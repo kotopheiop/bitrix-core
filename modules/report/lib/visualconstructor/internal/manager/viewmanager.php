@@ -51,7 +51,6 @@ class ViewManager extends Base
             foreach ($views as $view) {
                 self::$viewsList[$view->getKey()] = $view;
                 self::$indices['dataType'][$view->getCompatibleDataType()][] = $view->getKey();
-
             }
         }
         return self::$viewsList;

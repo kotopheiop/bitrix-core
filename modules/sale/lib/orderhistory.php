@@ -30,7 +30,6 @@ class OrderHistory
 
     protected function __construct()
     {
-
     }
 
     /**
@@ -43,10 +42,19 @@ class OrderHistory
      * @param $entity
      * @param array $fields
      */
-    public static function addField($entityName, $orderId, $field, $oldValue = null, $value = null, $id = null, $entity = null, array $fields = array())
-    {
-        if ($field == "ID")
+    public static function addField(
+        $entityName,
+        $orderId,
+        $field,
+        $oldValue = null,
+        $value = null,
+        $id = null,
+        $entity = null,
+        array $fields = array()
+    ) {
+        if ($field == "ID") {
             return;
+        }
 
         if ($value !== null && static::isDate($value)) {
             $value = $value->toString();
@@ -89,14 +97,22 @@ class OrderHistory
      * @throws Main\ArgumentNullException
      * @throws Main\ArgumentOutOfRangeException
      */
-    public static function addAction($entityName, $orderId, $type, $id = null, $entity = null, array $fields = array(), $level = null)
-    {
+    public static function addAction(
+        $entityName,
+        $orderId,
+        $type,
+        $id = null,
+        $entity = null,
+        array $fields = array(),
+        $level = null
+    ) {
         if ($level === null) {
             $level = static::SALE_ORDER_HISTORY_ACTION_LOG_LEVEL_0;
         }
 
-        if (!static::checkActionLogLevel($level))
+        if (!static::checkActionLogLevel($level)) {
             return;
+        }
 
         static::$pool[$entityName][$orderId][$id][$type][] = array(
             'RECORD_TYPE' => static::SALE_ORDER_HISTORY_RECORD_TYPE_ACTION,
@@ -129,13 +145,15 @@ class OrderHistory
                 }
             }
 
-            if (!$found)
+            if (!$found) {
                 return false;
+            }
         }
 
         foreach ($poolEntity as $entityId => $fieldValue) {
-            if ($id !== null && $entityId != $id)
+            if ($id !== null && $entityId != $id) {
                 continue;
+            }
 
             $entity = null;
 
@@ -157,8 +175,9 @@ class OrderHistory
                         );
                         unset(static::$pool[$entityName][$orderId][$data['ID']][$data['TYPE']][$key]);
 
-                        if (empty(static::$pool[$entityName][$orderId][$data['ID']][$data['TYPE']]))
+                        if (empty(static::$pool[$entityName][$orderId][$data['ID']][$data['TYPE']])) {
                             unset(static::$pool[$entityName][$orderId][$data['ID']][$data['TYPE']]);
+                        }
 
                         continue;
                     }
@@ -166,11 +185,13 @@ class OrderHistory
                     $value = $data['VALUE'];
                     $oldValue = $data['OLD_VALUE'];
 
-                    if (static::isDate($value))
+                    if (static::isDate($value)) {
                         $value = static::convertDateField($value);
+                    }
 
-                    if (static::isDate($oldValue))
+                    if (static::isDate($oldValue)) {
                         $oldValue = static::convertDateField($oldValue);
+                    }
 
                     $oldFields[$data['NAME']] = $oldValue;
                     $fields[$data['NAME']] = $value;
@@ -180,29 +201,29 @@ class OrderHistory
                     }
 
                     $dataType = static::FIELD_TYPE_TYPE;
-                    if (isset($data['RECORD_TYPE']) == static::SALE_ORDER_HISTORY_RECORD_TYPE_FIELD) {
+                    if (isset($data['RECORD_TYPE']) && $data['RECORD_TYPE'] == static::SALE_ORDER_HISTORY_RECORD_TYPE_FIELD) {
                         $dataType = static::FIELD_TYPE_NAME;
                     }
 
                     if (isset($data[$dataType])) {
                         unset(static::$pool[$entityName][$orderId][$data['ID']][$data[$dataType]][$key]);
 
-                        if (empty(static::$pool[$entityName][$orderId][$data['ID']][$data[$dataType]]))
+                        if (empty(static::$pool[$entityName][$orderId][$data['ID']][$data[$dataType]])) {
                             unset(static::$pool[$entityName][$orderId][$data['ID']][$data[$dataType]]);
+                        }
                     }
 
                     if ($entity === null && array_key_exists('ENTITY', $data)) {
                         $entity = $data['ENTITY'];
                     }
-
                 }
-
             }
 
             if ($entityName === "") // for order
             {
-                if (isset($fields["ID"]))
+                if (isset($fields["ID"])) {
                     unset($fields["ID"]);
+                }
             }
 
             foreach ($fields as $key => $val) {
@@ -213,7 +234,7 @@ class OrderHistory
                 if (!array_key_exists($key, $oldFields)
                     || (
                         array_key_exists($key, $oldFields)
-                        && strlen($val) > 0 && $val != $oldFields[$key]
+                        && $val <> '' && $val != $oldFields[$key]
                     )
                 ) {
                     $arRecord = \CSaleOrderChange::MakeRecordFromField($key, $dataFields, $entityName, $entity);
@@ -237,15 +258,18 @@ class OrderHistory
                 }
             }
 
-            if (empty(static::$pool[$entityName][$orderId][$entityId]))
+            if (empty(static::$pool[$entityName][$orderId][$entityId])) {
                 unset(static::$pool[$entityName][$orderId][$entityId]);
+            }
         }
 
-        if (empty(static::$pool[$entityName][$orderId]))
+        if (empty(static::$pool[$entityName][$orderId])) {
             unset(static::$pool[$entityName][$orderId]);
+        }
 
-        if (empty(static::$pool[$entityName]))
+        if (empty(static::$pool[$entityName])) {
             unset(static::$pool[$entityName]);
+        }
 
         return true;
     }
@@ -377,13 +401,16 @@ class OrderHistory
      */
     public static function deleteByOrderId($id)
     {
-        if (intval($id) <= 0)
+        if (intval($id) <= 0) {
             return false;
+        }
 
-        $dbRes = static::getList(array(
-            'select' => array('ID'),
-            'filter' => array('=ORDER_ID' => $id)
-        ));
+        $dbRes = static::getList(
+            array(
+                'select' => array('ID'),
+                'filter' => array('=ORDER_ID' => $id)
+            )
+        );
 
         while ($data = $dbRes->fetch()) {
             static::deleteInternal($data['ID']);
@@ -426,14 +453,22 @@ class OrderHistory
      * @throws Main\ArgumentNullException
      * @throws Main\ArgumentOutOfRangeException
      */
-    public static function addLog($entityName, $orderId, $type, $id = null, $entity = null, array $fields = array(), $level = null)
-    {
+    public static function addLog(
+        $entityName,
+        $orderId,
+        $type,
+        $id = null,
+        $entity = null,
+        array $fields = array(),
+        $level = null
+    ) {
         if ($level === null) {
             $level = static::SALE_ORDER_HISTORY_LOG_LEVEL_0;
         }
 
-        if (!static::checkLogLevel($level))
+        if (!static::checkLogLevel($level)) {
             return;
+        }
 
         if (!empty($fields)) {
             foreach ($fields as $fieldName => $fieldValue) {
@@ -463,10 +498,15 @@ class OrderHistory
      */
     public static function checkLogLevel($level)
     {
-        $orderHistoryLogLevel = Main\Config\Option::get('sale', 'order_history_log_level', static::SALE_ORDER_HISTORY_LOG_LEVEL_0);
+        $orderHistoryLogLevel = Main\Config\Option::get(
+            'sale',
+            'order_history_log_level',
+            static::SALE_ORDER_HISTORY_LOG_LEVEL_0
+        );
 
-        if ($level > $orderHistoryLogLevel)
+        if ($level > $orderHistoryLogLevel) {
             return false;
+        }
 
         return true;
     }
@@ -486,8 +526,9 @@ class OrderHistory
             static::SALE_ORDER_HISTORY_ACTION_LOG_LEVEL_0
         );
 
-        if ($level > $orderHistoryActionLogLevel)
+        if ($level > $orderHistoryActionLogLevel) {
             return false;
+        }
 
         return true;
     }
@@ -506,8 +547,9 @@ class OrderHistory
     {
         $days = (int)($days);
 
-        if ($days <= 0)
+        if ($days <= 0) {
             return false;
+        }
 
         $expired = new Main\Type\DateTime();
         $expired->add('-' . $days . ' days');
@@ -551,10 +593,12 @@ class OrderHistory
         if ($days) {
             $expired = new Main\Type\DateTime();
             $expired->add("-$days days");
-            $dbRes = static::getList(array(
-                'filter' => array('<DATE_CREATE' => $expired->toString()),
-                'limit' => 1
-            ));
+            $dbRes = static::getList(
+                array(
+                    'filter' => array('<DATE_CREATE' => $expired->toString()),
+                    'limit' => 1
+                )
+            );
 
             if ($dbRes->fetch()) {
                 $interval = 60;
@@ -562,10 +606,13 @@ class OrderHistory
                 $interval = 24 * 60 * 60;
             }
 
-            $agentsList = \CAgent::GetList(array("ID" => "DESC"), array(
-                "MODULE_ID" => "sale",
-                "NAME" => $calledClass . "::deleteOldAgent(%"
-            ));
+            $agentsList = \CAgent::GetList(
+                array("ID" => "DESC"),
+                array(
+                    "MODULE_ID" => "sale",
+                    "NAME" => $calledClass . "::deleteOldAgent(%"
+                )
+            );
             if ($agent = $agentsList->Fetch()) {
                 \CAgent::Update($agent['ID'], array("AGENT_INTERVAL" => $interval));
             }

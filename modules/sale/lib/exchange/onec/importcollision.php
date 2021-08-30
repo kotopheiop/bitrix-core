@@ -50,7 +50,11 @@ class ImportCollision implements ICollision
         }
 
         if (!EntityCollisionType::isDefined($typeId)) {
-            throw new ArgumentOutOfRangeException('Is not defined', EntityCollisionType::First, EntityCollisionType::Last);
+            throw new ArgumentOutOfRangeException(
+                'Is not defined',
+                EntityCollisionType::First,
+                EntityCollisionType::Last
+            );
         }
 
         $this->setEntity($entity);
@@ -166,8 +170,9 @@ class CollisionOrder extends ImportCollision
      */
     public function resolve(ImportBase $item)
     {
-        if (!($item instanceof OrderImport))
+        if (!($item instanceof OrderImport)) {
             throw new ArgumentException("Item must be instanceof OrderImport");
+        }
 
         $this->setCollision($item);
 
@@ -194,16 +199,19 @@ class CollisionOrder extends ImportCollision
                 foreach ($collisionTypes as $collisionType) {
                     switch ($collisionType) {
                         case EntityCollisionType::OrderFinalStatusName:
-                            if ($order->getField('STATUS_ID') == $settings->finalStatusIdFor($item->getOwnerTypeId()))
+                            if ($order->getField('STATUS_ID') == $settings->finalStatusIdFor($item->getOwnerTypeId())) {
                                 $result[] = EntityCollisionType::resolveID($collisionType);
+                            }
                             break;
                         case EntityCollisionType::OrderIsPayedName:
-                            if ($order->isPaid())
+                            if ($order->isPaid()) {
                                 $result[] = EntityCollisionType::resolveID($collisionType);
+                            }
                             break;
                         case EntityCollisionType::OrderIsShippedName:
-                            if ($order->isShipped())
+                            if ($order->isShipped()) {
                                 $result[] = EntityCollisionType::resolveID($collisionType);
+                            }
                             break;
                     }
                 }
@@ -223,8 +231,9 @@ class CollisionPayment extends ImportCollision
      */
     public function resolve(ImportBase $item)
     {
-        if (!($item instanceof PaymentImport))
+        if (!($item instanceof PaymentImport)) {
             throw new ArgumentException("Item must be instanceof PaymentImport");
+        }
 
         $this->setCollision($item);
 
@@ -242,8 +251,9 @@ class CollisionPayment extends ImportCollision
         /** @var Payment $payment */
         $payment = $item->getEntity();
         if (!empty($payment)) {
-            if ($payment->isPaid())
+            if ($payment->isPaid()) {
                 $result[] = EntityCollisionType::PaymentIsPayed;
+            }
         }
 
         return $result;
@@ -259,8 +269,9 @@ class CollisionShipment extends ImportCollision
      */
     public function resolve(ImportBase $item)
     {
-        if (!($item instanceof ShipmentImport))
+        if (!($item instanceof ShipmentImport)) {
             throw new ArgumentException("Item must be instanceof ShipmentImport");
+        }
 
         $this->setCollision($item);
 
@@ -278,8 +289,9 @@ class CollisionShipment extends ImportCollision
         /** @var Shipment $shipment */
         $shipment = $item->getEntity();
         if (!empty($shipment)) {
-            if ($shipment->isShipped())
+            if ($shipment->isShipped()) {
                 $result[] = EntityCollisionType::ShipmentIsShipped;
+            }
         }
 
         return $result;
@@ -296,8 +308,9 @@ class CollisionProfile extends ImportCollision
      */
     public function resolve(ImportBase $item)
     {
-        if (!($item instanceof ProfileImport))
+        if (!($item instanceof ProfileImport)) {
             throw new ArgumentException("Item must be instanceof ProfileImport");
+        }
 
         return new Result();
     }

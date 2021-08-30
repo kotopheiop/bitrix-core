@@ -28,8 +28,9 @@ class SimpleHandler extends \Bitrix\Sale\Delivery\Services\Base
         parent::__construct($initParams);
 
         //Default value
-        if (!isset($this->config["MAIN"]["0"]))
+        if (!isset($this->config["MAIN"]["0"])) {
             $this->config["MAIN"]["0"] = "0";
+        }
     }
 
     /**
@@ -55,13 +56,16 @@ class SimpleHandler extends \Bitrix\Sale\Delivery\Services\Base
     protected function getLocationGroups()
     {
         $result = array();
-        $res = GroupTable::getList(array(
-            'select' => array('ID', 'CODE', 'LNAME' => 'NAME.NAME'),
-            'filter' => array('NAME.LANGUAGE_ID' => LANGUAGE_ID)
-        ));
+        $res = GroupTable::getList(
+            array(
+                'select' => array('ID', 'CODE', 'LNAME' => 'NAME.NAME'),
+                'filter' => array('NAME.LANGUAGE_ID' => LANGUAGE_ID)
+            )
+        );
 
-        while ($group = $res->fetch())
+        while ($group = $res->fetch()) {
             $result[$group['ID']] = $group['LNAME'];
+        }
 
         return $result;
     }
@@ -83,33 +87,38 @@ class SimpleHandler extends \Bitrix\Sale\Delivery\Services\Base
 
         $order = $shipment->getCollection()->getOrder();
 
-        if (!$props = $order->getPropertyCollection())
+        if (!$props = $order->getPropertyCollection()) {
             return $result;
+        }
 
-        if (!$locationProp = $props->getDeliveryLocation())
+        if (!$locationProp = $props->getDeliveryLocation()) {
             return $result;
+        }
 
-        if (!$locationCode = $locationProp->getValue())
+        if (!$locationCode = $locationProp->getValue()) {
             return $result;
+        }
 
-        $res = \Bitrix\Sale\Location\LocationTable::getList(array(
-            'runtime' => array(
-                new \Bitrix\Main\Entity\ReferenceField(
-                    'PARENT_GROUP',
-                    '\Bitrix\Sale\Location\GroupLocationTable',
-                    array(
-                        '=this.PARENTS.ID' => 'ref.LOCATION_ID',
-                    ),
-                    array(
-                        "join_type" => 'inner'
+        $res = \Bitrix\Sale\Location\LocationTable::getList(
+            array(
+                'runtime' => array(
+                    new \Bitrix\Main\Entity\ReferenceField(
+                        'PARENT_GROUP',
+                        '\Bitrix\Sale\Location\GroupLocationTable',
+                        array(
+                            '=this.PARENTS.ID' => 'ref.LOCATION_ID',
+                        ),
+                        array(
+                            "join_type" => 'inner'
+                        )
                     )
-                )
-            ),
-            'filter' => array('=CODE' => $locationCode),
-            'select' => array('CLOSEST_GROUP_ID' => 'PARENT_GROUP.LOCATION_GROUP_ID'),
-            'order' => array('PARENTS.DEPTH_LEVEL' => 'desc'),
-            'limit' => 1
-        ));
+                ),
+                'filter' => array('=CODE' => $locationCode),
+                'select' => array('CLOSEST_GROUP_ID' => 'PARENT_GROUP.LOCATION_GROUP_ID'),
+                'order' => array('PARENTS.DEPTH_LEVEL' => 'desc'),
+                'limit' => 1
+            )
+        );
 
         if ($group = $res->fetch()) {
             if (isset($this->config["MAIN"][$group['CLOSEST_GROUP_ID']])) {
@@ -137,8 +146,9 @@ class SimpleHandler extends \Bitrix\Sale\Delivery\Services\Base
 
         if (Loader::includeModule('currency')) {
             $currencyList = CurrencyManager::getCurrencyList();
-            if (isset($currencyList[$this->currency]))
+            if (isset($currencyList[$this->currency])) {
                 $currency = $currencyList[$this->currency];
+            }
             unset($currencyList);
         }
 

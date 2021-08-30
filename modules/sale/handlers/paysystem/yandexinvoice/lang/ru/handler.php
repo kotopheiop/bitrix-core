@@ -1,5 +1,6 @@
 <?php
-$MESS['SALE_HPS_YANDEX_INVOICE_SBERBANK'] = 'Сбербанк.Онлайн';
-$MESS["SALE_HPS_YANDEX_INVOICE_WALLET"] = "Яндекс.Деньги";
-$MESS["SALE_HPS_YANDEX_INVOICE_ERROR_SUM"] = "Оплаченная сумма не совпадает с суммой заказа";
-$MESS["SALE_HPS_YANDEX_INVOICE_ERROR_ISS"] = "Неправильный ISS";
+
+$MESS['SALE_HPS_YANDEX_INVOICE_SBERBANK'] = 'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.пїЅпїЅпїЅпїЅпїЅпїЅ';
+$MESS["SALE_HPS_YANDEX_INVOICE_WALLET"] = "пїЅMoney";
+$MESS["SALE_HPS_YANDEX_INVOICE_ERROR_SUM"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_YANDEX_INVOICE_ERROR_ISS"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ ISS";

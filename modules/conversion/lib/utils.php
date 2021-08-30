@@ -53,7 +53,9 @@ final class Utils
                     case 'BYR':
                     case 'UAH':
 
-                        if ($row = CurrencyLangTable::getByPrimary(array('CURRENCY' => $unit, 'LID' => LANGUAGE_ID))->fetch()) {
+                        if ($row = CurrencyLangTable::getByPrimary(
+                            array('CURRENCY' => $unit, 'LID' => LANGUAGE_ID)
+                        )->fetch()) {
                             $unit = trim(str_replace('#', '', $row['FORMAT_STRING']));
                         }
 

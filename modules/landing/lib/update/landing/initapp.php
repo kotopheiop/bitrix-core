@@ -36,25 +36,30 @@ class InitApp extends Stepper
 
         // get all app in demo tables
         $demos = [];
-        $res = Demos::getList([
-            'select' => [
-                'APP_CODE', 'XML_ID'
+        $res = Demos::getList(
+            [
+                'select' => [
+                    'APP_CODE',
+                    'XML_ID'
+                ]
             ]
-        ]);
+        );
         while ($row = $res->fetch()) {
             $demos[$row['APP_CODE'] . '.' . $row['XML_ID']] = $row;
         }
         unset($res, $row);
 
         // calculate count of records, which we need
-        $res = LandingTable::getList([
-            'select' => [
-                'CNT'
-            ],
-            'runtime' => [
-                new \Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(*)')
+        $res = LandingTable::getList(
+            [
+                'select' => [
+                    'CNT'
+                ],
+                'runtime' => [
+                    new \Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(*)')
+                ]
             ]
-        ]);
+        );
         if ($row = $res->fetch()) {
             $result['count'] = $row['CNT'];
         }
@@ -62,18 +67,21 @@ class InitApp extends Stepper
 
 
         // one group for update
-        $res = LandingTable::getList(array(
-            'select' => array(
-                'ID', 'TPL_CODE'
-            ),
-            'filter' => array(
-                '>ID' => $lastId
-            ),
-            'order' => array(
-                'ID' => 'ASC'
-            ),
-            'limit' => 1
-        ));
+        $res = LandingTable::getList(
+            array(
+                'select' => array(
+                    'ID',
+                    'TPL_CODE'
+                ),
+                'filter' => array(
+                    '>ID' => $lastId
+                ),
+                'order' => array(
+                    'ID' => 'ASC'
+                ),
+                'limit' => 1
+            )
+        );
         while ($row = $res->fetch()) {
             $lastId = $row['ID'];
             $result['steps']++;
@@ -82,15 +90,18 @@ class InitApp extends Stepper
                 : null;
 
             // mark with this app all available blocks in current page
-            $resBlock = BlockTable::getList([
-                'select' => [
-                    'ID', 'CODE'
-                ],
-                'filter' => [
-                    'LID' => $row['ID'],
-                    '=DELETED' => 'N'
+            $resBlock = BlockTable::getList(
+                [
+                    'select' => [
+                        'ID',
+                        'CODE'
+                    ],
+                    'filter' => [
+                        'LID' => $row['ID'],
+                        '=DELETED' => 'N'
+                    ]
                 ]
-            ]);
+            );
             while ($rowBlock = $resBlock->fetch()) {
                 $appCodeBlock = isset($blocksRepo[$rowBlock['CODE']])
                     ? $blocksRepo[$rowBlock['CODE']]['app_code']
@@ -98,17 +109,23 @@ class InitApp extends Stepper
                 if ($appCodeBlock != $appCode) {
                     $appCodeBlock = null;
                 }
-                $resTmp = BlockTable::update($rowBlock['ID'], [
-                    'INITIATOR_APP_CODE' => $appCodeBlock
-                ]);
+                $resTmp = BlockTable::update(
+                    $rowBlock['ID'],
+                    [
+                        'INITIATOR_APP_CODE' => $appCodeBlock
+                    ]
+                );
                 $resTmp->isSuccess();
             }
             unset($resBlock, $rowBlock);
 
             // mark the page with this app
-            $resTmp = LandingTable::update($row['ID'], [
-                'INITIATOR_APP_CODE' => $appCode
-            ]);
+            $resTmp = LandingTable::update(
+                $row['ID'],
+                [
+                    'INITIATOR_APP_CODE' => $appCode
+                ]
+            );
             $resTmp->isSuccess();
 
             $finished = false;

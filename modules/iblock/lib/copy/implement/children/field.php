@@ -89,7 +89,7 @@ class Field implements Child
         foreach ($list as $id => $enum) {
             if (is_array($enum)) {
                 $value = trim($enum["VALUE"], " \t\n\r");
-                if (strlen($value)) {
+                if ($value <> '') {
                     $enum["PROPERTY_ID"] = $propertyId;
                     \CIBlockPropertyEnum::add($enum);
                 }
@@ -103,7 +103,7 @@ class Field implements Child
 
         $this->enumTmpMap[$fieldId] = [];
 
-        $propertyId = substr($fieldId, strlen("PROPERTY_"));
+        $propertyId = mb_substr($fieldId, mb_strlen("PROPERTY_"));
         $enum = \CIBlockPropertyEnum::getList([], ["PROPERTY_ID" => $propertyId]);
         while ($listData = $enum->fetch()) {
             $values[] = [
@@ -125,7 +125,7 @@ class Field implements Child
             if (!is_array($this->enumRatio[$iblockId])) {
                 $this->enumRatio[$iblockId] = [];
             }
-            $propertyId = substr($copiedFieldId, strlen("PROPERTY_"));
+            $propertyId = mb_substr($copiedFieldId, mb_strlen("PROPERTY_"));
             $enum = \CIBlockPropertyEnum::getList([], ["PROPERTY_ID" => $propertyId]);
             while ($listData = $enum->fetch()) {
                 if (array_key_exists($listData["VALUE"], $enumTmpMap)) {

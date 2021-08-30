@@ -1,4 +1,5 @@
 <?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/calendar/include.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/calendar/prolog.php");
@@ -12,8 +13,9 @@ $adminChain->AddItem(array("TEXT" => GetMessage("CAL_CONVERT"), "LINK" => "calen
 
 $adminMenu->aActiveSections[] = $adminMenu->aGlobalMenu["global_menu_settings"];
 
-if (!$USER->IsAdmin())
+if (!$USER->IsAdmin()) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $CNT = 0;
 
@@ -70,7 +72,7 @@ class CCalendarConvert
             CCalendarConvert::SetOption('__convert_doc_roots', array());
         }
 
-        $dbSites = CSite::GetList($by = 'sort', $order = 'asc', array('ACTIVE' => 'Y'));
+        $dbSites = CSite::GetList('sort', 'asc', array('ACTIVE' => 'Y'));
         $arSites = array();
         $default_site = '';
         $arDocRoots = CCalendarConvert::GetOption('__convert_doc_roots', serialize(array()));
@@ -79,29 +81,34 @@ class CCalendarConvert
 
             $docRoot = CSite::GetSiteDocRoot($arRes['ID']);
 
-            if (count($arDocRoots) > 0 && in_array($docRoot, $arDocRoots))
+            if (count($arDocRoots) > 0 && in_array($docRoot, $arDocRoots)) {
                 continue;
+            }
 
             $arDocRoots[] = $docRoot;
             CCalendarConvert::SetOption('__convert_doc_roots', $arDocRoots);
 
-            if (self::$bSkip && self::$curSite != self::$lastSite)
+            if (self::$bSkip && self::$curSite != self::$lastSite) {
                 continue;
+            }
 
-            $oDir = new CFilemanUtilDir($docRoot, array(
+            $oDir = new CFilemanUtilDir(
+                $docRoot, array(
                 'obj' => $this,
                 'site' => $arRes['ID'],
                 'callBack' => "ParseFile",
                 'checkBreak' => "CheckBreak",
                 'checkSubdirs' => false
-            ));
+            )
+            );
             $bSuccess = $oDir->Start();
 
             $bBreak = $oDir->bBreak;
             $nextPath = $oDir->nextPath;
 
-            if ($bBreak)
+            if ($bBreak) {
                 $this->ParseStop(CFilemanUtils::TrimPath($nextPath, $docRoot), self::$curSite);
+            }
         }
 
         $this->AddTypesFromIblockType();
@@ -116,41 +123,49 @@ class CCalendarConvert
         $io = CBXVirtualIo::GetInstance();
         $bIsDir = $io->DirectoryExists($file);
 
-        if (is_link($file))
+        if (is_link($file)) {
             return;
+        }
 
         if ($bIsDir) {
             // Skip 'bitrix' and 'upload' folders
-            if ($file == $docRoot . '/bitrix' || $file == $docRoot . '/upload' || $file == $docRoot . '/images')
+            if ($file == $docRoot . '/bitrix' || $file == $docRoot . '/upload' || $file == $docRoot . '/images') {
                 return;
+            }
 
-            $oDir = new CFilemanUtilDir($file, array(
+            $oDir = new CFilemanUtilDir(
+                $file, array(
                 'obj' => $this,
                 'site' => self::$curSite,
                 'callBack' => "ParseFile",
                 'checkBreak' => "CheckBreak",
                 'checkSubdirs' => false
-            ));
+            )
+            );
             $bSuccess = $oDir->Start();
             $bBreak = $oDir->bBreak;
             $nextPath = $oDir->nextPath;
 
-            if ($bBreak)
+            if ($bBreak) {
                 $this->ParseStop(CFilemanUtils::TrimPath($nextPath, $docRoot), self::$curSite);
+            }
         } else {
             if (self::$bSkip) {
-                if ($file == $docRoot . self::$lastPath)
-                    self::$bSkip = false; // continue handle files from last path
-                else
-                    return; // Files was handled earlier
+                if ($file == $docRoot . self::$lastPath) {
+                    self::$bSkip = false;
+                } // continue handle files from last path
+                else {
+                    return;
+                } // Files was handled earlier
             }
 
 
             $fileName = $io->ExtractNameFromPath($file);
 
             // Skip files stating from dot '.' or any non .php files
-            if (GetFileExtension($fileName) != 'php' || preg_match('/^\..*/i' . BX_UTF_PCRE_MODIFIER, $fileName))
+            if (GetFileExtension($fileName) != 'php' || preg_match('/^\..*/i' . BX_UTF_PCRE_MODIFIER, $fileName)) {
                 return;
+            }
 
             // 1. Get file content
             $fTmp = $io->GetFile($file);
@@ -166,7 +181,10 @@ class CCalendarConvert
                 'socialnetwork_group'
             );
             foreach ($pattern as $p) {
-                if (preg_match('/includecomponent\([\n\t\r\s]*("|\')bitrix:' . $p . '/i' . BX_UTF_PCRE_MODIFIER, $fileContent)) {
+                if (preg_match(
+                    '/includecomponent\([\n\t\r\s]*("|\')bitrix:' . $p . '/i' . BX_UTF_PCRE_MODIFIER,
+                    $fileContent
+                )) {
                     $this->FetchParams($fileContent);
                     break;
                 }
@@ -194,7 +212,12 @@ class CCalendarConvert
     {
         // 1. Parse file
         $arPHP = PHPParser::ParseFile($content);
-        $arComponents = array('bitrix:intranet.event_calendar', 'bitrix:socialnetwork', 'bitrix:socialnetwork_user', 'bitrix:socialnetwork_group');
+        $arComponents = array(
+            'bitrix:intranet.event_calendar',
+            'bitrix:socialnetwork',
+            'bitrix:socialnetwork_user',
+            'bitrix:socialnetwork_group'
+        );
 
         if (count($arPHP) > 0) {
             self::$types = CCalendarConvert::GetOption('__convert_types');
@@ -207,19 +230,24 @@ class CCalendarConvert
                     $PARAMS = $arRes['PARAMS'];
 
                     if ($arRes['COMPONENT_NAME'] == 'bitrix:intranet.event_calendar') {
-                        if (!in_array($PARAMS['IBLOCK_TYPE'], self::$iblockTypes) && $PARAMS['IBLOCK_TYPE'])
+                        if (!in_array($PARAMS['IBLOCK_TYPE'], self::$iblockTypes) && $PARAMS['IBLOCK_TYPE']) {
                             self::$iblockTypes[] = $PARAMS['IBLOCK_TYPE'];
+                        }
 
-                        if (self::$types['user']['iblockType'] == '')
+                        if (self::$types['user']['iblockType'] == '') {
                             self::$types['user']['iblockType'] = $PARAMS['IBLOCK_TYPE'];
-                        if (self::$types['group']['iblockType'] == '')
+                        }
+                        if (self::$types['group']['iblockType'] == '') {
                             self::$types['group']['iblockType'] = $PARAMS['IBLOCK_TYPE'];
+                        }
 
-                        if (isset($PARAMS['USERS_IBLOCK_ID']) && $PARAMS['USERS_IBLOCK_ID'] > 0 && self::$types['user']['iblockId'] <= 0)
+                        if (isset($PARAMS['USERS_IBLOCK_ID']) && $PARAMS['USERS_IBLOCK_ID'] > 0 && self::$types['user']['iblockId'] <= 0) {
                             self::$types['user']['iblockId'] = intval($PARAMS['USERS_IBLOCK_ID']);
+                        }
 
-                        if (isset($PARAMS['SUPERPOSE_GROUPS_IBLOCK_ID']) && $PARAMS['SUPERPOSE_GROUPS_IBLOCK_ID'] > 0 && self::$types['group']['iblockId'] <= 0)
+                        if (isset($PARAMS['SUPERPOSE_GROUPS_IBLOCK_ID']) && $PARAMS['SUPERPOSE_GROUPS_IBLOCK_ID'] > 0 && self::$types['group']['iblockId'] <= 0) {
                             self::$types['group']['iblockId'] = intval($PARAMS['SUPERPOSE_GROUPS_IBLOCK_ID']);
+                        }
 
                         // Settings
                         self::SetModuleOption('path_to_user', $PARAMS['PATH_TO_USER']);
@@ -235,27 +263,49 @@ class CCalendarConvert
                         self::SetModuleOption('path_to_vr', $PARAMS['CALENDAR_PATH_TO_VIDEO_MEETING']);
                     } else // socialnetwork
                     {
-                        if (!in_array($PARAMS['CALENDAR_IBLOCK_TYPE'], self::$iblockTypes) && $PARAMS['CALENDAR_IBLOCK_TYPE'])
+                        if (!in_array(
+                                $PARAMS['CALENDAR_IBLOCK_TYPE'],
+                                self::$iblockTypes
+                            ) && $PARAMS['CALENDAR_IBLOCK_TYPE']) {
                             self::$iblockTypes[] = $PARAMS['CALENDAR_IBLOCK_TYPE'];
-                        if (self::$types['user']['iblockType'] == '')
+                        }
+                        if (self::$types['user']['iblockType'] == '') {
                             self::$types['user']['iblockType'] = $PARAMS['CALENDAR_IBLOCK_TYPE'];
-                        if (self::$types['group']['iblockType'] == '')
+                        }
+                        if (self::$types['group']['iblockType'] == '') {
                             self::$types['group']['iblockType'] = $PARAMS['CALENDAR_IBLOCK_TYPE'];
+                        }
 
-                        if (isset($PARAMS['CALENDAR_USER_IBLOCK_ID']) && $PARAMS['CALENDAR_USER_IBLOCK_ID'] > 0 && self::$types['user']['iblockId'] <= 0)
+                        if (isset($PARAMS['CALENDAR_USER_IBLOCK_ID']) && $PARAMS['CALENDAR_USER_IBLOCK_ID'] > 0 && self::$types['user']['iblockId'] <= 0) {
                             self::$types['user']['iblockId'] = intval($PARAMS['CALENDAR_USER_IBLOCK_ID']);
+                        }
 
-                        if (isset($PARAMS['CALENDAR_GROUP_IBLOCK_ID']) && $PARAMS['CALENDAR_GROUP_IBLOCK_ID'] > 0 && self::$types['group']['iblockId'] <= 0)
+                        if (isset($PARAMS['CALENDAR_GROUP_IBLOCK_ID']) && $PARAMS['CALENDAR_GROUP_IBLOCK_ID'] > 0 && self::$types['group']['iblockId'] <= 0) {
                             self::$types['group']['iblockId'] = intval($PARAMS['CALENDAR_GROUP_IBLOCK_ID']);
+                        }
 
                         self::SetModuleOption('path_to_user', $PARAMS['PATH_TO_USER']);
                         self::SetModuleOption('path_to_group', $PARAMS['PATH_TO_GROUP']);
 
-                        if (isset($PARAMS['SEF_URL_TEMPLATES']['group_calendar']) && (strpos($PARAMS['SEF_URL_TEMPLATES']['group_calendar'], 'extranet') === false && strpos($PARAMS['SEF_FOLDER'], 'extranet') === false))
-                            self::SetModuleOption('path_to_group_calendar', $PARAMS['SEF_FOLDER'] . $PARAMS['SEF_URL_TEMPLATES']['group_calendar']);
+                        if (isset($PARAMS['SEF_URL_TEMPLATES']['group_calendar']) && (mb_strpos(
+                                    $PARAMS['SEF_URL_TEMPLATES']['group_calendar'],
+                                    'extranet'
+                                ) === false && mb_strpos($PARAMS['SEF_FOLDER'], 'extranet') === false)) {
+                            self::SetModuleOption(
+                                'path_to_group_calendar',
+                                $PARAMS['SEF_FOLDER'] . $PARAMS['SEF_URL_TEMPLATES']['group_calendar']
+                            );
+                        }
 
-                        if (isset($PARAMS['SEF_URL_TEMPLATES']['user_calendar']) && (strpos($PARAMS['SEF_URL_TEMPLATES']['user_calendar'], 'extranet') === false && strpos($PARAMS['SEF_FOLDER'], 'extranet') === false))
-                            self::SetModuleOption('path_to_user_calendar', $PARAMS['SEF_FOLDER'] . $PARAMS['SEF_URL_TEMPLATES']['user_calendar']);
+                        if (isset($PARAMS['SEF_URL_TEMPLATES']['user_calendar']) && (mb_strpos(
+                                    $PARAMS['SEF_URL_TEMPLATES']['user_calendar'],
+                                    'extranet'
+                                ) === false && mb_strpos($PARAMS['SEF_FOLDER'], 'extranet') === false)) {
+                            self::SetModuleOption(
+                                'path_to_user_calendar',
+                                $PARAMS['SEF_FOLDER'] . $PARAMS['SEF_URL_TEMPLATES']['user_calendar']
+                            );
+                        }
 
                         self::SetModuleOption('week_holidays', $PARAMS['CALENDAR_WEEK_HOLIDAYS']);
                         self::SetModuleOption('year_holidays', $PARAMS['CALENDAR_YEAR_HOLIDAYS']);
@@ -320,11 +370,15 @@ class CCalendarConvert
                     //	continue;
 
                     // Skip reserve meetings
-                    $checked = strpos($iblock['CODE'], 'video-meeting') === false && strpos($iblock['CODE'], 'meeting_rooms') === false;
+                    $checked = mb_strpos($iblock['CODE'], 'video-meeting') === false && mb_strpos(
+                            $iblock['CODE'],
+                            'meeting_rooms'
+                        ) === false;
 
                     // Skip users and groups calendars
-                    if ($iblock['ID'] == self::$types['user']['iblockId'] || $iblock['ID'] == self::$types['group']['iblockId'])
+                    if ($iblock['ID'] == self::$types['user']['iblockId'] || $iblock['ID'] == self::$types['group']['iblockId']) {
                         continue;
+                    }
 
                     self::$types[$iblock['CODE']] = array(
                         'sys' => false,
@@ -344,8 +398,9 @@ class CCalendarConvert
     {
         if ($paramName == 'week_holidays' && is_array($value)) {
             $val = array();
-            foreach ($value as $day)
+            foreach ($value as $day) {
                 $val[] = CCalendar::WeekDayByInd($day, false);
+            }
             $value = $val;
         }
 
@@ -356,8 +411,9 @@ class CCalendarConvert
                 $val = array();
                 foreach ($value as $iii) {
                     $iii = trim($iii);
-                    if ($iii != '')
+                    if ($iii != '') {
                         $val[] = $iii;
+                    }
                 }
                 self::$settings['year_holidays'] = implode(',', array_unique($val));
             } else {
@@ -365,14 +421,16 @@ class CCalendarConvert
             }
         }
 
-        if (empty(self::$settings[$paramName]))
+        if (empty(self::$settings[$paramName])) {
             self::$settings[$paramName] = $value;
+        }
     }
 
     public static function Log($mess = '')
     {
-        if ($mess != '')
+        if ($mess != '') {
             echo '<div> - ' . $mess . '</div>';
+        }
     }
 
     public static function CreateSectionProperty($iblockId)
@@ -381,7 +439,10 @@ class CCalendarConvert
         global $USER_FIELD_MANAGER;
 
         $ent_id = "IBLOCK_" . $iblockId . "_SECTION";
-        $db_res = CUserTypeEntity::GetList(array('ID' => 'ASC'), array("ENTITY_ID" => $ent_id, "FIELD_NAME" => "UF_CAL_CONVERTED"));
+        $db_res = CUserTypeEntity::GetList(
+            array('ID' => 'ASC'),
+            array("ENTITY_ID" => $ent_id, "FIELD_NAME" => "UF_CAL_CONVERTED")
+        );
         if (!$db_res || !($r = $db_res->GetNext())) {
             $arFields = Array(
                 "ENTITY_ID" => $ent_id,
@@ -391,9 +452,10 @@ class CCalendarConvert
                 "MANDATORY" => "N",
             );
             $arFieldName = array();
-            $rsLanguage = CLanguage::GetList($by, $order, array());
-            while ($arLanguage = $rsLanguage->Fetch())
+            $rsLanguage = CLanguage::GetList();
+            while ($arLanguage = $rsLanguage->Fetch()) {
                 $arFieldName[$arLanguage["LID"]] = $arProps[$i][1];
+            }
             $arFields["EDIT_FORM_LABEL"] = $arFieldName;
             $obUserField = new CUserTypeEntity;
             $r = $obUserField->Add($arFields);
@@ -417,23 +479,28 @@ class CCalendarConvert
     {
         $prop = array('CODE' => 'CAL_CONVERTED', 'TYPE' => 'S', 'NAME' => 'CAL_CONVERTED');
         $code = $prop['CODE'];
-        $rsProperty = CIBlockProperty::GetList(array(), array(
-            "IBLOCK_ID" => $iblockId,
-            "CODE" => $code
-        ));
+        $rsProperty = CIBlockProperty::GetList(
+            array(),
+            array(
+                "IBLOCK_ID" => $iblockId,
+                "CODE" => $code
+            )
+        );
         $arProperty = $rsProperty->Fetch();
 
         if (!$arProperty) {
             $obProperty = new CIBlockProperty;
-            $obProperty->Add(array(
-                "IBLOCK_ID" => $iblockId,
-                "ACTIVE" => "Y",
-                "USER_TYPE" => false,
-                "PROPERTY_TYPE" => $prop['TYPE'],
-                "MULTIPLE" => 'N',
-                "NAME" => $prop['NAME'],
-                "CODE" => $prop['CODE']
-            ));
+            $obProperty->Add(
+                array(
+                    "IBLOCK_ID" => $iblockId,
+                    "ACTIVE" => "Y",
+                    "USER_TYPE" => false,
+                    "PROPERTY_TYPE" => $prop['TYPE'],
+                    "MULTIPLE" => 'N',
+                    "NAME" => $prop['NAME'],
+                    "CODE" => $prop['CODE']
+                )
+            );
         }
     }
 
@@ -453,63 +520,85 @@ class CCalendarConvert
         // CONVERT ACCESS:
         if ($ownerType == 'user') // Socnet
         {
-            if (!CSocNetFeatures::IsActiveFeature(SONET_ENTITY_USER, $ownerId, "calendar"))
+            if (!CSocNetFeatures::IsActiveFeature(SONET_ENTITY_USER, $ownerId, "calendar")) {
                 return $result;
+            }
 
             // Read
             $read = CSocNetFeaturesPerms::GetOperationPerm(SONET_ENTITY_USER, $ownerId, "calendar", 'view');
             $taskId = CCalendar::GetAccessTasksByName('calendar_section', 'calendar_view');
             if ($read == 'A') // All users
+            {
                 $Access['G2'] = $taskId;
-            elseif ($read == 'C') // All autorized
+            } elseif ($read == 'C') // All autorized
+            {
                 $Access['AU'] = $taskId;
-            elseif ($read == 'M' || $read == 'E') // Friends
+            } elseif ($read == 'M' || $read == 'E') // Friends
+            {
                 $Access['SU' . $ownerId . '_F'] = $taskId;
-            elseif ($bSetAccessFromCalendar)
+            } elseif ($bSetAccessFromCalendar) {
                 $bSetAccessFromCalendar = false;
+            }
 
             // Write - will override read access
             $write = CSocNetFeaturesPerms::GetOperationPerm(SONET_ENTITY_USER, $ownerId, "calendar", 'write');
             $taskId = CCalendar::GetAccessTasksByName('calendar_section', 'calendar_edit');
             if ($write == 'A') // All users
+            {
                 $Access['G2'] = $taskId;
-            elseif ($write == 'C') // All autorized
+            } elseif ($write == 'C') // All autorized
+            {
                 $Access['AU'] = $taskId;
-            elseif ($write == 'M' || $write == 'E') // Friends
+            } elseif ($write == 'M' || $write == 'E') // Friends
+            {
                 $Access['SU' . $ownerId . '_F'] = $taskId;
+            }
         } elseif ($ownerType == 'group') {
-            if (!CSocNetFeatures::IsActiveFeature(SONET_ENTITY_GROUP, $ownerId, "calendar"))
+            if (!CSocNetFeatures::IsActiveFeature(SONET_ENTITY_GROUP, $ownerId, "calendar")) {
                 return $result;
+            }
 
             // Read
             $read = CSocNetFeaturesPerms::GetOperationPerm(SONET_ENTITY_GROUP, $ownerId, "calendar", 'view');
             $taskId = CCalendar::GetAccessTasksByName('calendar_section', 'calendar_view');
 
             if ($read == 'A') // Group owner
+            {
                 $Access['SG' . $ownerId . '_A'] = $taskId;
-            elseif ($read == 'E') // Group moderator
+            } elseif ($read == 'E') // Group moderator
+            {
                 $Access['SG' . $ownerId . '_E'] = $taskId;
-            elseif ($read == 'K') // User
+            } elseif ($read == 'K') // User
+            {
                 $Access['SG' . $ownerId . '_K'] = $taskId;
-            elseif ($read == 'L') // Authorized
+            } elseif ($read == 'L') // Authorized
+            {
                 $Access['AU'] = $taskId;
-            elseif ($read == 'N') // Authorized
+            } elseif ($read == 'N') // Authorized
+            {
                 $Access['G2'] = $taskId;
+            }
 
             // Write - will override read access
             $write = CSocNetFeaturesPerms::GetOperationPerm(SONET_ENTITY_GROUP, $ownerId, "calendar", 'write');
             $taskId = CCalendar::GetAccessTasksByName('calendar_section', 'calendar_edit');
 
             if ($write == 'A') // Group owner
+            {
                 $Access['SG' . $ownerId . '_A'] = $taskId;
-            elseif ($write == 'E') // Group moderator
+            } elseif ($write == 'E') // Group moderator
+            {
                 $Access['SG' . $ownerId . '_E'] = $taskId;
-            elseif ($write == 'K') // User
+            } elseif ($write == 'K') // User
+            {
                 $Access['SG' . $ownerId . '_K'] = $taskId;
-            elseif ($write == 'L') // Authorized
+            } elseif ($write == 'L') // Authorized
+            {
                 $Access['AU'] = $taskId;
-            elseif ($write == 'N') // Authorized
+            } elseif ($write == 'N') // Authorized
+            {
                 $Access['G2'] = $taskId;
+            }
         } else // iblock access
         {
             $arGroupPerm = CIBlock::GetGroupPermissions($iblockId);
@@ -520,8 +609,9 @@ class CCalendarConvert
                 'X' => CCalendar::GetAccessTasksByName('calendar_section', 'calendar_access')
             );
 
-            foreach ($arGroupPerm as $groupId => $letter)
+            foreach ($arGroupPerm as $groupId => $letter) {
                 $Access['G' . $groupId] = $taskByLetter[$letter];
+            }
         }
 
         // 1. Fetch sections
@@ -529,8 +619,9 @@ class CCalendarConvert
         $calendarIndex = array();
         foreach ($arUserSections as $section) {
             $arUF = $GLOBALS["USER_FIELD_MANAGER"]->GetUserFields($ent_id, $section['ID']);
-            if (isset($arUF["UF_CAL_CONVERTED"]) && strlen($arUF["UF_CAL_CONVERTED"]['VALUE']) > 0)
+            if (isset($arUF["UF_CAL_CONVERTED"]) && $arUF["UF_CAL_CONVERTED"]['VALUE'] <> '') {
                 continue;
+            }
 
             $SectionAccess = array();
             if ($bSetAccessFromCalendar && $ownerType == 'user') {
@@ -550,17 +641,19 @@ class CCalendarConvert
                 $SectionAccess = $Access; // G2 => denied
             }
 
-            $new_sect_id = CCalendarSect::Edit(array(
-                'arFields' => array(
-                    "CAL_TYPE" => $ownerType,
-                    "NAME" => $section['NAME'],
-                    "OWNER_ID" => $ownerId,
-                    "CREATED_BY" => $createdBy,
-                    "DESCRIPTION" => $section['DESCRIPTION'],
-                    "COLOR" => $section["COLOR"],
-                    "ACCESS" => $SectionAccess
+            $new_sect_id = CCalendarSect::Edit(
+                array(
+                    'arFields' => array(
+                        "CAL_TYPE" => $ownerType,
+                        "NAME" => $section['NAME'],
+                        "OWNER_ID" => $ownerId,
+                        "CREATED_BY" => $createdBy,
+                        "DESCRIPTION" => $section['DESCRIPTION'],
+                        "COLOR" => $section["COLOR"],
+                        "ACCESS" => $SectionAccess
+                    )
                 )
-            ));
+            );
 
             // Set converted property
             $bs->Update($section['ID'], array('UF_CAL_CONVERTED' => 1));
@@ -572,8 +665,9 @@ class CCalendarConvert
         // 2. Create events
         $arEvents = CEventCalendar::GetCalendarEventsList(array($iblockId, $sectionId, 0), array());
         foreach ($arEvents as $event) {
-            if (!isset($calendarIndex[$event['IBLOCK_SECTION_ID']]) || $event['PROPERTY_PARENT'] > 0)
+            if (!isset($calendarIndex[$event['IBLOCK_SECTION_ID']]) || $event['PROPERTY_PARENT'] > 0) {
                 continue;
+            }
 
             $arFields = array(
                 "CAL_TYPE" => $ownerType,
@@ -595,27 +689,34 @@ class CCalendarConvert
 
             if (!empty($event['PROPERTY_REMIND_SETTINGS'])) {
                 $ar = explode("_", $event["PROPERTY_REMIND_SETTINGS"]);
-                if (count($ar) == 2)
+                if (count($ar) == 2) {
                     $arFields["REMIND"][] = array('type' => $ar[1], 'count' => floatVal($ar[0]));
+                }
             }
 
-            if (isset($event["PROPERTY_PERIOD_TYPE"]) && in_array($event["PROPERTY_PERIOD_TYPE"], array("DAILY", "WEEKLY", "MONTHLY", "YEARLY"))) {
+            if (isset($event["PROPERTY_PERIOD_TYPE"]) && in_array(
+                    $event["PROPERTY_PERIOD_TYPE"],
+                    array("DAILY", "WEEKLY", "MONTHLY", "YEARLY")
+                )) {
                 $arFields['RRULE']['FREQ'] = $event["PROPERTY_PERIOD_TYPE"];
                 $arFields['RRULE']['INTERVAL'] = $event["PROPERTY_PERIOD_COUNT"];
 
-                if (!empty($event['PROPERTY_EVENT_LENGTH']))
+                if (!empty($event['PROPERTY_EVENT_LENGTH'])) {
                     $arFields['DT_LENGTH'] = intval($event['PROPERTY_EVENT_LENGTH']);
+                }
 
-                if (!$arFields['DT_LENGTH'])
+                if (!$arFields['DT_LENGTH']) {
                     $arFields['DT_LENGTH'] = 86400;
+                }
 
                 if ($arFields['RRULE']['FREQ'] == "WEEKLY" && !empty($event['PROPERTY_PERIOD_ADDITIONAL'])) {
                     $arFields['RRULE']['BYDAY'] = array();
                     $bydays = explode(',', $event['PROPERTY_PERIOD_ADDITIONAL']);
                     foreach ($bydays as $day) {
                         $day = CCalendar::WeekDayByInd($day);
-                        if ($day !== false)
+                        if ($day !== false) {
                             $arFields['RRULE']['BYDAY'][] = $day;
+                        }
                     }
                     $arFields['RRULE']['BYDAY'] = implode(',', $arFields['RRULE']['BYDAY']);
                 }
@@ -624,13 +725,15 @@ class CCalendarConvert
             }
 
             if ($arFields['IS_MEETING']) {
-                if ($event['PROPERTY_PARENT'] > 0)
+                if ($event['PROPERTY_PARENT'] > 0) {
                     continue;
+                }
 
-                $host = intVal($event['CREATED_BY']);
+                $host = intval($event['CREATED_BY']);
                 $arFields['ATTENDEES'] = array();
-                if ($event['PROPERTY_HOST_IS_ABSENT'] == 'N')
+                if ($event['PROPERTY_HOST_IS_ABSENT'] == 'N') {
                     $arFields['ATTENDEES'][] = $host;
+                }
 
                 $arGuests = CECEvent::GetGuests(self::$userIblockId, $event['ID']);
 
@@ -643,7 +746,9 @@ class CCalendarConvert
                 $arFields['MEETING_HOST'] = $host;
                 $arFields['MEETING'] = array(
                     'HOST_NAME' => CCalendar::GetUserName($host),
-                    'TEXT' => (is_array($event['PROPERTY_MEETING_TEXT']) && is_string($event['PROPERTY_MEETING_TEXT']['TEXT'])) ? trim($event['PROPERTY_MEETING_TEXT']['TEXT']) : '',
+                    'TEXT' => (is_array($event['PROPERTY_MEETING_TEXT']) && is_string(
+                            $event['PROPERTY_MEETING_TEXT']['TEXT']
+                        )) ? trim($event['PROPERTY_MEETING_TEXT']['TEXT']) : '',
                     'OPEN' => false,
                     'NOTIFY' => false,
                     'REINVITE' => false
@@ -684,8 +789,9 @@ class CCalendarConvert
 
         foreach ($types as $key => $type) {
             $iblockId = $type['iblockId'];
-            if ($iblockId < 0)
+            if ($iblockId < 0) {
                 continue;
+            }
 
             // Fetch type
             if ($key == 'user') {
@@ -703,12 +809,30 @@ class CCalendarConvert
                     $ownerId = $arSection["CREATED_BY"];
                     CCalendar::SetUserSettings(false, $ownerId);
 
-                    $res = CCalendarConvert::ConvertEntity('user', $ownerId, $arSection["ID"], $iblockId, $arSection["CREATED_BY"]);
+                    $res = CCalendarConvert::ConvertEntity(
+                        'user',
+                        $ownerId,
+                        $arSection["ID"],
+                        $iblockId,
+                        $arSection["CREATED_BY"]
+                    );
 
-                    if ($res['sectCount'] > 0 || $res['eventsCount'] > 0)
-                        CCalendarConvert::Log(GetMessage("CAL_CONVERT_STAGE_USER_CALS", array('#USER_NAME#' => $arSection['NAME'], '#SECT_COUNT#' => $res['sectCount'], '#EVENTS_COUNT#' => $res['eventsCount'])));
+                    if ($res['sectCount'] > 0 || $res['eventsCount'] > 0) {
+                        CCalendarConvert::Log(
+                            GetMessage(
+                                "CAL_CONVERT_STAGE_USER_CALS",
+                                array(
+                                    '#USER_NAME#' => $arSection['NAME'],
+                                    '#SECT_COUNT#' => $res['sectCount'],
+                                    '#EVENTS_COUNT#' => $res['eventsCount']
+                                )
+                            )
+                        );
+                    }
 
-                    if ($res && ($res['sectCount'] > 0 || $res['eventsCount'] > 0) && microtime(true) - $start_time > $time_limit) {
+                    if ($res && ($res['sectCount'] > 0 || $res['eventsCount'] > 0) && microtime(
+                            true
+                        ) - $start_time > $time_limit) {
                         $stage = 'go';
                         break;
                     }
@@ -726,13 +850,31 @@ class CCalendarConvert
                 // For each group:
                 while ($arSection = $dbSections->Fetch()) {
                     $ownerId = $arSection["SOCNET_GROUP_ID"];
-                    $res = CCalendarConvert::ConvertEntity('group', $ownerId, $arSection["ID"], $iblockId, $arSection["CREATED_BY"]);
+                    $res = CCalendarConvert::ConvertEntity(
+                        'group',
+                        $ownerId,
+                        $arSection["ID"],
+                        $iblockId,
+                        $arSection["CREATED_BY"]
+                    );
 
-                    if ($res['sectCount'] > 0 || $res['eventsCount'] > 0)
-                        CCalendarConvert::Log(GetMessage("CAL_CONVERT_STAGE_GROUP_CALS", array('#GROUP_NAME#' => $arSection['NAME'], '#SECT_COUNT#' => $res['sectCount'], '#EVENTS_COUNT#' => $res['eventsCount'])));
+                    if ($res['sectCount'] > 0 || $res['eventsCount'] > 0) {
+                        CCalendarConvert::Log(
+                            GetMessage(
+                                "CAL_CONVERT_STAGE_GROUP_CALS",
+                                array(
+                                    '#GROUP_NAME#' => $arSection['NAME'],
+                                    '#SECT_COUNT#' => $res['sectCount'],
+                                    '#EVENTS_COUNT#' => $res['eventsCount']
+                                )
+                            )
+                        );
+                    }
 
 
-                    if ($res && ($res['sectCount'] > 0 || $res['eventsCount'] > 0) && microtime(true) - $start_time > $time_limit) {
+                    if ($res && ($res['sectCount'] > 0 || $res['eventsCount'] > 0) && microtime(
+                            true
+                        ) - $start_time > $time_limit) {
                         $stage = 'go';
                         break;
                     }
@@ -740,17 +882,29 @@ class CCalendarConvert
             } else {
                 $res = CCalendarConvert::ConvertEntity($key, 0, 0, $iblockId, 1);
                 if ($res['sectCount'] > 0 || $res['eventsCount'] > 0) {
-                    CCalendarConvert::Log(GetMessage("CAL_CONVERT_STAGE_TYPE", array('#TYPE_NAME#' => $type['name'], '#SECT_COUNT#' => $res['sectCount'], '#EVENTS_COUNT#' => $res['eventsCount'])));
+                    CCalendarConvert::Log(
+                        GetMessage(
+                            "CAL_CONVERT_STAGE_TYPE",
+                            array(
+                                '#TYPE_NAME#' => $type['name'],
+                                '#SECT_COUNT#' => $res['sectCount'],
+                                '#EVENTS_COUNT#' => $res['eventsCount']
+                            )
+                        )
+                    );
                 }
 
-                if ($res && ($res['sectCount'] > 0 || $res['eventsCount'] > 0) && microtime(true) - $start_time > $time_limit) {
+                if ($res && ($res['sectCount'] > 0 || $res['eventsCount'] > 0) && microtime(
+                        true
+                    ) - $start_time > $time_limit) {
                     $stage = 'go';
                     break;
                 }
             }
 
-            if ($stage == 'go')
+            if ($stage == 'go') {
                 break;
+            }
         }
 
         return $stage;
@@ -770,18 +924,20 @@ class CCalendarConvert
                 $value = $default;
             } else {
                 $value = file_get_contents(CTempFile::GetAbsoluteRoot() . "/cal_convert/" . $name . ".tmp");
-                if ($value == '')
+                if ($value == '') {
                     $value = $default;
+                }
             }
-            $value = unserialize($value);
+            $value = unserialize($value, ['allowed_classes' => false]);
             return $value;
         }
     }
 
     public static function SetOption($name = '', $value = false, $serialize = true)
     {
-        if ($serialize)
+        if ($serialize) {
             $value = serialize($value);
+        }
 
         $abs_path = CTempFile::GetAbsoluteRoot() . "/cal_convert/" . $name . ".tmp";
         $io = CBXVirtualIo::GetInstance();
@@ -796,10 +952,11 @@ class CCalendarConvert
 
 if (CModule::IncludeModule("intranet") && CModule::IncludeModule("calendar")) {
     CModule::IncludeModule("socialnetwork");
-    $RES = NULL;
+    $RES = null;
 
     // 1. Fetch options
-    if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["convert"]) && $_POST["convert"] == 'Y' && check_bitrix_sessid()) {
+    if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["convert"]) && $_POST["convert"] == 'Y' && check_bitrix_sessid(
+        )) {
         // Remember all settings
         $SET = array(
             'work_time_start' => $_REQUEST['work_time_start'],
@@ -818,16 +975,19 @@ if (CModule::IncludeModule("intranet") && CModule::IncludeModule("calendar")) {
         );
         $CUR_SET = CCalendar::GetSettings();
         foreach ($CUR_SET as $key => $value) {
-            if (!isset($SET[$key]) && isset($value))
+            if (!isset($SET[$key]) && isset($value)) {
                 $SET[$key] = $value;
+            }
         }
         CCalendar::SetSettings($SET);
-        CCalendar::ClearCache(array(
-            'access_tasks',
-            'type_list',
-            'type_list',
-            'section_list'
-        ));
+        CCalendar::ClearCache(
+            array(
+                'access_tasks',
+                'type_list',
+                'type_list',
+                'section_list'
+            )
+        );
 
         // Remember iblocks
         // Create types
@@ -854,22 +1014,25 @@ if (CModule::IncludeModule("intranet") && CModule::IncludeModule("calendar")) {
                             'W' => CCalendar::GetAccessTasksByName('calendar_type', 'calendar_type_edit'),
                             'X' => CCalendar::GetAccessTasksByName('calendar_type', 'calendar_type_access')
                         );
-                        foreach ($arGroupPerm as $groupId => $letter)
+                        foreach ($arGroupPerm as $groupId => $letter) {
                             $typeAccess['G' . $groupId] = $taskByLetter[$letter];
+                        }
                     }
 
                     CCalendarConvert::CreateSectionProperty($type['iblock_id']);
 
-                    $XML_ID = CCalendarType::Edit(array(
-                        'NEW' => true,
-                        'arFields' => array(
-                            'XML_ID' => $type['key'],
-                            'NAME' => $type['title'],
-                            'DESCRIPTION' => trim($type['desc']),
-                            'EXTERNAL_ID' => 'iblock_' . $type['iblock_id'],
-                            'ACCESS' => $typeAccess
+                    $XML_ID = CCalendarType::Edit(
+                        array(
+                            'NEW' => true,
+                            'arFields' => array(
+                                'XML_ID' => $type['key'],
+                                'NAME' => $type['title'],
+                                'DESCRIPTION' => trim($type['desc']),
+                                'EXTERNAL_ID' => 'iblock_' . $type['iblock_id'],
+                                'ACCESS' => $typeAccess
+                            )
                         )
-                    ));
+                    );
                 }
             }
 
@@ -890,8 +1053,9 @@ if (CModule::IncludeModule("intranet") && CModule::IncludeModule("calendar")) {
             $io->Delete(CTempFile::GetAbsoluteRoot() . "/cal_convert");
 
             $db_events = GetModuleEvents("calendar", "OnAfterCalendarConvert");
-            while ($arEvent = $db_events->Fetch())
+            while ($arEvent = $db_events->Fetch()) {
                 ExecuteModuleEventEx($arEvent);
+            }
         }
 
         ?>
@@ -910,8 +1074,9 @@ if (CModule::IncludeModule("intranet") && CModule::IncludeModule("calendar")) {
             CCalendarConvert::SetOption('__convert_types', false);
         } else {
             $types = CCalendarConvert::GetOption('__convert_types');
-            if (is_array($types))
+            if (is_array($types)) {
                 $RES = array('TYPES' => $types);
+            }
             $IB = CCalendarConvert::GetIblockTypes();
         }
     }
@@ -922,8 +1087,9 @@ if (CModule::IncludeModule("intranet") && CModule::IncludeModule("calendar")) {
     $SET = CCalendarConvert::GetSettings();
     $CUR_SET = CCalendar::GetSettings();
     foreach ($CUR_SET as $key => $value) {
-        if (!isset($SET[$key]) && !empty($value))
+        if (!isset($SET[$key]) && !empty($value)) {
             $SET[$key] = $value;
+        }
     }
 
     $arDays = Array('MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU');
@@ -1082,9 +1248,9 @@ if (CModule::IncludeModule("intranet") && CModule::IncludeModule("calendar")) {
                         </td>
                     </tr>
                     <tr>
-                        <td class="field-name"><label
-                                    for="cal_path_to_user_calendar"><?= GetMessage("CAL_PATH_TO_USER_CALENDAR") ?>
-                                :</label></td>
+                        <td class="field-name"><label for="cal_path_to_user_calendar"><?= GetMessage(
+                                    "CAL_PATH_TO_USER_CALENDAR"
+                                ) ?>:</label></td>
                         <td>
                             <input name="path_to_user_calendar" type="text"
                                    value="<?= htmlspecialcharsbx($SET['path_to_user_calendar']) ?>"
@@ -1101,9 +1267,9 @@ if (CModule::IncludeModule("intranet") && CModule::IncludeModule("calendar")) {
                         </td>
                     </tr>
                     <tr>
-                        <td class="field-name"><label
-                                    for="cal_path_to_group_calendar"><?= GetMessage("CAL_PATH_TO_GROUP_CALENDAR") ?>
-                                :</label></td>
+                        <td class="field-name"><label for="cal_path_to_group_calendar"><?= GetMessage(
+                                    "CAL_PATH_TO_GROUP_CALENDAR"
+                                ) ?>:</label></td>
                         <td>
                             <input name="path_to_group_calendar" type="text"
                                    value="<?= htmlspecialcharsbx($SET['path_to_group_calendar']) ?>"

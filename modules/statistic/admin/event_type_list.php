@@ -1,18 +1,22 @@
 <?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/prolog.php");
 /** @var CMain $APPLICATION */
 IncludeModuleLangFile(__FILE__);
 
 $STAT_RIGHT = $APPLICATION->GetGroupRight("statistic");
-if ($STAT_RIGHT == "D")
+if ($STAT_RIGHT == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 $statDB = CDatabase::GetModuleConnection('statistic');
 if (isset($group_by)) {
-    if ($group_by != "event1" && $group_by != "event2")
+    if ($group_by != "event1" && $group_by != "event2") {
         $group_by = "";
-} else
-    $group_by = false;//no setting (will be read later from session)
+    }
+} else {
+    $group_by = false;
+}//no setting (will be read later from session)
 
 
 $today = GetTime(time());
@@ -20,12 +24,12 @@ $yesterday = GetTime(time() - 86400);
 $b_yesterday = GetTime(time() - 172800);
 
 $base_currency = GetStatisticBaseCurrency();
-if (strlen($base_currency) > 0 && CModule::IncludeModule("currency")) {
+if ($base_currency <> '' && CModule::IncludeModule("currency")) {
     $currency_module = "Y";
     $base_currency = GetStatisticBaseCurrency();
-    $view_currency = (strlen($find_currency) > 0 && $find_currency != "NOT_REF") ? $find_currency : $base_currency;
+    $view_currency = ($find_currency <> '' && $find_currency != "NOT_REF") ? $find_currency : $base_currency;
     $arrCurrency = array();
-    $rsCur = CCurrency::GetList(($v1 = "sort"), ($v2 = "asc"));
+    $rsCur = CCurrency::GetList("sort", "asc");
     $arrRefID = array();
     $arrRef = array();
     while ($arCur = $rsCur->Fetch()) {
@@ -43,7 +47,9 @@ function CheckFilter()
 {
     global $FilterArr, $lAdmin, $statDB;
 
-    foreach ($FilterArr as $f) global $$f;
+    foreach ($FilterArr as $f) {
+        global $$f;
+    }
     $arr = array();
 
     $arr[] = array(
@@ -71,26 +77,32 @@ function CheckFilter()
     );
 
     foreach ($arr as $ar) {
-        if (strlen($ar["date1"]) > 0 && !CheckDateTime($ar["date1"]))
+        if ($ar["date1"] <> '' && !CheckDateTime($ar["date1"])) {
             $lAdmin->AddFilterError($ar["mess1"]);
-        if (strlen($ar["date2"]) > 0 && !CheckDateTime($ar["date2"]))
+        }
+        if ($ar["date2"] <> '' && !CheckDateTime($ar["date2"])) {
             $lAdmin->AddFilterError($ar["mess2"]);
-        if (strlen($ar["date1"]) > 0 && strlen($ar["date2"]) > 0 &&
-            $statDB->CompareDates($ar["date1"], $ar["date2"]) == 1)
+        }
+        if ($ar["date1"] <> '' && $ar["date2"] <> '' &&
+            $statDB->CompareDates($ar["date1"], $ar["date2"]) == 1) {
             $lAdmin->AddFilterError($ar["mess3"]);
+        }
     }
 
     // sessions
-    if (intval($find_counter1) > intval($find_counter2))
+    if (intval($find_counter1) > intval($find_counter2)) {
         $lAdmin->AddFilterError(GetMessage("STAT_COUNTER1_COUNTER2"));
+    }
 
     // statistics keep days
-    if (intval($find_keep_days1) > intval($find_keep_days2))
+    if (intval($find_keep_days1) > intval($find_keep_days2)) {
         $lAdmin->AddFilterError(GetMessage("STAT_DAYS1_DAYS2"));
+    }
 
     // dynamics keep days
-    if (intval($find_dynamic_keep_days1) > intval($find_dynamic_keep_days2))
+    if (intval($find_dynamic_keep_days1) > intval($find_dynamic_keep_days2)) {
         $lAdmin->AddFilterError(GetMessage("STAT_DYNAMIC_DAYS1_DAYS2"));
+    }
 
     return count($lAdmin->arFilterErrors) == 0;
 }
@@ -136,9 +148,12 @@ $lAdmin->InitFilter($FilterArr);
 $arSettings = array("saved_group_by");
 InitFilterEx($arSettings, $sTableID . "_settings", "get");
 if ($group_by === false)//Restore saved setting
+{
     $group_by = $saved_group_by;
-elseif ($saved_group_by != $group_by)//Set if changed
+} elseif ($saved_group_by != $group_by)//Set if changed
+{
     $saved_group_by = $group_by;
+}
 InitFilterEx($arSettings, $sTableID . "_settings", "set");
 
 if (CheckFilter()) {
@@ -173,14 +188,16 @@ if (CheckFilter()) {
 if (($arID = $lAdmin->GroupAction()) && $STAT_RIGHT >= "W") {
     if ($_REQUEST['action_target'] == "selected") {
         $cData = new CStatEventType;
-        $rsData = $cData->GetList($by2, $order2, $arFilter, $is_filtered);
-        while ($arRes = $rsData->Fetch())
+        $rsData = $cData->GetList('', '', $arFilter);
+        while ($arRes = $rsData->Fetch()) {
             $arID[] = $arRes['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
         $ID = intval($ID);
         switch ($_REQUEST['action']) {
             case "delete":
@@ -205,8 +222,10 @@ if (($arID = $lAdmin->GroupAction()) && $STAT_RIGHT >= "W") {
     }
 }
 
+global $by, $order;
+
 $cData = new CStatEventType;
-$rsData = $cData->GetList($by, $order, $arFilter, $is_filtered);
+$rsData = $cData->GetList($by, $order, $arFilter);
 $rsData = new CAdminResult($rsData, $sTableID);
 $rsData->NavStart();
 $lAdmin->NavText($rsData->GetNavPrint(GetMessage("STAT_EVENT_TYPE_PAGES")));
@@ -215,79 +234,92 @@ $arHeaders = array();
 
 if ($group_by == "") {
     $arHeaders[] =
-        array("id" => "ID",
+        array(
+            "id" => "ID",
             "content" => "ID",
             "sort" => "s_id",
             "align" => "right",
             "default" => true,
         );
     $arHeaders[] =
-        array("id" => "NAME",
+        array(
+            "id" => "NAME",
             "content" => GetMessage("STAT_NAME") . $group_by,
             "sort" => "s_name",
             "default" => true,
         );
 }
-if ($group_by == "" || $group_by == "event1")
+if ($group_by == "" || $group_by == "event1") {
     $arHeaders[] =
-        array("id" => "EVENT1",
+        array(
+            "id" => "EVENT1",
             "content" => "event1",
             "sort" => "s_event1",
             "default" => true,
         );
-if ($group_by == "" || $group_by == "event2")
+}
+if ($group_by == "" || $group_by == "event2") {
     $arHeaders[] =
-        array("id" => "EVENT2",
+        array(
+            "id" => "EVENT2",
             "content" => "event2",
             "sort" => "s_event2",
             "default" => true,
         );
+}
 $arHeaders[] =
-    array("id" => "TODAY_COUNTER",
+    array(
+        "id" => "TODAY_COUNTER",
         "content" => GetMessage("STAT_TODAY_COUNTER"),
         "sort" => "s_today_counter",
         "align" => "right",
         "default" => true,
     );
 $arHeaders[] =
-    array("id" => "YESTERDAY_COUNTER",
+    array(
+        "id" => "YESTERDAY_COUNTER",
         "content" => GetMessage("STAT_YESTERDAY_COUNTER"),
         "sort" => "s_yesterday_counter",
         "align" => "right",
         "default" => true,
     );
 $arHeaders[] =
-    array("id" => "B_YESTERDAY_COUNTER",
+    array(
+        "id" => "B_YESTERDAY_COUNTER",
         "content" => GetMessage("STAT_B_YESTERDAY_COUNTER"),
         "sort" => "s_b_yesterday_counter",
         "align" => "right",
         "default" => true,
     );
-$bIsPeriod = (strlen($arFilter["DATE1_PERIOD"]) > 0 || strlen($arFilter["DATE1_PERIOD"]) > 0);
-if ($bIsPeriod)
-
+$bIsPeriod = ($arFilter["DATE1_PERIOD"] <> '' || $arFilter["DATE1_PERIOD"] <> '');
+if ($bIsPeriod) {
     $arHeaders[] =
-        array("id" => "PERIOD_COUNTER",
+        array(
+            "id" => "PERIOD_COUNTER",
             "content" => GetMessage("STAT_PERIOD_COUNTER"),
             "sort" => "s_period_counter",
             "align" => "right",
             "default" => true,
         );
+}
 $arHeaders[] =
-    array("id" => "TOTAL_COUNTER",
+    array(
+        "id" => "TOTAL_COUNTER",
         "content" => GetMessage("STAT_TOTAL_COUNTER"),
         "sort" => "s_total_counter",
         "align" => "right",
         "default" => true,
     );
 $arHeaders[] =
-    array("id" => "DATE_ENTER",
+    array(
+        "id" => "DATE_ENTER",
         "content" => GetMessage("STAT_DATE_ENTER"),
         "sort" => "s_date_enter",
         "default" => true,
     );
 $arHeaders[] =
-    array("id" => "DATE_LAST",
+    array(
+        "id" => "DATE_LAST",
         "content" => GetMessage("STAT_DATE_LAST"),
         "sort" => "s_date_last",
         "default" => true,
@@ -302,9 +334,13 @@ while ($arRes = $rsData->NavNext(true, "f_")):
         if ($group_by == ""):
             $strHTML = '<a href="event_list.php?lang=' . LANG . '&amp;find_event_id=' . $f_ID . '&amp;find_event_id_exact_match=Y&amp;find_date1=' . $today . '&amp;set_filter=Y">' . $f_TODAY_COUNTER . '</a>';
         elseif ($group_by == "event1"):
-            $strHTML = '<a href="event_list.php?lang=' . LANG . '&amp;find_event1=' . urlencode("\"" . $f_EVENT1 . "\"") . '&amp;find_event12_exact_match=Y&amp;find_date1=' . $today . '&amp;set_filter=Y">' . $f_TODAY_COUNTER . '</a>';
+            $strHTML = '<a href="event_list.php?lang=' . LANG . '&amp;find_event1=' . urlencode(
+                    "\"" . $f_EVENT1 . "\""
+                ) . '&amp;find_event12_exact_match=Y&amp;find_date1=' . $today . '&amp;set_filter=Y">' . $f_TODAY_COUNTER . '</a>';
         elseif ($group_by == "event2"):
-            $strHTML = '<a href="event_list.php?lang=' . LANG . '&amp;find_event2=' . urlencode("\"" . $f_EVENT2 . "\"") . '&amp;find_event12_exact_match=Y&amp;find_date1=' . $today . '&amp;set_filter=Y">' . $f_TODAY_COUNTER . '</a>';
+            $strHTML = '<a href="event_list.php?lang=' . LANG . '&amp;find_event2=' . urlencode(
+                    "\"" . $f_EVENT2 . "\""
+                ) . '&amp;find_event12_exact_match=Y&amp;find_date1=' . $today . '&amp;set_filter=Y">' . $f_TODAY_COUNTER . '</a>';
         endif;
         if ($f_TODAY_MONEY > 0 && $STAT_RIGHT > "M"):
             $strHTML .= " (" . str_replace(" ", $thousand_sep, number_format($f_TODAY_MONEY, 2, ".", " ")) . ")";
@@ -318,9 +354,13 @@ while ($arRes = $rsData->NavNext(true, "f_")):
         if ($group_by == ""):
             $strHTML = '<a href="event_list.php?lang=' . LANG . '&amp;find_event_id=' . $f_ID . '&amp;find_event_id_exact_match=Y&amp;find_date1=' . $yesterday . '&amp;find_date2=' . $yesterday . '&amp;set_filter=Y">' . $f_YESTERDAY_COUNTER . '</a>';
         elseif ($group_by == "event1"):
-            $strHTML = '<a href="event_list.php?lang=' . LANG . '&amp;find_event1=' . urlencode("\"" . $f_EVENT1 . "\"") . '&amp;find_event12_exact_match=Y&amp;find_date1=' . $yesterday . '&amp;find_date2=' . $yesterday . '&amp;set_filter=Y">' . $f_YESTERDAY_COUNTER . '</a>';
+            $strHTML = '<a href="event_list.php?lang=' . LANG . '&amp;find_event1=' . urlencode(
+                    "\"" . $f_EVENT1 . "\""
+                ) . '&amp;find_event12_exact_match=Y&amp;find_date1=' . $yesterday . '&amp;find_date2=' . $yesterday . '&amp;set_filter=Y">' . $f_YESTERDAY_COUNTER . '</a>';
         elseif ($group_by == "event2"):
-            $strHTML = '<a href="event_list.php?lang=' . LANG . '&amp;find_event2=' . urlencode("\"" . $f_EVENT2 . "\"") . '&amp;find_event12_exact_match=Y&amp;find_date1=' . $yesterday . '&amp;find_date2=' . $yesterday . '&amp;set_filter=Y">' . $f_YESTERDAY_COUNTER . '</a>';
+            $strHTML = '<a href="event_list.php?lang=' . LANG . '&amp;find_event2=' . urlencode(
+                    "\"" . $f_EVENT2 . "\""
+                ) . '&amp;find_event12_exact_match=Y&amp;find_date1=' . $yesterday . '&amp;find_date2=' . $yesterday . '&amp;set_filter=Y">' . $f_YESTERDAY_COUNTER . '</a>';
         endif;
         if ($f_YESTERDAY_MONEY > 0 && $STAT_RIGHT > "M"):
             $strHTML .= " (" . str_replace(" ", $thousand_sep, number_format($f_YESTERDAY_MONEY, 2, ".", " ")) . ")";
@@ -334,9 +374,13 @@ while ($arRes = $rsData->NavNext(true, "f_")):
         if ($group_by == ""):
             $strHTML = '<a href="event_list.php?lang=' . LANG . '&amp;find_event_id=' . $f_ID . '&amp;find_event_id_exact_match=Y&amp;find_date1=' . $b_yesterday . '&amp;find_date2=' . $b_yesterday . '&amp;set_filter=Y">' . $f_B_YESTERDAY_COUNTER . '</a>';
         elseif ($group_by == "event1"):
-            $strHTML = '<a href="event_list.php?lang=' . LANG . '&amp;find_event1=' . urlencode("\"" . $f_EVENT1 . "\"") . '&amp;find_event12_exact_match=Y&amp;find_date1=' . $b_yesterday . '&amp;find_date2=' . $b_yesterday . '&amp;set_filter=Y">' . $f_B_YESTERDAY_COUNTER . '</a>';
+            $strHTML = '<a href="event_list.php?lang=' . LANG . '&amp;find_event1=' . urlencode(
+                    "\"" . $f_EVENT1 . "\""
+                ) . '&amp;find_event12_exact_match=Y&amp;find_date1=' . $b_yesterday . '&amp;find_date2=' . $b_yesterday . '&amp;set_filter=Y">' . $f_B_YESTERDAY_COUNTER . '</a>';
         elseif ($group_by == "event2"):
-            $strHTML = '<a href="event_list.php?lang=' . LANG . '&amp;find_event2=' . urlencode("\"" . $f_EVENT2 . "\"") . '&amp;find_event12_exact_match=Y&amp;find_date1=' . $b_yesterday . '&amp;find_date2=' . $b_yesterday . '&amp;set_filter=Y">' . $f_B_YESTERDAY_COUNTER . '</a>';
+            $strHTML = '<a href="event_list.php?lang=' . LANG . '&amp;find_event2=' . urlencode(
+                    "\"" . $f_EVENT2 . "\""
+                ) . '&amp;find_event12_exact_match=Y&amp;find_date1=' . $b_yesterday . '&amp;find_date2=' . $b_yesterday . '&amp;set_filter=Y">' . $f_B_YESTERDAY_COUNTER . '</a>';
         endif;
         if ($f_B_YESTERDAY_MONEY > 0 && $STAT_RIGHT > "M"):
             $strHTML .= " (" . str_replace(" ", $thousand_sep, number_format($f_B_YESTERDAY_MONEY, 2, ".", " ")) . ")";
@@ -351,9 +395,13 @@ while ($arRes = $rsData->NavNext(true, "f_")):
             if ($group_by == ""):
                 $strHTML = '<a href="event_list.php?lang=' . LANG . '&amp;find_event_id=' . $f_ID . '&amp;find_event_id_exact_match=Y&amp;find_date1=' . $arFilter["DATE1_PERIOD"] . '&amp;find_date2=' . $arFilter["DATE2_PERIOD"] . '&amp;set_filter=Y">' . $f_PERIOD_COUNTER . '</a>';
             elseif ($group_by == "event1"):
-                $strHTML = '<a href="event_list.php?lang=' . LANG . '&amp;find_event1=' . urlencode("\"" . $f_EVENT1 . "\"") . '&amp;find_date1=' . $arFilter["DATE1_PERIOD"] . '&amp;find_event12_exact_match=Y&amp;find_date2=' . $arFilter["DATE2_PERIOD"] . '&amp;set_filter=Y">' . $f_PERIOD_COUNTER . '</a>';
+                $strHTML = '<a href="event_list.php?lang=' . LANG . '&amp;find_event1=' . urlencode(
+                        "\"" . $f_EVENT1 . "\""
+                    ) . '&amp;find_date1=' . $arFilter["DATE1_PERIOD"] . '&amp;find_event12_exact_match=Y&amp;find_date2=' . $arFilter["DATE2_PERIOD"] . '&amp;set_filter=Y">' . $f_PERIOD_COUNTER . '</a>';
             elseif ($group_by == "event2"):
-                $strHTML = '<a href="event_list.php?lang=' . LANG . '&amp;find_event2=' . urlencode("\"" . $f_EVENT2 . "\"") . '&amp;find_date1=' . $arFilter["DATE1_PERIOD"] . '&amp;find_event12_exact_match=Y&amp;find_date2=' . $arFilter["DATE2_PERIOD"] . '&amp;set_filter=Y">' . $f_PERIOD_COUNTER . '</a>';
+                $strHTML = '<a href="event_list.php?lang=' . LANG . '&amp;find_event2=' . urlencode(
+                        "\"" . $f_EVENT2 . "\""
+                    ) . '&amp;find_date1=' . $arFilter["DATE1_PERIOD"] . '&amp;find_event12_exact_match=Y&amp;find_date2=' . $arFilter["DATE2_PERIOD"] . '&amp;set_filter=Y">' . $f_PERIOD_COUNTER . '</a>';
             endif;
             if ($f_PERIOD_MONEY > 0 && $STAT_RIGHT > "M"):
                 $strHTML .= " (" . str_replace(" ", $thousand_sep, number_format($f_PERIOD_MONEY, 2, ".", " ")) . ")";
@@ -367,9 +415,13 @@ while ($arRes = $rsData->NavNext(true, "f_")):
         if ($group_by == ""):
             $strHTML = '<a href="event_list.php?lang=' . LANG . '&amp;find_event_id=' . $f_ID . '&amp;find_event_id_exact_match=Y&amp;set_filter=Y">' . $f_TOTAL_COUNTER . '</a>';
         elseif ($group_by == "event1"):
-            $strHTML = '<a href="event_list.php?lang=' . LANG . '&amp;find_event1=' . urlencode("\"" . $f_EVENT1 . "\"") . '&amp;find_event12_exact_match=Y&amp;set_filter=Y">' . $f_TOTAL_COUNTER . '</a>';
+            $strHTML = '<a href="event_list.php?lang=' . LANG . '&amp;find_event1=' . urlencode(
+                    "\"" . $f_EVENT1 . "\""
+                ) . '&amp;find_event12_exact_match=Y&amp;set_filter=Y">' . $f_TOTAL_COUNTER . '</a>';
         elseif ($group_by == "event2"):
-            $strHTML = '<a href="event_list.php?lang=' . LANG . '&amp;find_event2=' . urlencode("\"" . $f_EVENT2 . "\"") . '&amp;find_event12_exact_match=Y&amp;set_filter=Y">' . $f_TOTAL_COUNTER . '</a>';
+            $strHTML = '<a href="event_list.php?lang=' . LANG . '&amp;find_event2=' . urlencode(
+                    "\"" . $f_EVENT2 . "\""
+                ) . '&amp;find_event12_exact_match=Y&amp;set_filter=Y">' . $f_TOTAL_COUNTER . '</a>';
         endif;
         if ($f_TOTAL_MONEY > 0 && $STAT_RIGHT > "M"):
             $strHTML .= " (" . str_replace(" ", $thousand_sep, number_format($f_TOTAL_MONEY, 2, ".", " ")) . ")";
@@ -381,57 +433,71 @@ while ($arRes = $rsData->NavNext(true, "f_")):
 
     $arActions = Array();
 
-    if ($STAT_RIGHT == "W")
+    if ($STAT_RIGHT == "W") {
         $arActions[] = array(
             "ICON" => "edit",
             "TEXT" => GetMessage("STAT_CHANGE"),
             "ACTION" => $lAdmin->ActionRedirect("event_type_edit.php?ID=" . $f_ID)
         );
-    if ($STAT_RIGHT == "W")
+    }
+    if ($STAT_RIGHT == "W") {
         $arActions[] = array(
             "ICON" => "clear",
             "TEXT" => GetMessage("STAT_CLEAR"),
-            "ACTION" => "if(confirm('" . GetMessageJS('STAT_CONFIRM_CLEAR') . "')) " . $lAdmin->ActionDoGroup($f_ID, "clear")
+            "ACTION" => "if(confirm('" . GetMessageJS('STAT_CONFIRM_CLEAR') . "')) " . $lAdmin->ActionDoGroup(
+                    $f_ID,
+                    "clear"
+                )
         );
-    if ($STAT_RIGHT == "W")
+    }
+    if ($STAT_RIGHT == "W") {
         $arActions[] = array(
             "ICON" => "delete",
             "TEXT" => GetMessage("STAT_DELETE"),
             "ACTION" => "if(confirm('" . GetMessageJS('STAT_CONFIRM') . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete")
         );
+    }
 
     $arActions[] = array("SEPARATOR" => true);
 
     $dynamic_days = CStatEventType::DynamicDays($f_ID);
-    if ($dynamic_days >= 2 && function_exists("ImageCreate"))
+    if ($dynamic_days >= 2 && function_exists("ImageCreate")) {
         $arActions[] = array(
             "DEFAULT" => true,
             "TEXT" => GetMessage("STAT_GRAPH"),
             "ACTION" => $lAdmin->ActionRedirect("event_graph_list.php?find_events[]=" . $f_ID . "&set_filter=Y")
         );
-    if ($dynamic_days >= 1)
+    }
+    if ($dynamic_days >= 1) {
         $arActions[] = array(
             "ICON" => "",
             "TEXT" => GetMessage("STAT_DYNAMICS"),
-            "ACTION" => $lAdmin->ActionRedirect("event_dynamic_list.php?find_event_id=" . $f_ID . "&find_event_id_exact_match=Y&set_filter=Y")
+            "ACTION" => $lAdmin->ActionRedirect(
+                "event_dynamic_list.php?find_event_id=" . $f_ID . "&find_event_id_exact_match=Y&set_filter=Y"
+            )
         );
+    }
     $arActions[] = array(
         "ICON" => "",
         "TEXT" => GetMessage("STAT_ANALYSIS"),
-        "ACTION" => $lAdmin->ActionRedirect("/bitrix/admin/adv_analysis.php?find_data_type=EVENT_SUMMA&find_events[]=" . $f_ID . "&set_filter=Y")
+        "ACTION" => $lAdmin->ActionRedirect(
+            "/bitrix/admin/adv_analysis.php?find_data_type=EVENT_SUMMA&find_events[]=" . $f_ID . "&set_filter=Y"
+        )
     );
 
-    if (is_set($arActions[count($arActions) - 1], "SEPARATOR"))
+    if (is_set($arActions[count($arActions) - 1], "SEPARATOR")) {
         unset($arActions[count($arActions) - 1]);
-    if ($group_by == "")
+    }
+    if ($group_by == "") {
         $row->AddActions($arActions);
+    }
 
 endwhile;
 
 //Totals
 $arTotalFilter = $arFilter;
 $arTotalFilter["GROUP"] = "total";
-$rsTotalData = $cData->GetList($by2, $order2, $arTotalFilter, $is_filtered2);
+$rsTotalData = $cData->GetList('', '', $arTotalFilter);
 $arTotal = $rsTotalData->Fetch();
 
 $arTotal["TODAY_COUNTER"] = intval($arTotal["TODAY_COUNTER"]);
@@ -451,40 +517,75 @@ $arFooter[] = array(
     "title" => GetMessage("MAIN_ADMIN_LIST_SELECTED"),
     "value" => $rsData->SelectedRowsCount(),
 );
-if ($group_by == "")
+if ($group_by == "") {
     $arFooter[] = array(
         "counter" => true,
         "title" => GetMessage("MAIN_ADMIN_LIST_CHECKED"),
         "value" => "0",
     );
+}
 $arFooter[] = array(
     "title" => GetMessage("STAT_TODAY_EVENTS"),
-    "value" => $arTotal["TODAY_COUNTER"] . ($STAT_RIGHT > "M" && $arTotal["TODAY_MONEY"] > 0 ? "(" . str_replace(" ", $thousand_sep, number_format($arTotal["TODAY_MONEY"], 2, ".", " ")) . ")" : ""),
+    "value" => $arTotal["TODAY_COUNTER"] . ($STAT_RIGHT > "M" && $arTotal["TODAY_MONEY"] > 0 ? "(" . str_replace(
+                " ",
+                $thousand_sep,
+                number_format(
+                    $arTotal["TODAY_MONEY"],
+                    2,
+                    ".",
+                    " "
+                )
+            ) . ")" : ""),
 );
 $arFooter[] = array(
     "title" => GetMessage("STAT_YESTERDAY_EVENTS"),
-    "value" => $arTotal["YESTERDAY_COUNTER"] . ($STAT_RIGHT > "M" && $arTotal["YESTERDAY_MONEY"] > 0 ? "(" . str_replace(" ", $thousand_sep, number_format($arTotal["YESTERDAY_MONEY"], 2, ".", " ")) . ")" : ""),
+    "value" => $arTotal["YESTERDAY_COUNTER"] . ($STAT_RIGHT > "M" && $arTotal["YESTERDAY_MONEY"] > 0 ? "(" . str_replace(
+                " ",
+                $thousand_sep,
+                number_format($arTotal["YESTERDAY_MONEY"], 2, ".", " ")
+            ) . ")" : ""),
 );
 $arFooter[] = array(
     "title" => GetMessage("STAT_B_YESTERDAY_EVENTS"),
-    "value" => $arTotal["B_YESTERDAY_COUNTER"] . ($STAT_RIGHT > "M" && $arTotal["B_YESTERDAY_MONEY"] > 0 ? "(" . str_replace(" ", $thousand_sep, number_format($arTotal["B_YESTERDAY_MONEY"], 2, ".", " ")) . ")" : ""),
+    "value" => $arTotal["B_YESTERDAY_COUNTER"] . ($STAT_RIGHT > "M" && $arTotal["B_YESTERDAY_MONEY"] > 0 ? "(" . str_replace(
+                " ",
+                $thousand_sep,
+                number_format($arTotal["B_YESTERDAY_MONEY"], 2, ".", " ")
+            ) . ")" : ""),
 );
-if ($bIsPeriod)
+if ($bIsPeriod) {
     $arFooter[] = array(
         "title" => GetMessage("STAT_PERIOD_EVENTS"),
-        "value" => $arTotal["PERIOD_COUNTER"] . ($STAT_RIGHT > "M" && $arTotal["PERIOD_MONEY"] > 0 ? "(" . str_replace(" ", $thousand_sep, number_format($arTotal["PERIOD_MONEY"], 2, ".", " ")) . ")" : ""),
+        "value" => $arTotal["PERIOD_COUNTER"] . ($STAT_RIGHT > "M" && $arTotal["PERIOD_MONEY"] > 0 ? "(" . str_replace(
+                    " ",
+                    $thousand_sep,
+                    number_format($arTotal["PERIOD_MONEY"], 2, ".", " ")
+                ) . ")" : ""),
     );
+}
 $arFooter[] = array(
     "title" => GetMessage("STAT_TOTAL_EVENTS"),
-    "value" => $arTotal["TOTAL_COUNTER"] . ($STAT_RIGHT > "M" && $arTotal["TOTAL_MONEY"] > 0 ? "(" . str_replace(" ", $thousand_sep, number_format($arTotal["TOTAL_MONEY"], 2, ".", " ")) . ")" : ""),
+    "value" => $arTotal["TOTAL_COUNTER"] . ($STAT_RIGHT > "M" && $arTotal["TOTAL_MONEY"] > 0 ? "(" . str_replace(
+                " ",
+                $thousand_sep,
+                number_format(
+                    $arTotal["TOTAL_MONEY"],
+                    2,
+                    ".",
+                    " "
+                )
+            ) . ")" : ""),
 );
 $lAdmin->AddFooter($arFooter);
 
-if ($group_by == "")
-    $lAdmin->AddGroupActionTable(Array(
-        "delete" => GetMessage("STAT_DELETE"),
-        "clear" => GetMessage("STAT_CLEAR"),
-    ));
+if ($group_by == "") {
+    $lAdmin->AddGroupActionTable(
+        Array(
+            "delete" => GetMessage("STAT_DELETE"),
+            "clear" => GetMessage("STAT_CLEAR"),
+        )
+    );
+}
 
 $aContext = array(
     array(
@@ -553,8 +654,9 @@ $arFilterDropDown = array(
 );
 if ($STAT_RIGHT > "M") {
     $arFilterDropDown[] = GetMessage("STAT_F_MONEY");
-    if ($currency_module == "Y")
+    if ($currency_module == "Y") {
         $arFilterDropDown[] = GetMessage("STAT_F_CURRENCY");
+    }
 }
 $arFilterDropDown[] = GetMessage("STAT_F_KEEP_DAYS");
 $arFilterDropDown[] = GetMessage("STAT_F_DYNAMIC_KEEP_DAYS");
@@ -614,70 +716,117 @@ $oFilter = new CAdminFilter($sTableID . "_filter", $arFilterDropDown);
         <tr>
             <td><? echo GetMessage("STAT_F_DESCRIPTION") ?></td>
             <td><input type="text" name="find_description" size="47"
-                       value="<? echo htmlspecialcharsbx($find_description) ?>"><?= ShowExactMatchCheckbox("find_description") ?>
-                &nbsp;<?= ShowFilterLogicHelp() ?></td>
+                       value="<? echo htmlspecialcharsbx($find_description) ?>"><?= ShowExactMatchCheckbox(
+                    "find_description"
+                ) ?>&nbsp;<?= ShowFilterLogicHelp() ?></td>
         </tr>
         <tr>
             <td><? echo GetMessage("STAT_F_DATE_ENTER") . " (" . FORMAT_DATE . "):" ?></td>
-            <td><? echo CalendarPeriod("find_date_enter_1", $find_date_enter_1, "find_date_enter_2", $find_date_enter_2, "find_form", "Y") ?></td>
+            <td><? echo CalendarPeriod(
+                    "find_date_enter_1",
+                    $find_date_enter_1,
+                    "find_date_enter_2",
+                    $find_date_enter_2,
+                    "find_form",
+                    "Y"
+                ) ?></td>
         </tr>
         <tr>
             <td><? echo GetMessage("STAT_F_DATE_LAST") . " (" . FORMAT_DATE . "):" ?></td>
-            <td><? echo CalendarPeriod("find_date_last_1", $find_date_last_1, "find_date_last_2", $find_date_last_2, "find_form", "Y") ?></td>
+            <td><? echo CalendarPeriod(
+                    "find_date_last_1",
+                    $find_date_last_1,
+                    "find_date_last_2",
+                    $find_date_last_2,
+                    "find_form",
+                    "Y"
+                ) ?></td>
         </tr>
         <tr>
             <td><? echo GetMessage("STAT_F_PERIOD") . " (" . FORMAT_DATE . "):" ?></td>
-            <td><? echo CalendarPeriod("find_date1_period", $find_date1_period, "find_date2_period", $find_date2_period, "find_form", "Y") ?></td>
+            <td><? echo CalendarPeriod(
+                    "find_date1_period",
+                    $find_date1_period,
+                    "find_date2_period",
+                    $find_date2_period,
+                    "find_form",
+                    "Y"
+                ) ?></td>
         </tr>
         <tr>
             <td><? echo GetMessage("STAT_F_COUNTER") ?></td>
             <td><input type="text" name="find_counter1" size="9"
-                       value="<? echo htmlspecialcharsbx($find_counter1) ?>"><? echo "&nbsp;" . GetMessage("STAT_TILL") . "&nbsp;" ?>
-                <input type="text" name="find_counter2" size="9" value="<? echo htmlspecialcharsbx($find_counter2) ?>">
-            </td>
+                       value="<? echo htmlspecialcharsbx($find_counter1) ?>"><? echo "&nbsp;" . GetMessage(
+                        "STAT_TILL"
+                    ) . "&nbsp;" ?><input type="text" name="find_counter2" size="9"
+                                          value="<? echo htmlspecialcharsbx($find_counter2) ?>"></td>
         </tr>
         <? if ($STAT_RIGHT > "M"): ?>
             <tr>
                 <td><? echo GetMessage("STAT_F_MONEY") ?></td>
                 <td><input type="text" name="find_money1" size="9"
-                           value="<? echo htmlspecialcharsbx($find_money1) ?>"><? echo "&nbsp;" . GetMessage("STAT_TILL") . "&nbsp;" ?>
-                    <input type="text" name="find_money2" size="9" value="<? echo htmlspecialcharsbx($find_money2) ?>">
-                </td>
+                           value="<? echo htmlspecialcharsbx($find_money1) ?>"><? echo "&nbsp;" . GetMessage(
+                            "STAT_TILL"
+                        ) . "&nbsp;" ?><input type="text" name="find_money2" size="9"
+                                              value="<? echo htmlspecialcharsbx($find_money2) ?>"></td>
             </tr>
             <? if ($currency_module == "Y"): ?>
                 <tr valign="center">
                     <td><? echo GetMessage("STAT_F_CURRENCY") ?></td>
                     <td><?
-                        echo SelectBoxFromArray("find_currency", $arrCurrency, htmlspecialcharsbx($find_currency), GetMessage("STAT_F_BASE_CURRENCY")); ?></td>
+                        echo SelectBoxFromArray(
+                            "find_currency",
+                            $arrCurrency,
+                            htmlspecialcharsbx($find_currency),
+                            GetMessage("STAT_F_BASE_CURRENCY")
+                        ); ?></td>
                 </tr>
             <?endif; ?>
         <?endif; ?>
         <tr>
             <td><? echo GetMessage("STAT_F_KEEP_DAYS") ?></td>
             <td><input type="text" name="find_keep_days1" size="9"
-                       value="<? echo htmlspecialcharsbx($find_keep_days1) ?>"><? echo "&nbsp;" . GetMessage("STAT_TILL") . "&nbsp;" ?>
-                <input type="text" name="find_keep_days2" size="9"
-                       value="<? echo htmlspecialcharsbx($find_keep_days2) ?>"></td>
+                       value="<? echo htmlspecialcharsbx($find_keep_days1) ?>"><? echo "&nbsp;" . GetMessage(
+                        "STAT_TILL"
+                    ) . "&nbsp;" ?><input type="text" name="find_keep_days2" size="9"
+                                          value="<? echo htmlspecialcharsbx($find_keep_days2) ?>"></td>
         </tr>
         <tr>
             <td><? echo GetMessage("STAT_F_DYNAMIC_KEEP_DAYS") ?></td>
             <td><input type="text" name="find_dynamic_keep_days1" size="9"
-                       value="<? echo htmlspecialcharsbx($find_dynamic_keep_days1) ?>"><? echo "&nbsp;" . GetMessage("STAT_TILL") . "&nbsp;" ?>
-                <input type="text" name="find_dynamic_keep_days2" size="9"
-                       value="<? echo htmlspecialcharsbx($find_dynamic_keep_days2) ?>"></td>
+                       value="<? echo htmlspecialcharsbx($find_dynamic_keep_days1) ?>"><? echo "&nbsp;" . GetMessage(
+                        "STAT_TILL"
+                    ) . "&nbsp;" ?><input type="text" name="find_dynamic_keep_days2" size="9"
+                                          value="<? echo htmlspecialcharsbx($find_dynamic_keep_days2) ?>"></td>
         </tr>
         <tr>
             <td><? echo GetMessage("STAT_F_ADV_VISIBLE") ?></td>
             <td><?
-                $arr = array("reference" => array(GetMessage("STAT_YES"), GetMessage("STAT_NO")), "reference_id" => array("Y", "N"));
-                echo SelectBoxFromArray("find_adv_visible", $arr, htmlspecialcharsbx($find_adv_visible), GetMessage("MAIN_ALL"));
+                $arr = array(
+                    "reference" => array(GetMessage("STAT_YES"), GetMessage("STAT_NO")),
+                    "reference_id" => array("Y", "N")
+                );
+                echo SelectBoxFromArray(
+                    "find_adv_visible",
+                    $arr,
+                    htmlspecialcharsbx($find_adv_visible),
+                    GetMessage("MAIN_ALL")
+                );
                 ?></td>
         </tr>
         <tr>
             <td><? echo GetMessage("STAT_F_DIAGRAM_DEFAULT") ?></td>
             <td class="tablebody" width="0%" nowrap><?
-                $arr = array("reference" => array(GetMessage("STAT_YES"), GetMessage("STAT_NO")), "reference_id" => array("Y", "N"));
-                echo SelectBoxFromArray("find_diagram_default", $arr, htmlspecialcharsbx($find_diagram_default), GetMessage("MAIN_ALL"));
+                $arr = array(
+                    "reference" => array(GetMessage("STAT_YES"), GetMessage("STAT_NO")),
+                    "reference_id" => array("Y", "N")
+                );
+                echo SelectBoxFromArray(
+                    "find_diagram_default",
+                    $arr,
+                    htmlspecialcharsbx($find_diagram_default),
+                    GetMessage("MAIN_ALL")
+                );
                 ?></td>
         </tr>
         <?
@@ -687,8 +836,9 @@ $oFilter = new CAdminFilter($sTableID . "_filter", $arFilterDropDown);
     </form>
 
 <?
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 $lAdmin->DisplayList();
 ?>
 

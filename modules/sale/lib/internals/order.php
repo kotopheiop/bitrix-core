@@ -42,7 +42,8 @@ class OrderTable extends Main\Entity\DataManager
         $helper = $connection->getSqlHelper();
 
         return array(
-            new Main\Entity\IntegerField('ID',
+            new Main\Entity\IntegerField(
+                'ID',
                 array(
                     'autocomplete' => true,
                     'primary' => true,
@@ -114,6 +115,14 @@ class OrderTable extends Main\Entity\DataManager
 
             new Main\Entity\BooleanField(
                 'PAYED',
+                array(
+                    'values' => array('N', 'Y'),
+                    'default_value' => 'N'
+                )
+            ),
+
+            new Main\Entity\BooleanField(
+                'IS_SYNC_B24',
                 array(
                     'values' => array('N', 'Y'),
                     'default_value' => 'N'
@@ -492,6 +501,15 @@ class OrderTable extends Main\Entity\DataManager
                 array(
                     '=ref.ORDER_ID' => 'this.ID',
                     '=ref.ENTITY_TYPE' => new Main\DB\SqlExpression('?', OrderDiscountDataTable::ENTITY_TYPE_ORDER)
+                ),
+                array('join_type' => 'LEFT')
+            ),
+
+            new Main\Entity\ReferenceField(
+                'ORDER_DISCOUNT_RULES',
+                'Bitrix\Sale\Internals\OrderRules',
+                array(
+                    '=ref.ORDER_ID' => 'this.ID',
                 ),
                 array('join_type' => 'LEFT')
             ),

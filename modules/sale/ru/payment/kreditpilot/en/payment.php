@@ -1,4 +1,5 @@
 <?
+
 global $MESS;
 $MESS["SPCP_DTITLE"] = "CreditPilot (Russian payment system)";
 $MESS["SPCP_DDESCR"] = "Payment via Pay Center <a href=\"http://www.kreditpilot.ru\" target=\"_blank\">http://www.kreditpilot.ru</a>";

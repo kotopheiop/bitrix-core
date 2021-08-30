@@ -46,7 +46,8 @@ class FuserTable extends Main\Entity\DataManager
             'DATE_INS' => array(
                 'data_type' => 'datetime',
                 'expression' => array(
-                    $DB->DatetimeToDateFunction('%s'), 'DATE_INSERT'
+                    $DB->DatetimeToDateFunction('%s'),
+                    'DATE_INSERT'
                 )
             ),
             'DATE_UPDATE' => array(
@@ -55,7 +56,8 @@ class FuserTable extends Main\Entity\DataManager
             'DATE_UPD' => array(
                 'data_type' => 'datetime',
                 'expression' => array(
-                    $DB->DatetimeToDateFunction('%s'), 'DATE_UPDATE'
+                    $DB->DatetimeToDateFunction('%s'),
+                    'DATE_UPDATE'
                 )
             ),
             new Main\Entity\IntegerField(
@@ -71,7 +73,8 @@ class FuserTable extends Main\Entity\DataManager
                 'CODE',
                 array(
                     'size' => 32
-                )),
+                )
+            ),
         );
     }
 
@@ -85,14 +88,18 @@ class FuserTable extends Main\Entity\DataManager
     public static function getUserById($id)
     {
         $id = (int)$id;
-        if ($id <= 0)
+        if ($id <= 0) {
             return false;
-        $fuserIterator = self::getList(array(
-            'select' => array('USER_ID'),
-            'filter' => array('=ID' => $id)
-        ));
-        if ($fuser = $fuserIterator->fetch())
+        }
+        $fuserIterator = self::getList(
+            array(
+                'select' => array('USER_ID'),
+                'filter' => array('=ID' => $id)
+            )
+        );
+        if ($fuser = $fuserIterator->fetch()) {
             return (int)$fuser['USER_ID'];
+        }
         return false;
     }
 }

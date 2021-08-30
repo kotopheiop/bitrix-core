@@ -1,8 +1,11 @@
-<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die(); ?><?
+<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+} ?><?
 $langFile = GetLangFileName(dirname(__FILE__) . "/", "/bill.php");
 
-if (file_exists($langFile))
+if (file_exists($langFile)) {
     include($langFile);
+}
 
 $psTitle = GetMessage("SBLP_DTITLE");
 $psDescription = GetMessage("SBLP_DDESCR");

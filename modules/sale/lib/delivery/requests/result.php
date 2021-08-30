@@ -55,8 +55,9 @@ class Result extends \Bitrix\Main\Result
     {
         $messages = array();
 
-        foreach ($this->getMessages() as $message)
+        foreach ($this->getMessages() as $message) {
             $messages[] = $message->getMessage();
+        }
 
         return $messages;
     }
@@ -90,9 +91,11 @@ class Result extends \Bitrix\Main\Result
     {
         $result = array();
 
-        foreach ($this->results as $res)
-            if ($res instanceof ShipmentResult)
+        foreach ($this->results as $res) {
+            if ($res instanceof ShipmentResult) {
                 $result[] = $res;
+            }
+        }
 
         return $result;
     }
@@ -104,9 +107,11 @@ class Result extends \Bitrix\Main\Result
     {
         $result = array();
 
-        foreach ($this->results as $res)
-            if ($res instanceof RequestResult)
+        foreach ($this->results as $res) {
+            if ($res instanceof RequestResult) {
                 $result[] = $res;
+            }
+        }
 
         return $result;
     }
@@ -132,8 +137,9 @@ class Result extends \Bitrix\Main\Result
      */
     public function addResults(array $results)
     {
-        foreach ($results as $result)
+        foreach ($results as $result) {
             $this->results[] = $result;
+        }
     }
 }
 

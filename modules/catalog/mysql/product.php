@@ -20,8 +20,13 @@ class CCatalogProduct extends CAllCatalogProduct
      * @see Catalog\Model\Product::getList or Catalog\ProductTable::getList
      *
      */
-    public static function GetList($arOrder = array(), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
-    {
+    public static function GetList(
+        $arOrder = array(),
+        $arFilter = array(),
+        $arGroupBy = false,
+        $arNavStartParams = false,
+        $arSelectFields = array()
+    ) {
         global $DB;
 
         $entityResult = new CCatalogResult('\Bitrix\Catalog\Model\Product');
@@ -46,11 +51,23 @@ class CCatalogProduct extends CAllCatalogProduct
             "QUANTITY_TRACE_ORIG" => array("FIELD" => "CP.QUANTITY_TRACE", "TYPE" => "char"),
             "CAN_BUY_ZERO_ORIG" => array("FIELD" => "CP.CAN_BUY_ZERO", "TYPE" => "char"),
             "NEGATIVE_AMOUNT_TRACE_ORIG" => array("FIELD" => "CP.NEGATIVE_AMOUNT_TRACE", "TYPE" => "char"),
-            "QUANTITY_TRACE" => array("FIELD" => "IF (CP.QUANTITY_TRACE = 'D', '" . $defaultQuantityTrace . "', CP.QUANTITY_TRACE)", "TYPE" => "char"),
-            "CAN_BUY_ZERO" => array("FIELD" => "IF (CP.CAN_BUY_ZERO = 'D', '" . $defaultCanBuyZero . "', CP.CAN_BUY_ZERO)", "TYPE" => "char"),
-            "NEGATIVE_AMOUNT_TRACE" => array("FIELD" => "IF (CP.NEGATIVE_AMOUNT_TRACE = 'D', '" . $defaultNegativeAmount . "', CP.NEGATIVE_AMOUNT_TRACE)", "TYPE" => "char"),
+            "QUANTITY_TRACE" => array(
+                "FIELD" => "IF (CP.QUANTITY_TRACE = 'D', '" . $defaultQuantityTrace . "', CP.QUANTITY_TRACE)",
+                "TYPE" => "char"
+            ),
+            "CAN_BUY_ZERO" => array(
+                "FIELD" => "IF (CP.CAN_BUY_ZERO = 'D', '" . $defaultCanBuyZero . "', CP.CAN_BUY_ZERO)",
+                "TYPE" => "char"
+            ),
+            "NEGATIVE_AMOUNT_TRACE" => array(
+                "FIELD" => "IF (CP.NEGATIVE_AMOUNT_TRACE = 'D', '" . $defaultNegativeAmount . "', CP.NEGATIVE_AMOUNT_TRACE)",
+                "TYPE" => "char"
+            ),
             "SUBSCRIBE_ORIG" => array("FIELD" => "CP.SUBSCRIBE", "TYPE" => "char"),
-            "SUBSCRIBE" => array("FIELD" => "IF (CP.SUBSCRIBE = 'D', '" . $defaultSubscribe . "', CP.SUBSCRIBE)", "TYPE" => "char"),
+            "SUBSCRIBE" => array(
+                "FIELD" => "IF (CP.SUBSCRIBE = 'D', '" . $defaultSubscribe . "', CP.SUBSCRIBE)",
+                "TYPE" => "char"
+            ),
             "AVAILABLE" => array("FIELD" => "CP.AVAILABLE", "TYPE" => "char"),
             "BUNDLE" => array("FIELD" => "CP.BUNDLE", "TYPE" => "char"),
             "WEIGHT" => array("FIELD" => "CP.WEIGHT", "TYPE" => "double"),
@@ -72,9 +89,21 @@ class CCatalogProduct extends CAllCatalogProduct
             "BARCODE_MULTI" => array("FIELD" => "CP.BARCODE_MULTI", "TYPE" => "char"),
             "MEASURE" => array("FIELD" => "CP.MEASURE", "TYPE" => "int"),
             "TYPE" => array("FIELD" => "CP.TYPE", "TYPE" => "int"),
-            "ELEMENT_IBLOCK_ID" => array("FIELD" => "I.IBLOCK_ID", "TYPE" => "int", "FROM" => "INNER JOIN b_iblock_element I ON (CP.ID = I.ID)"),
-            "ELEMENT_XML_ID" => array("FIELD" => "I.XML_ID", "TYPE" => "string", "FROM" => "INNER JOIN b_iblock_element I ON (CP.ID = I.ID)"),
-            "ELEMENT_NAME" => array("FIELD" => "I.NAME", "TYPE" => "string", "FROM" => "INNER JOIN b_iblock_element I ON (CP.ID = I.ID)")
+            "ELEMENT_IBLOCK_ID" => array(
+                "FIELD" => "I.IBLOCK_ID",
+                "TYPE" => "int",
+                "FROM" => "INNER JOIN b_iblock_element I ON (CP.ID = I.ID)"
+            ),
+            "ELEMENT_XML_ID" => array(
+                "FIELD" => "I.XML_ID",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_iblock_element I ON (CP.ID = I.ID)"
+            ),
+            "ELEMENT_NAME" => array(
+                "FIELD" => "I.NAME",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_iblock_element I ON (CP.ID = I.ID)"
+            )
         );
 
         $arSelectFields = $entityResult->prepareSelect($arSelectFields);
@@ -85,43 +114,53 @@ class CCatalogProduct extends CAllCatalogProduct
 
         if (empty($arGroupBy) && is_array($arGroupBy)) {
             $strSql = "SELECT " . $arSqls["SELECT"] . " FROM b_catalog_product CP " . $arSqls["FROM"];
-            if (!empty($arSqls["WHERE"]))
+            if (!empty($arSqls["WHERE"])) {
                 $strSql .= " WHERE " . $arSqls["WHERE"];
-            if (!empty($arSqls["GROUPBY"]))
+            }
+            if (!empty($arSqls["GROUPBY"])) {
                 $strSql .= " GROUP BY " . $arSqls["GROUPBY"];
+            }
 
             $dbRes = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-            if ($arRes = $dbRes->Fetch())
+            if ($arRes = $dbRes->Fetch()) {
                 return $arRes["CNT"];
-            else
+            } else {
                 return false;
+            }
         }
 
         $strSql = "SELECT " . $arSqls["SELECT"] . " FROM b_catalog_product CP " . $arSqls["FROM"];
-        if (!empty($arSqls["WHERE"]))
+        if (!empty($arSqls["WHERE"])) {
             $strSql .= " WHERE " . $arSqls["WHERE"];
-        if (!empty($arSqls["GROUPBY"]))
+        }
+        if (!empty($arSqls["GROUPBY"])) {
             $strSql .= " GROUP BY " . $arSqls["GROUPBY"];
-        if (!empty($arSqls["ORDERBY"]))
+        }
+        if (!empty($arSqls["ORDERBY"])) {
             $strSql .= " ORDER BY " . $arSqls["ORDERBY"];
+        }
 
         $intTopCount = 0;
         $boolNavStartParams = (!empty($arNavStartParams) && is_array($arNavStartParams));
-        if ($boolNavStartParams && isset($arNavStartParams['nTopCount']))
+        if ($boolNavStartParams && isset($arNavStartParams['nTopCount'])) {
             $intTopCount = (int)$arNavStartParams['nTopCount'];
+        }
 
         if ($boolNavStartParams && $intTopCount <= 0) {
             $strSql_tmp = "SELECT COUNT('x') as CNT FROM b_catalog_product CP " . $arSqls["FROM"];
-            if (!empty($arSqls["WHERE"]))
+            if (!empty($arSqls["WHERE"])) {
                 $strSql_tmp .= " WHERE " . $arSqls["WHERE"];
-            if (!empty($arSqls["GROUPBY"]))
+            }
+            if (!empty($arSqls["GROUPBY"])) {
                 $strSql_tmp .= " GROUP BY " . $arSqls["GROUPBY"];
+            }
 
             $dbRes = $DB->Query($strSql_tmp, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             $cnt = 0;
             if (empty($arSqls["GROUPBY"])) {
-                if ($arRes = $dbRes->Fetch())
+                if ($arRes = $dbRes->Fetch()) {
                     $cnt = $arRes["CNT"];
+                }
             } else {
                 $cnt = $dbRes->SelectedRowsCount();
             }
@@ -129,8 +168,9 @@ class CCatalogProduct extends CAllCatalogProduct
             $dbRes = new CDBResult();
             $dbRes->NavQuery($strSql, $cnt, $arNavStartParams);
         } else {
-            if ($boolNavStartParams && $intTopCount > 0)
+            if ($boolNavStartParams && $intTopCount > 0) {
                 $strSql .= " LIMIT " . $intTopCount;
+            }
 
             $entityResult->setResult($DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__));
 
@@ -165,10 +205,11 @@ class CCatalogProduct extends CAllCatalogProduct
     public static function GetVATInfo($PRODUCT_ID)
     {
         $vat = self::GetVATDataByID($PRODUCT_ID);
-        if (empty($vat))
+        if (empty($vat)) {
             $vat = [];
-        else
+        } else {
             $vat = [0 => $vat];
+        }
         $result = new CDBResult();
         $result->InitFromArray($vat);
         unset($vat);
@@ -184,11 +225,13 @@ class CCatalogProduct extends CAllCatalogProduct
     public static function GetVATDataByIDList(array $list)
     {
         $output = [];
-        if (empty($list))
+        if (empty($list)) {
             return $output;
+        }
         Main\Type\Collection::normalizeArrayValuesByInt($list, true);
-        if (empty($list))
+        if (empty($list)) {
             return $output;
+        }
         return self::loadVatInfoFromDB($list);
     }
 
@@ -200,8 +243,9 @@ class CCatalogProduct extends CAllCatalogProduct
     public static function GetVATDataByID($id)
     {
         $id = (int)$id;
-        if ($id <= 0)
+        if ($id <= 0) {
             return false;
+        }
         $result = self::loadVatInfoFromDB([$id]);
         return (isset($result[$id]) ? $result[$id] : false);
     }
@@ -263,11 +307,13 @@ class CCatalogProduct extends CAllCatalogProduct
     public static function SetProductType($intID, $intTypeID)
     {
         $intID = (int)$intID;
-        if ($intID <= 0)
+        if ($intID <= 0) {
             return false;
+        }
         $intTypeID = (int)$intTypeID;
-        if ($intTypeID != Catalog\ProductTable::TYPE_PRODUCT && $intTypeID != Catalog\ProductTable::TYPE_SET)
+        if ($intTypeID != Catalog\ProductTable::TYPE_PRODUCT && $intTypeID != Catalog\ProductTable::TYPE_SET) {
             return false;
+        }
 
         $result = Catalog\Model\Product::update($intID, ['TYPE' => $intTypeID]);
         return $result->isSuccess();

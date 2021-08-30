@@ -16,8 +16,16 @@ class CBitrixCloudBackupBucket extends CCloudStorageBucket
      * @param string $file_name
      * @param string $location
      */
-    function __construct($bucket_name, $prefix, $access_key, $secret_key, $session_token, $check_word, $file_name, $location = "")
-    {
+    function __construct(
+        $bucket_name,
+        $prefix,
+        $access_key,
+        $secret_key,
+        $session_token,
+        $check_word,
+        $file_name,
+        $location = ""
+    ) {
         parent::__construct(0);
         $this->arBucket = array(
             "ACTIVE" => "Y",

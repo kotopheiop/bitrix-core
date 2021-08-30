@@ -1,10 +1,12 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 \Bitrix\Main\Loader::includeModule("forum");
 
 $forumModulePermissions = $APPLICATION->GetGroupRight("forum");
-if ($forumModulePermissions == "D")
+if ($forumModulePermissions == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/forum/prolog.php");
@@ -24,16 +26,18 @@ $arFilter = array();
 if ($lAdmin->EditAction() && $forumModulePermissions >= "W") {
     foreach ($FIELDS as $ID => $arFields) {
         $DB->StartTransaction();
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
-        if (!$lAdmin->IsUpdated($ID))
+        if (!$lAdmin->IsUpdated($ID)) {
             continue;
+        }
 
         if (!CForumPoints2Post::Update($ID, $arFields)) {
-            if ($ex = $APPLICATION->GetException())
+            if ($ex = $APPLICATION->GetException()) {
                 $lAdmin->AddUpdateError($ex->GetString(), $ID);
-            else
+            } else {
                 $lAdmin->AddUpdateError(GetMessage("FP2PAN_UPDATE_ERROR"), $ID);
+            }
 
             $DB->Rollback();
         }
@@ -50,13 +54,15 @@ if (($arID = $lAdmin->GroupAction()) && $forumModulePermissions >= "W") {
             array($by => $order),
             $arFilter
         );
-        while ($arResult = $dbResultList->Fetch())
+        while ($arResult = $dbResultList->Fetch()) {
             $arID[] = $arResult['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
 
         switch ($_REQUEST['action']) {
             case "delete":
@@ -68,10 +74,11 @@ if (($arID = $lAdmin->GroupAction()) && $forumModulePermissions >= "W") {
                 if (!CForumPoints2Post::Delete($ID)) {
                     $DB->Rollback();
 
-                    if ($ex = $APPLICATION->GetException())
+                    if ($ex = $APPLICATION->GetException()) {
                         $lAdmin->AddGroupError($ex->GetString(), $ID);
-                    else
+                    } else {
                         $lAdmin->AddGroupError(GetMessage("FORUM_PP_ERROR_DELETE"), $ID);
+                    }
                 }
 
                 $DB->Commit();
@@ -93,11 +100,25 @@ $dbResultList->NavStart();
 $lAdmin->NavText($dbResultList->GetNavPrint(GetMessage("FORUM_PP_POINTS_PER_MES")));
 
 /*******************************************************************/
-$lAdmin->AddHeaders(array(
-    array("id" => "ID", "content" => "ID", "sort" => "ID", "default" => true),
-    array("id" => "MIN_NUM_POSTS", "content" => GetMessage("FORUM_PP_MIN_MES"), "sort" => "MIN_NUM_POSTS", "default" => true, "align" => "right"),
-    array("id" => "POINTS_PER_POST", "content" => GetMessage('FORUM_PP_POINTS'), "sort" => "POINTS_PER_POST", "default" => true, "align" => "right"),
-));
+$lAdmin->AddHeaders(
+    array(
+        array("id" => "ID", "content" => "ID", "sort" => "ID", "default" => true),
+        array(
+            "id" => "MIN_NUM_POSTS",
+            "content" => GetMessage("FORUM_PP_MIN_MES"),
+            "sort" => "MIN_NUM_POSTS",
+            "default" => true,
+            "align" => "right"
+        ),
+        array(
+            "id" => "POINTS_PER_POST",
+            "content" => GetMessage('FORUM_PP_POINTS'),
+            "sort" => "POINTS_PER_POST",
+            "default" => true,
+            "align" => "right"
+        ),
+    )
+);
 
 $arVisibleColumns = $lAdmin->GetVisibleHeaderColumns();
 
@@ -111,11 +132,28 @@ while ($arForum = $dbResultList->NavNext(true, "f_")) {
 
     $arActions = Array();
     if ($forumModulePermissions >= "R") {
-        $arActions[] = array("ICON" => "edit", "TEXT" => GetMessage("FORUM_PP_EDIT_DESCR"), "ACTION" => $lAdmin->ActionRedirect("forum_points2post_edit.php?ID=" . $f_ID . "&lang=" . LANG . "&" . GetFilterParams("filter_", false) . ""), "DEFAULT" => true);
+        $arActions[] = array(
+            "ICON" => "edit",
+            "TEXT" => GetMessage("FORUM_PP_EDIT_DESCR"),
+            "ACTION" => $lAdmin->ActionRedirect(
+                "forum_points2post_edit.php?ID=" . $f_ID . "&lang=" . LANG . "&" . GetFilterParams(
+                    "filter_",
+                    false
+                ) . ""
+            ),
+            "DEFAULT" => true
+        );
     }
     if ($forumModulePermissions >= "W") {
         $arActions[] = array("SEPARATOR" => true);
-        $arActions[] = array("ICON" => "delete", "TEXT" => GetMessage("FORUM_PP_DEL_DESCR"), "ACTION" => "if(confirm('" . GetMessage('FORUM_PP_DEL_CONF') . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete"));
+        $arActions[] = array(
+            "ICON" => "delete",
+            "TEXT" => GetMessage("FORUM_PP_DEL_DESCR"),
+            "ACTION" => "if(confirm('" . GetMessage('FORUM_PP_DEL_CONF') . "')) " . $lAdmin->ActionDoGroup(
+                    $f_ID,
+                    "delete"
+                )
+        );
     }
 
     $row->AddActions($arActions);

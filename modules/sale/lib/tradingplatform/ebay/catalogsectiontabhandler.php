@@ -25,8 +25,9 @@ class CatalogSectionTabHandler extends TabHandler
 
     public function Action($arArgs)
     {
-        if (!isset($_POST["SALE"]["EBAY"]))
+        if (!isset($_POST["SALE"]["EBAY"])) {
             return true;
+        }
 
         $propsRes = true;
         $ebayCategoryId = isset($_POST["SALE"]["EBAY"]["EBAY_CATEGORY_ID"]) ? $_POST["SALE"]["EBAY"]["EBAY_CATEGORY_ID"] : "";
@@ -37,17 +38,21 @@ class CatalogSectionTabHandler extends TabHandler
             $settings = $ebay->getSettings();
             $siteSettings = $settings[$arArgs["IBLOCK"]["LID"]];
 
-            if ($_POST["SALE"]["EBAY"]["POLICY"]["RETURN"] == $siteSettings["POLICY"]["RETURN"]["DEFAULT"])
+            if ($_POST["SALE"]["EBAY"]["POLICY"]["RETURN"] == $siteSettings["POLICY"]["RETURN"]["DEFAULT"]) {
                 unset($_POST["SALE"]["EBAY"]["POLICY"]["RETURN"]);
+            }
 
-            if ($_POST["SALE"]["EBAY"]["POLICY"]["PAYMENT"] == $siteSettings["POLICY"]["PAYMENT"]["DEFAULT"])
+            if ($_POST["SALE"]["EBAY"]["POLICY"]["PAYMENT"] == $siteSettings["POLICY"]["PAYMENT"]["DEFAULT"]) {
                 unset($_POST["SALE"]["EBAY"]["POLICY"]["PAYMENT"]);
+            }
 
-            if ($_POST["SALE"]["EBAY"]["POLICY"]["SHIPPING"] == $siteSettings["POLICY"]["SHIPPING"]["DEFAULT"])
+            if ($_POST["SALE"]["EBAY"]["POLICY"]["SHIPPING"] == $siteSettings["POLICY"]["SHIPPING"]["DEFAULT"]) {
                 unset($_POST["SALE"]["EBAY"]["POLICY"]["SHIPPING"]);
+            }
 
-            if (!empty($_POST["SALE"]["EBAY"]["POLICY"]))
+            if (!empty($_POST["SALE"]["EBAY"]["POLICY"])) {
                 $params = array("POLICY" => $_POST["SALE"]["EBAY"]["POLICY"]);
+            }
         }
 
         $catRes = self::saveCategoryMap($arArgs["ID"], $arArgs["IBLOCK"]["ID"], array($ebayCategoryId), $params);
@@ -58,7 +63,12 @@ class CatalogSectionTabHandler extends TabHandler
             && isset($_POST["SALE"]["EBAY"]["BITRIX_CATEGORY_PROPS"])
             && is_array($_POST["SALE"]["EBAY"]["BITRIX_CATEGORY_PROPS"])
         ) {
-            $propsRes = self::saveCategoryPropsMap($arArgs["IBLOCK"]["ID"], $ebayCategoryId, $_POST["SALE"]["EBAY"]["EBAY_CATEGORY_VARIATIONS"], $_POST["SALE"]["EBAY"]["BITRIX_CATEGORY_PROPS"]);
+            $propsRes = self::saveCategoryPropsMap(
+                $arArgs["IBLOCK"]["ID"],
+                $ebayCategoryId,
+                $_POST["SALE"]["EBAY"]["EBAY_CATEGORY_VARIATIONS"],
+                $_POST["SALE"]["EBAY"]["BITRIX_CATEGORY_PROPS"]
+            );
         }
 
         return $catRes && $propsRes;
@@ -71,8 +81,9 @@ class CatalogSectionTabHandler extends TabHandler
         MapTable::deleteByMapEntityId($mapEntityId);
 
         foreach ($ebayCatVar as $key => $ebayCategoryVariation) {
-            if (!isset($bitrixCatProps[$key]) || strlen($ebayCategoryVariation) <= 0)
+            if (!isset($bitrixCatProps[$key]) || $ebayCategoryVariation == '') {
                 continue;
+            }
 
             $fields = array(
                 "ENTITY_ID" => $mapEntityId,
@@ -94,26 +105,31 @@ class CatalogSectionTabHandler extends TabHandler
 
 
         foreach ($ebayCategoriesIds as $ebayCategoryId) {
-            if (strlen(trim($ebayCategoryId)) <= 0)
+            if (trim($ebayCategoryId) == '') {
                 continue;
+            }
 
             $fields = array(
                 "ENTITY_ID" => $catMapEntId,
                 "VALUE_INTERNAL" => $bitrixCategoryId
             );
 
-            $dbRes = MapTable::getList(array(
-                'filter' => $fields
-            ));
+            $dbRes = MapTable::getList(
+                array(
+                    'filter' => $fields
+                )
+            );
 
             $fields["VALUE_EXTERNAL"] = $ebayCategoryId;
-            if (!empty($params))
+            if (!empty($params)) {
                 $fields["PARAMS"] = $params;
+            }
 
-            if ($map = $dbRes->fetch())
+            if ($map = $dbRes->fetch()) {
                 $res = MapTable::update($map['ID'], $fields);
-            else
+            } else {
                 $res = MapTable::add($fields);
+            }
 
             $result = $result && $res->isSuccess();
         }
@@ -123,15 +139,20 @@ class CatalogSectionTabHandler extends TabHandler
 
     public function Check($arArgs)
     {
-        if (!isset($_POST["SALE"]["EBAY"]["EBAY_CATEGORY_VARIATIONS"]) || !is_array($_POST["SALE"]["EBAY"]["EBAY_CATEGORY_VARIATIONS"]))
+        if (!isset($_POST["SALE"]["EBAY"]["EBAY_CATEGORY_VARIATIONS"]) || !is_array(
+                $_POST["SALE"]["EBAY"]["EBAY_CATEGORY_VARIATIONS"]
+            )) {
             return true;
+        }
 
         $result = true;
 
-        $categoriesVarResult = CategoryVariationTable::getList(array(
-            'select' => array('ID', 'NAME', 'REQUIRED'),
-            'filter' => array("=CATEGORY_ID" => $_POST["SALE"]["EBAY"]["EBAY_CATEGORY_ID"]),
-        ));
+        $categoriesVarResult = CategoryVariationTable::getList(
+            array(
+                'select' => array('ID', 'NAME', 'REQUIRED'),
+                'filter' => array("=CATEGORY_ID" => $_POST["SALE"]["EBAY"]["EBAY_CATEGORY_ID"]),
+            )
+        );
 
         while ($var = $categoriesVarResult->fetch()) {
             if ($var['REQUIRED'] == 'Y') {
@@ -144,15 +165,16 @@ class CatalogSectionTabHandler extends TabHandler
 
                 if ($variationIdx === false
                     || !isset($_POST["SALE"]["EBAY"]["BITRIX_CATEGORY_PROPS"][$variationIdx])
-                    || strlen($_POST["SALE"]["EBAY"]["BITRIX_CATEGORY_PROPS"][$variationIdx]) <= 0) {
+                    || $_POST["SALE"]["EBAY"]["BITRIX_CATEGORY_PROPS"][$variationIdx] == '') {
                     $result = false;
                     break;
                 }
             }
         }
 
-        if (!$result)
+        if (!$result) {
             throw new SystemException("All required variations of category must be filled!");
+        }
 
         return $result;
     }
@@ -162,8 +184,9 @@ class CatalogSectionTabHandler extends TabHandler
         $ebay = \Bitrix\Sale\TradingPlatform\Ebay\Ebay::getInstance();
         $settings = $ebay->getSettings();
 
-        if (empty($settings[$arArgs["IBLOCK"]["LID"]]))
+        if (empty($settings[$arArgs["IBLOCK"]["LID"]])) {
             return '';
+        }
 
         $siteSettings = $settings[$arArgs["IBLOCK"]["LID"]];
 
@@ -175,12 +198,16 @@ class CatalogSectionTabHandler extends TabHandler
             '<td width="40%" valign="top">' . Loc::getMessage("SALE_EBAY_CSTH_CATEGORY") . ':</td>' .
             '<td width="60%">';
 
-        $catMapRes = \Bitrix\Sale\TradingPlatform\MapTable::getList(array(
-            "filter" => array(
-                "ENTITY_ID" => \Bitrix\Sale\TradingPlatform\Ebay\MapHelper::getCategoryEntityId($arArgs["IBLOCK"]["ID"]),
-                "VALUE_INTERNAL" => $arArgs["ID"]
+        $catMapRes = \Bitrix\Sale\TradingPlatform\MapTable::getList(
+            array(
+                "filter" => array(
+                    "ENTITY_ID" => \Bitrix\Sale\TradingPlatform\Ebay\MapHelper::getCategoryEntityId(
+                        $arArgs["IBLOCK"]["ID"]
+                    ),
+                    "VALUE_INTERNAL" => $arArgs["ID"]
+                )
             )
-        ));
+        );
 
         $arMapRes = $catMapRes->fetch();
 
@@ -194,16 +221,18 @@ class CatalogSectionTabHandler extends TabHandler
         );
 
 
-        if (isset($_POST["SALE"]["EBAY"]["EBAY_CATEGORY_ID"]))
+        if (isset($_POST["SALE"]["EBAY"]["EBAY_CATEGORY_ID"])) {
             $params["EBAY_CATEGORY_ID"] = $_POST["SALE"]["EBAY"]["EBAY_CATEGORY_ID"];
-        elseif (isset($arMapRes["VALUE_EXTERNAL"]))
+        } elseif (isset($arMapRes["VALUE_EXTERNAL"])) {
             $params["EBAY_CATEGORY_ID"] = $arMapRes["VALUE_EXTERNAL"];
+        }
 
         if (isset($_POST["SALE"]["EBAY"]["EBAY_CATEGORY_VARIATIONS"]) && isset($_POST["SALE"]["EBAY"]["BITRIX_CATEGORY_PROPS"])) {
             $params["VARIATIONS_VALUES"] = array();
 
-            for ($i = 0, $l = count($_POST["SALE"]["EBAY"]["EBAY_CATEGORY_VARIATIONS"]); $i < $l; $i++)
+            for ($i = 0, $l = count($_POST["SALE"]["EBAY"]["EBAY_CATEGORY_VARIATIONS"]); $i < $l; $i++) {
                 $params["VARIATIONS_VALUES"][$_POST["SALE"]["EBAY"]["EBAY_CATEGORY_VARIATIONS"][$i]] = $_POST["SALE"]["EBAY"]["BITRIX_CATEGORY_PROPS"][$i];
+            }
         }
 
         ob_start();
@@ -228,38 +257,51 @@ class CatalogSectionTabHandler extends TabHandler
         $policyShipping = "";
 
         if (isset($_POST["SALE"]["EBAY"]["POLICY"])) {
-            if (!empty($_POST["SALE"]["EBAY"]["POLICY"]["RETURN"]))
+            if (!empty($_POST["SALE"]["EBAY"]["POLICY"]["RETURN"])) {
                 $policyReturn = $_POST["SALE"]["EBAY"]["POLICY"]["RETURN"];
+            }
 
-            if (!empty($_POST["SALE"]["EBAY"]["POLICY"]["SHIPPING"]))
+            if (!empty($_POST["SALE"]["EBAY"]["POLICY"]["SHIPPING"])) {
                 $policyShipping = $_POST["SALE"]["EBAY"]["POLICY"]["SHIPPING"];
+            }
 
-            if (!empty($_POST["SALE"]["EBAY"]["POLICY"]["PAYMENT"]))
+            if (!empty($_POST["SALE"]["EBAY"]["POLICY"]["PAYMENT"])) {
                 $policyPayment = $_POST["SALE"]["EBAY"]["POLICY"]["PAYMENT"];
+            }
         } elseif (!empty($arMapRes["PARAMS"]["POLICY"])) {
-            if (!empty($arMapRes["PARAMS"]["POLICY"]["RETURN"]))
+            if (!empty($arMapRes["PARAMS"]["POLICY"]["RETURN"])) {
                 $policyReturn = $arMapRes["PARAMS"]["POLICY"]["RETURN"];
+            }
 
-            if (!empty($arMapRes["PARAMS"]["POLICY"]["SHIPPING"]))
+            if (!empty($arMapRes["PARAMS"]["POLICY"]["SHIPPING"])) {
                 $policyShipping = $arMapRes["PARAMS"]["POLICY"]["SHIPPING"];
+            }
 
-            if (!empty($arMapRes["PARAMS"]["POLICY"]["PAYMENT"]))
+            if (!empty($arMapRes["PARAMS"]["POLICY"]["PAYMENT"])) {
                 $policyPayment = $arMapRes["PARAMS"]["POLICY"]["PAYMENT"];
+            }
         }
 
-        if (strlen($policyReturn) <= 0 && !empty($siteSettings["POLICY"]["RETURN"]["DEFAULT"]))
+        if ($policyReturn == '' && !empty($siteSettings["POLICY"]["RETURN"]["DEFAULT"])) {
             $policyReturn = $siteSettings["POLICY"]["RETURN"]["DEFAULT"];
+        }
 
-        if (strlen($policyShipping) <= 0 && !empty($siteSettings["POLICY"]["SHIPPING"]["DEFAULT"]))
+        if ($policyShipping == '' && !empty($siteSettings["POLICY"]["SHIPPING"]["DEFAULT"])) {
             $policyShipping = $siteSettings["POLICY"]["SHIPPING"]["DEFAULT"];
+        }
 
-        if (strlen($policyPayment) <= 0 && !empty($siteSettings["POLICY"]["PAYMENT"]["DEFAULT"]))
+        if ($policyPayment == '' && !empty($siteSettings["POLICY"]["PAYMENT"]["DEFAULT"])) {
             $policyPayment = $siteSettings["POLICY"]["PAYMENT"]["DEFAULT"];
+        }
 
-        if (isset($siteSettings["API"]["AUTH_TOKEN"]) && strlen($siteSettings["API"]["AUTH_TOKEN"]) > 0)
-            $policy = new \Bitrix\Sale\TradingPlatform\Ebay\Policy($siteSettings["API"]["AUTH_TOKEN"], $arArgs["IBLOCK"]["LID"]);
-        else
+        if (isset($siteSettings["API"]["AUTH_TOKEN"]) && $siteSettings["API"]["AUTH_TOKEN"] <> '') {
+            $policy = new \Bitrix\Sale\TradingPlatform\Ebay\Policy(
+                $siteSettings["API"]["AUTH_TOKEN"],
+                $arArgs["IBLOCK"]["LID"]
+            );
+        } else {
             $errorMsg .= "You must set API token first!\n";
+        }
 
         $resultHtml .= '
 			<tr></tr><td colspan="2" style="border-top: 2px solid #e0e8ea;">&nbsp;</td></tr>
@@ -267,16 +309,20 @@ class CatalogSectionTabHandler extends TabHandler
 				<td>' . Loc::getMessage("SALE_EBAY_CSTH_POLICY_RETURN") . ':</span></td>
 				<td>';
 
-        if ($policy)
+        if ($policy) {
             $names = $policy->getPoliciesNames(\Bitrix\Sale\TradingPlatform\Ebay\Policy::TYPE_RETURN);
-        else
+        } else {
             $names = array();
+        }
 
         if ($policy && !empty($names)) {
             $resultHtml .= '<select name="SALE[EBAY][POLICY][RETURN]">';
 
-            foreach ($names as $policyId => $policyName)
-                $resultHtml .= '<option value="' . htmlspecialcharsbx($policyId) . '"' . ($policyReturn == $policyId ? " selected" : "") . '>' . $policyName . '</option>';
+            foreach ($names as $policyId => $policyName) {
+                $resultHtml .= '<option value="' . htmlspecialcharsbx(
+                        $policyId
+                    ) . '"' . ($policyReturn == $policyId ? " selected" : "") . '>' . $policyName . '</option>';
+            }
 
             $resultHtml .= '</select>';
         } else {
@@ -290,17 +336,21 @@ class CatalogSectionTabHandler extends TabHandler
 				<td>' . Loc::getMessage("SALE_EBAY_CSTH_POLICY_SHIPMENT") . ':</td>
 				<td>';
 
-        if ($policy)
+        if ($policy) {
             $names = $policy->getPoliciesNames(\Bitrix\Sale\TradingPlatform\Ebay\Policy::TYPE_SHIPPING);
-        else
+        } else {
             $names = array();
+        }
 
 
         if ($policy && !empty($names)) {
             $resultHtml .= '<select name="SALE[EBAY][POLICY][SHIPPING]">';
 
-            foreach ($names as $policyId => $policyName)
-                $resultHtml .= '<option value="' . htmlspecialcharsbx($policyId) . '"' . ($policyShipping == $policyId ? " selected" : "") . '>' . $policyName . '</option>';
+            foreach ($names as $policyId => $policyName) {
+                $resultHtml .= '<option value="' . htmlspecialcharsbx(
+                        $policyId
+                    ) . '"' . ($policyShipping == $policyId ? " selected" : "") . '>' . $policyName . '</option>';
+            }
 
             $resultHtml .= '</select>';
         } else {
@@ -314,16 +364,24 @@ class CatalogSectionTabHandler extends TabHandler
 				<td>' . Loc::getMessage("SALE_EBAY_CSTH_POLICY_PAYMENT") . ':</td>
 				<td>';
 
-        if ($policy)
+        if ($policy) {
             $names = $policy->getPoliciesNames(\Bitrix\Sale\TradingPlatform\Ebay\Policy::TYPE_PAYMENT);
-        else
+        } else {
             $names = array();
+        }
 
         if ($policy && !empty($names)) {
             $resultHtml .= '<select name="SALE[EBAY][POLICY][PAYMENT]">';
 
-            foreach ($policy->getPoliciesNames(\Bitrix\Sale\TradingPlatform\Ebay\Policy::TYPE_PAYMENT) as $policyId => $policyName)
-                $resultHtml .= '<option value="' . htmlspecialcharsbx($policyId) . '"' . ($policyPayment == $policyId ? " selected" : "") . '>' . $policyName . '</option>';
+            foreach (
+                $policy->getPoliciesNames(
+                    \Bitrix\Sale\TradingPlatform\Ebay\Policy::TYPE_PAYMENT
+                ) as $policyId => $policyName
+            ) {
+                $resultHtml .= '<option value="' . htmlspecialcharsbx(
+                        $policyId
+                    ) . '"' . ($policyPayment == $policyId ? " selected" : "") . '>' . $policyName . '</option>';
+            }
 
             $resultHtml .= '</select>';
         } else {
@@ -334,7 +392,9 @@ class CatalogSectionTabHandler extends TabHandler
 				</td>
 			</tr>
 			<tr>
-				<td>&nbsp</td><td><a href="http://www.bizpolicy.ebay.ru/businesspolicy/manage?totalPages=1">' . Loc::getMessage('SALE_EBAY_CSTH_EDIT_POLICIES') . '</a></td>
+				<td>&nbsp</td><td><a href="http://www.bizpolicy.ebay.ru/businesspolicy/manage?totalPages=1">' . Loc::getMessage(
+                'SALE_EBAY_CSTH_EDIT_POLICIES'
+            ) . '</a></td>
 			</tr>';
 
         return $resultHtml;

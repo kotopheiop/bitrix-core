@@ -27,7 +27,7 @@ class Query extends BaseQuery
         if ($this->entity instanceof ElementV2Entity) {
             // table alias for all the records (cut b_ prefix)
             $propSTable = $this->entity->getSingleValueTableName();
-            $commonAlias = substr($propSTable, 2);
+            $commonAlias = mb_substr($propSTable, 2);
 
             // found first join and changed alias. all other joins to be removed
             $changed = false;
@@ -43,7 +43,8 @@ class Query extends BaseQuery
                     $conditions = $join['reference']->getConditions();
 
                     // check on condition
-                    if (count($conditions) === 1 && $conditions[0]->getColumn() === 'ID' && $conditions[0]->getOperator() === '=') {
+                    if (count($conditions) === 1 && $conditions[0]->getColumn() === 'ID' && $conditions[0]->getOperator(
+                        ) === '=') {
                         // collect table aliases to rewrite in chains
                         $replacedAliases[$join['alias']] = true;
 
@@ -56,7 +57,6 @@ class Query extends BaseQuery
                             // remove from registry
                             unset($this->join_map[$k]);
                         }
-
                     }
                 }
             }

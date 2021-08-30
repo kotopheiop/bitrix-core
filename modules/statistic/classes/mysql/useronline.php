@@ -33,11 +33,13 @@ class CUserOnline
         if (is_array($arFilter)) {
             foreach ($arFilter as $key => $val) {
                 if (is_array($val)) {
-                    if (count($val) <= 0)
+                    if (count($val) <= 0) {
                         continue;
+                    }
                 } else {
-                    if ((strlen($val) <= 0) || ($val === "NOT_REF"))
+                    if (((string)$val == '') || ($val === "NOT_REF")) {
                         continue;
+                    }
                 }
                 $match_value_set = array_key_exists($key . "_EXACT_MATCH", $arFilter);
                 $key = strtoupper($key);
@@ -71,10 +73,11 @@ class CUserOnline
                         $arSqlSearch[] = "S.HITS<='" . intval($val) . "'";
                         break;
                     case "ADV":
-                        if ($val == "Y")
+                        if ($val == "Y") {
                             $arSqlSearch[] = "(S.ADV_ID>0 and S.ADV_ID is not null)";
-                        elseif ($val == "N")
+                        } elseif ($val == "N") {
                             $arSqlSearch[] = "(S.ADV_ID<=0 or S.ADV_ID is null)";
+                        }
                         break;
                     case "REFERER1":
                     case "REFERER2":
@@ -94,11 +97,21 @@ class CUserOnline
                         break;
                     case "URL_LAST":
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "Y" && $match_value_set) ? "N" : "Y";
-                        $arSqlSearch[] = GetFilterQuery("S." . $key, $val, $match, array("/", "\\", ".", "?", "#", ":"));
+                        $arSqlSearch[] = GetFilterQuery(
+                            "S." . $key,
+                            $val,
+                            $match,
+                            array("/", "\\", ".", "?", "#", ":")
+                        );
                         break;
                     case "FIRST_URL_FROM":
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "Y" && $match_value_set) ? "N" : "Y";
-                        $arSqlSearch[] = GetFilterQuery("G." . $key, $val, $match, array("/", "\\", ".", "?", "#", ":"));
+                        $arSqlSearch[] = GetFilterQuery(
+                            "G." . $key,
+                            $val,
+                            $match,
+                            array("/", "\\", ".", "?", "#", ":")
+                        );
                         break;
                     case "ADV_BACK":
                     case "NEW_GUEST":
@@ -124,26 +137,39 @@ class CUserOnline
         $order = "desc";
         if (is_array($arOrder) && !empty($arOrder)) {
             foreach ($arOrder as $by => $order) {
-                $by = strtolower($by);
-                $order = strtolower($order);
-                if ($order != "asc")
+                $by = mb_strtolower($by);
+                $order = mb_strtolower($order);
+                if ($order != "asc") {
                     $order = "desc";
+                }
             }
         }
 
-        if ($by == "s_id") $strSqlOrder = "ORDER BY S.ID";
-        elseif ($by == "s_session_time") $strSqlOrder = "ORDER BY SESSION_TIME";
-        elseif ($by == "s_date_first") $strSqlOrder = "ORDER BY S.DATE_FIRST";
-        elseif ($by == "s_date_last") $strSqlOrder = "ORDER BY S.DATE_LAST";
-        elseif ($by == "s_user_id") $strSqlOrder = "ORDER BY S.USER_ID";
-        elseif ($by == "s_guest_id") $strSqlOrder = "ORDER BY S.GUEST_ID";
-        elseif ($by == "s_ip") $strSqlOrder = "ORDER BY S.IP_LAST";
-        elseif ($by == "s_hits") $strSqlOrder = "ORDER BY S.HITS ";
-        elseif ($by == "s_adv_id") $strSqlOrder = "ORDER BY S.ADV_ID ";
-        elseif ($by == "s_country_id") $strSqlOrder = "ORDER BY S.COUNTRY_ID ";
-        elseif ($by == "s_url_last") $strSqlOrder = "ORDER BY S.URL_LAST ";
-        elseif ($by == "s_url_to") $strSqlOrder = "ORDER BY S.URL_TO ";
-        else {
+        if ($by == "s_id") {
+            $strSqlOrder = "ORDER BY S.ID";
+        } elseif ($by == "s_session_time") {
+            $strSqlOrder = "ORDER BY SESSION_TIME";
+        } elseif ($by == "s_date_first") {
+            $strSqlOrder = "ORDER BY S.DATE_FIRST";
+        } elseif ($by == "s_date_last") {
+            $strSqlOrder = "ORDER BY S.DATE_LAST";
+        } elseif ($by == "s_user_id") {
+            $strSqlOrder = "ORDER BY S.USER_ID";
+        } elseif ($by == "s_guest_id") {
+            $strSqlOrder = "ORDER BY S.GUEST_ID";
+        } elseif ($by == "s_ip") {
+            $strSqlOrder = "ORDER BY S.IP_LAST";
+        } elseif ($by == "s_hits") {
+            $strSqlOrder = "ORDER BY S.HITS ";
+        } elseif ($by == "s_adv_id") {
+            $strSqlOrder = "ORDER BY S.ADV_ID ";
+        } elseif ($by == "s_country_id") {
+            $strSqlOrder = "ORDER BY S.COUNTRY_ID ";
+        } elseif ($by == "s_url_last") {
+            $strSqlOrder = "ORDER BY S.URL_LAST ";
+        } elseif ($by == "s_url_to") {
+            $strSqlOrder = "ORDER BY S.URL_TO ";
+        } else {
             $by = "s_id";
             $strSqlOrder = "ORDER BY S.ID";
         }

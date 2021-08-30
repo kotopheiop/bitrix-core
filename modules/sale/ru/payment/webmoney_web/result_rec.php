@@ -1,10 +1,12 @@
-<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die(); ?><?
+<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+} ?><?
 
 use \Bitrix\Sale\Order;
 
 $request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
 
-$entityId = IntVal($request->get("LMI_PAYMENT_NO"));
+$entityId = intval($request->get("LMI_PAYMENT_NO"));
 list($orderId, $paymentId) = \Bitrix\Sale\PaySystem\Manager::getIdsByPayment($entityId);
 
 if ($orderId > 0) {
@@ -18,8 +20,9 @@ if ($orderId > 0) {
             $payment = $paymentCollection->getItemById($paymentId);
             if ($payment) {
                 $service = \Bitrix\Sale\PaySystem\Manager::getObjectById($payment->getPaymentSystemId());
-                if ($service)
+                if ($service) {
                     $service->processRequest($request);
+                }
             }
         }
     }

@@ -29,23 +29,33 @@ class RouteTable extends Entity\DataManager
     public static function getMap()
     {
         return array(
-            'ID' => new Entity\IntegerField('ID', array(
+            'ID' => new Entity\IntegerField(
+                'ID', array(
                 'primary' => true,
                 'autocomplete' => true,
-            )),
-            'ROUTE' => new Entity\StringField('ROUTE', array(
+            )
+            ),
+            'ROUTE' => new Entity\StringField(
+                'ROUTE', array(
                 'required' => true,
                 'unique' => true
-            )),
-            'MODULE' => new Entity\StringField('MODULE', array(
+            )
+            ),
+            'MODULE' => new Entity\StringField(
+                'MODULE', array(
                 'required' => true,
-            )),
-            'CLASS' => new Entity\StringField('CLASS', array(
+            )
+            ),
+            'CLASS' => new Entity\StringField(
+                'CLASS', array(
                 'required' => true,
-            )),
-            'PARAMETERS' => new Entity\TextField('PARAMETERS', array(
+            )
+            ),
+            'PARAMETERS' => new Entity\TextField(
+                'PARAMETERS', array(
                 'serialized' => true,
-            )),
+            )
+            ),
         );
     }
 

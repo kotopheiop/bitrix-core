@@ -44,12 +44,14 @@ final class FileVersion extends Base
             ) {
                 $gender = $userCache[intval($params['userId'])]['PERSONAL_GENDER'];
             } else {
-                $res = UserTable::getList(array(
-                    'filter' => array(
-                        '=ID' => intval($params['userId'])
-                    ),
-                    'select' => array('ID', 'PERSONAL_GENDER')
-                ));
+                $res = UserTable::getList(
+                    array(
+                        'filter' => array(
+                            '=ID' => intval($params['userId'])
+                        ),
+                        'select' => array('ID', 'PERSONAL_GENDER')
+                    )
+                );
 
                 if ($user = $res->fetch()) {
                     $userCache[$user['ID']] = $user;
@@ -90,12 +92,14 @@ final class FileVersion extends Base
                 );
 
                 if ($followValue != "N") {
-                    $ratingVoteParams['ENTITY_LINK'] = $this->getRatingCommentLink(array(
-                        'commentId' => $fields['ID'],
-                        'commentAuthorId' => $ratingVoteParams['OWNER_ID'],
-                        'ratingEntityTypeId' => $ratingVoteParams['ENTITY_TYPE_ID'],
-                        'ratingEntityId' => $ratingVoteParams['ENTITY_ID']
-                    ));
+                    $ratingVoteParams['ENTITY_LINK'] = $this->getRatingCommentLink(
+                        array(
+                            'commentId' => $fields['ID'],
+                            'commentAuthorId' => $ratingVoteParams['OWNER_ID'],
+                            'ratingEntityTypeId' => $ratingVoteParams['ENTITY_TYPE_ID'],
+                            'ratingEntityId' => $ratingVoteParams['ENTITY_ID']
+                        )
+                    );
 
                     $ratingVoteParams["ENTITY_PARAM"] = 'COMMENT';
                     $ratingVoteParams["ENTITY_MESSAGE"] = $this->getText();

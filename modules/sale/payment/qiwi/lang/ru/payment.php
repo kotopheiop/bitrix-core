@@ -1,8 +1,9 @@
 <?php
+
 global $MESS;
-$MESS["SALE_QH_COMMENT"] = "Оплата транзакции ##ID#";
-$MESS["SALE_QH_INPUT_PHONE"] = "Введите номер телефона в формате: +7";
-$MESS["SALE_QH_INCORRECT_PHONE_NUMBER"] = "Неверно введен номер телефона";
+$MESS["SALE_QH_COMMENT"] = "пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ ##ID#";
+$MESS["SALE_QH_INPUT_PHONE"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ: +7";
+$MESS["SALE_QH_INCORRECT_PHONE_NUMBER"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
 $MESS["SALE_QH_SEND_PHONE"] = "Ok";
-$MESS["SALE_QH_DO_BILL"] = "Оплатить";
-$MESS["SALE_QH_SUMM_TO_PAY"] = "Сумма к оплате";
+$MESS["SALE_QH_DO_BILL"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_QH_SUMM_TO_PAY"] = "пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ";

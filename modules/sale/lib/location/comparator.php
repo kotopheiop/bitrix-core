@@ -26,15 +26,17 @@ class Comparator
     public static function isLocationsEqual($location1, $location2)
     {
         foreach ($location1 as $type => $name) {
-            if (empty($location2[$type]))
+            if (empty($location2[$type])) {
                 continue;
+            }
 
-            if (strlen($location1[$type]) > 0 && strlen($location2[$type]) > 0) {
+            if ($location1[$type] <> '' && $location2[$type] <> '') {
                 /** @var Comparator $comparator */
                 $comparator = self::getConcreteComparatorClassaName($type);
 
-                if (!$comparator::isEntityEqual($location1[$type], $location2[$type]))
+                if (!$comparator::isEntityEqual($location1[$type], $location2[$type])) {
                     return false;
+                }
             }
         }
 
@@ -43,18 +45,20 @@ class Comparator
 
     public static function getReplacement()
     {
-        if (self::$replacement === null)
+        if (self::$replacement === null) {
             self::setReplacement();
+        }
 
         return self::$replacement;
     }
 
     public static function setReplacement(Replacement $replacement = null)
     {
-        if ($replacement === null)
+        if ($replacement === null) {
             self::$replacement = new Replacement;
-        else
+        } else {
             self::$replacement = $replacement;
+        }
     }
 
     public static function isCountryRussia($countryName)
@@ -69,23 +73,24 @@ class Comparator
      */
     private static function getConcreteComparatorClassaName($type)
     {
-        if ($type === self::LOCALITY || $type === 'LOCALITY' || $type == 'CITY')
+        if ($type === self::LOCALITY || $type === 'LOCALITY' || $type == 'CITY') {
             $result = 'ComparatorLocality';
-        elseif ($type === self::DISTRICT || $type === 'SUBREGION')
+        } elseif ($type === self::DISTRICT || $type === 'SUBREGION') {
             $result = 'ComparatorDistrict';
-        elseif ($type === self::REGION || $type === 'REGION')
+        } elseif ($type === self::REGION || $type === 'REGION') {
             $result = 'ComparatorRegion';
-        elseif ($type === self::COUNTRY || $type === 'COUNTRY')
+        } elseif ($type === self::COUNTRY || $type === 'COUNTRY') {
             $result = 'ComparatorCountry';
-        else
+        } else {
             throw new ArgumentOutOfRangeException('type');
+        }
 
         return '\Bitrix\Sale\Location\\' . $result;
     }
 
     public static function isEntityEqual($entity1, $entity2, $type = '')
     {
-        if (strlen($type) > 0) {
+        if ($type <> '') {
             /** @var Comparator $comparator */
             $comparator = self::getConcreteComparatorClassaName($type);
             return $comparator::isEntityEqual($entity1, $entity2);
@@ -105,13 +110,17 @@ class Comparator
             $entity2N = static::normalize($entity2);
         }
 
-        if (strlen($entity1N['NAME']) > 0 && strlen($entity2N['NAME']) > 0)
-            if ($entity1N['NAME'] != $entity2N['NAME'])
+        if ($entity1N['NAME'] <> '' && $entity2N['NAME'] <> '') {
+            if ($entity1N['NAME'] != $entity2N['NAME']) {
                 return false;
+            }
+        }
 
-        if (strlen($entity1N['TYPE']) > 0 && strlen($entity2N['TYPE']) > 0)
-            if ($entity1N['TYPE'] != $entity2N['TYPE'])
+        if ($entity1N['TYPE'] <> '' && $entity2N['TYPE'] <> '') {
+            if ($entity1N['TYPE'] != $entity2N['TYPE']) {
                 return false;
+            }
+        }
 
         return true;
     }
@@ -149,7 +158,11 @@ class Comparator
     public static function flatten($value)
     {
         $result = preg_replace('/\s*(\(.*\))/i' . BX_UTF_PCRE_MODIFIER, ' ', $value);
-        $result = preg_replace('/[~\'\"\`\!\@\#\$\%\^\&\*\+\=\\\.\,\?\:\;\{\}\[\]\-]/i' . BX_UTF_PCRE_MODIFIER, ' ', $result);
+        $result = preg_replace(
+            '/[~\'\"\`\!\@\#\$\%\^\&\*\+\=\\\.\,\?\:\;\{\}\[\]\-]/i' . BX_UTF_PCRE_MODIFIER,
+            ' ',
+            $result
+        );
         $result = preg_replace('/\s{2,}/i' . BX_UTF_PCRE_MODIFIER, ' ', $result);
         $result = ToUpper($result);
         $result = self::getReplacement()->changeYoE($result);
@@ -162,8 +175,9 @@ class Comparator
     {
         $result = array();
 
-        foreach ($variants as $k => $v)
+        foreach ($variants as $k => $v) {
             $result[self::flatten($k)] = self::flatten($v);
+        }
 
         return $result;
     }
@@ -180,8 +194,9 @@ class Comparator
     {
         $name = self::flatten($name);
 
-        if (strlen($name) <= 0)
+        if ($name == '') {
             return array('NAME' => '', 'TYPE' => '');
+        }
 
         $matches = array();
         $types = static::getTypes();
@@ -196,8 +211,9 @@ class Comparator
         }
 
         foreach ($types as $type => $search) {
-            if (!is_array($search))
+            if (!is_array($search)) {
                 continue;
+            }
 
             $search[] = $type;
 
@@ -205,12 +221,13 @@ class Comparator
                 $regexp = '';
                 $s = self::flatten($s);
 
-                if (strpos($name, $s . ' ') !== false)
+                if (mb_strpos($name, $s . ' ') !== false) {
                     $regexp = '/^' . $s . '\s+(.*)$/i' . BX_UTF_PCRE_MODIFIER;
-                elseif (strpos($name, ' ' . $s) !== false)
+                } elseif (mb_strpos($name, ' ' . $s) !== false) {
                     $regexp = '/^(.*)\s+' . $s . '$/i' . BX_UTF_PCRE_MODIFIER;
+                }
 
-                if (strlen($regexp) > 0 && preg_match($regexp, $name, $matches)) {
+                if ($regexp <> '' && preg_match($regexp, $name, $matches)) {
                     $name = $matches[1];
                     $resultType = $type;
                     break 2;
@@ -226,13 +243,14 @@ class Comparator
 
     public static function getLocalityNamesArray($name, $type)
     {
-        if (strlen($name) <= 0)
+        if ($name == '') {
             return array();
+        }
 
         $result = array();
         $types = self::getReplacement()->getLocalityTypes();
 
-        if (strlen($type) > 0) {
+        if ($type <> '') {
             $result[] = ToUpper($type . ' ' . $name);
             $result[] = ToUpper($name . ' ' . $type);
 

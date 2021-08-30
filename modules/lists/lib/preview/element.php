@@ -24,8 +24,9 @@ class Element
         $parameters['listId'] = (int)$parameters['listId'];
         $parameters['elementId'] = (int)$parameters['elementId'];
 
-        if ($parameters['listId'] == 0 || $parameters['elementId'] == 0)
+        if ($parameters['listId'] == 0 || $parameters['elementId'] == 0) {
             return false;
+        }
 
         $userPermission = \CListPermissions::CheckAccess(
             $USER,
@@ -34,9 +35,15 @@ class Element
         );
         if ($userPermission < 0) {
             return false;
-        } else if ($userPermission < \CListPermissions::CAN_READ
-            && !\CIBlockElementRights::UserHasRightTo($parameters['listId'], $parameters['elementId'], "element_read")) {
-            return false;
+        } else {
+            if ($userPermission < \CListPermissions::CAN_READ
+                && !\CIBlockElementRights::UserHasRightTo(
+                    $parameters['listId'],
+                    $parameters['elementId'],
+                    "element_read"
+                )) {
+                return false;
+            }
         }
 
         return true;

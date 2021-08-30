@@ -32,13 +32,15 @@ class CSPListsClient extends CSOAPClient
 
         $arParams['path'] = WS_SP_SERVICE_PATH; // temporary.
 
-        foreach ($arDefaultParams as $param => $value)
+        foreach ($arDefaultParams as $param => $value) {
             $this->arConnectionParams[$param] = isset($arParams[$param]) ? $arParams[$param] : $value;
+        }
 
-        if ($this->arConnectionParams['scheme'] == 'https')
+        if ($this->arConnectionParams['scheme'] == 'https') {
             $this->arConnectionParams['port'] = 443;
-        elseif ($this->arConnectionParams['port'] == 443)
+        } elseif ($this->arConnectionParams['port'] == 443) {
             $this->arConnectionParams['scheme'] = 'https';
+        }
 
         return $this->__initialize();
     }
@@ -52,7 +54,9 @@ class CSPListsClient extends CSOAPClient
             $GLOBALS['APPLICATION']->ThrowException('Connection error!');
             return false;
         } elseif ($this->RESPONSE->isFault()) {
-            $GLOBALS['APPLICATION']->ThrowException('SOAP Fault ' . $this->RESPONSE->faultCode() . ': ' . $this->RESPONSE->faultString());
+            $GLOBALS['APPLICATION']->ThrowException(
+                'SOAP Fault ' . $this->RESPONSE->faultCode() . ': ' . $this->RESPONSE->faultString()
+            );
             return false;
         } else {
             return true;
@@ -85,8 +89,9 @@ class CSPListsClient extends CSOAPClient
 
                 return $this->GetListCollectionProcessResult($arLists);
             }
-        } else
+        } else {
             return false;
+        }
     }
 
     protected function _GetByID_query($XML_ID)
@@ -107,11 +112,11 @@ class CSPListsClient extends CSOAPClient
         $query = new CXMLCreator('Query');
         $query->addChild(new CXMLCreator('Where'));
 
-        if (!is_array($XML_ID))
+        if (!is_array($XML_ID)) {
             $query->children[0]->addChild($this->_GetByID_query($XML_ID));
-        elseif (count($XML_ID) == 1)
+        } elseif (count($XML_ID) == 1) {
             $query->children[0]->addChild($this->_GetByID_query($XML_ID[0]));
-        else {
+        } else {
             $obOr = new CXMLCreator('Or');
 
             foreach ($XML_ID as $item) {
@@ -179,8 +184,9 @@ class CSPListsClient extends CSOAPClient
                             }
 
                             $arDefaultNodes = $arChoiceNodes = $node->elementsByName('Default');
-                            if (count($arDefaultNodes) > 0)
+                            if (count($arDefaultNodes) > 0) {
                                 $arField['DEFAULT'] = $arDefaultNodes[0]->textContent();
+                            }
                         }
 
                         $RESULT['FIELDS'][] = $arField;
@@ -233,15 +239,21 @@ class CSPListsClient extends CSOAPClient
     {
         $arMethodParams = array('listName' => $listName);
 
-        if ($arParams['TOKEN'])
+        if ($arParams['TOKEN']) {
             $arMethodParams['changeToken'] = $arParams['TOKEN'];
+        }
 
-        if ($arParams['NUM_ROWS'])
+        if ($arParams['NUM_ROWS']) {
             $arMethodParams['rowLimit'] = intval($arParams['NUM_ROWS']);
+        }
 
         $queryOptions = new CXMLCreator('QueryOptions');
         if (isset($arParams['PAGING'])) {
-            $queryOptions->addChild(CXMLCreator::createTagAttributed('Paging ListItemCollectionPositionNext="' . htmlspecialchars($arParams['PAGING']) . '"'));
+            $queryOptions->addChild(
+                CXMLCreator::createTagAttributed(
+                    'Paging ListItemCollectionPositionNext="' . htmlspecialchars($arParams['PAGING']) . '"'
+                )
+            );
         }
 
         $arMethodParams['queryOptions'] = $queryOptions;
@@ -250,8 +262,9 @@ class CSPListsClient extends CSOAPClient
             $viewFields = new CXMLCreator('ViewFields');
             $viewFields->setAttribute('Properties', 'TRUE');
 
-            foreach ($arParams['FIELDS'] as $fld)
+            foreach ($arParams['FIELDS'] as $fld) {
                 $viewFields->addChild(CXMLCreator::createTagAttributed('FieldRef Name="' . $fld . '"'));
+            }
 
             $arMethodParams['viewFields'] = $viewFields;
         }
@@ -284,12 +297,13 @@ class CSPListsClient extends CSOAPClient
 
                 $RESULT['COUNT'] = $DATA_NODE->getAttribute('ItemCount');
                 $RESULT['PAGING'] = $DATA_NODE->getAttribute('ListItemCollectionPositionNext');
-                $RESULT['MORE_ROWS'] |= (strlen($RESULT['PAGING']) > 0);
+                $RESULT['MORE_ROWS'] |= ($RESULT['PAGING'] <> '');
 
                 $RESULT['DATA'] = $this->ConvertRows($DATA_NODE);
 
-                if (count($RESULT['DATA']) <= 0)
+                if (count($RESULT['DATA']) <= 0) {
                     $RESULT['MORE_ROWS'] = false;
+                }
             }
 
             return $this->GetListItemChangesSinceTokenProcessResult($RESULT);
@@ -341,16 +355,31 @@ class CSPListsClient extends CSOAPClient
                 unset($row['ID']);
 
                 $obRow->addChild(CXMLCreator::createTagAttributed('Field Name="ID"', 'New'));
-                $obRow->addChild(CXMLCreator::createTagAttributed('Field Name="MetaInfo" Property="ReplicationID"', $row['ReplicationID']));
+                $obRow->addChild(
+                    CXMLCreator::createTagAttributed(
+                        'Field Name="MetaInfo" Property="ReplicationID"',
+                        $row['ReplicationID']
+                    )
+                );
                 unset($row['ReplicationID']);
             }
 
             foreach ($row as $fld => $value) {
-                if (substr($fld, 0, 9) == 'MetaInfo_') {
-                    $obRow->addChild(CXMLCreator::createTagAttributed('Field Name="MetaInfo" Property="' . CXMLCreator::xmlspecialchars(substr($fld, 9)) . '"', $value));
+                if (mb_substr($fld, 0, 9) == 'MetaInfo_') {
+                    $obRow->addChild(
+                        CXMLCreator::createTagAttributed(
+                            'Field Name="MetaInfo" Property="' . CXMLCreator::xmlspecialchars(mb_substr($fld, 9)) . '"',
+                            $value
+                        )
+                    );
                 } else {
                     if ($fld) {
-                        $obRow->addChild(CXMLCreator::createTagAttributed('Field Name="' . CXMLCreator::xmlspecialchars($fld) . '"', $value));
+                        $obRow->addChild(
+                            CXMLCreator::createTagAttributed(
+                                'Field Name="' . CXMLCreator::xmlspecialchars($fld) . '"',
+                                $value
+                            )
+                        );
                     }
                 }
             }
@@ -377,11 +406,12 @@ class CSPListsClient extends CSOAPClient
                     'Row' => $this->ConvertRows($resultNode),
                 );
 
-                if ($arRes['Row']) $arRes['Row'] = $arRes['Row'][0];
+                if ($arRes['Row']) {
+                    $arRes['Row'] = $arRes['Row'][0];
+                }
 
                 $RESULT[] = $arRes;
             }
-
         }
 
         $fp = fopen($_SERVER['DOCUMENT_ROOT'] . '/sp_client5.log', 'a');
@@ -401,11 +431,13 @@ class CSPListsClient extends CSOAPClient
             $URL = str_replace(
                 array('%3A', '%2F'),
                 array(':', '/'),
-                rawurlencode($GLOBALS['APPLICATION']->ConvertCharset(
-                    urldecode($arParams['URL']),
-                    LANG_CHARSET,
-                    'utf-8'
-                ))
+                rawurlencode(
+                    $GLOBALS['APPLICATION']->ConvertCharset(
+                        urldecode($arParams['URL']),
+                        LANG_CHARSET,
+                        'utf-8'
+                    )
+                )
             );
 
             $CLIENT = new CHTTP();
@@ -419,12 +451,16 @@ class CSPListsClient extends CSOAPClient
             }
 
             if ($file_contents = $CLIENT->Get($URL)) {
-                $point_pos = strrpos($URL, '.');
+                $point_pos = mb_strrpos($URL, '.');
                 $ext = '';
 
-                $new_filename = md5($URL) . ($point_pos > 0 ? substr($URL, $point_pos) : '');
+                $new_filename = md5($URL) . ($point_pos > 0 ? mb_substr($URL, $point_pos) : '');
 
-                $new_filepath = $_SERVER['DOCUMENT_ROOT'] . $this->ATTACHMENTS_PATH . '/' . substr($new_filename, 0, 2) . '/' . $new_filename;
+                $new_filepath = $_SERVER['DOCUMENT_ROOT'] . $this->ATTACHMENTS_PATH . '/' . mb_substr(
+                        $new_filename,
+                        0,
+                        2
+                    ) . '/' . $new_filename;
                 CheckDirPath($new_filepath);
 
                 $fp = fopen($new_filepath, 'wb');
@@ -457,15 +493,20 @@ class CSPListsClient extends CSOAPClient
     {
         global $APPLICATION;
 
-        if ($this->bInit)
+        if ($this->bInit) {
             return true;
+        }
 
         if (!$this->arConnectionParams['host']) {
             $APPLICATION->ThrowException('No SP host specified!');
             return false;
         }
 
-        $this->CSOAPClient($this->arConnectionParams['host'], $this->arConnectionParams['path'], $this->arConnectionParams['port']);
+        $this->CSOAPClient(
+            $this->arConnectionParams['host'],
+            $this->arConnectionParams['path'],
+            $this->arConnectionParams['port']
+        );
 
         if ($this->arConnectionParams['user']) {
             $this->setLogin($this->arConnectionParams['user']);
@@ -517,8 +558,8 @@ class CSPListsClient extends CSOAPClient
             $arAttrs = $row->getAttributes();
             foreach ($arAttrs as $attr) {
                 // cut 'ows' prefix
-                $name = substr($attr->name, 0, 4) == 'ows_'
-                    ? substr($attr->name, 4)
+                $name = mb_substr($attr->name, 0, 4) == 'ows_'
+                    ? mb_substr($attr->name, 4)
                     : $attr->name;
 
                 $arRow[$name] = $attr->content;

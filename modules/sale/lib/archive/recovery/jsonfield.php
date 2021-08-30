@@ -28,8 +28,9 @@ class JsonField extends PackedField
     {
         try {
             $unpacked = Main\Web\Json::decode($this->packedValue);
-            if (!is_array($unpacked))
+            if (!is_array($unpacked)) {
                 return null;
+            }
 
             return $this->formatResult($unpacked);
         } catch (\Exception $e) {

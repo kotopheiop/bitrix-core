@@ -141,12 +141,14 @@ abstract class Request
                     continue;
                 }
 
-                ServiceLogTable::add(array(
-                    'GROUP_ID' => 'checkout',
-                    'TYPE' => static::TYPE_CODE,
-                    'CODE' => $error->getCode(),
-                    'MESSAGE' => $error->getMessage()
-                ));
+                ServiceLogTable::add(
+                    array(
+                        'GROUP_ID' => 'checkout',
+                        'TYPE' => static::TYPE_CODE,
+                        'CODE' => $error->getCode(),
+                        'MESSAGE' => $error->getMessage()
+                    )
+                );
             }
         }
 

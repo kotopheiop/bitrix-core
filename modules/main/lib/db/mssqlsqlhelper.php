@@ -60,7 +60,7 @@ class MssqlSqlHelper extends SqlHelper
     function forSql($value, $maxLength = 0)
     {
         if ($maxLength > 0) {
-            $value = substr($value, 0, $maxLength);
+            $value = mb_substr($value, 0, $maxLength);
         }
         $value = str_replace("'", "''", $value);
         $value = str_replace("\x00", "", $value);
@@ -155,7 +155,14 @@ class MssqlSqlHelper extends SqlHelper
 
         $result = array();
 
-        foreach (preg_split("#(YYYY|MMMM|MM|MI|M|DD|HH|H|GG|G|SS|TT|T)#", $format, -1, PREG_SPLIT_DELIM_CAPTURE) as $part) {
+        foreach (
+            preg_split(
+                "#(YYYY|MMMM|MM|MI|M|DD|HH|H|GG|G|SS|TT|T)#",
+                $format,
+                -1,
+                PREG_SPLIT_DELIM_CAPTURE
+            ) as $part
+        ) {
             switch ($part) {
                 case "YYYY":
                     $result[] = "\n\tCONVERT(varchar(4),DATEPART(yyyy, $field))";
@@ -223,10 +230,11 @@ class MssqlSqlHelper extends SqlHelper
     {
         $sql = 'SUBSTRING(' . $str . ', ' . $from;
 
-        if (!is_null($length))
+        if (!is_null($length)) {
             $sql .= ', ' . $length;
-        else
+        } else {
             $sql .= ', LEN(' . $str . ') + 1 - ' . $from;
+        }
 
         return $sql . ')';
     }
@@ -378,7 +386,7 @@ class MssqlSqlHelper extends SqlHelper
     public function convertFromDbDateTime($value)
     {
         if ($value !== null) {
-            $value = new Type\DateTime(substr($value, 0, 19), "Y-m-d H:i:s");
+            $value = new Type\DateTime(mb_substr($value, 0, 19), "Y-m-d H:i:s");
         }
 
         return $value;
@@ -474,7 +482,7 @@ class MssqlSqlHelper extends SqlHelper
             if (preg_match('/^[0-9]+$/', $values[0]) && preg_match('/^[0-9]+$/', $values[1])) {
                 return 'int';
             } else {
-                return 'varchar(' . max(strlen($values[0]), strlen($values[1])) . ')';
+                return 'varchar(' . max(mb_strlen($values[0]), mb_strlen($values[1])) . ')';
             }
         } elseif ($field instanceof ORM\Fields\EnumField) {
             return 'varchar(' . max(array_map('strlen', $field->getValues())) . ')';
@@ -572,8 +580,9 @@ class MssqlSqlHelper extends SqlHelper
         $offset = intval($offset);
         $limit = intval($limit);
 
-        if ($offset > 0 && $limit <= 0)
+        if ($offset > 0 && $limit <= 0) {
             throw new Main\ArgumentException("Limit must be set if offset is set");
+        }
 
         if ($limit > 0) {
             if ($offset <= 0) {
@@ -585,10 +594,10 @@ class MssqlSqlHelper extends SqlHelper
                 preg_match_all("#\\sorder\\s+by\\s#i", $sql, $matches, PREG_OFFSET_CAPTURE);
                 if (isset($matches[0]) && is_array($matches[0]) && count($matches[0]) > 0) {
                     $idx = $matches[0][count($matches[0]) - 1][1];
-                    $s = substr($sql, $idx);
+                    $s = mb_substr($sql, $idx);
                     if (substr_count($s, '(') === substr_count($s, ')')) {
                         $orderBy = $s;
-                        $sqlTmp = substr($sql, 0, $idx);
+                        $sqlTmp = mb_substr($sql, 0, $idx);
                     }
                 }
 
@@ -647,7 +656,10 @@ class MssqlSqlHelper extends SqlHelper
             }
 
             if (isset($updateFields[$columnName]) || array_key_exists($columnName, $updateFields)) {
-                $updateColumns[] = "target." . $quotedName . ' = ' . $this->convertToDb($updateFields[$columnName], $tableField);
+                $updateColumns[] = "target." . $quotedName . ' = ' . $this->convertToDb(
+                        $updateFields[$columnName],
+                        $tableField
+                    );
             }
         }
 

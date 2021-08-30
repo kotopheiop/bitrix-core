@@ -196,8 +196,9 @@ class Reference
         $result = '';
 
         foreach ($errorCodes as $item) {
-            if (!in_array($method, $item['METHODS']) && !in_array('ALL', $item['METHODS']))
+            if (!in_array($method, $item['METHODS']) && !in_array('ALL', $item['METHODS'])) {
                 continue;
+            }
 
             if (isset($item['CODES'][$errorCode])) {
                 $result = $item['CODES'][$errorCode];
@@ -205,8 +206,9 @@ class Reference
             }
         }
 
-        if (strlen($result) <= 0)
+        if ($result == '') {
             $result = $errorCode;
+        }
 
         return $result;
     }
@@ -315,9 +317,15 @@ class Reference
     public static function getEnvelopeType($type)
     {
         $types = array(
-            'C4' => '229' . Loc::getMessage('SALE_DLVRS_ADD_DREQ_REF_MM') . ' x 324' . Loc::getMessage('SALE_DLVRS_ADD_DREQ_REF_MM'),
-            'C5' => '162' . Loc::getMessage('SALE_DLVRS_ADD_DREQ_REF_MM') . ' x 229' . Loc::getMessage('SALE_DLVRS_ADD_DREQ_REF_MM'),
-            'DL' => '220' . Loc::getMessage('SALE_DLVRS_ADD_DREQ_REF_MM') . ' x 110' . Loc::getMessage('SALE_DLVRS_ADD_DREQ_REF_MM')
+            'C4' => '229' . Loc::getMessage('SALE_DLVRS_ADD_DREQ_REF_MM') . ' x 324' . Loc::getMessage(
+                    'SALE_DLVRS_ADD_DREQ_REF_MM'
+                ),
+            'C5' => '162' . Loc::getMessage('SALE_DLVRS_ADD_DREQ_REF_MM') . ' x 229' . Loc::getMessage(
+                    'SALE_DLVRS_ADD_DREQ_REF_MM'
+                ),
+            'DL' => '220' . Loc::getMessage('SALE_DLVRS_ADD_DREQ_REF_MM') . ' x 110' . Loc::getMessage(
+                    'SALE_DLVRS_ADD_DREQ_REF_MM'
+                )
         );
 
         return isset($types[$type]) ? $types[$type] : $type;

@@ -1,4 +1,5 @@
 <?
+
 // Clear Category table
 function ClearCategoryTable()
 {
@@ -20,7 +21,6 @@ function ClearCategoryTable()
         );
         $ID = $DB->Insert("b_ticket_sla_2_category", $arFields_i, $err_mess . __LINE__);
     }
-
 }
 
 $module_id = "support";
@@ -29,15 +29,16 @@ IncludeModuleLangFile(__FILE__);
 $SUP_RIGHT = $APPLICATION->GetGroupRight($module_id);
 if ($SUP_RIGHT >= "R") :
 
-    if ($REQUEST_METHOD == "GET" && $SUP_RIGHT >= "W" && strlen($RestoreDefaults) > 0 && check_bitrix_sessid()) {
+    if ($REQUEST_METHOD == "GET" && $SUP_RIGHT >= "W" && $RestoreDefaults <> '' && check_bitrix_sessid()) {
         COption::RemoveOption("support");
-        $z = CGroup::GetList($v1 = "id", $v2 = "asc", array("ACTIVE" => "Y", "ADMIN" => "N"));
-        while ($zr = $z->Fetch())
+        $z = CGroup::GetList("id", "asc", array("ACTIVE" => "Y", "ADMIN" => "N"));
+        while ($zr = $z->Fetch()) {
             $APPLICATION->DelGroupRight($module_id, array($zr["ID"]));
+        }
     }
     $message = false;
     require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/" . $module_id . "/include.php");
-    if ($REQUEST_METHOD == "POST" && strlen($Update) > 0 && $SUP_RIGHT >= "W" && check_bitrix_sessid()) {
+    if ($REQUEST_METHOD == "POST" && $Update <> '' && $SUP_RIGHT >= "W" && check_bitrix_sessid()) {
         $SUPPORT_DIR = str_replace("\\", "/", $SUPPORT_DIR);
         $SUPPORT_DIR = str_replace("//", "/", $SUPPORT_DIR);
         COption::SetOptionString($module_id, "SUPPORT_DIR", $SUPPORT_DIR);
@@ -53,7 +54,9 @@ if ($SUP_RIGHT >= "R") :
         COption::SetOptionString($module_id, "SHOW_COMMENTS_IN_TICKET_LIST", $SHOW_COMMENTS_IN_TICKET_LIST ?: 'N');
         COption::SetOptionString($module_id, "SOURCE_MAIL", $SOURCE_MAIL);
         COption::SetOptionString($module_id, "REINDEX_MSG_S", $REINDEX_MSG_S);
-        if (preg_match_all('|#|' . BX_UTF_PCRE_MODIFIER, $SUPERTICKET_COUPON_FORMAT, $_tmp) && is_array($_tmp[0]) && count($_tmp[0]) >= 6) {
+        if (preg_match_all('|#|' . BX_UTF_PCRE_MODIFIER, $SUPERTICKET_COUPON_FORMAT, $_tmp) && is_array(
+                $_tmp[0]
+            ) && count($_tmp[0]) >= 6) {
             COption::SetOptionString($module_id, "SUPERTICKET_COUPON_FORMAT", $SUPERTICKET_COUPON_FORMAT);
         } else {
             $message = new CAdminMessage(GetMessage('SUP_SUPERTICKET_ERROR'));
@@ -62,12 +65,13 @@ if ($SUP_RIGHT >= "R") :
 
         $SUPPORT_OLD_FUNCTIONALITY_OLD = COption::GetOptionString($module_id, "SUPPORT_OLD_FUNCTIONALITY");
         $SUPPORT_OLD_FUNCTIONALITY = ($SUPPORT_OLD_FUNCTIONALITY == "Y" ? "Y" : "N");
-        if ($SUPPORT_OLD_FUNCTIONALITY_OLD <> $SUPPORT_OLD_FUNCTIONALITY) ClearCategoryTable();
+        if ($SUPPORT_OLD_FUNCTIONALITY_OLD <> $SUPPORT_OLD_FUNCTIONALITY) {
+            ClearCategoryTable();
+        }
         COption::SetOptionString($module_id, "SUPPORT_OLD_FUNCTIONALITY", $SUPPORT_OLD_FUNCTIONALITY);
         COption::SetOptionString($module_id, "SUPPORT_DEFAULT_SLA_ID", intval($SUPPORT_DEFAULT_SLA_ID));
         COption::SetOptionString($module_id, "SUPPORT_CACHE_DAYS_FORWARD", intval($SUPPORT_CACHE_DAYS_FORWARD));
         COption::SetOptionString($module_id, "SUPPORT_CACHE_DAYS_BACKWARD", intval($SUPPORT_CACHE_DAYS_BACKWARD));
-
     }
     $SUPPORT_DIR = COption::GetOptionString($module_id, "SUPPORT_DIR");
     $SUPPORT_EDIT = COption::GetOptionString($module_id, "SUPPORT_EDIT");
@@ -89,12 +93,23 @@ if ($SUP_RIGHT >= "R") :
     $SUPPORT_CACHE_DAYS_BACKWARD = COption::GetOptionString($module_id, "SUPPORT_CACHE_DAYS_BACKWARD");
     $REINDEX_MSG_S = COption::GetOptionString($module_id, "REINDEX_MSG_S", 8);
 
-    if ($message)
+    if ($message) {
         echo $message->Show();
+    }
 
     $aTabs = array(
-        array("DIV" => "edit1", "TAB" => GetMessage("MAIN_TAB_SET"), "ICON" => "support_settings", "TITLE" => GetMessage("MAIN_TAB_TITLE_SET")),
-        array("DIV" => "edit2", "TAB" => GetMessage("MAIN_TAB_RIGHTS"), "ICON" => "support_settings", "TITLE" => GetMessage("MAIN_TAB_TITLE_RIGHTS")),
+        array(
+            "DIV" => "edit1",
+            "TAB" => GetMessage("MAIN_TAB_SET"),
+            "ICON" => "support_settings",
+            "TITLE" => GetMessage("MAIN_TAB_TITLE_SET")
+        ),
+        array(
+            "DIV" => "edit2",
+            "TAB" => GetMessage("MAIN_TAB_RIGHTS"),
+            "ICON" => "support_settings",
+            "TITLE" => GetMessage("MAIN_TAB_TITLE_RIGHTS")
+        ),
     );
     $tabControl = new CAdminTabControl("tabControl", $aTabs);
     ?>
@@ -124,7 +139,15 @@ if ($SUP_RIGHT >= "R") :
     </tr>
     <tr>
         <td valign="top"><label><?= GetMessage("SUP_DEFAULT_VALUE_HIDDEN") ?></label></td>
-        <td valign="top"><? echo InputType("checkbox", "DEFAULT_VALUE_HIDDEN", "Y", $DEFAULT_VALUE_HIDDEN, false, "", 'id="DEFAULT_VALUE_HIDDEN"') ?></td>
+        <td valign="top"><? echo InputType(
+                "checkbox",
+                "DEFAULT_VALUE_HIDDEN",
+                "Y",
+                $DEFAULT_VALUE_HIDDEN,
+                false,
+                "",
+                'id="DEFAULT_VALUE_HIDDEN"'
+            ) ?></td>
     </tr>
     <tr>
         <td valign="top"><?= GetMessage("SUP_DEFAULT_RESPONSIBLE") ?></td>
@@ -227,7 +250,15 @@ if ($SUP_RIGHT >= "R") :
     </tr>
     <tr>
         <td valign="top"><?= GetMessage("SUP_SHOW_COMMENTS_IN_TICKET_LIST") ?></td>
-        <td valign="top"><? echo InputType("checkbox", "SHOW_COMMENTS_IN_TICKET_LIST", "Y", $SHOW_COMMENTS_IN_TICKET_LIST, false, "", 'id="SHOW_COMMENTS_IN_TICKET_LIST"') ?></td>
+        <td valign="top"><? echo InputType(
+                "checkbox",
+                "SHOW_COMMENTS_IN_TICKET_LIST",
+                "Y",
+                $SHOW_COMMENTS_IN_TICKET_LIST,
+                false,
+                "",
+                'id="SHOW_COMMENTS_IN_TICKET_LIST"'
+            ) ?></td>
     </tr>
     <tr>
         <td valign="top"><?= GetMessage('SUP_SUPERTICKET_COUPON_FORMAT') ?></td>
@@ -236,7 +267,8 @@ if ($SUP_RIGHT >= "R") :
     </tr>
     <?
     $arr = Array("reference" => array(), "reference_id" => array());
-    $rs = CTicketSLA::GetList($a = array('NAME' => 'ASC'), array(), $__is_f);
+    $a = array('NAME' => 'ASC');
+    $rs = CTicketSLA::GetList($a, array(), $__is_f);
     while ($arSla = $rs->GetNext()) {
         $arr['reference'][] = htmlspecialcharsback($arSla['NAME']) . ' [' . $arSla['ID'] . ']';
         $arr['reference_id'][] = $arSla['ID'];
@@ -258,7 +290,12 @@ if ($SUP_RIGHT >= "R") :
 
     <tr>
         <td valign="top"><?= GetMessage('SUP_OLD_FUNCTIONALITY') ?></td>
-        <td valign="top"><?= SelectBoxFromArray("SUPPORT_OLD_FUNCTIONALITY", $arr2, $SUPPORT_OLD_FUNCTIONALITY, "") ?></td>
+        <td valign="top"><?= SelectBoxFromArray(
+                "SUPPORT_OLD_FUNCTIONALITY",
+                $arr2,
+                $SUPPORT_OLD_FUNCTIONALITY,
+                ""
+            ) ?></td>
     </tr>
 
     <?
@@ -271,7 +308,6 @@ if ($SUP_RIGHT >= "R") :
             $arr['reference'][] = htmlspecialcharsback($arDict['NAME']);
             $arr['reference_id'][] = $arDict['SID'];
         }
-
     }
     ?>
     <tr>
@@ -328,8 +364,9 @@ if ($SUP_RIGHT >= "R") :
 
                 }
             </script>
-            <a id="RESTART_AGENTS" href="#nul"
-               onClick="javascript: restartAgentsJS();"><? echo GetMessage('SUP_RESTART_AGENTS_BTN'); ?></a>
+            <a id="RESTART_AGENTS" href="#nul" onClick="javascript: restartAgentsJS();"><? echo GetMessage(
+                    'SUP_RESTART_AGENTS_BTN'
+                ); ?></a>
         </td>
     </tr>
 
@@ -340,7 +377,8 @@ if ($SUP_RIGHT >= "R") :
     <script language="JavaScript">
         function RestoreDefaults() {
             if (confirm('<?echo AddSlashes(GetMessage("MAIN_HINT_RESTORE_DEFAULTS_WARNING"))?>'))
-                window.location = "<?echo $APPLICATION->GetCurPage()?>?RestoreDefaults=Y&lang=<?echo LANG?>&mid=<?echo urlencode($mid)?>&<?echo bitrix_sessid_get()?>";
+                window.location = "<?echo $APPLICATION->GetCurPage(
+                )?>?RestoreDefaults=Y&lang=<?echo LANG?>&mid=<?echo urlencode($mid)?>&<?echo bitrix_sessid_get()?>";
         }
     </script>
     <input <? if ($SUP_RIGHT < "W") echo "disabled" ?> type="submit" name="Update"
@@ -357,7 +395,12 @@ if ($SUP_RIGHT >= "R") :
 
     <?
     $aTabs = array(
-        array("DIV" => "edit21", "TAB" => GetMessage("SUP_SEARCH_NDX_TAB_NAME"), "ICON" => "support_settings", "TITLE" => GetMessage("SUP_SEARCH_NDX_TAB_TITLE")),
+        array(
+            "DIV" => "edit21",
+            "TAB" => GetMessage("SUP_SEARCH_NDX_TAB_NAME"),
+            "ICON" => "support_settings",
+            "TITLE" => GetMessage("SUP_SEARCH_NDX_TAB_TITLE")
+        ),
     );
     $tabControl = new CAdminTabControl("tabControl2", $aTabs);
     ?>
@@ -378,17 +421,21 @@ if ($SUP_RIGHT >= "R") :
             </div>
 
             <div id="sup_search_ndx_progressbar_nil" style="display: none;">
-                <? CAdminMessage::ShowMessage(array(
-                    "DETAILS" => "<br>#PROGRESS_BAR#",
-                    "HTML" => true,
-                    "TYPE" => "PROGRESS",
-                    "PROGRESS_TOTAL" => 100,
-                    "PROGRESS_VALUE" => 0,
-                )); ?>
+                <? CAdminMessage::ShowMessage(
+                    array(
+                        "DETAILS" => "<br>#PROGRESS_BAR#",
+                        "HTML" => true,
+                        "TYPE" => "PROGRESS",
+                        "PROGRESS_TOTAL" => 100,
+                        "PROGRESS_VALUE" => 0,
+                    )
+                ); ?>
             </div>
 
             <?= GetMessage('SUP_SEARCH_NDX_INTERVAL') ?> <input type="text" style="width: 20px" value="10"
-                                                                id="sup_search_ndx_inerval"> <?= GetMessage('SUP_SEARCH_NDX_INTERVAL_SEC') ?>
+                                                                id="sup_search_ndx_inerval"> <?= GetMessage(
+                'SUP_SEARCH_NDX_INTERVAL_SEC'
+            ) ?>
 
             <p>
                 <input type="button" value="<?= GetMessage('SUP_SEARCH_NDX_START') ?>" id="sup_search_ndx_start">

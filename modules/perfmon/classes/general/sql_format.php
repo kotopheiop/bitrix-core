@@ -1,6 +1,14 @@
 <?php
-if (!defined("T_KEYWORD"))
+
+if (!defined("T_KEYWORD")) {
     define("T_KEYWORD", 400);
+}
+if (!defined("T_BAD_CHARACTER")) {
+    define("T_BAD_CHARACTER", 401);
+}
+if (!defined("T_CHARACTER")) {
+    define("T_CHARACTER", 402);
+}
 
 class CSqlFormatFormatter
 {
@@ -36,36 +44,47 @@ class CSqlFormatFormatter
             } else {
                 if ($skipWS) {
                     $skipWS = false;
-                    if ($token[0] === T_WHITESPACE)
+                    if ($token[0] === T_WHITESPACE) {
                         continue;
+                    }
                 } elseif ($tokens[$i - 1][2] <> $token[2]) {
                     $result .= "\x3" . str_repeat("\x2", $token[2]);
-                    if ($token[0] === T_WHITESPACE)
+                    if ($token[0] === T_WHITESPACE) {
                         continue;
+                    }
                 }
 
-                if ($token[0] === T_WHITESPACE)
+                if ($token[0] === T_WHITESPACE) {
                     $result .= "\x1";
-                else
+                } else {
                     $result .= $token[1];
+                }
             }
         }
 
-        $result = preg_replace_callback("/(
+        $result = preg_replace_callback(
+            "/(
 			\\([\\x1\\x2\\x3_0-9A-Za-z.0-9_,]+\\)
 			|\\([\\x1\\x2\\x3'x%0-9,]+\\)
 			|\\([\\x1\\x2\\x3]*[a-zA-Z0-9_.]+[\\x1\\x2\\x3]*=[\\x1\\x2\\x3]*[a-zA-Z0-9_.']+[\\x1\\x2\\x3]*\\)
-		)/x", array($this, "removeSpaces"), $result);
+		)/x",
+            array($this, "removeSpaces"),
+            $result
+        );
 
-        $result = str_replace(array(
-            "\x1",
-            "\x2",
-            "\x3",
-        ), array(
-            $this->getSpace(),
-            $this->getTab(),
-            $this->getEol(),
-        ), $result);
+        $result = str_replace(
+            array(
+                "\x1",
+                "\x2",
+                "\x3",
+            ),
+            array(
+                $this->getSpace(),
+                $this->getTab(),
+                $this->getEol(),
+            ),
+            $result
+        );
 
         return $result;
     }
@@ -134,8 +153,9 @@ class CSqlTokenizer
                 $this->tokens[$this->current] === "("
                 && $this->lookForwardFor("(")
             ) {
-                if ($this->removeBalancedBrackets())
+                if ($this->removeBalancedBrackets()) {
                     continue;
+                }
             }
 
             //Remove following spaces
@@ -172,21 +192,23 @@ class CSqlTokenizer
         static $keywords = "UPDATE|SET|DELETE|SELECT|DISTINCT|INNER|LEFT|OUTER|JOIN|ON|FROM|WHERE|GROUP|BY|IN|EXISTS|HAVING|ORDER|ASC|DESC|LIMIT|AND|OR";
         static $functions = "DATE_FORMAT|UNIX_TIMESTAMP|CONCAT|DATE_ADD|UPPER|LENGTH|IFNULL";
 
-        if (isset($token[1]))
+        if (isset($token[1])) {
             $token = array($token[0], $token[1]);
-        else
+        } else {
             $token = array(T_CHARACTER, $token[0]);
+        }
 
         switch ($token[0]) {
             case T_STRING:
-                if (preg_match("/^($keywords)\$/i", $token[1]))
-                    $token = array(T_KEYWORD, strtoupper($token[1]));
-                elseif (preg_match("/^($functions)\$/i", $token[1]))
+                if (preg_match("/^($keywords)\$/i", $token[1])) {
+                    $token = array(T_KEYWORD, mb_strtoupper($token[1]));
+                } elseif (preg_match("/^($functions)\$/i", $token[1])) {
                     $token = array(T_FUNCTION, $token[1]);
+                }
                 break;
             case T_LOGICAL_AND:
             case T_LOGICAL_OR:
-                $token = array(T_KEYWORD, strtoupper($token[1]));
+                $token = array(T_KEYWORD, mb_strtoupper($token[1]));
                 break;
             case T_AS:
                 $token = array(T_KEYWORD, $token[1]);
@@ -237,10 +259,11 @@ class CSqlTokenizer
     {
         $pos = $this->current + 1;
         while (isset($this->tokens[$pos])) {
-            if ($this->tokens[$pos] == $token)
+            if ($this->tokens[$pos] == $token) {
                 return true;
-            elseif ($this->tokens[$pos][0] !== T_WHITESPACE)
+            } elseif ($this->tokens[$pos][0] !== T_WHITESPACE) {
                 return false;
+            }
             $pos++;
         }
         return false;
@@ -261,18 +284,21 @@ class CSqlLevel
         $this->tokens = $tokens;
         $this->current = 0;
         while (isset($this->tokens[$this->current])) {
-            if ($this->tokens[$this->current][1] === "(")
+            if ($this->tokens[$this->current][1] === "(") {
                 $this->balance++;
-            elseif ($this->tokens[$this->current][1] === ")")
+            } elseif ($this->tokens[$this->current][1] === ")") {
                 $this->balance--;
+            }
 
-            if ($this->tokens[$this->current][0] !== T_WHITESPACE)
+            if ($this->tokens[$this->current][0] !== T_WHITESPACE) {
                 $this->changeLevelBefore();
+            }
 
             $this->tokens[$this->current][] = array_sum($this->level);
 
-            if ($this->tokens[$this->current][0] !== T_WHITESPACE)
+            if ($this->tokens[$this->current][0] !== T_WHITESPACE) {
                 $this->changeLevelAfter();
+            }
 
             $this->current++;
         }
@@ -298,14 +324,16 @@ class CSqlLevel
             || $this->tokens[$this->current][1] === "ORDER"
         ) {
             $this->level["SELECT_" . $this->balance]--;
-            if ($this->level["JOIN_" . $this->balance] > 0)
+            if ($this->level["JOIN_" . $this->balance] > 0) {
                 $this->level["JOIN_" . $this->balance]--;
+            }
         } elseif (
             $this->tokens[$this->current][1] === "INNER"
             || $this->tokens[$this->current][1] === "LEFT"
         ) {
-            if ($this->level["JOIN_" . $this->balance] > 0)
+            if ($this->level["JOIN_" . $this->balance] > 0) {
                 $this->level["JOIN_" . $this->balance]--;
+            }
         }
     }
 
@@ -339,10 +367,11 @@ class CSqlLevel
     {
         $pos = $this->current + 1;
         while (isset($this->tokens[$pos])) {
-            if ($this->tokens[$pos][1] == $token)
+            if ($this->tokens[$pos][1] == $token) {
                 return true;
-            elseif ($this->tokens[$pos][0] !== T_WHITESPACE)
+            } elseif ($this->tokens[$pos][0] !== T_WHITESPACE) {
                 return false;
+            }
             $pos++;
         }
         return false;
@@ -352,10 +381,11 @@ class CSqlLevel
     {
         $pos = $this->current - 1;
         while (isset($this->tokens[$pos])) {
-            if ($this->tokens[$pos][1] == $token)
+            if ($this->tokens[$pos][1] == $token) {
                 return true;
-            elseif ($this->tokens[$pos][0] !== T_WHITESPACE)
+            } elseif ($this->tokens[$pos][0] !== T_WHITESPACE) {
                 return false;
+            }
             $pos--;
         }
         return false;

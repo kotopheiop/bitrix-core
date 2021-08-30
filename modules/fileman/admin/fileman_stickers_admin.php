@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/fileman/prolog.php");
 
@@ -7,8 +8,9 @@ CModule::IncludeModule("fileman");
 
 $APPLICATION->SetTitle(GetMessage('FM_ST_ACCESS_TITLE'));
 
-if (!$USER->CanDoOperation('fileman_edit_all_settings'))
+if (!$USER->CanDoOperation('fileman_edit_all_settings')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/fileman/classes/general/sticker.php");
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
@@ -18,23 +20,26 @@ $arTasks = CSticker::GetTasks();
 
 //Fetch user groups
 $arGroups = array();
-$db_groups = CGroup::GetList($order = "sort", $by = "asc", array("ACTIVE" => "Y", "ADMIN" => "N"));
-while ($arRes = $db_groups->Fetch())
+$db_groups = CGroup::GetList("sort", "asc", array("ACTIVE" => "Y", "ADMIN" => "N"));
+while ($arRes = $db_groups->Fetch()) {
     $arGroups[] = $arRes;
+}
 
 $defaultAccess = COption::GetOptionString('fileman', 'stickers_default_access', false);
-if ($defaultAccess === false)
+if ($defaultAccess === false) {
     foreach ($arTasks as $id => $task) {
         if ($task['letter'] == 'D') {
             $defaultAccess = $id;
             break;
         }
     }
+}
 
 if ($REQUEST_METHOD == "POST" && $_POST['saveperm'] == 'Y' && check_bitrix_sessid()) {
     //Clear all
-    if ($_REQUEST['clear_all'] == "Y")
+    if ($_REQUEST['clear_all'] == "Y") {
         CSticker::DeleteAll();
+    }
 
     // Settings
     COption::SetOptionString("fileman", "stickers_hide_bottom", $_REQUEST['set_hide_bottom'] == "Y" ? "Y" : "N");
@@ -45,25 +50,29 @@ if ($REQUEST_METHOD == "POST" && $_POST['saveperm'] == 'Y' && check_bitrix_sessi
     $arTaskPerm = Array();
     foreach ($arGroups as $group) {
         $tid = ${"TASKS_" . $group["ID"]};
-        if ($tid)
-            $arTaskPerm[$group["ID"]] = intVal($tid);
+        if ($tid) {
+            $arTaskPerm[$group["ID"]] = intval($tid);
+        }
     }
     CSticker::SaveAccessPermissions($arTaskPerm);
-    COption::SetOptionString('fileman', 'stickers_default_access', intVal($_REQUEST['st_default_access']));
-    $defaultAccess = intVal($_REQUEST['st_default_access']);
+    COption::SetOptionString('fileman', 'stickers_default_access', intval($_REQUEST['st_default_access']));
+    $defaultAccess = intval($_REQUEST['st_default_access']);
 }
 
 $arTaskPerm = CSticker::GetAccessPermissions();
 
 $strTaskOpt = "";
-foreach ($arTasks as $id => $task)
-    $strTaskOpt .= '<option value="' . $id . '">' . (strlen($task['letter']) > 0 ? '[' . $task['letter'] . '] ' : '') . $task['title'] . '</option>';
+foreach ($arTasks as $id => $task) {
+    $strTaskOpt .= '<option value="' . $id . '">' . ($task['letter'] <> '' ? '[' . $task['letter'] . '] ' : '') . $task['title'] . '</option>';
+}
 
 $strGroupsOpt = '<option value="">(' . GetMessage('FM_ST_SELECT_GROUP') . ')</option>';
 $arGroupIndex = array();
 foreach ($arGroups as $group) {
     $arGroupIndex[$group['ID']] = $group['NAME'];
-    $strGroupsOpt .= '<option value="' . $group['ID'] . '">' . htmlspecialcharsex($group['NAME']) . ' [' . intVal($group['ID']) . ']</option>';
+    $strGroupsOpt .= '<option value="' . $group['ID'] . '">' . htmlspecialcharsex($group['NAME']) . ' [' . intval(
+            $group['ID']
+        ) . ']</option>';
 }
 ?>
 
@@ -76,8 +85,18 @@ foreach ($arGroups as $group) {
 
     <?
     $aTabs = array(
-        array("DIV" => "stickers_settings", "TAB" => GetMessage("FM_ST_SETTINGS"), "ICON" => "fileman", "TITLE" => GetMessage("FM_ST_SETTINGS_TITLE")),
-        array("DIV" => "stickers_access", "TAB" => GetMessage("FM_ST_ACCESS"), "ICON" => "fileman", "TITLE" => GetMessage("FM_ST_ACCESS_TITLE")),
+        array(
+            "DIV" => "stickers_settings",
+            "TAB" => GetMessage("FM_ST_SETTINGS"),
+            "ICON" => "fileman",
+            "TITLE" => GetMessage("FM_ST_SETTINGS_TITLE")
+        ),
+        array(
+            "DIV" => "stickers_access",
+            "TAB" => GetMessage("FM_ST_ACCESS"),
+            "ICON" => "fileman",
+            "TITLE" => GetMessage("FM_ST_ACCESS_TITLE")
+        ),
     );
 
     $tabControl = new CAdminTabControl("tabControl", $aTabs);
@@ -92,36 +111,48 @@ foreach ($arGroups as $group) {
                 <tr>
                     <td class="adm-detail-content-cell-l" width="40%">
                         <input type="checkbox" name="set_hide_bottom" id="set_hide_bottom"
-                               value="Y" <? if (COption::GetOptionString("fileman", "stickers_hide_bottom", "Y") == "Y") {
+                               value="Y" <? if (COption::GetOptionString(
+                                "fileman",
+                                "stickers_hide_bottom",
+                                "Y"
+                            ) == "Y") {
                             echo "checked";
                         } ?>/>
                     </td>
-                    <td class="adm-detail-content-cell-r" width="60%"><label
-                                for="set_hide_bottom"><?= GetMessage('FM_ST_SET_HIDE_BOTTOM') ?></label></td>
+                    <td class="adm-detail-content-cell-r" width="60%"><label for="set_hide_bottom"><?= GetMessage(
+                                'FM_ST_SET_HIDE_BOTTOM'
+                            ) ?></label></td>
                 </tr>
                 <tr style="display: none;">
                     <td class="adm-detail-content-cell-l">
                         <input type="checkbox" name="set_supafly" id="set_supafly" value="Y"/>
                     </td>
-                    <td class="adm-detail-content-cell-r"><label
-                                for="set_supafly"><?= GetMessage('FM_ST_SET_SUPAFLY') ?></label></td>
+                    <td class="adm-detail-content-cell-r"><label for="set_supafly"><?= GetMessage(
+                                'FM_ST_SET_SUPAFLY'
+                            ) ?></label></td>
                 </tr>
                 <tr style="display: none;">
                     <td class="adm-detail-content-cell-l">
                         <input type="checkbox" name="set_smart_marker" id="set_smart_marker" value="Y"/>
                     </td>
-                    <td class="adm-detail-content-cell-r"><label
-                                for="set_smart_marker"><?= GetMessage('FM_ST_SET_SMART_MARKER') ?></label></td>
+                    <td class="adm-detail-content-cell-r"><label for="set_smart_marker"><?= GetMessage(
+                                'FM_ST_SET_SMART_MARKER'
+                            ) ?></label></td>
                 </tr>
                 <tr>
                     <td class="adm-detail-content-cell-l">
                         <input type="checkbox" name="use_hotkeys" id="use_hotkeys"
-                               value="Y" <? if (COption::GetOptionString("fileman", "stickers_use_hotkeys", "Y") == "Y") {
+                               value="Y" <? if (COption::GetOptionString(
+                                "fileman",
+                                "stickers_use_hotkeys",
+                                "Y"
+                            ) == "Y") {
                             echo "checked";
                         } ?>/>
                     </td>
-                    <td class="adm-detail-content-cell-r"><label
-                                for="use_hotkeys"><?= GetMessage('FM_ST_USE_HOTKEYS') ?></label></td>
+                    <td class="adm-detail-content-cell-r"><label for="use_hotkeys"><?= GetMessage(
+                                'FM_ST_USE_HOTKEYS'
+                            ) ?></label></td>
                 </tr>
                 <tr>
                     <td class="adm-detail-content-cell-l"><label for="set_sizes"><?= GetMessage('FM_ST_SET_SIZES') ?>
@@ -147,8 +178,11 @@ foreach ($arGroups as $group) {
 
                 <tr>
                     <td colSpan="2" class="adm-detail-content-cell-r">
-                        <a href="javascript: void('');"
-                           onclick="if (confirm('<?= GetMessage('FM_ST_CLEAR_ALL_CONFIRM'); ?>')) {BX('bxst_clear_all').value='Y'; document.forms.st_access_form.submit(); return false;}"><?= GetMessage('FM_ST_CLEAR_ALL'); ?></a>
+                        <a href="javascript: void('');" onclick="if (confirm('<?= GetMessage(
+                            'FM_ST_CLEAR_ALL_CONFIRM'
+                        ); ?>')) {BX('bxst_clear_all').value='Y'; document.forms.st_access_form.submit(); return false;}"><?= GetMessage(
+                                'FM_ST_CLEAR_ALL'
+                            ); ?></a>
                     </td>
                 </tr>
             </table>
@@ -184,23 +218,27 @@ foreach ($arGroups as $group) {
             </script>
             <table class="edit-table" id="bxst_access_table">
                 <tr>
-                    <td class="field-name" width="50%"><label
-                                for="st_default_access"><b><?= GetMessage('FM_ST_ACCESS_DEFAULT') ?>:</b></label></td>
+                    <td class="field-name" width="50%"><label for="st_default_access"><b><?= GetMessage(
+                                    'FM_ST_ACCESS_DEFAULT'
+                                ) ?>:</b></label></td>
                     <td width="50%">
                         <select name="st_default_access" id="st_default_access">
                             <? foreach ($arTasks as $id => $task): ?>
                                 <option value="<?= $id ?>" <? if ($id == $defaultAccess) {
                                     echo 'selected';
                                 } ?>>
-                                    <? echo (strlen($task['letter']) > 0 ? '[' . $task['letter'] . '] ' : '') . $task['title']; ?></option>
+                                    <? echo ($task['letter'] <> '' ? '[' . $task['letter'] . '] ' : '') . $task['title']; ?></option>
                             <? endforeach; ?>
                         </select></td>
                 </tr>
 
                 <? foreach ($arTaskPerm as $group_id => $task_id): ?>
                     <tr>
-                        <td class="field-name" width="50%"><label
-                                    for="TASKS_<?= $group_id ?>"><?= htmlspecialcharsex($arGroupIndex[$group_id]) . " [<a title=\"" . GetMessage("FM_ST_EDIT_GROUP_TITLE") . "\" href=\"/bitrix/admin/group_edit.php?ID=" . $group_id . "&amp;lang=" . LANGUAGE_ID . "\">" . $group_id . "</a>]" ?>
+                        <td class="field-name" width="50%"><label for="TASKS_<?= $group_id ?>"><?= htmlspecialcharsex(
+                                    $arGroupIndex[$group_id]
+                                ) . " [<a title=\"" . GetMessage(
+                                    "FM_ST_EDIT_GROUP_TITLE"
+                                ) . "\" href=\"/bitrix/admin/group_edit.php?ID=" . $group_id . "&amp;lang=" . LANGUAGE_ID . "\">" . $group_id . "</a>]" ?>
                                 :</label></td>
                         <td width="50%">
                             <select name="TASKS_<?= $group_id ?>" id="TASKS_<?= $group_id ?>">
@@ -208,7 +246,9 @@ foreach ($arGroups as $group) {
                                 <? foreach ($arTasks as $id => $task): ?>
                                     <option value="<?= $id ?>" <? if ($task_id == $id) {
                                         echo " selected";
-                                    } ?>><?= htmlspecialcharsex((strlen($task['letter']) > 0 ? '[' . $task['letter'] . '] ' : '') . $task['title']) ?></option>
+                                    } ?>><?= htmlspecialcharsex(
+                                            ($task['letter'] <> '' ? '[' . $task['letter'] . '] ' : '') . $task['title']
+                                        ) ?></option>
                                 <? endforeach; ?>
                             </select>
                         </td>
@@ -226,18 +266,26 @@ foreach ($arGroups as $group) {
 
                 <tr>
                     <td colSpan="2" align="center">
-                        <a href="javascript: void('');"
-                           onclick="addGroup(); return false;"><?= GetMessage('FM_ST_ADD_GROUP_TASK') ?></a>
+                        <a href="javascript: void('');" onclick="addGroup(); return false;"><?= GetMessage(
+                                'FM_ST_ADD_GROUP_TASK'
+                            ) ?></a>
                     </td>
                 </tr>
             </table>
             <?= BeginNote(); ?>
-            <?= GetMessage("FM_ST_ACCESS_NOTE", array('#LINK_BEGIN#' => '<a href="/bitrix/admin/settings.php?lang=' . LANGUAGE_ID . '&mid=fileman&tabControl_active_tab=edit3&' . bitrix_sessid_get() . '">', '#LINK_END#' => '</a>')); ?>
+            <?= GetMessage(
+                "FM_ST_ACCESS_NOTE",
+                array(
+                    '#LINK_BEGIN#' => '<a href="/bitrix/admin/settings.php?lang=' . LANGUAGE_ID . '&mid=fileman&tabControl_active_tab=edit3&' . bitrix_sessid_get(
+                        ) . '">',
+                    '#LINK_END#' => '</a>'
+                )
+            ); ?>
             <?= EndNote(); ?>
             <div style="display: none;">
                 <select id="bxst_group_sel"><?= $strGroupsOpt ?></select>
                 <select id="bxst_task_sel">
-                    <option value=""><?= '< ' . strtolower(GetMessage('FM_ST_ACCESS_DEFAULT')) . ' >' ?></option>
+                    <option value=""><?= '< ' . mb_strtolower(GetMessage('FM_ST_ACCESS_DEFAULT')) . ' >' ?></option>
                     <?= $strTaskOpt ?>
                 </select>
             </div>

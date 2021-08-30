@@ -27,10 +27,28 @@ Loc::loadMessages(__FILE__);
 $err_mess = "File: " . __FILE__ . "<br>Line: ";
 $old_module_version = \CVote::IsOldVersion();
 
-$tabControl = new CAdminTabControl("tabControl", array(
-    array("DIV" => "edit1", "TAB" => GetMessage("VOTE_VOTE"), "ICON" => "main_vote_edit", "TITLE" => GetMessage("VOTE_VOTE")),
-    array("DIV" => "edit2", "TAB" => GetMessage("VOTE_PROP"), "ICON" => "main_vote_edit", "TITLE" => GetMessage("VOTE_PARAMS")),
-    array("DIV" => "edit3", "TAB" => GetMessage("VOTE_UNIQUE_PARAMS"), "ICON" => "main_vote_edit", "TITLE" => GetMessage("VOTE_UNIQUE_PARAMS"))));
+$tabControl = new CAdminTabControl(
+    "tabControl", array(
+    array(
+        "DIV" => "edit1",
+        "TAB" => GetMessage("VOTE_VOTE"),
+        "ICON" => "main_vote_edit",
+        "TITLE" => GetMessage("VOTE_VOTE")
+    ),
+    array(
+        "DIV" => "edit2",
+        "TAB" => GetMessage("VOTE_PROP"),
+        "ICON" => "main_vote_edit",
+        "TITLE" => GetMessage("VOTE_PARAMS")
+    ),
+    array(
+        "DIV" => "edit3",
+        "TAB" => GetMessage("VOTE_UNIQUE_PARAMS"),
+        "ICON" => "main_vote_edit",
+        "TITLE" => GetMessage("VOTE_UNIQUE_PARAMS")
+    )
+)
+);
 
 //region Check access
 /* @var $request \Bitrix\Main\HttpRequest */
@@ -38,21 +56,24 @@ $request = \Bitrix\Main\Context::getCurrent()->getRequest();
 $message = false;
 $channels = array();
 $VOTE_RIGHT = $APPLICATION->GetGroupRight("vote");
-$db_res = \Bitrix\Vote\Channel::getList(array(
-    'select' => array("*"),
-    'filter' => ($VOTE_RIGHT < "W" ? array(
-        "ACTIVE" => "Y",
-        "HIDDEN" => "N",
-        ">=PERMISSION.PERMISSION" => 4,
-        "PERMISSION.GROUP_ID" => $USER->GetUserGroupArray()
-    ) : array()),
-    'order' => array(
-        'TITLE' => 'ASC'
-    ),
-    'group' => array("ID")
-));
-while ($res = $db_res->GetNext())
+$db_res = \Bitrix\Vote\Channel::getList(
+    array(
+        "select" => array("*"),
+        "filter" => ($VOTE_RIGHT < "W" ? array(
+            "ACTIVE" => "Y",
+            "HIDDEN" => "N",
+            ">=PERMISSION.PERMISSION" => 4,
+            "PERMISSION.GROUP_ID" => $USER->GetUserGroupArray()
+        ) : array()),
+        "order" => array(
+            "TITLE" => "ASC"
+        ),
+        "group" => array("ID")
+    )
+);
+while ($res = $db_res->GetNext()) {
     $channels[$res["ID"]] = $res;
+}
 if (empty($channels)) {
     $APPLICATION->SetTitle(GetMessage("VOTE_NEW_RECORD"));
     require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
@@ -93,8 +114,9 @@ try {
 
     if ($request->getRequestMethod() == "POST" && (
         ($request->getPost("save") || $request->getPost("apply")))) {
-        if (!check_bitrix_sessid())
+        if (!check_bitrix_sessid()) {
             throw new \Bitrix\Main\ArgumentException("Bad sessid.");
+        }
         $saveAction = true;
         $voteId = $request->getPost("ID");
         $copyVoteId = $request->getPost("COPY_ID");
@@ -102,45 +124,54 @@ try {
     }
     if ($voteId > 0) {
         $vote = \Bitrix\Vote\Vote::loadFromId($voteId);
-        if (!$vote->canEdit($USER->GetID()))
+        if (!$vote->canEdit($USER->GetID())) {
             throw new \Bitrix\Main\ArgumentException(GetMessage("ACCESS_DENIED"), "Access denied.");
+        }
         $channelId = ($saveAction ? $channelId : ($channelId ?: $vote->get("CHANNEL_ID")));
-    } else if ($copyVoteId > 0) {
-        $copyVote = \Bitrix\Vote\Vote::loadFromId($copyVoteId);
-        global $USER;
-        if (!$copyVote->canRead($USER->GetID()))
-            throw new \Bitrix\Main\ArgumentException(GetMessage("ACCESS_DENIED"), "Access denied.");
-        $channelId = ($saveAction ? $channelId : ($channelId ?: $copyVote->get("CHANNEL_ID")));
+    } else {
+        if ($copyVoteId > 0) {
+            $copyVote = \Bitrix\Vote\Vote::loadFromId($copyVoteId);
+            global $USER;
+            if (!$copyVote->canRead($USER->GetID())) {
+                throw new \Bitrix\Main\ArgumentException(GetMessage("ACCESS_DENIED"), "Access denied.");
+            }
+            $channelId = ($saveAction ? $channelId : ($channelId ?: $copyVote->get("CHANNEL_ID")));
+        }
     }
     $fields["CHANNEL_ID"] = $channelId;
     /* @var \Bitrix\Vote\Channel $channel */
     $channel = \Bitrix\Vote\Channel::loadFromId($channelId);
-    if (!isset($vote) && !$channel->canEditVote($USER->getId()))
+    if (!isset($vote) && !$channel->canEditVote($USER->getId())) {
         throw new \Bitrix\Main\ArgumentException(GetMessage("ACCESS_DENIED"), "Access denied.");
+    }
 
     $t = (isset($vote) ? $vote : (isset($copyVote) ? $copyVote : null));
     if ($t) {
-        foreach ($fields as $key => &$value)
+        foreach ($fields as $key => &$value) {
             $value = $t->get($key);
+        }
     }
     if ($request->getRequestMethod() == "GET" && $request->get("action") == "reset") {
-        if (!check_bitrix_sessid())
+        if (!check_bitrix_sessid()) {
             throw new \Bitrix\Main\ArgumentException("Bad sessid.");
+        }
         \CVote::Reset($voteId);
-        $url = $APPLICATION->GetCurPage() . "?lang=" . LANGUAGE_ID . "&ID=" . $ID . "&" . $tabControl->ActiveTabParam() .
+        $url = $APPLICATION->GetCurPage() . "?lang=" . LANGUAGE_ID . "&ID=" . $ID . "&" . $tabControl->ActiveTabParam(
+            ) .
             (!empty($request->get("return_url")) ? "&return_url=" . urlencode($request->get("return_url")) : "");
         LocalRedirect($url);
     }
     if ($saveAction) {
         foreach ($fields as $key => &$value) {
-            if ($request->getPost($key) !== null)
+            if ($request->getPost($key) !== null) {
                 $value = $request->getPost($key);
+            }
         }
 
         $arIMAGE_ID = array();
-        if (array_key_exists("IMAGE_ID", $_FILES))
+        if (array_key_exists("IMAGE_ID", $_FILES)) {
             $arIMAGE_ID = $_FILES["IMAGE_ID"];
-        elseif ($request->getPost("IMAGE_ID")) {
+        } elseif ($request->getPost("IMAGE_ID")) {
             $arIMAGE_ID = CFile::MakeFileArray($_SERVER["DOCUMENT_ROOT"] . $request->getPost("IMAGE_ID"));
             $arIMAGE_ID["COPY_FILE"] = "Y";
         }
@@ -157,9 +188,7 @@ try {
             }
         }
         $ID = isset($vote) ? $vote->getId() : 0;
-        if (!CVote::CheckFields(($ID > 0 ? "UPDATE" : "ADD"), $fields, $ID)) {
-            $result = false;
-        } else if ($ID <= 0) {
+        if ($ID <= 0) {
             $fields["AUTHOR_ID"] = $GLOBALS["USER"]->GetId();
             $result = $ID = CVote::Add($fields);
         } else {
@@ -171,26 +200,34 @@ try {
                 $newID = $ID;
                 $DB->Update("b_vote", array("COUNTER" => "0"), "WHERE ID=" . $newID, $err_mess . __LINE__);
                 if ($copyVote->get("IMAGE_ID") > 0 &&
-                    empty($arIMAGE_ID['name']) &&
-                    $arIMAGE_ID['del'] != 'Y'
+                    empty($arIMAGE_ID["name"]) &&
+                    $arIMAGE_ID["del"] != "Y"
                 ) {
                     $newImageId = CFile::CopyFile($copyVote->get("IMAGE_ID"));
                     if ($newImageId) {
-                        $DB->Update("b_vote", array("IMAGE_ID" => $newImageId), "WHERE ID=" . $newID, $err_mess . __LINE__);
+                        $DB->Update(
+                            "b_vote",
+                            array("IMAGE_ID" => $newImageId),
+                            "WHERE ID=" . $newID,
+                            $err_mess . __LINE__
+                        );
                     }
                 }
 
                 $state = true;
-                $rQuestions = CVoteQuestion::GetList($copyVote->getId(), $by, $order, array(), $is_filtered);
+                $rQuestions = CVoteQuestion::GetList($copyVote->getId());
                 while ($arQuestion = $rQuestions->Fetch()) {
-                    $state = $state && (CVoteQuestion::Copy($arQuestion['ID'], $newID) !== false);
+                    $state = $state && (CVoteQuestion::Copy($arQuestion["ID"], $newID) !== false);
                 }
             }
 
-            $url = $APPLICATION->GetCurPage() . "?lang=" . LANGUAGE_ID . "&ID=" . $ID . "&" . $tabControl->ActiveTabParam() .
+            $url = $APPLICATION->GetCurPage(
+                ) . "?lang=" . LANGUAGE_ID . "&ID=" . $ID . "&" . $tabControl->ActiveTabParam() .
                 (!empty($_REQUEST["return_url"]) ? "&return_url=" . urlencode($_REQUEST["return_url"]) : "");
             if ($request->getPost("save") !== null) {
-                $url = ($request->getPost("return_url") ?: "vote_list.php?lang=" . LANGUAGE_ID . "&find_channel_id=" . $channelId . "&set_filter=Y");
+                $url = ($request->getPost(
+                    "return_url"
+                ) ?: "vote_list.php?lang=" . LANGUAGE_ID . "&find_channel_id=" . $channelId . "&set_filter=Y");
             }
             LocalRedirect($url);
         }
@@ -206,15 +243,22 @@ try {
 }
 //endregion
 
-$APPLICATION->SetTitle(isset($vote) ? GetMessage("VOTE_EDIT_RECORD", array("#ID#" => $vote->getId())) : GetMessage("VOTE_NEW_RECORD"));
+$APPLICATION->SetTitle(
+    isset($vote) ? GetMessage("VOTE_EDIT_RECORD", array("#ID#" => $vote->getId())) : GetMessage("VOTE_NEW_RECORD")
+);
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
-if (is_null($fields["C_SORT"]))
+if (is_null($fields["C_SORT"])) {
     $fields["C_SORT"] = CVote::GetNextSort($channel->getId());
-if (is_null($fields["DATE_START"]))
-    $fields["DATE_START"] = ($channel->get("VOTE_SINGLE") != "N" ? CVote::GetNextStartDate($channel->get("VOTE_SINGLE")) : "");
-if (is_null($fields["EVENT2"]))
+}
+if (is_null($fields["DATE_START"])) {
+    $fields["DATE_START"] = ($channel->get("VOTE_SINGLE") != "N" ? CVote::GetNextStartDate(
+        $channel->get("VOTE_SINGLE")
+    ) : "");
+}
+if (is_null($fields["EVENT2"])) {
     $fields["EVENT2"] = $channel->get("SYMBOLIC_NAME");
+}
 $tmp = $fields;
 
 foreach ($tmp as $key => $val):
@@ -230,62 +274,86 @@ if (isset($vote)) {
             "TEXT" => GetMessage("VOTE_VOTE_LIST"),
             "TITLE" => GetMessage("VOTE_VOTE_LIST"),
             "LINK" => "vote_list.php?lang=" . LANGUAGE_ID . "&amp;find_channel_id=" . $fields["CHANNEL_ID"],
-            "ICON" => "btn_list"),
+            "ICON" => "btn_list"
+        ),
         array(
             "TEXT" => GetMessage("VOTE_COPY"),
             "TITLE" => GetMessage("VOTE_COPY_TITLE"),
             "LINK" => "vote_edit.php?lang=" . LANGUAGE_ID . "&amp;COPY_ID=$ID&" . bitrix_sessid_get(),
-            "ICON" => "btn_copy"),
+            "ICON" => "btn_copy"
+        ),
         array(
             "TEXT" => GetMessage("VOTE_DELETE"),
             "TITLE" => GetMessage("VOTE_DELETE_RECORD"),
-            "LINK" => "javascript:if(confirm('" . GetMessage("VOTE_DELETE_RECORD_CONFIRM") . "')) window.location='/bitrix/admin/vote_list.php?action=delete&ID=" . $ID . "&" . bitrix_sessid_get() . "&lang=" . LANGUAGE_ID . "';",
-            "ICON" => "btn_delete"));
+            "LINK" => "javascript:if(confirm('" . GetMessage(
+                    "VOTE_DELETE_RECORD_CONFIRM"
+                ) . "')) window.location='/bitrix/admin/vote_list.php?action=delete&ID=" . $ID . "&" . bitrix_sessid_get(
+                ) . "&lang=" . LANGUAGE_ID . "';",
+            "ICON" => "btn_delete"
+        )
+    );
     if ($vote["COUNTER"] > 0) {
-        array_push($toolbar, array(
+        array_push(
+            $toolbar,
+            array(
                 "TEXT" => GetMessage("VOTE_VOTES_DROPDOWN", array("COUNTER" => $vote["COUNTER"])),
                 "MENU" => array(
                     array(
                         "TEXT" => GetMessage("VOTE_VOTES_GOTO_VIEW"),
-                        "LINK" => "/bitrix/admin/vote_results.php?lang=" . LANGUAGE_ID . "&VOTE_ID=" . $ID),
+                        "LINK" => "/bitrix/admin/vote_results.php?lang=" . LANGUAGE_ID . "&VOTE_ID=" . $ID
+                    ),
                     array(
                         "TEXT" => GetMessage("VOTE_VOTES_GOTO_LIST"),
                         "LINK" => "/bitrix/admin/vote_user_votes_table.php?lang=" . LANGUAGE_ID . "&VOTE_ID=" . $ID,
-                        "ICON" => "btn_list"),
+                        "ICON" => "btn_list"
+                    ),
                     array(
                         "TEXT" => GetMessage("VOTE_VOTES_RESET"),
-                        "LINK" => "javascript:if(confirm('" . GetMessage("VOTE_RESET_RECORD_CONFIRM") . "')) window.location='/bitrix/admin/vote_edit.php?ID=" . $ID . "&action=reset&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get() . "';",
-                        "ICON" => "btn_refresh"),
+                        "LINK" => "javascript:if(confirm('" . GetMessage(
+                                "VOTE_RESET_RECORD_CONFIRM"
+                            ) . "')) window.location='/bitrix/admin/vote_edit.php?ID=" . $ID . "&action=reset&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get(
+                            ) . "';",
+                        "ICON" => "btn_refresh"
+                    ),
                     array(
                         "TEXT" => GetMessage("VOTE_VOTES_EXPORT"),
                         "LINK" => "vote_user_votes.php?lang=" . LANGUAGE_ID . "&find_vote_id=$ID&export=xls",
-                        "ICON" => "btn_excel"),
+                        "ICON" => "btn_excel"
+                    ),
                     array(
                         "TEXT" => GetMessage("VOTE_VOTES_EXPORT_2"),
                         "LINK" => "vote_user_votes_table.php?lang=" . LANGUAGE_ID . "&VOTE_ID=$ID&mode=excel",
-                        "ICON" => "btn_excel")
-                ))
+                        "ICON" => "btn_excel"
+                    )
+                )
+            )
         );
     }
     (new CAdminContextMenu($toolbar))->Show();
 
     $cnt = count($vote->getQuestions());
-    $context = new CAdminContextMenu(array(
+    $context = new CAdminContextMenu(
         array(
-            "TEXT" => GetMessage("VOTE_QUESTIONS") . ($cnt > 0 ? " [" . $cnt . "]" : ""),
-            "TITLE" => GetMessage("VOTE_QUESTIONS_TITLE"),
-            "LINK" => "/bitrix/admin/vote_question_list.php?lang=" . LANGUAGE_ID . "&VOTE_ID=" . $ID),
-        array(
-            "TEXT" => GetMessage("VOTE_QUESTIONS_ADD"),
-            "TITLE" => GetMessage("VOTE_QUESTIONS_ADD_TITLE"),
-            "LINK" => "/bitrix/admin/vote_question_edit.php?lang=" . LANGUAGE_ID . "&VOTE_ID=$ID",
-            "ICON" => "btn_new")));
+            array(
+                "TEXT" => GetMessage("VOTE_QUESTIONS") . ($cnt > 0 ? " [" . $cnt . "]" : ""),
+                "TITLE" => GetMessage("VOTE_QUESTIONS_TITLE"),
+                "LINK" => "/bitrix/admin/vote_question_list.php?lang=" . LANGUAGE_ID . "&VOTE_ID=" . $ID
+            ),
+            array(
+                "TEXT" => GetMessage("VOTE_QUESTIONS_ADD"),
+                "TITLE" => GetMessage("VOTE_QUESTIONS_ADD_TITLE"),
+                "LINK" => "/bitrix/admin/vote_question_edit.php?lang=" . LANGUAGE_ID . "&VOTE_ID=$ID",
+                "ICON" => "btn_new"
+            )
+        )
+    );
     $context->Show();
 }
 //endregion
 
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 ?>
     <form name="form1" method="POST" action="" enctype="multipart/form-data">
         <input type="hidden" name="lang" value="<?= LANGUAGE_ID ?>">
@@ -297,8 +365,10 @@ if ($message)
 
         if (isset($vote)) {
             ?><input type="hidden" name="ID" value="<?= $vote->getId() ?>" /><?
-        } else if (isset($copyVote)) {
-            ?><input type="hidden" name="COPY_ID" value="<?= $copyVote->getId() ?>" /><?
+        } else {
+            if (isset($copyVote)) {
+                ?><input type="hidden" name="COPY_ID" value="<?= $copyVote->getId() ?>" /><?
+            }
         }
         ?>
         <tr>
@@ -307,7 +377,17 @@ if ($message)
         </tr>
         <tr>
             <td><?= GetMessage("VOTE_DATE") . ":" ?></td>
-            <td><?= CalendarPeriod("DATE_START", $fields["~DATE_START"], "DATE_END", $fields["~DATE_END"], "form1", "N", false, false, "19") ?></td>
+            <td><?= CalendarPeriod(
+                    "DATE_START",
+                    $fields["~DATE_START"],
+                    "DATE_END",
+                    $fields["~DATE_END"],
+                    "form1",
+                    "N",
+                    false,
+                    false,
+                    "19"
+                ) ?></td>
         </tr>
         <?
 
@@ -320,9 +400,16 @@ if ($message)
                 <?
                 if ($bFileman) {
                     echo CMedialib::InputFile(
-                        "IMAGE_ID", $str_PREVIEW_PICTURE,
-                        array("IMAGE" => "Y", "PATH" => "Y", "FILE_SIZE" => "Y", "DIMENSIONS" => "Y",
-                            "IMAGE_POPUP" => "Y", "MAX_SIZE" => array("W" => 200, "H" => 200)), //info
+                        "IMAGE_ID",
+                        $str_PREVIEW_PICTURE,
+                        array(
+                            "IMAGE" => "Y",
+                            "PATH" => "Y",
+                            "FILE_SIZE" => "Y",
+                            "DIMENSIONS" => "Y",
+                            "IMAGE_POPUP" => "Y",
+                            "MAX_SIZE" => array("W" => 200, "H" => 200)
+                        ), //info
                         array(), //file
                         array(), //server
                         array(), //media lib
@@ -332,7 +419,7 @@ if ($message)
                     );
                 } else {
                     CFile::InputFile("IMAGE_ID", 20, $fields["IMAGE_ID"]);
-                    if (strlen($fields["IMAGE_ID"]) > 0):
+                    if ($fields["IMAGE_ID"] <> ''):
                         echo "<br />";
                         CFile::ShowImage($fields["IMAGE_ID"], 200, 200, "border=0", "", true);
                     endif;
@@ -347,7 +434,13 @@ if ($message)
             <td align="center" colspan="2">
                 <?
                 if (COption::GetOptionString("vote", "USE_HTML_EDIT") == "Y" && CModule::IncludeModule("fileman")):
-                    CFileMan::AddHTMLEditorFrame("DESCRIPTION", $fields["DESCRIPTION"], "DESCRIPTION_TYPE", $fields["DESCRIPTION_TYPE"], array('height' => '200', 'width' => '100%'));
+                    CFileMan::AddHTMLEditorFrame(
+                        "DESCRIPTION",
+                        $fields["DESCRIPTION"],
+                        "DESCRIPTION_TYPE",
+                        $fields["DESCRIPTION_TYPE"],
+                        array('height' => '200', 'width' => '100%')
+                    );
                 else:
                     ?>
                     <input type="radio" name="DESCRIPTION_TYPE" id="DESCRIPTION_TYPE_TEXT"
@@ -369,7 +462,7 @@ if ($message)
         //region Descr Tab
         $tabControl->BeginNextTab();
         if (isset($vote)) {
-            if (strlen($vote->get("TIMESTAMP_X")) > 0 && $vote->get("TIMESTAMP_X") != "00.00.0000 00:00:00") {
+            if ($vote->get("TIMESTAMP_X") <> '' && $vote->get("TIMESTAMP_X") != "00.00.0000 00:00:00") {
                 ?>
                 <tr>
                 <td><?= GetMessage("VOTE_TIMESTAMP") ?></td>
@@ -524,12 +617,14 @@ if ($message)
                             GetMessage("VOTE_SECOND"),
                             GetMessage("VOTE_MINUTE"),
                             GetMessage("VOTE_HOUR"),
-                            GetMessage("VOTE_DAY")),
+                            GetMessage("VOTE_DAY")
+                        ),
                         "reference_id" => array("S", "M", "H", "D")
                     ),
                     "S",
                     "",
-                    "class=\"typeselect\"");
+                    "class=\"typeselect\""
+                );
                 ?></td>
         </tr>
         <tr>
@@ -574,7 +669,9 @@ if ($message)
         <?
         //endregion
 
-        $tabControl->Buttons(array("back_url" => "vote_list.php?lang=" . LANGUAGE_ID . ($channelId > 0 ? "&find_channel_id=" . $channelId . "&set_filter=Y" : "")));
+        $tabControl->Buttons(
+            array("back_url" => "vote_list.php?lang=" . LANGUAGE_ID . ($channelId > 0 ? "&find_channel_id=" . $channelId . "&set_filter=Y" : ""))
+        );
         $tabControl->End();
         ?>
 
@@ -639,11 +736,14 @@ $tabControl->ShowWarnings("form1", $message);
 <?
 if (isset($vote)) {
     ?><h2><?= GetMessage("VOTE_QUESTIONS") ?></h2><?
-    ?><? $APPLICATION->IncludeComponent("bitrix:voting.admin.questions", ".default",
+    ?><? $APPLICATION->IncludeComponent(
+        "bitrix:voting.admin.questions",
+        ".default",
         array(
             "VOTE_ID" => $vote->getId(),
             "SHOW_FILTER" => "N"
-        )); ?><?
+        )
+    ); ?><?
 }
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_admin.php");
 ?>

@@ -24,7 +24,7 @@ class GroupHelper extends NameHelper
      *
      * @return string Entity class name
      */
-    public function getEntityRoadMap()
+    public static function getEntityRoadMap()
     {
         return array(
             'main' => array(
@@ -94,7 +94,9 @@ class GroupHelper extends NameHelper
         if ($result['success']) {
             // update also locations
             $entityClass = static::getEntityClass('link');
-            $entityClass::deleteAllForOwner($gId); // we should also remove links when removing group (for other entities this is not always so)
+            $entityClass::deleteAllForOwner(
+                $gId
+            ); // we should also remove links when removing group (for other entities this is not always so)
         }
 
         return $result;

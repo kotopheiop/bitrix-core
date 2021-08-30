@@ -19,25 +19,29 @@ class CAdminTabControlDrag extends CAdminTabControl
 
     function BeginNextTab($options = array())
     {
-        if ($this->AUTOSAVE)
+        if ($this->AUTOSAVE) {
             $this->AUTOSAVE->Init();
+        }
 
         //end previous tab
         $this->EndTab();
 
-        if ($this->tabIndex >= count($this->tabs))
+        if ($this->tabIndex >= count($this->tabs)) {
             return;
+        }
 
         $css = '';
-        if ($this->tabs[$this->tabIndex]["DIV"] <> $this->selectedTab)
+        if ($this->tabs[$this->tabIndex]["DIV"] <> $this->selectedTab) {
             $css .= 'display:none; ';
+        }
 
         echo '
 <div class="adm-detail-content" id="' . $this->tabs[$this->tabIndex]["DIV"] . '"' . ($css != '' ? ' style="' . $css . '"' : '') . '>';
 
-        if (!empty($this->tabs[$this->tabIndex]["TITLE"]))
+        if (!empty($this->tabs[$this->tabIndex]["TITLE"])) {
             echo '
 	<div class="adm-detail-title">' . $this->tabs[$this->tabIndex]["TITLE"] . '</div>';
+        }
 
         if ($this->tabs[$this->tabIndex]["IS_DRAGGABLE"] == "Y") {
             $arJsParams = array(
@@ -78,7 +82,9 @@ class CAdminTabControlDrag extends CAdminTabControl
         $s = '';
         if (!$this->bPublicMode) {
             if (count($this->tabs) > 1 && $this->bCanExpand/* || $this->AUTOSAVE*/) {
-                $s .= '<div class="adm-detail-title-setting" onclick="' . $this->name . '.ToggleTabs();" title="' . GetMessage("admin_lib_expand_tabs") . '" id="' . $this->name . '_expand_link"><span class="adm-detail-title-setting-btn adm-detail-title-expand"></span></div>';
+                $s .= '<div class="adm-detail-title-setting" onclick="' . $this->name . '.ToggleTabs();" title="' . GetMessage(
+                        "admin_lib_expand_tabs"
+                    ) . '" id="' . $this->name . '_expand_link"><span class="adm-detail-title-setting-btn adm-detail-title-expand"></span></div>';
             }
         }
         return $s;
@@ -91,18 +97,21 @@ class CAdminTabControlDrag extends CAdminTabControl
 
     function getTabSettings($tabIdx)
     {
-        if (isset($this->tabs[$tabIdx]["SETTINGS"]))
+        if (isset($this->tabs[$tabIdx]["SETTINGS"])) {
             return $this->tabs[$tabIdx]["SETTINGS"];
+        }
 
         $tabSettings = CUserOptions::getOption($this->moduleId, $this->getCurrentTabOptionName($tabIdx));
 
         $tabSettings["order"] = isset($tabSettings["order"]) ? $tabSettings["order"] : array();
-        if (!empty($tabSettings["order"]))
+        if (!empty($tabSettings["order"])) {
             $tabSettings["order"] = explode(",", $tabSettings["order"]);
+        }
 
         $tabSettings["hidden"] = isset($tabSettings["hidden"]) ? $tabSettings["hidden"] : array();
-        if (!empty($tabSettings["hidden"]))
+        if (!empty($tabSettings["hidden"])) {
             $tabSettings["hidden"] = explode(",", $tabSettings["hidden"]);
+        }
 
         $this->tabs[$tabIdx]["SETTINGS"] = $tabSettings;
         return $tabSettings;
@@ -118,8 +127,9 @@ class CAdminTabControlDrag extends CAdminTabControl
                 $blocksOrder = $defaultBlocksOrder;
             } else {
                 foreach ($blocksOrder as $key => $blockCode) {
-                    if (!in_array($blockCode, $defaultBlocksOrder))
+                    if (!in_array($blockCode, $defaultBlocksOrder)) {
                         unset($blocksOrder[$key]);
+                    }
                 }
                 $blocksOrder = array_unique(array_merge($blocksOrder, $defaultBlocksOrder));
             }
@@ -143,7 +153,10 @@ class CAdminTabControlDrag extends CAdminTabControl
     function DraggableBlockBegin($title, $dataId = "")
     {
         echo '
-		<div class="adm-container-draggable' . (in_array($dataId, $this->getTabHiddenBlocks($this->tabIndex - 1)) ? ' hidden' : '') . '" data-role="dragObj" data-id="' . $dataId . '">
+		<div class="adm-container-draggable' . (in_array(
+                $dataId,
+                $this->getTabHiddenBlocks($this->tabIndex - 1)
+            ) ? ' hidden' : '') . '" data-role="dragObj" data-id="' . $dataId . '">
 			<div class="adm-bus-statusorder">
 				<div class="adm-bus-component-container">
 					<div class="adm-bus-component-title-container draggable">
@@ -190,8 +203,9 @@ class CAdminDraggableBlockEngine
         foreach (GetModuleEvents("main", $this->id, true) as $arEvent) {
             $res = ExecuteModuleEventEx($arEvent, array($args));
 
-            if (is_array($res))
+            if (is_array($res)) {
                 $this->engines[$res["BLOCKSET"]] = $res;
+            }
         }
     }
 
@@ -208,14 +222,15 @@ class CAdminDraggableBlockEngine
      */
     public function check()
     {
-        $result = True;
+        $result = true;
 
         foreach ($this->engines as $value) {
             if (array_key_exists("check", $value)) {
                 $resultTmp = call_user_func_array($value["check"], array($this->args));
 
-                if ($result && !$resultTmp)
+                if ($result && !$resultTmp) {
                     $result = false;
+                }
             }
         }
 
@@ -227,14 +242,15 @@ class CAdminDraggableBlockEngine
      */
     public function action()
     {
-        $result = True;
+        $result = true;
 
         foreach ($this->engines as $value) {
             if (array_key_exists("action", $value)) {
                 $resultTmp = call_user_func_array($value["action"], array($this->args));
 
-                if ($result && !$resultTmp)
-                    $result = False;
+                if ($result && !$resultTmp) {
+                    $result = false;
+                }
             }
         }
 
@@ -252,8 +268,9 @@ class CAdminDraggableBlockEngine
             if (array_key_exists("getBlocksBrief", $value)) {
                 $tmp = call_user_func_array($value["getBlocksBrief"], array($this->args));
 
-                if (is_array($tmp))
+                if (is_array($tmp)) {
                     $blocks = $blocks + $tmp;
+                }
             }
         }
 
@@ -269,9 +286,14 @@ class CAdminDraggableBlockEngine
     {
         $result = '';
 
-        foreach ($this->engines as $key => $value)
-            if (array_key_exists("getBlockContent", $value))
-                $result .= call_user_func_array($value["getBlockContent"], array($blockCode, $selectedTab, $this->args));
+        foreach ($this->engines as $key => $value) {
+            if (array_key_exists("getBlockContent", $value)) {
+                $result .= call_user_func_array(
+                    $value["getBlockContent"],
+                    array($blockCode, $selectedTab, $this->args)
+                );
+            }
+        }
 
         return $result;
     }
@@ -284,8 +306,9 @@ class CAdminDraggableBlockEngine
         $result = '';
 
         foreach ($this->engines as $key => $value) {
-            if (array_key_exists("getScripts", $value))
+            if (array_key_exists("getScripts", $value)) {
                 $result .= call_user_func_array($value["getScripts"], array($this->args));
+            }
         }
 
         return $result;

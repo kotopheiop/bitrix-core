@@ -93,7 +93,10 @@ class AccountNumberCompatibilityManager
                         $settingsSequent = $settings[SequentNumberGenerator::getType()];
                         if (isset($settingsSequent['step']) && $settingsSequent['step'] == 1
                             &&
-                            key_exists('periodicBy', $settingsSequent) && $settingsSequent['periodicBy'] == SequentNumberGenerator::DAY
+                            key_exists(
+                                'periodicBy',
+                                $settingsSequent
+                            ) && $settingsSequent['periodicBy'] == SequentNumberGenerator::DAY
                         ) {
                             $type = 'DATE';
                         }
@@ -102,7 +105,10 @@ class AccountNumberCompatibilityManager
                         $settingsSequent = $settings[SequentNumberGenerator::getType()];
                         if (isset($settingsSequent['step']) && $settingsSequent['step'] == 1
                             &&
-                            key_exists('periodicBy', $settingsSequent) && $settingsSequent['periodicBy'] == SequentNumberGenerator::MONTH
+                            key_exists(
+                                'periodicBy',
+                                $settingsSequent
+                            ) && $settingsSequent['periodicBy'] == SequentNumberGenerator::MONTH
                         ) {
                             $type = 'DATE';
                         }
@@ -111,7 +117,10 @@ class AccountNumberCompatibilityManager
                         $settingsSequent = $settings[SequentNumberGenerator::getType()];
                         if (isset($settingsSequent['step']) && $settingsSequent['step'] == 1
                             &&
-                            key_exists('periodicBy', $settingsSequent) && $settingsSequent['periodicBy'] == SequentNumberGenerator::YEAR
+                            key_exists(
+                                'periodicBy',
+                                $settingsSequent
+                            ) && $settingsSequent['periodicBy'] == SequentNumberGenerator::YEAR
                         ) {
                             $type = 'DATE';
                         }
@@ -119,10 +128,21 @@ class AccountNumberCompatibilityManager
                     default:
                         if (!$type) {
                             // check if template is a custom type - it should contain only custom word
-                            $isStartIsUserDefinedPattern = strncmp($numberTemplate, NumberGenerator::USER_DEFINED_SYMBOL_START, strlen(NumberGenerator::USER_DEFINED_SYMBOL_START)) === 0;
-                            $isEndIsUserDefinedPattern = substr($numberTemplate, -strlen(NumberGenerator::USER_DEFINED_SYMBOL_END)) === NumberGenerator::USER_DEFINED_SYMBOL_END;
+                            $isStartIsUserDefinedPattern = strncmp(
+                                    $numberTemplate,
+                                    NumberGenerator::USER_DEFINED_SYMBOL_START,
+                                    mb_strlen(NumberGenerator::USER_DEFINED_SYMBOL_START)
+                                ) === 0;
+                            $isEndIsUserDefinedPattern = mb_substr(
+                                    $numberTemplate,
+                                    -mb_strlen(NumberGenerator::USER_DEFINED_SYMBOL_END)
+                                ) === NumberGenerator::USER_DEFINED_SYMBOL_END;
                             if ($isStartIsUserDefinedPattern && $isEndIsUserDefinedPattern) {
-                                $type = substr(substr($numberTemplate, strlen(NumberGenerator::USER_DEFINED_SYMBOL_START)), 0, -strlen(NumberGenerator::USER_DEFINED_SYMBOL_END));
+                                $type = mb_substr(
+                                    mb_substr($numberTemplate, mb_strlen(NumberGenerator::USER_DEFINED_SYMBOL_START)),
+                                    0,
+                                    -mb_strlen(NumberGenerator::USER_DEFINED_SYMBOL_END)
+                                );
                             }
                         }
                         break;

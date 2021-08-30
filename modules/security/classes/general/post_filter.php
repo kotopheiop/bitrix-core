@@ -36,14 +36,18 @@ class CSecurityXSSDetect
      */
     public static function OnEndBufferContent(&$content)
     {
-        if (CSecuritySystemInformation::isCliMode())
+        if (CSecuritySystemInformation::isCliMode()) {
             return;
+        }
 
-        if (CSecurityFilterMask::Check(SITE_ID, $_SERVER["REQUEST_URI"]))
+        if (CSecurityFilterMask::Check(SITE_ID, $_SERVER["REQUEST_URI"])) {
             return;
+        }
 
         if (!preg_match('#</script#', $content)) // Probably does not include the scripts
+        {
             return;
+        }
 
         $filter = new CSecurityXSSDetect();
         $filter->process($content);
@@ -58,13 +62,13 @@ class CSecurityXSSDetect
         $this->variables = new CSecurityXSSDetectVariables();
         $this->extractVariablesFromArray("\$_GET", $_GET);
         $this->extractVariablesFromArray("\$_POST", $_POST);
+        $this->extractVariablesFromArray("\$_SERVER[REQUEST_URI]", explode("/", $_SERVER['REQUEST_URI']));
 
         if (!$this->variables->isEmpty()) {
             $this->searches = $this->variables->getSearchValues();
             $this->quotedSearches = $this->variables->getQuoteSearchValues();
             $content = $this->filter($content);
         }
-
     }
 
     /**
@@ -126,8 +130,9 @@ class CSecurityXSSDetect
      */
     protected function logVariable($name, $value, $sourceScript)
     {
-        if (defined("ANTIVIRUS_CREATE_TRACE"))
+        if (defined("ANTIVIRUS_CREATE_TRACE")) {
             $this->CreateTrace($name, $value, $sourceScript);
+        }
 
         return CSecurityEvent::getInstance()->doLog("SECURITY", "SECURITY_FILTER_XSS2", $name, $value);
     }
@@ -148,8 +153,9 @@ class CSecurityXSSDetect
             fwrite($f, $var_name . ": " . $str);
             fwrite($f, "\n------------\n" . $script);
             fwrite($f, "\n------------------------------\n\$_SERVER:\n");
-            foreach ($_SERVER as $k => $v)
+            foreach ($_SERVER as $k => $v) {
                 fwrite($f, $k . " = " . $v . "\n");
+            }
 
             fclose($f);
             @chmod($fn, BX_FILE_PERMISSIONS);
@@ -174,17 +180,18 @@ class CSecurityXSSDetect
     protected function findInArray($string, $searches)
     {
         foreach ($searches as $i => $search) {
-            $pos = static::fastStrpos($string, $search["value"]);
+            $pos = strpos($string, $search["value"]);
             if ($pos !== false) {
-                $prevChar = static::fastSubstr($string, $pos - 1, 1);
+                $prevChar = substr($string, $pos - 1, 1);
                 $isFound = ($prevChar !== '\\');
                 if ($isFound && preg_match("/^[a-zA-Z_]/", $search["value"])) {
                     $isFound = preg_match("/^[a-zA-Z_]/", $prevChar) <= 0;
                 }
-            }
 
-            if ($isFound)
-                return $i;
+                if ($isFound) {
+                    return $i;
+                }
+            }
         }
         return null;
     }
@@ -198,11 +205,13 @@ class CSecurityXSSDetect
         $search = $this->findInArray($body, $this->quotedSearches);
         if ($search !== null) {
             return $this->quotedSearches[$search];
-        } else if (!empty($this->searches)) {
-            $bodyWithoutQuotes = $this->removeQuotedStrings($body, false);
-            $search = $this->findInArray($bodyWithoutQuotes, $this->searches);
-            if ($search !== null) {
-                return $this->searches[$search];
+        } else {
+            if (!empty($this->searches)) {
+                $bodyWithoutQuotes = $this->removeQuotedStrings($body, false);
+                $search = $this->findInArray($bodyWithoutQuotes, $this->searches);
+                if ($search !== null) {
+                    return $this->searches[$search];
+                }
             }
         }
 
@@ -234,10 +243,11 @@ class CSecurityXSSDetect
      */
     protected function getFilteredScript($strs)
     {
-        if (trim($strs[2]) === "")
+        if (trim($strs[2]) === "") {
             return $strs[0];
-        else
+        } else {
             return $strs[1] . $this->getFilteredScriptBody($strs[2]) . $strs[3];
+        }
     }
 
     /**
@@ -249,7 +259,11 @@ class CSecurityXSSDetect
         $stringLen = CUtil::BinStrlen($string) * 2;
         CUtil::AdjustPcreBacktrackLimit($stringLen);
 
-        return preg_replace_callback("/(<script[^>]*>)(.*?)(<\\/script[^>]*>)/is", array($this, "getFilteredScript"), $string);
+        return preg_replace_callback(
+            "/(<script[^>]*>)(.*?)(<\\/script[^>]*>)/is",
+            array($this, "getFilteredScript"),
+            $string
+        );
     }
 
     /**
@@ -258,18 +272,23 @@ class CSecurityXSSDetect
      */
     protected function addVariable($name, $value)
     {
-        if (!is_string($value))
+        if (!is_string($value)) {
             return;
-        if (strlen($value) <= 2)
-            return; //too short
-        if (preg_match("/^(?P<quot>[\"']?)[^`,;+\-*\/\{\}\[\]\(\)&\\|=\\\\]*(?P=quot)\$/D", $value))
-            return; //there is no potantially dangerous code
-        if (preg_match("/^[,0-9_-]*\$/D", $value))
-            return; //there is no potantially dangerous code
-        if (preg_match("/^[0-9 \n\r\t\\[\\]]*\$/D", $value))
-            return; //there is no potantially dangerous code
+        }
+        if (mb_strlen($value) <= 2) {
+            return;
+        } //too short
+        if (preg_match("/^(?P<quot>[\"']?)[^`,;+\-*\/\{\}\[\]\(\)&\\|=\\\\]*(?P=quot)\$/D", $value)) {
+            return;
+        } //there is no potantially dangerous code
+        if (preg_match("/^[,0-9_-]*\$/D", $value)) {
+            return;
+        } //there is no potantially dangerous code
+        if (preg_match("/^[0-9 \n\r\t\\[\\]]*\$/D", $value)) {
+            return;
+        } //there is no potantially dangerous code
 
-        $this->variables->addVariable($name, str_replace(chr(0), "", $value));
+        $this->variables->addVariable($name, $value);
     }
 
     /**
@@ -278,34 +297,17 @@ class CSecurityXSSDetect
      */
     protected function extractVariablesFromArray($name, $array)
     {
-        if (!is_array($array))
+        if (!is_array($array)) {
             return;
+        }
 
         foreach ($array as $key => $value) {
             $variableName = sprintf('%s[%s]', $name, $key);
-            if (is_array($value))
+            if (is_array($value)) {
                 $this->extractVariablesFromArray($variableName, $value);
-            else
+            } else {
                 $this->addVariable($variableName, $value);
+            }
         }
     }
-
-    protected static function fastStrpos($haystack, $needle)
-    {
-        if (function_exists("mb_orig_strpos")) {
-            return mb_orig_strpos($haystack, $needle);
-        }
-
-        return strpos($haystack, $needle);
-    }
-
-    protected static function fastSubstr($string, $start, $length = null)
-    {
-        if (function_exists("mb_orig_substr")) {
-            return mb_orig_substr($string, $start, $length);
-        }
-
-        return substr($string, $start, $length);
-    }
-
 }

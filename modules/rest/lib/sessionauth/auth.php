@@ -25,8 +25,7 @@ class Auth
 
         $externalAuthId = $USER->GetParam('EXTERNAL_AUTH_ID');
 
-        // user with external '__controller' is real user
-        if ($externalAuthId === "__controller") {
+        if ($USER->IsAdmin() || $externalAuthId === "__controller") {
             return true;
         }
 
@@ -67,8 +66,15 @@ class Auth
             static::checkHttpAuth();
             static::checkCookieAuth();
 
-            if (check_bitrix_sessid() || $authKey === bitrix_sessid()) {
-                if ($USER->isAuthorized()) {
+            if (!$USER->isAuthorized()) {
+                $error = true;
+                $res = array(
+                    'error' => 'access_denied',
+                    'error_description' => 'User not authorized',
+                    'additional' => array('sessid' => bitrix_sessid(), 'extended_error' => 'user_not_authorized')
+                );
+            } else {
+                if (check_bitrix_sessid() || $authKey === bitrix_sessid()) {
                     if (self::isAccessAllowed()) {
                         $error = false;
                         $res = array(
@@ -85,15 +91,20 @@ class Auth
                         }
                     } else {
                         $error = true;
-                        $res = array('error' => 'access_denied', 'error_description' => 'Access denied for this type of user', 'additional' => array('type' => $USER->GetParam('EXTERNAL_AUTH_ID')));
+                        $res = array(
+                            'error' => 'access_denied',
+                            'error_description' => 'Access denied for this type of user',
+                            'additional' => array('type' => $USER->GetParam('EXTERNAL_AUTH_ID'))
+                        );
                     }
                 } else {
                     $error = true;
-                    $res = array('error' => 'access_denied', 'error_description' => 'User not authorized', 'additional' => array('sessid' => bitrix_sessid()));
+                    $res = array(
+                        'error' => 'session_failed',
+                        'error_description' => 'Sessid check failed',
+                        'additional' => array('sessid' => bitrix_sessid())
+                    );
                 }
-            } else {
-                $error = true;
-                $res = array('error' => 'session_failed', 'error_description' => 'Sessid check failed', 'additional' => array('sessid' => bitrix_sessid()));
             }
 
             return !$error;

@@ -43,7 +43,9 @@ class OrderDocument extends \Bitrix\Sale\Exchange\OneC\OrderDocument
         $result = null;
         $message = self::getMessage();
 
-        if (is_array($value["#"][$message["SALE_EXPORT_SUBORDINATES"]][0]["#"][$message["SALE_EXPORT_SUBORDINATE"]][0]["#"])) {
+        if (is_array(
+            $value["#"][$message["SALE_EXPORT_SUBORDINATES"]][0]["#"][$message["SALE_EXPORT_SUBORDINATE"]][0]["#"]
+        )) {
             $rawSubordinates = $value["#"][$message["SALE_EXPORT_SUBORDINATES"]][0]["#"][$message["SALE_EXPORT_SUBORDINATE"]];
 
             foreach ($rawSubordinates as $raw) {

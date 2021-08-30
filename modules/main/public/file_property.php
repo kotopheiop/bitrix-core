@@ -1,45 +1,54 @@
 <?
+
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 IncludeModuleLangFile(__FILE__);
 
-$popupWindow = new CJSPopup(GetMessage("PAGE_PROP_WINDOW_TITLE"), array("SUFFIX" => ($_GET['subdialog'] == 'Y' ? 'subdialog' : '')));
+$popupWindow = new CJSPopup(
+    GetMessage("PAGE_PROP_WINDOW_TITLE"),
+    array("SUFFIX" => ($_GET['subdialog'] == 'Y' ? 'subdialog' : ''))
+);
 
 if (IsModuleInstalled("fileman")) {
-    if (!$USER->CanDoOperation('fileman_admin_files') && !$USER->CanDoOperation('fileman_edit_existent_files'))
+    if (!$USER->CanDoOperation('fileman_admin_files') && !$USER->CanDoOperation('fileman_edit_existent_files')) {
         $popupWindow->ShowError(GetMessage("PAGE_PROP_ACCESS_DENIED"));
+    }
 }
 
 $io = CBXVirtualIo::GetInstance();
 
 //Page path
 $path = "/";
-if (isset($_REQUEST["path"]) && strlen($_REQUEST["path"]) > 0)
+if (isset($_REQUEST["path"]) && $_REQUEST["path"] <> '') {
     $path = $io->CombinePath("/", $_REQUEST["path"]);
+}
 
 //Lang
-if (!isset($_REQUEST["lang"]) || strlen($_REQUEST["lang"]) <= 0)
+if (!isset($_REQUEST["lang"]) || $_REQUEST["lang"] == '') {
     $lang = LANGUAGE_ID;
+}
 
 //BackUrl
 $back_url = (isset($_REQUEST["back_url"]) ? $_REQUEST["back_url"] : "");
 
 //Site ID
 $site = SITE_ID;
-if (isset($_REQUEST["site"]) && strlen($_REQUEST["site"]) > 0) {
+if (isset($_REQUEST["site"]) && $_REQUEST["site"] <> '') {
     $obSite = CSite::GetByID($_REQUEST["site"]);
-    if ($arSite = $obSite->Fetch())
+    if ($arSite = $obSite->Fetch()) {
         $site = $_REQUEST["site"];
+    }
 }
 
 $documentRoot = CSite::GetSiteDocRoot($site);
 $absoluteFilePath = $documentRoot . $path;
 
 //Check permissions
-if (!$io->FileExists($absoluteFilePath) && !$io->DirectoryExists($absoluteFilePath))
+if (!$io->FileExists($absoluteFilePath) && !$io->DirectoryExists($absoluteFilePath)) {
     $popupWindow->ShowError(GetMessage("PAGE_PROP_FILE_NOT_FOUND") . " (" . htmlspecialcharsbx($path) . ")");
-elseif (!$USER->CanDoFileOperation('fm_edit_existent_file', Array($site, $path)))
+} elseif (!$USER->CanDoFileOperation('fm_edit_existent_file', Array($site, $path))) {
     $popupWindow->ShowError(GetMessage("PAGE_PROP_ACCESS_DENIED"));
+}
 
 $f = $io->GetFile($absoluteFilePath);
 $fileContent = $f->GetContents();
@@ -54,8 +63,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !check_bitrix_sessid()) {
     CUtil::JSPostUnescape();
 
     //Title
-    if (isset($_POST["pageTitle"]) && strlen($_POST["pageTitle"]) > 0)
+    if (isset($_POST["pageTitle"]) && $_POST["pageTitle"] <> '') {
         $fileContent = SetPrologTitle($fileContent, $_POST["pageTitle"]);
+    }
 
     //Properties
     if (isset($_POST["PROPERTY"]) && is_array($_POST["PROPERTY"])) {
@@ -63,14 +73,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !check_bitrix_sessid()) {
             $arProperty["CODE"] = (isset($arProperty["CODE"]) ? trim($arProperty["CODE"]) : "");
             $arProperty["VALUE"] = (isset($arProperty["VALUE"]) ? trim($arProperty["VALUE"]) : "");
 
-            if (preg_match("/[a-zA-Z_-~]+/i", $arProperty["CODE"]))
+            if (preg_match("/[a-zA-Z_-~]+/i", $arProperty["CODE"])) {
                 $fileContent = SetPrologProperty($fileContent, $arProperty["CODE"], $arProperty["VALUE"]);
+            }
         }
     }
 
     //Tags
-    if (isset($_POST["TAGS"]) && IsModuleInstalled("search"))
-        $fileContent = SetPrologProperty($fileContent, COption::GetOptionString("search", "page_tag_property", "tags"), $_POST["TAGS"]);
+    if (isset($_POST["TAGS"]) && IsModuleInstalled("search")) {
+        $fileContent = SetPrologProperty(
+            $fileContent,
+            COption::GetOptionString("search", "page_tag_property", "tags"),
+            $_POST["TAGS"]
+        );
+    }
 
     $f = $io->GetFile($absoluteFilePath);
     $arUndoParams = array(
@@ -85,13 +101,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !check_bitrix_sessid()) {
 
     $success = $APPLICATION->SaveFileContent($absoluteFilePath, $fileContent);
 
-    if ($success === false && ($exception = $APPLICATION->GetException()))
+    if ($success === false && ($exception = $APPLICATION->GetException())) {
         $strWarning = $exception->msg;
-    else {
+    } else {
         CUndo::ShowUndoMessage(CUndo::Add($arUndoParams));
 
-        if ($_GET['subdialog'] == 'Y')
+        if ($_GET['subdialog'] == 'Y') {
             echo "<script>structReload('" . urlencode($_REQUEST["path"]) . "');</script>";
+        }
         $popupWindow->Close($bReload = ($_GET['subdialog'] <> 'Y'), $back_url);
         die();
     }
@@ -99,19 +116,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !check_bitrix_sessid()) {
 
 //Properties from fileman settings
 $arFilemanProperties = Array();
-if (CModule::IncludeModule("fileman") && is_callable(Array("CFileMan", "GetPropstypes")))
+if (CModule::IncludeModule("fileman") && is_callable(Array("CFileMan", "GetPropstypes"))) {
     $arFilemanProperties = CFileMan::GetPropstypes($site);
+}
 
 //Properties from page
 $arDirProperties = Array();
 if ($strWarning != "") {
     //Restore post values if error occured
-    $pageTitle = (isset($_POST["pageTitle"]) && strlen($_POST["pageTitle"]) > 0 ? $_POST["pageTitle"] : "");
+    $pageTitle = (isset($_POST["pageTitle"]) && $_POST["pageTitle"] <> '' ? $_POST["pageTitle"] : "");
 
     if (isset($_POST["PROPERTY"]) && is_array($_POST["PROPERTY"])) {
         foreach ($_POST["PROPERTY"] as $arProperty) {
-            if (isset($arProperty["VALUE"]) && strlen($arProperty["VALUE"]) > 0)
+            if (isset($arProperty["VALUE"]) && $arProperty["VALUE"] <> '') {
                 $arDirProperties[$arProperty["CODE"]] = $arProperty["VALUE"];
+            }
         }
     }
 } else {
@@ -122,38 +141,43 @@ if ($strWarning != "") {
 
 //All properties for file. Includes properties from root folders
 $arInheritProperties = $APPLICATION->GetDirPropertyList(Array($site, $path));
-if ($arInheritProperties === false)
+if ($arInheritProperties === false) {
     $arInheritProperties = Array();
+}
 
 //Tags
 if (IsModuleInstalled("search")) {
     $tagPropertyCode = COption::GetOptionString("search", "page_tag_property", "tags");
     $tagPropertyValue = "";
 
-    if ($strWarning != "" && isset($_POST["TAGS"]) && strlen($_POST["TAGS"]) > 0) //Restore post value if error occured
+    if ($strWarning != "" && isset($_POST["TAGS"]) && $_POST["TAGS"] <> '') //Restore post value if error occured
+    {
         $tagPropertyValue = $_POST["TAGS"];
-    elseif (array_key_exists($tagPropertyCode, $arDirProperties))
+    } elseif (array_key_exists($tagPropertyCode, $arDirProperties)) {
         $tagPropertyValue = $arDirProperties[$tagPropertyCode];
+    }
 
     unset($arFilemanProperties[$tagPropertyCode]);
     unset($arDirProperties[$tagPropertyCode]);
-    unset($arInheritProperties[strtoupper($tagPropertyCode)]);
+    unset($arInheritProperties[mb_strtoupper($tagPropertyCode)]);
 }
 
 //Delete equal properties
 $arGlobalProperties = Array();
 foreach ($arFilemanProperties as $propertyCode => $propertyDesc) {
-    if (array_key_exists($propertyCode, $arDirProperties))
+    if (array_key_exists($propertyCode, $arDirProperties)) {
         $arGlobalProperties[$propertyCode] = $arDirProperties[$propertyCode];
-    else
+    } else {
         $arGlobalProperties[$propertyCode] = "";
+    }
 
     unset($arDirProperties[$propertyCode]);
-    unset($arInheritProperties[strtoupper($propertyCode)]);
+    unset($arInheritProperties[mb_strtoupper($propertyCode)]);
 }
 
-foreach ($arDirProperties as $propertyCode => $propertyValue)
-    unset($arInheritProperties[strtoupper($propertyCode)]);
+foreach ($arDirProperties as $propertyCode => $propertyValue) {
+    unset($arInheritProperties[mb_strtoupper($propertyCode)]);
+}
 ?>
 
 
@@ -162,16 +186,19 @@ foreach ($arDirProperties as $propertyCode => $propertyValue)
 $popupWindow->ShowTitlebar(GetMessage("PAGE_PROP_WINDOW_TITLE"));
 $popupWindow->StartDescription("bx-property-page");
 
-if ($strWarning != "")
+if ($strWarning != "") {
     $popupWindow->ShowValidationError($strWarning);
+}
 ?>
 
     <p><?= GetMessage("PAGE_PROP_WINDOW_TITLE") ?> <b><?= htmlspecialcharsbx($path) ?></b></p>
 
 <? if (IsModuleInstalled("fileman")): ?>
-    <p>
-        <a href="/bitrix/admin/fileman_html_edit.php?lang=<?= urlencode($lang) ?>&site=<?= urlencode($site) ?>&path=<?= urlencode($path) ?>&back_url=<?= urlencode($back_url) ?>"><?= GetMessage("PAGE_PROP_EDIT_IN_ADMIN") ?></a>
-    </p>
+    <p><a href="/bitrix/admin/fileman_html_edit.php?lang=<?= urlencode($lang) ?>&site=<?= urlencode(
+            $site
+        ) ?>&path=<?= urlencode($path) ?>&back_url=<?= urlencode($back_url) ?>"><?= GetMessage(
+                "PAGE_PROP_EDIT_IN_ADMIN"
+            ) ?></a></p>
 <? endif ?>
 
 <?
@@ -220,7 +247,7 @@ $popupWindow->StartContent();
 
             <tr style="height:30px;">
                 <td class="bx-popup-label bx-width30"><?= (
-                    strlen($arFilemanProperties[$propertyCode]) > 0 ?
+                    $arFilemanProperties[$propertyCode] <> '' ?
                         htmlspecialcharsEx($arFilemanProperties[$propertyCode]) :
                         htmlspecialcharsEx($propertyCode))
                     ?>:
@@ -229,7 +256,7 @@ $popupWindow->StartContent();
 
                     <? $inheritValue = $APPLICATION->GetDirProperty($propertyCode, Array($site, $path)); ?>
 
-                    <? if (strlen($inheritValue) > 0 && strlen($propertyValue) <= 0):
+                    <? if ($inheritValue <> '' && $propertyValue == ''):
                         $jsInheritPropIds .= "," . $propertyIndex;
                         ?>
 
@@ -240,8 +267,9 @@ $popupWindow->StartContent();
                              style="overflow:hidden;padding:2px 12px 2px 2px; border:1px solid white; width:90%; cursor:text; box-sizing:border-box; -moz-box-sizing:border-box;background-color:transparent; background-position:right; background-repeat:no-repeat;"
                              onclick="BXEditProperty(<?= $propertyIndex ?>)"
                              onmouseover="this.style.borderColor = '#434B50 #ADC0CF #ADC0CF #434B50';"
-                             onmouseout="this.style.borderColor = 'white'"
-                             class="edit-field"><?= htmlspecialcharsEx($inheritValue) ?></div>
+                             onmouseout="this.style.borderColor = 'white'" class="edit-field"><?= htmlspecialcharsEx(
+                                $inheritValue
+                            ) ?></div>
 
                         <div id="bx_edit_property_<?= $propertyIndex ?>" style="display:none;"></div>
 
@@ -250,7 +278,9 @@ $popupWindow->StartContent();
                         <input type="text" name="PROPERTY[<?= $propertyIndex ?>][VALUE]"
                                value="<?= htmlspecialcharsEx($propertyValue) ?>" style="width:90%;"><input type="hidden"
                                                                                                            name="PROPERTY[<?= $propertyIndex ?>][CODE]"
-                                                                                                           value="<?= htmlspecialcharsEx($propertyCode) ?>"/>
+                                                                                                           value="<?= htmlspecialcharsEx(
+                                                                                                               $propertyCode
+                                                                                                           ) ?>"/>
 
                     <? endif ?>
                 </td>
@@ -271,8 +301,9 @@ $popupWindow->StartContent();
                          style="overflow:hidden;padding:2px 12px 2px 2px; border:1px solid white; width:90%; cursor:text; box-sizing:border-box; -moz-box-sizing:border-box;background-color:transparent; background-position:right; background-repeat:no-repeat;"
                          onclick="BXEditProperty(<?= $propertyIndex ?>)"
                          onmouseover="this.style.borderColor = '#434B50 #ADC0CF #ADC0CF #434B50'"
-                         onmouseout="this.style.borderColor = 'white'"
-                         class="edit-field"><?= htmlspecialcharsEx($propertyValue) ?></div>
+                         onmouseout="this.style.borderColor = 'white'" class="edit-field"><?= htmlspecialcharsEx(
+                            $propertyValue
+                        ) ?></div>
 
                     <div id="bx_edit_property_<?= $propertyIndex ?>" style="display:none;"></div>
 
@@ -388,7 +419,9 @@ $popupWindow->ShowStandardButtons();
             <?=$jsInheritPropIds?>
 
             for (var index = 0; index < jsInheritProps.length; index++)
-                oBXHint = new BXHint("<?=GetMessage("PAGE_PROP_INHERIT_TITLE")?>", document.getElementById("bx_view_property_" + jsInheritProps[index]), {"width": 200});
+                oBXHint = new BXHint("<?=GetMessage(
+                    "PAGE_PROP_INHERIT_TITLE"
+                )?>", document.getElementById("bx_view_property_" + jsInheritProps[index]), {"width": 200});
         }
 
         window.BXFolderEditHint();

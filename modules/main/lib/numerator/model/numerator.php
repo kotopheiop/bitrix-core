@@ -155,10 +155,12 @@ class NumeratorTable extends DataManager
      */
     public static function loadSettings($numeratorId)
     {
-        $numerator = static::getList([
-            'select' => ['*',],
-            'filter' => ['=ID' => $numeratorId],
-        ])->fetch();
+        $numerator = static::getList(
+            [
+                'select' => ['*',],
+                'filter' => ['=ID' => $numeratorId],
+            ]
+        )->fetch();
 
         if ($numerator) {
             $result = [];

@@ -1,13 +1,15 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 if (!CModule::IncludeModule('learning')) {
     require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php'); // second system's prolog
 
-    if (IsModuleInstalled('learning') && defined('LEARNING_FAILED_TO_LOAD_REASON'))
+    if (IsModuleInstalled('learning') && defined('LEARNING_FAILED_TO_LOAD_REASON')) {
         echo LEARNING_FAILED_TO_LOAD_REASON;
-    else
+    } else {
         CAdminMessage::ShowMessage(GetMessage('LEARNING_MODULE_NOT_FOUND'));
+    }
 
     require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin.php');    // system's epilog
     exit();
@@ -66,27 +68,32 @@ $arFilter = Array(
     "ACCESS_OPERATIONS" => CLearnAccess::OP_LESSON_READ | CLearnAccess::OP_LESSON_WRITE
 );
 
-if (!empty($filter_summary_from))
+if (!empty($filter_summary_from)) {
     $arFilter[">=SUMMARY"] = $filter_summary_from;
-if (!empty($filter_summary_to))
+}
+if (!empty($filter_summary_to)) {
     $arFilter["<=SUMMARY"] = $filter_summary_to;
+}
 
-if (!empty($filter_user))
+if (!empty($filter_user)) {
     $arFilter["USER"] = $filter_user;
+}
 
 
 if ($lAdmin->EditAction()) //save from the list
 {
     foreach ($FIELDS as $ID => $arFields) {
-        if (!$lAdmin->IsUpdated($ID))
+        if (!$lAdmin->IsUpdated($ID)) {
             continue;
+        }
 
         $res = CCertification::GetByID($ID);
-        if (!$res->Fetch())
+        if (!$res->Fetch()) {
             continue;
+        }
 
         $DB->StartTransaction();
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
         $ob = new CCertification;
         if (!$ob->Update($ID, $arFields)) {
@@ -103,20 +110,26 @@ if ($lAdmin->EditAction()) //save from the list
 if ($arID = $lAdmin->GroupAction()) {
     if ($_REQUEST['action_target'] == 'selected') {
         $rsData = CCertification::GetList(Array($by => $order), $arFilter);
-        while ($arRes = $rsData->Fetch())
+        while ($arRes = $rsData->Fetch()) {
             $arID[] = $arRes['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
 
         $ID = intval($ID);
         switch ($_REQUEST['action']) {
             case "delete":
                 $oAccess = CLearnAccess::GetInstance($USER->GetID());
-                if (!$oAccess->IsLessonAccessible(CCertification::LessonIdByCertId($ID), CLearnAccess::OP_LESSON_WRITE))
+                if (!$oAccess->IsLessonAccessible(
+                    CCertification::LessonIdByCertId($ID),
+                    CLearnAccess::OP_LESSON_WRITE
+                )) {
                     break;
+                }
 
                 @set_time_limit(0);
                 $DB->StartTransaction();
@@ -130,9 +143,11 @@ if ($arID = $lAdmin->GroupAction()) {
             case "deactivate":
                 $cl = new CCertification;
                 $arFields = Array("ACTIVE" => ($_REQUEST['action'] == "activate" ? "Y" : "N"));
-                if (!$cl->Update($ID, $arFields))
-                    if ($e = $APPLICATION->GetException())
+                if (!$cl->Update($ID, $arFields)) {
+                    if ($e = $APPLICATION->GetException()) {
                         $lAdmin->AddGroupError(GetMessage("SAVE_ERROR") . $ID . ": " . $e->GetString(), $ID);
+                    }
+                }
                 break;
         }
     }
@@ -140,10 +155,11 @@ if ($arID = $lAdmin->GroupAction()) {
 
 
 // fetch data
-if (isset($_REQUEST["mode"]) && $_REQUEST["mode"] == "excel")
+if (isset($_REQUEST["mode"]) && $_REQUEST["mode"] == "excel") {
     $arNavParams = array();
-else
+} else {
     $arNavParams = array('nPageSize' => CAdminResult::GetNavSize($sTableID));
+}
 
 $rsData = CCertification::GetList(array($by => $order), $arFilter, $arNavParams);
 $rsData = new CAdminResult($rsData, $sTableID);
@@ -152,17 +168,49 @@ $rsData = new CAdminResult($rsData, $sTableID);
 $lAdmin->NavText($rsData->GetNavPrint(GetMessage("LEARNING_ADMIN_RESULTS")));
 
 
-$lAdmin->AddHeaders(array(
-    array("id" => "ID", "content" => "ID", "sort" => "id", "default" => true),
-    array("id" => "TIMESTAMP_X", "content" => GetMessage('LEARNING_COURSE_ADM_DATECH'), "sort" => "timestamp_x", "default" => true),
-    array("id" => "COURSE_NAME", "content" => GetMessage('LEARNING_ADMIN_COURSE_ID'), "default" => true),
-    array("id" => "USER_NAME", "content" => GetMessage('LEARNING_ADMIN_STUDENT'), "sort" => "user_name", "default" => true),
-    array("id" => "SUMMARY", "content" => GetMessage('LEARNING_ADMIN_SUMMARY'), "sort" => "summary", "default" => true),
-    array("id" => "MAX_SUMMARY", "content" => GetMessage('LEARNING_ADMIN_MAX_SUMMARY'), "sort" => "max_summary", "default" => true),
-    array("id" => "ACTIVE", "content" => GetMessage('LEARNING_COURSE_ADM_ACT'), "sort" => "active", "default" => true),
-    array("id" => "SORT", "content" => GetMessage('LEARNING_COURSE_ADM_SORT'), "sort" => "sort", "default" => true),
-    array("id" => "FROM_ONLINE", "content" => GetMessage('LEARNING_ADMIN_ONLINE'), "sort" => "from_online", "default" => true),
-));
+$lAdmin->AddHeaders(
+    array(
+        array("id" => "ID", "content" => "ID", "sort" => "id", "default" => true),
+        array(
+            "id" => "TIMESTAMP_X",
+            "content" => GetMessage('LEARNING_COURSE_ADM_DATECH'),
+            "sort" => "timestamp_x",
+            "default" => true
+        ),
+        array("id" => "COURSE_NAME", "content" => GetMessage('LEARNING_ADMIN_COURSE_ID'), "default" => true),
+        array(
+            "id" => "USER_NAME",
+            "content" => GetMessage('LEARNING_ADMIN_STUDENT'),
+            "sort" => "user_name",
+            "default" => true
+        ),
+        array(
+            "id" => "SUMMARY",
+            "content" => GetMessage('LEARNING_ADMIN_SUMMARY'),
+            "sort" => "summary",
+            "default" => true
+        ),
+        array(
+            "id" => "MAX_SUMMARY",
+            "content" => GetMessage('LEARNING_ADMIN_MAX_SUMMARY'),
+            "sort" => "max_summary",
+            "default" => true
+        ),
+        array(
+            "id" => "ACTIVE",
+            "content" => GetMessage('LEARNING_COURSE_ADM_ACT'),
+            "sort" => "active",
+            "default" => true
+        ),
+        array("id" => "SORT", "content" => GetMessage('LEARNING_COURSE_ADM_SORT'), "sort" => "sort", "default" => true),
+        array(
+            "id" => "FROM_ONLINE",
+            "content" => GetMessage('LEARNING_ADMIN_ONLINE'),
+            "sort" => "from_online",
+            "default" => true
+        ),
+    )
+);
 
 
 // building list
@@ -176,7 +224,12 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
     $row->AddInputField("MAX_SUMMARY", Array("size" => "3"));
     $row->AddInputField("SORT", Array("size" => "3"));
 
-    $row->AddViewField("USER_NAME", "[<a href=\"user_edit.php?lang=" . LANG . "&ID=" . $f_USER_ID . "\" title=\"" . GetMessage("LEARNING_CHANGE_USER_PROFILE") . "\">" . $f_USER_ID . "</a>] " . $f_USER_NAME);
+    $row->AddViewField(
+        "USER_NAME",
+        "[<a href=\"user_edit.php?lang=" . LANG . "&ID=" . $f_USER_ID . "\" title=\"" . GetMessage(
+            "LEARNING_CHANGE_USER_PROFILE"
+        ) . "\">" . $f_USER_ID . "</a>] " . $f_USER_NAME
+    );
 
 
     $arActions = Array();
@@ -184,7 +237,12 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
     $arActions[] = array(
         "ICON" => "delete",
         "TEXT" => GetMessage("MAIN_ADMIN_MENU_DELETE"),
-        "ACTION" => "if(confirm('" . GetMessageJS('LEARNING_CONFIRM_DEL_MESSAGE') . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete", ''));
+        "ACTION" => "if(confirm('" . GetMessageJS('LEARNING_CONFIRM_DEL_MESSAGE') . "')) " . $lAdmin->ActionDoGroup(
+                $f_ID,
+                "delete",
+                ''
+            )
+    );
 
     $row->AddActions($arActions);
 }
@@ -197,11 +255,13 @@ $lAdmin->AddFooter(
     )
 );
 
-$lAdmin->AddGroupActionTable(Array(
-    "activate" => GetMessage("MAIN_ADMIN_LIST_ACTIVATE"),
-    "deactivate" => GetMessage("MAIN_ADMIN_LIST_DEACTIVATE"),
-    "delete" => GetMessage("MAIN_ADMIN_LIST_DELETE"),
-));
+$lAdmin->AddGroupActionTable(
+    Array(
+        "activate" => GetMessage("MAIN_ADMIN_LIST_ACTIVATE"),
+        "deactivate" => GetMessage("MAIN_ADMIN_LIST_DEACTIVATE"),
+        "delete" => GetMessage("MAIN_ADMIN_LIST_DELETE"),
+    )
+);
 
 $lAdmin->AddAdminContextMenu(Array());
 $lAdmin->CheckListMode();
@@ -210,8 +270,9 @@ $lAdmin->CheckListMode();
 $APPLICATION->SetTitle(GetMessage("LEARNING_ADMIN_TITLE"));
 require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admin_after.php");
 
-if (defined("LEARNING_ADMIN_ACCESS_DENIED"))
+if (defined("LEARNING_ADMIN_ACCESS_DENIED")) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"), false);
+}
 ?>
 
     <form name="form1" method="GET" action="<? echo $APPLICATION->GetCurPage() ?>"
@@ -250,8 +311,16 @@ if (defined("LEARNING_ADMIN_ACCESS_DENIED"))
             <td><? echo GetMessage("LEARNING_F_ACTIVE") ?>:</td>
             <td>
                 <?
-                $arr = array("reference" => array(GetMessage("LEARNING_YES"), GetMessage("LEARNING_NO")), "reference_id" => array("Y", "N"));
-                echo SelectBoxFromArray("filter_active", $arr, htmlspecialcharsex($filter_active), GetMessage('LEARNING_ALL'));
+                $arr = array(
+                    "reference" => array(GetMessage("LEARNING_YES"), GetMessage("LEARNING_NO")),
+                    "reference_id" => array("Y", "N")
+                );
+                echo SelectBoxFromArray(
+                    "filter_active",
+                    $arr,
+                    htmlspecialcharsex($filter_active),
+                    GetMessage('LEARNING_ALL')
+                );
                 ?>
             </td>
         </tr>
@@ -271,8 +340,16 @@ if (defined("LEARNING_ADMIN_ACCESS_DENIED"))
             <td><? echo GetMessage("LEARNING_ADMIN_FROM_ONLINE") ?>:</td>
             <td>
                 <?
-                $arr = array("reference" => array(GetMessage("LEARNING_YES"), GetMessage("LEARNING_NO")), "reference_id" => array("Y", "N"));
-                echo SelectBoxFromArray("filter_from_online", $arr, htmlspecialcharsex($filter_from_online), GetMessage('LEARNING_ALL'));
+                $arr = array(
+                    "reference" => array(GetMessage("LEARNING_YES"), GetMessage("LEARNING_NO")),
+                    "reference_id" => array("Y", "N")
+                );
+                echo SelectBoxFromArray(
+                    "filter_from_online",
+                    $arr,
+                    htmlspecialcharsex($filter_from_online),
+                    GetMessage('LEARNING_ALL')
+                );
                 ?>
             </td>
         </tr>

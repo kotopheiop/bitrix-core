@@ -5,8 +5,9 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
-if ($APPLICATION->GetGroupRight('currency') == 'D')
+if ($APPLICATION->GetGroupRight('currency') == 'D') {
     return false;
+}
 
 return array(
     "parent_menu" => "global_menu_settings",

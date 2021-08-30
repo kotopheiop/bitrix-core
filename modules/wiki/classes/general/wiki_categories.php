@@ -8,7 +8,7 @@ class CWikiCategories
 
     public function addItem($catParams)
     {
-        $this->arItems[strtolower($catParams->sName)] = array(
+        $this->arItems[mb_strtolower($catParams->sName)] = array(
             'TITLE' => $catParams->sTitle,
             'NAME' => $catParams->sName,
             'CNT' => $catParams->iItemsCount,
@@ -28,8 +28,9 @@ class CWikiCategories
     {
         $arItemsNames = array();
 
-        foreach ($this->arItems as $arItem)
+        foreach ($this->arItems as $arItem) {
             $arItemsNames[] = 'category:' . $arItem["NAME"];
+        }
 
         return $arItemsNames;
     }
@@ -52,14 +53,17 @@ class CWikiCategoryParams
 
     public function createLinkFromTemplate($sTemplate = "")
     {
-        if ((!$this->sPathTemplate && !$sTemplate) || !$this->sName)
+        if ((!$this->sPathTemplate && !$sTemplate) || !$this->sName) {
             return false;
+        }
 
-        $this->sLink = CComponentEngine::MakePathFromTemplate($sTemplate != "" ? $sTemplate : $this->sPathTemplate,
+        $this->sLink = CComponentEngine::MakePathFromTemplate(
+            $sTemplate != "" ? $sTemplate : $this->sPathTemplate,
             array(
                 'wiki_name' => rawurlencode('Category:' . $this->sName),
                 'group_id' => CWikiSocnet::$iSocNetId
-            ));
+            )
+        );
         return true;
     }
 
@@ -69,8 +73,9 @@ class CWikiCategoryParams
         $this->iItemsCount = 0;
         $this->bIsRed = false;
 
-        if ($bClearTemplate)
+        if ($bClearTemplate) {
             $this->sPathTemplate = "";
+        }
 
         return true;
     }

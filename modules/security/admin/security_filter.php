@@ -1,4 +1,5 @@
 <?
+
 define("ADMIN_MODULE_NAME", "security");
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
@@ -13,8 +14,9 @@ IncludeModuleLangFile(__FILE__);
 
 $canRead = $USER->CanDoOperation('security_filter_settings_read');
 $canWrite = $USER->CanDoOperation('security_filter_settings_write');
-if (!$canRead && !$canWrite)
+if (!$canRead && !$canWrite) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $aTabs = array(
     array(
@@ -40,17 +42,19 @@ $tabControl = new CAdminTabControl("tabControl", $aTabs, true, true);
 
 $bVarsFromForm = false;
 
-if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["save"] . $_REQUEST["apply"] . $_REQUEST["filter_siteb"] != "" && $canWrite && check_bitrix_sessid()) {
-
-    if ($_REQUEST["filter_siteb"] != "")
+if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["save"] . $_REQUEST["apply"] . $_REQUEST["filter_siteb"] != "" && $canWrite && check_bitrix_sessid(
+    )) {
+    if ($_REQUEST["filter_siteb"] != "") {
         CSecurityFilter::SetActive($_POST["filter_active"] === "Y");
+    }
 
-    if ($_POST["filter_action"] === "clear")
+    if ($_POST["filter_action"] === "clear") {
         COption::SetOptionString("security", "filter_action", "clear");
-    elseif ($_POST["filter_action"] === "none")
+    } elseif ($_POST["filter_action"] === "none") {
         COption::SetOptionString("security", "filter_action", "none");
-    else
+    } else {
         COption::SetOptionString("security", "filter_action", "filter");
+    }
 
     COption::SetOptionString("security", "filter_stop", $_POST["filter_stop"] === "Y" ? "Y" : "N");
     COption::SetOptionInt("security", "filter_duration", $_POST["filter_duration"]);
@@ -58,25 +62,30 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["save"] . $_REQUEST["apply
 
     CSecurityFilterMask::Update($_POST["FILTER_MASKS"]);
 
-    if ($_REQUEST["save"] != "" && $_GET["return_url"] != "")
+    if ($_REQUEST["save"] != "" && $_GET["return_url"] != "") {
         LocalRedirect($_GET["return_url"]);
+    }
 
     $returnUrl = $_GET["return_url"] ? "&return_url=" . urlencode($_GET["return_url"]) : "";
-    LocalRedirect("/bitrix/admin/security_filter.php?lang=" . LANGUAGE_ID . $returnUrl . "&" . $tabControl->ActiveTabParam());
+    LocalRedirect(
+        "/bitrix/admin/security_filter.php?lang=" . LANGUAGE_ID . $returnUrl . "&" . $tabControl->ActiveTabParam()
+    );
 }
 
 $rsSecurityFilterExclMask = CSecurityFilterMask::GetList();
-if ($rsSecurityFilterExclMask->Fetch())
+if ($rsSecurityFilterExclMask->Fetch()) {
     $bSecurityFilterExcl = true;
-else
+} else {
     $bSecurityFilterExcl = false;
+}
 
 $messageDetails = "";
 if (CSecurityFilter::IsActive()) {
     $messageType = "OK";
     $messageText = GetMessage("SEC_FILTER_ON");
-    if ($bSecurityFilterExcl)
+    if ($bSecurityFilterExcl) {
         $messageDetails = "<span style=\"font-style: italic;\">" . GetMessage("SEC_FILTER_EXCL_FOUND") . "</span>";
+    }
 } else {
     $messageType = "ERROR";
     $messageText = GetMessage("SEC_FILTER_OFF");
@@ -88,17 +97,20 @@ CUtil::InitJSCore();
 $APPLICATION->AddHeadScript('/bitrix/js/security/admin/interface.js');
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
-CAdminMessage::ShowMessage(array(
-    "MESSAGE" => $messageText,
-    "TYPE" => $messageType,
-    "DETAILS" => $messageDetails,
-    "HTML" => true
-));
+CAdminMessage::ShowMessage(
+    array(
+        "MESSAGE" => $messageText,
+        "TYPE" => $messageType,
+        "DETAILS" => $messageDetails,
+        "HTML" => true
+    )
+);
 ?>
 
     <form method="POST"
-          action="security_filter.php?lang=<? echo LANGUAGE_ID ?><? echo $_GET["return_url"] ? "&amp;return_url=" . urlencode($_GET["return_url"]) : "" ?>"
-          enctype="multipart/form-data" name="editform">
+          action="security_filter.php?lang=<? echo LANGUAGE_ID ?><? echo $_GET["return_url"] ? "&amp;return_url=" . urlencode(
+                  $_GET["return_url"]
+              ) : "" ?>" enctype="multipart/form-data" name="editform">
         <?= bitrix_sessid_post() ?>
         <input type="hidden" name="lang" value="<?= LANG ?>">
         <?
@@ -133,15 +145,25 @@ CAdminMessage::ShowMessage(array(
         <tr>
             <td width="40%" class="adm-detail-valign-top"><? echo GetMessage("SEC_FILTER_ACTION") ?>:</td>
             <td width="60%">
-                <label><input type="radio" name="filter_action"
-                              value="filter" <? if (COption::GetOptionString("security", "filter_action") != "clear" && COption::GetOptionString("security", "filter_action") != "none") echo "checked"; ?>><? echo GetMessage("SEC_FILTER_ACTION_FILTER") ?>
-                    <span class="required"><sup>1</sup></span></label><br>
-                <label><input type="radio" name="filter_action"
-                              value="clear" <? if (COption::GetOptionString("security", "filter_action") == "clear") echo "checked"; ?>><? echo GetMessage("SEC_FILTER_ACTION_CLEAR") ?>
-                </label><br>
-                <label><input type="radio" name="filter_action"
-                              value="none" <? if (COption::GetOptionString("security", "filter_action") == "none") echo "checked"; ?>><? echo GetMessage("SEC_FILTER_ACTION_NONE") ?>
-                </label><br>
+                <label><input type="radio" name="filter_action" value="filter" <? if (COption::GetOptionString(
+                            "security",
+                            "filter_action"
+                        ) != "clear" && COption::GetOptionString("security", "filter_action") != "none") {
+                        echo "checked";
+                    } ?>><? echo GetMessage("SEC_FILTER_ACTION_FILTER") ?><span
+                            class="required"><sup>1</sup></span></label><br>
+                <label><input type="radio" name="filter_action" value="clear" <? if (COption::GetOptionString(
+                            "security",
+                            "filter_action"
+                        ) == "clear") {
+                        echo "checked";
+                    } ?>><? echo GetMessage("SEC_FILTER_ACTION_CLEAR") ?></label><br>
+                <label><input type="radio" name="filter_action" value="none" <? if (COption::GetOptionString(
+                            "security",
+                            "filter_action"
+                        ) == "none") {
+                        echo "checked";
+                    } ?>><? echo GetMessage("SEC_FILTER_ACTION_NONE") ?></label><br>
             </td>
         </tr>
         <tr>
@@ -149,8 +171,12 @@ CAdminMessage::ShowMessage(array(
                         class="required"><sup>2</sup></span>:
             </td>
             <td>
-                <input type="checkbox" name="filter_stop" id="filter_stop"
-                       value="Y" <? if (COption::GetOptionString("security", "filter_stop") == "Y") echo "checked"; ?>>
+                <input type="checkbox" name="filter_stop" id="filter_stop" value="Y" <? if (COption::GetOptionString(
+                        "security",
+                        "filter_stop"
+                    ) == "Y") {
+                    echo "checked";
+                } ?>>
             </td>
         </tr>
         <tr>
@@ -163,8 +189,12 @@ CAdminMessage::ShowMessage(array(
         <tr>
             <td><label for="filter_log"><? echo GetMessage("SEC_FILTER_LOG") ?></label>:</td>
             <td>
-                <input type="checkbox" name="filter_log" id="filter_log"
-                       value="Y" <? if (COption::GetOptionString("security", "filter_log") == "Y") echo "checked"; ?>>
+                <input type="checkbox" name="filter_log" id="filter_log" value="Y" <? if (COption::GetOptionString(
+                        "security",
+                        "filter_log"
+                    ) == "Y") {
+                    echo "checked";
+                } ?>>
             </td>
         </tr>
         <tr>
@@ -179,19 +209,22 @@ CAdminMessage::ShowMessage(array(
         $tabControl->BeginNextTab();
         $arMasks = array();
         if ($bVarsFromForm) {
-            if (is_array($_POST["FILTER_MASKS"]))
-                foreach ($_POST["FILTER_MASKS"] as $i => $POST_MASK)
+            if (is_array($_POST["FILTER_MASKS"])) {
+                foreach ($_POST["FILTER_MASKS"] as $i => $POST_MASK) {
                     $arMasks[] = array(
                         "SITE_ID" => htmlspecialcharsbx($POST_MASK["SITE_ID"]),
                         "FILTER_MASK" => htmlspecialcharsbx($POST_MASK["FILTER_MASK"]),
                     );
+                }
+            }
         } else {
             $rs = CSecurityFilterMask::GetList();
-            while ($ar = $rs->Fetch())
+            while ($ar = $rs->Fetch()) {
                 $arMasks[] = array(
                     "SITE_ID" => htmlspecialcharsbx($ar["SITE_ID"]),
                     "FILTER_MASK" => htmlspecialcharsbx($ar["FILTER_MASK"]),
                 );
+            }
         }
         ?>
         <tr>
@@ -202,9 +235,14 @@ CAdminMessage::ShowMessage(array(
                         <tr>
                             <td nowrap style="padding-bottom: 3px;">
                                 <input type="text" size="45" name="FILTER_MASKS[<? echo $i ?>][MASK]"
-                                       value="<? echo $arMask["FILTER_MASK"] ?>">&nbsp;<? echo GetMessage("SEC_FILTER_SITE") ?>
-                                &nbsp;<? echo CSite::SelectBox("FILTER_MASKS[$i][SITE_ID]", $arMask["SITE_ID"], GetMessage("MAIN_ALL"), ""); ?>
-                                <br>
+                                       value="<? echo $arMask["FILTER_MASK"] ?>">&nbsp;<? echo GetMessage(
+                                    "SEC_FILTER_SITE"
+                                ) ?>&nbsp;<? echo CSite::SelectBox(
+                                    "FILTER_MASKS[$i][SITE_ID]",
+                                    $arMask["SITE_ID"],
+                                    GetMessage("MAIN_ALL"),
+                                    ""
+                                ); ?><br>
                             </td>
                         </tr>
                     <? endforeach; ?>
@@ -213,8 +251,12 @@ CAdminMessage::ShowMessage(array(
                             <td nowrap style="padding-bottom: 3px;">
                                 <input type="text" size="45" name="FILTER_MASKS[n0][MASK]"
                                        value="">&nbsp;<? echo GetMessage("SEC_FILTER_SITE") ?>
-                                &nbsp;<? echo CSite::SelectBox("FILTER_MASKS[n0][SITE_ID]", "", GetMessage("MAIN_ALL"), ""); ?>
-                                <br>
+                                &nbsp;<? echo CSite::SelectBox(
+                                    "FILTER_MASKS[n0][SITE_ID]",
+                                    "",
+                                    GetMessage("MAIN_ALL"),
+                                    ""
+                                ); ?><br>
                             </td>
                         </tr>
                     <? endif; ?>

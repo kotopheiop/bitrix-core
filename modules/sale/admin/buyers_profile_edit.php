@@ -13,8 +13,9 @@ IncludeModuleLangFile(__FILE__);
 $selfFolderUrl = $adminPage->getSelfFolderUrl();
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions == "D")
+if ($saleModulePermissions == "D") {
     $APPLICATION->AuthForm(GetMessage("BUYER_PE_ACCESS_DENIED"));
+}
 
 if (!CBXFeatures::IsFeatureEnabled('SaleAccounts')) {
     require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php');
@@ -34,17 +35,20 @@ if ($arProfile = CSaleOrderUserProps::GetByID($ID)) {
     $USER_ID = intval($arProfile["USER_ID"]);
     $PERSON_TYPE = intval($arProfile["PERSON_TYPE_ID"]);
     $profileName = $arProfile["NAME"];
-} else
+} else {
     $arErrors[] = GetMessage("BUYER_PE_NO_PROFILE");
+}
 
 /*****************************************************************************/
 /**************************** SAVE PROFILE ***********************************/
 /*****************************************************************************/
-if ($_SERVER['REQUEST_METHOD'] == "POST" && $saleModulePermissions >= "U" && check_bitrix_sessid() && !empty($arProfile)) {
+if ($_SERVER['REQUEST_METHOD'] == "POST" && $saleModulePermissions >= "U" && check_bitrix_sessid(
+    ) && !empty($arProfile)) {
     $adminSidePanelHelper->decodeUriComponent();
     $CODE_PROFILE_NAME = trim($_REQUEST["CODE_PROFILE_NAME"]);
-    if (strlen($CODE_PROFILE_NAME) > 0)
+    if ($CODE_PROFILE_NAME <> '') {
         $profileName = $CODE_PROFILE_NAME;
+    }
 
     $arOrderPropsValues = array();
     $dbProperties = CSaleOrderProps::GetList(
@@ -83,8 +87,9 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && $saleModulePermissions >= "U" && che
             if (is_array($_REQUEST["CODE_" . $arOrderProps["ID"]])) {
                 foreach ($_REQUEST["CODE_" . $arOrderProps["ID"]] as $key => $val) {
                     $curVal .= trim($val);
-                    if ($key < (count($_REQUEST["CODE_" . $arOrderProps["ID"]]) - 1))
+                    if ($key < (count($_REQUEST["CODE_" . $arOrderProps["ID"]]) - 1)) {
                         $curVal .= ",";
+                    }
                 }
             }
         } elseif ($arOrderProps["MULTIPLE"] === "Y") {
@@ -97,10 +102,10 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && $saleModulePermissions >= "U" && che
             ($arOrderProps["IS_LOCATION"] == "Y" || $arOrderProps["IS_LOCATION4TAX"] == "Y")
             && empty($_REQUEST["LOCATION_" . $arOrderProps["ID"]])
             ||
-            ($arOrderProps["IS_ZIP"] == "Y" && strlen($curVal) <= 0)
+            ($arOrderProps["IS_ZIP"] == "Y" && $curVal == '')
             ||
             ($arOrderProps["IS_PROFILE_NAME"] == "Y" || $arOrderProps["IS_PAYER"] == "Y")
-            && strlen($curVal) <= 0
+            && $curVal == ''
             ||
             $arOrderProps["REQUIED"] == "Y"
             && $arOrderProps["TYPE"] == "LOCATION"
@@ -108,11 +113,11 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && $saleModulePermissions >= "U" && che
             ||
             $arOrderProps["REQUIED"] == "Y"
             && ($arOrderProps["TYPE"] == "TEXT" || $arOrderProps["TYPE"] == "TEXTAREA" || $arOrderProps["TYPE"] == "RADIO" || $arOrderProps["TYPE"] == "SELECT")
-            && strlen($curVal) <= 0
+            && $curVal == ''
             ||
             ($arOrderProps["REQUIED"] == "Y"
                 && $arOrderProps["TYPE"] == "MULTISELECT"
-                && strlen($curVal) <= 0)
+                && $curVal == '')
         ) {
             $arErrors[] = str_replace("#NAME#", $arOrderProps["NAME"], GetMessage("BUYER_PE_EMPTY_PROPS"));
         }
@@ -121,7 +126,14 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && $saleModulePermissions >= "U" && che
     }
 
     if (count($arErrors) <= 0) {
-        CSaleOrderUserProps::DoSaveUserProfile($USER_ID, $ID, $profileName, $PERSON_TYPE, $arOrderPropsValues, $arErrors);
+        CSaleOrderUserProps::DoSaveUserProfile(
+            $USER_ID,
+            $ID,
+            $profileName,
+            $PERSON_TYPE,
+            $arOrderPropsValues,
+            $arErrors
+        );
     } else {
         $adminSidePanelHelper->sendJsonErrorResponse(implode("; ", $arErrors));
     }
@@ -130,12 +142,12 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && $saleModulePermissions >= "U" && che
         $adminSidePanelHelper->sendSuccessResponse("base");
     }
 
-    if (isset($_REQUEST["save"]) && strlen($_REQUEST["save"]) > 0 && empty($arErrors)) {
+    if (isset($_REQUEST["save"]) && $_REQUEST["save"] <> '' && empty($arErrors)) {
         $saveUrl = $selfFolderUrl . "sale_buyers_profile.php?lang=" . LANGUAGE_ID . "&USER_ID=" . $USER_ID;
         $saveUrl = $adminSidePanelHelper->editUrlToPublicPage($saveUrl);
         $adminSidePanelHelper->localRedirect($saveUrl);
         LocalRedirect($saveUrl);
-    } elseif (isset($_REQUEST["apply"]) && strlen($_REQUEST["apply"]) > 0 && empty($arErrors)) {
+    } elseif (isset($_REQUEST["apply"]) && $_REQUEST["apply"] <> '' && empty($arErrors)) {
         $applyUrl = $selfFolderUrl . "sale_buyers_profile_edit.php?id=" . $ID . "&lang=" . LANGUAGE_ID;
         $applyUrl = $adminSidePanelHelper->setDefaultQueryParams($applyUrl);
         LocalRedirect($applyUrl);
@@ -151,18 +163,26 @@ if ($USER_ID > 0) {
     $dbUser = CUser::GetByID($USER_ID);
     if ($arUser = $dbUser->Fetch()) {
         $userFIO = $arUser["NAME"];
-        if (strlen($arUser["LAST_NAME"]) > 0) {
-            if (strlen($userFIO) > 0)
+        if ($arUser["LAST_NAME"] <> '') {
+            if ($userFIO <> '') {
                 $userFIO .= " ";
+            }
             $userFIO .= $arUser["LAST_NAME"];
         }
-    } else
+    } else {
         $arErrors[] = GetMessage("BUYER_PE_NO_USER");
-} else
+    }
+} else {
     $arErrors[] = GetMessage("BUYER_PE_NO_USER");
+}
 
 $aTabs = array(
-    array("DIV" => "edit1", "TAB" => GetMessage("BUYER_PE_TAB_PROFILE"), "ICON" => "sale", "TITLE" => GetMessage("BUYER_PE_TAB_PROFILE_TITLE")),
+    array(
+        "DIV" => "edit1",
+        "TAB" => GetMessage("BUYER_PE_TAB_PROFILE"),
+        "ICON" => "sale",
+        "TITLE" => GetMessage("BUYER_PE_TAB_PROFILE_TITLE")
+    ),
 );
 $tabControl = new CAdminForm("buyers_profile_edit", $aTabs, false);
 $tabControl->SetShowSettings(false);
@@ -185,8 +205,9 @@ $aMenu = array(
 $context = new CAdminContextMenu($aMenu);
 $context->Show();
 
-if (!empty($arErrors))
+if (!empty($arErrors)) {
     CAdminMessage::ShowMessage(implode("<br>", $arErrors));
+}
 
 $tabControl->BeginEpilogContent();
 echo bitrix_sessid_post(); ?>
@@ -195,8 +216,9 @@ echo bitrix_sessid_post(); ?>
 $tabControl->EndEpilogContent();
 
 $urlForm = "";
-if ($ID > 0)
+if ($ID > 0) {
     $urlForm = "&id=" . $ID;
+}
 
 $actionUrl = $APPLICATION->GetCurPage() . "?lang=" . LANGUAGE_ID . $urlForm;
 $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
@@ -212,8 +234,28 @@ if (!empty($arProfile) && !empty($arUser)) {
 
     $arFilterProps = array("PERSON_TYPE_ID" => $PERSON_TYPE, "ACTIVE" => "Y", "USER_PROPS" => "Y");
 
-    $tabControl->AddViewField("CODE_USER", GetMessage("BUYER_PE_USER") . ":", "[<a href=\"" . $selfFolderUrl . "user_edit.php?ID=" . $arUser["ID"] . "&lang=" . LANGUAGE_ID . "\">" . $arUser["ID"] . "</a>] (" . htmlspecialcharsEx($arUser["LOGIN"]) . ") " . htmlspecialcharsEx($userFIO));
-    $tabControl->AddEditField("CODE_PROFILE_NAME", GetMessage("BUYER_PE_PROFILE_NAME") . ":", false, array("size" => 30, "maxlength" => 255), htmlspecialcharsEx($profileName));
+    if ($adminSidePanelHelper->isPublicSidePanel()) {
+        $tabControl->AddViewField(
+            "CODE_USER",
+            GetMessage("BUYER_PE_USER") . ":",
+            "(" . htmlspecialcharsEx($arUser["LOGIN"]) . ") " . htmlspecialcharsEx($userFIO)
+        );
+    } else {
+        $tabControl->AddViewField(
+            "CODE_USER",
+            GetMessage("BUYER_PE_USER") . ":",
+            "[<a href=\"" . $selfFolderUrl . "user_edit.php?ID=" . $arUser["ID"] . "&lang=" . LANGUAGE_ID . "\">" . $arUser["ID"] . "</a>] (" . htmlspecialcharsEx(
+                $arUser["LOGIN"]
+            ) . ") " . htmlspecialcharsEx($userFIO)
+        );
+    }
+    $tabControl->AddEditField(
+        "CODE_PROFILE_NAME",
+        GetMessage("BUYER_PE_PROFILE_NAME") . ":",
+        false,
+        array("size" => 30, "maxlength" => 255),
+        htmlspecialcharsEx($profileName)
+    );
 
     $propertyGroupID = "";
     $dbProperties = CSaleOrderProps::GetList(
@@ -230,12 +272,14 @@ if (!empty($arProfile) && !empty($arUser)) {
         $arProperties["ID"] = intval($arProperties["ID"]);
         $fieldValue = $userPropertyValues[$arProperties["ID"]];
 
-        if (intval($arProperties["PROPS_GROUP_ID"]) != $propertyGroupID)
+        if (intval($arProperties["PROPS_GROUP_ID"]) != $propertyGroupID) {
             $tabControl->AddSection("SECTION_" . $arProperties["PROPS_GROUP_ID"], $arProperties["GROUP_NAME"]);
+        }
 
         $shure = false;
-        if ($arProperties["REQUIED"] == "Y" || $arProperties["IS_PROFILE_NAME"] == "Y" || $arProperties["IS_LOCATION"] == "Y" || $arProperties["IS_LOCATION4TAX"] == "Y" || $arProperties["IS_PAYER"] == "Y" || $arProperties["IS_ZIP"] == "Y")
+        if ($arProperties["REQUIED"] == "Y" || $arProperties["IS_PROFILE_NAME"] == "Y" || $arProperties["IS_LOCATION"] == "Y" || $arProperties["IS_LOCATION4TAX"] == "Y" || $arProperties["IS_PAYER"] == "Y" || $arProperties["IS_ZIP"] == "Y") {
             $shure = true;
+        }
 
         /*fields*/
         if ($arProperties["TYPE"] == "TEXT") {
@@ -244,21 +288,45 @@ if (!empty($arProfile) && !empty($arUser)) {
                 $fieldName = htmlspecialcharsbx($arProperties["NAME"]);
                 if (is_array($fieldValue)) {
                     foreach ($fieldValue as $key => $value) {
-                        $tabControl->AddEditField("CODE_" . $arProperties["ID"] . "[" . $key . "]", $fieldName, $shure, array("size" => 30, "maxlength" => 255), htmlspecialcharsbx($value));
+                        $tabControl->AddEditField(
+                            "CODE_" . $arProperties["ID"] . "[" . $key . "]",
+                            $fieldName,
+                            $shure,
+                            array("size" => 30, "maxlength" => 255),
+                            htmlspecialcharsbx($value)
+                        );
                         $fieldName = false;
                     }
                     $key++;
                 }
-                $tabControl->AddEditField("CODE_" . $arProperties["ID"] . "[" . $key . "]", $fieldName, $shure, array("size" => 30, "maxlength" => 255), '');
+                $tabControl->AddEditField(
+                    "CODE_" . $arProperties["ID"] . "[" . $key . "]",
+                    $fieldName,
+                    $shure,
+                    array("size" => 30, "maxlength" => 255),
+                    ''
+                );
 
                 unset($fieldName);
             } else {
-                $tabControl->AddEditField("CODE_" . $arProperties["ID"], $arProperties["NAME"] . ":", $shure, array("size" => 30, "maxlength" => 255), htmlspecialcharsbx($fieldValue));
+                $tabControl->AddEditField(
+                    "CODE_" . $arProperties["ID"],
+                    $arProperties["NAME"] . ":",
+                    $shure,
+                    array("size" => 30, "maxlength" => 255),
+                    htmlspecialcharsbx($fieldValue)
+                );
             }
         } elseif ($arProperties["TYPE"] == "CHECKBOX") {
             $checked = ($fieldValue == "Y") ? true : false;
 
-            $tabControl->AddCheckBoxField("CODE_" . $arProperties["ID"], $arProperties["NAME"] . ":", $shure, "Y", $checked);
+            $tabControl->AddCheckBoxField(
+                "CODE_" . $arProperties["ID"],
+                $arProperties["NAME"] . ":",
+                $shure,
+                "Y",
+                $checked
+            );
         } elseif ($arProperties["TYPE"] == "SELECT") {
             $tabControl->BeginCustomField("CODE_" . $arProperties["ID"], $arProperties["NAME"], $shure);
             ?>
@@ -278,11 +346,13 @@ if (!empty($arProfile) && !empty($arUser)) {
                         );
                         while ($arVariants = $dbVariants->Fetch()) {
                             $selected = "";
-                            if ($arVariants["VALUE"] == $fieldValue)
+                            if ($arVariants["VALUE"] == $fieldValue) {
                                 $selected .= " selected";
+                            }
                             ?>
-                            <option <? echo $selected; ?>
-                                    value="<? echo htmlspecialcharsbx($arVariants["VALUE"]); ?>"><? echo htmlspecialcharsbx($arVariants["NAME"]); ?></option>
+                            <option <? echo $selected; ?>value="<? echo htmlspecialcharsbx(
+                                $arVariants["VALUE"]
+                            ); ?>"><? echo htmlspecialcharsbx($arVariants["NAME"]); ?></option>
                             <?
                         }
                         ?>
@@ -304,13 +374,14 @@ if (!empty($arProfile) && !empty($arUser)) {
                         if (is_array($fieldValue)) {
                             $arCurVal = $fieldValue;
                         } else {
-                            if (strlen($fieldValue) > 0) {
+                            if ($fieldValue <> '') {
                                 $curVal = explode(",", $fieldValue);
 
                                 $arCurVal = array();
                                 $curValCount = count($curVal);
-                                for ($i = 0; $i < $curValCount; $i++)
+                                for ($i = 0; $i < $curValCount; $i++) {
                                     $arCurVal[$i] = trim($curVal[$i]);
+                                }
                             }
                         }
 
@@ -327,8 +398,9 @@ if (!empty($arProfile) && !empty($arUser)) {
                                 $selected .= " selected";
                             }
                             ?>
-                            <option <? echo $selected; ?>
-                                    value="<? echo htmlspecialcharsbx($arVariants["VALUE"]); ?>"><? echo htmlspecialcharsbx($arVariants["NAME"]); ?></option>
+                            <option <? echo $selected; ?>value="<? echo htmlspecialcharsbx(
+                                $arVariants["VALUE"]
+                            ); ?>"><? echo htmlspecialcharsbx($arVariants["NAME"]); ?></option>
                             <?
                         }
                         ?>
@@ -337,11 +409,15 @@ if (!empty($arProfile) && !empty($arUser)) {
             </tr>
             <?
             $tabControl->EndCustomField("CODE_" . $arProperties["ID"]);
-        } elseif ($arProperties["TYPE"] == "TEXTAREA")
-            $tabControl->AddTextField("CODE_" . $arProperties["ID"], $arProperties["NAME"] . ":", htmlspecialcharsbx($fieldValue), array("cols" => "30", "rows" => "5"), $shure);
-
-        elseif ($arProperties["TYPE"] == "RADIO") {
-
+        } elseif ($arProperties["TYPE"] == "TEXTAREA") {
+            $tabControl->AddTextField(
+                "CODE_" . $arProperties["ID"],
+                $arProperties["NAME"] . ":",
+                htmlspecialcharsbx($fieldValue),
+                array("cols" => "30", "rows" => "5"),
+                $shure
+            );
+        } elseif ($arProperties["TYPE"] == "RADIO") {
             $tabControl->BeginCustomField("CODE_" . $arProperties["ID"], $arProperties["NAME"], $shure);
             ?>
             <tr<? ($shure) ? " class=\"adm-detail-required-field\"" : "" ?>>
@@ -359,14 +435,16 @@ if (!empty($arProfile) && !empty($arUser)) {
                     );
                     while ($arVariants = $dbVariants->Fetch()) {
                         $selected = "";
-                        if ($arVariants["VALUE"] == $fieldValue)
+                        if ($arVariants["VALUE"] == $fieldValue) {
                             $selected .= " checked";
+                        }
                         ?>
                         <input <? echo $selected ?> id="radio_<? echo $arVariants["ID"]; ?>" type="radio"
                                                     name="CODE_<? echo $arProperties["ID"]; ?>"
                                                     value="<? echo htmlspecialcharsbx($arVariants["VALUE"]); ?>"/>
-                        <label for="radio_<? echo $arVariants["ID"]; ?>"><? echo htmlspecialcharsEx($arVariants["NAME"]) ?></label>
-                        <br/>
+                        <label for="radio_<? echo $arVariants["ID"]; ?>"><? echo htmlspecialcharsEx(
+                                $arVariants["NAME"]
+                            ) ?></label><br/>
                         <?
                     }
                     ?>
@@ -388,10 +466,11 @@ if (!empty($arProfile) && !empty($arUser)) {
                 $changedLocation[] = $location['ID'];
             }
 
-            if (!empty($changedLocation))
+            if (!empty($changedLocation)) {
                 $fieldValue = $changedLocation;
-            else
+            } else {
                 $fieldValue = array("");
+            }
 
             $tabControl->BeginCustomField("CODE_" . $arProperties["ID"], $arProperties["NAME"], $shure);
             ?>

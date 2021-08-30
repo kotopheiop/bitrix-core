@@ -2,10 +2,16 @@
 
 use Bitrix\Security\SessionTable;
 
+/**
+ * Class CSecuritySessionDB
+ * @deprecated
+ * @see \Bitrix\Main\Session\Handlers\DatabaseSessionHandler
+ */
 class CSecuritySessionDB
 {
     protected static $isReadOnly = false;
     protected static $sessionId = null;
+    protected static $hasFailedRead = false;
 
     /**
      * @return bool
@@ -45,20 +51,29 @@ class CSecuritySessionDB
      */
     public static function read($id)
     {
-        if (!self::isValidId($id))
+        if (!self::isValidId($id)) {
             return "";
+        }
 
-        if (!self::$isReadOnly && !SessionTable::lock($id, 60/*TODO: timelimit from php.ini?*/))
+        if (!self::$isReadOnly && !SessionTable::lock($id, 60/*TODO: timelimit from php.ini?*/)) {
             CSecuritySession::triggerFatalError('Unable to get session lock within 60 seconds.');
+        }
 
         self::$sessionId = $id;
-        $sessionRow = SessionTable::getRow(array(
-            'select' => array('SESSION_DATA'),
-            'filter' => array('=SESSION_ID' => $id)
-        ));
+        $sessionRow = SessionTable::getRow(
+            array(
+                'select' => array('SESSION_DATA'),
+                'filter' => array('=SESSION_ID' => $id)
+            )
+        );
 
         if ($sessionRow && isset($sessionRow['SESSION_DATA'])) {
             return base64_decode($sessionRow['SESSION_DATA']);
+        } else {
+            if (!self::$hasFailedRead) {
+                AddEventHandler("main", "OnPageStart", array("CSecuritySession", "UpdateSessID"));
+                self::$hasFailedRead = true;
+            }
         }
 
         return '';
@@ -71,8 +86,9 @@ class CSecuritySessionDB
      */
     public static function write($id, $sessionData)
     {
-        if (!self::isValidId($id))
+        if (!self::isValidId($id)) {
             return false;
+        }
 
         if (self::$isReadOnly) {
             if (!CSecuritySession::isOldSessionIdExist()) {
@@ -80,17 +96,20 @@ class CSecuritySessionDB
             }
         }
 
-        if (CSecuritySession::isOldSessionIdExist())
+        if (CSecuritySession::isOldSessionIdExist()) {
             $oldSessionId = CSecuritySession::getOldSessionId(true);
-        else
+        } else {
             $oldSessionId = $id;
+        }
 
         SessionTable::delete($oldSessionId);
-        $result = SessionTable::add(array(
-            'SESSION_ID' => $id,
-            'TIMESTAMP_X' => new Bitrix\Main\Type\DateTime,
-            'SESSION_DATA' => base64_encode($sessionData),
-        ));
+        $result = SessionTable::add(
+            array(
+                'SESSION_ID' => $id,
+                'TIMESTAMP_X' => new Bitrix\Main\Type\DateTime,
+                'SESSION_DATA' => base64_encode($sessionData),
+            )
+        );
 
         return $result->isSuccess();
     }
@@ -101,16 +120,19 @@ class CSecuritySessionDB
      */
     public static function destroy($id)
     {
-        if (!self::isValidId($id))
+        if (!self::isValidId($id)) {
             return false;
+        }
 
-        if (self::$isReadOnly)
+        if (self::$isReadOnly) {
             return false;
+        }
 
         SessionTable::delete($id);
 
-        if (CSecuritySession::isOldSessionIdExist())
+        if (CSecuritySession::isOldSessionIdExist()) {
             SessionTable::delete(CSecuritySession::getOldSessionId(true));
+        }
 
         return true;
     }

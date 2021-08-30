@@ -60,14 +60,17 @@ class Base32
      */
     public static function encode($string)
     {
-        if (!$string)
+        if (!$string) {
             return '';
+        }
 
-        if (!is_string($string))
+        if (!is_string($string)) {
             throw new ArgumentTypeException('string', 'string');
+        }
 
-        if (self::$encodeAlphabet === null)
+        if (self::$encodeAlphabet === null) {
             self::$encodeAlphabet = array_flip(self::$alphabet);
+        }
 
         // Convert string to binary
         $binaryString = '';
@@ -115,32 +118,36 @@ class Base32
      */
     public static function decode($base32String)
     {
-        if (!$base32String)
+        if (!$base32String) {
             return '';
+        }
 
-        if (!is_string($base32String))
+        if (!is_string($base32String)) {
             throw new ArgumentTypeException('base32String', 'string');
+        }
 
-        $base32String = strtoupper($base32String);
+        $base32String = mb_strtoupper($base32String);
         $base32Array = str_split($base32String);
 
         $string = '';
 
         foreach ($base32Array as $str) {
             // skip padding
-            if ($str === '=')
+            if ($str === '=') {
                 continue;
+            }
 
-            if (!isset(self::$alphabet[$str]))
+            if (!isset(self::$alphabet[$str])) {
                 throw new DecodingException(sprintf('Illegal character: %s', $str));
+            }
 
             $char = self::$alphabet[$str];
             $char = decbin($char);
             $string .= str_pad($char, 5, 0, STR_PAD_LEFT);
         }
 
-        while (\CUtil::binStrlen($string) % 8 !== 0) {
-            $string = \CUtil::binSubstr($string, 0, -1);
+        while (strlen($string) % 8 !== 0) {
+            $string = substr($string, 0, -1);
         }
 
         $binaryArray = self::chunk($string, 8);
@@ -168,8 +175,8 @@ class Base32
     {
         $binaryString = chunk_split($binaryString, $bits, ' ');
 
-        if (\CUtil::binSubstr($binaryString, -1) == ' ') {
-            $binaryString = \CUtil::binSubstr($binaryString, 0, -1);
+        if (substr($binaryString, -1) == ' ') {
+            $binaryString = substr($binaryString, 0, -1);
         }
 
         return explode(' ', $binaryString);

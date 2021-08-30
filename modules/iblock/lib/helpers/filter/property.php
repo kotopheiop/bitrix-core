@@ -31,7 +31,11 @@ class Property
     public static function render($filterId, $propertyType, array $listProperty)
     {
         $result = '';
-
+        /**
+         * @see Property::renderByECrm()
+         * @see Property::renderByE()
+         * @see Property::renderByEmployee()
+         */
         if (method_exists(__CLASS__, 'renderBy' . $propertyType)) {
             $renderMethod = 'renderBy' . $propertyType;
             $result = self::$renderMethod($filterId, $listProperty);
@@ -70,8 +74,9 @@ class Property
 
     protected static function renderByECrm($filterId, $listProperty)
     {
-        if (!Loader::includeModule('crm'))
+        if (!Loader::includeModule('crm')) {
             return '';
+        }
 
         Asset::getInstance()->addCss('/bitrix/js/crm/css/crm.css');
         Asset::getInstance()->addJs('/bitrix/js/crm/crm.js');
@@ -146,7 +151,10 @@ class Property
                     try {
                         global $APPLICATION;
                         $convertValue = $APPLICATION->ConvertCharset(
-                            $filterData[$property['FIELD_ID']], 'UTF-8', LANG_CHARSET);
+                            $filterData[$property['FIELD_ID']],
+                            'UTF-8',
+                            LANG_CHARSET
+                        );
                         $currentValues = Json::decode($convertValue);
                     } catch (SystemException $e) {
                         return $e->getMessage();
@@ -160,7 +168,9 @@ class Property
                     }
                 }
                 ob_start();
-                $APPLICATION->includeComponent('bitrix:iblock.element.selector', '',
+                $APPLICATION->includeComponent(
+                    'bitrix:iblock.element.selector',
+                    '',
                     array(
                         'SELECTOR_ID' => $filterId . '_' . $property['FIELD_ID'],
                         'SEARCH_INPUT_ID' => $filterId . '_' . $property['FIELD_ID'],
@@ -169,7 +179,8 @@ class Property
                         'PANEL_SELECTED_VALUES' => 'N',
                         'CURRENT_ELEMENTS_ID' => $currentElements
                     ),
-                    null, array('HIDE_ICONS' => 'Y')
+                    null,
+                    array('HIDE_ICONS' => 'Y')
                 );
                 ?>
                 <script>
@@ -195,8 +206,9 @@ class Property
 
     protected static function renderByEmployee($filterId, array $listProperty)
     {
-        if (!Loader::includeModule('intranet'))
+        if (!Loader::includeModule('intranet')) {
             return '';
+        }
 
         $html = '';
         if (!empty($listProperty)) {
@@ -204,16 +216,19 @@ class Property
             global $APPLICATION;
             ob_start();
             foreach ($listProperty as $property):
-                $APPLICATION->includeComponent('bitrix:intranet.user.selector.new', '',
+                $APPLICATION->includeComponent(
+                    'bitrix:intranet.user.selector.new',
+                    '',
                     array(
                         'MULTIPLE' => 'N',
                         'NAME' => $filterId . '_' . $property['FIELD_ID'],
-                        'INPUT_NAME' => strtolower($filterId . '_' . $property['FIELD_ID']),
+                        'INPUT_NAME' => mb_strtolower($filterId . '_' . $property['FIELD_ID']),
                         'POPUP' => 'Y',
                         'SITE_ID' => SITE_ID,
                         'SHOW_EXTRANET_USERS' => 'NONE',
                     ),
-                    null, array('HIDE_ICONS' => 'Y')
+                    null,
+                    array('HIDE_ICONS' => 'Y')
                 );
                 ?>
                 <script>
@@ -1003,8 +1018,9 @@ class Property
 
         $filterOption = new \Bitrix\Main\UI\Filter\Options($controlSettings["FILTER_ID"]);
         $filterData = $filterOption->getFilter();
-        if (!empty($filterData[$controlSettings['VALUE']]))
+        if (!empty($filterData[$controlSettings['VALUE']])) {
             $currentValue = $filterData[$controlSettings['VALUE']];
+        }
 
         if (!empty($currentValue)) {
             try {

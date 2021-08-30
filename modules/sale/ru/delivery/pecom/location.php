@@ -34,8 +34,9 @@ class Location extends ExternalLocationMap
         $result = new Result();
         $srvId = self::getExternalServiceId();
 
-        if (intval($srvId) <= 0)
+        if (intval($srvId) <= 0) {
             return $result;
+        }
 
         self::fillNormalizedTable();
         $res = static::getAllLocations();
@@ -45,9 +46,11 @@ class Location extends ExternalLocationMap
 
             if (is_array($locations) && !empty($locations)) {
                 $lastKey = static::mapByNames($locations, $srvId, $startKey, $timeout, $updateExist);
-                $result->addData(array(
-                    'LAST_KEY' => $lastKey
-                ));
+                $result->addData(
+                    array(
+                        'LAST_KEY' => $lastKey
+                    )
+                );
             }
         } else {
             $result->addErrors($res->getErrors());
@@ -68,8 +71,9 @@ class Location extends ExternalLocationMap
      */
     protected static function mapByNames($locations, $srvId, $startKey = 0, $timeout = 0, $updateExist = false)
     {
-        if (empty($locations))
+        if (empty($locations)) {
             throw new ArgumentNullException('locations');
+        }
 
         $startTime = mktime(true);
         $imported = 0;
@@ -77,11 +81,13 @@ class Location extends ExternalLocationMap
         $locationIdExist = array();
 
         if (!$updateExist) {
-            $res = ExternalTable::getList(array(
-                'filter' => array(
-                    '=SERVICE_ID' => $srvId
+            $res = ExternalTable::getList(
+                array(
+                    'filter' => array(
+                        '=SERVICE_ID' => $srvId
+                    )
                 )
-            ));
+            );
 
             while ($map = $res->fetch()) {
                 $xmlIdExist[] = $map['XML_ID'];
@@ -99,24 +105,41 @@ class Location extends ExternalLocationMap
                     $cityName = $location[static::CITY_NAME_IDX];
                     $districtName = self::extractDistrict($cityName);
 
-                    $locationId = static::getLocationIdByNames($cityName, '', $districtName, $location[static::REGION_NAME_IDX], '', true);
+                    $locationId = static::getLocationIdByNames(
+                        $cityName,
+                        '',
+                        $districtName,
+                        $location[static::REGION_NAME_IDX],
+                        '',
+                        true
+                    );
 
-                    if (!$locationId)
-                        $locationId = static::getLocationIdByNames($cityName, '', $districtName, $location[static::REGION_NAME_IDX], '', false);
+                    if (!$locationId) {
+                        $locationId = static::getLocationIdByNames(
+                            $cityName,
+                            '',
+                            $districtName,
+                            $location[static::REGION_NAME_IDX],
+                            '',
+                            false
+                        );
+                    }
 
                     if (intval($locationId) > 0 && !in_array($locationId, $locationIdExist)) {
                         $res = self::setExternalLocation($srvId, $locationId, $xmlId, $updateExist);
 
-                        if ($res)
+                        if ($res) {
                             $imported++;
+                        }
                     }
                 }
             }
 
             unset($locations[$key]);
 
-            if ($timeout > 0 && (mktime(true) - $startTime) >= $timeout)
+            if ($timeout > 0 && (mktime(true) - $startTime) >= $timeout) {
                 return intval($key);
+            }
         }
 
         return intval($key) > 0 ? intval($key) : 0;
@@ -134,21 +157,24 @@ class Location extends ExternalLocationMap
     protected static function getAllLocations()
     {
         $result = new Result();
-        $http = new \Bitrix\Main\Web\HttpClient(array(
-            "version" => "1.1",
-            "socketTimeout" => 30,
-            "streamTimeout" => 30,
-            "redirect" => true,
-            "redirectMax" => 5,
-            "disableSslVerification" => true
-        ));
+        $http = new \Bitrix\Main\Web\HttpClient(
+            array(
+                "version" => "1.1",
+                "socketTimeout" => 30,
+                "streamTimeout" => 30,
+                "redirect" => true,
+                "redirectMax" => 5,
+                "disableSslVerification" => true
+            )
+        );
 
         $jsnData = $http->get("https://www.pecom.ru/ru/calc/towns.php");
         $errors = $http->getError();
 
         if (!$jsnData && !empty($errors)) {
-            foreach ($errors as $errorCode => $errMes)
+            foreach ($errors as $errorCode => $errMes) {
                 $result->addError(new Error($errMes, $errorCode));
+            }
 
             return $result;
         }
@@ -163,8 +189,9 @@ class Location extends ExternalLocationMap
             $emptyRegions = array();
             $other = array();
 
-            if (strtolower(SITE_CHARSET) != 'utf-8')
+            if (mb_strtolower(SITE_CHARSET) != 'utf-8') {
                 $data = Encoding::convertEncoding($data, 'UTF-8', SITE_CHARSET, $em);
+            }
 
             $regions = self::getParents(array_keys($data));
 
@@ -172,7 +199,7 @@ class Location extends ExternalLocationMap
                 $regionCity = ToUpper($regionCity);
                 $regionName = !empty($regions[$regionCity]['REGION']) ? $regions[$regionCity]['REGION'] : '';
 
-                if (strlen($regionName) <= 0) {
+                if ($regionName == '') {
                     foreach (Replacement::getRegionExceptions() as $cName => $rName) {
                         if ($regionCity == $cName) {
                             $regionName = $rName;
@@ -185,14 +212,15 @@ class Location extends ExternalLocationMap
                     $cityName = ToUpper($cityName);
                     $location = array($cityName, $regionName, $cityId);
 
-                    if (strpos($cityName, '(') !== false && strpos($cityName, ')') !== false)
+                    if (mb_strpos($cityName, '(') !== false && mb_strpos($cityName, ')') !== false) {
                         $precised[] = $location;
-                    elseif ($cityName == $regionCity)
+                    } elseif ($cityName == $regionCity) {
                         $cityRegionSame[] = $location;
-                    elseif (strlen($regionCity) <= 0 || $regionCity == '-' || $regionCity == '--')
+                    } elseif ($regionCity == '' || $regionCity == '-' || $regionCity == '--') {
                         $emptyRegions = $location;
-                    else
+                    } else {
                         $other[] = $location;
+                    }
                 }
             }
 
@@ -219,30 +247,35 @@ class Location extends ExternalLocationMap
      */
     protected static function getParents(array $cityNames)
     {
-        if (empty($cityNames))
+        if (empty($cityNames)) {
             return array();
+        }
 
         $result = array();
 
-        foreach ($cityNames as $key => $name)
+        foreach ($cityNames as $key => $name) {
             $cityNames[$key] = ToUpper($name);
+        }
 
-        $res = LocationTable::getList(array(
-            'filter' => array(
-                '=NAME.NAME_UPPER' => $cityNames,
-                '=NAME.LANGUAGE_ID' => LANGUAGE_ID,
-                '=PARENTS.NAME.LANGUAGE_ID' => LANGUAGE_ID
-            ),
-            'select' => array(
-                'NAME_UPPER' => 'NAME.NAME_UPPER',
-                'PARENTS_TYPE_CODE' => 'PARENTS.TYPE.CODE',
-                'PARENTS_NAME_UPPER' => 'PARENTS.NAME.NAME_UPPER'
+        $res = LocationTable::getList(
+            array(
+                'filter' => array(
+                    '=NAME.NAME_UPPER' => $cityNames,
+                    '=NAME.LANGUAGE_ID' => LANGUAGE_ID,
+                    '=PARENTS.NAME.LANGUAGE_ID' => LANGUAGE_ID
+                ),
+                'select' => array(
+                    'NAME_UPPER' => 'NAME.NAME_UPPER',
+                    'PARENTS_TYPE_CODE' => 'PARENTS.TYPE.CODE',
+                    'PARENTS_NAME_UPPER' => 'PARENTS.NAME.NAME_UPPER'
+                )
             )
-        ));
+        );
 
         while ($loc = $res->fetch()) {
-            if (!isset($result[$loc['NAME_UPPER']]))
+            if (!isset($result[$loc['NAME_UPPER']])) {
                 $result[$loc['NAME_UPPER']] = array();
+            }
 
             $result[$loc['NAME_UPPER']][$loc['PARENTS_TYPE_CODE']] = $loc['PARENTS_NAME_UPPER'];
         }
@@ -265,11 +298,13 @@ class Location extends ExternalLocationMap
                 $result = trim($matches[2]);
                 $mark = Replacement::getDistrictMark();
 
-                if (!preg_match('/(' . $mark . '){1}/i' . BX_UTF_PCRE_MODIFIER, $result))
+                if (!preg_match('/(' . $mark . '){1}/i' . BX_UTF_PCRE_MODIFIER, $result)) {
                     $result = '';
+                }
 
-                if (!empty($matches[1]))
+                if (!empty($matches[1])) {
                     $cityName = trim($matches[1]);
+                }
             }
         }
 

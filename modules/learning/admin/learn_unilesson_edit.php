@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is modified admin_lesson_edit.php (with added additional field for 'CODE' from admin_chapter_edit.php).
  *
@@ -8,10 +9,11 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_ad
 if (!CModule::IncludeModule('learning')) {
     require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php'); // second system's prolog
 
-    if (IsModuleInstalled('learning') && defined('LEARNING_FAILED_TO_LOAD_REASON'))
+    if (IsModuleInstalled('learning') && defined('LEARNING_FAILED_TO_LOAD_REASON')) {
         echo LEARNING_FAILED_TO_LOAD_REASON;
-    else
+    } else {
         CAdminMessage::ShowMessage(GetMessage('LEARNING_MODULE_NOT_FOUND'));
+    }
 
     require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin.php');    // system's epilog
     exit();
@@ -33,20 +35,24 @@ $message = null;
 $bVarsFromForm = false;
 $LESSON_ID = intval($LESSON_ID);
 
-if (isset($g_learn_parentLessonId))
+if (isset($g_learn_parentLessonId)) {
     unset($g_learn_parentLessonId);
+}
 
-if (isset($g_learn_currentLessonPath))
+if (isset($g_learn_currentLessonPath)) {
     unset($g_learn_currentLessonPath);
+}
 
-if (isset($g_learn_parentLessonPath))
+if (isset($g_learn_parentLessonPath)) {
     unset($g_learn_parentLessonPath);
+}
 
 if (isset($_POST['LESSON_PATH']) || isset($_GET['LESSON_PATH'])) {
-    if (isset($_POST['LESSON_PATH']))
+    if (isset($_POST['LESSON_PATH'])) {
         $g_learn_currentLessonPath = $_POST['LESSON_PATH'];
-    else
+    } else {
         $g_learn_currentLessonPath = $_GET['LESSON_PATH'];
+    }
 
     $oPath = new CLearnPath();
     $oPath->ImportUrlencoded($g_learn_currentLessonPath);
@@ -95,7 +101,8 @@ if (isset($_GET['PROPOSE_RETURN_LESSON_PATH'])) {
         throw new LearnException (
             'EA_LOGIC: PROPOSE_RETURN_LESSON_PATH and '
             . 'LESSON_PATH are mutually exclusive arguments.',
-            LearnException::EXC_ERR_ALL_LOGIC);
+            LearnException::EXC_ERR_ALL_LOGIC
+        );
     }
 
     $g_learn_parentLessonPath = $_GET['PROPOSE_RETURN_LESSON_PATH'];
@@ -107,21 +114,23 @@ if (isset($_GET['PROPOSE_RETURN_LESSON_PATH'])) {
         throw new LearnException (
             'EA_LOGIC: PROPOSE_RETURN_LESSON_PATH given, '
             . 'but there is no parent lesson in path',
-            LearnException::EXC_ERR_ALL_LOGIC);
+            LearnException::EXC_ERR_ALL_LOGIC
+        );
     }
 }
 
 // Place to $topCourseLessonId lesson id of top course, if top lesson is course.
 $topCourseLessonId = false;
-if (isset($g_learn_parentLessonPath) && strlen($g_learn_parentLessonPath)) {
+if (isset($g_learn_parentLessonPath) && mb_strlen($g_learn_parentLessonPath)) {
     try {
         $oPath = new CLearnPath();
         $oPath->ImportUrlencoded($g_learn_parentLessonPath);
         $topLessonId = $oPath->GetTop();
 
         // Is lesson the course?
-        if (CLearnLesson::GetLinkedCourse($topLessonId) !== false)
+        if (CLearnLesson::GetLinkedCourse($topLessonId) !== false) {
             $topCourseLessonId = $topLessonId;
+        }
     } catch (Exception $e) {
         $topCourseLessonId = false;
     }
@@ -131,19 +140,21 @@ if (isset($g_learn_parentLessonPath) && strlen($g_learn_parentLessonPath)) {
 
 
 // This argument can be transmitted on POST submit of form when creating new lesson
-if (isset($_GET['PARENT_LESSON_ID']))
+if (isset($_GET['PARENT_LESSON_ID'])) {
     $_POST['PARENT_LESSON_ID'] = $_GET['PARENT_LESSON_ID'];
+}
 
 if (isset($_POST['PARENT_LESSON_ID'])) {
     $g_learn_parentLessonId = $_POST['PARENT_LESSON_ID'];
 }
 
 $createNewLesson = false;
-if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($Update) > 0 && check_bitrix_sessid()) {
+if ($_SERVER["REQUEST_METHOD"] == "POST" && $Update <> '' && check_bitrix_sessid()) {
     $arEdgeProperties = array();
 
-    if ($LESSON_ID == 0)
+    if ($LESSON_ID == 0) {
         $createNewLesson = true;
+    }
 
     $was_errors = false;
     // Block 1: params, preview_text and detail_text
@@ -203,20 +214,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($Update) > 0 && check_bitrix_
                         CLearnLesson::RelationUpdate(
                             $g_learn_parentLessonId,
                             $LESSON_ID,
-                            $arEdgeProperties);
+                            $arEdgeProperties
+                        );
                     }
                 } else {
                     // If we are in context of parent lesson => create linked lesson
                     if (isset($g_learn_parentLessonId) && $g_learn_parentLessonId > 0) {
                         $arNewEdgeProperties = array('SORT' => 500);
-                        if (isset($arEdgeProperties['SORT']))
+                        if (isset($arEdgeProperties['SORT'])) {
                             $arNewEdgeProperties['SORT'] = $arEdgeProperties['SORT'];
+                        }
 
                         $LESSON_ID = CLearnLesson::Add(
                             $arFields,
                             false,        // is course?
                             $g_learn_parentLessonId,
-                            $arNewEdgeProperties);
+                            $arNewEdgeProperties
+                        );
                     } else {
                         $LESSON_ID = CLearnLesson::Add($arFields);
                     }
@@ -228,31 +242,43 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($Update) > 0 && check_bitrix_
                 if (($LESSON_ID > 0) && ($topCourseLessonId !== false)) {
                     $isProhibited = false;
 
-                    if ($_POST['PUBLISH_PROHIBITED'] === 'Y')
+                    if ($_POST['PUBLISH_PROHIBITED'] === 'Y') {
                         $isProhibited = true;
+                    }
 
                     CLearnLesson::PublishProhibitionSetTo(
-                        $LESSON_ID, $topCourseLessonId, $isProhibited);
+                        $LESSON_ID,
+                        $topCourseLessonId,
+                        $isProhibited
+                    );
                 }
-
             } catch (Exception $e) {
+                /* @var Exception $e */
+
+                $APPLICATION->ThrowException($e->getMessage(), $e->getCode());
                 $res = false;
             }
 
             if (!$res) {
-                if ($e = $APPLICATION->GetException())
+                if ($e = $APPLICATION->GetException()) {
                     $message = new CAdminMessage(GetMessage("LEARNING_ERROR"), $e);
-                else
+                } else {
                     $message = new CAdminMessage(GetMessage("LEARNING_ERROR"));
+                }
 
                 $bVarsFromForm = true;
                 $was_errors = true;
             }
         } else {
-            if ($e = $APPLICATION->GetException())
-                $message = new CAdminMessage(GetMessage("LEARNING_ERROR") . ': ' . GetMessage('LEARNING_ACCESS_D_FOR_EDIT_CONTENT'), $e);
-            else
-                $message = new CAdminMessage(GetMessage("LEARNING_ERROR") . ': ' . GetMessage('LEARNING_ACCESS_D_FOR_EDIT_CONTENT'));
+            if ($e = $APPLICATION->GetException()) {
+                $message = new CAdminMessage(
+                    GetMessage("LEARNING_ERROR") . ': ' . GetMessage('LEARNING_ACCESS_D_FOR_EDIT_CONTENT'), $e
+                );
+            } else {
+                $message = new CAdminMessage(
+                    GetMessage("LEARNING_ERROR") . ': ' . GetMessage('LEARNING_ACCESS_D_FOR_EDIT_CONTENT')
+                );
+            }
 
             $bVarsFromForm = true;
 
@@ -269,8 +295,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($Update) > 0 && check_bitrix_
         && (!isset($_REQUEST['SKIP_RELATIONS_SAVING']))
     ) {
         $sort = false;    // default sort order will be used for new edges
-        if (isset($_POST['EDGE_SORT']) && ($_POST['EDGE_SORT'] > 0))
+        if (isset($_POST['EDGE_SORT']) && ($_POST['EDGE_SORT'] > 0)) {
             $sort = (int)$_POST['EDGE_SORT'];
+        }
         CLearnRelationHelper::ProccessPOST($oAccess, $LESSON_ID, $sort);
     }
 
@@ -286,34 +313,46 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($Update) > 0 && check_bitrix_
             if ($oAccess->IsLessonAccessible($LESSON_ID, CLearnAccess::OP_LESSON_MANAGE_RIGHTS)) {
                 // Process permissions
                 $arPostedRights = array();
-                if (is_array($_POST['LESSON_RIGHTS']))
+                if (is_array($_POST['LESSON_RIGHTS'])) {
                     $arPostedRights = $_POST['LESSON_RIGHTS'];
+                }
 
                 $arAccessSymbols = array();
                 $arTaskIds = array();
                 foreach ($arPostedRights as $key => $arData) {
-                    if (isset($arData['GROUP_CODE']))
+                    if (isset($arData['GROUP_CODE'])) {
                         $arAccessSymbols[] = $arData['GROUP_CODE'];
-                    elseif (isset($arData['TASK_ID']))
+                    } elseif (isset($arData['TASK_ID'])) {
                         $arTaskIds[] = $arData['TASK_ID'];
+                    }
                 }
-                if (count($arAccessSymbols) !== count($arTaskIds))
-                    throw new LearnException('', LearnException::EXC_ERR_ALL_LOGIC | LearnException::EXC_ERR_ALL_GIVEUP);
+                if (count($arAccessSymbols) !== count($arTaskIds)) {
+                    throw new LearnException(
+                        '', LearnException::EXC_ERR_ALL_LOGIC | LearnException::EXC_ERR_ALL_GIVEUP
+                    );
+                }
 
                 $arPermPairs = array();
-                if (count($arAccessSymbols) > 0)
+                if (count($arAccessSymbols) > 0) {
                     $arPermPairs = array_combine($arAccessSymbols, $arTaskIds);
+                }
 
-                if ($arPermPairs === false)
+                if ($arPermPairs === false) {
                     $arPermPairs = array();
+                }
 
                 // Save permissions
                 $oAccess->SetLessonsPermissions(array($LESSON_ID => $arPermPairs));
             } else {
-                if ($e = $APPLICATION->GetException())
-                    $message = new CAdminMessage(GetMessage("LEARNING_ERROR") . ': ' . GetMessage('LEARNING_ACCESS_D_FOR_MANAGE_RIGHTS'), $e);
-                else
-                    $message = new CAdminMessage(GetMessage("LEARNING_ERROR") . ': ' . GetMessage('LEARNING_ACCESS_D_FOR_MANAGE_RIGHTS'));
+                if ($e = $APPLICATION->GetException()) {
+                    $message = new CAdminMessage(
+                        GetMessage("LEARNING_ERROR") . ': ' . GetMessage('LEARNING_ACCESS_D_FOR_MANAGE_RIGHTS'), $e
+                    );
+                } else {
+                    $message = new CAdminMessage(
+                        GetMessage("LEARNING_ERROR") . ': ' . GetMessage('LEARNING_ACCESS_D_FOR_MANAGE_RIGHTS')
+                    );
+                }
 
                 $bVarsFromForm = true;
 
@@ -327,14 +366,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($Update) > 0 && check_bitrix_
     }
 
     if (!$was_errors) {
-
         $currentLessonPath = "";
         if (isset($g_learn_currentLessonPath)) {
             $currentLessonPath = $g_learn_currentLessonPath . ($createNewLesson && $LESSON_ID > 0 ? "." . $LESSON_ID : "");
         }
 
-        if (strlen($apply) <= 0) {
-            if (strlen($return_url) > 0) {
+        if ($apply == '') {
+            if ($return_url <> '') {
                 LocalRedirect(
                     str_replace(
                         array("#LESSON_ID#", "#LESSON_PATH#"),
@@ -359,11 +397,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($Update) > 0 && check_bitrix_
             }
         }
 
-        LocalRedirect("/bitrix/admin/learn_unilesson_edit.php?lang=" . LANG
+        LocalRedirect(
+            "/bitrix/admin/learn_unilesson_edit.php?lang=" . LANG
             . "&LESSON_ID=" . ($LESSON_ID + 0)
             . "&LESSON_PATH=" . urlencode($currentLessonPath)
             . "&lessonTabControl_active_tab=" . urlencode($_REQUEST['lessonTabControl_active_tab'])
-            . GetFilterParams("filter_", false));
+            . GetFilterParams("filter_", false)
+        );
     }
 }
 
@@ -375,7 +415,6 @@ if (($LESSON_ID > 0) && $oAccess->IsLessonAccessible($LESSON_ID, CLearnAccess::O
     $isBtnsDisabled = false;
 } elseif ($LESSON_ID == 0) {
     if (isset($g_learn_parentLessonId) && $g_learn_parentLessonId > 0) {
-
         if ($oAccess->IsBaseAccess(CLearnAccess::OP_LESSON_LINK_DESCENDANTS | CLearnAccess::OP_LESSON_LINK_TO_PARENTS)
             || (
                 $oAccess->IsLessonAccessible($g_learn_parentLessonId, CLearnAccess::OP_LESSON_LINK_DESCENDANTS)
@@ -390,16 +429,19 @@ if (($LESSON_ID > 0) && $oAccess->IsLessonAccessible($LESSON_ID, CLearnAccess::O
     }
 } elseif (($LESSON_ID > 0) && CLearnAccessMacroses::CanUserEditLessonRights(array('lesson_id' => $LESSON_ID))) {
     $isBtnsDisabled = false;
-} elseif (($LESSON_ID > 0) && CLearnAccessMacroses::CanUserPerformAtLeastOneRelationAction(array('lesson_id' => $LESSON_ID))) {
+} elseif (($LESSON_ID > 0) && CLearnAccessMacroses::CanUserPerformAtLeastOneRelationAction(
+        array('lesson_id' => $LESSON_ID)
+    )) {
     $isBtnsDisabled = false;
 }
 
-if (($LESSON_ID > 0) && $oAccess->IsLessonAccessible($LESSON_ID, CLearnAccess::OP_LESSON_READ))
+if (($LESSON_ID > 0) && $oAccess->IsLessonAccessible($LESSON_ID, CLearnAccess::OP_LESSON_READ)) {
     $APPLICATION->SetTitle(GetMessage("LEARNING_LESSONS") . ": " . GetMessage("LEARNING_EDIT_TITLE"));
-elseif (($LESSON_ID == 0) && $oAccess->IsBaseAccess(CLearnAccess::OP_LESSON_CREATE))
+} elseif (($LESSON_ID == 0) && $oAccess->IsBaseAccess(CLearnAccess::OP_LESSON_CREATE)) {
     $APPLICATION->SetTitle(GetMessage('LEARNING_LESSONS') . ": " . GetMessage("LEARNING_NEW_TITLE"));
-else
+} else {
     $bBadCourse = true;
+}
 
 //Defaults
 $str_ACTIVE = "Y";
@@ -418,24 +460,29 @@ if (isset($g_learn_parentLessonId)) {
         $result = CLearnLesson::GetListOfImmediateChilds(
             $str_PARENT_LESSON_ID,            // parent of current lesson
             array(),                        // sort order
-            array('LESSON_ID' => $LESSON_ID));        // get data for current lesson only
+            array('LESSON_ID' => $LESSON_ID)
+        );        // get data for current lesson only
     }
 } else {
-    if (isset($str_PARENT_LESSON_ID))
+    if (isset($str_PARENT_LESSON_ID)) {
         unset ($str_PARENT_LESSON_ID);
+    }
 
-    if ($LESSON_ID > 0)
+    if ($LESSON_ID > 0) {
         $result = CLearnLesson::GetByID($LESSON_ID);
+    }
 }
 // Now $str_PARENT_LESSON_ID exists only if in GET and/or POST request was PARENT_LESSON_ID
 
 if (($topCourseLessonId !== false) && ($LESSON_ID > 0)) {
-    if (CLearnLesson::IsPublishProhibited($LESSON_ID, $topCourseLessonId))
+    if (CLearnLesson::IsPublishProhibited($LESSON_ID, $topCourseLessonId)) {
         $str_PUBLISH_PROHIBITED = 'Y';
+    }
 }
 
-if (!($result && $result->ExtractFields("str_")))
+if (!($result && $result->ExtractFields("str_"))) {
     $LESSON_ID = 0;
+}
 
 if ($bVarsFromForm) {
     $ACTIVE = ($ACTIVE != "Y" ? "N" : "Y");
@@ -446,10 +493,17 @@ if ($bVarsFromForm) {
      * $DB->InitTableVarsForEdit("b_learn_lesson", "", "str_");
      */
     $arVarsOnForm = array(
-        'TIMESTAMP_X', 'ACTIVE', 'CODE', 'NAME', 'KEYWORDS',
-        'PREVIEW_TEXT', 'PREVIEW_TEXT_TYPE',
-        'DETAIL_TEXT', 'DETAIL_TEXT_TYPE',
-        'LAUNCH');
+        'TIMESTAMP_X',
+        'ACTIVE',
+        'CODE',
+        'NAME',
+        'KEYWORDS',
+        'PREVIEW_TEXT',
+        'PREVIEW_TEXT_TYPE',
+        'DETAIL_TEXT',
+        'DETAIL_TEXT_TYPE',
+        'LAUNCH'
+    );
 
     // Only in context of parent lesson
     if (isset($str_PARENT_LESSON_ID)) {
@@ -457,16 +511,18 @@ if ($bVarsFromForm) {
     }
 
     // Only in context of most top course
-    if ($topCourseLessonId !== false)
+    if ($topCourseLessonId !== false) {
         $arVarsOnForm[] = 'PUBLISH_PROHIBITED';
+    }
 
     foreach ($arVarsOnForm as $k => $varName) {
-        if (!is_array(${$varName}))
+        if (!is_array(${$varName})) {
             ${'str_' . $varName} = htmlspecialcharsbx(${$varName});
-        else {
+        } else {
             $tmp = array();
-            foreach (${$varName} as $key => $value)
+            foreach (${$varName} as $key => $value) {
                 $tmp[$key] = htmlspecialcharsbx($value);
+            }
 
             ${'str_' . $varName} = $tmp;
             unset ($tmp);
@@ -526,8 +582,9 @@ $tabControl = new CAdminForm("lessonTabControl", $aTabs);
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 
 if (!$bBadCourse):
 
@@ -537,7 +594,9 @@ if (!$bBadCourse):
             array(
                 "ICON" => "btn_list",
                 "TEXT" => GetMessage("MAIN_ADMIN_MENU_LIST"),
-                "LINK" => "learn_unilesson_admin.php?lang=" . LANG . "&LESSON_PATH=" . urlencode($g_learn_parentLessonPath) . GetFilterParams("filter_"),
+                "LINK" => "learn_unilesson_admin.php?lang=" . LANG . "&LESSON_PATH=" . urlencode(
+                        $g_learn_parentLessonPath
+                    ) . GetFilterParams("filter_"),
                 "TITLE" => GetMessage("MAIN_ADMIN_MENU_LIST")
             ),
         );
@@ -549,7 +608,8 @@ if (!$bBadCourse):
                 'TEXT' => GetMessage('LEARNING_ALL_LESSONS'),
                 'LINK' => 'learn_unilesson_admin.php?lang=' . LANG
                     . '&set_filter=Y'
-                    . '&PARENT_LESSON_ID=-2',    // magic number '-2' is means 'List lessons, without relation to parent'
+                    . '&PARENT_LESSON_ID=-2',
+                // magic number '-2' is means 'List lessons, without relation to parent'
                 'TITLE' => GetMessage('LEARNING_ALL_LESSONS')
             )
         );
@@ -567,7 +627,6 @@ if (!$bBadCourse):
                 . "&" . bitrix_sessid_get()
                 . urlencode(GetFilterParams("filter_", false)) . "';",
         );
-
         /*
         // If we are in context of parent lesson - we can unlink current lesson from parent
         if (isset($g_learn_parentLessonId))
@@ -628,16 +687,23 @@ if (!$bBadCourse):
         }
     </script>
     <?
-    CAdminFileDialog::ShowScript(Array
+    CAdminFileDialog::ShowScript(
+        Array
         (
             "event" => "OpenFileBrowserWindMedia",
             "arResultDest" => Array("FUNCTION_NAME" => "SetUrl"),
-            "arPath" => Array("SITE" => $_GET["site"], "PATH" => (strlen($str_FILENAME) > 0 ? GetDirPath($str_FILENAME) : '')),
-            "select" => 'F',// F - file only, D - folder only,
-            "operation" => 'O',// O - open, S - save
+            "arPath" => Array(
+                "SITE" => $_GET["site"],
+                "PATH" => ($str_FILENAME <> '' ? GetDirPath($str_FILENAME) : '')
+            ),
+            "select" => 'F',
+            // F - file only, D - folder only,
+            "operation" => 'O',
+            // O - open, S - save
             "showUploadTab" => true,
             "showAddToMenuTab" => false,
-            "fileFilter" => 'wmv,flv,mp4,wma,mp3',//'' - don't shjow select, 'image' - only images; "ext1,ext2" - Only files with ext1 and ext2 extentions;
+            "fileFilter" => 'wmv,flv,mp4,wma,mp3',
+            //'' - don't shjow select, 'image' - only images; "ext1,ext2" - Only files with ext1 and ext2 extentions;
             "allowAllFiles" => true,
             "SaveConfig" => true
         )
@@ -948,10 +1014,11 @@ if (!$bBadCourse):
 
     $tabControl->EndEpilogContent();
 
-    if ($LESSON_ID > 0)
+    if ($LESSON_ID > 0) {
         $bContentReadOnly = !CLearnAccessMacroses::CanUserEditLesson(array('lesson_id' => $LESSON_ID));
-    else
+    } else {
         $bContentReadOnly = !$oAccess->IsBaseAccess(CLearnAccess::OP_LESSON_CREATE);
+    }
 
     $tabControl->Begin();
     $tabControl->BeginNextFormTab();
@@ -999,26 +1066,30 @@ if (!$bBadCourse):
         <td><? echo $tabControl->GetCustomLabelHTML() ?>:</td>
         <td><?php
             if ($bContentReadOnly) {
-                if ($str_ACTIVE == 'Y')
+                if ($str_ACTIVE == 'Y') {
                     echo GetMessage('LEARNING_YES');
-                else
+                } else {
                     echo GetMessage('LEARNING_NO');
+                }
             } else {
                 ?><input type="checkbox" name="ACTIVE" value="Y"<? if ($str_ACTIVE == "Y") echo " checked" ?>><?php
             }
             ?>
         </td>
     </tr>
-    <?php $tabControl->EndCustomField("ACTIVE", '<input type="hidden" id="ACTIVE" name="ACTIVE" value="' . $str_ACTIVE . '">');
+    <?php $tabControl->EndCustomField(
+    "ACTIVE",
+    '<input type="hidden" id="ACTIVE" name="ACTIVE" value="' . $str_ACTIVE . '">'
+);
 
     $tabControl->BeginCustomField("NAME", GetMessage("LEARNING_NAME"), false); ?>
     <tr class="adm-detail-required-field">
         <td><? echo $tabControl->GetCustomLabelHTML() ?>:</td>
         <td valign="top">
             <?php
-            if ($bContentReadOnly)
+            if ($bContentReadOnly) {
                 echo $str_NAME;
-            else {
+            } else {
                 ?>
                 <input type="text" name="NAME" size="50" maxlength="255" value="<? echo $str_NAME ?>">
                 <?php
@@ -1035,9 +1106,9 @@ if (!$bBadCourse):
         <td><? echo $tabControl->GetCustomLabelHTML() ?>:</td>
         <td>
             <?php
-            if ($bContentReadOnly)
+            if ($bContentReadOnly) {
                 echo $str_CODE;
-            else {
+            } else {
                 ?>
                 <input type="text" name="CODE" size="20" maxlength="40" value="<?php echo $str_CODE; ?>">
                 <?php
@@ -1053,9 +1124,9 @@ if (!$bBadCourse):
         <td><? echo $tabControl->GetCustomLabelHTML() ?>:</td>
         <td valign="top">
             <?php
-            if ($bContentReadOnly)
+            if ($bContentReadOnly) {
                 echo $str_KEYWORDS;
-            else {
+            } else {
                 ?>
                 <input type="text" name="KEYWORDS" size="50" maxlength="255" value="<? echo $str_KEYWORDS ?>">
                 <?php
@@ -1064,7 +1135,10 @@ if (!$bBadCourse):
         </td>
     </tr>
     <?php
-    $tabControl->EndCustomField("KEYWORDS", '<input type="hidden" id="KEYWORDS" name="KEYWORDS" value="' . $str_KEYWORDS . '">');
+    $tabControl->EndCustomField(
+        "KEYWORDS",
+        '<input type="hidden" id="KEYWORDS" name="KEYWORDS" value="' . $str_KEYWORDS . '">'
+    );
 
 
 // If we are in context of parent lesson - show EDGE_SORT property
@@ -1072,7 +1146,11 @@ if (!$bBadCourse):
         $resParentLessonData = CLearnLesson::GetByID($g_learn_parentLessonId);
         $arParentLessonData = $resParentLessonData->GetNext();
         if (is_array($arParentLessonData)) {
-            $tabControl->BeginCustomField("ZOMBIE_CONTEXT_PARENT_NAME", GetMessage("LEARNING_PARENT_CHAPTER_ID"), false);
+            $tabControl->BeginCustomField(
+                "ZOMBIE_CONTEXT_PARENT_NAME",
+                GetMessage("LEARNING_PARENT_CHAPTER_ID"),
+                false
+            );
             ?>
             <tr>
                 <td><? echo $tabControl->GetCustomLabelHTML() ?>:</td>
@@ -1088,9 +1166,9 @@ if (!$bBadCourse):
                 <td><? echo $tabControl->GetCustomLabelHTML() ?>:</td>
                 <td>
                     <?php
-                    if ($bContentReadOnly)
+                    if ($bContentReadOnly) {
                         echo $str_EDGE_SORT;
-                    else {
+                    } else {
                         ?>
                         <input type="text" name="EDGE_SORT" size="10" maxlength="10"
                                value="<?php echo $str_EDGE_SORT; ?>">
@@ -1100,10 +1178,14 @@ if (!$bBadCourse):
                 </td>
             </tr>
             <?php
-            if ($bContentReadOnly)
+            if ($bContentReadOnly) {
                 $tabControl->EndCustomField('EDGE_SORT');
-            else
-                $tabControl->EndCustomField('EDGE_SORT', '<input type="hidden" id="EDGE_SORT" name="EDGE_SORT" value="' . $str_EDGE_SORT . '">');
+            } else {
+                $tabControl->EndCustomField(
+                    'EDGE_SORT',
+                    '<input type="hidden" id="EDGE_SORT" name="EDGE_SORT" value="' . $str_EDGE_SORT . '">'
+                );
+            }
         }
 
         unset ($resParentLessonData, $arParentLessonData);
@@ -1126,12 +1208,14 @@ if (!$bBadCourse):
                 <td>
                     <label>
                         <?php
-                        if ($bContentReadOnly)
+                        if ($bContentReadOnly) {
                             echo $str_PUBLISH_PROHIBITED;
-                        else {
+                        } else {
                             ?>
                             <input type="checkbox" name="PUBLISH_PROHIBITED"
-                                   value="Y" <?php if ($str_PUBLISH_PROHIBITED == "Y") echo "checked"; ?>>
+                                   value="Y" <?php if ($str_PUBLISH_PROHIBITED == "Y") {
+                                echo "checked";
+                            } ?>>
                             <?php
                         }
 
@@ -1147,10 +1231,14 @@ if (!$bBadCourse):
                 </td>
             </tr>
             <?php
-            if ($bContentReadOnly)
+            if ($bContentReadOnly) {
                 $tabControl->EndCustomField('PUBLISH_PROHIBITED');
-            else
-                $tabControl->EndCustomField('PUBLISH_PROHIBITED', '<input type="hidden" id="PUBLISH_PROHIBITED" name="PUBLISH_PROHIBITED" value="' . $str_PUBLISH_PROHIBITED . '">');
+            } else {
+                $tabControl->EndCustomField(
+                    'PUBLISH_PROHIBITED',
+                    '<input type="hidden" id="PUBLISH_PROHIBITED" name="PUBLISH_PROHIBITED" value="' . $str_PUBLISH_PROHIBITED . '">'
+                );
+            }
         }
 
         unset ($resParentLessonData, $arRootLessonData);
@@ -1168,10 +1256,11 @@ if (!$bBadCourse):
                 <div>
                     <?php
                     echo GetMessage("LEARNING_DESC_TYPE") . ': ';
-                    if ($str_PREVIEW_TEXT_TYPE != 'html')
+                    if ($str_PREVIEW_TEXT_TYPE != 'html') {
                         echo GetMessage("LEARNING_DESC_TYPE_TEXT");
-                    else
+                    } else {
                         echo GetMessage("LEARNING_DESC_TYPE_HTML");
+                    }
                     ?>
                 </div>
 
@@ -1203,7 +1292,11 @@ if (!$bBadCourse):
                     false,
                     true,
                     false,
-                    array('toolbarConfig' => CFileman::GetEditorToolbarConfig("learning_" . (defined('BX_PUBLIC_MODE') && BX_PUBLIC_MODE == 1 ? 'public' : 'admin')))
+                    array(
+                        'toolbarConfig' => CFileman::GetEditorToolbarConfig(
+                            "learning_" . (defined('BX_PUBLIC_MODE') && BX_PUBLIC_MODE == 1 ? 'public' : 'admin')
+                        )
+                    )
                 );
             }
             ?>
@@ -1213,11 +1306,18 @@ if (!$bBadCourse):
     <tr>
         <td align="center"><? echo GetMessage("LEARNING_DESC_TYPE") ?>:</td>
         <td>
-            <input type="radio" <?php if ($bContentReadOnly) echo ' disabled="disabled" '; ?> name="PREVIEW_TEXT_TYPE"
-                   value="text"<? if ($str_PREVIEW_TEXT_TYPE != "html") echo " checked" ?>> <? echo GetMessage("LEARNING_DESC_TYPE_TEXT") ?>
-            /
-            <input type="radio" <?php if ($bContentReadOnly) echo ' disabled="disabled" '; ?> name="PREVIEW_TEXT_TYPE"
-                   value="html"<? if ($str_PREVIEW_TEXT_TYPE == "html") echo " checked" ?>> <? echo GetMessage("LEARNING_DESC_TYPE_HTML") ?>
+            <input type="radio" <?php if ($bContentReadOnly) {
+                echo ' disabled="disabled" ';
+            } ?> name="PREVIEW_TEXT_TYPE"
+                   value="text"<? if ($str_PREVIEW_TEXT_TYPE != "html") echo " checked" ?>> <? echo GetMessage(
+                "LEARNING_DESC_TYPE_TEXT"
+            ) ?> /
+            <input type="radio" <?php if ($bContentReadOnly) {
+                echo ' disabled="disabled" ';
+            } ?> name="PREVIEW_TEXT_TYPE"
+                   value="html"<? if ($str_PREVIEW_TEXT_TYPE == "html") echo " checked" ?>> <? echo GetMessage(
+                "LEARNING_DESC_TYPE_HTML"
+            ) ?>
         </td>
     </tr>
     <tr>
@@ -1246,7 +1346,8 @@ if (!$bBadCourse):
         </td>
     </tr>
 <?endif ?>
-    <?php $tabControl->EndCustomField("PREVIEW_TEXT",
+    <?php $tabControl->EndCustomField(
+    "PREVIEW_TEXT",
     '<input type="hidden" id="PREVIEW_TEXT" name="PREVIEW_TEXT" value="' . $str_PREVIEW_TEXT . '">' .
     '<input type="hidden" id="PREVIEW_TEXT_TYPE" name="PREVIEW_TEXT_TYPE" value="' . $str_PREVIEW_TEXT_TYPE . '">'
 ); ?>
@@ -1266,8 +1367,18 @@ if (!$bBadCourse):
             <td valign="top" style="width:50%;"><? echo $tabControl->GetCustomLabelHTML() ?></td>
             <td>
                 <?php
-                if (!$bContentReadOnly)
-                    echo CFile::InputFile("PREVIEW_PICTURE", 20, $str_PREVIEW_PICTURE, false, 0, "IMAGE", "", 40) . '<br>';
+                if (!$bContentReadOnly) {
+                    echo CFile::InputFile(
+                            "PREVIEW_PICTURE",
+                            20,
+                            $str_PREVIEW_PICTURE,
+                            false,
+                            0,
+                            "IMAGE",
+                            "",
+                            40
+                        ) . '<br>';
+                }
 
                 if ($str_PREVIEW_PICTURE) {
                     echo CFile::ShowImage($str_PREVIEW_PICTURE, 200, 200, "border=0", "", true);
@@ -1285,14 +1396,18 @@ if (!$bBadCourse):
     <tr>
         <td valign="top" width="50%" align="right"><? echo GetMessage("LEARNING_CONTENT_SOURCE") ?>:</td>
         <td valign="top" width="50%">
-            <label><input onClick="toggleSource()" <?php if ($bContentReadOnly) echo ' disabled="disabled" '; ?>
-                          type="radio" name="CONTENT_SOURCE"
-                          value="field"<?php echo $str_DETAIL_TEXT_TYPE != "file" ? " checked" : "" ?>>&nbsp;<? echo GetMessage("LEARNING_CONTENT_SOURCE_FIELD") ?>
-            </label><br/>
-            <label><input onClick="toggleSource()" <?php if ($bContentReadOnly) echo ' disabled="disabled" '; ?>
-                          type="radio" name="CONTENT_SOURCE"
-                          value="file"<?php echo $str_DETAIL_TEXT_TYPE == "file" ? " checked" : "" ?>>&nbsp;<? echo GetMessage("LEARNING_CONTENT_SOURCE_FILE") ?>
-                (pdf, html, text, jpg, png)</label>
+            <label><input onClick="toggleSource()" <?php if ($bContentReadOnly) {
+                    echo ' disabled="disabled" ';
+                } ?> type="radio" name="CONTENT_SOURCE"
+                          value="field"<?php echo $str_DETAIL_TEXT_TYPE != "file" ? " checked" : "" ?>>&nbsp;<? echo GetMessage(
+                    "LEARNING_CONTENT_SOURCE_FIELD"
+                ) ?></label><br/>
+            <label><input onClick="toggleSource()" <?php if ($bContentReadOnly) {
+                    echo ' disabled="disabled" ';
+                } ?> type="radio" name="CONTENT_SOURCE"
+                          value="file"<?php echo $str_DETAIL_TEXT_TYPE == "file" ? " checked" : "" ?>>&nbsp;<? echo GetMessage(
+                    "LEARNING_CONTENT_SOURCE_FILE"
+                ) ?> (pdf, html, text, jpg, png)</label>
         </td>
     </tr>
     <? if (COption::GetOptionString("learning", "use_htmledit", "Y") == "Y" && CModule::IncludeModule("fileman")):
@@ -1305,10 +1420,11 @@ if (!$bBadCourse):
                 <div>
                     <?php
                     echo GetMessage("LEARNING_DESC_TYPE") . ': ';
-                    if ($str_DETAIL_TEXT_TYPE != 'html')
+                    if ($str_DETAIL_TEXT_TYPE != 'html') {
                         echo GetMessage("LEARNING_DESC_TYPE_TEXT");
-                    else
+                    } else {
                         echo GetMessage("LEARNING_DESC_TYPE_HTML");
+                    }
                     ?>
                 </div>
 
@@ -1340,7 +1456,11 @@ if (!$bBadCourse):
                     false,
                     true,
                     false,
-                    array('toolbarConfig' => CFileman::GetEditorToolbarConfig("learning_" . (defined('BX_PUBLIC_MODE') && BX_PUBLIC_MODE == 1 ? 'public' : 'admin')))
+                    array(
+                        'toolbarConfig' => CFileman::GetEditorToolbarConfig(
+                            "learning_" . (defined('BX_PUBLIC_MODE') && BX_PUBLIC_MODE == 1 ? 'public' : 'admin')
+                        )
+                    )
                 );
             }
             ?>
@@ -1350,11 +1470,18 @@ if (!$bBadCourse):
     <tr id="source_field[0]">
         <td valign="top"><? echo GetMessage("LEARNING_DESC_TYPE") ?></td>
         <td valign="top">
-            <input type="radio" <?php if ($bContentReadOnly) echo ' disabled="disabled" '; ?> name="DETAIL_TEXT_TYPE"
-                   value="text"<? if ($str_DETAIL_TEXT_TYPE != "html") echo " checked" ?>> <? echo GetMessage("LEARNING_DESC_TYPE_TEXT") ?>
-            /
-            <input type="radio" <?php if ($bContentReadOnly) echo ' disabled="disabled" '; ?> name="DETAIL_TEXT_TYPE"
-                   value="html"<? if ($str_DETAIL_TEXT_TYPE == "html") echo " checked" ?>> <? echo GetMessage("LEARNING_DESC_TYPE_HTML") ?>
+            <input type="radio" <?php if ($bContentReadOnly) {
+                echo ' disabled="disabled" ';
+            } ?> name="DETAIL_TEXT_TYPE"
+                   value="text"<? if ($str_DETAIL_TEXT_TYPE != "html") echo " checked" ?>> <? echo GetMessage(
+                "LEARNING_DESC_TYPE_TEXT"
+            ) ?> /
+            <input type="radio" <?php if ($bContentReadOnly) {
+                echo ' disabled="disabled" ';
+            } ?> name="DETAIL_TEXT_TYPE"
+                   value="html"<? if ($str_DETAIL_TEXT_TYPE == "html") echo " checked" ?>> <? echo GetMessage(
+                "LEARNING_DESC_TYPE_HTML"
+            ) ?>
         </td>
     </tr>
     <tr id="source_field[1]">
@@ -1387,9 +1514,9 @@ if (!$bBadCourse):
         <td valign="top" align="right"><? echo GetMessage("LEARNING_PATH_TO_FILE") ?>:</td>
         <td valign="top">
             <?php
-            if ($bContentReadOnly)
+            if ($bContentReadOnly) {
                 echo $str_LAUNCH;
-            else {
+            } else {
                 ?>
                 <input type="text" name="LAUNCH" size="50" maxlength="255" value="<? echo $str_LAUNCH ?>">
                 <?php
@@ -1398,7 +1525,8 @@ if (!$bBadCourse):
         </td>
     </tr>
     <script type="text/javascript">toggleSource()</script>
-    <?php $tabControl->EndCustomField("DESCRIPTION",
+    <?php $tabControl->EndCustomField(
+    "DESCRIPTION",
     '<input type="hidden" id="DESCRIPTION" name="DESCRIPTION" value="' . $str_DESCRIPTION . '">'
     . '<input type="hidden" id="DETAIL_TEXT_TYPE" name="DETAIL_TEXT_TYPE" value="' . $str_DETAIL_TEXT_TYPE . '">'
     . '<input type="hidden" id="LAUNCH" name="LAUNCH" value="' . $str_LAUNCH . '">'
@@ -1419,8 +1547,18 @@ if (!$bBadCourse):
             <td valign="top" style="width:50%;"><? echo $tabControl->GetCustomLabelHTML() ?></td>
             <td>
                 <?php
-                if (!$bContentReadOnly)
-                    echo CFile::InputFile("DETAIL_PICTURE", 20, $str_DETAIL_PICTURE, false, 0, "IMAGE", "", 40) . '<br>';
+                if (!$bContentReadOnly) {
+                    echo CFile::InputFile(
+                            "DETAIL_PICTURE",
+                            20,
+                            $str_DETAIL_PICTURE,
+                            false,
+                            0,
+                            "IMAGE",
+                            "",
+                            40
+                        ) . '<br>';
+                }
 
                 if ($str_DETAIL_PICTURE) {
                     echo CFile::ShowImage($str_DETAIL_PICTURE, 200, 200, "border=0", "", true);
@@ -1441,7 +1579,10 @@ if (!$bBadCourse):
         echo '<tr><td>';
         CLearnRelationHelper::RenderForm($oAccess, $LESSON_ID, $arOPathes);
         echo '</td></tr>';
-        $tabControl->EndCustomField("_RELATIONS", '<input type="hidden" id="SKIP_RELATIONS_SAVING" name="SKIP_RELATIONS_SAVING" value="Y">');
+        $tabControl->EndCustomField(
+            "_RELATIONS",
+            '<input type="hidden" id="SKIP_RELATIONS_SAVING" name="SKIP_RELATIONS_SAVING" value="Y">'
+        );
     } else {
         /*
         $tabControl->BeginNextFormTab();
@@ -1467,14 +1608,16 @@ if (!$bBadCourse):
 
     if (($LESSON_ID > 0) && CLearnAccessMacroses::CanUserViewLessonRights(array('lesson_id' => $LESSON_ID))) {
         $readOnly = true;
-        if (CLearnAccessMacroses::CanUserEditLessonRights(array('lesson_id' => $LESSON_ID)))
+        if (CLearnAccessMacroses::CanUserEditLessonRights(array('lesson_id' => $LESSON_ID))) {
             $readOnly = false;
+        }
 
         $tabControl->BeginNextFormTab();
         $tabControl->BeginCustomField("__GESGSTR", '', false);
         CLearnRenderRightsEdit::RenderLessonRightsTab($USER->GetID(), 'LESSON_RIGHTS', $LESSON_ID, $readOnly);
-        if ($readOnly)
+        if ($readOnly) {
             echo '<input type="hidden" id="SKIP_RIGHTS_SAVING" name="SKIP_RIGHTS_SAVING" value="Y">';
+        }
         $tabControl->EndCustomField("__GESGSTR");
     } else {
         /*
@@ -1505,10 +1648,11 @@ if (!$bBadCourse):
         $uriParentLessonPath = '&LESSON_PATH=' . urlencode($g_learn_parentLessonPath);
     }
 
-    if (isset($g_learn_currentLessonPath))
+    if (isset($g_learn_currentLessonPath)) {
         $uriCurrentLessonPath = '&LESSON_PATH=' . urlencode($g_learn_currentLessonPath);
-    else
+    } else {
         $uriCurrentLessonPath = '';
+    }
 
     $tabControl->BeginNextFormTab();
     $tabControl->BeginCustomField("UFS", '', false);

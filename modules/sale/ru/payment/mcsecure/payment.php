@@ -1,11 +1,14 @@
-<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die(); ?><?
-$ORDER_ID = IntVal($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["ID"]);
+<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+} ?><?
+$ORDER_ID = intval($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["ID"]);
 ?>
 <p>�� ������ �������� �� ��������� ����� ����� �������������� ����� ��������� ������� <strong>�����������</strong>.</p>
 <p>C��� � <? echo $ORDER_ID . " �� " . CSalePaySystemAction::GetParamValue("DATE_INSERT") ?></p>
-<p>����� � ������ �� �����:
-    <strong><? echo SaleFormatCurrency(CSalePaySystemAction::GetParamValue("SHOULD_PAY"), CSalePaySystemAction::GetParamValue("CURRENCY")) ?></strong>
-</p>
+<p>����� � ������ �� �����: <strong><? echo SaleFormatCurrency(
+            CSalePaySystemAction::GetParamValue("SHOULD_PAY"),
+            CSalePaySystemAction::GetParamValue("CURRENCY")
+        ) ?></strong></p>
 
 <!-- START IMPEXBANK SMART-CARD PAY FORM -->
 <form method=post action="https://e-commerce.impexbank.ru/vsmc3ds/3dsproxy_init.jsp" target="_blank" class="mb-3">

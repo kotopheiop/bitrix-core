@@ -21,7 +21,6 @@ class FileIndex
      */
     public static function createByFile(Main\IO\File $file)
     {
-
         if (
             !$file instanceof Main\IO\File ||
             !$file->isFile() ||

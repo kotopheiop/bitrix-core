@@ -18,7 +18,6 @@ class Category
      */
     public static function getOptionsTree($categories, $options = array(), $depth = 0)
     {
-
         $prefix = str_repeat('-', $depth);
         $depth++;
 

@@ -1,9 +1,7 @@
 <?php
 
-
 namespace Bitrix\Catalog\Product;
 
-use Bitrix\Currency;
 use Bitrix\Sale;
 
 /**
@@ -42,9 +40,11 @@ class CatalogProviderCompatibility
             $productId => array(
                 'ITEM_CODE' => $productId,
                 'QUANTITY_LIST' => array(
-                    $basketItemData['BASKET_ID'] => $basketItemData['QUANTITY'])
+                    $basketItemData['BASKET_ID'] => $basketItemData['QUANTITY']
+                )
             ,
-            ));
+            )
+        );
 
         if (!empty($basketItemData['BASKET_ID'])) {
             $products[$productId]['BASKET_ID'] = $basketItemData['BASKET_ID'];
@@ -139,7 +139,8 @@ class CatalogProviderCompatibility
             $productId => array(
                 'ITEM_CODE' => $productId,
                 'QUANTITY' => $values['QUANTITY'] * ($values['UNDO_RESERVATION'] == 'Y' ? -1 : 1),
-            ));
+            )
+        );
 
         $r = $transfer->reserve($products);
         if ($r->isSuccess()) {
@@ -147,11 +148,13 @@ class CatalogProviderCompatibility
             if (!empty($data)) {
                 $result = new Sale\Result();
 
-                $result->setData(array(
-                    'RESERVED_PRODUCTS_LIST' => array(
-                        $productId => $data
+                $result->setData(
+                    array(
+                        'RESERVED_PRODUCTS_LIST' => array(
+                            $productId => $data
+                        )
                     )
-                ));
+                );
 
                 $r = $transfer->setItemsResultAfterReserve($products, $result);
             }
@@ -180,7 +183,8 @@ class CatalogProviderCompatibility
                 'ITEM_CODE' => $productId,
                 'PRODUCT_ID' => $productId,
                 'QUANTITY' => $values['QUANTITY'] * ($values['UNDO_DEDUCTION'] == 'Y' ? -1 : 1),
-            ));
+            )
+        );
 
         $r = $transfer->ship($products);
         if ($r->isSuccess()) {
@@ -188,11 +192,13 @@ class CatalogProviderCompatibility
             if (!empty($data)) {
                 $result = new Sale\Result();
 
-                $result->setData(array(
-                    'SHIPPED_PRODUCTS_LIST' => array(
-                        $productId => $data
+                $result->setData(
+                    array(
+                        'SHIPPED_PRODUCTS_LIST' => array(
+                            $productId => $data
+                        )
                     )
-                ));
+                );
 
                 $r = $transfer->setItemsResultAfterShip($products, $result);
             }
@@ -226,7 +232,8 @@ class CatalogProviderCompatibility
                 "PRODUCT_ID" => $productId,
                 "USER_ID" => $values["USER_ID"],
                 "SITE_ID" => $values["SITE_ID"]
-            ));
+            )
+        );
 
         $r = $transfer->viewProduct($products);
         if ($r->isSuccess()) {
@@ -267,7 +274,8 @@ class CatalogProviderCompatibility
                 "PRODUCT_ID" => $productId,
                 "BASKET_ID" => $values["BASKET_ID"],
                 "SITE_ID" => $values["SITE_ID"]
-            ));
+            )
+        );
 
         $r = $transfer->getProductListStores($products);
         if ($r->isSuccess()) {
@@ -307,13 +315,17 @@ class CatalogProviderCompatibility
             $productId => array(
                 "PRODUCT_ID" => $productId,
                 "USER_ID" => $values["USER_ID"],
-            ));
+            )
+        );
 
         $r = $transfer->recurring($products);
         if ($r->isSuccess()) {
             $data = $r->getData();
 
-            if (!empty($data['RECURRING_PRODUCTS_LIST']) && array_key_exists($productId, $data['RECURRING_PRODUCTS_LIST'])) {
+            if (!empty($data['RECURRING_PRODUCTS_LIST']) && array_key_exists(
+                    $productId,
+                    $data['RECURRING_PRODUCTS_LIST']
+                )) {
                 return $data['RECURRING_PRODUCTS_LIST'][$productId];
             }
         }
@@ -375,13 +387,17 @@ class CatalogProviderCompatibility
                 "ORDER_ID" => $values["ORDER_ID"],
                 "PAID" => $values["PAID"],
                 "BASKET_ID" => $values["BASKET_ID"],
-            ));
+            )
+        );
 
         $r = $transfer->deliver($products);
         if ($r->isSuccess()) {
             $data = $r->getData();
 
-            if (!empty($data['DELIVER_PRODUCTS_LIST']) && array_key_exists($productId, $data['DELIVER_PRODUCTS_LIST'])) {
+            if (!empty($data['DELIVER_PRODUCTS_LIST']) && array_key_exists(
+                    $productId,
+                    $data['DELIVER_PRODUCTS_LIST']
+                )) {
                 return $data['DELIVER_PRODUCTS_LIST'][$productId];
             }
         }
@@ -421,7 +437,7 @@ class CatalogProviderCompatibility
         return array(
             'SITE_ID' => SITE_ID,
             'USER_ID' => isset($USER) && $USER instanceof \CUser ? (int)$USER->GetID() : 0,
-            'CURRENCY' => Currency\CurrencyManager::getBaseCurrency(),
+            'CURRENCY' => Sale\Internals\SiteCurrencyTable::getSiteCurrency(SITE_ID)
         );
     }
 
@@ -432,5 +448,4 @@ class CatalogProviderCompatibility
     {
         return "\Bitrix\Catalog\Product\CatalogProvider";
     }
-
 }

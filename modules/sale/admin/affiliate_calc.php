@@ -2,8 +2,9 @@
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions == "D")
+if ($saleModulePermissions == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 
@@ -32,19 +33,21 @@ $arPossibleActions = array(
     "F" => GetMessage("SAC_ACTION_CALC")
 );
 
-if ($REQUEST_METHOD == "GET" && strlen($Update) > 0 && $saleModulePermissions >= "W" && check_bitrix_sessid())
+if ($REQUEST_METHOD == "GET" && $Update <> '' && $saleModulePermissions >= "W" && check_bitrix_sessid())
 {
-if (StrLen($SUM_TODO) <= 0 || !array_key_exists($SUM_TODO, $arPossibleActions))
+if ($SUM_TODO == '' || !array_key_exists($SUM_TODO, $arPossibleActions)) {
     $errorMessage = GetMessage("SAC_ERROR_NO_ACTION");
+}
 
-if (StrLen($errorMessage) <= 0)
+if ($errorMessage == '')
 {
-if (strlen($curLoadSessID) <= 0)
+if ($curLoadSessID == '') {
     $curLoadSessID = "CLS" . time();
+}
 
-$max_execution_time = IntVal($max_execution_time);
-$numAffiliatesCalc = IntVal($numAffiliatesCalc);
-$numAffiliatesPay = IntVal($numAffiliatesPay);
+$max_execution_time = intval($max_execution_time);
+$numAffiliatesCalc = intval($numAffiliatesCalc);
+$numAffiliatesPay = intval($numAffiliatesPay);
 
 $arFilter = array(
     "ACTIVE" => "Y",
@@ -54,38 +57,46 @@ $arAffiliateID = array();
 if (isset($OID) && is_array($OID)) {
     $countOid = count($OID);
     for ($i = 0; $i < $countOid; $i++) {
-        $OID[$i] = IntVal($OID[$i]);
-        if ($OID[$i] > 0)
+        $OID[$i] = intval($OID[$i]);
+        if ($OID[$i] > 0) {
             $arAffiliateID[] = $OID[$i];
+        }
     }
 
-    if (count($arAffiliateID) > 0)
+    if (count($arAffiliateID) > 0) {
         $arFilter["@ID"] = $arAffiliateID;
+    }
 }
 
-if (!isset($affiliates_calculated))
+if (!isset($affiliates_calculated)) {
     $affiliates_calculated = 0;
-$affiliates_calculated = IntVal($affiliates_calculated);
+}
+$affiliates_calculated = intval($affiliates_calculated);
 
-$bAllAffiliatesCalc = True;
+$bAllAffiliatesCalc = true;
 
 if ($affiliates_calculated <= 0) {
     $arFilterTmp = $arFilter;
 
     $arFilterTmp["ORDER_ALLOW_DELIVERY"] = "Y";
-    if (StrLen($DATE_CALC_FROM) > 0)
+    if ($DATE_CALC_FROM <> '') {
         $arFilterTmp[">=ORDER_DATE_ALLOW_DELIVERY"] = $DATE_CALC_FROM;
+    }
 
-    if (StrLen($DATE_CALC_TO) <= 0)
+    if ($DATE_CALC_TO == '') {
         $DATE_CALC_TO = date($DB->DateFormatToPHP(CSite::GetDateFormat("FULL")), time() + CTimeZone::GetOffset());
-    if (StrLen($DATE_CALC_TO) > 0)
+    }
+    if ($DATE_CALC_TO <> '') {
         $arFilterTmp["<ORDER_DATE_ALLOW_DELIVERY"] = $DATE_CALC_TO;
-    if (StrLen($DATE_PLAN_TO) <= 0)
+    }
+    if ($DATE_PLAN_TO == '') {
         $DATE_PLAN_TO = date($DB->DateFormatToPHP(CSite::GetDateFormat("FULL")), time() + CTimeZone::GetOffset());
+    }
 
-    $LAST_AFFILIATE_ID = IntVal($LAST_AFFILIATE_ID);
-    if ($LAST_AFFILIATE_ID > 0)
+    $LAST_AFFILIATE_ID = intval($LAST_AFFILIATE_ID);
+    if ($LAST_AFFILIATE_ID > 0) {
         $arFilterTmp[">ID"] = $LAST_AFFILIATE_ID;
+    }
 
     $dbAffiliates = CSaleAffiliate::GetList(
         array("ID" => "ASC"),
@@ -111,38 +122,48 @@ if ($affiliates_calculated <= 0) {
     );
     while ($arAffiliates = $dbAffiliates->Fetch()) {
         $errorMessageTmp = "";
-        if (!CSaleAffiliate::CalculateAffiliate($arAffiliates, $DATE_CALC_FROM, $DATE_CALC_TO, $DATE_PLAN_FROM, $DATE_PLAN_TO)) {
+        if (!CSaleAffiliate::CalculateAffiliate(
+            $arAffiliates,
+            $DATE_CALC_FROM,
+            $DATE_CALC_TO,
+            $DATE_PLAN_FROM,
+            $DATE_PLAN_TO
+        )) {
             $errorMessageTmp .= str_replace("#ID#", $arAffiliates["ID"], GetMessage("SAC_AFFILIATE_N"));
-            if ($ex = $APPLICATION->GetException())
+            if ($ex = $APPLICATION->GetException()) {
                 $errorMessageTmp .= $ex->GetString();
-            else
+            } else {
                 $errorMessageTmp .= GetMessage("SAC_ERROR_CALC_AFFILIATE");
+            }
             $errorMessageTmp .= "<br>";
         }
 
         $LAST_AFFILIATE_ID = $arAffiliates["ID"];
         $numAffiliatesCalc++;
 
-        if (StrLen($errorMessageTmp) > 0)
+        if ($errorMessageTmp <> '') {
             $errorMessage .= $errorMessageTmp;
+        }
 
         if ($max_execution_time > 0 && (getmicrotime() - START_EXEC_TIME) > $max_execution_time) {
-            $bAllAffiliatesCalc = False;
+            $bAllAffiliatesCalc = false;
             break;
         }
     }
 }
 
-if ($bAllAffiliatesCalc)
+if ($bAllAffiliatesCalc) {
     $affiliates_calculated = 1;
+}
 
-$bAllAffiliatesPay = True;
+$bAllAffiliatesPay = true;
 
 if ($affiliates_calculated > 0 && $SUM_TODO != "F") {
     $arFilterTmp = $arFilter;
-    $LAST_AFFILIATE_ID1 = IntVal($LAST_AFFILIATE_ID1);
-    if ($LAST_AFFILIATE_ID1 > 0)
+    $LAST_AFFILIATE_ID1 = intval($LAST_AFFILIATE_ID1);
+    if ($LAST_AFFILIATE_ID1 > 0) {
         $arFilterTmp[">ID"] = $LAST_AFFILIATE_ID1;
+    }
 
     $dbAffiliates = CSaleAffiliate::GetList(
         array("ID" => "ASC"),
@@ -179,14 +200,16 @@ if ($affiliates_calculated > 0 && $SUM_TODO != "F") {
         }
 
         $LAST_AFFILIATE_ID1 = $arAffiliates["ID"];
-        if ($paySum > 0)
+        if ($paySum > 0) {
             $numAffiliatesPay++;
+        }
 
-        if (StrLen($errorMessageTmp) > 0)
+        if ($errorMessageTmp <> '') {
             $errorMessage .= $errorMessageTmp;
+        }
 
         if ($max_execution_time > 0 && (getmicrotime() - START_EXEC_TIME) > $max_execution_time) {
-            $bAllAffiliatesPay = False;
+            $bAllAffiliatesPay = false;
             break;
         }
     }
@@ -196,10 +219,21 @@ if (!$bAllAffiliatesCalc || !$bAllAffiliatesPay)
 {
 $_SESSION[$curLoadSessID]["ERROR_MESSAGE"] .= $errorMessage;
 
-$urlParams = "Update=" . UrlEncode($Update) . "&affiliates_calculated=" . UrlEncode($affiliates_calculated) . "&DATE_CALC_FROM=" . UrlEncode($DATE_CALC_FROM) . "&DATE_CALC_TO=" . UrlEncode($DATE_CALC_TO) . "&DATE_PLAN_FROM=" . UrlEncode($DATE_PLAN_FROM) . "&DATE_PLAN_TO=" . UrlEncode($DATE_PLAN_TO) . "&SUM_TODO=" . UrlEncode($SUM_TODO) . "&LAST_AFFILIATE_ID=" . $LAST_AFFILIATE_ID . "&LAST_AFFILIATE_ID1=" . $LAST_AFFILIATE_ID1 . "&max_execution_time=" . $max_execution_time . "&numAffiliatesCalc=" . $numAffiliatesCalc . "&numAffiliatesPay=" . $numAffiliatesPay . "&curLoadSessID=" . UrlEncode($curLoadSessID) . "&" . bitrix_sessid_get();
+$urlParams = "Update=" . UrlEncode($Update) . "&affiliates_calculated=" . UrlEncode(
+        $affiliates_calculated
+    ) . "&DATE_CALC_FROM=" . UrlEncode($DATE_CALC_FROM) . "&DATE_CALC_TO=" . UrlEncode(
+        $DATE_CALC_TO
+    ) . "&DATE_PLAN_FROM=" . UrlEncode($DATE_PLAN_FROM) . "&DATE_PLAN_TO=" . UrlEncode(
+        $DATE_PLAN_TO
+    ) . "&SUM_TODO=" . UrlEncode(
+        $SUM_TODO
+    ) . "&LAST_AFFILIATE_ID=" . $LAST_AFFILIATE_ID . "&LAST_AFFILIATE_ID1=" . $LAST_AFFILIATE_ID1 . "&max_execution_time=" . $max_execution_time . "&numAffiliatesCalc=" . $numAffiliatesCalc . "&numAffiliatesPay=" . $numAffiliatesPay . "&curLoadSessID=" . UrlEncode(
+        $curLoadSessID
+    ) . "&" . bitrix_sessid_get();
 $countarAffiliate = count($arAffiliateID);
-for ($i = 0; $i < $countarAffiliate; $i++)
+for ($i = 0; $i < $countarAffiliate; $i++) {
     $urlParams .= "&OID[]=" . $arAffiliateID[$i];
+}
 ?><!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
 <html>
 <head>
@@ -208,7 +242,9 @@ for ($i = 0; $i < $countarAffiliate; $i++)
 <body>
 <? echo GetMessage("SAC_STEP_AUTO_HINT") ?><br>
 <? echo GetMessage("SAC_STEP_AUTO_HINT1") ?>
-<a href="<? echo $APPLICATION->GetCurPage() ?>?lang=<? echo LANG; ?>&<? echo $urlParams ?>"><? echo GetMessage("SAC_STEP_AUTO_HINT2") ?></a><br>
+<a href="<? echo $APPLICATION->GetCurPage() ?>?lang=<? echo LANG; ?>&<? echo $urlParams ?>"><? echo GetMessage(
+        "SAC_STEP_AUTO_HINT2"
+    ) ?></a><br>
 <script language="JavaScript" type="text/javascript">
     <!--
     function DoNext() {
@@ -233,10 +269,19 @@ else {
 $_SESSION[$curLoadSessID]["OK_MESSAGE"] .= $okMessage;
 $_SESSION[$curLoadSessID]["ERROR_MESSAGE"] .= $errorMessage;
 
-$urlParams = "DATE_CALC_FROM=" . UrlEncode($DATE_CALC_FROM) . "&DATE_CALC_TO=" . UrlEncode($DATE_CALC_TO) . "&DATE_PLAN_FROM=" . UrlEncode($DATE_PLAN_FROM) . "&DATE_PLAN_TO=" . UrlEncode($DATE_PLAN_TO) . "&SUM_TODO=" . UrlEncode($SUM_TODO) . "&max_execution_time=" . $max_execution_time . "&numAffiliatesCalc=" . $numAffiliatesCalc . "&numAffiliatesPay=" . $numAffiliatesPay . "&curLoadSessID=" . UrlEncode($curLoadSessID);
+$urlParams = "DATE_CALC_FROM=" . UrlEncode($DATE_CALC_FROM) . "&DATE_CALC_TO=" . UrlEncode(
+        $DATE_CALC_TO
+    ) . "&DATE_PLAN_FROM=" . UrlEncode($DATE_PLAN_FROM) . "&DATE_PLAN_TO=" . UrlEncode(
+        $DATE_PLAN_TO
+    ) . "&SUM_TODO=" . UrlEncode(
+        $SUM_TODO
+    ) . "&max_execution_time=" . $max_execution_time . "&numAffiliatesCalc=" . $numAffiliatesCalc . "&numAffiliatesPay=" . $numAffiliatesPay . "&curLoadSessID=" . UrlEncode(
+        $curLoadSessID
+    );
 $countArAffiliate = count($arAffiliateID);
-for ($i = 0; $i < $countArAffiliate; $i++)
+for ($i = 0; $i < $countArAffiliate; $i++) {
     $urlParams .= "&OID[]=" . $arAffiliateID[$i];
+}
 
 LocalRedirect("/bitrix/admin/sale_affiliate_calc.php?lang=" . LANG . "&" . $urlParams);
 }
@@ -263,15 +308,25 @@ $context->Show();
 ?>
 
 <?
-if (StrLen($curLoadSessID) > 0 && array_key_exists($curLoadSessID, $_SESSION) && is_array($_SESSION[$curLoadSessID]) && array_key_exists("ERROR_MESSAGE", $_SESSION[$curLoadSessID]))
+if ($curLoadSessID <> '' && array_key_exists($curLoadSessID, $_SESSION) && is_array(
+        $_SESSION[$curLoadSessID]
+    ) && array_key_exists("ERROR_MESSAGE", $_SESSION[$curLoadSessID])) {
     $errorMessage = $_SESSION[$curLoadSessID]["ERROR_MESSAGE"] . $errorMessage;
-if (StrLen($curLoadSessID) > 0 && array_key_exists($curLoadSessID, $_SESSION) && is_array($_SESSION[$curLoadSessID]) && array_key_exists("OK_MESSAGE", $_SESSION[$curLoadSessID]))
+}
+if ($curLoadSessID <> '' && array_key_exists($curLoadSessID, $_SESSION) && is_array(
+        $_SESSION[$curLoadSessID]
+    ) && array_key_exists("OK_MESSAGE", $_SESSION[$curLoadSessID])) {
     $okMessage = $_SESSION[$curLoadSessID]["OK_MESSAGE"] . $okMessage;
+}
 
-if (strlen($errorMessage) > 0) {
-    echo CAdminMessage::ShowMessage(Array("DETAILS" => $errorMessage, "TYPE" => "ERROR", "MESSAGE" => GetMessage("SAC_ERROR_TITLE"), "HTML" => true));
-} elseif (strlen($okMessage) > 0) {
-    echo CAdminMessage::ShowMessage(Array("DETAILS" => $okMessage, "TYPE" => "OK", "MESSAGE" => GetMessage("SAC_SUCCESS_TITLE"), "HTML" => true));
+if ($errorMessage <> '') {
+    echo CAdminMessage::ShowMessage(
+        Array("DETAILS" => $errorMessage, "TYPE" => "ERROR", "MESSAGE" => GetMessage("SAC_ERROR_TITLE"), "HTML" => true)
+    );
+} elseif ($okMessage <> '') {
+    echo CAdminMessage::ShowMessage(
+        Array("DETAILS" => $okMessage, "TYPE" => "OK", "MESSAGE" => GetMessage("SAC_SUCCESS_TITLE"), "HTML" => true)
+    );
 }
 ?>
 
@@ -283,7 +338,12 @@ if (strlen($errorMessage) > 0) {
 
     <?
     $aTabs = array(
-        array("DIV" => "edit1", "TAB" => GetMessage("SAC_TITLE"), "ICON" => "sale", "TITLE" => GetMessage("SAC_CALC_SETUP")),
+        array(
+            "DIV" => "edit1",
+            "TAB" => GetMessage("SAC_TITLE"),
+            "ICON" => "sale",
+            "TITLE" => GetMessage("SAC_CALC_SETUP")
+        ),
     );
 
     $tabControl = new CAdminTabControl("tabControl", $aTabs, true, true);
@@ -298,14 +358,15 @@ if (strlen($errorMessage) > 0) {
         <td width="40%" valign="top"><? echo GetMessage("SAC_AFFILIATES") ?></td>
         <td width="60%" valign="top">
             <?
-            $bFilteredList = False;
+            $bFilteredList = false;
             if (isset($OID) && is_array($OID)) {
                 $arAffiliateID = array();
                 $countOid = count($OID);
                 for ($i = 0; $i < $countOid; $i++) {
-                    $OID[$i] = IntVal($OID[$i]);
-                    if ($OID[$i] > 0)
+                    $OID[$i] = intval($OID[$i]);
+                    if ($OID[$i] > 0) {
                         $arAffiliateID[] = $OID[$i];
+                    }
                 }
 
                 if (count($arAffiliateID) > 0) {
@@ -317,14 +378,15 @@ if (strlen($errorMessage) > 0) {
                         array("ID", "USER_ID", "SITE_ID", "USER_LOGIN", "USER_NAME", "USER_LAST_NAME")
                     );
                     if ($arAffiliates = $dbAffiliates->Fetch()) {
-                        $bFilteredList = True;
+                        $bFilteredList = true;
                         ?>
                         <select name="OID[]" multiple size="5">
                             <?
                             do {
                                 ?>
-                                <option value="<?= IntVal($arAffiliates["ID"]) ?>"
-                                        selected><?= htmlspecialcharsex("[" . $arAffiliates["ID"] . "] " . $arAffiliates["USER_NAME"] . " " . $arAffiliates["USER_LAST_NAME"] . " (" . $arAffiliates["USER_LOGIN"] . ")") ?></option><?
+                                <option value="<?= intval($arAffiliates["ID"]) ?>" selected><?= htmlspecialcharsex(
+                                "[" . $arAffiliates["ID"] . "] " . $arAffiliates["USER_NAME"] . " " . $arAffiliates["USER_LAST_NAME"] . " (" . $arAffiliates["USER_LOGIN"] . ")"
+                            ) ?></option><?
                             } while ($arAffiliates = $dbAffiliates->Fetch());
                             ?>
                         </select>
@@ -336,7 +398,15 @@ if (strlen($errorMessage) > 0) {
             if (!$bFilteredList) {
                 echo GetMessage("SAC_ALL_AFFILIATES");
                 echo "<br>";
-                echo str_replace("#LINK2#", "</a>", str_replace("#LINK1#", "<a href=\"/bitrix/admin/sale_affiliate.php?lang=" . LANG . "\">", GetMessage("SAC_ALL_AFFILIATES_HINT")));
+                echo str_replace(
+                    "#LINK2#",
+                    "</a>",
+                    str_replace(
+                        "#LINK1#",
+                        "<a href=\"/bitrix/admin/sale_affiliate.php?lang=" . LANG . "\">",
+                        GetMessage("SAC_ALL_AFFILIATES_HINT")
+                    )
+                );
             }
             ?>
         </td>
@@ -351,8 +421,9 @@ if (strlen($errorMessage) > 0) {
         </td>
     </tr>
     <tr>
-        <td width="40%" valign="top"><? echo GetMessage("SAC_PLAN_PERIOD_HINT1") ?>
-            <br><small><? echo GetMessage("SAC_PLAN_PERIOD_HINT2") ?></small></td>
+        <td width="40%" valign="top"><? echo GetMessage("SAC_PLAN_PERIOD_HINT1") ?><br><small><? echo GetMessage(
+                    "SAC_PLAN_PERIOD_HINT2"
+                ) ?></small></td>
         <td width="60%" valign="top">
             <? echo CalendarPeriod("DATE_PLAN_FROM", $DATE_PLAN_FROM, "DATE_PLAN_TO", $DATE_PLAN_TO, "form1", "N") ?>
             <br>
@@ -367,7 +438,9 @@ if (strlen($errorMessage) > 0) {
             foreach ($arPossibleActions as $key => $value) {
                 ?>
                 <input type="radio" name="SUM_TODO" id="ID_SUM_TODO_<?= $key ?>"
-                       value="<?= $key ?>"<? if ($SUM_TODO == $key || StrLen($SUM_TODO) <= 0 && $key == "U") echo " checked"; ?>>
+                       value="<?= $key ?>"<? if ($SUM_TODO == $key || $SUM_TODO == '' && $key == "U") {
+                    echo " checked";
+                } ?>>
                 <label for="ID_SUM_TODO_<?= $key ?>"><?= $value ?></label><br>
                 <?
             }
@@ -377,7 +450,7 @@ if (strlen($errorMessage) > 0) {
     <tr>
         <td width="40%" valign="top"><? echo GetMessage("SAC_STEP") ?></td>
         <td width="60%" valign="top">
-            <input type="text" name="max_execution_time" value="<?= IntVal($max_execution_time) ?>"
+            <input type="text" name="max_execution_time" value="<?= intval($max_execution_time) ?>"
                    size="5"> <? echo GetMessage("SAC_SEC") ?><br>
             <small><? echo GetMessage("SAC_SEC_0") ?></small>
         </td>

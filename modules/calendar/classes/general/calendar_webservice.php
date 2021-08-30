@@ -1,30 +1,65 @@
 <?
-if (!\Bitrix\Main\Loader::includeModule('webservice'))
+
+if (!\Bitrix\Main\Loader::includeModule('webservice')) {
     return;
+}
 
 class CCalendarWebService extends IWebService
 {
     var $arStatusValues = array(
-        'free' => 0, 'quest' => 1, 'busy' => 2, 'absent' => 3,
+        'free' => 0,
+        'quest' => 1,
+        'busy' => 2,
+        'absent' => 3,
     );
 
     var $arPriorityValues = array(
-        'low' => -1, 'normal' => 0, 'high' => 1,
+        'low' => -1,
+        'normal' => 0,
+        'high' => 1,
     );
 
     function __getFieldsDefinition()
     {
         $obFields = new CXMLCreator('Fields');
 
-        $obFields->addChild($obField = CXMLCreator::createTagAttributed('Field ID="ID" ColName="tp_ID" RowOrdinal="0" ReadOnly="TRUE" Type="Counter" Name="ID" PrimaryKey="TRUE" DisplayName="ID" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="ID" FromBaseType="TRUE"'));
-        $obFields->addChild($obField = CXMLCreator::createTagAttributed('Field ID="OWSHIDDENVERSION" ColName="tp_Version" RowOrdinal="0" Hidden="TRUE" ReadOnly="TRUE" Type="Integer" SetAs="owshiddenversion" Name="owshiddenversion" DisplayName="owshiddenversion" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="owshiddenversion" FromBaseType="TRUE"'));
-        $obFields->addChild($obField = CXMLCreator::createTagAttributed('Field ID="FSOBJTYPE" Name="FSObjType" DisplaceOnUpgrade="TRUE" ReadOnly="TRUE" Hidden="TRUE" ShowInFileDlg="FALSE" Type="Lookup" DisplayName="Item Type" List="Docs" FieldRef="ID" ShowField="FSType" JoinColName="DoclibRowId" JoinRowOrdinal="0" JoinType="INNER" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="FSObjType" FromBaseType="TRUE"'));
-        $obFields->addChild($obField = CXMLCreator::createTagAttributed('Field ID="UNIQUEID" Name="UniqueId" DisplaceOnUpgrade="TRUE" ReadOnly="TRUE" Hidden="TRUE" ShowInFileDlg="FALSE" Type="Lookup" DisplayName="Unique Id" List="Docs" FieldRef="ID" ShowField="UniqueId" JoinColName="DoclibRowId" JoinRowOrdinal="0" JoinType="INNER" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="UniqueId" FromBaseType="TRUE"'));
-        $obFields->addChild($obField = CXMLCreator::createTagAttributed('Field ID="CONTENTTYPEID" ColName="tp_ContentTypeId" Sealed="TRUE" Hidden="TRUE" RowOrdinal="0" ReadOnly="TRUE" Type="ContentTypeId" Name="ContentTypeId" DisplaceOnUpgrade="TRUE" DisplayName="Content Type ID" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="ContentTypeId" FromBaseType="TRUE"'));
+        $obFields->addChild(
+            $obField = CXMLCreator::createTagAttributed(
+                'Field ID="ID" ColName="tp_ID" RowOrdinal="0" ReadOnly="TRUE" Type="Counter" Name="ID" PrimaryKey="TRUE" DisplayName="ID" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="ID" FromBaseType="TRUE"'
+            )
+        );
+        $obFields->addChild(
+            $obField = CXMLCreator::createTagAttributed(
+                'Field ID="OWSHIDDENVERSION" ColName="tp_Version" RowOrdinal="0" Hidden="TRUE" ReadOnly="TRUE" Type="Integer" SetAs="owshiddenversion" Name="owshiddenversion" DisplayName="owshiddenversion" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="owshiddenversion" FromBaseType="TRUE"'
+            )
+        );
+        $obFields->addChild(
+            $obField = CXMLCreator::createTagAttributed(
+                'Field ID="FSOBJTYPE" Name="FSObjType" DisplaceOnUpgrade="TRUE" ReadOnly="TRUE" Hidden="TRUE" ShowInFileDlg="FALSE" Type="Lookup" DisplayName="Item Type" List="Docs" FieldRef="ID" ShowField="FSType" JoinColName="DoclibRowId" JoinRowOrdinal="0" JoinType="INNER" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="FSObjType" FromBaseType="TRUE"'
+            )
+        );
+        $obFields->addChild(
+            $obField = CXMLCreator::createTagAttributed(
+                'Field ID="UNIQUEID" Name="UniqueId" DisplaceOnUpgrade="TRUE" ReadOnly="TRUE" Hidden="TRUE" ShowInFileDlg="FALSE" Type="Lookup" DisplayName="Unique Id" List="Docs" FieldRef="ID" ShowField="UniqueId" JoinColName="DoclibRowId" JoinRowOrdinal="0" JoinType="INNER" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="UniqueId" FromBaseType="TRUE"'
+            )
+        );
+        $obFields->addChild(
+            $obField = CXMLCreator::createTagAttributed(
+                'Field ID="CONTENTTYPEID" ColName="tp_ContentTypeId" Sealed="TRUE" Hidden="TRUE" RowOrdinal="0" ReadOnly="TRUE" Type="ContentTypeId" Name="ContentTypeId" DisplaceOnUpgrade="TRUE" DisplayName="Content Type ID" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="ContentTypeId" FromBaseType="TRUE"'
+            )
+        );
         //$obFields->addChild($obField = CXMLCreator::createTagAttributed('Field ID="CONTENTTYPE" ColName="tp_ContentType" RowOrdinal="0" ReadOnly="TRUE" Type="Text" Name="ContentType" DisplaceOnUpgrade="TRUE" DisplayName="Content Type" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="ContentType" FromBaseType="TRUE" PITarget="MicrosoftWindowsSharePointServices" PIAttribute="ContentTypeID"'));
-        $obFields->addChild($obField = CXMLCreator::createTagAttributed('Field ID="METAINFO" Name="MetaInfo" DisplaceOnUpgrade="TRUE" Hidden="TRUE" ShowInFileDlg="FALSE" Type="Lookup" DisplayName="Property Bag" List="Docs" FieldRef="ID" ShowField="MetaInfo" JoinColName="DoclibRowId" JoinType="INNER" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="MetaInfo" FromBaseType="TRUE"'));
+        $obFields->addChild(
+            $obField = CXMLCreator::createTagAttributed(
+                'Field ID="METAINFO" Name="MetaInfo" DisplaceOnUpgrade="TRUE" Hidden="TRUE" ShowInFileDlg="FALSE" Type="Lookup" DisplayName="Property Bag" List="Docs" FieldRef="ID" ShowField="MetaInfo" JoinColName="DoclibRowId" JoinType="INNER" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="MetaInfo" FromBaseType="TRUE"'
+            )
+        );
 
-        $obFields->addChild($obField = CXMLCreator::createTagAttributed('Field ID="PERMMASK" Name="PermMask" DisplaceOnUpgrade="TRUE" ReadOnly="TRUE" Hidden="TRUE" RenderXMLUsingPattern="TRUE" ShowInFileDlg="FALSE" Type="Computed" DisplayName="Effective Permissions Mask" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="PermMask" FromBaseType="TRUE"'));
+        $obFields->addChild(
+            $obField = CXMLCreator::createTagAttributed(
+                'Field ID="PERMMASK" Name="PermMask" DisplaceOnUpgrade="TRUE" ReadOnly="TRUE" Hidden="TRUE" RenderXMLUsingPattern="TRUE" ShowInFileDlg="FALSE" Type="Computed" DisplayName="Effective Permissions Mask" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="PermMask" FromBaseType="TRUE"'
+            )
+        );
 
         $obField->addChild($obFieldRefs = new CXMLCreator('FieldRefs'));
         $obFieldRefs->addChild(CXMLCreator::createTagAttributed('FieldRef Name="ID"'));
@@ -33,39 +68,105 @@ class CCalendarWebService extends IWebService
         $obDisplayPattern->addChild(new CXMLCreator('CurrentRights'));
 
         //
-        $obFields->addChild($obField = CXMLCreator::createTagAttributed('Field ID="{fa564e0f-0c70-4ab9-b863-0177e6ddd247}" Type="Text" Name="Title" DisplayName="Title" Required="TRUE" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="Title" FromBaseType="TRUE" ColName="nvarchar1"'));
+        $obFields->addChild(
+            $obField = CXMLCreator::createTagAttributed(
+                'Field ID="{fa564e0f-0c70-4ab9-b863-0177e6ddd247}" Type="Text" Name="Title" DisplayName="Title" Required="TRUE" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="Title" FromBaseType="TRUE" ColName="nvarchar1"'
+            )
+        );
 
-        $obFields->addChild($obField = CXMLCreator::createTagAttributed('Field ID="LOCATION" Type="Text" Name="Location" DisplayName="Location" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="Location" ColName="nvarchar3"'));
+        $obFields->addChild(
+            $obField = CXMLCreator::createTagAttributed(
+                'Field ID="LOCATION" Type="Text" Name="Location" DisplayName="Location" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="Location" ColName="nvarchar3"'
+            )
+        );
 
-        $obFields->addChild($obField = CXMLCreator::createTagAttributed('Field Type="Note" ID="DESCRIPTION" Name="Description" RichText="TRUE" DisplayName="Description" Sortable="FALSE" Sealed="TRUE" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="Description" ColName="ntext2"'));
-        $obFields->addChild($obField = CXMLCreator::createTagAttributed('Field ID="MODIFIED" ColName="tp_Modified" RowOrdinal="0" ReadOnly="TRUE" Type="DateTime" Name="Modified" DisplayName="Modified" StorageTZ="TRUE" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="Modified" FromBaseType="TRUE"'));
-        $obFields->addChild($obField = CXMLCreator::createTagAttributed('Field ID="AUTHOR" ColName="tp_Author" RowOrdinal="0" ReadOnly="TRUE" Type="User" List="UserInfo" Name="Author" DisplayName="Created By" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="Author" FromBaseType="TRUE"'));
+        $obFields->addChild(
+            $obField = CXMLCreator::createTagAttributed(
+                'Field Type="Note" ID="DESCRIPTION" Name="Description" RichText="TRUE" DisplayName="Description" Sortable="FALSE" Sealed="TRUE" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="Description" ColName="ntext2"'
+            )
+        );
+        $obFields->addChild(
+            $obField = CXMLCreator::createTagAttributed(
+                'Field ID="MODIFIED" ColName="tp_Modified" RowOrdinal="0" ReadOnly="TRUE" Type="DateTime" Name="Modified" DisplayName="Modified" StorageTZ="TRUE" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="Modified" FromBaseType="TRUE"'
+            )
+        );
+        $obFields->addChild(
+            $obField = CXMLCreator::createTagAttributed(
+                'Field ID="AUTHOR" ColName="tp_Author" RowOrdinal="0" ReadOnly="TRUE" Type="User" List="UserInfo" Name="Author" DisplayName="Created By" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="Author" FromBaseType="TRUE"'
+            )
+        );
 
-        $obFields->addChild($obField = CXMLCreator::createTagAttributed('Field ID="EDITOR" ColName="tp_Editor" RowOrdinal="0" ReadOnly="TRUE" Type="User" List="UserInfo" Name="Editor" DisplayName="Modified By" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="Editor" FromBaseType="TRUE" '));
+        $obFields->addChild(
+            $obField = CXMLCreator::createTagAttributed(
+                'Field ID="EDITOR" ColName="tp_Editor" RowOrdinal="0" ReadOnly="TRUE" Type="User" List="UserInfo" Name="Editor" DisplayName="Modified By" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="Editor" FromBaseType="TRUE" '
+            )
+        );
 
-        $obFields->addChild($obField = CXMLCreator::createTagAttributed('Field Type="DateTime" ID="DATE_FROM" Name="EventDate" DisplayName="Start Time" Format="DateTime" Sealed="TRUE" Required="TRUE" FromBaseType="TRUE" Filterable="FALSE" FilterableNoRecurrence="FALSE" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="EventDate" ColName="datetime1"'));
+        $obFields->addChild(
+            $obField = CXMLCreator::createTagAttributed(
+                'Field Type="DateTime" ID="DATE_FROM" Name="EventDate" DisplayName="Start Time" Format="DateTime" Sealed="TRUE" Required="TRUE" FromBaseType="TRUE" Filterable="FALSE" FilterableNoRecurrence="FALSE" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="EventDate" ColName="datetime1"'
+            )
+        );
         $obField->addChild(CXMLCreator::createTagAttributed('Default', '[today]'));
         $obField->addChild($obFieldRefs = new CXMLCreator('FieldRefs'));
         $obFieldRefs->addChild(CXMLCreator::createTagAttributed('FieldRef Name="fAllDayEvent" RefType="AllDayEvent"'));
-        $obField->addChild(CXMLCreator::createTagAttributed('DefaultFormulaValue', $this->__makeDateTime(strtotime(date('Y-m-d')))));
+        $obField->addChild(
+            CXMLCreator::createTagAttributed('DefaultFormulaValue', $this->__makeDateTime(strtotime(date('Y-m-d'))))
+        );
 
-        $obFields->addChild($obField = CXMLCreator::createTagAttributed('Field ID="DATE_TO" Type="DateTime" Name="EndDate" DisplayName="End Time" Format="DateTime" Sealed="TRUE" Required="TRUE" Filterable="FALSE" FilterableNoRecurrence="FALSE" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="EndDate" ColName="datetime2"'));
+        $obFields->addChild(
+            $obField = CXMLCreator::createTagAttributed(
+                'Field ID="DATE_TO" Type="DateTime" Name="EndDate" DisplayName="End Time" Format="DateTime" Sealed="TRUE" Required="TRUE" Filterable="FALSE" FilterableNoRecurrence="FALSE" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="EndDate" ColName="datetime2"'
+            )
+        );
         $obField->addChild(CXMLCreator::createTagAttributed('Default', '[today]'));
-        $obFields->addChild($obField = CXMLCreator::createTagAttributed('Field ID="DURATION" Type="Integer" Name="Duration" DisplayName="Duration" Hidden="TRUE" Sealed="TRUE" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="Duration" ColName="int2"'));
+        $obFields->addChild(
+            $obField = CXMLCreator::createTagAttributed(
+                'Field ID="DURATION" Type="Integer" Name="Duration" DisplayName="Duration" Hidden="TRUE" Sealed="TRUE" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="Duration" ColName="int2"'
+            )
+        );
 
-        $obFields->addChild($obField = CXMLCreator::createTagAttributed('Field ID="ALLDAYEVENT" Type="AllDayEvent" Name="fAllDayEvent" DisplaceOnUpgrade="TRUE" DisplayName="All Day Event" Sealed="TRUE" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="fAllDayEvent" ColName="bit1"'));
+        $obFields->addChild(
+            $obField = CXMLCreator::createTagAttributed(
+                'Field ID="ALLDAYEVENT" Type="AllDayEvent" Name="fAllDayEvent" DisplaceOnUpgrade="TRUE" DisplayName="All Day Event" Sealed="TRUE" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="fAllDayEvent" ColName="bit1"'
+            )
+        );
 
-        $obFields->addChild($obField = CXMLCreator::createTagAttributed('Field ID="EVENTTYPE" Type="Integer" Name="EventType" DisplayName="Event Type" Sealed="TRUE" Hidden="TRUE" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="EventType" ColName="int1"'));
+        $obFields->addChild(
+            $obField = CXMLCreator::createTagAttributed(
+                'Field ID="EVENTTYPE" Type="Integer" Name="EventType" DisplayName="Event Type" Sealed="TRUE" Hidden="TRUE" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="EventType" ColName="int1"'
+            )
+        );
 
-        $obFields->addChild($obField = CXMLCreator::createTagAttributed('Field ID="UID" Type="Guid" Name="UID" DisplayName="UID" Sealed="TRUE" Hidden="TRUE" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="UID" ColName="uniqueidentifier1"'));
+        $obFields->addChild(
+            $obField = CXMLCreator::createTagAttributed(
+                'Field ID="UID" Type="Guid" Name="UID" DisplayName="UID" Sealed="TRUE" Hidden="TRUE" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="UID" ColName="uniqueidentifier1"'
+            )
+        );
 
-        $obFields->addChild($obField = CXMLCreator::createTagAttributed('Field ID="RECURENCE_DATA" Type="Note" Name="RecurrenceData" DisplayName="RecurrenceData" Hidden="TRUE" Sealed="TRUE" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="RecurrenceData" ColName="ntext3"'));
+        $obFields->addChild(
+            $obField = CXMLCreator::createTagAttributed(
+                'Field ID="RECURENCE_DATA" Type="Note" Name="RecurrenceData" DisplayName="RecurrenceData" Hidden="TRUE" Sealed="TRUE" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="RecurrenceData" ColName="ntext3"'
+            )
+        );
 
-        $obFields->addChild($obField = CXMLCreator::createTagAttributed('Field ID="TIMEZONE" Type="Integer" Name="TimeZone" DisplayName="TimeZone" Sealed="TRUE" Hidden="TRUE" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="TimeZone" ColName="int3"'));
+        $obFields->addChild(
+            $obField = CXMLCreator::createTagAttributed(
+                'Field ID="TIMEZONE" Type="Integer" Name="TimeZone" DisplayName="TimeZone" Sealed="TRUE" Hidden="TRUE" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="TimeZone" ColName="int3"'
+            )
+        );
 
-        $obFields->addChild($obField = CXMLCreator::createTagAttributed('Field ID="XMLTZONE" Type="Note" Name="XMLTZone" DisplayName="XMLTZone" Hidden="TRUE" Sealed="TRUE" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="XMLTZone" ColName="ntext4"'));
+        $obFields->addChild(
+            $obField = CXMLCreator::createTagAttributed(
+                'Field ID="XMLTZONE" Type="Note" Name="XMLTZone" DisplayName="XMLTZone" Hidden="TRUE" Sealed="TRUE" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="XMLTZone" ColName="ntext4"'
+            )
+        );
 
-        $obFields->addChild($obField = CXMLCreator::createTagAttributed('Field ID="RECURRENCE" Type="Recurrence" Name="fRecurrence" DisplayName="Recurrence"  Title="Recurrence" Sealed="TRUE" NoEditFormBreak="TRUE" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="fRecurrence" ColName="bit2"'));
+        $obFields->addChild(
+            $obField = CXMLCreator::createTagAttributed(
+                'Field ID="RECURRENCE" Type="Recurrence" Name="fRecurrence" DisplayName="Recurrence"  Title="Recurrence" Sealed="TRUE" NoEditFormBreak="TRUE" SourceID="http://schemas.microsoft.com/sharepoint/v3" StaticName="fRecurrence" ColName="bit2"'
+            )
+        );
         $obField->addChild(CXMLCreator::createTagAttributed('Default', 'FALSE'));
         $obField->addChild($obFieldRefs = new CXMLCreator('FieldRefs'));
         $obFieldRefs->addChild(CXMLCreator::createTagAttributed('FieldRef Name="RecurrenceData" RefType="RecurData"'));
@@ -84,21 +185,24 @@ class CCalendarWebService extends IWebService
 
     function __makeDateTime($ts = null)
     {
-        if (null === $ts)
+        if (null === $ts) {
             $ts = time();
+        }
 
         return date('Y-m-d', $ts) . 'T' . date('H:i:s', $ts) . 'Z';
     }
 
     function __makeTS($datetime = null)
     {
-        if (null === $datetime)
+        if (null === $datetime) {
             return time();
+        }
 
-        if (intval(substr($datetime, 0, 4)) >= 2037)
-            $datetime = '2037' . substr($datetime, 4);
+        if (intval(mb_substr($datetime, 0, 4)) >= 2037) {
+            $datetime = '2037' . mb_substr($datetime, 4);
+        }
 
-        return MakeTimeStamp(substr($datetime, 0, 10) . ' ' . substr($datetime, 11, -1), 'YYYY-MM-DD HH:MI:SS');
+        return MakeTimeStamp(mb_substr($datetime, 0, 10) . ' ' . mb_substr($datetime, 11, -1), 'YYYY-MM-DD HH:MI:SS');
     }
 
     function GetList($listName)
@@ -113,15 +217,16 @@ class CCalendarWebService extends IWebService
         $listName = ToUpper(CIntranetUtils::makeGUID($listName_original));
         $arSections = CCalendarSect::GetList(
             array(
-                'arFilter' => array('XML_ID' => strtolower($listName_original))
+                'arFilter' => array('XML_ID' => mb_strtolower($listName_original))
             )
         );
 
-        if (!$arSections || !is_array($arSections[0]))
+        if (!$arSections || !is_array($arSections[0])) {
             return new CSoapFault(
                 'List not found',
                 'List with ' . $listName . ' GUID not found'
             );
+        }
         $arSection = $arSections[0];
 
         $data = new CXMLCreator('List');
@@ -133,7 +238,10 @@ class CCalendarWebService extends IWebService
         $data->setAttribute('ReadSecurity', '2');
         $data->setAttribute('WriteSecurity', '2');
 
-        $data->setAttribute('Author', $arSection['CREATED_BY'] . ';#' . CCalendar::GetUserName($arSection['CREATED_BY']));
+        $data->setAttribute(
+            'Author',
+            $arSection['CREATED_BY'] . ';#' . CCalendar::GetUserName($arSection['CREATED_BY'])
+        );
 
         $data->addChild($this->__getFieldsDefinition());
 
@@ -143,7 +251,9 @@ class CCalendarWebService extends IWebService
         $obNode->addChild(CXMLCreator::createTagAttributed('Locale', '1049'));
         $obNode->addChild(CXMLCreator::createTagAttributed('SortOrder', '1026'));
         // TODO: replace following code with commented line below
-        $obNode->addChild(CXMLCreator::createTagAttributed('TimeZone', -(intval(date('Z')) + \CTimeZone::GetOffset(null, true)) / 60));
+        $obNode->addChild(
+            CXMLCreator::createTagAttributed('TimeZone', -(intval(date('Z')) + \CTimeZone::GetOffset(null, true)) / 60)
+        );
         //$obNode->addChild(CXMLCreator::createTagAttributed('TimeZone', \CIntranetUtils::getOutlookTimeZone()));
 
         $obNode->addChild(CXMLCreator::createTagAttributed('AdvanceHijri', '0'));
@@ -166,11 +276,12 @@ class CCalendarWebService extends IWebService
         $arPriorityValues = $this->arPriorityValues;
 
         $first_week_day = COption::GetOptionString('calendar', 'week_start', 'MO');
-        $first_week_day = strtolower($first_week_day);
+        $first_week_day = mb_strtolower($first_week_day);
 
         $change = MakeTimeStamp($event['TIMESTAMP_X']);
-        if ($last_change < $change)
+        if ($last_change < $change) {
             $last_change = $change;
+        }
 
         $bRecurrent = (isset($event['RRULE']) && $event['RRULE'] != "") ? 1 : 0;
         $rrule = CCalendarEvent::ParseRRULE($event['RRULE']);
@@ -185,8 +296,9 @@ class CCalendarWebService extends IWebService
 
         $TZBias = intval(date('Z'));
         $duration = $event['DT_LENGTH'];
-        if ($bAllDay)
+        if ($bAllDay) {
             $duration -= 20;
+        }
 
         if (!$bAllDay || defined('OLD_OUTLOOK_VERSION')) {
             $ts_start = $event['DATE_FROM_TS_UTC']; // We need time in UTC
@@ -240,8 +352,12 @@ class CCalendarWebService extends IWebService
             if ($bUseTransition) {
                 $transition_standard = COption::GetOptionString('intranet', 'tz_transition_standard', '');
                 $transition_daylight = COption::GetOptionString('intranet', 'tz_transition_daylight', '');
-                if (!$transition_standard) $transition_standard = '<transitionRule month="10" day="su" weekdayOfMonth="last" /><transitionTime>3:0:0</transitionTime>';
-                if (!$transition_daylight) $transition_daylight = '<transitionRule  month="3" day="su" weekdayOfMonth="last" /><transitionTime>2:0:0</transitionTime>';
+                if (!$transition_standard) {
+                    $transition_standard = '<transitionRule month="10" day="su" weekdayOfMonth="last" /><transitionTime>3:0:0</transitionTime>';
+                }
+                if (!$transition_daylight) {
+                    $transition_daylight = '<transitionRule  month="3" day="su" weekdayOfMonth="last" /><transitionTime>2:0:0</transitionTime>';
+                }
 
                 $tz_data .= '<standardDate>' . $transition_standard . '</standardDate><daylightDate>' . $transition_daylight . '</daylightDate>';
             }
@@ -262,17 +378,24 @@ class CCalendarWebService extends IWebService
 
                 case 'WEEKLY':
                     $days = '';
-                    foreach ($rrule['BYDAY'] as $day)
-                        $days .= strtolower($day) . '="TRUE" ';
+                    foreach ($rrule['BYDAY'] as $day) {
+                        $days .= mb_strtolower($day) . '="TRUE" ';
+                    }
                     $recurence_data .= '<weekly ' . $days . 'weekFrequency="' . $rrule['INTERVAL'] . '" />';
                     break;
 
                 case 'MONTHLY':
-                    $recurence_data .= '<monthly monthFrequency="' . $rrule['INTERVAL'] . '" day="' . date('d', $ts_start) . '" />';
+                    $recurence_data .= '<monthly monthFrequency="' . $rrule['INTERVAL'] . '" day="' . date(
+                            'd',
+                            $ts_start
+                        ) . '" />';
                     break;
 
                 case 'YEARLY':
-                    $recurence_data .= '<yearly yearFrequency="' . $rrule['INTERVAL'] . '" month="' . date('m', $ts_start) . '" day="' . date('d', $ts_start) . '" />';
+                    $recurence_data .= '<yearly yearFrequency="' . $rrule['INTERVAL'] . '" month="' . date(
+                            'm',
+                            $ts_start
+                        ) . '" day="' . date('d', $ts_start) . '" />';
                     break;
             }
             $recurence_data .= '</repeat>';
@@ -280,7 +403,9 @@ class CCalendarWebService extends IWebService
             if ($rrule['COUNT']) {
                 $recurence_data .= '<repeatInstances>' . intval($rrule['COUNT']) . '</repeatInstances>';
             } elseif ($rrule['~UNTIL']) {
-                $recurence_data .= '<windowEnd>' . $this->__makeDateTime(CCalendar::Timestamp($rrule['UNTIL'])) . '</windowEnd>';
+                $recurence_data .= '<windowEnd>' . $this->__makeDateTime(
+                        CCalendar::Timestamp($rrule['UNTIL'])
+                    ) . '</windowEnd>';
             } else {
                 $recurence_data .= '<repeatForever>FALSE</repeatForever>';
             }
@@ -307,12 +432,19 @@ class CCalendarWebService extends IWebService
     {
         define('OLD_OUTLOOK_VERSION', true);
 
-        $res = $this->GetListItemChangesSinceToken($listName, $viewFields, '', 0, $since ? $this->__makeTS($since) : '');
+        $res = $this->GetListItemChangesSinceToken(
+            $listName,
+            $viewFields,
+            '',
+            0,
+            $since ? $this->__makeTS($since) : ''
+        );
 
-        if (is_object($res))
+        if (is_object($res)) {
             return $res;
-        else
+        } else {
             return array('GetListItemChangesResult' => $res['GetListItemChangesSinceTokenResult']);
+        }
     }
 
     function GetListItemChangesSinceToken($listName, $viewFields = '', $query = '', $rowLimit = 0, $changeToken = '')
@@ -326,16 +458,19 @@ class CCalendarWebService extends IWebService
         $listName = ToUpper(CIntranetUtils::makeGUID($listName_original));
 
         $arSections = CCalendarSect::GetList(array('arFilter' => array('XML_ID' => $listName_original)));
-        if (!$arSections || !is_array($arSections[0]))
+        if (!$arSections || !is_array($arSections[0])) {
             return new CSoapFault(
                 'List not found',
                 'List with ' . $listName . ' GUID not found!'
             );
+        }
         $arSection = $arSections[0];
 
         $userId = (is_object($USER) && $USER->GetID()) ? $USER->GetID() : 1;
 
-        $fetchMeetings = $arSection['CAL_TYPE'] == 'user' && CCalendar::GetMeetingSection($arSection['OWNER_ID']) == $arSection['ID'];
+        $fetchMeetings = $arSection['CAL_TYPE'] == 'user' && CCalendar::GetMeetingSection(
+                $arSection['OWNER_ID']
+            ) == $arSection['ID'];
         $arEvents = CCalendarEvent::GetList(
             array(
                 'arFilter' => array(
@@ -386,10 +521,11 @@ class CCalendarWebService extends IWebService
         $data->setAttribute('xmlns:rs', 'urn:schemas-microsoft-com:rowset');
         $data->setAttribute('xmlns:z', '#RowsetSchema');
 
-        if ($last_change > 0)
+        if ($last_change > 0) {
             $obChanges->setAttribute('LastChangeToken', $last_change);
+        }
 
-        CCalendar::SaveSyncDate($userId, 'outlook');
+        CCalendar::SaveMultipleSyncDate($userId, 'outlook', $arSection['ID']);
         return array('GetListItemChangesSinceTokenResult' => $data);
     }
 
@@ -400,30 +536,38 @@ class CCalendarWebService extends IWebService
         $arStatusValues = array_flip($this->arStatusValues);
         $arPriorityValues = array_flip($this->arPriorityValues);
 
-        if (!$listName_original = CIntranetUtils::checkGUID($listName))
+        if (!$listName_original = CIntranetUtils::checkGUID($listName)) {
             return new CSoapFault('Data error', 'Wrong GUID - ' . $listName);
+        }
 
         $obResponse = new CXMLCreator('Results');
 
         $listName = ToUpper(CIntranetUtils::makeGUID($listName_original));
         $arSections = CCalendarSect::GetList(array('arFilter' => array('XML_ID' => $listName_original)));
-        if (!$arSections || !is_array($arSections[0]))
+        if (!$arSections || !is_array($arSections[0])) {
             return new CSoapFault(
                 'List not found',
                 'List with ' . $listName . ' GUID not found'
             );
+        }
+
         $arSection = $arSections[0];
 
-        $bGroup = $arSection['CAL_TYPE'] == 'group';
+        $bGroup = $arSection['CAL_TYPE'] === 'group';
         $calType = $arSection['CAL_TYPE'];
         $ownerId = $arSection['OWNER_ID'];
 
         if ($bGroup) {
             \Bitrix\Main\Loader::includeModule('socialnetwork');
             $arGroupTmp = CSocNetGroup::GetByID($arSection['SOCNET_GROUP_ID']);
-            if ($arGroupTmp["CLOSED"] == "Y")
-                if (COption::GetOptionString("socialnetwork", "work_with_closed_groups", "N") != "Y")
-                    return new CSoapFault('Cannot modify archive group calendar', 'Cannot modify archive group calendar');
+            if ($arGroupTmp["CLOSED"] === "Y") {
+                if (COption::GetOptionString("socialnetwork", "work_with_closed_groups", "N") !== "Y") {
+                    return new CSoapFault(
+                        'Cannot modify archive group calendar',
+                        'Cannot modify archive group calendar'
+                    );
+                }
+            }
         }
 
         $obBatch = $updates->children[0];
@@ -444,23 +588,25 @@ class CCalendarWebService extends IWebService
 
             foreach ($obMethod->children as $obField) {
                 $name = $obField->getAttribute('Name');
-                if ($name == 'MetaInfo')
+                if ($name === 'MetaInfo') {
                     $name .= '_' . $obField->getAttribute('Property');
+                }
 
                 $arData[$name] = $obField->content;
             }
 
-            if ($arData['_command'] == 'Delete') {
+            if ($arData['_command'] === 'Delete') {
                 $obRes = new CXMLCreator('Result');
                 $obRes->setAttribute('ID', $obMethod->getAttribute('ID') . ',' . $arData['_command']);
                 $obRes->setAttribute('List', $listName);
                 $obRes->addChild($obNode = new CXMLCreator('ErrorCode'));
 
                 $res = CCalendar::DeleteEvent($arData['ID']);
-                if ($res === true)
+                if ($res === true) {
                     $obNode->setData('0x00000000');
-                else
+                } else {
                     $obNode->setData('0x81020014');
+                }
 
                 /*
                     0x00000000 - ok
@@ -469,22 +615,24 @@ class CCalendarWebService extends IWebService
                     0x81020016 - item does not exist
                 */
                 $obResponse->addChild($obRes);
-            } elseif ($arData['_command'] == 'New' || $arData['_command'] == 'Update') {
+            } elseif ($arData['_command'] === 'New' || $arData['_command'] === 'Update') {
                 $arData['Location'] = trim($arData['Location']);
-                $arData['EventType'] = intval($arData['EventType']);
+                $arData['EventType'] = (int)$arData['EventType'];
 
-                if ($arData['EventType'] == 2)
+                if ((int)$arData['EventType'] === 2) {
                     $arData['EventType'] = 0;
+                }
 
-                if ($arData['EventType'] > 2 /* || ($arData['EventType'] == 1 && !$arData['RecurrenceData'])*/)
+                if ($arData['EventType'] > 2 /* || ($arData['EventType'] == 1 && !$arData['RecurrenceData'])*/) {
                     return new CSoapFault(
                         'Unsupported event type',
                         'Event type unsupported'
                     );
+                }
 
-                $id = $arData['_command'] == 'New' ? 0 : intVal($arData['ID']);
+                $id = $arData['_command'] === 'New' ? 0 : (int)$arData['ID'];
 
-                $arData['fRecurrence'] = intval($arData['fRecurrence']);
+                $arData['fRecurrence'] = (int)$arData['fRecurrence'];
                 $arData['RRULE'] = '';
 
                 if (isset($arData['EventDate'])) {
@@ -522,7 +670,7 @@ class CCalendarWebService extends IWebService
                     switch ($obNode->name) {
                         case 'daily':
                             // hack. we have no "work days" daily recurence
-                            if ($obNode->getAttribute('weekday') == 'TRUE') {
+                            if ($obNode->getAttribute('weekday') === 'TRUE') {
                                 $arData['RRULE']['FREQ'] = 'WEEKLY';
                                 $arData['RRULE']['BYDAY'] = 'MO,TU,WE,TH,FR';
                                 $arData['RRULE']['INTERVAL'] = 1;
@@ -545,7 +693,7 @@ class CCalendarWebService extends IWebService
                             $arWeekDays = ['mo', 'tu', 'we', 'th', 'fr', 'sa', 'su'];
                             foreach ($arWeekDays as $day => $value) {
                                 if ($obNode->getAttribute($value)) {
-                                    $arData['RRULE']['BYDAY'][] = strtoupper($value);
+                                    $arData['RRULE']['BYDAY'][] = mb_strtoupper($value);
                                 }
                             }
 
@@ -575,58 +723,63 @@ class CCalendarWebService extends IWebService
                             break;
                     }
 
-                    if ($arData['DT_LENGTH'] == 0 && isset($arData['RRULE']['FREQ']))
+                    if ((int)$arData['DT_LENGTH'] === 0 && isset($arData['RRULE']['FREQ'])) {
                         $arData['DT_LENGTH'] = 86400;
+                    }
 
                     $obWhile = $obRecurRule->children[2];
-                    if ($obWhile->name == 'repeatForever') {
+                    if ($obWhile->name === 'repeatForever') {
                         $arData['RRULE']['UNTIL'] = MakeTimeStamp('');;
-                    } elseif ($obWhile->name == 'windowEnd') {
+                    } elseif ($obWhile->name === 'windowEnd') {
                         $toTsUTC = $this->__makeTS($obWhile->textContent());
                         $arData['RRULE']['UNTIL'] = ConvertTimeStamp($toTsUTC, 'FULL');
-                    } elseif ($obWhile->name == 'repeatInstances') {
+                    } elseif ($obWhile->name === 'repeatInstances') {
                         $arData['RRULE']['COUNT'] = intval($obWhile->textContent());
                     }
-                } elseif ($arData['fRecurrence'] == -1 && $id > 0) {
+                } elseif (($arData['fRecurrence'] === -1) && ($id > 0)) {
                     $arData['RRULE'] = -1;
                 }
 
-                $arFields = array(
+                $arFields = [
                     "ID" => $id,
                     'CAL_TYPE' => $calType,
                     'OWNER_ID' => $ownerId,
                     'CREATED_BY' => $userId,
                     'NAME' => $arData['Title'],
                     'DESCRIPTION' => self::ClearOutlookHtml($arData['Description']),
-                    'SECTIONS' => array($arSection['ID']),
+                    'SECTIONS' => [$arSection['ID']],
                     'ACCESSIBILITY' => $arStatusValues[$arData['MetaInfo_BusyStatus']],
                     'IMPORTANCE' => $arPriorityValues[$arData['MetaInfo_Priority']],
                     'RRULE' => $arData['RRULE'],
                     'LOCATION' => CCalendar::UnParseTextLocation($arData['Location'])
-                );
+                ];
 
                 if ($fromTs && $toTs) {
-                    $arFields['DATE_FROM'] = CCalendar::Date($fromTs, $skipTime == 'N');
-                    $arFields['DATE_TO'] = CCalendar::Date($toTs, $skipTime == 'N');
+                    $arFields['DATE_FROM'] = CCalendar::Date($fromTs, $skipTime === 'N');
+                    $arFields['DATE_TO'] = CCalendar::Date($toTs, $skipTime === 'N');
                     $arFields['DT_SKIP_TIME'] = $skipTime;
                 }
 
-                if (isset($arData['DT_LENGTH']) && $arData['DT_LENGTH'] > 0)
+                if (isset($arData['DT_LENGTH']) && $arData['DT_LENGTH'] > 0) {
                     $arFields['DT_LENGTH'] = $arData['DT_LENGTH'];
+                }
 
                 $eventId = CCalendar::SaveEvent(
-                    array(
+                    [
                         'arFields' => $arFields,
                         'fromWebservice' => true
-                    )
+                    ]
                 );
 
-                if ($eventId && intval($eventId) > 0) {
-                    $eventId = intval($eventId);
+                if ($eventId && ((int)$eventId) > 0) {
+                    $eventId = (int)$eventId;
                     $replicationId[$eventId] = $arData['MetaInfo_ReplicationID'];
 
                     $responseRows[$eventId] = new CXMLCreator('Result');
-                    $responseRows[$eventId]->setAttribute('ID', $obMethod->getAttribute('ID') . ',' . $arData['_command']);
+                    $responseRows[$eventId]->setAttribute(
+                        'ID',
+                        $obMethod->getAttribute('ID') . ',' . $arData['_command']
+                    );
                     $responseRows[$eventId]->setAttribute('List', $listName);
 
                     $responseRows[$eventId]->addChild($obNode = new CXMLCreator('ErrorCode'));
@@ -637,37 +790,42 @@ class CCalendarWebService extends IWebService
         }
 
         $userId = (is_object($USER) && $USER->GetID()) ? $USER->GetID() : 1;
-        $fetchMeetings = CCalendar::GetMeetingSection($userId) == $arSection['ID'];
+        $fetchMeetings = (int)CCalendar::GetMeetingSection($userId) === (int)$arSection['ID'];
         $arEvents = CCalendarEvent::GetList(
-            array(
-                'arFilter' => array(
+            [
+                'arFilter' => [
                     'CAL_TYPE' => $calType,
                     'OWNER_ID' => $ownerId,
                     'SECTION' => $arSection['ID']
-                ),
+                ],
                 'getUserfields' => false,
                 'parseRecursion' => false,
                 'fetchAttendees' => false,
                 'fetchMeetings' => $fetchMeetings,
                 'userId' => $userId
-            )
+            ]
         );
 
-        foreach ($arEvents as $key => $event) {
+        foreach ($arEvents as $event) {
             if ($responseRows[$event['ID']]) {
-                $obRow = $this->__getRow($event, $listName, $last_change = 0);
+                $last_change = 0;
+                $obRow = $this->__getRow($event, $listName, $last_change);
                 $obRow->setAttribute('xmlns:z', "#RowsetSchema");
-                if ($replicationId[$event['ID']])
+
+                if ($replicationId[$event['ID']]) {
                     $obRow->setAttribute('MetaInfo_ReplicationID', $replicationId[$event['ID']]);
+                }
 
                 $responseRows[$event['ID']]->addChild($obRow);
             }
+
             $obResponse->addChild($responseRows[$event['ID']]);
         }
-        return array('UpdateListItemsResult' => $obResponse);
+
+        return ['UpdateListItemsResult' => $obResponse];
     }
 
-    function GetWebServiceDesc()
+    public static function GetWebServiceDesc()
     {
         $wsdesc = new CWebServiceDesc();
         $wsdesc->wsname = "bitrix.webservice.calendar";
@@ -741,18 +899,18 @@ class CCalendarWebService extends IWebService
     public static function ClearOutlookHtml($html)
     {
         $q = tolower($html);
-        if (($pos = strrpos($q, '</head>')) !== false) {
-            $html = substr($html, $pos + 7);
+        if (($pos = mb_strrpos($q, '</head>')) !== false) {
+            $html = mb_substr($html, $pos + 7);
             $q = tolower($html);
         }
 
-        if (strpos($q, '<body') !== false) {
+        if (mb_strpos($q, '<body') !== false) {
             $html = preg_replace("/((\s|\S)*)<body[^>]*>((\s|\S)*)/is", "$3", $html);
             $q = tolower($html);
         }
 
-        if (($pos = strrpos($q, '</body>')) !== false) {
-            $html = substr($html, 0, $pos);
+        if (($pos = mb_strrpos($q, '</body>')) !== false) {
+            $html = mb_substr($html, 0, $pos);
         }
 
         $html = str_replace('</DIV>', "\r\n</DIV>", $html);

@@ -1,4 +1,5 @@
 <?php
+
 $messageservice_default_option = array(
     //'smsru_partner' => 'bitrix24',
     //'smsru_secret_key' => 'P46y811M84W3b4H18SmDpy9KG3pKG3Ok',

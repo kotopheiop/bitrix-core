@@ -61,7 +61,8 @@ class SchedulerEventTable extends Main\Entity\DataManager
         $eventType = $sqlHelper->forSql($eventType);
         $entityId = $entityId !== null ? $sqlHelper->forSql($entityId) : null;
 
-        $connection->queryExecute("DELETE 
+        $connection->queryExecute(
+            "DELETE 
 			FROM {$table} 
 			WHERE 
 				WORKFLOW_ID = '{$workflowId}' 
@@ -92,13 +93,16 @@ class SchedulerEventTable extends Main\Entity\DataManager
             '=EVENT_TYPE' => (string)$eventType
         );
 
-        if ($entityId !== null)
+        if ($entityId !== null) {
             $filter['=ENTITY_ID'] = (string)$entityId;
+        }
 
-        $row = static::getList(array(
-            'select' => array('ID'),
-            'filter' => $filter
-        ))->fetch();
+        $row = static::getList(
+            array(
+                'select' => array('ID'),
+                'filter' => $filter
+            )
+        )->fetch();
 
         return (is_array($row));
     }
@@ -110,11 +114,13 @@ class SchedulerEventTable extends Main\Entity\DataManager
             '=EVENT_TYPE' => $eventType
         );
 
-        $row = static::getList(array(
-            'select' => array('ID'),
-            'filter' => $filter,
-            'limit' => 1
-        ))->fetch();
+        $row = static::getList(
+            array(
+                'select' => array('ID'),
+                'filter' => $filter,
+                'limit' => 1
+            )
+        )->fetch();
 
         return (is_array($row));
     }

@@ -62,7 +62,10 @@ class IblockRight implements RightEntity, Errorable
                 $this->rightParam->getIblockId() &&
                 $this->listsPermission < \CListPermissions::IS_ADMIN &&
                 !\CIBlockRights::userHasRightTo(
-                    $this->rightParam->getIblockId(), $this->rightParam->getIblockId(), "iblock_edit")
+                    $this->rightParam->getIblockId(),
+                    $this->rightParam->getIblockId(),
+                    "iblock_edit"
+                )
             ) ||
             (
                 !$this->rightParam->getIblockId() && $this->listsPermission < \CListPermissions::IS_ADMIN

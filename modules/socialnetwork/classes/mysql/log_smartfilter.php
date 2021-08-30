@@ -1,19 +1,22 @@
-<?
+<?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/socialnetwork/classes/general/log_smartfilter.php");
 
 class CSocNetLogSmartFilter extends CAllSocNetLogSmartFilter
 {
-    function Set($user_id, $type)
+    public static function Set($user_id, $type)
     {
         global $DB;
 
         $user_id = intval($user_id);
 
-        if ($user_id <= 0)
+        if ($user_id <= 0) {
             return false;
+        }
 
-        if ($type != "Y")
+        if ($type != "Y") {
             $type = "N";
+        }
 
         $strSQL = "
 			INSERT INTO b_sonet_log_smartfilter (USER_ID, TYPE)
@@ -28,5 +31,3 @@ class CSocNetLogSmartFilter extends CAllSocNetLogSmartFilter
         }
     }
 }
-
-?>

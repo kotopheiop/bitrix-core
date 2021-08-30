@@ -1,10 +1,11 @@
-<?
+<?php
+
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/blog/general/ratings_components.php");
 
 class CAllRatingsComponentsBlog
 {
     // return configs of component-rating
-    function OnGetRatingConfigs()
+    public static function OnGetRatingConfigs()
     {
         $arConfigs = array(
             "MODULE_ID" => "BLOG",
@@ -105,27 +106,34 @@ class CAllRatingsComponentsBlog
     }
 
     // return support object
-    function OnGetRatingObject()
+    public static function OnGetRatingObject()
     {
         $arRatingConfigs = CRatingsComponentsBlog::OnGetRatingConfigs();
-        foreach ($arRatingConfigs["COMPONENT"] as $SupportType => $value)
+        foreach ($arRatingConfigs["COMPONENT"] as $SupportType => $value) {
             $arSupportType[] = $SupportType;
+        }
 
         return $arSupportType;
     }
 
     // check the value of the component-rating which relate to the module
-    function OnAfterAddRating($ID, $arFields)
+    public static function OnAfterAddRating($ID, $arFields)
     {
-        $arFields['CONFIGS']['BLOG'] = CRatingsComponentsBlog::__CheckFields($arFields['ENTITY_ID'], $arFields['CONFIGS']['BLOG']);
+        $arFields['CONFIGS']['BLOG'] = CRatingsComponentsBlog::__CheckFields(
+            $arFields['ENTITY_ID'],
+            $arFields['CONFIGS']['BLOG']
+        );
 
         return $arFields;
     }
 
     // check the value of the component-rating which relate to the module
-    function OnAfterUpdateRating($ID, $arFields)
+    public static function OnAfterUpdateRating($ID, $arFields)
     {
-        $arFields['CONFIGS']['BLOG'] = CRatingsComponentsBlog::__CheckFields($arFields['ENTITY_ID'], $arFields['CONFIGS']['BLOG']);
+        $arFields['CONFIGS']['BLOG'] = CRatingsComponentsBlog::__CheckFields(
+            $arFields['ENTITY_ID'],
+            $arFields['CONFIGS']['BLOG']
+        );
 
         return $arFields;
     }
@@ -133,50 +141,62 @@ class CAllRatingsComponentsBlog
     // Utilities
 
     // check input values, if value does not validate, set the default value
-    function __CheckFields($entityId, $arConfigs)
+    public static function __CheckFields($entityId, $arConfigs)
     {
         $arDefaultConfig = CRatingsComponentsBlog::__AssembleConfigDefault($entityId);
         if ($entityId == "USER") {
             if (isset($arConfigs['VOTE']['POST'])) {
-                if (!preg_match('/^\d{1,7}\.?\d{0,4}$/', $arConfigs['VOTE']['POST']['COEFFICIENT']))
+                if (!preg_match('/^\d{1,7}\.?\d{0,4}$/', $arConfigs['VOTE']['POST']['COEFFICIENT'])) {
                     $arConfigs['VOTE']['POST']['COEFFICIENT'] = $arDefaultConfig['VOTE']['POST']['COEFFICIENT']['DEFAULT'];
+                }
 
-                if (!preg_match('/^\d{1,5}$/', $arConfigs['VOTE']['POST']['LIMIT']))
+                if (!preg_match('/^\d{1,5}$/', $arConfigs['VOTE']['POST']['LIMIT'])) {
                     $arConfigs['VOTE']['POST']['LIMIT'] = $arDefaultConfig['VOTE']['POST']['LIMIT']['DEFAULT'];
+                }
             }
 
             if (isset($arConfigs['VOTE']['COMMENT'])) {
-                if (!preg_match('/^\d{1,7}\.?\d{0,4}$/', $arConfigs['VOTE']['COMMENT']['COEFFICIENT']))
+                if (!preg_match('/^\d{1,7}\.?\d{0,4}$/', $arConfigs['VOTE']['COMMENT']['COEFFICIENT'])) {
                     $arConfigs['VOTE']['COMMENT']['COEFFICIENT'] = $arDefaultConfig['VOTE']['COMMENT']['COEFFICIENT']['DEFAULT'];
+                }
 
-                if (!preg_match('/^\d{1,5}$/', $arConfigs['VOTE']['COMMENT']['LIMIT']))
+                if (!preg_match('/^\d{1,5}$/', $arConfigs['VOTE']['COMMENT']['LIMIT'])) {
                     $arConfigs['VOTE']['COMMENT']['LIMIT'] = $arDefaultConfig['VOTE']['COMMENT']['LIMIT']['DEFAULT'];
+                }
             }
 
             if (isset($arConfigs['RATING']['ACTIVITY'])) {
-                if (!preg_match('/^\d{1,7}\.?\d{0,4}$/', $arConfigs['RATING']['ACTIVITY']['TODAY_POST_COEF']))
+                if (!preg_match('/^\d{1,7}\.?\d{0,4}$/', $arConfigs['RATING']['ACTIVITY']['TODAY_POST_COEF'])) {
                     $arConfigs['RATING']['ACTIVITY']['TODAY_POST_COEF'] = $arDefaultConfig['RATING']['ACTIVITY']['TODAY_POST_COEF']['DEFAULT'];
+                }
 
-                if (!preg_match('/^\d{1,7}\.?\d{0,4}$/', $arConfigs['RATING']['ACTIVITY']['WEEK_POST_COEF']))
+                if (!preg_match('/^\d{1,7}\.?\d{0,4}$/', $arConfigs['RATING']['ACTIVITY']['WEEK_POST_COEF'])) {
                     $arConfigs['RATING']['ACTIVITY']['WEEK_POST_COEF'] = $arDefaultConfig['RATING']['ACTIVITY']['WEEK_POST_COEF']['DEFAULT'];
+                }
 
-                if (!preg_match('/^\d{1,7}\.?\d{0,4}$/', $arConfigs['RATING']['ACTIVITY']['MONTH_POST_COEF']))
+                if (!preg_match('/^\d{1,7}\.?\d{0,4}$/', $arConfigs['RATING']['ACTIVITY']['MONTH_POST_COEF'])) {
                     $arConfigs['RATING']['ACTIVITY']['MONTH_POST_COEF'] = $arDefaultConfig['RATING']['ACTIVITY']['MONTH_POST_COEF']['DEFAULT'];
+                }
 
-                if (!preg_match('/^\d{1,7}\.?\d{0,4}$/', $arConfigs['RATING']['ACTIVITY']['ALL_POST_COEF']))
+                if (!preg_match('/^\d{1,7}\.?\d{0,4}$/', $arConfigs['RATING']['ACTIVITY']['ALL_POST_COEF'])) {
                     $arConfigs['RATING']['ACTIVITY']['ALL_POST_COEF'] = $arDefaultConfig['RATING']['ACTIVITY']['ALL_POST_COEF']['DEFAULT'];
+                }
 
-                if (!preg_match('/^\d{1,7}\.?\d{0,4}$/', $arConfigs['RATING']['ACTIVITY']['TODAY_COMMENT_COEF']))
+                if (!preg_match('/^\d{1,7}\.?\d{0,4}$/', $arConfigs['RATING']['ACTIVITY']['TODAY_COMMENT_COEF'])) {
                     $arConfigs['RATING']['ACTIVITY']['TODAY_COMMENT_COEF'] = $arDefaultConfig['RATING']['ACTIVITY']['TODAY_POST_COEF']['DEFAULT'];
+                }
 
-                if (!preg_match('/^\d{1,7}\.?\d{0,4}$/', $arConfigs['RATING']['ACTIVITY']['WEEK_COMMENT_COEF']))
+                if (!preg_match('/^\d{1,7}\.?\d{0,4}$/', $arConfigs['RATING']['ACTIVITY']['WEEK_COMMENT_COEF'])) {
                     $arConfigs['RATING']['ACTIVITY']['WEEK_COMMENT_COEF'] = $arDefaultConfig['RATING']['ACTIVITY']['WEEK_COMMENT_COEF']['DEFAULT'];
+                }
 
-                if (!preg_match('/^\d{1,7}\.?\d{0,4}$/', $arConfigs['RATING']['ACTIVITY']['MONTH_COMMENT_COEF']))
+                if (!preg_match('/^\d{1,7}\.?\d{0,4}$/', $arConfigs['RATING']['ACTIVITY']['MONTH_COMMENT_COEF'])) {
                     $arConfigs['RATING']['ACTIVITY']['MONTH_COMMENT_COEF'] = $arDefaultConfig['RATING']['ACTIVITY']['MONTH_COMMENT_COEF']['DEFAULT'];
+                }
 
-                if (!preg_match('/^\d{1,7}\.?\d{0,4}$/', $arConfigs['RATING']['ACTIVITY']['ALL_COMMENT_COEF']))
+                if (!preg_match('/^\d{1,7}\.?\d{0,4}$/', $arConfigs['RATING']['ACTIVITY']['ALL_COMMENT_COEF'])) {
                     $arConfigs['RATING']['ACTIVITY']['ALL_COMMENT_COEF'] = $arDefaultConfig['RATING']['ACTIVITY']['ALL_COMMENT_COEF']['DEFAULT'];
+                }
             }
         }
 
@@ -184,38 +204,42 @@ class CAllRatingsComponentsBlog
     }
 
     // collect the default and regular expressions for the fields component-rating
-    function __AssembleConfigDefault($objectType = null)
+    public static function __AssembleConfigDefault($objectType = null)
     {
         $arConfigs = array();
         $arRatingConfigs = CRatingsComponentsBlog::OnGetRatingConfigs();
         if (is_null($objectType)) {
-            foreach ($arRatingConfigs["COMPONENT"] as $OBJ_TYPE => $TYPE_VALUE)
-                foreach ($TYPE_VALUE as $RAT_TYPE => $RAT_VALUE)
-                    foreach ($RAT_VALUE as $VALUE_CONFIG)
-                        foreach ($VALUE_CONFIG['FIELDS'] as $VALUE_FIELDS)
+            foreach ($arRatingConfigs["COMPONENT"] as $OBJ_TYPE => $TYPE_VALUE) {
+                foreach ($TYPE_VALUE as $RAT_TYPE => $RAT_VALUE) {
+                    foreach ($RAT_VALUE as $VALUE_CONFIG) {
+                        foreach ($VALUE_CONFIG['FIELDS'] as $VALUE_FIELDS) {
                             $arConfigs[$OBJ_TYPE][$RAT_TYPE][$VALUE_CONFIG['ID']][$VALUE_FIELDS['ID']]['DEFAULT'] = $VALUE_FIELDS['DEFAULT'];
+                        }
+                    }
+                }
+            }
         } else {
-            foreach ($arRatingConfigs["COMPONENT"][$objectType] as $RAT_TYPE => $RAT_VALUE)
-                foreach ($RAT_VALUE as $VALUE_CONFIG)
-                    foreach ($VALUE_CONFIG['FIELDS'] as $VALUE_FIELDS)
+            foreach ($arRatingConfigs["COMPONENT"][$objectType] as $RAT_TYPE => $RAT_VALUE) {
+                foreach ($RAT_VALUE as $VALUE_CONFIG) {
+                    foreach ($VALUE_CONFIG['FIELDS'] as $VALUE_FIELDS) {
                         $arConfigs[$RAT_TYPE][$VALUE_CONFIG['ID']][$VALUE_FIELDS['ID']]['DEFAULT'] = $VALUE_FIELDS['DEFAULT'];
-
+                    }
+                }
+            }
         }
 
         return $arConfigs;
     }
 
-    function OnGetRatingContentOwner($arParams)
+    public static function OnGetRatingContentOwner($arParams)
     {
         if ($arParams['ENTITY_TYPE_ID'] == 'BLOG_POST') {
-            $arPost = CBlogPost::GetByID(IntVal($arParams['ENTITY_ID']));
+            $arPost = CBlogPost::GetByID(intval($arParams['ENTITY_ID']));
             return $arPost['AUTHOR_ID'];
         } elseif ($arParams['ENTITY_TYPE_ID'] == 'BLOG_COMMENT') {
-            $arComment = CBlogComment::GetByID(IntVal($arParams['ENTITY_ID']));
+            $arComment = CBlogComment::GetByID(intval($arParams['ENTITY_ID']));
             return $arComment['AUTHOR_ID'];
         }
         return false;
     }
 }
-
-?>

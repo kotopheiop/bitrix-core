@@ -8,8 +8,9 @@
 
 require_once(dirname(__FILE__) . "/../include/prolog_admin_before.php");
 
-if (!$USER->CanDoOperation('edit_ratings'))
+if (!$USER->CanDoOperation('edit_ratings')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 
@@ -20,7 +21,9 @@ $lAdmin = new CAdminList($sTableID, $oSort);
 function CheckFilter()
 {
     global $FilterArr, $lAdmin;
-    foreach ($FilterArr as $f) global $$f;
+    foreach ($FilterArr as $f) {
+        global $$f;
+    }
     return count($lAdmin->arFilterErrors) == 0;
 }
 
@@ -45,9 +48,10 @@ if (CheckFilter()) {
 
 if ($lAdmin->EditAction()) {
     foreach ($FIELDS as $ID => $arFields) {
-        $ID = IntVal($ID);
-        if ($ID <= 0)
+        $ID = intval($ID);
+        if ($ID <= 0) {
             continue;
+        }
 
         $arUpdate['NAME'] = $arFields['NAME'];
         $arUpdate['ACTIVE'] = $arFields['ACTIVE'] == 'Y' ? 'Y' : 'N';
@@ -61,22 +65,26 @@ if ($lAdmin->EditAction()) {
 if (($arID = $lAdmin->GroupAction())) {
     if ($_REQUEST['action_target'] == 'selected') {
         $rsData = CRatingRule::GetList(array($by => $order), $arFilter);
-        while ($arRes = $rsData->Fetch())
+        while ($arRes = $rsData->Fetch()) {
             $arID[] = $arRes['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        $ID = IntVal($ID);
-        if ($ID <= 0)
+        $ID = intval($ID);
+        if ($ID <= 0) {
             continue;
+        }
         switch ($_REQUEST['action']) {
             case "reapply":
-                if (!CRatingRule::Apply($ID, true))
+                if (!CRatingRule::Apply($ID, true)) {
                     $lAdmin->AddGroupError(GetMessage("RATING_RULE_LIST_ERR_APP"), $ID);
+                }
                 break;
             case "delete":
-                if (!CRatingRule::Delete($ID))
+                if (!CRatingRule::Delete($ID)) {
                     $lAdmin->AddGroupError(GetMessage("RATING_RULE_LIST_ERR_DEL"), $ID);
+                }
                 break;
         }
     }
@@ -92,9 +100,24 @@ $aHeaders = array(
     array("id" => "NAME", "content" => GetMessage("RATING_RULE_NAME"), "sort" => "name", "default" => true),
     array("id" => "ACTIVE", "content" => GetMessage("RATING_RULE_ACTIVE"), "sort" => "active", "default" => true),
     array("id" => "CREATED", "content" => GetMessage("RATING_RULE_CREATED"), "sort" => "created", "default" => false),
-    array("id" => "LAST_MODIFIED", "content" => GetMessage("RATING_RULE_LAST_MODIFIED"), "sort" => "last_modified", "default" => true),
-    array("id" => "LAST_APPLIED", "content" => GetMessage("RATING_RULE_LAST_APPLIED"), "sort" => "last_applied", "default" => true),
-    array("id" => "ENTITY_TYPE_ID", "content" => GetMessage("RATING_RULE_ENTITY_TYPE_ID"), "sort" => "entity_type_id", "default" => false),
+    array(
+        "id" => "LAST_MODIFIED",
+        "content" => GetMessage("RATING_RULE_LAST_MODIFIED"),
+        "sort" => "last_modified",
+        "default" => true
+    ),
+    array(
+        "id" => "LAST_APPLIED",
+        "content" => GetMessage("RATING_RULE_LAST_APPLIED"),
+        "sort" => "last_applied",
+        "default" => true
+    ),
+    array(
+        "id" => "ENTITY_TYPE_ID",
+        "content" => GetMessage("RATING_RULE_ENTITY_TYPE_ID"),
+        "sort" => "entity_type_id",
+        "default" => false
+    ),
 );
 
 $lAdmin->AddHeaders($aHeaders);
@@ -104,8 +127,14 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
     $row->AddInputField("NAME", array("size" => 20));
     $row->AddViewField("NAME", $f_NAME);
     $row->AddCheckField("ACTIVE", array("size" => 20));
-    $row->AddViewField("ACTIVE", $f_ACTIVE == "Y" ? GetMessage("RATING_RULE_ACTIVE_YES") : GetMessage("RATING_RULE_ACTIVE_NO"));
-    $row->AddViewField("LAST_CALCULATED", empty($f_LAST_CALCULATED) ? GetMessage("RATING_RULE_STATUS_WAITING") : $f_LAST_CALCULATED);
+    $row->AddViewField(
+        "ACTIVE",
+        $f_ACTIVE == "Y" ? GetMessage("RATING_RULE_ACTIVE_YES") : GetMessage("RATING_RULE_ACTIVE_NO")
+    );
+    $row->AddViewField(
+        "LAST_CALCULATED",
+        empty($f_LAST_CALCULATED) ? GetMessage("RATING_RULE_STATUS_WAITING") : $f_LAST_CALCULATED
+    );
 
     $arActions = Array(
         array(
@@ -122,15 +151,20 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
         array(
             "ICON" => "delete",
             "TEXT" => GetMessage("RATING_RULE_LIST_DEL"),
-            "ACTION" => "if(confirm('" . GetMessage("RATING_RULE_LIST_DEL_CONF") . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete")
+            "ACTION" => "if(confirm('" . GetMessage("RATING_RULE_LIST_DEL_CONF") . "')) " . $lAdmin->ActionDoGroup(
+                    $f_ID,
+                    "delete"
+                )
         ),
     );
     $row->AddActions($arActions);
 }
 
-$lAdmin->AddGroupActionTable(Array(
-    "delete" => true,
-));
+$lAdmin->AddGroupActionTable(
+    Array(
+        "delete" => true,
+    )
+);
 
 $aContext = array(
     array(
@@ -167,8 +201,12 @@ $oFilter = new CAdminFilter(
             <td><? echo GetMessage("RATING_RULE_LIST_FLT_ACTIVE") ?></td>
             <td><select name="find_active">
                     <option value=""><? echo GetMessage("RATING_RULE_LIST_FLT_ALL") ?></option>
-                    <option value="Y"<? if ($find_active == "Y") echo " selected" ?>><? echo GetMessage("RATING_RULE_LIST_FLT_ACTIVE_Y") ?></option>
-                    <option value="N"<? if ($find_active == "N") echo " selected" ?>><? echo GetMessage("RATING_RULE_LIST_FLT_ACTIVE_N") ?></option>
+                    <option value="Y"<? if ($find_active == "Y") echo " selected" ?>><? echo GetMessage(
+                            "RATING_RULE_LIST_FLT_ACTIVE_Y"
+                        ) ?></option>
+                    <option value="N"<? if ($find_active == "N") echo " selected" ?>><? echo GetMessage(
+                            "RATING_RULE_LIST_FLT_ACTIVE_N"
+                        ) ?></option>
                 </select>
             </td>
         </tr>
@@ -179,8 +217,8 @@ $oFilter = new CAdminFilter(
         <tr>
             <td><? echo GetMessage("RATING_RULE_LIST_FLT_ENTITY_TYPE_ID") ?></td>
             <td><input type="text" name="find_entity_type_id"
-                       value="<? echo htmlspecialcharsbx($find_entity_type_id) ?>"
-                       size="40"><?= ShowFilterLogicHelp() ?></td>
+                       value="<? echo htmlspecialcharsbx($find_entity_type_id) ?>" size="40"><?= ShowFilterLogicHelp(
+                ) ?></td>
         </tr>
         <?
         $oFilter->Buttons(array("table_id" => $sTableID, "url" => $APPLICATION->GetCurPage(), "form" => "form1"));

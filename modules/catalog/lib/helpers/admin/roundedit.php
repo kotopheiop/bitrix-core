@@ -44,8 +44,9 @@ class RoundEdit
             1000,
             5000
         );
-        if (!$dropdownList)
+        if (!$dropdownList) {
             return $result;
+        }
         $list = array();
         foreach ($result as $value) {
             $value = (string)$value;
@@ -62,7 +63,8 @@ class RoundEdit
      */
     public static function prepareFields(array &$fields)
     {
-        if (isset($fields['ROUND_TYPE']))
+        if (isset($fields['ROUND_TYPE'])) {
             $fields['ROUND_TYPE'] = (int)$fields['ROUND_TYPE'];
+        }
     }
 }

@@ -1,5 +1,6 @@
 <?
 //<title>CSV Export (new)</title>
+
 /** @global CUser $USER */
 /** @global CMain $APPLICATION */
 /** @var int $IBLOCK_ID */
@@ -15,8 +16,9 @@ use Bitrix\Main,
 IncludeModuleLangFile($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/catalog/data_export.php');
 
 $MAX_EXECUTION_TIME = (isset($MAX_EXECUTION_TIME) ? (int)$MAX_EXECUTION_TIME : 0);
-if ($MAX_EXECUTION_TIME <= 0)
+if ($MAX_EXECUTION_TIME <= 0) {
     $MAX_EXECUTION_TIME = 0;
+}
 if (defined('BX_CAT_CRON') && BX_CAT_CRON == true) {
     $MAX_EXECUTION_TIME = 0;
     $firstStep = true;
@@ -25,10 +27,12 @@ if (defined("CATALOG_EXPORT_NO_STEP") && CATALOG_EXPORT_NO_STEP == true) {
     $MAX_EXECUTION_TIME = 0;
     $firstStep = true;
 }
-if ($MAX_EXECUTION_TIME == 0)
+if ($MAX_EXECUTION_TIME == 0) {
     set_time_limit(0);
-if (!isset($firstStep))
+}
+if (!isset($firstStep)) {
     $firstStep = true;
+}
 
 $pageSize = 500;
 $navParams = array('nTopCount' => $pageSize);
@@ -40,8 +44,9 @@ global $USER;
 $bTmpUserCreated = false;
 if (!CCatalog::IsUserExists()) {
     $bTmpUserCreated = true;
-    if (isset($USER))
+    if (isset($USER)) {
         $USER_TMP = $USER;
+    }
     $USER = new CUser();
 }
 
@@ -63,8 +68,9 @@ if (!function_exists('__CSVArrayMultiply')) {
                         $arTemp[count($arTemp) - 1] = $value;
                         __CSVArrayMultiply($arTuple, $arTemp, $csvFile, $currentFile);
                     }
-                    if (isset($value))
+                    if (isset($value)) {
                         unset($value);
+                    }
                 }
             } else {
                 $arTemp[count($arTemp) - 1] = $head;
@@ -77,8 +83,9 @@ if (!function_exists('__CSVArrayMultiply')) {
 if (!function_exists('__CSVExportFile')) {
     function __CSVExportFile($intFileID, $strExportPath, $strFilePath, $strExportFromClouds = 'Y')
     {
-        if ('Y' != $strExportFromClouds)
+        if ('Y' != $strExportFromClouds) {
             $strExportFromClouds = 'N';
+        }
 
         $arFile = CFile::GetFileArray($intFileID);
         if ($arFile) {
@@ -91,8 +98,9 @@ if (!function_exists('__CSVExportFile')) {
                     $strNewFile = str_replace("//", "/", $strExportPath . $strFilePath . $strFile);
                     CheckDirPath($_SERVER['DOCUMENT_ROOT'] . $strNewFile);
 
-                    if (@copy($arTempFile["tmp_name"], $_SERVER['DOCUMENT_ROOT'] . $strNewFile))
+                    if (@copy($arTempFile["tmp_name"], $_SERVER['DOCUMENT_ROOT'] . $strNewFile)) {
                         return $strFilePath . $strFile;
+                    }
                 }
             }
         }
@@ -103,8 +111,9 @@ if (!function_exists('__CSVExportFile')) {
 $strCatalogDefaultFolder = COption::GetOptionString("catalog", "export_default_path", CATALOG_DEFAULT_EXPORT_PATH);
 
 $NUM_CATALOG_LEVELS = (int)COption::GetOptionInt("catalog", "num_catalog_levels");
-if ($NUM_CATALOG_LEVELS <= 0)
+if ($NUM_CATALOG_LEVELS <= 0) {
     $NUM_CATALOG_LEVELS = 3;
+}
 
 $strExportErrorMessage = '';
 $arRunErrors = array();
@@ -122,29 +131,40 @@ $arCatalogAvailGroupFields,
 $defCatalogAvailGroupFields,
 $defCatalogAvailCurrencies;
 
-if (!isset($arCatalogAvailProdFields))
+if (!isset($arCatalogAvailProdFields)) {
     $arCatalogAvailProdFields = CCatalogCSVSettings::getSettingsFields(CCatalogCSVSettings::FIELDS_ELEMENT);
-if (!isset($arCatalogAvailPriceFields))
+}
+if (!isset($arCatalogAvailPriceFields)) {
     $arCatalogAvailPriceFields = CCatalogCSVSettings::getSettingsFields(CCatalogCSVSettings::FIELDS_CATALOG);
-if (!isset($arCatalogAvailValueFields))
+}
+if (!isset($arCatalogAvailValueFields)) {
     $arCatalogAvailValueFields = CCatalogCSVSettings::getSettingsFields(CCatalogCSVSettings::FIELDS_PRICE);
-if (!isset($arCatalogAvailQuantityFields))
+}
+if (!isset($arCatalogAvailQuantityFields)) {
     $arCatalogAvailQuantityFields = CCatalogCSVSettings::getSettingsFields(CCatalogCSVSettings::FIELDS_PRICE_EXT);
-if (!isset($arCatalogAvailGroupFields))
+}
+if (!isset($arCatalogAvailGroupFields)) {
     $arCatalogAvailGroupFields = CCatalogCSVSettings::getSettingsFields(CCatalogCSVSettings::FIELDS_SECTION);
+}
 
-if (!isset($defCatalogAvailProdFields))
+if (!isset($defCatalogAvailProdFields)) {
     $defCatalogAvailProdFields = CCatalogCSVSettings::getDefaultSettings(CCatalogCSVSettings::FIELDS_ELEMENT);
-if (!isset($defCatalogAvailPriceFields))
+}
+if (!isset($defCatalogAvailPriceFields)) {
     $defCatalogAvailPriceFields = CCatalogCSVSettings::getDefaultSettings(CCatalogCSVSettings::FIELDS_CATALOG);
-if (!isset($defCatalogAvailValueFields))
+}
+if (!isset($defCatalogAvailValueFields)) {
     $defCatalogAvailValueFields = CCatalogCSVSettings::getDefaultSettings(CCatalogCSVSettings::FIELDS_PRICE);
-if (!isset($defCatalogAvailQuantityFields))
+}
+if (!isset($defCatalogAvailQuantityFields)) {
     $defCatalogAvailQuantityFields = CCatalogCSVSettings::getDefaultSettings(CCatalogCSVSettings::FIELDS_PRICE_EXT);
-if (!isset($defCatalogAvailGroupFields))
+}
+if (!isset($defCatalogAvailGroupFields)) {
     $defCatalogAvailGroupFields = CCatalogCSVSettings::getDefaultSettings(CCatalogCSVSettings::FIELDS_SECTION);
-if (!isset($defCatalogAvailCurrencies))
+}
+if (!isset($defCatalogAvailCurrencies)) {
     $defCatalogAvailCurrencies = CCatalogCSVSettings::getDefaultSettings(CCatalogCSVSettings::FIELDS_CURRENCY);
+}
 
 $IBLOCK_ID = intval($IBLOCK_ID);
 if ($IBLOCK_ID <= 0) {
@@ -177,12 +197,12 @@ if (empty($arRunErrors)) {
             $skuPropertyID = $arCatalog['SKU_PROPERTY_ID'];
         }
     }
-
 }
 
 $CML2_LINK_IS_XML = (isset($CML2_LINK_IS_XML) && $CML2_LINK_IS_XML == 'Y' ? 'Y' : 'N');
-if (empty($arSku))
+if (empty($arSku)) {
     $CML2_LINK_IS_XML = 'N';
+}
 
 if (empty($arRunErrors)) {
     $currentFile = '';
@@ -195,8 +215,9 @@ if (empty($arRunErrors)) {
     $csvFile->SetFieldsType($fields_type);
 
     $first_line_names = (isset($first_line_names) && $first_line_names == 'Y');
-    if (!$firstStep)
+    if (!$firstStep) {
         $first_line_names = false;
+    }
     $csvFile->SetFirstHeader($first_line_names);
 
     $delimiter_r_char = '';
@@ -212,7 +233,7 @@ if (empty($arRunErrors)) {
                 $delimiter_r_char = " ";
                 break;
             case "OTR":
-                $delimiter_r_char = (isset($delimiter_other_r) ? substr($delimiter_other_r, 0, 1) : '');
+                $delimiter_r_char = (isset($delimiter_other_r) ? mb_substr($delimiter_other_r, 0, 1) : '');
                 break;
             case "TZP":
                 $delimiter_r_char = ";";
@@ -220,7 +241,7 @@ if (empty($arRunErrors)) {
         }
     }
 
-    if (strlen($delimiter_r_char) != 1) {
+    if (mb_strlen($delimiter_r_char) != 1) {
         $arRunErrors[] = GetMessage("CATI_NO_DELIMITER");
     }
 
@@ -228,10 +249,12 @@ if (empty($arRunErrors)) {
         $csvFile->SetDelimiter($delimiter_r_char);
     }
 
-    if (!isset($export_files) || $export_files != 'Y')
+    if (!isset($export_files) || $export_files != 'Y') {
         $export_files = 'N';
-    if (!isset($export_from_clouds) || $export_from_clouds != 'Y')
+    }
+    if (!isset($export_from_clouds) || $export_from_clouds != 'Y') {
         $export_from_clouds = 'N';
+    }
 
     if (!isset($SETUP_FILE_NAME) || $SETUP_FILE_NAME == '') {
         $arRunErrors[] = GetMessage("CATI_NO_SAVE_FILE");
@@ -239,9 +262,10 @@ if (empty($arRunErrors)) {
         $arRunErrors[] = GetMessage("CES_ERROR_BAD_EXPORT_FILENAME");
     } else {
         $SETUP_FILE_NAME = Rel2Abs("/", $SETUP_FILE_NAME);
-        if (strtolower(substr($SETUP_FILE_NAME, strlen($SETUP_FILE_NAME) - 4)) != ".csv")
+        if (mb_strtolower(mb_substr($SETUP_FILE_NAME, mb_strlen($SETUP_FILE_NAME) - 4)) != ".csv") {
             $SETUP_FILE_NAME .= ".csv";
-        if (0 !== strpos($SETUP_FILE_NAME, $strCatalogDefaultFolder)) {
+        }
+        if (0 !== mb_strpos($SETUP_FILE_NAME, $strCatalogDefaultFolder)) {
             $arRunErrors[] = GetMessage('CES_ERROR_PATH_WITHOUT_DEFAUT');
         } else {
             CheckDirPath($_SERVER["DOCUMENT_ROOT"] . $SETUP_FILE_NAME);
@@ -262,7 +286,7 @@ if (empty($arRunErrors)) {
 
             if ($export_files == 'Y') {
                 $strExportPath = GetDirPath($SETUP_FILE_NAME);
-                $strFilePath = str_replace($strExportPath, '', substr($SETUP_FILE_NAME, 0, -4)) . '_files/';
+                $strFilePath = str_replace($strExportPath, '', mb_substr($SETUP_FILE_NAME, 0, -4)) . '_files/';
                 if ($firstStep) {
                     if (!CheckDirPath($_SERVER['DOCUMENT_ROOT'] . $strExportPath . $strFilePath)) {
                         $arRunErrors[] = GetMessage(
@@ -324,7 +348,14 @@ if (empty($arRunErrors)) {
         }
         unset($arOneCatalogAvailProdFields);
 
-        $rsProps = CIBlockProperty::GetList(array("SORT" => "ASC", "ID" => "ASC"), array("IBLOCK_ID" => $IBLOCK_ID, "ACTIVE" => "Y", 'CHECK_PERMISSIONS' => 'N'));
+        $rsProps = CIBlockProperty::GetList(
+            array("SORT" => "ASC", "ID" => "ASC"),
+            array(
+                "IBLOCK_ID" => $IBLOCK_ID,
+                "ACTIVE" => "Y",
+                'CHECK_PERMISSIONS' => 'N'
+            )
+        );
         while ($arProp = $rsProps->Fetch()) {
             $mxSelKey = array_search('IP_PROP' . $arProp['ID'], $field_code);
             if (!(false === $mxSelKey || empty($field_needed[$mxSelKey]) || 'Y' != $field_needed[$mxSelKey])) {
@@ -338,8 +369,9 @@ if (empty($arRunErrors)) {
             }
             $intCount++;
         }
-        if ($bNeedProps)
+        if ($bNeedProps) {
             $arElementProps = array_values(array_unique($arElementProps));
+        }
 
         // Prepare arrays for groups loading
         $strAvailGroupFields = COption::GetOptionString("catalog", "allowed_group_fields", $defCatalogAvailGroupFields);
@@ -371,17 +403,23 @@ if (empty($arRunErrors)) {
                     }
                     $intCount++;
                 }
-                if (isset($strKey))
+                if (isset($strKey)) {
                     unset($strKey);
-                if (!empty($arGroupProps[$i]))
+                }
+                if (!empty($arGroupProps[$i])) {
                     $arGroupProps[$i] = array_values(array_unique($arGroupProps[$i]));
+                }
             }
             unset($arAvailGroupFieldsList);
         }
 
         if ($boolCatalog) {
             // Prepare arrays for product loading (for catalog)
-            $strAvailPriceFields = COption::GetOptionString("catalog", "allowed_product_fields", $defCatalogAvailPriceFields);
+            $strAvailPriceFields = COption::GetOptionString(
+                "catalog",
+                "allowed_product_fields",
+                $defCatalogAvailPriceFields
+            );
             $arAvailPriceFields = explode(",", $strAvailPriceFields);
             $arAvailPriceFields_names = array();
             foreach ($arCatalogAvailPriceFields as &$arOneCatalogAvailPriceFields) {
@@ -436,7 +474,11 @@ if (empty($arRunErrors)) {
             }
             unset($arOneCatalogAvailQuantityFields);
 
-            $strAvailValueFields = COption::GetOptionString("catalog", "allowed_price_fields", $defCatalogAvailValueFields);
+            $strAvailValueFields = COption::GetOptionString(
+                "catalog",
+                "allowed_price_fields",
+                $defCatalogAvailValueFields
+            );
             $arAvailValueFields = explode(",", $strAvailValueFields);
             $arAvailValueFields_names = array();
             foreach ($arCatalogAvailValueFields as &$arOneCatalogAvailValueFields) {
@@ -449,8 +491,9 @@ if (empty($arRunErrors)) {
                 }
             }
             unset($arOneCatalogAvailValueFields);
-            if (!empty($arValueCodes))
+            if (!empty($arValueCodes)) {
                 $arValueCodes = array_values(array_unique($arValueCodes));
+            }
 
             if (!empty($arAvailValueFields_names)) {
                 $arAvailValueFieldsList = array_keys($arAvailValueFields_names);
@@ -469,8 +512,9 @@ if (empty($arRunErrors)) {
                         }
                         $intCount++;
                     }
-                    if (isset($strKey))
+                    if (isset($strKey)) {
                         unset($strKey);
+                    }
                 }
                 unset($arAvailValueFieldsList);
                 if ($bNeedPrices) {
@@ -501,8 +545,9 @@ if (empty($arRunErrors)) {
         $filter = array('IBLOCK_ID' => $IBLOCK_ID, 'CHECK_PERMISSIONS' => 'N');
 
         do {
-            if (isset($CUR_ELEMENT_ID) && $CUR_ELEMENT_ID > 0)
+            if (isset($CUR_ELEMENT_ID) && $CUR_ELEMENT_ID > 0) {
                 $filter['>ID'] = $CUR_ELEMENT_ID;
+            }
 
             $existItems = false;
 
@@ -524,20 +569,30 @@ if (empty($arRunErrors)) {
 
                 if (isset($arIBlockElement["PREVIEW_PICTURE"])) {
                     if ('Y' == $export_files) {
-                        $arIBlockElement["~PREVIEW_PICTURE"] = __CSVExportFile($arIBlockElement['PREVIEW_PICTURE'], $strExportPath, $strFilePath);
+                        $arIBlockElement["~PREVIEW_PICTURE"] = __CSVExportFile(
+                            $arIBlockElement['PREVIEW_PICTURE'],
+                            $strExportPath,
+                            $strFilePath
+                        );
                     } else {
                         $arIBlockElement["PREVIEW_PICTURE"] = CFile::GetFileArray($arIBlockElement["PREVIEW_PICTURE"]);
-                        if ($arIBlockElement["PREVIEW_PICTURE"])
+                        if ($arIBlockElement["PREVIEW_PICTURE"]) {
                             $arIBlockElement["~PREVIEW_PICTURE"] = $arIBlockElement["PREVIEW_PICTURE"]["SRC"];
+                        }
                     }
                 }
                 if (isset($arIBlockElement["DETAIL_PICTURE"])) {
                     if ('Y' == $export_files) {
-                        $arIBlockElement["~DETAIL_PICTURE"] = __CSVExportFile($arIBlockElement['DETAIL_PICTURE'], $strExportPath, $strFilePath);
+                        $arIBlockElement["~DETAIL_PICTURE"] = __CSVExportFile(
+                            $arIBlockElement['DETAIL_PICTURE'],
+                            $strExportPath,
+                            $strFilePath
+                        );
                     } else {
                         $arIBlockElement["DETAIL_PICTURE"] = CFile::GetFileArray($arIBlockElement["DETAIL_PICTURE"]);
-                        if ($arIBlockElement["DETAIL_PICTURE"])
+                        if ($arIBlockElement["DETAIL_PICTURE"]) {
                             $arIBlockElement["~DETAIL_PICTURE"] = $arIBlockElement["DETAIL_PICTURE"]["SRC"];
+                        }
                     }
                 }
                 $arProperties = ($bNeedProps ? $obIBlockElement->GetProperties() : array());
@@ -550,8 +605,9 @@ if (empty($arRunErrors)) {
                             $arProperty["USER_TYPE"] = (string)$arProperty["USER_TYPE"];
                             if ($arProperty["USER_TYPE"] != '') {
                                 $arUserType = CIBlockProperty::GetUserType($arProperty["USER_TYPE"]);
-                                if (isset($arUserType["GetPublicViewHTML"]))
+                                if (isset($arUserType["GetPublicViewHTML"])) {
                                     $arUserTypeFormat[$arProperty["ID"]] = $arUserType["GetPublicViewHTML"];
+                                }
                             }
                         }
                     }
@@ -564,20 +620,25 @@ if (empty($arRunErrors)) {
                             $exportMode = ($CML2_LINK_IS_XML == 'Y' && $arProperty['ID'] == $skuPropertyID ? 'EXTERNAL_ID' : 'CSV_EXPORT');
                             if ($arProperty['MULTIPLE'] == 'Y' && is_array($arProperty["~VALUE"])) {
                                 $arValues = array();
-                                foreach ($arProperty["~VALUE"] as $value)
-                                    $arValues[] = call_user_func_array($arUserTypeFormat[$arProperty["ID"]],
+                                foreach ($arProperty["~VALUE"] as $value) {
+                                    $arValues[] = call_user_func_array(
+                                        $arUserTypeFormat[$arProperty["ID"]],
                                         array(
                                             $arProperty,
                                             array("VALUE" => $value),
                                             array("MODE" => $exportMode)
-                                        ));
+                                        )
+                                    );
+                                }
                             } else {
-                                $arValues = call_user_func_array($arUserTypeFormat[$arProperty["ID"]],
+                                $arValues = call_user_func_array(
+                                    $arUserTypeFormat[$arProperty["ID"]],
                                     array(
                                         $arProperty,
                                         array("VALUE" => $arProperty["~VALUE"]),
                                         array("MODE" => $exportMode),
-                                    ));
+                                    )
+                                );
                             }
                         } elseif ($arProperty["PROPERTY_TYPE"] == "F") {
                             if (is_array($arProperty["~VALUE"])) {
@@ -587,8 +648,9 @@ if (empty($arRunErrors)) {
                                         $arValues[] = __CSVExportFile($file_id, $strExportPath, $strFilePath);
                                     } else {
                                         $file = CFile::GetFileArray($file_id);
-                                        if ($file)
+                                        if ($file) {
                                             $arValues[] = $file["SRC"];
+                                        }
                                     }
                                 }
                             } elseif ($arProperty["~VALUE"] > 0) {
@@ -596,10 +658,11 @@ if (empty($arRunErrors)) {
                                     $arValues = __CSVExportFile($arProperty["~VALUE"], $strExportPath, $strFilePath);
                                 } else {
                                     $file = CFile::GetFileArray($arProperty["~VALUE"]);
-                                    if ($file)
+                                    if ($file) {
                                         $arValues = $file["SRC"];
-                                    else
+                                    } else {
                                         $arValues = "";
+                                    }
                                 }
                             } else {
                                 $arValues = "";
@@ -614,10 +677,15 @@ if (empty($arRunErrors)) {
                 $arResSections = array();
                 if ($bNeedGroups) {
                     $i = 0;
-                    $rsSections = CIBlockElement::GetElementGroups($arIBlockElement["ID"], false, array('ID', 'ADDITIONAL_PROPERTY_ID'));
+                    $rsSections = CIBlockElement::GetElementGroups(
+                        $arIBlockElement["ID"],
+                        false,
+                        array('ID', 'ADDITIONAL_PROPERTY_ID')
+                    );
                     while ($arSection = $rsSections->Fetch()) {
-                        if (0 < intval($arSection['ADDITIONAL_PROPERTY_ID']))
+                        if (0 < intval($arSection['ADDITIONAL_PROPERTY_ID'])) {
                             continue;
+                        }
                         if (!isset($arCacheChains[$arSection['ID']])) {
                             $arPath = array();
                             $j = 0;
@@ -628,7 +696,11 @@ if (empty($arRunErrors)) {
                                         $field = $arAvailGroupFields_names[$key]['field'];
                                         if ('IC_PICTURE' == $key || 'IC_DETAIL_PICTURE' == $key) {
                                             if ('Y' == $export_files) {
-                                                $arPathSection[$field] = __CSVExportFile($arPathSection[$field], $strExportPath, $strFilePath);
+                                                $arPathSection[$field] = __CSVExportFile(
+                                                    $arPathSection[$field],
+                                                    $strExportPath,
+                                                    $strFilePath
+                                                );
                                             } else {
                                                 $arPathSection[$field] = CFile::GetFileArray($arPathSection[$field]);
                                                 if ($arPathSection[$field]) {
@@ -640,8 +712,9 @@ if (empty($arRunErrors)) {
                                         }
                                         $arPath['~' . $key . $j] = $arPathSection[$field];
                                     }
-                                    if (isset($key))
+                                    if (isset($key)) {
                                         unset($key);
+                                    }
                                     $arPathSection['IBLOCK_SECTION_ID'] = intval($arPathSection['IBLOCK_SECTION_ID']);
                                     $arCacheChains[$arPathSection['ID']] = $arPathSection['IBLOCK_SECTION_ID'];
                                     $arCacheSections[$arPathSection['ID']] = $arPath;
@@ -664,8 +737,9 @@ if (empty($arRunErrors)) {
                         $arResSections[$i] = $arPath;
                         $i++;
                     }
-                    if (empty($arResSections))
+                    if (empty($arResSections)) {
                         $arResSections[] = array();
+                    }
                 } else {
                     $arResSections[] = array();
                 }
@@ -675,10 +749,23 @@ if (empty($arRunErrors)) {
                     $arResPricesMap = array();
                     $mapIndex = -1;
 
-                    $dbProductPrice = Catalog\PriceTable::getList(array(
-                        'select' => array('ID', 'CATALOG_GROUP_ID', 'PRICE', 'CURRENCY', 'QUANTITY_FROM', 'QUANTITY_TO', 'EXTRA_ID'),
-                        'filter' => array('=PRODUCT_ID' => $arIBlockElement["ID"], '@CATALOG_GROUP_ID' => $arCatalogGroups)
-                    ));
+                    $dbProductPrice = Catalog\PriceTable::getList(
+                        array(
+                            'select' => array(
+                                'ID',
+                                'CATALOG_GROUP_ID',
+                                'PRICE',
+                                'CURRENCY',
+                                'QUANTITY_FROM',
+                                'QUANTITY_TO',
+                                'EXTRA_ID'
+                            ),
+                            'filter' => array(
+                                '=PRODUCT_ID' => $arIBlockElement["ID"],
+                                '@CATALOG_GROUP_ID' => $arCatalogGroups
+                            )
+                        )
+                    );
                     while ($arProductPrice = $dbProductPrice->fetch()) {
                         if (!isset($arResPricesMap[$arProductPrice["QUANTITY_FROM"] . "-" . $arProductPrice["QUANTITY_TO"]])) {
                             $mapIndex++;
@@ -691,8 +778,9 @@ if (empty($arRunErrors)) {
                         $arResPrices[$intDiap]['QUANTITY_FROM'] = $arProductPrice["QUANTITY_FROM"];
                         $arResPrices[$intDiap]['QUANTITY_TO'] = $arProductPrice["QUANTITY_TO"];
                     }
-                    if (empty($arResPrices))
+                    if (empty($arResPrices)) {
                         $arResPrices[] = array();
+                    }
                 } else {
                     $arResPrices[] = array();
                 }
@@ -708,26 +796,27 @@ if (empty($arRunErrors)) {
                     foreach ($arResPrices as $arPrice) {
                         $arTuple = array();
                         foreach ($arNeedFields as $field_name) {
-                            if (strncmp($field_name, "IE_", 3) == 0)
-                                $arTuple[] = $arIBlockElement["~" . substr($field_name, 3)];
-                            elseif (strncmp($field_name, "IP_PROP", 7) == 0)
-                                $arTuple[] = $arPropsValues[intval(substr($field_name, 7))];
-                            elseif (strncmp($field_name, "IC_", 3) == 0) {
+                            if (strncmp($field_name, "IE_", 3) == 0) {
+                                $arTuple[] = $arIBlockElement["~" . mb_substr($field_name, 3)];
+                            } elseif (strncmp($field_name, "IP_PROP", 7) == 0) {
+                                $arTuple[] = $arPropsValues[intval(mb_substr($field_name, 7))];
+                            } elseif (strncmp($field_name, "IC_", 3) == 0) {
                                 $strKey = $field_name;
                                 $arTuple[] = (isset($arPath['~' . $strKey]) ? $arPath['~' . $strKey] : '');
                             } elseif (strncmp($field_name, 'CV_', 3) == 0) {
-                                $strKey = substr($field_name, 3);
+                                $strKey = mb_substr($field_name, 3);
                                 $arTuple[] = (isset($arPrice[$strKey]) ? $arPrice[$strKey] : '');
                             } elseif (strncmp($field_name, 'CP_', 3) == 0) {
-                                $arTuple[] = (!empty($arResProducts) ? $arResProducts[substr($field_name, 3)] : '');
+                                $arTuple[] = (!empty($arResProducts) ? $arResProducts[mb_substr($field_name, 3)] : '');
                             }
                         }
                         __CSVArrayMultiply($arTuple, [], $csvFile, $currentFile);
                     }
                 }
 
-                if ($MAX_EXECUTION_TIME > 0 && (getmicrotime() - START_EXEC_TIME) >= $MAX_EXECUTION_TIME)
+                if ($MAX_EXECUTION_TIME > 0 && (getmicrotime() - START_EXEC_TIME) >= $MAX_EXECUTION_TIME) {
                     break;
+                }
             }
             unset($arIBlockElement, $dbIBlockElement);
         } while ($MAX_EXECUTION_TIME == 0 && $existItems);
@@ -739,8 +828,9 @@ if (empty($arRunErrors)) {
     }
 }
 
-if (!empty($arRunErrors))
+if (!empty($arRunErrors)) {
     $strExportErrorMessage = implode('<br />', $arRunErrors);
+}
 
 if ($bTmpUserCreated) {
     if (isset($USER_TMP)) {

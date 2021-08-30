@@ -1,4 +1,5 @@
 <?
+
 $MESS["SALE_HANDLERS_DISCOUNTPRESET_CUMULATIVE_NAME"] = "Progressive discounts";
 $MESS["SALE_HANDLERS_DISCOUNTPRESET_H_SUM"] = "Paid orders total (#CURRENCY#)";
 $MESS["SALE_HANDLERS_DISCOUNTPRESET_DONT_APPLY_IF_THERE_IS_DISCOUNTS"] = "Don't apply if product discounts are in effect";

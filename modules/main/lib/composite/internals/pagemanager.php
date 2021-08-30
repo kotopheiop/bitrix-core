@@ -15,18 +15,18 @@ class PageManager
             return null;
         }
 
-        if (!is_string($cacheKey) || strlen($cacheKey) < 1) {
+        if (!is_string($cacheKey) || mb_strlen($cacheKey) < 1) {
             return null;
         }
 
         $pageTitle = isset($params["TITLE"]) ? $params["TITLE"] : $GLOBALS["APPLICATION"]->GetTitle();
-        $pageTitle = substr($pageTitle, 0, 250);
+        $pageTitle = mb_substr($pageTitle, 0, 250);
 
-        $pageHost = isset($params["HOST"]) && strlen($params["HOST"]) ? $params["HOST"] : Helper::getHttpHost();
-        $pageHost = substr($pageHost, 0, 100);
+        $pageHost = isset($params["HOST"]) && mb_strlen($params["HOST"]) ? $params["HOST"] : Helper::getHttpHost();
+        $pageHost = mb_substr($pageHost, 0, 100);
 
-        $pageUri = isset($params["URI"]) && strlen($params["URI"]) ? $params["URI"] : Helper::getRequestUri();
-        $pageUri = substr($pageUri, 0, 2000);
+        $pageUri = isset($params["URI"]) && mb_strlen($params["URI"]) ? $params["URI"] : Helper::getRequestUri();
+        $pageUri = mb_substr($pageUri, 0, 2000);
 
         $pageSize = isset($params["SIZE"]) ? intval($params["SIZE"]) : 0;
 
@@ -64,14 +64,16 @@ class PageManager
 
     public static function getByCacheKey($cacheKey)
     {
-        $records = PageTable::getList(array(
-            "filter" => array(
-                "=CACHE_KEY" => $cacheKey
-            ),
-            "order" => array(
-                "ID" => "ASC"
+        $records = PageTable::getList(
+            array(
+                "filter" => array(
+                    "=CACHE_KEY" => $cacheKey
+                ),
+                "order" => array(
+                    "ID" => "ASC"
+                )
             )
-        ));
+        );
 
         $result = null;
         while ($record = $records->fetch()) {
@@ -88,12 +90,14 @@ class PageManager
 
     public static function deleteByCacheKey($cacheKey)
     {
-        $records = PageTable::getList(array(
-            "select" => array("ID"),
-            "filter" => array(
-                "=CACHE_KEY" => $cacheKey
+        $records = PageTable::getList(
+            array(
+                "select" => array("ID"),
+                "filter" => array(
+                    "=CACHE_KEY" => $cacheKey
+                )
             )
-        ));
+        );
 
         $result = null;
         while ($record = $records->fetch()) {

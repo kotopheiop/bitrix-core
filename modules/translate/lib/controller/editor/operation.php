@@ -45,9 +45,11 @@ class Operation
         // backup
         if ($langFile->isExists() && Translate\Config::needToBackUpFiles()) {
             if (!$langFile->backup()) {
-                $this->addError(new Main\Error(
-                    Loc::getMessage('TR_CREATE_BACKUP_ERROR', ['#FILE#' => $langFile->getPath()])
-                ));
+                $this->addError(
+                    new Main\Error(
+                        Loc::getMessage('TR_CREATE_BACKUP_ERROR', ['#FILE#' => $langFile->getPath()])
+                    )
+                );
             }
         }
 
@@ -68,13 +70,17 @@ class Operation
             }
         } catch (Main\IO\IoException $exception) {
             if (!$langFile->isExists()) {
-                $this->addError(new Main\Error(
-                    Loc::getMessage('TR_ERROR_WRITE_CREATE', ['#FILE#' => $langFile->getPath()])
-                ));
+                $this->addError(
+                    new Main\Error(
+                        Loc::getMessage('TR_ERROR_WRITE_CREATE', ['#FILE#' => $langFile->getPath()])
+                    )
+                );
             } else {
-                $this->addError(new Main\Error(
-                    Loc::getMessage('TR_ERROR_WRITE_UPDATE', ['#FILE#' => $langFile->getPath()])
-                ));
+                $this->addError(
+                    new Main\Error(
+                        Loc::getMessage('TR_ERROR_WRITE_UPDATE', ['#FILE#' => $langFile->getPath()])
+                    )
+                );
             }
 
             return false;
@@ -95,9 +101,11 @@ class Operation
         // backup
         if ($langFile->isExists() && Translate\Config::needToBackUpFiles()) {
             if (!$langFile->backup()) {
-                $this->addError(new Main\Error(
-                    Loc::getMessage('TR_CREATE_BACKUP_ERROR', ['#FILE#' => $langFile->getPath()])
-                ));
+                $this->addError(
+                    new Main\Error(
+                        Loc::getMessage('TR_CREATE_BACKUP_ERROR', ['#FILE#' => $langFile->getPath()])
+                    )
+                );
             }
         }
 
@@ -106,17 +114,21 @@ class Operation
                 if ($langFile->hasErrors()) {
                     $this->addErrors($langFile->getErrors());
                 } else {
-                    $this->addError(new Main\Error(
-                        Loc::getMessage('TR_ERROR_DELETE', ['#FILE#' => $langFile->getPath()])
-                    ));
+                    $this->addError(
+                        new Main\Error(
+                            Loc::getMessage('TR_ERROR_DELETE', ['#FILE#' => $langFile->getPath()])
+                        )
+                    );
                 }
 
                 return false;
             }
         } catch (Main\IO\IoException $exception) {
-            $this->addError(new Main\Error(
-                Loc::getMessage('TR_ERROR_DELETE', ['#FILE#' => $langFile->getPath()])
-            ));
+            $this->addError(
+                new Main\Error(
+                    Loc::getMessage('TR_ERROR_DELETE', ['#FILE#' => $langFile->getPath()])
+                )
+            );
 
             return false;
         }
@@ -178,7 +190,7 @@ class Operation
                         continue;
                     }
 
-                    if ((substr($name, -4) === '.php') && is_file($fullPath)) {
+                    if ((mb_substr($name, -4) === '.php') && is_file($fullPath)) {
                         $files[$langPath . '/' . $name][$langId] = $fullPath;
                     }
                 }

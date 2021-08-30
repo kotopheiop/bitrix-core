@@ -26,11 +26,13 @@ final class Director
     public function getUpdatedShipment(OrderBuilder $builder, array $shipmentData)
     {
         try {
-            $builder->initFields(array(
-                'ID' => $shipmentData['ORDER_ID'],
-                'SITE_ID' => $shipmentData['SITE_ID'],
-                'SHIPMENT' => array($shipmentData)
-            ))
+            $builder->initFields(
+                array(
+                    'ID' => $shipmentData['ORDER_ID'],
+                    'SITE_ID' => $shipmentData['SITE_ID'],
+                    'SHIPMENT' => array($shipmentData)
+                )
+            )
                 ->delegate()
                 ->createOrder()
                 ->setDiscounts() //?
@@ -66,11 +68,13 @@ final class Director
     public function getUpdatedPayment(OrderBuilder $builder, array $paymentData)
     {
         try {
-            $builder->initFields(array(
-                'ID' => $paymentData['ORDER_ID'],
-                'SITE_ID' => $paymentData['SITE_ID'],
-                'PAYMENT' => array($paymentData)
-            ))
+            $builder->initFields(
+                array(
+                    'ID' => $paymentData['ORDER_ID'],
+                    'SITE_ID' => $paymentData['SITE_ID'],
+                    'PAYMENT' => array($paymentData)
+                )
+            )
                 ->delegate()
                 ->createOrder()
                 ->setDiscounts()

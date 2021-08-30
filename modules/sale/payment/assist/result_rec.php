@@ -1,5 +1,8 @@
 <?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die(); ?><?
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+} ?><?
 
 use \Bitrix\Sale\Order;
 
@@ -19,8 +22,9 @@ if ($orderId > 0) {
             $payment = $paymentCollection->getItemById($paymentId);
             if ($payment) {
                 $service = \Bitrix\Sale\PaySystem\Manager::getObjectById($payment->getPaymentSystemId());
-                if ($service)
+                if ($service) {
                     $service->processRequest($request);
+                }
             }
         }
     }

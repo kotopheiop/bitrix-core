@@ -139,35 +139,44 @@ abstract class Entity extends \CBitrixComponent implements Main\Engine\Contract\
         $params['BASE_LINK'] = (isset($params['BASE_LINK']) ? $params['BASE_LINK'] : '');
 
         $params['IBLOCK_ID'] = (isset($params['IBLOCK_ID']) ? (int)$params['IBLOCK_ID'] : 0);
-        if ($params['IBLOCK_ID'] < 0)
+        if ($params['IBLOCK_ID'] < 0) {
             $params['IBLOCK_ID'] = 0;
+        }
 
         $params['USE_MODE'] = (isset($params['USE_MODE']) && is_string($params['USE_MODE'])
             ? trim($params['USE_MODE'])
             : self::MODE_PAGE
         );
 
-        $params['RESULT_ACTION_TYPE'] = (isset($params['RESULT_ACTION_TYPE']) && is_string($params['RESULT_ACTION_TYPE'])
+        $params['RESULT_ACTION_TYPE'] = (isset($params['RESULT_ACTION_TYPE']) && is_string(
+            $params['RESULT_ACTION_TYPE']
+        )
             ? trim($params['RESULT_ACTION_TYPE'])
             : self::RESULT_ACTION_TYPE_NONE
         );
 
-        if (!isset($params['RESULT_ACTION_NAME']))
+        if (!isset($params['RESULT_ACTION_NAME'])) {
             $params['RESULT_ACTION_NAME'] = '';
-        if (!is_string($params['RESULT_ACTION_NAME']) && !is_array($params['RESULT_ACTION_NAME']))
+        }
+        if (!is_string($params['RESULT_ACTION_NAME']) && !is_array($params['RESULT_ACTION_NAME'])) {
             $params['RESULT_ACTION_NAME'] = '';
+        }
         $params['RESULT_ACTION_NAME'] = preg_replace('/[^a-zA-Z0-9]/', '', $params['RESULT_ACTION_NAME']);
-        if (empty($params['RESULT_ACTION_NAME']))
+        if (empty($params['RESULT_ACTION_NAME'])) {
             $params['RESULT_ACTION_TYPE'] = self::RESULT_ACTION_TYPE_NONE;
+        }
 
         $params['RESULT_DATA_TYPE'] = (isset($params['RESULT_DATA_TYPE']) && is_string($params['RESULT_DATA_TYPE'])
             ? $params['RESULT_DATA_TYPE']
             : self::RESULT_DATA_TYPE_NONE
         );
-        if ($params['RESULT_DATA_TYPE'] == self::RESULT_DATA_TYPE_SET)
+        if ($params['RESULT_DATA_TYPE'] == self::RESULT_DATA_TYPE_SET) {
             $params['MULTIPLE_SELECT'] = false;
+        }
 
-        $params['RESULT_DATA_SET_LIST'] = (isset($params['RESULT_DATA_SET_LIST']) && is_array($params['RESULT_DATA_SET_LIST'])
+        $params['RESULT_DATA_SET_LIST'] = (isset($params['RESULT_DATA_SET_LIST']) && is_array(
+            $params['RESULT_DATA_SET_LIST']
+        )
             ? $params['RESULT_DATA_SET_LIST']
             : []
         );
@@ -253,8 +262,9 @@ abstract class Entity extends \CBitrixComponent implements Main\Engine\Contract\
      */
     protected function setUseMode($mode)
     {
-        if (!isset($this->resultActionMap[$mode]))
+        if (!isset($this->resultActionMap[$mode])) {
             return;
+        }
         $this->useMode = $mode;
     }
 
@@ -297,14 +307,16 @@ abstract class Entity extends \CBitrixComponent implements Main\Engine\Contract\
     {
         $mode = $this->getUseMode();
         $resultAction = $this->arParams['RESULT_ACTION_TYPE'];
-        if (!in_array($resultAction, $this->resultActionMap[$mode]))
+        if (!in_array($resultAction, $this->resultActionMap[$mode])) {
             $resultAction = self::RESULT_ACTION_TYPE_NONE;
+        }
         $dataType = $this->arParams['RESULT_DATA_TYPE'];
         if (
             $dataType != self::RESULT_DATA_TYPE_SET
             && $dataType != self::RESULT_DATA_TYPE_FILTER
-        )
+        ) {
             $dataType = self::RESULT_DATA_TYPE_NONE;
+        }
         switch ($dataType) {
             case self::RESULT_DATA_TYPE_SET:
                 if (empty($this->arParams['RESULT_DATA_SET_LIST'])) {
@@ -321,8 +333,9 @@ abstract class Entity extends \CBitrixComponent implements Main\Engine\Contract\
         $this->resultAction['TYPE'] = $resultAction;
         $this->resultAction['NAME'] = $this->arParams['RESULT_ACTION_NAME'];
         $this->resultAction['DATA_TYPE'] = $dataType;
-        if ($dataType == self::RESULT_DATA_TYPE_SET)
+        if ($dataType == self::RESULT_DATA_TYPE_SET) {
             $this->resultAction['DATA_SET'] = $this->arParams['RESULT_DATA_SET_LIST'];
+        }
     }
 
     /**
@@ -353,29 +366,35 @@ abstract class Entity extends \CBitrixComponent implements Main\Engine\Contract\
             'FILTER_ALL' => Loc::getMessage('ENTITY_SELECTOR_SLIDER_FILTER_EMPTY')
         ];
         if ($this->arParams['IBLOCK_ID'] > 0) {
-            $iterator = Iblock\IblockTable::getList([
-                'select' => ['ID', 'IBLOCK_TYPE_ID', 'NAME'],
-                'filter' => ['=ID' => $this->arParams['IBLOCK_ID'], '=ACTIVE' => 'Y']
-            ]);
+            $iterator = Iblock\IblockTable::getList(
+                [
+                    'select' => ['ID', 'IBLOCK_TYPE_ID', 'NAME'],
+                    'filter' => ['=ID' => $this->arParams['IBLOCK_ID'], '=ACTIVE' => 'Y']
+                ]
+            );
             $iblock = $iterator->fetch();
             unset($iterator);
             if (!empty($iblock)) {
                 $description['IBLOCK_ID'] = $this->arParams['IBLOCK_ID'];
                 $description['NAME'] = $iblock['NAME'];
-                $iterator = Iblock\TypeTable::getList([
-                    'select' => ['ID', 'SECTIONS'],
-                    'filter' => ['=ID' => $iblock['IBLOCK_TYPE_ID']]
-                ]);
+                $iterator = Iblock\TypeTable::getList(
+                    [
+                        'select' => ['ID', 'SECTIONS'],
+                        'filter' => ['=ID' => $iblock['IBLOCK_TYPE_ID']]
+                    ]
+                );
                 $type = $iterator->fetch();
                 unset($iterator);
                 if (!empty($type)) {
                     $description['IBLOCK_TYPE_ID'] = $iblock['IBLOCK_TYPE_ID'];
                     $description['IBLOCK_SECTIONS'] = $type['SECTIONS'];
 
-                    $iterator = Iblock\TypeLanguageTable::getList([
-                        'select' => ['IBLOCK_TYPE_ID', 'SECTIONS_NAME', 'ELEMENTS_NAME'],
-                        'filter' => ['=IBLOCK_TYPE_ID' => $iblock['IBLOCK_TYPE_ID'], '=LANGUAGE_ID' => LANGUAGE_ID]
-                    ]);
+                    $iterator = Iblock\TypeLanguageTable::getList(
+                        [
+                            'select' => ['IBLOCK_TYPE_ID', 'SECTIONS_NAME', 'ELEMENTS_NAME'],
+                            'filter' => ['=IBLOCK_TYPE_ID' => $iblock['IBLOCK_TYPE_ID'], '=LANGUAGE_ID' => LANGUAGE_ID]
+                        ]
+                    );
                     $messages = $iterator->fetch();
                     unset($iterator);
                     if (!empty($messages)) {
@@ -458,7 +477,9 @@ abstract class Entity extends \CBitrixComponent implements Main\Engine\Contract\
 
         $paramsList = [
             self::STORAGE_GRID => [
-                'GRID_ID', 'NAVIGATION_ID', 'PAGE_SIZES'
+                'GRID_ID',
+                'NAVIGATION_ID',
+                'PAGE_SIZES'
             ],
             self::STORAGE_GRID_FILTER => [
                 'FILTER_ID'
@@ -524,8 +545,9 @@ abstract class Entity extends \CBitrixComponent implements Main\Engine\Contract\
             'AJAX_OPTION_STYLE' => 'N',
             'AJAX_OPTION_HISTORY' => 'N'
         ];
-        if ($this->isUsedImplicitPageNavigation())
+        if ($this->isUsedImplicitPageNavigation()) {
             $grid['NAV_STRING'] = $this->navigationString;
+        }
 
         $grid['PAGE_SIZES'] = [];
         foreach ($this->getPageSizes() as $size) {
@@ -603,10 +625,12 @@ abstract class Entity extends \CBitrixComponent implements Main\Engine\Contract\
     protected function fillStorageNode($node, array $nodeValues)
     {
         $node = (string)$node;
-        if ($node === '' || empty($nodeValues))
+        if ($node === '' || empty($nodeValues)) {
             return;
-        if (!isset($this->storage[$node]))
+        }
+        if (!isset($this->storage[$node])) {
             $this->storage[$node] = [];
+        }
         $this->storage[$node] = array_merge($this->storage[$node], $nodeValues);
     }
 
@@ -616,8 +640,9 @@ abstract class Entity extends \CBitrixComponent implements Main\Engine\Contract\
      */
     protected function getStorageNode($node)
     {
-        if (isset($this->storage[$node]))
+        if (isset($this->storage[$node])) {
             return $this->storage[$node];
+        }
         return null;
     }
 
@@ -639,8 +664,9 @@ abstract class Entity extends \CBitrixComponent implements Main\Engine\Contract\
      */
     protected function getStorageItem($node, $item)
     {
-        if (isset($this->storage[$node][$item]))
+        if (isset($this->storage[$node][$item])) {
             return $this->storage[$node][$item];
+        }
         return null;
     }
 
@@ -761,8 +787,9 @@ abstract class Entity extends \CBitrixComponent implements Main\Engine\Contract\
         $this->navigation->setPageSizes($this->getPageSizes());
         $this->navigation->allowAllRecords(false);
         $this->navigation->setPageSize($naviParams['nPageSize']);
-        if (!$this->isUsedImplicitPageNavigation())
+        if (!$this->isUsedImplicitPageNavigation()) {
             $this->navigation->initFromUri();
+        }
         unset($naviParams);
     }
 
@@ -927,21 +954,25 @@ abstract class Entity extends \CBitrixComponent implements Main\Engine\Contract\
                 $rawColumns = explode(',', $oldOptions['columns']);
                 foreach ($rawColumns as $id) {
                     $id = trim($id);
-                    if ($id !== '')
+                    if ($id !== '') {
                         $oldGridColumns[] = $id;
+                    }
                 }
                 unset($id, $rawColumns);
-                if (!empty($oldGridColumns))
+                if (!empty($oldGridColumns)) {
                     $result = $oldGridColumns;
+                }
                 unset($oldGridColumns);
             }
             unset($oldOptions);
 
-            if (!empty($result))
+            if (!empty($result)) {
                 $this->gridConfig->SetVisibleColumns($result);
+            }
         }
-        if (!empty($result) && !in_array('ID', $result))
+        if (!empty($result) && !in_array('ID', $result)) {
             array_unshift($result, 'ID');
+        }
         return $result;
     }
 
@@ -970,15 +1001,17 @@ abstract class Entity extends \CBitrixComponent implements Main\Engine\Contract\
 
         $sorting = $this->gridConfig->getSorting(['sort' => $result]);
 
-        $order = strtolower(reset($sorting['sort']));
-        if ($order !== 'asc')
+        $order = mb_strtolower(reset($sorting['sort']));
+        if ($order !== 'asc') {
             $order = 'desc';
+        }
         $field = key($sorting['sort']);
         $found = false;
 
         foreach ($this->getVisibleColumns() as $column) {
-            if (!isset($column['sort']))
+            if (!isset($column['sort'])) {
                 continue;
+            }
             if ($column['sort'] == $field) {
                 $found = true;
                 break;
@@ -986,8 +1019,9 @@ abstract class Entity extends \CBitrixComponent implements Main\Engine\Contract\
         }
         unset($column);
 
-        if ($found)
+        if ($found) {
             $result = [$field => $order];
+        }
 
         $this->fillStorageNode(
             self::STORAGE_GRID,
@@ -1017,8 +1051,9 @@ abstract class Entity extends \CBitrixComponent implements Main\Engine\Contract\
      */
     protected function initGridFilter()
     {
-        if (!$this->isUsedGridFilter())
+        if (!$this->isUsedGridFilter()) {
             return;
+        }
         $this->initGridFilterConfig();
         $this->initGridFilterSettings();
         $this->initGridFilterCurrentPreset();
@@ -1037,8 +1072,9 @@ abstract class Entity extends \CBitrixComponent implements Main\Engine\Contract\
      */
     protected function initGridFilterSettings()
     {
-        if (!$this->isUsedGridFilter())
+        if (!$this->isUsedGridFilter()) {
             return;
+        }
         $result = [
             'QUICK_SEARCH_FIELD' => null,
             'QUICK_SEARCH_DESCRIPTION' => [
@@ -1053,8 +1089,9 @@ abstract class Entity extends \CBitrixComponent implements Main\Engine\Contract\
                 if (
                     (!isset($row['quickSearch']) && !isset($row['quickSearchOnly']))
                     || (isset($row['entity']) && $row['entity'] != 'master')
-                )
+                ) {
                     continue;
+                }
 
                 $result['QUICK_SEARCH_FIELD'] = $row['id'];
                 $result['QUICK_SEARCH_DESCRIPTION']['FIELD'] = $row['id'];
@@ -1072,8 +1109,9 @@ abstract class Entity extends \CBitrixComponent implements Main\Engine\Contract\
      */
     protected function initGridFilterCurrentPreset()
     {
-        if (!$this->isUsedGridFilter())
+        if (!$this->isUsedGridFilter()) {
             return;
+        }
 
         $preset = $this->prepareGridFilterCurrentPreset();
         if (!empty($preset)) {
@@ -1114,8 +1152,9 @@ abstract class Entity extends \CBitrixComponent implements Main\Engine\Contract\
     {
         $fields = $this->getStorageItem(self::STORAGE_GRID, 'VISIBLE_COLUMNS_MAP');
         $titleField = $this->getDataTitleField();
-        if ($titleField !== '')
+        if ($titleField !== '') {
             $fields[$titleField] = true;
+        }
         unset($titleField);
         return array_keys($fields);
     }
@@ -1128,8 +1167,9 @@ abstract class Entity extends \CBitrixComponent implements Main\Engine\Contract\
         $result = $this->getInternalFilter();
 
         $userFilter = $this->getUserFilter();
-        if (!empty($userFilter))
+        if (!empty($userFilter)) {
             $result = array_merge($userFilter, $result);
+        }
         unset($userFilter);
 
         return $result;
@@ -1150,8 +1190,9 @@ abstract class Entity extends \CBitrixComponent implements Main\Engine\Contract\
     {
         $result = [];
         $iblockId = (int)$this->getStorageItem(self::STORAGE_ENTITY_IBLOCK, 'IBLOCK_ID');
-        if ($iblockId > 0)
+        if ($iblockId > 0) {
             $result['IBLOCK_ID'] = $iblockId;
+        }
 
         return $result;
     }
@@ -1161,8 +1202,9 @@ abstract class Entity extends \CBitrixComponent implements Main\Engine\Contract\
      */
     protected function getUserFilter()
     {
-        if (!$this->isUsedGridFilter())
+        if (!$this->isUsedGridFilter()) {
             return [];
+        }
 
         $result = $this->prepareUserFilter();
         return $this->compileUserFilter($result);
@@ -1173,15 +1215,17 @@ abstract class Entity extends \CBitrixComponent implements Main\Engine\Contract\
      */
     protected function prepareUserFilter()
     {
-        if (!$this->isUsedGridFilter())
+        if (!$this->isUsedGridFilter()) {
             return [];
+        }
 
         $fields = $this->getGridFilterDefinition();
         $filterValues = $this->gridFilterConfig->getFilter($fields);
         $filterRows = UI\Filter\Options::getRowsFromFields($filterValues);
 
-        if (empty($filterRows))
+        if (empty($filterRows)) {
             return [];
+        }
 
         $result = [];
         $quickSearchField = $this->getQuickSearchField();
@@ -1197,11 +1241,13 @@ abstract class Entity extends \CBitrixComponent implements Main\Engine\Contract\
         }
 
         foreach ($filterRows as $id) {
-            if (!isset($fields[$id]))
+            if (!isset($fields[$id])) {
                 continue;
+            }
 
-            if ($checkQuickSearch && $id == $quickSearchField)
+            if ($checkQuickSearch && $id == $quickSearchField) {
                 continue;
+            }
 
             switch ($fields[$id]['type']) {
                 case "number":
@@ -1254,13 +1300,15 @@ abstract class Entity extends \CBitrixComponent implements Main\Engine\Contract\
     private function getFilterOperator(array $field, $operator)
     {
         $result = '';
-        if ($operator === '')
+        if ($operator === '') {
             $operator = 'default';
+        }
         if (!empty($field['operators']) && is_array($field['operators'])) {
-            if (isset($field['operators'][$operator]))
+            if (isset($field['operators'][$operator])) {
                 $result = $field['operators'][$operator];
-            elseif (isset($field['operators']['default']))
+            } elseif (isset($field['operators']['default'])) {
                 $result = $field['operators']['default'];
+            }
         }
         return $result;
     }
@@ -1273,13 +1321,15 @@ abstract class Entity extends \CBitrixComponent implements Main\Engine\Contract\
      */
     private function addFilterItems(array &$result, array $items, array $field)
     {
-        if (empty($items))
+        if (empty($items)) {
             return;
+        }
 
         $entity = (isset($field['entity']) ? $field['entity'] : 'master');
         if ($entity !== '') {
-            if (!isset($result[$entity]))
+            if (!isset($result[$entity])) {
                 $result[$entity] = [];
+            }
             $result[$entity] = array_merge($result[$entity], $items);
         }
         unset($entity);
@@ -1296,8 +1346,9 @@ abstract class Entity extends \CBitrixComponent implements Main\Engine\Contract\
     {
         $findValue = trim($filter['FIND']);
         $operator = $this->getFilterOperator($field, 'quickSearch');
-        if (is_string($operator))
+        if (is_string($operator)) {
             $fieldId = $operator . $fieldId;
+        }
         unset($operator);
         $this->addFilterItems($result, [$fieldId => $findValue], $field);
     }
@@ -1326,8 +1377,9 @@ abstract class Entity extends \CBitrixComponent implements Main\Engine\Contract\
                 case 'exact':
                     if ($minValue !== '') {
                         $operator = $this->getFilterOperator($field, 'exact');
-                        if (is_string($operator))
+                        if (is_string($operator)) {
                             $fieldId = $operator . $fieldId;
+                        }
                         unset($operator);
                         $items[$fieldId] = $minValue;
                     }
@@ -1335,8 +1387,9 @@ abstract class Entity extends \CBitrixComponent implements Main\Engine\Contract\
                 case 'range':
                     if ($minValue !== '' && $maxValue !== '') {
                         $operator = $this->getFilterOperator($field, 'range');
-                        if (is_string($operator))
+                        if (is_string($operator)) {
                             $fieldId = $operator . $fieldId;
+                        }
                         unset($operator);
                         $items[$fieldId] = [$minValue, $maxValue];
                     }
@@ -1344,8 +1397,9 @@ abstract class Entity extends \CBitrixComponent implements Main\Engine\Contract\
                 case 'more':
                     if ($minValue !== '') {
                         $operator = $this->getFilterOperator($field, 'more');
-                        if (is_string($operator))
+                        if (is_string($operator)) {
                             $fieldId = $operator . $fieldId;
+                        }
                         unset($operator);
                         $items[$fieldId] = $minValue;
                     }
@@ -1353,8 +1407,9 @@ abstract class Entity extends \CBitrixComponent implements Main\Engine\Contract\
                 case 'less':
                     if ($maxValue !== '') {
                         $operator = $this->getFilterOperator($field, 'less');
-                        if (is_string($operator))
+                        if (is_string($operator)) {
                             $fieldId = $operator . $fieldId;
+                        }
                         unset($operator);
                         $items[$fieldId] = $maxValue;
                     }
@@ -1392,8 +1447,9 @@ abstract class Entity extends \CBitrixComponent implements Main\Engine\Contract\
                 case 'EXACT':
                     if ($minValue !== '') {
                         $operator = $this->getFilterOperator($field, 'default');
-                        if (is_string($operator))
+                        if (is_string($operator)) {
                             $fieldId = $operator . $fieldId;
+                        }
                         unset($operator);
                         $items[$fieldId] = $minValue;
                     }
@@ -1402,8 +1458,9 @@ abstract class Entity extends \CBitrixComponent implements Main\Engine\Contract\
                 default:
                     if ($minValue !== '' && $maxValue !== '') {
                         $operator = $this->getFilterOperator($field, 'range');
-                        if (is_string($operator))
+                        if (is_string($operator)) {
                             $fieldId = $operator . $fieldId;
+                        }
                         unset($operator);
                         $items[$fieldId] = [$minValue, $maxValue];
                     }
@@ -1427,17 +1484,18 @@ abstract class Entity extends \CBitrixComponent implements Main\Engine\Contract\
     {
         $multiple = isset($field['params']['multiple']) && $field['params']['multiple'] == 'Y';
         if (isset($filter[$fieldId])) {
-            if ($multiple)
+            if ($multiple) {
                 $validRawValue = !empty($filter[$fieldId]) && is_array($filter[$fieldId]);
-            else
+            } else {
                 $validRawValue = is_string($filter[$fieldId]) || is_int($filter[$fieldId]);
+            }
             if ($validRawValue) {
-
                 if ($multiple) {
                     $value = [];
                     foreach ($filter[$fieldId] as $item) {
-                        if (isset($field['items'][$item]))
+                        if (isset($field['items'][$item])) {
                             $value[] = $item;
+                        }
                     }
                     unset($item);
                     $check = !empty($value);
@@ -1447,8 +1505,9 @@ abstract class Entity extends \CBitrixComponent implements Main\Engine\Contract\
                 }
                 if ($check) {
                     $operator = $this->getFilterOperator($field, ($multiple ? 'enum' : 'exact'));
-                    if (is_string($operator))
+                    if (is_string($operator)) {
                         $fieldId = $operator . $fieldId;
+                    }
                     unset($operator);
                     $this->addFilterItems($result, [$fieldId => $value], $field);
                 }
@@ -1471,8 +1530,9 @@ abstract class Entity extends \CBitrixComponent implements Main\Engine\Contract\
             $value = $filter[$fieldId];
             if ($value === 'Y' || $value === 'N') {
                 $operator = $this->getFilterOperator($field, 'exact');
-                if (is_string($operator))
+                if (is_string($operator)) {
                     $fieldId = $operator . $fieldId;
+                }
                 unset($operator);
                 $this->addFilterItems($result, [$fieldId => $value], $field);
             }
@@ -1491,14 +1551,16 @@ abstract class Entity extends \CBitrixComponent implements Main\Engine\Contract\
     {
         if (isset($filter[$fieldId])) {
             $multiple = isset($field['params']['multiple']) && $field['params']['multiple'] == 'Y';
-            if ($multiple)
+            if ($multiple) {
                 $validRawValue = !empty($filter[$fieldId]) && is_array($filter[$fieldId]);
-            else
+            } else {
                 $validRawValue = is_string($filter[$fieldId]) && ($filter[$fieldId] !== '');
+            }
             if ($validRawValue) {
                 $operator = $this->getFilterOperator($field, ($multiple ? 'enum' : 'exact'));
-                if (is_string($operator))
+                if (is_string($operator)) {
                     $fieldId = $operator . $fieldId;
+                }
                 unset($operator);
                 $this->addFilterItems($result, [$fieldId => $filter[$fieldId]], $field);
             }
@@ -1519,8 +1581,9 @@ abstract class Entity extends \CBitrixComponent implements Main\Engine\Contract\
             $value = trim($filter[$fieldId]);
             if ($value !== '') {
                 $operator = $this->getFilterOperator($field, 'default');
-                if (is_string($operator))
+                if (is_string($operator)) {
                     $fieldId = $operator . $fieldId;
+                }
                 unset($operator);
                 $this->addFilterItems($result, [$fieldId => $value], $field);
             }
@@ -1541,8 +1604,9 @@ abstract class Entity extends \CBitrixComponent implements Main\Engine\Contract\
      */
     protected function setImplicitNavigationData(\CDBResult $iterator)
     {
-        if (!$this->isUsedImplicitPageNavigation())
+        if (!$this->isUsedImplicitPageNavigation()) {
             return;
+        }
 
         $navComponentObject = null;
         $navComponentParameters = [];
@@ -1632,8 +1696,9 @@ abstract class Entity extends \CBitrixComponent implements Main\Engine\Contract\
     protected function getRowAction(array $row)
     {
         $result = null;
-        if ($this->resultAction['DATA_TYPE'] != self::RESULT_DATA_TYPE_SET)
+        if ($this->resultAction['DATA_TYPE'] != self::RESULT_DATA_TYPE_SET) {
             return $result;
+        }
         switch ($this->resultAction['TYPE']) {
             case self::RESULT_ACTION_TYPE_EVENT:
                 break;

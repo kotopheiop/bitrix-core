@@ -1,4 +1,6 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();?><?
+<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+}?><?
 /*
 ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ /bitrix/admin/reports ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
@@ -95,44 +97,59 @@ $arUser - ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï
             $arUser = $db_user->Fetch();
             echo htmlspecialcharsbx($arUser["NAME"]) . " " . htmlspecialcharsbx($arUser["LAST_NAME"]);
 
-            if (strlen($arOrderProps["F_INN"]) > 0) echo "<br>ï¿½ï¿½ï¿½: " . $arOrderProps["F_INN"]; ?>
+            if ($arOrderProps["F_INN"] <> '') {
+                echo "<br>ï¿½ï¿½ï¿½: " . $arOrderProps["F_INN"];
+            } ?>
             <br>ï¿½ï¿½ï¿½ï¿½ï¿½:
             <?
-            if (strlen($arOrderProps["F_INDEX"]) > 0) echo $arOrderProps["F_INDEX"] . ",";
+            if ($arOrderProps["F_INDEX"] <> '') {
+                echo $arOrderProps["F_INDEX"] . ",";
+            }
 
             $arVal = CSaleLocation::GetByID($arOrderProps["F_LOCATION"], "ru");
-            if (strlen($arVal["COUNTRY_NAME"]) > 0 && strlen($arVal["CITY_NAME"]) > 0)
+            if ($arVal["COUNTRY_NAME"] <> '' && $arVal["CITY_NAME"] <> '') {
                 echo htmlspecialcharsbx($arVal["COUNTRY_NAME"] . " - " . $arVal["CITY_NAME"]);
-            elseif (strlen($arVal["COUNTRY_NAME"]) > 0 || strlen($arVal["CITY_NAME"]) > 0)
+            } elseif ($arVal["COUNTRY_NAME"] <> '' || $arVal["CITY_NAME"] <> '') {
                 echo htmlspecialcharsbx($arVal["COUNTRY_NAME"] . $arVal["CITY_NAME"]);
+            }
 
-            if (strlen($arOrderProps["F_CITY"]) > 0) echo ", ï¿½. " . $arOrderProps["F_CITY"];
-            if (strlen($arOrderProps["F_ADDRESS"]) > 0 && strlen($arOrderProps["F_CITY"]) > 0)
+            if ($arOrderProps["F_CITY"] <> '') {
+                echo ", ï¿½. " . $arOrderProps["F_CITY"];
+            }
+            if ($arOrderProps["F_ADDRESS"] <> '' && $arOrderProps["F_CITY"] <> '') {
                 echo ", " . $arOrderProps["F_ADDRESS"];
-            elseif (strlen($arOrderProps["F_ADDRESS"]) > 0)
+            } elseif ($arOrderProps["F_ADDRESS"] <> '') {
                 echo $arOrderProps["F_ADDRESS"];
+            }
 
-            if (strlen($arOrderProps["F_EMAIL"]) > 0) echo "<br>E-Mail: " . $arOrderProps["F_EMAIL"]; ?>
+            if ($arOrderProps["F_EMAIL"] <> '') {
+                echo "<br>E-Mail: " . $arOrderProps["F_EMAIL"];
+            } ?>
             <br>ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: <? echo $arOrderProps["F_NAME"]; ?>
             <?
-            if (strlen($arOrderProps["F_PHONE"]) > 0)
+            if ($arOrderProps["F_PHONE"] <> '') {
                 echo "<br>ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½: " . $arOrderProps["F_PHONE"];
-
+            }
         } else {
-            if (strlen($arParams["BUYER_COMPANY_NAME"]) > 0)
+            if ($arParams["BUYER_COMPANY_NAME"] <> '') {
                 echo $arParams["BUYER_COMPANY_NAME"];
-            else
+            } else {
                 echo $arParams["BUYER_LAST_NAME"] . " " . $arParams["BUYER_FIRST_NAME"] . " " . $arParams["BUYER_SECOND_NAME"];
+            }
 
-            if (strlen($arParams["BUYER_INN"]) > 0) echo "<br>ï¿½ï¿½ï¿½/ï¿½ï¿½ï¿½: " . $arParams["BUYER_INN"] . " / " . $arParams["BUYER_KPP"];
+            if ($arParams["BUYER_INN"] <> '') {
+                echo "<br>ï¿½ï¿½ï¿½/ï¿½ï¿½ï¿½: " . $arParams["BUYER_INN"] . " / " . $arParams["BUYER_KPP"];
+            }
 
             echo "<br>ï¿½ï¿½ï¿½ï¿½ï¿½: " . $arParams["BUYER_COUNTRY"] . ", " . $arParams["BUYER_INDEX"] . ", ï¿½. " . $arParams["BUYER_CITY"] . ", " . $arParams["BUYER_ADDRESS"];
 
-            if (strlen($arParams["BUYER_CONTACT"]) > 0) echo "<br>ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: " . $arParams["BUYER_CONTACT"];
+            if ($arParams["BUYER_CONTACT"] <> '') {
+                echo "<br>ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: " . $arParams["BUYER_CONTACT"];
+            }
 
-            if (strlen($arParams["BUYER_PHONE"]) > 0)
+            if ($arParams["BUYER_PHONE"] <> '') {
                 echo "<br>ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½: " . $arParams["BUYER_PHONE"];
-
+            }
         }
         ?>
         <br>ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½:
@@ -151,8 +168,9 @@ $arUser - ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï
     for ($i = 0, $max = count($arBasketIDs); $i < $max; $i++) {
         $arBasketTmp = CSaleBasket::GetByID($arBasketIDs[$i]);
 
-        if (floatval($arBasketTmp["VAT_RATE"]) > 0)
+        if (floatval($arBasketTmp["VAT_RATE"]) > 0) {
             $bUseVat = true;
+        }
 
         $priceTotal += $arBasketTmp["PRICE"] * $arBasketTmp["QUANTITY"];
 
@@ -165,8 +183,9 @@ $arUser - ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï
                 false,
                 array("ID", "BASKET_ID", "NAME", "VALUE", "CODE", "SORT")
             );
-            while ($arBasketProps = $dbBasketProps->GetNext())
+            while ($arBasketProps = $dbBasketProps->GetNext()) {
                 $arBasketTmp["PROPS"][$arBasketProps["ID"]] = $arBasketProps;
+            }
         }
 
         $arBasketOrder[] = $arBasketTmp;
@@ -191,8 +210,9 @@ $arUser - ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï
         // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ - ï¿½ï¿½ï¿½
         // ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ NDS, ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         // ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
-        if ($arTaxList[$i]["CODE"] == "NDS")
+        if ($arTaxList[$i]["CODE"] == "NDS") {
             $iNds = $i;
+        }
         $i++;
     }
 
@@ -223,8 +243,9 @@ $arUser - ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï
             $nds_val = 0;
             $taxRate = 0;
 
-            if (floatval($arQuantities[$mi]) <= 0)
+            if (floatval($arQuantities[$mi]) <= 0) {
                 $arQuantities[$mi] = DoubleVal($arBasket["QUANTITY"]);
+            }
 
             $b_AMOUNT = DoubleVal($arBasket["PRICE"]);
 
@@ -260,8 +281,9 @@ $arUser - ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï
                     <?
                     if (is_array($arBasket["PROPS"]) && $_GET["PROPS_ENABLE"] == "Y") {
                         foreach ($arBasket["PROPS"] as $vv) {
-                            if (strlen($vv["VALUE"]) > 0 && $vv["CODE"] != "CATALOG.XML_ID" && $vv["CODE"] != "PRODUCT.XML_ID")
+                            if ($vv["VALUE"] <> '' && $vv["CODE"] != "CATALOG.XML_ID" && $vv["CODE"] != "PRODUCT.XML_ID") {
                                 echo "<div style=\"font-size:8pt\">" . $vv["NAME"] . ": " . $vv["VALUE"] . "</div>";
+                            }
                         }
                     }
                     ?>
@@ -289,7 +311,7 @@ $arUser - ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï
         }//endforeach
         ?>
 
-        <? if (False && DoubleVal($arOrder["DISCOUNT_VALUE"]) > 0): ?>
+        <? if (false && DoubleVal($arOrder["DISCOUNT_VALUE"]) > 0): ?>
             <tr>
                 <td bgcolor="#ffffff" style="border: 1pt solid #000000; border-right:none; border-top:none;">
                     <? echo $n++ ?>
@@ -389,10 +411,11 @@ $arUser - ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï
         }
         ?>.</p>
     <?
-    if ($arOrder['CURRENCY'] === 'UAH')
+    if ($arOrder['CURRENCY'] === 'UAH') {
         $contextCurrency = 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½';
-    else
+    } else {
         $contextCurrency = 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½';
+    }
     ?>
     <p><font size="2">ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
             ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½
@@ -414,7 +437,7 @@ $arUser - ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï
                 <p class=MsoNormal>_______________ <input size="55"
                                                           style="border:0px solid #000000;font-size:14px;font-style:bold;"
                                                           type="text"
-                                                          value="/ <? echo((strlen($arParams["DIRECTOR"]) > 0) ? $arParams["DIRECTOR"] : "______________________________") ?> /">
+                                                          value="/ <? echo(($arParams["DIRECTOR"] <> '') ? $arParams["DIRECTOR"] : "______________________________") ?> /">
                 </p>
             </td>
         </tr>
@@ -442,7 +465,7 @@ $arUser - ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï
                 <p class=MsoNormal>_______________ <input size="45"
                                                           style="border:0px solid #000000;font-size:14px;font-style:bold;"
                                                           type="text"
-                                                          value="/ <? echo((strlen($arParams["BUHG"]) > 0) ? $arParams["BUHG"] : "______________________________") ?> /">
+                                                          value="/ <? echo(($arParams["BUHG"] <> '') ? $arParams["BUHG"] : "______________________________") ?> /">
                 </p>
             </td>
         </tr>

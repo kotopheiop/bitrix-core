@@ -55,7 +55,7 @@ abstract class Audience extends BaseApiObject
 
     public static function normalizeEmail($email)
     {
-        return trim(strtolower($email));
+        return trim(mb_strtolower($email));
     }
 
     public static function normalizePhone($phone)
@@ -172,8 +172,8 @@ abstract class Audience extends BaseApiObject
 
                     case self::ENUM_CONTACT_TYPE_PHONE:
                         $contact = static::normalizePhone($contact);
-                        if (substr($contact, 0, 1) == '8' && strlen($contact) > 8) {
-                            $contactPhone = '+7' . substr($contact, 1);
+                        if (mb_substr($contact, 0, 1) == '8' && mb_strlen($contact) > 8) {
+                            $contactPhone = '+7' . mb_substr($contact, 1);
                         }
                         break;
                 }
@@ -201,10 +201,12 @@ abstract class Audience extends BaseApiObject
 
         if ($isRemove) {
             $action = QueueTable::ACTION_REMOVE;
-        } else if ($this->isQueueAutoRemove) {
-            $action = QueueTable::ACTION_IMPORT_AND_AUTO_REMOVE;
         } else {
-            $action = QueueTable::ACTION_IMPORT;
+            if ($this->isQueueAutoRemove) {
+                $action = QueueTable::ACTION_IMPORT_AND_AUTO_REMOVE;
+            } else {
+                $action = QueueTable::ACTION_IMPORT;
+            }
         }
 
 
@@ -216,17 +218,20 @@ abstract class Audience extends BaseApiObject
             $contactsCount = count($contacts[$contactType]);
             for ($i = 0; $i < $contactsCount; $i++) {
                 $contact = $contacts[$contactType][$i];
-                $resultDb = QueueTable::add(array(
-                    'TYPE' => static::TYPE_CODE,
-                    'ACCOUNT_ID' => $this->accountId,
-                    'CLIENT_ID' => $this->service instanceof IMultiClientService ? $this->service->getClientId() : null,
-                    'AUDIENCE_ID' => $audienceId,
-                    'PARENT_ID' => $options['parentId'] ?: null,
-                    'CONTACT_TYPE' => $contactType,
-                    'VALUE' => $contact,
-                    'ACTION' => $action,
-                    'DATE_AUTO_REMOVE' => $dateAutoRemove,
-                ));
+                $resultDb = QueueTable::add(
+                    array(
+                        'TYPE' => static::TYPE_CODE,
+                        'ACCOUNT_ID' => $this->accountId,
+                        'CLIENT_ID' => $this->service instanceof IMultiClientService ? $this->service->getClientId(
+                        ) : null,
+                        'AUDIENCE_ID' => $audienceId,
+                        'PARENT_ID' => $options['parentId'] ?: null,
+                        'CONTACT_TYPE' => $contactType,
+                        'VALUE' => $contact,
+                        'ACTION' => $action,
+                        'DATE_AUTO_REMOVE' => $dateAutoRemove,
+                    )
+                );
                 $resultDb->isSuccess();
             }
         }
@@ -244,16 +249,18 @@ abstract class Audience extends BaseApiObject
             $contactsCount = count($contacts[$contactType]);
             for ($i = 0; $i < $contactsCount; $i++) {
                 $contact = $contacts[$contactType][$i];
-                $itemDb = QueueTable::getList(array(
-                    'select' => array('ID'),
-                    'filter' => array(
-                        'TYPE' => static::TYPE_CODE,
-                        'ACCOUNT_ID' => $this->accountId,
-                        'AUDIENCE_ID' => $audienceId,
-                        'CONTACT_TYPE' => $contactType,
-                        'VALUE' => $contact,
+                $itemDb = QueueTable::getList(
+                    array(
+                        'select' => array('ID'),
+                        'filter' => array(
+                            'TYPE' => static::TYPE_CODE,
+                            'ACCOUNT_ID' => $this->accountId,
+                            'AUDIENCE_ID' => $audienceId,
+                            'CONTACT_TYPE' => $contactType,
+                            'VALUE' => $contact,
+                        )
                     )
-                ));
+                );
                 while ($item = $itemDb->fetch()) {
                     $result = QueueTable::delete($item['ID']);
                     $result->isSuccess();

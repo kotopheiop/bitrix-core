@@ -1,12 +1,14 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 $publicMode = $adminPage->publicMode;
 $selfFolderUrl = $adminPage->getSelfFolderUrl();
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions == "D")
+if ($saleModulePermissions == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 \Bitrix\Main\Loader::includeModule('sale');
 
@@ -14,7 +16,7 @@ IncludeModuleLangFile(__FILE__);
 
 $sTableID = "tbl_sale_account";
 
-$oSort = new CAdminSorting($sTableID, "ID", "asc");
+$oSort = new CAdminUiSorting($sTableID, "ID", "asc");
 
 $lAdmin = new CAdminUiList($sTableID, $oSort);
 
@@ -77,13 +79,15 @@ if (($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "U") {
             false,
             array("ID")
         );
-        while ($arAccountList = $dbResultList->Fetch())
+        while ($arAccountList = $dbResultList->Fetch()) {
             $arID[] = $arAccountList['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
 
         switch ($_REQUEST['action']) {
             case "delete":
@@ -93,30 +97,42 @@ if (($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "U") {
                     $DB->StartTransaction();
 
                     if ($arDelAccount = CSaleUserAccount::GetByID($ID)) {
-                        if (CSaleUserAccount::UpdateAccount($arDelAccount["USER_ID"], -$arDelAccount["CURRENT_BUDGET"], $arDelAccount["CURRENCY"], "DEL_ACCOUNT", 0)) {
+                        if (CSaleUserAccount::UpdateAccount(
+                            $arDelAccount["USER_ID"],
+                            -$arDelAccount["CURRENT_BUDGET"],
+                            $arDelAccount["CURRENCY"],
+                            "DEL_ACCOUNT",
+                            0
+                        )) {
                             if (!CSaleUserAccount::Delete($ID)) {
                                 $DB->Rollback();
 
-                                if ($ex = $APPLICATION->GetException())
+                                if ($ex = $APPLICATION->GetException()) {
                                     $lAdmin->AddGroupError($ex->GetString(), $ID);
-                                else
-                                    $lAdmin->AddGroupError(str_replace("#ID#", $ID, GetMessage("SAA_ERROR_DELETE")), $ID);
+                                } else {
+                                    $lAdmin->AddGroupError(
+                                        str_replace("#ID#", $ID, GetMessage("SAA_ERROR_DELETE")),
+                                        $ID
+                                    );
+                                }
                             }
                         } else {
                             $DB->Rollback();
 
-                            if ($ex = $APPLICATION->GetException())
+                            if ($ex = $APPLICATION->GetException()) {
                                 $lAdmin->AddGroupError($ex->GetString(), $ID);
-                            else
+                            } else {
                                 $lAdmin->AddGroupError(str_replace("#ID#", $ID, GetMessage("SAA_ERROR_MONEY")), $ID);
+                            }
                         }
                     } else {
                         $DB->Rollback();
 
-                        if ($ex = $APPLICATION->GetException())
+                        if ($ex = $APPLICATION->GetException()) {
                             $lAdmin->AddGroupError($ex->GetString(), $ID);
-                        else
+                        } else {
                             $lAdmin->AddGroupError(str_replace("#ID#", $ID, GetMessage("SAA_ERROR_GET")), $ID);
+                        }
                     }
 
                     $DB->Commit();
@@ -128,10 +144,11 @@ if (($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "U") {
             case "unlock":
 
                 if (!CSaleUserAccount::UnLockByID($ID)) {
-                    if ($ex = $APPLICATION->GetException())
+                    if ($ex = $APPLICATION->GetException()) {
                         $lAdmin->AddGroupError($ex->GetString(), $ID);
-                    else
+                    } else {
                         $lAdmin->AddGroupError(str_replace("#ID#", $ID, GetMessage("SAA_ERROR_UNLOCK")), $ID);
+                    }
                 }
 
                 break;
@@ -153,13 +170,20 @@ $dbResultList->NavStart();
 
 $lAdmin->SetNavigationParams($dbResultList, array("BASE_LINK" => $selfFolderUrl . "sale_account_admin.php"));
 
-$lAdmin->AddHeaders(array(
-    array("id" => "ID", "content" => "ID", "sort" => "id", "default" => true),
-    array("id" => "USER_ID", "content" => GetMessage("SAA_USER1"), "sort" => "user_id", "default" => true),
-    array("id" => "CURRENT_BUDGET", "content" => GetMessage('SAA_SUM'), "sort" => "current_budget", "default" => true),
-    array("id" => "LOCKED", "content" => GetMessage("SAAN_LOCK_ACCT"), "sort" => "locked", "default" => true),
-    array("id" => "TRANSACT", "content" => GetMessage("SAAN_TRANSACT"), "sort" => "", "default" => true),
-));
+$lAdmin->AddHeaders(
+    array(
+        array("id" => "ID", "content" => "ID", "sort" => "id", "default" => true),
+        array("id" => "USER_ID", "content" => GetMessage("SAA_USER1"), "sort" => "user_id", "default" => true),
+        array(
+            "id" => "CURRENT_BUDGET",
+            "content" => GetMessage('SAA_SUM'),
+            "sort" => "current_budget",
+            "default" => true
+        ),
+        array("id" => "LOCKED", "content" => GetMessage("SAAN_LOCK_ACCT"), "sort" => "locked", "default" => true),
+        array("id" => "TRANSACT", "content" => GetMessage("SAAN_TRANSACT"), "sort" => "", "default" => true),
+    )
+);
 
 $arVisibleColumns = $lAdmin->GetVisibleHeaderColumns();
 
@@ -175,10 +199,14 @@ while ($arAccount = $dbResultList->NavNext(false)) {
         $urlToUser = $selfFolderUrl . "sale_buyers_profile.php?USER_ID=" . $arAccount["USER_ID"] . "&lang=" . LANGUAGE_ID;
         $urlToUser = $adminSidePanelHelper->editUrlToPublicPage($urlToUser);
     }
-    $fieldValue = "[<a href=\"" . $urlToUser . "\" title=\"" . GetMessage("SAA_USER_INFO") . "\">" . $arAccount["USER_ID"] . "</a>] ";
+    $fieldValue = "[<a href=\"" . $urlToUser . "\" title=\"" . GetMessage(
+            "SAA_USER_INFO"
+        ) . "\">" . $arAccount["USER_ID"] . "</a>] ";
 
-    $fieldValue .= htmlspecialcharsEx($arAccount["USER_NAME"] . ((strlen($arAccount["USER_NAME"]) <= 0 ||
-                strlen($arAccount["USER_LAST_NAME"]) <= 0) ? "" : " ") . $arAccount["USER_LAST_NAME"]) . "<br>";
+    $fieldValue .= htmlspecialcharsEx(
+            $arAccount["USER_NAME"] . (($arAccount["USER_NAME"] == '' ||
+                $arAccount["USER_LAST_NAME"] == '') ? "" : " ") . $arAccount["USER_LAST_NAME"]
+        ) . "<br>";
     $fieldValue .= htmlspecialcharsEx($arAccount["USER_LOGIN"]) . "&nbsp;&nbsp;&nbsp; ";
     $fieldValue .= "<a href=\"mailto:" . htmlspecialcharsbx($arAccount["USER_EMAIL"]) . "\" title=\"" .
         GetMessage("SAA_MAILTO") . "\">" . htmlspecialcharsEx($arAccount["USER_EMAIL"]) . "</a>";
@@ -197,12 +225,13 @@ while ($arAccount = $dbResultList->NavNext(false)) {
             ),
             array()
         );
-        if (IntVal($numTrans) > 0) {
+        if (intval($numTrans) > 0) {
             $urlToTransact = "sale_transact_admin.php?lang=" . LANGUAGE_ID;
             if ($publicMode) {
                 $urlToTransact = $selfFolderUrl . "sale_transact_admin/";
             }
-            $urlToTransact = CHTTP::urlAddParams($urlToTransact,
+            $urlToTransact = CHTTP::urlAddParams(
+                $urlToTransact,
                 array(
                     "USER_ID" => $arAccount["USER_ID"],
                     "CURRENCY" => $arAccount["CURRENCY"],
@@ -210,7 +239,7 @@ while ($arAccount = $dbResultList->NavNext(false)) {
                 )
             );
             $fieldValue .= "<a href=\"" . $urlToTransact . "\" title=\"" . GetMessage("SAA_TRANS_TITLE") . "\">";
-            $fieldValue .= IntVal($numTrans);
+            $fieldValue .= intval($numTrans);
             $fieldValue .= "</a>";
         } else {
             $fieldValue .= 0;
@@ -229,7 +258,11 @@ while ($arAccount = $dbResultList->NavNext(false)) {
         $arActions[] = array(
             "ICON" => "delete",
             "TEXT" => GetMessage("SAA_DELETE_ALT"),
-            "ACTION" => "javascript:if(confirm('" . GetMessage('SAA_DELETE_CONFIRM') . "')) " . $lAdmin->ActionDoGroup($arAccount["ID"], "delete"));
+            "ACTION" => "javascript:if(confirm('" . GetMessage('SAA_DELETE_CONFIRM') . "')) " . $lAdmin->ActionDoGroup(
+                    $arAccount["ID"],
+                    "delete"
+                )
+        );
     }
 
     $row->AddActions($arActions);
@@ -261,7 +294,9 @@ $order_sum = "";
 foreach ($arFooterArray as $val) {
     $order_sum .= $val["title"] . " " . $val["value"] . "<br />";
 }
-$lAdmin->sEpilogContent = "<script>setTimeout(function(){if (document.getElementById('order_sum'))document.getElementById('order_sum').innerHTML = '" . CUtil::JSEscape($order_sum) . "';}, 10);</script>";
+$lAdmin->sEpilogContent = "<script>setTimeout(function(){if (document.getElementById('order_sum'))document.getElementById('order_sum').innerHTML = '" . CUtil::JSEscape(
+        $order_sum
+    ) . "';}, 10);</script>";
 
 
 $lAdmin->AddGroupActionTable(

@@ -47,20 +47,23 @@ class Request
     public function send($controller, $action, $data, $assoc = true)
     {
         global $APPLICATION;
-        $http = new \Bitrix\Main\Web\HttpClient(array(
-            "version" => "1.1",
-            "socketTimeout" => 30,
-            "streamTimeout" => 30,
-            "redirect" => true,
-            "redirectMax" => 5,
-            "disableSslVerification" => true
-        ));
+        $http = new \Bitrix\Main\Web\HttpClient(
+            array(
+                "version" => "1.1",
+                "socketTimeout" => 30,
+                "streamTimeout" => 30,
+                "redirect" => true,
+                "redirectMax" => 5,
+                "disableSslVerification" => true
+            )
+        );
 
         $http->setHeader("Content-Type", "application/json; charset=utf-8");
         $http->setHeader("Authorization", "Basic " . base64_encode($this->apiLogin . ":" . $this->apiKey));
 
-        if (strtolower(SITE_CHARSET) != 'utf-8')
+        if (mb_strtolower(SITE_CHARSET) != 'utf-8') {
             $data = $APPLICATION->ConvertCharsetArray($data, SITE_CHARSET, 'utf-8');
+        }
 
         $jsonData = json_encode($data);
         $result = $http->post($this->constructApiUrl($controller, $action), $jsonData);
@@ -69,8 +72,9 @@ class Request
         if (!$result && !empty($errors)) {
             $strError = "";
 
-            foreach ($errors as $errorCode => $errMes)
+            foreach ($errors as $errorCode => $errMes) {
                 $strError .= $errorCode . ": " . $errMes;
+            }
 
             throw new \Exception($strError);
         } else {
@@ -84,8 +88,9 @@ class Request
 
             $decodedResult = json_decode($resData, $assoc);
 
-            if (strtolower(SITE_CHARSET) != 'utf-8')
+            if (mb_strtolower(SITE_CHARSET) != 'utf-8') {
                 $decodedResult = $APPLICATION->ConvertCharsetArray($decodedResult, 'utf-8', SITE_CHARSET);
+            }
         }
 
         return $decodedResult;

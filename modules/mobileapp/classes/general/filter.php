@@ -1,14 +1,10 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 class CAdminMobileFilter
 {
     const SELECT_ALL = "AMFSelectAll";
-
-    public static function getFields($filterId)
-    {
-        return CUserOptions::GetOption("mobileapp", "filter_" . $filterId, array());
-    }
 
     public static function setFields($filterId, $arFields)
     {
@@ -21,8 +17,9 @@ class CAdminMobileFilter
         $arNonemptyFields = array();
 
         foreach ($arFilter as $fieldId => $fieldValue) {
-            if (strlen($fieldValue) <= 0)
+            if ($fieldValue == '') {
                 continue;
+            }
 
             $arNonemptyFields[$fieldId] = $fieldValue;
 
@@ -38,6 +35,11 @@ class CAdminMobileFilter
         }
 
         return $arNonemptyFields;
+    }
+
+    public static function getFields($filterId)
+    {
+        return CUserOptions::GetOption("mobileapp", "filter_" . $filterId, array());
     }
 
     public static function getHtml($arFields)
@@ -62,7 +64,6 @@ class CAdminMobileFilter
                         "onclick" => "maAdminFilter.getDatePickerHtml(this);"
                     )
                 );
-
             } elseif ($arField["TYPE"] == "ONE_SELECT") {
                 if (isset($arField["ADD_ALL_SELECT"]) && $arField["ADD_ALL_SELECT"] == "Y") {
                     $arField["OPTIONS"] = array_merge(
@@ -79,10 +80,13 @@ class CAdminMobileFilter
                 );
             } elseif ($arField["TYPE"] == "MULTI_SELECT") {
                 $checked = array();
-                if (is_array($arField["VALUE"]))
+                if (is_array($arField["VALUE"])) {
                     $checked = $arField["VALUE"];
-                else if (is_string($arField["VALUE"]) && strlen(trim($arField["VALUE"])) > 0)
-                    $checked = explode(',', $arField["VALUE"]);
+                } else {
+                    if (is_string($arField["VALUE"]) && trim($arField["VALUE"]) <> '') {
+                        $checked = explode(',', $arField["VALUE"]);
+                    }
+                }
 
                 $arItem = array(
                     "TYPE" => "CHECKBOXES",
@@ -90,8 +94,9 @@ class CAdminMobileFilter
                     "NAME" => "field_name_" . $fieldID,
                 );
 
-                if (!empty($checked))
+                if (!empty($checked)) {
                     $arItem["CHECKED"] = $checked;
+                }
             }
 
             $arData[] = array(

@@ -103,10 +103,14 @@ abstract class Relation extends Field implements ITypeHintable
         $type = strtoupper($type);
 
         if (!in_array($type, Join::getTypes(), true)) {
-            throw new ArgumentException(sprintf(
-                'Unknown join type `%s` in reference `%s` of `%s` entity',
-                $type, $this->name, $this->entity->getDataClass()
-            ));
+            throw new ArgumentException(
+                sprintf(
+                    'Unknown join type `%s` in reference `%s` of `%s` entity',
+                    $type,
+                    $this->name,
+                    $this->entity->getDataClass()
+                )
+            );
         }
 
         $this->joinType = $type;

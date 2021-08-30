@@ -1,19 +1,23 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 CModule::IncludeModule("iblock");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/iblock/prolog.php");
 IncludeModuleLangFile(__FILE__);
 
-if (!$USER->IsAdmin())
+if (!$USER->IsAdmin()) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
-if ($back_url == '')
+if ($back_url == '') {
     $back_url = '/bitrix/admin/iblock_type_admin.php?lang=' . $lang;
+}
 
 $arIBTLang = Array();
-$l = CLanguage::GetList($lby = "sort", $lorder = "asc");
-while ($ar = $l->GetNext())
+$l = CLanguage::GetList();
+while ($ar = $l->GetNext()) {
     $arIBTLang[] = $ar;
+}
 
 $strWarning = "";
 
@@ -33,25 +37,27 @@ $aTabs[] = array(
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
 $bVarsFromForm = false;
-if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($Update) > 0 && check_bitrix_sessid()) {
+if ($_SERVER["REQUEST_METHOD"] == "POST" && $Update <> '' && check_bitrix_sessid()) {
     $arFields = Array();
-    if (strlen($ID) <= 0)
+    if ($ID == '') {
         $arFields["ID"] = $NEW_ID;
+    }
     $arFields["EDIT_FILE_BEFORE"] = $EDIT_FILE_BEFORE;
     $arFields["EDIT_FILE_AFTER"] = $EDIT_FILE_AFTER;
     $arFields["IN_RSS"] = $IN_RSS;
     $arFields["SECTIONS"] = $SECTIONS;
     $arFields["SORT"] = $_POST['SORT'];
     $arFields["LANG"] = Array();
-    foreach ($arIBTLang as $ar)
+    foreach ($arIBTLang as $ar) {
         $arFields["LANG"][$ar["LID"]] = $LANG_FIELDS[$ar["LID"]];
+    }
 
     $obBlocktype = new CIBlockType;
-    if (strlen($ID) > 0)
+    if ($ID <> '') {
         $res = $obBlocktype->Update($ID, $arFields);
-    else {
+    } else {
         $ID = $obBlocktype->Add($arFields);
-        $res = (strlen($ID) > 0);
+        $res = ($ID <> '');
     }
 
     if (!$res) {
@@ -60,18 +66,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($Update) > 0 && check_bitrix_
         $bVarsFromForm = true;
     } else {
         $DB->Commit();
-        if (strlen($apply) <= 0) {
-            if (strlen($back_url) > 0)
+        if ($apply == '') {
+            if ($back_url <> '') {
                 LocalRedirect("/" . ltrim($back_url, "/"));
-        } else
-            LocalRedirect($APPLICATION->GetCurPage() . "?lang=" . $lang . "&ID=" . UrlEncode($ID) . "&" . $tabControl->ActiveTabParam());
+            }
+        } else {
+            LocalRedirect(
+                $APPLICATION->GetCurPage() . "?lang=" . $lang . "&ID=" . UrlEncode(
+                    $ID
+                ) . "&" . $tabControl->ActiveTabParam()
+            );
+        }
     }
 }
 
-if (strlen($ID) > 0)
+if ($ID <> '') {
     $APPLICATION->SetTitle(GetMessage("IBTYPE_E_TITLE", array('#ITYPE#' => $ID)));
-else
+} else {
     $APPLICATION->SetTitle(GetMessage("IBTYPE_E_TITLE_2"));
+}
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
@@ -80,8 +93,9 @@ $str_SECTIONS = "Y";
 $str_SORT = "500";
 
 $result = CIBlockType::GetByID($ID);
-if (!$result->ExtractFields("str_"))
+if (!$result->ExtractFields("str_")) {
     $ID = '';
+}
 
 if ($bVarsFromForm) {
     $DB->InitTableVarsForEdit("b_iblock_type", "", "str_");
@@ -97,7 +111,7 @@ $aMenu = array(
     )
 );
 
-if (strlen($ID) > 0) {
+if ($ID <> '') {
     $aMenu[] = array("SEPARATOR" => "Y");
     $aMenu[] = array(
         "TEXT" => GetMessage("IBTYPE_E_CREATE"),
@@ -109,7 +123,10 @@ if (strlen($ID) > 0) {
     $aMenu[] = array(
         "TEXT" => GetMessage("IBTYPE_E_DEL"),
         "TITLE" => GetMessage("IBTYPE_E_DEL_TITLE"),
-        "LINK" => "javascript:if(confirm('" . GetMessageJS("IBTYPE_E_DEL_CONF") . "')) window.location='/bitrix/admin/iblock_type_admin.php?ID=" . $ID . "&action=delete&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get() . "';",
+        "LINK" => "javascript:if(confirm('" . GetMessageJS(
+                "IBTYPE_E_DEL_CONF"
+            ) . "')) window.location='/bitrix/admin/iblock_type_admin.php?ID=" . $ID . "&action=delete&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get(
+            ) . "';",
         "ICON" => "btn_delete"
     );
 }
@@ -123,13 +140,13 @@ $context->Show();
     <? echo GetFilterHiddens("find_"); ?>
     <input type="hidden" name="Update" value="Y">
     <input type="hidden" name="ID" value="<? echo $ID ?>">
-    <? if (strlen($back_url) > 0): ?><input type="hidden" name="back_url"
-                                            value="<?= htmlspecialcharsbx($back_url) ?>"><? endif ?>
+    <? if ($back_url <> ''): ?><input type="hidden" name="back_url"
+                                      value="<?= htmlspecialcharsbx($back_url) ?>"><? endif ?>
     <?
     $tabControl->Begin();
     $tabControl->BeginNextTab();
     ?>
-    <? if (strlen($ID) > 0): ?>
+    <? if ($ID <> ''): ?>
         <tr>
             <td><? echo GetMessage("IBTYPE_E_ID") ?></td>
             <td><?= $str_ID ?></td>
@@ -172,10 +189,11 @@ $context->Show();
                 </tr>
                 <?
                 foreach ($arIBTLang as $ar):
-                    if ($bVarsFromForm)
+                    if ($bVarsFromForm) {
                         $ibtypelang = $LANG_FIELDS[$ar["LID"]];
-                    else
+                    } else {
                         $ibtypelang = CIBlockType::GetByIDLang($str_ID, $ar["LID"], false);
+                    }
                     ?>
                     <tr>
                         <td><? echo $ar["NAME"] ?>:</td>

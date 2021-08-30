@@ -7,8 +7,9 @@ class CSalePaySystemsHelper
 {
     private static function getTarifClassName($actionFile)
     {
-        if (strlen($actionFile) <= 0)
+        if ($actionFile == '') {
             return '';
+        }
 
         static $arClassNames = array();
 
@@ -16,8 +17,9 @@ class CSalePaySystemsHelper
             $PSTarifClassName = '';  //must be defined in file tarif.php and contain class
             $tarifFileName = $_SERVER["DOCUMENT_ROOT"] . $actionFile . "/tarif.php";
 
-            if (file_exists($tarifFileName))
+            if (file_exists($tarifFileName)) {
                 include_once($tarifFileName);
+            }
 
             $arClassNames[$actionFile] = $PSTarifClassName;  // todo: may be object/instance instead name ?
         }
@@ -31,8 +33,9 @@ class CSalePaySystemsHelper
 
         $PSTarifClassName = self::getTarifClassName($actionFile);
 
-        if (strlen($PSTarifClassName) > 0 && is_callable($PSTarifClassName . '::prepareToField'))
+        if ($PSTarifClassName <> '' && is_callable($PSTarifClassName . '::prepareToField')) {
             $arResult = call_user_func($PSTarifClassName . '::prepareToField', $arTarif);
+        }
 
         return $arResult;
     }
@@ -42,8 +45,9 @@ class CSalePaySystemsHelper
         $arTarif = array();
         $PSTarifClassName = self::getTarifClassName($actionFile);
 
-        if (strlen($PSTarifClassName) > 0 && is_callable($PSTarifClassName . '::getStructure'))
+        if ($PSTarifClassName <> '' && is_callable($PSTarifClassName . '::getStructure')) {
             $arTarif = call_user_func($PSTarifClassName . '::getStructure', $psId, $persId);
+        }
 
         return $arTarif;
     }
@@ -54,12 +58,13 @@ class CSalePaySystemsHelper
 
         $map = CSalePaySystemAction::getOldToNewHandlersMap();
         $oldHandler = array_search($arPaySystem["PSA_ACTION_FILE"], $map);
-        if ($oldHandler !== false)
+        if ($oldHandler !== false) {
             $arPaySystem["PSA_ACTION_FILE"] = $oldHandler;
+        }
 
         $PSTarifClassName = self::getTarifClassName($arPaySystem["PSA_ACTION_FILE"]);
 
-        if (strlen($PSTarifClassName) > 0 && is_callable($PSTarifClassName . '::getPrice'))
+        if ($PSTarifClassName <> '' && is_callable($PSTarifClassName . '::getPrice')) {
             $result = call_user_func_array(
                 $PSTarifClassName . '::getPrice',
                 array(
@@ -69,6 +74,7 @@ class CSalePaySystemsHelper
                     $buyerLocationId
                 )
             );
+        }
 
         return $result;
     }
@@ -77,7 +83,7 @@ class CSalePaySystemsHelper
     {
         $PSTarifClassName = self::getTarifClassName($actionFile);
 
-        if (strlen($PSTarifClassName) > 0 && is_callable($PSTarifClassName . '::checkCompability')) {
+        if ($PSTarifClassName <> '' && is_callable($PSTarifClassName . '::checkCompability')) {
             $result = call_user_func_array(
                 $PSTarifClassName . '::checkCompability',
                 array(
@@ -98,16 +104,18 @@ class CSalePaySystemsHelper
     {
         $psTitle = "";
 
-        if (file_exists($fileName) && is_file($fileName))
+        if (file_exists($fileName) && is_file($fileName)) {
             include($fileName);
+        }
 
         return $psTitle;
     }
 
     public static function getPSActionTitle_old($fileName)
     {
-        if (!file_exists($fileName))
+        if (!file_exists($fileName)) {
             return false;
+        }
 
         $handle = fopen($fileName, "r");
         $contents = fread($handle, filesize($fileName));
@@ -116,17 +124,26 @@ class CSalePaySystemsHelper
         $rep_title = "";
 
         $arMatches = array();
-        if (preg_match("#<title_" . LANGUAGE_ID . "[^>]*>([^<]*?)</title_" . LANGUAGE_ID . "[\s]*>#i", $contents, $arMatches)) {
+        if (preg_match(
+            "#<title_" . LANGUAGE_ID . "[^>]*>([^<]*?)</title_" . LANGUAGE_ID . "[\s]*>#i",
+            $contents,
+            $arMatches
+        )) {
             $arMatches[1] = Trim($arMatches[1]);
-            if (strlen($arMatches[1]) > 0) $rep_title = $arMatches[1];
+            if ($arMatches[1] <> '') {
+                $rep_title = $arMatches[1];
+            }
         }
-        if (strlen($rep_title) <= 0
+        if ($rep_title == ''
             && preg_match("#<title[^>]*>([^<]*?)</title[\s]*>#i", $contents, $arMatches)) {
             $arMatches[1] = Trim($arMatches[1]);
-            if (strlen($arMatches[1]) > 0) $rep_title = $arMatches[1];
+            if ($arMatches[1] <> '') {
+                $rep_title = $arMatches[1];
+            }
         }
-        if (strlen($rep_title) <= 0)
+        if ($rep_title == '') {
             $rep_title = basename($strPathFull, ".php");
+        }
 
         return $rep_title;
     }
@@ -137,8 +154,9 @@ class CSalePaySystemsHelper
 
         $descriptionFile = $_SERVER['DOCUMENT_ROOT'] . $actionFile . '/.description.php';
 
-        if (is_file($descriptionFile))
+        if (is_file($descriptionFile)) {
             include($descriptionFile);
+        }
 
         return $isAffordPdf;
     }
@@ -161,48 +179,57 @@ class CSalePaySystemsHelper
         while ($ps = $res->Fetch()) {
             $descriptionFile = $_SERVER["DOCUMENT_ROOT"] . $ps["ACTION_FILE"] . "/.description.php";
 
-            if (!file_exists($descriptionFile) || !is_file($descriptionFile))
+            if (!file_exists($descriptionFile) || !is_file($descriptionFile)) {
                 continue;
+            }
 
             $arPSCorrespondence = array();
             include($descriptionFile);
 
-            if (!is_array($arPSCorrespondence) || empty($arPSCorrespondence))
+            if (!is_array($arPSCorrespondence) || empty($arPSCorrespondence)) {
                 continue;
+            }
 
             $arCorrespondence = CSalePaySystemAction::UnSerializeParams($ps["PARAMS"]);
 
-            if (!is_array($arCorrespondence))
+            if (!is_array($arCorrespondence)) {
                 continue;
+            }
 
             $missingKeys = array_keys(array_diff_key($arPSCorrespondence, $arCorrespondence));
 
             if (!empty($missingKeys)) {
                 $result[$ps["ID"]] = $missingKeys;
 
-                foreach ($missingKeys as $key)
+                foreach ($missingKeys as $key) {
                     $arCorrespondence[$key] = array_intersect_key(
                         $arPSCorrespondence[$key],
                         array("TYPE" => true, "VALUE" => true)
                     );
+                }
 
                 $updRes = CSalePaySystemAction::update(
                     $ps["ID"],
-                    array("PARAMS" => CSalePaySystemAction::SerializeParams($arCorrespondence)
-                    ));
+                    array(
+                        "PARAMS" => CSalePaySystemAction::SerializeParams($arCorrespondence)
+                    )
+                );
 
-                if ($updRes <= 0)
+                if ($updRes <= 0) {
                     $result[$ps["ID"]]["UPDATE_ERROR"] = true;
+                }
             }
         }
 
-        \CEventLog::Add(array(
-            "SEVERITY" => "INFO",
-            "AUDIT_TYPE_ID" => "PS_PARAMS_CONVERT_RESULT",
-            "MODULE_ID" => "sale",
-            "ITEM_ID" => "PaySystems",
-            "DESCRIPTION" => serialize($result),
-        ));
+        \CEventLog::Add(
+            array(
+                "SEVERITY" => "INFO",
+                "AUDIT_TYPE_ID" => "PS_PARAMS_CONVERT_RESULT",
+                "MODULE_ID" => "sale",
+                "ITEM_ID" => "PaySystems",
+                "DESCRIPTION" => serialize($result),
+            )
+        );
 
         return "";
     }

@@ -1,4 +1,5 @@
 <?
+
 global $MESS;
 
 $MESS["SBLP_DTITLE"] = "Invoice (German)";
@@ -42,7 +43,7 @@ $MESS["SBLP_REG_SUPPLI_DESC"] = "Companies House registration details";
 
 $MESS["SBLP_DIR_POS_SUPPLI"] = "Supervisor job position";
 $MESS["SBLP_DIR_POS_SUPPLI_DESC"] = "Supervisor job position (sales)";
-$MESS["SBLP_DIR_POS_SUPPLI_VAL"] = "Geschäftsführer";
+$MESS["SBLP_DIR_POS_SUPPLI_VAL"] = "Geschï¿½ftsfï¿½hrer";
 $MESS["SBLP_ACC_POS_SUPPLI"] = "Accountant job position";
 $MESS["SBLP_ACC_POS_SUPPLI_DESC"] = "Accountant job position (sales)";
 $MESS["SBLP_ACC_POS_SUPPLI_VAL"] = "Buchhalter";

@@ -18,14 +18,17 @@ final class Measure extends Controller
         $view = $this->getViewManager()
             ->getView($this);
 
-        return ['MEASURE' => $view->prepareFieldInfos(
-            $view->getFields()
-        )];
+        return [
+            'MEASURE' => $view->prepareFieldInfos(
+                $view->getFields()
+            )
+        ];
     }
 
     public function listAction($select = [], $filter = [], $order = [], PageNavigation $pageNavigation)
     {
-        return new Page('MEASURES',
+        return new Page(
+            'MEASURES',
             $this->getList($select, $filter, $order, $pageNavigation),
             $this->count($filter)
         );
@@ -52,8 +55,9 @@ final class Measure extends Controller
     protected function exists($id)
     {
         $r = new Result();
-        if (isset($this->get($id)['ID']) == false)
+        if (isset($this->get($id)['ID']) == false) {
             $r->addError(new Error('Measure is not exists'));
+        }
 
         return $r;
     }
@@ -74,7 +78,9 @@ final class Measure extends Controller
     {
         $r = new Result();
 
-        if (!(static::getGlobalUser()->CanDoOperation('catalog_read') || static::getGlobalUser()->CanDoOperation('catalog_store'))) {
+        if (!(static::getGlobalUser()->CanDoOperation('catalog_read') || static::getGlobalUser()->CanDoOperation(
+                'catalog_store'
+            ))) {
             $r->addError(new Error('Access Denied', 200040300010));
         }
         return $r;

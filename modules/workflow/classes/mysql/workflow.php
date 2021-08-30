@@ -1,4 +1,5 @@
 <?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/workflow/classes/general/workflow.php");
 
 class CWorkflow extends CAllWorkflow
@@ -13,12 +14,15 @@ class CWorkflow extends CAllWorkflow
         $err_mess = (CWorkflow::err_mess()) . "<br>Function: Insert<br>Line: ";
         global $DB;
         $arInsert = $DB->PrepareInsert("b_workflow_document", $arFields, "workflow");
-        $DB->Query("
+        $DB->Query(
+            "
 			INSERT INTO b_workflow_document
 			(DATE_MODIFY, DATE_ENTER,  " . $arInsert[0] . ")
 			VALUES
 			(now(), now(), " . $arInsert[1] . ")",
-            false, $err_mess . __LINE__);
+            false,
+            $err_mess . __LINE__
+        );
         $ID = $DB->LastID();
         $LOG_ID = CWorkflow::SetHistory($ID);
         CWorkflow::SetMove($ID, $arFields["STATUS_ID"], 0, $LOG_ID);
@@ -47,11 +51,15 @@ class CWorkflow extends CAllWorkflow
 
         $strUpdate = $DB->PrepareUpdate("b_workflow_document", $arFields, "workflow");
         if ($strUpdate) {
-            $DB->Query("
+            $DB->Query(
+                "
 				UPDATE b_workflow_document
 				SET " . $strUpdate . ", DATE_MODIFY=now(), DATE_ENTER=now()
 				WHERE ID = " . $DOCUMENT_ID
-                , false, $err_mess . __LINE__);
+                ,
+                false,
+                $err_mess . __LINE__
+            );
         }
 
         if ($change) {
@@ -86,23 +94,26 @@ class CWorkflow extends CAllWorkflow
         return $zr["LOCK_STATUS"];
     }
 
-    public static function GetList(&$by, &$order, $arFilter = Array(), &$is_filtered)
+    public static function GetList($by = 's_date_modify', $order = 'desc', $arFilter = [])
     {
         $err_mess = (CWorkflow::err_mess()) . "<br>Function: GetList<br>Line: ";
-        global $DB, $USER, $APPLICATION;
+        global $DB, $USER;
         $arSqlSearch = Array();
-        $strSqlSearch = "";
         $MAX_LOCK = intval(COption::GetOptionString("workflow", "MAX_LOCK_TIME", "60"));
         $arGroups = $USER->GetUserGroupArray();
-        if (!is_array($arGroups)) $arGroups[] = 2;
+        if (!is_array($arGroups)) {
+            $arGroups[] = 2;
+        }
         $groups = implode(",", $arGroups);
         $uid = intval($USER->GetID());
         if (is_array($arFilter)) {
             foreach ($arFilter as $key => $val) {
-                if (strlen($val) <= 0 || "$val" == "NOT_REF")
+                if ((string)$val == '' || "$val" == "NOT_REF") {
                     continue;
-                if (is_array($val) && count($val) <= 0)
+                }
+                if (is_array($val) && count($val) <= 0) {
                     continue;
+                }
                 $match_value_set = (array_key_exists($key . "_EXACT_MATCH", $arFilter) ? true : false);
                 $key = strtoupper($key);
                 switch ($key) {
@@ -111,12 +122,17 @@ class CWorkflow extends CAllWorkflow
                         $arSqlSearch[] = GetFilterQuery("D.ID", $val, $match);
                         break;
                     case "DATE_MODIFY_1":
-                        if (CheckDateTime($val))
+                        if (CheckDateTime($val)) {
                             $arSqlSearch[] = "D.DATE_MODIFY >= " . $DB->CharToDateFunction($val, "SHORT");
+                        }
                         break;
                     case "DATE_MODIFY_2":
-                        if (CheckDateTime($val))
-                            $arSqlSearch[] = "D.DATE_MODIFY < " . $DB->CharToDateFunction($val, "SHORT") . " + INTERVAL 1 DAY";
+                        if (CheckDateTime($val)) {
+                            $arSqlSearch[] = "D.DATE_MODIFY < " . $DB->CharToDateFunction(
+                                    $val,
+                                    "SHORT"
+                                ) . " + INTERVAL 1 DAY";
+                        }
                         break;
                     case "MODIFIED_BY":
                         $match = ($match_value_set && $arFilter[$key . "_EXACT_MATCH"] == "Y") ? "N" : "Y";
@@ -154,21 +170,28 @@ class CWorkflow extends CAllWorkflow
             }
         }
 
-        if ($by == "s_id") $strSqlOrder = "ORDER BY D.ID";
-        elseif ($by == "s_lock_status") $strSqlOrder = "ORDER BY LOCK_STATUS";
-        elseif ($by == "s_date_modify") $strSqlOrder = "ORDER BY D.DATE_MODIFY";
-        elseif ($by == "s_modified_by") $strSqlOrder = "ORDER BY D.MODIFIED_BY";
-        elseif ($by == "s_filename") $strSqlOrder = "ORDER BY D.FILENAME";
-        elseif ($by == "s_title") $strSqlOrder = "ORDER BY D.TITLE";
-        elseif ($by == "s_site_id") $strSqlOrder = "ORDER BY D.SITE_ID";
-        elseif ($by == "s_status") $strSqlOrder = "ORDER BY D.STATUS_ID";
-        else {
-            $by = "s_date_modify";
+        if ($by == "s_id") {
+            $strSqlOrder = "ORDER BY D.ID";
+        } elseif ($by == "s_lock_status") {
+            $strSqlOrder = "ORDER BY LOCK_STATUS";
+        } elseif ($by == "s_date_modify") {
+            $strSqlOrder = "ORDER BY D.DATE_MODIFY";
+        } elseif ($by == "s_modified_by") {
+            $strSqlOrder = "ORDER BY D.MODIFIED_BY";
+        } elseif ($by == "s_filename") {
+            $strSqlOrder = "ORDER BY D.FILENAME";
+        } elseif ($by == "s_title") {
+            $strSqlOrder = "ORDER BY D.TITLE";
+        } elseif ($by == "s_site_id") {
+            $strSqlOrder = "ORDER BY D.SITE_ID";
+        } elseif ($by == "s_status") {
+            $strSqlOrder = "ORDER BY D.STATUS_ID";
+        } else {
             $strSqlOrder = "ORDER BY D.DATE_MODIFY";
         }
+
         if ($order != "asc") {
             $strSqlOrder .= " desc ";
-            $order = "desc";
         }
 
         $strSqlSearch = GetFilterSqlSearch($arSqlSearch);
@@ -222,11 +245,11 @@ class CWorkflow extends CAllWorkflow
         }
 
         $rs = $DB->Query($strSql, false, $err_mess . __LINE__);
-        $is_filtered = (IsFiltered($strSqlSearch));
         $arr = array();
         while ($ar = $rs->Fetch()) {
-            if ($USER->CanDoFileOperation('fm_edit_in_workflow', Array($ar["SITE_ID"], $ar["FILENAME"])))
+            if ($USER->CanDoFileOperation('fm_edit_in_workflow', Array($ar["SITE_ID"], $ar["FILENAME"]))) {
                 $arr[] = $ar;
+            }
         }
         $rs = new CDBResult;
         $rs->InitFromArray($arr);
@@ -276,14 +299,16 @@ class CWorkflow extends CAllWorkflow
         }
 
         $obQueryWhere = new CSQLWhere;
-        $obQueryWhere->SetFields(array(
-            "STATUS_ID" => array(
-                "TABLE_ALIAS" => "D",
-                "FIELD_NAME" => "D.STATUS_ID",
-                "FIELD_TYPE" => "int",
-                "JOIN" => false,
-            ),
-        ));
+        $obQueryWhere->SetFields(
+            array(
+                "STATUS_ID" => array(
+                    "TABLE_ALIAS" => "D",
+                    "FIELD_NAME" => "D.STATUS_ID",
+                    "FIELD_TYPE" => "int",
+                    "JOIN" => false,
+                ),
+            )
+        );
         $strSqlWhere = $obQueryWhere->GetQuery($arFilter);
 
         $err_mess = (CWorkflowStatus::err_mess()) . "<br>Function: GetByFilename<br>Line: ";
@@ -318,18 +343,19 @@ class CWorkflow extends CAllWorkflow
         return $res;
     }
 
-    public static function GetHistoryList(&$by, &$order, $arFilter = Array(), &$is_filtered)
+    public static function GetHistoryList($by = 's_id', $order = 'desc', $arFilter = [])
     {
         $err_mess = (CWorkflow::err_mess()) . "<br>Function: GetHistoryList<br>Line: ";
         global $DB;
         $arSqlSearch = Array();
-        $strSqlSearch = "";
         if (is_array($arFilter)) {
             foreach ($arFilter as $key => $val) {
-                if (strlen($val) <= 0 || "$val" == "NOT_REF")
+                if ((string)$val == '' || "$val" == "NOT_REF") {
                     continue;
-                if (is_array($val) && count($val) <= 0)
+                }
+                if (is_array($val) && count($val) <= 0) {
                     continue;
+                }
                 $match_value_set = (array_key_exists($key . "_EXACT_MATCH", $arFilter)) ? true : false;
                 $key = strtoupper($key);
                 switch ($key) {
@@ -342,12 +368,17 @@ class CWorkflow extends CAllWorkflow
                         $arSqlSearch[] = GetFilterQuery("L.DOCUMENT_ID", $val, $match);
                         break;
                     case "DATE_MODIFY_1":
-                        if (CheckDateTime($val))
+                        if (CheckDateTime($val)) {
                             $arSqlSearch[] = "L.TIMESTAMP_X >= " . $DB->CharToDateFunction($val, "SHORT");
+                        }
                         break;
                     case "DATE_MODIFY_2":
-                        if (CheckDateTime($val))
-                            $arSqlSearch[] = "L.TIMESTAMP_X < " . $DB->CharToDateFunction($val, "SHORT") . " + INTERVAL 1 DAY";
+                        if (CheckDateTime($val)) {
+                            $arSqlSearch[] = "L.TIMESTAMP_X < " . $DB->CharToDateFunction(
+                                    $val,
+                                    "SHORT"
+                                ) . " + INTERVAL 1 DAY";
+                        }
                         break;
                     case "MODIFIED_BY":
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "N" && $match_value_set) ? "Y" : "N";
@@ -382,21 +413,28 @@ class CWorkflow extends CAllWorkflow
             }
         }
 
-        if ($by == "s_id") $strSqlOrder = "ORDER BY L.ID";
-        elseif ($by == "s_document_id") $strSqlOrder = "ORDER BY L.DOCUMENT_ID";
-        elseif ($by == "s_date_modify") $strSqlOrder = "ORDER BY L.TIMESTAMP_X";
-        elseif ($by == "s_modified_by") $strSqlOrder = "ORDER BY L.MODIFIED_BY";
-        elseif ($by == "s_filename") $strSqlOrder = "ORDER BY L.FILENAME";
-        elseif ($by == "s_site_id") $strSqlOrder = "ORDER BY L.SITE_ID";
-        elseif ($by == "s_title") $strSqlOrder = "ORDER BY L.TITLE";
-        elseif ($by == "s_status") $strSqlOrder = "ORDER BY L.STATUS_ID";
-        else {
-            $by = "s_id";
+        if ($by == "s_id") {
+            $strSqlOrder = "ORDER BY L.ID";
+        } elseif ($by == "s_document_id") {
+            $strSqlOrder = "ORDER BY L.DOCUMENT_ID";
+        } elseif ($by == "s_date_modify") {
+            $strSqlOrder = "ORDER BY L.TIMESTAMP_X";
+        } elseif ($by == "s_modified_by") {
+            $strSqlOrder = "ORDER BY L.MODIFIED_BY";
+        } elseif ($by == "s_filename") {
+            $strSqlOrder = "ORDER BY L.FILENAME";
+        } elseif ($by == "s_site_id") {
+            $strSqlOrder = "ORDER BY L.SITE_ID";
+        } elseif ($by == "s_title") {
+            $strSqlOrder = "ORDER BY L.TITLE";
+        } elseif ($by == "s_status") {
+            $strSqlOrder = "ORDER BY L.STATUS_ID";
+        } else {
             $strSqlOrder = "ORDER BY L.ID";
         }
+
         if ($order != "asc") {
             $strSqlOrder .= " desc ";
-            $order = "desc";
         }
 
         $strSqlSearch = GetFilterSqlSearch($arSqlSearch);
@@ -416,7 +454,7 @@ class CWorkflow extends CAllWorkflow
 			";
 
         $res = $DB->Query($strSql, false, $err_mess . __LINE__);
-        $is_filtered = (IsFiltered($strSqlSearch));
+
         return $res;
     }
 
@@ -455,7 +493,9 @@ class CWorkflow extends CAllWorkflow
 				";
             $DB->Query($strSql, false, $err_mess . __LINE__);
         }
-        if (CModule::IncludeModule("iblock")) CIblockElement::WF_CleanUpHistory();
+        if (CModule::IncludeModule("iblock")) {
+            CIblockElement::WF_CleanUpHistory();
+        }
     }
 
     public static function CleanUpPublished()

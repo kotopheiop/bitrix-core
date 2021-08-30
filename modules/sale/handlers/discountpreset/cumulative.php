@@ -81,32 +81,49 @@ final class Cumulative extends BasePreset
 			<table width="100%" border="0" cellspacing="7" cellpadding="0">
 				<tbody>
 				<tr>
-					<td class="adm-detail-content-cell-l" style="width:25%;"><strong>' . Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_LABEL_RANGES') . ':</strong></td>
+					<td class="adm-detail-content-cell-l" style="width:25%;"><strong>' . Loc::getMessage(
+                'SALE_HANDLERS_DISCOUNTPRESET_LABEL_RANGES'
+            ) . ':</strong></td>
 					<td class="adm-detail-content-cell-r" style="width:75%;">
 						<table id="range_table" style="width: auto;" class="internal" border="0" cellspacing="7" cellpadding="0">
 							<tbody>
 							<tr class="heading">
-								<td align="center">' . Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_H_SUM', array('#CURRENCY#' => $currency,)) . '</td>
-								<td align="center">' . Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_H_DISCOUNT_VALUE') . '</td>
+								<td align="center">' . Loc::getMessage(
+                'SALE_HANDLERS_DISCOUNTPRESET_H_SUM',
+                array('#CURRENCY#' => $currency,)
+            ) . '</td>
+								<td align="center">' . Loc::getMessage(
+                'SALE_HANDLERS_DISCOUNTPRESET_H_DISCOUNT_VALUE'
+            ) . '</td>
 							</tr>
 							' . $rows . '
 							' . $templateRow . '
 						</table>
 						<div style="width: 100%; text-align: left; margin-top: 10px;">
-							<input id="clone_range" class="adm-btn" type="button" value="' . Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_DISCOUNT_ADD_RANGE') . '">
+							<input id="clone_range" class="adm-btn" type="button" value="' . Loc::getMessage(
+                'SALE_HANDLERS_DISCOUNTPRESET_DISCOUNT_ADD_RANGE'
+            ) . '">
 						</div>
 					</td>
 				</tr>
 				
 				<tr>
-					<td class="adm-detail-content-cell-l" style="width:25%;"><strong>' . Loc::getMessage('SALE_BASE_PRESET_ACTIVE_PERIOD') . ':</strong></td>
+					<td class="adm-detail-content-cell-l" style="width:25%;"><strong>' . Loc::getMessage(
+                'SALE_BASE_PRESET_ACTIVE_PERIOD'
+            ) . ':</strong></td>
 					<td class="adm-detail-content-cell-r">' .
             HtmlHelper::generateSelect(
                 'discount_type_sum_period',
                 array(
-                    self::TYPE_COUNT_PERIOD_ALL_TIME => Loc::getMessage("SALE_HANDLERS_DISCOUNTPRESET_CUMULATIVE_TYPE_COUNT_PERIOD_ALL_TIME"),
-                    self::TYPE_COUNT_PERIOD_INTERVAL => Loc::getMessage("SALE_HANDLERS_DISCOUNTPRESET_CUMULATIVE_TYPE_COUNT_PERIOD_INTERVAL"),
-                    self::TYPE_COUNT_PERIOD_RELATIVE => Loc::getMessage("SALE_HANDLERS_DISCOUNTPRESET_CUMULATIVE_TYPE_COUNT_PERIOD_RELATIVE"),
+                    self::TYPE_COUNT_PERIOD_ALL_TIME => Loc::getMessage(
+                        "SALE_HANDLERS_DISCOUNTPRESET_CUMULATIVE_TYPE_COUNT_PERIOD_ALL_TIME"
+                    ),
+                    self::TYPE_COUNT_PERIOD_INTERVAL => Loc::getMessage(
+                        "SALE_HANDLERS_DISCOUNTPRESET_CUMULATIVE_TYPE_COUNT_PERIOD_INTERVAL"
+                    ),
+                    self::TYPE_COUNT_PERIOD_RELATIVE => Loc::getMessage(
+                        "SALE_HANDLERS_DISCOUNTPRESET_CUMULATIVE_TYPE_COUNT_PERIOD_RELATIVE"
+                    ),
                 ),
                 $state['discount_type_sum_period']
             ) . '
@@ -114,17 +131,34 @@ final class Cumulative extends BasePreset
 				</tr>
 
 				<tr id="tr_interval_start" class="js-date-interval" style="display: none;">
-					<td class="adm-detail-content-cell-l" width="25%">' . Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_CUMULATIVE_PERIOD_START') . ':</td>
-					<td class="adm-detail-content-cell-r" width="75%">' . \CAdminCalendar::CalendarDate('discount_sum_order_start', $state['discount_sum_order_start'], 19, true) . '</td>
+					<td class="adm-detail-content-cell-l" width="25%">' . Loc::getMessage(
+                'SALE_HANDLERS_DISCOUNTPRESET_CUMULATIVE_PERIOD_START'
+            ) . ':</td>
+					<td class="adm-detail-content-cell-r" width="75%">' . \CAdminCalendar::CalendarDate(
+                'discount_sum_order_start',
+                $state['discount_sum_order_start'],
+                19,
+                true
+            ) . '</td>
 				</tr>
 				<tr id="tr_interval_end" class="js-date-interval" style="display: none;">
-					<td class="adm-detail-content-cell-l" width="25%">' . Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_CUMULATIVE_PERIOD_END') . ':</td>
-					<td class="adm-detail-content-cell-r" width="75%">' . \CAdminCalendar::CalendarDate('discount_sum_order_end', $state['discount_sum_order_end'], 19, true) . '</td>
+					<td class="adm-detail-content-cell-l" width="25%">' . Loc::getMessage(
+                'SALE_HANDLERS_DISCOUNTPRESET_CUMULATIVE_PERIOD_END'
+            ) . ':</td>
+					<td class="adm-detail-content-cell-r" width="75%">' . \CAdminCalendar::CalendarDate(
+                'discount_sum_order_end',
+                $state['discount_sum_order_end'],
+                19,
+                true
+            ) . '</td>
 				</tr>
 				<tr id="tr_relative" class="js-date-relative" style="display: none;">
-					<td class="adm-detail-content-cell-l" width="25%">' . Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_CUMULATIVE_PERIOD_RELATIVE') . ':</td>
+					<td class="adm-detail-content-cell-l" width="25%">' . Loc::getMessage(
+                'SALE_HANDLERS_DISCOUNTPRESET_CUMULATIVE_PERIOD_RELATIVE'
+            ) . ':</td>
 					<td class="adm-detail-content-cell-r" width="75%"><input type="text" name="discount_sum_period_value" id="discount_sum_period_value" value="' . $state['discount_sum_period_value'] . '" size="7" maxlength="10">&nbsp;' .
-            HtmlHelper::generateSelect('discount_sum_period_type',
+            HtmlHelper::generateSelect(
+                'discount_sum_period_type',
                 array(
                     'Y' => Loc::getMessage("SALE_HANDLERS_DISCOUNTPRESET_CUMULATIVE_PERIOD_RELATIVE_Y"),
                     'M' => Loc::getMessage("SALE_HANDLERS_DISCOUNTPRESET_CUMULATIVE_PERIOD_RELATIVE_M"),
@@ -135,15 +169,25 @@ final class Cumulative extends BasePreset
 					</td>
 				</tr>
 				<tr>
-					<td class="adm-detail-content-cell-l" style="width:25%;"><strong>' . Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_DONT_APPLY_IF_THERE_IS_DISCOUNTS') . ':</strong></td>
+					<td class="adm-detail-content-cell-l" style="width:25%;"><strong>' . Loc::getMessage(
+                'SALE_HANDLERS_DISCOUNTPRESET_DONT_APPLY_IF_THERE_IS_DISCOUNTS'
+            ) . ':</strong></td>
 					<td class="adm-detail-content-cell-r">
-						<input type="checkbox" name="discount_skip_if_there_were_discounts" value="Y" ' . ($state->get('discount_skip_if_there_were_discounts', 'N') == 'Y' ? 'checked' : '') . '>
+						<input type="checkbox" name="discount_skip_if_there_were_discounts" value="Y" ' . ($state->get(
+                'discount_skip_if_there_were_discounts',
+                'N'
+            ) == 'Y' ? 'checked' : '') . '>
 					</td>
 				</tr>
 				<tr>
-					<td class="adm-detail-content-cell-l" style="width:25%;"><strong>' . Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_APPLY_IF_MORE_PROFITABLE_DISCOUNT') . ':</strong></td>
+					<td class="adm-detail-content-cell-l" style="width:25%;"><strong>' . Loc::getMessage(
+                'SALE_HANDLERS_DISCOUNTPRESET_APPLY_IF_MORE_PROFITABLE_DISCOUNT'
+            ) . ':</strong></td>
 					<td class="adm-detail-content-cell-r">
-						<input type="checkbox" name="discount_apply_if_more_profitable" value="Y" ' . ($state->get('discount_apply_if_more_profitable', 'N') == 'Y' ? 'checked' : '') . '>
+						<input type="checkbox" name="discount_apply_if_more_profitable" value="Y" ' . ($state->get(
+                'discount_apply_if_more_profitable',
+                'N'
+            ) == 'Y' ? 'checked' : '') . '>
 					</td>
 				</tr>
 				
@@ -208,7 +252,7 @@ final class Cumulative extends BasePreset
         $html = '';
         foreach ($state->get('discount_ranges', $this->getDefaultRowValues()) as $i => $range) {
             if (
-                empty($range['sum']) ||
+                ($range['sum'] === '' || $range['sum'] === null) ||
                 empty($range['value']) ||
                 empty($range['type'])
             ) {
@@ -280,7 +324,9 @@ final class Cumulative extends BasePreset
             }
 
             if (!isset($rangeValue[$i])) {
-                $this->errorCollection[] = new Error(Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_CUMULATIVE_ERROR_BAD_RANGE'));
+                $this->errorCollection[] = new Error(
+                    Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_CUMULATIVE_ERROR_BAD_RANGE')
+                );
 
                 return null;
             }
@@ -289,13 +335,17 @@ final class Cumulative extends BasePreset
             $rangeValue[$i] = doubleval($rangeValue[$i]);
 
             if ($rangeValue[$i] <= 0) {
-                $this->errorCollection[] = new Error(Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_CUMULATIVE_ERROR_RANGE_VALUE'));
+                $this->errorCollection[] = new Error(
+                    Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_CUMULATIVE_ERROR_RANGE_VALUE')
+                );
 
                 return null;
             }
 
             if ($rangeType[$i] === self::TYPE_PERCENT && $rangeValue[$i] > 100) {
-                $this->errorCollection[] = new Error(Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_CUMULATIVE_ERROR_RANGE_VALUE'));
+                $this->errorCollection[] = new Error(
+                    Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_CUMULATIVE_ERROR_RANGE_VALUE')
+                );
 
                 return null;
             }
@@ -316,7 +366,9 @@ final class Cumulative extends BasePreset
         $prevSum = null;
         foreach ($matrix as $row) {
             if ($row['sum'] === $prevSum) {
-                $this->errorCollection[] = new Error(Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_CUMULATIVE_ERROR_RANGE_FROM_DUPLICATE'));
+                $this->errorCollection[] = new Error(
+                    Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_CUMULATIVE_ERROR_RANGE_FROM_DUPLICATE')
+                );
 
                 return null;
             }
@@ -356,11 +408,15 @@ final class Cumulative extends BasePreset
                 break;
         }
 
-        if ($state['discount_skip_if_there_were_discounts'] !== 'Y' || !$this->request->getPost('discount_skip_if_there_were_discounts')) {
+        if ($state['discount_skip_if_there_were_discounts'] !== 'Y' || !$this->request->getPost(
+                'discount_skip_if_there_were_discounts'
+            )) {
             $state['discount_skip_if_there_were_discounts'] = 'N';
         }
 
-        if ($state['discount_apply_if_more_profitable'] !== 'Y' || !$this->request->getPost('discount_apply_if_more_profitable')) {
+        if ($state['discount_apply_if_more_profitable'] !== 'Y' || !$this->request->getPost(
+                'discount_apply_if_more_profitable'
+            )) {
             $state['discount_apply_if_more_profitable'] = 'N';
         }
 
@@ -398,15 +454,24 @@ final class Cumulative extends BasePreset
     {
         $discountFields = $this->normalizeDiscountFields($discountFields);
 
-        $firstChildrenControlId = ArrayHelper::getByPath($discountFields, 'ACTIONS.CHILDREN.0.CHILDREN.0.CLASS_ID') === \CSaleActionCondCtrlBasketFields::CONTROL_ID_APPLIED_DISCOUNT;
+        $firstChildrenControlId = ArrayHelper::getByPath(
+                $discountFields,
+                'ACTIONS.CHILDREN.0.CHILDREN.0.CLASS_ID'
+            ) === \CSaleActionCondCtrlBasketFields::CONTROL_ID_APPLIED_DISCOUNT;
         $stateFields = array(
             'discount_lid' => $discountFields['LID'],
             'discount_name' => $discountFields['NAME'],
             'discount_groups' => $this->getUserGroupsByDiscount($discountFields['ID']),
             'discount_ranges' => ArrayHelper::getByPath($discountFields, 'ACTIONS.CHILDREN.0.DATA.ranges'),
-            'discount_type_sum_period' => ArrayHelper::getByPath($discountFields, 'ACTIONS.CHILDREN.0.DATA.type_sum_period'),
+            'discount_type_sum_period' => ArrayHelper::getByPath(
+                $discountFields,
+                'ACTIONS.CHILDREN.0.DATA.type_sum_period'
+            ),
             'discount_skip_if_there_were_discounts' => $firstChildrenControlId ? 'Y' : '',
-            'discount_apply_if_more_profitable' => ArrayHelper::getByPath($discountFields, 'ACTIONS.CHILDREN.0.DATA.apply_if_more_profitable'),
+            'discount_apply_if_more_profitable' => ArrayHelper::getByPath(
+                $discountFields,
+                'ACTIONS.CHILDREN.0.DATA.apply_if_more_profitable'
+            ),
             'discount_sum_order_start' => '',
             'discount_sum_order_end' => '',
             'discount_sum_period_value' => '',
@@ -414,12 +479,20 @@ final class Cumulative extends BasePreset
         );
 
         $periodData = ArrayHelper::getByPath($discountFields, 'ACTIONS.CHILDREN.0.DATA.sum_period_data', array());
-        $stateFields = array_merge($stateFields, array_filter(array_intersect_key($periodData, array(
-            'discount_sum_order_start' => true,
-            'discount_sum_order_end' => true,
-            'discount_sum_period_value' => true,
-            'discount_sum_period_type' => true,
-        ))));
+        $stateFields = array_merge(
+            $stateFields,
+            array_filter(
+                array_intersect_key(
+                    $periodData,
+                    array(
+                        'discount_sum_order_start' => true,
+                        'discount_sum_order_end' => true,
+                        'discount_sum_period_value' => true,
+                        'discount_sum_period_type' => true,
+                    )
+                )
+            )
+        );
 
         return parent::generateState($discountFields)->append($stateFields);
     }
@@ -446,36 +519,39 @@ final class Cumulative extends BasePreset
             );
         }
 
-        return array_merge(parent::generateDiscount($state), array(
-            'CONDITIONS' => array(
-                'CLASS_ID' => 'CondGroup',
-                'DATA' => array(
-                    'All' => 'AND',
-                    'True' => 'True',
+        return array_merge(
+            parent::generateDiscount($state),
+            array(
+                'CONDITIONS' => array(
+                    'CLASS_ID' => 'CondGroup',
+                    'DATA' => array(
+                        'All' => 'AND',
+                        'True' => 'True',
+                    ),
+                    'CHILDREN' => array(),
                 ),
-                'CHILDREN' => array(),
-            ),
-            'ACTIONS' => array(
-                'CLASS_ID' => 'CondGroup',
-                'DATA' => array(
-                    'All' => 'AND',
-                ),
-                'CHILDREN' => array(
-                    array(
-                        'CLASS_ID' => \CSaleCumulativeAction::getControlID(),
-                        'DATA' => array(
-                            'ranges' => $state['discount_ranges'],
-                            'type_sum_period' => $state['discount_type_sum_period'],
-                            'sum_period_data' => $periodData,
-                            'apply_if_more_profitable' => $state['discount_apply_if_more_profitable'],
-                            'All' => 'AND',
-                            'True' => 'True',
+                'ACTIONS' => array(
+                    'CLASS_ID' => 'CondGroup',
+                    'DATA' => array(
+                        'All' => 'AND',
+                    ),
+                    'CHILDREN' => array(
+                        array(
+                            'CLASS_ID' => \CSaleCumulativeAction::getControlID(),
+                            'DATA' => array(
+                                'ranges' => $state['discount_ranges'],
+                                'type_sum_period' => $state['discount_type_sum_period'],
+                                'sum_period_data' => $periodData,
+                                'apply_if_more_profitable' => $state['discount_apply_if_more_profitable'],
+                                'All' => 'AND',
+                                'True' => 'True',
+                            ),
+                            'CHILDREN' => $filterChildren,
                         ),
-                        'CHILDREN' => $filterChildren,
                     ),
                 ),
-            ),
-        ));
+            )
+        );
     }
 
     /**

@@ -1,9 +1,11 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/fileman/prolog.php");
 $FM_RIGHT = $APPLICATION->GetGroupRight("fileman");
-if (!($USER->CanDoOperation('fileman_admin_files') || $USER->CanDoOperation('fileman_edit_existent_files')))
+if (!($USER->CanDoOperation('fileman_admin_files') || $USER->CanDoOperation('fileman_edit_existent_files'))) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/fileman/include.php");
 
@@ -27,14 +29,18 @@ if ($REQUEST_METHOD == "POST" && strlen($saveimg) > 0 && check_bitrix_sessid()) 
         $strWarning = GetMessage('FILEMAN_CAN_NOT_WRITE') . "<br>";
     } else {
         $file_name = CFileman::GetFileName($newfilename);
-        if (strlen($file_name) <= 0 || $file_name == "none")
+        if (strlen($file_name) <= 0 || $file_name == "none") {
             continue;
+        }
 
-        if (!$USER->IsAdmin() && (in_array(CFileman::GetFileExtension($file_name), CFileMan::GetScriptFileExt()) || $file_name[0] == "."))
+        if (!$USER->IsAdmin() && (in_array(
+                    CFileman::GetFileExtension($file_name),
+                    CFileMan::GetScriptFileExt()
+                ) || $file_name[0] == ".")) {
             $strWarning .= GetMessage("FILEMAN_UPLOAD_BAD_TYPE") . "\n";
-        elseif ($io->FileExists($abs_path . "/" . $file_name))
+        } elseif ($io->FileExists($abs_path . "/" . $file_name)) {
             $strWarning = GetMessage("FILEMAN_FILE_EXIST") . "<br>";
-        else {
+        } else {
             if ($io->Copy($_FILES["imagefile"]["tmp_name"], $abs_path . "/" . $file_name)) {
                 $bUploaded = true;
                 $f = $io->GetFile($abs_path . "/" . $file_name);
@@ -101,7 +107,9 @@ else:
         <?if ($WF_CONVERT == "Y"):?>
         function WF_OnFileSelect(strPath, strTemp) {
             var src;
-            src = "/bitrix/admin/workflow_get_file.php?cash=Y&did=<?=intval($DOCUMENT_ID)?>&wf_path=<?=urlencode($WF_PATH)?>&fname=" + strPath;
+            src = "/bitrix/admin/workflow_get_file.php?cash=Y&did=<?=intval($DOCUMENT_ID)?>&wf_path=<?=urlencode(
+                $WF_PATH
+            )?>&fname=" + strPath;
             imageupload.url.value = strPath;
             if (imageupload.preview)
                 imageupload.preview.src = src;
@@ -151,9 +159,10 @@ else:
         <table cellpadding="0" cellspacing="0" border="0" width="100%">
             <tr>
                 <td width="0%">
-                    <iframe name="filelist"
-                            src="fileman_file_list.php?path=<? echo urlencode(isset($lopendir) ? $lopendir : $path) ?>&site=<?= urlencode($site) ?>&lang=<? echo LANG ?>&type=<?= urlencode($type) ?>"
-                            width="450" height="250"></iframe>
+                    <iframe name="filelist" src="fileman_file_list.php?path=<? echo urlencode(
+                        isset($lopendir) ? $lopendir : $path
+                    ) ?>&site=<?= urlencode($site) ?>&lang=<? echo LANG ?>&type=<?= urlencode($type) ?>" width="450"
+                            height="250"></iframe>
                 </td>
                 <? if ($type == "image"):?>
                     <td width="2%">&nbsp;</td>
@@ -192,8 +201,9 @@ else:
                 <br>
                 <table border="0" cellspacing="0" cellpadding="0" width="450">
                     <tr>
-                        <td colspan="2" align="left"><font
-                                    class="tableheadtext"><b><?= GetMessage('FILEMAN_UPLOADED_FILES') ?></b></font></td>
+                        <td colspan="2" align="left"><font class="tableheadtext"><b><?= GetMessage(
+                                        'FILEMAN_UPLOADED_FILES'
+                                    ) ?></b></font></td>
                     </tr>
                     <tr>
                         <td align="center" colspan="2" width="0%">
@@ -205,17 +215,21 @@ else:
                                                 <td class="tablehead" align="center"><font
                                                             class="tableheadtext">ID</font></td>
                                                 <td class="tablehead" align="center" width="50%"><font
-                                                            class="tableheadtext"><?= GetMessage("FILEMAN_FILENAME") ?></font>
-                                                </td>
+                                                            class="tableheadtext"><?= GetMessage(
+                                                            "FILEMAN_FILENAME"
+                                                        ) ?></font></td>
                                                 <td class="tablehead" align="center"><font
-                                                            class="tableheadtext"><?= GetMessage("FILEMAN_SIZE") ?></font>
-                                                </td>
+                                                            class="tableheadtext"><?= GetMessage(
+                                                            "FILEMAN_SIZE"
+                                                        ) ?></font></td>
                                                 <td class="tablehead" align="center"><font
-                                                            class="tableheadtext"><?= GetMessage("FILEMAN_FILE_LOADED") ?></font>
-                                                </td>
+                                                            class="tableheadtext"><?= GetMessage(
+                                                            "FILEMAN_FILE_LOADED"
+                                                        ) ?></font></td>
                                                 <td class="tablehead" align="center" width="50%"><font
-                                                            class="tableheadtext"><?= GetMessage("FILEMAN_UPLOADED_BY") ?></font>
-                                                </td>
+                                                            class="tableheadtext"><?= GetMessage(
+                                                            "FILEMAN_UPLOADED_BY"
+                                                        ) ?></font></td>
                                             </tr>
                                             <?
                                             while ($zr = $doc_files->GetNext()) :
@@ -226,9 +240,12 @@ else:
                                                         <td class="tablebody"><font
                                                                     class="tablebodytext"><?= $zr["ID"] ?></font></td>
                                                         <td class="tablebody"><font class="tablebodytext"><a
-                                                                        onclick="WF_OnFileSelect('<?= AddSlashes(htmlspecialcharsex($zr["FILENAME"])) ?>'); return false;"
-                                                                        href="javascript:void(0)"><?= htmlspecialcharsex($zr["FILENAME"]) ?></a></font>
-                                                        </td>
+                                                                        onclick="WF_OnFileSelect('<?= AddSlashes(
+                                                                            htmlspecialcharsex($zr["FILENAME"])
+                                                                        ) ?>'); return false;"
+                                                                        href="javascript:void(0)"><?= htmlspecialcharsex(
+                                                                        $zr["FILENAME"]
+                                                                    ) ?></a></font></td>
                                                         <td class="tablebody" align="right"><font
                                                                     class="tablebodytext"><?= $zr["FILESIZE"] ?></font>
                                                         </td>
@@ -258,8 +275,9 @@ else:
         <br>
         <table width="100%" border="0" cellspacing="0" cellpadding="0">
             <tr>
-                <td colspan="2" align="left"><font
-                            class="tableheadtext"><b><?= GetMessage('FILEMAN_SELECT_IMAGE') ?></b></font></td>
+                <td colspan="2" align="left"><font class="tableheadtext"><b><?= GetMessage(
+                                'FILEMAN_SELECT_IMAGE'
+                            ) ?></b></font></td>
             </tr>
             <tr>
                 <td width="0%" align="right"><font class="tablebodytext">&nbsp;URL:&nbsp;</font></td>
@@ -268,15 +286,17 @@ else:
                                                                                                    type="button"
                                                                                                    name="bSelect"
                                                                                                    onclick="SelectImage(imageupload.url.value)"
-                                                                                                   value="<?= GetMessage('FILEMAN_SELECT_IMAGE') ?>"></font>
-                </td>
+                                                                                                   value="<?= GetMessage(
+                                                                                                       'FILEMAN_SELECT_IMAGE'
+                                                                                                   ) ?>"></font></td>
             </tr>
             <tr>
                 <td colspan="2" nowrap align="center"></td>
             </tr>
             <tr>
-                <td colspan="2" nowrap align="left"><font
-                            class="tableheadtext"><b><?= GetMessage('FILEMAN_UPLOAD_IMAGE') ?></b></font></td>
+                <td colspan="2" nowrap align="left"><font class="tableheadtext"><b><?= GetMessage(
+                                'FILEMAN_UPLOAD_IMAGE'
+                            ) ?></b></font></td>
             </tr>
             <tr>
                 <td nowrap align="right"><font class="tablebodytext">&nbsp;<?= GetMessage('FILEMAN_FILE') ?>

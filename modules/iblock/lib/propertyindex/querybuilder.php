@@ -62,8 +62,9 @@ class QueryBuilder
     public function getFilterSql(&$filter, &$sqlSearch)
     {
         if (array_key_exists("FACET_OPTIONS", $filter)) {
-            if (is_array($filter["FACET_OPTIONS"]))
+            if (is_array($filter["FACET_OPTIONS"])) {
                 $this->options = $filter["FACET_OPTIONS"];
+            }
             unset($filter["FACET_OPTIONS"]);
         }
 
@@ -86,8 +87,9 @@ class QueryBuilder
                 $toUnset[] = array(&$filter, "INCLUDE_SUBSECTIONS");
             } else {
                 $subsectionsCondition = "INCLUDE_SUBSECTIONS=1";
-                if (array_key_exists("INCLUDE_SUBSECTIONS", $filter))
+                if (array_key_exists("INCLUDE_SUBSECTIONS", $filter)) {
                     $toUnset[] = array(&$filter, "INCLUDE_SUBSECTIONS");
+                }
             }
 
             $hasAdditionalFilters = false;
@@ -118,8 +120,12 @@ class QueryBuilder
                 $filter["SECTION_ID"] = (isset($filter["SECTION_ID"]) ? (int)$filter["SECTION_ID"] : 0);
                 $this->facet->setSectionId($filter["SECTION_ID"]);
                 if ($this->options) {
-                    if ($this->options["CURRENCY_CONVERSION"])
-                        $this->facet->enableCurrencyConversion($this->options["CURRENCY_CONVERSION"]["TO"], $this->options["CURRENCY_CONVERSION"]["FROM"]);
+                    if ($this->options["CURRENCY_CONVERSION"]) {
+                        $this->facet->enableCurrencyConversion(
+                            $this->options["CURRENCY_CONVERSION"]["TO"],
+                            $this->options["CURRENCY_CONVERSION"]["FROM"]
+                        );
+                    }
                 }
                 $distinctSelectCapable = (\Bitrix\Main\Application::getConnection()->getType() == "mysql");
                 if (count($where) == 1 && $distinctSelectCapable) {
@@ -127,25 +133,29 @@ class QueryBuilder
                     $fcJoin = "INNER JOIN " . $this->storage->getTableName() . " FC on FC.ELEMENT_ID = BE.ID";
                     foreach ($where as $facetFilter) {
                         $sqlWhere = $this->facet->whereToSql($facetFilter, "FC", $subsectionsCondition);
-                        if ($sqlWhere)
+                        if ($sqlWhere) {
                             $sqlSearch[] = $sqlWhere;
+                        }
                     }
                 } elseif (count($where) <= 5) {
                     $subJoin = "";
                     $subWhere = "";
                     $i = 0;
                     foreach ($where as $facetFilter) {
-                        if ($i == 0)
+                        if ($i == 0) {
                             $subJoin .= "FROM " . $this->storage->getTableName() . " FC$i\n";
-                        else
-                            $subJoin .= "INNER JOIN " . $this->storage->getTableName() . " FC$i ON FC$i.ELEMENT_ID = FC0.ELEMENT_ID\n";
+                        } else {
+                            $subJoin .= "INNER JOIN " . $this->storage->getTableName(
+                                ) . " FC$i ON FC$i.ELEMENT_ID = FC0.ELEMENT_ID\n";
+                        }
 
                         $sqlWhere = $this->facet->whereToSql($facetFilter, "FC$i", $subsectionsCondition);
                         if ($sqlWhere) {
-                            if ($subWhere)
+                            if ($subWhere) {
                                 $subWhere .= "\nAND " . $sqlWhere;
-                            else
+                            } else {
                                 $subWhere .= $sqlWhere;
+                            }
                         }
 
                         $i++;
@@ -163,8 +173,9 @@ class QueryBuilder
                     $condition = array();
                     foreach ($where as $facetFilter) {
                         $sqlWhere = $this->facet->whereToSql($facetFilter, "FC0", $subsectionsCondition);
-                        if ($sqlWhere)
+                        if ($sqlWhere) {
                             $condition[] = $sqlWhere;
+                        }
                     }
                     $fcJoin = "
 						INNER JOIN (
@@ -202,11 +213,13 @@ class QueryBuilder
      */
     private function fillWhere(&$where, &$hasAdditionalFilters, &$toUnset, &$filter)
     {
+        $countUnset = count($toUnset);
         $properties = null;
         foreach ($filter as $filterKey => $filterValue) {
             if (preg_match("/^(=)PROPERTY\$/i", $filterKey, $keyDetails) && is_array($filterValue)) {
-                if ($properties === null)
+                if ($properties === null) {
                     $properties = $this->getFilterProperty();
+                }
 
                 foreach ($filterValue as $propertyId => $value) {
                     $facetId = $this->storage->propertyIdToFacetId($propertyId);
@@ -224,8 +237,9 @@ class QueryBuilder
                     }
                 }
             } elseif (preg_match("/^(=)PROPERTY_(\\d+)\$/i", $filterKey, $keyDetails)) {
-                if ($properties === null)
+                if ($properties === null) {
                     $properties = $this->getFilterProperty();
+                }
 
                 $propertyId = $keyDetails[2];
                 $value = $filterValue;
@@ -243,16 +257,18 @@ class QueryBuilder
                     }
                 }
             } elseif (preg_match("/^(>=|<=)PROPERTY\$/i", $filterKey, $keyDetails) && is_array($filterValue)) {
-                if ($properties === null)
+                if ($properties === null) {
                     $properties = $this->getFilterProperty();
+                }
 
                 foreach ($filterValue as $propertyId => $value) {
                     $facetId = $this->storage->propertyIdToFacetId($propertyId);
                     if ($properties[$propertyId] == Storage::NUMERIC) {
-                        if (is_array($value))
+                        if (is_array($value)) {
                             $doubleValue = doubleval(current($value));
-                        else
+                        } else {
                             $doubleValue = doubleval($value);
+                        }
                         $where[] = array(
                             "TYPE" => Storage::NUMERIC,
                             "OP" => $keyDetails[1],
@@ -261,10 +277,11 @@ class QueryBuilder
                         );
                         $toUnset[] = array(&$filter[$filterKey], $propertyId);
                     } elseif ($properties[$propertyId] == Storage::DATETIME) {
-                        if (is_array($value))
+                        if (is_array($value)) {
                             $timestamp = MakeTimeStamp(current($value), "YYYY-MM-DD HH:MI:SS");
-                        else
+                        } else {
                             $timestamp = MakeTimeStamp($value, "YYYY-MM-DD HH:MI:SS");
+                        }
                         $where[] = array(
                             "TYPE" => Storage::DATETIME,
                             "OP" => $keyDetails[1],
@@ -275,8 +292,9 @@ class QueryBuilder
                     }
                 }
             } elseif (preg_match("/^(><)PROPERTY\$/i", $filterKey, $keyDetails) && is_array($filterValue)) {
-                if ($properties === null)
+                if ($properties === null) {
                     $properties = $this->getFilterProperty();
+                }
 
                 foreach ($filterValue as $propertyId => $value) {
                     $facetId = $this->storage->propertyIdToFacetId($propertyId);
@@ -390,6 +408,11 @@ class QueryBuilder
                 $hasAdditionalFilters = true;
             }
         }
+        if ($hasAdditionalFilters) {
+            while (count($toUnset) > $countUnset) {
+                array_pop($toUnset);
+            }
+        }
     }
 
     /**
@@ -406,19 +429,19 @@ class QueryBuilder
 
         if (is_array($value)) {
             foreach ($value as $val) {
-                if (strlen($val) > 0) {
+                if ((string)$val <> '') {
                     if ($lookup) {
                         $result[] = $this->dictionary->getStringId($val, false);
                     } else {
-                        $result[] = intval($val);
+                        $result[] = (int)$val;
                     }
                 }
             }
-        } elseif (strlen($value) > 0) {
+        } elseif ((string)$value <> '') {
             if ($lookup) {
                 $result[] = $this->dictionary->getStringId($value, false);
             } else {
-                $result[] = intval($value);
+                $result[] = (int)$value;
             }
         }
 
@@ -437,22 +460,25 @@ class QueryBuilder
         //TODO: remove this code to \Bitrix\Iblock\Model\Property
         if (!isset($this->propertyFilter)) {
             $this->propertyFilter = array();
-            $propertyList = \Bitrix\Iblock\SectionPropertyTable::getList(array(
-                "select" => array("PROPERTY_ID", "PROPERTY.PROPERTY_TYPE", "PROPERTY.USER_TYPE"),
-                "filter" => array(
-                    "=IBLOCK_ID" => array($this->facet->getIblockId(), $this->facet->getSkuIblockId()),
-                    "=SMART_FILTER" => "Y",
-                ),
-            ));
+            $propertyList = \Bitrix\Iblock\SectionPropertyTable::getList(
+                array(
+                    "select" => array("PROPERTY_ID", "PROPERTY.PROPERTY_TYPE", "PROPERTY.USER_TYPE"),
+                    "filter" => array(
+                        "=IBLOCK_ID" => array($this->facet->getIblockId(), $this->facet->getSkuIblockId()),
+                        "=SMART_FILTER" => "Y",
+                    ),
+                )
+            );
             while ($link = $propertyList->fetch()) {
-                if ($link["IBLOCK_SECTION_PROPERTY_PROPERTY_PROPERTY_TYPE"] === "N")
+                if ($link["IBLOCK_SECTION_PROPERTY_PROPERTY_PROPERTY_TYPE"] === "N") {
                     $this->propertyFilter[$link["PROPERTY_ID"]] = Storage::NUMERIC;
-                elseif ($link["IBLOCK_SECTION_PROPERTY_PROPERTY_USER_TYPE"] === "DateTime")
+                } elseif ($link["IBLOCK_SECTION_PROPERTY_PROPERTY_USER_TYPE"] === "DateTime") {
                     $this->propertyFilter[$link["PROPERTY_ID"]] = Storage::DATETIME;
-                elseif ($link["IBLOCK_SECTION_PROPERTY_PROPERTY_PROPERTY_TYPE"] === "S")
+                } elseif ($link["IBLOCK_SECTION_PROPERTY_PROPERTY_PROPERTY_TYPE"] === "S") {
                     $this->propertyFilter[$link["PROPERTY_ID"]] = Storage::STRING;
-                else
+                } else {
                     $this->propertyFilter[$link["PROPERTY_ID"]] = Storage::DICTIONARY;
+                }
             }
         }
         return $this->propertyFilter;

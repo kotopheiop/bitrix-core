@@ -72,8 +72,15 @@ class Element implements Controllable, Errorable
      */
     public function add()
     {
-        $this->param->checkRequiredInputParams(["IBLOCK_TYPE_ID", "IBLOCK_CODE", "IBLOCK_ID",
-            "ELEMENT_CODE", ["FIELDS" => ["NAME"]]]);
+        $this->param->checkRequiredInputParams(
+            [
+                "IBLOCK_TYPE_ID",
+                "IBLOCK_CODE",
+                "IBLOCK_ID",
+                "ELEMENT_CODE",
+                ["FIELDS" => ["NAME"]]
+            ]
+        );
         if ($this->param->hasErrors()) {
             $this->errorCollection->add($this->param->getErrors());
             return false;
@@ -139,8 +146,15 @@ class Element implements Controllable, Errorable
      */
     public function update()
     {
-        $this->param->checkRequiredInputParams(["IBLOCK_TYPE_ID", "IBLOCK_CODE", "IBLOCK_ID",
-            "ELEMENT_CODE", "ELEMENT_ID"]);
+        $this->param->checkRequiredInputParams(
+            [
+                "IBLOCK_TYPE_ID",
+                "IBLOCK_CODE",
+                "IBLOCK_ID",
+                "ELEMENT_CODE",
+                "ELEMENT_ID"
+            ]
+        );
         if ($this->param->hasErrors()) {
             $this->errorCollection->add($this->param->getErrors());
             return false;
@@ -165,7 +179,12 @@ class Element implements Controllable, Errorable
         if ($updateResult) {
             if ($startUpBp) {
                 $changedElementFields = \CLists::checkChangedFields(
-                    $this->iblockId, $this->elementId, $elementSelect, $elementFields, $elementProperty);
+                    $this->iblockId,
+                    $this->elementId,
+                    $elementSelect,
+                    $elementFields,
+                    $elementProperty
+                );
                 $this->startBizproc($documentStates, $bizprocParameters, $changedElementFields);
             }
             if ($this->hasErrors()) {
@@ -190,8 +209,15 @@ class Element implements Controllable, Errorable
      */
     public function delete()
     {
-        $this->param->checkRequiredInputParams(["IBLOCK_TYPE_ID", "IBLOCK_CODE", "IBLOCK_ID",
-            "ELEMENT_CODE", "ELEMENT_ID"]);
+        $this->param->checkRequiredInputParams(
+            [
+                "IBLOCK_TYPE_ID",
+                "IBLOCK_CODE",
+                "IBLOCK_ID",
+                "ELEMENT_CODE",
+                "ELEMENT_ID"
+            ]
+        );
         if ($this->param->hasErrors()) {
             $this->errorCollection->add($this->param->getErrors());
             return false;
@@ -208,10 +234,11 @@ class Element implements Controllable, Errorable
             return true;
         } else {
             $DB->rollback();
-            if ($exception = $APPLICATION->getException())
+            if ($exception = $APPLICATION->getException()) {
                 $this->errorCollection->setError(new Error($exception->getString(), self::ERROR_UPDATE_ELEMENT));
-            else
+            } else {
                 $this->errorCollection->setError(new Error("Unknown error", self::ERROR_UPDATE_ELEMENT));
+            }
 
             return false;
         }
@@ -234,22 +261,34 @@ class Element implements Controllable, Errorable
 
         $sefFolder = $this->getSefFolder();
 
-        $queryProperty = \CIBlockElement::getProperty($this->iblockId, $this->elementId,
-            "SORT", "ASC", array("ACTIVE" => "Y", "EMPTY" => "N", "ID" => $this->params["FIELD_ID"])
+        $queryProperty = \CIBlockElement::getProperty(
+            $this->iblockId,
+            $this->elementId,
+            "SORT",
+            "ASC",
+            array("ACTIVE" => "Y", "EMPTY" => "N", "ID" => $this->params["FIELD_ID"])
         );
         while ($property = $queryProperty->fetch()) {
             if ($property["PROPERTY_TYPE"] == "F") {
-                $file = new \CListFile($this->iblockId, 0, $this->elementId,
-                    "PROPERTY_" . $this->params["FIELD_ID"], $property["VALUE"]);
+                $file = new \CListFile(
+                    $this->iblockId, 0, $this->elementId,
+                    "PROPERTY_" . $this->params["FIELD_ID"], $property["VALUE"]
+                );
                 $file->SetSocnetGroup($this->params["SOCNET_GROUP_ID"]);
-                $urls[] = $file->GetImgSrc(["url_template" => $sefFolder .
-                    "#list_id#/file/#section_id#/#element_id#/#field_id#/#file_id#/"]);
+                $urls[] = $file->GetImgSrc(
+                    [
+                        "url_template" => $sefFolder .
+                            "#list_id#/file/#section_id#/#element_id#/#field_id#/#file_id#/"
+                    ]
+                );
             } elseif ($property["USER_TYPE"] == "DiskFile") {
                 if (is_array($property["VALUE"])) {
                     foreach ($property["VALUE"] as $attacheId) {
                         $driver = \Bitrix\Disk\Driver::getInstance();
                         $urls[] = $driver->getUrlManager()->getUrlUfController(
-                            "download", array("attachedId" => $attacheId));
+                            "download",
+                            array("attachedId" => $attacheId)
+                        );
                     }
                 }
             }
@@ -264,19 +303,47 @@ class Element implements Controllable, Errorable
      */
     public function getAvailableFields()
     {
-        $availableFields = array("ID", "ACTIVE", "NAME", "TAGS", "XML_ID", "EXTERNAL_ID", "PREVIEW_TEXT",
-            "PREVIEW_TEXT_TYPE", "PREVIEW_PICTURE", "DETAIL_TEXT", "DETAIL_TEXT_TYPE", "DETAIL_PICTURE",
-            "CHECK_PERMISSIONS", "PERMISSIONS_BY", "CATALOG_TYPE", "MIN_PERMISSION", "SEARCHABLE_CONTENT",
-            "SORT", "TIMESTAMP_X", "DATE_MODIFY_FROM", "DATE_MODIFY_TO", "MODIFIED_USER_ID", "MODIFIED_BY",
-            "DATE_CREATE", "CREATED_USER_ID", "CREATED_BY", "DATE_ACTIVE_FROM", "DATE_ACTIVE_TO", "ACTIVE_DATE",
-            "ACTIVE_FROM", "ACTIVE_TO", "SECTION_ID");
+        $availableFields = array(
+            "ID",
+            "ACTIVE",
+            "NAME",
+            "TAGS",
+            "XML_ID",
+            "EXTERNAL_ID",
+            "PREVIEW_TEXT",
+            "PREVIEW_TEXT_TYPE",
+            "PREVIEW_PICTURE",
+            "DETAIL_TEXT",
+            "DETAIL_TEXT_TYPE",
+            "DETAIL_PICTURE",
+            "CHECK_PERMISSIONS",
+            "PERMISSIONS_BY",
+            "CATALOG_TYPE",
+            "MIN_PERMISSION",
+            "SEARCHABLE_CONTENT",
+            "SORT",
+            "TIMESTAMP_X",
+            "DATE_MODIFY_FROM",
+            "DATE_MODIFY_TO",
+            "MODIFIED_USER_ID",
+            "MODIFIED_BY",
+            "DATE_CREATE",
+            "CREATED_USER_ID",
+            "CREATED_BY",
+            "DATE_ACTIVE_FROM",
+            "DATE_ACTIVE_TO",
+            "ACTIVE_DATE",
+            "ACTIVE_FROM",
+            "ACTIVE_TO",
+            "SECTION_ID"
+        );
 
         $listCustomFields = [];
 
         $fields = $this->listObject->getFields();
 
         foreach ($fields as $field) {
-            if (strlen($field["CODE"]) > 0) {
+            if ($field["CODE"] <> '') {
                 $availableFields[] = "PROPERTY_" . $field["CODE"];
             }
 
@@ -313,10 +380,12 @@ class Element implements Controllable, Errorable
     private function setUrlTemplate()
     {
         if (!empty($this->params["LIST_ELEMENT_URL"])) {
-            $this->listObject->actualizeDocumentAdminPage(str_replace(
+            $this->listObject->actualizeDocumentAdminPage(
+                str_replace(
                     ["#list_id#", "#group_id#"],
                     [$this->iblockId, $this->params["SOCNET_GROUP_ID"]],
-                    $this->params["LIST_ELEMENT_URL"])
+                    $this->params["LIST_ELEMENT_URL"]
+                )
             );
         }
     }
@@ -328,11 +397,13 @@ class Element implements Controllable, Errorable
             $fieldValue = $this->params["FIELDS"][$fieldId];
 
             if (empty($this->params["FIELDS"][$fieldId]) && $fieldData["IS_REQUIRED"] === "Y") {
-                $this->errorCollection->setError(new Error(
-                    "The field \"" . $fieldData["NAME"] . "\" is required", self::ERROR_ELEMENT_FIELD_VALUE));
+                $this->errorCollection->setError(
+                    new Error(
+                        "The field \"" . $fieldData["NAME"] . "\" is required", self::ERROR_ELEMENT_FIELD_VALUE
+                    )
+                );
             }
             if ($this->listObject->is_field($fieldId)) {
-
             } else {
                 if (!is_array($fieldValue)) {
                     $fieldValue = [$fieldValue];
@@ -343,9 +414,11 @@ class Element implements Controllable, Errorable
                         foreach ($fieldValue as $key => $value) {
                             $value = str_replace(" ", "", str_replace(",", ".", $value));
                             if ($value && !is_numeric($value)) {
-                                $this->errorCollection->setError(new Error(
+                                $this->errorCollection->setError(
+                                    new Error(
                                         "Value of the \"" . $fieldData["NAME"] . "\" field is not correct",
-                                        self::ERROR_ELEMENT_FIELD_VALUE)
+                                        self::ERROR_ELEMENT_FIELD_VALUE
+                                    )
                                 );
                             }
                         }
@@ -455,10 +528,11 @@ class Element implements Controllable, Errorable
 
     private function setFileValue(&$elementFields, $fieldId, array $fieldValue, array $fieldData, array $values)
     {
-        if (!empty($values[$fieldId . "_DEL"]))
+        if (!empty($values[$fieldId . "_DEL"])) {
             $delete = $values[$fieldId . "_DEL"];
-        else
+        } else {
             $delete = [];
+        }
 
         if (!Loader::includeModule("rest")) {
             return;
@@ -475,18 +549,20 @@ class Element implements Controllable, Errorable
                 if (intval($value)) {
                     $elementFields["PROPERTY_VALUES"][$fieldData["ID"]][$key]["VALUE"] = \CFile::makeFileArray($value);
                 } else {
-                    $elementFields["PROPERTY_VALUES"][$fieldData["ID"]][$key]["VALUE"] = \CRestUtil::saveFile($fieldValue);
+                    $elementFields["PROPERTY_VALUES"][$fieldData["ID"]][$key]["VALUE"] = \CRestUtil::saveFile(
+                        $fieldValue
+                    );
                 }
                 break;
             }
         }
 
         foreach ($delete as $elementPropertyId => $mark) {
-            if (isset($elementFields["PROPERTY_VALUES"][$fieldData["ID"]][$elementPropertyId]["VALUE"]))
+            if (isset($elementFields["PROPERTY_VALUES"][$fieldData["ID"]][$elementPropertyId]["VALUE"])) {
                 $elementFields["PROPERTY_VALUES"][$fieldData["ID"]][$elementPropertyId]["VALUE"]["del"] = "Y";
-            else
+            } else {
                 $elementFields["PROPERTY_VALUES"][$fieldData["ID"]][$elementPropertyId]["del"] = "Y";
-
+            }
         }
     }
 
@@ -504,8 +580,9 @@ class Element implements Controllable, Errorable
             if (is_array($value)) {
                 $elementFields["PROPERTY_VALUES"][$fieldData["ID"]][$key]["VALUE"] = $value;
             } else {
-                if (!is_array($elementFields["PROPERTY_VALUES"][$fieldData["ID"]]["VALUE"]))
+                if (!is_array($elementFields["PROPERTY_VALUES"][$fieldData["ID"]]["VALUE"])) {
                     $elementFields["PROPERTY_VALUES"][$fieldData["ID"]]["VALUE"] = [];
+                }
                 $elementFields["PROPERTY_VALUES"][$fieldData["ID"]]["VALUE"][] = $value;
             }
         }
@@ -569,8 +646,9 @@ class Element implements Controllable, Errorable
     {
         foreach ($fieldValue as $key => $value) {
             if (is_array($value)) {
-                foreach ($value as $k => $v)
+                foreach ($value as $k => $v) {
                     $elementFields["PROPERTY_VALUES"][$fieldData["ID"]][$k]["VALUE"] = $v;
+                }
             } else {
                 $elementFields["PROPERTY_VALUES"][$fieldData["ID"]][$key]["VALUE"] = $value;
             }
@@ -593,7 +671,9 @@ class Element implements Controllable, Errorable
             $this->iblockId
         );
         $documentId = ($elementId ? \BizProcDocument::getDocumentComplexId(
-            $this->params["IBLOCK_TYPE_ID"], $elementId) : null);
+            $this->params["IBLOCK_TYPE_ID"],
+            $elementId
+        ) : null);
         $documentStates = \CBPDocument::getDocumentStates($documentType, $documentId);
 
         global $USER;
@@ -605,25 +685,31 @@ class Element implements Controllable, Errorable
 
         if ($elementId) {
             $canWrite = \CBPDocument::canUserOperateDocument(
-                \CBPCanUserOperateOperation::WriteDocument, $userId, $documentId,
+                \CBPCanUserOperateOperation::WriteDocument,
+                $userId,
+                $documentId,
                 ["AllUserGroups" => $currentUserGroups, "DocumentStates" => $documentStates]
             );
         } else {
             $canWrite = \CBPDocument::canUserOperateDocumentType(
-                \CBPCanUserOperateOperation::WriteDocument, $userId, $documentType,
+                \CBPCanUserOperateOperation::WriteDocument,
+                $userId,
+                $documentType,
                 ["AllUserGroups" => $currentUserGroups, "DocumentStates" => $documentStates]
             );
         }
         if (!$canWrite) {
-            $this->errorCollection->setError(new Error(
+            $this->errorCollection->setError(
+                new Error(
                     "You do not have enough permissions to edit this record in its current bizproc state",
-                    self::ERROR_ADD_ELEMENT)
+                    self::ERROR_ADD_ELEMENT
+                )
             );
             return [$documentStates, $bizprocParameters, $startUpTemplate];
         }
 
         foreach ($documentStates as $documentState) {
-            if (strlen($documentState["ID"]) <= 0) {
+            if ($documentState["ID"] == '') {
                 $startUpTemplate = true;
                 $tmpError = [];
                 $bizprocParameters[$documentState["TEMPLATE_ID"]] = \CBPDocument::startWorkflowParametersValidate(
@@ -644,8 +730,11 @@ class Element implements Controllable, Errorable
 
         foreach ($templates as $template) {
             if (!\CBPWorkflowTemplateLoader::isConstantsTuned($template["ID"])) {
-                $this->errorCollection->setError(new Error(
-                    "Workflow constants need to be configured", self::ERROR_ADD_ELEMENT));
+                $this->errorCollection->setError(
+                    new Error(
+                        "Workflow constants need to be configured", self::ERROR_ADD_ELEMENT
+                    )
+                );
                 break;
             }
         }
@@ -663,19 +752,23 @@ class Element implements Controllable, Errorable
         $elementId = $this->elementId;
 
         foreach ($documentStates as $documentState) {
-            if (strlen($documentState["ID"]) <= 0) {
+            if ($documentState["ID"] == '') {
                 $errors = [];
                 $bizprocWorkflowId[$documentState["TEMPLATE_ID"]] = \CBPDocument::startWorkflow(
                     $documentState["TEMPLATE_ID"],
                     \BizProcDocument::getDocumentComplexId($this->params["IBLOCK_TYPE_ID"], $elementId),
-                    array_merge($bizprocParameters[$documentState["TEMPLATE_ID"]], array(
-                        \CBPDocument::PARAM_TAGRET_USER => "user_" . intval($userId),
-                        \CBPDocument::PARAM_MODIFIED_DOCUMENT_FIELDS => $changedElementFields
-                    )),
+                    array_merge(
+                        $bizprocParameters[$documentState["TEMPLATE_ID"]],
+                        array(
+                            \CBPDocument::PARAM_TAGRET_USER => "user_" . intval($userId),
+                            \CBPDocument::PARAM_MODIFIED_DOCUMENT_FIELDS => $changedElementFields
+                        )
+                    ),
                     $errors
                 );
-                foreach ($errors as $message)
+                foreach ($errors as $message) {
                     $this->errorCollection->setError(new Error($message, self::ERROR_ADD_ELEMENT));
+                }
             }
         }
     }
@@ -689,15 +782,18 @@ class Element implements Controllable, Errorable
         $fields = $this->listObject->getFields();
         $propertyFields = [];
         foreach ($fields as $fieldId => $field) {
-            if ($this->listObject->is_field($fieldId))
+            if ($this->listObject->is_field($fieldId)) {
                 $elementSelect[] = $fieldId;
-            else
+            } else {
                 $propertyFields[] = $fieldId;
+            }
 
-            if ($fieldId == "CREATED_BY")
+            if ($fieldId == "CREATED_BY") {
                 $elementSelect[] = "CREATED_USER_NAME";
-            if ($fieldId == "MODIFIED_BY")
+            }
+            if ($fieldId == "MODIFIED_BY") {
                 $elementSelect[] = "USER_NAME";
+            }
         }
 
         $filter = [
@@ -713,7 +809,9 @@ class Element implements Controllable, Errorable
             if (!empty($propertyFields)) {
                 $queryProperty = \CIBlockElement::getProperty(
                     $this->iblockId,
-                    $result["ID"], "SORT", "ASC",
+                    $result["ID"],
+                    "SORT",
+                    "ASC",
                     array("ACTIVE" => "Y", "EMPTY" => "N")
                 );
                 while ($property = $queryProperty->fetch()) {
@@ -747,20 +845,34 @@ class Element implements Controllable, Errorable
 
         $elementSelect = ["ID", "IBLOCK_ID", "NAME", "IBLOCK_SECTION_ID", "CREATED_BY", "BP_PUBLISHED", "CODE"];
         $propertyFields = [];
-        $ignoreSortFields = ["S:Money", "PREVIEW_TEXT", "DETAIL_TEXT", "S:ECrm", "S:map_yandex", "PREVIEW_PICTURE",
-            "DETAIL_PICTURE", "S:DiskFile", "IBLOCK_SECTION_ID", "BIZPROC", "COMMENTS"];
+        $ignoreSortFields = [
+            "S:Money",
+            "PREVIEW_TEXT",
+            "DETAIL_TEXT",
+            "S:ECrm",
+            "S:map_yandex",
+            "PREVIEW_PICTURE",
+            "DETAIL_PICTURE",
+            "S:DiskFile",
+            "IBLOCK_SECTION_ID",
+            "BIZPROC",
+            "COMMENTS"
+        ];
 
         $availableFieldsIdForSort = ["ID"];
         foreach ($fields as $fieldId => $field) {
-            if ($this->listObject->is_field($fieldId))
+            if ($this->listObject->is_field($fieldId)) {
                 $elementSelect[] = $fieldId;
-            else
+            } else {
                 $propertyFields[] = $fieldId;
+            }
 
-            if ($fieldId == "CREATED_BY")
+            if ($fieldId == "CREATED_BY") {
                 $elementSelect[] = "CREATED_USER_NAME";
-            if ($fieldId == "MODIFIED_BY")
+            }
+            if ($fieldId == "MODIFIED_BY") {
                 $elementSelect[] = "USER_NAME";
+            }
 
             if (!($field["MULTIPLE"] == "Y" || in_array($field["TYPE"], $ignoreSortFields))) {
                 $availableFieldsIdForSort[] = $fieldId;
@@ -770,7 +882,7 @@ class Element implements Controllable, Errorable
         $order = $this->getOrder($availableFieldsIdForSort);
 
         $filter = [
-            "IBLOCK_TYPE" => $this->params["IBLOCK_TYPE_ID"],
+            "=IBLOCK_TYPE" => $this->params["IBLOCK_TYPE_ID"],
             "IBLOCK_ID" => $this->iblockId,
             "ID" => $this->params["ELEMENT_ID"] ? $this->params["ELEMENT_ID"] : "",
             "CODE" => $this->params["ELEMENT_CODE"] ? $this->params["ELEMENT_CODE"] : "",
@@ -785,7 +897,9 @@ class Element implements Controllable, Errorable
             if (!empty($propertyFields)) {
                 $queryProperty = \CIBlockElement::getProperty(
                     $this->iblockId,
-                    $result["ID"], "SORT", "ASC",
+                    $result["ID"],
+                    "SORT",
+                    "ASC",
                     array("ACTIVE" => "Y", "EMPTY" => "N")
                 );
                 while ($property = $queryProperty->fetch()) {
@@ -803,10 +917,9 @@ class Element implements Controllable, Errorable
         $order = [];
 
         if (is_array($this->params["ELEMENT_ORDER"])) {
-
             $orderList = ["nulls,asc", "asc,nulls", "nulls,desc", "desc,nulls", "asc", "desc"];
             foreach ($this->params["ELEMENT_ORDER"] as $fieldId => $orderParam) {
-                $orderParam = strtolower($orderParam);
+                $orderParam = mb_strtolower($orderParam);
                 if (!in_array($orderParam, $orderList) || !in_array($fieldId, $availableFieldsIdForSort)) {
                     continue;
                 }
@@ -835,8 +948,22 @@ class Element implements Controllable, Errorable
 
     private function isFieldDateType($type)
     {
-        return (in_array($type, ["DATE_CREATE", "TIMESTAMP_X", "DATE_MODIFY_FROM", "DATE_MODIFY_TO", "ACTIVE_DATE",
-            "S:Date", "S:DateTime", "DATE_ACTIVE_FROM", "DATE_ACTIVE_TO", "ACTIVE_FROM", "ACTIVE_TO"]));
+        return (in_array(
+            $type,
+            [
+                "DATE_CREATE",
+                "TIMESTAMP_X",
+                "DATE_MODIFY_FROM",
+                "DATE_MODIFY_TO",
+                "ACTIVE_DATE",
+                "S:Date",
+                "S:DateTime",
+                "DATE_ACTIVE_FROM",
+                "DATE_ACTIVE_TO",
+                "ACTIVE_FROM",
+                "ACTIVE_TO"
+            ]
+        ));
     }
 
     private function getSefFolder()

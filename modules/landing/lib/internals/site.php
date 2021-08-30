@@ -4,12 +4,14 @@ namespace Bitrix\Landing\Internals;
 
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\Entity;
+use \Bitrix\Main\ModuleManager;
+use \Bitrix\Main\SystemException;
 use \Bitrix\Landing\Manager;
 use \Bitrix\Landing\Site;
 use \Bitrix\Landing\Domain;
 use \Bitrix\Landing\Rights;
 use \Bitrix\Landing\Role;
-use \Bitrix\Main\SystemException;
+use \Bitrix\Landing\Restriction;
 
 Loc::loadMessages(__FILE__);
 
@@ -38,6 +40,12 @@ class SiteTable extends Entity\DataManager
     protected static $disableCallback = false;
 
     /**
+     * In current iteration we change date only.
+     * @var bool
+     */
+    protected static $touchMode = false;
+
+    /**
      * Returns DB table name for entity.
      * @return string
      */
@@ -53,98 +61,144 @@ class SiteTable extends Entity\DataManager
     public static function getMap()
     {
         $types = \Bitrix\Landing\Site::getTypes();
+        $typesKeys = array_keys($types);
 
         return array(
-            'ID' => new Entity\IntegerField('ID', array(
+            'ID' => new Entity\IntegerField(
+                'ID', array(
                 'primary' => true,
                 'autocomplete' => true,
                 'title' => 'ID'
-            )),
-            'CODE' => new Entity\StringField('CODE', array(
+            )
+            ),
+            'CODE' => new Entity\StringField(
+                'CODE', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_SITE_CODE'),
                 'required' => true
-            )),
-            'ACTIVE' => new Entity\StringField('ACTIVE', array(
+            )
+            ),
+            'ACTIVE' => new Entity\StringField(
+                'ACTIVE', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_SITE_ACTIVE'),
                 'default_value' => 'Y'
-            )),
-            'DELETED' => new Entity\StringField('DELETED', array(
+            )
+            ),
+            'DELETED' => new Entity\StringField(
+                'DELETED', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_LANDING_DELETED'),
                 'default_value' => 'N'
-            )),
-            'TITLE' => new Entity\StringField('TITLE', array(
+            )
+            ),
+            'TITLE' => new Entity\StringField(
+                'TITLE', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_SITE_TITLE'),
                 'required' => true
-            )),
-            'XML_ID' => new Entity\StringField('XML_ID', array(
+            )
+            ),
+            'XML_ID' => new Entity\StringField(
+                'XML_ID', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_XML_ID')
-            )),
-            'DESCRIPTION' => new Entity\StringField('DESCRIPTION', array(
+            )
+            ),
+            'DESCRIPTION' => new Entity\StringField(
+                'DESCRIPTION', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_DESCRIPTION')
-            )),
-            'TYPE' => new Entity\EnumField('TYPE', array(
+            )
+            ),
+            'TYPE' => new Entity\EnumField(
+                'TYPE', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_TYPE'),
-                'values' => array_keys($types),
-                'default_value' => array_shift(array_keys($types))
-            )),
-            'TPL_ID' => new Entity\IntegerField('TPL_ID', array(
+                'values' => $typesKeys,
+                'default_value' => array_shift($typesKeys)
+            )
+            ),
+            'TPL_ID' => new Entity\IntegerField(
+                'TPL_ID', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_TPL_ID'),
                 'default_value' => 0
-            )),
-            'DOMAIN_ID' => new Entity\IntegerField('DOMAIN_ID', array(
+            )
+            ),
+            'TPL_CODE' => new Entity\StringField(
+                'TPL_CODE', array(
+                'title' => Loc::getMessage('LANDING_TABLE_FIELD_TPL_CODE')
+            )
+            ),
+            'DOMAIN_ID' => new Entity\IntegerField(
+                'DOMAIN_ID', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_DOMAIN_ID'),
                 'required' => true
-            )),
+            )
+            ),
             'DOMAIN' => new Entity\ReferenceField(
                 'DOMAIN',
                 'Bitrix\Landing\Internals\DomainTable',
                 array('=this.DOMAIN_ID' => 'ref.ID')
             ),
-            'SMN_SITE_ID' => new Entity\StringField('SMN_SITE_ID', array(
+            'SMN_SITE_ID' => new Entity\StringField(
+                'SMN_SITE_ID', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_SMN_SITE_ID')
-            )),
-            'LANDING_ID_INDEX' => new Entity\IntegerField('LANDING_ID_INDEX', array(
+            )
+            ),
+            'LANDING_ID_INDEX' => new Entity\IntegerField(
+                'LANDING_ID_INDEX', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_LANDING_ID_INDEX')
-            )),
-            'LANDING_ID_404' => new Entity\IntegerField('LANDING_ID_404', array(
+            )
+            ),
+            'LANDING_ID_404' => new Entity\IntegerField(
+                'LANDING_ID_404', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_LANDING_ID_404')
-            )),
-            'LANDING_ID_503' => new Entity\IntegerField('LANDING_ID_503', array(
+            )
+            ),
+            'LANDING_ID_503' => new Entity\IntegerField(
+                'LANDING_ID_503', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_LANDING_ID_503')
-            )),
-            'LANG' => new Entity\IntegerField('LANG', array(
+            )
+            ),
+            'LANG' => new Entity\IntegerField(
+                'LANG', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_LANG')
-            )),
-            'SPECIAL' => new Entity\StringField('SPECIAL', array(
+            )
+            ),
+            'SPECIAL' => new Entity\StringField(
+                'SPECIAL', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_SPECIAL'),
                 'default_value' => 'N'
-            )),
-            'CREATED_BY_ID' => new Entity\IntegerField('CREATED_BY_ID', array(
+            )
+            ),
+            'CREATED_BY_ID' => new Entity\IntegerField(
+                'CREATED_BY_ID', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_CREATED_BY_ID'),
                 'required' => true
-            )),
+            )
+            ),
             'CREATED_BY' => new Entity\ReferenceField(
                 'CREATED_BY',
                 'Bitrix\Main\UserTable',
                 array('=this.CREATED_BY_ID' => 'ref.ID')
             ),
-            'MODIFIED_BY_ID' => new Entity\IntegerField('MODIFIED_BY_ID', array(
+            'MODIFIED_BY_ID' => new Entity\IntegerField(
+                'MODIFIED_BY_ID', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_MODIFIED_BY_ID'),
                 'required' => true
-            )),
+            )
+            ),
             'MODIFIED_BY' => new Entity\ReferenceField(
                 'MODIFIED_BY',
                 'Bitrix\Main\UserTable',
                 array('=this.MODIFIED_BY_ID' => 'ref.ID')
             ),
-            'DATE_CREATE' => new Entity\DatetimeField('DATE_CREATE', array(
+            'DATE_CREATE' => new Entity\DatetimeField(
+                'DATE_CREATE', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_DATE_CREATE'),
                 'required' => true
-            )),
-            'DATE_MODIFY' => new Entity\DatetimeField('DATE_MODIFY', array(
+            )
+            ),
+            'DATE_MODIFY' => new Entity\DatetimeField(
+                'DATE_MODIFY', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_DATE_MODIFY'),
                 'required' => true
-            ))
+            )
+            )
         );
     }
 
@@ -166,18 +220,20 @@ class SiteTable extends Entity\DataManager
      */
     protected static function checkUniqueInDomain($code, $currentId, $domainId)
     {
-        $res = self::getList(array(
-            'select' => array(
-                'ID'
-            ),
-            'filter' => array(
-                '!ID' => $currentId,
-                'DOMAIN_ID' => $domainId,
-                '=CODE' => $code,
-                '=DELETED' => ['Y', 'N'],
-                'CHECK_PERMISSIONS' => 'N'
+        $res = self::getList(
+            array(
+                'select' => array(
+                    'ID'
+                ),
+                'filter' => array(
+                    '!ID' => $currentId,
+                    'DOMAIN_ID' => $domainId,
+                    '=CODE' => $code,
+                    '=DELETED' => ['Y', 'N'],
+                    'CHECK_PERMISSIONS' => 'N'
+                )
             )
-        ));
+        );
         return $res->fetch() ? false : true;
     }
 
@@ -199,7 +255,7 @@ class SiteTable extends Entity\DataManager
     protected static function customizeControllerError(SystemException $ex)
     {
         $code = str_replace(' ', '', $ex->getMessage());
-        $code = strtoupper($code);
+        $code = mb_strtoupper($code);
         $message = Loc::getMessage('LANDING_CONTROLLER_ERROR_' . $code);
         $message = $message ? $message : $ex->getMessage();
 
@@ -223,7 +279,7 @@ class SiteTable extends Entity\DataManager
             (
                 $isB24Domain && preg_match_all($disableMask, $domainName)
                 ||
-                !$isB24Domain && strpos($domainName, 'bitrix') !== false
+                !$isB24Domain && mb_strpos($domainName, 'bitrix') !== false
             )
         ) {
             return true;
@@ -246,7 +302,10 @@ class SiteTable extends Entity\DataManager
         }
 
         // build filter
-        $buildFilter = Rights::getAccessFilter();
+        $allowedSites = Rights::getAllowedSites();
+        $buildFilter = Rights::getAccessFilter(
+            $allowedSites ? ['ID' => $allowedSites] : []
+        );
         if (empty($buildFilter)) {
             return $params;
         }
@@ -280,47 +339,24 @@ class SiteTable extends Entity\DataManager
         }
 
         // create runtime fields
-        $runtimeParams = [
+        $runtimeParams = [];
+        $runtimeParams[] = [
+            'LOGIC' => 'OR',
             '=this.ID' => 'ref.ENTITY_ID',
-            '=ref.ENTITY_TYPE' => [
-                '?', Rights::ENTITY_TYPE_SITE
-            ]
-            /*'=ref.TASK_ID' => [
-                $tasks[$readCode]
-            ]*/
+            '=ref.ENTITY_ID' => [0]
         ];
         if ($extendedRights) {
             $runtimeParams['=ref.ROLE_ID'] = [0];
         } else {
+            $runtimeParams['=ref.ENTITY_TYPE'] = ['?', Rights::ENTITY_TYPE_SITE];
             $runtimeParams['@ref.ROLE_ID'] = [implode(',', $expectedRoles)];
         }
         $params['runtime'][] = new Entity\ReferenceField(
             'RIGHTS',
             'Bitrix\Landing\Internals\RightsTable',
             $runtimeParams,
-            [
-                'join_type' => 'LEFT'
-            ]
+            ['join_type' => 'INNER']
         );
-        if (!$extendedRights) {
-            $params['runtime'][] = new Entity\ReferenceField(
-                'RIGHTS_COMMON',
-                'Bitrix\Landing\Internals\RightsTable',
-                [
-                    '=ref.ENTITY_ID' => [0],
-                    '=ref.ENTITY_TYPE' => [
-                        '?', Rights::ENTITY_TYPE_SITE
-                    ],
-                    /*'=ref.TASK_ID' => [
-                        $tasks[$readCode]
-                    ],*/
-                    '@ref.ROLE_ID' => [implode(',', $expectedRoles)]
-                ],
-                [
-                    'join_type' => 'LEFT'
-                ]
-            );
-        }
 
         $params['group'][] = 'ID';
 
@@ -349,17 +385,20 @@ class SiteTable extends Entity\DataManager
             return $fields[$code];
         }
 
-        $res = self::getList([
-            'select' => [
-                '*',
-                'DOMAIN_NAME' => 'DOMAIN.DOMAIN'
-            ],
-            'filter' => [
-                'ID' => $id,
-                'CHECK_PERMISSIONS' => 'N',
-                '=DELETED' => ['Y', 'N']
+        $res = self::getList(
+            [
+                'select' => [
+                    '*',
+                    'DOMAIN_NAME' => 'DOMAIN.DOMAIN',
+                    'DOMAIN_PROVIDER' => 'DOMAIN.PROVIDER'
+                ],
+                'filter' => [
+                    'ID' => $id,
+                    'CHECK_PERMISSIONS' => 'N',
+                    '=DELETED' => ['Y', 'N']
+                ]
             ]
-        ]);
+        );
         if ($row = $res->fetch()) {
             $data[$id] = $row;
         }
@@ -383,6 +422,38 @@ class SiteTable extends Entity\DataManager
         $siteController = self::getSiteController();
         $deleteMode = false;
 
+        self::$touchMode = isset($fields['TOUCH']) && $fields['TOUCH'] == 'Y';
+
+        if ($actionType == self::ACTION_TYPE_ADD) {
+            //@tmp log
+            \Bitrix\Landing\Debug::log(
+                $fields['TITLE'] ?? 'Noname',
+                print_r([$fields, \Bitrix\Main\Diag\Helper::getBackTrace(15)], true),
+                'LANDING_SITE_CREATE'
+            );
+        }
+
+        // clear binding cache
+        if (
+            isset($fields['CODE']) ||
+            isset($fields['TITLE']) ||
+            isset($fields['DELETED'])
+        ) {
+            if ($primary) {
+                \Bitrix\Landing\Binding\Entity::onSiteChange(
+                    $primary['ID']
+                );
+            }
+        }
+
+        if (
+            isset($fields['DOMAIN_ID']) &&
+            $fields['DOMAIN_ID'] === ''
+        ) {
+            unset($fields['DOMAIN_ID']);
+            $unsetFields[] = 'DOMAIN_ID';
+        }
+
         // if delete, set unpublic always
         if (isset($fields['DELETED'])) {
             $deleteMode = true;
@@ -403,13 +474,34 @@ class SiteTable extends Entity\DataManager
                     ]
                 );
                 if (!$check) {
-                    $result->setErrors([
-                        new Entity\EntityError(
-                            Loc::getMessage('LANDING_TABLE_ERROR_TOTAL_SITE_REACHED'),
-                            'TOTAL_SITE_REACHED'
-                        )
-                    ]);
+                    $result->setErrors(
+                        [
+                            new Entity\EntityError(
+                                Restriction\Manager::getSystemErrorMessage('limit_sites_number'),
+                                'TOTAL_SITE_REACHED'
+                            )
+                        ]
+                    );
                     return $result;
+                }
+            } else {
+                if ($primary && $fields['DELETED'] == 'Y') {
+                    $fields['DOMAIN_PROVIDER'] = self::getValueByCode(
+                        $primary['ID'],
+                        $fields,
+                        'DOMAIN_PROVIDER'
+                    );
+                    if ($fields['DOMAIN_PROVIDER'] && ModuleManager::isModuleInstalled('bitrix24')) {
+                        $result->setErrors(
+                            [
+                                new Entity\EntityError(
+                                    Loc::getMessage('LANDING_TABLE_ERROR_ACCESS_DENIED_DELETED'),
+                                    'ACCESS_DENIED_DELETED'
+                                )
+                            ]
+                        );
+                        return $result;
+                    }
                 }
             }
         }
@@ -418,12 +510,14 @@ class SiteTable extends Entity\DataManager
         if (!$primary && isset($fields['TYPE'])) {
             $allowedTypes = (array)\Bitrix\Landing\Site\Type::getFilterType();
             if (!in_array($fields['TYPE'], $allowedTypes)) {
-                $result->setErrors(array(
-                    new Entity\EntityError(
-                        Loc::getMessage('LANDING_TABLE_ERROR_ACCESS_DENIED_ADD'),
-                        'ACCESS_DENIED'
+                $result->setErrors(
+                    array(
+                        new Entity\EntityError(
+                            Loc::getMessage('LANDING_TABLE_ERROR_ACCESS_DENIED_ADD'),
+                            'ACCESS_DENIED'
+                        )
                     )
-                ));
+                );
                 return $result;
             }
         }
@@ -443,7 +537,8 @@ class SiteTable extends Entity\DataManager
                 'CREATED_BY_ID',
                 'MODIFIED_BY_ID',
                 'DATE_CREATE',
-                'DATE_MODIFY'
+                'DATE_MODIFY',
+                'TOUCH'
             ];
             if (in_array(Rights::ACCESS_TYPES['sett'], $rights)) {
                 $freeAccessFields = $fields;
@@ -475,27 +570,33 @@ class SiteTable extends Entity\DataManager
                             'LANDING_TABLE_ERROR_ACCESS_DENIED'
                         );
                     }
-                    $result->setErrors(array(
-                        new Entity\EntityError(
-                            $errMessage,
-                            'ACCESS_DENIED'
+                    $result->setErrors(
+                        array(
+                            new Entity\EntityError(
+                                $errMessage,
+                                'ACCESS_DENIED'
+                            )
                         )
-                    ));
+                    );
                     return $result;
                 }
             }
-        } else if (Rights::isOn()) {
-            $hasAccess = Rights::hasAdditionalRight(
-                Rights::ADDITIONAL_RIGHTS['create']
-            );
-            if (!$hasAccess) {
-                $result->setErrors(array(
-                    new Entity\EntityError(
-                        Loc::getMessage('LANDING_TABLE_ERROR_ACCESS_DENIED_ADD'),
-                        'ACCESS_DENIED'
-                    )
-                ));
-                return $result;
+        } else {
+            if (Rights::isOn()) {
+                $hasAccess = Rights::hasAdditionalRight(
+                    Rights::ADDITIONAL_RIGHTS['create']
+                );
+                if (!$hasAccess) {
+                    $result->setErrors(
+                        array(
+                            new Entity\EntityError(
+                                Loc::getMessage('LANDING_TABLE_ERROR_ACCESS_DENIED_ADD'),
+                                'ACCESS_DENIED'
+                            )
+                        )
+                    );
+                    return $result;
+                }
             }
         }
 
@@ -513,22 +614,26 @@ class SiteTable extends Entity\DataManager
             !Manager::isB24()
         ) {
             // for check rights call upper level
-            $res = Domain::getList(array(
-                'select' => array(
-                    'ID'
-                ),
-                'filter' => array(
-                    'ID' => $fields['DOMAIN_ID']
+            $res = Domain::getList(
+                array(
+                    'select' => array(
+                        'ID'
+                    ),
+                    'filter' => array(
+                        'ID' => $fields['DOMAIN_ID']
+                    )
                 )
-            ));
+            );
             if (!$res->fetch()) {
                 $result->unsetFields($unsetFields);
-                $result->setErrors(array(
-                    new Entity\EntityError(
-                        Loc::getMessage('LANDING_TABLE_ERROR_DOMAIN_NOT_EXIST'),
-                        'DOMAIN_NOT_FOUND'
+                $result->setErrors(
+                    array(
+                        new Entity\EntityError(
+                            Loc::getMessage('LANDING_TABLE_ERROR_DOMAIN_NOT_EXIST'),
+                            'DOMAIN_NOT_FOUND'
+                        )
                     )
-                ));
+                );
                 return $result;
             }
         }
@@ -547,27 +652,38 @@ class SiteTable extends Entity\DataManager
             } else {
                 $fields['TYPE'] = null;
             }
-            $canPublicSite = Manager::checkFeature(
-                Manager::FEATURE_PUBLICATION_SITE,
-                $primary
-                    ? array(
-                    'filter' => array(
-                        '!ID' => $primary['ID'],
-                    ),
-                    'type' => $fields['TYPE']
-                )
-                    : array(
-                    'type' => $fields['TYPE']
-                )
+            $special = self::getValueByCode(
+                $primary['ID'],
+                $fields,
+                'SPECIAL'
             );
+            if ($special == 'Y') {
+                $canPublicSite = true;
+            } else {
+                $canPublicSite = Manager::checkFeature(
+                    Manager::FEATURE_PUBLICATION_SITE,
+                    $primary
+                        ? array(
+                        'filter' => array(
+                            '!ID' => $primary['ID']
+                        ),
+                        'type' => $fields['TYPE']
+                    )
+                        : array(
+                        'type' => $fields['TYPE']
+                    )
+                );
+            }
             if (!$canPublicSite) {
                 $result->unsetFields($unsetFields);
-                $result->setErrors(array(
-                    new Entity\EntityError(
-                        Loc::getMessage('LANDING_PUBLIC_SITE_REACHED'),
-                        'PUBLIC_SITE_REACHED'
+                $result->setErrors(
+                    array(
+                        new Entity\EntityError(
+                            Restriction\Manager::getSystemErrorMessage('limit_sites_number'),
+                            'PUBLIC_SITE_REACHED'
+                        )
                     )
-                ));
+                );
                 return $result;
             }
         }
@@ -575,6 +691,18 @@ class SiteTable extends Entity\DataManager
         // prepare CODE - base part of URL
         if (array_key_exists('CODE', $fields)) {
             $fields['CODE'] = trim(trim(trim($fields['CODE']), '/'));
+            if (mb_strpos($fields['CODE'], '/') !== false) {
+                $result->unsetFields($unsetFields);
+                $result->setErrors(
+                    array(
+                        new Entity\EntityError(
+                            Loc::getMessage('LANDING_TABLE_ERROR_SITE_SLASH_IS_NOT_ALLOWED'),
+                            'SLASH_IS_NOT_ALLOWED'
+                        )
+                    )
+                );
+                return $result;
+            }
             // generate CODE from TITLE, if CODE is empty (in create)
             if (!$fields['CODE']) {
                 $fields['CODE'] = \CUtil::translit(
@@ -590,24 +718,29 @@ class SiteTable extends Entity\DataManager
             if (preg_match('/^[\d]+$/', $fields['CODE'])) {
                 $fields['CODE'] = 'site' . $fields['CODE'];
             }
-            $fields['CODE'] = substr($fields['CODE'], 0, 253);
+            $fields['CODE'] = mb_substr($fields['CODE'], 0, 253);
+            $domainId = null;
             // get domain id if no exists
             if (!array_key_exists('DOMAIN_ID', $fields) && $primary) {
-                $fields['DOMAIN_ID'] = self::getValueByCode(
+                $domainId = self::getValueByCode(
                     $primary['ID'],
                     $fields,
                     'DOMAIN_ID'
                 );
+            } else {
+                if (array_key_exists('DOMAIN_ID', $fields)) {
+                    $domainId = $fields['DOMAIN_ID'];
+                }
             }
             // make CODE unique in one domain
-            if (array_key_exists('DOMAIN_ID', $fields)) {
+            if ($domainId !== null) {
                 $checkCount = 1;
                 $originalCode = $fields['CODE'];
                 do {
                     $unique = self::checkUniqueInDomain(
                         '/' . $fields['CODE'] . '/',
                         $primary ? $primary['ID'] : 0,
-                        $fields['DOMAIN_ID']
+                        $domainId
                     );
                     if (!$unique) {
                         $fields['CODE'] = $originalCode . (++$checkCount);
@@ -628,7 +761,7 @@ class SiteTable extends Entity\DataManager
             )
         ) {
             $domainId = 0;
-            $domainName = strtolower(trim($fields['DOMAIN_ID']));
+            $domainName = mb_strtolower(trim($fields['DOMAIN_ID']));
             $domainNameOld = '';
 
             // fix for full name
@@ -638,26 +771,14 @@ class SiteTable extends Entity\DataManager
                 // check correct name
                 if (!preg_match('/^[a-z0-9\-\.]+\.[a-z0-9\-]{2,20}$/i', $domainName)) {
                     $result->unsetFields($unsetFields);
-                    $result->setErrors(array(
-                        new Entity\EntityError(
-                            Loc::getMessage('LANDING_TABLE_ERROR_DOMAIN_IS_INCORRECT2'),
-                            'DOMAIN_IS_INCORRECT'
+                    $result->setErrors(
+                        array(
+                            new Entity\EntityError(
+                                Loc::getMessage('LANDING_TABLE_ERROR_DOMAIN_IS_INCORRECT2'),
+                                'DOMAIN_IS_INCORRECT'
+                            )
                         )
-                    ));
-                    return $result;
-                }
-                // check allow custom domain
-                if (
-                    !self::isB24Domain($domainName) &&
-                    !Manager::checkFeature(Manager::FEATURE_CUSTOM_DOMAIN)
-                ) {
-                    $result->unsetFields($unsetFields);
-                    $result->setErrors(array(
-                        new Entity\EntityError(
-                            Loc::getMessage('LANDING_TABLE_ERROR_CUSTOM_DOMAIN_ISNT_ALLOWED'),
-                            'CUSTOM_DOMAIN_ISNT_ALLOWED'
-                        )
-                    ));
+                    );
                     return $result;
                 }
             }
@@ -667,18 +788,20 @@ class SiteTable extends Entity\DataManager
                 $modifyFields['DOMAIN_ID'] = 0;
             } else {
                 if ($primary) {
-                    $res = self::getList(array(
-                        'select' => array(
-                            'DOMAIN_ID',
-                            'DOMAIN_NAME' => 'DOMAIN.DOMAIN'
-                        ),
-                        'filter' => array(
-                            'ID' => $primary['ID'],
-                            'CHECK_PERMISSIONS' => 'N'
+                    $res = self::getList(
+                        array(
+                            'select' => array(
+                                'DOMAIN_ID',
+                                'DOMAIN_NAME' => 'DOMAIN.DOMAIN'
+                            ),
+                            'filter' => array(
+                                'ID' => $primary['ID'],
+                                'CHECK_PERMISSIONS' => 'N'
+                            )
                         )
-                    ));
+                    );
                     if ($row = $res->fetch()) {
-                        $domainNameOld = strtolower($row['DOMAIN_NAME']);
+                        $domainNameOld = mb_strtolower($row['DOMAIN_NAME']);
                         $domainId = $row['DOMAIN_ID'];
                     }
                 }
@@ -694,12 +817,14 @@ class SiteTable extends Entity\DataManager
                 );
                 if (!$unique) {
                     $result->unsetFields($unsetFields);
-                    $result->setErrors(array(
-                        new Entity\EntityError(
-                            Loc::getMessage('LANDING_TABLE_ERROR_SITE_CODE_IS_NOT_UNIQUE2'),
-                            'CODE_IS_NOT_UNIQUE'
+                    $result->setErrors(
+                        array(
+                            new Entity\EntityError(
+                                Loc::getMessage('LANDING_TABLE_ERROR_SITE_CODE_IS_NOT_UNIQUE2'),
+                                'CODE_IS_NOT_UNIQUE'
+                            )
                         )
-                    ));
+                    );
                     return $result;
                 }
             }
@@ -713,26 +838,30 @@ class SiteTable extends Entity\DataManager
 
                 // check domain exist
                 if ($domainName != '') {
-                    $resDomain = Domain::getList(array(
-                        'select' => array(
-                            'ID'
-                        ),
-                        'filter' => array(
-                            '=DOMAIN' => $domainName
-                        )
-                    ));
-                    if ($rowDomain = $resDomain->fetch()) {
-                        $domainExist = true;
-                        $resSite = Site::getList(array(
+                    $resDomain = Domain::getList(
+                        array(
                             'select' => array(
                                 'ID'
                             ),
                             'filter' => array(
-                                'DOMAIN_ID' => $rowDomain['ID'],
-                                '=DELETED' => 'Y',
-                                'CHECK_PERMISSIONS' => 'N'
+                                '=DOMAIN' => $domainName
                             )
-                        ));
+                        )
+                    );
+                    if ($rowDomain = $resDomain->fetch()) {
+                        $domainExist = true;
+                        $resSite = Site::getList(
+                            array(
+                                'select' => array(
+                                    'ID'
+                                ),
+                                'filter' => array(
+                                    'DOMAIN_ID' => $rowDomain['ID'],
+                                    '=DELETED' => 'Y',
+                                    'CHECK_PERMISSIONS' => 'N'
+                                )
+                            )
+                        );
                         if ($resSite->fetch()) {
                             $result->setErrors(
                                 array(
@@ -749,9 +878,11 @@ class SiteTable extends Entity\DataManager
                             $domainExist = $siteController::isDomainExists($domainName);
                         } catch (SystemException $ex) {
                             $result->unsetFields($unsetFields);
-                            $result->setErrors(array(
-                                self::customizeControllerError($ex)
-                            ));
+                            $result->setErrors(
+                                array(
+                                    self::customizeControllerError($ex)
+                                )
+                            );
                             return $result;
                         }
                     }
@@ -786,9 +917,11 @@ class SiteTable extends Entity\DataManager
                     $siteController::isDomainExists('repo.bitrix24.site');
                 } catch (SystemException $ex) {
                     $result->unsetFields($unsetFields);
-                    $result->setErrors(array(
-                        self::customizeControllerError($ex)
-                    ));
+                    $result->setErrors(
+                        array(
+                            self::customizeControllerError($ex)
+                        )
+                    );
                     return $result;
                 }
 
@@ -799,7 +932,14 @@ class SiteTable extends Entity\DataManager
                     $actionType == self::ACTION_TYPE_ADD
                         ? '\\' . __NAMESPACE__ . '\\Site::onAfterAdd'
                         : '\\' . __NAMESPACE__ . '\\Site::onAfterUpdate',
-                    function (Entity\Event $event) use ($domainId, $domainName, $domainNameOld, $result, $unsetFields, $siteController) {
+                    function (Entity\Event $event) use (
+                        $domainId,
+                        $domainName,
+                        $domainNameOld,
+                        $result,
+                        $unsetFields,
+                        $siteController
+                    ) {
                         $primary = $event->getParameter('primary');
                         $fields = $event->getParameter('fields');
 
@@ -812,14 +952,16 @@ class SiteTable extends Entity\DataManager
                                         $primary['ID']
                                     );
                                     try {
-                                        $row = self::getList(array(
-                                            'select' => array(
-                                                'TYPE'
-                                            ),
-                                            'filter' => array(
-                                                'ID' => $primary['ID']
+                                        $row = self::getList(
+                                            array(
+                                                'select' => array(
+                                                    'TYPE'
+                                                ),
+                                                'filter' => array(
+                                                    'ID' => $primary['ID']
+                                                )
                                             )
-                                        ))->fetch();
+                                        )->fetch();
                                         if ($row['TYPE'] == 'STORE')// fix for controller
                                         {
                                             $row['TYPE'] = 'shop';
@@ -840,31 +982,42 @@ class SiteTable extends Entity\DataManager
                                         }
                                     } catch (SystemException $ex) {
                                         $result->unsetFields($unsetFields);
-                                        $result->setErrors(array(
-                                            self::customizeControllerError($ex)
-                                        ));
+                                        $result->setErrors(
+                                            array(
+                                                self::customizeControllerError($ex)
+                                            )
+                                        );
                                         return $result;
                                     }
                                 }
                                 // add new domain
                                 if ($domainName) {
-                                    $resDomain = Domain::add(array(
-                                        'ACTIVE' => 'Y',
-                                        'DOMAIN' => $domainName
-                                    ));
+                                    $resDomain = Domain::add(
+                                        array(
+                                            'ACTIVE' => 'Y',
+                                            'DOMAIN' => $domainName
+                                        )
+                                    );
                                     $domainId = $resDomain->getId();
                                     if ($domainId) {
                                         SiteTable::$disableCallback = true;
-                                        SiteTable::update($primary['ID'], array(
-                                            'DOMAIN_ID' => $domainId
-                                        ));
+                                        SiteTable::update(
+                                            $primary['ID'],
+                                            array(
+                                                'DOMAIN_ID' => $domainId
+                                            )
+                                        );
                                     }
                                 }
                             } // update domain
                             else {
-                                $res = Domain::update($domainId, array(
-                                    'DOMAIN' => $domainName
-                                ));
+                                $res = Domain::update(
+                                    $domainId,
+                                    array(
+                                        'DOMAIN' => $domainName,
+                                        'PROVIDER' => null
+                                    )
+                                );
                                 if ($res->isSuccess()) {
                                     if (Manager::isB24()) {
                                         try {
@@ -878,9 +1031,11 @@ class SiteTable extends Entity\DataManager
                                             );
                                         } catch (SystemException $ex) {
                                             $result->unsetFields($unsetFields);
-                                            $result->setErrors(array(
-                                                self::customizeControllerError($ex)
-                                            ));
+                                            $result->setErrors(
+                                                array(
+                                                    self::customizeControllerError($ex)
+                                                )
+                                            );
                                             return $result;
                                         }
                                     }
@@ -896,6 +1051,131 @@ class SiteTable extends Entity\DataManager
         $result->modifyFields($modifyFields);
 
         return $result;
+    }
+
+    /**
+     * Switch domains between two sites. Returns true on success.
+     * @param int $siteId1 First site id.
+     * @param int $siteId2 Second site id.
+     * @return bool
+     */
+    public static function switchDomain(int $siteId1, int $siteId2): bool
+    {
+        $result = false;
+
+        self::$disableCallback = true;
+
+        $domains = [];
+        $res = self::getList(
+            [
+                'select' => [
+                    'ID',
+                    'TYPE',
+                    'LANG',
+                    'DOMAIN_ID',
+                    'DOMAIN_NAME' => 'DOMAIN.DOMAIN'
+                ],
+                'filter' => [
+                    'ID' => [$siteId1, $siteId2]
+                ]
+            ]
+        );
+        while ($row = $res->fetch()) {
+            $domains[] = [
+                'ID' => $row['ID'],
+                'TYPE' => $row['TYPE'],
+                'LANG' => $row['LANG'],
+                'DOMAIN_ID' => $row['DOMAIN_ID'],
+                'DOMAIN_NAME' => $row['DOMAIN_NAME']
+            ];
+        }
+
+        if (count($domains) == 2) {
+            $res1 = self::update(
+                $domains[0]['ID'],
+                [
+                    'DOMAIN_ID' => $domains[1]['DOMAIN_ID']
+                ]
+            );
+            $res2 = self::update(
+                $domains[1]['ID'],
+                [
+                    'DOMAIN_ID' => $domains[0]['DOMAIN_ID']
+                ]
+            );
+            $result = $res1->isSuccess() && $res2->isSuccess();
+        }
+
+        self::$disableCallback = false;
+
+        // switch domain for bitrix24
+        if ($result && Manager::isB24()) {
+            $siteController = self::getSiteController();
+            try {
+                for ($i = 0; $i <= 1; $i++) {
+                    $siteController::deleteDomain($domains[$i]['DOMAIN_NAME']);
+                    $siteController::addDomain(
+                        $domains[$i]['DOMAIN_NAME'],
+                        Manager::getPublicationPath($domains[$i == 0 ? 1 : 0]['ID']),
+                        'Y',
+                        ($domains[$i]['TYPE'] == 'STORE') ? 'shop' : $domains[$i]['TYPE'],
+                        $domains[$i]['LANG']
+                    );
+                }
+            } catch (SystemException $ex) {
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Sets new random domain to site. Actual for Bitrix24 only.
+     * @param int $siteId Site id.
+     * @return bool
+     */
+    public static function randomizeDomain(int $siteId): bool
+    {
+        if (ModuleManager::isModuleInstalled('bitrix24')) {
+            $res = self::getList(
+                [
+                    'select' => [
+                        'ID',
+                        'TYPE',
+                        'DOMAIN_ID',
+                        'DOMAIN_NAME' => 'DOMAIN.DOMAIN'
+                    ],
+                    'filter' => [
+                        'ID' => $siteId
+                    ]
+                ]
+            );
+            if ($row = $res->fetch()) {
+                $siteController = self::getSiteController();
+                $publicUrl = Manager::getPublicationPath($row['ID']);
+                try {
+                    $siteController::deleteDomain($row['DOMAIN_NAME']);
+                    $domainName = $siteController::addRandomDomain(
+                        $publicUrl,
+                        ($row['TYPE'] == 'STORE') ? 'shop' : $row['TYPE'],
+                        Manager::getZone()
+                    );
+                    if ($domainName) {
+                        $res = Domain::update(
+                            $row['DOMAIN_ID'],
+                            [
+                                'DOMAIN' => $domainName,
+                                'PROVIDER' => null
+                            ]
+                        );
+                        return $res->isSuccess();
+                    }
+                } catch (SystemException $ex) {
+                }
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -923,12 +1203,14 @@ class SiteTable extends Entity\DataManager
         )
         ) {
             $result->unsetFields(array('ADDITIONAL_FIELDS'));
-            $result->setErrors(array(
-                new Entity\EntityError(
-                    Loc::getMessage('LANDING_TABLE_ERROR_SITE_LIMIT_REACHED'),
-                    'SITE_LIMIT_REACHED'
+            $result->setErrors(
+                array(
+                    new Entity\EntityError(
+                        Restriction\Manager::getSystemErrorMessage('limit_sites_number'),
+                        'SITE_LIMIT_REACHED'
+                    )
                 )
-            ));
+            );
             return $result;
         }
 
@@ -1036,7 +1318,7 @@ class SiteTable extends Entity\DataManager
         }
 
         // for B24 we must update domain
-        if (Manager::isB24()) {
+        if (Manager::isB24() && !self::$touchMode) {
             static $domainUpdated = [];
 
             $primary = $event->getParameter('primary');
@@ -1044,19 +1326,22 @@ class SiteTable extends Entity\DataManager
             if (!in_array($primary['ID'], $domainUpdated)) {
                 $domainUpdated[] = $primary['ID'];
                 $siteController = self::getSiteController();
-                $res = self::getList([
-                    'select' => [
-                        'ACTIVE', 'DELETED',
-                        'DOMAIN_NAME' => 'DOMAIN.DOMAIN',
-                        'LANG'
-                    ],
-                    'filter' => [
-                        'ID' => $primary['ID'],
-                        '=DELETED' => ['Y', 'N'],
-                        'CHECK_PERMISSIONS' => 'N',
-                        '>DOMAIN_ID' => 0
+                $res = self::getList(
+                    [
+                        'select' => [
+                            'ACTIVE',
+                            'DELETED',
+                            'DOMAIN_NAME' => 'DOMAIN.DOMAIN',
+                            'LANG'
+                        ],
+                        'filter' => [
+                            'ID' => $primary['ID'],
+                            '=DELETED' => ['Y', 'N'],
+                            'CHECK_PERMISSIONS' => 'N',
+                            '>DOMAIN_ID' => 0
+                        ]
                     ]
-                ]);
+                );
                 if ($row = $res->fetch()) {
                     try {
                         // now external domains always are active
@@ -1097,48 +1382,81 @@ class SiteTable extends Entity\DataManager
                 true
             );
             if (!$hasAccess) {
-                $result->setErrors(array(
-                    new Entity\EntityError(
-                        Loc::getMessage('LANDING_TABLE_ERROR_ACCESS_DENIED_DELETED'),
-                        'ACCESS_DENIED'
+                $result->setErrors(
+                    array(
+                        new Entity\EntityError(
+                            Loc::getMessage('LANDING_TABLE_ERROR_ACCESS_DENIED_DELETED'),
+                            'ACCESS_DENIED'
+                        )
                     )
-                ));
+                );
                 return $result;
             }
             // check if site is not empty
-            $res = LandingTable::getList(array(
-                'select' => array(
-                    'ID'
-                ),
-                'filter' => array(
-                    'SITE_ID' => $primary['ID'],
-                    'CHECK_PERMISSIONS' => 'N'
-                )
-            ));
-            if ($res->fetch()) {
-                $result->setErrors(array(
-                    new Entity\EntityError(
-                        Loc::getMessage('LANDING_TABLE_ERROR_SITE_IS_NOT_EMPTY'),
-                        'SITE_IS_NOT_EMPTY'
+            $res = LandingTable::getList(
+                array(
+                    'select' => array(
+                        'ID'
+                    ),
+                    'filter' => array(
+                        'SITE_ID' => $primary['ID'],
+                        'CHECK_PERMISSIONS' => 'N'
                     )
-                ));
+                )
+            );
+            if ($res->fetch()) {
+                $result->setErrors(
+                    array(
+                        new Entity\EntityError(
+                            Loc::getMessage('LANDING_TABLE_ERROR_SITE_IS_NOT_EMPTY'),
+                            'SITE_IS_NOT_EMPTY'
+                        )
+                    )
+                );
+                return $result;
+            }
+            // check lock status
+            if (\Bitrix\Landing\Lock::isSiteDeleteLocked($primary['ID'])) {
+                $result->setErrors(
+                    array(
+                        new Entity\EntityError(
+                            Loc::getMessage('LANDING_TABLE_ERROR_SITE_IS_LOCK'),
+                            'SITE_IS_LOCK'
+                        )
+                    )
+                );
                 return $result;
             }
 
             // delete in b24.site
             if (Manager::isB24()) {
-                $res = self::getList(array(
-                    'select' => array(
-                        'DOMAIN_ID',
-                        'DOMAIN_NAME' => 'DOMAIN.DOMAIN'
-                    ),
-                    'filter' => array(
-                        'ID' => $primary['ID'],
-                        'DELETED' => ['Y', 'N'],
-                        'CHECK_PERMISSIONS' => 'N'
+                $res = self::getList(
+                    array(
+                        'select' => array(
+                            'DOMAIN_ID',
+                            'DOMAIN_NAME' => 'DOMAIN.DOMAIN',
+                            'DOMAIN_PROVIDER' => 'DOMAIN.PROVIDER'
+                        ),
+                        'filter' => array(
+                            'ID' => $primary['ID'],
+                            'DELETED' => ['Y', 'N'],
+                            'CHECK_PERMISSIONS' => 'N'
+                        )
                     )
-                ));
+                );
                 if ($row = $res->fetch()) {
+                    if ($row['DOMAIN_PROVIDER'] && ModuleManager::isModuleInstalled('bitrix24')) {
+                        $result->setErrors(
+                            [
+                                new Entity\EntityError(
+                                    Loc::getMessage('LANDING_TABLE_ERROR_ACCESS_DENIED_DELETED'),
+                                    'ACCESS_DENIED_DELETED'
+                                )
+                            ]
+                        );
+                        return $result;
+                    }
+
                     $domainId = $row['DOMAIN_ID'];
                     $domainName = $row['DOMAIN_NAME'];
                     $eventManager = \Bitrix\Main\EventManager::getInstance();
@@ -1146,23 +1464,27 @@ class SiteTable extends Entity\DataManager
                         'landing',
                         '\\' . __NAMESPACE__ . '\\Site::onAfterDelete',
                         function (Entity\Event $event) use ($domainId, $domainName, $result, $siteController) {
-                            $res = self::getList(array(
-                                'select' => array(
-                                    'ID'
-                                ),
-                                'filter' => array(
-                                    'DOMAIN_ID' => $domainId,
-                                    'DELETED' => ['Y', 'N']
+                            $res = self::getList(
+                                array(
+                                    'select' => array(
+                                        'ID'
+                                    ),
+                                    'filter' => array(
+                                        'DOMAIN_ID' => $domainId,
+                                        'DELETED' => ['Y', 'N']
+                                    )
                                 )
-                            ));
+                            );
                             if (!$res->fetch()) {
                                 DomainTable::delete($domainId);
                                 try {
                                     $siteController::deleteDomain($domainName);
                                 } catch (SystemException $ex) {
-                                    $result->setErrors(array(
-                                        self::customizeControllerError($ex)
-                                    ));
+                                    $result->setErrors(
+                                        array(
+                                            self::customizeControllerError($ex)
+                                        )
+                                    );
                                     return $result;
                                 }
                             }
@@ -1193,14 +1515,16 @@ class SiteTable extends Entity\DataManager
         if ($primary) {
             Rights::setOff();
 
-            $res = LandingTable::getList(array(
-                'select' => array(
-                    'ID'
-                ),
-                'filter' => array(
-                    'SITE_ID' => $primary['ID']
+            $res = LandingTable::getList(
+                array(
+                    'select' => array(
+                        'ID'
+                    ),
+                    'filter' => array(
+                        'SITE_ID' => $primary['ID']
+                    )
                 )
-            ));
+            );
             while ($row = $res->fetch()) {
                 \Bitrix\Landing\Landing::delete($row['ID'], true);
             }
@@ -1211,6 +1535,7 @@ class SiteTable extends Entity\DataManager
             \Bitrix\Landing\TemplateRef::setForSite($primary['ID'], []);
             \Bitrix\Landing\UrlRewrite::removeForSite($primary['ID']);
             \Bitrix\Landing\Rights::setOperationsForSite($primary['ID'], []);
+            \Bitrix\Landing\Site\Cookies::removeAgreementsForSite($primary['ID']);
             BindingTable::siteClear($primary['ID']);
 
             Rights::setOn();

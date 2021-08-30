@@ -33,12 +33,7 @@ class CPHPCache
 
     public function Clean($uniq_str, $initdir = false, $basedir = "cache")
     {
-        if (isset($this) && is_object($this) && ($this instanceof CPHPCache)) {
-            return $this->cache->clean($uniq_str, $initdir, $basedir);
-        } else {
-            $obCache = new CPHPCache();
-            return $obCache->Clean($uniq_str, $initdir, $basedir);
-        }
+        return $this->cache->clean($uniq_str, $initdir, $basedir);
     }
 
     public function CleanDir($initdir = false, $basedir = "cache")
@@ -61,17 +56,26 @@ class CPHPCache
         return $this->cache->getVars();
     }
 
-    public function StartDataCache($TTL = false, $uniq_str = false, $initdir = false, $vars = Array(), $basedir = "cache")
-    {
+    public function StartDataCache(
+        $TTL = false,
+        $uniq_str = false,
+        $initdir = false,
+        $vars = Array(),
+        $basedir = "cache"
+    ) {
         $narg = func_num_args();
-        if ($narg <= 0)
+        if ($narg <= 0) {
             return $this->cache->startDataCache();
-        if ($narg <= 1)
+        }
+        if ($narg <= 1) {
             return $this->cache->startDataCache($TTL);
-        if ($narg <= 2)
+        }
+        if ($narg <= 2) {
             return $this->cache->startDataCache($TTL, $uniq_str);
-        if ($narg <= 3)
+        }
+        if ($narg <= 3) {
             return $this->cache->startDataCache($TTL, $uniq_str, $initdir);
+        }
 
         return $this->cache->startDataCache($TTL, $uniq_str, $initdir, $vars, $basedir);
     }
@@ -122,7 +126,7 @@ class CPageCache
     function GetPath($uniq_str)
     {
         $un = md5($uniq_str);
-        return substr($un, 0, 2) . "/" . $un . ".html";
+        return mb_substr($un, 0, 2) . "/" . $un . ".html";
     }
 
     function Clean($uniq_str, $initdir = false, $basedir = "cache")
@@ -130,8 +134,9 @@ class CPageCache
         if (isset($this) && is_object($this) && is_object($this->_cache)) {
             $basedir = BX_PERSONAL_ROOT . "/" . $basedir . "/";
             $filename = CPageCache::GetPath($uniq_str);
-            if (\Bitrix\Main\Data\Cache::getShowCacheStat())
+            if (\Bitrix\Main\Data\Cache::getShowCacheStat()) {
                 \Bitrix\Main\Diag\CacheTracker::add(0, "", $basedir, $initdir, "/" . $filename, "C");
+            }
             return $this->_cache->clean($basedir, $initdir, "/" . $filename);
         } else {
             $obCache = new CPageCache();
@@ -142,8 +147,9 @@ class CPageCache
     function CleanDir($initdir = false, $basedir = "cache")
     {
         $basedir = BX_PERSONAL_ROOT . "/" . $basedir . "/";
-        if (\Bitrix\Main\Data\Cache::getShowCacheStat())
+        if (\Bitrix\Main\Data\Cache::getShowCacheStat()) {
             \Bitrix\Main\Diag\CacheTracker::add(0, "", $basedir, $initdir, "", "C");
+        }
         return $this->_cache->clean($basedir, $initdir);
     }
 
@@ -151,8 +157,9 @@ class CPageCache
     {
         /** @global CMain $APPLICATION */
         global $APPLICATION, $USER;
-        if ($initdir === false)
+        if ($initdir === false) {
             $initdir = $APPLICATION->GetCurDir();
+        }
 
         $this->basedir = BX_PERSONAL_ROOT . "/" . $basedir . "/";
         $this->initdir = $initdir;
@@ -160,26 +167,33 @@ class CPageCache
         $this->TTL = $TTL;
         $this->uniq_str = $uniq_str;
 
-        if ($TTL <= 0)
+        if ($TTL <= 0) {
             return false;
+        }
 
         if (is_object($USER) && $USER->CanDoOperation('cache_control')) {
             if (isset($_GET["clear_cache_session"])) {
-                if (strtoupper($_GET["clear_cache_session"]) == "Y")
-                    $_SESSION["SESS_CLEAR_CACHE"] = "Y";
-                elseif (strlen($_GET["clear_cache_session"]) > 0)
-                    unset($_SESSION["SESS_CLEAR_CACHE"]);
+                if (mb_strtoupper($_GET["clear_cache_session"]) == "Y") {
+                    \Bitrix\Main\Application::getInstance()->getKernelSession()["SESS_CLEAR_CACHE"] = "Y";
+                } elseif ($_GET["clear_cache_session"] <> '') {
+                    unset(\Bitrix\Main\Application::getInstance()->getKernelSession()["SESS_CLEAR_CACHE"]);
+                }
             }
 
-            if (isset($_GET["clear_cache"]) && strtoupper($_GET["clear_cache"]) == "Y")
+            if (isset($_GET["clear_cache"]) && mb_strtoupper($_GET["clear_cache"]) == "Y") {
                 return false;
+            }
         }
 
-        if (isset($_SESSION["SESS_CLEAR_CACHE"]) && $_SESSION["SESS_CLEAR_CACHE"] == "Y")
+        if (isset(
+                \Bitrix\Main\Application::getInstance()->getKernelSession()["SESS_CLEAR_CACHE"]
+            ) && \Bitrix\Main\Application::getInstance()->getSession()["SESS_CLEAR_CACHE"] == "Y") {
             return false;
+        }
 
-        if (!$this->_cache->read($this->content, $this->basedir, $this->initdir, $this->filename, $this->TTL))
+        if (!$this->_cache->read($this->content, $this->basedir, $this->initdir, $this->filename, $this->TTL)) {
             return false;
+        }
 
 //		$GLOBALS["CACHE_STAT_BYTES"] += $this->_cache->read;
         if (\Bitrix\Main\Data\Cache::getShowCacheStat()) {
@@ -214,8 +228,9 @@ class CPageCache
             return false;
         }
 
-        if ($TTL <= 0)
+        if ($TTL <= 0) {
             return true;
+        }
 
         ob_start();
         $this->bStarted = true;
@@ -224,8 +239,9 @@ class CPageCache
 
     function AbortDataCache()
     {
-        if (!$this->bStarted)
+        if (!$this->bStarted) {
             return;
+        }
         $this->bStarted = false;
 
         ob_end_flush();
@@ -233,8 +249,9 @@ class CPageCache
 
     function EndDataCache()
     {
-        if (!$this->bStarted)
+        if (!$this->bStarted) {
             return;
+        }
         $this->bStarted = false;
 
         $arAllVars = ob_get_contents();
@@ -258,10 +275,11 @@ class CPageCache
             \Bitrix\Main\Diag\CacheTracker::add($written, $path, $this->basedir, $this->initdir, $this->filename, "W");
         }
 
-        if (strlen($arAllVars) > 0)
+        if ($arAllVars <> '') {
             ob_end_flush();
-        else
+        } else {
             ob_end_clean();
+        }
     }
 
     function IsCacheExpired($path)
@@ -292,7 +310,9 @@ function BXClearCache($full = false, $initdir = "")
     $path = $_SERVER["DOCUMENT_ROOT"] . BX_PERSONAL_ROOT . "/cache" . $initdir;
     if (is_dir($path) && ($handle = opendir($path))) {
         while (($file = readdir($handle)) !== false) {
-            if ($file == "." || $file == "..") continue;
+            if ($file == "." || $file == "..") {
+                continue;
+            }
 
             if (is_dir($path . "/" . $file)) {
                 if (!BXClearCache($full, $initdir . "/" . $file)) {
@@ -304,21 +324,24 @@ function BXClearCache($full = false, $initdir = "")
                 }
             } elseif ($full) {
                 @chmod($path . "/" . $file, BX_FILE_PERMISSIONS);
-                if (!unlink($path . "/" . $file))
+                if (!unlink($path . "/" . $file)) {
                     $res = false;
-            } elseif (substr($file, -5) == ".html") {
-                $obCache = new CPHPCache();
-                if ($obCache->IsCacheExpired($path . "/" . $file)) {
-                    @chmod($path . "/" . $file, BX_FILE_PERMISSIONS);
-                    if (!unlink($path . "/" . $file))
-                        $res = false;
                 }
-            } elseif (substr($file, -4) == ".php") {
+            } elseif (mb_substr($file, -5) == ".html") {
                 $obCache = new CPHPCache();
                 if ($obCache->IsCacheExpired($path . "/" . $file)) {
                     @chmod($path . "/" . $file, BX_FILE_PERMISSIONS);
-                    if (!unlink($path . "/" . $file))
+                    if (!unlink($path . "/" . $file)) {
                         $res = false;
+                    }
+                }
+            } elseif (mb_substr($file, -4) == ".php") {
+                $obCache = new CPHPCache();
+                if ($obCache->IsCacheExpired($path . "/" . $file)) {
+                    @chmod($path . "/" . $file, BX_FILE_PERMISSIONS);
+                    if (!unlink($path . "/" . $file)) {
+                        $res = false;
+                    }
                 }
             } else {
                 //We should skip unknown file
@@ -471,17 +494,20 @@ class CStackCacheEntry
     {
         $this->entity = $entity;
 
-        if ($length > 0)
+        if ($length > 0) {
             $this->len = intval($length);
+        }
 
-        if ($ttl > 0)
+        if ($ttl > 0) {
             $this->ttl = intval($ttl);
+        }
     }
 
     function SetLength($length)
     {
-        if ($length > 0)
+        if ($length > 0) {
             $this->len = intval($length);
+        }
 
         while (count($this->values) > $this->len) {
             $this->cleanSet = false;
@@ -491,8 +517,9 @@ class CStackCacheEntry
 
     function SetTTL($ttl)
     {
-        if ($ttl > 0)
+        if ($ttl > 0) {
             $this->ttl = intval($ttl);
+        }
     }
 
     function Load()
@@ -551,8 +578,9 @@ class CStackCacheEntry
             $this->values = $this->values + array($id => $value);
         } else {
             $this->values = $this->values + array($id => $value);
-            while (count($this->values) > $this->len)
+            while (count($this->values) > $this->len) {
                 array_shift($this->values);
+            }
         }
 
         $this->cleanSet = false;
@@ -560,8 +588,9 @@ class CStackCacheEntry
 
     function Save()
     {
-        if (defined("BITRIX_SKIP_STACK_CACHE") && BITRIX_SKIP_STACK_CACHE)
+        if (defined("BITRIX_SKIP_STACK_CACHE") && BITRIX_SKIP_STACK_CACHE) {
             return;
+        }
 
         global $DB;
 
@@ -577,7 +606,13 @@ class CStackCacheEntry
             //Force cache rewrite
             $objCache->forceRewriting(true);
 
-            if ($objCache->startDataCache($this->ttl, $this->entity, $DB->type . "/" . $this->entity, $this->values, "stack_cache")) {
+            if ($objCache->startDataCache(
+                $this->ttl,
+                $this->entity,
+                $DB->type . "/" . $this->entity,
+                $this->values,
+                "stack_cache"
+            )) {
                 $objCache->endDataCache();
             }
 
@@ -597,70 +632,83 @@ class CStackCacheManager
 
     function SetLength($entity, $length)
     {
-        if (defined("BITRIX_SKIP_STACK_CACHE") && BITRIX_SKIP_STACK_CACHE)
+        if (defined("BITRIX_SKIP_STACK_CACHE") && BITRIX_SKIP_STACK_CACHE) {
             return;
+        }
 
-        if (isset($this->cache[$entity]) && is_object($this->cache[$entity]))
+        if (isset($this->cache[$entity]) && is_object($this->cache[$entity])) {
             $this->cache[$entity]->SetLength($length);
-        else
+        } else {
             $this->cacheLen[$entity] = $length;
+        }
     }
 
     function SetTTL($entity, $ttl)
     {
-        if (defined("BITRIX_SKIP_STACK_CACHE") && BITRIX_SKIP_STACK_CACHE)
+        if (defined("BITRIX_SKIP_STACK_CACHE") && BITRIX_SKIP_STACK_CACHE) {
             return;
+        }
 
-        if (isset($this->cache[$entity]) && is_object($this->cache[$entity]))
+        if (isset($this->cache[$entity]) && is_object($this->cache[$entity])) {
             $this->cache[$entity]->SetTTL($ttl);
-        else
+        } else {
             $this->cacheTTL[$entity] = $ttl;
+        }
     }
 
     function Init($entity, $length = 0, $ttl = 0)
     {
-        if (defined("BITRIX_SKIP_STACK_CACHE") && BITRIX_SKIP_STACK_CACHE)
+        if (defined("BITRIX_SKIP_STACK_CACHE") && BITRIX_SKIP_STACK_CACHE) {
             return;
+        }
 
         if (!$this->eventHandlerAdded) {
             AddEventHandler("main", "OnEpilog", array("CStackCacheManager", "SaveAll"));
-            $this->eventHandlerAdded = True;
+            $this->eventHandlerAdded = true;
         }
 
-        if ($length <= 0 && isset($this->cacheLen[$entity]))
+        if ($length <= 0 && isset($this->cacheLen[$entity])) {
             $length = $this->cacheLen[$entity];
+        }
 
-        if ($ttl <= 0 && isset($this->cacheTTL[$entity]))
+        if ($ttl <= 0 && isset($this->cacheTTL[$entity])) {
             $ttl = $this->cacheTTL[$entity];
+        }
 
-        if (!array_key_exists($entity, $this->cache))
+        if (!array_key_exists($entity, $this->cache)) {
             $this->cache[$entity] = new CStackCacheEntry($entity, $length, $ttl);
+        }
     }
 
     function Load($entity)
     {
-        if (defined("BITRIX_SKIP_STACK_CACHE") && BITRIX_SKIP_STACK_CACHE)
+        if (defined("BITRIX_SKIP_STACK_CACHE") && BITRIX_SKIP_STACK_CACHE) {
             return;
+        }
 
-        if (!array_key_exists($entity, $this->cache))
+        if (!array_key_exists($entity, $this->cache)) {
             $this->Init($entity);
+        }
 
         $this->cache[$entity]->Load();
     }
 
     //NO ONE SHOULD NEVER EVER USE INTEGER $id HERE
-    function Clear($entity, $id = False)
+    function Clear($entity, $id = false)
     {
-        if (defined("BITRIX_SKIP_STACK_CACHE") && BITRIX_SKIP_STACK_CACHE)
+        if (defined("BITRIX_SKIP_STACK_CACHE") && BITRIX_SKIP_STACK_CACHE) {
             return;
+        }
 
-        if (!array_key_exists($entity, $this->cache))
+        if (!array_key_exists($entity, $this->cache)) {
             $this->Load($entity);
+        }
 
-        if ($id !== False)
+        if ($id !== false) {
             $this->cache[$entity]->DeleteEntry($id);
-        else
+        } else {
             $this->cache[$entity]->Clean();
+        }
     }
 
     // Clears all managed_cache
@@ -675,11 +723,13 @@ class CStackCacheManager
     //NO ONE SHOULD NEVER EVER USE INTEGER $id HERE
     function Exist($entity, $id)
     {
-        if (defined("BITRIX_SKIP_STACK_CACHE") && BITRIX_SKIP_STACK_CACHE)
-            return False;
+        if (defined("BITRIX_SKIP_STACK_CACHE") && BITRIX_SKIP_STACK_CACHE) {
+            return false;
+        }
 
-        if (!array_key_exists($entity, $this->cache))
+        if (!array_key_exists($entity, $this->cache)) {
             $this->Load($entity);
+        }
 
         return array_key_exists($id, $this->cache[$entity]->values);
     }
@@ -687,11 +737,13 @@ class CStackCacheManager
     //NO ONE SHOULD NEVER EVER USE INTEGER $id HERE
     function Get($entity, $id)
     {
-        if (defined("BITRIX_SKIP_STACK_CACHE") && BITRIX_SKIP_STACK_CACHE)
-            return False;
+        if (defined("BITRIX_SKIP_STACK_CACHE") && BITRIX_SKIP_STACK_CACHE) {
+            return false;
+        }
 
-        if (!array_key_exists($entity, $this->cache))
+        if (!array_key_exists($entity, $this->cache)) {
             $this->Load($entity);
+        }
 
         return $this->cache[$entity]->Get($id);
     }
@@ -699,28 +751,33 @@ class CStackCacheManager
     //NO ONE SHOULD NEVER EVER USE INTEGER $id HERE
     function Set($entity, $id, $value)
     {
-        if (defined("BITRIX_SKIP_STACK_CACHE") && BITRIX_SKIP_STACK_CACHE)
+        if (defined("BITRIX_SKIP_STACK_CACHE") && BITRIX_SKIP_STACK_CACHE) {
             return;
+        }
 
-        if (!array_key_exists($entity, $this->cache))
+        if (!array_key_exists($entity, $this->cache)) {
             $this->Load($entity);
+        }
 
         $this->cache[$entity]->Set($id, $value);
     }
 
     function Save($entity)
     {
-        if (defined("BITRIX_SKIP_STACK_CACHE") && BITRIX_SKIP_STACK_CACHE)
+        if (defined("BITRIX_SKIP_STACK_CACHE") && BITRIX_SKIP_STACK_CACHE) {
             return;
+        }
 
-        if (array_key_exists($entity, $this->cache))
+        if (array_key_exists($entity, $this->cache)) {
             $this->cache[$entity]->Save();
+        }
     }
 
     public static function SaveAll()
     {
-        if (defined("BITRIX_SKIP_STACK_CACHE") && BITRIX_SKIP_STACK_CACHE)
+        if (defined("BITRIX_SKIP_STACK_CACHE") && BITRIX_SKIP_STACK_CACHE) {
             return;
+        }
 
         /** @global CStackCacheManager $stackCacheManager */
         global $stackCacheManager;
@@ -736,8 +793,9 @@ class CStackCacheManager
 
         sort($values);
 
-        for ($i = 0, $c = count($values); $i < $c; $i++)
+        for ($i = 0, $c = count($values); $i < $c; $i++) {
             $id .= "_" . $values[$i];
+        }
 
         return $id;
     }

@@ -1,9 +1,11 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions < "W")
+if ($saleModulePermissions < "W") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 \Bitrix\Main\Loader::includeModule('sale');
 
@@ -43,11 +45,12 @@ $errorsList = "";
 
 //$obDelivery = new CSaleDeliveryHandler();
 
-if (CModule::IncludeModule("fileman"))
+if (CModule::IncludeModule("fileman")) {
     $bFilemanModuleInst = true;
+}
 
 $siteList = array();
-$rsSites = CSite::GetList($by = "sort", $order = "asc", Array());
+$rsSites = CSite::GetList();
 $i = 0;
 while ($arRes = $rsSites->Fetch()) {
     $siteList[] = array(
@@ -62,11 +65,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !empty($_REQUEST["Update"]) && check
 
     $arHandlersData = json_decode($arHandlersData, true);
 
-    if ('utf-8' != strtolower(SITE_CHARSET))
+    if ('utf-8' != mb_strtolower(SITE_CHARSET)) {
         $arHandlersData = $APPLICATION->ConvertCharsetArray($arHandlersData, 'utf-8', SITE_CHARSET);
+    }
 
     if ($arHandlersData) {
-
         if ($_REQUEST["USE_DIFF_SITES_SETTINGS"] != "Y") {
             $curSITE_ID = $_REQUEST["current_site"];
             $arHandlersData = array("ALL" => $arHandlersData[$curSITE_ID]);
@@ -79,7 +82,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !empty($_REQUEST["Update"]) && check
                 if (is_array($arProfile["RESTRICTIONS_SUM"])) {
                     $currency = array_shift($arProfile["RESTRICTIONS_SUM"]);
                     foreach ($arProfile["RESTRICTIONS_SUM"] as $key => $value) {
-                        $arProfile["RESTRICTIONS_SUM"][$key] = CCurrencyRates::ConvertCurrency($value, $currency, $arHandlersData[$siteID]["BASE_CURRENCY"]);
+                        $arProfile["RESTRICTIONS_SUM"][$key] = CCurrencyRates::ConvertCurrency(
+                            $value,
+                            $currency,
+                            $arHandlersData[$siteID]["BASE_CURRENCY"]
+                        );
                     }
 
                     $arHandlersData[$siteID]["PROFILES"][$profile_id] = $arProfile;
@@ -88,10 +95,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !empty($_REQUEST["Update"]) && check
             $arConfig = array();
             foreach ($arHandlersData[$siteID]["CONFIG"]["CONFIG"] as $configID => $arHandlerConfig) {
                 if (isset($arHandlerConfig["CHECK_FORMAT"])) {
-                    $formatError = CSaleDeliveryHelper::getFormatError($arHandlerConfig["VALUE"], $arHandlerConfig["CHECK_FORMAT"], $arHandlerConfig["TITLE"]);
+                    $formatError = CSaleDeliveryHelper::getFormatError(
+                        $arHandlerConfig["VALUE"],
+                        $arHandlerConfig["CHECK_FORMAT"],
+                        $arHandlerConfig["TITLE"]
+                    );
 
-                    if (!is_null($formatError))
+                    if (!is_null($formatError)) {
                         $errorsList .= $formatError;
+                    }
                 }
 
                 $arConfig[$configID] = $arHandlerConfig["VALUE"];
@@ -102,13 +114,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !empty($_REQUEST["Update"]) && check
 
         //add logotip
         $arPicture = array();
-        if (array_key_exists("LOGOTIP", $_FILES) && $_FILES["LOGOTIP"]["error"] == 0)
+        if (array_key_exists("LOGOTIP", $_FILES) && $_FILES["LOGOTIP"]["error"] == 0) {
             $arPicture = $_FILES["LOGOTIP"];
-        if ($_POST["LOGOTIP_del"] == "Y")
+        }
+        if ($_POST["LOGOTIP_del"] == "Y") {
             $arPicture["del"] = trim($_POST["LOGOTIP_del"]);
+        }
 
-        if (!empty($arPicture))
+        if (!empty($arPicture)) {
             $arHandlersData["ALL"]["LOGOTIP"] = $arPicture;
+        }
 
         foreach ($arHandlersData as $SITE_ID => $arHandlerData) {
             $APPLICATION->ResetException();
@@ -122,19 +137,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && !empty($_REQUEST["Update"]) && check
 
         //pay system for delivery
         if (is_set($_POST["PAY_SYSTEM"]) && is_array($_POST["PAY_SYSTEM"])) {
-            foreach ($_POST["PAY_SYSTEM"] as $profileName => $arPSIds)
-                CSaleDelivery2PaySystem::UpdateDelivery($SID, array(
+            foreach ($_POST["PAY_SYSTEM"] as $profileName => $arPSIds) {
+                CSaleDelivery2PaySystem::UpdateDelivery(
+                    $SID,
+                    array(
                         "PAYSYSTEM_ID" => $arPSIds,
                         "DELIVERY_PROFILE_ID" => $profileName
                     )
                 );
+            }
         }
 
-        if (strlen($errorsList) <= 0) {
-            if (strlen($_REQUEST["apply"]) > 0)
+        if ($errorsList == '') {
+            if ($_REQUEST["apply"] <> '') {
                 LocalRedirect($APPLICATION->GetCurPage() . "?lang=" . LANG . "&SID=" . urlencode($SID));
-            else
+            } else {
                 LocalRedirect('/bitrix/admin/sale_delivery_handlers.php?lang=' . LANG);
+            }
 
             die();
         }
@@ -159,9 +178,9 @@ while ($arHandler = $rsDeliveryInfo->Fetch()) {
     unset($arHandler["COMPABILITY"]);
     unset($arHandler["CALCULATOR"]);
 
-    if (strlen($arHandler["LID"]) > 0)
+    if ($arHandler["LID"] <> '') {
         $arDeliveryInfo[$arHandler["LID"]] = $arHandler;
-    else {
+    } else {
         $arDeliveryInfo = array("ALL" => $arHandler);
         break;
     }
@@ -199,36 +218,38 @@ if (!$bInstall) {
     } else {
         $bInstall = true;
     }
-} else if (isset($arDeliveryInfo["ALL"])) {
-    $arDeliveryInfoTmp = $arDeliveryInfo;
-    $arDeliveryInfoTmp["ALL"]["ACTIVE"] = 'N';
-    $arDeliveryInfoTmp["ALL"]["SORT"] = '100';
-
-    $arDeliveryInfo = array();
-
-    foreach ($siteList as $arSite) {
-        $arDeliveryInfo[$arSite["ID"]] = $arDeliveryInfoTmp["ALL"];
-        $arDeliveryInfo[$arSite["ID"]]["LID"] = $arSite["ID"];
-    }
-
-    unset($arDeliveryInfoTmp);
-
-    $handlerPath = $arDeliveryInfo[$siteList[0]["ID"]]["HANDLER"];
-    $deliveryHint = $arDeliveryInfo[$siteList[0]["ID"]]['DESCRIPTION_INNER'];
-    $deliveryName = $arDeliveryInfo[$siteList[0]["ID"]]['NAME'];
-
-    $bSites = false;
 } else {
-    $bSites = true;
+    if (isset($arDeliveryInfo["ALL"])) {
+        $arDeliveryInfoTmp = $arDeliveryInfo;
+        $arDeliveryInfoTmp["ALL"]["ACTIVE"] = 'N';
+        $arDeliveryInfoTmp["ALL"]["SORT"] = '100';
 
-    foreach ($siteList as $arSite) {
-        $arDeliveryInfo[$arSite["ID"]]["ACTIVE"] = 'N';
-        $arDeliveryInfo[$arSite["ID"]]["SORT"] = '100';
+        $arDeliveryInfo = array();
+
+        foreach ($siteList as $arSite) {
+            $arDeliveryInfo[$arSite["ID"]] = $arDeliveryInfoTmp["ALL"];
+            $arDeliveryInfo[$arSite["ID"]]["LID"] = $arSite["ID"];
+        }
+
+        unset($arDeliveryInfoTmp);
+
+        $handlerPath = $arDeliveryInfo[$siteList[0]["ID"]]["HANDLER"];
+        $deliveryHint = $arDeliveryInfo[$siteList[0]["ID"]]['DESCRIPTION_INNER'];
+        $deliveryName = $arDeliveryInfo[$siteList[0]["ID"]]['NAME'];
+
+        $bSites = false;
+    } else {
+        $bSites = true;
+
+        foreach ($siteList as $arSite) {
+            $arDeliveryInfo[$arSite["ID"]]["ACTIVE"] = 'N';
+            $arDeliveryInfo[$arSite["ID"]]["SORT"] = '100';
+        }
+
+        $handlerPath = $arDeliveryInfo[$siteList[0]["ID"]]["HANDLER"];
+        $deliveryHint = $arDeliveryInfo[$siteList[0]["ID"]]['DESCRIPTION_INNER'];
+        $deliveryName = $arDeliveryInfo[$siteList[0]["ID"]]['NAME'];
     }
-
-    $handlerPath = $arDeliveryInfo[$siteList[0]["ID"]]["HANDLER"];
-    $deliveryHint = $arDeliveryInfo[$siteList[0]["ID"]]['DESCRIPTION_INNER'];
-    $deliveryName = $arDeliveryInfo[$siteList[0]["ID"]]['NAME'];
 }
 
 foreach ($siteList as $arSite) {
@@ -249,31 +270,46 @@ foreach ($siteList as $arSite) {
     }
 
     foreach ($arDeliveryInfo[$curSITE_ID]['PROFILES'] as $key => $arProfile) {
-        if (!is_set($arProfile['ACTIVE'])) $arProfile['ACTIVE'] = "Y";
+        if (!is_set($arProfile['ACTIVE'])) {
+            $arProfile['ACTIVE'] = "Y";
+        }
 
-        if (!is_set($arProfile['TAX_RATE'])) $arProfile['TAX_RATE'] = "0";
-        if (!is_set($arProfile['RESTRICTIONS_DIMENSIONS_SUM'])) $arProfile['RESTRICTIONS_DIMENSIONS_SUM'] = "0";
-        if (!is_set($arProfile['RESTRICTIONS_MAX_SIZE'])) $arProfile['RESTRICTIONS_MAX_SIZE'] = "0";
+        if (!is_set($arProfile['TAX_RATE'])) {
+            $arProfile['TAX_RATE'] = "0";
+        }
+        if (!is_set($arProfile['RESTRICTIONS_DIMENSIONS_SUM'])) {
+            $arProfile['RESTRICTIONS_DIMENSIONS_SUM'] = "0";
+        }
+        if (!is_set($arProfile['RESTRICTIONS_MAX_SIZE'])) {
+            $arProfile['RESTRICTIONS_MAX_SIZE'] = "0";
+        }
 
-        if (!is_array($arProfile["RESTRICTIONS_WEIGHT"]) || count($arProfile["RESTRICTIONS_WEIGHT"]) <= 0)
+        if (!is_array($arProfile["RESTRICTIONS_WEIGHT"]) || count($arProfile["RESTRICTIONS_WEIGHT"]) <= 0) {
             $arProfile["RESTRICTIONS_WEIGHT"] = array(0);
+        }
 
-        if (!is_array($arProfile["RESTRICTIONS_DIMENSIONS"]) || count($arProfile["RESTRICTIONS_DIMENSIONS"]) <= 0)
+        if (!is_array($arProfile["RESTRICTIONS_DIMENSIONS"]) || count($arProfile["RESTRICTIONS_DIMENSIONS"]) <= 0) {
             $arProfile["RESTRICTIONS_DIMENSIONS"] = array(0);
+        }
 
-        if (!is_array($arProfile["RESTRICTIONS_SUM"]) || count($arProfile["RESTRICTIONS_SUM"]) <= 0)
+        if (!is_array($arProfile["RESTRICTIONS_SUM"]) || count($arProfile["RESTRICTIONS_SUM"]) <= 0) {
             $arProfile["RESTRICTIONS_SUM"] = array(0);
-        else
+        } else {
             array_unshift($arProfile["RESTRICTIONS_SUM"], $arDeliveryInfo[$curSITE_ID]['BASE_CURRENCY']);
+        }
 
-        foreach ($arProfile["RESTRICTIONS_WEIGHT"] as $pkey => $value)
+        foreach ($arProfile["RESTRICTIONS_WEIGHT"] as $pkey => $value) {
             $arProfile["RESTRICTIONS_WEIGHT"][$pkey] = number_format(doubleval($value), 2, '.', '');
-        foreach ($arProfile["RESTRICTIONS_SUM"] as $pkey => $value)
+        }
+        foreach ($arProfile["RESTRICTIONS_SUM"] as $pkey => $value) {
             $arProfile["RESTRICTIONS_SUM"][$pkey] = $pkey > 0 ? number_format(doubleval($value), 2, '.', '') : $value;
-        if (count($arProfile["RESTRICTIONS_SUM"]) < 3)
+        }
+        if (count($arProfile["RESTRICTIONS_SUM"]) < 3) {
             $arProfile["RESTRICTIONS_SUM"][] = "0.00";
-        foreach ($arProfile["RESTRICTIONS_DIMENSIONS"] as $pkey => $value)
+        }
+        foreach ($arProfile["RESTRICTIONS_DIMENSIONS"] as $pkey => $value) {
             $arProfile["RESTRICTIONS_DIMENSIONS"][$pkey] = number_format(doubleval($value), 2, '.', '');
+        }
 
         $arDeliveryInfo[$curSITE_ID]['PROFILES'][$key] = $arProfile;
     }
@@ -284,7 +320,11 @@ $APPLICATION->SetTitle(GetMessage("SALE_DH_TITLE_EDIT") . ": (" . htmlspecialcha
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
 $aTabs = array(
-    array("DIV" => "editbase", "TAB" => GetMessage("SALE_DH_EDIT_BASECONFIG"), "TITLE" => GetMessage("SALE_DH_EDIT_BASECONFIG_DESCR"))
+    array(
+        "DIV" => "editbase",
+        "TAB" => GetMessage("SALE_DH_EDIT_BASECONFIG"),
+        "TITLE" => GetMessage("SALE_DH_EDIT_BASECONFIG_DESCR")
+    )
 );
 
 $SITE_ID = $siteList[0]['ID'];
@@ -292,11 +332,19 @@ if (is_array($arDeliveryInfo[$SITE_ID]["CONFIG"])) {
     if (is_array($arDeliveryInfo[$SITE_ID]["CONFIG"]["CONFIG_GROUPS"])) {
         foreach ($arDeliveryInfo[$SITE_ID]["CONFIG"]["CONFIG_GROUPS"] as $group => $title) {
             $configTabsCount++;
-            $aTabs[] = array("DIV" => "edit_" . htmlspecialcharsbx($group), "TAB" => htmlspecialcharsbx($title), "TITLE" => htmlspecialcharsbx($title));
+            $aTabs[] = array(
+                "DIV" => "edit_" . htmlspecialcharsbx($group),
+                "TAB" => htmlspecialcharsbx($title),
+                "TITLE" => htmlspecialcharsbx($title)
+            );
         }
     } else {
         $configTabsCount++;
-        $aTabs[] = array("DIV" => "edit_config", "TAB" => GetMessage('SALE_DH_EDIT_CONFIG'), "TITLE" => GetMessage('SALE_DH_EDIT_CONFIG_DESCR'));
+        $aTabs[] = array(
+            "DIV" => "edit_config",
+            "TAB" => GetMessage('SALE_DH_EDIT_CONFIG'),
+            "TITLE" => GetMessage('SALE_DH_EDIT_CONFIG_DESCR')
+        );
     }
 }
 
@@ -304,7 +352,11 @@ if (is_array($arDeliveryInfo[$SITE_ID]["PROFILES"])) {
     foreach ($arDeliveryInfo[$SITE_ID]["PROFILES"] as $profileId => $arProfile) {
         if (!array_key_exists($profileId, $arDeliveryInfo[$SITE_ID]["CONFIG"]["CONFIG_GROUPS"])) {
             $configTabsCount++;
-            $aTabs[] = array("DIV" => "edit_" . htmlspecialcharsbx($profileId), "TAB" => htmlspecialcharsbx($arProfile["TITLE"]), "TITLE" => htmlspecialcharsbx($arProfile["TITLE"]));
+            $aTabs[] = array(
+                "DIV" => "edit_" . htmlspecialcharsbx($profileId),
+                "TAB" => htmlspecialcharsbx($arProfile["TITLE"]),
+                "TITLE" => htmlspecialcharsbx($arProfile["TITLE"])
+            );
         }
     }
 }
@@ -312,9 +364,16 @@ if (is_array($arDeliveryInfo[$SITE_ID]["PROFILES"])) {
 //$aTabs[] = array("DIV" => "delivery2pay", "TAB" => GetMessage('SALE_TAB_DELIVERY_PAY'), "TITLE" => GetMessage('SALE_TAB_DELIVERY_PAY_DESC'));
 
 $tabControl = new CAdminViewTabControl("tabControl", $aTabs, true, false);
-$parentTabControl = new CAdminTabControl('parentTabControl', array(
-    array("DIV" => "edit_main", "TAB" => GetMessage('SALE_DH_TAB_TITLE_EDIT'), "ICON" => "sale", "TITLE" => GetMessage('SALE_DH_TAB_TITLE_EDIT_ALT'))
-), true, true);
+$parentTabControl = new CAdminTabControl(
+    'parentTabControl', array(
+    array(
+        "DIV" => "edit_main",
+        "TAB" => GetMessage('SALE_DH_TAB_TITLE_EDIT'),
+        "ICON" => "sale",
+        "TITLE" => GetMessage('SALE_DH_TAB_TITLE_EDIT_ALT')
+    )
+), true, true
+);
 
 $aContext = array(
     array(
@@ -330,14 +389,16 @@ $obContextMenu->Show();
 
 $arConfigValues = array();
 foreach ($arDeliveryInfo[$SITE_ID]["CONFIG"]["CONFIG"] as $config_id => $arConfig) {
-    if ($arConfig["TYPE"] != "MULTISELECT")
-        $arConfigValues[$config_id] = strlen($arConfig["VALUE"]) > 0 ? $arConfig["VALUE"] : $arConfig["DEFAULT"];
-    else {
-        if (is_set($arConfig["VALUE"]) && !is_array($arConfig["VALUE"]))
+    if ($arConfig["TYPE"] != "MULTISELECT") {
+        $arConfigValues[$config_id] = $arConfig["VALUE"] <> '' ? $arConfig["VALUE"] : $arConfig["DEFAULT"];
+    } else {
+        if (is_set($arConfig["VALUE"]) && !is_array($arConfig["VALUE"])) {
             $arConfig["VALUE"] = array("0" => $arConfig["VALUE"]);
+        }
 
-        if (!is_set($arConfig["VALUE"]) && is_set($arConfig["DEFAULT"]) && !is_array($arConfig["DEFAULT"]))
+        if (!is_set($arConfig["VALUE"]) && is_set($arConfig["DEFAULT"]) && !is_array($arConfig["DEFAULT"])) {
             $arConfig["DEFAULT"] = array("0" => $arConfig["DEFAULT"]);
+        }
 
         $arConfigValues[$config_id] = count($arConfig["VALUE"]) > 0 ? $arConfig["VALUE"] : $arConfig["DEFAULT"];
     }
@@ -570,18 +631,24 @@ foreach ($arDeliveryInfo[$SITE_ID]["CONFIG"]["CONFIG"] as $config_id => $arConfi
             <td>
                 <?= GetMessage("SALE_DH_SITES_LIST") ?>:
             </td>
-            <td><select name="site" id="site_id"<? if (!$bSites) echo " disabled=\"disabled\""; ?>
-                        onChange="selectSite(this.value)">
+            <td><select name="site" id="site_id"<? if (!$bSites) {
+                    echo " disabled=\"disabled\"";
+                } ?> onChange="selectSite(this.value)">
                     <?
-                    for ($i = 0; $i < $siteCount; $i++)
-                        echo "<option value=\"" . htmlspecialcharsbx($siteList[$i]["ID"]) . "\" " . ($i == 0 ? "selected=\"selected\"" : "") . ">" . htmlspecialcharsbx($siteList[$i]["NAME"]) . "</option>";
+                    for ($i = 0; $i < $siteCount; $i++) {
+                        echo "<option value=\"" . htmlspecialcharsbx(
+                                $siteList[$i]["ID"]
+                            ) . "\" " . ($i == 0 ? "selected=\"selected\"" : "") . ">" . htmlspecialcharsbx(
+                                $siteList[$i]["NAME"]
+                            ) . "</option>";
+                    }
                     ?></select><input type="hidden" name="current_site" id="current_site"
                                       value="<?= htmlspecialcharsbx($siteList[0]["ID"]); ?>"/></td>
         </tr>
         <tr>
             <td colspan="2">
                 <?
-                if (strlen($deliveryHint) > 0) {
+                if ($deliveryHint <> '') {
                     echo BeginNote();
                     echo $deliveryHint;
                     echo EndNote();
@@ -616,7 +683,10 @@ foreach ($arDeliveryInfo[$SITE_ID]["CONFIG"]["CONFIG"] as $config_id => $arConfi
                     </tr>
                     <tr>
                         <td class="field-name"><?= GetMessage('SALE_DH_HANDLER_CURRENCY') ?></td>
-                        <td><?= CCurrency::SelectBox('HANDLER[BASE_CURRENCY]', htmlspecialcharsbx($arDeliveryInfo[$SITE_ID]["BASE_CURRENCY"])) ?></td>
+                        <td><?= CCurrency::SelectBox(
+                                'HANDLER[BASE_CURRENCY]',
+                                htmlspecialcharsbx($arDeliveryInfo[$SITE_ID]["BASE_CURRENCY"])
+                            ) ?></td>
                     </tr>
                     <tr>
                         <td valign="top" class="field-name"><?= GetMessage('SALE_DH_HANDLER_DESCRIPTION') ?></td>
@@ -624,7 +694,8 @@ foreach ($arDeliveryInfo[$SITE_ID]["CONFIG"]["CONFIG"] as $config_id => $arConfi
                             <?= wrapDescrLHE(
                                 'HANDLER[DESCRIPTION]',
                                 isset($arDeliveryInfo[$SITE_ID]["DESCRIPTION"]) ? $arDeliveryInfo[$SITE_ID]["DESCRIPTION"] : '',
-                                'hndl_dscr'); ?>
+                                'hndl_dscr'
+                            ); ?>
                             <script language="JavaScript">setLHEClass('bxlhe_frame_hndl_dscr'); </script>
                         </td>
                     </tr>
@@ -640,7 +711,14 @@ foreach ($arDeliveryInfo[$SITE_ID]["CONFIG"]["CONFIG"] as $config_id => $arConfi
                             <? if (count($arDeliveryInfo[$SITE_ID]["LOGOTIP"]) > 0): ?>
                                 <br>
                                 <?
-                                echo CFile::ShowImage($arDeliveryInfo[$SITE_ID]["LOGOTIP"], 150, 150, "border=0", "", false);
+                                echo CFile::ShowImage(
+                                    $arDeliveryInfo[$SITE_ID]["LOGOTIP"],
+                                    150,
+                                    150,
+                                    "border=0",
+                                    "",
+                                    false
+                                );
                                 ?>
                                 <br/>
                                 <div>
@@ -665,7 +743,12 @@ foreach ($arDeliveryInfo[$SITE_ID]["CONFIG"]["CONFIG"] as $config_id => $arConfi
 
                     //if exist profile witch named such as config group
                     if (isset($arDeliveryInfo[$SITE_ID]["PROFILES"][$group])) {
-                        printProfileInfo($SID, $group, $arDeliveryInfo[$SITE_ID]["PROFILES"][$group], $arDeliveryInfo[$SITE_ID]["BASE_CURRENCY"]);
+                        printProfileInfo(
+                            $SID,
+                            $group,
+                            $arDeliveryInfo[$SITE_ID]["PROFILES"][$group],
+                            $arDeliveryInfo[$SITE_ID]["BASE_CURRENCY"]
+                        );
                         $arDeliveryInfo[$SITE_ID]["PROFILES"][$group]["TABBED"] = true;
                     }
 
@@ -747,14 +830,21 @@ function wrapDescrLHE($inputName, $content = '', $divId = false)
         'bAutoResize' => true,
         'bSaveOnBlur' => true,
         'toolbarConfig' => array(
-            'Bold', 'Italic', 'Underline', 'Strike',
-            'CreateLink', 'DeleteLink',
-            'Source', 'BackColor', 'ForeColor'
+            'Bold',
+            'Italic',
+            'Underline',
+            'Strike',
+            'CreateLink',
+            'DeleteLink',
+            'Source',
+            'BackColor',
+            'ForeColor'
         )
     );
 
-    if ($divId)
+    if ($divId) {
         $ar['id'] = $divId;
+    }
 
     $LHE = new CLightHTMLEditor;
     $LHE->Show($ar);
@@ -789,7 +879,8 @@ function printProfileInfo($SID, $profileId, $arProfile, $baseCurrency)
             <?= wrapDescrLHE(
                 'HANDLER[PROFILES][' . htmlspecialcharsbx($profileId) . '][DESCRIPTION]',
                 isset($arProfile["DESCRIPTION"]) ? $arProfile["DESCRIPTION"] : '',
-                'hndl_dscr_' . $profileId); ?>
+                'hndl_dscr_' . $profileId
+            ); ?>
             <script language="JavaScript">setLHEClass('bxlhe_frame_hndl_dscr_<?=$profileId?>'); </script>
         </td>
     </tr>
@@ -807,12 +898,14 @@ function printProfileInfo($SID, $profileId, $arProfile, $baseCurrency)
                 $arPaySystemIdSID = array();
                 $arPaySystemIdProfile = array();
                 $dbRes = CSaleDelivery2PaySystem::GetList(
-                    array("DELIVERY_ID" => $SID));
+                    array("DELIVERY_ID" => $SID)
+                );
                 while ($arRes = $dbRes->Fetch()) {
-                    if ($arRes["DELIVERY_PROFILE_ID"] == $profileId || is_null($arRes["DELIVERY_PROFILE_ID"]))
+                    if ($arRes["DELIVERY_PROFILE_ID"] == $profileId || is_null($arRes["DELIVERY_PROFILE_ID"])) {
                         $arPaySystemIdProfile[] = $arRes["PAYSYSTEM_ID"];
-                    else
+                    } else {
                         $arPaySystemIdSID[] = $arRes["PAYSYSTEM_ID"];
+                    }
                 }
 
                 $dbResultList = CSalePaySystem::GetList(
@@ -824,8 +917,13 @@ function printProfileInfo($SID, $profileId, $arProfile, $baseCurrency)
                 );
 
                 while ($arPayType = $dbResultList->Fetch()):?>
-                    <option value="<?= intval($arPayType["ID"]); ?>" <?= (in_array($arPayType["ID"], $arPaySystemIdProfile) || empty($arPaySystemIdProfile) ? " selected" : "") ?>>
-                        <?= htmlspecialcharsbx($arPayType["NAME"] . (!is_null($arPayType["LID"]) ? " (" . $arPayType["LID"] . ")" : "")) ?>
+                    <option value="<?= intval($arPayType["ID"]); ?>" <?= (in_array(
+                        $arPayType["ID"],
+                        $arPaySystemIdProfile
+                    ) || empty($arPaySystemIdProfile) ? " selected" : "") ?>>
+                        <?= htmlspecialcharsbx(
+                            $arPayType["NAME"] . (!is_null($arPayType["LID"]) ? " (" . $arPayType["LID"] . ")" : "")
+                        ) ?>
                     </option>
                 <?endwhile; ?>
             </select>
@@ -836,8 +934,9 @@ function printProfileInfo($SID, $profileId, $arProfile, $baseCurrency)
         <td colspan="2"><?= GetMessage('SDEN_ORDER_RESTRICT') ?></td>
     </tr>
     <tr>
-        <td class="field-name"><?= GetMessage('SALE_DH_PROFILE_WEIGHT_RESTRICTIONS') ?> <?= htmlspecialcharsbx($weight_unit) ?>
-            :
+        <td class="field-name"><?= GetMessage('SALE_DH_PROFILE_WEIGHT_RESTRICTIONS') ?> <?= htmlspecialcharsbx(
+                $weight_unit
+            ) ?>:
         </td>
         <td valign="top" width="60%">
             <input type="text" name="HANDLER[PROFILES][<?= htmlspecialcharsbx($profileId) ?>][RESTRICTIONS_WEIGHT][0]"

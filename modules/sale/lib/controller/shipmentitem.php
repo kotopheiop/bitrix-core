@@ -22,25 +22,28 @@ class ShipmentItem extends Controller
             Sale\ShipmentItem::class,
             'shipmentItem',
             function ($className, $id) {
-
                 $registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
 
                 /** @var Sale\ShipmentItem $shipmentItemClass */
                 $shipmentItemClass = $registry->getShipmentItemClassName();
 
-                $si = $shipmentItemClass::getList([
-                    'select' => ['ORDER_DELIVERY_ID'],
-                    'filter' => ['ID' => $id]
-                ]);
+                $si = $shipmentItemClass::getList(
+                    [
+                        'select' => ['ORDER_DELIVERY_ID'],
+                        'filter' => ['ID' => $id]
+                    ]
+                );
 
                 if ($siRow = $si->fetch()) {
                     /** @var Sale\Shipment $shipmentClass */
                     $shipmentClass = $registry->getShipmentClassName();
 
-                    $r = $shipmentClass::getList([
-                        'select' => ['ORDER_ID'],
-                        'filter' => ['ID' => $siRow['ORDER_DELIVERY_ID']]
-                    ]);
+                    $r = $shipmentClass::getList(
+                        [
+                            'select' => ['ORDER_ID'],
+                            'filter' => ['ID' => $siRow['ORDER_DELIVERY_ID']]
+                        ]
+                    );
 
                     if ($row = $r->fetch()) {
                         /** @var Sale\Order $orderClass */
@@ -67,9 +70,11 @@ class ShipmentItem extends Controller
     public function getFieldsAction()
     {
         $entity = new \Bitrix\Sale\Rest\Entity\ShipmentItem();
-        return ['SHIPMENT_ITEM' => $entity->prepareFieldInfos(
-            $entity->getFields()
-        )];
+        return [
+            'SHIPMENT_ITEM' => $entity->prepareFieldInfos(
+                $entity->getFields()
+            )
+        ];
     }
 
     public function getAction(\Bitrix\Sale\ShipmentItem $shipmentItem)
@@ -92,11 +97,13 @@ class ShipmentItem extends Controller
             ]
         )->fetchAll();
 
-        return new Page('SHIPMENT_ITEMS', $shipmentItems, function () use ($select, $filter) {
+        return new Page(
+            'SHIPMENT_ITEMS', $shipmentItems, function () use ($select, $filter) {
             return count(
                 \Bitrix\Sale\ShipmentItem::getList(['select' => $select, 'filter' => $filter])->fetchAll()
             );
-        });
+        }
+        );
     }
 
     public function addAction(array $fields)
@@ -114,10 +121,12 @@ class ShipmentItem extends Controller
         /** @var Sale\Basket $basketClass */
         $basketClass = $registry->getBasketClassName();
 
-        $r = $basketClass::getList([
-            'select' => ['ORDER_ID'],
-            'filter' => ['ID' => $basketId]
-        ]);
+        $r = $basketClass::getList(
+            [
+                'select' => ['ORDER_ID'],
+                'filter' => ['ID' => $basketId]
+            ]
+        );
 
         if ($row = $r->fetch()) {
             /** @var Sale\Order $orderClass */
@@ -142,7 +151,9 @@ class ShipmentItem extends Controller
                             }
                         }
                     } else {
-                        $result->addError(new Error('Duplicate entry for key [basketId, orderDeliveryId]', 201250000001));
+                        $result->addError(
+                            new Error('Duplicate entry for key [basketId, orderDeliveryId]', 201250000001)
+                        );
                     }
                 } else {
                     $result->addError(new Error('shipment not exists', 201240400002));

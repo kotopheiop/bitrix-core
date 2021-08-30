@@ -4,6 +4,7 @@ namespace Bitrix\Forum\Comments;
 
 use \Bitrix\Forum\Internals\Error\ErrorCollection;
 use \Bitrix\Forum\Internals\Error\Error;
+use \Bitrix\Forum;
 use Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\ArgumentTypeException;
 use \Bitrix\Main\ArgumentException;
@@ -49,10 +50,11 @@ abstract class BaseObject
 
     protected function setEntity(array $id)
     {
-        if (($id = array_change_key_case($id, CASE_LOWER)) && $id["id"] > 0)
+        if (($id = array_change_key_case($id, CASE_LOWER)) && $id["id"] > 0) {
             $this->entity = $id;
-        else
+        } else {
             throw new ArgumentException(Loc::getMessage("FORUM_CM_WRONG_ENTITY"), self::ERROR_PARAMS_ENTITY_ID);
+        }
     }
 
     /**
@@ -61,26 +63,32 @@ abstract class BaseObject
      */
     public function getEntity()
     {
-        if ($this->entity instanceof Entity)
+        if ($this->entity instanceof Entity) {
             return $this->entity;
+        }
 
-        if (!is_array($this->entity))
+        if (!is_array($this->entity)) {
             throw new ArgumentTypeException("entity");
+        }
 
         $id = $this->entity;
         $protoEntity = Entity::getEntityByType($id["type"]);
         if (is_null($protoEntity)) {
             $protoEntity = Entity::getEntityByType("default");
-            if (!array_key_exists('xml_id', $id) || empty($id["xml_id"]))
-                $id['xml_id'] = strtoupper($id["type"] . "_" . $id['id']);
-        } elseif (!array_key_exists('xml_id', $id) || empty($id["xml_id"]))
+            if (!array_key_exists('xml_id', $id) || empty($id["xml_id"])) {
+                $id['xml_id'] = mb_strtoupper($id["type"] . "_" . $id['id']);
+            }
+        } elseif (!array_key_exists('xml_id', $id) || empty($id["xml_id"])) {
             $id['xml_id'] = $protoEntity["xmlIdPrefix"] . "_" . $id['id'];
-        if (!Loader::includeModule($protoEntity["moduleId"]))
+        }
+        if (!Loader::includeModule($protoEntity["moduleId"])) {
             throw new SystemException("Module {$protoEntity["moduleId"]} is not included.");
+        }
 
         $this->entity = new $protoEntity["className"]($id, $this->getForum());
-        if (!$this->entity instanceof Entity)
+        if (!$this->entity instanceof Entity) {
             throw new SystemException("Entity Class does not descended from \\Bitrix\\Forum\\Comments\\Entity.");
+        }
 
         return $this->entity;
     }
@@ -88,10 +96,13 @@ abstract class BaseObject
     protected function setTopic()
     {
         if (!array_key_exists($this->getEntity()->getXmlId(), self::$topics)) {
-            $dbRes = \CForumTopic::getList(null, array(
-                "FORUM_ID" => $this->forum["ID"],
-                "XML_ID" => $this->getEntity()->getXmlId()
-            ));
+            $dbRes = \CForumTopic::getList(
+                null,
+                array(
+                    "FORUM_ID" => $this->forum["ID"],
+                    "XML_ID" => $this->getEntity()->getXmlId()
+                )
+            );
             self::$topics[$this->getEntity()->getXmlId()] = (($res = $dbRes->fetch()) && $res ? $res : null);
         }
         $this->topic = self::$topics[$this->getEntity()->getXmlId()];
@@ -110,26 +121,37 @@ abstract class BaseObject
         $request = \Bitrix\Main\Context::getCurrent()->getRequest();
         $post = array_merge($request->getQueryList()->toArray(), $request->getPostList()->toArray());
 
-        $event = new Event("forum", "OnCommentTopicAdd", array($this->getEntity()->getType(), $this->getEntity()->getId(), $post, &$topic));
+        $event = new Event(
+            "forum",
+            "OnCommentTopicAdd",
+            array($this->getEntity()->getType(), $this->getEntity()->getId(), $post, &$topic)
+        );
         $event->send();
 
-        if (strlen($topic["AUTHOR_NAME"]) <= 0)
-            $topic["AUTHOR_NAME"] = ($topic["AUTHOR_ID"] <= 0 ? Loc::getMessage("FORUM_USER_SYSTEM") : self::getUserName($topic["AUTHOR_ID"]));
+        if ($topic["AUTHOR_NAME"] == '') {
+            $topic["AUTHOR_NAME"] = ($topic["AUTHOR_ID"] <= 0 ? Loc::getMessage(
+                "FORUM_USER_SYSTEM"
+            ) : self::getUserName($topic["AUTHOR_ID"]));
+        }
 
-        $topic = array_merge($topic, array(
-            "FORUM_ID" => $this->forum["ID"],
-            'TITLE' => $topic["TITLE"],
-            'TAGS' => $topic["TAGS"],
-            'MESSAGE' => $topic["MESSAGE"],
-            "USER_START_ID" => $topic["AUTHOR_ID"],
-            "USER_START_NAME" => $topic["AUTHOR_NAME"],
-            "LAST_POSTER_NAME" => $topic["AUTHOR_NAME"],
-            "XML_ID" => $this->getEntity()->getXmlId(),
-            "APPROVED" => "Y"
-        ));
+        $topic = array_merge(
+            $topic,
+            array(
+                "FORUM_ID" => $this->forum["ID"],
+                'TITLE' => $topic["TITLE"],
+                'TAGS' => $topic["TAGS"],
+                'MESSAGE' => $topic["MESSAGE"],
+                "USER_START_ID" => $topic["AUTHOR_ID"],
+                "USER_START_NAME" => $topic["AUTHOR_NAME"],
+                "LAST_POSTER_NAME" => $topic["AUTHOR_NAME"],
+                "XML_ID" => $this->getEntity()->getXmlId(),
+                "APPROVED" => "Y"
+            )
+        );
         if (($tid = \CForumTopic::add($topic)) > 0) {
-            if ($this->forum["ALLOW_HTML"] != "Y")
+            if ($this->forum["ALLOW_HTML"] != "Y") {
                 $topic['MESSAGE'] = strip_tags($topic['MESSAGE']);
+            }
 
             $fields = Array(
                 "POST_MESSAGE" => $topic['MESSAGE'],
@@ -144,7 +166,11 @@ abstract class BaseObject
                 "PARAM2" => $this->getEntity()->getId()
             );
             if ((\CForumMessage::add($fields)) > 0) {
-                $event = new Event("forum", "OnAfterCommentTopicAdd", array($this->getEntity()->getType(), $this->getEntity()->getId(), $tid));
+                $event = new Event(
+                    "forum",
+                    "OnAfterCommentTopicAdd",
+                    array($this->getEntity()->getType(), $this->getEntity()->getId(), $tid)
+                );
                 $event->send();
 
                 self::$topics[$this->getEntity()->getXmlId()] = $topic + array("ID" => $tid);
@@ -152,7 +178,9 @@ abstract class BaseObject
             }
             \CForumTopic::delete($tid);
         }
-        $this->errorCollection->add(array(new Error(Loc::getMessage("FORUM_CM_TOPIC_IS_NOT_CREATED"), self::ERROR_PARAMS_TOPIC_ID)));
+        $this->errorCollection->add(
+            array(new Error(Loc::getMessage("FORUM_CM_TOPIC_IS_NOT_CREATED"), self::ERROR_PARAMS_TOPIC_ID))
+        );
         return null;
     }
 
@@ -194,13 +222,15 @@ abstract class BaseObject
 
     protected function setForum($id)
     {
-        if (!$this->checkForumId($id))
+        if (!$this->checkForumId($id)) {
             throw new ArgumentTypeException(Loc::getMessage("FORUM_CM_FORUM_IS_WRONG"), self::ERROR_PARAMS_FORUM_ID);
+        }
 
-        $this->forum = \CForumNew::getByIDEx($id, SITE_ID);
+        $this->forum = Forum\ForumTable::getMainData($id, SITE_ID);
 
-        if (!$this->forum)
+        if (!$this->forum) {
             throw new ArgumentException(Loc::getMessage("FORUM_CM_FORUM_IS_LOST"), self::ERROR_PARAMS_FORUM_ID);
+        }
 
         return $this;
     }
@@ -223,8 +253,9 @@ abstract class BaseObject
     public function setForumFields(array $params)
     {
         foreach ($params as $key => $val) {
-            if (array_key_exists($key, $this->forum))
+            if (array_key_exists($key, $this->forum)) {
                 $this->forum[$key] = $val;
+            }
         }
         return $this;
     }
@@ -245,6 +276,21 @@ abstract class BaseObject
     public function getUser()
     {
         return $this->user;
+    }
+
+    public function getUserUnreadMessageId()
+    {
+        return $this->user->getUnreadMessageId($this->getTopic() ? $this->getTopic()["ID"] : 0);
+    }
+
+    public function setUserAsRead()
+    {
+        $this->user->readTopic($this->getTopic() ? $this->getTopic()["ID"] : 0);
+    }
+
+    public function setUserLocation()
+    {
+        $this->user->setLocation($this->forum["ID"], $this->getTopic() ? $this->getTopic()["ID"] : 0);
     }
 
     /**

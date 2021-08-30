@@ -268,7 +268,9 @@ class Tester
             return $result;
         }
 
-        $campaignId = isset($parameters['CAMPAIGN_ID']) ? $parameters['CAMPAIGN_ID'] : Entity\Campaign::getDefaultId(SITE_ID);
+        $campaignId = isset($parameters['CAMPAIGN_ID']) ? $parameters['CAMPAIGN_ID'] : Entity\Campaign::getDefaultId(
+            SITE_ID
+        );
         $name = isset($parameters['NAME']) ? $parameters['NAME'] : null;
         $name = $name ?: $GLOBALS['USER']->getFirstName();
         $userId = isset($parameters['USER_ID']) ? $parameters['USER_ID'] : null;
@@ -280,19 +282,29 @@ class Tester
         $count = 0;
         foreach ($codes as $code) {
             if (self::MAX_SEND_CODES && $count++ >= self::MAX_SEND_CODES) {
-                $result->addError(new Error(Loc::getMessage('SENDER_MESSAGE_TESTER_ERROR_MAX_COUNT', ['%count%' => self::MAX_SEND_CODES])));
+                $result->addError(
+                    new Error(
+                        Loc::getMessage('SENDER_MESSAGE_TESTER_ERROR_MAX_COUNT', ['%count%' => self::MAX_SEND_CODES])
+                    )
+                );
                 return $result;
             }
 
             if ($this->message->getTransport()->isLimitsExceeded($this->message)) {
-                $result->addError(new Error(Loc::getMessage('SENDER_MESSAGE_TESTER_ERROR_LIMIT_EXCEEDED', array('%name%' => $code))));
+                $result->addError(
+                    new Error(Loc::getMessage('SENDER_MESSAGE_TESTER_ERROR_LIMIT_EXCEEDED', array('%name%' => $code)))
+                );
                 return $result;
             }
 
             if (Integration\Bitrix24\Service::isCloud()) {
                 $testerDailyLimit = Integration\Bitrix24\Limitation\TesterDailyLimit::instance();
                 if ($testerDailyLimit->getCurrent() >= $testerDailyLimit->getLimit()) {
-                    $result->addError(new Error(Loc::getMessage('SENDER_MESSAGE_TESTER_ERROR_LIMIT_EXCEEDED', array('%name%' => $code))));
+                    $result->addError(
+                        new Error(
+                            Loc::getMessage('SENDER_MESSAGE_TESTER_ERROR_LIMIT_EXCEEDED', array('%name%' => $code))
+                        )
+                    );
                     return $result;
                 }
             }
@@ -302,7 +314,9 @@ class Tester
                 $code = Recipient\Normalizer::normalize($code, $type);
             }
             if (!$type || !$code) {
-                $result->addError(new Error(Loc::getMessage('SENDER_MESSAGE_TESTER_ERROR_WRONG_RECIPIENT', array('%name%' => $code))));
+                $result->addError(
+                    new Error(Loc::getMessage('SENDER_MESSAGE_TESTER_ERROR_WRONG_RECIPIENT', array('%name%' => $code)))
+                );
                 continue;
             }
 
@@ -321,12 +335,15 @@ class Tester
                 $sendResult = $this->message->send();
                 if (!$sendResult && $result->isSuccess()) {
                     $to = $this->message->getRecipientCode();
-                    $result->addError(new Error(Loc::getMessage('SENDER_MESSAGE_TESTER_ERROR_SENT', array('%name%' => $to))));
+                    $result->addError(
+                        new Error(Loc::getMessage('SENDER_MESSAGE_TESTER_ERROR_SENT', array('%name%' => $to)))
+                    );
                 }
 
                 if ($sendResult) {
                     $this->addLastCode($code);
-                    if (Integration\Bitrix24\Service::isCloud() && $this->message->getCode() === Message\iBase::CODE_MAIL) {
+                    if (Integration\Bitrix24\Service::isCloud() && $this->message->getCode(
+                        ) === Message\iBase::CODE_MAIL) {
                         Integration\Bitrix24\Limitation\DailyLimit::increment();
                         Integration\Bitrix24\Limitation\TesterDailyLimit::increment();
                     }

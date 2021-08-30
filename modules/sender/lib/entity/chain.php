@@ -191,10 +191,12 @@ class Chain
      */
     public function load($id)
     {
-        $list = Model\LetterTable::getList([
-            'select' => ['ID', 'PARENT_ID'],
-            'filter' => ['=CAMPAIGN_ID' => $id],
-        ])->fetchAll();
+        $list = Model\LetterTable::getList(
+            [
+                'select' => ['ID', 'PARENT_ID'],
+                'filter' => ['=CAMPAIGN_ID' => $id],
+            ]
+        )->fetchAll();
 
         $limiter = 100;
         $parentId = null;

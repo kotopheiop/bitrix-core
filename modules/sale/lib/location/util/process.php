@@ -36,24 +36,27 @@ abstract class Process
 
     public function __construct($options = array())
     {
-        if (isset($options['INITIAL_TIME']))
+        if (isset($options['INITIAL_TIME'])) {
             $this->time = intval($options['INITIAL_TIME']);
-        else
+        } else {
             $this->time = time();
+        }
 
         $this->useLock = !!$options['USE_LOCK'];
         $this->options = $options;
 
         $this->restore();
 
-        if (isset($options['STEP']) && $options['STEP'] == 0)
+        if (isset($options['STEP']) && $options['STEP'] == 0) {
             $this->reset();
+        }
 
         $this->logMessage('#############################', false);
         $this->logMessage('HIT STARTED ' . $this->getTimeStampString(), false);
 
-        if (intval($options['TIME_LIMIT']))
+        if (intval($options['TIME_LIMIT'])) {
             $this->setTimeLimit(intval($options['TIME_LIMIT']));
+        }
 
         $this->saveStartTime();
         $this->saveMemoryPeak();
@@ -61,8 +64,9 @@ abstract class Process
 
     public function addStage($params)
     {
-        if (empty($params['CODE']) || empty($params['CALLBACK']))
+        if (empty($params['CODE']) || empty($params['CALLBACK'])) {
             throw new Main\SystemException('Not enought params to add stage');
+        }
 
         $ss = intval($params['STEP_SIZE']);
 
@@ -71,26 +75,29 @@ abstract class Process
             'PERCENT' => intval($params['PERCENT']),
             'CODE' => $params['CODE'],
             'ORDER' => count($this->stages),
-            'TYPE' => strlen($params['TYPE']) ? $params['TYPE'] : static::CALLBACK_TYPE_MANUAL,
+            'TYPE' => $params['TYPE'] <> '' ? $params['TYPE'] : static::CALLBACK_TYPE_MANUAL,
 
             'CALLBACK' => $params['CALLBACK'],
             'SUBPERCENT_CALLBACK' => $params['SUBPERCENT_CALLBACK'],
-            'ON_BEFORE_CALLBACK' => strlen($params['ON_BEFORE_CALLBACK']) ? $params['ON_BEFORE_CALLBACK'] : false,
-            'ON_AFTER_CALLBACK' => strlen($params['ON_AFTER_CALLBACK']) ? $params['ON_AFTER_CALLBACK'] : false
+            'ON_BEFORE_CALLBACK' => $params['ON_BEFORE_CALLBACK'] <> '' ? $params['ON_BEFORE_CALLBACK'] : false,
+            'ON_AFTER_CALLBACK' => $params['ON_AFTER_CALLBACK'] <> '' ? $params['ON_AFTER_CALLBACK'] : false
         );
         $this->stagesByCode[$params['CODE']] =& $this->stages[count($this->stages) - 1];
     }
 
     public function restore()
     {
-        if (!isset($_SESSION[$this->sessionKey]['STAGE']))
+        if (!isset($_SESSION[$this->sessionKey]['STAGE'])) {
             $_SESSION[$this->sessionKey]['STAGE'] = 0;
+        }
 
-        if (!isset($_SESSION[$this->sessionKey]['STEP']))
+        if (!isset($_SESSION[$this->sessionKey]['STEP'])) {
             $_SESSION[$this->sessionKey]['STEP'] = 0;
+        }
 
-        if (!isset($_SESSION[$this->sessionKey]['DATA']))
+        if (!isset($_SESSION[$this->sessionKey]['DATA'])) {
             $_SESSION[$this->sessionKey]['DATA'] = array();
+        }
 
         $this->stage =& $_SESSION[$this->sessionKey]['STAGE'];
         $this->step =& $_SESSION[$this->sessionKey]['STEP'];
@@ -119,8 +126,9 @@ abstract class Process
 
             if (static::DEBUG_MODE) {
                 $logDir = $this->getLogFileDir();
-                if (!file_exists($logDir))
+                if (!file_exists($logDir)) {
                     mkdir($logDir, 755, true);
+                }
 
                 $this->logMessage('PROCESS STARTED, STAGE ' . $this->stages[0]['CODE']);
             }
@@ -128,34 +136,39 @@ abstract class Process
 
         $this->onBeforePerformIteration();
 
-        if (!isset($this->stages[$this->stage]))
+        if (!isset($this->stages[$this->stage])) {
             throw new Main\SystemException('No more stages to perform');
+        }
 
-        if (self::JUST_SHOW_STAGES)
+        if (self::JUST_SHOW_STAGES) {
             $this->nextStage();
-        else {
+        } else {
             $stage = $this->stage;
 
-            if ($this->stages[$stage]['ON_BEFORE_CALLBACK'] != false)
+            if ($this->stages[$stage]['ON_BEFORE_CALLBACK'] != false) {
                 call_user_func(array($this, $this->stages[$stage]['ON_BEFORE_CALLBACK']));
+            }
 
-            if ($this->stages[$this->stage]['TYPE'] == static::CALLBACK_TYPE_MANUAL)
+            if ($this->stages[$this->stage]['TYPE'] == static::CALLBACK_TYPE_MANUAL) {
                 call_user_func(array($this, $this->stages[$this->stage]['CALLBACK']));
-            elseif ($this->stages[$this->stage]['TYPE'] == static::CALLBACK_TYPE_QUOTA) {
+            } elseif ($this->stages[$this->stage]['TYPE'] == static::CALLBACK_TYPE_QUOTA) {
                 while ($this->checkQuota()) {
                     $result = call_user_func(array($this, $this->stages[$this->stage]['CALLBACK']));
                     $this->nextStep();
 
-                    if ($result)
+                    if ($result) {
                         break;
+                    }
                 }
 
-                if ($result)
+                if ($result) {
                     $this->nextStage();
+                }
             }
 
-            if ($this->stages[$stage]['ON_AFTER_CALLBACK'] != false)
+            if ($this->stages[$stage]['ON_AFTER_CALLBACK'] != false) {
                 call_user_func(array($this, $this->stages[$stage]['ON_AFTER_CALLBACK']));
+            }
         }
 
         $this->onAfterPerformIteration();
@@ -165,8 +178,9 @@ abstract class Process
 
         $this->logMessage('HIT ENDED ' . $this->getTimeStampString(), false);
 
-        if ($percent == 100)
+        if ($percent == 100) {
             $this->unLockProcess();
+        }
 
         return $percent;
     }
@@ -177,11 +191,13 @@ abstract class Process
 
     public function setStepSize($code, $stepSize)
     {
-        if (!isset($this->stagesByCode[$code]))
+        if (!isset($this->stagesByCode[$code])) {
             throw new Main\SystemException('Unknown stage code passed');
+        }
 
-        if (($stepSize = intval($stepSize)) <= 0)
+        if (($stepSize = intval($stepSize)) <= 0) {
             throw new Main\SystemException('Bad step size passed');
+        }
 
         $this->stagesByCode[$code]['STEP_SIZE'] = $stepSize;
     }
@@ -192,7 +208,10 @@ abstract class Process
         $this->stage++;
         $this->step = 0;
 
-        $this->logMessage('### NEXT STAGE >>> ' . $this->stages[$this->stage]['CODE'] . ' in ' . $this->getElapsedTimeString() . ', mem peak = ' . $this->getMemoryPeakString() . ' mb');
+        $this->logMessage(
+            '### NEXT STAGE >>> ' . $this->stages[$this->stage]['CODE'] . ' in ' . $this->getElapsedTimeString(
+            ) . ', mem peak = ' . $this->getMemoryPeakString() . ' mb'
+        );
     }
 
     // move to next step
@@ -211,12 +230,17 @@ abstract class Process
         $currIndex = $this->stages[$this->stage]['ORDER'];
         $stageIndex = $this->stagesByCode[$code]['ORDER'];
 
-        if ($currIndex == $stageIndex) return true;
+        if ($currIndex == $stageIndex) {
+            return true;
+        }
 
         if ($way) // gt
+        {
             return $currIndex > $stageIndex;
-        else // lt
+        } else // lt
+        {
             return $currIndex < $stageIndex;
+        }
     }
 
     // $this->stage <= $code
@@ -281,11 +305,11 @@ abstract class Process
 
     public function getStagePercent($sNum = false)
     {
-
-        if ($sNum === false)
+        if ($sNum === false) {
             $stage = $this->stages[$this->stage]['PERCENT'];
-        else
+        } else {
             $stage = is_numeric($sNum) ? $this->stages[$sNum]['PERCENT'] : $this->stagesByCode[$sNum]['PERCENT'];
+        }
 
         return $stage ? $stage : 0;
     }
@@ -311,23 +335,29 @@ abstract class Process
 
         $addit = 0;
         $cb = $this->stages[$this->stage]['SUBPERCENT_CALLBACK'];
-        if (strlen($cb) && method_exists($this, $cb))
+        if (mb_strlen($cb) && method_exists($this, $cb)) {
             $addit = $this->$cb();
+        }
 
         return $percent + $addit;
     }
 
     public function calcSubPercent($range)
     {
-        if (!$range) return 0;
+        if (!$range) {
+            return 0;
+        }
 
-        return round(($this->step / $range) * ($this->getStagePercent($this->stage) - $this->getStagePercent($this->stage - 1)));
+        return round(
+            ($this->step / $range) * ($this->getStagePercent($this->stage) - $this->getStagePercent($this->stage - 1))
+        );
     }
 
     public function getSubPercentByTotalAndDone($total, $done = 0)
     {
-        if (!$done || !$total)
+        if (!$done || !$total) {
             return 0;
+        }
 
         $pRange = $this->getCurrentPercentRange();
         $part = round($pRange * ($done / $total));
@@ -347,8 +377,9 @@ abstract class Process
     public function setTimeLimit($timeLimit)
     {
         if ($timeLimit == intval($timeLimit)) {
-            if ($timeLimit < static::MIN_TIME_LIMIT)
+            if ($timeLimit < static::MIN_TIME_LIMIT) {
                 $timeLimit = static::MIN_TIME_LIMIT;
+            }
 
             $this->timeLimit = $timeLimit;
         }
@@ -361,19 +392,21 @@ abstract class Process
 
     protected function saveStartTime()
     {
-        if (!isset($this->data['process_time']))
+        if (!isset($this->data['process_time'])) {
             $this->data['process_time'] = time();
+        }
     }
 
     protected function saveMemoryPeak()
     {
         $mp = memory_get_peak_usage(false);
 
-        if (!isset($this->data['memory_peak']))
+        if (!isset($this->data['memory_peak'])) {
             $this->data['memory_peak'] = $mp;
-        else {
-            if ($this->data['memory_peak'] < $mp)
+        } else {
+            if ($this->data['memory_peak'] < $mp) {
                 $this->data['memory_peak'] = $mp;
+            }
         }
     }
 
@@ -385,8 +418,9 @@ abstract class Process
     {
         $logDir = $this->getLogFileDir();
 
-        if (!Main\IO\Directory::isDirectoryExists($logDir))
+        if (!Main\IO\Directory::isDirectoryExists($logDir)) {
             Main\IO\Directory::createDirectory($logDir);
+        }
 
         $logFile = $this->getLogFilePath();
 
@@ -405,8 +439,9 @@ abstract class Process
 
     public function logMessage($message = '', $addTimeStamp = true)
     {
-        if (!static::DEBUG_MODE || !strlen($message))
+        if (!static::DEBUG_MODE || !mb_strlen($message)) {
             return;
+        }
 
         file_put_contents(
             $this->getLogFilePath(),
@@ -439,20 +474,23 @@ abstract class Process
 
     public function lockProcess()
     {
-        if (!$this->useLock)
+        if (!$this->useLock) {
             return;
+        }
 
         file_put_contents($this->getLockFilePath(), '1');
     }
 
     public function unLockProcess()
     {
-        if (!$this->useLock)
+        if (!$this->useLock) {
             return;
+        }
 
         $file = $this->getLockFilePath();
-        if (file_exists($file))
+        if (file_exists($file)) {
             unlink($file);
+        }
     }
 
     public function checkProcessLocked()
@@ -496,11 +534,13 @@ abstract class Process
         $m = floor(($time - $h * 3600) / 60);
         $s = $time - $h * 3600 - $m * 60;
 
-        if (strlen($m) == 1)
+        if (mb_strlen($m) == 1) {
             $m = '0' . $m;
+        }
 
-        if (strlen($s) == 1)
+        if (mb_strlen($s) == 1) {
             $s = '0' . $s;
+        }
 
         return $h . ':' . $m . ':' . $s;
     }
@@ -529,15 +569,22 @@ abstract class Process
     {
         $step = $this->step;
 
-        for ($i = 0; $i < $step; $i++)
+        for ($i = 0; $i < $step; $i++) {
             next($from);
+        }
 
         $block = array();
         $hadSmth = false;
 
         for ($i = $step; $i <= $step + $this->getCurrStageStepSize(); $i++) {
-            list($code, $elem) = each($from);
-            if (!isset($code)) break;
+            $code = key($from);
+
+            if (!isset($code)) {
+                break;
+            }
+
+            $elem = current($from);
+            next($from);
 
             $hadSmth = true;
             $block[$code] = $elem;

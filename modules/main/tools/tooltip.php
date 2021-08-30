@@ -1,4 +1,5 @@
 <?
+
 /**
  * @global CMain $APPLICATION
  */
@@ -6,9 +7,8 @@ define("STOP_STATISTICS", true);
 define("PUBLIC_AJAX_MODE", true);
 
 if (isset($_REQUEST["site"]) && is_string($_REQUEST["site"])) {
-
     $site_id = trim($_REQUEST["site"]);
-    $site_id = substr(preg_replace("/[^a-z0-9_]/i", "", $site_id), 0, 2);
+    $site_id = mb_substr(preg_replace("/[^a-z0-9_]/i", "", $site_id), 0, 2);
     define("SITE_ID", $site_id);
 }
 
@@ -23,10 +23,16 @@ if (!IsModuleInstalled("b24network")) {
     $arParams["SHOW_YEAR"] = COption::GetOptionString("main", "TOOLTIP_SHOW_YEAR", "", SITE_ID);
     $arParams["NAME_TEMPLATE"] = CSite::GetNameFormat(false);
     $arParams["SHOW_LOGIN"] = COption::GetOptionString("main", "TOOLTIP_SHOW_LOGIN", "", SITE_ID);
-    $arParams["PATH_TO_CONPANY_DEPARTMENT"] = COption::GetOptionString("main", "TOOLTIP_PATH_TO_CONPANY_DEPARTMENT", "", SITE_ID);
+    $arParams["PATH_TO_CONPANY_DEPARTMENT"] = COption::GetOptionString(
+        "main",
+        "TOOLTIP_PATH_TO_CONPANY_DEPARTMENT",
+        "",
+        SITE_ID
+    );
     $arParams["PATH_TO_VIDEO_CALL"] = COption::GetOptionString("main", "TOOLTIP_PATH_TO_VIDEO_CALL", "", SITE_ID);
 
-    $APPLICATION->IncludeComponent("bitrix:main.user.link",
+    $APPLICATION->IncludeComponent(
+        "bitrix:main.user.link",
         '',
         array(
             "AJAX_ONLY" => "Y",

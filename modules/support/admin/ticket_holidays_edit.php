@@ -7,8 +7,10 @@ function Tab1($adminForm)
     <tr class="adm-detail-required-field">
         <td width="40%" align="right"><? echo $adminForm->GetCustomLabelHTML() ?>:</td>
         <td width="60%"><input type="text" maxlength="255" name="NAME" size="50"
-                               value="<? echo CSupportPage::$holidaysFields->getFieldForOutput("NAME", CSupportTableFields::ATTRIBUTE); ?>">
-        </td>
+                               value="<? echo CSupportPage::$holidaysFields->getFieldForOutput(
+                                   "NAME",
+                                   CSupportTableFields::ATTRIBUTE
+                               ); ?>"></td>
     </tr>
     <?
     $adminForm->EndCustomField("NAME");
@@ -22,10 +24,16 @@ function Tab1($adminForm)
                 <?
                 $arr = CSupportHolidays::GetOpenTimeArray();
                 foreach ($arr as $v => $n) {
-                    $ss = substr($v, 0, 3);
-                    if ($ss == "GB_") echo '<optgroup label="' . GetMessage($n) . '">';
-                    elseif ($ss == "GE_") echo '</optgroup>';
-                    else echo '<option ' . ($v == CSupportPage::$holidaysFields->OPEN_TIME ? 'selected ' : '') . 'value="' . $v . '">' . GetMessage($n) . '</option>';
+                    $ss = mb_substr($v, 0, 3);
+                    if ($ss == "GB_") {
+                        echo '<optgroup label="' . GetMessage($n) . '">';
+                    } elseif ($ss == "GE_") {
+                        echo '</optgroup>';
+                    } else {
+                        echo '<option ' . ($v == CSupportPage::$holidaysFields->OPEN_TIME ? 'selected ' : '') . 'value="' . $v . '">' . GetMessage(
+                                $n
+                            ) . '</option>';
+                    }
                 }
 
                 ?>
@@ -54,7 +62,9 @@ function Tab1($adminForm)
 
     $dateControl = str_replace(
         array('bTime: true', 'bHideTime: false', 'BX.calendar({'),
-        array('bTime: BX(\'OPEN_TIME\').value.slice(-2) == \'_H\'', 'bHideTime: BX(\'OPEN_TIME\').value.slice(-2) != \'_H\'',
+        array(
+            'bTime: BX(\'OPEN_TIME\').value.slice(-2) == \'_H\'',
+            'bHideTime: BX(\'OPEN_TIME\').value.slice(-2) != \'_H\'',
             'BX.calendar({callback_after: function(param){this.params.field.value = BX.calendar.ValueToString(param, BX(\'OPEN_TIME\').value.slice(-2) == \'_H\')}, '
         ),
         CalendarDate("DATE_FROM", $time, "supTabControl", "20")
@@ -78,7 +88,9 @@ function Tab1($adminForm)
 
     $dateControl = str_replace(
         array('bTime: true', 'bHideTime: false', 'BX.calendar({'),
-        array('bTime: BX(\'OPEN_TIME\').value.slice(-2) == \'_H\'', 'bHideTime: BX(\'OPEN_TIME\').value.slice(-2) != \'_H\'',
+        array(
+            'bTime: BX(\'OPEN_TIME\').value.slice(-2) == \'_H\'',
+            'bHideTime: BX(\'OPEN_TIME\').value.slice(-2) != \'_H\'',
             'BX.calendar({callback_after: function(param){this.params.field.value = BX.calendar.ValueToString(param, BX(\'OPEN_TIME\').value.slice(-2) == \'_H\')}, '
         ),
         CalendarDate("DATE_TILL", $time, "supTabControl", "20")
@@ -102,11 +114,7 @@ function Tab1($adminForm)
             $arSort = array();
             $is_filtered = null;
             $ar = CTicketSLA::GetList($arSort, array(), $is_filtered);
-            $idR = 0;
-            while ($arR = $ar->Fetch()) {
-                $idR++;
-                echo InputType("checkbox", "SLA_ID[]", $arR["ID"], $arrSLA_ID, false, "", "", $idR) . '<label for="' . $idR . '"> ' . htmlspecialcharsbx($arR["NAME"]) . "</label><br>";
-            }
+            echo SelectBoxM('SLA_ID[]', $ar, $arrSLA_ID, false, 10);
             ?>
         </td>
     </tr>
@@ -121,12 +129,13 @@ function Tab1($adminForm)
     </tr>
     <tr>
         <td colspan="2" align="center"><textarea style="width:60%; height:150px;" name="DESCRIPTION"
-                                                 wrap="VIRTUAL"><? echo CSupportPage::$holidaysFields->getFieldForOutput("DESCRIPTION", CSupportTableFields::ATTRIBUTE); ?></textarea>
-        </td>
+                                                 wrap="VIRTUAL"><? echo CSupportPage::$holidaysFields->getFieldForOutput(
+                    "DESCRIPTION",
+                    CSupportTableFields::ATTRIBUTE
+                ); ?></textarea></td>
     </tr>
     <?
     $adminForm->EndCustomField("DESCRIPTION");
-
 }
 
 class CSupportPage
@@ -151,7 +160,7 @@ class CSupportPage
 
     static function ProcessAJAX()
     {
-        if (isset($_REQUEST[self::AJAX_VAR_NAME]) && strlen($_REQUEST[self::AJAX_VAR_NAME]) > 0) {
+        if (isset($_REQUEST[self::AJAX_VAR_NAME]) && $_REQUEST[self::AJAX_VAR_NAME] <> '') {
             self::$needShowInterface = false;
             $type = $_REQUEST[self::AJAX_VAR_NAME];
             /*
@@ -170,16 +179,23 @@ class CSupportPage
         self::$postHolidaysFields = new CSupportTableFields(CSupportHolidays::$holidays);
         self::$postHolidaysFields->DATE_FROM = time() + CTimeZone::GetOffset();
         self::$postHolidaysFields->DATE_TILL = time() + CTimeZone::GetOffset();
-        self::$postHolidaysSlaFields = new CSupportTableFields(CSupportHolidays::$sla2holidays, CSupportTableFields::C_Table);
+        self::$postHolidaysSlaFields = new CSupportTableFields(
+            CSupportHolidays::$sla2holidays,
+            CSupportTableFields::C_Table
+        );
         self::$postHolidaysSlaFields->RemoveExistingRows();
         $res = false;
-        if (isset($_REQUEST["ID"]) && intval($_REQUEST["ID"]) > 0) self::$id = intval($_REQUEST["ID"]);
+        if (isset($_REQUEST["ID"]) && intval($_REQUEST["ID"]) > 0) {
+            self::$id = intval($_REQUEST["ID"]);
+        }
 
         if (check_bitrix_sessid() && $_SERVER["REQUEST_METHOD"] == "POST") {
             // Get data from POST
             self::$postHolidaysFields->FromArray($_REQUEST);
             self::$id = self::$postHolidaysFields->ID;
-            if (isset($_REQUEST["SLA_ID"]) && is_array($_REQUEST["SLA_ID"]) && count($_REQUEST["SLA_ID"]) > 0) self::ArrSLAinObj($_REQUEST["SLA_ID"]);
+            if (isset($_REQUEST["SLA_ID"]) && is_array($_REQUEST["SLA_ID"]) && count($_REQUEST["SLA_ID"]) > 0) {
+                self::ArrSLAinObj($_REQUEST["SLA_ID"]);
+            }
             $res = true;
         }
         return $res;
@@ -187,14 +203,16 @@ class CSupportPage
 
     static function Save()
     {
-        $presSave = (isset($_REQUEST["save"]) && strlen($_REQUEST["save"]) > 0);
-        $presApply = (isset($_REQUEST["apply"]) && strlen($_REQUEST["apply"]) > 0);
+        $presSave = (isset($_REQUEST["save"]) && $_REQUEST["save"] <> '');
+        $presApply = (isset($_REQUEST["apply"]) && $_REQUEST["apply"] <> '');
         if ($presSave || $presApply) {
             self::$id = intval(CSupportHolidays::Set(self::$postHolidaysFields, self::$postHolidaysSlaFields));
             // ���� ��������� �� ������� �� self::$id ����� ����� 0 � read() �� ��������� ������ ��������� �� POST ��� ���������
             if (self::$id > 0) {
                 if (!$presApply) {
-                    LocalRedirect("/bitrix/admin/" . self::LIST_URL . "?lang=" . LANG . GetFilterParams("filter_", false));
+                    LocalRedirect(
+                        "/bitrix/admin/" . self::LIST_URL . "?lang=" . LANG . GetFilterParams("filter_", false)
+                    );
                 }
                 return true;
             }
@@ -297,10 +315,13 @@ class CSupportPage
             $aContext[] = array(
                 "ICON" => "btn_delete",
                 "TEXT" => GetMessage("MAIN_ADMIN_MENU_DELETE"),
-                "LINK" => "javascript:if(confirm('" . GetMessage("SUP_CONFIRM_DEL_MESSAGE") . "'))window.location='" . self::LIST_URL . "?lang=" . LANG .
-                    "&action=delete&ID=" . self::$holidaysFields->ID . "&" . bitrix_sessid_get() . urlencode(GetFilterParams("filter_", false)) . "';",
+                "LINK" => "javascript:if(confirm('" . GetMessage(
+                        "SUP_CONFIRM_DEL_MESSAGE"
+                    ) . "'))window.location='" . self::LIST_URL . "?lang=" . LANG .
+                    "&action=delete&ID=" . self::$holidaysFields->ID . "&" . bitrix_sessid_get() . urlencode(
+                        GetFilterParams("filter_", false)
+                    ) . "';",
             );
-
         }
 
         if (self::SHOW_FORM_SETTINGS) {
@@ -347,10 +368,13 @@ class CSupportPage
             self::$objCAdminForm->EndCustomField("USER_FIELDS");
         }
 
-        self::$objCAdminForm->Buttons(Array("back_url" => "ticket_holidays_list.php?lang=" . LANG . GetFilterParams("filter_", false)));
-        self::$objCAdminForm->arParams["FORM_ACTION"] = $APPLICATION->GetCurPage() . "?lang=" . LANG . GetFilterParams("filter_");
+        self::$objCAdminForm->Buttons(
+            Array("back_url" => "ticket_holidays_list.php?lang=" . LANG . GetFilterParams("filter_", false))
+        );
+        self::$objCAdminForm->arParams["FORM_ACTION"] = $APPLICATION->GetCurPage() . "?lang=" . LANG . GetFilterParams(
+                "filter_"
+            );
         self::$objCAdminForm->Show();
-
     }
 
     static function ArrSLAinObj($arr)

@@ -37,7 +37,7 @@ class Seo
         foreach (self::$storedKeys as $key => $val) {
             $currentVal = $application->getProperty($key);
             if (is_string($currentVal)) {
-                self::$storedKeys[$key] = $currentVal;
+                self::$storedKeys[$key] = htmlspecialcharsback($currentVal);
             }
         }
     }
@@ -53,7 +53,7 @@ class Seo
         foreach (self::$storedKeys as $key => $val) {
             $newVal = $application->getProperty($key);
             if (is_string($newVal) && $newVal != $val) {
-                self::$changedKeys[$key] = $newVal;
+                self::$changedKeys[$key] = htmlspecialcharsback($newVal);
             }
         }
     }

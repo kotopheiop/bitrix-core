@@ -32,26 +32,38 @@ class AbuseTable extends Entity\DataManager
     public static function getMap()
     {
         return array(
-            new Entity\IntegerField('ID', array(
+            new Entity\IntegerField(
+                'ID', array(
                 'primary' => true,
                 'autocomplete' => true
-            )),
-            new Entity\StringField('TEXT', array(
+            )
+            ),
+            new Entity\StringField(
+                'TEXT', array(
                 'required' => false
-            )),
-            new Entity\IntegerField('CONTACT_ID', array(
+            )
+            ),
+            new Entity\IntegerField(
+                'CONTACT_ID', array(
                 'required' => false
-            )),
-            new Entity\StringField('CONTACT_CODE', array(
+            )
+            ),
+            new Entity\StringField(
+                'CONTACT_CODE', array(
                 'required' => true
-            )),
-            new Entity\IntegerField('CONTACT_TYPE_ID', array(
+            )
+            ),
+            new Entity\IntegerField(
+                'CONTACT_TYPE_ID', array(
                 'required' => true,
-            )),
-            new Entity\DatetimeField('DATE_INSERT', array(
+            )
+            ),
+            new Entity\DatetimeField(
+                'DATE_INSERT', array(
                 'required' => true,
                 'default_value' => new DateTime()
-            )),
+            )
+            ),
         );
     }
 

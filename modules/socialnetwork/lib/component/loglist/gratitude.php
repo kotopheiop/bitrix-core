@@ -88,28 +88,7 @@ class Gratitude
 
     public static function getGratitudesIblockId()
     {
-        static $result = null;
-
-        if ($result === null) {
-            $result = false;
-
-            if (!Loader::includeModule('iblock')) {
-                return $result;
-            }
-
-            $res = \Bitrix\Iblock\IblockTable::getList(array(
-                'filter' => [
-                    '=CODE' => 'honour',
-                    '=IBLOCK_TYPE_ID' => 'structure',
-                ],
-                'select' => ['ID']
-            ));
-            if ($iblockFields = $res->fetch()) {
-                $result = intval($iblockFields['ID']);
-            }
-        }
-
-        return $result;
+        return \Bitrix\Socialnetwork\Helper\Gratitude::getIblockId();
     }
 
     public static function getGratitudesBlogData(array $params = [])
@@ -122,7 +101,9 @@ class Gratitude
             'ELEMENT_ID_LIST' => [],
         ];
 
-        $iblockElementsIdList = (!empty($params['iblockElementsIdList']) && is_array($params['iblockElementsIdList']) ? $params['iblockElementsIdList'] : []);
+        $iblockElementsIdList = (!empty($params['iblockElementsIdList']) && is_array(
+            $params['iblockElementsIdList']
+        ) ? $params['iblockElementsIdList'] : []);
         if (empty($iblockElementsIdList)) {
             return $result;
         }
@@ -133,12 +114,14 @@ class Gratitude
 
         $authorsIdList = [];
 
-        $res = \Bitrix\Blog\PostTable::getList([
-            'filter' => [
-                '@UF_GRATITUDE' => $iblockElementsIdList
-            ],
-            'select' => ['ID', 'AUTHOR_ID', 'UF_GRATITUDE']
-        ]);
+        $res = \Bitrix\Blog\PostTable::getList(
+            [
+                'filter' => [
+                    '@UF_GRATITUDE' => $iblockElementsIdList
+                ],
+                'select' => ['ID', 'AUTHOR_ID', 'UF_GRATITUDE']
+            ]
+        );
 
         $iblockElementsIdList = [];
         while ($postFields = $res->fetch()) {
@@ -192,7 +175,7 @@ class Gratitude
                 'userId' => $userId
             ];
 
-            if (strlen($gratCode) > 0) {
+            if ($gratCode <> '') {
                 $filterParams['gratCode'] = $gratCode;
             }
 
@@ -200,15 +183,17 @@ class Gratitude
             $iblockElementsIdList = $gratitudesData['ELEMENT_ID_LIST'];
             $gratValue = '';
 
-            if (strlen($gratitudesData['GRAT_VALUE']) > 0) {
+            if ($gratitudesData['GRAT_VALUE'] <> '') {
                 $gratValue = $gratitudesData['GRAT_VALUE'];
             }
 
             $postIdList = [];
             if (!empty($iblockElementsIdList)) {
-                $gratitudesData = \Bitrix\Socialnetwork\Component\LogList\Gratitude::getGratitudesBlogData([
-                    'iblockElementsIdList' => $iblockElementsIdList
-                ]);
+                $gratitudesData = \Bitrix\Socialnetwork\Component\LogList\Gratitude::getGratitudesBlogData(
+                    [
+                        'iblockElementsIdList' => $iblockElementsIdList
+                    ]
+                );
                 $postIdList = $gratitudesData['POST_ID_LIST'];
             }
 
@@ -217,11 +202,16 @@ class Gratitude
                 $result['RETURN_EMPTY_LIST'] = false;
             }
 
-            if (strlen($gratUserName) > 0) {
-                $APPLICATION->setTitle(Loc::getMessage(strlen($gratValue) > 0 ? 'SONET_LOG_LIST_TITLE_GRAT2' : 'SONET_LOG_LIST_TITLE_GRAT', [
-                    '#USER_NAME#' => $gratUserName,
-                    '#GRAT_NAME#' => $gratValue
-                ]));
+            if ($gratUserName <> '') {
+                $APPLICATION->setTitle(
+                    Loc::getMessage(
+                        $gratValue <> '' ? 'SONET_LOG_LIST_TITLE_GRAT2' : 'SONET_LOG_LIST_TITLE_GRAT',
+                        [
+                            '#USER_NAME#' => $gratUserName,
+                            '#GRAT_NAME#' => $gratValue
+                        ]
+                    )
+                );
             }
         }
     }

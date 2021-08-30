@@ -7,8 +7,9 @@ class CLAnswer
         global $DB;
         $arMsg = Array();
 
-        if ((is_set($arFields, "ANSWER") || $ID === false) && strlen(trim($arFields["ANSWER"])) <= 0)
+        if ((is_set($arFields, "ANSWER") || $ID === false) && trim($arFields["ANSWER"]) == '') {
             $arMsg[] = array("id" => "NAME", "text" => GetMessage("LEARNING_BAD_NAME"));
+        }
 
 
         if (
@@ -19,8 +20,9 @@ class CLAnswer
             $arMsg[] = array("id" => "QUESTION_ID", "text" => GetMessage("LEARNING_BAD_QUESTION_ID"));
         } elseif (is_set($arFields, "QUESTION_ID")) {
             $res = CLQuestion::GetByID($arFields["QUESTION_ID"]);
-            if (!$arRes = $res->Fetch())
+            if (!$arRes = $res->Fetch()) {
                 $arMsg[] = array("id" => "QUESTION_ID", "text" => GetMessage("LEARNING_BAD_QUESTION_ID"));
+            }
         }
 
         if (!empty($arMsg)) {
@@ -29,8 +31,9 @@ class CLAnswer
             return false;
         }
 
-        if (is_set($arFields, "CORRECT") && $arFields["CORRECT"] != "Y")
+        if (is_set($arFields, "CORRECT") && $arFields["CORRECT"] != "Y") {
             $arFields["CORRECT"] = "N";
+        }
 
         return true;
     }
@@ -57,7 +60,9 @@ class CLAnswer
         global $DB;
 
         $ID = intval($ID);
-        if ($ID < 1) return false;
+        if ($ID < 1) {
+            return false;
+        }
 
 
         if ($this->CheckFields($arFields, $ID)) {
@@ -79,32 +84,36 @@ class CLAnswer
     }
 
 
-    function Delete($ID)
+    public static function Delete($ID)
     {
         global $DB;
 
         $ID = intval($ID);
-        if ($ID < 1) return false;
+        if ($ID < 1) {
+            return false;
+        }
 
         $strSql = "DELETE FROM b_learn_answer WHERE ID = " . $ID;
 
-        if (!$DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__))
+        if (!$DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__)) {
             return false;
+        }
 
         return true;
     }
 
 
-    function GetByID($ID)
+    public static function GetByID($ID)
     {
         return CLAnswer::GetList($arOrder = Array(), $arFilter = Array("ID" => $ID));
     }
 
 
-    function GetFilter($arFilter)
+    public static function GetFilter($arFilter)
     {
-        if (!is_array($arFilter))
+        if (!is_array($arFilter)) {
             $arFilter = Array();
+        }
 
         $arSqlSearch = Array();
 
@@ -113,40 +122,59 @@ class CLAnswer
             $key = $res["FIELD"];
             $cOperationType = $res["OPERATION"];
 
-            $key = strtoupper($key);
+            $key = mb_strtoupper($key);
 
             switch ($key) {
                 case "ID":
                 case "SORT":
                 case "QUESTION_ID":
-                    $arSqlSearch[] = CLearnHelper::FilterCreate("CA." . $key, $val, "number", $bFullJoin, $cOperationType);
+                    $arSqlSearch[] = CLearnHelper::FilterCreate(
+                        "CA." . $key,
+                        $val,
+                        "number",
+                        $bFullJoin,
+                        $cOperationType
+                    );
                     break;
 
                 case "ANSWER":
-                    $arSqlSearch[] = CLearnHelper::FilterCreate("CA." . $key, $val, "string", $bFullJoin, $cOperationType);
+                    $arSqlSearch[] = CLearnHelper::FilterCreate(
+                        "CA." . $key,
+                        $val,
+                        "string",
+                        $bFullJoin,
+                        $cOperationType
+                    );
                     break;
 
                 case "CORRECT":
-                    $arSqlSearch[] = CLearnHelper::FilterCreate("CA." . $key, $val, "string_equal", $bFullJoin, $cOperationType);
+                    $arSqlSearch[] = CLearnHelper::FilterCreate(
+                        "CA." . $key,
+                        $val,
+                        "string_equal",
+                        $bFullJoin,
+                        $cOperationType
+                    );
                     break;
             }
-
         }
 
         return $arSqlSearch;
     }
 
 
-    function GetList($arOrder = Array(), $arFilter = Array())
+    public static function GetList($arOrder = Array(), $arFilter = Array())
     {
         global $DB, $USER;
 
         $arSqlSearch = CLAnswer::GetFilter($arFilter);
 
         $strSqlSearch = "";
-        for ($i = 0; $i < count($arSqlSearch); $i++)
-            if (strlen($arSqlSearch[$i]) > 0)
+        for ($i = 0; $i < count($arSqlSearch); $i++) {
+            if ($arSqlSearch[$i] <> '') {
                 $strSqlSearch .= " AND " . $arSqlSearch[$i] . " ";
+            }
+        }
 
         $strSql =
             "SELECT CA.*, CQ.ID AS QUESTION_ID, CQ.NAME AS QUESTION_NAME " .
@@ -155,21 +183,29 @@ class CLAnswer
             "WHERE 1=1 " .
             $strSqlSearch;
 
-        if (!is_array($arOrder))
+        if (!is_array($arOrder)) {
             $arOrder = Array();
+        }
 
+        $arSqlOrder = [];
         foreach ($arOrder as $by => $order) {
-            $by = strtolower($by);
-            $order = strtolower($order);
-            if ($order != "asc")
+            $by = mb_strtolower($by);
+            $order = mb_strtolower($order);
+            if ($order != "asc") {
                 $order = "desc";
+            }
 
-            if ($by == "id") $arSqlOrder[] = " CA.ID " . $order . " ";
-            elseif ($by == "sort") $arSqlOrder[] = " CA.SORT " . $order . " ";
-            elseif ($by == "correct") $arSqlOrder[] = " CA.CORRECT " . $order . " ";
-            elseif ($by == "answer") $arSqlOrder[] = " CA.ANSWER " . $order . " ";
-            elseif ($by == "rand") $arSqlOrder[] = CTest::GetRandFunction();
-            else {
+            if ($by == "id") {
+                $arSqlOrder[] = " CA.ID " . $order . " ";
+            } elseif ($by == "sort") {
+                $arSqlOrder[] = " CA.SORT " . $order . " ";
+            } elseif ($by == "correct") {
+                $arSqlOrder[] = " CA.CORRECT " . $order . " ";
+            } elseif ($by == "answer") {
+                $arSqlOrder[] = " CA.ANSWER " . $order . " ";
+            } elseif ($by == "rand") {
+                $arSqlOrder[] = CTest::GetRandFunction();
+            } else {
                 $arSqlOrder[] = " CA.ID " . $order . " ";
                 $by = "id";
             }
@@ -178,10 +214,11 @@ class CLAnswer
         $strSqlOrder = "";
         DelDuplicateSort($arSqlOrder);
         for ($i = 0; $i < count($arSqlOrder); $i++) {
-            if ($i == 0)
+            if ($i == 0) {
                 $strSqlOrder = " ORDER BY ";
-            else
+            } else {
                 $strSqlOrder .= ",";
+            }
 
             $strSqlOrder .= $arSqlOrder[$i];
         }
@@ -213,8 +250,9 @@ class CLAnswer
     {
         global $DB;
 
-        if (!is_array($arIds))
+        if (!is_array($arIds)) {
             return (false);
+        }
 
         $arResult = array();
 

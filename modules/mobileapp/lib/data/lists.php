@@ -34,7 +34,6 @@ class Lists
             "ID" => $sectionCode,
             "NAME" => $sectionName
         );
-
     }
 
     public function setCategoryName($categoryCode = "", $name = "")
@@ -48,7 +47,6 @@ class Lists
             $this->categoryCodes[$categoryCode] = array();
             $this->sections[$categoryCode] = array();
             $this->categoryNames[$categoryCode] = "";
-
         }
     }
 

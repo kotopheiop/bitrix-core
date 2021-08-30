@@ -10,8 +10,9 @@ class CSaleBasketHelper
     */
     public static function isInSet($arItem)
     {
-        if (!empty($arItem["SET_PARENT_ID"]))
+        if (!empty($arItem["SET_PARENT_ID"])) {
             return true;
+        }
 
         return false;
     }
@@ -31,8 +32,9 @@ class CSaleBasketHelper
                 ($adminSection && $arItem["SET_PARENT_ID"] != '' && $arItem["SET_PARENT_ID"] != 0)
                 ||
                 intval($arItem["SET_PARENT_ID"]) > 0
-            )
+            ) {
                 return true;
+            }
         }
 
         return false;
@@ -62,21 +64,27 @@ class CSaleBasketHelper
         $setParentID = intval($setParentID);
         $bItemFound = false;
 
-        if ($setParentID <= 0)
+        if ($setParentID <= 0) {
             return false;
+        }
 
-        $dbres = $DB->Query("SELECT ID, DEDUCTED FROM b_sale_basket WHERE SET_PARENT_ID = " . $setParentID . " AND (TYPE IS NULL OR TYPE = '0')", true);
+        $dbres = $DB->Query(
+            "SELECT ID, DEDUCTED FROM b_sale_basket WHERE SET_PARENT_ID = " . $setParentID . " AND (TYPE IS NULL OR TYPE = '0')",
+            true
+        );
 
         while ($arItem = $dbres->GetNext()) {
             $bItemFound = true;
-            if ($arItem["DEDUCTED"] == "N")
+            if ($arItem["DEDUCTED"] == "N") {
                 return false;
+            }
         }
 
-        if ($bItemFound)
+        if ($bItemFound) {
             return true;
-        else
+        } else {
             return false;
+        }
     }
 
     /**
@@ -87,13 +95,15 @@ class CSaleBasketHelper
      */
     public static function cmpSetData($arBasketItemA, $arBasketItemB)
     {
-        if ($arBasketItemA["SET_PARENT_ID"] == "")
+        if ($arBasketItemA["SET_PARENT_ID"] == "") {
             return 0;
+        }
 
-        if ($arBasketItemA["TYPE"] == CSaleBasket::TYPE_SET)
+        if ($arBasketItemA["TYPE"] == CSaleBasket::TYPE_SET) {
             return -1;
-        else
+        } else {
             return 1;
+        }
     }
 
 
@@ -101,14 +111,17 @@ class CSaleBasketHelper
     {
         if (!isset($array1["SORT"])
             || !isset($array2["SORT"])
-            || ($array1["SORT"] < $array2["SORT"]))
+            || ($array1["SORT"] < $array2["SORT"])) {
             return -1;
+        }
 
-        if ($array1["SORT"] > $array2["SORT"])
+        if ($array1["SORT"] > $array2["SORT"]) {
             return 1;
+        }
 
-        if ($array1["SORT"] == $array2["SORT"])
+        if ($array1["SORT"] == $array2["SORT"]) {
             return 0;
+        }
     }
 
 
@@ -179,13 +192,18 @@ class CSaleBasketHelper
      */
     public static function getVat(array $basketItemData)
     {
-        if (empty($basketItemData['VAT_RATE']) || $basketItemData['VAT_RATE'] == 0)
+        if (empty($basketItemData['VAT_RATE']) || $basketItemData['VAT_RATE'] == 0) {
             return 0;
+        }
 
         if (isset($basketItemData['VAT_INCLUDED']) && $basketItemData['VAT_INCLUDED'] === 'N') {
-            $vat = \Bitrix\Sale\PriceMaths::roundPrecision(($basketItemData['PRICE'] * $basketItemData['QUANTITY'] * $basketItemData['VAT_RATE']));
+            $vat = \Bitrix\Sale\PriceMaths::roundPrecision(
+                ($basketItemData['PRICE'] * $basketItemData['QUANTITY'] * $basketItemData['VAT_RATE'])
+            );
         } else {
-            $vat = \Bitrix\Sale\PriceMaths::roundPrecision(($basketItemData['PRICE'] * $basketItemData['QUANTITY'] * $basketItemData['VAT_RATE'] / ($basketItemData['VAT_RATE'] + 1)));
+            $vat = \Bitrix\Sale\PriceMaths::roundPrecision(
+                ($basketItemData['PRICE'] * $basketItemData['QUANTITY'] * $basketItemData['VAT_RATE'] / ($basketItemData['VAT_RATE'] + 1))
+            );
         }
 
         return $vat;

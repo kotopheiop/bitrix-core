@@ -1,5 +1,6 @@
 <?
 /** @global CUser $USER */
+
 /** @global CMain $APPLICATION */
 
 /** @global array $FIELDS */
@@ -22,8 +23,9 @@ global $adminSidePanelHelper;
 $publicMode = $adminPage->publicMode;
 $selfFolderUrl = $adminPage->getSelfFolderUrl();
 
-if (!($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_group')))
+if (!($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_group'))) {
     $APPLICATION->AuthForm('');
+}
 Loader::includeModule('catalog');
 $readOnly = !$USER->CanDoOperation('catalog_group');
 
@@ -34,7 +36,9 @@ $canViewUserList = (
     || $USER->CanDoOperation('edit_subordinate_users')
 );
 
-if ($publicMode) $canViewUserList = false;
+if ($publicMode) {
+    $canViewUserList = false;
+}
 
 $adminListTableID = 'tbl_catalog_round_rules';
 
@@ -42,8 +46,9 @@ $adminSort = new CAdminUiSorting($adminListTableID, 'ID', 'ASC');
 $adminList = new CAdminUiList($adminListTableID, $adminSort);
 
 $listType = array('' => Loc::getMessage('PRICE_ROUND_LIST_FILTER_PRICE_TYPE_ANY'));
-foreach (Catalog\Helpers\Admin\Tools::getPriceTypeList(false) as $id => $title)
+foreach (Catalog\Helpers\Admin\Tools::getPriceTypeList(false) as $id => $title) {
     $listType[$id] = $title;
+}
 
 $filterFields = array(
     array(
@@ -71,12 +76,15 @@ if (!$readOnly && $adminList->EditAction()) {
         $listIds = array_filter(array_keys($FIELDS));
         if (!empty($listIds)) {
             $priceTypeList = array();
-            $iterator = Catalog\RoundingTable::getList(array(
-                'select' => array('ID', 'CATALOG_GROUP_ID'),
-                'filter' => array('@ID' => $listIds)
-            ));
-            while ($row = $iterator->fetch())
+            $iterator = Catalog\RoundingTable::getList(
+                array(
+                    'select' => array('ID', 'CATALOG_GROUP_ID'),
+                    'filter' => array('@ID' => $listIds)
+                )
+            );
+            while ($row = $iterator->fetch()) {
                 $priceTypeList[$row['CATALOG_GROUP_ID']] = $row['CATALOG_GROUP_ID'];
+            }
             unset($row, $iterator);
             Catalog\RoundingTable::clearPriceTypeIds();
             Catalog\RoundingTable::setPriceTypeIds($priceTypeList);
@@ -84,8 +92,9 @@ if (!$readOnly && $adminList->EditAction()) {
             $conn = Main\Application::getConnection();
             foreach ($FIELDS as $ruleId => $fields) {
                 $ruleId = (int)$ruleId;
-                if ($ruleId <= 0 || !$adminList->IsUpdated($ruleId))
+                if ($ruleId <= 0 || !$adminList->IsUpdated($ruleId)) {
                     continue;
+                }
 
                 Catalog\Helpers\Admin\RoundEdit::prepareFields($fields);
 
@@ -111,10 +120,12 @@ if (!$readOnly && ($listIds = $adminList->GroupAction())) {
     $priceTypeList = array();
     if ($_REQUEST['action_target'] == 'selected') {
         $listIds = array();
-        $ruleIterator = Catalog\RoundingTable::getList(array(
-            'select' => array('ID', 'CATALOG_GROUP_ID'),
-            'filter' => $filter
-        ));
+        $ruleIterator = Catalog\RoundingTable::getList(
+            array(
+                'select' => array('ID', 'CATALOG_GROUP_ID'),
+                'filter' => $filter
+            )
+        );
         while ($rule = $ruleIterator->fetch()) {
             $listIds[] = $rule['ID'];
             $priceTypeList[$rule['CATALOG_GROUP_ID']] = $rule['CATALOG_GROUP_ID'];
@@ -128,12 +139,15 @@ if (!$readOnly && ($listIds = $adminList->GroupAction())) {
         switch ($action) {
             case 'delete':
                 if (empty($priceTypeList)) {
-                    $iterator = Catalog\RoundingTable::getList(array(
-                        'select' => array('ID', 'CATALOG_GROUP_ID'),
-                        'filter' => array('@ID' => $listIds)
-                    ));
-                    while ($row = $iterator->fetch())
+                    $iterator = Catalog\RoundingTable::getList(
+                        array(
+                            'select' => array('ID', 'CATALOG_GROUP_ID'),
+                            'filter' => array('@ID' => $listIds)
+                        )
+                    );
+                    while ($row = $iterator->fetch()) {
                         $priceTypeList[$row['CATALOG_GROUP_ID']] = $row['CATALOG_GROUP_ID'];
+                    }
                     unset($row, $iterator);
                 }
                 Catalog\RoundingTable::clearPriceTypeIds();
@@ -141,8 +155,9 @@ if (!$readOnly && ($listIds = $adminList->GroupAction())) {
                 Catalog\RoundingTable::disallowClearCache();
                 foreach ($listIds as $ruleId) {
                     $result = Catalog\RoundingTable::delete($ruleId);
-                    if (!$result->isSuccess())
+                    if (!$result->isSuccess()) {
                         $adminList->AddGroupError(implode('<br>', $result->getErrorMessages()), $ruleId);
+                    }
                     unset($result);
                 }
                 unset($ruleId);
@@ -227,10 +242,12 @@ $selectFieldsMap = array_fill_keys(array_keys($headerList), false);
 $selectFieldsMap = array_merge($selectFieldsMap, $selectFields);
 
 global $by, $order;
-if (!isset($by))
+if (!isset($by)) {
     $by = 'ID';
-if (!isset($order))
+}
+if (!isset($order)) {
     $order = 'ASC';
+}
 
 $userList = array();
 $userIds = array();
@@ -269,8 +286,9 @@ if ($usePageNavigation) {
     $totalCount = (int)Catalog\RoundingTable::getCount($getListParams['filter']);
     if ($totalCount > 0) {
         $totalPages = ceil($totalCount / $navyParams['SIZEN']);
-        if ($navyParams['PAGEN'] > $totalPages)
+        if ($navyParams['PAGEN'] > $totalPages) {
             $navyParams['PAGEN'] = $totalPages;
+        }
         $getListParams['limit'] = $navyParams['SIZEN'];
         $getListParams['offset'] = $navyParams['SIZEN'] * ($navyParams['PAGEN'] - 1);
     } else {
@@ -296,13 +314,15 @@ while ($rule = $ruleIterator->Fetch()) {
     $rule['ID'] = (int)$rule['ID'];
     if ($selectFieldsMap['CREATED_BY']) {
         $rule['CREATED_BY'] = (int)$rule['CREATED_BY'];
-        if ($rule['CREATED_BY'] > 0)
+        if ($rule['CREATED_BY'] > 0) {
             $userIds[$rule['CREATED_BY']] = true;
+        }
     }
     if ($selectFieldsMap['MODIFIED_BY']) {
         $rule['MODIFIED_BY'] = (int)$rule['MODIFIED_BY'];
-        if ($rule['MODIFIED_BY'] > 0)
+        if ($rule['MODIFIED_BY'] > 0) {
             $userIds[$rule['MODIFIED_BY']] = true;
+        }
     }
 
     $urlEdit = $selfFolderUrl . 'cat_round_edit.php?ID=' . $rule['ID'] . '&lang=' . LANGUAGE_ID;
@@ -311,14 +331,18 @@ while ($rule = $ruleIterator->Fetch()) {
         $rule['ID'],
         $rule,
         $urlEdit,
-        (!$readOnly ? Loc::getMessage('PRICE_ROUND_LIST_MESS_EDIT_RULE') : Loc::getMessage('PRICE_ROUND_LIST_MESS_VIEW_RULE'))
+        (!$readOnly ? Loc::getMessage('PRICE_ROUND_LIST_MESS_EDIT_RULE') : Loc::getMessage(
+            'PRICE_ROUND_LIST_MESS_VIEW_RULE'
+        ))
     );
     $row->AddViewField('ID', '<a href="' . $urlEdit . '">' . $rule['ID'] . '</a>');
 
-    if ($selectFieldsMap['DATE_CREATE'])
+    if ($selectFieldsMap['DATE_CREATE']) {
         $row->AddViewField('DATE_CREATE', $rule['DATE_CREATE']);
-    if ($selectFieldsMap['TIMESTAMP_X'])
+    }
+    if ($selectFieldsMap['TIMESTAMP_X']) {
         $row->AddViewField('TIMESTAMP_X', $rule['TIMESTAMP_X']);
+    }
 
     $row->AddViewField(
         'CATALOG_GROUP_ID',
@@ -336,22 +360,29 @@ while ($rule = $ruleIterator->Fetch()) {
     }
 
     if (!$readOnly) {
-        if ($selectFieldsMap['PRICE'])
+        if ($selectFieldsMap['PRICE']) {
             $row->AddInputField('PRICE');
-        if ($selectFieldsMap['ROUND_TYPE'])
+        }
+        if ($selectFieldsMap['ROUND_TYPE']) {
             $row->AddSelectField('ROUND_TYPE', $roundTypeList);
-        if ($selectFieldsMap['ROUND_PRECISION'])
+        }
+        if ($selectFieldsMap['ROUND_PRECISION']) {
             $row->AddSelectField('ROUND_PRECISION', $roundValues);
+        }
     } else {
-        if ($selectFieldsMap['ROUND_TYPE'])
+        if ($selectFieldsMap['ROUND_TYPE']) {
             $row->AddSelectField('ROUND_TYPE', $roundTypeList, false);
-        if ($selectFieldsMap['ROUND_PRECISION'])
+        }
+        if ($selectFieldsMap['ROUND_PRECISION']) {
             $row->AddSelectField('ROUND_PRECISION', $roundValues, false);
+        }
     }
     $actions = array();
     $actions[] = array(
         'ICON' => 'edit',
-        'TEXT' => (!$readOnly ? Loc::getMessage('PRICE_ROUND_LIST_CONTEXT_EDIT') : Loc::getMessage('PRICE_ROUND_LIST_CONTEXT_VIEW')),
+        'TEXT' => (!$readOnly ? Loc::getMessage('PRICE_ROUND_LIST_CONTEXT_EDIT') : Loc::getMessage(
+            'PRICE_ROUND_LIST_CONTEXT_VIEW'
+        )),
         'LINK' => $urlEdit,
         'DEFAULT' => true
     );
@@ -366,7 +397,9 @@ while ($rule = $ruleIterator->Fetch()) {
         $actions[] = array(
             'ICON' => 'delete',
             'TEXT' => Loc::getMessage('PRICE_ROUND_LIST_CONTEXT_DELETE'),
-            'ACTION' => "if (confirm('" . Loc::getMessage('PRICE_ROUND_LIST_CONTEXT_DELETE_CONFIRM') . "')) " . $adminList->ActionDoGroup($rule['ID'], 'delete')
+            'ACTION' => "if (confirm('" . Loc::getMessage(
+                    'PRICE_ROUND_LIST_CONTEXT_DELETE_CONFIRM'
+                ) . "')) " . $adminList->ActionDoGroup($rule['ID'], 'delete')
         );
     }
 
@@ -384,16 +417,22 @@ unset($roundValues);
 
 if (!empty($rowList) && ($selectFieldsMap['CREATED_BY'] || $selectFieldsMap['MODIFIED_BY'])) {
     if (!empty($userIds)) {
-        $userIterator = Main\UserTable::getList(array(
-            'select' => array('ID', 'LOGIN', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'EMAIL'),
-            'filter' => array('@ID' => array_keys($userIds)),
-        ));
+        $userIterator = Main\UserTable::getList(
+            array(
+                'select' => array('ID', 'LOGIN', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'EMAIL'),
+                'filter' => array('@ID' => array_keys($userIds)),
+            )
+        );
         while ($oneUser = $userIterator->fetch()) {
             $oneUser['ID'] = (int)$oneUser['ID'];
-            if ($canViewUserList)
-                $userList[$oneUser['ID']] = '<a href="/bitrix/admin/user_edit.php?lang=' . LANGUAGE_ID . '&ID=' . $oneUser['ID'] . '">' . CUser::FormatName($nameFormat, $oneUser) . '</a>';
-            else
+            if ($canViewUserList) {
+                $userList[$oneUser['ID']] = '<a href="/bitrix/admin/user_edit.php?lang=' . LANGUAGE_ID . '&ID=' . $oneUser['ID'] . '">' . CUser::FormatName(
+                        $nameFormat,
+                        $oneUser
+                    ) . '</a>';
+            } else {
                 $userList[$oneUser['ID']] = CUser::FormatName($nameFormat, $oneUser);
+            }
         }
         unset($oneUser, $userIterator);
     }
@@ -402,14 +441,16 @@ if (!empty($rowList) && ($selectFieldsMap['CREATED_BY'] || $selectFieldsMap['MOD
     foreach ($rowList as &$row) {
         if ($selectFieldsMap['CREATED_BY']) {
             $userName = '';
-            if ($row->arRes['CREATED_BY'] > 0 && isset($userList[$row->arRes['CREATED_BY']]))
+            if ($row->arRes['CREATED_BY'] > 0 && isset($userList[$row->arRes['CREATED_BY']])) {
                 $userName = $userList[$row->arRes['CREATED_BY']];
+            }
             $row->AddViewField('CREATED_BY', $userName);
         }
         if ($selectFieldsMap['MODIFIED_BY']) {
             $userName = '';
-            if ($row->arRes['MODIFIED_BY'] > 0 && isset($userList[$row->arRes['MODIFIED_BY']]))
+            if ($row->arRes['MODIFIED_BY'] > 0 && isset($userList[$row->arRes['MODIFIED_BY']])) {
                 $userName = $userList[$row->arRes['MODIFIED_BY']];
+            }
             $row->AddViewField('MODIFIED_BY', $userName);
         }
         unset($userName);
@@ -432,10 +473,12 @@ $adminList->AddFooter(
 );
 
 if (!$readOnly) {
-    $adminList->AddGroupActionTable([
-        'edit' => true,
-        'delete' => true
-    ]);
+    $adminList->AddGroupActionTable(
+        [
+            'edit' => true,
+            'delete' => true
+        ]
+    );
 }
 
 $contextMenu = array();

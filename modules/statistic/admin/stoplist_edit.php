@@ -1,10 +1,12 @@
 <?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/prolog.php");
 /** @var CMain $APPLICATION */
 $STAT_RIGHT = $APPLICATION->GetGroupRight("statistic");
-if ($STAT_RIGHT == "D")
+if ($STAT_RIGHT == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 $statDB = CDatabase::GetModuleConnection('statistic');
 IncludeModuleLangFile(__FILE__);
 $err_mess = "File: " . __FILE__ . "<br>Line: ";
@@ -19,7 +21,7 @@ InitBVar($ACTIVE);
 InitBVar($SAVE_STATISTIC);
 InitBVar($USER_AGENT_IS_NULL);
 // "save" on the current page was pressed
-if ((strlen($save) > 0 || strlen($apply) > 0) && $REQUEST_METHOD == "POST" && $STAT_RIGHT >= "W" && check_bitrix_sessid()) {
+if (($save <> '' || $apply <> '') && $REQUEST_METHOD == "POST" && $STAT_RIGHT >= "W" && check_bitrix_sessid()) {
     $arFields = array(
         "DATE_START" => $_POST["DATE_START"],
         "DATE_END" => $_POST["DATE_END"],
@@ -54,13 +56,19 @@ if ((strlen($save) > 0 || strlen($apply) > 0) && $REQUEST_METHOD == "POST" && $S
     }
 
     if ($res) {
-        if (strlen($_POST["save"]) > 0)
+        if ($_POST["save"] <> '') {
             LocalRedirect("stoplist_list.php?lang=" . LANG);
-        else
-            LocalRedirect($APPLICATION->GetCurPage() . "?lang=" . LANG . "&ID=" . $ID . "&tabControl_active_tab=" . urlencode($tabControl_active_tab));
+        } else {
+            LocalRedirect(
+                $APPLICATION->GetCurPage() . "?lang=" . LANG . "&ID=" . $ID . "&tabControl_active_tab=" . urlencode(
+                    $tabControl_active_tab
+                )
+            );
+        }
     } else {
-        if ($e = $APPLICATION->GetException())
+        if ($e = $APPLICATION->GetException()) {
             $message = new CAdminMessage(GetMessage("STAT_ERROR"), $e);
+        }
     }
 }
 
@@ -83,11 +91,15 @@ if (!($stoplist && $stoplist->ExtractFields())) {
     $str_MESSAGE_LID = LANG;
     $str_SAVE_STATISTIC = "Y";
 }
-if ($message)
+if ($message) {
     $statDB->InitTableVarsForEdit("b_stop_list", "", "str_");
+}
 
-if ($ID > 0) $sDocTitle = GetMessage("STAT_EDIT_RECORD", array("#ID#" => $ID));
-else $sDocTitle = GetMessage("STAT_NEW_RECORD");
+if ($ID > 0) {
+    $sDocTitle = GetMessage("STAT_EDIT_RECORD", array("#ID#" => $ID));
+} else {
+    $sDocTitle = GetMessage("STAT_NEW_RECORD");
+}
 
 $APPLICATION->SetTitle($sDocTitle);
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
@@ -119,7 +131,10 @@ if (intval($ID) > 0) {
             "ICON" => "btn_delete",
             "TITLE" => GetMessage("STAT_DELETE_STOPLIST"),
             "TEXT" => GetMessage("MAIN_ADMIN_MENU_DELETE"),
-            "LINK" => "javascript:if(confirm('" . GetMessageJS("STAT_DELETE_STOPLIST_CONFIRM") . "'))window.location='stoplist_list.php?action=delete&ID=" . $ID . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get() . "';",
+            "LINK" => "javascript:if(confirm('" . GetMessageJS(
+                    "STAT_DELETE_STOPLIST_CONFIRM"
+                ) . "'))window.location='stoplist_list.php?action=delete&ID=" . $ID . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get(
+                ) . "';",
         );
     }
 }
@@ -127,14 +142,30 @@ if (intval($ID) > 0) {
 $context = new CAdminContextMenu($aMenu);
 $context->Show();
 
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 
 
 $aTabs = array();
-$aTabs[] = array("DIV" => "edit1", "TAB" => GetMessage("STAT_PARAMS"), "ICON" => "stat_stoplist", "TITLE" => GetMessage("STAT_PARAMS_S"));
-$aTabs[] = array("DIV" => "edit2", "TAB" => GetMessage("STAT_ACTIONS"), "ICON" => "stat_stoplist", "TITLE" => GetMessage("STAT_WHAT_TO_DO"));
-$aTabs[] = array("DIV" => "edit3", "TAB" => GetMessage("STAT_COMMENT_S"), "ICON" => "stat_stoplist", "TITLE" => GetMessage("STAT_COMMENT"));
+$aTabs[] = array(
+    "DIV" => "edit1",
+    "TAB" => GetMessage("STAT_PARAMS"),
+    "ICON" => "stat_stoplist",
+    "TITLE" => GetMessage("STAT_PARAMS_S")
+);
+$aTabs[] = array(
+    "DIV" => "edit2",
+    "TAB" => GetMessage("STAT_ACTIONS"),
+    "ICON" => "stat_stoplist",
+    "TITLE" => GetMessage("STAT_WHAT_TO_DO")
+);
+$aTabs[] = array(
+    "DIV" => "edit3",
+    "TAB" => GetMessage("STAT_COMMENT_S"),
+    "ICON" => "stat_stoplist",
+    "TITLE" => GetMessage("STAT_COMMENT")
+);
 
 $tabControl = new CAdminTabControl("tabControl", $aTabs); ?>
 
@@ -147,7 +178,7 @@ $tabControl = new CAdminTabControl("tabControl", $aTabs); ?>
         $tabControl->Begin();
         $tabControl->BeginNextTab();
         ?>
-        <? if (strlen($str_TIMESTAMP_X) > 0) : ?>
+        <? if ($str_TIMESTAMP_X <> '') : ?>
             <tr valign="center">
                 <td width="40%" align="right"><? echo GetMessage("STAT_TIMESTAMP") ?></td>
                 <td width="60%"><? echo $str_TIMESTAMP_X ?></td>
@@ -155,10 +186,13 @@ $tabControl = new CAdminTabControl("tabControl", $aTabs); ?>
         <? endif; ?>
         <tr valign="top" class="heading">
             <td colspan="2"><?= GetMessage("STAT_ACTIVITY") ?><?
-                if (strlen($str_LAMP) > 0) :
+                if ($str_LAMP <> '') :
                     ?>&nbsp;<?
-                    if ($str_LAMP == "green") echo "<font class=\"stat_pointed\">(" . GetMessage("STAT_GREEN_LAMP") . ")</span>";
-                    else echo "<span class=\"stat_attention\">(" . GetMessage("STAT_RED_LAMP") . ")</span>";
+                    if ($str_LAMP == "green") {
+                        echo "<font class=\"stat_pointed\">(" . GetMessage("STAT_GREEN_LAMP") . ")</span>";
+                    } else {
+                        echo "<span class=\"stat_attention\">(" . GetMessage("STAT_RED_LAMP") . ")</span>";
+                    }
                     ?><?
                 endif;
                 ?></td>
@@ -234,7 +268,12 @@ $tabControl = new CAdminTabControl("tabControl", $aTabs); ?>
                                                      wrap="VIRTUAL"><?= $str_COMMENTS ?></textarea></td>
         </tr>
         <?
-        $tabControl->Buttons(Array("disabled" => $STAT_RIGHT < "W", "back_url" => "/bitrix/admin/stoplist_list.php?lang=" . LANG . "&set_filter=Y"));
+        $tabControl->Buttons(
+            Array(
+                "disabled" => $STAT_RIGHT < "W",
+                "back_url" => "/bitrix/admin/stoplist_list.php?lang=" . LANG . "&set_filter=Y"
+            )
+        );
         $tabControl->End();
         ?>
     </form>

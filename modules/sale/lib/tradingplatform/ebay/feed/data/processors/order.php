@@ -24,16 +24,18 @@ class Order extends DataProcessor
 
     public function __construct($params)
     {
-        if (!isset($params["SITE_ID"]) || strlen($params["SITE_ID"]) <= 0)
+        if (!isset($params["SITE_ID"]) || $params["SITE_ID"] == '') {
             throw new ArgumentNullException("SITE_ID");
+        }
 
         $this->siteId = $params["SITE_ID"];
     }
 
     public function process($data)
     {
-        if (!is_array($data))
+        if (!is_array($data)) {
             throw new SystemException("Data must be an array! " . __METHOD__);
+        }
 
         foreach ($data as $order) {
             try {
@@ -83,8 +85,9 @@ class Order extends DataProcessor
         $result = "";
         $sku = explode("_", $ebaySku);
 
-        if (isset($sku[1]) && strlen($sku[1]) > 0)
+        if (isset($sku[1]) && $sku[1] <> '') {
             $result = $sku[1];
+        }
 
         return $result;
     }
@@ -95,8 +98,9 @@ class Order extends DataProcessor
 
         $sku = explode("_", $ebaySku);
 
-        if (isset($sku[2]) && strlen($sku[2]) > 0)
+        if (isset($sku[2]) && $sku[2] <> '') {
             $result = $sku[2];
+        }
 
         return $result;
     }
@@ -104,8 +108,9 @@ class Order extends DataProcessor
     protected function normalizeTransactionsArray($transactArray)
     {
         foreach ($transactArray["Transaction"] as $key => $transaction) {
-            if (intval($key) !== $key)
+            if (intval($key) !== $key) {
                 $transactArray["Transaction"] = array($transactArray["Transaction"]);
+            }
 
             break;
         }
@@ -115,7 +120,13 @@ class Order extends DataProcessor
 
     public function processOrder($orderEbay)
     {
-        Ebay::log(Logger::LOG_LEVEL_DEBUG, "EBAY_DATA_PROCESSOR_ORDER_PROCESSING", $orderEbay["ExtendedOrderID"], print_r($orderEbay, true), $this->siteId);
+        Ebay::log(
+            Logger::LOG_LEVEL_DEBUG,
+            "EBAY_DATA_PROCESSOR_ORDER_PROCESSING",
+            $orderEbay["ExtendedOrderID"],
+            print_r($orderEbay, true),
+            $this->siteId
+        );
 
         /*
          * only in this case order is completely ready for shipping
@@ -142,17 +153,20 @@ class Order extends DataProcessor
         $ebay = \Bitrix\Sale\TradingPlatform\Ebay\Ebay::getInstance();
         $settings = $ebay->getSettings();
 
-        if (!isset($settings[$this->siteId]["ORDER_PROPS"]) || !is_array($settings[$this->siteId]["ORDER_PROPS"]))
+        if (!isset($settings[$this->siteId]["ORDER_PROPS"]) || !is_array($settings[$this->siteId]["ORDER_PROPS"])) {
             throw new SystemException("Can't get order props map");
+        }
 
         $propsMap = $settings[$this->siteId]["ORDER_PROPS"];
 
-        $dbRes = TradeBindingCollection::getList(array(
-            "filter" => array(
-                "TRADING_PLATFORM_ID" => $ebay->getId(),
-                "EXTERNAL_ORDER_ID" => $orderEbay["ExtendedOrderID"]
+        $dbRes = TradeBindingCollection::getList(
+            array(
+                "filter" => array(
+                    "TRADING_PLATFORM_ID" => $ebay->getId(),
+                    "EXTERNAL_ORDER_ID" => $orderEbay["ExtendedOrderID"]
+                )
             )
-        ));
+        );
 
         if ($orderCorrespondence = $dbRes->fetch()) {
             Ebay::log(
@@ -231,17 +245,20 @@ class Order extends DataProcessor
                     );
                 }
 
-                if ($userId <= 0)
+                if ($userId <= 0) {
                     $userId = \CSaleUser::GetAnonymousUserID();
+                }
             }
 
-            if (intval($userId > 0))
+            if (intval($userId > 0)) {
                 $order->setFieldNoDemand("USER_ID", $userId);
+            }
 
             $fUserId = null;
 
-            if ($order->getUserId() > 0)
+            if ($order->getUserId() > 0) {
                 $fUserId = Fuser::getIdByUserId($order->getUserId());
+            }
 
             /** @var \Bitrix\Sale\Basket $basket */
             if (!$basket) {
@@ -261,15 +278,29 @@ class Order extends DataProcessor
             }
 
             if (empty($items)) {
-                Ebay::log(Logger::LOG_LEVEL_INFO, "EBAY_DATA_PROCESSOR_ORDER_PROCESSING_TRANSACTION_ITEM_NOT_FOUND", $transaction["OrderLineItemID"], print_r($transaction, true), $this->siteId);
+                Ebay::log(
+                    Logger::LOG_LEVEL_INFO,
+                    "EBAY_DATA_PROCESSOR_ORDER_PROCESSING_TRANSACTION_ITEM_NOT_FOUND",
+                    $transaction["OrderLineItemID"],
+                    print_r($transaction, true),
+                    $this->siteId
+                );
                 continue;
             }
 
             foreach ($items as $transactionItem) {
-                $ebaySku = $isVariation ? $this->getSkuVariation($transactionItem["SKU"]) : $this->getSku($transactionItem["SKU"]);
+                $ebaySku = $isVariation ? $this->getSkuVariation($transactionItem["SKU"]) : $this->getSku(
+                    $transactionItem["SKU"]
+                );
 
-                if (strlen($ebaySku) <= 0) {
-                    Ebay::log(Logger::LOG_LEVEL_INFO, "EBAY_DATA_PROCESSOR_ORDER_PROCESSING_TRANSACTION_ITEM_SKU_NOT_FOUND", $transaction["OrderLineItemID"], print_r($transaction, true), $this->siteId);
+                if ($ebaySku == '') {
+                    Ebay::log(
+                        Logger::LOG_LEVEL_INFO,
+                        "EBAY_DATA_PROCESSOR_ORDER_PROCESSING_TRANSACTION_ITEM_SKU_NOT_FOUND",
+                        $transaction["OrderLineItemID"],
+                        print_r($transaction, true),
+                        $this->siteId
+                    );
                     continue;
                 }
 
@@ -316,17 +347,32 @@ class Order extends DataProcessor
                 if ($res->isSuccess()) {
                     $orderLineItemsIds[] = $transaction["OrderLineItemID"];
                 } else {
-                    foreach ($res->getErrors() as $error)
-                        Ebay::log(Logger::LOG_LEVEL_ERROR, "EBAY_DATA_PROCESSOR_ORDER_TRANSACTION_ITEM_CREATE_ERROR", $transaction["OrderLineItemID"], $error->getMessage(), $this->siteId);
+                    foreach ($res->getErrors() as $error) {
+                        Ebay::log(
+                            Logger::LOG_LEVEL_ERROR,
+                            "EBAY_DATA_PROCESSOR_ORDER_TRANSACTION_ITEM_CREATE_ERROR",
+                            $transaction["OrderLineItemID"],
+                            $error->getMessage(),
+                            $this->siteId
+                        );
+                    }
                 }
             }
         }
 
         $res = $order->setBasket($basket);
 
-        if (!$res->isSuccess())
-            foreach ($res->getErrors() as $error)
-                Ebay::log(Logger::LOG_LEVEL_ERROR, "EBAY_DATA_PROCESSOR_ORDER_CREATE_ERROR_SET_BASKET", $orderEbay["ExtendedOrderID"], $error->getMessage(), $this->siteId);
+        if (!$res->isSuccess()) {
+            foreach ($res->getErrors() as $error) {
+                Ebay::log(
+                    Logger::LOG_LEVEL_ERROR,
+                    "EBAY_DATA_PROCESSOR_ORDER_CREATE_ERROR_SET_BASKET",
+                    $orderEbay["ExtendedOrderID"],
+                    $error->getMessage(),
+                    $this->siteId
+                );
+            }
+        }
 
         //payments
         if (intval($settings[$this->siteId]["MAPS"]["PAYMENT"]["PayPal"]) > 0) {
@@ -335,8 +381,9 @@ class Order extends DataProcessor
             /** @var \Bitrix\Sale\Payment $payment */
             if ($payments->count() > 0) {
                 foreach ($payments as $payment) {
-                    if ($payment->isPaid())
+                    if ($payment->isPaid()) {
                         $payment->setPaid("N");
+                    }
 
                     $payment->delete();
                 }
@@ -356,17 +403,25 @@ class Order extends DataProcessor
         }
 
         //shipment
-        if (intval($settings[$this->siteId]["MAPS"]["SHIPMENT"][$orderEbay["ShippingServiceSelected"]["ShippingService"]]) > 0) {
+        if (intval(
+                $settings[$this->siteId]["MAPS"]["SHIPMENT"][$orderEbay["ShippingServiceSelected"]["ShippingService"]]
+            ) > 0) {
             $shipments = $order->getShipmentCollection();
 
             /** @var \Bitrix\Sale\Shipment $shipment */
-            if ($shipments->count() > 0)
-                foreach ($shipments as $shipment)
-                    if (!$shipment->isSystem())
+            if ($shipments->count() > 0) {
+                foreach ($shipments as $shipment) {
+                    if (!$shipment->isSystem()) {
                         $shipment->delete();
+                    }
+                }
+            }
 
             $shipment = $shipments->createItem();
-            $shipment->setField('DELIVERY_ID', $settings[$this->siteId]["MAPS"]["SHIPMENT"][$orderEbay["ShippingServiceSelected"]["ShippingService"]]);
+            $shipment->setField(
+                'DELIVERY_ID',
+                $settings[$this->siteId]["MAPS"]["SHIPMENT"][$orderEbay["ShippingServiceSelected"]["ShippingService"]]
+            );
             $shipment->setField('CUSTOM_PRICE_DELIVERY', "Y");
             $shipment->setField('BASE_PRICE_DELIVERY', $orderEbay["ShippingServiceSelected"]["ShippingServiceCost"]);
             $basket = $order->getBasket();
@@ -401,7 +456,7 @@ class Order extends DataProcessor
         }
 
         // order status
-        if (strlen($settings[$this->siteId]["STATUS_MAP"][$orderEbay["OrderStatus"]]) > 0) {
+        if ($settings[$this->siteId]["STATUS_MAP"][$orderEbay["OrderStatus"]] <> '') {
             switch ($settings[$this->siteId]["STATUS_MAP"][$orderEbay["OrderStatus"]]) {
                 /* flags */
                 case "CANCELED":
@@ -426,8 +481,9 @@ class Order extends DataProcessor
                 case "PAYED":
                     $payments = $order->getPaymentCollection();
 
-                    foreach ($payments as $payment)
+                    foreach ($payments as $payment) {
                         $payment->setPaid("Y");
+                    }
 
                     break;
 
@@ -480,7 +536,10 @@ class Order extends DataProcessor
 
                 /* statuses */
                 default:
-                    $res = $order->setField("STATUS_ID", $settings[$this->siteId]["STATUS_MAP"][$orderEbay["OrderStatus"]]);
+                    $res = $order->setField(
+                        "STATUS_ID",
+                        $settings[$this->siteId]["STATUS_MAP"][$orderEbay["OrderStatus"]]
+                    );
 
                     /** @var \Bitrix\Sale\Result $res */
                     if (!$res->isSuccess()) {
@@ -508,22 +567,31 @@ class Order extends DataProcessor
 
         /** @var TradeBindingEntity $entity */
         $entity = TradeBindingEntity::create($tradeCollection);
-        $entity->setFields([
-            "TRADING_PLATFORM_ID" => $ebay->getId(),
-            "EXTERNAL_ORDER_ID" => $orderEbay["ExtendedOrderID"],
-            "PARAMS" => [
-                "ORDER_LINES" => $orderLineItemsIds,
-                "ORDER_ID" => $orderEbay["OrderID"]
+        $entity->setFields(
+            [
+                "TRADING_PLATFORM_ID" => $ebay->getId(),
+                "EXTERNAL_ORDER_ID" => $orderEbay["ExtendedOrderID"],
+                "PARAMS" => [
+                    "ORDER_LINES" => $orderLineItemsIds,
+                    "ORDER_ID" => $orderEbay["OrderID"]
+                ]
             ]
-        ]);
+        );
 
         $tradeCollection->addItem($entity);
 
         $res = $order->save();
 
         if (!$res->isSuccess()) {
-            foreach ($res->getErrors() as $error)
-                Ebay::log(Logger::LOG_LEVEL_ERROR, "EBAY_DATA_PROCESSOR_ORDER_SAVE_ERROR", $orderEbay["ExtendedOrderID"], print_r($error->getMessage(), true), $this->siteId);
+            foreach ($res->getErrors() as $error) {
+                Ebay::log(
+                    Logger::LOG_LEVEL_ERROR,
+                    "EBAY_DATA_PROCESSOR_ORDER_SAVE_ERROR",
+                    $orderEbay["ExtendedOrderID"],
+                    print_r($error->getMessage(), true),
+                    $this->siteId
+                );
+            }
         } else {
             Ebay::log(
                 Logger::LOG_LEVEL_INFO,
@@ -544,8 +612,9 @@ class Order extends DataProcessor
             $ebayFeed = \Bitrix\Sale\TradingPlatform\Ebay\Feed\Manager::createFeed("ORDER_ACK", $this->siteId);
             $sourceData = array();
 
-            foreach ($orderLineItemsIds as $id)
+            foreach ($orderLineItemsIds as $id) {
                 $sourceData[] = array("ORDER_ID" => $orderEbay["OrderID"], "ORDER_LINE_ITEM_ID" => $id);
+            }
 
             $ebayFeed->setSourceData(array($sourceData));
             $ebayFeed->processData();
@@ -561,13 +630,15 @@ class Order extends DataProcessor
             $email,
             $name,
             $this->siteId,
-            $errors);
+            $errors
+        );
 
         if (!empty($errors)) {
             $errorMessage = "";
 
-            foreach ($errors as $val)
+            foreach ($errors as $val) {
                 $errorMessage .= $val["TEXT"];
+            }
 
             throw new SystemException($errorMessage);
         }

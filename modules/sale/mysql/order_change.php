@@ -1,4 +1,4 @@
-<?
+<?php
 
 use Bitrix\Sale\Compatible;
 
@@ -6,15 +6,15 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/general/order_cha
 
 class CSaleOrderChange extends CAllSaleOrderChange
 {
-    public function Add($arFields)
+    public static function Add($arFields)
     {
         if (defined("SALE_DEBUG") && SALE_DEBUG) {
             CSaleHelper::WriteToLog("CSaleOrderChange - Add", array("arFields" => $arFields), "SOCA1");
         }
 
         foreach ($arFields as $key => $value) {
-            if (substr($key, 0, 1) == "=") {
-                $arFields[substr($key, 1)] = $value;
+            if (mb_substr($key, 0, 1) == "=") {
+                $arFields[mb_substr($key, 1)] = $value;
                 unset($arFields[$key]);
             }
         }
@@ -35,17 +35,17 @@ class CSaleOrderChange extends CAllSaleOrderChange
         return (int)$result->getId();
     }
 
-    function Update($ID, $arFields)
+    public static function Update($ID, $arFields)
     {
         if (defined("SALE_DEBUG") && SALE_DEBUG) {
             CSaleHelper::WriteToLog("CSaleOrderChange - Update", array("ID" => $ID, "arFields" => $arFields), "SOCU2");
         }
 
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
         foreach ($arFields as $key => $value) {
-            if (substr($key, 0, 1) == "=") {
-                $arFields[substr($key, 1)] = $value;
+            if (mb_substr($key, 0, 1) == "=") {
+                $arFields[mb_substr($key, 1)] = $value;
                 unset($arFields[$key]);
             }
         }
@@ -61,8 +61,13 @@ class CSaleOrderChange extends CAllSaleOrderChange
         return $ID;
     }
 
-    static function GetList($arOrder = array("ID" => "DESC"), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
-    {
+    public static function GetList(
+        $arOrder = array("ID" => "DESC"),
+        $arFilter = array(),
+        $arGroupBy = false,
+        $arNavStartParams = false,
+        $arSelectFields = array()
+    ) {
         if (array_key_exists("DATE_CREATE_FROM", $arFilter)) {
             $val = $arFilter["DATE_CREATE_FROM"];
             unset($arFilter["DATE_CREATE_FROM"]);
@@ -87,7 +92,17 @@ class CSaleOrderChange extends CAllSaleOrderChange
         if (count($arSelectFields) <= 0
             || in_array("*", $arSelectFields)
         ) {
-            $arSelectFields = array("ID", "ORDER_ID", "TYPE", "DATA", "DATE_CREATE", "DATE_MODIFY", "USER_ID", "ENTITY", "ENTITY_ID");
+            $arSelectFields = array(
+                "ID",
+                "ORDER_ID",
+                "TYPE",
+                "DATA",
+                "DATE_CREATE",
+                "DATE_MODIFY",
+                "USER_ID",
+                "ENTITY",
+                "ENTITY_ID"
+            );
         }
 
         $query = new Compatible\OrderQuery(static::getEntity());

@@ -10,6 +10,8 @@ namespace Bitrix\Sender\Message;
 
 class ConfigurationOption
 {
+    const TYPE_DATE_TIME = 'datetime';
+    const TYPE_NUMBER = 'number';
     const TYPE_CUSTOM = 'custom';
     const TYPE_PRESET_STRING = 'preset-string';
     const TYPE_STRING = 'string';
@@ -19,6 +21,7 @@ class ConfigurationOption
     const TYPE_HTML = 'html';
     const TYPE_TEXT = 'text';
     const TYPE_FILE = 'file';
+    const TYPE_TITLE = 'title';
     const TYPE_TEMPLATE_TYPE = 'template-type';
     const TYPE_TEMPLATE_ID = 'template-id';
     const TYPE_MAIL_EDITOR = 'mail-editor';
@@ -68,6 +71,15 @@ class ConfigurationOption
     /** @var boolean $showInFilter Show option value in filter. */
     protected $showInFilter = false;
 
+    /** @var int $maxLength max length of string field */
+    protected $maxLength;
+
+    /** @var int $maxValue max value of the field */
+    protected $maxValue;
+
+    /** @var int $minValue min value of te string field */
+    protected $minValue;
+
     /**
      * Configuration constructor.
      * @param array $data Data.
@@ -113,6 +125,15 @@ class ConfigurationOption
         if (isset($data['show_in_filter'])) {
             $this->setShowInFilter($data['show_in_filter']);
         }
+        if (isset($data['max_length'])) {
+            $this->setMaxLength($data['max_length']);
+        }
+        if (isset($data['max_value'])) {
+            $this->setMaxValue($data['max_value']);
+        }
+        if (isset($data['min_value'])) {
+            $this->setMinValue($data['min_value']);
+        }
     }
 
     /**
@@ -133,6 +154,9 @@ class ConfigurationOption
             'required' => $this->isRequired(),
             'templated' => $this->isTemplated(),
             'hint' => $this->getHint(),
+            'max_length' => $this->getMaxLength(),
+            'min_value' => $this->getMinValue(),
+            'max_value' => $this->getMaxValue(),
         );
     }
 
@@ -380,6 +404,15 @@ class ConfigurationOption
     }
 
     /**
+     * @return int
+     */
+    public function getMaxLength()
+    {
+        return $this->maxLength;
+    }
+
+
+    /**
      * Get show in list or not.
      *
      * @return bool
@@ -430,5 +463,53 @@ class ConfigurationOption
     public function setShowInFilter($showInFilter)
     {
         $this->showInFilter = $showInFilter;
+    }
+
+    /**
+     * @param int $maxLength
+     */
+    public function setMaxLength(int $maxLength)
+    {
+        $this->maxLength = $maxLength;
+    }
+
+    /**
+     * @return int
+     */
+    public function getMaxValue()
+    {
+        return $this->maxValue;
+    }
+
+    /**
+     * @param int $maxValue
+     *
+     * @return ConfigurationOption
+     */
+    public function setMaxValue(int $maxValue)
+    {
+        $this->maxValue = $maxValue;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getMinValue()
+    {
+        return $this->minValue;
+    }
+
+    /**
+     * @param int $minValue
+     *
+     * @return ConfigurationOption
+     */
+    public function setMinValue(int $minValue)
+    {
+        $this->minValue = $minValue;
+
+        return $this;
     }
 }

@@ -80,15 +80,19 @@ class LengthValidator extends Validator
     public function validate($value, $primary, array $row, Field $field)
     {
         if ($this->min !== null) {
-            if (strlen($value) < $this->min) {
-                $mess = ($this->errorPhraseMin !== null ? $this->errorPhraseMin : Loc::getMessage($this->errorPhraseMinCode));
+            if (mb_strlen($value) < $this->min) {
+                $mess = ($this->errorPhraseMin !== null ? $this->errorPhraseMin : Loc::getMessage(
+                    $this->errorPhraseMinCode
+                ));
                 return $this->getErrorMessage($value, $field, $mess, array("#MIN_LENGTH#" => $this->min));
             }
         }
 
         if ($this->max !== null) {
-            if (strlen($value) > $this->max) {
-                $mess = ($this->errorPhraseMax !== null ? $this->errorPhraseMax : Loc::getMessage($this->errorPhraseMaxCode));
+            if (mb_strlen($value) > $this->max) {
+                $mess = ($this->errorPhraseMax !== null ? $this->errorPhraseMax : Loc::getMessage(
+                    $this->errorPhraseMaxCode
+                ));
                 return $this->getErrorMessage($value, $field, $mess, array("#MAX_LENGTH#" => $this->max));
             }
         }

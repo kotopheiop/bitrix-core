@@ -14,11 +14,13 @@ class XmlField
     public function __construct($name, array $options = array())
     {
         $this->name = $name;
-        if (array_key_exists('multiple', $options))
+        if (array_key_exists('multiple', $options)) {
             $this->multiple = (bool)$options['multiple'];
+        }
 
-        if (array_key_exists('subParser', $options) && is_object($options['subParser']))
+        if (array_key_exists('subParser', $options) && is_object($options['subParser'])) {
             $this->subParser = $options['subParser'];
+        }
     }
 
     public function getName()

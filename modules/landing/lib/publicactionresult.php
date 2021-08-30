@@ -82,15 +82,15 @@ class PublicActionResult
         if (is_array($data)) {
             foreach ($data as $key => $value) {
                 if (
-                    strpos($key, '.') !== false ||
-                    strtolower($key) == 'runtime' ||
-                    $sanitizeValue && strpos($value, '.') !== false
+                    mb_strpos($key, '.') !== false ||
+                    mb_strtolower($key) == 'runtime' ||
+                    $sanitizeValue && mb_strpos($value, '.') !== false
                 ) {
                     unset($data[$key]);
                 } else {
                     $data[$key] = $this->sanitizeKeys(
                         $value,
-                        strtolower($key) == 'select'
+                        mb_strtolower($key) == 'select'
                     );
                 }
             }

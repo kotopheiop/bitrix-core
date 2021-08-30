@@ -32,9 +32,11 @@ class TypeTable extends Entity\DataManager
 
     public static function add(array $data)
     {
-        $res = self::getList(array(
-            'filter' => array('=CODE' => $data['CODE'])
-        ));
+        $res = self::getList(
+            array(
+                'filter' => array('=CODE' => $data['CODE'])
+            )
+        );
 
         if ($res->fetch()) {
             $addResult = new Entity\AddResult();
@@ -58,8 +60,9 @@ class TypeTable extends Entity\DataManager
             $primary = $addResult->getId();
 
             // names
-            if (isset($name))
+            if (isset($name)) {
                 Name\TypeTable::addMultipleForOwner($primary, $name);
+            }
         }
 
         return $addResult;
@@ -70,16 +73,20 @@ class TypeTable extends Entity\DataManager
         $primary = Assert::expectIntegerPositive($primary, '$primary');
 
         if (isset($data['CODE'])) {
-            $res = self::getList(array(
-                'filter' => array(
-                    '=CODE' => $data['CODE'],
-                    '!=ID' => $primary
+            $res = self::getList(
+                array(
+                    'filter' => array(
+                        '=CODE' => $data['CODE'],
+                        '!=ID' => $primary
+                    )
                 )
-            ));
+            );
 
             if ($res->fetch()) {
                 $updResult = new Entity\UpdateResult();
-                $updResult->addError(new Main\Error(Loc::getMessage('SALE_LOCATION_TYPE_ENTITY_CODE_FIELD_EXIST_ERROR')));
+                $updResult->addError(
+                    new Main\Error(Loc::getMessage('SALE_LOCATION_TYPE_ENTITY_CODE_FIELD_EXIST_ERROR'))
+                );
                 return $updResult;
             }
         }
@@ -96,8 +103,9 @@ class TypeTable extends Entity\DataManager
         // update connected data
         if ($updResult->isSuccess()) {
             // names
-            if (isset($name))
+            if (isset($name)) {
                 Name\TypeTable::updateMultipleForOwner($primary, $name);
+            }
         }
 
         return $updResult;
@@ -110,8 +118,9 @@ class TypeTable extends Entity\DataManager
         $delResult = parent::delete($primary);
 
         // delete connected data
-        if ($delResult->isSuccess())
+        if ($delResult->isSuccess()) {
             Name\TypeTable::deleteMultipleForOwner($primary);
+        }
 
         return $delResult;
     }

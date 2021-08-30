@@ -41,14 +41,16 @@ class BatchOrderAdd extends Base
 
         if (is_array($rawData['errors'])) {
             foreach ($rawData['errors'] as $error) {
-                if (!isset($requestData[$error['position']]))
+                if (!isset($requestData[$error['position']])) {
                     continue;
+                }
 
                 $internalId = $requestData[$error['position']]['order-num'];
                 $errorPositions[$error['position']] = true;
 
-                if (!isset($shpResults[$internalId]))
+                if (!isset($shpResults[$internalId])) {
                     $shpResults[$internalId] = new Requests\ShipmentResult($internalId);
+                }
 
                 if (is_array($error['error-codes'])) {
                     $message = '';
@@ -57,15 +59,21 @@ class BatchOrderAdd extends Base
                         $message = Reference::getErrorDescription($errorCode['code'], 'POST /1.0/user/shipment');
 
                         if (!empty($errorCode['details']) && $message . '.' != $errorCode['details']) {
-                            if ($errorCode['code'] == 'ILLEGAL_MAIL_CATEGORY')
-                                $message = str_replace('%s', Reference::getRpoCategory($errorCode['details']), $message);
-                            else
+                            if ($errorCode['code'] == 'ILLEGAL_MAIL_CATEGORY') {
+                                $message = str_replace(
+                                    '%s',
+                                    Reference::getRpoCategory($errorCode['details']),
+                                    $message
+                                );
+                            } else {
                                 $message .= ' (' . $errorCode['details'] . ')';
+                            }
                         }
                     }
 
-                    if (strlen($message) > 0)
+                    if ($message <> '') {
                         $shpResults[$internalId]->addError(new Error($message));
+                    }
                 }
             }
         }
@@ -82,23 +90,27 @@ class BatchOrderAdd extends Base
             if ($res->isSuccess()) {
                 $batchData = $res->getData();
 
-                if (!empty($batchData['list-number']))
+                if (!empty($batchData['list-number'])) {
                     $listNumber = $batchData['list-number'];
+                }
 
-                if (!empty($batchData['list-number-date']))
+                if (!empty($batchData['list-number-date'])) {
                     $listDate = $batchData['list-number-date'];
+                }
             }
 
             /** @var Requests\Result $res */
             $res = $deliveryRequest->send('BATCH_ORDERS', array('BATCH_NAME' => $this->name));
             $batchOrders = array();
 
-            if ($res->isSuccess())
+            if ($res->isSuccess()) {
                 $batchOrders = $res->getData();
+            }
 
             for ($i = 0, $l = count($requestData); $i < $l; $i++) {
-                if (isset($errorPositions[$i]))
+                if (isset($errorPositions[$i])) {
                     continue;
+                }
 
                 $internalId = $requestData[$i]['order-num'];
                 $externalId = $rawData['result-ids'][$resultIdsPosition];
@@ -140,16 +152,17 @@ class BatchOrderAdd extends Base
         $orderCreateRequest = $deliveryRequest->getRequestObject('ORDER_CREATE');
         $result = $orderCreateRequest->createBody($shipmentIds);
 
-        if (!$result->isSuccess())
+        if (!$result->isSuccess()) {
             return $result;
+        }
 
         $data = $result->getData();
 
-        if (empty($data))
+        if (empty($data)) {
             $result->addError(new Error(Loc::getMessage('SALE_DLVRS_ADD_DREQ_BOA_DATA_EMPTY')));
+        }
 
         return $result;
-
     }
 
     /**

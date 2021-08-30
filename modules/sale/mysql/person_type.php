@@ -1,27 +1,36 @@
-<?
+<?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/general/person_type.php");
 
 class CSalePersonType extends CAllSalePersonType
 {
-    function GetList($arOrder = array(), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
-    {
+    public static function GetList(
+        $arOrder = array(),
+        $arFilter = array(),
+        $arGroupBy = false,
+        $arNavStartParams = false,
+        $arSelectFields = array()
+    ) {
         global $DB;
 
         if (!is_array($arOrder) && !is_array($arFilter)) {
             $arOrder = strval($arOrder);
             $arFilter = strval($arFilter);
-            if (strlen($arOrder) > 0 && strlen($arFilter) > 0)
+            if ($arOrder <> '' && $arFilter <> '') {
                 $arOrder = array($arOrder => $arFilter);
-            else
+            } else {
                 $arOrder = array();
-            if (is_array($arGroupBy))
+            }
+            if (is_array($arGroupBy)) {
                 $arFilter = $arGroupBy;
-            else
+            } else {
                 $arFilter = array();
+            }
             $arGroupBy = false;
         }
-        if (empty($arSelectFields))
+        if (empty($arSelectFields)) {
             $arSelectFields = Array("ID", "LID", "NAME", "SORT", "ACTIVE", "CODE");
+        }
 
         if (is_set($arFilter, "LID") && !empty($arFilter["LID"])) {
             $arFilter["LIDS"] = $arFilter["LID"];
@@ -34,7 +43,11 @@ class CSalePersonType extends CAllSalePersonType
         $arFields = array(
             "ID" => array("FIELD" => "PT.ID", "TYPE" => "int"),
             "LID" => array("FIELD" => "PT.LID", "TYPE" => "string"),
-            "LIDS" => array("FIELD" => "PTS.SITE_ID", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_person_type_site PTS ON (PT.ID = PTS.PERSON_TYPE_ID)"),
+            "LIDS" => array(
+                "FIELD" => "PTS.SITE_ID",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_sale_person_type_site PTS ON (PT.ID = PTS.PERSON_TYPE_ID)"
+            ),
             "NAME" => array("FIELD" => "PT.NAME", "TYPE" => "string"),
             "CODE" => array("FIELD" => "PT.CODE", "TYPE" => "string"),
             "SORT" => array("FIELD" => "PT.SORT", "TYPE" => "int"),
@@ -51,48 +64,57 @@ class CSalePersonType extends CAllSalePersonType
                 "SELECT " . $arSqls["SELECT"] . " " .
                 "FROM b_sale_person_type PT " .
                 "	" . $arSqls["FROM"] . " ";
-            if (strlen($arSqls["WHERE"]) > 0)
+            if ($arSqls["WHERE"] <> '') {
                 $strSql .= "WHERE " . $arSqls["WHERE"] . " ";
-            if (strlen($arSqls["GROUPBY"]) > 0)
+            }
+            if ($arSqls["GROUPBY"] <> '') {
                 $strSql .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
+            }
 
             //echo "!1!=".htmlspecialcharsbx($strSql)."<br>";
 
             $dbRes = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-            if ($arRes = $dbRes->Fetch())
+            if ($arRes = $dbRes->Fetch()) {
                 return $arRes["CNT"];
-            else
-                return False;
+            } else {
+                return false;
+            }
         }
 
         $strSql =
             "SELECT " . $arSqls["SELECT"] . " " .
             "FROM b_sale_person_type PT " .
             "	" . $arSqls["FROM"] . " ";
-        if (strlen($arSqls["WHERE"]) > 0)
+        if ($arSqls["WHERE"] <> '') {
             $strSql .= "WHERE " . $arSqls["WHERE"] . " ";
-        if (strlen($arSqls["GROUPBY"]) > 0)
+        }
+        if ($arSqls["GROUPBY"] <> '') {
             $strSql .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
-        if (strlen($arSqls["ORDERBY"]) > 0)
+        }
+        if ($arSqls["ORDERBY"] <> '') {
             $strSql .= "ORDER BY " . $arSqls["ORDERBY"] . " ";
+        }
 
-        if (is_array($arNavStartParams) && IntVal($arNavStartParams["nTopCount"]) <= 0) {
+        if (is_array($arNavStartParams) && intval($arNavStartParams["nTopCount"]) <= 0) {
             $strSql_tmp =
                 "SELECT COUNT('x') as CNT " .
                 "FROM b_sale_person_type PT " .
                 "	" . $arSqls["FROM"] . " ";
-            if (strlen($arSqls["WHERE"]) > 0)
+            if ($arSqls["WHERE"] <> '') {
                 $strSql_tmp .= "WHERE " . $arSqls["WHERE"] . " ";
-            if (strlen($arSqls["GROUPBY"]) > 0)
+            }
+            if ($arSqls["GROUPBY"] <> '') {
                 $strSql_tmp .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
+            }
 
             //echo "!2.1!=".htmlspecialcharsbx($strSql_tmp)."<br>";
 
             $dbRes = $DB->Query($strSql_tmp, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             $cnt = 0;
-            if (strlen($arSqls["GROUPBY"]) <= 0) {
-                if ($arRes = $dbRes->Fetch())
+            if ($arSqls["GROUPBY"] == '') {
+                if ($arRes = $dbRes->Fetch()) {
                     $cnt = $arRes["CNT"];
+                }
             } else {
                 // FOR MYSQL!!! ANOTHER CODE FOR ORACLE
                 $cnt = $dbRes->SelectedRowsCount();
@@ -104,8 +126,9 @@ class CSalePersonType extends CAllSalePersonType
 
             $dbRes->NavQuery($strSql, $cnt, $arNavStartParams);
         } else {
-            if (is_array($arNavStartParams) && IntVal($arNavStartParams["nTopCount"]) > 0)
-                $strSql .= "LIMIT " . IntVal($arNavStartParams["nTopCount"]);
+            if (is_array($arNavStartParams) && intval($arNavStartParams["nTopCount"]) > 0) {
+                $strSql .= "LIMIT " . intval($arNavStartParams["nTopCount"]);
+            }
 
             //echo "!3!=".htmlspecialcharsbx($strSql)."<br>";
 
@@ -116,9 +139,10 @@ class CSalePersonType extends CAllSalePersonType
         $arPT = array();
         $arResTmp = array();
         while ($arRes = $dbRes->Fetch()) {
-            if (IntVal($arRes["ID"]) > 0) {
-                if (!in_array($arRes["ID"], $arPT))
+            if (intval($arRes["ID"]) > 0) {
+                if (!in_array($arRes["ID"], $arPT)) {
                     $arPT[] = $arRes["ID"];
+                }
                 $arResTmp[] = $arRes;
             }
         }
@@ -131,8 +155,9 @@ class CSalePersonType extends CAllSalePersonType
             }
         }
 
-        foreach ($arResTmp as $k => $v)
+        foreach ($arResTmp as $k => $v) {
             $arResTmp[$k]["LIDS"] = $arRes2[$v["ID"]];
+        }
 
         $dbRes = new CDBResult();
         $dbRes->InitFromArray($arResTmp);
@@ -140,34 +165,40 @@ class CSalePersonType extends CAllSalePersonType
         return $dbRes;
     }
 
-    function Add($arFields)
+    public static function Add($arFields)
     {
         global $DB;
 
-        if (!CSalePersonType::CheckFields("ADD", $arFields))
+        if (!CSalePersonType::CheckFields("ADD", $arFields)) {
             return false;
+        }
 
         $db_events = GetModuleEvents("sale", "OnBeforePersonTypeAdd");
-        while ($arEvent = $db_events->Fetch())
-            if (ExecuteModuleEventEx($arEvent, Array(&$arFields)) === false)
+        while ($arEvent = $db_events->Fetch()) {
+            if (ExecuteModuleEventEx($arEvent, Array(&$arFields)) === false) {
                 return false;
+            }
+        }
 
         $arLID = Array();
         if (is_set($arFields, "LID")) {
-            if (is_array($arFields["LID"]))
+            if (is_array($arFields["LID"])) {
                 $arLID = $arFields["LID"];
-            else
+            } else {
                 $arLID[] = $arFields["LID"];
+            }
 
             $str_LID = "''";
             $arFields["LID"] = false;
             foreach ($arLID as $k => $v) {
-                if (strlen($v) > 0) {
+                if ($v <> '') {
                     $str_LID .= ", '" . $DB->ForSql($v) . "'";
-                    if (empty($arFields["LID"]))
+                    if (empty($arFields["LID"])) {
                         $arFields["LID"] = $v;
-                } else
+                    }
+                } else {
                     unset($arLID[$k]);
+                }
             }
         }
 
@@ -180,7 +211,7 @@ class CSalePersonType extends CAllSalePersonType
             "VALUES(" . $arInsert[1] . ")";
         $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 
-        $ID = IntVal($DB->LastID());
+        $ID = intval($DB->LastID());
 
         if (count($arLID) > 0) {
             $strSql = "DELETE FROM b_sale_person_type_site WHERE PERSON_TYPE_ID=" . $ID;
@@ -198,11 +229,10 @@ class CSalePersonType extends CAllSalePersonType
         unset($GLOBALS["SALE_PERSON_TYPE_LIST_CACHE"]);
 
         $events = GetModuleEvents("sale", "OnPersonTypeAdd");
-        while ($arEvent = $events->Fetch())
+        while ($arEvent = $events->Fetch()) {
             ExecuteModuleEventEx($arEvent, Array($ID, $arFields));
+        }
 
         return $ID;
     }
 }
-
-?>

@@ -5,8 +5,9 @@ require_once(dirname(__FILE__) . "/../include/prolog_admin_before.php");
 
 IncludeModuleLangFile(__FILE__);
 
-if (!$USER->CanDoOperation('edit_other_settings') && !$USER->CanDoOperation('view_other_settings'))
+if (!$USER->CanDoOperation('edit_other_settings') && !$USER->CanDoOperation('view_other_settings')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $isAdmin = $USER->CanDoOperation('edit_other_settings');
 
@@ -36,9 +37,10 @@ $arFilter = Array(
 if ($isAdmin) {
     if ($lAdmin->EditAction()) {
         foreach ($FIELDS as $ID => $arFields) {
-            $ID = IntVal($ID);
-            if ($ID <= 0)
+            $ID = intval($ID);
+            if ($ID <= 0) {
                 continue;
+            }
             if (!$hotKeyCodes->Update($ID, $arFields)) {
                 $e = $APPLICATION->GetException();
                 $lAdmin->AddUpdateError(($e ? $e->GetString() : GetMessage("HK_UPDATE_ERROR")), $ID);
@@ -49,19 +51,22 @@ if ($isAdmin) {
     if (($arID = $lAdmin->GroupAction())) {
         if ($_REQUEST['action_target'] == 'selected') {
             $rsData = $hotKeyCodes->GetList(array($by => $order), $arFilter);
-            while ($arRes = $rsData->Fetch())
+            while ($arRes = $rsData->Fetch()) {
                 $arID[] = $arRes['ID'];
+            }
         }
 
         foreach ($arID as $ID) {
-            $ID = IntVal($ID);
+            $ID = intval($ID);
 
-            if ($ID <= 0)
+            if ($ID <= 0) {
                 continue;
+            }
             switch ($_REQUEST['action']) {
                 case "delete":
-                    if (!$hotKeyCodes->Delete($ID))
+                    if (!$hotKeyCodes->Delete($ID)) {
                         $lAdmin->AddGroupError(GetMessage("HK_DELETION_ERROR"), $ID);
+                    }
                     break;
             }
         }
@@ -109,12 +114,16 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
             "ACTION" => $lAdmin->ActionRedirect("hot_keys_edit.php?ID=" . $f_ID)
         );
 
-        if ($f_IS_CUSTOM)
+        if ($f_IS_CUSTOM) {
             $arActions[] = array(
                 "ICON" => "delete",
                 "TEXT" => GetMessage("HK_ACTION_DEL"),
-                "ACTION" => "if(confirm('" . GetMessage("HK_DEL_CONFIRM") . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete")
+                "ACTION" => "if(confirm('" . GetMessage("HK_DEL_CONFIRM") . "')) " . $lAdmin->ActionDoGroup(
+                        $f_ID,
+                        "delete"
+                    )
             );
+        }
 
         $row->AddActions($arActions);
     }
@@ -180,8 +189,12 @@ $oFilter = new CAdminFilter(
         <td>
             <select name="find_is_custom">
                 <option value=""><? echo GetMessage("MAIN_ALL") ?></option>
-                <option value="1"<? if ($find_is_custom == "1") echo " selected" ?>><?= GetMessage("HK_FLT_TRUE") ?></option>
-                <option value="0"<? if ($find_is_custom == "0") echo " selected" ?>><?= GetMessage("HK_FLT_FALSE") ?></option>
+                <option value="1"<? if ($find_is_custom == "1") echo " selected" ?>><?= GetMessage(
+                        "HK_FLT_TRUE"
+                    ) ?></option>
+                <option value="0"<? if ($find_is_custom == "0") echo " selected" ?>><?= GetMessage(
+                        "HK_FLT_FALSE"
+                    ) ?></option>
             </select>
     </tr>
     <?

@@ -45,7 +45,6 @@ class Manager
                 $result = self::EMPTY_REQUIRED;
             }
         } else {
-
             self::addConfig($appCode, "global", $initConfig);
         }
 
@@ -84,8 +83,9 @@ class Manager
         $result = AppTable::getById($appCode);
         $appData = $result->fetchAll();
         if (count($appData) > 0) {
-            if (!is_array($appData[0]["FILES"]))
+            if (!is_array($appData[0]["FILES"])) {
                 $appData[0]["FILES"] = [];
+            }
             $appData[0]["FILES"][] = $fileArray["fileID"];
             AppTable::update($appCode, array("FILES" => $appData[0]["FILES"]));
             $arImage = \CFile::ResizeImageGet(
@@ -98,7 +98,6 @@ class Manager
             );
             $fileArray["img_source_src"] = $arImage["src"];
         }
-
     }
 
     /**
@@ -112,16 +111,13 @@ class Manager
         $result = AppTable::getById($appCode);
         $appData = $result->fetchAll();
         if (count($appData) > 0) {
-
             $index = array_search($fileId, $appData[0]["FILES"]);
             if ($index !== false) {
                 unset($appData[0]["FILES"][$index]);
                 AppTable::update($appCode, array("FILES" => $appData[0]["FILES"]));
             }
             die();
-
         }
-
     }
 
     /**
@@ -151,7 +147,6 @@ class Manager
         $result = ConfigTable::add($fields);
 
         return $result->isSuccess();
-
     }
 
     /**
@@ -173,7 +168,6 @@ class Manager
         $result = ConfigTable::delete($filter);
 
         return $result->isSuccess();
-
     }
 
     /**
@@ -207,7 +201,6 @@ class Manager
         $result = ConfigTable::update(array("APP_CODE" => $appCode, "PLATFORM" => $platform), $data);
 
         return $result->isSuccess();
-
     }
 
     /**
@@ -223,11 +216,13 @@ class Manager
     public static function getConfigJSON($appCode, $platform = false)
     {
         $map = new \Bitrix\MobileApp\Designer\ConfigMap();
-        $res = ConfigTable::getList(array(
-            "filter" => array(
-                "APP_CODE" => $appCode,
+        $res = ConfigTable::getList(
+            array(
+                "filter" => array(
+                    "APP_CODE" => $appCode,
+                )
             )
-        ));
+        );
 
         $configs = $res->fetchAll();
         $targetConfig = array();
@@ -253,20 +248,22 @@ class Manager
 
             if (array_key_exists($key, $imageParamList)) {
                 $imagePath = \CFile::GetPath($value);
-                if (strlen($imagePath) > 0)
+                if ($imagePath <> '') {
                     $value = $imagePath;
-                else
+                } else {
                     continue;
+                }
             }
 
             if (array_key_exists($key, $imageSetParamList)) {
                 $tmpValue = array();
                 foreach ($value as $imageCode => $imageId) {
                     $imagePath = \CFile::GetPath($imageId);
-                    if (strlen($imagePath) > 0)
+                    if ($imagePath <> '') {
                         $tmpValue[$imageCode] = $imagePath;
-                    else
+                    } else {
                         continue;
+                    }
                 }
                 $value = $tmpValue;
             }
@@ -302,7 +299,8 @@ class Manager
 
         $appFolderPath = Application::getDocumentRoot() . "/" . $folder . "/";
         $offlineTemplate = Application::getDocumentRoot() . "/bitrix/modules/mobileapp/templates_app/offline/";
-        $templatePath = Application::getDocumentRoot() . "/bitrix/modules/mobileapp/templates_app/" . $templateCode . "/";
+        $templatePath = Application::getDocumentRoot(
+            ) . "/bitrix/modules/mobileapp/templates_app/" . $templateCode . "/";
 
         $directory = new Directory($templatePath);
         if ($directory->isExists()) {
@@ -346,12 +344,20 @@ class Manager
         if ($createNew) {
             CopyDirFiles(
                 Application::getDocumentRoot() . "/bitrix/modules/mobileapp/templates/default_app/",
-                Application::getDocumentRoot() . "/bitrix/templates/" . $templateId, True, True
+                Application::getDocumentRoot() . "/bitrix/templates/" . $templateId,
+                true,
+                true
             );
 
             File::putFileContents(
                 Application::getDocumentRoot() . "/bitrix/templates/" . $templateId . "/description.php",
-                str_replace(Array("#mobile_template_name#"), Array($templateId), File::getFileContents(Application::getDocumentRoot() . "/bitrix/templates/" . $templateId . "/description.php"))
+                str_replace(
+                    Array("#mobile_template_name#"),
+                    Array($templateId),
+                    File::getFileContents(
+                        Application::getDocumentRoot() . "/bitrix/templates/" . $templateId . "/description.php"
+                    )
+                )
             );
 
             $arFields["TEMPLATE"][] = Array(
@@ -398,25 +404,24 @@ class Manager
     {
         $result = AppTable::getById($appCode);
         $appData = $result->fetchAll();
-        $files = array();
-        if (count($appData) > 0) {
+        $files = [];
+        if (count($appData) > 0 && is_array($appData[0]['FILES'])) {
             //TODO fix, use module_id in the filter
-            $result = \CFile::GetList(array("ID" => "desc"), Array("@ID" => implode(",", $appData[0]["FILES"])));
+            $result = \CFile::GetList(['ID' => 'desc'], ['@ID' => implode(',', $appData[0]['FILES'])]);
             while ($file = $result->Fetch()) {
                 $image = \CFile::ResizeImageGet(
-                    $file["ID"],
-                    array("width" => self::PREVIEW_IMAGE_SIZE, "height" => self::PREVIEW_IMAGE_SIZE),
+                    $file['ID'],
+                    ['width' => self::PREVIEW_IMAGE_SIZE, 'height' => self::PREVIEW_IMAGE_SIZE],
                     BX_RESIZE_IMAGE_EXACT,
                     false,
                     false,
                     true
                 );
-                $files["file_" . $file["ID"]] = array(
-                    "id" => $file["ID"],
-                    "src" => \CFile::GetFileSRC($file),
-                    "preview" => $image["src"]
-                );
-
+                $files['file_' . $file['ID']] = [
+                    'id' => $file['ID'],
+                    'src' => \CFile::GetFileSRC($file),
+                    'preview' => $image['src']
+                ];
             }
         }
 
@@ -451,7 +456,7 @@ class Manager
      *
      * @return array
      */
-    private function nameSpaceToArray($namespace, $value)
+    private static function nameSpaceToArray($namespace, $value)
     {
         $keys = explode("/", $namespace);
         $result = array();
@@ -463,7 +468,6 @@ class Manager
         $temp = $value;
 
         return $result;
-
     }
 
     private static function addVirtualParams(&$structuredConfig, $platform)

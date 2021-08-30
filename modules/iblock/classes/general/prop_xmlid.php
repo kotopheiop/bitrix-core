@@ -19,6 +19,9 @@ class CIBlockPropertyXmlID
             "GetAdminListViewHTML" => array(__CLASS__, "GetAdminListViewHTML"),
             "GetPropertyFieldHtml" => array(__CLASS__, "GetPropertyFieldHtml"),
             "GetSettingsHTML" => array(__CLASS__, "GetSettingsHTML"),
+            'GetUIEntityEditorProperty' => array(__CLASS__, 'GetUIEntityEditorProperty'),
+            'GetUIEntityEditorPropertyEditHtml' => array(__CLASS__, 'GetUIEntityEditorPropertyEditHtml'),
+            'GetUIEntityEditorPropertyViewHtml' => array(__CLASS__, 'GetUIEntityEditorPropertyViewHtml'),
         );
     }
 
@@ -27,7 +30,7 @@ class CIBlockPropertyXmlID
         static $cache = array();
         if (isset($strHTMLControlName['MODE']) && $strHTMLControlName["MODE"] == "CSV_EXPORT") {
             return $value["VALUE"];
-        } elseif (strlen($value["VALUE"]) > 0) {
+        } elseif ($value["VALUE"] <> '') {
             if (!isset($cache[$value["VALUE"]])) {
                 $db_res = CIBlockElement::GetList(
                     array(),
@@ -37,22 +40,25 @@ class CIBlockPropertyXmlID
                     array("ID", "IBLOCK_TYPE_ID", "IBLOCK_ID", "NAME", "DETAIL_PAGE_URL")
                 );
                 $ar_res = $db_res->GetNext();
-                if ($ar_res)
+                if ($ar_res) {
                     $cache[$value["VALUE"]] = $ar_res;
-                else
+                } else {
                     $cache[$value["VALUE"]] = $value["VALUE"];
+                }
             }
 
             if (isset($strHTMLControlName['MODE']) && ($strHTMLControlName["MODE"] == "SIMPLE_TEXT" || $strHTMLControlName["MODE"] == 'ELEMENT_TEMPLATE')) {
-                if (is_array($cache[$value["VALUE"]]))
+                if (is_array($cache[$value["VALUE"]])) {
                     return $cache[$value["VALUE"]]["~NAME"];
-                else
+                } else {
                     return $cache[$value["VALUE"]];
+                }
             } else {
-                if (is_array($cache[$value["VALUE"]]))
+                if (is_array($cache[$value["VALUE"]])) {
                     return '<a href="' . $cache[$value["VALUE"]]["DETAIL_PAGE_URL"] . '">' . $cache[$value["VALUE"]]["NAME"] . '</a>';
-                else
+                } else {
                     return htmlspecialcharsex($cache[$value["VALUE"]]);
+                }
             }
         } else {
             return '';
@@ -62,7 +68,7 @@ class CIBlockPropertyXmlID
     public static function GetAdminListViewHTML($arProperty, $value, $strHTMLControlName)
     {
         static $cache = array();
-        if (strlen($value["VALUE"]) > 0) {
+        if ($value["VALUE"] <> '') {
             if (!array_key_exists($value["VALUE"], $cache)) {
                 $db_res = CIBlockElement::GetList(
                     array(),
@@ -72,7 +78,7 @@ class CIBlockPropertyXmlID
                     array("ID", "IBLOCK_TYPE_ID", "IBLOCK_ID", "NAME")
                 );
                 $ar_res = $db_res->GetNext();
-                if ($ar_res)
+                if ($ar_res) {
                     $cache[$value["VALUE"]] = htmlspecialcharsbx($ar_res['NAME']) .
                         ' [<a href="' .
                         '/bitrix/admin/iblock_element_edit.php?' .
@@ -81,8 +87,9 @@ class CIBlockPropertyXmlID
                         '&amp;ID=' . $ar_res['ID'] .
                         '&amp;lang=' . LANGUAGE_ID .
                         '" title="' . Loc::getMessage("IBLOCK_PROP_EL_EDIT") . '">' . $ar_res['ID'] . '</a>]';
-                else
+                } else {
                     $cache[$value["VALUE"]] = htmlspecialcharsbx($value["VALUE"]);
+                }
             }
             return $cache[$value["VALUE"]];
         } else {
@@ -99,7 +106,7 @@ class CIBlockPropertyXmlID
     public static function GetPropertyFieldHtml($arProperty, $value, $strHTMLControlName)
     {
         $ar_res = false;
-        if (strlen($value["VALUE"])) {
+        if ($value["VALUE"] <> '') {
             $db_res = CIBlockElement::GetList(
                 array(),
                 array("=XML_ID" => $value["VALUE"], "SHOW_HISTORY" => "Y"),
@@ -110,15 +117,24 @@ class CIBlockPropertyXmlID
             $ar_res = $db_res->GetNext();
         }
 
-        if (!$ar_res)
+        if (!$ar_res) {
             $ar_res = array("NAME" => "");
+        }
 
         $fixIBlock = $arProperty["LINK_IBLOCK_ID"] > 0;
         $windowTableId = 'iblockprop-' . Iblock\PropertyTable::TYPE_ELEMENT . '-' . $arProperty['ID'] . '-' . $arProperty['LINK_IBLOCK_ID'];
 
-        return '<input name="' . htmlspecialcharsbx($strHTMLControlName["VALUE"]) . '" id="' . htmlspecialcharsbx($strHTMLControlName["VALUE"]) . '" value="' . htmlspecialcharsEx($value["VALUE"]) . '" size="20" type="text">' .
-            '<input type="button" value="..." onClick="jsUtils.OpenWindow(\'' . CUtil::JSEscape('/bitrix/admin/iblock_element_search.php?lang=' . LANGUAGE_ID . '&n=' . urlencode($strHTMLControlName["VALUE"]) . '&get_xml_id=Y&a=b' . ($fixIBlock ? '&iblockfix=y' : '') . '&tableId=' . $windowTableId) . '\', 900, 700);">' .
-            '&nbsp;<span id="sp_' . htmlspecialcharsbx($strHTMLControlName["VALUE"]) . '" >' . $ar_res['NAME'] . '</span>';
+        return '<input name="' . htmlspecialcharsbx($strHTMLControlName["VALUE"]) . '" id="' . htmlspecialcharsbx(
+                $strHTMLControlName["VALUE"]
+            ) . '" value="' . htmlspecialcharsEx($value["VALUE"]) . '" size="20" type="text">' .
+            '<input type="button" value="..." onClick="jsUtils.OpenWindow(\'' . CUtil::JSEscape(
+                '/bitrix/admin/iblock_element_search.php?lang=' . LANGUAGE_ID . '&n=' . urlencode(
+                    $strHTMLControlName["VALUE"]
+                ) . '&get_xml_id=Y&a=b' . ($fixIBlock ? '&iblockfix=y' : '') . '&tableId=' . $windowTableId
+            ) . '\', 900, 700);">' .
+            '&nbsp;<span id="sp_' . htmlspecialcharsbx(
+                $strHTMLControlName["VALUE"]
+            ) . '" >' . $ar_res['NAME'] . '</span>';
     }
 
     public static function GetSettingsHTML($arProperty, $strHTMLControlName, &$arPropertyFields)
@@ -127,5 +143,36 @@ class CIBlockPropertyXmlID
             "HIDE" => array("ROW_COUNT", "COL_COUNT", "WITH_DESCRIPTION"),
         );
         return '';
+    }
+
+    public static function GetUIEntityEditorProperty($settings, $value)
+    {
+        return [
+            'type' => 'custom',
+        ];
+    }
+
+    public static function GetUIEntityEditorPropertyEditHtml(array $params = []): string
+    {
+        $settings = $params['SETTINGS'] ?? [];
+        $value = $params['VALUE'] ?? '';
+        $paramsHTMLControl = [
+            'MODE' => 'iblock_element_admin',
+            'VALUE' => $params['FIELD_NAME'] ?? '',
+        ];
+        return self::GetPropertyFieldHtml($settings, $value, $paramsHTMLControl);
+    }
+
+    public static function GetUIEntityEditorPropertyViewHtml(array $params = []): string
+    {
+        $settings = $params['SETTINGS'] ?? [];
+        $value = [
+            'VALUE' => $params['VALUE'] ?? ''
+        ];
+        $paramsHTMLControl = [
+            'MODE' => 'iblock_element_admin',
+            'VALUE' => $params['FIELD_NAME'] ?? '',
+        ];
+        return static::GetPublicViewHTML($settings, $value, $paramsHTMLControl);
     }
 }

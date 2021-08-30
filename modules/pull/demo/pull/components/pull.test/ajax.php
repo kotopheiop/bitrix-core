@@ -1,4 +1,5 @@
 <?
+
 // special constants for creating very fast ajax response
 define("PULL_AJAX_INIT", true);
 define("PUBLIC_AJAX_MODE", true);
@@ -24,7 +25,8 @@ if (intval($USER->GetID()) <= 0) {
 
 if (check_bitrix_sessid()) {
     if ($_POST['SEND'] == 'Y') {
-        CPullWatch::AddToStack('PULL_TEST',
+        CPullWatch::AddToStack(
+            'PULL_TEST',
             Array(
                 'module_id' => 'test',
                 'command' => 'check',
@@ -36,10 +38,12 @@ if (check_bitrix_sessid()) {
         echo CUtil::PhpToJsObject(Array('ERROR' => 'UNKNOWN_ERROR'));
     }
 } else {
-    echo CUtil::PhpToJsObject(Array(
-        'BITRIX_SESSID' => bitrix_sessid(),
-        'ERROR' => 'SESSION_ERROR'
-    ));
+    echo CUtil::PhpToJsObject(
+        Array(
+            'BITRIX_SESSID' => bitrix_sessid(),
+            'ERROR' => 'SESSION_ERROR'
+        )
+    );
 }
 
 CMain::FinalActions();

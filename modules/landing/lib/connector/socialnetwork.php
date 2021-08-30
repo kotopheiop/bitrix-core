@@ -28,14 +28,15 @@ class SocialNetwork
      * Path for binding group with new site.
      * @todo: it's not good, specify path in the code, but temporary it's ok
      */
-    const PATH_GROUP_BINDING = '/kb/binding/group/create.php?groupId=#groupId#';
+    const PATH_GROUP_BINDING = 'kb/binding/group/create.php?groupId=#groupId#';
 
     /**
      * Gets binding row by group id.
      * @param int $groupId Group id.
+     * @param bool $checkAccess Check read access.
      * @return array
      */
-    public static function getBindingRow($groupId)
+    public static function getBindingRow(int $groupId, bool $checkAccess = true)
     {
         \Bitrix\Landing\Site\Type::setScope(
             \Bitrix\Landing\Site\Type::SCOPE_CODE_GROUP
@@ -48,10 +49,10 @@ class SocialNetwork
             $bindings = array_pop($bindings);
 
             if ($bindings['ENTITY_TYPE'] == Binding\Entity::ENTITY_TYPE_SITE) {
-                $hasAccess = Rights::hasAccessForSite(
-                    $bindings['ENTITY_ID'],
-                    Rights::ACCESS_TYPES['read']
-                );
+                $hasAccess = !$checkAccess || Rights::hasAccessForSite(
+                        $bindings['ENTITY_ID'],
+                        Rights::ACCESS_TYPES['read']
+                    );
                 if ($hasAccess) {
                     return $bindings;
                 }
@@ -66,47 +67,44 @@ class SocialNetwork
      * @param int $groupId Group id.
      * @param bool $returnCreateLink If true and link is no exist, returns create link.
      * @return string
-     * @throws \Bitrix\Main\ArgumentNullException
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
      */
     public static function getSocNetMenuUrl($groupId, $returnCreateLink = true)
     {
-        if (!self::userInGroup($groupId)) {
-            return '';
-        }
-
         if (Option::get(Group::MODULE_ID, Group::CHECKER_OPTION . $groupId, '') == 'Y') {
             return '';
         }
 
         $link = '';
         $groupId = intval($groupId);
-        $bindings = self::getBindingRow($groupId);
+        $bindings = self::getBindingRow($groupId, false);
 
         // binding exist
         if ($bindings) {
             $link = $bindings['PUBLIC_URL'];
             self::processTabHit($link);
         } // binding don't exist, allow to create new one
-        else if (
-            $returnCreateLink &&
-            !self::isExtranet()
-        ) {
-            $asset = \Bitrix\Main\Page\Asset::getInstance();
-            $asset->addString(
-                $asset->insertJs(
-                    'var KnowledgeCreate = function(url) 
+        else {
+            if (
+                $returnCreateLink &&
+                !self::isExtranet() &&
+                self::userInGroup($groupId)
+            ) {
+                $asset = \Bitrix\Main\Page\Asset::getInstance();
+                $asset->addString(
+                    $asset->insertJs(
+                        'var KnowledgeCreate = function(url) 
 					{
 						top.window.history.pushState(\'\', \'\', \'?tab=' . self::SETTINGS_CODE_SHORT . '\');
 						BX.SidePanel.Instance.open(url, {allowChangeHistory: false});
 					};',
-                    '',
-                    true
-                )
-            );
-            \CJSCore::init('sidepanel');
-            $link = str_replace('#groupId#', $groupId, self::PATH_GROUP_BINDING);
-            $link = 'javascript:void(KnowledgeCreate(\'' . $link . '\'));';
+                        '',
+                        true
+                    )
+                );
+                \CJSCore::init('sidepanel');
+                $link = SITE_DIR . str_replace('#groupId#', $groupId, self::PATH_GROUP_BINDING);
+                $link = 'javascript:void(KnowledgeCreate(\'' . $link . '\'));';
+            }
         }
 
         return $link;
@@ -114,7 +112,7 @@ class SocialNetwork
 
     /**
      * Fill settings array for social network group.
-     * @param array $socNetFeaturesSettings Settings array.
+     * @param array &$socNetFeaturesSettings Settings array.
      * @return void
      */
     public static function onFillSocNetFeaturesList(&$socNetFeaturesSettings)
@@ -135,7 +133,7 @@ class SocialNetwork
 
     /**
      * Fill menu array for social network group.
-     * @param array $result Menu array.
+     * @param array &$result Menu array.
      * @return void
      */
     public static function onFillSocNetMenu(&$result)
@@ -221,7 +219,7 @@ class SocialNetwork
 
         if ($groupPath === null) {
             $groupPath = Option::get('socialnetwork', 'group_path_template', '', SITE_ID);
-            if (substr($groupPath, -1) == '/') {
+            if (mb_substr($groupPath, -1) == '/') {
                 $groupPath .= 'general/';
             }
         }
@@ -230,13 +228,17 @@ class SocialNetwork
         if ($groupId && $groupPath) {
             $groupPath = str_replace('#group_id#', $groupId, $groupPath);
             $uri = new \Bitrix\Main\Web\Uri($groupPath);
-            $uri->addParams([
-                'tab' => self::SETTINGS_CODE_SHORT
-            ]);
+            $uri->addParams(
+                [
+                    'tab' => self::SETTINGS_CODE_SHORT
+                ]
+            );
             if ($pagePath) {
-                $uri->addParams([
-                    'page' => $pagePath
-                ]);
+                $uri->addParams(
+                    [
+                        'page' => $pagePath
+                    ]
+                );
             }
             return $uri->getUri();
         }

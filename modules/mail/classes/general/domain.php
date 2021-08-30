@@ -87,7 +87,7 @@ class CMailDomain
         $result = CMailYandex::getDomainUsers($token, 1, 1, $error);
 
         if ($result !== false) {
-            if (strtolower($result['name']) == $domain) {
+            if (mb_strtolower($result['name']) == $domain) {
                 return array(
                     'domain' => $result['name'],
                     'stage' => $result['status']
@@ -110,13 +110,15 @@ class CMailDomain
         do {
             $result = CMailYandex::getDomainUsers($token, $per_page = 30, ++$page, $error);
 
-            if ($result === false)
+            if ($result === false) {
                 break;
+            }
 
             foreach ($result['emails'] as $email) {
                 list($login, $emailDomain) = explode('@', $email['name'], 2);
-                if ($emailDomain == $domain)
+                if ($emailDomain == $domain) {
                     $users[] = $login;
+                }
             }
         } while ($result['emails_total'] > $per_page * $page);
 

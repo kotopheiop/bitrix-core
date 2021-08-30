@@ -13,8 +13,9 @@ class CCatalogMeasureClassifier
 
     private static function initMeasureClassifier()
     {
-        if (null !== self::$unitsClassifier)
+        if (null !== self::$unitsClassifier) {
             return;
+        }
 
         self::$unitsClassifier = array(
             0 =>
@@ -310,7 +311,9 @@ class CCatalogMeasureClassifier
                             162 =>
                                 array(
                                     'CODE' => '162',
-                                    'MEASURE_TITLE' => Loc::getMessage("CAT_UC_METRICHESKIJ_KARAT_1_KARAT_=_200_MG_=_2*0_0001_KG"),
+                                    'MEASURE_TITLE' => Loc::getMessage(
+                                        "CAT_UC_METRICHESKIJ_KARAT_1_KARAT_=_200_MG_=_2*0_0001_KG"
+                                    ),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_KAR"),
                                     'SYMBOL_INTL' => 'CTM',
                                     'SYMBOL_LETTER_INTL' => 'CTM',
@@ -360,7 +363,7 @@ class CCatalogMeasureClassifier
                                     'CODE' => '181',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_BRUTTO_-_REGISTROVAYA_TONNA_2_8316_M3"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_BRT"),
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'GRT',
                                 ),
                             185 =>
@@ -368,7 +371,7 @@ class CCatalogMeasureClassifier
                                     'CODE' => '185',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_GRUZOPOD_EMNOST_V_METRICHESKIH_TONNAH"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_T_GRP"),
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'CCT',
                                 ),
                             206 =>
@@ -434,7 +437,9 @@ class CCatalogMeasureClassifier
                             228 =>
                                 array(
                                     'CODE' => '228',
-                                    'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MEGAVOL_T_-_AMPER_TISYACHA_KILOVOL_T_-_AMPER"),
+                                    'MEASURE_TITLE' => Loc::getMessage(
+                                        "CAT_UC_MEGAVOL_T_-_AMPER_TISYACHA_KILOVOL_T_-_AMPER"
+                                    ),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_MV_A"),
                                     'SYMBOL_INTL' => 'MV.A',
                                     'SYMBOL_LETTER_INTL' => 'MVA',
@@ -474,7 +479,9 @@ class CCatalogMeasureClassifier
                             247 =>
                                 array(
                                     'CODE' => '247',
-                                    'MEASURE_TITLE' => Loc::getMessage("CAT_UC_GIGAVATT_-_CHAS_MILLION_KILOVATT_-_CHASOV"),
+                                    'MEASURE_TITLE' => Loc::getMessage(
+                                        "CAT_UC_GIGAVATT_-_CHAS_MILLION_KILOVATT_-_CHASOV"
+                                    ),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_GVT_CH"),
                                     'SYMBOL_INTL' => 'GW.h',
                                     'SYMBOL_LETTER_INTL' => 'GWH',
@@ -856,7 +863,7 @@ class CCatalogMeasureClassifier
                                     'CODE' => '360',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_NEDELYA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_NED"),
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'WEE',
                                 ),
                             361 =>
@@ -864,7 +871,7 @@ class CCatalogMeasureClassifier
                                     'CODE' => '361',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_DEKADA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_DEK"),
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'DAD',
                                 ),
                             362 =>
@@ -872,7 +879,7 @@ class CCatalogMeasureClassifier
                                     'CODE' => '362',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MESYATC"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_MES"),
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'MON',
                                 ),
                             364 =>
@@ -880,7 +887,7 @@ class CCatalogMeasureClassifier
                                     'CODE' => '364',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_KVARTAL"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_KVART"),
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'QAN',
                                 ),
                             365 =>
@@ -888,7 +895,7 @@ class CCatalogMeasureClassifier
                                     'CODE' => '365',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_POLUGODIE"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_POLGODA"),
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'SAN',
                                 ),
                             366 =>
@@ -904,7 +911,7 @@ class CCatalogMeasureClassifier
                                     'CODE' => '368',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_DESYATILETIE"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_DESLET"),
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'DEC',
                                 ),
                         ),
@@ -916,7 +923,7 @@ class CCatalogMeasureClassifier
                                     'CODE' => '499',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_KILOGRAMM_V_SEKUNDU"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_KGS"),
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'KGS',
                                 ),
                             533 =>
@@ -924,7 +931,7 @@ class CCatalogMeasureClassifier
                                     'CODE' => '533',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TONNA_PARA_V_CHAS"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_T_PARCH"),
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'TSH',
                                 ),
                             596 =>
@@ -948,7 +955,7 @@ class CCatalogMeasureClassifier
                                     'CODE' => '599',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_KUBICHESKIH_METROV_V_SUTKI"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_M3SUT"),
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'TQD',
                                 ),
                             616 =>
@@ -956,7 +963,7 @@ class CCatalogMeasureClassifier
                                     'CODE' => '616',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_BOBINA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_BOB"),
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'NBB',
                                 ),
                             625 =>
@@ -964,7 +971,7 @@ class CCatalogMeasureClassifier
                                     'CODE' => '625',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_LIST"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_L"),
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'LEF',
                                 ),
                             626 =>
@@ -972,15 +979,17 @@ class CCatalogMeasureClassifier
                                     'CODE' => '626',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_STO_LISTOV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_100_L"),
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'CLF',
                                 ),
                             630 =>
                                 array(
                                     'CODE' => '630',
-                                    'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_STANDARTNIH_USLOVNIH_KIRPICHEJ"),
+                                    'MEASURE_TITLE' => Loc::getMessage(
+                                        "CAT_UC_TISYACHA_STANDARTNIH_USLOVNIH_KIRPICHEJ"
+                                    ),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_TIS_STAND_USL_KIRP"),
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'MBE',
                                 ),
                             641 =>
@@ -996,7 +1005,7 @@ class CCatalogMeasureClassifier
                                     'CODE' => '657',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_IZDELIE"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_IZD"),
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'NAR',
                                 ),
                             683 =>
@@ -1012,7 +1021,7 @@ class CCatalogMeasureClassifier
                                     'CODE' => '704',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_NABOR"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_NABOR"),
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'SET',
                                 ),
                             715 =>
@@ -1036,7 +1045,7 @@ class CCatalogMeasureClassifier
                                     'CODE' => '732',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_DESYAT_PAR"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_10_PAR"),
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'TPR',
                                 ),
                             733 =>
@@ -1044,7 +1053,7 @@ class CCatalogMeasureClassifier
                                     'CODE' => '733',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_DYUZHINA_PAR"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_DYUZHINA_PAR"),
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'DPR',
                                 ),
                             734 =>
@@ -1052,7 +1061,7 @@ class CCatalogMeasureClassifier
                                     'CODE' => '734',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_POSILKA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_POSIL"),
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'NPL',
                                 ),
                             735 =>
@@ -1060,7 +1069,7 @@ class CCatalogMeasureClassifier
                                     'CODE' => '735',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_CHAST"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_CHAST"),
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'NPT',
                                 ),
                             736 =>
@@ -1068,7 +1077,7 @@ class CCatalogMeasureClassifier
                                     'CODE' => '736',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_RULON"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_RUL"),
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'NPL',
                                 ),
                             737 =>
@@ -1076,7 +1085,7 @@ class CCatalogMeasureClassifier
                                     'CODE' => '737',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_DYUZHINA_RULONOV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_DYUZHINA_RUL"),
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'DRL',
                                 ),
                             740 =>
@@ -1084,7 +1093,7 @@ class CCatalogMeasureClassifier
                                     'CODE' => '740',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_DYUZHINA_SHTUK"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_DYUZHINA_SHT"),
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'DPC',
                                 ),
                             745 =>
@@ -1100,7 +1109,7 @@ class CCatalogMeasureClassifier
                                     'CODE' => '778',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_UPAKOVKA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_UPAK"),
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'NMP',
                                 ),
                             780 =>
@@ -1108,7 +1117,7 @@ class CCatalogMeasureClassifier
                                     'CODE' => '780',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_DYUZHINA_UPAKOVOK"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_DYUZHINA_UPAK"),
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'DZP',
                                 ),
                             781 =>
@@ -1116,7 +1125,7 @@ class CCatalogMeasureClassifier
                                     'CODE' => '781',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_STO_UPAKOVOK"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_100_UPAK"),
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'CNP',
                                 ),
                             796 =>
@@ -1196,7 +1205,7 @@ class CCatalogMeasureClassifier
                                     'CODE' => '831',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_LITR_CHISTOGO_100_SPIRTA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_L_100_SPIRTA"),
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'LPA',
                                 ),
                             833 =>
@@ -1204,7 +1213,7 @@ class CCatalogMeasureClassifier
                                     'CODE' => '833',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_GEKTOLITR_CHISTOGO_100_SPIRTA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_GL_100_SPIRTA"),
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'HPA',
                                 ),
                             841 =>
@@ -1212,15 +1221,15 @@ class CCatalogMeasureClassifier
                                     'CODE' => '841',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_KILOGRAMM_PEROKSIDA_VODORODA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_KG_H_2_0_2"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             845 =>
                                 array(
                                     'CODE' => '845',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_KILOGRAMM_90-GO_SUHOGO_VESHESTVA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_KG_90_SV"),
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'KSD',
                                 ),
                             847 =>
@@ -1228,7 +1237,7 @@ class CCatalogMeasureClassifier
                                     'CODE' => '847',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TONNA_90-GO_SUHOGO_VESHESTVA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_T_90_SV"),
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'TSD',
                                 ),
                             852 =>
@@ -1236,7 +1245,7 @@ class CCatalogMeasureClassifier
                                     'CODE' => '852',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_KILOGRAMM_OKSIDA_KALIYA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_KG_K_2_O"),
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'KPO',
                                 ),
                             859 =>
@@ -1244,7 +1253,7 @@ class CCatalogMeasureClassifier
                                     'CODE' => '859',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_KILOGRAMM_GIDROKSIDA_KALIYA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_KG_KON"),
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'KPH',
                                 ),
                             861 =>
@@ -1252,7 +1261,7 @@ class CCatalogMeasureClassifier
                                     'CODE' => '861',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_KILOGRAMM_AZOTA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_KG_N"),
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'KNI',
                                 ),
                             863 =>
@@ -1260,7 +1269,7 @@ class CCatalogMeasureClassifier
                                     'CODE' => '863',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_KILOGRAMM_GIDROKSIDA_NATRIYA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_KG_NAOH"),
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'KSH',
                                 ),
                             865 =>
@@ -1268,7 +1277,7 @@ class CCatalogMeasureClassifier
                                     'CODE' => '865',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_KILOGRAMM_PYATIOKISI_FOSFORA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_KG_R_2_O_5"),
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'KPP',
                                 ),
                             867 =>
@@ -1276,7 +1285,7 @@ class CCatalogMeasureClassifier
                                     'CODE' => '867',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_KILOGRAMM_URANA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_KG_U"),
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'KUR',
                                 ),
                         ),
@@ -1295,40 +1304,40 @@ class CCatalogMeasureClassifier
                                     'CODE' => '018',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_POGONNIJ_METR"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_POG_M"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             19 =>
                                 array(
                                     'CODE' => '019',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_POGONNIH_METROV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_POG_M"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             20 =>
                                 array(
                                     'CODE' => '020',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_USLOVNIJ_METR"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_USL_M"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             48 =>
                                 array(
                                     'CODE' => '048',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_USLOVNIH_METROV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_USL_M"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             49 =>
                                 array(
                                     'CODE' => '049',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_KILOMETR_USLOVNIH_TRUB"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_KM_USL_TRUB"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                         ),
                     1 =>
@@ -1339,128 +1348,142 @@ class CCatalogMeasureClassifier
                                     'CODE' => '054',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_KVADRATNIH_DETCIMETROV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_DM2"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             56 =>
                                 array(
                                     'CODE' => '056',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLION_KVADRATNIH_DETCIMETROV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_106_DM2"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             57 =>
                                 array(
                                     'CODE' => '057',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLION_KVADRATNIH_METROV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_106_M2"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             60 =>
                                 array(
                                     'CODE' => '060',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_GEKTAROV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_GA"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             62 =>
                                 array(
                                     'CODE' => '062',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_USLOVNIJ_KVADRATNIJ_METR"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_USL_M2"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             63 =>
                                 array(
                                     'CODE' => '063',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_USLOVNIH_KVADRATNIH_METROV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_USL_M2"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             64 =>
                                 array(
                                     'CODE' => '064',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLION_USLOVNIH_KVADRATNIH_METROV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_106_USL_M2"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             81 =>
                                 array(
                                     'CODE' => '081',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_KVADRATNIJ_METR_OBSHEJ_PLOSHADI"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_M2_OBSH_PL"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             82 =>
                                 array(
                                     'CODE' => '082',
-                                    'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_KVADRATNIH_METROV_OBSHEJ_PLOSHADI"),
+                                    'MEASURE_TITLE' => Loc::getMessage(
+                                        "CAT_UC_TISYACHA_KVADRATNIH_METROV_OBSHEJ_PLOSHADI"
+                                    ),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_M2_OBSH_PL"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             83 =>
                                 array(
                                     'CODE' => '083',
-                                    'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLION_KVADRATNIH_METROV_OBSHEJ_PLOSHADI"),
+                                    'MEASURE_TITLE' => Loc::getMessage(
+                                        "CAT_UC_MILLION_KVADRATNIH_METROV_OBSHEJ_PLOSHADI"
+                                    ),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_106_M2_OBSH_PL"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             84 =>
                                 array(
                                     'CODE' => '084',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_KVADRATNIJ_METR_ZHILOJ_PLOSHADI"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_M2_ZHIL_PL"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             85 =>
                                 array(
                                     'CODE' => '085',
-                                    'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_KVADRATNIH_METROV_ZHILOJ_PLOSHADI"),
+                                    'MEASURE_TITLE' => Loc::getMessage(
+                                        "CAT_UC_TISYACHA_KVADRATNIH_METROV_ZHILOJ_PLOSHADI"
+                                    ),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_M2_ZHIL_PL"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             86 =>
                                 array(
                                     'CODE' => '086',
-                                    'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLION_KVADRATNIH_METROV_ZHILOJ_PLOSHADI"),
+                                    'MEASURE_TITLE' => Loc::getMessage(
+                                        "CAT_UC_MILLION_KVADRATNIH_METROV_ZHILOJ_PLOSHADI"
+                                    ),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_106_M2_ZHIL_PL"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             87 =>
                                 array(
                                     'CODE' => '087',
-                                    'MEASURE_TITLE' => Loc::getMessage("CAT_UC_KVADRATNIJ_METR_UCHEBNO_-_LABORATORNIH_ZDANIJ"),
+                                    'MEASURE_TITLE' => Loc::getMessage(
+                                        "CAT_UC_KVADRATNIJ_METR_UCHEBNO_-_LABORATORNIH_ZDANIJ"
+                                    ),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_M2_UCH_LAB_ZDAN"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             88 =>
                                 array(
                                     'CODE' => '088',
-                                    'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_KVADRATNIH_METROV_UCHEBNO_-_LABORATORNIH_ZDANIJ"),
+                                    'MEASURE_TITLE' => Loc::getMessage(
+                                        "CAT_UC_TISYACHA_KVADRATNIH_METROV_UCHEBNO_-_LABORATORNIH_ZDANIJ"
+                                    ),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_M2_UCH_LAB_ZDAN"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             89 =>
                                 array(
                                     'CODE' => '089',
-                                    'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLION_KVADRATNIH_METROV_V_DVUHMILLIMETROVOM_ISCHISLENII"),
+                                    'MEASURE_TITLE' => Loc::getMessage(
+                                        "CAT_UC_MILLION_KVADRATNIH_METROV_V_DVUHMILLIMETROVOM_ISCHISLENII"
+                                    ),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_106_M2_2_MM_ISCH"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                         ),
                     2 =>
@@ -1471,104 +1494,106 @@ class CCatalogMeasureClassifier
                                     'CODE' => '114',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_KUBICHESKIH_METROV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_M3"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             115 =>
                                 array(
                                     'CODE' => '115',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLIARD_KUBICHESKIH_METROV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_109_M3"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             116 =>
                                 array(
                                     'CODE' => '116',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_DEKALITR"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_DKL"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             119 =>
                                 array(
                                     'CODE' => '119',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_DEKALITROV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_DKL"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             120 =>
                                 array(
                                     'CODE' => '120',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLION_DEKALITROV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_106_DKL"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             121 =>
                                 array(
                                     'CODE' => '121',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_PLOTNIJ_KUBICHESKIJ_METR"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_PLOTN_M3"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             123 =>
                                 array(
                                     'CODE' => '123',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_USLOVNIJ_KUBICHESKIJ_METR"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_USL_M3"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             124 =>
                                 array(
                                     'CODE' => '124',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_USLOVNIH_KUBICHESKIH_METROV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_USL_M3"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             125 =>
                                 array(
                                     'CODE' => '125',
-                                    'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLION_KUBICHESKIH_METROV_PERERABOTKI_GAZA"),
+                                    'MEASURE_TITLE' => Loc::getMessage(
+                                        "CAT_UC_MILLION_KUBICHESKIH_METROV_PERERABOTKI_GAZA"
+                                    ),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_106_M3_PERERAB_GAZA"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             127 =>
                                 array(
                                     'CODE' => '127',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_PLOTNIH_KUBICHESKIH_METROV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_PLOTN_M3"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             128 =>
                                 array(
                                     'CODE' => '128',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_POLULITROV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_POL_L"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             129 =>
                                 array(
                                     'CODE' => '129',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLION_POLULITROV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_106_POL_L"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             130 =>
                                 array(
                                     'CODE' => '130',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_LITROV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_L"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                         ),
                     3 =>
@@ -1579,88 +1604,90 @@ class CCatalogMeasureClassifier
                                     'CODE' => '165',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_KARATOV_METRICHESKIH"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_KAR"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             167 =>
                                 array(
                                     'CODE' => '167',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLION_KARATOV_METRICHESKIH"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_106_KAR"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             169 =>
                                 array(
                                     'CODE' => '169',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_TONN"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_T"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             171 =>
                                 array(
                                     'CODE' => '171',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLION_TONN"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_106_T"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             172 =>
                                 array(
                                     'CODE' => '172',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TONNA_USLOVNOGO_TOPLIVA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_T_USL_TOPL"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             175 =>
                                 array(
                                     'CODE' => '175',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_TONN_USLOVNOGO_TOPLIVA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_T_USL_TOPL"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             176 =>
                                 array(
                                     'CODE' => '176',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLION_TONN_USLOVNOGO_TOPLIVA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_106_T_USL_TOPL"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             177 =>
                                 array(
                                     'CODE' => '177',
-                                    'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_TONN_EDINOVREMENNOGO_HRANENIYA"),
+                                    'MEASURE_TITLE' => Loc::getMessage(
+                                        "CAT_UC_TISYACHA_TONN_EDINOVREMENNOGO_HRANENIYA"
+                                    ),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_T_EDINOVR_HRAN"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             178 =>
                                 array(
                                     'CODE' => '178',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_TONN_PERERABOTKI"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_T_PERERAB"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             179 =>
                                 array(
                                     'CODE' => '179',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_USLOVNAYA_TONNA_T"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_USL_T"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             207 =>
                                 array(
                                     'CODE' => '207',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_TCENTNEROV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_103_TC"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                         ),
                     4 =>
@@ -1671,232 +1698,232 @@ class CCatalogMeasureClassifier
                                     'CODE' => '226',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_VOL_T_-_AMPER"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_V_A"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             231 =>
                                 array(
                                     'CODE' => '231',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_METR_V_CHAS"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_MCH"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             232 =>
                                 array(
                                     'CODE' => '232',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_KILOKALORIYA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_KKAL"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             233 =>
                                 array(
                                     'CODE' => '233',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_GIGAKALORIYA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_GKAL"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             234 =>
                                 array(
                                     'CODE' => '234',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_GIGAKALORIJ"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_GKAL"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             235 =>
                                 array(
                                     'CODE' => '235',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLION_GIGAKALORIJ"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_106_GKAL"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             236 =>
                                 array(
                                     'CODE' => '236',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_KALORIYA_V_CHAS"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_KALCH"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             237 =>
                                 array(
                                     'CODE' => '237',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_KILOKALORIYA_V_CHAS"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_KKALCH"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             238 =>
                                 array(
                                     'CODE' => '238',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_GIGAKALORIYA_V_CHAS"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_GKALCH"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             239 =>
                                 array(
                                     'CODE' => '239',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_GIGAKALORIJ_V_CHAS"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_GKALCH"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             241 =>
                                 array(
                                     'CODE' => '241',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLION_AMPER_-_CHASOV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_106_A_CH"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             242 =>
                                 array(
                                     'CODE' => '242',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLION_KILOVOL_T_-_AMPER"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_106_KV_A"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             248 =>
                                 array(
                                     'CODE' => '248',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_KILOVOL_T_-_AMPER_REAKTIVNIJ"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_KV_A_R"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             249 =>
                                 array(
                                     'CODE' => '249',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLIARD_KILOVATT_-_CHASOV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_109_KVT_CH"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             250 =>
                                 array(
                                     'CODE' => '250',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_KILOVOL_T_-_AMPER_REAKTIVNIH"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_KV_A_R"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             251 =>
                                 array(
                                     'CODE' => '251',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_LOSHADINAYA_SILA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_L_S"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             252 =>
                                 array(
                                     'CODE' => '252',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_LOSHADINIH_SIL"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_L_S"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             253 =>
                                 array(
                                     'CODE' => '253',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLION_LOSHADINIH_SIL"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_106_L_S"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             254 =>
                                 array(
                                     'CODE' => '254',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_BIT"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_BIT"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             255 =>
                                 array(
                                     'CODE' => '255',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_BAJT"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_BAJT"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             256 =>
                                 array(
                                     'CODE' => '256',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_KILOBAJT"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_KBAJT"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             257 =>
                                 array(
                                     'CODE' => '257',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MEGABAJT"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_MBAJT"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             258 =>
                                 array(
                                     'CODE' => '258',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_BOD"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_BOD"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             287 =>
                                 array(
                                     'CODE' => '287',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_GENRI"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_GN"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             313 =>
                                 array(
                                     'CODE' => '313',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TESLA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_TL"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             317 =>
                                 array(
                                     'CODE' => '317',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_KILOGRAMM_NA_KVADRATNIJ_SANTIMETR"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_KGSM2"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             337 =>
                                 array(
                                     'CODE' => '337',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLIMETR_VODYANOGO_STOLBA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_MM_VOD_ST"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             338 =>
                                 array(
                                     'CODE' => '338',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLIMETR_RTUTNOGO_STOLBA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_MM_RT_ST"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             339 =>
                                 array(
                                     'CODE' => '339',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_SANTIMETR_VODYANOGO_STOLBA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_SM_VOD_ST"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                         ),
                     5 =>
@@ -1907,16 +1934,16 @@ class CCatalogMeasureClassifier
                                     'CODE' => '352',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MIKROSEKUNDA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_MKS"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             353 =>
                                 array(
                                     'CODE' => '353',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLISEKUNDA_EK"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_MLS"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                         ),
                     6 =>
@@ -1927,1424 +1954,1426 @@ class CCatalogMeasureClassifier
                                     'CODE' => '383',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_RUBL"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_RUB"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             384 =>
                                 array(
                                     'CODE' => '384',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_RUBLEJ"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_RUB"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             385 =>
                                 array(
                                     'CODE' => '385',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLION_RUBLEJ"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_106_RUB"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             386 =>
                                 array(
                                     'CODE' => '386',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLIARD_RUBLEJ"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_109_RUB"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             387 =>
                                 array(
                                     'CODE' => '387',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TRILLION_RUBLEJ"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1012_RUB"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             388 =>
                                 array(
                                     'CODE' => '388',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_KVADRIL_ON_RUBLEJ"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1015_RUB"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             414 =>
                                 array(
                                     'CODE' => '414',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_PASSAZHIRO_-_KILOMETR"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_PASS_KM"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             421 =>
                                 array(
                                     'CODE' => '421',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_PASSAZHIRSKOE_MESTO_PASSAZHIRSKIH_MEST"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_PASS_MEST"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             423 =>
                                 array(
                                     'CODE' => '423',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_PASSAZHIRO_-_KILOMETROV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_PASS_KM"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             424 =>
                                 array(
                                     'CODE' => '424',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLION_PASSAZHIRO_-_KILOMETROV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_106_PASS_KM"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             427 =>
                                 array(
                                     'CODE' => '427',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_PASSAZHIROPOTOK"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_PASS_POTOK"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             449 =>
                                 array(
                                     'CODE' => '449',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TONNO_-_KILOMETR"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_T_KM"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             450 =>
                                 array(
                                     'CODE' => '450',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_TONNO_-_KILOMETROV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_T_KM"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             451 =>
                                 array(
                                     'CODE' => '451',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLION_TONNO_-_KILOMETROV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_106_T_KM"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             479 =>
                                 array(
                                     'CODE' => '479',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_NABOROV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_103_NABOR"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             510 =>
                                 array(
                                     'CODE' => '510',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_GRAMM_NA_KILOVATT_-_CHAS"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_GKVT_CH"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             511 =>
                                 array(
                                     'CODE' => '511',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_KILOGRAMM_NA_GIGAKALORIYU"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_KGGKAL"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             512 =>
                                 array(
                                     'CODE' => '512',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TONNO_-_NOMER"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_T_NOM"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             513 =>
                                 array(
                                     'CODE' => '513',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_AVTOTONNA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_AVTO_T"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             514 =>
                                 array(
                                     'CODE' => '514',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TONNA_TYAGI"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_T_TYAGI"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             515 =>
                                 array(
                                     'CODE' => '515',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_DEDVEJT-TONNA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_DEDVEJT_T"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             516 =>
                                 array(
                                     'CODE' => '516',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TONNO-TANID"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_T_TANID"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             521 =>
                                 array(
                                     'CODE' => '521',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_CHELOVEK_NA_KVADRATNIJ_METR"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_CHELM2"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             522 =>
                                 array(
                                     'CODE' => '522',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_CHELOVEK_NA_KVADRATNIJ_KILOMETR"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_CHELKM2"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             534 =>
                                 array(
                                     'CODE' => '534',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TONNA_V_CHAS"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_TCH"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             535 =>
                                 array(
                                     'CODE' => '535',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TONNA_V_SUTKI"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_TSUT"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             536 =>
                                 array(
                                     'CODE' => '536',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TONNA_V_SMENU"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_TSMEN"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             537 =>
                                 array(
                                     'CODE' => '537',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_TONN_V_SEZON"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_TSEZ"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             538 =>
                                 array(
                                     'CODE' => '538',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_TONN_V_GOD"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_TGOD"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             539 =>
                                 array(
                                     'CODE' => '539',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_CHELOVEKO_-_CHAS"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_CHEL_CH"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             540 =>
                                 array(
                                     'CODE' => '540',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_CHELOVEKO_-_DEN"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_CHEL_DN"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             541 =>
                                 array(
                                     'CODE' => '541',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_CHELOVEKO_-_DNEJ"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_CHEL_DN"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             542 =>
                                 array(
                                     'CODE' => '542',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_CHELOVEKO_-_CHASOV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_CHEL_CH"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             543 =>
                                 array(
                                     'CODE' => '543',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_USLOVNIH_BANOK_V_SMENU"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_USL_BANKSMEN"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             544 =>
                                 array(
                                     'CODE' => '544',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLION_EDINITC_V_GOD"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_106_EDGOD"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             545 =>
                                 array(
                                     'CODE' => '545',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_POSESHENIE_V_SMENU"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_POSESHSMEN"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             546 =>
                                 array(
                                     'CODE' => '546',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_POSESHENIJ_V_SMENU"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_POSESHSMEN"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             547 =>
                                 array(
                                     'CODE' => '547',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_PARA_V_SMENU"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_PARSMEN"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             548 =>
                                 array(
                                     'CODE' => '548',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_PAR_V_SMENU"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_PARSMEN"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             550 =>
                                 array(
                                     'CODE' => '550',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLION_TONN_V_GOD"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_106_TGOD"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             552 =>
                                 array(
                                     'CODE' => '552',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TONNA_PERERABOTKI_V_SUTKI"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_T_PERERABSUT"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             553 =>
                                 array(
                                     'CODE' => '553',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_TONN_PERERABOTKI_V_SUTKI"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_T_PERERABSUT"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             554 =>
                                 array(
                                     'CODE' => '554',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TCENTNER_PERERABOTKI_V_SUTKI"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_TC_PERERABSUT"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             555 =>
                                 array(
                                     'CODE' => '555',
-                                    'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_TCENTNEROV_PERERABOTKI_V_SUTKI"),
+                                    'MEASURE_TITLE' => Loc::getMessage(
+                                        "CAT_UC_TISYACHA_TCENTNEROV_PERERABOTKI_V_SUTKI"
+                                    ),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_TC_PERERABSUT"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             556 =>
                                 array(
                                     'CODE' => '556',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_GOLOV_V_GOD"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_GOLGOD"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             557 =>
                                 array(
                                     'CODE' => '557',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLION_GOLOV_V_GOD"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_106_GOLGOD"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             558 =>
                                 array(
                                     'CODE' => '558',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_PTITCEMEST"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_PTITCEMEST"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             559 =>
                                 array(
                                     'CODE' => '559',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_KUR_-_NESUSHEK"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_KUR_NESUSH"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             560 =>
                                 array(
                                     'CODE' => '560',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MINIMAL_NAYA_ZARABOTNAYA_PLATA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_MIN_ZARABOTN_PLAT"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             561 =>
                                 array(
                                     'CODE' => '561',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_TONN_PARA_V_CHAS"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_T_PARCH"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             562 =>
                                 array(
                                     'CODE' => '562',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_PRYADIL_NIH_VERETEN"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_103_PRYAD_VERET"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             563 =>
                                 array(
                                     'CODE' => '563',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_PRYADIL_NIH_MEST"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_103_PRYAD_MEST"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             639 =>
                                 array(
                                     'CODE' => '639',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_DOZA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_DOZ"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             640 =>
                                 array(
                                     'CODE' => '640',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_DOZ"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_DOZ"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             642 =>
                                 array(
                                     'CODE' => '642',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_EDINITCA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_ED"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             643 =>
                                 array(
                                     'CODE' => '643',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_EDINITC"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_ED"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             644 =>
                                 array(
                                     'CODE' => '644',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLION_EDINITC"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_106_ED"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             661 =>
                                 array(
                                     'CODE' => '661',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_KANAL"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_KANAL"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             673 =>
                                 array(
                                     'CODE' => '673',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_KOMPLEKTOV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_103_KOMPL"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             698 =>
                                 array(
                                     'CODE' => '698',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MESTO"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_MEST"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             699 =>
                                 array(
                                     'CODE' => '699',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_MEST"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_MEST"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             709 =>
                                 array(
                                     'CODE' => '709',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_NOMEROV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_103_NOM"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             724 =>
                                 array(
                                     'CODE' => '724',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_GEKTAROV_PORTCIJ"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_103_GA_PORTC"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             729 =>
                                 array(
                                     'CODE' => '729',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_PACHEK"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_103_PACH"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             744 =>
                                 array(
                                     'CODE' => '744',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_PROTCENT"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_PROC"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             746 =>
                                 array(
                                     'CODE' => '746',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_PROMILLE_0_1_PROTCENTA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_PROMILLE"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             751 =>
                                 array(
                                     'CODE' => '751',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_RULONOV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_RUL"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             761 =>
                                 array(
                                     'CODE' => '761',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_STANOV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_103_STAN"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             762 =>
                                 array(
                                     'CODE' => '762',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_STANTCIYA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_STANTC"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             775 =>
                                 array(
                                     'CODE' => '775',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_TYUBIKOV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_103_TYUBIK"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             776 =>
                                 array(
                                     'CODE' => '776',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_USLOVNIH_TUBOV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_103_USL_TUB"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             779 =>
                                 array(
                                     'CODE' => '779',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLION_UPAKOVOK"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_106_UPAK"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             782 =>
                                 array(
                                     'CODE' => '782',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_UPAKOVOK"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_103_UPAK"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             792 =>
                                 array(
                                     'CODE' => '792',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_CHELOVEK"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_CHEL"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             793 =>
                                 array(
                                     'CODE' => '793',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_CHELOVEK"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_CHEL"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             794 =>
                                 array(
                                     'CODE' => '794',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLION_CHELOVEK"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_106_CHEL"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             808 =>
                                 array(
                                     'CODE' => '808',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLION_EKZEMPLYAROV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_106_EKZ"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             810 =>
                                 array(
                                     'CODE' => '810',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_YACHEJKA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_YACH"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             812 =>
                                 array(
                                     'CODE' => '812',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_YASHIK"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_YASH"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             836 =>
                                 array(
                                     'CODE' => '836',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_GOLOVA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_GOL"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             837 =>
                                 array(
                                     'CODE' => '837',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_PAR"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_PAR"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             838 =>
                                 array(
                                     'CODE' => '838',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLION_PAR"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_106_PAR"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             839 =>
                                 array(
                                     'CODE' => '839',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_KOMPLEKT"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_KOMPL"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             840 =>
                                 array(
                                     'CODE' => '840',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_SEKTCIYA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_SEKTC"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             868 =>
                                 array(
                                     'CODE' => '868',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_BUTILKA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_BUT"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             869 =>
                                 array(
                                     'CODE' => '869',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_BUTILOK"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_BUT"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             870 =>
                                 array(
                                     'CODE' => '870',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_AMPULA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_AMPUL"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             871 =>
                                 array(
                                     'CODE' => '871',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_AMPUL"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_AMPUL"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             872 =>
                                 array(
                                     'CODE' => '872',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_FLAKON"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_FLAK"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             873 =>
                                 array(
                                     'CODE' => '873',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_FLAKONOV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_FLAK"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             874 =>
                                 array(
                                     'CODE' => '874',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_TUBOV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_TUB"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             875 =>
                                 array(
                                     'CODE' => '875',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_KOROBOK"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_KOR"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             876 =>
                                 array(
                                     'CODE' => '876',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_USLOVNAYA_EDINITCA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_USL_ED"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             877 =>
                                 array(
                                     'CODE' => '877',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_USLOVNIH_EDINITC"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_USL_ED"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             878 =>
                                 array(
                                     'CODE' => '878',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLION_USLOVNIH_EDINITC"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_106_USL_ED"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             879 =>
                                 array(
                                     'CODE' => '879',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_USLOVNAYA_SHTUKA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_USL_SHT"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             880 =>
                                 array(
                                     'CODE' => '880',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_USLOVNIH_SHTUK"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_USL_SHT"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             881 =>
                                 array(
                                     'CODE' => '881',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_USLOVNAYA_BANKA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_USL_BANK"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             882 =>
                                 array(
                                     'CODE' => '882',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_USLOVNIH_BANOK"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_USL_BANK"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             883 =>
                                 array(
                                     'CODE' => '883',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLION_USLOVNIH_BANOK"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_106_USL_BANK"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             884 =>
                                 array(
                                     'CODE' => '884',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_USLOVNIJ_KUSOK"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_USL_KUS"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             885 =>
                                 array(
                                     'CODE' => '885',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_USLOVNIH_KUSKOV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_USL_KUS"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             886 =>
                                 array(
                                     'CODE' => '886',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLION_USLOVNIH_KUSKOV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_106_USL_KUS"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             887 =>
                                 array(
                                     'CODE' => '887',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_USLOVNIJ_YASHIK"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_USL_YASH"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             888 =>
                                 array(
                                     'CODE' => '888',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_USLOVNIH_YASHIKOV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_USL_YASH"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             889 =>
                                 array(
                                     'CODE' => '889',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_USLOVNAYA_KATUSHKA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_USL_KAT"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             890 =>
                                 array(
                                     'CODE' => '890',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_USLOVNIH_KATUSHEK"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_USL_KAT"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             891 =>
                                 array(
                                     'CODE' => '891',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_USLOVNAYA_PLITKA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_USL_PLIT"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             892 =>
                                 array(
                                     'CODE' => '892',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_USLOVNIH_PLITOK"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_USL_PLIT"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             893 =>
                                 array(
                                     'CODE' => '893',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_USLOVNIJ_KIRPICH"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_USL_KIRP"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             894 =>
                                 array(
                                     'CODE' => '894',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_USLOVNIH_KIRPICHEJ"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_USL_KIRP"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             895 =>
                                 array(
                                     'CODE' => '895',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLION_USLOVNIH_KIRPICHEJ"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_106_USL_KIRP"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             896 =>
                                 array(
                                     'CODE' => '896',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_SEM_YA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_SEMEJ"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             897 =>
                                 array(
                                     'CODE' => '897',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_SEMEJ"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_SEMEJ"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             898 =>
                                 array(
                                     'CODE' => '898',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLION_SEMEJ"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_106_SEMEJ"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             899 =>
                                 array(
                                     'CODE' => '899',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_DOMOHOZYAJSTVO"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_DOMHOZ"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             900 =>
                                 array(
                                     'CODE' => '900',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_DOMOHOZYAJSTV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_DOMHOZ"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             901 =>
                                 array(
                                     'CODE' => '901',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLION_DOMOHOZYAJSTV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_106_DOMHOZ"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             902 =>
                                 array(
                                     'CODE' => '902',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_UCHENICHESKOE_MESTO"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_UCHEN_MEST"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             903 =>
                                 array(
                                     'CODE' => '903',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_UCHENICHESKIH_MEST"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_UCHEN_MEST"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             904 =>
                                 array(
                                     'CODE' => '904',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_RABOCHEE_MESTO"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_RAB_MEST"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             905 =>
                                 array(
                                     'CODE' => '905',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_RABOCHIH_MEST"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_RAB_MEST"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             906 =>
                                 array(
                                     'CODE' => '906',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_POSADOCHNOE_MESTO"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_POSAD_MEST"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             907 =>
                                 array(
                                     'CODE' => '907',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_POSADOCHNIH_MEST"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_POSAD_MEST"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             908 =>
                                 array(
                                     'CODE' => '908',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_NOMER"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_NOM"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             909 =>
                                 array(
                                     'CODE' => '909',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_KVARTIRA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_KVART"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             910 =>
                                 array(
                                     'CODE' => '910',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_KVARTIR"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_KVART"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             911 =>
                                 array(
                                     'CODE' => '911',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_KOJKA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_KOEK"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             912 =>
                                 array(
                                     'CODE' => '912',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_KOEK"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_KOEK"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             913 =>
                                 array(
                                     'CODE' => '913',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TOM_KNIZHNOGO_FONDA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_TOM_KNIZHN_FOND"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             914 =>
                                 array(
                                     'CODE' => '914',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_TOMOV_KNIZHNOGO_FONDA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_1000_TOM_KNIZHN_FOND"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             915 =>
                                 array(
                                     'CODE' => '915',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_USLOVNIJ_REMONT"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_USL_REM"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             916 =>
                                 array(
                                     'CODE' => '916',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_USLOVNIJ_REMONT_V_GOD"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_USL_REMGOD"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             917 =>
                                 array(
                                     'CODE' => '917',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_SMENA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_SMEN"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             918 =>
                                 array(
                                     'CODE' => '918',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_LIST_AVTORSKIJ"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_L_AVT"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             920 =>
                                 array(
                                     'CODE' => '920',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_LIST_PECHATNIJ"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_L_PECH"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             921 =>
                                 array(
                                     'CODE' => '921',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_LIST_UCHETNO_-_IZDATEL_SKIJ"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_L_UCH_-IZD"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             922 =>
                                 array(
                                     'CODE' => '922',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_ZNAK"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_ZNAK"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             923 =>
                                 array(
                                     'CODE' => '923',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_SLOVO"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_SLOVO"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             924 =>
                                 array(
                                     'CODE' => '924',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_SIMVOL"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_SIMVOL"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             925 =>
                                 array(
                                     'CODE' => '925',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_USLOVNAYA_TRUBA"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_USL_TRUB"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             930 =>
                                 array(
                                     'CODE' => '930',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_PLASTIN"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_103_PLAST"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             937 =>
                                 array(
                                     'CODE' => '937',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLION_DOZ"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_106_DOZ"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             949 =>
                                 array(
                                     'CODE' => '949',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLION_LISTOV-OTTISKOV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_106_LIST_OTTISK"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             950 =>
                                 array(
                                     'CODE' => '950',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_VAGONO_MASHINO_-DEN"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_VAG_MASH_DN"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             951 =>
                                 array(
                                     'CODE' => '951',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_VAGONO-_MASHINO_-CHASOV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_103_VAG_MASH_CH"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             952 =>
                                 array(
                                     'CODE' => '952',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_VAGONO-_MASHINO_-KILOMETROV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_103_VAG_MASH_KM"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             953 =>
                                 array(
                                     'CODE' => '953',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_MESTO-KILOMETROV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_103_MEST_KM"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             954 =>
                                 array(
                                     'CODE' => '954',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_VAGONO-SUTKI"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_VAG_SUT"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             955 =>
                                 array(
                                     'CODE' => '955',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_POEZDO-CHASOV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_103_POEZD_CH"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             956 =>
                                 array(
                                     'CODE' => '956',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_POEZDO-KILOMETROV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_103_POEZD_KM"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             957 =>
                                 array(
                                     'CODE' => '957',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_TONNO-MIL"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_103_T_MIL"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             958 =>
                                 array(
                                     'CODE' => '958',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_PASSAZHIRO-MIL"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_103_PASS_MIL"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             959 =>
                                 array(
                                     'CODE' => '959',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_AVTOMOBILE-DEN"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_AVTOMOB_DN"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             960 =>
                                 array(
                                     'CODE' => '960',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_AVTOMOBILE-TONNO-DNEJ"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_103_AVTOMOB_T_DN"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             961 =>
                                 array(
                                     'CODE' => '961',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_AVTOMOBILE-CHASOV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_103_AVTOMOB_CH"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             962 =>
                                 array(
                                     'CODE' => '962',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_AVTOMOBILE-MESTO-DNEJ"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_103_AVTOMOB_MEST_DN"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             963 =>
                                 array(
                                     'CODE' => '963',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_PRIVEDENNIJ_CHAS"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_PRIVED_CH"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             964 =>
                                 array(
                                     'CODE' => '964',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_SAMOLETO-KILOMETR"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_SAMOLET_KM"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             965 =>
                                 array(
                                     'CODE' => '965',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_KILOMETROV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_103_KM"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             966 =>
                                 array(
                                     'CODE' => '966',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_TONNAZHE-REJSOV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_103_TONNAZH_REJS"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             967 =>
                                 array(
                                     'CODE' => '967',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLION_TONNO-MIL"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_106_T_MIL"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             968 =>
                                 array(
                                     'CODE' => '968',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLION_PASSAZHIRO-MIL"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_106_PASS_MIL"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             969 =>
                                 array(
                                     'CODE' => '969',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLION_TONNAZHE-MIL"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_106_TONNAZH_MIL"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             970 =>
                                 array(
                                     'CODE' => '970',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLION_PASSAZHIRO-MESTO-MIL"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_106_PASS_MEST_MIL"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             971 =>
                                 array(
                                     'CODE' => '971',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_KORMO-DEN"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_KORM_DN"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             972 =>
                                 array(
                                     'CODE' => '972',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TCENTNER_KORMOVIH_EDINITC"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_TC_KORM_ED"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             973 =>
                                 array(
                                     'CODE' => '973',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_AVTOMOBILE-KILOMETROV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_103_AVTOMOB_KM"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             974 =>
                                 array(
                                     'CODE' => '974',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_TONNAZHE-SUT"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_103_TONNAZH_SUT"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             975 =>
                                 array(
                                     'CODE' => '975',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_SUGO-SUTKI"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_SUGO_SUT"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             976 =>
                                 array(
                                     'CODE' => '976',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_SHTUK_V_20-FUTOVOM_EKVIVALENTE_DFE"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_SHTUK_V_20-FUTOVOM_EKVIVALENTE"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             977 =>
                                 array(
                                     'CODE' => '977',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_KANALO-KILOMETR"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_KANAL_KM"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             978 =>
                                 array(
                                     'CODE' => '978',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_KANALO-KONTCI"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_KANAL_KONTC"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             979 =>
                                 array(
                                     'CODE' => '979',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_EKZEMPLYAROV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_103_EKZ"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             980 =>
                                 array(
                                     'CODE' => '980',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_DOLLAROV"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_103_DOLLAR"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             981 =>
                                 array(
                                     'CODE' => '981',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHA_TONN_KORMOVIH_EDINITC"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_103_KORM_ED"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             982 =>
                                 array(
                                     'CODE' => '982',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILLION_TONN_KORMOVIH_EDINITC"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_106_KORM_ED"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                             983 =>
                                 array(
                                     'CODE' => '983',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_SUDO-SUTKI"),
                                     'SYMBOL_RUS' => Loc::getMessage("CAT_UC_SUD_SUT"),
-                                    'SYMBOL_INTL' => NULL,
-                                    'SYMBOL_LETTER_INTL' => NULL,
+                                    'SYMBOL_INTL' => null,
+                                    'SYMBOL_LETTER_INTL' => null,
                                 ),
                         ),
                 );
@@ -3358,7 +3387,7 @@ class CCatalogMeasureClassifier
                                 array(
                                     'CODE' => '017',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_GEKTOMETR"),
-                                    'SYMBOL_RUS' => NULL,
+                                    'SYMBOL_RUS' => null,
                                     'SYMBOL_INTL' => 'hm',
                                     'SYMBOL_LETTER_INTL' => 'HMT',
                                 ),
@@ -3366,7 +3395,7 @@ class CCatalogMeasureClassifier
                                 array(
                                     'CODE' => '045',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MILYA_USTAVNAYA_1609_344_M"),
-                                    'SYMBOL_RUS' => NULL,
+                                    'SYMBOL_RUS' => null,
                                     'SYMBOL_INTL' => 'mile',
                                     'SYMBOL_LETTER_INTL' => 'SMI',
                                 ),
@@ -3378,7 +3407,7 @@ class CCatalogMeasureClassifier
                                 array(
                                     'CODE' => '077',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_AKR_4840_KVADRATNIH_YARDOV"),
-                                    'SYMBOL_RUS' => NULL,
+                                    'SYMBOL_RUS' => null,
                                     'SYMBOL_INTL' => 'acre',
                                     'SYMBOL_LETTER_INTL' => 'ACR',
                                 ),
@@ -3386,7 +3415,7 @@ class CCatalogMeasureClassifier
                                 array(
                                     'CODE' => '079',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_KVADRATNAYA_MILYA"),
-                                    'SYMBOL_RUS' => NULL,
+                                    'SYMBOL_RUS' => null,
                                     'SYMBOL_INTL' => 'mile2',
                                     'SYMBOL_LETTER_INTL' => 'MIK',
                                 ),
@@ -3398,7 +3427,7 @@ class CCatalogMeasureClassifier
                                 array(
                                     'CODE' => '135',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_ZHIDKOSTNAYA_UNTCIYA_SK_3_28_413_SM3"),
-                                    'SYMBOL_RUS' => NULL,
+                                    'SYMBOL_RUS' => null,
                                     'SYMBOL_INTL' => 'fl oz (UK)',
                                     'SYMBOL_LETTER_INTL' => 'OZI',
                                 ),
@@ -3406,7 +3435,7 @@ class CCatalogMeasureClassifier
                                 array(
                                     'CODE' => '136',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_DZHILL_SK_0_142065_DM3"),
-                                    'SYMBOL_RUS' => NULL,
+                                    'SYMBOL_RUS' => null,
                                     'SYMBOL_INTL' => 'gill (UK)',
                                     'SYMBOL_LETTER_INTL' => 'GII',
                                 ),
@@ -3414,7 +3443,7 @@ class CCatalogMeasureClassifier
                                 array(
                                     'CODE' => '137',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_PINTA_SK_0_568262_DM3"),
-                                    'SYMBOL_RUS' => NULL,
+                                    'SYMBOL_RUS' => null,
                                     'SYMBOL_INTL' => 'pt (UK)',
                                     'SYMBOL_LETTER_INTL' => 'PTI',
                                 ),
@@ -3422,7 +3451,7 @@ class CCatalogMeasureClassifier
                                 array(
                                     'CODE' => '138',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_KVARTA_SK_1_136523_DM3"),
-                                    'SYMBOL_RUS' => NULL,
+                                    'SYMBOL_RUS' => null,
                                     'SYMBOL_INTL' => 'qt (UK)',
                                     'SYMBOL_LETTER_INTL' => 'QTI',
                                 ),
@@ -3430,7 +3459,7 @@ class CCatalogMeasureClassifier
                                 array(
                                     'CODE' => '139',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_GALLON_SK_4_546092_DM3"),
-                                    'SYMBOL_RUS' => NULL,
+                                    'SYMBOL_RUS' => null,
                                     'SYMBOL_INTL' => 'gal (UK)',
                                     'SYMBOL_LETTER_INTL' => 'GLI',
                                 ),
@@ -3438,7 +3467,7 @@ class CCatalogMeasureClassifier
                                 array(
                                     'CODE' => '140',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_BUSHEL_SK_36_36874_DM3"),
-                                    'SYMBOL_RUS' => NULL,
+                                    'SYMBOL_RUS' => null,
                                     'SYMBOL_INTL' => 'bu (UK)',
                                     'SYMBOL_LETTER_INTL' => 'BUI',
                                 ),
@@ -3446,7 +3475,7 @@ class CCatalogMeasureClassifier
                                 array(
                                     'CODE' => '141',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_ZHIDKOSTNAYA_UNTCIYA_SSHA_29_5735_SM3"),
-                                    'SYMBOL_RUS' => NULL,
+                                    'SYMBOL_RUS' => null,
                                     'SYMBOL_INTL' => 'fl oz (US)',
                                     'SYMBOL_LETTER_INTL' => 'OZA',
                                 ),
@@ -3454,7 +3483,7 @@ class CCatalogMeasureClassifier
                                 array(
                                     'CODE' => '142',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_DZHILL_SSHA_11_8294_SM3"),
-                                    'SYMBOL_RUS' => NULL,
+                                    'SYMBOL_RUS' => null,
                                     'SYMBOL_INTL' => 'gill  (US)',
                                     'SYMBOL_LETTER_INTL' => 'GIA',
                                 ),
@@ -3462,7 +3491,7 @@ class CCatalogMeasureClassifier
                                 array(
                                     'CODE' => '143',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_ZHIDKOSTNAYA_PINTA_SSHA_0_473176_DM3"),
-                                    'SYMBOL_RUS' => NULL,
+                                    'SYMBOL_RUS' => null,
                                     'SYMBOL_INTL' => 'liq pt (US)',
                                     'SYMBOL_LETTER_INTL' => 'PTL',
                                 ),
@@ -3470,7 +3499,7 @@ class CCatalogMeasureClassifier
                                 array(
                                     'CODE' => '144',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_ZHIDKOSTNAYA_KVARTA_SSHA_0_946353_DM3"),
-                                    'SYMBOL_RUS' => NULL,
+                                    'SYMBOL_RUS' => null,
                                     'SYMBOL_INTL' => 'liq qt (US)',
                                     'SYMBOL_LETTER_INTL' => 'QTL',
                                 ),
@@ -3478,7 +3507,7 @@ class CCatalogMeasureClassifier
                                 array(
                                     'CODE' => '145',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_ZHIDKOSTNIJ_GALLON_SSHA_3_78541_DM3"),
-                                    'SYMBOL_RUS' => NULL,
+                                    'SYMBOL_RUS' => null,
                                     'SYMBOL_INTL' => 'gal (US)',
                                     'SYMBOL_LETTER_INTL' => 'GLL',
                                 ),
@@ -3486,7 +3515,7 @@ class CCatalogMeasureClassifier
                                 array(
                                     'CODE' => '146',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_BARREL_NEFTYANOJ_SSHA_158_987_DM3"),
-                                    'SYMBOL_RUS' => NULL,
+                                    'SYMBOL_RUS' => null,
                                     'SYMBOL_INTL' => 'barrel (US)',
                                     'SYMBOL_LETTER_INTL' => 'BLL',
                                 ),
@@ -3494,7 +3523,7 @@ class CCatalogMeasureClassifier
                                 array(
                                     'CODE' => '147',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_SUHAYA_PINTA_SSHA_0_55061_DM3"),
-                                    'SYMBOL_RUS' => NULL,
+                                    'SYMBOL_RUS' => null,
                                     'SYMBOL_INTL' => 'dry pt (US)',
                                     'SYMBOL_LETTER_INTL' => 'PTD',
                                 ),
@@ -3502,7 +3531,7 @@ class CCatalogMeasureClassifier
                                 array(
                                     'CODE' => '148',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_SUHAYA_KVARTA_SSHA_1_101221_DM3"),
-                                    'SYMBOL_RUS' => NULL,
+                                    'SYMBOL_RUS' => null,
                                     'SYMBOL_INTL' => 'dry qt (US)',
                                     'SYMBOL_LETTER_INTL' => 'QTD',
                                 ),
@@ -3510,7 +3539,7 @@ class CCatalogMeasureClassifier
                                 array(
                                     'CODE' => '149',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_SUHOJ_GALLON_SSHA_4_404884_DM3"),
-                                    'SYMBOL_RUS' => NULL,
+                                    'SYMBOL_RUS' => null,
                                     'SYMBOL_INTL' => 'dry gal (US)',
                                     'SYMBOL_LETTER_INTL' => 'GLD',
                                 ),
@@ -3518,7 +3547,7 @@ class CCatalogMeasureClassifier
                                 array(
                                     'CODE' => '150',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_BUSHEL_SSHA_35_2391_DM3"),
-                                    'SYMBOL_RUS' => NULL,
+                                    'SYMBOL_RUS' => null,
                                     'SYMBOL_INTL' => 'bu (US)',
                                     'SYMBOL_LETTER_INTL' => 'BUA',
                                 ),
@@ -3526,7 +3555,7 @@ class CCatalogMeasureClassifier
                                 array(
                                     'CODE' => '151',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_SUHOJ_BARREL_SSHA_115_627_DM3"),
-                                    'SYMBOL_RUS' => NULL,
+                                    'SYMBOL_RUS' => null,
                                     'SYMBOL_INTL' => 'bbl (US)',
                                     'SYMBOL_LETTER_INTL' => 'BLD',
                                 ),
@@ -3534,24 +3563,24 @@ class CCatalogMeasureClassifier
                                 array(
                                     'CODE' => '152',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_STANDART"),
-                                    'SYMBOL_RUS' => NULL,
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_RUS' => null,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'WSD',
                                 ),
                             153 =>
                                 array(
                                     'CODE' => '153',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_KORD_3_63_M3"),
-                                    'SYMBOL_RUS' => NULL,
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_RUS' => null,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'WCD',
                                 ),
                             154 =>
                                 array(
                                     'CODE' => '154',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TISYACHI_BORDFUTOV_2_36_M3"),
-                                    'SYMBOL_RUS' => NULL,
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_RUS' => null,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'MBF',
                                 ),
                         ),
@@ -3562,31 +3591,31 @@ class CCatalogMeasureClassifier
                                 array(
                                     'CODE' => '182',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_NETTO_-_REGISTROVAYA_TONNA"),
-                                    'SYMBOL_RUS' => NULL,
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_RUS' => null,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'NTT',
                                 ),
                             183 =>
                                 array(
                                     'CODE' => '183',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_OBMERNAYA_FRAHTOVAYA_TONNA"),
-                                    'SYMBOL_RUS' => NULL,
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_RUS' => null,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'SHT',
                                 ),
                             184 =>
                                 array(
                                     'CODE' => '184',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_VODOIZMESHENIE"),
-                                    'SYMBOL_RUS' => NULL,
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_RUS' => null,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'DPT',
                                 ),
                             186 =>
                                 array(
                                     'CODE' => '186',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_FUNT_SK_SSHA_0_45359237_KG"),
-                                    'SYMBOL_RUS' => NULL,
+                                    'SYMBOL_RUS' => null,
                                     'SYMBOL_INTL' => 'lb',
                                     'SYMBOL_LETTER_INTL' => 'LBR',
                                 ),
@@ -3594,7 +3623,7 @@ class CCatalogMeasureClassifier
                                 array(
                                     'CODE' => '187',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_UNTCIYA_SK_SSHA_28_349523_G"),
-                                    'SYMBOL_RUS' => NULL,
+                                    'SYMBOL_RUS' => null,
                                     'SYMBOL_INTL' => 'oz',
                                     'SYMBOL_LETTER_INTL' => 'ONZ',
                                 ),
@@ -3602,7 +3631,7 @@ class CCatalogMeasureClassifier
                                 array(
                                     'CODE' => '188',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_DRAHMA_SK_1_771745_G"),
-                                    'SYMBOL_RUS' => NULL,
+                                    'SYMBOL_RUS' => null,
                                     'SYMBOL_INTL' => 'dr',
                                     'SYMBOL_LETTER_INTL' => 'DRI',
                                 ),
@@ -3610,7 +3639,7 @@ class CCatalogMeasureClassifier
                                 array(
                                     'CODE' => '189',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_GRAN_SK_SSHA_64_798910_MG"),
-                                    'SYMBOL_RUS' => NULL,
+                                    'SYMBOL_RUS' => null,
                                     'SYMBOL_INTL' => 'gn',
                                     'SYMBOL_LETTER_INTL' => 'GRN',
                                 ),
@@ -3618,7 +3647,7 @@ class CCatalogMeasureClassifier
                                 array(
                                     'CODE' => '190',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_STOUN_SK_6_350293_KG"),
-                                    'SYMBOL_RUS' => NULL,
+                                    'SYMBOL_RUS' => null,
                                     'SYMBOL_INTL' => 'st',
                                     'SYMBOL_LETTER_INTL' => 'STI',
                                 ),
@@ -3626,7 +3655,7 @@ class CCatalogMeasureClassifier
                                 array(
                                     'CODE' => '191',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_KVARTER_SK_12_700586_KG"),
-                                    'SYMBOL_RUS' => NULL,
+                                    'SYMBOL_RUS' => null,
                                     'SYMBOL_INTL' => 'qtr',
                                     'SYMBOL_LETTER_INTL' => 'QTR',
                                 ),
@@ -3634,15 +3663,15 @@ class CCatalogMeasureClassifier
                                 array(
                                     'CODE' => '192',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TCENTAL_SK_45_359237_KG"),
-                                    'SYMBOL_RUS' => NULL,
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_RUS' => null,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'CNT',
                                 ),
                             193 =>
                                 array(
                                     'CODE' => '193',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TCENTNER_SSHA_45_3592_KG"),
-                                    'SYMBOL_RUS' => NULL,
+                                    'SYMBOL_RUS' => null,
                                     'SYMBOL_INTL' => 'cwt',
                                     'SYMBOL_LETTER_INTL' => 'CWA',
                                 ),
@@ -3650,7 +3679,7 @@ class CCatalogMeasureClassifier
                                 array(
                                     'CODE' => '194',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_DLINNIJ_TCENTNER_SK_50_802345_KG"),
-                                    'SYMBOL_RUS' => NULL,
+                                    'SYMBOL_RUS' => null,
                                     'SYMBOL_INTL' => 'cwt (UK)',
                                     'SYMBOL_LETTER_INTL' => 'CWI',
                                 ),
@@ -3658,7 +3687,7 @@ class CCatalogMeasureClassifier
                                 array(
                                     'CODE' => '195',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_KOROTKAYA_TONNA_SK_SSHA_0_90718474_T"),
-                                    'SYMBOL_RUS' => NULL,
+                                    'SYMBOL_RUS' => null,
                                     'SYMBOL_INTL' => 'sht',
                                     'SYMBOL_LETTER_INTL' => 'STN',
                                 ),
@@ -3666,7 +3695,7 @@ class CCatalogMeasureClassifier
                                 array(
                                     'CODE' => '196',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_DLINNAYA_TONNA_SK_SSHA_1_0160469_T"),
-                                    'SYMBOL_RUS' => NULL,
+                                    'SYMBOL_RUS' => null,
                                     'SYMBOL_INTL' => 'lt',
                                     'SYMBOL_LETTER_INTL' => 'LTN',
                                 ),
@@ -3674,7 +3703,7 @@ class CCatalogMeasureClassifier
                                 array(
                                     'CODE' => '197',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_SKRUPUL_SK_SSHA_1_295982_G"),
-                                    'SYMBOL_RUS' => NULL,
+                                    'SYMBOL_RUS' => null,
                                     'SYMBOL_INTL' => 'scr',
                                     'SYMBOL_LETTER_INTL' => 'SCR',
                                 ),
@@ -3682,7 +3711,7 @@ class CCatalogMeasureClassifier
                                 array(
                                     'CODE' => '198',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_PENNIVEJT_SK_SSHA_1_555174_G"),
-                                    'SYMBOL_RUS' => NULL,
+                                    'SYMBOL_RUS' => null,
                                     'SYMBOL_INTL' => 'dwt',
                                     'SYMBOL_LETTER_INTL' => 'DWT',
                                 ),
@@ -3690,7 +3719,7 @@ class CCatalogMeasureClassifier
                                 array(
                                     'CODE' => '199',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_DRAHMA_SK_3_887935_G"),
-                                    'SYMBOL_RUS' => NULL,
+                                    'SYMBOL_RUS' => null,
                                     'SYMBOL_INTL' => 'drm',
                                     'SYMBOL_LETTER_INTL' => 'DRM',
                                 ),
@@ -3698,15 +3727,17 @@ class CCatalogMeasureClassifier
                                 array(
                                     'CODE' => '200',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_DRAHMA_SSHA_3_887935_G"),
-                                    'SYMBOL_RUS' => NULL,
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_RUS' => null,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'DRA',
                                 ),
                             201 =>
                                 array(
                                     'CODE' => '201',
-                                    'MEASURE_TITLE' => Loc::getMessage("CAT_UC_UNTCIYA_SK_SSHA_31_10348_G_TROJSKAYA_UNTCIYA"),
-                                    'SYMBOL_RUS' => NULL,
+                                    'MEASURE_TITLE' => Loc::getMessage(
+                                        "CAT_UC_UNTCIYA_SK_SSHA_31_10348_G_TROJSKAYA_UNTCIYA"
+                                    ),
+                                    'SYMBOL_RUS' => null,
                                     'SYMBOL_INTL' => 'apoz',
                                     'SYMBOL_LETTER_INTL' => 'APZ',
                                 ),
@@ -3714,8 +3745,8 @@ class CCatalogMeasureClassifier
                                 array(
                                     'CODE' => '202',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_TROJSKIJ_FUNT_SSHA_373_242_G"),
-                                    'SYMBOL_RUS' => NULL,
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_RUS' => null,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'LBT',
                                 ),
                         ),
@@ -3726,15 +3757,17 @@ class CCatalogMeasureClassifier
                                 array(
                                     'CODE' => '213',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_EFFEKTIVNAYA_MOSHNOST_245_7_VATT"),
-                                    'SYMBOL_RUS' => NULL,
+                                    'SYMBOL_RUS' => null,
                                     'SYMBOL_INTL' => 'B.h.p.',
                                     'SYMBOL_LETTER_INTL' => 'BHP',
                                 ),
                             275 =>
                                 array(
                                     'CODE' => '275',
-                                    'MEASURE_TITLE' => Loc::getMessage("CAT_UC_BRITANSKAYA_TEPLOVAYA_EDINITCA_1_055_KDZH"),
-                                    'SYMBOL_RUS' => NULL,
+                                    'MEASURE_TITLE' => Loc::getMessage(
+                                        "CAT_UC_BRITANSKAYA_TEPLOVAYA_EDINITCA_1_055_KDZH"
+                                    ),
+                                    'SYMBOL_RUS' => null,
                                     'SYMBOL_INTL' => 'Btu',
                                     'SYMBOL_LETTER_INTL' => 'BTU',
                                 ),
@@ -3750,7 +3783,7 @@ class CCatalogMeasureClassifier
                                 array(
                                     'CODE' => '638',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_GROSS_144_SHT"),
-                                    'SYMBOL_RUS' => NULL,
+                                    'SYMBOL_RUS' => null,
                                     'SYMBOL_INTL' => 'gr',
                                     'SYMBOL_LETTER_INTL' => 'GRO',
                                 ),
@@ -3758,7 +3791,7 @@ class CCatalogMeasureClassifier
                                 array(
                                     'CODE' => '731',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_BOL_SHOJ_GROSS_12_GROSSOV"),
-                                    'SYMBOL_RUS' => NULL,
+                                    'SYMBOL_RUS' => null,
                                     'SYMBOL_INTL' => '1728',
                                     'SYMBOL_LETTER_INTL' => 'GGR',
                                 ),
@@ -3766,32 +3799,32 @@ class CCatalogMeasureClassifier
                                 array(
                                     'CODE' => '738',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_KOROTKIJ_STANDART_7200_EDINITC"),
-                                    'SYMBOL_RUS' => NULL,
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_RUS' => null,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'SST',
                                 ),
                             835 =>
                                 array(
                                     'CODE' => '835',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_GALLON_SPIRTA_USTANOVLENNOJ_KREPOSTI"),
-                                    'SYMBOL_RUS' => NULL,
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_RUS' => null,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'PGL',
                                 ),
                             851 =>
                                 array(
                                     'CODE' => '851',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_MEZHDUNARODNAYA_EDINITCA"),
-                                    'SYMBOL_RUS' => NULL,
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_RUS' => null,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'NIU',
                                 ),
                             853 =>
                                 array(
                                     'CODE' => '853',
                                     'MEASURE_TITLE' => Loc::getMessage("CAT_UC_STO_MEZHDUNARODNIH_EDINITC"),
-                                    'SYMBOL_RUS' => NULL,
-                                    'SYMBOL_INTL' => NULL,
+                                    'SYMBOL_RUS' => null,
+                                    'SYMBOL_INTL' => null,
                                     'SYMBOL_LETTER_INTL' => 'HIU',
                                 ),
                         ),
@@ -3804,8 +3837,9 @@ class CCatalogMeasureClassifier
      */
     public static function getMeasureClassifier()
     {
-        if (self::$unitsClassifier === null)
+        if (self::$unitsClassifier === null) {
             self::initMeasureClassifier();
+        }
         return self::$unitsClassifier;
     }
 
@@ -3827,15 +3861,17 @@ class CCatalogMeasureClassifier
     {
         $findId = (int)$findId;
         $findValue = (string)$findValue;
-        if ($findValue === '')
+        if ($findValue === '') {
             $findValue = 'MEASURE_TITLE';
+        }
         $result = '';
         if ($findId > 0) {
             self::initMeasureClassifier();
             foreach (self::$unitsClassifier as $subSection) {
                 foreach ($subSection as $measureList) {
-                    if (!is_array($measureList))
+                    if (!is_array($measureList)) {
                         continue;
+                    }
                     if (
                         isset($measureList[$findId])
                         && isset($measureList[$findId]['CODE'])
@@ -3861,8 +3897,9 @@ class CCatalogMeasureClassifier
             self::initMeasureClassifier();
             foreach (self::$unitsClassifier as $subSection) {
                 foreach ($subSection as $measureList) {
-                    if (!is_array($measureList))
+                    if (!is_array($measureList)) {
                         continue;
+                    }
                     if (isset($measureList[$findCode]) && isset($measureList[$findCode]['CODE']) && (int)$measureList[$findCode]['CODE'] === $findCode) {
                         $result = $measureList[$findCode];
                         break 2;

@@ -28,10 +28,12 @@ abstract class MessageLookalike extends MessageBase implements iLookalikeAds, iB
         $result = new Result();
         $config = $this->loadConfiguration();
 
-        $letter = LetterTable::getList([
-            'filter' => ['=MESSAGE_ID' => $config->getId()],
-            'select' => ['ID', 'TITLE']
-        ])->fetch();
+        $letter = LetterTable::getList(
+            [
+                'filter' => ['=MESSAGE_ID' => $config->getId()],
+                'select' => ['ID', 'TITLE']
+            ]
+        )->fetch();
 
         $service = AdsAudience::getService();
         $service->setClientId($config->get('CLIENT_ID'));
@@ -41,11 +43,13 @@ abstract class MessageLookalike extends MessageBase implements iLookalikeAds, iB
             $config->set('AUDIENCE_ID', $audienceId);
             $this->saveConfiguration($this->configuration);
         } else {
-            $result->addErrors(array_map(
+            $result->addErrors(
+                array_map(
                     function ($errorMessage) {
                         return new Error($errorMessage);
                     },
-                    AdsAudience::getErrors())
+                    AdsAudience::getErrors()
+                )
             );
         }
 
@@ -63,13 +67,20 @@ abstract class MessageLookalike extends MessageBase implements iLookalikeAds, iB
 
         $audience = Service::getAudience($this->getAdsType());
         if ($audience->isQueueProcessed('sender:' . $config->getId())) {
-            $audienceId = AdsAudience::addLookalikeAudience($this->getAdsType(), $config->get('ACCOUNT_ID'), $config->get('AUDIENCE_ID'), $this->getLookalikeOptions());
+            $audienceId = AdsAudience::addLookalikeAudience(
+                $this->getAdsType(),
+                $config->get('ACCOUNT_ID'),
+                $config->get('AUDIENCE_ID'),
+                $this->getLookalikeOptions()
+            );
             if (!$audienceId) {
-                $result->addErrors(array_map(
+                $result->addErrors(
+                    array_map(
                         function ($errorMessage) {
                             return new Error($errorMessage);
                         },
-                        AdsAudience::getErrors())
+                        AdsAudience::getErrors()
+                    )
                 );
                 $result->setSuccess(true);
             }

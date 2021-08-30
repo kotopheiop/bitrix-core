@@ -1,2 +1,3 @@
 <?php
-$MESS['SALE_HPS_YANDEX_INVOICE_SUCCESS'] = 'Счет №#PAYMENT_ID# успешно выставлен';
+
+$MESS['SALE_HPS_YANDEX_INVOICE_SUCCESS'] = 'пїЅпїЅпїЅпїЅ пїЅ#PAYMENT_ID# пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ';

@@ -19,8 +19,9 @@ use \Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
-if (!\Bitrix\Main\Loader::includeModule('sale'))
+if (!\Bitrix\Main\Loader::includeModule('sale')) {
     $arResult["ERROR"] = "Module sale is not installed!";
+}
 
 $result = false;
 
@@ -78,17 +79,20 @@ if (isset($arResult["ERROR"]) <= 0 && $APPLICATION->GetGroupRight("sale") >= "W"
             break;
     }
 } else {
-    if (strlen($arResult["ERROR"]) <= 0)
+    if ($arResult["ERROR"] == '') {
         $arResult["ERROR"] = "Access denied";
+    }
 }
 
-if (isset($arResult["ERROR"]))
+if (isset($arResult["ERROR"])) {
     $arResult["RESULT"] = "ERROR";
-else
+} else {
     $arResult["RESULT"] = "OK";
+}
 
-if (strtolower(SITE_CHARSET) != 'utf-8')
+if (mb_strtolower(SITE_CHARSET) != 'utf-8') {
     $arResult = $APPLICATION->ConvertCharsetArray($arResult, SITE_CHARSET, 'utf-8');
+}
 
 header('Content-Type: application/json');
 die(json_encode($arResult));

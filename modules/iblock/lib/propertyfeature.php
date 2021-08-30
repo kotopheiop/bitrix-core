@@ -43,27 +43,37 @@ class PropertyFeatureTable extends ORM\Data\DataManager
     public static function getMap()
     {
         return [
-            'ID' => new ORM\Fields\IntegerField('ID', [
+            'ID' => new ORM\Fields\IntegerField(
+                'ID', [
                 'primary' => true,
                 'autocomplete' => true,
                 'title' => Loc::getMessage('PROPERTY_FEATURE_ENTITY_ID_FIELD')
-            ]),
-            'PROPERTY_ID' => new ORM\Fields\IntegerField('PROPERTY_ID', [
+            ]
+            ),
+            'PROPERTY_ID' => new ORM\Fields\IntegerField(
+                'PROPERTY_ID', [
                 'title' => Loc::getMessage('PROPERTY_FEATURE_ENTITY_PROPERTY_ID_FIELD')
-            ]),
-            'MODULE_ID' => new ORM\Fields\StringField('MODULE_ID', [
+            ]
+            ),
+            'MODULE_ID' => new ORM\Fields\StringField(
+                'MODULE_ID', [
                 'validation' => [__CLASS__, 'validateModuleId'],
                 'title' => Loc::getMessage('PROPERTY_FEATURE_ENTITY_MODULE_ID_FIELD')
-            ]),
-            'FEATURE_ID' => new ORM\Fields\StringField('FEATURE_ID', [
+            ]
+            ),
+            'FEATURE_ID' => new ORM\Fields\StringField(
+                'FEATURE_ID', [
                 'validation' => [__CLASS__, 'validateFeatureId'],
                 'title' => Loc::getMessage('PROPERTY_FEATURE_ENTITY_FEATURE_ID_FIELD')
-            ]),
-            'IS_ENABLED' => new ORM\Fields\BooleanField('IS_ENABLED', [
+            ]
+            ),
+            'IS_ENABLED' => new ORM\Fields\BooleanField(
+                'IS_ENABLED', [
                 'values' => ['N', 'Y'],
                 'default_value' => 'N',
                 'title' => Loc::getMessage('PROPERTY_FEATURE_ENTITY_IS_ENABLED_FIELD')
-            ]),
+            ]
+            ),
             'PROPERTY' => new ORM\Fields\Relations\Reference(
                 'PROPERTY',
                 '\Bitrix\Iblock\Property',
@@ -105,12 +115,15 @@ class PropertyFeatureTable extends ORM\Data\DataManager
     public static function deleteByProperty($property)
     {
         $property = (int)$property;
-        if ($property <= 0)
+        if ($property <= 0) {
             return;
+        }
         $conn = Main\Application::getConnection();
         $helper = $conn->getSqlHelper();
         $conn->queryExecute(
-            'delete from ' . $helper->quote(self::getTableName()) . ' where ' . $helper->quote('PROPERTY_ID') . ' = ' . $property
+            'delete from ' . $helper->quote(self::getTableName()) . ' where ' . $helper->quote(
+                'PROPERTY_ID'
+            ) . ' = ' . $property
         );
         unset($helper, $conn);
     }

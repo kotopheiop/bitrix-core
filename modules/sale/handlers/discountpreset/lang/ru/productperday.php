@@ -1,15 +1,16 @@
 <?php
-$MESS["SALE_HANDLERS_DISCOUNTPRESET_PERDAY_NAME"] = "Скидка на товары, зависящая от дня недели";
-$MESS["SALE_HANDLERS_DISCOUNTPRESET_PERDAY_DAY_LABEL"] = "Дни недели";
-$MESS["SALE_HANDLERS_DISCOUNTPRESET_PERDAY_DAY_OF_WEEK_1"] = "Понедельник";
-$MESS["SALE_HANDLERS_DISCOUNTPRESET_PERDAY_DAY_OF_WEEK_2"] = "Вторник";
-$MESS["SALE_HANDLERS_DISCOUNTPRESET_PERDAY_DAY_OF_WEEK_3"] = "Среда";
-$MESS["SALE_HANDLERS_DISCOUNTPRESET_PERDAY_DAY_OF_WEEK_4"] = "Четверг";
-$MESS["SALE_HANDLERS_DISCOUNTPRESET_PERDAY_DAY_OF_WEEK_5"] = "Пятница";
-$MESS["SALE_HANDLERS_DISCOUNTPRESET_PERDAY_DAY_OF_WEEK_6"] = "Суббота";
-$MESS["SALE_HANDLERS_DISCOUNTPRESET_PERDAY_DAY_OF_WEEK_7"] = "Воскресенье";
-$MESS["SALE_HANDLERS_DISCOUNTPRESET_ERROR_EMPTY_VALUE_DAYS"] = "Не указан день недели";
-$MESS["SALE_HANDLERS_DISCOUNTPRESET_ERROR_SECTION_NON_ARRAY"] = "Неверное значения при выборе секций";
-$MESS["SALE_HANDLERS_DISCOUNTPRESET_ERROR_PRODUCT_NON_ARRAY"] = "Неверное значения при выборе продуктов";
-$MESS["SALE_HANDLERS_DISCOUNTPRESET_PERDAY_DISCOUNT_VALUE"] = "Скидка";
+
+$MESS["SALE_HANDLERS_DISCOUNTPRESET_PERDAY_NAME"] = "пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HANDLERS_DISCOUNTPRESET_PERDAY_DAY_LABEL"] = "пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HANDLERS_DISCOUNTPRESET_PERDAY_DAY_OF_WEEK_1"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HANDLERS_DISCOUNTPRESET_PERDAY_DAY_OF_WEEK_2"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HANDLERS_DISCOUNTPRESET_PERDAY_DAY_OF_WEEK_3"] = "пїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HANDLERS_DISCOUNTPRESET_PERDAY_DAY_OF_WEEK_4"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HANDLERS_DISCOUNTPRESET_PERDAY_DAY_OF_WEEK_5"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HANDLERS_DISCOUNTPRESET_PERDAY_DAY_OF_WEEK_6"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HANDLERS_DISCOUNTPRESET_PERDAY_DAY_OF_WEEK_7"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HANDLERS_DISCOUNTPRESET_ERROR_EMPTY_VALUE_DAYS"] = "пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HANDLERS_DISCOUNTPRESET_ERROR_SECTION_NON_ARRAY"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HANDLERS_DISCOUNTPRESET_ERROR_PRODUCT_NON_ARRAY"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HANDLERS_DISCOUNTPRESET_PERDAY_DISCOUNT_VALUE"] = "пїЅпїЅпїЅпїЅпїЅпїЅ";
 ?>

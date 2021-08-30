@@ -28,28 +28,34 @@ class BaseContext
      */
     public function addCounter($day, $name, $value = null)
     {
-        if (!($day instanceof Date))
+        if (!($day instanceof Date)) {
             throw new ArgumentTypeException('day', '\Bitrix\Main\Type\Date');
+        }
 
-        if (!is_string($name))
+        if (!is_string($name)) {
             throw new ArgumentTypeException('name', 'string');
+        }
 
-        if (!is_numeric($value))
+        if (!is_numeric($value)) {
             throw new ArgumentTypeException('value', 'numeric');
+        }
 
-        if (($id = $this->id) === null)
+        if (($id = $this->id) === null) {
             throw new SystemException('Cannot add counter without context!');
+        }
 
         static $types;
         if (!$types) {
             $types = CounterManager::getTypes();
         }
 
-        if (!$type = $types[$name])
+        if (!$type = $types[$name]) {
             throw new SystemException("Undefined counter '$name' type!");
+        }
 
-        if (!$type['ACTIVE'])
+        if (!$type['ACTIVE']) {
             return;
+        }
 
         // save to database
 
@@ -82,22 +88,26 @@ class BaseContext
      */
     public function setAttribute($name, $value = null)
     {
-        if (!is_string($name))
+        if (!is_string($name)) {
             throw new ArgumentTypeException('name', 'string');
+        }
 
-        if (!(is_scalar($value) || is_null($value)))
+        if (!(is_scalar($value) || is_null($value))) {
             throw new ArgumentTypeException('name', 'scalar');
+        }
 
-        if ($this->id !== null)
+        if ($this->id !== null) {
             throw new SystemException('Cannot set attribute for existent context!');
+        }
 
         static $types;
         if (!$types) {
             $types = AttributeManager::getTypes();
         }
 
-        if (!$type = $types[$name])
+        if (!$type = $types[$name]) {
             throw new SystemException("Undefined attribute '$name' type!");
+        }
 
         // set attribute
 
@@ -107,8 +117,9 @@ class BaseContext
     /** Save context & attributes to database */
     protected function save()
     {
-        if (($id =& $this->id) !== null)
+        if (($id =& $this->id) !== null) {
             throw new SystemException('Cannot save existent context!');
+        }
 
         $id = self::EMPTY_CONTEXT_ID;
 
@@ -156,11 +167,13 @@ class BaseContext
 
                         foreach ($attributes as $name => $value) {
                             // TODO resetContext if not success and return null!!!
-                            $result = ContextAttributeTable::add(array(
-                                'CONTEXT_ID' => $id,
-                                'NAME' => $name,
-                                'VALUE' => (string)$value, // can be null!
-                            ));
+                            $result = ContextAttributeTable::add(
+                                array(
+                                    'CONTEXT_ID' => $id,
+                                    'NAME' => $name,
+                                    'VALUE' => (string)$value, // can be null!
+                                )
+                            );
                         }
                     } else {
                         throw new DB\SqlQueryException();

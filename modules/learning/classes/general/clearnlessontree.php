@@ -2,7 +2,7 @@
 
 class CLearnLessonTree
 {
-    protected $arTree = NULL;
+    protected $arTree = null;
     protected $arLessonsInTree = array();        // Array of ids of lessons already pushed to tree
     protected $arLessonsAsList = array();        // Lessons' tree in list mode (with depth)
     protected $arLessonsAsListOldMode = array();        // Lessons' tree in list mode (with depth) - in old compatibility mode
@@ -20,17 +20,24 @@ class CLearnLessonTree
      * @param array filter
      * @param bool skip publish prohibited lessons in context of $rootLessonId
      */
-    public function __construct($rootLessonId, $arOrder = null, $arFilter = array(), $publishProhibitionMode = true, $arSelectFields = array())
-    {
+    public function __construct(
+        $rootLessonId,
+        $arOrder = null,
+        $arFilter = array(),
+        $publishProhibitionMode = true,
+        $arSelectFields = array()
+    ) {
         $this->EnsureStrictlyCastableToInt($rootLessonId);        // throws an exception on error
-        if ($arOrder === null)
+        if ($arOrder === null) {
             $arOrder = array('EDGE_SORT' => 'asc');
+        }
 
         if (is_array($arSelectFields) && (count($arSelectFields) > 0)) {
             $arFieldsMustBeSelected = array('LESSON_ID', 'EDGE_SORT', 'IS_CHILDS');
             foreach ($arFieldsMustBeSelected as $fieldName) {
-                if (!in_array($fieldName, $arSelectFields))
+                if (!in_array($fieldName, $arSelectFields)) {
                     $arSelectFields[] = $fieldName;
+                }
             }
         }
 
@@ -47,11 +54,13 @@ class CLearnLessonTree
                 true    // ignore errors
             );
 
-            if ($rc === false)
+            if ($rc === false) {
                 throw new LearnException ('EA_SQLERROR', LearnException::EXC_ERR_ALL_GIVEUP);
+            }
 
-            while ($arData = $rc->Fetch())
+            while ($arData = $rc->Fetch()) {
                 $this->arPublishProhibitedLessons[] = (int)$arData['PROHIBITED_LESSON_ID'];
+            }
         }
 
         $arCurrentPath = array($rootLessonId);
@@ -60,7 +69,7 @@ class CLearnLessonTree
             $arOrder,
             $arFilter,
             0,
-            NULL,
+            null,
             $arSelectFields,
             $arCurrentPath
         );
@@ -154,20 +163,29 @@ class CLearnLessonTree
      * if there is some duplicates lessons, only one of them
      * will be in resulted tree.
      */
-    protected function BuildTreeRecursive($rootLessonId, $arOrder, $arFilter, $depth = 0, $parentChapterId = NULL, $arSelectFields, $arRootPath)
-    {
+    protected function BuildTreeRecursive(
+        $rootLessonId,
+        $arOrder,
+        $arFilter,
+        $depth = 0,
+        $parentChapterId = null,
+        $arSelectFields,
+        $arRootPath
+    ) {
         $oPath = new CLearnPath();
         $arLessons = array();
 
         $CDBResult = CLearnLesson::GetListOfImmediateChilds($rootLessonId, $arOrder, $arFilter, $arSelectFields);
         while (($arData = $CDBResult->Fetch()) !== false) {
             // Skip lessons that are already in tree (prevent cycling)
-            if (in_array($arData['LESSON_ID'], $this->arLessonsInTree))
+            if (in_array($arData['LESSON_ID'], $this->arLessonsInTree)) {
                 continue;
+            }
 
             // Skip lessons prohibited for publishing
-            if (in_array((int)$arData['LESSON_ID'], $this->arPublishProhibitedLessons, true))
+            if (in_array((int)$arData['LESSON_ID'], $this->arPublishProhibitedLessons, true)) {
                 continue;
+            }
 
             // Path as array for current LESSON_ID
             $arCurrentLessonPath = $arRootPath;
@@ -210,15 +228,17 @@ class CLearnLessonTree
                 );
 
                 // It still can be zero childs due to $arFilter, publish prohibition or prevent cycling instead of non-zero $arData['IS_CHILDS']
-                if (count($item['#childs']) == 0)
+                if (count($item['#childs']) == 0) {
                     $lessonType_oldDataModel = 'LE';
+                }
             }
 
             // remove unneeded element caused by hack above
-            if ($lessonType_oldDataModel === 'LE')
+            if ($lessonType_oldDataModel === 'LE') {
                 unset($this->arLessonsAsListOldMode['CH' . $arData['LESSON_ID']]);
-            else
+            } else {
                 unset($this->arLessonsAsListOldMode['LE' . $arData['LESSON_ID']]);
+            }
 
             $this->arLessonsAsListOldMode[$lessonType_oldDataModel . $arData['LESSON_ID']] = array_merge(
                 $arData,
@@ -243,9 +263,11 @@ class CLearnLessonTree
         if ((!is_numeric($i))
             || (!is_int($i + 0))
         ) {
-            throw new LearnException ('Non-strictly casts to integer: ' . htmlspecialcharsbx($i),
+            throw new LearnException (
+                'Non-strictly casts to integer: ' . htmlspecialcharsbx($i),
                 LearnException::EXC_ERR_ALL_PARAMS
-                | LearnException::EXC_ERR_ALL_LOGIC);
+                | LearnException::EXC_ERR_ALL_LOGIC
+            );
         }
     }
 }

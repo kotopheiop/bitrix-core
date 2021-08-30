@@ -27,12 +27,13 @@ abstract class Base
     protected $currency = "";
     protected $operatingCurrency = "";
 
-    abstract public function getClassTitle();
+    abstract public static function getClassTitle();
 
     public function __construct($id, array $initParams, $currency, $value = null, array $additionalParams = array())
     {
-        if (strlen($id) <= 0)
+        if ($id == '') {
             throw new ArgumentNullException('id');
+        }
 
         $this->id = $id;
         $this->code = $initParams["CODE"];
@@ -48,10 +49,11 @@ abstract class Base
 
         $this->currency = $this->operatingCurrency = $currency;
 
-        if ($value !== null)
+        if ($value !== null) {
             $this->setValue($value);
-        elseif ($this->initial !== null)
+        } elseif ($this->initial !== null) {
             $this->setValue($this->initial);
+        }
     }
 
     public function setValue($value)
@@ -76,13 +78,15 @@ abstract class Base
 
     public function getEditControl($prefix = "", $value = false)
     {
-        if (strlen($prefix) > 0)
+        if ($prefix <> '') {
             $name = $prefix;
-        else
+        } else {
             $name = $this->id;
+        }
 
-        if (!$value)
+        if (!$value) {
             $value = $this->value;
+        }
 
         return Input\Manager::getEditHtml($name, $this->params, $value);
     }
@@ -102,8 +106,9 @@ abstract class Base
     {
         $result = false;
 
-        if (isset($this->params["PRICE"]))
+        if (isset($this->params["PRICE"])) {
             $result = $this->convertToOperatingCurrency($this->params["PRICE"]);
+        }
 
         return $result;
     }
@@ -112,28 +117,33 @@ abstract class Base
     {
         $result = floatval($value);
 
-        if ($result <= 0)
+        if ($result <= 0) {
             return $value;
+        }
 
-        if (strlen($this->currency) <= 0 || strlen($currency) <= 0)
+        if ($this->currency == '' || $currency == '') {
             return $value;
+        }
 
-        if ($this->currency == $currency)
+        if ($this->currency == $currency) {
             return $value;
+        }
 
         static $rates = null;
 
         if ($rates === null) {
-            if (\Bitrix\Main\Loader::includeModule('currency'))
+            if (\Bitrix\Main\Loader::includeModule('currency')) {
                 $rates = new \CCurrencyRates;
-            else
+            } else {
                 $rates = false;
+            }
         }
 
-        if ($rates)
+        if ($rates) {
             $result = $rates->convertCurrency($result, $this->currency, $currency);
-        else
+        } else {
             $result = $value;
+        }
 
         return $result;
     }
@@ -198,6 +208,10 @@ abstract class Base
         return $this->code;
     }
 
+    public function getId()
+    {
+        return $this->id;
+    }
 
     public function getCostShipment(Shipment $shipment = null)
     {
@@ -222,5 +236,13 @@ abstract class Base
     public function getPriceShipment(Shipment $shipment = null)
     {
         return $this->getPrice();
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getDisplayValue(): ?string
+    {
+        return is_null($this->value) ? null : (string)$this->value;
     }
 }

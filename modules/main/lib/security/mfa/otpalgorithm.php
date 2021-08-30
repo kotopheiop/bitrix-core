@@ -2,7 +2,6 @@
 
 namespace Bitrix\Main\Security\Mfa;
 
-use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\Security\OtpException;
 use Bitrix\Main\Text\Base32;
@@ -59,8 +58,9 @@ abstract class OtpAlgorithm
         $this->secret = $secret;
 
         // Backward compatibility. Use sha256 for eToken with 256bits key
-        if (\Bitrix\Main\Text\BinaryString::getLength($this->secret) > 25)
+        if (strlen($this->secret) > 25) {
             $this->digest = 'sha256';
+        }
 
         return $this;
     }
@@ -93,7 +93,7 @@ abstract class OtpAlgorithm
 
         $opts['algorithm'] = $this->getDigest();
         // Digest must be in upper case for some OTP apps (e.g Google Authenticator for iOS)
-        $opts['algorithm'] = strtoupper($opts['algorithm']);
+        $opts['algorithm'] = mb_strtoupper($opts['algorithm']);
         $opts['digits'] = $this->getDigits();
 
         ksort($opts);
@@ -174,13 +174,8 @@ abstract class OtpAlgorithm
             throw new ArgumentTypeException('actual', 'string');
         }
 
-        if (function_exists('mb_orig_strlen')) {
-            $lenExpected = mb_orig_strlen($expected);
-            $lenActual = mb_orig_strlen($actual);
-        } else {
-            $lenExpected = strlen($expected);
-            $lenActual = strlen($actual);
-        }
+        $lenExpected = strlen($expected);
+        $lenActual = strlen($actual);
 
         $status = $lenExpected ^ $lenActual;
         $len = min($lenExpected, $lenActual);

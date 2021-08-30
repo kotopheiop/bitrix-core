@@ -101,7 +101,7 @@ class CatalogSectionTabHandler extends TabHandler
                 if (
                     isset($_POST['VK_EXPORT'][$export["ID"]]["TO_ALBUM"]) && $_POST['VK_EXPORT'][$export["ID"]]["TO_ALBUM"] > 0 &&
                     $_POST['VK_EXPORT'][$export["ID"]]["TO_ALBUM"] == $_POST['VK_EXPORT'][$export["ID"]]["TO_ALBUM_CURRENT"] &&
-                    strlen($_POST['VK_EXPORT'][$export["ID"]]["TO_ALBUM_ALIAS"]) < 2
+                    mb_strlen($_POST['VK_EXPORT'][$export["ID"]]["TO_ALBUM_ALIAS"]) < 2
                 ) {
                     $currErrors[] = Loc::getMessage("SALE_VK_EXPORT_SETTINGS__ERROR_EMPTY_ALIAS");
                     unset($_POST['VK_EXPORT'][$export["ID"]]["TO_ALBUM_ALIAS"]);
@@ -113,15 +113,17 @@ class CatalogSectionTabHandler extends TabHandler
                 }
             }
 
-            if (!empty($currErrors))
+            if (!empty($currErrors)) {
                 $errors[] =
                     Loc::getMessage("SALE_VK_EXPORT_PROFILE") .
                     '"' . HtmlFilter::encode($export['DESC']) . '": <br>' .
                     implode('<br>', $currErrors);
+            }
         }
 
-        if (!empty($errors))
+        if (!empty($errors)) {
             throw new SystemException(implode('<br><br>', $errors));
+        }
 
         return true;
     }
@@ -157,8 +159,9 @@ class CatalogSectionTabHandler extends TabHandler
         $sectionId = $arArgs["ID"];
 
 //		test current section activity (if new - we have not ID and cant set settings)
-        if ($sectionId <= 0)
+        if ($sectionId <= 0) {
             return '<tr><td colspan="2">' . Loc::getMessage("SALE_VK_NEED_SAVE_SECTION") . '</td></tr>';
+        }
 
 //		if we not have exports profiles - we cant sdave settings
         $vk = Vk::getInstance();
@@ -166,7 +169,10 @@ class CatalogSectionTabHandler extends TabHandler
         if (empty($exports)) {
             return
                 '<tr><td colspan="2">' .
-                Loc::getMessage("SALE_VK_NEED_EXPORT_PROFILE", array('#A1' => '/bitrix/admin/sale_vk_export_list.php')) .
+                Loc::getMessage(
+                    "SALE_VK_NEED_EXPORT_PROFILE",
+                    array('#A1' => '/bitrix/admin/sale_vk_export_list.php')
+                ) .
                 '</td></tr>';
         }
 
@@ -357,14 +363,17 @@ class CatalogSectionTabHandler extends TabHandler
     private function compareSettingsWithPost($settings, $exportId)
     {
 //		not need check  INHERIT and ENABLE. Patamushta not need
-        if ($_POST['VK_EXPORT'][$exportId]["TO_ALBUM"])
+        if ($_POST['VK_EXPORT'][$exportId]["TO_ALBUM"]) {
             $settings["TO_ALBUM"] = $_POST['VK_EXPORT'][$exportId]["TO_ALBUM"];
+        }
 
-        if ($_POST['VK_EXPORT'][$exportId]["TO_ALBUM_ALIAS"])
+        if ($_POST['VK_EXPORT'][$exportId]["TO_ALBUM_ALIAS"]) {
             $settings["TO_ALBUM_ALIAS"] = $_POST['VK_EXPORT'][$exportId]["TO_ALBUM_ALIAS"];
+        }
 
-        if ($_POST['VK_EXPORT'][$exportId]["VK_CATEGORY"])
+        if ($_POST['VK_EXPORT'][$exportId]["VK_CATEGORY"]) {
             $settings["VK_CATEGORY"] = $_POST['VK_EXPORT'][$exportId]["VK_CATEGORY"];
+        }
 
         $settings["INCLUDE_CHILDS"] = $_POST['VK_EXPORT'][$exportId]["INCLUDE_CHILDS"] ? true : $settings["INCLUDE_CHILDS"];
 

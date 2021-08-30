@@ -19,15 +19,21 @@ require_once(dirname(__FILE__) . "/../include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/prolog.php");
 define("HELP_FILE", "settings/lang_edit.php");
 
-if (!$USER->CanDoOperation('edit_other_settings') && !$USER->CanDoOperation('view_other_settings'))
+if (!$USER->CanDoOperation('edit_other_settings') && !$USER->CanDoOperation('view_other_settings')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $isAdmin = $USER->CanDoOperation('edit_other_settings');
 
 Loc::loadMessages(__FILE__);
 
 $aTabs = array(
-    array("DIV" => "edit1", "TAB" => Loc::getMessage("MAIN_PARAM"), "ICON" => "lang_edit", "TITLE" => Loc::getMessage("MAIN_PARAM_TITLE")),
+    array(
+        "DIV" => "edit1",
+        "TAB" => Loc::getMessage("MAIN_PARAM"),
+        "ICON" => "lang_edit",
+        "TITLE" => Loc::getMessage("MAIN_PARAM_TITLE")
+    ),
 );
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
@@ -35,7 +41,8 @@ $message = null;
 $bVarsFromForm = false;
 $ID = intval($_REQUEST["ID"]);
 
-if ($_SERVER["REQUEST_METHOD"] == "POST" && ($_POST["save"] <> '' || $_POST["apply"] <> '') && $isAdmin && check_bitrix_sessid()) {
+if ($_SERVER["REQUEST_METHOD"] == "POST" && ($_POST["save"] <> '' || $_POST["apply"] <> '') && $isAdmin && check_bitrix_sessid(
+    )) {
     $arFields = array(
         "ACTIVE" => $_POST['ACTIVE'],
         "SORT" => $_POST['SORT'],
@@ -44,23 +51,28 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($_POST["save"] <> '' || $_POST["app
         "CULTURE_ID" => $_POST['CULTURE_ID'],
     );
 
-    if ($ID <= 0)
+    if ($ID <= 0) {
         $arFields["LID"] = $_POST["LID"];
+    }
 
     $langs = new CLanguage;
     if ($ID > 0) {
         $res = $langs->Update($_POST["LID"], $arFields);
     } else {
-        $res = (strlen($langs->Add($arFields)) > 0);
+        $res = ($langs->Add($arFields) <> '');
     }
 
     if (!$res) {
         $bVarsFromForm = true;
     } else {
-        if ($_POST["save"] <> '')
+        if ($_POST["save"] <> '') {
             LocalRedirect(BX_ROOT . "/admin/lang_admin.php?lang=" . LANGUAGE_ID);
-        else
-            LocalRedirect(BX_ROOT . "/admin/lang_edit.php?lang=" . LANGUAGE_ID . "&LID=" . $_POST["LID"] . "&" . $tabControl->ActiveTabParam());
+        } else {
+            LocalRedirect(
+                BX_ROOT . "/admin/lang_edit.php?lang=" . LANGUAGE_ID . "&LID=" . $_POST["LID"] . "&" . $tabControl->ActiveTabParam(
+                )
+            );
+        }
     }
 }
 
@@ -72,8 +84,9 @@ if ($bVarsFromForm == false) {
         $language = $lng->Fetch();
     } elseif ($_REQUEST["LID"] <> '') {
         $lng = CLanguage::GetByID($_REQUEST["LID"]);
-        if (($language = $lng->Fetch()))
+        if (($language = $lng->Fetch())) {
             $ID = 1;
+        }
     }
     if ($language === false) {
         $language = array(
@@ -85,10 +98,13 @@ if ($bVarsFromForm == false) {
 }
 
 $langField = array();
-foreach ($language as $key => $val)
+foreach ($language as $key => $val) {
     $langField[$key] = HtmlFilter::encode($val);
+}
 
-$strTitle = ($ID > 0 ? Loc::getMessage("EDIT_LANG_TITLE", array("#ID#" => $langField["LID"])) : Loc::getMessage("NEW_LANG_TITLE"));
+$strTitle = ($ID > 0 ? Loc::getMessage("EDIT_LANG_TITLE", array("#ID#" => $langField["LID"])) : Loc::getMessage(
+    "NEW_LANG_TITLE"
+));
 $APPLICATION->SetTitle($strTitle);
 
 require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admin_after.php");
@@ -120,7 +136,11 @@ if ($ID > 0) {
         );
         $aMenu[] = array(
             "TEXT" => Loc::getMessage("MAIN_DELETE_RECORD"),
-            "LINK" => "javascript:if(confirm('" . Loc::getMessage("MAIN_DELETE_RECORD_CONF") . "')) window.location='/bitrix/admin/lang_admin.php?ID=" . urlencode(urlencode($language["LID"])) . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get() . "&action=delete';",
+            "LINK" => "javascript:if(confirm('" . Loc::getMessage(
+                    "MAIN_DELETE_RECORD_CONF"
+                ) . "')) window.location='/bitrix/admin/lang_admin.php?ID=" . urlencode(
+                    urlencode($language["LID"])
+                ) . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get() . "&action=delete';",
             "TITLE" => Loc::getMessage("MAIN_DELETE_RECORD_TITLE"),
             "ICON" => "btn_delete"
         );
@@ -129,11 +149,13 @@ if ($ID > 0) {
 
 $context = new CAdminContextMenu($aMenu);
 $context->Show();
-if ($e = $APPLICATION->GetException())
+if ($e = $APPLICATION->GetException()) {
     $message = new CAdminMessage(Loc::getMessage("MAIN_ERROR_SAVING"), $e);
+}
 
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 
 ?>
 <form method="POST" action="<? echo $APPLICATION->GetCurPage() ?>?" name="form1">
@@ -182,7 +204,9 @@ if ($message)
             $cultures = array();
             while ($cult = $cultureRes->fetch()) {
                 $cult["WEEK_START"] = Loc::getMessage('DAY_OF_WEEK_' . $cult["WEEK_START"]);
-                $cult["DIRECTION"] = ($cult["DIRECTION"] == "Y" ? Loc::getMessage('DIRECTION_LTR') : Loc::getMessage('DIRECTION_RTL'));
+                $cult["DIRECTION"] = ($cult["DIRECTION"] == "Y" ? Loc::getMessage('DIRECTION_LTR') : Loc::getMessage(
+                    'DIRECTION_RTL'
+                ));
                 $cultures[] = $cult;
             }
             ?>
@@ -213,7 +237,9 @@ if ($message)
                 <?
                 foreach ($cultures as $cult):
                     ?>
-                    <option value="<?= $cult["ID"] ?>"<? if ($cult["ID"] == $language["CULTURE_ID"]) echo " selected" ?>><?= HtmlFilter::encode($cult["NAME"]) ?></option>
+                    <option value="<?= $cult["ID"] ?>"<? if ($cult["ID"] == $language["CULTURE_ID"]) echo " selected" ?>><?= HtmlFilter::encode(
+                            $cult["NAME"]
+                        ) ?></option>
                 <?
                 endforeach;
                 ?>
@@ -222,8 +248,9 @@ if ($message)
     </tr>
     <tr>
         <td>&nbsp;</td>
-        <td><a href="culture_edit.php?lang=<?= LANGUAGE_ID ?>"
-               id="bx_culture_link"><? echo Loc::getMessage("lang_edit_culture_edit") ?></a></td>
+        <td><a href="culture_edit.php?lang=<?= LANGUAGE_ID ?>" id="bx_culture_link"><? echo Loc::getMessage(
+                    "lang_edit_culture_edit"
+                ) ?></a></td>
     </tr>
     <tr>
         <td><? echo Loc::getMessage('FORMAT_DATE') ?></td>

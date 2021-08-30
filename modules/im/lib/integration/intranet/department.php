@@ -10,20 +10,25 @@ class Department
 
     public static function checkModules()
     {
-        return \Bitrix\Main\Loader::includeModule('intranet') && \Bitrix\Main\Loader::includeModule("iblock") && \Bitrix\Main\Loader::includeModule("socialnetwork");
+        return \Bitrix\Main\Loader::includeModule('intranet') && \Bitrix\Main\Loader::includeModule(
+                "iblock"
+            ) && \Bitrix\Main\Loader::includeModule("socialnetwork");
     }
 
     public static function getList()
     {
-        if (!self::checkModules())
+        if (!self::checkModules()) {
             return false;
+        }
 
-        if (\Bitrix\Im\User::getInstance()->isExtranet())
+        if (\Bitrix\Im\User::getInstance()->isExtranet()) {
             return Array();
+        }
 
         $departmentIblockId = (int)\Bitrix\Main\Config\Option::get('intranet', 'iblock_structure', 0);
-        if ($departmentIblockId <= 0)
+        if ($departmentIblockId <= 0) {
             return Array();
+        }
 
         $cacheId = 'im_structure_' . $departmentIblockId;
         $cachePath = '/bx/imc/intranet/department/';
@@ -66,8 +71,9 @@ class Department
 
     public static function getGroup($params)
     {
-        if (!self::checkModules())
+        if (!self::checkModules()) {
             return false;
+        }
 
         $params = is_array($params) ? $params : Array();
 
@@ -139,8 +145,9 @@ class Department
             array("ID", "USER_ID", "GROUP_ID")
         );
         while ($ar = $db->GetNext(true, false)) {
-            if ($ar["USER_ID"] == $userId)
+            if ($ar["USER_ID"] == $userId) {
                 continue;
+            }
 
             $groups['SG' . $row['GROUP_ID']]['USERS'][] = $ar["USER_ID"];
         }

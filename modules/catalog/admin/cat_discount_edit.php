@@ -8,8 +8,9 @@ use Bitrix\Catalog;
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/catalog/prolog.php");
-if (!($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_discount')))
+if (!($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_discount'))) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 Main\Loader::includeModule("catalog");
 
 $readOnly = !$USER->CanDoOperation('catalog_discount');
@@ -26,18 +27,43 @@ IncludeModuleLangFile(__FILE__);
 $returnUrl = '';
 if (!empty($_REQUEST['return_url'])) {
     $currentUrl = $APPLICATION->GetCurPage();
-    if (strtolower(substr($_REQUEST['return_url'], strlen($currentUrl))) != strtolower($currentUrl)) {
+    if (mb_strtolower(mb_substr($_REQUEST['return_url'], mb_strlen($currentUrl))) != mb_strtolower($currentUrl)) {
         $returnUrl = $_REQUEST['return_url'];
     }
     unset($currentUrl);
 }
 
 $aTabs = array(
-    array("DIV" => "edit1", "TAB" => GetMessage("CDEN_TAB_DISCOUNT"), "ICON" => "catalog", "TITLE" => GetMessage("CDEN_TAB_DISCOUNT_DESCR")),
-    array("DIV" => "edit4", "TAB" => GetMessage("BT_CAT_DISCOUNT_EDIT_TAB_NAME_CONDITIONS"), "ICON" => "catalog", "TITLE" => GetMessage("BT_CAT_DISCOUNT_EDIT_TAB_TITLE_CONDITIONS")),
-    array("DIV" => "edit2", "TAB" => GetMessage("CDEN_TAB_DISCOUNT_PAR"), "ICON" => "catalog", "TITLE" => GetMessage("CDEN_TAB_DISCOUNT_PAR_DESCR")),
-    array("DIV" => "edit3", "TAB" => GetMessage("BT_CAT_DISCOUNT_EDIT_TAB_NAME_COUPONS"), "ICON" => "catalog", "TITLE" => GetMessage("BT_CAT_DISCOUNT_EDIT_TAB_TITLE_COUPONS")),
-    array("DIV" => "edit5", "TAB" => GetMessage("BT_CAT_DISCOUNT_EDIT_TAB_NAME_MISC"), "ICON" => "catalog", "TITLE" => GetMessage("BT_CAT_DISCOUNT_EDIT_TAB_TITLE_MISC")),
+    array(
+        "DIV" => "edit1",
+        "TAB" => GetMessage("CDEN_TAB_DISCOUNT"),
+        "ICON" => "catalog",
+        "TITLE" => GetMessage("CDEN_TAB_DISCOUNT_DESCR")
+    ),
+    array(
+        "DIV" => "edit4",
+        "TAB" => GetMessage("BT_CAT_DISCOUNT_EDIT_TAB_NAME_CONDITIONS"),
+        "ICON" => "catalog",
+        "TITLE" => GetMessage("BT_CAT_DISCOUNT_EDIT_TAB_TITLE_CONDITIONS")
+    ),
+    array(
+        "DIV" => "edit2",
+        "TAB" => GetMessage("CDEN_TAB_DISCOUNT_PAR"),
+        "ICON" => "catalog",
+        "TITLE" => GetMessage("CDEN_TAB_DISCOUNT_PAR_DESCR")
+    ),
+    array(
+        "DIV" => "edit3",
+        "TAB" => GetMessage("BT_CAT_DISCOUNT_EDIT_TAB_NAME_COUPONS"),
+        "ICON" => "catalog",
+        "TITLE" => GetMessage("BT_CAT_DISCOUNT_EDIT_TAB_TITLE_COUPONS")
+    ),
+    array(
+        "DIV" => "edit5",
+        "TAB" => GetMessage("BT_CAT_DISCOUNT_EDIT_TAB_NAME_MISC"),
+        "ICON" => "catalog",
+        "TITLE" => GetMessage("BT_CAT_DISCOUNT_EDIT_TAB_TITLE_MISC")
+    ),
 );
 
 $tabControl = new CAdminForm("fdiscount_edit", $aTabs);
@@ -67,18 +93,25 @@ if (
 
     $boolCond = $obCond2->Init(BT_COND_MODE_PARSE, BT_COND_BUILD_CATALOG, array());
     if (!$boolCond) {
-        if ($ex = $APPLICATION->GetException())
+        if ($ex = $APPLICATION->GetException()) {
             $errorMessage .= $ex->GetString() . "<br>";
-        else
-            $errorMessage .= (0 < $ID ? str_replace('#ID#', $ID, GetMessage('BT_CAT_DISCOUNT_EDIT_ERR_UPDATE')) : GetMessage('BT_CAT_DISCOUNT_EDIT_ERR_ADD')) . "<br>";
+        } else {
+            $errorMessage .= (0 < $ID ? str_replace(
+                    '#ID#',
+                    $ID,
+                    GetMessage('BT_CAT_DISCOUNT_EDIT_ERR_UPDATE')
+                ) : GetMessage('BT_CAT_DISCOUNT_EDIT_ERR_ADD')) . "<br>";
+        }
         $bVarsFromForm = true;
     } else {
         $boolCond = false;
         if (array_key_exists('CONDITIONS', $_POST) && array_key_exists('CONDITIONS_CHECK', $_POST)) {
-            if (is_string($_POST['CONDITIONS']) && is_string($_POST['CONDITIONS_CHECK']) && md5($_POST['CONDITIONS']) == $_POST['CONDITIONS_CHECK']) {
+            if (is_string($_POST['CONDITIONS']) && is_string($_POST['CONDITIONS_CHECK']) && md5(
+                    $_POST['CONDITIONS']
+                ) == $_POST['CONDITIONS_CHECK']) {
                 $CONDITIONS = base64_decode($_POST['CONDITIONS']);
                 if (CheckSerializedData($CONDITIONS)) {
-                    $CONDITIONS = unserialize($CONDITIONS);
+                    $CONDITIONS = unserialize($CONDITIONS, ['allowed_classes' => false]);
                     $boolCond = true;
                 } else {
                     $boolCondParseError = true;
@@ -86,13 +119,19 @@ if (
             }
         }
 
-        if (!$boolCond)
+        if (!$boolCond) {
             $CONDITIONS = $obCond2->Parse();
+        }
         if (empty($CONDITIONS)) {
-            if ($ex = $APPLICATION->GetException())
+            if ($ex = $APPLICATION->GetException()) {
                 $errorMessage .= $ex->GetString() . "<br>";
-            else
-                $errorMessage .= (0 < $ID ? str_replace('#ID#', $ID, GetMessage('BT_CAT_DISCOUNT_EDIT_ERR_UPDATE')) : GetMessage('BT_CAT_DISCOUNT_EDIT_ERR_ADD')) . "<br>";
+            } else {
+                $errorMessage .= (0 < $ID ? str_replace(
+                        '#ID#',
+                        $ID,
+                        GetMessage('BT_CAT_DISCOUNT_EDIT_ERR_UPDATE')
+                    ) : GetMessage('BT_CAT_DISCOUNT_EDIT_ERR_ADD')) . "<br>";
+            }
             $bVarsFromForm = true;
             $boolCondParseError = true;
         }
@@ -106,8 +145,9 @@ if (
                 $arGroupID[] = $intValue;
             }
         }
-        if (isset($intValue))
+        if (isset($intValue)) {
             unset($intValue);
+        }
     }
 
     $arCatalogGroupID = array();
@@ -118,8 +158,9 @@ if (
                 $arCatalogGroupID[] = $intValue;
             }
         }
-        if (isset($intValue))
+        if (isset($intValue)) {
             unset($intValue);
+        }
     }
 
     $arFields = array(
@@ -175,10 +216,15 @@ if (
         }
 
         if (!$res) {
-            if ($ex = $APPLICATION->GetException())
+            if ($ex = $APPLICATION->GetException()) {
                 $errorMessage .= $ex->GetString() . "<br>";
-            else
-                $errorMessage .= (0 < $ID ? str_replace('#ID#', $ID, GetMessage('BT_CAT_DISCOUNT_EDIT_ERR_UPDATE')) : GetMessage('BT_CAT_DISCOUNT_EDIT_ERR_ADD')) . "<br>";
+            } else {
+                $errorMessage .= (0 < $ID ? str_replace(
+                        '#ID#',
+                        $ID,
+                        GetMessage('BT_CAT_DISCOUNT_EDIT_ERR_UPDATE')
+                    ) : GetMessage('BT_CAT_DISCOUNT_EDIT_ERR_ADD')) . "<br>";
+            }
             $bVarsFromForm = true;
             $conn->rollbackTransaction();
         } else {
@@ -204,12 +250,23 @@ if (
 
             if (!$bVarsFromForm) {
                 if (empty($_POST['apply'])) {
-                    if (!empty($returnUrl))
+                    if (!empty($returnUrl)) {
                         LocalRedirect($returnUrl);
-                    else
-                        LocalRedirect('/bitrix/admin/cat_discount_admin.php?lang=' . LANGUAGE_ID . GetFilterParams('filter_', false));
+                    } else {
+                        LocalRedirect(
+                            '/bitrix/admin/cat_discount_admin.php?lang=' . LANGUAGE_ID . GetFilterParams(
+                                'filter_',
+                                false
+                            )
+                        );
+                    }
                 } else {
-                    LocalRedirect('/bitrix/admin/cat_discount_edit.php?lang=' . LANGUAGE_ID . '&ID=' . $ID . GetFilterParams('filter_', false) . '&' . $tabControl->ActiveTabParam());
+                    LocalRedirect(
+                        '/bitrix/admin/cat_discount_edit.php?lang=' . LANGUAGE_ID . '&ID=' . $ID . GetFilterParams(
+                            'filter_',
+                            false
+                        ) . '&' . $tabControl->ActiveTabParam()
+                    );
                 }
             }
         }
@@ -278,35 +335,53 @@ if (0 < $ID) {
         if (!isset($arDiscount['VERSION']) || (int)$arDiscount['VERSION'] != CCatalogDiscount::CURRENT_FORMAT) {
             $readOnly = true;
             $boolShowCoupons = false;
-            $rsAdminNotify = CAdminNotify::GetList(array(), array('MODULE_ID' => 'catalog', 'TAG' => 'CATALOG_DISC_CONVERT'));
+            $rsAdminNotify = CAdminNotify::GetList(
+                array(),
+                array('MODULE_ID' => 'catalog', 'TAG' => 'CATALOG_DISC_CONVERT')
+            );
             if (!($arAdminNotify = $rsAdminNotify->Fetch())) {
                 $strLangPath = $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/catalog/lang/';
                 $strDefLang = false;
                 $arLangList = array();
-                $by = "def";
-                $order = "desc";
-                $rsLangs = CLanguage::GetList($by, $order);
+                $rsLangs = CLanguage::GetList("def", "desc");
                 while ($arOneLang = $rsLangs->Fetch()) {
-                    if (empty($strDefLang))
+                    if (empty($strDefLang)) {
                         $strDefLang = $arOneLang['LID'];
+                    }
                     $arLangList[] = $arOneLang['LID'];
                 }
-                $arMess = __GetCatLangMessages($strLangPath, '/admin/cat_discount_edit.php', array('BT_MOD_CAT_DSC_CONV_INVITE'), '', $arLangList);
+                $arMess = __GetCatLangMessages(
+                    $strLangPath,
+                    '/admin/cat_discount_edit.php',
+                    array('BT_MOD_CAT_DSC_CONV_INVITE'),
+                    '',
+                    $arLangList
+                );
                 if (is_array($arMess) && !empty($arMess['BT_MOD_CAT_DSC_CONV_INVITE'][$strDefLang])) {
                     $arFields = array(
-                        "MESSAGE" => str_replace("#LINK#", '/bitrix/admin/cat_discount_convert.php', $arMess['BT_MOD_CAT_DSC_CONV_INVITE'][$strDefLang]),
+                        "MESSAGE" => str_replace(
+                            "#LINK#",
+                            '/bitrix/admin/cat_discount_convert.php',
+                            $arMess['BT_MOD_CAT_DSC_CONV_INVITE'][$strDefLang]
+                        ),
                         "TAG" => "CATALOG_DISC_CONVERT",
                         "MODULE_ID" => "catalog",
                         "ENABLE_CLOSE" => "N"
                     );
                     $arLangMess = array();
                     foreach ($arMess['BT_MOD_CAT_DSC_CONV_INVITE'] as $strLangID => $strMess) {
-                        if (empty($strMess))
+                        if (empty($strMess)) {
                             continue;
-                        $arLangMess[$strLangID] = str_replace("#LINK#", '/bitrix/admin/cat_discount_convert.php', $strMess);
+                        }
+                        $arLangMess[$strLangID] = str_replace(
+                            "#LINK#",
+                            '/bitrix/admin/cat_discount_convert.php',
+                            $strMess
+                        );
                     }
-                    if (!empty($arLangMess))
+                    if (!empty($arLangMess)) {
                         $arFields['LANG'] = $arLangMess;
+                    }
                     CAdminNotify::Add($arFields);
                 }
             }
@@ -325,14 +400,16 @@ if ($bVarsFromForm) {
     }
     $arDiscountGroupList = $arFields['GROUP_IDS'];
     $arDiscountCatList = $arFields['CATALOG_GROUP_IDS'];
-    if (isset($arCouponFields))
+    if (isset($arCouponFields)) {
         $arCoupons = $arCouponFields;
+    }
 }
 
-if ($ID > 0 && !$boolCopy)
+if ($ID > 0 && !$boolCopy) {
     $APPLICATION->SetTitle(str_replace("#ID#", $ID, GetMessage("DSC_TITLE_UPDATE")));
-else
+} else {
     $APPLICATION->SetTitle(GetMessage("DSC_TITLE_ADD"));
+}
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
 $aMenu = array(
@@ -362,14 +439,20 @@ if ($ID > 0) {
         if (!$boolCopy) {
             $aMenu[] = array(
                 "TEXT" => GetMessage("BT_CAT_DISCOUNT_EDIT_CONT_NAME_COPY"),
-                "LINK" => "/bitrix/admin/cat_discount_edit.php?ID=" . $ID . "&action=copy&lang=" . LANGUAGE_ID . GetFilterParams("filter_", false),
+                "LINK" => "/bitrix/admin/cat_discount_edit.php?ID=" . $ID . "&action=copy&lang=" . LANGUAGE_ID . GetFilterParams(
+                        "filter_",
+                        false
+                    ),
                 "ICON" => "btn_copy",
             );
 
             $aMenu[] = array(
                 "TEXT" => GetMessage("CDEN_DELETE_DISCOUNT"),
                 "ICON" => "btn_delete",
-                "LINK" => "javascript:if(confirm('" . GetMessageJS("CDEN_DELETE_DISCOUNT_CONFIRM") . "')) window.location='/bitrix/admin/cat_discount_admin.php?action=delete&ID[]=" . $ID . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get() . "#tb';",
+                "LINK" => "javascript:if(confirm('" . GetMessageJS(
+                        "CDEN_DELETE_DISCOUNT_CONFIRM"
+                    ) . "')) window.location='/bitrix/admin/cat_discount_admin.php?action=delete&ID[]=" . $ID . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get(
+                    ) . "#tb';",
                 "WARNING" => "Y"
             );
         }
@@ -382,17 +465,13 @@ $context->Show();
 CAdminMessage::ShowMessage($errorMessage);
 
 $arSiteList = array();
-$by = 'sort';
-$order = 'asc';
-$rsSites = CSite::GetList($by, $order);
+$rsSites = CSite::GetList();
 while ($arSite = $rsSites->Fetch()) {
     $arSiteList[$arSite['LID']] = '(' . $arSite['LID'] . ') ' . $arSite['NAME'];
 }
 
 $arCurrencyList = array();
-$by2 = 'sort';
-$order2 = 'asc';
-$rsCurrencies = CCurrency::GetList($by2, $order2);
+$rsCurrencies = CCurrency::GetList('sort', 'asc');
 while ($arCurrency = $rsCurrencies->Fetch()) {
     $arCurrencyList[$arCurrency['CURRENCY']] = $arCurrency['CURRENCY'];
 }
@@ -416,15 +495,24 @@ if ($boolCopy) {
     ?><input type="hidden" name="action" value="copy"><?
 }
 $tabControl->EndEpilogContent();
-$tabControl->Begin(array(
-    "FORM_ACTION" => '/bitrix/admin/cat_discount_edit.php?lang=' . urlencode(LANGUAGE_ID),
-));
+$tabControl->Begin(
+    array(
+        "FORM_ACTION" => '/bitrix/admin/cat_discount_edit.php?lang=' . urlencode(LANGUAGE_ID),
+    )
+);
 
 $tabControl->BeginNextFormTab();
-if ($ID > 0 && !$boolCopy)
+if ($ID > 0 && !$boolCopy) {
     $tabControl->AddViewField('ID', 'ID:', $ID, false);
+}
 $tabControl->AddCheckBoxField("ACTIVE", GetMessage("DSC_ACTIVE") . ":", false, "Y", $arDiscount['ACTIVE'] == "Y");
-$tabControl->AddEditField("NAME", GetMessage("DSC_NAME") . ":", true, array("size" => 50, "maxlength" => 255), htmlspecialcharsbx($arDiscount['NAME']));
+$tabControl->AddEditField(
+    "NAME",
+    GetMessage("DSC_NAME") . ":",
+    true,
+    array("size" => 50, "maxlength" => 255),
+    htmlspecialcharsbx($arDiscount['NAME'])
+);
 $tabControl->AddDropDownField("SITE_ID", GetMessage('DSC_SITE') . ':', true, $arSiteList, $arDiscount['SITE_ID']);
 $tabControl->BeginCustomField("PERIOD", GetMessage('DSC_PERIOD') . ":", false);
 ?>
@@ -432,8 +520,9 @@ $tabControl->BeginCustomField("PERIOD", GetMessage('DSC_PERIOD') . ":", false);
         <td width="40%"><? echo $tabControl->GetCustomLabelHTML(); ?></td>
         <td width="60%"><?
             $periodValue = '';
-            if ('' != $arDiscount['ACTIVE_FROM'] || '' != $arDiscount['ACTIVE_TO'])
+            if ('' != $arDiscount['ACTIVE_FROM'] || '' != $arDiscount['ACTIVE_TO']) {
                 $periodValue = CAdminCalendar::PERIOD_INTERVAL;
+            }
 
             echo CAdminCalendar::CalendarPeriodCustom(
                 'ACTIVE_FROM',
@@ -451,7 +540,8 @@ $tabControl->BeginCustomField("PERIOD", GetMessage('DSC_PERIOD') . ":", false);
             );
             ?></td>
     </tr><?
-$tabControl->EndCustomField("PERIOD",
+$tabControl->EndCustomField(
+    "PERIOD",
     '<input type="hidden" name="ACTIVE_FROM" value="' . htmlspecialcharsbx($arDiscount['ACTIVE_FROM']) . '">' .
     '<input type="hidden" name="ACTIVE_TO" value="' . htmlspecialcharsbx($arDiscount['ACTIVE_FROM']) . '">'
 );
@@ -463,16 +553,31 @@ $tabControl->BeginCustomField("VALUE_TYPE", GetMessage('DSC_TYPE') . ":", true);
             <select name="VALUE_TYPE" id="ob_value_type"><?
                 foreach (CCatalogDiscount::GetDiscountTypes(true) as $key => $value) {
                     ?>
-                    <option value="<?= htmlspecialcharsbx($key); ?>"<? if ($arDiscount['VALUE_TYPE'] == $key) echo " selected"; ?>><?= htmlspecialcharsbx($value); ?></option><?
+                    <option value="<?= htmlspecialcharsbx($key); ?>"<? if ($arDiscount['VALUE_TYPE'] == $key) {
+                        echo " selected";
+                    } ?>><?= htmlspecialcharsbx($value); ?></option><?
                 }
                 ?></select>
         </td>
     </tr><?
-$tabControl->EndCustomField("VALUE_TYPE",
+$tabControl->EndCustomField(
+    "VALUE_TYPE",
     '<input type="hidden" name="VALUE_TYPE" value="' . htmlspecialcharsbx($arDiscount['VALUE_TYPE']) . '">'
 );
-$tabControl->AddEditField("VALUE", GetMessage("DSC_VALUE") . ":", true, array('size' => 20, 'maxlength' => 20), htmlspecialcharsbx($arDiscount['VALUE']));
-$tabControl->AddDropDownField("CURRENCY", GetMessage('DSC_CURRENCY') . ':', true, $arCurrencyList, $arDiscount['CURRENCY']);
+$tabControl->AddEditField(
+    "VALUE",
+    GetMessage("DSC_VALUE") . ":",
+    true,
+    array('size' => 20, 'maxlength' => 20),
+    htmlspecialcharsbx($arDiscount['VALUE'])
+);
+$tabControl->AddDropDownField(
+    "CURRENCY",
+    GetMessage('DSC_CURRENCY') . ':',
+    true,
+    $arCurrencyList,
+    $arDiscount['CURRENCY']
+);
 $tabControl->BeginCustomField("MAX_DISCOUNT", GetMessage('DSC_MAX_SUM') . ":", false);
 ?>
     <tr id="tr_MAX_DISCOUNT" style="display: <? echo 'P' == $arDiscount['VALUE_TYPE'] ? 'table-row' : 'none'; ?>;">
@@ -480,11 +585,18 @@ $tabControl->BeginCustomField("MAX_DISCOUNT", GetMessage('DSC_MAX_SUM') . ":", f
         <td width="60%"><input id="ob_max_discount" type="text" name="MAX_DISCOUNT" size="20" maxlength="20"
                                value="<?= htmlspecialcharsbx($arDiscount['MAX_DISCOUNT']); ?>"></td>
     </tr><?
-$tabControl->EndCustomField("MAX_DISCOUNT",
+$tabControl->EndCustomField(
+    "MAX_DISCOUNT",
     '<input type="hidden" name="MAX_DISCOUNT" value="' . htmlspecialcharsbx($arDiscount['MAX_DISCOUNT']) . '">'
 );
 $tabControl->AddCheckBoxField("RENEWAL", GetMessage("DSC_RENEW") . ":", false, "Y", $arDiscount['RENEWAL'] == "Y");
-$tabControl->AddEditField("PRIORITY", GetMessage("BT_CAT_DISCOUNT_EDIT_FIELDS_PRIORITY") . ":", false, array("size" => 20, "maxlength" => 20), intval($arDiscount['PRIORITY']));
+$tabControl->AddEditField(
+    "PRIORITY",
+    GetMessage("BT_CAT_DISCOUNT_EDIT_FIELDS_PRIORITY") . ":",
+    false,
+    array("size" => 20, "maxlength" => 20),
+    intval($arDiscount['PRIORITY'])
+);
 $tabControl->BeginCustomField("LAST_DISCOUNT", GetMessage('BT_CAT_DISCOUNT_EDIT_FIELDS_LAST_DISCOUNT') . ":", false);
 ?>
     <tr id="tr_LAST_DISCOUNT">
@@ -495,10 +607,16 @@ $tabControl->BeginCustomField("LAST_DISCOUNT", GetMessage('BT_CAT_DISCOUNT_EDIT_
                    name="LAST_DISCOUNT" <? echo('Y' == $arDiscount['LAST_DISCOUNT'] ? 'checked' : ''); ?>>
         </td>
     </tr><?
-$tabControl->EndCustomField("LAST_DISCOUNT",
+$tabControl->EndCustomField(
+    "LAST_DISCOUNT",
     '<input type="hidden" name="LAST_DISCOUNT" value="' . htmlspecialcharsbx($arDiscount['LAST_DISCOUNT']) . '">'
 );
-$tabControl->AddTextField("NOTES", GetMessage("DSC_DESCR") . ':', htmlspecialcharsbx($arDiscount['NOTES']), array("cols" => 50, 'rows' => 6));
+$tabControl->AddTextField(
+    "NOTES",
+    GetMessage("DSC_DESCR") . ':',
+    htmlspecialcharsbx($arDiscount['NOTES']),
+    array("cols" => 50, 'rows' => 6)
+);
 
 $tabControl->BeginNextFormTab();
 
@@ -509,16 +627,25 @@ $tabControl->BeginCustomField("CONDITIONS", GetMessage('BT_CAT_DISCOUNT_EDIT_FIE
             <div id="tree" style="position: relative; z-index: 1;"></div><?
             if (!is_array($arDiscount['CONDITIONS'])) {
                 if (CheckSerializedData($arDiscount['CONDITIONS'])) {
-                    $arDiscount['CONDITIONS'] = unserialize($arDiscount['CONDITIONS']);
+                    $arDiscount['CONDITIONS'] = unserialize($arDiscount['CONDITIONS'], ['allowed_classes' => false]);
                 } else {
                     $arDiscount['CONDITIONS'] = '';
                 }
             }
             $obCond = new CCatalogCondTree();
-            $boolCond = $obCond->Init(BT_COND_MODE_DEFAULT, BT_COND_BUILD_CATALOG, array('FORM_NAME' => 'fdiscount_edit_form', 'CONT_ID' => 'tree', 'JS_NAME' => 'JSCatCond'));
+            $boolCond = $obCond->Init(
+                BT_COND_MODE_DEFAULT,
+                BT_COND_BUILD_CATALOG,
+                array(
+                    'FORM_NAME' => 'fdiscount_edit_form',
+                    'CONT_ID' => 'tree',
+                    'JS_NAME' => 'JSCatCond'
+                )
+            );
             if (!$boolCond) {
-                if ($ex = $APPLICATION->GetException())
+                if ($ex = $APPLICATION->GetException()) {
                     echo $ex->GetString() . "<br>";
+                }
             } else {
                 $obCond->Show($arDiscount['CONDITIONS']);
             }
@@ -526,7 +653,8 @@ $tabControl->BeginCustomField("CONDITIONS", GetMessage('BT_CAT_DISCOUNT_EDIT_FIE
     </tr><?
 $strHidden = '';
 $strCond = base64_encode(serialize($arDiscount['CONDITIONS']));
-$tabControl->EndCustomField("CONDITIONS",
+$tabControl->EndCustomField(
+    "CONDITIONS",
     '<input type="hidden" name="CONDITIONS" value="' . htmlspecialcharsbx($strCond) . '">' .
     '<input type="hidden" name="CONDITIONS_CHECK" value="' . htmlspecialcharsbx(md5($strCond)) . '">'
 );
@@ -540,10 +668,12 @@ $strHidden = '';
         <td width="60%">
             <select name="GROUP_IDS[]" multiple size="8">
                 <?
-                $groupIterator = Main\GroupTable::getList(array(
-                    'select' => array('ID', 'NAME', 'C_SORT'),
-                    'order' => array('C_SORT' => 'ASC', 'ID' => 'ASC')
-                ));
+                $groupIterator = Main\GroupTable::getList(
+                    array(
+                        'select' => array('ID', 'NAME', 'C_SORT'),
+                        'order' => array('C_SORT' => 'ASC', 'ID' => 'ASC')
+                    )
+                );
                 while ($group = $groupIterator->fetch()) {
                     $group['ID'] = (int)$group['ID'];
                     $selected = (in_array($group['ID'], $arDiscountGroupList) ? ' selected' : '');
@@ -560,15 +690,18 @@ if ($ID > 0 && !empty($arDiscountGroupList)) {
     $arHidden = array();
     foreach ($arDiscountGroupList as &$value) {
         $value = (int)$value;
-        if ($value > 0)
+        if ($value > 0) {
             $arHidden[] = '<input type="hidden" name="GROUP_IDS[]" value="' . $value . '">';
+        }
     }
     unset($value);
-    if (!empty($arHidden))
+    if (!empty($arHidden)) {
         $strHidden = implode('', $arHidden);
+    }
 }
-if ($strHidden == '')
+if ($strHidden == '') {
     $strHidden = '<input type="hidden" name="GROUP_IDS[]" value="">';
+}
 
 $tabControl->EndCustomField('GROUP_IDS', $strHidden);
 
@@ -579,10 +712,12 @@ $strHidden = '';
         <td valign="top" width="40%"><? echo $tabControl->GetCustomLabelHTML(); ?></td>
         <td valign="top" width="60%">
             <select name="CAT_IDS[]" multiple size="8"><?
-                $priceTypeIterator = Catalog\GroupTable::getList(array(
-                    'select' => array('ID', 'NAME', 'LANG_NAME' => 'CURRENT_LANG.NAME'),
-                    'order' => array('NAME' => 'ASC', 'ID' => 'ASC')
-                ));
+                $priceTypeIterator = Catalog\GroupTable::getList(
+                    array(
+                        'select' => array('ID', 'NAME', 'LANG_NAME' => 'CURRENT_LANG.NAME'),
+                        'order' => array('NAME' => 'ASC', 'ID' => 'ASC')
+                    )
+                );
                 while ($priceType = $priceTypeIterator->fetch()) {
                     $priceType['ID'] = (int)$priceType['ID'];
                     $priceType['LANG_NAME'] = (string)$priceType['LANG_NAME'];
@@ -600,15 +735,18 @@ if ($ID > 0 && !empty($arDiscountCatList)) {
     $arHidden = array();
     foreach ($arDiscountCatList as &$value) {
         $value = (int)$value;
-        if ($value > 0)
+        if ($value > 0) {
             $arHidden[] = '<input type="hidden" name="CAT_IDS[]" value="' . $value . '">';
+        }
     }
     unset($value);
-    if (!empty($arHidden))
+    if (!empty($arHidden)) {
         $strHidden = implode('', $arHidden);
+    }
 }
-if ($strHidden == '')
+if ($strHidden == '') {
     $strHidden = '<input type="hidden" name="CAT_IDS[]" value="">';
+}
 $tabControl->EndCustomField('CAT_IDS', $strHidden);
 
 $tabControl->BeginNextFormTab();
@@ -620,7 +758,9 @@ $TMP_ID = 0;
 $intDiscountID = ((0 == $ID) || ($boolCopy) ? '-' . $TMP_ID : $ID);
 $strSubTMP_ID = $TMP_ID;
 $boolCouponsReadOnly = !$USER->CanDoOperation('catalog_discount');
-$strSubElementAjaxPath = '/bitrix/admin/cat_subcoupons_admin.php?lang=' . LANGUAGE_ID . '&find_discount_id=' . $intDiscountID . '&TMP_ID=' . urlencode($strSubTMP_ID);
+$strSubElementAjaxPath = '/bitrix/admin/cat_subcoupons_admin.php?lang=' . LANGUAGE_ID . '&find_discount_id=' . $intDiscountID . '&TMP_ID=' . urlencode(
+        $strSubTMP_ID
+    );
 if (0 < $intDiscountID && $boolShowCoupons && !$boolCopy) {
     ?>
     <tr id="tr_COUPONS">
@@ -644,8 +784,11 @@ if (0 < $intDiscountID && $boolShowCoupons && !$boolCopy) {
             <select name="COUPON_TYPE" size="3"><?
                 foreach ($arCouponTypeList as $strType => $strName) {
                     ?>
-                    <option
-                    value="<?= htmlspecialcharsbx($strType); ?>" <? echo($strType == $arCoupons['COUPON_TYPE'] ? 'selected' : ''); ?>><?= htmlspecialcharsbx($strName); ?></option><?
+                    <optionvalue="<?= htmlspecialcharsbx(
+                        $strType
+                    ); ?>" <? echo($strType == $arCoupons['COUPON_TYPE'] ? 'selected' : ''); ?>><?= htmlspecialcharsbx(
+                        $strName
+                    ); ?></option><?
                 }
                 ?></select>
         </td>
@@ -659,8 +802,20 @@ if (0 < $intDiscountID && $boolShowCoupons && !$boolCopy) {
 $tabControl->EndCustomField('COUPONS');
 
 $tabControl->BeginNextFormTab();
-$tabControl->AddEditField("XML_ID", GetMessage("BT_CAT_DISCOUNT_EDIT_FIELDS_XML_ID") . ":", false, array("size" => 50, "maxlength" => 255), htmlspecialcharsbx($arDiscount['XML_ID']));
-$tabControl->AddEditField("SORT", GetMessage("DSC_SORT") . ":", false, array("size" => 20, "maxlength" => 20), intval($arDiscount['SORT']));
+$tabControl->AddEditField(
+    "XML_ID",
+    GetMessage("BT_CAT_DISCOUNT_EDIT_FIELDS_XML_ID") . ":",
+    false,
+    array("size" => 50, "maxlength" => 255),
+    htmlspecialcharsbx($arDiscount['XML_ID'])
+);
+$tabControl->AddEditField(
+    "SORT",
+    GetMessage("DSC_SORT") . ":",
+    false,
+    array("size" => 20, "maxlength" => 20),
+    intval($arDiscount['SORT'])
+);
 
 $arButtonsParams = array(
     "disabled" => $readOnly,

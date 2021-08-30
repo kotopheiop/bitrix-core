@@ -23,7 +23,6 @@ class OrderUserProperties
 
     function __construct()
     {
-
     }
 
     /**
@@ -31,7 +30,6 @@ class OrderUserProperties
      */
     public static function getInstance()
     {
-
         if (!isset(self::$instance)) {
             self::$instance = new self();
         }
@@ -64,13 +62,15 @@ class OrderUserProperties
     public static function getFirstId($personTypeId, $userId)
     {
         if (empty(static::getInstance()->profiles)) {
-            static::loadFromDB(array(
-                'order' => array("DATE_UPDATE" => "DESC"),
-                'filter' => array(
-                    "PERSON_TYPE_ID" => $personTypeId,
-                    "USER_ID" => $userId
-                ),
-            ));
+            static::loadFromDB(
+                array(
+                    'order' => array("DATE_UPDATE" => "DESC"),
+                    'filter' => array(
+                        "PERSON_TYPE_ID" => $personTypeId,
+                        "USER_ID" => $userId
+                    ),
+                )
+            );
         }
 
         if (!empty(static::getInstance()->profiles) && is_array(static::getInstance()->profiles)) {
@@ -89,12 +89,15 @@ class OrderUserProperties
      */
     public static function checkCorrect($profileId, $personTypeId, $userId)
     {
-        if (static::getList(array(
-            'filter' => array(
-                "ID" => $profileId,
-                "PERSON_TYPE_ID" => $personTypeId,
-                "USER_ID" => $userId
-            )))->fetch()) {
+        if (static::getList(
+            array(
+                'filter' => array(
+                    "ID" => $profileId,
+                    "PERSON_TYPE_ID" => $personTypeId,
+                    "USER_ID" => $userId
+                )
+            )
+        )->fetch()) {
             return true;
         } else {
             return false;
@@ -121,22 +124,26 @@ class OrderUserProperties
         $locationCodeList = array();
 
         if ($userId <= 0) {
-            $result->addError(new Error("EMPTY USER ID"));
+            return $result->addError(new Error("EMPTY USER ID"));
         } else {
             $filter['USER_ID'] = $userId;
         }
 
-        if ((int)$personTypeId > 0)
+        if ((int)$personTypeId > 0) {
             $filter['PERSON_TYPE_ID'] = (int)$personTypeId;
+        }
 
-        if ((int)$profileId > 0)
+        if ((int)$profileId > 0) {
             $filter['USER_PROPS_ID'] = (int)$profileId;
+        }
 
         $userPropsValueData = Internals\UserPropsValueTable::getList(
             array(
                 'filter' => $filter,
                 'select' => array(
-                    'ORDER_PROPS_ID', 'USER_PROPS_ID', 'VALUE',
+                    'ORDER_PROPS_ID',
+                    'USER_PROPS_ID',
+                    'VALUE',
                     'PROFILE_NAME' => 'USER_PROPERTY.NAME',
                     'VALUE_ORIG' => 'VALUE',
                     'USER_ID' => 'USER_PROPERTY.USER_ID',
@@ -155,12 +162,13 @@ class OrderUserProperties
         while ($propValue = $userPropsValueData->fetch()) {
             if (($propValue['MULTIPLE'] === 'Y' || $propValue['TYPE'] === 'FILE')
                 && CheckSerializedData($propValue['VALUE'])
-                && ($serialisedValue = @unserialize($propValue['VALUE'])) !== false) {
+                && ($serialisedValue = @unserialize($propValue['VALUE'], ['allowed_classes' => false])) !== false) {
                 $propValue['VALUE'] = $serialisedValue;
             }
 
-            if (!array_key_exists($propValue['PERSON_TYPE_ID'], $resultData))
+            if (!array_key_exists($propValue['PERSON_TYPE_ID'], $resultData)) {
                 $resultData[$propValue['PERSON_TYPE_ID']] = array();
+            }
 
             $resultData[$propValue['PERSON_TYPE_ID']][$propValue['USER_PROPS_ID']]['NAME'] = $propValue['PROFILE_NAME'];
 

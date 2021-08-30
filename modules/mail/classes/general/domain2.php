@@ -96,8 +96,8 @@ class CMailDomain2
 
     public static function addUser($token, $domain, $login, $password, &$error)
     {
-        $domain = trim(strtolower($domain));
-        $login = trim(strtolower($login));
+        $domain = trim(mb_strtolower($domain));
+        $login = trim(mb_strtolower($login));
 
         if (empty($domain)) {
             $error = self::getErrorCode('no_domain');
@@ -112,10 +112,12 @@ class CMailDomain2
         $result = CMailYandex2::addUser($token, $domain, $login, $password, $error);
 
         if ($result !== false) {
-            \Bitrix\Mail\Internals\DomainEmailTable::add(array(
-                'DOMAIN' => $domain,
-                'LOGIN' => $login,
-            ));
+            \Bitrix\Mail\Internals\DomainEmailTable::add(
+                array(
+                    'DOMAIN' => $domain,
+                    'LOGIN' => $login,
+                )
+            );
 
             // @TODO: temporary fix for simple passwords
             \CMailYandex2::editUser($token, $domain, $login, array('password' => $password), $dummy);
@@ -167,7 +169,7 @@ class CMailDomain2
     {
         global $DB;
 
-        $domain = trim(strtolower($domain));
+        $domain = trim(mb_strtolower($domain));
         $users = array();
 
         if (empty($domain)) {
@@ -176,14 +178,17 @@ class CMailDomain2
         }
 
         if (!$resync) {
-            $res = \Bitrix\Mail\Internals\DomainEmailTable::getList(array(
-                'filter' => array(
-                    '=DOMAIN' => $domain,
-                ),
-            ));
+            $res = \Bitrix\Mail\Internals\DomainEmailTable::getList(
+                array(
+                    'filter' => array(
+                        '=DOMAIN' => $domain,
+                    ),
+                )
+            );
             if ($res !== false) {
-                while ($item = $res->fetch())
+                while ($item = $res->fetch()) {
                     $users[] = $item['LOGIN'];
+                }
             }
         }
 
@@ -194,13 +199,15 @@ class CMailDomain2
             do {
                 $result = CMailYandex2::getDomainUsers($token, $domain, $per_page = 30, ++$page, $error);
 
-                if ($result === false)
+                if ($result === false) {
                     break;
+                }
 
                 foreach ($result['accounts'] as $email) {
                     list($login, $emailDomain) = explode('@', $email['login'], 2);
-                    if ($emailDomain == $domain)
-                        $users[] = trim(strtolower($login));
+                    if ($emailDomain == $domain) {
+                        $users[] = trim(mb_strtolower($login));
+                    }
                 }
             } while ($result['total'] > $per_page * $page);
 
@@ -209,27 +216,34 @@ class CMailDomain2
             if (!$error) {
                 $cached = array();
 
-                $res = \Bitrix\Mail\Internals\DomainEmailTable::getList(array(
-                    'filter' => array(
-                        '=DOMAIN' => $domain,
-                    ),
-                ));
+                $res = \Bitrix\Mail\Internals\DomainEmailTable::getList(
+                    array(
+                        'filter' => array(
+                            '=DOMAIN' => $domain,
+                        ),
+                    )
+                );
                 if ($res !== false) {
-                    while ($item = $res->fetch())
+                    while ($item = $res->fetch()) {
                         $cached[] = $item['LOGIN'];
+                    }
                 }
 
                 foreach (array_diff($cached, $users) as $login) {
-                    \Bitrix\Mail\Internals\DomainEmailTable::delete(array(
-                        'DOMAIN' => $domain,
-                        'LOGIN' => $login,
-                    ));
+                    \Bitrix\Mail\Internals\DomainEmailTable::delete(
+                        array(
+                            'DOMAIN' => $domain,
+                            'LOGIN' => $login,
+                        )
+                    );
                 }
                 foreach (array_diff($users, $cached) as $login) {
-                    \Bitrix\Mail\Internals\DomainEmailTable::add(array(
-                        'DOMAIN' => $domain,
-                        'LOGIN' => $login,
-                    ));
+                    \Bitrix\Mail\Internals\DomainEmailTable::add(
+                        array(
+                            'DOMAIN' => $domain,
+                            'LOGIN' => $login,
+                        )
+                    );
                 }
             }
         }
@@ -249,8 +263,9 @@ class CMailDomain2
             $result = CMailYandex2::checkLogo($token, $domain, $error);
 
             if ($result !== false) {
-                if (preg_match('~^https?://avatars\.yandex\.net/get-for-domain/~i', $result))
+                if (preg_match('~^https?://avatars\.yandex\.net/get-for-domain/~i', $result)) {
                     return false;
+                }
             } else {
                 $error = self::getErrorCode2($error);
                 return null;
@@ -281,8 +296,8 @@ class CMailDomain2
 
     public static function deleteUser($token, $domain, $login, &$error)
     {
-        $domain = trim(strtolower($domain));
-        $login = trim(strtolower($login));
+        $domain = trim(mb_strtolower($domain));
+        $login = trim(mb_strtolower($login));
 
         if (empty($domain)) {
             $error = self::getErrorCode('no_domain');
@@ -297,10 +312,12 @@ class CMailDomain2
         $result = CMailYandex2::deleteUser($token, $domain, $login, $error);
 
         if ($result !== false) {
-            \Bitrix\Mail\Internals\DomainEmailTable::delete(array(
-                'DOMAIN' => $domain,
-                'LOGIN' => $login,
-            ));
+            \Bitrix\Mail\Internals\DomainEmailTable::delete(
+                array(
+                    'DOMAIN' => $domain,
+                    'LOGIN' => $login,
+                )
+            );
 
             return true;
         } else {

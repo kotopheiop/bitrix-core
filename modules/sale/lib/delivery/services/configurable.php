@@ -30,11 +30,13 @@ class Configurable extends Base
     {
         parent::__construct($initParams);
 
-        if (!isset($this->config["MAIN"]["PRICE"]))
+        if (!isset($this->config["MAIN"]["PRICE"])) {
             $this->config["MAIN"]["PRICE"] = "0";
+        }
 
-        if (!isset($initParams["CURRENCY"]))
+        if (!isset($initParams["CURRENCY"])) {
             $initParams["CURRENCY"] = "RUB";
+        }
 
         if (!isset($this->config["MAIN"]["PERIOD"]) || !is_array($this->config["MAIN"]["PERIOD"])) {
             $this->config["MAIN"]["PERIOD"] = array();
@@ -67,23 +69,30 @@ class Configurable extends Base
     {
         $result = "";
 
-        if (IntVal($this->config["MAIN"]["PERIOD"]["FROM"]) > 0 || IntVal($this->config["MAIN"]["PERIOD"]["TO"]) > 0) {
+        if (intval($this->config["MAIN"]["PERIOD"]["FROM"]) > 0 || intval($this->config["MAIN"]["PERIOD"]["TO"]) > 0) {
             $result = "";
 
-            if (IntVal($this->config["MAIN"]["PERIOD"]["FROM"]) > 0)
-                $result .= " " . Loc::getMessage("SALE_DLVR_HANDL_CONF_PERIOD_FROM") . " " . IntVal($this->config["MAIN"]["PERIOD"]["FROM"]);
+            if (intval($this->config["MAIN"]["PERIOD"]["FROM"]) > 0) {
+                $result .= " " . Loc::getMessage("SALE_DLVR_HANDL_CONF_PERIOD_FROM") . " " . intval(
+                        $this->config["MAIN"]["PERIOD"]["FROM"]
+                    );
+            }
 
-            if (IntVal($this->config["MAIN"]["PERIOD"]["TO"]) > 0)
-                $result .= " " . Loc::getMessage("SALE_DLVR_HANDL_CONF_PERIOD_TO") . " " . IntVal($this->config["MAIN"]["PERIOD"]["TO"]);
+            if (intval($this->config["MAIN"]["PERIOD"]["TO"]) > 0) {
+                $result .= " " . Loc::getMessage("SALE_DLVR_HANDL_CONF_PERIOD_TO") . " " . intval(
+                        $this->config["MAIN"]["PERIOD"]["TO"]
+                    );
+            }
 
-            if ($this->config["MAIN"]["PERIOD"]["TYPE"] == "MIN")
+            if ($this->config["MAIN"]["PERIOD"]["TYPE"] == "MIN") {
                 $result .= " " . Loc::getMessage("SALE_DLVR_HANDL_CONF_PERIOD_MIN") . " ";
-            elseif ($this->config["MAIN"]["PERIOD"]["TYPE"] == "H")
+            } elseif ($this->config["MAIN"]["PERIOD"]["TYPE"] == "H") {
                 $result .= " " . Loc::getMessage("SALE_DLVR_HANDL_CONF_PERIOD_HOUR") . " ";
-            elseif ($this->config["MAIN"]["PERIOD"]["TYPE"] == "M")
+            } elseif ($this->config["MAIN"]["PERIOD"]["TYPE"] == "M") {
                 $result .= " " . Loc::getMessage("SALE_DLVR_HANDL_CONF_PERIOD_MONTH") . " ";
-            else
+            } else {
                 $result .= " " . Loc::getMessage("SALE_DLVR_HANDL_CONF_PERIOD_DAY") . " ";
+            }
         }
 
         return $result;
@@ -126,8 +135,9 @@ class Configurable extends Base
 
         if (Loader::includeModule('currency')) {
             $currencyList = Currency\CurrencyManager::getCurrencyList();
-            if (isset($currencyList[$this->currency]))
+            if (isset($currencyList[$this->currency])) {
                 $currency = $currencyList[$this->currency];
+            }
             unset($currencyList);
         }
 
@@ -190,16 +200,20 @@ class Configurable extends Base
 
     public function prepareFieldsForSaving(array $fields)
     {
-        if ((!isset($fields["CODE"]) || intval($fields["CODE"]) < 0) && isset($fields["ID"]) && intval($fields["ID"]) > 0)
+        if ((!isset($fields["CODE"]) || intval($fields["CODE"]) < 0) && isset($fields["ID"]) && intval(
+                $fields["ID"]
+            ) > 0) {
             $fields["CODE"] = $fields["ID"];
+        }
 
         return parent::prepareFieldsForSaving($fields);
     }
 
     public static function onAfterAdd($serviceId, array $fields = array())
     {
-        if ($serviceId <= 0)
+        if ($serviceId <= 0) {
             return false;
+        }
 
         $res = Manager::update($serviceId, array('CODE' => $serviceId));
         return $res->isSuccess();

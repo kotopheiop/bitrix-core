@@ -39,12 +39,14 @@ class FilterEntity extends \Bitrix\Landing\Internals\BaseTable
 
         if ($filterId) {
             $select = ['SOURCE_ID', 'FILTER', 'FILTER_HASH'];
-            $res = self::getList([
-                'select' => $select,
-                'filter' => [
-                    'ID' => $filterId
+            $res = self::getList(
+                [
+                    'select' => $select,
+                    'filter' => [
+                        'ID' => $filterId
+                    ]
                 ]
-            ]);
+            );
             if ($row = $res->fetch()) {
                 $filter = $row;
             }
@@ -92,22 +94,26 @@ class FilterEntity extends \Bitrix\Landing\Internals\BaseTable
                 );
                 // add new entity if not exist
                 $filterId = 0;
-                $res = self::getList([
-                    'select' => [
-                        'ID'
-                    ],
-                    'filter' => [
-                        '=FILTER_HASH' => $hashFilter
+                $res = self::getList(
+                    [
+                        'select' => [
+                            'ID'
+                        ],
+                        'filter' => [
+                            '=FILTER_HASH' => $hashFilter
+                        ]
                     ]
-                ]);
+                );
                 if ($row = $res->fetch()) {
                     $filterId = $row['ID'];
                 } else {
-                    $res = self::add([
-                        'SOURCE_ID' => $sourceId,
-                        'FILTER_HASH' => $hashFilter,
-                        'FILTER' => $sourceFilter
-                    ]);
+                    $res = self::add(
+                        [
+                            'SOURCE_ID' => $sourceId,
+                            'FILTER_HASH' => $hashFilter,
+                            'FILTER' => $sourceFilter
+                        ]
+                    );
                     if ($res->isSuccess()) {
                         $filterId = $res->getId();
                     }

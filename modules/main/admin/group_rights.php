@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 $MODULE_RIGHT = $APPLICATION->GetGroupRight($module_id);
@@ -6,11 +7,12 @@ $MODULE_RIGHT = $APPLICATION->GetGroupRight($module_id);
 $md = CModule::CreateModuleObject($module_id);
 
 $arFilter = Array("ACTIVE" => "Y");
-if ($md->SHOW_SUPER_ADMIN_GROUP_RIGHTS != "Y")
+if ($md->SHOW_SUPER_ADMIN_GROUP_RIGHTS != "Y") {
     $arFilter["ADMIN"] = "N";
+}
 
 $arGROUPS = array();
-$z = CGroup::GetList($v1 = "sort", $v2 = "asc", $arFilter);
+$z = CGroup::GetList("sort", "asc", $arFilter);
 while ($zr = $z->Fetch()) {
     $ar = array();
     $ar["ID"] = intval($zr["ID"]);
@@ -21,18 +23,34 @@ while ($zr = $z->Fetch()) {
 if (!function_exists("__GroupRightsShowRow")) {
     function __GroupRightsShowRowDefault($module_id, $ar, $arSites, $arRightsUseSites, $site_id_tmp)
     {
-        $GROUP_DEFAULT_RIGHT = COption::GetOptionString($module_id, "GROUP_DEFAULT_RIGHT", false, (strlen($site_id_tmp) > 0 ? $site_id_tmp : ""), (strlen($site_id_tmp) > 0));
+        $GROUP_DEFAULT_RIGHT = COption::GetOptionString(
+            $module_id,
+            "GROUP_DEFAULT_RIGHT",
+            false,
+            ($site_id_tmp <> '' ? $site_id_tmp : ""),
+            ($site_id_tmp <> '')
+        );
         if (!$GROUP_DEFAULT_RIGHT) {
-            if (strlen($site_id_tmp) == 0)
+            if ($site_id_tmp == '') {
                 $GROUP_DEFAULT_RIGHT = "D";
-            else
+            } else {
                 return;
+            }
         }
 
         $titleCol = bitrix_sessid_post() . "<b>" . GetMessage("MAIN_BY_DEFAULT") . "</b>";
 
-        __GroupRightsShowRow($titleCol, false, 0, $ar, $GROUP_DEFAULT_RIGHT, $site_id_tmp, $arRightsUseSites, $arSites, false);
-
+        __GroupRightsShowRow(
+            $titleCol,
+            false,
+            0,
+            $ar,
+            $GROUP_DEFAULT_RIGHT,
+            $site_id_tmp,
+            $arRightsUseSites,
+            $arSites,
+            false
+        );
     }
 
     function __GetGroupRight($module_id, $groupID, $site_id_tmp, $arSites, $arGROUPS)
@@ -82,13 +100,36 @@ if (!function_exists("__GroupRightsShowRow")) {
             return;
         }
 
-        $titleCol = $value["NAME"] . " [<a title=\"" . GetMessage("MAIN_USER_GROUP_TITLE") . "\" href=\"/bitrix/admin/group_edit.php?ID=" . $value["ID"] . "&amp;lang=" . LANGUAGE_ID . "\">" . $value["ID"] . "</a>]:" . (($value["ID"] == 1 && $md->SHOW_SUPER_ADMIN_GROUP_RIGHTS == "Y") ? "<br><small>" . GetMessage("MAIN_SUPER_ADMIN_RIGHTS_COMMENT") . "</small>" : "");
+        $titleCol = $value["NAME"] . " [<a title=\"" . GetMessage(
+                "MAIN_USER_GROUP_TITLE"
+            ) . "\" href=\"/bitrix/admin/group_edit.php?ID=" . $value["ID"] . "&amp;lang=" . LANGUAGE_ID . "\">" . $value["ID"] . "</a>]:" . (($value["ID"] == 1 && $md->SHOW_SUPER_ADMIN_GROUP_RIGHTS == "Y") ? "<br><small>" . GetMessage(
+                    "MAIN_SUPER_ADMIN_RIGHTS_COMMENT"
+                ) . "</small>" : "");
 
-        __GroupRightsShowRow($titleCol, $value["ID"], $value["ID"], $ar, $v, $site_id_tmp, $arRightsUseSites, $arSites, true);
+        __GroupRightsShowRow(
+            $titleCol,
+            $value["ID"],
+            $value["ID"],
+            $ar,
+            $v,
+            $site_id_tmp,
+            $arRightsUseSites,
+            $arSites,
+            true
+        );
     }
 
-    function __GroupRightsShowRow($titleCol, $groupID, $group_id, $ar, $v, $site_id_tmp, $arRightsUseSites, $arSites, $useDefault = true)
-    {
+    function __GroupRightsShowRow(
+        $titleCol,
+        $groupID,
+        $group_id,
+        $ar,
+        $v,
+        $site_id_tmp,
+        $arRightsUseSites,
+        $arSites,
+        $useDefault = true
+    ) {
         ?>
         <tr>
         <td width="40%"><?= $titleCol ?></td>
@@ -99,32 +140,43 @@ if (!function_exists("__GroupRightsShowRow")) {
 
             $ref = $ar["reference"];
             $ref_id = $ar["reference_id"];
-            if (!is_array($ref))
+            if (!is_array($ref)) {
                 $ref = $ar["REFERENCE"];
-            if (!is_array($ref_id))
+            }
+            if (!is_array($ref_id)) {
                 $ref_id = $ar["REFERENCE_ID"];
+            }
 
-            if ($useDefault)
+            if ($useDefault) {
                 $strReturnBox .= '<option value="">' . GetMessage("MAIN_DEFAULT") . '</option>';
+            }
 
             for ($i = 0, $n = count($ref); $i < $n; $i++) {
                 $strReturnBox .= '<option';
-                if (strcasecmp($ref_id[$i], htmlspecialcharsbx($v)) == 0)
+                if (strcasecmp($ref_id[$i], htmlspecialcharsbx($v)) == 0) {
                     $strReturnBox .= ' selected';
-                $strReturnBox .= ' value="' . htmlspecialcharsbx($ref_id[$i]) . '">' . htmlspecialcharsbx($ref[$i]) . '</option>';
+                }
+                $strReturnBox .= ' value="' . htmlspecialcharsbx($ref_id[$i]) . '">' . htmlspecialcharsbx(
+                        $ref[$i]
+                    ) . '</option>';
             }
 
             echo $strReturnBox . '</select>';
             ?></td>
         <td width="20%"><span style="display: <?= (in_array($v, $arRightsUseSites) ? "inline-block" : "none") ?>;"><?
-                echo SelectBoxFromArray("SITES[]", $arSites, htmlspecialcharsbx($site_id_tmp), GetMessage("group_rights_sites_all"), "class='typeselect' style='width: 150px;'");
+                echo SelectBoxFromArray(
+                    "SITES[]",
+                    $arSites,
+                    htmlspecialcharsbx($site_id_tmp),
+                    GetMessage("group_rights_sites_all"),
+                    "class='typeselect' style='width: 150px;'"
+                );
                 ?></span></td>
         <td width="0%"><a href="javascript:void(0)" onClick="__GroupRightsDeleteRow(this)"><img
                         src="/bitrix/themes/.default/images/actions/delete_button.gif" border="0" width="20"
                         height="20"></a></td>
         </tr><?
     }
-
 }
 
 
@@ -135,16 +187,17 @@ if ($MODULE_RIGHT != "D") :
         "reference" => array()
     );
 
-    $rsSites = CSite::GetList($by = "sort", $order = "asc", Array("ACTIVE" => "Y"));
+    $rsSites = CSite::GetList("sort", "asc", Array("ACTIVE" => "Y"));
     while ($arSite = $rsSites->GetNext()) {
         $arSites["reference_id"][] = $arSite["ID"];
         $arSites["reference"][] = "[" . $arSite["ID"] . "] " . $arSite["NAME"];
     }
 
-    if (method_exists($md, "GetModuleRightList"))
+    if (method_exists($md, "GetModuleRightList")) {
         $ar = call_user_func(array($md, "GetModuleRightList"));
-    else
+    } else {
         $ar = $APPLICATION->GetDefaultRightList();
+    }
 
 
     $arRightsUseSites = array();
@@ -184,7 +237,7 @@ if ($MODULE_RIGHT != "D") :
         "}\n" .
         "</script>\n";
 
-    if ($REQUEST_METHOD == "POST" && strlen($Update) > 0 && $MODULE_RIGHT == "W" && check_bitrix_sessid()) {
+    if ($REQUEST_METHOD == "POST" && $Update <> '' && $MODULE_RIGHT == "W" && check_bitrix_sessid()) {
         if (count($GROUPS) > 0) {
 // echo "Remove all options<br>";
             COption::RemoveOption($module_id, "GROUP_DEFAULT_RIGHT");
@@ -196,35 +249,47 @@ if ($MODULE_RIGHT != "D") :
             }
 
             foreach ($GROUPS as $i => $group_id) {
-                if (strlen($group_id) <= 0)
+                if ($group_id == '') {
                     continue;
+                }
 
                 if (
                     !array_key_exists($i, $RIGHTS)
-                    || strlen($RIGHTS[$i]) <= 0
-                )
+                    || $RIGHTS[$i] == ''
+                ) {
                     continue;
+                }
 
                 if (intval($group_id) == 0) {
                     if (
                         !in_array($RIGHTS[$i], $arRightsUseSites)
-                        || strlen($SITES[$i]) <= 0
+                        || $SITES[$i] == ''
                     ) {
 // echo "Set Default for all sites: ". $RIGHTS[$i]."<br>";
-                        COption::SetOptionString($module_id, "GROUP_DEFAULT_RIGHT", $RIGHTS[$i], "Right for groups by default", "");
+                        COption::SetOptionString(
+                            $module_id,
+                            "GROUP_DEFAULT_RIGHT",
+                            $RIGHTS[$i],
+                            "Right for groups by default",
+                            ""
+                        );
                     } else {
 // echo "Set Default for site ".$SITES[$i].": ".$RIGHTS[$i]."<br>";
-                        COption::SetOptionString($module_id, "GROUP_DEFAULT_RIGHT", $RIGHTS[$i], "Right for groups by default for site " . $SITES[$i], $SITES[$i]);
-
+                        COption::SetOptionString(
+                            $module_id,
+                            "GROUP_DEFAULT_RIGHT",
+                            $RIGHTS[$i],
+                            "Right for groups by default for site " . $SITES[$i],
+                            $SITES[$i]
+                        );
                     }
                 } else {
                     if (
                         !in_array($RIGHTS[$i], $arRightsUseSites)
-                        || strlen($SITES[$i]) <= 0
+                        || $SITES[$i] == ''
                     ) {
 // echo "Set Right for group ".$group_id." all sites: ".$RIGHTS[$i]."<br>";						
                         $APPLICATION->SetGroupRight($module_id, $group_id, $RIGHTS[$i], false);
-
                     } else {
 // echo "Set Right for group ".$group_id." ".$SITES[$i].": ".$RIGHTS[$i]."<br>";
                         $APPLICATION->SetGroupRight($module_id, $group_id, $RIGHTS[$i], $SITES[$i]);
@@ -263,21 +328,33 @@ if ($MODULE_RIGHT != "D") :
 
         $ref = $ar["reference"];
         $ref_id = $ar["reference_id"];
-        if (!is_array($ref))
+        if (!is_array($ref)) {
             $ref = $ar["REFERENCE"];
-        if (!is_array($ref_id))
+        }
+        if (!is_array($ref_id)) {
             $ref_id = $ar["REFERENCE_ID"];
+        }
 
-        if ($useDefault)
+        if ($useDefault) {
             $strReturnBox .= '<option value="">' . GetMessage("MAIN_DEFAULT") . '</option>';
+        }
 
-        for ($i = 0, $n = count($ref); $i < $n; $i++)
-            $strReturnBox .= '<option value="' . htmlspecialcharsbx($ref_id[$i]) . '">' . htmlspecialcharsbx($ref[$i]) . '</option>';
+        for ($i = 0, $n = count($ref); $i < $n; $i++) {
+            $strReturnBox .= '<option value="' . htmlspecialcharsbx($ref_id[$i]) . '">' . htmlspecialcharsbx(
+                    $ref[$i]
+                ) . '</option>';
+        }
 
         echo $strReturnBox . '</select>';
         ?></td>
     <td width="20%"><span style="display: none;"><?
-            echo SelectBoxFromArray("SITES[]", $arSites, "", GetMessage("group_rights_sites_all"), "class='typeselect' style='width: 150px;'");
+            echo SelectBoxFromArray(
+                "SITES[]",
+                $arSites,
+                "",
+                GetMessage("group_rights_sites_all"),
+                "class='typeselect' style='width: 150px;'"
+            );
             ?></span></td>
     <td width="0%"></td>
     </tr>

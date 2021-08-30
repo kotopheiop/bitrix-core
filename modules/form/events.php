@@ -1,36 +1,46 @@
-<?
+<?php
 
 class CFormEventHandlers
 {
-    function sendOnAfterResultStatusChange($WEB_FORM_ID, $RESULT_ID, $NEW_STATUS_ID = false, $CHECK_RIGHTS = 'Y')
-    {
+    public static function sendOnAfterResultStatusChange(
+        $WEB_FORM_ID,
+        $RESULT_ID,
+        $NEW_STATUS_ID = false,
+        $CHECK_RIGHTS = 'Y'
+    ) {
         $NEW_STATUS_ID = intval($NEW_STATUS_ID);
 
         $dbRes = CForm::GetByID($WEB_FORM_ID);
-        if (!$arForm = $dbRes->Fetch())
+        if (!$arForm = $dbRes->Fetch()) {
             return;
+        }
 
         CTimeZone::Disable();
         $dbRes = CFormResult::GetByID($RESULT_ID);
         CTimeZone::Enable();
 
-        if (!($arResult = $dbRes->Fetch()) || !$arResult['USER_ID'])
+        if (!($arResult = $dbRes->Fetch()) || !$arResult['USER_ID']) {
             return;
+        }
 
         $dbRes = CUser::GetByID($arResult['USER_ID']);
-        if (!($arUser = $dbRes->Fetch()))
+        if (!($arUser = $dbRes->Fetch())) {
             return;
+        }
 
-        if (!$NEW_STATUS_ID)
+        if (!$NEW_STATUS_ID) {
             $NEW_STATUS_ID = CFormStatus::GetDefault($WEB_FORM_ID);
+        }
 
         $dbRes = CFormStatus::GetByID($NEW_STATUS_ID);
-        if (!($arStatus = $dbRes->Fetch()) || strlen($arStatus['MAIL_EVENT_TYPE']) <= 0)
+        if (!($arStatus = $dbRes->Fetch()) || $arStatus['MAIL_EVENT_TYPE'] == '') {
             return;
+        }
 
         $arTemplates = CFormStatus::GetMailTemplateArray($NEW_STATUS_ID);
-        if (!is_array($arTemplates) || count($arTemplates) <= 0)
+        if (!is_array($arTemplates) || count($arTemplates) <= 0) {
             return;
+        }
 
         $arEventFields = array(
             "EMAIL_TO" => $arUser['EMAIL'],
@@ -47,15 +57,18 @@ class CFormEventHandlers
             "RS_STATUS_NAME" => $arStatus["TITLE"],
         );
 
-        $dbRes = CEventMessage::GetList($by = "id", $order = "asc", array(
-            'ID' => $arTemplates,
-            "ACTIVE" => "Y",
-            "EVENT_NAME" => $arStatus["MAIL_EVENT_TYPE"]
-        ));
+        $dbRes = CEventMessage::GetList(
+            "id",
+            "asc",
+            array(
+                'ID' => $arTemplates,
+                "ACTIVE" => "Y",
+                "EVENT_NAME" => $arStatus["MAIL_EVENT_TYPE"]
+            )
+        );
 
-        while ($arTemplate = $dbRes->Fetch())
+        while ($arTemplate = $dbRes->Fetch()) {
             CEvent::Send($arTemplate["EVENT_NAME"], $arTemplate["SITE_ID"], $arEventFields, "Y", $arTemplate["ID"]);
+        }
     }
 }
-
-?>

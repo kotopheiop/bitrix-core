@@ -29,10 +29,12 @@ class Indexer
         if ($lastId) {
             $filter['>ID'] = $lastId;
         }
-        $list = Model\LetterTable::getList([
-            'filter' => $filter,
-            'order' => ['ID' => 'ASC']
-        ]);
+        $list = Model\LetterTable::getList(
+            [
+                'filter' => $filter,
+                'order' => ['ID' => 'ASC']
+            ]
+        );
 
         $nextId = null;
         foreach ($list as $item) {

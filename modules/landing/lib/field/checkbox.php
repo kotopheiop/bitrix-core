@@ -14,9 +14,11 @@ class Checkbox extends \Bitrix\Landing\Field
      */
     public function viewForm(array $params = array())
     {
-        $name = \htmlspecialcharsbx(isset($params['name_format'])
-            ? str_replace('#field_code#', $this->code, $params['name_format'])
-            : $this->code);
+        $name = \htmlspecialcharsbx(
+            isset($params['name_format'])
+                ? str_replace('#field_code#', $this->code, $params['name_format'])
+                : $this->code
+        );
         ?>
         <input type="hidden" name="<?= $name ?>" value="N"/>
         <input type="checkbox" <?

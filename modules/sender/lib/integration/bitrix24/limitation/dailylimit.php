@@ -78,7 +78,6 @@ class DailyLimit
         }
 
         return min($senderLimit, $b24Limit);
-
     }
 
     /**

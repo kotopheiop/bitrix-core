@@ -25,55 +25,63 @@ class FixSrcImg extends Stepper
         $finished = true;
 
         // gets common quantity
-        $res = BlockTable::getList(array(
-            'select' => array(
-                new \Bitrix\Main\Entity\ExpressionField(
-                    'CNT', 'COUNT(*)'
-                )
-            ),
-            'filter' => [
-                'LOGIC' => 'OR',
-                'CONTENT' => [
-                    '%http:///%',
-                    '%https:///%',
-                ]
-            ]
-        ));
-        if ($row = $res->fetch()) {
-            $result['count'] = $row['CNT'];
-        }
-
-        // gets group for update
-        $res = BlockTable::getList(array(
-            'select' => array(
-                'ID', 'CONTENT'
-            ),
-            'filter' => array(
-                '>ID' => $lastId,
-                [
+        $res = BlockTable::getList(
+            array(
+                'select' => array(
+                    new \Bitrix\Main\Entity\ExpressionField(
+                        'CNT', 'COUNT(*)'
+                    )
+                ),
+                'filter' => [
                     'LOGIC' => 'OR',
                     'CONTENT' => [
                         '%http:///%',
                         '%https:///%',
                     ]
                 ]
-            ),
-            'order' => array(
-                'ID' => 'ASC'
-            ),
-            'limit' => 10
-        ));
+            )
+        );
+        if ($row = $res->fetch()) {
+            $result['count'] = $row['CNT'];
+        }
+
+        // gets group for update
+        $res = BlockTable::getList(
+            array(
+                'select' => array(
+                    'ID',
+                    'CONTENT'
+                ),
+                'filter' => array(
+                    '>ID' => $lastId,
+                    [
+                        'LOGIC' => 'OR',
+                        'CONTENT' => [
+                            '%http:///%',
+                            '%https:///%',
+                        ]
+                    ]
+                ),
+                'order' => array(
+                    'ID' => 'ASC'
+                ),
+                'limit' => 10
+            )
+        );
         while ($row = $res->fetch()) {
             $lastId = $row['ID'];
             $result['steps']++;
 
-            BlockTable::update($row['ID'], [
-                'CONTENT' => str_replace(
-                    ['http:///', 'https:///'],
-                    '/',
-                    $row['CONTENT']
-                )
-            ]);
+            BlockTable::update(
+                $row['ID'],
+                [
+                    'CONTENT' => str_replace(
+                        ['http:///', 'https:///'],
+                        '/',
+                        $row['CONTENT']
+                    )
+                ]
+            );
 
             $finished = false;
         }

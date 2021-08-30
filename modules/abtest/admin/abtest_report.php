@@ -9,25 +9,38 @@ $conversionAvailable = Bitrix\Main\Loader::includeModule('conversion');
 $arLang = $APPLICATION->getLang();
 
 $MOD_RIGHT = $APPLICATION->getGroupRight('abtest');
-if ($MOD_RIGHT < 'R')
+if ($MOD_RIGHT < 'R') {
     $APPLICATION->authForm(getMessage('ACCESS_DENIED'));
+}
 
 $ID = intval($ID);
-$abtest = Bitrix\ABTest\ABTestTable::getList(array(
-    'filter' => array('=ID' => $ID),
-    'select' => array('*', 'USER_NAME' => 'USER.NAME', 'USER_LAST_NAME' => 'USER.LAST_NAME', 'USER_SECOND_NAME' => 'USER.SECOND_NAME', 'USER_TITLE' => 'USER.TITLE', 'USER_LOGIN' => 'USER.LOGIN')
-))->fetch();
+$abtest = Bitrix\ABTest\ABTestTable::getList(
+    array(
+        'filter' => array('=ID' => $ID),
+        'select' => array(
+            '*',
+            'USER_NAME' => 'USER.NAME',
+            'USER_LAST_NAME' => 'USER.LAST_NAME',
+            'USER_SECOND_NAME' => 'USER.SECOND_NAME',
+            'USER_TITLE' => 'USER.TITLE',
+            'USER_LOGIN' => 'USER.LOGIN'
+        )
+    )
+)->fetch();
 
 if (empty($abtest) || $abtest['ENABLED'] != 'Y') {
-    $APPLICATION->setTitle(empty($abtest['NAME'])
-        ? str_replace('#ID#', $ID, getMessage('ABTEST_REPORT_TITLE1'))
-        : str_replace('#NAME#', $abtest['NAME'], getMessage('ABTEST_REPORT_TITLE2'))
+    $APPLICATION->setTitle(
+        empty($abtest['NAME'])
+            ? str_replace('#ID#', $ID, getMessage('ABTEST_REPORT_TITLE1'))
+            : str_replace('#NAME#', $abtest['NAME'], getMessage('ABTEST_REPORT_TITLE2'))
     );
 
-    $message = new CAdminMessage(array(
-        'MESSAGE' => getMessage('ABTEST_REPORT_NOTFOUND'),
-        'DETAILS' => getMessage('ABTEST_REPORT_DISABLED')
-    ));
+    $message = new CAdminMessage(
+        array(
+            'MESSAGE' => getMessage('ABTEST_REPORT_NOTFOUND'),
+            'DETAILS' => getMessage('ABTEST_REPORT_DISABLED')
+        )
+    );
 
     require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php');
 
@@ -40,31 +53,38 @@ if (empty($abtest) || $abtest['ENABLED'] != 'Y') {
 if ($abtest['ACTIVE'] == 'Y') {
     $active_test = $abtest;
 } else {
-    $active_test = Bitrix\ABTest\ABTestTable::getList(array(
-        'order' => array('SORT' => 'ASC'),
-        'filter' => array('SITE_ID' => $abtest['SITE_ID'], 'ACTIVE' => 'Y')
-    ))->fetch();
+    $active_test = Bitrix\ABTest\ABTestTable::getList(
+        array(
+            'order' => array('SORT' => 'ASC'),
+            'filter' => array('SITE_ID' => $abtest['SITE_ID'], 'ACTIVE' => 'Y')
+        )
+    )->fetch();
 }
 
 $arGraphData = array();
 
-if ($conversionAvailable)
+if ($conversionAvailable) {
     $conversionRates = Bitrix\Conversion\RateManager::getTypes(array('ACTIVE' => true));
+}
 
 if (!empty($conversionRates)) {
     reset($conversionRates);
     $baseRate = key($conversionRates);
     $allRates = array_keys($conversionRates);
 
-    usort($allRates, function ($a, $b) use ($conversionRates) {
-        $a = $conversionRates[$a];
-        $b = $conversionRates[$b];
-        return $a['MODULE'] == $b['MODULE'] ? $b['SORT'] - $a['SORT'] : $a['SORT'] - $b['SORT'];
-    });
+    usort(
+        $allRates,
+        function ($a, $b) use ($conversionRates) {
+            $a = $conversionRates[$a];
+            $b = $conversionRates[$b];
+            return $a['MODULE'] == $b['MODULE'] ? $b['SORT'] - $a['SORT'] : $a['SORT'] - $b['SORT'];
+        }
+    );
 
     $funnelRates = array('sale_cart', 'sale_order', 'sale_payment');
-    if (array_diff($funnelRates, $allRates))
+    if (array_diff($funnelRates, $allRates)) {
         $funnelRates = null;
+    }
 
     $reportContext = new Bitrix\Conversion\ReportContext;
 
@@ -72,24 +92,35 @@ if (!empty($conversionRates)) {
     $reportContext->setAttribute('abtest', $ID);
 
     $reportContext->setAttribute('abtest_section', 'A');
-    $arGroupAData = $reportContext->getRatesDeprecated($conversionRates, array(), array('FORMAT' => 'Y-m-d', 'SELECT' => 'RATE'));
+    $arGroupAData = $reportContext->getRatesDeprecated(
+        $conversionRates,
+        array(),
+        array('FORMAT' => 'Y-m-d', 'SELECT' => 'RATE')
+    );
 
     $reportContext->unsetAttribute('abtest_section', 'A');
     $reportContext->setAttribute('abtest_section', 'B');
-    $arGroupBData = $reportContext->getRatesDeprecated($conversionRates, array(), array('FORMAT' => 'Y-m-d', 'SELECT' => 'RATE'));
+    $arGroupBData = $reportContext->getRatesDeprecated(
+        $conversionRates,
+        array(),
+        array('FORMAT' => 'Y-m-d', 'SELECT' => 'RATE')
+    );
 
-    foreach ($arGroupAData as $type => $data)
+    foreach ($arGroupAData as $type => $data) {
         $arGroupAData[$type]['TYPE'] = $conversionRates[$type];
-    foreach ($arGroupBData as $type => $data)
+    }
+    foreach ($arGroupBData as $type => $data) {
         $arGroupBData[$type]['TYPE'] = $conversionRates[$type];
+    }
 
     $arGroupABaseRate =& $arGroupAData[$baseRate];
     $arGroupBBaseRate =& $arGroupBData[$baseRate];
 
     if (!empty($arGroupABaseRate)) {
         foreach ($arGroupABaseRate['STEPS'] as $date => $rate) {
-            if (!isset($arGraphData[$date]))
+            if (!isset($arGraphData[$date])) {
                 $arGraphData[$date] = array('date' => $date);
+            }
 
             $arGraphData[$date]['value_a'] = round($rate * 100, 2);
         }
@@ -97,14 +128,16 @@ if (!empty($conversionRates)) {
 
     if (!empty($arGroupBBaseRate)) {
         foreach ($arGroupBBaseRate['STEPS'] as $date => $rate) {
-            if (!isset($arGraphData[$date]))
+            if (!isset($arGraphData[$date])) {
                 $arGraphData[$date] = array('date' => $date);
+            }
 
             $arGraphData[$date]['value_b'] = round($rate * 100, 2);
         }
 
-        if (!empty($arGraphData))
+        if (!empty($arGraphData)) {
             ksort($arGraphData);
+        }
         $arGraphData = array_values($arGraphData);
     }
 }
@@ -117,8 +150,9 @@ function get_plural_messages($prefix)
     $result = array();
 
     $k = 0;
-    while ($form = getMessage($prefix . 'PLURAL_' . ++$k))
+    while ($form = getMessage($prefix . 'PLURAL_' . ++$k)) {
         $result[] = $form;
+    }
 
     return $result;
 }
@@ -141,12 +175,14 @@ function plural_form($n, $forms)
     return isset($forms[$p]) ? $forms[$p] : end($forms);
 }
 
-if (!empty($conversionRates))
+if (!empty($conversionRates)) {
     CUtil::initJSCore(array('amcharts', 'amcharts_funnel', 'amcharts_serial'));
+}
 
-$APPLICATION->setTitle(empty($abtest['NAME'])
-    ? str_replace('#ID#', $ID, getMessage('ABTEST_REPORT_TITLE1'))
-    : str_replace('#NAME#', $abtest['NAME'], getMessage('ABTEST_REPORT_TITLE2'))
+$APPLICATION->setTitle(
+    empty($abtest['NAME'])
+        ? str_replace('#ID#', $ID, getMessage('ABTEST_REPORT_TITLE1'))
+        : str_replace('#NAME#', $abtest['NAME'], getMessage('ABTEST_REPORT_TITLE2'))
 );
 require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php');
 
@@ -161,7 +197,13 @@ $aMenu = array(
 $context = new CAdminContextMenu($aMenu);
 $context->Show();
 
-$aTabs = array(array('DIV' => 'edit1', 'TAB' => getMessage('ABTEST_TAB_NAME'), 'TITLE' => getMessage('ABTEST_TAB_TITLE')));
+$aTabs = array(
+    array(
+        'DIV' => 'edit1',
+        'TAB' => getMessage('ABTEST_TAB_NAME'),
+        'TITLE' => getMessage('ABTEST_TAB_TITLE')
+    )
+);
 $tabControl = new CAdminTabControl("tabControl", $aTabs, false);
 
 ?>
@@ -220,8 +262,9 @@ function pvalue($p1, $p2, $n1, $n2)
 
     $zval = abs($p2 - $p1) / $stdError;
 
-    for ($pval = 0, $i = 6; $i >= 0; $i--)
+    for ($pval = 0, $i = 6; $i >= 0; $i--) {
         $pval = $pval * $zval + $dx[$i];
+    }
     $pval = pow($pval, -16);
     $pval = 0.5 - abs($pval - 0.5);
 
@@ -234,8 +277,10 @@ if ($abtest['START_DATE'] || $abtest['STOP_DATE']) {
     if ($abtest['MIN_AMOUNT'] > 0) {
         if (min($arGroupABaseRate['DENOMINATOR'], $arGroupBBaseRate['DENOMINATOR']) >= $abtest['MIN_AMOUNT']) {
             $pval = pvalue(
-                $arGroupABaseRate['RATE'], $arGroupBBaseRate['RATE'],
-                $arGroupABaseRate['DENOMINATOR'], $arGroupBBaseRate['DENOMINATOR']
+                $arGroupABaseRate['RATE'],
+                $arGroupBBaseRate['RATE'],
+                $arGroupABaseRate['DENOMINATOR'],
+                $arGroupBBaseRate['DENOMINATOR']
             );
 
             $math = array('pwr' => true, 'sgn' => $pval < 0.05);
@@ -252,7 +297,8 @@ $user_name = $abtest['USER_ID'] ? CUser::formatName(
         'LAST_NAME' => $abtest['USER_LAST_NAME'],
         'LOGIN' => $abtest['USER_LOGIN'],
     ),
-    true, true
+    true,
+    true
 ) : false;
 
 ?>
@@ -263,27 +309,46 @@ $user_name = $abtest['USER_ID'] ? CUser::formatName(
             <div class="stat-item-block-container abtest-report-container">
                 <div class="stat-item-container item-test-info">
                     <? if ($user_name) : ?>
-                        <span class="ab-test-info ab-test-info-right"><?= getMessage($abtest['ACTIVE'] == 'Y' ? 'ABTEST_STARTED_BY' : 'ABTEST_STOPPED_BY'); ?>: <a
-                                    href="/bitrix/admin/user_edit.php?ID=<?= intval($abtest['USER_ID']); ?>&amp;lang=<?= LANG; ?>"><?= $user_name; ?></a></span>
+                        <span class="ab-test-info ab-test-info-right"><?= getMessage(
+                                $abtest['ACTIVE'] == 'Y' ? 'ABTEST_STARTED_BY' : 'ABTEST_STOPPED_BY'
+                            ); ?>: <a href="/bitrix/admin/user_edit.php?ID=<?= intval(
+                                $abtest['USER_ID']
+                            ); ?>&amp;lang=<?= LANG; ?>"><?= $user_name; ?></a></span>
                     <? endif; ?>
                     <img style="float: left; margin-right: 15px; "
                          src="/bitrix/images/abtest/ab-test-<?= ($abtest['ACTIVE'] == 'Y' ? 'on' : 'off'); ?>.gif">
                     <? if ($MOD_RIGHT >= 'W') : ?>
                         <? if ($abtest['ACTIVE'] == 'Y') : ?>
                             <span class="adm-btn" style="vertical-align: baseline; "
-                                  onclick="if (confirm('<?= CUtil::JSEscape(getMessage('ABTEST_STOP_CONFIRM')); ?>')) window.location='abtest_admin.php?action=stop&amp;ID=<?= intval($abtest['ID']); ?>&amp;lang=<?= LANG; ?>&amp;<?= bitrix_sessid_get(); ?>'; "><?= getMessage('ABTEST_BTN_STOP'); ?></span>
+                                  onclick="if (confirm('<?= CUtil::JSEscape(
+                                      getMessage('ABTEST_STOP_CONFIRM')
+                                  ); ?>')) window.location='abtest_admin.php?action=stop&amp;ID=<?= intval(
+                                      $abtest['ID']
+                                  ); ?>&amp;lang=<?= LANG; ?>&amp;<?= bitrix_sessid_get(); ?>'; "><?= getMessage(
+                                    'ABTEST_BTN_STOP'
+                                ); ?></span>
                         <? elseif (empty($active_test)) : ?>
                             <span class="adm-btn adm-btn-green" style="vertical-align: baseline; "
-                                  onclick="if (confirm('<?= CUtil::JSEscape(getMessage('ABTEST_START_CONFIRM')); ?>')) window.location='abtest_admin.php?action=start&amp;ID=<?= intval($abtest['ID']); ?>&amp;lang=<?= LANG; ?>&amp;<?= bitrix_sessid_get(); ?>'; "><?= getMessage('ABTEST_BTN_START'); ?></span>
+                                  onclick="if (confirm('<?= CUtil::JSEscape(
+                                      getMessage('ABTEST_START_CONFIRM')
+                                  ); ?>')) window.location='abtest_admin.php?action=start&amp;ID=<?= intval(
+                                      $abtest['ID']
+                                  ); ?>&amp;lang=<?= LANG; ?>&amp;<?= bitrix_sessid_get(); ?>'; "><?= getMessage(
+                                    'ABTEST_BTN_START'
+                                ); ?></span>
                         <? else : ?>
                             <span class="adm-btn adm-btn-disabled" style="vertical-align: baseline; margin-right: 0px; "
-                                  onclick="alert('<?= CUtil::JSEscape(getMessage('ABTEST_ONLYONE_WARNING')); ?>'); "><?= getMessage('ABTEST_BTN_START'); ?></span>
+                                  onclick="alert('<?= CUtil::JSEscape(
+                                      getMessage('ABTEST_ONLYONE_WARNING')
+                                  ); ?>'); "><?= getMessage('ABTEST_BTN_START'); ?></span>
                         <? endif; ?>
                     <? endif; ?>
                     <? if ($abtest['ACTIVE'] == 'Y') : ?>
                         <span class="ab-test-info">
 			<?= getMessage('ABTEST_START_DATE'); ?>:
-			<span><?= $abtest['START_DATE']->format(Bitrix\Main\Type\Date::convertFormatToPhp($arLang['FORMAT_DATE'])); ?></span>
+			<span><?= $abtest['START_DATE']->format(
+                    Bitrix\Main\Type\Date::convertFormatToPhp($arLang['FORMAT_DATE'])
+                ); ?></span>
 		</span>
                         <? if ($end_date) : ?>
                             <span class="ab-test-info">
@@ -295,13 +360,17 @@ $user_name = $abtest['USER_ID'] ? CUser::formatName(
                         <? if ($abtest['START_DATE']) : ?>
                             <span class="ab-test-info">
 			<?= getMessage('ABTEST_START_DATE2'); ?>:
-			<span><?= $abtest['START_DATE']->format(Bitrix\Main\Type\Date::convertFormatToPhp($arLang['FORMAT_DATE'])); ?></span>
+			<span><?= $abtest['START_DATE']->format(
+                    Bitrix\Main\Type\Date::convertFormatToPhp($arLang['FORMAT_DATE'])
+                ); ?></span>
 		</span>
                         <? endif; ?>
                         <? if ($abtest['STOP_DATE']) : ?>
                             <span class="ab-test-info">
 			<?= getMessage('ABTEST_STOP_DATE'); ?>:
-			<span><?= $abtest['STOP_DATE']->format(Bitrix\Main\Type\Date::convertFormatToPhp($arLang['FORMAT_DATE'])); ?></span>
+			<span><?= $abtest['STOP_DATE']->format(
+                    Bitrix\Main\Type\Date::convertFormatToPhp($arLang['FORMAT_DATE'])
+                ); ?></span>
 		</span>
                         <? endif; ?>
                         <? if (!$abtest['START_DATE'] && !$abtest['STOP_DATE']) : ?>
@@ -321,7 +390,10 @@ $user_name = $abtest['USER_ID'] ? CUser::formatName(
                             <? if (!$math['pwr'] && $estDays) : ?>
                                 (<?= str_replace(
                                     array('#NUM#', '#UNIT#'),
-                                    array($estDays, plural_form($estDays, get_plural_messages('ABTEST_DURATION_DAYS1_'))),
+                                    array(
+                                        $estDays,
+                                        plural_form($estDays, get_plural_messages('ABTEST_DURATION_DAYS1_'))
+                                    ),
                                     getMessage('ABTEST_DURATION_EST')
                                 ); ?>)
                             <? endif; ?>
@@ -335,32 +407,44 @@ $user_name = $abtest['USER_ID'] ? CUser::formatName(
 
                 <? if (empty($conversionRates)) : ?>
                     <div class="stat-item-container item-conversion-block">
-                        <?= getMessage($conversionAvailable ? 'ABTEST_CONVRATES_UNAVAILABLE' : 'ABTEST_CONVERSION_UNAVAILABLE'); ?>
+                        <?= getMessage(
+                            $conversionAvailable ? 'ABTEST_CONVRATES_UNAVAILABLE' : 'ABTEST_CONVERSION_UNAVAILABLE'
+                        ); ?>
                     </div>
                 <? else : ?>
                     <div class="ab-item-container">
                         <div class="stat-item-container">
                             <span class="ab-item-desc"><span>50%</span> <?= getMessage('ABTEST_VISITS'); ?></span>
                             <span class="ab-letter ab-letter-a">A</span>
-                            <span class="ab-item"
-                                  style="min-width: 250px; "><?= getMessage('ABTEST_TEST_TITLE_A'); ?></span>
+                            <span class="ab-item" style="min-width: 250px; "><?= getMessage(
+                                    'ABTEST_TEST_TITLE_A'
+                                ); ?></span>
                         </div>
                         <div class="stat-item-container">
                             <span class="ab-item-desc"><span>50%</span> <?= getMessage('ABTEST_VISITS'); ?></span>
                             <span class="ab-letter ab-letter-b">B</span>
-                            <span class="ab-item"
-                                  style="min-width: 250px; "><?= getMessage('ABTEST_TEST_TITLE_B'); ?></span>
+                            <span class="ab-item" style="min-width: 250px; "><?= getMessage(
+                                    'ABTEST_TEST_TITLE_B'
+                                ); ?></span>
                         </div>
                     </div>
                     <div class="stat-item-container item-conversion-block">
                         <div class="item-conversion-block-title"><?= (empty($abtest['NAME'])
                                 ? str_replace('#ID#', $ID, getMessage('ABTEST_CONVERSION_GRAPH_TITLE1'))
-                                : str_replace('#NAME#', htmlspecialcharsbx($abtest['NAME']), getMessage('ABTEST_CONVERSION_GRAPH_TITLE2'))
+                                : str_replace(
+                                    '#NAME#',
+                                    htmlspecialcharsbx($abtest['NAME']),
+                                    getMessage('ABTEST_CONVERSION_GRAPH_TITLE2')
+                                )
                             ); ?></div>
-                        <div class="item-conversion-block-subtitle"><?= getMessage('ABTEST_CONVERSION_GRAPH_DESCR'); ?></div>
+                        <div class="item-conversion-block-subtitle"><?= getMessage(
+                                'ABTEST_CONVERSION_GRAPH_DESCR'
+                            ); ?></div>
                         <div id="chart_container" class="item-conversion-graph-block">
                             <div style="position: relative; top: 50%; margin-top: -0.5em; color: #808080; ">
-                                <?= getMessage(empty($arGraphData) ? 'ABTEST_CONVERSION_GRAPH_EMPTY' : 'ABTEST_CONVERSION_GRAPH_LOADING'); ?>
+                                <?= getMessage(
+                                    empty($arGraphData) ? 'ABTEST_CONVERSION_GRAPH_EMPTY' : 'ABTEST_CONVERSION_GRAPH_LOADING'
+                                ); ?>
                             </div>
                         </div>
 
@@ -384,7 +468,9 @@ $user_name = $abtest['USER_ID'] ? CUser::formatName(
                                     AmCharts.monthNames = monthNames;
                                     AmCharts.shortMonthNames = shortMonthNames;
 
-                                    chart.zoomOutText = '<?=CUtil::JSEscape(getMessage('ABTEST_CONVERSION_GRAPH_SHOW_ALL')); ?>';
+                                    chart.zoomOutText = '<?=CUtil::JSEscape(
+                                        getMessage('ABTEST_CONVERSION_GRAPH_SHOW_ALL')
+                                    ); ?>';
                                     chart.dataProvider = chartData;
                                     chart.categoryField = 'date';
                                     chart.theme = 'none';
@@ -446,7 +532,9 @@ $user_name = $abtest['USER_ID'] ? CUser::formatName(
                                     var graph_b = new AmCharts.AmGraph();
 
                                     graph_a.connect = false;
-                                    graph_a.balloonText = '<?=CUtil::JSEscape(getMessage('ABTEST_CONVERSION_GRAPH_HINT_A')); ?>: [[value]]%';
+                                    graph_a.balloonText = '<?=CUtil::JSEscape(
+                                        getMessage('ABTEST_CONVERSION_GRAPH_HINT_A')
+                                    ); ?>: [[value]]%';
                                     graph_a.valueField = 'value_a';
                                     graph_a.type = 'smoothedLine';
                                     graph_a.lineThickness = 2;
@@ -454,7 +542,9 @@ $user_name = $abtest['USER_ID'] ? CUser::formatName(
                                     graph_a.lineColor = '#33b4ea';
 
                                     graph_b.connect = false;
-                                    graph_b.balloonText = '<?=CUtil::JSEscape(getMessage('ABTEST_CONVERSION_GRAPH_HINT_B')); ?>: [[value]]%';
+                                    graph_b.balloonText = '<?=CUtil::JSEscape(
+                                        getMessage('ABTEST_CONVERSION_GRAPH_HINT_B')
+                                    ); ?>: [[value]]%';
                                     graph_b.valueField = 'value_b';
                                     graph_b.type = 'smoothedLine';
                                     graph_b.lineThickness = 2;
@@ -476,13 +566,18 @@ $user_name = $abtest['USER_ID'] ? CUser::formatName(
                             <div class="stat-item-container stat-item-data">
                                 <div class="stat-item-container-title">
                                     <span class="stat-item-container-title-letter">A</span>
-                                    <span class="stat-item-container-title-name"><?= getMessage('ABTEST_CONVERSION_VALUE_TITLE'); ?></span>
+                                    <span class="stat-item-container-title-name"><?= getMessage(
+                                            'ABTEST_CONVERSION_VALUE_TITLE'
+                                        ); ?></span>
                                 </div>
                                 <div class="stat-item">
                                     <div class="stat-item-block">
 						<span class="stat-item-block-inner">
-							<span id="a-graph-rate"
-                                  class="stat-item-block-digit"><?= str_replace('.', ',', $groupARate); ?><span>%</span></span>
+							<span id="a-graph-rate" class="stat-item-block-digit"><?= str_replace(
+                                    '.',
+                                    ',',
+                                    $groupARate
+                                ); ?><span>%</span></span>
 						</span>
                                     </div>
                                 </div>
@@ -491,13 +586,19 @@ $user_name = $abtest['USER_ID'] ? CUser::formatName(
                         <div class="stat-item-data-container<? if ($rateDiff != 0) : ?> stat-item-data-container-dynamics<? endif; ?>">
                             <div class="stat-item-container stat-item-data<? if ($rateDiff != 0) : ?> stat-item-block-<?= ($rateDiff > 0 ? 'incr' : 'fall'); ?><? endif; ?>">
                                 <div class="stat-item-container-title">
-                                    <span class="stat-item-container-title-name"><?= getMessage('ABTEST_CONVERSION_DIFF_TITLE'); ?></span>
+                                    <span class="stat-item-container-title-name"><?= getMessage(
+                                            'ABTEST_CONVERSION_DIFF_TITLE'
+                                        ); ?></span>
                                 </div>
                                 <div class="stat-item">
                                     <div class="stat-item-block">
 						<span class="stat-item-block-inner">
 							<span id="graph-rate-diff" class="stat-item-block-digit">
-								<span class="stat-item-block-digit-arrow"></span><?= str_replace('.', ',', abs($rateDiff)); ?><span>%</span>
+								<span class="stat-item-block-digit-arrow"></span><?= str_replace(
+                                    '.',
+                                    ',',
+                                    abs($rateDiff)
+                                ); ?><span>%</span>
 							</span>
 						</span>
                                     </div>
@@ -508,13 +609,18 @@ $user_name = $abtest['USER_ID'] ? CUser::formatName(
                             <div class="stat-item-container stat-item-data">
                                 <div class="stat-item-container-title">
                                     <span class="stat-item-container-title-letter">B</span>
-                                    <span class="stat-item-container-title-name"><?= getMessage('ABTEST_CONVERSION_VALUE_TITLE'); ?></span>
+                                    <span class="stat-item-container-title-name"><?= getMessage(
+                                            'ABTEST_CONVERSION_VALUE_TITLE'
+                                        ); ?></span>
                                 </div>
                                 <div class="stat-item">
                                     <div class="stat-item-block">
 						<span class="stat-item-block-inner">
-							<span id="b-graph-rate"
-                                  class="stat-item-block-digit"><?= str_replace('.', ',', $groupBRate); ?><span>%</span></span>
+							<span id="b-graph-rate" class="stat-item-block-digit"><?= str_replace(
+                                    '.',
+                                    ',',
+                                    $groupBRate
+                                ); ?><span>%</span></span>
 						</span>
                                     </div>
                                 </div>
@@ -525,19 +631,27 @@ $user_name = $abtest['USER_ID'] ? CUser::formatName(
                 <? if (!empty($funnelRates)) : ?>
                 <? $funnelBaseRate = end($funnelRates); ?>
                     <div class="adm-detail-toolbar">
-                        <span class="adm-detail-toolbar-title"><?= getMessage('ABTEST_CONVERSION_FUNNEL_TITLE'); ?></span>
+                        <span class="adm-detail-toolbar-title"><?= getMessage(
+                                'ABTEST_CONVERSION_FUNNEL_TITLE'
+                            ); ?></span>
                     </div>
                     <div id="funnel-a" class="stat-item-data-container stat-item-data-container-a">
                         <div class="stat-item-container stat-item-data stat-item-data-funnel">
                             <div class="stat-item-container-title">
                                 <span class="stat-item-container-title-letter">A</span>
-                                <span class="stat-item-container-title-name"><?= htmlspecialcharsbx($arGroupAData[$funnelBaseRate]['TYPE']['NAME']); ?></span>
+                                <span class="stat-item-container-title-name"><?= htmlspecialcharsbx(
+                                        $arGroupAData[$funnelBaseRate]['TYPE']['NAME']
+                                    ); ?></span>
                             </div>
                             <div class="stat-item">
                                 <div class="stat-item-block stat-item-block-conversion">
 					<span class="stat-item-block-inner">
 						<span class="stat-item-block-title"><?= getMessage('ABTEST_CONVERSION_VALUE_TITLE'); ?></span>
-						<span class="stat-item-block-digit"><?= str_replace('.', ',', $groupARate); ?><span>%</span></span>
+						<span class="stat-item-block-digit"><?= str_replace(
+                                '.',
+                                ',',
+                                $groupARate
+                            ); ?><span>%</span></span>
 					</span>
                                 </div>
                                 <div class="stat-item-block stat-item-block-first">
@@ -545,16 +659,24 @@ $user_name = $abtest['USER_ID'] ? CUser::formatName(
 						<span class="stat-item-block-title"><?= getMessage('ABTEST_CONVERSION_SUM_TITLE'); ?></span>
 						<span class="stat-item-block-digit scale-sum-fnl scale-num-30-3">
 							<?= number_format(floatval($arGroupAData[$funnelBaseRate]['SUM']), 0, '', ' '); ?>
-							<span><?= htmlspecialcharsbx($arGroupAData[$funnelBaseRate]['TYPE']['UNITS']['SUM']); ?></span>
+							<span><?= htmlspecialcharsbx(
+                                    $arGroupAData[$funnelBaseRate]['TYPE']['UNITS']['SUM']
+                                ); ?></span>
 						</span>
 					</span>
                                 </div>
-                                <? $sum = array_reduce($funnelRates, function ($sum, $type) use ($arGroupAData) {
-                                    return $sum + $arGroupAData[$type]['SUM'];
-                                }, 0); ?>
+                                <? $sum = array_reduce(
+                                    $funnelRates,
+                                    function ($sum, $type) use ($arGroupAData) {
+                                        return $sum + $arGroupAData[$type]['SUM'];
+                                    },
+                                    0
+                                ); ?>
                                 <div id="funnel_a_container">
                                     <div style="position: relative; top: 50%; margin-top: -0.5em; color: #808080; ">
-                                        <?= getMessage($sum > 0 ? 'ABTEST_CONVERSION_GRAPH_LOADING' : 'ABTEST_CONVERSION_GRAPH_EMPTY'); ?>
+                                        <?= getMessage(
+                                            $sum > 0 ? 'ABTEST_CONVERSION_GRAPH_LOADING' : 'ABTEST_CONVERSION_GRAPH_EMPTY'
+                                        ); ?>
                                     </div>
                                 </div>
 
@@ -568,7 +690,9 @@ $user_name = $abtest['USER_ID'] ? CUser::formatName(
                                                 <? $k = 0; ?>
                                                 <? foreach ($funnelRates as $type) : ?>
                                                 <? $data = $arGroupAData[$type]; ?>
-                                                    <? if ($k++ > 0) echo ','; ?>{
+                                                    <? if ($k++ > 0) {
+                                                        echo ',';
+                                                    } ?>{
                                                     'title': '<?=CUtil::JSEscape($data['TYPE']['NAME']); ?>',
                                                     'value': <?=sprintf('%.0f', $data['SUM']); ?>,
                                                     'unit': '<?=CUtil::JSEscape($data['TYPE']['UNITS']['SUM']); ?>'
@@ -602,7 +726,9 @@ $user_name = $abtest['USER_ID'] ? CUser::formatName(
                         <div class="stat-item-container stat-item-data stat-item-data-funnel">
                             <div class="stat-item-container-title">
                                 <span class="stat-item-container-title-letter">B</span>
-                                <span class="stat-item-container-title-name"><?= htmlspecialcharsbx($arGroupBData[$funnelBaseRate]['TYPE']['NAME']); ?></span>
+                                <span class="stat-item-container-title-name"><?= htmlspecialcharsbx(
+                                        $arGroupBData[$funnelBaseRate]['TYPE']['NAME']
+                                    ); ?></span>
                             </div>
                             <div class="stat-item">
                                 <div class="stat-item-block stat-item-block-conversion<? if ($rateDiff != 0) : ?> stat-item-block-conversion-<?= ($rateDiff > 0 ? 'incr' : 'fall'); endif; ?>">
@@ -610,7 +736,11 @@ $user_name = $abtest['USER_ID'] ? CUser::formatName(
 						<span class="stat-item-block-title"><?= getMessage('ABTEST_CONVERSION_VALUE_TITLE'); ?></span>
 						<span class="stat-item-block-digit">
 							<? if ($rateDiff != 0) : ?><span
-                                    class="stat-item-block-digit-arrow"></span><? endif; ?><?= str_replace('.', ',', $groupBRate); ?><span>%</span>
+                                    class="stat-item-block-digit-arrow"></span><? endif; ?><?= str_replace(
+                                '.',
+                                ',',
+                                $groupBRate
+                            ); ?><span>%</span>
 						</span>
 					</span>
                                 </div>
@@ -619,16 +749,24 @@ $user_name = $abtest['USER_ID'] ? CUser::formatName(
 						<span class="stat-item-block-title"><?= getMessage('ABTEST_CONVERSION_SUM_TITLE'); ?></span>
 						<span class="stat-item-block-digit scale-sum-fnl scale-num-30-3">
 							<?= number_format(floatval($arGroupBData[$funnelBaseRate]['SUM']), 0, '', ' '); ?>
-							<span><?= htmlspecialcharsbx($arGroupBData[$funnelBaseRate]['TYPE']['UNITS']['SUM']); ?></span>
+							<span><?= htmlspecialcharsbx(
+                                    $arGroupBData[$funnelBaseRate]['TYPE']['UNITS']['SUM']
+                                ); ?></span>
 						</span>
 					</span>
                                 </div>
-                                <? $sum = array_reduce($funnelRates, function ($sum, $type) use ($arGroupBData) {
-                                    return $sum + $arGroupBData[$type]['SUM'];
-                                }, 0); ?>
+                                <? $sum = array_reduce(
+                                    $funnelRates,
+                                    function ($sum, $type) use ($arGroupBData) {
+                                        return $sum + $arGroupBData[$type]['SUM'];
+                                    },
+                                    0
+                                ); ?>
                                 <div id="funnel_b_container">
                                     <div style="position: relative; top: 50%; margin-top: -0.5em; color: #808080; ">
-                                        <?= getMessage($sum > 0 ? 'ABTEST_CONVERSION_GRAPH_LOADING' : 'ABTEST_CONVERSION_GRAPH_EMPTY'); ?>
+                                        <?= getMessage(
+                                            $sum > 0 ? 'ABTEST_CONVERSION_GRAPH_LOADING' : 'ABTEST_CONVERSION_GRAPH_EMPTY'
+                                        ); ?>
                                     </div>
                                 </div>
 
@@ -642,7 +780,9 @@ $user_name = $abtest['USER_ID'] ? CUser::formatName(
                                                 <? $k = 0; ?>
                                                 <? foreach ($funnelRates as $type) : ?>
                                                 <? $data = $arGroupBData[$type]; ?>
-                                                    <? if ($k++ > 0) echo ','; ?>{
+                                                    <? if ($k++ > 0) {
+                                                        echo ',';
+                                                    } ?>{
                                                     'title': '<?=CUtil::JSEscape($data['TYPE']['NAME']); ?>',
                                                     'value': <?=sprintf('%.0f', $data['SUM']); ?>,
                                                     'unit': '<?=CUtil::JSEscape($data['TYPE']['UNITS']['SUM']); ?>'
@@ -675,7 +815,9 @@ $user_name = $abtest['USER_ID'] ? CUser::formatName(
                 <? endif; ?>
 
                     <div class="adm-detail-toolbar">
-                        <span class="adm-detail-toolbar-title"><?= getMessage('ABTEST_CONVERSION_COUNTERS_TITLE'); ?></span>
+                        <span class="adm-detail-toolbar-title"><?= getMessage(
+                                'ABTEST_CONVERSION_COUNTERS_TITLE'
+                            ); ?></span>
                     </div>
                 <? $arGroupARates = array(); ?>
                     <div id="counters-a" class="stat-item-data-container stat-item-data-container-a">
@@ -685,10 +827,15 @@ $user_name = $abtest['USER_ID'] ? CUser::formatName(
                             <? $data = $arGroupAData[$type]; ?>
                             <? $rate = round($data['RATE'] * 100, 2); ?>
                             <? $arGroupARates[$type] = $rate; ?>
-                            <div class="stat-item-container stat-item-data<? if (!is_set($data, 'SUM')) : ?> stat-item-data-short<? endif; ?>">
+                            <div class="stat-item-container stat-item-data<? if (!is_set(
+                                $data,
+                                'SUM'
+                            )) : ?> stat-item-data-short<? endif; ?>">
                                 <div class="stat-item-container-title">
                                     <span class="stat-item-container-title-letter">A</span>
-                                    <span class="stat-item-container-title-name"><?= htmlspecialcharsbx($data['TYPE']['NAME']); ?></span>
+                                    <span class="stat-item-container-title-name"><?= htmlspecialcharsbx(
+                                            $data['TYPE']['NAME']
+                                        ); ?></span>
                                 </div>
                                 <div class="stat-item">
                                     <div class="stat-item-block stat-item-block-conversion">
@@ -708,11 +855,18 @@ $user_name = $abtest['USER_ID'] ? CUser::formatName(
 					</span>
                                         </div>
                                     <? endif; ?>
-                                    <? $value = floatval(isset($data['QUANTITY']) ? $data['QUANTITY'] : $data['NUMERATOR']); ?>
+                                    <? $value = floatval(
+                                        isset($data['QUANTITY']) ? $data['QUANTITY'] : $data['NUMERATOR']
+                                    ); ?>
                                     <div class="stat-item-block">
 					<span class="stat-item-block-inner">
 						<span class="stat-item-block-title"><?= getMessage('ABTEST_CONVERSION_CNT_TITLE'); ?></span>
-						<span class="stat-item-block-digit scale-num-cnt scale-num-30-2"><?= number_format($value, 0, '', ' '); ?></span>
+						<span class="stat-item-block-digit scale-num-cnt scale-num-30-2"><?= number_format(
+                                $value,
+                                0,
+                                '',
+                                ' '
+                            ); ?></span>
 					</span>
                                     </div>
                                 </div>
@@ -727,17 +881,26 @@ $user_name = $abtest['USER_ID'] ? CUser::formatName(
                             <? $data = $arGroupBData[$type]; ?>
                             <? $rate = round($data['RATE'] * 100, 2); ?>
                             <? $rateDiff = round($rate - $arGroupARates[$type], 2); ?>
-                            <div class="stat-item-container stat-item-data<? if (!is_set($data, 'SUM')) : ?> stat-item-data-short<? endif; ?>">
+                            <div class="stat-item-container stat-item-data<? if (!is_set(
+                                $data,
+                                'SUM'
+                            )) : ?> stat-item-data-short<? endif; ?>">
                                 <div class="stat-item-container-title">
                                     <span class="stat-item-container-title-letter">B</span>
-                                    <span class="stat-item-container-title-name"><?= htmlspecialcharsbx($data['TYPE']['NAME']); ?></span>
+                                    <span class="stat-item-container-title-name"><?= htmlspecialcharsbx(
+                                            $data['TYPE']['NAME']
+                                        ); ?></span>
                                 </div>
                                 <div class="stat-item">
                                     <div class="stat-item-block stat-item-block-conversion<? if ($rateDiff != 0) : ?> stat-item-block-conversion-<?= ($rateDiff > 0 ? 'incr' : 'fall'); endif; ?>">
 					<span class="stat-item-block-inner">
 						<span class="stat-item-block-title"><?= getMessage('ABTEST_CONVERSION_VALUE_TITLE'); ?></span>
 						<span class="stat-item-block-digit"><? if ($rateDiff != 0) : ?><span
-                                    class="stat-item-block-digit-arrow"></span><? endif; ?><?= str_replace('.', ',', $rate); ?><span>%</span></span>
+                                    class="stat-item-block-digit-arrow"></span><? endif; ?><?= str_replace(
+                                '.',
+                                ',',
+                                $rate
+                            ); ?><span>%</span></span>
 					</span>
                                     </div>
                                     <? if (is_set($data, 'SUM')) : ?>
@@ -751,11 +914,18 @@ $user_name = $abtest['USER_ID'] ? CUser::formatName(
 					</span>
                                         </div>
                                     <? endif; ?>
-                                    <? $value = floatval(isset($data['QUANTITY']) ? $data['QUANTITY'] : $data['NUMERATOR']); ?>
+                                    <? $value = floatval(
+                                        isset($data['QUANTITY']) ? $data['QUANTITY'] : $data['NUMERATOR']
+                                    ); ?>
                                     <div class="stat-item-block">
 					<span class="stat-item-block-inner">
 						<span class="stat-item-block-title"><?= getMessage('ABTEST_CONVERSION_CNT_TITLE'); ?></span>
-						<span class="stat-item-block-digit scale-num-cnt scale-num-30-2"><?= number_format($value, 0, '', ' '); ?></span>
+						<span class="stat-item-block-digit scale-num-cnt scale-num-30-2"><?= number_format(
+                                $value,
+                                0,
+                                '',
+                                ' '
+                            ); ?></span>
 					</span>
                                     </div>
                                 </div>

@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/webservice/include.php");
 
 IncludeModuleLangFile(__FILE__);
@@ -15,7 +16,9 @@ $tabControl->BeginNextTab();
 ?>
     <tr>
         <td colspan="2">
-            <a href="/bitrix/components/bitrix/webservice.statistic/distr/BitrixStat.gadget"><?= GetMessage("WS_GADGET_LINK") ?></a><br><br>
+            <a href="/bitrix/components/bitrix/webservice.statistic/distr/BitrixStat.gadget"><?= GetMessage(
+                    "WS_GADGET_LINK"
+                ) ?></a><br><br>
             <?= GetMessage("WS_GADGET_DESCR") ?>
         </td>
     </tr>

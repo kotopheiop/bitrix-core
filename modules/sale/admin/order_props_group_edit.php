@@ -1,9 +1,11 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions < "W")
+if ($saleModulePermissions < "W") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 \Bitrix\Main\Loader::includeModule('sale');
 
@@ -14,9 +16,9 @@ ClearVars();
 $errorMessage = "";
 $bVarsFromForm = false;
 
-$ID = IntVal($ID);
+$ID = intval($ID);
 
-if ($REQUEST_METHOD == "POST" && strlen($Update) > 0 && $saleModulePermissions >= "W" && check_bitrix_sessid()) {
+if ($REQUEST_METHOD == "POST" && $Update <> '' && $saleModulePermissions >= "W" && check_bitrix_sessid()) {
     $arFields = array(
         "NAME" => $NAME,
         "SORT" => $SORT
@@ -24,29 +26,34 @@ if ($REQUEST_METHOD == "POST" && strlen($Update) > 0 && $saleModulePermissions >
 
     if ($ID > 0) {
         if (!CSaleOrderPropsGroup::Update($ID, $arFields)) {
-            if ($ex = $APPLICATION->GetException())
+            if ($ex = $APPLICATION->GetException()) {
                 $errorMessage .= $ex->GetString() . ". ";
-            else
+            } else {
                 $errorMessage .= GetMessage("SOPGEN_ERROR_SAVING_PROPS_GRP") . ". ";
+            }
         }
     } else {
         $arFields["PERSON_TYPE_ID"] = $PERSON_TYPE_ID;
 
         $ID = CSaleOrderPropsGroup::Add($arFields);
-        $ID = IntVal($ID);
+        $ID = intval($ID);
         if ($ID <= 0) {
-            if ($ex = $APPLICATION->GetException())
+            if ($ex = $APPLICATION->GetException()) {
                 $errorMessage .= $ex->GetString() . ". ";
-            else
+            } else {
                 $errorMessage .= GetMessage("SOPGEN_ERROR_SAVING_PROPS_GRP") . ". ";
+            }
         } else {
-            LocalRedirect("/bitrix/admin/sale_order_props_group_edit.php?ID=$ID&lang=" . LANG . GetFilterParams("filter_", false));
+            LocalRedirect(
+                "/bitrix/admin/sale_order_props_group_edit.php?ID=$ID&lang=" . LANG . GetFilterParams("filter_", false)
+            );
         }
     }
 
-    if (strlen($errorMessage) <= 0) {
-        if (strlen($apply) <= 0)
+    if ($errorMessage == '') {
+        if ($apply == '') {
             LocalRedirect("/bitrix/admin/sale_order_props_group.php?lang=" . LANG . GetFilterParams("filter_", false));
+        }
     } else {
         $bVarsFromForm = true;
     }
@@ -54,22 +61,25 @@ if ($REQUEST_METHOD == "POST" && strlen($Update) > 0 && $saleModulePermissions >
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/prolog.php");
 
-if ($ID > 0)
+if ($ID > 0) {
     $APPLICATION->SetTitle(GetMessage("SOPGEN_UPDATING"));
-else
+} else {
     $APPLICATION->SetTitle(GetMessage("SOPGEN_ADDING"));
+}
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
 $dbPropsGroup = CSaleOrderPropsGroup::GetList(array(), array("ID" => $ID));
 if (!$dbPropsGroup->ExtractFields("str_")) {
-    if ($saleModulePermissions < "W")
+    if ($saleModulePermissions < "W") {
         $errorMessage .= GetMessage("SOPGEN_NO_PERMS2ADD") . ". ";
+    }
     $ID = 0;
 }
 
-if ($bVarsFromForm)
+if ($bVarsFromForm) {
     $DB->InitTableVarsForEdit("b_sale_order_props_group", "", "str_");
+}
 ?>
 
 <?
@@ -92,7 +102,10 @@ if ($ID > 0 && $saleModulePermissions >= "W") {
 
     $aMenu[] = array(
         "TEXT" => GetMessage("SOPGEN_DELETE_PROPS_GRP"),
-        "LINK" => "javascript:if(confirm('" . GetMessage("SOPGEN_DELETE_PROPS_GRP_CONFIRM") . "')) window.location='/bitrix/admin/sale_order_props_group.php?ID=" . $ID . "&action=delete&lang=" . LANG . "&" . bitrix_sessid_get() . "#tb';",
+        "LINK" => "javascript:if(confirm('" . GetMessage(
+                "SOPGEN_DELETE_PROPS_GRP_CONFIRM"
+            ) . "')) window.location='/bitrix/admin/sale_order_props_group.php?ID=" . $ID . "&action=delete&lang=" . LANG . "&" . bitrix_sessid_get(
+            ) . "#tb';",
         "ICON" => "btn_delete",
     );
 }
@@ -103,8 +116,10 @@ $context->Show();
 <? CAdminMessage::ShowMessage($errorMessage); ?>
 
     <form method="POST"
-          action="<?= $APPLICATION->GetCurPage() . "?ID=" . $ID . "&lang=" . LANGUAGE_ID . GetFilterParams("filter_", false) ?>"
-          name="form1">
+          action="<?= $APPLICATION->GetCurPage() . "?ID=" . $ID . "&lang=" . LANGUAGE_ID . GetFilterParams(
+              "filter_",
+              false
+          ) ?>" name="form1">
         <? echo GetFilterHiddens("filter_"); ?>
         <input type="hidden" name="Update" value="Y">
         <input type="hidden" name="lang" value="<? echo LANG ?>">
@@ -113,7 +128,12 @@ $context->Show();
 
         <?
         $aTabs = array(
-            array("DIV" => "edit1", "TAB" => GetMessage("SOPGEN_TAB_PROPS_GRP"), "ICON" => "sale", "TITLE" => GetMessage("SOPGEN_TAB_PROPS_GRP_DESCR"))
+            array(
+                "DIV" => "edit1",
+                "TAB" => GetMessage("SOPGEN_TAB_PROPS_GRP"),
+                "ICON" => "sale",
+                "TITLE" => GetMessage("SOPGEN_TAB_PROPS_GRP_DESCR")
+            )
         );
 
         $tabControl = new CAdminTabControl("tabControl", $aTabs);
@@ -133,18 +153,27 @@ $context->Show();
                 <td width="40%"><? echo GetMessage("SOPGEN_PERSON_TYPE") ?>:</td>
                 <?
                 $arPersType = Array();
-                $dbPersonType = CSalePersonType::GetList(array("SORT" => "ASC", "NAME" => "ASC"), array("ID" => $str_PERSON_TYPE_ID));
+                $dbPersonType = CSalePersonType::GetList(
+                    array("SORT" => "ASC", "NAME" => "ASC"),
+                    array("ID" => $str_PERSON_TYPE_ID)
+                );
                 if ($arPersonType = $dbPersonType->Fetch()) {
-                    $arPersType = Array("ID" => $arPersonType["ID"], "NAME" => htmlspecialcharsEx($arPersonType["NAME"]), "LID" => implode(", ", $arPersonType["LIDS"]));
+                    $arPersType = Array(
+                        "ID" => $arPersonType["ID"],
+                        "NAME" => htmlspecialcharsEx($arPersonType["NAME"]),
+                        "LID" => implode(", ", $arPersonType["LIDS"])
+                    );
                 }
                 ?>
-                <td width="60%"><?= "[" . $arPersType["ID"] . "] " . ($arPersType["NAME"]) . " (" . htmlspecialcharsEx($arPersType["LID"]) . ")" ?></td>
+                <td width="60%"><?= "[" . $arPersType["ID"] . "] " . ($arPersType["NAME"]) . " (" . htmlspecialcharsEx(
+                        $arPersType["LID"]
+                    ) . ")" ?></td>
             </tr>
         <? else: ?>
             <tr class="adm-detail-required-field">
                 <td width="40%"><? echo GetMessage("SOPGEN_PERSON_TYPE") ?>:</td>
                 <td width="60%">
-                    <? echo CSalePersonType::SelectBox("PERSON_TYPE_ID", $str_PERSON_TYPE_ID, "", True, "", "") ?>
+                    <? echo CSalePersonType::SelectBox("PERSON_TYPE_ID", $str_PERSON_TYPE_ID, "", true, "", "") ?>
                 </td>
             </tr>
         <? endif; ?>
@@ -157,7 +186,7 @@ $context->Show();
         <tr>
             <td><? echo GetMessage("SOPGEN_SORT") ?>:</td>
             <td>
-                <input type="text" name="SORT" value="<?= IntVal($str_SORT) ?>">
+                <input type="text" name="SORT" value="<?= intval($str_SORT) ?>">
             </td>
         </tr>
 

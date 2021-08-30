@@ -48,7 +48,9 @@ class DocumentFactory
         } elseif ($documentTypeID === DocumentType::USER_PROFILE) {
             return new UserProfileDocument();
         } else {
-            throw new NotSupportedException("Document type: '" . EntityType::ResolveName($documentTypeID) . "' is not supported in current context");
+            throw new NotSupportedException(
+                "Document type: '" . EntityType::ResolveName($documentTypeID) . "' is not supported in current context"
+            );
         }
     }
 }

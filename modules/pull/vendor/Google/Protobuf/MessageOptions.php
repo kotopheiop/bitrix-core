@@ -269,13 +269,16 @@ class MessageOptions extends \Protobuf\AbstractMessage
     public static function fromArray(array $values)
     {
         $message = new self();
-        $values = array_merge([
-            'message_set_wire_format' => false,
-            'no_standard_descriptor_accessor' => false,
-            'deprecated' => false,
-            'map_entry' => null,
-            'uninterpreted_option' => []
-        ], $values);
+        $values = array_merge(
+            [
+                'message_set_wire_format' => false,
+                'no_standard_descriptor_accessor' => false,
+                'deprecated' => false,
+                'map_entry' => null,
+                'uninterpreted_option' => []
+            ],
+            $values
+        );
 
         $message->setMessageSetWireFormat($values['message_set_wire_format']);
         $message->setNoStandardDescriptorAccessor($values['no_standard_descriptor_accessor']);
@@ -294,45 +297,57 @@ class MessageOptions extends \Protobuf\AbstractMessage
      */
     public static function descriptor()
     {
-        return \google\protobuf\DescriptorProto::fromArray([
-            'name' => 'MessageOptions',
-            'field' => [
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 1,
-                    'name' => 'message_set_wire_format',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_BOOL(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
-                    'default_value' => false
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 2,
-                    'name' => 'no_standard_descriptor_accessor',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_BOOL(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
-                    'default_value' => false
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 3,
-                    'name' => 'deprecated',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_BOOL(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
-                    'default_value' => false
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 7,
-                    'name' => 'map_entry',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_BOOL(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 999,
-                    'name' => 'uninterpreted_option',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_MESSAGE(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_REPEATED(),
-                    'type_name' => '.google.protobuf.UninterpretedOption'
-                ]),
-            ],
-        ]);
+        return \google\protobuf\DescriptorProto::fromArray(
+            [
+                'name' => 'MessageOptions',
+                'field' => [
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 1,
+                            'name' => 'message_set_wire_format',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_BOOL(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
+                            'default_value' => false
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 2,
+                            'name' => 'no_standard_descriptor_accessor',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_BOOL(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
+                            'default_value' => false
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 3,
+                            'name' => 'deprecated',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_BOOL(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
+                            'default_value' => false
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 7,
+                            'name' => 'map_entry',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_BOOL(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 999,
+                            'name' => 'uninterpreted_option',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_MESSAGE(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_REPEATED(),
+                            'type_name' => '.google.protobuf.UninterpretedOption'
+                        ]
+                    ),
+                ],
+            ]
+        );
     }
 
     /**
@@ -408,7 +423,6 @@ class MessageOptions extends \Protobuf\AbstractMessage
             : null;
 
         while ($limit === null || $stream->tell() < $limit) {
-
             if ($stream->eof()) {
                 break;
             }
@@ -489,7 +503,6 @@ class MessageOptions extends \Protobuf\AbstractMessage
             $unknown = new \Protobuf\Unknown($tag, $wire, $data);
 
             $this->unknownFieldSet->add($unknown);
-
         }
     }
 
@@ -556,7 +569,9 @@ class MessageOptions extends \Protobuf\AbstractMessage
     public function merge(\Protobuf\Message $message)
     {
         if (!$message instanceof \google\protobuf\MessageOptions) {
-            throw new \InvalidArgumentException(sprintf('Argument 1 passed to %s must be a %s, %s given', __METHOD__, __CLASS__, get_class($message)));
+            throw new \InvalidArgumentException(
+                sprintf('Argument 1 passed to %s must be a %s, %s given', __METHOD__, __CLASS__, get_class($message))
+            );
         }
 
         $this->message_set_wire_format = ($message->message_set_wire_format !== null) ? $message->message_set_wire_format : $this->message_set_wire_format;

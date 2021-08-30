@@ -1,15 +1,18 @@
-<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die(); ?><?
+<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+} ?><?
 $strMerchantID = CSalePaySystemAction::GetParamValue("SHOP_ACCOUNT");
 $strMerchantName = CSalePaySystemAction::GetParamValue("SHOP_NAME");
 
-$ORDER_ID = IntVal($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["ID"]);
+$ORDER_ID = intval($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["ID"]);
 ?>
 <p>�� ������ �������� �� �����-����� &quot;�����������&quot; ����� �������������� ����� ��������� ������� <strong>�����������</strong>.
 </p>
 <p>C��� � <?= htmlspecialcharsEx($ORDER_ID . " �� " . $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["DATE_INSERT"]) ?></p>
-<p>����� � ������ �� �����:
-    <strong><?= SaleFormatCurrency($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["SHOULD_PAY"], $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"]) . "&nbsp;" ?></strong>
-</p>
+<p>����� � ������ �� �����: <strong><?= SaleFormatCurrency(
+            $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["SHOULD_PAY"],
+            $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"]
+        ) . "&nbsp;" ?></strong></p>
 
 <form method="post" action="https://www.impexbank.ru/servlets/SPCardPaymentServlet" class="mb-3">
     <input type="hidden" name="Order_ID" value="<?= $ORDER_ID ?>">

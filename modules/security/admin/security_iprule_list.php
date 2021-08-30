@@ -1,4 +1,5 @@
 <?
+
 define("ADMIN_MODULE_NAME", "security");
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
@@ -13,8 +14,9 @@ IncludeModuleLangFile(__FILE__);
 
 $canRead = $USER->CanDoOperation('security_iprule_settings_read');
 $canWrite = $USER->CanDoOperation('security_iprule_settings_write');
-if (!$canRead && !$canWrite)
+if (!$canRead && !$canWrite) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $arAccessTypes = array(
     "M" => GetMessage("SEC_IP_LIST_RULE_TYPE_M"),
@@ -49,17 +51,21 @@ $arFilter = Array(
     "PATH" => ($find != "" && $find_type == "path" ? $find : $find_path),
 );
 
-foreach ($arFilter as $key => $value)
-    if (!$value)
+foreach ($arFilter as $key => $value) {
+    if (!$value) {
         unset($arFilter[$key]);
+    }
+}
 
 if ($lAdmin->EditAction() && $canWrite) {
     foreach ($FIELDS as $ID => $arFields) {
-        if (!$lAdmin->IsUpdated($ID))
+        if (!$lAdmin->IsUpdated($ID)) {
             continue;
+        }
         $cData = new CSecurityIPRule;
-        if (!$cData->Update($ID, $arFields))
+        if (!$cData->Update($ID, $arFields)) {
             $lAdmin->AddGroupError(GetMessage("SEC_IP_LIST_UPDATE_ERROR") . " " . $cData->LAST_ERROR, $ID);
+        }
     }
 }
 
@@ -67,18 +73,21 @@ if (($arID = $lAdmin->GroupAction()) && $canWrite) {
     if ($_REQUEST['action_target'] == 'selected') {
         $cData = new CSecurityIPRule;
         $rsData = $cData->GetList(array('ID'), $arFilter, array());
-        while ($arRes = $rsData->Fetch())
+        while ($arRes = $rsData->Fetch()) {
             $arID[] = $arRes['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
-        $ID = IntVal($ID);
+        }
+        $ID = intval($ID);
         switch ($_REQUEST['action']) {
             case "delete":
-                if (!CSecurityIPRule::Delete($ID))
+                if (!CSecurityIPRule::Delete($ID)) {
                     $lAdmin->AddGroupError(GetMessage("SEC_IP_LIST_DELETE_ERROR"), $ID);
+                }
                 break;
         }
     }
@@ -174,7 +183,7 @@ $arHeaders = array(
 $lAdmin->AddHeaders($arHeaders);
 
 $arSelectedFields = $lAdmin->GetVisibleHeaderColumns();
-if (!is_array($arSelectedFields) || (count($arSelectedFields) < 1))
+if (!is_array($arSelectedFields) || (count($arSelectedFields) < 1)) {
     $arSelectedFields = array(
         "ID",
         "RULE_TYPE",
@@ -186,16 +195,20 @@ if (!is_array($arSelectedFields) || (count($arSelectedFields) < 1))
         "ACTIVE_FROM",
         "ACTIVE_TO",
     );
+}
 
 $arVisibleColumnsMap = array();
-foreach ($arSelectedFields as $value)
+foreach ($arSelectedFields as $value) {
     $arVisibleColumnsMap[$value] = true;
+}
 
-if (array_key_exists("ACTIVE_FROM", $arVisibleColumnsMap))
+if (array_key_exists("ACTIVE_FROM", $arVisibleColumnsMap)) {
     $arSelectedFields[] = "ACTIVE_FROM_TIMESTAMP";
+}
 
-if (array_key_exists("ACTIVE_TO", $arVisibleColumnsMap))
+if (array_key_exists("ACTIVE_TO", $arVisibleColumnsMap)) {
     $arSelectedFields[] = "ACTIVE_TO_TIMESTAMP";
+}
 
 $cData = new CSecurityIPRule;
 $rsData = $cData->GetList($arSelectedFields, $arFilter, array($by => $order, "ID" => "DESC"));
@@ -223,36 +236,43 @@ while ($arRes = $rsData->NavNext(true, "f_")):
 
     if (array_key_exists("INCL_PATH", $arVisibleColumnsMap)) {
         $arMasks = CSecurityIPRule::GetRuleInclMasks($f_ID);
-        foreach ($arMasks as $i => $mask)
+        foreach ($arMasks as $i => $mask) {
             $arMasks[$i] = htmlspecialcharsex($mask);
+        }
         $row->AddViewField("INCL_PATH", implode("<br>", $arMasks));
     }
 
     if (array_key_exists("EXCL_PATH", $arVisibleColumnsMap)) {
         $arMasks = CSecurityIPRule::GetRuleExclMasks($f_ID);
-        foreach ($arMasks as $i => $mask)
+        foreach ($arMasks as $i => $mask) {
             $arMasks[$i] = htmlspecialcharsex($mask);
+        }
         $row->AddViewField("EXCL_PATH", implode("<br>", $arMasks));
     }
 
     if (array_key_exists("INCL_IP", $arVisibleColumnsMap)) {
         $arIPs = CSecurityIPRule::GetRuleInclIPs($f_ID);
-        foreach ($arIPs as $i => $ip)
+        foreach ($arIPs as $i => $ip) {
             $arIPs[$i] = htmlspecialcharsex($ip);
+        }
         $row->AddViewField("INCL_IP", implode("<br>", $arIPs));
     }
 
     if (array_key_exists("EXCL_IP", $arVisibleColumnsMap)) {
         $arIPs = CSecurityIPRule::GetRuleExclIPs($f_ID);
-        foreach ($arIPs as $i => $ip)
+        foreach ($arIPs as $i => $ip) {
             $arIPs[$i] = htmlspecialcharsex($ip);
+        }
         $row->AddViewField("EXCL_IP", implode("<br>", $arIPs));
     }
 
     if ($canWrite) {
         $row->AddCheckField("ACTIVE");
         $row->AddInputField("SORT", array("size" => 6));
-        $row->AddEditField("SITE_ID", CLang::SelectBox("FIELDS[" . $f_ID . "][SITE_ID]", $f_SITE_ID, GetMessage("MAIN_ALL")));
+        $row->AddEditField(
+            "SITE_ID",
+            CLang::SelectBox("FIELDS[" . $f_ID . "][SITE_ID]", $f_SITE_ID, GetMessage("MAIN_ALL"))
+        );
         $row->AddInputField("NAME", array("size" => 20));
         $row->AddCalendarField("ACTIVE_FROM");
         $row->AddCalendarField("ACTIVE_TO");
@@ -270,7 +290,10 @@ while ($arRes = $rsData->NavNext(true, "f_")):
             array(
                 "ICON" => "delete",
                 "TEXT" => GetMessage("SEC_IP_LIST_DELETE"),
-                "ACTION" => "if(confirm('" . GetMessage("SEC_IP_LIST_DELETE_CONF") . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete")
+                "ACTION" => "if(confirm('" . GetMessage("SEC_IP_LIST_DELETE_CONF") . "')) " . $lAdmin->ActionDoGroup(
+                        $f_ID,
+                        "delete"
+                    )
             ),
         );
         $row->AddActions($arActions);
@@ -305,9 +328,11 @@ if ($canWrite) {
 $lAdmin->AddAdminContextMenu($aContext);
 
 if ($canWrite) {
-    $lAdmin->AddGroupActionTable(Array(
-        "delete" => GetMessage("MAIN_ADMIN_LIST_DELETE"),
-    ));
+    $lAdmin->AddGroupActionTable(
+        Array(
+            "delete" => GetMessage("MAIN_ADMIN_LIST_DELETE"),
+        )
+    );
 }
 
 $message = CSecurityIPRule::CheckAntiFile(true);
@@ -379,11 +404,21 @@ $oFilter = new CAdminFilter(
     ?>
     <tr>
         <td><? echo GetMessage("SEC_IP_LIST_ACTIVE") ?></td>
-        <td><? echo SelectBoxFromArray("find_active", $arYesNo, htmlspecialcharsbx($find_active), GetMessage("MAIN_ALL")); ?></td>
+        <td><? echo SelectBoxFromArray(
+                "find_active",
+                $arYesNo,
+                htmlspecialcharsbx($find_active),
+                GetMessage("MAIN_ALL")
+            ); ?></td>
     </tr>
     <tr>
         <td><? echo GetMessage("SEC_IP_LIST_ADMIN_SECTION") ?></td>
-        <td><? echo SelectBoxFromArray("find_admin_section", $arYesNo, htmlspecialcharsbx($find_admin_section), GetMessage("MAIN_ALL")); ?></td>
+        <td><? echo SelectBoxFromArray(
+                "find_admin_section",
+                $arYesNo,
+                htmlspecialcharsbx($find_admin_section),
+                GetMessage("MAIN_ALL")
+            ); ?></td>
     </tr>
     <tr>
         <td><? echo GetMessage("SEC_IP_LIST_SITE_ID") ?></td>

@@ -141,7 +141,11 @@ class CHTMLEditor
         </script><?
 
         $basePath = '/bitrix/js/fileman/html_editor/';
-        $this->id = (isset($arParams['id']) && strlen($arParams['id']) > 0) ? $arParams['id'] : 'bxeditor' . substr(uniqid(mt_rand(), true), 0, 4);
+        $this->id = (isset($arParams['id']) && $arParams['id'] <> '') ? $arParams['id'] : 'bxeditor' . mb_substr(
+                uniqid(mt_rand(), true),
+                0,
+                4
+            );
         $this->id = preg_replace("/[^a-zA-Z0-9_:\.]/is", "", $this->id);
         if (isset($arParams['name'])) {
             $this->name = preg_replace("/[^a-zA-Z0-9_:\.]/is", "", $arParams['name']);
@@ -151,26 +155,32 @@ class CHTMLEditor
 
         $this->cssIframePath = $this->GetActualPath($basePath . 'iframe-style.css');
 
-        CJSCore::RegisterExt('html_editor', array(
-            'js' => array(
-                $basePath . 'range.js',
-                $basePath . 'html-actions.js',
-                $basePath . 'html-views.js',
-                $basePath . 'html-parser.js',
-                $basePath . 'html-base-controls.js',
-                $basePath . 'html-controls.js',
-                $basePath . 'html-components.js',
-                $basePath . 'html-snippets.js',
-                $basePath . 'html-editor.js',
-                '/bitrix/js/main/dd.js'
-            ),
-            'css' => $basePath . 'html-editor.css',
-            'rel' => array('date', 'timer')
-        ));
+        CJSCore::RegisterExt(
+            'html_editor',
+            array(
+                'js' => array(
+                    $basePath . 'range.js',
+                    $basePath . 'html-actions.js',
+                    $basePath . 'html-views.js',
+                    $basePath . 'html-parser.js',
+                    $basePath . 'html-base-controls.js',
+                    $basePath . 'html-controls.js',
+                    $basePath . 'html-components.js',
+                    $basePath . 'html-snippets.js',
+                    $basePath . 'html-editor.js',
+                    '/bitrix/js/main/dd.js'
+                ),
+                'css' => $basePath . 'html-editor.css',
+                'rel' => array('date', 'timer')
+            )
+        );
         CUtil::InitJSCore(array('html_editor'));
 
-        foreach (GetModuleEvents("fileman", "OnBeforeHTMLEditorScriptRuns", true) as $arEvent)
+        \Bitrix\Main\UI\Extension::load(['ajax']);
+
+        foreach (GetModuleEvents("fileman", "OnBeforeHTMLEditorScriptRuns", true) as $arEvent) {
             ExecuteModuleEventEx($arEvent);
+        }
 
         $this->bAutorized = is_object($USER) && $USER->IsAuthorized();
         if (isset($arParams['allowPhp']) && !isset($arParams['bAllowPhp'])) {
@@ -297,8 +307,9 @@ class CHTMLEditor
         $arParams["showSnippets"] = isset($arParams["showSnippets"]) ? $arParams["showSnippets"] : true;
         $arParams["showSnippets"] = $arParams["showSnippets"] && $userSettings['show_snippets'] != 'N';
 
-        if (!isset($arParams["initConponentParams"]))
+        if (!isset($arParams["initConponentParams"])) {
             $arParams["initConponentParams"] = $arParams["showTaskbars"] !== false && $arParams["showComponents"] && ($arParams['limitPhpAccess'] || $arParams['bAllowPhp']);
+        }
         if (empty($arParams["actionUrl"])) {
             $arParams["actionUrl"] = $arParams["bbCode"] ? '/bitrix/tools/html_editor_action.php' : '/bitrix/admin/fileman_html_editor_action.php';
         }
@@ -323,7 +334,9 @@ class CHTMLEditor
             'cssIframePath' => $this->cssIframePath,
             'bodyClass' => $arParams["bodyClass"],
             'bodyId' => $arParams["bodyId"],
-            'spellcheck_path' => $basePath . 'html-spell.js?v=' . filemtime($_SERVER['DOCUMENT_ROOT'] . $basePath . 'html-spell.js'),
+            'spellcheck_path' => $basePath . 'html-spell.js?v=' . filemtime(
+                    $_SERVER['DOCUMENT_ROOT'] . $basePath . 'html-spell.js'
+                ),
             'usePspell' => $arParams["usePspell"],
             'useCustomSpell' => $arParams["useCustomSpell"],
             'bbCode' => $arParams["bbCode"],
@@ -352,66 +365,84 @@ class CHTMLEditor
             $this->jsConfig['components'] = self::GetComponents($templateId, false, $arParams['componentFilter']);
         }
 
-        if (isset($arParams["initAutosave"]))
+        if (isset($arParams["initAutosave"])) {
             $this->jsConfig["initAutosave"] = $arParams["initAutosave"];
+        }
 
-        if (isset($arParams["uploadImagesFromClipboard"]))
+        if (isset($arParams["uploadImagesFromClipboard"])) {
             $this->jsConfig["uploadImagesFromClipboard"] = $arParams["uploadImagesFromClipboard"];
+        }
 
-        if (isset($arParams["useFileDialogs"]))
+        if (isset($arParams["useFileDialogs"])) {
             $this->jsConfig["useFileDialogs"] = $arParams["useFileDialogs"];
+        } elseif (\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24')) {
+            $this->jsConfig["useFileDialogs"] = false;
+        }
 
-        if (isset($arParams["useLinkStat"]))
-            $this->jsConfig["useLinkStat"] = $arParams["useLinkStat"];
-
-        if (isset($arParams["showTaskbars"]))
+        if (isset($arParams["showTaskbars"])) {
             $this->jsConfig["showTaskbars"] = $arParams["showTaskbars"];
+        }
 
-        if (isset($arParams["showNodeNavi"]))
+        if (isset($arParams["showNodeNavi"])) {
             $this->jsConfig["showNodeNavi"] = $arParams["showNodeNavi"];
+        }
 
-        if (isset($arParams["controlsMap"]))
+        if (isset($arParams["controlsMap"])) {
             $this->jsConfig["controlsMap"] = $arParams["controlsMap"];
+        }
 
-        if (isset($arParams["arSmiles"]))
+        if (isset($arParams["arSmiles"])) {
             $this->jsConfig["smiles"] = $arParams["arSmiles"];
+        }
 
-        if (isset($arParams["arSmilesSet"]))
+        if (isset($arParams["arSmilesSet"])) {
             $this->jsConfig["smileSets"] = $arParams["arSmilesSet"];
+        }
 
-        if (isset($arParams["iframeCss"]))
+        if (isset($arParams["iframeCss"])) {
             $this->jsConfig["iframeCss"] = $arParams["iframeCss"];
+        }
 
 
-        if (isset($arParams["beforeUnloadMessage"]))
+        if (isset($arParams["beforeUnloadMessage"])) {
             $this->jsConfig["beforeUnloadMessage"] = $arParams["beforeUnloadMessage"];
+        }
 
-        if (isset($arParams["setFocusAfterShow"]))
+        if (isset($arParams["setFocusAfterShow"])) {
             $this->jsConfig["setFocusAfterShow"] = $arParams["setFocusAfterShow"];
+        }
 
-        if (isset($arParams["relPath"]))
+        if (isset($arParams["relPath"])) {
             $this->jsConfig["relPath"] = $arParams["relPath"];
+        }
 
         // autoresize
         if (isset($arParams["autoResize"])) {
             $this->jsConfig["autoResize"] = $arParams["autoResize"];
-            if (isset($arParams['autoResizeOffset']))
+            if (isset($arParams['autoResizeOffset'])) {
                 $this->jsConfig['autoResizeOffset'] = $arParams['autoResizeOffset'];
-            if (isset($arParams['autoResizeMaxHeight']))
+            }
+            if (isset($arParams['autoResizeMaxHeight'])) {
                 $this->jsConfig['autoResizeMaxHeight'] = $arParams['autoResizeMaxHeight'];
-            if (isset($arParams['autoResizeSaveSize']))
+            }
+            if (isset($arParams['autoResizeSaveSize'])) {
                 $this->jsConfig['autoResizeSaveSize'] = $arParams['autoResizeSaveSize'] !== false;
+            }
         }
 
-        if (isset($arParams["minBodyWidth"]))
+        if (isset($arParams["minBodyWidth"])) {
             $this->jsConfig["minBodyWidth"] = $arParams["minBodyWidth"];
-        if (isset($arParams["minBodyHeight"]))
+        }
+        if (isset($arParams["minBodyHeight"])) {
             $this->jsConfig["minBodyHeight"] = $arParams["minBodyHeight"];
-        if (isset($arParams["normalBodyWidth"]))
+        }
+        if (isset($arParams["normalBodyWidth"])) {
             $this->jsConfig["normalBodyWidth"] = $arParams["normalBodyWidth"];
+        }
 
-        if (isset($arParams['autoLink']))
+        if (isset($arParams['autoLink'])) {
             $this->jsConfig['autoLink'] = $arParams['autoLink'];
+        }
 
         return $arParams;
     }
@@ -428,27 +459,34 @@ class CHTMLEditor
         $this->InitLangMess();
         $arParams = $this->Init($arParams);
 
-        if ($arParams["uploadImagesFromClipboard"] !== false)
+        if ($arParams["uploadImagesFromClipboard"] !== false) {
             CJSCore::Init(array("uploader"));
+        }
 
         // Display all DOM elements, dialogs
         $this->BuildSceleton($this->display);
         $this->Run($this->display);
 
         if ($arParams["initConponentParams"]) {
-            CComponentParamsManager::Init(array(
-                'requestUrl' => '/bitrix/admin/fileman_component_params.php'
-            ));
+            CComponentParamsManager::Init(
+                array(
+                    'requestUrl' => '/bitrix/admin/fileman_component_params.php'
+                )
+            );
         }
     }
 
     function BuildSceleton($display = true)
     {
-        $width = isset($this->jsConfig['width']) && intval($this->jsConfig['width']) > 0 ? $this->jsConfig['width'] : "100%";
-        $height = isset($this->jsConfig['height']) && intval($this->jsConfig['height']) > 0 ? $this->jsConfig['height'] : "100%";
+        $width = isset($this->jsConfig['width']) && intval(
+            $this->jsConfig['width']
+        ) > 0 ? $this->jsConfig['width'] : "100%";
+        $height = isset($this->jsConfig['height']) && intval(
+            $this->jsConfig['height']
+        ) > 0 ? $this->jsConfig['height'] : "100%";
 
-        $widthUnit = strpos($width, "%") === false ? "px" : "%";
-        $heightUnit = strpos($height, "%") === false ? "px" : "%";
+        $widthUnit = mb_strpos($width, "%") === false ? "px" : "%";
+        $heightUnit = mb_strpos($height, "%") === false ? "px" : "%";
         $width = intval($width);
         $height = intval($height);
 
@@ -520,7 +558,10 @@ class CHTMLEditor
     function SafeJsonEncode($data = array())
     {
         try {
-            $json = \Bitrix\Main\Web\Json::encode($data, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_PARTIAL_OUTPUT_ON_ERROR);
+            $json = \Bitrix\Main\Web\Json::encode(
+                $data,
+                JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_PARTIAL_OUTPUT_ON_ERROR
+            );
         } catch (Exception $e) {
             $json = '{}';
         }
@@ -529,7 +570,9 @@ class CHTMLEditor
 
     function InitLangMess()
     {
-        $mess_lang = \Bitrix\Main\Localization\Loc::loadLanguageFile($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/fileman/classes/general/html_editor_js.php');
+        $mess_lang = \Bitrix\Main\Localization\Loc::loadLanguageFile(
+            $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/fileman/classes/general/html_editor_js.php'
+        );
         ?>
         <script>BX.message(<?=CUtil::PhpToJSObject($mess_lang, false);?>);</script><?
     }
@@ -550,7 +593,9 @@ class CHTMLEditor
                     'bClearCache' => $bClearCache
                 )
             ),
-            'rootDefaultFilename' => CSnippets::GetDefaultFileName($_SERVER["DOCUMENT_ROOT"] . BX_PERSONAL_ROOT . "/templates/" . $templateId . "/snippets")
+            'rootDefaultFilename' => CSnippets::GetDefaultFileName(
+                $_SERVER["DOCUMENT_ROOT"] . BX_PERSONAL_ROOT . "/templates/" . $templateId . "/snippets"
+            )
         );
     }
 
@@ -559,12 +604,13 @@ class CHTMLEditor
         global $CACHE_MANAGER;
 
         $allowed = trim(COption::GetOptionString('fileman', "~allowed_components", ''));
-        $mask = $allowed === '' ? 0 : substr(md5($allowed), 0, 10);
+        $mask = $allowed === '' ? 0 : mb_substr(md5($allowed), 0, 10);
 
         $lang = isset($Params['lang']) ? $Params['lang'] : LANGUAGE_ID;
         $component_type = '';
-        if (isset($arFilter['TYPE']))
+        if (isset($arFilter['TYPE'])) {
             $component_type = '_' . $arFilter['TYPE'];
+        }
 
         $cache_name = 'component_tree_array_' . $lang . '_' . $mask . $component_type;
         $table_id = "fileman_component_tree";
@@ -615,7 +661,7 @@ class CHTMLEditor
     public static function _HandleComponentElement($arEls, $path)
     {
         foreach ($arEls as $elName => $arEl) {
-            if (strpos($path, ",") !== false) {
+            if (mb_strpos($path, ",") !== false) {
                 if (isset($arEl['*'])) {
                     $thirdLevelName = '__bx_thirdLevel_' . self::$thirdLevelId;
                     self::$thirdLevelId++;
@@ -680,15 +726,17 @@ class CHTMLEditor
 
         switch ($action) {
             case "load_site_template":
-                if (!$USER->CanDoOperation('fileman_view_file_structure'))
+                if (!$USER->CanDoOperation('fileman_view_file_structure')) {
                     break;
+                }
                 $siteTemplate = $_REQUEST['site_template'];
                 $siteId = isset($_REQUEST['site_id']) ? $_REQUEST['site_id'] : SITE_ID;
                 $result = self::GetSiteTemplateParams($siteTemplate, $siteId);
                 break;
             case "load_components_list":
-                if (!$USER->CanDoOperation('fileman_view_file_structure'))
+                if (!$USER->CanDoOperation('fileman_view_file_structure')) {
                     break;
+                }
                 $siteTemplate = $_REQUEST['site_template'];
                 $componentFilter = isset($_REQUEST['componentFilter']) ? $_REQUEST['componentFilter'] : false;
                 $result = self::GetComponents($siteTemplate, true, $componentFilter);
@@ -698,8 +746,9 @@ class CHTMLEditor
                 break;
             // Snippets actions
             case "load_snippets_list":
-                if (!$USER->CanDoOperation('fileman_view_file_structure'))
+                if (!$USER->CanDoOperation('fileman_view_file_structure')) {
                     break;
+                }
                 $template = $_REQUEST['site_template'];
                 $result = array(
                     'result' => true,
@@ -707,30 +756,35 @@ class CHTMLEditor
                 );
                 break;
             case "edit_snippet":
-                if (!$USER->CanDoOperation('fileman_view_file_structure'))
+                if (!$USER->CanDoOperation('fileman_view_file_structure')) {
                     break;
+                }
                 CUtil::JSPostUnEscape();
                 $template = $_REQUEST['site_template'];
 
                 // Update
                 if ($_REQUEST['current_path']) {
-                    $result = CSnippets::Update(array(
-                        'template' => $template,
-                        'path' => $_REQUEST['path'],
-                        'code' => $_REQUEST['code'],
-                        'title' => $_REQUEST['name'],
-                        'current_path' => $_REQUEST['current_path'],
-                        'description' => $_REQUEST['description']
-                    ));
+                    $result = CSnippets::Update(
+                        array(
+                            'template' => $template,
+                            'path' => $_REQUEST['path'],
+                            'code' => $_REQUEST['code'],
+                            'title' => $_REQUEST['name'],
+                            'current_path' => $_REQUEST['current_path'],
+                            'description' => $_REQUEST['description']
+                        )
+                    );
                 } // Add new
                 else {
-                    $result = CSnippets::Add(array(
-                        'template' => $template,
-                        'path' => $_REQUEST['path'],
-                        'code' => $_REQUEST['code'],
-                        'title' => $_REQUEST['name'],
-                        'description' => $_REQUEST['description']
-                    ));
+                    $result = CSnippets::Add(
+                        array(
+                            'template' => $template,
+                            'path' => $_REQUEST['path'],
+                            'code' => $_REQUEST['code'],
+                            'title' => $_REQUEST['name'],
+                            'description' => $_REQUEST['description']
+                        )
+                    );
                 }
 
                 if ($result && $result['result']) {
@@ -739,15 +793,18 @@ class CHTMLEditor
 
                 break;
             case "remove_snippet":
-                if (!$USER->CanDoOperation('fileman_view_file_structure'))
+                if (!$USER->CanDoOperation('fileman_view_file_structure')) {
                     break;
+                }
                 CUtil::JSPostUnEscape();
                 $template = $_REQUEST['site_template'];
 
-                $res = CSnippets::Remove(array(
-                    'template' => $template,
-                    'path' => $_REQUEST['path']
-                ));
+                $res = CSnippets::Remove(
+                    array(
+                        'template' => $template,
+                        'path' => $_REQUEST['path']
+                    )
+                );
 
                 if ($res) {
                     $result = array(
@@ -760,15 +817,18 @@ class CHTMLEditor
 
                 break;
             case "snippet_add_category":
-                if (!$USER->CanDoOperation('fileman_view_file_structure'))
+                if (!$USER->CanDoOperation('fileman_view_file_structure')) {
                     break;
+                }
                 CUtil::JSPostUnEscape();
                 $template = $_REQUEST['site_template'];
-                $res = CSnippets::CreateCategory(array(
-                    'template' => $template,
-                    'name' => $_REQUEST['category_name'],
-                    'parent' => $_REQUEST['category_parent']
-                ));
+                $res = CSnippets::CreateCategory(
+                    array(
+                        'template' => $template,
+                        'name' => $_REQUEST['category_name'],
+                        'parent' => $_REQUEST['category_parent']
+                    )
+                );
 
                 if ($res) {
                     $result = array(
@@ -780,14 +840,17 @@ class CHTMLEditor
                 }
                 break;
             case "snippet_remove_category":
-                if (!$USER->CanDoOperation('fileman_view_file_structure'))
+                if (!$USER->CanDoOperation('fileman_view_file_structure')) {
                     break;
+                }
                 CUtil::JSPostUnEscape();
                 $template = $_REQUEST['site_template'];
-                $res = CSnippets::RemoveCategory(array(
-                    'template' => $template,
-                    'path' => $_REQUEST['category_path']
-                ));
+                $res = CSnippets::RemoveCategory(
+                    array(
+                        'template' => $template,
+                        'path' => $_REQUEST['category_path']
+                    )
+                );
 
                 if ($res) {
                     $result = array(
@@ -799,15 +862,18 @@ class CHTMLEditor
                 }
                 break;
             case "snippet_rename_category":
-                if (!$USER->CanDoOperation('fileman_view_file_structure'))
+                if (!$USER->CanDoOperation('fileman_view_file_structure')) {
                     break;
+                }
                 CUtil::JSPostUnEscape();
                 $template = $_REQUEST['site_template'];
-                $res = CSnippets::RenameCategory(array(
-                    'template' => $template,
-                    'path' => $_REQUEST['category_path'],
-                    'new_name' => $_REQUEST['category_new_name']
-                ));
+                $res = CSnippets::RenameCategory(
+                    array(
+                        'template' => $template,
+                        'path' => $_REQUEST['category_path'],
+                        'new_name' => $_REQUEST['category_new_name']
+                    )
+                );
 
                 if ($res) {
                     $result = array(
@@ -824,13 +890,15 @@ class CHTMLEditor
             case "spellcheck_words":
             case "spellcheck_add_word":
                 CUtil::JSPostUnEscape();
-                $spellChecker = new CSpellchecker(array(
-                    "lang" => $_REQUEST['lang'],
-                    "skip_length" => 2,
-                    "use_pspell" => $_REQUEST['use_pspell'] !== "N",
-                    "use_custom_spell" => $_REQUEST['use_custom_spell'] !== "N",
-                    "mode" => PSPELL_FAST
-                ));
+                $spellChecker = new CSpellchecker(
+                    array(
+                        "lang" => $_REQUEST['lang'],
+                        "skip_length" => 2,
+                        "use_pspell" => $_REQUEST['use_pspell'] !== "N",
+                        "use_custom_spell" => $_REQUEST['use_custom_spell'] !== "N",
+                        "mode" => PSPELL_FAST
+                    )
+                );
 
                 if ($action == "spellcheck_words") {
                     $words = (isset($_REQUEST['words']) && is_array($_REQUEST['words'])) ? $_REQUEST['words'] : array();
@@ -848,7 +916,8 @@ class CHTMLEditor
                 $editorId = $_REQUEST['editor_id'];
                 $editorId = preg_replace("/[^a-zA-Z0-9_-]/is", "_", $editorId);
 
-                CAdminFileDialog::ShowScript(Array
+                CAdminFileDialog::ShowScript(
+                    Array
                     (
                         "event" => "BxOpenFileBrowserWindFile" . $editorId,
                         "arResultDest" => Array("FUNCTION_NAME" => "OnFileDialogSelect" . $editorId),
@@ -859,7 +928,7 @@ class CHTMLEditor
                         "showAddToMenuTab" => false,
                         "fileFilter" => 'image',
                         "allowAllFiles" => true,
-                        "SaveConfig" => true
+                        "saveConfig" => true
                     )
                 );
                 CMedialib::ShowBrowseButton(
@@ -896,43 +965,55 @@ class CHTMLEditor
 
             case "uploadfile":
                 $uploader = new \CFileUploader(
-                    array("events" => array(
-                        "onFileIsUploaded" => function ($hash, &$file, &$package, &$upload, &$error) {
-                            $error = \CFile::CheckFile($file["files"]["default"], 0, "image/", \CFile::GetImageExtensions());
-                            $io = CBXVirtualIo::GetInstance();
-                            $fileName = $file["name"];
+                    array(
+                        "events" => array(
+                            "onFileIsUploaded" => function ($hash, &$file, &$package, &$upload, &$error) {
+                                $error = \CFile::CheckFile(
+                                    $file["files"]["default"],
+                                    0,
+                                    "image/",
+                                    \CFile::GetImageExtensions()
+                                );
+                                $io = CBXVirtualIo::GetInstance();
+                                $fileName = $file["name"];
 
-                            if (empty($error) && $io->ValidateFilenameString($fileName) && $io->ValidatePathString(self::GetUploadPath() . $fileName)) {
-                                if (COption::GetOptionString('fileman', "use_medialib", "Y") != "N" &&
-                                    CMedialib::CanDoOperation('medialib_view_collection', 0, false, true)) {
-                                    $image = CMedialib::AutosaveImage($file["files"]["default"]);
-                                    if ($image && $image['PATH']) {
-                                        $file["uploadedPath"] = $image['PATH'];
-                                        return true;
-                                    } else {
-                                        return false;
-                                    }
-                                } else {
-                                    $newPath = self::GetUploadPath() . $fileName;
-                                    if ($io->FileExists($_SERVER["DOCUMENT_ROOT"] . $newPath)) {
-                                        $ext = GetFileExtension($fileName);
-                                        $name = GetFileNameWithoutExtension($fileName);
-                                        $iter = 1;
-                                        while (true && $iter < 1000) {
-                                            $newPath = self::GetUploadPath() . $name . '(' . $iter . ').' . $ext;
-                                            if (!$io->FileExists($_SERVER["DOCUMENT_ROOT"] . $newPath)) {
-                                                break;
-                                            }
-                                            $iter++;
+                                if (empty($error) && $io->ValidateFilenameString($fileName) && $io->ValidatePathString(
+                                        self::GetUploadPath() . $fileName
+                                    )) {
+                                    if (COption::GetOptionString('fileman', "use_medialib", "Y") != "N" &&
+                                        CMedialib::CanDoOperation('medialib_view_collection', 0, false, true)) {
+                                        $image = CMedialib::AutosaveImage($file["files"]["default"]);
+                                        if ($image && $image['PATH']) {
+                                            $file["uploadedPath"] = $image['PATH'];
+                                            return true;
+                                        } else {
+                                            return false;
                                         }
+                                    } else {
+                                        $newPath = self::GetUploadPath() . $fileName;
+                                        if ($io->FileExists($_SERVER["DOCUMENT_ROOT"] . $newPath)) {
+                                            $ext = GetFileExtension($fileName);
+                                            $name = GetFileNameWithoutExtension($fileName);
+                                            $iter = 1;
+                                            while (true && $iter < 1000) {
+                                                $newPath = self::GetUploadPath() . $name . '(' . $iter . ').' . $ext;
+                                                if (!$io->FileExists($_SERVER["DOCUMENT_ROOT"] . $newPath)) {
+                                                    break;
+                                                }
+                                                $iter++;
+                                            }
+                                        }
+                                        CopyDirFiles(
+                                            $file["files"]["default"]["tmp_name"],
+                                            $_SERVER["DOCUMENT_ROOT"] . $newPath
+                                        );
+                                        $file["uploadedPath"] = $newPath;
+                                        return true;
                                     }
-                                    CopyDirFiles($file["files"]["default"]["tmp_name"], $_SERVER["DOCUMENT_ROOT"] . $newPath);
-                                    $file["uploadedPath"] = $newPath;
-                                    return true;
                                 }
                             }
-                        }
-                    )),
+                        )
+                    ),
                     "get"
                 );
                 $uploader->checkPost();
@@ -940,26 +1021,33 @@ class CHTMLEditor
                 break;
         }
 
-        self::ShowResponse(intVal($_REQUEST['reqId']), $result);
+        self::ShowResponse(intval($_REQUEST['reqId']), $result);
     }
 
     public static function ShowResponse($reqId = false, $Res = false)
     {
         if ($Res !== false) {
             if ($reqId === false) {
-                $reqId = intVal($_REQUEST['reqId']);
+                $reqId = intval($_REQUEST['reqId']);
             }
 
             if ($reqId) {
                 ?>
-                <script>top.BXHtmlEditorAjaxResponse['<?= $reqId?>'] = <?= \Bitrix\Main\Web\Json::encode($Res)?>;</script>
+                <script>top.BXHtmlEditorAjaxResponse['<?= $reqId?>'] = <?= \Bitrix\Main\Web\Json::encode(
+                        $Res
+                    )?>;</script>
                 <?
             }
         }
     }
 
-    public static function GetComponentParams($name, $siteTemplate = '', $template = '', $curValues = array(), $loadHelp = true)
-    {
+    public static function GetComponentParams(
+        $name,
+        $siteTemplate = '',
+        $template = '',
+        $curValues = array(),
+        $loadHelp = true
+    ) {
         $template = (!$template || $template == '.default') ? '' : CUtil::JSEscape($template);
         $arTemplates = CComponentUtil::GetTemplatesList($name, $siteTemplate);
 
@@ -983,11 +1071,20 @@ class CHTMLEditor
 
                 $tName = (!$arTemplate['NAME'] || $arTemplate['NAME'] == '.default') ? '' : $arTemplate['NAME'];
                 if ($tName == $template) {
-                    $arTemplateProps = CComponentUtil::GetTemplateProps($name, $arTemplate['NAME'], $siteTemplate, $curValues);
+                    $arTemplateProps = CComponentUtil::GetTemplateProps(
+                        $name,
+                        $arTemplate['NAME'],
+                        $siteTemplate,
+                        $curValues
+                    );
 
                     if (is_array($arTemplateProps)) {
                         foreach ($arTemplateProps as $k => $arTemplateProp) {
-                            $result['templ_props'][] = self::_HandleComponentParam($k, $arTemplateProp, $arProps['GROUPS']);
+                            $result['templ_props'][] = self::_HandleComponentParam(
+                                $k,
+                                $arTemplateProp,
+                                $arProps['GROUPS']
+                            );
                         }
                     }
                 }
@@ -1036,7 +1133,16 @@ class CHTMLEditor
                         'ONLY_ML' => isset($arParam['FD_USE_ONLY_MEDIALIB']) && $arParam['FD_USE_ONLY_MEDIALIB'],
                         'ML_TYPES' => isset($arParam['FD_MEDIALIB_TYPES']) ? $arParam['FD_MEDIALIB_TYPES'] : false
                     );
-                } elseif (in_array($k, Array('FD_TARGET', 'FD_EXT', 'FD_UPLOAD', 'FD_MEDIALIB_TYPES', 'FD_USE_ONLY_MEDIALIB'))) {
+                } elseif (in_array(
+                    $k,
+                    Array(
+                        'FD_TARGET',
+                        'FD_EXT',
+                        'FD_UPLOAD',
+                        'FD_MEDIALIB_TYPES',
+                        'FD_USE_ONLY_MEDIALIB'
+                    )
+                )) {
                     continue;
                 }
 
@@ -1051,11 +1157,17 @@ class CHTMLEditor
     {
         $params = CFileman::GetAllTemplateParams($templateId, $siteId);
 
-        $params["STYLES"] = preg_replace("/(url\(\"?)images\//is", "\\1" . $params['SITE_TEMPLATE_PATH'] . '/images/', $params["STYLES"]);
+        $params["STYLES"] = preg_replace(
+            "/(url\(\"?)images\//is",
+            "\\1" . $params['SITE_TEMPLATE_PATH'] . '/images/',
+            $params["STYLES"]
+        );
 
         if (is_array($params['EDITOR_STYLES'])) {
             for ($i = 0, $l = count($params['EDITOR_STYLES']); $i < $l; $i++) {
-                $params['EDITOR_STYLES'][$i] = $params['EDITOR_STYLES'][$i] . '?' . @filemtime($_SERVER['DOCUMENT_ROOT'] . $params['EDITOR_STYLES'][$i]);
+                $params['EDITOR_STYLES'][$i] = $params['EDITOR_STYLES'][$i] . '?' . @filemtime(
+                        $_SERVER['DOCUMENT_ROOT'] . $params['EDITOR_STYLES'][$i]
+                    );
             }
         }
 
@@ -1106,7 +1218,7 @@ class CHTMLEditor
             $path = $url;
             $serverPath = self::GetServerPath();
 
-            if (strpos($path, $serverPath) !== false) {
+            if (mb_strpos($path, $serverPath) !== false) {
                 $path = str_replace($serverPath, '', $path);
             }
 
@@ -1156,19 +1268,24 @@ class CHTMLEditor
 
     public static function GetServerPath()
     {
-        if (defined("SITE_SERVER_NAME") && strlen(SITE_SERVER_NAME) > 0)
+        if (defined("SITE_SERVER_NAME") && SITE_SERVER_NAME <> '') {
             $server_name = SITE_SERVER_NAME;
-        if (!$server_name)
+        }
+        if (!$server_name) {
             $server_name = COption::GetOptionString("main", "server_name", "");
-        if (!$server_name)
+        }
+        if (!$server_name) {
             $server_name = $_SERVER['HTTP_HOST'];
+        }
         $server_name = rtrim($server_name, '/');
         if (!preg_match('/^[a-z0-9\.\-]+$/i', $server_name)) // cyrillic domain hack
         {
             $converter = new CBXPunycode(defined('BX_UTF') && BX_UTF === true ? 'UTF-8' : 'windows-1251');
             $host = $converter->Encode($server_name);
             if (!preg_match('#--p1ai$#', $host)) // trying to guess
+            {
                 $host = $converter->Encode(CharsetConverter::ConvertCharset($server_name, 'utf-8', 'windows-1251'));
+            }
             $server_name = $host;
         }
 
@@ -1181,12 +1298,15 @@ class CHTMLEditor
     {
         $settingsKey = "user_settings_" . $params["bbCode"];
 
-        if (isset($params["view"]))
+        if (isset($params["view"])) {
             $settingsKey .= '_' . $params["view"];
+        }
 
         if (isset($params["controlsMap"]) && is_array($params["controlsMap"])) {
             foreach ($params["controlsMap"] as $control) {
-                if ($control && (strtolower($control['id']) == 'bbcode' || strtolower($control['id']) == 'changeview')) {
+                if ($control && (mb_strtolower($control['id']) == 'bbcode' || mb_strtolower(
+                            $control['id']
+                        ) == 'changeview')) {
                     $settingsKey .= '_' . $control['id'];
                 }
             }

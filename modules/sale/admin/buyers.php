@@ -12,8 +12,9 @@ $publicMode = $adminPage->publicMode;
 $selfFolderUrl = $adminPage->getSelfFolderUrl();
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions == "D")
+if ($saleModulePermissions == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 if (!CBXFeatures::IsFeatureEnabled('SaleAccounts')) {
     require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
@@ -32,18 +33,20 @@ ClearVars();
 
 $APPLICATION->SetTitle(GetMessage("BUYER_TITLE"));
 
-$rsSites = CSite::GetList($sby = "sort", $sorder = "desc", array("ACTIVE" => "Y"));
+$rsSites = CSite::GetList("sort", "desc", array("ACTIVE" => "Y"));
 $arSites = array();
-while ($arSite = $rsSites->Fetch())
+while ($arSite = $rsSites->Fetch()) {
     $arSites[$arSite["ID"]] = array("ID" => $arSite["ID"], "NAME" => $arSite["NAME"]);
+}
 
 $arUsersGroups = array();
-$dbGroups = CGroup::GetList(($b = "c_sort"), ($o = "asc"), array("ANONYMOUS" => "N"));
-while ($arGroups = $dbGroups->Fetch())
+$dbGroups = CGroup::GetList("c_sort", "asc", array("ANONYMOUS" => "N"));
+while ($arGroups = $dbGroups->Fetch()) {
     $arUsersGroups[] = $arGroups;
+}
 
 $sTableID = "tbl_sale_buyers";
-$oSort = new CAdminSorting($sTableID, "LAST_LOGIN", "desc");
+$oSort = new CAdminUiSorting($sTableID, "LAST_LOGIN", "desc");
 global $by, $order;
 $lAdmin = new CAdminUiList($sTableID, $oSort);
 
@@ -60,7 +63,7 @@ foreach ($currencyList as $currencyId => $currencyName) {
     $listCurrency[$currencyId] = $currencyName;
 }
 $listSite = array();
-$sitesQueryObject = CSite::getList($bySite = "sort", $orderSite = "asc", array("ACTIVE" => "Y"));
+$sitesQueryObject = CSite::getList("sort", "asc", array("ACTIVE" => "Y"));
 while ($site = $sitesQueryObject->fetch()) {
     $listSite[$site["LID"]] = $site["NAME"] . " [" . $site["LID"] . "]";
 }
@@ -167,11 +170,13 @@ $lAdmin->setFilterPresets($filterPresets);
 
 $lAdmin->AddFilter($filterFields, $arFilter);
 
-if (isset($arFilter["BUYER"]) && strlen($arFilter["BUYER"]) > 0) {
+if (isset($arFilter["BUYER"]) && $arFilter["BUYER"] <> '') {
     $nameSearch = trim($arFilter["BUYER"]);
-    $searchFilter = \Bitrix\Main\UserUtils::getAdminSearchFilter([
-        'FIND' => $nameSearch
-    ]);
+    $searchFilter = \Bitrix\Main\UserUtils::getAdminSearchFilter(
+        [
+            'FIND' => $nameSearch
+        ]
+    );
 
     $renameUserFields = function ($fields) use (&$renameUserFields) {
         $result = [];
@@ -179,11 +184,11 @@ if (isset($arFilter["BUYER"]) && strlen($arFilter["BUYER"]) > 0) {
             if (is_array($value)) {
                 $result[$key] = $renameUserFields($value);
             } else {
-                if (strpos($key, 'INDEX') !== false) {
+                if (mb_strpos($key, 'INDEX') !== false) {
                     $key = str_replace('INDEX', 'USER.INDEX', $key);
                 } elseif ($key !== 'LOGIC') {
-                    $namePosition = strpos($key, preg_replace('/^\W+/', '', $key));
-                    $key = substr($key, 0, $namePosition) . "USER." . substr($key, $namePosition);
+                    $namePosition = mb_strpos($key, preg_replace('/^\W+/', '', $key));
+                    $key = mb_substr($key, 0, $namePosition) . "USER." . mb_substr($key, $namePosition);
                 }
                 $result[$key] = $value;
             }
@@ -198,11 +203,13 @@ if (isset($arFilter["BUYER"]) && strlen($arFilter["BUYER"]) > 0) {
 $arSitesShop = array();
 foreach ($arSites as $key => $val) {
     $site = COption::GetOptionString("sale", "SHOP_SITE_" . $key, "");
-    if ($key == $site)
+    if ($key == $site) {
         $arSitesShop[] = array("ID" => $key, "NAME" => $val["NAME"]);
+    }
 }
-if (empty($arSitesShop))
+if (empty($arSitesShop)) {
     $arSitesShop = $arSites;
+}
 
 $arHeaders = array(
     array("id" => "USER_ID", "content" => "ID", "sort" => "USER_ID"),
@@ -212,22 +219,67 @@ $arHeaders = array(
     array("id" => "NAME", "content" => GetMessage("BUYER_ROW_NAME"), "sort" => "NAME"),
     array("id" => "SECOND_NAME", "content" => GetMessage("BUYER_ROW_SECOND"), "sort" => "SECOND_NAME"),
     array("id" => "EMAIL", "content" => GetMessage("BUYER_ROW_MAIL"), "sort" => "EMAIL", "default" => true),
-    array("id" => "PERSONAL_PHONE", "content" => GetMessage("BUYER_ROW_PHONE"), "sort" => "PERSONAL_PHONE", "default" => true),
-    array("id" => "LAST_LOGIN", "content" => GetMessage('BUYER_ROW_LAST_LOGIN'), "sort" => "LAST_LOGIN", "default" => false),
-    array("id" => "DATE_REGISTER", "content" => GetMessage('BUYER_ROW_DATE_REGISTER'), "sort" => "DATE_REGISTER", "default" => true),
-    array("id" => "LAST_ORDER_DATE", "content" => GetMessage('BUYER_ROW_LAST_ORDER_DATE'), "sort" => "LAST_ORDER_DATE", "default" => false),
+    array(
+        "id" => "PERSONAL_PHONE",
+        "content" => GetMessage("BUYER_ROW_PHONE"),
+        "sort" => "PERSONAL_PHONE",
+        "default" => true
+    ),
+    array(
+        "id" => "LAST_LOGIN",
+        "content" => GetMessage('BUYER_ROW_LAST_LOGIN'),
+        "sort" => "LAST_LOGIN",
+        "default" => false
+    ),
+    array(
+        "id" => "DATE_REGISTER",
+        "content" => GetMessage('BUYER_ROW_DATE_REGISTER'),
+        "sort" => "DATE_REGISTER",
+        "default" => true
+    ),
+    array(
+        "id" => "LAST_ORDER_DATE",
+        "content" => GetMessage('BUYER_ROW_LAST_ORDER_DATE'),
+        "sort" => "LAST_ORDER_DATE",
+        "default" => false
+    ),
     array("id" => "LID", "content" => GetMessage('BUYER_ROW_LID'), "default" => true),
-    array("id" => "COUNT_FULL_PAID_ORDER", "content" => GetMessage('BUYER_ROW_COUNT_FULL_PAID_ORDER'), "sort" => "COUNT_FULL_PAID_ORDER", "default" => true, "align" => "right"),
-    array("id" => "COUNT_PART_PAID_ORDER", "content" => GetMessage('BUYER_ROW_COUNT_PART_PAID_ORDER'), "sort" => "COUNT_PART_PAID_ORDER", "default" => true, "align" => "right"),
-    array("id" => "SUM_PAID", "content" => GetMessage('BUYER_ROW_SUM_PAID'), "sort" => "SUM_PAID", "default" => true, "align" => "right"),
+    array(
+        "id" => "COUNT_FULL_PAID_ORDER",
+        "content" => GetMessage('BUYER_ROW_COUNT_FULL_PAID_ORDER'),
+        "sort" => "COUNT_FULL_PAID_ORDER",
+        "default" => true,
+        "align" => "right"
+    ),
+    array(
+        "id" => "COUNT_PART_PAID_ORDER",
+        "content" => GetMessage('BUYER_ROW_COUNT_PART_PAID_ORDER'),
+        "sort" => "COUNT_PART_PAID_ORDER",
+        "default" => true,
+        "align" => "right"
+    ),
+    array(
+        "id" => "SUM_PAID",
+        "content" => GetMessage('BUYER_ROW_SUM_PAID'),
+        "sort" => "SUM_PAID",
+        "default" => true,
+        "align" => "right"
+    ),
     array("id" => "GROUPS_ID", "content" => GetMessage('BUYER_ROW_GROUP')),
 );
 $lAdmin->AddHeaders($arHeaders);
 $arVisibleColumns = $lAdmin->GetVisibleHeaderColumns();
 
 $userFields = [
-    'DATE_REGISTER', 'LOGIN', 'EMAIL', 'NAME', 'LAST_NAME', 'SECOND_NAME',
-    'PERSONAL_PHONE', 'LAST_LOGIN', 'PERSONAL_BIRTHDAY'
+    'DATE_REGISTER',
+    'LOGIN',
+    'EMAIL',
+    'NAME',
+    'LAST_NAME',
+    'SECOND_NAME',
+    'PERSONAL_PHONE',
+    'LAST_LOGIN',
+    'PERSONAL_BIRTHDAY'
 ];
 $orderFields = ['SUM_PAID', 'COUNT_FULL_PAID_ORDER', 'COUNT_PART_PAID_ORDER'];
 
@@ -238,7 +290,7 @@ if ($publicMode && \Bitrix\Main\Loader::includeModule('crm')) {
     $sorting = $gridOptions->getSorting(['sort' => ['NAME' => 'ASC']]);
 
     $by = key($sorting['sort']);
-    $order = strtoupper(current($sorting['sort'])) === 'ASC' ? 'ASC' : 'DESC';
+    $order = mb_strtoupper(current($sorting['sort'])) === 'ASC' ? 'ASC' : 'DESC';
 
     $sortByUserField = isset($by) && in_array($by, $userFields);
 
@@ -260,24 +312,19 @@ if ($publicMode && \Bitrix\Main\Loader::includeModule('crm')) {
 
     if ($searchString !== '') {
         $searchFields = ['FIND' => $searchString];
-    } else {
-        $searchFields = [];
-
-        foreach ($arFilter as $key => $searchValue) {
-            if (strpos($key, 'USER.') === 0) {
-                $field = str_replace('USER.', '', $key);
-                $searchFields[$field] = $searchValue;
-            }
-        }
-    }
-
-    if (!empty($searchFields)) {
         $filter = array_merge(\Bitrix\Main\UserUtils::getAdminSearchFilter($searchFields), $filter);
     }
 
+    foreach ($arFilter as $key => $searchValue) {
+        if (mb_strpos($key, 'USER.') === 0 || mb_strpos($key, '%USER.') === 0 || mb_strpos($key, '*USER.') === 0) {
+            $field = str_replace('USER.', '', $key);
+            $filter[$field] = $searchValue;
+        }
+    }
+
     $gridColumns = $gridOptions->getUsedColumns();
-    $selectColumns = array_merge($gridColumns, ['ID']);
-    $selectColumns = array_intersect($selectColumns, array_keys(\Bitrix\Main\UserTable::getMap()));
+    $selectColumns = array_merge($gridColumns, ['ID', 'EXTERNAL_AUTH_ID']);
+    $selectColumns = array_intersect($selectColumns, array_keys(\Bitrix\Main\UserTable::getEntity()->getFields()));
 
     $navyParams = CDBResult::GetNavParams(CAdminUiResult::GetNavSize($sTableID));
     $navyParams['PAGEN'] = (int)$navyParams['PAGEN'];
@@ -313,14 +360,16 @@ if ($publicMode && \Bitrix\Main\Loader::includeModule('crm')) {
         $navOffset = 0;
     }
 
-    $buyersData = \Bitrix\Main\UserTable::getList([
-        'select' => $selectColumns,
-        'filter' => $filter,
-        'order' => [$userBy => $order],
-        'offset' => $navOffset,
-        'limit' => $navLimit,
-        'runtime' => [$groupReference],
-    ]);
+    $buyersData = \Bitrix\Main\UserTable::getList(
+        [
+            'select' => $selectColumns,
+            'filter' => $filter,
+            'order' => [$userBy => $order],
+            'offset' => $navOffset,
+            'limit' => $navLimit,
+            'runtime' => [$groupReference],
+        ]
+    );
     while ($user = $buyersData->Fetch()) {
         $userIdList[] = $user['ID'];
     }
@@ -333,12 +382,14 @@ if ($publicMode && \Bitrix\Main\Loader::includeModule('crm')) {
         $order = ['ID' => 'ASC'];
     }
 
-    $dbUsersOrderData = \Bitrix\Sale\BuyerStatistic::getList([
-        'filter' => [
-            'USER_ID' => $userIdList
-        ],
-        'order' => $order
-    ])->fetchAll();
+    $dbUsersOrderData = \Bitrix\Sale\BuyerStatistic::getList(
+        [
+            'filter' => [
+                'USER_ID' => $userIdList
+            ],
+            'order' => $order
+        ]
+    )->fetchAll();
     $dbUsersOrderData = array_column($dbUsersOrderData, null, 'USER_ID');
 
     if ($sortByOrderField) {
@@ -347,15 +398,21 @@ if ($publicMode && \Bitrix\Main\Loader::includeModule('crm')) {
 
     $userOrderData = [];
 
-    $defaultUsersOrderData = array_fill_keys($userIdList, [
-        'SUM_PAID' => 0,
-        'COUNT_FULL_PAID_ORDER' => 0,
-        'COUNT_PART_PAID_ORDER' => 0,
-        'CURRENCY' => Bitrix\Sale\Internals\SiteCurrencyTable::getSiteCurrency(SITE_ID),
-    ]);
+    $defaultUsersOrderData = array_fill_keys(
+        $userIdList,
+        [
+            'SUM_PAID' => 0,
+            'COUNT_FULL_PAID_ORDER' => 0,
+            'COUNT_PART_PAID_ORDER' => 0,
+            'CURRENCY' => Bitrix\Sale\Internals\SiteCurrencyTable::getSiteCurrency(SITE_ID),
+        ]
+    );
 
     foreach ($defaultUsersOrderData as $userId => $userData) {
-        $userOrderData[$userId] = isset($dbUsersOrderData[$userId]) ? array_merge($userData, $dbUsersOrderData[$userId]) : $userData;
+        $userOrderData[$userId] = isset($dbUsersOrderData[$userId]) ? array_merge(
+            $userData,
+            $dbUsersOrderData[$userId]
+        ) : $userData;
     }
 } else {
     $buyersFilter = [];
@@ -411,6 +468,8 @@ if (isset($navyParams, $navLimit)) {
 }
 
 $lAdmin->SetNavigationParams($resultUsersList, array("BASE_LINK" => $selfFolderUrl . "sale_buyers.php"));
+$isIntranetInstalled = IsModuleInstalled('intranet');
+$isCrmInstalled = IsModuleInstalled('crm');
 
 while ($arBuyers = $resultUsersList->Fetch()) {
     $userId = isset($arBuyers["USER_ID"]) ? $arBuyers["USER_ID"] : $arBuyers["ID"];
@@ -422,24 +481,38 @@ while ($arBuyers = $resultUsersList->Fetch()) {
     $profileUrl = $selfFolderUrl . "sale_buyers_profile.php?USER_ID=" . $userId . "&lang=" . LANGUAGE_ID;
     $profileUrl = $adminSidePanelHelper->editUrlToPublicPage($profileUrl);
 
+    if (
+        $publicMode
+        && $isIntranetInstalled
+        && $isCrmInstalled
+        && $arBuyers['EXTERNAL_AUTH_ID'] !== \Bitrix\Crm\Order\Buyer::AUTH_ID
+    ) {
+        $editUrl = '/company/personal/user/' . $userId . '/';
+    } else {
+        $editUrl = '/shop/buyer/' . $userId . '/edit/';
+    }
+
     $row =& $lAdmin->AddRow($userId, $arBuyers, $profileUrl, GetMessage("BUYER_SUB_ACTION_PROFILE"));
 
     $profile = '<a href="' . $profileUrl . '">' . $userId . '</a>';
     $row->AddField("USER_ID", $profile);
 
-    if (in_array("SUM_PAID", $arVisibleColumns))
+    if (in_array("SUM_PAID", $arVisibleColumns)) {
         $row->AddField("SUM_PAID", SaleFormatCurrency($arBuyers["SUM_PAID"], $arBuyers["CURRENCY"]));
+    }
 
-    if (floatVal($arBuyers["ORDER_COUNT"]) <= 0)
+    if (floatVal($arBuyers["ORDER_COUNT"]) <= 0) {
         $row->AddField("ORDER_COUNT", '&nbsp;');
+    }
 
     if (in_array("GROUPS_ID", $arVisibleColumns)) {
         $strUserGroup = '';
         $arUserGroups = CUser::GetUserGroup($userId);
 
         foreach ($arUsersGroups as $arGroup) {
-            if (in_array($arGroup["ID"], $arUserGroups))
+            if (in_array($arGroup["ID"], $arUserGroups)) {
                 $strUserGroup .= htmlspecialcharsbx($arGroup["NAME"]) . "<br>";
+            }
         }
         $row->AddField("GROUPS_ID", $strUserGroup);
     }
@@ -464,7 +537,7 @@ while ($arBuyers = $resultUsersList->Fetch()) {
         $arActions[] = array(
             'ICON' => 'edit',
             'TEXT' => GetMessage('BUYER_SUB_ACTION_EDIT_PROFILE'),
-            'LINK' => '/shop/buyer/' . $userId . '/edit/',
+            'LINK' => $editUrl,
         );
     }
 

@@ -12,13 +12,14 @@ class CSearchStatistic
     function __construct($phrase = "", $tags = "")
     {
         $phrase = ToLower(trim($phrase, " \t\n\r"));
-        if ($l = strlen($phrase)) {
+        if ($l = mb_strlen($phrase)) {
             if ($l > 250) {
-                $p = strrpos($phrase, ' ');
-                if ($p === false)
-                    $this->_phrase = substr($phrase, 0, 250);
-                else
-                    $this->_phrase = substr($phrase, 0, $p);
+                $p = mb_strrpos($phrase, ' ');
+                if ($p === false) {
+                    $this->_phrase = mb_substr($phrase, 0, 250);
+                } else {
+                    $this->_phrase = mb_substr($phrase, 0, $p);
+                }
             } else {
                 $this->_phrase = $phrase;
             }
@@ -36,8 +37,9 @@ class CSearchStatistic
 
         $this->_session_id = bitrix_sessid();
 
-        if (isset($_SESSION["SESS_SESSION_ID"]))
+        if (isset($_SESSION["SESS_SESSION_ID"])) {
             $this->_stat_sess_id = intval($_SESSION["SESS_SESSION_ID"]);
+        }
     }
 
     function PhraseStat($result_count = 0, $page_num = 0)
@@ -58,10 +60,12 @@ class CSearchStatistic
         $rs = $DB->Query($strSql);
         if ($ar = $rs->Fetch()) {
             $this->phrase_id = $ar["ID"];
-            if ($page_num > $ar["PAGES"])
+            if ($page_num > $ar["PAGES"]) {
                 $DB->Query("UPDATE b_search_phrase SET PAGES = " . $page_num . " WHERE ID = " . $ar["ID"]);
+            }
         } else {
-            $this->phrase_id = $DB->Add("b_search_phrase",
+            $this->phrase_id = $DB->Add(
+                "b_search_phrase",
                 array(
                     "~TIMESTAMP_X" => $DB->CurrentTimeFunction(),
                     "SITE_ID" => SITE_ID,
@@ -95,28 +99,33 @@ class CSearchStatistic
             "STAT_SESS_ID",
         );
 
-        if (!is_array($arSelect))
+        if (!is_array($arSelect)) {
             $arSelect = array();
-        if (count($arSelect) < 1)
+        }
+        if (count($arSelect) < 1) {
             $arSelect = $arDefSelect;
+        }
 
-        if (!is_array($arOrder))
+        if (!is_array($arOrder)) {
             $arOrder = array();
-        if (count($arOrder) < 1)
+        }
+        if (count($arOrder) < 1) {
             $arOrder = array(
                 "ID" => "DESC",
             );
+        }
 
         $arQueryOrder = array();
         foreach ($arOrder as $strColumn => $strDirection) {
-            $strColumn = strtoupper($strColumn);
-            $strDirection = strtoupper($strDirection) == "ASC" ? "ASC" : "DESC";
+            $strColumn = mb_strtoupper($strColumn);
+            $strDirection = mb_strtoupper($strDirection) == "ASC" ? "ASC" : "DESC";
             if (in_array($strColumn, $arDefSelect)) {
                 $arSelect[] = $strColumn;
-                if ($strColumn == "TIMESTAMP_X")
+                if ($strColumn == "TIMESTAMP_X") {
                     $arQueryOrder[$strColumn] = "TMP_TS " . $strDirection;
-                else
+                } else {
                     $arQueryOrder[$strColumn] = $strColumn . " " . $strDirection;
+                }
             } elseif ($strColumn == "COUNT" && $bGroup) {
                 $arSelect[] = $strColumn;
                 $arQueryOrder[$strColumn] = $strColumn . " " . $strDirection;
@@ -126,82 +135,89 @@ class CSearchStatistic
         $arQueryGroup = array();
         $arQuerySelect = array();
         foreach ($arSelect as $strColumn) {
-            $strColumn = strtoupper($strColumn);
+            $strColumn = mb_strtoupper($strColumn);
             if (in_array($strColumn, $arDefSelect)) {
                 if ($strColumn == "TIMESTAMP_X") {
                     $arQuerySelect["TMP_TS"] = "sph." . $strColumn . " TMP_TS";
-                    $arQuerySelect[$strColumn] = $DB->DateToCharFunction("sph." . $strColumn, "FULL") . " " . $strColumn;
+                    $arQuerySelect[$strColumn] = $DB->DateToCharFunction(
+                            "sph." . $strColumn,
+                            "FULL"
+                        ) . " " . $strColumn;
                 } else {
                     $arQuerySelect[$strColumn] = "sph." . $strColumn;
                 }
 
-                if ($bGroup)
+                if ($bGroup) {
                     $arQueryGroup[$strColumn] = "sph." . $strColumn;
+                }
             } elseif ($strColumn == "COUNT" && $bGroup) {
                 $arQuerySelect[$strColumn] = "count(*) " . $strColumn;
             }
         }
 
         $obQueryWhere = new CSQLWhere;
-        $obQueryWhere->SetFields(array(
-            "ID" => array(
-                "TABLE_ALIAS" => "sph",
-                "FIELD_NAME" => "sph.ID",
-                "FIELD_TYPE" => "int", //int, double, file, enum, int, string, date, datetime
-                "JOIN" => false,
-            ),
-            "PHRASE" => array(
-                "TABLE_ALIAS" => "sph",
-                "FIELD_NAME" => "sph.PHRASE",
-                "FIELD_TYPE" => "string",
-                "JOIN" => false,
-            ),
-            "TAGS" => array(
-                "TABLE_ALIAS" => "sph",
-                "FIELD_NAME" => "sph.TAGS",
-                "FIELD_TYPE" => "string",
-                "JOIN" => false,
-            ),
-            "TIMESTAMP_X" => array(
-                "TABLE_ALIAS" => "sph",
-                "FIELD_NAME" => "sph.TIMESTAMP_X",
-                "FIELD_TYPE" => "datetime",
-                "JOIN" => false,
-            ),
-            "SITE_ID" => array(
-                "TABLE_ALIAS" => "sph",
-                "FIELD_NAME" => "sph.SITE_ID",
-                "FIELD_TYPE" => "string",
-                "JOIN" => false,
-            ),
-            "URL_TO" => array(
-                "TABLE_ALIAS" => "sph",
-                "FIELD_NAME" => "sph.URL_TO",
-                "FIELD_TYPE" => "string",
-                "JOIN" => false,
-            ),
-            "URL_TO_404" => array(
-                "TABLE_ALIAS" => "sph",
-                "FIELD_NAME" => "sph.URL_TO_404",
-                "FIELD_TYPE" => "string",
-                "JOIN" => false,
-            ),
-            "STAT_SESS_ID" => array(
-                "TABLE_ALIAS" => "sph",
-                "FIELD_NAME" => "sph.STAT_SESS_ID",
-                "FIELD_TYPE" => "int",
-                "JOIN" => false,
-            ),
-            "RESULT_COUNT" => array(
-                "TABLE_ALIAS" => "sph",
-                "FIELD_NAME" => "sph.RESULT_COUNT",
-                "FIELD_TYPE" => "int",
-                "JOIN" => false,
-            ),
-        ));
+        $obQueryWhere->SetFields(
+            array(
+                "ID" => array(
+                    "TABLE_ALIAS" => "sph",
+                    "FIELD_NAME" => "sph.ID",
+                    "FIELD_TYPE" => "int", //int, double, file, enum, int, string, date, datetime
+                    "JOIN" => false,
+                ),
+                "PHRASE" => array(
+                    "TABLE_ALIAS" => "sph",
+                    "FIELD_NAME" => "sph.PHRASE",
+                    "FIELD_TYPE" => "string",
+                    "JOIN" => false,
+                ),
+                "TAGS" => array(
+                    "TABLE_ALIAS" => "sph",
+                    "FIELD_NAME" => "sph.TAGS",
+                    "FIELD_TYPE" => "string",
+                    "JOIN" => false,
+                ),
+                "TIMESTAMP_X" => array(
+                    "TABLE_ALIAS" => "sph",
+                    "FIELD_NAME" => "sph.TIMESTAMP_X",
+                    "FIELD_TYPE" => "datetime",
+                    "JOIN" => false,
+                ),
+                "SITE_ID" => array(
+                    "TABLE_ALIAS" => "sph",
+                    "FIELD_NAME" => "sph.SITE_ID",
+                    "FIELD_TYPE" => "string",
+                    "JOIN" => false,
+                ),
+                "URL_TO" => array(
+                    "TABLE_ALIAS" => "sph",
+                    "FIELD_NAME" => "sph.URL_TO",
+                    "FIELD_TYPE" => "string",
+                    "JOIN" => false,
+                ),
+                "URL_TO_404" => array(
+                    "TABLE_ALIAS" => "sph",
+                    "FIELD_NAME" => "sph.URL_TO_404",
+                    "FIELD_TYPE" => "string",
+                    "JOIN" => false,
+                ),
+                "STAT_SESS_ID" => array(
+                    "TABLE_ALIAS" => "sph",
+                    "FIELD_NAME" => "sph.STAT_SESS_ID",
+                    "FIELD_TYPE" => "int",
+                    "JOIN" => false,
+                ),
+                "RESULT_COUNT" => array(
+                    "TABLE_ALIAS" => "sph",
+                    "FIELD_NAME" => "sph.RESULT_COUNT",
+                    "FIELD_TYPE" => "int",
+                    "JOIN" => false,
+                ),
+            )
+        );
 
-        if (count($arQuerySelect) < 1)
+        if (count($arQuerySelect) < 1) {
             $arQuerySelect = array("ID" => "sph.ID");
+        }
 
         $strSql = "
 			SELECT
@@ -210,8 +226,9 @@ class CSearchStatistic
 				b_search_phrase sph
 		";
 
-        if (!is_array($arFilter))
+        if (!is_array($arFilter)) {
             $arFilter = array();
+        }
         if ($strQueryWhere = $obQueryWhere->GetQuery($arFilter)) {
             $strSql .= "
 				WHERE
@@ -243,7 +260,11 @@ class CSearchStatistic
         if ($cleanup_days > 0) {
             $arDate = localtime(time());
             $date = mktime(0, 0, 0, $arDate[4] + 1, $arDate[3] - $cleanup_days, 1900 + $arDate[5]);
-            $DB->Query("DELETE FROM b_search_phrase WHERE TIMESTAMP_X <= " . $DB->CharToDateFunction(ConvertTimeStamp($date, "FULL")));
+            $DB->Query(
+                "DELETE FROM b_search_phrase WHERE TIMESTAMP_X <= " . $DB->CharToDateFunction(
+                    ConvertTimeStamp($date, "FULL")
+                )
+            );
         }
         return "CSearchStatistic::CleanUpAgent();";
     }
@@ -266,11 +287,13 @@ class CSearchStatistic
     public static function SetActive($bActive = false)
     {
         if ($bActive) {
-            if (!CSearchStatistic::IsActive())
+            if (!CSearchStatistic::IsActive()) {
                 RegisterModuleDependences("main", "OnEpilog", "search", "CSearchStatistic", "OnEpilog", "90");
+            }
         } else {
-            if (CSearchStatistic::IsActive())
+            if (CSearchStatistic::IsActive()) {
                 UnRegisterModuleDependences("main", "OnEpilog", "search", "CSearchStatistic", "OnEpilog");
+            }
         }
     }
 
@@ -282,8 +305,9 @@ class CSearchStatistic
         $res .= $host;
 
         $port = intval($_SERVER["SERVER_PORT"]);
-        if ($port > 0 && $port != 80 && $port != 443 && strpos($host, ":") === false)
+        if ($port > 0 && $port != 80 && $port != 443 && mb_strpos($host, ":") === false) {
             $res .= ":" . $port;
+        }
 
         $url = preg_replace("/\\?sphrase_id=\\d+&/", "?", $_SERVER["REQUEST_URI"]);
         $url = preg_replace("/\\?sphrase_id=\\d+/", "", $url);
@@ -301,22 +325,26 @@ class CSearchStatistic
             if ($phrase_id) {
                 $DB = CDatabase::GetModuleConnection('search');
                 $DB->StartUsingMasterOnly();
-                $rs = $DB->Query("
+                $rs = $DB->Query(
+                    "
 					SELECT *
 					FROM b_search_phrase
 					WHERE ID = " . $phrase_id . "
 					AND SESSION_ID = '" . $DB->ForSQL(bitrix_sessid()) . "'
 					AND URL_TO IS NULL
-				");
+				"
+                );
                 if ($ar = $rs->Fetch()) {
                     $URL_TO = $DB->ForSQL(CSearchStatistic::GetCurrentURL(), 2000);
-                    $DB->Query("
+                    $DB->Query(
+                        "
 						UPDATE b_search_phrase
 						SET URL_TO = '" . $URL_TO . "'
 							,URL_TO_404 = '" . (defined("ERROR_404") ? "Y" : "N") . "'
 							,URL_TO_SITE_ID = " . (defined("SITE_ID") ? "'" . $DB->ForSQL(SITE_ID, 2) . "'" : "null") . "
 						WHERE ID = " . $phrase_id . "
-					");
+					"
+                    );
                 }
                 $DB->StopUsingMasterOnly();
             }

@@ -1,4 +1,5 @@
 <?
+
 define('BX_DONT_SKIP_PULL_INIT', true);
 require_once($_SERVER["DOCUMENT_ROOT"] . '/bitrix/modules/mobileapp/include/prolog_admin_mobile_before.php');
 
@@ -19,7 +20,8 @@ $APPLICATION->IncludeComponent(
     '.default',
     $arParams,
     false,
-    Array('HIDE_ICONS' => 'Y'));
+    Array('HIDE_ICONS' => 'Y')
+);
 ?>
 
     <script type="text/javascript">

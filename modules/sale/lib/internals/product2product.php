@@ -132,8 +132,9 @@ class Product2ProductTable extends Main\Entity\DataManager
         $liveTime = (int)$liveTime;
         $connection = Main\Application::getConnection();
 
-        if (!$connection->isTableExists('b_sale_order_product_stat'))
+        if (!$connection->isTableExists('b_sale_order_product_stat')) {
             return;
+        }
 
         $sqlDelete = "TRUNCATE TABLE b_sale_order_product_stat";
         $connection->query($sqlDelete);
@@ -178,8 +179,9 @@ class Product2ProductTable extends Main\Entity\DataManager
     {
         $orderId = (int)$orderId;
 
-        if (Sale\OrderProcessingTable::hasAddedProducts($orderId))
+        if (Sale\OrderProcessingTable::hasAddedProducts($orderId)) {
             return;
+        }
 
         $connection = Main\Application::getConnection();
         $type = $connection->getType();
@@ -348,7 +350,14 @@ class Product2ProductTable extends Main\Entity\DataManager
         if ($processingData->fetch()) {
             if ($isTableExists && $agent['ID'] && $agent['ID'] > 60) {
                 \CAgent::Delete($agent["ID"]);
-                \CAgent::AddAgent("Bitrix\\Sale\\Product2ProductTable::addProductsByAgent($limit);", "sale", "N", 60, "", "Y");
+                \CAgent::AddAgent(
+                    "Bitrix\\Sale\\Product2ProductTable::addProductsByAgent($limit);",
+                    "sale",
+                    "N",
+                    60,
+                    "",
+                    "Y"
+                );
             }
         } else {
             if ($agent['ID']) {
@@ -371,7 +380,10 @@ class Product2ProductTable extends Main\Entity\DataManager
         if ((!$order instanceof Sale\Order)) {
             return new Main\EventResult(
                 Main\EventResult::ERROR,
-                new Sale\ResultError(Main\Localization\Loc::getMessage('SALE_EVENT_PRODUCT2PRODUCT_WRONG_ORDER'), 'SALE_EVENT_PRODUCT2PRODUCT_ON_SALE_ORDER_ADD_WRONG_ORDER'),
+                new Sale\ResultError(
+                    Main\Localization\Loc::getMessage('SALE_EVENT_PRODUCT2PRODUCT_WRONG_ORDER'),
+                    'SALE_EVENT_PRODUCT2PRODUCT_ON_SALE_ORDER_ADD_WRONG_ORDER'
+                ),
                 'sale'
             );
         }
@@ -397,7 +409,10 @@ class Product2ProductTable extends Main\Entity\DataManager
         if ((!$order instanceof Sale\Order)) {
             return new Main\EventResult(
                 Main\EventResult::ERROR,
-                new Sale\ResultError(Main\Localization\Loc::getMessage('SALE_EVENT_PRODUCT2PRODUCT_WRONG_ORDER'), 'SALE_EVENT_PRODUCT2PRODUCT_ON_SALE_ORDER_STATUS_WRONG_ORDER'),
+                new Sale\ResultError(
+                    Main\Localization\Loc::getMessage('SALE_EVENT_PRODUCT2PRODUCT_WRONG_ORDER'),
+                    'SALE_EVENT_PRODUCT2PRODUCT_ON_SALE_ORDER_STATUS_WRONG_ORDER'
+                ),
                 'sale'
             );
         }
@@ -418,7 +433,10 @@ class Product2ProductTable extends Main\Entity\DataManager
         if ((!$shipment instanceof Sale\Shipment)) {
             return new Main\EventResult(
                 Main\EventResult::ERROR,
-                new Sale\ResultError(Main\Localization\Loc::getMessage('SALE_EVENT_PRODUCT2PRODUCT_WRONG_SHIPMENT'), 'SALE_EVENT_PRODUCT2PRODUCT_ON_SALE_DELIVERY_ORDER_WRONG_SHIPMENT'),
+                new Sale\ResultError(
+                    Main\Localization\Loc::getMessage('SALE_EVENT_PRODUCT2PRODUCT_WRONG_SHIPMENT'),
+                    'SALE_EVENT_PRODUCT2PRODUCT_ON_SALE_DELIVERY_ORDER_WRONG_SHIPMENT'
+                ),
                 'sale'
             );
         }
@@ -426,19 +444,23 @@ class Product2ProductTable extends Main\Entity\DataManager
         if (!$shipmentCollection = $shipment->getCollection()) {
             return new Main\EventResult(
                 Main\EventResult::ERROR,
-                new Sale\ResultError(Main\Localization\Loc::getMessage('SALE_EVENT_PRODUCT2PRODUCT_WRONG_SHIPMENTCOLLECTION'), 'SALE_EVENT_PRODUCT2PRODUCT_ON_SALE_DELIVERY_ORDER_WRONG_SHIPMENTCOLLECTION'),
+                new Sale\ResultError(
+                    Main\Localization\Loc::getMessage('SALE_EVENT_PRODUCT2PRODUCT_WRONG_SHIPMENTCOLLECTION'),
+                    'SALE_EVENT_PRODUCT2PRODUCT_ON_SALE_DELIVERY_ORDER_WRONG_SHIPMENTCOLLECTION'
+                ),
                 'sale'
             );
-
         }
 
         if (!$order = $shipmentCollection->getOrder()) {
             return new Main\EventResult(
                 Main\EventResult::ERROR,
-                new Sale\ResultError(Main\Localization\Loc::getMessage('SALE_EVENT_PRODUCT2PRODUCT_WRONG_ORDER'), 'SALE_EVENT_PRODUCT2PRODUCT_ON_SALE_DELIVERY_ORDER_WRONG_ORDER'),
+                new Sale\ResultError(
+                    Main\Localization\Loc::getMessage('SALE_EVENT_PRODUCT2PRODUCT_WRONG_ORDER'),
+                    'SALE_EVENT_PRODUCT2PRODUCT_ON_SALE_DELIVERY_ORDER_WRONG_ORDER'
+                ),
                 'sale'
             );
-
         }
 
         static::onSaleDeliveryOrderHandler($order->getId(), $order->isAllowDelivery() ? 'Y' : 'N');
@@ -457,7 +479,10 @@ class Product2ProductTable extends Main\Entity\DataManager
         if ((!$shipment instanceof Sale\Shipment)) {
             return new Main\EventResult(
                 Main\EventResult::ERROR,
-                new Sale\ResultError(Main\Localization\Loc::getMessage('SALE_EVENT_PRODUCT2PRODUCT_WRONG_SHIPMENT'), 'SALE_EVENT_PRODUCT2PRODUCT_ON_SALE_DEDUCT_ORDER_WRONG_SHIPMENT'),
+                new Sale\ResultError(
+                    Main\Localization\Loc::getMessage('SALE_EVENT_PRODUCT2PRODUCT_WRONG_SHIPMENT'),
+                    'SALE_EVENT_PRODUCT2PRODUCT_ON_SALE_DEDUCT_ORDER_WRONG_SHIPMENT'
+                ),
                 'sale'
             );
         }
@@ -465,19 +490,23 @@ class Product2ProductTable extends Main\Entity\DataManager
         if (!$shipmentCollection = $shipment->getCollection()) {
             return new Main\EventResult(
                 Main\EventResult::ERROR,
-                new Sale\ResultError(Main\Localization\Loc::getMessage('SALE_EVENT_PRODUCT2PRODUCT_WRONG_SHIPMENTCOLLECTION'), 'SALE_EVENT_PRODUCT2PRODUCT_ON_SALE_DEDUCT_ORDER_WRONG_SHIPMENTCOLLECTION'),
+                new Sale\ResultError(
+                    Main\Localization\Loc::getMessage('SALE_EVENT_PRODUCT2PRODUCT_WRONG_SHIPMENTCOLLECTION'),
+                    'SALE_EVENT_PRODUCT2PRODUCT_ON_SALE_DEDUCT_ORDER_WRONG_SHIPMENTCOLLECTION'
+                ),
                 'sale'
             );
-
         }
 
         if (!$order = $shipmentCollection->getOrder()) {
             return new Main\EventResult(
                 Main\EventResult::ERROR,
-                new Sale\ResultError(Main\Localization\Loc::getMessage('SALE_EVENT_PRODUCT2PRODUCT_WRONG_ORDER'), 'SALE_EVENT_PRODUCT2PRODUCT_ON_SALE_DEDUCT_ORDER_WRONG_ORDER'),
+                new Sale\ResultError(
+                    Main\Localization\Loc::getMessage('SALE_EVENT_PRODUCT2PRODUCT_WRONG_ORDER'),
+                    'SALE_EVENT_PRODUCT2PRODUCT_ON_SALE_DEDUCT_ORDER_WRONG_ORDER'
+                ),
                 'sale'
             );
-
         }
 
 
@@ -497,7 +526,10 @@ class Product2ProductTable extends Main\Entity\DataManager
         if ((!$order instanceof Sale\Order)) {
             return new Main\EventResult(
                 Main\EventResult::ERROR,
-                new Sale\ResultError(Main\Localization\Loc::getMessage('SALE_EVENT_PRODUCT2PRODUCT_WRONG_ORDER'), 'SALE_EVENT_PRODUCT2PRODUCT_ON_SALE_CANCELED_ORDER_WRONG_ORDER'),
+                new Sale\ResultError(
+                    Main\Localization\Loc::getMessage('SALE_EVENT_PRODUCT2PRODUCT_WRONG_ORDER'),
+                    'SALE_EVENT_PRODUCT2PRODUCT_ON_SALE_CANCELED_ORDER_WRONG_ORDER'
+                ),
                 'sale'
             );
         }
@@ -518,7 +550,10 @@ class Product2ProductTable extends Main\Entity\DataManager
         if ((!$order instanceof Sale\Order)) {
             return new Main\EventResult(
                 Main\EventResult::ERROR,
-                new Sale\ResultError(Main\Localization\Loc::getMessage('SALE_EVENT_PRODUCT2PRODUCT_WRONG_ORDER'), 'SALE_EVENT_PRODUCT2PRODUCT_ON_SALE_PAID_ORDER_WRONG_ORDER'),
+                new Sale\ResultError(
+                    Main\Localization\Loc::getMessage('SALE_EVENT_PRODUCT2PRODUCT_WRONG_ORDER'),
+                    'SALE_EVENT_PRODUCT2PRODUCT_ON_SALE_PAID_ORDER_WRONG_ORDER'
+                ),
                 'sale'
             );
         }
@@ -623,12 +658,16 @@ class Product2ProductTable extends Main\Entity\DataManager
     {
         $allowStatuses = Config\Option::get("sale", "p2p_status_list", "");
         $allowCollecting = Config\Option::get("sale", "p2p_allow_collect_data");
-        if ($allowStatuses != '')
-            $allowStatuses = unserialize($allowStatuses);
-        else
+        if ($allowStatuses != '') {
+            $allowStatuses = unserialize($allowStatuses, ['allowed_classes' => false]);
+        } else {
             $allowStatuses = array();
+        }
 
-        if ($allowCollecting == "Y" && !empty($allowStatuses) && is_array($allowStatuses) && in_array($statusName, $allowStatuses)) {
+        if ($allowCollecting == "Y" && !empty($allowStatuses) && is_array($allowStatuses) && in_array(
+                $statusName,
+                $allowStatuses
+            )) {
             $orderInformation = Sale\OrderProcessingTable::getList(
                 array(
                     "filter" => array("ORDER_ID" => (int)$orderId),
@@ -636,8 +675,9 @@ class Product2ProductTable extends Main\Entity\DataManager
                 )
             );
             $result = $orderInformation->fetch();
-            if (!$result)
+            if (!$result) {
                 Sale\OrderProcessingTable::add(array("ORDER_ID" => (int)$orderId));
+            }
         }
     }
 }

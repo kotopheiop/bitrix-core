@@ -15,14 +15,18 @@
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/prolog.php");
 
-if ((!$USER->CanDoOperation('edit_other_settings') && !$USER->CanDoOperation('view_other_settings')) || !check_bitrix_sessid())
+if ((!$USER->CanDoOperation('edit_other_settings') && !$USER->CanDoOperation(
+            'view_other_settings'
+        )) || !check_bitrix_sessid()) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $ID = str_replace("\\", "", $_REQUEST["ID"]);
 $ID = str_replace("/", "", $ID);
-$bUseCompression = True;
-if (!extension_loaded('zlib') || !function_exists("gzcompress"))
-    $bUseCompression = False;
+$bUseCompression = true;
+if (!extension_loaded('zlib') || !function_exists("gzcompress")) {
+    $bUseCompression = false;
+}
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/classes/general/tar_gz.php");
 
@@ -41,10 +45,12 @@ if (is_dir($_SERVER["DOCUMENT_ROOT"] . $path)) {
         $arErrors = &$oArchiver->GetErrors();
         if (count($arErrors) > 0) {
             $strError .= ":<br>";
-            foreach ($arErrors as $value)
+            foreach ($arErrors as $value) {
                 $strError .= "[" . $value[0] . "] " . $value[1] . "<br>";
-        } else
+            }
+        } else {
             $strError .= ".<br>";
+        }
     }
 
     header('Pragma: public');
@@ -60,7 +66,7 @@ if (is_dir($_SERVER["DOCUMENT_ROOT"] . $path)) {
     //	die();
 }
 
-if (strlen($strError) > 0) {
+if ($strError <> '') {
     $APPLICATION->SetTitle("Archiver error");
     require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 

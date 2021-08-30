@@ -25,31 +25,43 @@ class ViewTable extends Entity\DataManager
     public static function getMap()
     {
         return array(
-            'ID' => new Entity\IntegerField('ID', array(
+            'ID' => new Entity\IntegerField(
+                'ID', array(
                 'primary' => true,
                 'autocomplete' => true,
                 'title' => 'ID'
-            )),
-            'LID' => new Entity\IntegerField('LID', array(
+            )
+            ),
+            'LID' => new Entity\IntegerField(
+                'LID', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_LID'),
                 'required' => true
-            )),
-            'USER_ID' => new Entity\IntegerField('USER_ID', array(
+            )
+            ),
+            'USER_ID' => new Entity\IntegerField(
+                'USER_ID', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_USER_ID'),
                 'required' => true
-            )),
-            'VIEWS' => new Entity\IntegerField('VIEWS', array(
+            )
+            ),
+            'VIEWS' => new Entity\IntegerField(
+                'VIEWS', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_VIEWS'),
                 'required' => true
-            )),
-            'FIRST_VIEW' => new Entity\DatetimeField('FIRST_VIEW', array(
+            )
+            ),
+            'FIRST_VIEW' => new Entity\DatetimeField(
+                'FIRST_VIEW', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_LAST_VIEW'),
                 'required' => true
-            )),
-            'LAST_VIEW' => new Entity\DatetimeField('LAST_VIEW', array(
+            )
+            ),
+            'LAST_VIEW' => new Entity\DatetimeField(
+                'LAST_VIEW', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_LAST_VIEW'),
                 'required' => true
-            ))
+            )
+            )
         );
     }
 }

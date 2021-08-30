@@ -14,8 +14,9 @@ class Executer
 
     public function __construct($api)
     {
-        if (empty($api))
+        if (empty($api)) {
             throw new ArgumentNullException('api');
+        }
 
         $this->scriptPath = $_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/sale/lib/tradingplatform/vk/api/scripts";
         $this->api = $api;
@@ -38,7 +39,7 @@ class Executer
             return $script;
         }
 
-        return NULL;
+        return null;
     }
 
 
@@ -52,8 +53,8 @@ class Executer
     public function __call($methodName, $arguments)
     {
 //		prepare METHOD name
-        $methodName = strtolower($methodName);
-        if (strpos($methodName, 'execute') == 0) {
+        $methodName = mb_strtolower($methodName);
+        if (mb_strpos($methodName, 'execute') == 0) {
             $methodName = str_replace("execute", "", $methodName);
         }
 
@@ -82,7 +83,7 @@ class Executer
                 $value = Json::encode($value);
                 $value = $this->decodeMultibyteUnicode($value);    //vkscript dont understand \uXXXX format, decoding
             }
-            $script = str_replace('%' . strtoupper($key) . '%', $value, $script);
+            $script = str_replace('%' . mb_strtoupper($key) . '%', $value, $script);
         }
 
         return $script;
@@ -96,9 +97,13 @@ class Executer
      */
     private function decodeMultibyteUnicode($str)
     {
-        $str = preg_replace_callback('/\\\\u(\w{4})/', function ($matches) {
-            return html_entity_decode('&#x' . $matches[1] . ';', null, 'UTF-8');
-        }, $str);
+        $str = preg_replace_callback(
+            '/\\\\u(\w{4})/',
+            function ($matches) {
+                return html_entity_decode('&#x' . $matches[1] . ';', null, 'UTF-8');
+            },
+            $str
+        );
 
         return $str;
     }

@@ -72,24 +72,29 @@ class AlbumAdd extends DataProcessor
 
 //			ADD or EDIT albums
             $logger->addLog("Add or edit albums", $data);
-            $albumsData = Vk\Api\ApiHelper::extractItemsFromArray($data,
-                array("SECTION_ID", "TITLE", "FLAG_EDIT", "PHOTO_VK_ID", "ALBUM_VK_ID"));
-            $albumsAddEditResults = $this->executer->executeMarketAlbumAddEdit(array(
-                "owner_id" => $this->vkGroupId,
-                "data" => $albumsData,
-                "count" => count($data),
-            ));
+            $albumsData = Vk\Api\ApiHelper::extractItemsFromArray(
+                $data,
+                array("SECTION_ID", "TITLE", "FLAG_EDIT", "PHOTO_VK_ID", "ALBUM_VK_ID")
+            );
+            $albumsAddEditResults = $this->executer->executeMarketAlbumAddEdit(
+                array(
+                    "owner_id" => $this->vkGroupId,
+                    "data" => $albumsData,
+                    "count" => count($data),
+                )
+            );
             $data = Vk\Api\ApiHelper::addResultToData($data, $albumsAddEditResults, "SECTION_ID");
 
 
 //			MAPPING for success results
             $dataToMapping = array();
             foreach ($albumsAddEditResults as $item) {
-                if (isset($item["flag_album_add_result"]) && $item["flag_album_add_result"])
+                if (isset($item["flag_album_add_result"]) && $item["flag_album_add_result"]) {
                     $dataToMapping[] = array(
                         "value_external" => $item["ALBUM_VK_ID"],
                         "value_internal" => $item["SECTION_ID"],
                     );
+                }
             }
 //			we don't need use timer in last operation. Timer will be checked in feed cycle.
             if (!empty($dataToMapping)) {

@@ -56,7 +56,6 @@ abstract class Content
      */
     public function onFlush()
     {
-
     }
 
     /**

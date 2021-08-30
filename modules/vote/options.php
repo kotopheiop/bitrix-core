@@ -2,8 +2,9 @@
 IncludeModuleLangFile(__FILE__);
 
 $rights = $APPLICATION->GetGroupRight("vote");
-if ($rights < "R")
+if ($rights < "R") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $old_module_version = CVote::IsOldVersion();
 $module_id = "vote";
@@ -12,25 +13,32 @@ $request = \Bitrix\Main\Context::getCurrent()->getRequest();
 $options = $arDisplayOptions = [
     "USE_HTML_EDIT" => [ // html editor in admin part to edit vote or question body
         "message" => GetMessage("VOTE_USE_HTML_EDIT"),
-        "field_type" => "checkbox"],
+        "field_type" => "checkbox"
+    ],
     "VOTE_COMPATIBLE_OLD_TEMPLATE" => [ // this is very old option to use old templates before component. We do not use it anymore.
         "message" => GetMessage("VOTE_COMPATIBLE"),
-        "field_type" => "checkbox"],
+        "field_type" => "checkbox"
+    ],
     "VOTE_DIR" => [ //
         "message" => GetMessage("VOTE_PUBLIC_DIR"),
-        "field_type" => "text"],
+        "field_type" => "text"
+    ],
     "VOTE_TEMPLATE_PATH" => [ //���� � �������� ������ ���� ������� (SV)
         "message" => GetMessage("VOTE_TEMPLATE_VOTES"),
-        "field_type" => "text"],
+        "field_type" => "text"
+    ],
     "VOTE_TEMPLATE_PATH_VOTE" => [ // ����� ������� ������ ����������� ������ (RV)
         "message" => GetMessage("VOTE_TEMPLATE_RESULTS_VOTE"),
-        "field_type" => "text"],
+        "field_type" => "text"
+    ],
     "VOTE_TEMPLATE_PATH_QUESTION" => [ //���� � �������� ������ ����������� �������: (RQ)
         "message" => GetMessage("VOTE_TEMPLATE_RESULTS_QUESTION"),
-        "field_type" => "text"],
+        "field_type" => "text"
+    ],
     "VOTE_TEMPLATE_PATH_QUESTION_NEW" => [// ������������� ���� � �������� ������ ����������� �������: C 4 ������
         "message" => GetMessage("VOTE_TEMPLATE_RESULTS_QUESTION_NEW"),
-        "field_type" => "text"]
+        "field_type" => "text"
+    ]
 ];
 if ($request->isPost() && $request->getPost("edit_vote_options") === "Y") {
     try {
@@ -42,9 +50,10 @@ if ($request->isPost() && $request->getPost("edit_vote_options") === "Y") {
         }
         if ($request->getPost("restore") !== null) {
             COption::RemoveOption($module_id);
-            $z = CGroup::GetList($v1 = "id", $v2 = "asc", array("ACTIVE" => "Y", "ADMIN" => "N"));
-            while ($zr = $z->Fetch())
+            $z = CGroup::GetList("id", "asc", array("ACTIVE" => "Y", "ADMIN" => "N"));
+            while ($zr = $z->Fetch()) {
                 $APPLICATION->DelGroupRight($module_id, array($zr["ID"]));
+            }
         } else {
             foreach ($options as $key => $value) {
                 if ($request->getPost($key) !== null) {
@@ -57,10 +66,10 @@ if ($request->isPost() && $request->getPost("edit_vote_options") === "Y") {
     }
 }
 if (COption::GetOptionString("vote", "VOTE_COMPATIBLE_OLD_TEMPLATE", "N") == "N") {
-    if (strlen(COption::GetOptionString("vote", "VOTE_TEMPLATE_PATH")) <= 0 &&
-        strlen(COption::GetOptionString("vote", "VOTE_TEMPLATE_PATH_VOTE")) <= 0 &&
-        strlen(COption::GetOptionString("vote", "VOTE_TEMPLATE_PATH_QUESTION")) <= 0 &&
-        strlen(COption::GetOptionString("vote", "VOTE_TEMPLATE_PATH_QUESTION_NEW")) <= 0) {
+    if (COption::GetOptionString("vote", "VOTE_TEMPLATE_PATH") == '' &&
+        COption::GetOptionString("vote", "VOTE_TEMPLATE_PATH_VOTE") == '' &&
+        COption::GetOptionString("vote", "VOTE_TEMPLATE_PATH_QUESTION") == '' &&
+        COption::GetOptionString("vote", "VOTE_TEMPLATE_PATH_QUESTION_NEW") == '') {
         unset($arDisplayOptions["VOTE_COMPATIBLE_OLD_TEMPLATE"]);
     }
     unset($arDisplayOptions["VOTE_DIR"]);
@@ -78,8 +87,18 @@ if (COption::GetOptionString("vote", "VOTE_COMPATIBLE_OLD_TEMPLATE", "N") == "N"
 }
 
 $aTabs = array(
-    array("DIV" => "edit1", "TAB" => GetMessage("MAIN_TAB_SET"), "ICON" => "vote_settings", "TITLE" => GetMessage("MAIN_TAB_TITLE_SET")),
-    array("DIV" => "edit2", "TAB" => GetMessage("MAIN_TAB_RIGHTS"), "ICON" => "vote_settings", "TITLE" => GetMessage("MAIN_TAB_TITLE_RIGHTS")),
+    array(
+        "DIV" => "edit1",
+        "TAB" => GetMessage("MAIN_TAB_SET"),
+        "ICON" => "vote_settings",
+        "TITLE" => GetMessage("MAIN_TAB_TITLE_SET")
+    ),
+    array(
+        "DIV" => "edit2",
+        "TAB" => GetMessage("MAIN_TAB_RIGHTS"),
+        "ICON" => "vote_settings",
+        "TITLE" => GetMessage("MAIN_TAB_TITLE_RIGHTS")
+    ),
 );
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 $tabControl->Begin();

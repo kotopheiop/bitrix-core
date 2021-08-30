@@ -11,13 +11,17 @@ class CMailYandex
 
     public static function checkUser($token, $login, &$error)
     {
-        $result = self::query('https://pddimp.yandex.ru/check_user.xml', array(
-            'token' => $token,
-            'login' => $login
-        ));
+        $result = self::query(
+            'https://pddimp.yandex.ru/check_user.xml',
+            array(
+                'token' => $token,
+                'login' => $login
+            )
+        );
 
-        if ($resultNode = $result->selectNodes('/page/result'))
+        if ($resultNode = $result->selectNodes('/page/result')) {
             return $resultNode->textContent();
+        }
 
         self::setError($result, $error);
         return false;
@@ -25,14 +29,18 @@ class CMailYandex
 
     public static function registerUserToken($token, $login, $password, &$error)
     {
-        $result = self::query('https://pddimp.yandex.ru/reg_user_token.xml', array(
-            'token' => $token,
-            'u_login' => $login,
-            'u_password' => $password
-        ));
+        $result = self::query(
+            'https://pddimp.yandex.ru/reg_user_token.xml',
+            array(
+                'token' => $token,
+                'u_login' => $login,
+                'u_password' => $password
+            )
+        );
 
-        if ($okNode = $result->selectNodes('/page/ok'))
+        if ($okNode = $result->selectNodes('/page/ok')) {
             return $okNode->getAttribute('uid');
+        }
 
         self::setError($result, $error);
         return false;
@@ -40,14 +48,18 @@ class CMailYandex
 
     public static function userOAuthToken($token, $domain, $login, &$error)
     {
-        $result = self::query('https://pddimp.yandex.ru/api/user_oauth_token.xml', array(
-            'token' => $token,
-            'domain' => $domain,
-            'login' => $login
-        ));
+        $result = self::query(
+            'https://pddimp.yandex.ru/api/user_oauth_token.xml',
+            array(
+                'token' => $token,
+                'domain' => $domain,
+                'login' => $login
+            )
+        );
 
-        if ($oauthTokenNode = $result->selectNodes('/action/domains/domain/email/oauth-token'))
+        if ($oauthTokenNode = $result->selectNodes('/action/domains/domain/email/oauth-token')) {
             return $oauthTokenNode->textContent();
+        }
 
         self::setError2($result, $error);
         return false;
@@ -70,19 +82,25 @@ class CMailYandex
 
         return sprintf(
             'https://passport.yandex.%s/passport?mode=oauth&type=trusted-pdd-partner&error_retpath=%s&access_token=%s',
-            $passportZone, urlencode($errorUrl), urlencode($oauthToken)
+            $passportZone,
+            urlencode($errorUrl),
+            urlencode($oauthToken)
         );
     }
 
     public static function deleteUser($token, $login, &$error)
     {
-        $result = self::query('https://pddimp.yandex.ru/delete_user.xml', array(
-            'token' => $token,
-            'login' => $login
-        ));
+        $result = self::query(
+            'https://pddimp.yandex.ru/delete_user.xml',
+            array(
+                'token' => $token,
+                'login' => $login
+            )
+        );
 
-        if ($okNode = $result->selectNodes('/page/ok'))
+        if ($okNode = $result->selectNodes('/page/ok')) {
             return true;
+        }
 
         self::setError($result, $error);
         return false;
@@ -90,13 +108,17 @@ class CMailYandex
 
     public static function getMailInfo($token, $login, &$error)
     {
-        $result = self::query('https://pddimp.yandex.ru/get_mail_info.xml', array(
-            'token' => $token,
-            'login' => $login
-        ));
+        $result = self::query(
+            'https://pddimp.yandex.ru/get_mail_info.xml',
+            array(
+                'token' => $token,
+                'login' => $login
+            )
+        );
 
-        if ($okNode = $result->selectNodes('/page/ok'))
+        if ($okNode = $result->selectNodes('/page/ok')) {
             return $okNode->getAttribute('new_messages');
+        }
 
         self::setError($result, $error);
         return false;
@@ -105,15 +127,19 @@ class CMailYandex
     // post
     public static function getUserInfo($token, $login, &$error)
     {
-        $result = self::query('https://pddimp.yandex.ru/get_user_info.xml', array(
-            'token' => $token,
-            'login' => $login
-        ));
+        $result = self::query(
+            'https://pddimp.yandex.ru/get_user_info.xml',
+            array(
+                'token' => $token,
+                'login' => $login
+            )
+        );
 
         if ($userNode = $result->selectNodes('/page/domain/user')) {
             $userInfo = array();
-            foreach ($userNode->children() as $userFieldNode)
+            foreach ($userNode->children() as $userFieldNode) {
                 $userInfo[$userFieldNode->name()] = $userFieldNode->textContent();
+            }
             return $userInfo;
         }
 
@@ -152,8 +178,9 @@ class CMailYandex
 
         $result = self::query('https://pddimp.yandex.ru/edit_user.xml', $postData);
 
-        if ($okNode = $result->selectNodes('/page/ok'))
+        if ($okNode = $result->selectNodes('/page/ok')) {
             return $okNode->getAttribute('uid');
+        }
 
         self::setError($result, $error);
         return false;
@@ -161,28 +188,35 @@ class CMailYandex
 
     public static function getDomainUsers($token, $per_page = 30, $page = 0, &$error)
     {
-        $result = self::query('https://pddimp.yandex.ru/get_domain_users.xml', array(
-            'token' => $token,
-            'on_page' => $per_page,
-            'page' => $page
-        ));
+        $result = self::query(
+            'https://pddimp.yandex.ru/get_domain_users.xml',
+            array(
+                'token' => $token,
+                'on_page' => $per_page,
+                'page' => $page
+            )
+        );
 
         if ($domainNode = $result->selectNodes('/page/domains/domain')) {
             $domainInfo = array();
             foreach ($domainNode->children() as $domainFieldNode) {
-                if (in_array($domainFieldNode->name(), array('name', 'status')))
+                if (in_array($domainFieldNode->name(), array('name', 'status'))) {
                     $domainInfo[$domainFieldNode->name()] = $domainFieldNode->textContent();
-                if (in_array($domainFieldNode->name(), array('emails-max-count')))
+                }
+                if (in_array($domainFieldNode->name(), array('emails-max-count'))) {
                     $domainInfo[$domainFieldNode->name()] = intval($domainFieldNode->textContent());
+                }
                 if ($domainFieldNode->name() == 'emails') {
                     $domainInfo['emails'] = array();
                     foreach ($domainFieldNode->children() as $domainEmailsNode) {
-                        if (in_array($domainEmailsNode->name(), array('found', 'total')))
+                        if (in_array($domainEmailsNode->name(), array('found', 'total'))) {
                             $domainInfo['emails_' . $domainEmailsNode->name()] = $domainEmailsNode->textContent();
+                        }
                         if ($domainEmailsNode->name() == 'email') {
                             $key = count($domainInfo['emails']);
-                            foreach ($domainEmailsNode->children() as $emailNode)
+                            foreach ($domainEmailsNode->children() as $emailNode) {
                                 $domainInfo['emails'][$key][$emailNode->name()] = $emailNode->textContent();
+                            }
                         }
                     }
                 }
@@ -226,8 +260,9 @@ class CMailYandex
         $result = new CDataXML();
         $result->loadString($response);
 
-        if ($logoUrlNode = $result->selectNodes('/action/domains/domain/logo/url'))
+        if ($logoUrlNode = $result->selectNodes('/action/domains/domain/logo/url')) {
             return $logoUrlNode->textContent();
+        }
 
         self::setError2($result, $error);
         return false;
@@ -247,14 +282,16 @@ class CMailYandex
 
     private static function setError($xml, &$error)
     {
-        if ($errorNode = $xml->selectNodes('/page/error'))
+        if ($errorNode = $xml->selectNodes('/page/error')) {
             $error = $errorNode->getAttribute('reason');
+        }
     }
 
     private static function setError2($xml, &$error)
     {
-        if ($errorNode = $xml->selectNodes('/action/status/error'))
+        if ($errorNode = $xml->selectNodes('/action/status/error')) {
             $error = $errorNode->textContent();
+        }
     }
 
 }

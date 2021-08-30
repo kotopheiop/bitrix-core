@@ -1,4 +1,5 @@
 <?
+
 $not_show_links = "Y";
 
 require_once($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/interface/auth/authorize.php");

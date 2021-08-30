@@ -44,6 +44,20 @@ class Event extends \IRestService
                     'callback' => array(__CLASS__, 'eventTest'),
                     'options' => array()
                 ),
+                \CRestUtil::EVENTS => array(
+                    'onOfflineEvent' => array(
+                        'rest',
+                        'onAfterOfflineEventCall',
+                        array(EventOfflineTable::class, 'prepareOfflineEvent'),
+                        array(
+                            "sendRefreshToken" => true,
+                            "disableOffline" => true,
+                            "allowOptions" => [
+                                'minTimeout' => 'int'
+                            ],
+                        ),
+                    )
+                ),
             ),
         );
     }
@@ -139,6 +153,7 @@ class Event extends \IRestService
         $eventType = ToLower($query['EVENT_TYPE']);
         $eventUser = intval($query['AUTH_TYPE']);
         $eventCallback = $query['HANDLER'];
+        $options = is_array($query['OPTIONS']) ? $query['OPTIONS'] : [];
 
         if ($eventUser > 0) {
             if (!\CRestUtil::isAdmin() && $eventUser !== intval($USER->GetID())) {
@@ -152,13 +167,16 @@ class Event extends \IRestService
 
         $connectorId = isset($authData['auth_connector']) ? $authData['auth_connector'] : '';
 
-        if (strlen($eventName) <= 0) {
+        if ($eventName == '') {
             throw new ArgumentNullException("EVENT");
         }
 
-        if (strlen($eventType) > 0) {
+        if ($eventType <> '') {
             if (!in_array($eventType, array(EventTable::TYPE_ONLINE, EventTable::TYPE_OFFLINE))) {
-                throw new ArgumentException('Value must be one of {' . EventTable::TYPE_ONLINE . '|' . EventTable::TYPE_OFFLINE . '}', 'EVENT_TYPE');
+                throw new ArgumentException(
+                    'Value must be one of {' . EventTable::TYPE_ONLINE . '|' . EventTable::TYPE_OFFLINE . '}',
+                    'EVENT_TYPE'
+                );
             }
         } else {
             $eventType = EventTable::TYPE_ONLINE;
@@ -171,13 +189,13 @@ class Event extends \IRestService
 
             $eventCallback = '';
             $eventUser = 0;
-        } elseif (strlen($eventCallback) <= 0 && $eventType === EventTable::TYPE_ONLINE) {
+        } elseif ($eventCallback == '' && $eventType === EventTable::TYPE_ONLINE) {
             throw new ArgumentNullException("HANDLER");
         }
 
         $clientInfo = AppTable::getByClientId($server->getClientId());
 
-        if (strlen($eventCallback) <= 0 || HandlerHelper::checkCallback($eventCallback, $clientInfo)) {
+        if ($eventCallback == '' || HandlerHelper::checkCallback($eventCallback, $clientInfo)) {
             $scopeList = $server->getAuthScope();
             $scopeList[] = \CRestUtil::GLOBAL_SCOPE;
 
@@ -196,10 +214,36 @@ class Event extends \IRestService
                             'EVENT_NAME' => $eventName,
                             'EVENT_HANDLER' => $eventCallback,
                             'CONNECTOR_ID' => $connectorId,
+                            'OPTIONS' => []
                         );
 
                         if ($eventUser > 0) {
                             $eventHandlerFields['USER_ID'] = $eventUser;
+                        }
+
+                        if (
+                            $eventCallback === ''
+                            && isset($eventInfo[3]['disableOffline'])
+                            && $eventInfo[3]['disableOffline'] === true
+                        ) {
+                            throw new RestException(
+                                'Offline event cannot be registered for this event.',
+                                RestException::ERROR_ARGUMENT
+                            );
+                        }
+
+                        if (!empty($options) && isset($eventInfo[3]['allowOptions']) && is_array(
+                                $eventInfo[3]['allowOptions']
+                            )) {
+                            foreach ($eventInfo[3]['allowOptions'] as $code => $type) {
+                                if (isset($options[$code])) {
+                                    if ($type === 'int') {
+                                        $eventHandlerFields['OPTIONS'][$code] = (int)$options[$code];
+                                    } elseif ($type === 'str' && is_string($options[$code])) {
+                                        $eventHandlerFields['OPTIONS'][$code] = $options[$code];
+                                    }
+                                }
+                            }
                         }
 
                         $result = EventTable::add($eventHandlerFields);
@@ -207,7 +251,10 @@ class Event extends \IRestService
                             \Bitrix\Rest\Event\Sender::bind($eventInfo[0], $eventInfo[1]);
                         } else {
                             $errorMessage = $result->getErrorMessages();
-                            throw new RestException('Unable to set event handler: ' . implode('. ', $errorMessage), RestException::ERROR_CORE);
+                            throw new RestException(
+                                'Unable to set event handler: ' . implode('. ', $errorMessage),
+                                RestException::ERROR_CORE
+                            );
                         }
                     }
 
@@ -263,13 +310,16 @@ class Event extends \IRestService
         $eventType = ToLower($query['EVENT_TYPE']);
         $eventCallback = $query['HANDLER'];
 
-        if (strlen($eventName) <= 0) {
+        if ($eventName == '') {
             throw new ArgumentNullException("EVENT");
         }
 
-        if (strlen($eventType) > 0) {
+        if ($eventType <> '') {
             if (!in_array($eventType, array(EventTable::TYPE_ONLINE, EventTable::TYPE_OFFLINE))) {
-                throw new ArgumentException('Value must be one of {' . EventTable::TYPE_ONLINE . '|' . EventTable::TYPE_OFFLINE . '}', 'EVENT_TYPE');
+                throw new ArgumentException(
+                    'Value must be one of {' . EventTable::TYPE_ONLINE . '|' . EventTable::TYPE_OFFLINE . '}',
+                    'EVENT_TYPE'
+                );
             }
         } else {
             $eventType = EventTable::TYPE_ONLINE;
@@ -281,7 +331,7 @@ class Event extends \IRestService
             }
 
             $eventCallback = '';
-        } elseif (strlen($eventCallback) <= 0) {
+        } elseif ($eventCallback == '') {
             throw new ArgumentNullException("HANDLER");
         }
 
@@ -308,10 +358,12 @@ class Event extends \IRestService
             }
         }
 
-        $dbRes = EventTable::getList(array(
-            'filter' => $filter,
-            'select' => ['ID']
-        ));
+        $dbRes = EventTable::getList(
+            array(
+                'filter' => $filter,
+                'select' => ['ID']
+            )
+        );
 
         $cnt = 0;
         while ($eventInfo = $dbRes->fetch()) {
@@ -346,14 +398,16 @@ class Event extends \IRestService
             $filter['=USER_ID'] = $USER->GetID();
         }
 
-        $dbRes = EventTable::getList(array(
-            "filter" => $filter,
-            'order' => array(
-                "ID" => "ASC",
-            ),
-        ));
+        $dbRes = EventTable::getList(
+            array(
+                "filter" => $filter,
+                'order' => array(
+                    "ID" => "ASC",
+                ),
+            )
+        );
         while ($eventHandler = $dbRes->fetch()) {
-            if (strlen($eventHandler['EVENT_HANDLER']) > 0) {
+            if ($eventHandler['EVENT_HANDLER'] <> '') {
                 $result[] = array(
                     "event" => $eventHandler['EVENT_NAME'],
                     "handler" => $eventHandler['EVENT_HANDLER'],
@@ -382,10 +436,15 @@ class Event extends \IRestService
         $clientInfo = AppTable::getByClientId($server->getClientId());
 
         foreach (GetModuleEvents("rest", "OnRestAppTest", true) as $event) {
-            ExecuteModuleEventEx($event, array(array(
-                "APP_ID" => $clientInfo["ID"],
-                "QUERY" => $query
-            )));
+            ExecuteModuleEventEx(
+                $event,
+                array(
+                    array(
+                        "APP_ID" => $clientInfo["ID"],
+                        "QUERY" => $query
+                    )
+                )
+            );
         }
 
         return 1;
@@ -445,14 +504,21 @@ class Event extends \IRestService
 
         $queryFilter['=PROCESS_ID'] = $processId;
 
-        $dbRes = EventOfflineTable::getList(array(
-            'select' => array(
-                'ID', 'TIMESTAMP_X', 'EVENT_NAME', 'EVENT_DATA', 'EVENT_ADDITIONAL', 'MESSAGE_ID'
-            ),
-            'filter' => $queryFilter,
-            'limit' => $limit,
-            'order' => $order,
-        ));
+        $dbRes = EventOfflineTable::getList(
+            array(
+                'select' => array(
+                    'ID',
+                    'TIMESTAMP_X',
+                    'EVENT_NAME',
+                    'EVENT_DATA',
+                    'EVENT_ADDITIONAL',
+                    'MESSAGE_ID'
+                ),
+                'filter' => $queryFilter,
+                'limit' => $limit,
+                'order' => $order,
+            )
+        );
 
         $result = array();
 
@@ -510,7 +576,7 @@ class Event extends \IRestService
             foreach ($query['message_id'] as $messageId) {
                 $messageId = trim($messageId);
 
-                if (strlen($messageId) !== 32) {
+                if (mb_strlen($messageId) !== 32) {
                     throw new ArgumentException('Value must be array of MESSAGE_ID values', 'messsage_id');
                 }
 
@@ -594,9 +660,22 @@ class Event extends \IRestService
         $authData = $server->getAuthData();
         $connectorId = isset($authData['auth_connector']) ? $authData['auth_connector'] : '';
 
-        $queryFilter = static::sanitizeFilter($filter, array('ID', 'TIMESTAMP_X', 'EVENT_NAME', 'MESSAGE_ID', 'PROCESS_ID', 'ERROR'));
+        $queryFilter = static::sanitizeFilter(
+            $filter,
+            array(
+                'ID',
+                'TIMESTAMP_X',
+                'EVENT_NAME',
+                'MESSAGE_ID',
+                'PROCESS_ID',
+                'ERROR'
+            )
+        );
 
-        $order = static::sanitizeOrder($order, array('ID', 'TIMESTAMP_X', 'EVENT_NAME', 'MESSAGE_ID', 'PROCESS_ID', 'ERROR'));
+        $order = static::sanitizeOrder(
+            $order,
+            array('ID', 'TIMESTAMP_X', 'EVENT_NAME', 'MESSAGE_ID', 'PROCESS_ID', 'ERROR')
+        );
 
         $clientInfo = AppTable::getByClientId($server->getClientId());
 
@@ -605,16 +684,25 @@ class Event extends \IRestService
 
         $navParams = static::getNavData($n, true);
 
-        $dbRes = EventOfflineTable::getList(array(
-            'select' => array(
-                'ID', 'TIMESTAMP_X', 'EVENT_NAME', 'EVENT_DATA', 'EVENT_ADDITIONAL', 'MESSAGE_ID', 'PROCESS_ID', 'ERROR'
-            ),
-            'filter' => $queryFilter,
-            'limit' => $navParams['limit'],
-            'offset' => $navParams['offset'],
-            'count_total' => true,
-            'order' => $order,
-        ));
+        $dbRes = EventOfflineTable::getList(
+            array(
+                'select' => array(
+                    'ID',
+                    'TIMESTAMP_X',
+                    'EVENT_NAME',
+                    'EVENT_DATA',
+                    'EVENT_ADDITIONAL',
+                    'MESSAGE_ID',
+                    'PROCESS_ID',
+                    'ERROR'
+                ),
+                'filter' => $queryFilter,
+                'limit' => $navParams['limit'],
+                'offset' => $navParams['offset'],
+                'count_total' => true,
+                'order' => $order,
+            )
+        );
 
         $result = array();
 
@@ -630,14 +718,21 @@ class Event extends \IRestService
             $result[] = $event;
         }
 
-        return static::setNavData($result, array(
-            "count" => $dbRes->getCount(),
-            "offset" => $navParams['offset']
-        ));
+        return static::setNavData(
+            $result,
+            array(
+                "count" => $dbRes->getCount(),
+                "offset" => $navParams['offset']
+            )
+        );
     }
 
-    protected static function sanitizeFilter($filter, array $availableFields = null, $valueCallback = null, array $availableOperations = null)
-    {
+    protected static function sanitizeFilter(
+        $filter,
+        array $availableFields = null,
+        $valueCallback = null,
+        array $availableOperations = null
+    ) {
         static $defaultFields = array('ID', 'TIMESTAMP_X', 'EVENT_NAME', 'MESSAGE_ID');
 
         if ($availableFields === null) {

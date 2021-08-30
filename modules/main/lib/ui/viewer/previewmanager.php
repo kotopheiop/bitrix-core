@@ -81,7 +81,9 @@ final class PreviewManager
                 }
 
                 if (!is_subclass_of($class, Renderer\Renderer::class, true)) {
-                    throw new SystemException("Wrong event result. {$class} is not a subclass of " . Renderer\Renderer::class);
+                    throw new SystemException(
+                        "Wrong event result. {$class} is not a subclass of " . Renderer\Renderer::class
+                    );
                 }
 
                 $additionalList[] = $class;
@@ -165,12 +167,15 @@ final class PreviewManager
             $response = $this->sendResizedImage($file);
         }
 
+        if ($response instanceof Response\BFile && isset($options['cache_time'])) {
+            $response->setCacheTime($options['cache_time']);
+        }
+
         if ($response instanceof \Bitrix\Main\Response) {
             /** @global \CMain $APPLICATION */
             global $APPLICATION;
 
             $APPLICATION->RestartBuffer();
-            while (ob_end_clean()) ;
 
             Application::getInstance()->end(0, $response);
         }
@@ -184,9 +189,12 @@ final class PreviewManager
             return null;
         }
 
-        FilePreviewTable::update($filePreview['ID'], [
-            'TOUCHED_AT' => new DateTime(),
-        ]);
+        FilePreviewTable::update(
+            $filePreview['ID'],
+            [
+                'TOUCHED_AT' => new DateTime(),
+            ]
+        );
 
         //get name for preview file
         return Response\BFile::createByFileId(
@@ -232,9 +240,11 @@ final class PreviewManager
                 return null;
             }
 
-            return $this->getSourceUri()->addParams([
-                self::GET_KEY_TO_SEND_PREVIEW_CONTENT => $this->signFileId($filePreviewData['ID']),
-            ]);
+            return $this->getSourceUri()->addParams(
+                [
+                    self::GET_KEY_TO_SEND_PREVIEW_CONTENT => $this->signFileId($filePreviewData['ID']),
+                ]
+            );
         };
 
         return [
@@ -247,9 +257,11 @@ final class PreviewManager
 
     protected function checkTransformation($file)
     {
-        return new Response\AjaxJson([
-            'transformation' => (bool)$this->getViewFileData($file),
-        ]);
+        return new Response\AjaxJson(
+            [
+                'transformation' => (bool)$this->getViewFileData($file),
+            ]
+        );
     }
 
     protected function sendPreview($file, $forceTransformation = false)
@@ -263,9 +275,11 @@ final class PreviewManager
         if ($render instanceof Renderer\Stub || $forceTransformation) {
             $filePreviewData = $this->getViewFileData($file);
             if ($filePreviewData) {
-                $sourceUri = $this->getSourceUri()->addParams([
-                    self::GET_KEY_TO_SEND_PREVIEW_CONTENT => $this->signFileId($filePreviewData['ID']),
-                ]);
+                $sourceUri = $this->getSourceUri()->addParams(
+                    [
+                        self::GET_KEY_TO_SEND_PREVIEW_CONTENT => $this->signFileId($filePreviewData['ID']),
+                    ]
+                );
 
                 $render = $this->buildRenderByFile(
                     $filePreviewData['ORIGINAL_NAME'],
@@ -284,10 +298,12 @@ final class PreviewManager
         }
 
         if ($render) {
-            return Response\AjaxJson::createSuccess([
-                'html' => $render->render(),
-                'data' => $render->getData(),
-            ]);
+            return Response\AjaxJson::createSuccess(
+                [
+                    'html' => $render->render(),
+                    'data' => $render->getData(),
+                ]
+            );
         }
 
         return Response\AjaxJson::createError();
@@ -297,14 +313,19 @@ final class PreviewManager
     {
         $alreadyPreview = $this->getFilePreviewEntryByFileId($fileId);
         if (isset($alreadyPreview['ID'])) {
-            $result = FilePreviewTable::update($fileId, [
-                'PREVIEW_IMAGE_ID' => $previewImageId,
-            ]);
+            $result = FilePreviewTable::update(
+                $fileId,
+                [
+                    'PREVIEW_IMAGE_ID' => $previewImageId,
+                ]
+            );
         } else {
-            $result = FilePreviewTable::add([
-                'FILE_ID' => $fileId,
-                'PREVIEW_IMAGE_ID' => $previewImageId,
-            ]);
+            $result = FilePreviewTable::add(
+                [
+                    'FILE_ID' => $fileId,
+                    'PREVIEW_IMAGE_ID' => $previewImageId,
+                ]
+            );
         }
 
         return $result;
@@ -351,7 +372,7 @@ final class PreviewManager
             'previewfile'
         );
 
-        return unserialize(base64_decode($unsignedParameters));
+        return unserialize(base64_decode($unsignedParameters), ['allowed_classes' => false]);
     }
 
     public function getByImage($fileId, Uri $sourceUri)
@@ -402,12 +423,14 @@ final class PreviewManager
 
     protected function getFilePreviewEntryByFileId($fileId)
     {
-        $row = FilePreviewTable::getList([
-            'filter' => [
-                '=FILE_ID' => $fileId,
-            ],
-            'limit' => 1,
-        ])->fetch();
+        $row = FilePreviewTable::getList(
+            [
+                'filter' => [
+                    '=FILE_ID' => $fileId,
+                ],
+                'limit' => 1,
+            ]
+        )->fetch();
 
         return $row;
     }
@@ -415,10 +438,12 @@ final class PreviewManager
     protected function buildRenderByFile($originalName, $contentType, Uri $sourceUri, array $options = [])
     {
         $options['contentType'] = $contentType;
-        $rendererClass = $this->getRenderClassByFile([
-            'contentType' => $contentType,
-            'originalName' => $originalName,
-        ]);
+        $rendererClass = $this->getRenderClassByFile(
+            [
+                'contentType' => $contentType,
+                'originalName' => $originalName,
+            ]
+        );
 
         $reflectionClass = new \ReflectionClass($rendererClass);
         /** @see \Bitrix\Main\UI\Viewer\Renderer\Renderer::__construct */

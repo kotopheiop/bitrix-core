@@ -11,6 +11,7 @@ class AnalyticBoardManager extends Base
     private static $indices = array(
         'boardKey' => array(),
         'boardBatchKey' => array(),
+        'group' => array(),
     );
 
 
@@ -36,7 +37,6 @@ class AnalyticBoardManager extends Base
     protected function getEventTypeKey()
     {
         return Common::EVENT_ANALYTIC_PAGE_COLLECT;
-
     }
 
     /**
@@ -51,8 +51,14 @@ class AnalyticBoardManager extends Base
                 self::$analyticBoardList[$board->getBoardKey()] = $board;
                 self::$indices['boardKey'][$board->getBoardKey()][] = $board->getBoardKey();
                 self::$indices['boardBatchKey'][$board->getBatchKey()][] = $board->getBoardKey();
+                self::$indices['group'][$board->getGroup()][] = $board->getGroup();
             }
         }
         return self::$analyticBoardList;
+    }
+
+    public function clearCache()
+    {
+        self::$analyticBoardList = [];
     }
 }

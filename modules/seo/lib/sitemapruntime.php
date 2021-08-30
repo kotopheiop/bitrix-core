@@ -95,11 +95,13 @@ class SitemapRuntimeTable extends Entity\DataManager
     public static function clearByPid($PID)
     {
         $connection = \Bitrix\Main\Application::getConnection();
-        $query = $connection->query("
+        $query = $connection->query(
+            "
 DELETE
 FROM " . self::getTableName() . "
 WHERE PID='" . intval($PID) . "'
-");
+"
+        );
     }
 }
 
@@ -110,7 +112,7 @@ class SitemapRuntime
     const PROGRESS_WIDTH = 500;
 
     protected $PID = 0;
-    private $originalFile = NULL;
+    private $originalFile = null;
 
     public function __construct($PID, $fileName, $arSettings)
     {
@@ -123,11 +125,11 @@ class SitemapRuntime
 //		normalize slashes
         $fileName = Path::normalize($fileName);
 //		divide directory and path tp correctly add prefix
-        $lastSlashPosition = strrpos($fileName, "/");
+        $lastSlashPosition = mb_strrpos($fileName, "/");
         $fileDirectory = '';
         if ($lastSlashPosition !== false) {
-            $fileDirectory = substr($fileName, 0, $lastSlashPosition + 1);
-            $fileName = substr($fileName, $lastSlashPosition + 1);
+            $fileDirectory = mb_substr($fileName, 0, $lastSlashPosition + 1);
+            $fileName = mb_substr($fileName, $lastSlashPosition + 1);
         }
 
         parent::__construct($fileDirectory . $this->getPrefix() . $fileName, $arSettings);
@@ -146,8 +148,9 @@ class SitemapRuntime
     public function putSitemapContent(SitemapFile $sitemapFile)
     {
 //		always write in new empty file - this is necessary
-        if ($this->isExists())
+        if ($this->isExists()) {
             $this->delete();
+        }
 
         if ($sitemapFile->isExists()) {
             $this->putContents($sitemapFile->getContents());
@@ -161,8 +164,9 @@ class SitemapRuntime
 
     public function setOriginalFile(SitemapFile $sitemapFile)
     {
-        if (isset($sitemapFile))
+        if (isset($sitemapFile)) {
             $this->originalFile = $sitemapFile;
+        }
     }
 
     /**
@@ -189,14 +193,21 @@ class SitemapRuntime
             }
 
 //			if part was changed - create new runtime part file
-            if (isset($filename) && $filename)
+            if (isset($filename) && $filename) {
                 $this->reInit($filename);
+            }
 
             $this->putSitemapContent($this->originalFile);
-            $this->appendEntry(array(
-                'XML_LOC' => $this->settings['PROTOCOL'] . '://' . \CBXPunycode::toASCII($this->settings['DOMAIN'], $e = NULL) . $url,
-                'XML_LASTMOD' => date('c', $modifiedDate - \CTimeZone::getOffset()),
-            ));
+            $e = [];
+            $this->appendEntry(
+                array(
+                    'XML_LOC' => $this->settings['PROTOCOL'] . '://' . \CBXPunycode::toASCII(
+                            $this->settings['DOMAIN'],
+                            $e
+                        ) . $url,
+                    'XML_LASTMOD' => date('c', $modifiedDate - \CTimeZone::getOffset()),
+                )
+            );
         } else {
             $this->addHeader();
             $this->addIBlockEntry($url, $modifiedDate);
@@ -216,8 +227,9 @@ class SitemapRuntime
         }
 
         if ($this->isCurrentPartNotEmpty()) {
-            if (!$this->footerClosed)
+            if (!$this->footerClosed) {
                 $this->addFooter();
+            }
             $this->rename(str_replace($this->getPrefix(), '', $this->getPath()));
         }
     }
@@ -232,22 +244,27 @@ class SitemapRuntime
         $v = $v >= 0 ? $v : 0;
 
         if ($v < 100) {
-            $msg = new \CAdminMessage(array(
-                "TYPE" => "PROGRESS",
-                "HTML" => true,
-                "MESSAGE" => $title,
-                "DETAILS" => "#PROGRESS_BAR#<div style=\"width: " . self::PROGRESS_WIDTH . "px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-top: 20px;\">" . Converter::getHtmlConverter()->encode($text) . "</div>",
-                "PROGRESS_TOTAL" => 100,
-                "PROGRESS_VALUE" => $v,
-                "PROGRESS_TEMPLATE" => '#PROGRESS_PERCENT#',
-                "PROGRESS_WIDTH" => self::PROGRESS_WIDTH,
-            ));
+            $msg = new \CAdminMessage(
+                array(
+                    "TYPE" => "PROGRESS",
+                    "HTML" => true,
+                    "MESSAGE" => $title,
+                    "DETAILS" => "#PROGRESS_BAR#<div style=\"width: " . self::PROGRESS_WIDTH . "px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-top: 20px;\">" . Converter::getHtmlConverter(
+                        )->encode($text) . "</div>",
+                    "PROGRESS_TOTAL" => 100,
+                    "PROGRESS_VALUE" => $v,
+                    "PROGRESS_TEMPLATE" => '#PROGRESS_PERCENT#',
+                    "PROGRESS_WIDTH" => self::PROGRESS_WIDTH,
+                )
+            );
         } else {
-            $msg = new \CAdminMessage(array(
-                "TYPE" => "OK",
-                "MESSAGE" => $title,
-                "DETAILS" => $text,
-            ));
+            $msg = new \CAdminMessage(
+                array(
+                    "TYPE" => "OK",
+                    "MESSAGE" => $title,
+                    "DETAILS" => $text,
+                )
+            );
         }
 
         return $msg->show();

@@ -1,5 +1,6 @@
 <?
 /** @global CDatabase $DB */
+
 /** @global CUser $USER */
 /** @global CMain $APPLICATION */
 define("STOP_STATISTICS", true);
@@ -50,7 +51,7 @@ if ($boolFlag) {
 if ($boolFlag) {
     if (Loader::includeModule('catalog')) {
         do {
-            $strCoupon = substr(CatalogGenerateCoupon(), 0, 32);
+            $strCoupon = mb_substr(CatalogGenerateCoupon(), 0, 32);
             $boolCheck = !CCatalogDiscountCoupon::IsExistCoupon($strCoupon);
         } while (!$boolCheck);
         $arResult['RESULT'] = $strCoupon;

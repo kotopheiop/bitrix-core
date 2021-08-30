@@ -64,8 +64,9 @@ abstract class Restriction
     {
         $severity = static::getSeverity($mode);
 
-        if ($severity == RestrictionManager::SEVERITY_NONE)
+        if ($severity == RestrictionManager::SEVERITY_NONE) {
             return RestrictionManager::SEVERITY_NONE;
+        }
 
         $entityRestrictionParams = static::extractParams($entity);
         $res = static::check($entityRestrictionParams, $restrictionParams, $serviceId);
@@ -111,10 +112,11 @@ abstract class Restriction
     {
         $fields["CLASS_NAME"] = '\\' . get_called_class();
 
-        if ($restrictionId > 0)
+        if ($restrictionId > 0) {
             $res = ServiceRestrictionTable::update($restrictionId, $fields);
-        else
+        } else {
             $res = ServiceRestrictionTable::add($fields);
+        }
 
         return $res;
     }
@@ -138,8 +140,9 @@ abstract class Restriction
     {
         $result = RestrictionManager::SEVERITY_STRICT;
 
-        if ($mode == RestrictionManager::MODE_MANAGER)
+        if ($mode == RestrictionManager::MODE_MANAGER) {
             return RestrictionManager::SEVERITY_SOFT;
+        }
 
         return $result;
     }

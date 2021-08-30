@@ -21,7 +21,7 @@ class TopicMembersStepper extends \Bitrix\Main\Update\Stepper
     public function execute(array &$option)
     {
         $res = Option::get("forum", "stat.user.recalc.topic", "");
-        $res = empty($res) ? [] : unserialize($res);
+        $res = empty($res) ? [] : unserialize($res, ["allowed_classes" => false]);
         if (empty($res) || !is_array($res)) {
             return self::FINISH_EXECUTION;
         }
@@ -30,13 +30,15 @@ class TopicMembersStepper extends \Bitrix\Main\Update\Stepper
         if (empty($state)) {
             $state["LAST_ID"] = 0;
         }
-        $dbRes = MessageTable::getList([
-            "select" => ["AUTHOR_ID"],
-            "filter" => ["TOPIC_ID" => $topicId, ">AUTHOR_ID" => $state["LAST_ID"]],
-            "limit" => 10,
-            "offset" => $state["LAST_ID"],
-            "order" => ["AUTHOR_ID" => "asc"]
-        ]);
+        $dbRes = MessageTable::getList(
+            [
+                "select" => ["AUTHOR_ID"],
+                "filter" => ["TOPIC_ID" => $topicId, ">AUTHOR_ID" => $state["LAST_ID"]],
+                "limit" => 10,
+                "offset" => $state["LAST_ID"],
+                "order" => ["AUTHOR_ID" => "asc"]
+            ]
+        );
         $count = 0;
         while ($r = $dbRes->fetch()) {
             $count++;
@@ -62,11 +64,12 @@ class TopicMembersStepper extends \Bitrix\Main\Update\Stepper
     public static function calc(int $topicId)
     {
         $res = Option::get("forum", "stat.user.recalc.topic", "");
-        if (!empty($res))
-            $res = unserialize($res);
+        if (!empty($res)) {
+            $res = unserialize($res, ["allowed_classes" => false]);
+        }
         $res = is_array($res) ? $res : [];
         $res[$topicId] = [];
         Option::set("forum", "stat.user.recalc.topic", serialize($res));
-        self::bind(0);
+        static::bind(0);
     }
 }

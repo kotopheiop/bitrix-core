@@ -1,5 +1,6 @@
 <?php
-$MESS["SALE_HANDLERS_PAY_SYSTEM_ASSIST_DESCRIPTION"] = "������ ������������� ������ ������-�������� <b>&laquo;������.�����&raquo;</b>.<br /><br />����� � ������ �� �����: ";
+
+$MESS["SALE_HANDLERS_PAY_SYSTEM_ASSIST_DESCRIPTION"] = "������ ������������� ������ ������-�������� <b>&laquo;�Kassa&raquo;</b>.<br /><br />����� � ������ �� �����: ";
 $MESS["SALE_HANDLERS_PAY_SYSTEM_ASSIST_WARNING_RETURN"] = "<b>�������� ��������:</b> ���� �� ���������� �� �������, ��� �������� ����� ��� �������� ���������� � �������.";
 $MESS["SALE_HANDLERS_PAY_SYSTEM_ASSIST_BUTTON_PAID"] = "��������";
 $MESS["SALE_HANDLERS_PAY_SYSTEM_ASSIST_PROMT"] = "�� ������ �������� ����� ������� <b>www.assist.ru</b>.";

@@ -49,8 +49,9 @@ class ShipmentItemTable extends Main\Entity\DataManager
     public static function deleteWithItems($id)
     {
         $id = intval($id);
-        if ($id <= 0)
+        if ($id <= 0) {
             throw new Main\ArgumentNullException("id");
+        }
 
         $itemsFromDbList = ShipmentItemStoreTable::getList(
             array(
@@ -60,8 +61,9 @@ class ShipmentItemTable extends Main\Entity\DataManager
                 "select" => array("ID")
             )
         );
-        while ($itemsFromDbItem = $itemsFromDbList->fetch())
+        while ($itemsFromDbItem = $itemsFromDbList->fetch()) {
             ShipmentItemStoreTable::delete($itemsFromDbItem['ID']);
+        }
 
         return ShipmentItemTable::delete($id);
     }
@@ -120,7 +122,8 @@ class ShipmentItemTable extends Main\Entity\DataManager
             'DATE_INSERT_SHORT' => array(
                 'data_type' => 'datetime',
                 'expression' => array(
-                    $DB->datetimeToDateFunction('%s'), 'DATE_INSERT'
+                    $DB->datetimeToDateFunction('%s'),
+                    'DATE_INSERT'
                 )
             ),
             'QUANTITY' => array(

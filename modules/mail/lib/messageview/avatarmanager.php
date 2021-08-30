@@ -23,12 +23,14 @@ class AvatarManager
     {
         $mailsNames = $this->getEmailsNames($messages);
 
-        $mailContacts = $this->fetchMailContacts(array_map(
-            function ($item) {
-                return $item['email'];
-            },
-            $mailsNames
-        ));
+        $mailContacts = $this->fetchMailContacts(
+            array_map(
+                function ($item) {
+                    return $item['email'];
+                },
+                $mailsNames
+            )
+        );
         $mailContacts = array_combine(array_column($mailContacts, 'EMAIL'), array_values($mailContacts));
         $mailContacts = $this->fillFileIdColumn($mailContacts);
 
@@ -126,25 +128,30 @@ class AvatarManager
             return [];
         }
 
-        return MailContactTable::getList(array(
-            'runtime' => array(
-                new Main\ORM\Fields\Relations\Reference(
-                    'USER',
-                    Main\UserTable::class,
-                    array(
-                        '=this.EMAIL' => 'ref.EMAIL',
-                        '=ref.ACTIVE' => new Main\DB\SqlExpression('?', 'Y'),
+        return MailContactTable::getList(
+            array(
+                'runtime' => array(
+                    new Main\ORM\Fields\Relations\Reference(
+                        'USER',
+                        Main\UserTable::class,
+                        array(
+                            '=this.EMAIL' => 'ref.EMAIL',
+                            '=ref.ACTIVE' => new Main\DB\SqlExpression('?', 'Y'),
+                        )
                     )
-                )
-            ),
-            'select' => array(
-                'NAME', 'EMAIL', 'ICON', 'FILE_ID',
-                'AVATAR_ID' => 'USER.PERSONAL_PHOTO',
-            ),
-            'filter' => array(
-                '=USER_ID' => $this->currentUserId,
-                '@EMAIL' => $emails,
-            ),
-        ))->fetchAll();
+                ),
+                'select' => array(
+                    'NAME',
+                    'EMAIL',
+                    'ICON',
+                    'FILE_ID',
+                    'AVATAR_ID' => 'USER.PERSONAL_PHOTO',
+                ),
+                'filter' => array(
+                    '=USER_ID' => $this->currentUserId,
+                    '@EMAIL' => $emails,
+                ),
+            )
+        )->fetchAll();
     }
 }

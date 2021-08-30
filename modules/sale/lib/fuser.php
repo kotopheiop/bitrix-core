@@ -18,7 +18,6 @@ class Fuser
 {
     function __construct()
     {
-
     }
 
     /**
@@ -60,11 +59,13 @@ class Fuser
     protected static function updateSession($id)
     {
         \CSaleUser::updateSessionSaleUserID();
-        if ((string)Main\Config\Option::get('sale', 'encode_fuser_id') != 'Y' && isset($_SESSION['SALE_USER_ID']))
+        if ((string)Main\Config\Option::get('sale', 'encode_fuser_id') != 'Y' && isset($_SESSION['SALE_USER_ID'])) {
             $_SESSION['SALE_USER_ID'] = (int)$_SESSION['SALE_USER_ID'];
+        }
 
-        if (!isset($_SESSION['SALE_USER_ID']) || (string)$_SESSION['SALE_USER_ID'] == '' || $_SESSION['SALE_USER_ID'] === 0)
+        if (!isset($_SESSION['SALE_USER_ID']) || (string)$_SESSION['SALE_USER_ID'] == '' || $_SESSION['SALE_USER_ID'] === 0) {
             $_SESSION['SALE_USER_ID'] = $id;
+        }
     }
 
     /**
@@ -86,15 +87,17 @@ class Fuser
      */
     public static function getIdByUserId($userId)
     {
-        $res = Internals\FuserTable::getList(array(
-            'filter' => array(
-                'USER_ID' => $userId
-            ),
-            'select' => array(
-                'ID'
-            ),
-            'order' => array('ID' => "DESC")
-        ));
+        $res = Internals\FuserTable::getList(
+            array(
+                'filter' => array(
+                    'USER_ID' => $userId
+                ),
+                'select' => array(
+                    'ID'
+                ),
+                'order' => array('ID' => "DESC")
+            )
+        );
         if ($fuserData = $res->fetch()) {
             return (int)$fuserData['ID'];
         } else {
@@ -120,15 +123,19 @@ class Fuser
         $result = 0;
 
         $fuserId = (int)$fuserId;
-        if ($fuserId <= 0)
+        if ($fuserId <= 0) {
             return $result;
-        $row = Internals\FuserTable::getList(array(
-            'select' => array('USER_ID'),
-            'filter' => array('=ID' => $fuserId),
-            'order' => array('ID' => "DESC")
-        ))->fetch();
-        if (!empty($row))
+        }
+        $row = Internals\FuserTable::getList(
+            array(
+                'select' => array('USER_ID'),
+                'filter' => array('=ID' => $fuserId),
+                'order' => array('ID' => "DESC")
+            )
+        )->fetch();
+        if (!empty($row)) {
             $result = (int)$row['USER_ID'];
+        }
 
         return $result;
     }
@@ -151,7 +158,9 @@ class Fuser
         $sqlHelper = $connection->getSqlHelper();
 
         $query = "DELETE FROM b_sale_fuser WHERE
-									b_sale_fuser.DATE_UPDATE < " . $sqlHelper->getDateToCharFunction("'" . $expiredValue . "'") . "
+									b_sale_fuser.DATE_UPDATE < " . $sqlHelper->getDateToCharFunction(
+                "'" . $expiredValue . "'"
+            ) . "
 									AND b_sale_fuser.USER_ID IS NULL
 									AND b_sale_fuser.id NOT IN (select FUSER_ID from b_sale_basket)";
         $connection->queryExecute($query);

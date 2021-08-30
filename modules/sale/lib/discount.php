@@ -57,8 +57,9 @@ class Discount extends DiscountBase
     public static function loadByFuser($fuser, $site)
     {
         $instanceIndex = static::getInstanceIndexByFuser((int)$fuser, (string)$site);
-        if (!static::instanceExists($instanceIndex))
+        if (!static::instanceExists($instanceIndex)) {
             return null;
+        }
         return static::getInstance($instanceIndex);
     }
 
@@ -108,8 +109,9 @@ class Discount extends DiscountBase
         $discountClone = parent::createClone($cloneEntity);
 
         if ($this->isShipmentExists()) {
-            if ($cloneEntity->contains($this->shipment))
+            if ($cloneEntity->contains($this->shipment)) {
                 $discountClone->shipment = $cloneEntity[$this->shipment];
+            }
         }
 
         return $discountClone;
@@ -130,8 +132,9 @@ class Discount extends DiscountBase
         if (!empty($this->applyResult['DISCOUNT_LIST'])) {
             if (!empty($this->applyResult['DELIVERY']) && is_array($this->applyResult['DELIVERY'])) {
                 foreach ($this->applyResult['DELIVERY'] as $orderDiscountId => $apply) {
-                    if ($apply == 'Y')
+                    if ($apply == 'Y') {
                         $this->applyResult['DISCOUNT_LIST'][$orderDiscountId] = 'Y';
+                    }
                 }
                 unset($apply, $orderDiscountId);
             }
@@ -146,8 +149,9 @@ class Discount extends DiscountBase
      */
     public function getApplyResult($extMode = false)
     {
-        if (Compatible\DiscountCompatibility::isUsed())
+        if (Compatible\DiscountCompatibility::isUsed()) {
             return Compatible\DiscountCompatibility::getApplyResult($extMode);
+        }
 
         $extMode = ($extMode === true);
 
@@ -158,10 +162,12 @@ class Discount extends DiscountBase
 
         if (!$extMode) {
             /* for compatibility only */
-            if (isset($this->discountResult['APPLY_BLOCKS'][0]['BASKET']))
+            if (isset($this->discountResult['APPLY_BLOCKS'][0]['BASKET'])) {
                 $result['BASKET'] = $this->discountResult['APPLY_BLOCKS'][0]['BASKET'];
-            if (isset($this->discountResult['APPLY_BLOCKS'][0]['ORDER']))
+            }
+            if (isset($this->discountResult['APPLY_BLOCKS'][0]['ORDER'])) {
                 $result['ORDER'] = $this->discountResult['APPLY_BLOCKS'][0]['ORDER'];
+            }
         }
         return $result;
     }
@@ -187,17 +193,21 @@ class Discount extends DiscountBase
     public function save()
     {
         $result = new Result;
-        if (!$this->isOrderExists() || !$this->isBasketNotEmpty())
+        if (!$this->isOrderExists() || !$this->isBasketNotEmpty()) {
             return $result;
+        }
 
         if ($this->isUsedDiscountCompatibility()) {
-            if (Compatible\DiscountCompatibility::isRepeatSave())
+            if (Compatible\DiscountCompatibility::isRepeatSave()) {
                 return $result;
+            }
             $compatibleResult = Compatible\DiscountCompatibility::getResult();
-            if ($compatibleResult === false)
+            if ($compatibleResult === false) {
                 return $result;
-            if (empty($compatibleResult))
+            }
+            if (empty($compatibleResult)) {
                 return $result;
+            }
 
             $this->setUseMode($compatibleResult['CALCULATE']['USE_MODE']);
             $this->newOrder = $compatibleResult['CALCULATE']['NEW_ORDER'];
@@ -238,8 +248,9 @@ class Discount extends DiscountBase
             'CUSTOM_PRICE_DELIVERY' => $this->orderData['CUSTOM_PRICE_DELIVERY'],
             'SHIPMENT_ID' => 0
         ];
-        if ($this->shipment instanceof $shipmentClassName)
+        if ($this->shipment instanceof $shipmentClassName) {
             $config['DELIVERY']['SHIPMENT_ID'] = $this->shipment->getId();
+        }
         unset($shipmentClassName);
         return $config;
     }
@@ -268,8 +279,9 @@ class Discount extends DiscountBase
      */
     protected function getExecuteFieldList()
     {
-        if (!$this->enableCheckingPrediction)
+        if (!$this->enableCheckingPrediction) {
             return parent::getExecuteFieldList();
+        }
         return ['PREDICTIONS_APP', 'APPLICATION'];
     }
 
@@ -282,8 +294,9 @@ class Discount extends DiscountBase
      */
     protected function getConditionField()
     {
-        if (!$this->enableCheckingPrediction)
+        if (!$this->enableCheckingPrediction) {
             return parent::getConditionField();
+        }
         return 'PREDICTIONS_APP';
     }
 
@@ -306,8 +319,9 @@ class Discount extends DiscountBase
                 'DESCR_DATA' => $stepResult['DELIVERY'],
                 'ACTION_BLOCK_LIST' => array_keys($stepResult['DELIVERY'])
             );
-            if (is_array($result['DELIVERY']['DESCR']))
+            if (is_array($result['DELIVERY']['DESCR'])) {
                 $result['DELIVERY']['DESCR'] = implode(', ', $result['DELIVERY']['DESCR']);
+            }
         }
         unset($stepResult);
 
@@ -330,10 +344,11 @@ class Discount extends DiscountBase
             : 0
         );
         if (!$customPrice) {
-            if ($this->orderData['PRICE_DELIVERY_DIFF'] > 0)
+            if ($this->orderData['PRICE_DELIVERY_DIFF'] > 0) {
                 $this->orderData['PRICE_DELIVERY'] = $this->orderData['BASE_PRICE_DELIVERY'] - $this->orderData['PRICE_DELIVERY_DIFF'];
-            else
+            } else {
                 $this->orderData['PRICE_DELIVERY'] = PriceMaths::roundPrecision($this->orderData['PRICE_DELIVERY']);
+            }
         }
         unset($customPrice);
     }
@@ -410,8 +425,9 @@ class Discount extends DiscountBase
             foreach ($this->discountResult['APPLY_BLOCKS'] as $counter => $applyBlock) {
                 if (!empty($applyBlock['ORDER'])) {
                     foreach ($applyBlock['ORDER'] as $discount) {
-                        if (empty($discount['RESULT']['DELIVERY']))
+                        if (empty($discount['RESULT']['DELIVERY'])) {
                             continue;
+                        }
                         $id = $discount['RESULT']['DELIVERY']['DELIVERY_ID'];
                         $delivery[$id] = $id;
                     }
@@ -425,8 +441,9 @@ class Discount extends DiscountBase
 
         $shipmentClassName = $this->getShipmentClassName();
         $shipment = [];
-        if ($this->shipment instanceof $shipmentClassName)
+        if ($this->shipment instanceof $shipmentClassName) {
             $shipment[] = $this->shipment->getShipmentCode();
+        }
         $result['SHIPMENT_LIST'] = $shipment;
         unset($shipment);
 
@@ -456,8 +473,9 @@ class Discount extends DiscountBase
 
         $orderKeys = ['PRICE_DELIVERY', 'PRICE_DELIVERY_DIFF'];
         foreach ($orderKeys as $key) {
-            if (isset($this->orderData[$key]))
+            if (isset($this->orderData[$key])) {
                 $result[$key] = $this->orderData[$key];
+            }
         }
         unset($key, $orderKeys);
         if (isset($result['PRICE_DELIVERY_DIFF'])) {
@@ -467,8 +485,9 @@ class Discount extends DiscountBase
 
         $shipmentClassName = $this->getShipmentClassName();
         $result['SHIPMENT'] = null;
-        if ($this->shipment instanceof $shipmentClassName)
+        if ($this->shipment instanceof $shipmentClassName) {
             $result['SHIPMENT'] = $this->shipment->getShipmentCode();
+        }
         unset($shipmentClassName);
 
         return $result;
@@ -492,8 +511,9 @@ class Discount extends DiscountBase
      */
     protected function resetDeliveryPrices()
     {
-        if ($this->orderData['CUSTOM_PRICE_DELIVERY'] !== 'N')
+        if ($this->orderData['CUSTOM_PRICE_DELIVERY'] !== 'N') {
             return;
+        }
         $this->orderData['PRICE_DELIVERY'] = $this->orderData['BASE_PRICE_DELIVERY'];
         $this->orderData['PRICE_DELIVERY_DIFF'] = 0;
     }
@@ -506,8 +526,9 @@ class Discount extends DiscountBase
     protected function loadOrderData()
     {
         $result = parent::loadOrderData();
-        if (!$result->isSuccess())
+        if (!$result->isSuccess()) {
             return $result;
+        }
 
         if (!$this->isShipmentExists()) {
             $this->shipmentIds = [];
@@ -550,16 +571,18 @@ class Discount extends DiscountBase
             $paymentCollection = $order->getPaymentCollection();
             /** @var Payment $payment */
             foreach ($paymentCollection as $payment) {
-                if ($payment->isInner())
+                if ($payment->isInner()) {
                     continue;
+                }
                 if (!isset($this->orderData['PAY_SYSTEM_ID'])) {
                     $this->orderData['PAY_SYSTEM_ID'] = (int)$payment->getPaymentSystemId();
                     break;
                 }
             }
             unset($payment, $paymentCollection);
-            if (!isset($this->orderData['PAY_SYSTEM_ID']))
+            if (!isset($this->orderData['PAY_SYSTEM_ID'])) {
                 $this->orderData['PAY_SYSTEM_ID'] = 0;
+            }
 
             unset($order);
         }
@@ -574,8 +597,9 @@ class Discount extends DiscountBase
     protected function loadBasket()
     {
         $result = parent::loadBasket();
-        if (!$result->isSuccess())
+        if (!$result->isSuccess()) {
             return $result;
+        }
 
         if ($this->isBasketNotEmpty()) {
             /** @var Basket $basket */
@@ -585,15 +609,18 @@ class Discount extends DiscountBase
                 if (
                     !$basketItem->canBuy()
                     || !$basketItem->isBundleParent()
-                )
+                ) {
                     continue;
+                }
 
                 $bundle = $basketItem->getBundleCollection();
                 if ($bundle->count() == 0) {
-                    $result->addError(new Main\Entity\EntityError(
-                        Loc::getMessage('BX_SALE_DISCOUNT_ERR_BASKET_BUNDLE_EMPTY'),
-                        self::ERROR_ID
-                    ));
+                    $result->addError(
+                        new Main\Entity\EntityError(
+                            Loc::getMessage('BX_SALE_DISCOUNT_ERR_BASKET_BUNDLE_EMPTY'),
+                            self::ERROR_ID
+                        )
+                    );
                     break;
                 }
                 /** @var BasketItem $bundleItem */
@@ -632,16 +659,18 @@ class Discount extends DiscountBase
     {
         parent::applyLoadedOrderConfig($data);
 
-        if (isset($data['OLD_ORDER']))
+        if (isset($data['OLD_ORDER'])) {
             $this->setValidState(false);
+        }
 
         /** @var Order $order */
         $order = $this->getOrder();
         if (!empty($data['DELIVERY'])) {
             $delivery = $data['DELIVERY'];
             $this->orderData['DELIVERY_ID'] = $delivery['DELIVERY_ID'];
-            if (isset($delivery['CUSTOM_PRICE_DELIVERY']))
+            if (isset($delivery['CUSTOM_PRICE_DELIVERY'])) {
                 $this->orderData['CUSTOM_PRICE_DELIVERY'] = $delivery['CUSTOM_PRICE_DELIVERY'];
+            }
             if (isset($delivery['SHIPMENT_ID'])) {
                 $delivery['SHIPMENT_ID'] = (int)$delivery['SHIPMENT_ID'];
                 if ($delivery['SHIPMENT_ID'] > 0) {
@@ -679,8 +708,9 @@ class Discount extends DiscountBase
      */
     protected function fillShipmentData()
     {
-        if (!$this->isShipmentExists())
+        if (!$this->isShipmentExists()) {
             return;
+        }
 
         $this->orderData['DELIVERY_ID'] = $this->shipment->getDeliveryId();
         $this->orderData['CUSTOM_PRICE_DELIVERY'] = ($this->shipment->isCustomPrice() ? 'Y' : 'N');
@@ -699,8 +729,9 @@ class Discount extends DiscountBase
     protected function loadShipment()
     {
         $result = new Result;
-        if (!$this->isOrderExists())
+        if (!$this->isOrderExists()) {
             return $result;
+        }
         if (!$this->isShipmentExists()) {
             $loadDelivery = false;
             /** @var Order $order */
@@ -710,8 +741,9 @@ class Discount extends DiscountBase
             /** @var Shipment $shipment */
             if ($this->isOrderNew()) {
                 foreach ($orderShipmentList as $shipment) {
-                    if ($shipment->isSystem())
+                    if ($shipment->isSystem()) {
                         continue;
+                    }
 
                     if (!$loadDelivery) {
                         $this->shipment = $shipment;
@@ -722,12 +754,14 @@ class Discount extends DiscountBase
             } else {
                 $shipmentId = false;
                 foreach ($orderShipmentList as $shipment) {
-                    if ($shipment->isSystem())
+                    if ($shipment->isSystem()) {
                         continue;
+                    }
 
                     $currentShipmentId = (int)$shipment->getId();
-                    if ($shipmentId === false || $shipmentId > $currentShipmentId)
+                    if ($shipmentId === false || $shipmentId > $currentShipmentId) {
                         $shipmentId = $currentShipmentId;
+                    }
                 }
                 unset($currentShipmentId, $shipment);
                 if (!empty($shipmentId)) {
@@ -891,8 +925,9 @@ class Discount extends DiscountBase
     public static function loadByBasket(Basket $basket)
     {
         $order = $basket->getOrder();
-        if ($order instanceof Order)
+        if ($order instanceof Order) {
             return static::buildFromOrder($order);
+        }
 
         return self::buildFromBasket($basket, new Context\Fuser($basket->getFUserId(true)));
     }
@@ -927,7 +962,12 @@ class Discount extends DiscountBase
 
         $this->loadOrderData();
 
-        $listItems[$basketItem->getBasketCode()] = array('APPLY' => 'Y', 'ACTION_BLOCK_LIST' => array(), 'DESCR_DATA' => array(), 'DESCR' => array());
+        $listItems[$basketItem->getBasketCode()] = array(
+            'APPLY' => 'Y',
+            'ACTION_BLOCK_LIST' => array(),
+            'DESCR_DATA' => array(),
+            'DESCR' => array()
+        );
 
         $this->discountsCache[$orderDiscountId]['MODULE_ID'] = 'sale';
         $applyBlock = &$this->discountResult['APPLY_BLOCKS'][$this->discountResultCounter];

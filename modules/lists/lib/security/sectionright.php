@@ -51,7 +51,10 @@ class SectionRight implements RightEntity, Errorable
         if (
             $this->listsPermission < \CListPermissions::CAN_WRITE &&
             !\CIBlockSectionRights::userHasRightTo(
-                $this->rightParam->getIblockId(), $this->rightParam->getEntityId(), "section_read")
+                $this->rightParam->getIblockId(),
+                $this->rightParam->getEntityId(),
+                "section_read"
+            )
         ) {
             $this->errorCollection->setError(new Error("Access denied", self::ACCESS_DENIED));
             return false;
@@ -71,7 +74,10 @@ class SectionRight implements RightEntity, Errorable
             (
                 ($this->listsPermission >= \CListPermissions::CAN_WRITE) ||
                 \CIBlockSectionRights::userHasRightTo(
-                    $this->rightParam->getIblockId(), $this->rightParam->getEntityId(), "section_edit")
+                    $this->rightParam->getIblockId(),
+                    $this->rightParam->getEntityId(),
+                    "section_edit"
+                )
             )
         );
 
@@ -95,7 +101,10 @@ class SectionRight implements RightEntity, Errorable
             (
                 ($this->listsPermission >= \CListPermissions::CAN_WRITE) ||
                 \CIBlockSectionRights::userHasRightTo(
-                    $this->rightParam->getIblockId(), $this->rightParam->getEntityId(), "section_section_bind")
+                    $this->rightParam->getIblockId(),
+                    $this->rightParam->getEntityId(),
+                    "section_section_bind"
+                )
             )
         );
 
@@ -119,7 +128,10 @@ class SectionRight implements RightEntity, Errorable
             (
                 ($this->listsPermission >= \CListPermissions::CAN_WRITE) ||
                 \CIBlockSectionRights::userHasRightTo(
-                    $this->rightParam->getIblockId(), $this->rightParam->getEntityId(), "section_delete")
+                    $this->rightParam->getIblockId(),
+                    $this->rightParam->getEntityId(),
+                    "section_delete"
+                )
             )
         );
 

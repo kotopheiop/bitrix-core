@@ -144,7 +144,10 @@ abstract class BasePreset
             throw new SystemException("Could not find method {$methodName}");
         }
 
-        $result = call_user_func_array(array($this, $methodName), array());
+        $result = call_user_func_array(
+            array($this, $methodName),
+            array()
+        );
 
         header('Content-Type:application/json; charset=UTF-8');
         echo Json::encode($result);
@@ -171,7 +174,7 @@ abstract class BasePreset
             throw new SystemException("Could not find product id");
         }
         if (empty($quantity)) {
-            throw new SystemException("Could not find quantity");
+            $quantity = 1;
         }
 
         $productDetails = OrderBasket::getProductDetails($productId, $quantity, $userId, $siteId);
@@ -185,19 +188,29 @@ abstract class BasePreset
     private function getProductInfo($elementId)
     {
         $elementId = intval($elementId);
-        $dbProduct = \CIBlockElement::getList(array(), array("ID" => $elementId), false, false, array(
-            'ID',
-            'IBLOCK_ID',
-            'IBLOCK_SECTION_ID',
-            'DETAIL_PICTURE',
-            'PREVIEW_PICTURE',
-            'NAME',
-            'XML_ID',
-        ));
+        $dbProduct = \CIBlockElement::getList(
+            array(),
+            array("ID" => $elementId),
+            false,
+            false,
+            array(
+                'ID',
+                'IBLOCK_ID',
+                'IBLOCK_SECTION_ID',
+                'DETAIL_PICTURE',
+                'PREVIEW_PICTURE',
+                'NAME',
+                'XML_ID',
+            )
+        );
         while ($product = $dbProduct->fetch()) {
             $imgCode = 0;
             if ($product["IBLOCK_ID"] > 0) {
-                $product["EDIT_PAGE_URL"] = \CIBlock::getAdminElementEditLink($product["IBLOCK_ID"], $elementId, array("find_section_section" => $product["IBLOCK_SECTION_ID"]));
+                $product["EDIT_PAGE_URL"] = \CIBlock::getAdminElementEditLink(
+                    $product["IBLOCK_ID"],
+                    $elementId,
+                    array("find_section_section" => $product["IBLOCK_SECTION_ID"])
+                );
             }
 
             if ($product["DETAIL_PICTURE"] > 0) {
@@ -207,10 +220,16 @@ abstract class BasePreset
             }
 
             if ($imgCode > 0) {
-                $imgProduct = \CFile::resizeImageGet(\CFile::getFileArray($imgCode), array(
-                    'width' => 80,
-                    'height' => 80,
-                ), BX_RESIZE_IMAGE_PROPORTIONAL, false, false);
+                $imgProduct = \CFile::resizeImageGet(
+                    \CFile::getFileArray($imgCode),
+                    array(
+                        'width' => 80,
+                        'height' => 80,
+                    ),
+                    BX_RESIZE_IMAGE_PROPORTIONAL,
+                    false,
+                    false
+                );
                 $product["PICTURE_URL"] = $imgProduct['src'];
             }
             $product['PRODUCT_ID'] = $product['ID'];
@@ -447,7 +466,9 @@ abstract class BasePreset
         return '
 			<form action="' . htmlspecialcharsbx($this->request->getRequestUri()) . '" enctype="multipart/form-data" method="post" name="__preset_form" id="__preset_form">
 				' . $state->toString() . '
-				<input type="hidden" name="' . static::STEP_NAME_VAR . '" id="' . static::STEP_NAME_VAR . '" value="' . htmlspecialcharsbx($this->getNextStep()) . '">
+				<input type="hidden" name="' . static::STEP_NAME_VAR . '" id="' . static::STEP_NAME_VAR . '" value="' . htmlspecialcharsbx(
+                $this->getNextStep()
+            ) . '">
 				<input type="hidden" name="' . static::RUN_PREV_STEP_NAME_VAR . '" id="' . static::RUN_PREV_STEP_NAME_VAR . '" value="">
 				' . bitrix_sessid_post() . ' 
 				<input type="hidden" name="lang" value="' . LANGUAGE_ID . '">
@@ -509,18 +530,20 @@ abstract class BasePreset
      */
     public function generateState(array $discountFields)
     {
-        return new State(array(
-            'discount_id' => $discountFields['ID'],
-            'discount_lid' => $discountFields['LID'],
-            'discount_name' => $discountFields['NAME'],
-            'discount_active_from' => $discountFields['ACTIVE_FROM'],
-            'discount_active_to' => $discountFields['ACTIVE_TO'],
-            'discount_last_discount' => $discountFields['LAST_DISCOUNT'],
-            'discount_last_level_discount' => $discountFields['LAST_LEVEL_DISCOUNT'],
-            'discount_priority' => $discountFields['PRIORITY'],
-            'discount_sort' => $discountFields['SORT'],
-            'discount_groups' => $this->getUserGroupsByDiscount($discountFields['ID']),
-        ));
+        return new State(
+            array(
+                'discount_id' => $discountFields['ID'],
+                'discount_lid' => $discountFields['LID'],
+                'discount_name' => $discountFields['NAME'],
+                'discount_active_from' => $discountFields['ACTIVE_FROM'],
+                'discount_active_to' => $discountFields['ACTIVE_TO'],
+                'discount_last_discount' => $discountFields['LAST_DISCOUNT'],
+                'discount_last_level_discount' => $discountFields['LAST_LEVEL_DISCOUNT'],
+                'discount_priority' => $discountFields['PRIORITY'],
+                'discount_sort' => $discountFields['SORT'],
+                'discount_groups' => $this->getUserGroupsByDiscount($discountFields['ID']),
+            )
+        );
     }
 
     final protected function normalizeDiscountFields(array $discountFields)
@@ -530,7 +553,10 @@ abstract class BasePreset
         }
 
         if (isset($discountFields['CONDITIONS_LIST']) && is_string($discountFields['CONDITIONS_LIST'])) {
-            $discountFields['CONDITIONS_LIST'] = unserialize($discountFields['CONDITIONS_LIST']);
+            $discountFields['CONDITIONS_LIST'] = unserialize(
+                $discountFields['CONDITIONS_LIST'],
+                ['allowed_classes' => false]
+            );
         }
 
         if (isset($discountFields['CONDITIONS_LIST']) && is_array($discountFields['CONDITIONS_LIST'])) {
@@ -543,7 +569,10 @@ abstract class BasePreset
         }
 
         if (isset($discountFields['ACTIONS_LIST']) && is_string($discountFields['ACTIONS_LIST'])) {
-            $discountFields['ACTIONS_LIST'] = unserialize($discountFields['ACTIONS_LIST']);
+            $discountFields['ACTIONS_LIST'] = unserialize(
+                $discountFields['ACTIONS_LIST'],
+                ['allowed_classes' => false]
+            );
         }
 
         if (isset($discountFields['ACTIONS_LIST']) && is_array($discountFields['ACTIONS_LIST'])) {
@@ -551,7 +580,10 @@ abstract class BasePreset
         }
 
         if (isset($discountFields['PREDICTIONS_LIST']) && is_string($discountFields['PREDICTIONS_LIST'])) {
-            $discountFields['PREDICTIONS_LIST'] = unserialize($discountFields['PREDICTIONS_LIST']);
+            $discountFields['PREDICTIONS_LIST'] = unserialize(
+                $discountFields['PREDICTIONS_LIST'],
+                ['allowed_classes' => false]
+            );
         }
 
         if (isset($discountFields['PREDICTIONS_LIST']) && is_array($discountFields['PREDICTIONS_LIST'])) {
@@ -593,18 +625,23 @@ abstract class BasePreset
 
     public function processShowFinalStep(State $state)
     {
-        return Loc::getMessage('SALE_BASE_PRESET_FINAL_OK', array(
-            '#NAME#' => htmlspecialcharsbx($state->get('discount_name'))
-        ));
+        return Loc::getMessage(
+            'SALE_BASE_PRESET_FINAL_OK',
+            array(
+                '#NAME#' => htmlspecialcharsbx($state->get('discount_name'))
+            )
+        );
     }
 
     protected function getUserGroupsByDiscount($discountId)
     {
         $groups = array();
-        $groupDiscountIterator = DiscountGroupTable::getList(array(
-            'select' => array('GROUP_ID'),
-            'filter' => array('DISCOUNT_ID' => $discountId, '=ACTIVE' => 'Y')
-        ));
+        $groupDiscountIterator = DiscountGroupTable::getList(
+            array(
+                'select' => array('GROUP_ID'),
+                'filter' => array('DISCOUNT_ID' => $discountId, '=ACTIVE' => 'Y')
+            )
+        );
         while ($groupDiscount = $groupDiscountIterator->fetch()) {
             $groups[] = $groupDiscount['GROUP_ID'];
         }
@@ -620,11 +657,13 @@ abstract class BasePreset
     private function getSaleSiteList()
     {
         $siteList = array();
-        $siteIterator = SiteTable::getList(array(
-            'select' => array('LID', 'NAME',),
-            'filter' => array('=ACTIVE' => 'Y'),
-            'order' => array('SORT' => 'ASC'),
-        ));
+        $siteIterator = SiteTable::getList(
+            array(
+                'select' => array('LID', 'NAME',),
+                'filter' => array('=ACTIVE' => 'Y'),
+                'order' => array('SORT' => 'ASC'),
+            )
+        );
         while ($site = $siteIterator->fetch()) {
             $saleSite = (string)Option::get('sale', 'SHOP_SITE_' . $site['LID']);
             if ($site['LID'] == $saleSite) {
@@ -638,10 +677,12 @@ abstract class BasePreset
     private function getFullSiteList()
     {
         $siteList = array();
-        $siteIterator = SiteTable::getList(array(
-            'select' => array('LID', 'NAME',),
-            'order' => array('SORT' => 'ASC'),
-        ));
+        $siteIterator = SiteTable::getList(
+            array(
+                'select' => array('LID', 'NAME',),
+                'order' => array('SORT' => 'ASC'),
+            )
+        );
         while ($site = $siteIterator->fetch()) {
             $siteList[$site['LID']] = '(' . $site['LID'] . ') ' . $site['NAME'];
         }
@@ -655,15 +696,25 @@ abstract class BasePreset
 			<table width="100%" border="0" cellspacing="7" cellpadding="0">
 				<tbody>
 				<tr>
-					<td class="adm-detail-content-cell-l" style="width:40%;"><strong>' . Loc::getMessage('SALE_BASE_PRESET_ORDERAMOUNT_FIELD_NAME') . ':</strong></td>
+					<td class="adm-detail-content-cell-l" style="width:40%;"><strong>' . Loc::getMessage(
+                'SALE_BASE_PRESET_ORDERAMOUNT_FIELD_NAME'
+            ) . ':</strong></td>
 					<td class="adm-detail-content-cell-r" style="width:60%;">
-						<input type="text" name="discount_name" value="' . htmlspecialcharsbx($state->get('discount_name')) . '" size="39" maxlength="100" style="width: 300px;">
+						<input type="text" name="discount_name" value="' . htmlspecialcharsbx(
+                $state->get('discount_name')
+            ) . '" size="39" maxlength="100" style="width: 300px;">
 					</td>
 				</tr>
 				<tr>
-					<td class="adm-detail-content-cell-l"><strong>' . Loc::getMessage('SALE_BASE_PRESET_ORDERAMOUNT_LID') . ':</strong></td>
+					<td class="adm-detail-content-cell-l"><strong>' . Loc::getMessage(
+                'SALE_BASE_PRESET_ORDERAMOUNT_LID'
+            ) . ':</strong></td>
 					<td class="adm-detail-content-cell-r">
-						' . HtmlHelper::generateSelect('discount_lid', $this->getSiteList(), $state->get('discount_lid')) . '
+						' . HtmlHelper::generateSelect(
+                'discount_lid',
+                $this->getSiteList(),
+                $state->get('discount_lid')
+            ) . '
 					</td>
 				</tr>
 				</tbody>
@@ -699,7 +750,9 @@ abstract class BasePreset
                 $hintLastDiscountImageName = 'hint_last_discount_' . LANGUAGE_ID . '.png';
                 break;
             default:
-                $hintLastDiscountImageName = 'hint_last_discount_' . Main\Localization\Loc::getDefaultLang(LANGUAGE_ID) . '.png';
+                $hintLastDiscountImageName = 'hint_last_discount_' . Main\Localization\Loc::getDefaultLang(
+                        LANGUAGE_ID
+                    ) . '.png';
                 break;
         }
 
@@ -712,13 +765,22 @@ abstract class BasePreset
 			<table width="100%" border="0" cellspacing="7" cellpadding="0">
 				<tbody>
 				<tr>
-					<td class="adm-detail-content-cell-l" style="width:40%;"><strong>' . Loc::getMessage('SALE_BASE_PRESET_ORDERAMOUNT_USER_GROUPS') . ':</strong></td>
+					<td class="adm-detail-content-cell-l" style="width:40%;"><strong>' . Loc::getMessage(
+                'SALE_BASE_PRESET_ORDERAMOUNT_USER_GROUPS'
+            ) . ':</strong></td>
 					<td class="adm-detail-content-cell-r">
-						' . HtmlHelper::generateMultipleSelect('discount_groups[]', $groupList, $state->get('discount_groups', array()), array('size=8')) . '
+						' . HtmlHelper::generateMultipleSelect(
+                'discount_groups[]',
+                $groupList,
+                $state->get('discount_groups', array()),
+                array('size=8')
+            ) . '
 					</td>
 				</tr>
 				<tr>
-					<td class="adm-detail-content-cell-l" style="width:40%;"><strong>' . Loc::getMessage('SALE_BASE_PRESET_ACTIVE_PERIOD') . ':</strong></td>
+					<td class="adm-detail-content-cell-l" style="width:40%;"><strong>' . Loc::getMessage(
+                'SALE_BASE_PRESET_ACTIVE_PERIOD'
+            ) . ':</strong></td>
 					<td class="adm-detail-content-cell-r">' .
             \CAdminCalendar::CalendarPeriodCustom(
                 'discount_active_from',
@@ -737,13 +799,20 @@ abstract class BasePreset
 					</td>
 				</tr>
 				<tr>
-					<td class="adm-detail-content-cell-l" style="width:40%;"><strong>' . Loc::getMessage('SALE_BASE_PRESET_ORDERAMOUNT_FIELD_PRIORITY') . ':</strong></td>
+					<td class="adm-detail-content-cell-l" style="width:40%;"><strong>' . Loc::getMessage(
+                'SALE_BASE_PRESET_ORDERAMOUNT_FIELD_PRIORITY'
+            ) . ':</strong></td>
 					<td class="adm-detail-content-cell-r" style="width:60%;">
-						<input type="text" name="discount_priority" value="' . (int)$state->get('discount_priority', 1) . '" size="39" maxlength="100" style="width: 100px;">
+						<input type="text" name="discount_priority" value="' . (int)$state->get(
+                'discount_priority',
+                1
+            ) . '" size="39" maxlength="100" style="width: 100px;">
 					</td>
 				</tr>
 				<tr>
-					<td class="adm-detail-content-cell-l" style="width:40%;"><strong>' . Loc::getMessage('SALE_BASE_PRESET_ORDERAMOUNT_FIELD_SORT') . ':</strong></td>
+					<td class="adm-detail-content-cell-l" style="width:40%;"><strong>' . Loc::getMessage(
+                'SALE_BASE_PRESET_ORDERAMOUNT_FIELD_SORT'
+            ) . ':</strong></td>
 					<td class="adm-detail-content-cell-r" style="width:60%;">
 						<input type="text" name="discount_sort" value="' . (int)$state->get('discount_sort', 100) . '" size="39" maxlength="100" style="width: 100px;">
 					</td>
@@ -755,7 +824,10 @@ abstract class BasePreset
 						<strong>' . Loc::getMessage('SALE_BASE_PRESET_LAST_LEVEL_DISCOUNT_LABEL') . ':</strong>
 					</td>
 					<td class="adm-detail-content-cell-r" style="width:60%;">
-						<input type="checkbox" name="discount_last_level_discount" value="Y" ' . ($state->get('discount_last_level_discount', 'N') == 'Y' ? 'checked' : '') . '>
+						<input type="checkbox" name="discount_last_level_discount" value="Y" ' . ($state->get(
+                'discount_last_level_discount',
+                'N'
+            ) == 'Y' ? 'checked' : '') . '>
 					</td>
 				</tr>
 				<tr>
@@ -765,7 +837,10 @@ abstract class BasePreset
 						<strong>' . Loc::getMessage('SALE_BASE_PRESET_LAST_DISCOUNT_LABEL') . ':</strong>
 					</td>
 					<td class="adm-detail-content-cell-r" style="width:60%;">
-						<input type="checkbox" name="discount_last_discount" value="Y" ' . ($state->get('discount_last_discount', 'Y') == 'Y' ? 'checked' : '') . '>
+						<input type="checkbox" name="discount_last_discount" value="Y" ' . ($state->get(
+                'discount_last_discount',
+                'Y'
+            ) == 'Y' ? 'checked' : '') . '>
 					</td>
 				</tr>
 				</tbody>
@@ -790,7 +865,9 @@ abstract class BasePreset
             $state['discount_last_discount'] = 'N';
         }
 
-        if ($state['discount_last_level_discount'] !== 'Y' || !$this->request->getPost('discount_last_level_discount')) {
+        if ($state['discount_last_level_discount'] !== 'Y' || !$this->request->getPost(
+                'discount_last_level_discount'
+            )) {
             $state['discount_last_level_discount'] = 'N';
         }
 
@@ -812,11 +889,17 @@ abstract class BasePreset
 			<tr>
 				<td class="adm-detail-content-cell-l" style="width:40%;"><strong>' . $this->getLabelDiscountValue() . ':</strong></td>
 				<td class="adm-detail-content-cell-r" style="width:60%;">
-					<input type="text" name="discount_value" value="' . htmlspecialcharsbx($state->get('discount_value')) . '" maxlength="100" style="width: 100px;"> '
-            . HtmlHelper::generateSelect('discount_type', array(
-                'Perc' => Loc::getMessage('SHD_BT_SALE_ACT_GROUP_BASKET_SELECT_PERCENT'),
-                'CurEach' => $currency,
-            ), $state->get('discount_type')) . '
+					<input type="text" name="discount_value" value="' . htmlspecialcharsbx(
+                $state->get('discount_value')
+            ) . '" maxlength="100" style="width: 100px;"> '
+            . HtmlHelper::generateSelect(
+                'discount_type',
+                array(
+                    'Perc' => Loc::getMessage('SHD_BT_SALE_ACT_GROUP_BASKET_SELECT_PERCENT'),
+                    'CurEach' => $currency,
+                ),
+                $state->get('discount_type')
+            ) . '
 				</td>
 			</tr>		
 		';
@@ -841,10 +924,12 @@ abstract class BasePreset
                 }
             }
         } else {
-            $groupIterator = Main\GroupTable::getList([
-                'select' => ['ID', 'NAME'],
-                'order' => ['C_SORT' => 'ASC', 'ID' => 'ASC'],
-            ]);
+            $groupIterator = Main\GroupTable::getList(
+                [
+                    'select' => ['ID', 'NAME'],
+                    'order' => ['C_SORT' => 'ASC', 'ID' => 'ASC'],
+                ]
+            );
             while ($group = $groupIterator->fetch()) {
                 $groupList[$group['ID']] = $group['NAME'];
             }

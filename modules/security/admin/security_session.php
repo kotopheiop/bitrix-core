@@ -1,4 +1,5 @@
 <?
+
 define("ADMIN_MODULE_NAME", "security");
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
@@ -12,8 +13,9 @@ IncludeModuleLangFile(__FILE__);
  */
 $canRead = $USER->CanDoOperation('security_session_settings_read');
 $canWrite = $USER->CanDoOperation('security_session_settings_write');
-if (!$canRead && !$canWrite)
+if (!$canRead && !$canWrite) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $aTabs = array(
     array(
@@ -50,8 +52,9 @@ if (
     }
 
     $ttl = intval($_POST["sessid_ttl"]);
-    if ($ttl <= 0)
+    if ($ttl <= 0) {
         $ttl = 60;
+    }
     COption::SetOptionInt("main", "session_id_ttl", $ttl);
 
     if (array_key_exists("sessid_ttl_on", $_POST)) {
@@ -60,10 +63,13 @@ if (
         COption::SetOptionString("main", "use_session_id_ttl", "N");
     }
 
-    if ($_REQUEST["save"] != "" && $_GET["return_url"] != "")
+    if ($_REQUEST["save"] != "" && $_GET["return_url"] != "") {
         LocalRedirect($_GET["return_url"]);
-    else
-        LocalRedirect("/bitrix/admin/security_session.php?lang=" . LANGUAGE_ID . $returnUrl . "&" . $tabControl->ActiveTabParam());
+    } else {
+        LocalRedirect(
+            "/bitrix/admin/security_session.php?lang=" . LANGUAGE_ID . $returnUrl . "&" . $tabControl->ActiveTabParam()
+        );
+    }
 }
 
 $APPLICATION->SetTitle(GetMessage("SEC_SESSION_ADMIN_TITLE"));
@@ -106,11 +112,13 @@ if ($showSecondMessage) {
 }
 
 foreach ($messages as $message) {
-    CAdminMessage::ShowMessage(array(
-        "MESSAGE" => $message["text"],
-        "TYPE" => $message["type"],
-        "HTML" => true
-    ));
+    CAdminMessage::ShowMessage(
+        array(
+            "MESSAGE" => $message["text"],
+            "TYPE" => $message["type"],
+            "HTML" => true
+        )
+    );
 }
 ?>
 
@@ -123,28 +131,31 @@ foreach ($messages as $message) {
         <? if (COption::GetOptionString("security", "session") == "Y"): ?>
             <tr>
                 <td colspan="2" align="left">
-                    <input type="submit" name="db_session_off"
-                           value="<? echo GetMessage("SEC_SESSION_ADMIN_DB_BUTTON_OFF") ?>"<? if (!$canWrite) echo " disabled" ?>>
+                    <input type="submit" name="db_session_off" value="<? echo GetMessage(
+                        "SEC_SESSION_ADMIN_DB_BUTTON_OFF"
+                    ) ?>"<? if (!$canWrite) echo " disabled" ?>>
                 </td>
             </tr>
         <? else: ?>
             <? if (CSecuritySession::checkSessionId(session_id())): ?>
                 <tr>
                     <td colspan="2" align="left">
-                        <input type="submit" name="db_session_on"
-                               value="<? echo GetMessage("SEC_SESSION_ADMIN_DB_BUTTON_ON") ?>"<? if (!$canWrite) echo " disabled" ?>
-                               class="adm-btn-save">
+                        <input type="submit" name="db_session_on" value="<? echo GetMessage(
+                            "SEC_SESSION_ADMIN_DB_BUTTON_ON"
+                        ) ?>"<? if (!$canWrite) echo " disabled" ?> class="adm-btn-save">
                     </td>
                 </tr>
             <? else: ?>
                 <tr>
                     <td colspan="2" align="left">
                         <?
-                        CAdminMessage::ShowMessage(array(
-                            "TYPE" => "ERROR",
-                            "DETAILS" => GetMessage("SEC_SESSION_ADMIN_SESSID_WARNING"),
-                            "HTML" => true
-                        ));
+                        CAdminMessage::ShowMessage(
+                            array(
+                                "TYPE" => "ERROR",
+                                "DETAILS" => GetMessage("SEC_SESSION_ADMIN_SESSID_WARNING"),
+                                "HTML" => true
+                            )
+                        );
                         ?>
                     </td>
                 </tr>
@@ -158,8 +169,9 @@ foreach ($messages as $message) {
         </tr>
         <tr>
             <td colspan="2">
-                <? echo BeginNote(); ?><span
-                        style="color:red">*</span><? echo GetMessage("SEC_SESSION_ADMIN_DB_WARNING") ?>
+                <? echo BeginNote(); ?><span style="color:red">*</span><? echo GetMessage(
+                    "SEC_SESSION_ADMIN_DB_WARNING"
+                ) ?>
                 <? echo EndNote(); ?>
             </td>
         </tr>
@@ -168,16 +180,17 @@ foreach ($messages as $message) {
         ?>
         <? if (COption::GetOptionString("main", "use_session_id_ttl") == "Y"): ?>
             <td colspan="2" align="left">
-                <input type="submit" name="sessid_ttl_off"
-                       value="<? echo GetMessage("SEC_SESSION_ADMIN_SESSID_BUTTON_OFF") ?>"<? if (!$canWrite) echo " disabled" ?>>
+                <input type="submit" name="sessid_ttl_off" value="<? echo GetMessage(
+                    "SEC_SESSION_ADMIN_SESSID_BUTTON_OFF"
+                ) ?>"<? if (!$canWrite) echo " disabled" ?>>
             </td>
             </tr>
         <? else: ?>
             <tr>
                 <td colspan="2" align="left">
-                    <input type="submit" name="sessid_ttl_on"
-                           value="<? echo GetMessage("SEC_SESSION_ADMIN_SESSID_BUTTON_ON") ?>"<? if (!$canWrite) echo " disabled" ?>
-                           class="adm-btn-save">
+                    <input type="submit" name="sessid_ttl_on" value="<? echo GetMessage(
+                        "SEC_SESSION_ADMIN_SESSID_BUTTON_ON"
+                    ) ?>"<? if (!$canWrite) echo " disabled" ?> class="adm-btn-save">
                 </td>
             </tr>
         <? endif; ?>

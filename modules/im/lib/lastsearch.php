@@ -33,7 +33,7 @@ class LastSearch
         }
 
         if (\Bitrix\Im\Common::isChatId($dialogId)) {
-            $chatId = substr($dialogId, 4);
+            $chatId = mb_substr($dialogId, 4);
             $relations = Chat::getRelation($chatId);
             if (!$relations[$userId]) {
                 return false;
@@ -50,31 +50,38 @@ class LastSearch
             $relationId = $relations[$userId]['ID'];
         }
 
-        $orm = \Bitrix\Im\Model\LastSearchTable::getList(Array(
-            'filter' => Array('USER_ID' => $userId, 'DIALOG_ID' => $dialogId),
-            'order' => Array('ID' => 'DESC')
-        ));
+        $orm = \Bitrix\Im\Model\LastSearchTable::getList(
+            Array(
+                'filter' => Array('USER_ID' => $userId, 'DIALOG_ID' => $dialogId),
+                'order' => Array('ID' => 'DESC')
+            )
+        );
         if ($orm->fetch()) {
             return true;
         }
 
-        $result = \Bitrix\Im\Model\LastSearchTable::add(Array(
-            'USER_ID' => $userId,
-            'DIALOG_ID' => $dialogId,
-            'ITEM_CID' => $chatId,
-            'ITEM_RID' => $relationId,
-        ));
+        $result = \Bitrix\Im\Model\LastSearchTable::add(
+            Array(
+                'USER_ID' => $userId,
+                'DIALOG_ID' => $dialogId,
+                'ITEM_CID' => $chatId,
+                'ITEM_RID' => $relationId,
+            )
+        );
 
-        if (!$result->isSuccess())
+        if (!$result->isSuccess()) {
             return false;
+        }
 
         $count = 0;
         $delete = Array();
 
-        $orm = \Bitrix\Im\Model\LastSearchTable::getList(Array(
-            'filter' => Array('USER_ID' => $userId),
-            'order' => Array('ID' => 'DESC')
-        ));
+        $orm = \Bitrix\Im\Model\LastSearchTable::getList(
+            Array(
+                'filter' => Array('USER_ID' => $userId),
+                'order' => Array('ID' => 'DESC')
+            )
+        );
         while ($row = $orm->fetch()) {
             $count++;
 
@@ -107,12 +114,14 @@ class LastSearch
             return false;
         }
 
-        $orm = \Bitrix\Im\Model\LastSearchTable::getList(Array(
-            'filter' => Array(
-                'USER_ID' => $userId,
-                'DIALOG_ID' => $dialogId
+        $orm = \Bitrix\Im\Model\LastSearchTable::getList(
+            Array(
+                'filter' => Array(
+                    '=USER_ID' => $userId,
+                    '=DIALOG_ID' => $dialogId
+                )
             )
-        ));
+        );
         $row = $orm->fetch();
         if (!$row) {
             return false;
@@ -164,13 +173,15 @@ class LastSearch
                 'CHAT_DATE_CREATE' => 'CHAT.DATE_CREATE',
             );
 
-            $orm = \Bitrix\Im\Model\LastSearchTable::getList(Array(
-                'select' => $select,
-                'filter' => Array('=USER_ID' => $userId),
-                'order' => Array('ID' => 'DESC')
-            ));
+            $orm = \Bitrix\Im\Model\LastSearchTable::getList(
+                Array(
+                    'select' => $select,
+                    'filter' => Array('=USER_ID' => $userId),
+                    'order' => Array('ID' => 'DESC')
+                )
+            );
             while ($row = $orm->fetch()) {
-                $isUser = strpos($row['DIALOG_ID'], 'chat') !== 0;
+                $isUser = mb_strpos($row['DIALOG_ID'], 'chat') !== 0;
                 $id = $row['DIALOG_ID'];
 
                 $item = Array(
@@ -186,7 +197,9 @@ class LastSearch
                     );
                 } else {
                     $avatar = \CIMChat::GetAvatarImage($row['CHAT_AVATAR'], 100, false);
-                    $color = strlen($row['CHAT_COLOR']) > 0 ? Color::getColor($row['CHAT_COLOR']) : Color::getColorByNumber($row['ITEM_ID']);
+                    $color = $row['CHAT_COLOR'] <> '' ? Color::getColor($row['CHAT_COLOR']) : Color::getColorByNumber(
+                        $row['ITEM_ID']
+                    );
                     $chatType = \Bitrix\Im\Chat::getType($row);
 
                     if ($generalChatId == $row['ITEM_ID']) {
@@ -257,12 +270,14 @@ class LastSearch
                 $user = User::getInstance($item['USER']['ID'])->getArray();
                 if (!$user) {
                     $user = Array('ID' => 0);
-                } else if ($item['TYPE'] == 'user') {
-                    $item['AVATAR'] = Array(
-                        'URL' => $user['AVATAR'],
-                        'COLOR' => $user['COLOR']
-                    );
-                    $item['TITLE'] = $user['NAME'];
+                } else {
+                    if ($item['TYPE'] == 'user') {
+                        $item['AVATAR'] = Array(
+                            'URL' => $user['AVATAR'],
+                            'COLOR' => $user['COLOR']
+                        );
+                        $item['TITLE'] = $user['NAME'];
+                    }
                 }
 
                 $item['USER'] = $user;
@@ -278,17 +293,26 @@ class LastSearch
                 foreach ($item as $key => $value) {
                     if ($value instanceof \Bitrix\Main\Type\DateTime) {
                         $item[$key] = date('c', $value->getTimestamp());
-                    } else if (is_array($value)) {
-                        foreach ($value as $subKey => $subValue) {
-                            if ($subValue instanceof \Bitrix\Main\Type\DateTime) {
-                                $value[$subKey] = date('c', $subValue->getTimestamp());
-                            } else if (is_string($subValue) && $subValue && in_array($subKey, Array('URL', 'AVATAR')) && strpos($subValue, 'http') !== 0) {
-                                $value[$subKey] = \Bitrix\Im\Common::getPublicDomain() . $subValue;
-                            } else if (is_array($subValue)) {
-                                $value[$subKey] = array_change_key_case($subValue, CASE_LOWER);
+                    } else {
+                        if (is_array($value)) {
+                            foreach ($value as $subKey => $subValue) {
+                                if ($subValue instanceof \Bitrix\Main\Type\DateTime) {
+                                    $value[$subKey] = date('c', $subValue->getTimestamp());
+                                } else {
+                                    if (is_string($subValue) && $subValue && in_array(
+                                            $subKey,
+                                            Array('URL', 'AVATAR')
+                                        ) && mb_strpos($subValue, 'http') !== 0) {
+                                        $value[$subKey] = \Bitrix\Im\Common::getPublicDomain() . $subValue;
+                                    } else {
+                                        if (is_array($subValue)) {
+                                            $value[$subKey] = array_change_key_case($subValue, CASE_LOWER);
+                                        }
+                                    }
+                                }
                             }
+                            $item[$key] = array_change_key_case($value, CASE_LOWER);
                         }
-                        $item[$key] = array_change_key_case($value, CASE_LOWER);
                     }
                 }
                 $result[$index] = array_change_key_case($item, CASE_LOWER);

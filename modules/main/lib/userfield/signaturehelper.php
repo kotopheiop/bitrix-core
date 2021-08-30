@@ -21,9 +21,12 @@ class SignatureHelper
 
     protected static function getSignatureParam(array $fieldParam)
     {
-        array_walk_recursive($fieldParam, function (&$item) {
-            $item = strval($item);
-        });
+        array_walk_recursive(
+            $fieldParam,
+            function (&$item) {
+                $item = strval($item);
+            }
+        );
 
         $signatureParam = array(
             'ENTITY_ID' => $fieldParam['ENTITY_ID'],

@@ -2,17 +2,17 @@
 
 namespace Bitrix\Sale\Internals\Input;
 
+use Bitrix\Location\Service\FormatService;
 use Bitrix\Main\Event;
-use    Bitrix\Main\EventManager,
-    Bitrix\Main\SystemException,
+use    Bitrix\Main\SystemException,
     Bitrix\Main\Localization\Loc;
 use Bitrix\Main\EventResult;
-use Bitrix\Sale\ResultError;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Web\Json;
 
 Loc::loadMessages(__FILE__);
 
 // TODO integrate with input.js on adding multiple item
-
 class Manager
 {
     static function initJs()
@@ -22,28 +22,40 @@ class Manager
         if (!$done) {
             $done = true;
 
-            \CJSCore::RegisterExt('input', array(
-                'js' => '/bitrix/js/sale/input.js',
-                'lang' => '/bitrix/modules/sale/lang/' . LANGUAGE_ID . '/lib/internals/input.php',
-            ));
+            if (Loader::includeModule('location')) {
+                \Bitrix\Main\UI\Extension::load('sale.address');
+            }
+
+            \CJSCore::RegisterExt(
+                'input',
+                array(
+                    'js' => [
+                        '/bitrix/js/sale/input.js'
+                    ],
+                    'lang' => '/bitrix/modules/sale/lang/' . LANGUAGE_ID . '/lib/internals/input.php',
+                )
+            );
             \CJSCore::Init(array('input'));
 
             print('<div style="display:none">');
-            $GLOBALS['APPLICATION']->IncludeComponent("bitrix:sale.location.selector." . \Bitrix\Sale\Location\Admin\LocationHelper::getWidgetAppearance(), "", array(
-                "ID" => '',
-                "CODE" => '',
-                "INPUT_NAME" => 'SALE_LOCATION_SELECTOR_RESOURCES',
-                "PROVIDE_LINK_BY" => 'code',
+            $GLOBALS['APPLICATION']->IncludeComponent(
+                "bitrix:sale.location.selector." . \Bitrix\Sale\Location\Admin\LocationHelper::getWidgetAppearance(),
+                "",
+                array(
+                    "ID" => '',
+                    "CODE" => '',
+                    "INPUT_NAME" => 'SALE_LOCATION_SELECTOR_RESOURCES',
+                    "PROVIDE_LINK_BY" => 'code',
 
-                "FILTER_BY_SITE" => 'Y',
+                    "FILTER_BY_SITE" => 'Y',
 
-                "SHOW_DEFAULT_LOCATIONS" => 'Y',
-                "SEARCH_BY_PRIMARY" => 'Y',
+                    "SHOW_DEFAULT_LOCATIONS" => 'Y',
+                    "SEARCH_BY_PRIMARY" => 'Y',
 
-                "JS_CONTROL_GLOBAL_ID" => 'SALE_LOCATION_SELECTOR_RESOURCES',
-                //"INITIALIZE_BY_GLOBAL_EVENT" => 'sale-event-never-happen',
-                "USE_JS_SPAWN" => 'Y'
-            ),
+                    "JS_CONTROL_GLOBAL_ID" => 'SALE_LOCATION_SELECTOR_RESOURCES',
+                    //"INITIALIZE_BY_GLOBAL_EVENT" => 'sale-event-never-happen',
+                    "USE_JS_SPAWN" => 'Y'
+                ),
                 false,
                 array('HIDE_ICONS' => 'Y')
             );
@@ -61,13 +73,15 @@ class Manager
      */
     static function getViewHtml(array $input, $value = null)
     {
-        if (!static::$initialized)
+        if (!static::$initialized) {
             static::initialize();
+        }
 
-        if ($type = static::$types[$input['TYPE']])
+        if ($type = static::$types[$input['TYPE']]) {
             return call_user_func(array($type['CLASS'], __FUNCTION__), $input, $value);
-        else
+        } else {
             throw new SystemException('invalid input type in ' . print_r($input, true), 0, __FILE__, __LINE__);
+        }
     }
 
     /** Return html input control for value.
@@ -79,13 +93,15 @@ class Manager
      */
     static function getEditHtml($name, array $input, $value = null)
     {
-        if (!static::$initialized)
+        if (!static::$initialized) {
             static::initialize();
+        }
 
-        if ($type = static::$types[$input['TYPE']])
+        if ($type = static::$types[$input['TYPE']]) {
             return call_user_func(array($type['CLASS'], __FUNCTION__), $name, $input, $value);
-        else
+        } else {
             throw new SystemException('invalid input type in ' . print_r($input, true), 0, __FILE__, __LINE__);
+        }
     }
 
     /**
@@ -97,13 +113,15 @@ class Manager
      */
     static function getFilterEditHtml($name, array $input, $value = null)
     {
-        if (!static::$initialized)
+        if (!static::$initialized) {
             static::initialize();
+        }
 
-        if ($type = static::$types[$input['TYPE']])
+        if ($type = static::$types[$input['TYPE']]) {
             return call_user_func(array($type['CLASS'], __FUNCTION__), $name, $input, $value);
-        else
+        } else {
             throw new SystemException('invalid input type in ' . print_r($input, true), 0, __FILE__, __LINE__);
+        }
     }
 
     /** Get user input validation errors.
@@ -114,13 +132,15 @@ class Manager
      */
     static function getError(array $input, $value)
     {
-        if (!static::$initialized)
+        if (!static::$initialized) {
             static::initialize();
+        }
 
-        if ($type = static::$types[$input['TYPE']])
+        if ($type = static::$types[$input['TYPE']]) {
             return call_user_func(array($type['CLASS'], __FUNCTION__), $input, $value);
-        else
+        } else {
             throw new SystemException('invalid input type in ' . print_r($input, true), 0, __FILE__, __LINE__);
+        }
     }
 
     /**
@@ -132,8 +152,9 @@ class Manager
      */
     static function getRequiredError(array $input, $value)
     {
-        if (!static::$initialized)
+        if (!static::$initialized) {
             static::initialize();
+        }
 
         if ($type = static::$types[$input['TYPE']]) {
             return call_user_func(array($type['CLASS'], __FUNCTION__), $input, $value);
@@ -151,13 +172,15 @@ class Manager
      */
     static function getValue(array $input, $value)
     {
-        if (!static::$initialized)
+        if (!static::$initialized) {
             static::initialize();
+        }
 
-        if ($type = static::$types[$input['TYPE']])
+        if ($type = static::$types[$input['TYPE']]) {
             return call_user_func(array($type['CLASS'], __FUNCTION__), $input, $value);
-        else
+        } else {
             throw new SystemException('invalid input type in ' . print_r($input, true), 0, __FILE__, __LINE__);
+        }
     }
 
     /** Get multiple value.
@@ -168,13 +191,15 @@ class Manager
      */
     static function asMultiple(array $input, $value)
     {
-        if (!static::$initialized)
+        if (!static::$initialized) {
             static::initialize();
+        }
 
-        if ($type = static::$types[$input['TYPE']])
+        if ($type = static::$types[$input['TYPE']]) {
             return call_user_func(array($type['CLASS'], __FUNCTION__), $value);
-        else
+        } else {
             throw new SystemException('invalid input type in ' . print_r($input, true), 0, __FILE__, __LINE__);
+        }
     }
 
     /** Get settings inputs for user control.
@@ -185,13 +210,15 @@ class Manager
      */
     static function getSettings(array $input, $reload = null)
     {
-        if (!static::$initialized)
+        if (!static::$initialized) {
             static::initialize();
+        }
 
-        if ($type = static::$types[$input['TYPE']])
+        if ($type = static::$types[$input['TYPE']]) {
             return call_user_func(array($type['CLASS'], __FUNCTION__), $input, $reload);
-        else
+        } else {
             throw new SystemException('invalid input type in ' . print_r($input, true), 0, __FILE__, __LINE__);
+        }
     }
 
     /** Get settings, common to all input types.
@@ -201,20 +228,48 @@ class Manager
      */
     static function getCommonSettings(array $input, $reload = null)
     {
-        if (!static::$initialized)
+        if (!static::$initialized) {
             static::initialize();
+        }
 
         $typeOptions = array();
 
-        foreach (static::$types as $k => $v)
+        foreach (static::$types as $k => $v) {
             $typeOptions[$k] = $v['NAME'] . " [$k]";
+        }
 
-        return array(
-            'TYPE' => array('TYPE' => 'ENUM', 'LABEL' => Loc::getMessage('INPUT_TYPE'), 'OPTIONS' => $typeOptions, 'REQUIRED' => 'Y', 'ONCHANGE' => $reload),
+        $hasMultipleSupport = true;
+        if (isset(static::$types[$input['TYPE']])) {
+            /** @var Base $typeClass */
+            $typeClass = static::$types[$input['TYPE']]['CLASS'];
+
+            if (!$typeClass::hasMultipleValuesSupport()) {
+                $hasMultipleSupport = false;
+            }
+        }
+
+        $multiple = array('TYPE' => 'Y/N', 'LABEL' => Loc::getMessage('INPUT_MULTIPLE'));
+
+        if (!$hasMultipleSupport) {
+            $multiple['DISABLED_YN'] = 'N';
+        } else {
+            $multiple['ONCLICK'] = $reload;
+        }
+
+        $result = [
+            'TYPE' => array(
+                'TYPE' => 'ENUM',
+                'LABEL' => Loc::getMessage('INPUT_TYPE'),
+                'OPTIONS' => $typeOptions,
+                'REQUIRED' => 'Y',
+                'ONCHANGE' => $reload
+            ),
             'REQUIRED' => array('TYPE' => 'Y/N', 'LABEL' => Loc::getMessage('INPUT_REQUIRED')),
-            'MULTIPLE' => array('TYPE' => 'Y/N', 'LABEL' => Loc::getMessage('INPUT_MULTIPLE'), 'ONCLICK' => $reload),
+            'MULTIPLE' => $multiple,
             'VALUE' => array('LABEL' => Loc::getMessage('INPUT_VALUE'), 'REQUIRED' => 'N') + $input,
-        );
+        ];
+
+        return $result;
     }
 
     /** Get all registered types.
@@ -222,8 +277,9 @@ class Manager
      */
     static function getTypes()
     {
-        if (!static::$initialized)
+        if (!static::$initialized) {
             static::initialize();
+        }
 
         return static::$types;
     }
@@ -238,21 +294,24 @@ class Manager
      */
     static function register($name, array $type)
     {
-        if (static::$types[$name])
+        if (isset(static::$types[$name])) {
             throw new SystemException('duplicate type ' . $name, 0, __FILE__, __LINE__);
+        }
 
-        if (!class_exists($type['CLASS']))
+        if (!class_exists($type['CLASS'])) {
             throw new SystemException('undefined CLASS in ' . print_r($type, true), 0, __FILE__, __LINE__);
+        }
 
-        if (!is_subclass_of($type['CLASS'], __NAMESPACE__ . '\Base'))
+        if (!is_subclass_of($type['CLASS'], __NAMESPACE__ . '\Base')) {
             throw new SystemException($type['CLASS'] . ' does not implement Input\Base', 0, __FILE__, __LINE__);
+        }
 
         static::$types[$name] = $type;
     }
 
     protected static $initialized;
 
-    protected function initialize()
+    protected static function initialize()
     {
         static::$initialized = true;
 
@@ -262,8 +321,9 @@ class Manager
 
         if ($event->getResults()) {
             foreach ($event->getResults() as $eventResult) {
-                if ($eventResult->getType() != EventResult::SUCCESS)
+                if ($eventResult->getType() != EventResult::SUCCESS) {
                     continue;
+                }
 
                 if ($params = $eventResult->getParameters()) {
                     if (!empty($params) && is_array($params)) {
@@ -297,9 +357,12 @@ abstract class Base
         if (static::isMultiple($value)) {
             $v = null;
 
-            foreach ($value as $v)
+            foreach ($value as $v) {
                 if ($v) // !== null) TODO maybe??
+                {
                     break;
+                }
+            }
 
             return $v;
         } else {
@@ -310,7 +373,7 @@ abstract class Base
     static function asMultiple($value)
     {
         if (static::isMultiple($value)) {
-            return array_diff($value, array("", NULL, false));
+            return array_diff($value, array("", null, false));
         } else {
             return $value === null ? array() : array($value);
         }
@@ -318,17 +381,19 @@ abstract class Base
 
     public static function getViewHtml(array $input, $value = null)
     {
-        if ($value === null)
+        if ($value === null) {
             $value = $input['VALUE'];
+        }
 
         if ($input['MULTIPLE'] == 'Y') {
             $tag = isset($input['MULTITAG']) ? htmlspecialcharsbx($input['MULTITAG']) : static::MULTITAG;
-            list ($startTag, $endTag) = $tag ? array("<$tag>", "</$tag>") : array('', '');
+            [$startTag, $endTag] = $tag ? array("<$tag>", "</$tag>") : array('', '');
 
             $html = '';
 
-            foreach (static::asMultiple($value) as $value)
+            foreach (static::asMultiple($value) as $value) {
                 $html .= $startTag . static::getViewHtmlSingle($input, $value) . $endTag;
+            }
 
             return $html;
         } else {
@@ -350,19 +415,24 @@ abstract class Base
     {
         $name = htmlspecialcharsbx($name);
 
-        if ($value === null)
+        if ($value === null) {
             $value = $input['VALUE'];
+        }
 
         $html = '';
 
         if ($input['HIDDEN'] == 'Y') {
-            $html .= static::getHiddenRecursive($name
-                , $input['MULTIPLE'] == 'Y' ? static::asMultiple($value) : static::asSingle($value)
-                , static::extractAttributes($input, array('DISABLED' => ''), array('FORM' => ''), false));
+            $html .= static::getHiddenRecursive(
+                $name
+                ,
+                $input['MULTIPLE'] == 'Y' ? static::asMultiple($value) : static::asSingle($value)
+                ,
+                static::extractAttributes($input, array('DISABLED' => ''), array('FORM' => ''), false)
+            );
         } else {
             if ($input['MULTIPLE'] == 'Y') {
                 $tag = isset($input['MULTITAG']) ? htmlspecialcharsbx($input['MULTITAG']) : static::MULTITAG;
-                list ($startTag, $endTag) = $tag ? array("<$tag>", "</$tag>") : array('', '');
+                [$startTag, $endTag] = $tag ? array("<$tag>", "</$tag>") : array('', '');
 
                 $index = -1;
 
@@ -377,18 +447,33 @@ abstract class Base
                 $replace = '##INPUT##NAME##';
 
                 if ($input['DISABLED'] !== 'Y') // TODO
-                    $html .= static::getEditHtmlInsert($tag, $replace, $name
-                        , static::getEditHtmlSingle($replace, $input, null) . static::getEditHtmlSingleDelete($replace, $input)
-                        , static::getEditHtmlSingleAfterInsert());
+                {
+                    $html .= static::getEditHtmlInsert(
+                        $tag,
+                        $replace,
+                        $name
+                        ,
+                        static::getEditHtmlSingle($replace, $input, null) . static::getEditHtmlSingleDelete(
+                            $replace,
+                            $input
+                        )
+                        ,
+                        static::getEditHtmlSingleAfterInsert()
+                    );
+                }
             } else {
                 $html .= static::getEditHtmlSingle($name, $input, static::asSingle($value));
             }
         }
 
         if ($input['ADDITIONAL_HIDDEN'] === 'Y') {
-            $html .= static::getHiddenRecursive($name
-                , $input['MULTIPLE'] == 'Y' ? static::asMultiple($value) : static::asSingle($value)
-                , static::extractAttributes($input, array(), array('FORM' => ''), false));
+            $html .= static::getHiddenRecursive(
+                $name
+                ,
+                $input['MULTIPLE'] == 'Y' ? static::asMultiple($value) : static::asSingle($value)
+                ,
+                static::extractAttributes($input, array(), array('FORM' => ''), false)
+            );
         }
 
         return $html;
@@ -397,7 +482,12 @@ abstract class Base
     /** @return string */
     public static function getEditHtmlSingle($name, array $input, $value)
     {
-        throw new SystemException("you must implement [getEditHtmlSingle] or override [getEditHtml] in yor class", 0, __FILE__, __LINE__);
+        throw new SystemException(
+            "you must implement [getEditHtmlSingle] or override [getEditHtml] in yor class",
+            0,
+            __FILE__,
+            __LINE__
+        );
     }
 
     public static function getEditHtmlSingleDelete($name, array $input)
@@ -432,11 +522,11 @@ abstract class Base
     public static function getError(array $input, $value)
     {
         $errors = array();
-        if ($value === null)
+        if ($value === null) {
             $value = $input['VALUE'];
+        }
 
         if ($input['MULTIPLE'] == 'Y') {
-
             $index = -1;
 
             foreach (static::asMultiple($value) as $value) {
@@ -465,15 +555,17 @@ abstract class Base
     {
         $errors = array();
 
-        if ($value === null)
+        if ($value === null) {
             $value = $input['VALUE'];
+        }
 
         if ($input['MULTIPLE'] == 'Y') {
             $index = -1;
             foreach (static::asMultiple($value) as $value) {
                 if ($value === '' || $value === null) {
-                    if ($input['REQUIRED'] == 'Y')
+                    if ($input['REQUIRED'] == 'Y') {
                         $errors[++$index] = array('REQUIRED' => Loc::getMessage('INPUT_REQUIRED_ERROR'));
+                    }
                 }
             }
         } else {
@@ -497,24 +589,32 @@ abstract class Base
      */
     public static function getErrorSingle(array $input, $value)
     {
-        throw new SystemException("you must implement [getErrorSingle] or override [getError] in yor class", 0, __FILE__, __LINE__);
+        throw new SystemException(
+            "you must implement [getErrorSingle] or override [getError] in yor class",
+            0,
+            __FILE__,
+            __LINE__
+        );
     }
 
     public static function getValue(array $input, $value)
     {
-        if ($input['DISABLED'] == 'Y')
-            return null; // TODO maybe??
+        if ($input['DISABLED'] == 'Y') {
+            return null;
+        } // TODO maybe??
 
-        if ($value === null)
+        if ($value === null) {
             $value = $input['VALUE'];
+        }
 
         if ($input['MULTIPLE'] == 'Y') {
             $values = array();
 
             foreach (static::asMultiple($value) as $value) {
                 $value = static::getValueSingle($input, $value);
-                if ($value !== null)
+                if ($value !== null) {
                     $values [] = $value;
+                }
             }
 
             return $values ? $values : null;
@@ -540,12 +640,15 @@ abstract class Base
         if (is_array($value)) {
             $html = '';
 
-            foreach ($value as $k => $v)
+            foreach ($value as $k => $v) {
                 $html .= self::getHiddenRecursive($name . '[' . htmlspecialcharsbx($k) . ']', $v, $attributes);
+            }
 
             return $html;
         } else {
-            return '<input type="hidden" name="' . $name . '" value="' . htmlspecialcharsbx($value) . '"' . $attributes . '>';
+            return '<input type="hidden" name="' . $name . '" value="' . htmlspecialcharsbx(
+                    $value
+                ) . '"' . $attributes . '>';
         }
     }
 
@@ -558,59 +661,135 @@ abstract class Base
 
         unset($boolean['REQUIRED']); // TODO remove with HTML5
 
-        static $globalBoolean = array('CONTENTEDITABLE' => '', 'DRAGGABLE' => 'true', 'SPELLCHECK' => '', 'TRANSLATE' => 'yes');
+        static $globalBoolean = array(
+            'CONTENTEDITABLE' => '',
+            'DRAGGABLE' => 'true',
+            'SPELLCHECK' => '',
+            'TRANSLATE' => 'yes'
+        );
 
-        if ($withGlobal)
+        if ($withGlobal) {
             $boolean = $globalBoolean + $boolean;
+        }
 
-        foreach (array_intersect_key($input, $boolean) as $k => $v)
-            if ($v === 'Y' || $v === true)
-                $string .= ' ' . strtolower($k) . ($boolean[$k] ? '="' . $boolean[$k] . '"' : '');
+        foreach (array_intersect_key($input, $boolean) as $k => $v) {
+            if ($v === 'Y' || $v === true) {
+                $string .= ' ' . mb_strtolower($k) . ($boolean[$k] ? '="' . $boolean[$k] . '"' : '');
+            }
+        }
 
         // add event attributes with values
         if ($withGlobal) {
             static $globalEvents = array(
-                'ONABORT' => 1, 'ONBLUR' => 1, 'ONCANPLAY' => 1, 'ONCANPLAYTHROUGH' => 1, 'ONCHANGE' => 1, 'ONCLICK' => 1,
-                'ONCONTEXTMENU' => 1, 'ONDBLCLICK' => 1, 'ONDRAG' => 1, 'ONDRAGEND' => 1, 'ONDRAGENTER' => 1, 'ONDRAGLEAVE' => 1,
-                'ONDRAGOVER' => 1, 'ONDRAGSTART' => 1, 'ONDROP' => 1, 'ONDURATIONCHANGE' => 1, 'ONEMPTIED' => 1, 'ONENDED' => 1,
-                'ONERROR' => 1, 'ONFOCUS' => 1, 'ONINPUT' => 1, 'ONINVALID' => 1, 'ONKEYDOWN' => 1, 'ONKEYPRESS' => 1, 'ONKEYUP' => 1,
-                'ONLOAD' => 1, 'ONLOADEDDATA' => 1, 'ONLOADEDMETADATA' => 1, 'ONLOADSTART' => 1, 'ONMOUSEDOWN' => 1, 'ONMOUSEMOVE' => 1,
-                'ONMOUSEOUT' => 1, 'ONMOUSEOVER' => 1, 'ONMOUSEUP' => 1, 'ONMOUSEWHEEL' => 1, 'ONPAUSE' => 1, 'ONPLAY' => 1,
-                'ONPLAYING' => 1, 'ONPROGRESS' => 1, 'ONRATECHANGE' => 1, 'ONREADYSTATECHANGE' => 1, 'ONRESET' => 1, 'ONSCROLL' => 1,
-                'ONSEEKED' => 1, 'ONSEEKING' => 1, 'ONSELECT' => 1, 'ONSHOW' => 1, 'ONSTALLED' => 1, 'ONSUBMIT' => 1, 'ONSUSPEND' => 1,
-                'ONTIMEUPDATE' => 1, 'ONVOLUMECHANGE' => 1, 'ONWAITING' => 1,
+                'ONABORT' => 1,
+                'ONBLUR' => 1,
+                'ONCANPLAY' => 1,
+                'ONCANPLAYTHROUGH' => 1,
+                'ONCHANGE' => 1,
+                'ONCLICK' => 1,
+                'ONCONTEXTMENU' => 1,
+                'ONDBLCLICK' => 1,
+                'ONDRAG' => 1,
+                'ONDRAGEND' => 1,
+                'ONDRAGENTER' => 1,
+                'ONDRAGLEAVE' => 1,
+                'ONDRAGOVER' => 1,
+                'ONDRAGSTART' => 1,
+                'ONDROP' => 1,
+                'ONDURATIONCHANGE' => 1,
+                'ONEMPTIED' => 1,
+                'ONENDED' => 1,
+                'ONERROR' => 1,
+                'ONFOCUS' => 1,
+                'ONINPUT' => 1,
+                'ONINVALID' => 1,
+                'ONKEYDOWN' => 1,
+                'ONKEYPRESS' => 1,
+                'ONKEYUP' => 1,
+                'ONLOAD' => 1,
+                'ONLOADEDDATA' => 1,
+                'ONLOADEDMETADATA' => 1,
+                'ONLOADSTART' => 1,
+                'ONMOUSEDOWN' => 1,
+                'ONMOUSEMOVE' => 1,
+                'ONMOUSEOUT' => 1,
+                'ONMOUSEOVER' => 1,
+                'ONMOUSEUP' => 1,
+                'ONMOUSEWHEEL' => 1,
+                'ONPAUSE' => 1,
+                'ONPLAY' => 1,
+                'ONPLAYING' => 1,
+                'ONPROGRESS' => 1,
+                'ONRATECHANGE' => 1,
+                'ONREADYSTATECHANGE' => 1,
+                'ONRESET' => 1,
+                'ONSCROLL' => 1,
+                'ONSEEKED' => 1,
+                'ONSEEKING' => 1,
+                'ONSELECT' => 1,
+                'ONSHOW' => 1,
+                'ONSTALLED' => 1,
+                'ONSUBMIT' => 1,
+                'ONSUSPEND' => 1,
+                'ONTIMEUPDATE' => 1,
+                'ONVOLUMECHANGE' => 1,
+                'ONWAITING' => 1,
             );
 
             $events = array_intersect_key($input, $globalEvents);
             $other = array_diff_key($other, $events);
 
-            foreach ($events as $k => $v)
-                if ($v)
-                    $string .= ' ' . strtolower($k) . '="' . $v . '"';
+            foreach ($events as $k => $v) {
+                if ($v) {
+                    $string .= ' ' . mb_strtolower($k) . '="' . $v . '"';
+                }
+            }
         }
 
         // add other attributes with values
 
         static $globalOther = array(
-            'ACCESSKEY' => 1, 'CLASS' => 1, 'CONTEXTMENU' => 1, 'DIR' => 1, 'DROPZONE' => 1, 'LANG' => 1, 'STYLE' => 1, 'TABINDEX' => 1,
-            'TITLE' => 1, 'ID' => 1,
-            'XML:LANG' => 1, 'XML:SPACE' => 1, 'XML:BASE' => 1
+            'ACCESSKEY' => 1,
+            'CLASS' => 1,
+            'CONTEXTMENU' => 1,
+            'DIR' => 1,
+            'DROPZONE' => 1,
+            'LANG' => 1,
+            'STYLE' => 1,
+            'TABINDEX' => 1,
+            'TITLE' => 1,
+            'ID' => 1,
+            'XML:LANG' => 1,
+            'XML:SPACE' => 1,
+            'XML:BASE' => 1
         );
 
-        if ($withGlobal)
+        if ($withGlobal) {
             $other += $globalOther;
+        }
 
-        foreach (array_intersect_key($input, $other) as $k => $v)
-            if ($v)
-                $string .= ' ' . strtolower($k) . '="' . htmlspecialcharsbx($v) . '"';
+        foreach (array_intersect_key($input, $other) as $k => $v) {
+            if ($v) {
+                $string .= ' ' . mb_strtolower($k) . '="' . htmlspecialcharsbx($v) . '"';
+            }
+        }
 
         // add data attributes
         if ($withGlobal && is_array($input['DATA'])) {
-            foreach ($input['DATA'] as $k => $v)
+            foreach ($input['DATA'] as $k => $v) {
                 $string .= ' data-' . htmlspecialcharsbx($k) . '="' . htmlspecialcharsbx($v) . '"';
+            }
         }
 
         return $string;
+    }
+
+    /**
+     * @return bool
+     */
+    public static function hasMultipleValuesSupport()
+    {
+        return true;
     }
 }
 
@@ -624,17 +803,31 @@ class StringInput extends Base // String reserved in php 7
     public static function getEditHtmlSingle($name, array $input, $value)
     {
         if ($input['MULTILINE'] == 'Y') {
-            $attributes = static::extractAttributes($input,
+            $attributes = static::extractAttributes(
+                $input,
                 array('DISABLED' => '', 'READONLY' => '', 'AUTOFOCUS' => '', 'REQUIRED' => ''),
-                array('FORM' => 1, 'MAXLENGTH' => 1, 'PLACEHOLDER' => 1, 'DIRNAME' => 1, 'ROWS' => 1, 'COLS' => 1, 'WRAP' => 1));
+                array(
+                    'FORM' => 1,
+                    'MAXLENGTH' => 1,
+                    'PLACEHOLDER' => 1,
+                    'DIRNAME' => 1,
+                    'ROWS' => 1,
+                    'COLS' => 1,
+                    'WRAP' => 1
+                )
+            );
 
             return '<textarea name="' . $name . '"' . $attributes . '>' . htmlspecialcharsbx($value) . '</textarea>';
         } else {
-            $attributes = static::extractAttributes($input,
+            $attributes = static::extractAttributes(
+                $input,
                 array('DISABLED' => '', 'READONLY' => '', 'AUTOFOCUS' => '', 'REQUIRED' => '', 'AUTOCOMPLETE' => 'on'),
-                array('FORM' => 1, 'MAXLENGTH' => 1, 'PLACEHOLDER' => 1, 'DIRNAME' => 1, 'SIZE' => 1, 'LIST' => 1));
+                array('FORM' => 1, 'MAXLENGTH' => 1, 'PLACEHOLDER' => 1, 'DIRNAME' => 1, 'SIZE' => 1, 'LIST' => 1)
+            );
 
-            return '<input type="text" name="' . $name . '" value="' . htmlspecialcharsbx($value) . '"' . $attributes . '>';
+            return '<input type="text" name="' . $name . '" value="' . htmlspecialcharsbx(
+                    $value
+                ) . '"' . $attributes . '>';
         }
     }
 
@@ -655,18 +848,29 @@ class StringInput extends Base // String reserved in php 7
 
         $value = trim($value);
 
-        if ($input['MINLENGTH'] && strlen($value) < $input['MINLENGTH'])
-            $errors['MINLENGTH'] = Loc::getMessage('INPUT_STRING_MINLENGTH_ERROR', array("#NUM#" => $input['MINLENGTH']));
+        if ($input['MINLENGTH'] && mb_strlen($value) < $input['MINLENGTH']) {
+            $errors['MINLENGTH'] = Loc::getMessage(
+                'INPUT_STRING_MINLENGTH_ERROR',
+                array("#NUM#" => $input['MINLENGTH'])
+            );
+        }
 
-        if ($input['MAXLENGTH'] && strlen($value) > $input['MAXLENGTH'])
-            $errors['MAXLENGTH'] = Loc::getMessage('INPUT_STRING_MAXLENGTH_ERROR', array("#NUM#" => $input['MAXLENGTH']));
+        if ($input['MAXLENGTH'] && mb_strlen($value) > $input['MAXLENGTH']) {
+            $errors['MAXLENGTH'] = Loc::getMessage(
+                'INPUT_STRING_MAXLENGTH_ERROR',
+                array("#NUM#" => $input['MAXLENGTH'])
+            );
+        }
 
 
         if (strval(trim($input['PATTERN'])) != "") {
             $issetDelimiter = false;
             $pattern = trim($input['PATTERN']);
 
-            if (isset($pattern[0]) && in_array($pattern[0], static::$patternDelimiters) && strrpos($pattern, $pattern[0]) !== false) {
+            if (isset($pattern[0]) && in_array($pattern[0], static::$patternDelimiters) && mb_strrpos(
+                    $pattern,
+                    $pattern[0]
+                ) !== false) {
                 $issetDelimiter = true;
             }
 
@@ -675,8 +879,9 @@ class StringInput extends Base // String reserved in php 7
                 $matchPattern = "/" . $pattern . "/";
             }
 
-            if (!preg_match($matchPattern, $value))
+            if (!preg_match($matchPattern, $value)) {
                 $errors['PATTERN'] = Loc::getMessage('INPUT_STRING_PATTERN_ERROR');
+            }
         }
 
 
@@ -686,17 +891,46 @@ class StringInput extends Base // String reserved in php 7
     static function getSettings(array $input, $reload)
     {
         $settings = array(
-            'MINLENGTH' => array('TYPE' => 'NUMBER', 'LABEL' => Loc::getMessage('INPUT_STRING_MINLENGTH'), 'MIN' => 0, 'STEP' => 1),
-            'MAXLENGTH' => array('TYPE' => 'NUMBER', 'LABEL' => Loc::getMessage('INPUT_STRING_MAXLENGTH'), 'MIN' => 0, 'STEP' => 1),
+            'MINLENGTH' => array(
+                'TYPE' => 'NUMBER',
+                'LABEL' => Loc::getMessage('INPUT_STRING_MINLENGTH'),
+                'MIN' => 0,
+                'STEP' => 1
+            ),
+            'MAXLENGTH' => array(
+                'TYPE' => 'NUMBER',
+                'LABEL' => Loc::getMessage('INPUT_STRING_MAXLENGTH'),
+                'MIN' => 0,
+                'STEP' => 1
+            ),
             'PATTERN' => array('TYPE' => 'STRING', 'LABEL' => Loc::getMessage('INPUT_STRING_PATTERN')),
-            'MULTILINE' => array('TYPE' => 'Y/N', 'LABEL' => Loc::getMessage('INPUT_STRING_MULTILINE'), 'ONCLICK' => $reload),
+            'MULTILINE' => array(
+                'TYPE' => 'Y/N',
+                'LABEL' => Loc::getMessage('INPUT_STRING_MULTILINE'),
+                'ONCLICK' => $reload
+            ),
         );
 
         if ($input['MULTILINE'] == 'Y') {
-            $settings['COLS'] = array('TYPE' => 'NUMBER', 'LABEL' => Loc::getMessage('INPUT_STRING_SIZE'), 'MIN' => 0, 'STEP' => 1);
-            $settings['ROWS'] = array('TYPE' => 'NUMBER', 'LABEL' => Loc::getMessage('INPUT_STRING_ROWS'), 'MIN' => 0, 'STEP' => 1);
+            $settings['COLS'] = array(
+                'TYPE' => 'NUMBER',
+                'LABEL' => Loc::getMessage('INPUT_STRING_SIZE'),
+                'MIN' => 0,
+                'STEP' => 1
+            );
+            $settings['ROWS'] = array(
+                'TYPE' => 'NUMBER',
+                'LABEL' => Loc::getMessage('INPUT_STRING_ROWS'),
+                'MIN' => 0,
+                'STEP' => 1
+            );
         } else {
-            $settings['SIZE'] = array('TYPE' => 'NUMBER', 'LABEL' => Loc::getMessage('INPUT_STRING_SIZE'), 'MIN' => 0, 'STEP' => 1);
+            $settings['SIZE'] = array(
+                'TYPE' => 'NUMBER',
+                'LABEL' => Loc::getMessage('INPUT_STRING_SIZE'),
+                'MIN' => 0,
+                'STEP' => 1
+            );
         }
 
         return $settings;
@@ -714,10 +948,13 @@ class StringInput extends Base // String reserved in php 7
 
 }
 
-Manager::register('STRING', array(
-    'CLASS' => __NAMESPACE__ . '\StringInput',
-    'NAME' => Loc::getMessage('INPUT_STRING'),
-));
+Manager::register(
+    'STRING',
+    array(
+        'CLASS' => __NAMESPACE__ . '\StringInput',
+        'NAME' => Loc::getMessage('INPUT_STRING'),
+    )
+);
 
 /**
  * Number
@@ -730,20 +967,25 @@ class Number extends Base
 
         $size = 5;
 
-        if (($s = strlen(strval($input['MIN']))) && $s > $size)
+        if (($s = mb_strlen(strval($input['MIN']))) && $s > $size) {
             $size = $s;
+        }
 
-        if (($s = strlen(strval($input['MAX']))) && $s > $size)
+        if (($s = mb_strlen(strval($input['MAX']))) && $s > $size) {
             $size = $s;
+        }
 
-        if (($s = strlen(strval($input['STEP']))) && $s > $size)
+        if (($s = mb_strlen(strval($input['STEP']))) && $s > $size) {
             $size = $s;
+        }
 
         $input['SIZE'] = $size;
 
-        $attributes = static::extractAttributes($input,
+        $attributes = static::extractAttributes(
+            $input,
             array('DISABLED' => '', 'READONLY' => '', 'AUTOFOCUS' => '', 'REQUIRED' => '', 'AUTOCOMPLETE' => 'on'),
-            array('FORM' => 1, 'LIST' => 1, 'PLACEHOLDER' => 1, 'SIZE' => 1));
+            array('FORM' => 1, 'LIST' => 1, 'PLACEHOLDER' => 1, 'SIZE' => 1)
+        );
 
         return '<input type="text" name="' . $name . '" value="' . htmlspecialcharsbx($value) . '"' . $attributes . '>';
     }
@@ -766,11 +1008,13 @@ class Number extends Base
         if (is_numeric($value)) {
             $value = (double)$value;
 
-            if (!empty($input['MIN']) && $value < $input['MIN'])
+            if (!empty($input['MIN']) && $value < $input['MIN']) {
                 $errors['MIN'] = Loc::getMessage('INPUT_NUMBER_MIN_ERROR', array("#NUM#" => $input['MIN']));
+            }
 
-            if (!empty($input['MAX']) && $value > $input['MAX'])
+            if (!empty($input['MAX']) && $value > $input['MAX']) {
                 $errors['MAX'] = Loc::getMessage('INPUT_NUMBER_MAX_ERROR', array("#NUM#" => $input['MAX']));
+            }
 
             if ($input['STEP']) {
                 $step = (double)$input['STEP'];
@@ -781,8 +1025,9 @@ class Number extends Base
                     $remainder = (double)abs($value - $step * round($value / $step));
                     $acceptableError = (double)($step / pow(2.0, 24));
 
-                    if ($acceptableError < $remainder && ($step - $acceptableError) > $remainder)
+                    if ($acceptableError < $remainder && ($step - $acceptableError) > $remainder) {
                         $errors['STEP'] = Loc::getMessage('INPUT_NUMBER_STEP_ERROR', array("#NUM#" => $input['STEP']));
+                    }
                 }
             }
         } else {
@@ -802,10 +1047,13 @@ class Number extends Base
     }
 }
 
-Manager::register('NUMBER', array(
-    'CLASS' => __NAMESPACE__ . '\Number',
-    'NAME' => Loc::getMessage('INPUT_NUMBER'),
-));
+Manager::register(
+    'NUMBER',
+    array(
+        'CLASS' => __NAMESPACE__ . '\Number',
+        'NAME' => Loc::getMessage('INPUT_NUMBER'),
+    )
+);
 
 /**
  * Either Y or N
@@ -820,11 +1068,19 @@ class EitherYN extends Base
     public static function getEditHtmlSingle($name, array $input, $value)
     {
         $hiddenAttributes = static::extractAttributes($input, array('DISABLED' => ''), array('FORM' => 1), false);
+        $checkboxAttributes = static::extractAttributes(
+            $input,
+            array('DISABLED' => '', 'AUTOFOCUS' => '', 'REQUIRED' => ''),
+            array('FORM' => 1)
+        );
 
-        $checkboxAttributes = static::extractAttributes($input, array('DISABLED' => '', 'AUTOFOCUS' => '', 'REQUIRED' => ''), array('FORM' => 1));
-
-        return '<input type="hidden" name="' . $name . '" value="N"' . $hiddenAttributes . '>'
-            . '<input type="checkbox" name="' . $name . '" value="Y"' . ($value == 'Y' ? ' checked' : '') . $checkboxAttributes . '>';
+        if (isset($input['DISABLED_YN'])) {
+            return '<input type="hidden" name="' . $name . '" value="' . (($input['DISABLED_YN'] == 'Y') ? 'Y' : 'N') . '">'
+                . '<input type="checkbox" ' . ($input['DISABLED_YN'] == 'Y' ? ' checked' : '') . 'disabled' . '>';
+        } else {
+            return '<input type="hidden" name="' . $name . '" value="N"' . $hiddenAttributes . '>'
+                . '<input type="checkbox" name="' . $name . '" value="Y"' . ($value == 'Y' ? ' checked' : '') . $checkboxAttributes . '>';
+        }
     }
 
     /**
@@ -837,19 +1093,28 @@ class EitherYN extends Base
     {
         $hiddenAttributes = static::extractAttributes($input, array('DISABLED' => ''), array('FORM' => 1), false);
 
-        $checkboxAttributes = static::extractAttributes($input, array('DISABLED' => '', 'AUTOFOCUS' => '', 'REQUIRED' => ''), array('FORM' => 1));
+        $checkboxAttributes = static::extractAttributes(
+            $input,
+            array('DISABLED' => '', 'AUTOFOCUS' => '', 'REQUIRED' => ''),
+            array('FORM' => 1)
+        );
 
         return '<select name="' . $name . '" ' . $hiddenAttributes . '>
 					<option value="">' . Loc::getMessage('INPUT_EITHERYN_ALL') . '</option>
-					<option value="Y"' . ($value == "Y" ? " selected" : '') . ' ' . $checkboxAttributes . '>' . Loc::getMessage('INPUT_EITHERYN_Y') . '</option>
-					<option value="N"' . ($value == "N" ? " selected" : '') . ' ' . $checkboxAttributes . '>' . Loc::getMessage('INPUT_EITHERYN_N') . '</option>
+					<option value="Y"' . ($value == "Y" ? " selected" : '') . ' ' . $checkboxAttributes . '>' . Loc::getMessage(
+                'INPUT_EITHERYN_Y'
+            ) . '</option>
+					<option value="N"' . ($value == "N" ? " selected" : '') . ' ' . $checkboxAttributes . '>' . Loc::getMessage(
+                'INPUT_EITHERYN_N'
+            ) . '</option>
 				</select>';
     }
 
     public static function getErrorSingle(array $input, $value)
     {
-        if ($input['REQUIRED'] == 'Y' && ($value === '' || $value === null))
+        if ($input['REQUIRED'] == 'Y' && ($value === '' || $value === null)) {
             return array('REQUIRED' => Loc::getMessage('INPUT_REQUIRED_ERROR'));
+        }
 
         return ($value == 'N' || $value == 'Y')
             ? array()
@@ -862,10 +1127,13 @@ class EitherYN extends Base
     }
 }
 
-Manager::register('Y/N', array(
-    'CLASS' => __NAMESPACE__ . '\EitherYN',
-    'NAME' => Loc::getMessage('INPUT_EITHERYN'),
-));
+Manager::register(
+    'Y/N',
+    array(
+        'CLASS' => __NAMESPACE__ . '\EitherYN',
+        'NAME' => Loc::getMessage('INPUT_EITHERYN'),
+    )
+);
 
 /**
  * Enumeration
@@ -894,8 +1162,9 @@ class Enum extends Base
         if (is_array($options)) {
             $options = self::flatten($options);
 
-            if ($v = $options[$value])
+            if ($v = $options[$value]) {
                 $value = $v;
+            }
         }
 
         return htmlspecialcharsbx($value);
@@ -916,32 +1185,39 @@ class Enum extends Base
     {
         $options = $input['OPTIONS'];
 
-        if (!is_array($options))
+        if (!is_array($options)) {
             return Loc::getMessage('INPUT_ENUM_OPTIONS_ERROR');
+        }
 
         $multiple = $input['MULTIPLE'] == 'Y';
 
         $name = htmlspecialcharsbx($name);
 
-        if ($value === null && isset($input['VALUE']))
+        if ($value === null && isset($input['VALUE'])) {
             $value = $input['VALUE'];
+        }
 
         $originalValue = $value;
         $html = '';
 
         if ($input['HIDDEN'] == 'Y') {
-            $html .= static::getHiddenRecursive($name
-                , $multiple ? static::asMultiple($value) : static::asSingle($value)
-                , static::extractAttributes($input, array('DISABLED' => ''), array('FORM' => 1), false));
+            $html .= static::getHiddenRecursive(
+                $name
+                ,
+                $multiple ? static::asMultiple($value) : static::asSingle($value)
+                ,
+                static::extractAttributes($input, array('DISABLED' => ''), array('FORM' => 1), false)
+            );
         } else {
-            if ($value === null)
+            if ($value === null) {
                 $value = array();
-            else
+            } else {
                 $value = $multiple ? array_flip(static::asMultiple($value)) : array(static::asSingle($value) => true);
+            }
 
             if ($input['MULTIELEMENT'] == 'Y') {
                 $tag = isset($input['MULTITAG']) ? htmlspecialcharsbx($input['MULTITAG']) : static::MULTITAG;
-                list ($startTag, $endTag) = $tag ? array("<$tag>", "</$tag>") : array('', '');
+                [$startTag, $endTag] = $tag ? array("<$tag>", "</$tag>") : array('', '');
 
                 $attributes = static::extractAttributes($input, array('DISABLED' => ''), array('FORM' => 1), false);
 
@@ -952,17 +1228,27 @@ class Enum extends Base
                     $name .= '[]';
                 }
 
-                $html .= self::getEditOptionsHtml($options, $value, ' checked',
+                $html .= self::getEditOptionsHtml(
+                    $options,
+                    $value,
+                    ' checked',
                     '<fieldset><legend>{GROUP}</legend>{OPTIONS}</fieldset>',
                     $startTag . '<label><input type="' . $type . '" name="' . $name . '" value="{VALUE}"{SELECTED}' . $attributes . '> {TEXT} </label>' . $endTag
                 );
             } else // select
             {
-                $attributes = static::extractAttributes($input, array('DISABLED' => '', 'AUTOFOCUS' => '', 'REQUIRED' => ''), array('FORM' => 1, 'SIZE' => 1));
+                $attributes = static::extractAttributes(
+                    $input,
+                    array('DISABLED' => '', 'AUTOFOCUS' => '', 'REQUIRED' => ''),
+                    array('FORM' => 1, 'SIZE' => 1)
+                );
 
                 $html .= '<select' . $attributes . ' name="' . $name . ($multiple ? '[]" multiple>' : '">');
 
-                $html .= self::getEditOptionsHtml($options, $value, ' selected',
+                $html .= self::getEditOptionsHtml(
+                    $options,
+                    $value,
+                    ' selected',
                     '<optgroup label="{GROUP}">{OPTIONS}</optgroup>',
                     '<option value="{VALUE}"{SELECTED}>{TEXT}</option>'
                 );
@@ -972,9 +1258,13 @@ class Enum extends Base
         }
 
         if ($input['ADDITIONAL_HIDDEN'] === 'Y') {
-            $html .= static::getHiddenRecursive($name
-                , $multiple ? static::asMultiple($originalValue) : static::asSingle($originalValue)
-                , static::extractAttributes($input, array(), array('FORM' => 1), false));
+            $html .= static::getHiddenRecursive(
+                $name
+                ,
+                $multiple ? static::asMultiple($originalValue) : static::asSingle($originalValue)
+                ,
+                static::extractAttributes($input, array(), array('FORM' => 1), false)
+            );
         }
 
         return $html;
@@ -1027,20 +1317,33 @@ class Enum extends Base
     {
         $settings = array(
             // TODO maybe??? 'OPTIONS' => array('TYPE' => 'TUPLE'),
-            'MULTIELEMENT' => array('TYPE' => 'Y/N', 'LABEL' => Loc::getMessage('INPUT_ENUM_MULTIELEMENT'), 'ONCLICK' => $reload),
+            'MULTIELEMENT' => array(
+                'TYPE' => 'Y/N',
+                'LABEL' => Loc::getMessage('INPUT_ENUM_MULTIELEMENT'),
+                'ONCLICK' => $reload
+            ),
         );
 
-        if ($input['MULTIELEMENT'] != 'Y')
-            $settings['SIZE'] = array('TYPE' => 'NUMBER', 'LABEL' => Loc::getMessage('INPUT_ENUM_SIZE'), 'MIN' => 0, 'STEP' => 1);
+        if ($input['MULTIELEMENT'] != 'Y') {
+            $settings['SIZE'] = array(
+                'TYPE' => 'NUMBER',
+                'LABEL' => Loc::getMessage('INPUT_ENUM_SIZE'),
+                'MIN' => 0,
+                'STEP' => 1
+            );
+        }
 
         return $settings;
     }
 }
 
-Manager::register('ENUM', array(
-    'CLASS' => __NAMESPACE__ . '\Enum',
-    'NAME' => Loc::getMessage('INPUT_ENUM'),
-));
+Manager::register(
+    'ENUM',
+    array(
+        'CLASS' => __NAMESPACE__ . '\Enum',
+        'NAME' => Loc::getMessage('INPUT_ENUM'),
+    )
+);
 
 /**
  * File
@@ -1087,14 +1390,16 @@ class File extends Base
     static function getPostWithFiles(array $post, array $files)
     {
         foreach ($files as $key => $file) {
-            if (!is_array($post[$key]))
+            if (!is_array($post[$key])) {
                 $post[$key] = array();
+            }
 
             foreach ($file as $property => $value) {
-                if (is_array($value))
+                if (is_array($value)) {
                     self::getPostWithFilesRecursive($post[$key], $value, $property);
-                else
+                } else {
                     $post[$key][$property] = $value;
+                }
             }
         }
 
@@ -1104,13 +1409,15 @@ class File extends Base
     private static function getPostWithFilesRecursive(array &$root, array $values, $property)
     {
         foreach ($values as $key => $value) {
-            if (!is_array($root[$key]))
+            if (!is_array($root[$key])) {
                 $root[$key] = array();
+            }
 
-            if (is_array($value))
+            if (is_array($value)) {
                 self::getPostWithFilesRecursive($root[$key], $value, $property);
-            else
+            } else {
                 $root[$key][$property] = $value;
+            }
         }
     }
 
@@ -1121,11 +1428,13 @@ class File extends Base
      */
     static function loadInfo($value)
     {
-        if (!$multiple = static::isMultiple($value))
+        if (!$multiple = static::isMultiple($value)) {
             $value = array($value);
+        }
 
-        foreach ($value as &$file)
+        foreach ($value as &$file) {
             $file = self::loadInfoSingle($file);
+        }
 
         return $multiple ? $value : reset($value);
     }
@@ -1134,8 +1443,9 @@ class File extends Base
     static function loadInfoSingle($file)
     {
         if (is_array($file)) {
-            if ($file['SRC'])
-                return $file; // already loaded
+            if ($file['SRC']) {
+                return $file;
+            } // already loaded
 
             $fileId = $file['ID'];
         } else {
@@ -1171,21 +1481,38 @@ class File extends Base
 
     static function isMultiple($value)
     {
-        return is_array($value) && !isset($value['ID']);
+        $isMultiple = false;
+
+        if (isset($value['ID'])) {
+            return $isMultiple;
+        }
+
+        if (\is_array($value)) {
+            $file = current($value);
+            if (\is_array($file) || ((int)$file > 0)) {
+                $isMultiple = true;
+            }
+        }
+
+        return $isMultiple;
     }
 
     public static function getViewHtmlSingle(array $input, $value)
     {
-        if (!is_array($value))
+        if (!is_array($value)) {
             $value = array('ID' => $value);
+        }
 
         if ($src = $value['SRC']) {
-            $attributes = ' href="' . htmlspecialcharsbx($src) . '" title="' . htmlspecialcharsbx(Loc::getMessage('INPUT_FILE_DOWNLOAD')) . '"';
+            $attributes = ' href="' . htmlspecialcharsbx($src) . '" title="' . htmlspecialcharsbx(
+                    Loc::getMessage('INPUT_FILE_DOWNLOAD')
+                ) . '"';
 
             if (\CFile::IsImage($src, $value['CONTENT_TYPE']) && $value['FILE_SIZE'] > 100000) {
                 $previewImage = \CFile::ResizeImageGet($value['ID'], array(200, 200), BX_RESIZE_IMAGE_PROPORTIONAL);
-                if (is_array($previewImage))
+                if (is_array($previewImage)) {
                     $src = $previewImage['src'];
+                }
             }
 
             $content = \CFile::IsImage($value['SRC'], $value['CONTENT_TYPE'])
@@ -1196,11 +1523,13 @@ class File extends Base
             $content = htmlspecialcharsbx($value['ORIGINAL_NAME']);
         }
 
-        if (!$content)
+        if (!$content) {
             $content = $value['FILE_NAME'];
+        }
 
-        if (!$content)
+        if (!$content) {
             $content = $value['ID'];
+        }
 
         return "<a$attributes>$content</a>";
     }
@@ -1233,20 +1562,28 @@ class File extends Base
             $input['ONCHANGE'];
 
         // TODO HTML5 add MULTIPLE
-        $fileAttributes = static::extractAttributes($input,
+        $fileAttributes = static::extractAttributes(
+            $input,
             array('DISABLED' => '', 'AUTOFOCUS' => '', 'REQUIRED' => ''),
-            array('FORM' => 1, 'ACCEPT' => 1));
+            array('FORM' => 1, 'ACCEPT' => 1)
+        );
 
         $otherAttributes = static::extractAttributes($input, array('DISABLED' => ''), array('FORM' => 1), false);
 
         return static::getViewHtmlSingle($input, $value)
-            . '<input type="hidden" name="' . $name . '[ID]" value="' . htmlspecialcharsbx($value['ID']) . '"' . $otherAttributes . '>'
+            . '<input type="hidden" name="' . $name . '[ID]" value="' . htmlspecialcharsbx(
+                $value['ID']
+            ) . '"' . $otherAttributes . '>'
             . '<input type="file" name="' . $name . '" style="position:absolute; visibility:hidden"' . $fileAttributes . '>'
-            . '<input type="button" value="' . Loc::getMessage('INPUT_FILE_BROWSE') . '" onclick="this.previousSibling.click()">'
+            . '<input type="button" value="' . Loc::getMessage(
+                'INPUT_FILE_BROWSE'
+            ) . '" onclick="this.previousSibling.click()">'
             . (
             $input['NO_DELETE']
                 ? ''
-                : '<label> ' . Loc::getMessage('INPUT_DELETE') . ' <input type="checkbox" name="' . $name . '[DELETE]" onclick="'
+                : '<label> ' . Loc::getMessage(
+                    'INPUT_DELETE'
+                ) . ' <input type="checkbox" name="' . $name . '[DELETE]" onclick="'
 
                 . "var button = this.parentNode.previousSibling, file = button.previousSibling;"
                 . "button.disabled = file.disabled = this.checked;"
@@ -1270,14 +1607,16 @@ class File extends Base
             } elseif (is_uploaded_file($value['tmp_name'])) {
                 $errors = array();
 
-                if ($input['MAXSIZE'] && $value['size'] > $input['MAXSIZE'])
+                if ($input['MAXSIZE'] && $value['size'] > $input['MAXSIZE']) {
                     $errors['MAXSIZE'] = Loc::getMessage('INPUT_FILE_MAXSIZE_ERROR');
+                }
 
                 // TODO check: file name, mime type, extension
                 //$info = pathinfo($value['name']);
 
-                if ($error = \CFile::CheckFile($value, 0, false, $input['ACCEPT']))
+                if ($error = \CFile::CheckFile($value, 0, false, $input['ACCEPT'])) {
                     $errors['CFILE'] = $error;
+                }
 
                 return $errors;
             } else {
@@ -1314,8 +1653,9 @@ class File extends Base
     public static function getValueSingle(array $input, $value)
     {
         if (is_array($value)) {
-            if ($value['DELETE'])
+            if ($value['DELETE']) {
                 return null;
+            }
 
             $value = $value['ID'];
         }
@@ -1326,16 +1666,28 @@ class File extends Base
     public static function getSettings(array $input, $reload)
     {
         return array(
-            'MAXSIZE' => array('TYPE' => 'NUMBER', 'LABEL' => Loc::getMessage('INPUT_FILE_MAXSIZE'), 'MIN' => 0, 'STEP' => 1),
-            'ACCEPT' => array('TYPE' => 'STRING', 'LABEL' => Loc::getMessage('INPUT_FILE_ACCEPT'), 'PLACEHOLDER' => 'png, doc, zip'),
+            'MAXSIZE' => array(
+                'TYPE' => 'NUMBER',
+                'LABEL' => Loc::getMessage('INPUT_FILE_MAXSIZE'),
+                'MIN' => 0,
+                'STEP' => 1
+            ),
+            'ACCEPT' => array(
+                'TYPE' => 'STRING',
+                'LABEL' => Loc::getMessage('INPUT_FILE_ACCEPT'),
+                'PLACEHOLDER' => 'png, doc, zip'
+            ),
         );
     }
 }
 
-Manager::register('FILE', array(
-    'CLASS' => __NAMESPACE__ . '\File',
-    'NAME' => Loc::getMessage('INPUT_FILE'),
-));
+Manager::register(
+    'FILE',
+    array(
+        'CLASS' => __NAMESPACE__ . '\File',
+        'NAME' => Loc::getMessage('INPUT_FILE'),
+    )
+);
 
 /**
  * Date
@@ -1348,14 +1700,20 @@ class Date extends Base
 
         // TODO HTML5 input="date|datetime|datetime-local" & min & max & step(date:integer|datetime..:float)
 
-        $textAttributes = static::extractAttributes($input,
+        $textAttributes = static::extractAttributes(
+            $input,
             array('DISABLED' => '', 'AUTOCOMPLETE' => 'on', 'AUTOFOCUS' => '', 'READONLY' => '', 'REQUIRED' => ''),
-            array('FORM' => 1, 'LIST' => 1));
+            array('FORM' => 1, 'LIST' => 1)
+        );
 
         $buttonAttributes = static::extractAttributes($input, array('DISABLED' => ''), array(), false);
 
-        return '<input type="text" name="' . $name . '" size="' . ($showTime ? 20 : 10) . '" value="' . htmlspecialcharsbx($value) . '"' . $textAttributes . '>'
-            . '<input type="button" value="' . Loc::getMessage('INPUT_DATE_SELECT') . '"' . $buttonAttributes . ' onclick="'
+        return '<input type="text" name="' . $name . '" size="' . ($showTime ? 20 : 10) . '" value="' . htmlspecialcharsbx(
+                $value
+            ) . '"' . $textAttributes . '>'
+            . '<input type="button" value="' . Loc::getMessage(
+                'INPUT_DATE_SELECT'
+            ) . '"' . $buttonAttributes . ' onclick="'
             . "BX.calendar({node:this, field:'$name', form:'', bTime:" . ($showTime ? 'true' : 'false') . ", bHideTime:false});"
             . '">';
     }
@@ -1399,10 +1757,13 @@ class Date extends Base
     }
 }
 
-Manager::register('DATE', array(
-    'CLASS' => __NAMESPACE__ . '\Date',
-    'NAME' => Loc::getMessage('INPUT_DATE'),
-));
+Manager::register(
+    'DATE',
+    array(
+        'CLASS' => __NAMESPACE__ . '\Date',
+        'NAME' => Loc::getMessage('INPUT_DATE'),
+    )
+);
 
 /**
  * Location
@@ -1411,19 +1772,24 @@ class Location extends Base
 {
     public static function getViewHtmlSingle(array $input, $value)
     {
-        if ((string)$value == '')
+        if ((string)$value == '') {
             return '';
+        }
 
         try {
-            $result = \Bitrix\Sale\Location\LocationTable::getPathToNodeByCode($value, array(
-                'select' => array('CHAIN' => 'NAME.NAME'),
-                'filter' => array('NAME.LANGUAGE_ID' => LANGUAGE_ID),
-            ));
+            $result = \Bitrix\Sale\Location\LocationTable::getPathToNodeByCode(
+                $value,
+                array(
+                    'select' => array('CHAIN' => 'NAME.NAME'),
+                    'filter' => array('NAME.LANGUAGE_ID' => LANGUAGE_ID),
+                )
+            );
 
             $path = array();
 
-            while ($row = $result->fetch())
+            while ($row = $result->fetch()) {
                 $path[] = $row['CHAIN'];
+            }
 
             return htmlspecialcharsbx(implode(', ', $path));
         } catch (\Bitrix\Main\SystemException $e) {
@@ -1446,15 +1812,20 @@ class Location extends Base
     {
         $name = htmlspecialcharsbx($name);
 
-        if ($value === null)
+        if ($value === null) {
             $value = $input['VALUE'];
+        }
 
         $html = '';
 
         if ($input['HIDDEN'] == 'Y') {
-            $html .= static::getHiddenRecursive($name
-                , $input['MULTIPLE'] == 'Y' ? static::asMultiple($value) : static::asSingle($value)
-                , static::extractAttributes($input, array('DISABLED' => ''), array('FORM' => 1), false));
+            $html .= static::getHiddenRecursive(
+                $name
+                ,
+                $input['MULTIPLE'] == 'Y' ? static::asMultiple($value) : static::asSingle($value)
+                ,
+                static::extractAttributes($input, array('DISABLED' => ''), array('FORM' => 1), false)
+            );
         } else {
             $selector = md5("location input selector $name");
             $input["LOCATION_SELECTOR"] = $selector;
@@ -1469,7 +1840,7 @@ class Location extends Base
 
             if ($input['MULTIPLE'] == 'Y') {
                 $tag = isset($input['MULTITAG']) ? htmlspecialcharsbx($input['MULTITAG']) : static::MULTITAG;
-                list ($startTag, $endTag) = $tag ? array("<$tag>", "</$tag>") : array('', '');
+                [$startTag, $endTag] = $tag ? array("<$tag>", "</$tag>") : array('', '');
 
                 $index = -1;
 
@@ -1477,29 +1848,41 @@ class Location extends Base
                 if (empty($value)) {
                     $values = array(null);
                 }
-                foreach ($values as $value)
+                foreach ($values as $value) {
                     $html .= $startTag
                         . static::getEditHtmlSingle($name . '[' . (++$index) . ']', $input, $value)
                         . $endTag;
+                }
 
                 $replace = '##INPUT##NAME##';
 
                 if ($input['DISABLED'] !== 'Y') // TODO
-                    $html .= static::getEditHtmlInsert($tag, $replace, $name
-                        , static::getEditHtmlSingle($replace, $input, null)
-                        , "var location = BX.locationSelectors['$selector'].spawn(container, {selectedItem: false, useSpawn: false});"
+                {
+                    $html .= static::getEditHtmlInsert(
+                        $tag,
+                        $replace,
+                        $name
+                        ,
+                        static::getEditHtmlSingle($replace, $input, null)
+                        ,
+                        "var location = BX.locationSelectors['$selector'].spawn(container, {selectedItem: false, useSpawn: false});"
                         . "location.clearSelected();"
                     //."location.focus();" // TODO
                     );
+                }
             } else {
                 $html .= static::getEditHtmlSingle($name, $input, static::asSingle($value));
             }
         }
 
         if ($input['ADDITIONAL_HIDDEN'] === 'Y') {
-            $html .= static::getHiddenRecursive($name
-                , $input['MULTIPLE'] == 'Y' ? static::asMultiple($value) : static::asSingle($value)
-                , static::extractAttributes($input, array(), array('FORM' => 1), false));
+            $html .= static::getHiddenRecursive(
+                $name
+                ,
+                $input['MULTIPLE'] == 'Y' ? static::asMultiple($value) : static::asSingle($value)
+                ,
+                static::extractAttributes($input, array(), array('FORM' => 1), false)
+            );
         }
 
         return $html;
@@ -1530,7 +1913,8 @@ class Location extends Base
         }
 
         $GLOBALS['APPLICATION']->IncludeComponent(
-            'bitrix:sale.location.selector.' . ($filterMode || $isSearchLine ? 'search' : \Bitrix\Sale\Location\Admin\Helper::getWidgetAppearance()),
+            'bitrix:sale.location.selector.' . ($filterMode || $isSearchLine ? 'search' : \Bitrix\Sale\Location\Admin\Helper::getWidgetAppearance(
+            )),
             '',
             $parameters,
             false
@@ -1554,7 +1938,137 @@ class Location extends Base
     }
 }
 
-Manager::register('LOCATION', array(
-    'CLASS' => __NAMESPACE__ . '\Location',
-    'NAME' => Loc::getMessage('INPUT_LOCATION'),
-));
+Manager::register(
+    'LOCATION',
+    array(
+        'CLASS' => __NAMESPACE__ . '\Location',
+        'NAME' => Loc::getMessage('INPUT_LOCATION'),
+    )
+);
+
+/**
+ * Class Address
+ * @package Bitrix\Sale\Internals\Input
+ */
+class Address extends Base
+{
+    /**
+     * @inheritdoc
+     */
+    static function isMultiple($value)
+    {
+        return false;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public static function hasMultipleValuesSupport()
+    {
+        return false;
+    }
+
+    /**
+     * @param array $input
+     * @param \Bitrix\Location\Entity\Address $value
+     * @return string
+     */
+    public static function getViewHtml(array $input, $value = null)
+    {
+        if (!is_array($value) || !Loader::includeModule('location')) {
+            return '';
+        }
+
+        $address = \Bitrix\Location\Entity\Address::fromArray($value);
+
+        return $address->toString(
+            FormatService::getInstance()->findDefault(LANGUAGE_ID)
+        );
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public static function getFilterEditHtml($name, array $input, $value)
+    {
+        //not implemented
+        return '';
+    }
+
+    /**
+     * @param array $input
+     * @param $value
+     * @return array
+     */
+    public static function getErrorSingle(array $input, $value)
+    {
+        if ($input['REQUIRED'] == 'Y') {
+            if (!(is_array($value) && !empty($value))) {
+                return ['REQUIRED' => Loc::getMessage('INPUT_REQUIRED_ERROR')];
+            }
+        }
+
+        return [];
+    }
+
+    /**
+     * @param array $input
+     * @param $value
+     * @return array
+     */
+    public static function getRequiredError(array $input, $value)
+    {
+        return static::getErrorSingle($input, $value);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public static function getEditHtmlSingle($name, array $input, $value)
+    {
+        if (!Loader::includeModule('location')) {
+            return '';
+        }
+
+        \Bitrix\Main\UI\Extension::load('sale.address');
+
+        ob_start();
+        ?>
+        <script>
+            if (BX.Sale.AddressControlConstructor) {
+                new BX.Sale.AddressControlConstructor(
+                    {
+                        propsData: {
+                            name: '<?=$name?>',
+                            initValue: <?=($value) ? ("'" . \Bitrix\Location\Entity\Address::fromArray($value)->toJson(
+                                ) . "'") : Json::encode(null)?>,
+                            isLocked: <?=($input['DISABLED'] === 'Y') ? Json::encode(true) : Json::encode(false)?>,
+                            onChangeCallback: function () {
+                                <?if (isset($input['ONCHANGE'])):?>
+                                <?=$input['ONCHANGE']?>
+                                <?endif;?>
+                            }
+                        }
+                    }
+                ).$mount('#<?=$name?>');
+            }
+        </script>
+        <?
+        $script = ob_get_clean();
+
+        return '
+			<div id="' . $name . '"></div>
+			' . $script . '
+		';
+    }
+}
+
+if (Loader::includeModule('location')) {
+    Manager::register(
+        'ADDRESS',
+        array(
+            'CLASS' => __NAMESPACE__ . '\Address',
+            'NAME' => Loc::getMessage('INPUT_ADDRESS'),
+        )
+    );
+}

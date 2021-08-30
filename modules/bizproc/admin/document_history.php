@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 \Bitrix\Main\Loader::includeModule('bizproc');
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/bizproc/prolog.php");
@@ -8,25 +9,30 @@ IncludeModuleLangFile(__FILE__);
 $fatalErrorMessage = "";
 
 $moduleId = "";
-if (defined("MODULE_ID"))
+if (defined("MODULE_ID")) {
     $moduleId = MODULE_ID;
+}
 
 $entity = "";
-if (defined("ENTITY"))
+if (defined("ENTITY")) {
     $entity = ENTITY;
+}
 
 $viewDocumentUrl = "";
-if (defined("VIEW_DOCUMENT_URL"))
+if (defined("VIEW_DOCUMENT_URL")) {
     $viewDocumentUrl = VIEW_DOCUMENT_URL;
+}
 
 $documentId = trim($_REQUEST["document_id"]);
 
-if (strlen($entity) <= 0)
+if ($entity == '') {
     $fatalErrorMessage .= GetMessage("BPADH_NO_ENTITY") . ". ";
-if (strlen($documentId) <= 0)
+}
+if ($documentId == '') {
     $fatalErrorMessage .= GetMessage("BPADH_NO_DOC_ID") . ". ";
+}
 
-if (strlen($fatalErrorMessage) <= 0) {
+if ($fatalErrorMessage == '') {
     $documentId = array($moduleId, $entity, $documentId);
 
     $bCanUserWrite = CBPDocument::CanUserOperateDocument(
@@ -35,11 +41,12 @@ if (strlen($fatalErrorMessage) <= 0) {
         $documentId,
         array("UserGroups" => $GLOBALS["USER"]->GetUserGroupArray())
     );
-    if (!$bCanUserWrite)
+    if (!$bCanUserWrite) {
         $fatalErrorMessage .= GetMessage("BPADH_NO_PERMS") . ". ";
+    }
 }
 
-if (strlen($fatalErrorMessage) > 0) {
+if ($fatalErrorMessage <> '') {
     $APPLICATION->SetTitle(GetMessage("BPADH_ERROR"));
     require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
     echo ShowError($fatalErrorMessage);
@@ -63,14 +70,18 @@ $arFilterFields = array(
 $lAdmin->InitFilter($arFilterFields);
 
 $arFilter = array("DOCUMENT_ID" => $documentId);
-if (strlen($filter_modified_1) > 0)
+if ($filter_modified_1 <> '') {
     $arFilter[">=MODIFIED"] = $filter_modified_1;
-if (strlen($filter_modified_2) > 0)
+}
+if ($filter_modified_2 <> '') {
     $arFilter["<=MODIFIED"] = $filter_modified_2;
-if (intval($filter_user_id) > 0)
+}
+if (intval($filter_user_id) > 0) {
     $arFilter["USER_ID"] = $filter_user_id;
-if (intval($filter_user_id1) > 0)
+}
+if (intval($filter_user_id1) > 0) {
     $arFilter["USER_ID"] = $filter_user_id1;
+}
 
 $history = new CBPHistoryService();
 
@@ -84,13 +95,15 @@ if (($arID = $lAdmin->GroupAction())) {
             false,
             array("ID")
         );
-        while ($arResult = $dbResultList->Fetch())
+        while ($arResult = $dbResultList->Fetch()) {
             $arID[] = $arResult['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
 
         switch ($_REQUEST['action']) {
             case "delete":
@@ -118,7 +131,17 @@ $dbResultList = $history->GetHistoryList(
     $arFilter,
     false,
     false,
-    array("ID", "DOCUMENT_ID", "NAME", "MODIFIED", "USER_ID", "USER_NAME", "USER_LAST_NAME", "USER_LOGIN", "USER_SECOND_NAME")
+    array(
+        "ID",
+        "DOCUMENT_ID",
+        "NAME",
+        "MODIFIED",
+        "USER_ID",
+        "USER_NAME",
+        "USER_LAST_NAME",
+        "USER_LOGIN",
+        "USER_SECOND_NAME"
+    )
 );
 
 $dbResultList = new CAdminResult($dbResultList, $sTableID);
@@ -126,12 +149,14 @@ $dbResultList->NavStart();
 
 $lAdmin->NavText($dbResultList->GetNavPrint(GetMessage("BPADH_TITLE")));
 
-$lAdmin->AddHeaders(array(
-    array("id" => "ID", "content" => "ID", "sort" => "ID", "default" => true),
-    array("id" => "NAME", "content" => GetMessage("BPADH_NAME"), "sort" => "NAME", "default" => true),
-    array("id" => "MODIFIED", "content" => GetMessage("BPADH_MODIFIED"), "sort" => "MODIFIED", "default" => true),
-    array("id" => "USER", "content" => GetMessage("BPADH_AUTHOR"), "sort" => "USER_ID", "default" => true),
-));
+$lAdmin->AddHeaders(
+    array(
+        array("id" => "ID", "content" => "ID", "sort" => "ID", "default" => true),
+        array("id" => "NAME", "content" => GetMessage("BPADH_NAME"), "sort" => "NAME", "default" => true),
+        array("id" => "MODIFIED", "content" => GetMessage("BPADH_MODIFIED"), "sort" => "MODIFIED", "default" => true),
+        array("id" => "USER", "content" => GetMessage("BPADH_AUTHOR"), "sort" => "USER_ID", "default" => true),
+    )
+);
 
 $arVisibleColumns = $lAdmin->GetVisibleHeaderColumns();
 
@@ -140,14 +165,25 @@ while ($arResultItem = $dbResultList->NavNext(true, "f_")) {
 
     $row->AddField(
         "ID",
-        ((strlen($viewDocumentUrl) > 0) ? '<a href="' . str_replace(array("#ID#"), array($f_ID), $viewDocumentUrl) . '" title="' . GetMessage("BPADH_VIEW_DOC") . '">' : "") . $f_ID . ((strlen($viewDocumentUrl) > 0) ? '</a>' : "")
+        (($viewDocumentUrl <> '') ? '<a href="' . str_replace(
+                array("#ID#"),
+                array($f_ID),
+                $viewDocumentUrl
+            ) . '" title="' . GetMessage(
+                "BPADH_VIEW_DOC"
+            ) . '">' : "") . $f_ID . (($viewDocumentUrl <> '') ? '</a>' : "")
     );
     $row->AddField("NAME", $f_NAME);
     $row->AddField("MODIFIED", $f_MODIFIED);
-    $row->AddField("USER", '[<a href="/bitrix/admin/user_edit.php?ID=' . $f_USER_ID . '&lang=' . LANGUAGE_ID . '" title="' . GetMessage("BPADH_USER_PROFILE") . '">' . $f_USER_ID . '</a>] ' . $f_USER_NAME . (strlen($f_USER_NAME) > 0 && strlen($f_USER_LAST_NAME) > 0 ? " " : "") . $f_USER_LAST_NAME . (strlen($f_USER_NAME) <= 0 && strlen($f_USER_LAST_NAME) <= 0 ? $f_USER_LOGIN : ""));
+    $row->AddField(
+        "USER",
+        '[<a href="/bitrix/admin/user_edit.php?ID=' . $f_USER_ID . '&lang=' . LANGUAGE_ID . '" title="' . GetMessage(
+            "BPADH_USER_PROFILE"
+        ) . '">' . $f_USER_ID . '</a>] ' . $f_USER_NAME . ($f_USER_NAME <> '' && $f_USER_LAST_NAME <> '' ? " " : "") . $f_USER_LAST_NAME . ($f_USER_NAME == '' && $f_USER_LAST_NAME == '' ? $f_USER_LOGIN : "")
+    );
 
     $arActions = Array();
-    if (strlen($viewDocumentUrl) > 0) {
+    if ($viewDocumentUrl <> '') {
         $arActions[] = array(
             "ICON" => "edit",
             "TEXT" => GetMessage("BPADH_VIEW_DOC"),
@@ -159,13 +195,29 @@ while ($arResultItem = $dbResultList->NavNext(true, "f_")) {
     $arActions[] = array(
         "ICON" => "",
         "TEXT" => GetMessage("BPADH_RECOVERY_DOC"),
-        "ACTION" => "if(confirm('" . GetMessage("BPADH_RECOVERY_DOC_CONFIRM") . "')) " . $lAdmin->ActionDoGroup($f_ID, "recover", "document_id=" . urlencode($documentId[2]) . "&view_document_url=" . urlencode($viewDocumentUrl))
+        "ACTION" => "if(confirm('" . GetMessage("BPADH_RECOVERY_DOC_CONFIRM") . "')) " . $lAdmin->ActionDoGroup(
+                $f_ID,
+                "recover",
+                "document_id=" . urlencode(
+                    $documentId[2]
+                ) . "&view_document_url=" . urlencode(
+                    $viewDocumentUrl
+                )
+            )
     );
     $arActions[] = array("SEPARATOR" => true);
     $arActions[] = array(
         "ICON" => "delete",
         "TEXT" => GetMessage("BPADH_DELETE_DOC"),
-        "ACTION" => "if(confirm('" . GetMessage("BPADH_DELETE_DOC_CONFIRM") . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete", "document_id=" . urlencode($documentId[2]) . "&view_document_url=" . urlencode($viewDocumentUrl))
+        "ACTION" => "if(confirm('" . GetMessage("BPADH_DELETE_DOC_CONFIRM") . "')) " . $lAdmin->ActionDoGroup(
+                $f_ID,
+                "delete",
+                "document_id=" . urlencode(
+                    $documentId[2]
+                ) . "&view_document_url=" . urlencode(
+                    $viewDocumentUrl
+                )
+            )
     );
 
     $row->AddActions($arActions);
@@ -216,7 +268,14 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
     ?>
     <tr>
         <td><?= GetMessage("BPADH_F_MODIFIED") ?>:</td>
-        <td><? echo CalendarPeriod("filter_modified_1", htmlspecialcharsbx($filter_modified_1), "filter_modified_2", htmlspecialcharsbx($filter_modified_2), "find_form", "Y") ?></td>
+        <td><? echo CalendarPeriod(
+                "filter_modified_1",
+                htmlspecialcharsbx($filter_modified_1),
+                "filter_modified_2",
+                htmlspecialcharsbx($filter_modified_2),
+                "find_form",
+                "Y"
+            ) ?></td>
     </tr>
     <tr>
         <td><?= GetMessage("BPADH_F_AUTHOR") ?>:</td>
@@ -228,8 +287,23 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
             );
             ?><select name="filter_user_id1">
                 <option value="">(<?= GetMessage("BPADH_F_AUTHOR_ANY") ?>)</option><?
-                while ($arGrRes = $dbGrRes->GetNext())
-                    echo "<option value='" . $arGrRes["USER_ID"] . "'" . ($filter_user_id1 == $arGrRes["USER_ID"] ? " selected" : "") . ">(" . htmlspecialcharsex($arGrRes["USER_LOGIN"] . ") " . CUser::FormatName(COption::GetOptionString("bizproc", "name_template", CSite::GetNameFormat(false), SITE_ID), array("NAME" => $arGrRes["USER_NAME"], "LAST_NAME" => $arGrRes["USER_LAST_NAME"], "SECOND_NAME" => $arGrRes["USER_SECOND_NAME"]))) . "</option>";
+                while ($arGrRes = $dbGrRes->GetNext()) {
+                    echo "<option value='" . $arGrRes["USER_ID"] . "'" . ($filter_user_id1 == $arGrRes["USER_ID"] ? " selected" : "") . ">(" . htmlspecialcharsex(
+                            $arGrRes["USER_LOGIN"] . ") " . CUser::FormatName(
+                                COption::GetOptionString(
+                                    "bizproc",
+                                    "name_template",
+                                    CSite::GetNameFormat(false),
+                                    SITE_ID
+                                ),
+                                array(
+                                    "NAME" => $arGrRes["USER_NAME"],
+                                    "LAST_NAME" => $arGrRes["USER_LAST_NAME"],
+                                    "SECOND_NAME" => $arGrRes["USER_SECOND_NAME"]
+                                )
+                            )
+                        ) . "</option>";
+                }
                 ?></select>
         </td>
     </tr>

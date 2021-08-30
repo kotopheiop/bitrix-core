@@ -90,10 +90,12 @@ class GroupStepper extends Stepper
     private function getPageIdsBySiteId(int $siteId): array
     {
         $pageIds = [];
-        $queryObject = Landing\Landing::getList([
-            'select' => ['ID'],
-            'filter' => ['SITE_ID' => $siteId],
-        ]);
+        $queryObject = Landing\Landing::getList(
+            [
+                'select' => ['ID'],
+                'filter' => ['SITE_ID' => $siteId],
+            ]
+        );
         while ($page = $queryObject->fetch()) {
             $pageIds[] = $page['ID'];
         }
@@ -114,12 +116,14 @@ class GroupStepper extends Stepper
         $blockMapIds = ($queueOption['blockMapIds'] ?: []);
 
         $pageMapIds = $pageCopier->getMapIdsByImplementer(
-                Landing\Copy\Implement\Landing::class, $result->getData()
+                Landing\Copy\Implement\Landing::class,
+                $result->getData()
             ) + $pageMapIds;
         $queueOption['pageMapIds'] = $pageMapIds;
 
         $blockMapIds = $pageCopier->getMapIdsByImplementer(
-                'LandingBlocks', $result->getData()
+                'LandingBlocks',
+                $result->getData()
             ) + $blockMapIds;
         $queueOption['blockMapIds'] = $blockMapIds;
 
@@ -154,18 +158,26 @@ class GroupStepper extends Stepper
             $copiedLandingInstance = Landing\Landing::createInstance($copiedPageId);
             $folderId = $copiedLandingInstance->getFolderId();
             if (array_key_exists($folderId, $pageMapIds)) {
-                Landing\Landing::update($pageId, [
-                    'FOLDER_ID' => $pageMapIds[$folderId],
-                ]);
+                Landing\Landing::update(
+                    $pageId,
+                    [
+                        'FOLDER_ID' => $pageMapIds[$folderId],
+                    ]
+                );
             }
         }
     }
 
     private function updateBlockIds(array $pageMapIds, array $blockMapIds): void
     {
+        ksort($pageMapIds);
+        ksort($blockMapIds);
+
+        Landing\Landing::setEditMode();
+
         foreach ($pageMapIds as $pageId => $copiedPageId) {
-            $landingMapIds['#landing' . $pageId] = '#landing' . $copiedPageId;
-            unset($landingMapIds[$pageId]);
+            $pageMapIds['#landing' . $pageId] = '#landing' . $copiedPageId;
+            unset($pageMapIds[$pageId]);
         }
         foreach ($blockMapIds as $blockId => $copiedBlockId) {
             $blockMapIds['#block' . $blockId] = '#block' . $copiedBlockId;
@@ -173,7 +185,7 @@ class GroupStepper extends Stepper
         }
 
         foreach ($pageMapIds as $pageId => $copiedPageId) {
-            $copiedLandingInstance = Landing\Landing::createInstance(substr($copiedPageId, 8));
+            $copiedLandingInstance = Landing\Landing::createInstance(mb_substr($copiedPageId, 8));
             foreach ($copiedLandingInstance->getBlocks() as $copiedBlock) {
                 $content = $copiedBlock->getContent();
                 $content = str_replace(
@@ -247,11 +259,11 @@ class GroupStepper extends Stepper
     protected function setQueue(array $queue): void
     {
         $queueId = (string)current($queue);
-        $this->checkerName = (strpos($this->checkerName, $queueId) === false ?
+        $this->checkerName = (mb_strpos($this->checkerName, $queueId) === false ?
             $this->checkerName . $queueId : $this->checkerName);
-        $this->baseName = (strpos($this->baseName, $queueId) === false ?
+        $this->baseName = (mb_strpos($this->baseName, $queueId) === false ?
             $this->baseName . $queueId : $this->baseName);
-        $this->errorName = (strpos($this->errorName, $queueId) === false ?
+        $this->errorName = (mb_strpos($this->errorName, $queueId) === false ?
             $this->errorName . $queueId : $this->errorName);
     }
 
@@ -293,7 +305,7 @@ class GroupStepper extends Stepper
     protected function getOptionData($optionName)
     {
         $option = Option::get(static::$moduleId, $optionName);
-        $option = ($option !== "" ? unserialize($option) : []);
+        $option = ($option !== "" ? unserialize($option, ['allowed_classes' => false]) : []);
         return (is_array($option) ? $option : []);
     }
 

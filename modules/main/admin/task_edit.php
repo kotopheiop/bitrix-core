@@ -18,8 +18,9 @@ define("HELP_FILE", "users/task_edit.php");
 
 ClearVars();
 
-if (!$USER->CanDoOperation('view_tasks'))
+if (!$USER->CanDoOperation('view_tasks')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 
@@ -30,8 +31,9 @@ IncludeModuleLangFile(__FILE__);
 $ID = intval($_REQUEST["ID"]);
 $COPY_ID = intval($_REQUEST["COPY_ID"]);
 
-if ($COPY_ID > 0)
+if ($COPY_ID > 0) {
     $ID = $COPY_ID;
+}
 
 $message = null;
 
@@ -41,9 +43,11 @@ $aTabs = array(
 );
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
-if ($_SERVER["REQUEST_METHOD"] == "POST" && ($_POST["save"] <> '' || $_POST["apply"] <> '') && $USER->CanDoOperation('edit_tasks') && check_bitrix_sessid()) {
+if ($_SERVER["REQUEST_METHOD"] == "POST" && ($_POST["save"] <> '' || $_POST["apply"] <> '') && $USER->CanDoOperation(
+        'edit_tasks'
+    ) && check_bitrix_sessid()) {
     $aMsg = Array();
-    $LETTER = strtoupper($_POST["LETTER"]);
+    $LETTER = mb_strtoupper($_POST["LETTER"]);
     $arFields = array
     (
         "NAME" => $_POST["NAME"],
@@ -61,24 +65,31 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($_POST["save"] <> '' || $_POST["app
     }
 
     /** @var CAdminException $e */
-    if ($e = $APPLICATION->GetException())
+    if ($e = $APPLICATION->GetException()) {
         $aMsg = $e->messages;
+    }
 
     if (empty($aMsg)) {
-        if (!isset($_POST['OPERATION_ID']))
+        if (!isset($_POST['OPERATION_ID'])) {
             $arOperationIds = Array();
-        else
+        } else {
             $arOperationIds = $_POST['OPERATION_ID'];
+        }
 
         $old_arOperationIds = CTask::GetOperations($ID);
-        if (count(array_diff($old_arOperationIds, $arOperationIds)) > 0 || count(array_diff($arOperationIds, $old_arOperationIds)) > 0) {
+        if (count(array_diff($old_arOperationIds, $arOperationIds)) > 0 || count(
+                array_diff($arOperationIds, $old_arOperationIds)
+            ) > 0) {
             CTask::SetOperations($ID, $arOperationIds);
         }
 
-        if ($_POST["save"] <> '')
+        if ($_POST["save"] <> '') {
             LocalRedirect("task_admin.php?lang=" . LANGUAGE_ID);
-        elseif ($_POST["apply"] <> '')
-            LocalRedirect($APPLICATION->GetCurPage() . "?lang=" . LANGUAGE_ID . "&ID=" . $ID . "&" . $tabControl->ActiveTabParam());
+        } elseif ($_POST["apply"] <> '') {
+            LocalRedirect(
+                $APPLICATION->GetCurPage() . "?lang=" . LANGUAGE_ID . "&ID=" . $ID . "&" . $tabControl->ActiveTabParam()
+            );
+        }
     } else {
         $message = new CAdminMessage(GetMessage('TASK_SAVE_ERROR'), new CAdminException($aMsg));
     }
@@ -91,11 +102,14 @@ if (!$z->ExtractFields("str_") || $ID == 0) {
     $str_BINDING = 'module';
     $str_MODULE_ID = 'main';
 } else {
-    if ($COPY_ID > 0)
+    if ($COPY_ID > 0) {
         $str_SYS = 'N';
+    }
 }
 
-$sDocTitle = ($ID > 0 && $COPY_ID <= 0 ? GetMessage("EDIT_TASK_TITLE", array("#ID#" => $ID)) : GetMessage("NEW_TASK_TITLE"));
+$sDocTitle = ($ID > 0 && $COPY_ID <= 0 ? GetMessage("EDIT_TASK_TITLE", array("#ID#" => $ID)) : GetMessage(
+    "NEW_TASK_TITLE"
+));
 $APPLICATION->SetTitle($sDocTitle);
 
 /***************************************************************************
@@ -132,7 +146,10 @@ if ($ID > 0 && $COPY_ID <= 0) {
         $aMenu[] = array(
             "TEXT" => GetMessage("MAIN_DELETE_RECORD"),
             "TITLE" => GetMessage("MAIN_DELETE_RECORD_TITLE"),
-            "LINK" => "javascript:if(confirm('" . GetMessage("MAIN_DELETE_RECORD_CONF") . "')) window.location='/bitrix/admin/task_admin.php?del_id=" . $ID . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get() . "';",
+            "LINK" => "javascript:if(confirm('" . GetMessage(
+                    "MAIN_DELETE_RECORD_CONF"
+                ) . "')) window.location='/bitrix/admin/task_admin.php?del_id=" . $ID . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get(
+                ) . "';",
             "ICON" => "btn_delete"
         );
     }
@@ -142,16 +159,17 @@ $context = new CAdminContextMenu($aMenu);
 $context->Show();
 ?>
 <?
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 ?>
 
     <form method="POST" action="<? echo $APPLICATION->GetCurPage() ?>?" name="form1">
         <?= bitrix_sessid_post() ?>
         <input type="hidden" name="lang" value="<? echo LANG ?>">
         <input type="hidden" name="ID" value="<? echo $ID ?>">
-        <? if (strlen($COPY_ID) > 0): ?><input type="hidden" name="COPY_ID"
-                                               value="<? echo htmlspecialcharsbx($COPY_ID) ?>"><? endif ?>
+        <? if ($COPY_ID <> ''): ?><input type="hidden" name="COPY_ID"
+                                         value="<? echo htmlspecialcharsbx($COPY_ID) ?>"><? endif ?>
         <?
         $tabControl->Begin();
 
@@ -198,7 +216,11 @@ if ($message)
                 'TITLE' => COperation::GetLangTitle($arOperation["NAME"], $arOperation["MODULE_ID"]),
                 'BINDING' => $arOperation["BINDING"],
                 'MODULE_ID' => $arOperation["MODULE_ID"],
-                'DESCRIPTION' => COperation::GetLangDescription($arOperation["NAME"], $arOperation["DESCRIPTION"], $arOperation["MODULE_ID"])
+                'DESCRIPTION' => COperation::GetLangDescription(
+                    $arOperation["NAME"],
+                    $arOperation["DESCRIPTION"],
+                    $arOperation["MODULE_ID"]
+                )
             );
             }
             \Bitrix\Main\Type\Collection::sortByColumn($arOperations, 'TITLE');
@@ -217,17 +239,25 @@ if ($message)
                     var arModules = ['main'];
                 </script>
                 <select name="MODULE_ID" id="__module_id_select">
-                    <option value="main" <? echo ($str_MODULE_ID == 'main') ? 'selected' : ''; ?>><?= GetMessage('KERNEL') ?></option>
+                    <option value="main" <? echo ($str_MODULE_ID == 'main') ? 'selected' : ''; ?>><?= GetMessage(
+                            'KERNEL'
+                        ) ?></option>
                     <?
                     $modules = COperation::GetAllowedModules();
                     foreach ($modules as $MID):
-                        if ($MID == "main")
+                        if ($MID == "main") {
                             continue;
-                        if (!($m = CModule::CreateModuleObject($MID)))
+                        }
+                        if (!($m = CModule::CreateModuleObject($MID))) {
                             continue;
+                        }
                         ?>
                         <script>arModules.push('<?=$MID?>');</script>
-                        <option value="<?= htmlspecialcharsbx($MID) ?>"<? echo($str_MODULE_ID == $MID ? ' selected' : ''); ?>><?= htmlspecialcharsbx($m->MODULE_NAME); ?></option>
+                        <option value="<?= htmlspecialcharsbx(
+                            $MID
+                        ) ?>"<? echo($str_MODULE_ID == $MID ? ' selected' : ''); ?>><?= htmlspecialcharsbx(
+                                $m->MODULE_NAME
+                            ); ?></option>
                     <? endforeach; ?>
                 </select>
             </td>
@@ -240,8 +270,9 @@ if ($message)
             <td><?= GetMessage('TASK_BINDING') ?>:</td>
             <td>
                 <?
-                if (!isset($arBindings[$str_MODULE_ID]) || count($arBindings[$str_MODULE_ID]) < 1)
+                if (!isset($arBindings[$str_MODULE_ID]) || count($arBindings[$str_MODULE_ID]) < 1) {
                     $arBindings[$str_MODULE_ID] = Array('module');
+                }
                 ?>
                 <select name="BINDING" id="__binding_select">
                     <?
@@ -265,8 +296,11 @@ if ($message)
         </tr>
         <tr>
             <td class="adm-detail-valign-top"><? echo GetMessage('DESCRIPTION') ?></td>
-            <td><textarea name="DESCRIPTION" cols="30"
-                          rows="5"><? echo CTask::GetLangDescription($str_NAME, $str_DESCRIPTION, $str_MODULE_ID); ?></textarea>
+            <td><textarea name="DESCRIPTION" cols="30" rows="5"><? echo CTask::GetLangDescription(
+                        $str_NAME,
+                        $str_DESCRIPTION,
+                        $str_MODULE_ID
+                    ); ?></textarea>
             </td>
         </tr>
         <? $tabControl->BeginNextTab(); ?>
@@ -278,10 +312,11 @@ if ($message)
                         <td width="90%">&nbsp;</td>
                     </tr>
                     <?
-                    if (isset($_POST['OPERATION_ID']))
+                    if (isset($_POST['OPERATION_ID'])) {
                         $arTaskOperations = $_POST['OPERATION_ID'];
-                    else
+                    } else {
                         $arTaskOperations = CTask::GetOperations($ID);
+                    }
 
                     $ind = -1;
                     foreach ($arOperations as $arOperation) {
@@ -291,7 +326,10 @@ if ($message)
                             <? echo (($arOperation["MODULE_ID"] != $str_MODULE_ID) || ($arOperation["BINDING"] != $str_BINDING)) ? 'style="display: none"' : '' ?>>
                             <td align="right" style="padding: 0 10px 0 10px">
                                 <input type="checkbox" name="OPERATION_ID[]" id="OPERATION_ID_<?= $ind ?>"
-                                       value="<?= $arOperation["ID"] ?>" <? echo (in_array($arOperation["ID"], $arTaskOperations)) ? " checked" : '' ?>>
+                                       value="<?= $arOperation["ID"] ?>" <? echo (in_array(
+                                    $arOperation["ID"],
+                                    $arTaskOperations
+                                )) ? " checked" : '' ?>>
                                 <script>
                                     arOperations['<?=$ind?>'] = {
                                         name: '<?=CUtil::JSEscape($arOperation["TITLE"])?>',
@@ -402,7 +440,12 @@ if ($message)
             </td>
         </tr>
         <?
-        $tabControl->Buttons(array("disabled" => (!$USER->CanDoOperation('edit_tasks') || $str_SYS == 'Y'), "back_url" => "task_admin.php?lang=" . LANGUAGE_ID));
+        $tabControl->Buttons(
+            array(
+                "disabled" => (!$USER->CanDoOperation('edit_tasks') || $str_SYS == 'Y'),
+                "back_url" => "task_admin.php?lang=" . LANGUAGE_ID
+            )
+        );
         $tabControl->End();
         ?>
     </form>

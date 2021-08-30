@@ -46,7 +46,20 @@ Loc::loadMessages(__FILE__);
  * </ul>
  *
  * @package Bitrix\Catalog
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Product_Query query()
+ * @method static EO_Product_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Product_Result getById($id)
+ * @method static EO_Product_Result getList(array $parameters = array())
+ * @method static EO_Product_Entity getEntity()
+ * @method static \Bitrix\Catalog\EO_Product createObject($setDefaultValues = true)
+ * @method static \Bitrix\Catalog\EO_Product_Collection createCollection()
+ * @method static \Bitrix\Catalog\EO_Product wakeUpObject($row)
+ * @method static \Bitrix\Catalog\EO_Product_Collection wakeUpCollection($rows)
+ */
 class ProductTable extends Main\Entity\DataManager
 {
     const USER_FIELD_ENTITY_ID = 'PRODUCT';
@@ -81,8 +94,6 @@ class ProductTable extends Main\Entity\DataManager
 
     protected static $defaultProductSettings = array();
 
-    protected static $existProductCache = array();
-
     /**
      * Returns DB table name for entity.
      *
@@ -101,20 +112,26 @@ class ProductTable extends Main\Entity\DataManager
     public static function getMap()
     {
         return array(
-            'ID' => new Main\Entity\IntegerField('ID', array(
+            'ID' => new Main\Entity\IntegerField(
+                'ID', array(
                 'primary' => true,
                 'title' => Loc::getMessage('PRODUCT_ENTITY_ID_FIELD')
-            )),
-            'QUANTITY' => new Main\Entity\FloatField('QUANTITY', array(
+            )
+            ),
+            'QUANTITY' => new Main\Entity\FloatField(
+                'QUANTITY', array(
                 'default_value' => 0,
                 'title' => Loc::getMessage('PRODUCT_ENTITY_QUANTITY_FIELD')
-            )),
-            'QUANTITY_TRACE' => new Main\Entity\EnumField('QUANTITY_TRACE', array(
+            )
+            ),
+            'QUANTITY_TRACE' => new Main\Entity\EnumField(
+                'QUANTITY_TRACE', array(
                 'values' => array(self::STATUS_DEFAULT, self::STATUS_NO, self::STATUS_YES),
                 'default_value' => self::STATUS_DEFAULT,
                 'fetch_data_modification' => array(__CLASS__, 'modifyQuantityTrace'),
                 'title' => Loc::getMessage('PRODUCT_ENTITY_QUANTITY_TRACE_FIELD')
-            )),
+            )
+            ),
             'QUANTITY_TRACE_ORIG' => new Main\Entity\ExpressionField(
                 'QUANTITY_TRACE_ORIG',
                 '%s',
@@ -123,57 +140,79 @@ class ProductTable extends Main\Entity\DataManager
                     'data_type' => 'string'
                 )
             ),
-            'WEIGHT' => new Main\Entity\FloatField('WEIGHT', array(
+            'WEIGHT' => new Main\Entity\FloatField(
+                'WEIGHT', array(
                 'default_value' => 0,
                 'title' => Loc::getMessage('PRODUCT_ENTITY_WEIGHT_FIELD')
-            )),
-            'TIMESTAMP_X' => new Main\Entity\DatetimeField('TIMESTAMP_X', array(
+            )
+            ),
+            'TIMESTAMP_X' => new Main\Entity\DatetimeField(
+                'TIMESTAMP_X', array(
                 'default_value' => function () {
                     return new Main\Type\DateTime();
                 },
                 'title' => Loc::getMessage('PRODUCT_ENTITY_TIMESTAMP_X_FIELD')
-            )),
-            'PRICE_TYPE' => new Main\Entity\EnumField('PRICE_TYPE', array(
+            )
+            ),
+            'PRICE_TYPE' => new Main\Entity\EnumField(
+                'PRICE_TYPE', array(
                 'values' => self::getPaymentTypes(false),
                 'default_value' => self::PAYMENT_TYPE_SINGLE,
                 'title' => Loc::getMessage('PRODUCT_ENTITY_PRICE_TYPE_FIELD')
-            )),
-            'RECUR_SCHEME_LENGTH' => new Main\Entity\IntegerField('RECUR_SCHEME_LENGTH', array(
+            )
+            ),
+            'RECUR_SCHEME_LENGTH' => new Main\Entity\IntegerField(
+                'RECUR_SCHEME_LENGTH', array(
                 'default_value' => 0,
                 'title' => Loc::getMessage('PRODUCT_ENTITY_RECUR_SCHEME_LENGTH_FIELD')
-            )),
-            'RECUR_SCHEME_TYPE' => new Main\Entity\EnumField('RECUR_SCHEME_TYPE', array(
+            )
+            ),
+            'RECUR_SCHEME_TYPE' => new Main\Entity\EnumField(
+                'RECUR_SCHEME_TYPE', array(
                 'values' => self::getPaymentPeriods(false),
                 'default_value' => self::PAYMENT_PERIOD_DAY,
                 'title' => Loc::getMessage('PRODUCT_ENTITY_RECUR_SCHEME_TYPE_FIELD')
-            )),
-            'TRIAL_PRICE_ID' => new Main\Entity\IntegerField('TRIAL_PRICE_ID', array(
+            )
+            ),
+            'TRIAL_PRICE_ID' => new Main\Entity\IntegerField(
+                'TRIAL_PRICE_ID', array(
                 'title' => Loc::getMessage('PRODUCT_ENTITY_TRIAL_PRICE_ID_FIELD')
-            )),
-            'WITHOUT_ORDER' => new Main\Entity\BooleanField('WITHOUT_ORDER', array(
+            )
+            ),
+            'WITHOUT_ORDER' => new Main\Entity\BooleanField(
+                'WITHOUT_ORDER', array(
                 'values' => array(self::STATUS_NO, self::STATUS_YES),
                 'default_value' => self::STATUS_NO,
                 'title' => Loc::getMessage('PRODUCT_ENTITY_WITHOUT_ORDER_FIELD'),
-            )),
-            'SELECT_BEST_PRICE' => new Main\Entity\BooleanField('SELECT_BEST_PRICE', array(
+            )
+            ),
+            'SELECT_BEST_PRICE' => new Main\Entity\BooleanField(
+                'SELECT_BEST_PRICE', array(
                 'values' => array(self::STATUS_NO, self::STATUS_YES),
                 'default_value' => self::STATUS_YES
-            )),
-            'VAT_ID' => new Main\Entity\IntegerField('VAT_ID', array(
+            )
+            ),
+            'VAT_ID' => new Main\Entity\IntegerField(
+                'VAT_ID', array(
                 'default_value' => 0,
                 'title' => Loc::getMessage('PRODUCT_ENTITY_VAT_ID_FIELD')
-            )),
-            'VAT_INCLUDED' => new Main\Entity\BooleanField('VAT_INCLUDED', array(
+            )
+            ),
+            'VAT_INCLUDED' => new Main\Entity\BooleanField(
+                'VAT_INCLUDED', array(
                 'values' => array(self::STATUS_NO, self::STATUS_YES),
                 'default_value' => self::STATUS_NO,
                 'title' => Loc::getMessage('PRODUCT_ENTITY_VAT_INCLUDED_FIELD')
-            )),
-            'CAN_BUY_ZERO' => new Main\Entity\EnumField('CAN_BUY_ZERO', array(
+            )
+            ),
+            'CAN_BUY_ZERO' => new Main\Entity\EnumField(
+                'CAN_BUY_ZERO', array(
                 'values' => array(self::STATUS_DEFAULT, self::STATUS_NO, self::STATUS_YES),
                 'default_value' => self::STATUS_DEFAULT,
                 'fetch_data_modification' => array(__CLASS__, 'modifyCanBuyZero'),
                 'title' => Loc::getMessage('PRODUCT_ENTITY_CAN_BUY_ZERO_FIELD')
-            )),
+            )
+            ),
             'CAN_BUY_ZERO_ORIG' => new Main\Entity\ExpressionField(
                 'CAN_BUY_ZERO_ORIG',
                 '%s',
@@ -182,12 +221,14 @@ class ProductTable extends Main\Entity\DataManager
                     'data_type' => 'string'
                 )
             ),
-            'NEGATIVE_AMOUNT_TRACE' => new Main\Entity\EnumField('NEGATIVE_AMOUNT_TRACE', array(
+            'NEGATIVE_AMOUNT_TRACE' => new Main\Entity\EnumField(
+                'NEGATIVE_AMOUNT_TRACE', array(
                 'values' => array(self::STATUS_DEFAULT, self::STATUS_NO, self::STATUS_YES),
                 'default_value' => self::STATUS_DEFAULT,
                 'fetch_data_modification' => array(__CLASS__, 'modifyNegativeAmountTrace'),
                 'title' => Loc::getMessage('PRODUCT_ENTITY_NEGATIVE_AMOUNT_TRACE_FIELD')
-            )),
+            )
+            ),
             'NEGATIVE_AMOUNT_TRACE_ORIG' => new Main\Entity\ExpressionField(
                 'NEGATIVE_AMOUNT_TRACE_ORIG',
                 '%s',
@@ -196,31 +237,43 @@ class ProductTable extends Main\Entity\DataManager
                     'data_type' => 'string'
                 )
             ),
-            'TMP_ID' => New Main\Entity\StringField('TMP_ID', array(
+            'TMP_ID' => New Main\Entity\StringField(
+                'TMP_ID', array(
                 'validation' => array(__CLASS__, 'validateTmpId'),
                 'title' => Loc::getMessage('PRODUCT_ENTITY_TMP_ID_FIELD')
-            )),
-            'PURCHASING_PRICE' => new Main\Entity\FloatField('PURCHASING_PRICE', array(
+            )
+            ),
+            'PURCHASING_PRICE' => new Main\Entity\FloatField(
+                'PURCHASING_PRICE', array(
                 'title' => Loc::getMessage('PRODUCT_ENTITY_PURCHASING_PRICE_FIELD')
-            )),
-            'PURCHASING_CURRENCY' => new Main\Entity\StringField('PURCHASING_CURRENCY', array(
+            )
+            ),
+            'PURCHASING_CURRENCY' => new Main\Entity\StringField(
+                'PURCHASING_CURRENCY', array(
                 'validation' => array(__CLASS__, 'validatePurchasingCurrency'),
                 'title' => Loc::getMessage('PRODUCT_ENTITY_PURCHASING_CURRENCY_FIELD')
-            )),
-            'BARCODE_MULTI' => new Main\Entity\BooleanField('BARCODE_MULTI', array(
+            )
+            ),
+            'BARCODE_MULTI' => new Main\Entity\BooleanField(
+                'BARCODE_MULTI', array(
                 'values' => array(self::STATUS_NO, self::STATUS_YES),
                 'default_value' => self::STATUS_NO,
                 'title' => Loc::getMessage('PRODUCT_ENTITY_BARCODE_MULTI_FIELD')
-            )),
-            'QUANTITY_RESERVED' => new Main\Entity\FloatField('QUANTITY_RESERVED', array(
+            )
+            ),
+            'QUANTITY_RESERVED' => new Main\Entity\FloatField(
+                'QUANTITY_RESERVED', array(
                 'title' => Loc::getMessage('PRODUCT_ENTITY_QUANTITY_RESERVED_FIELD')
-            )),
-            'SUBSCRIBE' => new Main\Entity\EnumField('SUBSCRIBE', array(
+            )
+            ),
+            'SUBSCRIBE' => new Main\Entity\EnumField(
+                'SUBSCRIBE', array(
                 'values' => array(self::STATUS_DEFAULT, self::STATUS_NO, self::STATUS_YES),
                 'default_value' => self::STATUS_DEFAULT,
                 'fetch_data_modification' => array(__CLASS__, 'modifySubscribe'),
                 'title' => Loc::getMessage('PRODUCT_ENTITY_SUBSCRIBE_FIELD'),
-            )),
+            )
+            ),
             'SUBSCRIBE_ORIG' => new Main\Entity\ExpressionField(
                 'SUBSCRIBE_ORIG',
                 '%s',
@@ -229,31 +282,52 @@ class ProductTable extends Main\Entity\DataManager
                     'data_type' => 'string'
                 )
             ),
-            'WIDTH' => new Main\Entity\FloatField('WIDTH', array(
+            'WIDTH' => new Main\Entity\FloatField(
+                'WIDTH', array(
                 'title' => Loc::getMessage('PRODUCT_ENTITY_WIDTH_FIELD')
-            )),
-            'LENGTH' => new Main\Entity\FloatField('LENGTH', array(
+            )
+            ),
+            'LENGTH' => new Main\Entity\FloatField(
+                'LENGTH', array(
                 'title' => Loc::getMessage('PRODUCT_ENTITY_LENGTH_FIELD')
-            )),
-            'HEIGHT' => new Main\Entity\FloatField('HEIGHT', array(
+            )
+            ),
+            'HEIGHT' => new Main\Entity\FloatField(
+                'HEIGHT', array(
                 'title' => Loc::getMessage('PRODUCT_ENTITY_HEIGHT_FIELD')
-            )),
-            'MEASURE' => new Main\Entity\IntegerField('MEASURE', array(
+            )
+            ),
+            'MEASURE' => new Main\Entity\IntegerField(
+                'MEASURE', array(
                 'title' => Loc::getMessage('PRODUCT_ENTITY_MEASURE_FIELD')
-            )),
-            'TYPE' => new Main\Entity\EnumField('TYPE', array(
-                'values' => array(self::TYPE_PRODUCT, self::TYPE_SET, self::TYPE_SKU, self::TYPE_OFFER, self::TYPE_FREE_OFFER, self::TYPE_EMPTY_SKU),
+            )
+            ),
+            'TYPE' => new Main\Entity\EnumField(
+                'TYPE', array(
+                'values' => array(
+                    self::TYPE_PRODUCT,
+                    self::TYPE_SET,
+                    self::TYPE_SKU,
+                    self::TYPE_OFFER,
+                    self::TYPE_FREE_OFFER,
+                    self::TYPE_EMPTY_SKU
+                ),
                 'default_value' => self::TYPE_PRODUCT,
                 'title' => Loc::getMessage('PRODUCT_ENTITY_TYPE_FIELD')
-            )),
-            'AVAILABLE' => new Main\Entity\BooleanField('AVAILABLE', array(
+            )
+            ),
+            'AVAILABLE' => new Main\Entity\BooleanField(
+                'AVAILABLE', array(
                 'values' => array(self::STATUS_NO, self::STATUS_YES),
                 'title' => Loc::getMessage('PRODUCT_ENTITY_AVAILABLE_FIELD')
-            )),
-            'BUNDLE' => new Main\Entity\BooleanField('BUNDLE', array(
+            )
+            ),
+            'BUNDLE' => new Main\Entity\BooleanField(
+                'BUNDLE', array(
                 'values' => array(self::STATUS_NO, self::STATUS_YES),
                 'title' => Loc::getMessage('PRODUCT_ENTITY_BUNDLE_FIELD')
-            )),
+            )
+            ),
             'IBLOCK_ELEMENT' => new Main\Entity\ReferenceField(
                 'IBLOCK_ELEMENT',
                 '\Bitrix\Iblock\Element',
@@ -397,8 +471,9 @@ class ProductTable extends Main\Entity\DataManager
     public static function prepareQuantityTrace($value)
     {
         if ($value == self::STATUS_DEFAULT) {
-            if (empty(self::$defaultProductSettings))
+            if (empty(self::$defaultProductSettings)) {
                 self::loadDefaultProductSettings();
+            }
             return self::$defaultProductSettings['QUANTITY_TRACE'];
         }
         return $value;
@@ -414,8 +489,9 @@ class ProductTable extends Main\Entity\DataManager
     public static function prepareCanBuyZero($value)
     {
         if ($value == self::STATUS_DEFAULT) {
-            if (empty(self::$defaultProductSettings))
+            if (empty(self::$defaultProductSettings)) {
                 self::loadDefaultProductSettings();
+            }
             return self::$defaultProductSettings['CAN_BUY_ZERO'];
         }
         return $value;
@@ -431,8 +507,9 @@ class ProductTable extends Main\Entity\DataManager
     public static function prepareNegativeAmountTrace($value)
     {
         if ($value == self::STATUS_DEFAULT) {
-            if (empty(self::$defaultProductSettings))
+            if (empty(self::$defaultProductSettings)) {
                 self::loadDefaultProductSettings();
+            }
             return self::$defaultProductSettings['NEGATIVE_AMOUNT_TRACE'];
         }
         return $value;
@@ -448,8 +525,9 @@ class ProductTable extends Main\Entity\DataManager
     public static function prepareSubscribe($value)
     {
         if ($value == self::STATUS_DEFAULT) {
-            if (empty(self::$defaultProductSettings))
+            if (empty(self::$defaultProductSettings)) {
                 self::loadDefaultProductSettings();
+            }
             return self::$defaultProductSettings['SUBSCRIBE'];
         }
         return $value;
@@ -457,44 +535,38 @@ class ProductTable extends Main\Entity\DataManager
 
     /**
      * Return is exist product.
-     *
      * @param int $product Product id.
      * @return bool
      * @throws Main\ArgumentException
+     * @see \Bitrix\Catalog\Model\Product::getCacheItem()
+     *
+     * @deprecated deprecated since catalog 20.100.0
      */
     public static function isExistProduct($product)
     {
         $product = (int)$product;
-        if ($product <= 0)
+        if ($product <= 0) {
             return false;
-        if (!isset(self::$existProductCache[$product])) {
-            self::$existProductCache[$product] = false;
-            $existProduct = self::getList(array(
+        }
+        $existProduct = self::getList(
+            array(
                 'select' => array('ID'),
                 'filter' => array('=ID' => $product)
-            ))->fetch();
-            if (!empty($existProduct))
-                self::$existProductCache[$product] = true;
-            unset($existProduct);
-        }
-        return self::$existProductCache[$product];
+            )
+        )->fetch();
+        return (!empty($existProduct));
     }
 
     /**
      * Clear product cache.
-     *
      * @param int $product Product id or zero (clear all cache).
      * @return void
+     * @deprecated deprecated since catalog 20.100.0
+     * @see \Bitrix\Catalog\Model\Product::clearCacheItem()
+     *
      */
     public static function clearProductCache($product = 0)
     {
-        $product = (int)$product;
-        if ($product > 0) {
-            if (isset(self::$existProductCache[$product]))
-                unset(self::$existProductCache[$product]);
-        } else {
-            self::$existProductCache = array();
-        }
     }
 
     /**
@@ -506,11 +578,13 @@ class ProductTable extends Main\Entity\DataManager
      */
     public static function getCurrentRatioWithMeasure($product)
     {
-        if (!is_array($product))
+        if (!is_array($product)) {
             $product = array($product);
+        }
         Main\Type\Collection::normalizeArrayValuesByInt($product, true);
-        if (empty($product))
+        if (empty($product)) {
             return false;
+        }
 
         $result = array();
 
@@ -524,20 +598,22 @@ class ProductTable extends Main\Entity\DataManager
 
         $productRows = array_chunk($product, 500);
         foreach ($productRows as &$row) {
-            $productIterator = self::getList(array(
-                'select' => array('ID', 'MEASURE'),
-                'filter' => array('@ID' => $row),
-                'order' => array('ID' => 'ASC')
-            ));
+            $productIterator = self::getList(
+                array(
+                    'select' => array('ID', 'MEASURE'),
+                    'filter' => array('@ID' => $row),
+                    'order' => array('ID' => 'ASC')
+                )
+            );
             while ($item = $productIterator->fetch()) {
                 $item['ID'] = (int)$item['ID'];
                 $item['MEASURE'] = (int)$item['MEASURE'];
-                self::$existProductCache[$item['ID']] = true;
                 $existProduct[] = $item['ID'];
                 $result[$item['ID']] = $defaultRow;
                 if ($item['MEASURE'] > 0) {
-                    if (!isset($measureMap[$item['MEASURE']]))
+                    if (!isset($measureMap[$item['MEASURE']])) {
                         $measureMap[$item['MEASURE']] = array();
+                    }
                     $measureMap[$item['MEASURE']][] = &$result[$item['ID']];
                 }
             }
@@ -545,13 +621,15 @@ class ProductTable extends Main\Entity\DataManager
         }
         unset($row, $productRows);
         unset($defaultRow, $defaultMeasure);
-        if (empty($existProduct))
+        if (empty($existProduct)) {
             return false;
+        }
 
         $ratioResult = MeasureRatioTable::getCurrentRatio($existProduct);
         if (!empty($ratioResult)) {
-            foreach ($ratioResult as $ratioProduct => $ratio)
+            foreach ($ratioResult as $ratioProduct => $ratio) {
                 $result[$ratioProduct]['RATIO'] = $ratio;
+            }
             unset($ratio, $ratioProduct);
         }
         unset($ratioResult);
@@ -567,11 +645,13 @@ class ProductTable extends Main\Entity\DataManager
             );
             while ($measure = $measureIterator->getNext()) {
                 $measure['ID'] = (int)$measure['ID'];
-                if (empty($measureMap[$measure['ID']]))
+                if (empty($measureMap[$measure['ID']])) {
                     continue;
+                }
 
-                foreach ($measureMap[$measure['ID']] as &$product)
+                foreach ($measureMap[$measure['ID']] as &$product) {
                     $product['MEASURE'] = $measure;
+                }
                 unset($product);
             }
             unset($measure, $measureIterator);
@@ -589,16 +669,20 @@ class ProductTable extends Main\Entity\DataManager
      */
     public static function calculateAvailable($fields)
     {
-        if (empty($fields) || !is_array($fields))
+        if (empty($fields) || !is_array($fields)) {
             return self::STATUS_NO;
+        }
 
         if (isset($fields['QUANTITY']) && isset($fields['QUANTITY_TRACE']) && isset($fields['CAN_BUY_ZERO'])) {
-            if (empty(self::$defaultProductSettings))
+            if (empty(self::$defaultProductSettings)) {
                 self::loadDefaultProductSettings();
-            if ($fields['QUANTITY_TRACE'] == self::STATUS_DEFAULT)
+            }
+            if ($fields['QUANTITY_TRACE'] == self::STATUS_DEFAULT) {
                 $fields['QUANTITY_TRACE'] = self::$defaultProductSettings['QUANTITY_TRACE'];
-            if ($fields['CAN_BUY_ZERO'] == self::STATUS_DEFAULT)
+            }
+            if ($fields['CAN_BUY_ZERO'] == self::STATUS_DEFAULT) {
                 $fields['CAN_BUY_ZERO'] = self::$defaultProductSettings['CAN_BUY_ZERO'];
+            }
             return (
             (
                 (float)$fields['QUANTITY'] <= 0
@@ -622,9 +706,15 @@ class ProductTable extends Main\Entity\DataManager
     public static function loadDefaultProductSettings()
     {
         self::$defaultProductSettings = array(
-            'QUANTITY_TRACE' => ((string)Main\Config\Option::get('catalog', 'default_quantity_trace') == 'Y' ? 'Y' : 'N'),
+            'QUANTITY_TRACE' => ((string)Main\Config\Option::get(
+                'catalog',
+                'default_quantity_trace'
+            ) == 'Y' ? 'Y' : 'N'),
             'CAN_BUY_ZERO' => ((string)Main\Config\Option::get('catalog', 'default_can_buy_zero') == 'Y' ? 'Y' : 'N'),
-            'NEGATIVE_AMOUNT_TRACE' => ((string)Main\Config\Option::get('catalog', 'allow_negative_amount') == 'Y' ? 'Y' : 'N'),
+            'NEGATIVE_AMOUNT_TRACE' => ((string)Main\Config\Option::get(
+                'catalog',
+                'allow_negative_amount'
+            ) == 'Y' ? 'Y' : 'N'),
             'SUBSCRIBE' => ((string)Main\Config\Option::get('catalog', 'default_subscribe') == 'N' ? 'N' : 'Y')
         );
     }

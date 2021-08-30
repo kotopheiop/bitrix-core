@@ -11,6 +11,7 @@ use \Bitrix\Main\Web\Json;
 use \Bitrix\Main\Context;
 use \Bitrix\Main\Loader;
 use \Bitrix\Main\Localization\Loc;
+use \Bitrix\Main;
 
 Loc::loadMessages(__FILE__);
 Loader::registerAutoLoadClasses(
@@ -18,7 +19,8 @@ Loader::registerAutoLoadClasses(
     array(
         "bitrix\\main\\ui\\uploader\\storage" => "lib/ui/uploader/storage.php",
         "bitrix\\main\\ui\\uploader\\cloudstorage" => "lib/ui/uploader/storage.php"
-    ));
+    )
+);
 
 class Log implements \ArrayAccess
 {
@@ -35,16 +37,21 @@ class Log implements \ArrayAccess
      */
     function __construct($path)
     {
-        $this->file = \CBXVirtualIo::GetInstance()->GetFile($path);
+        try {
+            $this->file = \CBXVirtualIo::GetInstance()->GetFile($path);
 
-        if ($this->file->IsExists()) {
-            $data = unserialize($this->file->GetContents());
-            foreach ($data as $key => $val) {
-                if (array_key_exists($key, $this->data) && is_array($this->data[$key]) && is_array($val))
-                    $this->data[$key] = array_merge($this->data[$key], $val);
-                else
-                    $this->data[$key] = $val;
+            if ($this->file->IsExists()) {
+                $data = unserialize($this->file->GetContents(), ["allowed_classes" => false]);
+                foreach ($data as $key => $val) {
+                    if (array_key_exists($key, $this->data) && is_array($this->data[$key]) && is_array($val)) {
+                        $this->data[$key] = array_merge($this->data[$key], $val);
+                    } else {
+                        $this->data[$key] = $val;
+                    }
+                }
             }
+        } catch (\Throwable $e) {
+            throw new Main\SystemException("Temporary file has wrong structure.", "BXU351.01");
         }
     }
 
@@ -56,10 +63,11 @@ class Log implements \ArrayAccess
      */
     public function setLog($key, $value)
     {
-        if (array_key_exists($key, $this->data) && is_array($this->data) && is_array($value))
+        if (array_key_exists($key, $this->data) && is_array($this->data) && is_array($value)) {
             $this->data[$key] = array_merge($this->data[$key], $value);
-        else
+        } else {
             $this->data[$key] = $value;
+        }
         $this->save();
 
         return $this;
@@ -79,7 +87,11 @@ class Log implements \ArrayAccess
      */
     public function save()
     {
-        $this->file->PutContents(serialize($this->data));
+        try {
+            $this->file->PutContents(serialize($this->data));
+        } catch (\Throwable $e) {
+            throw new Main\SystemException("Temporary file was not saved.", "BXU351.02");
+        }
     }
 
     /**
@@ -95,8 +107,13 @@ class Log implements \ArrayAccess
      */
     public function unlink()
     {
-        if ($this->file instanceof \CBXVirtualFileFileSystem && $this->file->IsExists())
-            $this->file->unlink();
+        try {
+            if ($this->file instanceof \CBXVirtualFileFileSystem && $this->file->IsExists()) {
+                $this->file->unlink();
+            }
+        } catch (\Throwable $e) {
+            throw new Main\SystemException("Temporary file was not deleted.", "BXU351.03");
+        }
     }
 
     /**
@@ -114,8 +131,9 @@ class Log implements \ArrayAccess
      */
     public function offsetGet($offset)
     {
-        if (array_key_exists($offset, $this->data))
+        if (array_key_exists($offset, $this->data)) {
             return $this->data[$offset];
+        }
         return null;
     }
 
@@ -190,7 +208,7 @@ class Uploader
     const SESSION_LIST = "MFI_SESSIONS";
     const SESSION_TTL = 86400;
 
-    function __construct($params = array())
+    public function __construct($params = array())
     {
         global $APPLICATION;
 
@@ -201,8 +219,9 @@ class Uploader
         $params["storage"] = (is_array($params["storage"]) ? $params["storage"] : array()) + $this->params["storage"];
         $params["storage"]["moduleId"] = preg_replace("/[^a-z_-]/i", "_", $params["storage"]["moduleId"]);
         $this->params = $params;
-        if (array_key_exists("controlId", $params))
+        if (array_key_exists("controlId", $params)) {
             $this->controlId = $params["controlId"];
+        }
         if (array_key_exists("events", $params) && is_array($params["events"])) {
             foreach ($params["events"] as $key => $val) {
                 $this->setHandler($key, $val);
@@ -215,17 +234,18 @@ class Uploader
             array(
                 "bxu",
                 $this->params["storage"]["moduleId"],
-                md5(serialize(array(
-                        $this->controlId,
-                        bitrix_sessid(),
-                        \CMain::GetServerUniqID()
-                    ))
+                md5(
+                    serialize(
+                        array(
+                            $this->controlId,
+                            bitrix_sessid(),
+                            \CMain::GetServerUniqID()
+                        )
+                    )
                 )
             )
         );
         $this->request = Context::getCurrent()->getRequest();
-
-        return $this;
     }
 
     public function setControlId($controlId)
@@ -254,8 +274,10 @@ class Uploader
                 if ($key == "chunksInfo") {
                     $item[$key]["uploaded"] = count($item[$key]["uploaded"]);
                     $item[$key]["written"] = count($item[$key]["written"]);
-                } else if (is_array($val)) {
-                    $item[$key] = self::removeTmpPath($val);
+                } else {
+                    if (is_array($val)) {
+                        $item[$key] = self::removeTmpPath($val);
+                    }
                 }
             }
         }
@@ -264,8 +286,14 @@ class Uploader
 
     public static function prepareData($data)
     {
-        array_walk_recursive($data, create_function('&$v,$k',
-            'if($k=="error"){$v=preg_replace("/<(.+?)>/is".BX_UTF_PCRE_MODIFIER, "", $v);}'));
+        array_walk_recursive(
+            $data,
+            function (&$v, $k) {
+                if ($k == "error") {
+                    $v = preg_replace("/<(.+?)>/is" . BX_UTF_PCRE_MODIFIER, "", $v);
+                }
+            }
+        );
         return self::removeTmpPath($data);
     }
 
@@ -278,25 +306,29 @@ class Uploader
     protected function fillRequireData()
     {
         $this->mode = $this->getRequest("mode");
-        if (!in_array($this->mode, array("upload", "delete", "view")))
+        if (!in_array($this->mode, array("upload", "delete", "view"))) {
             throw new ArgumentOutOfRangeException("mode");
+        }
 
-        if ($this->mode != "view" && !check_bitrix_sessid())
+        if ($this->mode != "view" && !check_bitrix_sessid()) {
             throw new AccessDeniedException("Bad sessid.");
+        }
 
         $this->version = $this->getRequest("version");
 
         $directory = \CBXVirtualIo::GetInstance()->GetDirectory($this->path);
         $directoryExists = $directory->IsExists();
-        if (!$directory->Create())
+        if (!$directory->Create()) {
             throw new NotImplementedException("Mandatory directory has not been created.");
+        }
         if (!$directoryExists) {
             $access = \CBXVirtualIo::GetInstance()->GetFile($directory->GetPath() . "/.access.php");
             $content = '<?$PERM["' . $directory->GetName() . '"]["*"]="X";?>';
 
-            if (!$access->IsExists() || strpos($access->GetContents(), $content) === false) {
-                if (($fd = $access->Open('ab')) && $fd)
+            if (!$access->IsExists() || mb_strpos($access->GetContents(), $content) === false) {
+                if (($fd = $access->Open('ab')) && $fd) {
                     fwrite($fd, $content);
+                }
                 fclose($fd);
             }
         }
@@ -306,25 +338,32 @@ class Uploader
 
     protected function showJsonAnswer($result)
     {
-        if (!defined("PUBLIC_AJAX_MODE"))
+        if (!defined("PUBLIC_AJAX_MODE")) {
             define("PUBLIC_AJAX_MODE", true);
-        if (!defined("NO_KEEP_STATISTIC"))
+        }
+        if (!defined("NO_KEEP_STATISTIC")) {
             define("NO_KEEP_STATISTIC", "Y");
-        if (!defined("NO_AGENT_STATISTIC"))
+        }
+        if (!defined("NO_AGENT_STATISTIC")) {
             define("NO_AGENT_STATISTIC", "Y");
-        if (!defined("NO_AGENT_CHECK"))
+        }
+        if (!defined("NO_AGENT_CHECK")) {
             define("NO_AGENT_CHECK", true);
-        if (!defined("DisableEventsCheck"))
+        }
+        if (!defined("DisableEventsCheck")) {
             define("DisableEventsCheck", true);
+        }
 
-        require_once(\Bitrix\Main\Application::getInstance()->getContext()->getServer()->getDocumentRoot() . "/bitrix/modules/main/include/prolog_before.php");
+        require_once(\Bitrix\Main\Application::getInstance()->getContext()->getServer()->getDocumentRoot(
+            ) . "/bitrix/modules/main/include/prolog_before.php");
         global $APPLICATION;
 
         $APPLICATION->RestartBuffer();
 
         $version = IsIE();
-        if (!(0 < $version && $version < 10))
+        if (!(0 < $version && $version < 10)) {
             header('Content-Type:application/json; charset=UTF-8');
+        }
 
         echo Json::encode($result);
         \CMain::finalActions();
@@ -338,8 +377,9 @@ class Uploader
      */
     protected function setRequestMethodToCheck(array $methods)
     {
-        foreach ($this->requestMethods as $method => $value)
+        foreach ($this->requestMethods as $method => $value) {
             $this->requestMethods[$method] = in_array($method, $methods);
+        }
         return $this;
     }
 
@@ -382,11 +422,13 @@ class Uploader
     public function checkPost($checkPost = true)
     {
         if ($checkPost === false && !is_array($this->request->getQuery(self::INFO_NAME)) ||
-            $checkPost !== false && !is_array($this->request->getPost(self::INFO_NAME)))
+            $checkPost !== false && !is_array($this->request->getPost(self::INFO_NAME))) {
             return false;
+        }
 
-        if ($checkPost === false)
+        if ($checkPost === false) {
             $this->setRequestMethodToCheck(array("get"));
+        }
 
         try {
             $this->fillRequireData();
@@ -412,8 +454,9 @@ class Uploader
                             "status" => $r["status"],
                             "file" => $r
                         );
-                        if (isset($r["error"]))
+                        if (isset($r["error"])) {
                             $response2[$k]["error"] = $r["error"];
+                        }
                     }
                     $result = array(
                         "status" => $package->getLog("uploadStatus") == "uploaded" ? "done" : "inprogress",
@@ -435,18 +478,29 @@ class Uploader
                     );
                     $this->showJsonAnswer($result);
                 }
-            } else if ($this->mode == "delete") {
-                $cid = FileInputUtility::instance()->registerControl($this->getRequest("CID"), $this->controlId);
-                File::deleteFile($cid, $this->getRequest("hash"), $this->path);
             } else {
-                File::viewFile($cid, $this->getRequest("hash"), $this->path);
+                if ($this->mode == "delete") {
+                    $cid = FileInputUtility::instance()->registerControl($this->getRequest("CID"), $this->controlId);
+                    File::deleteFile($cid, $this->getRequest("hash"), $this->path);
+                } else {
+                    File::viewFile($cid, $this->getRequest("hash"), $this->path);
+                }
             }
             return true;
+        } catch (Main\IO\IoException $e) {
+            $this->showJsonAnswer(
+                array(
+                    "status" => "error",
+                    "error" => "Something went wrong with the temporary file."
+                )
+            );
         } catch (\Exception $e) {
-            $this->showJsonAnswer(array(
-                "status" => "error",
-                "error" => $e->getMessage()
-            ));
+            $this->showJsonAnswer(
+                array(
+                    "status" => "error",
+                    "error" => $e->getMessage()
+                )
+            );
         }
         return false;
     }
@@ -472,12 +526,16 @@ class Uploader
             foreach ($canvases as $canvas => $canvasParams) {
                 if (!array_key_exists($canvas, $file["files"])) {
                     $source = $file["files"]["default"]; // TODO pick up more appropriate copy by params
-                    $file["files"][$canvas] = File::createCanvas($source,
+                    $file["files"][$canvas] = File::createCanvas(
+                        $source,
                         array(
                             "code" => $canvas,
-                            "tmp_name" => substr($source["tmp_name"], 0, -7) . $canvas,
-                            "url" => substr($source["url"], 0, -7) . $canvas
-                        ), $canvasParams, $watermark);
+                            "tmp_name" => mb_substr($source["tmp_name"], 0, -7) . $canvas,
+                            "url" => mb_substr($source["url"], 0, -7) . $canvas
+                        ),
+                        $canvasParams,
+                        $watermark
+                    );
                 }
             }
         }
@@ -504,17 +562,23 @@ class Uploader
                 "tmp_url" => $url,
                 "tmp_name" => $strFilePath
             );
-        } else if ((($docRoot = \Bitrix\Main\Application::getInstance()->getContext()->getServer()->getDocumentRoot()) && $strFilePath = $docRoot . $tmpName) && $io->FileExists($strFilePath)) {
-            return array(
-                "tmp_url" => $tmpName,
-                "tmp_name" => $strFilePath
-            );
-        } else if ($io->FileExists($tmpName) && ($docRoot = \Bitrix\Main\Application::getInstance()->getContext()->getServer()->getDocumentRoot()) &&
-            strpos($tmpName, $docRoot) === 0) {
-            return array(
-                "tmp_url" => str_replace("//", "/", "/" . substr($tmpName, strlen($docRoot))),
-                "tmp_name" => $tmpName
-            );
+        } else {
+            if ((($docRoot = \Bitrix\Main\Application::getInstance()->getContext()->getServer()->getDocumentRoot(
+                    )) && $strFilePath = $docRoot . $tmpName) && $io->FileExists($strFilePath)) {
+                return array(
+                    "tmp_url" => $tmpName,
+                    "tmp_name" => $strFilePath
+                );
+            } else {
+                if ($io->FileExists($tmpName) && ($docRoot = \Bitrix\Main\Application::getInstance()->getContext(
+                    )->getServer()->getDocumentRoot()) &&
+                    mb_strpos($tmpName, $docRoot) === 0) {
+                    return array(
+                        "tmp_url" => str_replace("//", "/", "/" . mb_substr($tmpName, mb_strlen($docRoot))),
+                        "tmp_name" => $tmpName
+                    );
+                }
+            }
         }
         return false;
     }

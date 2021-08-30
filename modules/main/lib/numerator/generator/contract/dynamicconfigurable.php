@@ -1,6 +1,7 @@
 <?php
 
 namespace Bitrix\Main\Numerator\Generator\Contract;
+
 /**
  * Interface DynamicConfigurable -
  * for generators that can not use static values or user specified settings for template parse

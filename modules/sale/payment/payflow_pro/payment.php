@@ -1,4 +1,6 @@
-<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die(); ?><?
+<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+} ?><?
 include(dirname(__FILE__) . "/common.php");
 
 $PF_HOST = CSalePaySystemAction::GetParamValue("PAYFLOW_URL");
@@ -19,54 +21,65 @@ $ORDER_ID = IntVal($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["ID"]);
             //***  START ACTION  ********************************
             //***************************************************
             $strErrorTmp = "";
-            $bNonePay = True;
+            $bNonePay = true;
             if (strlen($_POST["GetPayRes"]) > 0) {
                 $cardnum = htmlspecialcharsbx(Trim($_POST["cardnum"]));
                 $cardnum = preg_replace("#[\D]#i", "", $cardnum);
-                if (strlen($cardnum) <= 0)
+                if (strlen($cardnum) <= 0) {
                     $strErrorTmp .= "Please fill in \"Credit Card Number\" field. ";
+                }
 
                 $cvv2 = htmlspecialcharsbx(Trim($_POST["cvv2"]));
-                if (strlen($cvv2) <= 0)
+                if (strlen($cvv2) <= 0) {
                     $strErrorTmp .= "Please fill in \"CVV2\" field. ";
+                }
 
                 $cardexp1 = IntVal(htmlspecialcharsbx($_POST["cardexp1"]));
                 $cardexp2 = IntVal(htmlspecialcharsbx($_POST["cardexp2"]));
-                if ($cardexp1 < 1 || $cardexp1 > 12)
+                if ($cardexp1 < 1 || $cardexp1 > 12) {
                     $strErrorTmp .= "Please fill in \"Expiration Date\" field. ";
-                elseif ($cardexp2 < 4 || $cardexp2 > 99)
+                } elseif ($cardexp2 < 4 || $cardexp2 > 99) {
                     $strErrorTmp .= "Please fill in \"Expiration Date\" field. ";
-                else {
+                } else {
                     $cardexp1 = ((strlen($cardexp1) < 2) ? "0" . $cardexp1 : $cardexp1);
                     $cardexp2 = ((strlen($cardexp2) < 2) ? "0" . $cardexp2 : $cardexp2);
                 }
 
                 $noc = htmlspecialcharsbx(trim($_POST["noc"]));
-                if (strlen($noc) <= 0)
+                if (strlen($noc) <= 0) {
                     $strErrorTmp .= "Please fill in \"Cardholder\" field. ";
+                }
 
                 $address1 = htmlspecialcharsbx(trim($_POST["address1"]));
-                if (strlen($address1) <= 0)
+                if (strlen($address1) <= 0) {
                     $strErrorTmp .= "Please fill in \"Address\" field. ";
+                }
 
                 $zipcode = htmlspecialcharsbx(trim($_POST["zipcode"]));
-                if (strlen($zipcode) <= 0)
+                if (strlen($zipcode) <= 0) {
                     $strErrorTmp .= "Please fill in \"Zip\" field. ";
+                }
 
                 if (strlen($strErrorTmp) <= 0) {
                     $ret_var = "";
 
                     $AMT = $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["SHOULD_PAY"];
                     if ($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"] != "USD") {
-                        $AMT = CCurrencyRates::ConvertCurrency($AMT, $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"], "USD");
+                        $AMT = CCurrencyRates::ConvertCurrency(
+                            $AMT,
+                            $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"],
+                            "USD"
+                        );
 
                         $additor = 1;
-                        for ($i = 0; $i < SALE_VALUE_PRECISION; $i++)
+                        for ($i = 0; $i < SALE_VALUE_PRECISION; $i++) {
                             $additor = $additor / 10;
+                        }
 
                         $AMT_tmp = round($AMT, SALE_VALUE_PRECISION);
-                        while ($AMT_tmp < $AMT)
+                        while ($AMT_tmp < $AMT) {
                             $AMT_tmp = round($AMT_tmp + $additor, SALE_VALUE_PRECISION);
+                        }
 
                         $AMT = $AMT_tmp;
                     }
@@ -115,9 +128,9 @@ $ORDER_ID = IntVal($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["ID"]);
                         CSaleOrder::Update($ORDER_ID, $arFields);
 
                         $arResult["RESULT"] = IntVal($arResult["RESULT"]);
-                        if ($arResult["RESULT"] == 0)
-                            $bNonePay = False;
-                        else {
+                        if ($arResult["RESULT"] == 0) {
+                            $bNonePay = false;
+                        } else {
                             if ($arResult["RESULT"] < 0) {
                                 $strErrorTmp .= "Communication Error: [" . $arResult["RESULT"] . "] " . $arResult["RESPMSG"] . " - " . $arResult["PREFPSMSG"] . ". ";
                             } elseif ($arPaySysRes_tmp["RESULT"] == 125) {
@@ -130,8 +143,9 @@ $ORDER_ID = IntVal($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["ID"]);
                                 $strErrorTmp .= "Unknown error. ";
                             }
                         }
-                    } else
+                    } else {
                         $strErrorTmp .= "Response error. ";
+                    }
                 }
             }
             //***************************************************
@@ -148,8 +162,9 @@ $ORDER_ID = IntVal($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["ID"]);
             }
             else
             {
-            if (strlen($strErrorTmp) > 0)
+            if (strlen($strErrorTmp) > 0) {
                 echo "<font color=\"#FF0000\"><b>" . $strErrorTmp . "</b></font><br>";
+            }
 
             $noc_def = htmlspecialcharsbx(CSalePaySystemAction::GetParamValue("NOC"));
             $address1_def = htmlspecialcharsbx(CSalePaySystemAction::GetParamValue("ADDRESS"));
@@ -212,11 +227,15 @@ $ORDER_ID = IntVal($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["ID"]);
                                 <select name="cardexp1" class="inputselect">
                                     <?
                                     $curMonth = intval(date("m"));
-                                    if (empty($cardexp1)) $cardexp1 = $curMonth;
+                                    if (empty($cardexp1)) {
+                                        $cardexp1 = $curMonth;
+                                    }
                                     for ($i = 1; $i <= 12; $i++) {
                                         $val = (($i < 10) ? "0" : "") . $i;
                                         ?>
-                                        <option value="<?= $val ?>" <? if ($cardexp1 == $val) echo "selected=\"selected\""; ?>><?= $val ?></option>
+                                        <option value="<?= $val ?>" <? if ($cardexp1 == $val) {
+                                            echo "selected=\"selected\"";
+                                        } ?>><?= $val ?></option>
                                         <?
                                     }
                                     ?>
@@ -224,12 +243,16 @@ $ORDER_ID = IntVal($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["ID"]);
                                 <select name="cardexp2" class="inputselect">
                                     <?
                                     $curYear = intval(date("y"));
-                                    if (empty($cardexp2)) $cardexp2 = $curYear;
+                                    if (empty($cardexp2)) {
+                                        $cardexp2 = $curYear;
+                                    }
                                     for ($i = $curYear; $i <= $curYear + 10; $i++) {
                                         $val = (($i < 10) ? "0" : "") . $i;
                                         $fullYear = 2000 + intval($val);
                                         ?>
-                                        <option value="<?= $val ?>" <? if ($cardexp2 == $val) echo "selected"; ?>><?= $fullYear ?></option>
+                                        <option value="<?= $val ?>" <? if ($cardexp2 == $val) {
+                                            echo "selected";
+                                        } ?>><?= $fullYear ?></option>
                                         <?
                                     }
                                     ?>

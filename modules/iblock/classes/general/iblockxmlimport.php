@@ -74,7 +74,6 @@ final class CIBlockXmlImport
 
     public function __construct()
     {
-
     }
 
     public function __destruct()
@@ -89,25 +88,31 @@ final class CIBlockXmlImport
         $this->final = false;
         $this->clearErrors();
         $this->setParameters($parameters);
-        if (!$this->isSuccess())
+        if (!$this->isSuccess()) {
             return;
+        }
         $this->setConfig($config);
-        if (!$this->isSuccess())
+        if (!$this->isSuccess()) {
             return;
+        }
         $this->initSessionStorage();
-        if (!$this->isSuccess())
+        if (!$this->isSuccess()) {
             return;
+        }
         $this->internalInit();
     }
 
     private function initSessionStorage()
     {
-        if (!isset($_SESSION[self::SESSION_STORAGE_ID]) || !is_array($_SESSION[self::SESSION_STORAGE_ID]))
+        if (!isset($_SESSION[self::SESSION_STORAGE_ID]) || !is_array($_SESSION[self::SESSION_STORAGE_ID])) {
             $_SESSION[self::SESSION_STORAGE_ID] = [];
-        if (!isset($_SESSION[self::SESSION_STORAGE_ID]['SECTIONS_MAP']))
+        }
+        if (!isset($_SESSION[self::SESSION_STORAGE_ID]['SECTIONS_MAP'])) {
             $_SESSION[self::SESSION_STORAGE_ID]['SECTIONS_MAP'] = null;
-        if (!isset($_SESSION[self::SESSION_STORAGE_ID]['PRICES_MAP']))
+        }
+        if (!isset($_SESSION[self::SESSION_STORAGE_ID]['PRICES_MAP'])) {
             $_SESSION[self::SESSION_STORAGE_ID]['PRICES_MAP'] = null;
+        }
         $this->initStepParameters();
     }
 
@@ -212,8 +217,9 @@ final class CIBlockXmlImport
             if (!$this->isFinal()) {
                 $result['IS_FINAL'] = 'N';
                 $progress = $this->getProgressCounter();
-                if (!empty($progress))
+                if (!empty($progress)) {
                     $result['PROGRESS'] = $progress;
+                }
                 unset($progress);
             }
         } else {
@@ -263,8 +269,9 @@ final class CIBlockXmlImport
     private function addError($error)
     {
         $error = trim((string)$error);
-        if ($error === '')
+        if ($error === '') {
             return;
+        }
         $this->errors[] = $error;
     }
 
@@ -275,8 +282,9 @@ final class CIBlockXmlImport
     private function setParameters(array $parameters)
     {
         $this->prepareParameters($parameters);
-        if (!$this->isSuccess())
+        if (!$this->isSuccess()) {
             return;
+        }
         $this->parameters = $parameters;
     }
 
@@ -298,32 +306,32 @@ final class CIBlockXmlImport
                 file_exists($rawFilename)
                 && is_file($rawFilename)
                 && (
-                    substr($rawFilename, -4) === ".xml"
+                    mb_substr($rawFilename, -4) === ".xml"
                 )
             ) {
-                $this->fileParameters['PATH'] = substr($rawFilename, strlen($_SERVER['DOCUMENT_ROOT']));
+                $this->fileParameters['PATH'] = mb_substr($rawFilename, mb_strlen($_SERVER['DOCUMENT_ROOT']));
                 $this->fileParameters['ABSOLUTE_PATH'] = $rawFilename;
             } else {
                 $rawFilename = trim(str_replace("\\", '/', $rawFilename), '/');
                 $filename = rel2abs($_SERVER['DOCUMENT_ROOT'], '/' . $rawFilename);
-                if (strlen($filename) > 1 && $filename === '/' . $rawFilename) {
+                if (mb_strlen($filename) > 1 && $filename === '/' . $rawFilename) {
                     $this->fileParameters['PATH'] = $filename;
                     $this->fileParameters['ABSOLUTE_PATH'] = $_SERVER['DOCUMENT_ROOT'] . $filename;
                 }
                 unset($filename, $rawFilename);
             }
-            $this->fileParameters['FILES_DIRECTORY'] = substr(
+            $this->fileParameters['FILES_DIRECTORY'] = mb_substr(
                 $this->fileParameters['ABSOLUTE_PATH'],
                 0,
-                strrpos($this->fileParameters['ABSOLUTE_PATH'], '/') + 1
+                mb_strrpos($this->fileParameters['ABSOLUTE_PATH'], '/') + 1
             );
         }
 
         $parameters['IBLOCK_TYPE'] = trim($parameters['IBLOCK_TYPE']);
 
-        if (!is_array($parameters['SITE_LIST']))
+        if (!is_array($parameters['SITE_LIST'])) {
             $parameters['SITE_LIST'] = [$parameters['SITE_LIST']];
-
+        }
     }
 
     /**
@@ -333,8 +341,9 @@ final class CIBlockXmlImport
     private function getParameter($name)
     {
         $name = (string)$name;
-        if ($name === '')
+        if ($name === '') {
             return null;
+        }
         return (isset($this->parameters[$name]) ? $this->parameters[$name] : null);
     }
 
@@ -360,8 +369,9 @@ final class CIBlockXmlImport
     private function setConfig(array $config)
     {
         $this->prepareConfig($config);
-        if (!$this->isSuccess())
+        if (!$this->isSuccess()) {
             return;
+        }
         $this->config = $config;
     }
 
@@ -390,8 +400,9 @@ final class CIBlockXmlImport
     private function getConfigFieldValue($field)
     {
         $field = (string)$field;
-        if ($field === '')
+        if ($field === '') {
             return null;
+        }
         return (isset($this->config[$field]) ? $this->config[$field] : null);
     }
 
@@ -448,10 +459,11 @@ final class CIBlockXmlImport
     private function nextStep()
     {
         $index = array_search($this->getCurrentStep(), $this->stepList);
-        if (isset($this->stepList[$index + 1]))
+        if (isset($this->stepList[$index + 1])) {
             $this->setCurrentStep($this->stepList[$index + 1]);
-        else
+        } else {
             $this->final = true;
+        }
     }
 
     /**
@@ -548,8 +560,9 @@ final class CIBlockXmlImport
     private function readXmlAction()
     {
         $this->openXmlFile();
-        if (!$this->isSuccess())
+        if (!$this->isSuccess()) {
             return;
+        }
         if ($this->xmlImport->ReadXMLToDatabase(
             $this->fileHandler,
             $this->stepParameters,
@@ -559,10 +572,12 @@ final class CIBlockXmlImport
             $this->setMessage(Loc::getMessage('IBLOCK_XML_IMPORT_MESS_XML_FILE_READ_COMPLETE'));
             $this->nextStep();
         } else {
-            $this->setMessage(Loc::getMessage(
-                'IBLOCK_XML_IMPORT_MESS_XML_FILE_READ_PROGRESS',
-                ['#PERCENT#' => $this->getXmlFileProgressPercent()]
-            ));
+            $this->setMessage(
+                Loc::getMessage(
+                    'IBLOCK_XML_IMPORT_MESS_XML_FILE_READ_PROGRESS',
+                    ['#PERCENT#' => $this->getXmlFileProgressPercent()]
+                )
+            );
         }
         $this->closeXmlFile();
     }
@@ -594,12 +609,15 @@ final class CIBlockXmlImport
             $this->nextStep();
             $this->setMessage(Loc::getMessage('IBLOCK_XML_IMPORT_MESS_METADATA_IMPORT_COMPLETE'));
         } else {
-            if (is_array($result))
+            if (is_array($result)) {
                 $result = "\n" . implode("\n", $result);
-            $this->addError(Loc::getMessage(
-                'IBLOCK_XML_IMPORT_ERR_METADATA_IMPORT_FAILURE',
-                ['#ERROR#' => $result]
-            ));
+            }
+            $this->addError(
+                Loc::getMessage(
+                    'IBLOCK_XML_IMPORT_ERR_METADATA_IMPORT_FAILURE',
+                    ['#ERROR#' => $result]
+                )
+            );
         }
         unset($result);
     }
@@ -617,10 +635,12 @@ final class CIBlockXmlImport
             $this->nextStep();
             $this->setMessage(Loc::getMessage('IBLOCK_XML_IMPORT_MESS_IBLOCK_SECTIONS_IMPORT_COMPLETE'));
         } else {
-            $this->addError(Loc::getMessage(
-                'IBLOCK_XML_IMPORT_ERR_IBLOCK_SECTIONS_IMPORT_FAILURE',
-                ['#ERROR#' => $result]
-            ));
+            $this->addError(
+                Loc::getMessage(
+                    'IBLOCK_XML_IMPORT_ERR_IBLOCK_SECTIONS_IMPORT_FAILURE',
+                    ['#ERROR#' => $result]
+                )
+            );
         }
     }
 
@@ -659,10 +679,12 @@ final class CIBlockXmlImport
         $this->xmlImport->freezeIblockCache();
         $result = $this->xmlImport->GetTotalCountElementsForImport();
         if (!$result) {
-            $this->addError(Loc::getMessage(
-                'IBLOCK_XML_IMPORT_ERR_ELEMENTS_IMPORT_FAILURE',
-                ['#ERROR#' => $this->xmlImport->LAST_ERROR]
-            ));
+            $this->addError(
+                Loc::getMessage(
+                    'IBLOCK_XML_IMPORT_ERR_ELEMENTS_IMPORT_FAILURE',
+                    ['#ERROR#' => $this->xmlImport->LAST_ERROR]
+                )
+            );
             return;
         }
         $this->xmlImport->ReadCatalogData(
@@ -680,13 +702,15 @@ final class CIBlockXmlImport
             $this->nextStep();
             $this->setMessage(Loc::getMessage('IBLOCK_XML_IMPORT_MESS_IBLOCK_ELEMENTS_IMPORT_COMPLETE'));
         } else {
-            $this->setMessage(Loc::getMessage(
-                'IBLOCK_XML_IMPORT_MESS_IBLOCK_ELEMENTS_IMPORT_PROGRESS',
-                [
-                    '#TOTAL#' => $this->stepParameters['DONE']['ALL'],
-                    '#DONE#' => $this->stepParameters['DONE']['CRC']
-                ]
-            ));
+            $this->setMessage(
+                Loc::getMessage(
+                    'IBLOCK_XML_IMPORT_MESS_IBLOCK_ELEMENTS_IMPORT_PROGRESS',
+                    [
+                        '#TOTAL#' => $this->stepParameters['DONE']['ALL'],
+                        '#DONE#' => $this->stepParameters['DONE']['CRC']
+                    ]
+                )
+            );
             $this->setProgressCounter(
                 $this->stepParameters['DONE']['ALL'],
                 $this->stepParameters['DONE']['CRC']
@@ -712,13 +736,15 @@ final class CIBlockXmlImport
             $this->nextStep();
             $this->setMessage(Loc::getMessage('IBLOCK_XML_IMPORT_MESS_PROCESS_MISSING_IBLOCK_ELEMENTS_COMPLETE'));
         } else {
-            $this->setMessage(Loc::getMessage(
-                'IBLOCK_XML_IMPORT_MESS_IBLOCK_ELEMENTS_IMPORT_PROGRESS',
-                [
-                    '#TOTAL#' => $this->stepParameters['DONE']['ALL'],
-                    '#DONE#' => $this->stepParameters['DONE']['NON']
-                ]
-            ));
+            $this->setMessage(
+                Loc::getMessage(
+                    'IBLOCK_XML_IMPORT_MESS_IBLOCK_ELEMENTS_IMPORT_PROGRESS',
+                    [
+                        '#TOTAL#' => $this->stepParameters['DONE']['ALL'],
+                        '#DONE#' => $this->stepParameters['DONE']['NON']
+                    ]
+                )
+            );
             $this->setProgressCounter(
                 $this->stepParameters['DONE']['ALL'],
                 $this->stepParameters['DONE']['NON']
@@ -777,8 +803,9 @@ final class CIBlockXmlImport
      */
     private function closeXmlFile()
     {
-        if (!is_resource($this->fileHandler))
+        if (!is_resource($this->fileHandler)) {
             return;
+        }
         fclose($this->fileHandler);
         $this->fileHandler = null;
     }
@@ -788,10 +815,12 @@ final class CIBlockXmlImport
      */
     private function getXmlFileProgressPercent()
     {
-        if (!is_resource($this->fileHandler))
+        if (!is_resource($this->fileHandler)) {
             return 0;
-        if ($this->fileParameters['SIZE'] <= 0)
+        }
+        if ($this->fileParameters['SIZE'] <= 0) {
             return 0;
+        }
         return round($this->xmlImport->GetFilePosition() * 100 / $this->fileParameters['SIZE'], 2);
     }
 
@@ -808,8 +837,9 @@ final class CIBlockXmlImport
      */
     private function destroyXmlImporter()
     {
-        if (is_object($this->xmlImport))
+        if (is_object($this->xmlImport)) {
             $this->xmlImport = null;
+        }
     }
 
     /**
@@ -819,8 +849,9 @@ final class CIBlockXmlImport
     {
         unset($this->stepId);
         unset($this->stepParameters);
-        if (array_key_exists(self::SESSION_STORAGE_ID, $_SESSION))
+        if (array_key_exists(self::SESSION_STORAGE_ID, $_SESSION)) {
             unset($_SESSION[self::SESSION_STORAGE_ID]);
+        }
     }
 
     /**

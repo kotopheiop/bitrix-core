@@ -58,11 +58,16 @@ class Component extends \Bitrix\Landing\Node
                     "\t" . '),' . PHP_EOL .
                     "\t" . ($component['DATA']['PARENT_COMP'] ? $component['DATA']['PARENT_COMP'] : 'false') .
                     (!empty($component['DATA']['FUNCTION_PARAMS']) ? ',' . PHP_EOL .
-                        "\t" . 'array(' . PHP_EOL . "\t" . "\t" . \PHPParser::returnPHPStr2($component['DATA']['FUNCTION_PARAMS']) . PHP_EOL .
+                        "\t" . 'array(' . PHP_EOL . "\t" . "\t" . \PHPParser::returnPHPStr2(
+                            $component['DATA']['FUNCTION_PARAMS']
+                        ) . PHP_EOL .
                         "\t" . ')' : '') . PHP_EOL .
                     ');';
                 $componentCode = str_replace(array('<?', '?>'), array('< ?', '? >'), $componentCode);
-                $content = substr($content, 0, $component['START']) . $componentCode . substr($content, $component['END']);
+                $content = mb_substr($content, 0, $component['START']) . $componentCode . mb_substr(
+                        $content,
+                        $component['END']
+                    );
                 break;
             }
         }
@@ -88,9 +93,9 @@ class Component extends \Bitrix\Landing\Node
             }
         } else {
             if (
-                substr($code, 0, 2) == '={' &&
-                substr($code, -1, 1) == '}' &&
-                strlen($code) > 3
+                mb_substr($code, 0, 2) == '={' &&
+                mb_substr($code, -1, 1) == '}' &&
+                mb_strlen($code) > 3
             ) {
                 return true;
             }
@@ -155,8 +160,11 @@ class Component extends \Bitrix\Landing\Node
      * @param array &$manifestFull Full manifest of block (by ref).
      * @return array|null Return null for delete from manifest.
      */
-    public static function prepareManifest(\Bitrix\Landing\Block $block, array $manifest, array &$manifestFull = array())
-    {
+    public static function prepareManifest(
+        \Bitrix\Landing\Block $block,
+        array $manifest,
+        array &$manifestFull = array()
+    ) {
         if (
             !isset($manifest['extra']['editable']) ||
             !is_array($manifest['extra']['editable'])
@@ -228,23 +236,28 @@ class Component extends \Bitrix\Landing\Node
                         'block' => array(),
                         'nodes' => array()
                     );
-                } else if (!isset($manifestFull['style']['nodes'])) {
-                    $manifestFull['style'] = array(
-                        'nodes' => $manifestFull['style']
-                    );
+                } else {
+                    if (!isset($manifestFull['style']['nodes'])) {
+                        $manifestFull['style'] = array(
+                            'nodes' => $manifestFull['style']
+                        );
+                    }
                 }
-                $manifestFull['style']['block'] = array_merge(array(
-                    'name' => isset($componentDesc['NAME'])
-                        ? $componentDesc['NAME']
-                        : '',
-                    'type' => 'box',
-                    'additional' => array(
-                        array(
-                            'name' => Loc::getMessage('LANDING_NODE_CMP_STYLE_BLOCK'),
-                            'attrs' => &$styleAttrs
+                $manifestFull['style']['block'] = array_merge(
+                    array(
+                        'name' => isset($componentDesc['NAME'])
+                            ? $componentDesc['NAME']
+                            : '',
+                        'type' => 'box',
+                        'additional' => array(
+                            array(
+                                'name' => Loc::getMessage('LANDING_NODE_CMP_STYLE_BLOCK'),
+                                'attrs' => &$styleAttrs
+                            )
                         )
-                    )
-                ), $originalStyleBlock);
+                    ),
+                    $originalStyleBlock
+                );
                 foreach ($editable as $field => $fieldItem) {
                     if (isset($props[$field])) {
                         // change node manifest
@@ -256,7 +269,8 @@ class Component extends \Bitrix\Landing\Node
                         if (!isset($manifestFull['attrs'][$componentName])) {
                             $manifestFull['attrs'][$componentName] = array();
                         }
-                        $propType = self::transformPropType(array(
+                        $propType = self::transformPropType(
+                            array(
                                 'name' => isset($fieldItem['name'])
                                     ? $fieldItem['name']
                                     : $newExtra[$field]['NAME'],
@@ -273,7 +287,9 @@ class Component extends \Bitrix\Landing\Node
                                 ),
                                 //'original_value' => $newExtra[$field]['VALUE'],
                                 'allowInlineEdit' => false
-                            ) + $fieldItem, $newExtra[$field]);
+                            ) + $fieldItem,
+                            $newExtra[$field]
+                        );
                         $newExtra[$field]['ATTRIBUTE_TYPE'] = $propType['type'];
                         if ($propType['style']) {
                             $propType['selector'] = $componentName;
@@ -361,16 +377,56 @@ class Component extends \Bitrix\Landing\Node
                 {
                     $item['type'] = 'catalog-view';
                     $item['items'] = array(
-                        array('name' => '', 'image' => '/bitrix/images/landing/catalog_images/preset-1.svg', 'value' => '0'),
-                        array('name' => '', 'image' => '/bitrix/images/landing/catalog_images/preset-2.svg', 'value' => '1'),
-                        array('name' => '', 'image' => '/bitrix/images/landing/catalog_images/preset-3.svg', 'value' => '2'),
-                        array('name' => '', 'image' => '/bitrix/images/landing/catalog_images/preset-4.svg', 'value' => '3'),
-                        array('name' => '', 'image' => '/bitrix/images/landing/catalog_images/preset-1-4.svg', 'value' => '4'),
-                        array('name' => '', 'image' => '/bitrix/images/landing/catalog_images/preset-4-1.svg', 'value' => '5'),
-                        array('name' => '', 'image' => '/bitrix/images/landing/catalog_images/preset-6.svg', 'value' => '6'),
-                        array('name' => '', 'image' => '/bitrix/images/landing/catalog_images/preset-1-6.svg', 'value' => '7'),
-                        array('name' => '', 'image' => '/bitrix/images/landing/catalog_images/preset-6-1.svg', 'value' => '8'),
-                        array('name' => '', 'image' => '/bitrix/images/landing/catalog_images/preset-line.svg', 'value' => '9')
+                        array(
+                            'name' => '',
+                            'image' => '/bitrix/images/landing/catalog_images/preset-1.svg',
+                            'value' => '0'
+                        ),
+                        array(
+                            'name' => '',
+                            'image' => '/bitrix/images/landing/catalog_images/preset-2.svg',
+                            'value' => '1'
+                        ),
+                        array(
+                            'name' => '',
+                            'image' => '/bitrix/images/landing/catalog_images/preset-3.svg',
+                            'value' => '2'
+                        ),
+                        array(
+                            'name' => '',
+                            'image' => '/bitrix/images/landing/catalog_images/preset-4.svg',
+                            'value' => '3'
+                        ),
+                        array(
+                            'name' => '',
+                            'image' => '/bitrix/images/landing/catalog_images/preset-1-4.svg',
+                            'value' => '4'
+                        ),
+                        array(
+                            'name' => '',
+                            'image' => '/bitrix/images/landing/catalog_images/preset-4-1.svg',
+                            'value' => '5'
+                        ),
+                        array(
+                            'name' => '',
+                            'image' => '/bitrix/images/landing/catalog_images/preset-6.svg',
+                            'value' => '6'
+                        ),
+                        array(
+                            'name' => '',
+                            'image' => '/bitrix/images/landing/catalog_images/preset-1-6.svg',
+                            'value' => '7'
+                        ),
+                        array(
+                            'name' => '',
+                            'image' => '/bitrix/images/landing/catalog_images/preset-6-1.svg',
+                            'value' => '8'
+                        ),
+                        array(
+                            'name' => '',
+                            'image' => '/bitrix/images/landing/catalog_images/preset-line.svg',
+                            'value' => '9'
+                        )
                     );
                     $jsArray = \Cutil::jsObjectToPhp($item['value']);
                     $item['value'] = array();
@@ -412,7 +468,9 @@ class Component extends \Bitrix\Landing\Node
                             $item['items'][] = array(
                                 'name' => $val,
                                 'value' => $code,
-                                'preview' => '/bitrix/images/landing/catalog_images/preview/' . strtolower($code) . '.svg?v3'
+                                'preview' => '/bitrix/images/landing/catalog_images/preview/' . mb_strtolower(
+                                        $code
+                                    ) . '.svg?v3'
                             );
                         }
                     }
@@ -483,12 +541,14 @@ class Component extends \Bitrix\Landing\Node
                             $value != '={$elementId}'
                         ) {
                             $value = '#catalogElement' . $value;
-                        } else if (
-                            $prop['entityType'] == 'section' &&
-                            $value != '={$sectionCode}' &&
-                            $value != '={$sectionId}'
-                        ) {
-                            $value = '#catalogSection' . $value;
+                        } else {
+                            if (
+                                $prop['entityType'] == 'section' &&
+                                $value != '={$sectionCode}' &&
+                                $value != '={$sectionId}'
+                            ) {
+                                $value = '#catalogSection' . $value;
+                            }
                         }
                     }
                 }
@@ -563,14 +623,19 @@ class Component extends \Bitrix\Landing\Node
                             case 'url':
                             {
                                 if (preg_match('/^#landing([\d]+)$/', $value, $matches)) {
-                                    $lansing = \Bitrix\Landing\Landing::createInstance($matches[1], [
-                                        'skip_blocks' => true
-                                    ]);
+                                    $lansing = \Bitrix\Landing\Landing::createInstance(
+                                        $matches[1],
+                                        [
+                                            'skip_blocks' => true
+                                        ]
+                                    );
                                     if ($lansing->exist()) {
                                         $value = $lansing->getPublicUrl();
                                     }
-                                } else if (preg_match('/^#catalog(Element|Section)([\d]+)$/', $value, $matches)) {
-                                    $value = $matches[2];
+                                } else {
+                                    if (preg_match('/^#catalog(Element|Section)([\d]+)$/', $value, $matches)) {
+                                        $value = $matches[2];
+                                    }
                                 }
                                 break;
                             }

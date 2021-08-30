@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/support/prolog.php");
 CModule::IncludeModule('support');
@@ -7,8 +8,9 @@ IncludeModuleLangFile(__FILE__);
 $bDemo = CTicket::IsDemo();
 $bAdmin = CTicket::IsAdmin();
 
-if (!$bAdmin && !$bDemo)
+if (!$bAdmin && !$bDemo) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $LIST_URL = '/bitrix/admin/ticket_coupon_list.php';
 
@@ -16,7 +18,7 @@ $ID = intval($ID);
 
 $message = false;
 
-if ((strlen($save) > 0 || strlen($apply) > 0) && $REQUEST_METHOD == 'POST' && $bAdmin && check_bitrix_sessid()) {
+if (($save <> '' || $apply <> '') && $REQUEST_METHOD == 'POST' && $bAdmin && check_bitrix_sessid()) {
     $obSSC = new CSupportSuperCoupon();
     $bOK = false;
     $new = false;
@@ -25,8 +27,8 @@ if ((strlen($save) > 0 || strlen($apply) > 0) && $REQUEST_METHOD == 'POST' && $b
         "ACTIVE_FROM" => $_POST['ACTIVE_FROM'],
         "ACTIVE_TO" => $_POST['ACTIVE_TO'],
         "ACTIVE" => $_POST['ACTIVE'],
-        "COUNT_TICKETS" => IntVal($_POST['COUNT_TICKETS']),
-        "SLA_ID" => IntVal($_POST['SLA_ID']),
+        "COUNT_TICKETS" => intval($_POST['COUNT_TICKETS']),
+        "SLA_ID" => intval($_POST['SLA_ID']),
     );
 
     if ($ID > 0) {
@@ -48,11 +50,19 @@ if ((strlen($save) > 0 || strlen($apply) > 0) && $REQUEST_METHOD == 'POST' && $b
         }
     }
     if ($bOK) {
-        if (strlen($save) > 0) LocalRedirect($LIST_URL . '?lang=' . LANG . ($new ? '&SHOW_COUPON=Y' : ''));
-        elseif ($new) LocalRedirect($APPLICATION->GetCurPage() . '?ID=' . $ID . '&lang=' . LANG . '&tabControl_active_tab=' . urlencode($tabControl_active_tab));
+        if ($save <> '') {
+            LocalRedirect($LIST_URL . '?lang=' . LANG . ($new ? '&SHOW_COUPON=Y' : ''));
+        } elseif ($new) {
+            LocalRedirect(
+                $APPLICATION->GetCurPage() . '?ID=' . $ID . '&lang=' . LANG . '&tabControl_active_tab=' . urlencode(
+                    $tabControl_active_tab
+                )
+            );
+        }
     } else {
-        if ($e = $APPLICATION->GetException())
+        if ($e = $APPLICATION->GetException()) {
             $message = new CAdminMessage(GetMessage('SUP_CE_ERROR'), $e);
+        }
     }
 }
 
@@ -69,10 +79,14 @@ if (!$arCoupon) {
     );
 }
 
-$str_ACTIVE_FROM = isset($_REQUEST["ACTIVE_FROM"]) ? htmlspecialcharsbx($_REQUEST["ACTIVE_FROM"]) : $arCoupon["ACTIVE_FROM"];
+$str_ACTIVE_FROM = isset($_REQUEST["ACTIVE_FROM"]) ? htmlspecialcharsbx(
+    $_REQUEST["ACTIVE_FROM"]
+) : $arCoupon["ACTIVE_FROM"];
 $str_ACTIVE_TO = isset($_REQUEST["ACTIVE_TO"]) ? htmlspecialcharsbx($_REQUEST["ACTIVE_TO"]) : $arCoupon["ACTIVE_TO"];
-$str_COUNT_TICKETS = isset($_REQUEST["COUNT_TICKETS"]) ? IntVal($_REQUEST["COUNT_TICKETS"]) : $arCoupon["COUNT_TICKETS"];
-$str_SLA_ID = isset($_REQUEST["SLA_ID"]) ? IntVal($arCoupon["SLA_ID"]) : $arCoupon["SLA_ID"];
+$str_COUNT_TICKETS = isset($_REQUEST["COUNT_TICKETS"]) ? intval(
+    $_REQUEST["COUNT_TICKETS"]
+) : $arCoupon["COUNT_TICKETS"];
+$str_SLA_ID = isset($_REQUEST["SLA_ID"]) ? intval($arCoupon["SLA_ID"]) : $arCoupon["SLA_ID"];
 $str_ACTIVE = isset($_REQUEST["ACTIVE"]) ? ($_REQUEST["ACTIVE"] == 'Y' ? 'Y' : 'N') : $arCoupon["ACTIVE"];
 
 
@@ -96,8 +110,9 @@ $aMenu = array(
 $context = new CAdminContextMenu($aMenu);
 $context->Show();
 
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 
 $aTabs = array();
 $aTabs[] = array(
@@ -142,7 +157,8 @@ $tabControl = new CAdminTabControl('tabControl', $aTabs);
         </tr>
         <?
         $arr = Array("reference" => array(), "reference_id" => array());
-        $rs = CTicketSLA::GetList($a = array('NAME' => 'ASC'), array(), $__is_f);
+        $a = array('NAME' => 'ASC');
+        $rs = CTicketSLA::GetList($a, array(), $__is_f);
         while ($arSla = $rs->GetNext()) {
             $arr['reference'][] = htmlspecialcharsback($arSla['NAME']) . ' [' . $arSla['ID'] . ']';
             $arr['reference_id'][] = $arSla['ID'];

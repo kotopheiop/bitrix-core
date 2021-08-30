@@ -6,9 +6,10 @@ class CAllSearchTitle extends CDBResult
     var $_arStemFunc;
     var $minLength = 1;
 
-    function __construct()
+    function __construct($res = null)
     {
         $this->_arStemFunc = stemming_init(LANGUAGE_ID);
+        parent::__construct($res);
     }
 
     function Search($phrase = "", $nTopCount = 5, $arParams = array(), $bNotFilter = false, $order = "")
@@ -17,10 +18,18 @@ class CAllSearchTitle extends CDBResult
         $this->_arPhrase = stemming_split($phrase, LANGUAGE_ID);
         if (!empty($this->_arPhrase)) {
             $nTopCount = intval($nTopCount);
-            if ($nTopCount <= 0)
+            if ($nTopCount <= 0) {
                 $nTopCount = 5;
+            }
 
-            $arId = CSearchFullText::getInstance()->searchTitle($phrase, $this->_arPhrase, $nTopCount, $arParams, $bNotFilter, $order);
+            $arId = CSearchFullText::getInstance()->searchTitle(
+                $phrase,
+                $this->_arPhrase,
+                $nTopCount,
+                $arParams,
+                $bNotFilter,
+                $order
+            );
             if (!is_array($arId)) {
                 return $this->searchTitle($phrase, $nTopCount, $arParams, $bNotFilter, $order);
             } elseif (!empty($arId)) {
@@ -47,7 +56,7 @@ class CAllSearchTitle extends CDBResult
 				";
 
                 $r = $DB->Query($DB->TopSql($strSql, $nTopCount + 1));
-                parent::CDBResult($r);
+                parent::__construct($r);
                 return true;
             }
         } else {
@@ -63,8 +72,9 @@ class CAllSearchTitle extends CDBResult
     function setMinWordLength($minLength)
     {
         $minLength = intval($minLength);
-        if ($minLength > 0)
+        if ($minLength > 0) {
             $this->minLength = $minLength;
+        }
     }
 
     function Fetch()
@@ -76,20 +86,20 @@ class CAllSearchTitle extends CDBResult
         if ($r) {
             $site_id = $r["SITE_ID"];
             if (!isset($arSite[$site_id])) {
-                $b = "sort";
-                $o = "asc";
-                $rsSite = CSite::GetList($b, $o, array("ID" => $site_id));
+                $rsSite = CSite::GetList('', '', array("ID" => $site_id));
                 $arSite[$site_id] = $rsSite->Fetch();
             }
             $r["DIR"] = $arSite[$site_id]["DIR"];
             $r["SERVER_NAME"] = $arSite[$site_id]["SERVER_NAME"];
 
-            if (strlen($r["SITE_URL"]) > 0)
+            if ($r["SITE_URL"] <> '') {
                 $r["URL"] = $r["SITE_URL"];
+            }
 
-            if (substr($r["URL"], 0, 1) == "=") {
-                foreach (GetModuleEvents("search", "OnSearchGetURL", true) as $arEvent)
+            if (mb_substr($r["URL"], 0, 1) == "=") {
+                foreach (GetModuleEvents("search", "OnSearchGetURL", true) as $arEvent) {
                     $r["URL"] = ExecuteModuleEventEx($arEvent, array($r));
+                }
             }
 
             $r["URL"] = str_replace(
@@ -101,21 +111,43 @@ class CAllSearchTitle extends CDBResult
 
             $r["NAME"] = htmlspecialcharsEx($r["TITLE"]);
 
-            $preg_template = "/(^|[^" . $this->_arStemFunc["pcre_letters"] . "])(" . str_replace("/", "\\/", implode("|", array_map('preg_quote', array_keys($this->_arPhrase)))) . ")/i" . BX_UTF_PCRE_MODIFIER;
+            $preg_template = "/(^|[^" . $this->_arStemFunc["pcre_letters"] . "])(" . str_replace(
+                    "/",
+                    "\\/",
+                    implode(
+                        "|",
+                        array_map(
+                            'preg_quote',
+                            array_keys(
+                                $this->_arPhrase
+                            )
+                        )
+                    )
+                ) . ")/i" . BX_UTF_PCRE_MODIFIER;
             if (preg_match_all($preg_template, ToUpper($r["NAME"]), $arMatches, PREG_OFFSET_CAPTURE)) {
                 $c = count($arMatches[2]);
                 if (defined("BX_UTF")) {
                     for ($j = $c - 1; $j >= 0; $j--) {
                         $prefix = mb_substr($r["NAME"], 0, $arMatches[2][$j][1], 'latin1');
-                        $instr = mb_substr($r["NAME"], $arMatches[2][$j][1], mb_strlen($arMatches[2][$j][0], 'latin1'), 'latin1');
-                        $suffix = mb_substr($r["NAME"], $arMatches[2][$j][1] + mb_strlen($arMatches[2][$j][0], 'latin1'), mb_strlen($r["NAME"], 'latin1'), 'latin1');
+                        $instr = mb_substr(
+                            $r["NAME"],
+                            $arMatches[2][$j][1],
+                            mb_strlen($arMatches[2][$j][0], 'latin1'),
+                            'latin1'
+                        );
+                        $suffix = mb_substr(
+                            $r["NAME"],
+                            $arMatches[2][$j][1] + mb_strlen($arMatches[2][$j][0], 'latin1'),
+                            mb_strlen($r["NAME"], 'latin1'),
+                            'latin1'
+                        );
                         $r["NAME"] = $prefix . "<b>" . $instr . "</b>" . $suffix;
                     }
                 } else {
                     for ($j = $c - 1; $j >= 0; $j--) {
-                        $prefix = substr($r["NAME"], 0, $arMatches[2][$j][1]);
-                        $instr = substr($r["NAME"], $arMatches[2][$j][1], strlen($arMatches[2][$j][0]));
-                        $suffix = substr($r["NAME"], $arMatches[2][$j][1] + strlen($arMatches[2][$j][0]));
+                        $prefix = mb_substr($r["NAME"], 0, $arMatches[2][$j][1]);
+                        $instr = mb_substr($r["NAME"], $arMatches[2][$j][1], mb_strlen($arMatches[2][$j][0]));
+                        $suffix = mb_substr($r["NAME"], $arMatches[2][$j][1] + mb_strlen($arMatches[2][$j][0]));
                         $r["NAME"] = $prefix . "<b>" . $instr . "</b>" . $suffix;
                     }
                 }

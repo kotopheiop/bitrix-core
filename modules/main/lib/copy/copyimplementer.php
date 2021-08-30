@@ -71,8 +71,14 @@ abstract class CopyImplementer
             return;
         }
 
-        $this->userTypeManager->copy($ufObject, $entityId, $copiedEntityId,
-            $this, $this->executiveUserId, $this->ufIgnoreList);
+        $this->userTypeManager->copy(
+            $ufObject,
+            $entityId,
+            $copiedEntityId,
+            $this,
+            $this->executiveUserId,
+            $this->ufIgnoreList
+        );
     }
 
     /**
@@ -123,7 +129,9 @@ abstract class CopyImplementer
         $data = [];
         foreach ($results as $result) {
             $data = $data + $result->getData();
-            $copyResult->addErrors($result->getErrors());
+            if ($result->getErrors()) {
+                $copyResult->addErrors($result->getErrors());
+            }
         }
 
         if ($data) {

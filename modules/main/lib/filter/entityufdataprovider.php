@@ -39,13 +39,15 @@ class EntityUFDataProvider extends DataProvider
     {
         global $USER_FIELD_MANAGER;
 
-        static $result = null;
-        if ($result === null) {
-            $result = $USER_FIELD_MANAGER->getUserFields($this->getUserFieldEntityID(), 0, LANGUAGE_ID, false);
-            $result = $this->postFilterFields($result);
+        static $result = [];
+
+        $entityId = $this->getUserFieldEntityID();
+        if (!isset($result[$entityId])) {
+            $result[$entityId] = $USER_FIELD_MANAGER->getUserFields($entityId, 0, LANGUAGE_ID, false);
+            $result[$entityId] = $this->postFilterFields($result[$entityId]);
         }
 
-        return $result;
+        return $result[$entityId];
     }
 
     /**
@@ -74,7 +76,7 @@ class EntityUFDataProvider extends DataProvider
                     $fieldLabel = $userField['EDIT_FORM_LABEL'];
                 }
             }
-            if (strlen($fieldLabel) <= 0) {
+            if ($fieldLabel == '') {
                 $fieldLabel = $fieldName;
             }
 

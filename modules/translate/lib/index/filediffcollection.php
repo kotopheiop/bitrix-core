@@ -60,8 +60,11 @@ class FileDiffCollection
      *
      * @return int
      */
-    public function collect(Translate\Filter $filter = null, Translate\Controller\ITimeLimit $timer = null, Translate\Filter $seek = null)
-    {
+    public function collect(
+        Translate\Filter $filter = null,
+        Translate\Controller\ITimeLimit $timer = null,
+        Translate\Filter $seek = null
+    ) {
         self::configure();
 
         return 0;

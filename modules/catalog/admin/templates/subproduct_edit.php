@@ -10,7 +10,9 @@ use Bitrix\Main,
 $selfFolderUrl = (defined("SELF_FOLDER_URL") ? SELF_FOLDER_URL : "/bitrix/admin/");
 $publicMode = (defined("SELF_FOLDER_URL") ? true : false);
 
-if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_price') || $USER->CanDoOperation('catalog_view')) {
+if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_price') || $USER->CanDoOperation(
+        'catalog_view'
+    )) {
     IncludeModuleLangFile($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/catalog/templates/product_edit.php');
 
     $currencyList = array();
@@ -28,14 +30,19 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
     $bUseStoreControl = Catalog\Config\State::isUsedInventoryManagement();
     $bEnableReservation = ('N' != COption::GetOptionString('catalog', 'enable_reservation'));
     $enableQuantityRanges = Catalog\Config\Feature::isPriceQuantityRangesEnabled();
+    $quantityRangesHelpLink = null;
+    if (!$enableQuantityRanges) {
+        $quantityRangesHelpLink = Catalog\Config\Feature::getPriceQuantityRangesHelpLink();
+    }
 
     $availQuantityTrace = COption::GetOptionString("catalog", "default_quantity_trace");
     $availCanBuyZero = COption::GetOptionString("catalog", "default_can_buy_zero");
     $strGlobalSubscribe = COption::GetOptionString("catalog", "default_subscribe");
 
     $IBLOCK_ID = intval($IBLOCK_ID);
-    if ($IBLOCK_ID <= 0)
+    if ($IBLOCK_ID <= 0) {
         return;
+    }
     $arCatalog = CCatalog::GetByID($IBLOCK_ID);
     $PRODUCT_ID = (0 < $ID ? CIBlockElement::GetRealElement($ID) : 0);
     $arBaseProduct = CCatalogProduct::GetByID($PRODUCT_ID);
@@ -46,9 +53,17 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
     }
 
     if (0 < $PRODUCT_ID) {
-        $bReadOnly = !($USER->CanDoOperation('catalog_price') && CIBlockElementRights::UserHasRightTo($IBLOCK_ID, $PRODUCT_ID, "element_edit_price"));
+        $bReadOnly = !($USER->CanDoOperation('catalog_price') && CIBlockElementRights::UserHasRightTo(
+                $IBLOCK_ID,
+                $PRODUCT_ID,
+                "element_edit_price"
+            ));
     } else {
-        $bReadOnly = !($USER->CanDoOperation('catalog_price') && CIBlockRights::UserHasRightTo($IBLOCK_ID, $IBLOCK_ID, "element_edit_price"));
+        $bReadOnly = !($USER->CanDoOperation('catalog_price') && CIBlockRights::UserHasRightTo(
+                $IBLOCK_ID,
+                $IBLOCK_ID,
+                "element_edit_price"
+            ));
     }
     if ($bSubCopy) {
         $arBaseProduct['QUANTITY'] = '';
@@ -67,7 +82,9 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
     <tr class="heading">
         <td colspan="2"><?
             echo GetMessage("IBLOCK_TCATALOG");
-            if ($bReadOnly) echo " " . GetMessage("IBLOCK_TREADONLY");
+            if ($bReadOnly) {
+                echo " " . GetMessage("IBLOCK_TREADONLY");
+            }
             ?>
             <script type="text/javascript">
                 var bReadOnly = <? echo($bReadOnly ? 'true' : 'false'); ?>;
@@ -198,15 +215,40 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
         <td valign="top" colspan="2">
             <?
             $aTabs1 = array();
-            $aTabs1[] = array("DIV" => "subcat_edit1", "TAB" => GetMessage("C2IT_PRICES"), "TITLE" => GetMessage("C2IT_PRICES_D"));
+            $aTabs1[] = array(
+                "DIV" => "subcat_edit1",
+                "TAB" => GetMessage("C2IT_PRICES"),
+                "TITLE" => GetMessage("C2IT_PRICES_D")
+            );
 
-            $aTabs1[] = array("DIV" => "subcat_edit3", "TAB" => GetMessage("C2IT_PARAMS"), "TITLE" => GetMessage("C2IT_PARAMS_D"));
-            if ($arCatalog["SUBSCRIPTION"] == "Y")
-                $aTabs1[] = array("DIV" => "subcat_edit4", "TAB" => GetMessage("C2IT_GROUPS"), "TITLE" => GetMessage("C2IT_GROUPS_D"));
-            $aTabs1[] = array("DIV" => "subcat_edit6", "TAB" => GetMessage("C2IT_DISCOUNTS"), "TITLE" => GetMessage("C2IT_DISCOUNTS_D"));
-            $aTabs1[] = array("DIV" => "subcat_edit5", "TAB" => GetMessage("C2IT_STORE"), "TITLE" => GetMessage("C2IT_STORE_D"));
+            $aTabs1[] = array(
+                "DIV" => "subcat_edit3",
+                "TAB" => GetMessage("C2IT_PARAMS"),
+                "TITLE" => GetMessage("C2IT_PARAMS_D")
+            );
+            if ($arCatalog["SUBSCRIPTION"] == "Y") {
+                $aTabs1[] = array(
+                    "DIV" => "subcat_edit4",
+                    "TAB" => GetMessage("C2IT_GROUPS"),
+                    "TITLE" => GetMessage("C2IT_GROUPS_D")
+                );
+            }
+            $aTabs1[] = array(
+                "DIV" => "subcat_edit6",
+                "TAB" => GetMessage("C2IT_DISCOUNTS"),
+                "TITLE" => GetMessage("C2IT_DISCOUNTS_D")
+            );
+            $aTabs1[] = array(
+                "DIV" => "subcat_edit5",
+                "TAB" => GetMessage("C2IT_STORE"),
+                "TITLE" => GetMessage("C2IT_STORE_D")
+            );
             if ($bUseStoreControl) {
-                $aTabs1[] = array("DIV" => "subcat_edit7", "TAB" => GetMessage("C2IT_BAR_CODE"), "TITLE" => GetMessage("C2IT_BAR_CODE_D"));
+                $aTabs1[] = array(
+                    "DIV" => "subcat_edit7",
+                    "TAB" => GetMessage("C2IT_BAR_CODE"),
+                    "TITLE" => GetMessage("C2IT_BAR_CODE_D")
+                );
             }
             if ($activitySubscribeTab) {
                 $aTabs1[] = array(
@@ -237,10 +279,12 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                 $arPrice['RAW_QUANTITY_TO'] = $arPrice['QUANTITY_TO'];
                 $arPrice['QUANTITY_FROM'] = (int)$arPrice['QUANTITY_FROM'];
                 $arPrice['QUANTITY_TO'] = (int)$arPrice['QUANTITY_TO'];
-                if ($arPrice['RAW_QUANTITY_FROM'] !== null && $arPrice['QUANTITY_FROM'] > 0)
+                if ($arPrice['RAW_QUANTITY_FROM'] !== null && $arPrice['QUANTITY_FROM'] > 0) {
                     $usedRanges = true;
-                if ($arPrice['RAW_QUANTITY_TO'] !== null && $arPrice['QUANTITY_TO'] > 0)
+                }
+                if ($arPrice['RAW_QUANTITY_TO'] !== null && $arPrice['QUANTITY_TO'] > 0) {
                     $usedRanges = true;
+                }
                 if ($arPrice["BASE"] == "Y") {
                     $arPriceBoundaries[] = array(
                         "FROM" => $arPrice["QUANTITY_FROM"],
@@ -248,19 +292,53 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                     );
                     if ($arPrice["QUANTITY_FROM"] > $arPrice["QUANTITY_TO"]
                         && $arPrice["QUANTITY_TO"] != 0) {
-                        $arPriceBoundariesError[] = str_replace("#RIGHT#", $arPrice["QUANTITY_TO"], str_replace("#LEFT#", $arPrice["QUANTITY_FROM"], GetMessage("C2IT_BOUND_LR")));
+                        $arPriceBoundariesError[] = str_replace(
+                            "#RIGHT#",
+                            $arPrice["QUANTITY_TO"],
+                            str_replace(
+                                "#LEFT#",
+                                $arPrice["QUANTITY_FROM"],
+                                GetMessage("C2IT_BOUND_LR")
+                            )
+                        );
                     }
                 } else {
                     if ($arPrice["QUANTITY_FROM"] > $arPrice["QUANTITY_TO"]
                         && $arPrice["QUANTITY_TO"] != 0) {
-                        $arPriceBoundariesError[] = str_replace("#TYPE#", $arPrice["CATALOG_GROUP_NAME"], str_replace("#RIGHT#", $arPrice["QUANTITY_TO"], str_replace("#LEFT#", $arPrice["QUANTITY_FROM"], GetMessage("C2IT_BOUND_LR1"))));
+                        $arPriceBoundariesError[] = str_replace(
+                            "#TYPE#",
+                            $arPrice["CATALOG_GROUP_NAME"],
+                            str_replace(
+                                "#RIGHT#",
+                                $arPrice["QUANTITY_TO"],
+                                str_replace(
+                                    "#LEFT#",
+                                    $arPrice["QUANTITY_FROM"],
+                                    GetMessage("C2IT_BOUND_LR1")
+                                )
+                            )
+                        );
                     } else {
                         $bNewSegment = true;
                         $intCount = count($arPriceBoundaries);
                         for ($i = 0; $i < $intCount; $i++) {
                             if ($arPriceBoundaries[$i]["FROM"] == $arPrice["QUANTITY_FROM"]) {
                                 if ($arPriceBoundaries[$i]["TO"] != $arPrice["QUANTITY_TO"]) {
-                                    $arPriceBoundariesError[] = str_replace("#TYPE#", $arPrice["CATALOG_GROUP_NAME"], str_replace("#RIGHT#", $arPrice["QUANTITY_TO"], str_replace("#LEFT#", $arPrice["QUANTITY_FROM"], GetMessage("C2IT_BOUND_DIAP"))));
+                                    $arPriceBoundariesError[] = str_replace(
+                                        "#TYPE#",
+                                        $arPrice["CATALOG_GROUP_NAME"],
+                                        str_replace(
+                                            "#RIGHT#",
+                                            $arPrice["QUANTITY_TO"],
+                                            str_replace(
+                                                "#LEFT#",
+                                                $arPrice["QUANTITY_FROM"],
+                                                GetMessage(
+                                                    "C2IT_BOUND_DIAP"
+                                                )
+                                            )
+                                        )
+                                    );
                                 }
                                 $bNewSegment = false;
                                 break;
@@ -268,14 +346,31 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                                 if ($arPriceBoundaries[$i]["FROM"] < $arPrice["QUANTITY_FROM"]
                                     && $arPriceBoundaries[$i]["TO"] >= $arPrice["QUANTITY_TO"]
                                     && $arPrice["QUANTITY_TO"] != 0) {
-                                    $arPriceBoundariesError[] = str_replace("#TYPE#", $arPrice["CATALOG_GROUP_NAME"], str_replace("#RIGHT#", $arPrice["QUANTITY_TO"], str_replace("#LEFT#", $arPrice["QUANTITY_FROM"], GetMessage("C2IT_BOUND_DIAP"))));
+                                    $arPriceBoundariesError[] = str_replace(
+                                        "#TYPE#",
+                                        $arPrice["CATALOG_GROUP_NAME"],
+                                        str_replace(
+                                            "#RIGHT#",
+                                            $arPrice["QUANTITY_TO"],
+                                            str_replace(
+                                                "#LEFT#",
+                                                $arPrice["QUANTITY_FROM"],
+                                                GetMessage(
+                                                    "C2IT_BOUND_DIAP"
+                                                )
+                                            )
+                                        )
+                                    );
                                     $bNewSegment = false;
                                     break;
                                 }
                             }
                         }
                         if ($bNewSegment) {
-                            $arPriceBoundaries[] = array("FROM" => $arPrice["QUANTITY_FROM"], "TO" => $arPrice["QUANTITY_TO"]);
+                            $arPriceBoundaries[] = array(
+                                "FROM" => $arPrice["QUANTITY_FROM"],
+                                "TO" => $arPrice["QUANTITY_TO"]
+                            );
                         }
                     }
                 }
@@ -293,27 +388,42 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
             // prices tab
             $subtabControl1->BeginNextTab();
             $arCatPricesExist = array(); // attr for exist prices for range
-            if ($enableQuantityRanges)
+            if ($enableQuantityRanges) {
                 $bUseExtendedPrice = $bVarsFromForm ? $subprice_useextform == 'Y' : $usedRanges;
-            else
+            } else {
                 $bUseExtendedPrice = false;
+            }
             $str_CAT_VAT_ID = $bVarsFromForm ? $SUBCAT_VAT_ID : ($arBaseProduct['VAT_ID'] == 0 ? $arCatalog['VAT_ID'] : $arBaseProduct['VAT_ID']);
             $str_CAT_VAT_INCLUDED = (string)($bVarsFromForm ? $SUBCAT_VAT_INCLUDED : $arBaseProduct['VAT_INCLUDED']);
-            if ($str_CAT_VAT_INCLUDED != 'Y' && $str_CAT_VAT_INCLUDED != 'N')
-                $str_CAT_VAT_INCLUDED = ((string)Main\Config\Option::get('catalog', 'default_product_vat_included') == 'Y' ? 'Y' : 'N');
+            if ($str_CAT_VAT_INCLUDED != 'Y' && $str_CAT_VAT_INCLUDED != 'N') {
+                $str_CAT_VAT_INCLUDED = ((string)Main\Config\Option::get(
+                    'catalog',
+                    'default_product_vat_included'
+                ) == 'Y' ? 'Y' : 'N');
+            }
             ?>
             <input type="hidden" name="subprice_useextform" id="subprice_useextform_N" value="N"/>
             <table border="0" cellspacing="0" cellpadding="0" width="100%" class="edit-table" id="subcatalog_vat_table">
                 <?
-                if ($enableQuantityRanges) {
+                if ($enableQuantityRanges || !empty($quantityRangesHelpLink)) {
                     ?>
                     <tr>
                         <td width="40%"><label for="subprice_useextform"><? echo GetMessage('C2IT_PRICES_USEEXT'); ?>
                                 :</label></td>
-                        <td width="60%">
-                            <input type="checkbox" name="subprice_useextform" id="subprice_useextform" value="Y"
-                                   onclick="toggleSubPriceType()" <?= $bUseExtendedPrice ? 'checked="checked"' : '' ?> <? echo($bReadOnly ? ' disabled readonly' : ''); ?> />
-                        </td>
+                        <td width="60%"><?
+                            if ($enableQuantityRanges) {
+                                ?><input type="checkbox" name="subprice_useextform" id="subprice_useextform" value="Y"
+                                         onclick="toggleSubPriceType()" <?= $bUseExtendedPrice ? 'checked="checked"' : '' ?><? echo($bReadOnly ? ' disabled readonly' : ''); ?> /><?
+                            } else {
+                                ?><input type="hidden" name="subprice_useextform" value="N"><?
+                                if ($quantityRangesHelpLink['TYPE'] == 'ONCLICK') {
+                                    ?><a href="#" onclick="<?= $quantityRangesHelpLink['LINK']; ?>"><?= GetMessage(
+                                        'C2IT_PRICES_EXT_TARIFF_ENABLE'
+                                    ); ?></a><?
+                                    Catalog\Config\Feature::initUiHelpScope();
+                                }
+                            }
+                            ?></td>
                     </tr>
                     <?
                 } else {
@@ -327,7 +437,13 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                     <td width="60%">
                         <?
                         $arVATRef = CatalogGetVATArray(array(), true);
-                        echo SelectBoxFromArray('SUBCAT_VAT_ID', $arVATRef, $str_CAT_VAT_ID, "", $bReadOnly ? "disabled readonly" : '');
+                        echo SelectBoxFromArray(
+                            'SUBCAT_VAT_ID',
+                            $arVATRef,
+                            $str_CAT_VAT_ID,
+                            "",
+                            $bReadOnly ? "disabled readonly" : ''
+                        );
                         ?>
                     </td>
                 </tr>
@@ -363,9 +479,17 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                                    value="<? echo htmlspecialcharsbx($arBaseProduct['PURCHASING_CURRENCY']) ?>">
 
                             <? $isDisabled = '';
-                            if ($bUseStoreControl) $isDisabled = " disabled";
-                            echo CCurrency::SelectBox("SUBCAT_PURCHASING_CURRENCY", $arBaseProduct['PURCHASING_CURRENCY'], "", true, "", "id='SUBCAT_PURCHASING_CURRENCY' $isDisabled"); ?>
-                        </td>
+                            if ($bUseStoreControl) {
+                                $isDisabled = " disabled";
+                            }
+                            echo CCurrency::SelectBox(
+                                "SUBCAT_PURCHASING_CURRENCY",
+                                $arBaseProduct['PURCHASING_CURRENCY'],
+                                "",
+                                true,
+                                "",
+                                "id='SUBCAT_PURCHASING_CURRENCY' $isDisabled"
+                            ); ?></td>
                     </tr>
                 <? endif; ?>
 
@@ -373,10 +497,16 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                     <td width="40%">
                         <?
                         $arBaseGroup = CCatalogGroup::GetBaseGroup();
-                        $arBasePrice = CPrice::GetBasePrice($PRODUCT_ID, $arPriceBoundaries[0]["FROM"], $arPriceBoundaries[0]["TO"]);
+                        $arBasePrice = CPrice::GetBasePrice(
+                            $PRODUCT_ID,
+                            $arPriceBoundaries[0]["FROM"],
+                            $arPriceBoundaries[0]["TO"],
+                            false
+                        );
                         echo GetMessage("BASE_PRICE") ?> (<? echo GetMessage('C2IT_PRICE_TYPE'); ?>
-                        "<? echo htmlspecialcharsbx(!empty($arBaseGroup['NAME_LANG']) ? $arBaseGroup['NAME_LANG'] : $arBaseGroup["NAME"]); ?>
-                        "):
+                        "<? echo htmlspecialcharsbx(
+                            !empty($arBaseGroup['NAME_LANG']) ? $arBaseGroup['NAME_LANG'] : $arBaseGroup["NAME"]
+                        ); ?>"):
                     </td>
                     <td width="60%">
                         <script type="text/javascript">
@@ -597,12 +727,15 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                         <?
                         $boolBaseExistPrice = false;
                         $str_CAT_BASE_PRICE = "";
-                        if ($arBasePrice)
+                        if ($arBasePrice) {
                             $str_CAT_BASE_PRICE = $arBasePrice["PRICE"];
-                        if ($bVarsFromForm)
+                        }
+                        if ($bVarsFromForm) {
                             $str_CAT_BASE_PRICE = $SUBCAT_BASE_PRICE;
-                        if (trim($str_CAT_BASE_PRICE) != '' && doubleval($str_CAT_BASE_PRICE) >= 0)
+                        }
+                        if (trim($str_CAT_BASE_PRICE) != '' && doubleval($str_CAT_BASE_PRICE) >= 0) {
                             $boolBaseExistPrice = true;
+                        }
                         ?>
                         <input type="text" <? if ($bReadOnly) echo "disabled readonly" ?> id="SUBCAT_BASE_PRICE"
                                name="SUBCAT_BASE_PRICE" value="<? echo htmlspecialcharsbx($str_CAT_BASE_PRICE) ?>"
@@ -615,10 +748,12 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                     </td>
                     <td width="60%">
                         <?
-                        if ($arBasePrice)
+                        if ($arBasePrice) {
                             $str_CAT_BASE_CURRENCY = $arBasePrice["CURRENCY"];
-                        if ($bVarsFromForm)
+                        }
+                        if ($bVarsFromForm) {
                             $str_CAT_BASE_CURRENCY = $SUBCAT_BASE_CURRENCY;
+                        }
 
                         ?>
                         <select id="SUBCAT_BASE_CURRENCY"
@@ -705,12 +840,15 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                         $str_CAT_PRICE = ${"SUBCAT_PRICE_" . $arCatalogGroup["ID"]};
                         $str_CAT_CURRENCY = ${"SUBCAT_CURRENCY_" . $arCatalogGroup["ID"]};
                     }
-                    if (trim($str_CAT_PRICE) != '' && doubleval($str_CAT_PRICE) >= 0)
+                    if (trim($str_CAT_PRICE) != '' && doubleval($str_CAT_PRICE) >= 0) {
                         $boolBaseExistPrice = true;
+                    }
                     ?>
                     <tr <? if ($bReadOnly) echo "disabled" ?>>
                         <td valign="top" align="left">
-                            <? echo htmlspecialcharsbx(!empty($arCatalogGroup["NAME_LANG"]) ? $arCatalogGroup["NAME_LANG"] : $arCatalogGroup["NAME"]); ?>
+                            <? echo htmlspecialcharsbx(
+                                !empty($arCatalogGroup["NAME_LANG"]) ? $arCatalogGroup["NAME_LANG"] : $arCatalogGroup["NAME"]
+                            ); ?>
                             <? if ($arPrice):?>
                                 <input type="hidden" name="SUBCAT_ID_<? echo $arCatalogGroup["ID"] ?>"
                                        value="<? echo $arPrice["ID"] ?>">
@@ -718,7 +856,13 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                         </td>
                         <td valign="top" align="center">
                             <?
-                            echo CExtra::SelectBox("SUBCAT_EXTRA_" . $arCatalogGroup["ID"], $str_CAT_EXTRA, GetMessage("VAL_NOT_SET"), "ChangeSubExtra(" . $arCatalogGroup["ID"] . ")", (($bReadOnly) ? "disabled readonly" : "") . ' id="' . "SUBCAT_EXTRA_" . $arCatalogGroup["ID"] . '" ');
+                            echo CExtra::SelectBox(
+                                "SUBCAT_EXTRA_" . $arCatalogGroup["ID"],
+                                $str_CAT_EXTRA,
+                                GetMessage("VAL_NOT_SET"),
+                                "ChangeSubExtra(" . $arCatalogGroup["ID"] . ")",
+                                (($bReadOnly) ? "disabled readonly" : "") . ' id="' . "SUBCAT_EXTRA_" . $arCatalogGroup["ID"] . '" '
+                            );
                             ?>
                         </td>
                         <td valign="top" align="center">
@@ -730,7 +874,14 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                         </td>
                         <td valign="top" align="center">
                             <?
-                            echo CCurrency::SelectBox("SUBCAT_CURRENCY_" . $arCatalogGroup["ID"], $str_CAT_CURRENCY, GetMessage("VAL_BASE"), true, "ChangeSubCurrency(" . $arCatalogGroup["ID"] . ")", (($bReadOnly) ? "disabled readonly" : "") . ' id="' . "SUBCAT_CURRENCY_" . $arCatalogGroup["ID"] . '" ')
+                            echo CCurrency::SelectBox(
+                                "SUBCAT_CURRENCY_" . $arCatalogGroup["ID"],
+                                $str_CAT_CURRENCY,
+                                GetMessage("VAL_BASE"),
+                                true,
+                                "ChangeSubCurrency(" . $arCatalogGroup["ID"] . ")",
+                                (($bReadOnly) ? "disabled readonly" : "") . ' id="' . "SUBCAT_CURRENCY_" . $arCatalogGroup["ID"] . '" '
+                            )
                             ?>
                             <script type="text/javascript">
                                 ChangeSubExtra(<?echo $arCatalogGroup["ID"] ?>);
@@ -739,7 +890,9 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                     </tr>
                     <?
                     }// endwhile
-                    if (!$bFirst) echo "</table>";
+                    if (!$bFirst) {
+                        echo "</table>";
+                    }
                     }
                     ?><input type="hidden" name="SUBCAT_PRICE_EXIST" id="SUBCAT_PRICE_EXIST"
                              value="<? echo($boolBaseExistPrice == true ? 'Y' : 'N'); ?>">
@@ -921,7 +1074,9 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                         foreach ($arExtraList as $arOneExtra)
                         {
                         ?>
-                        str += '<option value="<?= $arOneExtra["ID"] ?>"><?= CUtil::JSEscape(htmlspecialcharsbx($arOneExtra["NAME"])) . " (" . htmlspecialcharsbx($arOneExtra["PERCENTAGE"]) . "%)" ?></option>';
+                        str += '<option value="<?= $arOneExtra["ID"] ?>"><?= CUtil::JSEscape(
+                            htmlspecialcharsbx($arOneExtra["NAME"])
+                        ) . " (" . htmlspecialcharsbx($arOneExtra["PERCENTAGE"]) . "%)" ?></option>';
                         <?
                         }
                         ?>
@@ -1199,8 +1354,9 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                         <td valign="top" align="right">
                             <?
                             echo GetMessage("BASE_PRICE") ?> (<? echo GetMessage('C2IT_PRICE_TYPE'); ?>
-                            "<? echo htmlspecialcharsbx(!empty($arBaseGroup['NAME_LANG']) ? $arBaseGroup['NAME_LANG'] : $arBaseGroup["NAME"]); ?>
-                            "):
+                            "<? echo htmlspecialcharsbx(
+                                !empty($arBaseGroup['NAME_LANG']) ? $arBaseGroup['NAME_LANG'] : $arBaseGroup["NAME"]
+                            ); ?>"):
                         </td>
                         <td valign="top" align="left">
                             <table border="0" cellspacing="1" cellpadding="3" id="SUBBASE_PRICE_GROUP_TABLE">
@@ -1247,24 +1403,27 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                                         $str_CAT_BASE_PRICE = ${"SUBCAT_BASE_PRICE_" . $ind};
                                         $str_CAT_BASE_CURRENCY = ${"SUBCAT_BASE_CURRENCY_" . $ind};
                                     }
-                                    if (trim($str_CAT_BASE_PRICE) != '' && doubleval($str_CAT_BASE_PRICE) >= 0)
+                                    if (trim($str_CAT_BASE_PRICE) != '' && doubleval($str_CAT_BASE_PRICE) >= 0) {
                                         $boolExistPrice = true;
+                                    }
                                     $arCatPricesExist[$ind][$arBaseGroup['ID']] = ($boolExistPrice == true ? 'Y' : 'N');
                                     ?>
                                     <tr id="submodel3">
                                         <td valign="top" align="center">
                                             <input type="text" <? if ($bReadOnly) echo "disabled readonly" ?>
                                                    name="SUBCAT_BASE_QUANTITY_FROM_<?= $ind ?>"
-                                                   value="<? echo($str_CAT_BASE_QUANTITY_FROM != 0 ? htmlspecialcharsbx($str_CAT_BASE_QUANTITY_FROM) : "") ?>"
-                                                   size="3" OnChange="ChangeSubBaseQuantityEx(this)">
+                                                   value="<? echo($str_CAT_BASE_QUANTITY_FROM != 0 ? htmlspecialcharsbx(
+                                                       $str_CAT_BASE_QUANTITY_FROM
+                                                   ) : "") ?>" size="3" OnChange="ChangeSubBaseQuantityEx(this)">
                                             <input type="hidden" name="SUBCAT_BASE_ID[<?= $ind ?>]"
                                                    value="<?= htmlspecialcharsbx($str_CAT_BASE_ID) ?>">
                                         </td>
                                         <td valign="top" align="center">
                                             <input type="text" <? if ($bReadOnly) echo "disabled readonly" ?>
                                                    name="SUBCAT_BASE_QUANTITY_TO_<?= $ind ?>"
-                                                   value="<? echo($str_CAT_BASE_QUANTITY_TO != 0 ? htmlspecialcharsbx($str_CAT_BASE_QUANTITY_TO) : "") ?>"
-                                                   size="3" OnChange="ChangeSubBaseQuantityEx(this)">
+                                                   value="<? echo($str_CAT_BASE_QUANTITY_TO != 0 ? htmlspecialcharsbx(
+                                                       $str_CAT_BASE_QUANTITY_TO
+                                                   ) : "") ?>" size="3" OnChange="ChangeSubBaseQuantityEx(this)">
                                         </td>
                                         <td valign="top" align="center">
                                             <input type="text" <? if ($bReadOnly) echo "disabled readonly" ?>
@@ -1298,24 +1457,27 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                                         $str_CAT_BASE_QUANTITY_TO = ${"SUBCAT_BASE_QUANTITY_TO_" . $ind};
                                         $str_CAT_BASE_PRICE = ${"SUBCAT_BASE_PRICE_" . $ind};
                                         $str_CAT_BASE_CURRENCY = ${"SUBCAT_BASE_CURRENCY_" . $ind};
-                                        if (trim($str_CAT_BASE_PRICE) != '' && doubleval($str_CAT_BASE_PRICE) >= 0)
+                                        if (trim($str_CAT_BASE_PRICE) != '' && doubleval($str_CAT_BASE_PRICE) >= 0) {
                                             $boolExistPrice = true;
+                                        }
                                         $arCatPricesExist[$ind][$arBaseGroup['ID']] = ($boolExistPrice == true ? 'Y' : 'N');
                                         ?>
                                         <tr id="submodel3">
                                             <td valign="top" align="center">
                                                 <input type="text" <? if ($bReadOnly) echo "disabled readonly" ?>
                                                        name="SUBCAT_BASE_QUANTITY_FROM_<?= $ind ?>"
-                                                       value="<? echo($str_CAT_BASE_QUANTITY_FROM != 0 ? htmlspecialcharsbx($str_CAT_BASE_QUANTITY_FROM) : "") ?>"
-                                                       size="3" OnChange="ChangeSubBaseQuantityEx(this)">
+                                                       value="<? echo($str_CAT_BASE_QUANTITY_FROM != 0 ? htmlspecialcharsbx(
+                                                           $str_CAT_BASE_QUANTITY_FROM
+                                                       ) : "") ?>" size="3" OnChange="ChangeSubBaseQuantityEx(this)">
                                                 <input type="hidden" name="SUBCAT_BASE_ID[<?= $ind ?>]"
                                                        value="<?= 0 ?>">
                                             </td>
                                             <td valign="top" align="center">
                                                 <input type="text" <? if ($bReadOnly) echo "disabled readonly" ?>
                                                        name="SUBCAT_BASE_QUANTITY_TO_<?= $ind ?>"
-                                                       value="<? echo($str_CAT_BASE_QUANTITY_TO != 0 ? htmlspecialcharsbx($str_CAT_BASE_QUANTITY_TO) : "") ?>"
-                                                       size="3" OnChange="ChangeSubBaseQuantityEx(this)">
+                                                       value="<? echo($str_CAT_BASE_QUANTITY_TO != 0 ? htmlspecialcharsbx(
+                                                           $str_CAT_BASE_QUANTITY_TO
+                                                       ) : "") ?>" size="3" OnChange="ChangeSubBaseQuantityEx(this)">
                                             </td>
                                             <td valign="top" align="center">
                                                 <input type="text" <? if ($bReadOnly) echo "disabled readonly" ?>
@@ -1393,7 +1555,6 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                     </script>
                     <?
                     if (Catalog\Config\Feature::isMultiPriceTypesEnabled()) {
-
                         $dbCatalogGroups = CCatalogGroup::GetList(
                             array("SORT" => "ASC", "NAME" => "ASC", "ID" => "ASC"),
                             array("!BASE" => "Y")
@@ -1406,9 +1567,9 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                             </script>
                             <tr>
                                 <td valign="top" align="right">
-                                    <? echo GetMessage("C2IT_PRICE_TYPE") ?>
-                                    "<? echo htmlspecialcharsbx(!empty($arCatalogGroup["NAME_LANG"]) ? $arCatalogGroup["NAME_LANG"] : $arCatalogGroup["NAME"]); ?>
-                                    ":
+                                    <? echo GetMessage("C2IT_PRICE_TYPE") ?> "<? echo htmlspecialcharsbx(
+                                        !empty($arCatalogGroup["NAME_LANG"]) ? $arCatalogGroup["NAME_LANG"] : $arCatalogGroup["NAME"]
+                                    ); ?>":
                                 </td>
                                 <td valign="top" align="left">
                                     <table border="0" cellspacing="1" cellpadding="3"
@@ -1427,7 +1588,10 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                                         $ind = -1;
                                         $dbPriceList = CPrice::GetList(
                                             array("QUANTITY_FROM" => "ASC", "QUANTITY_TO" => "ASC"),
-                                            array("PRODUCT_ID" => $PRODUCT_ID, "CATALOG_GROUP_ID" => $arCatalogGroup["ID"])
+                                            array(
+                                                "PRODUCT_ID" => $PRODUCT_ID,
+                                                "CATALOG_GROUP_ID" => $arCatalogGroup["ID"]
+                                            )
                                         );
                                         $arPrice = $dbPriceList->Fetch();
                                         $intCount = count($arPriceBoundaries);
@@ -1438,7 +1602,9 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                                             $str_CAT_QUANTITY_TO = $arPriceBoundaries[$i]["TO"];
 
                                             if ($arPrice
-                                                && intval($arPrice["QUANTITY_FROM"]) == $arPriceBoundaries[$i]["FROM"]) {
+                                                && intval(
+                                                    $arPrice["QUANTITY_FROM"]
+                                                ) == $arPriceBoundaries[$i]["FROM"]) {
                                                 $str_CAT_ID = $arPrice["ID"];
                                                 $str_CAT_EXTRA = $arPrice["EXTRA_ID"];
                                                 $str_CAT_PRICE = $arPrice["PRICE"];
@@ -1459,8 +1625,9 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                                                 $str_CAT_QUANTITY_FROM = ${"SUBCAT_BASE_QUANTITY_FROM_" . $ind};
                                                 $str_CAT_QUANTITY_TO = ${"SUBCAT_BASE_QUANTITY_TO_" . $ind};
                                             }
-                                            if (trim($str_CAT_PRICE) != '' && doubleval($str_CAT_PRICE) >= 0)
+                                            if (trim($str_CAT_PRICE) != '' && doubleval($str_CAT_PRICE) >= 0) {
                                                 $boolExistPrice = true;
+                                            }
                                             $arCatPricesExist[$ind][$arCatalogGroup['ID']] = ($boolExistPrice == true ? 'Y' : 'N');
                                             ?>
                                             <tr id="submodel3_<?= $arCatalogGroup["ID"] ?>">
@@ -1468,8 +1635,9 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                                                     <input type="text" disabled readonly
                                                            id="SUBCAT_QUANTITY_FROM_<?= $arCatalogGroup["ID"] ?>_<?= $ind ?>"
                                                            name="SUBCAT_QUANTITY_FROM_<?= $arCatalogGroup["ID"] ?>_<?= $ind ?>"
-                                                           value="<? echo($str_CAT_QUANTITY_FROM != 0 ? htmlspecialcharsbx($str_CAT_QUANTITY_FROM) : "") ?>"
-                                                           size="3">
+                                                           value="<? echo($str_CAT_QUANTITY_FROM != 0 ? htmlspecialcharsbx(
+                                                               $str_CAT_QUANTITY_FROM
+                                                           ) : "") ?>" size="3">
                                                     <input type="hidden"
                                                            name="SUBCAT_ID_<?= $arCatalogGroup["ID"] ?>[<?= $ind ?>]"
                                                            value="<?= htmlspecialcharsbx($str_CAT_ID) ?>">
@@ -1478,13 +1646,20 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                                                     <input type="text" disabled readonly
                                                            id="SUBCAT_QUANTITY_TO_<?= $arCatalogGroup["ID"] ?>_<?= $ind ?>"
                                                            name="SUBCAT_QUANTITY_TO_<?= $arCatalogGroup["ID"] ?>_<?= $ind ?>"
-                                                           value="<? echo($str_CAT_QUANTITY_TO != 0 ? htmlspecialcharsbx($str_CAT_QUANTITY_TO) : "") ?>"
-                                                           size="3">
+                                                           value="<? echo($str_CAT_QUANTITY_TO != 0 ? htmlspecialcharsbx(
+                                                               $str_CAT_QUANTITY_TO
+                                                           ) : "") ?>" size="3">
 
                                                 </td>
                                                 <td valign="top" align="center">
                                                     <?
-                                                    echo CExtra::SelectBox("SUBCAT_EXTRA_" . $arCatalogGroup["ID"] . "_" . $ind, $str_CAT_EXTRA, GetMessage("VAL_NOT_SET"), "ChangeSubExtraEx(this)", (($bReadOnly) ? "disabled readonly" : "") . ' id="' . "SUBCAT_EXTRA_" . $arCatalogGroup["ID"] . "_" . $ind . '" ');
+                                                    echo CExtra::SelectBox(
+                                                        "SUBCAT_EXTRA_" . $arCatalogGroup["ID"] . "_" . $ind,
+                                                        $str_CAT_EXTRA,
+                                                        GetMessage("VAL_NOT_SET"),
+                                                        "ChangeSubExtraEx(this)",
+                                                        (($bReadOnly) ? "disabled readonly" : "") . ' id="' . "SUBCAT_EXTRA_" . $arCatalogGroup["ID"] . "_" . $ind . '" '
+                                                    );
                                                     ?>
 
                                                 </td>
@@ -1498,7 +1673,14 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                                                 </td>
                                                 <td valign="top" align="center">
 
-                                                    <?= CCurrency::SelectBox("SUBCAT_CURRENCY_" . $arCatalogGroup["ID"] . "_" . $ind, $str_CAT_CURRENCY, GetMessage("VAL_BASE"), true, "ChangeSubCurrencyEx(this)", (($bReadOnly) ? "disabled readonly" : "") . ' id="' . "SUBCAT_CURRENCY_" . $arCatalogGroup["ID"] . "_" . $ind . '" ') ?>
+                                                    <?= CCurrency::SelectBox(
+                                                        "SUBCAT_CURRENCY_" . $arCatalogGroup["ID"] . "_" . $ind,
+                                                        $str_CAT_CURRENCY,
+                                                        GetMessage("VAL_BASE"),
+                                                        true,
+                                                        "ChangeSubCurrencyEx(this)",
+                                                        (($bReadOnly) ? "disabled readonly" : "") . ' id="' . "SUBCAT_CURRENCY_" . $arCatalogGroup["ID"] . "_" . $ind . '" '
+                                                    ) ?>
                                                     <script type="text/javascript">
                                                         jsUtils.addEvent(window, 'load', function () {
                                                             ChangeSubExtraEx(BX('SUBCAT_EXTRA_<?= $arCatalogGroup["ID"] ?>_<?= $ind ?>'));
@@ -1510,8 +1692,14 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                                             <?
                                         }
 
-                                        if ($bVarsFromForm && $ind < intval(${"SUBCAT_ROW_COUNTER_" . $arCatalogGroup["ID"]})) {
-                                            for ($i = $ind + 1; $i <= intval(${"SUBCAT_ROW_COUNTER_" . $arCatalogGroup["ID"]}); $i++) {
+                                        if ($bVarsFromForm && $ind < intval(
+                                                ${"SUBCAT_ROW_COUNTER_" . $arCatalogGroup["ID"]}
+                                            )) {
+                                            for (
+                                                $i = $ind + 1; $i <= intval(
+                                                ${"SUBCAT_ROW_COUNTER_" . $arCatalogGroup["ID"]}
+                                            ); $i++
+                                            ) {
                                                 $boolExistPrice = false;
                                                 $ind++;
                                                 $str_CAT_QUANTITY_FROM = ${"SUBCAT_BASE_QUANTITY_FROM_" . $ind};
@@ -1519,8 +1707,9 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                                                 $str_CAT_EXTRA = ${"SUBCAT_EXTRA_" . $arCatalogGroup["ID"] . "_" . $ind};
                                                 $str_CAT_PRICE = ${"SUBCAT_PRICE_" . $arCatalogGroup["ID"] . "_" . $ind};
                                                 $str_CAT_CURRENCY = ${"SUBCAT_CURRENCY_" . $arCatalogGroup["ID"] . "_" . $ind};
-                                                if (trim($str_CAT_PRICE) != '' && doubleval($str_CAT_PRICE) >= 0)
+                                                if (trim($str_CAT_PRICE) != '' && doubleval($str_CAT_PRICE) >= 0) {
                                                     $boolExistPrice = true;
+                                                }
                                                 $arCatPricesExist[$ind][$arCatalogGroup['ID']] = ($boolExistPrice == true ? 'Y' : 'N');
                                                 ?>
                                                 <tr id="submodel3_<?= $arCatalogGroup["ID"] ?>">
@@ -1528,8 +1717,9 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                                                         <input type="text" disabled readonly
                                                                id="SUBCAT_QUANTITY_FROM_<?= $arCatalogGroup["ID"] ?>_<?= $ind ?>"
                                                                name="SUBCAT_QUANTITY_FROM_<?= $arCatalogGroup["ID"] ?>_<?= $ind ?>"
-                                                               value="<? echo($str_CAT_QUANTITY_FROM != 0 ? htmlspecialcharsbx($str_CAT_QUANTITY_FROM) : "") ?>"
-                                                               size="3">
+                                                               value="<? echo($str_CAT_QUANTITY_FROM != 0 ? htmlspecialcharsbx(
+                                                                   $str_CAT_QUANTITY_FROM
+                                                               ) : "") ?>" size="3">
                                                         <input type="hidden"
                                                                name="SUBCAT_ID_<?= $arCatalogGroup["ID"] ?>[<?= $ind ?>]"
                                                                value="<?= 0 ?>">
@@ -1538,13 +1728,20 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                                                         <input type="text" disabled readonly
                                                                id="SUBCAT_QUANTITY_TO_<?= $arCatalogGroup["ID"] ?>_<?= $ind ?>"
                                                                name="SUBCAT_QUANTITY_TO_<?= $arCatalogGroup["ID"] ?>_<?= $ind ?>"
-                                                               value="<? echo($str_CAT_QUANTITY_TO != 0 ? htmlspecialcharsbx($str_CAT_QUANTITY_TO) : "") ?>"
-                                                               size="3">
+                                                               value="<? echo($str_CAT_QUANTITY_TO != 0 ? htmlspecialcharsbx(
+                                                                   $str_CAT_QUANTITY_TO
+                                                               ) : "") ?>" size="3">
 
                                                     </td>
                                                     <td valign="top" align="center">
                                                         <?
-                                                        echo CExtra::SelectBox("SUBCAT_EXTRA_" . $arCatalogGroup["ID"] . "_" . $ind, $str_CAT_EXTRA, GetMessage("VAL_NOT_SET"), "ChangeSubExtraEx(this)", (($bReadOnly) ? "disabled readonly" : "") . ' id="' . "SUBCAT_EXTRA_" . $arCatalogGroup["ID"] . "_" . $ind . '" ');
+                                                        echo CExtra::SelectBox(
+                                                            "SUBCAT_EXTRA_" . $arCatalogGroup["ID"] . "_" . $ind,
+                                                            $str_CAT_EXTRA,
+                                                            GetMessage("VAL_NOT_SET"),
+                                                            "ChangeSubExtraEx(this)",
+                                                            (($bReadOnly) ? "disabled readonly" : "") . ' id="' . "SUBCAT_EXTRA_" . $arCatalogGroup["ID"] . "_" . $ind . '" '
+                                                        );
                                                         ?>
 
                                                     </td>
@@ -1558,7 +1755,14 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                                                     </td>
                                                     <td valign="top" align="center">
 
-                                                        <?= CCurrency::SelectBox("SUBCAT_CURRENCY_" . $arCatalogGroup["ID"] . "_" . $ind, $str_CAT_CURRENCY, GetMessage("VAL_BASE"), true, "ChangeSubCurrencyEx(this)", (($bReadOnly) ? "disabled readonly" : "") . ' id="' . "SUBCAT_CURRENCY_" . $arCatalogGroup["ID"] . "_" . $ind . '" ') ?>
+                                                        <?= CCurrency::SelectBox(
+                                                            "SUBCAT_CURRENCY_" . $arCatalogGroup["ID"] . "_" . $ind,
+                                                            $str_CAT_CURRENCY,
+                                                            GetMessage("VAL_BASE"),
+                                                            true,
+                                                            "ChangeSubCurrencyEx(this)",
+                                                            (($bReadOnly) ? "disabled readonly" : "") . ' id="' . "SUBCAT_CURRENCY_" . $arCatalogGroup["ID"] . "_" . $ind . '" '
+                                                        ) ?>
                                                         <script type="text/javascript">
                                                             jsUtils.addEvent(window, 'load', function () {
                                                                 ChangeSubExtraEx(BX('SUBCAT_EXTRA_<?= $arCatalogGroup["ID"] ?>_<?= $ind ?>'));
@@ -1589,7 +1793,13 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                                                 </td>
                                                 <td valign="top" align="center">
                                                     <?
-                                                    echo CExtra::SelectBox("SUBCAT_EXTRA_" . $arCatalogGroup["ID"] . "_" . $ind, "", GetMessage("VAL_NOT_SET"), "ChangeSubExtraEx(this)", (($bReadOnly) ? "disabled readonly" : "") . ' id="' . "SUBCAT_EXTRA_" . $arCatalogGroup["ID"] . "_" . $ind . '" ');
+                                                    echo CExtra::SelectBox(
+                                                        "SUBCAT_EXTRA_" . $arCatalogGroup["ID"] . "_" . $ind,
+                                                        "",
+                                                        GetMessage("VAL_NOT_SET"),
+                                                        "ChangeSubExtraEx(this)",
+                                                        (($bReadOnly) ? "disabled readonly" : "") . ' id="' . "SUBCAT_EXTRA_" . $arCatalogGroup["ID"] . "_" . $ind . '" '
+                                                    );
                                                     ?>
 
                                                 </td>
@@ -1602,7 +1812,14 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                                                 </td>
                                                 <td valign="top" align="center">
 
-                                                    <?= CCurrency::SelectBox("SUBCAT_CURRENCY_" . $arCatalogGroup["ID"] . "_" . $ind, "", GetMessage("VAL_BASE"), true, "ChangeSubCurrencyEx(this)", (($bReadOnly) ? "disabled readonly" : "") . ' id="' . "SUBCAT_CURRENCY_" . $arCatalogGroup["ID"] . "_" . $ind . '" ') ?>
+                                                    <?= CCurrency::SelectBox(
+                                                        "SUBCAT_CURRENCY_" . $arCatalogGroup["ID"] . "_" . $ind,
+                                                        "",
+                                                        GetMessage("VAL_BASE"),
+                                                        true,
+                                                        "ChangeSubCurrencyEx(this)",
+                                                        (($bReadOnly) ? "disabled readonly" : "") . ' id="' . "SUBCAT_CURRENCY_" . $arCatalogGroup["ID"] . "_" . $ind . '" '
+                                                    ) ?>
 
                                                 </td>
                                             </tr>
@@ -1645,7 +1862,9 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                     <td width="60%">
                         <?
                         $str_CAT_BASE_QUANTITY = $arBaseProduct["QUANTITY"];
-                        if (!$bUseStoreControl && $bVarsFromForm) $str_CAT_BASE_QUANTITY = $SUBCAT_BASE_QUANTITY;
+                        if (!$bUseStoreControl && $bVarsFromForm) {
+                            $str_CAT_BASE_QUANTITY = $SUBCAT_BASE_QUANTITY;
+                        }
                         ?>
                         <input type="text"
                                name="SUBCAT_BASE_QUANTITY" <? if ($bReadOnly || $bUseStoreControl) echo "disabled readonly" ?>
@@ -1671,7 +1890,9 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                                onfocus="ShowNotice()" onblur="HideNotice()"
                                value="<? echo htmlspecialcharsbx($str_CAT_BASE_QUANTITY_RESERVED) ?>" size="30"><span
                                 id="CAT_QUANTITY_RESERVED_DIV"
-                                style="color: #af2d49; margin-left: 10px; display: none;">	<? echo GetMessage("QUANTITY_RESERVED_NOTICE") ?></span>
+                                style="color: #af2d49; margin-left: 10px; display: none;">	<? echo GetMessage(
+                                "QUANTITY_RESERVED_NOTICE"
+                            ) ?></span>
 
                     </td>
                     </tr><?
@@ -1695,15 +1916,19 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                             $arAllMeasure[] = $arMeasure;
                         }
                         $str_CAT_MEASURE = $arBaseProduct["MEASURE"];
-                        if ($bVarsFromForm)
+                        if ($bVarsFromForm) {
                             $str_CAT_MEASURE = $SUBCAT_MEASURE;
+                        }
                         ?>
                         <? if (!empty($arAllMeasure)):?>
                             <select style="max-width:220px" id="SUBCAT_MEASURE"
                                     name="SUBCAT_MEASURE" <? if ($bReadOnly) echo "disabled readonly" ?>>
                                 <? foreach ($arAllMeasure as $arMeasure):?>
-                                    <option <? if ($str_CAT_MEASURE == $arMeasure["ID"] || ($str_CAT_MEASURE == '' && $arMeasure["IS_DEFAULT"] == 'Y')) echo " selected"; ?>
-                                            value="<?= $arMeasure["ID"] ?>"><?= htmlspecialcharsbx($arMeasure["MEASURE_TITLE"]) ?></option>
+                                    <option <? if ($str_CAT_MEASURE == $arMeasure["ID"] || ($str_CAT_MEASURE == '' && $arMeasure["IS_DEFAULT"] == 'Y')) {
+                                        echo " selected";
+                                    } ?> value="<?= $arMeasure["ID"] ?>"><?= htmlspecialcharsbx(
+                                            $arMeasure["MEASURE_TITLE"]
+                                        ) ?></option>
                                 <?endforeach;
                                 unset($arMeasure);
                                 ?>
@@ -1712,8 +1937,9 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                             $measureListUrl = $selfFolderUrl . 'cat_measure_list.php?lang=' . LANGUAGE_ID;
                             $measureListUrl = $adminSidePanelHelper->editUrlToPublicPage($measureListUrl);
                             echo GetMessage("C2IT_MEASURE_NO_MEASURE"); ?> <a target="_top"
-                                                                              href="<?= $measureListUrl ?>"><?= GetMessage("C2IT_MEASURES"); ?></a>
-                            <br>
+                                                                              href="<?= $measureListUrl ?>"><?= GetMessage(
+                                "C2IT_MEASURES"
+                            ); ?></a><br>
                         <? endif; ?>
                     </td>
                 </tr>
@@ -1736,17 +1962,21 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                             while ($ar_CAT_MEASURE_RATIO = $db_CAT_MEASURE_RATIO->Fetch()) {
                                 if ($str_CAT_MEASURE_RATIO === null || $ar_CAT_MEASURE_RATIO['IS_DEFAULT'] == 'Y') {
                                     $str_CAT_MEASURE_RATIO = $ar_CAT_MEASURE_RATIO["RATIO"];
-                                    if (!$bSubCopy)
+                                    if (!$bSubCopy) {
                                         $SUBCAT_MEASURE_RATIO_ID = $ar_CAT_MEASURE_RATIO["ID"];
-                                    if ($ar_CAT_MEASURE_RATIO['IS_DEFAULT'] == 'Y')
+                                    }
+                                    if ($ar_CAT_MEASURE_RATIO['IS_DEFAULT'] == 'Y') {
                                         break;
+                                    }
                                 }
                             }
                             unset($db_CAT_MEASURE_RATIO, $ar_CAT_MEASURE_RATIO);
-                            if ($str_CAT_MEASURE_RATIO === null)
+                            if ($str_CAT_MEASURE_RATIO === null) {
                                 $str_CAT_MEASURE_RATIO = 1;
-                            if ($bVarsFromForm)
+                            }
+                            if ($bVarsFromForm) {
                                 $str_CAT_MEASURE_RATIO = $SUBCAT_MEASURE_RATIO;
+                            }
                             ?>
                             <input type="text" <? if ($bReadOnly) echo "disabled readonly" ?> id="SUBCAT_MEASURE_RATIO"
                                    name="SUBCAT_MEASURE_RATIO"
@@ -1768,15 +1998,24 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                     <td width="60%">
                         <?
                         $str_CAT_BASE_QUANTITY_TRACE = $arBaseProduct["QUANTITY_TRACE_ORIG"];
-                        if ($bVarsFromForm) $str_CAT_BASE_QUANTITY_TRACE = $SUBCAT_BASE_QUANTITY_TRACE;
+                        if ($bVarsFromForm) {
+                            $str_CAT_BASE_QUANTITY_TRACE = $SUBCAT_BASE_QUANTITY_TRACE;
+                        }
                         ?>
                         <select id="SUBCAT_BASE_QUANTITY_TRACE"
                                 name="SUBCAT_BASE_QUANTITY_TRACE" <? if ($bReadOnly) echo "disabled readonly" ?>>
-                            <option value="D" <? if ("D" == $str_CAT_BASE_QUANTITY_TRACE) echo " selected" ?>><?= GetMessage("C2IT_DEFAULT_NEGATIVE") . " (" ?><? echo $availQuantityTrace == 'Y' ? GetMessage("C2IT_YES_NEGATIVE") : GetMessage("C2IT_NO_NEGATIVE") ?>
-                                )
+                            <option value="D" <? if ("D" == $str_CAT_BASE_QUANTITY_TRACE) echo " selected" ?>><?= GetMessage(
+                                    "C2IT_DEFAULT_NEGATIVE"
+                                ) . " (" ?><? echo $availQuantityTrace == 'Y' ? GetMessage(
+                                    "C2IT_YES_NEGATIVE"
+                                ) : GetMessage("C2IT_NO_NEGATIVE") ?>)
                             </option>
-                            <option value="Y" <? if ("Y" == $str_CAT_BASE_QUANTITY_TRACE) echo " selected" ?>><?= GetMessage("C2IT_YES_NEGATIVE") ?></option>
-                            <option value="N" <? if ("N" == $str_CAT_BASE_QUANTITY_TRACE) echo " selected" ?>><?= GetMessage("C2IT_NO_NEGATIVE") ?></option>
+                            <option value="Y" <? if ("Y" == $str_CAT_BASE_QUANTITY_TRACE) echo " selected" ?>><?= GetMessage(
+                                    "C2IT_YES_NEGATIVE"
+                                ) ?></option>
+                            <option value="N" <? if ("N" == $str_CAT_BASE_QUANTITY_TRACE) echo " selected" ?>><?= GetMessage(
+                                    "C2IT_NO_NEGATIVE"
+                                ) ?></option>
                         </select>
                     </td>
                 </tr>
@@ -1787,15 +2026,24 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                     <td width="60%">
                         <?
                         $str_CAT_BASE_CAN_BUY_ZERO = $arBaseProduct["CAN_BUY_ZERO_ORIG"];
-                        if ($bVarsFromForm) $str_CAT_BASE_CAN_BUY_ZERO = $SUBUSE_STORE;
+                        if ($bVarsFromForm) {
+                            $str_CAT_BASE_CAN_BUY_ZERO = $SUBUSE_STORE;
+                        }
                         ?>
                         <select id="SUBUSE_STORE"
                                 name="SUBUSE_STORE" <? echo($bReadOnly ? "disabled readonly" : ''); ?>>
-                            <option value="D" <? if ("D" == $str_CAT_BASE_CAN_BUY_ZERO) echo " selected" ?>><?= GetMessage("C2IT_DEFAULT_NEGATIVE") . " (" ?><? echo $availCanBuyZero == 'Y' ? GetMessage("C2IT_YES_NEGATIVE") : GetMessage("C2IT_NO_NEGATIVE") ?>
-                                )
+                            <option value="D" <? if ("D" == $str_CAT_BASE_CAN_BUY_ZERO) echo " selected" ?>><?= GetMessage(
+                                    "C2IT_DEFAULT_NEGATIVE"
+                                ) . " (" ?><? echo $availCanBuyZero == 'Y' ? GetMessage(
+                                    "C2IT_YES_NEGATIVE"
+                                ) : GetMessage("C2IT_NO_NEGATIVE") ?>)
                             </option>
-                            <option value="Y" <? if ("Y" == $str_CAT_BASE_CAN_BUY_ZERO) echo " selected" ?>><?= GetMessage("C2IT_YES_NEGATIVE") ?></option>
-                            <option value="N" <? if ("N" == $str_CAT_BASE_CAN_BUY_ZERO) echo " selected" ?>><?= GetMessage("C2IT_NO_NEGATIVE") ?></option>
+                            <option value="Y" <? if ("Y" == $str_CAT_BASE_CAN_BUY_ZERO) echo " selected" ?>><?= GetMessage(
+                                    "C2IT_YES_NEGATIVE"
+                                ) ?></option>
+                            <option value="N" <? if ("N" == $str_CAT_BASE_CAN_BUY_ZERO) echo " selected" ?>><?= GetMessage(
+                                    "C2IT_NO_NEGATIVE"
+                                ) ?></option>
                         </select>
                     </td>
                 </tr>
@@ -1804,14 +2052,23 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                     <td width="60%">
                         <?
                         $str_CAT_SUBSCRIBE = $arBaseProduct["SUBSCRIBE_ORIG"];
-                        if ($bVarsFromForm) $str_CAT_SUBSCRIBE = $SUBSUBSCRIBE;
+                        if ($bVarsFromForm) {
+                            $str_CAT_SUBSCRIBE = $SUBSUBSCRIBE;
+                        }
                         ?>
                         <select id="SUBSUBSCRIBE" name="SUBSUBSCRIBE" <? if ($bReadOnly) echo "disabled readonly" ?>>
-                            <option value="D" <? if ("D" == $str_CAT_SUBSCRIBE) echo " selected" ?>><?= GetMessage("C2IT_DEFAULT_NEGATIVE") . " (" ?><? echo 'Y' == $strGlobalSubscribe ? GetMessage("C2IT_YES_NEGATIVE") : GetMessage("C2IT_NO_NEGATIVE") ?>
-                                )
+                            <option value="D" <? if ("D" == $str_CAT_SUBSCRIBE) echo " selected" ?>><?= GetMessage(
+                                    "C2IT_DEFAULT_NEGATIVE"
+                                ) . " (" ?><? echo 'Y' == $strGlobalSubscribe ? GetMessage(
+                                    "C2IT_YES_NEGATIVE"
+                                ) : GetMessage("C2IT_NO_NEGATIVE") ?>)
                             </option>
-                            <option value="Y" <? if ("Y" == $str_CAT_SUBSCRIBE) echo " selected" ?>><?= GetMessage("C2IT_YES_NEGATIVE") ?></option>
-                            <option value="N" <? if ("N" == $str_CAT_SUBSCRIBE) echo " selected" ?>><?= GetMessage("C2IT_NO_NEGATIVE") ?></option>
+                            <option value="Y" <? if ("Y" == $str_CAT_SUBSCRIBE) echo " selected" ?>><?= GetMessage(
+                                    "C2IT_YES_NEGATIVE"
+                                ) ?></option>
+                            <option value="N" <? if ("N" == $str_CAT_SUBSCRIBE) echo " selected" ?>><?= GetMessage(
+                                    "C2IT_NO_NEGATIVE"
+                                ) ?></option>
                         </select>
                     </td>
                 </tr>
@@ -1827,7 +2084,9 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                     <td>
                         <?
                         $str_CAT_BASE_WEIGHT = $arBaseProduct["WEIGHT"];
-                        if ($bVarsFromForm) $str_CAT_BASE_WEIGHT = $SUBCAT_BASE_WEIGHT;
+                        if ($bVarsFromForm) {
+                            $str_CAT_BASE_WEIGHT = $SUBCAT_BASE_WEIGHT;
+                        }
                         ?>
                         <input type="text" <? if ($bReadOnly) echo "disabled readonly" ?> name="SUBCAT_BASE_WEIGHT"
                                value="<? echo htmlspecialcharsbx($str_CAT_BASE_WEIGHT) ?>" size="30">
@@ -1841,7 +2100,9 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                     <td width="60%">
                         <?
                         $str_CAT_BASE_LENGTH = $arBaseProduct["LENGTH"];
-                        if ($bVarsFromForm) $str_CAT_BASE_LENGTH = $SUBCAT_BASE_LENGTH;
+                        if ($bVarsFromForm) {
+                            $str_CAT_BASE_LENGTH = $SUBCAT_BASE_LENGTH;
+                        }
                         ?>
                         <input type="text" <? if ($bReadOnly) echo "disabled readonly" ?> id="SUBCAT_BASE_LENGTH"
                                name="SUBCAT_BASE_LENGTH" value="<? echo htmlspecialcharsbx($str_CAT_BASE_LENGTH) ?>"
@@ -1856,7 +2117,9 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                     <td width="60%">
                         <?
                         $str_CAT_BASE_WIDTH = $arBaseProduct["WIDTH"];
-                        if ($bVarsFromForm) $str_CAT_BASE_WIDTH = $SUBCAT_BASE_WIDTH;
+                        if ($bVarsFromForm) {
+                            $str_CAT_BASE_WIDTH = $SUBCAT_BASE_WIDTH;
+                        }
                         ?>
                         <input type="text" <? if ($bReadOnly) echo "disabled readonly" ?> id="SUBCAT_BASE_WIDTH"
                                name="SUBCAT_BASE_WIDTH" value="<? echo htmlspecialcharsbx($str_CAT_BASE_WIDTH) ?>"
@@ -1871,7 +2134,9 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                     <td width="60%">
                         <?
                         $str_CAT_BASE_HEIGHT = $arBaseProduct["HEIGHT"];
-                        if ($bVarsFromForm) $str_CAT_BASE_HEIGHT = $SUBCAT_BASE_HEIGHT;
+                        if ($bVarsFromForm) {
+                            $str_CAT_BASE_HEIGHT = $SUBCAT_BASE_HEIGHT;
+                        }
                         ?>
                         <input type="text" <? if ($bReadOnly) echo "disabled readonly" ?> id="SUBCAT_BASE_HEIGHT"
                                name="SUBCAT_BASE_HEIGHT" value="<? echo htmlspecialcharsbx($str_CAT_BASE_HEIGHT) ?>"
@@ -1919,12 +2184,20 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
 
                             <?
                             $str_CAT_PRICE_TYPE = $arBaseProduct["PRICE_TYPE"];
-                            if ($bVarsFromForm) $str_CAT_PRICE_TYPE = $SUBCAT_PRICE_TYPE;
+                            if ($bVarsFromForm) {
+                                $str_CAT_PRICE_TYPE = $SUBCAT_PRICE_TYPE;
+                            }
                             ?>
                             <select id="SUBCAT_PRICE_TYPE" name="SUBCAT_PRICE_TYPE" OnChange="ChangeSubPriceType()">
-                                <option value="S"<? if ($str_CAT_PRICE_TYPE == "S") echo " selected"; ?>><? echo GetMessage("C2IT_SINGLE") ?></option>
-                                <option value="R"<? if ($str_CAT_PRICE_TYPE == "R") echo " selected"; ?>><? echo GetMessage("C2IT_REGULAR") ?></option>
-                                <option value="T"<? if ($str_CAT_PRICE_TYPE == "T") echo " selected"; ?>><? echo GetMessage("C2IT_TRIAL") ?></option>
+                                <option value="S"<? if ($str_CAT_PRICE_TYPE == "S") {
+                                    echo " selected";
+                                } ?>><? echo GetMessage("C2IT_SINGLE") ?></option>
+                                <option value="R"<? if ($str_CAT_PRICE_TYPE == "R") {
+                                    echo " selected";
+                                } ?>><? echo GetMessage("C2IT_REGULAR") ?></option>
+                                <option value="T"<? if ($str_CAT_PRICE_TYPE == "T") {
+                                    echo " selected";
+                                } ?>><? echo GetMessage("C2IT_TRIAL") ?></option>
                             </select>
 
                         </td>
@@ -1937,7 +2210,9 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
 
                             <?
                             $str_CAT_RECUR_SCHEME_LENGTH = $arBaseProduct["RECUR_SCHEME_LENGTH"];
-                            if ($bVarsFromForm) $str_CAT_RECUR_SCHEME_LENGTH = $SUBCAT_RECUR_SCHEME_LENGTH;
+                            if ($bVarsFromForm) {
+                                $str_CAT_RECUR_SCHEME_LENGTH = $SUBCAT_RECUR_SCHEME_LENGTH;
+                            }
                             ?>
                             <input type="text" <? if ($bReadOnly) echo "disabled readonly" ?>
                                    id="SUBCAT_RECUR_SCHEME_LENGTH" name="SUBCAT_RECUR_SCHEME_LENGTH"
@@ -1952,13 +2227,17 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                         <td>
                             <?
                             $str_CAT_RECUR_SCHEME_TYPE = $arBaseProduct["RECUR_SCHEME_TYPE"];
-                            if ($bVarsFromForm) $str_CAT_RECUR_SCHEME_TYPE = $SUBCAT_RECUR_SCHEME_TYPE;
+                            if ($bVarsFromForm) {
+                                $str_CAT_RECUR_SCHEME_TYPE = $SUBCAT_RECUR_SCHEME_TYPE;
+                            }
                             ?>
                             <select id="SUBCAT_RECUR_SCHEME_TYPE" name="SUBCAT_RECUR_SCHEME_TYPE">
                                 <?
                                 foreach ($periodTimeTypes as $key => $value) {
                                     ?>
-                                    <option value="<?= $key ?>"<? if ($str_CAT_RECUR_SCHEME_TYPE == $key) echo " selected"; ?>><?= $value ?></option><?
+                                    <option value="<?= $key ?>"<? if ($str_CAT_RECUR_SCHEME_TYPE == $key) {
+                                        echo " selected";
+                                    } ?>><?= $value ?></option><?
                                 }
                                 ?>
                             </select>
@@ -1972,12 +2251,15 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
 
                             <?
                             $str_CAT_TRIAL_PRICE_ID = $arBaseProduct["TRIAL_PRICE_ID"];
-                            if ($bVarsFromForm) $str_CAT_TRIAL_PRICE_ID = $SUBCAT_TRIAL_PRICE_ID;
+                            if ($bVarsFromForm) {
+                                $str_CAT_TRIAL_PRICE_ID = $SUBCAT_TRIAL_PRICE_ID;
+                            }
                             $catProductName = "";
                             if (intval($str_CAT_TRIAL_PRICE_ID) > 0) {
                                 $dbCatElement = CIBlockElement::GetByID(intval($str_CAT_TRIAL_PRICE_ID));
-                                if ($arCatElement = $dbCatElement->GetNext())
+                                if ($arCatElement = $dbCatElement->GetNext()) {
                                     $catProductName = $arCatElement["NAME"];
+                                }
                             }
                             ?>
                             <input id="SUBCAT_TRIAL_PRICE_ID" name="SUBCAT_TRIAL_PRICE_ID"
@@ -1996,7 +2278,9 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                         <td>
                             <?
                             $str_CAT_WITHOUT_ORDER = $arBaseProduct["WITHOUT_ORDER"];
-                            if ($bVarsFromForm) $str_CAT_WITHOUT_ORDER = $SUBCAT_WITHOUT_ORDER;
+                            if ($bVarsFromForm) {
+                                $str_CAT_WITHOUT_ORDER = $SUBCAT_WITHOUT_ORDER;
+                            }
                             ?>
                             <input type="checkbox" <? if ($bReadOnly) echo "disabled readonly" ?>
                                    name="SUBCAT_WITHOUT_ORDER"
@@ -2007,7 +2291,18 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                     <?
                 }
 
-                $arUserFields = $USER_FIELD_MANAGER->GetUserFields(Catalog\ProductTable::getUfId(), $PRODUCT_ID, LANGUAGE_ID);
+                $arUserFields = $USER_FIELD_MANAGER->GetUserFields(
+                    Catalog\ProductTable::getUfId(),
+                    $PRODUCT_ID,
+                    LANGUAGE_ID
+                );
+                if (!empty($arUserFields)) {
+                    if ($arCatalog['SUBSCRIPTION'] == 'Y') {
+                        if (isset($arUserFields['UF_PRODUCT_GROUP'])) {
+                            unset($arUserFields['UF_PRODUCT_GROUP']);
+                        }
+                    }
+                }
                 if (!empty($arUserFields)) {
                     ?>
                     <tr class="heading">
@@ -2019,7 +2314,16 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                         $strLabel = $arUserField["EDIT_FORM_LABEL"] ? $arUserField["EDIT_FORM_LABEL"] : $arUserField["FIELD_NAME"];
                         $arUserField["EDIT_FORM_LABEL"] = $strLabel;
 
-                        echo $USER_FIELD_MANAGER->GetEditFormHTML($bVarsFromForm, $GLOBALS[$FIELD_NAME], $arUserField);
+                        $html = $USER_FIELD_MANAGER->GetEditFormHTML(
+                            $bVarsFromForm,
+                            $GLOBALS[$FIELD_NAME],
+                            $arUserField
+                        );
+                        //TODO: remove this code after refactoring UF fields
+                        if ($FIELD_NAME == 'UF_PRODUCT_GROUP') {
+                            $html = str_replace('<select', '<select style="max-width: 300px;"', $html);
+                        }
+                        echo $html;
                     }
                     unset($FIELD_NAME, $arUserField);
                 }
@@ -2069,31 +2373,43 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                         array("ID", "GROUP_ID", "ACCESS_LENGTH", "ACCESS_LENGTH_TYPE")
                     );
                     while ($arProductGroup = $dbProductGroups->Fetch()) {
-                        $arCurProductGroups[intval($arProductGroup["GROUP_ID"])] = array(intval($arProductGroup["ACCESS_LENGTH"]), $arProductGroup["ACCESS_LENGTH_TYPE"]);
+                        $arCurProductGroups[intval($arProductGroup["GROUP_ID"])] = array(
+                            intval(
+                                $arProductGroup["ACCESS_LENGTH"]
+                            ),
+                            $arProductGroup["ACCESS_LENGTH_TYPE"]
+                        );
                     }
 
                     $arAvailContentGroups = array();
                     $availContentGroups = COption::GetOptionString("catalog", "avail_content_groups");
-                    if (strlen($availContentGroups) > 0)
+                    if ($availContentGroups <> '') {
                         $arAvailContentGroups = explode(",", $availContentGroups);
+                    }
 
                     $bNoAvailGroups = true;
 
                     $dbGroups = CGroup::GetList(
-                        ($b = "c_sort"),
-                        ($o = "asc"),
+                        "c_sort",
+                        "asc",
                         array("ANONYMOUS" => "N")
                     );
                     while ($arGroup = $dbGroups->Fetch()) {
                         $arGroup["ID"] = intval($arGroup["ID"]);
 
                         if ($arGroup["ID"] == 2
-                            || !in_array($arGroup["ID"], $arAvailContentGroups))
+                            || !in_array($arGroup["ID"], $arAvailContentGroups)) {
                             continue;
+                        }
 
                         if ($bVarsFromForm) {
                             if (isset(${"SUBCAT_USER_GROUP_ID_" . $arGroup["ID"]}) && ${"SUBCAT_USER_GROUP_ID_" . $arGroup["ID"]} == "Y") {
-                                $arCurProductGroups[$arGroup["ID"]] = array(intval(${"SUBCAT_ACCESS_LENGTH_" . $arGroup["ID"]}), ${"SUBCAT_ACCESS_LENGTH_TYPE_" . $arGroup["ID"]});
+                                $arCurProductGroups[$arGroup["ID"]] = array(
+                                    intval(
+                                        ${"SUBCAT_ACCESS_LENGTH_" . $arGroup["ID"]}
+                                    ),
+                                    ${"SUBCAT_ACCESS_LENGTH_TYPE_" . $arGroup["ID"]}
+                                );
                             } elseif (array_key_exists($arGroup["ID"], $arCurProductGroups)) {
                                 unset($arCurProductGroups[$arGroup["ID"]]);
                             }
@@ -2105,8 +2421,9 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                             <td align="center">
 
                                 <input type="checkbox" name="SUBCAT_USER_GROUP_ID_<?= $arGroup["ID"] ?>"
-                                       value="Y"<? if (isset($arCurProductGroups[$arGroup["ID"]])) echo " checked"; ?>
-                                       onclick="SubCatGroupsActivate(this, <?= $arGroup["ID"] ?>)">
+                                       value="Y"<? if (isset($arCurProductGroups[$arGroup["ID"]])) {
+                                    echo " checked";
+                                } ?> onclick="SubCatGroupsActivate(this, <?= $arGroup["ID"] ?>)">
 
                             </td>
                             <td align="left"><? echo htmlspecialcharsbx($arGroup["NAME"]); ?></td>
@@ -2114,20 +2431,24 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
 
                                 <input type="text" id="SUBCAT_ACCESS_LENGTH_<?= $arGroup["ID"] ?>"
                                        name="SUBCAT_ACCESS_LENGTH_<?= $arGroup["ID"] ?>" size="5" <?
-                                if (isset($arCurProductGroups[$arGroup["ID"]]))
+                                if (isset($arCurProductGroups[$arGroup["ID"]])) {
                                     echo 'value="' . $arCurProductGroups[$arGroup["ID"]][0] . '" ';
-                                else
+                                } else {
                                     echo 'disabled ';
+                                }
                                 ?>>
                                 <select id="SUBCAT_ACCESS_LENGTH_TYPE_<?= $arGroup["ID"] ?>"
                                         name="SUBCAT_ACCESS_LENGTH_TYPE_<?= $arGroup["ID"] ?>"<?
-                                if (!isset($arCurProductGroups[$arGroup["ID"]]))
+                                if (!isset($arCurProductGroups[$arGroup["ID"]])) {
                                     echo ' disabled';
+                                }
                                 ?>>
                                     <?
                                     foreach ($periodTimeTypes as $key => $value) {
                                         ?>
-                                        <option value="<?= $key ?>"<? if ($arCurProductGroups[$arGroup["ID"]][1] == $key) echo " selected"; ?>><?= $value ?></option><?
+                                        <option value="<?= $key ?>"<? if ($arCurProductGroups[$arGroup["ID"]][1] == $key) {
+                                            echo " selected";
+                                        } ?>><?= $value ?></option><?
                                     }
                                     ?>
                                 </select>
@@ -2145,7 +2466,9 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                         }
                         ?>
                         <tr>
-                            <td colspan="3"><?= GetMessage("C2IT_NO_USER_GROUPS1") ?><?= " " . $textForSettingsNotify ?></td>
+                            <td colspan="3"><?= GetMessage(
+                                    "C2IT_NO_USER_GROUPS1"
+                                ) ?><?= " " . $textForSettingsNotify ?></td>
                         </tr>
                         <?
                     }
@@ -2163,14 +2486,20 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                 $arParams['SKU_PARAMS'] = $arSKU;
             }
 
-            $arDiscountList = CCatalogDiscount::GetDiscountForProduct(array('ID' => $PRODUCT_ID, 'IBLOCK_ID' => $IBLOCK_ID), $arParams);
+            $arDiscountList = CCatalogDiscount::GetDiscountForProduct(
+                array('ID' => $PRODUCT_ID, 'IBLOCK_ID' => $IBLOCK_ID),
+                $arParams
+            );
 
             if (empty($arDiscountList)) {
                 ?><b><? echo GetMessage("C2IT_NO_ACTIVE_DISCOUNTS") ?></b><br><?
             } else {
                 $showDiscountUrl = $bDiscount;
                 $discountUrl = $selfFolderUrl . 'cat_discount_edit.php?ID=';
-                if (Main\ModuleManager::isModuleInstalled('sale') && (string)Main\Config\Option::get('sale', 'use_sale_discount_only') == 'Y') {
+                if (Main\ModuleManager::isModuleInstalled('sale') && (string)Main\Config\Option::get(
+                        'sale',
+                        'use_sale_discount_only'
+                    ) == 'Y') {
                     $showDiscountUrl = ($APPLICATION->GetGroupRight('sale') >= 'W');
                     $discountUrl = $selfFolderUrl . 'sale_discount_edit.php?ID=';
                 }
@@ -2201,9 +2530,17 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                         if ($arProductDiscounts["VALUE_TYPE"] == "P") {
                             echo $arProductDiscounts["VALUE"] . "%";
                         } elseif ($arProductDiscounts["VALUE_TYPE"] == "S") {
-                            ?>= <? echo CCurrencyLang::CurrencyFormat($arProductDiscounts["VALUE"], $arProductDiscounts["CURRENCY"], true);
+                            ?>= <? echo CCurrencyLang::CurrencyFormat(
+                                $arProductDiscounts["VALUE"],
+                                $arProductDiscounts["CURRENCY"],
+                                true
+                            );
                         } else {
-                            echo CCurrencyLang::CurrencyFormat($arProductDiscounts["VALUE"], $arProductDiscounts["CURRENCY"], true);
+                            echo CCurrencyLang::CurrencyFormat(
+                                $arProductDiscounts["VALUE"],
+                                $arProductDiscounts["CURRENCY"],
+                                true
+                            );
                         }
                         ?>
                     </td>
@@ -2229,11 +2566,13 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
             $stores = array();
             $storeLink = array();
             $storeCount = 0;
-            $iterator = Catalog\StoreTable::getList(array(
-                'select' => array('ID', 'TITLE', 'ADDRESS', 'SORT'),
-                'filter' => array('=ACTIVE' => 'Y'),
-                'order' => array('SORT' => 'ASC', 'ID' => 'ASC'),
-            ));
+            $iterator = Catalog\StoreTable::getList(
+                array(
+                    'select' => array('ID', 'TITLE', 'ADDRESS', 'SORT'),
+                    'filter' => array('=ACTIVE' => 'Y'),
+                    'order' => array('SORT' => 'ASC', 'ID' => 'ASC'),
+                )
+            );
             while ($row = $iterator->fetch()) {
                 $row['ID'] = (int)$row['ID'];
                 $row['ADDRESS'] = trim($row['ADDRESS']);
@@ -2246,10 +2585,12 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
             if ($storeCount > 0) {
                 $storeIds = array_keys($storeLink);
                 if (!$bCopy) {
-                    $iterator = Catalog\StoreProductTable::getList(array(
-                        'select' => array('STORE_ID', 'AMOUNT'),
-                        'filter' => array('=PRODUCT_ID' => $PRODUCT_ID, '@STORE_ID' => $storeIds)
-                    ));
+                    $iterator = Catalog\StoreProductTable::getList(
+                        array(
+                            'select' => array('STORE_ID', 'AMOUNT'),
+                            'filter' => array('=PRODUCT_ID' => $PRODUCT_ID, '@STORE_ID' => $storeIds)
+                        )
+                    );
                     while ($row = $iterator->fetch()) {
                         $storeId = (int)$row['STORE_ID'];
                         $storeLink[$storeId]['PRODUCT_AMOUNT'] = $row['AMOUNT'];
@@ -2258,8 +2599,9 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                 }
                 if ($bVarsFromForm) {
                     foreach ($storeIds as $store) {
-                        if (isset($_POST['SUBAR_AMOUNT'][$store]) && is_string($_POST['SUBAR_AMOUNT'][$store]))
+                        if (isset($_POST['SUBAR_AMOUNT'][$store]) && is_string($_POST['SUBAR_AMOUNT'][$store])) {
                             $storeLink[$store]['PRODUCT_AMOUNT'] = $_POST['SUBAR_AMOUNT'][$store];
+                        }
                     }
                     unset($store);
                 }
@@ -2285,7 +2627,9 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                         $storeId = $row['ID'];
                         $storeEditUrl = $selfFolderUrl . 'cat_store_edit.php?ID=' . $row['ID'] . '&lang=' . LANGUAGE_ID;
                         $storeEditUrl = ($publicMode ? str_replace(".php", "/", $storeEditUrl) : $storeEditUrl);
-                        $address = ('' != $row['ADDRESS'] ? htmlspecialcharsbx($row['ADDRESS']) : '<a href="' . $storeEditUrl . '">' . GetMessage("C2IT_EDIT") . '</a>');
+                        $address = ('' != $row['ADDRESS'] ? htmlspecialcharsbx(
+                            $row['ADDRESS']
+                        ) : '<a href="' . $storeEditUrl . '">' . GetMessage("C2IT_EDIT") . '</a>');
                         $storeUrl = '<a href="' . $storeEditUrl . '">' . $storeUrl . '</a>';
                     }
                     ?>
@@ -2296,7 +2640,9 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                     <td style="text-align:center;"><?= $address; ?></td>
                     <td style="text-align:center;"><input type="text" id="SUBAR_AMOUNT_<?= $row['ID']; ?>"
                                                           name="SUBAR_AMOUNT[<?= $row['ID'] ?>]" size="12"
-                                                          value="<?= htmlspecialcharsbx($row['PRODUCT_AMOUNT']); ?>" <? echo((!$bStore || $bUseStoreControl) ? 'disabled readonly' : ''); ?>><?
+                                                          value="<?= htmlspecialcharsbx(
+                                                              $row['PRODUCT_AMOUNT']
+                                                          ); ?>" <? echo((!$bStore || $bUseStoreControl) ? 'disabled readonly' : ''); ?>><?
                         if ($bStore) {
                             ?><input type="hidden" name="SUBAR_STORE_ID[<?= $row['ID'] ?>]" value="<?= $row['ID'] ?>"><?
                         }
@@ -2310,12 +2656,14 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                     $storeListUrl = $selfFolderUrl . 'cat_store_list.php?lang=' . LANGUAGE_ID;
                     $storeListUrl = $adminSidePanelHelper->editUrlToPublicPage($storeListUrl);
                     ?><b><? echo GetMessage("C2IT_STORE_NO_STORE"); ?> <a target="_top"
-                                                                          href="<?= $storeListUrl ?>"><?= GetMessage("C2IT_STORE"); ?></a>
-                    </b><br><?
+                                                                          href="<?= $storeListUrl ?>"><?= GetMessage(
+                            "C2IT_STORE"
+                        ); ?></a></b><br><?
                 }
             }
-            if (!$bUseStoreControl)
+            if (!$bUseStoreControl) {
                 echo "<br>" . GetMessage("C2IT_STORE_HINT");
+            }
             unset($storeCount, $stores);
 
             if ($bUseStoreControl) {
@@ -2325,8 +2673,9 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                 if (!$bSubCopy) {
                     $dbBarcode = CCatalogStoreBarCode::GetList(array(), array("PRODUCT_ID" => $PRODUCT_ID));
 
-                    if ($arBarcode = $dbBarcode->Fetch())
+                    if ($arBarcode = $dbBarcode->Fetch()) {
                         $barcode = $arBarcode["BARCODE"];
+                    }
                 }
                 ?>
                 <input type="hidden" name="SUBCAT_BARCODE_MULTIPLY" id="SUBCAT_BARCODE_MULTIPLY_N" value="N"/>
@@ -2334,9 +2683,9 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                        id="subcatalog_barcode_table">
 
                     <tr>
-                        <td width="40%"><label
-                                    for="SUBCAT_BARCODE_MULTIPLY"><? echo GetMessage('C2IT_BARCODE_MULTIPLY'); ?>
-                                :</label></td>
+                        <td width="40%"><label for="SUBCAT_BARCODE_MULTIPLY"><? echo GetMessage(
+                                    'C2IT_BARCODE_MULTIPLY'
+                                ); ?>:</label></td>
                         <td width="60%">
                             <input type="checkbox" name="SUBCAT_BARCODE_MULTIPLY" id="SUBCAT_BARCODE_MULTIPLY"
                                    value="Y" <?= $bUseMultiplyBarcode ? 'checked="checked"' : '' ?> <? echo(($bReadOnly) ? 'disabled readonly' : 'onclick="checkSubBarCode();"'); ?>/>
@@ -2410,21 +2759,29 @@ if ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_pric
                     <table border="0" cellspacing="0" cellpadding="5" width="100%" class="edit-table"
                            id="subscription-data-table">
                         <tr>
-                            <td width="40%"
-                                style="text-align:right;"><?= GetMessage('C2IT_NUMBER_SUBSCRIPTIONS') ?></td>
+                            <td width="40%" style="text-align:right;"><?= GetMessage(
+                                    'C2IT_NUMBER_SUBSCRIPTIONS'
+                                ) ?></td>
                             <td width="60%" id="bx-catalog-subscribe-total-count"></td>
                         </tr>
                         <tr>
-                            <td width="40%"
-                                style="text-align:right;"><?= GetMessage('C2IT_NUMBER_ACTIVE_SUBSCRIPTIONS') ?></td>
+                            <td width="40%" style="text-align:right;"><?= GetMessage(
+                                    'C2IT_NUMBER_ACTIVE_SUBSCRIPTIONS'
+                                ) ?></td>
                             <td width="60%" id="bx-catalog-subscribe-active-count"></td>
                         </tr>
                         <tr>
                             <td width="40%" style="text-align:right;"><?= GetMessage('C2IT_LIST_SUBSCRIPTIONS') ?></td>
                             <td width="60%">
                                 <?
-                                $subscriptionUrl = $selfFolderUrl . "cat_subscription_list.php?ITEM_ID=" . htmlspecialcharsbx($PRODUCT_ID) . "&lang=" . LANGUAGE_ID;
-                                $subscriptionUrl = ($publicMode ? str_replace(".php", "/", $subscriptionUrl) : $subscriptionUrl);
+                                $subscriptionUrl = $selfFolderUrl . "cat_subscription_list.php?ITEM_ID=" . htmlspecialcharsbx(
+                                        $PRODUCT_ID
+                                    ) . "&lang=" . LANGUAGE_ID;
+                                $subscriptionUrl = ($publicMode ? str_replace(
+                                    ".php",
+                                    "/",
+                                    $subscriptionUrl
+                                ) : $subscriptionUrl);
                                 ?>
                                 <a target="_top" href="<?= $subscriptionUrl ?>">
                                     <?= GetMessage('C2IT_LIST_SUBSCRIPTIONS_TEXT') ?>

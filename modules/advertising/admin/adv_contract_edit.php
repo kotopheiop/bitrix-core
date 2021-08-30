@@ -8,11 +8,12 @@
 ##############################################
 */
 
+use Bitrix\Main\Loader;
+use Bitrix\Main\Text\HtmlFilter;
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/advertising/prolog.php");
-require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/advertising/include.php");
-
-use Bitrix\Main\Text\HtmlFilter;
+Loader::includeModule('advertising');
 
 ClearVars();
 
@@ -21,18 +22,47 @@ $isManager = CAdvContract::IsManager();
 $isAdvertiser = CAdvContract::IsAdvertiser();
 $isAdmin = CAdvContract::IsAdmin();
 
-if (!$isAdmin && !$isDemo && !$isManager && !$isAdvertiser) $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if (!$isAdmin && !$isDemo && !$isManager && !$isAdvertiser) {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 $err_mess = "FILE: " . __FILE__ . "<br>LINE: ";
 
 $aTabs = array(
-    array("DIV" => "edit1", "TAB" => GetMessage("AD_TAB_CONTRACT"), "ICON" => "ad_contract_edit", "TITLE" => GetMessage("AD_TAB_TITLE_CONTRACT")),
-    array("DIV" => "edit2", "TAB" => GetMessage("AD_TAB_LIMIT"), "ICON" => "ad_contract_edit", "TITLE" => GetMessage("AD_CONTRACT_LIMITS")),
-    array("DIV" => "edit3", "TAB" => GetMessage("AD_TAB_TARG"), "ICON" => "ad_contract_edit", "TITLE" => GetMessage("AD_TAB_TITLE_TARG")),
-    array("DIV" => "edit4", "TAB" => GetMessage("AD_TAB_ACCESS"), "ICON" => "ad_contract_edit", "TITLE" => GetMessage("AD_OWNER_PERMISSIONS")));
-if ($isAdmin || ($isDemo && !$isOwner))
-    $aTabs[] = array("DIV" => "edit5", "TAB" => GetMessage("AD_TAB_COMMENT"), "ICON" => "ad_contract_edit", "TITLE" => GetMessage("AD_ADMIN_COMMENTS"));
+    array(
+        "DIV" => "edit1",
+        "TAB" => GetMessage("AD_TAB_CONTRACT"),
+        "ICON" => "ad_contract_edit",
+        "TITLE" => GetMessage("AD_TAB_TITLE_CONTRACT")
+    ),
+    array(
+        "DIV" => "edit2",
+        "TAB" => GetMessage("AD_TAB_LIMIT"),
+        "ICON" => "ad_contract_edit",
+        "TITLE" => GetMessage("AD_CONTRACT_LIMITS")
+    ),
+    array(
+        "DIV" => "edit3",
+        "TAB" => GetMessage("AD_TAB_TARG"),
+        "ICON" => "ad_contract_edit",
+        "TITLE" => GetMessage("AD_TAB_TITLE_TARG")
+    ),
+    array(
+        "DIV" => "edit4",
+        "TAB" => GetMessage("AD_TAB_ACCESS"),
+        "ICON" => "ad_contract_edit",
+        "TITLE" => GetMessage("AD_OWNER_PERMISSIONS")
+    )
+);
+if ($isAdmin || ($isDemo && !$isOwner)) {
+    $aTabs[] = array(
+        "DIV" => "edit5",
+        "TAB" => GetMessage("AD_TAB_COMMENT"),
+        "ICON" => "ad_contract_edit",
+        "TITLE" => GetMessage("AD_ADMIN_COMMENTS")
+    );
+}
 
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 /***************************************************************************
@@ -49,20 +79,28 @@ $isOwner = CAdvContract::IsOwner($ID);
 $isEditMode = false;
 $isEditRightsMode = false;
 if (!$isDemo) {
-    if (count($arrPERM) <= 0) $APPLICATION->AuthForm(GetMessage("AD_ERROR_NOT_ENOUGH_PERMISSIONS_CONTRACT"));
+    if (count($arrPERM) <= 0) {
+        $APPLICATION->AuthForm(GetMessage("AD_ERROR_NOT_ENOUGH_PERMISSIONS_CONTRACT"));
+    }
 } else {
-    if (!$isOwner) $isEditMode = true;
+    if (!$isOwner) {
+        $isEditMode = true;
+    }
 }
 
-if ($isAdmin) $isEditMode = true;
-if (in_array("EDIT", $arrPERM)) $isEditRightsMode = true;
+if ($isAdmin) {
+    $isEditMode = true;
+}
+if (in_array("EDIT", $arrPERM)) {
+    $isEditRightsMode = true;
+}
 
 if ($action == "view") {
     $isEditMode = false;
     $isEditRightsMode = false;
 }
 
-if ((strlen($save) > 0 || strlen($apply) > 0) && check_bitrix_sessid() && $REQUEST_METHOD == "POST") {
+if (($save <> '' || $apply <> '') && check_bitrix_sessid() && $REQUEST_METHOD == "POST") {
     $arrWEEKDAY = array(
         "SUNDAY" => $arrSUNDAY,
         "MONDAY" => $arrMONDAY,
@@ -97,20 +135,21 @@ if ((strlen($save) > 0 || strlen($apply) > 0) && check_bitrix_sessid() && $REQUE
     );
 
     if ($ID = CAdvContract::Set($arFields, $ID)) {
-        if (strlen($strError) <= 0) {
-            if (strlen($save) > 0)
+        if ($strError == '') {
+            if ($save <> '') {
                 LocalRedirect("adv_contract_list.php?lang=" . LANGUAGE_ID);
-            else
-                LocalRedirect("adv_contract_edit.php?ID=" . $ID . "&lang=" . LANGUAGE_ID . "&" . $tabControl->ActiveTabParam());
+            } else {
+                LocalRedirect(
+                    "adv_contract_edit.php?ID=" . $ID . "&lang=" . LANGUAGE_ID . "&" . $tabControl->ActiveTabParam()
+                );
+            }
         }
     }
     $DB->PrepareFields("b_adv_contract");
 }
 
-$by = "sort";
-$order = "asc";
 $arrSites = array();
-$rs = CSite::GetList($by, $order);
+$rs = CSite::GetList();
 while ($ar = $rs->Fetch()) {
     $arrSites[$ar["ID"]] = $ar;
 }
@@ -132,8 +171,8 @@ if (!$rsContract || !$rsContract->ExtractFields()) {
     $str_DEFAULT_STATUS_SID = "READY";
     $arrSITE = array_keys($arrSites);
 } else {
-    if (strlen($strError) <= 0) {
-        if (strlen($str_KEYWORDS) > 0) {
+    if ($strError == '') {
+        if ($str_KEYWORDS <> '') {
             $arrKEYWORDS = preg_split('/[\n\r]+/', $str_KEYWORDS);
             TrimArr($arrKEYWORDS);
         }
@@ -147,17 +186,21 @@ if (!$rsContract || !$rsContract->ExtractFields()) {
         $arrTYPE = array_keys($arContractTypes);
 
         $arrWEEKDAY = CAdvContract::GetWeekdayArray($ID);
-        while (list($key, $value) = each($arrWEEKDAY)) ${"arr" . $key} = $value;
+        foreach ($arrWEEKDAY as $key => $value) {
+            ${"arr" . $key} = $value;
+        }
         $arrP = CAdvContract::GetContractPermissions($ID);
         if (is_array($arrP)) {
-            while (list($key, $arr) = each($arrP))
-                foreach ($arr as $ar)
+            foreach ($arrP as $key => $arr) {
+                foreach ($arr as $ar) {
                     ${"arrUSER_" . $key}[] = $ar["USER_ID"];
+                }
+            }
         }
     }
 }
 
-if (strlen($strError) > 0) {
+if ($strError <> '') {
     $DB->InitTableVarsForEdit("b_adv_contract", "", "str_");
     $str_SHOW_PAGE = $SHOW_PAGE;
     $str_NOT_SHOW_PAGE = $NOT_SHOW_PAGE;
@@ -182,7 +225,6 @@ $aMenu = array(
     )
 );
 if (intval($ID) > 0) {
-
     $aMenu[] = array(
         "TEXT" => GetMessage("AD_CONTRACT_STATISTICS"),
         "TITLE" => GetMessage("AD_CONTRACT_STATISTICS_TITLE"),
@@ -218,7 +260,10 @@ if (intval($ID) > 0) {
             $arMenuActions[] = array(
                 "TEXT" => GetMessage("AD_DELETE_CONTRACT"),
                 "TITLE" => GetMessage("AD_DELETE_CONTRACT_TITLE"),
-                "LINK" => "javascript:if(confirm('" . GetMessage("AD_DELETE_CONTRACT_CONFIRM") . "'))window.location='adv_contract_list.php?ID=" . $ID . "&lang=" . LANGUAGE_ID . "&action=delete&sessid=" . bitrix_sessid() . "';",
+                "LINK" => "javascript:if(confirm('" . GetMessage(
+                        "AD_DELETE_CONTRACT_CONFIRM"
+                    ) . "'))window.location='adv_contract_list.php?ID=" . $ID . "&lang=" . LANGUAGE_ID . "&action=delete&sessid=" . bitrix_sessid(
+                    ) . "';",
             );
         }
     }
@@ -246,7 +291,7 @@ $context->Show();
     ?>
     <?
     if ($ID > 0) :
-        $lamp_alt = GetMessage("AD_" . strtoupper($str_LAMP) . "_ALT");
+        $lamp_alt = GetMessage("AD_" . mb_strtoupper($str_LAMP) . "_ALT");
         $lamp = '<div class="lamp-' . $str_LAMP . '" title="' . $lamp_alt . '" style="float:left;"></div>';
         ?>
         <tr>
@@ -256,26 +301,38 @@ $context->Show();
     <? endif; ?>
 
     <? if ($ID > 0): ?>
-        <? if (strlen($str_DATE_CREATE) > 0): ?>
+        <? if ($str_DATE_CREATE <> ''): ?>
             <tr>
                 <td width="40%"><?= GetMessage("AD_CREATED") ?></td>
                 <td width="60%"><?= $str_DATE_CREATE ?><?
                     if (intval($str_CREATED_BY) > 0) :
                         $rsUser = CUser::GetByID($str_CREATED_BY);
                         $arUser = $rsUser->Fetch();
-                        echo "&nbsp;&nbsp;[<a href='/bitrix/admin/user_edit.php?ID=" . $str_CREATED_BY . "&lang=" . LANGUAGE_ID . "' title='" . GetMessage("AD_USER_ALT") . "'>" . $str_CREATED_BY . "</a>]&nbsp;(" . htmlspecialcharsbx($arUser["LOGIN"]) . ") " . htmlspecialcharsbx($arUser["NAME"]) . " " . htmlspecialcharsbx($arUser["LAST_NAME"]);
+                        echo "&nbsp;&nbsp;[<a href='/bitrix/admin/user_edit.php?ID=" . $str_CREATED_BY . "&lang=" . LANGUAGE_ID . "' title='" . GetMessage(
+                                "AD_USER_ALT"
+                            ) . "'>" . $str_CREATED_BY . "</a>]&nbsp;(" . htmlspecialcharsbx(
+                                $arUser["LOGIN"]
+                            ) . ") " . htmlspecialcharsbx($arUser["NAME"]) . " " . htmlspecialcharsbx(
+                                $arUser["LAST_NAME"]
+                            );
                     endif;
                     ?></td>
             </tr>
         <? endif; ?>
-        <? if (strlen($str_DATE_MODIFY) > 0): ?>
+        <? if ($str_DATE_MODIFY <> ''): ?>
             <tr>
                 <td><?= GetMessage("AD_MODIFIED") ?></td>
                 <td><?= $str_DATE_MODIFY ?><?
                     if (intval($str_MODIFIED_BY) > 0) :
                         $rsUser = CUser::GetByID($str_MODIFIED_BY);
                         $arUser = $rsUser->Fetch();
-                        echo "&nbsp;&nbsp;[<a href='/bitrix/admin/user_edit.php?ID=" . $str_MODIFIED_BY . "&lang=" . LANGUAGE_ID . "' title='" . GetMessage("AD_USER_ALT") . "'>" . $str_MODIFIED_BY . "</a>]&nbsp;(" . htmlspecialcharsbx($arUser["LOGIN"]) . ") " . htmlspecialcharsbx($arUser["NAME"]) . " " . htmlspecialcharsbx($arUser["LAST_NAME"]);
+                        echo "&nbsp;&nbsp;[<a href='/bitrix/admin/user_edit.php?ID=" . $str_MODIFIED_BY . "&lang=" . LANGUAGE_ID . "' title='" . GetMessage(
+                                "AD_USER_ALT"
+                            ) . "'>" . $str_MODIFIED_BY . "</a>]&nbsp;(" . htmlspecialcharsbx(
+                                $arUser["LOGIN"]
+                            ) . ") " . htmlspecialcharsbx($arUser["NAME"]) . " " . htmlspecialcharsbx(
+                                $arUser["LAST_NAME"]
+                            );
                     endif;
                     ?></td>
             </tr>
@@ -296,10 +353,10 @@ $context->Show();
         <tr>
             <td><?= GetMessage("AD_SHOW_INTERVAL") . ":" ?></td>
             <td><?
-                if (strlen($str_DATE_SHOW_FROM) > 0) :
+                if ($str_DATE_SHOW_FROM <> '') :
                     echo GetMessage("AD_FROM") ?>&nbsp;<b><?= $str_DATE_SHOW_FROM ?></b>&nbsp;<?
                 endif;
-                if (strlen($str_DATE_SHOW_TO) > 0) :
+                if ($str_DATE_SHOW_TO <> '') :
                     echo GetMessage("AD_TILL") ?>&nbsp;<b><?= $str_DATE_SHOW_TO ?></b><?
                 endif;
                 ?></td>
@@ -308,7 +365,17 @@ $context->Show();
         <tr>
             <td><?= GetMessage("AD_SHOW_INTERVAL") . ":" ?></td>
             <td><?
-                echo CalendarPeriod("DATE_SHOW_FROM", htmlspecialcharsbx($str_DATE_SHOW_FROM), "DATE_SHOW_TO", htmlspecialcharsbx($str_DATE_SHOW_TO), "form1", "N", "", "", 20); ?></td>
+                echo CalendarPeriod(
+                    "DATE_SHOW_FROM",
+                    htmlspecialcharsbx($str_DATE_SHOW_FROM),
+                    "DATE_SHOW_TO",
+                    htmlspecialcharsbx($str_DATE_SHOW_TO),
+                    "form1",
+                    "N",
+                    "",
+                    "",
+                    20
+                ); ?></td>
         </tr>
     <? endif; ?>
 
@@ -384,10 +451,14 @@ $context->Show();
             <td>
                 <table cellspacing=1 cellpadding=0 border=0>
                     <?
-                    while (list($key, $status_sid) = each($arrStatus["reference_id"])) :
+                    foreach ($arrStatus["reference_id"] as $key => $status_sid) :
                         $count = 0;
-                        $arFilter = array("CONTRACT_ID" => $ID, "CONTRACT_EXACT_MATCH" => "Y", "STATUS_SID" => $status_sid);
-                        if ($rsBanners = CAdvBanner::GetList($v1, $v2, $arFilter, $v3)) {
+                        $arFilter = array(
+                            "CONTRACT_ID" => $ID,
+                            "CONTRACT_EXACT_MATCH" => "Y",
+                            "STATUS_SID" => $status_sid
+                        );
+                        if ($rsBanners = CAdvBanner::GetList('', '', $arFilter)) {
                             $rsBanners->NavStart();
                             $count = $rsBanners->SelectedRowsCount();
                         }
@@ -398,7 +469,7 @@ $context->Show();
                                 <a href="/bitrix/admin/adv_banner_list.php?find_contract_id[]=<? echo $ID ?>&find_status_sid[]=<? echo $status_sid ?>&set_filter=Y&lang=<?= LANGUAGE_ID ?>"
                                    title='<?= GetMessage("AD_BANNER_ALT") ?>'><?= $count ?></a></td>
                         </tr>
-                    <? endwhile; ?>
+                    <? endforeach; ?>
                     <tr>
                         <td><b><?= GetMessage("AD_TOTAL") ?>&nbsp;</b></td>
                         <td>
@@ -417,19 +488,28 @@ $context->Show();
         <td width="60%"><?
             if ($isEditMode) :?>
                 <div class="adm-list">
-                    <? reset($arrSites);
-                    while (list($sid, $arrS) = each($arrSites)):
+                    <?
+                    foreach ($arrSites as $sid => $arrS):
                         $checked = (in_array($sid, $arrSITE)) ? "checked" : "";
                         /*<?=$disabled?>*/
                         ?>
                         <div class="adm-list-item">
                             <div class="adm-list-control"><input type="checkbox" name="arrSITE[]"
                                                                  value="<?= htmlspecialcharsbx($sid) ?>"
-                                                                 id="site_<?= htmlspecialcharsbx($sid) ?>" <?= $checked ?>>
-                            </div>
-                            <div class="adm-list-label"><? echo '[<a href="/bitrix/admin/site_edit.php?LID=' . urlencode($sid) . '&lang=' . LANGUAGE_ID . '" title="' . GetMessage("AD_SITE_ALT") . '">' . htmlspecialcharsex($sid) . '</a>]&nbsp;<label for="site_' . htmlspecialcharsbx($sid) . '">' . htmlspecialcharsex($arrS["NAME"]) ?></label></div>
+                                                                 id="site_<?= htmlspecialcharsbx(
+                                                                     $sid
+                                                                 ) ?>" <?= $checked ?>></div>
+                            <div class="adm-list-label"><? echo '[<a href="/bitrix/admin/site_edit.php?LID=' . urlencode(
+                                        $sid
+                                    ) . '&lang=' . LANGUAGE_ID . '" title="' . GetMessage(
+                                        "AD_SITE_ALT"
+                                    ) . '">' . htmlspecialcharsex(
+                                        $sid
+                                    ) . '</a>]&nbsp;<label for="site_' . htmlspecialcharsbx(
+                                        $sid
+                                    ) . '">' . htmlspecialcharsex($arrS["NAME"]) ?></label></div>
                         </div>
-                    <?endwhile; ?>
+                    <?endforeach; ?>
                 </div>
             <?
             else:
@@ -464,14 +544,16 @@ $context->Show();
                 <div class="adm-list">
                     <div class="adm-list-item">
                         <div class="adm-list-control"><input name="arrTYPE[]" type="checkbox" value="ALL"
-                                                             onclick="OnSelectAll_typies(this.checked)" <? if ($ID > 0 && in_array("ALL", $arrTYPE) || $ID <= 0) echo 'checked="checked"' ?>
-                                                             id="alltypies"></div>
+                                                             onclick="OnSelectAll_typies(this.checked)" <? if ($ID > 0 && in_array(
+                                    "ALL",
+                                    $arrTYPE
+                                ) || $ID <= 0) echo 'checked="checked"' ?> id="alltypies"></div>
                         <div class="adm-list-label"><label for="alltypies"><?= GetMessage("AD_ALL_TYPIES") ?></label>
                         </div>
                     </div>
 
                     <?
-                    $rsType = CAdvType::GetList($v1 = "s_sort", $v2 = "asc", array("ACTIVE" => "Y"), $v3);
+                    $rsType = CAdvType::GetList("s_sort", "asc", array("ACTIVE" => "Y"));
                     $i = 0;
                     while ($arType = $rsType->GetNext()) {
                         ?>
@@ -484,7 +566,9 @@ $context->Show();
                                         id="arType_<?= $i ?>">
                             </div>
                             <div class="adm-list-label">
-                                <?= "[<a href='/bitrix/admin/adv_type_edit.php?lang=" . LANGUAGE_ID . "&SID=" . $arType["SID"] . "&action=view' title='" . GetMessage("AD_TYPE_ALT") . "'>" . $arType["SID"] . "</a>] " . "<label for='arType_" . $i . "'>" . $arType["NAME"] . "</label>" ?>
+                                <?= "[<a href='/bitrix/admin/adv_type_edit.php?lang=" . LANGUAGE_ID . "&SID=" . $arType["SID"] . "&action=view' title='" . GetMessage(
+                                    "AD_TYPE_ALT"
+                                ) . "'>" . $arType["SID"] . "</a>] " . "<label for='arType_" . $i . "'>" . $arType["NAME"] . "</label>" ?>
                             </div>
                         </div>
                         <?
@@ -508,7 +592,9 @@ $context->Show();
 
                 $arContractTypes = CAdvContract::GetTypeArray($ID);
                 foreach ($arContractTypes as $sid => $name):
-                    if ($sid == "ALL") continue;
+                    if ($sid == "ALL") {
+                        continue;
+                    }
                     ?>
                     [<a href="/bitrix/admin/adv_type_edit.php?lang=<?= LANGUAGE_ID ?>&SID=<?= $sid ?>&action=view"
                         title="<?= GetMessage("AD_TYPE_ALT") ?>"><?= $sid ?></a>]
@@ -527,8 +613,9 @@ $context->Show();
         <tr valign="top">
             <td><?= GetMessage("AD_MAX_VISITOR_COUNT") ?></td>
             <td><input type="text" name="MAX_VISITOR_COUNT" size="8"
-                       value="<?= $str_MAX_VISITOR_COUNT ?>"><? if ($ID > 0): ?>&nbsp;<?= GetMessage("AD_VISITORS_2") ?>&nbsp;<?= intval($str_VISITOR_COUNT) ?><? endif; ?>
-            </td>
+                       value="<?= $str_MAX_VISITOR_COUNT ?>"><? if ($ID > 0): ?>&nbsp;<?= GetMessage(
+                    "AD_VISITORS_2"
+                ) ?>&nbsp;<?= intval($str_VISITOR_COUNT) ?><? endif; ?></td>
         </tr>
     <? endif; ?>
 
@@ -541,8 +628,9 @@ $context->Show();
         <tr valign="top">
             <td><?= GetMessage("AD_MAX_SHOW_COUNT") ?></td>
             <td><input type="text" name="MAX_SHOW_COUNT" size="8"
-                       value="<?= $str_MAX_SHOW_COUNT ?>"><? if ($ID > 0): ?>&nbsp;<?= GetMessage("AD_SHOW_COUNT") ?>&nbsp;<?= intval($str_SHOW_COUNT) ?><? endif; ?>
-            </td>
+                       value="<?= $str_MAX_SHOW_COUNT ?>"><? if ($ID > 0): ?>&nbsp;<?= GetMessage(
+                    "AD_SHOW_COUNT"
+                ) ?>&nbsp;<?= intval($str_SHOW_COUNT) ?><? endif; ?></td>
         </tr>
     <? endif; ?>
 
@@ -555,8 +643,9 @@ $context->Show();
         <tr valign="top">
             <td><?= GetMessage("AD_MAX_CLICK_COUNT") ?></td>
             <td><input type="text" name="MAX_CLICK_COUNT" size="8"
-                       value="<?= $str_MAX_CLICK_COUNT ?>"><? if ($ID > 0): ?>&nbsp;<?= GetMessage("AD_CLICKED") ?>&nbsp;<?= intval($str_CLICK_COUNT) ?><? endif; ?>
-            </td>
+                       value="<?= $str_MAX_CLICK_COUNT ?>"><? if ($ID > 0): ?>&nbsp;<?= GetMessage(
+                    "AD_CLICKED"
+                ) ?>&nbsp;<?= intval($str_CLICK_COUNT) ?><? endif; ?></td>
         </tr>
     <? endif; ?>
 
@@ -604,14 +693,14 @@ $context->Show();
                         "SATURDAY" => GetMessage("AD_SATURDAY"),
                         "SUNDAY" => GetMessage("AD_SUNDAY")
                     );
-                    while (list($key, $value) = each($arrWDAY)) :
+                    foreach ($arrWDAY as $key => $value):
                         ?>
                         <td><label for="<?= $key ?>"><?= $value ?></label><br><input <?= $disabled ?> type="checkbox"
                                                                                                       onclick="OnSelectAll(this.checked, '<?= $key ?>', true)"
                                                                                                       id="<?= $key ?>">
                         </td>
                     <?
-                    endwhile;
+                    endforeach;
                     ?>
                     <td>&nbsp;</td>
                 </tr>
@@ -622,17 +711,19 @@ $context->Show();
                     <tr>
                         <td><label for="<?= $i ?>"><? echo $i . "&nbsp;-&nbsp;" . ($i + 1) ?></label></td>
                         <?
-                        reset($arrWDAY);
-
-                        while (list($key, $value) = each($arrWDAY)) :
+                        foreach ($arrWDAY as $key => $value):
                             $checked = "";
-                            if ($ID <= 0 && strlen($strError) <= 0) $checked = "checked";
-                            if (is_array(${"arr" . $key}) && in_array($i, ${"arr" . $key})) $checked = "checked";
+                            if ($ID <= 0 && $strError == '') {
+                                $checked = "checked";
+                            }
+                            if (is_array(${"arr" . $key}) && in_array($i, ${"arr" . $key})) {
+                                $checked = "checked";
+                            }
                             ?>
                             <td><input id="arr<?= $key ?>_<?= $i ?>[]" <?= $disabled ?> name="arr<?= $key ?>[]"
                                        type="checkbox" value="<?= $i ?>" <?= $checked ?>></td>
                         <?
-                        endwhile;
+                        endforeach;
 
                         ?>
                         <td><input <?= $disabled ?> type="checkbox"
@@ -690,8 +781,9 @@ $context->Show();
             <td width="60%"><?
                 $arr = $arrSHOW_PAGE;
                 if (is_array($arr) && count($arr) > 0) {
-                    foreach ($arr as $page)
+                    foreach ($arr as $page) {
                         echo htmlspecialcharsbx($page) . '<br>';
+                    }
                 } else {
                     echo GetMessage("ADV_NO_LIMITS");
                 }
@@ -701,8 +793,9 @@ $context->Show();
         <tr valign="top">
             <td width="40%"><?= GetMessage("AD_SHOW_PAGES"); ?></td>
             <td width="60%"><textarea name="SHOW_PAGE" cols="45" rows="6"
-                                      wrap="OFF"><?= $str_SHOW_PAGE ?></textarea><br><?= GetMessage("AD_SHOW_PAGES_ALT") ?>
-            </td>
+                                      wrap="OFF"><?= $str_SHOW_PAGE ?></textarea><br><?= GetMessage(
+                    "AD_SHOW_PAGES_ALT"
+                ) ?></td>
         </tr>
     <? endif; ?>
 
@@ -712,8 +805,9 @@ $context->Show();
             <td><?
                 $arr = $arrNOT_SHOW_PAGE;
                 if (is_array($arr) && count($arr) > 0) {
-                    foreach ($arr as $page)
+                    foreach ($arr as $page) {
                         echo htmlspecialcharsbx($page) . '<br>';
+                    }
                 } else {
                     echo GetMessage("ADV_NO_LIMITS");
                 }
@@ -735,10 +829,11 @@ $context->Show();
                 ?><textarea name="KEYWORDS" cols="45" rows="6" wrap="OFF"><?= $str_KEYWORDS ?></textarea>
                 <br><?= GetMessage("AD_KEYWORDS_ALT") ?><?
             else :
-                if (is_array($arrKEYWORDS))
+                if (is_array($arrKEYWORDS)) {
                     echo implode("<br>", $arrKEYWORDS);
-                else
+                } else {
                     echo GetMessage("ADV_NOT_SET");
+                }
             endif;
             ?></td>
     </tr>
@@ -761,20 +856,28 @@ $context->Show();
             <td width="40%"><?= GetMessage("AD_VIEW_STATISTICS") ?><br><IMG SRC="/bitrix/images/advertising/mouse.gif"
                                                                             WIDTH="44" HEIGHT="21" BORDER=0 ALT=""></td>
             <td width="60%"><?
-                echo SelectBoxMFromArray("arrUSER_VIEW[]", array("REFERENCE" => $ref, "REFERENCE_ID" => $ref_id), $arrUSER_VIEW, "", true, 15);
+                echo SelectBoxMFromArray(
+                    "arrUSER_VIEW[]",
+                    array("REFERENCE" => $ref, "REFERENCE_ID" => $ref_id),
+                    $arrUSER_VIEW,
+                    "",
+                    true,
+                    15
+                );
                 ?></td>
         </tr>
     <? else:?>
         <tr valign="top">
             <td width="40%"><?= GetMessage("AD_VIEW_STATISTICS") ?></td>
             <td width="60%"><?
-                reset($ref_id);
-                while (list($key, $value) = each($ref_id)) {
-                    if (is_array($arrUSER_VIEW) && in_array($value, $arrUSER_VIEW))
+                foreach ($ref_id as $key => $value) {
+                    if (is_array($arrUSER_VIEW) && in_array($value, $arrUSER_VIEW)) {
                         echo $ref[$key] . "<br>";
+                    }
                 }
-                if (!is_set($arrUSER_VIEW))
+                if (!is_set($arrUSER_VIEW)) {
                     echo GetMessage("ADV_NOT_SET");
+                }
                 ?></td>
         </tr>
     <? endif; ?>
@@ -784,19 +887,28 @@ $context->Show();
             <td><?= GetMessage("AD_MANAGE_BANNERS") ?><br><IMG SRC="/bitrix/images/advertising/mouse.gif" WIDTH="44"
                                                                HEIGHT="21" BORDER=0 ALT=""></td>
             <td><?
-                echo SelectBoxMFromArray("arrUSER_ADD[]", array("REFERENCE" => $ref, "REFERENCE_ID" => $ref_id), $arrUSER_ADD, "", true, 15);
+                echo SelectBoxMFromArray(
+                    "arrUSER_ADD[]",
+                    array("REFERENCE" => $ref, "REFERENCE_ID" => $ref_id),
+                    $arrUSER_ADD,
+                    "",
+                    true,
+                    15
+                );
                 ?></td>
         </tr>
     <? else: ?>
         <tr valign="top">
             <td><?= GetMessage("AD_MANAGE_BANNERS") ?></td>
             <td><?
-                reset($ref_id);
-                while (list($key, $value) = each($ref_id)) {
-                    if (is_array($arrUSER_ADD) && in_array($value, $arrUSER_ADD)) echo $ref[$key] . "<br>";
+                foreach ($ref_id as $key => $value) {
+                    if (is_array($arrUSER_ADD) && in_array($value, $arrUSER_ADD)) {
+                        echo $ref[$key] . "<br>";
+                    }
                 }
-                if (!is_set($arrUSER_ADD))
+                if (!is_set($arrUSER_ADD)) {
                     echo GetMessage("ADV_NOT_SET");
+                }
                 ?></td>
         </tr>
     <? endif; ?>
@@ -805,19 +917,28 @@ $context->Show();
         <tr valign="top">
             <td><?= GetMessage("AD_EDIT_CONTRACT") ?><br><IMG SRC="/bitrix/images/advertising/mouse.gif" WIDTH="44"
                                                               HEIGHT="21" BORDER=0 ALT=""></td>
-            <td><? echo SelectBoxMFromArray("arrUSER_EDIT[]", array("REFERENCE" => $ref, "REFERENCE_ID" => $ref_id), $arrUSER_EDIT, "", true, 15);
+            <td><? echo SelectBoxMFromArray(
+                    "arrUSER_EDIT[]",
+                    array("REFERENCE" => $ref, "REFERENCE_ID" => $ref_id),
+                    $arrUSER_EDIT,
+                    "",
+                    true,
+                    15
+                );
                 ?></td>
         </tr>
     <? else: ?>
         <tr valign="top">
             <td><?= GetMessage("AD_EDIT_CONTRACT") ?></td>
             <td><?
-                reset($ref_id);
-                while (list($key, $value) = each($ref_id)) {
-                    if (is_array($arrUSER_EDIT) && in_array($value, $arrUSER_EDIT)) echo $ref[$key] . "<br>";
+                foreach ($ref_id as $key => $value) {
+                    if (is_array($arrUSER_EDIT) && in_array($value, $arrUSER_EDIT)) {
+                        echo $ref[$key] . "<br>";
+                    }
                 }
-                if (!is_set($arrUSER_EDIT))
+                if (!is_set($arrUSER_EDIT)) {
                     echo GetMessage("ADV_NOT_SET");
+                }
                 ?></td>
         </tr>
     <? endif; ?>
@@ -838,15 +959,16 @@ $context->Show();
 
     <?
     $disable = true;
-    if ($isEditMode || $isEditRightsMode)
+    if ($isEditMode || $isEditRightsMode) {
         $disable = false;
+    }
 
     $tabControl->Buttons(array("disabled" => $disable, "back_url" => "adv_contract_list.php?lang=" . LANGUAGE_ID));
     $tabControl->End();
     ?>
 </form>
 <?
-if (isset($aTabs[4]) && strlen($str_ADMIN_COMMENTS) <= 0 && !$isEditMode):?>
+if (isset($aTabs[4]) && $str_ADMIN_COMMENTS == '' && !$isEditMode):?>
     <script language="JavaScript">
         <!--
         tabControl.DisableTab("edit5");

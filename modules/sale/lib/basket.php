@@ -136,7 +136,7 @@ class Basket extends BasketBase
     public static function deleteOldAgent($days, $speed = 0)
     {
         if (!isset($GLOBALS["USER"]) || !is_object($GLOBALS["USER"])) {
-            $tmpUser = True;
+            $tmpUser = true;
             $GLOBALS["USER"] = new \CUser();
         }
 
@@ -188,20 +188,27 @@ class Basket extends BasketBase
                         continue;
                     }
 
-                    if (strval(trim($basketPropertyItem->getField('VALUE'))) == "")
+                    if (strval(trim($basketPropertyItem->getField('VALUE'))) == "") {
                         continue;
+                    }
 
 
-                    $basketItemDataProperty .= (!empty($basketItemDataProperty) ? "; " : "") . trim($basketPropertyItem->getField('NAME')) . ": " . trim($basketPropertyItem->getField('VALUE'));
+                    $basketItemDataProperty .= (!empty($basketItemDataProperty) ? "; " : "") . trim(
+                            $basketPropertyItem->getField('NAME')
+                        ) . ": " . trim($basketPropertyItem->getField('VALUE'));
                 }
 
-                if (!empty($basketItemDataProperty))
+                if (!empty($basketItemDataProperty)) {
                     $basketItemData .= " [" . $basketItemDataProperty . "]";
+                }
             }
 
-            $measure = (strval($basketItem->getField("MEASURE_NAME")) != '') ? $basketItem->getField("MEASURE_NAME") : Loc::getMessage("SOA_SHT");
-            $list[$basketItem->getBasketCode()] = $basketItemData . " - " . $basketItemClassName::formatQuantity($basketItem->getQuantity()) . " " . $measure . " x " . SaleFormatCurrency($basketItem->getPrice(), $basketItem->getCurrency());
-
+            $measure = (strval($basketItem->getField("MEASURE_NAME")) != '') ? $basketItem->getField(
+                "MEASURE_NAME"
+            ) : Loc::getMessage("SOA_SHT");
+            $list[$basketItem->getBasketCode()] = $basketItemData . " - " . $basketItemClassName::formatQuantity(
+                    $basketItem->getQuantity()
+                ) . " " . $measure . " x " . SaleFormatCurrency($basketItem->getPrice(), $basketItem->getCurrency());
         }
 
         return !empty($list) ? $list : false;
@@ -305,11 +312,13 @@ class Basket extends BasketBase
 
             /** @var EntityMarker $entityMarker */
             $entityMarker = $registry->getEntityMarkerClassName();
-            $entityMarker::deleteByFilter(array(
-                '=ORDER_ID' => $orderId,
-                '=ENTITY_TYPE' => $entityMarker::ENTITY_TYPE_BASKET_ITEM,
-                '=ENTITY_ID' => $itemValues['ID'],
-            ));
+            $entityMarker::deleteByFilter(
+                array(
+                    '=ORDER_ID' => $orderId,
+                    '=ENTITY_TYPE' => $entityMarker::ENTITY_TYPE_BASKET_ITEM,
+                    '=ENTITY_ID' => $itemValues['ID'],
+                )
+            );
         }
     }
 

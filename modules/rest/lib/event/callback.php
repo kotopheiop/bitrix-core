@@ -59,14 +59,18 @@ class Callback
         $handlerFound = false;
 
         if (array_key_exists('EVENT_REST', $event)) {
-            $dbRes = EventTable::getList(array(
-                'filter' => array(
-                    '=EVENT_NAME' => toUpper($event['EVENT_REST']['EVENT']),
-                ),
-                'select' => array('*', 'APP_CODE' => 'REST_APP.CLIENT_ID'),
-            ));
+            $dbRes = EventTable::getList(
+                array(
+                    'filter' => array(
+                        '=EVENT_NAME' => toUpper($event['EVENT_REST']['EVENT']),
+                    ),
+                    'select' => array('*', 'APP_CODE' => 'REST_APP.CLIENT_ID'),
+                )
+            );
 
-            $dataProcessed = !is_array($event['EVENT_REST']['HANDLER']) || !is_callable($event['EVENT_REST']['HANDLER']);
+            $dataProcessed = !is_array($event['EVENT_REST']['HANDLER']) || !is_callable(
+                    $event['EVENT_REST']['HANDLER']
+                );
             $call = array();
             while ($handler = $dbRes->fetch()) {
                 $handlerArguments = $arguments;
@@ -74,7 +78,10 @@ class Callback
 
                 if (!$dataProcessed) {
                     try {
-                        $handlerArguments = call_user_func_array($event['EVENT_REST']['HANDLER'], array($handlerArguments, $handler));
+                        $handlerArguments = call_user_func_array(
+                            $event['EVENT_REST']['HANDLER'],
+                            array($handlerArguments, $handler)
+                        );
                         $call[] = array($handler, $handlerArguments, $event['EVENT_REST']['ADDITIONAL']);
                     } catch (\Exception $e) {
                     }

@@ -21,8 +21,12 @@ final class Registry
     const ENTITY_ORDER = 'ORDER';
     const ENTITY_PAYMENT = 'PAYMENT';
     const ENTITY_PAYMENT_COLLECTION = 'PAYMENT_COLLECTION';
+    const ENTITY_PAYABLE_BASKET_ITEM = 'PAYABLE_BASKET_ITEM';
+    const ENTITY_PAYABLE_SHIPMENT = 'PAYABLE_SHIPMENT';
+    const ENTITY_PAYABLE_ITEM_COLLECTION = 'PAYABLE_ITEM_COLLECTION';
     const ENTITY_SHIPMENT_COLLECTION = 'SHIPMENT_COLLECTION';
     const ENTITY_PROPERTY_VALUE = 'PROPERTY_VALUE';
+    const ENTITY_SHIPMENT_PROPERTY_VALUE = 'SHIPMENT_PROPERTY_VALUE';
     const ENTITY_BUNDLE_COLLECTION = 'BUNDLE_COLLECTION';
     const ENTITY_BASKET = 'BASKET';
     const ENTITY_TAX = 'TAX';
@@ -34,6 +38,7 @@ final class Registry
     const ENTITY_SHIPMENT_ITEM_STORE = 'SHIPMENT_ITEM_STORE';
     const ENTITY_SHIPMENT_ITEM_STORE_COLLECTION = 'SHIPMENT_ITEM_STORE_COLLECTION';
     const ENTITY_PROPERTY_VALUE_COLLECTION = 'PROPERTY_VALUE_COLLECTION';
+    const ENTITY_SHIPMENT_PROPERTY_VALUE_COLLECTION = 'SHIPMENT_PROPERTY_VALUE_COLLECTION';
     const ENTITY_OPTIONS = 'CONFIG_OPTION';
     const ENTITY_DISCOUNT = 'DISCOUNT';
     const ENTITY_DISCOUNT_COUPON = 'DISCOUNT_COUPON';
@@ -44,86 +49,99 @@ final class Registry
     const ENTITY_ENTITY_MARKER = 'ENTITY_MARKER';
     const ENTITY_ORDER_HISTORY = 'ORDER_HISTORY';
     const ENTITY_PROPERTY = 'PROPERTIES';
+    const ENTITY_SHIPMENT_PROPERTY = 'SHIPMENT_PROPERTIES';
     const ENTITY_NOTIFY = 'NOTIFY';
     const ENTITY_TRADE_BINDING_COLLECTION = 'TRADE_BINDING_COLLECTION';
     const ENTITY_TRADE_BINDING_ENTITY = 'TRADE_BINDING_ENTITY';
 
-    private static $registryMap = array();
-    private static $registryObjects = array();
-
+    private static $registryMap = [];
+    private static $registryObjects = [];
     private $type = '';
+    private static $initData = [
+        Registry::REGISTRY_TYPE_ORDER => [
+            Registry::ENTITY_ORDER => '\Bitrix\Sale\Order',
+            Registry::ENTITY_PAYMENT => '\Bitrix\Sale\Payment',
+            Registry::ENTITY_PAYMENT_COLLECTION => '\Bitrix\Sale\PaymentCollection',
+            Registry::ENTITY_PAYABLE_BASKET_ITEM => '\Bitrix\Sale\PayableBasketItem',
+            Registry::ENTITY_PAYABLE_SHIPMENT => '\Bitrix\Sale\PayableShipmentItem',
+            Registry::ENTITY_PAYABLE_ITEM_COLLECTION => '\Bitrix\Sale\PayableItemCollection',
+            Registry::ENTITY_SHIPMENT => '\Bitrix\Sale\Shipment',
+            Registry::ENTITY_SHIPMENT_COLLECTION => '\Bitrix\Sale\ShipmentCollection',
+            Registry::ENTITY_SHIPMENT_ITEM => '\Bitrix\Sale\ShipmentItem',
+            Registry::ENTITY_SHIPMENT_ITEM_COLLECTION => '\Bitrix\Sale\ShipmentItemCollection',
+            Registry::ENTITY_SHIPMENT_ITEM_STORE => '\Bitrix\Sale\ShipmentItemStore',
+            Registry::ENTITY_SHIPMENT_ITEM_STORE_COLLECTION => '\Bitrix\Sale\ShipmentItemStoreCollection',
+            Registry::ENTITY_PROPERTY_VALUE_COLLECTION => '\Bitrix\Sale\PropertyValueCollection',
+            Registry::ENTITY_SHIPMENT_PROPERTY_VALUE_COLLECTION => '\Bitrix\Sale\ShipmentPropertyValueCollection',
+            Registry::ENTITY_PROPERTY_VALUE => '\Bitrix\Sale\PropertyValue',
+            Registry::ENTITY_SHIPMENT_PROPERTY_VALUE => '\Bitrix\Sale\ShipmentPropertyValue',
+            Registry::ENTITY_PROPERTY => '\Bitrix\Sale\Property',
+            Registry::ENTITY_SHIPMENT_PROPERTY => '\Bitrix\Sale\ShipmentProperty',
+            Registry::ENTITY_TAX => '\Bitrix\Sale\Tax',
+            Registry::ENTITY_BASKET_PROPERTY_ITEM => '\Bitrix\Sale\BasketPropertyItem',
+            Registry::ENTITY_BUNDLE_COLLECTION => '\Bitrix\Sale\BundleCollection',
+            Registry::ENTITY_BASKET => '\Bitrix\Sale\Basket',
+            Registry::ENTITY_BASKET_ITEM => '\Bitrix\Sale\BasketItem',
+            Registry::ENTITY_BASKET_PROPERTIES_COLLECTION => '\Bitrix\Sale\BasketPropertiesCollection',
+            Registry::ENTITY_DISCOUNT => '\Bitrix\Sale\Discount',
+            Registry::ENTITY_DISCOUNT_COUPON => '\Bitrix\Sale\DiscountCouponsManager',
+            Registry::ENTITY_ORDER_DISCOUNT => '\Bitrix\Sale\OrderDiscount',
+            Registry::ENTITY_OPTIONS => 'Bitrix\Main\Config\Option',
+            Registry::ENTITY_PERSON_TYPE => 'Bitrix\Sale\PersonType',
+            Registry::ENTITY_ORDER_STATUS => 'Bitrix\Sale\OrderStatus',
+            Registry::ENTITY_DELIVERY_STATUS => 'Bitrix\Sale\DeliveryStatus',
+            Registry::ENTITY_ENTITY_MARKER => '\Bitrix\Sale\EntityMarker',
+            Registry::ENTITY_ORDER_HISTORY => 'Bitrix\Sale\OrderHistory',
+            Registry::ENTITY_NOTIFY => 'Bitrix\Sale\Notify',
+            Registry::ENTITY_TRADE_BINDING_COLLECTION => 'Bitrix\Sale\TradeBindingCollection',
+            Registry::ENTITY_TRADE_BINDING_ENTITY => 'Bitrix\Sale\TradeBindingEntity',
+        ],
+        Registry::REGISTRY_TYPE_ARCHIVE_ORDER => [
+            Registry::ENTITY_ORDER => '\Bitrix\Sale\Archive\Order',
+            Registry::ENTITY_PAYMENT => '\Bitrix\Sale\Payment',
+            Registry::ENTITY_PAYMENT_COLLECTION => '\Bitrix\Sale\PaymentCollection',
+            Registry::ENTITY_PAYABLE_BASKET_ITEM => '\Bitrix\Sale\PayableBasketItem',
+            Registry::ENTITY_PAYABLE_SHIPMENT => '\Bitrix\Sale\PayableShipmentItem',
+            Registry::ENTITY_PAYABLE_ITEM_COLLECTION => '\Bitrix\Sale\PayableItemCollection',
+            Registry::ENTITY_SHIPMENT => '\Bitrix\Sale\Shipment',
+            Registry::ENTITY_SHIPMENT_COLLECTION => '\Bitrix\Sale\ShipmentCollection',
+            Registry::ENTITY_SHIPMENT_ITEM => '\Bitrix\Sale\ShipmentItem',
+            Registry::ENTITY_SHIPMENT_ITEM_COLLECTION => '\Bitrix\Sale\ShipmentItemCollection',
+            Registry::ENTITY_SHIPMENT_ITEM_STORE => '\Bitrix\Sale\ShipmentItemStore',
+            Registry::ENTITY_SHIPMENT_ITEM_STORE_COLLECTION => '\Bitrix\Sale\ShipmentItemStoreCollection',
+            Registry::ENTITY_PROPERTY_VALUE_COLLECTION => '\Bitrix\Sale\PropertyValueCollection',
+            Registry::ENTITY_SHIPMENT_PROPERTY_VALUE_COLLECTION => '\Bitrix\Sale\ShipmentPropertyValueCollection',
+            Registry::ENTITY_PROPERTY_VALUE => '\Bitrix\Sale\PropertyValue',
+            Registry::ENTITY_SHIPMENT_PROPERTY_VALUE => '\Bitrix\Sale\ShipmentPropertyValue',
+            Registry::ENTITY_PROPERTY => '\Bitrix\Sale\Property',
+            Registry::ENTITY_SHIPMENT_PROPERTY => '\Bitrix\Sale\ShipmentProperty',
+            Registry::ENTITY_TAX => '\Bitrix\Sale\Tax',
+            Registry::ENTITY_BASKET_PROPERTY_ITEM => '\Bitrix\Sale\BasketPropertyItem',
+            Registry::ENTITY_BUNDLE_COLLECTION => '\Bitrix\Sale\BundleCollection',
+            Registry::ENTITY_BASKET => '\Bitrix\Sale\Basket',
+            Registry::ENTITY_BASKET_ITEM => '\Bitrix\Sale\BasketItem',
+            Registry::ENTITY_BASKET_PROPERTIES_COLLECTION => '\Bitrix\Sale\BasketPropertiesCollection',
+            Registry::ENTITY_DISCOUNT => '\Bitrix\Sale\Discount',
+            Registry::ENTITY_DISCOUNT_COUPON => '\Bitrix\Sale\DiscountCouponsManager',
+            Registry::ENTITY_ORDER_DISCOUNT => '\Bitrix\Sale\OrderDiscount',
+            Registry::ENTITY_OPTIONS => 'Bitrix\Main\Config\Option',
+            Registry::ENTITY_PERSON_TYPE => 'Bitrix\Sale\PersonType',
+            Registry::ENTITY_ORDER_STATUS => 'Bitrix\Sale\OrderStatus',
+            Registry::ENTITY_DELIVERY_STATUS => 'Bitrix\Sale\DeliveryStatus',
+            Registry::ENTITY_ENTITY_MARKER => '\Bitrix\Sale\EntityMarker',
+            Registry::ENTITY_ORDER_HISTORY => 'Bitrix\Sale\OrderHistory',
+            Registry::ENTITY_TRADE_BINDING_COLLECTION => 'Bitrix\Sale\TradeBindingCollection',
+            Registry::ENTITY_TRADE_BINDING_ENTITY => 'Bitrix\Sale\TradeBindingEntity',
+            Registry::ENTITY_NOTIFY => 'Bitrix\Sale\Notify',
+        ],
+    ];
 
     /**
      * @return void
      */
     private static function initRegistry()
     {
-        static::$registryMap = array(
-            static::REGISTRY_TYPE_ORDER => array(
-                Registry::ENTITY_ORDER => '\Bitrix\Sale\Order',
-                Registry::ENTITY_PAYMENT => '\Bitrix\Sale\Payment',
-                Registry::ENTITY_PAYMENT_COLLECTION => '\Bitrix\Sale\PaymentCollection',
-                Registry::ENTITY_SHIPMENT => '\Bitrix\Sale\Shipment',
-                Registry::ENTITY_SHIPMENT_COLLECTION => '\Bitrix\Sale\ShipmentCollection',
-                Registry::ENTITY_SHIPMENT_ITEM => '\Bitrix\Sale\ShipmentItem',
-                Registry::ENTITY_SHIPMENT_ITEM_COLLECTION => '\Bitrix\Sale\ShipmentItemCollection',
-                Registry::ENTITY_SHIPMENT_ITEM_STORE => '\Bitrix\Sale\ShipmentItemStore',
-                Registry::ENTITY_SHIPMENT_ITEM_STORE_COLLECTION => '\Bitrix\Sale\ShipmentItemStoreCollection',
-                Registry::ENTITY_PROPERTY_VALUE_COLLECTION => '\Bitrix\Sale\PropertyValueCollection',
-                Registry::ENTITY_PROPERTY_VALUE => '\Bitrix\Sale\PropertyValue',
-                Registry::ENTITY_PROPERTY => 'Bitrix\Sale\Property',
-                Registry::ENTITY_TAX => '\Bitrix\Sale\Tax',
-                Registry::ENTITY_BASKET_PROPERTY_ITEM => '\Bitrix\Sale\BasketPropertyItem',
-                Registry::ENTITY_BUNDLE_COLLECTION => '\Bitrix\Sale\BundleCollection',
-                Registry::ENTITY_BASKET => '\Bitrix\Sale\Basket',
-                Registry::ENTITY_BASKET_ITEM => '\Bitrix\Sale\BasketItem',
-                Registry::ENTITY_BASKET_PROPERTIES_COLLECTION => '\Bitrix\Sale\BasketPropertiesCollection',
-                Registry::ENTITY_DISCOUNT => '\Bitrix\Sale\Discount',
-                Registry::ENTITY_DISCOUNT_COUPON => '\Bitrix\Sale\DiscountCouponsManager',
-                Registry::ENTITY_ORDER_DISCOUNT => '\Bitrix\Sale\OrderDiscount',
-                Registry::ENTITY_OPTIONS => 'Bitrix\Main\Config\Option',
-                Registry::ENTITY_PERSON_TYPE => 'Bitrix\Sale\PersonType',
-                Registry::ENTITY_ORDER_STATUS => 'Bitrix\Sale\OrderStatus',
-                Registry::ENTITY_DELIVERY_STATUS => 'Bitrix\Sale\DeliveryStatus',
-                Registry::ENTITY_ENTITY_MARKER => '\Bitrix\Sale\EntityMarker',
-                Registry::ENTITY_ORDER_HISTORY => 'Bitrix\Sale\OrderHistory',
-                Registry::ENTITY_NOTIFY => 'Bitrix\Sale\Notify',
-                Registry::ENTITY_TRADE_BINDING_COLLECTION => 'Bitrix\Sale\TradeBindingCollection',
-                Registry::ENTITY_TRADE_BINDING_ENTITY => 'Bitrix\Sale\TradeBindingEntity',
-            ),
-            static::REGISTRY_TYPE_ARCHIVE_ORDER => array(
-                Registry::ENTITY_ORDER => '\Bitrix\Sale\Archive\Order',
-                Registry::ENTITY_PAYMENT => '\Bitrix\Sale\Payment',
-                Registry::ENTITY_PAYMENT_COLLECTION => '\Bitrix\Sale\PaymentCollection',
-                Registry::ENTITY_SHIPMENT => '\Bitrix\Sale\Shipment',
-                Registry::ENTITY_SHIPMENT_COLLECTION => '\Bitrix\Sale\ShipmentCollection',
-                Registry::ENTITY_SHIPMENT_ITEM => '\Bitrix\Sale\ShipmentItem',
-                Registry::ENTITY_SHIPMENT_ITEM_COLLECTION => '\Bitrix\Sale\ShipmentItemCollection',
-                Registry::ENTITY_SHIPMENT_ITEM_STORE => '\Bitrix\Sale\ShipmentItemStore',
-                Registry::ENTITY_SHIPMENT_ITEM_STORE_COLLECTION => '\Bitrix\Sale\ShipmentItemStoreCollection',
-                Registry::ENTITY_PROPERTY_VALUE_COLLECTION => '\Bitrix\Sale\PropertyValueCollection',
-                Registry::ENTITY_PROPERTY_VALUE => '\Bitrix\Sale\PropertyValue',
-                Registry::ENTITY_PROPERTY => 'Bitrix\Sale\Property',
-                Registry::ENTITY_TAX => '\Bitrix\Sale\Tax',
-                Registry::ENTITY_BASKET_PROPERTY_ITEM => '\Bitrix\Sale\BasketPropertyItem',
-                Registry::ENTITY_BUNDLE_COLLECTION => '\Bitrix\Sale\BundleCollection',
-                Registry::ENTITY_BASKET => '\Bitrix\Sale\Basket',
-                Registry::ENTITY_BASKET_ITEM => '\Bitrix\Sale\BasketItem',
-                Registry::ENTITY_BASKET_PROPERTIES_COLLECTION => '\Bitrix\Sale\BasketPropertiesCollection',
-                Registry::ENTITY_DISCOUNT => '\Bitrix\Sale\Discount',
-                Registry::ENTITY_DISCOUNT_COUPON => '\Bitrix\Sale\DiscountCouponsManager',
-                Registry::ENTITY_ORDER_DISCOUNT => '\Bitrix\Sale\OrderDiscount',
-                Registry::ENTITY_OPTIONS => 'Bitrix\Main\Config\Option',
-                Registry::ENTITY_PERSON_TYPE => 'Bitrix\Sale\PersonType',
-                Registry::ENTITY_ORDER_STATUS => 'Bitrix\Sale\OrderStatus',
-                Registry::ENTITY_DELIVERY_STATUS => 'Bitrix\Sale\DeliveryStatus',
-                Registry::ENTITY_ENTITY_MARKER => '\Bitrix\Sale\EntityMarker',
-                Registry::ENTITY_ORDER_HISTORY => 'Bitrix\Sale\OrderHistory',
-                Registry::ENTITY_TRADE_BINDING_COLLECTION => 'Bitrix\Sale\TradeBindingCollection',
-                Registry::ENTITY_TRADE_BINDING_ENTITY => 'Bitrix\Sale\TradeBindingEntity',
-                Registry::ENTITY_NOTIFY => 'Bitrix\Sale\Notify',
-            ),
-        );
+        static::$registryMap = self::$initData;
 
         $event = new Main\Event('sale', static::EVENT_ON_INIT_REGISTRY_LIST);
         $event->send();
@@ -157,14 +175,16 @@ final class Registry
      */
     public static function getInstance($type)
     {
-        if (!static::$registryMap)
+        if (!static::$registryMap) {
             static::initRegistry();
+        }
 
         if (!isset(static::$registryObjects[$type])) {
-            if (isset(static::$registryMap[$type]))
+            if (isset(static::$registryMap[$type])) {
                 static::$registryObjects[$type] = new static($type);
-            else
+            } else {
                 throw new Main\ArgumentException();
+            }
         }
 
         return static::$registryObjects[$type];
@@ -177,8 +197,9 @@ final class Registry
      */
     public static function setRegistry($code, $registryItem)
     {
-        if (!static::$registryMap)
+        if (!static::$registryMap) {
             static::initRegistry();
+        }
 
         static::$registryMap[$code] = $registryItem;
     }
@@ -312,6 +333,15 @@ final class Registry
 
     /**
      * @return mixed
+     * @throws Main\SystemException
+     */
+    public function getPayableItemCollectionClassName()
+    {
+        return $this->get(static::ENTITY_PAYABLE_ITEM_COLLECTION);
+    }
+
+    /**
+     * @return mixed
      * @throws Main\ArgumentException
      */
     public function getPropertyValueCollectionClassName()
@@ -323,10 +353,29 @@ final class Registry
      * @return mixed
      * @throws Main\ArgumentException
      */
+    public function getShipmentPropertyValueCollectionClassName()
+    {
+        return $this->get(static::ENTITY_SHIPMENT_PROPERTY_VALUE_COLLECTION);
+    }
+
+    /**
+     * @return mixed
+     * @throws Main\ArgumentException
+     */
     public function getPropertyValueClassName()
     {
         return $this->get(static::ENTITY_PROPERTY_VALUE);
     }
+
+    /**
+     * @return mixed
+     * @throws Main\ArgumentException
+     */
+    public function getShipmentPropertyValueClassName()
+    {
+        return $this->get(static::ENTITY_SHIPMENT_PROPERTY_VALUE);
+    }
+
 
     /**
      * @return mixed
@@ -461,5 +510,14 @@ final class Registry
     public function getPropertyClassName()
     {
         return $this->get(static::ENTITY_PROPERTY);
+    }
+
+    /**
+     * @return mixed
+     * @throws Main\ArgumentException
+     */
+    public function getShipmentPropertyClassName()
+    {
+        return $this->get(static::ENTITY_SHIPMENT_PROPERTY);
     }
 }

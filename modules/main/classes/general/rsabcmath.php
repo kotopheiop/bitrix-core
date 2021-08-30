@@ -4,9 +4,10 @@ class CRsaBcmathProvider extends CRsaProvider
 {
     public function LoadKeys()
     {
-        $arKeys = unserialize(COption::GetOptionString("main", "~rsa_keys_bcmath", ""));
-        if (!is_array($arKeys))
+        $arKeys = unserialize(COption::GetOptionString("main", "~rsa_keys_bcmath", ""), ['allowed_classes' => false]);
+        if (!is_array($arKeys)) {
             return false;
+        }
         return $arKeys;
     }
 
@@ -35,10 +36,11 @@ class CRsaBcmathProvider extends CRsaProvider
 
     public function Keygen($keylen = false)
     {
-        if ($keylen === false)
+        if ($keylen === false) {
             $keylen = 512;
-        else
+        } else {
             $keylen = intval($keylen);
+        }
 
         $pl = intval(($keylen + 1) / 2);
         $ql = $keylen - $pl;
@@ -64,8 +66,9 @@ class CRsaBcmathProvider extends CRsaProvider
 
         while (self::bitlenght($ret) != $cnt) {
             $str = '';
-            for ($i = 0; $i < $btn; $i++)
+            for ($i = 0; $i < $btn; $i++) {
                 $str .= chr(rand() & 0xff);
+            }
 
             $n = rand() & 0xff;
             $n |= 0x80;
@@ -73,11 +76,13 @@ class CRsaBcmathProvider extends CRsaProvider
             $str .= chr($n);
             $ret = self::raw2int($str);
 
-            if (!bccomp(bcmod($ret, '2'), '0'))
+            if (!bccomp(bcmod($ret, '2'), '0')) {
                 $ret = bcadd($ret, '1');
+            }
 
-            while (!self::is_prime($ret))
+            while (!self::is_prime($ret)) {
                 $ret = bcadd($ret, '2');
+            }
         }
         return $ret;
     }
@@ -85,9 +90,9 @@ class CRsaBcmathProvider extends CRsaProvider
     private static function bitlenght($in)
     {
         $t = self::int2raw($in);
-        $out = strlen($t) * 8;
+        $out = mb_strlen($t) * 8;
 
-        $t = ord($t[strlen($t) - 1]);
+        $t = ord($t[mb_strlen($t) - 1]);
 
         if (!$t) {
             $out -= 8;
@@ -106,33 +111,41 @@ class CRsaBcmathProvider extends CRsaProvider
         static $psc = 0;
         if (is_null($ps)) {
             $ps = array();
-            for ($i = 0; $i < 10000; $i++)
+            for ($i = 0; $i < 10000; $i++) {
                 $ps[] = $i;
+            }
             $ps[0] = $ps[1] = 0;
             for ($i = 2; $i < 100; $i++) {
-                while (!$ps[$i])
+                while (!$ps[$i]) {
                     $i++;
+                }
                 $j = $i;
-                for ($j += $i; $j < 10000; $j += $i)
+                for ($j += $i; $j < 10000; $j += $i) {
                     $ps[$j] = 0;
+                }
             }
             $j = 0;
             for ($i = 0; $i < 10000; $i++) {
-                if ($ps[$i]) $ps[$j++] = $ps[$i];
+                if ($ps[$i]) {
+                    $ps[$j++] = $ps[$i];
+                }
             }
             $psc = $j;
         }
 
         for ($i = 0; $i < $psc; $i++) {
-            if (bccomp($in, $ps[$i]) <= 0)
+            if (bccomp($in, $ps[$i]) <= 0) {
                 return true;
-            if (!bccomp(bcmod($in, $ps[$i]), '0'))
+            }
+            if (!bccomp(bcmod($in, $ps[$i]), '0')) {
                 return false;
+            }
         }
 
         for ($i = 0; $i < 7; $i++) {
-            if (!self::miller($in, $ps[$i]))
+            if (!self::miller($in, $ps[$i])) {
                 return false;
+            }
         }
         return true;
     }
@@ -172,10 +185,11 @@ class CRsaBcmathProvider extends CRsaProvider
         $uu = $u1;
         $vv = $u2;
 
-        if (bccomp($vv, 0) == -1)
+        if (bccomp($vv, 0) == -1) {
             $ret = bcadd($vv, $em);
-        else
+        } else {
             $ret = $vv;
+        }
 
         return $ret;
     }
@@ -189,10 +203,11 @@ class CRsaBcmathProvider extends CRsaProvider
 
             while (bccomp(self::GCD($et, $m), '1') != 0) {
                 $et = bcadd($et, $c);
-                if ($c == '2')
+                if ($c == '2') {
                     $c = '4';
-                else
+                } else {
                     $c = '2';
+                }
             }
         }
 
@@ -216,8 +231,9 @@ class CRsaBcmathProvider extends CRsaProvider
     {
         $out = '';
 
-        if ($in == '0')
+        if ($in == '0') {
             return chr(0);
+        }
 
         while (bccomp($in, '0')) {
             $out .= chr(bcmod($in, '256'));
@@ -229,7 +245,7 @@ class CRsaBcmathProvider extends CRsaProvider
     private static function raw2int($in)
     {
         $out = '0';
-        $n = strlen($in);
+        $n = mb_strlen($in);
         while ($n > 0) {
             $out = bcadd(bcmul($out, '256'), ord($in[--$n]));
         }
@@ -238,8 +254,9 @@ class CRsaBcmathProvider extends CRsaProvider
 
     private static function powmod($n, $p, $m)
     {
-        if (function_exists('bcpowmod'))
+        if (function_exists('bcpowmod')) {
             return bcpowmod($n, $p, $m);
+        }
 
         $out = '1';
         do {
@@ -255,8 +272,9 @@ class CRsaBcmathProvider extends CRsaProvider
 
     private static function miller($in, $b)
     {
-        if (!bccomp($in, '1'))
+        if (!bccomp($in, '1')) {
             return false;
+        }
 
         $t = bcsub($in, '1');
 
@@ -267,12 +285,14 @@ class CRsaBcmathProvider extends CRsaProvider
         }
 
         $t = self::powmod($b, $t, $in);
-        if (!bccomp($t, '1'))
+        if (!bccomp($t, '1')) {
             return true;
+        }
 
         while ($nulcnt--) {
-            if (!bccomp(bcadd($t, '1'), $in))
+            if (!bccomp(bcadd($t, '1'), $in)) {
                 return true;
+            }
 
             $t = self::powmod($t, '2', $in);
         }

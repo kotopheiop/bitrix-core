@@ -60,8 +60,8 @@ class LogComment
         $content = "";
         $message = false;
 
-        if (intval($sourceId) > 0) {
-            $select = array('*', 'UF_FORUM_MES_URL_PRV');
+        if ((int)$sourceId > 0) {
+            $select = array('*', 'UF_FORUM_MES_URL_PRV', 'SERVICE_TYPE');
 
             if (
                 \Bitrix\Main\Config\Option::get('disk', 'successfully_converted', false)
@@ -70,23 +70,29 @@ class LogComment
                 $select[] = 'UF_FORUM_MESSAGE_DOC';
             }
 
-            $res = MessageTable::getList(array(
-                'filter' => array(
-                    '=ID' => $sourceId
-                ),
-                'select' => $select
-            ));
+            $res = MessageTable::getList(
+                array(
+                    'filter' => array(
+                        '=ID' => $sourceId
+                    ),
+                    'select' => $select
+                )
+            );
             $message = $res->fetch();
         }
 
         if ($message) {
+            if (!empty($message['SERVICE_TYPE'])) {
+                return $result;
+            }
+
             $content .= LogIndex::getUserName($message["AUTHOR_ID"]) . " ";
             $content .= \forumTextParser::clearAllTags($message['POST_MESSAGE']);
 
             if (!empty($message['UF_FORUM_MESSAGE_DOC'])) {
                 $fileNameList = LogIndex::getDiskUFFileNameList($message['UF_FORUM_MESSAGE_DOC']);
                 if (!empty($fileNameList)) {
-                    $content .= ' ' . join(' ', $fileNameList);
+                    $content .= ' ' . implode(' ', $fileNameList);
                 }
             }
 

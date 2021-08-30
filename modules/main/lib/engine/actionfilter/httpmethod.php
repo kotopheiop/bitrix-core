@@ -55,10 +55,12 @@ final class HttpMethod extends Base
         $requestMethod = $this->action->getController()->getRequest()->getRequestMethod();
 
         if (!in_array($requestMethod, $this->allowedMethods, true)) {
-            $this->addError(new Error(
-                'Wrong method for current action',
-                self::ERROR_INVALID_HTTP_METHOD
-            ));
+            $this->addError(
+                new Error(
+                    'Wrong method for current action',
+                    self::ERROR_INVALID_HTTP_METHOD
+                )
+            );
 
             return new EventResult(EventResult::ERROR, null, null, $this);
         }

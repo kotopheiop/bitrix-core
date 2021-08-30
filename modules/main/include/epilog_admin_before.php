@@ -8,7 +8,7 @@
  * @global CCacheManager $CACHE_MANAGER
  */
 
-define("START_EXEC_EPILOG_BEFORE_1", microtime());
+define("START_EXEC_EPILOG_BEFORE_1", microtime(true));
 $GLOBALS["BX_STATE"] = "EB";
 
 if ($USER->IsAuthorized() && (!defined("BX_AUTH_FORM") || !BX_AUTH_FORM)) {
@@ -30,7 +30,9 @@ if ($USER->IsAuthorized() && (!defined("BX_AUTH_FORM") || !BX_AUTH_FORM)) {
     if (
         $USER->IsAuthorized()
         && (!defined('BX_PUBLIC_MODE') || BX_PUBLIC_MODE != 1)
-        && (!isset($_SESSION["SS_B24NET_STATE"]) || $_SESSION["SS_B24NET_STATE"] !== $USER->GetID())
+        && (!isset(
+                \Bitrix\Main\Application::getInstance()->getSession()["SS_B24NET_STATE"]
+            ) || \Bitrix\Main\Application::getInstance()->getSession()["SS_B24NET_STATE"] !== $USER->GetID())
         && \Bitrix\Main\ModuleManager::isModuleInstalled("socialservices")
         && \Bitrix\Main\Config\Option::get("socialservices", "bitrix24net_id", "") != ""
     ) {
@@ -46,20 +48,24 @@ if ($USER->IsAuthorized() && (!defined("BX_AUTH_FORM") || !BX_AUTH_FORM)) {
             }
 
             if (!$adminSidePanelHelper->isPublicSidePanel()) {
-                \Bitrix\Socialservices\Network::displayAdminPopup(array(
-                    "SHOW" => true,
-                ));
+                \Bitrix\Socialservices\Network::displayAdminPopup(
+                    array(
+                        "SHOW" => true,
+                    )
+                );
             }
         }
     }
 }
 
 if (!defined('BX_PUBLIC_MODE') || BX_PUBLIC_MODE != 1) {
-    if (!defined("BX_AUTH_FORM") || !BX_AUTH_FORM)
+    if (!defined("BX_AUTH_FORM") || !BX_AUTH_FORM) {
         require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/interface/epilog_main_admin.php");
-    else
+    } else {
         require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/interface/epilog_auth_admin.php");
-} else
+    }
+} else {
     require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/interface/epilog_jspopup_admin.php");
+}
 
 ?>

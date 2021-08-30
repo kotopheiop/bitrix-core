@@ -40,13 +40,15 @@ class OrderCreate extends Base
 
         if (is_array($rawData['errors'])) {
             foreach ($rawData['errors'] as $error) {
-                if (!isset($requestData[$error['position']]['order-num']))
+                if (!isset($requestData[$error['position']]['order-num'])) {
                     continue;
+                }
 
                 $internalId = $requestData[$error['position']]['order-num'];
 
-                if (!isset($createResults[$internalId]))
+                if (!isset($createResults[$internalId])) {
                     $createResults[$internalId] = new Requests\ShipmentResult($internalId, '');
+                }
 
                 $errorPositions[] = $error['position'];
 
@@ -54,18 +56,20 @@ class OrderCreate extends Base
                     foreach ($error['error-codes'] as $errorcode) {
                         $message = Reference::getErrorDescription($errorcode['code'], 'PUT /1.0/user/backlog');
 
-                        if (!empty($errorcode['details']))
+                        if (!empty($errorcode['details'])) {
                             $details = $errorcode['details'];
-                        elseif (!empty($errorcode['description']))
+                        } elseif (!empty($errorcode['description'])) {
                             $details = $errorcode['description'];
-                        else
+                        } else {
                             $details = '';
+                        }
 
                         if (!empty($details)) {
-                            if ($errorcode['code'] == 'ILLEGAL_MAIL_CATEGORY')
+                            if ($errorcode['code'] == 'ILLEGAL_MAIL_CATEGORY') {
                                 $message = str_replace('%s', Reference::getRpoCategory($details), $message);
-                            else
+                            } else {
                                 $message .= ' (' . $details . ')';
+                            }
                         }
 
                         $createResults[$internalId]->addError(new Error($message));
@@ -79,13 +83,15 @@ class OrderCreate extends Base
 
         if (is_array($rawData['result-ids'])) {
             foreach ($rawData['result-ids'] as $externalId) {
-                if (!isset($idsMapFlipped[$externalId]))
+                if (!isset($idsMapFlipped[$externalId])) {
                     continue;
+                }
 
                 $internalId = $idsMapFlipped[$externalId];
 
-                if (!isset($createResults[$internalId]))
+                if (!isset($createResults[$internalId])) {
                     $createResults[$internalId] = new Requests\ShipmentResult($internalId, $externalId);
+                }
             }
         }
 
@@ -103,8 +109,9 @@ class OrderCreate extends Base
     {
         $idsMap = array();
 
-        if (empty($successIds) || !is_array($successIds))
+        if (empty($successIds) || !is_array($successIds)) {
             return array();
+        }
 
         $shift = 0;
 
@@ -114,8 +121,9 @@ class OrderCreate extends Base
                 continue;
             }
 
-            if (!empty($requestData[$position]['order-num']) && !empty($successIds[$position - $shift]))
+            if (!empty($requestData[$position]['order-num']) && !empty($successIds[$position - $shift])) {
                 $idsMap[$request['order-num']] = $successIds[$position - $shift];
+            }
         }
 
         return $idsMap;
@@ -205,7 +213,7 @@ class OrderCreate extends Base
 
             $mailType = $deliveryConfig['MAIN']['ITEMS']['OTPRAVKA_RPO']['VALUE'];
 
-            if (strlen($mailType) <= 0) {
+            if ($mailType == '') {
                 $shpResult = new Requests\ShipmentResult($shipmentId);
                 $shpResult->addError(
                     new Error(
@@ -213,9 +221,14 @@ class OrderCreate extends Base
                             'SALE_DLVRS_ADD_DREQ_ROC_NOT_SUPPORTED',
                             array(
                                 '#DELIVERY_PROFILE_LINK#' =>
-                                    Requests\Helper::getDeliveryEditLink($shipment->getDeliveryId(), $shipmentParams['DELIVERY_SERVICE_CONFIG']['MAIN']['NAME']),
+                                    Requests\Helper::getDeliveryEditLink(
+                                        $shipment->getDeliveryId(),
+                                        $shipmentParams['DELIVERY_SERVICE_CONFIG']['MAIN']['NAME']
+                                    ),
                             )
-                        )));
+                        )
+                    )
+                );
 
                 $result->addResult($shpResult);
                 continue;
@@ -241,28 +254,32 @@ class OrderCreate extends Base
 
             $mailCategory = $rpoCategory[$shipmentParams['DELIVERY_SERVICE_CONFIG']['MAIN']['CATEGORY']];
 
-            if (strlen($mailCategory) <= 0)
+            if ($mailCategory == '') {
                 $mailCategory = 'ORDINARY';
+            }
 
             $item = array(
                 'address-type-to' => 'DEFAULT',
                 //'brand-name' => ''
                 //'envelope-type' =>
-                'fragile' => isset($shipmentParams['EXTRA_SERVICES'][4]) && $shipmentParams['EXTRA_SERVICES'][4] == 'Y', // 4 - code of extra service fragile
+                'fragile' => isset($shipmentParams['EXTRA_SERVICES'][4]) && $shipmentParams['EXTRA_SERVICES'][4] == 'Y',
+                // 4 - code of extra service fragile
                 'mail-category' => $mailCategory,
                 'order-num' => strval($shipmentParams['SHIPMENT_ID']),
                 'sms-notice-recipient' => isset($shipmentParams['EXTRA_SERVICES'][42]) && $shipmentParams['EXTRA_SERVICES'][4] == 'Y' ? 1 : 0,
-                'mail-direct' => 643, //Russia
+                'mail-direct' => 643,
+                //Russia
                 'mail-type' => $mailType
             );
 
             $item['courier'] = isset($shipmentParams['EXTRA_SERVICES'][26]) && $shipmentParams['EXTRA_SERVICES'][26] == 'Y';
 
             if (isset($shipmentParams['EXTRA_SERVICES'][1])) {
-                if ($shipmentParams['EXTRA_SERVICES'][1] == "1")
+                if ($shipmentParams['EXTRA_SERVICES'][1] == "1") {
                     $item['with-simple-notice'] = true;
-                elseif ($shipmentParams['EXTRA_SERVICES'][1] == "2")
+                } elseif ($shipmentParams['EXTRA_SERVICES'][1] == "2") {
                     $item['with-order-of-notice'] = true;
+                }
             }
 
             if (intval($shipmentParams['WEIGHT']) > 0) {
@@ -270,8 +287,9 @@ class OrderCreate extends Base
             } else {
                 $dlvConfig = $this->deliveryService->getConfigValues();
 
-                if (intval($dlvConfig['MAIN']['WEIGHT_DEFAULT']) > 0)
+                if (intval($dlvConfig['MAIN']['WEIGHT_DEFAULT']) > 0) {
                     $item['mass'] = intval($dlvConfig['MAIN']['WEIGHT_DEFAULT']);
+                }
             }
 
             if (!empty($shpDim)) {
@@ -307,53 +325,65 @@ class OrderCreate extends Base
                 unset($item['dimension']);
             }
 
-            if (!empty($additional['OPS']))
+            if (!empty($additional['OPS'])) {
                 $item['postoffice-code'] = $additional['OPS'];
+            }
 
-            if (!empty($shipmentParams['PHONE']))
+            if (!empty($shipmentParams['PHONE'])) {
                 $item['tel-address'] = preg_replace('/[^\d]/', '', $shipmentParams['PHONE']);
+            }
 
             $price = ($shipmentParams['PRICE'] + $shipmentParams['PRICE_DELIVERY']) * 100; //rubles -> kopeck
 
-            if ($shipmentParams['DELIVERY_SERVICE_CONFIG']['MAIN']['CATEGORY'] == 2 || $shipmentParams['DELIVERY_SERVICE_CONFIG']['MAIN']['CATEGORY'] == 4)
-                $item['insr-value'] = $price;
+            if ($shipmentParams['DELIVERY_SERVICE_CONFIG']['MAIN']['CATEGORY'] == 2 || $shipmentParams['DELIVERY_SERVICE_CONFIG']['MAIN']['CATEGORY'] == 4) {
+                $item['insr-value'] = $shipmentParams['PRICE'] * 100;
+            }
 
-            if ($shipmentParams['DELIVERY_SERVICE_CONFIG']['MAIN']['CATEGORY'] == 4)
+            if ($shipmentParams['DELIVERY_SERVICE_CONFIG']['MAIN']['CATEGORY'] == 4) {
                 $item['payment'] = $price;
+            }
 
-            if (!empty($shipmentParams['LOCATION_TO_TYPES']['REGION']))
+            if (!empty($shipmentParams['LOCATION_TO_TYPES']['REGION'])) {
                 $item['region-to'] = $shipmentParams['LOCATION_TO_TYPES']['REGION'];
+            }
 
-            if (!empty($shipmentParams['LOCATION_TO_TYPES']['SUBREGION']))
+            if (!empty($shipmentParams['LOCATION_TO_TYPES']['SUBREGION'])) {
                 $item['area-to'] = $shipmentParams['LOCATION_TO_TYPES']['SUBREGION'];
+            }
 
-            if (!empty($shipmentParams['LOCATION_TO_TYPES']['STREET']))
+            if (!empty($shipmentParams['LOCATION_TO_TYPES']['STREET'])) {
                 $item['street-to'] = $shipmentParams['LOCATION_TO_TYPES']['STREET'];
+            }
 
-            if (!empty($shipmentParams['LOCATION_TO_TYPES']['VILLAGE']))
+            if (!empty($shipmentParams['LOCATION_TO_TYPES']['VILLAGE'])) {
                 $item['place-to'] = $shipmentParams['LOCATION_TO_TYPES']['VILLAGE'];
-            elseif (!empty($shipmentParams['LOCATION_TO_TYPES']['CITY']))
+            } elseif (!empty($shipmentParams['LOCATION_TO_TYPES']['CITY'])) {
                 $item['place-to'] = $shipmentParams['LOCATION_TO_TYPES']['CITY'];
+            }
 
-            if (!empty($shipmentParams['ZIP_TO']))
+            if (!empty($shipmentParams['ZIP_TO'])) {
                 $item['index-to'] = $shipmentParams['ZIP_TO'];
+            }
 
             $address = '';
             $types = array('COUNTRY', 'REGION', 'SUBREGION', 'CITY', 'VILLAGE', 'STREET');
 
             foreach ($types as $type) {
-                if (empty($shipmentParams['LOCATION_TO_TYPES'][$type]))
+                if (empty($shipmentParams['LOCATION_TO_TYPES'][$type])) {
                     continue;
+                }
 
-                if (strlen($address) > 0)
+                if ($address <> '') {
                     $address .= ', ';
+                }
 
                 $address .= $shipmentParams['LOCATION_TO_TYPES'][$type];
             }
 
             if (!empty($shipmentParams['ADDRESS'])) {
-                if (strlen($address) > 0)
+                if ($address <> '') {
                     $address .= ', ';
+                }
 
                 $address .= $shipmentParams['ADDRESS'];
             }
@@ -373,65 +403,85 @@ class OrderCreate extends Base
                 foreach ($normalizeResult->getData() as $address) {
                     $shipmentId = $address['id'];
 
-                    if (!isset($resultData[$shipmentId]))
+                    if (!isset($resultData[$shipmentId])) {
                         continue;
+                    }
 
                     if (!$this->isAddressGood($address)) {
                         $shpResult = new Requests\ShipmentResult($shipmentId);
-                        $shpResult->addError(new Error(
-                            $qualityCodes[$address['quality-code']] . '. ' . Loc::getMessage('SALE_DLVRS_ADD_DREQ_ROC_02') . '. "' .
-                            print_r($address['original-address'], true) . '"',
-                            $shipmentId
-                        ));
+                        $shpResult->addError(
+                            new Error(
+                                $qualityCodes[$address['quality-code']] . '. ' . Loc::getMessage(
+                                    'SALE_DLVRS_ADD_DREQ_ROC_02'
+                                ) . '. "' .
+                                print_r($address['original-address'], true) . '"',
+                                $shipmentId
+                            )
+                        );
                         $result->addResult($shpResult);
                         $notValidShipmentIds[$shipmentId] = true;
                         continue;
                     }
 
-                    if (!empty($address['area']) && empty($resultData[$shipmentId]['area-to']))
+                    if (!empty($address['area']) && empty($resultData[$shipmentId]['area-to'])) {
                         $resultData[$shipmentId]['area-to'] = $address['area'];
+                    }
 
-                    if (!empty($address['house']))
+                    if (!empty($address['house'])) {
                         $resultData[$shipmentId]['house-to'] = $address['house'];
+                    }
 
-                    if (!empty($address['place']))
+                    if (!empty($address['place'])) {
                         $resultData[$shipmentId]['place-to'] = $address['place'];
+                    }
 
-                    if (!empty($address['region']) && empty($resultData[$shipmentId]['region-to']))
+                    if (!empty($address['region']) && empty($resultData[$shipmentId]['region-to'])) {
                         $resultData[$shipmentId]['region-to'] = $address['region'];
+                    }
 
-                    if (!empty($address['room']))
+                    if (!empty($address['room'])) {
                         $resultData[$shipmentId]['room-to'] = $address['room'];
+                    }
 
-                    if (!empty($address['slash']))
+                    if (!empty($address['slash'])) {
                         $resultData[$shipmentId]['slash-to'] = $address['slash'];
+                    }
 
-                    if (!empty($address['building']))
+                    if (!empty($address['building'])) {
                         $resultData[$shipmentId]['building-to'] = $address['building'];
+                    }
 
-                    if (!empty($address['corpus']))
+                    if (!empty($address['corpus'])) {
                         $resultData[$shipmentId]['corpus-to'] = $address['corpus'];
+                    }
 
-                    if (!empty($address['hotel']))
+                    if (!empty($address['hotel'])) {
                         $resultData[$shipmentId]['hotel-to'] = $address['hotel'];
+                    }
 
-                    if (!empty($address['letter']))
+                    if (!empty($address['letter'])) {
                         $resultData[$shipmentId]['letter-to'] = $address['letter'];
+                    }
 
-                    if (!empty($address['location']))
+                    if (!empty($address['location'])) {
                         $resultData[$shipmentId]['location-to'] = $address['location'];
+                    }
 
-                    if (!empty($address['street']) && empty($resultData[$shipmentId]['street-to']))
+                    if (!empty($address['street']) && empty($resultData[$shipmentId]['street-to'])) {
                         $resultData[$shipmentId]['street-to'] = $address['street'];
+                    }
 
-                    if (!empty($address['place']) && empty($resultData[$shipmentId]['place-to']))
+                    if (!empty($address['place']) && empty($resultData[$shipmentId]['place-to'])) {
                         $resultData[$shipmentId]['place-to'] = $address['place'];
+                    }
 
-                    if (!empty($address['index']) && empty($resultData[$shipmentId]['index-to']))
+                    if (!empty($address['index']) && empty($resultData[$shipmentId]['index-to'])) {
                         $resultData[$shipmentId]['index-to'] = $address['index'];
+                    }
 
-                    if (!empty($address['num-address-type']))
+                    if (!empty($address['num-address-type'])) {
                         $resultData[$shipmentId]['num-address-type-to'] = $address['num-address-type'];
+                    }
                 }
             }
 
@@ -445,32 +495,39 @@ class OrderCreate extends Base
             foreach ($normalizeResult->getData() as $fio) {
                 $shipmentId = $fio['id'];
 
-                if (!isset($resultData[$shipmentId]) || $notValidShipmentIds[$shipmentId])
+                if (!isset($resultData[$shipmentId]) || $notValidShipmentIds[$shipmentId]) {
                     continue;
+                }
 
                 if ((!isset($fio["valid"]) || $fio["valid"] !== false) && $fio["quality-code"] != 'NOT_SURE') {
-                    if (!empty($fio['middle-name']))
+                    if (!empty($fio['middle-name'])) {
                         $resultData[$shipmentId]['middle-name'] = $fio['middle-name'];
+                    }
 
-                    if (!empty($fio['surname']))
+                    if (!empty($fio['surname'])) {
                         $resultData[$shipmentId]['surname'] = $fio['surname'];
+                    }
 
-                    if (!empty($fio['name']))
+                    if (!empty($fio['name'])) {
                         $resultData[$shipmentId]['given-name'] = $fio['name'];
+                    }
                 }
 
                 $resultData[$shipmentId]['recipient-name'] = $fio['original-fio'];
             }
         }
 
-        if (!empty($notValidShipmentIds))
-            foreach ($notValidShipmentIds as $shipmentId => $t)
+        if (!empty($notValidShipmentIds)) {
+            foreach ($notValidShipmentIds as $shipmentId => $t) {
                 unset($resultData[$shipmentId]);
+            }
+        }
 
-        if (!empty($resultData))
+        if (!empty($resultData)) {
             $result->setData(array_values($resultData));
-        else
+        } else {
             $result->addError(new Error(Loc::getMessage('SALE_DLVRS_ADD_DREQ_ROC_DATA_EMPTY')));
+        }
 
         return $result;
     }

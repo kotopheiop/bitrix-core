@@ -96,7 +96,10 @@ abstract class BaseRefreshStrategy
         foreach ($productDataList as $providerName => $productValueList) {
             foreach ($productValueList as $productId => $productData) {
                 if (empty($basketIndexList[$providerName][$productId])) {
-                    $basketIndexList[$providerName][$productId][] = $basket->createItem($productData['MODULE_ID'], $productData['PRODUCT_ID']);
+                    $basketIndexList[$providerName][$productId][] = $basket->createItem(
+                        $productData['MODULE_ID'],
+                        $productData['PRODUCT_ID']
+                    );
                 }
 
                 /** @var BasketItemBase $item */
@@ -118,9 +121,11 @@ abstract class BaseRefreshStrategy
             }
         }
 
-        $result->addData(array(
-            'CHANGED_BASKET_ITEMS' => $changedBasketItems
-        ));
+        $result->addData(
+            array(
+                'CHANGED_BASKET_ITEMS' => $changedBasketItems
+            )
+        );
 
         return $result;
     }
@@ -136,7 +141,8 @@ abstract class BaseRefreshStrategy
                 return $result;
             }
 
-            if (!$item->isCustomPrice() && isset($preparedData['DISCOUNT_PRICE']) && isset($preparedData['BASE_PRICE'])) {
+            if (!$item->isCustomPrice(
+                ) && isset($preparedData['DISCOUNT_PRICE']) && isset($preparedData['BASE_PRICE'])) {
                 $preparedData['PRICE'] = $preparedData['BASE_PRICE'] - $preparedData['DISCOUNT_PRICE'];
             }
 
@@ -150,11 +156,13 @@ abstract class BaseRefreshStrategy
             }
 
             /** @var Main\Event $event */
-            $event = new Main\Event('sale', EventActions::EVENT_ON_BASKET_ITEM_REFRESH_DATA, array(
+            $event = new Main\Event(
+                'sale', EventActions::EVENT_ON_BASKET_ITEM_REFRESH_DATA, array(
                 'ENTITY' => $item,
                 'VALUES' => $data,
                 'PREPARED_VALUES' => $preparedData
-            ));
+            )
+            );
             $event->send();
 
             if ($event->getResults()) {
@@ -217,7 +225,10 @@ abstract class BaseRefreshStrategy
 
                 $data = $priceData + $data;
                 if (isset($data['QUANTITY'])) {
-                    $data['QUANTITY'] = $data['AVAILABLE_QUANTITY'] = static::getAvailableQuantityFromPool($item, $data['QUANTITY']);
+                    $data['QUANTITY'] = $data['AVAILABLE_QUANTITY'] = static::getAvailableQuantityFromPool(
+                        $item,
+                        $data['QUANTITY']
+                    );
                 }
             } else {
                 return false;
@@ -229,8 +240,12 @@ abstract class BaseRefreshStrategy
 
         foreach ($data as $key => $value) {
             if (isset($settableFields[$key])) {
-                if ($key === 'PRICE' && $item->isCustomPrice()) {
-                    $value = $item->getPrice();
+                if (
+                    $item->isMarkedFieldCustom($key)
+                    ||
+                    $key === 'DISCOUNT_PRICE' && $item->isMarkedFieldCustom('PRICE')
+                ) {
+                    $value = $item->getField($key);
                 }
 
                 if (isset($roundFields[$key])) {
@@ -263,11 +278,13 @@ abstract class BaseRefreshStrategy
             $reserveQuantityList = $pool->getQuantities(PoolQuantity::POOL_RESERVE_TYPE);
             $quantityList = $pool->getQuantities(PoolQuantity::POOL_QUANTITY_TYPE);
 
-            if ($quantityList[$productId])
+            if ($quantityList[$productId]) {
                 $poolQuantity += $quantityList[$productId];
+            }
 
-            if ($reserveQuantityList[$productId])
+            if ($reserveQuantityList[$productId]) {
                 $poolQuantity += $reserveQuantityList[$productId];
+            }
 
             if ($poolQuantity < 0) {
                 $poolQuantity = abs($poolQuantity);
@@ -323,9 +340,11 @@ abstract class BaseRefreshStrategy
             $result = Provider::getProductData($itemsToRefresh, $context);
         } else {
             $result = new Result();
-            $result->setData(array(
-                'PRODUCT_DATA_LIST' => array()
-            ));
+            $result->setData(
+                array(
+                    'PRODUCT_DATA_LIST' => array()
+                )
+            );
         }
 
         return $result;
@@ -368,17 +387,21 @@ abstract class BaseRefreshStrategy
                         $result->addErrors($r->getErrors());
                     }
                 } else {
-                    $result->addData(array(
-                        'CHANGED_BASKET_ITEMS' => array()
-                    ));
+                    $result->addData(
+                        array(
+                            'CHANGED_BASKET_ITEMS' => array()
+                        )
+                    );
                 }
             }
         } else {
             $result = new Result();
-            $result->setData(array(
-                'PRODUCT_DATA_LIST' => array(),
-                'CHANGED_BASKET_ITEMS' => array()
-            ));
+            $result->setData(
+                array(
+                    'PRODUCT_DATA_LIST' => array(),
+                    'CHANGED_BASKET_ITEMS' => array()
+                )
+            );
         }
 
         return $result;

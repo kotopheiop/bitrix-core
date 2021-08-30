@@ -33,9 +33,14 @@ class CWiki
 
         $arCats = array();
         $CWikiParser = new CWikiParser();
-        $arFields['DETAIL_TEXT'] = $CWikiParser->parseBeforeSave($arFields['DETAIL_TEXT'], $arCats, $arFields['NAME_TEMPLATE']);
-        if (CWikiSocnet::IsSocNet())
+        $arFields['DETAIL_TEXT'] = $CWikiParser->parseBeforeSave(
+            $arFields['DETAIL_TEXT'],
+            $arCats,
+            $arFields['NAME_TEMPLATE']
+        );
+        if (CWikiSocnet::IsSocNet()) {
             $arFields['IBLOCK_SECTION_ID'] = CWikiSocnet::$iCatId;
+        }
 
         //add item
         $ID = $this->cIB_E->Add($arFields);
@@ -54,7 +59,11 @@ class CWiki
     {
         $arCats = array();
         $CWikiParser = new CWikiParser();
-        $arFields['DETAIL_TEXT'] = $CWikiParser->parseBeforeSave($arFields['DETAIL_TEXT'], $arCats, $arFields['NAME_TEMPLATE']);
+        $arFields['DETAIL_TEXT'] = $CWikiParser->parseBeforeSave(
+            $arFields['DETAIL_TEXT'],
+            $arCats,
+            $arFields['NAME_TEMPLATE']
+        );
 
         $this->CleanCache($ID, $arFields['NAME'], $arFields['IBLOCK_ID']);
         //save item
@@ -82,14 +91,17 @@ class CWiki
             $arHistoryResult = CBPDocument::GetDocumentFromHistory($HISTORY_ID, $arErrorsTmp);
             $modifyComment = GetMessage('WIKI_RECOVER_COMMENT') . " " . $arHistoryResult["MODIFIED"];
             if (CBPHistoryService::RecoverDocumentFromHistory($HISTORY_ID)) {
-                if ($this->UpdateHistory($ID, $IBLOCK_ID, $modifyComment))
+                if ($this->UpdateHistory($ID, $IBLOCK_ID, $modifyComment)) {
                     return true;
-                else
+                } else {
                     return false;
-            } else
+                }
+            } else {
                 return false;
-        } else
+            }
+        } else {
             return false;
+        }
     }
 
     function UpdateHistory($ID, $IBLOCK_ID, $modifyComment = false)
@@ -133,7 +145,6 @@ class CWiki
 
     function UpdateCategory($ID, $IBLOCK_ID, $arCats)
     {
-
         $this->CleanCacheById($ID, $IBLOCK_ID);
 
         $arFilter = array(
@@ -144,8 +155,9 @@ class CWiki
         $bCategoryPage = false;
         $sCatName = '';
         $arCatsID = array();
-        if (CWikiUtils::IsCategoryPage($arElement['~NAME'], $sCatName))
+        if (CWikiUtils::IsCategoryPage($arElement['~NAME'], $sCatName)) {
             $bCategoryPage = true;
+        }
 
         if ($bCategoryPage) {
             // get current category
@@ -164,11 +176,13 @@ class CWiki
                 $_arFields['ACTIVE'] = 'Y';
                 $_arFields['NAME'] = $sCatName;
                 $_arFields['XML_ID'] = $sCatName;
-                if (CWikiSocnet::IsSocNet())
+                if (CWikiSocnet::IsSocNet()) {
                     $_arFields['IBLOCK_SECTION_ID'] = CWikiSocnet::$iCatId;
+                }
                 $iCurCatID = $CIB_S->Add($_arFields);
-                if ($iCurCatID != false)
+                if ($iCurCatID != false) {
                     $arCatsID[] = $iCurCatID;
+                }
             } else {
                 $iCurCatID = $arCurCat['ID'];
                 $arCatsID[] = $arCurCat['ID'];
@@ -195,12 +209,14 @@ class CWiki
                     $_arFields['NAME'] = CWikiUtils::htmlspecialcharsback($arCats[0]);
                     $_arFields['XML_ID'] = CWikiUtils::htmlspecialcharsback($arCats[0]);
                     $_arFields['CHECK_PERMISSIONS'] = 'N';
-                    if (CWikiSocnet::IsSocNet())
+                    if (CWikiSocnet::IsSocNet()) {
                         $_arFields['IBLOCK_SECTION_ID'] = CWikiSocnet::$iCatId;
+                    }
 
                     $iCatID = $CIB_S->Add($_arFields);
-                } else
+                } else {
                     $iCatID = $arCat['ID'];
+                }
 
                 $_arFields = array();
                 $_arFields['IBLOCK_ID'] = $IBLOCK_ID;
@@ -213,8 +229,9 @@ class CWiki
                 $_arFields['IBLOCK_ID'] = $IBLOCK_ID;
                 $_arFields['ACTIVE'] = 'Y';
                 $_arFields['IBLOCK_SECTION_ID'] = 0;
-                if (CWikiSocnet::IsSocNet())
+                if (CWikiSocnet::IsSocNet()) {
                     $_arFields['IBLOCK_SECTION_ID'] = CWikiSocnet::$iCatId;
+                }
                 // bind to the root category
                 $CIB_S->Update($iCurCatID, $_arFields);
             }
@@ -224,8 +241,9 @@ class CWiki
             $arDelCatId = array();
             $rsSect = CIBlockElement::GetElementGroups($ID, false);
             //$arResult['SECTIONS'] = array(); //erase candidat
-            while ($arSect = $rsSect->GetNext())
+            while ($arSect = $rsSect->GetNext()) {
                 $arExistsCatsId[] = $arSect['ID'];
+            }
 
             if (!empty($arCats)) {
                 $arFilter = array('NAME' => $arCats, 'IBLOCK_ID' => $IBLOCK_ID, 'CHECK_PERMISSIONS' => 'N');
@@ -248,11 +266,13 @@ class CWiki
                         $_arFields['NAME'] = CWikiUtils::htmlspecialcharsback($sCatName, false);
                         $_arFields['XML_ID'] = CWikiUtils::htmlspecialcharsback($sCatName, false);
                         $_arFields['CHECK_PERMISSIONS'] = 'N';
-                        if (CWikiSocnet::IsSocNet())
+                        if (CWikiSocnet::IsSocNet()) {
                             $_arFields['IBLOCK_SECTION_ID'] = CWikiSocnet::$iCatId;
+                        }
                         $iCatID = $CIB_S->Add($_arFields);
-                        if ($iCatID != false)
+                        if ($iCatID != false) {
                             $arCatsID[] = $iCatID;
+                        }
                     }
                 }
 
@@ -264,19 +284,22 @@ class CWiki
                 }
             } else {
                 $arCatsID = array();
-                if (CWikiSocnet::IsSocNet())
+                if (CWikiSocnet::IsSocNet()) {
                     $arCatsID = CWikiSocnet::$iCatId;
+                }
                 CIBlockElement::SetElementSection($ID, $arCatsID);
             }
 
-            if (is_array($arCatsID))
+            if (is_array($arCatsID)) {
                 $arDelCatId = array_diff($arExistsCatsId, $arCatsID);
+            }
             if (!empty($arDelCatId)) {
                 foreach ($arDelCatId as $_iCatId) {
                     $obRes = CIBlockSection::GetList(array(), array('ID' => $_iCatId, 'IBLOCK_ID' => $IBLOCK_ID), true);
                     $arCatProp = $obRes->Fetch();
-                    if ($arCatProp['ELEMENT_CNT'] == 0)
+                    if ($arCatProp['ELEMENT_CNT'] == 0) {
                         CIBlockSection::Delete($_iCatId);
+                    }
                 }
             }
         }
@@ -309,7 +332,13 @@ class CWiki
         $arCurImagesNew = array();
         $arAddImage = array();
 
-        $rsProperties = CIBlockElement::GetProperty($IBLOCK_ID, $ID, 'value_id', 'asc', array('ACTIVE' => 'Y', 'CODE' => 'IMAGES'));
+        $rsProperties = CIBlockElement::GetProperty(
+            $IBLOCK_ID,
+            $ID,
+            'value_id',
+            'asc',
+            array('ACTIVE' => 'Y', 'CODE' => 'IMAGES')
+        );
         while ($arProperty = $rsProperties->Fetch()) {
             if ($arProperty['CODE'] == 'IMAGES') {
                 $arProperties['IMAGES'] = $arProperty;
@@ -318,8 +347,9 @@ class CWiki
         }
 
         $rsFile = CFile::GetList(array(), array('@ID' => implode(',', array_keys($arCurImages))));
-        while ($arFile = $rsFile->Fetch())
+        while ($arFile = $rsFile->Fetch()) {
             $arCurImages[$arFile['ID']] = $arFile['ORIGINAL_NAME'];
+        }
 
         if (array_search($arImage['name'], $arCurImages) !== false) {
             $this->errorCollection->add(array(new Error(Loc::getMessage('WIKI_ERROR_IMAGE_ATTACHED'))));
@@ -329,22 +359,27 @@ class CWiki
         $obProperty = new CIBlockProperty();
         $res = true;
         if (!array_key_exists('IMAGES', $arProperties)) {
-            $res = $obProperty->Add(array(
-                'IBLOCK_ID' => $IBLOCK_ID,
-                'ACTIVE' => 'Y',
-                'PROPERTY_TYPE' => 'F',
-                'MULTIPLE' => 'Y',
-                'NAME' => 'Images',
-                'CODE' => 'IMAGES'
-            ));
+            $res = $obProperty->Add(
+                array(
+                    'IBLOCK_ID' => $IBLOCK_ID,
+                    'ACTIVE' => 'Y',
+                    'PROPERTY_TYPE' => 'F',
+                    'MULTIPLE' => 'Y',
+                    'NAME' => 'Images',
+                    'CODE' => 'IMAGES'
+                )
+            );
         }
 
         $arFields = array();
 
-        CFile::ResizeImage($arImage, array(
-            'width' => COption::GetOptionString('wiki', 'image_max_width', 600),
-            'height' => COption::GetOptionString('wiki', 'image_max_height', 600)
-        ));
+        CFile::ResizeImage(
+            $arImage,
+            array(
+                'width' => COption::GetOptionString('wiki', 'image_max_width', 600),
+                'height' => COption::GetOptionString('wiki', 'image_max_height', 600)
+            )
+        );
 
         $arFields['PROPERTY_VALUES'] = array('IMAGES' => $arImage);
         $arFields['BLOCK_ID'] = $IBLOCK_ID;
@@ -352,20 +387,33 @@ class CWiki
 
         $this->cIB_E->Update($ID, $arFields);
 
-        $rsProperties = CIBlockElement::GetProperty($IBLOCK_ID, $ID, 'value_id', 'asc', array('ACTIVE' => 'Y', 'CODE' => 'IMAGES', 'EMPTY' => 'N'));
+        $rsProperties = CIBlockElement::GetProperty(
+            $IBLOCK_ID,
+            $ID,
+            'value_id',
+            'asc',
+            array('ACTIVE' => 'Y', 'CODE' => 'IMAGES', 'EMPTY' => 'N')
+        );
         while ($arProperty = $rsProperties->Fetch()) {
-            if ($arProperty['CODE'] == 'IMAGES')
+            if ($arProperty['CODE'] == 'IMAGES') {
                 $arCurImagesNew[$arProperty['VALUE']] = '';
+            }
         }
 
         $arAddImage = array_diff(array_keys($arCurImagesNew), array_keys($arCurImages));
-        list(, $imgId) = each($arAddImage);
+        $imgId = current($arAddImage);
         return $imgId;
     }
 
     function DeleteImage($IMAGE_ID, $ID, $IBLOCK_ID)
     {
-        $rsProperties = CIBlockElement::GetProperty($IBLOCK_ID, $ID, 'value_id', 'asc', array('ACTIVE' => 'Y', 'CODE' => 'IMAGES'));
+        $rsProperties = CIBlockElement::GetProperty(
+            $IBLOCK_ID,
+            $ID,
+            'value_id',
+            'asc',
+            array('ACTIVE' => 'Y', 'CODE' => 'IMAGES')
+        );
         $_iPropertyId = 0;
         while ($arProperty = $rsProperties->Fetch()) {
             if ($arProperty['CODE'] == 'IMAGES' && $arProperty['VALUE'] == $IMAGE_ID) {
@@ -391,10 +439,13 @@ class CWiki
 
         $bRename = false;
         if ($arOldElement != false) {
-            if ($arElement == false)
+            if ($arElement == false) {
                 $bRename = true;
-            else if ($arElement['ID'] == $ID)
-                $bRename = true;
+            } else {
+                if ($arElement['ID'] == $ID) {
+                    $bRename = true;
+                }
+            }
         }
 
         if ($bRename) {
@@ -408,7 +459,11 @@ class CWiki
                 $sCatNameOld = '';
                 if (CWikiUtils::IsCategoryPage($arOldElement['NAME'], $sCatNameOld)) {
                     // rename a category
-                    $arFilter = array('NAME' => $sCatNameOld, 'IBLOCK_ID' => $arFields['IBLOCK_ID'], 'CHECK_PERMISSIONS' => 'N');
+                    $arFilter = array(
+                        'NAME' => $sCatNameOld,
+                        'IBLOCK_ID' => $arFields['IBLOCK_ID'],
+                        'CHECK_PERMISSIONS' => 'N'
+                    );
                     if (CWikiSocnet::IsSocNet()) {
                         $arFilter['>LEFT_BORDER'] = CWikiSocnet::$iCatLeftBorder;
                         $arFilter['<RIGHT_BORDER'] = CWikiSocnet::$iCatRightBorder;
@@ -434,8 +489,9 @@ class CWiki
 
             if (self::GetDefaultPage($arFields['IBLOCK_ID']) == false
                 || (self::GetDefaultPage($arFields['IBLOCK_ID']) == $arOldElement['NAME']
-                    && $arOldElement['NAME'] != $arFields['NAME']))
+                    && $arOldElement['NAME'] != $arFields['NAME'])) {
                 self::SetDefaultPage($arFields['IBLOCK_ID'], $arFields['NAME']);
+            }
 
             return true;
         }
@@ -457,8 +513,9 @@ class CWiki
      */
     function RenameLinkOnPages($iBlockId, $oldName, $newName, $iBlockSectId = false)
     {
-        if (!$iBlockId || !$oldName || !$newName)
+        if (!$iBlockId || !$oldName || !$newName) {
             return false;
+        }
 
         $arFilter["IBLOCK_ID"] = $iBlockId;
         $arFilter["CHECK_PERMISSIONS"] = "N";
@@ -478,7 +535,9 @@ class CWiki
             //link and link_name are equal
             array(
                 "search" => "[[" . $oldName . "|" . $oldName . "]]",
-                "pattern" => "/\[\[(" . preg_quote($oldName) . ")\|(" . preg_quote($oldName) . ")\]\]/isU" . BX_UTF_PCRE_MODIFIER,
+                "pattern" => "/\[\[(" . preg_quote($oldName) . ")\|(" . preg_quote(
+                        $oldName
+                    ) . ")\]\]/isU" . BX_UTF_PCRE_MODIFIER,
                 "replacement" => "[[" . $newName . "|" . $newName . "]]"
             ),
 
@@ -506,18 +565,19 @@ class CWiki
             $newText = $arElement["~DETAIL_TEXT"];
 
             foreach ($arPatterns as $arPattern) {
-                if (strpos($newText, $arPattern["search"]) !== false) {
+                if (mb_strpos($newText, $arPattern["search"]) !== false) {
                     $newText = preg_replace($arPattern["pattern"], $arPattern["replacement"], $newText);
                     $bChanged = true;
                 }
             }
 
 
-            if ($isCategory)
-                if (strpos($newText, $catSearch) !== false) {
+            if ($isCategory) {
+                if (mb_strpos($newText, $catSearch) !== false) {
                     $newText = $this->RenameCategoryOnPage($newText, $sCatName, $newName);
                     $bChanged = true;
                 }
+            }
 
             if ($bChanged) {
                 $this->CleanCache($arElement["ID"], $arElement["NAME"], $iBlockId);
@@ -533,7 +593,11 @@ class CWiki
     function RenameCategoryOnPage($pageText, $oldCategoryName, $newCategoryName)
     {
         $newCategoryName = preg_replace("/category:/isU", "", $newCategoryName);
-        return preg_replace("/\[\[" . GetMessage('CATEGORY_NAME') . ":" . $oldCategoryName . "\]\]/isU", "[[" . GetMessage('CATEGORY_NAME') . ":" . $newCategoryName . "]]", $pageText);
+        return preg_replace(
+            "/\[\[" . GetMessage('CATEGORY_NAME') . ":" . $oldCategoryName . "\]\]/isU",
+            "[[" . GetMessage('CATEGORY_NAME') . ":" . $newCategoryName . "]]",
+            $pageText
+        );
     }
 
     static function SetDefaultPage($IBLOCK_ID, $NAME)
@@ -562,8 +626,9 @@ class CWiki
                 $intID = $CAllUserTypeEntity->Add($arFields);
                 if (false == $intID) {
                     $e = $GLOBALS['APPLICATION']->GetException();
-                    if ($e)
+                    if ($e) {
                         ShowError(GetMessage("WIKI_USER_T_ADD_ERR") . $e->GetString());
+                    }
                 }
             }
 
@@ -599,7 +664,7 @@ class CWiki
         return isset($arElement['UF_WIKI_INDEX']['VALUE']) ? $arElement['UF_WIKI_INDEX']['VALUE'] : '';
     }
 
-    function GetCategory($NAME, $IBLOCK_ID)
+    public static function GetCategory($NAME, $IBLOCK_ID)
     {
         global $arParams;
 
@@ -608,7 +673,8 @@ class CWiki
             'TITLE' => GetMessage('Service:Categories_TITLE'),
             'NAME' => GetMessage('Service:Categories'),
             'LINK' => CHTTP::urlAddParams(
-                CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CATEGORIES'],
+                CComponentEngine::MakePathFromTemplate(
+                    $arParams['PATH_TO_CATEGORIES'],
                     array(
                         'wiki_name' => 'Service:Categories',
                         'group_id' => CWikiSocnet::$iSocNetId
@@ -624,15 +690,17 @@ class CWiki
         $arFilter['IBLOCK_ID'] = $IBLOCK_ID;
         $arFilter['CHECK_PERMISSIONS'] = 'N';
 
-        if (CWikiSocnet::IsSocNet())
+        if (CWikiSocnet::IsSocNet()) {
             $arFilter['SUBSECTION'] = CWikiSocnet::$iCatId;
+        }
 
         $rsElement = CIBlockElement::GetList(array(), $arFilter, false, false, Array());
         $arElement = $rsElement->GetNext();
 
         $sCatName = '';
-        if (CWikiUtils::IsCategoryPage($NAME, $sCatName))
+        if (CWikiUtils::IsCategoryPage($NAME, $sCatName)) {
             return $arResult;
+        }
 
         $arLink = array();
         $arLinkExists = array();
@@ -646,22 +714,28 @@ class CWiki
         /*if(empty($arLink))
             return array();*/
 
-        if (CWikiSocnet::IsSocNet() && isset($arCat[CWikiSocnet::$iCatId]))
+        if (CWikiSocnet::IsSocNet() && isset($arCat[CWikiSocnet::$iCatId])) {
             unset($arCat[CWikiSocnet::$iCatId]);
+        }
 
         $arFilter = array();
         $arFilter['=NAME'] = $arLink;
         $arFilter['IBLOCK_ID'] = $IBLOCK_ID;
         $arFilter['ACTIVE'] = 'Y';
         $arFilter['CHECK_PERMISSIONS'] = 'N';
-        if (CWikiSocnet::IsSocNet())
+        if (CWikiSocnet::IsSocNet()) {
             $arFilter['SUBSECTION'] = CWikiSocnet::$iCatId;
+        }
 
         $rsElement = CIBlockElement::GetList(array(), $arFilter, false, false, Array());
 
         while ($obElement = $rsElement->GetNextElement()) {
             $arFields = $obElement->GetFields();
-            $arLinkExists[] = preg_replace('/^(category|' . GetMessage('CATEGORY_NAME') . '):/i' . BX_UTF_PCRE_MODIFIER, '', $arFields['NAME']);
+            $arLinkExists[] = preg_replace(
+                '/^(category|' . GetMessage('CATEGORY_NAME') . '):/i' . BX_UTF_PCRE_MODIFIER,
+                '',
+                $arFields['NAME']
+            );
         }
 
         if (!empty($arCat)) {
@@ -671,7 +745,8 @@ class CWiki
                 $_arResult['ID'] = $_arCat['ID'];
                 $_arResult['IS_RED'] = 'N';
                 $_arResult['LINK'] = CHTTP::urlAddParams(
-                    CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CATEGORY'],
+                    CComponentEngine::MakePathFromTemplate(
+                        $arParams['PATH_TO_CATEGORY'],
                         array(
                             'wiki_name' => 'Category:' . $_arCat['NAME'],
                             'group_id' => CWikiSocnet::$iSocNetId
@@ -683,8 +758,9 @@ class CWiki
                 $_arResult['TITLE'] = $_arCat['NAME'];
                 $_arResult['NAME'] = $_arCat['NAME'];
                 $_arResult['IS_SERVICE'] = 'N';
-                if (!in_array($_arCat['NAME'], $arLinkExists))
+                if (!in_array($_arCat['NAME'], $arLinkExists)) {
                     $_arResult['IS_RED'] = 'Y';
+                }
                 $arResult[] = $_arResult;
             }
         }
@@ -702,20 +778,23 @@ class CWiki
     {
         global $arParams;
         $arFilter['ID'] = $ID;
-        if (CWikiSocnet::IsSocNet())
+        if (CWikiSocnet::IsSocNet()) {
             $arFilter['SUBSECTION'] = CWikiSocnet::$iCatId;
+        }
         $rsElement = CIBlockElement::GetList(array(), $arFilter, false, false, Array());
         $obElement = $rsElement->GetNextElement();
         $arResult = false;
         if ($obElement !== false) {
             $arResult = $obElement->GetFields();
 
-            if (isset($arResult['NAME']))
+            if (isset($arResult['NAME'])) {
                 $arResult['NAME'] = htmlspecialcharsbx($arResult['NAME']);
+            }
             $rsProperties = $obElement->GetProperties(array(), array('CODE' => 'IMAGES'));
 
-            foreach ($rsProperties as $arProperty)
+            foreach ($rsProperties as $arProperty) {
                 $arResult[$arProperty['CODE']] = $arProperty['VALUE'];
+            }
 
             $arResult['SECTIONS'] = self::GetCategory($arResult['XML_ID'], $arFilter['IBLOCK_ID']);
             if (!empty($arResult['TAGS'])) {
@@ -727,10 +806,12 @@ class CWiki
                         $arP = $arParams['IN_COMPLEX'] == 'Y' && $arParams['SEF_MODE'] == 'N' ? array($arParams['OPER_VAR'] => 'search') : array();
                         $arP['tags'] = rawurlencode($sTag);
                         $arTag['LINK'] = CHTTP::urlAddParams(
-                            CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_SEARCH'],
+                            CComponentEngine::MakePathFromTemplate(
+                                $arParams['PATH_TO_SEARCH'],
                                 array(
                                     'wiki_name' => $arParams['ELEMENT_NAME'],
-                                    'group_id' => CWikiSocnet::$iSocNetId)
+                                    'group_id' => CWikiSocnet::$iSocNetId
+                                )
                             ),
                             $arP
                         );
@@ -763,7 +844,9 @@ class CWiki
 
         $cacheByNameID = self::GetIdForCacheByName($arFilter['IBLOCK_ID'], $iCatId, $NAME);
 
-        $cacheTime = isset($arComponentParams['CACHE_TIME']) ? intval($arComponentParams['CACHE_TIME']) : CWiki::CWIKI_CACHE_TTL;
+        $cacheTime = isset($arComponentParams['CACHE_TIME']) ? intval(
+            $arComponentParams['CACHE_TIME']
+        ) : CWiki::CWIKI_CACHE_TTL;
 
         if ($CACHE_MANAGER->Read($cacheTime, $cacheByNameID)) {
             $cachedElement = $CACHE_MANAGER->Get($cacheByNameID);
@@ -778,8 +861,9 @@ class CWiki
                     }
                 }
 
-                if ($sameFilter)
+                if ($sameFilter) {
                     return $cachedElement;
+                }
             }
         }
 
@@ -792,17 +876,20 @@ class CWiki
         $arResult = false;
         if ($obElement !== false) {
             $arResult = $obElement->GetFields();
-            if (isset($arResult['NAME']))
+            if (isset($arResult['NAME'])) {
                 $arResult['NAME'] = htmlspecialcharsbx($arResult['NAME']);
+            }
             $rsProperties = $obElement->GetProperties(array(), array('CODE' => 'IMAGES'));
 
-            foreach ($rsProperties as $arProperty)
+            foreach ($rsProperties as $arProperty) {
                 $arResult[$arProperty['CODE']] = $arProperty['VALUE'];
+            }
 
             $rsProperties = $obElement->GetProperties(array(), array('CODE' => 'FORUM_TOPIC_ID'));
 
-            foreach ($rsProperties as $arProperty)
+            foreach ($rsProperties as $arProperty) {
                 $arResult[$arProperty['CODE']] = $arProperty['VALUE'];
+            }
 
             $arResult['SECTIONS'] = self::GetCategory($arResult['XML_ID'], $arFilter['IBLOCK_ID']);
             if (!empty($arResult['TAGS'])) {
@@ -811,18 +898,35 @@ class CWiki
                 foreach ($_arTAGS as $sTag) {
                     $sTag = trim($sTag);
                     $arTag = array('NAME' => $sTag);
-                    if (!empty($arComponentParams) && isset($arComponentParams['PATH_TO_SEARCH'])) {
-                        $arP = $arComponentParams['IN_COMPLEX'] == 'Y' && $arComponentParams['SEF_MODE'] == 'N' ? array($arComponentParams['OPER_VAR'] => 'search') : array();
-                        $arP['tags'] = rawurlencode($sTag);
-                        $arTag['LINK'] = CHTTP::urlAddParams(
-                            CComponentEngine::MakePathFromTemplate($arComponentParams['PATH_TO_SEARCH'],
-                                array(
-                                    'wiki_name' => $arComponentParams['ELEMENT_NAME'],
-                                    'group_id' => CWikiSocnet::$iSocNetId
-                                )
-                            ),
-                            $arP
-                        );
+                    if (
+                        !empty($arComponentParams)
+                        && (
+                            isset($arComponentParams['PATH_TO_SEARCH'])
+                            || isset($arComponentParams['~PATH_TO_TAG'])
+                        )
+                    ) {
+                        if (isset($arComponentParams['PATH_TO_TAG'])) {
+                            $arTag['LINK'] = \CComponentEngine::MakePathFromTemplate(
+                                $arComponentParams['~PATH_TO_TAG'],
+                                [
+                                    'group_id' => CWikiSocnet::$iSocNetId,
+                                    'tag' => rawurlencode($sTag)
+                                ]
+                            );
+                        } else {
+                            $arP = $arComponentParams['IN_COMPLEX'] == 'Y' && $arComponentParams['SEF_MODE'] == 'N' ? array($arComponentParams['OPER_VAR'] => 'search') : array();
+                            $arP['tags'] = rawurlencode($sTag);
+                            $arTag['LINK'] = CHTTP::urlAddParams(
+                                CComponentEngine::MakePathFromTemplate(
+                                    $arComponentParams['PATH_TO_SEARCH'],
+                                    array(
+                                        'wiki_name' => $arComponentParams['ELEMENT_NAME'],
+                                        'group_id' => CWikiSocnet::$iSocNetId
+                                    )
+                                ),
+                                $arP
+                            );
+                        }
                     }
                     $arResult['_TAGS'][] = $arTag;
                 }
@@ -830,7 +934,9 @@ class CWiki
         }
 
         if (!empty($arComponentParams)) //Let's store only full page data with tag links
+        {
             $CACHE_MANAGER->Set($cacheByNameID, $arResult);
+        }
 
         return $arResult;
     }
@@ -850,16 +956,19 @@ class CWiki
 
     public function CleanCache($ID = false, $Name = false, $iBlockId = false)
     {
-        if ($ID === false && !$Name)
+        if ($ID === false && !$Name) {
             return false;
+        }
 
         global $CACHE_MANAGER;
 
-        if ($ID !== false)
+        if ($ID !== false) {
             $CACHE_MANAGER->ClearByTag('wiki_' . $ID);
+        }
 
-        if (!$iBlockId)
+        if (!$iBlockId) {
             return true;
+        }
 
         $iCatId = CWikiSocnet::IsSocNet() ? CWikiSocnet::$iCatId : "";
 
@@ -874,8 +983,9 @@ class CWiki
                 );
 
                 $arElement = self::GetElementById($ID, $arFilter);
-                if ($arElement != false)
+                if ($arElement != false) {
                     $elName = $arElement['NAME'];
+                }
             } else {
                 $elName = $Name;
             }
@@ -909,8 +1019,9 @@ class CWiki
 
         $cacheId = self::GetCacheIdForPageUpdated($iBlockId, $iSocCatId, $name);
 
-        if ($CACHE_MANAGER->Read($cacheTime, $cacheID))
+        if ($CACHE_MANAGER->Read($cacheTime, $cacheID)) {
             return ($CACHE_MANAGER->Get($cacheId) == "Y");
+        }
 
         return false;
     }

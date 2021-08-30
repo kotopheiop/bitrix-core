@@ -1,4 +1,5 @@
-<?
+<?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/general/recurring.php");
 
 /***********************************************************************/
@@ -7,15 +8,18 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/general/recurring
 
 class CSaleRecurring extends CAllSaleRecurring
 {
-    function GetByID($ID)
+    public static function GetByID($ID)
     {
         global $DB;
 
         $ID = (int)$ID;
-        if ($ID <= 0)
+        if ($ID <= 0) {
             return false;
+        }
 
-        if (isset($GLOBALS["SALE_RECURRING"]["SALE_RECURRING_CACHE_" . $ID]) && is_array($GLOBALS["SALE_RECURRING"]["SALE_RECURRING_CACHE_" . $ID]) && is_set($GLOBALS["SALE_RECURRING"]["SALE_RECURRING_CACHE_" . $ID], "ID")) {
+        if (isset($GLOBALS["SALE_RECURRING"]["SALE_RECURRING_CACHE_" . $ID]) && is_array(
+                $GLOBALS["SALE_RECURRING"]["SALE_RECURRING_CACHE_" . $ID]
+            ) && is_set($GLOBALS["SALE_RECURRING"]["SALE_RECURRING_CACHE_" . $ID], "ID")) {
             return $GLOBALS["SALE_RECURRING"]["SALE_RECURRING_CACHE_" . $ID];
         } else {
             $strSql =
@@ -40,12 +44,43 @@ class CSaleRecurring extends CAllSaleRecurring
         return false;
     }
 
-    function GetList($arOrder = array(), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
-    {
+    public static function GetList(
+        $arOrder = array(),
+        $arFilter = array(),
+        $arGroupBy = false,
+        $arNavStartParams = false,
+        $arSelectFields = array()
+    ) {
         global $DB;
 
-        if (empty($arSelectFields))
-            $arSelectFields = array("ID", "USER_ID", "MODULE", "PRODUCT_ID", "PRODUCT_NAME", "PRODUCT_URL", "PRODUCT_PRICE_ID", "RECUR_SCHEME_TYPE", "RECUR_SCHEME_LENGTH", "WITHOUT_ORDER", "PRICE", "CURRENCY", "ORDER_ID", "CANCELED", "DATE_CANCELED", "CANCELED_REASON", "CALLBACK_FUNC", "PRODUCT_PROVIDER_CLASS", "DESCRIPTION", "TIMESTAMP_X", "PRIOR_DATE", "NEXT_DATE", "REMAINING_ATTEMPTS", "SUCCESS_PAYMENT");
+        if (empty($arSelectFields)) {
+            $arSelectFields = array(
+                "ID",
+                "USER_ID",
+                "MODULE",
+                "PRODUCT_ID",
+                "PRODUCT_NAME",
+                "PRODUCT_URL",
+                "PRODUCT_PRICE_ID",
+                "RECUR_SCHEME_TYPE",
+                "RECUR_SCHEME_LENGTH",
+                "WITHOUT_ORDER",
+                "PRICE",
+                "CURRENCY",
+                "ORDER_ID",
+                "CANCELED",
+                "DATE_CANCELED",
+                "CANCELED_REASON",
+                "CALLBACK_FUNC",
+                "PRODUCT_PROVIDER_CLASS",
+                "DESCRIPTION",
+                "TIMESTAMP_X",
+                "PRIOR_DATE",
+                "NEXT_DATE",
+                "REMAINING_ATTEMPTS",
+                "SUCCESS_PAYMENT"
+            );
+        }
 
         // FIELDS -->
         $arFields = array(
@@ -73,12 +108,37 @@ class CSaleRecurring extends CAllSaleRecurring
             "NEXT_DATE" => array("FIELD" => "SR.NEXT_DATE", "TYPE" => "datetime"),
             "REMAINING_ATTEMPTS" => array("FIELD" => "SR.REMAINING_ATTEMPTS", "TYPE" => "int"),
             "SUCCESS_PAYMENT" => array("FIELD" => "SR.SUCCESS_PAYMENT", "TYPE" => "char"),
-            "USER_LOGIN" => array("FIELD" => "U.LOGIN", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (SR.USER_ID = U.ID)"),
-            "USER_ACTIVE" => array("FIELD" => "U.ACTIVE", "TYPE" => "char", "FROM" => "INNER JOIN b_user U ON (SR.USER_ID = U.ID)"),
-            "USER_NAME" => array("FIELD" => "U.NAME", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (SR.USER_ID = U.ID)"),
-            "USER_LAST_NAME" => array("FIELD" => "U.LAST_NAME", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (SR.USER_ID = U.ID)"),
-            "USER_EMAIL" => array("FIELD" => "U.EMAIL", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (SR.USER_ID = U.ID)"),
-            "USER_USER" => array("FIELD" => "U.LOGIN,U.NAME,U.LAST_NAME,U.EMAIL,U.ID", "WHERE_ONLY" => "Y", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (SR.USER_ID = U.ID)")
+            "USER_LOGIN" => array(
+                "FIELD" => "U.LOGIN",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_user U ON (SR.USER_ID = U.ID)"
+            ),
+            "USER_ACTIVE" => array(
+                "FIELD" => "U.ACTIVE",
+                "TYPE" => "char",
+                "FROM" => "INNER JOIN b_user U ON (SR.USER_ID = U.ID)"
+            ),
+            "USER_NAME" => array(
+                "FIELD" => "U.NAME",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_user U ON (SR.USER_ID = U.ID)"
+            ),
+            "USER_LAST_NAME" => array(
+                "FIELD" => "U.LAST_NAME",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_user U ON (SR.USER_ID = U.ID)"
+            ),
+            "USER_EMAIL" => array(
+                "FIELD" => "U.EMAIL",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_user U ON (SR.USER_ID = U.ID)"
+            ),
+            "USER_USER" => array(
+                "FIELD" => "U.LOGIN,U.NAME,U.LAST_NAME,U.EMAIL,U.ID",
+                "WHERE_ONLY" => "Y",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_user U ON (SR.USER_ID = U.ID)"
+            )
         );
         // <-- FIELDS
 
@@ -91,48 +151,57 @@ class CSaleRecurring extends CAllSaleRecurring
                 "SELECT " . $arSqls["SELECT"] . " " .
                 "FROM b_sale_recurring SR " .
                 "	" . $arSqls["FROM"] . " ";
-            if (strlen($arSqls["WHERE"]) > 0)
+            if ($arSqls["WHERE"] <> '') {
                 $strSql .= "WHERE " . $arSqls["WHERE"] . " ";
-            if (strlen($arSqls["GROUPBY"]) > 0)
+            }
+            if ($arSqls["GROUPBY"] <> '') {
                 $strSql .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
+            }
 
             //echo "!1!=".htmlspecialcharsbx($strSql)."<br>";
 
             $dbRes = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-            if ($arRes = $dbRes->Fetch())
+            if ($arRes = $dbRes->Fetch()) {
                 return $arRes["CNT"];
-            else
-                return False;
+            } else {
+                return false;
+            }
         }
 
         $strSql =
             "SELECT " . $arSqls["SELECT"] . " " .
             "FROM b_sale_recurring SR " .
             "	" . $arSqls["FROM"] . " ";
-        if (strlen($arSqls["WHERE"]) > 0)
+        if ($arSqls["WHERE"] <> '') {
             $strSql .= "WHERE " . $arSqls["WHERE"] . " ";
-        if (strlen($arSqls["GROUPBY"]) > 0)
+        }
+        if ($arSqls["GROUPBY"] <> '') {
             $strSql .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
-        if (strlen($arSqls["ORDERBY"]) > 0)
+        }
+        if ($arSqls["ORDERBY"] <> '') {
             $strSql .= "ORDER BY " . $arSqls["ORDERBY"] . " ";
+        }
 
-        if (is_array($arNavStartParams) && IntVal($arNavStartParams["nTopCount"]) <= 0) {
+        if (is_array($arNavStartParams) && intval($arNavStartParams["nTopCount"]) <= 0) {
             $strSql_tmp =
                 "SELECT COUNT('x') as CNT " .
                 "FROM b_sale_recurring SR " .
                 "	" . $arSqls["FROM"] . " ";
-            if (strlen($arSqls["WHERE"]) > 0)
+            if ($arSqls["WHERE"] <> '') {
                 $strSql_tmp .= "WHERE " . $arSqls["WHERE"] . " ";
-            if (strlen($arSqls["GROUPBY"]) > 0)
+            }
+            if ($arSqls["GROUPBY"] <> '') {
                 $strSql_tmp .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
+            }
 
             //echo "!2.1!=".htmlspecialcharsbx($strSql_tmp)."<br>";
 
             $dbRes = $DB->Query($strSql_tmp, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             $cnt = 0;
-            if (strlen($arSqls["GROUPBY"]) <= 0) {
-                if ($arRes = $dbRes->Fetch())
+            if ($arSqls["GROUPBY"] == '') {
+                if ($arRes = $dbRes->Fetch()) {
                     $cnt = $arRes["CNT"];
+                }
             } else {
                 // FOR MYSQL!!! ANOTHER CODE FOR ORACLE
                 $cnt = $dbRes->SelectedRowsCount();
@@ -144,8 +213,9 @@ class CSaleRecurring extends CAllSaleRecurring
 
             $dbRes->NavQuery($strSql, $cnt, $arNavStartParams);
         } else {
-            if (is_array($arNavStartParams) && IntVal($arNavStartParams["nTopCount"]) > 0)
-                $strSql .= "LIMIT " . IntVal($arNavStartParams["nTopCount"]);
+            if (is_array($arNavStartParams) && intval($arNavStartParams["nTopCount"]) > 0) {
+                $strSql .= "LIMIT " . intval($arNavStartParams["nTopCount"]);
+            }
 
             //echo "!3!=".htmlspecialcharsbx($strSql)."<br>";
 
@@ -155,12 +225,13 @@ class CSaleRecurring extends CAllSaleRecurring
         return $dbRes;
     }
 
-    function Add($arFields)
+    public static function Add($arFields)
     {
         global $DB;
 
-        if (!CSaleRecurring::CheckFields("ADD", $arFields, 0))
+        if (!CSaleRecurring::CheckFields("ADD", $arFields, 0)) {
             return false;
+        }
 
         $arInsert = $DB->PrepareInsert("b_sale_recurring", $arFields);
 
@@ -169,10 +240,8 @@ class CSaleRecurring extends CAllSaleRecurring
             "VALUES(" . $arInsert[1] . ")";
         $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 
-        $ID = IntVal($DB->LastID());
+        $ID = intval($DB->LastID());
 
         return $ID;
     }
 }
-
-?>

@@ -1,9 +1,10 @@
 <?
-$MESS["SALE_DLV_SRV_SPSR_PROFILE_TITLE"] = "Сервис СПСР-ЭКСПРЕСС";
+
+$MESS["SALE_DLV_SRV_SPSR_PROFILE_TITLE"] = "пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
 $MESS["SALE_DLV_SRV_SPSR_PROFILE_DESCRIPTION"] = " ";
-$MESS["SALE_DLV_SRV_SPSR_PROFILE_MAIN_TITLE"] = "Настройки";
-$MESS["SALE_DLV_SRV_SPSR_PROFILE_MAIN_DSCR"] = "Настройки Сервиса";
-$MESS["SALE_DLV_SRV_SPSR_PROFILE_ST"] = "Тип сервиса";
-$MESS["SALE_DLV_SRV_SPSR_INNER_DESCR"] = "Внутреннее описание";
-$MESS["SALE_DLV_SRV_SPSR_ERROR_CONFIG_SRV_TYPE"] = "Ошибка настройки. Не указан тип сервиса";
+$MESS["SALE_DLV_SRV_SPSR_PROFILE_MAIN_TITLE"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_DLV_SRV_SPSR_PROFILE_MAIN_DSCR"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_DLV_SRV_SPSR_PROFILE_ST"] = "пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_DLV_SRV_SPSR_INNER_DESCR"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_DLV_SRV_SPSR_ERROR_CONFIG_SRV_TYPE"] = "пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ. пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
 ?>

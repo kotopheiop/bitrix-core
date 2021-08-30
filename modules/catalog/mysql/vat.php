@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/catalog/general/vat.php");
 
 class CCatalogVat extends CAllCatalogVat
@@ -7,8 +8,9 @@ class CCatalogVat extends CAllCatalogVat
     {
         global $DB;
 
-        if (!CCatalogVat::CheckFields('ADD', $arFields))
+        if (!CCatalogVat::CheckFields('ADD', $arFields)) {
             return false;
+        }
 
         $arInsert = $DB->PrepareInsert("b_catalog_vat", $arFields);
 
@@ -24,11 +26,13 @@ class CCatalogVat extends CAllCatalogVat
         global $DB;
 
         $ID = intval($ID);
-        if (0 >= $ID)
+        if (0 >= $ID) {
             return false;
+        }
 
-        if (!CCatalogVat::CheckFields('UPDATE', $arFields, $ID))
+        if (!CCatalogVat::CheckFields('UPDATE', $arFields, $ID)) {
             return false;
+        }
 
         $strUpdate = $DB->PrepareUpdate("b_catalog_vat", $arFields);
         if (!empty($strUpdate)) {
@@ -43,18 +47,25 @@ class CCatalogVat extends CAllCatalogVat
     {
         global $DB;
         $ID = intval($ID);
-        if (0 >= $ID)
+        if (0 >= $ID) {
             return false;
+        }
         $DB->Query("DELETE FROM b_catalog_vat WHERE ID=" . $ID, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
         return true;
     }
 
-    public static function GetListEx($arOrder = array(), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
-    {
+    public static function GetListEx(
+        $arOrder = array(),
+        $arFilter = array(),
+        $arGroupBy = false,
+        $arNavStartParams = false,
+        $arSelectFields = array()
+    ) {
         global $DB;
 
-        if (empty($arSelectFields))
+        if (empty($arSelectFields)) {
             $arSelectFields = array('ID', 'TIMESTAMP_X', 'ACTIVE', 'C_SORT', 'NAME', 'RATE');
+        }
 
         $arFields = array(
             'ID' => array("FIELD" => "CV.ID", "TYPE" => "int"),
@@ -72,25 +83,31 @@ class CCatalogVat extends CAllCatalogVat
 
         if (empty($arGroupBy) && is_array($arGroupBy)) {
             $strSql = "SELECT " . $arSqls["SELECT"] . " FROM b_catalog_vat CV " . $arSqls["FROM"];
-            if (!empty($arSqls["WHERE"]))
+            if (!empty($arSqls["WHERE"])) {
                 $strSql .= " WHERE " . $arSqls["WHERE"];
-            if (!empty($arSqls["GROUPBY"]))
+            }
+            if (!empty($arSqls["GROUPBY"])) {
                 $strSql .= " GROUP BY " . $arSqls["GROUPBY"];
+            }
 
             $dbRes = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-            if ($arRes = $dbRes->Fetch())
+            if ($arRes = $dbRes->Fetch()) {
                 return $arRes["CNT"];
-            else
+            } else {
                 return false;
+            }
         }
 
         $strSql = "SELECT " . $arSqls["SELECT"] . " FROM b_catalog_vat CV " . $arSqls["FROM"];
-        if (!empty($arSqls["WHERE"]))
+        if (!empty($arSqls["WHERE"])) {
             $strSql .= " WHERE " . $arSqls["WHERE"];
-        if (!empty($arSqls["GROUPBY"]))
+        }
+        if (!empty($arSqls["GROUPBY"])) {
             $strSql .= " GROUP BY " . $arSqls["GROUPBY"];
-        if (!empty($arSqls["ORDERBY"]))
+        }
+        if (!empty($arSqls["ORDERBY"])) {
             $strSql .= " ORDER BY " . $arSqls["ORDERBY"];
+        }
 
         $intTopCount = 0;
         $boolNavStartParams = (!empty($arNavStartParams) && is_array($arNavStartParams));
@@ -99,16 +116,19 @@ class CCatalogVat extends CAllCatalogVat
         }
         if ($boolNavStartParams && 0 >= $intTopCount) {
             $strSql_tmp = "SELECT COUNT('x') as CNT FROM b_catalog_vat CV " . $arSqls["FROM"];
-            if (!empty($arSqls["WHERE"]))
+            if (!empty($arSqls["WHERE"])) {
                 $strSql_tmp .= " WHERE " . $arSqls["WHERE"];
-            if (!empty($arSqls["GROUPBY"]))
+            }
+            if (!empty($arSqls["GROUPBY"])) {
                 $strSql_tmp .= " GROUP BY " . $arSqls["GROUPBY"];
+            }
 
             $dbRes = $DB->Query($strSql_tmp, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             $cnt = 0;
             if (empty($arSqls["GROUPBY"])) {
-                if ($arRes = $dbRes->Fetch())
+                if ($arRes = $dbRes->Fetch()) {
                     $cnt = $arRes["CNT"];
+                }
             } else {
                 $cnt = $dbRes->SelectedRowsCount();
             }

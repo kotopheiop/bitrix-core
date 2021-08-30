@@ -27,10 +27,12 @@ class ReportTable extends DataManager
     public static function getMap()
     {
         return array(
-            new IntegerField('ID', array(
+            new IntegerField(
+                'ID', array(
                 'primary' => true,
                 'autocomplete' => true,
-            )),
+            )
+            ),
             new IntegerField('WIDGET_ID'),
             new StringField('GID'),
             new IntegerField('WEIGHT'),

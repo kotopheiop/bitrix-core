@@ -1,8 +1,12 @@
 <div class="bxstl-navi-prev-next-cnt">
     <a href="javascript: void('');"
-       onclick="if (window.oBXSticker){window.oBXSticker.List.NaviGet('<?= ($this->NavPageNomer - 1) ?>', '<?= $this->NavNum ?>');}; return false;"><?= GetMessage('FMST_LIST_PREV') ?></a>
+       onclick="if (window.oBXSticker){window.oBXSticker.List.NaviGet('<?= ($this->NavPageNomer - 1) ?>', '<?= $this->NavNum ?>');}; return false;"><?= GetMessage(
+            'FMST_LIST_PREV'
+        ) ?></a>
     <a href="javascript: void('');"
-       onclick="if (window.oBXSticker){window.oBXSticker.List.NaviGet('<?= ($this->NavPageNomer + 1) ?>', '<?= $this->NavNum ?>');}; return false;"><?= GetMessage('FMST_LIST_NEXT') ?></a>
+       onclick="if (window.oBXSticker){window.oBXSticker.List.NaviGet('<?= ($this->NavPageNomer + 1) ?>', '<?= $this->NavNum ?>');}; return false;"><?= GetMessage(
+            'FMST_LIST_NEXT'
+        ) ?></a>
 </div>
 
 <div class="bxstl-navi-pages-cnt">
@@ -13,10 +17,12 @@
         <? if ($NavRecordGroup == $this->NavPageNomer) : ?>
             <?
             $w = 20;
-            if ($NavRecordGroup > 9)
+            if ($NavRecordGroup > 9) {
                 $w = 30;
-            if ($NavRecordGroup > 99)
+            }
+            if ($NavRecordGroup > 99) {
                 $w = 40;
+            }
             ?>
             <div class="bxstl-navi-item-cur" style="width: <?= $w ?>px;">
                 <div class="bxstl-navi-it-l"></div>

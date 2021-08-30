@@ -10,11 +10,15 @@ class Message
 {
     public static function index(\Bitrix\Forum\Forum $forum, \Bitrix\Forum\Topic $topic, array $message)
     {
-        if (!\Bitrix\Main\Loader::includeModule("search")) {
+        if (!\Bitrix\Main\Loader::includeModule("search") || $message["SERVICE_TYPE"] > 0) {
             return;
         }
 
-        if (\Bitrix\Main\Config\Option::get("forum", "FILTER", "Y") == "Y" && $message["POST_MESSAGE_FILTER"] !== null) {
+        if (\Bitrix\Main\Config\Option::get(
+                "forum",
+                "FILTER",
+                "Y"
+            ) == "Y" && $message["POST_MESSAGE_FILTER"] !== null) {
             $message["POST_MESSAGE"] = $message["POST_MESSAGE_FILTER"];
         }
 
@@ -46,7 +50,9 @@ class Message
             "PERMISSIONS" => $arParams["PERMISSION"],
             "TITLE" => $topic["TITLE"] . ($message["NEW_TOPIC"] == "Y" && !empty($topic["DESCRIPTION"]) ? ", " . $topic["DESCRIPTION"] : ""),
             "TAGS" => ($message["NEW_TOPIC"] == "Y" ? $topic["TAGS"] : ""),
-            "BODY" => GetMessage("AVTOR_PREF") . " " . $message["AUTHOR_NAME"] . ". " . (\CSearch::KillTags(\forumTextParser::clearAllTags($message["POST_MESSAGE"]))),
+            "BODY" => GetMessage("AVTOR_PREF") . " " . $message["AUTHOR_NAME"] . ". " . (\CSearch::KillTags(
+                    \forumTextParser::clearAllTags($message["POST_MESSAGE"])
+                )),
             "URL" => "",
             "INDEX_TITLE" => $message["NEW_TOPIC"] == "Y",
         );
@@ -67,11 +73,13 @@ class Message
             "SOCNET_GROUP_ID" => $topic["SOCNET_GROUP_ID"],
             "OWNER_ID" => $topic["OWNER_ID"],
             "PARAM1" => $message["PARAM1"],
-            "PARAM2" => $message["PARAM2"]);
+            "PARAM2" => $message["PARAM2"]
+        );
         foreach ($arParams["SITE"] as $key => $val) {
             $arSearchInd["LID"][$key] = \CForumNew::PreparePath2Message($val, $urlPatterns);
-            if (empty($arSearchInd["URL"]) && !empty($arSearchInd["LID"][$key]))
+            if (empty($arSearchInd["URL"]) && !empty($arSearchInd["LID"][$key])) {
                 $arSearchInd["URL"] = $arSearchInd["LID"][$key];
+            }
         }
 
         if (empty($arSearchInd["URL"]) && ($res = \CLang::GetByID(SITE_ID)->fetch())) {

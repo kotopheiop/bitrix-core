@@ -56,7 +56,7 @@ class Yandex extends Engine\YandexBase implements IEngine
 
     protected $engineId = 'yandex';
     protected $arServiceList = array();
-    private $userId = NULL;
+    private $userId = null;
     private $hostIds = array();
 
     public function __construct()
@@ -64,8 +64,9 @@ class Yandex extends Engine\YandexBase implements IEngine
         parent::__construct();
 
 //		save user ID from auth
-        if (isset($this->engineSettings['AUTH_USER']['id']))
+        if (isset($this->engineSettings['AUTH_USER']['id'])) {
             $this->userId = $this->engineSettings['AUTH_USER']['id'];
+        }
     }
 
     /**
@@ -77,21 +78,25 @@ class Yandex extends Engine\YandexBase implements IEngine
      * @param null $params
      * @return string
      */
-    private function getServiceUrl($userId = NULL, $hostId = NULL, $service = NULL, $params = NULL)
+    private function getServiceUrl($userId = null, $hostId = null, $service = null, $params = null)
     {
         $url = self::API_BASE_URL;
 
-        if ($userId)
+        if ($userId) {
             $url .= $userId . '/';
-        if ($hostId)
+        }
+        if ($hostId) {
             $url .= 'hosts/' . $hostId . '/';
-        if ($service)
+        }
+        if ($service) {
             $url .= $service;
+        }
         if ($params) {
-            if (is_array($params))
+            if (is_array($params)) {
                 $params = '?' . http_build_query($params);
-            else
+            } else {
                 $params = '?' . str_replace('?', '', $params);
+            }
 
             $url .= $params;
         }
@@ -114,8 +119,9 @@ class Yandex extends Engine\YandexBase implements IEngine
     private function getHostId($domain)
     {
 //		get saved host ID
-        if (isset($this->hostIds[$domain]) && !empty($this->hostIds[$domain]))
+        if (isset($this->hostIds[$domain]) && !empty($this->hostIds[$domain])) {
             return $this->hostIds[$domain];
+        }
 
 //		else get host ID from API (host will be saved in local)
         $hosts = $this->getFeeds();
@@ -125,16 +131,19 @@ class Yandex extends Engine\YandexBase implements IEngine
 
     public function getFeeds()
     {
-        $serviceUrl = $this->getServiceUrl($this->userId, NULL, self::API_HOSTS_URL);
+        $serviceUrl = $this->getServiceUrl($this->userId, null, self::API_HOSTS_URL);
         $queryResult = $this->query($serviceUrl, 'GET');
 
-        if ($queryResult && $queryResult->getStatus() == self::HTTP_STATUS_OK && strlen($queryResult->getResult()) > 0) {
+        if ($queryResult && $queryResult->getStatus() == self::HTTP_STATUS_OK && $queryResult->getResult() <> '') {
             $resultConverted = array();
             $result = Json::decode($queryResult->getResult());
             foreach ($result['hosts'] as $host) {
 //				if set main mirror - we must use them
-                if (array_key_exists("main_mirror", $host) && is_array($host["main_mirror"]) && !empty($host["main_mirror"]))
+                if (array_key_exists("main_mirror", $host) && is_array(
+                        $host["main_mirror"]
+                    ) && !empty($host["main_mirror"])) {
                     $host = array_merge($host, $host["main_mirror"]);
+                }
 
 //				ascii_host_url must be equal unicode_host_url for latin URLs.
 //				if it cyrillic URL - we need ASCII host.
@@ -143,8 +152,9 @@ class Yandex extends Engine\YandexBase implements IEngine
                 $resultConverted[$hostUrl] = $host;
 
 //				convert verified status in correct format
-                if ($host['verified'])
+                if ($host['verified']) {
                     $resultConverted[$hostUrl]['verification'] = self::VERIFIED_STATE_VERIFIED;
+                }
 //				save hostId in local var
                 $this->hostIds[$hostUrl] = $host['host_id'];
             }
@@ -181,10 +191,11 @@ class Yandex extends Engine\YandexBase implements IEngine
         $serviceUrl = $this->getServiceUrl($this->userId, $hostId);
         $queryResult = $this->query($serviceUrl, 'GET');
 
-        if ($queryResult->getStatus() == self::HTTP_STATUS_OK && strlen($queryResult->getResult()) > 0)
+        if ($queryResult->getStatus() == self::HTTP_STATUS_OK && $queryResult->getResult() <> '') {
             return Json::decode($queryResult->getResult());
-        else
+        } else {
             throw new Engine\YandexException($queryResult);
+        }
     }
 
     private function getSiteInfoStats($domain)
@@ -195,10 +206,11 @@ class Yandex extends Engine\YandexBase implements IEngine
         $serviceUrl = $this->getServiceUrl($this->userId, $hostId, self::API_SUMMARY_URL);
         $queryResult = $this->query($serviceUrl, 'GET');
 
-        if ($queryResult->getStatus() == self::HTTP_STATUS_OK && strlen($queryResult->getResult()) > 0)
+        if ($queryResult->getStatus() == self::HTTP_STATUS_OK && $queryResult->getResult() <> '') {
             return Json::decode($queryResult->getResult());
-        else
+        } else {
             throw new Engine\YandexException($queryResult);
+        }
     }
 
 //	todo: we can add info about external links like a popular queries
@@ -227,10 +239,11 @@ class Yandex extends Engine\YandexBase implements IEngine
         $serviceUrl .= '&query_indicator=AVG_CLICK_POSITION';
 
         $queryResult = $this->query($serviceUrl, 'GET');
-        if ($queryResult->getStatus() == self::HTTP_STATUS_OK && strlen($queryResult->getResult()) > 0)
+        if ($queryResult->getStatus() == self::HTTP_STATUS_OK && $queryResult->getResult() <> '') {
             $queriesShows = Json::decode($queryResult->getResult());
-        else
+        } else {
             throw new Engine\YandexException($queryResult);
+        }
 
 //		format out array
         $result = array();
@@ -241,8 +254,14 @@ class Yandex extends Engine\YandexBase implements IEngine
                 'TEXT' => $query['query_text'],
                 'TOTAL_SHOWS' => $query['indicators']['TOTAL_SHOWS'],
                 'TOTAL_CLICKS' => $query['indicators']['TOTAL_CLICKS'],
-                'AVG_SHOW_POSITION' => is_null($query['indicators']['AVG_SHOW_POSITION']) ? '' : round($query['indicators']['AVG_SHOW_POSITION'], 1),
-                'AVG_CLICK_POSITION' => is_null($query['indicators']['AVG_CLICK_POSITION']) ? '' : round($query['indicators']['AVG_CLICK_POSITION'], 1),
+                'AVG_SHOW_POSITION' => is_null($query['indicators']['AVG_SHOW_POSITION']) ? '' : round(
+                    $query['indicators']['AVG_SHOW_POSITION'],
+                    1
+                ),
+                'AVG_CLICK_POSITION' => is_null($query['indicators']['AVG_CLICK_POSITION']) ? '' : round(
+                    $query['indicators']['AVG_CLICK_POSITION'],
+                    1
+                ),
             );
             $totalShows += $query['indicators']['TOTAL_SHOWS'];
             $totalClicks += $query['indicators']['TOTAL_CLICKS'];
@@ -265,8 +284,9 @@ class Yandex extends Engine\YandexBase implements IEngine
             $domain['DOMAIN'] = ToLower($domain['DOMAIN']);
 
             if (isset($this->hostIds[$domain['DOMAIN']])) {
-                if (!is_array($this->engineSettings['SITES']))
+                if (!is_array($this->engineSettings['SITES'])) {
                     $this->engineSettings['SITES'] = array();
+                }
 
                 $this->engineSettings['SITES'][$domain['DOMAIN']] = $this->hostIds[$domain['DOMAIN']];
             }
@@ -302,8 +322,9 @@ class Yandex extends Engine\YandexBase implements IEngine
             $counter += count($stepResult['original_texts']);
 
 //			if catch last text - exit
-            if ($counter >= $result['count'])
+            if ($counter >= $result['count']) {
                 break;
+            }
         }
 
         return $result;
@@ -322,10 +343,11 @@ class Yandex extends Engine\YandexBase implements IEngine
         $serviceUrl = $this->getServiceUrl($this->userId, $hostId, self::API_ORIGINAL_TEXTS_URL, $params);
         $queryResult = $this->query($serviceUrl, 'GET', $params);
 
-        if ($queryResult->getStatus() == self::HTTP_STATUS_OK && strlen($queryResult->getResult()) > 0)
+        if ($queryResult->getStatus() == self::HTTP_STATUS_OK && $queryResult->getResult() <> '') {
             return Json::decode($queryResult->getResult());
-        else
+        } else {
             throw new Engine\YandexException($queryResult);
+        }
     }
 
 
@@ -348,10 +370,11 @@ class Yandex extends Engine\YandexBase implements IEngine
         $serviceUrl = $this->getServiceUrl($this->userId, $hostId, self::API_ORIGINAL_TEXTS_URL);
         $queryResult = $this->query($serviceUrl, 'POST', $data);
 
-        if ($queryResult->getStatus() == self::HTTP_STATUS_CREATED && strlen($queryResult->getResult()) > 0)
+        if ($queryResult->getStatus() == self::HTTP_STATUS_CREATED && $queryResult->getResult() <> '') {
             return $queryResult->getResult();
-        else
+        } else {
             throw new Engine\YandexException($queryResult);
+        }
     }
 
 
@@ -370,13 +393,14 @@ class Yandex extends Engine\YandexBase implements IEngine
 //		create JSON data in correct format
         $data = array("host_url" => $queryDomain);
         $data = Json::encode($data);
-        $serviceUrl = $this->getServiceUrl($this->userId, NULL, self::API_HOSTS_URL);
+        $serviceUrl = $this->getServiceUrl($this->userId, null, self::API_HOSTS_URL);
         $queryResult = $this->query($serviceUrl, 'POST', $data);
 
-        if ($queryResult->getStatus() == self::HTTP_STATUS_CREATED && strlen($queryResult->getResult()) > 0)
+        if ($queryResult->getStatus() == self::HTTP_STATUS_CREATED && $queryResult->getResult() <> '') {
             return array($domain => true);
-        else
+        } else {
             throw new Engine\YandexException($queryResult);
+        }
     }
 
 
@@ -394,12 +418,13 @@ class Yandex extends Engine\YandexBase implements IEngine
         $serviceUrl = $this->getServiceUrl($this->userId, $hostId, self::API_VERIFICATION_URL);
         $queryResult = $this->query($serviceUrl, 'GET');
 
-        if ($queryResult->getStatus() == self::HTTP_STATUS_OK && strlen($queryResult->getResult()) > 0) {
+        if ($queryResult->getStatus() == self::HTTP_STATUS_OK && $queryResult->getResult() <> '') {
             $result = Json::decode($queryResult->getResult());
-            if ($result['verification_state'] != self::VERIFIED_STATE_VERIFIED)
+            if ($result['verification_state'] != self::VERIFIED_STATE_VERIFIED) {
                 return $result['verification_uin'];
-            else
-                return false;    //already verify
+            } else {
+                return false;
+            }    //already verify
         } else {
             throw new Engine\YandexException($queryResult);
         }
@@ -407,15 +432,21 @@ class Yandex extends Engine\YandexBase implements IEngine
 
     public function verifySite($domain, $verType = 'HTML_FILE')
     {
-        if (!in_array($verType, self::$verificationTypes))
+        if (!in_array($verType, self::$verificationTypes)) {
             return array('error' => array('message' => 'incorrect verification type'));
+        }
 
         $domain = ToLower($domain);
         $hostId = $this->getHostId($domain);
 
-        $serviceUrl = $this->getServiceUrl($this->userId, $hostId, self::API_VERIFICATION_URL, array('verification_type' => $verType));
+        $serviceUrl = $this->getServiceUrl(
+            $this->userId,
+            $hostId,
+            self::API_VERIFICATION_URL,
+            array('verification_type' => $verType)
+        );
         $queryResult = $this->query($serviceUrl, 'POST');
-        if ($queryResult->getStatus() == self::HTTP_STATUS_OK && strlen($queryResult->getResult()) > 0) {
+        if ($queryResult->getStatus() == self::HTTP_STATUS_OK && $queryResult->getResult() <> '') {
             $result = Json::decode($queryResult->getResult());
 
             return array($domain => array('verification' => $result['verification_state']));
@@ -433,7 +464,7 @@ class Yandex extends Engine\YandexBase implements IEngine
      * @return \CHTTP
      * @deprecated by query
      */
-    protected function queryOld($scope, $method = "GET", $data = NULL, $skipRefreshAuth = false)
+    protected function queryOld($scope, $method = "GET", $data = null, $skipRefreshAuth = false)
     {
         if ($this->engineSettings['AUTH']) {
             $http = new \CHTTP();
@@ -480,7 +511,7 @@ class Yandex extends Engine\YandexBase implements IEngine
      * @param bool $skipRefreshAuth
      * @return HttpClient
      */
-    protected function query($scope, $method = "GET", $data = NULL, $skipRefreshAuth = false)
+    protected function query($scope, $method = "GET", $data = null, $skipRefreshAuth = false)
     {
         if ($this->engineSettings['AUTH']) {
             $http = new HttpClient();

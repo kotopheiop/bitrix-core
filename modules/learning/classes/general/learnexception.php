@@ -44,26 +44,30 @@ class LearnException extends Exception
 
     protected function learning_log_exception($message, $code, $line, $file, $backtrace)
     {
-        if (!method_exists('CDatabase', 'Query'))
+        if (!method_exists('CDatabase', 'Query')) {
             return;
+        }
 
         global $DB;
 
-        if (!(is_object($DB) && method_exists($DB, 'Query')))
+        if (!(is_object($DB) && method_exists($DB, 'Query'))) {
             return;
+        }
 
-        if (!$DB->TableExists('b_learn_exceptions_log'))
+        if (!$DB->TableExists('b_learn_exceptions_log')) {
             return;
+        }
 
         $DB->Query(
             "INSERT INTO b_learn_exceptions_log
 					(DATE_REGISTERED, CODE, MESSAGE, FFILE, LINE, BACKTRACE)
-					VALUES (" . CDatabase::GetNowFunction() . ", " . (int)$code . ", '"
+					VALUES (" . $DB->GetNowFunction() . ", " . (int)$code . ", '"
             . $DB->ForSQL($message) . "', '" . $DB->ForSQL($file) . "', "
             . (int)$line . ",'"
             . $DB->ForSQL(base64_encode(serialize($backtrace))) // due to charsets problems do base64_encode()
             . "')
 					",
-            true);
+            true
+        );
     }
 }

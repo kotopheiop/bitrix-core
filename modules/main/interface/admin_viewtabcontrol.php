@@ -20,9 +20,9 @@ class CAdminViewTabControl
         //array(array("DIV"=>"", "TAB"=>"", "ICON"=>, "TITLE"=>"", "ONSELECT"=>"javascript"), ...)
         $this->tabs = $tabs;
         $this->name = $name;
-        if (isset($_REQUEST[$this->name . "_active_tab"]))
+        if (isset($_REQUEST[$this->name . "_active_tab"])) {
             $this->selectedTab = $_REQUEST[$this->name . "_active_tab"];
-        else {
+        } else {
             foreach ($tabs as $tab) {
                 if (
                     !isset($tab["VISIBLE"])
@@ -54,8 +54,9 @@ class CAdminViewTabControl
         //end previous tab
         $this->EndTab();
 
-        if ($this->tabIndex >= count($this->tabs))
+        if ($this->tabIndex >= count($this->tabs)) {
             return;
+        }
 
         echo '
 <div id="' . $this->tabs[$this->tabIndex]["DIV"] . '"' . ($this->tabs[$this->tabIndex]["DIV"] <> $this->selectedTab ? ' style="display:none;"' : '') . '>
@@ -67,8 +68,9 @@ class CAdminViewTabControl
 
     function EndTab()
     {
-        if ($this->tabIndex < 1 || $this->tabIndex > count($this->tabs))
+        if ($this->tabIndex < 1 || $this->tabIndex > count($this->tabs)) {
             return;
+        }
         echo '
 	</div>
 </div>

@@ -1,13 +1,15 @@
 <?
-if (array_key_exists("Preview", $_REQUEST) && strlen($_REQUEST["Preview"]) > 0) {
+
+if (array_key_exists("Preview", $_REQUEST) && $_REQUEST["Preview"] <> '') {
     define("NO_KEEP_STATISTIC", "Y");
 }
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/prolog.php");
 
-if (!$USER->CanDoOperation('edit_other_settings') && !$USER->CanDoOperation('view_other_settings'))
+if (!$USER->CanDoOperation('edit_other_settings') && !$USER->CanDoOperation('view_other_settings')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $isAdmin = $USER->CanDoOperation('edit_other_settings');
 
@@ -161,7 +163,7 @@ $cpt = new CCaptcha;
 $dh = opendir($_SERVER["DOCUMENT_ROOT"] . $cpt->GetTTFFontsPath());
 if ($dh) {
     while (($file = readdir($dh)) !== false) {
-        if (substr(strtolower($file), -4) === ".ttf") {
+        if (mb_substr(mb_strtolower($file), -4) === ".ttf") {
             $arSettings["arTTFFiles"][1][$file] = $file;
         }
     }
@@ -169,32 +171,39 @@ if ($dh) {
 }
 
 $aTabs = array(
-    array("DIV" => "fedit1", "TAB" => GetMessage("MAIN_ADM_CAPTCHA_TAB"), "ICON" => "main_settings", "TITLE" => GetMessage("MAIN_ADM_CAPTCHA_TAB_TITLE")),
+    array(
+        "DIV" => "fedit1",
+        "TAB" => GetMessage("MAIN_ADM_CAPTCHA_TAB"),
+        "ICON" => "main_settings",
+        "TITLE" => GetMessage("MAIN_ADM_CAPTCHA_TAB_TITLE")
+    ),
 );
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
-if ($REQUEST_METHOD == "POST" && (strlen($save) > 0 || strlen($apply) > 0) && check_bitrix_sessid() && $isAdmin) {
+if ($REQUEST_METHOD == "POST" && ($save <> '' || $apply <> '') && check_bitrix_sessid() && $isAdmin) {
     foreach ($arSettings as $key => $value) {
         if ($key === "letters") {
-            $strChars = strtoupper($_POST[$key]);
+            $strChars = mb_strtoupper($_POST[$key]);
             $arChars = array();
-            for ($i = 0, $c = strlen($strChars); $i < $c; $i++) {
-                $ch = substr($strChars, $i, 1);
+            for ($i = 0, $c = mb_strlen($strChars); $i < $c; $i++) {
+                $ch = mb_substr($strChars, $i, 1);
                 $arChars[$ch] = $ch;
             }
             COption::SetOptionString("main", "CAPTCHA_" . $key, implode("", $arChars));
-        } elseif ($value[0] === "int")
+        } elseif ($value[0] === "int") {
             COption::SetOptionInt("main", "CAPTCHA_" . $key, intval($_POST[$key]));
-        elseif ($value[0] === "string")
+        } elseif ($value[0] === "string") {
             COption::SetOptionString("main", "CAPTCHA_" . $key, $_POST[$key]);
-        elseif ($value[0] === "checkbox")
+        } elseif ($value[0] === "checkbox") {
             COption::SetOptionString("main", "CAPTCHA_" . $key, $_POST[$key] === "Y" ? "Y" : "N");
-        elseif ($value[0] === "list") {
+        } elseif ($value[0] === "list") {
             $ar = array();
             if (is_array($_POST[$key])) {
-                foreach ($_POST[$key] as $val)
-                    if (array_key_exists($val, $value[1]))
+                foreach ($_POST[$key] as $val) {
+                    if (array_key_exists($val, $value[1])) {
                         $ar[] = $val;
+                    }
+                }
             }
             COption::SetOptionString("main", "CAPTCHA_" . $key, implode(",", $ar));
         }
@@ -204,36 +213,38 @@ if ($REQUEST_METHOD == "POST" && (strlen($save) > 0 || strlen($apply) > 0) && ch
     LocalRedirect($APPLICATION->GetCurPage() . "?lang=" . LANGUAGE_ID . "&" . $tabControl->ActiveTabParam());
 }
 
-if (strlen($Preview) > 0) {
-    if (CModule::IncludeModule("compression"))
-        CCompress::Disable2048Spaces();
-
+if ($Preview <> '') {
     $cpt = new CCaptcha();
 
     $result = array();
     foreach ($arSettings as $key => $value) {
         if ($value[0] === "int") {
-            if (array_key_exists($key, $_GET))
+            if (array_key_exists($key, $_GET)) {
                 $result[$key] = intval($_GET[$key]);
-            else
+            } else {
                 $result[$key] = COption::GetOptionInt("main", "CAPTCHA_" . $key, $value[2]);
+            }
         } elseif ($value[0] === "string") {
-            if (array_key_exists($key, $_GET))
+            if (array_key_exists($key, $_GET)) {
                 $result[$key] = $_GET[$key];
-            else
+            } else {
                 $result[$key] = COption::GetOptionString("main", "CAPTCHA_" . $key, $value[2]);
+            }
         } elseif ($value[0] === "checkbox") {
-            if (array_key_exists($key, $_GET))
+            if (array_key_exists($key, $_GET)) {
                 $result[$key] = $_GET[$key] === "Y" ? "Y" : "N";
-            else
+            } else {
                 $result[$key] = COption::GetOptionString("main", "CAPTCHA_" . $key, $value[2]);
+            }
         } elseif ($value[0] === "list") {
             $ar = array();
             if (array_key_exists($key, $_GET)) {
                 $_GET[$key] = explode(",", $_GET[$key]);
-                foreach ($_GET[$key] as $val)
-                    if (array_key_exists($val, $value[1]))
+                foreach ($_GET[$key] as $val) {
+                    if (array_key_exists($val, $value[1])) {
                         $ar[] = $val;
+                    }
+                }
             } else {
                 $ar = explode(",", COption::GetOptionString("main", "CAPTCHA_" . $key, implode(",", $value[2])));
             }
@@ -248,7 +259,14 @@ if (strlen($Preview) > 0) {
     $cpt->SetLinesOverText($result["bLinesOverText"] === "Y");
     $cpt->SetLinesNumber($result["numLines"]);
     $cpt->SetLineColorRGB($result["arLineColor_1"], $result["arLineColor_2"]);
-    $cpt->SetTextWriting($result["textAngel_1"], $result["textAngel_2"], $result["textStartX"], $result["textDistance_1"], $result["textDistance_2"], $result["textFontSize"]);
+    $cpt->SetTextWriting(
+        $result["textAngel_1"],
+        $result["textAngel_2"],
+        $result["textStartX"],
+        $result["textDistance_1"],
+        $result["textDistance_2"],
+        $result["textFontSize"]
+    );
     $cpt->SetTextColorRGB($result["arTextColor_1"], $result["arTextColor_2"]);
     $cpt->SetWaveTransformation($result["bWaveTransformation"] === "Y");
     $cpt->SetEmptyText($result["bEmptyText"] === "Y");
@@ -256,17 +274,19 @@ if (strlen($Preview) > 0) {
     $cpt->SetTTFFonts($result["arTTFFiles"]);
 
     $arChars = array();
-    $l = strlen($result["letters"]);
-    for ($i = 0; $i < $l; $i++)
-        $arChars[] = substr($result["letters"], $i, 1);
+    $l = mb_strlen($result["letters"]);
+    for ($i = 0; $i < $l; $i++) {
+        $arChars[] = mb_substr($result["letters"], $i, 1);
+    }
     $cpt->SetCodeChars($arChars);
 
     $cpt->SetCode();
 
-    if ($cpt->InitCode($cpt->GetSID()))
+    if ($cpt->InitCode($cpt->GetSID())) {
         $cpt->Output();
-    else
+    } else {
         $cpt->OutputError();
+    }
 
     require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_after.php");
     die();
@@ -490,17 +510,38 @@ $tabControl->Begin();
             <td width="40%"><? echo GetMessage("MAIN_ADM_CAPTCHA_PRESETS") ?>:</td>
             <td width="300">
                 <select id="presets" name="presets" onchange="set_presets()">
-                    <option value="0" <? if (COption::GetOptionInt("main", "CAPTCHA_presets") == 0) echo "selected" ?>><? echo GetMessage("MAIN_ADM_CAPTCHA_PRESET_0") ?></option>
-                    <option value="1" <? if (COption::GetOptionInt("main", "CAPTCHA_presets") == 1) echo "selected" ?>><? echo GetMessage("MAIN_ADM_CAPTCHA_PRESET_1") ?></option>
-                    <option value="2" <? if (COption::GetOptionInt("main", "CAPTCHA_presets") == 2) echo "selected" ?>><? echo GetMessage("MAIN_ADM_CAPTCHA_PRESET_2") ?></option>
-                    <option value="3" <? if (COption::GetOptionInt("main", "CAPTCHA_presets") == 3) echo "selected" ?>><? echo GetMessage("MAIN_ADM_CAPTCHA_PRESET_3") ?></option>
-                    <option value="4" <? if (COption::GetOptionInt("main", "CAPTCHA_presets") == 4) echo "selected" ?>><? echo GetMessage("MAIN_ADM_CAPTCHA_PRESET_4") ?></option>
-                    <option value="5" <? if (COption::GetOptionInt("main", "CAPTCHA_presets") == 5) echo "selected" ?>><? echo GetMessage("MAIN_ADM_CAPTCHA_PRESET_5") ?></option>
-                    <option value="6" <? if (COption::GetOptionInt("main", "CAPTCHA_presets") == 6) echo "selected" ?>><? echo GetMessage("MAIN_ADM_CAPTCHA_PRESET_6") ?></option>
+                    <option value="0" <? if (COption::GetOptionInt(
+                            "main",
+                            "CAPTCHA_presets"
+                        ) == 0) echo "selected" ?>><? echo GetMessage("MAIN_ADM_CAPTCHA_PRESET_0") ?></option>
+                    <option value="1" <? if (COption::GetOptionInt(
+                            "main",
+                            "CAPTCHA_presets"
+                        ) == 1) echo "selected" ?>><? echo GetMessage("MAIN_ADM_CAPTCHA_PRESET_1") ?></option>
+                    <option value="2" <? if (COption::GetOptionInt(
+                            "main",
+                            "CAPTCHA_presets"
+                        ) == 2) echo "selected" ?>><? echo GetMessage("MAIN_ADM_CAPTCHA_PRESET_2") ?></option>
+                    <option value="3" <? if (COption::GetOptionInt(
+                            "main",
+                            "CAPTCHA_presets"
+                        ) == 3) echo "selected" ?>><? echo GetMessage("MAIN_ADM_CAPTCHA_PRESET_3") ?></option>
+                    <option value="4" <? if (COption::GetOptionInt(
+                            "main",
+                            "CAPTCHA_presets"
+                        ) == 4) echo "selected" ?>><? echo GetMessage("MAIN_ADM_CAPTCHA_PRESET_4") ?></option>
+                    <option value="5" <? if (COption::GetOptionInt(
+                            "main",
+                            "CAPTCHA_presets"
+                        ) == 5) echo "selected" ?>><? echo GetMessage("MAIN_ADM_CAPTCHA_PRESET_5") ?></option>
+                    <option value="6" <? if (COption::GetOptionInt(
+                            "main",
+                            "CAPTCHA_presets"
+                        ) == 6) echo "selected" ?>><? echo GetMessage("MAIN_ADM_CAPTCHA_PRESET_6") ?></option>
                 </select>
             </td>
             <td valign="top" rowspan="<? echo count($arSettings) + 1 ?>">
-                <? for ($i = 0; $i < 12; $i++): ?>
+                <? for ($i = 0; $i < 10; $i++): ?>
                     <img id="CAPTCHA_<? echo $i ?>"
                          src="/bitrix/admin/captcha.php?Preview=Y&amp;captcha_sid=<? echo $CAPTCHA_CODE ?>&amp;i=<? echo $i ?>&amp;j=0"
                          width="180" height="40" alt="CAPTCHA"/><br><br><br>
@@ -515,19 +556,31 @@ $tabControl->Begin();
                 <td>
                     <? if ($value[0] === "checkbox"): ?>
                         <input type="checkbox" id="<? echo $key ?>" name="<? echo $key ?>"
-                               value="<? echo htmlspecialcharsbx($value[1]) ?>" <? if (COption::GetOptionString("main", "CAPTCHA_" . $key, $value[2]) === "Y") echo "checked" ?>>
+                               value="<? echo htmlspecialcharsbx($value[1]) ?>" <? if (COption::GetOptionString(
+                                "main",
+                                "CAPTCHA_" . $key,
+                                $value[2]
+                            ) === "Y") echo "checked" ?>>
                     <? elseif ($value[0] === "list"):
-                        $vv = explode(",", COption::GetOptionString("main", "CAPTCHA_" . $key, implode(",", $value[2])));
+                        $vv = explode(
+                            ",",
+                            COption::GetOptionString("main", "CAPTCHA_" . $key, implode(",", $value[2]))
+                        );
                         ?>
                         <select multiple id="<? echo $key ?>" name="<? echo $key ?>[]"
                                 size="<? echo count($value[1]) ?>">
                             <? foreach ($value[1] as $k => $v):?>
-                                <option value="<? echo htmlspecialcharsbx($k) ?>" <? if (in_array($k, $vv)) echo "selected" ?>><? echo htmlspecialcharsbx($v) ?></option>
+                                <option value="<? echo htmlspecialcharsbx($k) ?>" <? if (in_array(
+                                    $k,
+                                    $vv
+                                )) echo "selected" ?>><? echo htmlspecialcharsbx($v) ?></option>
                             <? endforeach ?>
                         </select>
                     <? else: ?>
                         <input type="text" size="<? echo $value[1] ?>" id="<? echo $key ?>" name="<? echo $key ?>"
-                               value="<? echo htmlspecialcharsbx(COption::GetOptionString("main", "CAPTCHA_" . $key, $value[2])) ?>">
+                               value="<? echo htmlspecialcharsbx(
+                                   COption::GetOptionString("main", "CAPTCHA_" . $key, $value[2])
+                               ) ?>">
                     <? endif ?>
                 </td>
             </tr>

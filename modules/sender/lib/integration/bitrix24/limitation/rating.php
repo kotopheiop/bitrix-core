@@ -129,13 +129,15 @@ class Rating
      */
     public static function block()
     {
-        $letters = Model\LetterTable::getList(array(
-            'select' => array('ID'),
-            'filter' => array(
-                '=STATUS' => Semantics::getWorkStates(),
-                '=MESSAGE_CODE' => Message\iBase::CODE_MAIL
+        $letters = Model\LetterTable::getList(
+            array(
+                'select' => array('ID'),
+                'filter' => array(
+                    '=STATUS' => Semantics::getWorkStates(),
+                    '=MESSAGE_CODE' => Message\iBase::CODE_MAIL
+                )
             )
-        ));
+        );
 
         $letter = new Letter();
         foreach ($letters as $letterData) {
@@ -147,10 +149,14 @@ class Rating
             $state = $letter->getState();
             if ($state->canPause()) {
                 $state->pause();
-            } else if ($state->canReady()) {
-                $state->ready();
-            } else if ($state->canStop()) {
-                $state->stop();
+            } else {
+                if ($state->canReady()) {
+                    $state->ready();
+                } else {
+                    if ($state->canStop()) {
+                        $state->stop();
+                    }
+                }
             }
         }
 
@@ -274,7 +280,7 @@ class Rating
      */
     public static function getNotifyText($code)
     {
-        $code = strtoupper($code);
+        $code = mb_strtoupper($code);
         return Loc::getMessage("SENDER_INTEGRATION_BITRIX24_RATING_{$code}1");
     }
 }

@@ -22,10 +22,12 @@ class Textarea extends \Bitrix\Landing\Field\Text
         ?><?= $this->placeholder != '' ? 'placeholder="' . $this->placeholder . '" ' : '' ?><?
         ?>class="<?= isset($params['class']) ? \htmlspecialcharsbx($params['class']) : '' ?>" <?
                   ?>data-code="<?= \htmlspecialcharsbx($this->code) ?>" <?
-                  ?>name="<?= \htmlspecialcharsbx(isset($params['name_format'])
-            ? str_replace('#field_code#', $this->code, $params['name_format'])
-            : $this->code) ?>" <?
-        ?> ><?= \htmlspecialcharsbx($this->value) ?></textarea>
+                  ?>name="<?= \htmlspecialcharsbx(
+            isset($params['name_format'])
+                ? str_replace('#field_code#', $this->code, $params['name_format'])
+                : $this->code
+        ) ?>" <?
+        ?> ><?= \htmlspecialcharsbx($this->value ? $this->value : $this->default) ?></textarea>
         <?
     }
 

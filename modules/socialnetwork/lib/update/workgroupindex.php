@@ -27,7 +27,7 @@ final class WorkgroupIndex extends Stepper
         $return = false;
 
         $params = Option::get("socialnetwork", "workgroupindex", "");
-        $params = ($params !== "" ? @unserialize($params) : array());
+        $params = ($params !== "" ? @unserialize($params, ['allowed_classes' => false]) : array());
         $params = (is_array($params) ? $params : array());
         if (empty($params)) {
             $params = array(
@@ -43,21 +43,25 @@ final class WorkgroupIndex extends Stepper
             $result["steps"] = "";
             $result["count"] = $params["count"];
 
-            $res = WorkgroupTable::getList(array(
-                'order' => array('ID' => 'ASC'),
-                'filter' => array(
-                    '>ID' => $params["lastId"]
-                ),
-                'select' => array_merge(array('ID'), Workgroup::getContentFieldsList()),
-                'offset' => 0,
-                'limit' => 100
-            ));
+            $res = WorkgroupTable::getList(
+                array(
+                    'order' => array('ID' => 'ASC'),
+                    'filter' => array(
+                        '>ID' => $params["lastId"]
+                    ),
+                    'select' => array_merge(array('ID'), Workgroup::getContentFieldsList()),
+                    'offset' => 0,
+                    'limit' => 100
+                )
+            );
 
             $found = false;
             while ($record = $res->fetch()) {
-                Workgroup::setIndex(array(
-                    'fields' => $record
-                ));
+                Workgroup::setIndex(
+                    array(
+                        'fields' => $record
+                    )
+                );
 
                 $params["lastId"] = $record['ID'];
                 $params["number"]++;

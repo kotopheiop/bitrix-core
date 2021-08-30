@@ -1,6 +1,7 @@
 <?php
 
 namespace Bitrix\Main\Numerator;
+
 /**
  * Interface Hashable
  * @package Bitrix\Main\Numerator

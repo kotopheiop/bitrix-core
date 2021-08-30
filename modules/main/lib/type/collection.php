@@ -20,8 +20,13 @@ class Collection
      * @param bool $preserveKeys If false numeric keys will be re-indexed. If true - preserve.
      * @throws \Bitrix\Main\ArgumentOutOfRangeException
      */
-    public static function sortByColumn(array &$array, $columns, $callbacks = '', $defaultValueIfNotSetValue = null, $preserveKeys = false)
-    {
+    public static function sortByColumn(
+        array &$array,
+        $columns,
+        $callbacks = '',
+        $defaultValueIfNotSetValue = null,
+        $preserveKeys = false
+    ) {
         //by default: sort by ASC
         if (!is_array($columns)) {
             $columns = array($columns => SORT_ASC);
@@ -108,12 +113,14 @@ class Collection
                     $current = &$current[$k];
                 }
                 if ($found) {
-                    if (is_array($current) || is_object($current) || $current != "")
+                    if (is_array($current) || is_object($current) || $current != "") {
                         return $current;
+                    }
                 }
             } elseif (is_array($anArray) && array_key_exists($key, $anArray)) {
-                if (is_array($anArray[$key]) || is_object($anArray[$key]) || $anArray[$key] != "")
+                if (is_array($anArray[$key]) || is_object($anArray[$key]) || $anArray[$key] != "") {
                     return $anArray[$key];
+                }
             }
         }
         return "";
@@ -128,20 +135,23 @@ class Collection
      */
     public static function normalizeArrayValuesByInt(&$map, $sorted = true)
     {
-        if (empty($map) || !is_array($map))
+        if (empty($map) || !is_array($map)) {
             return;
+        }
 
         $result = array();
         foreach ($map as $value) {
             $value = (int)$value;
-            if (0 < $value)
+            if (0 < $value) {
                 $result[$value] = true;
+            }
         }
         $map = array();
         if (!empty($result)) {
             $map = array_keys($result);
-            if ($sorted)
+            if ($sorted) {
                 sort($map);
+            }
         }
     }
 
@@ -156,5 +166,28 @@ class Collection
         $array = array_keys($array);
 
         return ($array !== array_keys($array));
+    }
+
+    /**
+     * Clone array recursively. Keys are preserved
+     *
+     * @param array $originalArray - array to clone
+     *
+     * @return array
+     */
+    public static function clone(array $originalArray): array
+    {
+        $clonedArray = [];
+        foreach ($originalArray as $index => $value) {
+            if (is_array($value)) {
+                $value = static::clone($value);
+            } elseif (is_object($value)) {
+                $value = clone $value;
+            }
+
+            $clonedArray[$index] = $value;
+        }
+
+        return $clonedArray;
     }
 }

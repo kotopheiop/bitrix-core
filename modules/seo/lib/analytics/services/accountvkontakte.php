@@ -27,10 +27,12 @@ class AccountVkontakte extends \Bitrix\Seo\Analytics\Account implements IRequest
     {
         // https://vk.com/dev/ads.getAccounts
 
-        $result = $this->getRequest()->send([
-            'method' => 'GET',
-            'endpoint' => 'ads.getAccounts',
-        ]);
+        $result = $this->getRequest()->send(
+            [
+                'method' => 'GET',
+                'endpoint' => 'ads.getAccounts',
+            ]
+        );
         if ($result->isSuccess()) {
             $list = [];
             while ($item = $result->fetch()) {
@@ -46,14 +48,16 @@ class AccountVkontakte extends \Bitrix\Seo\Analytics\Account implements IRequest
 
     public function getProfile()
     {
-        $response = $this->getRequest()->send(array(
-            'method' => 'GET',
-            'endpoint' => 'users.get',
-            'fields' => array(
-                //'user_ids' => array(),
-                'fields' => 'photo_50,screen_name'
+        $response = $this->getRequest()->send(
+            array(
+                'method' => 'GET',
+                'endpoint' => 'users.get',
+                'fields' => array(
+                    //'user_ids' => array(),
+                    'fields' => 'photo_50,screen_name'
+                )
             )
-        ));
+        );
 
 
         if ($response->isSuccess()) {
@@ -93,11 +97,13 @@ class AccountVkontakte extends \Bitrix\Seo\Analytics\Account implements IRequest
             $fields['date_from'] = '0';
             $fields['date_to'] = '0';
         }
-        $response = $this->getRequest()->send([
-            'method' => 'GET',
-            'endpoint' => 'ads.getStatistics',
-            'fields' => $fields,
-        ]);
+        $response = $this->getRequest()->send(
+            [
+                'method' => 'GET',
+                'endpoint' => 'ads.getStatistics',
+                'fields' => $fields,
+            ]
+        );
         if ($response->isSuccess()) {
             $data = $response->getData();
             if (isset($data[0])) {
@@ -105,13 +111,15 @@ class AccountVkontakte extends \Bitrix\Seo\Analytics\Account implements IRequest
             }
             $expenses = new Expenses();
             foreach ($data['stats'] as $stat) {
-                $expenses->add([
-                    'impressions' => $stat['impressions'],
-                    'clicks' => $stat['clicks'],
-                    'actions' => $stat['clicks'],
-                    'spend' => $stat['spent'],
-                    'currency' => static::CURRENCY_CODE,
-                ]);
+                $expenses->add(
+                    [
+                        'impressions' => $stat['impressions'],
+                        'clicks' => $stat['clicks'],
+                        'actions' => $stat['clicks'],
+                        'spend' => $stat['spent'],
+                        'currency' => static::CURRENCY_CODE,
+                    ]
+                );
             }
             $result->setData(['expenses' => $expenses]);
         } else {
@@ -155,13 +163,15 @@ class AccountVkontakte extends \Bitrix\Seo\Analytics\Account implements IRequest
         $result = [];
         $groups = $response->getData();
         foreach ($groups as $page) {
-            $result[] = new Page([
-                'id' => $page['id'],
-                'name' => $page['name'],
-                'about' => $page['description'],
-                'image' => $page['photo_200'],
-                'phone' => $page['phone'],
-            ]);
+            $result[] = new Page(
+                [
+                    'id' => $page['id'],
+                    'name' => $page['name'],
+                    'about' => $page['description'],
+                    'image' => $page['photo_200'],
+                    'phone' => $page['phone'],
+                ]
+            );
         }
         $response->setData($result);
 
@@ -244,14 +254,16 @@ class AccountVkontakte extends \Bitrix\Seo\Analytics\Account implements IRequest
      */
     protected function editAds($accountId, array $data)
     {
-        return $this->getRequest()->send([
-            'method' => 'POST',
-            'endpoint' => 'ads.updateAds',
-            'fields' => [
-                'account_id' => $accountId,
-                'data' => Json::encode($data)
+        return $this->getRequest()->send(
+            [
+                'method' => 'POST',
+                'endpoint' => 'ads.updateAds',
+                'fields' => [
+                    'account_id' => $accountId,
+                    'data' => Json::encode($data)
+                ]
             ]
-        ]);
+        );
     }
 
     /**
@@ -266,11 +278,13 @@ class AccountVkontakte extends \Bitrix\Seo\Analytics\Account implements IRequest
             'include_deleted' => '0',
         ];
 
-        $response = $this->getRequest()->send([
-            'method' => 'GET',
-            'endpoint' => 'ads.getAdsLayout',
-            'fields' => $fields,
-        ]);
+        $response = $this->getRequest()->send(
+            [
+                'method' => 'GET',
+                'endpoint' => 'ads.getAdsLayout',
+                'fields' => $fields,
+            ]
+        );
 
         if ($response->isSuccess()) {
             $ads = $response->getData();
@@ -313,39 +327,47 @@ class AccountVkontakte extends \Bitrix\Seo\Analytics\Account implements IRequest
             }
             if (!empty($data)) {
                 $data['id'] = $group['id'];
-                $response = $this->getRequest()->send([
-                    'method' => 'POST',
-                    'endpoint' => 'groups.edit',
-                    'fields' => $data,
-                ]);
+                $response = $this->getRequest()->send(
+                    [
+                        'method' => 'POST',
+                        'endpoint' => 'groups.edit',
+                        'fields' => $data,
+                    ]
+                );
                 if (!$response->isSuccess()) {
                     $result->addErrors($response->getErrors());
                 }
             }
 
-            if (isset($params['url_tags']) && !empty($params['url_tags']) && isset($group['links']) && is_array($group['links']) && !empty($group['links'])) {
+            if (isset($params['url_tags']) && !empty($params['url_tags']) && isset($group['links']) && is_array(
+                    $group['links']
+                ) && !empty($group['links'])) {
                 foreach ($group['links'] as $link) {
                     $url = new Uri($link['url']);
                     $url->addParams($params['url_tags']);
                     if ($url->getUri() != $link['url']) {
-                        $response = $this->getRequest()->send([
-                            'method' => 'POST',
-                            'emdpoint' => 'groups.deleteLink',
-                            'fields' => [
-                                'group_id' => $group['id'],
-                                'link_id' => $link['id'],
-                            ]
-                        ]);
-                        if ($response->isSuccess()) {
-                            $response = $this->getRequest()->send([
+                        $response = $this->getRequest()->send(
+                            [
                                 'method' => 'POST',
-                                'endpoint' => 'groups.addLink',
+                                'emdpoint' => 'groups.deleteLink',
                                 'fields' => [
                                     'group_id' => $group['id'],
-                                    'text' => $link['desc'],
-                                    'link' => $url->getUri(),
+                                    'link_id' => $link['id'],
                                 ]
-                            ]);
+                            ]
+                        );
+                        if ($response->isSuccess()) {
+                            $response = $this->getRequest()->send(
+                                [
+                                    'method' => 'POST',
+                                    'endpoint' => 'groups.addLink',
+                                    'fields' => [
+                                        'group_id' => $group['id'],
+                                        'text' => $link['desc'],
+                                        'link' => $url->getUri(),
+                                    ]
+                                ]
+                            );
                         }
                         if (!$response->isSuccess()) {
                             $result->addErrors($response->getErrors());
@@ -353,7 +375,6 @@ class AccountVkontakte extends \Bitrix\Seo\Analytics\Account implements IRequest
                     }
                 }
             }
-
             // todo add here edit call_to_action button
         }
 
@@ -367,14 +388,16 @@ class AccountVkontakte extends \Bitrix\Seo\Analytics\Account implements IRequest
      */
     protected function getGroups(array $groupIDs)
     {
-        return $this->getRequest()->send([
-            'method' => 'GET',
-            'endpoint' => 'groups.getById',
-            'fields' => [
-                'group_ids' => implode(',', $groupIDs),
-                'fields' => 'name,type,id,links,site,status,description,phone'
+        return $this->getRequest()->send(
+            [
+                'method' => 'GET',
+                'endpoint' => 'groups.getById',
+                'fields' => [
+                    'group_ids' => implode(',', $groupIDs),
+                    'fields' => 'name,type,id,links,site,status,description,phone'
+                ]
             ]
-        ]);
+        );
     }
 
     /**
@@ -408,13 +431,18 @@ class AccountVkontakte extends \Bitrix\Seo\Analytics\Account implements IRequest
 
         $posts = $result->getData();
         foreach ($posts as $post) {
-            if ($post['post_type'] == 'post_ads' && isset($post['attachments']) && is_array($post['attachments']) && count($post['attachments']) == 1) {
+            if ($post['post_type'] == 'post_ads' && isset($post['attachments']) && is_array(
+                    $post['attachments']
+                ) && count($post['attachments']) == 1) {
                 $attachment = reset($post['attachments']);
-                if ($attachment['type'] != 'link' || strpos($attachment['link']['url'], 'vk.com') !== false) {
+                if ($attachment['type'] != 'link' || mb_strpos($attachment['link']['url'], 'vk.com') !== false) {
                     continue;
                 }
                 $data = [];
-                if (isset($params['phone']) && !empty($params['phone']) && strpos($attachment['link']['url'], 'tel:') === 0) {
+                if (isset($params['phone']) && !empty($params['phone']) && mb_strpos(
+                        $attachment['link']['url'],
+                        'tel:'
+                    ) === 0) {
                     $data = [
                         'owner_id' => $post['owner_id'],
                         'post_id' => $post['id'],
@@ -432,11 +460,13 @@ class AccountVkontakte extends \Bitrix\Seo\Analytics\Account implements IRequest
                     }
                 }
                 if (!empty($data)) {
-                    $response = $this->getRequest()->send([
-                        'method' => 'POST',
-                        'endpoint' => 'wall.editAdsStealth',
-                        'fields' => $data,
-                    ]);
+                    $response = $this->getRequest()->send(
+                        [
+                            'method' => 'POST',
+                            'endpoint' => 'wall.editAdsStealth',
+                            'fields' => $data,
+                        ]
+                    );
                     if (!$response->isSuccess()) {
                         $result->addErrors($response->getErrors());
                     }
@@ -454,13 +484,15 @@ class AccountVkontakte extends \Bitrix\Seo\Analytics\Account implements IRequest
      */
     protected function getPosts(array $postIDs)
     {
-        return $this->getRequest()->send([
-            'method' => 'GET',
-            'endpoint' => 'wall.getById',
-            'fields' => [
-                'posts' => implode(',', array_values($postIDs)),
-                'fields' => 'id,attachments',
+        return $this->getRequest()->send(
+            [
+                'method' => 'GET',
+                'endpoint' => 'wall.getById',
+                'fields' => [
+                    'posts' => implode(',', array_values($postIDs)),
+                    'fields' => 'id,attachments',
+                ]
             ]
-        ]);
+        );
     }
 }

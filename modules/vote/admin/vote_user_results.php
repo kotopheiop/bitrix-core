@@ -8,7 +8,9 @@
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/vote/prolog.php");
 $VOTE_RIGHT = $APPLICATION->GetGroupRight("vote");
-if ($VOTE_RIGHT == "D") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($VOTE_RIGHT == "D") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/vote/include.php");
 ClearVars();
 IncludeModuleLangFile(__FILE__);
@@ -19,10 +21,12 @@ $err_mess = "File: " . __FILE__ . "<br>Line: ";
  ********************************************************************/
 $EVENT_ID = intval($EVENT_ID);
 
-if ($REQUEST_METHOD == "GET" && (strlen($save) > 0 || $apply) && $VOTE_RIGHT == "W" && $EVENT_ID > 0 && check_bitrix_sessid()) {
+if ($REQUEST_METHOD == "GET" && ($save <> '' || $apply) && $VOTE_RIGHT == "W" && $EVENT_ID > 0 && check_bitrix_sessid(
+    )) {
     CVoteEvent::SetValid($EVENT_ID, $valid);
-    if (strlen($save) > 0)
+    if ($save <> '') {
         LocalRedirect("vote_user_votes.php?lang=" . LANGUAGE_ID);
+    }
 }
 
 if (!($event = CVoteEvent::GetByID($EVENT_ID))) {
@@ -49,10 +53,27 @@ if (!($zr = $z->Fetch())) {
 }
 
 $aTabs = array(
-    array("DIV" => "edit1", "TAB" => GetMessage("VOTE_PARAMS"), "ICON" => "main_vote_edit", "TITLE" => GetMessage("VOTE_PARAMS_TITE")),
+    array(
+        "DIV" => "edit1",
+        "TAB" => GetMessage("VOTE_PARAMS"),
+        "ICON" => "main_vote_edit",
+        "TITLE" => GetMessage("VOTE_PARAMS_TITE")
+    ),
 );
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
-GetVoteDataByID($VOTE_ID, $arChannel, $arVote, $arQuestions, $arAnswers, $arDropDown, $arMultiSelect, $arGroupAnswers, "N", $template, $res_template);
+GetVoteDataByID(
+    $VOTE_ID,
+    $arChannel,
+    $arVote,
+    $arQuestions,
+    $arAnswers,
+    $arDropDown,
+    $arMultiSelect,
+    $arGroupAnswers,
+    "N",
+    $template,
+    $res_template
+);
 
 /********************************************************************
  * Form
@@ -93,11 +114,13 @@ $tabControl->BeginNextTab();
             <td><?
                 ?>[<a class="tablebodylink" href="vote_edit.php?lang=<?= LANGUAGE_ID ?>&ID=<?= $arVote["ID"] ?>"
                       class="tablebodytext"><?= $arVote["ID"] ?></a>]&nbsp;<?
-                if (strlen($arVote["TITLE"]) > 0) echo $arVote["TITLE"];
-                elseif ($arVote["DESCRIPTION_TYPE"] == "html")
+                if ($arVote["TITLE"] <> '') {
+                    echo $arVote["TITLE"];
+                } elseif ($arVote["DESCRIPTION_TYPE"] == "html") {
                     echo TruncateText(strip_tags($arVote["~DESCRIPTION"]), 200);
-                else
+                } else {
                     echo TruncateText($arVote["DESCRIPTION"], 200);
+                }
                 ?></font></td>
         </tr>
         <tr>
@@ -144,7 +167,9 @@ $tabControl->BeginNextTab();
         <?
         $tabControl->EndTab();
 
-        $tabControl->Buttons(array("disabled" => ($VOTE_RIGHT < "W"), "back_url" => "vote_user_votes.php?lang=" . LANGUAGE_ID));
+        $tabControl->Buttons(
+            array("disabled" => ($VOTE_RIGHT < "W"), "back_url" => "vote_user_votes.php?lang=" . LANGUAGE_ID)
+        );
         $tabControl->End();
         ?>
     </form>
@@ -156,7 +181,7 @@ $tabControl->BeginNextTab();
                  * Header
                  ********************************************************************/
 
-                if (strlen($arVote["TITLE"]) > 0):
+                if ($arVote["TITLE"] <> ''):
                 ?><font class="h2"><b><? echo $arVote["TITLE"]; ?></b></font><br><img src="/bitrix/images/1.gif"
                                                                                       width="1" height="6" border=0
                                                                                       alt=""><?
@@ -178,7 +203,15 @@ $tabControl->BeginNextTab();
                     <? if ($arVote["IMAGE_ID"]): ?>
                     <table cellpadding="0" cellspacing="0" border="0">
                         <tr>
-                            <td><? echo ShowImage($arVote["IMAGE_ID"], 253, 300, "hspace='3' vspace='3' align='left' border='0'", "", true, GetMessage("VOTE_ENLARGE")); ?></td>
+                            <td><? echo ShowImage(
+                                    $arVote["IMAGE_ID"],
+                                    253,
+                                    300,
+                                    "hspace='3' vspace='3' align='left' border='0'",
+                                    "",
+                                    true,
+                                    GetMessage("VOTE_ENLARGE")
+                                ); ?></td>
                             <td width="0%"><img src="/images/1.gif" width="10" height="1"></td>
                         </tr>
                         <tr>
@@ -199,13 +232,13 @@ $tabControl->BeginNextTab();
                 <p>
                 <table cellspacing="0" cellpadding="10" class="tablebody" width="100%">
                     <?
-                    while (list($key, $arQuestion) = each($arQuestions)):
+                    foreach ($arQuestions as $key => $arQuestion):
                         $QUESTION_ID = $arQuestion["ID"];
 
-                        if (!array_key_exists($QUESTION_ID, $arAnswers))
+                        if (!array_key_exists($QUESTION_ID, $arAnswers)) {
                             continue;
+                        }
 
-                        reset($arAnswers[$QUESTION_ID]);
                         $show_multiselect = "N";
                         $show_dropdown = "N";
                         ?>
@@ -213,27 +246,40 @@ $tabControl->BeginNextTab();
                             <td>
                                 <table cellspacing="0" cellpadding="3">
                                     <tr>
-                                        <td valign="center"
-                                            width="0%"><? echo ShowImage($arQuestion["IMAGE_ID"], 50, 50, "hspace='0' vspace='0' align='left' border='0'", "", true, GetMessage("VOTE_ENLARGE")); ?></td>
+                                        <td valign="center" width="0%"><? echo ShowImage(
+                                                $arQuestion["IMAGE_ID"],
+                                                50,
+                                                50,
+                                                "hspace='0' vspace='0' align='left' border='0'",
+                                                "",
+                                                true,
+                                                GetMessage("VOTE_ENLARGE")
+                                            ); ?></td>
                                         <td valign="center" width="100%"><font
                                                     class="text"><b><?= $arQuestion["QUESTION"] ?></b></font></td>
                                     </tr>
                                     <?
-                                    while (list($key, $arAnswer) = each($arAnswers[$QUESTION_ID])) :
+                                    foreach ($arAnswers[$QUESTION_ID] as $key => $arAnswer):
                                         ?>
                                         <tr>
                                             <td colspan=2><?
                                                 switch ($arAnswer["FIELD_TYPE"]) :
                                                     case 0:
                                                         $field_name = "vote_radio_" . $QUESTION_ID;
-                                                        $checked = (CVoteEvent::GetAnswer($EVENT_ID, $arAnswer["ID"])) ? "checked" : "";
+                                                        $checked = (CVoteEvent::GetAnswer(
+                                                            $EVENT_ID,
+                                                            $arAnswer["ID"]
+                                                        )) ? "checked" : "";
                                                         ?><input type="radio" name="<?= $field_name ?>"
                                                                  value="<?= $arAnswer["ID"] ?>" <?= $checked ?>><font
                                                             class="text">&nbsp;<?= $arAnswer["MESSAGE"] ?></font><?
                                                         break;
                                                     case 1:
                                                         $field_name = "vote_checkbox_" . $QUESTION_ID;
-                                                        $checked = (CVoteEvent::GetAnswer($EVENT_ID, $arAnswer["ID"])) ? "checked" : "";
+                                                        $checked = (CVoteEvent::GetAnswer(
+                                                            $EVENT_ID,
+                                                            $arAnswer["ID"]
+                                                        )) ? "checked" : "";
                                                         ?><input type="checkbox" name="<?= $field_name ?>[]"
                                                                  value="<?= $arAnswer["ID"] ?>" <?= $checked ?>><font
                                                             class="text">&nbsp;<?= $arAnswer["MESSAGE"] ?></font><?
@@ -244,9 +290,17 @@ $tabControl->BeginNextTab();
                                                             $arDropDown[$QUESTION_ID]["reference"] = $arDropDown[$QUESTION_ID]["~reference"];
                                                             foreach ($arDropDown[$QUESTION_ID]["reference_id"] as $q) {
                                                                 $selected = CVoteEvent::GetAnswer($EVENT_ID, $q);
-                                                                if (intval($selected) > 0) break;
+                                                                if (intval($selected) > 0) {
+                                                                    break;
+                                                                }
                                                             }
-                                                            echo SelectBoxFromArray($field_name, $arDropDown[$QUESTION_ID], $selected, "", $arAnswer["FIELD_PARAM"]);
+                                                            echo SelectBoxFromArray(
+                                                                $field_name,
+                                                                $arDropDown[$QUESTION_ID],
+                                                                $selected,
+                                                                "",
+                                                                $arAnswer["FIELD_PARAM"]
+                                                            );
                                                             $show_dropdown = "Y";
                                                         }
                                                         break;
@@ -257,16 +311,26 @@ $tabControl->BeginNextTab();
                                                             $arMultiSelect[$QUESTION_ID]["reference"] = $arMultiSelect[$QUESTION_ID]["~reference"];
                                                             foreach ($arMultiSelect[$QUESTION_ID]["reference_id"] as $q) {
                                                                 $selected = CVoteEvent::GetAnswer($EVENT_ID, $q);
-                                                                if (intval($selected) > 0) $arr[] = intval($selected);
+                                                                if (intval($selected) > 0) {
+                                                                    $arr[] = intval($selected);
+                                                                }
                                                             }
-                                                            echo SelectBoxMFromArray($field_name . "[]", $arMultiSelect[$QUESTION_ID], $arr, "", false, $arAnswer["FIELD_HEIGHT"], $arAnswer["FIELD_PARAM"]);
+                                                            echo SelectBoxMFromArray(
+                                                                $field_name . "[]",
+                                                                $arMultiSelect[$QUESTION_ID],
+                                                                $arr,
+                                                                "",
+                                                                false,
+                                                                $arAnswer["FIELD_HEIGHT"],
+                                                                $arAnswer["FIELD_PARAM"]
+                                                            );
                                                             $show_multiselect = "Y";
                                                         }
                                                         break;
                                                     case 4:
                                                         $field_name = "vote_field_" . $arAnswer["ID"];
                                                         $value = CVoteEvent::GetAnswer($EVENT_ID, $arAnswer["ID"]);
-                                                        ?><? if (strlen(trim($arAnswer["MESSAGE"])) > 0):?><font
+                                                        ?><? if (trim($arAnswer["MESSAGE"]) <> ''):?><font
                                                             class="text"><?= $arAnswer["MESSAGE"] ?></font>
                                                         <br><?endif ?><input type="text" name="<?= $field_name ?>"
                                                                              value="<?= htmlspecialcharsbx($value) ?>"
@@ -275,21 +339,23 @@ $tabControl->BeginNextTab();
                                                     case 5:
                                                         $field_name = "vote_memo_" . $arAnswer["ID"];
                                                         $text = CVoteEvent::GetAnswer($EVENT_ID, $arAnswer["ID"]);
-                                                        ?><font
-                                                            class="text"><? if (strlen(trim($arAnswer["MESSAGE"])) > 0) echo $arAnswer["MESSAGE"] . "<br>" ?></font>
-                                                        <textarea
+                                                        ?><font class="text"><? if (trim(
+                                                            $arAnswer["MESSAGE"]
+                                                        ) <> '') echo $arAnswer["MESSAGE"] . "<br>" ?></font><textarea
                                                         name="<?= $field_name ?>" <?= $arAnswer["FIELD_PARAM"] ?>
                                                         cols="<?= $arAnswer["FIELD_WIDTH"] ?>"
-                                                        rows="<?= $arAnswer["FIELD_HEIGHT"] ?>"><?= htmlspecialcharsbx($text) ?></textarea><?
+                                                        rows="<?= $arAnswer["FIELD_HEIGHT"] ?>"><?= htmlspecialcharsbx(
+                                                        $text
+                                                    ) ?></textarea><?
                                                         break;
                                                 endswitch;
                                                 ?></td>
                                         </tr>
-                                    <? endwhile; ?>
+                                    <? endforeach; ?>
                                 </table>
                             </td>
                         </tr>
-                    <? endwhile ?>
+                    <? endforeach; ?>
                 </table>
             </td>
         </tr>

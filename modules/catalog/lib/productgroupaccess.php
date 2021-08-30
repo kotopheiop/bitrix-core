@@ -21,7 +21,20 @@ Loc::loadMessages(__FILE__);
  * </ul>
  *
  * @package Bitrix\Catalog
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_ProductGroupAccess_Query query()
+ * @method static EO_ProductGroupAccess_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_ProductGroupAccess_Result getById($id)
+ * @method static EO_ProductGroupAccess_Result getList(array $parameters = array())
+ * @method static EO_ProductGroupAccess_Entity getEntity()
+ * @method static \Bitrix\Catalog\EO_ProductGroupAccess createObject($setDefaultValues = true)
+ * @method static \Bitrix\Catalog\EO_ProductGroupAccess_Collection createCollection()
+ * @method static \Bitrix\Catalog\EO_ProductGroupAccess wakeUpObject($row)
+ * @method static \Bitrix\Catalog\EO_ProductGroupAccess_Collection wakeUpCollection($rows)
+ */
 class ProductGroupAccessTable extends Main\Entity\DataManager
 {
     const ACCESS_LENGTH_HOUR = 'H';
@@ -50,29 +63,39 @@ class ProductGroupAccessTable extends Main\Entity\DataManager
     public static function getMap()
     {
         return array(
-            'ID' => new Main\Entity\IntegerField('ID', array(
+            'ID' => new Main\Entity\IntegerField(
+                'ID', array(
                 'primary' => true,
                 'autocomplete' => true,
                 'title' => Loc::getMessage('PRODUCTGROUPACCESS_ENTITY_ID_FIELD')
-            )),
-            'PRODUCT_ID' => new Main\Entity\IntegerField('PRODUCT_ID', array(
+            )
+            ),
+            'PRODUCT_ID' => new Main\Entity\IntegerField(
+                'PRODUCT_ID', array(
                 'required' => true,
                 'title' => Loc::getMessage('PRODUCTGROUPACCESS_ENTITY_PRODUCT_ID_FIELD')
-            )),
-            'GROUP_ID' => new Main\Entity\IntegerField('GROUP_ID', array(
+            )
+            ),
+            'GROUP_ID' => new Main\Entity\IntegerField(
+                'GROUP_ID', array(
                 'required' => true,
                 'title' => Loc::getMessage('PRODUCTGROUPACCESS_ENTITY_GROUP_ID_FIELD')
-            )),
-            'ACCESS_LENGTH' => new Main\Entity\IntegerField('ACCESS_LENGTH', array(
+            )
+            ),
+            'ACCESS_LENGTH' => new Main\Entity\IntegerField(
+                'ACCESS_LENGTH', array(
                 'required' => true,
                 'title' => Loc::getMessage('PRODUCTGROUPACCESS_ENTITY_ACCESS_LENGTH_FIELD')
-            )),
-            'ACCESS_LENGTH_TYPE' => new Main\Entity\EnumField('ACCESS_LENGTH_TYPE', array(
+            )
+            ),
+            'ACCESS_LENGTH_TYPE' => new Main\Entity\EnumField(
+                'ACCESS_LENGTH_TYPE', array(
                 'required' => true,
                 'values' => static::getAccessPeriods(false),
                 'default_value' => self::ACCESS_LENGTH_DAY,
                 'title' => Loc::getMessage('PRODUCTGROUPACCESS_ENTITY_ACCESS_LENGTH_TYPE_FIELD')
-            )),
+            )
+            ),
             'PRODUCT' => new Main\Entity\ReferenceField(
                 'PRODUCT',
                 '\Bitrix\Catalog\Product',
@@ -122,13 +145,16 @@ class ProductGroupAccessTable extends Main\Entity\DataManager
     public static function deleteByProduct($id)
     {
         $id = (int)$id;
-        if ($id <= 0)
+        if ($id <= 0) {
             return;
+        }
 
         $conn = Main\Application::getConnection();
         $helper = $conn->getSqlHelper();
         $conn->queryExecute(
-            'delete from ' . $helper->quote(self::getTableName()) . ' where ' . $helper->quote('PRODUCT_ID') . ' = ' . $id
+            'delete from ' . $helper->quote(self::getTableName()) . ' where ' . $helper->quote(
+                'PRODUCT_ID'
+            ) . ' = ' . $id
         );
         unset($helper, $conn);
     }

@@ -63,33 +63,35 @@ class MailboxTable extends Entity\DataManager
             $accessSubquery->addFilter('=MAILBOX_ID', new \Bitrix\Main\DB\SqlExpression('%s'));
             $accessSubquery->addFilter('=USER_ACCESS.USER_ID', $userId);
 
-            $res = static::getList(array(
-                'runtime' => array(
-                    new Entity\ExpressionField(
-                        'IS_OWNED',
-                        sprintf('IF(%%s=%u, 1, 0)', $userId),
-                        'USER_ID'
+            $res = static::getList(
+                array(
+                    'runtime' => array(
+                        new Entity\ExpressionField(
+                            'IS_OWNED',
+                            sprintf('IF(%%s=%u, 1, 0)', $userId),
+                            'USER_ID'
+                        ),
+                        new Entity\ExpressionField(
+                            'IS_ACCESS',
+                            sprintf('EXISTS(%s)', $accessSubquery->getQuery()),
+                            'ID'
+                        ),
                     ),
-                    new Entity\ExpressionField(
-                        'IS_ACCESS',
-                        sprintf('EXISTS(%s)', $accessSubquery->getQuery()),
-                        'ID'
+                    'filter' => array(
+                        array(
+                            'LOGIC' => 'OR',
+                            '=USER_ID' => $userId,
+                            '==IS_ACCESS' => true,
+                        ),
+                        '=ACTIVE' => 'Y',
+                        '=SERVER_TYPE' => 'imap',
                     ),
-                ),
-                'filter' => array(
-                    array(
-                        'LOGIC' => 'OR',
-                        '=USER_ID' => $userId,
-                        '==IS_ACCESS' => true,
+                    'order' => array(
+                        'IS_OWNED' => 'DESC',
+                        'ID' => 'DESC',
                     ),
-                    '=ACTIVE' => 'Y',
-                    '=SERVER_TYPE' => 'imap',
-                ),
-                'order' => array(
-                    'IS_OWNED' => 'DESC',
-                    'ID' => 'DESC',
-                ),
-            ));
+                )
+            );
 
             while ($mailbox = $res->fetch()) {
                 static::normalizeEmail($mailbox);
@@ -236,9 +238,6 @@ class MailboxTable extends Entity\DataManager
                 'save_data_modification' => function () {
                     return array(
                         function ($options) {
-                            if (!empty($options['imap']['dirsMd5']) && is_array($options['imap']['dirsMd5'])) {
-                                unset($options['imap']['dirsMd5']);
-                            }
                             return serialize($options);
                         }
                     );
@@ -246,14 +245,7 @@ class MailboxTable extends Entity\DataManager
                 'fetch_data_modification' => function () {
                     return array(
                         function ($values) {
-                            $values = unserialize($values);
-                            if (!empty($values['imap']['dirs']) && is_array($values['imap']['dirs'])) {
-                                foreach ($values['imap']['dirs'] as $name => $dir) {
-                                    $values['imap']['dirsMd5'][$name] = md5($name);
-                                }
-                            }
-
-                            return $values;
+                            return unserialize($values);
                         }
                     );
                 }

@@ -22,10 +22,12 @@ class AccountYandex extends Account
 
     public function getProfile()
     {
-        $response = $this->getRequest()->send(array(
-            'methodName' => 'retargeting.profile',
-            'parameters' => array()
-        ));
+        $response = $this->getRequest()->send(
+            array(
+                'methodName' => 'retargeting.profile',
+                'parameters' => array()
+            )
+        );
 
         if ($response->isSuccess()) {
             $data = $response->fetch();

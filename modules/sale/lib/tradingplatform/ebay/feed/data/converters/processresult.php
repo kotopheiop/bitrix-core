@@ -8,15 +8,17 @@ class ProcessResult extends DataConverter
 {
     public function convert($data)
     {
-        if (!isset($data["RESULT_ID"]))
+        if (!isset($data["RESULT_ID"])) {
             throw new ArgumentNullException("data[\"RESULT_ID\"]");
+        }
 
-        if (!isset($data["CONTENT"]))
+        if (!isset($data["CONTENT"])) {
             throw new ArgumentNullException("data[\"CONTENT\"]");
+        }
 
         $result["RESULT_ID"] = $data["RESULT_ID"];
 
-        if (strlen($data["CONTENT"]) >= 0) {
+        if ((string)$data["CONTENT"] !== '') {
             $strings = explode("\n", $data["CONTENT"]);
             $fields = array();
 
@@ -24,14 +26,16 @@ class ProcessResult extends DataConverter
                 foreach ($strings as $string) {
                     $info = json_decode($string, true);
 
-                    if (strpos($info["message"], "Processing Request #") !== false)
-                        $fields["PROCESSING_REQUEST_ID"] = substr($info["message"], 20);
-                    elseif (strpos($info["message"], "Processing Complete") !== false)
+                    if (mb_strpos($info["message"], "Processing Request #") !== false) {
+                        $fields["PROCESSING_REQUEST_ID"] = mb_substr($info["message"], 20);
+                    } elseif (mb_strpos($info["message"], "Processing Complete") !== false) {
                         $fields["PROCESSING_RESULT"] = "Complete";
+                    }
                 }
 
-                if (!empty($fields))
+                if (!empty($fields)) {
                     $result = array_merge($result, $fields);
+                }
             }
         }
 

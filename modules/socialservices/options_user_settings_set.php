@@ -21,13 +21,15 @@ if (
     && Loader::includeModule('socialservices')
     && check_bitrix_sessid()
 ) {
-    $dbRes = UserTable::getList(array(
-        'filter' => array(
-            '=USER_ID' => $ID,
-            '=EXTERNAL_AUTH_ID' => CSocServBitrix24Net::ID
-        ),
-        'select' => array('ID')
-    ));
+    $dbRes = UserTable::getList(
+        array(
+            'filter' => array(
+                '=USER_ID' => $ID,
+                '=EXTERNAL_AUTH_ID' => CSocServBitrix24Net::ID
+            ),
+            'select' => array('ID')
+        )
+    );
 
     $profileInfo = $dbRes->fetch();
     if ($profileInfo) {

@@ -85,14 +85,16 @@ class MailSecurityContext extends Disk\Security\SecurityContext
     {
         global $DB;
 
-        $message = $DB->query(sprintf(
-            'SELECT ID, MAILBOX_ID FROM b_mail_message WHERE ID IN (
+        $message = $DB->query(
+            sprintf(
+                'SELECT ID, MAILBOX_ID FROM b_mail_message WHERE ID IN (
 				SELECT MESSAGE_ID FROM b_mail_msg_attachment WHERE FILE_ID = (
 					SELECT FILE_ID FROM b_disk_object WHERE ID = %u
 				)
 			)',
-            $objectId
-        ))->fetch();
+                $objectId
+            )
+        )->fetch();
 
         return Mail\Helper\Message::hasAccess($message, $this->userId);
     }

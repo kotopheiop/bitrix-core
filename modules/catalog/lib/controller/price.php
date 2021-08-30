@@ -18,14 +18,17 @@ final class Price extends Controller
         $view = $this->getViewManager()
             ->getView($this);
 
-        return ['PRICE' => $view->prepareFieldInfos(
-            $view->getFields()
-        )];
+        return [
+            'PRICE' => $view->prepareFieldInfos(
+                $view->getFields()
+            )
+        ];
     }
 
     public function listAction($select = [], $filter = [], $order = [], PageNavigation $pageNavigation)
     {
-        return new Page('PRICES',
+        return new Page(
+            'PRICES',
             $this->getList($select, $filter, $order, $pageNavigation),
             $this->count($filter)
         );
@@ -101,15 +104,17 @@ final class Price extends Controller
                         $ids[] = $price['ID'];
                     }
                 } else {
-                    $result = \Bitrix\Catalog\Model\Price::add([
-                        'PRODUCT_ID' => $productId,
-                        'CATALOG_GROUP_ID' => $price['CATALOG_GROUP_ID'],
-                        'CURRENCY' => $price['CURRENCY'],
-                        'PRICE' => $price['PRICE'],
-                        'QUANTITY_FROM' => isset($price['QUANTITY_FROM']) ? $price['QUANTITY_FROM'] : null,
-                        'QUANTITY_TO' => isset($price['QUANTITY_TO']) ? $price['QUANTITY_TO'] : null,
-                        'EXTRA_ID' => isset($price['EXTRA_ID']) ? $price['EXTRA_ID'] : null,
-                    ]);
+                    $result = \Bitrix\Catalog\Model\Price::add(
+                        [
+                            'PRODUCT_ID' => $productId,
+                            'CATALOG_GROUP_ID' => $price['CATALOG_GROUP_ID'],
+                            'CURRENCY' => $price['CURRENCY'],
+                            'PRICE' => $price['PRICE'],
+                            'QUANTITY_FROM' => isset($price['QUANTITY_FROM']) ? $price['QUANTITY_FROM'] : null,
+                            'QUANTITY_TO' => isset($price['QUANTITY_TO']) ? $price['QUANTITY_TO'] : null,
+                            'EXTRA_ID' => isset($price['EXTRA_ID']) ? $price['EXTRA_ID'] : null,
+                        ]
+                    );
 
                     if ($result->isSuccess()) {
                         $ids[] = $result->getId();
@@ -121,8 +126,9 @@ final class Price extends Controller
                 }
             }
 
-            if ($r->isSuccess())
+            if ($r->isSuccess()) {
                 $r->setData([$ids]);
+            }
         }
 
         return $r;
@@ -153,28 +159,31 @@ final class Price extends Controller
     private static function normalizeFields(array &$fields)
     {
         if (isset($fields['QUANTITY_FROM'])) {
-            if (is_string($fields['QUANTITY_FROM']) && $fields['QUANTITY_FROM'] === '')
+            if (is_string($fields['QUANTITY_FROM']) && $fields['QUANTITY_FROM'] === '') {
                 $fields['QUANTITY_FROM'] = null;
-            elseif ($fields['QUANTITY_FROM'] === false || $fields['QUANTITY_FROM'] === 0)
+            } elseif ($fields['QUANTITY_FROM'] === false || $fields['QUANTITY_FROM'] === 0) {
                 $fields['QUANTITY_FROM'] = null;
+            }
         } else {
             $fields['QUANTITY_FROM'] = null;
         }
 
         if (isset($fields['QUANTITY_TO'])) {
-            if (is_string($fields['QUANTITY_TO']) && $fields['QUANTITY_TO'] === '')
+            if (is_string($fields['QUANTITY_TO']) && $fields['QUANTITY_TO'] === '') {
                 $fields['QUANTITY_TO'] = null;
-            elseif ($fields['QUANTITY_TO'] === false || $fields['QUANTITY_TO'] === 0)
+            } elseif ($fields['QUANTITY_TO'] === false || $fields['QUANTITY_TO'] === 0) {
                 $fields['QUANTITY_TO'] = null;
+            }
         } else {
             $fields['QUANTITY_TO'] = null;
         }
 
         if (isset($fields['EXTRA_ID'])) {
-            if (is_string($fields['EXTRA_ID']) && $fields['EXTRA_ID'] === '')
+            if (is_string($fields['EXTRA_ID']) && $fields['EXTRA_ID'] === '') {
                 $fields['EXTRA_ID'] = null;
-            elseif ($fields['EXTRA_ID'] === false)
+            } elseif ($fields['EXTRA_ID'] === false) {
                 $fields['EXTRA_ID'] = null;
+            }
         } else {
             $fields['EXTRA_ID'] = null;
         }
@@ -189,8 +198,9 @@ final class Price extends Controller
         foreach ($items as $k => $fields) {
             $extendPrices = (isset($fields['QUANTITY_FROM']) || isset($fields['QUANTITY_TO']));
 
-            if ($extendPrices)
+            if ($extendPrices) {
                 break;
+            }
         }
 
         $allowEmptyRange = \Bitrix\Main\Config\Option::get('catalog', 'save_product_with_empty_price_range') == 'Y';
@@ -218,37 +228,59 @@ final class Price extends Controller
                 for ($i = 0, $cnt = $count; $i < $cnt; $i++) {
                     if ($i != 0 && $items[$i]["QUANTITY_FROM"] <= 0
                         || $i == 0 && $items[$i]["QUANTITY_FROM"] < 0) {
-                        $r->addError(new Error('Quantity bounds error: lower bound ' . $items[$i]["QUANTITY_FROM"] . ' must be above zero (for the first range)'));
+                        $r->addError(
+                            new Error(
+                                'Quantity bounds error: lower bound ' . $items[$i]["QUANTITY_FROM"] . ' must be above zero (for the first range)'
+                            )
+                        );
                     }
 
                     if ($i != $cnt - 1 && $items[$i]["QUANTITY_TO"] <= 0
                         || $i == $cnt - 1 && $items[$i]["QUANTITY_TO"] < 0) {
-                        $r->addError(new Error('Quantity bounds error: higher bound ' . $items[$i]["QUANTITY_TO"] . ' must be above zero (for the last range)'));
-
+                        $r->addError(
+                            new Error(
+                                'Quantity bounds error: higher bound ' . $items[$i]["QUANTITY_TO"] . ' must be above zero (for the last range)'
+                            )
+                        );
                     }
 
                     if ($items[$i]["QUANTITY_FROM"] > $items[$i]["QUANTITY_TO"]
                         && ($i != $cnt - 1 || $items[$i]["QUANTITY_TO"] > 0)) {
-                        $r->addError(new Error('Quantity bounds error: range ' . $items[$i]["QUANTITY_FROM"] . "-" . $items[$i]["QUANTITY_TO"] . ' is incorrect'));
+                        $r->addError(
+                            new Error(
+                                'Quantity bounds error: range ' . $items[$i]["QUANTITY_FROM"] . "-" . $items[$i]["QUANTITY_TO"] . ' is incorrect'
+                            )
+                        );
                     }
 
                     if ($i < $cnt - 1 && $items[$i]["QUANTITY_TO"] >= $items[$i + 1]["QUANTITY_FROM"]) {
-                        $r->addError(new Error('Quantity bounds error: ranges ' . $items[$i]["QUANTITY_FROM"] . "-" . $items[$i]["QUANTITY_TO"] . ' and ' . $items[$i + 1]["QUANTITY_FROM"] . "-" . $items[$i + 1]["QUANTITY_TO"] . ' overlap'));
+                        $r->addError(
+                            new Error(
+                                'Quantity bounds error: ranges ' . $items[$i]["QUANTITY_FROM"] . "-" . $items[$i]["QUANTITY_TO"] . ' and ' . $items[$i + 1]["QUANTITY_FROM"] . "-" . $items[$i + 1]["QUANTITY_TO"] . ' overlap'
+                            )
+                        );
                     }
 
                     if ($i < $cnt - 1
                         && $items[$i + 1]["QUANTITY_FROM"] - $items[$i]["QUANTITY_TO"] > 1
                         && !$allowEmptyRange
                     ) {
-                        $r->addError(new Error('Invalid quantity range entry: no price is specified for range ' . ($items[$i]["QUANTITY_TO"] + 1) . "-" . ($items[$i + 1]["QUANTITY_FROM"] - 1)));
+                        $r->addError(
+                            new Error(
+                                'Invalid quantity range entry: no price is specified for range ' . ($items[$i]["QUANTITY_TO"] + 1) . "-" . ($items[$i + 1]["QUANTITY_FROM"] - 1)
+                            )
+                        );
                     }
 
                     if ($i >= $cnt - 1
                         && $items[$i]["QUANTITY_TO"] > 0) {
-                        $r->addError(new Error('Invalid quantity range entry: no price is specified for quantity over ' . $items[$i]["QUANTITY_TO"]));
+                        $r->addError(
+                            new Error(
+                                'Invalid quantity range entry: no price is specified for quantity over ' . $items[$i]["QUANTITY_TO"]
+                            )
+                        );
                     }
                 }
-
             }
         }
         return $r;
@@ -262,8 +294,9 @@ final class Price extends Controller
     protected function exists($id)
     {
         $r = new Result();
-        if (isset($this->get($id)['ID']) == false)
+        if (isset($this->get($id)['ID']) == false) {
             $r->addError(new Error('Price is not exists'));
+        }
 
         return $r;
     }
@@ -276,7 +309,7 @@ final class Price extends Controller
     //region checkPermissionController
     protected function checkPermissionEntity($name, $arguments = [])
     {
-        $name = strtolower($name); //for ajax mode
+        $name = mb_strtolower($name); //for ajax mode
 
         if ($name == 'modify') {
             $r = $this->checkModifyPermissionPrice($name, $arguments);
@@ -302,7 +335,9 @@ final class Price extends Controller
     {
         $r = new Result();
 
-        if (!static::getGlobalUser()->CanDoOperation('catalog_read') && !static::getGlobalUser()->CanDoOperation('catalog_price') && !static::getGlobalUser()->CanDoOperation('catalog_view')) {
+        if (!static::getGlobalUser()->CanDoOperation('catalog_read') && !static::getGlobalUser()->CanDoOperation(
+                'catalog_price'
+            ) && !static::getGlobalUser()->CanDoOperation('catalog_view')) {
             $r->addError(new Error('Access Denied', 200040300010));
         }
         return $r;

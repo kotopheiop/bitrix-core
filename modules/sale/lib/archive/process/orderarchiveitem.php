@@ -118,16 +118,21 @@ class OrderArchiveItem
         $eventManager = Main\EventManager::getInstance();
         if ($eventsList = $eventManager->findEventHandlers('sale', Sale\EventActions::EVENT_ON_ORDER_BEFORE_ARCHIVED)) {
             /** @var Main\Event $event */
-            $event = new Main\Event('sale', Sale\EventActions::EVENT_ON_ORDER_BEFORE_ARCHIVED, array(
+            $event = new Main\Event(
+                'sale', Sale\EventActions::EVENT_ON_ORDER_BEFORE_ARCHIVED, array(
                 'ENTITY' => $order
-            ));
+            )
+            );
             $event->send();
 
             if ($event->getResults()) {
                 /** @var Main\EventResult $eventResult */
                 foreach ($event->getResults() as $eventResult) {
                     if ($eventResult->getType() == Main\EventResult::ERROR) {
-                        $errorMsg = new Sale\ResultError(Main\Localization\Loc::getMessage('SALE_EVENT_ON_BEFORE_ORDER_SAVED_ERROR'), 'SALE_EVENT_ON_BEFORE_ORDER_SAVED_ERROR');
+                        $errorMsg = new Sale\ResultError(
+                            Main\Localization\Loc::getMessage('SALE_EVENT_ON_BEFORE_ORDER_SAVED_ERROR'),
+                            'SALE_EVENT_ON_BEFORE_ORDER_SAVED_ERROR'
+                        );
                         if ($eventResultData = $eventResult->getParameters()) {
                             if (isset($eventResultData) && $eventResultData instanceof Sale\ResultError) {
                                 /** @var ResultError $errorMsg */
@@ -170,7 +175,10 @@ class OrderArchiveItem
      */
     private function saveOrderArchive()
     {
-        $preparedOrderData = array_intersect_key($this->getOrderDataField('ORDER'), array_flip(Manager::getOrderFieldNames()));
+        $preparedOrderData = array_intersect_key(
+            $this->getOrderDataField('ORDER'),
+            array_flip(Manager::getOrderFieldNames())
+        );
         $preparedOrderData['ORDER_ID'] = $this->getId();
         $preparedOrderData['DATE_ARCHIVED'] = new Type\DateTime();
         $preparedOrderData['VERSION'] = Manager::SALE_ARCHIVE_VERSION;

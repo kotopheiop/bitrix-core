@@ -46,11 +46,13 @@ if (Loader::includeModule('transformer')) {
             }
 
             $previewLogId = $previewId = $previewImageId = 0;
-            $previewLog = FilePreviewTable::getList([
-                'select' => ['ID'],
-                'filter' => ['FILE_ID' => $params['fileId']],
-                'limit' => 1,
-            ])->fetch();
+            $previewLog = FilePreviewTable::getList(
+                [
+                    'select' => ['ID'],
+                    'filter' => ['FILE_ID' => $params['fileId']],
+                    'limit' => 1,
+                ]
+            )->fetch();
 
             if (isset($previewLog['ID'])) {
                 $previewLogId = $previewLog['ID'];
@@ -61,14 +63,19 @@ if (Loader::includeModule('transformer')) {
                     $previewImageId = self::saveFile($filePath, 'image/jpeg');
                     if ($previewImageId) {
                         if ($previewLogId) {
-                            FilePreviewTable::update($previewLogId, [
-                                'PREVIEW_IMAGE_ID' => $previewImageId,
-                            ]);
+                            FilePreviewTable::update(
+                                $previewLogId,
+                                [
+                                    'PREVIEW_IMAGE_ID' => $previewImageId,
+                                ]
+                            );
                         } else {
-                            $resultAdd = FilePreviewTable::add([
-                                'FILE_ID' => $params['fileId'],
-                                'PREVIEW_IMAGE_ID' => $previewImageId,
-                            ]);
+                            $resultAdd = FilePreviewTable::add(
+                                [
+                                    'FILE_ID' => $params['fileId'],
+                                    'PREVIEW_IMAGE_ID' => $previewImageId,
+                                ]
+                            );
 
                             if ($resultAdd->getId()) {
                                 $previewLogId = $resultAdd->getId();
@@ -78,23 +85,30 @@ if (Loader::includeModule('transformer')) {
                 } else {
                     $previewId = self::saveFile($filePath, MimeType::getByFileExtension($ext));
                     if ($previewLogId) {
-                        FilePreviewTable::update($previewLogId, [
-                            'PREVIEW_ID' => $previewId,
-                        ]);
+                        FilePreviewTable::update(
+                            $previewLogId,
+                            [
+                                'PREVIEW_ID' => $previewId,
+                            ]
+                        );
                     } else {
-                        FilePreviewTable::add([
-                            'FILE_ID' => $params['fileId'],
-                            'PREVIEW_ID' => $previewId,
-                        ]);
+                        FilePreviewTable::add(
+                            [
+                                'FILE_ID' => $params['fileId'],
+                                'PREVIEW_ID' => $previewId,
+                            ]
+                        );
                     }
 
                     self::sendNotifyAboutTransformation($params['fileId']);
                 }
             }
 
-            (new Event('main', 'onFileTransformationComplete', [
+            (new Event(
+                'main', 'onFileTransformationComplete', [
                 'fileId' => $params['fileId'],
-            ]))->send();
+            ]
+            ))->send();
 
             return true;
         }
@@ -129,13 +143,15 @@ if (Loader::includeModule('transformer')) {
 
         public static function existSavedFile($fileId)
         {
-            $previewRow = FilePreviewTable::getList([
-                'select' => ['ID', 'PID' => 'PREVIEW.ID'],
-                'filter' => [
-                    '=FILE_ID' => $fileId,
-                ],
-                'limit' => 1,
-            ])->fetch();
+            $previewRow = FilePreviewTable::getList(
+                [
+                    'select' => ['ID', 'PID' => 'PREVIEW.ID'],
+                    'filter' => [
+                        '=FILE_ID' => $fileId,
+                    ],
+                    'limit' => 1,
+                ]
+            )->fetch();
 
             return !empty($previewRow['PID']);
         }

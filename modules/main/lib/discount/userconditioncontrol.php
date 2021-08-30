@@ -135,7 +135,7 @@ class UserConditionControl extends \CSaleCondCtrlComplex
                 'LOGIC' => static::getLogic(array(BT_COND_LOGIC_EQ, BT_COND_LOGIC_NOT_EQ)),
                 'JS_VALUE' => array(
                     'type' => 'userPopup',
-                    'popup_url' => '/bitrix/admin/user_search.php',
+                    'popup_url' => self::getAdminSection() . 'user_search.php',
                     'popup_params' => array(
                         'lang' => LANGUAGE_ID,
                     ),
@@ -156,12 +156,15 @@ class UserConditionControl extends \CSaleCondCtrlComplex
             );
 
             $userGroups = array();
-            $iterator = Main\GroupTable::getList(array(
-                'select' => array('ID', 'NAME', 'C_SORT'),
-                'order' => array('C_SORT' => 'ASC', 'NAME' => 'ASC')
-            ));
-            while ($row = $iterator->fetch())
+            $iterator = Main\GroupTable::getList(
+                array(
+                    'select' => array('ID', 'NAME', 'C_SORT'),
+                    'order' => array('C_SORT' => 'ASC', 'NAME' => 'ASC')
+                )
+            );
+            while ($row = $iterator->fetch()) {
                 $userGroups[$row['ID']] = $row['NAME'];
+            }
             unset($row, $iterator);
             $controlList[self::ENTITY_USER_GROUP_ID] = array(
                 'ID' => self::ENTITY_USER_GROUP_ID,
@@ -276,10 +279,20 @@ class UserConditionControl extends \CSaleCondCtrlComplex
                     }
                     break;
             }
-            if ($result !== '')
+            if ($result !== '') {
                 $result = 'isset(' . $field . ') && ' . $result;
+            }
         }
 
         return $result;
+    }
+
+    /**
+     * @return string
+     */
+    private static function getAdminSection()
+    {
+        //TODO: need use \CAdminPage::getSelfFolderUrl, but in general it is impossible now
+        return (defined('SELF_FOLDER_URL') ? SELF_FOLDER_URL : '/bitrix/admin/');
     }
 }

@@ -36,17 +36,19 @@ class BlackList extends ConnectorBase
     {
         $mailingId = $this->getFieldValue('MAILING_ID', 0);
 
-        return MailingSubscriptionTable::getSubscriptionList(array(
-            'select' => array(
-                'SENDER_CONTACT_ID' => 'CONTACT.ID',
-                'NAME' => 'CONTACT.NAME',
-                'EMAIL' => 'CONTACT.CODE',
-                'USER_ID' => 'CONTACT.USER_ID'
-            ),
-            'filter' => array(
-                'MAILING_ID' => $mailingId,
+        return MailingSubscriptionTable::getSubscriptionList(
+            array(
+                'select' => array(
+                    'SENDER_CONTACT_ID' => 'CONTACT.ID',
+                    'NAME' => 'CONTACT.NAME',
+                    'EMAIL' => 'CONTACT.CODE',
+                    'USER_ID' => 'CONTACT.USER_ID'
+                ),
+                'filter' => array(
+                    'MAILING_ID' => $mailingId,
+                )
             )
-        ));
+        );
     }
 
     /**

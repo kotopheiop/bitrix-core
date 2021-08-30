@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/catalog/prolog.php");
 global $APPLICATION;
@@ -9,8 +10,9 @@ $selfFolderUrl = $adminPage->getSelfFolderUrl();
 $listUrl = $selfFolderUrl . "cat_contractor_list.php?lang=" . LANGUAGE_ID;
 $listUrl = $adminSidePanelHelper->editUrlToPublicPage($listUrl);
 
-if (!($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_store')))
+if (!($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_store'))) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 CModule::IncludeModule("catalog");
 $bReadOnly = !$USER->CanDoOperation('catalog_store');
 
@@ -33,14 +35,19 @@ $ID = (isset($_REQUEST["ID"]) ? (int)$_REQUEST["ID"] : 0);
 $typeReadOnly = false;
 $userId = (int)$USER->GetID();
 
-if ($_SERVER["REQUEST_METHOD"] == "POST" && check_bitrix_sessid() && strlen($_REQUEST["Update"]) > 0 && !$bReadOnly) {
+if ($_SERVER["REQUEST_METHOD"] == "POST" && check_bitrix_sessid() && $_REQUEST["Update"] <> '' && !$bReadOnly) {
     $adminSidePanelHelper->decodeUriComponent();
 
-    if ($PERSON_TYPE == CONTRACTOR_INDIVIDUAL)
+    if ($PERSON_TYPE == CONTRACTOR_INDIVIDUAL) {
         $INN = $KPP = $COMPANY = '';
+    }
     $PERSON_NAME = ($_REQUEST["PERSON_NAME"] == GetMessage("CONTRACTOR_NAME")) ? '' : $_REQUEST["PERSON_NAME"];
-    $PERSON_LASTNAME = ($_REQUEST["PERSON_LASTNAME"] == GetMessage("CONTRACTOR_LAST_NAME")) ? '' : $_REQUEST["PERSON_LASTNAME"];
-    $PERSON_MIDDLENAME = ($_REQUEST["PERSON_MIDDLENAME"] == GetMessage("CONTRACTOR_SECOND_NAME")) ? '' : $_REQUEST["PERSON_MIDDLENAME"];
+    $PERSON_LASTNAME = ($_REQUEST["PERSON_LASTNAME"] == GetMessage(
+            "CONTRACTOR_LAST_NAME"
+        )) ? '' : $_REQUEST["PERSON_LASTNAME"];
+    $PERSON_MIDDLENAME = ($_REQUEST["PERSON_MIDDLENAME"] == GetMessage(
+            "CONTRACTOR_SECOND_NAME"
+        )) ? '' : $_REQUEST["PERSON_MIDDLENAME"];
     $arFields = Array(
         "PERSON_TYPE" => $PERSON_TYPE,
         "SITE_ID" => SITE_ID,
@@ -60,13 +67,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && check_bitrix_sessid() && strlen($_RE
         "MODIFIED_BY" => $userId,
     );
     $DB->StartTransaction();
-    if (strlen($errorMessage) == 0 && $ID > 0 && $res = CCatalogContractor::update($ID, $arFields)) {
+    if ($errorMessage == '' && $ID > 0 && $res = CCatalogContractor::update($ID, $arFields)) {
         $ID = $res;
         $DB->Commit();
 
         $adminSidePanelHelper->sendSuccessResponse("base", array("ID" => $ID));
 
-        if (strlen($_REQUEST["apply"]) <= 0) {
+        if ($_REQUEST["apply"] == '') {
             $adminSidePanelHelper->localRedirect($listUrl);
             LocalRedirect($listUrl);
         } else {
@@ -74,13 +81,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && check_bitrix_sessid() && strlen($_RE
             $applyUrl = $adminSidePanelHelper->setDefaultQueryParams($applyUrl);
             LocalRedirect($applyUrl);
         }
-    } elseif (strlen($errorMessage) == 0 && $ID == 0 && $res = CCatalogContractor::Add($arFields)) {
+    } elseif ($errorMessage == '' && $ID == 0 && $res = CCatalogContractor::Add($arFields)) {
         $ID = $res;
         $DB->Commit();
 
         $adminSidePanelHelper->sendSuccessResponse("base", array("ID" => $ID));
 
-        if (strlen($_REQUEST["apply"]) <= 0) {
+        if ($_REQUEST["apply"] == '') {
             $adminSidePanelHelper->localRedirect($listUrl);
             LocalRedirect($listUrl);
         } else {
@@ -97,10 +104,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && check_bitrix_sessid() && strlen($_RE
     }
 }
 
-if ($ID > 0)
+if ($ID > 0) {
     $APPLICATION->SetTitle(str_replace("#ID#", $ID, GetMessage("CONTRACTOR_TITLE_UPDATE")));
-else
+} else {
     $APPLICATION->SetTitle(GetMessage("CONTRACTOR_TITLE_ADD"));
+}
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 $str_ACTIVE = "Y";
@@ -123,15 +131,18 @@ if ($ID > 0) {
     );
 
     $dbResult = CCatalogContractor::GetList(array(), array('ID' => $ID), false, false, $arSelect);
-    if (!$dbResult->ExtractFields("str_"))
+    if (!$dbResult->ExtractFields("str_")) {
         $ID = 0;
+    }
 }
 
-if ($bVarsFromForm)
+if ($bVarsFromForm) {
     $DB->InitTableVarsForEdit("b_catalog_contractor", "", "str_");
+}
 
-if (isset($str_ADDRESS))
+if (isset($str_ADDRESS)) {
     $str_ADDRESS = (trim($str_ADDRESS) != '') ? $str_ADDRESS : '';
+}
 
 $str_PERSON_TYPE = (isset($str_PERSON_TYPE)) ? $str_PERSON_TYPE : CONTRACTOR_INDIVIDUAL;
 
@@ -153,14 +164,17 @@ if ($ID > 0 && !$bReadOnly) {
         "ICON" => "btn_new",
         "LINK" => $addUrl
     );
-    $deleteUrl = $selfFolderUrl . "cat_contractor_list.php?action=delete&ID[]=" . $ID . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get() . "#tb";
+    $deleteUrl = $selfFolderUrl . "cat_contractor_list.php?action=delete&ID[]=" . $ID . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get(
+        ) . "#tb";
     if ($adminSidePanelHelper->isPublicFrame()) {
         $deleteUrl = $adminSidePanelHelper->editUrlToPublicPage($deleteUrl);
     }
     $aMenu[] = array(
         "TEXT" => GetMessage("CONTRACTOR_DELETE"),
         "ICON" => "btn_delete",
-        "LINK" => "javascript:if(confirm('" . GetMessage("CONTRACTOR_DELETE_CONFIRM") . "')) top.window.location='" . $deleteUrl . "';",
+        "LINK" => "javascript:if(confirm('" . GetMessage(
+                "CONTRACTOR_DELETE_CONFIRM"
+            ) . "')) top.window.location='" . $deleteUrl . "';",
         "WARNING" => "Y"
     );
 }
@@ -207,7 +221,12 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
 
         <?
         $aTabs = array(
-            array("DIV" => "edit1", "TAB" => GetMessage("CONTRACTOR_TAB"), "ICON" => "catalog", "TITLE" => GetMessage("CONTRACTOR_TAB_DESCR")),
+            array(
+                "DIV" => "edit1",
+                "TAB" => GetMessage("CONTRACTOR_TAB"),
+                "ICON" => "catalog",
+                "TITLE" => GetMessage("CONTRACTOR_TAB_DESCR")
+            ),
         );
 
         $tabControl = new CAdminTabControl("tabControl", $aTabs);
@@ -236,32 +255,40 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
             <td width="40%"><?= GetMessage("CONTRACTOR_TYPE") ?>:</td>
             <td width="60%">
                 <input type="hidden" name="PERSON_TYPE" value="<?= $str_PERSON_TYPE ?>">
-                <select <? if ($typeReadOnly) echo " disabled"; ?> name="PERSON_TYPE"
-                                                                   onchange="fContractorChangeType(this);">
-                    <option <? if (intval($str_PERSON_TYPE) == CONTRACTOR_INDIVIDUAL) echo " selected"; ?>
-                            value="1"><?= GetMessage("CONTRACTOR_INDIVIDUAL") ?></option>
-                    <option <? if (intval($str_PERSON_TYPE) == CONTRACTOR_JURIDICAL) echo " selected"; ?>
-                            value="2"><?= GetMessage("CONTRACTOR_JURIDICAL") ?></option>
+                <select <? if ($typeReadOnly) {
+                    echo " disabled";
+                } ?> name="PERSON_TYPE" onchange="fContractorChangeType(this);">
+                    <option <? if (intval($str_PERSON_TYPE) == CONTRACTOR_INDIVIDUAL) {
+                        echo " selected";
+                    } ?> value="1"><?= GetMessage("CONTRACTOR_INDIVIDUAL") ?></option>
+                    <option <? if (intval($str_PERSON_TYPE) == CONTRACTOR_JURIDICAL) {
+                        echo " selected";
+                    } ?> value="2"><?= GetMessage("CONTRACTOR_JURIDICAL") ?></option>
                 </select>
             </td>
         </tr>
 
-        <tr class="adm-detail-required-field"
-            id="company-name-tr" <? if ($str_PERSON_TYPE == 1) echo "style=\"display: none\""; ?>>
+        <tr class="adm-detail-required-field" id="company-name-tr" <? if ($str_PERSON_TYPE == 1) {
+            echo "style=\"display: none\"";
+        } ?>>
             <td width="40%"><?= GetMessage("CONTRACTOR_COMPANY") ?>:</td>
             <td width="60%">
                 <input type="text" name="COMPANY" value="<?= $str_COMPANY ?>" size="30"/>
             </td>
 
         </tr>
-        <tr id="company-inn-tr"<? if ($str_PERSON_TYPE == CONTRACTOR_INDIVIDUAL) echo "style=\"display: none\""; ?>>
+        <tr id="company-inn-tr"<? if ($str_PERSON_TYPE == CONTRACTOR_INDIVIDUAL) {
+            echo "style=\"display: none\"";
+        } ?>>
             <td><?= GetMessage("CONTRACTOR_INN") ?>:</td>
             <td>
                 <input type="text" name="INN" value="<?= $str_INN ?>" size="30"/>
             </td>
         </tr>
         <? if (trim(GetMessage("CONTRACTOR_KPP")) != ''): ?>
-            <tr id="company-kpp-tr" <? if ($str_PERSON_TYPE == CONTRACTOR_INDIVIDUAL) echo "style=\"display: none\""; ?>>
+            <tr id="company-kpp-tr" <? if ($str_PERSON_TYPE == CONTRACTOR_INDIVIDUAL) {
+                echo "style=\"display: none\"";
+            } ?>>
                 <td><?= GetMessage("CONTRACTOR_KPP") ?>:</td>
                 <td>
                     <input type="text" name="KPP" value="<?= $str_KPP ?>" size="30"/>
@@ -271,10 +298,11 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
         <tr class="adm-detail-required-field">
             <td> <span id="title_span">
 			<?
-            if ($str_PERSON_TYPE == CONTRACTOR_JURIDICAL)
+            if ($str_PERSON_TYPE == CONTRACTOR_JURIDICAL) {
                 echo GetMessage("CONTRACTOR_TITLE_JURIDICAL");
-            else
+            } else {
                 echo GetMessage("CONTRACTOR_TITLE");
+            }
             ?>:</span></td>
             <td>
                 <input type="text" name="PERSON_NAME" id="BREAK_LAST_NAME" size="50" value="<?= $str_PERSON_NAME ?>"/>
@@ -298,9 +326,11 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
             </td>
         </tr>
         <tr>
-            <td class="adm-detail-valign-top"><span
-                        id="address_span"><? if ($str_PERSON_TYPE == CONTRACTOR_JURIDICAL) echo GetMessage("CONTRACTOR_ADDRESS_JURIDICAL"); else echo GetMessage("CONTRACTOR_ADDRESS"); ?>:</span>
-            </td>
+            <td class="adm-detail-valign-top"><span id="address_span"><? if ($str_PERSON_TYPE == CONTRACTOR_JURIDICAL) {
+                        echo GetMessage("CONTRACTOR_ADDRESS_JURIDICAL");
+                    } else {
+                        echo GetMessage("CONTRACTOR_ADDRESS");
+                    } ?>:</span></td>
             <td>
                 <textarea cols="35" rows="3" class="typearea" name="ADDRESS"
                           wrap="virtual"><?= $str_ADDRESS ?></textarea>

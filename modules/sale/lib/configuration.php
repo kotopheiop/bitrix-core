@@ -176,8 +176,9 @@ class Configuration
      */
     public static function useStoreControl()
     {
-        if (!Loader::includeModule('catalog'))
+        if (!Loader::includeModule('catalog')) {
             return false;
+        }
 
         return Catalog\Config\State::isUsedInventoryManagement();
     }

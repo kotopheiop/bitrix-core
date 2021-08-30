@@ -1,22 +1,30 @@
-<?
+<?php
+
 IncludeModuleLangFile(__FILE__);
 
 class CFormValidatorFileSize
 {
-    function GetDescription()
+    public static function GetDescription()
     {
         return array(
-            "NAME" => "file_size", // unique validator string ID
-            "DESCRIPTION" => GetMessage('FORM_VALIDATOR_FILE_SIZE_DESCRIPTION'), // validator description
-            "TYPES" => array("file", "image"), //  list of types validator can be applied.
-            "SETTINGS" => array("CFormValidatorFileSize", "GetSettings"), // method returning array of validator settings, optional
-            "CONVERT_TO_DB" => array("CFormValidatorFileSize", "ToDB"), // method, processing validator settings to string to put to db, optional
-            "CONVERT_FROM_DB" => array("CFormValidatorFileSize", "FromDB"), // method, processing validator settings from string from db, optional
-            "HANDLER" => array("CFormValidatorFileSize", "DoValidate") // main validation method
+            "NAME" => "file_size",
+            // unique validator string ID
+            "DESCRIPTION" => GetMessage('FORM_VALIDATOR_FILE_SIZE_DESCRIPTION'),
+            // validator description
+            "TYPES" => array("file", "image"),
+            //  list of types validator can be applied.
+            "SETTINGS" => array("CFormValidatorFileSize", "GetSettings"),
+            // method returning array of validator settings, optional
+            "CONVERT_TO_DB" => array("CFormValidatorFileSize", "ToDB"),
+            // method, processing validator settings to string to put to db, optional
+            "CONVERT_FROM_DB" => array("CFormValidatorFileSize", "FromDB"),
+            // method, processing validator settings from string from db, optional
+            "HANDLER" => array("CFormValidatorFileSize", "DoValidate")
+            // main validation method
         );
     }
 
-    function GetSettings()
+    public static function GetSettings()
     {
         return array(
             "SIZE_FROM" => array(
@@ -34,7 +42,7 @@ class CFormValidatorFileSize
         );
     }
 
-    function ToDB($arParams)
+    public static function ToDB($arParams)
     {
         $arParams["SIZE_FROM"] = intval($arParams["SIZE_FROM"]);
         $arParams["SIZE_TO"] = intval($arParams["SIZE_TO"]);
@@ -48,18 +56,18 @@ class CFormValidatorFileSize
         return serialize($arParams);
     }
 
-    function FromDB($strParams)
+    public static function FromDB($strParams)
     {
-        return unserialize($strParams);
+        return unserialize($strParams, ['allowed_classes' => false]);
     }
 
-    function DoValidate($arParams, $arQuestion, $arAnswers, $arValues)
+    public static function DoValidate($arParams, $arQuestion, $arAnswers, $arValues)
     {
         global $APPLICATION;
 
         if (count($arValues) > 0) {
             foreach ($arValues as $arFile) {
-                if (strlen($arFile["tmp_name"]) > 0 && $arFile["error"] == "0") {
+                if ($arFile["tmp_name"] <> '' && $arFile["error"] == "0") {
                     if ($arParams["SIZE_FROM"] > 0 && $arFile["size"] < $arParams["SIZE_FROM"]) {
                         $APPLICATION->ThrowException(GetMessage("FORM_VALIDATOR_FILE_SIZE_ERROR_LESS"));
                         return false;
@@ -78,4 +86,3 @@ class CFormValidatorFileSize
 }
 
 AddEventHandler("form", "onFormValidatorBuildList", array("CFormValidatorFileSize", "GetDescription"));
-?>

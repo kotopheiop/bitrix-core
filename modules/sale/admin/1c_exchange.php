@@ -1,16 +1,32 @@
 <?
+
 define('BX_SESSION_ID_CHANGE', false);
 define('BX_SKIP_POST_UNQUOTE', true);
 define('NO_AGENT_CHECK', true);
 define("STATISTIC_SKIP_ACTIVITY_CHECK", true);
+define("BX_FORCE_DISABLE_SEPARATED_SESSION_MODE", true);
 
 if (isset($_REQUEST["type"]) && $_REQUEST["type"] == "crm") {
     define("ADMIN_SECTION", true);
 }
+
+if (isset($_SERVER["REQUEST_METHOD"]) && $_SERVER["REQUEST_METHOD"] == "GET") {
+    //from main 20.0.1300 only POST allowed
+    if (isset($_GET["USER_LOGIN"]) && isset($_GET["USER_PASSWORD"]) && isset($_GET["AUTH_FORM"]) && isset($_GET["TYPE"])) {
+        $_POST["USER_LOGIN"] = $_GET["USER_LOGIN"];
+        $_POST["USER_PASSWORD"] = $_GET["USER_PASSWORD"];
+        $_POST["AUTH_FORM"] = $_GET["AUTH_FORM"];
+        $_POST["TYPE"] = $_GET["TYPE"];
+    }
+}
+
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_before.php");
 
 if ($type == "sale") {
-    $APPLICATION->IncludeComponent("bitrix:sale.export.1c", "", Array(
+    $APPLICATION->IncludeComponent(
+        "bitrix:sale.export.1c",
+        "",
+        Array(
             "SITE_LIST" => COption::GetOptionString("sale", "1C_SALE_SITE_LIST", ""),
             "EXPORT_PAYED_ORDERS" => COption::GetOptionString("sale", "1C_EXPORT_PAYED_ORDERS", ""),
             "EXPORT_ALLOW_DELIVERY_ORDERS" => COption::GetOptionString("sale", "1C_EXPORT_ALLOW_DELIVERY_ORDERS", ""),
@@ -41,7 +57,10 @@ if ($type == "sale") {
         $GZ_COMPRESSION_SUPPORTED = intval($_GET["GZ_COMPRESSION_SUPPORTED"]);
     }
 
-    $APPLICATION->IncludeComponent("bitrix:sale.export.1c", "", Array(
+    $APPLICATION->IncludeComponent(
+        "bitrix:sale.export.1c",
+        "",
+        Array(
             "CRM_MODE" => "Y",
             "ORDER_ID" => $orderId,
             "MODIFICATION_LABEL" => $modifLabel,
@@ -54,7 +73,10 @@ if ($type == "sale") {
         )
     );
 } elseif ($type == "catalog") {
-    $APPLICATION->IncludeComponent("bitrix:catalog.import.1c", "", Array(
+    $APPLICATION->IncludeComponent(
+        "bitrix:catalog.import.1c",
+        "",
+        Array(
             "IBLOCK_TYPE" => COption::GetOptionString("catalog", "1C_IBLOCK_TYPE", "-"),
             "SITE_LIST" => array(COption::GetOptionString("catalog", "1C_SITE_LIST", "-")),
             "INTERVAL" => COption::GetOptionString("catalog", "1C_INTERVAL", "-"),
@@ -82,7 +104,10 @@ if ($type == "sale") {
         )
     );
 } elseif ($type == "reference") {
-    $APPLICATION->IncludeComponent("bitrix:catalog.import.hl", "", Array(
+    $APPLICATION->IncludeComponent(
+        "bitrix:catalog.import.hl",
+        "",
+        Array(
             "INTERVAL" => COption::GetOptionString("catalog", "1C_INTERVAL", "-"),
             "GROUP_PERMISSIONS" => explode(",", COption::GetOptionString("catalog", "1C_GROUP_PERMISSIONS", "1")),
             "FILE_SIZE_LIMIT" => COption::GetOptionString("catalog", "1C_FILE_SIZE_LIMIT", 200 * 1024),
@@ -91,7 +116,10 @@ if ($type == "sale") {
         )
     );
 } elseif ($type == "get_catalog") {
-    $APPLICATION->IncludeComponent("bitrix:catalog.export.1c", "", Array(
+    $APPLICATION->IncludeComponent(
+        "bitrix:catalog.export.1c",
+        "",
+        Array(
             "IBLOCK_ID" => COption::GetOptionString("catalog", "1CE_IBLOCK_ID", ""),
             "INTERVAL" => COption::GetOptionString("catalog", "1CE_INTERVAL", "-"),
             "ELEMENTS_PER_STEP" => COption::GetOptionString("catalog", "1CE_ELEMENTS_PER_STEP", 100),
@@ -113,7 +141,7 @@ if ($type == "sale") {
         while (!$CACHE_MANAGER->getImmediate(CACHED_b_sale_order, "sale_orders")) {
             usleep(1000);
 
-            if (intVal(time() - $startExecTime) > $max_execution_time) {
+            if (intval(time() - $startExecTime) > $max_execution_time) {
                 break;
             }
         }

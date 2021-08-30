@@ -24,7 +24,7 @@ class Feed
     protected $startPosition;
 
     /** @var \Bitrix\Sale\TradingPlatform\Timer|null $t iimer */
-    static $timer = NULL;
+    static $timer = null;
 
     /**
      * Feed constructor.
@@ -34,17 +34,21 @@ class Feed
      */
     public function __construct($params, $startPosition)
     {
-        if (isset($params["TIMER"]) && $params["TIMER"] instanceof Timer)
+        if (isset($params["TIMER"]) && $params["TIMER"] instanceof Timer) {
             self::$timer = $params["TIMER"];
+        }
 
-        if (!isset($params["DATA_SOURCE"]) /*|| (!($params["DATA_SOURCE"] instanceof Data\Sources\DataSource))*/)
+        if (!isset($params["DATA_SOURCE"]) /*|| (!($params["DATA_SOURCE"] instanceof Data\Sources\DataSource))*/) {
             throw new ArgumentException("DATA_SOURCE must be instanceof DataSource!", "DATA_SOURCE");
+        }
 
-        if (!isset($params["DATA_CONVERTER"]) /*|| (!($params["DATA_CONVERTER"] instanceof Data\Converters\DataConverter))*/)
+        if (!isset($params["DATA_CONVERTER"]) /*|| (!($params["DATA_CONVERTER"] instanceof Data\Converters\DataConverter))*/) {
             throw new ArgumentException("DATA_CONVERTER must be instanceof DataConverter!", "DATA_CONVERTER");
+        }
 
-        if (!isset($params["DATA_PROCESSOR"]) || (!($params["DATA_PROCESSOR"] instanceof Data\Processors\DataProcessor)))
+        if (!isset($params["DATA_PROCESSOR"]) || (!($params["DATA_PROCESSOR"] instanceof Data\Processors\DataProcessor))) {
             throw new ArgumentException("DATA_PROCESSOR must be instanceof DataProcessor!", "DATA_PROCESSOR");
+        }
 
         $this->feedType = $params["FEED_TYPE"];
         $this->sourceDataIterator = $params["DATA_SOURCE"];
@@ -69,11 +73,11 @@ class Feed
      *
      * @param null $exportId
      */
-    public function processData($exportId = NULL)
+    public function processData($exportId = null)
     {
 //		EMPTY data for deleteAll-operations
         if (!$this->sourceDataIterator) {
-            $this->dataProcessor->process(NULL, self::getTimer());
+            $this->dataProcessor->process(null, self::getTimer());
         } else {
             $vk = Vk\Vk::getInstance();
             $executionItemsLimit = $exportId ? $vk->getExecutionItemsLimit($exportId) : Vk\Vk::MAX_EXECUTION_ITEMS;
@@ -83,7 +87,7 @@ class Feed
             $logger->addLog('Feed start', 'Feed type ' . $this->feedType);
 
             $convertedData = array();
-            $nextStepItem = NULL;
+            $nextStepItem = null;
             $nextStepFlag = false;
 
             foreach ($this->sourceDataIterator as $data) {

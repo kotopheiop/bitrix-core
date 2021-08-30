@@ -2,6 +2,7 @@
 
 namespace Bitrix\Seo\Analytics\Services;
 
+use Bitrix\Main\Result;
 use Bitrix\Seo\Analytics\Internals\Expenses;
 use Bitrix\Main\Error;
 use Bitrix\Main\Type\Date;
@@ -10,100 +11,88 @@ use \Bitrix\Seo\Analytics\Account;
 use Bitrix\Seo\Analytics\Internals\Page;
 use Bitrix\Seo\Retargeting\Services\ResponseFacebook;
 use Bitrix\Seo\Retargeting\Response;
-use Bitrix\Seo\Retargeting\IRequestDirectly;
 
-class AccountFacebook extends Account implements IRequestDirectly
+class AccountFacebook extends Account
 {
     const TYPE_CODE = 'facebook';
 
     public function getList()
     {
-        return $this->getRequest()->send(array(
-            'method' => 'GET',
-            'endpoint' => 'me/adaccounts',
-            'fields' => array(
-                'fields' => 'account_id,id,name'
-            ),
-            'has_pagination' => true
-        ));
+        $response = $this->request->send(
+            array(
+                'methodName' => 'analytics.account.list',
+                'parameters' => array()
+            )
+        );
+
+        return $response;
     }
 
     public function getProfile()
     {
-        $response = $this->getRequest()->send(array(
-            'method' => 'GET',
-            'endpoint' => 'me/',
-            'fields' => array(
-                'fields' => 'id,name,picture,link'
-            )
-        ));
+        $response = $this->getRequest()->getClient()->get(
+            'https://graph.facebook.com/me?fields=id,name,picture,link&access_token=' .
+            urlencode($this->getRequest()->getAuthAdapter()->getToken())
+        );
 
-
-        if ($response->isSuccess()) {
-            $data = $response->fetch();
-            return array(
-                'ID' => $data['ID'],
-                'NAME' => $data['NAME'],
-                'LINK' => $data['LINK'],
-                'PICTURE' => $data['PICTURE'] ? $data['PICTURE']['data']['url'] : null,
-            );
-        } else {
-            return null;
+        if ($response) {
+            $response = Json::decode($response);
+            if (is_array($response)) {
+                return array(
+                    'ID' => $response['id'] ?? null,
+                    'NAME' => $response['name'] ?? null,
+                    'LINK' => '',
+                    'PICTURE' => $response['picture']['data']['url'] ?? null,
+                );
+            }
         }
+
+
+        return null;
     }
 
     /**
+     * Get expenses.
+     *
      * @param mixed $accountId Facebook Ad Account Id.
-     * @param Date|null $dateFrom
-     * @param Date|null $dateTo
+     * @param Date|null $dateFrom Date from.
+     * @param Date|null $dateTo Date to.
      * @return ResponseFacebook
      */
     public function getExpenses($accountId, Date $dateFrom = null, Date $dateTo = null)
     {
-        $result = new ResponseFacebook();
-
-        if (substr($accountId, 0, 4) === 'act_') {
-            $accountId = substr($accountId, 4);
-        }
-
-        $fields = [
-            'fields' => 'account_currency,actions,clicks,cpc,cpm,impressions,spend',
-            'breakdowns' => 'publisher_platform',
+        $parameters = [
+            'ACCOUNT_ID' => $accountId,
         ];
         if ($dateFrom && $dateTo) {
-            $fields['time_range'] = Json::encode([
-                'since' => $dateFrom->format('Y-m-d'),
-                'until' => $dateTo->format('Y-m-d'),
-            ]);
+            $parameters['DATE_FROM'] = $dateFrom->format('Ymd');
+            $parameters['DATE_TO'] = $dateTo->format('Ymd');
         }
-        $response = $this->getRequest()->send([
-            'method' => 'GET',
-            'endpoint' => 'act_' . $accountId . '/insights/',
-            'fields' => $fields,
-        ]);
-        if ($response->isSuccess()) {
-            $insights = $response->getData();
-            $expenses = new Expenses();
-            foreach ($insights as $data) {
-                if (in_array($data['publisher_platform'], $this->getPublisherPlatforms())) {
-                    $data = $this->prepareExpensesData($data);
-                    $expenses->add([
-                        'impressions' => $data['impressions'],
-                        'clicks' => $data['clicks'],
-                        'actions' => $data['actions'],
-                        'cpc' => $data['cpc'],
-                        'cpm' => $data['cpm'],
-                        'spend' => $data['spend'],
-                        'currency' => $data['account_currency'],
-                    ]);
-                }
-            }
-            $result->setData(['expenses' => $expenses]);
-        } else {
-            $result->addErrors($response->getErrors());
-        }
+        $response = $this->getRequest()->send(
+            [
+                'methodName' => 'analytics.expenses.get',
+                'parameters' => $parameters,
+            ]
+        );
 
-        return $result;
+        $data = $response->getData();
+        $expenses = new Expenses();
+        $expenses->add(
+            [
+                'impressions' => $data['impressions'],
+                'clicks' => $data['clicks'],
+                'actions' => $data['actions'],
+                'cpc' => $data['cpc'],
+                'cpm' => $data['cpm'],
+                'spend' => $data['spend'],
+                'currency' => $data['currency'],
+            ]
+        );
+
+        $response = (new ResponseFacebook());
+        $response->setData(['expenses' => $expenses]);
+
+        return $response;
     }
 
     protected function prepareExpensesData($data)
@@ -112,6 +101,49 @@ class AccountFacebook extends Account implements IRequestDirectly
     }
 
     /**
+     * Return true if it has expenses report.
+     *
+     * @return bool
+     */
+    public function hasExpensesReport()
+    {
+        return true;
+    }
+
+    /**
+     * Get expenses report.
+     *
+     * @param mixed $accountId Facebook Ad Account Id.
+     * @param Date|null $dateFrom Date from.
+     * @param Date|null $dateTo Date to.
+     * @return Result
+     */
+    public function getExpensesReport($accountId, Date $dateFrom = null, Date $dateTo = null)
+    {
+        if (mb_substr($accountId, 0, 4) === 'act_') {
+            $accountId = mb_substr($accountId, 4);
+        }
+
+        $parameters = [
+            'ACCOUNT_ID' => $accountId,
+        ];
+        if ($dateFrom && $dateTo) {
+            $parameters['DATE_FROM'] = $dateFrom->format('Ymd');
+            $parameters['DATE_TO'] = $dateTo->format('Ymd');
+        }
+        $response = $this->getRequest()->send(
+            [
+                'methodName' => 'analytics.expenses.report',
+                'parameters' => $parameters,
+            ]
+        );
+
+        return $response;
+    }
+
+    /**
+     * Return true if it has public pages.
+     *
      * @return bool
      */
     public function hasPublicPages()
@@ -126,26 +158,30 @@ class AccountFacebook extends Account implements IRequestDirectly
      */
     public function getPublicPages($accountId)
     {
-        $response = $this->getRequest()->send([
-            'method' => 'GET',
-            'endpoint' => 'act_' . $accountId . '/promote_pages',
-            'fields' => [
-                'fields' => 'id,name,about,cover,emails,phone',
+        $response = $this->getRequest()->send(
+            [
+                'method' => 'GET',
+                'endpoint' => 'act_' . $accountId . '/promote_pages',
+                'fields' => [
+                    'fields' => 'id,name,about,cover,emails,phone',
+                ]
             ]
-        ]);
+        );
 
         if ($response->isSuccess()) {
             $pages = [];
             $data = $response->getData();
             foreach ($data as $page) {
-                $pages[] = new Page([
-                    'id' => $page['id'],
-                    'name' => $page['name'],
-                    'about' => $page['about'],
-                    'image' => $page['cover']['source'],
-                    'phone' => $page['phone'],
-                    'email' => $page['emails'],
-                ]);
+                $pages[] = new Page(
+                    [
+                        'id' => $page['id'],
+                        'name' => $page['name'],
+                        'about' => $page['about'],
+                        'image' => $page['cover']['source'],
+                        'phone' => $page['phone'],
+                        'email' => $page['emails'],
+                    ]
+                );
             }
             $response->setData($pages);
         }
@@ -170,40 +206,48 @@ class AccountFacebook extends Account implements IRequestDirectly
             $fields['emails'] = $params['email'];
         }
 
-        $response = $this->getRequest()->send([
-            'method' => 'POST',
-            'endpoint' => $publicPageId,
-            'fields' => $fields,
-        ]);
+        $response = $this->getRequest()->send(
+            [
+                'method' => 'POST',
+                'endpoint' => $publicPageId,
+                'fields' => $fields,
+            ]
+        );
         if (!$response->isSuccess()) {
             $result->addErrors($response->getErrors());
         }
 
-        $response = $this->getRequest()->send([
-            'method' => 'GET',
-            'endpoint' => $publicPageId . '/call_to_actions',
-            'fields' => [
-                'fields' => 'id,type'
-            ],
-        ]);
+        $response = $this->getRequest()->send(
+            [
+                'method' => 'GET',
+                'endpoint' => $publicPageId . '/call_to_actions',
+                'fields' => [
+                    'fields' => 'id,type'
+                ],
+            ]
+        );
         if ($response->isSuccess()) {
             $callToAction = $response->getData();
             if ($callToAction['type'] == 'CALL_NOW' && isset($fields['phone'])) {
-                $response = $this->getRequest()->send([
-                    'method' => 'POST',
-                    'endpoint' => $callToAction['id'],
-                    'fields' => [
-                        'intl_number_with_plus' => $fields['phone']
+                $response = $this->getRequest()->send(
+                    [
+                        'method' => 'POST',
+                        'endpoint' => $callToAction['id'],
+                        'fields' => [
+                            'intl_number_with_plus' => $fields['phone']
+                        ]
                     ]
-                ]);
+                );
             } elseif ($callToAction == 'EMAIL' && isset($fields['emails'])) {
-                $response = $this->getRequest()->send([
-                    'method' => 'POST',
-                    'endpoint' => $callToAction['id'],
-                    'fields' => [
-                        'email_address' => $fields['emails']
+                $response = $this->getRequest()->send(
+                    [
+                        'method' => 'POST',
+                        'endpoint' => $callToAction['id'],
+                        'fields' => [
+                            'email_address' => $fields['emails']
+                        ]
                     ]
-                ]);
+                );
             }
         }
 
@@ -267,11 +311,13 @@ class AccountFacebook extends Account implements IRequestDirectly
             'fields' => 'id,adset_id,campaign_id,creative',
         ];
 
-        $adsResult = $this->getRequest()->send([
-            'method' => 'GET',
-            'endpoint' => 'act_' . $accountId . '/ads',
-            'fields' => $fields,
-        ]);
+        $adsResult = $this->getRequest()->send(
+            [
+                'method' => 'GET',
+                'endpoint' => 'act_' . $accountId . '/ads',
+                'fields' => $fields,
+            ]
+        );
         if ($adsResult->isSuccess()) {
             $ads = $adsResult->getData();
             $result = [];
@@ -301,11 +347,13 @@ class AccountFacebook extends Account implements IRequestDirectly
                 'template_url_spec,thumbnail_url,title,url_tags,use_page_actor_override,video_id',
         ];
 
-        return $this->getRequest()->send([
-            'method' => 'GET',
-            'endpoint' => $creativeId,
-            'fields' => $fields,
-        ]);
+        return $this->getRequest()->send(
+            [
+                'method' => 'GET',
+                'endpoint' => $creativeId,
+                'fields' => $fields,
+            ]
+        );
     }
 
     /**
@@ -325,20 +373,24 @@ class AccountFacebook extends Account implements IRequestDirectly
             }
         }
 
-        $response = $this->getRequest()->send([
-            'method' => 'POST',
-            'endpoint' => 'act_' . $accountId . '/adcreatives',
-            'fields' => $creative,
-        ]);
+        $response = $this->getRequest()->send(
+            [
+                'method' => 'POST',
+                'endpoint' => 'act_' . $accountId . '/adcreatives',
+                'fields' => $creative,
+            ]
+        );
 
         if ($response->isSuccess()) {
             $data = $response->getData();
             if (isset($data['id'])) {
-                $response = $this->getRequest()->send([
-                    'method' => 'POST',
-                    'enpoint' => $adId,
-                    'fields' => ['creative' => $data['id']],
-                ]);
+                $response = $this->getRequest()->send(
+                    [
+                        'method' => 'POST',
+                        'enpoint' => $adId,
+                        'fields' => ['creative' => $data['id']],
+                    ]
+                );
             } else {
                 $response->addError(new Error('Could not find id after Ad Creative add'));
             }
@@ -440,13 +492,15 @@ class AccountFacebook extends Account implements IRequestDirectly
      */
     public function getAdSetIds($accountId)
     {
-        $response = $this->getRequest()->send([
-            'method' => 'GET',
-            'endpoint' => 'act_' . $accountId . '/adsets',
-            'fields' => [
-                'fields' => 'id,name,targeting'
-            ],
-        ]);
+        $response = $this->getRequest()->send(
+            [
+                'method' => 'GET',
+                'endpoint' => 'act_' . $accountId . '/adsets',
+                'fields' => [
+                    'fields' => 'id,name,targeting'
+                ],
+            ]
+        );
         if ($response->isSuccess()) {
             $data = $response->getData();
             $facebook = $instagram = [];
@@ -454,8 +508,12 @@ class AccountFacebook extends Account implements IRequestDirectly
                 $all[] = $adSet['id'];
                 if (
                     isset($adSet['targeting']) && is_array($adSet['targeting']) &&
-                    isset($adSet['targeting']['publisher_platforms']) && is_array($adSet['targeting']['publisher_platforms']) &&
-                    count($adSet['targeting']['publisher_platforms']) == 1 && reset($adSet['targeting']['publisher_platforms']) == 'instagram'
+                    isset($adSet['targeting']['publisher_platforms']) && is_array(
+                        $adSet['targeting']['publisher_platforms']
+                    ) &&
+                    count($adSet['targeting']['publisher_platforms']) == 1 && reset(
+                        $adSet['targeting']['publisher_platforms']
+                    ) == 'instagram'
                 ) {
                     $instagram[] = $adSet['id'];
                 } else {

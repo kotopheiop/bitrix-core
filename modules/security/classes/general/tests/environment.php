@@ -70,21 +70,30 @@ class CSecurityEnvironmentTest
         }
 
         $isPhpDoubleExtensionExecutable = false;
-        if (!$isPhpExecutable && self::isScriptExecutable("test.php.any", "<?php echo '{$uniqueString}'; ?>", $uniqueString)) {
+        if (!$isPhpExecutable && self::isScriptExecutable(
+                "test.php.any",
+                "<?php echo '{$uniqueString}'; ?>",
+                $uniqueString
+            )) {
             $isPhpDoubleExtensionExecutable = true;
             $this->addUnformattedDetailError($baseMessageKey . "_PHP_DOUBLE", CSecurityCriticalLevel::LOW);
         }
 
         $isPythonCgiExecutable = false;
-        if (self::isScriptExecutable("test.py", "print 'Content-type:text/html\\r\\n\\r\\n{$uniqueString}'", $uniqueString)) {
+        if (self::isScriptExecutable(
+            "test.py",
+            "print 'Content-type:text/html\\r\\n\\r\\n{$uniqueString}'",
+            $uniqueString
+        )) {
             $isPythonCgiExecutable = true;
             $this->addUnformattedDetailError($baseMessageKey . "_PY", CSecurityCriticalLevel::LOW);
         }
 
-        if ($isPhpExecutable || $isPhpDoubleExtensionExecutable || $isHtaccessOverrided || $isPythonCgiExecutable)
+        if ($isPhpExecutable || $isPhpDoubleExtensionExecutable || $isHtaccessOverrided || $isPythonCgiExecutable) {
             return self::STATUS_FAILED;
-        else
+        } else {
             return self::STATUS_PASSED;
+        }
     }
 
     /**
@@ -104,7 +113,10 @@ Body:----------ru--
 ";
 
         if (self::isScriptExecutable("test.var.jpg", $testFileContent, $testingText)) {
-            $this->addUnformattedDetailError("SECURITY_SITE_CHECKER_UPLOAD_NEGOTIATION", CSecurityCriticalLevel::MIDDLE);
+            $this->addUnformattedDetailError(
+                "SECURITY_SITE_CHECKER_UPLOAD_NEGOTIATION",
+                CSecurityCriticalLevel::MIDDLE
+            );
             return self::STATUS_FAILED;
         }
 
@@ -122,8 +134,9 @@ Body:----------ru--
         $uploadPathHtaccessFile = $uploadDir . 'test/.htaccess';
         $uploadPathTestUri = $uploadDir . 'test/test_notexist.php';
 
-        if (!CheckDirPath($_SERVER['DOCUMENT_ROOT'] . $uploadPathTestFile))
+        if (!CheckDirPath($_SERVER['DOCUMENT_ROOT'] . $uploadPathTestFile)) {
             return false;
+        }
 
         $testingText = "testing text here...";
         $htaccessText = <<<HTACCESS
@@ -157,27 +170,33 @@ HTACCESS;
      */
     protected function checkPhpUserAndGroup($minUid = self::MIN_UID, $minGid = self::MIN_GID)
     {
-        if (self::isRunOnWin())
+        if (self::isRunOnWin()) {
             return self::STATUS_PASSED;
+        }
 
         $uid = self::getCurrentUID();
         $uidCheckFailed = false;
-        if ($uid !== null && $uid < $minUid)
+        if ($uid !== null && $uid < $minUid) {
             $uidCheckFailed = true;
+        }
 
         $gid = self::getCurrentGID();
         $gidCheckFailed = false;
-        if ($gid !== null && $gid < $minGid)
+        if ($gid !== null && $gid < $minGid) {
             $gidCheckFailed = true;
+        }
 
         if ($uidCheckFailed || $gidCheckFailed) {
             $this->addUnformattedDetailError(
                 'SECURITY_SITE_CHECKER_PHP_PRIVILEGED_USER',
                 ($uid == 0 || $gid == 0 ? CSecurityCriticalLevel::HIGHT : CSecurityCriticalLevel::MIDDLE),
-                getMessage('SECURITY_SITE_CHECKER_PHP_PRIVILEGED_USER_ADDITIONAL', array(
-                    '#UID#' => static::formatUID($uid),
-                    '#GID#' => static::formatGID($gid)
-                ))
+                getMessage(
+                    'SECURITY_SITE_CHECKER_PHP_PRIVILEGED_USER_ADDITIONAL',
+                    array(
+                        '#UID#' => static::formatUID($uid),
+                        '#GID#' => static::formatGID($gid)
+                    )
+                )
             );
             return self::STATUS_FAILED;
         }
@@ -239,14 +258,15 @@ HTACCESS;
     protected function isScriptExecutable($pFileName, $pText, $pSearch)
     {
         $uploadPath = self::getUploadDir() . $pFileName;
-        if (!CheckDirPath($_SERVER['DOCUMENT_ROOT'] . $uploadPath))
+        if (!CheckDirPath($_SERVER['DOCUMENT_ROOT'] . $uploadPath)) {
             return false;
+        }
 
         $result = false;
         if (file_put_contents($_SERVER['DOCUMENT_ROOT'] . $uploadPath, $pText)) {
             $response = self::doRequestToLocalhost($uploadPath);
             if ($response) {
-                if ($response != $pText && strpos($response, $pSearch) !== false) {
+                if ($response != $pText && mb_strpos($response, $pSearch) !== false) {
                     $result = true;
                 }
             }
@@ -306,33 +326,39 @@ HTACCESS;
      */
     protected function checkCollectivePhpSession()
     {
-        if (self::isRunOnWin())
+        if (self::isRunOnWin()) {
             return self::STATUS_PASSED;
+        }
 
-        if (COption::GetOptionString("security", "session") == "Y")
+        if (COption::GetOptionString("security", "session") == "Y") {
             return self::STATUS_PASSED;
+        }
 
-        if (ini_get("session.save_handler") != "files")
+        if (ini_get("session.save_handler") != "files") {
             return self::STATUS_PASSED;
+        }
 
         $tmpDir = self::getTmpDir("session.save_path");
-        if (!$tmpDir)
+        if (!$tmpDir) {
             return self::STATUS_PASSED;
+        }
 
         $additionalInfo = "";
         $isFailed = false;
         $currentUID = self::getCurrentUID();
         $sessionSign = self::getSessionUniqID();
         foreach (glob($tmpDir . "/sess_*", GLOB_NOSORT) as $fileName) {
-
             if ($currentUID !== null) {
                 $fileOwner = fileowner($fileName);
                 if ($currentUID != $fileOwner) {
-                    $additionalInfo = getMessage("SECURITY_SITE_CHECKER_COLLECTIVE_SESSION_ADDITIONAL_OWNER", array(
-                        "#FILE#" => $fileName,
-                        "#FILE_ONWER#" => $fileOwner,
-                        "#CURRENT_OWNER#" => $currentUID,
-                    ));
+                    $additionalInfo = getMessage(
+                        "SECURITY_SITE_CHECKER_COLLECTIVE_SESSION_ADDITIONAL_OWNER",
+                        array(
+                            "#FILE#" => $fileName,
+                            "#FILE_ONWER#" => $fileOwner,
+                            "#CURRENT_OWNER#" => $currentUID,
+                        )
+                    );
                     $isFailed = true;
                     break;
                 }
@@ -340,12 +366,15 @@ HTACCESS;
 
             if (is_readable($fileName)) {
                 $fileContent = file_get_contents($fileName);
-                if (strpos($fileContent, $sessionSign) === false) {
-                    $additionalInfo = getMessage("SECURITY_SITE_CHECKER_COLLECTIVE_SESSION_ADDITIONAL_SIGN", array(
-                        "#FILE#" => $fileName,
-                        "#FILE_CONTENT#" => htmlspecialcharsbx(substr($fileContent, 0, 1024)),
-                        "#SIGN#" => $sessionSign
-                    ));
+                if (mb_strpos($fileContent, $sessionSign) === false) {
+                    $additionalInfo = getMessage(
+                        "SECURITY_SITE_CHECKER_COLLECTIVE_SESSION_ADDITIONAL_SIGN",
+                        array(
+                            "#FILE#" => $fileName,
+                            "#FILE_CONTENT#" => htmlspecialcharsbx(mb_substr($fileContent, 0, 1024)),
+                            "#SIGN#" => $sessionSign
+                        )
+                    );
                     $isFailed = true;
                     break;
                 }
@@ -370,24 +399,29 @@ HTACCESS;
      */
     protected function checkPhpSessionDir()
     {
-        if (self::isRunOnWin())
+        if (self::isRunOnWin()) {
             return self::STATUS_PASSED;
+        }
 
-        if (COption::GetOptionString("security", "session") == "Y")
+        if (COption::GetOptionString("security", "session") == "Y") {
             return self::STATUS_PASSED;
+        }
 
-        if (ini_get("session.save_handler") != "files")
+        if (ini_get("session.save_handler") != "files") {
             return self::STATUS_PASSED;
+        }
 
         $tmpDir = self::getTmpDir("session.save_path");
-        if (!$tmpDir)
+        if (!$tmpDir) {
             return self::STATUS_PASSED;
+        }
 
         $dir = $tmpDir;
         while ($dir && $dir != '/') {
             $perms = static::getFilePerm($dir);
-            if (($perms & 0x0001) === 0)
+            if (($perms & 0x0001) === 0) {
                 return self::STATUS_PASSED;
+            }
 
             $dir = dirname($dir);
         }
@@ -395,10 +429,13 @@ HTACCESS;
         $this->addUnformattedDetailError(
             "SECURITY_SITE_CHECKER_SESSION_DIR",
             CSecurityCriticalLevel::HIGHT,
-            getMessage("SECURITY_SITE_CHECKER_SESSION_DIR_ADDITIONAL", array(
-                "#DIR#" => $tmpDir,
-                "#PERMS#" => self::formatFilePermissions(static::getFilePerm($tmpDir)),
-            ))
+            getMessage(
+                "SECURITY_SITE_CHECKER_SESSION_DIR_ADDITIONAL",
+                array(
+                    "#DIR#" => $tmpDir,
+                    "#PERMS#" => self::formatFilePermissions(static::getFilePerm($tmpDir)),
+                )
+            )
         );
 
         return self::STATUS_FAILED;
@@ -538,13 +575,16 @@ HTACCESS;
         $documentRoot = self::getParam("DOCUMENT_ROOT", $_SERVER["DOCUMENT_ROOT"]);
         $documentRoot = $io->CombinePath($documentRoot);
 
-        if (strpos($path, $documentRoot) === 0) {
+        if (mb_strpos($path, $documentRoot) === 0) {
             $this->addUnformattedDetailError(
                 "SECURITY_SITE_CHECKER_BITRIX_TMP_DIR",
                 CSecurityCriticalLevel::MIDDLE,
-                getMessage("SECURITY_SITE_CHECKER_BITRIX_TMP_DIR_ADDITIONAL", array(
-                    "#DIR#" => $path
-                ))
+                getMessage(
+                    "SECURITY_SITE_CHECKER_BITRIX_TMP_DIR_ADDITIONAL",
+                    array(
+                        "#DIR#" => $path
+                    )
+                )
             );
 
             return static::STATUS_FAILED;

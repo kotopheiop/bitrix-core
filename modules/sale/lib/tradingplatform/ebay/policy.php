@@ -24,30 +24,35 @@ class Policy
 
     public function __construct($authToken, $siteId)
     {
-        if (!strlen($authToken))
+        if ($authToken == '') {
             throw new ArgumentNullException("authToken");
+        }
 
-        if (!strlen($siteId))
+        if ($siteId == '') {
             throw new ArgumentNullException("siteId");
+        }
 
         $this->authToken = $authToken;
         $this->siteId = $siteId;
 
-        $this->http = new HttpClient(array(
-            "version" => "1.1",
-            "socketTimeout" => 30,
-            "streamTimeout" => 30,
-            "redirect" => true,
-            "redirectMax" => 5,
-        ));
+        $this->http = new HttpClient(
+            array(
+                "version" => "1.1",
+                "socketTimeout" => 30,
+                "streamTimeout" => 30,
+                "redirect" => true,
+                "redirectMax" => 5,
+            )
+        );
     }
 
     public function getItemsList()
     {
         static $result = null;
 
-        if ($result === null)
+        if ($result === null) {
             $result = \Bitrix\Sale\TradingPlatform\Xml2Array::convert($this->getItems());
+        }
 
         return $result;
     }
@@ -60,20 +65,23 @@ class Policy
     {
         $policiesList = $this->getItemsList();
 
-        if (empty($policiesList))
+        if (empty($policiesList)) {
             return array();
+        }
 
-        if ($type == self::TYPE_RETURN)
+        if ($type == self::TYPE_RETURN) {
             $policyBranch = $policiesList["returnPolicyProfileList"]["ReturnPolicyProfile"];
-        elseif ($type == self::TYPE_PAYMENT)
+        } elseif ($type == self::TYPE_PAYMENT) {
             $policyBranch = $policiesList["paymentProfileList"]["PaymentProfile"];
-        elseif ($type == self::TYPE_SHIPPING)
+        } elseif ($type == self::TYPE_SHIPPING) {
             $policyBranch = $policiesList["shippingPolicyProfile"]["ShippingPolicyProfile"];
-        else
+        } else {
             throw new ArgumentOutOfRangeException("type");
+        }
 
-        if (empty($policyBranch) || !is_array($policyBranch))
+        if (empty($policyBranch) || !is_array($policyBranch)) {
             return array();
+        }
 
         $result = array();
         $policies = Xml2Array::normalize($policyBranch);
@@ -81,9 +89,9 @@ class Policy
         foreach ($policies as $policy) {
             if (
                 isset($policy["profileName"])
-                && strlen($policy["profileName"]) > 0
+                && $policy["profileName"] <> ''
                 && isset($policy["profileId"])
-                && strlen($policy["profileId"]) > 0
+                && $policy["profileId"] <> ''
             ) {
                 $result[$policy["profileId"]] = $policy["profileName"];
             }
@@ -111,8 +119,9 @@ class Policy
         $this->http->setHeader("X-EBAY-SOA-RESPONSE-DATA-FORMAT", "XML");
         $this->http->setHeader("X-EBAY-SOA-SECURITY-TOKEN", $this->authToken);
 
-        if (strtolower(SITE_CHARSET) != 'utf-8')
+        if (mb_strtolower(SITE_CHARSET) != 'utf-8') {
             $data = Encoding::convertEncodingArray($data, SITE_CHARSET, 'UTF-8');
+        }
 
         $result = $this->http->post(self::URL, $data);
         $errors = $this->http->getError();
@@ -120,18 +129,27 @@ class Policy
         if (!$result && !empty($errors)) {
             $strError = "";
 
-            foreach ($errors as $errorCode => $errMes)
+            foreach ($errors as $errorCode => $errMes) {
                 $strError .= $errorCode . ": " . $errMes;
+            }
 
             Ebay::log(Logger::LOG_LEVEL_INFO, "EBAY_POLICY_REQUEST_ERROR", $operationName, $strError, $this->siteId);
         } else {
             $status = $this->http->getStatus();
 
-            if ($status != 200)
-                Ebay::log(Logger::LOG_LEVEL_INFO, "EBAY_POLICY_REQUEST_HTTP_ERROR", $operationName, 'HTTP error code: ' . $status, $this->siteId);
+            if ($status != 200) {
+                Ebay::log(
+                    Logger::LOG_LEVEL_INFO,
+                    "EBAY_POLICY_REQUEST_HTTP_ERROR",
+                    $operationName,
+                    'HTTP error code: ' . $status,
+                    $this->siteId
+                );
+            }
 
-            if (strtolower(SITE_CHARSET) != 'utf-8')
+            if (mb_strtolower(SITE_CHARSET) != 'utf-8') {
                 $result = Encoding::convertEncodingArray($result, 'UTF-8', SITE_CHARSET);
+            }
         }
 
         return $result;

@@ -1,13 +1,14 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 CUtil::InitJSCore(array('ajax'));
 CModule::IncludeModule("iblock");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/iblock/prolog.php");
 IncludeModuleLangFile(__FILE__);
 
-$IBLOCK_ID = IntVal($IBLOCK_ID);
-$WAY = IntVal($WAY);
-$STEP = IntVal($STEP);
+$IBLOCK_ID = intval($IBLOCK_ID);
+$WAY = intval($WAY);
+$STEP = intval($STEP);
 $INTERVAL = 20;//sec TODO make setting?
 $isSidePanel = (isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y");
 
@@ -59,31 +60,33 @@ if (!CIBlockRights::UserHasRightTo($IBLOCK_ID, $IBLOCK_ID, "iblock_edit") || (!c
     $rsIBlock = CIBlock::GetList(array(), array("ID" => $IBLOCK_ID, "CHECK_PERMISSIONS" => "N"));
     if ($arIBlock = $rsIBlock->Fetch()) {
         if ($arIBlock["VERSION"] == 1) {
-            if ($STEP != 0 && $WAY != 12)
+            if ($STEP != 0 && $WAY != 12) {
                 $arErrors[] = GetMessage("IBCONV_WRONG_CONVERSION");
-            elseif ($STEP == 1)
+            } elseif ($STEP == 1) {
                 $STEP = 2;
-            elseif ($STEP == 2)
+            } elseif ($STEP == 2) {
                 $STEP = FirstStep12($arIBlock);
-            elseif ($STEP == 3)
+            } elseif ($STEP == 3) {
                 $STEP = NextStep12($arIBlock);
-            elseif ($STEP == 4)
+            } elseif ($STEP == 4) {
                 $STEP = 5;
-            elseif ($STEP == 5)
+            } elseif ($STEP == 5) {
                 $STEP = LastStep12($arIBlock);
+            }
         } elseif ($arIBlock["VERSION"] == 2) {
-            if ($STEP != 0 && $WAY != 21)
+            if ($STEP != 0 && $WAY != 21) {
                 $arErrors[] = GetMessage("IBCONV_WRONG_CONVERSION");
-            elseif ($STEP == 1)
+            } elseif ($STEP == 1) {
                 $STEP = 2;
-            elseif ($STEP == 2)
+            } elseif ($STEP == 2) {
                 $STEP = FirstStep21($arIBlock);
-            elseif ($STEP == 3)
+            } elseif ($STEP == 3) {
                 $STEP = NextStep21($arIBlock);
-            elseif ($STEP == 4)
+            } elseif ($STEP == 4) {
                 $STEP = 5;
-            elseif ($STEP == 5)
+            } elseif ($STEP == 5) {
                 $STEP = LastStep21($arIBlock);
+            }
         } else {
             $arErrors[] = GetMessage("IBCONV_WRONG_VERSION");
         }
@@ -92,26 +95,44 @@ if (!CIBlockRights::UserHasRightTo($IBLOCK_ID, $IBLOCK_ID, "iblock_edit") || (!c
     }
 }
 
-foreach ($arErrors as $strError)
+foreach ($arErrors as $strError) {
     CAdminMessage::ShowMessage($strError);
-foreach ($arMessages as $strMessage)
+}
+foreach ($arMessages as $strMessage) {
     CAdminMessage::ShowMessage(array("MESSAGE" => $strMessage, "TYPE" => "OK"));
+}
 
 if (count($arErrors) == 0):?>
     <? if ($STEP == 0):?>
-        <p>
-            <span class="required"><?= GetMessage("IBCONV_ATTENTION") ?></span> <?= GetMessage("IBCONV_WARNING_MESSAGE", array("#IBLOCK_NAME#" => htmlspecialcharsbx($arIBlock["NAME"]))) ?>
+        <p><span class="required"><?= GetMessage("IBCONV_ATTENTION") ?></span> <?= GetMessage(
+                "IBCONV_WARNING_MESSAGE",
+                array(
+                    "#IBLOCK_NAME#" => htmlspecialcharsbx(
+                        $arIBlock["NAME"]
+                    )
+                )
+            ) ?>
             <input type="button" name="START" value="<?= GetMessage("IBCONV_MOVE") ?>"
                    OnClick="DoNext(<?= $arIBlock["VERSION"] == 2 ? 21 : 12 ?>,1)">
             <? elseif ($STEP >= 1 && $STEP <= 5): ?>
             <? if ($WAY == 12): ?>
     <p>
         <ul>
-            <li><?= $STEP == 2 ? '<b>' : '' ?><?= GetMessage("IBCONV_CREATE_TABLE") ?><?= $STEP == 2 ? '</b>' : '' ?></li>
+            <li><?= $STEP == 2 ? '<b>' : '' ?><?= GetMessage(
+                    "IBCONV_CREATE_TABLE"
+                ) ?><?= $STEP == 2 ? '</b>' : '' ?></li>
             <? if (is_array($_SESSION["BX_IBLOCK_CONV"])):?>
-                <li><?= $STEP == 3 ? '<b>' : '' ?><?= GetMessage("IBCONV_PROGRESS", array("#DONE#" => $_SESSION["BX_IBLOCK_CONV"]["DONE"], "#TODO#" => $_SESSION["BX_IBLOCK_CONV"]["TODO"])) ?><?= $STEP == 3 ? '</b>' : '' ?></li>
+                <li><?= $STEP == 3 ? '<b>' : '' ?><?= GetMessage(
+                        "IBCONV_PROGRESS",
+                        array(
+                            "#DONE#" => $_SESSION["BX_IBLOCK_CONV"]["DONE"],
+                            "#TODO#" => $_SESSION["BX_IBLOCK_CONV"]["TODO"]
+                        )
+                    ) ?><?= $STEP == 3 ? '</b>' : '' ?></li>
             <? else:?>
-                <li><?= $STEP == 3 ? '<b>' : '' ?><?= GetMessage("IBCONV_INPROGRESS") ?><?= $STEP == 3 ? '</b>' : '' ?></li>
+                <li><?= $STEP == 3 ? '<b>' : '' ?><?= GetMessage(
+                        "IBCONV_INPROGRESS"
+                    ) ?><?= $STEP == 3 ? '</b>' : '' ?></li>
             <?endif; ?>
             <li><?= $STEP == 5 ? '<b>' : '' ?><?= GetMessage("IBCONV_FINALIZE") ?><?= $STEP == 5 ? '</b>' : '' ?></li>
         </ul></p>
@@ -120,9 +141,17 @@ if (count($arErrors) == 0):?>
         <ul>
             <li><?= $STEP == 2 ? '<b>' : '' ?><?= GetMessage("IBCONV_PREPARE") ?><?= $STEP == 2 ? '</b>' : '' ?></li>
             <? if (is_array($_SESSION["BX_IBLOCK_CONV"])):?>
-                <li><?= $STEP == 3 ? '<b>' : '' ?><?= GetMessage("IBCONV_PROGRESS", array("#DONE#" => $_SESSION["BX_IBLOCK_CONV"]["DONE"], "#TODO#" => $_SESSION["BX_IBLOCK_CONV"]["TODO"])) ?><?= $STEP == 3 ? '</b>' : '' ?></li>
+                <li><?= $STEP == 3 ? '<b>' : '' ?><?= GetMessage(
+                        "IBCONV_PROGRESS",
+                        array(
+                            "#DONE#" => $_SESSION["BX_IBLOCK_CONV"]["DONE"],
+                            "#TODO#" => $_SESSION["BX_IBLOCK_CONV"]["TODO"]
+                        )
+                    ) ?><?= $STEP == 3 ? '</b>' : '' ?></li>
             <? else:?>
-                <li><?= $STEP == 3 ? '<b>' : '' ?><?= GetMessage("IBCONV_INPROGRESS") ?><?= $STEP == 3 ? '</b>' : '' ?></li>
+                <li><?= $STEP == 3 ? '<b>' : '' ?><?= GetMessage(
+                        "IBCONV_INPROGRESS"
+                    ) ?><?= $STEP == 3 ? '</b>' : '' ?></li>
             <?endif; ?>
             <li><?= $STEP == 5 ? '<b>' : '' ?><?= GetMessage("IBCONV_FINALIZE2") ?><?= $STEP == 5 ? '</b>' : '' ?></li>
         </ul></p>
@@ -131,21 +160,24 @@ if (count($arErrors) == 0):?>
     <? else:?>
         <p><?= GetMessage("IBCONV_FINISHED") ?></p>
         <? if ($isSidePanel): ?>
-            <p onclick="top.BX.onCustomEvent('SidePanel:close');"><a
-                        href="javascript:void(0)"><?= GetMessage("IBCONV_FINISHED_HREF") ?></a></p>
+            <p onclick="top.BX.onCustomEvent('SidePanel:close');"><a href="javascript:void(0)"><?= GetMessage(
+                        "IBCONV_FINISHED_HREF"
+                    ) ?></a></p>
         <? else: ?>
             <p>
-                <a href="iblock_edit.php?ID=<?= $arIBlock["ID"] ?>&amp;type=<?= $arIBlock["IBLOCK_TYPE_ID"] ?>&amp;lang=<?= LANG ?>&amp;admin=Y"><?= GetMessage("IBCONV_FINISHED_HREF") ?></a>
-            </p>
+                <a href="iblock_edit.php?ID=<?= $arIBlock["ID"] ?>&amp;type=<?= $arIBlock["IBLOCK_TYPE_ID"] ?>&amp;lang=<?= LANG ?>&amp;admin=Y"><?= GetMessage(
+                        "IBCONV_FINISHED_HREF"
+                    ) ?></a></p>
         <? endif; ?>
     <?endif; ?>
 <?endif; ?>
 <?
 $lAdmin->EndCustomContent();
-if ($STEP == 0)
+if ($STEP == 0) {
     require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
-else
+} else {
     require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_js.php");
+}
 ?>
     <script>
         function DoNext(way, step) {
@@ -215,16 +247,19 @@ function FirstStep12($arIBlock)
         while ($ar = $rs->Fetch()) {
             $id = intval($ar["ID"]);
 
-            if ($ar["MULTIPLE"] == "Y")
+            if ($ar["MULTIPLE"] == "Y") {
                 $arMultiple[$id] = $id;
-            else
+            } else {
                 $arSingle[$id] = $id;
+            }
 
-            if ($ar["PROPERTY_TYPE"] == "N")
+            if ($ar["PROPERTY_TYPE"] == "N") {
                 $arNumber[$id] = $id;
+            }
 
-            if ($LAST_CONV_ELEMENT == 0)
+            if ($LAST_CONV_ELEMENT == 0) {
                 $obIBlockProperty->_Add($id, $ar);
+            }
         }
         $strSql = "
 			SELECT
@@ -248,8 +283,9 @@ function FirstStep12($arIBlock)
         } else {
             return 4;//nothing todo
         }
-    } else
+    } else {
         $arErrors[] = GetMessage("IBCONV_TABLE_CREATION_ERROR");
+    }
     return 3;
 }
 
@@ -278,8 +314,9 @@ function NextStep12($arIBlock)
 			(" . $ELEMENT_ID . ")
 		";
         $rs = $DB->Query($strSql, true);
-        if (!$rs)
+        if (!$rs) {
             continue;
+        }
 
         if (count($_SESSION["BX_IBLOCK_CONV"]["arMultiple"]) > 0) {
             $strSql = "
@@ -307,8 +344,14 @@ function NextStep12($arIBlock)
                 $arFields["DESCRIPTION_" . $ar["IBLOCK_PROPERTY_ID"]] = $ar["DESCRIPTION"];
             }
             if (count($arFields) > 0) {
-                $strUpdate = $DB->PrepareUpdateBind("b_iblock_element_prop_s" . $arIBlock["ID"], $arFields, "iblock", false, $arBinds);
-                if (strlen($strUpdate) > 0) {
+                $strUpdate = $DB->PrepareUpdateBind(
+                    "b_iblock_element_prop_s" . $arIBlock["ID"],
+                    $arFields,
+                    "iblock",
+                    false,
+                    $arBinds
+                );
+                if ($strUpdate <> '') {
                     $strSql = "UPDATE b_iblock_element_prop_s" . $arIBlock["ID"] . " SET " . $strUpdate . " WHERE IBLOCK_ELEMENT_ID=" . $ELEMENT_ID;
                     $DB->QueryBind($strSql, $arBinds);
                 }
@@ -325,17 +368,20 @@ function NextStep12($arIBlock)
         $DB->Query("UPDATE b_iblock SET LAST_CONV_ELEMENT = " . $ELEMENT_ID . " WHERE ID = " . $arIBlock["ID"]);
 
         $i++;
-        if ((getmicrotime() - $t) > $INTERVAL)
+        if ((getmicrotime() - $t) > $INTERVAL) {
             break;
+        }
     }
     $_SESSION["BX_IBLOCK_CONV"]["DONE"] += $i;
-    if ($_SESSION["BX_IBLOCK_CONV"]["TODO"] < $_SESSION["BX_IBLOCK_CONV"]["DONE"])
+    if ($_SESSION["BX_IBLOCK_CONV"]["TODO"] < $_SESSION["BX_IBLOCK_CONV"]["DONE"]) {
         $_SESSION["BX_IBLOCK_CONV"]["TODO"] = $_SESSION["BX_IBLOCK_CONV"]["DONE"];
+    }
     //$_SESSION["BX_IBLOCK_CONV"]["STAT"][]=$i;$arMessages[]=implode(', ',$_SESSION["BX_IBLOCK_CONV"]["STAT"]);
-    if ($arID)
+    if ($arID) {
         return 3;
-    else
+    } else {
         return 4;
+    }
 }
 
 function LastStep12($arIBlock)
@@ -370,13 +416,15 @@ function FirstStep21($arIBlock)
     while ($ar = $rs->Fetch()) {
         $id = intval($ar["ID"]);
 
-        if ($ar["MULTIPLE"] == "Y")
+        if ($ar["MULTIPLE"] == "Y") {
             $arMultiple[$id] = $id;
-        else
+        } else {
             $arSingle[$id] = $id;
+        }
 
-        if ($ar["PROPERTY_TYPE"] == "N")
+        if ($ar["PROPERTY_TYPE"] == "N") {
             $arNumber[$id] = $id;
+        }
     }
     $strSql = "
 		SELECT
@@ -415,8 +463,8 @@ function NextStep21($arIBlock)
         $ELEMENT_ID = $arElement["IBLOCK_ELEMENT_ID"];
 
         foreach ($arElement as $key => $value) {
-            if (substr($key, 0, 9) == "PROPERTY_" && strlen($value) > 0) {
-                $ID = intval(substr($key, 9));//TODO make conversion and check forsql and bind!!!!
+            if (mb_substr($key, 0, 9) == "PROPERTY_" && $value <> '') {
+                $ID = intval(mb_substr($key, 9));//TODO make conversion and check forsql and bind!!!!
 
                 if ($ID > 0 && array_key_exists($ID, $_SESSION["BX_IBLOCK_CONV"]["arSingle"])) {
                     $arFields = array(
@@ -428,7 +476,10 @@ function NextStep21($arIBlock)
                         "DESCRIPTION" => $arElement["DESCRIPTION_" . $ID],
                     );
                     $arInsert = $DB->PrepareInsert("b_iblock_element_property", $arFields);
-                    $rs = $DB->QueryBind("INSERT INTO b_iblock_element_property (" . $arInsert[0] . ")VALUES(" . $arInsert[1] . ")", array("DESCRIPTION" => $arElement["DESCRIPTION_" . $ID]));
+                    $rs = $DB->QueryBind(
+                        "INSERT INTO b_iblock_element_property (" . $arInsert[0] . ")VALUES(" . $arInsert[1] . ")",
+                        array("DESCRIPTION" => $arElement["DESCRIPTION_" . $ID])
+                    );
                 }
             }
         }
@@ -459,17 +510,20 @@ function NextStep21($arIBlock)
         $DB->Query("UPDATE b_iblock SET LAST_CONV_ELEMENT = " . $ELEMENT_ID . " WHERE ID = " . $arIBlock["ID"]);
 
         $i++;
-        if ((getmicrotime() - $t) > $INTERVAL)
+        if ((getmicrotime() - $t) > $INTERVAL) {
             break;
+        }
     }
     $_SESSION["BX_IBLOCK_CONV"]["DONE"] += $i;
-    if ($_SESSION["BX_IBLOCK_CONV"]["TODO"] < $_SESSION["BX_IBLOCK_CONV"]["DONE"])
+    if ($_SESSION["BX_IBLOCK_CONV"]["TODO"] < $_SESSION["BX_IBLOCK_CONV"]["DONE"]) {
         $_SESSION["BX_IBLOCK_CONV"]["TODO"] = $_SESSION["BX_IBLOCK_CONV"]["DONE"];
+    }
     //$_SESSION["BX_IBLOCK_CONV"]["STAT"][]=$i;$arMessages[]=implode(', ',$_SESSION["BX_IBLOCK_CONV"]["STAT"]);
-    if ($arElement)
+    if ($arElement) {
         return 3;
-    else
+    } else {
         return 4;
+    }
 }
 
 function LastStep21($arIBlock)
@@ -487,7 +541,8 @@ function LastStep21($arIBlock)
 
 
 $lAdmin->DisplayList();
-if ($STEP == 0)
+if ($STEP == 0) {
     require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_admin.php");
-else
+} else {
     require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/epilog_admin_js.php");
+}

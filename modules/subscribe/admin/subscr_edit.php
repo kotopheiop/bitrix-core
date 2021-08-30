@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/subscribe/include.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/subscribe/prolog.php");
@@ -7,12 +8,23 @@ IncludeModuleLangFile(__FILE__);
 define("HELP_FILE", "add_subscriber.php");
 
 $POST_RIGHT = $APPLICATION->GetGroupRight("subscribe");
-if ($POST_RIGHT == "D")
+if ($POST_RIGHT == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $aTabs = array(
-    array("DIV" => "edit1", "TAB" => GetMessage("subscr_tab_subscriber"), "ICON" => "main_user_edit", "TITLE" => GetMessage("subscr_tab_subscriber_title")),
-    array("DIV" => "edit2", "TAB" => GetMessage("subscr_tab_subscription"), "ICON" => "main_user_edit", "TITLE" => GetMessage("subscr_tab_subscription_title")),
+    array(
+        "DIV" => "edit1",
+        "TAB" => GetMessage("subscr_tab_subscriber"),
+        "ICON" => "main_user_edit",
+        "TITLE" => GetMessage("subscr_tab_subscriber_title")
+    ),
+    array(
+        "DIV" => "edit2",
+        "TAB" => GetMessage("subscr_tab_subscription"),
+        "ICON" => "main_user_edit",
+        "TITLE" => GetMessage("subscr_tab_subscription_title")
+    ),
 );
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
@@ -40,13 +52,18 @@ if ($REQUEST_METHOD == "POST" && ($save != "" || $apply != "") && $POST_RIGHT >=
     }
 
     if ($res) {
-        if ($apply != "")
-            LocalRedirect("/bitrix/admin/subscr_edit.php?ID=" . $ID . "&mess=ok&lang=" . LANG . "&" . $tabControl->ActiveTabParam());
-        else
+        if ($apply != "") {
+            LocalRedirect(
+                "/bitrix/admin/subscr_edit.php?ID=" . $ID . "&mess=ok&lang=" . LANG . "&" . $tabControl->ActiveTabParam(
+                )
+            );
+        } else {
             LocalRedirect("/bitrix/admin/subscr_admin.php?lang=" . LANG);
+        }
     } else {
-        if ($e = $APPLICATION->GetException())
+        if ($e = $APPLICATION->GetException()) {
             $message = new CAdminMessage(GetMessage("subs_save_error"), $e);
+        }
         $bVarsFromForm = true;
     }
 }
@@ -58,12 +75,14 @@ $str_USER_ID = 0;
 
 if ($ID > 0) {
     $subscr = CSubscription::GetByID($ID);
-    if (!$subscr->ExtractFields("str_"))
+    if (!$subscr->ExtractFields("str_")) {
         $ID = 0;
+    }
 }
 
-if ($bVarsFromForm)
+if ($bVarsFromForm) {
     $DB->InitTableVarsForEdit("b_subscription", "", "str_");
+}
 
 $APPLICATION->SetTitle(($ID > 0 ? GetMessage("subscr_title_edit") . $ID : GetMessage("subscr_title_add")));
 
@@ -88,7 +107,10 @@ if ($ID > 0) {
     $aMenu[] = array(
         "TEXT" => GetMessage("subscr_del_text"),
         "TITLE" => GetMessage("subscr_mnu_del"),
-        "LINK" => "javascript:if(confirm('" . GetMessage("subscr_mnu_del_conf") . "'))window.location='subscr_admin.php?ID=" . $ID . "&action=delete&lang=" . LANG . "&" . bitrix_sessid_get() . "';",
+        "LINK" => "javascript:if(confirm('" . GetMessage(
+                "subscr_mnu_del_conf"
+            ) . "'))window.location='subscr_admin.php?ID=" . $ID . "&action=delete&lang=" . LANG . "&" . bitrix_sessid_get(
+            ) . "';",
         "ICON" => "btn_delete",
     );
 }
@@ -97,10 +119,12 @@ $context->Show();
 ?>
 
 <?
-if ($_REQUEST["mess"] == "ok" && $ID > 0)
+if ($_REQUEST["mess"] == "ok" && $ID > 0) {
     CAdminMessage::ShowMessage(array("MESSAGE" => GetMessage("subs_saved"), "TYPE" => "OK"));
-if ($message)
+}
+if ($message) {
     echo $message->Show();
+}
 ?>
 
     <form method="POST" action="<? echo $APPLICATION->GetCurPage() ?>" enctype="multipart/form-data" name="subscrform">
@@ -154,10 +178,21 @@ if ($message)
                 if ($ID > 0 && $str_USER_ID > 0) {
                     $rsUser = CUser::GetByID($str_USER_ID);
                     $arUser = $rsUser->GetNext();
-                    if ($arUser)
+                    if ($arUser) {
                         $sUser = "[<a href=\"user_edit.php?ID=" . $arUser["ID"] . "&amp;lang=" . LANG . "\">" . $arUser["ID"] . "</a>] (" . $arUser["LOGIN"] . ") " . $arUser["NAME"] . " " . $arUser["LAST_NAME"];
+                    }
                 }
-                echo FindUserID("USER_ID", ($str_USER_ID > 0 ? $str_USER_ID : ""), $sUser, "subscrform", "10", "", " ... ", "", "");
+                echo FindUserID(
+                    "USER_ID",
+                    ($str_USER_ID > 0 ? $str_USER_ID : ""),
+                    $sUser,
+                    "subscrform",
+                    "10",
+                    "",
+                    " ... ",
+                    "",
+                    ""
+                );
 
                 if ((integer)$str_USER_ID == 0):
                     ?>
@@ -206,18 +241,24 @@ if ($message)
             <td width="60%">
                 <div class="adm-list">
                     <?
-                    if ($bVarsFromForm)
+                    if ($bVarsFromForm) {
                         $aSubscrRub = is_array($RUB_ID) ? $RUB_ID : array();
-                    else
+                    } else {
                         $aSubscrRub = CSubscription::GetRubricArray($ID);
+                    }
 
-                    $rsRubrics = CRubric::GetList(array("LID" => "ASC", "SORT" => "ASC", "NAME" => "ASC"), array("ACTIVE" => "Y"));
+                    $rsRubrics = CRubric::GetList(
+                        array("LID" => "ASC", "SORT" => "ASC", "NAME" => "ASC"),
+                        array("ACTIVE" => "Y")
+                    );
                     while ($arRubric = $rsRubrics->GetNext()):?>
                         <div class="adm-list-item">
                             <div class="adm-list-control"><input type="checkbox" id="RUB_ID_<? echo $arRubric["ID"] ?>"
                                                                  name="RUB_ID[]"
-                                                                 value="<? echo $arRubric["ID"] ?>"<? if (in_array($arRubric["ID"], $aSubscrRub)) echo " checked" ?>>
-                            </div>
+                                                                 value="<? echo $arRubric["ID"] ?>"<? if (in_array(
+                                    $arRubric["ID"],
+                                    $aSubscrRub
+                                )) echo " checked" ?>></div>
                             <div class="adm-list-label"><label
                                         for="RUB_ID_<? echo $arRubric["ID"] ?>"><? echo "[" . $arRubric["LID"] . "] " . $arRubric["NAME"] ?></label>
                             </div>

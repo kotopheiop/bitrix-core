@@ -36,11 +36,13 @@ class StreamCollection extends ArrayObject implements Collection
     public function offsetSet($offset, $value)
     {
         if (!$value instanceof Stream) {
-            throw new InvalidArgumentException(sprintf(
-                'Argument 2 passed to %s must be a \Protobuf\Stream, %s given',
-                __METHOD__,
-                is_object($value) ? get_class($value) : gettype($value)
-            ));
+            throw new InvalidArgumentException(
+                sprintf(
+                    'Argument 2 passed to %s must be a \Protobuf\Stream, %s given',
+                    __METHOD__,
+                    is_object($value) ? get_class($value) : gettype($value)
+                )
+            );
         }
 
         parent::offsetSet($offset, $value);

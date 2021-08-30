@@ -11,7 +11,9 @@
  * @global array $arBanners
  */
 
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+}
 
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\Text\Converter;
@@ -49,8 +51,17 @@ if (count($bannerList) > 0) {
                 if (isset($bannerList[$campaignId])) {
                     ?>
                     <div class="adv-campaign-item">
-                        <a href="/bitrix/admin/seo_search_yandex_direct_edit.php?lang=<?= LANGUAGE_ID ?>&ID=<?= $campaignId ?>&back_url=<?= Converter::getHtmlConverter()->encode(urlencode($APPLICATION->GetCurPageParam('form_element_' . $iblockElementInfo["IBLOCK"]["ID"] . '_active_tab=seo_adv_seo_adv', array('form_element_' . $iblockElementInfo["IBLOCK"]["ID"] . '_active_tab')))) ?>"
-                           class="adv-campaign-link"><?= Converter::getHtmlConverter()->encode($bannerList[$campaignId]['NAME']); ?></a>
+                        <a href="/bitrix/admin/seo_search_yandex_direct_edit.php?lang=<?= LANGUAGE_ID ?>&ID=<?= $campaignId ?>&back_url=<?= Converter::getHtmlConverter(
+                        )->encode(
+                            urlencode(
+                                $APPLICATION->GetCurPageParam(
+                                    'form_element_' . $iblockElementInfo["IBLOCK"]["ID"] . '_active_tab=seo_adv_seo_adv',
+                                    array('form_element_' . $iblockElementInfo["IBLOCK"]["ID"] . '_active_tab')
+                                )
+                            )
+                        ) ?>" class="adv-campaign-link"><?= Converter::getHtmlConverter()->encode(
+                                $bannerList[$campaignId]['NAME']
+                            ); ?></a>
                         <div class="adv-campaign-list">
                             <?
                             foreach ($campaignBanners as $banner) {
@@ -58,12 +69,22 @@ if (count($bannerList) > 0) {
                                 <div class="adv-banner-item">
                                     <input type="hidden" name="seo_yandex_banner_id[]"
                                            value="<?= $banner['BANNER_ID'] ?>"/>
-                                    <a href="/bitrix/admin/seo_search_yandex_direct_banner_edit.php?lang=<?= LANGUAGE_ID ?>&ID=<?= $banner['BANNER_ID'] ?>&element=<?= $iblockElementInfo['ID'] ?>&back_url=<?= Converter::getHtmlConverter()->encode(urlencode($APPLICATION->GetCurPageParam('form_element_' . $iblockElementInfo["IBLOCK"]["ID"] . '_active_tab=seo_adv_seo_adv', array('form_element_' . $iblockElementInfo["IBLOCK"]["ID"] . '_active_tab')))) ?>"
-                                       class="adv-banner-link"><?= Loc::getMessage('SEO_YANDEX_DIRECT_BANNER_LINK_TPL', array(
-                                            "#XML_ID#" => $banner['BANNER_XML_ID'],
-                                            '#NAME#' => $banner['BANNER_NAME'],
-                                        )) ?></a>&nbsp;<span class="yandex-delete"
-                                                             onclick="deleteLink('<?= $banner['BANNER_ID'] ?>', this)"></span>
+                                    <a href="/bitrix/admin/seo_search_yandex_direct_banner_edit.php?lang=<?= LANGUAGE_ID ?>&ID=<?= $banner['BANNER_ID'] ?>&element=<?= $iblockElementInfo['ID'] ?>&back_url=<?= Converter::getHtmlConverter(
+                                    )->encode(
+                                        urlencode(
+                                            $APPLICATION->GetCurPageParam(
+                                                'form_element_' . $iblockElementInfo["IBLOCK"]["ID"] . '_active_tab=seo_adv_seo_adv',
+                                                array('form_element_' . $iblockElementInfo["IBLOCK"]["ID"] . '_active_tab')
+                                            )
+                                        )
+                                    ) ?>" class="adv-banner-link"><?= Loc::getMessage(
+                                            'SEO_YANDEX_DIRECT_BANNER_LINK_TPL',
+                                            array(
+                                                "#XML_ID#" => $banner['BANNER_XML_ID'],
+                                                '#NAME#' => $banner['BANNER_NAME'],
+                                            )
+                                        ) ?></a>&nbsp;<span class="yandex-delete"
+                                                            onclick="deleteLink('<?= $banner['BANNER_ID'] ?>', this)"></span>
                                 </div>
                                 <?
                             }
@@ -76,6 +97,5 @@ if (count($bannerList) > 0) {
             ?>
         </div>
         <?
-
     }
 }

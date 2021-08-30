@@ -52,8 +52,9 @@ class Cashbox1C extends Cashbox
         $id = 0;
         $cacheManager = Main\Application::getInstance()->getManagedCache();
 
-        if ($cacheManager->read(self::TTL, self::CACHE_ID))
+        if ($cacheManager->read(self::TTL, self::CACHE_ID)) {
             $id = $cacheManager->get(self::CACHE_ID);
+        }
 
         if ($id <= 0) {
             $data = CashboxTable::getRow(

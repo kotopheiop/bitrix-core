@@ -170,7 +170,16 @@ class CalculationResult extends Sale\ResultSerializable
     /** @param int $periodType */
     public function setPeriodType($periodType)
     {
-        if (in_array($periodType, array(self::PERIOD_TYPE_DAY, self::PERIOD_TYPE_HOUR, self::PERIOD_TYPE_MIN, self::PERIOD_TYPE_MONTH)))
+        if (in_array(
+            $periodType,
+            array(
+                self::PERIOD_TYPE_DAY,
+                self::PERIOD_TYPE_HOUR,
+                self::PERIOD_TYPE_MIN,
+                self::PERIOD_TYPE_MONTH
+            )
+        )) {
             $this->periodType = $periodType;
+        }
     }
 }

@@ -6,7 +6,9 @@
  * @copyright 2001-2013 Bitrix
  */
 
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+}
 
 IncludeModuleLangFile(__FILE__);
 
@@ -43,8 +45,9 @@ class CEditArea
         $res .= '</div>';
         $areaId = $this->__GetAreaId();
 
-        if ($this->bDrawIcons)
+        if ($this->bDrawIcons) {
             $res .= '<script type="text/javascript">if(window.BX&&BX.admin)BX.admin.setComponentBorder(\'bx_incl_area_' . $areaId . '\')</script>';
+        }
 
         $this->includeLevel--;
         return $res;
@@ -59,28 +62,33 @@ class CEditArea
         foreach ($arIcons as $arIcon) {
             if (isset($arIcon['SEPARATOR'])) {
                 $size = count($arJSIcons);
-                if ($size <= 0 || !isset($arJSIcons[$size - 1]["SEPARATOR"]))
+                if ($size <= 0 || !isset($arJSIcons[$size - 1]["SEPARATOR"])) {
                     $arJSIcons[] = array('SEPARATOR' => 'Y');
+                }
             } else {
                 //skip duplicate buttons
-                if (isset($arIcon["ID"]) && strlen($arIcon["ID"]) > 0) {
-                    if (!array_key_exists("ICONS_ID", $this->includeAreaIcons) || !is_array($this->includeAreaIcons["ICONS_ID"]))
+                if (isset($arIcon["ID"]) && $arIcon["ID"] <> '') {
+                    if (!array_key_exists("ICONS_ID", $this->includeAreaIcons) || !is_array(
+                            $this->includeAreaIcons["ICONS_ID"]
+                        )) {
                         $this->includeAreaIcons["ICONS_ID"] = Array($arIcon["ID"]);
-                    elseif (in_array($arIcon["ID"], $this->includeAreaIcons["ICONS_ID"]))
+                    } elseif (in_array($arIcon["ID"], $this->includeAreaIcons["ICONS_ID"])) {
                         continue;
-                    else
+                    } else {
                         $this->includeAreaIcons["ICONS_ID"][] = $arIcon["ID"];
+                    }
                 }
 
                 $jsIcon = CEditArea::GetJSIcon($arIcon);
 
-                if ($arIcon['IN_MENU'] || ($arIcon['TYPE'] == 'components2_props' && $bStack))
+                if ($arIcon['IN_MENU'] || ($arIcon['TYPE'] == 'components2_props' && $bStack)) {
                     $arJSIcons[] = $jsIcon;
-                elseif ($arIcon['IN_PARAMS_MENU']) {
+                } elseif ($arIcon['IN_PARAMS_MENU']) {
                     $jsIcon['TYPE'] = 'components2_submenu_item';
                     $arOuterIcons[] = $jsIcon;
-                } else
+                } else {
                     $arOuterIcons[] = $jsIcon;
+                }
             }
         }
 
@@ -97,8 +105,9 @@ class CEditArea
             $this->bDrawIcons = false;
             return '';
         } else {
-            if (array_key_exists("ICONS_ID", $this->includeAreaIcons))
+            if (array_key_exists("ICONS_ID", $this->includeAreaIcons)) {
                 unset($this->includeAreaIcons["ICONS_ID"]);
+            }
 
             $arAllOuterIcons = array();
             $arAllInnerIcons = array();
@@ -164,10 +173,15 @@ class CEditArea
                     if ($arUserOptions['pin'] === 'true' || $arParams['COMPONENT_ID'] == 'page_edit_control') {
                         $arJSParams['pin'] = $arUserOptions['pin'] === 'true';
                         if ($arJSParams['pin']) {
-                            if ($arUserOptions['transform'])
+                            if ($arUserOptions['transform']) {
                                 $arJSParams['transform'] = ($arUserOptions['transform'] === 'true');
-                            if ($arUserOptions['top']) $arJSParams['top'] = $arUserOptions['top'] == 'false' ? false : $arJSParams['top'];
-                            if ($arUserOptions['left']) $arJSParams['left'] = $arUserOptions['left'] == 'false' ? false : $arUserOptions['left'];
+                            }
+                            if ($arUserOptions['top']) {
+                                $arJSParams['top'] = $arUserOptions['top'] == 'false' ? false : $arJSParams['top'];
+                            }
+                            if ($arUserOptions['left']) {
+                                $arJSParams['left'] = $arUserOptions['left'] == 'false' ? false : $arUserOptions['left'];
+                            }
                         }
                     }
                 }
@@ -187,7 +201,9 @@ class CEditArea
 
                 $this->bDrawIcons = true;
 
-                $res = '<script type="text/javascript">if(window.BX)BX.ready(function() {(new BX.' . ($arParams['COMPONENT_ID'] == 'page_edit_control' ? 'CPageOpener' : 'CMenuOpener') . '(' . CUtil::PhpToJsObject($arJSParams) . ')).Show()});</script>';
+                $res = '<script type="text/javascript">if(window.BX)BX.ready(function() {(new BX.' . ($arParams['COMPONENT_ID'] == 'page_edit_control' ? 'CPageOpener' : 'CMenuOpener') . '(' . CUtil::PhpToJsObject(
+                        $arJSParams
+                    ) . ')).Show()});</script>';
             } else {
                 $this->bDrawIcons = false;
                 $res = '';
@@ -201,11 +217,12 @@ class CEditArea
     function GetJSIcon($arIcon)
     {
         $url = $arIcon['URL'];
-        if (strlen($url) > 0) {
-            if (strtolower(substr($url, 0, 11)) == 'javascript:')
-                $url = substr($url, 11);
-            else
+        if ($url <> '') {
+            if (mb_strtolower(mb_substr($url, 0, 11)) == 'javascript:') {
+                $url = mb_substr($url, 11);
+            } else {
                 $url = 'jsUtils.Redirect([], \'' . CUtil::JSEscape($url) . '\')';
+            }
         }
 
         $jsIcon = array(
@@ -214,18 +231,22 @@ class CEditArea
             'TEXT' => $arIcon['TITLE'],
         );
 
-        if ($url)
+        if ($url) {
             $jsIcon['ONCLICK'] = $url;
+        }
 
-        if (isset($arIcon['DEFAULT']) && $arIcon['DEFAULT'] == true)
+        if (isset($arIcon['DEFAULT']) && $arIcon['DEFAULT'] == true) {
             $jsIcon['DEFAULT'] = true;
-        if (isset($arIcon['IMAGE']))
+        }
+        if (isset($arIcon['IMAGE'])) {
             $jsIcon['IMAGE'] = $arIcon['IMAGE'];
-        elseif (isset($arIcon['SRC']))
+        } elseif (isset($arIcon['SRC'])) {
             $jsIcon['IMAGE'] = $arIcon['SRC'];
+        }
 
-        if ($arIcon['TYPE'])
+        if ($arIcon['TYPE']) {
             $jsIcon['TYPE'] = $arIcon['TYPE'];
+        }
 
         if ($arIcon['MENU']) {
             $jsIcon['MENU'] = CEditArea::GetJSIconMenu($arIcon['MENU']);
@@ -239,16 +260,18 @@ class CEditArea
         foreach ($arMenu as $k => $aMenuItem) {
             if ($aMenuItem['URL']) {
                 $u = $aMenuItem['URL'];
-                if (strtolower(substr($u, 0, 11)) == 'javascript:')
-                    $u = substr($u, 11);
-                else
+                if (mb_strtolower(mb_substr($u, 0, 11)) == 'javascript:') {
+                    $u = mb_substr($u, 11);
+                } else {
                     $u = 'jsUtils.Redirect([], \'' . CUtil::JSEscape($u) . '\')';
+                }
 
                 $aMenuItem['URL'] = $aMenuItem['ACTION'] = $u;
             }
 
-            if ($aMenuItem['MENU'])
+            if ($aMenuItem['MENU']) {
                 $aMenuItem['MENU'] = CEditArea::GetJSIconMenu($aMenuItem['MENU']);
+            }
 
             $arMenu[$k] = $aMenuItem;
         }
@@ -289,8 +312,9 @@ class CEditArea
             $this->bEditAreas = true;
         }
 
-        if (!isset($this->arEditAreas[$areaId]))
+        if (!isset($this->arEditAreas[$areaId])) {
             $this->arEditAreas[$areaId] = array();
+        }
 
         $this->arEditAreas[$areaId] = array_merge($this->arEditAreas[$areaId], $arIcons);
     }
@@ -325,23 +349,23 @@ class CComponentPanel
 
         if ($this->iSrcLine > 0 && $this->sSrcFile <> "") {
             // try to convert absolute path to file within DOCUMENT_ROOT
-            $lowerScrFile = strtolower($this->sSrcFile);
-            $docRoot = strtolower(str_replace("\\", "/", realpath($_SERVER["DOCUMENT_ROOT"])));
-            if (strpos($lowerScrFile, $docRoot . "/") === 0) {
+            $lowerScrFile = mb_strtolower($this->sSrcFile);
+            $docRoot = mb_strtolower(str_replace("\\", "/", realpath($_SERVER["DOCUMENT_ROOT"])));
+            if (mb_strpos($lowerScrFile, $docRoot . "/") === 0) {
                 //within
-                $this->sSrcFile = substr($this->sSrcFile, strlen($docRoot));
+                $this->sSrcFile = mb_substr($this->sSrcFile, mb_strlen($docRoot));
                 $this->bSrcFound = true;
             } else {
                 //bitrix outside
-                $realBitrix = strtolower(str_replace("\\", "/", realpath($_SERVER["DOCUMENT_ROOT"] . "/bitrix")));
-                if (strpos($lowerScrFile, substr($realBitrix, 0, -6)) === 0) {
-                    $this->sSrcFile = substr($this->sSrcFile, strlen($realBitrix) - 7);
+                $realBitrix = mb_strtolower(str_replace("\\", "/", realpath($_SERVER["DOCUMENT_ROOT"] . "/bitrix")));
+                if (mb_strpos($lowerScrFile, mb_substr($realBitrix, 0, -6)) === 0) {
+                    $this->sSrcFile = mb_substr($this->sSrcFile, mb_strlen($realBitrix) - 7);
                     $this->bSrcFound = true;
                 } else {
                     //local outside
-                    $realLocal = strtolower(str_replace("\\", "/", realpath($_SERVER["DOCUMENT_ROOT"] . "/local")));
-                    if (strpos($lowerScrFile, substr($realLocal, 0, -5)) === 0) {
-                        $this->sSrcFile = substr($this->sSrcFile, strlen($realLocal) - 6);
+                    $realLocal = mb_strtolower(str_replace("\\", "/", realpath($_SERVER["DOCUMENT_ROOT"] . "/local")));
+                    if ($realLocal && mb_strpos($lowerScrFile, mb_substr($realLocal, 0, -5)) === 0) {
+                        $this->sSrcFile = mb_substr($this->sSrcFile, mb_strlen($realLocal) - 6);
                         $this->bSrcFound = true;
                     }
                 }
@@ -358,7 +382,10 @@ class CComponentPanel
         $arPanelParams = array();
 
         $arComponentDescription = CComponentUtil::GetComponentDescr($this->componentName);
-        $bComponentAccess = ($USER->CanDoOperation('edit_php') || $this->bSrcFound && $USER->CanDoFileOperation('fm_lpa', array(SITE_ID, $this->sSrcFile)));
+        $bComponentAccess = ($USER->CanDoOperation('edit_php') || $this->bSrcFound && $USER->CanDoFileOperation(
+                'fm_lpa',
+                array(SITE_ID, $this->sSrcFile)
+            ));
 
         if ($bComponentAccess && !$this->parentComponent && $this->bSrcFound) {
             $url = $APPLICATION->GetPopupLink(
@@ -397,8 +424,9 @@ class CComponentPanel
             if (is_null($template)) {
                 //the component is possibly disabled, need to init the template
                 $this->component->setTemplateName($this->componentTemplate);
-                if ($this->component->InitComponentTemplate())
+                if ($this->component->InitComponentTemplate()) {
                     $template = $this->component->GetTemplate();
+                }
             }
             if (!is_null($template)) {
                 $urlCopy = '';
@@ -428,39 +456,49 @@ class CComponentPanel
                     );
                 }
 
-                if ($USER->CanDoOperation('edit_php') && strlen($template->GetSiteTemplate()) > 0) {
+                if ($USER->CanDoOperation('edit_php') && $template->GetSiteTemplate() <> '') {
                     //edit template copied to site template
                     $arIcons[] = array(
-                        'URL' => 'javascript:' . $APPLICATION->GetPopupLink(array(
-                                'URL' => "/bitrix/admin/public_file_edit_src.php?site=" . SITE_ID . "&" . 'path=' . urlencode($template->GetFile()) . "&back_url=" . urlencode($_SERVER["REQUEST_URI"]) . "&lang=" . LANGUAGE_ID,
-                                'PARAMS' => array(
-                                    'width' => 770,
-                                    'height' => 470,
-                                    'resize' => true,
-                                    "dialog_type" => 'EDITOR',
-                                    "min_width" => 700,
-                                    "min_height" => 400
+                        'URL' => 'javascript:' . $APPLICATION->GetPopupLink(
+                                array(
+                                    'URL' => "/bitrix/admin/public_file_edit_src.php?site=" . SITE_ID . "&" . 'path=' . urlencode(
+                                            $template->GetFile()
+                                        ) . "&back_url=" . urlencode($_SERVER["REQUEST_URI"]) . "&lang=" . LANGUAGE_ID,
+                                    'PARAMS' => array(
+                                        'width' => 770,
+                                        'height' => 470,
+                                        'resize' => true,
+                                        "dialog_type" => 'EDITOR',
+                                        "min_width" => 700,
+                                        "min_height" => 400
+                                    )
                                 )
-                            )),
+                            ),
                         'ICON' => 'edit-2',
                         'TITLE' => GetMessage("main_comp_edit_templ"),
                         'IN_MENU' => true
                     );
-                    if (strlen($template->GetFolder()) > 0) {
+                    if ($template->GetFolder() <> '') {
                         if (file_exists($_SERVER["DOCUMENT_ROOT"] . $template->GetFolder() . "/style.css")) {
                             //edit template CSS copied to site template
                             $arIcons[] = array(
-                                'URL' => 'javascript:' . $APPLICATION->GetPopupLink(array(
-                                        'URL' => "/bitrix/admin/public_file_edit_src.php?site=" . SITE_ID . "&" . 'path=' . urlencode($template->GetFolder() . "/style.css") . "&back_url=" . urlencode($_SERVER["REQUEST_URI"]) . "&lang=" . LANGUAGE_ID,
-                                        'PARAMS' => array(
-                                            'width' => 770,
-                                            'height' => 470,
-                                            'resize' => true,
-                                            "dialog_type" => 'EDITOR',
-                                            "min_width" => 700,
-                                            "min_height" => 400
+                                'URL' => 'javascript:' . $APPLICATION->GetPopupLink(
+                                        array(
+                                            'URL' => "/bitrix/admin/public_file_edit_src.php?site=" . SITE_ID . "&" . 'path=' . urlencode(
+                                                    $template->GetFolder() . "/style.css"
+                                                ) . "&back_url=" . urlencode(
+                                                    $_SERVER["REQUEST_URI"]
+                                                ) . "&lang=" . LANGUAGE_ID,
+                                            'PARAMS' => array(
+                                                'width' => 770,
+                                                'height' => 470,
+                                                'resize' => true,
+                                                "dialog_type" => 'EDITOR',
+                                                "min_width" => 700,
+                                                "min_height" => 400
+                                            )
                                         )
-                                    )),
+                                    ),
                                 'ICON' => 'edit-css',
                                 'TITLE' => GetMessage("main_comp_edit_css"),
                                 'IN_MENU' => true
@@ -471,36 +509,49 @@ class CComponentPanel
                             $bWasSep = true;
                             $arIcons[] = array('SEPARATOR' => true);
                             $arIcons[] = array(
-                                'URL' => 'javascript:' . $APPLICATION->GetPopupLink(array(
-                                        'URL' => "/bitrix/admin/public_file_edit_src.php?site=" . SITE_ID . "&" . 'path=' . urlencode($template->GetFolder() . "/result_modifier.php") . "&back_url=" . urlencode($_SERVER["REQUEST_URI"]) . "&lang=" . LANGUAGE_ID,
-                                        'PARAMS' => array(
-                                            'width' => 770,
-                                            'height' => 470,
-                                            'resize' => true,
-                                            "dialog_type" => 'EDITOR',
-                                            "min_width" => 700,
-                                            "min_height" => 400
+                                'URL' => 'javascript:' . $APPLICATION->GetPopupLink(
+                                        array(
+                                            'URL' => "/bitrix/admin/public_file_edit_src.php?site=" . SITE_ID . "&" . 'path=' . urlencode(
+                                                    $template->GetFolder() . "/result_modifier.php"
+                                                ) . "&back_url=" . urlencode(
+                                                    $_SERVER["REQUEST_URI"]
+                                                ) . "&lang=" . LANGUAGE_ID,
+                                            'PARAMS' => array(
+                                                'width' => 770,
+                                                'height' => 470,
+                                                'resize' => true,
+                                                "dialog_type" => 'EDITOR',
+                                                "min_width" => 700,
+                                                "min_height" => 400
+                                            )
                                         )
-                                    )),
+                                    ),
                                 'TITLE' => GetMessage("main_comp_edit_res_mod"),
                                 'IN_MENU' => true
                             );
                         }
                         if (file_exists($_SERVER["DOCUMENT_ROOT"] . $template->GetFolder() . "/component_epilog.php")) {
-                            if (!$bWasSep)
+                            if (!$bWasSep) {
                                 $arIcons[] = array('SEPARATOR' => true);
+                            }
                             $arIcons[] = array(
-                                'URL' => 'javascript:' . $APPLICATION->GetPopupLink(array(
-                                        'URL' => "/bitrix/admin/public_file_edit_src.php?site=" . SITE_ID . "&" . 'path=' . urlencode($template->GetFolder() . "/component_epilog.php") . "&back_url=" . urlencode($_SERVER["REQUEST_URI"]) . "&lang=" . LANGUAGE_ID,
-                                        'PARAMS' => array(
-                                            'width' => 770,
-                                            'height' => 470,
-                                            'resize' => true,
-                                            "dialog_type" => 'EDITOR',
-                                            "min_width" => 700,
-                                            "min_height" => 400
+                                'URL' => 'javascript:' . $APPLICATION->GetPopupLink(
+                                        array(
+                                            'URL' => "/bitrix/admin/public_file_edit_src.php?site=" . SITE_ID . "&" . 'path=' . urlencode(
+                                                    $template->GetFolder() . "/component_epilog.php"
+                                                ) . "&back_url=" . urlencode(
+                                                    $_SERVER["REQUEST_URI"]
+                                                ) . "&lang=" . LANGUAGE_ID,
+                                            'PARAMS' => array(
+                                                'width' => 770,
+                                                'height' => 470,
+                                                'resize' => true,
+                                                "dialog_type" => 'EDITOR',
+                                                "min_width" => 700,
+                                                "min_height" => 400
+                                            )
                                         )
-                                    )),
+                                    ),
                                 'TITLE' => GetMessage("main_comp_edit_epilog"),
                                 'IN_MENU' => true
                             );
@@ -539,9 +590,11 @@ class CComponentPanel
 
             //clear cache
             if (array_key_exists("CACHE_PATH", $arComponentDescription) && $USER->CanDoOperation('cache_control')) {
-                if (strlen($arComponentDescription["CACHE_PATH"]) > 0) {
+                if ($arComponentDescription["CACHE_PATH"] <> '') {
                     $arIcons[] = array(
-                        "URL" => "javascript:jsComponentUtils.ClearCache('component_name=" . urlencode(CUtil::addslashes($this->componentName)) . "&site_id=" . SITE_ID . "&" . bitrix_sessid_get() . "');",
+                        "URL" => "javascript:jsComponentUtils.ClearCache('component_name=" . urlencode(
+                                CUtil::addslashes($this->componentName)
+                            ) . "&site_id=" . SITE_ID . "&" . bitrix_sessid_get() . "');",
                         "ICON" => "del-cache",
                         "TITLE" => GetMessage("MAIN_BX_COMPONENT_CACHE_CLEAR"),
                         'IN_MENU' => true,
@@ -555,43 +608,56 @@ class CComponentPanel
                 $componentRelativePath = CComponentEngine::MakeComponentPath($this->componentName);
                 $localPath = getLocalPath("components" . $componentRelativePath);
                 foreach ($arComponentDescription["AREA_BUTTONS"] as $value) {
-                    if (array_key_exists("SRC", $value))
+                    if (array_key_exists("SRC", $value)) {
                         $value["SRC"] = $localPath . $value["SRC"];
+                    }
                     $aAddIcons[] = $value;
                 }
             }
         }
 
-        if (!empty($arIcons) && !empty($aAddIcons))
+        if (!empty($arIcons) && !empty($aAddIcons)) {
             $arIcons[] = array("SEPARATOR" => true);
+        }
         $arIcons = array_merge($arIcons, $aAddIcons);
 
         $aAddIcons = $this->component->GetIncludeAreaIcons();
 
-        if (!empty($arIcons) && !empty($aAddIcons))
+        if (!empty($arIcons) && !empty($aAddIcons)) {
             $arIcons[] = array("SEPARATOR" => true);
+        }
         $arIcons = array_merge($arIcons, $aAddIcons);
 
         // enable/disable menu item
         if ($bComponentAccess && !$this->parentComponent && $this->bSrcFound) {
-            if (!empty($arIcons))
+            if (!empty($arIcons)) {
                 $arIcons[] = array("SEPARATOR" => true);
+            }
             $arIcons[] = array(
-                "URL" => "javascript:jsComponentUtils.EnableComponent('component_name=" . urlencode(CUtil::addslashes($this->componentName)) . //$rel_path
+                "URL" => "javascript:jsComponentUtils.EnableComponent('component_name=" . urlencode(
+                        CUtil::addslashes($this->componentName)
+                    ) . //$rel_path
                     "&lang=" . urlencode(CUtil::addslashes(LANGUAGE_ID)) .
                     "&src_path=" . urlencode(CUtil::addslashes($this->sSrcFile)) .
                     "&src_line=" . $this->iSrcLine .
                     "&src_site=" . urlencode(CUtil::addslashes(SITE_ID)) .
                     '&active=' . ($this->bComponentEnabled ? 'N' : 'Y') .
                     '&' . bitrix_sessid_get() . "');",
-                "TITLE" => ($this->bComponentEnabled ? GetMessage("main_comp_disable") : GetMessage("main_comp_enable")),
-                "ALT" => ($this->bComponentEnabled ? GetMessage("main_comp_disable_title") : GetMessage("main_comp_enable_title")),
+                "TITLE" => ($this->bComponentEnabled ? GetMessage("main_comp_disable") : GetMessage(
+                    "main_comp_enable"
+                )),
+                "ALT" => ($this->bComponentEnabled ? GetMessage("main_comp_disable_title") : GetMessage(
+                    "main_comp_enable_title"
+                )),
                 'IN_MENU' => true,
             );
         }
 
-        if ($this->bSrcFound)
-            $arPanelParams['COMPONENT_ID'] = md5($arPanelParams['COMPONENT'] . '|' . $this->sSrcFile . ':' . $this->iSrcLine);
+        if ($this->bSrcFound) {
+            $arPanelParams['COMPONENT_ID'] = md5(
+                $arPanelParams['COMPONENT'] . '|' . $this->sSrcFile . ':' . $this->iSrcLine
+            );
+        }
 
         return array("icons" => $arIcons, "parameters" => $arPanelParams);
     }

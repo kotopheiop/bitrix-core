@@ -1,18 +1,22 @@
 <?
+
+use Bitrix\Main\Loader;
+
 define("ADMIN_MODULE_NAME", "perfmon");
 define("PERFMON_STOP", true);
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 /** @global CMain $APPLICATION */
 /** @global CDatabase $DB */
 /** @global CUser $USER */
-require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/perfmon/include.php");
+Loader::includeModule('perfmon');
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/perfmon/prolog.php");
 
 IncludeModuleLangFile(__FILE__);
 
 $RIGHT = $APPLICATION->GetGroupRight("perfmon");
-if ($RIGHT == "D")
+if ($RIGHT == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $bCluster = CModule::IncludeModule('cluster');
 
@@ -79,8 +83,9 @@ $arFilter = array(
     "=SUGGEST_ID" => intval($find_suggest_id),
 );
 foreach ($arFilter as $key => $value) {
-    if (!$value)
+    if (!$value) {
         unset($arFilter[$key]);
+    }
 }
 
 if ($find_node_id != "") {
@@ -154,14 +159,15 @@ if ($bCluster) {
     );
     $arClusterNodes[""] = GetMessage("MAIN_ALL");
     $rsNodes = CClusterDBNode::GetList();
-    while ($node = $rsNodes->fetch())
+    while ($node = $rsNodes->fetch()) {
         $arClusterNodes[$node["ID"]] = htmlspecialcharsex($node["NAME"]);
+    }
 }
 
 $lAdmin->AddHeaders($arHeaders);
 
 $arSelectedFields = $lAdmin->GetVisibleHeaderColumns();
-if (!is_array($arSelectedFields) || (count($arSelectedFields) < 1))
+if (!is_array($arSelectedFields) || (count($arSelectedFields) < 1)) {
     $arSelectedFields = array(
         "ID",
         "HIT_ID",
@@ -169,9 +175,16 @@ if (!is_array($arSelectedFields) || (count($arSelectedFields) < 1))
         "QUERY_TIME",
         "SQL_TEXT",
     );
+}
 
 $cData = new CPerfomanceSQL;
-$rsData = $cData->GetList($arSelectedFields, $arFilter, array($by => $order), false, array("nPageSize" => CAdminResult::GetNavSize($sTableID)));
+$rsData = $cData->GetList(
+    $arSelectedFields,
+    $arFilter,
+    array($by => $order),
+    false,
+    array("nPageSize" => CAdminResult::GetNavSize($sTableID))
+);
 
 $rsData = new CAdminResult($rsData, $sTableID);
 $rsData->NavStart();
@@ -197,17 +210,22 @@ while ($arRes = $rsData->NavNext(true, "f_")):
     $html = '<span onmouseover="addTimer(this)" onmouseout="removeTimer(this)" id="' . $f_ID . '_sql_backtrace">' . $html . '</span>';
 
     $row->AddViewField("SQL_TEXT", $html);
-    $row->AddViewField("HIT_ID", '<a href="perfmon_hit_list.php?lang=' . LANGUAGE_ID . '&amp;set_filter=Y&amp;find_id=' . $f_HIT_ID . '">' . $f_HIT_ID . '</a>');
+    $row->AddViewField(
+        "HIT_ID",
+        '<a href="perfmon_hit_list.php?lang=' . LANGUAGE_ID . '&amp;set_filter=Y&amp;find_id=' . $f_HIT_ID . '">' . $f_HIT_ID . '</a>'
+    );
     if ($bCluster && $arRes["NODE_ID"] != "") {
-        if ($arRes["NODE_ID"] < 0)
+        if ($arRes["NODE_ID"] < 0) {
             $html = '<div class="lamp-red" style="display:inline-block"></div>';
-        else
+        } else {
             $html = '';
+        }
 
-        if ($arRes["NODE_ID"] > 1)
+        if ($arRes["NODE_ID"] > 1) {
             $html .= $arClusterNodes[$arRes["NODE_ID"]];
-        else
+        } else {
             $html .= $arClusterNodes[1];
+        }
 
         $row->AddViewField("NODE_ID", $html);
     }
@@ -220,8 +238,9 @@ while ($arRes = $rsData->NavNext(true, "f_")):
             "ACTION" => 'jsUtils.OpenWindow(\'perfmon_explain.php?lang=' . LANG . '&ID=' . $f_ID . '\', 600, 500);',
         );
     }
-    if (count($arActions))
+    if (count($arActions)) {
         $row->AddActions($arActions);
+    }
 endwhile;
 
 $lAdmin->AddFooter(
@@ -247,8 +266,9 @@ $arFilter = array(
     "find_component_id" => GetMessage("PERFMON_SQL_COMPONENT_ID"),
     "find_query_time" => GetMessage("PERFMON_SQL_QUERY_TIME"),
 );
-if ($bCluster)
+if ($bCluster) {
     $arFilter["find_node_id"] = GetMessage("PERFMON_SQL_NODE_ID");
+}
 
 $oFilter = new CAdminFilter($sTableID . "_filter", $arFilter);
 
@@ -351,11 +371,13 @@ CJSCore::Init(array("ajax", "popup"));
             </tr>
         <? endif; ?>
         <?
-        $oFilter->Buttons(array(
-            "table_id" => $sTableID,
-            "url" => $APPLICATION->GetCurPage(),
-            "form" => "find_form",
-        ));
+        $oFilter->Buttons(
+            array(
+                "table_id" => $sTableID,
+                "url" => $APPLICATION->GetCurPage(),
+                "form" => "find_form",
+            )
+        );
         $oFilter->End();
         ?>
     </form>

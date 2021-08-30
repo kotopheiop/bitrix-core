@@ -1,4 +1,5 @@
 <?
+
 $MESS["SALE_HPS_PAYMASTER_ERROR_PARAMS_VALUE"] = "Payment parameters don't match  ;";
 $MESS["SALE_HPS_PAYMASTER_SIM_MODE_TEST"] = "test mode, no actual fund transfer happened; ";
 $MESS["SALE_HPS_PAYMASTER_DESC_MERCHANT_ID"] = "merchant wallet - #MERCHANT_ID# ;";

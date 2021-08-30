@@ -50,16 +50,18 @@ class CBlogSmile
         $type = CSmile::TYPE_SMILE;
         $lang = LANGUAGE_ID;
 
-        if (COption::GetOptionInt("blog", "smile_native_gallery_id", 0) <= 0)
+        if (COption::GetOptionInt("blog", "smile_native_gallery_id", 0) <= 0) {
             return self::getSmiles($type, $lang);
+        }
 
         $key = "old_" . $type . "_" . $lang;
         if (!array_key_exists($key, self::$smiles)) {
             $smiles = CSmile::getByGalleryId($type, COption::GetOptionInt("blog", "smile_native_gallery_id", 0), $lang);
             $result = array();
             foreach ($smiles as $smile) {
-                if ($smile['HIDDEN'] == 'Y')
+                if ($smile['HIDDEN'] == 'Y') {
                     continue;
+                }
 
                 $result[] = array(
                     'ID' => $smile['ID'],
@@ -91,8 +93,9 @@ class CBlogSmile
             $smiles = CSmile::getByGalleryId($type, COption::GetOptionInt("blog", "smile_gallery_id", 0), $lang);
             $result = array();
             foreach ($smiles as $smile) {
-                if ($smile['HIDDEN'] == 'Y')
+                if ($smile['HIDDEN'] == 'Y') {
                     continue;
+                }
 
                 $result[] = array(
                     'SET_ID' => $smile['SET_ID'],

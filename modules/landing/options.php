@@ -1,4 +1,5 @@
 <?php
+
 $module_id = 'landing';
 
 use \Bitrix\Landing\Manager;
@@ -8,6 +9,8 @@ use \Bitrix\Main\SiteTemplateTable;
 if (!\Bitrix\Main\Loader::includeModule('landing')) {
     return;
 }
+
+/** @var \CMain $APPLICATION */
 
 // vars
 $context = \Bitrix\Main\Application::getInstance()->getContext();
@@ -61,7 +64,8 @@ $getIblocksTree = function () {
         }
 
         // sorting by sort
-        usort($iblocks,
+        usort(
+            $iblocks,
             function ($a, $b) {
                 if ($a['SORT'] == $b['SORT']) {
                     return 0;
@@ -78,17 +82,19 @@ if ($postRight >= 'R'):
 
     // sites list
     $sites = [];
-    $res = \Bitrix\Main\SiteTable::getList(array(
-        'select' => array(
-            '*'
-        ),
-        'filter' => array(
-            'ACTIVE' => 'Y'
-        ),
-        'order' => array(
-            'SORT' => 'ASC'
+    $res = \Bitrix\Main\SiteTable::getList(
+        array(
+            'select' => array(
+                '*'
+            ),
+            'filter' => array(
+                'ACTIVE' => 'Y'
+            ),
+            'order' => array(
+                'SORT' => 'ASC'
+            )
         )
-    ));
+    );
     while ($row = $res->fetch()) {
         $row['NAME'] = \htmlspecialcharsbx($row['NAME']);
         $sites[] = $row;
@@ -157,6 +163,11 @@ if ($postRight >= 'R'):
         );
     }
     $allOptions[] = array(
+        'public_hook_on_save',
+        Loc::getMessage('LANDING_OPT_PUBLIC_HOOK_ON_SAVE') . ':',
+        array('checkbox')
+    );
+    $allOptions[] = array(
         'source_iblocks',
         Loc::getMessage('LANDING_OPT_SOURCE_IBLOCKS') . ':',
         array(
@@ -167,14 +178,19 @@ if ($postRight >= 'R'):
     );
 
     // tabs
-    $tabControl = new \CAdmintabControl('tabControl', array(
+    $tabControl = new \CAdmintabControl(
+        'tabControl', array(
         array('DIV' => 'edit1', 'TAB' => Loc::getMessage('MAIN_TAB_SET'), 'ICON' => ''),
         array('DIV' => 'edit2', 'TAB' => Loc::getMessage('MAIN_TAB_RIGHTS'), 'ICON' => '')
-    ));
+    )
+    );
+
+    $Update = $Update ?? '';
+    $Apply = $Apply ?? '';
 
     // post save
     if (
-        strlen($Update . $Apply) > 0 &&
+        $Update . $Apply <> '' &&
         ($postRight == 'W' || $postRight == 'X') &&
         \check_bitrix_sessid()
     ) {
@@ -187,7 +203,7 @@ if ($postRight >= 'R'):
             if ($arOption[2][0] == 'text-list') {
                 $val = '';
                 for ($j = 0; $j < count($$name); $j++) {
-                    if (strlen(trim(${$name}[$j])) > 0) {
+                    if (trim(${$name}[$j]) <> '') {
                         $val .= ($val <> '' ? ',' : '') . trim(${$name}[$j]);
                     }
                 }
@@ -198,9 +214,11 @@ if ($postRight >= 'R'):
                 $arOption[2][0] == 'selectboxtree'
             ) {
                 $val = '';
-                for ($j = 0; $j < count($$name); $j++) {
-                    if (strlen(trim(${$name}[$j])) > 0) {
-                        $val .= ($val <> '' ? ',' : '') . trim(${$name}[$j]);
+                if (isset($$name)) {
+                    for ($j = 0; $j < count($$name); $j++) {
+                        if (trim(${$name}[$j]) <> '') {
+                            $val .= ($val <> '' ? ',' : '') . trim(${$name}[$j]);
+                        }
                     }
                 }
             } else {
@@ -217,22 +235,28 @@ if ($postRight >= 'R'):
             $prefix = 'site_template_id_';
             if ($arOption[0] == 'site_template_id')// base template
             {
-                $valOld = trim(\COption::getOptionString(
-                    $module_id,
-                    'site_template_id'
-                ));
+                $valOld = trim(
+                    \COption::getOptionString(
+                        $module_id,
+                        'site_template_id'
+                    )
+                );
                 if (!$val) {
                     $val = $valOld;
                 }
                 if ($valOld != $val) {
-                    $res = SiteTemplateTable::getList(array(
-                        'filter' => array(
-                            '=TEMPLATE' => $valOld
+                    $res = SiteTemplateTable::getList(
+                        array(
+                            'filter' => array(
+                                '=TEMPLATE' => $valOld
+                            )
                         )
-                    ));
+                    );
                     while ($row = $res->fetch()) {
                         $clearTmplCache = true;
-                        SiteTemplateTable::update($row['ID'], [
+                        SiteTemplateTable::update(
+                            $row['ID'],
+                            [
                                 'TEMPLATE' => $val
                             ]
                         );
@@ -240,25 +264,31 @@ if ($postRight >= 'R'):
                 }
             } elseif (strpos($arOption[0], $prefix) === 0)// individual templates
             {
-                $valDefault = trim(\COption::getOptionString(
-                    $module_id,
-                    'site_template_id'
-                ));
+                $valDefault = trim(
+                    \COption::getOptionString(
+                        $module_id,
+                        'site_template_id'
+                    )
+                );
                 $valOld = \COption::getOptionString(
                     $module_id,
                     $arOption[0]
                 );
                 if ($valOld != $val) {
                     $siteId = substr($arOption[0], strlen($prefix));
-                    $res = SiteTemplateTable::getList(array(
-                        'filter' => array(
-                            '=SITE_ID' => $siteId,
-                            '=TEMPLATE' => $valOld ? $valOld : $valDefault
+                    $res = SiteTemplateTable::getList(
+                        array(
+                            'filter' => array(
+                                '=SITE_ID' => $siteId,
+                                '=TEMPLATE' => $valOld ? $valOld : $valDefault
+                            )
                         )
-                    ));
+                    );
                     while ($row = $res->fetch()) {
                         $clearTmplCache = true;
-                        SiteTemplateTable::update($row['ID'], [
+                        SiteTemplateTable::update(
+                            $row['ID'],
+                            [
                                 'TEMPLATE' => $val ? $val : $valDefault
                             ]
                         );
@@ -279,7 +309,7 @@ if ($postRight >= 'R'):
         require_once($docRoot . '/bitrix/modules/main/admin/group_rights.php');
         ob_end_clean();
 
-        if (strlen($Update) > 0 && strlen($backUrl) > 0) {
+        if ($Update <> '' && $backUrl <> '') {
             \LocalRedirect($backUrl);
         } else {
             \LocalRedirect(
@@ -287,7 +317,8 @@ if ($postRight >= 'R'):
                 '?mid=' . urlencode($mid) .
                 '&lang=' . urlencode(LANGUAGE_ID) .
                 '&back_url_settings=' . urlencode($backUrl) .
-                '&' . $tabControl->ActiveTabParam());
+                '&' . $tabControl->ActiveTabParam()
+            );
         }
     }
 
@@ -339,22 +370,23 @@ foreach ($allOptions
     <td valign="middle" width="60%"><?
         if ($type[0] == 'checkbox'):
             ?><input type="checkbox" name="<? echo \htmlspecialcharsbx($Option[0]) ?>"
-                     id="<? echo \htmlspecialcharsbx($Option[0]) ?>"
-                     value="Y"<? if ($val == 'Y') echo ' checked="checked"'; ?> /><?
+                     id="<? echo \htmlspecialcharsbx($Option[0]) ?>" value="Y"<? if ($val == 'Y') {
+            echo ' checked="checked"';
+        } ?> /><?
         elseif ($type[0] == 'text'):
             ?><input type="text" size="<? echo $type[1] ?>" maxlength="255" value="<? echo \htmlspecialcharsbx($val) ?>"
                      name="<? echo \htmlspecialcharsbx($Option[0]) ?>" /><?
         elseif ($type[0] == 'doubletext'):
             list($val1, $val2) = explode('x', $val);
-            ?><input type="text" size="<? echo $type[1] ?>" maxlength="255"
-                     value="<? echo \htmlspecialcharsbx($val1) ?>"
+            ?><input type="text" size="<? echo $type[1] ?>" maxlength="255"value="<? echo \htmlspecialcharsbx($val1) ?>"
                      name="<? echo \htmlspecialcharsbx($Option[0] . '_1') ?>" /><?
-            ?><input type="text" size="<? echo $type[1] ?>" maxlength="255"
-                     value="<? echo \htmlspecialcharsbx($val2) ?>"
+            ?><input type="text" size="<? echo $type[1] ?>" maxlength="255"value="<? echo \htmlspecialcharsbx($val2) ?>"
                      name="<? echo \htmlspecialcharsbx($Option[0] . '_2') ?>" /><?
         elseif ($type[0] == 'textarea'):
             ?><textarea rows="<? echo $type[1] ?>" cols="<? echo $type[2] ?>"
-                        name="<? echo \htmlspecialcharsbx($Option[0]) ?>"><? echo \htmlspecialcharsbx($val) ?></textarea><?
+                        name="<? echo \htmlspecialcharsbx($Option[0]) ?>"><? echo \htmlspecialcharsbx(
+            $val
+        ) ?></textarea><?
         elseif ($type[0] == 'text-list'):
             $aVal = explode(",", $val);
             for ($j = 0; $j < count($aVal); $j++):
@@ -372,7 +404,10 @@ foreach ($allOptions
             ?><select name="<? echo \htmlspecialcharsbx($Option[0]) ?>[]"<?= $type[2] ?>><?
             for ($j = 0; $j < count($arr_keys); $j++):
                 ?>
-                <option value="<? echo $arr_keys[$j] ?>"<? if (in_array($arr_keys[$j], $currValue)) echo ' selected="selected"' ?>><? echo \htmlspecialcharsbx($arr[$arr_keys[$j]]) ?></option><?
+                <option value="<? echo $arr_keys[$j] ?>"<? if (in_array(
+                $arr_keys[$j],
+                $currValue
+            )) echo ' selected="selected"' ?>><? echo \htmlspecialcharsbx($arr[$arr_keys[$j]]) ?></option><?
             endfor;
             ?></select><?
         elseif ($type[0] == 'selectboxtree'):
@@ -415,15 +450,23 @@ endforeach;
     ?>
     <input <? if ($postRight < 'W') echo 'disabled="disabled"' ?> type="submit" name="Update"
                                                                   value="<?= Loc::getMessage('MAIN_SAVE') ?>"
-                                                                  title="<?= Loc::getMessage('MAIN_OPT_SAVE_TITLE') ?>"/>
+                                                                  title="<?= Loc::getMessage(
+                                                                      'MAIN_OPT_SAVE_TITLE'
+                                                                  ) ?>"/>
     <input <? if ($postRight < 'W') echo 'disabled="disabled"' ?> type="submit" name="Apply"
                                                                   value="<?= Loc::getMessage('MAIN_OPT_APPLY') ?>"
-                                                                  title="<?= Loc::getMessage('MAIN_OPT_APPLY_TITLE') ?>"/>
-    <? if (strlen($backUrl) > 0):?>
+                                                                  title="<?= Loc::getMessage(
+                                                                      'MAIN_OPT_APPLY_TITLE'
+                                                                  ) ?>"/>
+    <? if ($backUrl <> ''):?>
     <input <? if ($postRight < 'W') echo 'disabled="disabled"' ?> type="button" name="Cancel"
                                                                   value="<?= Loc::getMessage('MAIN_OPT_CANCEL') ?>"
-                                                                  title="<?= Loc::getMessage('MAIN_OPT_CANCEL_TITLE') ?>"
-                                                                  onclick="window.location='<? echo \htmlspecialcharsbx(CUtil::addslashes($backUrl)) ?>'"/>
+                                                                  title="<?= Loc::getMessage(
+                                                                      'MAIN_OPT_CANCEL_TITLE'
+                                                                  ) ?>"
+                                                                  onclick="window.location='<? echo \htmlspecialcharsbx(
+                                                                      CUtil::addslashes($backUrl)
+                                                                  ) ?>'"/>
     <input type="hidden" name="back_url_settings" value="<?= \htmlspecialcharsbx($backUrl) ?>"/>
 <? endif ?>
     <?= bitrix_sessid_post(); ?>

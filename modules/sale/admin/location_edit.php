@@ -1,9 +1,11 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions < "W")
+if ($saleModulePermissions < "W") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 
@@ -11,18 +13,19 @@ IncludeModuleLangFile(__FILE__);
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/prolog.php");
 
-$ID = IntVal($ID);
+$ID = intval($ID);
 
 /// redirect to newer version
-if (CSaleLocation::isLocationProEnabled())
+if (CSaleLocation::isLocationProEnabled()) {
     LocalRedirect('/bitrix/admin/sale_location_node_edit.php' . ($ID ? '?id=' . $ID : ''));
+}
 
 ClearVars();
 
 $langCount = 0;
 $arSysLangs = Array();
 $arSysLangNames = Array();
-$db_lang = CLangAdmin::GetList(($b = "sort"), ($o = "asc"), array("ACTIVE" => "Y"));
+$db_lang = CLangAdmin::GetList("sort", "asc", array("ACTIVE" => "Y"));
 while ($arLang = $db_lang->Fetch()) {
     $arSysLangs[$langCount] = $arLang["LID"];
     $arSysLangNames[$langCount] = htmlspecialcharsbx($arLang["NAME"]);
@@ -30,47 +33,73 @@ while ($arLang = $db_lang->Fetch()) {
 }
 
 $aTabs = array(
-    array("DIV" => "edit1", "TAB" => GetMessage("SLN_TAB_LOCATION"), "ICON" => "sale", "TITLE" => GetMessage("SLN_TAB_LOCATION_DESCR")),
-    array("DIV" => "edit2", "TAB" => GetMessage("SLN_TAB_LOCATION_ZIP"), "ICON" => "sale", "TITLE" => GetMessage("SLN_TAB_LOCATION_ZIP_DESCR"))
+    array(
+        "DIV" => "edit1",
+        "TAB" => GetMessage("SLN_TAB_LOCATION"),
+        "ICON" => "sale",
+        "TITLE" => GetMessage("SLN_TAB_LOCATION_DESCR")
+    ),
+    array(
+        "DIV" => "edit2",
+        "TAB" => GetMessage("SLN_TAB_LOCATION_ZIP"),
+        "ICON" => "sale",
+        "TITLE" => GetMessage("SLN_TAB_LOCATION_ZIP_DESCR")
+    )
 );
 
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
 $strError = "";
 $bInitVars = false;
-if ((strlen($save) > 0 || strlen($apply) > 0) && $REQUEST_METHOD == "POST" && $saleModulePermissions == "W" && check_bitrix_sessid()) {
-    $SORT = IntVal($SORT);
-    if ($SORT <= 0) $SORT = 100;
+if (($save <> '' || $apply <> '') && $REQUEST_METHOD == "POST" && $saleModulePermissions == "W" && check_bitrix_sessid(
+    )) {
+    $SORT = intval($SORT);
+    if ($SORT <= 0) {
+        $SORT = 100;
+    }
 
     //$COUNTRY_ID = IntVal($COUNTRY_ID);
 
-    if ($CHANGE_COUNTRY != "Y") $CHANGE_COUNTRY = "N";
-    if ($WITHOUT_CITY != "Y") $WITHOUT_CITY = "N";
+    if ($CHANGE_COUNTRY != "Y") {
+        $CHANGE_COUNTRY = "N";
+    }
+    if ($WITHOUT_CITY != "Y") {
+        $WITHOUT_CITY = "N";
+    }
 
-    if ($ID > 0 && $COUNTRY_ID <= 0 && $CHANGE_COUNTRY == "Y")
+    if ($ID > 0 && $COUNTRY_ID <= 0 && $CHANGE_COUNTRY == "Y") {
         $strError .= GetMessage("ERROR_SELECT_COUNTRY") . "<br>";
+    }
 
     if (($COUNTRY_ID <= 0 || $ID > 0 && $COUNTRY_ID > 0 && $CHANGE_COUNTRY == "Y") && $COUNTRY_ID != "") {
         $COUNTRY_NAME = Trim($COUNTRY_NAME);
-        if (strlen($COUNTRY_NAME) <= 0)
+        if ($COUNTRY_NAME == '') {
             $strError .= GetMessage("ERROR_COUNTRY_NAME") . "<br>";
+        }
 
         for ($i = 0, $max = count($arSysLangs); $i < $max; $i++) {
             ${"COUNTRY_NAME_" . $arSysLangs[$i]} = Trim(${"COUNTRY_NAME_" . $arSysLangs[$i]});
-            if (strlen(${"COUNTRY_NAME_" . $arSysLangs[$i]}) <= 0)
-                $strError .= GetMessage("ERROR_COUNTRY_NAME_LANG") . " [" . $arSysLangs[$i] . "] " . $arSysLangNames[$i] . ".<br>";
+            if (${"COUNTRY_NAME_" . $arSysLangs[$i]} == '') {
+                $strError .= GetMessage(
+                        "ERROR_COUNTRY_NAME_LANG"
+                    ) . " [" . $arSysLangs[$i] . "] " . $arSysLangNames[$i] . ".<br>";
+            }
         }
     }
 
     if ($WITHOUT_CITY != "Y") {
         $CITY_NAME = Trim($CITY_NAME);
-        if (strlen($CITY_NAME) <= 0)
+        if ($CITY_NAME == '') {
             $strError .= GetMessage("ERROR_CITY_NAME") . "<br>";
+        }
 
         for ($i = 0, $max = count($arSysLangs); $i < $max; $i++) {
             ${"CITY_NAME_" . $arSysLangs[$i]} = Trim(${"CITY_NAME_" . $arSysLangs[$i]});
-            if (strlen(${"CITY_NAME_" . $arSysLangs[$i]}) <= 0)
-                $strError .= GetMessage("ERROR_CITY_NAME_LANG") . " [" . $arSysLangs[$i] . "] " . $arSysLangNames[$i] . ".<br>";
+            if (${"CITY_NAME_" . $arSysLangs[$i]} == '') {
+                $strError .= GetMessage(
+                        "ERROR_CITY_NAME_LANG"
+                    ) . " [" . $arSysLangs[$i] . "] " . $arSysLangNames[$i] . ".<br>";
+            }
         }
     }
 
@@ -80,12 +109,15 @@ if ((strlen($save) > 0 || strlen($apply) > 0) && $REQUEST_METHOD == "POST" && $s
 
         for ($i = 0, $max = count($arSysLangs); $i < $max; $i++) {
             ${"REGION_NAME_" . $arSysLangs[$i]} = Trim(${"REGION_NAME_" . $arSysLangs[$i]});
-            if (strlen(${"REGION_NAME_" . $arSysLangs[$i]}) <= 0 && $_POST["REGION_ID"] == 0)
-                $strError .= GetMessage("ERROR_REGION_NAME_LANG") . " [" . $arSysLangs[$i] . "] " . $arSysLangNames[$i] . ".<br>";
+            if (${"REGION_NAME_" . $arSysLangs[$i]} == '' && $_POST["REGION_ID"] == 0) {
+                $strError .= GetMessage(
+                        "ERROR_REGION_NAME_LANG"
+                    ) . " [" . $arSysLangs[$i] . "] " . $arSysLangNames[$i] . ".<br>";
+            }
         }
     }
 
-    if (strlen($strError) <= 0) {
+    if ($strError == '') {
         $arFields = array(
             "SORT" => $SORT,
             "COUNTRY_ID" => $COUNTRY_ID,
@@ -116,10 +148,11 @@ if ((strlen($save) > 0 || strlen($apply) > 0) && $REQUEST_METHOD == "POST" && $s
                 "NAME" => $CITY_NAME,
                 "SHORT_NAME" => $CITY_SHORT_NAME
             );
-            if ($REGION_ID > 0)
+            if ($REGION_ID > 0) {
                 $regionTmp = $REGION_ID;
-            else
+            } else {
                 $regionTmp = '';
+            }
 
             $arCity["REGION_ID"] = $regionTmp;
 
@@ -153,30 +186,35 @@ if ((strlen($save) > 0 || strlen($apply) > 0) && $REQUEST_METHOD == "POST" && $s
         }
 
         $arFields["LOC_DEFAULT"] = "N";
-        if (strlen($LOC_DEFAULT) > 0)
+        if ($LOC_DEFAULT <> '') {
             $arFields["LOC_DEFAULT"] = $LOC_DEFAULT;
-
-        if ($ID > 0) {
-            if (!CSaleLocation::Update($ID, $arFields))
-                $strError .= GetMessage("ERROR_EDIT_LOCAT") . "<br>";
-        } else {
-            $ID = CSaleLocation::Add($arFields);
-            if (IntVal($ID) <= 0)
-                $strError .= GetMessage("ERROR_ADD_LOCAT") . "<br>";
         }
 
-        if ($ID > 0 && strlen($strError) <= 0) {
+        if ($ID > 0) {
+            if (!CSaleLocation::Update($ID, $arFields)) {
+                $strError .= GetMessage("ERROR_EDIT_LOCAT") . "<br>";
+            }
+        } else {
+            $ID = CSaleLocation::Add($arFields);
+            if (intval($ID) <= 0) {
+                $strError .= GetMessage("ERROR_ADD_LOCAT") . "<br>";
+            }
+        }
+
+        if ($ID > 0 && $strError == '') {
             $arZipList = $_REQUEST["ZIP"];
             CSaleLocation::SetLocationZIP($ID, $arZipList);
         }
     }
 
-    if (strlen($strError) > 0) $bInitVars = True;
-    else {
-        if (strlen($save) > 0)
+    if ($strError <> '') {
+        $bInitVars = true;
+    } else {
+        if ($save <> '') {
             LocalRedirect("sale_location_admin.php?lang=" . LANG . GetFilterParams("filter_", false));
-        else
+        } else {
             LocalRedirect("sale_location_edit.php?lang=" . LANG . "&ID=" . $ID . GetFilterParams("filter_", false));
+        }
     }
 }
 
@@ -203,8 +241,9 @@ if ($bInitVars) {
     }
 }
 
-if (!is_array($arZipList))
+if (!is_array($arZipList)) {
     $arZipList = array();
+}
 
 $sDocTitle = ($ID > 0) ? str_replace("#ID#", $ID, GetMessage("SALE_EDIT_RECORD")) : GetMessage("SALE_NEW_RECORD");
 $APPLICATION->SetTitle($sDocTitle);
@@ -237,7 +276,10 @@ if ($ID > 0 && $saleModulePermissions >= "W") {
     $aMenu[] = array(
         "TEXT" => GetMessage("SLN_DELETE_LOCATION"),
         "ICON" => "btn_delete",
-        "LINK" => "javascript:if(confirm('" . GetMessage("SLN_DELETE_LOCATION_CONFIRM") . "')) window.location='/bitrix/admin/sale_location_admin.php?action=delete&ID[]=" . $ID . "&lang=" . LANG . "&" . bitrix_sessid_get() . "#tb';",
+        "LINK" => "javascript:if(confirm('" . GetMessage(
+                "SLN_DELETE_LOCATION_CONFIRM"
+            ) . "')) window.location='/bitrix/admin/sale_location_admin.php?action=delete&ID[]=" . $ID . "&lang=" . LANG . "&" . bitrix_sessid_get(
+            ) . "#tb';",
     );
 }
 $context = new CAdminContextMenu($aMenu);
@@ -280,7 +322,9 @@ CAdminMessage::ShowMessage($strError);
         <tr>
             <td><? echo GetMessage("SALE_DEFAULT_LOC") ?>:</td>
             <td>
-                <input type="checkbox" name="LOC_DEFAULT" value="Y" <? if ($str_LOC_DEFAULT == "Y") echo "checked"; ?>>
+                <input type="checkbox" name="LOC_DEFAULT" value="Y" <? if ($str_LOC_DEFAULT == "Y") {
+                    echo "checked";
+                } ?>>
             </td>
         </tr>
 
@@ -331,7 +375,9 @@ CAdminMessage::ShowMessage($strError);
                         }
                         <?endif;?>
 
-                        if (parseInt(COUNTRY_LIST.selectedIndex) == 0 <?if ($ID > 0) echo "|| CHANGE_COUNTRY.checked";?>) {
+                        if (parseInt(COUNTRY_LIST.selectedIndex) == 0 <?if ($ID > 0) {
+                            echo "|| CHANGE_COUNTRY.checked";
+                        }?>) {
                             SetEnabled(true);
                         } else {
                             SetEnabled(false);
@@ -341,13 +387,20 @@ CAdminMessage::ShowMessage($strError);
 
                 <select name="COUNTRY_ID" OnChange="SetContact()">
                     <option value="0"><? echo GetMessage("NEW_COUNTRY") ?></option>
-                    <option value="" <? if ((isset($COUNTRY_ID) && $COUNTRY_ID == "") || $str_COUNTRY_ID == "0") echo " selected"; ?>><? echo GetMessage("WITHOUT_COUNTRY") ?></option>
+                    <option value="" <? if ((isset($COUNTRY_ID) && $COUNTRY_ID == "") || $str_COUNTRY_ID == "0") {
+                        echo " selected";
+                    } ?>><? echo GetMessage("WITHOUT_COUNTRY") ?></option>
                     <?
                     $db_contList = CSaleLocation::GetCountryList(Array("NAME" => "ASC"), Array(), LANG);
                     while ($arContList = $db_contList->Fetch()) {
                         ?>
-                        <option value="<? echo $arContList["ID"] ?>"<? if (IntVal($arContList["ID"]) == IntVal($str_COUNTRY_ID)) echo " selected"; ?>><? echo htmlspecialcharsbx($arContList["NAME_ORIG"]) ?>
-                        [<? echo htmlspecialcharsbx($arContList["NAME_LANG"]) ?>]</option><?
+                        <option value="<? echo $arContList["ID"] ?>"<? if (intval($arContList["ID"]) == intval(
+                                $str_COUNTRY_ID
+                            )) {
+                            echo " selected";
+                        } ?>><? echo htmlspecialcharsbx($arContList["NAME_ORIG"]) ?> [<? echo htmlspecialcharsbx(
+                            $arContList["NAME_LANG"]
+                        ) ?>]</option><?
                     }
                     ?>
                 </select>
@@ -366,8 +419,9 @@ CAdminMessage::ShowMessage($strError);
                     <? echo GetMessage("SALE_CHANGE_CNTR") ?>:
                 </td>
                 <td>
-                    <input type="checkbox" name="CHANGE_COUNTRY"
-                           value="Y" <? if ($CHANGE_COUNTRY == "Y") echo "checked"; ?> OnClick="SetContact()">
+                    <input type="checkbox" name="CHANGE_COUNTRY" value="Y" <? if ($CHANGE_COUNTRY == "Y") {
+                        echo "checked";
+                    } ?> OnClick="SetContact()">
                 </td>
             </tr>
         <? endif; ?>
@@ -481,17 +535,25 @@ CAdminMessage::ShowMessage($strError);
             <td>
                 <select name="REGION_ID" id="REGION_ID" OnChange="ResetRegion()">
                     <option value="0"><? echo GetMessage("NEW_REGION") ?></option>
-                    <option value="" <? if ((isset($REGION_ID) && $REGION_ID == "") || $str_REGION_ID == "" || $str_REGION_ID == "0") echo " selected"; ?> ><? echo GetMessage("WITHOUT_REGION") ?></option>
+                    <option value="" <? if ((isset($REGION_ID) && $REGION_ID == "") || $str_REGION_ID == "" || $str_REGION_ID == "0") {
+                        echo " selected";
+                    } ?> ><? echo GetMessage("WITHOUT_REGION") ?></option>
                     <?
                     $arFilterRegion = array();
-                    if (isset($str_COUNTRY_ID) && $str_COUNTRY_ID > 0)
+                    if (isset($str_COUNTRY_ID) && $str_COUNTRY_ID > 0) {
                         $arFilterRegion["COUNTRY_ID"] = $str_COUNTRY_ID;
+                    }
 
                     $dbRegionList = CSaleLocation::GetRegionList(array("NAME" => "ASC"), $arFilterRegion, LANG);
                     while ($arRegionList = $dbRegionList->Fetch()) {
                         ?>
-                        <option value="<? echo $arRegionList["ID"] ?>"<? if (IntVal($arRegionList["ID"]) == IntVal($str_REGION_ID)) echo " selected"; ?>><? echo htmlspecialcharsbx($arRegionList["NAME_ORIG"]) ?>
-                        [<? echo htmlspecialcharsbx($arRegionList["NAME_LANG"]) ?>]</option><?
+                        <option value="<? echo $arRegionList["ID"] ?>"<? if (intval($arRegionList["ID"]) == intval(
+                                $str_REGION_ID
+                            )) {
+                            echo " selected";
+                        } ?>><? echo htmlspecialcharsbx($arRegionList["NAME_ORIG"]) ?> [<? echo htmlspecialcharsbx(
+                            $arRegionList["NAME_LANG"]
+                        ) ?>]</option><?
                     }
                     ?>
                 </select>
@@ -508,10 +570,11 @@ CAdminMessage::ShowMessage($strError);
             $str_CITY_SHORT_NAME = htmlspecialcharbx($arCity["SHORT_NAME"]);
             $str_WITHOUT_CITY = "N";
         } else {
-            if ($ID > 0)
+            if ($ID > 0) {
                 $str_WITHOUT_CITY = "Y";
-            else
+            } else {
                 $str_WITHOUT_CITY = "N";
+            }
         }
         if ($bInitVars) {
             $str_CITY_NAME = htmlspecialcharbx($CITY_NAME);
@@ -541,7 +604,7 @@ CAdminMessage::ShowMessage($strError);
             $arRegion = CSaleLocation::GetRegionLangByID($str_REGION_ID, $arSysLangs[$i]);
             $str_REGION_NAME = htmlspecialcharbx($arRegion["NAME"]);
             $str_REGION_SHORT_NAME = htmlspecialcharbx($arRegion["SHORT_NAME"]);
-            if ($bInitVars && $str_WITHOUT_CITY == "Y" && IntVal($str_REGION_ID) > 0) {
+            if ($bInitVars && $str_WITHOUT_CITY == "Y" && intval($str_REGION_ID) > 0) {
                 $str_REGION_NAME = htmlspecialcharbx(${"REGION_NAME_" . $arSysLangs[$i]});
                 $str_REGION_SHORT_NAME = htmlspecialcharbx(${"REGION_SHORT_NAME_" . $arSysLangs[$i]});
             }
@@ -583,7 +646,9 @@ CAdminMessage::ShowMessage($strError);
             </td>
             <td>
                 <input type="checkbox" name="WITHOUT_CITY" id="WITHOUT_CITY"
-                       value="Y" <? if ($str_WITHOUT_CITY == "Y") echo "checked"; ?>>
+                       value="Y" <? if ($str_WITHOUT_CITY == "Y") {
+                    echo "checked";
+                } ?>>
             </td>
         </tr>
         <tr class="adm-detail-required-field">

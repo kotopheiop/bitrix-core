@@ -58,7 +58,8 @@ class Rest extends Sender\Base
         while ($row = $result->fetch()) {
             $list[] = array(
                 'id' => $row['APP_ID'] . '|' . $row['CODE'],
-                'name' => sprintf('[%s] %s',
+                'name' => sprintf(
+                    '[%s] %s',
                     $this->getLangField($row['ID'], 'APP_NAME'),
                     $this->getLangField($row['ID'], 'NAME')
                 ),
@@ -114,11 +115,13 @@ class Rest extends Sender\Base
             return $sendResult;
         }
         */
-        $dbRes = \Bitrix\Rest\AppTable::getList(array(
-            'filter' => array(
-                '=CLIENT_ID' => $restSender['APP_ID'],
+        $dbRes = \Bitrix\Rest\AppTable::getList(
+            array(
+                'filter' => array(
+                    '=CLIENT_ID' => $restSender['APP_ID'],
+                )
             )
-        ));
+        );
         $application = $dbRes->fetch();
 
         if (!$application) {
@@ -171,6 +174,20 @@ class Rest extends Sender\Base
         \Bitrix\Rest\OAuthService::getEngine()->getClient()->sendEvent($queryItems);
         $sendResult->setExternalId($messageId);
         $sendResult->setStatus(MessageService\MessageStatus::SENT);
+
+        if ($application['CODE']) {
+            AddEventToStatFile(
+                'messageservice',
+                'sendRest' . $restSender['TYPE'],
+                uniqid($application['CODE'], true),
+                $application['CODE']
+            );
+        }
+
+        if (is_callable(['\Bitrix\Rest\UsageStatTable', 'logMessage'])) {
+            \Bitrix\Rest\UsageStatTable::logMessage($application['CLIENT_ID'], $restSender['TYPE']);
+            \Bitrix\Rest\UsageStatTable::finalize();
+        }
 
         return $sendResult;
     }

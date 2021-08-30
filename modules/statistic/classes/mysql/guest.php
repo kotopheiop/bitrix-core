@@ -1,4 +1,5 @@
 <?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/classes/general/guest.php");
 
 class CGuest extends CAllGuest

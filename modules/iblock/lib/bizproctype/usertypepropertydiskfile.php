@@ -10,6 +10,8 @@ use Bitrix\Main\Loader;
 if (Loader::requireModule('bizproc')) {
     class UserTypePropertyDiskFile extends UserTypeProperty
     {
+        private const MOBILE_COMPONENT_NAME = 'bitrix:mobile.iblock.bizproctype.diskfile';
+
         /**
          * @return string
          */
@@ -20,8 +22,9 @@ if (Loader::requireModule('bizproc')) {
 
         public static function formatValueMultiple(FieldType $fieldType, $value, $format = 'printable')
         {
-            if (!is_array($value) || is_array($value) && \CBPHelper::isAssociativeArray($value))
+            if (!is_array($value) || is_array($value) && \CBPHelper::isAssociativeArray($value)) {
                 $value = array($value);
+            }
 
             foreach ($value as $k => $v) {
                 $value[$k] = static::formatValuePrintable($fieldType, $v);
@@ -60,8 +63,9 @@ if (Loader::requireModule('bizproc')) {
          */
         public static function convertTo(FieldType $fieldType, $value, $toTypeClass)
         {
-            if (is_array($value) && isset($value['VALUE']))
+            if (is_array($value) && isset($value['VALUE'])) {
                 $value = $value['VALUE'];
+            }
 
             $value = (int)$value;
 
@@ -92,6 +96,15 @@ if (Loader::requireModule('bizproc')) {
             );
         }
 
+        public static function canRenderControl($renderMode)
+        {
+            if ($renderMode & FieldType::RENDER_MODE_MOBILE) {
+                return (static::getMobileControlRenderer() !== null);
+            }
+
+            return parent::canRenderControl($renderMode);
+        }
+
         /**
          * @param FieldType $fieldType Document field object.
          * @param array $field Form field information.
@@ -100,8 +113,13 @@ if (Loader::requireModule('bizproc')) {
          * @param int $renderMode Control render mode.
          * @return string
          */
-        public static function renderControlSingle(FieldType $fieldType, array $field, $value, $allowSelection, $renderMode)
-        {
+        public static function renderControlSingle(
+            FieldType $fieldType,
+            array $field,
+            $value,
+            $allowSelection,
+            $renderMode
+        ) {
             return static::renderControlMultiple($fieldType, $field, $value, $allowSelection, $renderMode);
         }
 
@@ -113,8 +131,13 @@ if (Loader::requireModule('bizproc')) {
          * @param int $renderMode Control render mode.
          * @return string
          */
-        public static function renderControlMultiple(FieldType $fieldType, array $field, $value, $allowSelection, $renderMode)
-        {
+        public static function renderControlMultiple(
+            FieldType $fieldType,
+            array $field,
+            $value,
+            $allowSelection,
+            $renderMode
+        ) {
             if ($allowSelection) {
                 $selectorValue = null;
                 if (is_array($value)) {
@@ -127,15 +150,21 @@ if (Loader::requireModule('bizproc')) {
                 return static::renderControlSelector($field, $selectorValue, true, '', $fieldType);
             }
 
-            if ($renderMode & FieldType::RENDER_MODE_DESIGNER)
+            if ($renderMode & FieldType::RENDER_MODE_DESIGNER) {
                 return '';
+            }
+
+            if ($renderMode & FieldType::RENDER_MODE_MOBILE) {
+                return self::renderMobileControl($fieldType, $field, $value);
+            }
 
             $userType = static::getUserType($fieldType);
             $iblockId = self::getIblockId($fieldType);
 
             if (!empty($userType['GetPublicEditHTML'])) {
-                if (is_array($value) && isset($value['VALUE']))
+                if (is_array($value) && isset($value['VALUE'])) {
                     $value = $value['VALUE'];
+                }
 
                 $fieldName = static::generateControlName($field);
                 $renderResult = call_user_func_array(
@@ -155,8 +184,9 @@ if (Loader::requireModule('bizproc')) {
                         true
                     )
                 );
-            } else
+            } else {
                 $renderResult = static::renderControl($fieldType, $field, $value, $allowSelection, $renderMode);
+            }
 
             return $renderResult;
         }
@@ -164,6 +194,15 @@ if (Loader::requireModule('bizproc')) {
         public static function extractValueSingle(FieldType $fieldType, array $field, array $request)
         {
             return static::extractValueMultiple($fieldType, $field, $request);
+        }
+
+        public static function extractValueMultiple(FieldType $fieldType, array $field, array $request)
+        {
+            if (defined('BX_MOBILE')) {
+                return self::extractValueMobile($fieldType, $field, $request);
+            }
+
+            return parent::extractValueMultiple($fieldType, $field, $request);
         }
 
         private static function getIblockId(FieldType $fieldType)
@@ -192,6 +231,38 @@ if (Loader::requireModule('bizproc')) {
             }
 
             return null;
+        }
+
+        private static function extractValueMobile(FieldType $fieldType, array $field, array $request)
+        {
+            $renderer = self::getMobileControlRenderer();
+            if (!$renderer) {
+                return null;
+            }
+
+            $diskFileIds = call_user_func(
+                [$renderer, 'extractValues'],
+                static::generateControlName($field),
+                $request
+            );
+
+            $property = static::getUserType($fieldType);
+            $iblockId = self::getIblockId($fieldType);
+
+            if (array_key_exists('AttachFilesWorkflow', $property)) {
+                foreach ($diskFileIds as $i => $diskFileId) {
+                    $diskFileIds[$i] = call_user_func_array(
+                        $property['AttachFilesWorkflow'],
+                        [$iblockId, $diskFileId]
+                    );
+                }
+            }
+
+            if (!$fieldType->isMultiple()) {
+                return $diskFileIds ? end($diskFileIds) : null;
+            }
+
+            return $diskFileIds;
         }
 
         public static function clearValueSingle(FieldType $fieldType, $value)
@@ -225,5 +296,31 @@ if (Loader::requireModule('bizproc')) {
             return $value;
         }
 
+        protected static function getMobileControlRenderer(): ?string
+        {
+            ob_start();
+            $className = \CBitrixComponent::includeComponentClass(self::MOBILE_COMPONENT_NAME);
+            ob_end_clean();
+
+            return $className ?: null;
+        }
+
+        protected static function renderMobileControl(FieldType $fieldType, array $field, $value): string
+        {
+            /** @var \CMain */
+            global $APPLICATION;
+            ob_start();
+            $APPLICATION->IncludeComponent(
+                self::MOBILE_COMPONENT_NAME,
+                '',
+                [
+                    'INPUT_NAME' => static::generateControlName($field),
+                    'INPUT_VALUE' => $value,
+                    'MULTIPLE' => $fieldType->isMultiple() ? 'Y' : 'N'
+                ]
+            );
+
+            return ob_get_clean();
+        }
     }
 }

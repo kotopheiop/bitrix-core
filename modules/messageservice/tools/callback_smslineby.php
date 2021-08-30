@@ -19,27 +19,29 @@ if (
     || !isset($messageFields['state'])
     || !CModule::IncludeModule("messageservice")
 ) {
-    \Bitrix\Main\Application::terminate();
+    \Bitrix\Main\Application::getInstance()->terminate();
 }
 
 $messageId = $messageFields['id_message'];
 $messageStatus = \Bitrix\MessageService\Sender\Sms\SmsLineBy::resolveStatus($messageFields['state']['state']);
 
 if ($messageStatus === null) {
-    \Bitrix\Main\Application::terminate();
+    \Bitrix\Main\Application::getInstance()->terminate();
 }
 
-$message = \Bitrix\MessageService\Internal\Entity\MessageTable::getList(array(
-    'select' => array('ID'),
-    'filter' => array(
-        '=SENDER_ID' => 'smslineby',
-        '=EXTERNAL_ID' => $messageId
+$message = \Bitrix\MessageService\Internal\Entity\MessageTable::getList(
+    array(
+        'select' => array('ID'),
+        'filter' => array(
+            '=SENDER_ID' => 'smslineby',
+            '=EXTERNAL_ID' => $messageId
+        )
     )
-))->fetch();
+)->fetch();
 
 if ($message) {
     \Bitrix\MessageService\Internal\Entity\MessageTable::update($message['ID'], array('STATUS_ID' => $messageStatus));
     $message['STATUS_ID'] = $messageStatus;
     \Bitrix\MessageService\Integration\Pull::onMessagesUpdate(array($message));
 }
-\Bitrix\Main\Application::terminate();
+\Bitrix\Main\Application::getInstance()->terminate();

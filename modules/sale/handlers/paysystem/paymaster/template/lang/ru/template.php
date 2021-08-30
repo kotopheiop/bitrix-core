@@ -1,3 +1,4 @@
 <?php
-$MESS['SALE_HPS_PAYMASTER_TEMPLATE_DESC_PAYMENT'] = 'Оплата #PAYMENT_ID# от #DATE_INSERT#';
-$MESS['SALE_HPS_PAYMASTER_TEMPLATE_BUTTON_PAID'] = 'Оплатить заказ';
+
+$MESS['SALE_HPS_PAYMASTER_TEMPLATE_DESC_PAYMENT'] = 'пїЅпїЅпїЅпїЅпїЅпїЅ #PAYMENT_ID# пїЅпїЅ #DATE_INSERT#';
+$MESS['SALE_HPS_PAYMASTER_TEMPLATE_BUTTON_PAID'] = 'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ';

@@ -52,8 +52,9 @@ class CashOnDeliveryCalcHandler extends PaySystem\BaseServiceHandler implements 
         /** @var \Bitrix\Sale\PropertyValue $delivery */
         $delivery = $propertyCollection->getDeliveryLocation();
 
-        if (!$delivery)
+        if (!$delivery) {
             return $result;
+        }
 
         $location = \CSaleLocation::GetByID($delivery->getValue());
 
@@ -66,19 +67,21 @@ class CashOnDeliveryCalcHandler extends PaySystem\BaseServiceHandler implements 
 
         $fullPrice = $payment->getSum();
 
-        if ($fullPrice <= 1000)
+        if ($fullPrice <= 1000) {
             $tariffNum = "0";
-        elseif ($fullPrice <= 5000)
+        } elseif ($fullPrice <= 5000) {
             $tariffNum = "1";
-        elseif ($fullPrice <= 20000)
+        } elseif ($fullPrice <= 20000) {
             $tariffNum = "2";
-        elseif ($fullPrice <= 500000)
+        } elseif ($fullPrice <= 500000) {
             $tariffNum = "3";
+        }
 
         if (isset($tariffNum)) {
             $percent = 0;
-            if ($tarifs["TARIFS"][$tariffNum]["UPPER_SUMM"] < $payment->getSum())
+            if ($tarifs["TARIFS"][$tariffNum]["UPPER_SUMM"] < $payment->getSum()) {
                 $percent = floatval($tarifs["TARIFS"][$tariffNum]["PERCENT"]) * floatval($payment->getSum()) / 100;
+            }
             $result = floatval($tarifs["TARIFS"][$tariffNum]["FIX"]) + $percent;
         }
 
@@ -92,10 +95,11 @@ class CashOnDeliveryCalcHandler extends PaySystem\BaseServiceHandler implements 
     private static function extractFromField($params)
     {
         $result = array();
-        $tarifs = unserialize($params);
+        $tarifs = unserialize($params, ['allowed_classes' => false]);
 
-        if (!is_array($tarifs))
+        if (!is_array($tarifs)) {
             $tarifs = array();
+        }
 
         $arRegIds = array_keys($tarifs);
         $regNames = @\CSaleLocation::GetRegionsNamesByIds($arRegIds);
@@ -171,15 +175,17 @@ class CashOnDeliveryCalcHandler extends PaySystem\BaseServiceHandler implements 
             foreach ($tariff as $id => $value) {
                 if ($id == "REG_NEW") {
                     if ((int)$value > 0) {
-                        for ($i = 0; $i < 12; ++$i)
+                        for ($i = 0; $i < 12; ++$i) {
                             $arResult[$value][] = 0;
+                        }
                     }
                     continue;
                 }
                 $tariffIds = explode('_', $id);
 
-                if (isset($tariffIds[2]))
+                if (isset($tariffIds[2])) {
                     $regionId = $tariffIds[2];
+                }
 
                 $arResult[$regionId][] = $value;
             }
@@ -198,7 +204,6 @@ class CashOnDeliveryCalcHandler extends PaySystem\BaseServiceHandler implements 
         $arCmTarifs = self::getValues($paySystemId);
 
         foreach ($arCmTarifs as $regionId => $arRegInfo) {
-
             $arResult[$regionId . 'REG_ID'] = array(
                 'TYPE' => 'TEXT_CENTERED',
                 'TITLE' => $arRegInfo["REG_NAME"],
@@ -206,13 +211,34 @@ class CashOnDeliveryCalcHandler extends PaySystem\BaseServiceHandler implements 
                 'BLOCK_LENGTH' => 4,
             );
 
-            if ($regionId != 0)
+            if ($regionId != 0) {
                 $arResult[$regionId . 'REG_ID']['BLOCK_DELETABLE'] = 'Y';
+            }
 
-            self::setTariffConfig('TARIF_1_' . $regionId, Loc::getMessage('SALE_HPS_CASH_ON_DELIVERY_LESS_1K'), $arRegInfo["TARIFS"][0], $arResult);
-            self::setTariffConfig('TARIF_2_' . $regionId, Loc::getMessage('SALE_HPS_CASH_ON_DELIVERY_LESS_5K'), $arRegInfo["TARIFS"][1], $arResult);
-            self::setTariffConfig('TARIF_3_' . $regionId, Loc::getMessage('SALE_HPS_CASH_ON_DELIVERY_LESS_20K'), $arRegInfo["TARIFS"][2], $arResult);
-            self::setTariffConfig('TARIF_4_' . $regionId, Loc::getMessage('SALE_HPS_CASH_ON_DELIVERY_LESS_500K'), $arRegInfo["TARIFS"][3], $arResult);
+            self::setTariffConfig(
+                'TARIF_1_' . $regionId,
+                Loc::getMessage('SALE_HPS_CASH_ON_DELIVERY_LESS_1K'),
+                $arRegInfo["TARIFS"][0],
+                $arResult
+            );
+            self::setTariffConfig(
+                'TARIF_2_' . $regionId,
+                Loc::getMessage('SALE_HPS_CASH_ON_DELIVERY_LESS_5K'),
+                $arRegInfo["TARIFS"][1],
+                $arResult
+            );
+            self::setTariffConfig(
+                'TARIF_3_' . $regionId,
+                Loc::getMessage('SALE_HPS_CASH_ON_DELIVERY_LESS_20K'),
+                $arRegInfo["TARIFS"][2],
+                $arResult
+            );
+            self::setTariffConfig(
+                'TARIF_4_' . $regionId,
+                Loc::getMessage('SALE_HPS_CASH_ON_DELIVERY_LESS_500K'),
+                $arRegInfo["TARIFS"][3],
+                $arResult
+            );
         }
 
         $arResult['REG_NEW'] = array(
@@ -233,10 +259,34 @@ class CashOnDeliveryCalcHandler extends PaySystem\BaseServiceHandler implements 
      */
     private static function setTariffConfig($tariffId, $tariffTitle, $arTarifs, &$arConfig)
     {
-        $arConfig[$tariffId . '_NAME'] = array('TYPE' => 'MULTI_CONTROL_STRING', 'MCS_ID' => $tariffId, 'TITLE' => $tariffTitle);
-        $arConfig[$tariffId . '_FIX'] = array('TYPE' => 'STRING', 'MCS_ID' => $tariffId, 'POST_TEXT' => Loc::getMessage('SALE_HPS_CASH_ON_DELIVERY_RUB'), 'SIZE' => 4, 'VALUE' => $arTarifs['FIX']);
-        $arConfig[$tariffId . '_PERCENT'] = array('TYPE' => 'STRING', 'MCS_ID' => $tariffId, 'PRE_TEXT' => ' + ', 'POST_TEXT' => ' % ', 'SIZE' => 3, 'VALUE' => $arTarifs['PERCENT']);
-        $arConfig[$tariffId . '_UPPER_SUMM'] = array('TYPE' => 'STRING', 'MCS_ID' => $tariffId, 'PRE_TEXT' => Loc::getMessage('SALE_HPS_CASH_ON_DELIVERY_SUMM_MORE'), 'POST_TEXT' => Loc::getMessage('SALE_HPS_CASH_ON_DELIVERY_RUB'), 'SIZE' => 7, 'VALUE' => $arTarifs['UPPER_SUMM']);
+        $arConfig[$tariffId . '_NAME'] = array(
+            'TYPE' => 'MULTI_CONTROL_STRING',
+            'MCS_ID' => $tariffId,
+            'TITLE' => $tariffTitle
+        );
+        $arConfig[$tariffId . '_FIX'] = array(
+            'TYPE' => 'STRING',
+            'MCS_ID' => $tariffId,
+            'POST_TEXT' => Loc::getMessage('SALE_HPS_CASH_ON_DELIVERY_RUB'),
+            'SIZE' => 4,
+            'VALUE' => $arTarifs['FIX']
+        );
+        $arConfig[$tariffId . '_PERCENT'] = array(
+            'TYPE' => 'STRING',
+            'MCS_ID' => $tariffId,
+            'PRE_TEXT' => ' + ',
+            'POST_TEXT' => ' % ',
+            'SIZE' => 3,
+            'VALUE' => $arTarifs['PERCENT']
+        );
+        $arConfig[$tariffId . '_UPPER_SUMM'] = array(
+            'TYPE' => 'STRING',
+            'MCS_ID' => $tariffId,
+            'PRE_TEXT' => Loc::getMessage('SALE_HPS_CASH_ON_DELIVERY_SUMM_MORE'),
+            'POST_TEXT' => Loc::getMessage('SALE_HPS_CASH_ON_DELIVERY_RUB'),
+            'SIZE' => 7,
+            'VALUE' => $arTarifs['UPPER_SUMM']
+        );
     }
 
     private static function getRegionsList()
@@ -245,8 +295,9 @@ class CashOnDeliveryCalcHandler extends PaySystem\BaseServiceHandler implements 
 
         /** @var \CDBResult $dbRes */
         $dbRes = \CSaleLocation::GetRegionList();
-        while ($region = $dbRes->Fetch())
+        while ($region = $dbRes->Fetch()) {
             $result[$region["ID"]] = $region["NAME"];
+        }
 
         return $result;
     }
@@ -257,8 +308,9 @@ class CashOnDeliveryCalcHandler extends PaySystem\BaseServiceHandler implements 
      */
     public function getCMTarifsByRegionFromCsv($regionNameLang)
     {
-        if (strlen(trim($regionNameLang)) <= 0)
+        if (trim($regionNameLang) == '') {
             return false;
+        }
 
         $csvFile = \CSaleHelper::getCsvObject(__DIR__ . '/lang/ru/cm_tarif.csv');
 
@@ -266,7 +318,7 @@ class CashOnDeliveryCalcHandler extends PaySystem\BaseServiceHandler implements 
         $arTarifs = array();
 
         while ($arRes = $csvFile->Fetch()) {
-            if (strtoupper(trim($regionNameLang)) === $arRes[$COL_REG_NAME]) {
+            if (mb_strtoupper(trim($regionNameLang)) === $arRes[$COL_REG_NAME]) {
                 $arTarifs = $arRes;
                 break;
             }
@@ -291,8 +343,9 @@ class CashOnDeliveryCalcHandler extends PaySystem\BaseServiceHandler implements 
             $arRegName = array_shift($arRes);
             $tarifs[$arRegName] = $arRes;
 
-            if ($arRegName != 'default')
+            if ($arRegName != 'default') {
                 $regNames[] = $arRegName;
+            }
         }
 
         if (isset($tarifs['default'])) {

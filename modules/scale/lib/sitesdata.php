@@ -17,14 +17,16 @@ class SitesData
      */
     public static function getSite($siteName, $dbName = false)
     {
-        if (strlen($siteName) <= 0)
+        if ($siteName == '') {
             throw new \Bitrix\Main\ArgumentNullException("siteName");
+        }
 
         $result = array();
         $sites = self::getList($dbName);
 
-        if (isset($sites[$siteName]))
+        if (isset($sites[$siteName])) {
             $result = $sites[$siteName];
+        }
 
         return $result;
     }
@@ -34,9 +36,11 @@ class SitesData
      */
     public static function getKernelSite()
     {
-        foreach (self::getList() as $siteId => $siteParams)
-            if ($siteParams['SiteInstall'] == 'kernel')
+        foreach (self::getList() as $siteId => $siteParams) {
+            if ($siteParams['SiteInstall'] == 'kernel') {
                 return $siteId;
+            }
+        }
 
         return '';
     }
@@ -48,9 +52,11 @@ class SitesData
     {
         $result = array();
 
-        foreach (self::getList() as $siteId => $siteParams)
-            if ($siteParams['SiteInstall'] == 'kernel')
+        foreach (self::getList() as $siteId => $siteParams) {
+            if ($siteParams['SiteInstall'] == 'kernel') {
                 $result[$siteId] = isset($siteParams['NAME']) ? $siteParams['NAME'] : $siteId;
+            }
+        }
 
         return $result;
     }
@@ -60,9 +66,11 @@ class SitesData
      */
     public static function getKernelRoot()
     {
-        foreach (self::getList() as $siteId => $siteParams)
-            if ($siteParams['SiteInstall'] == 'kernel')
+        foreach (self::getList() as $siteId => $siteParams) {
+            if ($siteParams['SiteInstall'] == 'kernel') {
                 return $siteParams['DocumentRoot'];
+            }
+        }
 
         return '';
     }
@@ -84,17 +92,19 @@ class SitesData
             if ($execRes) {
                 $arData = json_decode($sitesData, true);
 
-                if (isset($arData["params"]))
+                if (isset($arData["params"])) {
                     $resSite = $arData["params"];
+                }
 
                 $domains = array();
                 $sdRes = SiteDomainTable::getList();
 
                 while ($dom = $sdRes->fetch()) {
-                    if (isset($domains[$dom['LID']]))
+                    if (isset($domains[$dom['LID']])) {
                         $domains[$dom['LID']] .= ', ';
-                    else
+                    } else {
                         $domains[$dom['LID']] = '';
+                    }
 
                     $domains[$dom['LID']] .= $dom['DOMAIN'];
                 }
@@ -103,7 +113,8 @@ class SitesData
 
                 while ($site = $rsSite->fetch()) {
                     foreach ($resSite as $siteId => $siteInfo) {
-                        $docRoot = strlen($site["DOC_ROOT"]) > 0 ? $site["DOC_ROOT"] : \Bitrix\Main\Application::getDocumentRoot();
+                        $docRoot = $site["DOC_ROOT"] <> '' ? $site["DOC_ROOT"] : \Bitrix\Main\Application::getDocumentRoot(
+                        );
 
                         if ($siteInfo["DocumentRoot"] == $docRoot) {
                             $resSite[$siteId]["NAME"] = $site["NAME"] . " (" . $site["LID"] . ") ";
@@ -125,9 +136,11 @@ class SitesData
         if ($dbName != false && !empty($hitCache)) {
             $result = array();
 
-            foreach ($hitCache as $siteId => $siteInfo)
-                if ($siteInfo['DBName'] == $dbName)
+            foreach ($hitCache as $siteId => $siteInfo) {
+                if ($siteInfo['DBName'] == $dbName) {
                     $result[$siteId] = $siteInfo;
+                }
+            }
         } else {
             $result = $hitCache;
         }

@@ -1,4 +1,5 @@
-<?
+<?php
+
 IncludeModuleLangFile(__FILE__);
 
 class CListsSocnet
@@ -51,36 +52,49 @@ class CListsSocnet
         );
     }
 
-    function OnFillSocNetMenu(&$arResult, $arParams = array())
+    public static function OnFillSocNetMenu(&$arResult, $arParams = array())
     {
         global $USER;
 
         $arResult["AllowSettings"]["group_lists"] = true;
 
-        $arResult["CanView"]["group_lists"] = ((array_key_exists("ActiveFeatures", $arResult) ? array_key_exists("group_lists", $arResult["ActiveFeatures"]) : true) && CSocNetFeaturesPerms::CanPerformOperation(
+        $arResult["CanView"]["group_lists"] = ((array_key_exists("ActiveFeatures", $arResult) ? array_key_exists(
+                "group_lists",
+                $arResult["ActiveFeatures"]
+            ) : true) && CSocNetFeaturesPerms::CanPerformOperation(
                 $USER->GetID(),
                 $arParams["ENTITY_TYPE"],
-                $arParams["ENTITY_ID"], "group_lists", "view",
+                $arParams["ENTITY_ID"],
+                "group_lists",
+                "view",
                 CSocNetUser::IsCurrentUserModuleAdmin()
             ));
 
-        $arResult["Title"]["group_lists"] = (array_key_exists("ActiveFeatures", $arResult) && array_key_exists("group_lists", $arResult["ActiveFeatures"]) && strlen($arResult["ActiveFeatures"]["group_lists"]) > 0 ? $arResult["ActiveFeatures"]["group_lists"] : GetMessage("LISTS_SOCNET_TAB"));
+        $arResult["Title"]["group_lists"] = (array_key_exists("ActiveFeatures", $arResult) && array_key_exists(
+            "group_lists",
+            $arResult["ActiveFeatures"]
+        ) && $arResult["ActiveFeatures"]["group_lists"] <> '' ? $arResult["ActiveFeatures"]["group_lists"] : GetMessage(
+            "LISTS_SOCNET_TAB"
+        ));
 
         if (!array_key_exists("SEF_MODE", $arResult) || $arResult["SEF_MODE"] != "N") {
-            if (isset($arResult["Urls"]))
+            if (isset($arResult["Urls"])) {
                 $arResult["Urls"]["group_lists"] = $arResult["Urls"]["view"] . "lists/";
+            }
         } else {
-            if (!array_key_exists("PAGE_VAR", $arResult))
+            if (!array_key_exists("PAGE_VAR", $arResult)) {
                 $arResult["PAGE_VAR"] = "page";
+            }
 
-            if (!array_key_exists("GROUP_VAR", $arResult))
+            if (!array_key_exists("GROUP_VAR", $arResult)) {
                 $arResult["GROUP_VAR"] = "group_id";
+            }
 
             $arResult["Urls"]["group_lists"] = "?" . $arResult["PAGE_VAR"] . "=group_lists&" . $arResult["GROUP_VAR"] . "=" . $arResult["Group"]["ID"];
         }
     }
 
-    function OnParseSocNetComponentPath(&$arUrlTemplates, &$arCustomPagesPath, $arParams)
+    public static function OnParseSocNetComponentPath(&$arUrlTemplates, &$arCustomPagesPath, $arParams)
     {
         if ($arParams["SEF_MODE"] == "N") {
             $arMyUrlTemplates = array(
@@ -120,12 +134,15 @@ class CListsSocnet
 
         static $base_path = false;
         if (!$base_path) {
-            if (file_exists($_SERVER["DOCUMENT_ROOT"] . "/bitrix/php_interface/lists/" . SITE_ID . "/group_lists.php"))
+            if (file_exists(
+                $_SERVER["DOCUMENT_ROOT"] . "/bitrix/php_interface/lists/" . SITE_ID . "/group_lists.php"
+            )) {
                 $base_path = "/bitrix/php_interface/lists/" . SITE_ID . "/";
-            elseif (file_exists($_SERVER["DOCUMENT_ROOT"] . "/bitrix/php_interface/lists/group_lists.php"))
+            } elseif (file_exists($_SERVER["DOCUMENT_ROOT"] . "/bitrix/php_interface/lists/group_lists.php")) {
                 $base_path = "/bitrix/php_interface/lists/";
-            else
+            } else {
                 $base_path = "/bitrix/modules/lists/socnet/";
+            }
         }
 
         foreach ($arMyUrlTemplates as $page => $url) {
@@ -146,7 +163,7 @@ class CListsSocnet
         );
     }
 
-    function OnInitSocNetComponentVariables(&$arVariableAliases, &$arCustomPagesPath)
+    public static function OnInitSocNetComponentVariables(&$arVariableAliases, &$arCustomPagesPath)
     {
         $arVariableAliases['list_id'] = 'list_id';
         $arVariableAliases['section_id'] = 'section_id';
@@ -159,5 +176,3 @@ class CListsSocnet
         $arVariableAliases['ID'] = 'ID';
     }
 }
-
-?>

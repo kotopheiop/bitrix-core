@@ -30,8 +30,9 @@ class Manager
     {
         $result = array();
 
-        if (empty($exportId))
+        if (empty($exportId)) {
             throw new ArgumentNullException('exportId');
+        }
         $exportId = \EscapePHPString($exportId);
 
         $currProcess = Vk\Journal::getCurrentProcess($exportId);
@@ -39,14 +40,16 @@ class Manager
         $execCount = $currProcess ? $currProcess['EXEC_COUNT'] : self::DEFAULT_EXEC_COUNT;
 //		if we run ALL export - first we must add ALBUMS. After this we create PRODUCTS
         $currProcessType = self::prepareType($processType);
-        if (!in_array($currProcessType, Vk\Vk::getExportTypes()))
+        if (!in_array($currProcessType, Vk\Vk::getExportTypes())) {
             throw new ArgumentOutOfRangeException('currProcessType');
+        }
 
         $journal = new Vk\Journal($exportId, $currProcessType);
 
 //		if first running - start journal
-        if ($startPosition == self::DEFAULT_START_POSITION)
+        if ($startPosition == self::DEFAULT_START_POSITION) {
             $journal->start();
+        }
 
         $vk = Vk\Vk::getInstance();
         $vk->log(
@@ -65,8 +68,9 @@ class Manager
 //			control of slow export
             if ($startPosition == $endPosition) {
                 $execCount++;
-                if ($execCount >= self::MAX_EXEC_COUNT)
+                if ($execCount >= self::MAX_EXEC_COUNT) {
                     $result['TOO_MUCH_TIMES'] = Vk\Journal::getTooMuchTimeExportMessage();
+                }
             } else {
                 $execCount = self::DEFAULT_EXEC_COUNT;
             }
@@ -86,7 +90,8 @@ class Manager
 //			todo: need create normal errors desc
             $vk->log(
                 TradingPlatform\Logger::LOG_LEVEL_ERROR,
-                "VK_PROCESS__ERRORS", 'FEED_' . $currProcessType,
+                "VK_PROCESS__ERRORS",
+                'FEED_' . $currProcessType,
                 "VKontakte export of " . $currProcessType . " for profile " . $exportId . " finished with some errors. " .
                 $e->getMessage()
             );

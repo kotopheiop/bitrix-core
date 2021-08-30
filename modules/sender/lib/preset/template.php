@@ -87,8 +87,9 @@ class Template
     {
         static $templateListByType;
 
-        if (!$templateListByType)
+        if (!$templateListByType) {
             $templateListByType = \Bitrix\Sender\Preset\Template::getListByType();
+        }
 
         $templateTypeList = \Bitrix\Sender\Preset\Template::getTypeList();
 
@@ -111,7 +112,9 @@ class Template
                                 <?
                                 $firstTemplateType = null;
                                 foreach ($templateTypeList as $templateType => $templateTypeName):
-                                    if (!$firstTemplateType) $firstTemplateType = $templateType;
+                                    if (!$firstTemplateType) {
+                                        $firstTemplateType = $templateType;
+                                    }
                                     ?>
                                     <div class="sender-template-type-selector-button sender-template-type-selector-button-type-<?= $templateType ?>"
                                          data-bx-sender-tmpl-type="<?= htmlspecialcharsbx($templateType) ?>">
@@ -127,30 +130,46 @@ class Template
                                          class="sender-template-list-type-container sender-template-list-type-container-<?= $templateType ?>"
                                          style="display: none;">
                                         <?
-                                        if (isset($templateListByType[$templateType]))
+                                        if (isset($templateListByType[$templateType])) {
                                             foreach ($templateListByType[$templateType] as $templateNum => $template):
-                                                $isContentForBlockEditor = TemplateTable::isContentForBlockEditor($template['HTML']);
+                                                $isContentForBlockEditor = TemplateTable::isContentForBlockEditor(
+                                                    $template['HTML']
+                                                );
                                                 ?>
                                                 <div class="sender-template-list-type-block">
                                                     <div class="sender-template-list-type-block-caption sender-template-list-block-selector"
                                                          data-bx-sender-tmpl-version="<?= ($isContentForBlockEditor ? 'block' : 'visual') ?>"
-                                                         data-bx-sender-tmpl-name="<?= htmlspecialcharsbx($template['NAME']) ?>"
-                                                         data-bx-sender-tmpl-type="<?= htmlspecialcharsbx($template['TYPE']) ?>"
-                                                         data-bx-sender-tmpl-code="<?= htmlspecialcharsbx($template['ID']) ?>"
+                                                         data-bx-sender-tmpl-name="<?= htmlspecialcharsbx(
+                                                             $template['NAME']
+                                                         ) ?>"
+                                                         data-bx-sender-tmpl-type="<?= htmlspecialcharsbx(
+                                                             $template['TYPE']
+                                                         ) ?>"
+                                                         data-bx-sender-tmpl-code="<?= htmlspecialcharsbx(
+                                                             $template['ID']
+                                                         ) ?>"
                                                          data-bx-sender-tmpl-lang="<?= LANGUAGE_ID ?>">
                                                         <a class="sender-link-email" href="javascript: void(0);">
                                                             <?= htmlspecialcharsbx($template['NAME']) ?>
                                                         </a>
                                                         <? if (!$isContentForBlockEditor):?>
                                                             <br>
-                                                            <span style="font-size: 10px;"><?= Loc::getMessage('SENDER_PRESET_TEMPLATE_OLD_EDITOR') ?></span>
+                                                            <span style="font-size: 10px;"><?= Loc::getMessage(
+                                                                    'SENDER_PRESET_TEMPLATE_OLD_EDITOR'
+                                                                ) ?></span>
                                                         <?endif; ?>
                                                     </div>
                                                     <div class="sender-template-list-type-block-img sender-template-list-block-selector"
                                                          data-bx-sender-tmpl-version="<?= ($isContentForBlockEditor ? 'block' : 'visual') ?>"
-                                                         data-bx-sender-tmpl-name="<?= htmlspecialcharsbx($template['NAME']) ?>"
-                                                         data-bx-sender-tmpl-type="<?= htmlspecialcharsbx($template['TYPE']) ?>"
-                                                         data-bx-sender-tmpl-code="<?= htmlspecialcharsbx($template['ID']) ?>"
+                                                         data-bx-sender-tmpl-name="<?= htmlspecialcharsbx(
+                                                             $template['NAME']
+                                                         ) ?>"
+                                                         data-bx-sender-tmpl-type="<?= htmlspecialcharsbx(
+                                                             $template['TYPE']
+                                                         ) ?>"
+                                                         data-bx-sender-tmpl-code="<?= htmlspecialcharsbx(
+                                                             $template['ID']
+                                                         ) ?>"
                                                          data-bx-sender-tmpl-lang="<?= LANGUAGE_ID ?>">
                                                         <? if (!empty($template['ICON'])):?>
                                                             <img src="<?= $template['ICON'] ?>">
@@ -158,16 +177,25 @@ class Template
                                                     </div>
                                                     <? if (!empty($template['HTML'])):?>
                                                         <div class="sender-template-message-preview-btn"
-                                                             data-bx-sender-tmpl-name="<?= htmlspecialcharsbx($template['NAME']) ?>"
-                                                             data-bx-sender-tmpl-type="<?= htmlspecialcharsbx($template['TYPE']) ?>"
-                                                             data-bx-sender-tmpl-code="<?= htmlspecialcharsbx($template['ID']) ?>"
+                                                             data-bx-sender-tmpl-name="<?= htmlspecialcharsbx(
+                                                                 $template['NAME']
+                                                             ) ?>"
+                                                             data-bx-sender-tmpl-type="<?= htmlspecialcharsbx(
+                                                                 $template['TYPE']
+                                                             ) ?>"
+                                                             data-bx-sender-tmpl-code="<?= htmlspecialcharsbx(
+                                                                 $template['ID']
+                                                             ) ?>"
                                                              data-bx-sender-tmpl-lang="<?= LANGUAGE_ID ?>">
                                                             <a class="sender-link-email "
-                                                               href="javascript: void(0);"><?= Loc::getMessage('SENDER_PRESET_TEMPLATE_BTN_PREVIEW') ?></a>
+                                                               href="javascript: void(0);"><?= Loc::getMessage(
+                                                                    'SENDER_PRESET_TEMPLATE_BTN_PREVIEW'
+                                                                ) ?></a>
                                                         </div>
                                                     <?endif; ?>
                                                 </div>
-                                            <?endforeach; ?>
+                                            <?endforeach;
+                                        } ?>
                                         <? if (empty($templateListByType[$templateType])):?>
                                             <div class="sender-template-list-type-blockempty">
                                                 <?= Loc::getMessage('SENDER_PRESET_TEMPLATE_NO_TMPL') ?>

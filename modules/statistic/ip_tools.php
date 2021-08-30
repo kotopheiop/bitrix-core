@@ -15,14 +15,21 @@ function i2c_create_db(
     $file_type = false,
     $file_db = false,
     $file_idx = false
-)
-{
+) {
     $step = intval($step);
 
-    if ($file_name === false) $file_name = IP_DEFAULT_SOURCE_FILENAME;
-    if ($file_type === false) $file_type = IP_DEFAULT_SOURCE_TYPE;
-    if ($file_db === false) $file_db = IP_DB_FILENAME;
-    if ($file_idx === false) $file_idx = IP_IDX_FILENAME;
+    if ($file_name === false) {
+        $file_name = IP_DEFAULT_SOURCE_FILENAME;
+    }
+    if ($file_type === false) {
+        $file_type = IP_DEFAULT_SOURCE_TYPE;
+    }
+    if ($file_db === false) {
+        $file_db = IP_DB_FILENAME;
+    }
+    if ($file_idx === false) {
+        $file_idx = IP_IDX_FILENAME;
+    }
 
     $start = getmicrotime();
 
@@ -36,7 +43,11 @@ function i2c_create_db(
     }
 
     if ($fp = fopen($_SERVER["DOCUMENT_ROOT"] . $file_name, "rb")) {
-        if ($fseek <= 0) $mode = "wb"; else $mode = "ab";
+        if ($fseek <= 0) {
+            $mode = "wb";
+        } else {
+            $mode = "ab";
+        }
         $f_db = fopen($_SERVER["DOCUMENT_ROOT"] . $file_db, $mode);
         $f_idx = fopen($_SERVER["DOCUMENT_ROOT"] . $file_idx, $mode);
 
@@ -48,21 +59,25 @@ function i2c_create_db(
         $src_db_lines = 0;
         $step_reindex = 0;
 
-        if ($bExtTotal)
+        if ($bExtTotal) {
             fseek($fp, $fseek);
+        }
 
         while ($fp > 0 && !feof($fp)) {
             $arr = fgetcsv($fp, 1000, ",");
             if (is_array($arr) && $file_type == "maxmind.com" && !isset($beginIpNum)) {
-                while (list($key, $value) = each($arr)) {
+                foreach ($arr as $key => $value) {
                     $value = trim($value);
-                    if ($value == "beginIpNum" || $value == "endIpNum" || $value == "countryCode") ${$value} = $key;
+                    if ($value == "beginIpNum" || $value == "endIpNum" || $value == "countryCode") {
+                        ${$value} = $key;
+                    }
                 }
             }
             $src_db_lines++;
             if (!$bExtTotal) {
-                if ($fseek > 0 && $src_db_lines <= $fseek)
+                if ($fseek > 0 && $src_db_lines <= $fseek) {
                     continue;
+                }
             }
 
             if ($file_type == "maxmind.com") {
@@ -73,7 +88,9 @@ function i2c_create_db(
                 $ip_to = TrimEx($arr[$ix_endIpNum], "\"");
 
                 $ip_to = (float)$ip_to;
-                if ($ip_to <= 0) continue;
+                if ($ip_to <= 0) {
+                    continue;
+                }
 
                 $ix_countryCode = (!isset($countryCode)) ? 4 : intval($countryCode);
                 $country_id = TrimEx($arr[$ix_countryCode], "\"");
@@ -82,7 +99,9 @@ function i2c_create_db(
                 $ip_to = TrimEx($arr[1], "\"");
                 $country_id = TrimEx($arr[2], "\"");
             }
-            if (strlen($country_id) <= 0 && strlen($country_id) != 2) continue;
+            if ($country_id == '' && mb_strlen($country_id) != 2) {
+                continue;
+            }
 
             $ip_from_p = str_pad($ip_from, 10, "0", STR_PAD_LEFT);
             $ip_to_p = str_pad($ip_to, 10, "0", STR_PAD_LEFT);
@@ -90,8 +109,9 @@ function i2c_create_db(
             $step_reindex++;
 
             $int = floor($ip_from / $d);
-            if ($int != $int_prev)
+            if ($int != $int_prev) {
                 fwrite($f_idx, $int . "," . ($my_total_reindex + $step_reindex) . "\n");
+            }
             $int_prev = $int;
 
             if ($step > 0 && (getmicrotime() - $start) > $step) {
@@ -100,8 +120,9 @@ function i2c_create_db(
             }
         }
 
-        if ($reindex_success != "N")
+        if ($reindex_success != "N") {
             $reindex_success = "Y";
+        }
 
         if ($bExtTotal) {
             $total_reindex[0] += $step_reindex;
@@ -119,13 +140,16 @@ function i2c_create_db(
 function i2c_load_countries(
     $file_name = false,
     $file_type = false
-)
-{
+) {
     $DB = CDatabase::GetModuleConnection('statistic');
     $err_mess = "FILE: " . __FILE__ . "<br>LINE: ";
 
-    if ($file_name === false) $file_name = IP_DEFAULT_SOURCE_FILENAME;
-    if ($file_type === false) $file_type = IP_DEFAULT_SOURCE_TYPE;
+    if ($file_name === false) {
+        $file_name = IP_DEFAULT_SOURCE_FILENAME;
+    }
+    if ($file_type === false) {
+        $file_type = IP_DEFAULT_SOURCE_TYPE;
+    }
 
     if ($fp = fopen($_SERVER["DOCUMENT_ROOT"] . $file_name, "rb")) {
         set_time_limit(0);
@@ -168,17 +192,18 @@ function i2c_load_countries(
                 }
 
                 //Check if was hanled with "dirty" $country_id
-                if (array_key_exists($arr[$ix_countryCode], $arrUpdated))
+                if (array_key_exists($arr[$ix_countryCode], $arrUpdated)) {
                     continue;
+                }
 
                 $country_id = trim($arr[$ix_countryCode], "\"");
 
                 if (!array_key_exists($country_id, $arrUpdated)) {
-
                     $country_name = trim($arr[$ix_countryName], "\"");
                     if ($bMaxMind) {
-                        if (strlen($country_id) != 2)
+                        if (mb_strlen($country_id) != 2) {
                             continue;
+                        }
                         $country_short_name = "";
                     } else {
                         $country_short_name = trim($arr[3], "\"");
@@ -187,8 +212,13 @@ function i2c_load_countries(
                     $arFields["NAME"] = "'" . $DB->ForSql($country_name, 50) . "'";
                     $arFields["SHORT_NAME"] = "'" . $DB->ForSql($country_short_name, 3) . "'";
 
-                    $rows = $DB->Update("b_stat_country", $arFields, "WHERE ID='" . $DB->ForSql(strtoupper($country_id), 2) . "'", $err_mess . __LINE__);
-                    if (intval($rows) <= 0 && strlen($country_id) > 0 && strlen($country_name) > 0) {
+                    $rows = $DB->Update(
+                        "b_stat_country",
+                        $arFields,
+                        "WHERE ID='" . $DB->ForSql(mb_strtoupper($country_id), 2) . "'",
+                        $err_mess . __LINE__
+                    );
+                    if (intval($rows) <= 0 && $country_id <> '' && $country_name <> '') {
                         $strSql = "
 							INSERT INTO b_stat_country (ID, SHORT_NAME, NAME) VALUES (
 								'" . $DB->ForSql($country_id, 2) . "',
@@ -218,16 +248,18 @@ function ip2address($ip_number)
 
 function i2c_get_country($ip = false)
 {
-    if ($ip === false)
+    if ($ip === false) {
         $ip = $_SERVER['REMOTE_ADDR'];
+    }
 
     $ipn = (float)sprintf("%u", ip2long($ip));
     $idx = i2c_search_in_index($ipn);
 
-    if ($idx !== false)
+    if ($idx !== false) {
         $country = i2c_search_in_db($ipn, $idx);
-    else
+    } else {
         $country = 'N0';
+    }
 
     return $country;
 }
@@ -275,8 +307,9 @@ function i2c_search_in_db($ip, $idx, $db_name = IP_DB_FILENAME)
     $country = "N0";
     $ipdb = fopen($_SERVER['DOCUMENT_ROOT'] . $db_name, "rb");
 
-    if (!$ipdb)
+    if (!$ipdb) {
         return $country;
+    }
 
     $i1_size = 10;
     $i2_size = 10;
@@ -291,13 +324,13 @@ function i2c_search_in_db($ip, $idx, $db_name = IP_DB_FILENAME)
             break;
         }
         $record = fread($ipdb, $record_size);
-        if (strlen($record) != $record_size) {
+        if (mb_strlen($record) != $record_size) {
             $country = "N0";
             break;
         }
-        $range_start = (float)substr($record, 0, $i1_size);
-        $range_end = (float)substr($record, $i1_size, $i2_size);
-        $country = substr($record, $i1_size + $i2_size, $cn_size);
+        $range_start = (float)mb_substr($record, 0, $i1_size);
+        $range_end = (float)mb_substr($record, $i1_size, $i2_size);
+        $country = mb_substr($record, $i1_size + $i2_size, $cn_size);
         $idx[0] += 1;
     }
     fclose($ipdb);
@@ -306,7 +339,7 @@ function i2c_search_in_db($ip, $idx, $db_name = IP_DB_FILENAME)
 
 function get_realip()
 {
-    $ip = FALSE;
+    $ip = false;
     if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
         $ips = explode(", ", $_SERVER['HTTP_X_FORWARDED_FOR']);
         for ($i = 0; $i < count($ips); $i++) {

@@ -104,28 +104,37 @@ class Internalizer extends ModificationFieldsBase
         $controller = $this->getController();
         $entity = $this->getEntity($controller);
 
-        LoggerDiag::addMessage('INTERNALIZER_RESOLVE_PARAMS_CAMEL2SNAKE_FIELDS_BEFORE', var_export([
-            'name' => $name,
-            'fields' => $arguments['fields']
-        ], true));
+        LoggerDiag::addMessage(
+            'INTERNALIZER_RESOLVE_PARAMS_CAMEL2SNAKE_FIELDS_BEFORE',
+            var_export(
+                [
+                    'name' => $name,
+                    'fields' => $arguments['fields']
+                ],
+                true
+            )
+        );
 
         if ($name == 'list') {
             if (isset($arguments['select'])) {
                 $fields = $arguments['select'];
-                if (!empty($fields))
+                if (!empty($fields)) {
                     $arguments['select'] = $entity->convertKeysToSnakeCaseSelect($fields);
+                }
             }
 
             if (isset($arguments['filter'])) {
                 $fields = $arguments['filter'];
-                if (!empty($fields))
+                if (!empty($fields)) {
                     $arguments['filter'] = $entity->convertKeysToSnakeCaseFilter($fields);
+                }
             }
 
             if (isset($arguments['order'])) {
                 $fields = $arguments['order'];
-                if (!empty($fields))
+                if (!empty($fields)) {
                     $arguments['order'] = $entity->convertKeysToSnakeCaseOrder($fields);
+                }
             }
         } elseif ($name == 'getfields') {
         } elseif ($name == 'get') {
@@ -138,17 +147,24 @@ class Internalizer extends ModificationFieldsBase
             || $name == 'trymodify') {
             if (isset($arguments['fields'])) {
                 $fields = $arguments['fields'];
-                if (!empty($fields))
+                if (!empty($fields)) {
                     $arguments['fields'] = $entity->convertKeysToSnakeCaseFields($fields);
+                }
             }
         } else {
             $arguments = $entity->convertKeysToSnakeCaseArguments($name, $arguments);
         }
 
-        LoggerDiag::addMessage('INTERNALIZER_RESOLVE_PARAMS_CAMEL2SNAKE_FIELDS_AFTER', var_export([
-            'name' => $name,
-            'fields' => $arguments['fields']
-        ], true));
+        LoggerDiag::addMessage(
+            'INTERNALIZER_RESOLVE_PARAMS_CAMEL2SNAKE_FIELDS_AFTER',
+            var_export(
+                [
+                    'name' => $name,
+                    'fields' => $arguments['fields']
+                ],
+                true
+            )
+        );
 
         return $arguments;
     }
@@ -160,31 +176,43 @@ class Internalizer extends ModificationFieldsBase
         $controller = $this->getController();
         $entity = $this->getEntity($controller);
 
-        LoggerDiag::addMessage('INTERNALIZER_RESOLVE_PARAMS_PREPARE_FIELDS_BEFORE', var_export([
-            'name' => $name,
-            'fields' => $arguments['fields']
-        ], true));
+        LoggerDiag::addMessage(
+            'INTERNALIZER_RESOLVE_PARAMS_PREPARE_FIELDS_BEFORE',
+            var_export(
+                [
+                    'name' => $name,
+                    'fields' => $arguments['fields']
+                ],
+                true
+            )
+        );
 
         if ($name == 'add') {
             $fields = $arguments['fields'];
-            if (!empty($fields))
+            if (!empty($fields)) {
                 $arguments['fields'] = $entity->internalizeFieldsAdd($fields);
+            }
         } elseif ($name == 'update') {
             $fields = $arguments['fields'];
-            if (!empty($fields))
+            if (!empty($fields)) {
                 $arguments['fields'] = $entity->internalizeFieldsUpdate($fields);
+            }
         } elseif ($name == 'list') {
-            $fields = $entity->internalizeFieldsList([
-                'select' => $arguments['select'],
-                'filter' => $arguments['filter'],
-                'order' => $arguments['order'],
-            ]);
+            $fields = $entity->internalizeFieldsList(
+                [
+                    'select' => $arguments['select'],
+                    'filter' => $arguments['filter'],
+                    'order' => $arguments['order'],
+                ]
+            );
 
-            $fields = $entity->rewriteFieldsList([
-                'select' => $fields['select'],
-                'filter' => $fields['filter'],
-                'order' => $fields['order'],
-            ]);
+            $fields = $entity->rewriteFieldsList(
+                [
+                    'select' => $fields['select'],
+                    'filter' => $fields['filter'],
+                    'order' => $fields['order'],
+                ]
+            );
 
             $arguments['select'] = $fields['select'];
             $arguments['filter'] = $fields['filter'];
@@ -194,28 +222,38 @@ class Internalizer extends ModificationFieldsBase
         } elseif ($name == 'delete') {
         } elseif ($name == 'modify') {
             $fields = $arguments['fields'];
-            if (!empty($fields))
+            if (!empty($fields)) {
                 $arguments['fields'] = $entity->internalizeFieldsModify($fields);
+            }
         } elseif ($name == 'tryadd') {
             $fields = $arguments['fields'];
-            if (!empty($fields))
+            if (!empty($fields)) {
                 $arguments['fields'] = $entity->internalizeFieldsTryAdd($fields);
+            }
         } elseif ($name == 'tryupdate') {
             $fields = $arguments['fields'];
-            if (!empty($fields))
+            if (!empty($fields)) {
                 $arguments['fields'] = $entity->internalizeFieldsUpdate($fields);
+            }
         } elseif ($name == 'trymodify') {
             $fields = $arguments['fields'];
-            if (!empty($fields))
+            if (!empty($fields)) {
                 $arguments['fields'] = $entity->internalizeFieldsTryModify($fields);
+            }
         } else {
             $arguments = $entity->internalizeArguments($name, $arguments);
         }
 
-        LoggerDiag::addMessage('INTERNALIZER_RESOLVE_PARAMS_PREPARE_FIELDS_AFTER', var_export([
-            'name' => $name,
-            'fields' => $arguments['fields']
-        ], true));
+        LoggerDiag::addMessage(
+            'INTERNALIZER_RESOLVE_PARAMS_PREPARE_FIELDS_AFTER',
+            var_export(
+                [
+                    'name' => $name,
+                    'fields' => $arguments['fields']
+                ],
+                true
+            )
+        );
 
         return $arguments;
     }

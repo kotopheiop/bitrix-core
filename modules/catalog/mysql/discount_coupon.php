@@ -17,17 +17,20 @@ class CCatalogDiscountCoupon extends CAllCatalogDiscountCoupon
         if ($eventOnBeforeAddExists === true || $eventOnBeforeAddExists === null) {
             foreach (GetModuleEvents('catalog', 'OnBeforeCouponAdd', true) as $arEvent) {
                 $eventOnBeforeAddExists = true;
-                if (ExecuteModuleEventEx($arEvent, array(&$arFields, &$bAffectDataFile)) === false)
+                if (ExecuteModuleEventEx($arEvent, array(&$arFields, &$bAffectDataFile)) === false) {
                     return false;
+                }
             }
-            if ($eventOnBeforeAddExists === null)
+            if ($eventOnBeforeAddExists === null) {
                 $eventOnBeforeAddExists = false;
+            }
         }
 
         $bAffectDataFile = false;
 
-        if (!CCatalogDiscountCoupon::CheckFields("ADD", $arFields, 0))
+        if (!CCatalogDiscountCoupon::CheckFields("ADD", $arFields, 0)) {
             return false;
+        }
 
         $arInsert = $DB->PrepareInsert("b_catalog_discount_coupon", $arFields);
 
@@ -36,16 +39,18 @@ class CCatalogDiscountCoupon extends CAllCatalogDiscountCoupon
 
         $ID = (int)$DB->LastID();
 
-        if ($ID > 0)
+        if ($ID > 0) {
             Catalog\DiscountTable::setUseCoupons($arFields['DISCOUNT_ID'], 'Y');
+        }
 
         if ($eventOnAddExists === true || $eventOnAddExists === null) {
             foreach (GetModuleEvents('catalog', 'OnCouponAdd', true) as $arEvent) {
                 $eventOnAddExists = true;
                 ExecuteModuleEventEx($arEvent, array($ID, $arFields));
             }
-            if ($eventOnAddExists === null)
+            if ($eventOnAddExists === null) {
                 $eventOnAddExists = false;
+            }
         }
 
         return $ID;
@@ -58,30 +63,36 @@ class CCatalogDiscountCoupon extends CAllCatalogDiscountCoupon
         global $DB;
 
         $ID = (int)$ID;
-        if ($ID <= 0)
+        if ($ID <= 0) {
             return false;
+        }
 
         if ($eventOnBeforeUpdateExists === true || $eventOnBeforeUpdateExists === null) {
             foreach (GetModuleEvents('catalog', 'OnBeforeCouponUpdate', true) as $arEvent) {
                 $eventOnBeforeUpdateExists = true;
-                if (ExecuteModuleEventEx($arEvent, array($ID, &$arFields)) === false)
+                if (ExecuteModuleEventEx($arEvent, array($ID, &$arFields)) === false) {
                     return false;
+                }
             }
-            if ($eventOnBeforeUpdateExists === null)
+            if ($eventOnBeforeUpdateExists === null) {
                 $eventOnBeforeUpdateExists = false;
+            }
         }
 
-        if (!CCatalogDiscountCoupon::CheckFields("UPDATE", $arFields, $ID))
+        if (!CCatalogDiscountCoupon::CheckFields("UPDATE", $arFields, $ID)) {
             return false;
+        }
 
         $discountIds = array();
         $strUpdate = $DB->PrepareUpdate("b_catalog_discount_coupon", $arFields);
         if (!empty($strUpdate)) {
             if (isset($arFields['DISCOUNT_ID'])) {
-                $iterator = Catalog\DiscountCouponTable::getList(array(
-                    'select' => array('DISCOUNT_ID', 'ID'),
-                    'filter' => array('=ID' => $ID)
-                ));
+                $iterator = Catalog\DiscountCouponTable::getList(
+                    array(
+                        'select' => array('DISCOUNT_ID', 'ID'),
+                        'filter' => array('=ID' => $ID)
+                    )
+                );
                 $row = $iterator->fetch();
                 unset($iterator);
                 if (!empty($row)) {
@@ -100,11 +111,13 @@ class CCatalogDiscountCoupon extends CAllCatalogDiscountCoupon
             if (!empty($discountIds)) {
                 $withoutCoupons = array_fill_keys($discountIds, true);
                 $withCoupons = array();
-                $couponIterator = Catalog\DiscountCouponTable::getList(array(
-                    'select' => array('DISCOUNT_ID', new Main\Entity\ExpressionField('CNT', 'COUNT(*)')),
-                    'filter' => array('@DISCOUNT_ID' => $discountIds),
-                    'group' => array('DISCOUNT_ID')
-                ));
+                $couponIterator = Catalog\DiscountCouponTable::getList(
+                    array(
+                        'select' => array('DISCOUNT_ID', new Main\Entity\ExpressionField('CNT', 'COUNT(*)')),
+                        'filter' => array('@DISCOUNT_ID' => $discountIds),
+                        'group' => array('DISCOUNT_ID')
+                    )
+                );
                 while ($coupon = $couponIterator->fetch()) {
                     $coupon['CNT'] = (int)$coupon['CNT'];
                     if ($coupon['CNT'] > 0) {
@@ -132,8 +145,9 @@ class CCatalogDiscountCoupon extends CAllCatalogDiscountCoupon
                 $eventOnUpdateExists = true;
                 ExecuteModuleEventEx($arEvent, array($ID, $arFields));
             }
-            if ($eventOnUpdateExists === null)
+            if ($eventOnUpdateExists === null) {
                 $eventOnUpdateExists = false;
+            }
         }
 
         return $ID;
@@ -146,37 +160,48 @@ class CCatalogDiscountCoupon extends CAllCatalogDiscountCoupon
         global $DB;
 
         $ID = (int)$ID;
-        if ($ID <= 0)
+        if ($ID <= 0) {
             return false;
+        }
 
         if ($eventOnBeforeDeleteExists === true || $eventOnBeforeDeleteExists === null) {
             foreach (GetModuleEvents('catalog', 'OnBeforeCouponDelete', true) as $arEvent) {
                 $eventOnBeforeDeleteExists = true;
-                if (ExecuteModuleEventEx($arEvent, array($ID, &$bAffectDataFile)) === false)
+                if (ExecuteModuleEventEx($arEvent, array($ID, &$bAffectDataFile)) === false) {
                     return false;
+                }
             }
-            if ($eventOnBeforeDeleteExists === null)
+            if ($eventOnBeforeDeleteExists === null) {
                 $eventOnBeforeDeleteExists = false;
+            }
         }
 
         $bAffectDataFile = false;
 
-        $iterator = Catalog\DiscountCouponTable::getList(array(
-            'select' => array('DISCOUNT_ID', 'ID'),
-            'filter' => array('=ID' => $ID)
-        ));
+        $iterator = Catalog\DiscountCouponTable::getList(
+            array(
+                'select' => array('DISCOUNT_ID', 'ID'),
+                'filter' => array('=ID' => $ID)
+            )
+        );
         $row = $iterator->fetch();
         unset($iterator);
 
-        $DB->Query("DELETE FROM b_catalog_discount_coupon WHERE ID = " . $ID, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+        $DB->Query(
+            "DELETE FROM b_catalog_discount_coupon WHERE ID = " . $ID,
+            false,
+            "File: " . __FILE__ . "<br>Line: " . __LINE__
+        );
 
         if (!empty($row)) {
             $row['DISCOUNT_ID'] = (int)$row['DISCOUNT_ID'];
-            $iterator = Catalog\DiscountCouponTable::getList(array(
-                'select' => array('DISCOUNT_ID'),
-                'filter' => array('=DISCOUNT_ID' => $row['DISCOUNT_ID']),
-                'limit' => 1
-            ));
+            $iterator = Catalog\DiscountCouponTable::getList(
+                array(
+                    'select' => array('DISCOUNT_ID'),
+                    'filter' => array('=DISCOUNT_ID' => $row['DISCOUNT_ID']),
+                    'limit' => 1
+                )
+            );
             $existRow = $iterator->fetch();
             unset($iterator);
             Catalog\DiscountTable::setUseCoupons(
@@ -192,8 +217,9 @@ class CCatalogDiscountCoupon extends CAllCatalogDiscountCoupon
                 $eventOnDeleteExists = true;
                 ExecuteModuleEventEx($arEvent, array($ID));
             }
-            if ($eventOnDeleteExists === null)
+            if ($eventOnDeleteExists === null) {
                 $eventOnDeleteExists = false;
+            }
         }
 
         return true;
@@ -204,19 +230,24 @@ class CCatalogDiscountCoupon extends CAllCatalogDiscountCoupon
         global $DB;
 
         $ID = intval($ID);
-        if ($ID <= 0)
+        if ($ID <= 0) {
             return false;
+        }
 
         $strSql =
             "SELECT CD.ID, CD.DISCOUNT_ID, CD.ACTIVE, CD.COUPON, CD.ONE_TIME, " .
             $DB->DateToCharFunction("CD.DATE_APPLY", "FULL") . " as DATE_APPLY, " .
             $DB->DateToCharFunction("CD.TIMESTAMP_X", "FULL") . " as TIMESTAMP_X, " .
-            "CD.CREATED_BY, CD.MODIFIED_BY, " . $DB->DateToCharFunction('CD.DATE_CREATE', 'FULL') . ' as DATE_CREATE, ' .
+            "CD.CREATED_BY, CD.MODIFIED_BY, " . $DB->DateToCharFunction(
+                'CD.DATE_CREATE',
+                'FULL'
+            ) . ' as DATE_CREATE, ' .
             "CD.DESCRIPTION FROM b_catalog_discount_coupon CD WHERE CD.ID = " . $ID;
 
         $db_res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-        if ($res = $db_res->Fetch())
+        if ($res = $db_res->Fetch()) {
             return $res;
+        }
 
         return false;
     }
@@ -229,8 +260,13 @@ class CCatalogDiscountCoupon extends CAllCatalogDiscountCoupon
      * @param array $arSelectFields
      * @return bool|CDBResult
      */
-    public static function GetList($arOrder = array(), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
-    {
+    public static function GetList(
+        $arOrder = array(),
+        $arFilter = array(),
+        $arGroupBy = false,
+        $arNavStartParams = false,
+        $arSelectFields = array()
+    ) {
         global $DB;
 
         $arFields = array(
@@ -240,7 +276,11 @@ class CCatalogDiscountCoupon extends CAllCatalogDiscountCoupon
             "ONE_TIME" => array("FIELD" => "CD.ONE_TIME", "TYPE" => "char"),
             "COUPON" => array("FIELD" => "CD.COUPON", "TYPE" => "string"),
             "DATE_APPLY" => array("FIELD" => "CD.DATE_APPLY", "TYPE" => "datetime"),
-            "DISCOUNT_NAME" => array("FIELD" => "CDD.NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_catalog_discount CDD ON (CD.DISCOUNT_ID = CDD.ID)"),
+            "DISCOUNT_NAME" => array(
+                "FIELD" => "CDD.NAME",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_catalog_discount CDD ON (CD.DISCOUNT_ID = CDD.ID)"
+            ),
             "DESCRIPTION" => array("FIELD" => "CD.DESCRIPTION", "TYPE" => "string"),
             "TIMESTAMP_X" => array("FIELD" => "CD.TIMESTAMP_X", "TYPE" => "datetime"),
             "MODIFIED_BY" => array("FIELD" => "CD.MODIFIED_BY", "TYPE" => "int"),
@@ -254,25 +294,31 @@ class CCatalogDiscountCoupon extends CAllCatalogDiscountCoupon
 
         if (empty($arGroupBy) && is_array($arGroupBy)) {
             $strSql = "SELECT " . $arSqls["SELECT"] . " FROM b_catalog_discount_coupon CD " . $arSqls["FROM"];
-            if (!empty($arSqls["WHERE"]))
+            if (!empty($arSqls["WHERE"])) {
                 $strSql .= " WHERE " . $arSqls["WHERE"];
-            if (!empty($arSqls["GROUPBY"]))
+            }
+            if (!empty($arSqls["GROUPBY"])) {
                 $strSql .= " GROUP BY " . $arSqls["GROUPBY"];
+            }
 
             $dbRes = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-            if ($arRes = $dbRes->Fetch())
+            if ($arRes = $dbRes->Fetch()) {
                 return $arRes["CNT"];
-            else
+            } else {
                 return false;
+            }
         }
 
         $strSql = "SELECT " . $arSqls["SELECT"] . " FROM b_catalog_discount_coupon CD " . $arSqls["FROM"];
-        if (!empty($arSqls["WHERE"]))
+        if (!empty($arSqls["WHERE"])) {
             $strSql .= " WHERE " . $arSqls["WHERE"];
-        if (!empty($arSqls["GROUPBY"]))
+        }
+        if (!empty($arSqls["GROUPBY"])) {
             $strSql .= " GROUP BY " . $arSqls["GROUPBY"];
-        if (!empty($arSqls["ORDERBY"]))
+        }
+        if (!empty($arSqls["ORDERBY"])) {
             $strSql .= " ORDER BY " . $arSqls["ORDERBY"];
+        }
 
         $intTopCount = 0;
         $boolNavStartParams = (!empty($arNavStartParams) && is_array($arNavStartParams));
@@ -281,16 +327,19 @@ class CCatalogDiscountCoupon extends CAllCatalogDiscountCoupon
         }
         if ($boolNavStartParams && 0 >= $intTopCount) {
             $strSql_tmp = "SELECT COUNT('x') as CNT FROM b_catalog_discount_coupon CD " . $arSqls["FROM"];
-            if (!empty($arSqls["WHERE"]))
+            if (!empty($arSqls["WHERE"])) {
                 $strSql_tmp .= " WHERE " . $arSqls["WHERE"];
-            if (!empty($arSqls["GROUPBY"]))
+            }
+            if (!empty($arSqls["GROUPBY"])) {
                 $strSql_tmp .= " GROUP BY " . $arSqls["GROUPBY"];
+            }
 
             $dbRes = $DB->Query($strSql_tmp, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             $cnt = 0;
             if (empty($arSqls["GROUPBY"])) {
-                if ($arRes = $dbRes->Fetch())
+                if ($arRes = $dbRes->Fetch()) {
                     $cnt = $arRes["CNT"];
+                }
             } else {
                 $cnt = $dbRes->SelectedRowsCount();
             }
@@ -314,8 +363,9 @@ class CCatalogDiscountCoupon extends CAllCatalogDiscountCoupon
      */
     public static function CouponApply($intUserID, $strCoupon)
     {
-        if (self::$existCouponsManager === null)
+        if (self::$existCouponsManager === null) {
             self::initCouponManager();
+        }
         if (self::$existCouponsManager) {
             $couponList = (is_array($strCoupon) ? $strCoupon : array($strCoupon));
             return DiscountCouponsManager::setApplyByProduct(array('MODULE' => 'catalog'), $couponList, true);
@@ -325,28 +375,34 @@ class CCatalogDiscountCoupon extends CAllCatalogDiscountCoupon
             $mxResult = false;
 
             $intUserID = (int)$intUserID;
-            if ($intUserID < 0)
+            if ($intUserID < 0) {
                 $intUserID = 0;
+            }
 
             $arCouponList = array();
             $arCheck = (is_array($strCoupon) ? $strCoupon : array($strCoupon));
             foreach ($arCheck as &$strOneCheck) {
                 $strOneCheck = (string)$strOneCheck;
-                if ('' != $strOneCheck)
+                if ('' != $strOneCheck) {
                     $arCouponList[] = $strOneCheck;
+                }
             }
-            if (isset($strOneCheck))
+            if (isset($strOneCheck)) {
                 unset($strOneCheck);
+            }
 
-            if (empty($arCouponList))
+            if (empty($arCouponList)) {
                 return $mxResult;
+            }
 
             $strDateFunction = $DB->GetNowFunction();
             $boolFlag = false;
-            $couponIterator = Catalog\DiscountCouponTable::getList(array(
-                'select' => array('ID', 'TYPE', 'COUPON'),
-                'filter' => array('=COUPON' => $arCouponList, '=ACTIVE' => 'Y')
-            ));
+            $couponIterator = Catalog\DiscountCouponTable::getList(
+                array(
+                    'select' => array('ID', 'TYPE', 'COUPON'),
+                    'filter' => array('=COUPON' => $arCouponList, '=ACTIVE' => 'Y')
+                )
+            );
             while ($arCoupon = $couponIterator->fetch()) {
                 $arCoupon['ID'] = (int)$arCoupon['ID'];
                 $arFields = array(
@@ -362,11 +418,12 @@ class CCatalogDiscountCoupon extends CAllCatalogDiscountCoupon
                     }
                 } elseif ($arCoupon['TYPE'] == Catalog\DiscountCouponTable::TYPE_ONE_ORDER) {
                     $boolFlag = true;
-                    if (!isset(self::$arOneOrderCoupons[$arCoupon['ID']]))
+                    if (!isset(self::$arOneOrderCoupons[$arCoupon['ID']])) {
                         self::$arOneOrderCoupons[$arCoupon['ID']] = array(
                             'COUPON' => $arCoupon['COUPON'],
                             'USER_ID' => $intUserID,
                         );
+                    }
                 }
 
                 $strUpdate = $DB->PrepareUpdate("b_catalog_discount_coupon", $arFields);
@@ -392,12 +449,17 @@ class CCatalogDiscountCoupon extends CAllCatalogDiscountCoupon
     public static function __CouponOneOrderDisable($arCoupons)
     {
         global $DB;
-        if (!is_array($arCoupons))
+        if (!is_array($arCoupons)) {
             $arCoupons = array(intval($arCoupons));
+        }
         CatalogClearArray($arCoupons, false);
-        if (empty($arCoupons))
+        if (empty($arCoupons)) {
             return;
-        $strSql = "UPDATE b_catalog_discount_coupon SET ACTIVE='N' WHERE ID IN (" . implode(', ', $arCoupons) . ") AND ONE_TIME='" . self::TYPE_ONE_ORDER . "'";
+        }
+        $strSql = "UPDATE b_catalog_discount_coupon SET ACTIVE='N' WHERE ID IN (" . implode(
+                ', ',
+                $arCoupons
+            ) . ") AND ONE_TIME='" . self::TYPE_ONE_ORDER . "'";
         $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
     }
 
@@ -407,10 +469,12 @@ class CCatalogDiscountCoupon extends CAllCatalogDiscountCoupon
      */
     public static function CouponOneOrderDisable($intOrderID = 0)
     {
-        if (self::$existCouponsManager === null)
+        if (self::$existCouponsManager === null) {
             self::initCouponManager();
-        if (self::$existCouponsManager)
+        }
+        if (self::$existCouponsManager) {
             return;
+        }
 
         global $DB;
         if (!empty(self::$arOneOrderCoupons)) {
@@ -423,11 +487,15 @@ class CCatalogDiscountCoupon extends CAllCatalogDiscountCoupon
                     CCatalogDiscountCoupon::EraseCoupon($arCoupon['COUPON']);
                 }
             }
-            if (isset($arCoupon))
+            if (isset($arCoupon)) {
                 unset($arCoupon);
+            }
             CatalogClearArray($arCouponID, false);
             if (!empty($arCouponID)) {
-                $strSql = "UPDATE b_catalog_discount_coupon SET ACTIVE='N' WHERE ID IN (" . implode(', ', $arCouponID) . ") AND ONE_TIME='" . self::TYPE_ONE_ORDER . "' AND ACTIVE='Y'";
+                $strSql = "UPDATE b_catalog_discount_coupon SET ACTIVE='N' WHERE ID IN (" . implode(
+                        ', ',
+                        $arCouponID
+                    ) . ") AND ONE_TIME='" . self::TYPE_ONE_ORDER . "' AND ACTIVE='Y'";
                 $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             }
             self::$arOneOrderCoupons = array();
@@ -440,23 +508,29 @@ class CCatalogDiscountCoupon extends CAllCatalogDiscountCoupon
      */
     public static function IsExistCoupon($strCoupon)
     {
-        if (self::$existCouponsManager === null)
+        if (self::$existCouponsManager === null) {
             self::initCouponManager();
+        }
         if (self::$existCouponsManager) {
             $result = DiscountCouponsManager::isExist($strCoupon);
-            if (!empty($result))
+            if (!empty($result)) {
                 return true;
+            }
             return false;
         } else {
             global $DB;
 
-            if ($strCoupon == '')
+            if ($strCoupon == '') {
                 return false;
+            }
 
-            $strSql = "select ID, COUPON from b_catalog_discount_coupon where COUPON='" . $DB->ForSql($strCoupon) . "' limit 1";
+            $strSql = "select ID, COUPON from b_catalog_discount_coupon where COUPON='" . $DB->ForSql(
+                    $strCoupon
+                ) . "' limit 1";
             $rsCoupons = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-            if ($arCoupon = $rsCoupons->Fetch())
+            if ($arCoupon = $rsCoupons->Fetch()) {
                 return true;
+            }
         }
         return false;
     }

@@ -245,9 +245,24 @@ HTML
         $this->setToolList($this->getDefaultToolList());
 
         $this->previewModes = array(
-            array('CLASS' => 'phone', 'NAME' => Loc::getMessage('BLOCK_EDITOR_PREVIEW_MODE_PHONE'), 'WIDTH' => 320, 'HEIGHT' => 480),
-            array('CLASS' => 'tablet', 'NAME' => Loc::getMessage('BLOCK_EDITOR_PREVIEW_MODE_TABLET'), 'WIDTH' => 768, 'HEIGHT' => 1024),
-            array('CLASS' => 'desktop', 'NAME' => Loc::getMessage('BLOCK_EDITOR_PREVIEW_MODE_DESKTOP'), 'WIDTH' => 1024, 'HEIGHT' => 768),
+            array(
+                'CLASS' => 'phone',
+                'NAME' => Loc::getMessage('BLOCK_EDITOR_PREVIEW_MODE_PHONE'),
+                'WIDTH' => 320,
+                'HEIGHT' => 480
+            ),
+            array(
+                'CLASS' => 'tablet',
+                'NAME' => Loc::getMessage('BLOCK_EDITOR_PREVIEW_MODE_TABLET'),
+                'WIDTH' => 768,
+                'HEIGHT' => 1024
+            ),
+            array(
+                'CLASS' => 'desktop',
+                'NAME' => Loc::getMessage('BLOCK_EDITOR_PREVIEW_MODE_DESKTOP'),
+                'WIDTH' => 1024,
+                'HEIGHT' => 768
+            ),
         );
 
         $this->tabs = array(
@@ -309,7 +324,6 @@ HTML
             }
         }
         $this->blocks = array_merge($this->blocks, $componentsNotAsBlocks);
-
     }
 
     /**
@@ -379,14 +393,16 @@ HTML
             'ID' => 'src',
             'NAME' => Loc::getMessage('BLOCK_EDITOR_TOOL_SRC'),
             'HTML' => '<input type="hidden" data-bx-editor-tool-input="item" value="">'
-                . \Bitrix\Main\UI\FileInput::createInstance((array(
-                    "id" => "BX_BLOCK_EDITOR_SRC_" . $this->id,
-                    "name" => "NEW_FILE_EDITOR[n#IND#]",
-                    "upload" => true,
-                    "medialib" => true,
-                    "fileDialog" => true,
-                    "cloud" => true
-                )))->show()
+                . \Bitrix\Main\UI\FileInput::createInstance(
+                    (array(
+                        "id" => "BX_BLOCK_EDITOR_SRC_" . $this->id,
+                        "name" => "NEW_FILE_EDITOR[n#IND#]",
+                        "upload" => true,
+                        "medialib" => true,
+                        "fileDialog" => true,
+                        "cloud" => true
+                    ))
+                )->show()
         );
 
         $resultList[] = array(
@@ -524,16 +540,32 @@ HTML
                         <input class="href" type="text" value="#href#">
                         <select class="preset">
                             <option value=""><?= Loc::getMessage('BLOCK_EDITOR_TOOL_SOCIAL_CONTENT_SELECT') ?></option>
-                            <option value="http://#SERVER_NAME#/"><?= Loc::getMessage('BLOCK_EDITOR_TOOL_SOCIAL_CONTENT_OURSITE') ?></option>
+                            <option value="http://#SERVER_NAME#/"><?= Loc::getMessage(
+                                    'BLOCK_EDITOR_TOOL_SOCIAL_CONTENT_OURSITE'
+                                ) ?></option>
                             <? if (self::isAvailableRussian()):?>
-                                <option value="http://vk.com/"><?= Loc::getMessage('BLOCK_EDITOR_TOOL_SOCIAL_CONTENT_VK') ?></option>
-                                <option value="http://ok.ru/"><?= Loc::getMessage('BLOCK_EDITOR_TOOL_SOCIAL_CONTENT_OK') ?></option>
+                                <option value="http://vk.com/"><?= Loc::getMessage(
+                                        'BLOCK_EDITOR_TOOL_SOCIAL_CONTENT_VK'
+                                    ) ?></option>
+                                <option value="http://ok.ru/"><?= Loc::getMessage(
+                                        'BLOCK_EDITOR_TOOL_SOCIAL_CONTENT_OK'
+                                    ) ?></option>
                             <?endif; ?>
-                            <option value="http://facebook.com/"><?= Loc::getMessage('BLOCK_EDITOR_TOOL_SOCIAL_CONTENT_FACEBOOK') ?></option>
-                            <option value="http://instagram.com/"><?= Loc::getMessage('BLOCK_EDITOR_TOOL_SOCIAL_CONTENT_INSTAGRAM') ?></option>
-                            <option value="http://twitter.com/"><?= Loc::getMessage('BLOCK_EDITOR_TOOL_SOCIAL_CONTENT_TWITTER') ?></option>
-                            <option value="http://"><?= Loc::getMessage('BLOCK_EDITOR_TOOL_SOCIAL_CONTENT_SITE') ?></option>
-                            <option value="mailto:"><?= Loc::getMessage('BLOCK_EDITOR_TOOL_SOCIAL_CONTENT_EMAIL') ?></option>
+                            <option value="http://facebook.com/"><?= Loc::getMessage(
+                                    'BLOCK_EDITOR_TOOL_SOCIAL_CONTENT_FACEBOOK'
+                                ) ?></option>
+                            <option value="http://instagram.com/"><?= Loc::getMessage(
+                                    'BLOCK_EDITOR_TOOL_SOCIAL_CONTENT_INSTAGRAM'
+                                ) ?></option>
+                            <option value="http://twitter.com/"><?= Loc::getMessage(
+                                    'BLOCK_EDITOR_TOOL_SOCIAL_CONTENT_TWITTER'
+                                ) ?></option>
+                            <option value="http://"><?= Loc::getMessage(
+                                    'BLOCK_EDITOR_TOOL_SOCIAL_CONTENT_SITE'
+                                ) ?></option>
+                            <option value="mailto:"><?= Loc::getMessage(
+                                    'BLOCK_EDITOR_TOOL_SOCIAL_CONTENT_EMAIL'
+                                ) ?></option>
                         </select>
                     </td>
                 </tr>
@@ -659,10 +691,13 @@ HTML
             'GROUP' => 'prop',
             'ID' => 'imagetextalign',
             'NAME' => Loc::getMessage('BLOCK_EDITOR_TOOL_IMAGETEXTALIGN'),
-            'HTML' => Tools::getControlSelect(array(
-                'left' => Loc::getMessage('BLOCK_EDITOR_CTRL_ALIGN_LEFT'),
-                'right' => Loc::getMessage('BLOCK_EDITOR_CTRL_ALIGN_RIGHT')
-            ), false)
+            'HTML' => Tools::getControlSelect(
+                array(
+                    'left' => Loc::getMessage('BLOCK_EDITOR_CTRL_ALIGN_LEFT'),
+                    'right' => Loc::getMessage('BLOCK_EDITOR_CTRL_ALIGN_RIGHT')
+                ),
+                false
+            )
         );
 
         $resultList[] = array(
@@ -676,7 +711,8 @@ HTML
                     '1/2' => Loc::getMessage('BLOCK_EDITOR_TOOL_IMAGETEXTPART12'),
                     '2/3' => Loc::getMessage('BLOCK_EDITOR_TOOL_IMAGETEXTPART23')
                 ),
-                false)
+                false
+            )
         );
 
         $resultList[] = array(
@@ -742,7 +778,8 @@ HTML
                     'N' => Loc::getMessage('BLOCK_EDITOR_TOOL_WIDE_N'),
                     'Y' => Loc::getMessage('BLOCK_EDITOR_TOOL_WIDE_Y')
                 )
-                , false
+                ,
+                false
             ),
         );
 
@@ -770,63 +807,81 @@ HTML
         $resultList[] = array(
             'GROUP' => 'style',
             'ID' => 'bx-stylist-text-color',
-            'NAME' => Loc::getMessage('BLOCK_EDITOR_TOOL_STYLIST_TEXT') . ' ' . Loc::getMessage('BLOCK_EDITOR_TOOL_COLOR'),
+            'NAME' => Loc::getMessage('BLOCK_EDITOR_TOOL_STYLIST_TEXT') . ' ' . Loc::getMessage(
+                    'BLOCK_EDITOR_TOOL_COLOR'
+                ),
             'HTML' => Tools::getControlColor(),
         );
 
         $resultList[] = array(
             'GROUP' => 'style',
             'ID' => 'bx-stylist-text-font-family',
-            'NAME' => Loc::getMessage('BLOCK_EDITOR_TOOL_STYLIST_TEXT') . ' ' . Loc::getMessage('BLOCK_EDITOR_TOOL_FONT_FAMILY'),
+            'NAME' => Loc::getMessage('BLOCK_EDITOR_TOOL_STYLIST_TEXT') . ' ' . Loc::getMessage(
+                    'BLOCK_EDITOR_TOOL_FONT_FAMILY'
+                ),
             'HTML' => Tools::getControlFontFamily(),
         );
 
         $resultList[] = array(
             'GROUP' => 'style',
             'ID' => 'bx-stylist-text-font-size',
-            'NAME' => Loc::getMessage('BLOCK_EDITOR_TOOL_STYLIST_TEXT') . ' ' . Loc::getMessage('BLOCK_EDITOR_TOOL_FONT_SIZE'),
+            'NAME' => Loc::getMessage('BLOCK_EDITOR_TOOL_STYLIST_TEXT') . ' ' . Loc::getMessage(
+                    'BLOCK_EDITOR_TOOL_FONT_SIZE'
+                ),
             'HTML' => Tools::getControlFontSize(),
         );
 
         $resultList[] = array(
             'GROUP' => 'style',
             'ID' => 'bx-stylist-text-font-weight',
-            'NAME' => Loc::getMessage('BLOCK_EDITOR_TOOL_STYLIST_TEXT') . ' ' . Loc::getMessage('BLOCK_EDITOR_TOOL_FONT_WEIGHT'),
+            'NAME' => Loc::getMessage('BLOCK_EDITOR_TOOL_STYLIST_TEXT') . ' ' . Loc::getMessage(
+                    'BLOCK_EDITOR_TOOL_FONT_WEIGHT'
+                ),
             'HTML' => Tools::getControlFontWeight(),
         );
 
         $resultList[] = array(
             'GROUP' => 'style',
             'ID' => 'bx-stylist-text-line-height',
-            'NAME' => Loc::getMessage('BLOCK_EDITOR_TOOL_STYLIST_TEXT') . ' ' . Loc::getMessage('BLOCK_EDITOR_TOOL_LINE_HEIGHT'),
+            'NAME' => Loc::getMessage('BLOCK_EDITOR_TOOL_STYLIST_TEXT') . ' ' . Loc::getMessage(
+                    'BLOCK_EDITOR_TOOL_LINE_HEIGHT'
+                ),
             'HTML' => Tools::getControlLineHeight(),
         );
 
         $resultList[] = array(
             'GROUP' => 'style',
             'ID' => 'bx-stylist-text-text-align',
-            'NAME' => Loc::getMessage('BLOCK_EDITOR_TOOL_STYLIST_TEXT') . ' ' . Loc::getMessage('BLOCK_EDITOR_TOOL_TEXT_ALIGN'),
+            'NAME' => Loc::getMessage('BLOCK_EDITOR_TOOL_STYLIST_TEXT') . ' ' . Loc::getMessage(
+                    'BLOCK_EDITOR_TOOL_TEXT_ALIGN'
+                ),
             'HTML' => Tools::getControlTextAlign(),
         );
 
         $resultList[] = array(
             'GROUP' => 'style',
             'ID' => 'bx-stylist-a-color',
-            'NAME' => Loc::getMessage('BLOCK_EDITOR_TOOL_STYLIST_LINK') . ' ' . Loc::getMessage('BLOCK_EDITOR_TOOL_COLOR'),
+            'NAME' => Loc::getMessage('BLOCK_EDITOR_TOOL_STYLIST_LINK') . ' ' . Loc::getMessage(
+                    'BLOCK_EDITOR_TOOL_COLOR'
+                ),
             'HTML' => Tools::getControlColor(),
         );
 
         $resultList[] = array(
             'GROUP' => 'style',
             'ID' => 'bx-stylist-a-font-weight',
-            'NAME' => Loc::getMessage('BLOCK_EDITOR_TOOL_STYLIST_LINK') . ' ' . Loc::getMessage('BLOCK_EDITOR_TOOL_FONT_WEIGHT'),
+            'NAME' => Loc::getMessage('BLOCK_EDITOR_TOOL_STYLIST_LINK') . ' ' . Loc::getMessage(
+                    'BLOCK_EDITOR_TOOL_FONT_WEIGHT'
+                ),
             'HTML' => Tools::getControlFontWeight(),
         );
 
         $resultList[] = array(
             'GROUP' => 'style',
             'ID' => 'bx-stylist-a-text-decoration',
-            'NAME' => Loc::getMessage('BLOCK_EDITOR_TOOL_STYLIST_LINK') . ' ' . Loc::getMessage('BLOCK_EDITOR_TOOL_TEXT_DECORATION'),
+            'NAME' => Loc::getMessage('BLOCK_EDITOR_TOOL_STYLIST_LINK') . ' ' . Loc::getMessage(
+                    'BLOCK_EDITOR_TOOL_TEXT_DECORATION'
+                ),
             'HTML' => Tools::getControlTextDecoration(),
         );
 
@@ -879,7 +934,7 @@ HTML
      */
     public function getUI($id, array $values)
     {
-        if (!array_key_exists($id, $this->uiPatterns) || strlen(trim($this->uiPatterns[$id])) === 0) {
+        if (!array_key_exists($id, $this->uiPatterns) || trim($this->uiPatterns[$id]) == '') {
             return '';
         }
 
@@ -908,41 +963,54 @@ HTML
         foreach (array_chunk($this->blocks, static::BLOCK_COUNT_PER_PAGE) as $blocksPerPage) {
             $blocksForPage = '';
             foreach ($blocksPerPage as $block) {
-                $blocksForPage .= $this->getUI('block', array(
-                    'type_class' => htmlspecialcharsbx($block['IS_COMPONENT'] ? 'component' : 'blockcomponent'),
-                    'code_class' => htmlspecialcharsbx(str_replace(array(':', '.'), array('-', '-'), $block['CODE'])),
-                    'type' => htmlspecialcharsbx($block['TYPE']),
-                    'code' => htmlspecialcharsbx($block['CODE']),
-                    'name' => htmlspecialcharsbx($block['NAME']),
-                    'desc' => htmlspecialcharsbx($block['DESC']),
-                ));
+                $blocksForPage .= $this->getUI(
+                    'block',
+                    array(
+                        'type_class' => htmlspecialcharsbx($block['IS_COMPONENT'] ? 'component' : 'blockcomponent'),
+                        'code_class' => htmlspecialcharsbx(
+                            str_replace(array(':', '.'), array('-', '-'), $block['CODE'])
+                        ),
+                        'type' => htmlspecialcharsbx($block['TYPE']),
+                        'code' => htmlspecialcharsbx($block['CODE']),
+                        'name' => htmlspecialcharsbx($block['NAME']),
+                        'desc' => htmlspecialcharsbx($block['DESC']),
+                    )
+                );
             }
 
             $blocks .= $this->getUI('block_page', array('blocks' => $blocksForPage));
         }
 
         foreach ($this->tools as $tool) {
-            $tools .= $this->getUI('tool', array(
-                'group' => htmlspecialcharsbx($tool['GROUP']),
-                'id' => htmlspecialcharsbx($tool['ID']),
-                'name' => htmlspecialcharsbx($tool['NAME']),
-                'html' => $tool['HTML'],
-            ));
+            $tools .= $this->getUI(
+                'tool',
+                array(
+                    'group' => htmlspecialcharsbx($tool['GROUP']),
+                    'id' => htmlspecialcharsbx($tool['ID']),
+                    'name' => htmlspecialcharsbx($tool['NAME']),
+                    'html' => $tool['HTML'],
+                )
+            );
         }
 
         foreach ($this->previewModes as $mode) {
-            $devices .= $this->getUI('device', array(
-                'MESS_NAME' => strtoupper(htmlspecialcharsbx($mode['NAME'])),
-                'class' => htmlspecialcharsbx($mode['CLASS']),
-                'width' => htmlspecialcharsbx($mode['WIDTH']),
-                'height' => htmlspecialcharsbx($mode['HEIGHT']),
-            ));
+            $devices .= $this->getUI(
+                'device',
+                array(
+                    'MESS_NAME' => mb_strtoupper(htmlspecialcharsbx($mode['NAME'])),
+                    'class' => htmlspecialcharsbx($mode['CLASS']),
+                    'width' => htmlspecialcharsbx($mode['WIDTH']),
+                    'height' => htmlspecialcharsbx($mode['HEIGHT']),
+                )
+            );
         }
 
 
         if (!$this->ownResultId) {
             $this->ownResultId = 'bx-block-editor-result-' . htmlspecialcharsbx($this->id);
-            $textArea = '<textarea name="' . htmlspecialcharsbx($this->id) . '" id="' . htmlspecialcharsbx($this->ownResultId)
+            $textArea = '<textarea name="' . htmlspecialcharsbx($this->id) . '" id="' . htmlspecialcharsbx(
+                    $this->ownResultId
+                )
                 . '" style="width:800px;height:900px; display: none;"></textarea>';
         }
 
@@ -951,47 +1019,59 @@ HTML
                 continue;
             }
 
-            $tabs .= $this->getUI('tab', array(
-                'code' => htmlspecialcharsbx($tabCode),
-                'name' => htmlspecialcharsbx($tab['NAME']),
-                'tab_active' => ($tab['ACTIVE'] ? $this->getUI('tab_active', array()) : '')
-            ));
+            $tabs .= $this->getUI(
+                'tab',
+                array(
+                    'code' => htmlspecialcharsbx($tabCode),
+                    'name' => htmlspecialcharsbx($tab['NAME']),
+                    'tab_active' => ($tab['ACTIVE'] ? $this->getUI('tab_active', array()) : '')
+                )
+            );
 
-            $panel = $this->getUI('panel-' . $tabCode, array(
-                'id' => htmlspecialcharsbx($this->id),
-                'blocks' => $blocks,
-                'tools' => $tools,
-                'devices' => $devices,
-                'nav-display' => count($this->blocks) <= static::BLOCK_COUNT_PER_PAGE ? 'bx-block-hide' : '',
-                'MESS_ACCESS_DENIED' => Loc::getMessage('ACCESS_DENIED'),
-                'MESS_STYLES' => Loc::getMessage('BLOCK_EDITOR_UI_STYLES'),
-                'MESS_BLOCKS' => Loc::getMessage('BLOCK_EDITOR_UI_BLOCKS'),
-                'MESS_TOOL_CONTENT' => Loc::getMessage('BLOCK_EDITOR_UI_TOOL_CONTENT'),
-                'MESS_TOOL_STYLES' => Loc::getMessage('BLOCK_EDITOR_UI_TOOL_STYLES'),
-                'MESS_TOOL_SETTINGS' => Loc::getMessage('BLOCK_EDITOR_UI_TOOL_SETTINGS'),
-                'MESS_TOOL_EMPTY' => Loc::getMessage('BLOCK_EDITOR_UI_TOOL_EMPTY'),
-                'MESS_TOOL_SAVE' => Loc::getMessage('BLOCK_EDITOR_UI_TOOL_SAVE'),
-                'MESS_TOOL_SAVE_TITLE' => Loc::getMessage('BLOCK_EDITOR_UI_TOOL_SAVE_TITLE'),
-                'MESS_TOOL_CANCEL' => Loc::getMessage('BLOCK_EDITOR_UI_TOOL_CANCEL'),
-                'MESS_TOOL_CANCEL_TITLE' => Loc::getMessage('BLOCK_EDITOR_UI_TOOL_CANCEL_TITLE'),
-            ));
+            $panel = $this->getUI(
+                'panel-' . $tabCode,
+                array(
+                    'id' => htmlspecialcharsbx($this->id),
+                    'blocks' => $blocks,
+                    'tools' => $tools,
+                    'devices' => $devices,
+                    'nav-display' => count($this->blocks) <= static::BLOCK_COUNT_PER_PAGE ? 'bx-block-hide' : '',
+                    'MESS_ACCESS_DENIED' => Loc::getMessage('ACCESS_DENIED'),
+                    'MESS_STYLES' => Loc::getMessage('BLOCK_EDITOR_UI_STYLES'),
+                    'MESS_BLOCKS' => Loc::getMessage('BLOCK_EDITOR_UI_BLOCKS'),
+                    'MESS_TOOL_CONTENT' => Loc::getMessage('BLOCK_EDITOR_UI_TOOL_CONTENT'),
+                    'MESS_TOOL_STYLES' => Loc::getMessage('BLOCK_EDITOR_UI_TOOL_STYLES'),
+                    'MESS_TOOL_SETTINGS' => Loc::getMessage('BLOCK_EDITOR_UI_TOOL_SETTINGS'),
+                    'MESS_TOOL_EMPTY' => Loc::getMessage('BLOCK_EDITOR_UI_TOOL_EMPTY'),
+                    'MESS_TOOL_SAVE' => Loc::getMessage('BLOCK_EDITOR_UI_TOOL_SAVE'),
+                    'MESS_TOOL_SAVE_TITLE' => Loc::getMessage('BLOCK_EDITOR_UI_TOOL_SAVE_TITLE'),
+                    'MESS_TOOL_CANCEL' => Loc::getMessage('BLOCK_EDITOR_UI_TOOL_CANCEL'),
+                    'MESS_TOOL_CANCEL_TITLE' => Loc::getMessage('BLOCK_EDITOR_UI_TOOL_CANCEL_TITLE'),
+                )
+            );
 
-            $panels .= $this->getUI('panel', array(
-                'code' => htmlspecialcharsbx($tabCode),
-                'panel_hidden' => (!$tab['ACTIVE'] ? $this->getUI('panel_hidden', array()) : ''),
-                'html' => $panel
-            ));
+            $panels .= $this->getUI(
+                'panel',
+                array(
+                    'code' => htmlspecialcharsbx($tabCode),
+                    'panel_hidden' => (!$tab['ACTIVE'] ? $this->getUI('panel_hidden', array()) : ''),
+                    'html' => $panel
+                )
+            );
         }
 
-        return $this->getUI('main', array(
-            'TEXTAREA' => $textArea,
-            'id' => htmlspecialcharsbx($this->id),
-            'tabs' => $tabs,
-            'panels' => $panels,
-            'MESS_BTN_MAX' => Loc::getMessage('BLOCK_EDITOR_UI_BTN_MAX'),
-            'MESS_BTN_MIN' => Loc::getMessage('BLOCK_EDITOR_UI_BTN_MIN'),
-            'MESS_BTN_HTML_COPY' => Loc::getMessage('BLOCK_EDITOR_UI_BTN_HTML_COPY'),
-        ));
+        return $this->getUI(
+            'main',
+            array(
+                'TEXTAREA' => $textArea,
+                'id' => htmlspecialcharsbx($this->id),
+                'tabs' => $tabs,
+                'panels' => $panels,
+                'MESS_BTN_MAX' => Loc::getMessage('BLOCK_EDITOR_UI_BTN_MAX'),
+                'MESS_BTN_MIN' => Loc::getMessage('BLOCK_EDITOR_UI_BTN_MIN'),
+                'MESS_BTN_HTML_COPY' => Loc::getMessage('BLOCK_EDITOR_UI_BTN_HTML_COPY'),
+            )
+        );
     }
 
     /**
@@ -1001,16 +1081,19 @@ HTML
      */
     public function show()
     {
-        \CJSCore::RegisterExt('block_editor', array(
-            'js' => array(
-                '/bitrix/js/main/core/core_dragdrop.js',
-                '/bitrix/js/fileman/block_editor/dialog.js',
-                '/bitrix/js/fileman/block_editor/helper.js',
-                '/bitrix/js/fileman/block_editor/editor.js',
-            ),
-            'css' => '/bitrix/js/fileman/block_editor/dialog.css',
-            'lang' => '/bitrix/modules/fileman/lang/' . LANGUAGE_ID . '/js_block_editor.php',
-        ));
+        \CJSCore::RegisterExt(
+            'block_editor',
+            array(
+                'js' => array(
+                    '/bitrix/js/main/core/core_dragdrop.js',
+                    '/bitrix/js/fileman/block_editor/dialog.js',
+                    '/bitrix/js/fileman/block_editor/helper.js',
+                    '/bitrix/js/fileman/block_editor/editor.js',
+                ),
+                'css' => '/bitrix/js/fileman/block_editor/dialog.css',
+                'lang' => '/bitrix/modules/fileman/lang/' . LANGUAGE_ID . '/js_block_editor.php',
+            )
+        );
         \CJSCore::Init(array("block_editor", "color_picker", "clipboard"));
 
         static $isBlockEditorManagerInited = false;
@@ -1036,12 +1119,18 @@ HTML
 
         $result = '';
         if (!$isBlockEditorManagerInited) {
-            $result .= 'BX.BlockEditorManager.setBlockList(' . \CUtil::PhpToJSObject($editorBlockTypeListByCode) . ");\n";
+            $result .= 'BX.BlockEditorManager.setBlockList(' . \CUtil::PhpToJSObject(
+                    $editorBlockTypeListByCode
+                ) . ");\n";
         }
 
         $result .= "var blockEditorParams = " . \CUtil::PhpToJSObject($jsCreateParams) . ";\n";
-        $result .= "blockEditorParams['context'] = BX('bx-block-editor-container-" . htmlspecialcharsbx($this->id) . "');\n";
-        $result .= "blockEditorParams['iframe'] = BX('bx-block-editor-iframe-" . htmlspecialcharsbx($this->id) . "');\n";
+        $result .= "blockEditorParams['context'] = BX('bx-block-editor-container-" . htmlspecialcharsbx(
+                $this->id
+            ) . "');\n";
+        $result .= "blockEditorParams['iframe'] = BX('bx-block-editor-iframe-" . htmlspecialcharsbx(
+                $this->id
+            ) . "');\n";
         $result .= "blockEditorParams['resultNode'] = BX('" . htmlspecialcharsbx($this->ownResultId) . "');\n";
         $result .= "BX.BlockEditorManager.create(blockEditorParams);\n";
 
@@ -1102,7 +1191,10 @@ HTML
 
         $html = preg_replace(
             '/(<meta .*?content=["\']+?[^;]+?;[ ]*?charset=)([^"\']*?)(["\']+?.*?>)/i',
-            '$1' . $charset . '$3', $html, 1, $replaceCount
+            '$1' . $charset . '$3',
+            $html,
+            1,
+            $replaceCount
         );
         if ($replaceCount === 0 && $add) {
             $html = preg_replace(
@@ -1154,7 +1246,7 @@ HTML
      */
     public static function isContentSupported($content)
     {
-        if (!$content || strpos($content, Content\Engine::BLOCK_PLACE_ATTR) === false) {
+        if (!$content || mb_strpos($content, Content\Engine::BLOCK_PLACE_ATTR) === false) {
             return false;
         } else {
             return true;
@@ -1170,14 +1262,14 @@ HTML
     public static function isHtmlDocument($content)
     {
         $result = true;
-        $content = strtoupper($content);
-        if (strpos($content, '<HTML') === false) {
+        $content = mb_strtoupper($content);
+        if (mb_strpos($content, '<HTML') === false) {
             $result = false;
         }
-        if (strpos($content, '</HTML') === false) {
+        if (mb_strpos($content, '</HTML') === false) {
             $result = false;
         }
-        if (strpos($content, '<BODY') === false) {
+        if (mb_strpos($content, '<BODY') === false) {
             $result = false;
         }
 
@@ -1237,7 +1329,10 @@ HTML
                         if (!isset($componentData['TREE_PATH'])) {
                             $componentData['TREE_PATH'] = array();
                         }
-                        $resultItem[$componentName]['TREE_PATH'] = array_merge(array($path), $componentData['TREE_PATH']);
+                        $resultItem[$componentName]['TREE_PATH'] = array_merge(
+                            array($path),
+                            $componentData['TREE_PATH']
+                        );
                     }
                 }
 

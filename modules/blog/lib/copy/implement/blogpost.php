@@ -172,11 +172,13 @@ class BlogPost extends Base
 
             $categoryIds = explode(",", $fields["CATEGORY_ID"]);
             foreach ($categoryIds as $categoryId) {
-                \CBlogPostCategory::add([
-                    "BLOG_ID" => $fields["BLOG_ID"],
-                    "POST_ID" => $blogPostId,
-                    "CATEGORY_ID" => $categoryId
-                ]);
+                \CBlogPostCategory::add(
+                    [
+                        "BLOG_ID" => $fields["BLOG_ID"],
+                        "POST_ID" => $blogPostId,
+                        "CATEGORY_ID" => $categoryId
+                    ]
+                );
             }
         }
     }
@@ -228,8 +230,12 @@ class BlogPost extends Base
     {
         $fields["ID"] = $blogPostId;
 
-        $pathToPost = \COption::getOptionString("socialnetwork", "userblogpost_page",
-            "/company/personal/user/#user_id#/blog/#post_id#/", SITE_ID);
+        $pathToPost = \COption::getOptionString(
+            "socialnetwork",
+            "userblogpost_page",
+            "/company/personal/user/#user_id#/blog/#post_id#/",
+            SITE_ID
+        );
         $pathToSmile = \COption::getOptionString("socialnetwork", "smile_page", false, SITE_ID);
 
         $paramsNotify = [

@@ -12,7 +12,6 @@ use Bitrix\Report\VisualConstructor\View;
  */
 abstract class Base extends View
 {
-
     /**
      * Method to modify Content which pass to widget view, in absoulte end.
      *
@@ -23,12 +22,14 @@ abstract class Base extends View
     public function prepareWidgetContent(Widget $widget, $withCalculatedData = false)
     {
         $resultWidget = parent::prepareWidgetContent($widget, $withCalculatedData);
-        $calculatedPerformedData = $withCalculatedData ? WidgetHelper::getCalculatedPerformedData($this, $widget) : array();
+        $calculatedPerformedData = $withCalculatedData ? WidgetHelper::getCalculatedPerformedData(
+            $this,
+            $widget
+        ) : array();
         $resultWidget['content']['params']['data'] = $this->handlerFinallyBeforePassToView($calculatedPerformedData);
         $resultWidget['content']['params']['data']['isFilled'] = !empty($resultWidget['content']['params']['data']);
         $resultWidget['content']['params']['color'] = $resultWidget['config']['color'];
         $resultWidget['content']['params']['errors'] = $calculatedPerformedData['errors'];
         return $resultWidget;
     }
-
 }

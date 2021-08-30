@@ -40,7 +40,7 @@ abstract class Base
      * if ($ob->process($someValue))
      *     $someValue = $ob->getFilteredValue();
      * </code>
-     * @param string $value
+     * @param string $value A value to filter.
      * @return bool
      */
     public function process($value)

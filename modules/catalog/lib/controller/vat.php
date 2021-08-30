@@ -18,14 +18,17 @@ final class Vat extends Controller
         $view = $this->getViewManager()
             ->getView($this);
 
-        return ['VAT' => $view->prepareFieldInfos(
-            $view->getFields()
-        )];
+        return [
+            'VAT' => $view->prepareFieldInfos(
+                $view->getFields()
+            )
+        ];
     }
 
     public function listAction($select = [], $filter = [], $order = [], PageNavigation $pageNavigation)
     {
-        return new Page('VATS',
+        return new Page(
+            'VATS',
             $this->getList($select, $filter, $order, $pageNavigation),
             $this->count($filter)
         );
@@ -47,8 +50,9 @@ final class Vat extends Controller
     protected function exists($id)
     {
         $r = new Result();
-        if (isset($this->get($id)['ID']) == false)
+        if (isset($this->get($id)['ID']) == false) {
             $r->addError(new Error('Vat is not exists'));
+        }
 
         return $r;
     }
@@ -74,7 +78,9 @@ final class Vat extends Controller
     {
         $r = new Result();
 
-        if (!(static::getGlobalUser()->CanDoOperation('catalog_read') || static::getGlobalUser()->CanDoOperation('catalog_vat'))) {
+        if (!(static::getGlobalUser()->CanDoOperation('catalog_read') || static::getGlobalUser()->CanDoOperation(
+                'catalog_vat'
+            ))) {
             $r->addError(new Error('Access Denied', 200040300010));
         }
         return $r;

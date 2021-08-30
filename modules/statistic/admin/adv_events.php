@@ -10,7 +10,9 @@
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 $STAT_RIGHT = $APPLICATION->GetGroupRight("statistic");
-if ($STAT_RIGHT == "D") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($STAT_RIGHT == "D") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 
@@ -22,10 +24,16 @@ $FilterArr = Array(
     "find_keywords",
     "find_date1",
     "find_date2",
-    "find_group");
-if (strlen($set_filter) > 0) InitFilterEx($FilterArr, "ADV_EVENTS", "set");
-else InitFilterEx($FilterArr, "ADV_EVENTS", "get");
-if (strlen($del_filter) > 0) DelFilterEx($FilterArr, "ADV_EVENTS");
+    "find_group"
+);
+if (strlen($set_filter) > 0) {
+    InitFilterEx($FilterArr, "ADV_EVENTS", "set");
+} else {
+    InitFilterEx($FilterArr, "ADV_EVENTS", "get");
+}
+if (strlen($del_filter) > 0) {
+    DelFilterEx($FilterArr, "ADV_EVENTS");
+}
 if (strlen($find_id) > 0 ||
     strlen($find_event1) > 0 ||
     strlen($find_event2) > 0 ||
@@ -33,7 +41,6 @@ if (strlen($find_id) > 0 ||
     strlen($find_date1) > 0 ||
     strlen($find_date2) > 0 ||
     $find_group != "NOT_REF") {
-
     if (AdminListCheckDate($strError, array("find_date1" => $find_date1, "find_date2" => $find_date2))) {
         $arFilter = Array(
             "ID" => $find_id,
@@ -78,23 +85,34 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_popup_a
         <tr>
             <td class="tablebody"><font class="tablefieldtext"><? echo GetMessage("STAT_F_KEYWORDS") ?></font></td>
             <td class="tablebody"><input class="typeinput" type="text" name="find_keywords" size="47"
-                                         value="<? echo htmlspecialchars($find_keywords) ?>"><?= ShowFilterLogicHelp() ?>
-            </td>
+                                         value="<? echo htmlspecialchars($find_keywords) ?>"><?= ShowFilterLogicHelp(
+                ) ?></td>
         </tr>
         <tr valign="center">
-            <td class="tablebody" width="0%" nowrap><font
-                        class="tablefieldtext"><? echo GetMessage("STAT_F_PERIOD") . " (" . CLang::GetDateFormat("SHORT") . "):" ?></font>
-            </td>
-            <td class="tablebody" width="0%" nowrap><font
-                        class="tablefieldtext"><? echo CalendarPeriod("find_date1", $find_date1, "find_date2", $find_date2, "form1", "Y") ?></font>
-            </td>
+            <td class="tablebody" width="0%" nowrap><font class="tablefieldtext"><? echo GetMessage(
+                            "STAT_F_PERIOD"
+                        ) . " (" . CLang::GetDateFormat("SHORT") . "):" ?></font></td>
+            <td class="tablebody" width="0%" nowrap><font class="tablefieldtext"><? echo CalendarPeriod(
+                        "find_date1",
+                        $find_date1,
+                        "find_date2",
+                        $find_date2,
+                        "form1",
+                        "Y"
+                    ) ?></font></td>
         </tr>
         <tr valign="center">
-            <td class="tablebody" width="0%" nowrap><font
-                        class="tablefieldtext"><? echo GetMessage("STAT_F_GROUP_BY") ?></font></td>
+            <td class="tablebody" width="0%" nowrap><font class="tablefieldtext"><? echo GetMessage(
+                        "STAT_F_GROUP_BY"
+                    ) ?></font></td>
             <td class="tablebody" width="0%" nowrap><?
                 $arr = array("reference" => array("event1", "event2"), "reference_id" => array("event1", "event2"));
-                echo SelectBoxFromArray("find_group", $arr, htmlspecialchars($find_group), "(" . GetMessage("STAT_NO") . ")");
+                echo SelectBoxFromArray(
+                    "find_group",
+                    $arr,
+                    htmlspecialchars($find_group),
+                    "(" . GetMessage("STAT_NO") . ")"
+                );
                 ?></td>
         </tr>
         <?= ShowLogicRadioBtn() ?>
@@ -112,8 +130,9 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_popup_a
                         <td width="0%"><font class="tablebodytext">&nbsp;</font></td>
                         <td width="100%" align="left"><font class="tablebodytext"><input class="button" type="submit"
                                                                                          name="del_filter"
-                                                                                         value="<? echo GetMessage("STAT_F_DEL_FILTER") ?>"></font>
-                        </td>
+                                                                                         value="<? echo GetMessage(
+                                                                                             "STAT_F_DEL_FILTER"
+                                                                                         ) ?>"></font></td>
                         <td width="0%"><? ShowAddFavorite() ?></td>
                     </tr>
                 </table>
@@ -158,19 +177,23 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_popup_a
                     <font class="tableheadtext"><?= GetMessage("STAT_NAME") ?><br><? echo SortingEx("s_name") ?></font>
                 </td>
                 <td valign="top" align="center" nowrap class="tablehead2" width="70%">
-                    <font class="tableheadtext"><?= GetMessage("STAT_DESCRIPTION") ?>
-                        <br><? echo SortingEx("s_description") ?></font></td>
+                    <font class="tableheadtext"><?= GetMessage("STAT_DESCRIPTION") ?><br><? echo SortingEx(
+                            "s_description"
+                        ) ?></font></td>
             <? endif; ?>
             <td valign="top" align="center" nowrap class="tablehead2">
                 <font class="tableheadtext"><?= GetMessage("STAT_COUNTER") ?><br><? echo SortingEx("s_counter") ?>
                 </font></td>
             <td valign="top" align="center" class="tablehead3">
-                <font class="tableheadtext"><?= GetMessage("STAT_COUNTER_BACK") ?>
-                    <br><? echo SortingEx("s_counter_back") ?></font></td>
+                <font class="tableheadtext"><?= GetMessage("STAT_COUNTER_BACK") ?><br><? echo SortingEx(
+                        "s_counter_back"
+                    ) ?></font></td>
         </tr>
         <?
         $bs = 2;
-        if ($find_group == "event1" || $find_group == "event2") $bs = 1;
+        if ($find_group == "event1" || $find_group == "event2") {
+            $bs = 1;
+        }
         while ($events->NavNext(true, "f_")) :
             ?>
             <tr align="left" valign="top">
@@ -207,16 +230,18 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_popup_a
         }
         ?>
         <tr valign="top">
-            <td class="tablebody1 selectedbody" <?= $s ?> align="right"><font
-                        class="tablebodytext"><? echo GetMessage("STAT_TOTAL") ?></font></td>
+            <td class="tablebody1 selectedbody" <?= $s ?> align="right"><font class="tablebodytext"><? echo GetMessage(
+                        "STAT_TOTAL"
+                    ) ?></font></td>
             <td class="tablebody2 selectedbody" align="right"><font
                         class="tablebodytext"><? echo $total_COUNTER ?></font></td>
             <td class="tablebody3 selectedbody" align="right"><font
                         class="tablebodytext"><? echo $total_COUNTER_BACK ?></font></td>
         </tr>
         <tr valign="top">
-            <td class="tablebody4 selectedbody" <?= $s2 ?>><font class="tablebodytext"><?= $str ?>
-                    &nbsp;<? echo count($arEvents) ?></font></td>
+            <td class="tablebody4 selectedbody" <?= $s2 ?>><font class="tablebodytext"><?= $str ?>&nbsp;<? echo count(
+                        $arEvents
+                    ) ?></font></td>
         </tr>
     </table>
     <p><? echo $events->NavPrint(GetMessage("STAT_ADV_EVENTS_PAGES")) ?></p>

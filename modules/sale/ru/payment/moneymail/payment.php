@@ -1,9 +1,12 @@
-<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die(); ?><? $ORDER_ID = IntVal($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["ID"]); ?>
+<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+} ?><? $ORDER_ID = intval($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["ID"]); ?>
 <p>�� ������ �������� ����� ������� <strong>MoneyMail</strong>.</p>
 <p>C��� � <? echo $ORDER_ID . " �� " . CSalePaySystemAction::GetParamValue("DATE_INSERT") ?></p>
-<p>����� � ������ �� �����:
-    <strong><? echo SaleFormatCurrency(CSalePaySystemAction::GetParamValue("SHOULD_PAY"), CSalePaySystemAction::GetParamValue("CURRENCY")) ?></strong>
-</p>
+<p>����� � ������ �� �����: <strong><? echo SaleFormatCurrency(
+            CSalePaySystemAction::GetParamValue("SHOULD_PAY"),
+            CSalePaySystemAction::GetParamValue("CURRENCY")
+        ) ?></strong></p>
 <FORM method=POST action='https://www.moneymail.ru/' target=_blank>
     <INPUT type=hidden name=action value='PostInvoice'>
     <INPUT type=hidden name=issuer value="<? echo CSalePaySystemAction::GetParamValue("ShopEmail") ?>">
@@ -17,8 +20,16 @@
     <INPUT type=hidden name=cert value='0'>
     <INPUT type=hidden name=credit value='0'>
     <INPUT type=hidden name=valid_days value='10'>
-    <INPUT type=hidden name=security_code
-           value="<? echo md5(CSalePaySystemAction::GetParamValue("PASS") . CSalePaySystemAction::GetParamValue("CURRENCY") . number_format(CSalePaySystemAction::GetParamValue("SHOULD_PAY"), 2, ".", "") . ("����� " . $ORDER_ID . " �� " . CSalePaySystemAction::GetParamValue("DATE_INSERT")) . $ORDER_ID . "0" . "0" . "0" . "10") ?>">
+    <INPUT type=hidden name=security_code value="<? echo md5(
+        CSalePaySystemAction::GetParamValue("PASS") . CSalePaySystemAction::GetParamValue("CURRENCY") . number_format(
+            CSalePaySystemAction::GetParamValue("SHOULD_PAY"),
+            2,
+            ".",
+            ""
+        ) . ("����� " . $ORDER_ID . " �� " . CSalePaySystemAction::GetParamValue(
+                "DATE_INSERT"
+            )) . $ORDER_ID . "0" . "0" . "0" . "10"
+    ) ?>">
     <INPUT type=hidden name=buyer value="<? echo CSalePaySystemAction::GetParamValue("PAYER_EMAIL") ?>">
     <INPUT type=hidden name=error_url value="<? echo CSalePaySystemAction::GetParamValue("ERROR_URL") ?>">
     <INPUT TYPE="SUBMIT" NAME="Submit" VALUE="��������" class="btn btn-primary">

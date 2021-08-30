@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/catalog/general/extra.php");
 
 class CExtra extends CAllExtra
@@ -7,8 +8,9 @@ class CExtra extends CAllExtra
     {
         global $DB;
 
-        if (!static::CheckFields('ADD', $arFields))
+        if (!static::CheckFields('ADD', $arFields)) {
             return false;
+        }
 
         $arInsert = $DB->PrepareInsert("b_catalog_extra", $arFields);
 
@@ -27,24 +29,31 @@ class CExtra extends CAllExtra
      * @param array $arSelectFields
      * @return bool|CDBResult
      */
-    public static function GetList($arOrder = array(), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
-    {
+    public static function GetList(
+        $arOrder = array(),
+        $arFilter = array(),
+        $arGroupBy = false,
+        $arNavStartParams = false,
+        $arSelectFields = array()
+    ) {
         global $DB;
 
         // for old execution style
         if (!is_array($arOrder) && !is_array($arFilter)) {
             $arOrder = strval($arOrder);
             $arFilter = strval($arFilter);
-            if ('' != $arOrder && '' != $arFilter)
+            if ('' != $arOrder && '' != $arFilter) {
                 $arOrder = array($arOrder => $arFilter);
-            else
+            } else {
                 $arOrder = array();
+            }
             $arFilter = array();
             $arGroupBy = false;
         }
 
-        if (empty($arSelectFields))
+        if (empty($arSelectFields)) {
             $arSelectFields = array("ID", "NAME", "PERCENTAGE");
+        }
 
         $arFields = array(
             "ID" => array("FIELD" => "E.ID", "TYPE" => "int"),
@@ -58,25 +67,31 @@ class CExtra extends CAllExtra
 
         if (empty($arGroupBy) && is_array($arGroupBy)) {
             $strSql = "SELECT " . $arSqls["SELECT"] . " FROM b_catalog_extra E " . $arSqls["FROM"];
-            if (!empty($arSqls["WHERE"]))
+            if (!empty($arSqls["WHERE"])) {
                 $strSql .= " WHERE " . $arSqls["WHERE"];
-            if (!empty($arSqls["GROUPBY"]))
+            }
+            if (!empty($arSqls["GROUPBY"])) {
                 $strSql .= " GROUP BY " . $arSqls["GROUPBY"];
+            }
 
             $dbRes = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-            if ($arRes = $dbRes->Fetch())
+            if ($arRes = $dbRes->Fetch()) {
                 return $arRes["CNT"];
-            else
+            } else {
                 return false;
+            }
         }
 
         $strSql = "SELECT " . $arSqls["SELECT"] . " FROM b_catalog_extra E " . $arSqls["FROM"];
-        if (!empty($arSqls["WHERE"]))
+        if (!empty($arSqls["WHERE"])) {
             $strSql .= " WHERE " . $arSqls["WHERE"];
-        if (!empty($arSqls["GROUPBY"]))
+        }
+        if (!empty($arSqls["GROUPBY"])) {
             $strSql .= " GROUP BY " . $arSqls["GROUPBY"];
-        if (!empty($arSqls["ORDERBY"]))
+        }
+        if (!empty($arSqls["ORDERBY"])) {
             $strSql .= " ORDER BY " . $arSqls["ORDERBY"];
+        }
 
         $intTopCount = 0;
         $boolNavStartParams = (!empty($arNavStartParams) && is_array($arNavStartParams));
@@ -85,16 +100,19 @@ class CExtra extends CAllExtra
         }
         if ($boolNavStartParams && 0 >= $intTopCount) {
             $strSql_tmp = "SELECT COUNT('x') as CNT FROM b_catalog_extra E " . $arSqls["FROM"];
-            if (!empty($arSqls["WHERE"]))
+            if (!empty($arSqls["WHERE"])) {
                 $strSql_tmp .= " WHERE " . $arSqls["WHERE"];
-            if (!empty($arSqls["GROUPBY"]))
+            }
+            if (!empty($arSqls["GROUPBY"])) {
                 $strSql_tmp .= " GROUP BY " . $arSqls["GROUPBY"];
+            }
 
             $dbRes = $DB->Query($strSql_tmp, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             $cnt = 0;
             if (empty($arSqls["GROUPBY"])) {
-                if ($arRes = $dbRes->Fetch())
+                if ($arRes = $dbRes->Fetch()) {
                     $cnt = $arRes["CNT"];
+                }
             } else {
                 $cnt = $dbRes->SelectedRowsCount();
             }
@@ -103,8 +121,9 @@ class CExtra extends CAllExtra
 
             $dbRes->NavQuery($strSql, $cnt, $arNavStartParams);
         } else {
-            if ($boolNavStartParams && 0 < $intTopCount)
+            if ($boolNavStartParams && 0 < $intTopCount) {
                 $strSql .= " LIMIT " . $intTopCount;
+            }
 
             $dbRes = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
         }

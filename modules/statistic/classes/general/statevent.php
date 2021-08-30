@@ -11,23 +11,37 @@ class CAllStatEvent
         $s = "";
 
         $COUNTRY_ID = $_SESSION["SESS_COUNTRY_ID"];
-        if (strlen($_SESSION["SESS_COUNTRY_ID"]) <= 0) $COUNTRY_ID = "N0";
+        if ($_SESSION["SESS_COUNTRY_ID"] == '') {
+            $COUNTRY_ID = "N0";
+        }
 
         $s .= $_SESSION["SESS_SESSION_ID"] . "." . $_SESSION["SESS_GUEST_ID"] . "." . $COUNTRY_ID;
 
-        if (intval($_SESSION["SESS_ADV_ID"]) > 0) $s .= "." . $_SESSION["SESS_ADV_ID"] . ".N";
-        elseif (intval($_SESSION["SESS_LAST_ADV_ID"]) > 0) $s .= "." . $_SESSION["SESS_LAST_ADV_ID"] . ".Y";
-        else $s .= "..";
+        if (intval($_SESSION["SESS_ADV_ID"]) > 0) {
+            $s .= "." . $_SESSION["SESS_ADV_ID"] . ".N";
+        } elseif (intval($_SESSION["SESS_LAST_ADV_ID"]) > 0) {
+            $s .= "." . $_SESSION["SESS_LAST_ADV_ID"] . ".Y";
+        } else {
+            $s .= "..";
+        }
 
         if ($site_id === false) {
-            if (defined("ADMIN_SECTION") && ADMIN_SECTION === true) $site_id = "";
-            elseif (defined("SITE_ID")) $site_id = SITE_ID;
+            if (defined("ADMIN_SECTION") && ADMIN_SECTION === true) {
+                $site_id = "";
+            } elseif (defined("SITE_ID")) {
+                $site_id = SITE_ID;
+            }
         }
-        if (strlen($site_id) > 0) $s .= "." . $site_id;
-        else $s .= ".";
+        if ($site_id <> '') {
+            $s .= "." . $site_id;
+        } else {
+            $s .= ".";
+        }
 
         $encode = COption::GetOptionString("statistic", "EVENT_GID_BASE64_ENCODE");
-        if ($encode == "Y") $s = base64_encode($s);
+        if ($encode == "Y") {
+            $s = base64_encode($s);
+        }
 
         return GetStatGroupSiteID() . "." . $s;
     }
@@ -35,8 +49,16 @@ class CAllStatEvent
     ///////////////////////////////////////////////////////////////////
     // Event creation
     ///////////////////////////////////////////////////////////////////
-    public static function AddCurrent($event1, $event2 = "", $event3 = "", $money = "", $currency = "", $goto = "", $chargeback = "N", $site_id = false)
-    {
+    public static function AddCurrent(
+        $event1,
+        $event2 = "",
+        $event3 = "",
+        $money = "",
+        $currency = "",
+        $goto = "",
+        $chargeback = "N",
+        $site_id = false
+    ) {
         $err_mess = "File: " . __FILE__ . "<br>Line: ";
         $DB = CDatabase::GetModuleConnection('statistic');
 
@@ -44,18 +66,24 @@ class CAllStatEvent
         $event2 = trim($event2);
         $event3 = trim($event3);
 
-        if (strlen($event1) <= 0 && strlen($event2) <= 0)
+        if ($event1 == '' && $event2 == '') {
             return array("EVENT_ID" => 0, "TYPE_ID" => 0, "EID" => 0);
+        }
 
         //Check if register event for searcher
-        if (intval($_SESSION["SESS_SEARCHER_ID"]) > 0 && COption::GetOptionString("statistic", "SEARCHER_EVENTS") != "Y")
+        if (intval($_SESSION["SESS_SEARCHER_ID"]) > 0 && COption::GetOptionString(
+                "statistic",
+                "SEARCHER_EVENTS"
+            ) != "Y") {
             return array("EVENT_ID" => 0, "TYPE_ID" => 0, "EID" => 0);
+        }
 
         // lookup event type ID
         $EVENT_ID = CStatEvent::SetEventType($event1, $event2, $arEventType);
         // return if it's unknown
-        if ($EVENT_ID <= 0)
+        if ($EVENT_ID <= 0) {
             return array("EVENT_ID" => 0, "TYPE_ID" => 0, "EID" => 0);
+        }
 
         if ($site_id === false) {
             if (defined("ADMIN_SECTION") && ADMIN_SECTION === true) {
@@ -69,7 +97,7 @@ class CAllStatEvent
                 $site_id = false;
             }
         } else {
-            if (strlen(trim($site_id)) > 0) {
+            if (trim($site_id) <> '') {
                 $sql_site = "'" . $DB->ForSql($site_id, 2) . "'";
             } else {
                 $sql_site = "null";
@@ -79,14 +107,15 @@ class CAllStatEvent
 
         $money = doubleval($money);
         // convert when currency specified
-        if (strlen(trim($currency)) > 0) {
+        if (trim($currency) <> '') {
             $base_currency = GetStatisticBaseCurrency();
-            if (strlen($base_currency) > 0) {
+            if ($base_currency <> '') {
                 if ($currency != $base_currency) {
                     if (CModule::IncludeModule("currency")) {
                         $rate = CCurrencyRates::GetConvertFactor($currency, $base_currency);
-                        if ($rate > 0 && $rate != 1)
+                        if ($rate > 0 && $rate != 1) {
                             $money = $money * $rate;
+                        }
                     }
                 }
             }
@@ -98,14 +127,18 @@ class CAllStatEvent
         $sql_KEEP_DAYS = (intval($arEventType["KEEP_DAYS"]) > 0) ? intval($arEventType["KEEP_DAYS"]) : "null";
 
         $arr = false;
-        $referer_url = strlen($_SERVER["HTTP_REFERER"]) <= 0 ? $_SESSION["SESS_HTTP_REFERER"] : $_SERVER["HTTP_REFERER"];
-        if (strlen($referer_url) > 0) {
+        $referer_url = $_SERVER["HTTP_REFERER"] == '' ? $_SESSION["SESS_HTTP_REFERER"] : $_SERVER["HTTP_REFERER"];
+        if ($referer_url <> '') {
             if ($url = @parse_url($referer_url)) {
-                $rs = CSite::GetList($v1 = "LENDIR", $v2 = "DESC", Array("ACTIVE" => "Y", "DOMAIN" => "%" . $url["host"], "IN_DIR" => $url["path"]));
+                $rs = CSite::GetList(
+                    "LENDIR",
+                    "DESC",
+                    Array("ACTIVE" => "Y", "DOMAIN" => "%" . $url["host"], "IN_DIR" => $url["path"])
+                );
                 $arr = $rs->Fetch();
             }
         }
-        $sql_referer_site_id = is_array($arr) && (strlen($arr["ID"]) > 0) ? "'" . $DB->ForSql($arr["ID"], 2) . "'" : "null";
+        $sql_referer_site_id = is_array($arr) && ($arr["ID"] <> '') ? "'" . $DB->ForSql($arr["ID"], 2) . "'" : "null";
         $HIT_ID = CKeepStatistics::GetCuurentHitID();
 
         $arFields = Array(
@@ -127,13 +160,14 @@ class CAllStatEvent
             "REFERER_SITE_ID" => $sql_referer_site_id,
         );
 
-        if (intval($_SESSION["SESS_LAST_ADV_ID"]) > 0 && intval($_SESSION["SESS_ADV_ID"]) <= 0)
+        if (intval($_SESSION["SESS_LAST_ADV_ID"]) > 0 && intval($_SESSION["SESS_ADV_ID"]) <= 0) {
             $arFields["ADV_BACK"] = "'Y'";
+        }
 
         $eid = $DB->Insert("b_stat_event_list", $arFields, $err_mess . __LINE__);
 
         // in case of first occurence
-        if (strlen($arEventType["DATE_ENTER"]) <= 0) {
+        if ($arEventType["DATE_ENTER"] == '') {
             // set date of the first event
             $arFields = Array("DATE_ENTER" => $DB->GetNowFunction());
             $DB->Update("b_stat_event", $arFields, "WHERE ID='" . $EVENT_ID . "'", $err_mess . __LINE__);
@@ -145,7 +179,12 @@ class CAllStatEvent
             "COUNTER" => "COUNTER + 1",
             "MONEY" => "MONEY + " . $money
         );
-        $rows = $DB->Update("b_stat_event_day", $arFields, "WHERE EVENT_ID='" . $EVENT_ID . "' and " . CStatistics::DBDateCompare("DATE_STAT"), $err_mess . __LINE__);
+        $rows = $DB->Update(
+            "b_stat_event_day",
+            $arFields,
+            "WHERE EVENT_ID='" . $EVENT_ID . "' and " . CStatistics::DBDateCompare("DATE_STAT"),
+            $err_mess . __LINE__
+        );
         // there was no records updated
         if (intval($rows) <= 0) {
             // so add one
@@ -160,7 +199,9 @@ class CAllStatEvent
         } elseif (intval($rows) > 1) // more than one record for event
         {
             // delete
-            $strSql = "SELECT ID FROM b_stat_event_day WHERE EVENT_ID='" . $EVENT_ID . "' and  " . CStatistics::DBDateCompare("DATE_STAT") . " ORDER BY ID";
+            $strSql = "SELECT ID FROM b_stat_event_day WHERE EVENT_ID='" . $EVENT_ID . "' and  " . CStatistics::DBDateCompare(
+                    "DATE_STAT"
+                ) . " ORDER BY ID";
             $i = 0;
             $rs = $DB->Query($strSql, false, $err_mess . __LINE__);
             while ($ar = $rs->Fetch()) {
@@ -174,21 +215,52 @@ class CAllStatEvent
 
         // guest counter
         $arFields = Array("C_EVENTS" => "C_EVENTS+1");
-        $DB->Update("b_stat_guest", $arFields, "WHERE ID=" . intval($_SESSION["SESS_GUEST_ID"]), $err_mess . __LINE__, false, false, false);
+        $DB->Update(
+            "b_stat_guest",
+            $arFields,
+            "WHERE ID=" . intval($_SESSION["SESS_GUEST_ID"]),
+            $err_mess . __LINE__,
+            false,
+            false,
+            false
+        );
 
         // session counter
         $arFields = Array("C_EVENTS" => "C_EVENTS+1");
-        $DB->Update("b_stat_session", $arFields, "WHERE ID=" . intval($_SESSION["SESS_SESSION_ID"]), $err_mess . __LINE__, false, false, false);
+        $DB->Update(
+            "b_stat_session",
+            $arFields,
+            "WHERE ID=" . intval($_SESSION["SESS_SESSION_ID"]),
+            $err_mess . __LINE__,
+            false,
+            false,
+            false
+        );
 
         // events counter
         $arFields = Array("C_EVENTS" => "C_EVENTS+1");
-        $DB->Update("b_stat_day", $arFields, "WHERE " . CStatistics::DBDateCompare("DATE_STAT"), $err_mess . __LINE__, false, false, false);
+        $DB->Update(
+            "b_stat_day",
+            $arFields,
+            "WHERE " . CStatistics::DBDateCompare("DATE_STAT"),
+            $err_mess . __LINE__,
+            false,
+            false,
+            false
+        );
 
         // when site defined
-        if (strlen($site_id) > 0) {
+        if ($site_id <> '') {
             // update site
             $arFields = Array("C_EVENTS" => "C_EVENTS+1");
-            $DB->Update("b_stat_day_site", $arFields, "WHERE SITE_ID='" . $DB->ForSql($site_id, 2) . "' and " . CStatistics::DBDateCompare("DATE_STAT"), $err_mess . __LINE__);
+            $DB->Update(
+                "b_stat_day_site",
+                $arFields,
+                "WHERE SITE_ID='" . $DB->ForSql($site_id, 2) . "' and " . CStatistics::DBDateCompare(
+                    "DATE_STAT"
+                ),
+                $err_mess . __LINE__
+            );
         }
 
         // there is advertising compaign defined
@@ -199,7 +271,15 @@ class CAllStatEvent
                 $arFields = array(
                     "REVENUE" => "REVENUE " . $sign . " " . $money,
                 );
-                $DB->Update("b_stat_adv", $arFields, "WHERE ID='" . intval($_SESSION["SESS_LAST_ADV_ID"]) . "'", $err_mess . __LINE__, false, false, false);
+                $DB->Update(
+                    "b_stat_adv",
+                    $arFields,
+                    "WHERE ID='" . intval($_SESSION["SESS_LAST_ADV_ID"]) . "'",
+                    $err_mess . __LINE__,
+                    false,
+                    false,
+                    false
+                );
             }
 
             if (intval($_SESSION["SESS_ADV_ID"]) > 0) {
@@ -214,7 +294,14 @@ class CAllStatEvent
                 );
             }
 
-            $rows = $DB->Update("b_stat_adv_event", $arFields, "WHERE ADV_ID='" . intval($_SESSION["SESS_LAST_ADV_ID"]) . "' and EVENT_ID='" . $EVENT_ID . "'", $err_mess . __LINE__);
+            $rows = $DB->Update(
+                "b_stat_adv_event",
+                $arFields,
+                "WHERE ADV_ID='" . intval(
+                    $_SESSION["SESS_LAST_ADV_ID"]
+                ) . "' and EVENT_ID='" . $EVENT_ID . "'",
+                $err_mess . __LINE__
+            );
             if (intval($rows) <= 0) {
                 $arFields = Array(
                     "ADV_ID" => "'" . $_SESSION["SESS_LAST_ADV_ID"] . "'",
@@ -242,7 +329,17 @@ class CAllStatEvent
                 );
             }
 
-            $rows = $DB->Update("b_stat_adv_event_day", $arFields, "WHERE ADV_ID='" . intval($_SESSION["SESS_LAST_ADV_ID"]) . "' and EVENT_ID='" . $EVENT_ID . "' and " . CStatistics::DBDateCompare("DATE_STAT"), $err_mess . __LINE__, false, false, false);
+            $rows = $DB->Update(
+                "b_stat_adv_event_day",
+                $arFields,
+                "WHERE ADV_ID='" . intval(
+                    $_SESSION["SESS_LAST_ADV_ID"]
+                ) . "' and EVENT_ID='" . $EVENT_ID . "' and " . CStatistics::DBDateCompare("DATE_STAT"),
+                $err_mess . __LINE__,
+                false,
+                false,
+                false
+            );
             if (intval($rows) <= 0) {
                 $arFields = Array(
                     "ADV_ID" => ($_SESSION["SESS_LAST_ADV_ID"] > 0) ? $_SESSION["SESS_LAST_ADV_ID"] : "null",
@@ -258,7 +355,11 @@ class CAllStatEvent
                 }
                 $DB->Insert("b_stat_adv_event_day", $arFields, $err_mess . __LINE__);
             } elseif (intval($rows) > 1) {
-                $strSql = "SELECT ID FROM b_stat_adv_event_day WHERE ADV_ID='" . intval($_SESSION["SESS_LAST_ADV_ID"]) . "' and EVENT_ID='" . $EVENT_ID . "' and " . CStatistics::DBDateCompare("DATE_STAT") . " ORDER BY ID";
+                $strSql = "SELECT ID FROM b_stat_adv_event_day WHERE ADV_ID='" . intval(
+                        $_SESSION["SESS_LAST_ADV_ID"]
+                    ) . "' and EVENT_ID='" . $EVENT_ID . "' and " . CStatistics::DBDateCompare(
+                        "DATE_STAT"
+                    ) . " ORDER BY ID";
                 $i = 0;
                 $rs = $DB->Query($strSql, false, $err_mess . __LINE__);
                 while ($ar = $rs->Fetch()) {
@@ -274,25 +375,42 @@ class CAllStatEvent
         // todays traffic counters
         CTraffic::IncParam(array("EVENT" => 1), array("EVENT" => 1));
 
-        if (strlen($_SESSION["SESS_COUNTRY_ID"]) > 0)
+        if ($_SESSION["SESS_COUNTRY_ID"] <> '') {
             CStatistics::UpdateCountry($_SESSION["SESS_COUNTRY_ID"], Array("C_EVENTS" => 1));
-        if ($_SESSION["SESS_CITY_ID"] > 0)
+        }
+        if ($_SESSION["SESS_CITY_ID"] > 0) {
             CStatistics::UpdateCity($_SESSION["SESS_CITY_ID"], Array("C_EVENTS" => 1));
+        }
 
         return array("EVENT_ID" => intval($EVENT_ID), "TYPE_ID" => intval($EVENT_ID), "EID" => intval($eid));
     }
 
     // creates new event by ID
-    public static function AddByID($EVENT_ID, $EVENT3, $DATE_ENTER, $PARAM, $MONEY = "", $CURRENCY = "", $CHARGEBACK = "N")
-    {
+    public static function AddByID(
+        $EVENT_ID,
+        $EVENT3,
+        $DATE_ENTER,
+        $PARAM,
+        $MONEY = "",
+        $CURRENCY = "",
+        $CHARGEBACK = "N"
+    ) {
         return CStatEvent::Add($EVENT_ID, $EVENT3, $DATE_ENTER, $PARAM, $MONEY, $CURRENCY, $CHARGEBACK);
     }
 
     // creates new event by event1 and event2
-    public static function AddByEvents($EVENT1, $EVENT2, $EVENT3, $DATE_ENTER, $PARAM, $MONEY = "", $CURRENCY = "", $CHARGEBACK = "N")
-    {
+    public static function AddByEvents(
+        $EVENT1,
+        $EVENT2,
+        $EVENT3,
+        $DATE_ENTER,
+        $PARAM,
+        $MONEY = "",
+        $CURRENCY = "",
+        $CHARGEBACK = "N"
+    ) {
         $EVENT_ID = CStatEvent::SetEventType($EVENT1, $EVENT2, $arEventType);
-        if ($EVENT_ID > 0 && strlen($PARAM) > 0) {
+        if ($EVENT_ID > 0 && $PARAM <> '') {
             return CStatEvent::Add($EVENT_ID, $EVENT3, $DATE_ENTER, $PARAM, $MONEY, $CURRENCY, $CHARGEBACK);
         }
         return 0;
@@ -347,19 +465,23 @@ class CAllStatEvent
         $gid = intval($ar[2]);
         $base64 = "Y";
 
-        if ((count($ar) == 6 || count($ar) == 7) && $sid > 0 && $gid > 0 && strlen($ar[1]) == strlen($sid) && strlen($ar[2]) == strlen($gid)) $base64 = "N";
+        if ((count($ar) == 6 || count($ar) == 7) && $sid > 0 && $gid > 0 && mb_strlen($ar[1]) == mb_strlen(
+                $sid
+            ) && mb_strlen($ar[2]) == mb_strlen($gid)) {
+            $base64 = "N";
+        }
         if ($base64 == "Y") {
             $group_site_id = GetStatGroupSiteID();
-            $s = substr($EVENT_GID, strlen($group_site_id) + 1, strlen($EVENT_GID));
+            $s = mb_substr($EVENT_GID, mb_strlen($group_site_id) + 1, mb_strlen($EVENT_GID));
             $EVENT_GID = $group_site_id . "." . base64_decode($s);
         }
         $arr = explode(".", $EVENT_GID);
         $SESSION_ID = (intval($arr[1]) > 0) ? intval($arr[1]) : "";
         $GUEST_ID = (intval($arr[2]) > 0) ? intval($arr[2]) : "";
-        $COUNTRY_ID = (strlen($arr[3]) > 0) ? $arr[3] : "";
+        $COUNTRY_ID = ($arr[3] <> '') ? $arr[3] : "";
         $ADV_ID = (intval($arr[4]) > 0) ? intval($arr[4]) : "";
         $ADV_BACK = ($arr[5] == "Y" || $arr[5] == "N") ? $arr[5] : "";
-        $SITE_ID = (strlen($arr[6]) > 0) ? $arr[6] : "";
+        $SITE_ID = ($arr[6] <> '') ? $arr[6] : "";
 
         $arrRes = array(
             "SESSION_ID" => $SESSION_ID,
@@ -397,11 +519,13 @@ class CAllStatEvent
         if (is_array($arFilter)) {
             foreach ($arFilter as $key => $val) {
                 if (is_array($val)) {
-                    if (count($val) <= 0)
+                    if (count($val) <= 0) {
                         continue;
+                    }
                 } else {
-                    if ((strlen($val) <= 0) || ($val === "NOT_REF"))
+                    if (((string)$val == '') || ($val === "NOT_REF")) {
                         continue;
+                    }
                 }
                 $match_value_set = array_key_exists($key . "_EXACT_MATCH", $arFilter);
                 $key = strtoupper($key);
@@ -410,8 +534,9 @@ class CAllStatEvent
                         $arSqlSearch[] = "E.EVENT3 = '" . $DB->ForSql($val, 255) . "'";
                         break;
                     case "DATE":
-                        if (CheckDateTime($val))
+                        if (CheckDateTime($val)) {
                             $arSqlSearch[] = "E.DATE_ENTER=" . $DB->CharToDateFunction($val);
+                        }
                         break;
                     case "EVENT_ID":
                     case "SESSION_ID":

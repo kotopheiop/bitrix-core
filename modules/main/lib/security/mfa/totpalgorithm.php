@@ -22,38 +22,35 @@ class TotpAlgorithm extends OtpAlgorithm
     public function __construct()
     {
         $interval = (int)Option::get('security', 'totp_interval');
-        if ($interval && $interval > 0)
+        if ($interval && $interval > 0) {
             $this->interval = $interval;
+        }
     }
 
     /**
-     * Verify provided input.
-     *
-     * @param string $input Input received from user.
-     * @param string $params Synchronized user params, saved for this algorithm (see getSyncParameters).
-     * @param int|null $time Override system time, may be used in time machine.
-     * @return array [
-     *  bool isSuccess (Valid input or not),
-     *  string newParams (Updated user params for this OtpAlgorithm)
-     * ]
-     * @throws \Bitrix\Main\ArgumentTypeException
-     * @throws ArgumentOutOfRangeException
+     * @inheritDoc
      */
-    public function verify($input, $params = '0:0', $time = null)
+    public function verify($input, $params = null, $time = null)
     {
         $input = (string)$input;
 
-        if (!preg_match('#^\d+$#D', $input))
+        if ($params === null) {
+            $params = '0:0';
+        }
+
+        if (!preg_match('#^\d+$#D', $input)) {
             throw new ArgumentOutOfRangeException('input', 'string with numbers');
+        }
 
         list($userOffset, $lastTimeCode) = explode(':', $params);
         $userOffset = (int)$userOffset;
         $lastTimeCode = (int)$lastTimeCode;
 
-        if ($time === null)
+        if ($time === null) {
             $timeCode = $this->timecode(time());
-        else
+        } else {
             $timeCode = $this->timecode((int)$time);
+        }
 
         $checkOffsets = array();
         // First of all we must check input for provided offset
@@ -78,8 +75,9 @@ class TotpAlgorithm extends OtpAlgorithm
         foreach ($checkOffsets as $offset) {
             $code = $timeCode + $offset;
             // Disallow authorization in the past. Must prevent replay attacks.
-            if ($lastTimeCode && $code <= $lastTimeCode)
+            if ($lastTimeCode && $code <= $lastTimeCode) {
                 continue;
+            }
 
             if ($this->isStringsEqual($input, $this->generateOTP($code))) {
                 $isSuccess = true;
@@ -89,20 +87,15 @@ class TotpAlgorithm extends OtpAlgorithm
             }
         }
 
-        if ($isSuccess === true)
+        if ($isSuccess === true) {
             return array($isSuccess, sprintf('%d:%d', $resultOffset, $resultTimeCode));
+        }
 
         return array($isSuccess, null);
     }
 
     /**
-     * Generate provision URI according to KeyUriFormat
-     *
-     * @link https://code.google.com/p/google-authenticator/wiki/KeyUriFormat
-     * @param string $label User label.
-     * @param array $opts Additional URI parameters, e.g. ['image' => 'http://example.com/my_logo.png'] .
-     * @throws \Bitrix\Main\ArgumentTypeException
-     * @return string
+     * @inheritDoc
      */
     public function generateUri($label, array $opts = array())
     {
@@ -152,13 +145,7 @@ class TotpAlgorithm extends OtpAlgorithm
     }
 
     /**
-     * Return synchronized user params for provided inputs
-     *
-     * @param string $inputA First code.
-     * @param null $inputB Second code not used for TOTP syncing.
-     * @return string
-     * @throws ArgumentOutOfRangeException
-     * @throws OtpException
+     * @inheritDoc
      */
     public function getSyncParameters($inputA, $inputB)
     {
@@ -184,8 +171,9 @@ class TotpAlgorithm extends OtpAlgorithm
             }
         }
 
-        if ($offset === self::SYNC_WINDOW)
+        if ($offset === self::SYNC_WINDOW) {
             throw new OtpException('Cannot synchronize this secret key with the provided password values.');
+        }
 
         return sprintf('%d:%d', $offset, 0);
     }

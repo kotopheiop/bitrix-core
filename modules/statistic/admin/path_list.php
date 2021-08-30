@@ -1,23 +1,27 @@
 <?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/prolog.php");
 /** @var CMain $APPLICATION */
 $STAT_RIGHT = $APPLICATION->GetGroupRight("statistic");
-if ($STAT_RIGHT == "D") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($STAT_RIGHT == "D") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 
 $context = ($_REQUEST["context"] === "tab" ? "tab" : "");
-if ($_REQUEST["table_id"] === "t_path_list_COUNTER")
+if ($_REQUEST["table_id"] === "t_path_list_COUNTER") {
     $table_id = "t_path_list_COUNTER";
-elseif ($_REQUEST["table_id"] === "t_path_list_COUNTER_FULL_PATH")
+} elseif ($_REQUEST["table_id"] === "t_path_list_COUNTER_FULL_PATH") {
     $table_id = "t_path_list_COUNTER_FULL_PATH";
-else
+} else {
     $table_id = "";
+}
 
 $arSites = array();
 $ref = $ref_id = array();
-$rs = CSite::GetList(($v1 = "sort"), ($v2 = "asc"));
+$rs = CSite::GetList();
 while ($ar = $rs->Fetch()) {
     $ref[] = $ar["ID"];
     $ref_id[] = $ar["ID"];
@@ -25,36 +29,42 @@ while ($ar = $rs->Fetch()) {
 }
 $arSiteDropdown = array("reference" => $ref, "reference_id" => $ref_id);
 
-$rs = CAdv::GetList($v1 = "", $v2 = "", Array(), $v3, "", $v4, $v5);
+$rs = CAdv::GetList();
 while ($ar = $rs->Fetch()) {
     $arrADV[$ar["ID"]] = $ar["REFERER1"] . " / " . $ar["REFERER2"] . " [" . $ar["ID"] . "]";
     $arrADV_DETAIL[$ar["ID"]] = array("REFERER1" => $ar["REFERER1"], "REFERER2" => $ar["REFERER2"]);
 }
 
-if (isset($find_referer1) && strlen($find_referer1) > 0) {
+if (isset($find_referer1) && $find_referer1 <> '') {
     $find_adv = array();
-    foreach ($arrADV_DETAIL as $ADV_ID => $ADV_DETAIL)
-        if ($ADV_DETAIL["REFERER1"] == $find_referer1 && !in_array($ADV_ID, $find_adv))
+    foreach ($arrADV_DETAIL as $ADV_ID => $ADV_DETAIL) {
+        if ($ADV_DETAIL["REFERER1"] == $find_referer1 && !in_array($ADV_ID, $find_adv)) {
             $find_adv[] = $ADV_ID;
+        }
+    }
 }
-if (isset($find_referer2) && strlen($find_referer2) > 0) {
+if (isset($find_referer2) && $find_referer2 <> '') {
     $find_adv = array();
-    foreach ($arrADV_DETAIL as $ADV_ID => $ADV_DETAIL)
-        if ($ADV_DETAIL["REFERER2"] == $find_referer2 && !in_array($ADV_ID, $find_adv))
+    foreach ($arrADV_DETAIL as $ADV_ID => $ADV_DETAIL) {
+        if ($ADV_DETAIL["REFERER2"] == $find_referer2 && !in_array($ADV_ID, $find_adv)) {
             $find_adv[] = $ADV_ID;
+        }
+    }
 }
 
 if (isset($find_diagram_type)) {
-    if ($find_diagram_type != "COUNTER_FULL_PATH")
+    if ($find_diagram_type != "COUNTER_FULL_PATH") {
         $find_diagram_type = "COUNTER";
+    }
 } else {
     $find_diagram_type = false;
 }
 
-if ($context == "tab")
+if ($context == "tab") {
     $sTableID = "t_path_list_" . $find_diagram_type;
-else
+} else {
     $sTableID = "t_path_list";
+}
 
 $oSort = new CAdminSorting($sTableID, "s_counter", "desc");
 $lAdmin = new CAdminList($sTableID, $oSort);
@@ -79,11 +89,21 @@ if ($lAdmin->IsDefaultFilter()) {
 }
 
 $FilterArr = Array(
-    "find_date1", "find_date2",
-    "find_steps1", "find_steps2",
-    "find_first_page_site_id", "find_first_page_404", "find_first_page", "find_first_page_exact_match",
-    "find_page_site_id", "find_page_404", "find_page",
-    "find_last_page_site_id", "find_last_page_404", "find_last_page", "find_last_page_exact_match",
+    "find_date1",
+    "find_date2",
+    "find_steps1",
+    "find_steps2",
+    "find_first_page_site_id",
+    "find_first_page_404",
+    "find_first_page",
+    "find_first_page_exact_match",
+    "find_page_site_id",
+    "find_page_404",
+    "find_page",
+    "find_last_page_site_id",
+    "find_last_page_404",
+    "find_last_page",
+    "find_last_page_exact_match",
     "find_adv",
     "find_adv_data_type",
 );
@@ -96,12 +116,15 @@ InitFilterEx($arSettings, $sTableID . "_settings", "get");
 
 if ($find_diagram_type === false)//Restore saved setting
 {
-    if (strlen($saved_diagram_type) > 0)
+    if ($saved_diagram_type <> '') {
         $find_diagram_type = $saved_diagram_type;
-    else
+    } else {
         $find_diagram_type = "COUNTER";
+    }
 } elseif ($saved_diagram_type != $find_diagram_type)//Set if changed
+{
     $saved_diagram_type = $find_diagram_type;
+}
 
 InitFilterEx($arSettings, $sTableID . "_settings", "set");
 
@@ -141,7 +164,9 @@ $arFilter = Array(
     "LAST_PAGE_EXACT_MATCH" => $find_last_page_exact_match,
 );
 
-$rsPath = CPath::GetList($parent_id, $find_diagram_type, $by, $order, $arFilter, $is_filtered);
+global $by, $order;
+
+$rsPath = CPath::GetList($parent_id, $find_diagram_type, $by, $order, $arFilter);
 
 $str_err_404 = "ERROR_404: ";
 
@@ -151,8 +176,9 @@ $sum_counter = 0;
 while ($arPath = $rsPath->Fetch()) {
     $arrPath[] = $arPath;
     $sum_counter += $arPath["COUNTER"];
-    if (intval($arPath["COUNTER"]) > $max_counter)
+    if (intval($arPath["COUNTER"]) > $max_counter) {
         $max_counter = intval($arPath["COUNTER"]);
+    }
 }
 $rsPath = new CDBResult;
 $rsPath->InitFromArray($arrPath);
@@ -165,7 +191,7 @@ $lAdmin->NavText($rsData->GetNavPrint(GetMessage("STAT_PATH_PAGES")));
 $lAdmin->BeginPrologContent();
 
 if ($find_diagram_type == "COUNTER"):
-    if (strlen($parent_id) > 0) :
+    if ($parent_id <> '') :
         ?>
         <table cellspacing=0 cellpadding=0 class="list">
             <tr class="gutter">
@@ -195,19 +221,19 @@ if ($find_diagram_type == "COUNTER"):
                 reset($arrPages);
                 $i = 0;
                 foreach ($arrPages as $page):
-                    if (strlen($page) > 0) :
+                    if ($page <> '') :
                         $i++;
                         $arr = array();
                         $site_url = "";
                         preg_match("#\[(.+?)\]#", $page, $arr);
-                        if (strlen($arr[1]) > 0) {
+                        if ($arr[1] <> '') {
                             $page = str_replace("[" . $arr[1] . "] ", "", $page);
                             $site_url = $arSites[$arr[1]];
                         }
                         $err_404 = "N";
-                        if (substr($page, 0, strlen($str_err_404)) == $str_err_404) {
+                        if (mb_substr($page, 0, mb_strlen($str_err_404)) == $str_err_404) {
                             $err_404 = "Y";
-                            $page = substr($page, strlen($str_err_404), strlen($page));
+                            $page = mb_substr($page, mb_strlen($str_err_404), mb_strlen($page));
                         }
                         ?>
                         <tr>
@@ -218,40 +244,52 @@ if ($find_diagram_type == "COUNTER"):
                                 $path_id = $new_path_id;
                                 if ($path_id != $parent_id) :
                                     $prev_parent_path = $path_id;
-                                    $action_url = "path_list.php?lang=" . LANGUAGE_ID . "&find_diagram_type=COUNTER&parent_id=" . urlencode($path_id) . "&context=" . urlencode($context);
-                                    $action_js = ($table_id == "" ? $sTableID : $table_id) . ".GetAdminList('" . CUtil::JSEscape($action_url) . "');";
-                                    ?><a href="javascript:void(0)"
-                                         onclick="<? echo htmlspecialcharsbx($action_js) ?>"><?
+                                    $action_url = "path_list.php?lang=" . LANGUAGE_ID . "&find_diagram_type=COUNTER&parent_id=" . urlencode(
+                                            $path_id
+                                        ) . "&context=" . urlencode($context);
+                                    $action_js = ($table_id == "" ? $sTableID : $table_id) . ".GetAdminList('" . CUtil::JSEscape(
+                                            $action_url
+                                        ) . "');";
+                                    ?><a href="javascript:void(0)"onclick="<? echo htmlspecialcharsbx($action_js) ?>"><?
                                     if ($err_404 == "Y"):
-                                        ?><span
-                                            class="stat_attention"><? echo htmlspecialcharsEx(TruncateText($page, 65)) ?></span><?
+                                        ?><span class="stat_attention"><? echo htmlspecialcharsEx(
+                                        TruncateText($page, 65)
+                                    ) ?></span><?
                                     else:
                                         echo htmlspecialcharsEx(TruncateText($page, 65));
                                     endif;
                                     ?></a><?
                                 else :
                                     if ($err_404 == "Y"):
-                                        ?><span
-                                            class="stat_attention"><? echo htmlspecialcharsEx(TruncateText($page, 65)) ?></span><?
+                                        ?><span class="stat_attention"><? echo htmlspecialcharsEx(
+                                        TruncateText($page, 65)
+                                    ) ?></span><?
                                     else:
                                         echo htmlspecialcharsEx(TruncateText($page, 65));
                                     endif;
                                 endif;
                                 $arFilter["PATH_ID"] = $path_id;
-                                $z = CPath::GetList($arParent[$path_id], $find_diagram_type, $v1, $v2, $arFilter, $v3);
+                                $z = CPath::GetList($arParent[$path_id], $find_diagram_type, '', '', $arFilter);
                                 $zr = $z->Fetch();
                                 $counter = $zr["COUNTER"];
-                                if ($i == 1) $max = $counter;
+                                if ($i == 1) {
+                                    $max = $counter;
+                                }
 
                                 $percent = ($counter * 100) / $max;
                                 $percent_f = number_format($percent, 2, '.', '');
                                 $percent_m = number_format(100 - $percent, 2, '.', '');
 
                                 $alt = "";
-                                if ($i == 1)
+                                if ($i == 1) {
                                     $alt = GetMessage("STAT_PATH_START");
-                                else
-                                    $alt = GetMessage("STAT_PATH_ALT_1") . " " . $counter . ". " . GetMessage("STAT_PATH_ALT_2") . " " . $percent_f . "%. " . GetMessage("STAT_PATH_ALT_3") . " " . $percent_m . "%";
+                                } else {
+                                    $alt = GetMessage("STAT_PATH_ALT_1") . " " . $counter . ". " . GetMessage(
+                                            "STAT_PATH_ALT_2"
+                                        ) . " " . $percent_f . "%. " . GetMessage(
+                                            "STAT_PATH_ALT_3"
+                                        ) . " " . $percent_m . "%";
+                                }
                                 ?></td>
                             <td nowrap align="right" width="15%">&nbsp;<?= intval($counter) ?></td>
                             <td nowrap align="right" width="15%"><span
@@ -272,8 +310,19 @@ $arHeaders = Array();
 
 $arHeaders[] = array("id" => "NUMBER", "content" => GetMessage("STAT_NUM"), "default" => true, "align" => "right");
 $arHeaders[] = array("id" => "URL", "content" => GetMessage("STAT_PAGE"), "sort" => "s_url", "default" => true,);
-$arHeaders[] = array("id" => "COUNTER", "content" => GetMessage("STAT_TRANSFER"), "sort" => "s_counter", "default" => true, "align" => "right");
-$arHeaders[] = array("id" => "PERCENT", "content" => GetMessage("STAT_PERCENT"), "default" => true, "align" => "right",);
+$arHeaders[] = array(
+    "id" => "COUNTER",
+    "content" => GetMessage("STAT_TRANSFER"),
+    "sort" => "s_counter",
+    "default" => true,
+    "align" => "right"
+);
+$arHeaders[] = array(
+    "id" => "PERCENT",
+    "content" => GetMessage("STAT_PERCENT"),
+    "default" => true,
+    "align" => "right",
+);
 
 $lAdmin->AddHeaders($arHeaders);
 
@@ -291,56 +340,70 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
     $str = "";
 
     if ($find_diagram_type == "COUNTER") {
-        $action_url = "path_list.php?lang=" . LANGUAGE_ID . "&find_diagram_type=COUNTER&parent_id=" . urlencode($f_PATH_ID) . "&context=" . urlencode($context);
-        $action_js = ($table_id == "" ? $sTableID : $table_id) . ".GetAdminList('" . CUtil::JSEscape($action_url) . "');";
+        $action_url = "path_list.php?lang=" . LANGUAGE_ID . "&find_diagram_type=COUNTER&parent_id=" . urlencode(
+                $f_PATH_ID
+            ) . "&context=" . urlencode($context);
+        $action_js = ($table_id == "" ? $sTableID : $table_id) . ".GetAdminList('" . CUtil::JSEscape(
+                $action_url
+            ) . "');";
         $str .= "";
-        $str .= '<a title="' . GetMessage("STAT_GO") . '" href="' . $f_LAST_PAGE . '">&raquo;</a>&nbsp;<a title="' . GetMessage("STAT_NEXT_STEP") . '" href="javascript:void(0)" onclick="' . htmlspecialcharsbx($action_js) . '">';
+        $str .= '<a title="' . GetMessage(
+                "STAT_GO"
+            ) . '" href="' . $f_LAST_PAGE . '">&raquo;</a>&nbsp;<a title="' . GetMessage(
+                "STAT_NEXT_STEP"
+            ) . '" href="javascript:void(0)" onclick="' . htmlspecialcharsbx($action_js) . '">';
 
-        if ($f_LAST_PAGE_404 == "Y")
+        if ($f_LAST_PAGE_404 == "Y") {
             $str .= "<span class=\"stat_attention\">" . TruncateText($f_LAST_PAGE, 65) . "</span>";
-        else
+        } else {
             $str .= TruncateText($f_LAST_PAGE, 65);
+        }
     } else {
         $arrPAGES = explode("\n", $f_PAGES);
         $path_id = "";
 
         foreach ($arrPAGES as $page) {
-            if (strlen($page) > 0) {
+            if ($page <> '') {
                 $arr = array();
                 $site_url = "";
                 preg_match("#\[(.+?)\]#", $page, $arr);
-                if (strlen($arr[1]) > 0) {
+                if ($arr[1] <> '') {
                     $page = str_replace("[" . $arr[1] . "] ", "", $page);
                     $site_url = $arSites[$arr[1]];
                 }
 
                 $err_404 = "N";
-                if (substr($page, 0, strlen($str_err_404)) == $str_err_404) {
+                if (mb_substr($page, 0, mb_strlen($str_err_404)) == $str_err_404) {
                     $err_404 = "Y";
-                    $page = substr($page, strlen($str_err_404), strlen($page));
+                    $page = mb_substr($page, mb_strlen($str_err_404), mb_strlen($page));
                 }
                 $path_id = GetStatPathID($page, $path_id);
-                $action_url = "path_list.php?lang=" . LANGUAGE_ID . "&find_diagram_type=COUNTER&parent_id=" . urlencode($path_id) . "&context=" . urlencode($context);
-                $action_js = ($table_id == "" ? $sTableID : $table_id) . ".GetAdminList('" . CUtil::JSEscape($action_url) . "');";
-                $str .= '<a title="' . GetMessage("STAT_GO") . '" href="' . $page . '">&raquo;</a>&nbsp;<a title="' . GetMessage("STAT_NEXT_PAGES") . '" href="javascript:void(0)" onclick="' . htmlspecialcharsbx($action_js) . '">';
-                if ($err_404 == "Y")
+                $action_url = "path_list.php?lang=" . LANGUAGE_ID . "&find_diagram_type=COUNTER&parent_id=" . urlencode(
+                        $path_id
+                    ) . "&context=" . urlencode($context);
+                $action_js = ($table_id == "" ? $sTableID : $table_id) . ".GetAdminList('" . CUtil::JSEscape(
+                        $action_url
+                    ) . "');";
+                $str .= '<a title="' . GetMessage(
+                        "STAT_GO"
+                    ) . '" href="' . $page . '">&raquo;</a>&nbsp;<a title="' . GetMessage(
+                        "STAT_NEXT_PAGES"
+                    ) . '" href="javascript:void(0)" onclick="' . htmlspecialcharsbx($action_js) . '">';
+                if ($err_404 == "Y") {
                     $str .= '<span class="stat_attention">' . TruncateText($page, 65) . '</span>';
-                else
+                } else {
                     $str .= TruncateText($page, 80);
+                }
 
                 $str .= '<br>';
-
             }
-
         }
-
     }
 
     $row->AddViewField("URL", $str);
 
     $row->AddViewField("NUMBER", $number);
     $row->AddViewField("PERCENT", $q . "%");
-
 }
 
 $lAdmin->AddFooter(
@@ -351,7 +414,7 @@ $lAdmin->AddFooter(
 );
 
 $aContext = array();
-if (strlen($parent_id) > 0) {
+if ($parent_id <> '') {
     $aContext[] = array(
         "TEXT" => GetMessage("STAT_ENTER_POINTS_S"),
         "ICON" => "btn_list",
@@ -361,7 +424,9 @@ if (strlen($parent_id) > 0) {
 
 $aContext[] =
     array(
-        "TEXT" => ($find_diagram_type != "COUNTER_FULL_PATH" ? GetMessage("STAT_F_SEGMENT_PATH") : GetMessage("STAT_F_FULL_PATH")),
+        "TEXT" => ($find_diagram_type != "COUNTER_FULL_PATH" ? GetMessage("STAT_F_SEGMENT_PATH") : GetMessage(
+            "STAT_F_FULL_PATH"
+        )),
         "MENU" => array(
             array(
                 "TEXT" => GetMessage("STAT_F_SEGMENT_PATH"),
@@ -376,8 +441,9 @@ $aContext[] =
         ),
     );
 
-if ($context != "tab")
+if ($context != "tab") {
     $lAdmin->AddAdminContextMenu($aContext);
+}
 
 $lAdmin->CheckListMode();
 
@@ -391,44 +457,92 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
         <? $filter->Begin(); ?>
         <tr valign="center">
             <td width="0%" nowrap><? echo GetMessage("STAT_F_PERIOD") . ":" ?></td>
-            <td width="0%"
-                nowrap><? echo CalendarPeriod("find_date1", $find_date1, "find_date2", $find_date2, "form1", "Y") ?></td>
+            <td width="0%" nowrap><? echo CalendarPeriod(
+                    "find_date1",
+                    $find_date1,
+                    "find_date2",
+                    $find_date2,
+                    "form1",
+                    "Y"
+                ) ?></td>
         </tr>
         <tr>
             <td><? echo GetMessage("STAT_F_STEPS") ?>:</td>
             <td><input type="text" name="find_steps1" size="10"
-                       value="<? echo htmlspecialcharsbx($find_steps1) ?>"><? echo "&nbsp;" . GetMessage("STAT_TILL") . "&nbsp;" ?>
-                <input type="text" name="find_steps2" size="10" value="<? echo htmlspecialcharsbx($find_steps2) ?>">
-            </td>
+                       value="<? echo htmlspecialcharsbx($find_steps1) ?>"><? echo "&nbsp;" . GetMessage(
+                        "STAT_TILL"
+                    ) . "&nbsp;" ?><input type="text" name="find_steps2" size="10"
+                                          value="<? echo htmlspecialcharsbx($find_steps2) ?>"></td>
         </tr>
         <tr valign="center">
             <td width="0%" nowrap><? echo GetMessage("STAT_F_FIRST_PAGE") ?>:</td>
             <td width="0%" nowrap><?
-                echo SelectBoxFromArray("find_first_page_site_id", $arSiteDropdown, $find_first_page_site_id, GetMessage("STAT_D_SITE"));
+                echo SelectBoxFromArray(
+                    "find_first_page_site_id",
+                    $arSiteDropdown,
+                    $find_first_page_site_id,
+                    GetMessage("STAT_D_SITE")
+                );
                 ?>&nbsp;<?
-                echo SelectBoxFromArray("find_first_page_404", array("reference" => array(GetMessage("STAT_YES"), GetMessage("STAT_NO")), "reference_id" => array("Y", "N")), htmlspecialcharsbx($find_first_page_404), GetMessage("STAT_404"));
+                echo SelectBoxFromArray(
+                    "find_first_page_404",
+                    array(
+                        "reference" => array(GetMessage("STAT_YES"), GetMessage("STAT_NO")),
+                        "reference_id" => array("Y", "N")
+                    ),
+                    htmlspecialcharsbx($find_first_page_404),
+                    GetMessage("STAT_404")
+                );
                 ?>&nbsp;<input type="text" name="find_first_page" size="37"
-                               value="<? echo htmlspecialcharsbx($find_first_page) ?>"><?= ShowExactMatchCheckbox("find_first_page") ?>
-                &nbsp;<?= ShowFilterLogicHelp() ?></td>
+                               value="<? echo htmlspecialcharsbx($find_first_page) ?>"><?= ShowExactMatchCheckbox(
+                    "find_first_page"
+                ) ?>&nbsp;<?= ShowFilterLogicHelp() ?></td>
         </tr>
         <tr valign="center">
             <td width="0%" nowrap><? echo GetMessage("STAT_F_PAGE") ?>:</td>
             <td width="0%" nowrap><?
-                echo SelectBoxFromArray("find_page_site_id", $arSiteDropdown, $find_page_site_id, GetMessage("STAT_D_SITE"));
+                echo SelectBoxFromArray(
+                    "find_page_site_id",
+                    $arSiteDropdown,
+                    $find_page_site_id,
+                    GetMessage("STAT_D_SITE")
+                );
                 ?>&nbsp;<?
-                echo SelectBoxFromArray("find_page_404", array("reference" => array(GetMessage("STAT_YES"), GetMessage("STAT_NO")), "reference_id" => array("Y", "N")), htmlspecialcharsbx($find_page_404), GetMessage("STAT_404"));
-                ?>&nbsp;<input type="text" name="find_page" size="37" value="<? echo htmlspecialcharsbx($find_page) ?>">&nbsp;<?= ShowFilterLogicHelp() ?>
-            </td>
+                echo SelectBoxFromArray(
+                    "find_page_404",
+                    array(
+                        "reference" => array(GetMessage("STAT_YES"), GetMessage("STAT_NO")),
+                        "reference_id" => array("Y", "N")
+                    ),
+                    htmlspecialcharsbx($find_page_404),
+                    GetMessage("STAT_404")
+                );
+                ?>&nbsp;<input type="text" name="find_page" size="37" value="<? echo htmlspecialcharsbx($find_page) ?>">&nbsp;<?= ShowFilterLogicHelp(
+                ) ?></td>
         </tr>
         <tr valign="center">
             <td width="0%" nowrap><? echo GetMessage("STAT_F_LAST_PAGE") ?>:</td>
             <td width="0%" nowrap><?
-                echo SelectBoxFromArray("find_last_page_site_id", $arSiteDropdown, $find_last_page_site_id, GetMessage("STAT_D_SITE"));
+                echo SelectBoxFromArray(
+                    "find_last_page_site_id",
+                    $arSiteDropdown,
+                    $find_last_page_site_id,
+                    GetMessage("STAT_D_SITE")
+                );
                 ?>&nbsp;<?
-                echo SelectBoxFromArray("find_last_page_404", array("reference" => array(GetMessage("STAT_YES"), GetMessage("STAT_NO")), "reference_id" => array("Y", "N")), htmlspecialcharsbx($find_last_page_404), GetMessage("STAT_404"));
+                echo SelectBoxFromArray(
+                    "find_last_page_404",
+                    array(
+                        "reference" => array(GetMessage("STAT_YES"), GetMessage("STAT_NO")),
+                        "reference_id" => array("Y", "N")
+                    ),
+                    htmlspecialcharsbx($find_last_page_404),
+                    GetMessage("STAT_404")
+                );
                 ?>&nbsp;<input type="text" name="find_last_page" size="37"
-                               value="<? echo htmlspecialcharsbx($find_last_page) ?>"><?= ShowExactMatchCheckbox("find_last_page") ?>
-                &nbsp;<?= ShowFilterLogicHelp() ?></td>
+                               value="<? echo htmlspecialcharsbx($find_last_page) ?>"><?= ShowExactMatchCheckbox(
+                    "find_last_page"
+                ) ?>&nbsp;<?= ShowFilterLogicHelp() ?></td>
         </tr>
         <tr valign="top">
             <td width="0%" nowrap valign="top"><?
@@ -436,7 +550,15 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
                                                           height="21" border=0 alt=""></td>
             <td width="100%" nowrap>
                 <?
-                echo SelectBoxMFromArray("find_adv[]", array("REFERENCE" => $find_adv_names, "REFERENCE_ID" => $find_adv), $find_adv, "", false, "5", "style=\"width:300px;\"");
+                echo SelectBoxMFromArray(
+                    "find_adv[]",
+                    array("REFERENCE" => $find_adv_names, "REFERENCE_ID" => $find_adv),
+                    $find_adv,
+                    "",
+                    false,
+                    "5",
+                    "style=\"width:300px;\""
+                );
                 ?>
                 <script language="Javascript">
                     function selectEventType(form, field) {
@@ -462,7 +584,8 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
                         GetMessage("STAT_ADV_NO_BACK"),
                         GetMessage("STAT_ADV_BACK")
                     ),
-                    "reference_id" => array("S", "P", "B"));
+                    "reference_id" => array("S", "P", "B")
+                );
                 echo SelectBoxFromArray("find_adv_data_type", $arr, htmlspecialcharsbx($find_adv_data_type));
                 ?></td>
         </tr>
@@ -471,8 +594,9 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
     </form>
 
 <?
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 $lAdmin->DisplayList();
 ?>
 

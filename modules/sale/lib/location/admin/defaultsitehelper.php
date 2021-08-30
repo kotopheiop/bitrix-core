@@ -26,7 +26,7 @@ class DefaultSiteHelper extends Helper
      * Function returns class name for an attached entity
      * @return string Entity class name
      */
-    public function getEntityRoadMap()
+    public static function getEntityRoadMap()
     {
         return array(
             'main' => array(
@@ -65,8 +65,9 @@ class DefaultSiteHelper extends Helper
     {
         // strip away empty and removed items
         foreach ($data['LOCATION'] as $id => $item) {
-            if ($item['REMOVE'] == 1 || !strlen($item['LOCATION_CODE']))
+            if ($item['REMOVE'] == 1 || !mb_strlen($item['LOCATION_CODE'])) {
                 unset($data['LOCATION'][$id]);
+            }
         }
 
         return $data['LOCATION'];
@@ -99,10 +100,11 @@ class DefaultSiteHelper extends Helper
                 'SITE_ID' => 'LID'
             );
         } elseif ($page == 'detail') {
-            $id = strlen($_REQUEST['id']) ? self::tryParseSiteId($_REQUEST['id']) : false;
+            $id = $_REQUEST['id'] <> '' ? self::tryParseSiteId($_REQUEST['id']) : false;
 
-            if ($id)
+            if ($id) {
                 $request['filter']['=LID'] = $id;
+            }
         }
 
         return $request;
@@ -111,7 +113,9 @@ class DefaultSiteHelper extends Helper
     // block add handle, nothing to add
     public static function add($data)
     {
-        throw new Main\NotSupportedException(Loc::getMessage('SALE_LOCATION_ADMIN_DEFAULT_SITE_HELPER_ADD_OP_UNSUPPORTED'));
+        throw new Main\NotSupportedException(
+            Loc::getMessage('SALE_LOCATION_ADMIN_DEFAULT_SITE_HELPER_ADD_OP_UNSUPPORTED')
+        );
     }
 
     public static function update($siteId, $data)
@@ -124,8 +128,9 @@ class DefaultSiteHelper extends Helper
 
         unset($data['ID']);
 
-        if (empty($errors))
-            $entityClass::updateMultipleForOwner($siteId, $data); // result is always successfull, unless an exception thrown
+        if (empty($errors)) {
+            $entityClass::updateMultipleForOwner($siteId, $data);
+        } // result is always successfull, unless an exception thrown
 
         return array(
             'success' => $success,
@@ -136,7 +141,9 @@ class DefaultSiteHelper extends Helper
     // block delete handle, nothing to delete
     public static function delete($primary)
     {
-        throw new Main\NotSupportedException(Loc::getMessage('SALE_LOCATION_ADMIN_DEFAULT_SITE_HELPER_DELETE_OP_UNSUPPORTED'));
+        throw new Main\NotSupportedException(
+            Loc::getMessage('SALE_LOCATION_ADMIN_DEFAULT_SITE_HELPER_DELETE_OP_UNSUPPORTED')
+        );
     }
 
     // avoid paging here, kz its based on ID which is absent for this table
@@ -174,22 +181,25 @@ class DefaultSiteHelper extends Helper
 
     public static function tryParseSiteId($sid)
     {
-        return htmlspecialcharsbx(substr($sid, 0, 2));
+        return htmlspecialcharsbx(mb_substr($sid, 0, 2));
     }
 
     public static function getDefaultLocationList($siteId)
     {
         $entityClass = static::getEntityClass('location');
 
-        $res = $entityClass::getList(array(
-            'filter' => array(
-                '=SITE_ID' => $siteId
-            ),
-            //'order' => array('SORT' => 'asc')
-        ));
+        $res = $entityClass::getList(
+            array(
+                'filter' => array(
+                    '=SITE_ID' => $siteId
+                ),
+                //'order' => array('SORT' => 'asc')
+            )
+        );
         $index = array();
-        while ($item = $res->fetch())
+        while ($item = $res->fetch()) {
             $index['LOCATION'][] = $item;
+        }
 
         return $index;
     }

@@ -99,7 +99,7 @@ class Event
         }
 
         $senderId = Main\Config\Option::get("main", "sms_default_service");
-        if (strlen($senderId) <= 0) {
+        if ($senderId == '') {
             //messageservice will try to use any available sender
             $senderId = null;
         }
@@ -107,12 +107,14 @@ class Event
         foreach ($templates as $template) {
             $message = Message::createFromTemplate($template, $this->fields);
 
-            $smsMessage = \Bitrix\MessageService\Sender\SmsManager::createMessage([
-                'SENDER_ID' => $senderId,
-                'MESSAGE_FROM' => $message->getSender(),
-                'MESSAGE_TO' => $message->getReceiver(),
-                'MESSAGE_BODY' => $message->getText(),
-            ]);
+            $smsMessage = \Bitrix\MessageService\Sender\SmsManager::createMessage(
+                [
+                    'SENDER_ID' => $senderId,
+                    'MESSAGE_FROM' => $message->getSender(),
+                    'MESSAGE_TO' => $message->getReceiver(),
+                    'MESSAGE_BODY' => $message->getText(),
+                ]
+            );
 
             $event = new Main\Event("main", "onBeforeSendSms", ['message' => $smsMessage, "template" => $template]);
             $event->send();
@@ -150,21 +152,23 @@ class Event
             $filter->where("EVENT_NAME", $this->eventName);
 
             if ($this->languageId !== null) {
-                $filter->where(Query::filter()
-                    ->logic('or')
-                    ->where('LANGUAGE_ID', $this->languageId)
-                    ->where('LANGUAGE_ID', '')
-                    ->whereNull('LANGUAGE_ID')
+                $filter->where(
+                    Query::filter()
+                        ->logic('or')
+                        ->where('LANGUAGE_ID', $this->languageId)
+                        ->where('LANGUAGE_ID', '')
+                        ->whereNull('LANGUAGE_ID')
                 );
             }
         }
 
-        $res = TemplateTable::getList([
-            'select' => ['*', 'SITES.SITE_NAME', 'SITES.SERVER_NAME', 'SITES.LID'],
-            'filter' => $filter,
-        ]);
+        $res = TemplateTable::getList(
+            [
+                'select' => ['*', 'SITES.SITE_NAME', 'SITES.SERVER_NAME', 'SITES.LID'],
+                'filter' => $filter,
+            ]
+        );
 
         return $res->fetchCollection();
-
     }
 }

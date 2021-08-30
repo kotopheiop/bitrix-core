@@ -92,37 +92,44 @@ class Actions
     public static function setUseMode($mode, array $config = array())
     {
         $mode = (int)$mode;
-        if ($mode !== self::MODE_CALCULATE && $mode !== self::MODE_MANUAL && $mode !== self::MODE_MIXED)
+        if ($mode !== self::MODE_CALCULATE && $mode !== self::MODE_MANUAL && $mode !== self::MODE_MIXED) {
             return;
+        }
         self::$useMode = $mode;
         switch (self::$useMode) {
             case self::MODE_CALCULATE:
                 $percentOption = (string)Main\Config\Option::get('sale', 'get_discount_percent_from_base_price');
                 self::$percentValueMode = ($percentOption == 'Y' ? self::PERCENT_FROM_BASE_PRICE : self::PERCENT_FROM_CURRENT_PRICE);
                 unset($percentOption);
-                if (isset($config['CURRENCY']))
+                if (isset($config['CURRENCY'])) {
                     self::$currencyId = $config['CURRENCY'];
+                }
                 if (isset($config['SITE_ID'])) {
                     self::$siteId = $config['SITE_ID'];
-                    if (self::$currencyId == '')
+                    if (self::$currencyId == '') {
                         self::$currencyId = Sale\Internals\SiteCurrencyTable::getSiteCurrency(self::$siteId);
+                    }
                 }
                 break;
             case self::MODE_MANUAL:
             case self::MODE_MIXED:
                 $percentOption = '';
-                if (isset($config['USE_BASE_PRICE']))
+                if (isset($config['USE_BASE_PRICE'])) {
                     $percentOption = $config['USE_BASE_PRICE'];
-                if ($percentOption == '')
+                }
+                if ($percentOption == '') {
                     $percentOption = (string)Main\Config\Option::get('sale', 'get_discount_percent_from_base_price');
+                }
                 self::$percentValueMode = ($percentOption == 'Y' ? self::PERCENT_FROM_BASE_PRICE : self::PERCENT_FROM_CURRENT_PRICE);
                 unset($percentOption);
-                if (isset($config['CURRENCY']))
+                if (isset($config['CURRENCY'])) {
                     self::$currencyId = $config['CURRENCY'];
+                }
                 if (isset($config['SITE_ID'])) {
                     self::$siteId = $config['SITE_ID'];
-                    if (self::$currencyId == '')
+                    if (self::$currencyId == '') {
                         self::$currencyId = Sale\Internals\SiteCurrencyTable::getSiteCurrency(self::$siteId);
+                    }
                 }
                 break;
         }
@@ -238,8 +245,9 @@ class Actions
      */
     public static function disableBasketFilter()
     {
-        if (!static::isMixedMode())
+        if (!static::isMixedMode()) {
             return;
+        }
         self::$useBasketFilter = false;
     }
 
@@ -250,8 +258,9 @@ class Actions
      */
     public static function enableBasketFilter()
     {
-        if (!static::isMixedMode())
+        if (!static::isMixedMode()) {
             return;
+        }
         self::$useBasketFilter = true;
     }
 
@@ -274,18 +283,22 @@ class Actions
     public static function fillCompatibleFields(array &$order)
     {
         $adminSection = Main\Context::getCurrent()->getRequest()->isAdminSection();
-        if (empty($order) || !is_array($order))
+        if (empty($order) || !is_array($order)) {
             return;
+        }
         if (!empty($order['BASKET_ITEMS']) && is_array($order['BASKET_ITEMS'])) {
             foreach ($order['BASKET_ITEMS'] as &$item) {
-                if (isset($item['PRICE_DEFAULT']))
+                if (isset($item['PRICE_DEFAULT'])) {
                     $item['PRICE_DEFAULT'] = $item['PRICE'];
-                if ($adminSection)
+                }
+                if ($adminSection) {
                     continue;
+                }
 
                 foreach (self::$compatibleBasketFields as &$fieldName) {
-                    if (array_key_exists($fieldName, $item) && !is_array($item[$fieldName]))
+                    if (array_key_exists($fieldName, $item) && !is_array($item[$fieldName])) {
                         $item['~' . $fieldName] = $item[$fieldName];
+                    }
                 }
                 unset($fieldName);
             }
@@ -342,8 +355,9 @@ class Actions
     public static function setApplyResultMode($mode)
     {
         $mode = (int)$mode;
-        if ($mode != self::APPLY_RESULT_MODE_COUNTER && $mode != self::APPLY_RESULT_MODE_DESCR && $mode != self::APPLY_RESULT_MODE_SIMPLE)
+        if ($mode != self::APPLY_RESULT_MODE_COUNTER && $mode != self::APPLY_RESULT_MODE_DESCR && $mode != self::APPLY_RESULT_MODE_SIMPLE) {
             return;
+        }
         self::$applyResultMode = $mode;
         self::$applyResult = array();
     }
@@ -398,10 +412,12 @@ class Actions
      */
     public static function setActionStoredData(array $data)
     {
-        if (!static::isCalculateMode())
+        if (!static::isCalculateMode()) {
             return;
-        if (empty($data))
+        }
+        if (empty($data)) {
             return;
+        }
         self::$storedData[static::getApplyCounter()] = $data;
     }
 
@@ -413,8 +429,9 @@ class Actions
     public static function getActionStoredData()
     {
         $counter = static::getApplyCounter();
-        if (isset(self::$storedData[$counter]))
+        if (isset(self::$storedData[$counter])) {
             return self::$storedData[$counter];
+        }
         return null;
     }
 
@@ -451,8 +468,9 @@ class Actions
     {
         static::increaseApplyCounter();
 
-        if (!isset($action['VALUE']) || !isset($action['UNIT']))
+        if (!isset($action['VALUE']) || !isset($action['UNIT'])) {
             return;
+        }
 
         $orderCurrency = static::getCurrency();
         $value = (float)$action['VALUE'];
@@ -460,8 +478,9 @@ class Actions
         $unit = (string)$action['UNIT'];
         $currency = (isset($action['CURRENCY']) ? $action['CURRENCY'] : $orderCurrency);
         $maxBound = false;
-        if ($unit == self::VALUE_TYPE_FIX && $value < 0)
+        if ($unit == self::VALUE_TYPE_FIX && $value < 0) {
             $maxBound = (isset($action['MAX_BOUND']) && $action['MAX_BOUND'] == 'Y');
+        }
         $valueAction = (
         $value < 0
             ? Formatter::VALUE_ACTION_DISCOUNT
@@ -524,36 +543,42 @@ class Actions
 
         static::setActionDescription(self::RESULT_ENTITY_BASKET, $actionDescription);
 
-        if (empty($order['BASKET_ITEMS']) || !is_array($order['BASKET_ITEMS']))
+        if (empty($order['BASKET_ITEMS']) || !is_array($order['BASKET_ITEMS'])) {
             return;
+        }
 
         static::enableBasketFilter();
         $filteredBasket = static::getBasketForApply($order['BASKET_ITEMS'], $filter, $action);
-        if (empty($filteredBasket))
+        if (empty($filteredBasket)) {
             return;
+        }
 
         $applyBasket = array_filter($filteredBasket, '\Bitrix\Sale\Discount\Actions::filterBasketForAction');
         unset($filteredBasket);
-        if (empty($applyBasket))
+        if (empty($applyBasket)) {
             return;
+        }
 
         if ($unit == self::VALUE_TYPE_SUMM || $unit == self::VALUE_TYPE_FIX) {
-            if ($currency != $orderCurrency)
+            if ($currency != $orderCurrency) {
                 $value = \CCurrencyRates::ConvertCurrency($value, $currency, $orderCurrency);
+            }
             if ($unit == self::VALUE_TYPE_SUMM) {
                 $value = static::getPercentByValue($applyBasket, $value);
                 if (
                     ($valueAction == Formatter::VALUE_ACTION_DISCOUNT && ($value >= 0 || $value < -100))
                     ||
                     ($valueAction == Formatter::VALUE_ACTION_EXTRA && $value <= 0)
-                )
+                ) {
                     return;
+                }
                 $unit = self::VALUE_TYPE_PERCENT;
             }
         }
         $value = static::roundZeroValue($value);
-        if ($value == 0)
+        if ($value == 0) {
             return;
+        }
 
         foreach ($applyBasket as $basketCode => $basketRow) {
             list($calculateValue, $result) = self::calculateDiscountPrice(
@@ -598,8 +623,12 @@ class Actions
      * @return void
      * @throws Main\ArgumentOutOfRangeException
      */
-    public static function applyCumulativeToBasket(array &$order, array $ranges, array $configuration = array(), $filter = null)
-    {
+    public static function applyCumulativeToBasket(
+        array &$order,
+        array $ranges,
+        array $configuration = array(),
+        $filter = null
+    ) {
         static::increaseApplyCounter();
 
         Main\Type\Collection::sortByColumn($ranges, 'sum');
@@ -642,8 +671,9 @@ class Actions
             'UNIT' => $rangeToApply['type'],
         );
 
-        if (!isset($action['VALUE']) || !isset($action['UNIT']))
+        if (!isset($action['VALUE']) || !isset($action['UNIT'])) {
             return;
+        }
 
         $orderCurrency = static::getCurrency();
         $value = (float)$action['VALUE'];
@@ -651,8 +681,9 @@ class Actions
         $unit = (string)$action['UNIT'];
         $currency = (isset($action['CURRENCY']) ? $action['CURRENCY'] : $orderCurrency);
         $maxBound = false;
-        if ($unit == self::VALUE_TYPE_FIX && $value < 0)
+        if ($unit == self::VALUE_TYPE_FIX && $value < 0) {
             $maxBound = (isset($action['MAX_BOUND']) && $action['MAX_BOUND'] == 'Y');
+        }
         $valueAction = Formatter::VALUE_ACTION_CUMULATIVE;
 
         $actionDescription = array(
@@ -667,8 +698,9 @@ class Actions
             case self::VALUE_TYPE_FIX:
                 $actionDescription['VALUE_TYPE'] = Formatter::VALUE_TYPE_CURRENCY;
                 $actionDescription['VALUE_UNIT'] = $currency;
-                if ($maxBound)
+                if ($maxBound) {
                     $actionDescription['ACTION_TYPE'] = Formatter::TYPE_MAX_BOUND;
+                }
                 break;
             default:
                 return;
@@ -692,8 +724,9 @@ class Actions
 
         static::setActionDescription(self::RESULT_ENTITY_BASKET, $actionDescription);
 
-        if (empty($order['BASKET_ITEMS']) || !is_array($order['BASKET_ITEMS']))
+        if (empty($order['BASKET_ITEMS']) || !is_array($order['BASKET_ITEMS'])) {
             return;
+        }
 
         static::enableBasketFilter();
 
@@ -707,14 +740,16 @@ class Actions
         }
 
         $filteredBasket = static::getBasketForApply($order['BASKET_ITEMS'], $filter, $action);
-        if (empty($filteredBasket))
+        if (empty($filteredBasket)) {
             return;
+        }
 
 
         $applyBasket = array_filter($filteredBasket, '\Bitrix\Sale\Discount\Actions::filterBasketForAction');
         unset($filteredBasket);
-        if (empty($applyBasket))
+        if (empty($applyBasket)) {
             return;
+        }
 
         foreach ($applyBasket as $basketCode => $basketRow) {
             if ($applyIfMoreProfitable) {
@@ -819,18 +854,21 @@ class Actions
     {
         static::increaseApplyCounter();
 
-        if (!isset($action['VALUE']) || !isset($action['UNIT']))
+        if (!isset($action['VALUE']) || !isset($action['UNIT'])) {
             return;
-        if ($action['UNIT'] != self::VALUE_TYPE_PERCENT && $action['UNIT'] != self::VALUE_TYPE_FIX)
+        }
+        if ($action['UNIT'] != self::VALUE_TYPE_PERCENT && $action['UNIT'] != self::VALUE_TYPE_FIX) {
             return;
+        }
 
         $orderCurrency = static::getCurrency();
         $unit = (string)$action['UNIT'];
         $value = (float)$action['VALUE'];
         $currency = (isset($action['CURRENCY']) ? $action['CURRENCY'] : $orderCurrency);
         $maxBound = false;
-        if ($unit == self::VALUE_TYPE_FIX && $value < 0)
+        if ($unit == self::VALUE_TYPE_FIX && $value < 0) {
             $maxBound = (isset($action['MAX_BOUND']) && $action['MAX_BOUND'] == 'Y');
+        }
 
         $actionDescription = array(
             'ACTION_TYPE' => Formatter::TYPE_VALUE,
@@ -841,8 +879,9 @@ class Actions
                 : Formatter::VALUE_ACTION_EXTRA
             )
         );
-        if ($maxBound)
+        if ($maxBound) {
             $actionDescription['ACTION_TYPE'] = Formatter::TYPE_MAX_BOUND;
+        }
 
         switch ($unit) {
             case self::VALUE_TYPE_PERCENT:
@@ -852,27 +891,31 @@ class Actions
             case self::VALUE_TYPE_FIX:
                 $actionDescription['VALUE_TYPE'] = Formatter::VALUE_TYPE_CURRENCY;
                 $actionDescription['VALUE_UNIT'] = $currency;
-                if ($currency != $orderCurrency)
+                if ($currency != $orderCurrency) {
                     $value = \CCurrencyRates::ConvertCurrency($value, $currency, $orderCurrency);
+                }
                 break;
         }
         static::setActionDescription(self::RESULT_ENTITY_DELIVERY, $actionDescription);
 
-        if (isset($order['CUSTOM_PRICE_DELIVERY']) && $order['CUSTOM_PRICE_DELIVERY'] == 'Y')
+        if (isset($order['CUSTOM_PRICE_DELIVERY']) && $order['CUSTOM_PRICE_DELIVERY'] == 'Y') {
             return;
+        }
         if (
             !isset($order['PRICE_DELIVERY'])
             || (
                 static::roundZeroValue($order['PRICE_DELIVERY']) == 0
                 && $actionDescription['VALUE_ACTION'] == Formatter::VALUE_ACTION_DISCOUNT
             )
-        )
+        ) {
             return;
+        }
 
         $value = static::roundValue($value, $order['CURRENCY']);
         $value = static::roundZeroValue($value);
-        if ($value == 0)
+        if ($value == 0) {
             return;
+        }
 
         $resultValue = static::roundZeroValue($order['PRICE_DELIVERY'] + $value);
         if ($maxBound && $resultValue < 0) {
@@ -880,11 +923,13 @@ class Actions
             $value = -$order['PRICE_DELIVERY'];
         }
 
-        if ($resultValue < 0)
+        if ($resultValue < 0) {
             return;
+        }
 
-        if (!isset($order['PRICE_DELIVERY_DIFF']))
+        if (!isset($order['PRICE_DELIVERY_DIFF'])) {
             $order['PRICE_DELIVERY_DIFF'] = 0;
+        }
         $order['PRICE_DELIVERY_DIFF'] -= $value;
         $order['PRICE_DELIVERY'] = $resultValue;
 
@@ -912,11 +957,13 @@ class Actions
         );
         static::setActionDescription(self::RESULT_ENTITY_BASKET, $actionDescription);
 
-        if (!is_callable($filter))
+        if (!is_callable($filter)) {
             return;
+        }
 
-        if (empty($order['BASKET_ITEMS']) || !is_array($order['BASKET_ITEMS']))
+        if (empty($order['BASKET_ITEMS']) || !is_array($order['BASKET_ITEMS'])) {
             return;
+        }
 
         static::disableBasketFilter();
 
@@ -933,17 +980,18 @@ class Actions
 
         static::enableBasketFilter();
 
-        if (empty($filteredBasket))
+        if (empty($filteredBasket)) {
             return;
+        }
 
         $applyBasket = array_filter($filteredBasket, '\Bitrix\Sale\Discount\Actions::filterBasketForAction');
         unset($filteredBasket);
-        if (empty($applyBasket))
+        if (empty($applyBasket)) {
             return;
+        }
 
         foreach ($applyBasket as $basketCode => $basketRow) {
-            $basketRow['DISCOUNT_PRICE'] = $basketRow['BASE_PRICE'];
-            $basketRow['PRICE'] = 0;
+            self::fillDiscountPrice($basketRow, 0, $basketRow['PRICE']);
 
             $order['BASKET_ITEMS'][$basketCode] = $basketRow;
 
@@ -977,10 +1025,14 @@ class Actions
                         $currentCounter = static::getApplyCounter();
                         $basketCodeList = array_keys($basket);
                         foreach ($basketCodeList as &$code) {
-                            if (empty(self::$applyResult['BASKET'][$code]) || !is_array(self::$applyResult['BASKET'][$code]))
+                            if (empty(self::$applyResult['BASKET'][$code]) || !is_array(
+                                    self::$applyResult['BASKET'][$code]
+                                )) {
                                 continue;
-                            if (!in_array($currentCounter, self::$applyResult['BASKET'][$code]))
+                            }
+                            if (!in_array($currentCounter, self::$applyResult['BASKET'][$code])) {
                                 continue;
+                            }
                             $result[$code] = $basket[$code];
                         }
                         unset($code, $basketCodeList, $currentCounter);
@@ -988,8 +1040,11 @@ class Actions
                     case self::APPLY_RESULT_MODE_DESCR:
                         $basketCodeList = array_keys($basket);
                         foreach ($basketCodeList as &$code) {
-                            if (empty(self::$applyResult['BASKET'][$code]) || !is_array(self::$applyResult['BASKET'][$code]))
+                            if (empty(self::$applyResult['BASKET'][$code]) || !is_array(
+                                    self::$applyResult['BASKET'][$code]
+                                )) {
                                 continue;
+                            }
                             foreach (self::$applyResult['BASKET'][$code] as $descr) {
                                 if (static::compareBasketResultDescr($action, $descr)) {
                                     $result[$code] = $basket[$code];
@@ -1005,8 +1060,9 @@ class Actions
                                     if (
                                         $descr['TYPE'] == Formatter::TYPE_SIMPLE
                                         && $descr['DESCR'] == $action['GIFT_TITLE']
-                                    )
+                                    ) {
                                         $result[$code] = $basket[$code];
+                                    }
                                     unset($descr);
                                 }
                             }
@@ -1016,8 +1072,9 @@ class Actions
                     case self::APPLY_RESULT_MODE_SIMPLE:
                         $basketCodeList = array_keys($basket);
                         foreach ($basketCodeList as &$code) {
-                            if (isset(self::$applyResult['BASKET'][$code]))
+                            if (isset(self::$applyResult['BASKET'][$code])) {
                                 $result[$code] = $basket[$code];
+                            }
                         }
                         unset($code, $basketCodeList);
                         break;
@@ -1037,13 +1094,16 @@ class Actions
      */
     public static function setActionDescription($type, $description)
     {
-        if (!static::isCalculateMode())
+        if (!static::isCalculateMode()) {
             return;
-        if (empty($description) || !is_array($description) || !isset($description['ACTION_TYPE']))
+        }
+        if (empty($description) || !is_array($description) || !isset($description['ACTION_TYPE'])) {
             return;
+        }
         $actionType = $description['ACTION_TYPE'];
-        if ($actionType == Formatter::TYPE_SIMPLE)
+        if ($actionType == Formatter::TYPE_SIMPLE) {
             $description = (isset($description['ACTION_DESCRIPTION']) ? $description['ACTION_DESCRIPTION'] : '');
+        }
 
         $prepareResult = Sale\Discount\Formatter::prepareRow($actionType, $description);
         unset($actionType);
@@ -1051,13 +1111,15 @@ class Actions
         if ($prepareResult !== null) {
             switch ($type) {
                 case self::RESULT_ENTITY_BASKET:
-                    if (!isset(self::$actionDescription['BASKET']))
+                    if (!isset(self::$actionDescription['BASKET'])) {
                         self::$actionDescription['BASKET'] = array();
+                    }
                     self::$actionDescription['BASKET'][static::getApplyCounter()] = $prepareResult;
                     break;
                 case self::RESULT_ENTITY_DELIVERY:
-                    if (!isset(self::$actionDescription['DELIVERY']))
+                    if (!isset(self::$actionDescription['DELIVERY'])) {
                         self::$actionDescription['DELIVERY'] = array();
+                    }
                     self::$actionDescription['DELIVERY'][static::getApplyCounter()] = $prepareResult;
                     break;
             }
@@ -1074,34 +1136,40 @@ class Actions
      */
     public static function setActionResult($entity, array $actionResult)
     {
-        if (empty($actionResult) || !isset($actionResult['ACTION_TYPE']))
+        if (empty($actionResult) || !isset($actionResult['ACTION_TYPE'])) {
             return;
+        }
 
         $actionType = $actionResult['ACTION_TYPE'];
-        if ($actionType == Formatter::TYPE_SIMPLE)
+        if ($actionType == Formatter::TYPE_SIMPLE) {
             $actionDescription = (isset($actionResult['ACTION_DESCRIPTION']) ? $actionResult['ACTION_DESCRIPTION'] : '');
-        else
+        } else {
             $actionDescription = $actionResult;
+        }
         $prepareResult = Sale\Discount\Formatter::prepareRow($actionType, $actionDescription);
         unset($actionDescription, $actionType);
 
         if ($prepareResult !== null) {
             switch ($entity) {
                 case self::RESULT_ENTITY_BASKET:
-                    if (!isset(self::$actionResult['BASKET']))
+                    if (!isset(self::$actionResult['BASKET'])) {
                         self::$actionResult['BASKET'] = array();
+                    }
                     $basketCode = $actionResult['BASKET_CODE'];
-                    if (!isset(self::$actionResult['BASKET'][$basketCode]))
+                    if (!isset(self::$actionResult['BASKET'][$basketCode])) {
                         self::$actionResult['BASKET'][$basketCode] = array();
+                    }
                     //TODO: remove this hack
-                    if (isset($actionResult['REVERT_APPLY']))
+                    if (isset($actionResult['REVERT_APPLY'])) {
                         $prepareResult['REVERT_APPLY'] = $actionResult['REVERT_APPLY'];
+                    }
                     self::$actionResult['BASKET'][$basketCode][static::getApplyCounter()] = $prepareResult;
                     unset($basketCode);
                     break;
                 case self::RESULT_ENTITY_DELIVERY:
-                    if (!isset(self::$actionResult['DELIVERY']))
+                    if (!isset(self::$actionResult['DELIVERY'])) {
                         self::$actionResult['DELIVERY'] = array();
+                    }
                     self::$actionResult['DELIVERY'][static::getApplyCounter()] = $prepareResult;
                     break;
             }
@@ -1119,16 +1187,22 @@ class Actions
         switch ($entity) {
             case self::RESULT_ENTITY_BASKET:
                 if (empty($entityParams)) {
-                    if (array_key_exists('BASKET', self::$actionResult))
+                    if (array_key_exists('BASKET', self::$actionResult)) {
                         unset(self::$actionResult['BASKET']);
+                    }
                 } else {
-                    if (isset($entityParams['BASKET_CODE']) && array_key_exists($entityParams['BASKET_CODE'], self::$actionResult['BASKET']))
+                    if (isset($entityParams['BASKET_CODE']) && array_key_exists(
+                            $entityParams['BASKET_CODE'],
+                            self::$actionResult['BASKET']
+                        )) {
                         unset(self::$actionResult['BASKET'][$entityParams['BASKET_CODE']]);
+                    }
                 }
                 break;
             case self::RESULT_ENTITY_DELIVERY:
-                if (array_key_exists('DELIVERY', self::$actionResult))
+                if (array_key_exists('DELIVERY', self::$actionResult)) {
                     unset(self::$actionResult['DELIVERY']);
+                }
                 break;
         }
     }
@@ -1145,13 +1219,15 @@ class Actions
         $summ = 0;
         switch (static::getPercentMode()) {
             case self::PERCENT_FROM_BASE_PRICE:
-                foreach ($basket as $basketRow)
+                foreach ($basket as $basketRow) {
                     $summ += (float)$basketRow['BASE_PRICE'] * (float)$basketRow['QUANTITY'];
+                }
                 unset($basketRow);
                 break;
             case self::PERCENT_FROM_CURRENT_PRICE:
-                foreach ($basket as $basketRow)
+                foreach ($basket as $basketRow) {
                     $summ += (float)$basketRow['PRICE'] * (float)$basketRow['QUANTITY'];
+                }
                 unset($basketRow);
                 break;
         }
@@ -1231,7 +1307,7 @@ class Actions
             $actionStructure = false;
             if (!is_array($discount['ACTIONS'])) {
                 if (CheckSerializedData($discount['ACTIONS'])) {
-                    $actionStructure = unserialize($discount['ACTIONS']);
+                    $actionStructure = unserialize($discount['ACTIONS'], ['allowed_classes' => false]);
                 }
             } else {
                 $actionStructure = $discount['ACTIONS'];
@@ -1254,10 +1330,12 @@ class Actions
     {
         $result = false;
 
-        if (empty($action))
+        if (empty($action)) {
             return $result;
-        if (!is_array($resultDescr) || !isset($resultDescr['TYPE']))
+        }
+        if (!is_array($resultDescr) || !isset($resultDescr['TYPE'])) {
             return $result;
+        }
 
         $currency = (isset($action['CURRENCY']) ? $action['CURRENCY'] : static::getCurrency());
         $value = abs($action['VALUE']);
@@ -1324,8 +1402,9 @@ class Actions
     protected static function calculateDiscountPrice($value, $unit, array $basketRow, $limitValue, $maxBound)
     {
         $calculateValue = $value;
-        if ($unit == self::VALUE_TYPE_PERCENT)
+        if ($unit == self::VALUE_TYPE_PERCENT) {
             $calculateValue = static::percentToValue($basketRow, $calculateValue);
+        }
         $calculateValue = static::roundValue($calculateValue, $basketRow['CURRENCY']);
 
         if ($unit == self::VALUE_TYPE_CLOSEOUT) {
@@ -1336,8 +1415,9 @@ class Actions
                 $result = -1;
             }
         } else {
-            if (!empty($limitValue) && $limitValue + $calculateValue <= 0)
+            if (!empty($limitValue) && $limitValue + $calculateValue <= 0) {
                 $calculateValue = -$limitValue;
+            }
 
             $result = static::roundZeroValue($basketRow['PRICE'] + $calculateValue);
             if ($maxBound && $result < 0) {
@@ -1359,8 +1439,9 @@ class Actions
      */
     protected static function fillDiscountPrice(array &$basketRow, $price, $discount)
     {
-        if (!isset($basketRow['DISCOUNT_PRICE']))
+        if (!isset($basketRow['DISCOUNT_PRICE'])) {
             $basketRow['DISCOUNT_PRICE'] = 0;
+        }
         $basketRow['PRICE'] = $price;
         $basketRow['DISCOUNT_PRICE'] += $discount;
     }

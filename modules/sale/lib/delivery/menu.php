@@ -35,9 +35,11 @@ class Menu
 
         $children = $this->getChildren();
 
-        foreach ($children as $key => $child)
-            if (!$child["can_has_children"])
+        foreach ($children as $key => $child) {
+            if (!$child["can_has_children"]) {
                 unset($children[$key]);
+            }
+        }
 
         if (!empty($children)) {
             $result["items"] = array_values($children);
@@ -49,23 +51,29 @@ class Menu
 
     protected function getChildren(array $parentIds = array(0))
     {
-        if (empty($parentIds))
+        if (empty($parentIds)) {
             return array();
+        }
 
         $result = array();
 
-        $dbRes = \Bitrix\Sale\Delivery\Services\Table::getList(array(
-            "filter" => array(
-                "=PARENT_ID" => $parentIds
-            ),
-            "select" => array(
-                "ID", "NAME", "DESCRIPTION", "CLASS_NAME"
-            ),
-            "order" => array(
-                "SORT" => "ASC",
-                "NAME" => "ASC"
+        $dbRes = \Bitrix\Sale\Delivery\Services\Table::getList(
+            array(
+                "filter" => array(
+                    "=PARENT_ID" => $parentIds
+                ),
+                "select" => array(
+                    "ID",
+                    "NAME",
+                    "DESCRIPTION",
+                    "CLASS_NAME"
+                ),
+                "order" => array(
+                    "SORT" => "ASC",
+                    "NAME" => "ASC"
+                )
             )
-        ));
+        );
 
         $services = array();
         $parents = array();
@@ -74,24 +82,29 @@ class Menu
             $services[$service["ID"]] = $service;
             $result[$service["ID"]] = array();
 
-            if (is_callable($service["CLASS_NAME"] . '::canHasChildren') && $service["CLASS_NAME"]::canHasChildren())
+            if (is_callable($service["CLASS_NAME"] . '::canHasChildren') && $service["CLASS_NAME"]::canHasChildren()) {
                 $parents[] = $service["ID"];
+            }
         }
 
-        if (!empty($parents))
+        if (!empty($parents)) {
             $childrenList = $this->getChildren($parents);
+        }
 
         foreach ($services as $serviceId => $service) {
             $canHasChildren = in_array($serviceId, $parents);
 
-            if ($canHasChildren && !empty($childrenList[$serviceId]))
+            if ($canHasChildren && !empty($childrenList[$serviceId])) {
                 $children = $childrenList[$serviceId];
-            else
+            } else {
                 $children = array();
+            }
 
-            foreach ($children as $key => $child)
-                if (!$child["can_has_children"])
+            foreach ($children as $key => $child) {
+                if (!$child["can_has_children"]) {
                     unset($children[$key]);
+                }
+            }
 
             $item = array(
                 "text" => htmlspecialcharsbx($service["NAME"]),

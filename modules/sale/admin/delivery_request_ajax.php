@@ -25,8 +25,9 @@ $arResult = array(
     "MESSAGES" => array()
 );
 
-if (!\Bitrix\Main\Loader::includeModule('sale'))
+if (!\Bitrix\Main\Loader::includeModule('sale')) {
     $arResult["ERRORS"][] = "Error! Can't include module \"Sale\"";
+}
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/lib/delivery/inputs.php");
 
@@ -50,8 +51,12 @@ if (empty($arResult["ERRORS"]) && $saleModulePermissions >= "U" && check_bitrix_
                     $white = false;
 
                     foreach ($fields as $name => $value) {
-                        $content .= '<tr><td class="adm-sale-delivery-request-content' . ($white ? ' white' : '') . '" width="50%">' . htmlspecialcharsbx($value['TITLE']) . '</td>
-							<td class="adm-sale-delivery-request-content' . ($white ? ' white' : '') . '" width="50%">' . htmlspecialcharsbx($value['VALUE']) . '</td></tr>';
+                        $content .= '<tr><td class="adm-sale-delivery-request-content' . ($white ? ' white' : '') . '" width="50%">' . htmlspecialcharsbx(
+                                $value['TITLE']
+                            ) . '</td>
+							<td class="adm-sale-delivery-request-content' . ($white ? ' white' : '') . '" width="50%">' . htmlspecialcharsbx(
+                                $value['VALUE']
+                            ) . '</td></tr>';
 
                         $white = !$white;
                     }
@@ -69,23 +74,40 @@ if (empty($arResult["ERRORS"]) && $saleModulePermissions >= "U" && check_bitrix_
 
             $requestId = isset($_REQUEST['requestId']) ? intval($_REQUEST['requestId']) : 0;
             $deliveryId = isset($_REQUEST['deliveryId']) ? intval($_REQUEST['deliveryId']) : 0;
-            $shipmentIds = isset($_REQUEST['shipmentIds']) && is_array($_REQUEST['shipmentIds']) ? $_REQUEST['shipmentIds'] : array();
-            $requestAction = isset($_REQUEST['requestAction']) && strlen($_REQUEST['requestAction']) > 0 ? trim($_REQUEST['requestAction']) : '';
-            $requestInputsValues = isset($_REQUEST['requestInputs']) && is_array($_REQUEST['requestInputs']) ? $_REQUEST['requestInputs'] : array();
+            $shipmentIds = isset($_REQUEST['shipmentIds']) && is_array(
+                $_REQUEST['shipmentIds']
+            ) ? $_REQUEST['shipmentIds'] : array();
+            $requestAction = isset($_REQUEST['requestAction']) && $_REQUEST['requestAction'] <> '' ? trim(
+                $_REQUEST['requestAction']
+            ) : '';
+            $requestInputsValues = isset($_REQUEST['requestInputs']) && is_array(
+                $_REQUEST['requestInputs']
+            ) ? $_REQUEST['requestInputs'] : array();
             $requestInputs = array();
             $actionsTypesList = Requests\Manager::getDeliveryRequestActions($requestId);
             $content = '';
 
             if (!isset($_REQUEST['requestInputs'])) {
                 $additional = array('ACTION_TYPE' => $requestAction);
-                $requestInputs = Requests\Manager::getDeliveryRequestFormFields($deliveryId, Requests\Manager::FORM_FIELDS_TYPE_ACTION, $shipmentIds, $additional);
+                $requestInputs = Requests\Manager::getDeliveryRequestFormFields(
+                    $deliveryId,
+                    Requests\Manager::FORM_FIELDS_TYPE_ACTION,
+                    $shipmentIds,
+                    $additional
+                );
 
                 if (!empty($requestInputs)) {
                     foreach ($requestInputs as $name => $params) {
                         $content .=
                             '<tr>
-								<td valign="top">' . (strlen($params["TITLE"]) > 0 ? htmlspecialcharsbx($params["TITLE"]) . ": " : "") . '</td>
-								<td>' . \Bitrix\Sale\Internals\Input\Manager::getEditHtml("requestInputs[" . $name . "]", $params, (isset($params[$name]) ? $params[$name] : null)) . '</td>
+								<td valign="top">' . ($params["TITLE"] <> '' ? htmlspecialcharsbx(
+                                    $params["TITLE"]
+                                ) . ": " : "") . '</td>
+								<td>' . \Bitrix\Sale\Internals\Input\Manager::getEditHtml(
+                                "requestInputs[" . $name . "]",
+                                $params,
+                                (isset($params[$name]) ? $params[$name] : null)
+                            ) . '</td>
 							</tr>';
                     }
 
@@ -97,19 +119,33 @@ if (empty($arResult["ERRORS"]) && $saleModulePermissions >= "U" && check_bitrix_
 						<input type="hidden" name="requestId" value="' . $requestId . '">
 						<input type="hidden" name="requestAction" value="' . htmlspecialcharsbx($requestAction) . '">';
 
-                    if (!empty($shipmentIds))
-                        foreach ($shipmentIds as $shipmentId)
-                            $content .= '<input type="hidden" name="shipmentIds[]" value="' . intval($shipmentId) . '">';
+                    if (!empty($shipmentIds)) {
+                        foreach ($shipmentIds as $shipmentId) {
+                            $content .= '<input type="hidden" name="shipmentIds[]" value="' . intval(
+                                    $shipmentId
+                                ) . '">';
+                        }
+                    }
 
                     $isFinal = false;
                 }
             }
 
             if (empty($requestInputs)) {
-                if ($action == 'actionExecute')
-                    $res = Requests\Manager::executeDeliveryRequestAction($requestId, $requestAction, $requestInputsValues);
-                else
-                    $res = Requests\Manager::executeDeliveryRequestShipmentAction($requestId, $shipmentIds, $requestAction, $requestInputsValues);
+                if ($action == 'actionExecute') {
+                    $res = Requests\Manager::executeDeliveryRequestAction(
+                        $requestId,
+                        $requestAction,
+                        $requestInputsValues
+                    );
+                } else {
+                    $res = Requests\Manager::executeDeliveryRequestShipmentAction(
+                        $requestId,
+                        $shipmentIds,
+                        $requestAction,
+                        $requestInputsValues
+                    );
+                }
 
                 if ($res instanceof Requests\ResultFile && $res->isSuccess()) {
                     $fileContent = $res->getFileContent();
@@ -121,7 +157,7 @@ if (empty($arResult["ERRORS"]) && $saleModulePermissions >= "U" && check_bitrix_
 
                     if ($res !== false) {
                         $file = new \Bitrix\Main\IO\File($fileName);
-                        $arResult['FILE_PATH'] = substr($tmpDir, strlen(\CTempFile::GetAbsoluteRoot()));
+                        $arResult['FILE_PATH'] = mb_substr($tmpDir, mb_strlen(\CTempFile::GetAbsoluteRoot()));
                         $arResult['FILE_NAME'] = $fileName;
                     } else {
                         $arResult["ERRORS"][] = Loc::getMessage('SALE_DELIVERY_REQ_AJAX_FILE_SAVE_ERROR');
@@ -129,8 +165,16 @@ if (empty($arResult["ERRORS"]) && $saleModulePermissions >= "U" && check_bitrix_
 
                     break;
                 } else {
-                    if ($res->isSuccess())
-                        $res->addMessage(new Requests\Message(Loc::getMessage('SALE_DELIVERY_REQ_AJAX_ACTION_DONE', array('#ACTION_NAME#' => $actionsTypesList[$requestAction]))));
+                    if ($res->isSuccess()) {
+                        $res->addMessage(
+                            new Requests\Message(
+                                Loc::getMessage(
+                                    'SALE_DELIVERY_REQ_AJAX_ACTION_DONE',
+                                    array('#ACTION_NAME#' => $actionsTypesList[$requestAction])
+                                )
+                            )
+                        );
+                    }
 
                     $content = createMessagesHtml($res);
                     $isFinal = true;
@@ -138,7 +182,9 @@ if (empty($arResult["ERRORS"]) && $saleModulePermissions >= "U" && check_bitrix_
             }
 
             $arResult['DAILOG_PARAMS'] = array(
-                'TITLE' => Loc::getMessage('SALE_DELIVERY_REQ_AJAX_ACTION') . ' "' . $actionsTypesList[$requestAction] . '"',
+                'TITLE' => Loc::getMessage(
+                        'SALE_DELIVERY_REQ_AJAX_ACTION'
+                    ) . ' "' . $actionsTypesList[$requestAction] . '"',
                 'CONTENT' => $content,
                 'IS_FINAL' => $isFinal
             );
@@ -178,27 +224,33 @@ if (empty($arResult["ERRORS"]) && $saleModulePermissions >= "U" && check_bitrix_
             break;
 
         case "deleteShipmentsFromDeliveryRequest":
-            $shipmentIds = isset($_REQUEST['shipmentIds']) && is_array($_REQUEST['shipmentIds']) ? $_REQUEST['shipmentIds'] : array();
+            $shipmentIds = isset($_REQUEST['shipmentIds']) && is_array(
+                $_REQUEST['shipmentIds']
+            ) ? $_REQUEST['shipmentIds'] : array();
 
             if (empty($shipmentIds)) {
                 $arResult["ERRORS"][] = Loc::getMessage('SALE_DELIVERY_REQ_AJAX_SLIST_EMPTY');
                 break;
             }
 
-            $dbRes = Requests\ShipmentTable::getList(array(
-                'filter' => array(
-                    '=SHIPMENT_ID' => $shipmentIds
+            $dbRes = Requests\ShipmentTable::getList(
+                array(
+                    'filter' => array(
+                        '=SHIPMENT_ID' => $shipmentIds
+                    )
                 )
-            ));
+            );
 
             $grouppedByRequestId = array();
 
             while ($row = $dbRes->fetch()) {
-                if (intval($row['REQUEST_ID']) <= 0)
+                if (intval($row['REQUEST_ID']) <= 0) {
                     continue;
+                }
 
-                if (!isset($grouppedByRequestId[$row['REQUEST_ID']]))
+                if (!isset($grouppedByRequestId[$row['REQUEST_ID']])) {
                     $grouppedByRequestId[$row['REQUEST_ID']] = array();
+                }
 
                 $grouppedByRequestId[$row['REQUEST_ID']][] = $row['SHIPMENT_ID'];
             }
@@ -218,7 +270,9 @@ if (empty($arResult["ERRORS"]) && $saleModulePermissions >= "U" && check_bitrix_
                                         '#SHIPMENT_ID#' => $shpRes->getInternalId(),
                                         '#REQUEST_ID#' => $requestId
                                     )
-                                )));
+                                )
+                            )
+                        );
                     }
 
                     $content .= createMessagesHtml($shpRes);
@@ -236,27 +290,33 @@ if (empty($arResult["ERRORS"]) && $saleModulePermissions >= "U" && check_bitrix_
             break;
 
         case "updateShipmentsFromDeliveryRequest":
-            $shipmentIds = isset($_REQUEST['shipmentIds']) && is_array($_REQUEST['shipmentIds']) ? $_REQUEST['shipmentIds'] : array();
+            $shipmentIds = isset($_REQUEST['shipmentIds']) && is_array(
+                $_REQUEST['shipmentIds']
+            ) ? $_REQUEST['shipmentIds'] : array();
 
             if (empty($shipmentIds)) {
                 $arResult["ERRORS"][] = Loc::getMessage('SALE_DELIVERY_REQ_AJAX_SLIST_EMPTY');
                 break;
             }
 
-            $dbRes = Requests\ShipmentTable::getList(array(
-                'filter' => array(
-                    '=SHIPMENT_ID' => $shipmentIds
+            $dbRes = Requests\ShipmentTable::getList(
+                array(
+                    'filter' => array(
+                        '=SHIPMENT_ID' => $shipmentIds
+                    )
                 )
-            ));
+            );
 
             $grouppedByRequestId = array();
 
             while ($row = $dbRes->fetch()) {
-                if (intval($row['REQUEST_ID']) <= 0)
+                if (intval($row['REQUEST_ID']) <= 0) {
                     continue;
+                }
 
-                if (!isset($grouppedByRequestId[$row['REQUEST_ID']]))
+                if (!isset($grouppedByRequestId[$row['REQUEST_ID']])) {
                     $grouppedByRequestId[$row['REQUEST_ID']] = array();
+                }
 
                 $grouppedByRequestId[$row['REQUEST_ID']][] = $row['SHIPMENT_ID'];
             }
@@ -274,7 +334,9 @@ if (empty($arResult["ERRORS"]) && $saleModulePermissions >= "U" && check_bitrix_
                                 Loc::getMessage(
                                     'SALE_DELIVERY_REQ_AJAX_UPDATE_SHIPMENT_SUCCESS',
                                     array('#SHIPMENT_ID#' => $uRes->getInternalId())
-                                )));
+                                )
+                            )
+                        );
                     }
 
                     $content .= createMessagesHtml($uRes);
@@ -294,17 +356,20 @@ if (empty($arResult["ERRORS"]) && $saleModulePermissions >= "U" && check_bitrix_
             break;
     }
 } else {
-    if (empty($arResult["ERRORS"]))
+    if (empty($arResult["ERRORS"])) {
         $arResult["ERRORS"][] = "Error! Access denied";
+    }
 }
 
-if (!empty($arResult["ERRORS"]))
+if (!empty($arResult["ERRORS"])) {
     $arResult["RESULT"] = "ERROR";
-else
+} else {
     $arResult["RESULT"] = "OK";
+}
 
-if (strtolower(SITE_CHARSET) != 'utf-8')
+if (mb_strtolower(SITE_CHARSET) != 'utf-8') {
     $arResult = $APPLICATION->ConvertCharsetArray($arResult, SITE_CHARSET, 'utf-8');
+}
 
 header('Content-Type: application/json');
 die(json_encode($arResult));
@@ -319,12 +384,17 @@ function createMessagesHtml(Requests\Result $reqResult)
     $sanitizer = new CBXSanitizer;
     $sanitizer->SetLevel(CBXSanitizer::SECURE_LEVEL_MIDDLE);
 
-    if (!$reqResult->isSuccess())
-        foreach ($reqResult->getErrorMessages() as $message)
-            $result .= '<div class="admin-delivery-request-confirm red">' . $sanitizer->SanitizeHtml($message) . '</div>';
+    if (!$reqResult->isSuccess()) {
+        foreach ($reqResult->getErrorMessages() as $message) {
+            $result .= '<div class="admin-delivery-request-confirm red">' . $sanitizer->SanitizeHtml(
+                    $message
+                ) . '</div>';
+        }
+    }
 
-    foreach ($reqResult->getMessagesMessages() as $message)
+    foreach ($reqResult->getMessagesMessages() as $message) {
         $result .= '<div class="admin-delivery-request-confirm green">' . $sanitizer->SanitizeHtml($message) . '</div>';
+    }
 
     return $result;
 }

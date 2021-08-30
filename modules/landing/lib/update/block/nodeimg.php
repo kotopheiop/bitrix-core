@@ -38,30 +38,35 @@ class NodeImg extends Stepper
         $finished = true;
 
         // gets common quantity
-        $res = BlockTable::getList(array(
-            'select' => array(
-                new \Bitrix\Main\Entity\ExpressionField(
-                    'CNT', 'COUNT(*)'
+        $res = BlockTable::getList(
+            array(
+                'select' => array(
+                    new \Bitrix\Main\Entity\ExpressionField(
+                        'CNT', 'COUNT(*)'
+                    )
                 )
             )
-        ));
+        );
         if ($row = $res->fetch()) {
             $result['count'] = $row['CNT'];
         }
 
         // gets group for update
-        $res = BlockTable::getList(array(
-            'select' => array(
-                'ID', 'CONTENT'
-            ),
-            'filter' => array(
-                '>ID' => $lastId
-            ),
-            'order' => array(
-                'ID' => 'ASC'
-            ),
-            'limit' => 100
-        ));
+        $res = BlockTable::getList(
+            array(
+                'select' => array(
+                    'ID',
+                    'CONTENT'
+                ),
+                'filter' => array(
+                    '>ID' => $lastId
+                ),
+                'order' => array(
+                    'ID' => 'ASC'
+                ),
+                'limit' => 100
+            )
+        );
         while ($row = $res->fetch()) {
             $files = array();
             $fileExist = preg_match_all(
@@ -108,7 +113,8 @@ class NodeImg extends Stepper
                 '\Bitrix\Landing\Internals\Block::OnBeforeDelete',
                 'landing',
                 '\Bitrix\Landing\Update\Block\NodeImg',
-                'disableBlockDelete');
+                'disableBlockDelete'
+            );
             $eventManager->unregisterEventHandler(
                 'landing',
                 'onLandingPublication',
@@ -128,12 +134,14 @@ class NodeImg extends Stepper
     public static function disableBlockDelete(Entity\Event $event)
     {
         $result = new Entity\EventResult();
-        $result->setErrors(array(
-            new Entity\EntityError(
-                Loc::getMessage('LANDING_BLOCK_DISABLE_DELETE'),
-                'BLOCK_DISABLE_DELETE'
+        $result->setErrors(
+            array(
+                new Entity\EntityError(
+                    Loc::getMessage('LANDING_BLOCK_DISABLE_DELETE'),
+                    'BLOCK_DISABLE_DELETE'
+                )
             )
-        ));
+        );
         return $result;
     }
 
@@ -145,12 +153,14 @@ class NodeImg extends Stepper
     public static function disablePublication(\Bitrix\Main\Event $event)
     {
         $result = new Entity\EventResult;
-        $result->setErrors(array(
-            new \Bitrix\Main\Entity\EntityError(
-                Loc::getMessage('LANDING_DISABLE_PUBLICATION'),
-                'LANDING_DISABLE_PUBLICATION'
+        $result->setErrors(
+            array(
+                new \Bitrix\Main\Entity\EntityError(
+                    Loc::getMessage('LANDING_DISABLE_PUBLICATION'),
+                    'LANDING_DISABLE_PUBLICATION'
+                )
             )
-        ));
+        );
         return $result;
     }
 }

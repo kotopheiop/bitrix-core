@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/b24connector/admin/prolog_before.php");
 
@@ -7,12 +8,13 @@ use Bitrix\B24Connector\Connection;
 
 Loc::loadMessages(__FILE__);
 
-if (LANGUAGE_ID == "ru")
+if (LANGUAGE_ID == "ru") {
     $b24Lang = "ru";
-elseif (LANGUAGE_ID == "de")
+} elseif (LANGUAGE_ID == "de") {
     $b24Lang = "de";
-else
+} else {
     $b24Lang = "com";
+}
 
 $APPLICATION->SetTitle(Loc::getMessage('B24C_TEL_TITLE'));
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
@@ -39,9 +41,11 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
                     <div class="connector-callback-desc">
                         <p class="connector-callback-text"><?= Loc::getMessage('B24C_TEL_CONNECT') ?></p>
                         <div class="connector-callback-app">
-                            <div class="connector-callback-app-title connector-callback-app-title-blue"><?= Loc::getMessage('B24C_TEL_MOBILE_APP') ?></div>
+                            <div class="connector-callback-app-title connector-callback-app-title-blue"><?= Loc::getMessage(
+                                    'B24C_TEL_MOBILE_APP'
+                                ) ?></div>
                             <div class="connector-callback-app-flex">
-                                <a href="https://itunes.apple.com/<?= LANGUAGE_ID == 'en/' ? '' : LANGUAGE_ID . '/' ?>app/bitrix24/id561683423?mt=8"
+                                <a href="https://itunes.apple.com/<?= LANGUAGE_ID === 'en' ? '' : LANGUAGE_ID . '/' ?>app/bitrix24/id561683423?mt=8"
                                    class="connector-callback-app-appstore">APP STORE</a>
                                 <a href="https://play.google.com/store/apps/details?id=com.bitrix24.android&hl=<?= LANGUAGE_ID ?>"
                                    class="connector-callback-app-google">GOOGLE PLAY</a>
@@ -70,10 +74,14 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
         </div>
         <div class="connector-create">
             <? if (Connection::isExist()): ?>
-                <a href=<?= Connection::getTelephonyConfigUrl() ?> class="connector-btn-blue"><?= Loc::getMessage('B24C_TEL_GET_TELEPHONY') ?></a>
+                <a href=<?= Connection::getTelephonyConfigUrl() ?> class="connector-btn-blue"><?= Loc::getMessage(
+                        'B24C_TEL_GET_TELEPHONY'
+                    ) ?></a>
             <? else: ?>
                 <?= Connection::getButtonHtml() ?>&nbsp;&nbsp;
-                <?= '<a href="https://www.bitrix24.' . $b24Lang . '/" class="connector-button-green">' . Loc::getMessage('B24C_TEL_CREATE_B24') . '</a>' ?>
+                <?= '<a href="https://www.bitrix24.' . $b24Lang . '/" class="connector-button-green">' . Loc::getMessage(
+                    'B24C_TEL_CREATE_B24'
+                ) . '</a>' ?>
             <? endif; ?>
         </div>
     </div>

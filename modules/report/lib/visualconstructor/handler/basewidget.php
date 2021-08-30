@@ -52,8 +52,6 @@ class BaseWidget extends Base
      */
     protected function collectFormElements()
     {
-
-
     }
 
     /**
@@ -159,7 +157,6 @@ class BaseWidget extends Base
                 $this->reportHandlerList[] = $report->getReportHandler();
             }
         }
-
     }
 
     private function fillFormElementValues()
@@ -168,7 +165,8 @@ class BaseWidget extends Base
         $configurations = $this->getConfigurations();
         if (!empty($configurations)) {
             foreach ($configurations as $configuration) {
-                if (isset($formElements[$configuration->getKey()]) && ($formElements[$configuration->getKey()] instanceof BaseValuable)) {
+                if (isset($formElements[$configuration->getKey()]) && ($formElements[$configuration->getKey(
+                        )] instanceof BaseValuable)) {
                     /** @var BaseValuable[] $formElements */
                     $formElements[$configuration->getKey()]->setValue($configuration->getValue());
                 }

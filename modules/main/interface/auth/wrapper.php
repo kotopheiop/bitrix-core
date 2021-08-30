@@ -14,30 +14,36 @@
  * @var string $sLinks From prolog_auth_admin.php
  * @var string $sCopyright From prolog_auth_admin.php
  */
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+}
 
 IncludeModuleLangFile(__FILE__);
 
 $arFormsList = array("authorize", "forgot_password", "change_password", "otp");
-if (!in_array($inc_file, $arFormsList))
+if (!in_array($inc_file, $arFormsList)) {
     $inc_file = $arFormsList[0];
+}
 
 function dump_post_var($vname, $vvalue, $var_stack = array())
 {
     if (is_array($vvalue)) {
         $str = "";
-        foreach ($vvalue as $key => $value)
+        foreach ($vvalue as $key => $value) {
             $str .= ($str == "" ? '' : '&') . dump_post_var($key, $value, array_merge($var_stack, array($vname)));
+        }
         return $str;
     } else {
         if (count($var_stack) > 0) {
             $var_name = $var_stack[0];
             $varStackCount = count($var_stack);
-            for ($i = 1; $i < $varStackCount; $i++)
+            for ($i = 1; $i < $varStackCount; $i++) {
                 $var_name .= "[" . $var_stack[$i] . "]";
+            }
             $var_name .= "[" . $vname . "]";
-        } else
+        } else {
             $var_name = $vname;
+        }
 
         return urlencode($var_name) . '=' . urlencode($vvalue);
     }
@@ -46,8 +52,9 @@ function dump_post_var($vname, $vvalue, $var_stack = array())
 //last login from cookie
 $last_login = ${COption::GetOptionString("main", "cookie_name", "BITRIX_SM") . "_LOGIN"};
 if (isset($_REQUEST['bxsender'])) {
-    if ($_REQUEST['bxsender'] != 'core_autosave')
+    if ($_REQUEST['bxsender'] != 'core_autosave') {
         require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/interface/auth/wrapper_popup.php");
+    }
 
     return;
 }
@@ -64,8 +71,9 @@ if (
 
 $post_data = '';
 foreach ($_POST as $vname => $vvalue) {
-    if ($vname == "USER_LOGIN" || $vname == "USER_PASSWORD" || $vname == "USER_OTP")
+    if ($vname == "USER_LOGIN" || $vname == "USER_PASSWORD" || $vname == "USER_OTP") {
         continue;
+    }
     $post_data .= ($post_data == '' ? '' : '&') . dump_post_var($vname, $vvalue);
 }
 
@@ -98,7 +106,9 @@ $authUrl = (defined('BX_ADMIN_SECTION_404') && BX_ADMIN_SECTION_404 == 'Y') ? '/
             window_wrapper: 'window_wrapper',
             auth_form_wrapper: 'auth_form_wrapper',
             login_variants: 'login_variants',
-            url: '<?echo CUtil::JSEscape($sDocPath . (($s = DeleteParam(array("logout", "login"))) == "" ? "" : "?" . $s));?>'
+            url: '<?echo CUtil::JSEscape(
+                $sDocPath . (($s = DeleteParam(array("logout", "login"))) == "" ? "" : "?" . $s)
+            );?>'
         });
     </script>
 
@@ -118,7 +128,10 @@ $authUrl = (defined('BX_ADMIN_SECTION_404') && BX_ADMIN_SECTION_404 == 'Y') ? '/
                 <div class="login-footer">
                     <div class="login-footer-left"><?= $sCopyright ?></div>
                     <div class="login-footer-right">
-                        <? if (($siteSupport = getLocalPath("php_interface/this_site_support.php", BX_PERSONAL_ROOT)) !== false): ?><? include($_SERVER["DOCUMENT_ROOT"] . $siteSupport); ?><? else: ?><? echo $sLinks ?><?endif; ?>
+                        <? if (($siteSupport = getLocalPath(
+                                "php_interface/this_site_support.php",
+                                BX_PERSONAL_ROOT
+                            )) !== false): ?><? include($_SERVER["DOCUMENT_ROOT"] . $siteSupport); ?><? else: ?><? echo $sLinks ?><?endif; ?>
                     </div>
                 </div>
                 <form name="form_auth" method="post" target="auth_frame" class="bx-admin-auth-form" action=""
@@ -154,7 +167,9 @@ $authUrl = (defined('BX_ADMIN_SECTION_404') && BX_ADMIN_SECTION_404 == 'Y') ? '/
                     </div>
                 </div>
                 <a class="login-popup-link" href="javascript:void(0)"
-                   onclick="BX.adminLogin.toggleAuthForm('change_password')"><?= GetMessage('AUTH_GOTO_CHANGE_FORM') ?></a>
+                   onclick="BX.adminLogin.toggleAuthForm('change_password')"><?= GetMessage(
+                        'AUTH_GOTO_CHANGE_FORM'
+                    ) ?></a>
             </div>
         </div>
 

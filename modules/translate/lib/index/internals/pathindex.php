@@ -28,7 +28,20 @@ use Bitrix\Translate\Index;
  * <li> HAS_SETTINGS bool optional
  * </ul>
  *
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_PathIndex_Query query()
+ * @method static EO_PathIndex_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_PathIndex_Result getById($id)
+ * @method static EO_PathIndex_Result getList(array $parameters = array())
+ * @method static EO_PathIndex_Entity getEntity()
+ * @method static \Bitrix\Translate\Index\PathIndex createObject($setDefaultValues = true)
+ * @method static \Bitrix\Translate\Index\PathIndexCollection createCollection()
+ * @method static \Bitrix\Translate\Index\PathIndex wakeUpObject($row)
+ * @method static \Bitrix\Translate\Index\PathIndexCollection wakeUpCollection($rows)
+ */
 class PathIndexTable extends DataManager
 {
     use Index\Internals\BulkOperation;
@@ -162,12 +175,14 @@ class PathIndexTable extends DataManager
             $parentId = $data['PARENT_ID'];
             $tableName = PathTreeTable::getTableName();
             $connection = Main\Application::getConnection();
-            $connection->query("
+            $connection->query(
+                "
 				INSERT INTO {$tableName} (PARENT_ID, PATH_ID, DEPTH_LEVEL)
 				SELECT PARENT_ID, '{$nodeId}', DEPTH_LEVEL + 1 FROM {$tableName} WHERE PATH_ID = '{$parentId}'
 				UNION ALL 
 				SELECT '{$nodeId}', '{$nodeId}', 0
-			");
+			"
+            );
         }
 
         return $result;
@@ -230,7 +245,7 @@ class PathIndexTable extends DataManager
 
         if ($filter !== null && ($filter instanceof Translate\Filter || $filter instanceof \Traversable)) {
             foreach ($filter as $key => $value) {
-                if (empty($value)) {
+                if (empty($value) && $value !== '0') {
                     continue;
                 }
 

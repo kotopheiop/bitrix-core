@@ -20,8 +20,9 @@ class DefaultConnector extends Connector implements Storable
      */
     public function canRead($userId)
     {
-        if (!array_key_exists($userId, $this->canRead) && $this->isStorable())
+        if (!array_key_exists($userId, $this->canRead) && $this->isStorable()) {
             $this->canRead[$userId] = $this->getStorage()->canRead($userId);
+        }
         return (isset($this->canRead[$userId]) ? $this->canRead[$userId] : false);
     }
 
@@ -31,8 +32,9 @@ class DefaultConnector extends Connector implements Storable
      */
     public function canEdit($userId)
     {
-        if (!array_key_exists($userId, $this->canEdit) && $this->isStorable())
+        if (!array_key_exists($userId, $this->canEdit) && $this->isStorable()) {
             $this->canEdit[$userId] = $this->getStorage()->canEditVote($userId);
+        }
         return (isset($this->canEdit[$userId]) ? $this->canEdit[$userId] : false);
     }
 

@@ -2,8 +2,9 @@
 
 use Bitrix\Main\Localization\Loc;
 
-if (!$USER->IsAdmin())
+if (!$USER->IsAdmin()) {
     return;
+}
 
 if (!\Bitrix\Main\Loader::includeModule('messageservice')) {
     return;
@@ -23,12 +24,18 @@ $arAllOptions = array(
 );
 
 $aTabs = array(
-    array("DIV" => "edit1", "TAB" => GetMessage("MAIN_TAB_SET"), "ICON" => "ib_settings", "TITLE" => GetMessage("MAIN_TAB_TITLE_SET")),
+    array(
+        "DIV" => "edit1",
+        "TAB" => GetMessage("MAIN_TAB_SET"),
+        "ICON" => "ib_settings",
+        "TITLE" => GetMessage("MAIN_TAB_TITLE_SET")
+    ),
 );
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
-if ($_SERVER["REQUEST_METHOD"] == "POST" && ($_POST['Update'] || $_POST['Apply'] || $_POST['RestoreDefaults']) > 0 && check_bitrix_sessid()) {
-    if (strlen($_POST['RestoreDefaults']) > 0) {
+if ($_SERVER["REQUEST_METHOD"] == "POST" && ($_POST['Update'] || $_POST['Apply'] || $_POST['RestoreDefaults']) > 0 && check_bitrix_sessid(
+    )) {
+    if ($_POST['RestoreDefaults'] <> '') {
         $arDefValues = $arDefaultValues['default'];
         foreach ($arDefValues as $key => $value) {
             COption::RemoveOption("messageservice", $key);
@@ -37,15 +44,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($_POST['Update'] || $_POST['Apply']
         foreach ($arAllOptions as $arOption) {
             $name = $arOption[0];
             $val = $_REQUEST[$name];
-            if ($arOption[3][0] == "checkbox" && $val != "Y")
+            if ($arOption[3][0] == "checkbox" && $val != "Y") {
                 $val = "N";
+            }
             COption::SetOptionString("messageservice", $name, $val, $arOption[1]);
         }
     }
-    if (strlen($_POST['Update']) > 0 && strlen($_REQUEST["back_url_settings"]) > 0)
+    if ($_POST['Update'] <> '' && $_REQUEST["back_url_settings"] <> '') {
         LocalRedirect($_REQUEST["back_url_settings"]);
-    else
-        LocalRedirect($APPLICATION->GetCurPage() . "?mid=" . urlencode($mid) . "&lang=" . urlencode(LANGUAGE_ID) . "&back_url_settings=" . urlencode($_REQUEST["back_url_settings"]) . "&" . $tabControl->ActiveTabParam());
+    } else {
+        LocalRedirect(
+            $APPLICATION->GetCurPage() . "?mid=" . urlencode($mid) . "&lang=" . urlencode(
+                LANGUAGE_ID
+            ) . "&back_url_settings=" . urlencode($_REQUEST["back_url_settings"]) . "&" . $tabControl->ActiveTabParam()
+        );
+    }
 }
 
 
@@ -65,15 +78,18 @@ $tabControl->Begin();
             <td width="60%">
                 <? if ($type[0] == "checkbox"):?>
                     <input type="checkbox" id="<? echo htmlspecialcharsbx($arOption[0]) ?>"
-                           name="<? echo htmlspecialcharsbx($arOption[0]) ?>"
-                           value="Y"<? if ($val == "Y") echo " checked"; ?>>
+                           name="<? echo htmlspecialcharsbx($arOption[0]) ?>" value="Y"<? if ($val == "Y") {
+                        echo " checked";
+                    } ?>>
                 <? elseif ($type[0] == "text"):?>
                     <input type="text" size="<? echo $type[1] ?>" maxlength="255"
                            value="<? echo htmlspecialcharsbx($val) ?>"
                            name="<? echo htmlspecialcharsbx($arOption[0]) ?>">
                 <? elseif ($type[0] == "textarea"):?>
                     <textarea rows="<? echo $type[1] ?>" cols="<? echo $type[2] ?>"
-                              name="<? echo htmlspecialcharsbx($arOption[0]) ?>"><? echo htmlspecialcharsbx($val) ?></textarea>
+                              name="<? echo htmlspecialcharsbx($arOption[0]) ?>"><? echo htmlspecialcharsbx(
+                            $val
+                        ) ?></textarea>
                 <? elseif ($type[0] == "selectbox"):?>
                     <select name="<? echo htmlspecialcharsbx($arOption[0]) ?>">
                         <?
@@ -100,9 +116,9 @@ $tabControl->Begin();
                     }
                     /** @var \Bitrix\MessageService\Sender\BaseConfigurable $sender */
                     ?>
-                    <li>
-                        <a href="<?= htmlspecialcharsbx($sender->getManageUrl()) ?>"><?= htmlspecialcharsbx($sender->getName()) ?></a>
-                    </li>
+                    <li><a href="<?= htmlspecialcharsbx($sender->getManageUrl()) ?>"><?= htmlspecialcharsbx(
+                                $sender->getName()
+                            ) ?></a></li>
                 <? endforeach; ?>
             </ul>
         </td>
@@ -120,10 +136,11 @@ $tabControl->Begin();
            title="<?= GetMessage("MAIN_OPT_SAVE_TITLE") ?>" class="adm-btn-save">
     <input type="submit" name="Apply" value="<?= GetMessage("MAIN_OPT_APPLY") ?>"
            title="<?= GetMessage("MAIN_OPT_APPLY_TITLE") ?>">
-    <? if (strlen($_REQUEST["back_url_settings"]) > 0): ?>
+    <? if ($_REQUEST["back_url_settings"] <> ''): ?>
         <input type="button" name="Cancel" value="<?= GetMessage("MAIN_OPT_CANCEL") ?>"
-               title="<?= GetMessage("MAIN_OPT_CANCEL_TITLE") ?>"
-               onclick="window.location='<? echo htmlspecialcharsbx(CUtil::addslashes($_REQUEST["back_url_settings"])) ?>'">
+               title="<?= GetMessage("MAIN_OPT_CANCEL_TITLE") ?>" onclick="window.location='<? echo htmlspecialcharsbx(
+            CUtil::addslashes($_REQUEST["back_url_settings"])
+        ) ?>'">
         <input type="hidden" name="back_url_settings" value="<?= htmlspecialcharsbx($_REQUEST["back_url_settings"]) ?>">
     <? endif ?>
     <input type="submit" name="RestoreDefaults" title="<? echo GetMessage("MAIN_HINT_RESTORE_DEFAULTS") ?>"

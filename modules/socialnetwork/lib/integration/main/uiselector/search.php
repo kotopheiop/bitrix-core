@@ -43,19 +43,24 @@ class Search
             $networkResult = $network->searchUser($search);
             if ($networkResult) {
                 foreach ($networkResult as $user) {
-                    $user = \CSocNetLogDestination::formatNetworkUser($user, array(
-                        "NAME_TEMPLATE" => $nameTemplate,
-                    ));
+                    $user = \CSocNetLogDestination::formatNetworkUser(
+                        $user,
+                        array(
+                            "NAME_TEMPLATE" => $nameTemplate,
+                        )
+                    );
                     $searchResult[$user['id']] = $user;
                 }
 
-                $userList = \Bitrix\Main\UserTable::getList(array(
-                    "select" => array("ID", "XML_ID"),
-                    "filter" => array(
-                        "=EXTERNAL_AUTH_ID" => "replica",
-                        "=XML_ID" => array_keys($searchResult),
-                    ),
-                ));
+                $userList = \Bitrix\Main\UserTable::getList(
+                    array(
+                        "select" => array("ID", "XML_ID"),
+                        "filter" => array(
+                            "=EXTERNAL_AUTH_ID" => "replica",
+                            "=XML_ID" => array_keys($searchResult),
+                        ),
+                    )
+                );
                 while ($user = $userList->fetch()) {
                     unset($searchResult[$user["XML_ID"]]);
                 }
@@ -99,10 +104,12 @@ class Search
         $search = $params['search'];
         $features = $params['features'];
 
-        return \CSocNetLogDestination::searchSonetGroups(array(
-            "SEARCH" => $search,
-            "FEATURES" => $features
-        ));
+        return \CSocNetLogDestination::searchSonetGroups(
+            array(
+                "SEARCH" => $search,
+                "FEATURES" => $features
+            )
+        );
     }
 
     protected static function searchCrmEmails($params = array(), &$usersList)
@@ -110,10 +117,12 @@ class Search
         $search = $params['search'];
         $nameTemplate = $params['nameTemplate'];
 
-        $searchResult = \CSocNetLogDestination::searchCrmEntities(array(
-            "SEARCH" => $search,
-            "NAME_TEMPLATE" => $nameTemplate
-        ));
+        $searchResult = \CSocNetLogDestination::searchCrmEntities(
+            array(
+                "SEARCH" => $search,
+                "NAME_TEMPLATE" => $nameTemplate
+            )
+        );
 
         return self::filterCrmSearchResult($searchResult, $usersList);
     }
@@ -126,12 +135,14 @@ class Search
         $entitiesList = $params['entities'];
         $searchByEmailOnly = $params['searchByEmailOnly'];
 
-        $searchResult = \CSocNetLogDestination::searchCrmEntities(array(
-            "SEARCH" => $search,
-            "NAME_TEMPLATE" => $nameTemplate,
-            "ENTITIES" => $entitiesList,
-            "SEARCH_BY_EMAIL_ONLY" => ($searchByEmailOnly ? "Y" : "N")
-        ));
+        $searchResult = \CSocNetLogDestination::searchCrmEntities(
+            array(
+                "SEARCH" => $search,
+                "NAME_TEMPLATE" => $nameTemplate,
+                "ENTITIES" => $entitiesList,
+                "SEARCH_BY_EMAIL_ONLY" => ($searchByEmailOnly ? "Y" : "N")
+            )
+        );
 
         return self::filterCrmSearchResult($searchResult, $usersList);
     }
@@ -185,21 +196,28 @@ class Search
                     'id' => 'CRMCONTACT' . $contact['ID'],
                     'entityType' => 'contacts',
                     'entityId' => $contact['ID'],
-                    'name' => htmlspecialcharsbx(\CUser::formatName(
-                        $nameTemplate,
-                        array(
-                            'LOGIN' => '',
-                            'NAME' => $contact['NAME'],
-                            'SECOND_NAME' => $contact['SECOND_NAME'],
-                            'LAST_NAME' => $contact['LAST_NAME']
-                        ),
-                        false, false
-                    )),
+                    'name' => htmlspecialcharsbx(
+                        \CUser::formatName(
+                            $nameTemplate,
+                            array(
+                                'LOGIN' => '',
+                                'NAME' => $contact['NAME'],
+                                'SECOND_NAME' => $contact['SECOND_NAME'],
+                                'LAST_NAME' => $contact['LAST_NAME']
+                            ),
+                            false,
+                            false
+                        )
+                    ),
                     'desc' => htmlspecialcharsbx($contact['COMPANY_TITLE'])
                 );
 
                 if (!empty($contact['PHOTO']) && intval($contact['PHOTO']) > 0) {
-                    $image = \CFile::resizeImageGet($contact['PHOTO'], array('width' => 100, 'height' => 100), BX_RESIZE_IMAGE_EXACT);
+                    $image = \CFile::resizeImageGet(
+                        $contact['PHOTO'],
+                        array('width' => 100, 'height' => 100),
+                        BX_RESIZE_IMAGE_EXACT
+                    );
                     $searchResult['CRMCONTACT' . $contact['ID']]['avatar'] = $image['src'];
                 }
             }
@@ -244,7 +262,11 @@ class Search
                 );
 
                 if (!empty($company['LOGO']) && intval($company['LOGO']) > 0) {
-                    $image = \CFile::resizeImageGet($company['LOGO'], array('width' => 100, 'height' => 100), BX_RESIZE_IMAGE_EXACT);
+                    $image = \CFile::resizeImageGet(
+                        $company['LOGO'],
+                        array('width' => 100, 'height' => 100),
+                        BX_RESIZE_IMAGE_EXACT
+                    );
                     $searchResult['CRMCOMPANY' . $company['ID']]['avatar'] = $image['src'];
                 }
             }
@@ -275,16 +297,19 @@ class Search
                     'entityId' => $lead['ID'],
                     'entityType' => 'leads',
                     'name' => htmlspecialcharsbx($lead['TITLE']),
-                    'desc' => htmlspecialcharsbx(\CUser::formatName(
-                        $nameTemplate,
-                        array(
-                            'LOGIN' => '',
-                            'NAME' => $lead['NAME'],
-                            'SECOND_NAME' => $lead['SECOND_NAME'],
-                            'LAST_NAME' => $lead['LAST_NAME']
-                        ),
-                        false, false
-                    ))
+                    'desc' => htmlspecialcharsbx(
+                        \CUser::formatName(
+                            $nameTemplate,
+                            array(
+                                'LOGIN' => '',
+                                'NAME' => $lead['NAME'],
+                                'SECOND_NAME' => $lead['SECOND_NAME'],
+                                'LAST_NAME' => $lead['LAST_NAME']
+                            ),
+                            false,
+                            false
+                        )
+                    )
                 );
             }
         }
@@ -305,7 +330,14 @@ class Search
                 $arFilter = array('%TITLE' => $search),
                 $arGroupBy = false,
                 $arNavStartParams = array('nTopCount' => 20),
-                $arSelectFields = array('ID', 'TITLE', 'COMPANY_TITLE', 'CONTACT_NAME', 'CONTACT_SECOND_NAME', 'CONTACT_LAST_NAME')
+                $arSelectFields = array(
+                    'ID',
+                    'TITLE',
+                    'COMPANY_TITLE',
+                    'CONTACT_NAME',
+                    'CONTACT_SECOND_NAME',
+                    'CONTACT_LAST_NAME'
+                )
             );
 
             while ($res && ($deal = $res->fetch())) {
@@ -321,7 +353,8 @@ class Search
                         'SECOND_NAME' => $deal['CONTACT_SECOND_NAME'],
                         'LAST_NAME' => $deal['CONTACT_LAST_NAME']
                     ),
-                    false, false
+                    false,
+                    false
                 );
 
                 $arDeals['CRMDEAL' . $deal['ID']] = array(
@@ -357,10 +390,12 @@ class Search
                 && $requestFields['NETWORK_SEARCH'] == 'Y'
                 && Loader::includeModule('socialservices')
             ) {
-                $result["USERS"] = self::searchNetworkUsers(array(
-                    'search' => $search,
-                    'nameTemplate' => $nameTemplate
-                ));
+                $result["USERS"] = self::searchNetworkUsers(
+                    array(
+                        'search' => $search,
+                        'nameTemplate' => $nameTemplate
+                    )
+                );
             }
 
             return $result;
@@ -371,12 +406,15 @@ class Search
             || $requestFields['USER_SEARCH'] != 'N'
         ) {
             $searchModified = false;
-            $result["USERS"] = self::searchUsers(array(
-                'search' => $search,
-                'nameTemplate' => $nameTemplate,
-                'useNetwork' => false,
-                'requestFields' => $requestFields
-            ), $searchModified);
+            $result["USERS"] = self::searchUsers(
+                array(
+                    'search' => $search,
+                    'nameTemplate' => $nameTemplate,
+                    'useNetwork' => false,
+                    'requestFields' => $requestFields
+                ),
+                $searchModified
+            );
 
             if (!empty($searchModified)) {
                 $result['SEARCH'] = $searchModified;
@@ -387,12 +425,15 @@ class Search
                 && $searchConverted
                 && $search != $searchConverted
             ) {
-                $result['USERS'] = self::searchUsers(array(
-                    'search' => $searchConverted,
-                    'nameTemplate' => $nameTemplate,
-                    'useNetwork' => false,
-                    'requestFields' => $requestFields
-                ), $searchModified);
+                $result['USERS'] = self::searchUsers(
+                    array(
+                        'search' => $searchConverted,
+                        'nameTemplate' => $nameTemplate,
+                        'useNetwork' => false,
+                        'requestFields' => $requestFields
+                    ),
+                    $searchModified
+                );
                 $result['SEARCH'] = $searchConverted;
             }
         }
@@ -401,30 +442,40 @@ class Search
             isset($requestFields['SEARCH_SONET_GROUPS'])
             && $requestFields['SEARCH_SONET_GROUPS'] == 'Y'
         ) {
-            $result['SONET_GROUPS'] = self::searchSonetGroups(array(
-                'search' => $search,
-                'features' => (isset($requestFields['SEARCH_SONET_FEATUES']) && is_array($requestFields['SEARCH_SONET_FEATUES']) ? $requestFields['SEARCH_SONET_FEATUES'] : false),
-            ));
+            $result['SONET_GROUPS'] = self::searchSonetGroups(
+                array(
+                    'search' => $search,
+                    'features' => (isset($requestFields['SEARCH_SONET_FEATUES']) && is_array(
+                        $requestFields['SEARCH_SONET_FEATUES']
+                    ) ? $requestFields['SEARCH_SONET_FEATUES'] : false),
+                )
+            );
         }
 
         if (
             isset($requestFields['CRMEMAIL'])
             && $requestFields['CRMEMAIL'] == 'Y'
         ) {
-            $result['CRM_EMAILS'] = self::searchCrmEmails(array(
-                'search' => $search,
-                'nameTemplate' => $nameTemplate
-            ), $result['USERS']);
+            $result['CRM_EMAILS'] = self::searchCrmEmails(
+                array(
+                    'search' => $search,
+                    'nameTemplate' => $nameTemplate
+                ),
+                $result['USERS']
+            );
         } elseif (
             isset($requestFields['CRMCONTACTEMAIL'])
             && $requestFields['CRMCONTACTEMAIL'] == 'Y'
         ) {
-            $result['CRM_EMAILS'] = self::searchCrmEntities(array(
-                'search' => $search,
-                'nameTemplate' => $nameTemplate,
-                'entities' => array("CONTACT"),
-                'searchByEmailOnly' => true
-            ), $result['USERS']);
+            $result['CRM_EMAILS'] = self::searchCrmEntities(
+                array(
+                    'search' => $search,
+                    'nameTemplate' => $nameTemplate,
+                    'entities' => array("CONTACT"),
+                    'searchByEmailOnly' => true
+                ),
+                $result['USERS']
+            );
         }
 
         if (
@@ -450,39 +501,47 @@ class Search
                 empty($crmAllowedTypesList)
                 || in_array("CRMCONTACT", $crmAllowedTypesList)
             ) {
-                $result['CONTACTS'] = self::searchCrmContacts(array(
-                    'search' => $search,
-                    'nameTemplate' => $nameTemplate
-                ));
+                $result['CONTACTS'] = self::searchCrmContacts(
+                    array(
+                        'search' => $search,
+                        'nameTemplate' => $nameTemplate
+                    )
+                );
             }
 
             if (
                 empty($crmAllowedTypesList)
                 || in_array("CRMCOMPANY", $crmAllowedTypesList)
             ) {
-                $result['CONTACTS'] = self::searchCrmCompanies(array(
-                    'search' => $search
-                ));
+                $result['CONTACTS'] = self::searchCrmCompanies(
+                    array(
+                        'search' => $search
+                    )
+                );
             }
 
             if (
                 empty($crmAllowedTypesList)
                 || in_array("CRMLEAD", $crmAllowedTypesList)
             ) {
-                $result['LEADS'] = self::searchCrmLeads(array(
-                    'search' => $search,
-                    'nameTemplate' => $nameTemplate
-                ));
+                $result['LEADS'] = self::searchCrmLeads(
+                    array(
+                        'search' => $search,
+                        'nameTemplate' => $nameTemplate
+                    )
+                );
             }
 
             if (
                 empty($crmAllowedTypesList)
                 || in_array("CRMDEAL", $crmAllowedTypesList)
             ) {
-                $result['LEADS'] = self::searchCrmDeals(array(
-                    'search' => $search,
-                    'nameTemplate' => $nameTemplate
-                ));
+                $result['LEADS'] = self::searchCrmDeals(
+                    array(
+                        'search' => $search,
+                        'nameTemplate' => $nameTemplate
+                    )
+                );
             }
         }
 

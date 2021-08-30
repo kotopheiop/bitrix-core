@@ -1,12 +1,14 @@
 <?
+
 /********************************************************************
  * Profanity dictionary.
  ********************************************************************/
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 \Bitrix\Main\Loader::includeModule("forum");
 $forumModulePermissions = $APPLICATION->GetGroupRight("forum");
-if ($forumModulePermissions == "D")
+if ($forumModulePermissions == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 IncludeModuleLangFile(__FILE__);
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/forum/prolog.php");
 
@@ -18,26 +20,30 @@ $lAdmin->InitFilter(array("DICTIONARY_ID", "find_type", "find"));
 /*******************************************************************/
 $arFilter = array();
 $find = trim($find);
-if (strLen($find) > 0)
+if ($find <> '') {
     $arFilter["%" . htmlspecialcharsbx($find_type)] = "%" . $find . "%";
-$DICTIONARY_ID = intVal($_REQUEST["DICTIONARY_ID"]);
-if ($DICTIONARY_ID <= 0)
+}
+$DICTIONARY_ID = intval($_REQUEST["DICTIONARY_ID"]);
+if ($DICTIONARY_ID <= 0) {
     $lAdmin->AddFilterError(GetMessage("FLT_NOT_DICT"));
+}
 $arFilter["DICTIONARY_ID"] = $DICTIONARY_ID;
 /*******************************************************************/
 if ($lAdmin->EditAction()) {
     foreach ($FIELDS as $ID => $arFields) {
         $arFields = array_merge($arFields, array("DICTIONARY_ID" => $DICTIONARY_ID));
         $DB->StartTransaction();
-        $ID = IntVal($ID);
-        if (!$lAdmin->IsUpdated($ID))
+        $ID = intval($ID);
+        if (!$lAdmin->IsUpdated($ID)) {
             continue;
+        }
 
         if (!CFilterLetter::Update($ID, $arFields)) {
             if ($ex = $APPLICATION->GetException()) {
                 $lAdmin->AddUpdateError($ex->GetString(), $ID);
-            } else
+            } else {
                 $lAdmin->AddUpdateError(GetMessage("FLT_NOT_UPDATE"), $ID);
+            }
             $DB->Rollback();
         }
         $DB->Commit();
@@ -47,13 +53,15 @@ if ($lAdmin->EditAction()) {
 if ($arID = $lAdmin->GroupAction()) {
     if ($_REQUEST['action_target'] == 'selected') {
         $rsData = CFilterLetter::GetList(array($by => $order), $arFilter);
-        while ($arRes = $rsData->Fetch())
+        while ($arRes = $rsData->Fetch()) {
             $arID[] = $arRes['ID'];
+        }
     }
     if (check_bitrix_sessid() && (CFilterUnquotableWords::FilterPerm())) {
         foreach ($arID as $ID) {
-            if (strlen($ID) <= 0)
+            if ($ID == '') {
                 continue;
+            }
             $ID = intval($ID);
             switch ($_REQUEST['action']) {
                 case "delete":
@@ -67,16 +75,24 @@ $rsData = CFilterLetter::GetList(array($by => $order), $arFilter);
 $rsData = new CAdminResult($rsData, $sTableID);
 $rsData->NavStart();
 $lAdmin->NavText($rsData->GetNavPrint(GetMessage("FLT_LETTERS")));
-$lAdmin->AddHeaders(array(
-    array("id" => "ID", "content" => "ID", "sort" => "ID", "default" => true),
-    array("id" => "LETTER", "content" => GetMessage("FLT_LETTER"), "sort" => "LETTER", "default" => true),
-    array("id" => "REPLACEMENT", "content" => GetMessage("FLT_REPLACE"), "sort" => "REPLACEMENT", "default" => true),
-));
+$lAdmin->AddHeaders(
+    array(
+        array("id" => "ID", "content" => "ID", "sort" => "ID", "default" => true),
+        array("id" => "LETTER", "content" => GetMessage("FLT_LETTER"), "sort" => "LETTER", "default" => true),
+        array(
+            "id" => "REPLACEMENT",
+            "content" => GetMessage("FLT_REPLACE"),
+            "sort" => "REPLACEMENT",
+            "default" => true
+        ),
+    )
+);
 /*******************************************************************/
 while ($arData = $rsData->NavNext(true, "t_")) {
     $row =& $lAdmin->AddRow($t_ID, $arData);
-    if (!CFilterUnquotableWords::FilterPerm())
-        $row->bReadOnly = True;
+    if (!CFilterUnquotableWords::FilterPerm()) {
+        $row->bReadOnly = true;
+    }
     $row->AddViewField("ID", $t_ID);
     $row->AddInputField("LETTER", array("size" => "35"));
     $row->AddInputField("REPLACEMENT", array("size" => "150"));

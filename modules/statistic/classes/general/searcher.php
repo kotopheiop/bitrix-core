@@ -4,15 +4,15 @@ class CAllSearcher
 {
     public static function DynamicDays($SEARCHER_ID, $date1 = "", $date2 = "")
     {
-        $by = "";
-        $order = "";
         $arMaxMin = array();
         $arFilter = array("DATE1" => $date1, "DATE2" => $date2);
-        $z = CSearcher::GetDynamicList($SEARCHER_ID, $by, $order, $arMaxMin, $arFilter);
+        $z = CSearcher::GetDynamicList($SEARCHER_ID, '', '', $arMaxMin, $arFilter);
         $d = 0;
-        while ($zr = $z->Fetch())
-            if (intval($zr["TOTAL_HITS"]) > 0)
+        while ($zr = $z->Fetch()) {
+            if (intval($zr["TOTAL_HITS"]) > 0) {
                 $d++;
+            }
+        }
         return $d;
     }
 
@@ -26,11 +26,13 @@ class CAllSearcher
         if (is_array($arFilter)) {
             foreach ($arFilter as $key => $val) {
                 if (is_array($val)) {
-                    if (count($val) <= 0)
+                    if (count($val) <= 0) {
                         continue;
+                    }
                 } else {
-                    if ((strlen($val) <= 0) || ($val === "NOT_REF"))
+                    if (((string)$val == '') || ($val === "NOT_REF")) {
                         continue;
+                    }
                 }
 
                 $key = strtoupper($key);
@@ -39,12 +41,14 @@ class CAllSearcher
                         $arSqlSearch[] = GetFilterQuery("D.SEARCHER_ID", $val, "N");
                         break;
                     case "DATE1":
-                        if (CheckDateTime($val))
+                        if (CheckDateTime($val)) {
                             $arSqlSearch[] = "D.DATE_STAT>=" . $DB->CharToDateFunction($val, "SHORT");
+                        }
                         break;
                     case "DATE2":
-                        if (CheckDateTime($val))
+                        if (CheckDateTime($val)) {
                             $arSqlSearch[] = "D.DATE_STAT<=" . $DB->CharToDateFunction($val . " 23:59:59", "FULL");
+                        }
                         break;
                 }
             }
@@ -80,7 +84,7 @@ class CAllSearcher
         return $arrDays;
     }
 
-    public static function GetDomainList(&$by, &$order, $arFilter = Array(), &$is_filtered)
+    public static function GetDomainList($by = 's_id', $order = 'desc', $arFilter = [])
     {
         $err_mess = "File: " . __FILE__ . "<br>Line: ";
         $DB = CDatabase::GetModuleConnection('statistic');
@@ -89,11 +93,13 @@ class CAllSearcher
         if (is_array($arFilter)) {
             foreach ($arFilter as $key => $val) {
                 if (is_array($val)) {
-                    if (count($val) <= 0)
+                    if (count($val) <= 0) {
                         continue;
+                    }
                 } else {
-                    if ((strlen($val) <= 0) || ($val === "NOT_REF"))
+                    if (((string)$val == '') || ($val === "NOT_REF")) {
                         continue;
+                    }
                 }
                 $match_value_set = array_key_exists($key . "_EXACT_MATCH", $arFilter);
                 $key = strtoupper($key);
@@ -112,17 +118,20 @@ class CAllSearcher
             }
         }
 
-        if ($by == "s_id") $strSqlOrder = "ORDER BY P.ID";
-        elseif ($by == "s_domain") $strSqlOrder = "ORDER BY P.DOMAIN";
-        elseif ($by == "s_variable") $strSqlOrder = "ORDER BY P.VARIABLE";
-        else {
-            $by = "s_id";
+        if ($by == "s_id") {
+            $strSqlOrder = "ORDER BY P.ID";
+        } elseif ($by == "s_domain") {
+            $strSqlOrder = "ORDER BY P.DOMAIN";
+        } elseif ($by == "s_variable") {
+            $strSqlOrder = "ORDER BY P.VARIABLE";
+        } else {
             $strSqlOrder = "ORDER BY P.ID";
         }
+
         if ($order != "asc") {
             $strSqlOrder .= " desc ";
-            $order = "desc";
         }
+
         $strSqlSearch = GetFilterSqlSearch($arSqlSearch);
         $strSql = "
 			SELECT
@@ -138,7 +147,7 @@ class CAllSearcher
 			";
 
         $rs = $DB->Query($strSql, false, $err_mess . __LINE__);
-        $is_filtered = (IsFiltered($strSqlSearch));
+
         return $rs;
     }
 

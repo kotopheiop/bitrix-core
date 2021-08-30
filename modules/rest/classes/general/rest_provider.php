@@ -109,6 +109,11 @@ class CRestProvider
                             )
                         ),
                     ),
+                    \CRestUtil::PLACEMENTS => array(
+                        \CRestUtil::PLACEMENT_APP_URI => array(
+                            'max_count' => 1
+                        )
+                    )
                 ),
             );
 
@@ -146,13 +151,19 @@ class CRestProvider
                     array_key_exists(\CRestUtil::EVENTS, self::$arMethodsList[$scope])
                     && is_array(self::$arMethodsList[$scope][\CRestUtil::EVENTS])
                 ) {
-                    self::$arMethodsList[$scope][\CRestUtil::EVENTS] = array_change_key_case(self::$arMethodsList[$scope][\CRestUtil::EVENTS], CASE_UPPER);
+                    self::$arMethodsList[$scope][\CRestUtil::EVENTS] = array_change_key_case(
+                        self::$arMethodsList[$scope][\CRestUtil::EVENTS],
+                        CASE_UPPER
+                    );
                 }
                 if (
                     array_key_exists(\CRestUtil::PLACEMENTS, self::$arMethodsList[$scope])
                     && is_array(self::$arMethodsList[$scope][\CRestUtil::PLACEMENTS])
                 ) {
-                    self::$arMethodsList[$scope][\CRestUtil::PLACEMENTS] = array_change_key_case(self::$arMethodsList[$scope][\CRestUtil::PLACEMENTS], CASE_UPPER);
+                    self::$arMethodsList[$scope][\CRestUtil::PLACEMENTS] = array_change_key_case(
+                        self::$arMethodsList[$scope][\CRestUtil::PLACEMENTS],
+                        CASE_UPPER
+                    );
                 }
             }
         }
@@ -231,7 +242,10 @@ class CRestProvider
                     $arParams = \CRestUtil::ParseBatchQuery($query, $arResult);
 
                     if ($method === \CRestUtil::METHOD_DOWNLOAD || $method === \CRestUtil::METHOD_UPLOAD) {
-                        $res = array('error' => self::ERROR_BATCH_METHOD_NOT_ALLOWED, 'error_description' => 'Method is not allowed for batch usage');
+                        $res = array(
+                            'error' => self::ERROR_BATCH_METHOD_NOT_ALLOWED,
+                            'error_description' => 'Method is not allowed for batch usage'
+                        );
                     } else {
                         if (is_array($authData)) {
                             foreach ($authData as $authParam => $authValue) {
@@ -239,11 +253,13 @@ class CRestProvider
                             }
                         }
 
-                        $pseudoServer = new \CRestServerBatchItem(array(
-                            'CLASS' => __CLASS__,
-                            'METHOD' => $method,
-                            'QUERY' => $arParams
-                        ));
+                        $pseudoServer = new \CRestServerBatchItem(
+                            array(
+                                'CLASS' => __CLASS__,
+                                'METHOD' => $method,
+                                'QUERY' => $arParams
+                            )
+                        );
                         $pseudoServer->setApplicationId($server->getClientId());
                         $pseudoServer->setAuthKeys(array_keys($authData));
                         $pseudoServer->setAuthData($server->getAuthData());
@@ -254,8 +270,10 @@ class CRestProvider
                         unset($pseudoServer);
                     }
                 } else {
-
-                    $res = array('error' => self::ERROR_BATCH_LENGTH_EXCEEDED, 'error_description' => 'Max batch length exceeded');
+                    $res = array(
+                        'error' => self::ERROR_BATCH_LENGTH_EXCEEDED,
+                        'error_description' => 'Max batch length exceeded'
+                    );
                 }
 
                 if (is_array($res)) {
@@ -288,7 +306,7 @@ class CRestProvider
         $arQuery = array_change_key_case($arQuery, CASE_UPPER);
 
         if ($arQuery['FULL'] == true) {
-            $arScope = \CRestUtil::getScopeList($server->getServiceDescription());
+            $arScope = \Bitrix\Rest\Engine\ScopeManager::getInstance()->listScope();
         } else {
             $arScope = self::getScope($server);
         }
@@ -306,8 +324,9 @@ class CRestProvider
         $arQuery = array_change_key_case($arQuery, CASE_UPPER);
 
         if (isset($arQuery['SCOPE'])) {
-            if ($arQuery['SCOPE'] != '')
+            if ($arQuery['SCOPE'] != '') {
                 $arScope = array($arQuery['SCOPE']);
+            }
         } elseif ($arQuery['FULL'] == true) {
             $arScope = array_keys($arMethods);
         } else {
@@ -425,8 +444,8 @@ class CRestProvider
 
         $appOptions = Option::get("rest", "options_" . $server->getClientId(), "");
 
-        if (strlen($appOptions) > 0) {
-            $appOptions = unserialize($appOptions);
+        if ($appOptions <> '') {
+            $appOptions = unserialize($appOptions, ['allowed_classes' => false]);
         } else {
             $appOptions = array();
         }
@@ -467,8 +486,8 @@ class CRestProvider
 
         if (\CRestUtil::isAdmin()) {
             $appOptions = Option::get("rest", "options_" . $server->getClientId(), "");
-            if (strlen($appOptions) > 0) {
-                $appOptions = unserialize($appOptions);
+            if ($appOptions <> '') {
+                $appOptions = unserialize($appOptions, ['allowed_classes' => false]);
             } else {
                 $appOptions = array();
             }

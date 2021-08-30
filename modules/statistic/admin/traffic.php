@@ -1,10 +1,12 @@
 <?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/prolog.php");
 /** @var CMain $APPLICATION */
 $STAT_RIGHT = $APPLICATION->GetGroupRight("statistic");
-if ($STAT_RIGHT == "D")
+if ($STAT_RIGHT == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 include($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/colors.php");
 
 IncludeModuleLangFile(__FILE__);
@@ -37,8 +39,9 @@ $arrParams = array(
 );
 
 if (isset($graph_type)) {
-    if ($graph_type != "date" && $graph_type != "hour" && $graph_type != "weekday" && $graph_type != "month")
+    if ($graph_type != "date" && $graph_type != "hour" && $graph_type != "weekday" && $graph_type != "month") {
         $graph_type = "date";
+    }
     $saved_graph_type = $graph_type;
 } else {
     $graph_type = false;//no setting (will be read later from session)
@@ -49,7 +52,7 @@ $oSort = new CAdminSorting($sTableID);
 $lAdmin = new CAdminList($sTableID, $oSort);
 
 $ref = $ref_id = array();
-$rs = CSite::GetList(($v1 = "sort"), ($v2 = "asc"));
+$rs = CSite::GetList();
 while ($ar = $rs->Fetch()) {
     $ref[] = "[" . $ar["ID"] . "] " . $ar["NAME"];
     $ref_id[] = $ar["ID"];
@@ -89,11 +92,16 @@ $lAdmin->InitFilter($FilterArr);
 $arSettings = array("saved_graph_type");
 InitFilterEx($arSettings, $sTableID . "_settings", "get");
 if ($graph_type === false)//Restore saved setting
+{
     $graph_type = $saved_graph_type;
-if ($graph_type != "date" && $graph_type != "hour" && $graph_type != "weekday" && $graph_type != "month")
+}
+if ($graph_type != "date" && $graph_type != "hour" && $graph_type != "weekday" && $graph_type != "month") {
     $graph_type = "date";
+}
 if ($saved_graph_type != $graph_type)//Set if changed
+{
     $saved_graph_type = $graph_type;
+}
 InitFilterEx($arSettings, $sTableID . "_settings", "set");
 
 AdminListCheckDate($lAdmin, array("find_date1" => $find_date1, "find_date2" => $find_date2));
@@ -107,7 +115,7 @@ $arFilter = Array(
 if (is_array($find_site_id)) {
     $site_filtered = count($find_site_id) > 0;
 } else {
-    $site_filtered = (strlen($find_site_id) > 0 && $find_site_id != "NOT_REF");
+    $site_filtered = ($find_site_id <> '' && $find_site_id != "NOT_REF");
 }
 
 $lAdmin->BeginPrologContent();
@@ -133,8 +141,10 @@ elseif (count($lAdmin->arFilterErrors) == 0) :
             <tr>
                 <td valign="center" class="graph">
                     <img class="graph"
-                         src="/bitrix/admin/traffic_graph.php?<?= GetFilterParams($FilterArr1) ?>&<?= GetFilterParams($FilterArr2) ?>&width=<?= $width ?>&height=<?= $height ?>&lang=<?= LANG ?>&rand=<?= rand() ?>&find_graph_type=<?= $graph_type ?>"
-                         width="<?= $width ?>" height="<?= $height ?>">
+                         src="/bitrix/admin/traffic_graph.php?<?= GetFilterParams($FilterArr1) ?>&<?= GetFilterParams(
+                             $FilterArr2
+                         ) ?>&width=<?= $width ?>&height=<?= $height ?>&lang=<?= LANG ?>&rand=<?= rand(
+                         ) ?>&find_graph_type=<?= $graph_type ?>" width="<?= $width ?>" height="<?= $height ?>">
                 </td>
                 <td valign="center">
                     <table cellpadding="2" cellspacing="0" border="0" class="legend">
@@ -143,8 +153,9 @@ elseif (count($lAdmin->arFilterErrors) == 0) :
                                 <td valign="center"><img
                                             src="/bitrix/admin/graph_legend.php?color=<?= $arrColor["HITS"] ?>"
                                             width="45" height="2"></td>
-                                <td nowrap><img src="/bitrix/images/1.gif" width="3"
-                                                height="1"><?= GetMessage("STAT_HITS_2") ?></td>
+                                <td nowrap><img src="/bitrix/images/1.gif" width="3" height="1"><?= GetMessage(
+                                        "STAT_HITS_2"
+                                    ) ?></td>
                             </tr>
                         <?endif; ?>
                         <? if ($find_host == "Y"):?>
@@ -152,8 +163,9 @@ elseif (count($lAdmin->arFilterErrors) == 0) :
                                 <td valign="center"><img
                                             src="/bitrix/admin/graph_legend.php?color=<?= $arrColor["HOSTS"] ?>"
                                             width="45" height="2"></td>
-                                <td nowrap><img src="/bitrix/images/1.gif" width="3"
-                                                height="1"><?= GetMessage("STAT_HOSTS_2") ?></td>
+                                <td nowrap><img src="/bitrix/images/1.gif" width="3" height="1"><?= GetMessage(
+                                        "STAT_HOSTS_2"
+                                    ) ?></td>
                             </tr>
                         <?endif; ?>
                         <? if ($find_session == "Y"):?>
@@ -161,8 +173,9 @@ elseif (count($lAdmin->arFilterErrors) == 0) :
                                 <td valign="center"><img
                                             src="/bitrix/admin/graph_legend.php?color=<?= $arrColor["SESSIONS"] ?>"
                                             width="45" height="2"></td>
-                                <td nowrap><img src="/bitrix/images/1.gif" width="3"
-                                                height="1"><?= GetMessage("STAT_SESSIONS_2") ?></td>
+                                <td nowrap><img src="/bitrix/images/1.gif" width="3" height="1"><?= GetMessage(
+                                        "STAT_SESSIONS_2"
+                                    ) ?></td>
                             </tr>
                         <?endif; ?>
                         <? if ($find_event == "Y"):?>
@@ -170,8 +183,9 @@ elseif (count($lAdmin->arFilterErrors) == 0) :
                                 <td valign="center"><img
                                             src="/bitrix/admin/graph_legend.php?color=<?= $arrColor["EVENTS"] ?>"
                                             width="45" height="2"></td>
-                                <td nowrap><img src="/bitrix/images/1.gif" width="3"
-                                                height="1"><?= GetMessage("STAT_EVENTS_2") ?></td>
+                                <td nowrap><img src="/bitrix/images/1.gif" width="3" height="1"><?= GetMessage(
+                                        "STAT_EVENTS_2"
+                                    ) ?></td>
                             </tr>
                         <?endif; ?>
                         <? if ($find_guest == "Y" && !$site_filtered):?>
@@ -179,8 +193,9 @@ elseif (count($lAdmin->arFilterErrors) == 0) :
                                 <td valign="center"><img
                                             src="/bitrix/admin/graph_legend.php?color=<?= $arrColor["GUESTS"] ?>"
                                             width="45" height="2"></td>
-                                <td nowrap><img src="/bitrix/images/1.gif" width="3"
-                                                height="1"><?= GetMessage("STAT_GUESTS_2") ?></td>
+                                <td nowrap><img src="/bitrix/images/1.gif" width="3" height="1"><?= GetMessage(
+                                        "STAT_GUESTS_2"
+                                    ) ?></td>
                             </tr>
                         <?endif; ?>
                         <? if ($find_new_guest == "Y" && !$site_filtered):?>
@@ -188,8 +203,9 @@ elseif (count($lAdmin->arFilterErrors) == 0) :
                                 <td valign="center"><img
                                             src="/bitrix/admin/graph_legend.php?color=<?= $arrColor["NEW_GUESTS"] ?>"
                                             width="45" height="2"></td>
-                                <td nowrap><img src="/bitrix/images/1.gif" width="3"
-                                                height="1"><?= GetMessage("STAT_NEW_GUESTS_2") ?></td>
+                                <td nowrap><img src="/bitrix/images/1.gif" width="3" height="1"><?= GetMessage(
+                                        "STAT_NEW_GUESTS_2"
+                                    ) ?></td>
                             </tr>
                         <?endif; ?>
                     </table>
@@ -203,7 +219,7 @@ elseif (count($lAdmin->arFilterErrors) == 0) :
 $lAdmin->EndPrologContent();
 
 if ($graph_type == "date") {
-    $rsData = CTraffic::GetDailyList($by, $order, $arMaxMin, $arFilter, $is_filtered);
+    $rsData = CTraffic::GetDailyList('', '', $arMaxMin, $arFilter);
 } else {
     $temp_graph_type = $graph_type;
     $rs = CTraffic::GetSumList($temp_graph_type, $arFilter);
@@ -248,20 +264,23 @@ $arHeaders = array();
 switch ($graph_type) {
     case "date":
         $arHeaders[] =
-            array("id" => "ID",
+            array(
+                "id" => "ID",
                 "content" => "ID",
                 "sort" => "s_id",
                 "align" => "right",
                 "default" => true,
             );
         $arHeaders[] =
-            array("id" => "DATE_STAT",
+            array(
+                "id" => "DATE_STAT",
                 "content" => GetMessage("STAT_DATE"),
                 "sort" => "s_date",
                 "default" => true,
             );
         $arHeaders[] =
-            array("id" => "WDAY",
+            array(
+                "id" => "WDAY",
                 "content" => GetMessage("STAT_WEEKDAY"),
                 "sort" => false,
                 "default" => true,
@@ -269,7 +288,8 @@ switch ($graph_type) {
         break;
     case "weekday":
         $arHeaders[] =
-            array("id" => "ID",
+            array(
+                "id" => "ID",
                 "content" => GetMessage("STAT_WEEKDAY"),
                 "sort" => false,
                 "default" => true,
@@ -277,7 +297,8 @@ switch ($graph_type) {
         break;
     case "hour":
         $arHeaders[] =
-            array("id" => "ID",
+            array(
+                "id" => "ID",
                 "content" => GetMessage("STAT_HOUR"),
                 "sort" => false,
                 "align" => "right",
@@ -286,7 +307,8 @@ switch ($graph_type) {
         break;
     case "month":
         $arHeaders[] =
-            array("id" => "ID",
+            array(
+                "id" => "ID",
                 "content" => GetMessage("STAT_MONTH"),
                 "sort" => false,
                 "align" => "right",
@@ -296,28 +318,32 @@ switch ($graph_type) {
 }
 
 $arHeaders[] =
-    array("id" => "HITS",
+    array(
+        "id" => "HITS",
         "content" => GetMessage("STAT_HITS"),
         "sort" => "s_hits",
         "align" => "right",
         "default" => true,
     );
 $arHeaders[] =
-    array("id" => "C_HOSTS",
+    array(
+        "id" => "C_HOSTS",
         "content" => GetMessage("STAT_HOSTS"),
         "sort" => "s_hosts",
         "align" => "right",
         "default" => true,
     );
 $arHeaders[] =
-    array("id" => "SESSIONS",
+    array(
+        "id" => "SESSIONS",
         "content" => GetMessage("STAT_SESSIONS"),
         "sort" => "s_sessions",
         "align" => "right",
         "default" => true,
     );
 $arHeaders[] =
-    array("id" => "C_EVENTS",
+    array(
+        "id" => "C_EVENTS",
         "content" => GetMessage("STAT_EVENTS"),
         "sort" => "s_events",
         "align" => "right",
@@ -325,14 +351,16 @@ $arHeaders[] =
     );
 if (!$site_filtered):
     $arHeaders[] =
-        array("id" => "GUESTS",
+        array(
+            "id" => "GUESTS",
             "content" => GetMessage("STAT_GUESTS"),
             "sort" => "s_guests",
             "align" => "right",
             "default" => true,
         );
     $arHeaders[] =
-        array("id" => "NEW_GUESTS",
+        array(
+            "id" => "NEW_GUESTS",
             "content" => GetMessage("STAT_NEW_GUESTS_S"),
             "sort" => "s_new_guests",
             "align" => "right",
@@ -343,7 +371,11 @@ $lAdmin->AddHeaders($arHeaders);
 
 
 while ($arRes = $rsData->NavNext(true, "f_")):
-    if ($f_WDAY == 6) $f_WDAY = 0; else $f_WDAY++;
+    if ($f_WDAY == 6) {
+        $f_WDAY = 0;
+    } else {
+        $f_WDAY++;
+    }
     $row =& $lAdmin->AddRow($f_ID, $arRes);
     switch ($graph_type) {
         case "date":
@@ -352,49 +384,56 @@ while ($arRes = $rsData->NavNext(true, "f_")):
             $strHTML = $f_ID;
             break;
         case "weekday":
-            if ($f_ID == 0)
+            if ($f_ID == 0) {
                 $strHTML = '<span class="required">' . GetMessage("STAT_WEEKDAY_" . $f_ID . "_S") . '</span>';
-            else
+            } else {
                 $strHTML = GetMessage("STAT_WEEKDAY_" . $f_ID . "_S");
+            }
             break;
     }
     $row->AddViewField("ID", $strHTML);
 
-    if ($f_WDAY == 0)
+    if ($f_WDAY == 0) {
         $strHTML = '<span class="required">' . GetMessage("STAT_WEEKDAY_" . $f_WDAY . "_S") . '</span>';
-    else
+    } else {
         $strHTML = GetMessage("STAT_WEEKDAY_" . $f_WDAY . "_S");
+    }
     $row->AddViewField("WDAY", $strHTML);
 
-    if ($graph_type == "date")
+    if ($graph_type == "date") {
         $strHTML = '<a href="hit_list.php?lang=' . LANG . '&amp;find_date1=' . $f_DATE_STAT . '&amp;find_date2=' . $f_DATE_STAT . '&amp;set_filter=Y">' . $f_HITS . '</a>';
-    else
+    } else {
         $strHTML = $f_HITS;
+    }
     $row->AddViewField("HITS", $strHTML);
 
-    if ($graph_type == "date")
+    if ($graph_type == "date") {
         $strHTML = '<a href="session_list.php?lang=' . LANG . '&amp;find_date1=' . $f_DATE_STAT . '&amp;find_date2=' . $f_DATE_STAT . '&amp;set_filter=Y">' . $f_SESSIONS . '</a>';
-    else
+    } else {
         $strHTML = $f_SESSIONS;
+    }
     $row->AddViewField("SESSIONS", $strHTML);
 
-    if ($graph_type == "date")
+    if ($graph_type == "date") {
         $strHTML = '<a href="event_list.php?lang=' . LANG . '&amp;find_date1=' . $f_DATE_STAT . '&amp;find_date2=' . $f_DATE_STAT . '&amp;set_filter=Y">' . $f_C_EVENTS . '</a>';
-    else
+    } else {
         $strHTML = $f_C_EVENTS;
+    }
     $row->AddViewField("C_EVENTS", $strHTML);
 
     if (!$site_filtered) {
-        if ($graph_type == "date")
+        if ($graph_type == "date") {
             $strHTML = '<a href="guest_list.php?lang=' . LANG . '&amp;find_period_date1=' . $f_DATE_STAT . '&amp;find_period_date2=' . $f_DATE_STAT . '&amp;set_filter=Y">' . $f_GUESTS . '</a>';
-        else
+        } else {
             $strHTML = $f_GUESTS;
+        }
         $row->AddViewField("GUESTS", $strHTML);
 
-        if ($graph_type == "date")
+        if ($graph_type == "date") {
             $strHTML = '<a href="guest_list.php?lang=' . LANG . '&amp;find_period_date1=' . $f_DATE_STAT . '&amp;find_period_date2=' . $f_DATE_STAT . '&amp;find_sess2=1&amp;set_filter=Y">' . $f_NEW_GUESTS . '</a>';
-        else
+        } else {
             $strHTML = $f_NEW_GUESTS;
+        }
         $row->AddViewField("NEW_GUESTS", $strHTML);
     }
 
@@ -447,10 +486,12 @@ $APPLICATION->SetTitle(GetMessage("STAT_PAGE_TITLE"));
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
-$oFilter = new CAdminFilter($sTableID . "_filter", array(
+$oFilter = new CAdminFilter(
+    $sTableID . "_filter", array(
     GetMessage("STAT_SITE"),
     GetMessage("STAT_SHOW"),
-));
+)
+);
 ?>
 
     <form name="find_form" method="GET" action="<?= $APPLICATION->GetCurPage() ?>?">
@@ -478,19 +519,30 @@ $oFilter = new CAdminFilter($sTableID . "_filter", array(
                 <label for="find_event"><?= GetMessage("STAT_EVENTS_2") ?></label><br>
                 <? echo InputType("checkbox", "find_guest", "Y", $find_guest, false, false, 'id="find_guest"'); ?>
                 <label for="find_guest"><?= GetMessage("STAT_GUESTS_2") ?></label><br>
-                <? echo InputType("checkbox", "find_new_guest", "Y", $find_new_guest, false, false, 'id="find_new_guest"'); ?>
+                <? echo InputType(
+                    "checkbox",
+                    "find_new_guest",
+                    "Y",
+                    $find_new_guest,
+                    false,
+                    false,
+                    'id="find_new_guest"'
+                ); ?>
                 <label for="find_new_guest"><?= GetMessage("STAT_NEW_GUESTS_2") ?></label><br>
             </td>
         </tr>
         <?
-        $oFilter->Buttons(array("table_id" => $sTableID, "url" => $APPLICATION->GetCurPage(), "form" => "find_form", "report" => true));
+        $oFilter->Buttons(
+            array("table_id" => $sTableID, "url" => $APPLICATION->GetCurPage(), "form" => "find_form", "report" => true)
+        );
         $oFilter->End();
         ?>
     </form>
 
 <?
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 $lAdmin->DisplayList();
 ?>
 

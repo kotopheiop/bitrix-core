@@ -1,5 +1,6 @@
 <?
 //<title>Yandex</title>
+
 /** @global CDatabase $DB */
 /** @global CUser $USER */
 /** @global CMain $APPLICATION */
@@ -27,42 +28,57 @@ $arSetupErrors = array();
 $strAllowExportPath = COption::GetOptionString("catalog", "export_default_path", "/bitrix/catalog_export/");
 
 if (($ACTION == 'EXPORT_EDIT' || $ACTION == 'EXPORT_COPY') && $STEP == 1) {
-    if (isset($arOldSetupVars['IBLOCK_ID']))
+    if (isset($arOldSetupVars['IBLOCK_ID'])) {
         $IBLOCK_ID = $arOldSetupVars['IBLOCK_ID'];
-    if (isset($arOldSetupVars['SITE_ID']))
+    }
+    if (isset($arOldSetupVars['SITE_ID'])) {
         $SITE_ID = $arOldSetupVars['SITE_ID'];
-    if (isset($arOldSetupVars['SETUP_FILE_NAME']))
+    }
+    if (isset($arOldSetupVars['SETUP_FILE_NAME'])) {
         $SETUP_FILE_NAME = str_replace($strAllowExportPath, '', $arOldSetupVars['SETUP_FILE_NAME']);
-    if (isset($arOldSetupVars['COMPANY_NAME']))
+    }
+    if (isset($arOldSetupVars['COMPANY_NAME'])) {
         $COMPANY_NAME = $arOldSetupVars['COMPANY_NAME'];
-    if (isset($arOldSetupVars['SETUP_PROFILE_NAME']))
+    }
+    if (isset($arOldSetupVars['SETUP_PROFILE_NAME'])) {
         $SETUP_PROFILE_NAME = $arOldSetupVars['SETUP_PROFILE_NAME'];
-    if (isset($arOldSetupVars['V']))
+    }
+    if (isset($arOldSetupVars['V'])) {
         $V = $arOldSetupVars['V'];
+    }
     if (isset($arOldSetupVars['XML_DATA'])) {
         $XML_DATA = base64_encode($arOldSetupVars['XML_DATA']);
     }
-    if (isset($arOldSetupVars['SETUP_SERVER_NAME']))
+    if (isset($arOldSetupVars['SETUP_SERVER_NAME'])) {
         $SETUP_SERVER_NAME = $arOldSetupVars['SETUP_SERVER_NAME'];
-    if (isset($arOldSetupVars['USE_HTTPS']))
+    }
+    if (isset($arOldSetupVars['USE_HTTPS'])) {
         $USE_HTTPS = $arOldSetupVars['USE_HTTPS'];
-    if (isset($arOldSetupVars['FILTER_AVAILABLE']))
+    }
+    if (isset($arOldSetupVars['FILTER_AVAILABLE'])) {
         $filterAvalable = $arOldSetupVars['FILTER_AVAILABLE'];
-    if (isset($arOldSetupVars['DISABLE_REFERERS']))
+    }
+    if (isset($arOldSetupVars['DISABLE_REFERERS'])) {
         $disableReferers = $arOldSetupVars['DISABLE_REFERERS'];
-    if (isset($arOldSetupVars['EXPORT_CHARSET']))
+    }
+    if (isset($arOldSetupVars['EXPORT_CHARSET'])) {
         $exportCharset = $arOldSetupVars['EXPORT_CHARSET'];
-    if (isset($arOldSetupVars['MAX_EXECUTION_TIME']))
+    }
+    if (isset($arOldSetupVars['MAX_EXECUTION_TIME'])) {
         $maxExecutionTime = $arOldSetupVars['MAX_EXECUTION_TIME'];
-    if (isset($arOldSetupVars['CHECK_PERMISSIONS']))
+    }
+    if (isset($arOldSetupVars['CHECK_PERMISSIONS'])) {
         $checkPermissions = $arOldSetupVars['CHECK_PERMISSIONS'];
+    }
 }
 
 if ($STEP > 1) {
     $IBLOCK_ID = (int)$IBLOCK_ID;
     $rsIBlocks = CIBlock::GetByID($IBLOCK_ID);
     if ($IBLOCK_ID <= 0 || !($arIBlock = $rsIBlocks->Fetch())) {
-        $arSetupErrors[] = GetMessage("CET_ERROR_NO_IBLOCK1") . " #" . $IBLOCK_ID . " " . GetMessage("CET_ERROR_NO_IBLOCK2");
+        $arSetupErrors[] = GetMessage("CET_ERROR_NO_IBLOCK1") . " #" . $IBLOCK_ID . " " . GetMessage(
+                "CET_ERROR_NO_IBLOCK2"
+            );
     } else {
         $bRightBlock = !CIBlockRights::UserHasRightTo($IBLOCK_ID, $IBLOCK_ID, "iblock_admin_display");
         if ($bRightBlock) {
@@ -74,10 +90,12 @@ if ($STEP > 1) {
     if ($SITE_ID === '') {
         $arSetupErrors[] = GetMessage('BX_CATALOG_EXPORT_YANDEX_ERR_EMPTY_SITE');
     } else {
-        $iterator = Main\SiteTable::getList(array(
-            'select' => array('LID'),
-            'filter' => array('=LID' => $SITE_ID, '=ACTIVE' => 'Y')
-        ));
+        $iterator = Main\SiteTable::getList(
+            array(
+                'select' => array('LID'),
+                'filter' => array('=LID' => $SITE_ID, '=ACTIVE' => 'Y')
+            )
+        );
         $site = $iterator->fetch();
         if (empty($site)) {
             $arSetupErrors[] = GetMessage('BX_CATALOG_EXPORT_YANDEX_ERR_BAD_SITE');
@@ -89,7 +107,11 @@ if ($STEP > 1) {
     } elseif (preg_match(BX_CATALOG_FILENAME_REG, $strAllowExportPath . $SETUP_FILE_NAME)) {
         $arSetupErrors[] = GetMessage("CES_ERROR_BAD_EXPORT_FILENAME");
     } elseif ($APPLICATION->GetFileAccessPermission($strAllowExportPath . $SETUP_FILE_NAME) < "W") {
-        $arSetupErrors[] = str_replace("#FILE#", $strAllowExportPath . $SETUP_FILE_NAME, GetMessage('CET_YAND_RUN_ERR_SETUP_FILE_ACCESS_DENIED'));
+        $arSetupErrors[] = str_replace(
+            "#FILE#",
+            $strAllowExportPath . $SETUP_FILE_NAME,
+            GetMessage('CET_YAND_RUN_ERR_SETUP_FILE_ACCESS_DENIED')
+        );
     }
 
     $SETUP_SERVER_NAME = (isset($SETUP_SERVER_NAME) ? trim($SETUP_SERVER_NAME) : '');
@@ -105,14 +127,20 @@ if ($STEP > 1) {
                     break;
                 }
                 $value = (int)$value;
-                if ($value > 0)
+                if ($value > 0) {
                     $arSections[] = $value;
+                }
             }
         }
 
         if (!$bAllSections && !empty($arSections)) {
             $arCheckSections = array();
-            $rsSections = CIBlockSection::GetList(array(), array('IBLOCK_ID' => $IBLOCK_ID, 'ID' => $arSections), false, array('ID'));
+            $rsSections = CIBlockSection::GetList(
+                array(),
+                array('IBLOCK_ID' => $IBLOCK_ID, 'ID' => $arSections),
+                false,
+                array('ID')
+            );
             while ($arOneSection = $rsSections->Fetch()) {
                 $arCheckSections[] = $arOneSection['ID'];
             }
@@ -137,29 +165,39 @@ if ($STEP > 1) {
         }
     }
 
-    if (!isset($USE_HTTPS) || $USE_HTTPS != 'Y')
+    if (!isset($USE_HTTPS) || $USE_HTTPS != 'Y') {
         $USE_HTTPS = 'N';
-    if (isset($_POST['FILTER_AVAILABLE']) && is_string($_POST['FILTER_AVAILABLE']))
+    }
+    if (isset($_POST['FILTER_AVAILABLE']) && is_string($_POST['FILTER_AVAILABLE'])) {
         $filterAvalable = $_POST['FILTER_AVAILABLE'];
-    if (!isset($filterAvalable) || $filterAvalable != 'Y')
+    }
+    if (!isset($filterAvalable) || $filterAvalable != 'Y') {
         $filterAvalable = 'N';
-    if (isset($_POST['DISABLE_REFERERS']) && is_string($_POST['DISABLE_REFERERS']))
+    }
+    if (isset($_POST['DISABLE_REFERERS']) && is_string($_POST['DISABLE_REFERERS'])) {
         $disableReferers = $_POST['DISABLE_REFERERS'];
-    if (!isset($disableReferers) || $disableReferers != 'Y')
+    }
+    if (!isset($disableReferers) || $disableReferers != 'Y') {
         $disableReferers = 'N';
-    if (isset($_POST['EXPORT_CHARSET']) && is_string($_POST['EXPORT_CHARSET']))
+    }
+    if (isset($_POST['EXPORT_CHARSET']) && is_string($_POST['EXPORT_CHARSET'])) {
         $exportCharset = $_POST['EXPORT_CHARSET'];
-    if (!isset($exportCharset) || $exportCharset !== 'UTF-8')
+    }
+    if (!isset($exportCharset) || $exportCharset !== 'UTF-8') {
         $exportCharset = 'windows-1251';
-    if (isset($_POST['MAX_EXECUTION_TIME']) && is_string($_POST['MAX_EXECUTION_TIME']))
+    }
+    if (isset($_POST['MAX_EXECUTION_TIME']) && is_string($_POST['MAX_EXECUTION_TIME'])) {
         $maxExecutionTime = $_POST['MAX_EXECUTION_TIME'];
+    }
     $maxExecutionTime = (!isset($maxExecutionTime) ? 0 : (int)$maxExecutionTime);
-    if ($maxExecutionTime < 0)
+    if ($maxExecutionTime < 0) {
         $maxExecutionTime = 0;
+    }
 
     if ($ACTION == "EXPORT_SETUP" || $ACTION == "EXPORT_EDIT" || $ACTION == "EXPORT_COPY") {
-        if (!isset($SETUP_PROFILE_NAME) || $SETUP_PROFILE_NAME == '')
+        if (!isset($SETUP_PROFILE_NAME) || $SETUP_PROFILE_NAME == '') {
             $arSetupErrors[] = GetMessage("CET_ERROR_NO_PROFILE_NAME");
+        }
     }
 
     if (!empty($arSetupErrors)) {
@@ -180,8 +218,9 @@ $context = new CAdminContextMenu($aMenu);
 
 $context->Show();
 
-if (!empty($arSetupErrors))
+if (!empty($arSetupErrors)) {
     ShowError(implode('<br>', $arSetupErrors));
+}
 
 $actionParams = "";
 if ($adminSidePanelHelper->isSidePanel()) {
@@ -193,8 +232,18 @@ if ($adminSidePanelHelper->isSidePanel()) {
       id="yandex_setup_form">
     <?
     $aTabs = array(
-        array("DIV" => "yand_edit1", "TAB" => GetMessage("CAT_ADM_MISC_EXP_TAB1"), "ICON" => "store", "TITLE" => GetMessage("CAT_ADM_MISC_EXP_TAB1_TITLE")),
-        array("DIV" => "yand_edit2", "TAB" => GetMessage("CAT_ADM_MISC_EXP_TAB2"), "ICON" => "store", "TITLE" => GetMessage("CAT_ADM_MISC_EXP_TAB2_TITLE")),
+        array(
+            "DIV" => "yand_edit1",
+            "TAB" => GetMessage("CAT_ADM_MISC_EXP_TAB1"),
+            "ICON" => "store",
+            "TITLE" => GetMessage("CAT_ADM_MISC_EXP_TAB1_TITLE")
+        ),
+        array(
+            "DIV" => "yand_edit2",
+            "TAB" => GetMessage("CAT_ADM_MISC_EXP_TAB2"),
+            "ICON" => "store",
+            "TITLE" => GetMessage("CAT_ADM_MISC_EXP_TAB2_TITLE")
+        ),
     );
 
     $tabControl = new CAdminTabControl("tabYandex", $aTabs, false, true);
@@ -203,84 +252,105 @@ if ($adminSidePanelHelper->isSidePanel()) {
     $tabControl->BeginNextTab();
 
     if ($STEP == 1) {
-        if (!isset($SITE_ID))
+        if (!isset($SITE_ID)) {
             $SITE_ID = '';
-        if (!isset($XML_DATA))
+        }
+        if (!isset($XML_DATA)) {
             $XML_DATA = '';
-        if (!isset($filterAvalable) || $filterAvalable != 'Y')
+        }
+        if (!isset($filterAvalable) || $filterAvalable != 'Y') {
             $filterAvalable = 'N';
-        if (!isset($USE_HTTPS) || $USE_HTTPS != 'Y')
+        }
+        if (!isset($USE_HTTPS) || $USE_HTTPS != 'Y') {
             $USE_HTTPS = 'N';
-        if (!isset($disableReferers) || $disableReferers != 'Y')
+        }
+        if (!isset($disableReferers) || $disableReferers != 'Y') {
             $disableReferers = 'N';
-        if (!isset($exportCharset) || $exportCharset !== 'UTF-8')
+        }
+        if (!isset($exportCharset) || $exportCharset !== 'UTF-8') {
             $exportCharset = 'windows-1251';
-        if (!isset($SETUP_SERVER_NAME))
+        }
+        if (!isset($SETUP_SERVER_NAME)) {
             $SETUP_SERVER_NAME = '';
-        if (!isset($COMPANY_NAME))
+        }
+        if (!isset($COMPANY_NAME)) {
             $COMPANY_NAME = '';
-        if (!isset($SETUP_FILE_NAME))
+        }
+        if (!isset($SETUP_FILE_NAME)) {
             $SETUP_FILE_NAME = 'yandex_' . mt_rand(0, 999999) . '.php';
-        if (!isset($checkPermissions) || $checkPermissions != 'Y')
+        }
+        if (!isset($checkPermissions) || $checkPermissions != 'Y') {
             $checkPermissions = 'N';
+        }
 
         $siteList = array();
-        $iterator = Main\SiteTable::getList(array(
-            'select' => array('LID', 'NAME', 'SORT'),
-            'filter' => array('=ACTIVE' => 'Y'),
-            'order' => array('SORT' => 'ASC')
-        ));
-        while ($row = $iterator->fetch())
+        $iterator = Main\SiteTable::getList(
+            array(
+                'select' => array('LID', 'NAME', 'SORT'),
+                'filter' => array('=ACTIVE' => 'Y'),
+                'order' => array('SORT' => 'ASC')
+            )
+        );
+        while ($row = $iterator->fetch()) {
             $siteList[$row['LID']] = $row['NAME'];
+        }
         unset($row, $iterator);
         $iblockIds = array();
         $iblockSites = array();
         $iblockMultiSites = array();
-        $iterator = Catalog\CatalogIblockTable::getList(array(
-            'select' => array(
-                'IBLOCK_ID',
-                'PRODUCT_IBLOCK_ID',
-                'IBLOCK_ACTIVE' => 'IBLOCK.ACTIVE',
-                'PRODUCT_IBLOCK_ACTIVE' => 'PRODUCT_IBLOCK.ACTIVE'
-            ),
-            'filter' => array('')
-        ));
+        $iterator = Catalog\CatalogIblockTable::getList(
+            array(
+                'select' => array(
+                    'IBLOCK_ID',
+                    'PRODUCT_IBLOCK_ID',
+                    'IBLOCK_ACTIVE' => 'IBLOCK.ACTIVE',
+                    'PRODUCT_IBLOCK_ACTIVE' => 'PRODUCT_IBLOCK.ACTIVE'
+                ),
+                'filter' => array('')
+            )
+        );
         while ($row = $iterator->fetch()) {
             $row['PRODUCT_IBLOCK_ID'] = (int)$row['PRODUCT_IBLOCK_ID'];
             $row['IBLOCK_ID'] = (int)$row['IBLOCK_ID'];
             if ($row['PRODUCT_IBLOCK_ID'] > 0) {
-                if ($row['PRODUCT_IBLOCK_ACTIVE'] == 'Y')
+                if ($row['PRODUCT_IBLOCK_ACTIVE'] == 'Y') {
                     $iblockIds[$row['PRODUCT_IBLOCK_ID']] = true;
+                }
             } else {
-                if ($row['IBLOCK_ACTIVE'] == 'Y')
+                if ($row['IBLOCK_ACTIVE'] == 'Y') {
                     $iblockIds[$row['IBLOCK_ID']] = true;
+                }
             }
         }
         unset($row, $iterator);
         if (!empty($iblockIds)) {
             $activeIds = array();
-            $iterator = Iblock\IblockSiteTable::getList(array(
-                'select' => array('IBLOCK_ID', 'SITE_ID', 'SITE_SORT' => 'SITE.SORT'),
-                'filter' => array('@IBLOCK_ID' => array_keys($iblockIds), '=SITE.ACTIVE' => 'Y'),
-                'order' => array('IBLOCK_ID' => 'ASC', 'SITE_SORT' => 'ASC')
-            ));
+            $iterator = Iblock\IblockSiteTable::getList(
+                array(
+                    'select' => array('IBLOCK_ID', 'SITE_ID', 'SITE_SORT' => 'SITE.SORT'),
+                    'filter' => array('@IBLOCK_ID' => array_keys($iblockIds), '=SITE.ACTIVE' => 'Y'),
+                    'order' => array('IBLOCK_ID' => 'ASC', 'SITE_SORT' => 'ASC')
+                )
+            );
             while ($row = $iterator->fetch()) {
                 $id = (int)$row['IBLOCK_ID'];
 
-                if (!isset($iblockSites[$id]))
+                if (!isset($iblockSites[$id])) {
                     $iblockSites[$id] = array(
                         'ID' => $id,
                         'SITES' => array()
                     );
+                }
                 $iblockSites[$id]['SITES'][] = array(
                     'ID' => $row['SITE_ID'],
                     'NAME' => $siteList[$row['SITE_ID']]
                 );
 
-                if (!isset($iblockMultiSites[$id]))
+                if (!isset($iblockMultiSites[$id])) {
                     $iblockMultiSites[$id] = false;
-                else
+                } else {
                     $iblockMultiSites[$id] = true;
+                }
 
                 $activeIds[$id] = true;
             }
@@ -295,7 +365,6 @@ if ($adminSidePanelHelper->isSidePanel()) {
             unset($activeIds);
         }
         if (empty($iblockIds)) {
-
         }
 
         $currentList = array();
@@ -312,14 +381,18 @@ if ($adminSidePanelHelper->isSidePanel()) {
         <td width="40%"><?= GetMessage('BX_CATALOG_EXPORT_IBLOCK'); ?></td>
         <td width="60%"><?
             echo GetIBlockDropDownListEx(
-                $IBLOCK_ID, 'IBLOCK_TYPE_ID', 'IBLOCK_ID',
+                $IBLOCK_ID,
+                'IBLOCK_TYPE_ID',
+                'IBLOCK_ID',
                 array(
                     'ID' => array_keys($iblockIds),
                     'CHECK_PERMISSIONS' => 'Y',
                     'MIN_PERMISSION' => 'U'
                 ),
-                "ClearSelected(); changeIblockSites(0); BX('id_ifr').src='/bitrix/tools/catalog_export/yandex_util.php?IBLOCK_ID=0&'+'" . bitrix_sessid_get() . "';",
-                "ClearSelected(); changeIblockSites(this[this.selectedIndex].value); BX('id_ifr').src='/bitrix/tools/catalog_export/yandex_util.php?IBLOCK_ID='+this[this.selectedIndex].value+'&'+'" . bitrix_sessid_get() . "';",
+                "ClearSelected(); changeIblockSites(0); BX('id_ifr').src='/bitrix/tools/catalog_export/yandex_util.php?IBLOCK_ID=0&'+'" . bitrix_sessid_get(
+                ) . "';",
+                "ClearSelected(); changeIblockSites(this[this.selectedIndex].value); BX('id_ifr').src='/bitrix/tools/catalog_export/yandex_util.php?IBLOCK_ID='+this[this.selectedIndex].value+'&'+'" . bitrix_sessid_get(
+                ) . "';",
                 'class="adm-detail-iblock-types"',
                 'class="adm-detail-iblock-list"'
             );
@@ -389,7 +462,9 @@ if ($adminSidePanelHelper->isSidePanel()) {
                         $selected = ($site['ID'] == $SITE_ID ? ' selected' : '');
                         $name = '[' . $site['ID'] . '] ' . $site['NAME'];
                         ?>
-                        <option value="<?= htmlspecialcharsbx($site['ID']); ?>"<?= $selected; ?>><?= htmlspecialcharsbx($name); ?></option><?
+                        <option value="<?= htmlspecialcharsbx($site['ID']); ?>"<?= $selected; ?>><?= htmlspecialcharsbx(
+                            $name
+                        ); ?></option><?
                     }
                     unset($name, $selected, $site);
                     ?>
@@ -448,7 +523,9 @@ if ($adminSidePanelHelper->isSidePanel()) {
 
                         buffer = '<table border="0" cellspacing="0" cellpadding="0">';
                         buffer += '<tr>';
-                        buffer += '<td colspan="2" valign="top" align="left"><input type="checkbox" name="V[]" value="0" id="v0"' + (BX.util.in_array(0, TreeSelected) ? ' checked' : '') + ' onclick="delOldV(this);"><label for="v0"><font class="text"><b><?echo CUtil::JSEscape(GetMessage("CET_ALL_GROUPS"));?></b></font></label></td>';
+                        buffer += '<td colspan="2" valign="top" align="left"><input type="checkbox" name="V[]" value="0" id="v0"' + (BX.util.in_array(0, TreeSelected) ? ' checked' : '') + ' onclick="delOldV(this);"><label for="v0"><font class="text"><b><?echo CUtil::JSEscape(
+                            GetMessage("CET_ALL_GROUPS")
+                        );?></b></font></label></td>';
                         buffer += '</tr>';
 
                         for (i in Tree[0]) {
@@ -509,8 +586,9 @@ if ($adminSidePanelHelper->isSidePanel()) {
                         BX.adminPanel.modifyFormElements('yandex_setup_form');
                     }
                 </script>
-                <iframe src="/bitrix/tools/catalog_export/yandex_util.php?IBLOCK_ID=<?= intval($IBLOCK_ID) ?>&<? echo bitrix_sessid_get(); ?>"
-                        id="id_ifr" name="ifr" style="display:none"></iframe>
+                <iframe src="/bitrix/tools/catalog_export/yandex_util.php?IBLOCK_ID=<?= intval(
+                    $IBLOCK_ID
+                ) ?>&<? echo bitrix_sessid_get(); ?>" id="id_ifr" name="ifr" style="display:none"></iframe>
             </td>
         </tr>
 
@@ -524,7 +602,8 @@ if ($adminSidePanelHelper->isSidePanel()) {
                             var dat = BX('XML_DATA');
                             var obDetailWindow = new BX.CAdminDialog({
                                 'content_url': '/bitrix/tools/catalog_export/yandex_detail.php?lang=<?=LANGUAGE_ID?>&bxpublic=Y&IBLOCK_ID=' + s[s.selectedIndex].value,
-                                'content_post': 'XML_DATA=' + BX.util.urlencode(dat.value) + '&' + '<?echo bitrix_sessid_get(); ?>',
+                                'content_post': 'XML_DATA=' + BX.util.urlencode(dat.value) + '&' + '<?echo bitrix_sessid_get(
+                                ); ?>',
                                 'width': 900, 'height': 550,
                                 'resizable': true
                             });
@@ -600,7 +679,9 @@ if ($adminSidePanelHelper->isSidePanel()) {
                 <input type="text" name="SETUP_SERVER_NAME" value="<?= htmlspecialcharsbx($SETUP_SERVER_NAME); ?>"
                        size="50"> <input type="button"
                                          onclick="this.form['SETUP_SERVER_NAME'].value = window.location.host;"
-                                         value="<? echo htmlspecialcharsbx(GetMessage('CET_SERVER_NAME_SET_CURRENT')) ?>">
+                                         value="<? echo htmlspecialcharsbx(
+                                             GetMessage('CET_SERVER_NAME_SET_CURRENT')
+                                         ) ?>">
             </td>
         </tr>
         <tr>
@@ -612,9 +693,10 @@ if ($adminSidePanelHelper->isSidePanel()) {
         <tr>
             <td width="40%"><? echo GetMessage("CET_SAVE_FILENAME"); ?></td>
             <td width="60%">
-                <b><? echo htmlspecialcharsbx(COption::GetOptionString("catalog", "export_default_path", "/bitrix/catalog_export/")); ?></b><input
-                        type="text" name="SETUP_FILE_NAME" value="<?= htmlspecialcharsbx($SETUP_FILE_NAME); ?>"
-                        size="50">
+                <b><? echo htmlspecialcharsbx(
+                        COption::GetOptionString("catalog", "export_default_path", "/bitrix/catalog_export/")
+                    ); ?></b><input type="text" name="SETUP_FILE_NAME"
+                                    value="<?= htmlspecialcharsbx($SETUP_FILE_NAME); ?>" size="50">
             </td>
         </tr>
         <?
@@ -636,7 +718,7 @@ if ($adminSidePanelHelper->isSidePanel()) {
 
     if ($STEP == 2) {
         $SETUP_FILE_NAME = $strAllowExportPath . $SETUP_FILE_NAME;
-        if (strlen($XML_DATA) > 0) {
+        if ($XML_DATA <> '') {
             $XML_DATA = base64_decode($XML_DATA);
         }
         $SETUP_SERVER_NAME = htmlspecialcharsbx($SETUP_SERVER_NAME);

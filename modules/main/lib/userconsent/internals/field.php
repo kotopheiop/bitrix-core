@@ -62,11 +62,13 @@ class FieldTable extends Entity\DataManager
     public static function getConsentFields($agreementId)
     {
         $fields = array();
-        $fieldsDb = static::getList(array(
-            'filter' => array(
-                '=AGREEMENT_ID' => $agreementId
+        $fieldsDb = static::getList(
+            array(
+                'filter' => array(
+                    '=AGREEMENT_ID' => $agreementId
+                )
             )
-        ));
+        );
         while ($field = $fieldsDb->fetch()) {
             $fields[$field['CODE']] = $field['VALUE'];
         }
@@ -84,23 +86,27 @@ class FieldTable extends Entity\DataManager
     public static function setConsentFields($agreementId, array $fields)
     {
         // remove old fields
-        $deleteFieldsDb = static::getList(array(
-            'select' => array('ID'),
-            'filter' => array(
-                '=AGREEMENT_ID' => $agreementId
+        $deleteFieldsDb = static::getList(
+            array(
+                'select' => array('ID'),
+                'filter' => array(
+                    '=AGREEMENT_ID' => $agreementId
+                )
             )
-        ));
+        );
         while ($deleteField = $deleteFieldsDb->fetch()) {
             static::delete($deleteField['ID']);
         }
 
         // add new fields
         foreach ($fields as $code => $value) {
-            $result = static::add(array(
-                'AGREEMENT_ID' => $agreementId,
-                'CODE' => $code,
-                'VALUE' => $value,
-            ));
+            $result = static::add(
+                array(
+                    'AGREEMENT_ID' => $agreementId,
+                    'CODE' => $code,
+                    'VALUE' => $value,
+                )
+            );
             $result->isSuccess();
         }
     }

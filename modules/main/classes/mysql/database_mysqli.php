@@ -14,23 +14,30 @@ class CDatabase extends CDatabaseMysql
     /** @var mysqli */
     var $db_Conn;
 
-    function ConnectInternal()
+    protected function ConnectInternal()
     {
         $dbHost = $this->DBHost;
         $dbPort = null;
-        if (($pos = strpos($dbHost, ":")) !== false) {
-            $dbPort = intval(substr($dbHost, $pos + 1));
-            $dbHost = substr($dbHost, 0, $pos);
+        if (($pos = mb_strpos($dbHost, ":")) !== false) {
+            $dbPort = intval(mb_substr($dbHost, $pos + 1));
+            $dbHost = mb_substr($dbHost, 0, $pos);
         }
 
         $persistentPrefix = (DBPersistent && !$this->bNodeConnection ? "p:" : "");
 
-        $this->db_Conn = mysqli_connect($persistentPrefix . $dbHost, $this->DBLogin, $this->DBPassword, $this->DBName, $dbPort);
+        $this->db_Conn = mysqli_connect(
+            $persistentPrefix . $dbHost,
+            $this->DBLogin,
+            $this->DBPassword,
+            $this->DBName,
+            $dbPort
+        );
 
         if (!$this->db_Conn) {
             $error = "[" . mysqli_connect_errno() . "] " . mysqli_connect_error();
-            if ($this->debug || (isset($_SESSION["SESS_AUTH"]["ADMIN"]) && $_SESSION["SESS_AUTH"]["ADMIN"]))
+            if ($this->debug) {
                 echo "<br><font color=#ff0000>Error! mysqli_connect()</font><br>" . $error . "<br>";
+            }
 
             SendError("Error! mysqli_connect()\n" . $error . "\n");
 
@@ -55,43 +62,33 @@ class CDatabase extends CDatabaseMysql
         mysqli_close($resource);
     }
 
-    function LastID()
+    public function LastID()
     {
         $this->DoConnect();
         return mysqli_insert_id($this->db_Conn);
     }
 
-    function ForSql($strValue, $iMaxLength = 0)
+    public function ForSql($strValue, $iMaxLength = 0)
     {
-        if ($iMaxLength > 0)
-            $strValue = substr($strValue, 0, $iMaxLength);
-
-        if (!isset($this) || !is_object($this) || !$this->db_Conn) {
-            global $DB;
-            $DB->DoConnect();
-            return mysqli_real_escape_string($DB->db_Conn, $strValue);
-        } else {
-            $this->DoConnect();
-            return mysqli_real_escape_string($this->db_Conn, $strValue);
+        if ($iMaxLength > 0) {
+            $strValue = mb_substr($strValue, 0, $iMaxLength);
         }
+
+        $this->DoConnect();
+        return mysqli_real_escape_string($this->db_Conn, $strValue);
     }
 
-    function ForSqlLike($strValue, $iMaxLength = 0)
+    public function ForSqlLike($strValue, $iMaxLength = 0)
     {
-        if ($iMaxLength > 0)
-            $strValue = substr($strValue, 0, $iMaxLength);
-
-        if (!isset($this) || !is_object($this) || !$this->db_Conn) {
-            global $DB;
-            $DB->DoConnect();
-            return mysqli_real_escape_string($DB->db_Conn, str_replace("\\", "\\\\", $strValue));
-        } else {
-            $this->DoConnect();
-            return mysqli_real_escape_string($this->db_Conn, str_replace("\\", "\\\\", $strValue));
+        if ($iMaxLength > 0) {
+            $strValue = mb_substr($strValue, 0, $iMaxLength);
         }
+
+        $this->DoConnect();
+        return mysqli_real_escape_string($this->db_Conn, str_replace("\\", "\\\\", $strValue));
     }
 
-    function GetTableFields($table)
+    public function GetTableFields($table)
     {
         if (!isset($this->column_cache[$table])) {
             $this->column_cache[$table] = array();
@@ -154,26 +151,25 @@ class CDBResult extends CDBResultMysql
         parent::__construct($res);
     }
 
-    /** @deprecated */
-    public function CDBResult($res = null)
-    {
-        self::__construct($res);
-    }
-
     protected function FetchRow()
     {
-        return mysqli_fetch_assoc($this->result);
+        if (is_object($this->result)) {
+            return mysqli_fetch_assoc($this->result);
+        }
+        return false;
     }
 
     function SelectedRowsCount()
     {
-        if ($this->nSelectedCount !== false)
+        if ($this->nSelectedCount !== false) {
             return $this->nSelectedCount;
+        }
 
-        if (is_object($this->result))
+        if (is_object($this->result)) {
             return mysqli_num_rows($this->result);
-        else
+        } else {
             return 0;
+        }
     }
 
     function AffectedRowsCount()
@@ -191,10 +187,11 @@ class CDBResult extends CDBResultMysql
 
     function FieldsCount()
     {
-        if (is_object($this->result))
+        if (is_object($this->result)) {
             return mysqli_num_fields($this->result);
-        else
+        } else {
             return 0;
+        }
     }
 
     function FieldName($iCol)
@@ -208,31 +205,37 @@ class CDBResult extends CDBResultMysql
         global $DB;
 
         //total rows count
-        if (is_object($this->result))
+        if (is_object($this->result)) {
             $this->NavRecordCount = mysqli_num_rows($this->result);
-        else
+        } else {
             return;
+        }
 
-        if ($this->NavRecordCount < 1)
+        if ($this->NavRecordCount < 1) {
             return;
+        }
 
-        if ($this->NavShowAll)
+        if ($this->NavShowAll) {
             $this->NavPageSize = $this->NavRecordCount;
+        }
 
         //calculate total pages depend on rows count. start with 1
         $this->NavPageCount = floor($this->NavRecordCount / $this->NavPageSize);
-        if ($this->NavRecordCount % $this->NavPageSize > 0)
+        if ($this->NavRecordCount % $this->NavPageSize > 0) {
             $this->NavPageCount++;
+        }
 
         //page number to display. start with 1
-        $this->NavPageNomer = ($this->PAGEN < 1 || $this->PAGEN > $this->NavPageCount ? ($_SESSION[$this->SESS_PAGEN] < 1 || $_SESSION[$this->SESS_PAGEN] > $this->NavPageCount ? 1 : $_SESSION[$this->SESS_PAGEN]) : $this->PAGEN);
+        $session = \Bitrix\Main\Application::getInstance()->getSession();
+        $this->NavPageNomer = ($this->PAGEN < 1 || $this->PAGEN > $this->NavPageCount ? ($session[$this->SESS_PAGEN] < 1 || $session[$this->SESS_PAGEN] > $this->NavPageCount ? 1 : $session[$this->SESS_PAGEN]) : $this->PAGEN);
 
         //rows to skip
         $NavFirstRecordShow = $this->NavPageSize * ($this->NavPageNomer - 1);
         $NavLastRecordShow = $this->NavPageSize * $this->NavPageNomer;
 
-        if ($this->SqlTraceIndex)
+        if ($this->SqlTraceIndex) {
             $start_time = microtime(true);
+        }
 
         mysqli_data_seek($this->result, $NavFirstRecordShow);
 

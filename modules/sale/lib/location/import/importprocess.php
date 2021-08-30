@@ -71,75 +71,93 @@ final class ImportProcess extends Location\Util\Process
     public function __construct($options)
     {
         if ($options['ONLY_DELETE_ALL']) {
-            $this->addStage(array(
-                'PERCENT' => 100,
-                'CODE' => 'DELETE_ALL',
-                'CALLBACK' => 'stageDeleteAll',
-                'SUBPERCENT_CALLBACK' => 'getSubpercentForstageDeleteAll'
-            ));
-        } else {
-            $this->addStage(array(
-                'PERCENT' => 5,
-                'CODE' => 'DOWNLOAD_FILES',
-                'CALLBACK' => 'stageDownloadFiles',
-                'SUBPERCENT_CALLBACK' => 'getSubpercentForStageDownloadFiles'
-            ));
-
-            if ($options['REQUEST']['OPTIONS']['DROP_ALL']) {
-                $this->addStage(array(
-                    'PERCENT' => 7,
+            $this->addStage(
+                array(
+                    'PERCENT' => 100,
                     'CODE' => 'DELETE_ALL',
                     'CALLBACK' => 'stageDeleteAll',
                     'SUBPERCENT_CALLBACK' => 'getSubpercentForstageDeleteAll'
-                ));
+                )
+            );
+        } else {
+            $this->addStage(
+                array(
+                    'PERCENT' => 5,
+                    'CODE' => 'DOWNLOAD_FILES',
+                    'CALLBACK' => 'stageDownloadFiles',
+                    'SUBPERCENT_CALLBACK' => 'getSubpercentForStageDownloadFiles'
+                )
+            );
+
+            if ($options['REQUEST']['OPTIONS']['DROP_ALL']) {
+                $this->addStage(
+                    array(
+                        'PERCENT' => 7,
+                        'CODE' => 'DELETE_ALL',
+                        'CALLBACK' => 'stageDeleteAll',
+                        'SUBPERCENT_CALLBACK' => 'getSubpercentForstageDeleteAll'
+                    )
+                );
             }
 
-            $this->addStage(array(
-                'PERCENT' => 10,
-                'CODE' => 'DROP_INDEXES',
-                'CALLBACK' => 'stageDropIndexes',
-                'SUBPERCENT_CALLBACK' => 'getSubpercentForStageDropIndexes'
-            ));
+            $this->addStage(
+                array(
+                    'PERCENT' => 10,
+                    'CODE' => 'DROP_INDEXES',
+                    'CALLBACK' => 'stageDropIndexes',
+                    'SUBPERCENT_CALLBACK' => 'getSubpercentForStageDropIndexes'
+                )
+            );
 
-            $this->addStage(array(
-                'PERCENT' => 60,
-                'STEP_SIZE' => 6000,
-                'CODE' => 'PROCESS_FILES',
-                'CALLBACK' => 'stageProcessFiles',
-                'SUBPERCENT_CALLBACK' => 'getSubpercentForStageProcessFiles'
-            ));
+            $this->addStage(
+                array(
+                    'PERCENT' => 60,
+                    'STEP_SIZE' => 6000,
+                    'CODE' => 'PROCESS_FILES',
+                    'CALLBACK' => 'stageProcessFiles',
+                    'SUBPERCENT_CALLBACK' => 'getSubpercentForStageProcessFiles'
+                )
+            );
 
             if ($options['REQUEST']['OPTIONS']['INTEGRITY_PRESERVE']) {
-                $this->addStage(array(
-                    'PERCENT' => 65,
-                    'STEP_SIZE' => 1,
-                    'CODE' => 'INTEGRITY_PRESERVE',
-                    'CALLBACK' => 'stageIntegrityPreserve'
-                ));
+                $this->addStage(
+                    array(
+                        'PERCENT' => 65,
+                        'STEP_SIZE' => 1,
+                        'CODE' => 'INTEGRITY_PRESERVE',
+                        'CALLBACK' => 'stageIntegrityPreserve'
+                    )
+                );
             }
 
-            $this->addStage(array(
-                'PERCENT' => 90,
-                'STEP_SIZE' => 1,
-                'CODE' => 'REBALANCE_WALK_TREE',
-                'CALLBACK' => 'stageRebalanceWalkTree',
-                'SUBPERCENT_CALLBACK' => 'getSubpercentForStageRebalanceWalkTree'
-            ));
+            $this->addStage(
+                array(
+                    'PERCENT' => 90,
+                    'STEP_SIZE' => 1,
+                    'CODE' => 'REBALANCE_WALK_TREE',
+                    'CALLBACK' => 'stageRebalanceWalkTree',
+                    'SUBPERCENT_CALLBACK' => 'getSubpercentForStageRebalanceWalkTree'
+                )
+            );
 
-            $this->addStage(array(
-                'PERCENT' => 95,
-                'STEP_SIZE' => 1,
-                'CODE' => 'REBALANCE_CLEANUP_TEMP_TABLE',
-                'CALLBACK' => 'stageRebalanceCleanupTempTable'
-            ));
+            $this->addStage(
+                array(
+                    'PERCENT' => 95,
+                    'STEP_SIZE' => 1,
+                    'CODE' => 'REBALANCE_CLEANUP_TEMP_TABLE',
+                    'CALLBACK' => 'stageRebalanceCleanupTempTable'
+                )
+            );
 
-            $this->addStage(array(
-                'PERCENT' => 100,
-                'STEP_SIZE' => 1,
-                'CODE' => 'RESTORE_INDEXES',
-                'CALLBACK' => 'stageRestoreIndexes',
-                'SUBPERCENT_CALLBACK' => 'getSubpercentForStageRestoreIndexes'
-            ));
+            $this->addStage(
+                array(
+                    'PERCENT' => 100,
+                    'STEP_SIZE' => 1,
+                    'CODE' => 'RESTORE_INDEXES',
+                    'CALLBACK' => 'stageRestoreIndexes',
+                    'SUBPERCENT_CALLBACK' => 'getSubpercentForStageRestoreIndexes'
+                )
+            );
         }
 
         $this->dbConnection = Main\HttpApplication::getConnection();
@@ -151,8 +169,9 @@ final class ImportProcess extends Location\Util\Process
 
     public function onBeforePerformIteration()
     {
-        if ($this->options['ONLY_DELETE_ALL'])
+        if ($this->options['ONLY_DELETE_ALL']) {
             return;
+        }
 
         if (!$this->data['inited']) {
             if ((string)$this->data['LOCAL_PATH'] == '') {
@@ -161,14 +180,16 @@ final class ImportProcess extends Location\Util\Process
 
             $opts = $this->options['REQUEST']['OPTIONS'];
 
-            if (!in_array($opts['SOURCE'], array(self::SOURCE_REMOTE, self::SOURCE_FILE)))
+            if (!in_array($opts['SOURCE'], array(self::SOURCE_REMOTE, self::SOURCE_FILE))) {
                 throw new Main\SystemException('Unknown import type');
+            }
 
             $sets = array();
             if ($opts['SOURCE'] == self::SOURCE_REMOTE) {
                 $sets = $this->normalizeQueryArray($this->options['REQUEST']['LOCATION_SETS']);
-                if (empty($sets))
+                if (empty($sets)) {
                     throw new Main\SystemException('Nothing to do (no sets selected)');
+                }
             }
 
             $this->data['settings'] = array(
@@ -177,10 +198,13 @@ final class ImportProcess extends Location\Util\Process
             );
 
             if ($opts['SOURCE'] == self::SOURCE_REMOTE) {
-                $this->data['settings']['additional'] = is_array($this->options['REQUEST']['ADDITIONAL']) ? array_flip(array_values($this->options['REQUEST']['ADDITIONAL'])) : array();
+                $this->data['settings']['additional'] = is_array($this->options['REQUEST']['ADDITIONAL']) ? array_flip(
+                    array_values($this->options['REQUEST']['ADDITIONAL'])
+                ) : array();
 
-                if (isset($this->data['settings']['additional']['ZIP']))
+                if (isset($this->data['settings']['additional']['ZIP'])) {
                     $this->data['settings']['additional']['ZIP_LOWER'] = $this->data['settings']['additional']['ZIP'];
+                }
             } elseif ($this->checkSource(self::SOURCE_FILE)) {
                 $this->data['settings']['additional'] = false; // means ANY
             }
@@ -191,8 +215,9 @@ final class ImportProcess extends Location\Util\Process
             $this->data['inited'] = true;
         }
 
-        if ($timeLimit = intval($this->data['settings']['options']['TIME_LIMIT']))
+        if ($timeLimit = intval($this->data['settings']['options']['TIME_LIMIT'])) {
             $this->setTimeLimit($timeLimit);
+        }
     }
 
     /////////////////////////////////////
@@ -202,8 +227,9 @@ final class ImportProcess extends Location\Util\Process
     {
         if ($this->checkSource(self::SOURCE_FILE)) // user uploaded file
         {
-            if ((string)$_SESSION[static::USER_FILE_DIRECTORY_SESSION_KEY] == '')
+            if ((string)$_SESSION[static::USER_FILE_DIRECTORY_SESSION_KEY] == '') {
                 throw new Main\SystemException('User file was not uploaded properly');
+            }
 
             $srcFilePath = $_SESSION[static::USER_FILE_DIRECTORY_SESSION_KEY] . '/' . static::USER_FILE_TEMP_NAME;
             $dstFilePath = $this->data['LOCAL_PATH'] . self::getFileNameByIndex(0);
@@ -241,7 +267,9 @@ final class ImportProcess extends Location\Util\Process
                 $this->data['requiredGroups'] = array();
                 foreach ($typeGroups as $code => $types) {
                     if ($code == 'LAYOUT') // layout is always included
+                    {
                         continue;
+                    }
 
                     foreach ($types as $type) {
                         if (isset($this->data['types']['allowed'][$type])) {
@@ -257,7 +285,12 @@ final class ImportProcess extends Location\Util\Process
                 if ($this->getStep() == 1) // get layout (root) file
                 {
                     $this->data['files'][0] = array(
-                        'size' => static::downloadFile(self::REMOTE_LAYOUT_FILE, self::getFileNameByIndex(0), false, $this->data['LOCAL_PATH']),
+                        'size' => static::downloadFile(
+                            self::REMOTE_LAYOUT_FILE,
+                            self::getFileNameByIndex(0),
+                            false,
+                            $this->data['LOCAL_PATH']
+                        ),
                         'onlyThese' => array_flip($this->data['settings']['bundles']['allpoints']),
                         'memgroup' => 'static'
                     );
@@ -269,7 +302,8 @@ final class ImportProcess extends Location\Util\Process
                 $i =& $this->data['fileDownload']['currentEndPoint'];
                 $j =& $this->data['fileDownload']['currentFileOffset'];
 
-                while ($this->checkQuota() && isset($this->data['settings']['bundles']['endpoints'][$i])) // process as many bundles as possible
+                while ($this->checkQuota(
+                    ) && isset($this->data['settings']['bundles']['endpoints'][$i])) // process as many bundles as possible
                 {
                     $ep = $this->data['settings']['bundles']['endpoints'][$i];
 
@@ -309,8 +343,9 @@ final class ImportProcess extends Location\Util\Process
 
         $currEp = intval($this->data['fileDownload']['currentEndPoint']);
 
-        if (!$currEp)
+        if (!$currEp) {
             return 0;
+        }
 
         return round($pRange * ($currEp / count($this->data['settings']['bundles']['endpoints'])));
     }
@@ -340,8 +375,9 @@ final class ImportProcess extends Location\Util\Process
 
         $this->nextStep();
 
-        if ($this->step >= 5)
+        if ($this->step >= 5) {
             $this->nextStage();
+        }
     }
 
     protected function getSubpercentForstageDeleteAll()
@@ -351,9 +387,9 @@ final class ImportProcess extends Location\Util\Process
 
         $stepsCount = 5;
 
-        if ($step >= $stepsCount)
+        if ($step >= $stepsCount) {
             return $pRange;
-        else {
+        } else {
             return round($pRange * ($step / $stepsCount));
         }
     }
@@ -382,9 +418,9 @@ final class ImportProcess extends Location\Util\Process
             'IX_B_SALE_LOCATION_3'
         );
 
-        if (!isset($indexes[$this->getStep()]))
+        if (!isset($indexes[$this->getStep()])) {
             $this->nextStage();
-        else {
+        } else {
             $this->dropIndexes($indexes[$this->getStep()]);
             $this->logMessage('Index dropped: ' . $indexes[$this->getStep()]);
             $this->nextStep();
@@ -398,9 +434,9 @@ final class ImportProcess extends Location\Util\Process
 
         $indexCount = 14;
 
-        if ($step >= $indexCount)
+        if ($step >= $indexCount) {
             return $pRange;
-        else {
+        } else {
             return round($pRange * ($step / $indexCount));
         }
     }
@@ -419,8 +455,9 @@ final class ImportProcess extends Location\Util\Process
         if (!isset($this->hitData['csv'])) {
             $file = $this->data['LOCAL_PATH'] . $fName;
 
-            if (!file_exists($file) || !is_readable($file))
+            if (!file_exists($file) || !is_readable($file)) {
                 throw new Main\SystemException('Cannot open file ' . $file . ' for reading');
+            }
 
             $this->logMessage('Chargeing File: ' . $fName);
 
@@ -443,8 +480,9 @@ final class ImportProcess extends Location\Util\Process
 
         if (is_array($onlyThese)) {
             foreach ($block as $i => $line) {
-                if (is_array($onlyThese) && !isset($onlyThese[$line['CODE']]))
+                if (is_array($onlyThese) && !isset($onlyThese[$line['CODE']])) {
                     unset($block[$i]);
+                }
             }
         }
 
@@ -455,21 +493,25 @@ final class ImportProcess extends Location\Util\Process
 
     protected static function checkLocationCodeExists($code)
     {
-        if (!strlen($code))
+        if ($code == '') {
             return false;
+        }
 
         $dbConnection = Main\HttpApplication::getConnection();
 
         $code = $dbConnection->getSqlHelper()->forSql($code);
-        $res = $dbConnection->query("select ID from " . Location\LocationTable::getTableName() . " where CODE = '" . $code . "'")->fetch();
+        $res = $dbConnection->query(
+            "select ID from " . Location\LocationTable::getTableName() . " where CODE = '" . $code . "'"
+        )->fetch();
 
         return $res['ID'];
     }
 
     protected function importBlock(&$block)
     {
-        if (empty($block))
+        if (empty($block)) {
             return;
+        }
 
         $gid = $this->getCurrentGid();
 
@@ -482,8 +524,9 @@ final class ImportProcess extends Location\Util\Process
             // this spike is only for cutting off COUNTRY_DISTRICT
             // strongly need for the more generalized mechanism for excluding certain types
             if (!!($this->options['REQUEST']['OPTIONS']['EXCLUDE_COUNTRY_DISTRICT'])) {
-                if (!is_array($this->data['COUNTRY_2_DISTRICT']))
+                if (!is_array($this->data['COUNTRY_2_DISTRICT'])) {
                     $this->data['COUNTRY_2_DISTRICT'] = array();
+                }
 
                 if ($data['TYPE_CODE'] == 'COUNTRY') {
                     $this->data['LAST_COUNTRY'] = $data['CODE'];
@@ -491,16 +534,18 @@ final class ImportProcess extends Location\Util\Process
                     $this->data['COUNTRY_2_DISTRICT'][$code] = $this->data['LAST_COUNTRY'];
                     continue;
                 } else {
-                    if (isset($this->data['COUNTRY_2_DISTRICT'][$data['PARENT_CODE']]))
+                    if (isset($this->data['COUNTRY_2_DISTRICT'][$data['PARENT_CODE']])) {
                         $data['PARENT_CODE'] = $this->data['COUNTRY_2_DISTRICT'][$data['PARENT_CODE']];
+                    }
                 }
             }
 
             // this spike is only for cutting off COUNTRY_DISTRICT
             // strongly need for the more generalized mechanism for excluding certain types
             if (!!($this->options['REQUEST']['OPTIONS']['EXCLUDE_COUNTRY_DISTRICT'])) {
-                if (!is_array($this->data['COUNTRY_2_DISTRICT']))
+                if (!is_array($this->data['COUNTRY_2_DISTRICT'])) {
                     $this->data['COUNTRY_2_DISTRICT'] = array();
+                }
 
                 if ($data['TYPE_CODE'] == 'COUNTRY') {
                     $this->data['LAST_COUNTRY'] = $data['CODE'];
@@ -508,16 +553,21 @@ final class ImportProcess extends Location\Util\Process
                     $this->data['COUNTRY_2_DISTRICT'][$code] = $this->data['LAST_COUNTRY'];
                     continue;
                 } else {
-                    if (isset($this->data['COUNTRY_2_DISTRICT'][$data['PARENT_CODE']]))
+                    if (isset($this->data['COUNTRY_2_DISTRICT'][$data['PARENT_CODE']])) {
                         $data['PARENT_CODE'] = $this->data['COUNTRY_2_DISTRICT'][$data['PARENT_CODE']];
+                    }
                 }
             }
 
             if (isset($this->data['existedlocs']['static'][$code]) || isset($this->data['existedlocs'][$gid][$code])) // already exists
+            {
                 continue;
+            }
 
             if (!isset($this->data['types']['allowed'][$data['TYPE_CODE']])) // disallowed
+            {
                 continue;
+            }
 
             // have to check existence first
             if (!$this->data['TABLE_WERE_EMPTY']) {
@@ -531,15 +581,17 @@ final class ImportProcess extends Location\Util\Process
 
             ///////////////////////////////////////////
             // transform parent
-            if (strlen($data['PARENT_CODE'])) {
+            if ($data['PARENT_CODE'] <> '') {
                 if (isset($this->data['existedlocs']['static'][$data['PARENT_CODE']])) {
                     $data['PARENT_ID'] = $this->data['existedlocs']['static'][$data['PARENT_CODE']];
                 } elseif (isset($this->data['existedlocs'][$gid][$data['PARENT_CODE']])) {
                     $data['PARENT_ID'] = $this->data['existedlocs'][$gid][$data['PARENT_CODE']];
-                } else
+                } else {
                     $data['PARENT_ID'] = 0;
-            } else
+                }
+            } else {
                 $data['PARENT_ID'] = 0;
+            }
 
             unset($data['PARENT_CODE']);
 
@@ -577,12 +629,14 @@ final class ImportProcess extends Location\Util\Process
                         $lid = ToLower($lid);
                         $toAdd = static::getTranslatedName($names, $lid);
 
-                        $this->hitData['HANDLES']['NAME']->insert(array(
-                            'NAME' => $toAdd['NAME'],
-                            'NAME_UPPER' => ToUpper($toAdd['NAME']),
-                            'LANGUAGE_ID' => $lid,
-                            'LOCATION_ID' => $locationId
-                        ));
+                        $this->hitData['HANDLES']['NAME']->insert(
+                            array(
+                                'NAME' => $toAdd['NAME'],
+                                'NAME_UPPER' => ToUpper($toAdd['NAME']),
+                                'LANGUAGE_ID' => $lid,
+                                'LOCATION_ID' => $locationId
+                            )
+                        );
                     }
                 }
             }
@@ -594,31 +648,37 @@ final class ImportProcess extends Location\Util\Process
                     if ($this->checkExternalServiceAllowed($sCode)) {
                         $serviceId = $this->data['externalService']['code2id'][$sCode];
 
-                        if (!$serviceId)
+                        if (!$serviceId) {
                             throw new Main\SystemException('Location import failed: external service doesnt exist');
+                        }
 
                         if ($sCode == 'ZIP_LOWER') {
-                            if (strlen($values) <= 0)
+                            if ($values == '') {
                                 continue;
+                            }
 
                             $values = explode(',', $values);
 
-                            if (!is_array($values))
+                            if (!is_array($values)) {
                                 continue;
+                            }
 
                             $values = array_unique($values);
                         }
 
                         if (is_array($values)) {
                             foreach ($values as $val) {
-                                if (strlen($val) <= 0)
+                                if ($val == '') {
                                     continue;
+                                }
 
-                                $this->hitData['HANDLES']['EXTERNAL']->insert(array(
-                                    'SERVICE_ID' => $serviceId,
-                                    'XML_ID' => $val,
-                                    'LOCATION_ID' => $locationId
-                                ));
+                                $this->hitData['HANDLES']['EXTERNAL']->insert(
+                                    array(
+                                        'SERVICE_ID' => $serviceId,
+                                        'XML_ID' => $val,
+                                        'LOCATION_ID' => $locationId
+                                    )
+                                );
                             }
                         }
                     }
@@ -634,35 +694,42 @@ final class ImportProcess extends Location\Util\Process
 
     protected function stageProcessFiles()
     {
-        if ($this->dbConnType == self::DB_TYPE_ORACLE)
+        if ($this->dbConnType == self::DB_TYPE_ORACLE) {
             $mtu = self::INSERTER_MTU_ORACLE;
-        else
+        } else {
             $mtu = self::INSERTER_MTU;
+        }
 
-        $this->hitData['HANDLES']['LOCATION'] = new BlockInserter(array(
-            'entityName' => '\Bitrix\Sale\Location\LocationTable',
-            'exactFields' => array('CODE', 'TYPE_ID', 'PARENT_ID', 'LATITUDE', 'LONGITUDE'),
-            'parameters' => array(
-                'autoIncrementFld' => 'ID',
-                'mtu' => $mtu
+        $this->hitData['HANDLES']['LOCATION'] = new BlockInserter(
+            array(
+                'entityName' => '\Bitrix\Sale\Location\LocationTable',
+                'exactFields' => array('CODE', 'TYPE_ID', 'PARENT_ID', 'LATITUDE', 'LONGITUDE'),
+                'parameters' => array(
+                    'autoIncrementFld' => 'ID',
+                    'mtu' => $mtu
+                )
             )
-        ));
+        );
 
-        $this->hitData['HANDLES']['NAME'] = new BlockInserter(array(
-            'entityName' => '\Bitrix\Sale\Location\Name\LocationTable',
-            'exactFields' => array('NAME', 'NAME_UPPER', 'LANGUAGE_ID', 'LOCATION_ID'),
-            'parameters' => array(
-                'mtu' => $mtu
+        $this->hitData['HANDLES']['NAME'] = new BlockInserter(
+            array(
+                'entityName' => '\Bitrix\Sale\Location\Name\LocationTable',
+                'exactFields' => array('NAME', 'NAME_UPPER', 'LANGUAGE_ID', 'LOCATION_ID'),
+                'parameters' => array(
+                    'mtu' => $mtu
+                )
             )
-        ));
+        );
 
-        $this->hitData['HANDLES']['EXTERNAL'] = new BlockInserter(array(
-            'entityName' => '\Bitrix\Sale\Location\ExternalTable',
-            'exactFields' => array('SERVICE_ID', 'XML_ID', 'LOCATION_ID'),
-            'parameters' => array(
-                'mtu' => $mtu
+        $this->hitData['HANDLES']['EXTERNAL'] = new BlockInserter(
+            array(
+                'entityName' => '\Bitrix\Sale\Location\ExternalTable',
+                'exactFields' => array('SERVICE_ID', 'XML_ID', 'LOCATION_ID'),
+                'parameters' => array(
+                    'mtu' => $mtu
+                )
             )
-        ));
+        );
 
         if ($this->getStep() == 0) {
             // set initial values
@@ -726,8 +793,9 @@ final class ImportProcess extends Location\Util\Process
         $totalSize = 0;
         $fileBytesRead = 0;
 
-        if (!isset($this->data['current']['fIndex']))
+        if (!isset($this->data['current']['fIndex'])) {
             return 0;
+        }
 
         $fIndex = $this->data['current']['fIndex'];
 
@@ -735,14 +803,16 @@ final class ImportProcess extends Location\Util\Process
         foreach ($this->data['files'] as $file) {
             $i++;
 
-            if ($i < $fIndex)
+            if ($i < $fIndex) {
                 $fileBytesRead += $file['size'];
+            }
 
             $totalSize += $file['size'];
         }
 
-        if (!$totalSize)
+        if (!$totalSize) {
             return 0;
+        }
 
         return round($pRange * (intval($fileBytesRead + $this->data['current']['bytesRead']) / $totalSize));
     }
@@ -756,19 +826,23 @@ final class ImportProcess extends Location\Util\Process
 
         $this->restoreIndexes('IX_B_SALE_LOC_PARENT');
 
-        $res = Location\LocationTable::getList(array(
-            'select' => array(
-                'ID', 'CODE'
-            ),
-            'filter' => array(
-                '=PARENT_ID' => 0
+        $res = Location\LocationTable::getList(
+            array(
+                'select' => array(
+                    'ID',
+                    'CODE'
+                ),
+                'filter' => array(
+                    '=PARENT_ID' => 0
+                )
             )
-        ));
+        );
         $relations = array();
         $code2id = array();
         while ($item = $res->fetch()) {
-            if (isset($lay[$item['CODE']]) && ((string)$lay[$item['CODE']]['PARENT_CODE'] != '')/*except root*/)
+            if (isset($lay[$item['CODE']]) && ((string)$lay[$item['CODE']]['PARENT_CODE'] != '')/*except root*/) {
                 $relations[$item['CODE']] = $lay[$item['CODE']]['PARENT_CODE'];
+            }
             // relations is a match between codes from the layout file
 
             $code2id[$item['CODE']] = $item['ID'];
@@ -780,8 +854,9 @@ final class ImportProcess extends Location\Util\Process
             if (isset($parentCode2id[$relations[$code]]) && ((string)$parentCode2id[$relations[$code]] != '')) // parent really exists
             {
                 $res = Location\LocationTable::update($id, array('PARENT_ID' => $parentCode2id[$relations[$code]]));
-                if (!$res->isSuccess())
+                if (!$res->isSuccess()) {
                     throw new Main\SystemException('Cannot make element become a child of its legal parent');
+                }
             }
         }
 
@@ -819,14 +894,17 @@ final class ImportProcess extends Location\Util\Process
                 array_shift($this->data['rebalance']['queue']);
                 if ($node['I'] != 'root') // we dont need for ROOT item in outgoing
                 {
-                    $this->acceptRebalancedNode(array(
-                        'I' => $node['I'],
-                        'D' => $node['D'],
-                        'L' => $node['L'],
-                        'R' => ++$this->data['rebalance']['margin']
-                    ));
-                } else
+                    $this->acceptRebalancedNode(
+                        array(
+                            'I' => $node['I'],
+                            'D' => $node['D'],
+                            'L' => $node['L'],
+                            'R' => ++$this->data['rebalance']['margin']
+                        )
+                    );
+                } else {
                     $this->data['rebalance']['margin']++;
+                }
             } else {
                 $a = $this->getCachedBundle($node['I']);
 
@@ -839,27 +917,35 @@ final class ImportProcess extends Location\Util\Process
                             array_unshift($this->data['rebalance']['queue'], array('I' => $id, 'D' => $node['D'] + 1));
                         } else // we dont need to put it to the query
                         {
-                            $this->acceptRebalancedNode(array(
-                                'I' => $id,
-                                'D' => $node['D'] + 1,
-                                'L' => ++$this->data['rebalance']['margin'],
-                                'R' => ++$this->data['rebalance']['margin']
-                            ));
+                            $this->acceptRebalancedNode(
+                                array(
+                                    'I' => $id,
+                                    'D' => $node['D'] + 1,
+                                    'L' => ++$this->data['rebalance']['margin'],
+                                    'R' => ++$this->data['rebalance']['margin']
+                                )
+                            );
                         }
                     }
                 } else {
                     array_shift($this->data['rebalance']['queue']);
-                    $this->acceptRebalancedNode(array(
-                        'I' => $node['I'],
-                        'D' => $node['D'],
-                        'L' => ++$this->data['rebalance']['margin'],
-                        'R' => ++$this->data['rebalance']['margin']
-                    ));
+                    $this->acceptRebalancedNode(
+                        array(
+                            'I' => $node['I'],
+                            'D' => $node['D'],
+                            'L' => ++$this->data['rebalance']['margin'],
+                            'R' => ++$this->data['rebalance']['margin']
+                        )
+                    );
                 }
             }
         }
 
-        $this->logMessage('Q size is ' . count($this->data['rebalance']['queue']) . ' already processed: ' . $this->data['processed'] . '/' . $this->data['rebalance']['cnt']);
+        $this->logMessage(
+            'Q size is ' . count(
+                $this->data['rebalance']['queue']
+            ) . ' already processed: ' . $this->data['processed'] . '/' . $this->data['rebalance']['cnt']
+        );
         $this->logMemoryUsage();
 
         if (empty($this->data['rebalance']['queue'])) {
@@ -870,16 +956,18 @@ final class ImportProcess extends Location\Util\Process
             return;
         }
 
-        if ($this->rebalanceInserter)
+        if ($this->rebalanceInserter) {
             $this->rebalanceInserter->flush();
+        }
 
         $this->nextStep();
     }
 
     protected function getSubpercentForStageRebalanceWalkTree()
     {
-        if (!$this->data['processed'] || !$this->data['rebalance']['cnt'])
+        if (!$this->data['processed'] || !$this->data['rebalance']['cnt']) {
             return 0;
+        }
 
         $pRange = $this->getCurrentPercentRange();
         $part = round($pRange * ($this->data['processed'] / $this->data['rebalance']['cnt']));
@@ -946,8 +1034,9 @@ final class ImportProcess extends Location\Util\Process
 
     protected function getLanguageId()
     {
-        if (isset($this->options['LANGUAGE_ID']))
+        if (isset($this->options['LANGUAGE_ID'])) {
             return $this->options['LANGUAGE_ID'];
+        }
 
         return LANGUAGE_ID;
     }
@@ -958,20 +1047,24 @@ final class ImportProcess extends Location\Util\Process
     public function getTypes()
     {
         $result = array();
-        $res = Location\TypeTable::getList(array(
-            'select' => array(
-                'CODE', 'TNAME' => 'NAME.NAME'
-            ),
-            'filter' => array(
-                'NAME.LANGUAGE_ID' => $this->getLanguageId()
-            ),
-            'order' => array(
-                'SORT' => 'asc',
-                'NAME.NAME' => 'asc'
+        $res = Location\TypeTable::getList(
+            array(
+                'select' => array(
+                    'CODE',
+                    'TNAME' => 'NAME.NAME'
+                ),
+                'filter' => array(
+                    'NAME.LANGUAGE_ID' => $this->getLanguageId()
+                ),
+                'order' => array(
+                    'SORT' => 'asc',
+                    'NAME.NAME' => 'asc'
+                )
             )
-        ));
-        while ($item = $res->fetch())
+        );
+        while ($item = $res->fetch()) {
             $result[$item['CODE']] = $item['TNAME'];
+        }
 
         return $result;
     }
@@ -988,15 +1081,17 @@ final class ImportProcess extends Location\Util\Process
         if (empty($this->stat)) {
             $types = \Bitrix\Sale\Location\Admin\TypeHelper::getTypes(array('LANGUAGE_ID' => $this->getLanguageId()));
 
-            $res = Location\LocationTable::getList(array(
-                'select' => array(
-                    'CNT',
-                    'TCODE' => 'TYPE.CODE'
-                ),
-                'group' => array(
-                    'TYPE_ID'
+            $res = Location\LocationTable::getList(
+                array(
+                    'select' => array(
+                        'CNT',
+                        'TCODE' => 'TYPE.CODE'
+                    ),
+                    'group' => array(
+                        'TYPE_ID'
+                    )
                 )
-            ));
+            );
             $total = 0;
             $stat = array();
             while ($item = $res->fetch()) {
@@ -1014,19 +1109,21 @@ final class ImportProcess extends Location\Util\Process
 
             $this->stat['TOTAL'] = array('CNT' => $total, 'CODE' => 'TOTAL');
 
-            $res = Location\GroupTable::getList(array(
-                'runtime' => array(
-                    'CNT' => array(
-                        'data_type' => 'integer',
-                        'expression' => array(
-                            'COUNT(*)'
+            $res = Location\GroupTable::getList(
+                array(
+                    'runtime' => array(
+                        'CNT' => array(
+                            'data_type' => 'integer',
+                            'expression' => array(
+                                'COUNT(*)'
+                            )
                         )
+                    ),
+                    'select' => array(
+                        'CNT'
                     )
-                ),
-                'select' => array(
-                    'CNT'
                 )
-            ))->fetch();
+            )->fetch();
 
             $this->stat['GROUPS'] = array('CNT' => intval($res['CNT']), 'CODE' => 'GROUPS');
         }
@@ -1039,15 +1136,17 @@ final class ImportProcess extends Location\Util\Process
         $lay = $this->getRemoteLayout(true);
 
         $parentness = array();
-        foreach ($lay as $data)
+        foreach ($lay as $data) {
             $parentness[$data['PARENT_CODE']] += 1;
+        }
 
         $bundles = array_flip($this->data['settings']['sets']);
 
         $selectedLayoutParts = array();
         foreach ($bundles as $bundle => $void) {
-            if (!isset($lay[$bundle]))
+            if (!isset($lay[$bundle])) {
                 throw new Main\SystemException('Unknown bundle passed in request');
+            }
 
             // obtaining intermediate chain parts
             $chain = array();
@@ -1058,17 +1157,25 @@ final class ImportProcess extends Location\Util\Process
                 $i++;
 
                 if ($i > 50) // smth is really bad
-                    throw new Main\SystemException('Too deep recursion got when building chains. Layout file is broken');
+                {
+                    throw new Main\SystemException(
+                        'Too deep recursion got when building chains. Layout file is broken'
+                    );
+                }
 
                 if (isset($lay[$currentBundle])) {
                     $chain[] = $currentBundle;
-                    if (strlen($lay[$currentBundle]['PARENT_CODE'])) {
+                    if ($lay[$currentBundle]['PARENT_CODE'] <> '') {
                         $currentBundle = $lay[$currentBundle]['PARENT_CODE'];
 
-                        if (!isset($lay[$currentBundle]))
-                            throw new Main\SystemException('Unknown parent bundle found (' . $currentBundle . '). Layout file is broken');
-                    } else
+                        if (!isset($lay[$currentBundle])) {
+                            throw new Main\SystemException(
+                                'Unknown parent bundle found (' . $currentBundle . '). Layout file is broken'
+                            );
+                        }
+                    } else {
                         $currentBundle = false;
+                    }
                 }
             }
 
@@ -1084,8 +1191,9 @@ final class ImportProcess extends Location\Util\Process
                     }
                 }
 
-                if (!empty($subChain))
+                if (!empty($subChain)) {
                     $selectedLayoutParts = array_merge($selectedLayoutParts, $subChain);
+                }
             }
         }
 
@@ -1095,8 +1203,9 @@ final class ImportProcess extends Location\Util\Process
         $this->data['settings']['bundles'] = array('endpoints' => array(), 'allpoints' => $selectedLayoutParts);
 
         foreach ($selectedLayoutParts as $bCode) {
-            if (!isset($parentness[$bCode]))
+            if (!isset($parentness[$bCode])) {
                 $this->data['settings']['bundles']['endpoints'][] = $bCode;
+            }
             //else
             //	$this->data['settings']['bundles']['middlepoints'][] = $bCode;
         }
@@ -1108,23 +1217,25 @@ final class ImportProcess extends Location\Util\Process
         $converted = array();
 
         foreach ($block as $line) {
-            if ($line[0] == 'S')
+            if ($line[0] == 'S') {
                 $typeCode = 'COUNTRY';
-            elseif ($line[0] == 'R')
+            } elseif ($line[0] == 'R') {
                 $typeCode = 'REGION';
-            elseif ($line[0] == 'T')
+            } elseif ($line[0] == 'T') {
                 $typeCode = 'CITY';
-            else
+            } else {
                 throw new Main\SystemException('Unknown type found in legacy file');
+            }
 
             $code = md5(implode(':', $line));
 
-            if ($typeCode == 'REGION')
+            if ($typeCode == 'REGION') {
                 $parentCode = $this->data['current']['legacy']['lastCOUNTRY'];
-            elseif ($typeCode == 'CITY')
+            } elseif ($typeCode == 'CITY') {
                 $parentCode = $this->data['current']['legacy']['lastParent'];
-            else
+            } else {
                 $parentCode = '';
+            }
 
             if ($typeCode != 'CITY') {
                 $this->data['current']['legacy']['last' . $typeCode] = $code;
@@ -1174,8 +1285,9 @@ final class ImportProcess extends Location\Util\Process
 
         $result = array();
         if ($getFlat) {
-            foreach ($res as $line)
+            foreach ($res as $line) {
                 $result[$line['CODE']] = $line;
+            }
             $csv->CloseFile();
             return $result;
         }
@@ -1208,8 +1320,9 @@ final class ImportProcess extends Location\Util\Process
             $res = $csv->ReadBlock($localPath . self::LOCAL_TYPE_FILE);
 
             $result = array();
-            foreach ($res as $line)
+            foreach ($res as $line) {
                 $result[$line['CODE']] = $line;
+            }
 
             $this->data['settings']['remote']['types'] = $result;
             $csv->CloseFile();
@@ -1227,14 +1340,20 @@ final class ImportProcess extends Location\Util\Process
         if (!$this->useCache || !isset($this->data['settings']['remote']['external_services'])) {
             list($localPath, $tmpDirCreated) = $this->getTemporalDirectory();
 
-            static::downloadFile(self::REMOTE_EXTERNAL_SERVICE_FILE, self::LOCAL_EXTERNAL_SERVICE_FILE, false, $localPath);
+            static::downloadFile(
+                self::REMOTE_EXTERNAL_SERVICE_FILE,
+                self::LOCAL_EXTERNAL_SERVICE_FILE,
+                false,
+                $localPath
+            );
 
             $csv = new CSVReader();
             $res = $csv->ReadBlock($localPath . self::LOCAL_EXTERNAL_SERVICE_FILE);
 
             $result = array();
-            foreach ($res as $line)
+            foreach ($res as $line) {
                 $result[$line['CODE']] = $line;
+            }
 
             $this->data['settings']['remote']['external_services'] = $result;
             $csv->CloseFile();
@@ -1277,8 +1396,9 @@ final class ImportProcess extends Location\Util\Process
         $types = $this->getRemoteTypes();
         $levels = array();
 
-        if (!isset($langId))
+        if (!isset($langId)) {
             $langId = $this->getLanguageId();
+        }
 
         foreach ($types as $type) {
             if ($type['SELECTORLEVEL'] = intval($type['SELECTORLEVEL'])) {
@@ -1286,13 +1406,15 @@ final class ImportProcess extends Location\Util\Process
                 $levels[$type['SELECTORLEVEL']]['NAMES'][] = $name['NAME'];
                 $levels[$type['SELECTORLEVEL']]['TYPES'][] = $type['CODE'];
 
-                if ($type['DEFAULTSELECT'] == '1')
+                if ($type['DEFAULTSELECT'] == '1') {
                     $levels[$type['SELECTORLEVEL']]['DEFAULT'] = true;
+                }
             }
         }
 
-        foreach ($levels as &$group)
+        foreach ($levels as &$group) {
             $group['NAMES'] = implode(', ', $group['NAMES']);
+        }
 
         ksort($levels, SORT_NUMERIC);
 
@@ -1306,7 +1428,13 @@ final class ImportProcess extends Location\Util\Process
         if ($langs == null) {
             $langs = array();
 
-            $res = \Bitrix\Main\SiteTable::getList(array('filter' => array('ACTIVE' => 'Y'), 'select' => array('LANGUAGE_ID'), 'group' => array('LANGUAGE_ID')));
+            $res = \Bitrix\Main\SiteTable::getList(
+                array(
+                    'filter' => array('ACTIVE' => 'Y'),
+                    'select' => array('LANGUAGE_ID'),
+                    'group' => array('LANGUAGE_ID')
+                )
+            );
             while ($item = $res->fetch()) {
                 $langs[ToUpper($item['LANGUAGE_ID'])] = true;
             }
@@ -1322,17 +1450,21 @@ final class ImportProcess extends Location\Util\Process
         $required = array(ToUpper($this->getLanguageId()));
 
         $langs = Location\Admin\NameHelper::getLanguageList();
-        if (isset($langs['en']))
+        if (isset($langs['en'])) {
             $required[] = 'EN';
+        }
 
-        return array_unique(array_merge($required, static::getSiteLanguages())); // current language plus for all active sites
+        return array_unique(
+            array_merge($required, static::getSiteLanguages())
+        ); // current language plus for all active sites
     }
 
     // read type.csv and build type table
     protected function buildTypeTable()
     {
-        if ($this->data['types_processed'])
+        if ($this->data['types_processed']) {
             return;
+        }
 
         // read existed
         $existed = static::getExistedTypes();
@@ -1348,27 +1480,32 @@ final class ImportProcess extends Location\Util\Process
 
                 $typesGroupped = $this->getTypeLevels();
 
-                if (!isset($typesGroupped[$dl]))
+                if (!isset($typesGroupped[$dl])) {
                     throw new Main\SystemException('Unknow type level to limit');
+                }
 
                 $allowed = array();
                 foreach ($typesGroupped as $gId => $group) {
-                    if ($gId > $dl)
+                    if ($gId > $dl) {
                         break;
+                    }
 
-                    foreach ($group['TYPES'] as $type)
+                    foreach ($group['TYPES'] as $type) {
                         $allowed[] = $type;
+                    }
                 }
 
                 $this->data['types']['allowed'] = $allowed;
             } else {
-                foreach ($rTypes as $type)
+                foreach ($rTypes as $type) {
                     $this->data['types']['allowed'][] = $type['CODE'];
+                }
             }
         } elseif ($this->checkSource(self::SOURCE_FILE)) {
             $codes = array();
-            if (is_array($existed) && !empty($existed))
+            if (is_array($existed) && !empty($existed)) {
                 $codes = array_keys($existed);
+            }
 
             $this->data['types']['allowed'] = $codes;
         }
@@ -1382,19 +1519,22 @@ final class ImportProcess extends Location\Util\Process
 
     protected function checkExternalServiceAllowed($code)
     {
-        if ($this->data['settings']['additional'] === false)
-            return true; // ANY
+        if ($this->data['settings']['additional'] === false) {
+            return true;
+        } // ANY
 
-        if ($code == 'ZIP_LOWER')
+        if ($code == 'ZIP_LOWER') {
             $code = 'ZIP';
+        }
 
         return isset($this->data['settings']['additional'][$code]);
     }
 
     protected function buildExternalSerivceTable()
     {
-        if ($this->data['external_processed'])
+        if ($this->data['external_processed']) {
             return;
+        }
 
         // read existed
         $existed = static::getExistedServices();
@@ -1420,25 +1560,36 @@ final class ImportProcess extends Location\Util\Process
         );
 
         // get static index, it will be always in memory
-        $parameters['filter'] = array('TYPE.CODE' => array('COUNTRY', 'COUNTRY_DISTRICT', 'REGION')); // todo: from typegroup later
+        $parameters['filter'] = array(
+            'TYPE.CODE' => array(
+                'COUNTRY',
+                'COUNTRY_DISTRICT',
+                'REGION'
+            )
+        ); // todo: from typegroup later
 
         $this->data['existedlocs'] = array('static' => array());
         $res = Location\LocationTable::getList($parameters);
-        while ($item = $res->fetch())
-            $this->data['existedlocs']['static'][$item['CODE']] = $item['ID']; // get existed, "static" index
+        while ($item = $res->fetch()) {
+            $this->data['existedlocs']['static'][$item['CODE']] = $item['ID'];
+        } // get existed, "static" index
     }
 
     protected function getLocationCodeToIdMapQuery($buffer, &$result)
     {
-        $res = Location\LocationTable::getList(array('filter' => array('CODE' => $buffer), 'select' => array('ID', 'CODE')));
-        while ($item = $res->fetch())
+        $res = Location\LocationTable::getList(
+            array('filter' => array('CODE' => $buffer), 'select' => array('ID', 'CODE'))
+        );
+        while ($item = $res->fetch()) {
             $result[$item['CODE']] = $item['ID'];
+        }
     }
 
     protected function getLocationCodeToIdMap($codes)
     {
-        if (empty($codes))
+        if (empty($codes)) {
             return array();
+        }
 
         $i = -1;
         $buffer = array();
@@ -1453,8 +1604,9 @@ final class ImportProcess extends Location\Util\Process
                 $i = -1;
             }
 
-            if (strlen($code))
+            if ($code <> '') {
                 $buffer[] = $code;
+            }
         }
 
         // last iteration
@@ -1469,8 +1621,9 @@ final class ImportProcess extends Location\Util\Process
 
         $cleaned = false;
         foreach ($this->data['existedlocs'] as $gid => $bundles) {
-            if ($gid == 'static' || in_array($gid, $memGroups))
+            if ($gid == 'static' || in_array($gid, $memGroups)) {
                 continue;
+            }
 
             $cleaned = true;
 
@@ -1494,25 +1647,31 @@ final class ImportProcess extends Location\Util\Process
         $indexName = $this->dbHelper->forSql(trim($indexName));
         $tableName = $this->dbHelper->forSql(trim($tableName));
 
-        if (!strlen($indexName) || !strlen($tableName))
+        if (!mb_strlen($indexName) || !mb_strlen($tableName)) {
             return false;
+        }
 
-        if ($this->dbConnType == self::DB_TYPE_MYSQL)
+        if ($this->dbConnType == self::DB_TYPE_MYSQL) {
             $res = $this->dbConnection->query("show index from " . $tableName);
-        elseif ($this->dbConnType == self::DB_TYPE_ORACLE)
-            $res = $this->dbConnection->query("SELECT INDEX_NAME as Key_name FROM USER_IND_COLUMNS WHERE TABLE_NAME = '" . ToUpper($tableName) . "'");
-        elseif ($this->dbConnType == self::DB_TYPE_MSSQL) {
-            $res = $this->dbConnection->query("SELECT si.name Key_name
+        } elseif ($this->dbConnType == self::DB_TYPE_ORACLE) {
+            $res = $this->dbConnection->query(
+                "SELECT INDEX_NAME as Key_name FROM USER_IND_COLUMNS WHERE TABLE_NAME = '" . ToUpper($tableName) . "'"
+            );
+        } elseif ($this->dbConnType == self::DB_TYPE_MSSQL) {
+            $res = $this->dbConnection->query(
+                "SELECT si.name Key_name
 				FROM sysindexkeys s
 					INNER JOIN syscolumns c ON s.id = c.id AND s.colid = c.colid
 					INNER JOIN sysobjects o ON s.id = o.Id AND o.xtype = 'U'
 					LEFT JOIN sysindexes si ON si.indid = s.indid AND si.id = s.id
-				WHERE o.name = '" . ToUpper($tableName) . "'");
+				WHERE o.name = '" . ToUpper($tableName) . "'"
+            );
         }
 
         while ($item = $res->fetch()) {
-            if ($item['Key_name'] == $indexName || $item['KEY_NAME'] == $indexName)
+            if ($item['Key_name'] == $indexName || $item['KEY_NAME'] == $indexName) {
                 return true;
+            }
         }
 
         return false;
@@ -1523,18 +1682,21 @@ final class ImportProcess extends Location\Util\Process
         $indexName = $this->dbHelper->forSql(trim($indexName));
         $tableName = $this->dbHelper->forSql(trim($tableName));
 
-        if (!strlen($indexName) || !strlen($tableName))
+        if (!mb_strlen($indexName) || !mb_strlen($tableName)) {
             return false;
+        }
 
-        if (!$this->checkIndexExistsByName($indexName, $tableName))
+        if (!$this->checkIndexExistsByName($indexName, $tableName)) {
             return false;
+        }
 
-        if ($this->dbConnType == self::DB_TYPE_MYSQL)
+        if ($this->dbConnType == self::DB_TYPE_MYSQL) {
             $this->dbConnection->query("alter table {$tableName} drop index {$indexName}");
-        elseif ($this->dbConnType == self::DB_TYPE_ORACLE)
+        } elseif ($this->dbConnType == self::DB_TYPE_ORACLE) {
             $this->dbConnection->query("drop index {$indexName}");
-        elseif ($this->dbConnType == self::DB_TYPE_MSSQL)
+        } elseif ($this->dbConnType == self::DB_TYPE_MSSQL) {
             $this->dbConnection->query("drop index {$indexName} on {$tableName}");
+        }
 
         return true;
     }
@@ -1546,15 +1708,30 @@ final class ImportProcess extends Location\Util\Process
         $locationExternalTable = Location\ExternalTable::getTableName();
 
         return array(
-            'IX_B_SALE_LOC_MARGINS' => array('TABLE' => $locationTable, 'COLUMNS' => array('LEFT_MARGIN', 'RIGHT_MARGIN')),
-            'IX_B_SALE_LOC_MARGINS_REV' => array('TABLE' => $locationTable, 'COLUMNS' => array('RIGHT_MARGIN', 'LEFT_MARGIN')),
+            'IX_B_SALE_LOC_MARGINS' => array(
+                'TABLE' => $locationTable,
+                'COLUMNS' => array('LEFT_MARGIN', 'RIGHT_MARGIN')
+            ),
+            'IX_B_SALE_LOC_MARGINS_REV' => array(
+                'TABLE' => $locationTable,
+                'COLUMNS' => array('RIGHT_MARGIN', 'LEFT_MARGIN')
+            ),
             'IX_B_SALE_LOC_PARENT' => array('TABLE' => $locationTable, 'COLUMNS' => array('PARENT_ID')),
             'IX_B_SALE_LOC_DL' => array('TABLE' => $locationTable, 'COLUMNS' => array('DEPTH_LEVEL')),
             'IX_B_SALE_LOC_TYPE' => array('TABLE' => $locationTable, 'COLUMNS' => array('TYPE_ID')),
             'IX_B_SALE_LOC_NAME_NAME_U' => array('TABLE' => $locationNameTable, 'COLUMNS' => array('NAME_UPPER')),
-            'IX_B_SALE_LOC_NAME_LI_LI' => array('TABLE' => $locationNameTable, 'COLUMNS' => array('LOCATION_ID', 'LANGUAGE_ID')),
-            'IX_B_SALE_LOC_EXT_LID_SID' => array('TABLE' => $locationExternalTable, 'COLUMNS' => array('LOCATION_ID', 'SERVICE_ID')),
-            'IX_SALE_LOCATION_TYPE_MARGIN' => array('TABLE' => $locationTable, 'COLUMNS' => array('TYPE_ID', 'LEFT_MARGIN', 'RIGHT_MARGIN')),
+            'IX_B_SALE_LOC_NAME_LI_LI' => array(
+                'TABLE' => $locationNameTable,
+                'COLUMNS' => array('LOCATION_ID', 'LANGUAGE_ID')
+            ),
+            'IX_B_SALE_LOC_EXT_LID_SID' => array(
+                'TABLE' => $locationExternalTable,
+                'COLUMNS' => array('LOCATION_ID', 'SERVICE_ID')
+            ),
+            'IX_SALE_LOCATION_TYPE_MARGIN' => array(
+                'TABLE' => $locationTable,
+                'COLUMNS' => array('TYPE_ID', 'LEFT_MARGIN', 'RIGHT_MARGIN')
+            ),
 
             // legacy
             'IXS_LOCATION_COUNTRY_ID' => array('TABLE' => $locationTable, 'COLUMNS' => array('COUNTRY_ID')),
@@ -1562,9 +1739,21 @@ final class ImportProcess extends Location\Util\Process
             'IXS_LOCATION_CITY_ID' => array('TABLE' => $locationTable, 'COLUMNS' => array('CITY_ID')),
 
             // obsolete
-            'IX_B_SALE_LOCATION_1' => array('TABLE' => $locationTable, 'COLUMNS' => array('COUNTRY_ID'), 'DROP_ONLY' => true),
-            'IX_B_SALE_LOCATION_2' => array('TABLE' => $locationTable, 'COLUMNS' => array('REGION_ID'), 'DROP_ONLY' => true),
-            'IX_B_SALE_LOCATION_3' => array('TABLE' => $locationTable, 'COLUMNS' => array('CITY_ID'), 'DROP_ONLY' => true),
+            'IX_B_SALE_LOCATION_1' => array(
+                'TABLE' => $locationTable,
+                'COLUMNS' => array('COUNTRY_ID'),
+                'DROP_ONLY' => true
+            ),
+            'IX_B_SALE_LOCATION_2' => array(
+                'TABLE' => $locationTable,
+                'COLUMNS' => array('REGION_ID'),
+                'DROP_ONLY' => true
+            ),
+            'IX_B_SALE_LOCATION_3' => array(
+                'TABLE' => $locationTable,
+                'COLUMNS' => array('CITY_ID'),
+                'DROP_ONLY' => true
+            ),
         );
     }
 
@@ -1573,8 +1762,9 @@ final class ImportProcess extends Location\Util\Process
         $map = static::getIndexMap();
 
         foreach ($map as $index => $ixData) {
-            if ($certainIndex !== false && $certainIndex != $index)
+            if ($certainIndex !== false && $certainIndex != $index) {
                 continue;
+            }
 
             $this->dropIndexByName($index, $ixData['TABLE']);
         }
@@ -1585,16 +1775,21 @@ final class ImportProcess extends Location\Util\Process
         $map = $this->getIndexMap();
 
         foreach ($map as $ixName => $ixData) {
-            if ($ixData['DROP_ONLY'] === true)
+            if ($ixData['DROP_ONLY'] === true) {
                 continue;
+            }
 
-            if ($certainIndex !== false && $certainIndex != $ixName)
+            if ($certainIndex !== false && $certainIndex != $ixName) {
                 continue;
+            }
 
-            if ($this->checkIndexExistsByName($ixName, $ixData['TABLE']))
+            if ($this->checkIndexExistsByName($ixName, $ixData['TABLE'])) {
                 return false;
+            }
 
-            $this->dbConnection->query('CREATE INDEX ' . $ixName . ' ON ' . $ixData['TABLE'] . ' (' . implode(', ', $ixData['COLUMNS']) . ')');
+            $this->dbConnection->query(
+                'CREATE INDEX ' . $ixName . ' ON ' . $ixData['TABLE'] . ' (' . implode(', ', $ixData['COLUMNS']) . ')'
+            );
         }
     }
 
@@ -1603,9 +1798,12 @@ final class ImportProcess extends Location\Util\Process
         $locationTable = Location\LocationTable::getTableName();
 
         $bundle = array();
-        $res = $this->dbConnection->query("select ID from {$locationTable} where PARENT_ID = " . ($id == 'root' ? '0' : intval($id)));
-        while ($item = $res->fetch())
+        $res = $this->dbConnection->query(
+            "select ID from {$locationTable} where PARENT_ID = " . ($id == 'root' ? '0' : intval($id))
+        );
+        while ($item = $res->fetch()) {
             $bundle[] = $item['ID'];
+        }
 
         return $bundle;
     }
@@ -1614,7 +1812,9 @@ final class ImportProcess extends Location\Util\Process
     {
         $locationTable = Location\LocationTable::getTableName();
 
-        $res = $this->dbConnection->query("select count(*) as CNT from {$locationTable} where PARENT_ID = " . ($id == 'root' ? '0' : intval($id)))->fetch();
+        $res = $this->dbConnection->query(
+            "select count(*) as CNT from {$locationTable} where PARENT_ID = " . ($id == 'root' ? '0' : intval($id))
+        )->fetch();
 
         return intval($res['CNT']);
     }
@@ -1628,7 +1828,16 @@ final class ImportProcess extends Location\Util\Process
 
             // merge temp table with location table
             // there should be more generalized method
-            Location\LocationTable::mergeRelationsFromTemporalTable(self::TREE_REBALANCE_TEMP_TABLE_NAME, false, array('LEFT_MARGIN' => 'L', 'RIGHT_MARGIN' => 'R', 'DEPTH_LEVEL' => 'D', 'ID' => 'I'));
+            Location\LocationTable::mergeRelationsFromTemporalTable(
+                self::TREE_REBALANCE_TEMP_TABLE_NAME,
+                false,
+                array(
+                    'LEFT_MARGIN' => 'L',
+                    'RIGHT_MARGIN' => 'R',
+                    'DEPTH_LEVEL' => 'D',
+                    'ID' => 'I'
+                )
+            );
         }
     }
 
@@ -1637,23 +1846,26 @@ final class ImportProcess extends Location\Util\Process
         $this->createTempTable();
 
         if (!$this->rebalanceInserter) {
-            if ($this->dbConnType == self::DB_TYPE_ORACLE)
+            if ($this->dbConnType == self::DB_TYPE_ORACLE) {
                 $mtu = self::TREE_REBALANCE_TEMP_BLOCK_LEN_O;
-            else
+            } else {
                 $mtu = self::TREE_REBALANCE_TEMP_BLOCK_LEN;
+            }
 
-            $this->rebalanceInserter = new BlockInserter(array(
-                'tableName' => self::TREE_REBALANCE_TEMP_TABLE_NAME,
-                'exactFields' => array(
-                    'I' => array('data_type' => 'integer'),
-                    'L' => array('data_type' => 'integer'),
-                    'R' => array('data_type' => 'integer'),
-                    'D' => array('data_type' => 'integer'),
-                ),
-                'parameters' => array(
-                    'mtu' => $mtu
+            $this->rebalanceInserter = new BlockInserter(
+                array(
+                    'tableName' => self::TREE_REBALANCE_TEMP_TABLE_NAME,
+                    'exactFields' => array(
+                        'I' => array('data_type' => 'integer'),
+                        'L' => array('data_type' => 'integer'),
+                        'R' => array('data_type' => 'integer'),
+                        'D' => array('data_type' => 'integer'),
+                    ),
+                    'parameters' => array(
+                        'mtu' => $mtu
+                    )
                 )
-            ));
+            );
         }
 
         $this->data['processed']++;
@@ -1663,37 +1875,41 @@ final class ImportProcess extends Location\Util\Process
 
     private function dropTempTable()
     {
-        if ($this->dbConnection->isTableExists(self::TREE_REBALANCE_TEMP_TABLE_NAME))
+        if ($this->dbConnection->isTableExists(self::TREE_REBALANCE_TEMP_TABLE_NAME)) {
             $this->dbConnection->query("drop table " . self::TREE_REBALANCE_TEMP_TABLE_NAME);
+        }
     }
 
     private function createTempTable()
     {
-        if ($this->data['rebalance']['tableCreated'])
+        if ($this->data['rebalance']['tableCreated']) {
             return;
+        }
 
         $tableName = self::TREE_REBALANCE_TEMP_TABLE_NAME;
 
-        if ($this->dbConnection->isTableExists($tableName))
+        if ($this->dbConnection->isTableExists($tableName)) {
             $this->dbConnection->query("truncate table {$tableName}");
-        else {
-
+        } else {
             if ($this->dbConnType == self::DB_TYPE_ORACLE) {
-                $this->dbConnection->query("create table {$tableName} (
+                $this->dbConnection->query(
+                    "create table {$tableName} (
 					I NUMBER(18),
 					L NUMBER(18),
 					R NUMBER(18),
 					D NUMBER(18)
-				)");
+				)"
+                );
             } else {
-                $this->dbConnection->query("create table {$tableName} (
+                $this->dbConnection->query(
+                    "create table {$tableName} (
 					I int,
 					L int,
 					R int,
 					D int
-				)");
+				)"
+                );
             }
-
         }
 
         $this->data['rebalance']['tableCreated'] = true;
@@ -1717,43 +1933,49 @@ final class ImportProcess extends Location\Util\Process
     protected static function downloadFile($fileName, $storeAs, $skip404 = false, $storeTo = false)
     {
         // useless thing
-        if (!$storeTo)
+        if (!$storeTo) {
             $storeTo = \CTempFile::GetDirectoryName(1);
+        }
 
         $storeTo .= $storeAs;
 
         if (file_exists($storeTo)) {
-            if (!is_writable($storeTo))
+            if (!is_writable($storeTo)) {
                 throw new Main\SystemException('Cannot remove previous ' . $storeAs . ' file');
+            }
 
             unlink($storeTo);
         }
 
-        if (!defined('SALE_LOCATIONS_IMPORT_SOURCE_URL'))
+        if (!defined('SALE_LOCATIONS_IMPORT_SOURCE_URL')) {
             $query = 'http://' . self::DISTRIBUTOR_HOST . ':' . self::DISTRIBUTOR_PORT . self::REMOTE_PATH . $fileName;
-        else
+        } else {
             $query = 'http://' . SALE_LOCATIONS_IMPORT_SOURCE_URL . '/' . $fileName;
+        }
 
         $client = new HttpClient();
 
         if (!$client->download($query, $storeTo)) {
             $eFormatted = array();
-            foreach ($client->getError() as $code => $desc)
+            foreach ($client->getError() as $code => $desc) {
                 $eFormatted[] = trim($desc . ' (' . $code . ')');
+            }
 
             throw new Main\SystemException('File download failed: ' . implode(', ', $eFormatted) . ' (' . $query . ')');
         }
 
         $status = intval($client->getStatus());
 
-        if ($status != 200 && file_exists($storeTo))
+        if ($status != 200 && file_exists($storeTo)) {
             unlink($storeTo);
+        }
 
         $okay = $status == 200 || ($status == 404 && $skip404);
 
         // honestly we should check for all 2xx codes, but for now this is enough
-        if (!$okay)
+        if (!$okay) {
             throw new Main\SystemException('File download failed: http error ' . $status . ' (' . $query . ')');
+        }
 
         return filesize($storeTo);
     }
@@ -1773,15 +1995,19 @@ final class ImportProcess extends Location\Util\Process
     public function saveUserFile($inputName)
     {
         if (is_array($_FILES[$inputName])) {
-            if ($_FILES[$inputName]['error'] > 0)
+            if ($_FILES[$inputName]['error'] > 0) {
                 throw new Main\SystemException(self::explainFileUploadError($_FILES[$inputName]['error']));
+            }
 
-            if (!in_array($_FILES[$inputName]['type'], array(
-                'text/plain',
-                'text/csv',
-                'application/vnd.ms-excel',
-                'application/octet-stream'
-            ))) {
+            if (!in_array(
+                $_FILES[$inputName]['type'],
+                array(
+                    'text/plain',
+                    'text/csv',
+                    'application/vnd.ms-excel',
+                    'application/octet-stream'
+                )
+            )) {
                 throw new Main\SystemException('Unsupported file type');
             }
 
@@ -1796,8 +2022,9 @@ final class ImportProcess extends Location\Util\Process
             }
 
             $_SESSION[static::USER_FILE_DIRECTORY_SESSION_KEY] = $localPath;
-        } else
+        } else {
             throw new Main\SystemException('No file were uploaded');
+        }
     }
 
     protected static function explainFileUploadError($error)
@@ -1836,13 +2063,16 @@ final class ImportProcess extends Location\Util\Process
     protected function getTemporalDirectory()
     {
         $wasCreated = false;
-        if ((string)$this->data['LOCAL_PATH'] != '' && \Bitrix\Main\IO\Directory::isDirectoryExists($this->data['LOCAL_PATH'])) {
+        if ((string)$this->data['LOCAL_PATH'] != '' && \Bitrix\Main\IO\Directory::isDirectoryExists(
+                $this->data['LOCAL_PATH']
+            )) {
             $localPath = $this->data['LOCAL_PATH'];
         } else {
             $wasCreated = true;
             $localPath = \CTempFile::GetDirectoryName(10);
-            if (!\Bitrix\Main\IO\Directory::isDirectoryExists($localPath))
+            if (!\Bitrix\Main\IO\Directory::isDirectoryExists($localPath)) {
                 \Bitrix\Main\IO\Directory::createDirectory($localPath);
+            }
         }
 
         return array($localPath, $wasCreated);
@@ -1867,8 +2097,9 @@ final class ImportProcess extends Location\Util\Process
         $result = array();
         if (is_array($value)) {
             foreach ($value as $v) {
-                if (strlen($v))
+                if ($v <> '') {
                     $result[] = $this->parseQueryCode($v);
+                }
             }
         }
 
@@ -1882,8 +2113,9 @@ final class ImportProcess extends Location\Util\Process
     {
         $value = ToLower(trim($value));
 
-        if (!preg_match('#^[a-z0-9]+$#i', $value))
+        if (!preg_match('#^[a-z0-9]+$#i', $value)) {
             throw new Main\SystemException('Bad request parameter');
+        }
 
         return $value;
     }
@@ -1900,8 +2132,9 @@ final class ImportProcess extends Location\Util\Process
     {
         $existed = array();
         $res = Location\TypeTable::getList(array('select' => array('ID', 'CODE', 'SORT')));
-        while ($item = $res->fetch())
+        while ($item = $res->fetch()) {
             $existed[$item['CODE']] = $item['ID'];
+        }
 
         return $existed;
     }
@@ -1910,8 +2143,9 @@ final class ImportProcess extends Location\Util\Process
     {
         $existed = array();
         $res = Location\ExternalServiceTable::getList(array('select' => array('ID', 'CODE')));
-        while ($item = $res->fetch())
+        while ($item = $res->fetch()) {
             $existed[$item['CODE']] = $item['ID'];
+        }
 
         return $existed;
     }
@@ -1919,8 +2153,9 @@ final class ImportProcess extends Location\Util\Process
     public static function createTypes($types, $existed = false)
     {
         // read existed
-        if ($existed === false)
+        if ($existed === false) {
             $existed = static::getExistedTypes();
+        }
 
         // here we try to add type names for ALL languages
         $langs = Location\Admin\NameHelper::getLanguageList();
@@ -1932,8 +2167,9 @@ final class ImportProcess extends Location\Util\Process
 
             $names = array();
 
-            if (!is_array($line['NAME']))
+            if (!is_array($line['NAME'])) {
                 $line['NAME'] = array();
+            }
 
             if (is_array($langs)) {
                 foreach ($langs as $lid => $f) {
@@ -1959,11 +2195,13 @@ final class ImportProcess extends Location\Util\Process
         $languageIdMapped = ToUpper(Location\Admin\NameHelper::mapLanguage($languageId));
         $languageId = ToUpper($languageId);
 
-        if (is_array($names[$languageId]) && (string)$names[$languageId]['NAME'] != '')
+        if (is_array($names[$languageId]) && (string)$names[$languageId]['NAME'] != '') {
             return $names[$languageId];
+        }
 
-        if (is_array($names[$languageIdMapped]) && (string)$names[$languageIdMapped]['NAME'] != '')
+        if (is_array($names[$languageIdMapped]) && (string)$names[$languageIdMapped]['NAME'] != '') {
             return $names[$languageIdMapped];
+        }
 
         return $names['EN'];
     }
@@ -1981,8 +2219,9 @@ final class ImportProcess extends Location\Util\Process
         }
 
         $res = Location\TypeTable::add($type);
-        if (!$res->isSuccess())
+        if (!$res->isSuccess()) {
             throw new Main\SystemException('Type creation failed: ' . implode(', ', $res->getErrorMessages()));
+        }
 
         return $res->getId();
     }
@@ -1990,8 +2229,11 @@ final class ImportProcess extends Location\Util\Process
     public static function createService($service)
     {
         $res = Location\ExternalServiceTable::add($service);
-        if (!$res->isSuccess())
-            throw new Main\SystemException('External service creation failed: ' . implode(', ', $res->getErrorMessages()));
+        if (!$res->isSuccess()) {
+            throw new Main\SystemException(
+                'External service creation failed: ' . implode(', ', $res->getErrorMessages())
+            );
+        }
 
         return $res->getId();
     }
@@ -2024,8 +2266,9 @@ final class ImportProcess extends Location\Util\Process
         $csvReader->LoadFile($file);
 
         $services = array();
-        while ($service = $csvReader->FetchAssoc())
+        while ($service = $csvReader->FetchAssoc()) {
             $services[$service['CODE']] = $service;
+        }
 
         return $services;
     }
@@ -2034,7 +2277,9 @@ final class ImportProcess extends Location\Util\Process
     public static function importFile(&$descriptior)
     {
         $timeLimit = ini_get('max_execution_time');
-        if ($timeLimit < $descriptior['TIME_LIMIT']) set_time_limit($descriptior['TIME_LIMIT'] + 5);
+        if ($timeLimit < $descriptior['TIME_LIMIT']) {
+            set_time_limit($descriptior['TIME_LIMIT'] + 5);
+        }
 
         $endTime = time() + $descriptior['TIME_LIMIT'];
 
@@ -2064,8 +2309,9 @@ final class ImportProcess extends Location\Util\Process
             while (time() < $endTime) {
                 $block = $csvReader->ReadBlockLowLevel($descriptior['POS']/*changed inside*/, 10);
 
-                if (!count($block))
+                if (!count($block)) {
                     break;
+                }
 
                 foreach ($block as $item) {
                     if ($descriptior['DO_SYNC']) {
@@ -2081,9 +2327,12 @@ final class ImportProcess extends Location\Util\Process
                     unset($item['TYPE_CODE']);
 
                     // parent id
-                    if (strlen($item['PARENT_CODE'])) {
-                        if (!isset($descriptior['CODES'][$item['PARENT_CODE']]))
-                            $descriptior['CODES'][$item['PARENT_CODE']] = static::checkLocationCodeExists($item['PARENT_CODE']);
+                    if ($item['PARENT_CODE'] <> '') {
+                        if (!isset($descriptior['CODES'][$item['PARENT_CODE']])) {
+                            $descriptior['CODES'][$item['PARENT_CODE']] = static::checkLocationCodeExists(
+                                $item['PARENT_CODE']
+                            );
+                        }
 
                         $item['PARENT_ID'] = $descriptior['CODES'][$item['PARENT_CODE']];
                     }
@@ -2094,27 +2343,32 @@ final class ImportProcess extends Location\Util\Process
                         foreach ($item['EXT'] as $code => $values) {
                             if (!empty($values)) {
                                 if (!isset($descriptior['SERVICES'][$code])) {
-                                    $descriptior['SERVICES'][$code] = static::createService(array(
-                                        'CODE' => $code
-                                    ));
+                                    $descriptior['SERVICES'][$code] = static::createService(
+                                        array(
+                                            'CODE' => $code
+                                        )
+                                    );
                                 }
 
                                 if ($code == 'ZIP_LOWER') {
-                                    if (strlen($values[0]) <= 0)
+                                    if ($values[0] == '') {
                                         continue;
+                                    }
 
                                     $values = explode(',', $values[0]);
 
-                                    if (!is_array($values))
+                                    if (!is_array($values)) {
                                         continue;
+                                    }
 
                                     $values = array_unique($values);
                                 }
 
                                 if (is_array($values)) {
                                     foreach ($values as $value) {
-                                        if (strlen($value) <= 0)
+                                        if ($value == '') {
                                             continue;
+                                        }
 
                                         $item['EXTERNAL'][] = array(
                                             'SERVICE_ID' => $descriptior['SERVICES'][$code],
@@ -2135,8 +2389,9 @@ final class ImportProcess extends Location\Util\Process
                         )
                     );
 
-                    if (!$res->isSuccess())
+                    if (!$res->isSuccess()) {
                         throw new Main\SystemException('Cannot create location');
+                    }
 
                     $descriptior['CODES'][$item['CODE']] = $res->getId();
                 }
@@ -2156,12 +2411,14 @@ final class ImportProcess extends Location\Util\Process
         // restore at least "EN" translation
         if (is_array($data)) {
             if (is_array($data['NAME']) && is_array($data['NAME']['RU'])) {
-                if (!is_array($data['NAME']['EN']))
+                if (!is_array($data['NAME']['EN'])) {
                     $data['NAME']['EN'] = array();
+                }
 
                 foreach ($data['NAME']['RU'] as $k => $v) {
-                    if ((string)$data['NAME']['EN'][$k] == '')
+                    if ((string)$data['NAME']['EN'][$k] == '') {
                         $data['NAME']['EN'][$k] = Location\Admin\NameHelper::translitFromUTF8($data['NAME']['RU'][$k]);
+                    }
                 }
             }
         }

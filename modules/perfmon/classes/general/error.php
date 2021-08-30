@@ -7,44 +7,47 @@ class CPerfomanceError
         global $DB;
 
         $obQueryWhere = new CSQLWhere;
-        $obQueryWhere->SetFields(array(
-            "HIT_ID" => array(
-                "TABLE_ALIAS" => "e",
-                "FIELD_NAME" => "HIT_ID",
-                "FIELD_TYPE" => "int",
-                "JOIN" => false,
-            ),
-            "ERRNO" => array(
-                "TABLE_ALIAS" => "e",
-                "FIELD_NAME" => "ERRNO",
-                "FIELD_TYPE" => "int",
-                "JOIN" => false,
-            ),
-            "ERRFILE" => array(
-                "TABLE_ALIAS" => "e",
-                "FIELD_NAME" => "ERRFILE",
-                "FIELD_TYPE" => "string",
-                "JOIN" => false,
-            ),
-            "ERRSTR" => array(
-                "TABLE_ALIAS" => "e",
-                "FIELD_NAME" => "ERRSTR",
-                "FIELD_TYPE" => "string",
-                "JOIN" => false,
-            ),
-            "ERRLINE" => array(
-                "TABLE_ALIAS" => "e",
-                "FIELD_NAME" => "ERRLINE",
-                "FIELD_TYPE" => "int",
-                "JOIN" => false,
-            ),
-        ));
+        $obQueryWhere->SetFields(
+            array(
+                "HIT_ID" => array(
+                    "TABLE_ALIAS" => "e",
+                    "FIELD_NAME" => "HIT_ID",
+                    "FIELD_TYPE" => "int",
+                    "JOIN" => false,
+                ),
+                "ERRNO" => array(
+                    "TABLE_ALIAS" => "e",
+                    "FIELD_NAME" => "ERRNO",
+                    "FIELD_TYPE" => "int",
+                    "JOIN" => false,
+                ),
+                "ERRFILE" => array(
+                    "TABLE_ALIAS" => "e",
+                    "FIELD_NAME" => "ERRFILE",
+                    "FIELD_TYPE" => "string",
+                    "JOIN" => false,
+                ),
+                "ERRSTR" => array(
+                    "TABLE_ALIAS" => "e",
+                    "FIELD_NAME" => "ERRSTR",
+                    "FIELD_TYPE" => "string",
+                    "JOIN" => false,
+                ),
+                "ERRLINE" => array(
+                    "TABLE_ALIAS" => "e",
+                    "FIELD_NAME" => "ERRLINE",
+                    "FIELD_TYPE" => "int",
+                    "JOIN" => false,
+                ),
+            )
+        );
 
         $strSql = "
 			DELETE FROM b_perf_error
 		";
-        if (!is_array($arFilter))
+        if (!is_array($arFilter)) {
             $arFilter = array();
+        }
         if ($strQueryWhere = $obQueryWhere->GetQuery($arFilter)) {
             $strSql .= "
 				WHERE
@@ -59,9 +62,10 @@ class CPerfomanceError
     {
         global $DB;
 
-        if (!is_array($arSelect))
+        if (!is_array($arSelect)) {
             $arSelect = array();
-        if (count($arSelect) < 1)
+        }
+        if (count($arSelect) < 1) {
             $arSelect = array(
                 "ID",
                 "HIT_ID",
@@ -70,19 +74,22 @@ class CPerfomanceError
                 "ERRLINE",
                 "ERRSTR",
             );
+        }
 
-        if (!is_array($arOrder))
+        if (!is_array($arOrder)) {
             $arOrder = array();
-        if (count($arOrder) < 1)
+        }
+        if (count($arOrder) < 1) {
             $arOrder = array(
                 "HIT_ID" => "DESC",
                 "ID" => "DESC",
             );
+        }
 
         $arQueryOrder = array();
         foreach ($arOrder as $strColumn => $strDirection) {
-            $strColumn = strtoupper($strColumn);
-            $strDirection = strtoupper($strDirection) == "ASC" ? "ASC" : "DESC";
+            $strColumn = mb_strtoupper($strColumn);
+            $strDirection = mb_strtoupper($strDirection) == "ASC" ? "ASC" : "DESC";
             switch ($strColumn) {
                 case "ID":
                 case "HIT_ID":
@@ -105,19 +112,21 @@ class CPerfomanceError
         $arQueryGroup = array();
         $arQuerySelect = array();
         foreach ($arSelect as $strColumn) {
-            $strColumn = strtoupper($strColumn);
+            $strColumn = mb_strtoupper($strColumn);
             switch ($strColumn) {
                 case "ID":
                 case "HIT_ID":
-                    if (!$bGroup)
+                    if (!$bGroup) {
                         $arQuerySelect[$strColumn] = "e." . $strColumn;
+                    }
                     break;
                 case "ERRNO":
                 case "ERRFILE":
                 case "ERRLINE":
                 case "ERRSTR":
-                    if ($bGroup)
+                    if ($bGroup) {
                         $arQueryGroup[$strColumn] = "e." . $strColumn;
+                    }
                     $arQuerySelect[$strColumn] = "e." . $strColumn;
                     break;
                 case "COUNT":
@@ -129,41 +138,44 @@ class CPerfomanceError
         }
 
         $obQueryWhere = new CSQLWhere;
-        $obQueryWhere->SetFields(array(
-            "HIT_ID" => array(
-                "TABLE_ALIAS" => "e",
-                "FIELD_NAME" => "HIT_ID",
-                "FIELD_TYPE" => "int",
-                "JOIN" => false,
-            ),
-            "ERRNO" => array(
-                "TABLE_ALIAS" => "e",
-                "FIELD_NAME" => "ERRNO",
-                "FIELD_TYPE" => "int",
-                "JOIN" => false,
-            ),
-            "ERRFILE" => array(
-                "TABLE_ALIAS" => "e",
-                "FIELD_NAME" => "ERRFILE",
-                "FIELD_TYPE" => "string",
-                "JOIN" => false,
-            ),
-            "ERRSTR" => array(
-                "TABLE_ALIAS" => "e",
-                "FIELD_NAME" => "ERRSTR",
-                "FIELD_TYPE" => "string",
-                "JOIN" => false,
-            ),
-            "ERRLINE" => array(
-                "TABLE_ALIAS" => "e",
-                "FIELD_NAME" => "ERRLINE",
-                "FIELD_TYPE" => "int",
-                "JOIN" => false,
-            ),
-        ));
+        $obQueryWhere->SetFields(
+            array(
+                "HIT_ID" => array(
+                    "TABLE_ALIAS" => "e",
+                    "FIELD_NAME" => "HIT_ID",
+                    "FIELD_TYPE" => "int",
+                    "JOIN" => false,
+                ),
+                "ERRNO" => array(
+                    "TABLE_ALIAS" => "e",
+                    "FIELD_NAME" => "ERRNO",
+                    "FIELD_TYPE" => "int",
+                    "JOIN" => false,
+                ),
+                "ERRFILE" => array(
+                    "TABLE_ALIAS" => "e",
+                    "FIELD_NAME" => "ERRFILE",
+                    "FIELD_TYPE" => "string",
+                    "JOIN" => false,
+                ),
+                "ERRSTR" => array(
+                    "TABLE_ALIAS" => "e",
+                    "FIELD_NAME" => "ERRSTR",
+                    "FIELD_TYPE" => "string",
+                    "JOIN" => false,
+                ),
+                "ERRLINE" => array(
+                    "TABLE_ALIAS" => "e",
+                    "FIELD_NAME" => "ERRLINE",
+                    "FIELD_TYPE" => "int",
+                    "JOIN" => false,
+                ),
+            )
+        );
 
-        if (count($arQuerySelect) < 1)
+        if (count($arQuerySelect) < 1) {
             $arQuerySelect = array("ID" => "e.ID");
+        }
 
         $strSql = "
 			SELECT
@@ -171,8 +183,9 @@ class CPerfomanceError
 			FROM
 				b_perf_error e
 		";
-        if (!is_array($arFilter))
+        if (!is_array($arFilter)) {
             $arFilter = array();
+        }
         if ($strQueryWhere = $obQueryWhere->GetQuery($arFilter)) {
             $strSql .= "
 				WHERE

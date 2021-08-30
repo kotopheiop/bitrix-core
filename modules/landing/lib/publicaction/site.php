@@ -86,8 +86,9 @@ class Site
         $params = $result->sanitizeKeys($params);
         $getPublicUrl = false;
         $getPreviewPicture = false;
+        $mobileHit = $initiator === 'mobile';
 
-        if ($initiator == 'mobile') {
+        if ($mobileHit) {
             \Bitrix\Landing\Connector\Mobile::forceMobile();
         }
 
@@ -188,7 +189,7 @@ class Site
 
         // gets public url for sites
         if ($getPublicUrl) {
-            $urls = SiteCore::getPublicUrl(array_keys($data));
+            $urls = SiteCore::getPublicUrl(array_keys($data), true, !$mobileHit);
             foreach ($urls as $siteId => $url) {
                 $data[$siteId]['PUBLIC_URL'] = $url;
             }
@@ -333,18 +334,23 @@ class Site
         $id = (int)$id;
 
         // work with pages
-        $res = Landing::getList(array(
-            'select' => array(
-                'ID'
-            ),
-            'filter' => array(
-                'SITE_ID' => $id
+        $res = Landing::getList(
+            array(
+                'select' => array(
+                    'ID'
+                ),
+                'filter' => array(
+                    'SITE_ID' => $id
+                )
             )
-        ));
+        );
         while ($row = $res->fetch()) {
-            $landing = Landing::createInstance($row['ID'], [
-                'skip_blocks' => true
-            ]);
+            $landing = Landing::createInstance(
+                $row['ID'],
+                [
+                    'skip_blocks' => true
+                ]
+            );
             if ($mark) {
                 $landing->publication();
             } else {
@@ -358,9 +364,12 @@ class Site
         }
 
         if (!$wasError) {
-            $res = SiteCore::update($id, array(
-                'ACTIVE' => $mark ? 'Y' : 'N'
-            ));
+            $res = SiteCore::update(
+                $id,
+                array(
+                    'ACTIVE' => $mark ? 'Y' : 'N'
+                )
+            );
             if (!$res->isSuccess()) {
                 $error->addFromResult($res);
                 $result->setError($error);
@@ -425,20 +434,24 @@ class Site
                 Loc::getMessage('LANDING_IS_NOT_ADMIN_ERROR')
             );
             $result->setError($error);
-        } else if (!Manager::checkFeature(Manager::FEATURE_PERMISSIONS_AVAILABLE)) {
-            $error->addError(
-                'FEATURE_NOT_AVAIL',
-                Loc::getMessage('LANDING_FEATURE_NOT_AVAIL_ERROR')
-            );
-            $result->setError($error);
-        } // set rights
-        else {
-            $result->setResult(
-                Rights::setOperationsForSite(
-                    $id,
-                    $rights
-                )
-            );
+        } else {
+            if (!Manager::checkFeature(Manager::FEATURE_PERMISSIONS_AVAILABLE)) {
+                $error->addError(
+                    'FEATURE_NOT_AVAIL',
+                    \Bitrix\Landing\Restriction\Manager::getSystemErrorMessage(
+                        'limit_sites_access_permissions'
+                    )
+                );
+                $result->setError($error);
+            } // set rights
+            else {
+                $result->setResult(
+                    Rights::setOperationsForSite(
+                        $id,
+                        $rights
+                    )
+                );
+            }
         }
 
         return $result;
@@ -460,7 +473,9 @@ class Site
         if (!Manager::checkFeature(Manager::FEATURE_PERMISSIONS_AVAILABLE)) {
             $error->addError(
                 'FEATURE_NOT_AVAIL',
-                Loc::getMessage('LANDING_FEATURE_NOT_AVAIL_ERROR')
+                \Bitrix\Landing\Restriction\Manager::getSystemErrorMessage(
+                    'limit_sites_access_permissions'
+                )
             );
             $result->setError($error);
         } // get rights
@@ -493,20 +508,24 @@ class Site
         $error = new \Bitrix\Landing\Error;
         $id = (int)$id;
 
-        $res = SiteCore::getList(array(
-            'filter' => array(
-                'ID' => $id
+        $res = SiteCore::getList(
+            array(
+                'filter' => array(
+                    'ID' => $id
+                )
             )
-        ));
+        );
 
         if ($res->fetch()) {
             $file = Manager::savePicture($picture, $ext, $params);
             if ($file) {
                 File::addToSite($id, $file['ID']);
-                $result->setResult(array(
-                    'id' => $file['ID'],
-                    'src' => $file['SRC']
-                ));
+                $result->setResult(
+                    array(
+                        'id' => $file['ID'],
+                        'src' => $file['SRC']
+                    )
+                );
             } else {
                 $error->addError(
                     'FILE_ERROR',
@@ -522,7 +541,7 @@ class Site
 
     /**
      * Sets scope for work with module.
-     * @param string $type
+     * @param string $type Scope code.
      * @return \Bitrix\Landing\PublicActionResult
      */
     public static function setScope($type)
@@ -530,5 +549,165 @@ class Site
         \Bitrix\Landing\Site\Type::setScope($type);
 
         return new PublicActionResult();
+    }
+
+    /**
+     * Binds or unbinds site with specific menu or Group.
+     * @param int $id Site id.
+     * @param \Bitrix\Landing\Binding\Entity $binding Binding instance.
+     * @param bool $bind Bind or unbind to menu (true or false).
+     * @return PublicActionResult
+     */
+    protected static function binding(int $id, \Bitrix\Landing\Binding\Entity $binding, bool $bind): PublicActionResult
+    {
+        $result = new PublicActionResult();
+
+        if (Rights::hasAccessForSite($id, Rights::ACCESS_TYPES['read'])) {
+            if ($bind) {
+                $result->setResult($binding->bindSite($id));
+            } else {
+                $result->setResult($binding->unbindSite($id));
+            }
+        } else {
+            $result->setResult(false);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Binds site with specific menu.
+     * @param int $id Site id.
+     * @param string $menuCode Menu code.
+     * @return PublicActionResult
+     */
+    public static function bindingToMenu(int $id, string $menuCode): PublicActionResult
+    {
+        \Bitrix\Landing\Site\Type::setScope('KNOWLEDGE');
+        $binding = new \Bitrix\Landing\Binding\Menu($menuCode);
+        return self::binding($id, $binding, true);
+    }
+
+    /**
+     * Unbinds site with specific menu.
+     * @param int $id Site id.
+     * @param string $menuCode Menu code.
+     * @return PublicActionResult
+     */
+    public static function unbindingFromMenu(int $id, string $menuCode): PublicActionResult
+    {
+        \Bitrix\Landing\Site\Type::setScope('KNOWLEDGE');
+        $binding = new \Bitrix\Landing\Binding\Menu($menuCode);
+        return self::binding($id, $binding, false);
+    }
+
+    /**
+     * Binds site with specific socialnetwork group.
+     * @param int $id Site id.
+     * @param int $groupId Group id.
+     * @return PublicActionResult
+     */
+    public static function bindingToGroup(int $id, int $groupId): PublicActionResult
+    {
+        \Bitrix\Landing\Site\Type::setScope('KNOWLEDGE');
+
+        if (
+            \Bitrix\landing\Connector\SocialNetwork::userInGroup($groupId) &&
+            !\Bitrix\landing\Binding\Group::getList($groupId)
+        ) {
+            $binding = new \Bitrix\Landing\Binding\Group($groupId);
+            $result = self::binding($id, $binding, true);
+            if ($result->getResult()) {
+                Rights::setGlobalOff();
+                \Bitrix\Landing\Site::update(
+                    $id,
+                    [
+                        'TYPE' => 'GROUP'
+                    ]
+                );
+                Rights::setGlobalOn();
+            }
+            return $result;
+        }
+
+        $result = new PublicActionResult();
+        $result->setResult(false);
+        return $result;
+    }
+
+    /**
+     * Unbinds site with specific socialnetwork group.
+     * @param int $id Site id.
+     * @param int $groupId Group id.
+     * @return PublicActionResult
+     */
+    public static function unbindingFromGroup(int $id, int $groupId): PublicActionResult
+    {
+        \Bitrix\Landing\Site\Type::setScope('GROUP');
+
+        if (\Bitrix\landing\Connector\SocialNetwork::userInGroup($groupId)) {
+            $binding = new \Bitrix\Landing\Binding\Group($groupId);
+            $result = self::binding($id, $binding, false);
+            if ($result->getResult()) {
+                Rights::setGlobalOff();
+                \Bitrix\Landing\Site::update(
+                    $id,
+                    [
+                        'TYPE' => 'KNOWLEDGE'
+                    ]
+                );
+                Rights::setGlobalOn();
+            }
+            return $result;
+        }
+
+        $result = new PublicActionResult();
+        $result->setResult(false);
+        return $result;
+    }
+
+    /**
+     * Removes empty binding.
+     * @param array $bindings Bindings array.
+     * @return array
+     */
+    protected static function removeEmptyBindings(array $bindings): array
+    {
+        // if PUBLIC_URL is empty user don't have read access
+        foreach ($bindings as $i => $binding) {
+            if (!$binding['PUBLIC_URL']) {
+                unset($bindings[$i]);
+            }
+        }
+
+        return array_values($bindings);
+    }
+
+    /**
+     * Returns exists bindings.
+     * @param string|null $menuCode Menu code (only for this menu).
+     * @return PublicActionResult
+     */
+    public static function getMenuBindings(?string $menuCode = null): PublicActionResult
+    {
+        $result = new PublicActionResult();
+        \Bitrix\Landing\Site\Type::setScope('KNOWLEDGE');
+        $bindings = \Bitrix\Landing\Binding\Menu::getList($menuCode);
+        $result->setResult(self::removeEmptyBindings($bindings));
+        return $result;
+    }
+
+    /**
+     * Returns exists bindings.
+     * @param int|null $groupId Group id (only for this group).
+     * @return PublicActionResult
+     */
+    public static function getGroupBindings(?int $groupId = null): PublicActionResult
+    {
+        $result = new PublicActionResult();
+        \Bitrix\Landing\Site\Type::setScope('GROUP');
+        $bindings = \Bitrix\Landing\Binding\Group::getList($groupId);
+        $result->setResult(self::removeEmptyBindings($bindings));
+        return $result;
     }
 }

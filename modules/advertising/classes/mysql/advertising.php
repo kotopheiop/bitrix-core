@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/advertising/classes/general/advertising.php");
 
 /*****************************************************************
@@ -13,25 +14,32 @@ class CAdvContract extends CAdvContract_all
     }
 
     // �������� ������ ����������
-    public static function GetList(&$by, &$order, $arFilter = Array(), &$is_filtered, $CHECK_RIGHTS = "Y")
-    {
+    public static function GetList(
+        $by = "s_sort",
+        $order = "desc",
+        $arFilter = [],
+        $is_filtered = null,
+        $CHECK_RIGHTS = "Y"
+    ) {
         $err_mess = (CAdvContract::err_mess()) . "<br>Function: GetList<br>Line: ";
-        global $DB, $USER, $APPLICATION, $strError;
+        global $DB, $USER;
         if ($CHECK_RIGHTS == "Y") {
             $USER_ID = intval($USER->GetID());
             $isAdmin = CAdvContract::IsAdmin();
             $isDemo = CAdvContract::IsDemo();
             $isManager = CAdvContract::IsManager();
-            $isAdvertiser = CAdvContract::IsAdvertiser();
         } else {
-            if (is_object($USER)) $USER_ID = intval($USER->GetID()); else $USER_ID = 0;
+            if (is_object($USER)) {
+                $USER_ID = intval($USER->GetID());
+            } else {
+                $USER_ID = 0;
+            }
             $isAdmin = true;
             $isDemo = true;
             $isManager = true;
-            $isAdvertiser = true;
         }
         $arSqlSearch = Array();
-        $strSqlSearch = "";
+
         $lamp = "
 			if ((
 				(C.DATE_SHOW_FROM<=now() or C.DATE_SHOW_FROM is null or length(C.DATE_SHOW_FROM)<=0) and
@@ -50,8 +58,12 @@ class CAdvContract extends CAdvContract_all
                 for ($i = 0, $n = count($filter_keys); $i < $n; $i++) {
                     $key = $filter_keys[$i];
                     $val = $arFilter[$filter_keys[$i]];
-                    if ($val == '' || "$val" == "NOT_REF") continue;
-                    if (is_array($val) && count($val) <= 0) continue;
+                    if ((string)$val == '' || "$val" == "NOT_REF") {
+                        continue;
+                    }
+                    if (is_array($val) && count($val) <= 0) {
+                        continue;
+                    }
                     $match_value_set = (in_array($key . "_EXACT_MATCH", $filter_keys)) ? true : false;
                     $key = strtoupper($key);
                     switch ($key) {
@@ -60,7 +72,9 @@ class CAdvContract extends CAdvContract_all
                             $arSqlSearch[] = GetFilterQuery("C.ID", $val, $match);
                             break;
                         case "SITE":
-                            if (is_array($val)) $val = implode(" | ", $val);
+                            if (is_array($val)) {
+                                $val = implode(" | ", $val);
+                            }
                             $match = ($arFilter[$key . "_EXACT_MATCH"] == "N" && $match_value_set) ? "Y" : "N";
                             $arSqlSearch[] = GetFilterQuery("CS.SITE_ID", $val, $match);
                             $left_join = "LEFT JOIN b_adv_contract_2_site CS ON (C.ID = CS.CONTRACT_ID)";
@@ -69,7 +83,10 @@ class CAdvContract extends CAdvContract_all
                             $arSqlSearch[] = "C.DATE_MODIFY>=" . $DB->CharToDateFunction($val, "SHORT");
                             break;
                         case "DATE_MODIFY_2":
-                            $arSqlSearch[] = "C.DATE_MODIFY<" . $DB->CharToDateFunction($val, "SHORT") . " + INTERVAL 1 DAY";
+                            $arSqlSearch[] = "C.DATE_MODIFY<" . $DB->CharToDateFunction(
+                                    $val,
+                                    "SHORT"
+                                ) . " + INTERVAL 1 DAY";
                             break;
                         case "NAME":
                         case "DESCRIPTION":
@@ -124,10 +141,14 @@ class CAdvContract extends CAdvContract_all
                             $arSqlSearch[] = "C.CLICK_COUNT<='" . intval($val) . "'";
                             break;
                         case "CTR_1":
-                            $arSqlSearch[] = "if(C.SHOW_COUNT<=0,0,round((C.CLICK_COUNT*100)/C.SHOW_COUNT,2))>='" . DoubleVal(str_replace(',', '.', $val)) . "'";
+                            $arSqlSearch[] = "if(C.SHOW_COUNT<=0,0,round((C.CLICK_COUNT*100)/C.SHOW_COUNT,2))>='" . DoubleVal(
+                                    str_replace(',', '.', $val)
+                                ) . "'";
                             break;
                         case "CTR_2":
-                            $arSqlSearch[] = "if(C.SHOW_COUNT<=0,0,round((C.CLICK_COUNT*100)/C.SHOW_COUNT,2))<='" . DoubleVal(str_replace(',', '.', $val)) . "'";
+                            $arSqlSearch[] = "if(C.SHOW_COUNT<=0,0,round((C.CLICK_COUNT*100)/C.SHOW_COUNT,2))<='" . DoubleVal(
+                                    str_replace(',', '.', $val)
+                                ) . "'";
                             break;
                         case "USER_PERMISSIONS":
                             $admin_from_1 = " INNER JOIN b_adv_contract_2_user CU ON (CU.CONTRACT_ID=C.ID) ";
@@ -138,30 +159,46 @@ class CAdvContract extends CAdvContract_all
             }
         }
 
-        if ($by == "s_id") $strSqlOrder = "ORDER BY C.ID";
-        elseif ($by == "s_lamp") $strSqlOrder = "ORDER BY LAMP";
-        elseif ($by == "s_date_modify") $strSqlOrder = "ORDER BY C.DATE_MODIFY";
-        elseif ($by == "s_name") $strSqlOrder = "ORDER BY C.NAME";
-        elseif ($by == "s_description") $strSqlOrder = "ORDER BY C.DESCRIPTION";
-        elseif ($by == "s_modified_by") $strSqlOrder = "ORDER BY C.MODIFIED_BY";
-        elseif ($by == "s_active") $strSqlOrder = "ORDER BY C.ACTIVE";
-        elseif ($by == "s_weight") $strSqlOrder = "ORDER BY C.WEIGHT";
-        elseif ($by == "s_sort") $strSqlOrder = "ORDER BY ifnull(C.SORT,0)";
-        elseif ($by == "s_banner_count") $strSqlOrder = "ORDER BY BANNER_COUNT";
-        elseif ($by == "s_ctr") $strSqlOrder = "ORDER BY CTR";
-        elseif ($by == "s_show_count") $strSqlOrder = "ORDER BY C.SHOW_COUNT";
-        elseif ($by == "s_max_show_count") $strSqlOrder = "ORDER BY ifnull(C.MAX_SHOW_COUNT,0)";
-        elseif ($by == "s_click_count") $strSqlOrder = "ORDER BY C.CLICK_COUNT";
-        elseif ($by == "s_max_click_count") $strSqlOrder = "ORDER BY ifnull(C.MAX_CLICK_COUNT,0)";
-        elseif ($by == "s_visitor_count") $strSqlOrder = "ORDER BY C.VISITOR_COUNT";
-        elseif ($by == "s_max_visitor_count") $strSqlOrder = "ORDER BY ifnull(C.MAX_VISITOR_COUNT,0)";
-        else {
-            $by = "s_sort";
+        if ($by == "s_id") {
+            $strSqlOrder = "ORDER BY C.ID";
+        } elseif ($by == "s_lamp") {
+            $strSqlOrder = "ORDER BY LAMP";
+        } elseif ($by == "s_date_modify") {
+            $strSqlOrder = "ORDER BY C.DATE_MODIFY";
+        } elseif ($by == "s_name") {
+            $strSqlOrder = "ORDER BY C.NAME";
+        } elseif ($by == "s_description") {
+            $strSqlOrder = "ORDER BY C.DESCRIPTION";
+        } elseif ($by == "s_modified_by") {
+            $strSqlOrder = "ORDER BY C.MODIFIED_BY";
+        } elseif ($by == "s_active") {
+            $strSqlOrder = "ORDER BY C.ACTIVE";
+        } elseif ($by == "s_weight") {
+            $strSqlOrder = "ORDER BY C.WEIGHT";
+        } elseif ($by == "s_sort") {
+            $strSqlOrder = "ORDER BY ifnull(C.SORT,0)";
+        } elseif ($by == "s_banner_count") {
+            $strSqlOrder = "ORDER BY BANNER_COUNT";
+        } elseif ($by == "s_ctr") {
+            $strSqlOrder = "ORDER BY CTR";
+        } elseif ($by == "s_show_count") {
+            $strSqlOrder = "ORDER BY C.SHOW_COUNT";
+        } elseif ($by == "s_max_show_count") {
+            $strSqlOrder = "ORDER BY ifnull(C.MAX_SHOW_COUNT,0)";
+        } elseif ($by == "s_click_count") {
+            $strSqlOrder = "ORDER BY C.CLICK_COUNT";
+        } elseif ($by == "s_max_click_count") {
+            $strSqlOrder = "ORDER BY ifnull(C.MAX_CLICK_COUNT,0)";
+        } elseif ($by == "s_visitor_count") {
+            $strSqlOrder = "ORDER BY C.VISITOR_COUNT";
+        } elseif ($by == "s_max_visitor_count") {
+            $strSqlOrder = "ORDER BY ifnull(C.MAX_VISITOR_COUNT,0)";
+        } else {
             $strSqlOrder = "ORDER BY ifnull(C.SORT,0)";
         }
+
         if ($order != "asc") {
             $strSqlOrder .= " desc ";
-            $order = "desc";
         }
 
         $strSqlSearch = GetFilterSqlSearch($arSqlSearch);
@@ -219,7 +256,7 @@ class CAdvContract extends CAdvContract_all
 				";
         }
         $res = $DB->Query($strSql, false, $err_mess . __LINE__);
-        $is_filtered = (IsFiltered($strSqlSearch));
+
         return $res;
     }
 }
@@ -277,26 +314,35 @@ class CAdvBanner extends CAdvBanner_all
         return $BANNER_ID;
     }
 
-    public static function GetList(&$by, &$order, $arFilter = Array(), &$is_filtered, $CHECK_RIGHTS = "Y")
-    {
+    public static function GetList(
+        $by = 's_id',
+        $order = 'desc',
+        $arFilter = [],
+        $is_filtered = null,
+        $CHECK_RIGHTS = "Y"
+    ) {
+        global $DB, $USER;
+
         $err_mess = (CAdvBanner::err_mess()) . "<br>Function: GetList<br>Line: ";
-        global $DB, $USER, $APPLICATION;
+
         if ($CHECK_RIGHTS == "Y") {
             $USER_ID = intval($USER->GetID());
             $isAdmin = CAdvContract::IsAdmin();
             $isDemo = CAdvContract::IsDemo();
             $isManager = CAdvContract::IsManager();
-            $isAdvertiser = CAdvContract::IsAdvertiser();
         } else {
-            if (is_object($USER)) $USER_ID = intval($USER->GetID()); else $USER_ID = 0;
+            if (is_object($USER)) {
+                $USER_ID = intval($USER->GetID());
+            } else {
+                $USER_ID = 0;
+            }
             $isAdmin = true;
             $isDemo = true;
             $isManager = true;
-            $isAdvertiser = true;
         }
-        $arSqlSearch = Array();
-        $strSqlSearch = "";
 
+        $arSqlSearch = Array();
+        $left_join = '';
 
         $DONT_USE_CONTRACT = COption::GetOptionString("advertising", "DONT_USE_CONTRACT", "N");
 
@@ -343,10 +389,12 @@ class CAdvBanner extends CAdvBanner_all
             for ($i = 0, $n = count($filter_keys); $i < $n; $i++) {
                 $key = $filter_keys[$i];
                 $val = $arFilter[$filter_keys[$i]];
-                if (is_array($val) && count($val) <= 0)
+                if (is_array($val) && count($val) <= 0) {
                     continue;
-                if ($val == '' || $val == "NOT_REF")
+                }
+                if ((string)$val == '' || $val == "NOT_REF") {
                     continue;
+                }
                 $match_value_set = (in_array($key . "_EXACT_MATCH", $filter_keys)) ? true : false;
                 $key = strtoupper($key);
                 switch ($key) {
@@ -358,7 +406,9 @@ class CAdvBanner extends CAdvBanner_all
                         $arSqlSearch[] = " " . $lamp . " = '" . $DB->ForSQL($val) . "'";
                         break;
                     case "SITE":
-                        if (is_array($val)) $val = implode(" | ", $val);
+                        if (is_array($val)) {
+                            $val = implode(" | ", $val);
+                        }
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "N" && $match_value_set) ? "Y" : "N";
                         $arSqlSearch[] = GetFilterQuery("BS.SITE_ID", $val, $match);
                         $left_join = "LEFT JOIN b_adv_banner_2_site BS ON (B.ID = BS.BANNER_ID)";
@@ -367,25 +417,37 @@ class CAdvBanner extends CAdvBanner_all
                         $arSqlSearch[] = "B.DATE_MODIFY>=" . $DB->CharToDateFunction($val, "SHORT");
                         break;
                     case "DATE_MODIFY_2":
-                        $arSqlSearch[] = "B.DATE_MODIFY<" . $DB->CharToDateFunction($val, "SHORT") . " + INTERVAL 1 DAY";
+                        $arSqlSearch[] = "B.DATE_MODIFY<" . $DB->CharToDateFunction(
+                                $val,
+                                "SHORT"
+                            ) . " + INTERVAL 1 DAY";
                         break;
                     case "DATE_CREATE_1":
                         $arSqlSearch[] = "B.DATE_CREATE>=" . $DB->CharToDateFunction($val, "SHORT");
                         break;
                     case "DATE_CREATE_2":
-                        $arSqlSearch[] = "B.DATE_CREATE<" . $DB->CharToDateFunction($val, "SHORT") . " + INTERVAL 1 DAY";
+                        $arSqlSearch[] = "B.DATE_CREATE<" . $DB->CharToDateFunction(
+                                $val,
+                                "SHORT"
+                            ) . " + INTERVAL 1 DAY";
                         break;
                     case "DATE_SHOW_FROM_1":
                         $arSqlSearch[] = "B.DATE_SHOW_FROM>=" . $DB->CharToDateFunction($val, "SHORT");
                         break;
                     case "DATE_SHOW_FROM_2":
-                        $arSqlSearch[] = "B.DATE_SHOW_FROM<" . $DB->CharToDateFunction($val, "SHORT") . " + INTERVAL 1 DAY";
+                        $arSqlSearch[] = "B.DATE_SHOW_FROM<" . $DB->CharToDateFunction(
+                                $val,
+                                "SHORT"
+                            ) . " + INTERVAL 1 DAY";
                         break;
                     case "DATE_SHOW_TO_1":
                         $arSqlSearch[] = "B.DATE_SHOW_TO>=" . $DB->CharToDateFunction($val, "SHORT");
                         break;
                     case "DATE_SHOW_TO_2":
-                        $arSqlSearch[] = "B.DATE_SHOW_TO<" . $DB->CharToDateFunction($val, "SHORT") . " + INTERVAL 1 DAY";
+                        $arSqlSearch[] = "B.DATE_SHOW_TO<" . $DB->CharToDateFunction(
+                                $val,
+                                "SHORT"
+                            ) . " + INTERVAL 1 DAY";
                         break;
                     case "ACTIVE":
                     case "FIX_SHOW":
@@ -434,10 +496,14 @@ class CAdvBanner extends CAdvBanner_all
                         $arSqlSearch[] = "ifnull(B.CLICK_COUNT,0)<='" . intval($val) . "'";
                         break;
                     case "CTR_1":
-                        $arSqlSearch[] = "if(B.SHOW_COUNT<=0,0,round((B.CLICK_COUNT*100)/B.SHOW_COUNT,2))>='" . DoubleVal(str_replace(',', '.', $val)) . "'";
+                        $arSqlSearch[] = "if(B.SHOW_COUNT<=0,0,round((B.CLICK_COUNT*100)/B.SHOW_COUNT,2))>='" . DoubleVal(
+                                str_replace(',', '.', $val)
+                            ) . "'";
                         break;
                     case "CTR_2":
-                        $arSqlSearch[] = "if(B.SHOW_COUNT<=0,0,round((B.CLICK_COUNT*100)/B.SHOW_COUNT,2))<='" . DoubleVal(str_replace(',', '.', $val)) . "'";
+                        $arSqlSearch[] = "if(B.SHOW_COUNT<=0,0,round((B.CLICK_COUNT*100)/B.SHOW_COUNT,2))<='" . DoubleVal(
+                                str_replace(',', '.', $val)
+                            ) . "'";
                         break;
                     case "GROUP":
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "Y" && $match_value_set) ? "N" : "Y";
@@ -445,34 +511,45 @@ class CAdvBanner extends CAdvBanner_all
                         break;
                     case "STATUS":
                     case "STATUS_SID":
-                        if (is_array($val)) $val = implode(" | ", $val);
+                        if (is_array($val)) {
+                            $val = implode(" | ", $val);
+                        }
                         $arSqlSearch[] = GetFilterQuery("B.STATUS_SID", $val, "N");
                         break;
                     case "CONTRACT_ID":
-                        if (is_array($val)) $val = implode(" | ", $val);
+                        if (is_array($val)) {
+                            $val = implode(" | ", $val);
+                        }
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "N" && $match_value_set) ? "Y" : "N";
                         $arSqlSearch[] = GetFilterQuery("B.CONTRACT_ID", $val, $match);
                         break;
                     case "CONTRACT":
-                        if (is_array($val)) $val = implode(" | ", $val);
+                        if (is_array($val)) {
+                            $val = implode(" | ", $val);
+                        }
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "Y" && $match_value_set) ? "N" : "Y";
                         $arSqlSearch[] = GetFilterQuery("B.CONTRACT_ID, C.NAME, C.DESCRIPTION", $val, $match);
                         break;
                     case "TYPE_SID":
-                        if (is_array($val)) $val = implode(" | ", $val);
+                        if (is_array($val)) {
+                            $val = implode(" | ", $val);
+                        }
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "N" && $match_value_set) ? "Y" : "N";
                         $arSqlSearch[] = GetFilterQuery("B.TYPE_SID", $val, $match);
                         break;
                     case "TYPE":
-                        if (is_array($val)) $val = implode(" | ", $val);
+                        if (is_array($val)) {
+                            $val = implode(" | ", $val);
+                        }
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "Y" && $match_value_set) ? "N" : "Y";
                         $arSqlSearch[] = GetFilterQuery("B.TYPE_SID, T.NAME, T.DESCRIPTION", $val, $match);
                         break;
                     case "SHOW_USER_GROUP":
-                        if ($val == "Y")
+                        if ($val == "Y") {
                             $arSqlSearch[] = "B.SHOW_USER_GROUP='Y'";
-                        else
+                        } else {
                             $arSqlSearch[] = "B.SHOW_USER_GROUP <> 'Y'";
+                        }
                         break;
                     case "NAME":
                     case "CODE":
@@ -490,37 +567,58 @@ class CAdvBanner extends CAdvBanner_all
             }
         }
 
-        if ($by == "s_id") $strSqlOrder = " ORDER BY B.ID ";
-        elseif ($by == "s_lamp") $strSqlOrder = " ORDER BY LAMP ";
-        elseif ($by == "s_name") $strSqlOrder = " ORDER BY B.NAME ";
-        elseif ($by == "s_type_sid") $strSqlOrder = " ORDER BY B.TYPE_SID ";
-        elseif ($by == "s_contract_id") $strSqlOrder = " ORDER BY B.CONTRACT_ID ";
-        elseif ($by == "s_group_sid") $strSqlOrder = " ORDER BY B.GROUP_SID ";
-        elseif ($by == "s_visitor_count") $strSqlOrder = " ORDER BY B.VISITOR_COUNT ";
-        elseif ($by == "s_max_visitor_count") $strSqlOrder = " ORDER BY ifnull(B.MAX_VISITOR_COUNT,0) ";
-        elseif ($by == "s_show_count") $strSqlOrder = " ORDER BY B.SHOW_COUNT ";
-        elseif ($by == "s_max_show_count") $strSqlOrder = " ORDER BY ifnull(B.MAX_SHOW_COUNT,0) ";
-        elseif ($by == "s_date_last_show") $strSqlOrder = " ORDER BY B.DATE_LAST_SHOW ";
-        elseif ($by == "s_click_count") $strSqlOrder = " ORDER BY B.CLICK_COUNT ";
-        elseif ($by == "s_max_click_count") $strSqlOrder = " ORDER BY ifnull(B.MAX_CLICK_COUNT,0) ";
-        elseif ($by == "s_date_last_click") $strSqlOrder = " ORDER BY B.DATE_LAST_CLICK ";
-        elseif ($by == "s_active") $strSqlOrder = " ORDER BY B.ACTIVE ";
-        elseif ($by == "s_weight") $strSqlOrder = " ORDER BY B.WEIGHT ";
-        elseif ($by == "s_status_sid") $strSqlOrder = " ORDER BY B.STATUS_SID ";
-        elseif ($by == "s_date_show_from") $strSqlOrder = " ORDER BY B.DATE_SHOW_FROM ";
-        elseif ($by == "s_date_show_to") $strSqlOrder = " ORDER BY B.DATE_SHOW_TO ";
-        elseif ($by == "s_dropdown") $strSqlOrder = " ORDER BY B.CONTRACT_ID desc, B.ID ";
-        elseif ($by == "s_ctr") $strSqlOrder = " ORDER BY CTR ";
-        elseif ($by == "s_date_create") $strSqlOrder = " ORDER BY B.DATE_CREATE ";
-        elseif ($by == "s_date_modify") $strSqlOrder = " ORDER BY B.DATE_MODIFY ";
-        else {
+        if ($by == "s_id") {
             $strSqlOrder = " ORDER BY B.ID ";
-            $by = "s_id";
+        } elseif ($by == "s_lamp") {
+            $strSqlOrder = " ORDER BY LAMP ";
+        } elseif ($by == "s_name") {
+            $strSqlOrder = " ORDER BY B.NAME ";
+        } elseif ($by == "s_type_sid") {
+            $strSqlOrder = " ORDER BY B.TYPE_SID ";
+        } elseif ($by == "s_contract_id") {
+            $strSqlOrder = " ORDER BY B.CONTRACT_ID ";
+        } elseif ($by == "s_group_sid") {
+            $strSqlOrder = " ORDER BY B.GROUP_SID ";
+        } elseif ($by == "s_visitor_count") {
+            $strSqlOrder = " ORDER BY B.VISITOR_COUNT ";
+        } elseif ($by == "s_max_visitor_count") {
+            $strSqlOrder = " ORDER BY ifnull(B.MAX_VISITOR_COUNT,0) ";
+        } elseif ($by == "s_show_count") {
+            $strSqlOrder = " ORDER BY B.SHOW_COUNT ";
+        } elseif ($by == "s_max_show_count") {
+            $strSqlOrder = " ORDER BY ifnull(B.MAX_SHOW_COUNT,0) ";
+        } elseif ($by == "s_date_last_show") {
+            $strSqlOrder = " ORDER BY B.DATE_LAST_SHOW ";
+        } elseif ($by == "s_click_count") {
+            $strSqlOrder = " ORDER BY B.CLICK_COUNT ";
+        } elseif ($by == "s_max_click_count") {
+            $strSqlOrder = " ORDER BY ifnull(B.MAX_CLICK_COUNT,0) ";
+        } elseif ($by == "s_date_last_click") {
+            $strSqlOrder = " ORDER BY B.DATE_LAST_CLICK ";
+        } elseif ($by == "s_active") {
+            $strSqlOrder = " ORDER BY B.ACTIVE ";
+        } elseif ($by == "s_weight") {
+            $strSqlOrder = " ORDER BY B.WEIGHT ";
+        } elseif ($by == "s_status_sid") {
+            $strSqlOrder = " ORDER BY B.STATUS_SID ";
+        } elseif ($by == "s_date_show_from") {
+            $strSqlOrder = " ORDER BY B.DATE_SHOW_FROM ";
+        } elseif ($by == "s_date_show_to") {
+            $strSqlOrder = " ORDER BY B.DATE_SHOW_TO ";
+        } elseif ($by == "s_dropdown") {
+            $strSqlOrder = " ORDER BY B.CONTRACT_ID desc, B.ID ";
+        } elseif ($by == "s_ctr") {
+            $strSqlOrder = " ORDER BY CTR ";
+        } elseif ($by == "s_date_create") {
+            $strSqlOrder = " ORDER BY B.DATE_CREATE ";
+        } elseif ($by == "s_date_modify") {
+            $strSqlOrder = " ORDER BY B.DATE_MODIFY ";
+        } else {
+            $strSqlOrder = " ORDER BY B.ID ";
         }
 
         if ($order != "asc") {
             $strSqlOrder .= " desc ";
-            $order = "desc";
         }
 
         $strSqlSearch = GetFilterSqlSearch($arSqlSearch);
@@ -580,7 +678,7 @@ class CAdvBanner extends CAdvBanner_all
 				";
         }
         $res = $DB->Query($strSql, false, $err_mess . __LINE__);
-        $is_filtered = (IsFiltered($strSqlSearch));
+
         return $res;
     }
 
@@ -590,11 +688,12 @@ class CAdvBanner extends CAdvBanner_all
         $err_mess = (CAdvBanner::err_mess()) . "<br>Function: Click<br>Line: ";
         global $DB;
         $BANNER_ID = intval($BANNER_ID);
-        if ($BANNER_ID <= 0) return false;
+        if ($BANNER_ID <= 0) {
+            return false;
+        }
 
         $strSql = "
 			SELECT
-				B.FIX_CLICK,
 				B.CONTRACT_ID
 			FROM
 				b_adv_banner B
@@ -603,66 +702,64 @@ class CAdvBanner extends CAdvBanner_all
 			";
         $rsBanner = $DB->Query($strSql, false, $err_mess . __LINE__);
         if ($arBanner = $rsBanner->Fetch()) {
-            if ($arBanner["FIX_CLICK"] == "Y") {
+            /********************
+             * ������� ������
+             ********************/
 
-                /********************
-                 * ������� ������
-                 ********************/
+            // ��������� �������
+            $arFields = Array(
+                "CLICK_COUNT" => "CLICK_COUNT + 1",
+                "DATE_LAST_CLICK" => $DB->GetNowFunction(),
+            );
+            $rows = $DB->Update("b_adv_banner", $arFields, "WHERE ID = $BANNER_ID", $err_mess . __LINE__);
+            if (intval($rows) > 0) {
+                foreach (getModuleEvents('advertising', 'onBannerClick', true) as $arEvent) {
+                    executeModuleEventEx($arEvent, array($BANNER_ID, $arFields));
+                }
 
-                // ��������� �������
-                $arFields = Array(
-                    "CLICK_COUNT" => "CLICK_COUNT + 1",
-                    "DATE_LAST_CLICK" => $DB->GetNowFunction(),
-                );
-                $rows = $DB->Update("b_adv_banner", $arFields, "WHERE ID = $BANNER_ID", $err_mess . __LINE__);
-                if (intval($rows) > 0) {
-                    foreach (getModuleEvents('advertising', 'onBannerClick', true) as $arEvent)
-                        executeModuleEventEx($arEvent, array($BANNER_ID, $arFields));
-
-                    // ������� �� ����
+                // ������� �� ����
+                $strSql = "
+					UPDATE b_adv_banner_2_day SET
+						CLICK_COUNT = CLICK_COUNT + 1
+					WHERE
+						BANNER_ID = $BANNER_ID
+					and	DATE_STAT = " . $DB->GetNowDate() . "
+					";
+                $z = $DB->Query($strSql, false, $err_mess . __LINE__);
+                $rows = $z->AffectedRowsCount();
+                if (intval($rows) <= 0) {
                     $strSql = "
-						UPDATE b_adv_banner_2_day SET
-							CLICK_COUNT = CLICK_COUNT + 1
+						SELECT
+							'x'
+						FROM
+							b_adv_banner_2_day
 						WHERE
 							BANNER_ID = $BANNER_ID
 						and	DATE_STAT = " . $DB->GetNowDate() . "
 						";
-                    $z = $DB->Query($strSql, false, $err_mess . __LINE__);
-                    $rows = $z->AffectedRowsCount();
-                    if (intval($rows) <= 0) {
+                    $w = $DB->Query($strSql, false, $err_mess . __LINE__);
+                    if (!$wr = $w->Fetch()) {
                         $strSql = "
-							SELECT
-								'x'
-							FROM
-								b_adv_banner_2_day
-							WHERE
-								BANNER_ID = $BANNER_ID
-							and	DATE_STAT = " . $DB->GetNowDate() . "
+							INSERT INTO b_adv_banner_2_day (DATE_STAT, BANNER_ID, CLICK_COUNT) VALUES (
+								" . $DB->GetNowDate() . ",
+								$BANNER_ID,
+								1)
 							";
-                        $w = $DB->Query($strSql, false, $err_mess . __LINE__);
-                        if (!$wr = $w->Fetch()) {
-                            $strSql = "
-								INSERT INTO b_adv_banner_2_day (DATE_STAT, BANNER_ID, CLICK_COUNT) VALUES (
-									" . $DB->GetNowDate() . ",
-									$BANNER_ID,
-									1)
-								";
-                            $DB->Query($strSql, true, $err_mess . __LINE__);
-                        }
+                        $DB->Query($strSql, true, $err_mess . __LINE__);
                     }
                 }
+            }
 
-                /*************************
-                 * ������� ��������
-                 *************************/
+            /*************************
+             * ������� ��������
+             *************************/
 
-                $DONT_USE_CONTRACT = COption::GetOptionString("advertising", "DONT_USE_CONTRACT", "N");
+            $DONT_USE_CONTRACT = COption::GetOptionString("advertising", "DONT_USE_CONTRACT", "N");
 
-                $CONTRACT_ID = intval($arBanner["CONTRACT_ID"]);
-                if ($CONTRACT_ID > 0 && $DONT_USE_CONTRACT == "N") {
-                    $arFields = Array("CLICK_COUNT" => "CLICK_COUNT + 1");
-                    $DB->Update("b_adv_contract", $arFields, "WHERE ID = $CONTRACT_ID", $err_mess . __LINE__);
-                }
+            $CONTRACT_ID = intval($arBanner["CONTRACT_ID"]);
+            if ($CONTRACT_ID > 0 && $DONT_USE_CONTRACT == "N") {
+                $arFields = Array("CLICK_COUNT" => "CLICK_COUNT + 1");
+                $DB->Update("b_adv_contract", $arFields, "WHERE ID = $CONTRACT_ID", $err_mess . __LINE__);
             }
         }
     }
@@ -678,27 +775,26 @@ class CAdvBanner extends CAdvBanner_all
         $stat_city_id = intval($_SESSION["SESS_CITY_ID"]);
         if ($stat_city_id > 0 && CModule::IncludeModule('statistic')) {
             $rsCity = CCity::GetList(array(), array("=CITY_ID" => $stat_city_id));
-            if ($arCity = $rsCity->Fetch())
+            if ($arCity = $rsCity->Fetch()) {
                 $stat_region = $arCity["REGION_NAME"];
+            }
         }
         $new_guest = ($_SESSION["SESS_GUEST_NEW"] == "N") ? "N" : "Y";
         $url = CAdvBanner::GetCurUri();
         $arrTime = getdate();
-        $weekday = strtoupper($arrTime["weekday"]);
+        $weekday = mb_strtoupper($arrTime["weekday"]);
         $hour = intval($arrTime["hours"]);
         $strUserGroups = $USER->GetUserGroupString();
 
         $DONT_USE_CONTRACT = COption::GetOptionString("advertising", "DONT_USE_CONTRACT", "N");
 
         if ($DONT_USE_CONTRACT == "N") {
-
             $strSql = "
 				SELECT DISTINCT
 					B.TYPE_SID,
 					B.ID					BANNER_ID,
 					B.WEIGHT				BANNER_WEIGHT,
 					B.SHOWS_FOR_VISITOR,
-					B.FIX_CLICK,
 					B.FIX_SHOW,
 					B.KEYWORDS				BANNER_KEYWORDS,
 					" . $DB->DateToCharFunction("B.DATE_SHOW_FIRST") . "		DATE_SHOW_FIRST,
@@ -824,7 +920,6 @@ class CAdvBanner extends CAdvBanner_all
 					B.ID					BANNER_ID,
 					B.WEIGHT				BANNER_WEIGHT,
 					B.SHOWS_FOR_VISITOR,
-					B.FIX_CLICK,
 					B.FIX_SHOW,
 					B.KEYWORDS				BANNER_KEYWORDS
 				FROM

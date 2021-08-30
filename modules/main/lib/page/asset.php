@@ -5,32 +5,6 @@ namespace Bitrix\Main\Page;
 use Bitrix\Main;
 use Bitrix\Main\IO;
 use Bitrix\Main\Config\Option;
-use Bitrix\Main\Text\BinaryString;
-
-class AssetMode
-{
-    const STANDARD = 1;
-    const COMPOSITE = 2;
-    const SPECIAL = 4;
-    const ALL = 7;
-}
-
-class AssetLocation
-{
-    const BEFORE_CSS = 'BEFORE_CSS';
-    const AFTER_CSS = 'AFTER_CSS';
-    const AFTER_JS_KERNEL = 'AFTER_JS_KERNEL';
-    const AFTER_JS = 'AFTER_JS';
-    const BODY_END = 'BODY_END';
-}
-
-class AssetShowTargetType
-{
-    const ALL = 0;
-    const KERNEL = 1;
-    const TEMPLATE_PAGE = 2;
-    const BODY = 3;
-}
 
 class Asset
 {
@@ -59,7 +33,7 @@ class Asset
     /** @var array Information about kernel modules */
     private $moduleInfo = ['CSS' => [], 'JS' => []];
     private $kernelAsset = ['CSS' => [], 'JS' => []];
-    private $assetList = ['CSS' => [], 'JS' => []];
+    private $assetList = ['CSS' => [], 'SOURCE_CSS' => [], 'JS' => [], 'SOURCE_JS' => []];
     private $fileList = ['CSS' => [], 'JS' => []];
     private $mode = AssetMode::STANDARD;
 
@@ -226,7 +200,6 @@ class Asset
      */
     public function setMaxCss($value)
     {
-
     }
 
     /**
@@ -315,7 +288,7 @@ class Asset
     public function startTarget($id = '', $mode = AssetMode::ALL)
     {
         $id = ToUpper(trim($id));
-        if (strlen($id) <= 0) {
+        if ($id == '') {
             return false;
         }
 
@@ -388,9 +361,10 @@ class Asset
     public function getAssetInfo($id, $mode)
     {
         $id = ToUpper(trim($id));
-        $res = ['JS' => [], 'CSS' => [], 'STRINGS' => []];
+        $emptyData = ['JS' => [], 'BUNDLE_JS' => [], 'CSS' => [], 'BUNDLE_CSS' => [], 'STRINGS' => []];
+
         if (!isset($this->targetList[$id])) {
-            return $res;
+            return $emptyData;
         }
 
         static $cacheInfo = [
@@ -401,7 +375,8 @@ class Asset
         ];
 
         if ($cacheInfo[$mode] === null) {
-            $cacheInfo[$mode] = ['JS' => [], 'BUNDLE_JS' => [], 'CSS' => [], 'BUNDLE_CSS' => [], 'STRINGS' => []];
+            $cacheInfo[$mode] = $emptyData;
+
             foreach ($this->strings as $locationID => $location) {
                 foreach ($location as $key => $item) {
                     if ($mode == $item['MODE']) {
@@ -410,12 +385,14 @@ class Asset
                 }
             }
 
-            $types = ['JS', 'CSS'];
-            foreach ($types as $type) {
-                $assetList = $this->getTargetList($type);
-                foreach ($assetList as $set) {
+            foreach (['JS', 'CSS'] as $type) {
+                foreach ($this->getTargetList($type) as $set) {
                     $cache = &$cacheInfo[$mode][$type][$set['NAME']];
                     $cacheFull = &$cacheInfo[$mode]['BUNDLE_' . $type][$set['NAME']];
+
+                    if (!is_array($cache)) {
+                        $cache = [];
+                    }
 
                     if (!is_array($cacheFull)) {
                         $cacheFull = [];
@@ -463,12 +440,13 @@ class Asset
             }
         }
 
-        $res['STRINGS'] = $cacheInfo[$mode]['STRINGS'][$id];
-        $res['JS'] = $cacheInfo[$mode]['JS'][$id];
-        $res['BUNDLE_JS'] = $cacheInfo[$mode]['BUNDLE_JS'][$id];
-        $res['CSS'] = $cacheInfo[$mode]['CSS'][$id];
-        $res['BUNDLE_CSS'] = $cacheInfo[$mode]['BUNDLE_CSS'][$id];
-        return $res;
+        return [
+            'JS' => $cacheInfo[$mode]['JS'][$id],
+            'BUNDLE_JS' => $cacheInfo[$mode]['BUNDLE_JS'][$id],
+            'CSS' => $cacheInfo[$mode]['CSS'][$id],
+            'BUNDLE_CSS' => $cacheInfo[$mode]['BUNDLE_CSS'][$id],
+            'STRINGS' => $cacheInfo[$mode]['STRINGS'][$id]
+        ];
     }
 
     /**
@@ -479,7 +457,7 @@ class Asset
     public function compositeTarget($id = '')
     {
         $id = ToUpper(trim($id));
-        if (strlen($id) <= 0 || !isset($this->targetList[$id])) {
+        if ($id == '' || !isset($this->targetList[$id])) {
             return false;
         } else {
             $this->targetList[$id]['MODE'] = AssetMode::COMPOSITE;
@@ -503,9 +481,9 @@ class Asset
                     'NAME' => $targetName,
                     'PARENT_NAME' => $targetName,
                     'UNIQUE' => $targetInfo['UNIQUE'],
-                    'PREFIX' => $targetInfo['PREFIX'],
+                    'PREFIX' => ($targetInfo['PREFIX'] ?? ''),
                     'MODE' => $targetInfo['MODE'],
-                    'MODULE_NAME' => $targetInfo['MODULE_NAME'],
+                    'MODULE_NAME' => ($targetInfo['MODULE_NAME'] ?? ''),
                 ];
 
                 if (!empty($targetInfo[$key])) {
@@ -513,10 +491,10 @@ class Asset
                         $res[$key][] = [
                             'NAME' => $subSetName,
                             'PARENT_NAME' => $targetName,
-                            'UNIQUE' => $val['UNIQUE'],
-                            'PREFIX' => $val['PREFIX'],
-                            'MODE' => $val['MODE'],
-                            'MODULE_NAME' => $val['MODULE_NAME'],
+                            'UNIQUE' => ($val['UNIQUE'] ?? ''),
+                            'PREFIX' => ($val['PREFIX'] ?? ''),
+                            'MODE' => ($val['MODE'] ?? 0),
+                            'MODULE_NAME' => ($val['MODULE_NAME'] ?? ''),
                         ];
                     }
                 }
@@ -565,7 +543,7 @@ class Asset
 
         $res = '';
         if ($location == AssetLocation::AFTER_CSS && \CJSCore::IsCoreLoaded()) {
-            $res = "<script type=\"text/javascript\">if(!window.BX)window.BX={};if(!window.BX.message)window.BX.message=function(mess){if(typeof mess=='object') for(var i in mess) BX.message[i]=mess[i]; return true;};</script>\n";
+            $res = "<script type=\"text/javascript\">if(!window.BX)window.BX={};if(!window.BX.message)window.BX.message=function(mess){if(typeof mess==='object'){for(let i in mess) {BX.message[i]=mess[i];} return true;}};</script>\n";
         }
 
         if (isset($this->strings[$location])) {
@@ -587,7 +565,7 @@ class Asset
      */
     public function addCss($path, $additional = false)
     {
-        if (strlen($path) <= 0) {
+        if ($path == '') {
             return false;
         }
 
@@ -605,7 +583,7 @@ class Asset
      */
     public function addJs($path, $additional = false)
     {
-        if (strlen($path) <= 0) {
+        if ($path == '') {
             return false;
         }
 
@@ -659,7 +637,7 @@ class Asset
         if (array_key_exists($from, $this->moduleInfo['JS'])) {
             $this->moduleInfo['JS'][$from]['MODULE_ID'] = $to;
         } else {
-            $this->moduleInfo['JS'][$from] = array('MODULE_ID' => $to, 'FILES_INFO' => false, 'BODY' => false);
+            $this->moduleInfo['JS'][$from] = ['MODULE_ID' => $to, 'FILES_INFO' => false, 'BODY' => false];
         }
 
         foreach ($this->moduleInfo['JS'] as $moduleID => $moduleInfo) {
@@ -685,7 +663,7 @@ class Asset
         if (array_key_exists($from, $this->moduleInfo['CSS'])) {
             $this->moduleInfo['CSS'][$from]['MODULE_ID'] = $to;
         } else {
-            $this->moduleInfo['CSS'][$from] = array('MODULE_ID' => $to, 'FILES_INFO' => false);
+            $this->moduleInfo['CSS'][$from] = ['MODULE_ID' => $to, 'FILES_INFO' => false];
         }
 
         foreach ($this->moduleInfo['CSS'] as $moduleID => $moduleInfo) {
@@ -735,7 +713,7 @@ class Asset
         if (array_key_exists($module, $this->moduleInfo['JS'])) {
             $this->moduleInfo['JS'][$module]['BODY'] = true;
         } else {
-            $this->moduleInfo['JS'][$module] = array('MODULE_ID' => $module, 'FILES_INFO' => false, 'BODY' => true);
+            $this->moduleInfo['JS'][$module] = ['MODULE_ID' => $module, 'FILES_INFO' => false, 'BODY' => true];
         }
     }
 
@@ -757,7 +735,9 @@ class Asset
     protected function getJsToBody()
     {
         if ($this->moveJsToBody === null) {
-            $this->moveJsToBody = Option::get("main", "move_js_to_body") === "Y" && (!defined("ADMIN_SECTION") || ADMIN_SECTION !== true);
+            $this->moveJsToBody = Option::get("main", "move_js_to_body") === "Y" && (!defined(
+                        "ADMIN_SECTION"
+                    ) || ADMIN_SECTION !== true);
         }
         return $this->moveJsToBody;
     }
@@ -781,12 +761,12 @@ class Asset
         $newContent = "";
         $areas = $this->getScriptAreas($content);
         foreach ($areas as $area) {
-            if (BinaryString::getPosition($area->attrs, "data-skip-moving") !== false || !self::isValidScriptType($area->attrs)) {
+            if (strpos($area->attrs, "data-skip-moving") !== false || !self::isValidScriptType($area->attrs)) {
                 continue;
             }
 
-            $js .= BinaryString::getSubstring($content, $area->openTagStart, $area->closingTagEnd - $area->openTagStart);
-            $newContent .= BinaryString::getSubstring($content, $offset, $area->openTagStart - $offset);
+            $js .= substr($content, $area->openTagStart, $area->closingTagEnd - $area->openTagStart);
+            $newContent .= substr($content, $offset, $area->openTagStart - $offset);
             $offset = $area->closingTagEnd;
         }
 
@@ -794,8 +774,8 @@ class Asset
             return;
         }
 
-        $newContent .= BinaryString::getSubstring($content, $offset);
-        $bodyEnd = BinaryString::getLastPositionIgnoreCase($newContent, "</body>");
+        $newContent .= substr($content, $offset);
+        $bodyEnd = strripos($newContent, "</body>");
         if ($bodyEnd === false) {
             $content = $newContent . $js;
         } else {
@@ -815,20 +795,20 @@ class Asset
         $ending = ">";
 
         $offset = 0;
-        $areas = array();
-        $content = BinaryString::changeCaseToLower($content);
-        while (($openTagStart = BinaryString::getPosition($content, $openTag, $offset)) !== false) {
-            $endingPos = BinaryString::getPosition($content, $ending, $openTagStart);
+        $areas = [];
+        $content = strtolower($content);
+        while (($openTagStart = strpos($content, $openTag, $offset)) !== false) {
+            $endingPos = strpos($content, $ending, $openTagStart);
             if ($endingPos === false) {
                 break;
             }
 
             $attrsStart = $openTagStart + strlen($openTag);
-            $attrs = BinaryString::getSubstring($content, $attrsStart, $endingPos - $attrsStart);
+            $attrs = substr($content, $attrsStart, $endingPos - $attrsStart);
             $openTagEnd = $endingPos + strlen($ending);
 
             $realClosingTag = $closingTag . $ending;
-            $closingTagStart = BinaryString::getPosition($content, $realClosingTag, $openTagEnd);
+            $closingTagStart = strpos($content, $realClosingTag, $openTagEnd);
             if ($closingTagStart === false) {
                 $offset = $openTagEnd;
                 continue;
@@ -879,7 +859,7 @@ class Asset
             return true;
         }
 
-        $type = strtolower($match[2]);
+        $type = mb_strtolower($match[2]);
         return $type === "" || $type === "text/javascript" || $type === "application/javascript";
     }
 
@@ -894,15 +874,15 @@ class Asset
     public static function replaceUrlCss($url, $quote, $path)
     {
         if (
-            strpos($url, "://") !== false
-            || strpos($url, "data:") !== false
-            || substr($url, 0, 1) == "#"
+            mb_strpos($url, "://") !== false
+            || mb_strpos($url, "data:") !== false
+            || mb_substr($url, 0, 1) == "#"
         ) {
             return $quote . $url . $quote;
         }
 
         $url = trim(stripslashes($url), "'\" \r\n\t");
-        if (substr($url, 0, 1) == "/") {
+        if (mb_substr($url, 0, 1) == "/") {
             return $quote . $url . $quote;
         }
 
@@ -916,8 +896,9 @@ class Asset
      */
     public static function getAssetPath($src)
     {
-        if (($p = strpos($src, "?")) > 0 && !\CMain::IsExternalLink($src)) {
-            $src = substr($src, 0, $p);
+        /** @noinspection PhpUndefinedClassInspection */
+        if (($p = mb_strpos($src, "?")) > 0 && !\CMain::IsExternalLink($src)) {
+            $src = mb_substr($src, 0, $p);
         }
         return $src;
     }
@@ -1109,7 +1090,7 @@ class Asset
         if (is_array($result)) {
             return $result["FULL_PATH"];
         }
-
+        /** @noinspection PhpUndefinedClassInspection */
         if (\CMain::IsExternalLink($sourcePath)) {
             return $sourcePath;
         }
@@ -1123,13 +1104,14 @@ class Asset
      * @throws Main\ArgumentOutOfRangeException
      * @throws Main\ArgumentNullException
      */
-    private function prepareCss()
+    private function prepareCss(): void
     {
-        $additional = array();
+        $additional = [];
 
         foreach ($this->css as $css => $set) {
             /** @var  $assetTID - get first target where added asset */
             $assetTID = $set['ADDITIONAL'] ? 'TEMPLATE' : $set['TARGET'][0];
+            /** @noinspection PhpUndefinedClassInspection */
             $cssInfo = [
                 'PATH' => $css,
                 'FULL_PATH' => false,
@@ -1156,13 +1138,13 @@ class Asset
                 $cssInfo['SKIP'] = true;
                 $this->assetCSSCnt++;
 
-                $this->targetList[$tmpKey]['CSS_LIST'][$cssInfo['TARGET']] = array(
+                $this->targetList[$tmpKey]['CSS_LIST'][$cssInfo['TARGET']] = [
                     'TARGET' => $cssInfo['TARGET'],
                     'PREFIX' => $cssInfo['PREFIX'],
                     'MODE' => $this->targetList[$assetTID]['MODE'],
                     'UNIQUE' => false,
-                    'WHERE_USED' => array()
-                );
+                    'WHERE_USED' => []
+                ];
             } else {
                 if (($paths = $this->getAssetPaths($css)) !== null) {
                     $cssInfo["PATH"] = $css;
@@ -1173,7 +1155,8 @@ class Asset
                     continue;
                 }
 
-                if ($moduleInfo = $this->isKernelCSS($cssInfo['PATH'])) {
+                $moduleInfo = $this->isKernelCSS($cssInfo['PATH']);
+                if ($moduleInfo) {
                     $cssInfo['TARGET'] = 'KERNEL';
                     if ($this->sliceKernel() && $this->optimizeCss()) {
                         $cssInfo['MODULE_ID'] = $moduleInfo['MODULE_ID'];
@@ -1191,13 +1174,13 @@ class Asset
                     if (isset($this->targetList['KERNEL']['CSS_LIST'][$cssInfo['TARGET']]['MODE'])) {
                         $this->targetList['KERNEL']['CSS_LIST'][$cssInfo['TARGET']]['MODE'] |= $this->targetList[$assetTID]['MODE'];
                     } else {
-                        $this->targetList['KERNEL']['CSS_LIST'][$cssInfo['TARGET']] = array(
+                        $this->targetList['KERNEL']['CSS_LIST'][$cssInfo['TARGET']] = [
                             'TARGET' => $cssInfo['TARGET'],
                             'PREFIX' => $cssInfo['PREFIX'],
                             'MODE' => $set['ADDITIONAL'] ? $this->targetList[$set['TARGET'][0]]['MODE'] : $this->targetList[$assetTID]['MODE'],
                             'UNIQUE' => true,
-                            'WHERE_USED' => array()
-                        );
+                            'WHERE_USED' => []
+                        ];
                     }
 
                     $this->targetList['KERNEL']['CSS_LIST'][$cssInfo['TARGET']]['MODULE_NAME'] = $moduleInfo['MODULE_ID'];
@@ -1237,10 +1220,11 @@ class Asset
      */
     private function prepareJs()
     {
-        $additional = array();
+        $additional = [];
         foreach ($this->js as $js => $set) {
             /** @var  $assetTID - get first target where added asset */
             $assetTID = $set['ADDITIONAL'] ? 'TEMPLATE' : $set['TARGET'][0];
+            /** @noinspection PhpUndefinedClassInspection */
             $jsInfo = [
                 'PATH' => $js,
                 'FULL_PATH' => false,
@@ -1392,7 +1376,7 @@ class Asset
                 }
 
                 $resCss = '';
-                $listAsset = array();
+                $listAsset = [];
                 $showLabel = ($setInfo['NAME'] == 'TEMPLATE');
 
                 foreach ($this->css[$setInfo['NAME']] as $cssFile) {
@@ -1419,16 +1403,25 @@ class Asset
                     }
                 }
 
-                $optimizedAsset = $this->optimizeAsset($listAsset, $setInfo['UNIQUE'], $setInfo['PREFIX'], $setInfo['NAME'], 'css', $data);
+                $optimizedAsset = $this->optimizeAsset(
+                    $listAsset,
+                    $setInfo['UNIQUE'],
+                    $setInfo['PREFIX'],
+                    $setInfo['NAME'],
+                    'css',
+                    $data
+                );
 
                 $resCss = $optimizedAsset['RESULT'] . $resCss;
                 if ($location == AssetLocation::AFTER_CSS) {
-                    $additional[] = array(
+                    $additional[] = [
                         'FILES' => $optimizedAsset['FILES'],
+                        'SOURCE_FILES' => $optimizedAsset['SOURCE_FILES'],
                         'RES' => $resCss
-                    );
+                    ];
                 } else {
                     $this->assetList['CSS'][$setInfo['PARENT_NAME']][$setInfo['NAME']] = $optimizedAsset['FILES'];
+                    $this->assetList['SOURCE_CSS'][$setInfo['PARENT_NAME']][$setInfo['NAME']] = ($optimizedAsset['SOURCE_FILES'] ?? []);
                     $this->targetList[$setInfo['PARENT_NAME']]['CSS_RES'][$setInfo['NAME']][] = $resCss;
                 }
             }
@@ -1437,16 +1430,25 @@ class Asset
                 if (isset($this->assetList['CSS']['TEMPLATE']['TEMPLATE'])) {
                     $templateFiles = $this->assetList['CSS']['TEMPLATE']['TEMPLATE'];
                 } else {
-                    $templateFiles = array();
+                    $templateFiles = [];
                 }
 
                 $this->assetList['CSS']['TEMPLATE']['TEMPLATE'] = array_merge($templateFiles, $bundle['FILES']);
+                $this->assetList['SOURCE_CSS']['TEMPLATE']['TEMPLATE'] = array_merge(
+                    $templateFiles,
+                    $bundle['SOURCE_FILES']
+                );
                 $this->targetList['TEMPLATE']['CSS_RES']['TEMPLATE'][] = $bundle['RES'];
             }
+
+            unset($additional, $templateFiles, $bundle);
         }
 
         if ($this->ajax && !empty($ajaxList)) {
-            $res .= '<script type="text/javascript">' . "BX.loadCSS(['" . implode("','", $ajaxList) . "']);" . '</script>';
+            $res .= '<script type="text/javascript">' . "BX.loadCSS(['" . implode(
+                    "','",
+                    $ajaxList
+                ) . "']);" . '</script>';
         }
 
         if ($type == AssetShowTargetType::KERNEL) {
@@ -1481,7 +1483,7 @@ class Asset
      */
     function getJs($type = AssetShowTargetType::ALL)
     {
-        static $setList = array();
+        static $setList = [];
 
         $res = '';
         $type = (int)$type;
@@ -1502,7 +1504,7 @@ class Asset
                 }
 
                 $resJs = '';
-                $listAsset = array();
+                $listAsset = [];
                 foreach ($this->js[$setInfo['NAME']] as $jsFile) {
                     $js = $jsFile['FULL_PATH'];
                     if ($optimize) {
@@ -1517,12 +1519,19 @@ class Asset
                         $resJs .= "<script type=\"text/javascript\" src=\"{$js}\"></script>\n";
                     }
                 }
-                $optAsset = $this->optimizeAsset($listAsset, $setInfo['UNIQUE'], $setInfo['PREFIX'], $setInfo['NAME'], 'js', $data);
-                $resJs = $optAsset['RESULT'] . $resJs;
+                $optAsset = $this->optimizeAsset(
+                    $listAsset,
+                    $setInfo['UNIQUE'],
+                    $setInfo['PREFIX'],
+                    $setInfo['NAME'],
+                    'js',
+                    $data
+                );
                 $this->assetList['JS'][$setInfo['PARENT_NAME']][$setInfo['NAME']] = $optAsset['FILES'];
-                $this->targetList[$setInfo['PARENT_NAME']]['JS_RES'][$setInfo['NAME']][] = $resJs;
+                $this->assetList['SOURCE_JS'][$setInfo['PARENT_NAME']][$setInfo['NAME']] = ($optAsset['SOURCE_FILES'] ?? []);
+                $this->targetList[$setInfo['PARENT_NAME']]['JS_RES'][$setInfo['NAME']][] = $optAsset['RESULT'] . $resJs;
             }
-            unset($optAsset);
+            unset($optAsset, $resJs, $listAsset);
         }
 
         if ($type == AssetShowTargetType::KERNEL && ($this->mode & $this->targetList['KERNEL']['MODE'])) {
@@ -1576,7 +1585,7 @@ class Asset
 
     /**
      * Convert location for new format.
-     * @param string $location AssetLocation.
+     * @param mixed $location AssetLocation.
      * @return AssetLocation
      */
     public static function getLocationByName($location)
@@ -1594,7 +1603,7 @@ class Asset
      * Insert JS code to sets assets included in page.
      * @return string
      */
-    private function showFilesList()
+    public function showFilesList()
     {
         $res = '';
         if (!\CJSCore::IsCoreLoaded()) {
@@ -1602,35 +1611,37 @@ class Asset
         }
 
         if (!empty($this->assetList['JS'])) {
-            $assetList = array();
-            $setList = $this->getTargetList('JS');
-            foreach ($setList as $set) {
+            $assets = [];
+            foreach ($this->getTargetList('JS') as $set) {
                 if ($this->mode & $set['MODE']
-                    && isset($this->assetList['JS'][$set['PARENT_NAME']][$set['NAME']])
-                    && is_array($this->assetList['JS'][$set['PARENT_NAME']][$set['NAME']])) {
-                    $assetList = array_merge($assetList, $this->assetList['JS'][$set['PARENT_NAME']][$set['NAME']]);
+                    && isset($this->assetList['SOURCE_JS'][$set['PARENT_NAME']][$set['NAME']])
+                    && is_array($this->assetList['SOURCE_JS'][$set['PARENT_NAME']][$set['NAME']])) {
+                    $assets = array_merge($assets, $this->assetList['SOURCE_JS'][$set['PARENT_NAME']][$set['NAME']]);
                 }
             }
 
-            if (!empty($assetList)) {
-                $res .= '<script type="text/javascript">' . "BX.setJSList(['" . implode("','", array_map(array($this, "getAssetPath"), $assetList)) . "']); </script>\n";
+            if (!empty($assets)) {
+                $res .= '<script type="text/javascript">BX.setJSList(' . \CUtil::phpToJSObject($assets) . ');</script>';
+                $res .= "\n";
             }
         }
 
         if (!empty($this->assetList['CSS'])) {
-            $assetList = array();
-            $setList = $this->getTargetList('CSS');
-            foreach ($setList as $set) {
+            $assets = [];
+            foreach ($this->getTargetList('CSS') as $set) {
                 if ($this->mode & $set['MODE']
-                    && isset($this->assetList['CSS'][$set['PARENT_NAME']][$set['NAME']])
-                    && is_array($this->assetList['CSS'][$set['PARENT_NAME']][$set['NAME']])
+                    && isset($this->assetList['SOURCE_CSS'][$set['PARENT_NAME']][$set['NAME']])
+                    && is_array($this->assetList['SOURCE_CSS'][$set['PARENT_NAME']][$set['NAME']])
                 ) {
-                    $assetList = array_merge($assetList, $this->assetList['CSS'][$set['PARENT_NAME']][$set['NAME']]);
+                    $assets = array_merge($assets, $this->assetList['SOURCE_CSS'][$set['PARENT_NAME']][$set['NAME']]);
                 }
             }
 
-            if (!empty($assetList)) {
-                $res .= '<script type="text/javascript">' . "BX.setCSSList(['" . implode("','", array_map(array($this, "getAssetPath"), $assetList)) . "']); </script>\n";
+            if (!empty($assets)) {
+                $res .= '<script type="text/javascript">BX.setCSSList(' . \CUtil::phpToJSObject(
+                        $assets
+                    ) . ');</script>';
+                $res .= "\n";
             }
         }
         return $res;
@@ -1643,14 +1654,14 @@ class Asset
      * @param array $settings Settings.
      * @return void
      */
-    function addCssKernelInfo($module = '', $css = array(), $settings = array())
+    function addCssKernelInfo($module = '', $css = [], $settings = [])
     {
         if (empty($module) || empty($css)) {
             return;
         }
 
         if (!array_key_exists($module, $this->moduleInfo['CSS'])) {
-            $this->moduleInfo['CSS'][$module] = array('MODULE_ID' => $module, 'FILES_INFO' => true);
+            $this->moduleInfo['CSS'][$module] = ['MODULE_ID' => $module, 'FILES_INFO' => true];
         }
 
         foreach ($css as $key) {
@@ -1675,14 +1686,14 @@ class Asset
      * @param array $settings Settings.
      * @return void
      */
-    function addJsKernelInfo($module = '', $js = array(), $settings = array())
+    function addJsKernelInfo($module = '', $js = [], $settings = [])
     {
         if (empty($module) || empty($js)) {
             return;
         }
 
         if (!array_key_exists($module, $this->moduleInfo['JS'])) {
-            $this->moduleInfo['JS'][$module] = array('MODULE_ID' => $module, 'FILES_INFO' => true, 'BODY' => false);
+            $this->moduleInfo['JS'][$module] = ['MODULE_ID' => $module, 'FILES_INFO' => true, 'BODY' => false];
         }
 
         foreach ($js as $key) {
@@ -1799,7 +1810,7 @@ class Asset
      * @param string $setName Parent set name.
      * @return string
      */
-    private function showAsset($setList = array(), $type = 'css', $setName = '')
+    private function showAsset($setList = [], $type = 'css', $setName = '')
     {
         $res = '';
         $type = ($type == 'css' ? 'CSS_RES' : 'JS_RES');
@@ -1840,13 +1851,13 @@ class Asset
      */
     public static function getAssetTime($file = '')
     {
-        $qpos = strpos($file, '?');
+        $qpos = mb_strpos($file, '?');
         if ($qpos === false) {
             return false;
         }
         $qpos++;
 
-        return substr($file, $qpos);
+        return mb_substr($file, $qpos);
     }
 
     /**
@@ -1854,9 +1865,9 @@ class Asset
      * @param array $assetList Asset list.
      * @return string
      */
-    private function getAssetChecksum($assetList = array())
+    private function getAssetChecksum($assetList = [])
     {
-        $result = array();
+        $result = [];
         foreach ($assetList as $asset) {
             $result[$asset['PATH']] = $asset['FULL_PATH'];
         }
@@ -1873,7 +1884,7 @@ class Asset
      * @param bool $unique Unique type.
      * @return array
      */
-    private function isAssetChanged($assetList = array(), $infoFile = '', $optimFile = '', $unique = false)
+    private function isAssetChanged($assetList = [], $infoFile = '', $optimFile = '', $unique = false)
     {
         $result = [
             'FILE' => [],
@@ -1883,9 +1894,10 @@ class Asset
         ];
 
         if (file_exists($infoFile) && file_exists($optimFile)) {
+            /** @noinspection PhpIncludeInspection */
             include($infoFile);
-            /** @var $filesInfo - information about files in set */
 
+            /** @var array $filesInfo - information about files in set */
             $result['FILES_INFO'] = $filesInfo;
             $result['FILE_EXIST'] = true;
             if ($unique) {
@@ -1932,8 +1944,14 @@ class Asset
      * @throws Main\ArgumentNullException
      * @throws Main\ArgumentOutOfRangeException
      */
-    private function optimizeAsset($files = array(), $unique = false, $prefix = 'default', $setName = '', $type = 'css', $data = '')
-    {
+    private function optimizeAsset(
+        $files = [],
+        $unique = false,
+        $prefix = 'default',
+        $setName = '',
+        $type = 'css',
+        $data = ''
+    ) {
         if ((!is_array($files) || empty($files))) {
             return ['RESULT' => '', 'FILES' => []];
         }
@@ -1941,7 +1959,7 @@ class Asset
         $this->setTemplateID();
         $res = $assetMD5 = $comments = $contents = '';
         $prefix = trim($prefix);
-        $prefix = strlen($prefix) < 1 ? 'default' : $prefix;
+        $prefix = mb_strlen($prefix) < 1 ? 'default' : $prefix;
         $add2End = (strncmp($prefix, 'kernel', 6) == 0);
         $type = ($type == 'js' ? 'js' : 'css');
 
@@ -1999,7 +2017,7 @@ class Asset
 
                         if (preg_match("/\\.min\\.js$/i", $file['FILE_PATH'])) {
                             $sourceMap = self::cutSourceMap($assetContent);
-                            if (strlen($sourceMap) > 0) {
+                            if ($sourceMap <> '') {
                                 $dirPath = IO\Path::getDirectory($file['PATH']);
                                 $info["map"] = $dirPath . "/" . $sourceMap;
                                 $info["min"] = self::getAssetPath($file['FULL_PATH']);
@@ -2008,7 +2026,9 @@ class Asset
                         }
 
                         $comments .= "; /* " . $file['FULL_PATH'] . "*/\n";
-                        $newContent .= "\n" . self::HEADER_START_TAG . serialize($info) . self::HEADER_END_TAG . "\n" . $assetContent . "\n/* End */\n;";
+                        $newContent .= "\n" . self::HEADER_START_TAG . serialize(
+                                $info
+                            ) . self::HEADER_END_TAG . "\n" . $assetContent . "\n/* End */\n;";
                     }
 
                     $filesInfo[$file['PATH']] = $this->getAssetTime($file['FULL_PATH']);
@@ -2017,7 +2037,7 @@ class Asset
 
                 if ($needWrite) {
                     $sourceMap = self::cutSourceMap($contents);
-                    $mapNeeded = $mapNeeded || strlen($sourceMap) > 0;
+                    $mapNeeded = $mapNeeded || $sourceMap <> '';
 
                     // Write packed files and meta information
                     $contents = ($add2End ? $comments . $contents . $newContent : $newContent . $contents . $comments);
@@ -2026,17 +2046,21 @@ class Asset
                     }
 
                     if ($writeResult = $this->write($optimFName, $contents)) {
-                        $cacheInfo = '<?php $filesInfo = array(';
+                        $cacheInfo = '<?php $filesInfo = [';
 
-                        foreach ($filesInfo as $key => $time) {
-                            $cacheInfo .= '"' . EscapePHPString($key) . '" => "' . $time . '",';
+                        foreach ($filesInfo as $key => $hash) {
+                            $cacheInfo .= '"' . EscapePHPString($key) . '" => "' . $hash . '",';
                         }
 
-                        $cacheInfo .= "); ?>";
+                        $cacheInfo .= "]; ?>";
                         $this->write($infoFile, $cacheInfo, false);
 
                         if ($mapNeeded) {
-                            $this->write($this->documentRoot . $optimPath . $prefix . ".map.js", self::generateSourceMap($prefix . ".js", $contents), false);
+                            $this->write(
+                                $this->documentRoot . $optimPath . $prefix . ".map.js",
+                                self::generateSourceMap($prefix . ".js", $contents),
+                                false
+                            );
                         }
                     }
                 } elseif ($optimFileExist) {
@@ -2046,7 +2070,11 @@ class Asset
             }
         }
 
-        $label = (($type == 'css') && ($prefix == 'template' || substr($prefix, 0, 9) == 'template_') ? ' data-template-style="true" ' : '');
+        $label = (($type == 'css') && ($prefix == 'template' || mb_substr(
+                $prefix,
+                0,
+                9
+            ) == 'template_') ? ' data-template-style="true" ' : '');
 
         $bundleFile = '';
         $extendData = ($data != '' ? ' ' . trim($data) : '');
@@ -2074,19 +2102,19 @@ class Asset
             }
         }
 
-        $resultFiles = array();
+        $resultFiles = [];
         if (is_array($filesInfo)) {
-            foreach ($filesInfo as $key => $time) {
-                $resultFiles[] = str_replace($this->documentRoot, '', $key) . '?' . $time;
+            foreach ($filesInfo as $key => $hash) {
+                $resultFiles[] = $key . '?' . $hash;
             }
         }
 
-        unset($files, $filesInfo);
+        unset($files);
 
         if ($bundleFile != '') {
             $currentFileList['FULL_FILES'][$bundleFile] = $resultFiles;
         }
-        return array('RESULT' => $res, 'FILES' => $resultFiles);
+        return ['RESULT' => $res, 'FILES' => $resultFiles, 'SOURCE_FILES' => array_keys($filesInfo)];
     }
 
     /**
@@ -2098,19 +2126,19 @@ class Asset
     {
         $sourceMapName = "";
 
-        $length = BinaryString::getLength($content);
+        $length = strlen($content);
         $position = $length > 512 ? $length - 512 : 0;
-        $lastLine = BinaryString::getPosition($content, self::SOURCE_MAP_TAG, $position);
+        $lastLine = strpos($content, self::SOURCE_MAP_TAG, $position);
         if ($lastLine !== false) {
             $nameStart = $lastLine + strlen(self::SOURCE_MAP_TAG);
-            if (($newLinePos = BinaryString::getPosition($content, "\n", $nameStart)) !== false) {
-                $sourceMapName = BinaryString::getSubstring($content, $nameStart, $newLinePos - $nameStart);
+            if (($newLinePos = strpos($content, "\n", $nameStart)) !== false) {
+                $sourceMapName = substr($content, $nameStart, $newLinePos - $nameStart);
             } else {
-                $sourceMapName = BinaryString::getSubstring($content, $nameStart);
+                $sourceMapName = substr($content, $nameStart);
             }
 
             $sourceMapName = trim($sourceMapName);
-            $content = BinaryString::getSubstring($content, 0, $lastLine);
+            $content = substr($content, 0, $lastLine);
         }
 
         return $sourceMapName;
@@ -2126,18 +2154,21 @@ class Asset
         $offset = 0;
         $line = 0;
 
-        $result = array();
-        while (($newLinePos = BinaryString::getPosition($content, "\n", $offset)) !== false) {
+        $result = [];
+        while (($newLinePos = strpos($content, "\n", $offset)) !== false) {
             $line++;
             $offset = $newLinePos + 1;
-            if (BinaryString::getSubstring($content, $offset, strlen(self::HEADER_START_TAG)) === self::HEADER_START_TAG) {
-                $endingPos = BinaryString::getPosition($content, self::HEADER_END_TAG, $offset);
+            if (substr($content, $offset, strlen(self::HEADER_START_TAG)) === self::HEADER_START_TAG) {
+                $endingPos = strpos($content, self::HEADER_END_TAG, $offset);
                 if ($endingPos === false) {
                     break;
                 }
 
                 $startData = $offset + strlen(self::HEADER_START_TAG);
-                $data = unserialize(BinaryString::getSubstring($content, $startData, $endingPos - $startData));
+                $data = unserialize(
+                    substr($content, $startData, $endingPos - $startData),
+                    ['allowed_classes' => false]
+                );
 
                 if (is_array($data)) {
                     $data["line"] = $line + 1;
@@ -2162,7 +2193,7 @@ class Asset
         $files = self::getFilesInfo($content);
         $sections = "";
         foreach ($files as $file) {
-            if (!isset($file["map"]) || strlen($file["map"]) < 1) {
+            if (!isset($file["map"]) || mb_strlen($file["map"]) < 1) {
                 continue;
             }
 
@@ -2177,8 +2208,8 @@ class Asset
                 $minName = IO\Path::getName($file["min"]);
 
                 $sourceMap = str_replace(
-                    array($sourceName, $minName),
-                    array($dirPath . "/" . $sourceName, $dirPath . "/" . $minName),
+                    [$sourceName, $minName],
+                    [$dirPath . "/" . $sourceName, $dirPath . "/" . $minName],
                     $content
                 );
                 $sections .= '{"offset": { "line": ' . $file["line"] . ', "column": 0 }, "map": ' . $sourceMap . '}';
@@ -2207,13 +2238,14 @@ class Asset
         }
 
         $written = fwrite($fh, $content);
-        $len = Main\Text\BinaryString::getLength($content);
+        $len = strlen($content);
         fclose($fh);
 
-        self::unlink($filePath);
+        @unlink($filePath);
         if ($written === $len) {
             $result = true;
             rename($fnTmp, $filePath);
+            @chmod($filePath, BX_FILE_PERMISSIONS);
             if ($gzip && self::gzipEnabled()) {
                 $fnTmpGz = $filePath . '.tmp.gz';
                 $fnGz = $filePath . '.gz';
@@ -2222,30 +2254,16 @@ class Asset
                     $writtenGz = @gzwrite($gz, $content);
                     gzclose($gz);
 
-                    self::unlink($fnGz);
+                    @unlink($fnGz);
                     if ($writtenGz === $len) {
                         rename($fnTmpGz, $fnGz);
+                        @chmod($fnGz, BX_FILE_PERMISSIONS);
                     }
-                    self::unlink($fnTmpGz);
+                    @unlink($fnTmpGz);
                 }
             }
         }
-        self::unlink($fnTmp);
+        @unlink($fnTmp);
         return $result;
-    }
-
-    /**
-     * Delete cache files.
-     * @param string $fileName Name of file to remove.
-     * @return bool
-     */
-    private static function unlink($fileName)
-    {
-        @chmod($fileName, BX_FILE_PERMISSIONS);
-        if (@unlink($fileName)) {
-            return true;
-        }
-
-        return false;
     }
 }

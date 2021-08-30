@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 use \Bitrix\Main\Localization\Loc;
@@ -7,7 +8,9 @@ Loc::loadMessages(__FILE__);
 
 /** @var CMain $APPLICATION */
 
-\Bitrix\Main\Page\Asset::getInstance()->addString('<link rel="stylesheet" type="text/css" href="/bitrix/css/sale/ebay.css">');
+\Bitrix\Main\Page\Asset::getInstance()->addString(
+    '<link rel="stylesheet" type="text/css" href="/bitrix/css/sale/ebay.css">'
+);
 $APPLICATION->SetTitle(Loc::getMessage("SALE_EBAY_TITLE"));
 
 require_once($DOCUMENT_ROOT . BX_ROOT . "/modules/main/include/prolog_admin_after.php");
@@ -62,16 +65,21 @@ require_once($DOCUMENT_ROOT . BX_ROOT . "/modules/main/include/prolog_admin_afte
                 <div class="ebay-start">
                     <div class="ebay-start-title"><?= Loc::getMessage('SALE_EBAY_HOWTO_START') ?></div>
                     <div class="ebay-start-content">
-                        <div class="ebay-start-content-item">
-                            <span>1</span><?= Loc::getMessage('SALE_EBAY_HOWTO_START1') ?></div>
-                        <div class="ebay-start-content-item">
-                            <span>2</span><?= Loc::getMessage('SALE_EBAY_HOWTO_START2') ?></div>
-                        <div class="ebay-start-content-item">
-                            <span>3</span><?= Loc::getMessage('SALE_EBAY_HOWTO_START3') ?></div>
-                        <div class="ebay-start-content-item">
-                            <span>4</span><?= Loc::getMessage('SALE_EBAY_HOWTO_START4') ?></div>
-                        <div class="ebay-start-content-item">
-                            <span>5</span><?= Loc::getMessage('SALE_EBAY_HOWTO_START5') ?></div>
+                        <div class="ebay-start-content-item"><span>1</span><?= Loc::getMessage(
+                                'SALE_EBAY_HOWTO_START1'
+                            ) ?></div>
+                        <div class="ebay-start-content-item"><span>2</span><?= Loc::getMessage(
+                                'SALE_EBAY_HOWTO_START2'
+                            ) ?></div>
+                        <div class="ebay-start-content-item"><span>3</span><?= Loc::getMessage(
+                                'SALE_EBAY_HOWTO_START3'
+                            ) ?></div>
+                        <div class="ebay-start-content-item"><span>4</span><?= Loc::getMessage(
+                                'SALE_EBAY_HOWTO_START4'
+                            ) ?></div>
+                        <div class="ebay-start-content-item"><span>5</span><?= Loc::getMessage(
+                                'SALE_EBAY_HOWTO_START5'
+                            ) ?></div>
                     </div>
                     <div class="ebay-start-btn-container">
                         <a href="/bitrix/admin/sale_ebay_wizard.php?lang=<?= LANGUAGE_ID ?>"

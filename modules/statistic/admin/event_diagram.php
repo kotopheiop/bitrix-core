@@ -1,9 +1,12 @@
 <?php
+
 define("STOP_STATISTICS", true);
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 /** @var CMain $APPLICATION */
 $STAT_RIGHT = $APPLICATION->GetGroupRight("statistic");
-if ($STAT_RIGHT == "D") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($STAT_RIGHT == "D") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 include($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/colors.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/img.php");
 
@@ -19,16 +22,20 @@ $arFilter = Array(
     "DATE1_PERIOD" => $find_date1,
     "DATE2_PERIOD" => $find_date2
 );
-if (strlen($find_date1) > 0 || strlen($find_date2) > 0) $period = "Y";
+if ($find_date1 <> '' || $find_date2 <> '') {
+    $period = "Y";
+}
 $by = ($period == "Y") ? "s_period_counter" : "s_total_counter";
-$w = CStatEventType::GetList($by, ($order = "desc"), $arFilter, $is_filtered);
+$w = CStatEventType::GetList($by, "desc", $arFilter);
 while ($wr = $w->Fetch()) {
     $total++;
     $count = ($period == "Y") ? $wr["PERIOD_COUNTER"] : $wr["TOTAL_COUNTER"];
-    if ($count > 0) $arr[] = array("COUNTER" => $count);
+    if ($count > 0) {
+        $arr[] = array("COUNTER" => $count);
+    }
 }
 $arChart = array();
-while (list($key, $sector) = each($arr)) {
+foreach ($arr as $sector) {
     $color = GetNextRGB($color, $total);
     $arChart[] = array("COUNTER" => $sector["COUNTER"], "COLOR" => $color);
 }

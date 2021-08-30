@@ -67,11 +67,15 @@ class Archive extends \Bitrix\Main\HttpResponse
     protected function setContentDispositionHeader()
     {
         $utfName = \CHTTP::urnEncode($this->name, 'UTF-8');
-        $translitName = \CUtil::translit($this->name, LANGUAGE_ID, [
-            'max_len' => 1024,
-            'safe_chars' => '.',
-            'replace_space' => '-',
-        ]);
+        $translitName = \CUtil::translit(
+            $this->name,
+            LANGUAGE_ID,
+            [
+                'max_len' => 1024,
+                'safe_chars' => '.',
+                'replace_space' => '-',
+            ]
+        );
         $this->addHeader(
             'Content-Disposition',
             "attachment; filename=\"{$translitName}\"; filename*=utf-8''{$utfName}"
@@ -85,7 +89,6 @@ class Archive extends \Bitrix\Main\HttpResponse
     public function send()
     {
         if (!$this->isEmpty()) {
-            $this->disableCompression();
             $this->setContentDispositionHeader();
             $this->setContent(
                 $this->getFileList()
@@ -93,15 +96,5 @@ class Archive extends \Bitrix\Main\HttpResponse
         }
 
         parent::send();
-    }
-
-    /**
-     * Disable compression of module compression.
-     */
-    protected function disableCompression()
-    {
-        if (Loader::includeModule('compression')) {
-            \CCompress::disableCompression();
-        }
     }
 }

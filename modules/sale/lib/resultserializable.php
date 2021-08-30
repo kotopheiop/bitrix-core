@@ -23,9 +23,11 @@ class ResultSerializable
     {
         $result = get_object_vars($this);
 
-        foreach ($result as $name => $value)
-            if (empty($value))
+        foreach ($result as $name => $value) {
+            if (empty($value)) {
                 unset($result[$name]);
+            }
+        }
 
         $result['errors'] = array();
 
@@ -49,24 +51,31 @@ class ResultSerializable
      */
     public function unserialize($data)
     {
-        $vars = unserialize($data);
+        $vars = unserialize($data, ['allowed_classes' => [static::class]]);
         $isNeedRecode = !empty($vars['CHARSET']) && $vars['CHARSET'] != ToUpper(SITE_CHARSET);
         $this->errors = new ErrorCollection();
 
         foreach ($vars as $name => $value) {
-            if (!property_exists($this, $name))
+            if (!property_exists($this, $name)) {
                 continue;
+            }
 
             if ($name == 'errors') {
                 foreach ($value as $error) {
-                    if ($isNeedRecode)
-                        $error['message'] = Encoding::convertEncoding($error['message'], $vars['CHARSET'], SITE_CHARSET);
+                    if ($isNeedRecode) {
+                        $error['message'] = Encoding::convertEncoding(
+                            $error['message'],
+                            $vars['CHARSET'],
+                            SITE_CHARSET
+                        );
+                    }
 
                     $this->addError(new Error($error['message'], $error['code']));
                 }
             } else {
-                if ($isNeedRecode)
+                if ($isNeedRecode) {
                     $value = Encoding::convertEncoding($value, $vars['CHARSET'], SITE_CHARSET);
+                }
 
                 $this->$name = $value;
             }

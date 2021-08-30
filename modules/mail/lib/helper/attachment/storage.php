@@ -39,13 +39,15 @@ class Storage
         if (!$storage) {
             $driver = \Bitrix\Disk\Driver::getInstance();
 
-            $storage = $driver->addStorageIfNotExist(array(
-                'NAME' => Loc::getMessage('MAIL_ATTACHMENT_STORAGE_NAME'),
-                'USE_INTERNAL_RIGHTS' => false,
-                'MODULE_ID' => 'mail',
-                'ENTITY_TYPE' => Mail\Disk\ProxyType\Mail::className(),
-                'ENTITY_ID' => 'mail',
-            ));
+            $storage = $driver->addStorageIfNotExist(
+                array(
+                    'NAME' => Loc::getMessage('MAIL_ATTACHMENT_STORAGE_NAME'),
+                    'USE_INTERNAL_RIGHTS' => false,
+                    'MODULE_ID' => 'mail',
+                    'ENTITY_TYPE' => Mail\Disk\ProxyType\Mail::className(),
+                    'ENTITY_ID' => 'mail',
+                )
+            );
             if ($storage) {
                 Main\Config\Option::set('mail', 'disk_attachment_storage_id', $storage->getId());
             } else {
@@ -95,14 +97,16 @@ class Storage
             return array();
         }
 
-        return \Bitrix\Disk\File::getModelList(array(
-            'filter' => array(
-                '=STORAGE_ID' => $storage->getId(),
-                '=TYPE' => \Bitrix\Disk\Internals\ObjectTable::TYPE_FILE,
-                '=FILE_ID' => $fileId,
-            ),
-            'limit' => $limit,
-        ));
+        return \Bitrix\Disk\File::getModelList(
+            array(
+                'filter' => array(
+                    '=STORAGE_ID' => $storage->getId(),
+                    '=TYPE' => \Bitrix\Disk\Internals\ObjectTable::TYPE_FILE,
+                    '=FILE_ID' => $fileId,
+                ),
+                'limit' => $limit,
+            )
+        );
     }
 
     /**
@@ -114,7 +118,8 @@ class Storage
      */
     public static function getObjectByAttachment(array $attachment, $create = false)
     {
-        $object = reset(static::getObjectsByFileId($attachment['FILE_ID'], 1));
+        $list = static::getObjectsByFileId($attachment['FILE_ID'], 1);
+        $object = reset($list);
 
         if (empty($object) && $create) {
             $object = static::registerAttachment($attachment);
@@ -137,16 +142,20 @@ class Storage
             return false;
         }
 
-        $folder = $storage->getChild(array(
-            '=NAME' => date('Y-m'),
-            '=TYPE' => \Bitrix\Disk\Internals\FolderTable::TYPE,
-        ));
+        $folder = $storage->getChild(
+            array(
+                '=NAME' => date('Y-m'),
+                '=TYPE' => \Bitrix\Disk\Internals\FolderTable::TYPE,
+            )
+        );
 
         if (!$folder) {
-            $folder = $storage->addFolder(array(
-                'NAME' => date('Y-m'),
-                'CREATED_BY' => 1, // @TODO
-            ));
+            $folder = $storage->addFolder(
+                array(
+                    'NAME' => date('Y-m'),
+                    'CREATED_BY' => 1, // @TODO
+                )
+            );
         }
 
         if (!$folder) {
@@ -155,7 +164,10 @@ class Storage
 
         return $folder->addFile(
             array(
-                'NAME' => \Bitrix\Disk\Ui\Text::correctFilename($attachment['FILE_NAME']) ?: sprintf('%x', rand(0, 0xffffff)),
+                'NAME' => \Bitrix\Disk\Ui\Text::correctFilename($attachment['FILE_NAME']) ?: sprintf(
+                    '%x',
+                    rand(0, 0xffffff)
+                ),
                 'FILE_ID' => $attachment['FILE_ID'],
                 'SIZE' => $attachment['FILE_SIZE'],
                 'CREATED_BY' => 1, // @TODO

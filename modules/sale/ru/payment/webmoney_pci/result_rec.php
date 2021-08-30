@@ -1,18 +1,21 @@
-<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die(); ?><?
+<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+} ?><?
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $bCorrectPayment = True;
+    $bCorrectPayment = true;
 
-    if (!($arOrder = CSaleOrder::GetByID(IntVal($_POST["pci_wmtid"]))))
-        $bCorrectPayment = False;
+    if (!($arOrder = CSaleOrder::GetByID(intval($_POST["pci_wmtid"])))) {
+        $bCorrectPayment = false;
+    }
 
     $CNST_PAYEE_PURSE = CSalePaySystemAction::GetParamValue("ACC_NUMBER");
     $CNST_SECRET_KEY = CSalePaySystemAction::GetParamValue("CNST_SECRET_KEY");
 
-    if (strlen($CNST_SECRET_KEY) <= 0)
-        $bCorrectPayment = False;
+    if ($CNST_SECRET_KEY == '') {
+        $bCorrectPayment = false;
+    }
 
     if ($_POST["LMI_PREREQUEST"] == "1") {
-
         if (round($arOrder["PRICE"], 2) == round($_POST["LMI_PAYMENT_AMOUNT"], 2)
             && $CNST_PAYEE_PURSE == $_POST["LMI_PAYEE_PURSE"]) {
             $APPLICATION->RestartBuffer();
@@ -20,12 +23,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             die();
         }
     } else {
-
         $SERVER_NAME_tmp = "";
-        if (defined("SITE_SERVER_NAME"))
+        if (defined("SITE_SERVER_NAME")) {
             $SERVER_NAME_tmp = SITE_SERVER_NAME;
-        if (strlen($SERVER_NAME_tmp) <= 0)
+        }
+        if ($SERVER_NAME_tmp == '') {
             $SERVER_NAME_tmp = COption::GetOptionString("main", "server_name", "");
+        }
 
         /*
         &purse=".$strPAYEE_PURSE;
@@ -37,28 +41,33 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $strCheck = md5(
             $_POST["pci_wmtid"] .
             $_POST["WMID"] .
-            md5(ToUpper(
-                "http://" . $SERVER_NAME_tmp . (CSalePaySystemAction::GetParamValue("PATH_TO_RESULT")) .
-                "?ORDER_ID=" . $arOrder["ID"] .
-                $CNST_PAYEE_PURSE .
-                round($arOrder["PRICE"], 2) .
-                "Order_" . $arOrder["ID"] .
-                CSalePaySystemAction::GetParamValue("TEST_MODE")
-            )) .
+            md5(
+                ToUpper(
+                    "http://" . $SERVER_NAME_tmp . (CSalePaySystemAction::GetParamValue("PATH_TO_RESULT")) .
+                    "?ORDER_ID=" . $arOrder["ID"] .
+                    $CNST_PAYEE_PURSE .
+                    round($arOrder["PRICE"], 2) .
+                    "Order_" . $arOrder["ID"] .
+                    CSalePaySystemAction::GetParamValue("TEST_MODE")
+                )
+            ) .
             $_POST["pci_pursesrc"] .
             $_POST["pci_pursedest"] .
             $_POST["pci_amount"] .
             $_POST["pci_desc"] .
             $_POST["pci_datecrt"] .
             $_POST["pci_mode"] .
-            md5($CNST_SECRET_KEY));
-        if ($_POST["pci_marker"] != $strCheck)
-            $bCorrectPayment = False;
+            md5($CNST_SECRET_KEY)
+        );
+        if ($_POST["pci_marker"] != $strCheck) {
+            $bCorrectPayment = false;
+        }
 
         if ($bCorrectPayment) {
             $strPS_STATUS_DESCRIPTION = "";
-            if (strlen($_POST["pci_mode"]) > 0)
+            if ($_POST["pci_mode"] <> '') {
                 $strPS_STATUS_DESCRIPTION .= "�������� �����, ������� ������ �� ������������; ";
+            }
             $strPS_STATUS_DESCRIPTION .= "������� �������� - " . $_POST["pci_pursedest"] . "; ";
             $strPS_STATUS_DESCRIPTION .= "����� �������� - " . $_POST["pci_wmtid"] . "; ";
             $strPS_STATUS_DESCRIPTION .= "���� ������� - " . $_POST["pci_datecrt"] . "";

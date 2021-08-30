@@ -1,5 +1,6 @@
 <?
 /** @global CMain $APPLICATION */
+
 /** @global CUser $USER */
 
 /** @global CDatabase $DB */
@@ -16,8 +17,9 @@ $selfFolderUrl = $adminPage->getSelfFolderUrl();
 $listUrl = $selfFolderUrl . "cat_store_document_list.php?lang=" . LANGUAGE_ID;
 $listUrl = $adminSidePanelHelper->editUrlToPublicPage($listUrl);
 
-if (!($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_store')))
+if (!$USER->CanDoOperation('catalog_store')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 Loader::includeModule('catalog');
 $bReadOnly = !$USER->CanDoOperation('catalog_store');
 
@@ -33,8 +35,9 @@ if (!isset($_REQUEST['AJAX_MODE'])) {
 }
 
 $ID = (isset($_REQUEST['ID']) ? (int)$_REQUEST['ID'] : 0);
-if ($ID < 0)
+if ($ID < 0) {
     $ID = 0;
+}
 
 $userId = (int)$USER->GetID();
 $docType = (isset($_REQUEST["DOCUMENT_TYPE"]) ? (string)$_REQUEST['DOCUMENT_TYPE'] : '');
@@ -42,15 +45,18 @@ $docType = (isset($_REQUEST["DOCUMENT_TYPE"]) ? (string)$_REQUEST['DOCUMENT_TYPE
 $arSitesShop = array();
 $arSitesTmp = array();
 
-$siteIterator = SiteTable::getList(array(
-    'select' => array('LID', 'NAME', 'SORT'),
-    'filter' => array('=ACTIVE' => 'Y'),
-    'order' => array('SORT' => 'ASC', 'LID' => 'ASC')
-));
+$siteIterator = SiteTable::getList(
+    array(
+        'select' => array('LID', 'NAME', 'SORT'),
+        'filter' => array('=ACTIVE' => 'Y'),
+        'order' => array('SORT' => 'ASC', 'LID' => 'ASC')
+    )
+);
 while ($site = $siteIterator->fetch()) {
     $saleSite = (string)Option::get('sale', 'SHOP_SITE_' . $site['LID']);
-    if ($site['LID'] == $saleSite)
+    if ($site['LID'] == $saleSite) {
         $arSitesShop[] = array('ID' => $site['LID'], 'NAME' => $site['NAME']);
+    }
     $arSitesTmp[] = array('ID' => $site['LID'], 'NAME' => $site['NAME']);
 }
 unset($saleSite, $site, $siteIterator);
@@ -63,18 +69,20 @@ if ($rsCount <= 0) {
 
 $rsContractors = CCatalogContractor::GetList();
 $arContractors = array();
-while ($arContractor = $rsContractors->Fetch())
+while ($arContractor = $rsContractors->Fetch()) {
     $arContractors[] = $arContractor;
+}
 unset($arContractor, $rsContractors);
 
 $arMeasureCode = $arResult = array();
 $arStores = array();
 $rsStores = CCatalogStore::GetList(array(), array("ACTIVE" => "Y"));
-while ($arStore = $rsStores->GetNext())
+while ($arStore = $rsStores->GetNext()) {
     $arStores[$arStore["ID"]] = $arStore;
+}
 unset($arStore, $rsStores);
 
-if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($_REQUEST["Update"]) > 0 && !$bReadOnly && check_bitrix_sessid()) {
+if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Update"] <> '' && !$bReadOnly && check_bitrix_sessid()) {
     $adminSidePanelHelper->decodeUriComponent();
     if (!$_REQUEST["cancellation"] && ($_REQUEST["save_document"] || $_REQUEST["save_and_conduct"])) {
         $contractorId = (isset($_REQUEST['CONTRACTOR_ID']) ? (int)$_REQUEST['CONTRACTOR_ID'] : 0);
@@ -91,17 +99,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($_REQUEST["Update"]) > 0 && !
             "MODIFIED_BY" => $userId,
             "COMMENTARY" => $_REQUEST["CAT_DOC_COMMENTARY"],
         );
-        if ($contractorId > 0)
+        if ($contractorId > 0) {
             $arGeneral["CONTRACTOR_ID"] = $contractorId;
-        if ($currency != '')
+        }
+        if ($currency != '') {
             $arGeneral["CURRENCY"] = $currency;
-        if (isset($_REQUEST["CAT_DOCUMENT_SUM"]))
+        }
+        if (isset($_REQUEST["CAT_DOCUMENT_SUM"])) {
             $arGeneral["TOTAL"] = (float)$_REQUEST["CAT_DOCUMENT_SUM"];
+        }
 
         if ($ID > 0) {
             unset($arGeneral['CREATED_BY']);
-            if (CCatalogDocs::update($ID, $arGeneral))
+            if (CCatalogDocs::update($ID, $arGeneral)) {
                 $docId = $ID;
+            }
         } else {
             $ID = $docId = CCatalogDocs::add($arGeneral);
         }
@@ -109,9 +121,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($_REQUEST["Update"]) > 0 && !
             $dbElement = CCatalogStoreDocsElement::getList(array(), array("DOC_ID" => $ID), false, false, array("ID"));
             while ($arElement = $dbElement->Fetch()) {
                 CCatalogStoreDocsElement::delete($arElement["ID"]);
-                $dbDocsBarcode = CCatalogStoreDocsBarcode::getList(array(), array("DOC_ELEMENT_ID" => $arElement["ID"]), false, false, array("ID"));
-                while ($arDocsBarcode = $dbDocsBarcode->Fetch())
+                $dbDocsBarcode = CCatalogStoreDocsBarcode::getList(
+                    array(),
+                    array("DOC_ELEMENT_ID" => $arElement["ID"]),
+                    false,
+                    false,
+                    array("ID")
+                );
+                while ($arDocsBarcode = $dbDocsBarcode->Fetch()) {
                     CCatalogStoreDocsBarcode::delete($arDocsBarcode["ID"]);
+                }
             }
         }
         if (isset($_POST["PRODUCT"]) && is_array($_POST["PRODUCT"]) && $docId) {
@@ -133,12 +152,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($_REQUEST["Update"]) > 0 && !
                 $docElementId = CCatalogStoreDocsElement::add($arAdditional);
                 if ($docElementId && isset($val["BARCODE"])) {
                     $arBarcode = array();
-                    if (!empty($val["BARCODE"]))
+                    if (!empty($val["BARCODE"])) {
                         $arBarcode = explode(', ', $val["BARCODE"]);
+                    }
 
                     if (!empty($arBarcode)) {
                         foreach ($arBarcode as $barCode) {
-                            CCatalogStoreDocsBarcode::add(array("BARCODE" => $barCode, "DOC_ELEMENT_ID" => $docElementId));
+                            CCatalogStoreDocsBarcode::add(
+                                array("BARCODE" => $barCode, "DOC_ELEMENT_ID" => $docElementId)
+                            );
                         }
                     }
                 }
@@ -158,25 +180,33 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($_REQUEST["Update"]) > 0 && !
         $result = false;
         $DB->StartTransaction();
 
-        if ($_REQUEST["save_and_conduct"])
+        if ($_REQUEST["save_and_conduct"]) {
             $result = CCatalogDocs::conductDocument($ID, $userId);
-        elseif ($_REQUEST["cancellation"])
+        } elseif ($_REQUEST["cancellation"]) {
             $result = CCatalogDocs::cancellationDocument($ID, $userId);
+        }
 
-        if ($result)
+        if ($result) {
             $DB->Commit();
-        else
+        } else {
             $DB->Rollback();
+        }
 
         if ($ex = $APPLICATION->GetException()) {
             $TAB_TITLE = GetMessage("CAT_DOC_" . $docType);
-            if ($bReadOnly)
-                $APPLICATION->SetTitle(str_replace("#ID#", $ID, GetMessage("CAT_DOC_TITLE_VIEW")) . ". " . $TAB_TITLE . ".");
-            else
-                $APPLICATION->SetTitle(str_replace("#ID#", $ID, GetMessage("CAT_DOC_TITLE_EDIT")) . ". " . $TAB_TITLE . ".");
+            if ($bReadOnly) {
+                $APPLICATION->SetTitle(
+                    str_replace("#ID#", $ID, GetMessage("CAT_DOC_TITLE_VIEW")) . ". " . $TAB_TITLE . "."
+                );
+            } else {
+                $APPLICATION->SetTitle(
+                    str_replace("#ID#", $ID, GetMessage("CAT_DOC_TITLE_EDIT")) . ". " . $TAB_TITLE . "."
+                );
+            }
             $strError = $ex->GetString();
-            if (!empty($result) && is_array($result))
+            if (!empty($result) && is_array($result)) {
                 $strError .= CCatalogStoreControlUtil::showErrorProduct($result);
+            }
             $adminSidePanelHelper->sendJsonErrorResponse($strError);
             require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
             CAdminMessage::ShowMessage($strError);
@@ -232,11 +262,18 @@ $isDocumentConduct = false;
 if ($ID > 0 || isset($_REQUEST["AJAX_MODE"])) {
     $arAllDocumentElement = array();
     if ($ID > 0) {
-        $dbDocument = CCatalogDocs::getList(array(), array("ID" => $ID), false, false, array("DOC_TYPE", "SITE_ID", "CONTRACTOR_ID", "CURRENCY", "TOTAL", "STATUS"));
+        $dbDocument = CCatalogDocs::getList(
+            array(),
+            array("ID" => $ID),
+            false,
+            false,
+            array("DOC_TYPE", "SITE_ID", "CONTRACTOR_ID", "CURRENCY", "TOTAL", "STATUS")
+        );
         if ($arDocument = $dbDocument->Fetch()) {
             $isDocumentConduct = ($arDocument["STATUS"] == 'Y');
-            foreach ($arDocument as $key => $value)
+            foreach ($arDocument as $key => $value) {
                 $arResult[$key] = $value;
+            }
             unset($key, $value);
 
             $arResult["DATE_DOCUMENT"] = 'now';
@@ -263,16 +300,36 @@ if ($ID > 0 || isset($_REQUEST["AJAX_MODE"])) {
     }
 
     if (!isset($_REQUEST["AJAX_MODE"])) {
-        $dbDocumentElement = CCatalogStoreDocsElement::getList(array('ID' => 'ASC'), array("DOC_ID" => $ID), false, false, array("ID", "STORE_FROM", "STORE_TO", "ELEMENT_ID", "AMOUNT", "PURCHASING_PRICE", "IS_MULTIPLY_BARCODE", "RESERVED"));
+        $dbDocumentElement = CCatalogStoreDocsElement::getList(
+            array('ID' => 'ASC'),
+            array("DOC_ID" => $ID),
+            false,
+            false,
+            array(
+                "ID",
+                "STORE_FROM",
+                "STORE_TO",
+                "ELEMENT_ID",
+                "AMOUNT",
+                "PURCHASING_PRICE",
+                "IS_MULTIPLY_BARCODE",
+                "RESERVED"
+            )
+        );
         while ($arDocumentElements = $dbDocumentElement->Fetch()) {
             $arAllDocumentElement[] = $arDocumentElements;
         }
     } elseif (isset($_REQUEST["PRODUCT"]) && is_array($_REQUEST["PRODUCT"]) || isset($_REQUEST["ELEMENT_ID"])) {
         $arElements = array();
-        if (isset($_REQUEST["PRODUCT"]) && is_array($_REQUEST["PRODUCT"]))
+        if (isset($_REQUEST["PRODUCT"]) && is_array($_REQUEST["PRODUCT"])) {
             $arElements = $_REQUEST["PRODUCT"];
+        }
         if (isset($_REQUEST["ELEMENT_ID"]) && is_array($_REQUEST["ELEMENT_ID"])) {
-            $arElements[] = array("PRODUCT_ID" => $_REQUEST["ELEMENT_ID"][0], "SELECTED_BARCODE" => $_REQUEST["HIDDEN_BARCODE"][0], "AMOUNT" => $_REQUEST["HIDDEN_QUANTITY"][0]);
+            $arElements[] = array(
+                "PRODUCT_ID" => $_REQUEST["ELEMENT_ID"][0],
+                "SELECTED_BARCODE" => $_REQUEST["HIDDEN_BARCODE"][0],
+                "AMOUNT" => $_REQUEST["HIDDEN_QUANTITY"][0]
+            );
         }
         $arAllAddedProductsId = $arAjaxElementInfo = array();
         foreach ($arElements as $eachAddElement) {
@@ -299,8 +356,9 @@ if ($ID > 0 || isset($_REQUEST["AJAX_MODE"])) {
             foreach ($arElements as &$arAjaxElement) {
                 $elementId = $arAjaxElement["PRODUCT_ID"];
                 $arAjaxElement["ELEMENT_ID"] = $arAjaxElement["PRODUCT_ID"];
-                if ($arAjaxElement["SELECTED_BARCODE"] == '')
+                if ($arAjaxElement["SELECTED_BARCODE"] == '') {
                     $arAjaxElement["SELECTED_BARCODE"] = $arAjaxElement["BARCODE"];
+                }
                 $arAjaxElement["BARCODE"] = array($arAjaxElement["BARCODE"]);
                 if (!empty($arAjaxElementInfo[$elementId])) {
                     $arAjaxElement["IS_MULTIPLY_BARCODE"] = $arAjaxElementInfo[$elementId]["IS_MULTIPLY_BARCODE"];
@@ -329,37 +387,51 @@ if ($ID > 0 || isset($_REQUEST["AJAX_MODE"])) {
         }
 
         if ($arDocumentElement["IS_MULTIPLY_BARCODE"] == 'N') {
-            if (isset($arElement["BARCODE"]))
+            if (isset($arElement["BARCODE"])) {
                 unset($arElement["BARCODE"]);
-            $dbDocumentStoreBarcode = CCatalogStoreBarCode::getList(array(), array("PRODUCT_ID" => $arDocumentElement["ELEMENT_ID"]));
+            }
+            $dbDocumentStoreBarcode = CCatalogStoreBarCode::getList(
+                array(),
+                array("PRODUCT_ID" => $arDocumentElement["ELEMENT_ID"])
+            );
             while ($arDocumentStoreBarcode = $dbDocumentStoreBarcode->Fetch()) {
                 $arElementBarcode[] = $arDocumentStoreBarcode["BARCODE"];
             }
             if (count($arElementBarcode) > 1) {
                 $isMultiSingleBarcode = true;
 
-                if ($bReadOnly)
+                if ($bReadOnly) {
                     $arElementBarcode = array();
+                }
             }
         }
 
         if ($arDocumentElement["IS_MULTIPLY_BARCODE"] == 'Y' || $isMultiSingleBarcode) {
-            $dbDocumentElementBarcode = CCatalogStoreDocsBarcode::getList(array(), array("DOC_ELEMENT_ID" => $arDocumentElement["ID"]), false, false, array("BARCODE"));
+            $dbDocumentElementBarcode = CCatalogStoreDocsBarcode::getList(
+                array(),
+                array("DOC_ELEMENT_ID" => $arDocumentElement["ID"]),
+                false,
+                false,
+                array("BARCODE")
+            );
             while ($arDocumentElementBarcode = $dbDocumentElementBarcode->Fetch()) {
                 if ($isMultiSingleBarcode) {
                     $selectedBarcode = $arDocumentElementBarcode["BARCODE"];
-                    if (empty($arElementBarcode))
+                    if (empty($arElementBarcode)) {
                         $arElementBarcode[] = $arDocumentElementBarcode["BARCODE"];
+                    }
                 } else {
                     $arElementBarcode[] = $arDocumentElementBarcode["BARCODE"];
                 }
             }
         }
 
-        if (!isset($arElement["BARCODE"]))
+        if (!isset($arElement["BARCODE"])) {
             $arElement["BARCODE"] = $arElementBarcode;
-        if (!isset($arElement["SELECTED_BARCODE"]))
+        }
+        if (!isset($arElement["SELECTED_BARCODE"])) {
             $arElement["SELECTED_BARCODE"] = $selectedBarcode;
+        }
         $arResult["ELEMENT"][] = $arElement;
     }
 }
@@ -386,13 +458,19 @@ if (!$bReadOnly) {
         array(
             "HTML" => GetMessage(
                 "CAT_DOC_LINK_FIND",
-                array("#LINK#" => '<a href="javascript:void(0);" onClick="findBarcodeDivHider()">' . GetMessage('CAT_DOC_BARCODE_FIND_LINK') . '</a>')
+                array(
+                    "#LINK#" => '<a href="javascript:void(0);" onClick="findBarcodeDivHider()">' . GetMessage(
+                            'CAT_DOC_BARCODE_FIND_LINK'
+                        ) . '</a>'
+                )
             ),
         ),
         array(
             "HTML" => '<div id="cat_barcode_find_div" style="display: none;">' .
                 '<input type="text" id="CAT_DOC_BARCODE_FIND" style="margin: 0 10px;">' .
-                '<a href="javascript:void(0);" class="adm-btn" onclick="productSearch(BX(\'CAT_DOC_BARCODE_FIND\').value);">' . GetMessage('CAT_DOC_BARCODE_FIND') . '</a>' .
+                '<a href="javascript:void(0);" class="adm-btn" onclick="productSearch(BX(\'CAT_DOC_BARCODE_FIND\').value);">' . GetMessage(
+                    'CAT_DOC_BARCODE_FIND'
+                ) . '</a>' .
                 '</div>',
         ),
     );
@@ -477,8 +555,9 @@ if (isset($requiredFields["BAR_CODE"])) {
 
 $lAdmin->AddHeaders($arHeaders);
 if (!empty($visibleHeaderIds)) {
-    foreach ($visibleHeaderIds as $headerId)
+    foreach ($visibleHeaderIds as $headerId) {
         $lAdmin->AddVisibleHeaderColumn($headerId);
+    }
     unset($headerId);
 }
 
@@ -489,8 +568,9 @@ if (is_array($arResult["ELEMENT"])) {
         $storesTo = $storesFrom = '';
         $isMultiply = ('Y' == $value["IS_MULTIPLY_BARCODE"]);
         $arProductInfo = CCatalogStoreControlUtil::getProductInfo($value["ELEMENT_ID"]);
-        if (is_array($arProductInfo))
+        if (is_array($arProductInfo)) {
             $value = array_merge($value, $arProductInfo);
+        }
 
         $arRes['ID'] = (int)$code;
         $maxId = ($arRes['ID'] > $maxId) ? $arRes['ID'] : $maxId;
@@ -508,7 +588,10 @@ if (is_array($arResult["ELEMENT"])) {
             $editPageUrl = $adminSidePanelHelper->editUrlToPublicPage($editPageUrl);
             $value['EDIT_PAGE_URL'] = $editPageUrl;
         }
-        $row->AddViewField("TITLE", '<a target="_top" href ="' . $value['EDIT_PAGE_URL'] . '"> ' . $value['NAME'] . '</a><input value="' . $value['ELEMENT_ID'] . '" type="hidden" name="PRODUCT[' . $arRes['ID'] . '][PRODUCT_ID]" id="PRODUCT_ID_' . $arRes['ID'] . '">');
+        $row->AddViewField(
+            "TITLE",
+            '<a target="_top" href ="' . $value['EDIT_PAGE_URL'] . '"> ' . $value['NAME'] . '</a><input value="' . $value['ELEMENT_ID'] . '" type="hidden" name="PRODUCT[' . $arRes['ID'] . '][PRODUCT_ID]" id="PRODUCT_ID_' . $arRes['ID'] . '">'
+        );
         $row->AddViewField('XML_ID', $value['XML_ID']);
         $readOnly = ($isMultiply && !$bReadOnly) ? ' readonly' : '';
         if (isset($value['BARCODE']) && $isMultiply) {
@@ -517,8 +600,9 @@ if (is_array($arResult["ELEMENT"])) {
             if (1 < $tmpBarcodeCount) {
                 $barcodeCount = $tmpBarcodeCount;
             } elseif (1 == $tmpBarcodeCount) {
-                if (isset($value['BARCODE'][0]) && $value['BARCODE'][0] != '')
+                if (isset($value['BARCODE'][0]) && $value['BARCODE'][0] != '') {
                     $barcodeCount = count(explode(', ', $value['BARCODE'][0]));
+                }
             }
             unset($tmpBarcodeCount);
         } elseif (!$isMultiply) {
@@ -526,49 +610,91 @@ if (is_array($arResult["ELEMENT"])) {
         } else {
             $barcodeCount = $value['AMOUNT'];
         }
-        if (isset($requiredFields["AMOUNT"]))
-            $row->AddViewField("AMOUNT", '<div><input type="hidden" id="CAT_DOC_AMOUNT_HIDDEN_' . $arRes['ID'] . '" value="' . $barcodeCount . '" onchange="recalculateSum(' . $arRes['ID'] . ');"> <input name="PRODUCT[' . $arRes['ID'] . '][AMOUNT]" onchange="recalculateSum(' . $arRes['ID'] . ');" id="CAT_DOC_AMOUNT_' . $arRes['ID'] . '" value="' . $value['AMOUNT'] . '" type="text" size="10"' . $isDisable . '></div>');
-        if (isset($requiredFields["NET_PRICE"]))
-            $row->AddViewField("PURCHASING_PRICE", '<div> <input name="PRODUCT[' . $arRes['ID'] . '][PURCHASING_PRICE]" onchange="recalculateSum(' . $arRes['ID'] . ');" id="CAT_DOC_PURCHASING_PRICE_' . $arRes['ID'] . '" value="' . $value['PURCHASING_PRICE'] . '" type="text" size="10"' . $isDisable . '></div>');
-        if (isset($requiredFields["TOTAL"]))
-            $row->AddViewField("SUMM", '<div id="CAT_DOC_SUMM_' . $arRes['ID'] . '">' . doubleval($value['AMOUNT']) * doubleval($value['PURCHASING_PRICE']) . '</div><input value="' . doubleval($value['AMOUNT']) * doubleval($value['PURCHASING_PRICE']) . '" type="hidden" name="PRODUCT[' . $arRes['ID'] . '][SUMM]" id="PRODUCT[' . $arRes['ID'] . '][SUMM]">');
-        if (isset($requiredFields["STORE_FROM"]))
-            $row->AddViewField("STORE_FROM", '<select style="max-width:300px; width:300px;" name="PRODUCT[' . $arRes['ID'] . '][STORE_FROM]" id="CAT_DOC_STORE_FROM_' . $arRes['ID'] . '"' . $isDisable . '>' . $storesFrom . '</select>');
-        if (isset($requiredFields["STORE_TO"]))
-            $row->AddViewField("STORE_TO", '<select style="max-width:300px; width:300px;" name="PRODUCT[' . $arRes['ID'] . '][STORE_TO]" id="CAT_DOC_STORE_TO_' . $arRes['ID'] . '"' . $isDisable . '>' . $storesTo . '</select>');
-        if (isset($requiredFields["RESERVED"]))
-            $row->AddViewField("RESERVED", '<div > <input readonly name="PRODUCT[' . $arRes['ID'] . '][RESERVED]" id="CAT_DOC_RESERVED_' . $arRes['ID'] . '" value="' . $value['RESERVED'] . '" type="text" size="10"' . $isDisable . '></div>');
+        if (isset($requiredFields["AMOUNT"])) {
+            $row->AddViewField(
+                "AMOUNT",
+                '<div><input type="hidden" id="CAT_DOC_AMOUNT_HIDDEN_' . $arRes['ID'] . '" value="' . $barcodeCount . '" onchange="recalculateSum(' . $arRes['ID'] . ');"> <input name="PRODUCT[' . $arRes['ID'] . '][AMOUNT]" onchange="recalculateSum(' . $arRes['ID'] . ');" id="CAT_DOC_AMOUNT_' . $arRes['ID'] . '" value="' . $value['AMOUNT'] . '" type="text" size="10"' . $isDisable . '></div>'
+            );
+        }
+        if (isset($requiredFields["NET_PRICE"])) {
+            $row->AddViewField(
+                "PURCHASING_PRICE",
+                '<div> <input name="PRODUCT[' . $arRes['ID'] . '][PURCHASING_PRICE]" onchange="recalculateSum(' . $arRes['ID'] . ');" id="CAT_DOC_PURCHASING_PRICE_' . $arRes['ID'] . '" value="' . $value['PURCHASING_PRICE'] . '" type="text" size="10"' . $isDisable . '></div>'
+            );
+        }
+        if (isset($requiredFields["TOTAL"])) {
+            $row->AddViewField(
+                "SUMM",
+                '<div id="CAT_DOC_SUMM_' . $arRes['ID'] . '">' . doubleval($value['AMOUNT']) * doubleval(
+                    $value['PURCHASING_PRICE']
+                ) . '</div><input value="' . doubleval($value['AMOUNT']) * doubleval(
+                    $value['PURCHASING_PRICE']
+                ) . '" type="hidden" name="PRODUCT[' . $arRes['ID'] . '][SUMM]" id="PRODUCT[' . $arRes['ID'] . '][SUMM]">'
+            );
+        }
+        if (isset($requiredFields["STORE_FROM"])) {
+            $row->AddViewField(
+                "STORE_FROM",
+                '<select style="max-width:300px; width:300px;" name="PRODUCT[' . $arRes['ID'] . '][STORE_FROM]" id="CAT_DOC_STORE_FROM_' . $arRes['ID'] . '"' . $isDisable . '>' . $storesFrom . '</select>'
+            );
+        }
+        if (isset($requiredFields["STORE_TO"])) {
+            $row->AddViewField(
+                "STORE_TO",
+                '<select style="max-width:300px; width:300px;" name="PRODUCT[' . $arRes['ID'] . '][STORE_TO]" id="CAT_DOC_STORE_TO_' . $arRes['ID'] . '"' . $isDisable . '>' . $storesTo . '</select>'
+            );
+        }
+        if (isset($requiredFields["RESERVED"])) {
+            $row->AddViewField(
+                "RESERVED",
+                '<div > <input readonly name="PRODUCT[' . $arRes['ID'] . '][RESERVED]" id="CAT_DOC_RESERVED_' . $arRes['ID'] . '" value="' . $value['RESERVED'] . '" type="text" size="10"' . $isDisable . '></div>'
+            );
+        }
         if (isset($requiredFields["BAR_CODE"]) && isset($value['BARCODE']) && is_array($value['BARCODE'])) {
             $barcode = implode(", ", $value['BARCODE']);
             if ($isMultiply) {
                 $readOnly = ($bReadOnly) ? ' readonly' : '';
-                $buttonValue = ($bReadOnly) ? GetMessage('CAT_DOC_BARCODES_VIEW') : GetMessage('CAT_DOC_BARCODES_ENTER');
-                if (empty($barcode))
-                    $barcode = '';//GetMessage('CAT_DOC_POPUP_TITLE');
-                $inputBarcode = '<input type="button" value="' . $buttonValue . '" onclick="enterBarcodes(' . $arRes['ID'] . ');"><input ' . $readOnly . ' type="hidden" value="' . htmlspecialcharsbx($barcode) . '" type="text" name="PRODUCT[' . $arRes['ID'] . '][BARCODE]" id="PRODUCT[' . $arRes['ID'] . '][BARCODE]" onchange="recalculateSum(' . $arRes['ID'] . ');" size="20">';
-            } elseif (count($value['BARCODE']) < 2)
+                $buttonValue = ($bReadOnly) ? GetMessage('CAT_DOC_BARCODES_VIEW') : GetMessage(
+                    'CAT_DOC_BARCODES_ENTER'
+                );
+                if (empty($barcode)) {
+                    $barcode = '';
+                }//GetMessage('CAT_DOC_POPUP_TITLE');
+                $inputBarcode = '<input type="button" value="' . $buttonValue . '" onclick="enterBarcodes(' . $arRes['ID'] . ');"><input ' . $readOnly . ' type="hidden" value="' . htmlspecialcharsbx(
+                        $barcode
+                    ) . '" type="text" name="PRODUCT[' . $arRes['ID'] . '][BARCODE]" id="PRODUCT[' . $arRes['ID'] . '][BARCODE]" onchange="recalculateSum(' . $arRes['ID'] . ');" size="20">';
+            } elseif (count($value['BARCODE']) < 2) {
                 $inputBarcode = htmlspecialcharsbx($barcode);
-            else {
+            } else {
                 $inputBarcode = '<select style="max-width:150px; width:150px;" id="PRODUCT[' . $arRes['ID'] . '][BARCODE]" name="PRODUCT[' . $arRes['ID'] . '][BARCODE]"> ';
                 foreach ($value['BARCODE'] as $singleCode) {
                     $selected = ($value["SELECTED_BARCODE"] == $singleCode) ? ' selected' : '';
-                    $inputBarcode .= '<option value="' . htmlspecialcharsbx($singleCode) . '"' . $selected . '>' . htmlspecialcharsbx($singleCode) . '</option>';
+                    $inputBarcode .= '<option value="' . htmlspecialcharsbx(
+                            $singleCode
+                        ) . '"' . $selected . '>' . htmlspecialcharsbx($singleCode) . '</option>';
                 }
                 $inputBarcode .= '</select>';
             }
-            $row->AddViewField("BARCODE", '<div id="CAT_BARCODE_DIV_BIND_' . $arRes['ID'] . '" align="center">' . $inputBarcode . '</div>');
+            $row->AddViewField(
+                "BARCODE",
+                '<div id="CAT_BARCODE_DIV_BIND_' . $arRes['ID'] . '" align="center">' . $inputBarcode . '</div>'
+            );
         }
         $arActions = array();
         if (!$bReadOnly) {
             $arActions[] = array(
                 "ICON" => "delete",
                 "TEXT" => GetMessage("CAT_DOC_DEL"),
-                "ACTION" => "if(confirm('" . GetMessageJS('CAT_DOC_CONFIRM_DELETE') . "')) deleteRow(" . $arRes['ID'] . ")"
+                "ACTION" => "if(confirm('" . GetMessageJS(
+                        'CAT_DOC_CONFIRM_DELETE'
+                    ) . "')) deleteRow(" . $arRes['ID'] . ")"
             );
             $arActions[] = array(
                 "ICON" => "copy",
                 "TEXT" => GetMessage("CAT_DOC_COPY"),
-                "ACTION" => "copyRow(null, " . CUtil::PhpToJSObject(array('id' => $value["ELEMENT_ID"], 'parent' => $arRes['ID'])) . ")"
+                "ACTION" => "copyRow(null, " . CUtil::PhpToJSObject(
+                        array('id' => $value["ELEMENT_ID"], 'parent' => $arRes['ID'])
+                    ) . ")"
             );
         }
         $row->AddActions($arActions);
@@ -576,8 +702,9 @@ if (is_array($arResult["ELEMENT"])) {
     }
 }
 
-if (isset($row))
+if (isset($row)) {
     unset($row);
+}
 
 $lAdmin->AddGroupActionTable(
     array(
@@ -598,10 +725,11 @@ $bVarsFromForm = false;
 
 $TAB_TITLE = GetMessage("CAT_DOC_" . $docType);
 if ($ID > 0) {
-    if ($bReadOnly)
+    if ($bReadOnly) {
         $APPLICATION->SetTitle(str_replace("#ID#", $ID, GetMessage("CAT_DOC_TITLE_VIEW")) . ". " . $TAB_TITLE . ".");
-    else
+    } else {
         $APPLICATION->SetTitle(str_replace("#ID#", $ID, GetMessage("CAT_DOC_TITLE_EDIT")) . ". " . $TAB_TITLE . ".");
+    }
 } else {
     $APPLICATION->SetTitle(GetMessage("CAT_DOC_NEW") . ". " . $TAB_TITLE);
 }
@@ -609,8 +737,9 @@ if ($ID > 0) {
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 CJSCore::Init(array('file_input', 'currency'));
 $APPLICATION->SetAdditionalCSS('/bitrix/panel/catalog/catalog_store_docs.css');
-if ($bVarsFromForm)
+if ($bVarsFromForm) {
     $DB->InitTableVarsForEdit("b_catalog_measure", "", "str_");
+}
 
 $aMenu = array(
     array(
@@ -624,9 +753,11 @@ $context = new CAdminContextMenu($aMenu);
 $context->Show();
 
 $currencyList = array();
-$currencyIterator = CurrencyTable::getList(array(
-    'select' => array('CURRENCY')
-));
+$currencyIterator = CurrencyTable::getList(
+    array(
+        'select' => array('CURRENCY')
+    )
+);
 while ($currency = $currencyIterator->fetch()) {
     $currencyFormat = CCurrencyLang::GetFormatDescription($currency['CURRENCY']);
     $currencyList[] = array(
@@ -665,8 +796,9 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
                         <? if ($ID > 0): ?>
                             <tr>
                                 <td width="40%" class="adm-detail-content-cell-l"><span
-                                            class="cat-doc-status-left-<?= $str_STATUS ?>"><?= GetMessage('CAT_DOC_STATUS') ?>:</span>
-                                </td>
+                                            class="cat-doc-status-left-<?= $str_STATUS ?>"><?= GetMessage(
+                                            'CAT_DOC_STATUS'
+                                        ) ?>:</span></td>
                                 <td width="60%" class="adm-detail-content-cell-r">
 								<span class="cat-doc-status-right-<?= $str_STATUS ?>">
 									<?= GetMessage('CAT_DOC_EXECUTION_' . $str_STATUS) ?>
@@ -680,7 +812,16 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
                                 <? if ($bReadOnly): ?>
                                     <?= $str_DATE_DOCUMENT ?>
                                 <? else: ?>
-                                    <?= CalendarDate("DOC_DATE", (isset($str_DATE_DOCUMENT)) ? $str_DATE_DOCUMENT : date($DB->DateFormatToPHP(CSite::GetDateFormat("FULL")), time()), "form_catalog_document_form", "15", "class=\"typeinput\""); ?>
+                                    <?= CalendarDate(
+                                        "DOC_DATE",
+                                        (isset($str_DATE_DOCUMENT)) ? $str_DATE_DOCUMENT : date(
+                                            $DB->DateFormatToPHP(CSite::GetDateFormat("FULL")),
+                                            time()
+                                        ),
+                                        "form_catalog_document_form",
+                                        "15",
+                                        "class=\"typeinput\""
+                                    ); ?>
                                 <? endif; ?>
                             </td>
                         </tr>
@@ -690,7 +831,11 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
                                 <select id="SITE_ID" name="SITE_ID" <?= $isDisable ?>>
                                     <? foreach ($arSitesShop as $key => $val) {
                                         $selected = ($val['ID'] == $str_SITE_ID) ? 'selected' : '';
-                                        echo "<option " . $selected . " value=" . htmlspecialcharsbx($val['ID']) . ">" . htmlspecialcharsbx($val["NAME"] . " (" . $val["ID"] . ")") . "</option>";
+                                        echo "<option " . $selected . " value=" . htmlspecialcharsbx(
+                                                $val['ID']
+                                            ) . ">" . htmlspecialcharsbx(
+                                                $val["NAME"] . " (" . $val["ID"] . ")"
+                                            ) . "</option>";
                                     }
                                     ?>
                                 </select>
@@ -698,15 +843,20 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
                         </tr>
                         <? if (isset($requiredFields["CONTRACTOR"])): ?>
                             <tr class="adm-detail-required-field">
-                                <td width="40%"
-                                    class="adm-detail-content-cell-l"><?= GetMessage("CAT_DOC_CONTRACTOR") ?>:
+                                <td width="40%" class="adm-detail-content-cell-l"><?= GetMessage(
+                                        "CAT_DOC_CONTRACTOR"
+                                    ) ?>:
                                 </td>
                                 <td width="60%" class="adm-detail-content-cell-r">
                                     <? if (count($arContractors) > 0 && is_array($arContractors)): ?>
                                         <select style="max-width:300px" name="CONTRACTOR_ID" <?= $isDisable ?>>
                                             <? foreach ($arContractors as $key => $val) {
                                                 $selected = ($val['ID'] == $str_CONTRACTOR_ID) ? 'selected' : '';
-                                                $companyName = ($val["PERSON_TYPE"] == CONTRACTOR_INDIVIDUAL) ? htmlspecialcharsbx($val["PERSON_NAME"]) : htmlspecialcharsbx($val["COMPANY"] . " (" . $val["PERSON_NAME"] . ")");
+                                                $companyName = ($val["PERSON_TYPE"] == CONTRACTOR_INDIVIDUAL) ? htmlspecialcharsbx(
+                                                    $val["PERSON_NAME"]
+                                                ) : htmlspecialcharsbx(
+                                                    $val["COMPANY"] . " (" . $val["PERSON_NAME"] . ")"
+                                                );
                                                 echo "<option " . $selected . " value=" . $val['ID'] . ">" . $companyName . "</option>";
                                             }
                                             ?>
@@ -714,10 +864,13 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
                                     <? else: ?>
                                         <?
                                         $contractorEditUrl = $selfFolderUrl . "cat_contractor_edit.php?lang=" . LANGUAGE_ID;
-                                        $contractorEditUrl = $adminSidePanelHelper->editUrlToPublicPage($contractorEditUrl);
+                                        $contractorEditUrl = $adminSidePanelHelper->editUrlToPublicPage(
+                                            $contractorEditUrl
+                                        );
                                         ?>
-                                        <a target="_top"
-                                           href="<?= $contractorEditUrl ?>"><?= GetMessage("CAT_DOC_CONTRACTOR_ADD") ?></a>
+                                        <a target="_top" href="<?= $contractorEditUrl ?>"><?= GetMessage(
+                                                "CAT_DOC_CONTRACTOR_ADD"
+                                            ) ?></a>
                                     <? endif; ?>
                                 </td>
                             </tr>
@@ -727,8 +880,14 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
                                 <td width="40%" class="adm-detail-content-cell-l"><?= GetMessage("CAT_DOC_CURRENCY") ?>
                                     :
                                 </td>
-                                <td width="60%"
-                                    class="adm-detail-content-cell-r"><? echo CCurrency::SelectBox("CAT_CURRENCY_STORE", $str_CURRENCY, "", true, "", "onChange=\"recalculateSum(0);\" id='CAT_CURRENCY_STORE'" . $isDisable); ?></td>
+                                <td width="60%" class="adm-detail-content-cell-r"><? echo CCurrency::SelectBox(
+                                        "CAT_CURRENCY_STORE",
+                                        $str_CURRENCY,
+                                        "",
+                                        true,
+                                        "",
+                                        "onChange=\"recalculateSum(0);\" id='CAT_CURRENCY_STORE'" . $isDisable
+                                    ); ?></td>
                             </tr>
                         <? endif; ?>
                         </tbody>
@@ -791,8 +950,9 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
                 ?>
                 <span class="hor-spacer"></span>
                 <input type="hidden" name="cancellation" id="cancellation" value="0">
-                <input type="button" class="adm-btn"
-                       onclick="if(confirm('<?= GetMessage("CAT_DOC_CANCELLATION_CONFIRM") ?>')) {BX('cancellation').value = 1; BX('form_b_catalog_store_docs').submit();}"
+                <input type="button" class="adm-btn" onclick="if(confirm('<?= GetMessage(
+                    "CAT_DOC_CANCELLATION_CONFIRM"
+                ) ?>')) {BX('cancellation').value = 1; BX('form_b_catalog_store_docs').submit();}"
                        value="<? echo GetMessage("CAT_DOC_CANCELLATION") ?>">
                 <?
             }
@@ -966,7 +1126,8 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
             }
 
             function productSearch(barcode) {
-                var dateURL = '<?=bitrix_sessid_get()?>&BARCODE_AJAX=Y&BARCODE=' + barcode + '&lang=<? echo LANGUAGE_ID; ?>';
+                var dateURL = '<?=bitrix_sessid_get(
+                )?>&BARCODE_AJAX=Y&BARCODE=' + barcode + '&lang=<? echo LANGUAGE_ID; ?>';
 
                 BX.showWait();
                 BX.ajax.post('<?=$selfFolderUrl?>cat_store_product_search.php', dateURL, fSearchProductResult);
@@ -1022,7 +1183,9 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
                                 },
                                 events: {
                                     click: function () {
-                                        if (BX("BARCODE_INPUT_" + id).value.replace(/^\s+|\s+$/g, '') !== '' && !<?=intval($bReadOnly)?>) {
+                                        if (BX("BARCODE_INPUT_" + id).value.replace(/^\s+|\s+$/g, '') !== '' && !<?=intval(
+                                            $bReadOnly
+                                        )?>) {
                                             amount = parseInt(BX('CAT_DOC_AMOUNT_HIDDEN_' + id).value, 10);
                                             if (isNaN(amount))
                                                 amount = 0;
@@ -1117,7 +1280,9 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
                         var barCodeAmount = parseInt(BX('CAT_DOC_AMOUNT_HIDDEN_' + id).value);
                         BX("BARCODE_INPUT_BUTTON_" + id).disabled = (savedBarcodes.length >= BX('CAT_DOC_AMOUNT_' + id).value);
                         for (i in savedBarcodes) {
-                            if (savedBarcodes.hasOwnProperty(i) && savedBarcodes[i] != undefined && savedBarcodes[i] != '<?=GetMessage('CAT_DOC_POPUP_TITLE')?>') {
+                            if (savedBarcodes.hasOwnProperty(i) && savedBarcodes[i] != undefined && savedBarcodes[i] != '<?=GetMessage(
+                                'CAT_DOC_POPUP_TITLE'
+                            )?>') {
                                 BX('BARCODE_DIV_' + id).appendChild(BX.create('DIV', {
                                     props: {
                                         id: "BARCODE_DIV_INPUT_" + id
@@ -1251,7 +1416,9 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
                 if (isNaN(totalSum))
                     totalSum = 0;
                 if (BX("CAT_DOCUMENT_SUMM_SPAN"))
-                    BX("CAT_DOCUMENT_SUMM_SPAN").innerHTML = '<?=GetMessage('CAT_DOC_TOTAL')?>' + ': ' + BX.Currency.currencyFormat(totalSum, BX('CAT_CURRENCY_STORE').value, true);
+                    BX("CAT_DOCUMENT_SUMM_SPAN").innerHTML = '<?=GetMessage(
+                        'CAT_DOC_TOTAL'
+                    )?>' + ': ' + BX.Currency.currencyFormat(totalSum, BX('CAT_CURRENCY_STORE').value, true);
                 else
                     showTotalSum();
                 if (BX("CAT_DOCUMENT_SUM"))

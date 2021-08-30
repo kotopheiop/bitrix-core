@@ -1,8 +1,21 @@
 <?
+
 define('BX_SESSION_ID_CHANGE', false);
 define('BX_SKIP_POST_UNQUOTE', true);
 define('NO_AGENT_CHECK', true);
 define("STATISTIC_SKIP_ACTIVITY_CHECK", true);
+define("BX_FORCE_DISABLE_SEPARATED_SESSION_MODE", true);
+
+if (isset($_SERVER["REQUEST_METHOD"]) && $_SERVER["REQUEST_METHOD"] == "GET") {
+    //from main 20.0.1300 only POST allowed
+    if (isset($_GET["USER_LOGIN"]) && isset($_GET["USER_PASSWORD"]) && isset($_GET["AUTH_FORM"]) && isset($_GET["TYPE"])) {
+        $_POST["USER_LOGIN"] = $_GET["USER_LOGIN"];
+        $_POST["USER_PASSWORD"] = $_GET["USER_PASSWORD"];
+        $_POST["AUTH_FORM"] = $_GET["AUTH_FORM"];
+        $_POST["TYPE"] = $_GET["TYPE"];
+    }
+}
+
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/header.php");
 
 if ($type == "sale") {

@@ -1,17 +1,20 @@
 <?
+
 define("ADMIN_MODULE_NAME", "sender");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 use \Bitrix\Sender\Internals\CounterCalculation;
 
-if (!\Bitrix\Main\Loader::includeModule("sender"))
+if (!\Bitrix\Main\Loader::includeModule("sender")) {
     ShowError(\Bitrix\Main\Localization\Loc::getMessage("MAIN_MODULE_NOT_INSTALLED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 
 $POST_RIGHT = $APPLICATION->GetGroupRight("sender");
-if ($POST_RIGHT <= "R")
+if ($POST_RIGHT <= "R") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 if ($REQUEST_METHOD == "POST" && $POST_RIGHT == "W" && check_bitrix_sessid()) {
     require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_js.php");
@@ -53,7 +56,12 @@ if ($REQUEST_METHOD == "POST" && $POST_RIGHT == "W" && check_bitrix_sessid()) {
 
 $APPLICATION->SetTitle(GetMessage("sender_convert_title"));
 $aTabs = array(
-    array("DIV" => "edit1", "TAB" => GetMessage("sender_convert_tab_convert_name"), "ICON" => "main_user_edit", "TITLE" => GetMessage("sender_convert_tab_convert_title")),
+    array(
+        "DIV" => "edit1",
+        "TAB" => GetMessage("sender_convert_tab_convert_name"),
+        "ICON" => "main_user_edit",
+        "TITLE" => GetMessage("sender_convert_tab_convert_title")
+    ),
 );
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");

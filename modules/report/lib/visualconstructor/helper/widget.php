@@ -48,7 +48,8 @@ class Widget
         $reports = $widget->getReports();
         $reportsCount = count($widget->getReports());
         if ($reportsCount > $view::MAX_RENDER_REPORT_COUNT) {
-            $result['errors'][] = 'View with key:' . $view->getKey() . 'can\'t render this count(' . $reportsCount . ') of reports';
+            $result['errors'][] = 'View with key:' . $view->getKey(
+                ) . 'can\'t render this count(' . $reportsCount . ') of reports';
             return $result;
         }
 
@@ -204,7 +205,10 @@ class Widget
 
             if (!empty($report['configurations']['new']['reportHandler'])) {
                 /** @var BaseReport $reportHandler */
-                $reportHandler = $viewController->getReportHandler($report['configurations']['new']['reportHandler'], $widgetHandler);
+                $reportHandler = $viewController->getReportHandler(
+                    $report['configurations']['new']['reportHandler'],
+                    $widgetHandler
+                );
             } elseif (!empty($report['configurations']['old'])) {
                 foreach ($report['configurations']['old'] as $configuration) {
                     foreach ($configuration as $key => $value) {

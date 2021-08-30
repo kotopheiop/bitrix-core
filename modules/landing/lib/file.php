@@ -27,6 +27,20 @@ class File
     const ENTITY_TYPE_ASSET = 'A';
 
     /**
+     * Returns sanitized file name.
+     * @param string $fileName File name.
+     * @return string
+     */
+    public static function sanitizeFileName(string $fileName): string
+    {
+        return preg_replace(
+            '/[\(\)\s]+/s',
+            '_',
+            $fileName
+        );
+    }
+
+    /**
      * Add new record.
      * @param int $fileId File id.
      * @param int $entityId Entity id.
@@ -35,22 +49,26 @@ class File
      */
     protected static function add($fileId, $entityId, $entityType)
     {
-        $res = FileTable::getList(array(
-            'select' => array(
-                'ID'
-            ),
-            'filter' => array(
-                'FILE_ID' => $fileId,
-                'ENTITY_ID' => $entityId,
-                '=ENTITY_TYPE' => $entityType
+        $res = FileTable::getList(
+            array(
+                'select' => array(
+                    'ID'
+                ),
+                'filter' => array(
+                    'FILE_ID' => $fileId,
+                    'ENTITY_ID' => $entityId,
+                    '=ENTITY_TYPE' => $entityType
+                )
             )
-        ));
+        );
         if (!$res->fetch()) {
-            $res = FileTable::add(array(
-                'FILE_ID' => $fileId,
-                'ENTITY_ID' => $entityId,
-                'ENTITY_TYPE' => $entityType
-            ));
+            $res = FileTable::add(
+                array(
+                    'FILE_ID' => $fileId,
+                    'ENTITY_ID' => $entityId,
+                    'ENTITY_TYPE' => $entityType
+                )
+            );
             $res->isSuccess();
         }
     }
@@ -64,15 +82,17 @@ class File
     protected static function getFiles($entityId, $entityType)
     {
         $files = [];
-        $res = FileTable::getList(array(
-            'select' => array(
-                'FILE_ID'
-            ),
-            'filter' => array(
-                'ENTITY_ID' => $entityId,
-                '=ENTITY_TYPE' => $entityType
+        $res = FileTable::getList(
+            array(
+                'select' => array(
+                    'FILE_ID'
+                ),
+                'filter' => array(
+                    'ENTITY_ID' => $entityId,
+                    '=ENTITY_TYPE' => $entityType
+                )
             )
-        ));
+        );
         while ($row = $res->fetch()) {
             $files[] = $row['FILE_ID'];
         }
@@ -88,6 +108,13 @@ class File
      */
     protected static function delete($fileId, $entityId, $entityType)
     {
+        //@tmp log
+        Debug::log(
+            $entityId . '@' . $entityType,
+            'fileId: ' . print_r($fileId, true) . '@' . print_r(\Bitrix\Main\Diag\Helper::getBackTrace(15), true),
+            'LANDING_FILE_MARK_DELETE'
+        );
+
         $filter = array(
             'ENTITY_ID' => $entityId,
             '=ENTITY_TYPE' => $entityType
@@ -95,12 +122,15 @@ class File
         if ($fileId) {
             $filter['FILE_ID'] = $fileId;
         }
-        $res = FileTable::getList(array(
-            'select' => array(
-                'ID', 'FILE_ID'
-            ),
-            'filter' => $filter
-        ));
+        $res = FileTable::getList(
+            array(
+                'select' => array(
+                    'ID',
+                    'FILE_ID'
+                ),
+                'filter' => $filter
+            )
+        );
         while ($row = $res->fetch()) {
             $resUpdate = FileTable::update(
                 $row['ID'],
@@ -114,25 +144,28 @@ class File
 
     /**
      * Final delete all marked files.
-     * @param null $limit
+     * @param int $limit Records limit for one iteration.
      * @return void
      */
     public static function deleteFinal($limit = null)
     {
         $deletedFiles = array();
 
-        $res = FileTable::getList(array(
-            'select' => array(
-                'ID', 'FILE_ID'
-            ),
-            'filter' => array(
-                '<FILE_ID' => 0
-            ),
-            'limit' => $limit,
-            'order' => array(
-                'ID' => 'asc'
+        $res = FileTable::getList(
+            array(
+                'select' => array(
+                    'ID',
+                    'FILE_ID'
+                ),
+                'filter' => array(
+                    '<FILE_ID' => 0
+                ),
+                'limit' => $limit,
+                'order' => array(
+                    'ID' => 'asc'
+                )
             )
-        ));
+        );
         while ($row = $res->fetch()) {
             $row['FILE_ID'] *= -1;
             FileTable::delete($row['ID']);
@@ -140,14 +173,16 @@ class File
         }
         if (!empty($deletedFiles)) {
             // don't delete still used
-            $res = FileTable::getList(array(
-                'select' => array(
-                    'FILE_ID'
-                ),
-                'filter' => array(
-                    'FILE_ID' => $deletedFiles
+            $res = FileTable::getList(
+                array(
+                    'select' => array(
+                        'FILE_ID'
+                    ),
+                    'filter' => array(
+                        'FILE_ID' => $deletedFiles
+                    )
                 )
-            ));
+            );
             while ($row = $res->fetch()) {
                 unset($deletedFiles[$row['FILE_ID']]);
             }
@@ -272,15 +307,17 @@ class File
             if (!is_array($fileId)) {
                 $fileId = array($fileId);
             }
-            $res = FileTable::getList(array(
-                'select' => array(
-                    'FILE_ID'
-                ),
-                'filter' => array(
-                    'ENTITY_ID' => $blockId,
-                    '=ENTITY_TYPE' => self::ENTITY_TYPE_BLOCK
+            $res = FileTable::getList(
+                array(
+                    'select' => array(
+                        'FILE_ID'
+                    ),
+                    'filter' => array(
+                        'ENTITY_ID' => $blockId,
+                        '=ENTITY_TYPE' => self::ENTITY_TYPE_BLOCK
+                    )
                 )
-            ));
+            );
             while ($row = $res->fetch()) {
                 if (!in_array($row['FILE_ID'], $fileId)) {
                     self::delete($row['FILE_ID'], $blockId, self::ENTITY_TYPE_BLOCK);
@@ -318,16 +355,18 @@ class File
         }
         // check if files ids set in blockId
         if (!empty($fileIds)) {
-            $res = FileTable::getList(array(
-                'select' => array(
-                    'FILE_ID'
-                ),
-                'filter' => array(
-                    'FILE_ID' => $fileIds,
-                    'ENTITY_ID' => $blockId,
-                    '=ENTITY_TYPE' => self::ENTITY_TYPE_BLOCK
+            $res = FileTable::getList(
+                array(
+                    'select' => array(
+                        'FILE_ID'
+                    ),
+                    'filter' => array(
+                        'FILE_ID' => $fileIds,
+                        'ENTITY_ID' => $blockId,
+                        '=ENTITY_TYPE' => self::ENTITY_TYPE_BLOCK
+                    )
                 )
-            ));
+            );
             $fileIds = array();
             while ($row = $res->fetch()) {
                 $fileIds[] = $row['FILE_ID'];
@@ -351,7 +390,7 @@ class File
 
     /**
      * Add new record for Asset.
-     * @param int $assetId - id of landing to which attached asset.
+     * @param int $assetId Id of landing to which attached asset.
      * @param int $fileId File id.
      * @return void
      */
@@ -366,10 +405,10 @@ class File
 
     /**
      * Gets asset files for current landing.
-     * @param int $assetId - id of landing to which attached asset.
+     * @param int $assetId Id of landing to which attached asset.
      * @return array
      */
-    public static function getFilesFromAsset($assetId)
+    public static function getFilesFromAsset($assetId): array
     {
         return self::getFiles(
             $assetId,
@@ -380,24 +419,21 @@ class File
     /**
      * Delete asset files for current landing.
      * Not remove from disk immediately, just marked for agent
-     * @param int $assetId - id of landing to which attached asset.
+     * @param int $assetId Id of landing to which attached asset.
      * @param int|int[] $fileId File id (by default delete all files from Asset).
      * @return void
      */
-    public static function deleteFromAsset($assetId, $fileId = [])
+    public static function deleteFromAsset(int $assetId, $fileId = []): void
     {
         self::delete($fileId, $assetId, self::ENTITY_TYPE_ASSET);
     }
 
     /**
      * Mark file as "need rebuild", but not delete them. File will be exist until not created new file.
-     * @param int|int[] $assetId - id of landing to which attached asset. If not set - will marked all
+     * @param int|int[] $assetId Id of landing to which attached asset. If not set - will marked all.
      * @return void
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
      */
-    public static function markAssetToRebuild($assetId = [])
+    public static function markAssetToRebuild($assetId = []): void
     {
         $filter = [
             '=ENTITY_TYPE' => self::ENTITY_TYPE_ASSET
@@ -405,10 +441,12 @@ class File
         if ($assetId) {
             $filter['ENTITY_ID'] = $assetId;
         }
-        $res = FileTable::getList([
-            'select' => ['ID', 'ENTITY_ID'],
-            'filter' => $filter
-        ]);
+        $res = FileTable::getList(
+            [
+                'select' => ['ID', 'ENTITY_ID'],
+                'filter' => $filter
+            ]
+        );
         while ($row = $res->fetch()) {
             $resUpdate = FileTable::update(
                 $row['ID'],
@@ -425,7 +463,7 @@ class File
      * @param int|int[] $assetId Id of landing to which attached asset.
      * @return void
      */
-    public static function markAssetRebuilded($assetId)
+    public static function markAssetRebuilded($assetId): void
     {
         if (!is_array($assetId)) {
             $assetId = [$assetId];
@@ -445,21 +483,25 @@ class File
      */
     protected static function copyEntityFiles($from, $to, $entityType)
     {
-        $res = FileTable::getList(array(
-            'select' => array(
-                'FILE_ID'
-            ),
-            'filter' => array(
-                'ENTITY_ID' => $from,
-                '=ENTITY_TYPE' => $entityType
+        $res = FileTable::getList(
+            array(
+                'select' => array(
+                    'FILE_ID'
+                ),
+                'filter' => array(
+                    'ENTITY_ID' => $from,
+                    '=ENTITY_TYPE' => $entityType
+                )
             )
-        ));
+        );
         while ($row = $res->fetch()) {
-            FileTable::add(array(
-                'FILE_ID' => $row['FILE_ID'],
-                'ENTITY_ID' => $to,
-                'ENTITY_TYPE' => $entityType
-            ));
+            FileTable::add(
+                array(
+                    'FILE_ID' => $row['FILE_ID'],
+                    'ENTITY_ID' => $to,
+                    'ENTITY_TYPE' => $entityType
+                )
+            );
         }
     }
 
@@ -527,5 +569,40 @@ class File
             return $file['SRC'];
         }
         return null;
+    }
+
+    /**
+     * Delete all file Id from File table.
+     * @param int $fileId File id to delete.
+     * @return void
+     */
+    public static function releaseFile(int $fileId): void
+    {
+        $res = FileTable::getList(
+            array(
+                'select' => [
+                    'ID'
+                ],
+                'filter' => [
+                    'FILE_ID' => $fileId
+                ]
+            )
+        );
+        while ($row = $res->fetch()) {
+            FileTable::delete($row['ID']);
+        }
+    }
+
+    /**
+     * Physical delete file.
+     * @param int $fileId File id.
+     * @return void
+     */
+    public static function deletePhysical(int $fileId): void
+    {
+        if (self::getFileArray($fileId)) {
+            self::releaseFile($fileId);
+            \CFile::delete($fileId);
+        }
     }
 }

@@ -24,20 +24,23 @@ class Directory
     private static function deleteInternal($path)
     {
         if (is_file($path) || is_link($path)) {
-            if (!@unlink($path))
+            if (!@unlink($path)) {
                 throw new FileDeleteException($path);
+            }
         } elseif (is_dir($path)) {
             if ($handle = opendir($path)) {
                 while (($file = readdir($handle)) !== false) {
-                    if ($file == "." || $file == "..")
+                    if ($file == "." || $file == "..") {
                         continue;
+                    }
 
                     self::deleteInternal(Path::combine($path, $file));
                 }
                 closedir($handle);
             }
-            if (!@rmdir($path))
+            if (!@rmdir($path)) {
                 throw new FileDeleteException($path);
+            }
         }
 
         return true;
@@ -49,22 +52,25 @@ class Directory
      */
     public function getChildren()
     {
-        if (!$this->isExists())
+        if (!$this->isExists()) {
             throw new FileNotFoundException($this->originalPath);
+        }
 
         $arResult = array();
 
         if ($handle = opendir($this->getPhysicalPath())) {
             while (($file = readdir($handle)) !== false) {
-                if ($file == "." || $file == "..")
+                if ($file == "." || $file == "..") {
                     continue;
+                }
 
                 $pathLogical = Path::combine($this->path, Path::convertPhysicalToLogical($file));
                 $pathPhysical = Path::combine($this->getPhysicalPath(), $file);
-                if (is_dir($pathPhysical))
+                if (is_dir($pathPhysical)) {
                     $arResult[] = new Directory($pathLogical, $this->siteId);
-                else
+                } else {
                     $arResult[] = new File($pathLogical, $this->siteId);
+                }
             }
             closedir($handle);
         }
@@ -79,39 +85,44 @@ class Directory
     public function createSubdirectory($name)
     {
         $dir = new Directory(Path::combine($this->path, $name));
-        if (!$dir->isExists())
+        if (!$dir->isExists()) {
             mkdir($dir->getPhysicalPath(), BX_DIR_PERMISSIONS, true);
+        }
         return $dir;
     }
 
     public function getCreationTime()
     {
-        if (!$this->isExists())
+        if (!$this->isExists()) {
             throw new FileNotFoundException($this->originalPath);
+        }
 
         return filectime($this->getPhysicalPath());
     }
 
     public function getLastAccessTime()
     {
-        if (!$this->isExists())
+        if (!$this->isExists()) {
             throw new FileNotFoundException($this->originalPath);
+        }
 
         return fileatime($this->getPhysicalPath());
     }
 
     public function getModificationTime()
     {
-        if (!$this->isExists())
+        if (!$this->isExists()) {
             throw new FileNotFoundException($this->originalPath);
+        }
 
         return filemtime($this->getPhysicalPath());
     }
 
     public function markWritable()
     {
-        if (!$this->isExists())
+        if (!$this->isExists()) {
             throw new FileNotFoundException($this->originalPath);
+        }
 
         @chmod($this->getPhysicalPath(), BX_DIR_PERMISSIONS);
     }

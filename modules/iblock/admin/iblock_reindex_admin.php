@@ -48,12 +48,15 @@ $lAdmin->AddHeaders($arHeader);
 $iblockFilter = array('=PROPERTY_INDEX' => array('I', 'Y'));
 if (Loader::includeModule('catalog')) {
     $OfferIblocks = array();
-    $offersIterator = \Bitrix\Catalog\CatalogIblockTable::getList(array(
-        'select' => array('IBLOCK_ID'),
-        'filter' => array('!=PRODUCT_IBLOCK_ID' => 0)
-    ));
-    while ($offer = $offersIterator->fetch())
+    $offersIterator = \Bitrix\Catalog\CatalogIblockTable::getList(
+        array(
+            'select' => array('IBLOCK_ID'),
+            'filter' => array('!=PRODUCT_IBLOCK_ID' => 0)
+        )
+    );
+    while ($offer = $offersIterator->fetch()) {
         $OfferIblocks[] = (int)$offer['IBLOCK_ID'];
+    }
     unset($offer, $offersIterator);
     if (!empty($OfferIblocks)) {
         unset($offer);
@@ -62,22 +65,27 @@ if (Loader::includeModule('catalog')) {
     unset($offersIterator, $OfferIblocks);
 }
 
-if (!isset($by))
+if (!isset($by)) {
     $by = 'ID';
-if (!isset($order))
+}
+if (!isset($order)) {
     $order = 'ASC';
+}
 $iblockOrder = array($by => $order);
 
 if ($arID = $lAdmin->GroupAction()) {
     if ($_REQUEST['action_target'] == 'selected') {
         $arID = array();
-        $iblockIterator = Iblock\IblockTable::getList(array(
-            'select' => array('ID'),
-            'filter' => $iblockFilter,
-            'order' => $iblockOrder
-        ));
-        while ($iblockInfo = $iblockIterator->fetch())
+        $iblockIterator = Iblock\IblockTable::getList(
+            array(
+                'select' => array('ID'),
+                'filter' => $iblockFilter,
+                'order' => $iblockOrder
+            )
+        );
+        while ($iblockInfo = $iblockIterator->fetch()) {
             $arID[] = (int)$iblockInfo['ID'];
+        }
         unset($iblockInfo, $iblockIterator);
     }
 
@@ -85,19 +93,24 @@ if ($arID = $lAdmin->GroupAction()) {
         $conn = Main\Application::getConnection();
         foreach ($arID as &$ID) {
             $ID = (int)$ID;
-            if ($ID <= 0)
+            if ($ID <= 0) {
                 continue;
+            }
 
             switch ($_REQUEST['action']) {
                 case "delete":
-                    if (!CIBlockRights::UserHasRightTo($ID, $ID, "iblock_edit"))
+                    if (!CIBlockRights::UserHasRightTo($ID, $ID, "iblock_edit")) {
                         break;
-                    $iblockInfo = Iblock\IblockTable::getList(array(
-                        'select' => array('ID', 'PROPERTY_INDEX'),
-                        'filter' => array('=ID' => $ID)
-                    ))->fetch();
-                    if (empty($iblockInfo) || $iblockInfo['PROPERTY_INDEX'] != 'Y')
+                    }
+                    $iblockInfo = Iblock\IblockTable::getList(
+                        array(
+                            'select' => array('ID', 'PROPERTY_INDEX'),
+                            'filter' => array('=ID' => $ID)
+                        )
+                    )->fetch();
+                    if (empty($iblockInfo) || $iblockInfo['PROPERTY_INDEX'] != 'Y') {
                         break;
+                    }
                     $conn->startTransaction();
                     $result = Iblock\IblockTable::update($ID, array('PROPERTY_INDEX' => 'I'));
                     if (!$result->isSuccess()) {
@@ -121,10 +134,12 @@ $usePageNavigation = true;
 if (isset($_REQUEST['mode']) && $_REQUEST['mode'] == 'excel') {
     $usePageNavigation = false;
 } else {
-    $navyParams = CDBResult::GetNavParams(CAdminResult::GetNavSize(
-        $sTableID,
-        array('nPageSize' => 20, 'sNavID' => $APPLICATION->GetCurPage())
-    ));
+    $navyParams = CDBResult::GetNavParams(
+        CAdminResult::GetNavSize(
+            $sTableID,
+            array('nPageSize' => 20, 'sNavID' => $APPLICATION->GetCurPage())
+        )
+    );
     if ($navyParams['SHOW_ALL']) {
         $usePageNavigation = false;
     } else {
@@ -152,8 +167,9 @@ if ($usePageNavigation) {
     $totalCount = (int)$totalCount['CNT'];
     if ($totalCount > 0) {
         $totalPages = ceil($totalCount / $navyParams['SIZEN']);
-        if ($navyParams['PAGEN'] > $totalPages)
+        if ($navyParams['PAGEN'] > $totalPages) {
             $navyParams['PAGEN'] = $totalPages;
+        }
         $getListParams['limit'] = $navyParams['SIZEN'];
         $getListParams['offset'] = $navyParams['SIZEN'] * ($navyParams['PAGEN'] - 1);
     } else {
@@ -180,12 +196,20 @@ while ($iblockInfo = $rsIBlocks->Fetch()) {
 
     $row->AddViewField("ID", $iblockInfo["ID"]);
     $row->AddViewField("NAME", htmlspecialcharsEx($iblockInfo["NAME"]));
-    $row->AddViewField('ACTIVE', ($iblockInfo['ACTIVE'] == 'Y' ? GetMessage('IBLOCK_RADM_ACTIVE_YES') : GetMessage('IBLOCK_RADM_ACTIVE_NO')));
+    $row->AddViewField(
+        'ACTIVE',
+        ($iblockInfo['ACTIVE'] == 'Y' ? GetMessage('IBLOCK_RADM_ACTIVE_YES') : GetMessage('IBLOCK_RADM_ACTIVE_NO'))
+    );
 
     if ($iblockInfo["PROPERTY_INDEX"] == "I") {
         $status = 'red';
         $lamp = '<span class="adm-lamp adm-lamp-in-list adm-lamp-' . $status . '"></span>';
-        $row->AddViewField("PROPERTY_INDEX", $lamp . '<a href="iblock_reindex.php?IBLOCK_ID=' . urlencode($iblockInfo["ID"]) . '&lang=' . LANGUAGE_ID . '">' . GetMessage("IBLOCK_RADM_REINDEX") . '</a>');
+        $row->AddViewField(
+            "PROPERTY_INDEX",
+            $lamp . '<a href="iblock_reindex.php?IBLOCK_ID=' . urlencode(
+                $iblockInfo["ID"]
+            ) . '&lang=' . LANGUAGE_ID . '">' . GetMessage("IBLOCK_RADM_REINDEX") . '</a>'
+        );
     } elseif ($iblockInfo["PROPERTY_INDEX"] == "Y") {
         $status = 'green';
         $lamp = '<span class="adm-lamp adm-lamp-in-list adm-lamp-' . $status . '"></span>';
@@ -199,7 +223,9 @@ while ($iblockInfo = $rsIBlocks->Fetch()) {
             array(
                 "ICON" => "edit",
                 "TEXT" => GetMessage("IBLOCK_RADM_REINDEX"),
-                "ACTION" => $lAdmin->ActionRedirect("iblock_reindex.php?IBLOCK_ID=" . urlencode($iblockInfo["ID"]) . "&lang=" . LANGUAGE_ID),
+                "ACTION" => $lAdmin->ActionRedirect(
+                    "iblock_reindex.php?IBLOCK_ID=" . urlencode($iblockInfo["ID"]) . "&lang=" . LANGUAGE_ID
+                ),
             ),
         );
 
@@ -210,7 +236,9 @@ while ($iblockInfo = $rsIBlocks->Fetch()) {
             array(
                 "ICON" => "edit",
                 "TEXT" => GetMessage("IBLOCK_RADM_REINDEX_DISABLE"),
-                "ACTION" => "if(confirm('" . GetMessageJS("IBLOCK_RADM_REINDEX_DISABLE_CONFIRM") . "')) " . $lAdmin->ActionDoGroup($iblockInfo["ID"], "delete", "&lang=" . LANGUAGE_ID),
+                "ACTION" => "if(confirm('" . GetMessageJS(
+                        "IBLOCK_RADM_REINDEX_DISABLE_CONFIRM"
+                    ) . "')) " . $lAdmin->ActionDoGroup($iblockInfo["ID"], "delete", "&lang=" . LANGUAGE_ID),
             ),
         );
 

@@ -1,19 +1,17 @@
-<?
-IncludeModuleLangFile(__FILE__);
+<?php
 
+IncludeModuleLangFile(__FILE__);
 
 class CAllTicketReminder
 {
-
-    function err_mess()
+    public static function err_mess()
     {
         $module_id = "support";
         @include($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/" . $module_id . "/install/version.php");
         return "<br>Module: " . $module_id . " <br>Class: CAllTicketReminder<br>File: " . __FILE__;
     }
 
-
-    function ConvertResponseTimeUnit($rt, $rtu)
+    public static function ConvertResponseTimeUnit($rt, $rtu)
     {
         switch ($rtu) {
             case 'day':
@@ -26,7 +24,7 @@ class CAllTicketReminder
         return 0;
     }
 
-    function RecalculateLastMessageDeadline($RSD = true)
+    public static function RecalculateLastMessageDeadline($RSD = true)
     {
         global $DB, $DBType;
         $err_mess = (self::err_mess()) . "<br>Function: RecalculateLastMessage<br>Line: ";
@@ -130,28 +128,35 @@ class CAllTicketReminder
 
         $res = $DB->Query($arS[$DBType], true);
 
-        $res = $DB->Query("UPDATE b_ticket SET SUPPORT_DEADLINE = null, SUPPORT_DEADLINE_NOTIFY = null WHERE LAST_MESSAGE_BY_SUPPORT_TEAM = 'Y'", true);
+        $res = $DB->Query(
+            "UPDATE b_ticket SET SUPPORT_DEADLINE = null, SUPPORT_DEADLINE_NOTIFY = null WHERE LAST_MESSAGE_BY_SUPPORT_TEAM = 'Y'",
+            true
+        );
 
         if ($RSD) {
             self::RecalculateSupportDeadline();
         }
 
         $DB->StopUsingMasterOnly();
-
     }
 
-
-    function RecalculateSupportDeadline($arFilter = array())
+    public static function RecalculateSupportDeadline($arFilter = array())
     {
         global $DB;
         $err_mess = (CAllTicketReminder::err_mess()) . "<br>Function: RecalculateSupportDeadline<br>Line: ";
 
         $arSqlSearch = Array();
-        if (!is_array($arFilter)) $arFilter = array();
+        if (!is_array($arFilter)) {
+            $arFilter = array();
+        }
         foreach ($arFilter as $key => $val) {
-            if ((is_array($val) && count($val) <= 0) || (!is_array($val) && strlen($val) <= 0)) continue;
-            $key = strtoupper($key);
-            if (is_array($val)) $val = implode(" | ", $val);
+            if ((is_array($val) && count($val) <= 0) || (!is_array($val) && (string)$val == '')) {
+                continue;
+            }
+            $key = mb_strtoupper($key);
+            if (is_array($val)) {
+                $val = implode(" | ", $val);
+            }
             switch ($key) {
                 case "ID":
                     $arSqlSearch[] = GetFilterQuery("T.ID", $val, "N");
@@ -191,8 +196,11 @@ class CAllTicketReminder
 
     /*$arTicket = ID,SLA_ID,RESPONSE_TIME, D_1_USER_M_AFTER_SUP_M, RESPONSE_TIME_UNIT, NOTICE_TIME, NOTICE_TIME_UNIT,DEADLINE_SOURCE_DATE
     $dateType = CTicket::ADD, CTicket::UPDATE CTicket::DELETE, CTicket::IGNORE, CTicket::REOPEN, CTicket::NEW_SLA*/
-    function RecalculateSupportDeadlineForOneTicket($arTicket, $arFields = array(), $dateType = array("EVENT" => array(CTicket::IGNORE)))
-    {
+    public static function RecalculateSupportDeadlineForOneTicket(
+        $arTicket,
+        $arFields = array(),
+        $dateType = array("EVENT" => array(CTicket::IGNORE))
+    ) {
         global $DB;
         $err_mess = (CAllTicketReminder::err_mess()) . "<br>Function: RecalculateSupportDeadlineForOneTicket<br>Line: ";
         $currDateTS = time() + CTimeZone::GetOffset();
@@ -227,7 +235,10 @@ class CAllTicketReminder
         $oldPeriodMin = null;
         if (isset($dateType["EVENT"]) && in_array(CTicket::UPDATE, $dateType["EVENT"])) {
             if (isset($dateType["OLD_SLA_RESPONSE_TIME"]) && isset($dateType["OLD_SLA_RESPONSE_TIME_UNIT"])) {
-                $oldPeriodMin = self::ConvertResponseTimeUnit($dateType["OLD_SLA_RESPONSE_TIME"], $dateType["OLD_SLA_RESPONSE_TIME_UNIT"]);
+                $oldPeriodMin = self::ConvertResponseTimeUnit(
+                    $dateType["OLD_SLA_RESPONSE_TIME"],
+                    $dateType["OLD_SLA_RESPONSE_TIME_UNIT"]
+                );
             }
 
             if (
@@ -253,7 +264,11 @@ class CAllTicketReminder
             }
         }
 
-        $supportDeadlineTS = CSupportTimetableCache::getEndDate($slaID, $periodMin, GetTime($deadlineSourceDate, "FULL"));
+        $supportDeadlineTS = CSupportTimetableCache::getEndDate(
+            $slaID,
+            $periodMin,
+            GetTime($deadlineSourceDate, "FULL")
+        );
         $arFields["SUPPORT_DEADLINE"] = $DB->CharToDateFunction(GetTime($supportDeadlineTS, "FULL"));
         $arFields["IS_OVERDUE"] = (($supportDeadlineTS <= $currDateTS) ? "'Y'" : "'N'");
 
@@ -271,7 +286,11 @@ class CAllTicketReminder
 
 
         if ($periodNMin > 0) {
-            $supportDeadlineNotifyTS = CSupportTimetableCache::getEndDate($slaID, $periodNMin, GetTime($deadlineSourceDate, "FULL"));
+            $supportDeadlineNotifyTS = CSupportTimetableCache::getEndDate(
+                $slaID,
+                $periodNMin,
+                GetTime($deadlineSourceDate, "FULL")
+            );
             $arFields["SUPPORT_DEADLINE_NOTIFY"] = $DB->CharToDateFunction(GetTime($supportDeadlineNotifyTS, "FULL"));
             $arFields["IS_NOTIFIED"] = (($supportDeadlineNotifyTS <= $currDateTS) ? "'Y'" : "'N'");
 
@@ -291,10 +310,8 @@ class CAllTicketReminder
         $DB->Update("b_ticket", $arFields, "WHERE ID='" . $ticketID . "'", $err_mess . __LINE__);
     }
 
-
-    function SupportDeadline($arrTicket)
+    public static function SupportDeadline($arrTicket)
     {
-
         global $MESS, $DB;
 
         $err_mess = (CAllTicketReminder::err_mess()) . "<br>Function: supportDeadline<br>Line: ";
@@ -303,7 +320,10 @@ class CAllTicketReminder
 
         //$oldMess = $MESS;
 
-        IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/support/classes/general/messages.php", $arSite["LANGUAGE_ID"]);
+        IncludeModuleLangFile(
+            $_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/support/classes/general/messages.php",
+            $arSite["LANGUAGE_ID"]
+        );
 
         // update message params
         $arFields = array(
@@ -327,13 +347,17 @@ class CAllTicketReminder
         // add message log
         $message = str_replace("#ID#", $arrTicket["TM_ID"], GetMessage("SUP_MESSAGE_OVERDUE_LOG"));
         $message = str_replace("#NUMBER#", $arrTicket["TM_C_NUMBER"], $message);
-        $message .= "<br><li>" . htmlspecialcharsEx(str_replace("#VALUE#", $arrTicket["SLA_NAME"], GetMessage("SUP_SLA_LOG")));
+        $message .= "<br><li>" . htmlspecialcharsEx(
+                str_replace("#VALUE#", $arrTicket["SLA_NAME"], GetMessage("SUP_SLA_LOG"))
+            );
 
         if (intval($arrTicket["RESPONSIBLE_USER_ID"]) > 0) {
             $rsUser = CUser::GetByID(intval($arrTicket["RESPONSIBLE_USER_ID"]));
             $arUser = $rsUser->Fetch();
             $responsibleText = "[" . $arUser["ID"] . "] (" . $arUser["LOGIN"] . ") " . $arUser["NAME"] . " " . $arUser["LAST_NAME"];
-            $message .= "<li>" . htmlspecialcharsEx(str_replace("#VALUE#", $responsibleText, GetMessage("SUP_RESPONSIBLE_LOG")));
+            $message .= "<li>" . htmlspecialcharsEx(
+                    str_replace("#VALUE#", $responsibleText, GetMessage("SUP_RESPONSIBLE_LOG"))
+                );
         }
 
         $arFields = array(
@@ -347,13 +371,11 @@ class CAllTicketReminder
         );
         $v = null;
         $mid = CTicket::AddMessage($arrTicket['ID'], $arFields, $v, "N");
-
         //$MESS = $oldMess;
 
     }
 
-
-    function SupportDeadlineNotify($arrTicket0)
+    public static function SupportDeadlineNotify($arrTicket0)
     {
         //SUPPORT_DEADLINE_NOTIFY
         //SUPPORT_DEADLINE			= EXPIRATION_DATE
@@ -361,7 +383,9 @@ class CAllTicketReminder
 
         $err_mess = (CAllTicketReminder::err_mess()) . "<br>Function: SupportDeadlineNotify<br>Line: ";
         $rs = CTicket::GetByID($arrTicket0["ID"], false, "N");
-        if (!($arTicket = $rs->Fetch())) return false;
+        if (!($arTicket = $rs->Fetch())) {
+            return false;
+        }
 
         $rsMessage = CTicket::GetMessageByID(intval($arTicket["ID_1_USER_M_AFTER_SUP_M"]), "N", "N");
         if (!($arMessage = $rsMessage->Fetch())) {
@@ -378,23 +402,30 @@ class CAllTicketReminder
 
         global $MESS, $DB;;
         //$oldMess = $MESS;
-        IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/support/classes/general/messages.php", $arSite["LANGUAGE_ID"]);
+        IncludeModuleLangFile(
+            $_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/support/classes/general/messages.php",
+            $arSite["LANGUAGE_ID"]
+        );
 
-        $sourceName = strlen($arTicket["SOURCE_NAME"]) <= 0 ? "" : "[" . $arTicket["SOURCE_NAME"] . "] ";
-        if (intval($arTicket["OWNER_USER_ID"]) > 0 || strlen(trim($arTicket["OWNER_LOGIN"])) > 0) {
+        $sourceName = $arTicket["SOURCE_NAME"] == '' ? "" : "[" . $arTicket["SOURCE_NAME"] . "] ";
+        if (intval($arTicket["OWNER_USER_ID"]) > 0 || trim($arTicket["OWNER_LOGIN"]) <> '') {
             $ownerText = "[" . $arTicket["OWNER_USER_ID"] . "] (" . $arTicket["OWNER_LOGIN"] . ") " . $arTicket["OWNER_NAME"];
             //if(strlen(trim($OWNER_SID)) > 0 && $OWNER_SID != "null") $ownerText = " / " . $ownerText;
         }
 
         if (intval($arTicket["RESPONSIBLE_USER_ID"]) > 0) {
             $responsibleText = "[" . $arTicket["RESPONSIBLE_USER_ID"] . "] (" . $arTicket["RESPONSIBLE_LOGIN"] . ") " . $arTicket["RESPONSIBLE_NAME"];
-            if (CTicket::IsSupportTeam($arTicket["RESPONSIBLE_USER_ID"]) || CTicket::IsAdmin($arTicket["RESPONSIBLE_USER_ID"])) {
+            if (CTicket::IsSupportTeam($arTicket["RESPONSIBLE_USER_ID"]) || CTicket::IsAdmin(
+                    $arTicket["RESPONSIBLE_USER_ID"]
+                )) {
                 $responsibleText .= " " . GetMessage("SUP_TECHSUPPORT_HINT");
             }
         }
 
         $arAdminEMails = CTicket::GetAdminEmails();
-        if (count($arAdminEMails) > 0) $support_admin_email = implode(",", $arAdminEMails);
+        if (count($arAdminEMails) > 0) {
+            $support_admin_email = implode(",", $arAdminEMails);
+        }
 
         // prepare email to author
         $arrOwnerEMail = array($arTicket["OWNER_EMAIL"]);
@@ -402,16 +433,18 @@ class CAllTicketReminder
         if (is_array($arrEmails) && count($arrEmails) > 0) {
             foreach ($arrEmails as $email) {
                 $email = trim($email);
-                if (strlen($email) > 0) {
+                if ($email <> '') {
                     preg_match_all("#[<\[\(](.*?)[>\]\)]#i" . BX_UTF_PCRE_MODIFIER, $email, $arr);
                     if (is_array($arr[1]) && count($arr[1]) > 0) {
                         foreach ($arr[1] as $email) {
                             $email = trim($email);
-                            if (strlen($email) > 0 && !in_array($email, $arrOwnerEMail) && check_email($email)) {
+                            if ($email <> '' && !in_array($email, $arrOwnerEMail) && check_email($email)) {
                                 $arrOwnerEMail[] = $email;
                             }
                         }
-                    } elseif (!in_array($email, $arrOwnerEMail) && check_email($email)) $arrOwnerEMail[] = $email;
+                    } elseif (!in_array($email, $arrOwnerEMail) && check_email($email)) {
+                        $arrOwnerEMail[] = $email;
+                    }
                 }
             }
         }
@@ -420,28 +453,36 @@ class CAllTicketReminder
 
         // prepare email to support
         $support_email = $arTicket["RESPONSIBLE_EMAIL"];
-        if (strlen($support_email) <= 0)
+        if ($support_email == '') {
             $support_email = $support_admin_email;
-        if (strlen($support_email) <= 0)
+        }
+        if ($support_email == '') {
             $support_email = COption::GetOptionString("main", "email_from", "");
+        }
 
         $arr = explode(",", $support_email);
         $arr = array_unique($arr);
         $support_email = implode(",", $arr);
         if (is_array($arr) && count($arr) > 0) {
-            foreach ($arr as $email) unset($arAdminEMails[$email]);
+            foreach ($arr as $email) {
+                unset($arAdminEMails[$email]);
+            }
         }
         $support_admin_email = implode(",", $arAdminEMails);
 
         $createdModuleName = "";
-        if ($arTicket["CREATED_MODULE_NAME"] == "support" || !strlen($arTicket["CREATED_MODULE_NAME"])) {
+        if ($arTicket["CREATED_MODULE_NAME"] == "support" || !mb_strlen($arTicket["CREATED_MODULE_NAME"])) {
             if (intval($arTicket["CREATED_USER_ID"]) > 0) {
                 $createdText = "[" . $arTicket["CREATED_USER_ID"] . "] (" . $arTicket["CREATED_LOGIN"] . ") " . $arTicket["CREATED_NAME"];
-                if (CTicket::IsSupportTeam($arTicket["CREATED_USER_ID"]) || CTicket::IsAdmin($arTicket["CREATED_USER_ID"])) {
+                if (CTicket::IsSupportTeam($arTicket["CREATED_USER_ID"]) || CTicket::IsAdmin(
+                        $arTicket["CREATED_USER_ID"]
+                    )) {
                     $createdText .= " " . GetMessage("SUP_TECHSUPPORT_HINT");
                 }
             }
-        } else $createdModuleName = "[" . $arTicket["CREATED_MODULE_NAME"] . "]";
+        } else {
+            $createdModuleName = "[" . $arTicket["CREATED_MODULE_NAME"] . "]";
+        }
 
         $MESSAGE = PrepareTxtForEmail($arMessage["MESSAGE"], $arSite["LANGUAGE_ID"], false, false);
         $remainedTime = $arMessage["EXPIRATION_DATE_STMP"] - time();
@@ -525,7 +566,7 @@ class CAllTicketReminder
         $DB->Update("b_ticket_message", $arFields, "WHERE ID='" . $arMessage["ID"] . "'", $err_mess . __LINE__);
     }
 
-    function AgentFunction()
+    public static function AgentFunction()
     {
         //IS_OVERDUE
         //IS_NOTIFIED
@@ -587,15 +628,11 @@ class CAllTicketReminder
         return "CTicketReminder::AgentFunction();";
     }
 
-
-    function StartAgent()
+    public static function StartAgent()
     {
         CAgent::RemoveModuleAgents("support");
         CAgent::AddAgent("CTicketReminder::AgentFunction();", "support", "N", 60);
         CAgent::AddAgent('CTicket::CleanUpOnline();', 'support', 'N');
         CAgent::AddAgent('CTicket::AutoClose();', 'support', 'N');
     }
-
 }
-
-?>

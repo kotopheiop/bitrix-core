@@ -1,17 +1,20 @@
 <?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/prolog.php");
 /** @var CMain $APPLICATION */
 include($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/colors.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/img.php");
 $STAT_RIGHT = $APPLICATION->GetGroupRight("statistic");
-if ($STAT_RIGHT == "D") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($STAT_RIGHT == "D") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 
 $arSites = array();
 $ref = $ref_id = array();
-$rs = CSite::GetList(($v1 = "sort"), ($v2 = "asc"));
+$rs = CSite::GetList();
 while ($ar = $rs->Fetch()) {
     $ref[] = $ar["ID"];
     $ref_id[] = $ar["ID"];
@@ -19,28 +22,33 @@ while ($ar = $rs->Fetch()) {
 }
 $arSiteDropdown = array("reference" => $ref, "reference_id" => $ref_id);
 
-$rs = CAdv::GetList($v1 = "", $v2 = "", Array(), $v3, "", $v4, $v5);
+$rs = CAdv::GetList();
 while ($ar = $rs->Fetch()) {
     $arrADV[$ar["ID"]] = $ar["REFERER1"] . " / " . $ar["REFERER2"] . " [" . $ar["ID"] . "]";
     $arrADV_DETAIL[$ar["ID"]] = array("REFERER1" => $ar["REFERER1"], "REFERER2" => $ar["REFERER2"]);
 }
 
-if (strlen($find_referer1) > 0) {
+if ($find_referer1 <> '') {
     $find_adv = array();
-    foreach ($arrADV_DETAIL as $ADV_ID => $ADV_DETAIL)
-        if ($ADV_DETAIL["REFERER1"] == $find_referer1 && !in_array($ADV_ID, $find_adv))
+    foreach ($arrADV_DETAIL as $ADV_ID => $ADV_DETAIL) {
+        if ($ADV_DETAIL["REFERER1"] == $find_referer1 && !in_array($ADV_ID, $find_adv)) {
             $find_adv[] = $ADV_ID;
+        }
+    }
 }
-if (strlen($find_referer2) > 0) {
+if ($find_referer2 <> '') {
     $find_adv = array();
-    foreach ($arrADV_DETAIL as $ADV_ID => $ADV_DETAIL)
-        if ($ADV_DETAIL["REFERER2"] == $find_referer2 && !in_array($ADV_ID, $find_adv))
+    foreach ($arrADV_DETAIL as $ADV_ID => $ADV_DETAIL) {
+        if ($ADV_DETAIL["REFERER2"] == $find_referer2 && !in_array($ADV_ID, $find_adv)) {
             $find_adv[] = $ADV_ID;
+        }
+    }
 }
 
 if (isset($find_diagram_type)) {
-    if ($find_diagram_type != "EXIT_COUNTER" && $find_diagram_type != "ENTER_COUNTER")
+    if ($find_diagram_type != "EXIT_COUNTER" && $find_diagram_type != "ENTER_COUNTER") {
         $find_diagram_type = "COUNTER";
+    }
 } else {
     $find_diagram_type = false;
 }
@@ -50,12 +58,15 @@ InitFilterEx($arSettings, $sTableID . "_settings", "get");
 
 if ($find_diagram_type === false)//Restore saved setting
 {
-    if (strlen($saved_group_by) > 0)
+    if ($saved_group_by <> '') {
         $find_diagram_type = $saved_group_by;
-    else
+    } else {
         $find_diagram_type = "COUNTER";
+    }
 } elseif ($saved_group_by != $find_diagram_type)//Set if changed
+{
     $saved_group_by = $find_diagram_type;
+}
 
 InitFilterEx($arSettings, $sTableID . "_settings", "set");
 
@@ -69,8 +80,9 @@ $arM = array(
     GetMessage("STAT_F_VIEW")
 );
 
-if (is_array($arrADV))
+if (is_array($arrADV)) {
     $arM[] = GetMessage("STAT_F_ADV");
+}
 
 $arM[] = GetMessage("STAT_F_ADV_DATA_TYPE");
 
@@ -88,16 +100,21 @@ $arrExactMatch = array(
 );
 
 $arFilterFields = Array(
-    "find_date1", "find_date2",
-    "find_site_id", "find_page_404", "find_section", "find_section_exact_match",
+    "find_date1",
+    "find_date2",
+    "find_site_id",
+    "find_page_404",
+    "find_section",
+    "find_section_exact_match",
     "find_show",
     "find_adv",
     "find_adv_data_type",
 
 );
 
-if (!is_array($arrADV))
+if (!is_array($arrADV)) {
     unset($arFilterFields["find_adv"]);
+}
 
 if ($lAdmin->IsDefaultFilter()) {
     $find_show = "D";
@@ -122,10 +139,11 @@ if (is_array($find_adv)) {
 
 AdminListCheckDate($lAdmin, array("find_date1" => $find_date1, "find_date2" => $find_date2));
 
-if (is_array($find_adv) && count($find_adv) > 0)
+if (is_array($find_adv) && count($find_adv) > 0) {
     $str = implode(" | ", $find_adv);
-else
+} else {
     $str = "";
+}
 
 $arFilter = Array(
     "DATE1" => $find_date1,
@@ -139,7 +157,7 @@ $arFilter = Array(
     "SECTION_EXACT_MATCH" => $find_section_exact_match,
 );
 
-$rsPages = CPage::GetList($find_diagram_type, $by, $order, $arFilter, $is_filtered);
+$rsPages = CPage::GetList($find_diagram_type, $by, $order, $arFilter);
 
 switch ($find_diagram_type) {
     case "COUNTER":
@@ -165,7 +183,9 @@ $sum_counter = 0;
 while ($arPage = $rsPages->Fetch()) {
     $arrPages[] = $arPage;
     $sum_counter += $arPage["COUNTER"];
-    if (intval($arPage["COUNTER"]) > $max_counter) $max_counter = intval($arPage["COUNTER"]);
+    if (intval($arPage["COUNTER"]) > $max_counter) {
+        $max_counter = intval($arPage["COUNTER"]);
+    }
 }
 $rsPages = new CDBResult;
 $rsPages->InitFromArray($arrPages);
@@ -180,8 +200,19 @@ $arHeaders = Array();
 
 $arHeaders[] = array("id" => "NUMBER", "content" => "ID", "default" => true,);
 $arHeaders[] = array("id" => "URL", "content" => GetMessage("STAT_PAGE"), "sort" => "s_url", "default" => true,);
-$arHeaders[] = array("id" => "COUNTER", "content" => $column_title, "sort" => "s_counter", "default" => true, "align" => "right");
-$arHeaders[] = array("id" => "PERCENT", "content" => GetMessage("STAT_PERCENT"), "default" => true, "align" => "right",);
+$arHeaders[] = array(
+    "id" => "COUNTER",
+    "content" => $column_title,
+    "sort" => "s_counter",
+    "default" => true,
+    "align" => "right"
+);
+$arHeaders[] = array(
+    "id" => "PERCENT",
+    "content" => GetMessage("STAT_PERCENT"),
+    "default" => true,
+    "align" => "right",
+);
 
 $lAdmin->AddHeaders($arHeaders);
 
@@ -193,8 +224,9 @@ $max_width = 100;
 $max_relation = ($max_counter * 100) / $max_width;
 
 $s = "";
-foreach ($find_adv as $f)
+foreach ($find_adv as $f) {
     $s .= "&find_adv[]=" . urlencode($f);
+}
 
 while ($arRes = $rsData->NavNext(true, "f_")) {
     $w = round(($f_COUNTER * 100) / $max_relation);
@@ -206,7 +238,12 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
 
     $str = '<a target="_blank" title="' . GetMessage("STAT_GO") . '" href="' . $f_URL . '">&raquo;</a>&nbsp;';
     if ($f_DIR == "Y") :
-        $str .= '<a title="' . GetMessage("STAT_FILTER_PAGE_DIAGRAM_ALT") . '" href="' . $APPLICATION->GetCurPage() . '?lang=' . LANG . GetFilterParams($arFilterFields) . '&find_diagram_type=' . $find_diagram_type . '&find_section=' . urlencode("$f_URL% ~$f_URL") . '&find_show=F&find_section_exact_match=Y&set_filter=Y">';
+        $str .= '<a title="' . GetMessage("STAT_FILTER_PAGE_DIAGRAM_ALT") . '" href="' . $APPLICATION->GetCurPage(
+            ) . '?lang=' . LANG . GetFilterParams(
+                $arFilterFields
+            ) . '&find_diagram_type=' . $find_diagram_type . '&find_section=' . urlencode(
+                "$f_URL% ~$f_URL"
+            ) . '&find_show=F&find_section_exact_match=Y&set_filter=Y">';
         if ($f_URL_404 == "Y") :
             $str .= "<span class=\"stat_attention\">" . TruncateText($f_URL, 65) . "</span>";
         else :
@@ -228,7 +265,9 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
     $row->AddViewField("NUMBER", $number);
 
 
-    $str = "<a href=\"hit_list.php?lang=" . LANG . "&find_url=" . urlencode($f_URL . "%") . "&find_url_exact_match=Y&set_filter=Y\">" . $f_COUNTER . "</a>";
+    $str = "<a href=\"hit_list.php?lang=" . LANG . "&find_url=" . urlencode(
+            $f_URL . "%"
+        ) . "&find_url_exact_match=Y&set_filter=Y\">" . $f_COUNTER . "</a>";
     $row->AddViewField("COUNTER", $str);
 
     $arActions = Array();
@@ -238,7 +277,11 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
         "DEFAULT" => "Y",
         "TEXT" => GetMessage("STAT_SECTION_GRAPH"),
         //"ACTION"=>"javascript:CloseWaitWindow();ShowGraph('".urlencode($f_URL)."', '".$f_SITE_ID."', '".$f_DIR."')",
-        "ACTION" => "javascript:CloseWaitWindow();jsUtils.OpenWindow('section_graph_list.php?lang=" . LANG . $s . "&find_adv_data_type=" . $find_adv_data_type . "&date1=" . urlencode($find_date1) . "&date2=" . urlencode($find_date2) . "&section=" . urlencode($f_URL) . "&site_id=" . $f_SITE_ID . "&is_dir=" . $f_DIR . "&set_default=Y', 620, 600);",
+        "ACTION" => "javascript:CloseWaitWindow();jsUtils.OpenWindow('section_graph_list.php?lang=" . LANG . $s . "&find_adv_data_type=" . $find_adv_data_type . "&date1=" . urlencode(
+                $find_date1
+            ) . "&date2=" . urlencode($find_date2) . "&section=" . urlencode(
+                $f_URL
+            ) . "&site_id=" . $f_SITE_ID . "&is_dir=" . $f_DIR . "&set_default=Y', 620, 600);",
     );
 
     $arActions[] = array(
@@ -248,7 +291,6 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
     );
 
     $row->AddActions($arActions);
-
     //$row->AddViewField("GRAPH", '<img src="/bitrix/images/statistic/votebar.gif" width="'.($w==0 ? "0" : $w."%").'" height="10" border=0 alt="">');
 }
 
@@ -259,8 +301,9 @@ $lAdmin->AddFooter(
     )
 );
 
-if ($context != "tab")
+if ($context != "tab") {
     $lAdmin->AddAdminContextMenu(array());
+}
 
 $lAdmin->BeginPrologContent(); ?>
 
@@ -272,9 +315,18 @@ $lAdmin->BeginPrologContent(); ?>
                 <td>
                     <? $diameter = COption::GetOptionString("statistic", "DIAGRAM_DIAMETER"); ?>
 
-                    <img class="graph" src="<? echo htmlspecialcharsbx("visit_section_diagram.php?lang=" . LANG . "
-&find_section=" . urlencode($find_section) . "&find_date1=" . urlencode($find_date1) . "&find_date2=" . urlencode($find_date2) . "&find_show=" . urlencode($find_show) . "&find_site_id=" . urlencode($find_site_id) . "&find_page_404=" . urlencode($find_page_404) . "&find_adv_data_type=" . urlencode($find_adv_data_type) . "&find_section_exact_match=" . urlencode($find_section_exact_match) . $s . GetFilterParams("find_") . "&by=" . urlencode($by) . "&order=" . urlencode($order)) ?>"
-                         width="<?= $diameter ?>" height="<?= $diameter ?>">
+                    <img class="graph" src="<? echo htmlspecialcharsbx(
+                        "visit_section_diagram.php?lang=" . LANG . "
+&find_section=" . urlencode($find_section) . "&find_date1=" . urlencode($find_date1) . "&find_date2=" . urlencode(
+                            $find_date2
+                        ) . "&find_show=" . urlencode($find_show) . "&find_site_id=" . urlencode(
+                            $find_site_id
+                        ) . "&find_page_404=" . urlencode($find_page_404) . "&find_adv_data_type=" . urlencode(
+                            $find_adv_data_type
+                        ) . "&find_section_exact_match=" . urlencode($find_section_exact_match) . $s . GetFilterParams(
+                            "find_"
+                        ) . "&by=" . urlencode($by) . "&order=" . urlencode($order)
+                    ) ?>" width="<?= $diameter ?>" height="<?= $diameter ?>">
                 </td>
                 <td>
                     <table border="0" cellspacing="2" cellpadding="0" class="legend">
@@ -283,31 +335,49 @@ $lAdmin->BeginPrologContent(); ?>
                         $max_width = 100;
                         $max_relation = ($max_counter * 100) / $max_width;
                         $total = count($arrPages);
-                        if ($total > 10)
+                        if ($total > 10) {
                             $total = 11;
+                        }
                         $top_sum = 0;
 
                         foreach ($arrPages as $key => $arVal):
-                            if ($i == 11) break;
+                            if ($i == 11) {
+                                break;
+                            }
                             $color = GetNextRGB($color, $total);
                             $q = number_format(($arVal["COUNTER"] * 100) / $sum_counter, 2, '.', '');
                             //$w = round(($arVal["COUNTER"]*100)/$max_relation);
                             $top_sum += $arVal["COUNTER"];
 
-                            $str = '<a target="_blank" title="' . GetMessage("STAT_GO") . '" href="' . htmlspecialcharsbx($arVal["URL"]) . '">&raquo;</a>&nbsp;';
+                            $str = '<a target="_blank" title="' . GetMessage(
+                                    "STAT_GO"
+                                ) . '" href="' . htmlspecialcharsbx($arVal["URL"]) . '">&raquo;</a>&nbsp;';
                             if ($arVal["DIR"] == "Y") :
-                                $str .= '<a title="' . GetMessage("STAT_FILTER_PAGE_DIAGRAM_ALT") . '" href="' . htmlspecialcharsbx($APPLICATION->GetCurPage() . '?lang=' . LANG . GetFilterParams($arFilterFields) . '&find_diagram_type=' . $find_diagram_type . '&find_section=' . urlencode($arVal["URL"] . "% ~" . $arVal["URL"]) . '&find_show=F&find_section_exact_match=Y&set_filter=Y') . '">';
+                                $str .= '<a title="' . GetMessage(
+                                        "STAT_FILTER_PAGE_DIAGRAM_ALT"
+                                    ) . '" href="' . htmlspecialcharsbx(
+                                        $APPLICATION->GetCurPage() . '?lang=' . LANG . GetFilterParams(
+                                            $arFilterFields
+                                        ) . '&find_diagram_type=' . $find_diagram_type . '&find_section=' . urlencode(
+                                            $arVal["URL"] . "% ~" . $arVal["URL"]
+                                        ) . '&find_show=F&find_section_exact_match=Y&set_filter=Y'
+                                    ) . '">';
                                 if ($arVal["URL_404"] == "Y") :
-                                    $str .= "<span class=\"stat_attention\">" . htmlspecialcharsEx(TruncateText($arVal["URL"], 45)) . "</span>";
+                                    $str .= "<span class=\"stat_attention\">" . htmlspecialcharsEx(
+                                            TruncateText($arVal["URL"], 45)
+                                        ) . "</span>";
                                 else:
                                     $str .= htmlspecialcharsEx(TruncateText($arVal["URL"], 45));
                                 endif;
                                 $str .= "</a>";
                             else :
-                                if (substr($arVal["URL"], -1) == "/")
+                                if (mb_substr($arVal["URL"], -1) == "/") {
                                     $arVal["URL"] .= "index.php";
+                                }
                                 if ($arVal["URL_404"] == "Y") :
-                                    $str .= "<span class=\"stat_attention\">" . htmlspecialcharsEx(TruncateText($arVal["URL"], 45)) . "</span>";
+                                    $str .= "<span class=\"stat_attention\">" . htmlspecialcharsEx(
+                                            TruncateText($arVal["URL"], 45)
+                                        ) . "</span>";
                                 else:
                                     $str .= htmlspecialcharsEx(TruncateText($arVal["URL"], 45));
                                 endif;
@@ -319,9 +389,11 @@ $lAdmin->BeginPrologContent(); ?>
                                 </td>
                                 <td class="number"><?= $q ?>%</td>
                                 <td><?= $str ?></td>
-                                <td class="number"><a
-                                            href="<? echo htmlspecialcharsbx("hit_list.php?lang=" . LANG . "&find_url=" . urlencode($arVal["URL"] . "%") . "&find_url_exact_match=Y&set_filter=Y") ?>"><? echo $arVal["COUNTER"] ?></a>
-                                </td>
+                                <td class="number"><a href="<? echo htmlspecialcharsbx(
+                                        "hit_list.php?lang=" . LANG . "&find_url=" . urlencode(
+                                            $arVal["URL"] . "%"
+                                        ) . "&find_url_exact_match=Y&set_filter=Y"
+                                    ) ?>"><? echo $arVal["COUNTER"] ?></a></td>
                             </tr>
                             <? $i++;endforeach; ?>
                         <? if ($total == 11): ?>
@@ -329,8 +401,12 @@ $lAdmin->BeginPrologContent(); ?>
                                 <td valign="center" class="color">
                                     <div style="background-color: <?= "#" . GetNextRGB($color, $total) ?>"></div>
                                 </td>
-                                <td class="number"><?= (number_format((($sum_counter - $top_sum) * 100) / $sum_counter, 2, '.', '')) ?>
-                                    %
+                                <td class="number"><?= (number_format(
+                                        (($sum_counter - $top_sum) * 100) / $sum_counter,
+                                        2,
+                                        '.',
+                                        ''
+                                    )) ?>%
                                 </td>
                                 <td><?= GetMessage("STAT_OTHER") ?></td>
                                 <td class="number"><?= ($sum_counter - $top_sum) ?></td>
@@ -353,12 +429,13 @@ $lAdmin->EndPrologContent();
 $lAdmin->CheckListMode();
 
 
-if ($find_diagram_type == "ENTER_COUNTER")
+if ($find_diagram_type == "ENTER_COUNTER") {
     $APPLICATION->SetTitle(GetMessage("STAT_GROUP_BY_ENTERS"));
-elseif ($find_diagram_type == "EXIT_COUNTER")
+} elseif ($find_diagram_type == "EXIT_COUNTER") {
     $APPLICATION->SetTitle(GetMessage("STAT_GROUP_BY_EXITS"));
-else
+} else {
     $APPLICATION->SetTitle(GetMessage("STAT_RECORDS_LIST"));
+}
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 ?>
@@ -369,25 +446,43 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
 
         <tr valign="center">
             <td width="0%" nowrap><? echo GetMessage("STAT_F_PERIOD") . ":" ?></td>
-            <td width="0%"
-                nowrap><? echo CalendarPeriod("find_date1", $find_date1, "find_date2", $find_date2, "form1", "Y") ?></td>
+            <td width="0%" nowrap><? echo CalendarPeriod(
+                    "find_date1",
+                    $find_date1,
+                    "find_date2",
+                    $find_date2,
+                    "form1",
+                    "Y"
+                ) ?></td>
         </tr>
         <tr valign="center">
             <td width="0%" nowrap><? echo GetMessage("STAT_F_SECTIONS") ?>:</td>
             <td width="0%" nowrap><?
                 echo SelectBoxFromArray("find_site_id", $arSiteDropdown, $find_site_id, GetMessage("STAT_D_SITE"));
                 ?>&nbsp;<?
-                echo SelectBoxFromArray("find_page_404", array("reference" => array(GetMessage("STAT_YES"), GetMessage("STAT_NO")), "reference_id" => array("Y", "N")), htmlspecialcharsbx($find_page_404), GetMessage("STAT_404"));
+                echo SelectBoxFromArray(
+                    "find_page_404",
+                    array(
+                        "reference" => array(GetMessage("STAT_YES"), GetMessage("STAT_NO")),
+                        "reference_id" => array("Y", "N")
+                    ),
+                    htmlspecialcharsbx($find_page_404),
+                    GetMessage("STAT_404")
+                );
                 ?>&nbsp;<input type="text" name="find_section" size="37"
-                               value="<? echo htmlspecialcharsbx($find_section) ?>"><?= ShowExactMatchCheckbox("find_section") ?>
-                &nbsp;<?= ShowFilterLogicHelp() ?></td>
+                               value="<? echo htmlspecialcharsbx($find_section) ?>"><?= ShowExactMatchCheckbox(
+                    "find_section"
+                ) ?>&nbsp;<?= ShowFilterLogicHelp() ?></td>
         </tr>
         <tr valign="center">
             <td width="0%" nowrap><?
                 echo GetMessage("STAT_F_VIEW") ?>:
             </td>
             <td width="100%" nowrap><?
-                $arr = array("reference" => array(GetMessage("STAT_F_VIEW_SECTIONS"), GetMessage("STAT_F_VIEW_FILES")), "reference_id" => array("D", "F"));
+                $arr = array(
+                    "reference" => array(GetMessage("STAT_F_VIEW_SECTIONS"), GetMessage("STAT_F_VIEW_FILES")),
+                    "reference_id" => array("D", "F")
+                );
                 echo SelectBoxFromArray("find_show", $arr, htmlspecialcharsbx($find_show), GetMessage("MAIN_ALL"));
                 ?>
             </td>
@@ -401,7 +496,15 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
                     echo GetMessage("STAT_F_ADV") ?>:<br><img src="/bitrix/images/statistic/mouse.gif" width="44"
                                                               height="21" border=0 alt=""></td>
                 <td width="100%" nowrap><?
-                    echo SelectBoxMFromArray("find_adv[]", array("REFERENCE" => $find_adv_names, "REFERENCE_ID" => $find_adv), $find_adv, "", false, "5", "style=\"width:300px;\"");
+                    echo SelectBoxMFromArray(
+                        "find_adv[]",
+                        array("REFERENCE" => $find_adv_names, "REFERENCE_ID" => $find_adv),
+                        $find_adv,
+                        "",
+                        false,
+                        "5",
+                        "style=\"width:300px;\""
+                    );
                     ?>
                     <script language="Javascript">
                         function selectEventType(form, field) {
@@ -429,7 +532,8 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
                         GetMessage("STAT_ADV_NO_BACK"),
                         GetMessage("STAT_ADV_BACK")
                     ),
-                    "reference_id" => array("S", "P", "B"));
+                    "reference_id" => array("S", "P", "B")
+                );
                 echo SelectBoxFromArray("find_adv_data_type", $arr, htmlspecialcharsbx($find_adv_data_type));
                 ?></td>
         </tr>
@@ -439,8 +543,9 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
     </form>
 
 <?
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 ?>
 
 <? $lAdmin->DisplayList(); ?>

@@ -67,15 +67,17 @@ class Recent
             $filter['=MESSAGE_CODE'] = $messageCode;
         }
 
-        $chains = Entity\Letter::getList(array(
-            'select' => array('TEMPLATE_TYPE', 'TEMPLATE_ID'),
-            'filter' => $filter,
-            'runtime' => array(new ExpressionField('MAX_ID', 'MAX(%s)', 'ID')),
-            'limit' => self::$maxCount + 1,
-            'cache' => array('ttl' => self::$cacheTtl),
-            'group' => array('TEMPLATE_TYPE', 'TEMPLATE_ID'),
-            'order' => array('MAX_ID' => 'DESC'),
-        ));
+        $chains = Entity\Letter::getList(
+            array(
+                'select' => array('TEMPLATE_TYPE', 'TEMPLATE_ID'),
+                'filter' => $filter,
+                'runtime' => array(new ExpressionField('MAX_ID', 'MAX(%s)', 'ID')),
+                'limit' => self::$maxCount + 1,
+                'cache' => array('ttl' => self::$cacheTtl),
+                'group' => array('TEMPLATE_TYPE', 'TEMPLATE_ID'),
+                'order' => array('MAX_ID' => 'DESC'),
+            )
+        );
         foreach ($chains as $chain) {
             $template = Selector::create()
                 ->withTypeId($chain['TEMPLATE_TYPE'])

@@ -32,7 +32,7 @@ class Content
      */
     public static function encodeText($text)
     {
-        return str_rot13(strtoupper(trim($text)));
+        return str_rot13(mb_strtoupper(trim($text)));
     }
 
     /**
@@ -141,7 +141,7 @@ class Content
 
         $text = trim($text);
         if ($length > 0) {
-            $text = substr($text, 0, $length);
+            $text = mb_substr($text, 0, $length);
         }
 
         if ($text !== '' && !in_array($text, $this->data)) {
@@ -210,10 +210,12 @@ class Content
      */
     public function addUserById($userID)
     {
-        $userData = UserTable::getRow([
-            'select' => ['ID', 'LOGIN', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'TITLE'],
-            'filter' => ['=ID' => $userID]
-        ]);
+        $userData = UserTable::getRow(
+            [
+                'select' => ['ID', 'LOGIN', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'TITLE'],
+                'filter' => ['=ID' => $userID]
+            ]
+        );
 
         if (is_array($userData)) {
             $value = \CAllUser::formatName(\CAllSite::getNameFormat(), $userData, true, false);

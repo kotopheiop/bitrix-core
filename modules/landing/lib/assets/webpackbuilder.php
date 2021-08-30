@@ -2,11 +2,11 @@
 
 namespace Bitrix\Landing\Assets;
 
+use Bitrix\Landing\Landing;
 use Bitrix\Main;
 
 class WebpackBuilder extends Builder
 {
-    public const PACKAGE_NAME_SUFFIX = '_webpack';
     protected const PACKAGE_CRITICAL_NAME = 'landing_grid';
 
     /**
@@ -81,7 +81,7 @@ class WebpackBuilder extends Builder
     {
         $this->webpackFile = new WebpackFile();
         $this->webpackFile->setLandingId($this->landingId);
-        $this->webpackFile->setFileName($this->createUniqueName());
+        $this->webpackFile->setPackageHash($this->createPackageHash());
 
         $this->fillPackageWithResources();
 
@@ -95,6 +95,9 @@ class WebpackBuilder extends Builder
     {
         foreach (Types::getAssetTypes() as $type) {
             if (array_key_exists($type, $this->normalizedResources)) {
+                if ($type === Types::TYPE_LANG) {
+                    $this->webpackFile->setUseLang();
+                }
                 foreach ($this->normalizedResources[$type] as $resource) {
                     $this->webpackFile->addResource($resource);
                 }
@@ -119,10 +122,10 @@ class WebpackBuilder extends Builder
     }
 
     /**
-     * Create unique name for currently asset set (with hash)
+     * Create unique name for currently landing, assets set, version and view mode.
      * @return string
      */
-    protected function createUniqueName(): string
+    protected function createPackageHash(): string
     {
         // List can be different with equal assets, because is depends on the order of adding assets. Unique and sort them!
         $list = [];
@@ -134,8 +137,10 @@ class WebpackBuilder extends Builder
         $list = array_unique($list);
         sort($list);
 
-        $list[] = Main\ModuleManager::getVersion('landing');
+        $list[] = 'version_' . Main\ModuleManager::getVersion('landing');
+        $list[] = 'lid_' . $this->landingId;
+        $list[] = Landing::getPreviewMode() ? 'previewMode' : 'publicMode';
 
-        return self::PACKAGE_NAME . self::PACKAGE_NAME_SUFFIX . '_' . md5(serialize($list)) . '.js';
+        return substr(md5(serialize($list)), 0, 10);
     }
 }

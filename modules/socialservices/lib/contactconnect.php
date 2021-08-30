@@ -21,7 +21,20 @@ use Bitrix\Main\Type\DateTime;
  * </ul>
  *
  * @package Bitrix\Socialservices
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_ContactConnect_Query query()
+ * @method static EO_ContactConnect_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_ContactConnect_Result getById($id)
+ * @method static EO_ContactConnect_Result getList(array $parameters = array())
+ * @method static EO_ContactConnect_Entity getEntity()
+ * @method static \Bitrix\Socialservices\EO_ContactConnect createObject($setDefaultValues = true)
+ * @method static \Bitrix\Socialservices\EO_ContactConnect_Collection createCollection()
+ * @method static \Bitrix\Socialservices\EO_ContactConnect wakeUpObject($row)
+ * @method static \Bitrix\Socialservices\EO_ContactConnect_Collection wakeUpCollection($rows)
+ */
 class ContactConnectTable extends Main\Entity\DataManager
 {
     const TYPE_PORTAL = 'P'; // bitrix24 portal
@@ -99,21 +112,25 @@ class ContactConnectTable extends Main\Entity\DataManager
     public static function deleteByLink($linkId)
     {
         $connection = \Bitrix\Main\Application::getConnection();
-        return $connection->query("
+        return $connection->query(
+            "
 DELETE
 FROM " . self::getTableName() . "
 WHERE LINK_ID='" . intval($linkId) . "'
-");
+"
+        );
     }
 
     public static function deleteByContact($contactId)
     {
         $connection = \Bitrix\Main\Application::getConnection();
-        return $connection->query("
+        return $connection->query(
+            "
 DELETE
 FROM " . self::getTableName() . "
 WHERE CONTACT_ID='" . intval($contactId) . "'
-");
+"
+        );
     }
 
 }

@@ -36,8 +36,9 @@ class Tools
             if (\CTimeZone::enabled()) {
                 /** @noinspection PhpMethodOrClassCallIsNotCaseSensitiveInspection */
                 $diff = \CTimeZone::getOffset();
-                if ($diff <> 0)
+                if ($diff <> 0) {
                     $datetimeField = $helper->addSecondsToDateTime($diff, $datetimeField);
+                }
                 unset($diff);
             }
             self::$datetimeTemplate = str_replace(

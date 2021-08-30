@@ -1,28 +1,31 @@
-<?
+<?php
+
 IncludeModuleLangFile(__FILE__);
 
 class CEventFileman
 {
-    function MakeFilemanObject()
+    public static function MakeFilemanObject()
     {
         $obj = new CEventFileman;
         return $obj;
     }
 
-    function GetFilter()
+    public static function GetFilter()
     {
         $arFilter = array();
         $module_id = 'fileman';
-        if (COption::GetOptionString($module_id, "log_page", "Y") == "Y")
+        if (COption::GetOptionString($module_id, "log_page", "Y") == "Y") {
             $arFilter["PAGE_EDIT"] = GetMessage("LOG_TYPE_PAGE_EDIT");
+        }
 
-        if (COption::GetOptionString($module_id, "log_menu", "Y") == "Y")
+        if (COption::GetOptionString($module_id, "log_menu", "Y") == "Y") {
             $arFilter["MENU_EDIT"] = GetMessage("LOG_TYPE_MENU_EDIT");
+        }
 
         return $arFilter;
     }
 
-    function GetAuditTypes()
+    public static function GetAuditTypes()
     {
         return array(
             "PAGE_EDIT" => "[PAGE_EDIT] " . GetMessage("LOG_TYPE_PAGE_EDIT"),
@@ -46,18 +49,21 @@ class CEventFileman
         );
     }
 
-    function GetEventInfo($row, $arParams, $arUser)
+    public static function GetEventInfo($row, $arParams, $arUser)
     {
         $site = CFileMan::__CheckSite($site);
         $DOC_ROOT = CSite::GetSiteDocRoot($site);
-        $DESCRIPTION = unserialize($row['DESCRIPTION']);
+        $DESCRIPTION = unserialize($row['DESCRIPTION'], ['allowed_classes' => false]);
 
         if (empty($DESCRIPTION['path'])) {
             $DESCRIPTION['path'] = $_SERVER['HTTP_HOST'];
             $fileURL = SITE_DIR;
         } else {
-            if ((is_file($DOC_ROOT . "/" . $DESCRIPTION['path']) || is_dir($DOC_ROOT . "/" . $DESCRIPTION['path'])) && !strrpos($DESCRIPTION['path'], " "))
+            if ((is_file($DOC_ROOT . "/" . $DESCRIPTION['path']) || is_dir(
+                        $DOC_ROOT . "/" . $DESCRIPTION['path']
+                    )) && !mb_strrpos($DESCRIPTION['path'], " ")) {
                 $fileURL = SITE_DIR . $DESCRIPTION['path'];
+            }
         }
 
         $EventName = $DESCRIPTION['path'];
@@ -125,9 +131,9 @@ class CEventFileman
         );
     }
 
-    function GetFilterSQL($var)
+    public static function GetFilterSQL($var)
     {
-        if (is_array($var))
+        if (is_array($var)) {
             foreach ($var as $key => $val) {
                 if ($val == "PAGE_EDIT"):
                     $ar[] = array("AUDIT_TYPE_ID" => "PAGE_ADD");
@@ -155,10 +161,8 @@ class CEventFileman
                 else:
                     $ar[] = array("AUDIT_TYPE_ID" => $val);
                 endif;
-
             }
+        }
         return $ar;
     }
 }
-
-?>

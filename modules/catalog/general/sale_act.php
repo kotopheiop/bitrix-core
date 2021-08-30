@@ -54,12 +54,13 @@ class CCatalogActionCtrlBasketProductFields extends CCatalogCondCtrlIBlockFields
                                 $boolError = true;
                             } else {
                                 foreach ($arValues['value'] as &$value) {
-                                    if ($useParent)
+                                    if ($useParent) {
                                         $parentResultValues[] = str_replace(
                                             array('#FIELD#', '#VALUE#'),
                                             array($strParent, $value),
                                             $arLogic['OP'][$arControl['MULTIPLE']]
                                         );
+                                    }
                                     $resultValues[] = str_replace(
                                         array('#FIELD#', '#VALUE#'),
                                         array($strField, $value),
@@ -67,18 +68,20 @@ class CCatalogActionCtrlBasketProductFields extends CCatalogCondCtrlIBlockFields
                                     );
                                 }
                                 unset($value);
-                                if ($useParent)
+                                if ($useParent) {
                                     $strParentResult = '(' . implode($arLogic['MULTI_SEP'], $parentResultValues) . ')';
+                                }
                                 $strResult = '(' . implode($arLogic['MULTI_SEP'], $resultValues) . ')';
                                 unset($resultValues, $parentResultValues);
                             }
                         } else {
-                            if ($useParent)
+                            if ($useParent) {
                                 $strParentResult = str_replace(
                                     array('#FIELD#', '#VALUE#'),
                                     array($strParent, $arValues['value']),
                                     $arLogic['OP'][$arControl['MULTIPLE']]
                                 );
+                            }
                             $strResult = str_replace(
                                 array('#FIELD#', '#VALUE#'),
                                 array($strField, $arValues['value']),
@@ -92,12 +95,13 @@ class CCatalogActionCtrlBasketProductFields extends CCatalogCondCtrlIBlockFields
                         if (is_array($arValues['value'])) {
                             $boolError = true;
                         } else {
-                            if ($useParent)
+                            if ($useParent) {
                                 $strParentResult = str_replace(
                                     array('#FIELD#', '#VALUE#'),
                                     array($strParent, '"' . EscapePHPString($arValues['value']) . '"'),
                                     $arLogic['OP'][$arControl['MULTIPLE']]
                                 );
+                            }
                             $strResult = str_replace(
                                 array('#FIELD#', '#VALUE#'),
                                 array($strField, '"' . EscapePHPString($arValues['value']) . '"'),
@@ -110,12 +114,13 @@ class CCatalogActionCtrlBasketProductFields extends CCatalogCondCtrlIBlockFields
                         if (is_array($arValues['value'])) {
                             $boolError = true;
                         } else {
-                            if ($useParent)
+                            if ($useParent) {
                                 $strParentResult = str_replace(
                                     array('#FIELD#', '#VALUE#'),
                                     array($strParent, $arValues['value']),
                                     $arLogic['OP'][$arControl['MULTIPLE']]
                                 );
+                            }
                             $strResult = str_replace(
                                 array('#FIELD#', '#VALUE#'),
                                 array($strField, $arValues['value']),
@@ -126,8 +131,9 @@ class CCatalogActionCtrlBasketProductFields extends CCatalogCondCtrlIBlockFields
                 }
 
                 $strResult = 'isset(' . $strField . ') && ' . $strResult;
-                if ($useParent)
+                if ($useParent) {
                     $strResult = 'isset(' . $strParent . ') ? ((' . $strResult . ')' . $arLogic['PARENT'] . $strParentResult . ') : (' . $strResult . ')';
+                }
                 $strResult = '(' . $strResult . ')';
             }
         }
@@ -319,8 +325,9 @@ class CCatalogGifterProduct extends CGlobalCondCtrlAtoms
     public static function Generate($arOneCondition, $arParams, $arControl, $arSubs = false)
     {
         $result = '';
-        if (is_string($arControl))
+        if (is_string($arControl)) {
             $arControl = static::GetControls($arControl);
+        }
         $boolError = !is_array($arControl);
 
         if (!$boolError) {
@@ -330,12 +337,14 @@ class CCatalogGifterProduct extends CGlobalCondCtrlAtoms
         }
 
         if (!$boolError) {
-            if (!is_array($arOneCondition['Value']))
+            if (!is_array($arOneCondition['Value'])) {
                 $arOneCondition['Value'] = array($arOneCondition['Value']);
+            }
             $stringDataArray = 'array(' . implode(',', $arOneCondition['Value']) . ')';
             $type = $arOneCondition['Type'];
 
-            $result = static::GetClassName() . "::GenerateApplyCallableFilter('{$arControl['ID']}', {$stringDataArray}, '{$type}')";
+            $result = static::GetClassName(
+                ) . "::GenerateApplyCallableFilter('{$arControl['ID']}', {$stringDataArray}, '{$type}')";
         }
 
         return $result;
@@ -392,8 +401,12 @@ class CCatalogGifterProduct extends CGlobalCondCtrlAtoms
                         'name' => 'Type',
                         'type' => 'select',
                         'values' => array(
-                            CSaleDiscountActionApply::GIFT_SELECT_TYPE_ONE => Loc::getMessage('BT_SALE_ACT_GIFT_SELECT_TYPE_SELECT_ONE'),
-                            CSaleDiscountActionApply::GIFT_SELECT_TYPE_ALL => Loc::getMessage('BT_SALE_ACT_GIFT_SELECT_TYPE_SELECT_ALL'),
+                            CSaleDiscountActionApply::GIFT_SELECT_TYPE_ONE => Loc::getMessage(
+                                'BT_SALE_ACT_GIFT_SELECT_TYPE_SELECT_ONE'
+                            ),
+                            CSaleDiscountActionApply::GIFT_SELECT_TYPE_ALL => Loc::getMessage(
+                                'BT_SALE_ACT_GIFT_SELECT_TYPE_SELECT_ALL'
+                            ),
                         ),
                         'defaultText' => Loc::getMessage('BT_SALE_ACT_GIFT_SELECT_TYPE_SELECT_DEF'),
                         'defaultValue' => CSaleDiscountActionApply::GIFT_SELECT_TYPE_ONE,
@@ -412,7 +425,7 @@ class CCatalogGifterProduct extends CGlobalCondCtrlAtoms
                         'id' => 'Value',
                         'name' => 'Value',
                         'type' => 'multiDialog',
-                        'popup_url' => 'cat_product_search_dialog.php',
+                        'popup_url' => self::getAdminSection() . 'cat_product_search_dialog.php',
                         'popup_params' => array(
                             'lang' => LANGUAGE_ID,
                             'caller' => 'discount_rules',
@@ -436,8 +449,12 @@ class CCatalogGifterProduct extends CGlobalCondCtrlAtoms
                         'name' => 'Type',
                         'type' => 'select',
                         'values' => array(
-                            CSaleDiscountActionApply::GIFT_SELECT_TYPE_ONE => Loc::getMessage('BT_SALE_ACT_GIFT_SELECT_TYPE_SELECT_ONE'),
-                            CSaleDiscountActionApply::GIFT_SELECT_TYPE_ALL => Loc::getMessage('BT_SALE_ACT_GIFT_SELECT_TYPE_SELECT_ALL'),
+                            CSaleDiscountActionApply::GIFT_SELECT_TYPE_ONE => Loc::getMessage(
+                                'BT_SALE_ACT_GIFT_SELECT_TYPE_SELECT_ONE'
+                            ),
+                            CSaleDiscountActionApply::GIFT_SELECT_TYPE_ALL => Loc::getMessage(
+                                'BT_SALE_ACT_GIFT_SELECT_TYPE_SELECT_ALL'
+                            ),
                         ),
                         'defaultText' => Loc::getMessage('BT_SALE_ACT_GIFT_SELECT_TYPE_SELECT_DEF'),
                         'defaultValue' => CSaleDiscountActionApply::GIFT_SELECT_TYPE_ONE,
@@ -456,7 +473,7 @@ class CCatalogGifterProduct extends CGlobalCondCtrlAtoms
                         'id' => 'Value',
                         'name' => 'Value',
                         'type' => 'popup',
-                        'popup_url' => '/bitrix/admin/iblock_section_search.php',
+                        'popup_url' => self::getAdminSection() . 'iblock_section_search.php',
                         'popup_params' => array(
                             'lang' => LANGUAGE_ID,
                             'discount' => 'Y',
@@ -491,19 +508,29 @@ class CCatalogGifterProduct extends CGlobalCondCtrlAtoms
                 case 'GifterCondIBElement':
                     $right =
                         (
-                            (isset($row['CATALOG']['PARENT_ID']) && array_intersect($gifts, (array)$row['CATALOG']['PARENT_ID'])) ||
+                            (isset($row['CATALOG']['PARENT_ID']) && array_intersect(
+                                    $gifts,
+                                    (array)$row['CATALOG']['PARENT_ID']
+                                )) ||
                             (isset($row['CATALOG']['ID']) && isset($gifts[$row['CATALOG']['ID']]))
                         ) &&
-                        isset($row['QUANTITY']) && $row['QUANTITY'] == \CCatalogGifterProduct::getRatio($row['CATALOG']['ID'])
+                        isset($row['QUANTITY']) && $row['QUANTITY'] == \CCatalogGifterProduct::getRatio(
+                            $row['CATALOG']['ID']
+                        )
                         && isset($row['PRICE']) && $row['PRICE'] > 0;
                     break;
 
                 case 'GifterCondIBSection':
                     $right =
                         (
-                            isset($row['CATALOG']['SECTION_ID']) && array_intersect($gifts, (array)$row['CATALOG']['SECTION_ID'])
+                            isset($row['CATALOG']['SECTION_ID']) && array_intersect(
+                                $gifts,
+                                (array)$row['CATALOG']['SECTION_ID']
+                            )
                         ) &&
-                        isset($row['QUANTITY']) && $row['QUANTITY'] == \CCatalogGifterProduct::getRatio($row['CATALOG']['ID'])
+                        isset($row['QUANTITY']) && $row['QUANTITY'] == \CCatalogGifterProduct::getRatio(
+                            $row['CATALOG']['ID']
+                        )
                         && isset($row['PRICE']) && $row['PRICE'] > 0;
 
                     break;
@@ -560,13 +587,19 @@ class CCatalogGifterProduct extends CGlobalCondCtrlAtoms
             return array();
         }
         $ids = array();
-        $query = CIBlockElement::getList(array(), array(
-            'ACTIVE_DATE' => 'Y',
-            'SECTION_ID' => $sectionId,
-            'CHECK_PERMISSIONS' => 'Y',
-            'MIN_PERMISSION' => 'R',
-            'ACTIVE' => 'Y',
-        ), false, false, array('ID'));
+        $query = CIBlockElement::getList(
+            array(),
+            array(
+                'ACTIVE_DATE' => 'Y',
+                'SECTION_ID' => $sectionId,
+                'CHECK_PERMISSIONS' => 'Y',
+                'MIN_PERMISSION' => 'R',
+                'ACTIVE' => 'Y',
+            ),
+            false,
+            false,
+            array('ID')
+        );
 
         while ($row = $query->fetch()) {
             $ids[] = $row['ID'];
@@ -578,13 +611,24 @@ class CCatalogGifterProduct extends CGlobalCondCtrlAtoms
     public static function ExtendProductIds(array $giftedProductIds)
     {
         $products = CCatalogSku::getProductList($giftedProductIds);
-        if (empty($products))
+        if (empty($products)) {
             return $giftedProductIds;
+        }
 
-        foreach ($products as $product)
+        foreach ($products as $product) {
             $giftedProductIds[] = $product['ID'];
+        }
         unset($product);
 
         return $giftedProductIds;
+    }
+
+    /**
+     * @return string
+     */
+    private static function getAdminSection()
+    {
+        //TODO: need use \CAdminPage::getSelfFolderUrl, but in general it is impossible now
+        return (defined('SELF_FOLDER_URL') ? SELF_FOLDER_URL : '/bitrix/admin/');
     }
 }

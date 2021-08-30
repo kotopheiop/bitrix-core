@@ -1,9 +1,14 @@
-<?
+<?php
 
 class CSocNetLogPages
 {
-    function GetList($arOrder = array(), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
-    {
+    public static function GetList(
+        $arOrder = array(),
+        $arFilter = array(),
+        $arGroupBy = false,
+        $arNavStartParams = false,
+        $arSelectFields = array()
+    ) {
         if (func_num_args() <= 2) {
             $arSelectFields = $arFilter;
             $arFilter = $arOrder;
@@ -13,7 +18,17 @@ class CSocNetLogPages
         global $DB;
 
         if (count($arSelectFields) <= 0) {
-            $arSelectFields = array("USER_ID", "SITE_ID", "GROUP_CODE", "PAGE_SIZE", "PAGE_NUM", "PAGE_LAST_DATE", "TRAFFIC_AVG", "TRAFFIC_CNT", "TRAFFIC_LAST_DATE");
+            $arSelectFields = array(
+                "USER_ID",
+                "SITE_ID",
+                "GROUP_CODE",
+                "PAGE_SIZE",
+                "PAGE_NUM",
+                "PAGE_LAST_DATE",
+                "TRAFFIC_AVG",
+                "TRAFFIC_CNT",
+                "TRAFFIC_LAST_DATE"
+            );
         }
 
         // FIELDS -->
@@ -38,10 +53,10 @@ class CSocNetLogPages
             "SELECT " . $arSqls["SELECT"] . " " .
             "FROM b_sonet_log_page SLP " .
             "	" . $arSqls["FROM"] . " ";
-        if (strlen($arSqls["WHERE"]) > 0) {
+        if ($arSqls["WHERE"] <> '') {
             $strSql .= "WHERE " . $arSqls["WHERE"] . " ";
         }
-        if (strlen($arSqls["ORDERBY"]) > 0) {
+        if ($arSqls["ORDERBY"] <> '') {
             $strSql .= "ORDER BY " . $arSqls["ORDERBY"] . " ";
         }
 
@@ -62,14 +77,14 @@ class CSocNetLogPages
 
         $strWhere = " USER_ID = " . $user_id;
         if (
-            strlen($site_id) > 0
+            $site_id <> ''
             && $site_id != "**"
         ) {
             $strWhere .= " AND SITE_ID = '" . $DB->ForSQL($site_id) . "'";
         }
 
         if (
-            strlen($group_code) > 0
+            $group_code <> ''
             && $group_code != "**"
         ) {
             $strWhere .= " AND GROUP_CODE = '" . $DB->ForSQL($group_code) . "'";
@@ -87,8 +102,16 @@ class CSocNetLogPages
         }
     }
 
-    public static function Set($user_id, $page_last_date, $page_size, $page_num = 1, $site_id = SITE_ID, $group_code = '**', $traffic_avg = false, $traffic_cnt = false)
-    {
+    public static function Set(
+        $user_id,
+        $page_last_date,
+        $page_size,
+        $page_num = 1,
+        $site_id = SITE_ID,
+        $group_code = '**',
+        $traffic_avg = false,
+        $traffic_cnt = false
+    ) {
         global $DB;
 
         $user_id = intval($user_id);
@@ -100,7 +123,7 @@ class CSocNetLogPages
         if (
             $user_id <= 0
             || $page_size <= 0
-            || strlen($page_last_date) <= 0
+            || $page_last_date == ''
         ) {
             return false;
         }
@@ -126,7 +149,9 @@ class CSocNetLogPages
         if ($traffic_cnt) {
             $arInsertFields["TRAFFIC_AVG"] = $arUpdateFields["TRAFFIC_AVG"] = $traffic_avg;
             $arInsertFields["TRAFFIC_CNT"] = $arUpdateFields["TRAFFIC_CNT"] = $traffic_cnt;
-            $arInsertFields["TRAFFIC_LAST_DATE"] = $arUpdateFields["TRAFFIC_LAST_DATE"] = new \Bitrix\Main\DB\SqlExpression($helper->getCurrentDateTimeFunction());
+            $arInsertFields["TRAFFIC_LAST_DATE"] = $arUpdateFields["TRAFFIC_LAST_DATE"] = new \Bitrix\Main\DB\SqlExpression(
+                $helper->getCurrentDateTimeFunction()
+            );
         }
 
         $merge = $helper->prepareMerge(
@@ -144,5 +169,3 @@ class CSocNetLogPages
         }
     }
 }
-
-?>

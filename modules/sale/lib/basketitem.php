@@ -69,8 +69,9 @@ class BasketItem extends BasketItemBase
                     ]
                 );
                 while ($itemsFromDbItem = $itemsFromDbList->fetch()) {
-                    if ($itemsFromDbItem['ID'] == $id)
+                    if ($itemsFromDbItem['ID'] == $id) {
                         continue;
+                    }
 
                     $itemsFromDb[$itemsFromDbItem['ID']] = true;
                 }
@@ -79,15 +80,18 @@ class BasketItem extends BasketItemBase
             /** @var BasketItem $bundleItem */
             foreach ($bundleCollection as $bundleItem) {
                 $parentId = (int)$bundleItem->getField('SET_PARENT_ID');
-                if ($parentId <= 0)
+                if ($parentId <= 0) {
                     $bundleItem->setFieldNoDemand('SET_PARENT_ID', $id);
+                }
 
                 $saveResult = $bundleItem->save();
-                if (!$saveResult->isSuccess())
+                if (!$saveResult->isSuccess()) {
                     $result->addErrors($saveResult->getErrors());
+                }
 
-                if (isset($itemsFromDb[$bundleItem->getId()]))
+                if (isset($itemsFromDb[$bundleItem->getId()])) {
                     unset($itemsFromDb[$bundleItem->getId()]);
+                }
             }
 
             foreach ($itemsFromDb as $id => $value) {
@@ -251,7 +255,9 @@ class BasketItem extends BasketItemBase
             $originalValues = $itemValues->getOriginalValues();
 
             foreach ($originalValues as $originalFieldName => $originalFieldValue) {
-                if (in_array($originalFieldName, $changeMeaningfulFields) && $this->getField($originalFieldName) != $originalFieldValue) {
+                if (in_array($originalFieldName, $changeMeaningfulFields) && $this->getField(
+                        $originalFieldName
+                    ) != $originalFieldValue) {
                     $logFields[$originalFieldName] = $this->getField($originalFieldName);
                     $logFields['OLD_' . $originalFieldName] = $originalFieldValue;
                 }
@@ -290,7 +296,9 @@ class BasketItem extends BasketItemBase
 
                     /** @var ShipmentItemCollection $shipmentItemCollection */
                     if ($shipmentItemCollection = $shipment->getShipmentItemCollection()) {
-                        if ($shipmentItemCollection->getItemByBasketCode($this->getBasketCode()) && $shipment->isShipped()) {
+                        if ($shipmentItemCollection->getItemByBasketCode(
+                                $this->getBasketCode()
+                            ) && $shipment->isShipped()) {
                             $result->addError(
                                 new ResultError(
                                     Loc::getMessage(
@@ -451,11 +459,11 @@ class BasketItem extends BasketItemBase
                     "PRODUCT_ID" => $bundleBasketItem->getProductId(),
                     "QUANTITY" => $bundleQuantity
                 ];
-
             }
 
-            if (empty($bundleChildList))
+            if (empty($bundleChildList)) {
                 return false;
+            }
 
             foreach ($bundleChildList as $bundleBasketListDat) {
                 foreach ($bundleBasketListDat["ITEMS"] as $bundleDat) {
@@ -615,7 +623,11 @@ class BasketItem extends BasketItemBase
                     }
 
                     /** @var BasketItem $basketItem */
-                    $bundleBasketItem = static::create($bundleCollection, $bundleFields['MODULE'], $bundleFields['PRODUCT_ID']);
+                    $bundleBasketItem = static::create(
+                        $bundleCollection,
+                        $bundleFields['MODULE'],
+                        $bundleFields['PRODUCT_ID']
+                    );
 
                     if (!empty($bundleDat["PROPS"]) && is_array($bundleDat["PROPS"])) {
                         /** @var BasketPropertiesCollection $property */
@@ -651,16 +663,18 @@ class BasketItem extends BasketItemBase
     public function findItemByBasketCode($basketCode)
     {
         $item = parent::findItemByBasketCode($basketCode);
-        if ($item !== null)
+        if ($item !== null) {
             return $item;
+        }
 
         if ($this->isBundleParent()) {
             $collection = $this->getBundleCollection();
             /** @var BasketItemBase $basketItem */
             foreach ($collection as $basketItem) {
                 $item = $basketItem->findItemByBasketCode($basketCode);
-                if ($item !== null)
+                if ($item !== null) {
                     return $item;
+                }
             }
         }
 
@@ -682,16 +696,18 @@ class BasketItem extends BasketItemBase
     public function findItemById($id)
     {
         $item = parent::findItemById($id);
-        if ($item !== null)
+        if ($item !== null) {
             return $item;
+        }
 
         if ($this->isBundleParent()) {
             $collection = $this->getBundleCollection();
             /** @var BasketItemBase $basketItem */
             foreach ($collection as $basketItem) {
                 $item = $basketItem->findItemById($id);
-                if ($item !== null)
+                if ($item !== null) {
                     return $item;
+                }
             }
         }
 
@@ -854,8 +870,9 @@ class BasketItem extends BasketItemBase
             $result->addWarnings($r->getWarnings());
         }
 
-        if (!$this->isBundleParent())
+        if (!$this->isBundleParent()) {
             return $result;
+        }
 
         if ($name === 'QUANTITY') {
             $deltaQuantity = $value - $oldValue;
@@ -867,8 +884,9 @@ class BasketItem extends BasketItemBase
                     foreach ($bundleCollection as $bundleItem) {
                         $bundleProductId = $bundleItem->getProductId();
 
-                        if (!isset($bundleBaseQuantity[$bundleProductId]))
+                        if (!isset($bundleBaseQuantity[$bundleProductId])) {
                             throw new ArgumentOutOfRangeException('bundle product id');
+                        }
 
                         $quantity = $bundleBaseQuantity[$bundleProductId] * $value;
 
@@ -985,8 +1003,9 @@ class BasketItem extends BasketItemBase
             foreach ($shipmentCollection as $shipment) {
                 $shipmentItemCollection = $shipment->getShipmentItemCollection();
                 $shipmentItem = $shipmentItemCollection->getItemByBasketCode($this->getBasketCode());
-                if ($shipmentItem)
+                if ($shipmentItem) {
                     $reservedQuantity += $shipmentItem->getReservedQuantity();
+                }
             }
         }
 

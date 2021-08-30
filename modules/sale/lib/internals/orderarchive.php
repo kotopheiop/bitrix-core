@@ -193,10 +193,12 @@ class OrderArchiveTable extends Main\Entity\DataManager
         $result = parent::add($data);
 
         if ($result->isSuccess()) {
-            OrderArchivePackedTable::add(array(
-                "ORDER_ARCHIVE_ID" => $result->getId(),
-                "ORDER_DATA" => $orderData
-            ));
+            OrderArchivePackedTable::add(
+                array(
+                    "ORDER_ARCHIVE_ID" => $result->getId(),
+                    "ORDER_DATA" => $orderData
+                )
+            );
         }
 
         return $result;
@@ -237,8 +239,9 @@ class OrderArchiveTable extends Main\Entity\DataManager
         $result = new Main\Result();
         $parameters = array("select" => array('ID'));
 
-        if (!empty($filter))
+        if (!empty($filter)) {
             $parameters['filter'] = $filter;
+        }
 
         $idList = array();
         $archivedOrderData = self::getList($parameters);
@@ -246,22 +249,29 @@ class OrderArchiveTable extends Main\Entity\DataManager
             $idList[] = $archiveRow['ID'];
         }
 
-        if (empty($idList))
+        if (empty($idList)) {
             return $result;
+        }
 
         $idListChunk = array_chunk($idList, 1000);
         foreach ($idListChunk as $chunk) {
-            $packedData = OrderArchivePackedTable::getList(array(
-                "filter" => array("ORDER_ARCHIVE_ID" => $chunk)
-            ));
+            $packedData = OrderArchivePackedTable::getList(
+                array(
+                    "filter" => array("ORDER_ARCHIVE_ID" => $chunk)
+                )
+            );
 
             while ($packed = $packedData->fetch()) {
-                $orderData = unserialize($packed['ORDER_DATA']);
+                $orderData = unserialize($packed['ORDER_DATA'], ['allowed_classes' => false]);
                 if (is_array($orderData['ORDER'])) {
-                    $preparedOrderData = array_intersect_key($orderData['ORDER'], array_flip(Sale\Archive\Manager::getOrderFieldNames()));
+                    $preparedOrderData = array_intersect_key(
+                        $orderData['ORDER'],
+                        array_flip(Sale\Archive\Manager::getOrderFieldNames())
+                    );
                     $result = self::update($packed['ORDER_ARCHIVE_ID'], $preparedOrderData);
-                    if (!$result->isSuccess())
+                    if (!$result->isSuccess()) {
                         return $result;
+                    }
                 }
             }
         }

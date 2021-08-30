@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 $GLOBALS["arSonetFeaturesPermsCache"] = array();
@@ -14,18 +15,21 @@ class CAllSocNetFeaturesPerms
 
         $arSocNetFeaturesSettings = CSocNetAllowed::GetAllowedFeatures();
 
-        if ($ACTION != "ADD" && IntVal($ID) <= 0) {
+        if ($ACTION != "ADD" && intval($ID) <= 0) {
             $APPLICATION->ThrowException("System error 870164", "ERROR");
             return false;
         }
 
-        if ((is_set($arFields, "FEATURE_ID") || $ACTION == "ADD") && IntVal($arFields["FEATURE_ID"]) <= 0) {
+        if ((is_set($arFields, "FEATURE_ID") || $ACTION == "ADD") && intval($arFields["FEATURE_ID"]) <= 0) {
             $APPLICATION->ThrowException(GetMessage("SONET_GFP_EMPTY_GROUP_FEATURE_ID"), "EMPTY_FEATURE_ID");
             return false;
         } elseif (is_set($arFields, "FEATURE_ID")) {
             $arResult = CSocNetFeatures::GetByID($arFields["FEATURE_ID"]);
             if ($arResult == false) {
-                $APPLICATION->ThrowException(str_replace("#ID#", $arFields["FEATURE_ID"], GetMessage("SONET_GFP_ERROR_NO_GROUP_FEATURE_ID")), "ERROR_NO_FEATURE_ID");
+                $APPLICATION->ThrowException(
+                    str_replace("#ID#", $arFields["FEATURE_ID"], GetMessage("SONET_GFP_ERROR_NO_GROUP_FEATURE_ID")),
+                    "ERROR_NO_FEATURE_ID"
+                );
                 return false;
             }
         }
@@ -33,11 +37,11 @@ class CAllSocNetFeaturesPerms
         $groupFeature = "";
         $groupFeatureType = "";
 
-        if ((is_set($arFields, "OPERATION_ID") || $ACTION == "ADD") && StrLen($arFields["OPERATION_ID"]) <= 0) {
+        if ((is_set($arFields, "OPERATION_ID") || $ACTION == "ADD") && $arFields["OPERATION_ID"] == '') {
             $APPLICATION->ThrowException(GetMessage("SONET_GFP_EMPTY_OPERATION_ID"), "EMPTY_OPERATION_ID");
             return false;
         } elseif (is_set($arFields, "OPERATION_ID")) {
-            $arFields["OPERATION_ID"] = strtolower($arFields["OPERATION_ID"]);
+            $arFields["OPERATION_ID"] = mb_strtolower($arFields["OPERATION_ID"]);
 
             if (is_set($arFields, "FEATURE_ID")) {
                 $arGroupFeature = CSocNetFeatures::GetByID($arFields["FEATURE_ID"]);
@@ -45,7 +49,7 @@ class CAllSocNetFeaturesPerms
                     $groupFeature = $arGroupFeature["FEATURE"];
                     $groupFeatureType = $arGroupFeature["ENTITY_TYPE"];
                 }
-            } elseif ($ACTION != "ADD" && IntVal($ID) > 0) {
+            } elseif ($ACTION != "ADD" && intval($ID) > 0) {
                 $dbGroupFeature = CSocNetFeaturesPerms::GetList(
                     array(),
                     array("ID" => $ID),
@@ -59,7 +63,7 @@ class CAllSocNetFeaturesPerms
                 }
             }
             if (
-                StrLen($groupFeature) <= 0
+                $groupFeature == ''
                 || !array_key_exists($groupFeature, $arSocNetFeaturesSettings)
             ) {
                 $APPLICATION->ThrowException(GetMessage("SONET_GFP_BAD_OPERATION_ID"), "BAD_OPERATION_ID");
@@ -72,17 +76,17 @@ class CAllSocNetFeaturesPerms
             }
         }
 
-        if ((is_set($arFields, "ROLE") || $ACTION == "ADD") && strlen($arFields["ROLE"]) <= 0) {
+        if ((is_set($arFields, "ROLE") || $ACTION == "ADD") && $arFields["ROLE"] == '') {
             $APPLICATION->ThrowException(GetMessage("SONET_GFP_EMPTY_ROLE"), "EMPTY_ROLE");
             return false;
         } elseif (is_set($arFields, "ROLE")) {
-            if (StrLen($groupFeatureType) <= 0) {
+            if ($groupFeatureType == '') {
                 if (is_set($arFields, "FEATURE_ID")) {
                     $arGroupFeature = CSocNetFeatures::GetByID($arFields["FEATURE_ID"]);
                     if ($arGroupFeature != false) {
                         $groupFeatureType = $arGroupFeature["ENTITY_TYPE"];
                     }
-                } elseif ($ACTION != "ADD" && IntVal($ID) > 0) {
+                } elseif ($ACTION != "ADD" && intval($ID) > 0) {
                     $dbGroupFeature = CSocNetFeaturesPerms::GetList(
                         array(),
                         array("ID" => $ID),
@@ -95,18 +99,24 @@ class CAllSocNetFeaturesPerms
                     }
                 }
             }
-            if (StrLen($groupFeatureType) <= 0 || !in_array($groupFeatureType, $arSocNetAllowedEntityTypes)) {
+            if ($groupFeatureType == '' || !in_array($groupFeatureType, $arSocNetAllowedEntityTypes)) {
                 $APPLICATION->ThrowException(GetMessage("SONET_GF_EMPTY_ENTITY_TYPE"), "BAD_TYPE");
                 return false;
             }
             if ($groupFeatureType == SONET_ENTITY_GROUP) {
                 if (!in_array($arFields["ROLE"], $arSocNetAllowedRolesForFeaturesPerms)) {
-                    $APPLICATION->ThrowException(str_replace("#ID#", $arFields["ROLE"], GetMessage("SONET_GFP_ERROR_NO_ROLE")), "ERROR_NO_SITE");
+                    $APPLICATION->ThrowException(
+                        str_replace("#ID#", $arFields["ROLE"], GetMessage("SONET_GFP_ERROR_NO_ROLE")),
+                        "ERROR_NO_SITE"
+                    );
                     return false;
                 }
             } else {
                 if (!in_array($arFields["ROLE"], $arSocNetAllowedRelationsType)) {
-                    $APPLICATION->ThrowException(str_replace("#ID#", $arFields["ROLE"], GetMessage("SONET_GFP_ERROR_NO_ROLE")), "ERROR_NO_SITE");
+                    $APPLICATION->ThrowException(
+                        str_replace("#ID#", $arFields["ROLE"], GetMessage("SONET_GFP_ERROR_NO_ROLE")),
+                        "ERROR_NO_SITE"
+                    );
                     return false;
                 } elseif ($arFields["ROLE"] == SONET_RELATIONS_TYPE_FRIENDS2) {
                     $arFields["ROLE"] = SONET_RELATIONS_TYPE_FRIENDS;
@@ -114,27 +124,31 @@ class CAllSocNetFeaturesPerms
             }
         }
 
-        return True;
+        return true;
     }
 
     public static function Delete($ID)
     {
         global $DB, $CACHE_MANAGER;
 
-        if (!CSocNetGroup::__ValidateID($ID))
+        if (!CSocNetGroup::__ValidateID($ID)) {
             return false;
+        }
 
-        $ID = IntVal($ID);
-        $bSuccess = True;
+        $ID = intval($ID);
+        $bSuccess = true;
 
         $db_events = GetModuleEvents("socialnetwork", "OnBeforeSocNetFeaturesPermsDelete");
-        while ($arEvent = $db_events->Fetch())
-            if (ExecuteModuleEventEx($arEvent, array($ID)) === false)
+        while ($arEvent = $db_events->Fetch()) {
+            if (ExecuteModuleEventEx($arEvent, array($ID)) === false) {
                 return false;
+            }
+        }
 
         $events = GetModuleEvents("socialnetwork", "OnSocNetFeaturesPermsDelete");
-        while ($arEvent = $events->Fetch())
+        while ($arEvent = $events->Fetch()) {
             ExecuteModuleEventEx($arEvent, array($ID));
+        }
 
         if ($bSuccess) {
             $bSuccess = $DB->Query("DELETE FROM b_sonet_features2perms WHERE ID = " . $ID . "", true);
@@ -151,7 +165,11 @@ class CAllSocNetFeaturesPerms
                     );
                     if ($arGroupFeaturePerm = $dbGroupFeaturePerm->Fetch()) {
                         $cache = new CPHPCache;
-                        $cache->CleanDir("/sonet/features_perms/" . $arGroupFeaturePerm["FEATURE_ENTITY_TYPE"] . "/" . intval($arGroupFeaturePerm["FEATURE_ENTITY_ID"] / 1000) . "/" . $arGroupFeaturePerm["FEATURE_ENTITY_ID"] . "/");
+                        $cache->CleanDir(
+                            "/sonet/features_perms/" . $arGroupFeaturePerm["FEATURE_ENTITY_TYPE"] . "/" . intval(
+                                $arGroupFeaturePerm["FEATURE_ENTITY_ID"] / 1000
+                            ) . "/" . $arGroupFeaturePerm["FEATURE_ENTITY_ID"] . "/"
+                        );
                     }
                 }
             }
@@ -164,15 +182,17 @@ class CAllSocNetFeaturesPerms
     {
         global $DB, $CACHE_MANAGER;
 
-        if (!CSocNetGroup::__ValidateID($ID))
+        if (!CSocNetGroup::__ValidateID($ID)) {
             return false;
+        }
 
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
         $arFields1 = \Bitrix\Socialnetwork\Util::getEqualityFields($arFields);
 
-        if (!CSocNetFeaturesPerms::CheckFields("UPDATE", $arFields, $ID))
+        if (!CSocNetFeaturesPerms::CheckFields("UPDATE", $arFields, $ID)) {
             return false;
+        }
 
         $db_events = GetModuleEvents("socialnetwork", "OnBeforeSocNetFeaturesPermsUpdate");
         while ($arEvent = $db_events->Fetch()) {
@@ -184,12 +204,12 @@ class CAllSocNetFeaturesPerms
         $strUpdate = $DB->PrepareUpdate("b_sonet_features2perms", $arFields);
         \Bitrix\Socialnetwork\Util::processEqualityFieldsToUpdate($arFields1, $strUpdate);
 
-        if (strlen($strUpdate) > 0) {
+        if ($strUpdate <> '') {
             $strSql =
                 "UPDATE b_sonet_features2perms SET " .
                 "	" . $strUpdate . " " .
                 "WHERE ID = " . $ID . " ";
-            $DB->Query($strSql, False, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+            $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 
             $events = GetModuleEvents("socialnetwork", "OnSocNetFeaturesPermsUpdate");
             while ($arEvent = $events->Fetch()) {
@@ -208,11 +228,15 @@ class CAllSocNetFeaturesPerms
                 );
                 if ($arGroupFeaturePerm = $dbGroupFeaturePerm->Fetch()) {
                     $cache = new CPHPCache;
-                    $cache->CleanDir("/sonet/features_perms/" . $arGroupFeaturePerm["FEATURE_ENTITY_TYPE"] . "/" . intval($arGroupFeaturePerm["FEATURE_ENTITY_ID"] / 1000) . "/" . $arGroupFeaturePerm["FEATURE_ENTITY_ID"] . "/");
+                    $cache->CleanDir(
+                        "/sonet/features_perms/" . $arGroupFeaturePerm["FEATURE_ENTITY_TYPE"] . "/" . intval(
+                            $arGroupFeaturePerm["FEATURE_ENTITY_ID"] / 1000
+                        ) . "/" . $arGroupFeaturePerm["FEATURE_ENTITY_ID"] . "/"
+                    );
                 }
             }
         } else {
-            $ID = False;
+            $ID = false;
         }
 
         return $ID;
@@ -224,7 +248,7 @@ class CAllSocNetFeaturesPerms
 
         $arSocNetFeaturesSettings = CSocNetAllowed::GetAllowedFeatures();
 
-        $featureID = IntVal($featureID);
+        $featureID = intval($featureID);
         $operation = Trim($operation);
         $perm = Trim($perm);
 
@@ -239,17 +263,22 @@ class CAllSocNetFeaturesPerms
             array("ID", "FEATURE_ENTITY_TYPE", "FEATURE_ENTITY_ID", "FEATURE_FEATURE", "OPERATION_ID", "ROLE")
         );
 
-        if ($arResult = $dbResult->Fetch())
+        if ($arResult = $dbResult->Fetch()) {
             $r = CSocNetFeaturesPerms::Update($arResult["ID"], array("ROLE" => $perm));
-        else
-            $r = CSocNetFeaturesPerms::Add(array("FEATURE_ID" => $featureID, "OPERATION_ID" => $operation, "ROLE" => $perm));
+        } else {
+            $r = CSocNetFeaturesPerms::Add(
+                array("FEATURE_ID" => $featureID, "OPERATION_ID" => $operation, "ROLE" => $perm)
+            );
+        }
 
         if (!$r) {
             $errorMessage = "";
-            if ($e = $APPLICATION->GetException())
+            if ($e = $APPLICATION->GetException()) {
                 $errorMessage = $e->GetString();
-            if (StrLen($errorMessage) <= 0)
+            }
+            if ($errorMessage == '') {
                 $errorMessage = GetMessage("SONET_GF_ERROR_SET") . ".";
+            }
 
             $APPLICATION->ThrowException($errorMessage, "ERROR_SET_RECORD");
             return false;
@@ -316,17 +345,18 @@ class CAllSocNetFeaturesPerms
     /***************************************/
     public static function GetByID($ID)
     {
-        if (!CSocNetGroup::__ValidateID($ID))
+        if (!CSocNetGroup::__ValidateID($ID)) {
             return false;
+        }
 
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
         $dbResult = CSocNetFeaturesPerms::GetList(Array(), Array("ID" => $ID));
         if ($arResult = $dbResult->GetNext()) {
             return $arResult;
         }
 
-        return False;
+        return false;
     }
 
     /***************************************/
@@ -337,12 +367,20 @@ class CAllSocNetFeaturesPerms
         global $USER;
 
         $userID = 0;
-        if (is_object($USER) && $USER->IsAuthorized())
-            $userID = IntVal($USER->GetID());
+        if (is_object($USER) && $USER->IsAuthorized()) {
+            $userID = intval($USER->GetID());
+        }
 
         $bCurrentUserIsAdmin = CSocNetUser::IsCurrentUserModuleAdmin($site_id);
 
-        return CSocNetFeaturesPerms::CanPerformOperation($userID, $type, $id, $feature, $operation, $bCurrentUserIsAdmin);
+        return CSocNetFeaturesPerms::CanPerformOperation(
+            $userID,
+            $type,
+            $id,
+            $feature,
+            $operation,
+            $bCurrentUserIsAdmin
+        );
     }
 
     public static function CanPerformOperation($userID, $type, $id, $feature, $operation, $bCurrentUserIsAdmin = false)
@@ -351,7 +389,7 @@ class CAllSocNetFeaturesPerms
 
         $arSocNetFeaturesSettings = CSocNetAllowed::GetAllowedFeatures();
 
-        $userID = IntVal($userID);
+        $userID = intval($userID);
 
         if ((is_array($id) && count($id) <= 0) || (!is_array($id) && $id <= 0)) {
             $APPLICATION->ThrowException(GetMessage("SONET_GF_EMPTY_ENTITY_ID"), "ERROR_EMPTY_ENTITY_ID");
@@ -359,7 +397,7 @@ class CAllSocNetFeaturesPerms
         }
 
         $type = Trim($type);
-        if ((StrLen($type) <= 0) || !in_array($type, $arSocNetAllowedEntityTypes)) {
+        if (($type == '') || !in_array($type, $arSocNetAllowedEntityTypes)) {
             $APPLICATION->ThrowException(GetMessage("SONET_GF_ERROR_NO_ENTITY_TYPE"), "ERROR_EMPTY_TYPE");
             return false;
         }
@@ -482,10 +520,9 @@ class CAllSocNetFeaturesPerms
                 }
 
                 return $arReturn;
-
             } else // not array of groups
             {
-                $id = IntVal($id);
+                $id = intval($id);
 
                 if ($featureOperationPerms == false) {
                     return false;
@@ -532,7 +569,10 @@ class CAllSocNetFeaturesPerms
                 if ($featureOperationPerms == SONET_ROLES_MODERATOR) {
                     return (in_array($userRoleInGroup, array(SONET_ROLES_MODERATOR, SONET_ROLES_OWNER)));
                 } elseif ($featureOperationPerms == SONET_ROLES_USER) {
-                    return (in_array($userRoleInGroup, array(SONET_ROLES_MODERATOR, SONET_ROLES_OWNER, SONET_ROLES_USER)));
+                    return (in_array(
+                        $userRoleInGroup,
+                        array(SONET_ROLES_MODERATOR, SONET_ROLES_OWNER, SONET_ROLES_USER)
+                    ));
                 } elseif ($featureOperationPerms == SONET_ROLES_OWNER) {
                     return ($userRoleInGroup == SONET_ROLES_OWNER);
                 }
@@ -540,9 +580,7 @@ class CAllSocNetFeaturesPerms
         } else // user
         {
             if (is_array($id)) {
-
                 foreach ($id as $entity_id) {
-
                     if ($featureOperationPerms[$entity_id] == false) {
                         $arReturn[$entity_id] = false;
                         continue;
@@ -599,28 +637,34 @@ class CAllSocNetFeaturesPerms
                 return $arReturn;
             } else // not array
             {
-
-                if ($featureOperationPerms == false)
+                if ($featureOperationPerms == false) {
                     return false;
+                }
 
-                if ($type == SONET_ENTITY_USER && $userID == $id)
+                if ($type == SONET_ENTITY_USER && $userID == $id) {
                     return true;
+                }
 
-                if ($bCurrentUserIsAdmin)
+                if ($bCurrentUserIsAdmin) {
                     return true;
+                }
 
-                if ($userID == $id)
+                if ($userID == $id) {
                     return true;
+                }
 
                 $usersRelation = CSocNetUserRelations::GetRelation($userID, $id);
-                if ($usersRelation == SONET_RELATIONS_BAN && !IsModuleInstalled("im"))
+                if ($usersRelation == SONET_RELATIONS_BAN && !IsModuleInstalled("im")) {
                     return false;
+                }
 
-                if ($featureOperationPerms == SONET_RELATIONS_TYPE_NONE)
+                if ($featureOperationPerms == SONET_RELATIONS_TYPE_NONE) {
                     return false;
+                }
 
-                if ($featureOperationPerms == SONET_RELATIONS_TYPE_ALL)
+                if ($featureOperationPerms == SONET_RELATIONS_TYPE_ALL) {
                     return true;
+                }
 
                 if ($featureOperationPerms == SONET_RELATIONS_TYPE_AUTHORIZED) {
                     return ($userID > 0);
@@ -633,7 +677,6 @@ class CAllSocNetFeaturesPerms
                     return CSocNetUserRelations::IsFriends($userID, $id);
                 }
             }
-
         }
 
         return false;
@@ -649,7 +692,7 @@ class CAllSocNetFeaturesPerms
 
         $type = Trim($type);
         if (
-            (strlen($type) <= 0)
+            ($type == '')
             || !in_array($type, $arSocNetAllowedEntityTypes)
         ) {
             $APPLICATION->ThrowException(GetMessage("SONET_GF_ERROR_NO_ENTITY_TYPE"), "ERROR_EMPTY_TYPE");
@@ -665,8 +708,8 @@ class CAllSocNetFeaturesPerms
             }
         }
 
-        $feature = strtolower(trim($feature));
-        if (strlen($feature) <= 0) {
+        $feature = mb_strtolower(trim($feature));
+        if ($feature == '') {
             $APPLICATION->ThrowException(GetMessage("SONET_GF_EMPTY_FEATURE_ID"), "ERROR_EMPTY_FEATURE_ID");
             if (is_array($id)) {
                 $arReturn = array();
@@ -698,7 +741,7 @@ class CAllSocNetFeaturesPerms
             }
         }
 
-        $operation = StrToLower(Trim($operation));
+        $operation = mb_strtolower(Trim($operation));
         if (
             !array_key_exists("operations", $arSocNetFeaturesSettings[$feature])
             || !array_key_exists($operation, $arSocNetFeaturesSettings[$feature]["operations"])
@@ -766,7 +809,10 @@ class CAllSocNetFeaturesPerms
                 while ($arResult = $dbResult->Fetch()) {
                     if (
                         !array_key_exists($arResult["FEATURE_ENTITY_ID"], $arFeaturesPerms)
-                        || !array_key_exists($arResult["FEATURE_FEATURE"], $arFeaturesPerms[$arResult["FEATURE_ENTITY_ID"]])
+                        || !array_key_exists(
+                            $arResult["FEATURE_FEATURE"],
+                            $arFeaturesPerms[$arResult["FEATURE_ENTITY_ID"]]
+                        )
                     ) {
                         $arFeaturesPerms[$arResult["FEATURE_ENTITY_ID"]][$arResult["FEATURE_FEATURE"]] = array();
                     }
@@ -832,7 +878,7 @@ class CAllSocNetFeaturesPerms
             return $arReturn;
         } else // not array
         {
-            $id = IntVal($id);
+            $id = intval($id);
             if ($id <= 0) {
                 $APPLICATION->ThrowException(GetMessage("SONET_GF_EMPTY_ENTITY_ID"), "ERROR_EMPTY_ENTITY_ID");
                 return false;

@@ -40,6 +40,9 @@ class PaySystemRestHandlersTable extends \Bitrix\Main\Entity\DataManager
                 'data_type' => 'string',
                 'serialized' => true
             ),
+            'APP_ID' => array(
+                'data_type' => 'string'
+            ),
         );
     }
 }

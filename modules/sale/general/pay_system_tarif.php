@@ -31,7 +31,7 @@ abstract class CSalePaySystemTarif
 
     public static function extractFromField($strFieldContent)
     {
-        return unserialize($strFieldContent);
+        return unserialize($strFieldContent, ['allowed_classes' => false]);
     }
 
     public static function prepareToField($arTarif)
@@ -53,8 +53,9 @@ abstract class CSalePaySystemTarif
         } else {
             $psa = CSalePaySystemAction::GetByID($psaId);
 
-            if (is_array($psa) && isset($psa['TARIF']) && is_array($psa['TARIF']))
-                $arResult = self::$arItems[$psaId] = unserialize($psa['TARIF']);
+            if (is_array($psa) && isset($psa['TARIF']) && is_array($psa['TARIF'])) {
+                $arResult = self::$arItems[$psaId] = unserialize($psa['TARIF'], ['allowed_classes' => false]);
+            }
         }
 
         return $arResult;

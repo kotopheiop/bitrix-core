@@ -24,8 +24,9 @@ class CPackageWelcome extends CWizardStep
     {
         $package = $this->package;
 
-        if (strlen($this->content) == 0)
+        if ($this->content == '') {
             $this->content = GetMessage("MAIN_WIZARD_WELCOME_TEXT");
+        }
     }
 }
 
@@ -53,12 +54,14 @@ class CPackageLicense extends CWizardStep
         $wizard = $this->GetWizard();
         $package = $this->package;
 
-        if ($wizard->IsPrevButtonClick())
+        if ($wizard->IsPrevButtonClick()) {
             return;
+        }
 
         $agree = $wizard->GetVar("__agree_license");
-        if ($agree != "Y")
+        if ($agree != "Y") {
             $this->SetError(GetMessage("MAIN_WIZARD_LICENSE_STEP_ERROR"));
+        }
     }
 
     function ShowStep()
@@ -66,8 +69,9 @@ class CPackageLicense extends CWizardStep
         $wizard = $this->GetWizard();
         $package = $this->package;
 
-        if (strlen($this->content) == 0)
+        if ($this->content == '') {
             $this->content .= GetMessage("MAIN_WIZARD_LICENSE_STEP_CONTENT");
+        }
 
         $licensePath = $package->__GetLicensePath();
 
@@ -107,19 +111,21 @@ class CPackageSelectSite extends CWizardStep
                     $wizard->SetCurrentStep($package->__obFirstStep->GetStepID());
                     $package->__obFirstStep->SetPrevStep(BX_WIZARD_SELECT_SITE_ID);
                 } else {
-                    if ($package->groupExists && $package->templateExists)
+                    if ($package->groupExists && $package->templateExists) {
                         $wizard->SetCurrentStep(BX_WIZARD_SELECT_GROUP_ID);
-                    elseif ($package->templateExists)
+                    } elseif ($package->templateExists) {
                         $wizard->SetCurrentStep(BX_WIZARD_SELECT_TEMPLATE_ID);
-                    elseif ($package->serviceExists)
+                    } elseif ($package->serviceExists) {
                         $wizard->SetCurrentStep(BX_WIZARD_SELECT_SERVICE_ID);
-                    elseif ($package->structureExists)
+                    } elseif ($package->structureExists) {
                         $wizard->SetCurrentStep(BX_WIZARD_SELECT_STRUCTURE_ID);
-                    else
+                    } else {
                         $wizard->SetCurrentStep(BX_WIZARD_START_INSTALL_ID);
+                    }
                 }
-            } else
+            } else {
                 $this->SetError(GetMessage("MAIN_WIZARD_ERROR_WRONG_SITE"), "__siteID");
+            }
         }
     }
 
@@ -131,19 +137,38 @@ class CPackageSelectSite extends CWizardStep
         $this->content .= '<table width="100%" cellpadding="0" cellspacing="0">';
 
         foreach ($package->arSites as $siteID => $arSite) {
-            if (isset($arSite["DEFAULT"]))
+            if (isset($arSite["DEFAULT"])) {
                 $wizard->SetDefaultVar("__siteID", $siteID);
+            }
 
             $this->content .= '<tr>';
 
-            $this->content .= '<td valign="top">' . $this->ShowRadioField("__siteID", $siteID, Array("id" => $siteID)) . '</td>';
+            $this->content .= '<td valign="top">' . $this->ShowRadioField(
+                    "__siteID",
+                    $siteID,
+                    Array("id" => $siteID)
+                ) . '</td>';
 
             $this->content .= '<td valign="top">';
 
-            if (isset($arSite["SCREENSHOT"]) && isset($arSite["PREVIEW"]))
-                $this->content .= CFile::Show2Images($package->path . "/" . $arSite["PREVIEW"], $package->path . "/" . $arSite["SCREENSHOT"], 150, 150, ' border="0"') . "<br /><br />";
-            elseif (isset($arSite["SCREENSHOT"]))
-                $this->content .= CFile::ShowImage($package->path . "/" . $arSite["SCREENSHOT"], 150, 150, ' border="0"', "", true) . "<br /><br />";
+            if (isset($arSite["SCREENSHOT"]) && isset($arSite["PREVIEW"])) {
+                $this->content .= CFile::Show2Images(
+                        $package->path . "/" . $arSite["PREVIEW"],
+                        $package->path . "/" . $arSite["SCREENSHOT"],
+                        150,
+                        150,
+                        ' border="0"'
+                    ) . "<br /><br />";
+            } elseif (isset($arSite["SCREENSHOT"])) {
+                $this->content .= CFile::ShowImage(
+                        $package->path . "/" . $arSite["SCREENSHOT"],
+                        150,
+                        150,
+                        ' border="0"',
+                        "",
+                        true
+                    ) . "<br /><br />";
+            }
 
             $this->content .= '</td>';
 
@@ -151,15 +176,16 @@ class CPackageSelectSite extends CWizardStep
             $this->content .= '<label for="' . htmlspecialcharsbx($siteID) . '">';
             $this->content .= '<b>' . htmlspecialcharsEx($arSite["NAME"]) . '</b></label>';
 
-            if (isset($arSite["DESCRIPTION"]) && strlen($arSite["DESCRIPTION"]) > 0)
-                $this->content .= '<br /><div style="margin-left:20px;"><label for="' . htmlspecialcharsbx($siteID) . '">' . $arSite["DESCRIPTION"] . '</label></div>';
+            if (isset($arSite["DESCRIPTION"]) && $arSite["DESCRIPTION"] <> '') {
+                $this->content .= '<br /><div style="margin-left:20px;"><label for="' . htmlspecialcharsbx(
+                        $siteID
+                    ) . '">' . $arSite["DESCRIPTION"] . '</label></div>';
+            }
 
             $this->content .= '</td>';
 
 
             $this->content .= '</tr>';
-
-
         }
 
         $this->content .= '</table>';
@@ -214,8 +240,9 @@ class CPackageSelectGroup extends CWizardStep
 
         $arGroups = $package->GetTemplateGroups(Array("SITE_ID" => $package->siteID));
 
-        if (empty($arGroups))
+        if (empty($arGroups)) {
             return;
+        }
 
         $this->content .= '<table cellspacing="0" cellpadding="2" width="100%"><tr>';
 
@@ -224,15 +251,30 @@ class CPackageSelectGroup extends CWizardStep
         $cellSize = count($arGroups);
 
         foreach ($arGroups as $groupID => $arGroup) {
-            if (isset($arGroup["DEFAULT"]))
+            if (isset($arGroup["DEFAULT"])) {
                 $wizard->SetDefaultVar("__groupID", $groupID);
+            }
 
             $this->content .= '<td valign="top" style="padding-bottom:15px;" width="33%">';
 
-            if (isset($arGroup["SCREENSHOT"]) && isset($arGroup["PREVIEW"]))
-                $this->content .= CFile::Show2Images($package->path . "/" . $arGroup["PREVIEW"], $package->path . "/" . $arGroup["SCREENSHOT"], 150, 150, ' border="0"') . "<br />";
-            elseif (isset($arGroup["SCREENSHOT"]))
-                $this->content .= CFile::ShowImage($package->path . "/" . $arGroup["SCREENSHOT"], 150, 150, ' border="0"', "", true) . "<br />";
+            if (isset($arGroup["SCREENSHOT"]) && isset($arGroup["PREVIEW"])) {
+                $this->content .= CFile::Show2Images(
+                        $package->path . "/" . $arGroup["PREVIEW"],
+                        $package->path . "/" . $arGroup["SCREENSHOT"],
+                        150,
+                        150,
+                        ' border="0"'
+                    ) . "<br />";
+            } elseif (isset($arGroup["SCREENSHOT"])) {
+                $this->content .= CFile::ShowImage(
+                        $package->path . "/" . $arGroup["SCREENSHOT"],
+                        150,
+                        150,
+                        ' border="0"',
+                        "",
+                        true
+                    ) . "<br />";
+            }
 
             $this->content .= '<table><tr><td valign="top">';
             $this->content .= $this->ShowRadioField("__groupID", $groupID, Array("id" => $groupID));
@@ -243,12 +285,14 @@ class CPackageSelectGroup extends CWizardStep
             $this->content .= "</td>";
 
             //Close table cells
-            if (!($counter % $colsNumber) && $cellSize != $counter)
+            if (!($counter % $colsNumber) && $cellSize != $counter) {
                 $this->content .= "</tr><tr>";
+            }
 
             if ($cellSize == $counter && ($cellSize % $colsNumber) > 0) {
-                for ($a = 1; $a <= ($colsNumber - ($cellSize % $colsNumber)); $a++)
+                for ($a = 1; $a <= ($colsNumber - ($cellSize % $colsNumber)); $a++) {
                     $this->content .= "<td>&nbsp;</td>";
+                }
             }
 
             $counter++;
@@ -289,15 +333,17 @@ class CPackageSelectTemplate extends CWizardStep
                     $wizard->SetCurrentStep($package->__obFirstStep->GetStepID());
                     $package->__obFirstStep->SetPrevStep(BX_WIZARD_SELECT_TEMPLATE_ID);
                 } else {
-                    if ($package->serviceExists)
+                    if ($package->serviceExists) {
                         $wizard->SetCurrentStep(BX_WIZARD_SELECT_SERVICE_ID);
-                    elseif ($package->structureExists)
+                    } elseif ($package->structureExists) {
                         $wizard->SetCurrentStep(BX_WIZARD_SELECT_STRUCTURE_ID);
-                    else
+                    } else {
                         $wizard->SetCurrentStep(BX_WIZARD_START_INSTALL_ID);
+                    }
                 }
-            } else
+            } else {
                 $this->SetError(GetMessage("MAIN_WIZARD_ERROR_WRONG_TEMPLATE"), "__templateID");
+            }
         }
     }
 
@@ -313,8 +359,9 @@ class CPackageSelectTemplate extends CWizardStep
             )
         );
 
-        if (empty($arTemplates))
+        if (empty($arTemplates)) {
             return;
+        }
 
         $this->content .= '<table cellspacing="0" cellpadding="2" width="100%"><tr>';
 
@@ -323,33 +370,56 @@ class CPackageSelectTemplate extends CWizardStep
         $cellSize = count($arTemplates);
 
         foreach ($arTemplates as $arTemplate) {
-            if (isset($arTemplate["DEFAULT"]))
+            if (isset($arTemplate["DEFAULT"])) {
                 $wizard->SetDefaultVar("__templateID", $arTemplate["ID"]);
+            }
 
             $this->content .= '<td valign="top" style="padding-bottom:15px;" width="33%">';
 
-            if ($arTemplate["SCREENSHOT"] && $arTemplate["PREVIEW"])
-                $this->content .= CFile::Show2Images($arTemplate["PREVIEW"], $arTemplate["SCREENSHOT"], 150, 150, ' border="0"') . "<br />";
-            else
-                $this->content .= CFile::ShowImage($arTemplate["SCREENSHOT"], 150, 150, ' border="0"', "", true) . "<br />";
+            if ($arTemplate["SCREENSHOT"] && $arTemplate["PREVIEW"]) {
+                $this->content .= CFile::Show2Images(
+                        $arTemplate["PREVIEW"],
+                        $arTemplate["SCREENSHOT"],
+                        150,
+                        150,
+                        ' border="0"'
+                    ) . "<br />";
+            } else {
+                $this->content .= CFile::ShowImage(
+                        $arTemplate["SCREENSHOT"],
+                        150,
+                        150,
+                        ' border="0"',
+                        "",
+                        true
+                    ) . "<br />";
+            }
 
             $this->content .= '<table><tr><td valign="top">';
-            $this->content .= $this->ShowRadioField("__templateID", $arTemplate["ID"], Array("id" => $arTemplate["ID"]));
+            $this->content .= $this->ShowRadioField(
+                "__templateID",
+                $arTemplate["ID"],
+                Array("id" => $arTemplate["ID"])
+            );
             $this->content .= '</td><td>';
-            $this->content .= '<label for="' . htmlspecialcharsbx($arTemplate["ID"]) . '">' . $arTemplate["NAME"] . '</label></td></tr>';
+            $this->content .= '<label for="' . htmlspecialcharsbx(
+                    $arTemplate["ID"]
+                ) . '">' . $arTemplate["NAME"] . '</label></td></tr>';
             $this->content .= '</table>';
 
-            $this->content .= (strlen($arTemplate["DESCRIPTION"]) > 0 ? "<br />" . $arTemplate["DESCRIPTION"] : "") . '';
+            $this->content .= ($arTemplate["DESCRIPTION"] <> '' ? "<br />" . $arTemplate["DESCRIPTION"] : "") . '';
 
             $this->content .= "</td>";
 
             //Close table cells
-            if (!($counter % $colsNumber) && $cellSize != $counter)
+            if (!($counter % $colsNumber) && $cellSize != $counter) {
                 $this->content .= "</tr><tr>";
+            }
 
             if ($cellSize == $counter && ($cellSize % $colsNumber) > 0) {
-                for ($a = 1; $a <= ($colsNumber - ($cellSize % $colsNumber)); $a++)
+                for ($a = 1; $a <= ($colsNumber - ($cellSize % $colsNumber)); $a++) {
                     $this->content .= "<td>&nbsp;</td>";
+                }
             }
 
             $counter++;
@@ -384,26 +454,29 @@ class CPackageSelectService extends CWizardStep
         if ($wizard->IsNextButtonClick()) {
             $arServices = $package->serviceID;
             if (!is_array($arServices)) {
-                if ($package->serviceExists)
+                if ($package->serviceExists) {
                     $wizard->SetCurrentStep(BX_WIZARD_SELECT_STRUCTURE_ID);
-                else
+                } else {
                     $wizard->SetCurrentStep(BX_WIZARD_START_INSTALL_ID);
+                }
                 return;
             }
 
             foreach ($arServices as $service) {
-                if (!array_key_exists($service, $package->arServices))
+                if (!array_key_exists($service, $package->arServices)) {
                     continue;
+                }
 
                 if ($package->_InitSubStep("select", $package->arServices[$service], false)) {
                     $wizard->SetCurrentStep($package->__obFirstStep->GetStepID());
                     $package->__obFirstStep->SetPrevStep(BX_WIZARD_SELECT_SERVICE_ID);
                     break;
                 } else {
-                    if ($package->serviceExists)
+                    if ($package->serviceExists) {
                         $wizard->SetCurrentStep(BX_WIZARD_SELECT_STRUCTURE_ID);
-                    else
+                    } else {
                         $wizard->SetCurrentStep(BX_WIZARD_START_INSTALL_ID);
+                    }
                     //$wizard->SetCurrentStep("__start_install");
                 }
             }
@@ -429,34 +502,44 @@ class CPackageSelectService extends CWizardStep
             $group = "";
 
             if (array_key_exists("FORM", $arService) && is_array($arService["FORM"])) {
-                if (array_key_exists("TYPE", $arService["FORM"]))
-                    $type = strtolower($arService["FORM"]["TYPE"]);
+                if (array_key_exists("TYPE", $arService["FORM"])) {
+                    $type = mb_strtolower($arService["FORM"]["TYPE"]);
+                }
 
-                if (array_key_exists("GROUP", $arService["FORM"]))
-                    $group = strtolower(preg_replace("~[^a-zA-Z0-9_]~i", "", $arService["FORM"]["GROUP"]));
+                if (array_key_exists("GROUP", $arService["FORM"])) {
+                    $group = mb_strtolower(preg_replace("~[^a-zA-Z0-9_]~i", "", $arService["FORM"]["GROUP"]));
+                }
 
                 if (array_key_exists("DEFAULT", $arService["FORM"]) && $type != "required") {
-                    if ($group == "")
+                    if ($group == "") {
                         $wizard->SetDefaultVar("__serviceID[" . $i++ . "]", $serviceID);
-                    else
+                    } else {
                         $wizard->SetDefaultVar("__serviceID[" . $group . "][" . $i++ . "]", $serviceID);
+                    }
                 }
             }
 
             if ($type == "radio") {
                 $this->content .= '<tr>';
-                $this->content .= '<td valign="top">' . $this->ShowRadioField("__serviceID[" . $group . "]", $serviceID, Array("id" => $serviceID)) . '</td>';
+                $this->content .= '<td valign="top">' . $this->ShowRadioField(
+                        "__serviceID[" . $group . "]",
+                        $serviceID,
+                        Array("id" => $serviceID)
+                    ) . '</td>';
 
                 $this->content .= '<td valign="top">';
-                if (isset($arService["ICON"]) && strlen($arService["ICON"]) > 0)
-                    $this->content .= '<label for="' . $serviceID . '"><img src="' . $package->GetPath() . '/' . $arService["ICON"] . '" /></label>';
+                if (isset($arService["ICON"]) && $arService["ICON"] <> '') {
+                    $this->content .= '<label for="' . $serviceID . '"><img src="' . $package->GetPath(
+                        ) . '/' . $arService["ICON"] . '" /></label>';
+                }
                 $this->content .= '</td>';
 
                 $this->content .= '<td valign="top" width="100%">';
                 $this->content .= '<label for="' . $serviceID . '">&nbsp;<b>' . $arService["NAME"] . '</b></label><br />';
 
-                if (isset($arService["DESCRIPTION"]) && strlen($arService["DESCRIPTION"]) > 0)
+                if (isset($arService["DESCRIPTION"]) && $arService["DESCRIPTION"] <> '') {
                     $this->content .= '<div style="margin-left:20px;"><label for="' . $serviceID . '">' . $arService["DESCRIPTION"] . '</label></div>';
+                }
 
                 $this->content .= '</td>';
 
@@ -466,15 +549,17 @@ class CPackageSelectService extends CWizardStep
                 $this->content .= '<td valign="top"><input type="checkbox" disabled="disabled" checked="checked" name="required" value="" /></td>';
 
                 $this->content .= '<td valign="top">';
-                if (isset($arService["ICON"]) && strlen($arService["ICON"]) > 0)
+                if (isset($arService["ICON"]) && $arService["ICON"] <> '') {
                     $this->content .= '<img src="' . $package->GetPath() . '/' . $arService["ICON"] . '" />';
+                }
                 $this->content .= '</td>';
 
                 $this->content .= '<td valign="top" width="100%">';
                 $this->content .= "&nbsp;<b>" . $arService["NAME"] . '</b><br />';
 
-                if (isset($arService["DESCRIPTION"]) && strlen($arService["DESCRIPTION"]) > 0)
+                if (isset($arService["DESCRIPTION"]) && $arService["DESCRIPTION"] <> '') {
                     $this->content .= '<div style="margin-left:20px;">' . $arService["DESCRIPTION"] . '</div>';
+                }
 
                 $this->content .= $this->ShowHiddenField("__serviceID[]", $serviceID);
                 $this->content .= '</td>';
@@ -483,18 +568,25 @@ class CPackageSelectService extends CWizardStep
             } else {
                 $this->content .= '<tr>';
 
-                $this->content .= '<td valign="top">' . $this->ShowCheckboxField("__serviceID[]", $serviceID, Array("id" => $serviceID)) . '</td>';
+                $this->content .= '<td valign="top">' . $this->ShowCheckboxField(
+                        "__serviceID[]",
+                        $serviceID,
+                        Array("id" => $serviceID)
+                    ) . '</td>';
 
                 $this->content .= '<td valign="top">';
-                if (isset($arService["ICON"]) && strlen($arService["ICON"]) > 0)
-                    $this->content .= '<label for="' . $serviceID . '"><img src="' . $package->GetPath() . '/' . $arService["ICON"] . '" /></label>';
+                if (isset($arService["ICON"]) && $arService["ICON"] <> '') {
+                    $this->content .= '<label for="' . $serviceID . '"><img src="' . $package->GetPath(
+                        ) . '/' . $arService["ICON"] . '" /></label>';
+                }
                 $this->content .= '</td>';
 
                 $this->content .= '<td valign="top" width="100%">';
                 $this->content .= '<label for="' . $serviceID . '">&nbsp;<b>' . $arService["NAME"] . '</b></label><br />';
 
-                if (isset($arService["DESCRIPTION"]) && strlen($arService["DESCRIPTION"]) > 0)
+                if (isset($arService["DESCRIPTION"]) && $arService["DESCRIPTION"] <> '') {
                     $this->content .= '<div style="margin-left:20px;"><label for="' . $serviceID . '">' . $arService["DESCRIPTION"] . '</label></div>';
+                }
 
                 $this->content .= '</td>';
 
@@ -503,7 +595,6 @@ class CPackageSelectService extends CWizardStep
         }
 
         $this->content .= '</table>';
-
     }
 }
 
@@ -529,26 +620,30 @@ class CPackageSelectStructure extends CWizardStep
     {
         $strTree = "";
 
-        if (!is_array($arStructure))
+        if (!is_array($arStructure)) {
             return $strTree;
+        }
 
         static $labelID = 0;
 
         foreach ($arStructure as $pageID => $arPage) {
             $pageID = (isset($arPage["ID"]) ? $arPage["ID"] : $pageID);
             $isService = (isset($arPage["TYPE"]) && $arPage["TYPE"] == "SERVICE");
-            $isRoot = (!$isService && isset($arPage["CHILD"]) && is_array($arPage["CHILD"]) && !empty($arPage["CHILD"]));
+            $isRoot = (!$isService && isset($arPage["CHILD"]) && is_array(
+                    $arPage["CHILD"]
+                ) && !empty($arPage["CHILD"]));
 
             $labelID++;
             $strTree .= '<li><input id="page' . $labelID . '" type="checkbox"' . ($isService ? ' class="locked"' . ($systemTree ? ' disabled="disabled"' : '') : '') . ' value="' . $pageID . '" onclick="WizOnCheckBoxClick(this)">';
 
-            if (isset($arPage["ICON"]) && strlen($arPage["ICON"]) > 3)
+            if (isset($arPage["ICON"]) && mb_strlen($arPage["ICON"]) > 3) {
                 $strTree .= '<img src="' . $this->package->GetPath() . '/' . $arPage["ICON"] . '" />&nbsp;';
-            else {
-                if ($isService)
+            } else {
+                if ($isService) {
                     $strTree .= '<img src="/bitrix/images/main/wizard/service.gif" width="16" height="16" border="0" alt="" />';
-                else
+                } else {
                     $strTree .= '<img src="/bitrix/images/main/wizard/page.gif" width="16" height="16" border="0" alt="" />';
+                }
             }
 
             $strTree .= '<label for="page' . $labelID . '">&nbsp;' . $arPage["NAME"] . '</label>';
@@ -560,10 +655,11 @@ class CPackageSelectStructure extends CWizardStep
                     $subPageID = (isset($arSubPage["ID"]) ? $arSubPage["ID"] : $pageID . "-" . $subPageID);
                     $strTree .= '<li><input id="page' . $labelID . '" type="checkbox" value="' . $subPageID . '" onclick="WizOnCheckBoxClick(this)" />';
 
-                    if (isset($arSubPage["ICON"]) && strlen($arSubPage["ICON"]) > 3)
+                    if (isset($arSubPage["ICON"]) && mb_strlen($arSubPage["ICON"]) > 3) {
                         $strTree .= '<img src="' . $this->package->GetPath() . '/' . $arSubPage["ICON"] . '" />';
-                    else
+                    } else {
                         $strTree .= '<img src="/bitrix/images/main/wizard/page.gif" width="16" height="16" border="0" alt="" />';
+                    }
 
                     $strTree .= '<label for="page' . $labelID . '">&nbsp;' . $arSubPage["NAME"] . '</label></li>';
                 }
@@ -590,10 +686,11 @@ class CPackageSelectStructure extends CWizardStep
             )
         );
 
-        if ($structureID !== null)
+        if ($structureID !== null) {
             $arStructure = $package->__GetNewStructure($structureID, $arOriginalStructure);
-        else
+        } else {
             $arStructure = $arOriginalStructure;
+        }
 
         $strTree = $this->DisplayTree($arStructure);
         $strTrash = $this->DisplayTree($arOriginalStructure, $systemTree = true);
@@ -1060,34 +1157,41 @@ class CPackageStartInstall extends CWizardStep
 
     function OnPostForm()
     {
-
     }
 
     function ShowStep()
     {
         $package = $this->package;
 
-        if (strlen($this->content) == 0)
+        if ($this->content == '') {
             $this->content .= GetMessage("MAIN_WIZARD_START_INSTALL_DESC");
+        }
 
         $siteID = $this->arSelected["siteID"];
-        if (isset($siteID) && isset($package->arSites[$siteID]["NAME"]))
-            $this->content .= "&nbsp;&nbsp;" . GetMessage("MAIN_WIZARD_SITE_TYPE") . ": <i>" . $package->arSites[$siteID]["NAME"] . "</i><br />";
+        if (isset($siteID) && isset($package->arSites[$siteID]["NAME"])) {
+            $this->content .= "&nbsp;&nbsp;" . GetMessage(
+                    "MAIN_WIZARD_SITE_TYPE"
+                ) . ": <i>" . $package->arSites[$siteID]["NAME"] . "</i><br />";
+        }
 
         $templateID = $this->arSelected["templateID"];
-        if (isset($templateID) && isset($package->arTemplates[$templateID]["NAME"]))
-            $this->content .= "&nbsp;&nbsp;" . GetMessage("MAIN_WIZARD_SITE_TEMPLATE") . ": <i>" . $package->arTemplates[$templateID]["NAME"] . "</i><br />";
+        if (isset($templateID) && isset($package->arTemplates[$templateID]["NAME"])) {
+            $this->content .= "&nbsp;&nbsp;" . GetMessage(
+                    "MAIN_WIZARD_SITE_TEMPLATE"
+                ) . ": <i>" . $package->arTemplates[$templateID]["NAME"] . "</i><br />";
+        }
 
         $arServices = $this->arSelected["arServices"];
         $strService = "";
         foreach ($arServices as $serviceID) {
-            if (array_key_exists($serviceID, $package->arServices) && isset($package->arServices[$serviceID]["NAME"]))
-                $strService .= (strlen($strService) > 0 ? ", " : "") . "<i>" . $package->arServices[$serviceID]["NAME"] . "</i>";
+            if (array_key_exists($serviceID, $package->arServices) && isset($package->arServices[$serviceID]["NAME"])) {
+                $strService .= ($strService <> '' ? ", " : "") . "<i>" . $package->arServices[$serviceID]["NAME"] . "</i>";
+            }
         }
 
-        if (strlen($strService) > 0)
+        if ($strService <> '') {
             $this->content .= "&nbsp;&nbsp;" . GetMessage("MAIN_WIZARD_SITE_SERVICES") . ": " . $strService;
-
+        }
     }
 }
 
@@ -1113,8 +1217,9 @@ class CPackageInstallSite extends CWizardStep
 
     function ShowStep()
     {
-        if (strlen($this->content) == 0)
+        if ($this->content == '') {
             $this->content = GetMessage("MAIN_WIZARD_SITE_INSTALL");
+        }
     }
 
 }
@@ -1141,8 +1246,9 @@ class CPackageInstallTemplate extends CWizardStep
 
     function ShowStep()
     {
-        if (strlen($this->content) == 0)
+        if ($this->content == '') {
             $this->content = GetMessage("MAIN_WIZARD_TEMPLATE_INSTALL");
+        }
     }
 }
 
@@ -1171,11 +1277,18 @@ class CPackageInstallService extends CWizardStep
         $package = $this->package;
 
         $serviceName = "";
-        if (array_key_exists($this->serviceID, $package->arServices) && array_key_exists("NAME", $package->arServices[$this->serviceID]))
+        if (array_key_exists($this->serviceID, $package->arServices) && array_key_exists(
+                "NAME",
+                $package->arServices[$this->serviceID]
+            )) {
             $serviceName = $package->arServices[$this->serviceID]["NAME"];
+        }
 
-        if (strlen($this->content) == 0)
-            $this->content = GetMessage("MAIN_WIZARD_SERVICE_INSTALL") . ' "' . htmlspecialcharsEx($serviceName) . '" ...';
+        if ($this->content == '') {
+            $this->content = GetMessage("MAIN_WIZARD_SERVICE_INSTALL") . ' "' . htmlspecialcharsEx(
+                    $serviceName
+                ) . '" ...';
+        }
     }
 }
 
@@ -1201,8 +1314,9 @@ class CPackageInstallStructure extends CWizardStep
 
     function ShowStep()
     {
-        if (strlen($this->content) == 0)
+        if ($this->content == '') {
             $this->content = GetMessage("MAIN_WIZARD_INSTALL_STRUCTURE");
+        }
     }
 }
 
@@ -1229,8 +1343,9 @@ class CPackageFinish extends CWizardStep
 
     function ShowStep()
     {
-        if (strlen($this->content) == 0)
+        if ($this->content == '') {
             $this->content = GetMessage("MAIN_WIZARD_FINISH_DESC");
+        }
     }
 }
 
@@ -1257,8 +1372,9 @@ class CPackageCancel extends CWizardStep
 
     function ShowStep()
     {
-        if (strlen($this->content) == 0)
+        if ($this->content == '') {
             $this->content .= GetMessage("MAIN_WIZARD_CANCEL_DESC");
+        }
     }
 }
 
@@ -1279,9 +1395,9 @@ class CPackageError extends CWizardStep
         $this->SetCancelStep(BX_WIZARD_CANCEL_ID);
         $this->SetTitle(GetMessage("MAIN_WIZARD_ERROR_STEP_TITLE"));
 
-        foreach ($package->arErrors as $arError)
+        foreach ($package->arErrors as $arError) {
             $this->SetError($arError[0], $arError[1]);
-
+        }
     }
 
     function OnPostForm()
@@ -1290,8 +1406,6 @@ class CPackageError extends CWizardStep
 
     function ShowStep()
     {
-
-
     }
 }
 

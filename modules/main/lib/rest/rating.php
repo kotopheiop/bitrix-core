@@ -22,14 +22,20 @@ if (Main\Loader::includeModule("rest")):
                 empty($entityTypeId)
                 || $entityId <= 0
             ) {
-                throw new Rest\RestException("Wrong entity data.", Rest\RestException::ERROR_ARGUMENT, \CRestServer::STATUS_WRONG_REQUEST);
+                throw new Rest\RestException(
+                    "Wrong entity data.",
+                    Rest\RestException::ERROR_ARGUMENT,
+                    \CRestServer::STATUS_WRONG_REQUEST
+                );
             }
 
-            $reactionResult = \CRatings::getRatingVoteReaction(array(
-                "ENTITY_TYPE_ID" => $entityTypeId,
-                "ENTITY_ID" => $entityId,
-                "USE_REACTIONS_CACHE" => 'Y'
-            ));
+            $reactionResult = \CRatings::getRatingVoteReaction(
+                array(
+                    "ENTITY_TYPE_ID" => $entityTypeId,
+                    "ENTITY_ID" => $entityId,
+                    "USE_REACTIONS_CACHE" => 'Y'
+                )
+            );
 
             return $reactionResult['reactions'];
         }
@@ -51,7 +57,11 @@ if (Main\Loader::includeModule("rest")):
                 empty($entityTypeId)
                 || $entityId <= 0
             ) {
-                throw new Rest\RestException("Wrong entity data.", Rest\RestException::ERROR_ARGUMENT, \CRestServer::STATUS_WRONG_REQUEST);
+                throw new Rest\RestException(
+                    "Wrong entity data.",
+                    Rest\RestException::ERROR_ARGUMENT,
+                    \CRestServer::STATUS_WRONG_REQUEST
+                );
             }
 
             $queryParams = array(
@@ -70,7 +80,15 @@ if (Main\Loader::includeModule("rest")):
             }
             if (Main\ModuleManager::isModuleInstalled('mail')) {
                 $mailInstalled = true;
-                $queryParams["USER_FIELDS"] = array("ID", "NAME", "LAST_NAME", "SECOND_NAME", "LOGIN", "PERSONAL_PHOTO", "EXTERNAL_AUTH_ID");
+                $queryParams["USER_FIELDS"] = array(
+                    "ID",
+                    "NAME",
+                    "LAST_NAME",
+                    "SECOND_NAME",
+                    "LOGIN",
+                    "PERSONAL_PHOTO",
+                    "EXTERNAL_AUTH_ID"
+                );
             }
 
             if (!empty($reaction)) {
@@ -81,7 +99,9 @@ if (Main\Loader::includeModule("rest")):
 
             $voteList = array(
                 'items_all' => $res['items_all'],
-                'items_reaction' => ($reaction && isset($res['reactions']) && isset($res['reactions'][$reaction]) ? intval($res['reactions'][$reaction]) : 0),
+                'items_reaction' => ($reaction && isset($res['reactions']) && isset($res['reactions'][$reaction]) ? intval(
+                    $res['reactions'][$reaction]
+                ) : 0),
                 'items_page' => $res['items_page'],
                 'items' => array()
             );
@@ -93,11 +113,16 @@ if (Main\Loader::includeModule("rest")):
                     'PHOTO' => $value['PHOTO'],
                     'PHOTO_SRC' => $value['PHOTO_SRC'],
                     'FULL_NAME' => $value['FULL_NAME'],
-                    'URL' => \CUtil::jSEscape(\CComponentEngine::makePathFromTemplate($pathToUserProfile, array(
-                        "UID" => $value["USER_ID"],
-                        "user_id" => $value["USER_ID"],
-                        "USER_ID" => $value["USER_ID"]
-                    )))
+                    'URL' => \CUtil::jSEscape(
+                        \CComponentEngine::makePathFromTemplate(
+                            $pathToUserProfile,
+                            array(
+                                "UID" => $value["USER_ID"],
+                                "user_id" => $value["USER_ID"],
+                                "USER_ID" => $value["USER_ID"]
+                            )
+                        )
+                    )
                 );
 
                 if (
@@ -134,10 +159,13 @@ if (Main\Loader::includeModule("rest")):
                 $event->send();
             }
 
-            return static::setNavData($voteList['items'], array(
-                "count" => ($reaction && $reaction != 'all' ? $voteList['items_reaction'] : $voteList['items_all']),
-                "offset" => $navParams['offset']
-            ));
+            return static::setNavData(
+                $voteList['items'],
+                array(
+                    "count" => ($reaction && $reaction != 'all' ? $voteList['items_reaction'] : $voteList['items_all']),
+                    "offset" => $navParams['offset']
+                )
+            );
         }
     }
 

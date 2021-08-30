@@ -37,23 +37,30 @@ class DefaultSiteTable extends Entity\DataManager
 
         $existed = array();
         $res = self::getList(array('filter' => array('SITE_ID' => $siteId)));
-        while ($item = $res->fetch())
+        while ($item = $res->fetch()) {
             $existed[$item['LOCATION_CODE']] = true;
+        }
 
         if (is_array($locationCodeList)) {
             foreach ($locationCodeList as $location) {
                 if (!isset($existed[$location])) {
-                    $opRes = self::add(array(
-                        'SITE_ID' => $siteId,
-                        'LOCATION_CODE' => $location['LOCATION_CODE'],
-                        'SORT' => $location['SORT'],
-                    ));
-                    if (!$opRes->isSuccess())
-                        throw new Main\SystemException(Loc::getMessage('SALE_LOCATION_DEFAULTSITE_ENTITY_CANNOT_ADD_EXCEPTION'));
+                    $opRes = self::add(
+                        array(
+                            'SITE_ID' => $siteId,
+                            'LOCATION_CODE' => $location['LOCATION_CODE'],
+                            'SORT' => $location['SORT'],
+                        )
+                    );
+                    if (!$opRes->isSuccess()) {
+                        throw new Main\SystemException(
+                            Loc::getMessage('SALE_LOCATION_DEFAULTSITE_ENTITY_CANNOT_ADD_EXCEPTION')
+                        );
+                    }
                 }
             }
-        } else
+        } else {
             throw new Main\SystemException('Code list is not a valid array');
+        }
 
         $GLOBALS['CACHE_MANAGER']->ClearByTag('sale-location-data');
     }
@@ -61,12 +68,16 @@ class DefaultSiteTable extends Entity\DataManager
     /**
      * $locationCodeList format
      */
-    public static function updateMultipleForOwner($siteId, $locationCodeList = array(), $behaviour = array('REMOVE_ABSENT' => true))
-    {
+    public static function updateMultipleForOwner(
+        $siteId,
+        $locationCodeList = array(),
+        $behaviour = array('REMOVE_ABSENT' => true)
+    ) {
         $siteId = static::checkSiteId($siteId);
 
-        if (!is_array($locationCodeList))
+        if (!is_array($locationCodeList)) {
             throw new Main\SystemException('Code list is not a valid array');
+        }
 
         // throw away duplicates and make index array
         $index = array();
@@ -81,9 +92,9 @@ class DefaultSiteTable extends Entity\DataManager
         $update = array();
         $delete = array();
         while ($item = $res->Fetch()) {
-            if (!isset($index[$item['LOCATION_CODE']]))
+            if (!isset($index[$item['LOCATION_CODE']])) {
                 $delete[$item['LOCATION_CODE']] = true;
-            else {
+            } else {
                 unset($index[$item['LOCATION_CODE']]);
                 $update[$item['LOCATION_CODE']] = true;
             }
@@ -92,25 +103,39 @@ class DefaultSiteTable extends Entity\DataManager
         if ($behaviour['REMOVE_ABSENT']) {
             foreach ($delete as $code => $void) {
                 $res = self::delete(array('SITE_ID' => $siteId, 'LOCATION_CODE' => $code));
-                if (!$res->isSuccess())
-                    throw new Main\SystemException(Loc::getMessage('SALE_LOCATION_DEFAULTSITE_ENTITY_CANNOT_DELETE_EXCEPTION'));
+                if (!$res->isSuccess()) {
+                    throw new Main\SystemException(
+                        Loc::getMessage('SALE_LOCATION_DEFAULTSITE_ENTITY_CANNOT_DELETE_EXCEPTION')
+                    );
+                }
             }
         }
 
         foreach ($update as $code => $void) {
-            $res = self::update(array('SITE_ID' => $siteId, 'LOCATION_CODE' => $code), array('SORT' => $locationCodeList[$code]['SORT']));
-            if (!$res->isSuccess())
-                throw new Main\SystemException(Loc::getMessage('SALE_LOCATION_DEFAULTSITE_ENTITY_CANNOT_UPDATE_EXCEPTION'));
+            $res = self::update(
+                array('SITE_ID' => $siteId, 'LOCATION_CODE' => $code),
+                array('SORT' => $locationCodeList[$code]['SORT'])
+            );
+            if (!$res->isSuccess()) {
+                throw new Main\SystemException(
+                    Loc::getMessage('SALE_LOCATION_DEFAULTSITE_ENTITY_CANNOT_UPDATE_EXCEPTION')
+                );
+            }
         }
 
         foreach ($index as $code => $void) {
-            $res = self::add(array(
-                'SORT' => $locationCodeList[$code]['SORT'],
-                'SITE_ID' => $siteId,
-                'LOCATION_CODE' => $code
-            ));
-            if (!$res->isSuccess())
-                throw new Main\SystemException(Loc::getMessage('SALE_LOCATION_DEFAULTSITE_ENTITY_CANNOT_ADD_EXCEPTION'));
+            $res = self::add(
+                array(
+                    'SORT' => $locationCodeList[$code]['SORT'],
+                    'SITE_ID' => $siteId,
+                    'LOCATION_CODE' => $code
+                )
+            );
+            if (!$res->isSuccess()) {
+                throw new Main\SystemException(
+                    Loc::getMessage('SALE_LOCATION_DEFAULTSITE_ENTITY_CANNOT_ADD_EXCEPTION')
+                );
+            }
         }
 
         $GLOBALS['CACHE_MANAGER']->ClearByTag('sale-location-data');
@@ -121,8 +146,11 @@ class DefaultSiteTable extends Entity\DataManager
         $siteId = Assert::expectStringNotNull($siteId, '$siteId');
 
         $res = Main\SiteTable::getList(array('filter' => array('LID' => $siteId)))->fetch();
-        if (!$res)
-            throw new Main\ArgumentOutOfRangeException(Loc::getMessage('SALE_LOCATION_DEFAULTSITE_ENTITY_SITE_ID_UNKNOWN_EXCEPTION'));
+        if (!$res) {
+            throw new Main\ArgumentOutOfRangeException(
+                Loc::getMessage('SALE_LOCATION_DEFAULTSITE_ENTITY_SITE_ID_UNKNOWN_EXCEPTION')
+            );
+        }
 
         return $siteId;
     }

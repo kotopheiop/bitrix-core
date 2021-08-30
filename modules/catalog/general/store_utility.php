@@ -1,4 +1,5 @@
 <?php
+
 IncludeModuleLangFile(__DIR__ . '\\store_docs.php');
 
 class CCatalogStoreControlUtil
@@ -12,8 +13,9 @@ class CCatalogStoreControlUtil
     public static function getStoreName($storeId)
     {
         $storeId = (int)$storeId;
-        if ($storeId <= 0)
+        if ($storeId <= 0) {
             return '';
+        }
 
         if (!isset(self::$storeNames[$storeId])) {
             $storeIterator = CCatalogStore::GetList(
@@ -47,8 +49,9 @@ class CCatalogStoreControlUtil
     {
         $elementId = intval($elementId);
         $result = "";
-        if ($elementId <= 0)
+        if ($elementId <= 0) {
             return $result;
+        }
 
         $dbProduct = CIBlockElement::GetList(
             array(),
@@ -60,20 +63,32 @@ class CCatalogStoreControlUtil
         while ($arProduct = $dbProduct->GetNext()) {
             $imgCode = "";
 
-            if ($arProduct["IBLOCK_ID"] > 0)
-                $arProduct["EDIT_PAGE_URL"] = CIBlock::GetAdminElementEditLink($arProduct["IBLOCK_ID"], $elementId, array("find_section_section" => $arProduct["IBLOCK_SECTION_ID"]));
+            if ($arProduct["IBLOCK_ID"] > 0) {
+                $arProduct["EDIT_PAGE_URL"] = CIBlock::GetAdminElementEditLink(
+                    $arProduct["IBLOCK_ID"],
+                    $elementId,
+                    array("find_section_section" => $arProduct["IBLOCK_SECTION_ID"])
+                );
+            }
 
-            if ($arProduct["DETAIL_PICTURE"] > 0)
+            if ($arProduct["DETAIL_PICTURE"] > 0) {
                 $imgCode = $arProduct["DETAIL_PICTURE"];
-            elseif ($arProduct["PREVIEW_PICTURE"] > 0)
+            } elseif ($arProduct["PREVIEW_PICTURE"] > 0) {
                 $imgCode = $arProduct["PREVIEW_PICTURE"];
+            }
 
             $arProduct["NAME"] = ($arProduct["NAME"]);
             $arProduct["DETAIL_PAGE_URL"] = htmlspecialcharsex($arProduct["DETAIL_PAGE_URL"]);
 
             if ($imgCode > 0) {
                 $arFile = CFile::GetFileArray($imgCode);
-                $arImgProduct = CFile::ResizeImageGet($arFile, array('width' => 80, 'height' => 80), BX_RESIZE_IMAGE_PROPORTIONAL, false, false);
+                $arImgProduct = CFile::ResizeImageGet(
+                    $arFile,
+                    array('width' => 80, 'height' => 80),
+                    BX_RESIZE_IMAGE_PROPORTIONAL,
+                    false,
+                    false
+                );
                 $arProduct["IMG_URL"] = $arImgProduct['src'];
             }
 
@@ -88,7 +103,7 @@ class CCatalogStoreControlUtil
      */
     public static function getFields($docType)
     {
-        if (strlen($docType) > 0 && isset(CCatalogDocs::$types[$docType])) {
+        if ($docType <> '' && isset(CCatalogDocs::$types[$docType])) {
             $documentClass = CCatalogDocs::$types[$docType];
             if (method_exists($documentClass, "getFields")) {
                 return $documentClass::getFields();
@@ -107,13 +122,17 @@ class CCatalogStoreControlUtil
     {
         $strError = '';
         $numberDisplayedElements = intval($numberDisplayedElements);
-        if ($numberDisplayedElements < 1)
+        if ($numberDisplayedElements < 1) {
             $numberDisplayedElements = 1;
+        }
         if (is_array($arProduct)) {
             foreach ($arProduct as $key => $product) {
                 $strError .= "\n- " . $product;
                 if ($key >= ($numberDisplayedElements - 1)) {
-                    $strError .= "\n..." . GetMessage("CAT_DOC_AND_MORE", array("#COUNT#" => (count($arProduct) - $numberDisplayedElements)));
+                    $strError .= "\n..." . GetMessage(
+                            "CAT_DOC_AND_MORE",
+                            array("#COUNT#" => (count($arProduct) - $numberDisplayedElements))
+                        );
                     break;
                 }
             }
@@ -125,15 +144,19 @@ class CCatalogStoreControlUtil
     {
         global $DB;
 
-        return $DB->Query("SELECT SUM(SP.AMOUNT) as SUM, CP.QUANTITY_RESERVED as RESERVED FROM b_catalog_store_product SP INNER JOIN b_catalog_product CP ON SP.PRODUCT_ID = CP.ID INNER JOIN b_catalog_store CS ON SP.STORE_ID = CS.ID WHERE SP.PRODUCT_ID = " . $productId . "  AND CS.ACTIVE = 'Y' GROUP BY QUANTITY_RESERVED ", true);
+        return $DB->Query(
+            "SELECT SUM(SP.AMOUNT) as SUM, CP.QUANTITY_RESERVED as RESERVED FROM b_catalog_store_product SP INNER JOIN b_catalog_product CP ON SP.PRODUCT_ID = CP.ID INNER JOIN b_catalog_store CS ON SP.STORE_ID = CS.ID WHERE SP.PRODUCT_ID = " . $productId . "  AND CS.ACTIVE = 'Y' GROUP BY QUANTITY_RESERVED ",
+            true
+        );
     }
 
     public static function clearStoreName($storeId)
     {
         $storeId = (int)$storeId;
         if ($storeId > 0) {
-            if (isset(self::$storeNames[$storeId]))
+            if (isset(self::$storeNames[$storeId])) {
                 unset(self::$storeNames[$storeId]);
+            }
         }
     }
 

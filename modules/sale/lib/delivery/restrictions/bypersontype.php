@@ -45,8 +45,9 @@ class ByPersonType extends Base
             $order = $entity;
         }
 
-        if (!$order)
+        if (!$order) {
             return false;
+        }
 
         $personTypeId = $order->getPersonTypeId();
         return $personTypeId;
@@ -78,8 +79,9 @@ class ByPersonType extends Base
 
         $dbRes = \Bitrix\Sale\PersonType::getList();
 
-        while ($personType = $dbRes->fetch())
+        while ($personType = $dbRes->fetch()) {
             $personTypeList[$personType["ID"]] = $personType["NAME"] . " (" . $personType["ID"] . ")";
+        }
 
         return array(
             "PERSON_TYPE_ID" => array(

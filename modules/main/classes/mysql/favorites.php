@@ -1,4 +1,5 @@
-<?
+<?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/classes/general/favorites.php");
 
 class CFavorites extends CAllFavorites
@@ -11,8 +12,10 @@ class CFavorites extends CAllFavorites
         $strSqlSearch = "";
         if (is_array($arFilter)) {
             foreach ($arFilter as $key => $val) {
-                if (strlen($val) <= 0 || $val == "NOT_REF") continue;
-                switch (strtoupper($key)) {
+                if ((string)$val == '' || $val == "NOT_REF") {
+                    continue;
+                }
+                switch (mb_strtoupper($key)) {
                     case "ID":
                         $arSqlSearch[] = GetFilterQuery("F.ID", $val, "N");
                         break;
@@ -29,10 +32,16 @@ class CFavorites extends CAllFavorites
                         $arSqlSearch[] = "F.LANGUAGE_ID = '" . $DB->ForSql($val, 2) . "'";
                         break;
                     case "DATE1":
-                        $arSqlSearch[] = "F.TIMESTAMP_X >= FROM_UNIXTIME('" . MkDateTime(FmtDate($val, "D.M.Y"), "d.m.Y") . "')";
+                        $arSqlSearch[] = "F.TIMESTAMP_X >= FROM_UNIXTIME('" . MkDateTime(
+                                FmtDate($val, "D.M.Y"),
+                                "d.m.Y"
+                            ) . "')";
                         break;
                     case "DATE2":
-                        $arSqlSearch[] = "F.TIMESTAMP_X <= FROM_UNIXTIME('" . MkDateTime(FmtDate($val, "D.M.Y") . " 23:59:59", "d.m.Y") . "')";
+                        $arSqlSearch[] = "F.TIMESTAMP_X <= FROM_UNIXTIME('" . MkDateTime(
+                                FmtDate($val, "D.M.Y") . " 23:59:59",
+                                "d.m.Y"
+                            ) . "')";
                         break;
                     case "MODIFIED":
                         $arSqlSearch[] = GetFilterQuery("UM.ID, UM.LOGIN, UM.LAST_NAME, UM.NAME", $val);
@@ -61,15 +70,14 @@ class CFavorites extends CAllFavorites
                     case "MENU_ID":
                         $arSqlSearch[] = "F.MENU_ID='" . $DB->ForSql($val, 255) . "'";
                         break;
-
                 }
             }
         }
 
         $sOrder = "";
         foreach ($aSort as $key => $val) {
-            $ord = (strtoupper($val) <> "ASC" ? "DESC" : "ASC");
-            switch (strtoupper($key)) {
+            $ord = (mb_strtoupper($val) <> "ASC" ? "DESC" : "ASC");
+            switch (mb_strtoupper($key)) {
                 case "ID":
                     $sOrder .= ", F.ID " . $ord;
                     break;
@@ -105,8 +113,9 @@ class CFavorites extends CAllFavorites
                     break;
             }
         }
-        if (strlen($sOrder) <= 0)
+        if ($sOrder == '') {
             $sOrder = "F.ID DESC";
+        }
         $strSqlOrder = " ORDER BY " . TrimEx($sOrder, ",");
 
         $strSqlSearch = GetFilterSqlSearch($arSqlSearch);

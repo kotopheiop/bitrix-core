@@ -37,7 +37,6 @@ class UserWelltory
 
     public static function setAccess(array $fields = [])
     {
-
         $userId = (
         isset($fields['userId'])
             ? intval($fields['userId'])
@@ -81,27 +80,32 @@ class UserWelltory
 
         $intranetInstalled = Loader::includeModule('intranet');
 
-        $res = UserWelltoryTable::getList([
-            'filter' => [
-                '=USER_ID' => $userId
-            ],
-            'order' => [
-                'DATE_MEASURE' => 'desc'
-            ],
-            'select' => ['ID', 'DATE_MEASURE', 'STRESS', 'STRESS_TYPE', 'STRESS_COMMENT', 'HASH'],
-            'limit' => $limit
-        ]);
+        $res = UserWelltoryTable::getList(
+            [
+                'filter' => [
+                    '=USER_ID' => $userId
+                ],
+                'order' => [
+                    'DATE_MEASURE' => 'desc'
+                ],
+                'select' => ['ID', 'DATE_MEASURE', 'STRESS', 'STRESS_TYPE', 'STRESS_COMMENT', 'HASH'],
+                'limit' => $limit
+            ]
+        );
         while ($dataFields = $res->fetch()) {
             $item = [
                 'id' => $dataFields['ID'],
                 'date' => $dataFields['DATE_MEASURE'],
                 'value' => intval($dataFields['STRESS']),
-                'type' => (strlen($dataFields['STRESS_TYPE']) > 0 ? $dataFields['STRESS_TYPE'] : ''),
+                'type' => ($dataFields['STRESS_TYPE'] <> '' ? $dataFields['STRESS_TYPE'] : ''),
                 'typeDescription' => ($intranetInstalled ?: ''),
-                'comment' => (strlen($dataFields['STRESS_COMMENT']) > 0 ? $dataFields['STRESS_COMMENT'] : ''),
-                'hash' => (strlen($dataFields['HASH']) > 0 ? $dataFields['HASH'] : '')
+                'comment' => ($dataFields['STRESS_COMMENT'] <> '' ? $dataFields['STRESS_COMMENT'] : ''),
+                'hash' => ($dataFields['HASH'] <> '' ? $dataFields['HASH'] : '')
             ];
-            $item['typeDescription'] = ($intranetInstalled ? \Bitrix\Intranet\Component\UserProfile\StressLevel::getTypeDescription($item['type'], $item['value']) : '');
+            $item['typeDescription'] = ($intranetInstalled ? \Bitrix\Intranet\Component\UserProfile\StressLevel::getTypeDescription(
+                $item['type'],
+                $item['value']
+            ) : '');
             $result[] = $item;
         }
 

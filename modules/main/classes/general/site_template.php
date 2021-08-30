@@ -15,10 +15,12 @@ class CSiteTemplate
         /** @global CMain $APPLICATION */
         global $APPLICATION;
 
-        if (isset($arFilter["ID"]) && !is_array($arFilter["ID"]))
+        if (isset($arFilter["ID"]) && !is_array($arFilter["ID"])) {
             $arFilter["ID"] = array($arFilter["ID"]);
-        if (isset($arFilter["TYPE"]) && !is_array($arFilter["TYPE"]))
+        }
+        if (isset($arFilter["TYPE"]) && !is_array($arFilter["TYPE"])) {
             $arFilter["TYPE"] = array($arFilter["TYPE"]);
+        }
 
         $folders = array(
             "/local/templates",
@@ -31,17 +33,21 @@ class CSiteTemplate
                 $handle = opendir($path);
                 if ($handle) {
                     while (($file = readdir($handle)) !== false) {
-                        if ($file == "." || $file == ".." || !is_dir($path . "/" . $file))
+                        if ($file == "." || $file == ".." || !is_dir($path . "/" . $file)) {
                             continue;
+                        }
 
-                        if ($file == ".default")
+                        if ($file == ".default") {
                             continue;
+                        }
 
-                        if (isset($arRes[$file]))
+                        if (isset($arRes[$file])) {
                             continue;
+                        }
 
-                        if (isset($arFilter["ID"]) && !in_array($file, $arFilter["ID"]))
+                        if (isset($arFilter["ID"]) && !in_array($file, $arFilter["ID"])) {
                             continue;
+                        }
 
                         $arTemplate = array("DESCRIPTION" => "");
 
@@ -51,44 +57,59 @@ class CSiteTemplate
                             include($fname);
                         }
 
-                        if (!isset($arTemplate["TYPE"])) $arTemplate["TYPE"] = '';
-                        if (isset($arFilter["TYPE"]) && !in_array($arTemplate["TYPE"], $arFilter["TYPE"]))
+                        if (!isset($arTemplate["TYPE"])) {
+                            $arTemplate["TYPE"] = '';
+                        }
+                        if (isset($arFilter["TYPE"]) && !in_array($arTemplate["TYPE"], $arFilter["TYPE"])) {
                             continue;
+                        }
 
                         $arTemplate["ID"] = $file;
                         $arTemplate["PATH"] = $folder . "/" . $file;
 
-                        if (!isset($arTemplate["NAME"]))
+                        if (!isset($arTemplate["NAME"])) {
                             $arTemplate["NAME"] = $file;
+                        }
 
                         if ($arSelect === false || in_array("SCREENSHOT", $arSelect)) {
-                            if (file_exists($path . "/" . $file . "/lang/" . LANGUAGE_ID . "/screen.gif"))
+                            if (file_exists($path . "/" . $file . "/lang/" . LANGUAGE_ID . "/screen.gif")) {
                                 $arTemplate["SCREENSHOT"] = $folder . "/" . $file . "/lang/" . LANGUAGE_ID . "/screen.gif";
-                            elseif (file_exists($path . "/" . $file . "/screen.gif"))
+                            } elseif (file_exists($path . "/" . $file . "/screen.gif")) {
                                 $arTemplate["SCREENSHOT"] = $folder . "/" . $file . "/screen.gif";
-                            else
+                            } else {
                                 $arTemplate["SCREENSHOT"] = false;
+                            }
 
-                            if (file_exists($path . "/" . $file . "/lang/" . LANGUAGE_ID . "/preview.gif"))
+                            if (file_exists($path . "/" . $file . "/lang/" . LANGUAGE_ID . "/preview.gif")) {
                                 $arTemplate["PREVIEW"] = $folder . "/" . $file . "/lang/" . LANGUAGE_ID . "/preview.gif";
-                            elseif (file_exists($path . "/" . $file . "/preview.gif"))
+                            } elseif (file_exists($path . "/" . $file . "/preview.gif")) {
                                 $arTemplate["PREVIEW"] = $folder . "/" . $file . "/preview.gif";
-                            else
+                            } else {
                                 $arTemplate["PREVIEW"] = false;
+                            }
                         }
 
                         if ($arSelect === false || in_array("CONTENT", $arSelect)) {
-                            $arTemplate["CONTENT"] = $APPLICATION->GetFileContent($path . "/" . $file . "/header.php") . "#WORK_AREA#" . $APPLICATION->GetFileContent($path . "/" . $file . "/footer.php");
+                            $arTemplate["CONTENT"] = $APPLICATION->GetFileContent(
+                                    $path . "/" . $file . "/header.php"
+                                ) . "#WORK_AREA#" . $APPLICATION->GetFileContent($path . "/" . $file . "/footer.php");
                         }
 
                         if ($arSelect === false || in_array("STYLES", $arSelect)) {
                             if (file_exists($path . "/" . $file . "/styles.css")) {
-                                $arTemplate["STYLES"] = $APPLICATION->GetFileContent($path . "/" . $file . "/styles.css");
-                                $arTemplate["STYLES_TITLE"] = CSiteTemplate::__GetByStylesTitle($path . "/" . $file . "/.styles.php");
+                                $arTemplate["STYLES"] = $APPLICATION->GetFileContent(
+                                    $path . "/" . $file . "/styles.css"
+                                );
+                                $arTemplate["STYLES_TITLE"] = CSiteTemplate::__GetByStylesTitle(
+                                    $path . "/" . $file . "/.styles.php"
+                                );
                             }
 
-                            if (file_exists($path . "/" . $file . "/template_styles.css"))
-                                $arTemplate["TEMPLATE_STYLES"] = $APPLICATION->GetFileContent($path . "/" . $file . "/template_styles.css");
+                            if (file_exists($path . "/" . $file . "/template_styles.css")) {
+                                $arTemplate["TEMPLATE_STYLES"] = $APPLICATION->GetFileContent(
+                                    $path . "/" . $file . "/template_styles.css"
+                                );
+                            }
                         }
 
                         $arRes[$file] = $arTemplate;
@@ -102,9 +123,9 @@ class CSiteTemplate
             $columns = array();
             static $fields = array("ID" => 1, "NAME" => 1, "DESCRIPTION" => 1, "SORT" => 1);
             foreach ($arOrder as $key => $val) {
-                $key = strtoupper($key);
+                $key = mb_strtoupper($key);
                 if (isset($fields[$key])) {
-                    $columns[$key] = (strtoupper($val) == "DESC" ? SORT_DESC : SORT_ASC);
+                    $columns[$key] = (mb_strtoupper($val) == "DESC" ? SORT_DESC : SORT_ASC);
                 }
             }
             if (!empty($columns)) {
@@ -121,8 +142,9 @@ class CSiteTemplate
     public static function __GetByStylesTitle($file)
     {
         $io = CBXVirtualIo::GetInstance();
-        if ($io->FileExists($file))
+        if ($io->FileExists($file)) {
             return include($file);
+        }
         return false;
     }
 
@@ -140,19 +162,21 @@ class CSiteTemplate
         $arMsg = array();
 
         if ($ID === false) {
-            if ($arFields["ID"] == '')
+            if ($arFields["ID"] == '') {
                 $this->LAST_ERROR .= GetMessage("MAIN_ENTER_TEMPLATE_ID") . " ";
-            elseif (file_exists($_SERVER["DOCUMENT_ROOT"] . BX_PERSONAL_ROOT . "/templates/" . $arFields["ID"]))
+            } elseif (file_exists($_SERVER["DOCUMENT_ROOT"] . BX_PERSONAL_ROOT . "/templates/" . $arFields["ID"])) {
                 $this->LAST_ERROR .= GetMessage("MAIN_TEMPLATE_ID_EX") . " ";
+            }
 
-            if (!isset($arFields["CONTENT"]))
+            if (!isset($arFields["CONTENT"])) {
                 $this->LAST_ERROR .= GetMessage("MAIN_TEMPLATE_CONTENT_NA") . " ";
+            }
         }
 
         if (isset($arFields["CONTENT"]) && $arFields["CONTENT"] == '') {
             $this->LAST_ERROR .= GetMessage("MAIN_TEMPLATE_CONTENT_NA") . " ";
             $arMsg[] = array("id" => "CONTENT", "text" => GetMessage("MAIN_TEMPLATE_CONTENT_NA"));
-        } elseif (isset($arFields["CONTENT"]) && strpos($arFields["CONTENT"], "#WORK_AREA#") === false) {
+        } elseif (isset($arFields["CONTENT"]) && mb_strpos($arFields["CONTENT"], "#WORK_AREA#") === false) {
             $this->LAST_ERROR .= GetMessage("MAIN_TEMPLATE_WORKAREA_NA") . " ";
             $arMsg[] = array("id" => "CONTENT", "text" => GetMessage("MAIN_TEMPLATE_WORKAREA_NA"));
         }
@@ -162,16 +186,18 @@ class CSiteTemplate
             $APPLICATION->ThrowException($e);
         }
 
-        if ($this->LAST_ERROR <> '')
+        if ($this->LAST_ERROR <> '') {
             return false;
+        }
 
         return true;
     }
 
     public function Add($arFields)
     {
-        if (!$this->CheckFields($arFields))
+        if (!$this->CheckFields($arFields)) {
             return false;
+        }
 
         /** @global CMain $APPLICATION */
         global $APPLICATION;
@@ -180,10 +206,10 @@ class CSiteTemplate
         CheckDirPath($_SERVER["DOCUMENT_ROOT"] . $path);
 
         if (isset($arFields["CONTENT"])) {
-            $p = strpos($arFields["CONTENT"], "#WORK_AREA#");
-            $header = substr($arFields["CONTENT"], 0, $p);
+            $p = mb_strpos($arFields["CONTENT"], "#WORK_AREA#");
+            $header = mb_substr($arFields["CONTENT"], 0, $p);
             $APPLICATION->SaveFileContent($_SERVER["DOCUMENT_ROOT"] . $path . "/header.php", $header);
-            $footer = substr($arFields["CONTENT"], $p + strlen("#WORK_AREA#"));
+            $footer = mb_substr($arFields["CONTENT"], $p + mb_strlen("#WORK_AREA#"));
             $APPLICATION->SaveFileContent($_SERVER["DOCUMENT_ROOT"] . $path . "/footer.php", $footer);
         }
         if (isset($arFields["STYLES"])) {
@@ -191,7 +217,10 @@ class CSiteTemplate
         }
 
         if (isset($arFields["TEMPLATE_STYLES"])) {
-            $APPLICATION->SaveFileContent($_SERVER["DOCUMENT_ROOT"] . $path . "/template_styles.css", $arFields["TEMPLATE_STYLES"]);
+            $APPLICATION->SaveFileContent(
+                $_SERVER["DOCUMENT_ROOT"] . $path . "/template_styles.css",
+                $arFields["TEMPLATE_STYLES"]
+            );
         }
 
         if (isset($arFields["NAME"]) || isset($arFields["DESCRIPTION"]) || isset($arFields["SORT"])) {
@@ -218,10 +247,10 @@ class CSiteTemplate
             return false;
         }
         if (isset($arFields["CONTENT"])) {
-            $p = strpos($arFields["CONTENT"], "#WORK_AREA#");
-            $header = substr($arFields["CONTENT"], 0, $p);
+            $p = mb_strpos($arFields["CONTENT"], "#WORK_AREA#");
+            $header = mb_substr($arFields["CONTENT"], 0, $p);
             $APPLICATION->SaveFileContent($_SERVER["DOCUMENT_ROOT"] . $path . "/header.php", $header);
-            $footer = substr($arFields["CONTENT"], $p + strlen("#WORK_AREA#"));
+            $footer = mb_substr($arFields["CONTENT"], $p + mb_strlen("#WORK_AREA#"));
             $APPLICATION->SaveFileContent($_SERVER["DOCUMENT_ROOT"] . $path . "/footer.php", $footer);
         }
         if (isset($arFields["STYLES"])) {
@@ -229,23 +258,31 @@ class CSiteTemplate
         }
 
         if (isset($arFields["TEMPLATE_STYLES"])) {
-            $APPLICATION->SaveFileContent($_SERVER["DOCUMENT_ROOT"] . $path . "/template_styles.css", $arFields["TEMPLATE_STYLES"]);
+            $APPLICATION->SaveFileContent(
+                $_SERVER["DOCUMENT_ROOT"] . $path . "/template_styles.css",
+                $arFields["TEMPLATE_STYLES"]
+            );
         }
 
         if (isset($arFields["NAME"]) || isset($arFields["DESCRIPTION"]) || isset($arFields["SORT"]) || isset($arFields["TYPE"])) {
             $db_t = CSiteTemplate::GetList(array(), array("ID" => $ID), array("NAME", "DESCRIPTION", "SORT"));
             $ar_t = $db_t->Fetch();
 
-            if (!isset($arFields["NAME"]))
+            if (!isset($arFields["NAME"])) {
                 $arFields["NAME"] = $ar_t["NAME"];
-            if (!isset($arFields["DESCRIPTION"]))
+            }
+            if (!isset($arFields["DESCRIPTION"])) {
                 $arFields["DESCRIPTION"] = $ar_t["DESCRIPTION"];
-            if (!isset($arFields["SORT"]))
+            }
+            if (!isset($arFields["SORT"])) {
                 $arFields["SORT"] = $ar_t["SORT"];
-            if (!isset($arFields["TYPE"]))
+            }
+            if (!isset($arFields["TYPE"])) {
                 $arFields["TYPE"] = $ar_t["TYPE"];
-            if (!isset($arFields["EDITOR_STYLES"]))
+            }
+            if (!isset($arFields["EDITOR_STYLES"])) {
                 $arFields["EDITOR_STYLES"] = $ar_t["EDITOR_STYLES"];
+            }
 
             self::SaveDescription($arFields, $_SERVER["DOCUMENT_ROOT"] . $path . "/description.php");
         }
@@ -272,10 +309,11 @@ class CSiteTemplate
 
     public static function GetContent($ID)
     {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             $arRes = array();
-        else
+        } else {
             $arRes = CSiteTemplate::DirsRecursive($ID);
+        }
         $db_res = new CDBResult;
         $db_res->InitFromArray($arRes);
         return $db_res;
@@ -302,30 +340,35 @@ class CSiteTemplate
                     $file["DESCRIPTION"] = "";
                     break;
                 default:
-                    if (($p = strpos($file["NAME"], ".menu_template.php")) !== false)
-                        $file["DESCRIPTION"] = str_replace("#MENU_TYPE#", substr($file["NAME"], 0, $p), GetMessage("MAIN_TEMPLATE_MENU"));
-                    elseif (($p = strpos($file["NAME"], "authorize_registration.php")) !== false)
+                    if (($p = mb_strpos($file["NAME"], ".menu_template.php")) !== false) {
+                        $file["DESCRIPTION"] = str_replace(
+                            "#MENU_TYPE#",
+                            mb_substr($file["NAME"], 0, $p),
+                            GetMessage("MAIN_TEMPLATE_MENU")
+                        );
+                    } elseif (($p = mb_strpos($file["NAME"], "authorize_registration.php")) !== false) {
                         $file["DESCRIPTION"] = GetMessage("MAIN_TEMPLATE_AUTH_REG");
-                    elseif (($p = strpos($file["NAME"], "forgot_password.php")) !== false)
+                    } elseif (($p = mb_strpos($file["NAME"], "forgot_password.php")) !== false) {
                         $file["DESCRIPTION"] = GetMessage("MAIN_TEMPLATE_SEND_PWD");
-                    elseif (($p = strpos($file["NAME"], "change_password.php")) !== false)
+                    } elseif (($p = mb_strpos($file["NAME"], "change_password.php")) !== false) {
                         $file["DESCRIPTION"] = GetMessage("MAIN_TEMPLATE_CHN_PWD");
-                    elseif (($p = strpos($file["NAME"], "authorize.php")) !== false)
+                    } elseif (($p = mb_strpos($file["NAME"], "authorize.php")) !== false) {
                         $file["DESCRIPTION"] = GetMessage("MAIN_TEMPLATE_AUTH");
-                    elseif (($p = strpos($file["NAME"], "registration.php")) !== false)
+                    } elseif (($p = mb_strpos($file["NAME"], "registration.php")) !== false) {
                         $file["DESCRIPTION"] = GetMessage("MAIN_TEMPLATE_REG");
+                    }
             }
             $arRes[] = $file;
         }
 
-        $nTemplateLen = strlen($templPath . "/");
+        $nTemplateLen = mb_strlen($templPath . "/");
         foreach ($arDirsTmp as $dir) {
             $arDir = $dir;
             $arDir["DEPTH_LEVEL"] = $depth;
             $arRes[] = $arDir;
 
             if ($depth < $maxDepth) {
-                $dirPath = substr($arDir["ABS_PATH"], $nTemplateLen);
+                $dirPath = mb_substr($arDir["ABS_PATH"], $nTemplateLen);
                 $arRes = array_merge($arRes, CSiteTemplate::DirsRecursive($ID, $dirPath, $depth, $maxDepth));
             }
         }
@@ -341,16 +384,22 @@ class CSiteTemplate
             $curStylesDesc = CSiteTemplate::__GetByStylesTitle($stylesPath);
             if (is_array($curStylesDesc)) {
                 foreach ($curStylesDesc as $code => $val) {
-                    if (!is_array($curStylesDesc[$code]))
+                    if (!is_array($curStylesDesc[$code])) {
                         unset($curStylesDesc[$code]);
+                    }
                 }
             }
             foreach ($stylesDesc as $code => $val) {
-                if (!isset($curStylesDesc[EscapePHPString($code)]) || !is_array($curStylesDesc[EscapePHPString($code)])) {
+                if (!isset($curStylesDesc[EscapePHPString($code)]) || !is_array(
+                        $curStylesDesc[EscapePHPString($code)]
+                    )) {
                     $curStylesDesc[EscapePHPString($code)] = EscapePHPString($val);
                 }
             }
-            $APPLICATION->SaveFileContent($stylesPath, '<' . '?' . "\nreturn " . var_export($curStylesDesc, 1) . ";\n" . '?' . '>');
+            $APPLICATION->SaveFileContent(
+                $stylesPath,
+                '<' . '?' . "\nreturn " . var_export($curStylesDesc, 1) . ";\n" . '?' . '>'
+            );
         }
     }
 
@@ -365,9 +414,16 @@ class CSiteTemplate
             "SORT" => (intval($arFields['SORT']) > 0 ? intval($arFields['SORT']) : ''),
             "TYPE" => $arFields['TYPE']
         );
-        if (isset($arFields['EDITOR_STYLES']))
+        if (isset($arFields['EDITOR_STYLES'])) {
             $arDescription["EDITOR_STYLES"] = $arFields['EDITOR_STYLES'];
-        $APPLICATION->SaveFileContent($descPath, '<' . '?' . "\n\$arTemplate = " . var_export($arDescription, 1) . ";\n" . '?' . '>');
+        }
+        $APPLICATION->SaveFileContent(
+            $descPath,
+            '<' . '?' . "\n\$arTemplate = " . var_export(
+                $arDescription,
+                1
+            ) . ";\n" . '?' . '>'
+        );
     }
 
 }

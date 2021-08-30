@@ -1,12 +1,14 @@
 <?
 /** @global CMain $APPLICATION */
+
 /** @global CUserTypeManager $USER_FIELD_MANAGER */
 /** @global CDatabase $DB */
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions == "D")
+if ($saleModulePermissions == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 
@@ -14,8 +16,8 @@ IncludeModuleLangFile(__FILE__);
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/prolog.php");
 
-$ID = IntVal($ID);
-$PERSON_TYPE_ID = IntVal($PERSON_TYPE_ID);
+$ID = intval($ID);
+$PERSON_TYPE_ID = intval($PERSON_TYPE_ID);
 
 if (($ID > 0) && ($arOrderProps = CSaleOrderProps::GetByID($ID))) {
     $PERSON_TYPE_ID = $arOrderProps["PERSON_TYPE_ID"];
@@ -28,42 +30,67 @@ if (($ID > 0) && ($arOrderProps = CSaleOrderProps::GetByID($ID))) {
 
 $strError = "";
 $bInitVars = false;
-if ((strlen($save) > 0 || strlen($apply) > 0) && $_SERVER['REQUEST_METHOD'] == "POST" && $saleModulePermissions == "W" && strlen($propeditmore) <= 0 && check_bitrix_sessid()) {
-    $PERSON_TYPE_ID = IntVal($PERSON_TYPE_ID);
-    if ($PERSON_TYPE_ID <= 0)
+if (($save <> '' || $apply <> '') && $_SERVER['REQUEST_METHOD'] == "POST" && $saleModulePermissions == "W" && $propeditmore == '' && check_bitrix_sessid(
+    )) {
+    $PERSON_TYPE_ID = intval($PERSON_TYPE_ID);
+    if ($PERSON_TYPE_ID <= 0) {
         $strError .= GetMessage("ERROR_NO_PERS_TYPE") . "<br>";
+    }
 
     $NAME = Trim($NAME);
-    if (strlen($NAME) <= 0)
+    if ($NAME == '') {
         $strError .= GetMessage("ERROR_NO_NAME") . "<br>";
+    }
 
     $TYPE = Trim($TYPE);
-    if (strlen($TYPE) <= 0)
+    if ($TYPE == '') {
         $strError .= GetMessage("ERROR_NO_TYPE") . "<br>";
+    }
 
-    if ($REQUIED != "Y") $REQUIED = "N";
-    if ($USER_PROPS != "Y") $USER_PROPS = "N";
+    if ($REQUIED != "Y") {
+        $REQUIED = "N";
+    }
+    if ($USER_PROPS != "Y") {
+        $USER_PROPS = "N";
+    }
 
-    if ($IS_LOCATION != "Y") $IS_LOCATION = "N";
-    if ($IS_LOCATION4TAX != "Y") $IS_LOCATION4TAX = "N";
-    if ($IS_EMAIL != "Y") $IS_EMAIL = "N";
-    if ($IS_PROFILE_NAME != "Y") $IS_PROFILE_NAME = "N";
-    if ($IS_PAYER != "Y") $IS_PAYER = "N";
-    if ($IS_FILTERED != "Y") $IS_FILTERED = "N";
+    if ($IS_LOCATION != "Y") {
+        $IS_LOCATION = "N";
+    }
+    if ($IS_LOCATION4TAX != "Y") {
+        $IS_LOCATION4TAX = "N";
+    }
+    if ($IS_EMAIL != "Y") {
+        $IS_EMAIL = "N";
+    }
+    if ($IS_PROFILE_NAME != "Y") {
+        $IS_PROFILE_NAME = "N";
+    }
+    if ($IS_PAYER != "Y") {
+        $IS_PAYER = "N";
+    }
+    if ($IS_FILTERED != "Y") {
+        $IS_FILTERED = "N";
+    }
 
-    if ($IS_LOCATION == "Y" && $TYPE != "LOCATION")
+    if ($IS_LOCATION == "Y" && $TYPE != "LOCATION") {
         $strError .= GetMessage("ERROR_NOT_LOCATION") . "<br>";
-    if ($IS_LOCATION4TAX == "Y" && $TYPE != "LOCATION")
+    }
+    if ($IS_LOCATION4TAX == "Y" && $TYPE != "LOCATION") {
         $strError .= GetMessage("ERROR_NOT_LOCATION") . "<br>";
+    }
 
-    $SORT = IntVal($SORT);
-    if ($SORT <= 0) $SORT = 100;
+    $SORT = intval($SORT);
+    if ($SORT <= 0) {
+        $SORT = 100;
+    }
 
-    $PROPS_GROUP_ID = IntVal($PROPS_GROUP_ID);
-    if ($PROPS_GROUP_ID <= 0)
+    $PROPS_GROUP_ID = intval($PROPS_GROUP_ID);
+    if ($PROPS_GROUP_ID <= 0) {
         $strError .= GetMessage("ERROR_NO_GROUP") . "<br>";
+    }
 
-    if (strlen($strError) <= 0) {
+    if ($strError == '') {
         unset($arFields);
         $arFields = array(
             "PERSON_TYPE_ID" => $PERSON_TYPE_ID,
@@ -72,7 +99,7 @@ if ((strlen($save) > 0 || strlen($apply) > 0) && $_SERVER['REQUEST_METHOD'] == "
             "REQUIED" => $REQUIED,
             "DEFAULT_VALUE" => $DEFAULT_VALUE,
             "SORT" => $SORT,
-            "CODE" => (strlen($CODE) <= 0 ? False : $CODE),
+            "CODE" => ($CODE == '' ? false : $CODE),
             "USER_PROPS" => $USER_PROPS,
             "IS_LOCATION" => $IS_LOCATION,
             "IS_LOCATION4TAX" => $IS_LOCATION4TAX,
@@ -87,56 +114,77 @@ if ((strlen($save) > 0 || strlen($apply) > 0) && $_SERVER['REQUEST_METHOD'] == "
         );
 
         if ($ID > 0) {
-            if (!CSaleOrderProps::Update($ID, $arFields))
+            if (!CSaleOrderProps::Update($ID, $arFields)) {
                 $strError .= GetMessage("ERROR_EDIT_PROP") . "<br>";
+            }
 
-            if (strlen($strError) <= 0) {
-                $db_order_props_tmp = CSaleOrderPropsValue::GetList(($b = "NAME"), ($o = "ASC"), Array("ORDER_PROPS_ID" => $ID));
+            if ($strError == '') {
+                $db_order_props_tmp = CSaleOrderPropsValue::GetList(
+                    ($b = "NAME"),
+                    ($o = "ASC"),
+                    Array("ORDER_PROPS_ID" => $ID)
+                );
                 while ($ar_order_props_tmp = $db_order_props_tmp->Fetch()) {
-                    CSaleOrderPropsValue::Update($ar_order_props_tmp["ID"], array("CODE" => (strlen($CODE) <= 0 ? False : $CODE)));
+                    CSaleOrderPropsValue::Update(
+                        $ar_order_props_tmp["ID"],
+                        array("CODE" => ($CODE == '' ? false : $CODE))
+                    );
                 }
             }
         } else {
             $ID = CSaleOrderProps::Add($arFields);
-            if ($ID <= 0)
+            if ($ID <= 0) {
                 $strError .= GetMessage("ERROR_ADD_PROP") . "<br>";
+            }
         }
     }
 
-    if (strlen($strError) <= 0) {
+    if ($strError == '') {
         if ($TYPE == "SELECT" || $TYPE == "MULTISELECT" || $TYPE == "RADIO") {
-            $numpropsvals = IntVal($numpropsvals);
+            $numpropsvals = intval($numpropsvals);
             for ($i = 0; $i <= $numpropsvals; $i++) {
                 $strError1 = "";
 
-                $CF_ID = IntVal(${"ID_" . $i});
+                $CF_ID = intval(${"ID_" . $i});
                 $CF_DEL = ${"DELETE_" . $i};
                 unset($arFieldsV);
                 $arFieldsV = array(
                     "ORDER_PROPS_ID" => $ID,
                     "VALUE" => Trim(${"VALUE_" . $i}),
                     "NAME" => Trim(${"NAME_" . $i}),
-                    "SORT" => ((IntVal(${"SORT_" . $i}) > 0) ? IntVal(${"SORT_" . $i}) : 100),
+                    "SORT" => ((intval(${"SORT_" . $i}) > 0) ? intval(${"SORT_" . $i}) : 100),
                     "DESCRIPTION" => Trim(${"DESCRIPTION_" . $i})
                 );
 
                 if ($CF_ID <= 0) {
-                    if (strlen($arFieldsV["VALUE"]) > 0 && strlen($arFieldsV["NAME"]) > 0) {
-                        if (!CSaleOrderPropsVariant::Add($arFieldsV))
-                            $strError1 .= GetMessage("ERROR_ADD_VARIANT") . " (" . $arFieldsV["VALUE"] . ", " . $arFieldsV["NAME"] . ", " . $arFieldsV["SORT"] . ", " . $arFieldsV["DESCRIPTION"] . ").<br>";
+                    if ($arFieldsV["VALUE"] <> '' && $arFieldsV["NAME"] <> '') {
+                        if (!CSaleOrderPropsVariant::Add($arFieldsV)) {
+                            $strError1 .= GetMessage(
+                                    "ERROR_ADD_VARIANT"
+                                ) . " (" . $arFieldsV["VALUE"] . ", " . $arFieldsV["NAME"] . ", " . $arFieldsV["SORT"] . ", " . $arFieldsV["DESCRIPTION"] . ").<br>";
+                        }
                     }
                 } elseif ($CF_DEL == "Y") {
                     CSaleOrderPropsVariant::Delete($CF_ID);
                 } else {
-                    if (strlen($arFieldsV["VALUE"]) <= 0)
-                        $strError1 .= GetMessage("ERROR_EMPTY_VAR_CODE") . " (" . $arFieldsV["NAME"] . ", " . $arFieldsV["SORT"] . ", " . $arFieldsV["DESCRIPTION"] . ").<br>";
+                    if ($arFieldsV["VALUE"] == '') {
+                        $strError1 .= GetMessage(
+                                "ERROR_EMPTY_VAR_CODE"
+                            ) . " (" . $arFieldsV["NAME"] . ", " . $arFieldsV["SORT"] . ", " . $arFieldsV["DESCRIPTION"] . ").<br>";
+                    }
 
-                    if (strlen($arFieldsV["NAME"]) <= 0)
-                        $strError1 .= GetMessage("ERROR_EMPTY_VAR_NAME") . " (" . $arFieldsV["VALUE"] . ", " . $arFieldsV["SORT"] . ", " . $arFieldsV["DESCRIPTION"] . ").<br>";
+                    if ($arFieldsV["NAME"] == '') {
+                        $strError1 .= GetMessage(
+                                "ERROR_EMPTY_VAR_NAME"
+                            ) . " (" . $arFieldsV["VALUE"] . ", " . $arFieldsV["SORT"] . ", " . $arFieldsV["DESCRIPTION"] . ").<br>";
+                    }
 
-                    if (strlen($strError1) <= 0) {
-                        if (!CSaleOrderPropsVariant::Update($CF_ID, $arFieldsV))
-                            $strError .= GetMessage("ERROR_EDIT_VARIANT") . " (" . $arFieldsV["VALUE"] . ", " . $arFieldsV["NAME"] . ", " . $arFieldsV["SORT"] . ", " . $arFieldsV["DESCRIPTION"] . ").<br>";
+                    if ($strError1 == '') {
+                        if (!CSaleOrderPropsVariant::Update($CF_ID, $arFieldsV)) {
+                            $strError .= GetMessage(
+                                    "ERROR_EDIT_VARIANT"
+                                ) . " (" . $arFieldsV["VALUE"] . ", " . $arFieldsV["NAME"] . ", " . $arFieldsV["SORT"] . ", " . $arFieldsV["DESCRIPTION"] . ").<br>";
+                        }
                     }
                 }
                 $strError .= $strError1;
@@ -146,10 +194,13 @@ if ((strlen($save) > 0 || strlen($apply) > 0) && $_SERVER['REQUEST_METHOD'] == "
         }
     }
 
-    if (strlen($strError) > 0) $bInitVars = True;
+    if ($strError <> '') {
+        $bInitVars = true;
+    }
 
-    if (strlen($save) > 0 && strlen($strError) <= 0)
+    if ($save <> '' && $strError == '') {
         LocalRedirect("sale_order_props.php?lang=" . LANGUAGE_ID . GetFilterParams("filter_", false));
+    }
 }
 ClearVars();
 if ($ID > 0) {
@@ -157,16 +208,19 @@ if ($ID > 0) {
     $db_orderProps->ExtractFields("str_");
 }
 
-if (strlen($propeditmore) > 0) $bInitVars = True;
+if ($propeditmore <> '') {
+    $bInitVars = true;
+}
 
 if ($bInitVars) {
     $DB->InitTableVarsForEdit("b_sale_order_props", "", "str_");
 }
 
-if ($ID > 0)
+if ($ID > 0) {
     $sDocTitle = GetMessage("SALE_EDIT_RECORD", array("#ID#" => $ID));
-else
+} else {
     $sDocTitle = GetMessage("SALE_NEW_RECORD");
+}
 $APPLICATION->SetTitle($sDocTitle);
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
@@ -217,7 +271,10 @@ if ($ID > 0 && $saleModulePermissions >= "W") {
 
     $aMenu[] = array(
         "TEXT" => GetMessage("SOPEN_DELETE_PROPS"),
-        "LINK" => "javascript:if(confirm('" . GetMessage("SOPEN_DELETE_PROPS_CONFIRM") . "')) window.location='/bitrix/admin/sale_order_props.php?action=delete&ID[]=" . $ID . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get() . "#tb';",
+        "LINK" => "javascript:if(confirm('" . GetMessage(
+                "SOPEN_DELETE_PROPS_CONFIRM"
+            ) . "')) window.location='/bitrix/admin/sale_order_props.php?action=delete&ID[]=" . $ID . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get(
+            ) . "#tb';",
         "ICON" => "btn_delete",
     );
 }
@@ -236,7 +293,18 @@ CAdminMessage::ShowMessage($strError); ?>
         $arPersonType = CSalePersonType::GetByID($PERSON_TYPE_ID);
 
         $aTabs = array(
-            array("DIV" => "edit1", "TAB" => GetMessage("SOPEN_TAB_PROPS"), "ICON" => "sale", "TITLE" => str_replace("#PTYPE#", htmlspecialcharsEx($arPersonType["NAME"]) . " (" . htmlspecialcharsEx($arPersonType["LID"]) . ")", GetMessage("SOPEN_TAB_PROPS_DESCR")))
+            array(
+                "DIV" => "edit1",
+                "TAB" => GetMessage("SOPEN_TAB_PROPS"),
+                "ICON" => "sale",
+                "TITLE" => str_replace(
+                    "#PTYPE#",
+                    htmlspecialcharsEx($arPersonType["NAME"]) . " (" . htmlspecialcharsEx(
+                        $arPersonType["LID"]
+                    ) . ")",
+                    GetMessage("SOPEN_TAB_PROPS_DESCR")
+                )
+            )
         );
 
         $tabControl = new CAdminTabControl("tabControl", $aTabs);
@@ -274,15 +342,17 @@ CAdminMessage::ShowMessage($strError); ?>
             <td width="40%"><span class="required">*</span><? echo GetMessage("F_TYPE") ?>:</td>
             <td width="60%">
                 <?
-                foreach (\Bitrix\Sale\Internals\Input\Manager::getTypes() as $k => $v)
+                foreach (\Bitrix\Sale\Internals\Input\Manager::getTypes() as $k => $v) {
                     $arSaleFieldType[$k] = Array("DESCRIPTION" => $v['NAME']);
+                }
 
                 //$dbUType = CUserTypeManager::GetUserType(false);
                 $arUType = $USER_FIELD_MANAGER->GetUserType();
 
                 $arSaleFieldType["--"] = Array("DESCRIPTION" => "---User types---");
-                foreach ($arUType as $k => $v)
+                foreach ($arUType as $k => $v) {
                     $arSaleFieldType["UF_" . $k] = $v;
+                }
 
                 ?>
                 <select name="TYPE">
@@ -290,8 +360,9 @@ CAdminMessage::ShowMessage($strError); ?>
                     foreach ($arSaleFieldType as $key => $value):
                         ?>
                         <option value="<? echo $key ?>"<? if ($str_TYPE == $key) echo " selected" ?>>
-                        [<? echo htmlspecialcharsbx($key) ?>
-                        ] <? echo htmlspecialcharsbx($value["DESCRIPTION"]) ?></option><?
+                        [<? echo htmlspecialcharsbx($key) ?>] <? echo htmlspecialcharsbx(
+                        $value["DESCRIPTION"]
+                    ) ?></option><?
                     endforeach;
                     ?>
                 </select>
@@ -326,17 +397,23 @@ CAdminMessage::ShowMessage($strError); ?>
             <td width="60%">
                 <select name="PROPS_GROUP_ID">
                     <?
-                    $l = CSaleOrderPropsGroup::GetList(($b = "NAME"), ($o = "ASC"), Array("PERSON_TYPE_ID" => $PERSON_TYPE_ID));
+                    $l = CSaleOrderPropsGroup::GetList(
+                        ($b = "NAME"),
+                        ($o = "ASC"),
+                        Array("PERSON_TYPE_ID" => $PERSON_TYPE_ID)
+                    );
                     while ($l->ExtractFields("l_")):
                         ?>
-                        <option value="<? echo $l_ID ?>"<? if (IntVal($str_PROPS_GROUP_ID) == IntVal($l_ID)) echo " selected" ?>>
-                        [<? echo $l_ID ?>] <? echo $l_NAME ?></option><?
+                        <option value="<? echo $l_ID ?>"<? if (intval($str_PROPS_GROUP_ID) == intval(
+                            $l_ID
+                        )) echo " selected" ?>>[<? echo $l_ID ?>] <? echo $l_NAME ?></option><?
                     endwhile;
                     ?>
                 </select>
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                <a href="sale_order_props_group.php?lang=<? echo LANGUAGE_ID ?>"
-                   target="_blank"><b><? echo GetMessage("SALE_PROPS_GROUP") ?> &gt;&gt;</b></a>
+                <a href="sale_order_props_group.php?lang=<? echo LANGUAGE_ID ?>" target="_blank"><b><? echo GetMessage(
+                            "SALE_PROPS_GROUP"
+                        ) ?> &gt;&gt;</b></a>
             </td>
         </tr>
         <tr>
@@ -424,7 +501,7 @@ CAdminMessage::ShowMessage($strError); ?>
         <? if ($str_TYPE == "SELECT" || $str_TYPE == "MULTISELECT" || $str_TYPE == "RADIO"): ?>
             <tr class="heading">
                 <td colspan="2">
-                    <? if (strlen($propeditmore) > 0): ?><a name="tb"></a><? endif; ?>
+                    <? if ($propeditmore <> ''): ?><a name="tb"></a><? endif; ?>
                     <? echo GetMessage("SALE_VARIANTS") ?>
                 </td>
             </tr>
@@ -439,7 +516,11 @@ CAdminMessage::ShowMessage($strError); ?>
                             <td align="center"><? echo GetMessage("SALE_VARIANTS_DEL") ?></td>
                         </tr>
                         <?
-                        $db_propsVars = CSaleOrderPropsVariant::GetList(($b = "SORT"), ($o = "ASC"), Array("ORDER_PROPS_ID" => $ID));
+                        $db_propsVars = CSaleOrderPropsVariant::GetList(
+                            ($b = "SORT"),
+                            ($o = "ASC"),
+                            Array("ORDER_PROPS_ID" => $ID)
+                        );
                         $ind = -1;
                         $oldind = -1;
                         while ($db_propsVars->ExtractFields("f_")) {
@@ -460,7 +541,7 @@ CAdminMessage::ShowMessage($strError); ?>
                                            value="<? echo htmlspecialcharsbx($f_NAME); ?>" size="30">
                                 </td>
                                 <td>
-                                    <input type="text" name="SORT_<? echo $ind; ?>" value="<? echo IntVal($f_SORT); ?>"
+                                    <input type="text" name="SORT_<? echo $ind; ?>" value="<? echo intval($f_SORT); ?>"
                                            size="3">
                                 </td>
                                 <td>
@@ -475,13 +556,15 @@ CAdminMessage::ShowMessage($strError); ?>
                             <?
                         }
 
-                        $numpropsvals = IntVal($numpropsvals);
+                        $numpropsvals = intval($numpropsvals);
                         $numnewpropsvals = $numpropsvals - $oldind;
                         if ($bInitVars && $numnewpropsvals > 0) {
                             for ($i = 0; $i < $numnewpropsvals; $i++) {
                                 $oldind++;
                                 $DB->InitTableVarsForEdit("b_sale_order_props_variant", "", "f_", "_" . $oldind);
-                                if (strlen($f_VALUE) <= 0 || strlen($f_NAME) <= 0) continue;
+                                if ($f_VALUE == '' || $f_NAME == '') {
+                                    continue;
+                                }
                                 $ind++;
                                 ?>
                                 <tr>
@@ -496,7 +579,7 @@ CAdminMessage::ShowMessage($strError); ?>
                                     </td>
                                     <td>
                                         <input type="text" name="SORT_<? echo $ind; ?>"
-                                               value="<? echo IntVal($f_SORT); ?>" size="3">
+                                               value="<? echo intval($f_SORT); ?>" size="3">
                                     </td>
                                     <td>
                                         <input type="text" name="DESCRIPTION_<? echo $ind; ?>"

@@ -79,7 +79,7 @@ $adminList->initFilter($filterFields);
 
 function getFilterDate($date)
 {
-    if (!isset($date) || strlen(trim($date)) < 1) {
+    if (!isset($date) || mb_strlen(trim($date)) < 1) {
         return null;
     }
 
@@ -100,7 +100,7 @@ $filter = array(
 );
 
 foreach ($filter as $key => $value) {
-    if (!is_array($value) && !strlen(trim($value))) {
+    if (!is_array($value) && !mb_strlen(trim($value))) {
         unset($filter[$key]);
     }
 }
@@ -108,95 +108,108 @@ foreach ($filter as $key => $value) {
 $logEntity = LogTable::getEntity();
 
 //Sorting
-$sortBy = strtoupper($sorting->getField());
+$sortBy = mb_strtoupper($sorting->getField());
 $sortBy = $logEntity->hasField($sortBy) ? $sortBy : "ID";
-$sortOrder = strtoupper($sorting->getOrder());
+$sortOrder = mb_strtoupper($sorting->getOrder());
 $sortOrder = $sortOrder !== "DESC" ? "ASC" : "DESC";
 
 $nav = new AdminPageNavigation("nav");
 
-$logList = LogTable::getList(array(
-    "select" => array(
-        "ID", "HOST", "URI", "TITLE", "CREATED", "TYPE", "AJAX", "USER_ID", "PAGE_ID", "MESSAGE_SHORT",
-        "USER_NAME" => "USER.NAME",
-        "USER_LAST_NAME" => "USER.LAST_NAME",
-        "USER_SECOND_NAME" => "USER.SECOND_NAME",
-        "USER_LOGIN" => "USER.LOGIN"
-    ),
-    "filter" => $filter,
-    "order" => array($sortBy => $sortOrder),
-    "count_total" => true,
-    "offset" => $nav->getOffset(),
-    "limit" => $nav->getLimit(),
-));
+$logList = LogTable::getList(
+    array(
+        "select" => array(
+            "ID",
+            "HOST",
+            "URI",
+            "TITLE",
+            "CREATED",
+            "TYPE",
+            "AJAX",
+            "USER_ID",
+            "PAGE_ID",
+            "MESSAGE_SHORT",
+            "USER_NAME" => "USER.NAME",
+            "USER_LAST_NAME" => "USER.LAST_NAME",
+            "USER_SECOND_NAME" => "USER.SECOND_NAME",
+            "USER_LOGIN" => "USER.LOGIN"
+        ),
+        "filter" => $filter,
+        "order" => array($sortBy => $sortOrder),
+        "count_total" => true,
+        "offset" => $nav->getOffset(),
+        "limit" => $nav->getLimit(),
+    )
+);
 
 $nav->setRecordCount($logList->getCount());
 
 $adminList->setNavigation($nav, Loc::getMessage("MAIN_COMPOSITE_LOG_PAGES"));
 
-$adminList->addHeaders(array(
+$adminList->addHeaders(
     array(
-        "id" => "ID",
-        "content" => "ID",
-        "sort" => "ID",
-        "default" => true
-    ),
-    array(
-        "id" => "PAGE",
-        "content" => Loc::getMessage("MAIN_COMPOSITE_LOG_PAGE_COLUMN"),
-        "sort" => "TITLE",
-        "default" => true
-    ),
-    array(
-        "id" => "HOST",
-        "content" => $logEntity->getField("HOST")->getTitle(),
-        "sort" => "HOST",
-    ),
-    array(
-        "id" => "URI",
-        "content" => $logEntity->getField("URI")->getTitle(),
-        "sort" => "URI",
-    ),
-    array(
-        "id" => "TITLE",
-        "content" => $logEntity->getField("TITLE")->getTitle(),
-    ),
-    array(
-        "id" => "CREATED",
-        "content" => $logEntity->getField("CREATED")->getTitle(),
-        "sort" => "CREATED",
-        "default" => true
-    ),
-    array(
-        "id" => "TYPE",
-        "content" => $logEntity->getField("TYPE")->getTitle(),
-        "sort" => "TYPE",
-        "default" => true
-    ),
-    array(
-        "id" => "MESSAGE_SHORT",
-        "content" => $logEntity->getField("MESSAGE")->getTitle(),
-        "default" => true
-    ),
-    array(
-        "id" => "AJAX",
-        "content" => $logEntity->getField("AJAX")->getTitle(),
-        "sort" => "AJAX",
-        "default" => true
-    ),
-    array(
-        "id" => "USER_ID",
-        "content" => $logEntity->getField("USER_ID")->getTitle(),
-        "sort" => "USER_ID",
-    ),
-));
+        array(
+            "id" => "ID",
+            "content" => "ID",
+            "sort" => "ID",
+            "default" => true
+        ),
+        array(
+            "id" => "PAGE",
+            "content" => Loc::getMessage("MAIN_COMPOSITE_LOG_PAGE_COLUMN"),
+            "sort" => "TITLE",
+            "default" => true
+        ),
+        array(
+            "id" => "HOST",
+            "content" => $logEntity->getField("HOST")->getTitle(),
+            "sort" => "HOST",
+        ),
+        array(
+            "id" => "URI",
+            "content" => $logEntity->getField("URI")->getTitle(),
+            "sort" => "URI",
+        ),
+        array(
+            "id" => "TITLE",
+            "content" => $logEntity->getField("TITLE")->getTitle(),
+        ),
+        array(
+            "id" => "CREATED",
+            "content" => $logEntity->getField("CREATED")->getTitle(),
+            "sort" => "CREATED",
+            "default" => true
+        ),
+        array(
+            "id" => "TYPE",
+            "content" => $logEntity->getField("TYPE")->getTitle(),
+            "sort" => "TYPE",
+            "default" => true
+        ),
+        array(
+            "id" => "MESSAGE_SHORT",
+            "content" => $logEntity->getField("MESSAGE")->getTitle(),
+            "default" => true
+        ),
+        array(
+            "id" => "AJAX",
+            "content" => $logEntity->getField("AJAX")->getTitle(),
+            "sort" => "AJAX",
+            "default" => true
+        ),
+        array(
+            "id" => "USER_ID",
+            "content" => $logEntity->getField("USER_ID")->getTitle(),
+            "sort" => "USER_ID",
+        ),
+    )
+);
 
 while ($record = $logList->fetch()) {
     $row = &$adminList->addRow($record["ID"], $record);
 
     $pageCell = '<div style="max-width:250px; word-wrap: break-word"><a href="//%s" target="_blank">%s</a><br>%s</div>';
     $pageLink = htmlspecialcharsbx($record["HOST"] . $record["URI"]);
-    $title = strlen(trim($record["TITLE"])) ? $record["TITLE"] : $pageLink;
+    $title = trim($record["TITLE"]) <> '' ? $record["TITLE"] : $pageLink;
     $title = htmlspecialcharsbx($title, ENT_COMPAT, false);
 
     $row->addViewField("PAGE", sprintf($pageCell, $pageLink, $title, $pageLink));
@@ -247,7 +260,6 @@ while ($record = $logList->fetch()) {
     );
 
     $row->addActions($actions);
-
 }
 
 $adminList->addGroupActionTable(
@@ -261,8 +273,11 @@ $toolbar = array(
         "LINK" => $APPLICATION->getCurPage() . "?lang=" . LANGUAGE_ID . "&action=clear_all&" . bitrix_sessid_get(),
         "TITLE" => Loc::getMessage("MAIN_COMPOSITE_LOG_CLEAR_ALL_TITLE"),
         "LINK_PARAM" =>
-            "onclick=\"if (!confirm('" . htmlspecialcharsbx(CUtil::JSEscape(
-                Loc::getMessage("MAIN_COMPOSITE_LOG_CLEAR_ALL_CONFIRM"))) . "')) return false;\"",
+            "onclick=\"if (!confirm('" . htmlspecialcharsbx(
+                CUtil::JSEscape(
+                    Loc::getMessage("MAIN_COMPOSITE_LOG_CLEAR_ALL_CONFIRM")
+                )
+            ) . "')) return false;\"",
         "ICON" => "btn_delete"
     ),
 );
@@ -318,12 +333,15 @@ require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admi
 
         <div style="margin: 10px 0 0 1px;">
             <?= Loc::getMessage("MAIN_COMPOSITE_LOG_DEBUG_DESC") ?><br>
-            <?= Loc::getMessage("MAIN_COMPOSITE_LOG_PLUGIN_AD", array(
-                "#LINK_START#" =>
-                    '<a href="https://chrome.google.com/webstore/detail/bitrix-composite-notifier/' .
-                    'bhjmmlcdfdcdloebidhnlgoabjpbfjbk?hl=en" target="_blank">',
-                "#LINK_END#" => "</a>"
-            )) ?>
+            <?= Loc::getMessage(
+                "MAIN_COMPOSITE_LOG_PLUGIN_AD",
+                array(
+                    "#LINK_START#" =>
+                        '<a href="https://chrome.google.com/webstore/detail/bitrix-composite-notifier/' .
+                        'bhjmmlcdfdcdloebidhnlgoabjpbfjbk?hl=en" target="_blank">',
+                    "#LINK_END#" => "</a>"
+                )
+            ) ?>
         </div>
     </form>
 <?= EndNote() ?>
@@ -424,11 +442,13 @@ require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admi
         </tr>
 
         <?
-        $filterControl->buttons(array(
-            "table_id" => $tableID,
-            "url" => $APPLICATION->getCurPage(),
-            "form" => "find_form",
-        ));
+        $filterControl->buttons(
+            array(
+                "table_id" => $tableID,
+                "url" => $APPLICATION->getCurPage(),
+                "form" => "find_form",
+            )
+        );
 
         $filterControl->end();
         ?>

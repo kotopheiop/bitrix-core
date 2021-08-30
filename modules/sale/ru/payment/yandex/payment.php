@@ -1,4 +1,6 @@
-<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die(); ?><?
+<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+} ?><?
 $Sum = CSalePaySystemAction::GetParamValue("SHOULD_PAY");
 $ShopID = CSalePaySystemAction::GetParamValue("SHOP_ID");
 $scid = CSalePaySystemAction::GetParamValue("SCID");
@@ -7,9 +9,9 @@ $orderDate = CSalePaySystemAction::GetParamValue("ORDER_DATE");
 $orderNumber = CSalePaySystemAction::GetParamValue("ORDER_ID");
 $Sum = number_format($Sum, 2, ',', '');
 ?>
-<p>�� ������ �������� ����� ������� <strong>������.������</strong>.</p>
+<p>�� ������ �������� ����� ������� <strong>�Money</strong>.</p>
 <p>����� � ������ �� �����: <strong><?= $Sum ?> �.</strong></p>
-<? if (strlen(CSalePaySystemAction::GetParamValue("IS_TEST")) > 0):
+<? if (CSalePaySystemAction::GetParamValue("IS_TEST") <> ''):
 ?>
 <form name="ShopForm" action="https://demomoney.yandex.ru/eshop.xml" method="post" target="_blank">
     <? else:
@@ -27,7 +29,7 @@ $Sum = number_format($Sum, 2, ',', '');
         <input name="OrderDetails" value="����� �<?= $orderNumber ?> (<?= $orderDate ?>)" type="hidden">
         <input name="BuyButton" value="��������" type="submit" class="btn btn-primary">
 
-        <div class="alert alert-info mt-4"><strong>��������!</strong> ������� ������� �� ��������� ������� ������.������
-            - ����������, ����������, ������ ����������� ��� ������ ������.
+        <div class="alert alert-info mt-4"><strong>��������!</strong> ������� ������� �� ��������� ������� �Money -
+            ����������, ����������, ������ ����������� ��� ������ ������.
         </div>
     </form>

@@ -1,4 +1,5 @@
 <?php
+
 IncludeModuleLangFile(__FILE__);
 
 class CAllStatEventType
@@ -34,11 +35,13 @@ class CAllStatEventType
         if (is_array($arFilter)) {
             foreach ($arFilter as $key => $val) {
                 if (is_array($val)) {
-                    if (count($val) <= 0)
+                    if (count($val) <= 0) {
                         continue;
+                    }
                 } else {
-                    if ((strlen($val) <= 0) || ($val === "NOT_REF"))
+                    if (((string)$val == '') || ($val === "NOT_REF")) {
                         continue;
+                    }
                 }
                 $match_value_set = array_key_exists($key . "_EXACT_MATCH", $arFilter);
                 $key = strtoupper($key);
@@ -48,12 +51,14 @@ class CAllStatEventType
                         $arSqlSearch[] = GetFilterQuery("D.EVENT_ID", $val, $match);
                         break;
                     case "DATE1":
-                        if (CheckDateTime($val))
+                        if (CheckDateTime($val)) {
                             $arSqlSearch[] = "D.DATE_STAT>=" . $DB->CharToDateFunction($val, "SHORT");
+                        }
                         break;
                     case "DATE2":
-                        if (CheckDateTime($val))
+                        if (CheckDateTime($val)) {
                             $arSqlSearch[] = "D.DATE_STAT<=" . $DB->CharToDateFunction($val . " 23:59:59", "FULL");
+                        }
                         break;
                 }
             }
@@ -72,7 +77,7 @@ class CAllStatEventType
                 $arrDays[$arD["DATE_STAT"]][$arD["EVENT_ID"]]["COUNTER"] = $arD["COUNTER"];
                 $arrDays[$arD["DATE_STAT"]][$arD["EVENT_ID"]]["MONEY"] = $arD["MONEY"];
                 $arrLegend[$arD["EVENT_ID"]]["COUNTER_TYPE"] = "DETAIL";
-                $arrLegend[$arD["EVENT_ID"]]["NAME"] = (strlen($arD["NAME"]) > 0) ? $arD["NAME"] : $arD["EVENT1"] . " / " . $arD["EVENT2"];
+                $arrLegend[$arD["EVENT_ID"]]["NAME"] = ($arD["NAME"] <> '') ? $arD["NAME"] : $arD["EVENT1"] . " / " . $arD["EVENT2"];
             } elseif ($summa == "Y") {
                 $arrDays[$arD["DATE_STAT"]]["COUNTER"] += $arD["COUNTER"];
                 $arrDays[$arD["DATE_STAT"]]["MONEY"] += $arD["MONEY"];
@@ -99,11 +104,11 @@ class CAllStatEventType
         $EVENT_ID = intval($arEventType["EVENT_ID"]);
 
         if ($EVENT_ID <= 0) {
-            if (strlen($event1) > 0 || strlen($event2) > 0) {
+            if ($event1 <> '' || $event2 <> '') {
                 // save to database
                 $arFields = Array(
-                    "EVENT1" => (strlen($event1) > 0) ? "'" . $DB->ForSql($event1, 200) . "'" : "null",
-                    "EVENT2" => (strlen($event2) > 0) ? "'" . $DB->ForSql($event2, 200) . "'" : "null",
+                    "EVENT1" => ($event1 <> '') ? "'" . $DB->ForSql($event1, 200) . "'" : "null",
+                    "EVENT2" => ($event2 <> '') ? "'" . $DB->ForSql($event2, 200) . "'" : "null",
                     "DATE_ENTER" => "null"
                 );
                 $EVENT_ID = $DB->Insert("b_stat_event", $arFields, $err_mess . __LINE__);
@@ -118,8 +123,8 @@ class CAllStatEventType
         $DB = CDatabase::GetModuleConnection('statistic');
         $event1 = $DB->ForSql(trim($event1), 200);
         $event2 = $DB->ForSql(trim($event2), 200);
-        $where1 = (strlen($event1) <= 0) ? "(EVENT1='' or EVENT1 is null)" : "(EVENT1 = '$event1')";
-        $where2 = (strlen($event2) <= 0) ? "(EVENT2='' or EVENT2 is null)" : "(EVENT2 = '$event2')";
+        $where1 = ($event1 == '') ? "(EVENT1='' or EVENT1 is null)" : "(EVENT1 = '$event1')";
+        $where2 = ($event2 == '') ? "(EVENT2='' or EVENT2 is null)" : "(EVENT2 = '$event2')";
         $strSql = "
 			SELECT
 				ID as EVENT_ID,
@@ -138,15 +143,15 @@ class CAllStatEventType
 
     public static function DynamicDays($EVENT_ID, $date1 = "", $date2 = "")
     {
-        $by = "";
-        $order = "";
         $arMaxMin = array();
         $arFilter = array("DATE1" => $date1, "DATE2" => $date2);
-        $z = CStatEventType::GetDynamicList($EVENT_ID, $by, $order, $arMaxMin, $arFilter);
+        $z = CStatEventType::GetDynamicList($EVENT_ID, '', '', $arMaxMin, $arFilter);
         $d = 0;
-        while ($zr = $z->Fetch())
-            if (intval($zr["COUNTER"]) > 0)
+        while ($zr = $z->Fetch()) {
+            if (intval($zr["COUNTER"]) > 0) {
                 $d++;
+            }
+        }
         return $d;
     }
 
@@ -155,14 +160,17 @@ class CAllStatEventType
     {
         $aMsg = array();
 
-        if (is_set($arFields, "EVENT1") && strlen($arFields["EVENT1"]) <= 0)
+        if (is_set($arFields, "EVENT1") && $arFields["EVENT1"] == '') {
             $aMsg[] = array("id" => "EVENT1", "text" => GetMessage("STAT_FORGOT_EVENT1"));
-        if (is_set($arFields, "EVENT2") && strlen($arFields["EVENT2"]) <= 0)
+        }
+        if (is_set($arFields, "EVENT2") && $arFields["EVENT2"] == '') {
             $aMsg[] = array("id" => "EVENT2", "text" => GetMessage("STAT_FORGOT_EVENT2"));
+        }
         if (intval($ID) == 0) {
             $rs = $this->GetByEvents($arFields["EVENT1"], $arFields["EVENT2"]);
-            if ($rs->Fetch())
+            if ($rs->Fetch()) {
                 $aMsg[] = array("id" => "EVENT1", "text" => GetMessage("STAT_WRONG_EVENT"));
+            }
         }
 
         if (!empty($aMsg)) {

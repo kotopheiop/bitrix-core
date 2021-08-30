@@ -94,9 +94,11 @@ class RestException
                     $e->getPrevious()
                 );
 
-                $ex->setAdditional(array(
-                    "argument" => $e->getParameter(),
-                ));
+                $ex->setAdditional(
+                    array(
+                        "argument" => $e->getParameter(),
+                    )
+                );
             }
         }
 

@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 use Bitrix\Main\Localization\Loc;
@@ -9,46 +10,57 @@ Loc::loadMessages(__FILE__);
 
 /** @var CMain $APPLICATION */
 
-if ($APPLICATION->GetGroupRight("sale") < "W")
+if ($APPLICATION->GetGroupRight("sale") < "W") {
     $APPLICATION->AuthForm(Loc::getMessage("SALE_ACCESS_DENIED"));
+}
 
-if ($_SERVER["REQUEST_METHOD"] == "POST" && !check_bitrix_sessid())
+if ($_SERVER["REQUEST_METHOD"] == "POST" && !check_bitrix_sessid()) {
     $APPLICATION->AuthForm(Loc::getMessage("SALE_ACCESS_DENIED"));
+}
 
-if (!\Bitrix\Main\Loader::includeModule('sale'))
+if (!\Bitrix\Main\Loader::includeModule('sale')) {
     $arResult["ERROR"] = Loc::getMessage("SALE_MODULE_NOT_INSTALLED");
+}
 
 $ebay = \Bitrix\Sale\TradingPlatform\Ebay\Ebay::getInstance();
 
-if (!$ebay->isActive())
-    LocalRedirect("/bitrix/admin/sale_ebay_general.php?lang=" . LANG . "&back_url=" . urlencode($APPLICATION->GetCurPageParam()));
+if (!$ebay->isActive()) {
+    LocalRedirect(
+        "/bitrix/admin/sale_ebay_general.php?lang=" . LANG . "&back_url=" . urlencode($APPLICATION->GetCurPageParam())
+    );
+}
 
 $errorMsg = "";
 $bSaved = false;
 
 $siteList = array();
 $defaultSite = "";
-$rsSites = CSite::GetList($by = "sort", $order = "asc", Array("ACTIVE" => "Y"));
+$rsSites = CSite::GetList("sort", "asc", Array("ACTIVE" => "Y"));
 
 
 while ($arRes = $rsSites->Fetch()) {
     $siteList[$arRes['ID']] = $arRes['NAME'];
 
-    if ($arRes["DEF"] == "Y")
+    if ($arRes["DEF"] == "Y") {
         $defaultSite = $arRes['ID'];
+    }
 }
 
-if (isset($_POST["SITE_ID"]) && array_key_exists($_POST["SITE_ID"], $siteList))
+if (isset($_POST["SITE_ID"]) && array_key_exists($_POST["SITE_ID"], $siteList)) {
     $SITE_ID = $_POST["SITE_ID"];
-else
+} else {
     $SITE_ID = $defaultSite;
+}
 
 $settings = $ebay->getSettings();
 
 if (isset($_POST["EBAY_SETTINGS"]) && is_array($_POST["EBAY_SETTINGS"])) {
     $site = !empty($_POST["SITE_ID_INITIAL"]) && $SITE_ID == $_POST["SITE_ID_INITIAL"] ? $SITE_ID : $_POST["SITE_ID_INITIAL"];
 
-    $_POST["EBAY_SETTINGS"]["FEEDS"] = \Bitrix\Sale\TradingPlatform\Ebay\Agent::update($site, $_POST["EBAY_SETTINGS"]["FEEDS"]);
+    $_POST["EBAY_SETTINGS"]["FEEDS"] = \Bitrix\Sale\TradingPlatform\Ebay\Agent::update(
+        $site,
+        $_POST["EBAY_SETTINGS"]["FEEDS"]
+    );
 
     if (is_array($settings[$site])) {
         $settings[$site] = array_merge($settings[$site], $_POST["EBAY_SETTINGS"]);
@@ -71,48 +83,58 @@ unset ($settings);
 $ebayCategoriesCount = 0;
 $ebayCategoriesUpdateDate = "";
 
-$res = \Bitrix\Sale\TradingPlatform\Ebay\CategoryTable::getList(array(
-    "select" => array("CNT", "LAST_UPDATE"),
-    "runtime" => array(
-        new \Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(1)'),
-        new \Bitrix\Main\Entity\ExpressionField('LAST_UPDATE', 'MAX(LAST_UPDATE)')
+$res = \Bitrix\Sale\TradingPlatform\Ebay\CategoryTable::getList(
+    array(
+        "select" => array("CNT", "LAST_UPDATE"),
+        "runtime" => array(
+            new \Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(1)'),
+            new \Bitrix\Main\Entity\ExpressionField('LAST_UPDATE', 'MAX(LAST_UPDATE)')
+        )
     )
-));
+);
 
 if ($cat = $res->fetch()) {
-    if (!empty($cat["CNT"]))
+    if (!empty($cat["CNT"])) {
         $ebayCategoriesCount = $cat["CNT"];
+    }
 
-    if (!empty($cat["LAST_UPDATE"]))
+    if (!empty($cat["LAST_UPDATE"])) {
         $ebayCategoriesUpdateDate = $cat["LAST_UPDATE"]->toString();
+    }
 }
 
 $ebayCategoriesVars = 0;
 
-$res = \Bitrix\Sale\TradingPlatform\Ebay\CategoryVariationTable::getList(array(
-    "select" => array("CNT"),
-    "runtime" => array(
-        new \Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(1)'),
+$res = \Bitrix\Sale\TradingPlatform\Ebay\CategoryVariationTable::getList(
+    array(
+        "select" => array("CNT"),
+        "runtime" => array(
+            new \Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(1)'),
+        )
     )
-));
+);
 
-if ($var = $res->fetch())
+if ($var = $res->fetch()) {
     $ebayCategoriesVars = $var["CNT"];
+}
 
 $defaultFeedIntervals = \Bitrix\Sale\TradingPlatform\Helper::getDefaultFeedIntervals();
 
-$res = \Bitrix\Sale\TradingPlatform\Ebay\Feed\ResultsTable::getList(array(
-    "select" => array("FEED_TYPE", "MAX_UPLOAD_TIME"),
-    "group" => array("FEED_TYPE"),
-    "runtime" => array(
-        new \Bitrix\Main\Entity\ExpressionField('MAX_UPLOAD_TIME', 'MAX(UPLOAD_TIME)'),
+$res = \Bitrix\Sale\TradingPlatform\Ebay\Feed\ResultsTable::getList(
+    array(
+        "select" => array("FEED_TYPE", "MAX_UPLOAD_TIME"),
+        "group" => array("FEED_TYPE"),
+        "runtime" => array(
+            new \Bitrix\Main\Entity\ExpressionField('MAX_UPLOAD_TIME', 'MAX(UPLOAD_TIME)'),
+        )
     )
-));
+);
 
 $results = array();
 
-while ($lastUpdates = $res->fetch())
+while ($lastUpdates = $res->fetch()) {
     $results[$lastUpdates["FEED_TYPE"]] = $lastUpdates["MAX_UPLOAD_TIME"];
+}
 
 $filter = array("LOGIC" => "OR");
 
@@ -123,14 +145,17 @@ foreach ($results as $feedType => $uploadTime) {
     );
 }
 
-$res = \Bitrix\Sale\TradingPlatform\Ebay\Feed\ResultsTable::getList(array(
-    'filter' => $filter
-));
+$res = \Bitrix\Sale\TradingPlatform\Ebay\Feed\ResultsTable::getList(
+    array(
+        'filter' => $filter
+    )
+);
 
 $results = array();
 
-while ($lastUpdates = $res->fetch())
+while ($lastUpdates = $res->fetch()) {
     $results[$lastUpdates["FEED_TYPE"]] = $lastUpdates;
+}
 
 $arTabs = array(
     array(
@@ -153,11 +178,13 @@ $APPLICATION->SetTitle(Loc::getMessage("SALE_EBAY_TITLE"));
 
 require_once($DOCUMENT_ROOT . BX_ROOT . "/modules/main/include/prolog_admin_after.php");
 
-if (strlen($errorMsg) > 0)
+if ($errorMsg <> '') {
     CAdminMessage::ShowMessage(array("MESSAGE" => $errorMsg, "TYPE" => "ERROR", "HTML" => true));
+}
 
-if ($bSaved)
+if ($bSaved) {
     CAdminMessage::ShowMessage(array("MESSAGE" => GetMessage("SALE_EBAY_SETTINGS_SAVED"), "TYPE" => "OK"));
+}
 
 ?>
     <form method="post" action="<?= $APPLICATION->GetCurPage() ?>?lang=<?= LANGUAGE_ID ?>"
@@ -167,8 +194,12 @@ if ($bSaved)
         <table width="100%">
             <tr>
                 <td align="left">
-                    <?= Loc::getMessage("SALE_EBAY_SITE") ?>
-                    : <?= CLang::SelectBox("SITE_ID", $SITE_ID, "", "this.form.submit();") ?>
+                    <?= Loc::getMessage("SALE_EBAY_SITE") ?>: <?= CLang::SelectBox(
+                        "SITE_ID",
+                        $SITE_ID,
+                        "",
+                        "this.form.submit();"
+                    ) ?>
                 </td>
                 <td align="right">
                     <img alt="eBay logo" src="/bitrix/images/sale/ebay/logo.png" style="width: 100px; height: 67px;">
@@ -182,7 +213,7 @@ if ($bSaved)
 
         ?>
         <? foreach (array("PRODUCT", "INVENTORY", "ORDER") as $feedType): //"IMAGE",?>
-            <? $smallFeedType = strtolower($feedType); ?>
+            <? $smallFeedType = mb_strtolower($feedType); ?>
             <tr class="heading">
                 <td colspan="2"><?= Loc::getMessage("SALE_EBAY_FEED_" . $feedType) ?></td>
             </tr>
@@ -190,9 +221,13 @@ if ($bSaved)
                 <td width="40%"><span><?= Loc::getMessage("SALE_EBAY_FEED_INTERVAL") ?>:</span></td>
                 <td width="60%">
                     <input type="text" name="EBAY_SETTINGS[FEEDS][<?= $feedType ?>][INTERVAL]" size="5" maxlength="255"
-                           value="<?= isset($siteSettings["FEEDS"][$feedType]["INTERVAL"]) ? htmlspecialcharsbx($siteSettings["FEEDS"][$feedType]["INTERVAL"]) : $defaultFeedIntervals[$feedType] ?>">
+                           value="<?= isset($siteSettings["FEEDS"][$feedType]["INTERVAL"]) ? htmlspecialcharsbx(
+                               $siteSettings["FEEDS"][$feedType]["INTERVAL"]
+                           ) : $defaultFeedIntervals[$feedType] ?>">
                     <input type="hidden" name="EBAY_SETTINGS[FEEDS][<?= $feedType ?>][AGENT_ID]"
-                           value="<?= isset($siteSettings["FEEDS"][$feedType]["AGENT_ID"]) ? htmlspecialcharsbx($siteSettings["FEEDS"][$feedType]["AGENT_ID"]) : 0 ?>">
+                           value="<?= isset($siteSettings["FEEDS"][$feedType]["AGENT_ID"]) ? htmlspecialcharsbx(
+                               $siteSettings["FEEDS"][$feedType]["AGENT_ID"]
+                           ) : 0 ?>">
                 </td>
             </tr>
             <tr>
@@ -213,8 +248,10 @@ if ($bSaved)
                     } else {
                         $tmp = Xml2Array::convert($results[$smallFeedType]["RESULTS"], false);
 
-                        if (strpos($results[$smallFeedType]["RESULTS"], "<Errors>") !== false) {
-                            $feedResMess = '<span style="color: red; font-weight: bold;">' . Loc::getMessage("SALE_EBAY_RES_ERROR") . '</span>';
+                        if (mb_strpos($results[$smallFeedType]["RESULTS"], "<Errors>") !== false) {
+                            $feedResMess = '<span style="color: red; font-weight: bold;">' . Loc::getMessage(
+                                    "SALE_EBAY_RES_ERROR"
+                                ) . '</span>';
 
                             if (isset($tmp["ProductResult"])) {
                                 $productResults = Xml2Array::normalize($tmp["ProductResult"]);
@@ -223,18 +260,26 @@ if ($bSaved)
                                     if (isset($productResult["Errors"]["Error"])) {
                                         $errors = Xml2Array::normalize($productResult["Errors"]["Error"]);
 
-                                        foreach ($errors as $error)
-                                            $feedResErrDescr .= Loc::getMessage("SALE_EBAY_ERROR") . ": " . $error["Message"] . " " . Loc::getMessage("SALE_EBAY_CODE") . ": " . $error["Code"] . "<br>\n";
+                                        foreach ($errors as $error) {
+                                            $feedResErrDescr .= Loc::getMessage(
+                                                    "SALE_EBAY_ERROR"
+                                                ) . ": " . $error["Message"] . " " . Loc::getMessage(
+                                                    "SALE_EBAY_CODE"
+                                                ) . ": " . $error["Code"] . "<br>\n";
+                                        }
                                     }
                                 }
                             }
                         }
 
-                        if (strpos($results[$smallFeedType]["RESULTS"], "<Warnings>") !== false) {
-                            if (strlen($feedResMess) > 0)
+                        if (mb_strpos($results[$smallFeedType]["RESULTS"], "<Warnings>") !== false) {
+                            if ($feedResMess <> '') {
                                 $feedResMess .= ", ";
+                            }
 
-                            $feedResMess .= '<span style="color: orange; font-weight: bold;">' . Loc::getMessage("SALE_EBAY_RES_WARNING") . '</span>';
+                            $feedResMess .= '<span style="color: orange; font-weight: bold;">' . Loc::getMessage(
+                                    "SALE_EBAY_RES_WARNING"
+                                ) . '</span>';
 
                             $feedResErrDescr .= "<br>\n";
 
@@ -245,23 +290,31 @@ if ($bSaved)
                                     if (isset($productResult["Warnings"]["Warning"])) {
                                         $warnings = Xml2Array::normalize($productResult["Warnings"]["Warning"]);
 
-                                        foreach ($warnings as $warning)
-                                            $feedResErrDescr .= Loc::getMessage("SALE_EBAY_CODE") . Loc::getMessage("SALE_EBAY_WARNING") . ": " . $warning["Message"] . " " . Loc::getMessage("SALE_EBAY_CODE") . ": " . $warning["Code"] . "<br>\n";
+                                        foreach ($warnings as $warning) {
+                                            $feedResErrDescr .= Loc::getMessage("SALE_EBAY_CODE") . Loc::getMessage(
+                                                    "SALE_EBAY_WARNING"
+                                                ) . ": " . $warning["Message"] . " " . Loc::getMessage(
+                                                    "SALE_EBAY_CODE"
+                                                ) . ": " . $warning["Code"] . "<br>\n";
+                                        }
                                     }
                                 }
                             }
                         }
                     }
 
-                    if ($feedResMess == "")
-                        $feedResMess = '<span style="color: green; font-weight: bold;">' . Loc::getMessage("SALE_EBAY_RES_SUCCESS") . '</span>';
+                    if ($feedResMess == "") {
+                        $feedResMess = '<span style="color: green; font-weight: bold;">' . Loc::getMessage(
+                                "SALE_EBAY_RES_SUCCESS"
+                            ) . '</span>';
+                    }
 
                     echo $feedResMess;
                     ?>
 
                 </td>
             </tr>
-            <? if (strlen($feedResErrDescr) > 0): ?>
+            <? if ($feedResErrDescr <> ''): ?>
                 <tr>
                     <td><span><?= Loc::getMessage("SALE_EBAY_RES_MESSAGES") ?>:</span></td>
                     <td>
@@ -292,8 +345,9 @@ if ($bSaved)
         <tr>
             <td width="40%">&nbsp;</td>
             <td width="60%"><input type="button" value="<?= Loc::getMessage("SALE_EBAY_REFRESH_DATA"); ?>"
-                                   onclick="BX.Sale.EbayAdmin.refreshCategoriesData('<?= CUtil::JSEscape($SITE_ID) ?>');">
-            </td>
+                                   onclick="BX.Sale.EbayAdmin.refreshCategoriesData('<?= CUtil::JSEscape(
+                                       $SITE_ID
+                                   ) ?>');"></td>
         </tr>
         <tr class="heading">
             <td colspan="2"><?= Loc::getMessage("SALE_EBAY_META_CAT_PROPS") ?></td>
@@ -305,15 +359,18 @@ if ($bSaved)
         <tr>
             <td width="40%">&nbsp;</td>
             <td width="60%"><input type="button" value="<?= Loc::getMessage("SALE_EBAY_REFRESH_DATA"); ?>"
-                                   onclick="BX.Sale.EbayAdmin.refreshCategoriesPropsData('<?= CUtil::JSEscape($SITE_ID) ?>');">
-            </td>
+                                   onclick="BX.Sale.EbayAdmin.refreshCategoriesPropsData('<?= CUtil::JSEscape(
+                                       $SITE_ID
+                                   ) ?>');"></td>
         </tr>
         <?
 
-        $tabControl->Buttons(array(
-            "btnSave" => true,
-            "btnApply" => false
-        ));
+        $tabControl->Buttons(
+            array(
+                "btnSave" => true,
+                "btnApply" => false
+            )
+        );
 
         $tabControl->End();
 

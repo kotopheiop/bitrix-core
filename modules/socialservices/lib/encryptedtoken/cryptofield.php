@@ -24,27 +24,34 @@ class CryptoField extends \Bitrix\Main\ORM\Fields\CryptoField
 
     public static function cryptoAvailable($key = '')
     {
-        if (!\Bitrix\Main\Config\Option::get("socialservices", "allow_encrypted_tokens", false))
+        if (!\Bitrix\Main\Config\Option::get("socialservices", "allow_encrypted_tokens", false)) {
             return false;
+        }
 
         return parent::cryptoAvailable($key);
     }
 
     public function decrypt($data)
     {
-        if ($this->encryptionComplete)
+        if ($this->encryptionComplete) {
             return parent::decrypt($data);
+        }
 
-        if ($data == '')
+        if ($data == '') {
             return $data;
+        }
 
         try {
             $value = base64_decode($data);
             if (false === $value) // not base64 decoded so not encrypted
+            {
                 return $data;
+            }
 
             if (mb_strlen($value, 'latin1') <= $this->ivLength) // too short to be encrypted
+            {
                 return $data;
+            }
 
             $value = static::$cipher->decrypt($value, $this->cryptoKey);
             return $value;

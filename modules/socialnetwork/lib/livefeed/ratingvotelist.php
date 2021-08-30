@@ -32,7 +32,9 @@ final class RatingVoteList extends Provider
             $params = array();
         }
 
-        $userId = (isset($params["user_id"]) && intval($params["user_id"]) > 0 ? intval($params["user_id"]) : $USER->getId());
+        $userId = (isset($params["user_id"]) && intval($params["user_id"]) > 0 ? intval(
+            $params["user_id"]
+        ) : $USER->getId());
         $contentEntityId = $this->getEntityId();
 
         list($ratingVoteTypeId, $ratingVoteEntityId) = explode('|', $contentEntityId);
@@ -45,9 +47,11 @@ final class RatingVoteList extends Provider
         }
 
         $CIMNotify = new \CIMNotify();
-        $CIMNotify->markNotifyReadBySubTag(array(
-            "RATING|" . $ratingVoteTypeId . "|" . $ratingVoteEntityId . '|' . $userId
-        ));
+        $CIMNotify->markNotifyReadBySubTag(
+            array(
+                "RATING|" . $ratingVoteTypeId . "|" . $ratingVoteEntityId . '|' . $userId
+            )
+        );
 
         return array(
             'success' => true,

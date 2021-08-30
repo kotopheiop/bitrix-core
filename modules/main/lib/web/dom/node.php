@@ -139,7 +139,6 @@ abstract class Node
     {
         $child = null;
         foreach ($this->getChildNodesArray() as $child) {
-
         }
 
         return $child;
@@ -230,7 +229,7 @@ abstract class Node
         return false;
     }
 
-    /*
+    /**
      * Adds the node newChild to the end of the list of children of this node.
      * If the newChild is already in the tree, it is first removed.
      * */
@@ -242,7 +241,10 @@ abstract class Node
     public function insertBefore(Node $newChild, Node $refChild = null, $removeExist = true)
     {
         if ($newChild->getOwnerDocument() !== $this->getOwnerDocument()) {
-            throw new DomException('Node newChild was created from a different document than the one that created this node', DomException::WRONG_DOCUMENT_ERR);
+            throw new DomException(
+                'Node newChild was created from a different document than the one that created this node',
+                DomException::WRONG_DOCUMENT_ERR
+            );
         }
 
         if ($refChild && !$this->haveChild($refChild)) {
@@ -339,16 +341,17 @@ abstract class Node
         $this->getOwnerDocument()->getParser()->parse($html, $this);
     }
 
-    /*
+    /**
      * @param string $queryString
      * @return Node[]
      * */
+
     public function querySelectorAll($queryString)
     {
         return QueryEngine::getQuerySelectorEngine()->query($queryString, $this);
     }
 
-    /*
+    /**
      * @param string $queryString
      * @return Node|null
      * */

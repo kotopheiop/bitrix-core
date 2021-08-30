@@ -1,4 +1,5 @@
 <?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 /** @var CMain $APPLICATION */
 $sTableID = "tbl_diagram";
@@ -10,23 +11,26 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/img.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/prolog.php");
 
 $STAT_RIGHT = $APPLICATION->GetGroupRight("statistic");
-if ($STAT_RIGHT == "D") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($STAT_RIGHT == "D") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 IncludeModuleLangFile(__FILE__);
 InitSorting();
 $err_mess = "File: " . __FILE__ . "<br>Line: ";
 define("HELP_FILE", "searcher_list.php");
 
 $arrDef = array();
-$rs = CSearcher::GetList(($v1 = "s_total_hits"), ($v2 = "desc"), array(), $v3);
+$rs = CSearcher::GetList("s_total_hits", "desc");
 while ($ar = $rs->Fetch()) {
-    if ($ar["DIAGRAM_DEFAULT"] == "Y") $arrDef[] = $ar["ID"];
+    if ($ar["DIAGRAM_DEFAULT"] == "Y") {
+        $arrDef[] = $ar["ID"];
+    }
     $arrSEARCHERS[$ar["ID"]] = $ar["NAME"] . " [" . $ar["ID"] . "]";
 }
 
 if ($lAdmin->IsDefaultFilter()) {
     if (is_array($arrSEARCHERS)) {
-        reset($arrSEARCHERS);
-        while (list($key, $value) = each($arrSEARCHERS)) {
+        foreach ($arrSEARCHERS as $key => $value) {
             if ($i <= 19 && in_array($key, $arrDef)) {
                 $find_searchers[] = $key;
                 $i++;
@@ -53,25 +57,27 @@ $arFilter = Array(
     "DATE2_PERIOD" => $find_date2
 );
 
-if (strlen($arFilter["DATE1_PERIOD"]) > 0 || strlen($arFilter["DATE2_PERIOD"]) > 0)
+if ($arFilter["DATE1_PERIOD"] <> '' || $arFilter["DATE2_PERIOD"] <> '') {
     $period = "Y";
+}
 
 ##### graph
 $sum = 0;
 $arr = array();
 if (is_array($find_searchers) && count($find_searchers) > 0) {
     $by = ($period == "Y") ? "s_period_hits" : "s_total_hits";
-    $w = CSearcher::GetList($by, ($order = "desc"), $arFilter, $is_filtered);
+    $w = CSearcher::GetList($by, "desc", $arFilter);
     while ($wr = $w->Fetch()) {
         $total++;
         $count = ($period == "Y") ? $wr["PERIOD_HITS"] : $wr["TOTAL_HITS"];
         $sum += $count;
-        if ($count > 0)
+        if ($count > 0) {
             $arr[] = array(
                 "ID" => $wr["ID"],
                 "NAME" => $wr["NAME"],
                 "COUNTER" => $count,
             );
+        }
     }
 }
 
@@ -83,8 +89,9 @@ if ($sum > 0):?>
                 <td><?
                     $diameter = COption::GetOptionString("statistic", "DIAGRAM_DIAMETER");
                     $url = "searcher_diagram.php?lang=" . LANGUAGE_ID;
-                    foreach ($find_searchers as $sid)
+                    foreach ($find_searchers as $sid) {
                         $url .= "&find_searchers[]=" . urlencode($sid);
+                    }
                     $url .= "&find_date1=" . $arFilter["DATE1_PERIOD"] . "&find_date2=" . $arFilter["DATE2_PERIOD"];
 
                     ?><img class="graph" src="<? echo htmlspecialcharsbx($url) ?>" width="<?= $diameter ?>"
@@ -107,13 +114,24 @@ if ($sum > 0):?>
                                 </td>
                                 <td nowrap class="number"><? echo sprintf("%01.2f", $procent) . "%" ?></td>
                                 <td nowrap class="number">(<a title="<? echo GetMessage("STAT_VIEW_SEARCHER_HITS") ?>"
-                                                              href="<? echo htmlspecialcharsbx("/bitrix/admin/hit_searcher_list.php?lang=" . urlencode(LANGUAGE_ID) . "&find_searcher_id=" . urlencode($id) . "&find_date1=" . urlencode($arFilter["DATE1_PERIOD"]) . "&find_date2=" . urlencode($arFilter["DATE2_PERIOD"]) . "&set_filter=Y") ?>"><?= $sector["COUNTER"] ?></a>)
+                                                              href="<? echo htmlspecialcharsbx(
+                                                                  "/bitrix/admin/hit_searcher_list.php?lang=" . urlencode(
+                                                                      LANGUAGE_ID
+                                                                  ) . "&find_searcher_id=" . urlencode(
+                                                                      $id
+                                                                  ) . "&find_date1=" . urlencode(
+                                                                      $arFilter["DATE1_PERIOD"]
+                                                                  ) . "&find_date2=" . urlencode(
+                                                                      $arFilter["DATE2_PERIOD"]
+                                                                  ) . "&set_filter=Y"
+                                                              ) ?>"><?= $sector["COUNTER"] ?></a>)
                                 </td>
                                 <td nowrap>[<a title="<?= GetMessage("STAT_SEARCHER_LIST_OPEN") ?>"
                                                href="searcher_list.php?lang=<?= LANGUAGE_ID ?>&find_id=<?= $id ?>&set_filter=Y"><?= $id ?></a>]
                                     <a title="<? echo GetMessage("STAT_VIEW_SEARCHER_GRAPH") ?>"
-                                       href="searcher_graph_list.php?lang=<?= LANGUAGE_ID ?>&find_searchers[]=<?= $id ?>&set_filter=Y"><?= htmlspecialcharsbx($sector["NAME"]) ?></a>
-                                </td>
+                                       href="searcher_graph_list.php?lang=<?= LANGUAGE_ID ?>&find_searchers[]=<?= $id ?>&set_filter=Y"><?= htmlspecialcharsbx(
+                                            $sector["NAME"]
+                                        ) ?></a></td>
                             </tr>
                             <?
                         }
@@ -148,8 +166,14 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
         ?>
         <tr>
             <td width="0%" nowrap><? echo GetMessage("STAT_F_PERIOD") . ":" ?></td>
-            <td width="0%"
-                nowrap><? echo CalendarPeriod("find_date1", $find_date1, "find_date2", $find_date2, "form1", "Y") ?></td>
+            <td width="0%" nowrap><? echo CalendarPeriod(
+                    "find_date1",
+                    $find_date1,
+                    "find_date2",
+                    $find_date2,
+                    "form1",
+                    "Y"
+                ) ?></td>
         </tr>
         <?
         if (is_array($arrSEARCHERS)):
@@ -166,15 +190,27 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
                     $kb = array_search($b, $find_searchers);
                 }
                 if ($ka !== false && $kb !== false) {
-                    if ($ka == $kb) $ret = 0;
-                    elseif (strtolower($ka) > strtolower($kb)) $ret = 1;
-                    else $ret = -1;
+                    if ($ka == $kb) {
+                        $ret = 0;
+                    } elseif (mb_strtolower($ka) > mb_strtolower($kb)) {
+                        $ret = 1;
+                    } else {
+                        $ret = -1;
+                    }
                 }
-                if ($ka === false && $kb !== false) $ret = 1;
-                if ($ka !== false && $kb === false) $ret = -1;
+                if ($ka === false && $kb !== false) {
+                    $ret = 1;
+                }
+                if ($ka !== false && $kb === false) {
+                    $ret = -1;
+                }
                 if ($ret == 0) {
-                    if ($arrSEARCHERS_lower[$a] > $arrSEARCHERS_lower[$b]) $ret = 1;
-                    if ($arrSEARCHERS_lower[$a] < $arrSEARCHERS_lower[$b]) $ret = -1;
+                    if ($arrSEARCHERS_lower[$a] > $arrSEARCHERS_lower[$b]) {
+                        $ret = 1;
+                    }
+                    if ($arrSEARCHERS_lower[$a] < $arrSEARCHERS_lower[$b]) {
+                        $ret = -1;
+                    }
                 }
                 return $ret;
             }
@@ -190,8 +226,15 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
             <tr valign="top">
                 <td width="0%" nowrap><? echo GetMessage("STAT_F_SEACHERS") ?><br><IMG
                             SRC="/bitrix/images/statistic/mouse.gif" WIDTH="44" HEIGHT="21" BORDER=0 ALT=""></td>
-                <td width="0%"
-                    nowrap><? echo SelectBoxMFromArray("find_searchers[]", array("REFERENCE" => $ref, "REFERENCE_ID" => $ref_id), $find_searchers, "", false, "11", "' style=\"width:100%\""); ?></td>
+                <td width="0%" nowrap><? echo SelectBoxMFromArray(
+                        "find_searchers[]",
+                        array("REFERENCE" => $ref, "REFERENCE_ID" => $ref_id),
+                        $find_searchers,
+                        "",
+                        false,
+                        "11",
+                        "' style=\"width:100%\""
+                    ); ?></td>
             </tr>
         <?
         endif;
@@ -202,8 +245,9 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
     </form>
 
 <?
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 
 $aMenu = array(
     array(

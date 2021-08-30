@@ -29,19 +29,21 @@ abstract class Base
     public function prepareFieldInfos($fields)
     {
         $result = [];
-        foreach ($fields as $name => $info) {
-            $attributs = isset($info['ATTRIBUTES']) ? $info['ATTRIBUTES'] : [];
+        if (is_array($fields)) {
+            foreach ($fields as $name => $info) {
+                $attributs = isset($info['ATTRIBUTES']) ? $info['ATTRIBUTES'] : [];
 
-            if (in_array(Attributes::Hidden, $attributs, true)) {
-                continue;
+                if (in_array(Attributes::Hidden, $attributs, true)) {
+                    continue;
+                }
+
+                $result[$name] = array(
+                    'TYPE' => $info['TYPE'],
+                    'IS_REQUIRED' => in_array(Attributes::Required, $attributs, true),
+                    'IS_READ_ONLY' => in_array(Attributes::ReadOnly, $attributs, true),
+                    'IS_IMMUTABLE' => in_array(Attributes::Immutable, $attributs, true)
+                );
             }
-
-            $result[$name] = array(
-                'TYPE' => $info['TYPE'],
-                'IS_REQUIRED' => in_array(Attributes::Required, $attributs, true),
-                'IS_READ_ONLY' => in_array(Attributes::ReadOnly, $attributs, true),
-                'IS_IMMUTABLE' => in_array(Attributes::Immutable, $attributs, true)
-            );
         }
 
         return $result;
@@ -50,7 +52,18 @@ abstract class Base
     public function getSettableFields()
     {
         return array_keys(
-            $this->getListFieldInfo($this->getFields(), ['filter' => ['ignoredAttributes' => [Attributes::Hidden, Attributes::ReadOnly, Attributes::Immutable]]])
+            $this->getListFieldInfo(
+                $this->getFields(),
+                [
+                    'filter' => [
+                        'ignoredAttributes' => [
+                            Attributes::Hidden,
+                            Attributes::ReadOnly,
+                            Attributes::Immutable
+                        ]
+                    ]
+                ]
+            )
         );
     }
 
@@ -143,7 +156,10 @@ abstract class Base
 
     public function internalizeFieldsList($arguments)
     {
-        $fieldsInfo = $this->getListFieldInfo($this->getFields(), ['filter' => ['ignoredAttributes' => [Attributes::Hidden]]]);
+        $fieldsInfo = $this->getListFieldInfo(
+            $this->getFields(),
+            ['filter' => ['ignoredAttributes' => [Attributes::Hidden]]]
+        );
 
         $filter = isset($arguments['filter']) ? $this->internalizeFilterFields($arguments['filter'], $fieldsInfo) : [];
         $select = isset($arguments['select']) ? $this->internalizeSelectFields($arguments['select'], $fieldsInfo) : [];
@@ -245,7 +261,10 @@ abstract class Base
         $fieldsInfo = empty($fieldsInfo) ? $this->getFields() : $fieldsInfo;
 
         if (is_array($fields) && count($fields) > 0) {
-            $listFieldsInfo = $this->getListFieldInfo($fieldsInfo, ['filter' => ['ignoredAttributes' => [Attributes::Hidden]]]);
+            $listFieldsInfo = $this->getListFieldInfo(
+                $fieldsInfo,
+                ['filter' => ['ignoredAttributes' => [Attributes::Hidden]]]
+            );
 
             foreach ($fields as $rawName => $value) {
                 $field = \CSqlUtil::GetFilterOperation($rawName);
@@ -255,7 +274,7 @@ abstract class Base
                     continue;
                 }
 
-                $operation = substr($rawName, 0, strlen($rawName) - strlen($field['FIELD']));
+                $operation = mb_substr($rawName, 0, mb_strlen($rawName) - mb_strlen($field['FIELD']));
                 if (isset($info['FORBIDDEN_FILTERS'])
                     && is_array($info['FORBIDDEN_FILTERS'])
                     && in_array($operation, $info['FORBIDDEN_FILTERS'], true)) {
@@ -275,7 +294,10 @@ abstract class Base
 
         $fieldsInfo = empty($fieldsInfo) ? $this->getFields() : $fieldsInfo;
 
-        $listFieldsInfo = $this->getListFieldInfo($fieldsInfo, ['filter' => ['ignoredAttributes' => [Attributes::Hidden]]]);
+        $listFieldsInfo = $this->getListFieldInfo(
+            $fieldsInfo,
+            ['filter' => ['ignoredAttributes' => [Attributes::Hidden]]]
+        );
 
         if (empty($fields) || in_array('*', $fields, true)) {
             $result = array_keys($listFieldsInfo);
@@ -301,7 +323,10 @@ abstract class Base
 
         if (is_array($fields)
             && count($fields) > 0) {
-            $listFieldsInfo = $this->getListFieldInfo($fieldsInfo, ['filter' => ['ignoredAttributes' => [Attributes::Hidden]]]);
+            $listFieldsInfo = $this->getListFieldInfo(
+                $fieldsInfo,
+                ['filter' => ['ignoredAttributes' => [Attributes::Hidden]]]
+            );
 
             foreach ($fields as $field => $order) {
                 $info = isset($listFieldsInfo[$field]) ? $listFieldsInfo[$field] : null;
@@ -363,7 +388,7 @@ abstract class Base
             if ($fieldsIsAlias) {
                 if (isset($rewriteFields[$field['FIELD']]['REFERENCE_FIELD'])) {
                     $originalName = $rewriteFields[$field['FIELD']]['REFERENCE_FIELD'];
-                    $operation = substr($rawName, 0, strlen($rawName) - strlen($field['FIELD']));
+                    $operation = mb_substr($rawName, 0, mb_strlen($rawName) - mb_strlen($field['FIELD']));
                     $result[$operation . $originalName] = $value;
                 }
             } else {
@@ -409,7 +434,10 @@ abstract class Base
 
         $fieldsInfo = empty($fieldsInfo) ? $this->getFields() : $fieldsInfo;
 
-        $listFieldsInfo = $this->getListFieldInfo($fieldsInfo, ['filter' => ['ignoredAttributes' => [Attributes::Hidden]]]);
+        $listFieldsInfo = $this->getListFieldInfo(
+            $fieldsInfo,
+            ['filter' => ['ignoredAttributes' => [Attributes::Hidden]]]
+        );
 
         if (is_array($list) && count($list) > 0) {
             foreach ($list as $k => $item) {
@@ -425,7 +453,10 @@ abstract class Base
     public function externalizeFields($fields)
     {
         $result = [];
-        $fieldsInfo = $this->getListFieldInfo($this->getFields(), ['filter' => ['ignoredAttributes' => [Attributes::Hidden]]]);
+        $fieldsInfo = $this->getListFieldInfo(
+            $this->getFields(),
+            ['filter' => ['ignoredAttributes' => [Attributes::Hidden]]]
+        );
 
         if (is_array($fields) && count($fields) > 0) {
             foreach ($fields as $name => $value) {
@@ -457,8 +488,9 @@ abstract class Base
     {
         $result = [];
         if (is_array($list) && count($list) > 0) {
-            foreach ($list as $k => $fields)
+            foreach ($list as $k => $fields) {
                 $result[$k] = $this->externalizeFields($fields);
+            }
         }
         return $result;
     }
@@ -504,8 +536,9 @@ abstract class Base
         $r = new Result();
 
         $required = $this->checkRequiredFieldsAdd($fields);
-        if (!$required->isSuccess())
+        if (!$required->isSuccess()) {
             $r->addError(new Error('Required fields: ' . implode(', ', $required->getErrorMessages())));
+        }
 
         return $r;
     }
@@ -515,8 +548,9 @@ abstract class Base
         $r = new Result();
 
         $required = $this->checkRequiredFieldsUpdate($fields);
-        if (!$required->isSuccess())
+        if (!$required->isSuccess()) {
             $r->addError(new Error('Required fields: ' . implode(', ', $required->getErrorMessages())));
+        }
 
         return $r;
     }
@@ -526,8 +560,9 @@ abstract class Base
         $r = new Result();
 
         $required = $this->checkRequiredFieldsModify($fields);
-        if (!$required->isSuccess())
+        if (!$required->isSuccess()) {
             $r->addError(new Error('Required fields: ' . implode(' ', $required->getErrorMessages())));
+        }
 
         return $r;
     }
@@ -539,18 +574,24 @@ abstract class Base
 
     protected function checkRequiredFieldsAdd($fields)
     {
-        return $this->checkRequiredFields($fields, $this->getListFieldInfo(
-            $this->getFields(),
-            ['filter' => ['ignoredAttributes' => [Attributes::Hidden, Attributes::ReadOnly]]]
-        ));
+        return $this->checkRequiredFields(
+            $fields,
+            $this->getListFieldInfo(
+                $this->getFields(),
+                ['filter' => ['ignoredAttributes' => [Attributes::Hidden, Attributes::ReadOnly]]]
+            )
+        );
     }
 
     protected function checkRequiredFieldsUpdate($fields)
     {
-        return $this->checkRequiredFields($fields, $this->getListFieldInfo(
-            $this->getFields(),
-            ['filter' => ['ignoredAttributes' => [Attributes::Hidden, Attributes::ReadOnly, Attributes::Immutable]]]
-        ));
+        return $this->checkRequiredFields(
+            $fields,
+            $this->getListFieldInfo(
+                $this->getFields(),
+                ['filter' => ['ignoredAttributes' => [Attributes::Hidden, Attributes::ReadOnly, Attributes::Immutable]]]
+            )
+        );
     }
 
     /**
@@ -574,8 +615,9 @@ abstract class Base
             if (in_array($name, $delRequiredFields)) {
                 continue;
             } elseif ($info['IS_REQUIRED'] == 'Y' || in_array($name, $addRequiredFields)) {
-                if (!is_set($fields, $name))
+                if (!is_set($fields, $name)) {
                     $r->addError(new Error($this->convertKeysToCamelCase($name)));
+                }
             }
         }
 

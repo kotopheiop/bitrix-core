@@ -8,8 +8,12 @@
 
 namespace Bitrix\Iblock;
 
+use Bitrix\Iblock\ORM\ElementEntity;
+use Bitrix\Iblock\ORM\ElementV1Entity;
 use Bitrix\Iblock\ORM\PropertyToField;
+use Bitrix\Iblock\ORM\ValueStorageEntity;
 use Bitrix\Iblock\ORM\ValueStorageTable;
+use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Entity;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\StringField;
@@ -21,24 +25,41 @@ use Bitrix\Main\SystemException;
  */
 class Property extends EO_Property
 {
-    /** @var Entity */
+    /** @var ValueStorageEntity */
     protected $valueEntity;
 
     /**
      * Generates personal property entity
      *
+     * @param ElementEntity $elementEntity
+     *
      * @return Entity|null
+     * @throws SystemException
      * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\SystemException
+     * @throws \Bitrix\Main\ObjectPropertyException
      */
-    public function getValueEntity()
+    public function getValueEntity($elementEntity = null)
     {
         if ($this->valueEntity === null) {
-            $elementEntity = IblockTable::compileEntity(
-                IblockTable::getByPrimary($this->getIblockId(), [
-                    'select' => ['ID', 'API_CODE']
-                ])->fetchObject()
-            );
+            if ($elementEntity === null) {
+                $elementEntity = IblockTable::compileEntity(
+                    IblockTable::getByPrimary(
+                        $this->getIblockId(),
+                        [
+                            'select' => ['ID', 'API_CODE']
+                        ]
+                    )->fetchObject()
+                );
+            }
+
+            /** @var DataManager $entityClassName */
+            $entityClassName = 'IblockProperty' . $this->getId() . 'Table';
+            $entityClass = '\\' . IblockTable::DATA_CLASS_NAMESPACE . '\\' . $entityClassName;
+
+            if (class_exists($entityClass, false)) {
+                // already compiled
+                return $this->valueEntity = $entityClass::getEntity();
+            }
 
             $valueTableName = $this->getMultiple()
                 ? $elementEntity->getMultiValueTableName()
@@ -89,7 +110,7 @@ class Property extends EO_Property
 
             // construct PropertyValue entity
             $this->valueEntity = Entity::compileEntity(
-                'IblockProperty' . $this->getId(),
+                $entityClassName,
                 $fields,
                 [
                     'namespace' => IblockTable::DATA_CLASS_NAMESPACE,
@@ -103,6 +124,18 @@ class Property extends EO_Property
 
             // set real column name
             $this->valueEntity->getField('VALUE')->configureColumnName($realValueColumnName);
+
+            // add generic value field
+            if ($realValueColumnName !== 'VALUE'
+                && (
+                    $elementEntity instanceof ElementV1Entity // all v1 props
+                    || $this->getMultiple() // multiple v2 props
+                )
+            ) {
+                $this->valueEntity->addField(
+                    (new StringField(ValueStorageTable::GENERIC_VALUE_FIELD_NAME))->configureColumnName('VALUE')
+                );
+            }
 
             // add description
             if ($this->getWithDescription()) {

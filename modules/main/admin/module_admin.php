@@ -15,8 +15,9 @@
 require_once(dirname(__FILE__) . "/../include/prolog_admin_before.php");
 define("HELP_FILE", "settings/module_admin.php");
 
-if (!$USER->CanDoOperation('edit_other_settings') && !$USER->CanDoOperation('view_other_settings'))
+if (!$USER->CanDoOperation('edit_other_settings') && !$USER->CanDoOperation('view_other_settings')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $isAdmin = $USER->CanDoOperation('edit_other_settings');
 
@@ -41,7 +42,9 @@ foreach ($folders as $folder) {
     $handle = @opendir($_SERVER["DOCUMENT_ROOT"] . $folder);
     if ($handle) {
         while (false !== ($dir = readdir($handle))) {
-            if (!isset($arModules[$dir]) && is_dir($_SERVER["DOCUMENT_ROOT"] . $folder . "/" . $dir) && $dir != "." && $dir != ".." && $dir != "main" && strpos($dir, ".") === false) {
+            if (!isset($arModules[$dir]) && is_dir(
+                    $_SERVER["DOCUMENT_ROOT"] . $folder . "/" . $dir
+                ) && $dir != "." && $dir != ".." && $dir != "main" && mb_strpos($dir, ".") === false) {
                 $module_dir = $_SERVER["DOCUMENT_ROOT"] . $folder . "/" . $dir;
                 if ($info = CModule::CreateModuleObject($dir)) {
                     $arModules[$dir]["MODULE_ID"] = $info->MODULE_ID;
@@ -50,8 +53,8 @@ foreach ($folders as $folder) {
                     $arModules[$dir]["MODULE_VERSION"] = $info->MODULE_VERSION;
                     $arModules[$dir]["MODULE_VERSION_DATE"] = $info->MODULE_VERSION_DATE;
                     $arModules[$dir]["MODULE_SORT"] = $info->MODULE_SORT;
-                    $arModules[$dir]["MODULE_PARTNER"] = (strpos($dir, ".") !== false) ? $info->PARTNER_NAME : "";
-                    $arModules[$dir]["MODULE_PARTNER_URI"] = (strpos($dir, ".") !== false) ? $info->PARTNER_URI : "";
+                    $arModules[$dir]["MODULE_PARTNER"] = (mb_strpos($dir, ".") !== false) ? $info->PARTNER_NAME : "";
+                    $arModules[$dir]["MODULE_PARTNER_URI"] = (mb_strpos($dir, ".") !== false) ? $info->PARTNER_URI : "";
                     $arModules[$dir]["IsInstalled"] = $info->IsInstalled();
                 }
             }
@@ -69,15 +72,15 @@ foreach ($folders as $folder) {
 
 $fb = ($id == 'fileman' && !$USER->CanDoOperation('fileman_install_control'));
 if ($isAdmin && !$fb && check_bitrix_sessid()) {
-    if (strlen($_REQUEST["uninstall"]) > 0 || strlen($_REQUEST["install"]) > 0) {
+    if ($_REQUEST["uninstall"] <> '' || $_REQUEST["install"] <> '') {
         $id = str_replace("\\", "", str_replace("/", "", $id));
         if ($Module = CModule::CreateModuleObject($id)) {
-            if ($Module->IsInstalled() && strlen($_REQUEST["uninstall"]) > 0) {
+            if ($Module->IsInstalled() && $_REQUEST["uninstall"] <> '') {
                 OnModuleInstalledEvent($id);
                 $Module->DoUninstall();
                 LocalRedirect($APPLICATION->GetCurPage() . "?lang=" . LANGUAGE_ID);
-            } elseif (!$Module->IsInstalled() && strlen($_REQUEST["install"]) > 0) {
-                if (strtolower($DB->type) == "mysql" && defined("MYSQL_TABLE_TYPE") && strlen(MYSQL_TABLE_TYPE) > 0) {
+            } elseif (!$Module->IsInstalled() && $_REQUEST["install"] <> '') {
+                if ($DB->type == "MYSQL" && defined("MYSQL_TABLE_TYPE") && MYSQL_TABLE_TYPE <> '') {
                     $DB->Query("SET storage_engine = '" . MYSQL_TABLE_TYPE . "'", true);
                 }
 
@@ -89,10 +92,13 @@ if ($isAdmin && !$fb && check_bitrix_sessid()) {
     } elseif (isset($_REQUEST["action"]) && $_REQUEST["action"] == "version_down") {
         require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_js.php");
 
-        if ($_REQUEST["id"] == "main")
+        if ($_REQUEST["id"] == "main") {
             $fn = $_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/classes/general/version.php";
-        else
-            $fn = $_SERVER["DOCUMENT_ROOT"] . getLocalPath("modules/" . preg_replace("/[^a-z0-9.]/", "", $_REQUEST["id"]) . "/install/version.php");
+        } else {
+            $fn = $_SERVER["DOCUMENT_ROOT"] . getLocalPath(
+                    "modules/" . preg_replace("/[^a-z0-9.]/", "", $_REQUEST["id"]) . "/install/version.php"
+                );
+        }
 
         $count = intval($_REQUEST['count']);
         $count = $count > 0 ? $count : 1;
@@ -142,7 +148,8 @@ require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admi
             if (action == 'version_down') {
                 ShowWaitWindow();
                 BX.ajax.post(
-                    'module_admin.php?lang=<?echo LANGUAGE_ID?>&id=' + module_id + '&count=' + (oEvent.shiftKey ? 10 : 1) + '&<?echo bitrix_sessid_get()?>&action=' + action,
+                    'module_admin.php?lang=<?echo LANGUAGE_ID?>&id=' + module_id + '&count=' + (oEvent.shiftKey ? 10 : 1) + '&<?echo bitrix_sessid_get(
+                    )?>&action=' + action,
                     null,
                     function (result) {
                         CloseWaitWindow();
@@ -165,12 +172,20 @@ require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admi
     </tr>
     <tr>
         <td><b><?= GetMessage("MOD_MAIN_MODULE") ?></b><br><?
-            $str = str_replace("#A1#", "<a  href='update_system.php?lang=" . LANG . "'>", GetMessage("MOD_MAIN_DESCRIPTION"));
+            $str = str_replace(
+                "#A1#",
+                "<a  href='update_system.php?lang=" . LANG . "'>",
+                GetMessage("MOD_MAIN_DESCRIPTION")
+            );
             $str = str_replace("#A2#", "</a>", $str);
             echo $str; ?></td>
         <td ondblclick="<? echo htmlspecialcharsbx("DoAction(event, 'version_down', 'main')") ?>"
             id="version_for_main"><? echo SM_VERSION; ?></td>
-        <td nowrap><? echo CDatabase::FormatDate(SM_VERSION_DATE, "YYYY-MM-DD HH:MI:SS", CLang::GetDateFormat("SHORT")); ?></td>
+        <td nowrap><? echo CDatabase::FormatDate(
+                SM_VERSION_DATE,
+                "YYYY-MM-DD HH:MI:SS",
+                CLang::GetDateFormat("SHORT")
+            ); ?></td>
         <td><?= GetMessage("MOD_INSTALLED") ?></td>
         <td>&nbsp;</td>
     </tr>
@@ -178,12 +193,23 @@ require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admi
     foreach ($arModules as $info) :
         ?>
         <tr>
-            <td>
-                <b><? echo htmlspecialcharsex($info["MODULE_NAME"]) ?></b> <? echo htmlspecialcharsex(strlen($info["MODULE_PARTNER"]) > 0 ? " <b><i>(" . str_replace(array("#NAME#", "#URI#"), array($info["MODULE_PARTNER"], $info["MODULE_PARTNER_URI"]), GetMessage("MOD_PARTNER_NAME")) . ")</i></b>" : "(" . $info["MODULE_ID"] . ")") ?>
-                <br><? echo $info["MODULE_DESCRIPTION"] ?></td>
-            <td ondblclick="<? echo htmlspecialcharsbx("DoAction(event, 'version_down', '" . CUtil::AddSlashes($info["MODULE_ID"]) . "')") ?>"
-                id="version_for_<? echo htmlspecialcharsbx($info["MODULE_ID"]) ?>"><? echo $info["MODULE_VERSION"] ?></td>
-            <td nowrap><? echo CDatabase::FormatDate($info["MODULE_VERSION_DATE"], "YYYY-MM-DD HH:MI:SS", CLang::GetDateFormat("SHORT")); ?></td>
+            <td><b><? echo htmlspecialcharsex($info["MODULE_NAME"]) ?></b> <? echo htmlspecialcharsex(
+                    $info["MODULE_PARTNER"] <> '' ? " <b><i>(" . str_replace(
+                            array("#NAME#", "#URI#"),
+                            array($info["MODULE_PARTNER"], $info["MODULE_PARTNER_URI"]),
+                            GetMessage("MOD_PARTNER_NAME")
+                        ) . ")</i></b>" : "(" . $info["MODULE_ID"] . ")"
+                ) ?><br><? echo $info["MODULE_DESCRIPTION"] ?></td>
+            <td ondblclick="<? echo htmlspecialcharsbx(
+                "DoAction(event, 'version_down', '" . CUtil::AddSlashes($info["MODULE_ID"]) . "')"
+            ) ?>" id="version_for_<? echo htmlspecialcharsbx(
+                $info["MODULE_ID"]
+            ) ?>"><? echo $info["MODULE_VERSION"] ?></td>
+            <td nowrap><? echo CDatabase::FormatDate(
+                    $info["MODULE_VERSION_DATE"],
+                    "YYYY-MM-DD HH:MI:SS",
+                    CLang::GetDateFormat("SHORT")
+                ); ?></td>
             <td nowrap><? if ($info["IsInstalled"]):?><? echo GetMessage("MOD_INSTALLED") ?><? else:?><span
                         class="required"><? echo GetMessage("MOD_NOT_INSTALLED") ?></span><?endif ?></td>
             <td>
@@ -195,7 +221,10 @@ require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admi
                     <input type="hidden" name="id" value="<? echo htmlspecialcharsbx($info["MODULE_ID"]) ?>">
                     <?= bitrix_sessid_post() ?>
                     <? if ($info["IsInstalled"]):?>
-                        <input <? if (!$isAdmin || in_array($info["MODULE_ID"], array("fileman", "intranet", "ui")) || $info["MODULE_ID"] == "rest" && IsModuleInstalled('intranet')) echo "disabled" ?>
+                        <input <? if (!$isAdmin || in_array(
+                                $info["MODULE_ID"],
+                                array("fileman", "intranet", "ui")
+                            ) || $info["MODULE_ID"] == "rest" && IsModuleInstalled('intranet')) echo "disabled" ?>
                                 type="submit" name="uninstall" value="<? echo GetMessage("MOD_DELETE") ?>">
                     <? else:?>
                         <input <? if (!$isAdmin) echo "disabled" ?> type="submit" class="adm-btn-green" name="install"

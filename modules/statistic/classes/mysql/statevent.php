@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/classes/general/statevent.php");
 
 class CStatEvent extends CAllStatEvent
@@ -9,12 +10,15 @@ class CStatEvent extends CAllStatEvent
         $DB = CDatabase::GetModuleConnection('statistic');
 
         $strSqlSearch = "";
-        if ($EVENT_ID !== false)
+        if ($EVENT_ID !== false) {
             $strSqlSearch .= " and E.EVENT_ID='" . intval($EVENT_ID) . "' ";
-        if ($EVENT3 !== false)
+        }
+        if ($EVENT3 !== false) {
             $strSqlSearch .= " and E.EVENT3='" . $DB->ForSql($EVENT3, 255) . "' ";
-        if ($SEC !== false)
+        }
+        if ($SEC !== false) {
             $strSqlSearch .= " and E.DATE_ENTER > DATE_ADD(now(),INTERVAL - " . intval($SEC) . " SECOND) ";
+        }
 
         $strSql = "
 			SELECT
@@ -43,13 +47,15 @@ class CStatEvent extends CAllStatEvent
             $MONEY = doubleval($MONEY);
 
             // ���� ������� ������ �� ������������
-            if (strlen(trim($CURRENCY)) > 0) {
+            if (trim($CURRENCY) <> '') {
                 $base_currency = GetStatisticBaseCurrency();
-                if (strlen($base_currency) > 0) {
+                if ($base_currency <> '') {
                     if ($CURRENCY != $base_currency) {
                         if (CModule::IncludeModule("currency")) {
                             $rate = CCurrencyRates::GetConvertFactor($CURRENCY, $base_currency);
-                            if ($rate > 0 && $rate != 1) $MONEY = $MONEY * $rate;
+                            if ($rate > 0 && $rate != 1) {
+                                $MONEY = $MONEY * $rate;
+                            }
                         }
                     }
                 }
@@ -65,7 +71,7 @@ class CStatEvent extends CAllStatEvent
             $CHARGEBACK = ($CHARGEBACK == "Y") ? "Y" : "N";
             $SITE_ID = $arr["SITE_ID"];
 
-            $DATE_ENTER = strlen(trim($DATE_ENTER)) > 0 ? $DATE_ENTER : GetTime(time(), "FULL");
+            $DATE_ENTER = trim($DATE_ENTER) <> '' ? $DATE_ENTER : GetTime(time(), "FULL");
             $TIME_ENTER_TMSTMP = MakeTimeStamp($DATE_ENTER);
             if (!$TIME_ENTER_TMSTMP) {
                 $DATE_ENTER = GetTime(time(), "FULL");
@@ -73,7 +79,7 @@ class CStatEvent extends CAllStatEvent
             }
             $TIME_ENTER_SQL = "FROM_UNIXTIME('" . $TIME_ENTER_TMSTMP . "')";
             $DAY_ENTER_TMSTMP = MakeTimeStamp($DATE_ENTER);
-            $DAY_ENTER_SQL = "FROM_UNIXTIME('" . $DAY_ENTER_TMSTMP . "')";
+            $DAY_ENTER_SQL = "DATE(FROM_UNIXTIME('" . $DAY_ENTER_TMSTMP . "'))";
 
             $DB->StartTransaction();
 
@@ -86,27 +92,38 @@ class CStatEvent extends CAllStatEvent
                 "GUEST_ID" => (intval($GUEST_ID) > 0) ? intval($GUEST_ID) : "null",
                 "ADV_ID" => (intval($ADV_ID) > 0) ? intval($ADV_ID) : "null",
                 "ADV_BACK" => ($ADV_BACK == "Y") ? "'Y'" : "'N'",
-                "COUNTRY_ID" => (strlen($COUNTRY_ID) > 0) ? "'" . $DB->ForSql($COUNTRY_ID, 2) . "'" : "null",
+                "COUNTRY_ID" => ($COUNTRY_ID <> '') ? "'" . $DB->ForSql($COUNTRY_ID, 2) . "'" : "null",
                 "KEEP_DAYS" => (intval($arEvent["KEEP_DAYS"]) > 0) ? intval($arEvent["KEEP_DAYS"]) : "null",
                 "CHARGEBACK" => "'" . $CHARGEBACK . "'",
-                "SITE_ID" => (strlen($SITE_ID) > 0) ? "'" . $DB->ForSql($SITE_ID, 2) . "'" : "null"
+                "SITE_ID" => ($SITE_ID <> '') ? "'" . $DB->ForSql($SITE_ID, 2) . "'" : "null"
             );
             $EVENT_LIST_ID = $DB->Insert("b_stat_event_list", $arFields, $err_mess . __LINE__);
 
             // ����������� ������� ��� ������
-            if (strlen($COUNTRY_ID) > 0)
+            if ($COUNTRY_ID <> '') {
                 CStatistics::UpdateCountry($COUNTRY_ID, Array("C_EVENTS" => 1));
+            }
 
             // ���� ����� ��������� ���� ������� ������� ��� ������� ���� �������
             $arFields = Array("DATE_ENTER" => $DB->GetNowFunction());
-            $DB->Update("b_stat_event", $arFields, "WHERE ID='" . $EVENT_ID . "' and DATE_ENTER is null", $err_mess . __LINE__);
+            $DB->Update(
+                "b_stat_event",
+                $arFields,
+                "WHERE ID='" . $EVENT_ID . "' and DATE_ENTER is null",
+                $err_mess . __LINE__
+            );
             // ��������� ������� �� ���� ��� ������� ���� �������
             $arFields = Array(
                 "DATE_LAST" => $DB->GetNowFunction(),
                 "COUNTER" => "COUNTER + 1",
                 "MONEY" => "MONEY + " . $MONEY
             );
-            $rows = $DB->Update("b_stat_event_day", $arFields, "WHERE EVENT_ID='" . $EVENT_ID . "' and DATE_STAT = " . $DAY_ENTER_SQL, $err_mess . __LINE__);
+            $rows = $DB->Update(
+                "b_stat_event_day",
+                $arFields,
+                "WHERE EVENT_ID='" . $EVENT_ID . "' and DATE_STAT = " . $DAY_ENTER_SQL,
+                $err_mess . __LINE__
+            );
             // ���� ������� �� ���� ��� ��
             if (intval($rows) <= 0) {
                 // ��������� ���
@@ -135,21 +152,42 @@ class CStatEvent extends CAllStatEvent
 
             // ��������� ������ � �����
             $arFields = Array("C_EVENTS" => "C_EVENTS+1");
-            $DB->Update("b_stat_session", $arFields, "WHERE ID=" . $SESSION_ID, $err_mess . __LINE__, false, false, false);
+            $DB->Update(
+                "b_stat_session",
+                $arFields,
+                "WHERE ID=" . $SESSION_ID,
+                $err_mess . __LINE__,
+                false,
+                false,
+                false
+            );
             $DB->Update("b_stat_guest", $arFields, "WHERE ID=" . $GUEST_ID, $err_mess . __LINE__, false, false, false);
 
             // ��������� ������� �������
             $arFields = Array("C_EVENTS" => "C_EVENTS + 1");
-            $DB->Update("b_stat_day", $arFields, "WHERE DATE_STAT = " . $DAY_ENTER_SQL, $err_mess . __LINE__, false, false, false);
+            $DB->Update(
+                "b_stat_day",
+                $arFields,
+                "WHERE DATE_STAT = " . $DAY_ENTER_SQL,
+                $err_mess . __LINE__,
+                false,
+                false,
+                false
+            );
 
             // ����������� ������� ��������
             CTraffic::IncParam(array("EVENT" => 1), array(), false, $DATE_ENTER);
 
             // ���� ���� ��������� ��
-            if (strlen($SITE_ID) > 0) {
+            if ($SITE_ID <> '') {
                 // ��������� ������� �������
                 $arFields = Array("C_EVENTS" => "C_EVENTS+1");
-                $DB->Update("b_stat_day_site", $arFields, "WHERE SITE_ID='" . $DB->ForSql($SITE_ID, 2) . "' and DATE_STAT = " . $DAY_ENTER_SQL, $err_mess . __LINE__);
+                $DB->Update(
+                    "b_stat_day_site",
+                    $arFields,
+                    "WHERE SITE_ID='" . $DB->ForSql($SITE_ID, 2) . "' and DATE_STAT = " . $DAY_ENTER_SQL,
+                    $err_mess . __LINE__
+                );
 
                 // ����������� ������� ��������
                 CTraffic::IncParam(array(), array("EVENT" => 1), $SITE_ID, $DATE_ENTER);
@@ -163,7 +201,15 @@ class CStatEvent extends CAllStatEvent
                     if ($MONEY != 0) {
                         $sign = ($CHARGEBACK == "Y") ? "-" : "+";
                         $arFields = array("REVENUE" => "REVENUE " . $sign . " " . $MONEY);
-                        $DB->Update("b_stat_adv", $arFields, "WHERE ID='$ADV_ID'", $err_mess . __LINE__, false, false, false);
+                        $DB->Update(
+                            "b_stat_adv",
+                            $arFields,
+                            "WHERE ID='$ADV_ID'",
+                            $err_mess . __LINE__,
+                            false,
+                            false,
+                            false
+                        );
                     }
                     // ��������� ������� ������ ��������� �������� � ���� �������
                     if ($ADV_BACK == "Y") {
@@ -177,7 +223,12 @@ class CStatEvent extends CAllStatEvent
                             "MONEY" => "MONEY + " . $MONEY
                         );
                     }
-                    $rows = $DB->Update("b_stat_adv_event", $arFields, "WHERE ADV_ID='$ADV_ID' and EVENT_ID='$EVENT_ID'", $err_mess . __LINE__);
+                    $rows = $DB->Update(
+                        "b_stat_adv_event",
+                        $arFields,
+                        "WHERE ADV_ID='$ADV_ID' and EVENT_ID='$EVENT_ID'",
+                        $err_mess . __LINE__
+                    );
                     // ���� ������ ��� ��
                     if (intval($rows) <= 0 && intval($ADV_ID) > 0 && intval($EVENT_ID) > 0) {
                         // ��������� ������
@@ -207,7 +258,15 @@ class CStatEvent extends CAllStatEvent
                             "MONEY" => "MONEY + " . $MONEY
                         );
                     }
-                    $rows = $DB->Update("b_stat_adv_event_day", $arFields, "WHERE ADV_ID='$ADV_ID' and EVENT_ID='$EVENT_ID' and DATE_STAT = " . $DAY_ENTER_SQL, $err_mess . __LINE__, false, false, false);
+                    $rows = $DB->Update(
+                        "b_stat_adv_event_day",
+                        $arFields,
+                        "WHERE ADV_ID='$ADV_ID' and EVENT_ID='$EVENT_ID' and DATE_STAT = " . $DAY_ENTER_SQL,
+                        $err_mess . __LINE__,
+                        false,
+                        false,
+                        false
+                    );
                     // ���� ��� ����� ������ ��
                     if (intval($rows) <= 0 && intval($ADV_ID) > 0 && intval($EVENT_ID) > 0) {
                         // ��������� ��
@@ -232,7 +291,7 @@ class CStatEvent extends CAllStatEvent
         return intval($EVENT_LIST_ID);
     }
 
-    public static function GetList(&$by, &$order, $arFilter = Array(), &$is_filtered)
+    public static function GetList($by = 's_id', $order = 'desc', $arFilter = [])
     {
         $err_mess = "File: " . __FILE__ . "<br>Line: ";
         $DB = CDatabase::GetModuleConnection('statistic');
@@ -243,11 +302,13 @@ class CStatEvent extends CAllStatEvent
         if (is_array($arFilter)) {
             foreach ($arFilter as $key => $val) {
                 if (is_array($val)) {
-                    if (count($val) <= 0)
+                    if (count($val) <= 0) {
                         continue;
+                    }
                 } else {
-                    if ((strlen($val) <= 0) || ($val === "NOT_REF"))
+                    if (((string)$val == '') || ($val === "NOT_REF")) {
                         continue;
+                    }
                 }
                 $match_value_set = array_key_exists($key . "_EXACT_MATCH", $arFilter);
                 $key = strtoupper($key);
@@ -271,20 +332,31 @@ class CStatEvent extends CAllStatEvent
                         $arSqlSearch[] = GetFilterQuery("E.EVENT3", $val, $match);
                         break;
                     case "DATE":
-                        if (CheckDateTime($val))
+                        if (CheckDateTime($val)) {
                             $arSqlSearch[] = "E.DATE_ENTER=" . $DB->CharToDateFunction($val);
+                        }
                         break;
                     case "DATE1":
-                        if (CheckDateTime($val))
+                        if (CheckDateTime($val)) {
                             $arSqlSearch[] = "E.DATE_ENTER>=" . $DB->CharToDateFunction($val, "SHORT");
+                        }
                         break;
                     case "DATE2":
-                        if (CheckDateTime($val))
-                            $arSqlSearch[] = "E.DATE_ENTER<" . $DB->CharToDateFunction($val, "SHORT") . " + INTERVAL 1 DAY";
+                        if (CheckDateTime($val)) {
+                            $arSqlSearch[] = "E.DATE_ENTER<" . $DB->CharToDateFunction(
+                                    $val,
+                                    "SHORT"
+                                ) . " + INTERVAL 1 DAY";
+                        }
                         break;
                     case "REDIRECT_URL":
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "Y" && $match_value_set) ? "N" : "Y";
-                        $arSqlSearch[] = GetFilterQuery("E.REDIRECT_URL", $val, $match, array("/", "\\", ".", "?", "#", ":"));
+                        $arSqlSearch[] = GetFilterQuery(
+                            "E.REDIRECT_URL",
+                            $val,
+                            $match,
+                            array("/", "\\", ".", "?", "#", ":")
+                        );
                         break;
                     case "MONEY":
                         $arSqlSearch_h[] = "MONEY='" . roundDB($val) . "'";
@@ -309,19 +381,28 @@ class CStatEvent extends CAllStatEvent
                     case "REFERER_URL":
                     case "URL":
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "Y" && $match_value_set) ? "N" : "Y";
-                        $arSqlSearch[] = GetFilterQuery("E." . $key, $val, $match, array("/", "\\", ".", "?", "#", ":"));
+                        $arSqlSearch[] = GetFilterQuery(
+                            "E." . $key,
+                            $val,
+                            $match,
+                            array("/", "\\", ".", "?", "#", ":")
+                        );
                         break;
                     case "COUNTRY":
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "Y" && $match_value_set) ? "N" : "Y";
                         $arSqlSearch[] = GetFilterQuery("C.NAME", $val, $match);
                         break;
                     case "SITE_ID":
-                        if (is_array($val)) $val = implode(" | ", $val);
+                        if (is_array($val)) {
+                            $val = implode(" | ", $val);
+                        }
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "N" && $match_value_set) ? "Y" : "N";
                         $arSqlSearch[] = GetFilterQuery("E.SITE_ID", $val, $match);
                         break;
                     case "REFERER_SITE_ID":
-                        if (is_array($val)) $val = implode(" | ", $val);
+                        if (is_array($val)) {
+                            $val = implode(" | ", $val);
+                        }
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "N" && $match_value_set) ? "Y" : "N";
                         $arSqlSearch[] = GetFilterQuery("E.REFERER_SITE_ID", $val, $match);
                         break;
@@ -335,9 +416,9 @@ class CStatEvent extends CAllStatEvent
         $rate = 1;
         $base_currency = GetStatisticBaseCurrency();
         $view_currency = $base_currency;
-        if (strlen($base_currency) > 0) {
+        if ($base_currency <> '') {
             if (CModule::IncludeModule("currency")) {
-                if ($CURRENCY != $base_currency && strlen($CURRENCY) > 0) {
+                if ($CURRENCY != $base_currency && $CURRENCY <> '') {
                     $rate = CCurrencyRates::GetConvertFactor($base_currency, $CURRENCY);
                     $view_currency = $CURRENCY;
                 }
@@ -345,32 +426,48 @@ class CStatEvent extends CAllStatEvent
         }
 
         $strSqlSearch = GetFilterSqlSearch($arSqlSearch);
-        foreach ($arSqlSearch_h as $sqlWhere)
+        foreach ($arSqlSearch_h as $sqlWhere) {
             $strSqlSearch_h .= " and (" . $sqlWhere . ") ";
+        }
 
-        if ($by == "s_id") $strSqlOrder = "ORDER BY E.ID";
-        elseif ($by == "s_site_id") $strSqlOrder = "ORDER BY E.SITE_ID";
-        elseif ($by == "s_event_id" || $by == "s_type_id") $strSqlOrder = "ORDER BY E.EVENT_ID";
-        elseif ($by == "s_event3") $strSqlOrder = "ORDER BY E.EVENT3";
-        elseif ($by == "s_date_enter") $strSqlOrder = "ORDER BY E.DATE_ENTER";
-        elseif ($by == "s_adv_id") $strSqlOrder = "ORDER BY E.ADV_ID";
-        elseif ($by == "s_adv_back") $strSqlOrder = "ORDER BY E.ADV_BACK";
-        elseif ($by == "s_session_id") $strSqlOrder = "ORDER BY E.SESSION_ID";
-        elseif ($by == "s_guest_id") $strSqlOrder = "ORDER BY E.GUEST_ID";
-        elseif ($by == "s_hit_id") $strSqlOrder = "ORDER BY E.HIT_ID";
-        elseif ($by == "s_url") $strSqlOrder = "ORDER BY E.URL";
-        elseif ($by == "s_referer_url") $strSqlOrder = "ORDER BY E.REFERER_URL";
-        elseif ($by == "s_redirect_url") $strSqlOrder = "ORDER BY E.REDIRECT_URL";
-        elseif ($by == "s_country_id") $strSqlOrder = "ORDER BY E.COUNTRY_ID";
-        elseif ($by == "s_money") $strSqlOrder = "ORDER BY MONEY";
-        else {
-            $by = "s_id";
+        if ($by == "s_id") {
+            $strSqlOrder = "ORDER BY E.ID";
+        } elseif ($by == "s_site_id") {
+            $strSqlOrder = "ORDER BY E.SITE_ID";
+        } elseif ($by == "s_event_id" || $by == "s_type_id") {
+            $strSqlOrder = "ORDER BY E.EVENT_ID";
+        } elseif ($by == "s_event3") {
+            $strSqlOrder = "ORDER BY E.EVENT3";
+        } elseif ($by == "s_date_enter") {
+            $strSqlOrder = "ORDER BY E.DATE_ENTER";
+        } elseif ($by == "s_adv_id") {
+            $strSqlOrder = "ORDER BY E.ADV_ID";
+        } elseif ($by == "s_adv_back") {
+            $strSqlOrder = "ORDER BY E.ADV_BACK";
+        } elseif ($by == "s_session_id") {
+            $strSqlOrder = "ORDER BY E.SESSION_ID";
+        } elseif ($by == "s_guest_id") {
+            $strSqlOrder = "ORDER BY E.GUEST_ID";
+        } elseif ($by == "s_hit_id") {
+            $strSqlOrder = "ORDER BY E.HIT_ID";
+        } elseif ($by == "s_url") {
+            $strSqlOrder = "ORDER BY E.URL";
+        } elseif ($by == "s_referer_url") {
+            $strSqlOrder = "ORDER BY E.REFERER_URL";
+        } elseif ($by == "s_redirect_url") {
+            $strSqlOrder = "ORDER BY E.REDIRECT_URL";
+        } elseif ($by == "s_country_id") {
+            $strSqlOrder = "ORDER BY E.COUNTRY_ID";
+        } elseif ($by == "s_money") {
+            $strSqlOrder = "ORDER BY MONEY";
+        } else {
             $strSqlOrder = "ORDER BY E.ID";
         }
+
         if ($order != "asc") {
             $strSqlOrder .= " desc ";
-            $order = "desc";
         }
+
         if ($arFilter["GROUP"] == "total") {
             $strSql = "
 				SELECT
@@ -414,7 +511,7 @@ class CStatEvent extends CAllStatEvent
         }
 
         $res = $DB->Query($strSql, false, $err_mess . __LINE__);
-        $is_filtered = (IsFiltered($strSqlSearch) || strlen($strSqlSearch_h) > 0);
+
         return $res;
     }
 
@@ -453,7 +550,17 @@ class CStatEvent extends CAllStatEvent
                 "COUNTER" => "COUNTER-1",
                 "MONEY" => "MONEY - " . doubleval($ar["MONEY"])
             );
-            $rows = $DB->Update("b_stat_event_day", $arFields, "WHERE EVENT_ID='" . intval($ar["EVENT_ID"]) . "' and DATE_STAT = FROM_UNIXTIME('" . MkDateTime(ConvertDateTime($ar["DATE_ENTER"], "D.M.Y"), "d.m.Y") . "')", $err_mess . __LINE__);
+            $rows = $DB->Update(
+                "b_stat_event_day",
+                $arFields,
+                "WHERE EVENT_ID='" . intval(
+                    $ar["EVENT_ID"]
+                ) . "' and DATE_STAT = FROM_UNIXTIME('" . MkDateTime(
+                    ConvertDateTime($ar["DATE_ENTER"], "D.M.Y"),
+                    "d.m.Y"
+                ) . "')",
+                $err_mess . __LINE__
+            );
             // ���� ��� ���� ������� ��
             if (intval($rows) <= 0) {
                 // �������� ������� �� ���� �������
@@ -461,7 +568,12 @@ class CStatEvent extends CAllStatEvent
                     "COUNTER" => "COUNTER-1",
                     "MONEY" => "MONEY - " . doubleval($ar["MONEY"])
                 );
-                $DB->Update("b_stat_event", $arFields, "WHERE ID='" . intval($ar["EVENT_ID"]) . "'", $err_mess . __LINE__);
+                $DB->Update(
+                    "b_stat_event",
+                    $arFields,
+                    "WHERE ID='" . intval($ar["EVENT_ID"]) . "'",
+                    $err_mess . __LINE__
+                );
             }
             // ���� � ������ ���� ������� �������� �� �� ����� �������
             $strSql = "DELETE FROM b_stat_event_day WHERE COUNTER=0";
@@ -469,17 +581,41 @@ class CStatEvent extends CAllStatEvent
 
             // ������ ������
             $arFields = Array("C_EVENTS" => "C_EVENTS-1");
-            $DB->Update("b_stat_session", $arFields, "WHERE ID='" . intval($ar["SESSION_ID"]) . "'", $err_mess . __LINE__, false, false, false);
+            $DB->Update(
+                "b_stat_session",
+                $arFields,
+                "WHERE ID='" . intval($ar["SESSION_ID"]) . "'",
+                $err_mess . __LINE__,
+                false,
+                false,
+                false
+            );
 
             // ������ �����
-            $DB->Update("b_stat_guest", $arFields, "WHERE ID='" . intval($ar["GUEST_ID"]) . "'", $err_mess . __LINE__, false, false, false);
+            $DB->Update(
+                "b_stat_guest",
+                $arFields,
+                "WHERE ID='" . intval($ar["GUEST_ID"]) . "'",
+                $err_mess . __LINE__,
+                false,
+                false,
+                false
+            );
 
             if (intval($ar["ADV_ID"]) > 0) {
                 // �������� ����� ��������� ��������
                 if (doubleval($ar["MONEY"]) != 0) {
                     $sign = ($ar["CHARGEBACK"] == "Y") ? "+" : "-";
                     $arFields = array("REVENUE" => "REVENUE " . $sign . " " . doubleval($ar["MONEY"]));
-                    $DB->Update("b_stat_adv", $arFields, "WHERE ID='" . intval($ar["ADV_ID"]) . "'", $err_mess . __LINE__, false, false, false);
+                    $DB->Update(
+                        "b_stat_adv",
+                        $arFields,
+                        "WHERE ID='" . intval($ar["ADV_ID"]) . "'",
+                        $err_mess . __LINE__,
+                        false,
+                        false,
+                        false
+                    );
                 }
 
                 // ������ ������ � ��������� ���������
@@ -494,7 +630,12 @@ class CStatEvent extends CAllStatEvent
                         "MONEY" => "MONEY - " . doubleval($ar["MONEY"]),
                     );
                 }
-                $DB->Update("b_stat_adv_event", $arFields, "WHERE ADV_ID='" . intval($ar["ADV_ID"]) . "' and EVENT_ID='" . $ar["EVENT_ID"] . "'", $err_mess . __LINE__);
+                $DB->Update(
+                    "b_stat_adv_event",
+                    $arFields,
+                    "WHERE ADV_ID='" . intval($ar["ADV_ID"]) . "' and EVENT_ID='" . $ar["EVENT_ID"] . "'",
+                    $err_mess . __LINE__
+                );
 
                 // ������ ������ � ��������� ��������� �� ����
                 if ($ar["ADV_BACK"] == "Y") {
@@ -508,7 +649,20 @@ class CStatEvent extends CAllStatEvent
                         "MONEY" => "MONEY - " . doubleval($ar["MONEY"]),
                     );
                 }
-                $DB->Update("b_stat_adv_event_day", $arFields, "WHERE ADV_ID='" . intval($ar["ADV_ID"]) . "' and EVENT_ID='" . $ar["EVENT_ID"] . "' and DATE_STAT = FROM_UNIXTIME('" . MkDateTime(ConvertDateTime($ar["DATE_ENTER"], "D.M.Y"), "d.m.Y") . "')", $err_mess . __LINE__, false, false, false);
+                $DB->Update(
+                    "b_stat_adv_event_day",
+                    $arFields,
+                    "WHERE ADV_ID='" . intval(
+                        $ar["ADV_ID"]
+                    ) . "' and EVENT_ID='" . $ar["EVENT_ID"] . "' and DATE_STAT = FROM_UNIXTIME('" . MkDateTime(
+                        ConvertDateTime($ar["DATE_ENTER"], "D.M.Y"),
+                        "d.m.Y"
+                    ) . "')",
+                    $err_mess . __LINE__,
+                    false,
+                    false,
+                    false
+                );
             }
             // ���� � ������� �������� ������� �������� �� �� ����� �������
             $strSql = "DELETE FROM b_stat_adv_event WHERE COUNTER<=0 and COUNTER_BACK<=0";
@@ -518,14 +672,33 @@ class CStatEvent extends CAllStatEvent
 
             // ��������� ������� �� ����
             $arFields = Array("C_EVENTS" => "C_EVENTS-1");
-            $DB->Update("b_stat_day", $arFields, "WHERE DATE_STAT = FROM_UNIXTIME('" . MkDateTime(ConvertDateTime($ar["DATE_ENTER"], "D.M.Y"), "d.m.Y") . "')", $err_mess . __LINE__);
+            $DB->Update(
+                "b_stat_day",
+                $arFields,
+                "WHERE DATE_STAT = FROM_UNIXTIME('" . MkDateTime(
+                    ConvertDateTime($ar["DATE_ENTER"], "D.M.Y"),
+                    "d.m.Y"
+                ) . "')",
+                $err_mess . __LINE__
+            );
 
             // ��������� ������� ��������
             CTraffic::DecParam(array("EVENT" => 1), array(), false, $ar["DATE_ENTER_FULL"]);
 
-            if (strlen($ar["SITE_ID"]) > 0) {
+            if ($ar["SITE_ID"] <> '') {
                 $arFields = Array("C_EVENTS" => "C_EVENTS-1");
-                $DB->Update("b_stat_day_site", $arFields, "WHERE SITE_ID = '" . $DB->ForSql($ar["SITE_ID"], 2) . "' and  DATE_STAT = FROM_UNIXTIME('" . MkDateTime(ConvertDateTime($ar["DATE_ENTER"], "D.M.Y"), "d.m.Y") . "')", $err_mess . __LINE__);
+                $DB->Update(
+                    "b_stat_day_site",
+                    $arFields,
+                    "WHERE SITE_ID = '" . $DB->ForSql(
+                        $ar["SITE_ID"],
+                        2
+                    ) . "' and  DATE_STAT = FROM_UNIXTIME('" . MkDateTime(
+                        ConvertDateTime($ar["DATE_ENTER"], "D.M.Y"),
+                        "d.m.Y"
+                    ) . "')",
+                    $err_mess . __LINE__
+                );
 
                 // ��������� ������� ��������
                 CTraffic::DecParam(array(), array("EVENT" => 1), $ar["SITE_ID"], $ar["DATE_ENTER_FULL"]);

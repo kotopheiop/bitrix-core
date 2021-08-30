@@ -1,4 +1,5 @@
 <?
+
 /**
  * @global CUser $USER
  * @global CMain $APPLICATION
@@ -13,7 +14,7 @@ use Bitrix\Main\Analytics;
 
 Loc::loadMessages(__FILE__);
 
-if (!$USER->CanDoOperation("view_other_settings") || !Analytics\SiteSpeed::isRussianSiteManager()) {
+if (!$USER->CanDoOperation("view_other_settings") || !Analytics\SiteSpeed::isOn()) {
     $APPLICATION->AuthForm(Loc::getMessage("ACCESS_DENIED"));
 }
 
@@ -80,18 +81,23 @@ foreach ($mapIframeLangKeys as $key) {
                         <span class="site-speed-stat-value" id="site-speed-hits"></span>
                     </div>
                     <div class="site-speed-stat-item">
-                        <span class="site-speed-stat-label"><?= Loc::getMessage("MAIN_SITE_SPEED_PERIOD_LABEL") ?>:</span>
+                        <span class="site-speed-stat-label"><?= Loc::getMessage(
+                                "MAIN_SITE_SPEED_PERIOD_LABEL"
+                            ) ?>:</span>
                         <span class="site-speed-stat-value" id="site-speed-date"></span>
                     </div>
                     <div class="site-speed-stat-item">
-                        <span class="site-speed-stat-label"><?= Loc::getMessage("MAIN_SITE_SPEED_COMPOSITE_HITS") ?>:</span>
+                        <span class="site-speed-stat-label"><?= Loc::getMessage(
+                                "MAIN_SITE_SPEED_COMPOSITE_HITS"
+                            ) ?>:</span>
                         <span class="site-speed-stat-value" id="site-speed-composite"></span>
                     </div>
                 </div>
 
                 <div class="site-speed-explanation">
-                    <b><?= Loc::getMessage("MAIN_SITE_SPEED_TITLE") ?></b>
-                    &mdash; <?= Loc::getMessage("MAIN_SITE_SPEED_TITLE_DESC") ?>
+                    <b><?= Loc::getMessage("MAIN_SITE_SPEED_TITLE") ?></b> &mdash; <?= Loc::getMessage(
+                        "MAIN_SITE_SPEED_TITLE_DESC"
+                    ) ?>
                 </div>
 
                 <div class="site-speed-perf" id="site-speed-perf">
@@ -101,11 +107,15 @@ foreach ($mapIframeLangKeys as $key) {
                         ?>
                         <a href="/bitrix/admin/perfmon_panel.php?lang=<?= LANGUAGE_ID ?>"
                            class="site-speed-perf-label"><?= Loc::getMessage("MAIN_SITE_SPEED_PERF") ?></a>:<span
-                            class="site-speed-perf-value"><? if ($mark > 0):?><?= $mark ?><? else:?><?= Loc::getMessage("MAIN_SITE_SPEED_PERF_NO_RES") ?><? endif ?></span>
+                            class="site-speed-perf-value"><? if ($mark > 0):?><?= $mark ?><? else:?><?= Loc::getMessage(
+                            "MAIN_SITE_SPEED_PERF_NO_RES"
+                        ) ?><? endif ?></span>
                     <? endif ?>
 
                     <?
-                    $compositeStatus = \Bitrix\Main\Composite\Helper::isCompositeEnabled() ? Loc::getMessage("MAIN_SITE_SPEED_ENABLED") : Loc::getMessage("MAIN_SITE_SPEED_DISABLED");
+                    $compositeStatus = \Bitrix\Main\Composite\Helper::isCompositeEnabled() ? Loc::getMessage(
+                        "MAIN_SITE_SPEED_ENABLED"
+                    ) : Loc::getMessage("MAIN_SITE_SPEED_DISABLED");
                     ?>
                     <a href="/bitrix/admin/composite.php?lang=<?= LANGUAGE_ID ?>"
                        class="site-speed-perf-label"><?= Loc::getMessage("MAIN_SITE_SPEED_COMPOSITE_SITE") ?></a>:<span
@@ -113,7 +123,9 @@ foreach ($mapIframeLangKeys as $key) {
                     <?
 
                     if (\Bitrix\Main\Loader::includeModule("bitrixcloud")):
-                        $cdnStatus = CBitrixCloudCDN::IsActive() ? Loc::getMessage("MAIN_SITE_SPEED_ENABLED") : Loc::getMessage("MAIN_SITE_SPEED_DISABLED");
+                        $cdnStatus = CBitrixCloudCDN::IsActive() ? Loc::getMessage(
+                            "MAIN_SITE_SPEED_ENABLED"
+                        ) : Loc::getMessage("MAIN_SITE_SPEED_DISABLED");
                         ?>
                         <a href="/bitrix/admin/bitrixcloud_cdn.php?lang=<?= LANGUAGE_ID ?>"
                            class="site-speed-perf-label"><?= Loc::getMessage("MAIN_SITE_SPEED_CDN") ?></a>:<span
@@ -150,7 +162,9 @@ foreach ($mapIframeLangKeys as $key) {
 
         (function () {
             "use strict";
-            var siteSpeed = new BX.Main.SiteSpeed("<?=CUtil::JSEscape(Analytics\Counter::getPrivateKey())?>", "<?=CUtil::JSEscape(Analytics\Counter::getAccountId())?>");
+            var siteSpeed = new BX.Main.SiteSpeed("<?=CUtil::JSEscape(
+                Analytics\Counter::getPrivateKey()
+            )?>", "<?=CUtil::JSEscape(Analytics\Counter::getAccountId())?>");
 
             BX.ready(function () {
                 BX.bind(BX("site-speed-domains"), "change", drawStatForCurrentHost);

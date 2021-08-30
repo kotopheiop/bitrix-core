@@ -33,13 +33,17 @@ class CMailYandex2
      */
     public static function addDomain($token, $domain, &$error)
     {
-        $result = self::post('https://pddimp.yandex.ru/api2/admin/domain/register', array(
-            'token' => $token,
-            'domain' => $domain
-        ));
+        $result = self::post(
+            'https://pddimp.yandex.ru/api2/admin/domain/register',
+            array(
+                'token' => $token,
+                'domain' => $domain
+            )
+        );
 
-        if (isset($result['success']) && $result['success'] == 'ok')
+        if (isset($result['success']) && $result['success'] == 'ok') {
             return $result;
+        }
 
         self::setError($result, $error);
         return false;
@@ -60,13 +64,17 @@ class CMailYandex2
      */
     public static function getDomainStatus($token, $domain, &$error)
     {
-        $result = self::get('https://pddimp.yandex.ru/api2/admin/domain/details', array(
-            'token' => $token,
-            'domain' => $domain
-        ));
+        $result = self::get(
+            'https://pddimp.yandex.ru/api2/admin/domain/details',
+            array(
+                'token' => $token,
+                'domain' => $domain
+            )
+        );
 
-        if (isset($result['success']) && $result['success'] == 'ok')
+        if (isset($result['success']) && $result['success'] == 'ok') {
             return $result;
+        }
 
         self::setError($result, $error);
         return false;
@@ -87,13 +95,17 @@ class CMailYandex2
      */
     public static function checkDomainStatus($token, $domain, &$error)
     {
-        $result = self::get('https://pddimp.yandex.ru/api2/admin/domain/registration_status', array(
-            'token' => $token,
-            'domain' => $domain
-        ));
+        $result = self::get(
+            'https://pddimp.yandex.ru/api2/admin/domain/registration_status',
+            array(
+                'token' => $token,
+                'domain' => $domain
+            )
+        );
 
-        if (isset($result['success']) && $result['success'] == 'ok')
+        if (isset($result['success']) && $result['success'] == 'ok') {
             return $result;
+        }
 
         self::setError($result, $error);
         return false;
@@ -115,13 +127,17 @@ class CMailYandex2
      */
     public static function deleteDomain($token, $domain, &$error)
     {
-        $result = self::post('https://pddimp.yandex.ru/api2/admin/domain/delete', array(
-            'token' => $token,
-            'domain' => $domain
-        ));
+        $result = self::post(
+            'https://pddimp.yandex.ru/api2/admin/domain/delete',
+            array(
+                'token' => $token,
+                'domain' => $domain
+            )
+        );
 
-        if (isset($result['success']) && $result['success'] == 'ok')
+        if (isset($result['success']) && $result['success'] == 'ok') {
             return true;
+        }
 
         self::setError($result, $error);
         return false;
@@ -144,19 +160,26 @@ class CMailYandex2
      */
     public static function checkUser($token, $domain, $login, &$error)
     {
-        if (in_array(strtolower($login), array('abuse', 'postmaster')))
+        if (in_array(mb_strtolower($login), array('abuse', 'postmaster'))) {
             return 'exists';
+        }
 
-        $result = self::get('https://pddimp.yandex.ru/api2/admin/email/details', array(
-            'token' => $token,
-            'domain' => $domain,
-            'login' => $login
-        ));
+        $result = self::get(
+            'https://pddimp.yandex.ru/api2/admin/email/details',
+            array(
+                'token' => $token,
+                'domain' => $domain,
+                'login' => $login
+            )
+        );
 
-        if (isset($result['success']) && $result['success'] == 'ok')
+        if (isset($result['success']) && $result['success'] == 'ok') {
             return 'exists';
-        else if (isset($result['error']) && $result['error'] == 'account_not_found')
-            return 'nouser';
+        } else {
+            if (isset($result['error']) && $result['error'] == 'account_not_found') {
+                return 'nouser';
+            }
+        }
 
         self::setError($result, $error);
         return false;
@@ -188,15 +211,19 @@ class CMailYandex2
      */
     public static function addUser($token, $domain, $login, $password, &$error)
     {
-        $result = self::post('https://pddimp.yandex.ru/api2/admin/email/add', array(
-            'token' => $token,
-            'domain' => $domain,
-            'login' => $login,
-            'password' => $password
-        ));
+        $result = self::post(
+            'https://pddimp.yandex.ru/api2/admin/email/add',
+            array(
+                'token' => $token,
+                'domain' => $domain,
+                'login' => $login,
+                'password' => $password
+            )
+        );
 
-        if (isset($result['success']) && $result['success'] == 'ok')
+        if (isset($result['success']) && $result['success'] == 'ok') {
             return $result['uid'];
+        }
 
         self::setError($result, $error);
         return false;
@@ -220,14 +247,18 @@ class CMailYandex2
      */
     public static function getOAuthToken($token, $domain, $login, &$error)
     {
-        $result = self::get('https://pddimp.yandex.ru/api2/admin/email/get_oauth_token', array(
-            'token' => $token,
-            'domain' => $domain,
-            'login' => $login
-        ));
+        $result = self::get(
+            'https://pddimp.yandex.ru/api2/admin/email/get_oauth_token',
+            array(
+                'token' => $token,
+                'domain' => $domain,
+                'login' => $login
+            )
+        );
 
-        if (isset($result['success']) && $result['success'] == 'ok')
+        if (isset($result['success']) && $result['success'] == 'ok') {
             return $result['oauth-token'];
+        }
 
         self::setError($result, $error);
         return false;
@@ -250,7 +281,9 @@ class CMailYandex2
 
         return sprintf(
             'https://passport.yandex.%s/passport?mode=oauth&type=trusted-pdd-partner&error_retpath=%s&access_token=%s',
-            $passportZone, urlencode($errorUrl), urlencode($oauthToken)
+            $passportZone,
+            urlencode($errorUrl),
+            urlencode($oauthToken)
         );
     }
 
@@ -261,14 +294,18 @@ class CMailYandex2
      */
     public static function getMailInfo($token, $domain, $login, &$error)
     {
-        $result = self::get('https://pddimp.yandex.ru/api2/admin/email/counters', array(
-            'token' => $token,
-            'domain' => $domain,
-            'login' => $login
-        ));
+        $result = self::get(
+            'https://pddimp.yandex.ru/api2/admin/email/counters',
+            array(
+                'token' => $token,
+                'domain' => $domain,
+                'login' => $login
+            )
+        );
 
-        if (isset($result['success']) && $result['success'] == 'ok')
+        if (isset($result['success']) && $result['success'] == 'ok') {
             return $result['counters']['unread'];
+        }
 
         self::setError($result, $error);
         return false;
@@ -292,14 +329,18 @@ class CMailYandex2
      */
     public static function deleteUser($token, $domain, $login, &$error)
     {
-        $result = self::post('https://pddimp.yandex.ru/api2/admin/email/del', array(
-            'token' => $token,
-            'domain' => $domain,
-            'login' => $login
-        ));
+        $result = self::post(
+            'https://pddimp.yandex.ru/api2/admin/email/del',
+            array(
+                'token' => $token,
+                'domain' => $domain,
+                'login' => $login
+            )
+        );
 
-        if (isset($result['success']) && $result['success'] == 'ok')
+        if (isset($result['success']) && $result['success'] == 'ok') {
             return true;
+        }
 
         self::setError($result, $error);
         return false;
@@ -353,8 +394,9 @@ class CMailYandex2
 
         $result = self::post('https://pddimp.yandex.ru/api2/admin/email/edit', $postData);
 
-        if (isset($result['success']) && $result['success'] == 'ok')
+        if (isset($result['success']) && $result['success'] == 'ok') {
             return $result['uid'];
+        }
 
         self::setError($result, $error);
         return false;
@@ -375,15 +417,19 @@ class CMailYandex2
      */
     public static function getDomainUsers($token, $domain, $per_page = 30, $page = 0, &$error)
     {
-        $result = self::get('https://pddimp.yandex.ru/api2/admin/email/list', array(
-            'token' => $token,
-            'domain' => $domain,
-            'on_page' => $per_page,
-            'page' => $page
-        ));
+        $result = self::get(
+            'https://pddimp.yandex.ru/api2/admin/email/list',
+            array(
+                'token' => $token,
+                'domain' => $domain,
+                'on_page' => $per_page,
+                'page' => $page
+            )
+        );
 
-        if (isset($result['success']) && $result['success'] == 'ok')
+        if (isset($result['success']) && $result['success'] == 'ok') {
             return $result;
+        }
 
         self::setError($result, $error);
         return false;
@@ -391,13 +437,17 @@ class CMailYandex2
 
     public static function checkLogo($token, $domain, &$error)
     {
-        $result = self::get('https://pddimp.yandex.ru/api2/admin/domain/logo/check', array(
-            'token' => $token,
-            'domain' => $domain
-        ));
+        $result = self::get(
+            'https://pddimp.yandex.ru/api2/admin/domain/logo/check',
+            array(
+                'token' => $token,
+                'domain' => $domain
+            )
+        );
 
-        if (isset($result['success']) && $result['success'] == 'ok')
+        if (isset($result['success']) && $result['success'] == 'ok') {
             return $result['logo-url'];
+        }
 
         self::setError($result, $error);
         return false;
@@ -432,8 +482,9 @@ class CMailYandex2
         $response = $http->post('https://pddimp.yandex.ru/api2/admin/domain/logo/set', $data);
         $result = json_decode($response, true);
 
-        if (isset($result['success']) && $result['success'] == 'ok')
+        if (isset($result['success']) && $result['success'] == 'ok') {
             return true;
+        }
 
         self::setError($result, $error);
         return false;
@@ -441,14 +492,18 @@ class CMailYandex2
 
     public static function setCountry($token, $domain, $country, &$error)
     {
-        $result = self::post('https://pddimp.yandex.ru/api2/admin/domain/settings/set_country', array(
-            'token' => $token,
-            'domain' => $domain,
-            'country' => $country
-        ));
+        $result = self::post(
+            'https://pddimp.yandex.ru/api2/admin/domain/settings/set_country',
+            array(
+                'token' => $token,
+                'domain' => $domain,
+                'country' => $country
+            )
+        );
 
-        if (isset($result['success']) && $result['success'] == 'ok')
+        if (isset($result['success']) && $result['success'] == 'ok') {
             return true;
+        }
 
         self::setError($result, $error);
         return false;

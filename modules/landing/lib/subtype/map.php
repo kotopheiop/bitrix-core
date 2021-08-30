@@ -15,16 +15,27 @@ class Map
      * @param array $params Additional params.
      * @return array
      */
-    public static function prepareManifest(array $manifest, \Bitrix\Landing\Block $block = null, array $params = array())
-    {
+    public static function prepareManifest(
+        array $manifest,
+        \Bitrix\Landing\Block $block = null,
+        array $params = array()
+    ) {
         if (
             isset($params['required']) &&
-            $params['required'] == 'google'
+            $params['required'] === 'google'
         ) {
             $hooks = \Bitrix\Landing\Hook::getForSite(
                 $block->getSiteId()
             );
-            if ($hooks['GMAP']->getFields()['USE']->getValue() !== 'Y') {
+            $fields = $hooks['GMAP']->getFields();
+            if (
+                $fields
+                && isset($fields['USE'], $fields['CODE'])
+                && (
+                    $fields['USE']->getValue() !== 'Y'
+                    || empty($fields['CODE']->getValue())
+                )
+            ) {
                 $manifest['requiredUserAction'] = array(
                     'header' => Loc::getMessage('LANDING_BLOCK_EMPTY_GMAP_TITLE'),
                     'description' => Loc::getMessage('LANDING_BLOCK_EMPTY_GMAP_DESC'),
@@ -160,7 +171,10 @@ class Map
         if (!is_array($manifest['attrs']['.landing-block-node-map'])) {
             $manifest['attrs']['.landing-block-node-map'] = [];
         }
-        $manifest['attrs']['.landing-block-node-map'] = array_merge($manifest['attrs']['.landing-block-node-map'], $attrs);
+        $manifest['attrs']['.landing-block-node-map'] = array_merge(
+            $manifest['attrs']['.landing-block-node-map'],
+            $attrs
+        );
 
 
         return $manifest;

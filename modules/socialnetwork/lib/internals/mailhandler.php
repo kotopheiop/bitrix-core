@@ -37,7 +37,7 @@ final class MailHandler
         $commentId = false;
 
         if (
-            strlen($message) <= 0
+            $message == ''
             && count($attachments) > 0
         ) {
             $message = Loc::getMessage('SONET_MAILHANDLER_ATTACHMENTS');
@@ -46,7 +46,7 @@ final class MailHandler
         if (
             $logEntryId <= 0
             || $userId <= 0
-            || strlen($message) <= 0
+            || $message == ''
         ) {
             return false;
         }
@@ -130,15 +130,31 @@ final class MailHandler
                     return false;
                 }
 
-                foreach (EventManager::getInstance()->findEventHandlers('socialnetwork', 'OnAfterSocNetLogEntryCommentAdd') as $handler) {
-                    ExecuteModuleEventEx($handler, array($logEntry, array(
-                        "SITE_ID" => $siteId,
-                        "COMMENT_ID" => $commentId
-                    )));
+                foreach (
+                    EventManager::getInstance()->findEventHandlers(
+                        'socialnetwork',
+                        'OnAfterSocNetLogEntryCommentAdd'
+                    ) as $handler
+                ) {
+                    ExecuteModuleEventEx(
+                        $handler,
+                        array(
+                            $logEntry,
+                            array(
+                                "SITE_ID" => $siteId,
+                                "COMMENT_ID" => $commentId
+                            )
+                        )
+                    );
                 }
 
                 $skipCounterIncrement = false;
-                foreach (EventManager::getInstance()->findEventHandlers('socialnetwork', 'OnBeforeSocNetLogCommentCounterIncrement') as $handler) {
+                foreach (
+                    EventManager::getInstance()->findEventHandlers(
+                        'socialnetwork',
+                        'OnBeforeSocNetLogCommentCounterIncrement'
+                    ) as $handler
+                ) {
                     if (ExecuteModuleEventEx($handler, array($logEntry)) === false) {
                         $skipCounterIncrement = true;
                         break;

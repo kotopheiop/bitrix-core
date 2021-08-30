@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/b24connector/admin/prolog_before.php");
 
@@ -22,11 +23,13 @@ $APPLICATION->SetTitle(Loc::getMessage("B24C_CHAT_TITLE"));
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
 if (!empty($errorMsgs)) {
-    $admMessage = new CAdminMessage(array(
-        "TYPE" => "ERROR",
-        "MESSAGE" => implode("<br>\n", $errorMsgs),
-        "HTML" => true
-    ));
+    $admMessage = new CAdminMessage(
+        array(
+            "TYPE" => "ERROR",
+            "MESSAGE" => implode("<br>\n", $errorMsgs),
+            "HTML" => true
+        )
+    );
 
     echo $admMessage->Show();
 }

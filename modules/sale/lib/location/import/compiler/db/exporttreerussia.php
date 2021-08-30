@@ -30,17 +30,21 @@ class ExportTreeRussiaTable extends ExportTreeTable
     {
         unset($this->codeIndex);
 
-        if (!empty($this->regionCodeIndex))
+        if (!empty($this->regionCodeIndex)) {
             $this->codeIndex = $this->regionCodeIndex;
+        }
     }
 
     public function insert($data)
     {
         if (isset($this->codeIndex[$data['SYS_CODE']])) // already in there
+        {
             return;
+        }
 
-        if ($data['TYPE_CODE'] == 'REGION')
+        if ($data['TYPE_CODE'] == 'REGION') {
             $this->regionCodeIndex[$data['SYS_CODE']] = $this->formatCode($this->exportOffset);
+        }
 
         $this->codeIndex[$data['SYS_CODE']] = $this->formatCode($this->exportOffset);
 
@@ -49,11 +53,13 @@ class ExportTreeRussiaTable extends ExportTreeTable
 
         unset($data['PARENT_SYS_CODE']);
 
-        if (is_array($data['LANGNAMES']))
+        if (is_array($data['LANGNAMES'])) {
             $data['LANGNAMES'] = serialize($data['LANGNAMES']);
+        }
 
-        if (is_array($data['EXTERNALS']))
+        if (is_array($data['EXTERNALS'])) {
             $data['EXTERNALS'] = serialize($data['EXTERNALS']);
+        }
 
         $this->exportOffset++;
 

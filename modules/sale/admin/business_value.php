@@ -1,13 +1,14 @@
 <?
+
 require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_before.php');
 
 $readOnly = $APPLICATION->GetGroupRight('sale') < 'W';
 
-if ($readOnly)
+if ($readOnly) {
     $APPLICATION->AuthForm(GetMessage('ACCESS_DENIED'));
+}
 
 require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/sale/prolog.php');
-require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/sale/include.php');
 
 use    Bitrix\Sale\BusinessValue;
 use    Bitrix\Sale\Helpers\Admin\BusinessValueControl;
@@ -15,6 +16,9 @@ use Bitrix\Sale\Internals\BusinessValueTable;
 use Bitrix\Sale\Internals\BusinessValuePersonDomainTable;
 use    Bitrix\Sale\Internals\Input;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Loader;
+
+Loader::includeModule('sale');
 
 Loc::loadMessages(__FILE__);
 
@@ -31,8 +35,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST'
     && !$readOnly
     && check_bitrix_sessid()
     && ($_POST['save'] || $_POST['apply'])) {
-    if ($isSuccess = $businessValueControl->setMapFromPost())
+    if ($isSuccess = $businessValueControl->setMapFromPost()) {
         $businessValueControl->saveMap();
+    }
 }
 
 $filter = BusinessValueControl::getFilter(isset($_GET['del_filter']) ? null : ($_GET['FILTER'] ?: $_POST['FILTER']));
@@ -45,10 +50,12 @@ $APPLICATION->SetTitle(Loc::getMessage('BIZVAL_PAGE_TITLE'));
 require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php');
 
 if (!$isSuccess) {
-    call_user_func(function () {
-        $m = new CAdminMessage(Loc::getMessage('BIZVAL_PAGE_ERRORS'));
-        echo $m->Show();
-    });
+    call_user_func(
+        function () {
+            $m = new CAdminMessage(Loc::getMessage('BIZVAL_PAGE_ERRORS'));
+            echo $m->Show();
+        }
+    );
 }
 
 $consumerInput = BusinessValueControl::getConsumerInput();
@@ -64,7 +71,7 @@ foreach ($consumerInput["OPTIONS"] as $key => $value) {
 }
 
 $sTableID = "tbl_sale_business_value";
-$oSort = new CAdminSorting($sTableID, "ID", "asc");
+$oSort = new CAdminUiSorting($sTableID, "ID", "asc");
 $lAdmin = new CAdminUiList($sTableID, $oSort);
 
 $filterFields = array(
@@ -90,7 +97,9 @@ if ($adminSidePanelHelper->isSidePanel()) {
 ?>
     <script type="text/javascript">
         if (!window['filter_<?=$sTableID?>'] || !BX.is_subclass_of(window['filter_<?=$sTableID?>'], BX.adminUiFilter)) {
-            window['filter_<?=$sTableID?>'] = new BX.adminUiFilter('<?=$sTableID?>', <?=CUtil::PhpToJsObject(array())?>);
+            window['filter_<?=$sTableID?>'] = new BX.adminUiFilter('<?=$sTableID?>', <?=CUtil::PhpToJsObject(
+                array()
+            )?>);
         }
     </script>
 

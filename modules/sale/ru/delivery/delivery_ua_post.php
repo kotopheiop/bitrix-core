@@ -1,4 +1,5 @@
 <?
+
 /********************************************************************************
  * Delivery services for Ukrainian �Nova poshta�
  * http://novaposhta.ua
@@ -36,14 +37,18 @@ class CDeliveryUaPost
         "OB_COMISS_MIN" => 3 // min declared value comission UAH
     );
 
-    function Init()
+    public static function Init()
     {
         return array(
             /* Basic description */
             'SID' => 'ua_post',
             'NAME' => GetMessage('SALE_DH_UP_NAME'),
-            'DESCRIPTION' => GetMessage('SALE_DH_UP_DESCR1') . ' <a href="http://novaposhta.ua">http://novaposhta.ua</a>. ' . GetMessage('SALE_DH_UP_DESCR2'),
-            'DESCRIPTION_INNER' => GetMessage('SALE_DH_UP_DESCR1') . ' <a href="http://novaposhta.ua">http://novaposhta.ua</a>. ' . GetMessage('SALE_DH_UP_DESCR2'),
+            'DESCRIPTION' => GetMessage(
+                    'SALE_DH_UP_DESCR1'
+                ) . ' <a href="http://novaposhta.ua">http://novaposhta.ua</a>. ' . GetMessage('SALE_DH_UP_DESCR2'),
+            'DESCRIPTION_INNER' => GetMessage(
+                    'SALE_DH_UP_DESCR1'
+                ) . ' <a href="http://novaposhta.ua">http://novaposhta.ua</a>. ' . GetMessage('SALE_DH_UP_DESCR2'),
             'BASE_CURRENCY' => 'UAH',
             'HANDLER' => __FILE__,
             /* Handler methods */
@@ -80,7 +85,7 @@ class CDeliveryUaPost
         );
     }
 
-    function GetConfig()
+    public static function GetConfig()
     {
         $arConfig = array(
             'CONFIG_GROUPS' => array(
@@ -136,7 +141,9 @@ class CDeliveryUaPost
             $arConfig['CONFIG']['TARIF_WARE_DOOR_' . $uperWeight] = array(
                 'TYPE' => 'STRING',
                 'DEFAULT' => $price,
-                'TITLE' => ($prevWeight / 1000) . ' - ' . ($uperWeight / 1000) . ' ' . GetMessage('SALE_DH_UP_KG') . '.',
+                'TITLE' => ($prevWeight / 1000) . ' - ' . ($uperWeight / 1000) . ' ' . GetMessage(
+                        'SALE_DH_UP_KG'
+                    ) . '.',
                 'GROUP' => 'common',
                 'CHECK_FORMAT' => 'NUMBER'
             );
@@ -155,7 +162,9 @@ class CDeliveryUaPost
             $arConfig['CONFIG']['TARIF_DOOR_DOOR_' . $uperWeight] = array(
                 'TYPE' => 'STRING',
                 'DEFAULT' => $price,
-                'TITLE' => ($prevWeight / 1000) . ' - ' . ($uperWeight / 1000) . ' ' . GetMessage('SALE_DH_UP_KG') . '.',
+                'TITLE' => ($prevWeight / 1000) . ' - ' . ($uperWeight / 1000) . ' ' . GetMessage(
+                        'SALE_DH_UP_KG'
+                    ) . '.',
                 'GROUP' => 'common',
                 'CHECK_FORMAT' => 'NUMBER'
             );
@@ -189,56 +198,62 @@ class CDeliveryUaPost
         //ware
         $aviableBoxes = self::getAviableBoxes();
 
-        foreach ($aviableBoxes as $boxId => $arBox)
+        foreach ($aviableBoxes as $boxId => $arBox) {
             CSaleDeliveryHelper::makeBoxConfig($boxId, $arBox, 'ware', $arConfig);
+        }
 
         //door
-        foreach ($aviableBoxes as $boxId => $arBox)
+        foreach ($aviableBoxes as $boxId => $arBox) {
             CSaleDeliveryHelper::makeBoxConfig($boxId, $arBox, 'door', $arConfig);
+        }
 
         return $arConfig;
     }
 
-    function GetSettings($strSettings)
+    public static function GetSettings($strSettings)
     {
-        return unserialize($strSettings);
+        return unserialize($strSettings, ['allowed_classes' => false]);
     }
 
-    function SetSettings($arSettings)
+    public static function SetSettings($arSettings)
     {
         foreach ($arSettings as $key => $value) {
-            if (strlen($value) > 0)
+            if ($value <> '') {
                 $arSettings[$key] = $value;
-            else
+            } else {
                 unset($arSettings[$key]);
+            }
         }
 
         return serialize($arSettings);
     }
 
-    function GetFeatures($arConfig)
+    public static function GetFeatures($arConfig)
     {
         $arResult = array();
 
-        if ($arConfig["DELIVERY_TO_POST"]["VALUE"] == "ware")
+        if ($arConfig["DELIVERY_TO_POST"]["VALUE"] == "ware") {
             $arResult[GetMessage("SALE_DH_UP_SHIPPING_HANDLING")] = GetMessage("SALE_DH_UP_DTP_WARE");
-        else
+        } else {
             $arResult[GetMessage("SALE_DH_UP_SHIPPING_HANDLING")] = GetMessage("SALE_DH_UP_DTP_DOOR");
+        }
 
-        if ($arConfig["OB_COMISS"]["VALUE"] != 0 && $arConfig["OB_COMISS_MIN"]["VALUE"] != 0)
+        if ($arConfig["OB_COMISS"]["VALUE"] != 0 && $arConfig["OB_COMISS_MIN"]["VALUE"] != 0) {
             $arResult[GetMessage("SALE_DH_UP_FEATURE_VALUE")] = GetMessage("SALE_DH_UP_FEATURE_ENABLED");
+        }
 
         return $arResult;
     }
 
-    function Calculate($profile, $arConfig, $arOrder, $STEP, $TEMP = false)
+    public static function Calculate($profile, $arConfig, $arOrder, $STEP, $TEMP = false)
     {
         $arPacks = CSaleDeliveryHelper::getBoxesFromConfig($profile, $arConfig);
 
         $arPackagesParams = CSaleDeliveryHelper::getRequiredPacks(
             $arOrder["ITEMS"],
             $arPacks,
-            self::$MAX_WEIGHT);
+            self::$MAX_WEIGHT
+        );
 
         $packageCount = count($arPackagesParams);
 
@@ -264,12 +279,13 @@ class CDeliveryUaPost
         return $arResult;
     }
 
-    function Compability($arOrder, $arConfig)
+    public static function Compability($arOrder, $arConfig)
     {
-        if (floatval($arOrder["WEIGHT"]) <= self::$MAX_WEIGHT)
+        if (floatval($arOrder["WEIGHT"]) <= self::$MAX_WEIGHT) {
             $profiles = array('ware', 'door');
-        else
+        } else {
             $profiles = array();
+        }
 
         $arRes = array();
 
@@ -319,8 +335,9 @@ class CDeliveryUaPost
         $CK = floatval(self::getConfValue($arConfig, 'OB_COMISS')) * $arPackage['PRICE'] / 100; //%
         $minComiss = floatval(self::getConfValue($arConfig, 'OB_COMISS_MIN'));
 
-        if ($CK < $minComiss)
+        if ($CK < $minComiss) {
             $CK = $minComiss;
+        }
 
         $arDebug[] = 'ccomiss: ' . $CK;
 
@@ -368,10 +385,11 @@ class CDeliveryUaPost
     {
         $volWeight = self::calcVolumeWeightByVolume($volume);
 
-        if (floatval($weight) >= floatval($volWeight))
+        if (floatval($weight) >= floatval($volWeight)) {
             $result = $weight;
-        else
+        } else {
             $result = $volWeight;
+        }
 
         return $result;
     }

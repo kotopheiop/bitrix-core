@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 /*
@@ -51,8 +52,9 @@ class CSecurityAntiVirus
     {
         $this->place = $place;
         global $BX_SECURITY_AV_ACTION;
-        if ($BX_SECURITY_AV_ACTION === "notify_only")
+        if ($BX_SECURITY_AV_ACTION === "notify_only") {
             $this->replace = false;
+        }
     }
 
     public static function IsActive()
@@ -76,14 +78,34 @@ class CSecurityAntiVirus
             if (!CSecurityAntiVirus::IsActive()) {
                 //Just pre compression
                 RegisterModuleDependences("main", "OnPageStart", "security", "CSecurityAntiVirus", "OnPageStart", -1);
-                RegisterModuleDependences("main", "OnEndBufferContent", "security", "CSecurityAntiVirus", "OnEndBufferContent", 10000);
+                RegisterModuleDependences(
+                    "main",
+                    "OnEndBufferContent",
+                    "security",
+                    "CSecurityAntiVirus",
+                    "OnEndBufferContent",
+                    10000
+                );
                 //Right after compression
-                RegisterModuleDependences("main", "OnAfterEpilog", "security", "CSecurityAntiVirus", "OnAfterEpilog", 10001);
+                RegisterModuleDependences(
+                    "main",
+                    "OnAfterEpilog",
+                    "security",
+                    "CSecurityAntiVirus",
+                    "OnAfterEpilog",
+                    10001
+                );
             }
         } else {
             if (CSecurityAntiVirus::IsActive()) {
                 UnRegisterModuleDependences("main", "OnPageStart", "security", "CSecurityAntiVirus", "OnPageStart");
-                UnRegisterModuleDependences("main", "OnEndBufferContent", "security", "CSecurityAntiVirus", "OnEndBufferContent");
+                UnRegisterModuleDependences(
+                    "main",
+                    "OnEndBufferContent",
+                    "security",
+                    "CSecurityAntiVirus",
+                    "OnEndBufferContent"
+                );
                 UnRegisterModuleDependences("main", "OnAfterEpilog", "security", "CSecurityAntiVirus", "OnAfterEpilog");
             }
         }
@@ -98,11 +120,14 @@ class CSecurityAntiVirus
 
     public static function OnPageStart()
     {
-        if (CSecuritySystemInformation::isCliMode())
+        if (CSecuritySystemInformation::isCliMode()) {
             return;
+        }
 
         if (self::isSafetyRequest()) //Check only GET and POST request
+        {
             return;
+        }
 
         global $APPLICATION, $DB, $BX_SECURITY_AV_TIMEOUT, $BX_SECURITY_AV_ACTION;
         $BX_SECURITY_AV_TIMEOUT = COption::GetOptionInt("security", "antivirus_timeout");
@@ -115,8 +140,9 @@ class CSecurityAntiVirus
         } else {
             $BX_SECURITY_AV_WHITE_LIST = array();
             $res = CSecurityAntiVirus::GetWhiteList();
-            while ($ar = $res->Fetch())
+            while ($ar = $res->Fetch()) {
                 $BX_SECURITY_AV_WHITE_LIST[] = $ar["WHITE_SUBSTR"];
+            }
             $CACHE_MANAGER->Set("b_sec_white_list", $BX_SECURITY_AV_WHITE_LIST);
         }
 
@@ -128,7 +154,7 @@ class CSecurityAntiVirus
         if (defined("BX_SECURITY_AV_STARTED")) {
             $content = ob_get_contents();
             ob_end_clean();
-            if (strlen($content)) {
+            if ($content <> '') {
                 $Antivirus = new CSecurityAntiVirus("pre");
                 $Antivirus->Analyze($content);
                 echo $content;
@@ -147,21 +173,38 @@ class CSecurityAntiVirus
                     $SITE_ID = false;
                     do {
                         $SITE_ID = $arInfo["SITE_ID"];
-                        if (strlen($arInfo["INFO"])) {
-                            $arEvent = unserialize(base64_decode($arInfo["INFO"]));
-                            if (is_array($arEvent))
+                        if ($arInfo["INFO"] <> '') {
+                            $arEvent = unserialize(base64_decode($arInfo["INFO"]), ['allowed_classes' => false]);
+                            if (is_array($arEvent)) {
                                 $DB->Add("b_event_log", $arEvent, array("DESCRIPTION"));
+                            }
                         }
                         CSecurityDB::Query("update b_sec_virus set SENT='Y' where ID='" . $arInfo["ID"] . "'", '');
                     } while ($arInfo = $rsInfo->Fetch());
 
                     CTimeZone::Disable();
                     $arDate = localtime(time());
-                    $date = mktime($arDate[2], $arDate[1] - $BX_SECURITY_AV_TIMEOUT, 0, $arDate[4] + 1, $arDate[3], 1900 + $arDate[5]);
-                    CSecurityDB::Query("DELETE FROM b_sec_virus WHERE TIMESTAMP_X <= " . $DB->CharToDateFunction(ConvertTimeStamp($date, "FULL")), '');
+                    $date = mktime(
+                        $arDate[2],
+                        $arDate[1] - $BX_SECURITY_AV_TIMEOUT,
+                        0,
+                        $arDate[4] + 1,
+                        $arDate[3],
+                        1900 + $arDate[5]
+                    );
+                    CSecurityDB::Query(
+                        "DELETE FROM b_sec_virus WHERE TIMESTAMP_X <= " . $DB->CharToDateFunction(
+                            ConvertTimeStamp($date, "FULL")
+                        ),
+                        ''
+                    );
                     CTimeZone::Enable();
 
-                    CEvent::Send("VIRUS_DETECTED", $SITE_ID ? $SITE_ID : SITE_ID, array("EMAIL" => COption::GetOptionString("main", "email_from", "")));
+                    CEvent::Send(
+                        "VIRUS_DETECTED",
+                        $SITE_ID ? $SITE_ID : SITE_ID,
+                        array("EMAIL" => COption::GetOptionString("main", "email_from", ""))
+                    );
 
                     CSecurityDB::UnlockTable($table_lock);
 
@@ -174,7 +217,9 @@ class CSecurityAntiVirus
     public static function OnEndBufferContent(&$content)
     {
         if (self::isSafetyRequest()) //Check only GET and POST request
+        {
             return;
+        }
 
         //��������� ��������� ������
         $Antivirus = new CSecurityAntiVirus("body");
@@ -184,7 +229,9 @@ class CSecurityAntiVirus
     public static function OnAfterEpilog()
     {
         if (self::isSafetyRequest()) //Check only GET and POST request
+        {
             return;
+        }
 
         //start monitoring of output that can be after working antivirus.
         ob_start();
@@ -195,13 +242,14 @@ class CSecurityAntiVirus
     {
         if (defined("BX_SECURITY_AV_AFTER_EPILOG")) {
             $content = ob_get_contents();
-            if (strlen($content)) {
+            if ($content <> '') {
                 ob_end_clean();
 
-                if (substr($content, 0, 6) == "<html>" && preg_match("#</html>\\s*\$#is", $content))
+                if (mb_substr($content, 0, 6) == "<html>" && preg_match("#</html>\\s*\$#is", $content)) {
                     $Antivirus = new CSecurityAntiVirus("body");
-                else
+                } else {
                     $Antivirus = new CSecurityAntiVirus("post");
+                }
 
                 $Antivirus->Analyze($content);
                 echo $content;
@@ -212,7 +260,11 @@ class CSecurityAntiVirus
     public static function GetWhiteList()
     {
         global $DB;
-        $res = $DB->Query("SELECT * FROM b_sec_white_list ORDER BY ID", false, "FILE: " . __FILE__ . "<br> LINE: " . __LINE__);
+        $res = $DB->Query(
+            "SELECT * FROM b_sec_white_list ORDER BY ID",
+            false,
+            "FILE: " . __FILE__ . "<br> LINE: " . __LINE__
+        );
         return $res;
     }
 
@@ -224,8 +276,9 @@ class CSecurityAntiVirus
         $i = 1;
         foreach ($arWhiteList as $white_str) {
             $white_str = trim($white_str);
-            if ($white_str)
+            if ($white_str) {
                 $DB->Add("b_sec_white_list", array("ID" => $i++, "WHITE_SUBSTR" => $white_str));
+            }
         }
         $CACHE_MANAGER->Clean("b_sec_white_list");
     }
@@ -233,164 +286,269 @@ class CSecurityAntiVirus
     // function returns 1, if current block is in white list and needs not processing.
     function isInWhiteList()
     {
-        if (strpos($this->atributes, 'src="/bitrix/') !== false)
+        if (mb_strpos($this->atributes, 'src="/bitrix/') !== false) {
             return 1;
+        }
 
-        if (preg_match('#src="http[s]?://(api-maps\\.yandex|maps\\.google|apis\\.google|stg\\.odnoklassniki)\\.[a-z]{2,3}/#', $this->atributes))
+        if (preg_match(
+            '#src="http[s]?://(api-maps\\.yandex|maps\\.google|apis\\.google|stg\\.odnoklassniki)\\.[a-z]{2,3}/#',
+            $this->atributes
+        )) {
             return 2;
+        }
 
-        if (strpos($this->body, 'BX_DEBUG_INFO') !== false)
+        if (mb_strpos($this->body, 'BX_DEBUG_INFO') !== false) {
             return 3;
+        }
 
-        if (preg_match('#(google-analytics\\.com/ga\\.js|openstat\\.net/cnt\\.js|autocontext\\.begun\\.ru/autocontext\\.js|counter\\.yadro\\.ru/hit)#', $this->body))
+        if (preg_match(
+            '#(google-analytics\\.com/ga\\.js|openstat\\.net/cnt\\.js|autocontext\\.begun\\.ru/autocontext\\.js|counter\\.yadro\\.ru/hit)#',
+            $this->body
+        )) {
             return 4;
+        }
 
-        if (preg_match('/var\s+(cmt|jsMnu_toolbar_|hint|desktopPage|arStructure|current_selected|arCrmSelected|arKernelCSS|lastUsers|arStore)/', $this->body))
+        if (preg_match(
+            '/var\s+(cmt|jsMnu_toolbar_|hint|desktopPage|arStructure|current_selected|arCrmSelected|arKernelCSS|lastUsers|arStore)/',
+            $this->body
+        )) {
             return 5;
+        }
 
-        if (preg_match('/(arFDDirs|arFDFiles|arPropFieldsList|PROP)\[/', $this->body))
+        if (preg_match('/(arFDDirs|arFDFiles|arPropFieldsList|PROP)\[/', $this->body)) {
             return 6;
+        }
 
-        if (preg_match('/(addPathRow|MoveProgress|Import|DoNext|JCMenu|AttachFile|CloseDialog|_processData|showComment|ShowWarnings|SWFObject|deliveryCalcProceed|structReload|addForumImagesShow|rsasec_form_bind|BX_YMapAddPolyline|BX_YMapAddPlacemark|CloseWaitWindow|DoChangeExternalSaleId|AjaxSend|readFileChunk|EndDump|createMenu|addProperty)\(/', $this->body))
+        if (preg_match(
+            '/(addPathRow|MoveProgress|Import|DoNext|JCMenu|AttachFile|CloseDialog|_processData|showComment|ShowWarnings|SWFObject|deliveryCalcProceed|structReload|addForumImagesShow|rsasec_form_bind|BX_YMapAddPolyline|BX_YMapAddPlacemark|CloseWaitWindow|DoChangeExternalSaleId|AjaxSend|readFileChunk|EndDump|createMenu|addProperty)\(/',
+            $this->body
+        )) {
             return 7;
+        }
 
-        if (strpos($this->body, 'window.operation_success = true;') !== false)
+        if (mb_strpos($this->body, 'window.operation_success = true;') !== false) {
             return 8;
+        }
 
-        if (preg_match('/(jsAjaxUtil|jsUtils|jsPopup|elOnline|jsAdminChain|jsEvent|jsAjaxHistory|bxSession|BXHotKeys|oSearchDialog)\./', $this->body))
+        if (preg_match(
+            '/(jsAjaxUtil|jsUtils|jsPopup|elOnline|jsAdminChain|jsEvent|jsAjaxHistory|bxSession|BXHotKeys|oSearchDialog)\./',
+            $this->body
+        )) {
             return 9;
+        }
 
-        if (preg_match('/new\s+(PopupMenu|JCAdminFilter|JCSmartFilter|JCAdminMenu|BXHint|ViewTabControl|BXHTMLEditor|JCTitleSearch|JCWDTitleSearch|BxInterfaceForm|Date|JCEmployeeSelectControl|JCCatalogBigdataProducts|JCCatalogSection|JCCatalogElement|JCCatalogTopSlider|JCCatalogTopSection|JCCatalogSectionRec|JCCatalogSectionViewed|JCCatalogCompareList|JCCatalogItem|JCSaleGiftProduct|B24\.SearchTitle)/', $this->body))
+        if (preg_match(
+            '/new\s+(PopupMenu|JCAdminFilter|JCSmartFilter|JCAdminMenu|BXHint|ViewTabControl|BXHTMLEditor|JCTitleSearch|JCWDTitleSearch|BxInterfaceForm|Date|JCEmployeeSelectControl|JCCatalogBigdataProducts|JCCatalogSection|JCCatalogElement|JCCatalogTopSlider|JCCatalogTopSection|JCCatalogSectionRec|JCCatalogSectionViewed|JCCatalogCompareList|JCCatalogItem|JCSaleGiftProduct|B24\.SearchTitle)/',
+            $this->body
+        )) {
             return 10;
+        }
 
-        if (strpos($this->body, 'document\.write(\'<link href="/bitrix/templates/') !== false)
+        if (mb_strpos($this->body, 'document\.write(\'<link href="/bitrix/templates/') !== false) {
             return 11;
+        }
 
-        if (preg_match('/(BX|document\.getElementById)\(\'session_time_result\'\).innerHTML/', $this->body))
+        if (preg_match('/(BX|document\.getElementById)\(\'session_time_result\'\).innerHTML/', $this->body)) {
             return 12;
+        }
 
-        if (preg_match('/(structRegisterDD|bx_adv_includeFlash|BXSnippetsTaskbar|BXPropertiesTaskbar|oBXDialogControls|editComment|taskManagerForm|SLtestParamsSetValue|SLshowError|arUsers|arImages|itm_name|form_tbl_dump|bx_template_params|GetAdminList|WDAddUser2Filter|pBXEventDispatcher|orderCallback|disableAddToCompare)/', $this->body))
+        if (preg_match(
+            '/(structRegisterDD|bx_adv_includeFlash|BXSnippetsTaskbar|BXPropertiesTaskbar|oBXDialogControls|editComment|taskManagerForm|SLtestParamsSetValue|SLshowError|arUsers|arImages|itm_name|form_tbl_dump|bx_template_params|GetAdminList|WDAddUser2Filter|pBXEventDispatcher|orderCallback|disableAddToCompare)/',
+            $this->body
+        )) {
             return 13;
+        }
 
-        if (preg_match('/(iblock_element_edit|iblock_element_search|posting_admin|fileman_file_view|sale_print|get_message|user_edit)\.php/', $this->body))
+        if (preg_match(
+            '/(iblock_element_edit|iblock_element_search|posting_admin|fileman_file_view|sale_print|get_message|user_edit)\.php/',
+            $this->body
+        )) {
             return 14;
+        }
 
-        if (preg_match('/BX\.(WindowManager|reload|message|browser|ready|tooltip|admin|hint_replace|CDebugDialog|adjust|ajax|bind|loadScript|addCustomEvent|timeman|Finder|Access|loadCSS|CrmProductEditor|COpener|file_input|setKernelJS|TreeConditions|PULL|runSitemap|setCSSList|setJSList)/', $this->body))
+        if (preg_match(
+            '/BX\.(WindowManager|reload|message|browser|ready|tooltip|admin|hint_replace|CDebugDialog|adjust|ajax|bind|loadScript|addCustomEvent|timeman|Finder|Access|loadCSS|CrmProductEditor|COpener|file_input|setKernelJS|TreeConditions|PULL|runSitemap|setCSSList|setJSList)/',
+            $this->body
+        )) {
             return 15;
+        }
 
-        if (preg_match('/window\.parent\.(InitActionProps|Tree|buildNoMenu)/', $this->body))
+        if (preg_match('/window\.parent\.(InitActionProps|Tree|buildNoMenu)/', $this->body)) {
             return 16;
+        }
 
-        if (preg_match('/document\.forms\.meeting_edit/', $this->body))
+        if (preg_match('/document\.forms\.meeting_edit/', $this->body)) {
             return 17;
+        }
 
-        if (preg_match('/top\.(jsBXAC|bx_req_res|BX|bxiu_simple_res|bxiu_wm_img_res|SetForumAjaxPostTmp|SetVoteAjaxPostTmp|SetReviewsAjaxPostTmp|bxBlogImageError|replaceKeys|FILE_UPLOADER_CALLBACK|setAuthResult)/', $this->body))
+        if (preg_match(
+            '/top\.(jsBXAC|bx_req_res|BX|bxiu_simple_res|bxiu_wm_img_res|SetForumAjaxPostTmp|SetVoteAjaxPostTmp|SetReviewsAjaxPostTmp|bxBlogImageError|replaceKeys|FILE_UPLOADER_CALLBACK|setAuthResult)/',
+            $this->body
+        )) {
             return 18;
+        }
 
-        if (preg_match('/var\s+dates\s+=\s+(new\s+Array|\[\];)/', $this->body))
+        if (preg_match('/var\s+dates\s+=\s+(new\s+Array|\[\];)/', $this->body)) {
             return 19;
+        }
 
-        if (preg_match('/(updateURL|bx_incl_area|basketTotalWeight|iNoOnSelectionChange|arGDGroups|phpVars)\s+=/', $this->body))
+        if (preg_match(
+            '/(updateURL|bx_incl_area|basketTotalWeight|iNoOnSelectionChange|arGDGroups|phpVars)\s+=/',
+            $this->body
+        )) {
             return 20;
+        }
 
-        if (preg_match('/^\s*__status\s+=\s+true;\s*$/', $this->body))
+        if (preg_match('/^\s*__status\s+=\s+true;\s*$/', $this->body)) {
             return 21;
+        }
 
-        if (preg_match('/window\.(bx_load_items_res|oPhotoEditIconDialogError|bxph_error|bxph_action|bxphres|bx_req_res|MLSearchResult|arUsedCSS|arComp2Templates|arComp2TemplateProps|arComp2TemplateLists|arComp2Elements|arSnippets|JCCalendarViewMonth|JCCalendarViewWeek|JCCalendarViewDay|_bx_result|_bx_new_event|_bx_plann_mr|_bx_ar_events|_bx_calendar|_bx_plann_events|_bx_existent_event|_ml_items_colls|MLCollections|fmsBtimeout|fmsResult|arSnGroups|BXFM_result|BXFM_NoCopyToDir|oPhotoEditAlbumDialogError|structOptions|__bxst_result|_bx_def_calendar|GLOBAL_arMapObjects|autosave_|oPhotoEditDialogError|bxPlayerOnload|LHE_MESS|MLItems|fmPackTimeout|fmUnpackSuccess|BXFM_archiveExists|BXHtmlEditor)/', $this->body))
+        if (preg_match(
+            '/window\.(bx_load_items_res|oPhotoEditIconDialogError|bxph_error|bxph_action|bxphres|bx_req_res|MLSearchResult|arUsedCSS|arComp2Templates|arComp2TemplateProps|arComp2TemplateLists|arComp2Elements|arSnippets|JCCalendarViewMonth|JCCalendarViewWeek|JCCalendarViewDay|_bx_result|_bx_new_event|_bx_plann_mr|_bx_ar_events|_bx_calendar|_bx_plann_events|_bx_existent_event|_ml_items_colls|MLCollections|fmsBtimeout|fmsResult|arSnGroups|BXFM_result|BXFM_NoCopyToDir|oPhotoEditAlbumDialogError|structOptions|__bxst_result|_bx_def_calendar|GLOBAL_arMapObjects|autosave_|oPhotoEditDialogError|bxPlayerOnload|LHE_MESS|MLItems|fmPackTimeout|fmUnpackSuccess|BXFM_archiveExists|BXHtmlEditor)/',
+            $this->body
+        )) {
             return 22;
+        }
 
-        if (preg_match('/\s*(self|window)\.close\s*\(\s*\)\s*;*\s*$/', $this->body))
+        if (preg_match('/\s*(self|window)\.close\s*\(\s*\)\s*;*\s*$/', $this->body)) {
             return 24;
+        }
 
-        if ($this->body === 'window.location.reload();')
+        if ($this->body === 'window.location.reload();') {
             return 25;
+        }
 
-        if ($this->body === 'window.location = window.location.href;')
+        if ($this->body === 'window.location = window.location.href;') {
             return 26;
+        }
 
-        if (preg_match('/^parent\.window\.(End\(\d+\)|EndTasks\(\)|buildNoMenu\(\));\s*$/', $this->body))
+        if (preg_match('/^parent\.window\.(End\(\d+\)|EndTasks\(\)|buildNoMenu\(\));\s*$/', $this->body)) {
             return 27;
+        }
 
-        if (preg_match('/parent\.window\.|Start\(\s*\d+,\s*\d+\s*\);\s*$/', $this->body))
+        if (preg_match('/parent\.window\.|Start\(\s*\d+,\s*\d+\s*\);\s*$/', $this->body)) {
             return 28;
+        }
 
-        if (preg_match('/^top\.location\.href\s*=\s*([\'"])[^\'"]*\1;{0,1}$/', $this->body))
+        if (preg_match('/^top\.location\.href\s*=\s*([\'"])[^\'"]*\1;{0,1}$/', $this->body)) {
             return 29;
+        }
 
-        if (preg_match('/\.setTimeout\(\'CheckNew\(\)\'/', $this->body))
+        if (preg_match('/\.setTimeout\(\'CheckNew\(\)\'/', $this->body)) {
             return 30;
+        }
 
-        if (preg_match('/function\s+twitter_click_\d+\(longUrl\)/', $this->body))
+        if (preg_match('/function\s+twitter_click_\d+\(longUrl\)/', $this->body)) {
             return 31;
+        }
 
-        if (preg_match('/(window\.)*parent\.document\.getElementById\(["\'](COUNTERS_UPDATED|div_PROPERTY_DEFAULT_VALUE)["\']\)\.innerHTML/', $this->body))
+        if (preg_match(
+            '/(window\.)*parent\.document\.getElementById\(["\'](COUNTERS_UPDATED|div_PROPERTY_DEFAULT_VALUE)["\']\)\.innerHTML/',
+            $this->body
+        )) {
             return 32;
+        }
 
-        if (preg_match('/(TasksUsers|IntranetUsers).arEmployees/', $this->body))
+        if (preg_match('/(TasksUsers|IntranetUsers).arEmployees/', $this->body)) {
             return 35;
+        }
 
-        if (preg_match('/window\.location\s*=\s*[\'"]\/bitrix\/admin\/iblock_bizproc_workflow_edit.php/', $this->body))
+        if (preg_match(
+            '/window\.location\s*=\s*[\'"]\/bitrix\/admin\/iblock_bizproc_workflow_edit.php/',
+            $this->body
+        )) {
             return 36;
+        }
 
-        if (preg_match('/window\.parent\.location\.href\s*=\s*[\'"]\/bitrix\/admin\/sale_order_new.php/', $this->body))
+        if (preg_match(
+            '/window\.parent\.location\.href\s*=\s*[\'"]\/bitrix\/admin\/sale_order_new.php/',
+            $this->body
+        )) {
             return 43;
+        }
 
-        if (preg_match('/^window\.open\(/', $this->body))
+        if (preg_match('/^window\.open\(/', $this->body)) {
             return 44;
+        }
 
-        if (preg_match('/^\s*window\.__bxResult\[\'\d+\'\]\s*=\s*\{/', $this->body))
+        if (preg_match('/^\s*window\.__bxResult\[\'\d+\'\]\s*=\s*\{/', $this->body)) {
             return 46;
+        }
 
-        if (strpos($this->body, 'showFLVPlayer') !== false)
+        if (mb_strpos($this->body, 'showFLVPlayer') !== false) {
             return 37;
+        }
 
-        if (preg_match('/var\s+formSettingsDialogCRM_(LEAD|DEAL|COMPANY|CONTACT)_SHOW/', $this->body))
+        if (preg_match('/var\s+formSettingsDialogCRM_(LEAD|DEAL|COMPANY|CONTACT)_SHOW/', $this->body)) {
             return 38;
+        }
 
-        if (preg_match('/parent\.(FILE_UPLOADER_CALLBACK)/', $this->body))
+        if (preg_match('/parent\.(FILE_UPLOADER_CALLBACK)/', $this->body)) {
             return 39;
+        }
 
-        if (preg_match('/bxForm_CRM/', $this->body))
+        if (preg_match('/bxForm_CRM/', $this->body)) {
             return 40;
+        }
 
-        if (preg_match('/\$\(([\'"])[^\'"]*[\'"]\)/', $this->body))
+        if (preg_match('/\$\(([\'"])[^\'"]*[\'"]\)/', $this->body)) {
             return 41;
+        }
 
-        if (preg_match('/document\.documentElement\.className/i', $this->body))
+        if (preg_match('/document\.documentElement\.className/i', $this->body)) {
             return 42;
+        }
 
         //site checker
-        if (preg_match('/var\s*fix_mode\s*=/i', $this->body))
+        if (preg_match('/var\s*fix_mode\s*=/i', $this->body)) {
             return 43;
+        }
 
         //Voximplant document uploader
-        if ($this->type == 'iframe' && preg_match('#\s*src=[\'"]https://verify.voximplant.com/#i', $this->atributes))
+        if ($this->type == 'iframe' && preg_match('#\s*src=[\'"]https://verify.voximplant.com/#i', $this->atributes)) {
             return 45;
+        }
 
-        if (preg_match('#function\s+bizvalChange#', $this->body))
+        if (preg_match('#function\s+bizvalChange#', $this->body)) {
             return 46;
+        }
 
         if ($this->type === "script") {
-            if (preg_match('#type="application/json"#is', $this->atributes))
+            if (preg_match('#type="application/json"#is', $this->atributes)) {
                 return 44;
+            }
 
             $filter = new CSecurityXSSDetect(array("action" => "none", "log" => "N"));
             $this->bodyWOquotes = trim($filter->removeQuotedStrings($this->body, false), " \t\n\r");
-            $this->bodyWOquotes = preg_replace("/\\s*(window\\.top|top|window|window\\.document|document)\\.(strWarning|location\\.href|location|action_warning|__bx_res_sn_filename|title|title[\\d]+\\s*=\\s*title[\\d]+|text[\\d]+\\s*=\\s*text[\\d]+)\\s*=\\s*(|\\s*\\+\\s*)+;{0,1}\\s*/s", "", $this->bodyWOquotes, -1, $count);
-            $this->bodyWOquotes = preg_replace("/\\s*(alert|SelFile)\\s*\\((|[0-9]+|\\s*\\+\\s*)+\\)\\s*;{0,1}\\s*/", "", $this->bodyWOquotes);
+            $this->bodyWOquotes = preg_replace(
+                "/\\s*(window\\.top|top|window|window\\.document|document)\\.(strWarning|location\\.href|location|action_warning|__bx_res_sn_filename|title|title[\\d]+\\s*=\\s*title[\\d]+|text[\\d]+\\s*=\\s*text[\\d]+)\\s*=\\s*(|\\s*\\+\\s*)+;{0,1}\\s*/s",
+                "",
+                $this->bodyWOquotes,
+                -1,
+                $count
+            );
+            $this->bodyWOquotes = preg_replace(
+                "/\\s*(alert|SelFile)\\s*\\((|[0-9]+|\\s*\\+\\s*)+\\)\\s*;{0,1}\\s*/",
+                "",
+                $this->bodyWOquotes
+            );
             $this->bodyWOquotes = trim($this->bodyWOquotes, "\n\r\t ");
             $this->bodyWOquotes = preg_replace("/^\\/\\/[^\n]*\$/", "", $this->bodyWOquotes);
 
-            if ($this->bodyWOquotes === "")
+            if ($this->bodyWOquotes === "") {
                 return 33;
+            }
         }
 
         //user defined white list
         global $BX_SECURITY_AV_WHITE_LIST;
-        if (is_array($BX_SECURITY_AV_WHITE_LIST))
-            foreach ($BX_SECURITY_AV_WHITE_LIST as $white_substr)
-                if (strpos($this->data, $white_substr) !== false)
+        if (is_array($BX_SECURITY_AV_WHITE_LIST)) {
+            foreach ($BX_SECURITY_AV_WHITE_LIST as $white_substr) {
+                if (mb_strpos($this->data, $white_substr) !== false) {
                     return 34;
+                }
+            }
+        }
 
         return 0;
     }
@@ -414,51 +572,75 @@ class CSecurityAntiVirus
     function dolog()
     {
         global $BX_SECURITY_AV_TIMEOUT;
-        if (defined("ANTIVIRUS_CREATE_TRACE"))
+        if (defined("ANTIVIRUS_CREATE_TRACE")) {
             $this->CreateTrace();
+        }
 
         $uniq_id = md5($this->data);
-        $rsLog = CSecurityDB::Query("SELECT * FROM b_sec_virus WHERE ID = '" . $uniq_id . "'", "Module: security; Class: CSecurityAntiVirus; Function: AddEventLog; File: " . __FILE__ . "; Line: " . __LINE__);
+        $rsLog = CSecurityDB::Query(
+            "SELECT * FROM b_sec_virus WHERE ID = '" . $uniq_id . "'",
+            "Module: security; Class: CSecurityAntiVirus; Function: AddEventLog; File: " . __FILE__ . "; Line: " . __LINE__
+        );
         $arLog = CSecurityDB::Fetch($rsLog);
         if ($arLog && ($arLog["SENT"] == "Y")) {
-            CSecurityDB::Query("DELETE FROM b_sec_virus WHERE SENT = 'Y' AND TIMESTAMP_X < " . CSecurityDB::SecondsAgo($BX_SECURITY_AV_TIMEOUT * 60) . "", "Module: security; Class: CSecurityAntiVirus; Function: AddEventLog; File: " . __FILE__ . "; Line: " . __LINE__);
-            $rsLog = CSecurityDB::Query("SELECT * FROM b_sec_virus WHERE ID = '" . $uniq_id . "'", "Module: security; Class: CSecurityAntiVirus; Function: AddEventLog; File: " . __FILE__ . "; Line: " . __LINE__);
+            CSecurityDB::Query(
+                "DELETE FROM b_sec_virus WHERE SENT = 'Y' AND TIMESTAMP_X < " . CSecurityDB::SecondsAgo(
+                    $BX_SECURITY_AV_TIMEOUT * 60
+                ) . "",
+                "Module: security; Class: CSecurityAntiVirus; Function: AddEventLog; File: " . __FILE__ . "; Line: " . __LINE__
+            );
+            $rsLog = CSecurityDB::Query(
+                "SELECT * FROM b_sec_virus WHERE ID = '" . $uniq_id . "'",
+                "Module: security; Class: CSecurityAntiVirus; Function: AddEventLog; File: " . __FILE__ . "; Line: " . __LINE__
+            );
             $arLog = CSecurityDB::Fetch($rsLog);
         }
 
         if (!$arLog) {
             $ss = $this->data;
 
-            if (defined("ANTIVIRUS_CREATE_TRACE"))
-                foreach ($this->resultrules as $k => $v)
+            if (defined("ANTIVIRUS_CREATE_TRACE")) {
+                foreach ($this->resultrules as $k => $v) {
                     $ss .= "\n" . $k . "=" . $v;
+                }
+            }
 
             if (defined("SITE_ID") && !defined("ADMIN_SECTION")) {
                 $SITE_ID = SITE_ID;
             } else {
-                $rsDefSite = CSecurityDB::Query("SELECT LID FROM b_lang WHERE ACTIVE='Y' ORDER BY DEF desc, SORT", "Module: security; Class: CSecurityAntiVirus; Function: AddEventLog; File: " . __FILE__ . "; Line: " . __LINE__);
+                $rsDefSite = CSecurityDB::Query(
+                    "SELECT LID FROM b_lang WHERE ACTIVE='Y' ORDER BY DEF desc, SORT",
+                    "Module: security; Class: CSecurityAntiVirus; Function: AddEventLog; File: " . __FILE__ . "; Line: " . __LINE__
+                );
                 $arDefSite = CSecurityDB::Fetch($rsDefSite);
-                if ($arDefSite)
+                if ($arDefSite) {
                     $SITE_ID = $arDefSite["LID"];
-                else
+                } else {
                     $SITE_ID = false;
+                }
             }
 
-            $s = serialize(array(
-                "SEVERITY" => "SECURITY",
-                "AUDIT_TYPE_ID" => "SECURITY_VIRUS",
-                "MODULE_ID" => "security",
-                "ITEM_ID" => "UNKNOWN",
-                "REMOTE_ADDR" => $_SERVER["REMOTE_ADDR"],
-                "USER_AGENT" => $_SERVER["HTTP_USER_AGENT"],
-                "REQUEST_URI" => $_SERVER["REQUEST_URI"],
-                "SITE_ID" => defined("SITE_ID") ? SITE_ID : false,
-                "USER_ID" => false,
-                "GUEST_ID" => array_key_exists("SESS_GUEST_ID", $_SESSION) && ($_SESSION["SESS_GUEST_ID"] > 0) ? $_SESSION["SESS_GUEST_ID"] : false,
-                "DESCRIPTION" => "==" . base64_encode($ss),
-            ));
+            $s = serialize(
+                array(
+                    "SEVERITY" => "SECURITY",
+                    "AUDIT_TYPE_ID" => "SECURITY_VIRUS",
+                    "MODULE_ID" => "security",
+                    "ITEM_ID" => "UNKNOWN",
+                    "REMOTE_ADDR" => $_SERVER["REMOTE_ADDR"],
+                    "USER_AGENT" => $_SERVER["HTTP_USER_AGENT"],
+                    "REQUEST_URI" => $_SERVER["REQUEST_URI"],
+                    "SITE_ID" => defined("SITE_ID") ? SITE_ID : false,
+                    "USER_ID" => false,
+                    "GUEST_ID" => array_key_exists(
+                        "SESS_GUEST_ID",
+                        $_SESSION
+                    ) && ($_SESSION["SESS_GUEST_ID"] > 0) ? $_SESSION["SESS_GUEST_ID"] : false,
+                    "DESCRIPTION" => "==" . base64_encode($ss),
+                )
+            );
             CSecurityDB::QueryBind(
-                "insert into b_sec_virus (ID, TIMESTAMP_X, SITE_ID, INFO) values ('" . $uniq_id . "', " . CSecurityDB::CurrentTimeFunction() . ", " . ($SITE_ID ? "'" . $SITE_ID . "'" : "null") . ", :INFO)",
+                "insert into b_sec_virus (ID, TIMESTAMP_X, SITE_ID, INFO) values ('" . $uniq_id . "', " . CSecurityDB::CurrentTimeFunction(
+                ) . ", " . ($SITE_ID ? "'" . $SITE_ID . "'" : "null") . ", :INFO)",
                 array("INFO" => base64_encode($s)),
                 "Module: security; Class: CSecurityAntiVirus; Function: AddEventLog; File: " . __FILE__ . "; Line: " . __LINE__
             );
@@ -483,10 +665,11 @@ class CSecurityAntiVirus
     // ������� ������ ���������� ���������� �����.
     function end_blkblock()
     {
-        if ($this->replace)
+        if ($this->replace) {
             return $this->replacement;
-        else
+        } else {
             return $this->data;
+        }
     }
 
     function CreateTrace()
@@ -500,12 +683,14 @@ class CSecurityAntiVirus
             fwrite($f, $this->data);
 
             fwrite($f, "\n------------------------------\n\$_SERVER:\n");
-            foreach ($_SERVER as $k => $v)
+            foreach ($_SERVER as $k => $v) {
                 fwrite($f, $k . " = " . $v . "\n");
+            }
 
             fwrite($f, "\n------------------------------\n\$this->resultrules:\n");
-            foreach ($this->resultrules as $k => $v)
+            foreach ($this->resultrules as $k => $v) {
                 fwrite($f, $k . " = " . $v . "\n");
+            }
 
             fclose($f);
 
@@ -522,35 +707,44 @@ class CSecurityAntiVirus
 
         $this->stylewithiframe = preg_match("/<style.*>\s*iframe/", $content);
 
-        $arData = preg_split("/(<script.*?>.*?<\\/script.*?>|<iframe.*?>.*?<\\/iframe.*?>)/is", $content, -1, PREG_SPLIT_DELIM_CAPTURE);
+        $arData = preg_split(
+            "/(<script.*?>.*?<\\/script.*?>|<iframe.*?>.*?<\\/iframe.*?>)/is",
+            $content,
+            -1,
+            PREG_SPLIT_DELIM_CAPTURE
+        );
 
         $cData = count($arData);
 
-        if ($cData < 2)
+        if ($cData < 2) {
             return;
+        }
 
         $bDataChanged = false;
         for ($iData = 1; $iData < $cData; $iData += 2) {
             $this->data = $arData[$iData]; //������ ��� �����, ������� �������������� ����
 
             //                <       1         2  >  3        4
-            if (!preg_match('/^<(script|iframe)(.*?)>(.*?)(<\\/\\1.*?>)$/is', $this->data, $ret))
+            if (!preg_match('/^<(script|iframe)(.*?)>(.*?)(<\\/\\1.*?>)$/is', $this->data, $ret)) {
                 continue;
+            }
 
-            if ($iData > 1)
+            if ($iData > 1) {
                 $this->prev = $arData[$iData - 2] . $arData[$iData - 1];
-            else
+            } else {
                 $this->prev = $arData[$iData - 1];
+            }
 
-            if ($iData < $cData - 2)
+            if ($iData < $cData - 2) {
                 $this->next = $arData[$iData + 1] . $arData[$iData + 2];
-            else
+            } else {
                 $this->next = $arData[$iData + 1];
+            }
 
             $this->resultrules = array();
             $this->bodylines = false;
             $this->atributes = $ret[2];
-            if (strtolower($ret[1]) == 'script') {
+            if (mb_strtolower($ret[1]) == 'script') {
                 $this->body = $this->returnscriptbody($this->data);
                 $this->type = 'script';
             } else {
@@ -561,23 +755,25 @@ class CSecurityAntiVirus
             $this->whitelist_id = $this->isInWhiteList();
             if (!$this->whitelist_id) {
                 $cache_id = md5($this->data);
-                if (!isset($arLocalCache[$cache_id]))
+                if (!isset($arLocalCache[$cache_id])) {
                     $arLocalCache[$cache_id] = $this->returnblockrating();
+                }
 
                 if ($arLocalCache[$cache_id] >= $this->maxrating) {
                     $this->dolog();
                     $arData[$iData] = $this->end_blkblock();
-                    if ($this->replace)
+                    if ($this->replace) {
                         $bDataChanged = true;
+                    }
                 }
             }
 
             $this->cnt++;
         }
 
-        if ($bDataChanged)
+        if ($bDataChanged) {
             $content = implode('', $arData);
-
+        }
     }
 
     /*
@@ -587,8 +783,9 @@ class CSecurityAntiVirus
     function returnblockrating()
     {
         if ($this->type == 'iframe') {
-            if (!preg_match("/src=[\'\"]?http/", $this->atributes))
+            if (!preg_match("/src=[\'\"]?http/", $this->atributes)) {
                 return 0;
+            }
         }
 
         $r = $this->returnfromcache();
@@ -907,13 +1104,14 @@ class CSecurityAntiVirus
     //�������, ������������ �������������� ����� ����� � ��������
     function rulescriptlenghts()
     {
-        if (!$this->bodylines)
+        if (!$this->bodylines) {
             $this->bodylines = explode("\n", $this->body);
+        }
 
         $r = 0;
 
         if (count($this->bodylines) == 1) {
-            $ll = strlen(bin2hex($this->body)) / 2;
+            $ll = mb_strlen(bin2hex($this->body)) / 2;
             if ($ll > 500) {
                 $val = 9;
                 $r += $val;
@@ -934,9 +1132,10 @@ class CSecurityAntiVirus
             $ll = 0;
             $mxl = 0;
             foreach ($this->bodylines as $str) {
-                $ll = strlen(bin2hex($str)) / 2;
-                if ($mxl < $ll)
+                $ll = mb_strlen(bin2hex($str)) / 2;
+                if ($mxl < $ll) {
                     $mxl = $ll;
+                }
             }
 
             if ($ll > 500) {
@@ -963,8 +1162,9 @@ class CSecurityAntiVirus
     // ������ ��������� ��������� ��������...
     function rulescriptfrequensy()
     {
-        if (!$this->bodylines)
+        if (!$this->bodylines) {
             $this->bodylines = explode("\n", $this->body);
+        }
 
         $all = array("MAXCHAR" => 0, "D" => 0, "H" => 0, "NW" => 0, "B" => 0, "LEN" => 0);
         $maxes = array("MAXCHAR" => 0, "D" => 0, "H" => 0, "NW" => 0, "B" => 0, "LEN" => 0);
@@ -986,16 +1186,21 @@ class CSecurityAntiVirus
                 $ret['NW'] = $ret['NW'] * 100 / $ret['LEN'];
                 $ret['B'] = $ret['B'] * 100 / $ret['LEN'];
 
-                if ($ret['MAXCHAR'] > $maxes['MAXCHAR'])
+                if ($ret['MAXCHAR'] > $maxes['MAXCHAR']) {
                     $maxes['MAXCHAR'] = $ret['MAXCHAR'];
-                if ($ret['D'] > $maxes['D'])
+                }
+                if ($ret['D'] > $maxes['D']) {
                     $maxes['D'] = $ret['D'];
-                if ($ret['H'] > $maxes['H'])
+                }
+                if ($ret['H'] > $maxes['H']) {
                     $maxes['H'] = $ret['H'];
-                if ($ret['NW'] > $maxes['NW'])
+                }
+                if ($ret['NW'] > $maxes['NW']) {
                     $maxes['NW'] = $ret['NW'];
-                if ($ret['B'] > $maxes['B'])
+                }
+                if ($ret['B'] > $maxes['B']) {
                     $maxes['B'] = $ret['B'];
+                }
             }
         }
 
@@ -1156,7 +1361,6 @@ class CSecurityAntiVirus
         //G3 ����� ���� ������ �����������  � ����� ������ (������ ����� psslss2 =30��������) ����� ��� � pss2%  24  [5]
         //G3 ����� ���� ������ �����������  � ����� ������ (������ ����� psslss3 =30��������) ����� ��� � pss3%  28  [6]
         if ($maxes['MAXCHAR'] > 20) {
-
             $val = 3;
             if ($g3 < $val) {
                 $g3 = $val;
@@ -1292,14 +1496,18 @@ class CSecurityAntiVirus
             }
         }
 
-        if (!empty($g3s))
+        if (!empty($g3s)) {
             $this->resultrules[$g3s] = $g3;
-        if (!empty($g4s))
+        }
+        if (!empty($g4s)) {
             $this->resultrules[$g4s] = $g4;
-        if (!empty($g5s))
+        }
+        if (!empty($g5s)) {
             $this->resultrules[$g5s] = $g5;
-        if (!empty($g6s))
+        }
+        if (!empty($g6s)) {
             $this->resultrules[$g6s] = $g6;
+        }
 
         return ($g3 + $g4 + $g5 + $g6);
     }
@@ -1307,10 +1515,11 @@ class CSecurityAntiVirus
     // ��������, ����������� ������� ��������� �������
     function rulescriptwhiterules()
     {
-        if (!$this->bodylines)
+        if (!$this->bodylines) {
             $this->bodylines = explode("\n", $this->body);
+        }
 
-        $ll = strlen(bin2hex($this->body)) / 2;
+        $ll = mb_strlen(bin2hex($this->body)) / 2;
         $r = 0;
         $lstr = count($this->bodylines);
 
@@ -1372,7 +1581,6 @@ class CSecurityAntiVirus
     //������ ��������� � ������ ������� � ����������
     function rulescriptnamerules()
     {
-
         $rr = $this->getnames($this->body);
 
         $cc = 0;
@@ -1381,18 +1589,21 @@ class CSecurityAntiVirus
 
         foreach ($rr['f'] as $k => $v) {
             $cc++;
-            if (!$this->isnormalname($v, $l))
+            if (!$this->isnormalname($v, $l)) {
                 $cn++;
+            }
         }
 
         $mxl = 0;
         foreach ($rr['n'] as $k => $v) {
             $cc++;
-            if (!$this->isnormalname($v, $l))
+            if (!$this->isnormalname($v, $l)) {
                 $cn++;
+            }
 
-            if ($l > $mxl)
+            if ($l > $mxl) {
                 $mxl = $l;
+            }
         }
 
         if ($mxl > 35) {
@@ -1411,9 +1622,10 @@ class CSecurityAntiVirus
 
         $mxs = 0;
         foreach ($rr['s'] as $k => $v) {
-            $l = strlen(bin2hex($v)) / 2;
-            if ($l > $mxs)
+            $l = mb_strlen(bin2hex($v)) / 2;
+            if ($l > $mxs) {
                 $mxs = $l;
+            }
         }
 
         if ($mxs > 400) {
@@ -1465,22 +1677,27 @@ class CSecurityAntiVirus
                 'NW' => array(),
             );
 
-            for ($i = ord('0'), $end = ord('9'); $i <= $end; $i++)
+            for ($i = ord('0'), $end = ord('9'); $i <= $end; $i++) {
                 $arCharClasses['D'][] = $i;
+            }
 
-            for ($i = ord('a'), $end = ord('f'); $i <= $end; $i++)
+            for ($i = ord('a'), $end = ord('f'); $i <= $end; $i++) {
                 $arCharClasses['H'][] = $i;
+            }
 
-            for ($i = ord('A'), $end = ord('F'); $i <= $end; $i++)
+            for ($i = ord('A'), $end = ord('F'); $i <= $end; $i++) {
                 $arCharClasses['H'][] = $i;
+            }
 
-            for ($i = 0; $i < 32; $i++)
+            for ($i = 0; $i < 32; $i++) {
                 $arCharClasses['B'][] = $i;
+            }
 
             $strPunct = "`~!@#$%^&*[]{}();:'\",.\/?\|";
-            $len = strlen($strPunct);
-            for ($i = 0; $i < $len; $i++)
-                $arCharClasses['NW'][] = ord(substr($strPunct, $i, 1));
+            $len = mb_strlen($strPunct);
+            for ($i = 0; $i < $len; $i++) {
+                $arCharClasses['NW'][] = ord(mb_substr($strPunct, $i, 1));
+            }
         }
 
         $chars = count_chars($str, 1);
@@ -1503,10 +1720,13 @@ class CSecurityAntiVirus
         );
 
         if (count($chars)) {
-            foreach ($arCharClasses as $class => $arChars)
-                foreach ($arChars as $ch)
-                    if (isset($chars[$ch]))
+            foreach ($arCharClasses as $class => $arChars) {
+                foreach ($arChars as $ch) {
+                    if (isset($chars[$ch])) {
                         $out[$class] += $chars[$ch];
+                    }
+                }
+            }
             $out["H"] += $out["D"];
         }
 
@@ -1531,10 +1751,11 @@ class CSecurityAntiVirus
             $added = array();
             foreach ($ret[1] as $k => $v) {
                 if (!array_key_exists($v, $added)) {
-                    if ($ret[2][$k] == '(')
+                    if ($ret[2][$k] == '(') {
                         $r['f'][] = $v;
-                    else
-                        $r['n'][] = $v;;
+                    } else {
+                        $r['n'][] = $v;
+                    };
 
                     $added[$v] = 1;
                 }
@@ -1548,14 +1769,17 @@ class CSecurityAntiVirus
 
     function isnormalname($nm, &$l)
     {
-        $lnm = strtolower($nm);
-        if ($lnm == 'ac_fl_runcontent')
+        $lnm = mb_strtolower($nm);
+        if ($lnm == 'ac_fl_runcontent') {
             return 1;
-        if ($lnm == 'innerhtml')
+        }
+        if ($lnm == 'innerhtml') {
             return 1;
+        }
 
-        if (preg_match("/[a-z]\d+[a-z]+\d+[a-z]+/is", $nm))
+        if (preg_match("/[a-z]\d+[a-z]+\d+[a-z]+/is", $nm)) {
             return 0;
+        }
 
         static $cache = array();
         if (!isset($cache[$nm])) {
@@ -1566,42 +1790,51 @@ class CSecurityAntiVirus
             $start = ord('a');
             $end = ord('z');
             for ($i = $start; $i <= $end; $i++) {
-                if (isset($chars[$i]))
+                if (isset($chars[$i])) {
                     $cs += $chars[$i];
+                }
             }
 
             $cz = 0;
             $start = ord('A');
             $end = ord('Z');
             for ($i = $start; $i <= $end; $i++) {
-                if (isset($chars[$i]))
+                if (isset($chars[$i])) {
                     $cz += $chars[$i];
+                }
             }
 
             $cc = 0;
             $start = ord('0');
             $end = ord('9');
             for ($i = $start; $i <= $end; $i++) {
-                if (isset($chars[$i]))
+                if (isset($chars[$i])) {
                     $cc += $chars[$i];
+                }
             }
 
-            if ($cs < $cz && $cs > 2 && $l > 5)
+            if ($cs < $cz && $cs > 2 && $l > 5) {
                 $cache[$nm] = 0;
-            elseif ($cs > $cz && $cz > 3 && $l > 6)
+            } elseif ($cs > $cz && $cz > 3 && $l > 6) {
                 $cache[$nm] = 0;
-            elseif ($l > 0 && $cc * 100 / $l > 50 && $l > 5)
+            } elseif ($l > 0 && $cc * 100 / $l > 50 && $l > 5) {
                 $cache[$nm] = 0;
-            else
+            } else {
                 $cache[$nm] = 1;
+            }
         }
         return $cache[$nm];
     }
 
     function returnscriptbody($str)
     {
-        if (preg_match("/<script.*?>((\s*<!\-\-)|(<!\[CDATA\[))?\s*(.*?)\s*((\/\/\s*\-\->\s*)|(\/\/\s*\]\s*\]\s*))?<\/script.*>/is", $str, $ret))
+        if (preg_match(
+            "/<script.*?>((\s*<!\-\-)|(<!\[CDATA\[))?\s*(.*?)\s*((\/\/\s*\-\->\s*)|(\/\/\s*\]\s*\]\s*))?<\/script.*>/is",
+            $str,
+            $ret
+        )) {
             return $ret[4];
+        }
         return $str;
     }
 

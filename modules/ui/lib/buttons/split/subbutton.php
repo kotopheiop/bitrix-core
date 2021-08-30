@@ -172,10 +172,14 @@ class SubButton extends Buttons\BaseButton
         } else {
             if ($state === $mainState && $this->isMenuButton()) {
                 $this->getSplitButton()->setState($globalState);
-            } else if ($state === $menuState && $this->isMainButton()) {
-                $this->getSplitButton()->setState($globalState);
-            } else if ($state !== $globalState) {
-                $this->getSplitButton()->setState($this->isMainButton() ? $mainState : $menuState);
+            } else {
+                if ($state === $menuState && $this->isMainButton()) {
+                    $this->getSplitButton()->setState($globalState);
+                } else {
+                    if ($state !== $globalState) {
+                        $this->getSplitButton()->setState($this->isMainButton() ? $mainState : $menuState);
+                    }
+                }
             }
         }
 

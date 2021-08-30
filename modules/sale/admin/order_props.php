@@ -5,8 +5,9 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
 \Bitrix\Main\Loader::includeModule('sale');
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions < "W")
+if ($saleModulePermissions < "W") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/prolog.php");
@@ -34,27 +35,43 @@ $lAdmin->InitFilter($arFilterFields);
 
 $arFilter = array();
 
-if (IntVal($filter_person_type_id) > 0) $arFilter["PERSON_TYPE_ID"] = IntVal($filter_person_type_id);
-if (strlen($filter_type) > 0) $arFilter["TYPE"] = Trim($filter_type);
-if (strlen($filter_user) > 0) $arFilter["USER_PROPS"] = Trim($filter_user);
-if (IntVal($filter_group) > 0) $arFilter["PROPS_GROUP_ID"] = IntVal($filter_group);
-if (strlen($filter_code) > 0) $arFilter["CODE"] = Trim($filter_code);
-if (strlen($filter_active) > 0) $arFilter["ACTIVE"] = Trim($filter_active);
-if (strlen($filter_util) > 0) $arFilter["UTIL"] = Trim($filter_util);
+if (intval($filter_person_type_id) > 0) {
+    $arFilter["PERSON_TYPE_ID"] = intval($filter_person_type_id);
+}
+if ($filter_type <> '') {
+    $arFilter["TYPE"] = Trim($filter_type);
+}
+if ($filter_user <> '') {
+    $arFilter["USER_PROPS"] = Trim($filter_user);
+}
+if (intval($filter_group) > 0) {
+    $arFilter["PROPS_GROUP_ID"] = intval($filter_group);
+}
+if ($filter_code <> '') {
+    $arFilter["CODE"] = Trim($filter_code);
+}
+if ($filter_active <> '') {
+    $arFilter["ACTIVE"] = Trim($filter_active);
+}
+if ($filter_util <> '') {
+    $arFilter["UTIL"] = Trim($filter_util);
+}
 
 if ($lAdmin->EditAction() && $saleModulePermissions >= "W") {
     foreach ($FIELDS as $ID => $arFields) {
         $DB->StartTransaction();
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
-        if (!$lAdmin->IsUpdated($ID))
+        if (!$lAdmin->IsUpdated($ID)) {
             continue;
+        }
 
         if (!CSaleOrderProps::Update($ID, $arFields)) {
-            if ($ex = $APPLICATION->GetException())
+            if ($ex = $APPLICATION->GetException()) {
                 $lAdmin->AddUpdateError($ex->GetString(), $ID);
-            else
+            } else {
                 $lAdmin->AddUpdateError(GetMessage("SPTAN_ERROR_UPDATE"), $ID);
+            }
 
             $DB->Rollback();
         }
@@ -74,13 +91,15 @@ if (($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "W") {
             false,
             array("ID")
         );
-        while ($arResult = $dbResultList->Fetch())
+        while ($arResult = $dbResultList->Fetch()) {
             $arID[] = $arResult['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
 
         switch ($_REQUEST['action']) {
             case "delete":
@@ -99,10 +118,11 @@ if (($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "W") {
                 } else {
                     $DB->Rollback();
 
-                    if ($ex = $APPLICATION->GetException())
+                    if ($ex = $APPLICATION->GetException()) {
                         $lAdmin->AddGroupError($ex->GetString(), $ID);
-                    else
+                    } else {
                         $lAdmin->AddGroupError(GetMessage("SOPAN_ERROR_DELETE"), $ID);
+                    }
                 }
 
                 $DB->Commit();
@@ -112,42 +132,63 @@ if (($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "W") {
     }
 }
 
-$dbResultList = \Bitrix\Sale\Property::getList([
-    'filter' => $arFilter,
-    'order' => [$by => $order]
-]);
+$dbResultList = \Bitrix\Sale\Property::getList(
+    [
+        'filter' => $arFilter,
+        'order' => [$by => $order]
+    ]
+);
 
 $dbResultList = new CAdminResult($dbResultList, $sTableID);
 $dbResultList->NavStart();
 
 $lAdmin->NavText($dbResultList->GetNavPrint(GetMessage("SALE_PRLIST")));
 
-$lAdmin->AddHeaders(array(
-    array("id" => "ID", "content" => "ID", "sort" => "ID", "default" => true),
-    array("id" => "PERSON_TYPE_ID", "content" => GetMessage("SALE_PERSON_TYPE"), "sort" => "PERSON_TYPE_ID", "default" => true),
-    array("id" => "NAME", "content" => GetMessage('SALE_FIELD_NAME'), "sort" => "NAME", "default" => true),
-    array("id" => "CODE", "content" => GetMessage('SALE_FIELD_CODE'), "sort" => "CODE", "default" => true),
-    array("id" => "ACTIVE", "content" => GetMessage("SALE_FIELD_ACTIVE"), "sort" => "ACTIVE", "default" => true),
-    array("id" => "SORT", "content" => GetMessage('SALE_FIELD_SORT'), "sort" => "SORT", "default" => true),
-    array("id" => "TYPE", "content" => GetMessage("SALE_FIELD_TYPE"), "sort" => "TYPE", "default" => true),
-    array("id" => "REQUIRED", "content" => GetMessage("SALE_REQUIED"), "sort" => "REQUIRED", "default" => true),
-    array("id" => "MULTIPLE", "content" => GetMessage("SALE_MULTIPLE"), "sort" => "MULTIPLE", "default" => true),
-    array("id" => "PROPS_GROUP_ID", "content" => GetMessage("SALE_GROUP"), "sort" => "PROPS_GROUP_ID", "default" => true),
-    array("id" => "USER_PROPS", "content" => GetMessage("SALE_USER"), "sort" => "USER_PROPS", "default" => true),
-    array("id" => "UTIL", "content" => GetMessage("SALE_FIELD_UTIL"), "sort" => "UTIL", "default" => true),
-));
+$lAdmin->AddHeaders(
+    array(
+        array("id" => "ID", "content" => "ID", "sort" => "ID", "default" => true),
+        array(
+            "id" => "PERSON_TYPE_ID",
+            "content" => GetMessage("SALE_PERSON_TYPE"),
+            "sort" => "PERSON_TYPE_ID",
+            "default" => true
+        ),
+        array("id" => "NAME", "content" => GetMessage('SALE_FIELD_NAME'), "sort" => "NAME", "default" => true),
+        array("id" => "CODE", "content" => GetMessage('SALE_FIELD_CODE'), "sort" => "CODE", "default" => true),
+        array("id" => "ACTIVE", "content" => GetMessage("SALE_FIELD_ACTIVE"), "sort" => "ACTIVE", "default" => true),
+        array("id" => "SORT", "content" => GetMessage('SALE_FIELD_SORT'), "sort" => "SORT", "default" => true),
+        array("id" => "TYPE", "content" => GetMessage("SALE_FIELD_TYPE"), "sort" => "TYPE", "default" => true),
+        array("id" => "REQUIRED", "content" => GetMessage("SALE_REQUIED"), "sort" => "REQUIRED", "default" => true),
+        array("id" => "MULTIPLE", "content" => GetMessage("SALE_MULTIPLE"), "sort" => "MULTIPLE", "default" => true),
+        array(
+            "id" => "PROPS_GROUP_ID",
+            "content" => GetMessage("SALE_GROUP"),
+            "sort" => "PROPS_GROUP_ID",
+            "default" => true
+        ),
+        array("id" => "USER_PROPS", "content" => GetMessage("SALE_USER"), "sort" => "USER_PROPS", "default" => true),
+        array("id" => "UTIL", "content" => GetMessage("SALE_FIELD_UTIL"), "sort" => "UTIL", "default" => true),
+    )
+);
 
 $arPersonTypeList = array();
 $dbPersonType = CSalePersonType::GetList(array("SORT" => "ASC", "NAME" => "ASC"), array());
 while ($arPersonType = $dbPersonType->Fetch()) {
-    $arPersonTypeList[$arPersonType["ID"]] = Array("ID" => $arPersonType["ID"], "NAME" => htmlspecialcharsEx($arPersonType["NAME"]), "LID" => implode(", ", $arPersonType["LIDS"]));
+    $arPersonTypeList[$arPersonType["ID"]] = Array(
+        "ID" => $arPersonType["ID"],
+        "NAME" => htmlspecialcharsEx($arPersonType["NAME"]),
+        "LID" => implode(", ", $arPersonType["LIDS"])
+    );
 }
 
 $arVisibleColumns = $lAdmin->GetVisibleHeaderColumns();
 while ($arOrderProp = $dbResultList->NavNext(true, "f_")) {
     $editUrl = "sale_order_props_edit.php?ID=" . $f_ID . "&lang=" . LANG . GetFilterParams("filter_");
     $row =& $lAdmin->AddRow($f_ID, $arOrderProp, $editUrl, GetMessage("SALE_EDIT_DESCR"));
-    $row->AddField("ID", "<b><a href='" . $editUrl . "' title='" . GetMessage("SALE_EDIT_DESCR") . "'>" . $f_ID . "</a>");
+    $row->AddField(
+        "ID",
+        "<b><a href='" . $editUrl . "' title='" . GetMessage("SALE_EDIT_DESCR") . "'>" . $f_ID . "</a>"
+    );
 
     $fieldValue = "";
     if (in_array("PERSON_TYPE_ID", $arVisibleColumns)) {
@@ -177,11 +218,23 @@ while ($arOrderProp = $dbResultList->NavNext(true, "f_")) {
 
     $arActions = Array();
 
-    $arActions[] = array("ICON" => "edit", "TEXT" => GetMessage("SALE_EDIT_DESCR"), "ACTION" => $lAdmin->ActionRedirect($editUrl), "DEFAULT" => true);
+    $arActions[] = array(
+        "ICON" => "edit",
+        "TEXT" => GetMessage("SALE_EDIT_DESCR"),
+        "ACTION" => $lAdmin->ActionRedirect($editUrl),
+        "DEFAULT" => true
+    );
 
     if ($saleModulePermissions >= "W") {
         $arActions[] = array("SEPARATOR" => true);
-        $arActions[] = array("ICON" => "delete", "TEXT" => GetMessage("SALE_DELETE_DESCR"), "ACTION" => "if(confirm('" . GetMessage('SALE_CONFIRM_DEL_MESSAGE') . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete"));
+        $arActions[] = array(
+            "ICON" => "delete",
+            "TEXT" => GetMessage("SALE_DELETE_DESCR"),
+            "ACTION" => "if(confirm('" . GetMessage('SALE_CONFIRM_DEL_MESSAGE') . "')) " . $lAdmin->ActionDoGroup(
+                    $f_ID,
+                    "delete"
+                )
+        );
     }
 
     $row->AddActions($arActions);
@@ -218,7 +271,9 @@ if ($saleModulePermissions == "W") {
     foreach ($arPersonTypeList as $arRes) {
         $arDDMenu[] = array(
             "TEXT" => "[" . $arRes["ID"] . "] " . $arRes["NAME"] . " (" . $arRes["LID"] . ")",
-            "ACTION" => "window.location = 'sale_order_props_edit.php?lang=" . LANG . "&PERSON_TYPE_ID=" . $arRes["ID"] . GetFilterParams("filter_") . "';"
+            "ACTION" => "window.location = 'sale_order_props_edit.php?lang=" . LANG . "&PERSON_TYPE_ID=" . $arRes["ID"] . GetFilterParams(
+                    "filter_"
+                ) . "';"
         );
     }
 
@@ -268,9 +323,10 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
                     <?
                     foreach ($arPersonTypeList as $val) {
                         ?>
-                        <option value="<? echo $val["ID"] ?>"<? if (IntVal($filter_person_type_id) == IntVal($val["ID"])) echo " selected" ?>>
-                        [<? echo $val["ID"] ?>] <? echo $val["NAME"] ?> (<? echo htmlspecialcharsEx($val["LID"]) ?>
-                        )</option><?
+                        <option value="<? echo $val["ID"] ?>"<? if (intval($filter_person_type_id) == intval(
+                                $val["ID"]
+                            )) echo " selected" ?>>[<? echo $val["ID"] ?>] <? echo $val["NAME"] ?>
+                        (<? echo htmlspecialcharsEx($val["LID"]) ?>)</option><?
                     }
                     ?>
                 </select>
@@ -296,8 +352,12 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
             <td>
                 <select name="filter_user">
                     <option value="">(<? echo GetMessage("SALE_ALL") ?>)</option>
-                    <option value="Y"<? if ($filter_user == "Y") echo " selected" ?>><? echo GetMessage("SALE_YES") ?></option>
-                    <option value="N"<? if ($filter_user == "N") echo " selected" ?>><? echo GetMessage("SALE_NO") ?></option>
+                    <option value="Y"<? if ($filter_user == "Y") echo " selected" ?>><? echo GetMessage(
+                            "SALE_YES"
+                        ) ?></option>
+                    <option value="N"<? if ($filter_user == "N") echo " selected" ?>><? echo GetMessage(
+                            "SALE_NO"
+                        ) ?></option>
                 </select>
             </td>
         </tr>
@@ -307,12 +367,20 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
                 <select name="filter_group">
                     <option value="">(<? echo GetMessage("SALE_ALL") ?>)</option>
                     <?
-                    $l = CSaleOrderPropsGroup::GetList(Array("PERSON_TYPE_ID" => "ASC", "SORT" => "ASC", "NAME" => "ASC"));
+                    $l = CSaleOrderPropsGroup::GetList(
+                        Array("PERSON_TYPE_ID" => "ASC", "SORT" => "ASC", "NAME" => "ASC")
+                    );
                     while ($arL = $l->Fetch()):
                         ?>
-                        <option value="<? echo $arL["ID"] ?>"<? if (IntVal($filter_group) == IntVal($arL["ID"])) echo " selected" ?>>
-                        [<? echo $arL["ID"] ?>
-                        ] <? echo htmlspecialcharsbx($arL["NAME"]) ?><? if (!empty($arPersonTypeList[$arL["PERSON_TYPE_ID"]])) echo "(" . $arPersonTypeList[$arL["PERSON_TYPE_ID"]]["NAME"] . " (" . htmlspecialcharsEx($arPersonTypeList[$arL["PERSON_TYPE_ID"]]["LID"]) . ")" . ")"; ?></option><?
+                        <option value="<? echo $arL["ID"] ?>"<? if (intval($filter_group) == intval(
+                            $arL["ID"]
+                        )) echo " selected" ?>>[<? echo $arL["ID"] ?>] <? echo htmlspecialcharsbx(
+                        $arL["NAME"]
+                    ) ?><? if (!empty($arPersonTypeList[$arL["PERSON_TYPE_ID"]])) {
+                        echo "(" . $arPersonTypeList[$arL["PERSON_TYPE_ID"]]["NAME"] . " (" . htmlspecialcharsEx(
+                                $arPersonTypeList[$arL["PERSON_TYPE_ID"]]["LID"]
+                            ) . ")" . ")";
+                    } ?></option><?
                     endwhile;
                     ?>
                 </select>
@@ -329,8 +397,12 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
             <td>
                 <select name="filter_active">
                     <option value="">(<? echo GetMessage("SALE_ALL") ?>)</option>
-                    <option value="Y"<? if ($filter_active == "Y") echo " selected" ?>><? echo GetMessage("SALE_YES") ?></option>
-                    <option value="N"<? if ($filter_active == "N") echo " selected" ?>><? echo GetMessage("SALE_NO") ?></option>
+                    <option value="Y"<? if ($filter_active == "Y") echo " selected" ?>><? echo GetMessage(
+                            "SALE_YES"
+                        ) ?></option>
+                    <option value="N"<? if ($filter_active == "N") echo " selected" ?>><? echo GetMessage(
+                            "SALE_NO"
+                        ) ?></option>
                 </select>
             </td>
         </tr>
@@ -339,8 +411,12 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
             <td>
                 <select name="filter_util">
                     <option value="">(<? echo GetMessage("SALE_ALL") ?>)</option>
-                    <option value="Y"<? if ($filter_util == "Y") echo " selected" ?>><? echo GetMessage("SALE_YES") ?></option>
-                    <option value="N"<? if ($filter_util == "N") echo " selected" ?>><? echo GetMessage("SALE_NO") ?></option>
+                    <option value="Y"<? if ($filter_util == "Y") echo " selected" ?>><? echo GetMessage(
+                            "SALE_YES"
+                        ) ?></option>
+                    <option value="N"<? if ($filter_util == "N") echo " selected" ?>><? echo GetMessage(
+                            "SALE_NO"
+                        ) ?></option>
                 </select>
             </td>
         </tr>

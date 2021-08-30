@@ -1,4 +1,5 @@
 <?
+
 global $MESS;
 
 $MESS["SBLP_DTITLE"] = "Invoice (Ukrainian)";

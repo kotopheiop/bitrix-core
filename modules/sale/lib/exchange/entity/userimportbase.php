@@ -45,8 +45,9 @@ abstract class UserImportBase extends ImportBase
         if ($fieldsConfig = $this->getFieldsConfig($personalTypeId, $profile)) {
             if (is_array($fieldsConfig)) {
                 foreach ($fieldsConfig as $k => $v) {
-                    if (!isset($v['VALUE']))
+                    if (!isset($v['VALUE'])) {
                         continue;
+                    }
 
                     if (!empty($property[$k])) {
                         $result[$v["VALUE"]] = $property[$k];
@@ -68,13 +69,15 @@ abstract class UserImportBase extends ImportBase
      */
     public function getFieldsConfig($orgFormId, $userProps = array())
     {
-        if (intval($orgFormId) <= 0)
+        if (intval($orgFormId) <= 0) {
             return false;
+        }
 
         $config = $this->getConfig();
 
-        if (empty($config[$orgFormId]))
+        if (empty($config[$orgFormId])) {
             return false;
+        }
 
         $fields = $config[$orgFormId];
         foreach ($fields as $k => $v) {
@@ -85,7 +88,6 @@ abstract class UserImportBase extends ImportBase
             ) {
                 unset($fields[$k]);
             }
-
         }
         return $fields;
     }
@@ -101,7 +103,7 @@ abstract class UserImportBase extends ImportBase
             if ($personTypes = $this->getListPersonType($this->settings->getSiteId())) {
                 $r = \CSaleExport::GetList(array(), array("PERSON_TYPE_ID" => $personTypes));
                 while ($ar = $r->Fetch()) {
-                    $config[$ar["PERSON_TYPE_ID"]] = unserialize($ar["VARS"]);
+                    $config[$ar["PERSON_TYPE_ID"]] = unserialize($ar["VARS"], ['allowed_classes' => false]);
                 }
             }
         }
@@ -177,8 +179,9 @@ abstract class UserImportBase extends ImportBase
                 false,
                 array("ID", "TYPE", "NAME", "CODE", "USER_PROPS", "SORT", "MULTIPLE")
             );
-            while ($arOrderProperties = $dbOrderProperties->Fetch())
+            while ($arOrderProperties = $dbOrderProperties->Fetch()) {
                 $result[$personTypeId][] = $arOrderProperties;
+            }
         }
 
         return $result[$personTypeId];
@@ -196,23 +199,36 @@ abstract class UserImportBase extends ImportBase
             "EMAIL" => $fields["CONTACT"]["MAIL_NEW"],
         );
 
-        if (strlen($userFields["NAME"]) <= 0)
+        if ($userFields["NAME"] == '') {
             $userFields["NAME"] = $fields["CONTACT"]["CONTACT_PERSON"];
+        }
 
         $userFields["NAME"] = ($this->isFiz() ? $userFields["NAME"] : array("NAME" => $userFields["NAME"]));
 
         $emServer = $_SERVER["SERVER_NAME"];
-        if (strpos($_SERVER["SERVER_NAME"], ".") === false)
+        if (mb_strpos($_SERVER["SERVER_NAME"], ".") === false) {
             $emServer .= ".bx";
+        }
 
-        if (strlen($userFields["EMAIL"]) <= 0)
+        if ($userFields["EMAIL"] == '') {
             $userFields["EMAIL"] = "buyer" . time() . GetRandomCode(2) . "@" . $emServer;
+        }
 
-        $id = \CSaleUser::DoAutoRegisterUser($userFields["EMAIL"], $userFields["NAME"], $this->settings->getSiteId(), $arErrors, array("XML_ID" => $fields["XML_ID"], "EXTERNAL_AUTH_ID" => self::EXTERNAL_AUTH_ID));
+        $id = \CSaleUser::DoAutoRegisterUser(
+            $userFields["EMAIL"],
+            $userFields["NAME"],
+            $this->settings->getSiteId(),
+            $arErrors,
+            array(
+                "XML_ID" => $fields["XML_ID"],
+                "EXTERNAL_AUTH_ID" => self::EXTERNAL_AUTH_ID
+            )
+        );
 
         $obUser = new \CUser;
-        if (strlen($fields["CONTACT"]["PHONE"]) > 0)
+        if ($fields["CONTACT"]["PHONE"] <> '') {
             $obUser->Update($id, array('WORK_PHONE' => $fields["CONTACT"]["PHONE"]), true);
+        }
 
         return $id;
     }
@@ -243,9 +259,11 @@ abstract class UserImportBase extends ImportBase
 
     public function initFields()
     {
-        $this->setFields(array(
-            'TRAITS' => $this->getFieldsTraits(),
-        ));
+        $this->setFields(
+            array(
+                'TRAITS' => $this->getFieldsTraits(),
+            )
+        );
     }
 
     /**
@@ -254,8 +272,9 @@ abstract class UserImportBase extends ImportBase
      */
     static protected function getBusinessValueOrderProvider(IBusinessValueProvider $entity)
     {
-        if (!($entity instanceof Order))
+        if (!($entity instanceof Order)) {
             throw new ArgumentException("entity must be instanceof Order");
+        }
 
         return $entity;
     }

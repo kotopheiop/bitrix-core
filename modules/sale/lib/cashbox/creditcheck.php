@@ -87,13 +87,15 @@ class CreditCheck extends Check
 
         $totalSum = 0;
         if (isset($result['PRODUCTS'])) {
-            foreach ($result['PRODUCTS'] as $item)
+            foreach ($result['PRODUCTS'] as $item) {
                 $totalSum += $item['SUM'];
+            }
         }
 
         if (isset($result['DELIVERY'])) {
-            foreach ($result['DELIVERY'] as $item)
+            foreach ($result['DELIVERY'] as $item) {
                 $totalSum += $item['SUM'];
+            }
         }
 
         $result['PAYMENTS'] = array(

@@ -25,12 +25,12 @@ class GroupLocationTable extends Connector
         return '';
     }
 
-    public function getLinkField()
+    public static function getLinkField()
     {
         return 'LOCATION_GROUP_ID';
     }
 
-    public function getTargetEntityName()
+    public static function getTargetEntityName()
     {
         return 'Bitrix\Sale\Location\Group';
     }
@@ -85,8 +85,9 @@ class GroupLocationTable extends Connector
 
     public static function deleteByGroupId($groupId)
     {
-        if (intval($groupId) <= 0)
+        if (intval($groupId) <= 0) {
             return;
+        }
 
         $con = \Bitrix\Main\Application::getConnection();
         $con->queryExecute("DELETE FROM " . self::getTableName() . " WHERE LOCATION_GROUP_ID=" . intval($groupId));

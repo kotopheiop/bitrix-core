@@ -185,24 +185,24 @@ class Service
         $phoneValue = '';
 
         if ($address = $props->getAddress()) {
-            if (strlen($address->getValue()) > 0) {
+            if ($address->getValue() <> '') {
                 $addressValue = (string)$address->getValue();
             }
         }
 
         if ($payerName = $props->getPayerName()) {
-            if (strlen($payerName->getValue()) > 0) {
+            if ($payerName->getValue() <> '') {
                 $fullNameValue = (string)$payerName->getValue();
             }
         }
 
         if ($phone = $props->getPhone()) {
-            if (strlen($phone->getValue()) > 0) {
+            if ($phone->getValue() <> '') {
                 $phoneValue = (string)$phone->getValue();
             }
         }
 
-        if (strlen($addressValue) <= 0 && strlen($fullNameValue) <= 0 && strlen($phoneValue) <= 0) {
+        if ($addressValue == '' && $fullNameValue == '' && $phoneValue == '') {
             return null;
         }
 
@@ -410,8 +410,26 @@ class Service
     public static function install(int $deliveryId)
     {
         $eventManager = \Bitrix\Main\EventManager::getInstance();
-        $eventManager->registerEventHandler('sale', 'OnSaleShipmentEntitySaved', 'sale', '\Sale\Handlers\Delivery\Additional\RusPost\Reliability\Service', 'onShipmentSave', 100, "", [$deliveryId]);
-        $eventManager->registerEventHandler('sale', 'onSaleAdminOrderInfoBlockShow', 'sale', '\Sale\Handlers\Delivery\Additional\RusPost\Reliability\Service', 'onSaleAdminOrderInfoBlockShow', 100, "", [$deliveryId]);
+        $eventManager->registerEventHandler(
+            'sale',
+            'OnSaleShipmentEntitySaved',
+            'sale',
+            '\Sale\Handlers\Delivery\Additional\RusPost\Reliability\Service',
+            'onShipmentSave',
+            100,
+            "",
+            [$deliveryId]
+        );
+        $eventManager->registerEventHandler(
+            'sale',
+            'onSaleAdminOrderInfoBlockShow',
+            'sale',
+            '\Sale\Handlers\Delivery\Additional\RusPost\Reliability\Service',
+            'onSaleAdminOrderInfoBlockShow',
+            100,
+            "",
+            [$deliveryId]
+        );
     }
 
     /**
@@ -420,8 +438,24 @@ class Service
     public static function unInstall(int $deliveryId)
     {
         $eventManager = \Bitrix\Main\EventManager::getInstance();
-        $eventManager->unRegisterEventHandler('sale', 'OnSaleShipmentEntitySaved', 'sale', '\Sale\Handlers\Delivery\Additional\RusPost\Reliability\Service', 'onShipmentSave', "", [$deliveryId]);
-        $eventManager->unRegisterEventHandler('sale', 'onSaleAdminOrderInfoBlockShow', 'sale', '\Sale\Handlers\Delivery\Additional\RusPost\Reliability\Service', 'onSaleAdminOrderInfoBlockShow', "", [$deliveryId]);
+        $eventManager->unRegisterEventHandler(
+            'sale',
+            'OnSaleShipmentEntitySaved',
+            'sale',
+            '\Sale\Handlers\Delivery\Additional\RusPost\Reliability\Service',
+            'onShipmentSave',
+            "",
+            [$deliveryId]
+        );
+        $eventManager->unRegisterEventHandler(
+            'sale',
+            'onSaleAdminOrderInfoBlockShow',
+            'sale',
+            '\Sale\Handlers\Delivery\Additional\RusPost\Reliability\Service',
+            'onSaleAdminOrderInfoBlockShow',
+            "",
+            [$deliveryId]
+        );
     }
 
     /**
@@ -429,13 +463,15 @@ class Service
      */
     private static function createHttpClient()
     {
-        return new HttpClient(array(
-            "version" => "1.1",
-            "socketTimeout" => 5,
-            "streamTimeout" => 5,
-            "redirect" => true,
-            "redirectMax" => 3,
-        ));
+        return new HttpClient(
+            array(
+                "version" => "1.1",
+                "socketTimeout" => 5,
+                "streamTimeout" => 5,
+                "redirect" => true,
+                "redirectMax" => 3,
+            )
+        );
     }
 
     /**

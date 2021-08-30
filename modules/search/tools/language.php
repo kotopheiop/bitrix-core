@@ -21,21 +21,23 @@ class CSearchLanguage
 
         if (!isset($arLanguages[$sLang])) {
             $obLanguage = null;
-            $class_name = strtolower("CSearchLanguage" . $sLang);
+            $class_name = mb_strtolower("CSearchLanguage" . $sLang);
             if (!class_exists($class_name)) {
                 //First try to load customized class
                 $strDirName = $_SERVER["DOCUMENT_ROOT"] . BX_PERSONAL_ROOT . "/php_interface/" . $sLang . "/search";
                 $strFileName = $strDirName . "/language.php";
-                if (file_exists($strFileName))
+                if (file_exists($strFileName)) {
                     $obLanguage = @include($strFileName);
+                }
 
                 if (!is_object($obLanguage)) {
                     if (!class_exists($class_name)) {
                         //Then module class
                         $strDirName = $_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/search/tools/" . $sLang;
                         $strFileName = $strDirName . "/language.php";
-                        if (file_exists($strFileName))
+                        if (file_exists($strFileName)) {
                             @include($strFileName);
+                        }
                         if (!class_exists($class_name)) {
                             $class_name = "CSearchLanguage";
                         }
@@ -43,12 +45,14 @@ class CSearchLanguage
                 }
             }
 
-            if (!is_object($obLanguage))
+            if (!is_object($obLanguage)) {
                 $obLanguage = new $class_name($sLang);
+            }
             $obLanguage->LoadTrigrams($strDirName);
             $arStemInfo = stemming_init($sLang);
-            if (is_array($arStemInfo))
+            if (is_array($arStemInfo)) {
                 $obLanguage->_abc = array_flip($obLanguage->StrToArray($arStemInfo["abc"]));
+            }
             $obLanguage->_has_bigramm_info = is_callable(array($obLanguage, "getbigrammletterfreq"));
 
             $arLanguages[$sLang] = $obLanguage;
@@ -73,9 +77,9 @@ class CSearchLanguage
                     }
                     $ar = explode("\n", $text);
                     foreach ($ar as $trigramm) {
-                        if (strlen($trigramm) == 3) {
+                        if (mb_strlen($trigramm) == 3) {
                             $strScanCodesTmp = $this->ConvertToScancode($trigramm, false, true);
-                            if (strlen($strScanCodesTmp) == 3) {
+                            if (mb_strlen($strScanCodesTmp) == 3) {
                                 $this->_trigrams[$strScanCodesTmp] = true;
                             }
                         }
@@ -117,8 +121,9 @@ class CSearchLanguage
             }
 
             if ($len >= 3) {
-                if (isset($this->_trigrams[$check]))
+                if (isset($this->_trigrams[$check])) {
                     $result++;
+                }
             }
         }
 
@@ -145,18 +150,20 @@ class CSearchLanguage
     {
         $result = "";
         $keyboard = $this->GetKeyboardLayout();
-        foreach ($arScancode as $code)
-            $result .= substr($keyboard["lo"], $code, 1);
+        foreach ($arScancode as $code) {
+            $result .= mb_substr($keyboard["lo"], $code, 1);
+        }
         return $result;
     }
 
-    function StrToArray($str)
+    public static function StrToArray($str)
     {
         if (defined("BX_UTF")) {
             $result = array();
-            $len = strlen($str);
-            for ($i = 0; $i < $len; $i++)
-                $result[] = substr($str, $i, 1);
+            $len = mb_strlen($str);
+            for ($i = 0; $i < $len; $i++) {
+                $result[] = mb_substr($str, $i, 1);
+            }
             return $result;
         } else {
             return str_split($str);
@@ -164,7 +171,7 @@ class CSearchLanguage
     }
 
     //This function converts text between layouts
-    static function ConvertKeyboardLayout($text, $from, $to)
+    public static function ConvertKeyboardLayout($text, $from, $to)
     {
         static $keyboards = array();
         $combo = $from . "|" . $to;
@@ -174,27 +181,31 @@ class CSearchLanguage
             if (!array_key_exists($from, $keyboards)) {
                 $ob = CSearchLanguage::GetLanguage($from);
                 $keyboard = $ob->GetKeyboardLayout();
-                if (is_array($keyboard))
+                if (is_array($keyboard)) {
                     $keyboards[$from] = array_merge($ob->StrToArray($keyboard["lo"]), $ob->StrToArray($keyboard["hi"]));
-                else
+                } else {
                     $keyboards[$from] = null;
+                }
             }
 
             if (!array_key_exists($to, $keyboards)) {
                 $ob = CSearchLanguage::GetLanguage($to);
                 $keyboard = $ob->GetKeyboardLayout();
-                if (is_array($keyboard))
+                if (is_array($keyboard)) {
                     $keyboards[$to] = array_merge($ob->StrToArray($keyboard["lo"]), $ob->StrToArray($keyboard["hi"]));
-                else
+                } else {
                     $keyboards[$to] = null;
+                }
             }
 
             //when both layouts defined
             if (isset($keyboards[$from]) && isset($keyboards[$to])) {
                 $keyboards[$combo] = array();
-                foreach ($keyboards[$from] as $i => $ch)
-                    if ($ch != false)
+                foreach ($keyboards[$from] as $i => $ch) {
+                    if ($ch != false) {
                         $keyboards[$combo][$ch] = $keyboards[$to][$i];
+                    }
+                }
             }
         }
 
@@ -202,8 +213,9 @@ class CSearchLanguage
             if (defined("BX_UTF")) {
                 $text = static::StrToArray($text);
                 foreach ($text as $pos => $char) {
-                    if (isset($keyboards[$combo][$char]))
+                    if (isset($keyboards[$combo][$char])) {
                         $text[$pos] = $keyboards[$combo][$char];
+                    }
                 }
                 return implode('', $text);
             } else {
@@ -223,11 +235,13 @@ class CSearchLanguage
             $cache[$this->_lang_id] = array();
             $keyboard = $this->GetKeyboardLayout();
 
-            foreach ($this->StrToArray($keyboard["lo"]) as $pos => $ch)
+            foreach ($this->StrToArray($keyboard["lo"]) as $pos => $ch) {
                 $cache[$this->_lang_id][$ch] = $pos;
+            }
 
-            foreach ($this->StrToArray($keyboard["hi"]) as $pos => $ch)
+            foreach ($this->StrToArray($keyboard["hi"]) as $pos => $ch) {
                 $cache[$this->_lang_id][$ch] = $pos;
+            }
         }
 
         $scancodes = &$cache[$this->_lang_id];
@@ -239,20 +253,22 @@ class CSearchLanguage
                     isset($scancodes[$ch])
                     && !($ch === " ")
                     && !($strict && !isset($this->_abc[$ch]))
-                )
+                ) {
                     $result .= chr($scancodes[$ch] + 1);
+                }
             }
         } else {
             $result = array();
             foreach ($this->StrToArray($text) as $ch) {
-                if ($ch === " ")
+                if ($ch === " ") {
                     $result[] = false;
-                elseif ($strict && !isset($this->_abc[$ch]))
+                } elseif ($strict && !isset($this->_abc[$ch])) {
                     $result[] = false;
-                elseif (isset($scancodes[$ch]))
+                } elseif (isset($scancodes[$ch])) {
                     $result[] = $scancodes[$ch];
-                else
+                } else {
                     $result[] = false;
+                }
             }
         }
         return $result;
@@ -269,34 +285,40 @@ class CSearchLanguage
 
     public static function GuessLanguage($text, $lang = false)
     {
-        if (strlen($text) <= 0)
+        if ($text == '') {
             return false;
+        }
 
         static $cache = array();
         if (empty($cache)) {
             $cache[] = "en";//English is always in mind and on the first place
-            $rsLanguages = CLanguage::GetList(($b = ""), ($o = ""));
-            while ($arLanguage = $rsLanguages->Fetch())
-                if ($arLanguage["LID"] != "en")
+            $rsLanguages = CLanguage::GetList();
+            while ($arLanguage = $rsLanguages->Fetch()) {
+                if ($arLanguage["LID"] != "en") {
                     $cache[] = $arLanguage["LID"];
+                }
+            }
         }
 
-        if (is_array($lang))
+        if (is_array($lang)) {
             $arLanguages = $lang;
-        else
+        } else {
             $arLanguages = $cache;
+        }
 
-        if (count($arLanguages) < 2)
+        if (count($arLanguages) < 2) {
             return false;
+        }
 
         //Give customized languages a chance to guess
         foreach ($arLanguages as $lang) {
             $ob = CSearchLanguage::GetLanguage($lang);
             $res = $ob->PreGuessLanguage($text, $lang);
-            if (is_array($res))
+            if (is_array($res)) {
                 return $res;
-            elseif ($res === true)
+            } elseif ($res === true) {
                 return false;
+            }
         }
 
         //First try to detect language which
@@ -308,24 +330,29 @@ class CSearchLanguage
 
             $arScanCodesTmp1 = $ob->ConvertToScancode($text, true);
             $_cnt = count(array_filter($arScanCodesTmp1));
-            if ($_cnt > $max_len)
+            if ($_cnt > $max_len) {
                 $max_len = $_cnt;
+            }
             $languages_from[$lang] = $arScanCodesTmp1;
         }
 
-        if (empty($languages_from))
+        if (empty($languages_from)) {
             return false;
+        }
 
-        if ($max_len < 2)
+        if ($max_len < 2) {
             return false;
+        }
 
-        $languages_from = array_filter($languages_from,
+        $languages_from = array_filter(
+            $languages_from,
             function ($a) use ($max_len) {
                 return count(array_filter($a)) >= $max_len;
             }
         );
 
-        uasort($languages_from,
+        uasort(
+            $languages_from,
             function ($a, $b) {
                 return count(array_filter($b)) - count(array_filter($a));
             }
@@ -389,8 +416,9 @@ class CSearchLanguage
         list($language_from, $language_to) = explode("=>", $language_from_to);
 
         $alt_text = CSearchLanguage::ConvertKeyboardLayout($text, $language_from, $language_to);
-        if ($alt_text === $text)
+        if ($alt_text === $text) {
             return false;
+        }
 
         return array("from" => $language_from, "to" => $language_to);
     }
@@ -400,10 +428,11 @@ class CSearchLanguage
     {
         $c = count($a);
         for ($i = 0; $i < $c; $i++) {
-            if ($a[$i] < $b[$i])
+            if ($a[$i] < $b[$i]) {
                 return -1;
-            elseif ($a[$i] > $b[$i])
+            } elseif ($a[$i] > $b[$i]) {
                 return 1;
+            }
         }
         return 0;//never happens
     }
@@ -466,8 +495,9 @@ class CSearchLanguage
     //Function returns model of the language
     function GetBigrammScancodeFreq()
     {
-        if (!$this->HasBigrammInfo())
+        if (!$this->HasBigrammInfo()) {
             return array("count" => 1);
+        }
 
         if (!isset($this->_lang_bigramm_cache)) {
             $bigramms = $this->GetBigrammLetterFreq();
@@ -477,15 +507,17 @@ class CSearchLanguage
 
             $result = array();
             foreach ($bigramms as $letter1 => $row) {
-                $p1 = strpos($keyboard_lo, $letter1);
-                if ($p1 === false)
-                    $p1 = strpos($keyboard_hi, $letter1);
+                $p1 = mb_strpos($keyboard_lo, $letter1);
+                if ($p1 === false) {
+                    $p1 = mb_strpos($keyboard_hi, $letter1);
+                }
 
                 $i = 0;
                 foreach ($bigramms as $letter2 => $tmp) {
-                    $p2 = strpos($keyboard_lo, $letter2);
-                    if ($p2 === false)
-                        $p2 = strpos($keyboard_hi, $letter2);
+                    $p2 = mb_strpos($keyboard_lo, $letter2);
+                    if ($p2 === false) {
+                        $p2 = mb_strpos($keyboard_hi, $letter2);
+                    }
 
                     $weight = $row[$i];
                     $result["count"] += $weight;

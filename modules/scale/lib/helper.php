@@ -16,8 +16,9 @@ class Helper
 
     public static function checkBxEnvVersion($version = false)
     {
-        if (!$version)
+        if (!$version) {
             $version = getenv('BITRIX_VA_VER');
+        }
 
         return version_compare($version, self::BX_ENV_MIN_VERSION, '>=');
     }
@@ -29,12 +30,15 @@ class Helper
 
     public static function getAvailabilityPage($minutes)
     {
-        if (intval($minutes) <= 0)
+        if (intval($minutes) <= 0) {
             throw new \Bitrix\Main\ArgumentNullException("minutes");
+        }
 
         $now = time();
 
-        $contents = file_get_contents(\Bitrix\Main\Application::getDocumentRoot() . '/bitrix/modules/scale/server_off.html');
+        $contents = file_get_contents(
+            \Bitrix\Main\Application::getDocumentRoot() . '/bitrix/modules/scale/server_off.html'
+        );
 
         $contents = str_replace(
             "##SITE_NAME##",
@@ -89,30 +93,42 @@ class Helper
 
     public static function modifyDbconn($DBHost, $DBName, $DBLogin, $DBPassword)
     {
-        if (strlen($DBHost) <= 0)
+        if ($DBHost == '') {
             throw new \Bitrix\Main\ArgumentNullException("DBHost");
-        if (strlen($DBName) <= 0)
+        }
+        if ($DBName == '') {
             throw new \Bitrix\Main\ArgumentNullException("DBName");
-        if (strlen($DBLogin) <= 0)
+        }
+        if ($DBLogin == '') {
             throw new \Bitrix\Main\ArgumentNullException("DBLogin");
+        }
 
         $filename = \Bitrix\Main\Application::getDocumentRoot() . "/bitrix/php_interface/dbconn.php";
         $file = new \Bitrix\Main\IO\File($filename);
 
-        if (!$file->isExists())
+        if (!$file->isExists()) {
             return false;
+        }
 
         $content = file_get_contents($filename);
 
-        if (strlen($content) <= 0)
+        if ($content == '') {
             return false;
+        }
 
-        file_put_contents(\Bitrix\Main\Application::getDocumentRoot() . "/bitrix/php_interface/dbconn.php.bak", $content);
+        file_put_contents(
+            \Bitrix\Main\Application::getDocumentRoot() . "/bitrix/php_interface/dbconn.php.bak",
+            $content
+        );
 
         $content = preg_replace('/(\$DBHost\s*=\s*(\"|\')+)(.*)((\"|\')+;)/', '${1}' . $DBHost . '${4}', $content);
         $content = preg_replace('/(\$DBName\s*=\s*(\"|\')+)(.*)((\"|\')+;)/', '${1}' . $DBName . '${4}', $content);
         $content = preg_replace('/(\$DBLogin\s*=\s*(\"|\')+)(.*)((\"|\')+;)/', '${1}' . $DBLogin . '${4}', $content);
-        $content = preg_replace('/(\$DBPassword\s*=\s*(\"|\')+)(.*)((\"|\')+;)/', '${1}' . $DBPassword . '${4}', $content);
+        $content = preg_replace(
+            '/(\$DBPassword\s*=\s*(\"|\')+)(.*)((\"|\')+;)/',
+            '${1}' . $DBPassword . '${4}',
+            $content
+        );
 
         return file_put_contents($filename, $content);
     }
@@ -121,18 +137,23 @@ class Helper
     {
         $filename = $_SERVER['DOCUMENT_ROOT'] . "/bitrix/.settings-test.php";
 
-        if (!file_exists($filename))
+        if (!file_exists($filename)) {
             return true;
+        }
 
         ob_start();
         $settings = include($filename);
         ob_end_clean();
 
-        if (!is_array($settings))
+        if (!is_array($settings)) {
             return false;
+        }
 
-        if (!isset($settings['connections']['value']['default']) || !is_array($settings['connections']['value']['default']))
+        if (!isset($settings['connections']['value']['default']) || !is_array(
+                $settings['connections']['value']['default']
+            )) {
             return true;
+        }
 
         $settings['connections']['value']['default']['host'] = $DBHost;
         $settings['connections']['value']['default']['database'] = $DBName;
@@ -150,11 +171,12 @@ class Helper
     public static function generatePass($length = 20)
     {
         $chars = "abcdefghiknrstyzABCDEFGHKNQRSTYZ1234567890";
-        $charsCount = strlen($chars);
+        $charsCount = mb_strlen($chars);
         $result = "";
 
-        for ($i = 0; $i < $length; $i++)
-            $result .= substr($chars, rand(1, $charsCount) - 1, 1);
+        for ($i = 0; $i < $length; $i++) {
+            $result .= mb_substr($chars, rand(1, $charsCount) - 1, 1);
+        }
 
         return $result;
     }
@@ -188,12 +210,14 @@ class Helper
         if ($execRes) {
             $arData = json_decode($jsonData, true);
 
-            if (isset($arData["params"]["pool_interfaces"]))
+            if (isset($arData["params"]["pool_interfaces"])) {
                 $result = $arData["params"]["pool_interfaces"];
+            }
 
             if (is_array($result)) {
-                foreach ($result as $iface => $ip)
+                foreach ($result as $iface => $ip) {
                     $result[$iface] = $iface . " (" . $ip . ")";
+                }
             }
         }
 
@@ -205,19 +229,20 @@ class Helper
         global $DB;
 
         return getenv('BITRIX_VA_VER')
-            && stristr(php_uname('s'), 'linux')
-            && strtolower($DB->type) == 'mysql'
+            && mb_stristr(php_uname('s'), 'linux')
+            && $DB->type == 'MYSQL'
             && self::checkBxEnvVersion();
     }
 
     public static function getTmpDir()
     {
         $path = '/home/bitrix/.webdir';
-        $permissionsForOwnerOnly = '0600';
+        $permissionsForOwnerOnly = 0700;
         $res = true;
 
-        if (!file_exists($path))
+        if (!file_exists($path)) {
             $res = mkdir($path, $permissionsForOwnerOnly, true);
+        }
 
         return $res ? $path : '';
     }

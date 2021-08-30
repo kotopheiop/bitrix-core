@@ -170,11 +170,14 @@ class Response extends \Protobuf\AbstractMessage
     public static function fromArray(array $values)
     {
         $message = new self();
-        $values = array_merge([
-            'outgoingMessages' => null,
-            'channelStats' => null,
-            'serverStats' => null
-        ], $values);
+        $values = array_merge(
+            [
+                'outgoingMessages' => null,
+                'channelStats' => null,
+                'serverStats' => null
+            ],
+            $values
+        );
 
         $message->setOutgoingMessages($values['outgoingMessages']);
         $message->setChannelStats($values['channelStats']);
@@ -188,32 +191,40 @@ class Response extends \Protobuf\AbstractMessage
      */
     public static function descriptor()
     {
-        return \google\protobuf\DescriptorProto::fromArray([
-            'name' => 'Response',
-            'field' => [
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 1,
-                    'name' => 'outgoingMessages',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_MESSAGE(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
-                    'type_name' => '.OutgoingMessagesResponse'
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 2,
-                    'name' => 'channelStats',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_MESSAGE(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
-                    'type_name' => '.ChannelStatsResponse'
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 3,
-                    'name' => 'serverStats',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_MESSAGE(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
-                    'type_name' => '.JsonResponse'
-                ]),
-            ],
-        ]);
+        return \google\protobuf\DescriptorProto::fromArray(
+            [
+                'name' => 'Response',
+                'field' => [
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 1,
+                            'name' => 'outgoingMessages',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_MESSAGE(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
+                            'type_name' => '.OutgoingMessagesResponse'
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 2,
+                            'name' => 'channelStats',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_MESSAGE(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
+                            'type_name' => '.ChannelStatsResponse'
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 3,
+                            'name' => 'serverStats',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_MESSAGE(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
+                            'type_name' => '.JsonResponse'
+                        ]
+                    ),
+                ],
+            ]
+        );
     }
 
     /**
@@ -279,7 +290,6 @@ class Response extends \Protobuf\AbstractMessage
             : null;
 
         while ($limit === null || $stream->tell() < $limit) {
-
             if ($stream->eof()) {
                 break;
             }
@@ -354,7 +364,6 @@ class Response extends \Protobuf\AbstractMessage
             $unknown = new \Protobuf\Unknown($tag, $wire, $data);
 
             $this->unknownFieldSet->add($unknown);
-
         }
     }
 
@@ -413,7 +422,9 @@ class Response extends \Protobuf\AbstractMessage
     public function merge(\Protobuf\Message $message)
     {
         if (!$message instanceof \Bitrix\Pull\Protobuf\Response) {
-            throw new \InvalidArgumentException(sprintf('Argument 1 passed to %s must be a %s, %s given', __METHOD__, __CLASS__, get_class($message)));
+            throw new \InvalidArgumentException(
+                sprintf('Argument 1 passed to %s must be a %s, %s given', __METHOD__, __CLASS__, get_class($message))
+            );
         }
 
         $this->outgoingMessages = ($message->outgoingMessages !== null) ? $message->outgoingMessages : $this->outgoingMessages;

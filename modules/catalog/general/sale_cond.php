@@ -54,12 +54,13 @@ class CCatalogCondCtrlBasketProductFields extends CCatalogCondCtrlIBlockFields
                                 $boolError = true;
                             } else {
                                 foreach ($arValues['value'] as &$value) {
-                                    if ($useParent)
+                                    if ($useParent) {
                                         $parentResultValues[] = str_replace(
                                             array('#FIELD#', '#VALUE#'),
                                             array($strParent, $value),
                                             $arLogic['OP'][$arControl['MULTIPLE']]
                                         );
+                                    }
                                     $resultValues[] = str_replace(
                                         array('#FIELD#', '#VALUE#'),
                                         array($strField, $value),
@@ -67,18 +68,20 @@ class CCatalogCondCtrlBasketProductFields extends CCatalogCondCtrlIBlockFields
                                     );
                                 }
                                 unset($value);
-                                if ($useParent)
+                                if ($useParent) {
                                     $strParentResult = '(' . implode($arLogic['MULTI_SEP'], $parentResultValues) . ')';
+                                }
                                 $strResult = '(' . implode($arLogic['MULTI_SEP'], $resultValues) . ')';
                                 unset($resultValues, $parentResultValues);
                             }
                         } else {
-                            if ($useParent)
+                            if ($useParent) {
                                 $strParentResult = str_replace(
                                     array('#FIELD#', '#VALUE#'),
                                     array($strParent, $arValues['value']),
                                     $arLogic['OP'][$arControl['MULTIPLE']]
                                 );
+                            }
                             $strResult = str_replace(
                                 array('#FIELD#', '#VALUE#'),
                                 array($strField, $arValues['value']),
@@ -92,12 +95,13 @@ class CCatalogCondCtrlBasketProductFields extends CCatalogCondCtrlIBlockFields
                         if (is_array($arValues['value'])) {
                             $boolError = true;
                         } else {
-                            if ($useParent)
+                            if ($useParent) {
                                 $strParentResult = str_replace(
                                     array('#FIELD#', '#VALUE#'),
                                     array($strParent, '"' . EscapePHPString($arValues['value']) . '"'),
                                     $arLogic['OP'][$arControl['MULTIPLE']]
                                 );
+                            }
                             $strResult = str_replace(
                                 array('#FIELD#', '#VALUE#'),
                                 array($strField, '"' . EscapePHPString($arValues['value']) . '"'),
@@ -110,12 +114,13 @@ class CCatalogCondCtrlBasketProductFields extends CCatalogCondCtrlIBlockFields
                         if (is_array($arValues['value'])) {
                             $boolError = true;
                         } else {
-                            if ($useParent)
+                            if ($useParent) {
                                 $strParentResult = str_replace(
                                     array('#FIELD#', '#VALUE#'),
                                     array($strParent, $arValues['value']),
                                     $arLogic['OP'][$arControl['MULTIPLE']]
                                 );
+                            }
                             $strResult = str_replace(
                                 array('#FIELD#', '#VALUE#'),
                                 array($strField, $arValues['value']),
@@ -126,8 +131,9 @@ class CCatalogCondCtrlBasketProductFields extends CCatalogCondCtrlIBlockFields
                 }
 
                 $strResult = 'isset(' . $strField . ') && ' . $strResult;
-                if ($useParent)
+                if ($useParent) {
                     $strResult = 'isset(' . $strParent . ') ? ((' . $strResult . ')' . $arLogic['PARENT'] . $strParentResult . ') : (' . $strResult . ')';
+                }
                 $strResult = '(' . $strResult . ')';
             }
         }
@@ -140,8 +146,9 @@ class CCatalogCondCtrlBasketProductFields extends CCatalogCondCtrlIBlockFields
         if (!empty($arControls)) {
             $strDisableKey = CSaleCondCtrlGroup::GetControlID();
             $arControlsMap = array_fill_keys($arControls, true);
-            if (array_key_exists($strDisableKey, $arControlsMap))
+            if (array_key_exists($strDisableKey, $arControlsMap)) {
                 unset($arControlsMap[$strDisableKey]);
+            }
             $arControls = array_keys($arControlsMap);
         }
         return $arControls;
@@ -243,8 +250,9 @@ class CCatalogCondCtrlBasketProductProps extends CCatalogCondCtrlIBlockProps
         if (!empty($arControls)) {
             $strDisableKey = CSaleCondCtrlGroup::GetControlID();
             $arControlsMap = array_fill_keys($arControls, true);
-            if (array_key_exists($strDisableKey, $arControlsMap))
+            if (array_key_exists($strDisableKey, $arControlsMap)) {
                 unset($arControlsMap[$strDisableKey]);
+            }
             $arControls = array_keys($arControlsMap);
         }
         return $arControls;
@@ -306,13 +314,15 @@ class CCatalogCondCtrlCatalogSettings extends CGlobalCondCtrlComplex
 
     public static function GetConditionShow($arParams)
     {
-        if (!isset($arParams['ID']))
+        if (!isset($arParams['ID'])) {
             return false;
+        }
 
         if ($arParams['ID'] == 'CondCatalogRenewal') {
             $control = static::GetControls($arParams['ID']);
-            if ($control === false)
+            if ($control === false) {
                 return false;
+            }
 
             return array(
                 'id' => $arParams['COND_NUM'],
@@ -326,12 +336,14 @@ class CCatalogCondCtrlCatalogSettings extends CGlobalCondCtrlComplex
 
     public static function Parse($arOneCondition)
     {
-        if (!isset($arOneCondition['controlId']))
+        if (!isset($arOneCondition['controlId'])) {
             return false;
+        }
         if ($arOneCondition['controlId'] == 'CondCatalogRenewal') {
             $control = static::GetControls($arOneCondition['controlId']);
-            if ($control === false)
+            if ($control === false) {
                 return false;
+            }
             return array('value' => 'Y');
         } else {
             return parent::Parse($arOneCondition);

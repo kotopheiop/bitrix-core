@@ -5,8 +5,9 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
 \Bitrix\Main\Loader::includeModule('sale');
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions < "W")
+if ($saleModulePermissions < "W") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/prolog.php");
@@ -24,26 +25,34 @@ $lAdmin->InitFilter($arFilterFields);
 
 $arFilter = array();
 
-if (IntVal($filter_person_type_id) > 0)
+if (intval($filter_person_type_id) > 0) {
     $arFilter["PERSON_TYPE_ID"] = $filter_person_type_id;
-else
+} else {
     Unset($arFilter["PERSON_TYPE_ID"]);
+}
 
 if ($lAdmin->EditAction() && $saleModulePermissions >= "W") {
     foreach ($FIELDS as $ID => $arFields) {
         $DB->StartTransaction();
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
-        if (!$lAdmin->IsUpdated($ID))
+        if (!$lAdmin->IsUpdated($ID)) {
             continue;
+        }
 
         unset($arFields["PERSON_TYPE_ID"]);
 
         if (!CSaleOrderPropsGroup::Update($ID, $arFields)) {
-            if ($ex = $APPLICATION->GetException())
+            if ($ex = $APPLICATION->GetException()) {
                 $lAdmin->AddUpdateError($ex->GetString(), $ID);
-            else
-                $lAdmin->AddUpdateError(GetMessage("ERROR_UPDATE_REC") . " (" . $CR_ID . ", " . $arFields["PERSON_TYPE_ID"] . ", " . $arFields["NAME"] . ", " . $arFields["SORT"] . ")", $ID);
+            } else {
+                $lAdmin->AddUpdateError(
+                    GetMessage(
+                        "ERROR_UPDATE_REC"
+                    ) . " (" . $CR_ID . ", " . $arFields["PERSON_TYPE_ID"] . ", " . $arFields["NAME"] . ", " . $arFields["SORT"] . ")",
+                    $ID
+                );
+            }
 
             $DB->Rollback();
         }
@@ -62,13 +71,15 @@ if (($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "W") {
             false,
             array("ID")
         );
-        while ($arResult = $dbResultList->Fetch())
+        while ($arResult = $dbResultList->Fetch()) {
             $arID[] = $arResult['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
 
         switch ($_REQUEST['action']) {
             case "delete":
@@ -79,10 +90,11 @@ if (($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "W") {
                 if (!CSaleOrderPropsGroup::Delete($ID)) {
                     $DB->Rollback();
 
-                    if ($ex = $APPLICATION->GetException())
+                    if ($ex = $APPLICATION->GetException()) {
                         $lAdmin->AddGroupError($ex->GetString(), $ID);
-                    else
+                    } else {
                         $lAdmin->AddGroupError(GetMessage("SOPGAN_DELETE_ERROR"), $ID);
+                    }
                 }
 
                 $DB->Commit();
@@ -94,35 +106,48 @@ if (($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "W") {
 
 $arFilter['=PERSON_TYPE.ENTITY_REGISTRY_TYPE'] = 'ORDER';
 
-$dbRes = \Bitrix\Sale\Internals\OrderPropsGroupTable::getList([
-    'filter' => $arFilter,
-    'order' => array($by => $order),
-    'runtime' => [
-        new \Bitrix\Main\Entity\ReferenceField(
-            'PERSON_TYPE',
-            'Bitrix\Sale\Internals\PersonType',
-            array('=this.PERSON_TYPE_ID' => 'ref.ID')
-        ),
+$dbRes = \Bitrix\Sale\Internals\OrderPropsGroupTable::getList(
+    [
+        'filter' => $arFilter,
+        'order' => array($by => $order),
+        'runtime' => [
+            new \Bitrix\Main\Entity\ReferenceField(
+                'PERSON_TYPE',
+                'Bitrix\Sale\Internals\PersonType',
+                array('=this.PERSON_TYPE_ID' => 'ref.ID')
+            ),
+        ]
     ]
-]);
+);
 
 $dbResultList = new CAdminResult($dbRes, $sTableID);
 $dbResultList->NavStart();
 
 $lAdmin->NavText($dbResultList->GetNavPrint(GetMessage("PERS_TYPE_NAV")));
 
-$lAdmin->AddHeaders(array(
-    array("id" => "ID", "content" => GetMessage("PERS_TYPE_ID"), "sort" => "ID", "default" => true),
-    array("id" => "NAME", "content" => GetMessage("PERS_TYPE_NAME"), "sort" => "NAME", "default" => true),
-    array("id" => "PERSON_TYPE_ID", "content" => GetMessage('PERS_TYPE_TYPE'), "sort" => "PERSON_TYPE_ID", "default" => true),
-    array("id" => "SORT", "content" => GetMessage("PERS_TYPE_SORT"), "sort" => "SORT", "default" => true),
-    array("id" => "PROPS", "content" => GetMessage("SOPGAN_PROPS"), "sort" => "", "default" => true),
-));
+$lAdmin->AddHeaders(
+    array(
+        array("id" => "ID", "content" => GetMessage("PERS_TYPE_ID"), "sort" => "ID", "default" => true),
+        array("id" => "NAME", "content" => GetMessage("PERS_TYPE_NAME"), "sort" => "NAME", "default" => true),
+        array(
+            "id" => "PERSON_TYPE_ID",
+            "content" => GetMessage('PERS_TYPE_TYPE'),
+            "sort" => "PERSON_TYPE_ID",
+            "default" => true
+        ),
+        array("id" => "SORT", "content" => GetMessage("PERS_TYPE_SORT"), "sort" => "SORT", "default" => true),
+        array("id" => "PROPS", "content" => GetMessage("SOPGAN_PROPS"), "sort" => "", "default" => true),
+    )
+);
 
 $arPersonTypeList = array();
 $dbPersonType = CSalePersonType::GetList(array("SORT" => "ASC", "NAME" => "ASC"), array());
 while ($arPersonType = $dbPersonType->Fetch()) {
-    $arPersonTypeList[$arPersonType["ID"]] = Array("ID" => $arPersonType["ID"], "NAME" => htmlspecialcharsEx($arPersonType["NAME"]), "LID" => implode(", ", $arPersonType["LIDS"]));
+    $arPersonTypeList[$arPersonType["ID"]] = Array(
+        "ID" => $arPersonType["ID"],
+        "NAME" => htmlspecialcharsEx($arPersonType["NAME"]),
+        "LID" => implode(", ", $arPersonType["LIDS"])
+    );
 }
 
 $arVisibleColumns = $lAdmin->GetVisibleHeaderColumns();
@@ -131,14 +156,19 @@ while ($arPropsGroup = $dbResultList->NavNext(true, "f_")) {
     $editUrl = "sale_order_props_group_edit.php?ID=" . $f_ID . "&lang=" . LANG . GetFilterParams("filter_");
     $row =& $lAdmin->AddRow($f_ID, $arPropsGroup, $editUrl, GetMessage("SOPGAN_EDIT_PROMT"));
 
-    $row->AddField("ID", "<b><a href='" . $editUrl . "' title='" . GetMessage("SOPGAN_EDIT_PROMT") . "'>" . $f_ID . "</a>");
+    $row->AddField(
+        "ID",
+        "<b><a href='" . $editUrl . "' title='" . GetMessage("SOPGAN_EDIT_PROMT") . "'>" . $f_ID . "</a>"
+    );
 
     $row->AddInputField("NAME", array("size" => "30"));
 
     $fieldValue = "";
     if (in_array("PERSON_TYPE_ID", $arVisibleColumns)) {
         $arPersType = $arPersonTypeList[$f_PERSON_TYPE_ID];
-        $fieldValue = "[" . $arPersType["ID"] . "] " . $arPersType["NAME"] . " (" . htmlspecialcharsEx($arPersType["LID"]) . ")";
+        $fieldValue = "[" . $arPersType["ID"] . "] " . $arPersType["NAME"] . " (" . htmlspecialcharsEx(
+                $arPersType["LID"]
+            ) . ")";
     }
     $row->AddField("PERSON_TYPE_ID", $fieldValue);
 
@@ -151,20 +181,33 @@ while ($arPropsGroup = $dbResultList->NavNext(true, "f_")) {
             array("PROPS_GROUP_ID" => $f_ID),
             array()
         );
-        $numProps = IntVal($numProps);
+        $numProps = intval($numProps);
 
-        if ($numProps > 0)
+        if ($numProps > 0) {
             $fieldValue = "<a href=\"sale_order_props.php?lang=" . LANG . "&set_filter=Y&filter_group=" . $f_ID . "\">" . $numProps . "</a>";
-        else
+        } else {
             $fieldValue = "0";
+        }
     }
     $row->AddField("PROPS", $fieldValue);
 
     $arActions = Array();
-    $arActions[] = array("ICON" => "edit", "TEXT" => GetMessage("SOPGAN_EDIT_PROMT"), "ACTION" => $lAdmin->ActionRedirect($editUrl), "DEFAULT" => true);
+    $arActions[] = array(
+        "ICON" => "edit",
+        "TEXT" => GetMessage("SOPGAN_EDIT_PROMT"),
+        "ACTION" => $lAdmin->ActionRedirect($editUrl),
+        "DEFAULT" => true
+    );
     if ($saleModulePermissions >= "W") {
         $arActions[] = array("SEPARATOR" => true);
-        $arActions[] = array("ICON" => "delete", "TEXT" => GetMessage("SOPGAN_DELETE_PROMT"), "ACTION" => "if(confirm('" . GetMessage('SOPGAN_DELETE_PROMT_CONF') . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete"));
+        $arActions[] = array(
+            "ICON" => "delete",
+            "TEXT" => GetMessage("SOPGAN_DELETE_PROMT"),
+            "ACTION" => "if(confirm('" . GetMessage('SOPGAN_DELETE_PROMT_CONF') . "')) " . $lAdmin->ActionDoGroup(
+                    $f_ID,
+                    "delete"
+                )
+        );
     }
 
     $row->AddActions($arActions);
@@ -223,7 +266,14 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
     <tr>
         <td><? echo GetMessage("PT_FILTER_NAME") ?>:</td>
         <td>
-            <? echo CSalePersonType::SelectBox("filter_person_type_id", $filter_person_type_id, "(" . GetMessage("SALE_ALL") . ")", True, "", "") ?>
+            <? echo CSalePersonType::SelectBox(
+                "filter_person_type_id",
+                $filter_person_type_id,
+                "(" . GetMessage("SALE_ALL") . ")",
+                true,
+                "",
+                ""
+            ) ?>
         </td>
     </tr>
     <?

@@ -10,7 +10,7 @@ use Bitrix\Main\Web\Uri;
 class HtmlDocument
 {
     const MAX_IMAGES = 4;
-    const MAX_IMAGE_URL_LENGTH = 255;
+    const MAX_IMAGE_URL_LENGTH = 2000;
 
     /** @var \Bitrix\Main\Web\Uri */
     protected $uri;
@@ -116,7 +116,7 @@ class HtmlDocument
      */
     public function setTitle($title)
     {
-        if (strlen($title) > 0) {
+        if ($title <> '') {
             $this->metadata['TITLE'] = $this->filterString($title);
         }
     }
@@ -137,7 +137,7 @@ class HtmlDocument
      */
     public function setDescription($description)
     {
-        if (strlen($description) > 0) {
+        if ($description <> '') {
             $this->metadata['DESCRIPTION'] = $this->filterString($description);
         }
     }
@@ -158,10 +158,11 @@ class HtmlDocument
      */
     public function setImage($image)
     {
-        if (strlen($image) > 0) {
+        if ($image <> '') {
             $imageUrl = $this->normalizeImageUrl($image);
-            if (!is_null($imageUrl) && $this->validateImage($imageUrl))
+            if (!is_null($imageUrl) && $this->validateImage($imageUrl)) {
                 $this->metadata['IMAGE'] = $imageUrl;
+            }
         }
     }
 
@@ -199,20 +200,24 @@ class HtmlDocument
     {
         if ($fieldName == 'FAVICON') {
             $this->metadata['EXTRA'][$fieldName] = $this->convertRelativeUriToAbsolute($fieldValue);
-        } else if ($fieldName == 'IMAGES') {
-            if (is_array($fieldValue)) {
-                $this->metadata['EXTRA']['IMAGES'] = array();
-                foreach ($fieldValue as $image) {
-                    $image = $this->normalizeImageUrl($image);
-                    if ($image)
-                        $this->metadata['EXTRA']['IMAGES'][] = $image;
-
-                    if (count($this->metadata['EXTRA']['IMAGES']) >= self::MAX_IMAGES)
-                        break;
-                }
-            }
         } else {
-            $this->metadata['EXTRA'][$fieldName] = $this->filterString($fieldValue);
+            if ($fieldName == 'IMAGES') {
+                if (is_array($fieldValue)) {
+                    $this->metadata['EXTRA']['IMAGES'] = array();
+                    foreach ($fieldValue as $image) {
+                        $image = $this->normalizeImageUrl($image);
+                        if ($image) {
+                            $this->metadata['EXTRA']['IMAGES'][] = $image;
+                        }
+
+                        if (count($this->metadata['EXTRA']['IMAGES']) >= self::MAX_IMAGES) {
+                            break;
+                        }
+                    }
+                }
+            } else {
+                $this->metadata['EXTRA'][$fieldName] = $this->filterString($fieldValue);
+            }
         }
     }
 
@@ -243,7 +248,7 @@ class HtmlDocument
      */
     public function getEncoding()
     {
-        if (strlen($this->htmlEncoding) > 0) {
+        if ($this->htmlEncoding <> '') {
             return $this->htmlEncoding;
         }
 
@@ -264,14 +269,16 @@ class HtmlDocument
         }
 
         foreach ($this->metaElements as $metaElement) {
-            if (isset($metaElement['http-equiv']) && strtolower($metaElement['http-equiv']) == 'content-type') {
+            if (isset($metaElement['http-equiv']) && mb_strtolower($metaElement['http-equiv']) == 'content-type') {
                 if (preg_match('/charset=([\w\-]+)/', $metaElement['content'], $matches)) {
                     $result = $matches[1];
                     break;
                 }
-            } else if (isset($metaElement['charset'])) {
-                $result = $metaElement['charset'];
-                break;
+            } else {
+                if (isset($metaElement['charset'])) {
+                    $result = $metaElement['charset'];
+                    break;
+                }
             }
         }
 
@@ -294,7 +301,7 @@ class HtmlDocument
 
             $elementAttributes = array();
             foreach ($matches[1] as $k => $attributeName) {
-                $attributeName = strtolower($attributeName);
+                $attributeName = mb_strtolower($attributeName);
                 $attributeValue = $matches[3][$k];
                 $elementAttributes[$attributeName] = $attributeValue;
             }
@@ -316,12 +323,12 @@ class HtmlDocument
         if (count($this->metaElements) == 0) {
             $this->metaElements = $this->extractElementAttributes('meta');
         }
-        $name = strtolower($name);
+        $name = mb_strtolower($name);
 
         foreach ($this->metaElements as $metaElement) {
-            if ((isset($metaElement['name']) && strtolower($metaElement['name']) === $name
-                    || isset($metaElement['property']) && strtolower($metaElement['property']) === $name)
-                && strlen($metaElement['content']) > 0) {
+            if ((isset($metaElement['name']) && mb_strtolower($metaElement['name']) === $name
+                    || isset($metaElement['property']) && mb_strtolower($metaElement['property']) === $name)
+                && $metaElement['content'] <> '') {
                 return $metaElement['content'];
             }
         }
@@ -340,12 +347,12 @@ class HtmlDocument
         if (count($this->linkElements) == 0) {
             $this->linkElements = $this->extractElementAttributes('link');
         }
-        $rel = strtolower($rel);
+        $rel = mb_strtolower($rel);
 
         foreach ($this->linkElements as $linkElement) {
             if (isset($linkElement['rel'])
-                && strtolower($linkElement['rel']) == $rel
-                && strlen($linkElement['href']) > 0) {
+                && mb_strtolower($linkElement['rel']) == $rel
+                && $linkElement['href'] <> '') {
                 return $linkElement['href'];
             }
         }
@@ -376,38 +383,43 @@ class HtmlDocument
      */
     protected function convertRelativeUriToAbsolute($uri)
     {
-        if (strpos($uri, '//') === 0)
+        if (mb_strpos($uri, '//') === 0) {
             $uri = $this->uri->getScheme() . ":" . $uri;
+        }
 
-        if (preg_match('#^https?://#', $uri))
+        if (preg_match('#^https?://#', $uri)) {
             return $uri;
+        }
 
         $pars = parse_url($uri);
-        if ($pars === false)
+        if ($pars === false) {
             return null;
+        }
 
         if (isset($pars['host'])) {
             $result = $uri;
-        } else if (isset($pars['path'])) {
-            if (substr($pars['path'], 0, 1) !== '/') {
-                $pathPrefix = preg_replace('/^(.+?)([^\/]*)$/', '$1', $this->uri->getPath());
-                $pars['path'] = $pathPrefix . $pars['path'];
-            }
-
-            $uriPort = '';
-            if ($this->uri->getScheme() === 'http' && $this->uri->getPort() != '80'
-                || $this->uri->getScheme() === 'https' && $this->uri->getPort() != '443') {
-                $uriPort = ':' . $this->uri->getPort();
-            }
-
-            $result = $this->uri->getScheme() . '://'
-                . $this->uri->getHost()
-                . $uriPort
-                . $pars['path']
-                . (isset($pars['query']) ? '?' . $pars['query'] : '')
-                . (isset($pars['fragment']) ? '#' . $pars['fragment'] : '');
         } else {
-            $result = null;
+            if (isset($pars['path'])) {
+                if (mb_substr($pars['path'], 0, 1) !== '/') {
+                    $pathPrefix = preg_replace('/^(.+?)([^\/]*)$/', '$1', $this->uri->getPath());
+                    $pars['path'] = $pathPrefix . $pars['path'];
+                }
+
+                $uriPort = '';
+                if ($this->uri->getScheme() === 'http' && $this->uri->getPort() != '80'
+                    || $this->uri->getScheme() === 'https' && $this->uri->getPort() != '443') {
+                    $uriPort = ':' . $this->uri->getPort();
+                }
+
+                $result = $this->uri->getScheme() . '://'
+                    . $this->uri->getHost()
+                    . $uriPort
+                    . $pars['path']
+                    . (isset($pars['query']) ? '?' . $pars['query'] : '')
+                    . (isset($pars['fragment']) ? '#' . $pars['fragment'] : '');
+            } else {
+                $result = null;
+            }
         }
 
         return $result;
@@ -418,11 +430,12 @@ class HtmlDocument
      * @param string $url Image's URL.
      * @return string|null Absolute image's URL, or null if URL is incorrect or too long.
      */
-    protected function normalizeImageUrl($url)
+    protected function normalizeImageUrl($url): ?string
     {
         $url = $this->convertRelativeUriToAbsolute($url);
-        if (strlen($url) > self::MAX_IMAGE_URL_LENGTH)
+        if (mb_strlen($url) > self::MAX_IMAGE_URL_LENGTH) {
             $url = null;
+        }
         return $url;
     }
 
@@ -436,18 +449,22 @@ class HtmlDocument
         $httpClient = new HttpClient();
         $httpClient->setTimeout(5);
         $httpClient->setStreamTimeout(5);
+        $httpClient->setPrivateIp(false);
         $httpClient->setHeader('User-Agent', UrlPreview::USER_AGENT, true);
-        if (!$httpClient->query('GET', $url))
+        if (!$httpClient->query('GET', $url)) {
             return false;
+        }
 
-        if ($httpClient->getStatus() !== 200)
+        if ($httpClient->getStatus() !== 200) {
             return false;
+        }
 
-        $contentType = strtolower($httpClient->getHeaders()->getContentType());
-        if (strpos($contentType, 'image/') === 0)
+        $contentType = mb_strtolower($httpClient->getHeaders()->getContentType());
+        if (mb_strpos($contentType, 'image/') === 0) {
             return true;
-        else
+        } else {
             return false;
+        }
     }
 
     /**

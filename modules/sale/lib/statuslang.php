@@ -31,7 +31,8 @@ class StatusLangTable extends Entity\DataManager
             'ID' => array(
                 'data_type' => 'string',
                 'expression' => array(
-                    '%s', 'STATUS_ID'
+                    '%s',
+                    'STATUS_ID'
                 )
             ),
             'LID' => array(

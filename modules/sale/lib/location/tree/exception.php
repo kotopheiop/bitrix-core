@@ -51,6 +51,7 @@ class NodeIncorrectException extends \Bitrix\Sale\Location\Tree\Exception
 {
     public function getDefaultMessage()
     {
-        return 'Incorrect LEFT_MARGIN or RIGHT_MARGIN (wrong data given or tree structure integrity seems to be compromised)' . static::fillMessageAdditions();
+        return 'Incorrect LEFT_MARGIN or RIGHT_MARGIN (wrong data given or tree structure integrity seems to be compromised)' . static::fillMessageAdditions(
+            );
     }
 }

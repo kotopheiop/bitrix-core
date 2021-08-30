@@ -1,12 +1,14 @@
 <?
+
 //<title>CSV</title>
 IncludeModuleLangFile($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/catalog/export_setup_templ.php');
 
 global $APPLICATION, $USER;
 
 $NUM_CATALOG_LEVELS = intval(COption::GetOptionString("catalog", "num_catalog_levels", 3));
-if (0 >= $NUM_CATALOG_LEVELS)
+if (0 >= $NUM_CATALOG_LEVELS) {
     $NUM_CATALOG_LEVELS = 3;
+}
 
 $arSetupErrors = array();
 
@@ -27,15 +29,17 @@ $strCatalogDefaultFolder = COption::GetOptionString("catalog", "export_default_p
 
 $STEP = intval($STEP);
 
-if (0 >= $STEP)
+if (0 >= $STEP) {
     $STEP = 1;
+}
 
 $ACTION = strval($ACTION);
 
 //********************  ACTIONS  **************************************//
 if (($ACTION == 'EXPORT_EDIT' || $ACTION == 'EXPORT_COPY') && $STEP == 1) {
-    if (isset($arOldSetupVars['IBLOCK_ID']))
+    if (isset($arOldSetupVars['IBLOCK_ID'])) {
         $IBLOCK_ID = $arOldSetupVars['IBLOCK_ID'];
+    }
 }
 if ($STEP > 1) {
     $IBLOCK_ID = intval($IBLOCK_ID);
@@ -56,29 +60,40 @@ if ($STEP > 1) {
 }
 
 if (($ACTION == 'EXPORT_EDIT' || $ACTION == 'EXPORT_COPY') && $STEP == 2) {
-    if (isset($arOldSetupVars['fields_type']))
+    if (isset($arOldSetupVars['fields_type'])) {
         $fields_type = $arOldSetupVars['fields_type'];
-    if (isset($arOldSetupVars['delimiter_r']))
+    }
+    if (isset($arOldSetupVars['delimiter_r'])) {
         $delimiter_r = $arOldSetupVars['delimiter_r'];
-    if (isset($arOldSetupVars['delimiter_r_char']))
+    }
+    if (isset($arOldSetupVars['delimiter_r_char'])) {
         $delimiter_r_char = $arOldSetupVars['delimiter_r_char'];
-    if ($arOldSetupVars['delimiter_other_r'])
+    }
+    if ($arOldSetupVars['delimiter_other_r']) {
         $delimiter_other_r = $arOldSetupVars['delimiter_other_r'];
-    if (isset($arOldSetupVars['first_names_r']))
+    }
+    if (isset($arOldSetupVars['first_names_r'])) {
         $first_names_r = $arOldSetupVars['first_names_r'];
-    if (isset($arOldSetupVars['first_line_names']))
+    }
+    if (isset($arOldSetupVars['first_line_names'])) {
         $first_line_names = $arOldSetupVars['first_line_names'];
-    if (isset($arOldSetupVars['SETUP_FILE_NAME']))
+    }
+    if (isset($arOldSetupVars['SETUP_FILE_NAME'])) {
         $SETUP_FILE_NAME = $arOldSetupVars['SETUP_FILE_NAME'];
-    if (isset($arOldSetupVars['SETUP_PROFILE_NAME']))
+    }
+    if (isset($arOldSetupVars['SETUP_PROFILE_NAME'])) {
         $SETUP_PROFILE_NAME = $arOldSetupVars['SETUP_PROFILE_NAME'];
+    }
     if ($arOldSetupVars['IBLOCK_ID'] == $IBLOCK_ID) {
-        if (isset($arOldSetupVars['field_needed']))
+        if (isset($arOldSetupVars['field_needed'])) {
             $field_needed = $arOldSetupVars['field_needed'];
-        if (isset($arOldSetupVars['field_num']))
+        }
+        if (isset($arOldSetupVars['field_num'])) {
             $field_num = $arOldSetupVars['field_num'];
-        if (isset($arOldSetupVars['field_code']))
+        }
+        if (isset($arOldSetupVars['field_code'])) {
             $field_code = $arOldSetupVars['field_code'];
+        }
     }
 }
 
@@ -100,7 +115,7 @@ if ($STEP > 2) {
                 $delimiter_r_char = " ";
                 break;
             case "OTR":
-                $delimiter_r_char = (isset($delimiter_other_r) ? substr($delimiter_other_r, 0, 1) : '');
+                $delimiter_r_char = (isset($delimiter_other_r) ? mb_substr($delimiter_other_r, 0, 1) : '');
                 break;
             case "TZP":
                 $delimiter_r_char = ";";
@@ -108,11 +123,11 @@ if ($STEP > 2) {
         }
     }
 
-    if (strlen($delimiter_r_char) != 1) {
+    if (mb_strlen($delimiter_r_char) != 1) {
         $arSetupErrors[] = GetMessage("CATI_NO_DELIMITER");
     }
 
-    if (!isset($SETUP_FILE_NAME) || strlen($SETUP_FILE_NAME) <= 0) {
+    if (!isset($SETUP_FILE_NAME) || $SETUP_FILE_NAME == '') {
         $arSetupErrors[] = GetMessage("CATI_NO_SAVE_FILE");
     }
 
@@ -126,8 +141,9 @@ if ($STEP > 2) {
     }
 
     if (empty($arSetupErrors)) {
-        if (strtolower(substr($SETUP_FILE_NAME, strlen($SETUP_FILE_NAME) - 4)) != ".csv")
+        if (mb_strtolower(mb_substr($SETUP_FILE_NAME, mb_strlen($SETUP_FILE_NAME) - 4)) != ".csv") {
             $SETUP_FILE_NAME .= ".csv";
+        }
         if (HasScriptExtension($SETUP_FILE_NAME)) {
             $arSetupErrors[] = GetMessage("CES_ERROR_BAD_EXPORT_FILENAME_EXTENTIONS");
         }
@@ -158,9 +174,9 @@ if ($STEP > 2) {
     // We can't link more than 30 tables
     $tableLinksCount = 10;
     for ($i = 0, $intCount = count($field_code); $i < $intCount; $i++) {
-        if (substr($field_code[$i], 0, strlen("CR_PRICE_")) == "CR_PRICE_" && $field_needed[$i] == "Y") {
+        if (mb_substr($field_code[$i], 0, mb_strlen("CR_PRICE_")) == "CR_PRICE_" && $field_needed[$i] == "Y") {
             $tableLinksCount++;
-        } elseif (substr($field_code[$i], 0, strlen("IP_PROP")) == "IP_PROP" && $field_needed[$i] == "Y") {
+        } elseif (mb_substr($field_code[$i], 0, mb_strlen("IP_PROP")) == "IP_PROP" && $field_needed[$i] == "Y") {
             $tableLinksCount += 2;
         }
     }
@@ -168,7 +184,7 @@ if ($STEP > 2) {
         $arSetupErrors[] = GetMessage("CATI_TOO_MANY_TABLES");
     }
 
-    if (($ACTION == "EXPORT_SETUP" || $ACTION == 'EXPORT_EDIT' || $ACTION == 'EXPORT_COPY') && (!isset($SETUP_PROFILE_NAME) || strlen($SETUP_PROFILE_NAME) <= 0)) {
+    if (($ACTION == "EXPORT_SETUP" || $ACTION == 'EXPORT_EDIT' || $ACTION == 'EXPORT_COPY') && (!isset($SETUP_PROFILE_NAME) || $SETUP_PROFILE_NAME == '')) {
         $arSetupErrors[] = GetMessage("CET_ERROR_NO_NAME");
     }
 
@@ -191,8 +207,9 @@ $context = new CAdminContextMenu($aMenu);
 
 $context->Show();
 
-if (!empty($arSetupErrors))
+if (!empty($arSetupErrors)) {
     ShowError(implode('<br />', $arSetupErrors));
+}
 
 $actionParams = "";
 if ($adminSidePanelHelper->isSidePanel()) {
@@ -203,9 +220,24 @@ if ($adminSidePanelHelper->isSidePanel()) {
       name="dataload">
     <?
     $aTabs = array(
-        array("DIV" => "edit1", "TAB" => GetMessage("CAT_ADM_CSV_EXP_TAB1"), "ICON" => "store", "TITLE" => GetMessage("CAT_ADM_CSV_EXP_TAB1_TITLE")),
-        array("DIV" => "edit2", "TAB" => GetMessage("CAT_ADM_CSV_EXP_TAB2"), "ICON" => "store", "TITLE" => GetMessage("CAT_ADM_CSV_EXP_TAB2_TITLE")),
-        array("DIV" => "edit3", "TAB" => GetMessage("CAT_ADM_CSV_EXP_TAB3"), "ICON" => "store", "TITLE" => GetMessage("CAT_ADM_CSV_EXP_TAB3_TITLE")),
+        array(
+            "DIV" => "edit1",
+            "TAB" => GetMessage("CAT_ADM_CSV_EXP_TAB1"),
+            "ICON" => "store",
+            "TITLE" => GetMessage("CAT_ADM_CSV_EXP_TAB1_TITLE")
+        ),
+        array(
+            "DIV" => "edit2",
+            "TAB" => GetMessage("CAT_ADM_CSV_EXP_TAB2"),
+            "ICON" => "store",
+            "TITLE" => GetMessage("CAT_ADM_CSV_EXP_TAB2_TITLE")
+        ),
+        array(
+            "DIV" => "edit3",
+            "TAB" => GetMessage("CAT_ADM_CSV_EXP_TAB3"),
+            "ICON" => "store",
+            "TITLE" => GetMessage("CAT_ADM_CSV_EXP_TAB3_TITLE")
+        ),
     );
 
     $tabControl = new CAdminTabControl("tabControl", $aTabs, false, true);
@@ -221,8 +253,9 @@ if ($adminSidePanelHelper->isSidePanel()) {
         <tr>
         <td valign="top" width="40%"><? echo GetMessage("CAT_ADM_CSV_EXP_IBLOCK_ID"); ?>:</td>
         <td valign="top" width="60%"><?
-            if (!isset($IBLOCK_ID))
+            if (!isset($IBLOCK_ID)) {
                 $IBLOCK_ID = 0;
+            }
             echo GetIBlockDropDownListEx(
                 $IBLOCK_ID,
                 'IBLOCK_TYPE_ID',
@@ -249,12 +282,13 @@ if ($adminSidePanelHelper->isSidePanel()) {
         <tr>
             <td valign="top" width="40%"><? echo GetMessage("CATI_DELIMITERS") ?>:</td>
             <td valign="top" width="60%"><?
-                if (!isset($delimiter_r) || empty($delimiter_r))
+                if (!isset($delimiter_r) || empty($delimiter_r)) {
                     $delimiter_r = 'TZP';
+                }
                 ?><input type="hidden" name="fields_type" value="R">
-                <input type="radio" name="delimiter_r"
-                       value="TZP" <? if ($delimiter_r == "TZP") echo "checked"; ?>><? echo GetMessage("CATI_TZP"); ?>
-                <br>
+                <input type="radio" name="delimiter_r" value="TZP" <? if ($delimiter_r == "TZP") {
+                    echo "checked";
+                } ?>><? echo GetMessage("CATI_TZP"); ?><br>
                 <input type="radio" name="delimiter_r"
                        value="ZPT" <? if ($delimiter_r == "ZPT") echo "checked" ?>><? echo GetMessage("CATI_ZPT") ?><br>
                 <input type="radio" name="delimiter_r"
@@ -271,8 +305,9 @@ if ($adminSidePanelHelper->isSidePanel()) {
             <td valign="top" width="40%"><label for="first_line_names_Y"><? echo GetMessage("CATI_FIRST_LINE_NAMES") ?>
                     :</label></td>
             <td valign="top" width="60%"><?
-                if (!isset($first_line_names))
+                if (!isset($first_line_names)) {
                     $first_line_names = 'Y';
+                }
                 ?><input type="hidden" name="first_line_names" id="first_line_names_N" value="N">
                 <input type="checkbox" name="first_line_names" id="first_line_names_Y"
                        value="Y" <? if ($first_line_names == "Y") echo "checked" ?>>
@@ -287,8 +322,9 @@ if ($adminSidePanelHelper->isSidePanel()) {
                     <?
                     $boolCatalog = false;
                     $arCatalog = CCatalog::GetByID($IBLOCK_ID);
-                    if (!empty($arCatalog))
+                    if (!empty($arCatalog)) {
                         $boolCatalog = true;
+                    }
 
                     $arAvailFields = array();
                     $intCount = 0;
@@ -311,14 +347,26 @@ if ($adminSidePanelHelper->isSidePanel()) {
                             $intCount++;
                         }
                     }
-                    if (isset($arOneCatalogAvailProdFields_tmp))
+                    if (isset($arOneCatalogAvailProdFields_tmp)) {
                         unset($arOneCatalogAvailProdFields_tmp);
+                    }
 
-                    $properties = CIBlockProperty::GetList(array("SORT" => "ASC", "ID" => "ASC"), array("IBLOCK_ID" => $IBLOCK_ID, "ACTIVE" => "Y", 'CHECK_PERMISSIONS' => 'N'));
+                    $properties = CIBlockProperty::GetList(
+                        array("SORT" => "ASC", "ID" => "ASC"),
+                        array(
+                            "IBLOCK_ID" => $IBLOCK_ID,
+                            "ACTIVE" => "Y",
+                            'CHECK_PERMISSIONS' => 'N'
+                        )
+                    );
                     while ($prop_fields = $properties->Fetch()) {
                         $arAvailFields[$intCount] = array(
                             "value" => "IP_PROP" . $prop_fields["ID"],
-                            "name" => GetMessage("CATI_FI_PROPS") . ' "' . $prop_fields["NAME"] . '"' . ' [' . ('' != trim($prop_fields["CODE"]) ? $prop_fields["CODE"] : $prop_fields["ID"]) . ']',
+                            "name" => GetMessage(
+                                    "CATI_FI_PROPS"
+                                ) . ' "' . $prop_fields["NAME"] . '"' . ' [' . ('' != trim(
+                                    $prop_fields["CODE"]
+                                ) ? $prop_fields["CODE"] : $prop_fields["ID"]) . ']',
                             'sort' => ($intCount + 1) * 10,
                         );
                         if ($boolSep) {
@@ -345,19 +393,30 @@ if ($adminSidePanelHelper->isSidePanel()) {
                                     $boolSep = false;
                                 }
                                 if ($k_old != $k) {
-                                    $arAvailFields[$intCount]['SUB_SEP'] = str_replace('#LEVEL#', ($k + 1), GetMessage("CAT_ADM_CSV_EXP_SECTION_LEVEL"));
+                                    $arAvailFields[$intCount]['SUB_SEP'] = str_replace(
+                                        '#LEVEL#',
+                                        ($k + 1),
+                                        GetMessage(
+                                            "CAT_ADM_CSV_EXP_SECTION_LEVEL"
+                                        )
+                                    );
                                     $k_old = $k;
                                 }
                                 $intCount++;
                             }
                         }
-                        if (isset($arOnerCatalogAvailGroupFields))
+                        if (isset($arOnerCatalogAvailGroupFields)) {
                             unset($arOnerCatalogAvailGroupFields);
+                        }
                     }
 
                     if ($boolCatalog) {
                         $boolSep = true;
-                        $strVal = COption::GetOptionString("catalog", "allowed_product_fields", $defCatalogAvailPriceFields);
+                        $strVal = COption::GetOptionString(
+                            "catalog",
+                            "allowed_product_fields",
+                            $defCatalogAvailPriceFields
+                        );
                         $arVal = explode(",", $strVal);
                         foreach ($arCatalogAvailPriceFields as &$arOneCatalogAvailProdFields_tmp) {
                             $mxKey = array_search($arOneCatalogAvailProdFields_tmp['value'], $arVal);
@@ -374,8 +433,9 @@ if ($adminSidePanelHelper->isSidePanel()) {
                                 $intCount++;
                             }
                         }
-                        if (isset($arOneCatalogAvailProdFields_tmp))
+                        if (isset($arOneCatalogAvailProdFields_tmp)) {
                             unset($arOneCatalogAvailProdFields_tmp);
+                        }
 
                         $boolSep = true;
                         $strVal = $defCatalogAvailQuantityFields;
@@ -395,18 +455,23 @@ if ($adminSidePanelHelper->isSidePanel()) {
                                 $intCount++;
                             }
                         }
-                        if (isset($arOneCatalogAvailQuantityFields))
+                        if (isset($arOneCatalogAvailQuantityFields)) {
                             unset($arOneCatalogAvailQuantityFields);
+                        }
 
                         $strVal = COption::GetOptionString("catalog", "allowed_currencies", $defCatalogAvailCurrencies);
                         $arVal = explode(",", $strVal);
-                        $lcur = CCurrency::GetList(($by1 = "sort"), ($order1 = "asc"));
+                        $lcur = CCurrency::GetList('sort', 'asc');
                         $arCurList = array();
                         while ($lcur_res = $lcur->Fetch()) {
                             if (in_array($lcur_res["CURRENCY"], $arVal)) {
                                 $arCurList[] = array(
                                     'ID' => $lcur_res["CURRENCY"],
-                                    'DESCR' => str_replace('#CURRENCY#', $lcur_res["CURRENCY"], GetMessage('CATI_FI_PRICE_CURRENCY')),
+                                    'DESCR' => str_replace(
+                                        '#CURRENCY#',
+                                        $lcur_res["CURRENCY"],
+                                        GetMessage('CATI_FI_PRICE_CURRENCY')
+                                    ),
                                 );
                             }
                         }
@@ -416,7 +481,11 @@ if ($adminSidePanelHelper->isSidePanel()) {
                             while ($prgr = $db_prgr->Fetch()) {
                                 foreach ($arCurList as &$arCurrency) {
                                     $strName = ($prgr['NAME_LANG'] ?
-                                        str_replace(array('#TYPE#', '#NAME#'), array($prgr["NAME"], $prgr['NAME_LANG']), GetMessage('CATI_FI_PRICE_TYPE3')) :
+                                        str_replace(
+                                            array('#TYPE#', '#NAME#'),
+                                            array($prgr["NAME"], $prgr['NAME_LANG']),
+                                            GetMessage('CATI_FI_PRICE_TYPE3')
+                                        ) :
                                         str_replace("#TYPE#", $prgr["NAME"], GetMessage("CATI_FI_PRICE_TYPE2"))
                                     );
                                     $arAvailFields[$intCount] = array(
@@ -450,15 +519,18 @@ if ($adminSidePanelHelper->isSidePanel()) {
                                     $arCheckID[] = $arOneAvailField['value'];
                                     $intCountChecked++;
                                 }
-                                if (isset($field_num[$key]) && 0 < intval($field_num[$key]))
+                                if (isset($field_num[$key]) && 0 < intval($field_num[$key])) {
                                     $intSort = intval($field_num[$key]);
+                                }
                             }
-                            if (0 < $intSort)
+                            if (0 < $intSort) {
                                 $arAvailFields[$i]['sort'] = $intSort;
+                            }
                         }
                     }
-                    if ($boolAll)
+                    if ($boolAll) {
                         $intCountChecked = $intCountAvailFields;
+                    }
 
                     ?>
                     <tr class="heading">
@@ -474,37 +546,51 @@ if ($adminSidePanelHelper->isSidePanel()) {
                         if (!empty($arOneAvailField['SEP'])) {
                             ?>
                             <tr>
-                            <td colspan="3" valign="middle" align="center">
-                                <b><? echo htmlspecialcharsbx($arOneAvailField['SEP']); ?></b></td></tr><?
+                            <td colspan="3" valign="middle" align="center"><b><? echo htmlspecialcharsbx(
+                                        $arOneAvailField['SEP']
+                                    ); ?></b></td></tr><?
                         }
                         if (!empty($arOneAvailField['SUB_SEP'])) {
                             ?>
                             <tr>
                             <td>&nbsp;</td>
-                            <td valign="middle" align="left">
-                                <b><? echo htmlspecialcharsbx($arOneAvailField['SUB_SEP']); ?></b></td>
+                            <td valign="middle" align="left"><b><? echo htmlspecialcharsbx(
+                                        $arOneAvailField['SUB_SEP']
+                                    ); ?></b></td>
                             <td>&nbsp;</td></tr><?
                         }
                         ?>
                         <tr>
                             <td valign="top" align="left"><input type="checkbox" name="field_needed[<? echo $i; ?>]"
                                                                  id="field_needed_<? echo $i; ?>"
-                                    <? if ($boolAll || in_array($arOneAvailField['value'], $arCheckID)) echo "checked"; ?>
+                                    <? if ($boolAll || in_array($arOneAvailField['value'], $arCheckID)) {
+                                        echo "checked";
+                                    } ?>
                                                                  value="Y"
                                                                  onclick="checkOne(this,<? echo $intCountAvailFields; ?>);">
                             </td>
                             <td valign="middle" align="left">
-                                <? if ($i < 2) echo "<b>"; ?>
+                                <? if ($i < 2) {
+                                    echo "<b>";
+                                } ?>
                                 <? echo htmlspecialcharsbx($arOneAvailField["name"]); ?>
-                                <? if ($i < 2) echo "</b>"; ?>
+                                <? if ($i < 2) {
+                                    echo "</b>";
+                                } ?>
                             </td>
                             <td valign="top" align="center">
-                                <? if ($i < 2) echo "<b>"; ?>
+                                <? if ($i < 2) {
+                                    echo "<b>";
+                                } ?>
                                 <input type="text" class="typeinput" name="field_num[<? echo $i ?>]"
                                        value="<? echo $arOneAvailField['sort']; ?>" size="4"> <input type="hidden"
                                                                                                      name="field_code[<? echo $i ?>]"
-                                                                                                     value="<? echo htmlspecialcharsbx($arOneAvailField["value"]) ?>">
-                                <? if ($i < 2) echo "</b>"; ?>
+                                                                                                     value="<? echo htmlspecialcharsbx(
+                                                                                                         $arOneAvailField["value"]
+                                                                                                     ) ?>">
+                                <? if ($i < 2) {
+                                    echo "</b>";
+                                } ?>
                             </td>
                         </tr>
                         <?
@@ -537,8 +623,13 @@ if ($adminSidePanelHelper->isSidePanel()) {
         <tr>
             <td valign="top" width="40%"><? echo GetMessage("CATI_DATA_FILE_NAME1") ?>:</td>
             <td valign="top" width="60%"><b><? echo htmlspecialcharsex($strCatalogDefaultFolder); ?></b>
-                <input type="text" class="typeinput" name="SETUP_FILE_NAME" size="40"
-                       value="<? echo htmlspecialcharsbx(strlen($SETUP_FILE_NAME) > 0 ? str_replace($strCatalogDefaultFolder, '', $SETUP_FILE_NAME) : "export_file_" . mt_rand(0, 999999) . ".csv"); ?>"><br>
+                <input type="text" class="typeinput" name="SETUP_FILE_NAME" size="40" value="<? echo htmlspecialcharsbx(
+                    $SETUP_FILE_NAME <> '' ? str_replace(
+                        $strCatalogDefaultFolder,
+                        '',
+                        $SETUP_FILE_NAME
+                    ) : "export_file_" . mt_rand(0, 999999) . ".csv"
+                ); ?>"><br>
                 <small><? echo GetMessage("CATI_DATA_FILE_NAME1_DESC") ?></small>
             </td>
         </tr>
@@ -587,8 +678,9 @@ if ($adminSidePanelHelper->isSidePanel()) {
                      value="&lt;&lt; <? echo GetMessage("CATI_BACK") ?>"><?
         }
         ?><input type="submit" class="button"
-                 value="<? echo ($STEP == 2) ? (($ACTION == "EXPORT") ? GetMessage("CATI_NEXT_STEP_F") : GetMessage("CET_SAVE")) : GetMessage("CATI_NEXT_STEP") . " &gt;&gt;" ?>"
-                 name="submit_btn"><?
+                 value="<? echo ($STEP == 2) ? (($ACTION == "EXPORT") ? GetMessage("CATI_NEXT_STEP_F") : GetMessage(
+                     "CET_SAVE"
+                 )) : GetMessage("CATI_NEXT_STEP") . " &gt;&gt;" ?>" name="submit_btn"><?
     }
     $tabControl->End();
 

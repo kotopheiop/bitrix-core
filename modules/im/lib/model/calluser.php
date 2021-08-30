@@ -6,6 +6,22 @@ use Bitrix\Main\Application;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Error;
 
+/**
+ * Class CallUserTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_CallUser_Query query()
+ * @method static EO_CallUser_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_CallUser_Result getById($id)
+ * @method static EO_CallUser_Result getList(array $parameters = array())
+ * @method static EO_CallUser_Entity getEntity()
+ * @method static \Bitrix\Im\Model\EO_CallUser createObject($setDefaultValues = true)
+ * @method static \Bitrix\Im\Model\EO_CallUser_Collection createCollection()
+ * @method static \Bitrix\Im\Model\EO_CallUser wakeUpObject($row)
+ * @method static \Bitrix\Im\Model\EO_CallUser_Collection wakeUpCollection($rows)
+ */
 class CallUserTable extends Entity\DataManager
 {
     public static function getTableName()
@@ -15,16 +31,36 @@ class CallUserTable extends Entity\DataManager
 
     public static function getMap()
     {
-        return array(
-            new Entity\IntegerField('CALL_ID', array(
+        return [
+            new Entity\IntegerField(
+                'CALL_ID', [
                 'primary' => true
-            )),
-            new Entity\IntegerField('USER_ID', array(
+            ]
+            ),
+            new Entity\IntegerField(
+                'USER_ID', [
                 'primary' => true
-            )),
+            ]
+            ),
             new Entity\StringField('STATE'),
-            new Entity\DatetimeField('LAST_SEEN')
-        );
+            new Entity\DatetimeField('FIRST_JOINED'),
+            new Entity\DatetimeField('LAST_SEEN'),
+            new Entity\BooleanField(
+                'IS_MOBILE', [
+                'values' => ['N', 'Y']
+            ]
+            ),
+            new Entity\BooleanField(
+                'SHARED_SCREEN', [
+                'values' => ['N', 'Y']
+            ]
+            ),
+            new Entity\BooleanField(
+                'RECORDED', [
+                'values' => ['N', 'Y']
+            ]
+            ),
+        ];
     }
 
     /**

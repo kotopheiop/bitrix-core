@@ -33,16 +33,20 @@ class Recurring
             foreach ($basketList as $basketCode => $resultData) {
                 if ($order->isPaid()) {
                     if (!empty($resultData) && is_array($resultData)) {
-                        if (empty($resultData['ORDER_ID']) || intval($resultData['ORDER_ID']) < 0)
+                        if (empty($resultData['ORDER_ID']) || intval($resultData['ORDER_ID']) < 0) {
                             $resultData["ORDER_ID"] = $order->getId();
+                        }
 
-                        $resultData["REMAINING_ATTEMPTS"] = (defined("SALE_PROC_REC_ATTEMPTS") ? SALE_PROC_REC_ATTEMPTS : 3);
+                        $resultData["REMAINING_ATTEMPTS"] = (defined(
+                            "SALE_PROC_REC_ATTEMPTS"
+                        ) ? SALE_PROC_REC_ATTEMPTS : 3);
                         $resultData["SUCCESS_PAYMENT"] = "Y";
 
-                        if ($recurringID > 0)
+                        if ($recurringID > 0) {
                             \CSaleRecurring::Update($recurringID, $resultData);
-                        else
+                        } else {
                             \CSaleRecurring::Add($resultData);
+                        }
                     } elseif ($recurringID > 0) {
                         \CSaleRecurring::Delete($recurringID);
                     }

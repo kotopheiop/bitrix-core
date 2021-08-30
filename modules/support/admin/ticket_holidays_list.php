@@ -6,8 +6,9 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/support/include.php");
 $bDemo = (CTicket::IsDemo()) ? "Y" : "N";
 $bAdmin = (CTicket::IsAdmin()) ? "Y" : "N";
 
-if ($bAdmin != "Y" && $bDemo != "Y")
+if ($bAdmin != "Y" && $bDemo != "Y") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/support/prolog.php");
@@ -27,14 +28,17 @@ $USER_FIELD_MANAGER->AdminListAddFilterFields("SUPPORT", $arFilterFields);
 $lAdmin->InitFilter($arFilterFields);
 
 $arFilter = array();
-if (strlen($filter_name) > 0)
+if ($filter_name <> '') {
     $arFilter["~NAME"] = "%" . $filter_name . "%";
-if (strlen($filter_open_time) > 0)
+}
+if ($filter_open_time <> '') {
     $arFilter["OPEN_TIME"] = $filter_open_time;
-if (is_array($filter_sla_id))
+}
+if (is_array($filter_sla_id)) {
     $arFilter["SLA_ID"] = $filter_sla_id;
-else
+} else {
     $filter_sla_id = array();
+}
 
 $USER_FIELD_MANAGER->AdminListAddFilter("SUPPORT", $arFilter);
 
@@ -42,12 +46,13 @@ if ($arID = $lAdmin->GroupAction()) {
     if ($_REQUEST['action_target'] == 'selected') {
         $arID = Array();
         $dbResultList = CSupportHolidays::GetList(array($by => $order), $arFilter);
-        while ($arResult = $dbResultList->Fetch())
+        while ($arResult = $dbResultList->Fetch()) {
             $arID[] = $arResult['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0) {
+        if ($ID == '') {
             continue;
         }
         switch ($_REQUEST['action']) {
@@ -89,8 +94,18 @@ $dbResultList->NavStart();
 $lAdmin->NavText($dbResultList->GetNavPrint(GetMessage("SUP_GROUP_NAV")));
 
 while ($arBlog = $dbResultList->NavNext(true, "f_")) {
-    $row =& $lAdmin->AddRow($f_ID, $arBlog, "/bitrix/admin/ticket_holidays_edit.php?ID=" . $f_ID . "&lang=" . LANGUAGE_ID, GetMessage("SUP_UPDATE_ALT"));
-    $row->AddField("NAME", '<a href="/bitrix/admin/ticket_holidays_edit.php?ID=' . $f_ID . '&lang=' . LANGUAGE_ID . '" title="' . GetMessage("SUP_UPDATE_ALT") . '">' . $f_NAME . '</a>');
+    $row =& $lAdmin->AddRow(
+        $f_ID,
+        $arBlog,
+        "/bitrix/admin/ticket_holidays_edit.php?ID=" . $f_ID . "&lang=" . LANGUAGE_ID,
+        GetMessage("SUP_UPDATE_ALT")
+    );
+    $row->AddField(
+        "NAME",
+        '<a href="/bitrix/admin/ticket_holidays_edit.php?ID=' . $f_ID . '&lang=' . LANGUAGE_ID . '" title="' . GetMessage(
+            "SUP_UPDATE_ALT"
+        ) . '">' . $f_NAME . '</a>'
+    );
     $row->AddField("OPEN_TIME", GetMessage(CSupportHolidays::GetOpenTimeT($f_OPEN_TIME)));
     if ($f_OPEN_TIME != "HOLIDAY_H" && $f_OPEN_TIME != "WORKDAY_H") {
         $f_DATE_FROM = GetTime(MakeTimeStamp($f_DATE_FROM), "SHORT");
@@ -102,7 +117,9 @@ while ($arBlog = $dbResultList->NavNext(true, "f_")) {
     $SLA = "";
     $rs = CSupportHolidays::GetSLAByID($f_ID);
     while ($arR = $rs->Fetch()) {
-        $SLA .= '<a href="/bitrix/admin/ticket_sla_edit.php?ID=' . intval($arR["SLA_ID"]) . '&lang=' . LANGUAGE_ID . '">' . htmlspecialcharsbx($arR["NAME"]) . '</a><br/>';
+        $SLA .= '<a href="/bitrix/admin/ticket_sla_edit.php?ID=' . intval(
+                $arR["SLA_ID"]
+            ) . '&lang=' . LANGUAGE_ID . '">' . htmlspecialcharsbx($arR["NAME"]) . '</a><br/>';
     }
     $row->AddField("SLA", $SLA);
 
@@ -112,9 +129,20 @@ while ($arBlog = $dbResultList->NavNext(true, "f_")) {
     $USER_FIELD_MANAGER->AddUserFields("SUPPORT", $arBlog, $row);
 
     $arActions = Array();
-    $arActions[] = array("ICON" => "edit", "TEXT" => GetMessage("SUP_UPDATE_ALT"), "ACTION" => $lAdmin->ActionRedirect("ticket_holidays_edit.php?ID=" . $f_ID . "&lang=" . LANG . "&" . GetFilterParams("filter_") . ""), "DEFAULT" => true);
+    $arActions[] = array(
+        "ICON" => "edit",
+        "TEXT" => GetMessage("SUP_UPDATE_ALT"),
+        "ACTION" => $lAdmin->ActionRedirect(
+            "ticket_holidays_edit.php?ID=" . $f_ID . "&lang=" . LANG . "&" . GetFilterParams("filter_") . ""
+        ),
+        "DEFAULT" => true
+    );
     $arActions[] = array("SEPARATOR" => true);
-    $arActions[] = array("ICON" => "delete", "TEXT" => GetMessage("SUP_DELETE_ALT"), "ACTION" => "if(confirm('" . GetMessage('SUP_DELETE_CONF') . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete"));
+    $arActions[] = array(
+        "ICON" => "delete",
+        "TEXT" => GetMessage("SUP_DELETE_ALT"),
+        "ACTION" => "if(confirm('" . GetMessage('SUP_DELETE_CONF') . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete")
+    );
     $row->AddActions($arActions);
 }
 
@@ -194,7 +222,7 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
                     <?
                     $arr = CSupportHolidays::GetOpenTimeArray();
                     foreach ($arr as $v => $n) {
-                        $ss = substr($v, 0, 3);
+                        $ss = mb_substr($v, 0, 3);
                         if ($ss == "GB_") {
                             echo '<optgroup label="' . GetMessage($n) . '">';
                         } elseif ($ss == "GE_") {
@@ -219,7 +247,9 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
                     $slaI++;
                     $slaC = in_array($arR["ID"], $filter_sla_id) ? 'checked=""' : '';
                     echo '<input id="filter_sla_id' . $slaI . '" name="filter_sla_id[]" type="checkbox" value="' . $arR["ID"] . '" ' . $slaC . '>';
-                    echo '<label class="adm-designed-checkbox-label" for="filter_sla_id' . $slaI . '" title="">' . htmlspecialcharsbx($arR["NAME"]) . '</label><br>';
+                    echo '<label class="adm-designed-checkbox-label" for="filter_sla_id' . $slaI . '" title="">' . htmlspecialcharsbx(
+                            $arR["NAME"]
+                        ) . '</label><br>';
                 }
                 ?>
             </td>

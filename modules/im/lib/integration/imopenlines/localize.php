@@ -29,7 +29,10 @@ class Localize
         }
 
         if (!isset(self::$MESS[$type][$lang])) {
-            self::$MESS[$type][$lang] = \Bitrix\Main\Localization\Loc::loadLanguageFile($_SERVER['DOCUMENT_ROOT'] . $path, $lang);
+            self::$MESS[$type][$lang] = \Bitrix\Main\Localization\Loc::loadLanguageFile(
+                $_SERVER['DOCUMENT_ROOT'] . $path,
+                $lang
+            );
         }
 
         if (is_string($phraseCode)) {

@@ -25,7 +25,8 @@ class PropertyValue extends Base
             ],
             'ID' => [
                 'TYPE' => self::TYPE_INT,
-                'ATTRIBUTES' => [Attributes::ReadOnly, Attributes::Immutable] //����������� ������ � ���������� �������. id ������ �����.
+                'ATTRIBUTES' => [Attributes::ReadOnly, Attributes::Immutable]
+                //����������� ������ � ���������� �������. id ������ �����.
             ],
             'ORDER_ID' => [
                 'TYPE' => self::TYPE_INT,
@@ -53,15 +54,39 @@ class PropertyValue extends Base
         $result = [];
 
         $fieldsInfo = empty($fieldsInfo) ? $this->getFields() : $fieldsInfo;
-        $listFieldsInfoAdd = $this->getListFieldInfo($fieldsInfo, ['filter' => ['ignoredAttributes' => [Attributes::Hidden, Attributes::ReadOnly], 'ignoredFields' => ['ORDER_ID']]]);
-        $listFieldsInfoUpdate = $this->getListFieldInfo($fieldsInfo, ['filter' => ['ignoredAttributes' => [Attributes::Hidden, Attributes::ReadOnly, Attributes::Immutable]]]);
+        $listFieldsInfoAdd = $this->getListFieldInfo(
+            $fieldsInfo,
+            [
+                'filter' => [
+                    'ignoredAttributes' => [
+                        Attributes::Hidden,
+                        Attributes::ReadOnly
+                    ],
+                    'ignoredFields' => ['ORDER_ID']
+                ]
+            ]
+        );
+        $listFieldsInfoUpdate = $this->getListFieldInfo(
+            $fieldsInfo,
+            [
+                'filter' => [
+                    'ignoredAttributes' => [
+                        Attributes::Hidden,
+                        Attributes::ReadOnly,
+                        Attributes::Immutable
+                    ]
+                ]
+            ]
+        );
 
-        if (isset($fields['ORDER']['ID']))
+        if (isset($fields['ORDER']['ID'])) {
             $result['ORDER']['ID'] = (int)$fields['ORDER']['ID'];
+        }
 
         if (isset($fields['ORDER']['PROPERTY_VALUES'])) {
             foreach ($fields['ORDER']['PROPERTY_VALUES'] as $k => $item) {
-                $result['ORDER']['PROPERTY_VALUES'][$k] = $this->internalizeFields($item,
+                $result['ORDER']['PROPERTY_VALUES'][$k] = $this->internalizeFields(
+                    $item,
                     $this->isNewItem($item) ? $listFieldsInfoAdd : $listFieldsInfoUpdate
                 );
             }
@@ -109,16 +134,41 @@ class PropertyValue extends Base
     {
         $r = new Result();
 
-        $listFieldsInfoAdd = $this->getListFieldInfo($this->getFields(), ['filter' => ['ignoredAttributes' => [Attributes::Hidden, Attributes::ReadOnly], 'ignoredFields' => ['ORDER_ID']]]);
-        $listFieldsInfoUpdate = $this->getListFieldInfo($this->getFields(), ['filter' => ['ignoredAttributes' => [Attributes::Hidden, Attributes::ReadOnly, Attributes::Immutable]]]);
+        $listFieldsInfoAdd = $this->getListFieldInfo(
+            $this->getFields(),
+            [
+                'filter' => [
+                    'ignoredAttributes' => [
+                        Attributes::Hidden,
+                        Attributes::ReadOnly
+                    ],
+                    'ignoredFields' => ['ORDER_ID']
+                ]
+            ]
+        );
+        $listFieldsInfoUpdate = $this->getListFieldInfo(
+            $this->getFields(),
+            [
+                'filter' => [
+                    'ignoredAttributes' => [
+                        Attributes::Hidden,
+                        Attributes::ReadOnly,
+                        Attributes::Immutable
+                    ]
+                ]
+            ]
+        );
 
         foreach ($fields['ORDER']['PROPERTY_VALUES'] as $k => $item) {
-            $required = $this->checkRequiredFields($item,
+            $required = $this->checkRequiredFields(
+                $item,
                 $this->isNewItem($item) ? $listFieldsInfoAdd : $listFieldsInfoUpdate
             );
 
             if (!$required->isSuccess()) {
-                $r->addError(new Error('[propertyValues][' . $k . '] - ' . implode(', ', $required->getErrorMessages()) . '.'));
+                $r->addError(
+                    new Error('[propertyValues][' . $k . '] - ' . implode(', ', $required->getErrorMessages()) . '.')
+                );
             }
         }
         return $r;

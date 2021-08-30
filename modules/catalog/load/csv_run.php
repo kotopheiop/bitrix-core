@@ -1,4 +1,5 @@
 <?
+
 //<title>CSV Export</title>
 IncludeModuleLangFile($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/catalog/data_export.php');
 
@@ -6,8 +7,9 @@ global $USER;
 $bTmpUserCreated = false;
 if (!CCatalog::IsUserExists()) {
     $bTmpUserCreated = true;
-    if (isset($USER))
+    if (isset($USER)) {
         $USER_TMP = $USER;
+    }
     $USER = new CUser();
 }
 
@@ -27,8 +29,9 @@ if (!function_exists('__sortCSVOrder')) {
 $strCatalogDefaultFolder = COption::GetOptionString("catalog", "export_default_path", CATALOG_DEFAULT_EXPORT_PATH);
 
 $NUM_CATALOG_LEVELS = intval(COption::GetOptionString("catalog", "num_catalog_levels", 3));
-if (0 >= $NUM_CATALOG_LEVELS)
+if (0 >= $NUM_CATALOG_LEVELS) {
     $NUM_CATALOG_LEVELS = 3;
+}
 
 $strExportErrorMessage = "";
 $arRunErrors = array();
@@ -46,34 +49,45 @@ $arCatalogAvailGroupFields,
 $defCatalogAvailGroupFields,
 $defCatalogAvailCurrencies;
 
-if (!isset($arCatalogAvailProdFields))
+if (!isset($arCatalogAvailProdFields)) {
     $arCatalogAvailProdFields = CCatalogCSVSettings::getSettingsFields(CCatalogCSVSettings::FIELDS_ELEMENT);
-if (!isset($arCatalogAvailPriceFields))
+}
+if (!isset($arCatalogAvailPriceFields)) {
     $arCatalogAvailPriceFields = CCatalogCSVSettings::getSettingsFields(CCatalogCSVSettings::FIELDS_CATALOG);
-if (!isset($arCatalogAvailValueFields))
+}
+if (!isset($arCatalogAvailValueFields)) {
     $arCatalogAvailValueFields = CCatalogCSVSettings::getSettingsFields(CCatalogCSVSettings::FIELDS_PRICE);
-if (!isset($arCatalogAvailQuantityFields))
+}
+if (!isset($arCatalogAvailQuantityFields)) {
     $arCatalogAvailQuantityFields = CCatalogCSVSettings::getSettingsFields(CCatalogCSVSettings::FIELDS_PRICE_EXT);
-if (!isset($arCatalogAvailGroupFields))
+}
+if (!isset($arCatalogAvailGroupFields)) {
     $arCatalogAvailGroupFields = CCatalogCSVSettings::getSettingsFields(CCatalogCSVSettings::FIELDS_SECTION);
+}
 
-if (!isset($defCatalogAvailProdFields))
+if (!isset($defCatalogAvailProdFields)) {
     $defCatalogAvailProdFields = CCatalogCSVSettings::getDefaultSettings(CCatalogCSVSettings::FIELDS_ELEMENT);
-if (!isset($defCatalogAvailPriceFields))
+}
+if (!isset($defCatalogAvailPriceFields)) {
     $defCatalogAvailPriceFields = CCatalogCSVSettings::getDefaultSettings(CCatalogCSVSettings::FIELDS_CATALOG);
-if (!isset($defCatalogAvailValueFields))
+}
+if (!isset($defCatalogAvailValueFields)) {
     $defCatalogAvailValueFields = CCatalogCSVSettings::getDefaultSettings(CCatalogCSVSettings::FIELDS_PRICE);
-if (!isset($defCatalogAvailQuantityFields))
+}
+if (!isset($defCatalogAvailQuantityFields)) {
     $defCatalogAvailQuantityFields = CCatalogCSVSettings::getDefaultSettings(CCatalogCSVSettings::FIELDS_PRICE_EXT);
-if (!isset($defCatalogAvailGroupFields))
+}
+if (!isset($defCatalogAvailGroupFields)) {
     $defCatalogAvailGroupFields = CCatalogCSVSettings::getDefaultSettings(CCatalogCSVSettings::FIELDS_SECTION);
-if (!isset($defCatalogAvailCurrencies))
+}
+if (!isset($defCatalogAvailCurrencies)) {
     $defCatalogAvailCurrencies = CCatalogCSVSettings::getDefaultSettings(CCatalogCSVSettings::FIELDS_CURRENCY);
+}
 
 $IBLOCK_ID = intval($IBLOCK_ID);
 if ($IBLOCK_ID <= 0) {
     $arRunErrors[] = GetMessage("CATI_NO_IBLOCK");
-} else
+} else {
     if ($IBLOCK_ID <= 0) {
         $arRunErrors[] = GetMessage("CATI_NO_IBLOCK");
     } else {
@@ -82,12 +96,14 @@ if ($IBLOCK_ID <= 0) {
             $arRunErrors[] = GetMessage("CATI_NO_IBLOCK");
         }
     }
+}
 
 $boolCatalog = false;
 if (empty($arRunErrors)) {
     $arCatalog = CCatalog::GetByID($IBLOCK_ID);
-    if (!empty($arCatalog))
+    if (!empty($arCatalog)) {
         $boolCatalog = true;
+    }
 }
 
 if (empty($arRunErrors)) {
@@ -116,7 +132,7 @@ if (empty($arRunErrors)) {
                 $delimiter_r_char = " ";
                 break;
             case "OTR":
-                $delimiter_r_char = (isset($delimiter_other_r) ? substr($delimiter_other_r, 0, 1) : '');
+                $delimiter_r_char = (isset($delimiter_other_r) ? mb_substr($delimiter_other_r, 0, 1) : '');
                 break;
             case "TZP":
                 $delimiter_r_char = ";";
@@ -124,7 +140,7 @@ if (empty($arRunErrors)) {
         }
     }
 
-    if (strlen($delimiter_r_char) != 1) {
+    if (mb_strlen($delimiter_r_char) != 1) {
         $arRunErrors[] = GetMessage("CATI_NO_DELIMITER");
     }
 
@@ -133,15 +149,16 @@ if (empty($arRunErrors)) {
     }
 
 
-    if (!isset($SETUP_FILE_NAME) || strlen($SETUP_FILE_NAME) <= 0) {
+    if (!isset($SETUP_FILE_NAME) || $SETUP_FILE_NAME == '') {
         $arRunErrors[] = GetMessage("CATI_NO_SAVE_FILE");
     } elseif (preg_match(BX_CATALOG_FILENAME_REG, $SETUP_FILE_NAME)) {
         $arRunErrors[] = GetMessage("CES_ERROR_BAD_EXPORT_FILENAME");
     } else {
         $SETUP_FILE_NAME = Rel2Abs("/", $SETUP_FILE_NAME);
-        if (strtolower(substr($SETUP_FILE_NAME, strlen($SETUP_FILE_NAME) - 4)) != ".csv")
+        if (mb_strtolower(mb_substr($SETUP_FILE_NAME, mb_strlen($SETUP_FILE_NAME) - 4)) != ".csv") {
             $SETUP_FILE_NAME .= ".csv";
-        if (0 !== strpos($SETUP_FILE_NAME, $strCatalogDefaultFolder)) {
+        }
+        if (0 !== mb_strpos($SETUP_FILE_NAME, $strCatalogDefaultFolder)) {
             $arRunErrors[] = GetMessage('CES_ERROR_PATH_WITHOUT_DEFAUT');
         } else {
             CheckDirPath($_SERVER["DOCUMENT_ROOT"] . $SETUP_FILE_NAME);
@@ -164,9 +181,17 @@ if (empty($arRunErrors)) {
     // We can't link more than 30 tables.
     $tableLinksCount = 10;
     for ($i = 0, $intCount = count($field_code); $i < $intCount; $i++) {
-        if (substr($field_code[$i], 0, strlen("CR_PRICE_")) == "CR_PRICE_" && isset($field_needed[$i]) && $field_needed[$i] == "Y") {
+        if (mb_substr(
+                $field_code[$i],
+                0,
+                mb_strlen("CR_PRICE_")
+            ) == "CR_PRICE_" && isset($field_needed[$i]) && $field_needed[$i] == "Y") {
             $tableLinksCount++;
-        } elseif (substr($field_code[$i], 0, strlen("IP_PROP")) == "IP_PROP" && isset($field_needed[$i]) && $field_needed[$i] == "Y") {
+        } elseif (mb_substr(
+                $field_code[$i],
+                0,
+                mb_strlen("IP_PROP")
+            ) == "IP_PROP" && isset($field_needed[$i]) && $field_needed[$i] == "Y") {
             $tableLinksCount += 2;
         }
     }
@@ -211,24 +236,36 @@ if (empty($arRunErrors)) {
                     $arSortFields[$arOneCatalogAvailProdFields['value']] = array(
                         'CODE' => $arOneCatalogAvailProdFields['value'],
                         'ID' => $intCount,
-                        'SORT' => (!empty($field_num[$mxSelKey]) && 0 < intval($field_num[$mxSelKey]) ? intval($field_num[$mxSelKey]) : ($intCount + 1) * 10),
+                        'SORT' => (!empty($field_num[$mxSelKey]) && 0 < intval($field_num[$mxSelKey]) ? intval(
+                            $field_num[$mxSelKey]
+                        ) : ($intCount + 1) * 10),
                     );
                     $selectArray[] = $arOneCatalogAvailProdFields["field"];
                 }
                 $intCount++;
             }
         }
-        if (isset($arOneCatalogAvailProdFields))
+        if (isset($arOneCatalogAvailProdFields)) {
             unset($arOneCatalogAvailProdFields);
+        }
 
-        $rsProps = CIBlockProperty::GetList(array("SORT" => "ASC", "ID" => "ASC"), array("IBLOCK_ID" => $IBLOCK_ID, "ACTIVE" => "Y", 'CHECK_PERMISSIONS' => 'N'));
+        $rsProps = CIBlockProperty::GetList(
+            array("SORT" => "ASC", "ID" => "ASC"),
+            array(
+                "IBLOCK_ID" => $IBLOCK_ID,
+                "ACTIVE" => "Y",
+                'CHECK_PERMISSIONS' => 'N'
+            )
+        );
         while ($arProp = $rsProps->Fetch()) {
             $mxSelKey = array_search('IP_PROP' . $arProp['ID'], $field_code);
             if (!(false === $mxSelKey || empty($field_needed[$mxSelKey]) || 'Y' != $field_needed[$mxSelKey])) {
                 $arSortFields['IP_PROP' . $arProp['ID']] = array(
                     'CODE' => 'IP_PROP' . $arProp['ID'],
                     'ID' => $intCount,
-                    'SORT' => (!empty($field_num[$mxSelKey]) && 0 < intval($field_num[$mxSelKey]) ? intval($field_num[$mxSelKey]) : ($intCount + 1) * 10),
+                    'SORT' => (!empty($field_num[$mxSelKey]) && 0 < intval($field_num[$mxSelKey]) ? intval(
+                        $field_num[$mxSelKey]
+                    ) : ($intCount + 1) * 10),
                 );
                 $bNeedProps = true;
                 $arElementProps[] = $arProp['ID'];
@@ -241,8 +278,9 @@ if (empty($arRunErrors)) {
         }
         if ($bNeedProps) {
             $arElementProps = array_values(array_unique($arElementProps));
-            if (!empty($arFileProps))
+            if (!empty($arFileProps)) {
                 $arFileProps = array_values(array_unique($arFileProps));
+            }
         }
 
         // Prepare arrays for groups loading
@@ -257,8 +295,9 @@ if (empty($arRunErrors)) {
                 );
             }
         }
-        if (isset($arOneCatalogAvailGroupFields))
+        if (isset($arOneCatalogAvailGroupFields)) {
             unset($arOneCatalogAvailGroupFields);
+        }
         if (!empty($arAvailGroupFields_names)) {
             $arAvailGroupFieldsList = array_keys($arAvailGroupFields_names);
             for ($i = 0; $i < $NUM_CATALOG_LEVELS; $i++) {
@@ -268,24 +307,32 @@ if (empty($arRunErrors)) {
                         $arSortFields[$strKey . $i] = array(
                             'CODE' => $strKey . $i,
                             'ID' => $intCount,
-                            'SORT' => (!empty($field_num[$mxSelKey]) && 0 < intval($field_num[$mxSelKey]) ? intval($field_num[$mxSelKey]) : ($intCount + 1) * 10),
+                            'SORT' => (!empty($field_num[$mxSelKey]) && 0 < intval($field_num[$mxSelKey]) ? intval(
+                                $field_num[$mxSelKey]
+                            ) : ($intCount + 1) * 10),
                         );
                         $bNeedGroups = true;
                         $arGroupProps[$i][] = $strKey;
                     }
                     $intCount++;
                 }
-                if (isset($strKey))
+                if (isset($strKey)) {
                     unset($strKey);
-                if (!empty($arGroupProps[$i]))
+                }
+                if (!empty($arGroupProps[$i])) {
                     $arGroupProps[$i] = array_values(array_unique($arGroupProps[$i]));
+                }
             }
             unset($arAvailGroupFieldsList);
         }
 
         if ($boolCatalog) {
             // Prepare arrays for product loading (for catalog)
-            $strAvailPriceFields = COption::GetOptionString("catalog", "allowed_product_fields", $defCatalogAvailPriceFields);
+            $strAvailPriceFields = COption::GetOptionString(
+                "catalog",
+                "allowed_product_fields",
+                $defCatalogAvailPriceFields
+            );
             $arAvailPriceFields = explode(",", $strAvailPriceFields);
             $arAvailPriceFields_names = array();
             foreach ($arCatalogAvailPriceFields as &$arOneCatalogAvailPriceFields) {
@@ -300,7 +347,9 @@ if (empty($arRunErrors)) {
                         $arSortFields[$arOneCatalogAvailPriceFields['value']] = array(
                             'CODE' => $arOneCatalogAvailPriceFields['value'],
                             'ID' => $intCount,
-                            'SORT' => (!empty($field_num[$mxSelKey]) && 0 < intval($field_num[$mxSelKey]) ? intval($field_num[$mxSelKey]) : ($intCount + 1) * 10),
+                            'SORT' => (!empty($field_num[$mxSelKey]) && 0 < intval($field_num[$mxSelKey]) ? intval(
+                                $field_num[$mxSelKey]
+                            ) : ($intCount + 1) * 10),
                         );
                         $bNeedProducts = true;
                         $arProductFields[] = $arOneCatalogAvailPriceFields['value'];
@@ -309,10 +358,12 @@ if (empty($arRunErrors)) {
                     $intCount++;
                 }
             }
-            if (isset($arOneCatalogAvailPriceFields))
+            if (isset($arOneCatalogAvailPriceFields)) {
                 unset($arOneCatalogAvailPriceFields);
-            if ($bNeedProducts)
+            }
+            if ($bNeedProducts) {
                 $arProductFields = array_values(array_unique($arProductFields));
+            }
 
             // Prepare arrays for price loading
             $strAvailCountFields = $defCatalogAvailQuantityFields;
@@ -329,7 +380,9 @@ if (empty($arRunErrors)) {
                         $arSortFields[$arOneCatalogAvailQuantityFields['value']] = array(
                             'CODE' => $arOneCatalogAvailQuantityFields['value'],
                             'ID' => $intCount,
-                            'SORT' => (!empty($field_num[$mxSelKey]) && 0 < intval($field_num[$mxSelKey]) ? intval($field_num[$mxSelKey]) : ($intCount + 1) * 10),
+                            'SORT' => (!empty($field_num[$mxSelKey]) && 0 < intval($field_num[$mxSelKey]) ? intval(
+                                $field_num[$mxSelKey]
+                            ) : ($intCount + 1) * 10),
                         );
                         $bNeedCounts = true;
                         $arCountFields[] = $arOneCatalogAvailQuantityFields['value'];
@@ -337,14 +390,13 @@ if (empty($arRunErrors)) {
                     $intCount++;
                 }
             }
-            if (isset($arOneCatalogAvailQuantityFields))
+            if (isset($arOneCatalogAvailQuantityFields)) {
                 unset($arOneCatalogAvailQuantityFields);
+            }
 
             $strVal = COption::GetOptionString("catalog", "allowed_currencies", $defCatalogAvailCurrencies);
             $arVal = explode(",", $strVal);
-            $by1 = "sort";
-            $order1 = "asc";
-            $lcur = CCurrency::GetList($by1, $order1);
+            $lcur = CCurrency::GetList('sort', 'asc');
             $arCurList = array();
             while ($lcur_res = $lcur->Fetch()) {
                 if (in_array($lcur_res["CURRENCY"], $arVal)) {
@@ -357,7 +409,7 @@ if (empty($arRunErrors)) {
                 foreach ($field_code as $mxSelKey => $strOneFieldsCode) {
                     if (0 == strncmp($strOneFieldsCode, "CR_PRICE_", 9)) {
                         if (!(empty($field_needed[$mxSelKey]) || 'Y' != $field_needed[$mxSelKey])) {
-                            $arTempo = explode('_', substr($strOneFieldsCode, 9));
+                            $arTempo = explode('_', mb_substr($strOneFieldsCode, 9));
                             $arTempo[0] = intval($arTempo[0]);
                             if (0 < $arTempo[0]) {
                                 $bNeedPrices = true;
@@ -365,7 +417,9 @@ if (empty($arRunErrors)) {
                                 $arSortFields['CR_PRICE_' . $arTempo[0] . '_' . $arTempo[1]] = array(
                                     'CODE' => 'CR_PRICE_' . $arTempo[0] . '_' . $arTempo[1],
                                     'ID' => $intCount,
-                                    'SORT' => (!empty($field_num[$mxSelKey]) && 0 < intval($field_num[$mxSelKey]) ? intval($field_num[$mxSelKey]) : ($intCount + 1) * 10),
+                                    'SORT' => (!empty($field_num[$mxSelKey]) && 0 < intval(
+                                        $field_num[$mxSelKey]
+                                    ) ? intval($field_num[$mxSelKey]) : ($intCount + 1) * 10),
                                 );
                                 $selectArray[] = "CATALOG_GROUP_" . $arTempo[0];
                             }
@@ -388,15 +442,22 @@ if (empty($arRunErrors)) {
             $csvFile->SaveFile($_SERVER["DOCUMENT_ROOT"] . $SETUP_FILE_NAME, $arNeedFields);
         }
 
-        $res = CIBlockElement::GetList(array('ID' => 'ASC'), array("IBLOCK_ID" => $IBLOCK_ID, 'CHECK_PERMISSIONS' => 'N'), false, false, $selectArray);
+        $res = CIBlockElement::GetList(
+            array('ID' => 'ASC'),
+            array("IBLOCK_ID" => $IBLOCK_ID, 'CHECK_PERMISSIONS' => 'N'),
+            false,
+            false,
+            $selectArray
+        );
         while ($res1 = $res->Fetch()) {
             $arResSections = array();
             if ($bNeedGroups) {
                 $indreseg = 0;
                 $reseg = CIBlockElement::GetElementGroups($res1["ID"], false, array('ID', 'ADDITIONAL_PROPERTY_ID'));
                 while ($reseg1 = $reseg->Fetch()) {
-                    if (0 < intval($reseg1['ADDITIONAL_PROPERTY_ID']))
+                    if (0 < intval($reseg1['ADDITIONAL_PROPERTY_ID'])) {
                         continue;
+                    }
                     $sections_path = GetIBlockSectionPath($IBLOCK_ID, $reseg1["ID"]);
                     while ($arSection = $sections_path->Fetch()) {
                         $arResSectionTmp = array();
@@ -407,8 +468,9 @@ if (empty($arRunErrors)) {
                     }
                     $indreseg++;
                 }
-                if (empty($arResSections))
+                if (empty($arResSections)) {
                     $arResSections[0] = array();
+                }
             } else {
                 $arResSections[0] = array();
             }
@@ -416,9 +478,9 @@ if (empty($arRunErrors)) {
             for ($inds = 0, $intSectCount = count($arResSections); $inds < $intSectCount; $inds++) {
                 $arResFields = array();
                 for ($i = 0, $intNFCount = count($arNeedFields); $i < $intNFCount; $i++) {
-                    $bFieldOut = False;
+                    $bFieldOut = false;
                     if (is_set($arAvailProdFields_names, $arNeedFields[$i])) {
-                        $bFieldOut = True;
+                        $bFieldOut = true;
                         $arResFields[$i] = $res1[$arAvailProdFields_names[$arNeedFields[$i]]["field"]];
                         if ($arNeedFields[$i] == "IE_PREVIEW_PICTURE" || $arNeedFields[$i] == "IE_DETAIL_PICTURE") {
                             if (intval($arResFields[$i]) > 0) {
@@ -434,52 +496,65 @@ if (empty($arRunErrors)) {
 
                     if ($boolCatalog) {
                         if (!$bFieldOut && is_set($arAvailPriceFields_names, $arNeedFields[$i])) {
-                            $bFieldOut = True;
+                            $bFieldOut = true;
                             $arResFields[$i] = $res1["CATALOG_" . $arAvailPriceFields_names[$arNeedFields[$i]]["field"]];
                         }
 
                         if (!$bFieldOut && is_set($arAvailCountFields_names, $arNeedFields[$i])) {
-                            $bFieldOut = True;
+                            $bFieldOut = true;
                             $arResFields[$i] = $res1["CATALOG_" . $arAvailCountFields_names[$arNeedFields[$i]]["field"]];
                         }
                     }
 
                     if (!$bFieldOut) {
-                        if (substr($arNeedFields[$i], 0, strlen("IP_PROP")) == "IP_PROP") {
-                            $strTempo = substr($arNeedFields[$i], strlen("IP_PROP"));
+                        if (mb_substr($arNeedFields[$i], 0, mb_strlen("IP_PROP")) == "IP_PROP") {
+                            $strTempo = mb_substr($arNeedFields[$i], mb_strlen("IP_PROP"));
                             if (!empty($arFileProps) && in_array($strTempo, $arFileProps)) {
                                 $valueTmp = '';
                                 if (0 < intval($res1["PROPERTY_" . $strTempo . "_VALUE"])) {
                                     $arFile = CFile::GetFileArray($res1["PROPERTY_" . $strTempo . "_VALUE"]);
-                                    if (is_array($arFile))
+                                    if (is_array($arFile)) {
                                         $valueTmp = $arFile['SRC'];
+                                    }
                                 }
                                 $arResFields[$i] = $valueTmp;
                             } else {
-                                //$arResFields[$i] = $res1["PROPERTY_".substr($arNeedFields[$i], strlen("IP_PROP"))."_VALUE"];
                                 $arResFields[$i] = $res1["PROPERTY_" . $strTempo . "_VALUE"];
                             }
-                            $bFieldOut = True;
-                        } elseif ($boolCatalog && substr($arNeedFields[$i], 0, strlen("CR_PRICE_")) == "CR_PRICE_") {
-                            $sPriceTmp = substr($arNeedFields[$i], strlen("CR_PRICE_"));
+                            $bFieldOut = true;
+                        } elseif ($boolCatalog && mb_substr(
+                                $arNeedFields[$i],
+                                0,
+                                mb_strlen("CR_PRICE_")
+                            ) == "CR_PRICE_") {
+                            $sPriceTmp = mb_substr($arNeedFields[$i], mb_strlen("CR_PRICE_"));
                             $arPriceTmp = explode("_", $sPriceTmp);
 
-                            if (strlen($res1["CATALOG_CURRENCY_" . intval($arPriceTmp[0])]) > 0
+                            if ($res1["CATALOG_CURRENCY_" . intval($arPriceTmp[0])] <> ''
                                 && $res1["CATALOG_CURRENCY_" . intval($arPriceTmp[0])] != $arPriceTmp[1]) {
-                                $arResFields[$i] = Round(CCurrencyRates::ConvertCurrency($res1["CATALOG_PRICE_" . intval($arPriceTmp[0])], $res1["CATALOG_CURRENCY_" . intval($arPriceTmp[0])], $arPriceTmp[1]), 2);
+                                $arResFields[$i] = Round(
+                                    CCurrencyRates::ConvertCurrency(
+                                        $res1["CATALOG_PRICE_" . intval($arPriceTmp[0])],
+                                        $res1["CATALOG_CURRENCY_" . intval($arPriceTmp[0])],
+                                        $arPriceTmp[1]
+                                    ),
+                                    2
+                                );
                             } else {
                                 $arResFields[$i] = $res1["CATALOG_PRICE_" . intval($arPriceTmp[0])];
                             }
-                            $bFieldOut = True;
+                            $bFieldOut = true;
                         }
                     }
 
                     if (!$bFieldOut) {
                         foreach ($arAvailGroupFields_names as $key => $value) {
-                            if ($key == substr($arNeedFields[$i], 0, strlen($key))
-                                && is_numeric(substr($arNeedFields[$i], strlen($key)))) {
-                                $bFieldOut = True;
-                                $arResFields[$i] = $arResSections[$inds][intval(substr($arNeedFields[$i], strlen($key)))][$key];
+                            if ($key == mb_substr($arNeedFields[$i], 0, mb_strlen($key))
+                                && is_numeric(mb_substr($arNeedFields[$i], mb_strlen($key)))) {
+                                $bFieldOut = true;
+                                $arResFields[$i] = $arResSections[$inds][intval(
+                                    mb_substr($arNeedFields[$i], mb_strlen($key))
+                                )][$key];
                                 break;
                             }
                         }
@@ -493,8 +568,9 @@ if (empty($arRunErrors)) {
     //*****************************************************************//
 }
 
-if (!empty($arRunErrors))
+if (!empty($arRunErrors)) {
     $strExportErrorMessage = implode('<br />', $arRunErrors);
+}
 
 CCatalogDiscountSave::Enable();
 

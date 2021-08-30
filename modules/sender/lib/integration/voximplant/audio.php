@@ -77,7 +77,7 @@ class Audio
      */
     public function withJsonString($json)
     {
-        if (strlen($json)) {
+        if ($json <> '') {
             try {
                 $params = Json::decode($json);
                 if ($params['type'] == self::AUDIO_TYPE_PRESET) {
@@ -103,7 +103,6 @@ class Audio
      */
     public function withMessageCode($messageCode = null)
     {
-
         $this->messageCode = $messageCode;
         return $this;
     }
@@ -116,7 +115,6 @@ class Audio
      */
     public function withFile($fileId = null)
     {
-
         $this->fileId = $fileId;
         return $this;
     }
@@ -256,8 +254,8 @@ class Audio
      */
     private function getPresetCode()
     {
-        return strpos($this->getPreset(), $this->getMessageCode()) === 0 ?
-            substr($this->getPreset(), strlen($this->getMessageCode()) + 1) : $this->getPreset();
+        return mb_strpos($this->getPreset(), $this->getMessageCode()) === 0 ?
+            mb_substr($this->getPreset(), mb_strlen($this->getMessageCode()) + 1) : $this->getPreset();
     }
 
     /**
@@ -267,17 +265,20 @@ class Audio
      */
     protected function getMp3fileDuration($fileId)
     {
-        if (!$fileId)
+        if (!$fileId) {
             return false;
+        }
 
         $fileName = \CFile::GetPath($fileId);
 
         if ($this->isRemoteFile($fileName)) {
             $tmpFileName = \CFile::GetTempName('', 'tmpfile.mp3');
-            $request = new HttpClient([
-                "socketTimeout" => 5,
-                "streamTimeout" => 5
-            ]);
+            $request = new HttpClient(
+                [
+                    "socketTimeout" => 5,
+                    "streamTimeout" => 5
+                ]
+            );
             $request->download($fileName, $tmpFileName);
             $fileName = $tmpFileName;
         } else {
@@ -295,7 +296,9 @@ class Audio
             if (mb_strlen($frame, 'latin1') < 10) {
                 break;
             } else {
-                if ("\xff" == $frame[0] && (ord($frame[1]) & 0xe0))  // if 1111 1111 111x xxxx bits (header sequence) was found
+                if ("\xff" == $frame[0] && (ord(
+                            $frame[1]
+                        ) & 0xe0))  // if 1111 1111 111x xxxx bits (header sequence) was found
                 {
                     list($frameLength, $frameDuration) = $this->getFrameInfo(mb_substr($frame, 0, 4, 'latin1'));
                     if (!$frameLength) {

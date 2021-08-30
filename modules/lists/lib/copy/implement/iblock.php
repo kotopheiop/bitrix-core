@@ -99,10 +99,12 @@ class Iblock extends IblockImplementer
 
         $socnetGroupId = ($fields["SOCNET_GROUP_ID"] ? $fields["SOCNET_GROUP_ID"] : 0);
 
-        $list->actualizeDocumentAdminPage(str_replace(
-            ["#list_id#", "#group_id#"],
-            [$iblockId, $socnetGroupId],
-            $listElementUrl
-        ));
+        $list->actualizeDocumentAdminPage(
+            str_replace(
+                ["#list_id#", "#group_id#"],
+                [$iblockId, $socnetGroupId],
+                $listElementUrl
+            )
+        );
     }
 }

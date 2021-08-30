@@ -36,21 +36,31 @@ class Manager
     {
         $result = array();
 
-        $dbRes = self::getList(array(
-            'filter' => array('ACTIVE' => 'Y')
-        ));
+        $dbRes = self::getList(
+            array(
+                'filter' => array('ACTIVE' => 'Y')
+            )
+        );
 
         while ($company = $dbRes->fetch()) {
             if ($mode == Restrictions\Manager::MODE_MANAGER) {
                 $checkServiceResult = Restrictions\Manager::checkService($company['ID'], $entity, $mode);
                 if ($checkServiceResult != Restrictions\Manager::SEVERITY_STRICT) {
-                    if ($checkServiceResult == Restrictions\Manager::SEVERITY_SOFT)
+                    if ($checkServiceResult == Restrictions\Manager::SEVERITY_SOFT) {
                         $company['RESTRICTED'] = $checkServiceResult;
+                    }
                     $result[$company['ID']] = $company;
                 }
-            } else if ($mode == Restrictions\Manager::MODE_CLIENT) {
-                if (Restrictions\Manager::checkService($company['ID'], $entity, $mode) === Restrictions\Manager::SEVERITY_NONE)
-                    $result[$company['ID']] = $company;
+            } else {
+                if ($mode == Restrictions\Manager::MODE_CLIENT) {
+                    if (Restrictions\Manager::checkService(
+                            $company['ID'],
+                            $entity,
+                            $mode
+                        ) === Restrictions\Manager::SEVERITY_NONE) {
+                        $result[$company['ID']] = $company;
+                    }
+                }
             }
         }
 
@@ -62,22 +72,28 @@ class Manager
      * @param int $mode
      * @return int
      */
-    public static function getAvailableCompanyIdByEntity(Internals\Entity $entity, $mode = Restrictions\Manager::MODE_CLIENT)
-    {
-        $dbRes = self::getList(array(
-            'select' => array('ID'),
-            'filter' => array('=ACTIVE' => 'Y'),
-            'order' => array('SORT' => 'ASC')
-        ));
+    public static function getAvailableCompanyIdByEntity(
+        Internals\Entity $entity,
+        $mode = Restrictions\Manager::MODE_CLIENT
+    ) {
+        $dbRes = self::getList(
+            array(
+                'select' => array('ID'),
+                'filter' => array('=ACTIVE' => 'Y'),
+                'order' => array('SORT' => 'ASC')
+            )
+        );
 
         while ($company = $dbRes->fetch()) {
             $result = Restrictions\Manager::checkService($company['ID'], $entity, $mode);
             if ($mode == Restrictions\Manager::MODE_CLIENT) {
-                if ($result == Restrictions\Manager::SEVERITY_NONE)
+                if ($result == Restrictions\Manager::SEVERITY_NONE) {
                     return $company['ID'];
+                }
             } else {
-                if ($result != Restrictions\Manager::SEVERITY_STRICT)
+                if ($result != Restrictions\Manager::SEVERITY_STRICT) {
                     return $company['ID'];
+                }
             }
         }
 

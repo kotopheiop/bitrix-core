@@ -28,8 +28,9 @@ class ConverterDocumentProfile extends Converter
      */
     public function resolveParams($documentImport)
     {
-        if (!($documentImport instanceof DocumentBase))
+        if (!($documentImport instanceof DocumentBase)) {
             throw new ArgumentException("Document must be instanceof DocumentBase");
+        }
 
         $result = array();
 
@@ -37,8 +38,9 @@ class ConverterDocumentProfile extends Converter
         foreach ($params as $k => $v) {
             switch ($k) {
                 case 'VERSION':
-                    if (!empty($v))
+                    if (!empty($v)) {
                         $profile['VERSION_1C'] = $v;
+                    }
                     break;
                 case 'XML_ID':
                 case 'OFICIAL_NAME':
@@ -52,8 +54,9 @@ class ConverterDocumentProfile extends Converter
                 case 'OKOPF':
                 case 'OKFC':
                     //case 'OKPO':
-                    if (!empty($v))
+                    if (!empty($v)) {
                         $profile[$k] = $v;
+                    }
                     break;
                 case 'ITEM_NAME':
                     if (!empty($v)) {
@@ -93,18 +96,21 @@ class ConverterDocumentProfile extends Converter
             }
         }
 
-        if (!empty($profile["OKPO_CODE"]))
+        if (!empty($profile["OKPO_CODE"])) {
             $profile["OKPO"] = $profile["OKPO_CODE"];
+        }
 
-        if (strlen($profile["OFICIAL_NAME"]) > 0 && empty($profile["FULL_NAME"]))
+        if ($profile["OFICIAL_NAME"] <> '' && empty($profile["FULL_NAME"])) {
             $profile["FULL_NAME"] = $profile["OFICIAL_NAME"];
+        }
 
-        if (strlen($profile["OFICIAL_NAME"]) > 0 && strlen($profile["INN"]) > 0)
+        if ($profile["OFICIAL_NAME"] <> '' && $profile["INN"] <> '') {
             $profile["TYPE"] = "UR";
-        elseif (strlen($profile["INN"]) > 0)
+        } elseif ($profile["INN"] <> '') {
             $profile["TYPE"] = "IP";
-        else
+        } else {
             $profile["TYPE"] = "FIZ";
+        }
 
         if (!empty($profile)) {
             $property = array();
@@ -137,16 +143,18 @@ class ConverterDocumentProfile extends Converter
                     case 'REGISTRATION_ADDRESS':
                     case 'UR_ADDRESS':
                         foreach ($value as $nameProperty => $valueProperty) {
-                            if (strlen($valueProperty) > 0 && empty($property[$nameProperty]))
+                            if ($valueProperty <> '' && empty($property[$nameProperty])) {
                                 $property[$nameProperty] = $valueProperty;
+                            }
                         }
                         $property["ADDRESS_FULL"] = $value["PRESENTATION"];
                         $property["INDEX"] = $value["POST_CODE"];
                         break;
                     case 'ADDRESS':
                         foreach ($value as $nameProperty => $valueProperty) {
-                            if (strlen($valueProperty) > 0 && empty($property["F_" . $nameProperty]))
+                            if ($valueProperty <> '' && empty($property["F_" . $nameProperty])) {
                                 $property["F_" . $nameProperty] = $valueProperty;
+                            }
                         }
                         $property["F_ADDRESS_FULL"] = $value["PRESENTATION"];
                         $property["F_INDEX"] = $value["POST_CODE"];
@@ -206,7 +214,8 @@ class ConverterDocumentProfile extends Converter
                         'STREET' => 'F_STREET',
                         'HOUSE' => 'F_HOUSE',
                         'BUILDING' => 'F_BUILDING',
-                        'FLAT' => 'F_FLAT');
+                        'FLAT' => 'F_FLAT'
+                    );
                     $this->replaceNameFields($replacedFields, $replaceNameFields);
                     $value = $this->externalizeArrayFields($replacedFields, $v);
                     break;
@@ -236,8 +245,21 @@ class ConverterDocumentProfile extends Converter
 
         if ($this->isFiz($businessValue)) {
             foreach ($availableFields as $k => $v) {
-                if (in_array($k, array('XML_ID', 'ITEM_NAME', 'INN', 'KPP', 'ADDRESS', 'CONTACTS', 'REPRESENTATIVES', 'ROLE')))
+                if (in_array(
+                    $k,
+                    array(
+                        'XML_ID',
+                        'ITEM_NAME',
+                        'INN',
+                        'KPP',
+                        'ADDRESS',
+                        'CONTACTS',
+                        'REPRESENTATIVES',
+                        'ROLE'
+                    )
+                )) {
                     continue;
+                }
 
                 $value = '';
                 $replacedFields = $businessValue;
@@ -269,16 +291,29 @@ class ConverterDocumentProfile extends Converter
                         $value = $this->externalizeArrayFields($replacedFields, $v);
                         break;
                 }
-                if (!is_array($value))
+                if (!is_array($value)) {
                     $this->externalizeField($value, $v);
+                }
 
                 $result[$k] = $value;
-
             }
         } else {
             foreach ($availableFields as $k => $v) {
-                if (in_array($k, array('XML_ID', 'ITEM_NAME', 'INN', 'KPP', 'ADDRESS', 'CONTACTS', 'REPRESENTATIVES', 'ROLE')))
+                if (in_array(
+                    $k,
+                    array(
+                        'XML_ID',
+                        'ITEM_NAME',
+                        'INN',
+                        'KPP',
+                        'ADDRESS',
+                        'CONTACTS',
+                        'REPRESENTATIVES',
+                        'ROLE'
+                    )
+                )) {
                     continue;
+                }
 
                 $value = '';
                 $replacedFields = $businessValue;
@@ -332,16 +367,18 @@ class ConverterDocumentProfile extends Converter
                         $value = $this->externalizeArrayFields($replacedFields, $v);
                         break;
                 }
-                if (!is_array($value))
+                if (!is_array($value)) {
                     $this->externalizeField($value, $v);
+                }
 
                 $result[$k] = $value;
             }
         }
 
         foreach ($availableFields as $k => $v) {
-            if ($k <> 'REK_VALUES')
+            if ($k <> 'REK_VALUES') {
                 continue;
+            }
 
             $value = '';
             switch ($k) {
@@ -352,8 +389,11 @@ class ConverterDocumentProfile extends Converter
                         switch ($name) {
                             case 'DELIVERY_ADDRESS':
                                 $valueRV = isset($result['ADDRESS']['PRESENTATION']) ? $result['ADDRESS']['PRESENTATION'] : '';
-                                if ($valueRV === '')
-                                    $valueRV = $result[($this->isFiz($businessValue) ? 'REGISTRATION_ADDRESS' : 'UR_ADDRESS')]['PRESENTATION'];
+                                if ($valueRV === '') {
+                                    $valueRV = $result[($this->isFiz(
+                                        $businessValue
+                                    ) ? 'REGISTRATION_ADDRESS' : 'UR_ADDRESS')]['PRESENTATION'];
+                                }
                                 break;
                         }
                         $value[] = $this->externalizeRekvValue($name, $valueRV, $fieldInfo);
@@ -409,8 +449,9 @@ class ConverterDocumentProfile extends Converter
                         $value = $fields[$name];
                 }
             }
-            if (!is_array($value))
+            if (!is_array($value)) {
                 $this->externalizeField($value, $fieldInfo);
+            }
 
             $result[$name] = $value;
         }
@@ -438,10 +479,16 @@ class ConverterDocumentProfile extends Converter
      */
     private function getXmlId(array $fields)
     {
-        if (strlen($fields['XML_ID']) > 0) {
+        if ($fields['XML_ID'] <> '') {
             $result = $fields['XML_ID'];
         } else {
-            $result = htmlspecialcharsbx(substr($fields["ID"] . "#" . $fields["LOGIN"] . "#" . $fields["LAST_NAME"] . " " . $fields["NAME"] . " " . $fields["SECOND_NAME"], 0, 40));
+            $result = htmlspecialcharsbx(
+                mb_substr(
+                    $fields["ID"] . "#" . $fields["LOGIN"] . "#" . $fields["LAST_NAME"] . " " . $fields["NAME"] . " " . $fields["SECOND_NAME"],
+                    0,
+                    40
+                )
+            );
             \Bitrix\Sale\Exchange\Entity\UserImportBase::updateEmptyXmlId($fields["ID"], $result);
         }
         return $result;

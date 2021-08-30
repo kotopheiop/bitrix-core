@@ -1,5 +1,6 @@
 <?
 /** @global CUser $USER */
+
 /** @global CMain $APPLICATION */
 
 /** @global CDatabase $DB */
@@ -13,8 +14,9 @@ $selfFolderUrl = $adminPage->getSelfFolderUrl();
 $listUrl = $selfFolderUrl . "cat_extra.php?lang=" . LANGUAGE_ID;
 $listUrl = $adminSidePanelHelper->editUrlToPublicPage($listUrl);
 
-if (!($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_price')))
+if (!($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_price'))) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 Loader::includeModule('catalog');
 $bReadOnly = !$USER->CanDoOperation('catalog_extra');
 
@@ -37,7 +39,7 @@ $bVarsFromForm = false;
 
 $ID = (isset($_REQUEST['ID']) ? (int)$_REQUEST['ID'] : 0);
 
-if ($_SERVER['REQUEST_METHOD'] == "POST" && strlen($Update) > 0 && !$bReadOnly && check_bitrix_sessid()) {
+if ($_SERVER['REQUEST_METHOD'] == "POST" && $Update <> '' && !$bReadOnly && check_bitrix_sessid()) {
     $adminSidePanelHelper->decodeUriComponent();
 
     $arFields = array(
@@ -48,22 +50,24 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && strlen($Update) > 0 && !$bReadOnly &
 
     if ($ID > 0) {
         if (!CExtra::Update($ID, $arFields)) {
-            if ($ex = $APPLICATION->GetException())
+            if ($ex = $APPLICATION->GetException()) {
                 $errorMessage = $ex->GetString();
-            else
+            } else {
                 $errorMessage = GetMessage("CEEN_ERROR_SAVING_EXTRA");
+            }
         }
     } else {
         $ID = (int)CExtra::Add($arFields);
         if ($ID <= 0) {
-            if ($ex = $APPLICATION->GetException())
+            if ($ex = $APPLICATION->GetException()) {
                 $errorMessage = $ex->GetString();
-            else
+            } else {
                 $errorMessage = GetMessage("CEEN_ERROR_SAVING_EXTRA");
+            }
         }
     }
 
-    if (strlen($errorMessage) <= 0) {
+    if ($errorMessage == '') {
         if ($adminSidePanelHelper->isAjaxRequest()) {
             $adminSidePanelHelper->sendSuccessResponse("base", array("ID" => $ID));
         } else {
@@ -84,10 +88,11 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && strlen($Update) > 0 && !$bReadOnly &
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/catalog/prolog.php");
 
-if ($ID > 0)
+if ($ID > 0) {
     $APPLICATION->SetTitle(GetMessage("CEEN_UPDATING"));
-else
+} else {
     $APPLICATION->SetTitle(GetMessage("CEEN_ADDING"));
+}
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
@@ -124,7 +129,8 @@ if ($ID > 0 && !$bReadOnly) {
         "ICON" => "btn_new",
         "LINK" => $addUrl
     );
-    $deleteUrl = $selfFolderUrl . "cat_extra.php?ID=" . $ID . "&action=delete&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get() . "#tb";
+    $deleteUrl = $selfFolderUrl . "cat_extra.php?ID=" . $ID . "&action=delete&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get(
+        ) . "#tb";
     $buttonAction = "LINK";
     if ($adminSidePanelHelper->isPublicFrame()) {
         $deleteUrl = $adminSidePanelHelper->editUrlToPublicPage($deleteUrl);
@@ -133,7 +139,9 @@ if ($ID > 0 && !$bReadOnly) {
     $aMenu[] = array(
         "TEXT" => GetMessage("CEEN_DELETE_DISCOUNT"),
         "ICON" => "btn_delete",
-        $buttonAction => "javascript:if(confirm('" . GetMessageJS("CEEN_DELETE_DISCOUNT_CONFIRM") . "')) top.window.location.href='" . $deleteUrl . "';",
+        $buttonAction => "javascript:if(confirm('" . GetMessageJS(
+                "CEEN_DELETE_DISCOUNT_CONFIRM"
+            ) . "')) top.window.location.href='" . $deleteUrl . "';",
         "WARNING" => "Y"
     );
 }
@@ -150,7 +158,12 @@ CAdminMessage::ShowMessage($errorMessage); ?>
         <?= bitrix_sessid_post();
 
         $aTabs = array(
-            array("DIV" => "edit1", "TAB" => GetMessage("CEEN_TAB_DISCOUNT"), "ICON" => "catalog", "TITLE" => GetMessage("CEEN_TAB_DISCOUNT_DESCR"))
+            array(
+                "DIV" => "edit1",
+                "TAB" => GetMessage("CEEN_TAB_DISCOUNT"),
+                "ICON" => "catalog",
+                "TITLE" => GetMessage("CEEN_TAB_DISCOUNT_DESCR")
+            )
         );
 
         $tabControl = new CAdminTabControl("tabControl", $aTabs);

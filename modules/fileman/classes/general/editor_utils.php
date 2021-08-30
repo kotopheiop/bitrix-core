@@ -1,9 +1,10 @@
-<?
+<?php
+
 IncludeModuleLangFile(__FILE__);
 
 class CEditorUtils
 {
-    function RenderComponents($arParams)
+    public static function RenderComponents($arParams)
     {
         global $USER;
         $bLPA = !$USER->CanDoOperation('edit_php');
@@ -12,41 +13,58 @@ class CEditorUtils
         $arParams['template'] = addslashes($arParams['template']);
         $arParams['siteTemplateId'] = addslashes($arParams['siteTemplateId']);
 
-        if ($arParams['siteTemplateId'] && !defined("SITE_TEMPLATE_ID"))
+        if ($arParams['siteTemplateId'] && !defined("SITE_TEMPLATE_ID")) {
             define("SITE_TEMPLATE_ID", $arParams['siteTemplateId']);
+        }
 
         // Report only errors
         error_reporting(E_ERROR);
 
         if ($arParams['name']) // one component by name
+        {
             $s = CEditorUtils::_RenderOneComponent($arParams, $bLPA);
-        elseif ($arParams['source']) // all components from content
+        } elseif ($arParams['source']) // all components from content
+        {
             $s = CEditorUtils::_RenderAllComponents($arParams, $bLPA);
+        }
 
         CEditorUtils::GetCSS($startCount); // Echo path to css
 
         // Cut out all scripts
         $s = preg_replace("/<script[^>]*?>[\s|\S]*?<\/script>/is", '', $s);
         // Cut out <div class="bx-component-panel"> .... </div>
-        $s = preg_replace("/<div[^>]*?class=\"bx-component-panel\"[^>]*?>[^<]*?<table[\s|\S]*?<\/table>[^<]*?<\/div>/is", '', $s);
+        $s = preg_replace(
+            "/<div[^>]*?class=\"bx-component-panel\"[^>]*?>[^<]*?<table[\s|\S]*?<\/table>[^<]*?<\/div>/is",
+            '',
+            $s
+        );
 
         echo $s;
     }
 
-    function _RenderOneComponent($arParams, $bLPA)
+    public static function _RenderOneComponent($arParams, $bLPA)
     {
         global $APPLICATION, $USER;
 
-        $arProperties = CEditorUtils::GetCompProperties($arParams['name'], $arParams['template'], $arParams['siteTemplateId']);
+        $arProperties = CEditorUtils::GetCompProperties(
+            $arParams['name'],
+            $arParams['template'],
+            $arParams['siteTemplateId']
+        );
         $code = '$APPLICATION->IncludeComponent("' . $arParams['name'] . '","' . $arParams['template'] . '",';
-        $arProperties['BX_EDITOR_RENDER_MODE'] = Array('NAME' => 'Workin in render mode *For Visual editor rendering only*', 'TYPE' => 'CHECKBOX', 'DEFAULT' => 'Y'); // Add description of the system parameter
+        $arProperties['BX_EDITOR_RENDER_MODE'] = Array(
+            'NAME' => 'Workin in render mode *For Visual editor rendering only*',
+            'TYPE' => 'CHECKBOX',
+            'DEFAULT' => 'Y'
+        ); // Add description of the system parameter
 
         $arProps = $arParams['params'];
         if (!$arProps) // Get default properties
         {
             $arProps = array();
-            foreach ($arProperties as $key => $Prop)
+            foreach ($arProperties as $key => $Prop) {
                 $arProps[$key] = $Prop['DEFAULT'];
+            }
         } else {
             if ($bLPA) {
                 $arPHPparams = Array();
@@ -68,17 +86,18 @@ class CEditorUtils
                 continue;
             }
 
-            if (strtolower($val) == 'array()') {
+            if (mb_strtolower($val) == 'array()') {
                 $arProps[$key] = Array();
-            } elseif (substr(strtolower($val), 0, 6) == 'array(') {
+            } elseif (mb_substr(mb_strtolower($val), 0, 6) == 'array(') {
                 $str = array();
                 $tArr = array();
                 PHPParser::GetParamsRec($val, $str, $tArr);
 
                 if (is_array($tArr)) {
                     foreach ($tArr as $k => $v) {
-                        if (substr($v, 0, 2) == "={" && substr($v, -1, 1) == "}" && strlen($v) > 3)
-                            $v = substr($v, 2, -1);
+                        if (mb_substr($v, 0, 2) == "={" && mb_substr($v, -1, 1) == "}" && mb_strlen($v) > 3) {
+                            $v = mb_substr($v, 2, -1);
+                        }
                         unset($tArr[$k]);
                         $tArr[addslashes($k)] = addslashes(trim($v, " \"'"));
                     }
@@ -104,7 +123,7 @@ class CEditorUtils
         return $s;
     }
 
-    function _RenderAllComponents($arParams, $bLPA)
+    public static function _RenderAllComponents($arParams, $bLPA)
     {
         global $APPLICATION, $USER;
         $s = '';
@@ -118,15 +137,17 @@ class CEditorUtils
             for ($n = 0; $n < $l; $n++) {
                 //Trim php tags
                 $src = $arPHP[$n][2];
-                if (SubStr($src, 0, 5) == "<?" . "php")
-                    $src = SubStr($src, 5);
-                else
-                    $src = SubStr($src, 2);
-                $src = SubStr($src, 0, -2);
+                if (mb_substr($src, 0, 5) == "<?" . "php") {
+                    $src = mb_substr($src, 5);
+                } else {
+                    $src = mb_substr($src, 2);
+                }
+                $src = mb_substr($src, 0, -2);
 
                 $comp2_begin = '$APPLICATION->INCLUDECOMPONENT(';
-                if (strtoupper(substr($src, 0, strlen($comp2_begin))) != $comp2_begin)
+                if (mb_strtoupper(mb_substr($src, 0, mb_strlen($comp2_begin))) != $comp2_begin) {
                     continue;
+                }
 
                 $arRes = PHPParser::CheckForComponent2($arPHP[$n][2]);
 
@@ -153,10 +174,12 @@ class CEditorUtils
                         $arTemplParams = CComponentUtil::GetTemplateProps($comp_name, $template_name, $template);
 
                         $arParameters = array();
-                        if (isset($arCompParams["PARAMETERS"]) && is_array($arCompParams["PARAMETERS"]))
+                        if (isset($arCompParams["PARAMETERS"]) && is_array($arCompParams["PARAMETERS"])) {
                             $arParameters = $arParameters + $arCompParams["PARAMETERS"];
-                        if (is_array($arTemplParams))
+                        }
+                        if (is_array($arTemplParams)) {
                             $arParameters = $arParameters + $arTemplParams;
+                        }
 
                         if ($bLPA) {
                             // Replace values from 'DEFAULT'
@@ -167,10 +190,11 @@ class CEditorUtils
                         }
 
                         foreach ($arParams as $key => $val) {
-                            if ($key != addslashes($key))
+                            if ($key != addslashes($key)) {
                                 unset($arParams[$key]);
-                            else
+                            } else {
                                 $arParams[$key] = addslashes($val);
+                            }
                         }
 
                         //ReturnPHPStr
@@ -182,24 +206,28 @@ class CEditorUtils
                     $parent_comp = CMain::_ReplaceNonLatin($arRes['PARENT_COMP']);
                     $arExParams_ = $arRes['FUNCTION_PARAMS'];
                     $bEx = isset($arExParams_) && is_array($arExParams_) && count($arExParams_) > 0;
-                    if (!$parent_comp || strtolower($parent_comp) == 'false')
+                    if (!$parent_comp || mb_strtolower($parent_comp) == 'false') {
                         $parent_comp = false;
+                    }
                     if ($parent_comp) {
-                        if ($parent_comp == 'true' || intVal($parent_comp) == $parent_comp)
+                        if ($parent_comp == 'true' || intval($parent_comp) == $parent_comp) {
                             $code .= ',' . $br . "\t" . $parent_comp;
-                        else
+                        } else {
                             $code .= ',' . $br . "\t\"" . $parent_comp . '"';
+                        }
                     }
                     if ($bEx) {
-                        if (!$parent_comp)
+                        if (!$parent_comp) {
                             $code .= ',' . $br . "\tfalse";
+                        }
 
                         $arExParams = array();
                         foreach ($arExParams_ as $k => $v) {
                             $k = CMain::_ReplaceNonLatin($k);
                             $v = CMain::_ReplaceNonLatin($v);
-                            if (strlen($k) > 0 && strlen($v) > 0)
+                            if ($k <> '' && $v <> '') {
                                 $arExParams[$k] = $v;
+                            }
                         }
                         $exParams = PHPParser::ReturnPHPStr2($arExParams);
                         $code .= ',' . $br . "\tArray(" . $exParams . ')';
@@ -218,7 +246,7 @@ class CEditorUtils
         return $s;
     }
 
-    function GetCompProperties($name, $template = '', $siteTemplateId = '', $arCurVals = array())
+    public static function GetCompProperties($name, $template = '', $siteTemplateId = '', $arCurVals = array())
     {
         $stid = $siteTemplateId;
         $arProps = CComponentUtil::GetComponentProps($name, $arCurVals);
@@ -226,49 +254,52 @@ class CEditorUtils
         return $arProps['PARAMETERS'] + $arTemplateProps;
     }
 
-    function StartFetchCSS()
+    public static function StartFetchCSS()
     {
         return count($GLOBALS['APPLICATION']->sPath2css);
     }
 
-    function GetCSS($startCount)
+    public static function GetCSS($startCount)
     {
         global $APPLICATION;
         $arCSS = array();
         $res = '';
         $curCount = count($APPLICATION->sPath2css);
-        if ($curCount <= $startCount)
+        if ($curCount <= $startCount) {
             return;
+        }
 
         for ($i = $startCount; $i < $curCount; $i++) {
             $path = $APPLICATION->sPath2css[$i];
-            if (!in_array($path, $arCSS))
+            if (!in_array($path, $arCSS)) {
                 $arCSS[] = $path;
+            }
         }
 
         echo "<script>window.arUsedCSS = [];\n";
         for ($i = 0, $l = count($arCSS); $i < $l; $i++) {
             $path = $arCSS[$i];
-            if (strpos($path, '?') !== false)
-                $path = substr($path, 0, strpos($path, '?'));
+            if (mb_strpos($path, '?') !== false) {
+                $path = mb_substr($path, 0, mb_strpos($path, '?'));
+            }
             $filename = $_SERVER["DOCUMENT_ROOT"] . $path;
-            if (file_exists($filename))
+            if (file_exists($filename)) {
                 echo 'window.arUsedCSS.push("' . $path . '");' . "\n";
+            }
         }
         echo '</script>';
     }
 
-    function UnJSEscapeArray($ar)
+    public static function UnJSEscapeArray($ar)
     {
         //$APPLICATION->UnJSEscape
         foreach ($ar as $key => $val) {
-            if (is_array($val))
+            if (is_array($val)) {
                 $ar[$key] = CEditorUtils::UnJSEscapeArray($val);
-            elseif (is_string($val))
+            } elseif (is_string($val)) {
                 $ar[$key] = $GLOBALS['APPLICATION']->UnJSEscape($val);
+            }
         }
         return $ar;
     }
 }
-
-?>

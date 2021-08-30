@@ -34,13 +34,15 @@ class PathIndex
             $indexPath->getIsLang() &&
             $indexPath->getName() === 'lang'
         ) {
-            $topPathRes = Translate\Index\Internals\PathIndexTable::getList(array(
-                'filter' => [
-                    '=NAME' => '#LANG_ID#',
-                    '=DEPTH_LEVEL' => $indexPath->getDepthLevel() + 1,
-                    '=DESCENDANTS.PARENT_ID' => $indexPath->getId(),//ancestor
-                ],
-            ));
+            $topPathRes = Translate\Index\Internals\PathIndexTable::getList(
+                array(
+                    'filter' => [
+                        '=NAME' => '#LANG_ID#',
+                        '=DEPTH_LEVEL' => $indexPath->getDepthLevel() + 1,
+                        '=DESCENDANTS.PARENT_ID' => $indexPath->getId(),//ancestor
+                    ],
+                )
+            );
             $indexPath = $topPathRes->fetchObject();
         }
 
@@ -84,7 +86,7 @@ class PathIndex
         // /bitrix/js/[moduleName]/[smth]
         foreach (Translate\ASSIGNMENT_TYPES as $testEntry) {
             $testPath = '/bitrix/' . $testEntry;
-            if (strpos($path, $testPath . '/') === 0 || $path == $testPath) {
+            if (mb_strpos($path, $testPath . '/') === 0 || $path == $testPath) {
                 return $testEntry;
             }
         }
@@ -105,46 +107,44 @@ class PathIndex
                 // /bitrix/modules/[moduleName]/install/gadgets/bitrix/[gadgetName]
                 // /bitrix/modules/[moduleName]/install/js/[moduleName]/[smth]
                 $testPath = '/bitrix/modules/' . $moduleName . '/install/' . $testEntry;
-                if (strpos($path, $testPath . '/') === 0 || $path == $testPath) {
+                if (mb_strpos($path, $testPath . '/') === 0 || $path == $testPath) {
                     return $testEntry;
                 }
                 if ($testEntry == 'templates') {
                     // /bitrix/modules/[moduleName]/install/public/templates/[templateName]
                     $testPath = '/bitrix/modules/' . $moduleName . '/install/public/' . $testEntry;
-                    if (strpos($path, $testPath . '/') === 0 || $path == $testPath) {
+                    if (mb_strpos($path, $testPath . '/') === 0 || $path == $testPath) {
                         return $testEntry;
                     }
                 }
                 // /bitrix/modules/[moduleName]/install/bitrix/templates/[templateName]
                 $testPath = '/bitrix/modules/' . $moduleName . '/install/bitrix/' . $testEntry;
-                if (strpos($path, $testPath . '/') === 0 || $path == $testPath) {
+                if (mb_strpos($path, $testPath . '/') === 0 || $path == $testPath) {
                     return $testEntry;
                 }
                 // /bitrix/modules/[moduleName]/install/public/templates/[templateName]
                 /*$testPath = '/bitrix/modules/'.$moduleName.'/install/public/'. $testEntry;
-                if (strpos($path, $testPath. '/') === 0 || $path == $testPath)
+                if (mb_strpos($path, $testPath. '/') === 0 || $path == $testPath)
                 {
                     return $testEntry;
                 }*/
                 // /bitrix/modules/[moduleName]/lang/#LANG_ID#/[smth]
                 $testPath = '/bitrix/modules/' . $moduleName . '/lang/#LANG_ID#/' . $testEntry;
-                if (strpos($path, $testPath . '/') === 0 || $path == $testPath) {
+                if (mb_strpos($path, $testPath . '/') === 0 || $path == $testPath) {
                     return $testEntry;
                 }
                 // /bitrix/modules/[moduleName]/lang/#LANG_ID#/install/[smth]
                 $testPath = '/bitrix/modules/' . $moduleName . '/lang/#LANG_ID#/install/' . $testEntry;
-                if (strpos($path, $testPath . '/') === 0 || $path == $testPath) {
+                if (mb_strpos($path, $testPath . '/') === 0 || $path == $testPath) {
                     return $testEntry;
                 }
 
                 // /bitrix/modules/[moduleName]/handlers/delivery/[smth]
                 // /bitrix/modules/[moduleName]/handlers/paysystem/[smth]
                 $testPath = '/bitrix/modules/' . $moduleName . '/handlers/' . $testEntry;
-                if (strpos($path, $testPath . '/') === 0 || $path == $testPath) {
+                if (mb_strpos($path, $testPath . '/') === 0 || $path == $testPath) {
                     return $testEntry;
                 }
-
-
                 // /bitrix/modules/[moduleName]/payment/[paymentHandler]
             }
         }

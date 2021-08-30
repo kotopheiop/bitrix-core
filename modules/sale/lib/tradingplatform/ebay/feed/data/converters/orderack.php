@@ -9,14 +9,16 @@ class OrderAck extends DataConverter
 {
     public function convert($data)
     {
-        if (!is_array($data))
+        if (!is_array($data)) {
             throw new ArgumentTypeException("data", "array");
+        }
 
         $result = "";
 
         foreach ($data as $item) {
-            if (empty($item["ORDER_ID"]) || empty($item["ORDER_LINE_ITEM_ID"]))
+            if (empty($item["ORDER_ID"]) || empty($item["ORDER_LINE_ITEM_ID"])) {
                 throw new SystemException("Wrong structure of ack data item");
+            }
 
             $result .=
                 "\t<OrderAck>\n" .

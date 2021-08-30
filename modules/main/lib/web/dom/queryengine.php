@@ -56,7 +56,7 @@ abstract class QueryEngine
                         break;
 
                     case self::FILTER_NODE_NAME:
-                        if (strtoupper($value) === $node->getNodeName()) {
+                        if (mb_strtoupper($value) === $node->getNodeName()) {
                             $isFiltered = true;
                         } else {
                             return false;
@@ -103,28 +103,30 @@ abstract class QueryEngine
 
                                     case self::FILTER_OPERATION_CONTAIN:
 
-                                        if (strpos($attrValue, $operationValue) === false) {
+                                        if (mb_strpos($attrValue, $operationValue) === false) {
                                             return false;
                                         }
                                         break;
 
                                     case self::FILTER_OPERATION_END:
 
-                                        if (substr($attrValue, -strlen($operationValue)) !== $operationValue) {
+                                        if (mb_substr($attrValue, -mb_strlen($operationValue)) !== $operationValue) {
                                             return false;
                                         }
                                         break;
 
                                     case self::FILTER_OPERATION_START:
 
-                                        if (strpos($attrValue, $operationValue) !== 0) {
+                                        if (mb_strpos($attrValue, $operationValue) !== 0) {
                                             return false;
                                         }
                                         break;
 
                                     case self::FILTER_OPERATION_CONTAIN_WORD:
 
-                                        throw new DomException('Not supported query filter: FILTER_OPERATION_CONTAIN_WORD');
+                                        throw new DomException(
+                                            'Not supported query filter: FILTER_OPERATION_CONTAIN_WORD'
+                                        );
                                         break;
 
                                     case self::FILTER_OPERATION_EQUAL:
@@ -132,7 +134,6 @@ abstract class QueryEngine
                                         if ($attrValue !== $operationValue) {
                                             return false;
                                         }
-
                                 }
 
                                 $isFiltered = true;
@@ -164,8 +165,13 @@ abstract class QueryEngine
         return $isFiltered;
     }
 
-    public function walk(array $filter = null, callable $callback = null, Node $node, $limit = 0, $direction = self::DIR_DOWN)
-    {
+    public function walk(
+        array $filter = null,
+        callable $callback = null,
+        Node $node,
+        $limit = 0,
+        $direction = self::DIR_DOWN
+    ) {
         if ($limit > 0) {
             $this->limit = $limit;
         } else {

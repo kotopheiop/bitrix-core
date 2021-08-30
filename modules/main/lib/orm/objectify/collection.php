@@ -93,6 +93,13 @@ abstract class Collection implements \ArrayAccess, \Iterator, \Countable
         $this->_isSinglePrimary = count($this->_entity->getPrimaryArray()) == 1;
     }
 
+    public function __clone()
+    {
+        $this->_objects = \Bitrix\Main\Type\Collection::clone((array)$this->_objects);
+        $this->_objectsRemoved = \Bitrix\Main\Type\Collection::clone((array)$this->_objectsRemoved);
+        $this->_iterableObjects = null;
+    }
+
     /**
      * @param EntityObject $object
      *
@@ -103,10 +110,14 @@ abstract class Collection implements \ArrayAccess, \Iterator, \Countable
     {
         // check object class
         if (!($object instanceof $this->_objectClass)) {
-            throw new ArgumentException(sprintf(
-                'Invalid object class %s for %s collection, expected "%s".',
-                get_class($object), get_class($this), $this->_objectClass
-            ));
+            throw new ArgumentException(
+                sprintf(
+                    'Invalid object class %s for %s collection, expected "%s".',
+                    get_class($object),
+                    get_class($this),
+                    $this->_objectClass
+                )
+            );
         }
 
         $srPrimary = $this->sysGetPrimaryKey($object);
@@ -140,10 +151,14 @@ abstract class Collection implements \ArrayAccess, \Iterator, \Countable
     {
         // check object class
         if (!($object instanceof $this->_objectClass)) {
-            throw new ArgumentException(sprintf(
-                'Invalid object class %s for %s collection, expected "%s".',
-                get_class($object), get_class($this), $this->_objectClass
-            ));
+            throw new ArgumentException(
+                sprintf(
+                    'Invalid object class %s for %s collection, expected "%s".',
+                    get_class($object),
+                    get_class($this),
+                    $this->_objectClass
+                )
+            );
         }
 
         return array_key_exists($this->sysGetPrimaryKey($object), $this->_objects);
@@ -170,7 +185,13 @@ abstract class Collection implements \ArrayAccess, \Iterator, \Countable
     final public function getByPrimary($primary)
     {
         $normalizedPrimary = $this->sysNormalizePrimary($primary);
-        return $this->_objects[$this->sysSerializePrimaryKey($normalizedPrimary)];
+        $serializePrimaryKey = $this->sysSerializePrimaryKey($normalizedPrimary);
+
+        if (isset($this->_objects[$serializePrimaryKey])) {
+            return $this->_objects[$serializePrimaryKey];
+        }
+
+        return null;
     }
 
     /**
@@ -192,10 +213,14 @@ abstract class Collection implements \ArrayAccess, \Iterator, \Countable
     {
         // check object class
         if (!($object instanceof $this->_objectClass)) {
-            throw new ArgumentException(sprintf(
-                'Invalid object class %s for %s collection, expected "%s".',
-                get_class($object), get_class($this), $this->_objectClass
-            ));
+            throw new ArgumentException(
+                sprintf(
+                    'Invalid object class %s for %s collection, expected "%s".',
+                    get_class($object),
+                    get_class($this),
+                    $this->_objectClass
+                )
+            );
         }
 
         // ignore deleted objects
@@ -223,6 +248,11 @@ abstract class Collection implements \ArrayAccess, \Iterator, \Countable
     public function sysRemove($srPrimary)
     {
         $object = $this->_objects[$srPrimary];
+
+        if (empty($object)) {
+            $object = $this->entity->wakeUpObject($srPrimary);
+        }
+
         unset($this->_objects[$srPrimary]);
 
         if (!isset($this->_objectsChanges[$srPrimary]) || $this->_objectsChanges[$srPrimary] != static::OBJECT_ADDED) {
@@ -357,7 +387,10 @@ abstract class Collection implements \ArrayAccess, \Iterator, \Countable
             $areEqual = true;
             $primaries = [];
 
-            $dataSample = $updateObjects[0]->collectValues(Values::CURRENT, FieldTypeMask::SCALAR | FieldTypeMask::USERTYPE);
+            $dataSample = $updateObjects[0]->collectValues(
+                Values::CURRENT,
+                FieldTypeMask::SCALAR | FieldTypeMask::USERTYPE
+            );
             asort($dataSample);
 
             // get only scalar & uf data and check its uniqueness
@@ -439,9 +472,13 @@ abstract class Collection implements \ArrayAccess, \Iterator, \Countable
                 throw new SystemException('Property `dataClass` should be received as static.');
         }
 
-        throw new SystemException(sprintf(
-            'Unknown property `%s` for collection `%s`', $name, get_called_class()
-        ));
+        throw new SystemException(
+            sprintf(
+                'Unknown property `%s` for collection `%s`',
+                $name,
+                get_called_class()
+            )
+        );
     }
 
     /**
@@ -457,14 +494,22 @@ abstract class Collection implements \ArrayAccess, \Iterator, \Countable
         switch ($name) {
             case 'entity':
             case 'dataClass':
-                throw new SystemException(sprintf(
-                    'Property `%s` for collection `%s` is read-only', $name, get_called_class()
-                ));
+                throw new SystemException(
+                    sprintf(
+                        'Property `%s` for collection `%s` is read-only',
+                        $name,
+                        get_called_class()
+                    )
+                );
         }
 
-        throw new SystemException(sprintf(
-            'Unknown property `%s` for collection `%s`', $name, get_called_class()
-        ));
+        throw new SystemException(
+            sprintf(
+                'Unknown property `%s` for collection `%s`',
+                $name,
+                get_called_class()
+            )
+        );
     }
 
     /**
@@ -486,7 +531,7 @@ abstract class Collection implements \ArrayAccess, \Iterator, \Countable
         if ($first3 == 'get' && $last4 == 'List') {
             $fieldName = EntityObject::sysMethodToFieldCase(substr($name, 3, -4));
 
-            if (!strlen($fieldName)) {
+            if ($fieldName == '') {
                 $fieldName = StringHelper::strtoupper($arguments[0]);
 
                 // check if custom method exists
@@ -511,7 +556,7 @@ abstract class Collection implements \ArrayAccess, \Iterator, \Countable
         if ($first3 == 'get' && $last10 == 'Collection') {
             $fieldName = EntityObject::sysMethodToFieldCase(substr($name, 3, -10));
 
-            if (!strlen($fieldName)) {
+            if ($fieldName == '') {
                 $fieldName = StringHelper::strtoupper($arguments[0]);
 
                 // check if custom method exists
@@ -543,9 +588,13 @@ abstract class Collection implements \ArrayAccess, \Iterator, \Countable
             }
         }
 
-        throw new SystemException(sprintf(
-            'Unknown method `%s` for object `%s`', $name, get_called_class()
-        ));
+        throw new SystemException(
+            sprintf(
+                'Unknown method `%s` for object `%s`',
+                $name,
+                get_called_class()
+            )
+        );
     }
 
     /**
@@ -630,9 +679,13 @@ abstract class Collection implements \ArrayAccess, \Iterator, \Countable
             }
 
             if (empty($changedObject)) {
-                throw new SystemException(sprintf(
-                    'Object with primary `%s` was not found in `%s` collection', $srPrimary, get_class($this)
-                ));
+                throw new SystemException(
+                    sprintf(
+                        'Object with primary `%s` was not found in `%s` collection',
+                        $srPrimary,
+                        get_class($this)
+                    )
+                );
             }
 
             $changes[] = [$changedObject, $changeCode];
@@ -749,10 +802,13 @@ abstract class Collection implements \ArrayAccess, \Iterator, \Countable
 
         if (!is_array($primary)) {
             if (count($primaryNames) > 1) {
-                throw new ArgumentException(sprintf(
-                    'Only one value of primary found, when entity %s has %s primary keys',
-                    $this->_entity->getDataClass(), count($primaryNames)
-                ));
+                throw new ArgumentException(
+                    sprintf(
+                        'Only one value of primary found, when entity %s has %s primary keys',
+                        $this->_entity->getDataClass(),
+                        count($primaryNames)
+                    )
+                );
             }
 
             $primary = [$primaryNames[0] => $primary];

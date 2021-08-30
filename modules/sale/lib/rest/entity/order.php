@@ -211,10 +211,33 @@ class Order extends Base
         $tradeBinding = new TradeBinding();
 
 
-        $listFieldsInfoAdd = $this->getListFieldInfo($this->getFields(), ['filter' => ['ignoredAttributes' => [Attributes::Hidden, Attributes::ReadOnly]]]);
-        $listFieldsInfoUpdate = $this->getListFieldInfo($this->getFields(), ['filter' => ['ignoredAttributes' => [Attributes::Hidden, Attributes::ReadOnly, Attributes::Immutable], 'skipFields' => ['ID']]]);
+        $listFieldsInfoAdd = $this->getListFieldInfo(
+            $this->getFields(),
+            [
+                'filter' => [
+                    'ignoredAttributes' => [
+                        Attributes::Hidden,
+                        Attributes::ReadOnly
+                    ]
+                ]
+            ]
+        );
+        $listFieldsInfoUpdate = $this->getListFieldInfo(
+            $this->getFields(),
+            [
+                'filter' => [
+                    'ignoredAttributes' => [
+                        Attributes::Hidden,
+                        Attributes::ReadOnly,
+                        Attributes::Immutable
+                    ],
+                    'skipFields' => ['ID']
+                ]
+            ]
+        );
 
-        $result['ORDER'] = $this->internalizeFields($fields['ORDER'],
+        $result['ORDER'] = $this->internalizeFields(
+            $fields['ORDER'],
             $this->isNewItem($fields['ORDER']) ? $listFieldsInfoAdd : $listFieldsInfoUpdate
         );
 
@@ -223,7 +246,9 @@ class Order extends Base
         }
 
         if (isset($fields['ORDER']['PROPERTY_VALUES'])) {
-            $result['ORDER']['PROPERTY_VALUES'] = $propertyValue->internalizeFieldsModify($fields)['ORDER']['PROPERTY_VALUES'];
+            $result['ORDER']['PROPERTY_VALUES'] = $propertyValue->internalizeFieldsModify(
+                $fields
+            )['ORDER']['PROPERTY_VALUES'];
         }
 
         if (isset($fields['ORDER']['PAYMENTS'])) {
@@ -235,7 +260,9 @@ class Order extends Base
         }
 
         if (isset($fields['ORDER']['TRADE_BINDINGS'])) {
-            $result['ORDER']['TRADE_BINDINGS'] = $tradeBinding->internalizeFieldsModify($fields)['ORDER']['TRADE_BINDINGS'];
+            $result['ORDER']['TRADE_BINDINGS'] = $tradeBinding->internalizeFieldsModify(
+                $fields
+            )['ORDER']['TRADE_BINDINGS'];
         }
 
         return $result;
@@ -246,8 +273,9 @@ class Order extends Base
         if ($name == 'import') {
             if (isset($arguments['fields'])) {
                 $fields = $arguments['fields'];
-                if (!empty($fields))
+                if (!empty($fields)) {
                     $arguments['fields'] = $this->convertKeysToSnakeCaseFields($fields);
+                }
             }
         }
         return $arguments;
@@ -287,8 +315,9 @@ class Order extends Base
         ) {
         } elseif ($name == 'import') {
             $fields = $arguments['fields'];
-            if (!empty($fields))
+            if (!empty($fields)) {
                 $arguments['fields'] = $this->internalizeFieldsImport($fields);
+            }
         } else {
             parent::internalizeArguments($name, $arguments);
         }
@@ -310,7 +339,10 @@ class Order extends Base
 
 
         if (isset($fields['ORDER'])) {
-            $result['ORDER'] = $this->internalizeFields($fields['ORDER'], $this->getFields());//only for importAction PERSON_TYPE_XML_ID, STATUS_XML_ID
+            $result['ORDER'] = $this->internalizeFields(
+                $fields['ORDER'],
+                $this->getFields()
+            );//only for importAction PERSON_TYPE_XML_ID, STATUS_XML_ID
         }
 
         if (isset($fields['ORDER']['BASKET_ITEMS'])) {
@@ -318,31 +350,43 @@ class Order extends Base
 
             foreach ($fields['ORDER']['BASKET_ITEMS'] as $k => $items) {
                 if (isset($items['PROPERTIES'])) {
-                    $result['ORDER']['BASKET_ITEMS'][$k]['PROPERTIES'] = $basketProperties->internalizeListFields($items['PROPERTIES']);
+                    $result['ORDER']['BASKET_ITEMS'][$k]['PROPERTIES'] = $basketProperties->internalizeListFields(
+                        $items['PROPERTIES']
+                    );
                 }
             }
         }
 
         if (isset($fields['ORDER']['PROPERTY_VALUES'])) {
-            $result['ORDER']['PROPERTY_VALUES'] = $propertyValue->internalizeListFields($fields['ORDER']['PROPERTY_VALUES']);//only for importAction ORDER_PROPS_XML_ID
+            $result['ORDER']['PROPERTY_VALUES'] = $propertyValue->internalizeListFields(
+                $fields['ORDER']['PROPERTY_VALUES']
+            );//only for importAction ORDER_PROPS_XML_ID
         }
 
         if (isset($fields['ORDER']['PAYMENTS'])) {
-            $result['ORDER']['PAYMENTS'] = $payment->internalizeListFields($fields['ORDER']['PAYMENTS']);//only for importAction PAY_SYSTEMS_XML_ID
+            $result['ORDER']['PAYMENTS'] = $payment->internalizeListFields(
+                $fields['ORDER']['PAYMENTS']
+            );//only for importAction PAY_SYSTEMS_XML_ID
         }
 
         if (isset($fields['ORDER']['SHIPMENTS'])) {
-            $result['ORDER']['SHIPMENTS'] = $shipment->internalizeListFields($fields['ORDER']['SHIPMENTS']);//only for importAction DELIVERY_XML_ID, STATUS_XML_ID
+            $result['ORDER']['SHIPMENTS'] = $shipment->internalizeListFields(
+                $fields['ORDER']['SHIPMENTS']
+            );//only for importAction DELIVERY_XML_ID, STATUS_XML_ID
 
             foreach ($fields['ORDER']['SHIPMENTS'] as $k => $items) {
                 if (isset($items['SHIPMENT_ITEMS'])) {
-                    $result['ORDER']['SHIPMENTS'][$k]['SHIPMENT_ITEMS'] = $shipmentItem->internalizeListFields($items['SHIPMENT_ITEMS']);
+                    $result['ORDER']['SHIPMENTS'][$k]['SHIPMENT_ITEMS'] = $shipmentItem->internalizeListFields(
+                        $items['SHIPMENT_ITEMS']
+                    );
                 }
             }
         }
 
         if (isset($fields['ORDER']['TRADE_BINDINGS'])) {
-            $result['ORDER']['TRADE_BINDINGS'] = $tradeBinding->internalizeListFields($fields['ORDER']['TRADE_BINDINGS']);//only for importAction TRADING_PLATFORM_XML_ID
+            $result['ORDER']['TRADE_BINDINGS'] = $tradeBinding->internalizeListFields(
+                $fields['ORDER']['TRADE_BINDINGS']
+            );//only for importAction TRADING_PLATFORM_XML_ID
         }
 
         return $result;
@@ -397,8 +441,9 @@ class Order extends Base
             }
         }
 
-        if (isset($fields['TRADE_BINDINGS']) && count($fields['TRADE_BINDINGS']) > 0)
+        if (isset($fields['TRADE_BINDINGS']) && count($fields['TRADE_BINDINGS']) > 0) {
             $result['TRADE_BINDINGS'] = $tradeBinding->externalizeListFields($fields['TRADE_BINDINGS']);
+        }
 
         return $result;
     }
@@ -468,10 +513,33 @@ class Order extends Base
         $propertyValue = new PropertyValue();
         $tradeBinding = new TradeBinding();
 
-        $listFieldsInfoAdd = $this->getListFieldInfo($this->getFields(), ['filter' => ['ignoredAttributes' => [Attributes::Hidden, Attributes::ReadOnly]]]);
-        $listFieldsInfoUpdate = $this->getListFieldInfo($this->getFields(), ['filter' => ['ignoredAttributes' => [Attributes::Hidden, Attributes::ReadOnly, Attributes::Immutable], 'skipFields' => ['ID']]]);
+        $listFieldsInfoAdd = $this->getListFieldInfo(
+            $this->getFields(),
+            [
+                'filter' => [
+                    'ignoredAttributes' => [
+                        Attributes::Hidden,
+                        Attributes::ReadOnly
+                    ]
+                ]
+            ]
+        );
+        $listFieldsInfoUpdate = $this->getListFieldInfo(
+            $this->getFields(),
+            [
+                'filter' => [
+                    'ignoredAttributes' => [
+                        Attributes::Hidden,
+                        Attributes::ReadOnly,
+                        Attributes::Immutable
+                    ],
+                    'skipFields' => ['ID']
+                ]
+            ]
+        );
 
-        $required = $this->checkRequiredFields($fields['ORDER'],
+        $required = $this->checkRequiredFields(
+            $fields['ORDER'],
             $this->isNewItem($fields['ORDER']) ? $listFieldsInfoAdd : $listFieldsInfoUpdate
         );
         if ($required->isSuccess() == false) {

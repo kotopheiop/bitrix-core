@@ -1,11 +1,13 @@
 <?
+
 require_once(dirname(__FILE__) . "/../include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/prolog.php");
 define("HELP_FILE", "settings/wizard_list.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/classes/general/wizard.php");
 
-if (!$USER->CanDoOperation('edit_php') && !$USER->CanDoOperation('view_other_settings'))
+if (!$USER->CanDoOperation('edit_php') && !$USER->CanDoOperation('view_other_settings')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $isAdmin = $USER->CanDoOperation('edit_php');
 
@@ -19,19 +21,22 @@ if (($arID = $lAdmin->GroupAction()) && $isAdmin) {
     if ($_REQUEST['action_target'] == 'selected') {
         $arID = Array();
         $rsData = CWizardUtil::GetWizardList(false, true);
-        while ($arRes = $rsData->Fetch())
+        while ($arRes = $rsData->Fetch()) {
             $arID[] = $arRes['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
 
         switch ($_REQUEST['action']) {
             case "delete":
                 @set_time_limit(0);
-                if (!CWizardUtil::DeleteWizard($ID))
+                if (!CWizardUtil::DeleteWizard($ID)) {
                     $lAdmin->AddGroupError(GetMessage("MAIN_WIZARD_DELETE_ERROR"), $ID);
+                }
                 break;
             case "export":
                 ?>
@@ -67,36 +72,54 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
 
     $idTmp = $f_ID;
     $arID = explode(":", $f_ID);
-    if (count($arID) > 2)
+    if (count($arID) > 2) {
         $idTmp = $arID[1] . ":" . $arID[2];
+    }
 
     $row->AddField("ID", $idTmp);
 
     $arActions = Array();
     if ($isAdmin) {
         $startType = (array_key_exists("START_TYPE", $arRes) ? $arRes["START_TYPE"] : "POPUP");
-        $startType = strtoupper($startType);
+        $startType = mb_strtoupper($startType);
 
-        if ($startType == "POPUP")
-            $arActions[] = array("DEFAULT" => "Y", "ICON" => "install", "TEXT" => GetMessage("MAIN_WIZARD_ADMIN_INSTALL"), "ACTION" => "WizardWindow.Open('" . $f_ID . "','" . bitrix_sessid() . "')");
-        else if ($startType == "WINDOW")
-            $arActions[] = Array(
+        if ($startType == "POPUP") {
+            $arActions[] = array(
                 "DEFAULT" => "Y",
                 "ICON" => "install",
                 "TEXT" => GetMessage("MAIN_WIZARD_ADMIN_INSTALL"),
-                "ACTION" => "window.open('wizard_install.php?lang=" . LANGUAGE_ID . "&wizardName=" . $f_ID . "&" . bitrix_sessid_get() . "');"
+                "ACTION" => "WizardWindow.Open('" . $f_ID . "','" . bitrix_sessid() . "')"
             );
+        } else {
+            if ($startType == "WINDOW") {
+                $arActions[] = Array(
+                    "DEFAULT" => "Y",
+                    "ICON" => "install",
+                    "TEXT" => GetMessage("MAIN_WIZARD_ADMIN_INSTALL"),
+                    "ACTION" => "window.open('wizard_install.php?lang=" . LANGUAGE_ID . "&wizardName=" . $f_ID . "&" . bitrix_sessid_get(
+                        ) . "');"
+                );
+            }
+        }
     }
 
-    if (count($arID) <= 2)
-        $arActions[] = array("ICON" => "export", "TEXT" => GetMessage("MAIN_WIZARD_ADMIN_DOWNLOAD"), "ACTION" => "exportWizard('" . $f_ID . "')");
+    if (count($arID) <= 2) {
+        $arActions[] = array(
+            "ICON" => "export",
+            "TEXT" => GetMessage("MAIN_WIZARD_ADMIN_DOWNLOAD"),
+            "ACTION" => "exportWizard('" . $f_ID . "')"
+        );
+    }
 
     if ($isAdmin && (count($arID) <= 2)) {
         $arActions[] = Array("SEPARATOR" => true);
         $arActions[] = Array(
             "ICON" => "delete",
             "TEXT" => GetMessage("MAIN_ADMIN_MENU_DELETE"),
-            "ACTION" => "if(confirm('" . GetMessage('MAIN_ADMIN_MENU_DELETE_CONF') . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete")
+            "ACTION" => "if(confirm('" . GetMessage('MAIN_ADMIN_MENU_DELETE_CONF') . "')) " . $lAdmin->ActionDoGroup(
+                    $f_ID,
+                    "delete"
+                )
         );
     }
 

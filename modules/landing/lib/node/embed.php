@@ -2,6 +2,8 @@
 
 namespace Bitrix\Landing\Node;
 
+use Bitrix\Main\Web\DOM\StyleInliner;
+
 class Embed extends \Bitrix\Landing\Node
 {
     /**
@@ -28,11 +30,31 @@ class Embed extends \Bitrix\Landing\Node
         foreach ($data as $pos => $value) {
             if (isset($resultList[$pos])) {
                 if (isset($value['src']) && $value['src']) {
-                    $resultList[$pos]->setAttribute('src', $value['src']);
+                    if ($resultList[$pos]->getTagName() === 'IFRAME') {
+                        $resultList[$pos]->setAttribute('src', $value['src']);
+                    } else {
+                        $resultList[$pos]->setAttribute('data-src', $value['src']);
+                    }
                 }
                 if (isset($value['source']) && $value['source']) {
                     $resultList[$pos]->setAttribute('data-source', $value['source']);
                 }
+
+//				set preview image
+                $styles = [];
+                foreach (StyleInliner::getStyle($resultList[$pos]) as $key => $stylesValue) {
+                    if ($key !== 'background' && $key !== 'background-image') {
+                        $styles[] = "{$key}: {$stylesValue};";
+                    }
+                }
+                if (isset($value['preview']) && $value['preview']) {
+                    $styles[] = "background-image: url('{$value['preview']}');";
+                    $resultList[$pos]->setAttribute('data-preview', $value['preview']);
+                } else {
+                    $resultList[$pos]->removeAttribute('data-preview');
+                }
+                $styles = implode(' ', $styles);
+                $resultList[$pos]->setAttribute('style', $styles);
             }
         }
     }
@@ -51,8 +73,9 @@ class Embed extends \Bitrix\Landing\Node
 
         foreach ($resultList as $pos => $res) {
             $data[$pos] = array(
-                'src' => $res->getAttribute('src'),
-                'data-source' => $res->getAttribute('data-source')
+                'src' => $res->getAttribute('data-src') ?: $res->getAttribute('src'),
+                'source' => $res->getAttribute('data-source'),
+                'preview' => $res->getAttribute('data-preview')
             );
         }
 

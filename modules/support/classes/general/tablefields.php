@@ -58,7 +58,7 @@ class CSupportTableFields
                 $res = (intval($value) == floatval($value)) ? intval($value) : floatval($value);
                 break;
             case self::VT_STRING:
-                $res = ($maxStrLen == 0 ? $value : substr($value, 0, $maxStrLen));
+                $res = ($maxStrLen == 0 ? $value : mb_substr($value, 0, $maxStrLen));
                 break;
             case self::VT_Y_N_NULL:
                 $res = ($value == "Y") ? "Y" : ($value === null ? null : "N");
@@ -75,7 +75,9 @@ class CSupportTableFields
                 $res = (is_int($res) || $res === null) ? $res : null;
                 break;
         }
-        if ($list != null) $res = (in_array($res, $list) ? $res : $defVal);
+        if ($list != null) {
+            $res = (in_array($res, $list) ? $res : $defVal);
+        }
 
         return $res;
     }
@@ -84,8 +86,12 @@ class CSupportTableFields
     {
         global $DB;
         $sf = "FULL";
-        if ($value === null) return "null";
-        if ($value === 0) return "0";
+        if ($value === null) {
+            return "null";
+        }
+        if ($value === 0) {
+            return "0";
+        }
         switch ($type) {
             case self::VT_NUMBER:
                 return (is_float($value)) ? floatval($value) : intval($value);
@@ -134,8 +140,14 @@ class CSupportTableFields
                 return preg_replace("/[^a-zA-Z0-9_]/", "", $value);
             case self::HREF_LOCATION:
                 $res = null;
-                foreach ($WHITE_LIST as $key => $value) if (substr($value, 0, strlen($value)) == $value) $res = $value;
-                if ($res == null) $res = "/" . $value;
+                foreach ($WHITE_LIST as $key => $value) {
+                    if (mb_substr($value, 0, mb_strlen($value)) == $value) {
+                        $res = $value;
+                    }
+                }
+                if ($res == null) {
+                    $res = "/" . $value;
+                }
                 return CUtil::addslashes(htmlspecialcharsbx($res));
         }
         return $DEF_VAL;
@@ -160,8 +172,12 @@ class CSupportTableFields
 
     public function checkRow($row)
     {
-        if ($this->_classType == self::C_Array || !array_key_exists($this->_currentRow, $this->_arFields)) $this->First();
-        if ($row != null && array_key_exists($row, $this->_arFields)) return $row;
+        if ($this->_classType == self::C_Array || !array_key_exists($this->_currentRow, $this->_arFields)) {
+            $this->First();
+        }
+        if ($row != null && array_key_exists($row, $this->_arFields)) {
+            return $row;
+        }
         return $this->_currentRow;
     }
 
@@ -195,7 +211,9 @@ class CSupportTableFields
 
     public function Previous()
     {
-        if ($this->_currentRow <= 0) return false;
+        if ($this->_currentRow <= 0) {
+            return false;
+        }
         $this->_currentRow--;
         return true;
     }
@@ -203,18 +221,24 @@ class CSupportTableFields
     public function Row($row)
     {
         $r = intval($row);
-        if ((count($this->table) - 1) < $r) return false;
+        if ((count($this->table) - 1) < $r) {
+            return false;
+        }
         $this->_currentRow = $r;
         return true;
     }
 
     public function CleanVar($row = null, $removeExistingRows = false)
     {
-        if ($removeExistingRows) $this->RemoveExistingRows();
+        if ($removeExistingRows) {
+            $this->RemoveExistingRows();
+        }
         $row = $this->checkRow($row);
         $this->_arFields[$row] = array();
         $this->_arModifiedFields[$row] = array();
-        foreach ($this->_arFieldsTypes as $key => $value) $this->Set($key, $value["DEF_VAL"], array(), $row, false);
+        foreach ($this->_arFieldsTypes as $key => $value) {
+            $this->Set($key, $value["DEF_VAL"], array(), $row, false);
+        }
     }
 
     public function RemoveExistingRows()
@@ -251,15 +275,21 @@ class CSupportTableFields
     //$notNull = array(self::NOT_NULL, self::MORE0, self::NOT_EMTY_STR)
     public function Set($name, $value, $notNull = array(), $row = null, $isModified = true)
     {
-        if (!array_key_exists($name, $this->_arFieldsTypes)) return;
+        if (!array_key_exists($name, $this->_arFieldsTypes)) {
+            return;
+        }
         $row = $this->checkRow($row);
         $op = array();
         $ft = $this->_arFieldsTypes[$name];
         if ((in_array(self::NOT_NULL, $notNull) && $value === null)
             || (in_array(self::MORE0, $notNull) && $ft["TYPE"] == self::VT_NUMBER && intval($value) <= 0)
             || (in_array(self::NOT_EMTY_STR, $notNull) && $value === "")
-        ) return;
-        if (array_key_exists("MAX_STR_LEN", $ft)) $op["MAX_STR_LEN"] = $ft["MAX_STR_LEN"];
+        ) {
+            return;
+        }
+        if (array_key_exists("MAX_STR_LEN", $ft)) {
+            $op["MAX_STR_LEN"] = $ft["MAX_STR_LEN"];
+        }
         if (array_key_exists("LIST", $ft)) {
             $op["LIST"] = $ft["LIST"];
             $op["DEF_VAL"] = $ft["DEF_VAL"];
@@ -274,7 +304,9 @@ class CSupportTableFields
         $row = $this->checkRow($row);
         $arName = CSupportTools::prepareParamArray($name);
         foreach ($arName as $key => $n) {
-            if (!array_key_exists($n, $this->_arFieldsTypes)) return;
+            if (!array_key_exists($n, $this->_arFieldsTypes)) {
+                return;
+            }
             if ($this->_arFieldsTypes[$n]["TYPE"] == self::VT_DATE) {
                 $this->_arFields[$row][$n] = time() + CTimeZone::GetOffset();
                 $this->_arModifiedFields[$row][$n] = true;
@@ -293,12 +325,16 @@ class CSupportTableFields
         $notNull = array(self::NOT_EMTY_STR, self::MORE0, self::NOT_EMTY_STR) */
     public function FromArray($arr, $fields = self::ALL, $notNull = array(), $row = null) //setFromArr
     {
-        if (!is_array($arr)) return;
+        if (!is_array($arr)) {
+            return;
+        }
         $row = $this->checkRow($row);
         $fieldsArr = CSupportTools::prepareParamArray($fields, array_keys($arr));
         foreach ($fieldsArr as $key => $name) {
             $nameF = is_int($key) ? $name : $key;
-            if (array_key_exists($name, $arr)) $this->Set($nameF, $arr[$name], $notNull, $row);
+            if (array_key_exists($name, $arr)) {
+                $this->Set($nameF, $arr[$name], $notNull, $row);
+            }
         }
     }
 
@@ -308,7 +344,12 @@ class CSupportTableFields
         $fields = array("��� ����", "��� ����2",...)
         $fields = array("��� ����" => "��� ���� � �������", "��� ����2" => "��� ���� � �������2",...)
         $notNull = array(self::NOT_EMTY_STR, self::MORE0, self::NOT_EMTY_STR) */
-    public function FromTable($table, $fields = self::ALL, $notNull = array(), $removeExistingRows = false) //setFromTable
+    public function FromTable(
+        $table,
+        $fields = self::ALL,
+        $notNull = array(),
+        $removeExistingRows = false
+    ) //setFromTable
     {
         if ($removeExistingRows) {
             $this->RemoveExistingRows();
@@ -329,7 +370,9 @@ class CSupportTableFields
 
     public function Get($name, $row = null)
     {
-        if (!array_key_exists($name, $this->_arFieldsTypes)) return null;
+        if (!array_key_exists($name, $this->_arFieldsTypes)) {
+            return null;
+        }
         $row = $this->checkRow($row);
         return $this->_arFields[$row][$name];
     }
@@ -347,10 +390,15 @@ class CSupportTableFields
         $arFields = CSupportTools::prepareParamArray($fields, array_keys($this->_arFields[$row]));
         foreach ($arFields as $key => $name) {
             $fName = is_int($key) ? $name : $key;
-            if (!array_key_exists($fName, $this->_arFieldsTypes)) continue;
+            if (!array_key_exists($fName, $this->_arFieldsTypes)) {
+                continue;
+            }
             $v = $this->_arFields[$row][$fName];
             $ft = $this->_arFieldsTypes[$fName];
-            if (in_array(self::ONLY_CHANGED, $notNull) && (!isset($this->_arModifiedFields[$row][$fName]) || $this->_arModifiedFields[$row][$fName] != true)) {
+            if (in_array(
+                    self::ONLY_CHANGED,
+                    $notNull
+                ) && (!isset($this->_arModifiedFields[$row][$fName]) || $this->_arModifiedFields[$row][$fName] != true)) {
                 continue;
             } elseif (in_array(self::NOT_NULL, $notNull) && $v === null) {
                 continue;
@@ -358,9 +406,13 @@ class CSupportTableFields
                 continue;
             }
             if ($forSQL) {
-                if (array_key_exists("AUTO_CALCULATED", $ft)) continue;
+                if (array_key_exists("AUTO_CALCULATED", $ft)) {
+                    continue;
+                }
                 $res[$name] = self::ConvertForSQL($ft["TYPE"], $v);
-            } else $res[$name] = $v;
+            } else {
+                $res[$name] = $v;
+            }
         }
         return $res;
     }
@@ -386,7 +438,9 @@ class CSupportTableFields
         if (!array_key_exists($name, $this->_arFieldsTypes)) {
             return false;
         }
-        foreach ($this->_arFields as $nom => $row) $res[$nom] = $row[$name];
+        foreach ($this->_arFields as $nom => $row) {
+            $res[$nom] = $row[$name];
+        }
         return $res;
     }
 

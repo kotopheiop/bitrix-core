@@ -38,29 +38,33 @@ class AdditionalProfile extends \Bitrix\Sale\Delivery\Services\Base
      */
     public function __construct(array $initParams)
     {
-        if (empty($initParams["PARENT_ID"]))
+        if (empty($initParams["PARENT_ID"])) {
             throw new ArgumentNullException('initParams[PARENT_ID]');
+        }
 
         parent::__construct($initParams);
         $this->additionalHandler = Manager::getObjectById($this->parentId);
 
-        if (!($this->additionalHandler instanceof AdditionalHandler))
+        if (!($this->additionalHandler instanceof AdditionalHandler)) {
             throw new ArgumentNullException('this->additionalHandler is not instance of AdditionalHandler');
+        }
 
-        if (isset($initParams['PROFILE_ID']) && strlen($initParams['PROFILE_ID']) > 0)
+        if (isset($initParams['PROFILE_ID']) && $initParams['PROFILE_ID'] <> '') {
             $this->profileType = $initParams['PROFILE_ID'];
-        elseif (isset($this->config['MAIN']['PROFILE_TYPE']) && strlen($this->config['MAIN']['PROFILE_TYPE']) > 0)
+        } elseif (isset($this->config['MAIN']['PROFILE_TYPE']) && $this->config['MAIN']['PROFILE_TYPE'] <> '') {
             $this->profileType = $this->config['MAIN']['PROFILE_TYPE'];
+        }
 
-        if (strlen($this->profileType) > 0) {
+        if ($this->profileType <> '') {
             $profileParams = $this->getProfileParams();
 
             if (!empty($profileParams) && $this->id <= 0) {
                 $this->name = $profileParams['NAME'];
                 $this->description = $profileParams['DESCRIPTION'];
 
-                if (!empty($profileParams['LOGOTIP']))
+                if (!empty($profileParams['LOGOTIP'])) {
                     $this->logotip = $profileParams['LOGOTIP'];
+                }
             }
 
             if ($this->isRusPost()) {
@@ -91,8 +95,9 @@ class AdditionalProfile extends \Bitrix\Sale\Delivery\Services\Base
         $result = array();
         $list = $this->additionalHandler->getProfilesListFull();
 
-        if (!empty($list[$this->profileType]))
+        if (!empty($list[$this->profileType])) {
             $result = $list[$this->profileType];
+        }
 
         return $result;
     }
@@ -120,9 +125,15 @@ class AdditionalProfile extends \Bitrix\Sale\Delivery\Services\Base
      */
     protected function inheritParams()
     {
-        if (strlen($this->name) <= 0) $this->name = $this->additionalHandler->getName();
-        if (intval($this->logotip) <= 0) $this->logotip = $this->additionalHandler->getLogotip();
-        if (strlen($this->description) <= 0) $this->description = $this->additionalHandler->getDescription();
+        if ($this->name == '') {
+            $this->name = $this->additionalHandler->getName();
+        }
+        if (intval($this->logotip) <= 0) {
+            $this->logotip = $this->additionalHandler->getLogotip();
+        }
+        if ($this->description == '') {
+            $this->description = $this->additionalHandler->getDescription();
+        }
 
         $this->trackingParams = $this->additionalHandler->getTrackingParams();
         $this->trackingClass = $this->additionalHandler->getTrackingClass();
@@ -138,8 +149,8 @@ class AdditionalProfile extends \Bitrix\Sale\Delivery\Services\Base
         if (!empty($parentES)) {
             foreach ($parentES as $esFields) {
                 if (
-                    (strlen($esFields['CODE']) > 0 && !$this->extraServices->getItemByCode($esFields['CODE']))
-                    || strlen($esFields['CODE']) <= 0
+                    ($esFields['CODE'] <> '' && !$this->extraServices->getItemByCode($esFields['CODE']))
+                    || $esFields['CODE'] == ''
                 ) {
                     $this->extraServices->addItem($esFields, $this->currency);
                 }
@@ -178,15 +189,17 @@ class AdditionalProfile extends \Bitrix\Sale\Delivery\Services\Base
         $shipmentCurrency = $order->getCurrency();
 
         if ($result->isSuccess() && $this->currency != $shipmentCurrency) {
-            if (!Loader::includeModule('currency'))
+            if (!Loader::includeModule('currency')) {
                 throw new SystemException("Can't include module \"Currency\"");
+            }
 
             $result->setDeliveryPrice(
                 \CCurrencyRates::convertCurrency(
                     $result->getPrice(),
                     $this->currency,
                     $shipmentCurrency
-                ));
+                )
+            );
         }
 
         return $result;
@@ -199,22 +212,26 @@ class AdditionalProfile extends \Bitrix\Sale\Delivery\Services\Base
      */
     public static function extractConfigValues(array $config)
     {
-        if (!is_array($config) || empty($config))
+        if (!is_array($config) || empty($config)) {
             return array();
+        }
 
         $result = array();
 
         foreach ($config as $sectionKey => $sectionConfig) {
-            if (isset($sectionConfig["ITEMS"]) && is_array($sectionConfig["ITEMS"]) && !empty($sectionConfig["ITEMS"])) {
+            if (isset($sectionConfig["ITEMS"]) && is_array(
+                    $sectionConfig["ITEMS"]
+                ) && !empty($sectionConfig["ITEMS"])) {
                 $result[$sectionKey] = array();
 
                 foreach ($sectionConfig["ITEMS"] as $name => $params) {
                     $value = "";
 
-                    if (isset($params['VALUE']))
+                    if (isset($params['VALUE'])) {
                         $value = $params['VALUE'];
-                    elseif (isset($params['DEFAULT']))
+                    } elseif (isset($params['DEFAULT'])) {
                         $value = $params['DEFAULT'];
+                    }
 
                     $result[$sectionKey][$name] = $value;
                 }
@@ -245,8 +262,9 @@ class AdditionalProfile extends \Bitrix\Sale\Delivery\Services\Base
             $this->profileType
         );
 
-        if (!$res->isSuccess())
+        if (!$res->isSuccess()) {
             array();
+        }
 
         return $res->getData();
     }
@@ -327,8 +345,9 @@ class AdditionalProfile extends \Bitrix\Sale\Delivery\Services\Base
                 self::extractConfigValues($this->getConfig())
             );
 
-            if ($res->isSuccess())
+            if ($res->isSuccess()) {
                 $result = $res->getData();
+            }
         }
 
         return $result;
@@ -367,7 +386,10 @@ class AdditionalProfile extends \Bitrix\Sale\Delivery\Services\Base
             $shippingPoints = Helper::getEnabledShippingPointsList($this->id);
 
             if (isset($shippingPoints[$selectedShippingPoint])) {
-                if (in_array($this->config['MAIN']['OTPRAVKA_RPO'], $shippingPoints[$selectedShippingPoint]['available-mail-types'])) {
+                if (in_array(
+                    $this->config['MAIN']['OTPRAVKA_RPO'],
+                    $shippingPoints[$selectedShippingPoint]['available-mail-types']
+                )) {
                     $this->config['MAIN']['IS_OTPRAVKA_SUPPORTED'] = 'Y';
                     $this->config['MAIN']['IS_OTPRAVKA_SUPPORTED_LABEL'] = Loc::getMessage('SALE_DLVRS_ADDP_Y');
                 } else {

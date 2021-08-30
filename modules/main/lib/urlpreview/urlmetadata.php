@@ -33,27 +33,37 @@ class UrlMetadataTable extends Entity\DataManager
     public static function getMap()
     {
         return array(
-            'ID' => new Entity\IntegerField('ID', array(
+            'ID' => new Entity\IntegerField(
+                'ID', array(
                 'primary' => true,
                 'autocomplete' => true,
-            )),
-            'URL' => new Entity\StringField('URL', array(
+            )
+            ),
+            'URL' => new Entity\StringField(
+                'URL', array(
                 'required' => true,
-            )),
-            'TYPE' => new Entity\StringField('TYPE', array(
+            )
+            ),
+            'TYPE' => new Entity\StringField(
+                'TYPE', array(
                 'required' => true,
-            )),
+            )
+            ),
             'TITLE' => new Entity\StringField('TITLE'),
             'DESCRIPTION' => new Entity\TextField('DESCRIPTION'),
             'IMAGE_ID' => new Entity\IntegerField('IMAGE_ID'),
             'IMAGE' => new Entity\StringField('IMAGE'),
             'EMBED' => new Entity\TextField('EMBED'),
-            'EXTRA' => new Entity\TextField('EXTRA', array(
+            'EXTRA' => new Entity\TextField(
+                'EXTRA', array(
                 'serialized' => true,
-            )),
-            'DATE_INSERT' => new Entity\DatetimeField('DATE_INSERT', array(
+            )
+            ),
+            'DATE_INSERT' => new Entity\DatetimeField(
+                'DATE_INSERT', array(
                 'default_value' => new Main\Type\DateTime(),
-            )),
+            )
+            ),
             'DATE_EXPIRE' => new Entity\DatetimeField('DATE_EXPIRE')
         );
     }

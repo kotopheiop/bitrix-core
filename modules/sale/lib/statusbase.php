@@ -61,14 +61,17 @@ abstract class StatusBase
                 $groups = $cacheGroups[$userId];
             } else {
                 // TODO: DATE_ACTIVE_FROM >=< DATE_ACTIVE_TO
-                $result = UserGroupTable::getList(array(
-                    'select' => array('GROUP_ID'),
-                    'filter' => array('USER_ID' => $userId)
-                ));
+                $result = UserGroupTable::getList(
+                    array(
+                        'select' => array('GROUP_ID'),
+                        'filter' => array('USER_ID' => $userId)
+                    )
+                );
 
                 $groups = array();
-                while ($row = $result->fetch())
+                while ($row = $result->fetch()) {
                     $groups [] = $row['GROUP_ID'];
+                }
 
                 $cacheGroups[$userId] = $groups;
             }
@@ -102,16 +105,18 @@ abstract class StatusBase
 
         $operations = static::convertNamesToOperations($operations);
 
-        $result = static::getList(array(
-            'select' => array(
-                'NAME' => 'Bitrix\Sale\Internals\StatusGroupTaskTable:STATUS.TASK.Bitrix\Main\TaskOperation:TASK.OPERATION.NAME',
-            ),
-            'filter' => array(
-                '=ID' => $fromStatus,
-                '=Bitrix\Sale\Internals\StatusGroupTaskTable:STATUS.GROUP_ID' => $groupId,
-                '=Bitrix\Sale\Internals\StatusGroupTaskTable:STATUS.TASK.Bitrix\Main\TaskOperation:TASK.OPERATION.NAME' => $operations,
-            ),
-        ));
+        $result = static::getList(
+            array(
+                'select' => array(
+                    'NAME' => 'Bitrix\Sale\Internals\StatusGroupTaskTable:STATUS.TASK.Bitrix\Main\TaskOperation:TASK.OPERATION.NAME',
+                ),
+                'filter' => array(
+                    '=ID' => $fromStatus,
+                    '=Bitrix\Sale\Internals\StatusGroupTaskTable:STATUS.GROUP_ID' => $groupId,
+                    '=Bitrix\Sale\Internals\StatusGroupTaskTable:STATUS.TASK.Bitrix\Main\TaskOperation:TASK.OPERATION.NAME' => $operations,
+                ),
+            )
+        );
 
         while ($row = $result->fetch()) {
             if (($key = array_search($row['NAME'], $operations)) !== false) {
@@ -147,26 +152,30 @@ abstract class StatusBase
     {
         static $cacheAllowStatuses = array();
 
-        if (!is_array($groupId))
+        if (!is_array($groupId)) {
             $groupId = array($groupId);
+        }
 
         $cacheKey = md5($groupId . "_" . (is_array($fromStatus) ? join('|', $fromStatus) : $fromStatus));
 
         if (in_array('1', $groupId, true) || \CMain::GetUserRight('sale', $groupId) >= 'W') // Admin
         {
             if (!array_key_exists($cacheKey, $cacheAllowStatuses)) {
-                $result = static::getList(array(
-                    'select' => array(
-                        'ID',
-                        'NAME' => 'Bitrix\Sale\Internals\StatusLangTable:STATUS.NAME'
-                    ),
-                    'filter' => array(
-                        '=TYPE' => static::TYPE,
-                        '=Bitrix\Sale\Internals\StatusLangTable:STATUS.LID' => LANGUAGE_ID),
-                    'order' => array(
-                        'SORT'
-                    ),
-                ));
+                $result = static::getList(
+                    array(
+                        'select' => array(
+                            'ID',
+                            'NAME' => 'Bitrix\Sale\Internals\StatusLangTable:STATUS.NAME'
+                        ),
+                        'filter' => array(
+                            '=TYPE' => static::TYPE,
+                            '=Bitrix\Sale\Internals\StatusLangTable:STATUS.LID' => LANGUAGE_ID
+                        ),
+                        'order' => array(
+                            'SORT'
+                        ),
+                    )
+                );
 
                 while ($row = $result->fetch()) {
                     $cacheAllowStatuses[$cacheKey][$row['ID']] = $row['NAME'];
@@ -176,28 +185,32 @@ abstract class StatusBase
             if (!array_key_exists($cacheKey, $cacheAllowStatuses)) {
                 $cacheAllowStatuses[$cacheKey] = array();
 
-                $dbRes = static::getList(array( // check if group can change from status
-                    'select' => array('ID'),
-                    'filter' => array(
-                        '=ID' => $fromStatus,
-                        '=TYPE' => static::TYPE,
-                        '=Bitrix\Sale\Internals\StatusGroupTaskTable:STATUS.GROUP_ID' => $groupId,
-                        '=Bitrix\Sale\Internals\StatusGroupTaskTable:STATUS.TASK.Bitrix\Main\TaskOperation:TASK.OPERATION.NAME' => 'sale_status_from',
-                    ),
-                    'limit' => 1,
-                ));
+                $dbRes = static::getList(
+                    array( // check if group can change from status
+                        'select' => array('ID'),
+                        'filter' => array(
+                            '=ID' => $fromStatus,
+                            '=TYPE' => static::TYPE,
+                            '=Bitrix\Sale\Internals\StatusGroupTaskTable:STATUS.GROUP_ID' => $groupId,
+                            '=Bitrix\Sale\Internals\StatusGroupTaskTable:STATUS.TASK.Bitrix\Main\TaskOperation:TASK.OPERATION.NAME' => 'sale_status_from',
+                        ),
+                        'limit' => 1,
+                    )
+                );
 
                 if ($dbRes->fetch()) {
-                    $result = static::getList(array(
-                        'select' => array('ID', 'NAME' => 'Bitrix\Sale\Internals\StatusLangTable:STATUS.NAME'),
-                        'filter' => array(
-                            '=TYPE' => static::TYPE,
-                            '=Bitrix\Sale\Internals\StatusLangTable:STATUS.LID' => LANGUAGE_ID,
-                            '=Bitrix\Sale\Internals\StatusGroupTaskTable:STATUS.GROUP_ID' => $groupId,
-                            '=Bitrix\Sale\Internals\StatusGroupTaskTable:STATUS.TASK.Bitrix\Main\TaskOperation:TASK.OPERATION.NAME' => 'sale_status_to',
-                        ),
-                        'order' => array('SORT'),
-                    ));
+                    $result = static::getList(
+                        array(
+                            'select' => array('ID', 'NAME' => 'Bitrix\Sale\Internals\StatusLangTable:STATUS.NAME'),
+                            'filter' => array(
+                                '=TYPE' => static::TYPE,
+                                '=Bitrix\Sale\Internals\StatusLangTable:STATUS.LID' => LANGUAGE_ID,
+                                '=Bitrix\Sale\Internals\StatusGroupTaskTable:STATUS.GROUP_ID' => $groupId,
+                                '=Bitrix\Sale\Internals\StatusGroupTaskTable:STATUS.TASK.Bitrix\Main\TaskOperation:TASK.OPERATION.NAME' => 'sale_status_to',
+                            ),
+                            'order' => array('SORT'),
+                        )
+                    );
 
                     while ($row = $result->fetch()) {
                         $cacheAllowStatuses[$cacheKey][$row['ID']] = $row['NAME'];
@@ -218,7 +231,7 @@ abstract class StatusBase
         $operations = array();
 
         foreach ($names as $name) {
-            $operations[] = 'sale_status_' . strtolower($name);
+            $operations[] = 'sale_status_' . mb_strtolower($name);
         }
 
         return $operations;
@@ -235,11 +248,13 @@ abstract class StatusBase
         static $statusList = array();
 
         if (!$statusList) {
-            $result = static::getList(array(
-                'select' => array('ID'),
-                'filter' => array('=TYPE' => static::TYPE),
-                'order' => array('SORT' => 'ASC')
-            ));
+            $result = static::getList(
+                array(
+                    'select' => array('ID'),
+                    'filter' => array('=TYPE' => static::TYPE),
+                    'order' => array('SORT' => 'ASC')
+                )
+            );
 
             while ($row = $result->fetch()) {
                 $statusList[$row['ID']] = $row['ID'];
@@ -308,10 +323,11 @@ abstract class StatusBase
     {
         static $cacheStatuses = array();
 
-        if (!is_array($groupId))
+        if (!is_array($groupId)) {
             $groupId = array($groupId);
+        }
 
-        $cacheHash = md5(static::TYPE . "|" . join($groupId, '_') . "|" . join($operations, '_'));
+        $cacheHash = md5(static::TYPE . "|" . join('_', $groupId) . "|" . join('_', $operations));
 
         if (!empty($cacheStatuses[$cacheHash])) {
             return $cacheStatuses[$cacheHash];
@@ -399,8 +415,9 @@ abstract class StatusBase
         if ($languages = $data['LANG']) {
             unset($data['LANG']);
 
-            if (!is_array($languages))
+            if (!is_array($languages)) {
                 throw new SystemException('invalid status LANG', 0, __FILE__, __LINE__);
+            }
         }
 
         $data['TYPE'] = static::TYPE;
@@ -416,18 +433,21 @@ abstract class StatusBase
         if ($languages) {
             $installedLanguages = array();
 
-            $result = StatusLangTable::getList(array(
-                'select' => array('LID'),
-                'filter' => array('=STATUS_ID' => $statusId),
-            ));
+            $result = StatusLangTable::getList(
+                array(
+                    'select' => array('LID'),
+                    'filter' => array('=STATUS_ID' => $statusId),
+                )
+            );
 
             while ($row = $result->fetch()) {
                 $installedLanguages[$row['LID']] = true;
             }
 
             foreach ($languages as $language) {
-                if (!is_array($language))
+                if (!is_array($language)) {
                     throw new SystemException('invalid status language', 0, __FILE__, __LINE__);
+                }
 
                 if (!$installedLanguages[$language['LID']]) {
                     $language['STATUS_ID'] = $statusId;

@@ -61,9 +61,15 @@ define('DELIVERY_CPCR_SERVER_POST_TO_CITY_NAME', 'to_Cities_name'); // query var
 define('DELIVERY_CPCR_SERVER_POST_TO_CITY', 'ToCity'); // query variable name for "to" city id
 
 
-define('DELIVERY_CPCR_SERVER_POST_ADDITIONAL', 'Amount=0&AmountCheck=1&SMS=0&InHands=0&BeforeSignal=0&DuesOrder=0&PlatType=0&GabarythSum=60&GabarythB=0'); // additional POST data
+define(
+    'DELIVERY_CPCR_SERVER_POST_ADDITIONAL',
+    'Amount=0&AmountCheck=1&SMS=0&InHands=0&BeforeSignal=0&DuesOrder=0&PlatType=0&GabarythSum=60&GabarythB=0'
+); // additional POST data
 
-define('DELIVERY_CPCR_VALUE_CHECK_STRING', '"Total"'); // first check string - to determine whether delivery price is in response
+define(
+    'DELIVERY_CPCR_VALUE_CHECK_STRING',
+    '"Total"'
+); // first check string - to determine whether delivery price is in response
 //define(
 //	'DELIVERY_CPCR_VALUE_CHECK_REGEXP',
 //	'/"(result[2]{0,1})": \[([^\]]*)\]/i'
@@ -71,26 +77,35 @@ define('DELIVERY_CPCR_VALUE_CHECK_STRING', '"Total"'); // first check string - t
 
 class CDeliveryCPCR
 {
-    function Init()
+    public static function Init()
     {
         // fix a possible currency bug
-        if (\Bitrix\Main\Loader::includeModule('currency') && $arCurrency = CCurrency::GetByID('RUR'))
+        if (\Bitrix\Main\Loader::includeModule('currency') && $arCurrency = CCurrency::GetByID('RUR')) {
             $base_currency = 'RUR';
-        else
+        } else {
             $base_currency = 'RUB';
+        }
 
         return array(
             /* Basic description */
-            "SID" => "cpcr", // unique string identifier
-            "NAME" => GetMessage('SALE_DH_CPCR_NAME'), // services public title
-            "DESCRIPTION" => GetMessage('SALE_DH_CPCR_DESCRIPTION'), // services public dedcription
-            "DESCRIPTION_INNER" => GetMessage('SALE_DH_CPCR_DESCRIPTION_INNER'), // services private description for admin panel
-            "BASE_CURRENCY" => $base_currency, // services base currency
+            "SID" => "cpcr",
+            // unique string identifier
+            "NAME" => GetMessage('SALE_DH_CPCR_NAME'),
+            // services public title
+            "DESCRIPTION" => GetMessage('SALE_DH_CPCR_DESCRIPTION'),
+            // services public dedcription
+            "DESCRIPTION_INNER" => GetMessage('SALE_DH_CPCR_DESCRIPTION_INNER'),
+            // services private description for admin panel
+            "BASE_CURRENCY" => $base_currency,
+            // services base currency
 
-            "HANDLER" => __FILE__, // services path - don't change it if you do not surely know what you are doin
+            "HANDLER" => __FILE__,
+            // services path - don't change it if you do not surely know what you are doin
 
-            "COMPABILITY" => array("CDeliveryCPCR", "Compability"), // callback method to check whether services is compatible with current order
-            "CALCULATOR" => array("CDeliveryCPCR", "Calculate"), // callback method to calculate delivery price
+            "COMPABILITY" => array("CDeliveryCPCR", "Compability"),
+            // callback method to check whether services is compatible with current order
+            "CALCULATOR" => array("CDeliveryCPCR", "Calculate"),
+            // callback method to calculate delivery price
             "DEPRECATED" => "Y",
             'GET_ADMIN_MESSAGE' => array('CDeliveryCPCR', 'getAdminMessage'),
 
@@ -157,7 +172,7 @@ class CDeliveryCPCR
         );
     }
 
-    function GetConfig()
+    public static function GetConfig()
     {
         return array();
 
@@ -184,7 +199,7 @@ class CDeliveryCPCR
         return $arConfig;
     }
 
-    function GetSettings($strSettings)
+    public static function GetSettings($strSettings)
     {
         return array();
         return array(
@@ -192,15 +207,18 @@ class CDeliveryCPCR
         );
     }
 
-    function SetSettings($arSettings)
+    public static function SetSettings($arSettings)
     {
         return array();
         $category = intval($arSettings["category"]);
-        if ($category <= 0 || $category > 8) return DELIVERY_CPCR_CATEGORY_DEFAULT;
-        else return $category;
+        if ($category <= 0 || $category > 8) {
+            return DELIVERY_CPCR_CATEGORY_DEFAULT;
+        } else {
+            return $category;
+        }
     }
 
-    function __GetLocation($location)
+    public static function __GetLocation($location)
     {
         static $arCPCRCountries;
         static $arCPCRCity;
@@ -264,16 +282,19 @@ class CDeliveryCPCR
         return $arReturn;
     }
 
-    function Calculate($profile, $arConfig, $arOrder, $STEP)
+    public static function Calculate($profile, $arConfig, $arOrder, $STEP)
     {
-        if ($STEP >= 3)
+        if ($STEP >= 3) {
             return array(
                 "RESULT" => "ERROR",
                 "TEXT" => GetMessage('SALE_DH_CPCR_ERROR_CONNECT'),
             );
+        }
 
         $arOrder["WEIGHT"] = CSaleMeasure::Convert($arOrder["WEIGHT"], "G", "KG");
-        if ($arOrder["WEIGHT"] <= 0) $arOrder["WEIGHT"] = 1; // weight must not be null - let it be 1 kg
+        if ($arOrder["WEIGHT"] <= 0) {
+            $arOrder["WEIGHT"] = 1;
+        } // weight must not be null - let it be 1 kg
 
         $arLocationFrom = CDeliveryCPCR::__GetLocation($arOrder["LOCATION_FROM"]);
         $arLocationTo = CDeliveryCPCR::__GetLocation($arOrder["LOCATION_TO"]);
@@ -286,9 +307,15 @@ class CDeliveryCPCR
             $arLocationTo["ORIGINAL"]["COUNTRY_ID"] . "|" .
             $arLocationTo["ORIGINAL"]["CITY_ID"];
 
-        if ($arOrder["WEIGHT"] <= 0.5) $cache_id .= "|0"; // first interval - up to 0.5 kg
-        elseif ($arOrder["WEIGHT"] <= 1) $cache_id .= "|1"; //2nd interval - up to 1 kg
-        else $cache_id .= "|" . ceil($arOrder["WEIGHT"]); // other intervals - up to next natural number
+        if ($arOrder["WEIGHT"] <= 0.5) {
+            $cache_id .= "|0";
+        } // first interval - up to 0.5 kg
+        elseif ($arOrder["WEIGHT"] <= 1) {
+            $cache_id .= "|1";
+        } //2nd interval - up to 1 kg
+        else {
+            $cache_id .= "|" . ceil($arOrder["WEIGHT"]);
+        } // other intervals - up to next natural number
 
         $obCache = new CPHPCache();
 
@@ -302,10 +329,13 @@ class CDeliveryCPCR
 
             $arQuery[] = DELIVERY_CPCR_SERVER_POST_FROM_COUNTRY . "=" . urlencode($arLocationFrom["COUNTRY"]);
 
-            if (is_set($arLocationFrom["CITY_ID"]))
+            if (is_set($arLocationFrom["CITY_ID"])) {
                 $arQuery[] = DELIVERY_CPCR_SERVER_POST_FROM_CITY . "=" . urlencode($arLocationFrom["CITY_ID"]);
-            else
-                $arQuery[] = DELIVERY_CPCR_SERVER_POST_FROM_CITY_NAME . "=" . urlencode($GLOBALS['APPLICATION']->ConvertCharset($arLocationFrom["CITY"], LANG_CHARSET, 'windows-1251'));
+            } else {
+                $arQuery[] = DELIVERY_CPCR_SERVER_POST_FROM_CITY_NAME . "=" . urlencode(
+                        $GLOBALS['APPLICATION']->ConvertCharset($arLocationFrom["CITY"], LANG_CHARSET, 'windows-1251')
+                    );
+            }
 
             $arQuery[] = DELIVERY_CPCR_SERVER_POST_WEIGHT . "=" . urlencode($arOrder["WEIGHT"]);
             $arQuery[] = DELIVERY_CPCR_SERVER_POST_CATEGORY . "=" . "1";//urlencode($arConfig["category"]["VALUE"]);
@@ -321,10 +351,13 @@ class CDeliveryCPCR
                 $arQuery[] = DELIVERY_CPCR_SERVER_POST_TO_REGION."=".urlencode(DELIVERY_CPCR_CITY_DEFAULT);
             */
 
-            if (is_set($arLocationTo["CITY_ID"]))
+            if (is_set($arLocationTo["CITY_ID"])) {
                 $arQuery[] = DELIVERY_CPCR_SERVER_POST_TO_CITY . "=" . urlencode($arLocationTo["CITY_ID"]);
-            else
-                $arQuery[] = DELIVERY_CPCR_SERVER_POST_TO_CITY_NAME . "=" . urlencode($GLOBALS['APPLICATION']->ConvertCharset($arLocationTo["CITY"], LANG_CHARSET, 'windows-1251'));
+            } else {
+                $arQuery[] = DELIVERY_CPCR_SERVER_POST_TO_CITY_NAME . "=" . urlencode(
+                        $GLOBALS['APPLICATION']->ConvertCharset($arLocationTo["CITY"], LANG_CHARSET, 'windows-1251')
+                    );
+            }
 
             CDeliveryCPCR::__Write2Log(print_r($arLocationTo, true));
 
@@ -341,22 +374,26 @@ class CDeliveryCPCR
                 DELIVERY_CPCR_SERVER_METHOD,
                 DELIVERY_CPCR_SERVER,
                 DELIVERY_CPCR_SERVER_PORT,
-                $query_page . (DELIVERY_CPCR_SERVER_METHOD == 'GET' ? ((strpos($query_page, '?') === false ? '?' : '&') . $query_string) : ''),
+                $query_page . (DELIVERY_CPCR_SERVER_METHOD == 'GET' ? ((mb_strpos(
+                        $query_page,
+                        '?'
+                    ) === false ? '?' : '&') . $query_string) : ''),
                 DELIVERY_CPCR_SERVER_METHOD == 'POST' ? $query_string : false
             //,
             // "",
             // "" // Empty content-type because of CPCR inner bugs
             );
 
-            if ($data)
+            if ($data) {
                 $data = $GLOBALS["APPLICATION"]->ConvertCharset($ob->result, 'windows-1251', LANG_CHARSET);
+            }
 
             CDeliveryCPCR::__Write2Log($query_page);
             CDeliveryCPCR::__Write2Log($query_string);
             CDeliveryCPCR::__Write2Log($error_number . ": " . $error_text);
             CDeliveryCPCR::__Write2Log($data);
 
-            if (strpos($data, "<?xml") === false) {
+            if (mb_strpos($data, "<?xml") === false) {
                 return array(
                     "RESULT" => "ERROR",
                     "TEXT" => GetMessage('SALE_DH_CPCR_ERROR_CONNECT'),
@@ -383,7 +420,9 @@ class CDeliveryCPCR
             if (isset($arResult["root"]["#"]["Error"]) AND is_array($arResult["root"]["#"]["Error"])) {
                 return array(
                     "RESULT" => "ERROR",
-                    "TEXT" => GetMessage('SALE_DH_CPCR_ERROR_CONNECT') . ' (' . htmlspecialcharsbx(strip_tags($arResult["root"]["#"]["Tariff"][0]["#"]["TariffType"][0]["#"])) . ')',
+                    "TEXT" => GetMessage('SALE_DH_CPCR_ERROR_CONNECT') . ' (' . htmlspecialcharsbx(
+                            strip_tags($arResult["root"]["#"]["Tariff"][0]["#"]["TariffType"][0]["#"])
+                        ) . ')',
                 );
             } else {
                 if (!empty($arResult["root"]["#"]["Tariff"])) {
@@ -435,7 +474,7 @@ class CDeliveryCPCR
         }
     }
 
-    function Compability($arOrder)
+    public static function Compability($arOrder)
     {
         $arLocationFrom = CDeliveryCPCR::__GetLocation($arOrder["LOCATION_FROM"]);
         $arLocationTo = CDeliveryCPCR::__GetLocation($arOrder["LOCATION_TO"]);
@@ -445,33 +484,169 @@ class CDeliveryCPCR
             $arLocationFrom["COUNTRY"] != DELIVERY_CPCR_COUNTRY_DEFAULT
             ||
             $arLocationTo["COUNTRY"] != DELIVERY_CPCR_COUNTRY_DEFAULT
-        )
+        ) {
             return array();
-        else {
+        } else {
             $arProfiles = array("simple", "econom");
 
             if ($arLocationFrom['CITY_ID'] == DELIVERY_CPCR_CITY_DEFAULT) {
-                if (in_array($arLocationTo['CITY_ID'], array(
-                    '269|0', '328|0', '1587|0', '455|0', '551|0', '713|0', '873|0', '924|0', '1054|0', '552|0', '1243|0', '1309|0', '1448|0', '893|0', '1828|0', '1907|0', '189|0', '2011|0', '2137|0'
-                ))) {
+                if (in_array(
+                    $arLocationTo['CITY_ID'],
+                    array(
+                        '269|0',
+                        '328|0',
+                        '1587|0',
+                        '455|0',
+                        '551|0',
+                        '713|0',
+                        '873|0',
+                        '924|0',
+                        '1054|0',
+                        '552|0',
+                        '1243|0',
+                        '1309|0',
+                        '1448|0',
+                        '893|0',
+                        '1828|0',
+                        '1907|0',
+                        '189|0',
+                        '2011|0',
+                        '2137|0'
+                    )
+                )) {
                     $arProfiles[] = "simple13";
                 }
 
-                if (in_array($arLocationTo['CITY_ID'], array(
-                    '199|0', '1063|0', '220|0', '286|0', '328|0', '347|0', '1071|0', '1587|0', '1916|0', '1726|0', '735|0', '785|0', '1083|0', '873|0', '1768|0', '1054|0', '1145|0', '552|0', '1176|0', '1243|0', '1309|0', '1387|0', '1472|0', '893|0', '1522|0', '1485|0', '1907|0', '189|0', '2011|0', '345|0'
-                ))) {
+                if (in_array(
+                    $arLocationTo['CITY_ID'],
+                    array(
+                        '199|0',
+                        '1063|0',
+                        '220|0',
+                        '286|0',
+                        '328|0',
+                        '347|0',
+                        '1071|0',
+                        '1587|0',
+                        '1916|0',
+                        '1726|0',
+                        '735|0',
+                        '785|0',
+                        '1083|0',
+                        '873|0',
+                        '1768|0',
+                        '1054|0',
+                        '1145|0',
+                        '552|0',
+                        '1176|0',
+                        '1243|0',
+                        '1309|0',
+                        '1387|0',
+                        '1472|0',
+                        '893|0',
+                        '1522|0',
+                        '1485|0',
+                        '1907|0',
+                        '189|0',
+                        '2011|0',
+                        '345|0'
+                    )
+                )) {
                     $arProfiles[] = "simple18";
                 }
             } elseif ($arLocationTo['CITY_ID'] == DELIVERY_CPCR_CITY_DEFAULT) {
-                if (in_array($arLocationFrom['CITY_ID'], array(
-                    '2137|0', '1828|0', '1781|0', '1722|0', '1660|0', '1448|0', '924|0', '713|0', '551|0', '455|0', '286|0', '269|0', '122|0', '1746|0', '1042|0', '1759|0', '199|0', '1063|0', '220|0', '286|0', '328|0', '347|0', '1071|0', '1587|0', '1916|0', '1726|0', '735|0', '785|0', '1083|0', '873|0', '1768|0', '1054|0', '1145|0', '552|0', '1243|0', '1309|0', '1387|0', '1472|0', '893|0', '1522|0', '1485|0', '1907|0', '189|0', '2011|0', '345|0'
-                ))) {
+                if (in_array(
+                    $arLocationFrom['CITY_ID'],
+                    array(
+                        '2137|0',
+                        '1828|0',
+                        '1781|0',
+                        '1722|0',
+                        '1660|0',
+                        '1448|0',
+                        '924|0',
+                        '713|0',
+                        '551|0',
+                        '455|0',
+                        '286|0',
+                        '269|0',
+                        '122|0',
+                        '1746|0',
+                        '1042|0',
+                        '1759|0',
+                        '199|0',
+                        '1063|0',
+                        '220|0',
+                        '286|0',
+                        '328|0',
+                        '347|0',
+                        '1071|0',
+                        '1587|0',
+                        '1916|0',
+                        '1726|0',
+                        '735|0',
+                        '785|0',
+                        '1083|0',
+                        '873|0',
+                        '1768|0',
+                        '1054|0',
+                        '1145|0',
+                        '552|0',
+                        '1243|0',
+                        '1309|0',
+                        '1387|0',
+                        '1472|0',
+                        '893|0',
+                        '1522|0',
+                        '1485|0',
+                        '1907|0',
+                        '189|0',
+                        '2011|0',
+                        '345|0'
+                    )
+                )) {
                     $arProfiles[] = "simple13";
                 }
 
-                if (in_array($arLocationFrom['CITY_ID'], array(
-                    '122|0', '1746|0', '1042|0', '1759|0', '199|0', '1063|0', '220|0', '286|0', '328|0', '347|0', '1071|0', '1587|0', '1916|0', '1726|0', '735|0', '785|0', '1083|0', '873|0', '1768|0', '1054|0', '1145|0', '552|0', '1176|0', '1243|0', '1309|0', '1387|0', '1472|0', '893|0', '1522|0', '1485|0', '1907|0', '189|0', '2011|0', '345|0'
-                ))) {
+                if (in_array(
+                    $arLocationFrom['CITY_ID'],
+                    array(
+                        '122|0',
+                        '1746|0',
+                        '1042|0',
+                        '1759|0',
+                        '199|0',
+                        '1063|0',
+                        '220|0',
+                        '286|0',
+                        '328|0',
+                        '347|0',
+                        '1071|0',
+                        '1587|0',
+                        '1916|0',
+                        '1726|0',
+                        '735|0',
+                        '785|0',
+                        '1083|0',
+                        '873|0',
+                        '1768|0',
+                        '1054|0',
+                        '1145|0',
+                        '552|0',
+                        '1176|0',
+                        '1243|0',
+                        '1309|0',
+                        '1387|0',
+                        '1472|0',
+                        '893|0',
+                        '1522|0',
+                        '1485|0',
+                        '1907|0',
+                        '189|0',
+                        '2011|0',
+                        '345|0'
+                    )
+                )) {
                     $arProfiles[] = "simple18";
                 }
             }
@@ -480,7 +655,7 @@ class CDeliveryCPCR
         }
     }
 
-    function __Write2Log($data)
+    public static function __Write2Log($data)
     {
         if (defined('DELIVERY_CPCR_WRITE_LOG') && DELIVERY_CPCR_WRITE_LOG === 1) {
             $fp = fopen(dirname(__FILE__) . "/cpcr.log", "a");
@@ -490,7 +665,7 @@ class CDeliveryCPCR
         }
     }
 
-    public function getAdminMessage()
+    public static function getAdminMessage()
     {
         return array(
             'MESSAGE' => GetMessage(

@@ -14,10 +14,10 @@ use \Bitrix\Main\Localization\Loc;
 Loc::loadMessages(__FILE__);
 
 if (!$USER->IsAdmin())
-	$APPLICATION->AuthForm(Loc::getMessage("SCALE_PANEL_ACCESS_DENIED"));
+	{$APPLICATION->AuthForm(Loc::getMessage("SCALE_PANEL_ACCESS_DENIED"));}
 
 if(!\Bitrix\Main\Loader::includeModule("scale"))
-	ShowError(Loc::getMessage("SCALE_PANEL_MODULE_NOT_INSTALLED"));
+	{ShowError(Loc::getMessage("SCALE_PANEL_MODULE_NOT_INSTALLED"));}
 
 $APPLICATION->SetTitle(Loc::getMessage("SCALE_PANEL_TITLE"));
 
@@ -107,7 +107,7 @@ if(empty($serversList))
 	$netIfaces = \Bitrix\Scale\Helper::getNetworkInterfaces();
 
 	if(is_array($netIfaces) && count($netIfaces) > 1)
-		$pullCreateAction = "CREATE_PULL_NET_IFACE";
+		{$pullCreateAction = "CREATE_PULL_NET_IFACE";}
 }
 
 \CUserCounter::Increment($USER->GetID(),'SCALE_PANEL_VISITS', SITE_ID, false);

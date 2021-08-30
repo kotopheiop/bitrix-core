@@ -63,7 +63,9 @@ class LogTagTable extends Entity\DataManager
             return false;
         }
 
-        \Bitrix\Main\Application::getConnection()->queryExecute('DELETE FROM ' . self::getTableName() . ' WHERE LOG_ID = ' . intval($params['logId']));
+        \Bitrix\Main\Application::getConnection()->queryExecute(
+            'DELETE FROM ' . self::getTableName() . ' WHERE LOG_ID = ' . intval($params['logId'])
+        );
         return true;
     }
 
@@ -84,7 +86,10 @@ class LogTagTable extends Entity\DataManager
             $params['itemType'] = self::ITEM_TYPE_LOG;
         }
 
-        \Bitrix\Main\Application::getConnection()->queryExecute('DELETE FROM ' . self::getTableName() . ' WHERE ITEM_TYPE = "' . $params['itemType'] . '" AND ITEM_ID = ' . intval($params['itemId']));
+        \Bitrix\Main\Application::getConnection()->queryExecute(
+            'DELETE FROM ' . self::getTableName(
+            ) . ' WHERE ITEM_TYPE = "' . $params['itemType'] . '" AND ITEM_ID = ' . intval($params['itemId'])
+        );
         return true;
     }
 
@@ -113,12 +118,14 @@ class LogTagTable extends Entity\DataManager
             empty($params['logId'])
             || intval($params['logId']) <= 0
         ) {
-            $res = LogCommentTable::getList(array(
-                'filter' => array(
-                    'ID' => intval($params['itemId'])
-                ),
-                'select' => array('LOG_ID')
-            ));
+            $res = LogCommentTable::getList(
+                array(
+                    'filter' => array(
+                        'ID' => intval($params['itemId'])
+                    ),
+                    'select' => array('LOG_ID')
+                )
+            );
             if ($logEntry = $res->fetch()) {
                 $params['logId'] = intval($logEntry['LOG_ID']);
             }
@@ -131,10 +138,12 @@ class LogTagTable extends Entity\DataManager
             return false;
         }
 
-        self::deleteByItem(array(
-            'itemType' => $params['itemType'],
-            'itemId' => intval($params['itemId'])
-        ));
+        self::deleteByItem(
+            array(
+                'itemType' => $params['itemType'],
+                'itemId' => intval($params['itemId'])
+            )
+        );
 
         $addedLowerCaseTagsList = [];
 
@@ -143,12 +152,14 @@ class LogTagTable extends Entity\DataManager
             if (in_array($lowerCaseTag, $addedLowerCaseTagsList)) {
                 continue;
             }
-            self::add(array(
-                'ITEM_TYPE' => $params['itemType'],
-                'ITEM_ID' => intval($params['itemId']),
-                'LOG_ID' => intval($params['logId']),
-                'NAME' => $tag
-            ));
+            self::add(
+                array(
+                    'ITEM_TYPE' => $params['itemType'],
+                    'ITEM_ID' => intval($params['itemId']),
+                    'LOG_ID' => intval($params['logId']),
+                    'NAME' => $tag
+                )
+            );
             $addedLowerCaseTagsList[] = $lowerCaseTag; // index requirement;
         }
 

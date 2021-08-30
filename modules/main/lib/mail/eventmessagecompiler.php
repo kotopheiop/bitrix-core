@@ -53,23 +53,29 @@ class EventMessageCompiler
      */
     public function __construct(array $arMessageParams)
     {
-        if (!array_key_exists('FIELDS', $arMessageParams))
+        if (!array_key_exists('FIELDS', $arMessageParams)) {
             throw new \Bitrix\Main\ArgumentTypeException("FIELDS");
-        if (!array_key_exists('MESSAGE', $arMessageParams))
+        }
+        if (!array_key_exists('MESSAGE', $arMessageParams)) {
             throw new \Bitrix\Main\ArgumentTypeException("MESSAGE");
-        if (!array_key_exists('SITE', $arMessageParams))
+        }
+        if (!array_key_exists('SITE', $arMessageParams)) {
             throw new \Bitrix\Main\ArgumentTypeException("SITE");
-        if (!array_key_exists('CHARSET', $arMessageParams))
+        }
+        if (!array_key_exists('CHARSET', $arMessageParams)) {
             throw new \Bitrix\Main\ArgumentTypeException("CHARSET");
+        }
 
 
         $this->eventFields = $arMessageParams['FIELDS'];
-        if (array_key_exists('EVENT', $arMessageParams))
+        if (array_key_exists('EVENT', $arMessageParams)) {
             $this->event = $arMessageParams['EVENT'];
+        }
 
         $this->eventMessageFields = $arMessageParams['MESSAGE'];
-        if (array_key_exists('ID', $arMessageParams['MESSAGE']))
+        if (array_key_exists('ID', $arMessageParams['MESSAGE'])) {
             $this->eventMessageId = $arMessageParams['MESSAGE']['ID'];
+        }
 
         $this->siteFields = $this->getSiteFieldsArray(
             is_array($arMessageParams['SITE'])
@@ -77,7 +83,9 @@ class EventMessageCompiler
                 : [$arMessageParams['SITE']]
         );
         $this->eventSiteFields = array_merge($this->siteFields, $this->eventFields);
-        foreach ($this->eventSiteFields as $k => $v) $this->eventSiteFields[$k] = static::getFieldFlatValue($v);
+        foreach ($this->eventSiteFields as $k => $v) {
+            $this->eventSiteFields[$k] = static::getFieldFlatValue($v);
+        }
         $this->setMailCharset($arMessageParams['CHARSET']);
     }
 
@@ -116,19 +124,25 @@ class EventMessageCompiler
         $message = $this->eventMessageFields["MESSAGE_PHP"];
         if (empty($message) && !empty($this->eventMessageFields["MESSAGE"])) {
             $message = MailInternal\EventMessageTable::replaceTemplateToPhp($this->eventMessageFields["MESSAGE"]);
-            if ($this->eventMessageFields["ID"] > 0)
-                MailInternal\EventMessageTable::update($this->eventMessageFields["ID"], array('MESSAGE_PHP' => $message));
+            if ($this->eventMessageFields["ID"] > 0) {
+                MailInternal\EventMessageTable::update(
+                    $this->eventMessageFields["ID"],
+                    array('MESSAGE_PHP' => $message)
+                );
+            }
         }
 
-        if (!empty($this->eventMessageFields['SITE_TEMPLATE_ID']))
+        if (!empty($this->eventMessageFields['SITE_TEMPLATE_ID'])) {
             $siteTemplateId = $this->eventMessageFields['SITE_TEMPLATE_ID'];
-        else
+        } else {
             $siteTemplateId = null;
+        }
 
         $themeCompiler = EventMessageThemeCompiler::createInstance($siteTemplateId, $message, $isHtml);
 
-        if (empty($siteTemplateId))
+        if (empty($siteTemplateId)) {
             $siteTemplateId = ".default";
+        }
 
         // set context variables for components
         $themeCompiler->setSiteTemplateId($siteTemplateId);
@@ -142,7 +156,7 @@ class EventMessageCompiler
             foreach ($this->eventSiteFields as $fieldKey => $fieldValue) {
                 $eventSiteFields["HTML_" . $fieldKey] = nl2br(htmlspecialcharsbx($fieldValue, ENT_COMPAT, false));
 
-                if (strpos($fieldValue, "<") === false) {
+                if (mb_strpos($fieldValue, "<") === false) {
                     $eventSiteFields[$fieldKey] = nl2br($fieldValue);
                 }
             }
@@ -150,7 +164,7 @@ class EventMessageCompiler
         $eventSiteFields['MAIL_EVENTS_UNSUBSCRIBE_LINK'] = Tracking::getLinkUnsub(
             'main',
             [
-                'CODE' => strtolower(trim(explode(',', $this->getMailTo())[0])),
+                'CODE' => mb_strtolower(trim(explode(',', $this->getMailTo())[0])),
                 'EVENT_NAME' => $this->eventMessageFields["EVENT_NAME"]
             ]
         );
@@ -211,11 +225,16 @@ class EventMessageCompiler
      */
     protected function setMailAttachment()
     {
-        $eventMessageAttachment = array();
+        $eventMessageAttachment = [];
+        $eventFilesContent = [];
 
         // Attach files from message template
         if (array_key_exists('FILE', $this->eventMessageFields)) {
             $eventMessageAttachment = $this->eventMessageFields["FILE"];
+        }
+
+        if (array_key_exists('FILES_CONTENT', $this->event)) {
+            $eventFilesContent = $this->event["FILES_CONTENT"];
         }
 
         // Attach files from event
@@ -251,6 +270,19 @@ class EventMessageCompiler
 
             $this->mailAttachment = $attachFileList;
         }
+
+        if (count($eventFilesContent) > 0) {
+            foreach ($eventFilesContent as $item) {
+                $this->mailAttachment[] = [
+                    'CONTENT_TYPE' => $item['CONTENT_TYPE'],
+                    'NAME' => $item['NAME'],
+                    'CONTENT' => $item['CONTENT'],
+                    'ID' => $item['ID'],
+                    'CHARSET' => $item['CHARSET'],
+                    'METHOD' => $item['METHOD'],
+                ];
+            }
+        }
     }
 
     /**
@@ -276,46 +308,56 @@ class EventMessageCompiler
 
         if (isset($messageFields["BCC"]) && $messageFields["BCC"] != '') {
             $bcc = $this->replaceTemplate($messageFields["BCC"], $arFields);
-            if (strpos($bcc, "@") !== false)
+            if (mb_strpos($bcc, "@") !== false) {
                 $arMailFields["BCC"] = $bcc;
+            }
         }
 
-        if (isset($messageFields["CC"]) && $messageFields["CC"] != '')
+        if (isset($messageFields["CC"]) && $messageFields["CC"] != '') {
             $arMailFields["CC"] = $this->replaceTemplate($messageFields["CC"], $arFields);
+        }
 
-        if (isset($messageFields["REPLY_TO"]) && $messageFields["REPLY_TO"] != '')
+        if (isset($messageFields["REPLY_TO"]) && $messageFields["REPLY_TO"] != '') {
             $arMailFields["Reply-To"] = $this->replaceTemplate($messageFields["REPLY_TO"], $arFields);
-        else
+        } else {
             $arMailFields["Reply-To"] = preg_replace("/(.*)\\<(.*)\\>/i", '$2', $arMailFields["From"]);
+        }
 
-        if (isset($messageFields["IN_REPLY_TO"]) && $messageFields["IN_REPLY_TO"] != '')
+        if (isset($messageFields["IN_REPLY_TO"]) && $messageFields["IN_REPLY_TO"] != '') {
             $arMailFields["In-Reply-To"] = $this->replaceTemplate($messageFields["IN_REPLY_TO"], $arFields);
+        }
 
         if (isset($messageFields["ADDITIONAL_FIELD"]) && is_array($messageFields['ADDITIONAL_FIELD'])) {
-            foreach ($messageFields['ADDITIONAL_FIELD'] as $additionalField)
+            foreach ($messageFields['ADDITIONAL_FIELD'] as $additionalField) {
                 $arMailFields[$additionalField['NAME']] = static::replaceTemplate($additionalField['VALUE'], $arFields);
+            }
         }
 
-        if (isset($messageFields["PRIORITY"]) && $messageFields["PRIORITY"] != '')
+        if (isset($messageFields["PRIORITY"]) && $messageFields["PRIORITY"] != '') {
             $arMailFields["X-Priority"] = $this->replaceTemplate($messageFields["PRIORITY"], $arFields);
+        }
 
         foreach ($arFields as $f => $v) {
-            if (substr($f, 0, 1) == "=")
-                $arMailFields[substr($f, 1)] = $v;
+            if (mb_substr($f, 0, 1) == "=") {
+                $arMailFields[mb_substr($f, 1)] = $v;
+            }
         }
 
-        foreach ($arMailFields as $k => $v)
+        foreach ($arMailFields as $k => $v) {
             $arMailFields[$k] = trim($v, "\r\n");
+        }
 
         //add those who want to receive all emails
         if (isset($this->event["DUPLICATE"]) && $this->event["DUPLICATE"] == "Y") {
             $all_bcc = Config\Option::get("main", "all_bcc", "");
-            if (strpos($all_bcc, "@") !== false)
-                $arMailFields["BCC"] .= (strlen($all_bcc) > 0 ? (strlen($arMailFields["BCC"]) > 0 ? "," : "") . $all_bcc : "");
+            if (mb_strpos($all_bcc, "@") !== false) {
+                $arMailFields["BCC"] .= ($all_bcc <> '' ? ($arMailFields["BCC"] <> '' ? "," : "") . $all_bcc : "");
+            }
         }
 
-        if (isset($this->event["EVENT_NAME"]))
+        if (isset($this->event["EVENT_NAME"])) {
             $arMailFields['X-EVENT_NAME'] = $this->event["EVENT_NAME"];
+        }
 
 
         $this->mailHeaders = $arMailFields;
@@ -334,10 +376,11 @@ class EventMessageCompiler
      */
     protected function setMailId()
     {
-        if (isset($this->event['ID']) && isset($this->eventMessageFields["ID"]))
+        if (isset($this->event['ID']) && isset($this->eventMessageFields["ID"])) {
             $this->mailId = $this->event['ID'] . "." . $this->eventMessageFields["ID"] . " (" . $this->event["DATE_INSERT"] . ")";
-        else
+        } else {
             $this->mailId = '';
+        }
     }
 
     /**
@@ -390,13 +433,21 @@ class EventMessageCompiler
     protected function replaceTemplate($str, $ar, $bNewLineToBreak = false)
     {
         $str = str_replace("%", "%2", $str);
+
         foreach ($ar as $key => $val) {
-            if ($bNewLineToBreak && strpos($val, "<") === false)
+            if (is_array($val)) {
+                $val = implode(', ', $val);
+            }
+
+            if ($bNewLineToBreak && strpos($val, "<") === false) {
                 $val = nl2br($val);
+            }
+
             $val = str_replace("%", "%2", $val);
             $val = str_replace("#", "%1", $val);
             $str = str_replace("#" . $key . "#", $val, $str);
         }
+
         $str = str_replace("%1", "#", $str);
         $str = str_replace("%2", "%", $str);
 
@@ -411,38 +462,34 @@ class EventMessageCompiler
      */
     protected function getSiteFieldsArray($sites)
     {
-        /*
-        global $BX_EVENT_SITE_PARAMS;
-        if($site_id !== false && isset($BX_EVENT_SITE_PARAMS[$site_id]))
-            return $BX_EVENT_SITE_PARAMS[$site_id];
-        */
-
-
         $site_id = $sites[0];
 
         if (!empty($this->eventMessageId)) {
-            $messageSiteDb = MailInternal\EventMessageSiteTable::getList(array(
-                'select' => array('SITE_ID'),
-                'filter' => array(
-                    'EVENT_MESSAGE_ID' => $this->eventMessageId,
-                    'SITE_ID' => $sites
+            $messageSiteDb = MailInternal\EventMessageSiteTable::getList(
+                array(
+                    'select' => array('SITE_ID'),
+                    'filter' => array(
+                        'EVENT_MESSAGE_ID' => $this->eventMessageId,
+                        'SITE_ID' => $sites
+                    )
                 )
-            ));
-            if ($arMessageSite = $messageSiteDb->Fetch())
+            );
+            if ($arMessageSite = $messageSiteDb->Fetch()) {
                 $site_id = $arMessageSite['SITE_ID'];
+            }
         }
 
         $SITE_NAME = Config\Option::get("main", "site_name", $GLOBALS["SERVER_NAME"]);
         $SERVER_NAME = Config\Option::get("main", "server_name", $GLOBALS["SERVER_NAME"]);
         $DEFAULT_EMAIL_FROM = Config\Option::get("main", "email_from", "admin@" . $GLOBALS["SERVER_NAME"]);
 
-        if (strlen($site_id) > 0) {
+        if ($site_id <> '') {
             $result = \Bitrix\Main\SiteTable::getById($site_id);
             if ($arSite = $result->fetch()) {
                 $this->siteId = $arSite['LID'];
                 $this->languageId = $arSite['LANGUAGE_ID'];
 
-                $BX_EVENT_SITE_PARAMS[$site_id] = array(
+                \CEvent::$EVENT_SITE_PARAMS[$site_id] = array(
                     "SITE_NAME" => ($arSite["SITE_NAME"] <> '' ? $arSite["SITE_NAME"] : $SITE_NAME),
                     "SERVER_NAME" => ($arSite["SERVER_NAME"] <> '' ? $arSite["SERVER_NAME"] : $SERVER_NAME),
                     "DEFAULT_EMAIL_FROM" => ($arSite["EMAIL"] <> '' ? $arSite["EMAIL"] : $DEFAULT_EMAIL_FROM),
@@ -450,7 +497,7 @@ class EventMessageCompiler
                     "SITE_ID" => $arSite['LID'],
                     "SITE_DIR" => $arSite['DIR'],
                 );
-                return $BX_EVENT_SITE_PARAMS[$site_id];
+                return \CEvent::$EVENT_SITE_PARAMS[$site_id];
             }
         }
 
@@ -469,10 +516,12 @@ class EventMessageCompiler
     {
         $flatValue = '';
         if (is_array($value)) {
-            foreach ($value as $v)
+            foreach ($value as $v) {
                 $flatValue .= ($flatValue <> '' ? ', ' : '') . static::getFieldFlatValue($v);
-        } else
+            }
+        } else {
             $flatValue = $value;
+        }
 
         return $flatValue;
     }

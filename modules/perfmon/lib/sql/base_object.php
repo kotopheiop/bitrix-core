@@ -67,12 +67,13 @@ abstract class BaseObject
             foreach ($name as $key => $value) {
                 $name[$key] = $this->getUnquotedName($value);
             }
-        } elseif ($name[0] == '`')
+        } elseif ($name[0] == '`') {
             $name = trim($name, '`');
-        elseif ($name[0] == '"')
+        } elseif ($name[0] == '"') {
             $name = trim($name, '"');
-        elseif ($name[0] == '[')
+        } elseif ($name[0] == '[') {
             $name = trim($name, '[]');
+        }
         return $name;
     }
 
@@ -85,14 +86,15 @@ abstract class BaseObject
      */
     final public function getLowercasedName()
     {
-        if ($this->name[0] == '`')
+        if ($this->name[0] == '`') {
             return $this->name;
-        elseif ($this->name[0] == '"')
+        } elseif ($this->name[0] == '"') {
             return $this->name;
-        elseif ($this->name[0] == '[')
+        } elseif ($this->name[0] == '[') {
             return $this->name;
-        else
-            return strtolower($this->name);
+        } else {
+            return mb_strtolower($this->name);
+        }
     }
 
     /**
@@ -105,14 +107,15 @@ abstract class BaseObject
      */
     final public static function getCompareName($name)
     {
-        if ($name[0] == '`')
+        if ($name[0] == '`') {
             return $name;
-        elseif ($name[0] == '"')
+        } elseif ($name[0] == '"') {
             return $name;
-        elseif ($name[0] == '[')
+        } elseif ($name[0] == '[') {
             return $name;
-        else
-            return strtoupper($name);
+        } else {
+            return mb_strtoupper($name);
+        }
     }
 
     /**

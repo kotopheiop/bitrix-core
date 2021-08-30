@@ -25,32 +25,39 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_before.
 
 global $DB;
 
-if (!defined('LANGUAGE_ID') || preg_match('/^[a-z]{2}$/i', LANGUAGE_ID) !== 1)
+if (!defined('LANGUAGE_ID') || preg_match('/^[a-z]{2}$/i', LANGUAGE_ID) !== 1) {
     die('Language id is absent - defined site is bad');
+}
 
 set_time_limit(0);
 
-if (!defined("CATALOG_LOAD_NO_STEP"))
+if (!defined("CATALOG_LOAD_NO_STEP")) {
     define("CATALOG_LOAD_NO_STEP", true);
+}
 
-if (!\Bitrix\Main\Loader::includeModule('catalog'))
+if (!\Bitrix\Main\Loader::includeModule('catalog')) {
     die('Can\'t include module');
+}
 
 $profile_id = 0;
-if (isset($argv[1]))
+if (isset($argv[1])) {
     $profile_id = (int)$argv[1];
-if ($profile_id <= 0)
+}
+if ($profile_id <= 0) {
     die('No profile id');
+}
 
 $ar_profile = CCatalogImport::GetByID($profile_id);
-if (!$ar_profile)
+if (!$ar_profile) {
     die('No profile');
+}
 
 $strFile = CATALOG_PATH2IMPORTS . $ar_profile["FILE_NAME"] . "_run.php";
 if (!file_exists($_SERVER["DOCUMENT_ROOT"] . $strFile)) {
     $strFile = CATALOG_PATH2IMPORTS_DEF . $ar_profile["FILE_NAME"] . "_run.php";
-    if (!file_exists($_SERVER["DOCUMENT_ROOT"] . $strFile))
+    if (!file_exists($_SERVER["DOCUMENT_ROOT"] . $strFile)) {
         die('No import script');
+    }
 }
 
 $bFirstLoadStep = true;
@@ -59,8 +66,9 @@ $arSetupVars = array();
 $intSetupVarsCount = 0;
 if ($ar_profile["DEFAULT_PROFILE"] != 'Y') {
     parse_str($ar_profile["SETUP_VARS"], $arSetupVars);
-    if (!empty($arSetupVars) && is_array($arSetupVars))
+    if (!empty($arSetupVars) && is_array($arSetupVars)) {
         $intSetupVarsCount = extract($arSetupVars, EXTR_SKIP);
+    }
 }
 
 global $arCatalogAvailProdFields;

@@ -38,8 +38,9 @@ class ByProductCategory extends Base
         }
 
         foreach ($categoriesList as $productId => $productCategories) {
-            if (!is_array($productCategories) || empty($productCategories))
+            if (!is_array($productCategories) || empty($productCategories)) {
                 continue;
+            }
 
             $isProductFromCategory = false;
 
@@ -52,8 +53,9 @@ class ByProductCategory extends Base
                 }
             }
 
-            if (!$isProductFromCategory)
+            if (!$isProductFromCategory) {
                 return false;
+            }
         }
 
         return true;
@@ -65,9 +67,11 @@ class ByProductCategory extends Base
 
         $nav = \CIBlockSection::GetNavChain(false, $categoryId);
 
-        while ($arSectionPath = $nav->GetNext())
-            if (!in_array($arSectionPath['ID'], $result))
+        while ($arSectionPath = $nav->GetNext()) {
+            if (!in_array($arSectionPath['ID'], $result)) {
                 $result[] = $arSectionPath['ID'];
+            }
+        }
 
         return $result;
     }
@@ -78,11 +82,13 @@ class ByProductCategory extends Base
             return array();
         }
 
-        if (!\Bitrix\Main\Loader::includeModule('iblock'))
+        if (!\Bitrix\Main\Loader::includeModule('iblock')) {
             return array();
+        }
 
-        if (!\Bitrix\Main\Loader::includeModule('catalog'))
+        if (!\Bitrix\Main\Loader::includeModule('catalog')) {
             return array();
+        }
 
         $productIds = array();
 
@@ -91,23 +97,27 @@ class ByProductCategory extends Base
             /** @var \Bitrix\Sale\BasketItem $basketItem */
             $basketItem = $shipmentItem->getBasketItem();
 
-            if (!$basketItem)
+            if (!$basketItem) {
                 continue;
+            }
 
-            if ($basketItem->getField('MODULE') != 'catalog')
+            if ($basketItem->getField('MODULE') != 'catalog') {
                 continue;
+            }
 
             $productId = intval($basketItem->getField('PRODUCT_ID'));
             $iblockId = (int)\CIBlockElement::getIBlockByID($productId);
             $info = \CCatalogSKU::getProductInfo($productId, $iblockId);
 
-            if (!empty($info['ID']))
+            if (!empty($info['ID'])) {
                 $candidate = $info['ID'];
-            else
+            } else {
                 $candidate = $productId;
+            }
 
-            if (!in_array($candidate, $productIds))
+            if (!in_array($candidate, $productIds)) {
                 $productIds[] = $candidate;
+            }
         }
 
         return self::getGroupsIds($productIds);
@@ -120,11 +130,13 @@ class ByProductCategory extends Base
         $res = \CIBlockElement::GetElementGroups($productIds, true, array('ID', 'IBLOCK_ELEMENT_ID'));
 
         while ($group = $res->Fetch()) {
-            if (!is_array($groupsIds[$group['IBLOCK_ELEMENT_ID']]))
+            if (!is_array($groupsIds[$group['IBLOCK_ELEMENT_ID']])) {
                 $groupsIds[$group['IBLOCK_ELEMENT_ID']] = array();
+            }
 
-            if (!in_array($group['ID'], $groupsIds[$group['IBLOCK_ELEMENT_ID']]))
+            if (!in_array($group['ID'], $groupsIds[$group['IBLOCK_ELEMENT_ID']])) {
                 $groupsIds[$group['IBLOCK_ELEMENT_ID']][] = $group['ID'];
+            }
         }
 
         return $groupsIds;
@@ -136,7 +148,9 @@ class ByProductCategory extends Base
             "CATEGORIES" => array(
                 "TYPE" => "DELIVERY_PRODUCT_CATEGORIES",
                 "URL" => "cat_section_search.php?lang=ru&m=y&n=SECTIONS_IDS",
-                "SCRIPT" => "window.InS" . md5('SECTIONS_IDS') . "=function(id, name){BX.Sale.Delivery.addRestrictionProductSection(id, name, this);};",
+                "SCRIPT" => "window.InS" . md5(
+                        'SECTIONS_IDS'
+                    ) . "=function(id, name){BX.Sale.Delivery.addRestrictionProductSection(id, name, this);};",
                 "LABEL" => Loc::getMessage("SALE_DLVR_RSTR_BY_PC_CATEGORIES"),
                 "ID" => 'sale-admin-delivery-restriction-cat-add'
             )

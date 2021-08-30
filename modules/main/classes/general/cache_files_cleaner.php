@@ -52,11 +52,12 @@ class CFileCacheCleaner
 
     function InitPath($PathToCheck)
     {
-        if (strlen($PathToCheck) > 0) {
+        if ($PathToCheck <> '') {
             $PathToCheck = preg_replace("#[\\\\\\/]+#", "/", "/" . $PathToCheck);
             //Check if path does not contain any injection
-            if (preg_match('#/\\.\\.#', $PathToCheck) || preg_match('#\\.\\./#', $PathToCheck))
+            if (preg_match('#/\\.\\.#', $PathToCheck) || preg_match('#\\.\\./#', $PathToCheck)) {
                 return false;
+            }
 
             $base = "";
             foreach ($this->_arPath as $path) {
@@ -66,9 +67,9 @@ class CFileCacheCleaner
                 }
             }
 
-            if (strlen($base)) {
+            if ($base <> '') {
                 $this->_CurrentBase = $base;
-                $this->_CurrentPath = substr($PathToCheck, strlen($base));
+                $this->_CurrentPath = mb_substr($PathToCheck, mb_strlen($base));
                 return true;
             } else {
                 return false;
@@ -98,8 +99,9 @@ class CFileCacheCleaner
                 $arPath = $this->_arPath;
                 while (count($arPath) > 0) {
                     $CurBase = array_shift($arPath);
-                    if ($CurBase == $this->_CurrentBase)
+                    if ($CurBase == $this->_CurrentBase) {
                         break;
+                    }
                 }
                 //There is at least one cache directory not checked yet
                 //so try to find a file inside
@@ -109,8 +111,9 @@ class CFileCacheCleaner
                     $this->_obFileTree = new _CFileTree($_SERVER["DOCUMENT_ROOT"] . $this->_CurrentBase);
                     $this->_obFileTree->Start($this->_CurrentPath);
                     $file = $this->_obFileTree->GetNextFile();
-                    if ($file !== false)
+                    if ($file !== false) {
                         return $file;
+                    }
                 }
                 return false;
             }
@@ -127,21 +130,23 @@ class CFileCacheCleaner
         } elseif (preg_match('#\\.~\\d+/#', $FileName)) //delayed delete files
         {
             return 1;//like an very old file
-        } elseif (substr($FileName, -4) == ".php") {
+        } elseif (mb_substr($FileName, -4) == ".php") {
             $fd = fopen($FileName, "rb");
             if ($fd) {
                 $header = fread($fd, 150);
                 fclose($fd);
-                if (preg_match("/dateexpire\s*=\s*'([\d]+)'/im", $header, $match))
+                if (preg_match("/dateexpire\s*=\s*'([\d]+)'/im", $header, $match)) {
                     return doubleval($match[1]);
+                }
             }
-        } elseif (substr($FileName, -5) == ".html") {
+        } elseif (mb_substr($FileName, -5) == ".html") {
             $fd = fopen($FileName, "rb");
             if ($fd) {
                 $header = fread($fd, 26);
                 fclose($fd);
-                if (substr($header, 0, 2) == "BX")
-                    return doubleval(substr($header, 14, 12));
+                if (mb_substr($header, 0, 2) == "BX") {
+                    return doubleval(mb_substr($header, 14, 12));
+                }
             }
         }
         return false;
@@ -168,8 +173,9 @@ class _CFileTree
             $this->_dir = $this->ReadDir($this->_path);
             if (is_array($this->_dir)) {
                 while (count($this->_dir)) {
-                    if (strcmp($this->_dir[0], $last) > 0)
+                    if (strcmp($this->_dir[0], $last) > 0) {
                         break;
+                    }
                     array_shift($this->_dir);
                 }
             }
@@ -179,8 +185,9 @@ class _CFileTree
     function FileExists($file)
     {
         if (function_exists('accelerator_reset')) {
-            if (is_dir($file))
+            if (is_dir($file)) {
                 return true;
+            }
 
             $fd = @fopen($file, "rb");
             if ($fd) {
@@ -198,24 +205,27 @@ class _CFileTree
     {
         if (!is_array($this->_dir)) {
             $this->_dir = $this->ReadDir($this->_path);
-            if (!is_array($this->_dir))
+            if (!is_array($this->_dir)) {
                 return false;
+            }
         }
 
-        $next = each($this->_dir);
+        $next = current($this->_dir);
+        next($this->_dir);
 
         if ($next === false) {
             //try to go up dir tree
-            if ($this->GoUp())
+            if ($this->GoUp()) {
                 return $this->GetNextFile();
-            else
+            } else {
                 return false;
-        } elseif (is_file($next["value"])) {
+            }
+        } elseif (is_file($next)) {
             //it's our target
-            return $next["value"];
+            return $next;
         } else {
             //it's dir or link try to go deeper
-            $this->_path = $next["value"];
+            $this->_path = $next;
             $this->_dir = false;
             return true;
         }
@@ -233,25 +243,30 @@ class _CFileTree
     {
         $last_dir = self::ExtractFileFromPath($this->_path);
         //We are not going to go up any more
-        if (strlen($this->_path . "/") < strlen($this->_in_path))
+        if (mb_strlen($this->_path . "/") < mb_strlen($this->_in_path)) {
             return false;
+        }
 
         $this->_dir = $this->ReadDir($this->_path);
         //This should't be happen so try to goup one more level
-        if (!is_array($this->_dir))
+        if (!is_array($this->_dir)) {
             return $this->GoUp();
+        }
 
         //Skip all dirs till current
         while (count($this->_dir)) {
-            if (strcmp($this->_dir[0], $last_dir) > 0)
+            if (strcmp($this->_dir[0], $last_dir) > 0) {
                 break;
+            }
             array_shift($this->_dir);
         }
 
-        if (count($this->_dir))
-            return true; //there is more work to do
-        else
-            return $this->GoUp(); // try to go upper
+        if (count($this->_dir)) {
+            return true;
+        } //there is more work to do
+        else {
+            return $this->GoUp();
+        } // try to go upper
     }
 
     function ReadDir($dir)
@@ -262,15 +277,17 @@ class _CFileTree
             if ($dh) {
                 $result = array();
                 while (($f = readdir($dh)) !== false) {
-                    if ($f == "." || $f == "..")
+                    if ($f == "." || $f == "..") {
                         continue;
+                    }
                     $result[] = $dir . "/" . $f;
                 }
                 closedir($dh);
                 sort($result);
                 //try to delete an empty directory
-                if (count($result) == 0)
+                if (count($result) == 0) {
                     @rmdir($dir);
+                }
 
                 return $result;
             }

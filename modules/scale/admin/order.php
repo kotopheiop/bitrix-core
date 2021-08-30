@@ -15,11 +15,13 @@ use \Bitrix\Main;
 
 Loc::loadMessages(__FILE__);
 
-if (!$USER->IsAdmin())
+if (!$USER->IsAdmin()) {
     $APPLICATION->AuthForm(Loc::getMessage("SCALE_ORDER_ACCESS_DENIED"));
+}
 
-if (!\Bitrix\Main\Loader::includeModule("scale"))
+if (!\Bitrix\Main\Loader::includeModule("scale")) {
     ShowError(Loc::getMessage("SCALE_ORDER_MODULE_NOT_INSTALLED"));
+}
 
 $APPLICATION->SetTitle(Loc::getMessage("SCALE_ORDER_TITLE"));
 
@@ -32,13 +34,15 @@ $request = Main\Context::getCurrent()->getRequest();
 
 if (($orderIds = $adminList->GroupAction())) {
     foreach ($orderIds as $orderId) {
-        if (strlen($orderId) <= 0)
+        if ($orderId == '') {
             continue;
+        }
 
         $ids = explode("::", $orderId);
 
-        if (!isset($ids[0]) || !isset($ids[1]) || strlen($ids[0]) <= 0 || strlen($ids[1]) <= 0)
+        if (!isset($ids[0]) || !isset($ids[1]) || $ids[0] == '' || $ids[1] == '') {
             continue;
+        }
 
         $providerId = $ids[0];
         $orderId = $ids[1];
@@ -51,8 +55,9 @@ if (($orderIds = $adminList->GroupAction())) {
                 if ($result === false || (isset($result["error"]) && $result["error"] == 1)) {
                     $message = Loc::getMessage("SCALE_ORDER_ADD_PULL_ERROR");
 
-                    if (isset($result["message"]))
+                    if (isset($result["message"])) {
                         $message .= ": \"" . $result["message"] . "\"";
+                    }
 
                     $adminList->AddGroupError($message);
                 } else {
@@ -76,8 +81,9 @@ $ordersList = \Bitrix\Scale\Provider::getOrdersList();
 $orders = array();
 
 foreach ($ordersList as $providerId => $providerOrders) {
-    if (!is_array($providerOrders))
+    if (!is_array($providerOrders)) {
         continue;
+    }
 
     foreach ($providerOrders as $orderId => $order) {
         $order["provider"] = $providerId;
@@ -94,20 +100,42 @@ $data = new CAdminResult($rsList, $tableID);
 $data->NavStart();
 $adminList->NavText($data->GetNavPrint(Loc::getMessage("PAGES"), false));
 
-$adminList->AddHeaders(array(
-    array("id" => "provider", "content" => Loc::getMessage("SCALE_ORDER_PROVIDER"), "sort" => "provider", "default" => true),
-    array("id" => "order_id", "content" => Loc::getMessage("SCALE_ORDER_ID"), "sort" => "order_id", "default" => true),
-    array("id" => "status", "content" => Loc::getMessage("SCALE_ORDER_STATUS"), "sort" => "status", "default" => true),
-    array("id" => "mtime", "content" => Loc::getMessage("SCALE_ORDER_MTIME"), "sort" => "mtime", "default" => true),
-    array("id" => "error", "content" => Loc::getMessage("SCALE_ORDER_ERROR"), "default" => false),
-    array("id" => "message", "content" => Loc::getMessage("SCALE_ORDER_MESSAGE"), "default" => true),
-));
+$adminList->AddHeaders(
+    array(
+        array(
+            "id" => "provider",
+            "content" => Loc::getMessage("SCALE_ORDER_PROVIDER"),
+            "sort" => "provider",
+            "default" => true
+        ),
+        array(
+            "id" => "order_id",
+            "content" => Loc::getMessage("SCALE_ORDER_ID"),
+            "sort" => "order_id",
+            "default" => true
+        ),
+        array(
+            "id" => "status",
+            "content" => Loc::getMessage("SCALE_ORDER_STATUS"),
+            "sort" => "status",
+            "default" => true
+        ),
+        array("id" => "mtime", "content" => Loc::getMessage("SCALE_ORDER_MTIME"), "sort" => "mtime", "default" => true),
+        array("id" => "error", "content" => Loc::getMessage("SCALE_ORDER_ERROR"), "default" => false),
+        array("id" => "message", "content" => Loc::getMessage("SCALE_ORDER_MESSAGE"), "default" => true),
+    )
+);
 
 while ($order = $data->Fetch()) {
     $provider = htmlspecialcharsbx($order["provider"]);
     $order_id = htmlspecialcharsbx($order["order_id"]);
 
-    $row = &$adminList->AddRow($provider . "::" . $order_id, $order, "?provider=" . $provider . "&order_id=" . $order_id . "&lang=" . LANGUAGE_ID, Loc::getMessage("SCALE_ORDER_EDIT"));
+    $row = &$adminList->AddRow(
+        $provider . "::" . $order_id,
+        $order,
+        "?provider=" . $provider . "&order_id=" . $order_id . "&lang=" . LANGUAGE_ID,
+        Loc::getMessage("SCALE_ORDER_EDIT")
+    );
     $row->AddViewField("provider", $order["provider"]);
     $row->AddViewField("order_id", $order["order_id"]);
 
@@ -129,7 +157,11 @@ while ($order = $data->Fetch()) {
     $arActions = array();
 
     if ($order["status"] == "finished") {
-        $arActions[] = array("ICON" => "edit", "TEXT" => Loc::getMessage("SCALE_ORDER_ADD_TO_PULL"), "ACTION" => $adminList->ActionDoGroup($provider . "::" . $order_id, "add_to_pull"));
+        $arActions[] = array(
+            "ICON" => "edit",
+            "TEXT" => Loc::getMessage("SCALE_ORDER_ADD_TO_PULL"),
+            "ACTION" => $adminList->ActionDoGroup($provider . "::" . $order_id, "add_to_pull")
+        );
     }
 
     $row->AddActions($arActions);

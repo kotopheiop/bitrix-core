@@ -1,4 +1,5 @@
 <?
+
 $MESS["SALE_HANDLERS_DISCOUNTPRESET_SIMPLEPRODUCT_NAME"] = "Product and product group discount";
 $MESS["SALE_HANDLERS_DISCOUNTPRESET_ERROR_SECTION_NON_ARRAY"] = "Sections selected have invalid values";
 $MESS["SALE_HANDLERS_DISCOUNTPRESET_ERROR_PRODUCT_NON_ARRAY"] = "Products selected have invalid values";

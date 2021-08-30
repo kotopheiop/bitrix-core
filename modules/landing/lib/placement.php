@@ -17,14 +17,16 @@ class Placement extends \Bitrix\Landing\Internals\BaseTable
      */
     public static function deleteByAppId($id)
     {
-        $res = self::getList(array(
-            'select' => array(
-                'ID'
-            ),
-            'filter' => array(
-                '=APP_ID' => $id
+        $res = self::getList(
+            array(
+                'select' => array(
+                    'ID'
+                ),
+                'filter' => array(
+                    '=APP_ID' => $id
+                )
             )
-        ));
+        );
         while ($row = $res->fetch()) {
             self::delete($row['ID']);
         }

@@ -122,12 +122,14 @@ class CatalogEdit
      */
     public function loadCatalog()
     {
-        if (!$this->isSuccess())
+        if (!$this->isSuccess()) {
             return;
+        }
         /** @noinspection PhpMethodOrClassCallIsNotCaseSensitiveInspection */
         $this->iblockCatalogData = \CCatalogSku::getInfoByIBlock($this->iblockId);
-        if ($this->iblockCatalogData === false)
+        if ($this->iblockCatalogData === false) {
             $this->iblockCatalogData = array();
+        }
         $this->simpleIblock = self::isSimpleIblock($this->iblockCatalogData);
         if (!$this->simpleIblock) {
             $this->parentIblock = self::isParentIblock($this->iblockCatalogData);
@@ -165,15 +167,18 @@ class CatalogEdit
      */
     public function saveCatalog($catalogData)
     {
-        if (!$this->isSuccess())
+        if (!$this->isSuccess()) {
             return;
+        }
 
         $this->prepareCatalogData($catalogData);
-        if (!$this->isSuccess())
+        if (!$this->isSuccess()) {
             return;
+        }
 
-        if (empty($this->catalogTableActions))
+        if (empty($this->catalogTableActions)) {
             return;
+        }
 
         foreach ($this->catalogTableActions as $iblockId => $action) {
             switch ($action) {
@@ -186,12 +191,12 @@ class CatalogEdit
                 case self::CATALOG_ACTION_DELETE:
                     $result = \CCatalog::delete($iblockId);
                     if (!$result) {
-
                     }
                     break;
             }
-            if (!$this->isSuccess())
+            if (!$this->isSuccess()) {
                 break;
+            }
         }
         unset($iblockId, $action);
     }
@@ -205,8 +210,9 @@ class CatalogEdit
     public function prepareCatalogData($catalogData)
     {
         $checkedData = $this->updateData;
-        if (!$this->isSuccess())
+        if (!$this->isSuccess()) {
             return;
+        }
 
         if (empty($catalogData)) {
             $this->errors[] = Loc::getMessage('BX_CAT_HELPER_ADMIN_CATALOGEDIT_ERR_EMPTY_DATA');
@@ -216,100 +222,127 @@ class CatalogEdit
             return;
         }
 
-        if (!isset($catalogData['CATALOG']) || ($catalogData['CATALOG'] != 'Y' && $catalogData['CATALOG'] != 'N'))
+        if (!isset($catalogData['CATALOG']) || ($catalogData['CATALOG'] != 'Y' && $catalogData['CATALOG'] != 'N')) {
             $this->errors[] = Loc::getMessage('BX_CAT_HELPER_ADMIN_CATALOGEDIT_ERR_FIELD_CATALOG_IS_ABSENT');
+        }
 
-        if (!isset($catalogData['USE_SKU']) || ($catalogData['USE_SKU'] != 'Y' && $catalogData['USE_SKU'] != 'N'))
+        if (!isset($catalogData['USE_SKU']) || ($catalogData['USE_SKU'] != 'Y' && $catalogData['USE_SKU'] != 'N')) {
             $this->errors[] = Loc::getMessage('BX_CAT_HELPER_ADMIN_CATALOGEDIT_ERR_FIELD_USE_SKU_IS_ABSENT');
+        }
 
         if ($this->isEnableRecurring()) {
-            if (!isset($catalogData['SUBSCRIPTION']) || ($catalogData['SUBSCRIPTION'] != 'Y' && $catalogData['SUBSCRIPTION'] != 'N'))
+            if (!isset($catalogData['SUBSCRIPTION']) || ($catalogData['SUBSCRIPTION'] != 'Y' && $catalogData['SUBSCRIPTION'] != 'N')) {
                 $this->errors[] = Loc::getMessage('BX_CAT_HELPER_ADMIN_CATALOGEDIT_ERR_FIELD_SUBSCRIPTION_IS_ABSENT');
+            }
         }
 
-        if (!$this->isSuccess())
+        if (!$this->isSuccess()) {
             return;
+        }
 
         if (!$this->simpleIblock) {
-            if ($this->offerIblock && $catalogData['CATALOG'] == 'N')
+            if ($this->offerIblock && $catalogData['CATALOG'] == 'N') {
                 $this->errors[] = Loc::getMessage('BX_CAT_HELPER_ADMIN_CATALOGEDIT_ERR_OFFERS_ONLY_CATALOG');
-            if ($this->isEnableRecurring() && $this->parentIblock && $catalogData['SUBSCRIPTION'] == 'Y')
-                $this->errors[] = Loc::getMessage('BX_CAT_HELPER_ADMIN_CATALOGEDIT_ERR_PARENT_IBLOCK_WITH_SUBSCRIPTION');
-            if ($this->offerIblock && $catalogData['USE_SKU'] == 'Y')
+            }
+            if ($this->isEnableRecurring() && $this->parentIblock && $catalogData['SUBSCRIPTION'] == 'Y') {
+                $this->errors[] = Loc::getMessage(
+                    'BX_CAT_HELPER_ADMIN_CATALOGEDIT_ERR_PARENT_IBLOCK_WITH_SUBSCRIPTION'
+                );
+            }
+            if ($this->offerIblock && $catalogData['USE_SKU'] == 'Y') {
                 $this->errors[] = Loc::getMessage('BX_CAT_HELPER_ADMIN_CATALOGEDIT_ERR_SKU_WITH_SKU');
+            }
         }
 
-        if (!$this->isSuccess())
+        if (!$this->isSuccess()) {
             return;
+        }
 
         $skuIblockId = 0;
         $skuCatalog = false;
         if ($catalogData['USE_SKU'] == 'Y') {
-            if (!isset($catalogData['SKU']) || (int)$catalogData['SKU'] <= 0)
+            if (!isset($catalogData['SKU']) || (int)$catalogData['SKU'] <= 0) {
                 $this->errors[] = Loc::getMessage('BX_CAT_HELPER_ADMIN_CATALOGEDIT_ERR_FIELD_SKU_IS_ABSENT');
+            }
 
             if ($this->isSuccess()) {
                 $skuIblockId = (int)$catalogData['SKU'];
-                if ($skuIblockId == $this->iblockId)
+                if ($skuIblockId == $this->iblockId) {
                     $this->errors[] = Loc::getMessage('BX_CAT_HELPER_ADMIN_CATALOGEDIT_ERR_SKU_SELF');
+                }
 
                 if ($this->isSuccess()) {
                     $skuIblock = self::loadIblockFromDatabase($skuIblockId);
-                    if (empty($skuIblock))
+                    if (empty($skuIblock)) {
                         $this->errors[] = Loc::getMessage('BX_CAT_HELPER_ADMIN_CATALOGEDIT_ERR_SKU_BAD');
+                    }
                     unset($skuIblock);
                 }
 
                 if ($this->isSuccess()) {
                     $skuSiteList = self::loadIblockSitesFromDatabase($skuIblockId);
-                    if (empty($skuSiteList))
+                    if (empty($skuSiteList)) {
                         $this->errors[] = Loc::getMessage('BX_CAT_HELPER_ADMIN_CATALOGEDIT_ERR_SKU_SITES_EMPTY');
-                    elseif ($this->iblockData['SITES'] != self::getSiteListString($skuSiteList, true))
+                    } elseif ($this->iblockData['SITES'] != self::getSiteListString($skuSiteList, true)) {
                         $this->errors[] = Loc::getMessage('BX_CAT_HELPER_ADMIN_CATALOGEDIT_ERR_SKU_SITES_NOT_EQUAL');
+                    }
                     unset($skuSiteList);
                 }
 
                 if ($this->isSuccess()) {
                     $skuCatalog = \CCatalogSku::getInfoByIBlock($skuIblockId);
                     if (!self::isSimpleIblock($skuCatalog)) {
-                        if (self::isParentIblock($skuCatalog))
+                        if (self::isParentIblock($skuCatalog)) {
                             $this->errors[] = Loc::getMessage('BX_CAT_HELPER_ADMIN_CATALOGEDIT_ERR_SKU_WITH_SKU');
-                        elseif (self::isOfferIblock($skuCatalog) && $skuCatalog['PRODUCT_IBLOCK_ID'] != $this->iblockId)
-                            $this->errors[] = Loc::getMessage('BX_CAT_HELPER_ADMIN_CATALOGEDIT_ERR_SKU_FROM_OTHER_IBLOCK');
+                        } elseif (self::isOfferIblock(
+                                $skuCatalog
+                            ) && $skuCatalog['PRODUCT_IBLOCK_ID'] != $this->iblockId) {
+                            $this->errors[] = Loc::getMessage(
+                                'BX_CAT_HELPER_ADMIN_CATALOGEDIT_ERR_SKU_FROM_OTHER_IBLOCK'
+                            );
+                        }
                     }
                 }
             }
         } else {
             if (!$this->simpleIblock && $this->offerIblock) {
-                if (!isset($catalogData['SKU']) || (int)$catalogData['SKU'] <= 0)
-                    $this->errors[] = Loc::getMessage('BX_CAT_HELPER_ADMIN_CATALOGEDIT_ERR_SKU_PARENT_IBLOCK_IS_ABSENT');
-                elseif ($this->iblockCatalogData['PRODUCT_IBLOCK_ID'] != $catalogData['SKU'])
+                if (!isset($catalogData['SKU']) || (int)$catalogData['SKU'] <= 0) {
+                    $this->errors[] = Loc::getMessage(
+                        'BX_CAT_HELPER_ADMIN_CATALOGEDIT_ERR_SKU_PARENT_IBLOCK_IS_ABSENT'
+                    );
+                } elseif ($this->iblockCatalogData['PRODUCT_IBLOCK_ID'] != $catalogData['SKU']) {
                     $this->errors[] = Loc::getMessage('BX_CAT_HELPER_ADMIN_CATALOGEDIT_ERR_SKU_PARENT_IBLOCK_OTHER');
+                }
             }
         }
 
-        if (!$this->isSuccess())
+        if (!$this->isSuccess()) {
             return;
-
-        if ($catalogData['CATALOG'] == 'Y') {
-            if (!isset($catalogData['VAT_ID']))
-                $this->errors[] = Loc::getMessage('BX_CAT_HELPER_ADMIN_CATALOGEDIT_ERR_VAT_ID_IS_ABSENT');
-            elseif ((int)$catalogData['VAT_ID'] < 0)
-                $this->errors[] = Loc::getMessage('BX_CAT_HELPER_ADMIN_CATALOGEDIT_ERR_BAD_VAT_ID');
-            if (!isset($catalogData['YANDEX_EXPORT']))
-                $this->errors[] = Loc::getMessage('BX_CAT_HELPER_ADMIN_CATALOGEDIT_ERR_YANDEX_EXPORT_IS_ABSENT');
-            elseif ($catalogData['YANDEX_EXPORT'] != 'Y' && $catalogData['YANDEX_EXPORT'] != 'N')
-                $this->errors[] = Loc::getMessage('BX_CAT_HELPER_ADMIN_CATALOGEDIT_ERR_BAD_YANDEX_EXPORT');
         }
 
-        if (!$this->isSuccess())
+        if ($catalogData['CATALOG'] == 'Y') {
+            if (!isset($catalogData['VAT_ID'])) {
+                $this->errors[] = Loc::getMessage('BX_CAT_HELPER_ADMIN_CATALOGEDIT_ERR_VAT_ID_IS_ABSENT');
+            } elseif ((int)$catalogData['VAT_ID'] < 0) {
+                $this->errors[] = Loc::getMessage('BX_CAT_HELPER_ADMIN_CATALOGEDIT_ERR_BAD_VAT_ID');
+            }
+            if (!isset($catalogData['YANDEX_EXPORT'])) {
+                $this->errors[] = Loc::getMessage('BX_CAT_HELPER_ADMIN_CATALOGEDIT_ERR_YANDEX_EXPORT_IS_ABSENT');
+            } elseif ($catalogData['YANDEX_EXPORT'] != 'Y' && $catalogData['YANDEX_EXPORT'] != 'N') {
+                $this->errors[] = Loc::getMessage('BX_CAT_HELPER_ADMIN_CATALOGEDIT_ERR_BAD_YANDEX_EXPORT');
+            }
+        }
+
+        if (!$this->isSuccess()) {
             return;
+        }
 
         if ($catalogData['CATALOG'] != $this->iblockCatalogData['CATALOG']) {
             if ($catalogData['CATALOG'] == 'Y') {
                 $this->catalogTableActions[$this->iblockId] = self::CATALOG_ACTION_ADD;
-                if (!isset($checkedData[$this->iblockId]))
+                if (!isset($checkedData[$this->iblockId])) {
                     $checkedData[$this->iblockId] = array();
+                }
                 $checkedData[$this->iblockId]['IBLOCK_ID'] = $this->iblockId;
             } else {
                 $this->catalogTableActions[$this->iblockId] = self::CATALOG_ACTION_DELETE;
@@ -321,16 +354,17 @@ class CatalogEdit
             if ($catalogData['USE_SKU'] == 'Y') {
                 $newOffersIBlock = self::isSimpleIblock($skuCatalog);
                 if ($newOffersIBlock || $skuCatalog['PRODUCT_IBLOCK_ID'] == 0) {
-                    if (!isset($checkedData[$skuIblockId]))
+                    if (!isset($checkedData[$skuIblockId])) {
                         $checkedData[$skuIblockId] = array();
+                    }
                     $checkedData[$skuIblockId]['PRODUCT_IBLOCK_ID'] = $this->iblockId;
                     $checkedData[$skuIblockId]['SKU_PROPERTY_ID'] = 0;
-                    if ($newOffersIBlock)
+                    if ($newOffersIBlock) {
                         $checkedData[$skuIblockId]['IBLOCK_ID'] = $skuIblockId;
+                    }
                 }
                 unset($newOffersIBlock);
             } else {
-
             }
         }
 
@@ -346,11 +380,13 @@ class CatalogEdit
      */
     protected static function getSiteListString($siteList, $sorted = false)
     {
-        if (empty($siteList) || !is_array($siteList))
+        if (empty($siteList) || !is_array($siteList)) {
             return '';
+        }
         $sorted = ($sorted === true);
-        if (!$sorted)
+        if (!$sorted) {
             sort($siteList);
+        }
         return implode(self::$siteListSeparator, $siteList);
     }
 
@@ -364,12 +400,15 @@ class CatalogEdit
     protected static function loadIblockFromDatabase($iblockId)
     {
         $iblockId = (int)$iblockId;
-        if ($iblockId <= 0)
+        if ($iblockId <= 0) {
             return false;
-        return Iblock\IblockTable::getList(array(
-            'select' => array('ID', 'NAME', 'IBLOCK_TYPE_ID', 'ACTIVE', 'PROPERTY_INDEX'),
-            'filter' => array('=ID' => $iblockId)
-        ))->fetch();
+        }
+        return Iblock\IblockTable::getList(
+            array(
+                'select' => array('ID', 'NAME', 'IBLOCK_TYPE_ID', 'ACTIVE', 'PROPERTY_INDEX'),
+                'filter' => array('=ID' => $iblockId)
+            )
+        )->fetch();
     }
 
     /**
@@ -382,16 +421,20 @@ class CatalogEdit
     protected static function loadIblockSitesFromDatabase($iblockId)
     {
         $iblockId = (int)$iblockId;
-        if ($iblockId <= 0)
+        if ($iblockId <= 0) {
             return array();
+        }
         $result = array();
-        $sitesIterator = Iblock\IblockSiteTable::getList(array(
-            'select' => array('SITE_ID'),
-            'filter' => array('=IBLOCK_ID' => $iblockId),
-            'order' => array('SITE_ID' => 'ASC')
-        ));
-        while ($site = $sitesIterator->fetch())
+        $sitesIterator = Iblock\IblockSiteTable::getList(
+            array(
+                'select' => array('SITE_ID'),
+                'filter' => array('=IBLOCK_ID' => $iblockId),
+                'order' => array('SITE_ID' => 'ASC')
+            )
+        );
+        while ($site = $sitesIterator->fetch()) {
             $result[] = $site['SITE_ID'];
+        }
         unset($site, $sitesIterator);
         return $result;
     }
@@ -459,11 +502,13 @@ class CatalogEdit
      */
     protected function initUpdateData()
     {
-        if (!$this->isSuccess())
+        if (!$this->isSuccess()) {
             return;
+        }
 
-        if ($this->simpleIblock)
+        if ($this->simpleIblock) {
             return;
+        }
 
         if ($this->offerIblock || $this->catalogIblock) {
             $this->updateData[$this->iblockId] = array();
@@ -486,16 +531,18 @@ class CatalogEdit
     {
         $parentiblockId = (int)$parentiblockId;
         $offerIblockId = (int)$offerIblockId;
-        if ($parentiblockId <= 0 || $offerIblockId <= 0)
+        if ($parentiblockId <= 0 || $offerIblockId <= 0) {
             return 0;
+        }
 
         $result = \CIBlockPropertyTools::createProperty(
             $offerIblockId,
             \CIBlockPropertyTools::CODE_SKU_LINK,
             array('LINK_IBLOCK_ID' => $parentiblockId)
         );
-        if (!$result)
+        if (!$result) {
             $this->errors = array_merge($this->errors, \CIBlockPropertyTools::getErrors());
+        }
 
         return $result;
     }

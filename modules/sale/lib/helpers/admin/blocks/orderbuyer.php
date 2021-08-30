@@ -28,29 +28,36 @@ class OrderBuyer
 								&nbsp;
 							</td>
 							<td class="adm-detail-content-cell-r">
-								<input type="button" name="FIND_BUYER" value="' . Loc::getMessage("SALE_ORDER_BUYER_FIND") . '" onclick="BX.Sale.Admin.OrderBuyer.showChooseBuyerWindow(\'' . LANGUAGE_ID . '\')"><br>
+								<input type="button" name="FIND_BUYER" value="' . Loc::getMessage(
+                "SALE_ORDER_BUYER_FIND"
+            ) . '" onclick="BX.Sale.Admin.OrderBuyer.showChooseBuyerWindow(\'' . LANGUAGE_ID . '\')"><br>
 								<i>' . Loc::getMessage("SALE_ORDER_BUYER_START_TO_CREATE") . ':</i>
 							</td>
 						</tr>
 						<tr' . (intval($data["USER_ID"]) <= 0 ? ' style="display: none"' : '') . ' id="sale-order-buyer-name-wrap">
 							<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage("SALE_ORDER_BUYER") . ':</td>
 							<td class="adm-detail-content-cell-r">
-								<div class="adm-s-order-person-choose">
-									<a id="BUYER_USER_NAME" href="' . $data["BUYER_URL"] . '">' .
-            htmlspecialcharsbx($data["BUYER_USER_NAME"]) .
-            '</a>&nbsp;
+								<div class="adm-s-order-person-choose">' . static::renderBuyerLink(
+                $data,
+                ['id="BUYER_USER_NAME"']
+            ) . '
+									&nbsp;
 									<a class="adm-s-bus-morelinkqhsw" onclick="BX.Sale.Admin.OrderBuyer.showChooseBuyerWindow(\'' . LANGUAGE_ID . '\')" href="javascript:void(0);">
 										' . Loc::getMessage("SALE_ORDER_BUYER_CHANGE") . '
 									</a>&nbsp;
 									<a class="adm-s-bus-morelinkqhsw" onclick="BX.Sale.Admin.OrderBuyer.clearBuyer();" href="javascript:void(0);">
 										' . Loc::getMessage("SALE_ORDER_BUYER_CLEAR") . '
 									</a>
-									<input type="hidden" name="USER_ID" id="USER_ID" value="' . intval($data["USER_ID"]) . '" onchange="BX.Sale.Admin.OrderBuyer.onBuyerIdChange(this);">
+									<input type="hidden" name="USER_ID" id="USER_ID" value="' . intval(
+                $data["USER_ID"]
+            ) . '" onchange="BX.Sale.Admin.OrderBuyer.onBuyerIdChange(this);">
 								</div>
 							</td>
 						</tr>
 						<tr>
-							<td class="adm-detail-content-cell-l fwb">' . Loc::getMessage("SALE_ORDER_BUYER_PAYER_TYPE") . ':</td>
+							<td class="adm-detail-content-cell-l fwb">' . Loc::getMessage(
+                "SALE_ORDER_BUYER_PAYER_TYPE"
+            ) . ':</td>
 							<td class="adm-detail-content-cell-r">' .
             \Bitrix\Sale\Helpers\Admin\OrderEdit::makeSelectHtml(
                 "PERSON_TYPE_ID",
@@ -66,7 +73,9 @@ class OrderBuyer
             '</td>
 						</tr>
 						<tr id="sale-order-buyer-profiles-list-row"' . ($showProfiles ? '' : ' style="display:none;"') . '>
-							<td class="adm-detail-content-cell-l">' . Loc::getMessage("SALE_ORDER_BUYER_CHOOSE_PROFILE") . ':</td>
+							<td class="adm-detail-content-cell-l">' . Loc::getMessage(
+                "SALE_ORDER_BUYER_CHOOSE_PROFILE"
+            ) . ':</td>
 							<td class="adm-detail-content-cell-r"><div id="BUYER_PROFILE_ID_CONTAINER">';
         if ($showProfiles) {
             $result .= \Bitrix\Sale\Helpers\Admin\OrderEdit::makeSelectHtml(
@@ -94,7 +103,9 @@ class OrderBuyer
 				<table border="0" cellspacing="0" cellpadding="0" width="100%" class="adm-detail-content-table edit-table ">
 					<tbody>
 						<tr>
-							<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage("SALE_ORDER_BUYER_ORDERCOMMENT") . ':</td>
+							<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage(
+                "SALE_ORDER_BUYER_ORDERCOMMENT"
+            ) . ':</td>
 							<td class="adm-detail-content-cell-r">
 								<textarea style="width:400px;min-height:100px;" name="USER_DESCRIPTION" id="USER_DESCRIPTION">' .
             htmlspecialcharsbx($data["USER_DESCRIPTION"]) .
@@ -131,11 +142,7 @@ class OrderBuyer
 					<tr>
 						<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage("SALE_ORDER_BUYER") . ':</td>
 						<td class="adm-detail-content-cell-r">
-							<div>
-									<a href="' . $data["BUYER_URL"] . '">' .
-            htmlspecialcharsbx($data["BUYER_USER_NAME"]) .
-            '</a>
-							</div>
+							<div>' . static::renderBuyerLink($data) . '</div>
 						</td>
 					</tr>
 					<tr>
@@ -152,13 +159,25 @@ class OrderBuyer
 				<table border="0" cellspacing="0" cellpadding="0" width="100%" class="adm-detail-content-table edit-table ">
 					<tbody>
 						<tr>
-							<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage("SALE_ORDER_BUYER_ORDERCOMMENT") . ':</td>
-							<td class="adm-detail-content-cell-r"><p id="sale-adm-user-description-view" style="color:gray; max-width:800px; overflow:auto;">' . (strlen($data["USER_DESCRIPTION"]) > 0 ? nl2br(htmlspecialcharsbx($data["USER_DESCRIPTION"])) : Loc::getMessage("SALE_ORDER_BUYER_NO")) . '</p></td>
+							<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage(
+                "SALE_ORDER_BUYER_ORDERCOMMENT"
+            ) . ':</td>
+							<td class="adm-detail-content-cell-r"><p id="sale-adm-user-description-view" style="color:gray; max-width:800px; overflow:auto;">' . ($data["USER_DESCRIPTION"] <> '' ? nl2br(
+                htmlspecialcharsbx($data["USER_DESCRIPTION"])
+            ) : Loc::getMessage("SALE_ORDER_BUYER_NO")) . '</p></td>
 						</tr>
 					</tbody>
 				</table>
 			</div>';
+    }
 
+    protected static function renderBuyerLink($data, $attr = [])
+    {
+        return '<a href="' . $data["BUYER_URL"] . '" ' . (count($attr) > 0 ? implode(
+                ' ',
+                $attr
+            ) : "") . '>' . htmlspecialcharsbx($data["BUYER_USER_NAME"]) . '</a>';
+        die;
     }
 
     public static function getScripts()
@@ -169,10 +188,13 @@ class OrderBuyer
         $langPhrases = array("SALE_ORDER_BUYER_CREATE_NEW", "SALE_ORDER_BUYER_UNKNOWN_GROUP");
 
         $result = '<script type="text/javascript">' .
-            'BX.Sale.Admin.OrderBuyer.isFeatureSaleAccountsEnabled = ' . (\CBXFeatures::IsFeatureEnabled('SaleAccounts') ? 'true' : 'false') . ';';
+            'BX.Sale.Admin.OrderBuyer.isFeatureSaleAccountsEnabled = ' . (\CBXFeatures::IsFeatureEnabled(
+                'SaleAccounts'
+            ) ? 'true' : 'false') . ';';
 
-        foreach ($langPhrases as $phrase)
+        foreach ($langPhrases as $phrase) {
             $result .= ' BX.message({' . $phrase . ': "' . \CUtil::jsEscape(Loc::getMessage($phrase)) . '"});';
+        }
 
         $result .= '
 				BX.ready(function(){
@@ -194,7 +216,9 @@ class OrderBuyer
     public static function prepareData(Sale\Order $order)
     {
         if (\CBXFeatures::IsFeatureEnabled('SaleAccounts')) {
-            $strBuyerProfileUrl = '/bitrix/admin/sale_buyers_profile.php?USER_ID=' . intval($order->getUserId()) . '&lang=' . LANGUAGE_ID;
+            $strBuyerProfileUrl = '/bitrix/admin/sale_buyers_profile.php?USER_ID=' . intval(
+                    $order->getUserId()
+                ) . '&lang=' . LANGUAGE_ID;
         } else {
             $strBuyerProfileUrl = '/bitrix/admin/user_edit.php?ID=' . $order->getUserId() . '&lang=' . LANGUAGE_ID;
         }
@@ -219,10 +243,14 @@ class OrderBuyer
 
         if (!isset($result[$siteId])) {
             $result[$siteId] = array();
-            $dbPersonType = \CSalePersonType::GetList(array("SORT" => "ASC", "NAME" => "ASC"), array("ACTIVE" => "Y", "LID" => $siteId));
+            $dbPersonType = \CSalePersonType::GetList(
+                array("SORT" => "ASC", "NAME" => "ASC"),
+                array("ACTIVE" => "Y", "LID" => $siteId)
+            );
 
-            while ($personType = $dbPersonType->GetNext())
+            while ($personType = $dbPersonType->GetNext()) {
                 $result[$siteId][$personType["ID"]] = $personType["NAME"] . " [" . $personType["ID"] . "]";
+            }
         }
 
         return $result[$siteId];
@@ -235,8 +263,9 @@ class OrderBuyer
 
     public static function getUserProfiles($userId, $personTypeId = null)
     {
-        if (intval($userId) <= 0)
+        if (intval($userId) <= 0) {
             return array();
+        }
 
         $result = array();
         $profilesResult = OrderUserProperties::loadProfiles($userId, $personTypeId);
@@ -244,8 +273,9 @@ class OrderBuyer
 
         if (is_array($profiles)) {
             foreach ($profiles as $typeId => $types) {
-                if (!isset($result[$typeId]))
+                if (!isset($result[$typeId])) {
                     $result[$typeId] = array();
+                }
 
                 foreach ($types as $key => $value) {
                     $result[$typeId][$key] = $value["VALUES"];
@@ -256,8 +286,9 @@ class OrderBuyer
         if ($personTypeId && empty($result[$personTypeId])) {
             $result[$personTypeId] = array(self::getProfileValuesFromPrevOrder($userId, $personTypeId));
 
-            if (empty($result[$personTypeId]))
+            if (empty($result[$personTypeId])) {
                 $result[$personTypeId] = array(self::getProfileValuesFromUser($userId, $personTypeId));
+            }
         }
 
         return $result;
@@ -265,23 +296,27 @@ class OrderBuyer
 
     protected static function getProfileValuesFromPrevOrder($userId, $personTypeId)
     {
-        if (intval($personTypeId) <= 0)
+        if (intval($personTypeId) <= 0) {
             throw new ArgumentNullException('userId');
+        }
 
-        if (intval($personTypeId) <= 0)
+        if (intval($personTypeId) <= 0) {
             throw new ArgumentNullException('personTypeId');
+        }
 
         $registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
         /** @var Sale\Order $orderClass */
         $orderClass = $registry->getOrderClassName();
 
-        $res = $orderClass::getList(array(
-            'filter' => array(
-                'USER_ID' => $userId
-            ),
-            'order' => array('DATE_INSERT' => 'DESC'),
-            'select' => array('ID')
-        ));
+        $res = $orderClass::getList(
+            array(
+                'filter' => array(
+                    'USER_ID' => $userId
+                ),
+                'order' => array('DATE_INSERT' => 'DESC'),
+                'select' => array('ID')
+            )
+        );
 
         if (!$order = $res->fetch()) {
             return array();
@@ -290,41 +325,47 @@ class OrderBuyer
         /** @var \Bitrix\Sale\Order $order */
         $order = $orderClass::load($order['ID']);
 
-        if (!$order)
+        if (!$order) {
             return array();
+        }
 
         $propCollection = $order->getPropertyCollection();
 
-        if (!$propCollection)
+        if (!$propCollection) {
             return array();
+        }
 
         $result = array();
 
-        $pRes = OrderPropsTable::getList(array(
-            'filter' => array(
-                'PERSON_TYPE_ID' => $personTypeId,
-                'ACTIVE' => 'Y',
-                'USER_PROPS' => 'Y'
+        $pRes = OrderPropsTable::getList(
+            array(
+                'filter' => array(
+                    'PERSON_TYPE_ID' => $personTypeId,
+                    'ACTIVE' => 'Y',
+                    'USER_PROPS' => 'Y'
+                )
             )
-        ));
+        );
 
         while ($prop = $pRes->fetch()) {
-            if (strlen($prop['DEFAULT_VALUE']) > 0) {
+            if ($prop['DEFAULT_VALUE'] <> '') {
                 $result[$prop['ID']] = $prop['DEFAULT_VALUE'];
             } else {
                 $property = null;
 
-                if ($prop['IS_EMAIL'] == 'Y')
+                if ($prop['IS_EMAIL'] == 'Y') {
                     $property = $propCollection->getUserEmail();
-                elseif ($prop['IS_PAYER'] == 'Y')
+                } elseif ($prop['IS_PAYER'] == 'Y') {
                     $property = $propCollection->getPayerName();
-                elseif ($prop['IS_PHONE'] == 'Y')
+                } elseif ($prop['IS_PHONE'] == 'Y') {
                     $property = $propCollection->getPhone();
-                elseif ($prop['IS_ADDRESS'] == 'Y')
+                } elseif ($prop['IS_ADDRESS'] == 'Y') {
                     $property = $propCollection->getAddress();
+                }
 
-                if ($property)
+                if ($property) {
                     $result[$prop['ID']] = $property->getValue();
+                }
             }
         }
 
@@ -333,66 +374,79 @@ class OrderBuyer
 
     protected static function getProfileValuesFromUser($userId, $personTypeId)
     {
-        if (intval($personTypeId) <= 0)
+        if (intval($personTypeId) <= 0) {
             throw new ArgumentNullException('userId');
+        }
 
-        if (intval($personTypeId) <= 0)
+        if (intval($personTypeId) <= 0) {
             throw new ArgumentNullException('personTypeId');
+        }
 
         $uRes = UserTable::getById($userId);
 
-        if (!$user = $uRes->fetch())
+        if (!$user = $uRes->fetch()) {
             return array();
+        }
 
         $result = array();
 
-        $pRes = OrderPropsTable::getList(array(
-            'filter' => array(
-                'PERSON_TYPE_ID' => $personTypeId,
-                'ACTIVE' => 'Y',
-                'USER_PROPS' => 'Y'
+        $pRes = OrderPropsTable::getList(
+            array(
+                'filter' => array(
+                    'PERSON_TYPE_ID' => $personTypeId,
+                    'ACTIVE' => 'Y',
+                    'USER_PROPS' => 'Y'
+                )
             )
-        ));
+        );
 
         while ($prop = $pRes->fetch()) {
-            if (strlen($prop['DEFAULT_VALUE']) > 0) {
+            if ($prop['DEFAULT_VALUE'] <> '') {
                 $result[$prop['ID']] = $prop['DEFAULT_VALUE'];
-
             } elseif ($prop['IS_EMAIL'] == 'Y' && !empty($user['EMAIL'])) {
                 $result[$prop['ID']] = $user['EMAIL'];
             } elseif ($prop['IS_PAYER'] == 'Y') {
                 $name = '';
 
-                if (!empty($user['LAST_NAME']))
+                if (!empty($user['LAST_NAME'])) {
                     $name .= $user['LAST_NAME'];
+                }
 
-                if (!empty($user['NAME']))
+                if (!empty($user['NAME'])) {
                     $name .= $user['NAME'];
+                }
 
-                if (!empty($user['SECOND_NAME']))
+                if (!empty($user['SECOND_NAME'])) {
                     $name .= $user['SECOND_NAME'];
+                }
 
-                if (strlen($name) > 0)
+                if ($name <> '') {
                     $result[$prop['ID']] = $name;
+                }
             } elseif ($prop['IS_PHONE'] == 'Y' && !empty($user['PERSONAL_MOBILE'])) {
                 $result[$prop['ID']] = $user['PERSONAL_MOBILE'];
             } elseif ($prop['IS_ADDRESS'] == 'Y') {
                 $address = '';
 
-                if (!empty($user['PERSONAL_STREET']))
+                if (!empty($user['PERSONAL_STREET'])) {
                     $address .= $user['PERSONAL_STREET'];
+                }
 
-                if (!empty($user['PERSONAL_CITY']))
+                if (!empty($user['PERSONAL_CITY'])) {
                     $address .= $user['PERSONAL_CITY'];
+                }
 
-                if (!empty($user['PERSONAL_STATE']))
+                if (!empty($user['PERSONAL_STATE'])) {
                     $address .= $user['PERSONAL_STATE'];
+                }
 
-                if (!empty($user['PERSONAL_ZIP']))
+                if (!empty($user['PERSONAL_ZIP'])) {
                     $address .= $user['PERSONAL_ZIP'];
+                }
 
-                if (!empty($user['PERSONAL_COUNTRY']))
+                if (!empty($user['PERSONAL_COUNTRY'])) {
                     $address .= $user['PERSONAL_COUNTRY'];
+                }
 
                 $result[$prop['ID']] = $address;
             }
@@ -409,10 +463,13 @@ class OrderBuyer
             $profilesResult = OrderUserProperties::loadProfiles($userId, $personTypeId);
             $profiles = $profilesResult->getData();
 
-            if (is_array($profiles))
-                foreach ($profiles as $types)
-                    foreach ($types as $key => $value)
+            if (is_array($profiles)) {
+                foreach ($profiles as $types) {
+                    foreach ($types as $key => $value) {
                         $result[$key] = htmlspecialcharsback($value["NAME"]);
+                    }
+                }
+            }
         }
 
         return $result;
@@ -428,8 +485,9 @@ class OrderBuyer
 
             $groupProperties = $propertyCollection->getPropertiesByGroupId($group['ID']);
 
-            if (!is_array($groupProperties))
+            if (!is_array($groupProperties)) {
                 continue;
+            }
 
             /** @var \Bitrix\Sale\PropertyValue $property */
             foreach ($propertyCollection->getPropertiesByGroupId($group['ID']) as $property) {
@@ -441,8 +499,9 @@ class OrderBuyer
                         || (is_array($propertyValue) && empty($propertyValue))
                         || $propertyValue === ""
                     )
-                )
+                ) {
                     continue;
+                }
 
                 $p = $property->getProperty();
 
@@ -450,16 +509,18 @@ class OrderBuyer
                     $phoneVal = $property->getValue();
 
                     if ($phoneVal != '') {
-                        if (!is_array($phoneVal))
+                        if (!is_array($phoneVal)) {
                             $phoneVal = array($phoneVal);
+                        }
 
                         $showHtml = '';
 
                         foreach ($phoneVal as $number) {
                             $number = str_replace("'", "", htmlspecialcharsbx($number));
 
-                            if (strlen($showHtml) > 0)
+                            if ($showHtml <> '') {
                                 $showHtml .= ', ';
+                            }
 
                             $showHtml .= '<a href="javascript:void(0)" onclick="BX.Sale.Admin.OrderEditPage.desktopMakeCall(\'' . $number . '\');">' .
                                 $number .
@@ -474,7 +535,9 @@ class OrderBuyer
 
                 $resultBody .= '
 					<tr>
-						<td class="adm-detail-content-cell-l" width="40%" valign="top">' . htmlspecialcharsbx($property->getName()) . ':</td>
+						<td class="adm-detail-content-cell-l" width="40%" valign="top">' . htmlspecialcharsbx(
+                        $property->getName()
+                    ) . ':</td>
 						<td class="adm-detail-content-cell-r"><div>' . $showHtml . '</div></td>
 					</tr>';
             }
@@ -488,7 +551,6 @@ class OrderBuyer
 					</table>
 				</div>';
             }
-
         }
 
         return $result;
@@ -504,7 +566,7 @@ class OrderBuyer
             if ($key == 'properties') {
                 $result[$key] = array();
                 foreach ($item as $property) {
-                    if (isset($property['RELATION'])) {
+                    if (!empty($property['RELATION'])) {
                         if ($property['TYPE'] === 'ENUM' && is_array($property['OPTIONS'])) {
                             $property['OPTIONS_SORT'] = array_keys($property['OPTIONS']);
                         }
@@ -518,8 +580,9 @@ class OrderBuyer
         }
 
         foreach ($result['groups'] as $i => $group) {
-            if (!isset($groups[$group['ID']]))
+            if (!isset($groups[$group['ID']])) {
                 unset($result['groups'][$i]);
+            }
         }
 
         return $result;
@@ -535,7 +598,7 @@ class OrderBuyer
             if ($key == 'properties') {
                 $result[$key] = array();
                 foreach ($item as $property) {
-                    if (!isset($property['RELATION'])) {
+                    if (empty($property['RELATION'])) {
                         $result[$key][] = $property;
                         $groups[$property['PROPS_GROUP_ID']] = true;
                     }
@@ -546,8 +609,9 @@ class OrderBuyer
         }
 
         foreach ($result['groups'] as $i => $group) {
-            if (!isset($groups[$group['ID']]) && $group['ID'] != 0)
+            if (!isset($groups[$group['ID']]) && $group['ID'] != 0) {
                 unset($result['groups'][$i]);
+            }
         }
 
         return $result;
@@ -555,17 +619,19 @@ class OrderBuyer
 
     public static function getOrderPropertiesByJS(Sale\Order $order)
     {
-        if ($order->getId() > 0)
+        if ($order->getId() > 0) {
             $result = $order->getPropertyCollection()->getArray();
-        else
+        } else {
             $result = self::getNotRelPropData($order);
+        }
 
         if (!empty($result['properties'])) {
             $propertyTypes = Input\Manager::getTypes();
             $baseTypes = array();
             foreach ($propertyTypes as $typeName => $typeData) {
-                if (strpos($typeData['CLASS'], 'Bitrix\\Sale\\Internals\\Input') !== false)
+                if (mb_strpos($typeData['CLASS'], 'Bitrix\\Sale\\Internals\\Input') !== false) {
                     $baseTypes[] = $typeName;
+                }
             }
 
             foreach ($result['properties'] as &$property) {
@@ -606,7 +672,6 @@ class OrderBuyer
                     }
                 }
             }
-
         }
 
         return '

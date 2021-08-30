@@ -20,9 +20,12 @@ class OrderAmount extends BasePreset
     {
         parent::init();
 
-        \CJSCore::RegisterExt('order_amount_preset', array(
-            'js' => '/bitrix/js/sale/admin/discountpreset/order_amount_preset.js',
-        ));
+        \CJSCore::RegisterExt(
+            'order_amount_preset',
+            array(
+                'js' => '/bitrix/js/sale/admin/discountpreset/order_amount_preset.js',
+            )
+        );
 
         \CUtil::InitJSCore(array('order_amount_preset'));
     }
@@ -76,7 +79,9 @@ class OrderAmount extends BasePreset
                     "ONCLICK" => $presetJsName . ".insertVar('#SHORTAGE#', 'menu_prediction_text', 'prediction_text')",
                 ),
                 array(
-                    "TEXT" => Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_ORDERAMOUNT_ORDER_DISCOUNT_PH_DISCOUNT_VALUE'),
+                    "TEXT" => Loc::getMessage(
+                        'SALE_HANDLERS_DISCOUNTPRESET_ORDERAMOUNT_ORDER_DISCOUNT_PH_DISCOUNT_VALUE'
+                    ),
                     "TITLE" => "",
                     "ONCLICK" => $presetJsName . ".insertVar('#DISCOUNT_VALUE#', 'menu_prediction_text', 'prediction_text')",
                 ),
@@ -92,27 +97,46 @@ class OrderAmount extends BasePreset
 			<table width="100%" border="0" cellspacing="7" cellpadding="0">
 				<tbody>
 				<tr>
-					<td class="adm-detail-content-cell-l" style="width:40%;"><strong>' . Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_ORDERAMOUNT_ORDER_AMOUNT') . ':</strong></td>
+					<td class="adm-detail-content-cell-l" style="width:40%;"><strong>' . Loc::getMessage(
+                'SALE_HANDLERS_DISCOUNTPRESET_ORDERAMOUNT_ORDER_AMOUNT'
+            ) . ':</strong></td>
 					<td class="adm-detail-content-cell-r" style="width:60%;">
-						<input type="text" name="discount_order_amount" value="' . htmlspecialcharsbx($state->get('discount_order_amount')) . '" size="39" maxlength="100" style="width: 100px;"> <span>' . $currency . '</span>
+						<input type="text" name="discount_order_amount" value="' . htmlspecialcharsbx(
+                $state->get('discount_order_amount')
+            ) . '" size="39" maxlength="100" style="width: 100px;"> <span>' . $currency . '</span>
 					</td>
 				</tr>
 				<tr>
-					<td class="adm-detail-content-cell-l" style="width:40%;"><strong>' . Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_ORDERAMOUNT_ORDER_DISCOUNT_VALUE') . ':</strong></td>
+					<td class="adm-detail-content-cell-l" style="width:40%;"><strong>' . Loc::getMessage(
+                'SALE_HANDLERS_DISCOUNTPRESET_ORDERAMOUNT_ORDER_DISCOUNT_VALUE'
+            ) . ':</strong></td>
 					<td class="adm-detail-content-cell-r" style="width:60%;">
-						<input type="text" name="discount_value" value="' . htmlspecialcharsbx($state->get('discount_value')) . '" maxlength="100" style="width: 100px;"> <span>' . $currency . '</span>
+						<input type="text" name="discount_value" value="' . htmlspecialcharsbx(
+                $state->get('discount_value')
+            ) . '" maxlength="100" style="width: 100px;"> <span>' . $currency . '</span>
 					</td>
 				</tr>
 				<tr>
-					<td class="adm-detail-content-cell-l" style="width:40%;"><strong>' . Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_ORDERAMOUNT_ORDER_DISCOUNT_PREDICTION_VALUE') . ':</strong></td>
+					<td class="adm-detail-content-cell-l" style="width:40%;"><strong>' . Loc::getMessage(
+                'SALE_HANDLERS_DISCOUNTPRESET_ORDERAMOUNT_ORDER_DISCOUNT_PREDICTION_VALUE'
+            ) . ':</strong></td>
 					<td class="adm-detail-content-cell-r" style="width:60%;">
-						<input type="text" name="discount_prediction_value" value="' . htmlspecialcharsbx($state->get('discount_prediction_value')) . '" maxlength="100" style="width: 100px;"> <span>' . $currency . '</span>
+						<input type="text" name="discount_prediction_value" value="' . htmlspecialcharsbx(
+                $state->get('discount_prediction_value')
+            ) . '" maxlength="100" style="width: 100px;"> <span>' . $currency . '</span>
 					</td>
 				</tr>
 				<tr>
-					<td class="adm-detail-content-cell-l" style="width:40%;"><strong>' . Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_ORDERAMOUNT_ORDER_DISCOUNT_PREDICTION_TEXT') . ':</strong></td>
+					<td class="adm-detail-content-cell-l" style="width:40%;"><strong>' . Loc::getMessage(
+                'SALE_HANDLERS_DISCOUNTPRESET_ORDERAMOUNT_ORDER_DISCOUNT_PREDICTION_TEXT'
+            ) . ':</strong></td>
 					<td class="adm-detail-content-cell-r" style="width:60%;">
-						<textarea name="discount_prediction_text" id="prediction_text" cols="55" rows="1" style="width: 90%; margin-top: 0px; margin-bottom: 0px; height: 50px;">' . htmlspecialcharsbx($state->get('discount_prediction_text', Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_ORDERAMOUNT_ORDER_DISCOUNT_PREDICTION_TEXT_DEFAULT'))) . '</textarea>
+						<textarea name="discount_prediction_text" id="prediction_text" cols="55" rows="1" style="width: 90%; margin-top: 0px; margin-bottom: 0px; height: 50px;">' . htmlspecialcharsbx(
+                $state->get(
+                    'discount_prediction_text',
+                    Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_ORDERAMOUNT_ORDER_DISCOUNT_PREDICTION_TEXT_DEFAULT')
+                )
+            ) . '</textarea>
 						<input style="float:right" type="button" id="menu_prediction_text" value="...">
 					</td>
 				</tr>
@@ -124,7 +148,9 @@ class OrderAmount extends BasePreset
     public function processSaveInputAmount(State $state)
     {
         if (!trim($state->get('discount_order_amount'))) {
-            $this->errorCollection[] = new Error(Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_ERROR_EMPTY_ORDER_AMOUNT'));
+            $this->errorCollection[] = new Error(
+                Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_ERROR_EMPTY_ORDER_AMOUNT')
+            );
         }
 
         if (!trim($state->get('discount_value'))) {
@@ -190,47 +216,50 @@ class OrderAmount extends BasePreset
             );
         }
 
-        return array_merge(parent::generateDiscount($state), array(
-            'CONDITIONS' => array(
-                'CLASS_ID' => 'CondGroup',
-                'DATA' => array(
-                    'All' => 'AND',
-                    'True' => 'True',
-                ),
-                'CHILDREN' => array(
-                    array(
-                        'CLASS_ID' => 'CondBsktAmtGroup',
-                        'DATA' => array(
-                            'logic' => 'EqGr',
-                            'Value' => $state->get('discount_order_amount'),
-                            'All' => 'AND',
+        return array_merge(
+            parent::generateDiscount($state),
+            array(
+                'CONDITIONS' => array(
+                    'CLASS_ID' => 'CondGroup',
+                    'DATA' => array(
+                        'All' => 'AND',
+                        'True' => 'True',
+                    ),
+                    'CHILDREN' => array(
+                        array(
+                            'CLASS_ID' => 'CondBsktAmtGroup',
+                            'DATA' => array(
+                                'logic' => 'EqGr',
+                                'Value' => $state->get('discount_order_amount'),
+                                'All' => 'AND',
+                            ),
+                            'CHILDREN' => array(),
                         ),
-                        'CHILDREN' => array(),
                     ),
                 ),
-            ),
-            'ACTIONS' => array(
-                'CLASS_ID' => 'CondGroup',
-                'DATA' => array(
-                    'All' => 'AND',
-                ),
-                'CHILDREN' => array(
-                    array(
-                        'CLASS_ID' => 'ActSaleBsktGrp',
-                        'DATA' => array(
-                            'Type' => 'Discount',
-                            'Value' => $state->get('discount_value'),
-                            'Unit' => $state->get('discount_type', 'CurAll'),
-                            'Max' => 0,
-                            'All' => 'AND',
-                            'True' => 'True',
+                'ACTIONS' => array(
+                    'CLASS_ID' => 'CondGroup',
+                    'DATA' => array(
+                        'All' => 'AND',
+                    ),
+                    'CHILDREN' => array(
+                        array(
+                            'CLASS_ID' => 'ActSaleBsktGrp',
+                            'DATA' => array(
+                                'Type' => 'Discount',
+                                'Value' => $state->get('discount_value'),
+                                'Unit' => $state->get('discount_type', 'CurAll'),
+                                'Max' => 0,
+                                'All' => 'AND',
+                                'True' => 'True',
+                            ),
+                            'CHILDREN' => array(),
                         ),
-                        'CHILDREN' => array(),
                     ),
                 ),
-            ),
-            'PREDICTIONS' => $predictions,
-            'PREDICTION_TEXT' => $state->get('discount_prediction_text'),
-        ));
+                'PREDICTIONS' => $predictions,
+                'PREDICTION_TEXT' => $state->get('discount_prediction_text'),
+            )
+        );
     }
 }

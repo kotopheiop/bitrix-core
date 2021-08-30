@@ -53,58 +53,81 @@ class EntityImportLoader
         $accountNumberPrefix = $this->settings->prefixFor(EntityType::ORDER);
 
         if (is_numeric($number)) {
-            if ($r = $entity::getById($number)->fetch())
+            if ($r = $entity::getById($number)->fetch()) {
                 return $r;
+            }
 
-            if ($r = $entity::getList(array(
-                'select' => array('ID'),
-                'filter' => array('ID_1C' => $number),
-                'order' => array('ID' => 'DESC')))->fetch()
-            )
+            if ($r = $entity::getList(
+                array(
+                    'select' => array('ID'),
+                    'filter' => array('ID_1C' => $number),
+                    'order' => array('ID' => 'DESC')
+                )
+            )->fetch()
+            ) {
                 return $r;
+            }
 
 
-            if ($r = $entity::getList(array(
-                'select' => array('ID'),
-                'filter' => array('ACCOUNT_NUMBER' => $number),
-                'order' => array('ID' => 'DESC')))->fetch()
-            )
+            if ($r = $entity::getList(
+                array(
+                    'select' => array('ID'),
+                    'filter' => array('=ACCOUNT_NUMBER' => $number),
+                    'order' => array('ID' => 'DESC')
+                )
+            )->fetch()
+            ) {
                 return $r;
+            }
 
             if ($accountNumberPrefix !== "") {
-                if (strpos($number, $accountNumberPrefix) === 0) {
-                    $number = substr($number, strlen($accountNumberPrefix));
-                    if ($r = $entity::getById($number)->fetch())
+                if (mb_strpos($number, $accountNumberPrefix) === 0) {
+                    $number = mb_substr($number, mb_strlen($accountNumberPrefix));
+                    if ($r = $entity::getById($number)->fetch()) {
                         return $r;
+                    }
                 }
             }
         } else {
-            if ($r = $entity::getList(array(
-                'select' => array('ID'),
-                'filter' => array('ID_1C' => $number),
-                'order' => array('ID' => 'DESC')))->fetch()
-            )
+            if ($r = $entity::getList(
+                array(
+                    'select' => array('ID'),
+                    'filter' => array('ID_1C' => $number),
+                    'order' => array('ID' => 'DESC')
+                )
+            )->fetch()
+            ) {
                 return $r;
+            }
 
-            if ($r = $entity::getList(array(
-                'select' => array('ID'),
-                'filter' => array('ACCOUNT_NUMBER' => $number),
-                'order' => array('ID' => 'DESC')))->fetch()
-            )
+            if ($r = $entity::getList(
+                array(
+                    'select' => array('ID'),
+                    'filter' => array('=ACCOUNT_NUMBER' => $number),
+                    'order' => array('ID' => 'DESC')
+                )
+            )->fetch()
+            ) {
                 return $r;
+            }
 
             if ($accountNumberPrefix != "") {
-                if (strpos($number, $accountNumberPrefix) === 0) {
-                    $number = substr($number, strlen($accountNumberPrefix));
-                    if ($r = $entity::getById($number)->fetch())
+                if (mb_strpos($number, $accountNumberPrefix) === 0) {
+                    $number = mb_substr($number, mb_strlen($accountNumberPrefix));
+                    if ($r = $entity::getById($number)->fetch()) {
                         return $r;
+                    }
 
-                    if ($r = $entity::getList(array(
-                        'select' => array('ID'),
-                        'filter' => array('ACCOUNT_NUMBER' => $number),
-                        'order' => array('ID' => 'DESC')))->fetch()
-                    )
+                    if ($r = $entity::getList(
+                        array(
+                            'select' => array('ID'),
+                            'filter' => array('=ACCOUNT_NUMBER' => $number),
+                            'order' => array('ID' => 'DESC')
+                        )
+                    )->fetch()
+                    ) {
                         return $r;
+                    }
                 }
             }
         }
@@ -124,10 +147,13 @@ class EntityImportLoader
 
         $entity = static::getEntityTable();
 
-        if ($r = $entity::getList(array(
-            'select' => static::getFields(),
-            'filter' => array(static::getExternalField() => $xmlId),
-            'order' => array('ID' => 'DESC')))->fetch()
+        if ($r = $entity::getList(
+            array(
+                'select' => static::getFields(),
+                'filter' => array(static::getExternalField() => $xmlId),
+                'order' => array('ID' => 'DESC')
+            )
+        )->fetch()
         ) {
             return $r;
         }
@@ -287,8 +313,19 @@ class UserProfileImportLoader extends EntityImportLoader
         if (intval($userCode[0]) > 0) {
             $r = \CUser::GetByID($userCode[0]);
             if ($arUser = $r->Fetch()) {
-                if (rtrim(htmlspecialcharsback(substr(htmlspecialcharsbx($arUser["ID"] . "#" . $arUser["LOGIN"] . "#" . $arUser["LAST_NAME"] . " " . $arUser["NAME"] . " " . $arUser["SECOND_NAME"]), 0, 80))) == $code)
+                if (rtrim(
+                        htmlspecialcharsback(
+                            mb_substr(
+                                htmlspecialcharsbx(
+                                    $arUser["ID"] . "#" . $arUser["LOGIN"] . "#" . $arUser["LAST_NAME"] . " " . $arUser["NAME"] . " " . $arUser["SECOND_NAME"]
+                                ),
+                                0,
+                                80
+                            )
+                        )
+                    ) == $code) {
                     $result = $arUser;
+                }
             }
         }
         return $result;

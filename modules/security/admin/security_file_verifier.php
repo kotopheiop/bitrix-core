@@ -1,4 +1,5 @@
 <?
+
 @set_time_limit(10000);
 ini_set("track_errors", "1");
 ignore_user_abort(true);
@@ -13,8 +14,9 @@ $canSign = $USER->CanDoOperation('security_file_verifier_sign');
 $canCollect = $USER->CanDoOperation('security_file_verifier_collect');
 $canVerify = $USER->CanDoOperation('security_file_verifier_verify');
 
-if (!$canSign && !$canCollect && !$canVerify)
+if (!$canSign && !$canCollect && !$canVerify) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 
@@ -25,8 +27,9 @@ define("BX_FILE_CHECKER_REGION_ROOT", 2);
 define("BX_FILE_CHECKER_REGION_PERSONAL_ROOT", 4);
 define("BX_FILE_CHECKER_REGION_PUBLIC", 8);
 
-if (!defined("START_EXEC_TIME"))
+if (!defined("START_EXEC_TIME")) {
     define("START_EXEC_TIME", getmicrotime());
+}
 
 class CFileChecker
 {
@@ -49,9 +52,12 @@ class CFileChecker
     {
         if (!self::$integrityKey) {
             $fileString = file_get_contents(__FILE__);
-            $fileString = preg_replace("#<" . "\\?[\\s]*define\\(\"BX_INTEGRITY_VALUE\",[\\s]*'[^']*?'\\);?[\\s]*\\?" . ">#i", "", $fileString);
+            $fileString = preg_replace(
+                "#<" . "\\?[\\s]*define\\(\"BX_INTEGRITY_VALUE\",[\\s]*'[^']*?'\\);?[\\s]*\\?" . ">#i",
+                "",
+                $fileString
+            );
             self::$integrityKey = hash('sha256', $fileString);
-
         }
         return self::$integrityKey;
     }
@@ -64,23 +70,29 @@ class CFileChecker
 
         if ($handle = @opendir($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules")) {
             while (($file = readdir($handle)) !== false) {
-                if ($file == "." || $file == "..")
+                if ($file == "." || $file == "..") {
                     continue;
+                }
 
-                if (!is_file($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/" . $file))
+                if (!is_file($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/" . $file)) {
                     continue;
+                }
 
-                if (substr($file, 0, strlen("serverfilelog-")) != "serverfilelog-")
+                if (mb_substr($file, 0, mb_strlen("serverfilelog-")) != "serverfilelog-") {
                     continue;
-                if (substr($file, -4) != ".dat")
+                }
+                if (mb_substr($file, -4) != ".dat") {
                     continue;
-                if (substr($file, -8) === "_tmp.dat")
+                }
+                if (mb_substr($file, -8) === "_tmp.dat") {
                     continue;
+                }
 
-                $ts = substr($file, strlen("serverfilelog-"));
-                $ts = substr($ts, 0, -4);
-                if (intval($ts) <= 0)
+                $ts = mb_substr($file, mb_strlen("serverfilelog-"));
+                $ts = mb_substr($ts, 0, -4);
+                if (intval($ts) <= 0) {
                     continue;
+                }
 
                 $vf->__GetDescriptionList($ts);
 
@@ -106,8 +118,9 @@ class CFileChecker
         $this->arCollectedExtensions = array();
         foreach ($arCollectedExtensions as $ext) {
             $ext = trim($ext);
-            if (strlen($ext) > 0)
-                $this->arCollectedExtensions[] = strtolower($ext);
+            if ($ext <> '') {
+                $this->arCollectedExtensions[] = mb_strtolower($ext);
+            }
         }
     }
 
@@ -115,12 +128,13 @@ class CFileChecker
     {
         $this->startPath = "";
 
-        if (strlen($startPath) > 0) {
-            if (intval(substr($startPath, 0, 1)) == $region) {
-                $startPath = str_replace("\\", "/", substr($startPath, 1));
+        if ($startPath <> '') {
+            if (intval(mb_substr($startPath, 0, 1)) == $region) {
+                $startPath = str_replace("\\", "/", mb_substr($startPath, 1));
                 $startPath = trim(trim($startPath, "/\\"));
-                if (strlen($startPath) > 0)
+                if ($startPath <> '') {
                     $this->startPath = "/" . $startPath;
+                }
             }
         }
     }
@@ -139,25 +153,32 @@ class CFileChecker
     {
         $path = str_replace("\\", "/", $path);
         $path = trim(trim($path, "/\\"));
-        if (strlen($path) > 0)
+        if ($path <> '') {
             $path = "/" . $path;
+        }
 
         $startPathPart = "";
         $le = false;
-        if (strlen($this->startPath) > 0) {
-            if (strlen($path) <= 0
-                || strlen($this->startPath) >= strlen($path) && substr($this->startPath, 0, strlen($path)) == $path) {
-                if (strlen($path) > 0)
-                    $startPath = substr($this->startPath, strlen($path) + 1);
-                else
+        if ($this->startPath <> '') {
+            if ($path == ''
+                || mb_strlen($this->startPath) >= mb_strlen($path) && mb_substr(
+                    $this->startPath,
+                    0,
+                    mb_strlen($path)
+                ) == $path) {
+                if ($path <> '') {
+                    $startPath = mb_substr($this->startPath, mb_strlen($path) + 1);
+                } else {
                     $startPath = $this->startPath;
+                }
 
-                $pos = strpos($startPath, "/");
+                $pos = mb_strpos($startPath, "/");
                 $le = (($pos === false) ? false : true);
-                if ($pos === false)
+                if ($pos === false) {
                     $startPathPart = $startPath;
-                else
-                    $startPathPart = substr($startPath, 0, $pos);
+                } else {
+                    $startPathPart = mb_substr($startPath, 0, $pos);
+                }
             }
         }
 
@@ -165,23 +186,26 @@ class CFileChecker
 
         if ($handle = @opendir($_SERVER["DOCUMENT_ROOT"] . $path)) {
             while (($file = readdir($handle)) !== false) {
-                if ($file == "." || $file == "..")
+                if ($file == "." || $file == "..") {
                     continue;
+                }
 
-                if (strlen($startPathPart) > 0 && ($le && $startPathPart > $file || !$le && $startPathPart >= $file))
+                if ($startPathPart <> '' && ($le && $startPathPart > $file || !$le && $startPathPart >= $file)) {
                     continue;
+                }
 
                 if (count($arSkipPaths) > 0) {
-                    $bSkip = False;
+                    $bSkip = false;
                     for ($i = 0, $count = count($arSkipPaths); $i < $count; $i++) {
-                        if (strpos($path . "/" . $file, $arSkipPaths[$i]) === 0) {
-                            $bSkip = True;
+                        if (mb_strpos($path . "/" . $file, $arSkipPaths[$i]) === 0) {
+                            $bSkip = true;
                             break;
                         }
                     }
 
-                    if ($bSkip)
+                    if ($bSkip) {
                         continue;
+                    }
                 }
 
                 $arFiles[] = $file;
@@ -194,14 +218,22 @@ class CFileChecker
 
         for ($i = 0, $count = count($arFiles); $i < $count; $i++) {
             if (is_dir($_SERVER["DOCUMENT_ROOT"] . $path . "/" . $arFiles[$i])) {
-                $res = $this->__WalkThrougtTree($path . "/" . $arFiles[$i], $arSkipPaths, $level + 1, $arTs, $fileFunction);
-                if (!$res)
+                $res = $this->__WalkThrougtTree(
+                    $path . "/" . $arFiles[$i],
+                    $arSkipPaths,
+                    $level + 1,
+                    $arTs,
+                    $fileFunction
+                );
+                if (!$res) {
                     return false;
+                }
             } else {
                 if (count($this->arCollectedExtensions) > 0) {
-                    $fileExt = strtolower(GetFileExtension($arFiles[$i]));
-                    if (!in_array($fileExt, $this->arCollectedExtensions))
+                    $fileExt = mb_strtolower(GetFileExtension($arFiles[$i]));
+                    if (!in_array($fileExt, $this->arCollectedExtensions)) {
                         continue;
+                    }
                 }
 
                 call_user_func(array(&$this, $fileFunction), $path . "/" . $arFiles[$i]);
@@ -229,10 +261,15 @@ class CFileChecker
         $arFileInfo = $this->GetFileInfo($file);
         $s = $this->fileLog->Search($arFileInfo["filename"]);
         if ($s) {
-            if ($s["fileSize"] != $arFileInfo["fileSize"])
-                $this->fileErrorLog->Write("FS*" . $arFileInfo["filename"] . "*" . $arFileInfo["fileSize"] . "*" . $s["fileSize"]);
-            elseif ($s["fileCRC"] != $arFileInfo["fileCRC"])
-                $this->fileErrorLog->Write("FC*" . $arFileInfo["filename"] . "*" . $arFileInfo["fileCRC"] . "*" . $s["fileCRC"]);
+            if ($s["fileSize"] != $arFileInfo["fileSize"]) {
+                $this->fileErrorLog->Write(
+                    "FS*" . $arFileInfo["filename"] . "*" . $arFileInfo["fileSize"] . "*" . $s["fileSize"]
+                );
+            } elseif ($s["fileCRC"] != $arFileInfo["fileCRC"]) {
+                $this->fileErrorLog->Write(
+                    "FC*" . $arFileInfo["filename"] . "*" . $arFileInfo["fileCRC"] . "*" . $s["fileCRC"]
+                );
+            }
         } else {
             $this->fileErrorLog->Write("FN*" . $arFileInfo["filename"]);
         }
@@ -240,14 +277,16 @@ class CFileChecker
 
     function __VerifyLogFileRest()
     {
-        while ($s = $this->fileLog->ReadLine())
+        while ($s = $this->fileLog->ReadLine()) {
             $this->fileErrorLog->Write("FM*" . $s);
+        }
     }
 
     function CollectCrc($region, $arCollectedExtensions, $pwdString, &$arTs, &$arErrors)
     {
-        if (BX_PERSONAL_ROOT == BX_ROOT)
+        if (BX_PERSONAL_ROOT == BX_ROOT) {
             $region = (($region | BX_FILE_CHECKER_REGION_PERSONAL_ROOT) ^ BX_FILE_CHECKER_REGION_PERSONAL_ROOT);
+        }
 
         $this->SetCollectedExtensions($arCollectedExtensions);
 
@@ -366,10 +405,11 @@ class CFileChecker
 
         $flag = ((($region | $arTs["Completed"]) ^ $arTs["Completed"]) == 0);
 
-        if ($flag)
+        if ($flag) {
             $this->fileLog->CloseCreate($pwdString);
-        else
+        } else {
             $this->fileLog->CloseCreateStep();
+        }
 
         return $flag;
     }
@@ -509,10 +549,11 @@ class CFileChecker
             $this->__VerifyLogFileRest();
         }
 
-        if ($res)
+        if ($res) {
             $this->fileLog->CloseOpen();
-        else
+        } else {
             $this->fileLog->CloseOpenStep();
+        }
 
         $this->fileErrorLog->CloseCreate();
 
@@ -546,7 +587,10 @@ class CFileCheckerLog
         $this->descrCollectedExtensions = $arCollectedExtensions;
         $this->descrTs = $this->ts;
 
-        fwrite($this->serverLogTmpHandle, $this->ts . "|" . $region . "|" . implode(",", $arCollectedExtensions) . "\n");
+        fwrite(
+            $this->serverLogTmpHandle,
+            $this->ts . "|" . $region . "|" . implode(",", $arCollectedExtensions) . "\n"
+        );
     }
 
     function __ReadDescription()
@@ -594,7 +638,10 @@ class CFileCheckerLog
 
     function Write($arFileInfo)
     {
-        fwrite($this->serverLogTmpHandle, $arFileInfo["filename"] . "*" . $arFileInfo["fileSize"] . "*" . $arFileInfo["fileCRC"] . "\n");
+        fwrite(
+            $this->serverLogTmpHandle,
+            $arFileInfo["filename"] . "*" . $arFileInfo["fileSize"] . "*" . $arFileInfo["fileCRC"] . "\n"
+        );
     }
 
     function CloseCreateStep()
@@ -605,12 +652,15 @@ class CFileCheckerLog
     function __Crypt($pwdString)
     {
         $fileString = file_get_contents($_SERVER["DOCUMENT_ROOT"] . str_replace("\\", "/", $this->serverLogTmp));
-        $fileString = substr($fileString, strpos($fileString, "\n") + 1);
+        $fileString = mb_substr($fileString, mb_strpos($fileString, "\n") + 1);
 
         $fileStringNew = CFileCheckerUtil::Encrypt($fileString, $pwdString);
 
         $this->serverLogHandle = fopen($_SERVER["DOCUMENT_ROOT"] . $this->serverLog, "wb");
-        fwrite($this->serverLogHandle, $this->descrTs . "|" . $this->descrRegion . "|" . implode(",", $this->descrCollectedExtensions) . "\n");
+        fwrite(
+            $this->serverLogHandle,
+            $this->descrTs . "|" . $this->descrRegion . "|" . implode(",", $this->descrCollectedExtensions) . "\n"
+        );
         fwrite($this->serverLogHandle, $fileStringNew);
         fclose($this->serverLogHandle);
     }
@@ -652,12 +702,13 @@ class CFileCheckerLog
         $this->__SetLogFileNames();
 
         $fileString = file_get_contents($_SERVER["DOCUMENT_ROOT"] . str_replace("\\", "/", $this->serverLog));
-        $pos = strpos($fileString, "\n");
-        $descr = substr($fileString, 0, $pos);
+        $pos = mb_strpos($fileString, "\n");
+        $descr = mb_substr($fileString, 0, $pos);
 
         $fileStringNew = CFileCheckerUtil::Decrypt($fileString, $pwdString, $pos + 1);
-        if (substr($fileStringNew, 0, 1) != "/")
+        if (mb_substr($fileStringNew, 0, 1) != "/") {
             return false;
+        }
 
         $this->serverLogTmpHandle = fopen($_SERVER["DOCUMENT_ROOT"] . $this->serverLogTmp, "w");
         fwrite($this->serverLogTmpHandle, $descr . "\n");
@@ -684,9 +735,9 @@ class CFileCheckerLog
 
     function __ReadDescriptionFromString()
     {
-        $pos = strpos($this->logText, "\n");
-        $line = substr($this->logText, 0, $pos);
-        $this->logText = substr($this->logText, $pos + 1);
+        $pos = mb_strpos($this->logText, "\n");
+        $line = mb_substr($this->logText, 0, $pos);
+        $this->logText = mb_substr($this->logText, $pos + 1);
 
         $line = trim($line);
         $arLine = explode("|", $line);
@@ -700,18 +751,18 @@ class CFileCheckerLog
     {
         $pos = -1;
         do {
-            $pos = strpos($this->logText, $filename, $pos + 1);
+            $pos = mb_strpos($this->logText, $filename, $pos + 1);
             if ($pos === false) {
                 return false;
             }
-        } while (($pos > 0) && (substr($this->logText, $pos - 1, 1) !== "\n"));
+        } while (($pos > 0) && (mb_substr($this->logText, $pos - 1, 1) !== "\n"));
         //check if it's begin of file or line
 
-        $pos1 = strpos($this->logText, "\n", $pos);
+        $pos1 = mb_strpos($this->logText, "\n", $pos);
 
-        $line = substr($this->logText, $pos, $pos1 - $pos);
+        $line = mb_substr($this->logText, $pos, $pos1 - $pos);
 
-        $this->logText = substr($this->logText, 0, $pos) . substr($this->logText, $pos1 + 1);
+        $this->logText = mb_substr($this->logText, 0, $pos) . mb_substr($this->logText, $pos1 + 1);
 
         $arLine = explode("*", $line);
 
@@ -724,9 +775,9 @@ class CFileCheckerLog
 
     function ReadLine()
     {
-        $pos = strpos($this->logText, "\n");
-        $line = substr($this->logText, 0, $pos);
-        $this->logText = substr($this->logText, $pos + 1);
+        $pos = mb_strpos($this->logText, "\n");
+        $line = mb_substr($this->logText, 0, $pos);
+        $this->logText = mb_substr($this->logText, $pos + 1);
 
         return $line;
     }
@@ -739,7 +790,10 @@ class CFileCheckerLog
     function CloseOpenStep()
     {
         $this->serverLogTmpHandle = fopen($_SERVER["DOCUMENT_ROOT"] . $this->serverLogTmp, "w");
-        fwrite($this->serverLogTmpHandle, $this->descrTs . "|" . $this->descrRegion . "|" . implode(",", $this->descrCollectedExtensions) . "\n");
+        fwrite(
+            $this->serverLogTmpHandle,
+            $this->descrTs . "|" . $this->descrRegion . "|" . implode(",", $this->descrCollectedExtensions) . "\n"
+        );
         fwrite($this->serverLogTmpHandle, $this->logText);
         fclose($this->serverLogTmpHandle);
     }
@@ -779,19 +833,21 @@ class CFileCheckerLog
     public static function GetDownloadName($ts)
     {
         $ts = intval($ts);
-        if ($ts <= 0)
+        if ($ts <= 0) {
             return "";
-        elseif (function_exists("gzcompress"))
+        } elseif (function_exists("gzcompress")) {
             return "serverfilelog-" . $ts . ".dat.gz";
-        else
+        } else {
             return "serverfilelog-" . $ts . ".dat";
+        }
     }
 
     public static function StartDownload($ts)
     {
         $ts = intval($ts);
-        if ($ts <= 0)
+        if ($ts <= 0) {
             return false;
+        }
 
         $serverFileLog = "/bitrix/modules/serverfilelog-" . $ts . ".dat";
 
@@ -803,8 +859,9 @@ class CFileCheckerLog
             $hFile = fopen($_SERVER["DOCUMENT_ROOT"] . $serverFileLog, "rb");
             while (!feof($hFile)) {
                 $buffer = fgets($hFile, 4096);
-                if (strlen($buffer) > 0)
+                if ($buffer <> '') {
                     gzwrite($zp_file, $buffer);
+                }
             }
             gzclose($zp_file);
             fclose($hFile);
@@ -816,12 +873,14 @@ class CFileCheckerLog
     public static function StopDownload($ts)
     {
         $ts = intval($ts);
-        if ($ts <= 0)
+        if ($ts <= 0) {
             return;
+        }
 
         $streamFileName = "/bitrix/modules/serverfilelog-" . $ts . ".dat2";
-        if (function_exists("gzcompress"))
+        if (function_exists("gzcompress")) {
             @unlink($_SERVER["DOCUMENT_ROOT"] . $streamFileName);
+        }
     }
 }
 
@@ -841,8 +900,9 @@ class CFileCheckerErrorLog
     {
         $this->__SetLogFileNames();
 
-        if ($this->serverLogHandle = fopen($_SERVER["DOCUMENT_ROOT"] . $this->serverLog, "w"))
+        if ($this->serverLogHandle = fopen($_SERVER["DOCUMENT_ROOT"] . $this->serverLog, "w")) {
             return true;
+        }
 
         return false;
     }
@@ -851,8 +911,9 @@ class CFileCheckerErrorLog
     {
         $this->__SetLogFileNames();
 
-        if ($this->serverLogHandle = fopen($_SERVER["DOCUMENT_ROOT"] . $this->serverLog, "a"))
+        if ($this->serverLogHandle = fopen($_SERVER["DOCUMENT_ROOT"] . $this->serverLog, "a")) {
             return true;
+        }
 
         return false;
     }
@@ -878,9 +939,9 @@ class CFileCheckerErrorLog
 
     function ReadLine()
     {
-        $pos = strpos($this->logText, "\n");
-        $line = substr($this->logText, 0, $pos);
-        $this->logText = substr($this->logText, $pos + 1);
+        $pos = mb_strpos($this->logText, "\n");
+        $line = mb_substr($this->logText, 0, $pos);
+        $this->logText = mb_substr($this->logText, $pos + 1);
 
         return $line;
     }
@@ -905,32 +966,37 @@ class CFileCheckerSubscriber
     public static function IsSubscribed($fileName)
     {
         $fileName = trim($fileName);
-        if (strlen($fileName) <= 0)
+        if ($fileName == '') {
             return false;
+        }
 
         $fileString = file_get_contents($_SERVER["DOCUMENT_ROOT"] . str_replace("\\", "/", $fileName));
-        if (strlen($fileString) <= 0)
+        if ($fileString == '') {
             return false;
+        }
 
-        return preg_match("#<" . "\?[\s]*define\(\"BX_INTEGRITY_VALUE\",[\s]*'([^']*?)'\);?[\s]*\?" . ">#i", $fileString);
+        return preg_match(
+            "#<" . "\?[\s]*define\(\"BX_INTEGRITY_VALUE\",[\s]*'([^']*?)'\);?[\s]*\?" . ">#i",
+            $fileString
+        );
     }
 
     public static function Subscribe($fileName, $pwdString, $keyString, &$arErrors)
     {
         $fileName = trim($fileName);
-        if (strlen($fileName) <= 0) {
+        if ($fileName == '') {
             $arErrors[] = GetMessage("MFC1_FILE_NOT_SET") . ". ";
             return false;
         }
 
         $pwdString = trim($pwdString);
-        if (strlen($pwdString) <= 0) {
+        if ($pwdString == '') {
             $arErrors[] = GetMessage("MFC1_PWD_NOT_SET") . ". ";
             return false;
         }
 
         $keyString = trim($keyString);
-        if (strlen($keyString) <= 0) {
+        if ($keyString == '') {
             $arErrors[] = GetMessage("MFC1_KEY_NOT_SET") . ". ";
             return false;
         }
@@ -941,17 +1007,21 @@ class CFileCheckerSubscriber
         }
 
         $fileString = file_get_contents($_SERVER["DOCUMENT_ROOT"] . str_replace("\\", "/", $fileName));
-        if (strlen($fileString) <= 0) {
+        if ($fileString == '') {
             $arErrors[] = GetMessage("MFC1_EMPTY_FILE") . ". ";
             return false;
         }
 
-        if (substr($fileString, 0, 4) === "Zend") {
+        if (mb_substr($fileString, 0, 4) === "Zend") {
             $arErrors[] = GetMessage("MFC1_ZEND_FILE") . ". ";
             return false;
         }
 
-        $fileString = preg_replace("#<" . "\\?[\\s]*define\\(\"BX_INTEGRITY_VALUE\",[\\s]*'[^']*?'\\);?[\\s]*\\?" . ">#i", "", $fileString);
+        $fileString = preg_replace(
+            "#<" . "\\?[\\s]*define\\(\"BX_INTEGRITY_VALUE\",[\\s]*'[^']*?'\\);?[\\s]*\\?" . ">#i",
+            "",
+            $fileString
+        );
         $currentCRC = sprintf("%u", crc32($fileString));
 
         $keyString = CFileCheckerUtil::Encrypt($keyString, CFileChecker::getIntegrityKey());
@@ -967,8 +1037,9 @@ class CFileCheckerSubscriber
 
     public static function __SetIntegrityParams($arData, $password)
     {
-        if (!is_array($arData) || !isset($arData["CRC"]) || !isset($arData["KEY"]))
-            return False;
+        if (!is_array($arData) || !isset($arData["CRC"]) || !isset($arData["KEY"])) {
+            return false;
+        }
 
         $data = $arData["CRC"] . "*" . $arData["KEY"];
         $dataNew = CFileCheckerUtil::Encrypt($data, $password);
@@ -979,27 +1050,35 @@ class CFileCheckerSubscriber
     public static function Verify($fileName, $pwdString, &$keyString, &$arErrors)
     {
         $fileName = trim($fileName);
-        if (strlen($fileName) <= 0) {
+        if ($fileName == '') {
             $arErrors[] = GetMessage("MFC1_FILE_NOT_SET") . ". ";
             return false;
         }
 
         $pwdString = trim($pwdString);
-        if (strlen($pwdString) <= 0) {
+        if ($pwdString == '') {
             $arErrors[] = GetMessage("MFC1_PWD_NOT_SET") . ". ";
             return false;
         }
 
         $fileString = file_get_contents($_SERVER["DOCUMENT_ROOT"] . str_replace("\\", "/", $fileName));
-        if (strlen($fileString) <= 0) {
+        if ($fileString == '') {
             $arErrors[] = GetMessage("MFC1_EMPTY_FILE") . ". ";
             return false;
         }
 
-        if (preg_match("#<" . "\\?[\\s]*define\\(\"BX_INTEGRITY_VALUE\",[\\s]*'([^']*?)'\\);?[\\s]*\\?" . ">#i", $fileString, $arMatches)) {
+        if (preg_match(
+            "#<" . "\\?[\\s]*define\\(\"BX_INTEGRITY_VALUE\",[\\s]*'([^']*?)'\\);?[\\s]*\\?" . ">#i",
+            $fileString,
+            $arMatches
+        )) {
             $data = $arMatches[1];
-            if (strlen($data) > 0) {
-                $fileString = preg_replace("#<" . "\\?[\\s]*define\\(\"BX_INTEGRITY_VALUE\",[\\s]*'[^']*?'\\);?[\\s]*\\?" . ">#i", "", $fileString);
+            if ($data <> '') {
+                $fileString = preg_replace(
+                    "#<" . "\\?[\\s]*define\\(\"BX_INTEGRITY_VALUE\",[\\s]*'[^']*?'\\);?[\\s]*\\?" . ">#i",
+                    "",
+                    $fileString
+                );
                 $currentCRC = sprintf("%u", crc32($fileString));
 
                 if ($arIntegrityParams = CFileCheckerSubscriber::__GetIntegrityParams($data, $pwdString)) {
@@ -1027,14 +1106,16 @@ class CFileCheckerSubscriber
 
     public static function __GetIntegrityParams($data, $password)
     {
-        if (strlen($data) <= 0)
-            return False;
+        if ($data == '') {
+            return false;
+        }
 
         $dataNew = CFileCheckerUtil::Decrypt($data, $password);
         $arDataNew = explode("*", $dataNew);
 
-        if (count($arDataNew) != 2)
-            return False;
+        if (count($arDataNew) != 2) {
+            return false;
+        }
 
         return array("CRC" => $arDataNew[0], "KEY" => $arDataNew[1]);
     }
@@ -1079,19 +1160,21 @@ class CFileCheckerUtil
 
     protected static function __CryptData($data, $pwdString, $type, $startPosition = 0)
     {
-        $type = strtoupper($type);
-        if ($type != "D")
+        $type = mb_strtoupper($type);
+        if ($type != "D") {
             $type = "E";
+        }
 
-        if ($type == 'D')
+        if ($type == 'D') {
             $data = urldecode($data);
+        }
 
         $key[] = "";
         $box[] = "";
-        $pwdLength = strlen($pwdString);
+        $pwdLength = mb_strlen($pwdString);
 
         for ($i = 0; $i <= 255; $i++) {
-            $key[$i] = ord(substr($pwdString, ($i % $pwdLength), 1));
+            $key[$i] = ord(mb_substr($pwdString, ($i % $pwdLength), 1));
             $box[$i] = $i;
         }
         $x = 0;
@@ -1106,7 +1189,7 @@ class CFileCheckerUtil
         $cipher = "";
         $a = 0;
         $j = 0;
-        $data_len = defined("BX_UTF") ? mb_strlen($data, 'latin1') : strlen($data);
+        $data_len = defined("BX_UTF") ? mb_strlen($data, 'latin1') : mb_strlen($data);
         for ($i = $startPosition; $i < $data_len; $i++) {
             $a = ($a + 1) % 256;
             $j = ($j + $box[$a]) % 256;
@@ -1115,15 +1198,16 @@ class CFileCheckerUtil
             $box[$j] = $temp;
             $k = $box[(($box[$a] + $box[$j]) % 256)];
             $cipherby = ord(
-                    defined("BX_UTF") ? mb_substr($data, $i, 1, 'latin1') : substr($data, $i, 1)
+                    defined("BX_UTF") ? mb_substr($data, $i, 1, 'latin1') : mb_substr($data, $i, 1)
                 ) ^ $k;
             $cipher .= chr($cipherby);
         }
 
-        if ($type == 'D')
+        if ($type == 'D') {
             return $cipher;
-        else
+        } else {
             return urlencode($cipher);
+        }
     }
 }
 
@@ -1137,11 +1221,13 @@ if (in_array($_REQUEST["fcajax"], array("cl", "vf", "df"))) {
     }
 
     if ($_REQUEST["fcajax"] == "cl") {
-        if (!$canCollect)
+        if (!$canCollect) {
             $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+        }
 
-        if (intval($_REQUEST["tm"]) < 5)
+        if (intval($_REQUEST["tm"]) < 5) {
             $_REQUEST["tm"] = 5;
+        }
 
         $collector = new CFileChecker();
         $arTs = array(
@@ -1151,21 +1237,30 @@ if (in_array($_REQUEST["fcajax"], array("cl", "vf", "df"))) {
             "MaxExecutionTime" => intval($_REQUEST["tm"]),
         );
         $arErrors = array();
-        $res = $collector->CollectCrc(intval($_REQUEST["region"]), explode(",", $_REQUEST["exts"]), $_REQUEST["pwd"], $arTs, $arErrors);
+        $res = $collector->CollectCrc(
+            intval($_REQUEST["region"]),
+            explode(",", $_REQUEST["exts"]),
+            $_REQUEST["pwd"],
+            $arTs,
+            $arErrors
+        );
         if (count($arErrors) > 0) {
             echo "ERR|" . implode("|", $arErrors);
         } else {
-            if ($res)
+            if ($res) {
                 echo "FIN|" . $arTs["ts"] . "|" . $arTs["StatNum"];
-            else
+            } else {
                 echo "STP|" . $arTs["Completed"] . "|" . $arTs["ts"] . "|" . $arTs["StartPoint"] . "|" . $arTs["StatNum"];
+            }
         }
     } elseif ($_REQUEST["fcajax"] == "vf") {
-        if (!$canVerify)
+        if (!$canVerify) {
             $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+        }
 
-        if (intval($_REQUEST["tm"]) < 5)
+        if (intval($_REQUEST["tm"]) < 5) {
             $_REQUEST["tm"] = 5;
+        }
 
         $collector = new CFileChecker();
         $arTs = array(
@@ -1194,19 +1289,21 @@ if (in_array($_REQUEST["fcajax"], array("cl", "vf", "df"))) {
                     $arS = explode("*", $s);
 
                     echo $io->GetLogicalName($arS[1]) . " - ";
-                    if ($arS[0] == "FS")
+                    if ($arS[0] == "FS") {
                         echo GetMessage("MFC1_SIZE_DIF");
-                    elseif ($arS[0] == "FC")
+                    } elseif ($arS[0] == "FC") {
                         echo GetMessage("MFC1_CRC_DIF");
-                    elseif ($arS[0] == "FN")
+                    } elseif ($arS[0] == "FN") {
                         echo GetMessage("MFC1_NEW_DIF");
-                    elseif ($arS[0] == "FM")
+                    } elseif ($arS[0] == "FM") {
                         echo GetMessage("MFC1_DEL_DIF");
+                    }
                     echo "<br />";
                     $i++;
                 }
-                if ($i == 0)
+                if ($i == 0) {
                     echo GetMessage("MFC1_NO_DIF");
+                }
                 $fl->CloseOpen();
                 COption::SetOptionInt("security", "last_files_check", time());
             } else {
@@ -1214,8 +1311,9 @@ if (in_array($_REQUEST["fcajax"], array("cl", "vf", "df"))) {
             }
         }
     } elseif ($_REQUEST["fcajax"] == "df") {
-        if (!$canCollect && !$canVerify)
+        if (!$canCollect && !$canVerify) {
             $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+        }
 
         $_REQUEST["df"] = intval($_REQUEST["df"]);
         unlink($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/serverfilelog-" . $_REQUEST["df"] . ".dat");
@@ -1230,10 +1328,16 @@ if ($_REQUEST["fcdld"] == "Y" && check_bitrix_sessid() && $canCollect) {
 
         $filesize = filesize($_SERVER["DOCUMENT_ROOT"] . $streamFileName);
         header($_SERVER["SERVER_PROTOCOL"] . " 200 OK");
-        header("Content-Type: application/force-download; name=\"" . CFileCheckerLog::GetDownloadName($_REQUEST["ts"]) . "\"");
+        header(
+            "Content-Type: application/force-download; name=\"" . CFileCheckerLog::GetDownloadName(
+                $_REQUEST["ts"]
+            ) . "\""
+        );
         header("Content-Transfer-Encoding: binary");
         header("Content-Length: " . $filesize);
-        header("Content-Disposition: attachment; filename=\"" . CFileCheckerLog::GetDownloadName($_REQUEST["ts"]) . "\"");
+        header(
+            "Content-Disposition: attachment; filename=\"" . CFileCheckerLog::GetDownloadName($_REQUEST["ts"]) . "\""
+        );
         header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
         header("Expires: 0");
         header("Pragma: public");
@@ -1249,10 +1353,13 @@ if ($_REQUEST["fcdld"] == "Y" && check_bitrix_sessid() && $canCollect) {
 }
 
 $tabStep = (isset($_REQUEST["tabStep"]) && intval($_REQUEST["tabStep"]) > 1 ? intval($_REQUEST["tabStep"]) : 1);
-if (isset($_REQUEST["backButton"]))
+if (isset($_REQUEST["backButton"])) {
     $tabStep = $tabStep - 2;
-else if (isset($_REQUEST["backToStart"]))
-    $tabStep = 1;
+} else {
+    if (isset($_REQUEST["backToStart"])) {
+        $tabStep = 1;
+    }
+}
 
 $scriptName = "/bitrix/modules/security/admin/security_file_verifier.php";
 $isSubscribed = CFileCheckerSubscriber::IsSubscribed($scriptName);
@@ -1264,55 +1371,69 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $tabStep == 2 && check_bitrix_sessid
         $errorMessageTmp = "";
         $okMessageTmp = "";
 
-        if (strlen($_REQUEST["crc_password"]) <= 0)
+        if ($_REQUEST["crc_password"] == '') {
             $errorMessageTmp .= GetMessage("MFC1_ERR_NO_PWD") . ". ";
-
-        if (strlen($errorMessageTmp) <= 0) {
-            $keyString = "";
-            $arErrors = array();
-            if (!CFileCheckerSubscriber::Verify($scriptName, $_REQUEST["crc_password"], $keyString, $arErrors))
-                $errorMessageTmp .= GetMessage("MFC1_ERR_VERIFY") . "<br />" . implode("<br />", $arErrors);
-            else
-                $okMessageTmp = str_replace("#KEY#", $keyString, GetMessage("MFC1_OK_VERIFY"));
         }
 
-        if (strlen($errorMessageTmp) > 0) {
+        if ($errorMessageTmp == '') {
+            $keyString = "";
+            $arErrors = array();
+            if (!CFileCheckerSubscriber::Verify($scriptName, $_REQUEST["crc_password"], $keyString, $arErrors)) {
+                $errorMessageTmp .= GetMessage("MFC1_ERR_VERIFY") . "<br />" . implode("<br />", $arErrors);
+            } else {
+                $okMessageTmp = str_replace("#KEY#", $keyString, GetMessage("MFC1_OK_VERIFY"));
+            }
+        }
+
+        if ($errorMessageTmp <> '') {
             $errorMessage = $errorMessageTmp;
             $tabStep = 1;
         }
-        if (strlen($okMessageTmp) > 0)
+        if ($okMessageTmp <> '') {
             $okMessage = $okMessageTmp;
+        }
     } elseif ($canSign) {
         $errorMessageTmp = "";
         $okMessageTmp = "";
 
-        if (strlen($_REQUEST["crc_password"]) <= 0)
+        if ($_REQUEST["crc_password"] == '') {
             $errorMessageTmp .= GetMessage("MFC1_ERR_C_PWD") . ". ";
-
-        if (strlen($errorMessageTmp) <= 0 && $_REQUEST["crc_password"] != $_REQUEST["crc_password_check"])
-            $errorMessageTmp .= GetMessage("MFC1_ERR_C_PWD_CHECK") . ". ";
-
-        if (strlen($errorMessageTmp) <= 0 && strlen($_REQUEST["crc_key"]) <= 0)
-            $errorMessageTmp .= GetMessage("MFC1_ERR_C_KEY") . ". ";
-
-        if (strlen($errorMessageTmp) <= 0 && $_REQUEST["crc_key"] == $_REQUEST["crc_password"])
-            $errorMessageTmp .= GetMessage("MFC1_ERR_C_PWD_KEY") . ". ";
-
-        if (strlen($errorMessageTmp) <= 0) {
-            $keyString = "";
-            $arErrors = array();
-            if (!CFileCheckerSubscriber::Subscribe($scriptName, $_REQUEST["crc_password"], $_REQUEST["crc_key"], $arErrors))
-                $errorMessageTmp .= GetMessage("MFC1_ERR_C_ERR") . "<br />" . implode("<br />", $arErrors);
-            else
-                $okMessageTmp = GetMessage("MFC1_ERR_C_SUCCESS") . ".";
         }
 
-        if (strlen($errorMessageTmp) > 0) {
+        if ($errorMessageTmp == '' && $_REQUEST["crc_password"] != $_REQUEST["crc_password_check"]) {
+            $errorMessageTmp .= GetMessage("MFC1_ERR_C_PWD_CHECK") . ". ";
+        }
+
+        if ($errorMessageTmp == '' && $_REQUEST["crc_key"] == '') {
+            $errorMessageTmp .= GetMessage("MFC1_ERR_C_KEY") . ". ";
+        }
+
+        if ($errorMessageTmp == '' && $_REQUEST["crc_key"] == $_REQUEST["crc_password"]) {
+            $errorMessageTmp .= GetMessage("MFC1_ERR_C_PWD_KEY") . ". ";
+        }
+
+        if ($errorMessageTmp == '') {
+            $keyString = "";
+            $arErrors = array();
+            if (!CFileCheckerSubscriber::Subscribe(
+                $scriptName,
+                $_REQUEST["crc_password"],
+                $_REQUEST["crc_key"],
+                $arErrors
+            )) {
+                $errorMessageTmp .= GetMessage("MFC1_ERR_C_ERR") . "<br />" . implode("<br />", $arErrors);
+            } else {
+                $okMessageTmp = GetMessage("MFC1_ERR_C_SUCCESS") . ".";
+            }
+        }
+
+        if ($errorMessageTmp <> '') {
             $errorMessage = $errorMessageTmp;
             $tabStep = 1;
         }
-        if (strlen($okMessageTmp) > 0)
+        if ($okMessageTmp <> '') {
             $okMessage = $okMessageTmp;
+        }
     } else {
         $errorMessage = GetMessage("MFC1_ERR_C_ERR_RIGHT");
         $tabStep = 1;
@@ -1321,8 +1442,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $tabStep == 2 && check_bitrix_sessid
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && $tabStep == 3 && check_bitrix_sessid()) {
     $bOK = $_REQUEST["action"] === "verify" && $canVerify;
-    if (!$bOK)
+    if (!$bOK) {
         $bOK = $_REQUEST["action"] === "collect" && $canCollect;
+    }
 
     if (!$bOK) {
         $tabStep = 2;
@@ -1340,29 +1462,51 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $tabStep == 4 && check_bitrix_sessid
 
         $region = 0;
 
-        if ($_REQUEST["checker_region_kernel"] == "Y")
+        if ($_REQUEST["checker_region_kernel"] == "Y") {
             $region |= BX_FILE_CHECKER_REGION_KERNEL;
-        COption::SetOptionString("security", "checker_region_kernel", $_REQUEST["checker_region_kernel"] == "Y" ? "Y" : "N");
+        }
+        COption::SetOptionString(
+            "security",
+            "checker_region_kernel",
+            $_REQUEST["checker_region_kernel"] == "Y" ? "Y" : "N"
+        );
 
-        if ($_REQUEST["checker_region_root"] == "Y")
+        if ($_REQUEST["checker_region_root"] == "Y") {
             $region |= BX_FILE_CHECKER_REGION_ROOT;
-        COption::SetOptionString("security", "checker_region_root", $_REQUEST["checker_region_root"] == "Y" ? "Y" : "N");
+        }
+        COption::SetOptionString(
+            "security",
+            "checker_region_root",
+            $_REQUEST["checker_region_root"] == "Y" ? "Y" : "N"
+        );
 
-        if ($_REQUEST["checker_region_personal_root"] == "Y")
+        if ($_REQUEST["checker_region_personal_root"] == "Y") {
             $region |= BX_FILE_CHECKER_REGION_PERSONAL_ROOT;
-        COption::SetOptionString("security", "checker_region_personal_root", $_REQUEST["checker_region_personal_root"] == "Y" ? "Y" : "N");
+        }
+        COption::SetOptionString(
+            "security",
+            "checker_region_personal_root",
+            $_REQUEST["checker_region_personal_root"] == "Y" ? "Y" : "N"
+        );
 
-        if ($_REQUEST["checker_region_public"] == "Y")
+        if ($_REQUEST["checker_region_public"] == "Y") {
             $region |= BX_FILE_CHECKER_REGION_PUBLIC;
-        COption::SetOptionString("security", "checker_region_public", $_REQUEST["checker_region_public"] == "Y" ? "Y" : "N");
+        }
+        COption::SetOptionString(
+            "security",
+            "checker_region_public",
+            $_REQUEST["checker_region_public"] == "Y" ? "Y" : "N"
+        );
 
-        if ($region <= 0)
+        if ($region <= 0) {
             $errorMessageTmp .= GetMessage("MFC1_ERR_C_NO_REG") . ". ";
+        }
 
-        if (strlen($errorMessageTmp) <= 0 && strlen($_REQUEST['checker_pwd']) <= 0)
+        if ($errorMessageTmp == '' && $_REQUEST['checker_pwd'] == '') {
             $errorMessageTmp .= GetMessage("MFC1_ERR_C_NO_PWD1") . ". ";
+        }
 
-        if (strlen($errorMessageTmp) > 0) {
+        if ($errorMessageTmp <> '') {
             $errorMessage = $errorMessageTmp;
             $tabStep = 3;
         }
@@ -1378,13 +1522,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $tabStep == 4 && check_bitrix_sessid
                 $zp_file = gzopen($_FILES["crc_file"]["tmp_name"], "rb9f");
                 while (!gzeof($zp_file)) {
                     $buffer = gzread($zp_file, 4096);
-                    if (strlen($buffer) > 0)
+                    if ($buffer <> '') {
                         fwrite($hFile, $buffer);
+                    }
                 }
                 gzclose($zp_file);
                 fclose($hFile);
             } else {
-                copy($_FILES["crc_file"]["tmp_name"], $_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/serverfilelog-1.dat");
+                copy(
+                    $_FILES["crc_file"]["tmp_name"],
+                    $_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/serverfilelog-1.dat"
+                );
             }
 
             $vf = new CFileCheckerLog();
@@ -1393,7 +1541,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $tabStep == 4 && check_bitrix_sessid
 
             if ($ts > 0) {
                 @unlink($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/serverfilelog-" . $ts . ".dat");
-                copy($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/serverfilelog-1.dat", $_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/serverfilelog-" . $ts . ".dat");
+                copy(
+                    $_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/serverfilelog-1.dat",
+                    $_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/serverfilelog-" . $ts . ".dat"
+                );
                 unlink($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/serverfilelog-1.dat");
 
                 $cf_select_dfile = $ts;
@@ -1403,10 +1554,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $tabStep == 4 && check_bitrix_sessid
         }
 
         $cf_select_dfile = intval($cf_select_dfile);
-        if ($cf_select_dfile <= 0)
+        if ($cf_select_dfile <= 0) {
             $errorMessageTmp .= GetMessage("MFC1_ERR_V_FILE") . ". ";
+        }
 
-        if (strlen($errorMessageTmp) > 0) {
+        if ($errorMessageTmp <> '') {
             $errorMessage = $errorMessageTmp;
             $tabStep = 3;
         }
@@ -1418,10 +1570,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $tabStep == 5 && check_bitrix_sessid
         $errorMessageTmp = "";
         $okMessageTmp = "";
 
-        if (strlen($_REQUEST['checker_pwd']) <= 0)
+        if ($_REQUEST['checker_pwd'] == '') {
             $errorMessageTmp .= GetMessage("MFC1_ERR_V_PWD1") . ". ";
+        }
 
-        if (strlen($errorMessageTmp) > 0) {
+        if ($errorMessageTmp <> '') {
             $errorMessage = $errorMessageTmp;
             $tabStep = 4;
         }
@@ -1437,13 +1590,33 @@ $arTabs = Array(
 );
 if ($tabStep > 2) {
     if ($_REQUEST["action"] == "collect" && $canCollect) {
-        $arTabs[] = Array("DIV" => "tabCollect", "TAB" => GetMessage("MFC1_TAB_COLLECT"), "TITLE" => GetMessage("MFC1_TAB_COLLECT_DESCR"));
-        $arTabs[] = Array("DIV" => "tabCollectResult", "TAB" => GetMessage("MFC1_TAB_COLLECT_REP"), "TITLE" => GetMessage("MFC1_TAB_COLLECT_REP_DESCR"));
+        $arTabs[] = Array(
+            "DIV" => "tabCollect",
+            "TAB" => GetMessage("MFC1_TAB_COLLECT"),
+            "TITLE" => GetMessage("MFC1_TAB_COLLECT_DESCR")
+        );
+        $arTabs[] = Array(
+            "DIV" => "tabCollectResult",
+            "TAB" => GetMessage("MFC1_TAB_COLLECT_REP"),
+            "TITLE" => GetMessage("MFC1_TAB_COLLECT_REP_DESCR")
+        );
     }
     if ($_REQUEST["action"] == "verify" && $canVerify) {
-        $arTabs[] = Array("DIV" => "tabFile", "TAB" => GetMessage("MFC1_TAB_FILE"), "TITLE" => GetMessage("MFC1_TAB_FILE_DESCR"));
-        $arTabs[] = Array("DIV" => "tabVerify", "TAB" => GetMessage("MFC1_TAB_VERIFY"), "TITLE" => GetMessage("MFC1_TAB_VERIFY_DESCR"));
-        $arTabs[] = Array("DIV" => "tabVerifyResult", "TAB" => GetMessage("MFC1_TAB_VERIFY_REP"), "TITLE" => GetMessage("MFC1_TAB_VERIFY_REP_DESCR"));
+        $arTabs[] = Array(
+            "DIV" => "tabFile",
+            "TAB" => GetMessage("MFC1_TAB_FILE"),
+            "TITLE" => GetMessage("MFC1_TAB_FILE_DESCR")
+        );
+        $arTabs[] = Array(
+            "DIV" => "tabVerify",
+            "TAB" => GetMessage("MFC1_TAB_VERIFY"),
+            "TITLE" => GetMessage("MFC1_TAB_VERIFY_DESCR")
+        );
+        $arTabs[] = Array(
+            "DIV" => "tabVerifyResult",
+            "TAB" => GetMessage("MFC1_TAB_VERIFY_REP"),
+            "TITLE" => GetMessage("MFC1_TAB_VERIFY_REP_DESCR")
+        );
     }
 }
 
@@ -1464,20 +1637,24 @@ $tabControl = new CAdminTabControl("tabControl", $arTabs, false, true);
         <?
 
         if ($okMessage) {
-            $m = new CAdminMessage(array(
-                "MESSAGE" => $okMessage,
-                "TYPE" => "OK",
-                "HTML" => true
-            ));
+            $m = new CAdminMessage(
+                array(
+                    "MESSAGE" => $okMessage,
+                    "TYPE" => "OK",
+                    "HTML" => true
+                )
+            );
             echo $m->Show();
         }
 
         if ($errorMessage) {
-            $m = new CAdminMessage(array(
-                "MESSAGE" => $errorMessage,
-                "TYPE" => "ERROR",
-                "HTML" => true
-            ));
+            $m = new CAdminMessage(
+                array(
+                    "MESSAGE" => $errorMessage,
+                    "TYPE" => "ERROR",
+                    "HTML" => true
+                )
+            );
             echo $m->Show();
         }
 
@@ -1487,21 +1664,21 @@ $tabControl = new CAdminTabControl("tabControl", $arTabs, false, true);
             if ($isSubscribed):
                 ?>
                 <tr class="adm-detail-required-field">
-                    <td class="adm-detail-valign-top" width="30%"
-                        style="padding-top:16px;"><?= GetMessage("MFC1_F_PWD") ?>:<br></td>
-                    <td width="70%"><input type="password" name="crc_password"
-                                           style="width:80%;"><? echo BeginNote() . GetMessage("MFCW_INT_PASS_SUBSCR") . EndNote(); ?>
-                    </td>
+                    <td class="adm-detail-valign-top" width="30%" style="padding-top:16px;"><?= GetMessage(
+                            "MFC1_F_PWD"
+                        ) ?>:<br></td>
+                    <td width="70%"><input type="password" name="crc_password" style="width:80%;"><? echo BeginNote(
+                            ) . GetMessage("MFCW_INT_PASS_SUBSCR") . EndNote(); ?></td>
                 </tr>
             <?
             elseif ($canSign):
                 ?>
                 <tr class="adm-detail-required-field">
-                    <td class="adm-detail-valign-top" width="30%"
-                        style="padding-top:16px;"><?= GetMessage("MFC1_F_PWD") ?>:<br></td>
-                    <td width="70%"><input type="password" name="crc_password"
-                                           style="width:80%;"><? echo BeginNote() . GetMessage("MFCW_INT_PASS_NOTSUBSCR") . EndNote(); ?>
-                    </td>
+                    <td class="adm-detail-valign-top" width="30%" style="padding-top:16px;"><?= GetMessage(
+                            "MFC1_F_PWD"
+                        ) ?>:<br></td>
+                    <td width="70%"><input type="password" name="crc_password" style="width:80%;"><? echo BeginNote(
+                            ) . GetMessage("MFCW_INT_PASS_NOTSUBSCR") . EndNote(); ?></td>
                 </tr>
                 <tr class="adm-detail-required-field">
                     <td><?= GetMessage("MFC1_F_PWD_CONF") ?>:</td>
@@ -1509,9 +1686,9 @@ $tabControl = new CAdminTabControl("tabControl", $arTabs, false, true);
                 </tr>
                 <tr class="adm-detail-required-field">
                     <td class="adm-detail-valign-top" style="padding-top:16px;"><?= GetMessage("MFC1_F_KEY") ?>:</td>
-                    <td><input type="text" name="crc_key" style="width:80%;"
-                               value=""><? echo BeginNote() . GetMessage("MFCW_INT_KEY_HINT_NOT_SUBSCR") . EndNote(); ?>
-                    </td>
+                    <td><input type="text" name="crc_key" style="width:80%;" value=""><? echo BeginNote() . GetMessage(
+                                "MFCW_INT_KEY_HINT_NOT_SUBSCR"
+                            ) . EndNote(); ?></td>
                 </tr>
             <?
             endif;
@@ -1605,21 +1782,29 @@ $tabControl = new CAdminTabControl("tabControl", $arTabs, false, true);
                                     <td style="text-align: center;"><input type="radio" name="cf_select_dfile"
                                                                            id="cf_select_dfile_<?= $arFile["TIMESTAMP_X"] ?>"<?= $f ? " checked" : "" ?>
                                                                            value="<?= $arFile["TIMESTAMP_X"] ?>"></td>
-                                    <td style="text-align: center;"><?= date(CDatabase::DateFormatToPHP(FORMAT_DATETIME), $arFile["TIMESTAMP_X"]) ?></td>
+                                    <td style="text-align: center;"><?= date(
+                                            CDatabase::DateFormatToPHP(FORMAT_DATETIME),
+                                            $arFile["TIMESTAMP_X"]
+                                        ) ?></td>
                                     <td style="text-align: center;"><?
-                                        if (($arFile["REGION"] & BX_FILE_CHECKER_REGION_KERNEL) != 0)
+                                        if (($arFile["REGION"] & BX_FILE_CHECKER_REGION_KERNEL) != 0) {
                                             echo GetMessage("MFC1_R_KERNEL") . " ( /bitrix/modules )<br />";
-                                        if (($arFile["REGION"] & BX_FILE_CHECKER_REGION_ROOT) != 0)
+                                        }
+                                        if (($arFile["REGION"] & BX_FILE_CHECKER_REGION_ROOT) != 0) {
                                             echo GetMessage("MFC1_R_SYSTEM") . " ( /bitrix )<br />";
-                                        if (($arFile["REGION"] & BX_FILE_CHECKER_REGION_PERSONAL_ROOT) != 0)
+                                        }
+                                        if (($arFile["REGION"] & BX_FILE_CHECKER_REGION_PERSONAL_ROOT) != 0) {
                                             echo GetMessage("MFC1_R_PSYSTEM") . " ( " . BX_PERSONAL_ROOT . " )<br />";
-                                        if (($arFile["REGION"] & BX_FILE_CHECKER_REGION_PUBLIC) != 0)
+                                        }
+                                        if (($arFile["REGION"] & BX_FILE_CHECKER_REGION_PUBLIC) != 0) {
                                             echo GetMessage("MFC1_R_PUBLIC") . "<br />";
+                                        }
                                         ?></td>
                                     <td style="text-align: center;"><?= implode(", ", $arFile["EXTENTIONS"]) ?></td>
                                     <td style="text-align: center;"><a
-                                                href="javascript:CFDeleteLog('<?= $arFile["TIMESTAMP_X"] ?>')"><?= GetMessage("MFC1_ACT_DODELETE") ?></a>
-                                    </td>
+                                                href="javascript:CFDeleteLog('<?= $arFile["TIMESTAMP_X"] ?>')"><?= GetMessage(
+                                                "MFC1_ACT_DODELETE"
+                                            ) ?></a></td>
                                 </tr>
                             <?
                             $f = false;
@@ -1660,24 +1845,38 @@ $tabControl = new CAdminTabControl("tabControl", $arTabs, false, true);
                 <td class="adm-detail-valign-top" width="30%"><?= GetMessage("MFC1_F_COLLECT_REGION") ?>:<br></td>
                 <td width="70%">
                     <input type="checkbox" name="checker_region_kernel"
-                           id="id_checker_region_kernel" <? if (COption::GetOptionString("security", "checker_region_kernel") == "Y") echo "checked"; ?>
-                           value="Y"><label for="id_checker_region_kernel"><?= GetMessage("MFC1_R_KERNEL") ?> (
+                           id="id_checker_region_kernel" <? if (COption::GetOptionString(
+                            "security",
+                            "checker_region_kernel"
+                        ) == "Y") {
+                        echo "checked";
+                    } ?> value="Y"><label for="id_checker_region_kernel"><?= GetMessage("MFC1_R_KERNEL") ?> (
                         /bitrix/modules )</label><br/>
                     <input type="checkbox" name="checker_region_root"
-                           id="id_checker_region_root" <? if (COption::GetOptionString("security", "checker_region_root") == "Y") echo "checked"; ?>
-                           value="Y"><label for="id_checker_region_root"><?= GetMessage("MFC1_R_SYSTEM") ?> ( /bitrix
+                           id="id_checker_region_root" <? if (COption::GetOptionString(
+                            "security",
+                            "checker_region_root"
+                        ) == "Y") {
+                        echo "checked";
+                    } ?> value="Y"><label for="id_checker_region_root"><?= GetMessage("MFC1_R_SYSTEM") ?> ( /bitrix
                         )</label><br/>
                     <? if (BX_PERSONAL_ROOT != BX_ROOT):?>
                         <input type="checkbox" name="checker_region_personal_root"
-                               id="id_checker_region_personal_root" <? if (COption::GetOptionString("security", "checker_region_personal_root") == "Y") echo "checked"; ?>
-                               value="Y"><label
-                                for="id_checker_region_personal_root"><?= GetMessage("MFC1_R_PSYSTEM") ?>
+                               id="id_checker_region_personal_root" <? if (COption::GetOptionString(
+                                "security",
+                                "checker_region_personal_root"
+                            ) == "Y") {
+                            echo "checked";
+                        } ?> value="Y"><label for="id_checker_region_personal_root"><?= GetMessage("MFC1_R_PSYSTEM") ?>
                             ( <?= BX_PERSONAL_ROOT ?> )</label><br/>
                     <?endif; ?>
                     <input type="checkbox" name="checker_region_public"
-                           id="id_checker_region_public" <? if (COption::GetOptionString("security", "checker_region_public") == "Y") echo "checked"; ?>
-                           value="Y"><label
-                            for="id_checker_region_public"><?= GetMessage("MFC1_R_PUBLIC") ?></label><br/>
+                           id="id_checker_region_public" <? if (COption::GetOptionString(
+                            "security",
+                            "checker_region_public"
+                        ) == "Y") {
+                        echo "checked";
+                    } ?> value="Y"><label for="id_checker_region_public"><?= GetMessage("MFC1_R_PUBLIC") ?></label><br/>
                 </td>
             </tr>
             <tr class="adm-detail-required-field">
@@ -1756,9 +1955,17 @@ $tabControl = new CAdminTabControl("tabControl", $arTabs, false, true);
                     updRand++;
                     var data = null;
                     <?if ($_REQUEST["action"] == "verify"):?>
-                    data = "fcajax=vf&df=<?= intval($_REQUEST["cf_select_dfile"]) ?>&pwd=<?= urlencode($_REQUEST['checker_pwd']) ?>&tm=<?= intval($_REQUEST['checker_time']) ?>&<?= bitrix_sessid_get() ?>&ts=" + ts + "&completed=" + completed + "&startpoint=" + startPoint + "&updRand=" + updRand;
+                    data = "fcajax=vf&df=<?= intval($_REQUEST["cf_select_dfile"]) ?>&pwd=<?= urlencode(
+                        $_REQUEST['checker_pwd']
+                    ) ?>&tm=<?= intval($_REQUEST['checker_time']) ?>&<?= bitrix_sessid_get(
+                    ) ?>&ts=" + ts + "&completed=" + completed + "&startpoint=" + startPoint + "&updRand=" + updRand;
                     <?elseif ($_REQUEST["action"] == "collect"):?>
-                    data = "fcajax=cl&region=<?= intval($region) ?>&exts=<?= urlencode($_REQUEST['checker_exts']) ?>&pwd=<?= urlencode($_REQUEST['checker_pwd']) ?>&tm=<?= intval($_REQUEST['checker_time']) ?>&<?= bitrix_sessid_get() ?>&ts=" + ts + "&completed=" + completed + "&startpoint=" + startPoint + "&updRand=" + updRand;
+                    data = "fcajax=cl&region=<?= intval($region) ?>&exts=<?= urlencode(
+                        $_REQUEST['checker_exts']
+                    ) ?>&pwd=<?= urlencode($_REQUEST['checker_pwd']) ?>&tm=<?= intval(
+                        $_REQUEST['checker_time']
+                    ) ?>&<?= bitrix_sessid_get(
+                    ) ?>&ts=" + ts + "&completed=" + completed + "&startpoint=" + startPoint + "&updRand=" + updRand;
                     <?endif;?>
                     BX.ajax.post("/bitrix/admin/security_file_verifier.php", data, callback);
                 }
@@ -1781,7 +1988,10 @@ $tabControl = new CAdminTabControl("tabControl", $arTabs, false, true);
                         <?elseif ($_REQUEST["action"] == "collect"):?>
                         __FCSuccessAdd("<b><?= GetMessage("MFC1_J_FINISH") ?></b><br /><br />");
                         __FCSuccessAdd("<?= GetMessage("MFC1_J_NUM_FILES") ?>: " + globalCounter + ".<br />");
-                        __FCSuccessAdd("<?= GetMessage("MFC1_J_DWL_PROMT1") ?> <a href='/bitrix/admin/security_file_verifier.php?fcdld=Y&ts=" + arData[1] + "&<?= bitrix_sessid_get() ?>'><?= GetMessage("MFC1_J_DWL_PROMT2") ?></a>.");
+                        __FCSuccessAdd("<?= GetMessage(
+                            "MFC1_J_DWL_PROMT1"
+                        ) ?> <a href='/bitrix/admin/security_file_verifier.php?fcdld=Y&ts=" + arData[1] + "&<?= bitrix_sessid_get(
+                        ) ?>'><?= GetMessage("MFC1_J_DWL_PROMT2") ?></a>.");
                         <?endif;?>
 
                         CloseWaitWindow();
@@ -1979,19 +2189,21 @@ $tabControl = new CAdminTabControl("tabControl", $arTabs, false, true);
 
 <?
 $legend = "";
-if ($tabStep == 1)
+if ($tabStep == 1) {
     $legend = $isSubscribed ? GetMessage("MFCW_LEGEND_SUBSCR_1") : GetMessage("MFCW_LEGEND_NOTSUBSCR_1");
-elseif ($tabStep == 2)
+} elseif ($tabStep == 2) {
     $legend = GetMessage("MFCW_LEGEND_2");
-elseif ($tabStep == 3 && $_REQUEST["action"] == "collect")
+} elseif ($tabStep == 3 && $_REQUEST["action"] == "collect") {
     $legend = GetMessage("MFCW_LEGEND_3_collect");
-elseif ($tabStep == 3 && $_REQUEST["action"] == "verify")
+} elseif ($tabStep == 3 && $_REQUEST["action"] == "verify") {
     $legend = GetMessage("MFCW_LEGEND_3_verify");
-elseif ($tabStep == 4 && $_REQUEST["action"] == "verify")
+} elseif ($tabStep == 4 && $_REQUEST["action"] == "verify") {
     $legend = GetMessage("MFCW_LEGEND_4_verify");
+}
 
-if (strlen($legend) > 0)
+if ($legend <> '') {
     echo BeginNote() . $legend . EndNote();
+}
 ?>
 
 <? require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/epilog_admin.php"); ?>

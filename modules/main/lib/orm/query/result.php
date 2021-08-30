@@ -227,9 +227,12 @@ class Result extends BaseResult
 
                     foreach ($remotePrimary as $primaryName) {
                         if (!array_key_exists($primaryName, $remoteObjectValues)) {
-                            throw new SystemException(sprintf(
-                                'Primary of %s was not found in database result', $remoteEntity->getDataClass()
-                            ));
+                            throw new SystemException(
+                                sprintf(
+                                    'Primary of %s was not found in database result',
+                                    $remoteEntity->getDataClass()
+                                )
+                            );
                         }
 
                         $remotePrimaryValues[$primaryName] = $remoteObjectValues[$primaryName];
@@ -238,7 +241,11 @@ class Result extends BaseResult
                     // compose relative object
                     if ($field instanceof Reference) {
                         // get object via identity map
-                        $remoteObject = $this->composeRemoteObject($remoteEntity, $remotePrimaryValues, $remoteObjectValues);
+                        $remoteObject = $this->composeRemoteObject(
+                            $remoteEntity,
+                            $remotePrimaryValues,
+                            $remoteObjectValues
+                        );
 
                         // set remoteObject to baseObject
                         $isRuntimeField
@@ -267,9 +274,15 @@ class Result extends BaseResult
                         }
 
                         // define remote object
-                        if (current($remotePrimaryValues) === null || !$collection->hasByPrimary($remotePrimaryValues)) {
+                        if (current($remotePrimaryValues) === null || !$collection->hasByPrimary(
+                                $remotePrimaryValues
+                            )) {
                             // get object via identity map
-                            $remoteObject = $this->composeRemoteObject($remoteEntity, $remotePrimaryValues, $remoteObjectValues);
+                            $remoteObject = $this->composeRemoteObject(
+                                $remoteEntity,
+                                $remotePrimaryValues,
+                                $remoteObjectValues
+                            );
 
                             // add to collection
                             if ($remoteObject !== null) {
@@ -404,9 +417,12 @@ class Result extends BaseResult
         }
 
         if (count($this->primaryAliases) != count($primaryNames)) {
-            throw new SystemException(sprintf(
-                'Primary of %s was not found in database result', $this->query->getEntity()->getDataClass()
-            ));
+            throw new SystemException(
+                sprintf(
+                    'Primary of %s was not found in database result',
+                    $this->query->getEntity()->getDataClass()
+                )
+            );
         }
     }
 
@@ -534,9 +550,11 @@ class Result extends BaseResult
 
     public function fetch(\Bitrix\Main\Text\Converter $converter = null)
     {
+        $row = $this->result->fetch($converter);
+
         return empty($this->hiddenObjectFields)
-            ? $this->result->fetch($converter)
-            : $this->hideObjectFields($this->result->fetch($converter));
+            ? $row
+            : $this->hideObjectFields($row);
     }
 
     public function fetchAll(\Bitrix\Main\Text\Converter $converter = null)
@@ -546,13 +564,12 @@ class Result extends BaseResult
         } else {
             $data = $this->result->fetchAll($converter);
 
-            foreach ($data as $row) {
+            foreach ($data as &$row) {
                 $this->hideObjectFields($row);
             }
 
             return $data;
         }
-
     }
 
     public function getTrackerQuery()

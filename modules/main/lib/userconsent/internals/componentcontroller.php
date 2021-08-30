@@ -31,7 +31,6 @@ abstract class ComponentController
 
     protected function prepareRequestData()
     {
-
     }
 
     protected function giveResponse()

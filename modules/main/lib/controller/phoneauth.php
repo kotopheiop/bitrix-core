@@ -29,33 +29,7 @@ class PhoneAuth extends Main\Engine\Controller
             $params["smsTemplate"] = "SMS_USER_CONFIRM_NUMBER";
         }
 
-        $phoneNumber = Main\UserPhoneAuthTable::normalizePhoneNumber($params["phoneNumber"]);
-        $userPhone = Main\UserPhoneAuthTable::getList(["filter" => ["=PHONE_NUMBER" => $phoneNumber]])->fetchObject();
-
-        if (!$userPhone) {
-            $this->addError(new Main\Error(Loc::getMessage("main_register_no_user"), "ERR_NOT_FOUND"));
-            return null;
-        }
-
-        //alowed only once in a minute
-        if ($userPhone->getDateSent()) {
-            $currentDateTime = new Main\Type\DateTime();
-            if (($currentDateTime->getTimestamp() - $userPhone->getDateSent()->getTimestamp()) < \CUser::PHONE_CODE_RESEND_INTERVAL) {
-                $this->addError(new Main\Error(Loc::getMessage("main_register_timeout"), "ERR_TIMEOUT"));
-                return null;
-            }
-        }
-
-        list($code, $phoneNumber) = \CUser::GeneratePhoneCode($userPhone->getUserId());
-
-        $sms = new Main\Sms\Event(
-            $params["smsTemplate"],
-            [
-                "USER_PHONE" => $phoneNumber,
-                "CODE" => $code,
-            ]
-        );
-        $result = $sms->send(true);
+        $result = \CUser::SendPhoneCode($params["phoneNumber"], $params["smsTemplate"]);
 
         if (!$result->isSuccess()) {
             $this->addErrors($result->getErrors());
@@ -63,10 +37,12 @@ class PhoneAuth extends Main\Engine\Controller
         }
 
         return [
-            'DATA_SIGN' => static::signData([
-                'phoneNumber' => $params["phoneNumber"],
-                'smsTemplate' => $params["smsTemplate"]
-            ]),
+            'DATA_SIGN' => static::signData(
+                [
+                    'phoneNumber' => $params["phoneNumber"],
+                    'smsTemplate' => $params["smsTemplate"]
+                ]
+            ),
             'DATE_SEND' => \CUser::PHONE_CODE_RESEND_INTERVAL,
         ];
     }
@@ -88,12 +64,14 @@ class PhoneAuth extends Main\Engine\Controller
             return null;
         }
 
-        $phoneRecord = Main\UserPhoneAuthTable::getList([
-            'filter' => [
-                '=USER_ID' => $userId
-            ],
-            'select' => ['USER_ID', 'PHONE_NUMBER', 'USER.ID', 'USER.ACTIVE'],
-        ])->fetchObject();
+        $phoneRecord = Main\UserPhoneAuthTable::getList(
+            [
+                'filter' => [
+                    '=USER_ID' => $userId
+                ],
+                'select' => ['USER_ID', 'PHONE_NUMBER', 'USER.ID', 'USER.ACTIVE'],
+            ]
+        )->fetchObject();
 
         if (!$phoneRecord) {
             $this->addError(new Main\Error(Loc::getMessage('main_register_no_user'), 'ERR_NOT_FOUND'));
@@ -136,7 +114,7 @@ class PhoneAuth extends Main\Engine\Controller
     {
         $signer = new Main\Security\Sign\Signer();
         $string = base64_encode(serialize($data));
-        return $signer->sign($string, self::SIGNATURE_SALT);
+        return $signer->sign($string, static::SIGNATURE_SALT);
     }
 
     /**
@@ -148,7 +126,7 @@ class PhoneAuth extends Main\Engine\Controller
         try {
             $signer = new Main\Security\Sign\Signer();
             $string = $signer->unsign($signedData, static::SIGNATURE_SALT);
-            return unserialize(base64_decode($string));
+            return unserialize(base64_decode($string), ['allowed_classes' => false]);
         } catch (Main\SystemException $exception) {
             return false;
         }

@@ -1,4 +1,6 @@
-<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die(); ?><?
+<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+} ?><?
 // Input:
 // $SALE_INPUT_PARAMS - Array of payment parameters
 // $INPUT_CARD_TYPE - Type of credit card
@@ -34,37 +36,44 @@ $PFPRO_CERT_PATH = CSalePaySystemAction::GetParamValue("PAYFLOW_CERT_PATH");
 $ORDER_ID = IntVal($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["ID"]);
 
 $INPUT_CARD_NUM = Trim($INPUT_CARD_NUM);
-if (!isset($INPUT_CARD_NUM) || strlen($INPUT_CARD_NUM) <= 0)
+if (!isset($INPUT_CARD_NUM) || strlen($INPUT_CARD_NUM) <= 0) {
     $strErrorMessage .= "Please enter valid credit card number" . ". ";
+}
 
 $INPUT_CARD_NUM = preg_replace("/[\D]+/", "", $INPUT_CARD_NUM);
-if (strlen($INPUT_CARD_NUM) <= 0)
+if (strlen($INPUT_CARD_NUM) <= 0) {
     $strErrorMessage .= "Please enter valid credit card number" . ". ";
+}
 
 $INPUT_CARD_CODE = Trim($INPUT_CARD_CODE);
-if (!isset($INPUT_CARD_CODE) || strlen($INPUT_CARD_CODE) <= 0)
+if (!isset($INPUT_CARD_CODE) || strlen($INPUT_CARD_CODE) <= 0) {
     $strErrorMessage .= "Please enter valid credit card CVC2" . ". ";
+}
 
 $INPUT_CARD_EXP_MONTH = IntVal($INPUT_CARD_EXP_MONTH);
-if ($INPUT_CARD_EXP_MONTH < 1 || $INPUT_CARD_EXP_MONTH > 12)
+if ($INPUT_CARD_EXP_MONTH < 1 || $INPUT_CARD_EXP_MONTH > 12) {
     $strErrorMessage .= "Please enter valid credit card expiration month" . ". ";
-elseif (strlen($INPUT_CARD_EXP_MONTH) < 2)
+} elseif (strlen($INPUT_CARD_EXP_MONTH) < 2) {
     $INPUT_CARD_EXP_MONTH = "0" . $INPUT_CARD_EXP_MONTH;
+}
 
 $INPUT_CARD_EXP_YEAR = IntVal($INPUT_CARD_EXP_YEAR);
-if ($INPUT_CARD_EXP_YEAR < 2005 || $INPUT_CARD_EXP_YEAR > 2099)
+if ($INPUT_CARD_EXP_YEAR < 2005 || $INPUT_CARD_EXP_YEAR > 2099) {
     $strErrorMessage .= "Please enter valid credit card expiration year" . ". ";
-else
+} else {
     $INPUT_CARD_EXP_YEAR = IntVal($INPUT_CARD_EXP_YEAR - 2000);
+}
 
 $INPUT_SUM = str_replace(",", ".", $INPUT_SUM);
 $INPUT_SUM = DoubleVal($INPUT_SUM);
-if ($INPUT_SUM <= 0)
+if ($INPUT_SUM <= 0) {
     $strErrorMessage .= "Please enter valid sum. ";
+}
 
 $INPUT_CURRENCY = Trim($INPUT_CURRENCY);
-if (strlen($INPUT_CURRENCY) <= 0)
+if (strlen($INPUT_CURRENCY) <= 0) {
     $strErrorMessage .= "Please enter valid currency. ";
+}
 
 $OUTPUT_ERROR_MESSAGE = $strErrorMessage;
 
@@ -75,12 +84,14 @@ if (strlen($strErrorMessage) <= 0) {
         $INPUT_SUM = CCurrencyRates::ConvertCurrency($INPUT_SUM, $INPUT_CURRENCY, "USD");
 
         $additor = 1;
-        for ($i = 0; $i < SALE_VALUE_PRECISION; $i++)
+        for ($i = 0; $i < SALE_VALUE_PRECISION; $i++) {
             $additor = $additor / 10;
+        }
 
         $INPUT_SUM_tmp = round($INPUT_SUM, SALE_VALUE_PRECISION);
-        while ($INPUT_SUM_tmp < $INPUT_SUM)
+        while ($INPUT_SUM_tmp < $INPUT_SUM) {
             $INPUT_SUM_tmp = round($INPUT_SUM_tmp + $additor, SALE_VALUE_PRECISION);
+        }
 
         $INPUT_SUM = $INPUT_SUM_tmp;
     }
@@ -118,20 +129,21 @@ if (strlen($strErrorMessage) <= 0) {
 
         $arResult["RESULT"] = IntVal($arResult["RESULT"]);
         if ($arResult["RESULT"] != 0) {
-            if ($arResult["RESULT"] < 0)
+            if ($arResult["RESULT"] < 0) {
                 $OUTPUT_STATUS_MESSAGE .= "Communication Error: [" . $arResult["RESULT"] . "] " . $arResult["RESPMSG"] . " - " . $arResult["PREFPSMSG"] . ". ";
-            elseif ($arPaySysRes_tmp["RESULT"] == 125)
+            } elseif ($arPaySysRes_tmp["RESULT"] == 125) {
                 $OUTPUT_STATUS_MESSAGE .= "Your payment is declined by Fraud Service. Please contact us to make payment" . ". ";
-            elseif ($arResult["RESULT"] == 126)
+            } elseif ($arResult["RESULT"] == 126) {
                 $OUTPUT_STATUS_MESSAGE .= "Your payment is under review by Fraud Service. We contact you in 48 hours to get more specific information" . ". ";
-            elseif (is_set($arErrorCodes, $arResult["RESULT"]))
+            } elseif (is_set($arErrorCodes, $arResult["RESULT"])) {
                 $OUTPUT_STATUS_MESSAGE .= $arErrorCodes[$arResult["RESULT"]] . ". ";
-            else
+            } else {
                 $OUTPUT_STATUS_MESSAGE .= "Unknown error" . ". ";
+            }
         }
-    } else
+    } else {
         $OUTPUT_STATUS_MESSAGE .= "Response error" . ". ";
-
+    }
     /*
 
         $OUTPUT_STATUS = "Y";

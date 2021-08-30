@@ -36,14 +36,16 @@ class CDeliveryPecom
     public static $PAYER_SHOP = "1";
     public static $PAYER_BUYER = "2";
 
-    function Init()
+    public static function Init()
     {
         return array(
             /* Basic description */
             'SID' => 'pecom',
             'NAME' => GetMessage('SALE_DH_PECOM_NAME'),
             'DESCRIPTION' => GetMessage('SALE_DH_PECOM_DESCRIPTION') . ' <a href="http://pecom.ru">http://pecom.ru</a>',
-            'DESCRIPTION_INNER' => GetMessage('SALE_DH_PECOM_DESCRIPTION') . ' <a href="http://pecom.ru">http://pecom.ru</a>',
+            'DESCRIPTION_INNER' => GetMessage(
+                    'SALE_DH_PECOM_DESCRIPTION'
+                ) . ' <a href="http://pecom.ru">http://pecom.ru</a>',
             'BASE_CURRENCY' => 'RUB',
             'HANDLER' => __FILE__,
 
@@ -85,7 +87,7 @@ class CDeliveryPecom
         );
     }
 
-    function getExtraInfoParams($arOrder, $arConfig, $profileId, $siteId)
+    public static function getExtraInfoParams($arOrder, $arConfig, $profileId, $siteId)
     {
         $result = array();
 
@@ -108,14 +110,14 @@ class CDeliveryPecom
         return $result;
     }
 
-    function getConfig($siteId = false)
+    public static function getConfig($siteId = false)
     {
         $shopLocationId = CSaleHelper::getShopLocationId($siteId);
         $arShopLocation = CSaleHelper::getLocationByIdHitCached($shopLocationId);
 
-        $locString = strlen($arShopLocation["COUNTRY_NAME_LANG"]) > 0 ? $arShopLocation["COUNTRY_NAME_LANG"] : "";
-        $locString .= (strlen($arShopLocation["REGION_NAME_LANG"]) > 0 ? (strlen($locString) > 0 ? ", " : "") . $arShopLocation["REGION_NAME_LANG"] : "");
-        $locString .= (strlen($arShopLocation["CITY_NAME_LANG"]) > 0 ? (strlen($locString) > 0 ? ", " : "") . $arShopLocation["CITY_NAME_LANG"] : "");
+        $locString = $arShopLocation["COUNTRY_NAME_LANG"] <> '' ? $arShopLocation["COUNTRY_NAME_LANG"] : "";
+        $locString .= ($arShopLocation["REGION_NAME_LANG"] <> '' ? ($locString <> '' ? ", " : "") . $arShopLocation["REGION_NAME_LANG"] : "");
+        $locString .= ($arShopLocation["CITY_NAME_LANG"] <> '' ? ($locString <> '' ? ", " : "") . $arShopLocation["CITY_NAME_LANG"] : "");
 
         $locDelivery = Adapter::mapLocation($shopLocationId);
 
@@ -219,7 +221,11 @@ class CDeliveryPecom
                     'TITLE' => GetMessage('SALE_DH_PECOM_AS_DELIVERY_ENABLE'),
                     'GROUP' => 'add_services',
                     'DEFAULT' => '',
-                    'HIDE_BY_NAMES' => array('SERVICE_DELIVERY_TENT_ENABLED', 'SERVICE_DELIVERY_HYDRO_ENABLED', 'SERVICE_OTHER_DELIVERY_PAYER')
+                    'HIDE_BY_NAMES' => array(
+                        'SERVICE_DELIVERY_TENT_ENABLED',
+                        'SERVICE_DELIVERY_HYDRO_ENABLED',
+                        'SERVICE_OTHER_DELIVERY_PAYER'
+                    )
                 ),
 
                 "SERVICE_DELIVERY_TENT_ENABLED" => array(
@@ -351,73 +357,87 @@ class CDeliveryPecom
         return $arConfig;
     }
 
-    function getSettings($strSettings)
+    public static function getSettings($strSettings)
     {
-        return unserialize($strSettings);
+        return unserialize($strSettings, ['allowed_classes' => false]);
     }
 
-    function setSettings($arSettings)
+    public static function setSettings($arSettings)
     {
         unset($arSettings["CITY"]);
 
         foreach ($arSettings as $key => $value) {
-            if (strlen($value) > 0)
+            if ($value <> '') {
                 $arSettings[$key] = $value;
-            else
+            } else {
                 unset($arSettings[$key]);
+            }
         }
 
         return serialize($arSettings);
     }
 
-    function getFeatures($arConfig)
+    public static function getFeatures($arConfig)
     {
         $arResult = array();
 
         $mesEnabled = GetMessage("SALE_DH_PECOM_FEATURE_ENABLED");
 
-        if ($arConfig["SERVICE_TAKE_ENABLED"]["VALUE"] == "Y")
+        if ($arConfig["SERVICE_TAKE_ENABLED"]["VALUE"] == "Y") {
             $arResult[GetMessage("SALE_DH_PECOM_AS_TAKE_ENABLE")] = $mesEnabled;
+        }
 
-        if ($arConfig["SERVICE_TAKE_TENT_ENABLED"]["VALUE"] == "Y")
+        if ($arConfig["SERVICE_TAKE_TENT_ENABLED"]["VALUE"] == "Y") {
             $arResult[GetMessage("SALE_DH_PECOM_AS_TAKE_TENT")] = $mesEnabled;
+        }
 
-        if ($arConfig["SERVICE_TAKE_HYDRO_ENABLED"]["VALUE"] == "Y")
+        if ($arConfig["SERVICE_TAKE_HYDRO_ENABLED"]["VALUE"] == "Y") {
             $arResult[GetMessage("SALE_DH_PECOM_AS_TAKE_HYDRO")] = $mesEnabled;
+        }
 
-        if ($arConfig["SERVICE_DELIVERY_ENABLED"]["VALUE"] == "Y")
+        if ($arConfig["SERVICE_DELIVERY_ENABLED"]["VALUE"] == "Y") {
             $arResult[GetMessage("SALE_DH_PECOM_AS_DELIVERY_ENABLE")] = $mesEnabled;
+        }
 
-        if ($arConfig["SERVICE_DELIVERY_TENT_ENABLED"]["VALUE"] == "Y")
+        if ($arConfig["SERVICE_DELIVERY_TENT_ENABLED"]["VALUE"] == "Y") {
             $arResult[GetMessage("SALE_DH_PECOM_AS_DELIVERY_TENT")] = $mesEnabled;
+        }
 
-        if ($arConfig["SERVICE_DELIVERY_HYDRO_ENABLED"]["VALUE"] == "Y")
+        if ($arConfig["SERVICE_DELIVERY_HYDRO_ENABLED"]["VALUE"] == "Y") {
             $arResult[GetMessage("SALE_DH_PECOM_AS_DELIVERY_HYDRO")] = $mesEnabled;
+        }
 
-        if ($arConfig["SERVICE_OTHER_DELIVERY_PAYER"]["VALUE"] == self::$PAYER_SHOP)
+        if ($arConfig["SERVICE_OTHER_DELIVERY_PAYER"]["VALUE"] == self::$PAYER_SHOP) {
             $arResult[GetMessage("SALE_DH_PECOM_AS_PAYER")] = GetMessage('SALE_DH_PECOM_AS_PAYER_SHOP');
-        else
+        } else {
             $arResult[GetMessage("SALE_DH_PECOM_AS_PAYER")] = GetMessage('SALE_DH_PECOM_AS_PAYER_BUYER');
+        }
 
-        if ($arConfig["SERVICE_OTHER_PLOMBIR_ENABLE"]["VALUE"] == "Y")
+        if ($arConfig["SERVICE_OTHER_PLOMBIR_ENABLE"]["VALUE"] == "Y") {
             $arResult[GetMessage("SALE_DH_PECOM_AS_OTHER_PLOMBIR_ENABLE")] = $mesEnabled;
+        }
 
-        if ($arConfig["SERVICE_OTHER_PALLETE"]["VALUE"] == "Y")
+        if ($arConfig["SERVICE_OTHER_PALLETE"]["VALUE"] == "Y") {
             $arResult[GetMessage("SALE_DH_PECOM_AS_OTHER_PALLETE")] = $mesEnabled;
+        }
 
-        if ($arConfig["SERVICE_OTHER_INSURANCE"]["VALUE"] == "Y")
+        if ($arConfig["SERVICE_OTHER_INSURANCE"]["VALUE"] == "Y") {
             $arResult[GetMessage("SALE_DH_PECOM_AS_OTHER_INSURANCE")] = $mesEnabled;
+        }
 
-        if ($arConfig["SERVICE_OTHER_RIGID_PACKING"]["VALUE"] == "Y")
+        if ($arConfig["SERVICE_OTHER_RIGID_PACKING"]["VALUE"] == "Y") {
             $arResult[GetMessage("SALE_DH_PECOM_AS_OTHER_RIGID_PACKING")] = $mesEnabled;
+        }
 
         return $arResult;
     }
 
-    function calculate($profile, $arConfig, $arOrder, $STEP, $TEMP = false)
+    public static function calculate($profile, $arConfig, $arOrder, $STEP, $TEMP = false)
     {
         $ttl = 604800; //week
-        $cacheId = "SaleDeliveryPecomCalc_" . $profile . "_" . md5(serialize($arConfig)) . "_" . md5(serialize($arOrder));
+        $cacheId = "SaleDeliveryPecomCalc_" . $profile . "_" . md5(serialize($arConfig)) . "_" . md5(
+                serialize($arOrder)
+            );
         $cacheManager = \Bitrix\Main\Application::getInstance()->getManagedCache();
 
         if ($cacheManager->read($ttl, $cacheId)) {
@@ -431,7 +451,7 @@ class CDeliveryPecom
         return $result;
     }
 
-    function compability($arOrder, $arConfig)
+    public static function compability($arOrder, $arConfig)
     {
         $ttl = 604800;
         $cacheId = "SaleDeliveryPecomCompability" . $arConfig["CITY_DELIVERY"]["VALUE"] . $arOrder["LOCATION_TO"];
@@ -515,11 +535,13 @@ class CDeliveryPecom
         $dbOrderProps = \CSaleOrderPropsValue::GetOrderProps($orderId);
 
         while ($arOrderProps = $dbOrderProps->Fetch()) {
-            if ($arOrderProps["CODE"] == "EMAIL")
+            if ($arOrderProps["CODE"] == "EMAIL") {
                 $result["EMAIL"] = $arOrderProps["VALUE"];
+            }
 
-            if ($arOrderProps["CODE"] == "PHONE")
+            if ($arOrderProps["CODE"] == "PHONE") {
                 $result["PHONE"] = $arOrderProps["VALUE"];
+            }
         }
 
         return $result;
@@ -535,13 +557,20 @@ class CDeliveryPecom
                 $controller = 'preregistration';
                 $action = 'submit';
                 $data = Adapter::preparePreregistrationReqData($arOrder, $profileId, $arConfig);
-                $reqResult = static::sendRequest($arConfig["LOGIN"]["VALUE"], $arConfig["KEY"]["VALUE"], $controller, $action, $data);
+                $reqResult = static::sendRequest(
+                    $arConfig["LOGIN"]["VALUE"],
+                    $arConfig["KEY"]["VALUE"],
+                    $controller,
+                    $action,
+                    $data
+                );
 
                 if (isset($reqResult["DATA"]["cargos"][0]["cargoCode"])) {
                     $result["TRACKING_NUMBER"] = $reqResult["DATA"]["cargos"][0]["cargoCode"];
 
-                    if (isset($reqResult["DATA"]["documentId"]))
+                    if (isset($reqResult["DATA"]["documentId"])) {
                         $result["DELIVERY_DOC_NUM"] = $reqResult["DATA"]["documentId"];
+                    }
 
                     $phoneAndEmail = static::getPhoneEmail($arOrder["ID"]);
                     $subsData = Adapter::prepareSubscribeReqData(
@@ -550,7 +579,13 @@ class CDeliveryPecom
                         $phoneAndEmail["PHONE"]
                     );
 
-                    $subsResult = static::sendRequest($arConfig["LOGIN"]["VALUE"], $arConfig["KEY"]["VALUE"], "notification", "cargosubscribe", $subsData);
+                    $subsResult = static::sendRequest(
+                        $arConfig["LOGIN"]["VALUE"],
+                        $arConfig["KEY"]["VALUE"],
+                        "notification",
+                        "cargosubscribe",
+                        $subsData
+                    );
                 }
 
                 break;
@@ -563,7 +598,13 @@ class CDeliveryPecom
                         $arOrder['TRACKING_NUMBER']
                     )
                 );
-                $reqResult = static::sendRequest($arConfig["LOGIN"]["VALUE"], $arConfig["KEY"]["VALUE"], $controller, $action, $data);
+                $reqResult = static::sendRequest(
+                    $arConfig["LOGIN"]["VALUE"],
+                    $arConfig["KEY"]["VALUE"],
+                    $controller,
+                    $action,
+                    $data
+                );
                 break;
 
             case "REQUEST_TAKE":
@@ -576,11 +617,13 @@ class CDeliveryPecom
 
         $result["RESULT"] = $reqResult["RESULT"];
 
-        if (isset($reqResult["TEXT"]))
+        if (isset($reqResult["TEXT"])) {
             $result["TEXT"] = $reqResult["TEXT"];
+        }
 
-        if (isset($reqResult["DATA"]))
+        if (isset($reqResult["DATA"])) {
             $result["DATA"] = $reqResult["DATA"];
+        }
 
         return $result;
     }
@@ -595,7 +638,7 @@ class CDeliveryPecom
         );
     }
 
-    public function getAdminMessage()
+    public static function getAdminMessage()
     {
         $result = array();
         $message = '';
@@ -616,13 +659,14 @@ class CDeliveryPecom
 
         if (isset($_SESSION['PECOM_LOCATIONS_MAP_ERRORS']) && is_array($_SESSION['PECOM_LOCATIONS_MAP_ERRORS'])) {
             /** @var \Bitrix\Main\Error $error */
-            foreach ($_SESSION['PECOM_LOCATIONS_MAP_ERRORS'] as $error)
+            foreach ($_SESSION['PECOM_LOCATIONS_MAP_ERRORS'] as $error) {
                 $message .= $error->getMessage() . "\n<br>";
+            }
 
             unset($_SESSION['PECOM_LOCATIONS_MAP_ERRORS']);
         }
 
-        if (strlen($message) > 0) {
+        if ($message <> '') {
             $result = array(
                 'MESSAGE' => $message,
                 "TYPE" => "ERROR",
@@ -637,11 +681,14 @@ class CDeliveryPecom
     {
         $result = new \Bitrix\Sale\Result();
 
-        if (isset($_REQUEST['PECOM_LOCATIONS_START_MAP']) && $_REQUEST['PECOM_LOCATIONS_START_MAP'] == 'Y' && !Location::isInstalled())
+        if (isset($_REQUEST['PECOM_LOCATIONS_START_MAP']) && $_REQUEST['PECOM_LOCATIONS_START_MAP'] == 'Y' && !Location::isInstalled(
+            )) {
             $result = Location::install();
+        }
 
-        if (!$result->isSuccess())
+        if (!$result->isSuccess()) {
             $_SESSION['PECOM_LOCATIONS_MAP_ERRORS'] = $result->getErrors();
+        }
 
         return $result;
     }
@@ -650,8 +697,9 @@ class CDeliveryPecom
     {
         $shipmentId = $shipment->getId();
 
-        if (intval($shipmentId) <= 0)
+        if (intval($shipmentId) <= 0) {
             return array();
+        }
 
         if (self::isRequestSelfSent($shipmentId)) {
             $date = self::getRequestSelfSentDate($shipmentId);
@@ -680,13 +728,17 @@ class CDeliveryPecom
     {
         $shipmentId = $shipment->getId();
 
-        if (intval($shipmentId) <= 0)
+        if (intval($shipmentId) <= 0) {
             return array();
+        }
 
-        if (self::isRequestSelfSent($shipmentId))
-            $value = GetMessage('SALE_DH_PECOM_PRELIMINARY_REQUEST_SENT') . ' ' . self::getRequestSelfSentDate($shipmentId);
-        else
+        if (self::isRequestSelfSent($shipmentId)) {
+            $value = GetMessage('SALE_DH_PECOM_PRELIMINARY_REQUEST_SENT') . ' ' . self::getRequestSelfSentDate(
+                    $shipmentId
+                );
+        } else {
             $value = GetMessage('SALE_DH_PECOM_PRELIMINARY_REQUEST_NOT_SENT');
+        }
 
         $inputs = array(
             'REQUEST_SELF' => array(
@@ -711,12 +763,16 @@ class CDeliveryPecom
         if (!isset($result[$shipmentId])) {
             $result[$shipmentId] = null;
 
-            $dbRes = \Bitrix\Sale\Internals\OrderDeliveryReqTable::getList(array(
-                'filter' => array('=SHIPMENT_ID' => $shipmentId),
-            ));
+            $dbRes = \Bitrix\Sale\Internals\OrderDeliveryReqTable::getList(
+                array(
+                    'filter' => array('=SHIPMENT_ID' => $shipmentId),
+                )
+            );
 
             while ($req = $dbRes->fetch()) {
-                if (!is_null($req["DATE_REQUEST"]) && !empty($req["PARAMS"]["TYPE"]) && $req["PARAMS"]["TYPE"] == "REQUEST_SELF") {
+                if (!is_null(
+                        $req["DATE_REQUEST"]
+                    ) && !empty($req["PARAMS"]["TYPE"]) && $req["PARAMS"]["TYPE"] == "REQUEST_SELF") {
                     $result[$shipmentId] = $req["DATE_REQUEST"];
                     break;
                 }
@@ -726,15 +782,17 @@ class CDeliveryPecom
         return $result[$shipmentId];
     }
 
-    public function processAdditionalInfoShipmentEdit(Shipment $shipment, array $requestData)
+    public static function processAdditionalInfoShipmentEdit(Shipment $shipment, array $requestData)
     {
-        if (empty($requestData['REQUEST_SELF']) || $requestData['REQUEST_SELF'] != 'Y')
+        if (empty($requestData['REQUEST_SELF']) || $requestData['REQUEST_SELF'] != 'Y') {
             return null;
+        }
 
         $shipmentId = $shipment->getId();
 
-        if (intval($shipmentId) <= 0)
+        if (intval($shipmentId) <= 0) {
             return null;
+        }
 
         $dt = new \Bitrix\Main\Type\DateTime();
 
@@ -748,8 +806,9 @@ class CDeliveryPecom
             )
         );
 
-        if (!$arResult)
+        if (!$arResult) {
             return null;
+        }
 
         $res = \Bitrix\Sale\Internals\OrderDeliveryReqTable::add(
             array(
@@ -763,11 +822,13 @@ class CDeliveryPecom
             )
         );
 
-        if (!$res->isSuccess())
+        if (!$res->isSuccess()) {
             return null;
+        }
 
-        if (isset($arResult["TRACKING_NUMBER"]))
+        if (isset($arResult["TRACKING_NUMBER"])) {
             $shipment->setField("TRACKING_NUMBER", $arResult["TRACKING_NUMBER"]);
+        }
 
         if (isset($arResult["DELIVERY_DOC_NUM"])) {
             $shipment->setField("DELIVERY_DOC_NUM", $arResult["DELIVERY_DOC_NUM"]);

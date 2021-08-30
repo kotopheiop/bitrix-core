@@ -71,12 +71,15 @@ class Param implements Errorable
 
     private function changeKeyCaseRecursive(array $params)
     {
-        return array_map(function ($item) {
-            if (is_array($item)) {
-                $item = $this->changeKeyCaseRecursive($item);
-            }
-            return $item;
-        }, array_change_key_case($params, CASE_UPPER));
+        return array_map(
+            function ($item) {
+                if (is_array($item)) {
+                    $item = $this->changeKeyCaseRecursive($item);
+                }
+                return $item;
+            },
+            array_change_key_case($params, CASE_UPPER)
+        );
     }
 
     private function checkArrayParam(array $param)

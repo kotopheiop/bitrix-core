@@ -49,7 +49,6 @@ class AdvanceReturnCashCheck extends AdvancePaymentCheck
                 $result['PAYMENTS'][$i]['IS_CASH'] = 'Y';
                 $result['PAYMENTS'][$i]['TYPE'] = static::PAYMENT_TYPE_CASH;
             }
-
         }
 
         return $result;

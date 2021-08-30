@@ -73,10 +73,12 @@ class RemoteDictionary extends Dictionary
             $managedCache->set($this->getCacheId(), $dictionary);
         }
 
-        $event = new Event('rest', 'onRemoteDictionaryLoad', array(
+        $event = new Event(
+            'rest', 'onRemoteDictionaryLoad', array(
             'ID' => static::ID,
             'DICTIONARY' => &$dictionary
-        ));
+        )
+        );
         $event->send();
 
         return $dictionary;
@@ -121,10 +123,12 @@ class RemoteDictionary extends Dictionary
             : $this->baseUrl[Loc::getDefaultLang($lang)];
 
         $uri = new Uri($baseUrl);
-        $uri->addParams(array(
-            'type' => static::ID,
-            'lng' => $this->language,
-        ));
+        $uri->addParams(
+            array(
+                'type' => static::ID,
+                'lng' => $this->language,
+            )
+        );
 
         return $uri;
     }

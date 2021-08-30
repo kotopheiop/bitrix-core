@@ -31,7 +31,6 @@ class TextFormat
         $stream = Stream::create();
 
         foreach ($properties as $property) {
-
             $property->setAccessible(true);
 
             $name = $property->getName();
@@ -42,7 +41,6 @@ class TextFormat
             }
 
             if (!is_array($value) && !($value instanceof Traversable)) {
-
                 if (!$value instanceof Message) {
                     $item = $this->encodeValue($value);
                     $buffer = $indent . $name . ': ' . $item . PHP_EOL;

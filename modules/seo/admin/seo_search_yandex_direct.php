@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 /**
@@ -52,11 +53,13 @@ try {
     $clientCurrency = current($clientsSettings);
     $clientCurrency = ', ' . Loc::getMessage('SEO_YANDEX_CURRENCY__' . $clientCurrency['Currency']);
 } catch (Engine\YandexDirectException $e) {
-    $seoproxyAuthError = new CAdminMessage(array(
-        "TYPE" => "ERROR",
-        "MESSAGE" => Loc::getMessage('SEO_YANDEX_SEOPROXY_AUTH_ERROR'),
-        "DETAILS" => $e->getMessage(),
-    ));
+    $seoproxyAuthError = new CAdminMessage(
+        array(
+            "TYPE" => "ERROR",
+            "MESSAGE" => Loc::getMessage('SEO_YANDEX_SEOPROXY_AUTH_ERROR'),
+            "DETAILS" => $e->getMessage(),
+        )
+    );
 }
 
 $request = Main\Context::getCurrent()->getRequest();
@@ -95,10 +98,12 @@ if (!$bNeedAuth && ($campaignIDs = $adminList->GroupAction())) {
                 '=ACTIVE' => $archive ? Adv\YandexCampaignTable::INACTIVE : Adv\YandexCampaignTable::ACTIVE,
             );
 
-            $dbRes = Adv\YandexCampaignTable::getList(array(
-                'filter' => $filter,
-                'select' => array('ID', 'XML_ID'),
-            ));
+            $dbRes = Adv\YandexCampaignTable::getList(
+                array(
+                    'filter' => $filter,
+                    'select' => array('ID', 'XML_ID'),
+                )
+            );
 
             $campaign = $dbRes->fetch();
             if ($campaign) {
@@ -131,7 +136,8 @@ if (!$bNeedAuth && ($campaignIDs = $adminList->GroupAction())) {
 
                     Adv\YandexCampaignTable::setSkipRemoteUpdate(true);
                     $result = Adv\YandexCampaignTable::update(
-                        $campaignId, array(
+                        $campaignId,
+                        array(
                             "SETTINGS" => $campaignInfo,
                         )
                     );
@@ -157,9 +163,17 @@ $arHeaders = array(
     array("id" => "NAME", "content" => Loc::getMessage('SEO_CAMPAIGN_NAME'), "sort" => "NAME", "default" => true),
     array("id" => "XML_ID", "content" => Loc::getMessage('SEO_CAMPAIGN_XML_ID'), "sort" => "XML_ID", "default" => true),
     array("id" => "STRATEGY", "content" => Loc::getMessage('SEO_CAMPAIGN_STRATEGY'), "default" => true),
-    array("id" => "LAST_UPDATE", "content" => Loc::getMessage('SEO_CAMPAIGN_LAST_UPDATE'), "sort" => "LAST_UPDATE", "default" => true),
-    array("id" => "BANNER_CNT", "content" => Loc::getMessage('SEO_CAMPAIGN_BANNER_CNT'), /*"sort"=>"BANNER_CNT", */
-        "default" => true),
+    array(
+        "id" => "LAST_UPDATE",
+        "content" => Loc::getMessage('SEO_CAMPAIGN_LAST_UPDATE'),
+        "sort" => "LAST_UPDATE",
+        "default" => true
+    ),
+    array(
+        "id" => "BANNER_CNT",
+        "content" => Loc::getMessage('SEO_CAMPAIGN_BANNER_CNT'), /*"sort"=>"BANNER_CNT", */
+        "default" => true
+    ),
 
     array("id" => "SHOW", "content" => Loc::getMessage('SEO_STATUS_SHOW'), "default" => true),
     array("id" => "SHOW", "content" => Loc::getMessage('SEO_STATUS_SHOW'), "default" => true),
@@ -175,21 +189,23 @@ if ($request["mode"] != 'excel') {
 
 $adminList->AddHeaders($arHeaders);
 
-$campaignList = Adv\YandexCampaignTable::getList(array(
-    'order' => array($by => $order),
-    'filter' => array(
-        "=ENGINE_ID" => $engine->getId(),
-        '=ACTIVE' => $archive ? Adv\YandexCampaignTable::INACTIVE : Adv\YandexCampaignTable::ACTIVE,
-    ),
-    "select" => array("ID", "BANNER_CNT"),
-    'runtime' => array(
-        new Entity\ExpressionField(
-            'BANNER_CNT',
-            'COUNT(%s)',
-            "\\Bitrix\\Seo\\Adv\\YandexBannerTable:CAMPAIGN.ID"
+$campaignList = Adv\YandexCampaignTable::getList(
+    array(
+        'order' => array($by => $order),
+        'filter' => array(
+            "=ENGINE_ID" => $engine->getId(),
+            '=ACTIVE' => $archive ? Adv\YandexCampaignTable::INACTIVE : Adv\YandexCampaignTable::ACTIVE,
         ),
+        "select" => array("ID", "BANNER_CNT"),
+        'runtime' => array(
+            new Entity\ExpressionField(
+                'BANNER_CNT',
+                'COUNT(%s)',
+                "\\Bitrix\\Seo\\Adv\\YandexBannerTable:CAMPAIGN.ID"
+            ),
+        )
     )
-));
+);
 
 $data = new \CAdminResult($campaignList, $tableID);
 $data->NavStart();
@@ -199,30 +215,49 @@ $campaignAdminList = array();
 while ($campaign = $data->NavNext()) {
     $bannerCnt = $campaign["BANNER_CNT"];
 
-    $campaignDetail = Adv\YandexCampaignTable::getList(array(
-        'filter' => array(
-            "=ID" => $campaign["ID"],
-        ),
-    ));
+    $campaignDetail = Adv\YandexCampaignTable::getList(
+        array(
+            'filter' => array(
+                "=ID" => $campaign["ID"],
+            ),
+        )
+    );
     $campaign = $campaignDetail->fetch();
 
     $editUrl = "seo_search_yandex_direct_edit.php?lang=" . LANGUAGE_ID . "&ID=" . $campaign["ID"];
 
-    $row = &$adminList->AddRow($campaign["ID"], $campaign, $editUrl, Loc::getMessage("SEO_CAMPAIGN_EDIT_TITLE", array(
-        "#ID#" => $campaign["ID"],
-        "#XML_ID#" => $campaign["XML_ID"],
-    )));
+    $row = &$adminList->AddRow(
+        $campaign["ID"],
+        $campaign,
+        $editUrl,
+        Loc::getMessage(
+            "SEO_CAMPAIGN_EDIT_TITLE",
+            array(
+                "#ID#" => $campaign["ID"],
+                "#XML_ID#" => $campaign["XML_ID"],
+            )
+        )
+    );
 
     $bOwner = $campaign['OWNER_ID'] == $currentUser['id'];
 
     $row->AddViewField("ID", $campaign['ID']);
 
-    $row->AddField("NAME", '<a href="' . Converter::getHtmlConverter()->encode($editUrl) . '" title="' . Loc::getMessage("SEO_CAMPAIGN_EDIT_TITLE", array(
-            "#ID#" => $campaign["ID"],
-            "#XML_ID#" => $campaign["XML_ID"],
-        )) . '">' . Converter::getHtmlConverter()->encode($campaign['NAME']) . '</a>');
+    $row->AddField(
+        "NAME",
+        '<a href="' . Converter::getHtmlConverter()->encode($editUrl) . '" title="' . Loc::getMessage(
+            "SEO_CAMPAIGN_EDIT_TITLE",
+            array(
+                "#ID#" => $campaign["ID"],
+                "#XML_ID#" => $campaign["XML_ID"],
+            )
+        ) . '">' . Converter::getHtmlConverter()->encode($campaign['NAME']) . '</a>'
+    );
 
-    $row->AddViewField('LAST_UPDATE', $campaign['LAST_UPDATE'] ? $campaign['LAST_UPDATE'] : Loc::getMessage('SEO_UPDATE_NEVER'));
+    $row->AddViewField(
+        'LAST_UPDATE',
+        $campaign['LAST_UPDATE'] ? $campaign['LAST_UPDATE'] : Loc::getMessage('SEO_UPDATE_NEVER')
+    );
 
     $row->AddViewField('SHOW', Loc::getMessage('SEO_YANDEX_STATUS_' . $campaign['SETTINGS']['StatusShow']));
 
@@ -244,26 +279,34 @@ while ($campaign = $data->NavNext()) {
         $active = 'red';
     }
 
-    $row->AddViewField('STATUS', '<div style="white-space:nowrap;"><div class="lamp-' . $active . '" style="display:inline-block;"></div>&nbsp;' . $active_title . '</div>'/*.'<pre>'.print_r(array(
+    $row->AddViewField(
+        'STATUS',
+        '<div style="white-space:nowrap;"><div class="lamp-' . $active . '" style="display:inline-block;"></div>&nbsp;' . $active_title . '</div>'/*.'<pre>'.print_r(array(
 	'IsActive' => $campaign['SETTINGS']['IsActive'],
 	'StatusShow' => $campaign['SETTINGS']['StatusShow'],
 	'StatusModerate' => $campaign['SETTINGS']['StatusModerate'],
 	'StatusActivating' => $campaign['SETTINGS']['StatusActivating'],
-), 1).'</pre>'*/);
+), 1).'</pre>'*/
+    );
 
     $row->AddViewField('SUM', $campaign['SETTINGS']['Sum']);
     $row->AddViewField('REST', $campaign['SETTINGS']['Rest']);
     $row->AddViewField('SHOWS', $campaign['SETTINGS']['Shows']);
     $row->AddViewField('CLICKS', $campaign['SETTINGS']['Clicks']);
 
-    $bStrategySupported = in_array($campaign["SETTINGS"]['Strategy']['StrategyName'], Adv\YandexCampaignTable::$supportedStrategy);
+    $bStrategySupported = in_array(
+        $campaign["SETTINGS"]['Strategy']['StrategyName'],
+        Adv\YandexCampaignTable::$supportedStrategy
+    );
     $strategyTitle = Loc::getMessage('SEO_CAMPAIGN_STRATEGY_' . $campaign["SETTINGS"]['Strategy']['StrategyName']);
     if (!$strategyTitle) {
         $strategyTitle = $campaign["SETTINGS"]['Strategy']['StrategyName'];
     }
 
     if (!$bStrategySupported) {
-        $strategyTitle = '<span style="color: #A0A0A0" title="' . Converter::getHtmlConverter()->encode(Loc::getMessage('SEO_CAMPAIGN_STRATEGY_NOT_SUPPORTED', array('#STRATEGY#' => $strategyTitle))) . '">' . $strategyTitle . '</span>';
+        $strategyTitle = '<span style="color: #A0A0A0" title="' . Converter::getHtmlConverter()->encode(
+                Loc::getMessage('SEO_CAMPAIGN_STRATEGY_NOT_SUPPORTED', array('#STRATEGY#' => $strategyTitle))
+            ) . '">' . $strategyTitle . '</span>';
     }
 
     $row->AddViewField('STRATEGY', $strategyTitle);
@@ -279,14 +322,38 @@ while ($campaign = $data->NavNext()) {
         }
     */
 
-    $row->AddField("UPDATE", '<input type="button" ' . ($bOwner ? '' : 'disabled="disabled"') . ' class="adm-btn-save" value="' . Converter::getHtmlConverter()->encode(Loc::getMessage('SEO_CAMPAIGN_UPDATE')) . '" onclick="updateCampaign(this, ' . $campaign['ID'] . ')" name="save" id="campaign_update_button_' . $campaign['ID'] . '"' . ($bNeedAuth ? ' disabled="disabled"' : '') . ' />');
+    $row->AddField(
+        "UPDATE",
+        '<input type="button" ' . ($bOwner ? '' : 'disabled="disabled"') . ' class="adm-btn-save" value="' . Converter::getHtmlConverter(
+        )->encode(
+            Loc::getMessage('SEO_CAMPAIGN_UPDATE')
+        ) . '" onclick="updateCampaign(this, ' . $campaign['ID'] . ')" name="save" id="campaign_update_button_' . $campaign['ID'] . '"' . ($bNeedAuth ? ' disabled="disabled"' : '') . ' />'
+    );
 
-    $row->AddViewField('XML_ID', '<a href="https://direct.yandex.ru/registered/main.pl?cmd=editCamp&cid=' . $campaign['XML_ID'] . '" target="_blank" title="' . Converter::getHtmlConverter()->encode(Loc::getMessage('SEO_CAMPAIGN_EDIT_EXTERNAL')) . '">' . Loc::getMessage('SEO_YANDEX_DIRECT_LINK_TPL', array('#XML_ID#' => $campaign['XML_ID'])) . '</a>');
+    $row->AddViewField(
+        'XML_ID',
+        '<a href="https://direct.yandex.ru/registered/main.pl?cmd=editCamp&cid=' . $campaign['XML_ID'] . '" target="_blank" title="' . Converter::getHtmlConverter(
+        )->encode(Loc::getMessage('SEO_CAMPAIGN_EDIT_EXTERNAL')) . '">' . Loc::getMessage(
+            'SEO_YANDEX_DIRECT_LINK_TPL',
+            array('#XML_ID#' => $campaign['XML_ID'])
+        ) . '</a>'
+    );
 
     if ($campaign['SETTINGS']['StatusArchive'] == Engine\YandexDirect::BOOL_YES) {
-        $row->AddViewField('BANNER_CNT', '<a href="seo_search_yandex_direct_banner.php?lang=' . LANGUAGE_ID . '&amp;campaign=' . $campaign['ID'] . '&amp;archive=1" title="' . Converter::getHtmlConverter()->encode(Loc::getMessage('SEO_CAMPAIGN_BANNER_CNT_TITLE')) . '">' . $bannerCnt . '</a>');
+        $row->AddViewField(
+            'BANNER_CNT',
+            '<a href="seo_search_yandex_direct_banner.php?lang=' . LANGUAGE_ID . '&amp;campaign=' . $campaign['ID'] . '&amp;archive=1" title="' . Converter::getHtmlConverter(
+            )->encode(Loc::getMessage('SEO_CAMPAIGN_BANNER_CNT_TITLE')) . '">' . $bannerCnt . '</a>'
+        );
     } else {
-        $row->AddViewField('BANNER_CNT', '<a href="seo_search_yandex_direct_banner.php?lang=' . LANGUAGE_ID . '&amp;campaign=' . $campaign['ID'] . '" title="' . Converter::getHtmlConverter()->encode(Loc::getMessage('SEO_CAMPAIGN_BANNER_CNT_TITLE')) . '">' . $bannerCnt . '</a>' . ($bStrategySupported ? ' [<a href="seo_search_yandex_direct_banner_edit.php?lang=' . LANGUAGE_ID . '&amp;campaign=' . $campaign['ID'] . '" title="' . Converter::getHtmlConverter()->encode(Loc::getMessage('SEO_CAMPAIGN_BANNER_ADD_TITLE')) . '">+</a>]' : ''));
+        $row->AddViewField(
+            'BANNER_CNT',
+            '<a href="seo_search_yandex_direct_banner.php?lang=' . LANGUAGE_ID . '&amp;campaign=' . $campaign['ID'] . '" title="' . Converter::getHtmlConverter(
+            )->encode(
+                Loc::getMessage('SEO_CAMPAIGN_BANNER_CNT_TITLE')
+            ) . '">' . $bannerCnt . '</a>' . ($bStrategySupported ? ' [<a href="seo_search_yandex_direct_banner_edit.php?lang=' . LANGUAGE_ID . '&amp;campaign=' . $campaign['ID'] . '" title="' . Converter::getHtmlConverter(
+                )->encode(Loc::getMessage('SEO_CAMPAIGN_BANNER_ADD_TITLE')) . '">+</a>]' : '')
+        );
     }
 
     if (!$bNeedAuth) {
@@ -310,7 +377,9 @@ while ($campaign = $data->NavNext()) {
         $actionsList[] = array(
             "ICON" => "list",
             "TEXT" => Loc::getMessage("SEO_CAMPAIGN_BANNER_CNT"),
-            "ACTION" => $adminList->ActionRedirect('seo_search_yandex_direct_banner.php?lang=' . LANGUAGE_ID . '&amp;campaign=' . $campaign['ID'] . ($archive ? '&amp;archive=1' : '')),
+            "ACTION" => $adminList->ActionRedirect(
+                'seo_search_yandex_direct_banner.php?lang=' . LANGUAGE_ID . '&amp;campaign=' . $campaign['ID'] . ($archive ? '&amp;archive=1' : '')
+            ),
         );
 
         if ($bOwner) {
@@ -321,7 +390,6 @@ while ($campaign = $data->NavNext()) {
                         "TEXT" => Loc::getMessage("SEO_BANNER_STOP"),
                         "ACTION" => $adminList->ActionDoGroup($campaign['ID'], 'stop'),
                     );
-
                 } else {
                     $actionsList[] = array(
                         "ICON" => "resume",
@@ -335,13 +403,22 @@ while ($campaign = $data->NavNext()) {
                 $actionsList[] = array(
                     "ICON" => "unarchive",
                     "TEXT" => Loc::getMessage("SEO_CAMPAIGN_UNARCHIVE"),
-                    "ACTION" => "BX.adminPanel.showWait(BX('campaign_update_button_" . $campaign['ID'] . "'));" . $adminList->ActionDoGroup($campaign['ID'], "unarchive", "archive=1")
+                    "ACTION" => "BX.adminPanel.showWait(BX('campaign_update_button_" . $campaign['ID'] . "'));" . $adminList->ActionDoGroup(
+                            $campaign['ID'],
+                            "unarchive",
+                            "archive=1"
+                        )
                 );
             } elseif ($campaign['SETTINGS']['IsActive'] !== Engine\YandexDirect::BOOL_YES) {
                 $actionsList[] = array(
                     "ICON" => "delete",
                     "TEXT" => Loc::getMessage("SEO_CAMPAIGN_ARCHIVE"),
-                    "ACTION" => "if(confirm('" . \CUtil::JSEscape(Loc::getMessage('SEO_CAMPAIGN_ARCHIVE_CONFIRM')) . "')) {BX.adminPanel.showWait(BX('campaign_update_button_" . $campaign['ID'] . "'));" . $adminList->ActionDoGroup($campaign['ID'], "archive") . '}'
+                    "ACTION" => "if(confirm('" . \CUtil::JSEscape(
+                            Loc::getMessage('SEO_CAMPAIGN_ARCHIVE_CONFIRM')
+                        ) . "')) {BX.adminPanel.showWait(BX('campaign_update_button_" . $campaign['ID'] . "'));" . $adminList->ActionDoGroup(
+                            $campaign['ID'],
+                            "archive"
+                        ) . '}'
                 );
             }
         }
@@ -350,7 +427,9 @@ while ($campaign = $data->NavNext()) {
             $actionsList[] = array(
                 "ICON" => "delete",
                 "TEXT" => Loc::getMessage("SEO_CAMPAIGN_DELETE"),
-                "ACTION" => "if(confirm('" . \CUtil::JSEscape(Loc::getMessage('SEO_CAMPAIGN_DELETE_CONFIRM')) . "')) " . $adminList->ActionDoGroup($campaign['ID'], "delete", $archive ? "archive=1" : "")
+                "ACTION" => "if(confirm('" . \CUtil::JSEscape(
+                        Loc::getMessage('SEO_CAMPAIGN_DELETE_CONFIRM')
+                    ) . "')) " . $adminList->ActionDoGroup($campaign['ID'], "delete", $archive ? "archive=1" : "")
             );
         }
 
@@ -403,7 +482,9 @@ $adminList->AddAdminContextMenu($aContext);
 
 $adminList->CheckListMode();
 
-$APPLICATION->SetTitle($archive ? Loc::getMessage("SEO_YANDEX_DIRECT_TITLE_ARCHIVE") : Loc::getMessage("SEO_YANDEX_DIRECT_TITLE"));
+$APPLICATION->SetTitle(
+    $archive ? Loc::getMessage("SEO_YANDEX_DIRECT_TITLE_ARCHIVE") : Loc::getMessage("SEO_YANDEX_DIRECT_TITLE")
+);
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
 ?>
@@ -451,8 +532,9 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
 <?
 require_once("tab/seo_search_yandex_direct_auth.php");
 
-if (isset($seoproxyAuthError))
+if (isset($seoproxyAuthError)) {
     echo $seoproxyAuthError->Show();
+}
 
 $adminList->DisplayList();
 
@@ -463,12 +545,14 @@ foreach (Adv\YandexCampaignTable::$supportedStrategy as $startegy) {
 $messageText .= '</ul>';
 
 
-$message = new CAdminMessage(array(
-    'TYPE' => 'OK',
-    'MESSAGE' => Loc::getMessage('SEO_SUPPORTED_STRATEGY_NOTE'),
-    "DETAILS" => $messageText,
-    'HTML' => 'Y'
-));
+$message = new CAdminMessage(
+    array(
+        'TYPE' => 'OK',
+        'MESSAGE' => Loc::getMessage('SEO_SUPPORTED_STRATEGY_NOTE'),
+        "DETAILS" => $messageText,
+        'HTML' => 'Y'
+    )
+);
 echo $message->show();
 
 

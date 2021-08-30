@@ -1,13 +1,14 @@
-<?
+<?php
+
 /**
  * @global $USER_FIELD_MANAGER CUserTypeManager
  */
-global $USER_FIELD_MANAGER;
 
+global $USER_FIELD_MANAGER;
 
 abstract class CAllTestAttempt
 {
-    function CheckFields(&$arFields, $ID = false, $bCheckRights = true)
+    public function CheckFields(&$arFields, $ID = false, $bCheckRights = true)
     {
         global $DB, $APPLICATION;
 
@@ -15,9 +16,9 @@ abstract class CAllTestAttempt
             $APPLICATION->ThrowException(GetMessage("LEARNING_BAD_TEST_ID"), "EMPTY_TEST_ID");
             return false;
         } elseif (is_set($arFields, "TEST_ID")) {
-            if ($bCheckRights)
+            if ($bCheckRights) {
                 $r = CTest::GetByID($arFields["TEST_ID"]);
-            else {
+            } else {
                 $r = CTest::getList(
                     array(),
                     array(
@@ -49,23 +50,30 @@ abstract class CAllTestAttempt
             return false;
         }
 
-        if (is_set($arFields, "DATE_END") && strlen($arFields["DATE_END"]) > 0 && (!$DB->IsDate($arFields["DATE_END"], false, LANG, "FULL"))) {
+        if (is_set($arFields, "DATE_END") && $arFields["DATE_END"] <> '' && (!$DB->IsDate(
+                $arFields["DATE_END"],
+                false,
+                LANG,
+                "FULL"
+            ))) {
             $APPLICATION->ThrowException(GetMessage("LEARNING_BAD_DATE_END"), "ERROR_DATE_END");
             return false;
         }
 
         //Defaults
-        if (is_set($arFields, "STATUS") && !in_array($arFields["STATUS"], Array("B", "D", "F", "N")))
+        if (is_set($arFields, "STATUS") && !in_array($arFields["STATUS"], Array("B", "D", "F", "N"))) {
             $arFields["STATUS"] = "B";
+        }
 
-        if (is_set($arFields, "COMPLETED") && $arFields["COMPLETED"] != "Y")
+        if (is_set($arFields, "COMPLETED") && $arFields["COMPLETED"] != "Y") {
             $arFields["COMPLETED"] = "N";
+        }
 
         return true;
     }
 
 
-    function Add($arFields)
+    public function Add($arFields)
     {
         global $DB, $USER_FIELD_MANAGER;
 
@@ -91,18 +99,25 @@ abstract class CAllTestAttempt
     }
 
 
-    function Update($ID, $arFields, $arParams = array())
+    public function Update($ID, $arFields, $arParams = array())
     {
         global $DB, $USER_FIELD_MANAGER;
 
         $ID = intval($ID);
-        if ($ID < 1) return false;
+        if ($ID < 1) {
+            return false;
+        }
 
         $bCheckRights = true;
-        if (isset($arParams['CHECK_PERMISSIONS']) && ($arParams['CHECK_PERMISSIONS'] === 'N'))
+        if (isset($arParams['CHECK_PERMISSIONS']) && ($arParams['CHECK_PERMISSIONS'] === 'N')) {
             $bCheckRights = false;
+        }
 
-        if ($this->CheckFields($arFields, $ID, $bCheckRights) && $USER_FIELD_MANAGER->CheckFields("LEARN_ATTEMPT", 0, $arFields)) {
+        if ($this->CheckFields($arFields, $ID, $bCheckRights) && $USER_FIELD_MANAGER->CheckFields(
+                "LEARN_ATTEMPT",
+                0,
+                $arFields
+            )) {
             unset($arFields["ID"]);
             unset($arFields["TEST_ID"]);
 
@@ -122,22 +137,26 @@ abstract class CAllTestAttempt
     }
 
 
-    function Delete($ID)
+    public static function Delete($ID)
     {
         global $DB, $USER_FIELD_MANAGER;
 
         $ID = intval($ID);
-        if ($ID < 1) return false;
+        if ($ID < 1) {
+            return false;
+        }
 
         //Results
         $strSql = "DELETE FROM b_learn_test_result WHERE ATTEMPT_ID = " . $ID;
-        if (!$DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__))
+        if (!$DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__)) {
             return false;
+        }
 
         //Attempt
         $strSql = "DELETE FROM b_learn_attempt WHERE ID = " . $ID;
-        if (!$DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__))
+        if (!$DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__)) {
             return false;
+        }
 
         $USER_FIELD_MANAGER->Delete("LEARN_ATTEMPT", $ID);
 
@@ -145,11 +164,11 @@ abstract class CAllTestAttempt
     }
 
 
-    function GetFilter($arFilter)
+    public static function GetFilter($arFilter)
     {
-
-        if (!is_array($arFilter))
+        if (!is_array($arFilter)) {
             $arFilter = Array();
+        }
 
         $arSqlSearch = Array();
 
@@ -158,7 +177,7 @@ abstract class CAllTestAttempt
             $key = $res["FIELD"];
             $cOperationType = $res["OPERATION"];
 
-            $key = strtoupper($key);
+            $key = mb_strtoupper($key);
 
             switch ($key) {
                 case "ID":
@@ -167,16 +186,34 @@ abstract class CAllTestAttempt
                 case "SCORE":
                 case "MAX_SCORE":
                 case "QUESTIONS":
-                    $arSqlSearch[] = CLearnHelper::FilterCreate("A." . $key, $val, "number", $bFullJoin, $cOperationType);
+                    $arSqlSearch[] = CLearnHelper::FilterCreate(
+                        "A." . $key,
+                        $val,
+                        "number",
+                        $bFullJoin,
+                        $cOperationType
+                    );
                     break;
 
                 case "SPEED":
-                    $arSqlSearch[] = CLearnHelper::FilterCreate(self::getSpeedFieldSql(), $val, "number", $bFullJoin, $cOperationType);
+                    $arSqlSearch[] = CLearnHelper::FilterCreate(
+                        self::getSpeedFieldSql(),
+                        $val,
+                        "number",
+                        $bFullJoin,
+                        $cOperationType
+                    );
                     break;
 
                 case "STATUS":
                 case "COMPLETED":
-                    $arSqlSearch[] = CLearnHelper::FilterCreate("A." . $key, $val, "string_equal", $bFullJoin, $cOperationType);
+                    $arSqlSearch[] = CLearnHelper::FilterCreate(
+                        "A." . $key,
+                        $val,
+                        "string_equal",
+                        $bFullJoin,
+                        $cOperationType
+                    );
                     break;
 
                 case "DATE_START":
@@ -189,15 +226,33 @@ abstract class CAllTestAttempt
                     break;
 
                 case "USER_LOGIN":
-                    $arSqlSearch[] = CLearnHelper::FilterCreate("U.LOGIN", $val, "string_equal", $bFullJoin, $cOperationType);
+                    $arSqlSearch[] = CLearnHelper::FilterCreate(
+                        "U.LOGIN",
+                        $val,
+                        "string_equal",
+                        $bFullJoin,
+                        $cOperationType
+                    );
                     break;
 
                 case "USER_NAME":
-                    $arSqlSearch[] = CLearnHelper::FilterCreate("U.NAME", $val, "string_equal", $bFullJoin, $cOperationType);
+                    $arSqlSearch[] = CLearnHelper::FilterCreate(
+                        "U.NAME",
+                        $val,
+                        "string_equal",
+                        $bFullJoin,
+                        $cOperationType
+                    );
                     break;
 
                 case "USER_LAST_NAME":
-                    $arSqlSearch[] = CLearnHelper::FilterCreate("U.LAST_NAME", $val, "string_equal", $bFullJoin, $cOperationType);
+                    $arSqlSearch[] = CLearnHelper::FilterCreate(
+                        "U.LAST_NAME",
+                        $val,
+                        "string_equal",
+                        $bFullJoin,
+                        $cOperationType
+                    );
                     break;
             }
         }
@@ -206,16 +261,17 @@ abstract class CAllTestAttempt
     }
 
 
-    function GetByID($ID)
+    public static function GetByID($ID)
     {
-        if ((int)$ID > 0)
+        if ((int)$ID > 0) {
             return CTestAttempt::GetList(array(), array("ID" => (int)$ID));
-        else
+        } else {
             return (new CDBResult());
+        }
     }
 
 
-    function GetCount($TEST_ID, $STUDENT_ID)
+    public static function GetCount($TEST_ID, $STUDENT_ID)
     {
         global $DB;
 
@@ -231,34 +287,41 @@ abstract class CAllTestAttempt
     }
 
 
-    function IsTestCompleted($ATTEMPT_ID, $PERCENT)
+    public static function IsTestCompleted($ATTEMPT_ID, $PERCENT)
     {
         global $DB;
 
         $strSql =
             "SELECT * " .
             "FROM b_learn_test_result TR, b_learn_question Q " .
-            "WHERE TR.QUESTION_ID = Q.ID AND TR.CORRECT = 'N' AND Q.CORRECT_REQUIRED = 'Y' AND TR.ATTEMPT_ID = '" . intval($ATTEMPT_ID) . "'";
+            "WHERE TR.QUESTION_ID = Q.ID AND TR.CORRECT = 'N' AND Q.CORRECT_REQUIRED = 'Y' AND TR.ATTEMPT_ID = '" . intval(
+                $ATTEMPT_ID
+            ) . "'";
 
-        if (!$res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__))
+        if (!$res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__)) {
             return false;
+        }
 
-        if ($arStat = $res->Fetch())
+        if ($arStat = $res->Fetch()) {
             return false;
+        }
 
         $strSql =
             "SELECT SUM(Q.POINT) as CNT_ALL, SUM(CASE WHEN TR.CORRECT = 'Y' THEN Q.POINT ELSE 0 END) as CNT_RIGHT " .
             "FROM b_learn_test_result TR, b_learn_question Q " .
             "WHERE TR.ATTEMPT_ID = '" . intval($ATTEMPT_ID) . "' AND TR.QUESTION_ID = Q.ID";
 
-        if (!$res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__))
+        if (!$res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__)) {
             return false;
+        }
 
-        if (!$arStat = $res->Fetch())
+        if (!$arStat = $res->Fetch()) {
             return false;
+        }
 
-        if ($arStat["CNT_RIGHT"] <= 0 || $arStat["CNT_ALL"] == 0)
+        if ($arStat["CNT_RIGHT"] <= 0 || $arStat["CNT_ALL"] == 0) {
             return false;
+        }
 
         // Do some magic due to IEEE 754
         $epsilon = 0.001;
@@ -269,31 +332,35 @@ abstract class CAllTestAttempt
         $delta = abs($userScore - $scoreForSuccess);
 
         $isTestComplete = false;
-        if ($userScore > $scoreForSuccess)
+        if ($userScore > $scoreForSuccess) {
             $isTestComplete = true;
-        elseif ($delta < $epsilon)        // it means, that $userScore == $scoreForSuccess
+        } elseif ($delta < $epsilon)        // it means, that $userScore == $scoreForSuccess
+        {
             $isTestComplete = true;
+        }
 
         return ($isTestComplete);
     }
 
 
-    function OnAttemptChange($ATTEMPT_ID, $bCOMPLETED = false)
+    public static function OnAttemptChange($ATTEMPT_ID, $bCOMPLETED = false)
     {
         global $DB;
 
         $ATTEMPT_ID = intval($ATTEMPT_ID);
 
-        if ($ATTEMPT_ID < 1)
+        if ($ATTEMPT_ID < 1) {
             return false;
+        }
 
         $strSql = "SELECT A.*, T.APPROVED, T.COMPLETED_SCORE, T.COURSE_ID " .
             "FROM b_learn_attempt A " .
             "INNER JOIN b_learn_test T ON A.TEST_ID = T.ID " .
             "WHERE A.ID = '" . $ATTEMPT_ID . "' AND A.STATUS = 'F' ";
         $res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-        if (!$arAttempt = $res->Fetch())
+        if (!$arAttempt = $res->Fetch()) {
             return false;
+        }
 
 
         $COMPLETED = "N";
@@ -301,18 +368,21 @@ abstract class CAllTestAttempt
             $arAttempt["APPROVED"] == "Y" &&
             intval($arAttempt["COMPLETED_SCORE"]) > 0 &&
             CTestAttempt::IsTestCompleted($ATTEMPT_ID, $arAttempt["COMPLETED_SCORE"])
-        )
+        ) {
             $COMPLETED = "Y";
+        }
 
-        if ($bCOMPLETED)
+        if ($bCOMPLETED) {
             $COMPLETED = "Y";
+        }
 
         $strSql =
             "UPDATE b_learn_attempt SET COMPLETED = '" . $COMPLETED . "' " .
             "WHERE ID = '" . $ATTEMPT_ID . "'";
 
-        if (!$res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__))
+        if (!$res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__)) {
             return false;
+        }
 
         $strSql = "SELECT * FROM b_learn_gradebook WHERE STUDENT_ID='" . $arAttempt["STUDENT_ID"] . "' AND TEST_ID='" . $arAttempt["TEST_ID"] . "'";
         $res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
@@ -327,8 +397,9 @@ abstract class CAllTestAttempt
 
             $at = new CGradeBook;
 
-            if (!$res = $at->Add($arFields))
+            if (!$res = $at->Add($arFields)) {
                 return false;
+            }
 
             CCertification::Certificate($arAttempt["STUDENT_ID"], $arAttempt["COURSE_ID"]);
         } else {
@@ -337,18 +408,23 @@ abstract class CAllTestAttempt
                 "WHERE A.STUDENT_ID = '" . $arAttempt["STUDENT_ID"] . "' AND A.TEST_ID = '" . $arAttempt["TEST_ID"] . "'  ORDER BY COMPLETED DESC, SCORE DESC";
             //AND A.COMPLETED = 'Y'
             $res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-            if (!$arMaxScore = $res->Fetch())
+            if (!$arMaxScore = $res->Fetch()) {
                 return false;
+            }
 
-            if ($arGradeBook["COMPLETED"] == "Y")
+            if ($arGradeBook["COMPLETED"] == "Y") {
                 $COMPLETED = "Y";
+            }
 
             $strSql =
-                "UPDATE b_learn_gradebook SET RESULT = '" . intval($arMaxScore["SCORE"]) . "', MAX_RESULT = '" . intval($arMaxScore["MAX_SCORE"]) . "',COMPLETED = '" . $COMPLETED . "' " .
+                "UPDATE b_learn_gradebook SET RESULT = '" . intval($arMaxScore["SCORE"]) . "', MAX_RESULT = '" . intval(
+                    $arMaxScore["MAX_SCORE"]
+                ) . "',COMPLETED = '" . $COMPLETED . "' " .
                 "WHERE ID = '" . $arGradeBook["ID"] . "'";
 
-            if (!$res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__))
+            if (!$res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__)) {
                 return false;
+            }
 
             CCertification::Certificate($arAttempt["STUDENT_ID"], $arAttempt["COURSE_ID"]);
         }
@@ -357,14 +433,15 @@ abstract class CAllTestAttempt
     }
 
 
-    function AttemptFinished($ATTEMPT_ID)
+    public function AttemptFinished($ATTEMPT_ID)
     {
         global $DB;
 
         $ATTEMPT_ID = intval($ATTEMPT_ID);
 
-        if ($ATTEMPT_ID < 1)
+        if ($ATTEMPT_ID < 1) {
             return false;
+        }
 
         $strSql =
             "SELECT SUM(TR.POINT) as SCORE, SUM(Q.POINT) MAX_SCORE " .
@@ -373,10 +450,12 @@ abstract class CAllTestAttempt
             "WHERE ATTEMPT_ID = '" . $ATTEMPT_ID . "' ";
 
         $res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-        if (!$ar = $res->Fetch())
+        if (!$ar = $res->Fetch()) {
             return false;
+        }
 
-        $res = $this->Update($ATTEMPT_ID,
+        $res = $this->Update(
+            $ATTEMPT_ID,
             array(
                 "SCORE" => $ar["SCORE"],
                 "MAX_SCORE" => $ar["MAX_SCORE"],
@@ -385,67 +464,80 @@ abstract class CAllTestAttempt
             )
         );
 
-        foreach (GetModuleEvents('learning', 'OnAfterAttemptFinished', true) as $arEvent)
+        foreach (GetModuleEvents('learning', 'OnAfterAttemptFinished', true) as $arEvent) {
             ExecuteModuleEventEx($arEvent, array($ATTEMPT_ID));
+        }
 
-        if ($res)
+        if ($res) {
             return CTestAttempt::OnAttemptChange($ATTEMPT_ID);
-        else
+        } else {
             return false;
+        }
     }
 
 
-    function RecountQuestions($ATTEMPT_ID)
+    public static function RecountQuestions($ATTEMPT_ID)
     {
         global $DB;
 
         $ATTEMPT_ID = intval($ATTEMPT_ID);
 
-        if ($ATTEMPT_ID < 1)
+        if ($ATTEMPT_ID < 1) {
             return false;
+        }
 
         $strSql = "SELECT COUNT(*) CNT, SUM(TR.POINT) CNT_SUM, SUM(Q.POINT) MAX_POINT " .
             "FROM b_learn_test_result TR " .
             "INNER JOIN b_learn_question Q ON TR.QUESTION_ID = Q.ID " .
             "WHERE TR.ATTEMPT_ID = " . $ATTEMPT_ID;
         $res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-        if (!$ar = $res->Fetch())
+        if (!$ar = $res->Fetch()) {
             return false;
+        }
 
-        $strSql = "UPDATE b_learn_attempt SET QUESTIONS = '" . intval($ar["CNT"]) . "', SCORE = '" . intval($ar["CNT_SUM"]) . "', MAX_SCORE = '" . intval($ar["MAX_POINT"]) . "' WHERE ID = " . $ATTEMPT_ID;
-        if (!$DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__))
+        $strSql = "UPDATE b_learn_attempt SET QUESTIONS = '" . intval($ar["CNT"]) . "', SCORE = '" . intval(
+                $ar["CNT_SUM"]
+            ) . "', MAX_SCORE = '" . intval($ar["MAX_POINT"]) . "' WHERE ID = " . $ATTEMPT_ID;
+        if (!$DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__)) {
             return false;
+        }
 
         return true;
     }
 
 
-    function IsTestFailed($ATTEMPT_ID, $PERCENT)
+    public static function IsTestFailed($ATTEMPT_ID, $PERCENT)
     {
         global $DB;
 
         $strSql =
             "SELECT * " .
             "FROM b_learn_test_result TR, b_learn_question Q " .
-            "WHERE TR.QUESTION_ID = Q.ID AND TR.CORRECT = 'N' AND TR.ANSWERED = 'Y' AND Q.CORRECT_REQUIRED = 'Y' AND TR.ATTEMPT_ID = '" . intval($ATTEMPT_ID) . "'";
+            "WHERE TR.QUESTION_ID = Q.ID AND TR.CORRECT = 'N' AND TR.ANSWERED = 'Y' AND Q.CORRECT_REQUIRED = 'Y' AND TR.ATTEMPT_ID = '" . intval(
+                $ATTEMPT_ID
+            ) . "'";
 
 
-        if (!$res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__))
+        if (!$res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__)) {
             return true;
+        }
 
-        if ($arStat = $res->Fetch())
+        if ($arStat = $res->Fetch()) {
             return true;
+        }
 
         $strSql =
             "SELECT SUM(Q.POINT) as CNT_ALL, SUM(CASE WHEN TR.CORRECT = 'N' AND TR.ANSWERED = 'Y' THEN Q.POINT ELSE 0 END) as CNT_WRONG " .
             "FROM b_learn_test_result TR, b_learn_question Q " .
             "WHERE TR.ATTEMPT_ID = '" . intval($ATTEMPT_ID) . "' AND TR.QUESTION_ID = Q.ID";
 
-        if (!$res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__))
+        if (!$res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__)) {
             return true;
+        }
 
-        if (!$arStat = $res->Fetch())
+        if (!$arStat = $res->Fetch()) {
             return true;
+        }
 
         if ($arStat["CNT_ALL"] == 0) {
             return true;
@@ -465,10 +557,12 @@ abstract class CAllTestAttempt
         $delta = abs($userScore - $scoreForSuccess);
 
         $isTestFailed = true;
-        if ($userScore > $scoreForSuccess)
+        if ($userScore > $scoreForSuccess) {
             $isTestFailed = false;
-        elseif ($delta < $epsilon)        // it means, that $userScore == $scoreForSuccess
+        } elseif ($delta < $epsilon)        // it means, that $userScore == $scoreForSuccess
+        {
             $isTestFailed = false;
+        }
 
         return ($isTestFailed);
     }
@@ -497,7 +591,14 @@ abstract class CAllTestAttempt
             "MAX_SCORE" => "A.MAX_SCORE",
             "QUESTIONS" => "A.QUESTIONS",
             "TEST_NAME" => "T.NAME",
-            "USER_NAME" => $DB->Concat("'('", 'U.LOGIN', "') '", "CASE WHEN U.NAME IS NULL THEN '' ELSE U.NAME END", "' '", "CASE WHEN U.LAST_NAME IS NULL THEN '' ELSE U.LAST_NAME END"),
+            "USER_NAME" => $DB->Concat(
+                "'('",
+                'U.LOGIN',
+                "') '",
+                "CASE WHEN U.NAME IS NULL THEN '' ELSE U.NAME END",
+                "' '",
+                "CASE WHEN U.LAST_NAME IS NULL THEN '' ELSE U.LAST_NAME END"
+            ),
             "USER_ID" => "U.ID",
             "MARK" => "TM.MARK",
             "MESSAGE" => "TM.DESCRIPTION",
@@ -506,87 +607,106 @@ abstract class CAllTestAttempt
             "SPEED" => self::getSpeedFieldSql()
         );
 
-        if (count($arSelect) <= 0 || in_array("*", $arSelect))
+        if (count($arSelect) <= 0 || in_array("*", $arSelect)) {
             $arSelect = array_keys($arFields);
+        }
 
         $arSqlSelect = array();
         foreach ($arSelect as $field) {
-            $field = strtoupper($field);
-            if (array_key_exists($field, $arFields))
+            $field = mb_strtoupper($field);
+            if (array_key_exists($field, $arFields)) {
                 $arSqlSelect[$field] = $arFields[$field] . " AS " . $field;
+            }
         }
 
         $sSelect = implode(",\n", $arSqlSelect);
 
-        if (!is_array($arFilter))
+        if (!is_array($arFilter)) {
             $arFilter = Array();
+        }
 
         $arSqlSearch = CTestAttempt::GetFilter($arFilter);
 
         $strSqlSearch = "";
         $arSqlSearchCnt = count($arSqlSearch);
-        for ($i = 0; $i < $arSqlSearchCnt; $i++)
-            if (strlen($arSqlSearch[$i]) > 0)
+        for ($i = 0; $i < $arSqlSearchCnt; $i++) {
+            if ($arSqlSearch[$i] <> '') {
                 $strSqlSearch .= " AND " . $arSqlSearch[$i] . " ";
+            }
+        }
 
         $r = $obUserFieldsSql->GetFilter();
-        if (strlen($r) > 0)
+        if ($r <> '') {
             $strSqlSearch .= " AND (" . $r . ") ";
+        }
 
         $bCheckPerm = 'ORPHANED VAR';
 
         $strSqlFrom = '';
-        $strSql = static::_GetListSQLFormer($sSelect, $obUserFieldsSql, $bCheckPerm, $USER, $arFilter, $strSqlSearch, $strSqlFrom);
+        $strSql = static::_GetListSQLFormer(
+            $sSelect,
+            $obUserFieldsSql,
+            $bCheckPerm,
+            $USER,
+            $arFilter,
+            $strSqlSearch,
+            $strSqlFrom
+        );
 
-        if (!is_array($arOrder))
+        if (!is_array($arOrder)) {
             $arOrder = Array();
+        }
 
+        $arSqlOrder = [];
         foreach ($arOrder as $by => $order) {
-            $by = strtolower($by);
-            $order = strtolower($order);
-            if ($order != "asc")
+            $by = mb_strtolower($by);
+            $order = mb_strtolower($order);
+            if ($order != "asc") {
                 $order = "desc";
+            }
 
-            if ($by == "id")
+            if ($by == "id") {
                 $arSqlOrder[] = " A.ID " . $order . " ";
-            elseif ($by == "test_id")
+            } elseif ($by == "test_id") {
                 $arSqlOrder[] = " A.TEST_ID " . $order . " ";
-            elseif ($by == "student_id")
+            } elseif ($by == "student_id") {
                 $arSqlOrder[] = " A.STUDENT_ID " . $order . " ";
-            elseif ($by == "date_start")
+            } elseif ($by == "date_start") {
                 $arSqlOrder[] = " A.DATE_START " . $order . " ";
-            elseif ($by == "date_end")
+            } elseif ($by == "date_end") {
                 $arSqlOrder[] = " A.DATE_END " . $order . " ";
-            elseif ($by == "status")
+            } elseif ($by == "status") {
                 $arSqlOrder[] = " A.STATUS " . $order . " ";
-            elseif ($by == "score")
+            } elseif ($by == "score") {
                 $arSqlOrder[] = " A.SCORE " . $order . " ";
-            elseif ($by == "max_score")
+            } elseif ($by == "max_score") {
                 $arSqlOrder[] = " A.MAX_SCORE " . $order . " ";
-            elseif ($by == "completed")
+            } elseif ($by == "completed") {
                 $arSqlOrder[] = " A.COMPLETED " . $order . " ";
-            elseif ($by == "questions")
+            } elseif ($by == "questions") {
                 $arSqlOrder[] = " A.QUESTIONS " . $order . " ";
-            elseif ($by == "user_name")
+            } elseif ($by == "user_name") {
                 $arSqlOrder[] = " USER_NAME " . $order . " ";
-            elseif ($by == "test_name")
+            } elseif ($by == "test_name") {
                 $arSqlOrder[] = " TEST_NAME " . $order . " ";
-            elseif ($by == "speed")
+            } elseif ($by == "speed") {
                 $arSqlOrder[] = " SPEED " . $order . " ";
-            elseif ($s = $obUserFieldsSql->GetOrder($by))
+            } elseif ($s = $obUserFieldsSql->GetOrder($by)) {
                 $arSqlOrder[$by] = " " . $s . " " . $order . " ";
-            else
+            } else {
                 $arSqlOrder[] = " A.ID " . $order . " ";
+            }
         }
 
         $strSqlOrder = "";
         DelDuplicateSort($arSqlOrder);
         $arSqlOrderCnt = count($arSqlOrder);
         for ($i = 0; $i < $arSqlOrderCnt; $i++) {
-            if ($i == 0)
+            if ($i == 0) {
                 $strSqlOrder = " ORDER BY ";
-            else
+            } else {
                 $strSqlOrder .= ",";
+            }
 
             $strSqlOrder .= $arSqlOrder[$i];
         }
@@ -595,18 +715,22 @@ abstract class CAllTestAttempt
 
         if (!empty($arNavParams)) {
             $nTopCount = null;
-            if (isset($arNavParams['NAV_PARAMS']['nPageTop']) && ($arNavParams['NAV_PARAMS']['nPageTop'] > 0))
+            if (isset($arNavParams['NAV_PARAMS']['nPageTop']) && ($arNavParams['NAV_PARAMS']['nPageTop'] > 0)) {
                 $nTopCount = (int)$arNavParams['NAV_PARAMS']['nPageTop'];
-            else if (isset($arNavParams['nPageTop']))
-                $nTopCount = (int)$arNavParams['nPageTop'];
-            else if (isset($arNavParams['nTopCount']))
-                $nTopCount = (int)$arNavParams['nTopCount'];
-            else {
-                $res_cnt = $DB->Query("SELECT COUNT(A.ID) as C " . $strSqlFrom);
-                $res_cnt = $res_cnt->fetch();
-                $res = new CDBResult();
-                $res->NavQuery($strSql, $res_cnt['C'], $arNavParams);
-                $res->SetUserFields($USER_FIELD_MANAGER->GetUserFields("LEARN_ATTEMPT"));
+            } else {
+                if (isset($arNavParams['nPageTop'])) {
+                    $nTopCount = (int)$arNavParams['nPageTop'];
+                } else {
+                    if (isset($arNavParams['nTopCount'])) {
+                        $nTopCount = (int)$arNavParams['nTopCount'];
+                    } else {
+                        $res_cnt = $DB->Query("SELECT COUNT(A.ID) as C " . $strSqlFrom);
+                        $res_cnt = $res_cnt->fetch();
+                        $res = new CDBResult();
+                        $res->NavQuery($strSql, $res_cnt['C'], $arNavParams);
+                        $res->SetUserFields($USER_FIELD_MANAGER->GetUserFields("LEARN_ATTEMPT"));
+                    }
+                }
             }
 
             if ($nTopCount !== null) {
@@ -654,8 +778,9 @@ abstract class CAllTestAttempt
         }
 
         $strSql = "DELETE FROM b_learn_test_result WHERE ATTEMPT_ID = " . $ATTEMPT_ID;
-        if (!$DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__))
+        if (!$DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__)) {
             return false;
+        }
 
         /**
          * QUESTIONS_FROM values:
@@ -705,7 +830,8 @@ abstract class CAllTestAttempt
 
                     . " AND Q.ACTIVE = 'Y' "        // active questions only
                     . ($arTest["INCLUDE_SELF_TEST"] != "Y" ? "AND Q.SELF = 'N' " : "")
-                    . "ORDER BY " . ($arTest["RANDOM_QUESTIONS"] == "Y" ? CTest::GetRandFunction() : "L.SORT, Q.SORT, L.ID");
+                    . "ORDER BY " . ($arTest["RANDOM_QUESTIONS"] == "Y" ? CTest::GetRandFunction(
+                    ) : "L.SORT, Q.SORT, L.ID");
             } else    // 'L' X questions from every lesson in course
             {
                 $strSql =
@@ -714,20 +840,23 @@ abstract class CAllTestAttempt
                     "INNER JOIN b_learn_question Q ON L.ID = Q.LESSON_ID " .
                     "WHERE L.ID IN (" . $clauseAllChildsLessons . ") AND Q.ACTIVE = 'Y' " .
                     ($arTest["INCLUDE_SELF_TEST"] != "Y" ? "AND Q.SELF = 'N' " : "") .
-                    "ORDER BY " . ($arTest["RANDOM_QUESTIONS"] == "Y" ? CTest::GetRandFunction() : "L.SORT, Q.SORT, L.ID");
+                    "ORDER BY " . ($arTest["RANDOM_QUESTIONS"] == "Y" ? CTest::GetRandFunction(
+                    ) : "L.SORT, Q.SORT, L.ID");
             }
 
-            if (!$res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__))
+            if (!$res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__)) {
                 return false;
+            }
 
             $Values = Array();
             $tmp = Array();
             while ($arRecord = $res->Fetch()) {
                 if (is_set($tmp, $arRecord["FROM_ID"])) {
-                    if ($tmp[$arRecord["FROM_ID"]] < $arTest["QUESTIONS_AMOUNT"])
+                    if ($tmp[$arRecord["FROM_ID"]] < $arTest["QUESTIONS_AMOUNT"]) {
                         $tmp[$arRecord["FROM_ID"]]++;
-                    else
+                    } else {
                         continue;
+                    }
                 } else {
                     $tmp[$arRecord["FROM_ID"]] = 1;
                 }
@@ -778,7 +907,8 @@ abstract class CAllTestAttempt
                 "INNER JOIN b_learn_question Q ON L.ID = Q.LESSON_ID " .
                 "WHERE " . $WHERE . " AND Q.ACTIVE = 'Y' " .
                 ($arTest["INCLUDE_SELF_TEST"] != "Y" ? "AND Q.SELF = 'N' " : "") .
-                "ORDER BY " . ($arTest["RANDOM_QUESTIONS"] == "Y" ? CTest::GetRandFunction() : "L.SORT, Q.SORT, L.ID ") .
+                "ORDER BY " . ($arTest["RANDOM_QUESTIONS"] == "Y" ? CTest::GetRandFunction(
+                ) : "L.SORT, Q.SORT, L.ID ") .
                 ($arTest["QUESTIONS_AMOUNT"] > 0 ? "LIMIT " . $arTest["QUESTIONS_AMOUNT"] : "");
 
             $success = false;
@@ -792,21 +922,28 @@ abstract class CAllTestAttempt
                             . "VALUES (" . $ATTEMPT_ID . ", " . (int)$arQuestion['QUESTION_ID'] . ")";
                     }
 
-                    if ($strSql !== '')
+                    if ($strSql !== '') {
                         $strSql = "INSERT ALL " . $strSql . " \nSELECT 1 FROM DUAL";
+                    }
                 } else {
                     $arSqlSubstrings = array();
-                    while ($arQuestion = $rsQuestions->fetch())
+                    while ($arQuestion = $rsQuestions->fetch()) {
                         $arSqlSubstrings[] = "(" . $ATTEMPT_ID . ", " . $arQuestion['QUESTION_ID'] . ")";
+                    }
 
-                    if (!empty($arSqlSubstrings))
-                        $strSql = "INSERT INTO b_learn_test_result (ATTEMPT_ID, QUESTION_ID) VALUES " . implode(",\n", $arSqlSubstrings);
+                    if (!empty($arSqlSubstrings)) {
+                        $strSql = "INSERT INTO b_learn_test_result (ATTEMPT_ID, QUESTION_ID) VALUES " . implode(
+                                ",\n",
+                                $arSqlSubstrings
+                            );
+                    }
                 }
 
                 if ($strSql !== '') {
                     $rc = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-                    if ($rc && intval($rc->AffectedRowsCount()) > 0)
+                    if ($rc && intval($rc->AffectedRowsCount()) > 0) {
                         $success = true;
+                    }
                 }
             }
 
@@ -832,9 +969,9 @@ abstract class CAllTestAttempt
 				WHERE (L.ID IN (" . $clauseAllChildsLessons . ") OR (L.ID = " . ($courseLessonId + 0) . ") )
 				AND Q.ACTIVE = 'Y' "
                     . ($arTest["INCLUDE_SELF_TEST"] != "Y" ? "AND Q.SELF = 'N' " : "") .
-                    "ORDER BY " . ($arTest["RANDOM_QUESTIONS"] == "Y" ? CTest::GetRandFunction() : "L.SORT, Q.SORT, L.ID ") .
+                    "ORDER BY " . ($arTest["RANDOM_QUESTIONS"] == "Y" ? CTest::GetRandFunction(
+                    ) : "L.SORT, Q.SORT, L.ID ") .
                     ($arTest["QUESTIONS_AMOUNT"] > 0 ? "LIMIT " . ($arTest["QUESTIONS_AMOUNT"] + 0) : "");
-
             } elseif ($DBType === 'mssql') {
                 $strSql =
                     "SELECT " . ($arTest["QUESTIONS_AMOUNT"] > 0 ? "TOP " . ($arTest["QUESTIONS_AMOUNT"] + 0) . " " : "") . " Q.ID AS QUESTION_ID
@@ -843,7 +980,8 @@ abstract class CAllTestAttempt
 				WHERE (L.ID IN (" . $clauseAllChildsLessons . ") OR (L.ID = " . ($courseLessonId + 0) . ") )
 				AND Q.ACTIVE = 'Y' "
                     . ($arTest["INCLUDE_SELF_TEST"] != "Y" ? "AND Q.SELF = 'N' " : "") .
-                    "ORDER BY " . ($arTest["RANDOM_QUESTIONS"] == "Y" ? CTest::GetRandFunction() : "L.SORT, Q.SORT, L.ID");
+                    "ORDER BY " . ($arTest["RANDOM_QUESTIONS"] == "Y" ? CTest::GetRandFunction(
+                    ) : "L.SORT, Q.SORT, L.ID");
             } else    // oracle
             {
                 $strSql =
@@ -854,7 +992,8 @@ abstract class CAllTestAttempt
 				AND Q.ACTIVE = 'Y' "
                     . ($arTest["QUESTIONS_AMOUNT"] > 0 ? "AND ROWNUM <= " . $arTest["QUESTIONS_AMOUNT"] . " " : "") .
                     ($arTest["INCLUDE_SELF_TEST"] != "Y" ? "AND Q.SELF = 'N' " : "") .
-                    "ORDER BY " . ($arTest["RANDOM_QUESTIONS"] == "Y" ? CTest::GetRandFunction() : "L.SORT, Q.SORT, L.ID");
+                    "ORDER BY " . ($arTest["RANDOM_QUESTIONS"] == "Y" ? CTest::GetRandFunction(
+                    ) : "L.SORT, Q.SORT, L.ID");
             }
 
             $success = false;
@@ -868,21 +1007,28 @@ abstract class CAllTestAttempt
                             . "VALUES (" . $ATTEMPT_ID . ", " . (int)$arQuestion['QUESTION_ID'] . ")";
                     }
 
-                    if ($strSql !== '')
+                    if ($strSql !== '') {
                         $strSql = "INSERT ALL " . $strSql . " \nSELECT 1 FROM DUAL";
+                    }
                 } else {
                     $arSqlSubstrings = array();
-                    while ($arQuestion = $rsQuestions->fetch())
+                    while ($arQuestion = $rsQuestions->fetch()) {
                         $arSqlSubstrings[] = "(" . $ATTEMPT_ID . ", " . $arQuestion['QUESTION_ID'] . ")";
+                    }
 
-                    if (!empty($arSqlSubstrings))
-                        $strSql = "INSERT INTO b_learn_test_result (ATTEMPT_ID, QUESTION_ID) VALUES " . implode(",\n", $arSqlSubstrings);
+                    if (!empty($arSqlSubstrings)) {
+                        $strSql = "INSERT INTO b_learn_test_result (ATTEMPT_ID, QUESTION_ID) VALUES " . implode(
+                                ",\n",
+                                $arSqlSubstrings
+                            );
+                    }
                 }
 
                 if ($strSql !== '') {
                     $rc = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-                    if ($rc && intval($rc->AffectedRowsCount()) > 0)
+                    if ($rc && intval($rc->AffectedRowsCount()) > 0) {
                         $success = true;
+                    }
                 }
             }
 
@@ -890,10 +1036,13 @@ abstract class CAllTestAttempt
                 $APPLICATION->ThrowException(GetMessage("LEARNING_BAD_TEST_IS_EMPTY"), "ERROR_TEST_IS_EMPTY");
                 return false;
             }
-        } else
+        } else {
             return (false);
+        }
 
-        $strSql = "UPDATE b_learn_attempt SET QUESTIONS = '" . CTestResult::GetCount($ATTEMPT_ID) . "' WHERE ID = " . $ATTEMPT_ID;
+        $strSql = "UPDATE b_learn_attempt SET QUESTIONS = '" . CTestResult::GetCount(
+                $ATTEMPT_ID
+            ) . "' WHERE ID = " . $ATTEMPT_ID;
         $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 
         return true;

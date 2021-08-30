@@ -1,5 +1,6 @@
 <?
 /** @global CUser $USER */
+
 /** @global CMain $APPLICATION */
 define('STOP_STATISTICS', true);
 define('NO_AGENT_CHECK', true);
@@ -40,29 +41,34 @@ $activeCount = 0;
 
 if ($request->getRequestMethod() == 'POST' && $request['getSubscriptionData'] == 'Y') {
     try {
-        $totalCount = Catalog\SubscribeTable::getList(array(
-            'select' => array('CNT'),
-            'filter' => array('=ITEM_ID' => intval($request['itemId'])),
-            'runtime' => array(new Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(*)'))
-        ))->fetch();
+        $totalCount = Catalog\SubscribeTable::getList(
+            array(
+                'select' => array('CNT'),
+                'filter' => array('=ITEM_ID' => intval($request['itemId'])),
+                'runtime' => array(new Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(*)'))
+            )
+        )->fetch();
         $totalCount = $totalCount['CNT'];
         global $DB;
-        $activeCount = Catalog\SubscribeTable::getList(array(
-            'select' => array('CNT'),
-            'filter' => array(
-                '=ITEM_ID' => intval($request['itemId']),
-                array(
-                    'LOGIC' => 'OR',
-                    array('=DATE_TO' => false),
-                    array('>DATE_TO' => date($DB->dateFormatToPHP(CLang::getDateFormat('FULL')), time()))
-                )
-            ),
-            'runtime' => array(new Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(*)'))
-        ))->fetch();
+        $activeCount = Catalog\SubscribeTable::getList(
+            array(
+                'select' => array('CNT'),
+                'filter' => array(
+                    '=ITEM_ID' => intval($request['itemId']),
+                    array(
+                        'LOGIC' => 'OR',
+                        array('=DATE_TO' => false),
+                        array('>DATE_TO' => date($DB->dateFormatToPHP(CLang::getDateFormat('FULL')), time()))
+                    )
+                ),
+                'runtime' => array(new Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(*)'))
+            )
+        )->fetch();
         $activeCount = $activeCount['CNT'];
 
         echo Bitrix\Main\Web\Json::encode(
-            array('success' => true, 'data' => array('totalCount' => $totalCount, 'activeCount' => $activeCount)));
+            array('success' => true, 'data' => array('totalCount' => $totalCount, 'activeCount' => $activeCount))
+        );
         require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin_after.php');
         die();
     } catch (Main\SystemException $exception) {

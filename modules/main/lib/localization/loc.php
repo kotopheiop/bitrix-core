@@ -42,7 +42,7 @@ final class Loc
             self::loadLazy($code, $language);
         }
 
-        $s = self::$messages[$language][$code];
+        $s = self::$messages[$language][$code] ?? null;
 
         if ($replace !== null && is_array($replace)) {
             foreach ($replace as $search => $repl) {
@@ -103,21 +103,56 @@ final class Loc
     {
         static $langDirCache = array();
 
+        // open_basedir restriction
+        static $openBasedir = [], $openBasedirRestriction;
+        if ($openBasedirRestriction === null) {
+            $openBasedirTmp = ini_get('open_basedir');
+            if (!empty($openBasedirTmp)) {
+                // multiple paths split by colon ":" - "/home/bitrix:/var/www/html"
+                // under non windows by semicolon ";" - "c:/www/;c:/www/html"
+                $openBasedirTmp = explode(
+                    (strncasecmp(PHP_OS, 'WIN', 3) == 0 ? ';' : ':'),
+                    $openBasedirTmp
+                );
+                foreach ($openBasedirTmp as $testDir) {
+                    if (!empty($testDir)) {
+                        $testDir = Path::normalize($testDir);
+                        if (is_dir($testDir)) {
+                            $openBasedir[] = $testDir;
+                        }
+                    }
+                }
+            }
+            $openBasedirRestriction = !empty($openBasedir);
+        }
+
         $path = Path::getDirectory($file);
 
         if (isset($langDirCache[$path])) {
             $langDir = $langDirCache[$path];
-            $fileName = substr($file, (strlen($langDir) - 5));
+            $fileName = mb_substr($file, (mb_strlen($langDir) - 5));
         } else {
             //let's find language folder
             $langDir = $fileName = '';
             $filePath = $file;
-            while (($slashPos = strrpos($filePath, '/')) !== false) {
-                $filePath = substr($filePath, 0, $slashPos);
+            while (($slashPos = mb_strrpos($filePath, '/')) !== false) {
+                $filePath = mb_substr($filePath, 0, $slashPos);
+                if ($openBasedirRestriction === true) {
+                    $withinOpenBasedir = false;
+                    foreach ($openBasedir as $testDir) {
+                        if (stripos($filePath, $testDir) === 0) {
+                            $withinOpenBasedir = true;
+                            break;
+                        }
+                    }
+                    if (!$withinOpenBasedir) {
+                        break;
+                    }
+                }
                 $langPath = $filePath . '/lang';
                 if (is_dir($langPath)) {
                     $langDir = $langPath;
-                    $fileName = substr($file, $slashPos);
+                    $fileName = mb_substr($file, $slashPos);
                     $langDirCache[$path] = $langDir;
                     break;
                 }
@@ -250,7 +285,7 @@ final class Loc
 
         $currentFile = null;
         for ($i = 3; $i >= 1; $i--) {
-            if (stripos($trace[$i]["function"], "GetMessage") === 0) {
+            if (mb_stripos($trace[$i]["function"], "GetMessage") === 0) {
                 $currentFile = Path::normalize($trace[$i]["file"]);
 
                 //we suppose there is a language file even if it wasn't registered via loadMessages()
@@ -281,7 +316,11 @@ final class Loc
                     $unset[] = $file;
                     if (isset(self::$messages[$language][$code])) {
                         if (defined("BX_MESS_LOG") && $currentFile !== null) {
-                            file_put_contents(BX_MESS_LOG, 'CTranslateUtils::CopyMessage("' . $code . '", "' . $file . '", "' . $currentFile . '");' . "\n", FILE_APPEND);
+                            file_put_contents(
+                                BX_MESS_LOG,
+                                'CTranslateUtils::CopyMessage("' . $code . '", "' . $file . '", "' . $currentFile . '");' . "\n",
+                                FILE_APPEND
+                            );
                         }
                         break;
                     }
@@ -307,13 +346,17 @@ final class Loc
     {
         $userMess = array();
         $documentRoot = Main\Application::getDocumentRoot();
-        if (($fname = Main\Loader::getLocal("php_interface/user_lang/" . $lang . "/lang.php", $documentRoot)) !== false) {
+        if (($fname = Main\Loader::getLocal(
+                "php_interface/user_lang/" . $lang . "/lang.php",
+                $documentRoot
+            )) !== false) {
             $mess = self::includeFile($fname);
 
             // typical call is Loc::loadMessages(__FILE__)
             // __FILE__ can differ from path used in the user file
-            foreach ($mess as $key => $val)
+            foreach ($mess as $key => $val) {
                 $userMess[str_replace("\\", "/", realpath($documentRoot . $key))] = $val;
+            }
         }
         return $userMess;
     }
@@ -338,7 +381,7 @@ final class Loc
 
             //cycle through languages
             foreach (self::$userMessages as $messages) {
-                if (is_array($messages[$path])) {
+                if (isset($messages[$path]) && is_array($messages[$path])) {
                     foreach ($messages[$path] as $key => $val) {
                         $MESS[$key] = $val;
                     }

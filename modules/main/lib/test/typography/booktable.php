@@ -80,13 +80,15 @@ class BookTable extends DataManager
             (new ArrayField('QUOTES')),
 
             (new ManyToMany('AUTHORS', AuthorTable::class))
-                ->configureMediatorTableName('(
+                ->configureMediatorTableName(
+                    '(
 					(SELECT 1 AS BOOK_ID, 18 AS AUTHOR_ID)
 					UNION
 					(SELECT 2 AS BOOK_ID, 17 AS AUTHOR_ID)
 					UNION
 					(SELECT 2 AS BOOK_ID, 18 AS AUTHOR_ID)
-				)'),
+				)'
+                ),
 
             (new OneToMany('STORE_ITEMS', StoreBookTable::class, 'BOOK'))
         ];

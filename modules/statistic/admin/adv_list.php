@@ -1,27 +1,31 @@
 <?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/prolog.php");
 /** @var CMain $APPLICATION */
 IncludeModuleLangFile(__FILE__);
 
 $STAT_RIGHT = $APPLICATION->GetGroupRight("statistic");
-if ($STAT_RIGHT == "D")
+if ($STAT_RIGHT == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 if (isset($group_by)) {
-    if ($group_by != "referer1" && $group_by != "referer2")
+    if ($group_by != "referer1" && $group_by != "referer2") {
         $group_by = "";
-} else
-    $group_by = false;//no setting (will be read later from session)
+    }
+} else {
+    $group_by = false;
+}//no setting (will be read later from session)
 
 $base_currency = GetStatisticBaseCurrency();
-if (strlen($base_currency) > 0) {
+if ($base_currency <> '') {
     if (CModule::IncludeModule("currency")) {
         $currency_module = "Y";
         $base_currency = GetStatisticBaseCurrency();
-        $view_currency = (strlen($find_currency) > 0 && $find_currency != "NOT_REF") ? $find_currency : $base_currency;
+        $view_currency = ($find_currency <> '' && $find_currency != "NOT_REF") ? $find_currency : $base_currency;
         $arrCurrency = array();
-        $rsCur = CCurrency::GetList(($v1 = "sort"), ($v2 = "asc"));
+        $rsCur = CCurrency::GetList("sort", "asc");
         $arrRefID = array();
         $arrRef = array();
         while ($arCur = $rsCur->Fetch()) {
@@ -82,12 +86,18 @@ $lAdmin->InitFilter($FilterArr);
 $arSettings = array("saved_group_by");
 InitFilterEx($arSettings, $sTableID . "_settings", "get");
 if ($group_by === false)//Restore saved setting
+{
     $group_by = $saved_group_by;
-elseif ($saved_group_by != $group_by)//Set if changed
+} elseif ($saved_group_by != $group_by)//Set if changed
+{
     $saved_group_by = $group_by;
+}
 InitFilterEx($arSettings, $sTableID . "_settings", "set");
 
-AdminListCheckDate($lAdmin, array("find_date1_period" => $find_date1_period, "find_date2_period" => $find_date2_period));
+AdminListCheckDate(
+    $lAdmin,
+    array("find_date1_period" => $find_date1_period, "find_date2_period" => $find_date2_period)
+);
 
 $arFilter = Array(
     "ID" => $find != "" && $find_type == "id" ? $find : $find_id,
@@ -124,14 +134,16 @@ $arFilter = array_merge($arFilter, array_convert_name_2_value($arrExactMatch));
 if (($arID = $lAdmin->GroupAction()) && $STAT_RIGHT >= "W") {
     if ($_REQUEST['action_target'] == "selected") {
         $cData = new CAdv;
-        $rsData = $cData->GetList($by2, $order2, $arFilter, $is_filtered2);
-        while ($arRes = $rsData->Fetch())
+        $rsData = $cData->GetList('', '', $arFilter, $is_filtered2);
+        while ($arRes = $rsData->Fetch()) {
             $arID[] = $arRes['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
         $ID = intval($ID);
         switch ($_REQUEST['action']) {
             case "delete":
@@ -156,94 +168,111 @@ if (($arID = $lAdmin->GroupAction()) && $STAT_RIGHT >= "W") {
     }
 }
 
+global $by, $order;
 
 $cData = new CAdv;
-$rsData = $cData->GetList($by, $order, $arFilter, $is_filtered, "", $arrGROUP_DAYS, $v);
+$rsData = $cData->GetList($by, $order, $arFilter, $is_filtered, "", $arrGROUP_DAYS);
 $rsData = new CAdminResult($rsData, $sTableID);
 $rsData->NavStart();
 $lAdmin->NavText($rsData->GetNavPrint(GetMessage("STAT_ADV_PAGES")));
 
 $arHeaders = array();
-if ($group_by == "")
+if ($group_by == "") {
     $arHeaders[] =
-        array("id" => "ID",
+        array(
+            "id" => "ID",
             "content" => "ID",
             "sort" => "ID",
             "align" => "right",
             "default" => true,
         );
-if ($group_by == "" || $group_by == "referer1")
+}
+if ($group_by == "" || $group_by == "referer1") {
     $arHeaders[] =
-        array("id" => "REFERER1",
+        array(
+            "id" => "REFERER1",
             "content" => "referer1",
             "sort" => "REFERER1",
             "default" => true,
         );
-if ($group_by == "" || $group_by == "referer2")
+}
+if ($group_by == "" || $group_by == "referer2") {
     $arHeaders[] =
-        array("id" => "REFERER2",
+        array(
+            "id" => "REFERER2",
             "content" => "referer2",
             "sort" => "REFERER2",
             "default" => true,
         );
+}
 $arHeaders[] =
-    array("id" => "DATE_FIRST",
+    array(
+        "id" => "DATE_FIRST",
         "content" => GetMessage("STAT_BEGIN"),
         "sort" => "C_TIME_FIRST",
         "default" => true,
     );
 $arHeaders[] =
-    array("id" => "DATE_LAST",
+    array(
+        "id" => "DATE_LAST",
         "content" => GetMessage("STAT_END"),
         "sort" => "C_TIME_LAST",
         "default" => true,
     );
-if ($group_by == "")
+if ($group_by == "") {
     $arHeaders[] =
-        array("id" => "PRIORITY",
+        array(
+            "id" => "PRIORITY",
             "content" => GetMessage("STAT_PRIORITY"),
             "sort" => "PRIORITY",
             "align" => "right",
             "default" => true,
         );
+}
 $arHeaders[] =
-    array("id" => "SESSIONS_TODAY",
+    array(
+        "id" => "SESSIONS_TODAY",
         "content" => GetMessage("STAT_SESSIONS_TODAY"),
         "sort" => $group_by == "" ? "SESSIONS_TODAY" : false,
         "align" => "right",
         "default" => true,
     );
 $arHeaders[] =
-    array("id" => "SESSIONS_BACK_TODAY",
+    array(
+        "id" => "SESSIONS_BACK_TODAY",
         "content" => GetMessage("STAT_SESSIONS_BACK_TODAY"),
         "sort" => $group_by == "" ? "SESSIONS_BACK_TODAY" : false,
         "align" => "right",
         "default" => false,
     );
 $arHeaders[] =
-    array("id" => "SESSIONS_YESTERDAY",
+    array(
+        "id" => "SESSIONS_YESTERDAY",
         "content" => GetMessage("STAT_SESSIONS_YESTERDAY"),
         "sort" => $group_by == "" ? "SESSIONS_YESTERDAY" : false,
         "align" => "right",
         "default" => false,
     );
 $arHeaders[] =
-    array("id" => "SESSIONS_BACK_YESTERDAY",
+    array(
+        "id" => "SESSIONS_BACK_YESTERDAY",
         "content" => GetMessage("STAT_SESSIONS_BACK_YESTERDAY"),
         "sort" => $group_by == "" ? "SESSIONS_BACK_YESTERDAY" : false,
         "align" => "right",
         "default" => false,
     );
-if ((strlen($find_date1_period) > 0 || strlen($find_date2_period) > 0) && $is_filtered):
+if (($find_date1_period <> '' || $find_date2_period <> '') && $is_filtered):
     $arHeaders[] =
-        array("id" => "SESSIONS_PERIOD",
+        array(
+            "id" => "SESSIONS_PERIOD",
             "content" => GetMessage("STAT_SESSIONS_PERIOD"),
             "sort" => $group_by == "" ? "SESSIONS_PERIOD" : false,
             "align" => "right",
             "default" => true,
         );
     $arHeaders[] =
-        array("id" => "SESSIONS_BACK_PERIOD",
+        array(
+            "id" => "SESSIONS_BACK_PERIOD",
             "content" => GetMessage("STAT_SESSIONS_BACK_PERIOD"),
             "sort" => $group_by == "" ? "SESSIONS_BACK_PERIOD" : false,
             "align" => "right",
@@ -251,67 +280,77 @@ if ((strlen($find_date1_period) > 0 || strlen($find_date2_period) > 0) && $is_fi
         );
 endif;
 $arHeaders[] =
-    array("id" => "SESSIONS",
+    array(
+        "id" => "SESSIONS",
         "content" => GetMessage("STAT_SESSIONS_TOTAL"),
         "sort" => "SESSIONS",
         "align" => "right",
         "default" => true,
     );
 $arHeaders[] =
-    array("id" => "SESSIONS_BACK",
+    array(
+        "id" => "SESSIONS_BACK",
         "content" => GetMessage("STAT_SESSIONS_BACK_TOTAL"),
         "sort" => "SESSIONS_BACK",
         "align" => "right",
         "default" => false,
     );
 $arHeaders[] =
-    array("id" => "EVENTS_TODAY",
+    array(
+        "id" => "EVENTS_TODAY",
         "content" => GetMessage("STAT_EVENTS_TOTAL_TODAY"),
         "align" => "right",
         "default" => true,
     );
 $arHeaders[] =
-    array("id" => "EVENTS_TOTAL",
+    array(
+        "id" => "EVENTS_TOTAL",
         "content" => GetMessage("STAT_EVENTS_TOTAL"),
         "align" => "right",
         "default" => true,
     );
 $arHeaders[] =
-    array("id" => "VISITORS_PER_DAY",
+    array(
+        "id" => "VISITORS_PER_DAY",
         "content" => GetMessage("STAT_VISITORS_PER_DAY"),
         "sort" => "VISITORS_PER_DAY",
         "align" => "right",
         "default" => false,
     );
 $arHeaders[] =
-    array("id" => "ATTENT",
+    array(
+        "id" => "ATTENT",
         "content" => GetMessage("STAT_ATTENTIVENESS"),
         "sort" => "ATTENT",
         "align" => "right",
         "default" => false,
     );
 $arHeaders[] =
-    array("id" => "ATTENT_BACK",
+    array(
+        "id" => "ATTENT_BACK",
         "content" => GetMessage("STAT_ATTENTIVENESS_BACK"),
         "sort" => "ATTENT_BACK",
         "align" => "right",
         "default" => false,
     );
 $arHeaders[] =
-    array("id" => "ACTIVITY",
+    array(
+        "id" => "ACTIVITY",
         "content" => GetMessage("STAT_ACTIVITY"),
         "align" => "right",
         "default" => false,
     );
 $arHeaders[] =
-    array("id" => "NEW_VISITORS",
+    array(
+        "id" => "NEW_VISITORS",
         "content" => GetMessage("STAT_NEW_VISITORS"),
         "sort" => "NEW_VISITORS",
         "align" => "right",
         "default" => false,
     );
 $arHeaders[] =
-    array("id" => "RETURNED_VISITORS",
+    array(
+        "id" => "RETURNED_VISITORS",
         "content" => GetMessage("STAT_RETURNED_VISITORS"),
         "sort" => "RETURNED_VISITORS",
         "align" => "right",
@@ -319,42 +358,48 @@ $arHeaders[] =
     );
 if ($STAT_RIGHT > "M"):
     $arHeaders[] =
-        array("id" => "COST",
+        array(
+            "id" => "COST",
             "content" => GetMessage("STAT_INPUTS"),
             "sort" => "COST",
             "align" => "right",
             "default" => false,
         );
     $arHeaders[] =
-        array("id" => "REVENUE",
+        array(
+            "id" => "REVENUE",
             "content" => GetMessage("STAT_OUTPUTS"),
             "sort" => "REVENUE",
             "align" => "right",
             "default" => false,
         );
     $arHeaders[] =
-        array("id" => "BENEFIT",
+        array(
+            "id" => "BENEFIT",
             "content" => GetMessage("STAT_BENEFIT"),
             "sort" => "BENEFIT",
             "align" => "right",
             "default" => false,
         );
     $arHeaders[] =
-        array("id" => "ROI",
+        array(
+            "id" => "ROI",
             "content" => GetMessage("STAT_ROI") . " (%)",
             "sort" => "ROI",
             "align" => "right",
             "default" => false,
         );
     $arHeaders[] =
-        array("id" => "SESSION_COST",
+        array(
+            "id" => "SESSION_COST",
             "content" => GetMessage("STAT_SESSION_COST"),
             "sort" => "SESSION_COST",
             "align" => "right",
             "default" => false,
         );
     $arHeaders[] =
-        array("id" => "VISITOR_COST",
+        array(
+            "id" => "VISITOR_COST",
             "content" => GetMessage("STAT_VISITOR_COST"),
             "sort" => "VISITOR_COST",
             "align" => "right",
@@ -367,11 +412,12 @@ $lAdmin->AddHeaders($arHeaders);
 //Helper function
 function resolveValue($field_name)
 {
-    global $group_by, ${"f_" . $field_name}, ${"f_" . strtoupper($group_by)}, $arrGROUP_DAYS;
-    if ($group_by == "")
+    global $group_by, ${"f_" . $field_name}, ${"f_" . mb_strtoupper($group_by)}, $arrGROUP_DAYS;
+    if ($group_by == "") {
         $value = intval(${"f_" . $field_name});
-    else
-        $value = intval($arrGROUP_DAYS[${"f_" . strtoupper($group_by)}][$field_name]);
+    } else {
+        $value = intval($arrGROUP_DAYS[${"f_" . mb_strtoupper($group_by)}][$field_name]);
+    }
     return $value;
 }
 
@@ -386,7 +432,11 @@ while ($arRes = $rsData->NavNext(true, "f_")):
 
     $f_SESSIONS_TODAY = resolveValue("SESSIONS_TODAY");
     if (intval($f_SESSIONS_TODAY) > 0):
-        $strHTML = '<a title="' . GetMessage("STAT_SESSIONS_LIST") . '" href="session_list.php?lang=' . LANG . '&amp;find_date1=' . urlencode($now_date) . '&amp;find_date2=' . urlencode($now_date) . '&amp;';
+        $strHTML = '<a title="' . GetMessage(
+                "STAT_SESSIONS_LIST"
+            ) . '" href="session_list.php?lang=' . LANG . '&amp;find_date1=' . urlencode(
+                $now_date
+            ) . '&amp;find_date2=' . urlencode($now_date) . '&amp;';
         if ($group_by == "referer1") :
             $strHTML .= 'find_referer1=' . urlencode("\"" . $f_REFERER1 . "\"");
         elseif ($group_by == "referer2") :
@@ -402,7 +452,11 @@ while ($arRes = $rsData->NavNext(true, "f_")):
 
     $f_SESSIONS_BACK_TODAY = resolveValue("SESSIONS_BACK_TODAY");
     if (intval($f_SESSIONS_BACK_TODAY) > 0):
-        $strHTML = '<a title="' . GetMessage("STAT_SESSIONS_LIST") . '" href="session_list.php?lang=' . LANG . '&amp;find_date1=' . urlencode($now_date) . '&amp;find_date2=' . urlencode($now_date) . '&amp;';
+        $strHTML = '<a title="' . GetMessage(
+                "STAT_SESSIONS_LIST"
+            ) . '" href="session_list.php?lang=' . LANG . '&amp;find_date1=' . urlencode(
+                $now_date
+            ) . '&amp;find_date2=' . urlencode($now_date) . '&amp;';
         if ($group_by == "referer1") :
             $strHTML .= 'find_referer1=' . urlencode("\"" . $f_REFERER1 . "\"");
         elseif ($group_by == "referer2") :
@@ -446,10 +500,14 @@ while ($arRes = $rsData->NavNext(true, "f_")):
     endif;
     $row->AddViewField("SESSIONS_BACK", $strHTML);
 
-    if ((strlen($find_date1_period) > 0 || strlen($find_date2_period) > 0) && $is_filtered):
+    if (($find_date1_period <> '' || $find_date2_period <> '') && $is_filtered):
         $f_SESSIONS_PERIOD = resolveValue("SESSIONS_PERIOD");
         if (intval($f_SESSIONS_PERIOD) > 0):
-            $strHTML = '<a title="' . GetMessage("STAT_SESSIONS_LIST") . '" href="session_list.php?lang=' . LANG . '&amp;find_date1=' . urlencode($find_date1_period) . '&amp;find_date2=' . urlencode($find_date2_period) . '&amp;';
+            $strHTML = '<a title="' . GetMessage(
+                    "STAT_SESSIONS_LIST"
+                ) . '" href="session_list.php?lang=' . LANG . '&amp;find_date1=' . urlencode(
+                    $find_date1_period
+                ) . '&amp;find_date2=' . urlencode($find_date2_period) . '&amp;';
             if ($group_by == "referer1") :
                 $strHTML .= 'find_referer1=' . urlencode("\"" . $f_REFERER1 . "\"");
             elseif ($group_by == "referer2") :
@@ -465,7 +523,11 @@ while ($arRes = $rsData->NavNext(true, "f_")):
 
         $f_SESSIONS_BACK_PERIOD = resolveValue("SESSIONS_BACK_PERIOD");
         if (intval($f_SESSIONS_BACK_PERIOD) > 0):
-            $strHTML = '<a title="' . GetMessage("STAT_SESSIONS_LIST") . '" href="session_list.php?lang=' . LANG . '&amp;find_date1=' . urlencode($find_date1_period) . '&amp;find_date2=' . urlencode($find_date2_period) . '&amp;';
+            $strHTML = '<a title="' . GetMessage(
+                    "STAT_SESSIONS_LIST"
+                ) . '" href="session_list.php?lang=' . LANG . '&amp;find_date1=' . urlencode(
+                    $find_date1_period
+                ) . '&amp;find_date2=' . urlencode($find_date2_period) . '&amp;';
             if ($group_by == "referer1") :
                 $strHTML .= 'find_referer1=' . urlencode("\"" . $f_REFERER1 . "\"");
             elseif ($group_by == "referer2") :
@@ -482,15 +544,21 @@ while ($arRes = $rsData->NavNext(true, "f_")):
     //$row->AddViewField("SESSIONS_PERIOD", getHTML("SESSIONS_PERIOD"));
     //$row->AddViewField("SESSIONS_BACK_PERIOD", getHTML("SESSIONS_BACK_PERIOD"));
 
-    $show_events = (strlen($f_EVENTS_VIEW) <= 0) ? COption::GetOptionString("statistic", "ADV_EVENTS_DEFAULT") : $f_EVENTS_VIEW;
+    $show_events = ($f_EVENTS_VIEW == '') ? COption::GetOptionString(
+        "statistic",
+        "ADV_EVENTS_DEFAULT"
+    ) : $f_EVENTS_VIEW;
     $group_events = ($show_events == "event1" || $show_events == "event2") ? $show_events : "";
     $arF = array();
     $arF["DATE1_PERIOD"] = $arFilter["DATE1_PERIOD"];
     $arF["DATE2_PERIOD"] = $arFilter["DATE2_PERIOD"];
-    if ($show_events == "event1") $arF["GROUP"] = "event1";
-    elseif ($show_events == "event2") $arF["GROUP"] = "event2";
+    if ($show_events == "event1") {
+        $arF["GROUP"] = "event1";
+    } elseif ($show_events == "event2") {
+        $arF["GROUP"] = "event2";
+    }
     if ($group_by == "") {
-        $events = CAdv::GetEventList($f_ID, ($by2 = "s_def"), ($order2 = "desc"), $arF, $v1);
+        $events = CAdv::GetEventList($f_ID, "s_def", "desc", $arF);
     } else {
         $value = ($group_by == "referer1") ? $f_REFERER1 : $f_REFERER2;
         $events = CAdv::GetEventListByReferer($value, $arFilter);
@@ -513,15 +581,16 @@ while ($arRes = $rsData->NavNext(true, "f_")):
     $row->AddViewField("VISITORS_PER_DAY", $f_VISITORS_PER_DAY < 0 ? "-" : $f_VISITORS_PER_DAY);
     $row->AddViewField("ATTENT", $f_ATTENT < 0 ? "-" : $f_ATTENT);
     $row->AddViewField("ATTENT_BACK", $f_ATTENT_BACK < 0 ? "-" : $f_ATTENT_BACK);
-    if (intval($f_GUESTS) <= 0)
+    if (intval($f_GUESTS) <= 0) {
         $row->AddViewField("ACTIVITY", "-");
-    else {
+    } else {
         $res = ($sum_total + $sum_back_total) / $f_GUESTS;
         $res_round = round($res, 2);
-        if ($res > 0 && $res_round <= 0)
+        if ($res > 0 && $res_round <= 0) {
             $row->AddViewField("ACTIVITY", "&#x2248;");
-        else
+        } else {
             $row->AddViewField("ACTIVITY", $res_round);
+        }
     }
     $row->AddViewField("NEW_VISITORS", $f_NEW_VISITORS < 0 ? "-" : $f_NEW_VISITORS . "%");
     $row->AddViewField("RETURNED_VISITORS", $f_RETURNED_VISITORS < 0 ? "-" : $f_RETURNED_VISITORS . "%");
@@ -530,9 +599,18 @@ while ($arRes = $rsData->NavNext(true, "f_")):
         $row->AddViewField("COST", str_replace(" ", $thousand_sep, number_format($f_COST, 2, ".", " ")));
         $row->AddViewField("REVENUE", str_replace(" ", $thousand_sep, number_format($f_REVENUE, 2, ".", " ")));
         $row->AddViewField("BENEFIT", str_replace(" ", $thousand_sep, number_format($f_BENEFIT, 2, ".", " ")));
-        $row->AddViewField("ROI", $f_ROI < 0 ? "-" : str_replace(" ", $thousand_sep, number_format($f_ROI, 2, ".", " ")));
-        $row->AddViewField("SESSION_COST", str_replace(" ", $thousand_sep, number_format($f_SESSION_COST, 2, ".", " ")));
-        $row->AddViewField("VISITOR_COST", str_replace(" ", $thousand_sep, number_format($f_VISITOR_COST, 2, ".", " ")));
+        $row->AddViewField(
+            "ROI",
+            $f_ROI < 0 ? "-" : str_replace(" ", $thousand_sep, number_format($f_ROI, 2, ".", " "))
+        );
+        $row->AddViewField(
+            "SESSION_COST",
+            str_replace(" ", $thousand_sep, number_format($f_SESSION_COST, 2, ".", " "))
+        );
+        $row->AddViewField(
+            "VISITOR_COST",
+            str_replace(" ", $thousand_sep, number_format($f_VISITOR_COST, 2, ".", " "))
+        );
     endif;
 
     $arActions = Array();
@@ -547,31 +625,46 @@ while ($arRes = $rsData->NavNext(true, "f_")):
         "ICON" => "view",
         "DEFAULT" => true,
         "TEXT" => GetMessage("STAT_DETAIL_VIEW"),
-        "ACTION" => $lAdmin->ActionRedirect("adv_detail.php?lang=" . LANG . "&find_type=" . urlencode($group_by) . "&find=" . ($group_by == "" ? $f_ID : ($group_by == "referer1" ? $f_REFERER1 : $f_REFERER2)) . "&find_date1_period=" . urlencode($find_date1_period) . "&find_date2_period=" . urlencode($find_date2_period) . "&set_filter=Y"),
+        "ACTION" => $lAdmin->ActionRedirect(
+            "adv_detail.php?lang=" . LANG . "&find_type=" . urlencode(
+                $group_by
+            ) . "&find=" . ($group_by == "" ? $f_ID : ($group_by == "referer1" ? $f_REFERER1 : $f_REFERER2)) . "&find_date1_period=" . urlencode(
+                $find_date1_period
+            ) . "&find_date2_period=" . urlencode($find_date2_period) . "&set_filter=Y"
+        ),
     );
 
     if ($group_by == "") {
-        if ($STAT_RIGHT >= "W")
+        if ($STAT_RIGHT >= "W") {
             $arActions[] = array(
                 "ICON" => "edit",
                 "TEXT" => GetMessage("STAT_EDIT"),
                 "TITLE" => GetMessage("STAT_EDIT_ADV"),
                 "ACTION" => $lAdmin->ActionRedirect("adv_edit.php?ID=" . $f_ID)
             );
-        if ($STAT_RIGHT >= "W")
+        }
+        if ($STAT_RIGHT >= "W") {
             $arActions[] = array(
                 "ICON" => "clear",
                 "TEXT" => GetMessage("STAT_RESET"),
                 "TITLE" => GetMessage("STAT_RESET_ADV"),
-                "ACTION" => "if(confirm('" . GetMessageJS('STAT_RESET_CONFIRM') . "')) " . $lAdmin->ActionDoGroup($f_ID, "clear")
+                "ACTION" => "if(confirm('" . GetMessageJS('STAT_RESET_CONFIRM') . "')) " . $lAdmin->ActionDoGroup(
+                        $f_ID,
+                        "clear"
+                    )
             );
-        if ($STAT_RIGHT >= "W")
+        }
+        if ($STAT_RIGHT >= "W") {
             $arActions[] = array(
                 "ICON" => "delete",
                 "TEXT" => GetMessage("STAT_DELETE"),
                 "TITLE" => GetMessage("STAT_DELETE_ADV"),
-                "ACTION" => "if(confirm('" . GetMessageJS('STAT_CONFIRM') . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete")
+                "ACTION" => "if(confirm('" . GetMessageJS('STAT_CONFIRM') . "')) " . $lAdmin->ActionDoGroup(
+                        $f_ID,
+                        "delete"
+                    )
             );
+        }
 
         $arActions[] = array("SEPARATOR" => true);
 
@@ -589,13 +682,16 @@ while ($arRes = $rsData->NavNext(true, "f_")):
                 "ACTION" => $lAdmin->ActionRedirect("path_list.php?find_adv[]=" . $f_ID . "&set_filter=Y")
             );
             $dynamic_days = CAdv::DynamicDays($f_ID);
-            if ($dynamic_days >= 1)
+            if ($dynamic_days >= 1) {
                 $arActions[] = array(
                     "ICON" => "",
                     "TEXT" => GetMessage("STAT_DYNAMICS"),
                     "TITLE" => GetMessage("STAT_DYNAMICS_ADV"),
-                    "ACTION" => $lAdmin->ActionRedirect("adv_dynamic_list.php?find_adv_id=" . $f_ID . "&find_event_id_exact_match=Y&set_default	=Y")
+                    "ACTION" => $lAdmin->ActionRedirect(
+                        "adv_dynamic_list.php?find_adv_id=" . $f_ID . "&find_event_id_exact_match=Y&set_default	=Y"
+                    )
                 );
+            }
 //			if ($dynamic_days>=2 && function_exists("ImageCreate"))
             $arActions[] = array(
                 "ICON" => "",
@@ -604,11 +700,11 @@ while ($arRes = $rsData->NavNext(true, "f_")):
                 "ACTION" => $lAdmin->ActionRedirect("adv_graph_list.php?ADV_ID=" . $f_ID . "&set_default=Y")
             );
         }
-
     }
 
-    if (is_set($arActions[count($arActions) - 1], "SEPARATOR"))
+    if (is_set($arActions[count($arActions) - 1], "SEPARATOR")) {
         unset($arActions[count($arActions) - 1]);
+    }
     $row->AddActions($arActions);
 endwhile;
 
@@ -624,16 +720,20 @@ $arFooter[] = array(
 );
 $lAdmin->AddFooter($arFooter);
 
-if ($STAT_RIGHT >= "W")
-    $lAdmin->AddGroupActionTable(Array(
-        "delete" => GetMessage("STAT_DELETE"),
-        "clear" => GetMessage("STAT_RESET"),
-        array(
-            "action" => "compareAdv()",
-            "value" => "compare",
-            "name" => GetMessage("STAT_COMPARE"),
+if ($STAT_RIGHT >= "W") {
+    $lAdmin->AddGroupActionTable(
+        Array(
+            "delete" => GetMessage("STAT_DELETE"),
+            "clear" => GetMessage("STAT_RESET"),
+            array(
+                "action" => "compareAdv()",
+                "value" => "compare",
+                "name" => GetMessage("STAT_COMPARE"),
+            ),
         ),
-    ), array("disable_action_target" => true));
+        array("disable_action_target" => true)
+    );
+}
 
 $aContext = array(
     array(
@@ -689,8 +789,9 @@ if ($STAT_RIGHT > "M") {
     $arFilterDropDown[] = GetMessage("STAT_F_REVENUE");
     $arFilterDropDown[] = GetMessage("STAT_F_BENEFIT");
     $arFilterDropDown[] = GetMessage("STAT_F_ROI");
-    if ($currency_module == "Y")
+    if ($currency_module == "Y") {
         $arFilterDropDown[] = GetMessage("STAT_F_CURRENCY");
+    }
 }
 
 $oFilter = new CAdminFilter($sTableID . "_filter", $arFilterDropDown);
@@ -729,102 +830,111 @@ $oFilter = new CAdminFilter($sTableID . "_filter", $arFilterDropDown);
             <td><? echo GetMessage("STAT_F_REFERER_1_2") ?>:</td>
             <td><input type="text" name="find_referer1" size="9" value="<? echo htmlspecialcharsbx($find_referer1) ?>">&nbsp;&nbsp;/&nbsp;&nbsp;<input
                         class="typeinput" type="text" name="find_referer2" size="9"
-                        value="<? echo htmlspecialcharsbx($find_referer2) ?>"><?= ShowExactMatchCheckbox("find_referer12") ?>
-                &nbsp;<?= ShowFilterLogicHelp() ?></td>
+                        value="<? echo htmlspecialcharsbx($find_referer2) ?>"><?= ShowExactMatchCheckbox(
+                    "find_referer12"
+                ) ?>&nbsp;<?= ShowFilterLogicHelp() ?></td>
         </tr>
         <tr>
             <td><? echo GetMessage("STAT_F_DURATION") ?>:</td>
             <td><input type="text" maxlength="10" name="find_duration1"
-                       value="<? echo htmlspecialcharsbx($find_duration1) ?>"
-                       size="9">&nbsp;<? echo GetMessage("STAT_TILL") ?>&nbsp;<input type="text" maxlength="10"
-                                                                                     name="find_duration2"
-                                                                                     value="<? echo htmlspecialcharsbx($find_duration2) ?>"
-                                                                                     size="9"></td>
+                       value="<? echo htmlspecialcharsbx($find_duration1) ?>" size="9">&nbsp;<? echo GetMessage(
+                    "STAT_TILL"
+                ) ?>&nbsp;<input type="text" maxlength="10" name="find_duration2"
+                                 value="<? echo htmlspecialcharsbx($find_duration2) ?>" size="9"></td>
         </tr>
         <tr>
             <td><? echo GetMessage("STAT_F_SESSIONS") ?>:</td>
             <td><input type="text" maxlength="10" name="find_sessions1"
-                       value="<? echo htmlspecialcharsbx($find_sessions1) ?>"
-                       size="9">&nbsp;<? echo GetMessage("STAT_TILL") ?>&nbsp;<input type="text" maxlength="10"
-                                                                                     name="find_sessions2"
-                                                                                     value="<? echo htmlspecialcharsbx($find_sessions2) ?>"
-                                                                                     size="9">&nbsp;<?= GetMessage("STAT_F_BACK") ?>
-                &nbsp;<? echo InputType("checkbox", "find_sessions_back", "Y", $find_sessions_back, false) ?></td>
+                       value="<? echo htmlspecialcharsbx($find_sessions1) ?>" size="9">&nbsp;<? echo GetMessage(
+                    "STAT_TILL"
+                ) ?>&nbsp;<input type="text" maxlength="10" name="find_sessions2"
+                                 value="<? echo htmlspecialcharsbx($find_sessions2) ?>" size="9">&nbsp;<?= GetMessage(
+                    "STAT_F_BACK"
+                ) ?>&nbsp;<? echo InputType("checkbox", "find_sessions_back", "Y", $find_sessions_back, false) ?></td>
         </tr>
         <tr>
             <td><? echo GetMessage("STAT_F_GUESTS") ?>:</td>
             <td><input type="text" maxlength="10" name="find_guests1"
-                       value="<? echo htmlspecialcharsbx($find_guests1) ?>"
-                       size="9">&nbsp;<? echo GetMessage("STAT_TILL") ?>&nbsp;<input type="text" maxlength="10"
-                                                                                     name="find_guests2"
-                                                                                     value="<? echo htmlspecialcharsbx($find_guests2) ?>"
-                                                                                     size="9">&nbsp;<?= GetMessage("STAT_F_BACK") ?>
-                &nbsp;<? echo InputType("checkbox", "find_guests_back", "Y", $find_guests_back, false) ?></td>
+                       value="<? echo htmlspecialcharsbx($find_guests1) ?>" size="9">&nbsp;<? echo GetMessage(
+                    "STAT_TILL"
+                ) ?>&nbsp;<input type="text" maxlength="10" name="find_guests2"
+                                 value="<? echo htmlspecialcharsbx($find_guests2) ?>" size="9">&nbsp;<?= GetMessage(
+                    "STAT_F_BACK"
+                ) ?>&nbsp;<? echo InputType("checkbox", "find_guests_back", "Y", $find_guests_back, false) ?></td>
         </tr>
         <tr>
             <td><? echo GetMessage("STAT_F_PERIOD") . " (" . FORMAT_DATE . "):" ?></td>
-            <td><? echo CalendarPeriod("find_date1_period", $find_date1_period, "find_date2_period", $find_date2_period, "find_form", "Y") ?></td>
+            <td><? echo CalendarPeriod(
+                    "find_date1_period",
+                    $find_date1_period,
+                    "find_date2_period",
+                    $find_date2_period,
+                    "find_form",
+                    "Y"
+                ) ?></td>
         </tr>
         <tr>
             <td><? echo GetMessage("STAT_F_ATTENTIVENESS") ?>:</td>
             <td><input type="text" maxlength="10" name="find_attent1"
-                       value="<? echo htmlspecialcharsbx($find_attent1) ?>"
-                       size="9">&nbsp;<? echo GetMessage("STAT_TILL") ?>&nbsp;<input type="text" maxlength="10"
-                                                                                     name="find_attent2"
-                                                                                     value="<? echo htmlspecialcharsbx($find_attent2) ?>"
-                                                                                     size="9">&nbsp;<?= GetMessage("STAT_F_BACK") ?>
-                &nbsp;<? echo InputType("checkbox", "find_attent_back", "Y", $find_attent_back, false) ?></td>
+                       value="<? echo htmlspecialcharsbx($find_attent1) ?>" size="9">&nbsp;<? echo GetMessage(
+                    "STAT_TILL"
+                ) ?>&nbsp;<input type="text" maxlength="10" name="find_attent2"
+                                 value="<? echo htmlspecialcharsbx($find_attent2) ?>" size="9">&nbsp;<?= GetMessage(
+                    "STAT_F_BACK"
+                ) ?>&nbsp;<? echo InputType("checkbox", "find_attent_back", "Y", $find_attent_back, false) ?></td>
         </tr>
         <tr>
             <td><? echo GetMessage("STAT_F_VISITORS_PER_DAY") ?>:</td>
             <td><input type="text" maxlength="10" name="find_visitors_per_day1"
-                       value="<? echo htmlspecialcharsbx($find_visitors_per_day1) ?>"
-                       size="9">&nbsp;<? echo GetMessage("STAT_TILL") ?>&nbsp;<input type="text" maxlength="10"
-                                                                                     name="find_visitors_per_day2"
-                                                                                     value="<? echo htmlspecialcharsbx($find_visitors_per_day2) ?>"
-                                                                                     size="9"></td>
+                       value="<? echo htmlspecialcharsbx($find_visitors_per_day1) ?>" size="9">&nbsp;<? echo GetMessage(
+                    "STAT_TILL"
+                ) ?>&nbsp;<input type="text" maxlength="10" name="find_visitors_per_day2"
+                                 value="<? echo htmlspecialcharsbx($find_visitors_per_day2) ?>" size="9"></td>
         </tr>
         <? if ($STAT_RIGHT > "M"): ?>
             <tr>
                 <td><? echo GetMessage("STAT_F_COST") ?>:</td>
                 <td><input type="text" maxlength="10" name="find_cost1"
-                           value="<? echo htmlspecialcharsbx($find_cost1) ?>"
-                           size="9">&nbsp;<? echo GetMessage("STAT_TILL") ?>&nbsp;<input type="text" maxlength="10"
-                                                                                         name="find_cost2"
-                                                                                         value="<? echo htmlspecialcharsbx($find_cost2) ?>"
-                                                                                         size="9"></td>
+                           value="<? echo htmlspecialcharsbx($find_cost1) ?>" size="9">&nbsp;<? echo GetMessage(
+                        "STAT_TILL"
+                    ) ?>&nbsp;<input type="text" maxlength="10" name="find_cost2"
+                                     value="<? echo htmlspecialcharsbx($find_cost2) ?>" size="9"></td>
             </tr>
             <tr>
                 <td><? echo GetMessage("STAT_F_REVENUE") ?>:</td>
                 <td><input type="text" maxlength="10" name="find_revenue1"
-                           value="<? echo htmlspecialcharsbx($find_revenue1) ?>"
-                           size="9">&nbsp;<? echo GetMessage("STAT_TILL") ?>&nbsp;<input type="text" maxlength="10"
-                                                                                         name="find_revenue2"
-                                                                                         value="<? echo htmlspecialcharsbx($find_revenue2) ?>"
-                                                                                         size="9"></td>
+                           value="<? echo htmlspecialcharsbx($find_revenue1) ?>" size="9">&nbsp;<? echo GetMessage(
+                        "STAT_TILL"
+                    ) ?>&nbsp;<input type="text" maxlength="10" name="find_revenue2"
+                                     value="<? echo htmlspecialcharsbx($find_revenue2) ?>" size="9"></td>
             </tr>
             <tr>
                 <td><? echo GetMessage("STAT_F_BENEFIT") ?>:</td>
                 <td><input type="text" maxlength="10" name="find_benefit1"
-                           value="<? echo htmlspecialcharsbx($find_benefit1) ?>"
-                           size="9">&nbsp;<? echo GetMessage("STAT_TILL") ?><input type="text" maxlength="10"
-                                                                                   name="find_benefit2"
-                                                                                   value="<? echo htmlspecialcharsbx($find_benefit2) ?>"
-                                                                                   size="9"></td>
+                           value="<? echo htmlspecialcharsbx($find_benefit1) ?>" size="9">&nbsp;<? echo GetMessage(
+                        "STAT_TILL"
+                    ) ?><input type="text" maxlength="10" name="find_benefit2"
+                               value="<? echo htmlspecialcharsbx($find_benefit2) ?>" size="9"></td>
             </tr>
             <tr>
                 <td><? echo GetMessage("STAT_F_ROI") ?>:</td>
                 <td><input type="text" maxlength="10" name="find_roi1" value="<? echo htmlspecialcharsbx($find_roi1) ?>"
                            size="9">&nbsp;<? echo GetMessage("STAT_TILL") ?><input type="text" maxlength="10"
                                                                                    name="find_roi2"
-                                                                                   value="<? echo htmlspecialcharsbx($find_roi2) ?>"
-                                                                                   size="9"></td>
+                                                                                   value="<? echo htmlspecialcharsbx(
+                                                                                       $find_roi2
+                                                                                   ) ?>" size="9"></td>
             </tr>
             <? if ($currency_module == "Y") : ?>
                 <tr>
                     <td><? echo GetMessage("STAT_F_CURRENCY") ?>:</td>
                     <td><?
-                        echo SelectBoxFromArray("find_currency", $arrCurrency, htmlspecialcharsbx($find_currency), GetMessage("STAT_F_BASE_CURRENCY")); ?></td>
+                        echo SelectBoxFromArray(
+                            "find_currency",
+                            $arrCurrency,
+                            htmlspecialcharsbx($find_currency),
+                            GetMessage("STAT_F_BASE_CURRENCY")
+                        ); ?></td>
                 </tr>
             <?endif; ?>
         <?endif; ?>
@@ -856,8 +966,9 @@ $oFilter = new CAdminFilter($sTableID . "_filter", $arFilterDropDown);
     </script>
 
 <?
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 $lAdmin->DisplayList();
 ?>
 

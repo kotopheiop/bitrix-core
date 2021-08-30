@@ -1,4 +1,5 @@
 <?
+
 global $MESS;
 
 $MESS["SPFP_DTITLE"] = "Payment forward";

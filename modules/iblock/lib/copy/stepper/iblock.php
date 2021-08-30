@@ -37,31 +37,43 @@ class Iblock extends Entity
 
             $iblockId = ($queueOption["iblockId"] ?: 0);
             $copiedIblockId = ($queueOption["copiedIblockId"] ?: 0);
+            $errorOffset = ($queueOption["errorOffset"] ?: 0);
 
             $limit = 5;
-            $offset = $this->getOffset($copiedIblockId);
+            $offset = $this->getOffset($copiedIblockId) + $errorOffset;
 
             $enumRatio = ($queueOption["enumRatio"] ?: []);
             $sectionsRatio = ($queueOption["sectionsRatio"] ?: []);
+            $mapIdsCopiedElements = ($queueOption["mapIdsCopiedElements"] ?: []);
 
             if ($iblockId) {
                 list($elementIds, $selectedRowsCount) = $this->getElementIds($iblockId, $limit, $offset);
 
                 $elementCopier = $this->getElementCopier();
                 $containerCollection = $this->getContainerCollection(
-                    $elementIds, $sectionsRatio, $enumRatio, $copiedIblockId);
-                $elementCopier->copy($containerCollection);
+                    $elementIds,
+                    $sectionsRatio,
+                    $enumRatio,
+                    $copiedIblockId
+                );
+                $result = $elementCopier->copy($containerCollection);
+                if (!$result->isSuccess()) {
+                    $queueOption["errorOffset"] += $this->getErrorOffset($elementCopier);
+                }
+
+                $mapIdsCopiedElements = $elementCopier->getMapIdsCopiedEntity() + $mapIdsCopiedElements;
+                $queueOption["mapIdsCopiedElements"] = $mapIdsCopiedElements;
+                $this->saveQueueOption($queueOption);
 
                 if ($selectedRowsCount < $limit) {
-                    $this->deleteCurrentQueue($queue);
                     $this->deleteQueueOption();
+                    $this->onAfterCopy($queueOption);
                     return !$this->isQueueEmpty();
                 } else {
                     $option["steps"] = $offset;
                     return true;
                 }
             } else {
-                $this->deleteCurrentQueue($queue);
                 $this->deleteQueueOption();
                 return !$this->isQueueEmpty();
             }
@@ -79,8 +91,10 @@ class Iblock extends Entity
         $connection = Application::getInstance()->getConnection();
         $sqlHelper = $connection->getSqlHelper();
 
-        $queryObject = $connection->query("SELECT ID FROM `b_iblock_element` WHERE `IBLOCK_ID` = '" .
-            $sqlHelper->forSql($iblockId) . "' ORDER BY ID ASC LIMIT " . $limit . " OFFSET " . $offset);
+        $queryObject = $connection->query(
+            "SELECT ID FROM `b_iblock_element` WHERE `IBLOCK_ID` = '" .
+            $sqlHelper->forSql($iblockId) . "' ORDER BY ID ASC LIMIT " . $limit . " OFFSET " . $offset
+        );
         $selectedRowsCount = $queryObject->getSelectedRowsCount();
         while ($element = $queryObject->fetch()) {
             $elementIds[] = $element["ID"];
@@ -96,8 +110,10 @@ class Iblock extends Entity
         $connection = Application::getInstance()->getConnection();
         $sqlHelper = $connection->getSqlHelper();
 
-        $queryObject = $connection->query("SELECT ID FROM `b_iblock_element` WHERE `IBLOCK_ID` = '" .
-            $sqlHelper->forSql($copiedIblockId) . "' ORDER BY ID");
+        $queryObject = $connection->query(
+            "SELECT ID FROM `b_iblock_element` WHERE `IBLOCK_ID` = '" .
+            $sqlHelper->forSql($copiedIblockId) . "' ORDER BY ID"
+        );
         while ($element = $queryObject->fetch()) {
             $elementIds[] = $element["ID"];
         }

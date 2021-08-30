@@ -1,4 +1,6 @@
-<? if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die(); ?>
+<? if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
+    die();
+} ?>
 <?
 $pageId = "group_wiki";
 include($_SERVER["DOCUMENT_ROOT"] . "/bitrix/components/bitrix/socialnetwork_group/templates/.default/util_group_menu.php");

@@ -22,21 +22,25 @@ class Product
     {
         $this->ebay = \Bitrix\Sale\TradingPlatform\Ebay\Ebay::getInstance();
 
-        if (!$this->ebay->isActive())
+        if (!$this->ebay->isActive()) {
             throw new SystemException("Ebay is not active!" . __METHOD__);
+        }
 
-        if (!isset($params["SITE_ID"]) || strlen($params["SITE_ID"]) <= 0)
+        if (!isset($params["SITE_ID"]) || $params["SITE_ID"] == '') {
             throw new ArgumentNullException("SITE_ID");
+        }
 
         $this->siteId = $params["SITE_ID"];
 
-        if (!\Bitrix\Main\Loader::includeModule('catalog'))
+        if (!\Bitrix\Main\Loader::includeModule('catalog')) {
             throw new SystemException("Can't include module \"Catalog\"! " . __METHOD__);
+        }
 
         $iBlockIds = $this->getIblockIds();
 
-        if (empty($iBlockIds))
+        if (empty($iBlockIds)) {
             throw new SystemException("Can't find iblocks ids! " . __METHOD__);
+        }
 
 
         foreach ($iBlockIds as $iblockId) {
@@ -56,8 +60,9 @@ class Product
         $result = array();
         $settings = $this->ebay->getSettings();
 
-        if (isset($settings[$this->siteId]["IBLOCK_ID"]) && is_array($settings[$this->siteId]["IBLOCK_ID"]))
+        if (isset($settings[$this->siteId]["IBLOCK_ID"]) && is_array($settings[$this->siteId]["IBLOCK_ID"])) {
             $result = $settings[$this->siteId]["IBLOCK_ID"];
+        }
 
         return $result;
     }
@@ -67,15 +72,19 @@ class Product
         $result = array();
         $catMapEntId = \Bitrix\Sale\TradingPlatform\Ebay\MapHelper::getCategoryEntityId($iblockId);
 
-        $catRes = \Bitrix\Sale\TradingPlatform\MapTable::getList(array(
-            'select' => array('VALUE_INTERNAL'),
-            'filter' => array('=ENTITY_ID' => $catMapEntId),
-            'group' => array('VALUE_INTERNAL')
-        ));
+        $catRes = \Bitrix\Sale\TradingPlatform\MapTable::getList(
+            array(
+                'select' => array('VALUE_INTERNAL'),
+                'filter' => array('=ENTITY_ID' => $catMapEntId),
+                'group' => array('VALUE_INTERNAL')
+            )
+        );
 
-        while ($category = $catRes->fetch())
-            if (intval($category["VALUE_INTERNAL"]) > 0)
+        while ($category = $catRes->fetch()) {
+            if (intval($category["VALUE_INTERNAL"]) > 0) {
                 $result[] = $category["VALUE_INTERNAL"];
+            }
+        }
 
         return $result;
     }
@@ -90,15 +99,16 @@ class Product
         $result = "";
         $settings = $this->ebay->getSettings();
 
-        if (isset($settings[$this->siteId]["DOMAIN_NAME"]) && is_array($settings[$this->siteId]["DOMAIN_NAME"]))
+        if (isset($settings[$this->siteId]["DOMAIN_NAME"]) && is_array($settings[$this->siteId]["DOMAIN_NAME"])) {
             $result = $settings[$this->siteId]["DOMAIN_NAME"];
+        }
 
         return $result;
     }
 
     public function setStartPosition($startPos = "")
     {
-        if (strlen($startPos) > 3) // format: iBlockId_RecordNumber
+        if (mb_strlen($startPos) > 3) // format: iBlockId_RecordNumber
         {
             $positions = explode("_", $startPos);
 
@@ -134,11 +144,13 @@ class Product
     {
         $this->currentFeed = $this->startProductFeed;
 
-        foreach ($this->productFeeds as $feed)
+        foreach ($this->productFeeds as $feed) {
             $feed->rewind();
+        }
 
-        for ($i = 0; $i < $this->startPos; $i++)
+        for ($i = 0; $i < $this->startPos; $i++) {
             $this->productFeeds[$this->currentFeed]->next();
+        }
     }
 
     public function valid()

@@ -2,6 +2,7 @@
 
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Main\Security;
 
 IncludeModuleLangFile(__FILE__);
 
@@ -21,6 +22,8 @@ class CRestUtil
     const TOKEN_DELIMITER = "|";
 
     const BITRIX_1C_APP_CODE = 'bitrix.1c';
+
+    const PLACEMENT_APP_URI = 'REST_APP_URI';
 
     public static function sendHeaders()
     {
@@ -80,7 +83,7 @@ class CRestUtil
 
                 default:
 
-                    if (strlen($rawPostData) > 0) {
+                    if ($rawPostData <> '') {
                         parse_str($rawPostData, $postData);
                     }
 
@@ -151,12 +154,15 @@ class CRestUtil
         global $USER;
 
         if (Loader::includeModule('im')) {
-            $userName = \CUser::FormatName("#NAME# #LAST_NAME#", array(
-                "NAME" => $USER->GetFirstName(),
-                "LAST_NAME" => $USER->GetLastName(),
-                "SECOND_NAME" => $USER->GetSecondName(),
-                "LOGIN" => $USER->GetLogin()
-            ));
+            $userName = \CUser::FormatName(
+                "#NAME# #LAST_NAME#",
+                array(
+                    "NAME" => $USER->GetFirstName(),
+                    "LAST_NAME" => $USER->GetLastName(),
+                    "SECOND_NAME" => $USER->GetSecondName(),
+                    "LOGIN" => $USER->GetLogin()
+                )
+            );
 
             $adminList = \CRestUtil::getAdministratorIdList();
             foreach ($adminList as $id) {
@@ -173,8 +179,11 @@ class CRestUtil
                             "#USER_NAME#" => $userName,
                             "#APP_NAME#" => $appInfo['APP_NAME'],
                             "#APP_CODE#" => $appInfo['CODE'],
-                            "#APP_LINK#" => \Bitrix\Rest\Marketplace\Url::getApplicationDetailUrl(urlencode($appInfo['CODE'])),
-                        )),
+                            "#APP_LINK#" => \Bitrix\Rest\Marketplace\Url::getApplicationDetailUrl(
+                                urlencode($appInfo['CODE'])
+                            ),
+                        )
+                    ),
                 );
                 \CIMNotify::Add($messageFields);
             }
@@ -183,7 +192,7 @@ class CRestUtil
 
     public static function signLicenseRequest(array $request, $licenseKey)
     {
-        if (Loader::includeModule('bitrix24')) {
+        if (Loader::includeModule('bitrix24') && defined('BX24_HOST_NAME')) {
             $request['BX_TYPE'] = 'B24';
             $request['BX_LICENCE'] = BX24_HOST_NAME;
             $request['BX_HASH'] = \CBitrix24::RequestSign(md5(implode("|", $request)));
@@ -224,8 +233,9 @@ class CRestUtil
             $date = false;
             $timestamp = strtotime($iso8601);
 
-            if ($timestamp !== false)
+            if ($timestamp !== false) {
                 $date = ConvertTimeStamp($timestamp, 'SHORT');
+            }
 
             return ($date);
         }
@@ -272,7 +282,10 @@ class CRestUtil
 
     public static function isStatic($url)
     {
-        return preg_match("/^http[s]{0,1}:\/\/[^\/]*?(\.apps-bitrix24\.com|\.bitrix24-cdn\.com|cdn\.bitrix24\.|app\.bitrix24\.com|upload-.*?\.s3\.amazonaws\.com\/app_local\/)/i", $url);
+        return preg_match(
+            "/^http[s]{0,1}:\/\/[^\/]*?(\.apps-bitrix24\.com|\.bitrix24-cdn\.com|cdn\.bitrix24\.|app\.bitrix24\.com|upload-.*?\.s3\.amazonaws\.com\/app_local\/)/i",
+            $url
+        );
     }
 
     public static function GetFile($fileId, $resizeParam = false)
@@ -285,11 +298,18 @@ class CRestUtil
             $bMult = true;
         }
 
-        if (strlen($fileId) > 0) {
+        if ($fileId <> '') {
             $files = \CFile::GetList(array(), array('@ID' => $fileId));
             while ($file = $files->Fetch()) {
                 if ($resizeParam !== false) {
-                    $resizeResult = \CFile::ResizeImageGet($file["ID"], $resizeParam, BX_RESIZE_IMAGE_PROPORTIONAL_ALT, false, false, false);
+                    $resizeResult = \CFile::ResizeImageGet(
+                        $file["ID"],
+                        $resizeParam,
+                        BX_RESIZE_IMAGE_PROPORTIONAL_ALT,
+                        false,
+                        false,
+                        false
+                    );
                     $fileSrc[$file['ID']] = \CHTTP::URN2URI($resizeResult['src']);
                 } else {
                     $fileSrc[$file['ID']] = \CHTTP::URN2URI(\CFile::GetFileSrc($file));
@@ -371,7 +391,12 @@ class CRestUtil
     /** @deprecated */
     public static function getAuthForEvent($appId, $userId, array $additionalData = array())
     {
-        return \Bitrix\Rest\Event\Sender::getAuth($appId, $userId, $additionalData, \Bitrix\Rest\Event\Sender::getDefaultEventParams());
+        return \Bitrix\Rest\Event\Sender::getAuth(
+            $appId,
+            $userId,
+            $additionalData,
+            \Bitrix\Rest\Event\Sender::getDefaultEventParams()
+        );
     }
 
     /**
@@ -389,10 +414,28 @@ class CRestUtil
             }
 
             $oauth = new \Bitrix\OAuth\Client\Application();
-            $authParams = $oauth->getAuthorizeParamsInternal($appId, COAuthConstants::AUTH_RESPONSE_TYPE_AUTH_CODE, '', '', $scope, array(), $user_id > 0 ? $user_id : $USER->GetID());
+            $authParams = $oauth->getAuthorizeParamsInternal(
+                $appId,
+                COAuthConstants::AUTH_RESPONSE_TYPE_AUTH_CODE,
+                '',
+                '',
+                $scope,
+                array(),
+                $user_id > 0 ? $user_id : $USER->GetID()
+            );
 
             if (is_array($authParams) && isset($authParams[COAuthConstants::AUTH_RESPONSE_TYPE_AUTH_CODE])) {
-                $res = $oauth->grantAccessTokenInternal($appId, COAuthConstants::GRANT_TYPE_AUTH_CODE, '', $authParams[COAuthConstants::AUTH_RESPONSE_TYPE_AUTH_CODE], $scope, $appSecret, '', $additionalParams, $user_id > 0 ? $user_id : $USER->GetID());
+                $res = $oauth->grantAccessTokenInternal(
+                    $appId,
+                    COAuthConstants::GRANT_TYPE_AUTH_CODE,
+                    '',
+                    $authParams[COAuthConstants::AUTH_RESPONSE_TYPE_AUTH_CODE],
+                    $scope,
+                    $appSecret,
+                    '',
+                    $additionalParams,
+                    $user_id > 0 ? $user_id : $USER->GetID()
+                );
 
                 return $res;
             }
@@ -431,7 +474,12 @@ class CRestUtil
             $dbRes = CUser::GetByID($res['user_id']);
             $userInfo = $dbRes->fetch();
 
-            if ($userInfo && $userInfo['ACTIVE'] === 'Y' && $USER->Authorize($res['user_id'], false, false, $application_id)) {
+            if ($userInfo && $userInfo['ACTIVE'] === 'Y' && $USER->Authorize(
+                    $res['user_id'],
+                    false,
+                    false,
+                    $application_id
+                )) {
                 setSessionExpired(true);
                 return true;
             }
@@ -474,10 +522,15 @@ class CRestUtil
                 $dateFinish = $appInfo['DATE_FINISH'] ? $appInfo['DATE_FINISH']->getTimestamp() : '';
 
                 if ($tokenInfo['status'] !== $appInfo['STATUS'] || $tokenInfo['date_finish'] != $dateFinish) {
-                    \Bitrix\Rest\AppTable::update($appInfo['ID'], array(
-                        'STATUS' => $tokenInfo['status'],
-                        'DATE_FINISH' => $tokenInfo['date_finish'] ? \Bitrix\Main\Type\DateTime::createFromTimestamp($tokenInfo['date_finish']) : '',
-                    ));
+                    \Bitrix\Rest\AppTable::update(
+                        $appInfo['ID'],
+                        array(
+                            'STATUS' => $tokenInfo['status'],
+                            'DATE_FINISH' => $tokenInfo['date_finish'] ? \Bitrix\Main\Type\DateTime::createFromTimestamp(
+                                $tokenInfo['date_finish']
+                            ) : '',
+                        )
+                    );
                 }
             }
         }
@@ -489,12 +542,12 @@ class CRestUtil
             list($fileName, $fileContent) = array_values($fileContent);
         }
 
-        if (strlen($fileContent) > 0 && $fileContent !== 'false') // let it be >0
+        if ($fileContent <> '' && $fileContent !== 'false') // let it be >0
         {
             $fileContent = base64_decode($fileContent);
-            if ($fileContent !== false && strlen($fileContent) > 0) {
-                if (strlen($fileName) <= 0) {
-                    $fileName = md5(mt_rand());
+            if ($fileContent !== false && $fileContent <> '') {
+                if ($fileName == '') {
+                    $fileName = Security\Random::getString(32);
                 } else {
                     $fileName = \Bitrix\Main\Text\Encoding::convertEncoding($fileName, LANG_CHARSET, 'utf-8');
                 }
@@ -573,6 +626,7 @@ class CRestUtil
                 $queryFields = array(
                     'CLIENT_ID' => $appDetailInfo['APP_CODE'],
                     'VERSION' => $appDetailInfo['VER'],
+                    'BY_SUBSCRIPTION' => $appDetailInfo['BY_SUBSCRIPTION'] === 'Y' ? 'Y' : 'N',
                 );
 
                 $installResult = \Bitrix\Rest\OAuthService::getEngine()
@@ -603,7 +657,9 @@ class CRestUtil
                         $appFields['STATUS'] === \Bitrix\Rest\AppTable::STATUS_TRIAL
                         || $appFields['STATUS'] === \Bitrix\Rest\AppTable::STATUS_PAID
                     ) {
-                        $appFields['DATE_FINISH'] = \Bitrix\Main\Type\DateTime::createFromTimestamp($installResult['result']['date_finish']);
+                        $appFields['DATE_FINISH'] = \Bitrix\Main\Type\DateTime::createFromTimestamp(
+                            $installResult['result']['date_finish']
+                        );
                     } else {
                         $appFields['DATE_FINISH'] = '';
                     }
@@ -621,21 +677,25 @@ class CRestUtil
                         $appId = $addResult->getId();
                         if (is_array($appDetailInfo['MENU_TITLE'])) {
                             foreach ($appDetailInfo['MENU_TITLE'] as $lang => $langName) {
-                                \Bitrix\Rest\AppLangTable::add(array(
-                                    'APP_ID' => $appId,
-                                    'LANGUAGE_ID' => $lang,
-                                    'MENU_NAME' => $langName
-                                ));
+                                \Bitrix\Rest\AppLangTable::add(
+                                    array(
+                                        'APP_ID' => $appId,
+                                        'LANGUAGE_ID' => $lang,
+                                        'MENU_NAME' => $langName
+                                    )
+                                );
                             }
                         }
 
                         if ($appDetailInfo["OPEN_API"] === "Y" && !empty($appFields["URL_INSTALL"])) {
                             // checkCallback is already called inside checkFields
-                            $result = \Bitrix\Rest\EventTable::add(array(
-                                "APP_ID" => $appId,
-                                "EVENT_NAME" => "ONAPPINSTALL",
-                                "EVENT_HANDLER" => $appFields["URL_INSTALL"],
-                            ));
+                            $result = \Bitrix\Rest\EventTable::add(
+                                array(
+                                    "APP_ID" => $appId,
+                                    "EVENT_NAME" => "ONAPPINSTALL",
+                                    "EVENT_HANDLER" => $appFields["URL_INSTALL"],
+                                )
+                            );
                             if ($result->isSuccess()) {
                                 \Bitrix\Rest\Event\Sender::bind('rest', 'OnRestAppInstall');
                             }
@@ -676,29 +736,12 @@ class CRestUtil
         CUserOptions::DeleteOption("app_options", "params_" . $arApp['APP_ID'] . "_" . $arApp['VERSION']);
     }
 
+    /**
+     * @deprecated
+     */
     public static function getScopeList(array $description = null)
     {
-        if ($description == null) {
-            $provider = new \CRestProvider();
-            $description = $provider->getDescription();
-        }
-
-        unset($description[\CRestUtil::GLOBAL_SCOPE]);
-
-        $scopeList = array_keys($description);
-
-        $installedModuleList = ModuleManager::getInstalledModules();
-        foreach ($installedModuleList as $moduleId => $moduleDescription) {
-            if (!isset($description[$moduleId])) {
-                $controllersConfig = \Bitrix\Main\Config\Configuration::getInstance($moduleId);
-
-                if (!empty($controllersConfig['controllers']['restIntegration']['enabled'])) {
-                    $scopeList[] = \Bitrix\Rest\Engine\RestManager::getModuleScopeAlias($moduleId);
-                }
-            }
-        }
-
-        return array_unique($scopeList);
+        return \Bitrix\Rest\Engine\ScopeManager::getInstance()->listScope();
     }
 
     public static function getEventList(array $description = null)
@@ -726,8 +769,13 @@ class CRestUtil
         if (!empty($application['APPLICATION_TOKEN'])) {
             return $application['APPLICATION_TOKEN'];
         } else {
-            $secret = array_key_exists("APP_SECRET_ID", $application) ? $application["APP_SECRET_ID"] : $application["CLIENT_SECRET"];
-            return md5(\CRestUtil::getMemberId() . "|" . $application["ID"] . "|" . $secret . "|" . $application["SHARED_KEY"]);
+            $secret = array_key_exists(
+                "APP_SECRET_ID",
+                $application
+            ) ? $application["APP_SECRET_ID"] : $application["CLIENT_SECRET"];
+            return md5(
+                \CRestUtil::getMemberId() . "|" . $application["ID"] . "|" . $secret . "|" . $application["SHARED_KEY"]
+            );
         }
     }
 
@@ -752,10 +800,12 @@ class CRestUtil
     {
         $languageId = '';
 
-        $siteIterator = \Bitrix\Main\SiteTable::getList(array(
-            'select' => array('LANGUAGE_ID'),
-            'filter' => array('=DEF' => 'Y', '=ACTIVE' => 'Y')
-        ));
+        $siteIterator = \Bitrix\Main\SiteTable::getList(
+            array(
+                'select' => array('LANGUAGE_ID'),
+                'filter' => array('=DEF' => 'Y', '=ACTIVE' => 'Y')
+            )
+        );
         if ($site = $siteIterator->fetch()) {
             $languageId = (string)$site['LANGUAGE_ID'];
         }
@@ -821,9 +871,11 @@ class CRestUtil
                     $auth['ap'],
                     $auth['aplogin'],
                     $method
-                ) . "?" . http_build_query(array(
-                    'token' => $token,
-                ));
+                ) . "?" . http_build_query(
+                    array(
+                        'token' => $token,
+                    )
+                );
         } else {
             $urlParam = array_merge(
                 $server->getAuth(),
@@ -838,7 +890,9 @@ class CRestUtil
 
     public static function getWebhookEndpoint($ap, $userId, $method = '')
     {
-        return static::getEndpoint() . urlencode($userId) . '/' . urlencode($ap) . '/' . ($method === '' ? '' : urlencode($method) . '/');
+        return static::getEndpoint() . urlencode($userId) . '/' . urlencode(
+                $ap
+            ) . '/' . ($method === '' ? '' : urlencode($method) . '/');
     }
 
     public static function getEndpoint()
@@ -867,15 +921,13 @@ class CRestUtil
         if ($type !== 'ID' && $type !== 'CODE' && $type !== 'CLIENT_ID') {
             $type = 'ID';
         }
-        $appType = \Bitrix\Rest\AppTable::getAppType($appInfo['CODE'], $appInfo['VERSION']);
 
-        $url = '';
         if (
             empty($appInfo['MENU_NAME'])
             && empty($appInfo['MENU_NAME_DEFAULT'])
             && empty($appInfo['MENU_NAME_LICENSE'])
             || $appInfo['ACTIVE'] === \Bitrix\Rest\AppTable::INACTIVE
-            || $appType === \Bitrix\Rest\AppTable::TYPE_CONFIGURATION
+            || $appInfo['TYPE'] === \Bitrix\Rest\AppTable::TYPE_CONFIGURATION
         ) {
             $url = \Bitrix\Rest\Marketplace\Url::getApplicationDetailUrl(urlencode($appInfo['CODE']));
         } elseif ($appInfo['CODE'] === static::BITRIX_1C_APP_CODE) {

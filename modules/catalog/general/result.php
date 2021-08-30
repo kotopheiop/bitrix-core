@@ -20,8 +20,9 @@ class CCatalogResult extends CDBResult
         $this->resultKeys = array();
 
         $this->fields = $this->entity->getCachedFieldList();
-        if (!empty($this->fields))
+        if (!empty($this->fields)) {
             $this->resultKeys = array_fill_keys($this->fields, true);
+        }
     }
 
     public function setResult($result)
@@ -36,12 +37,14 @@ class CCatalogResult extends CDBResult
             empty($select)
             || (is_string($select) && $select == '*')
             || (is_array($select) && in_array('*', $select))
-        )
+        ) {
             return $select;
+        }
         foreach ($this->fields as $field) {
             $index = array_search($field, $select);
-            if ($index !== false)
+            if ($index !== false) {
                 continue;
+            }
 
             $select[] = $field;
             $this->erasedKeys[$field] = true;
@@ -55,21 +58,24 @@ class CCatalogResult extends CDBResult
     {
         $row = parent::Fetch();
 
-        if (!isset($this) || !is_object($this))
+        if (!isset($this) || !is_object($this)) {
             return $row;
+        }
 
         if (empty($row)) {
             $this->erasedKeys = array();
             return $row;
         }
 
-        if (empty($this->fields))
+        if (empty($this->fields)) {
             return $row;
+        }
 
         if (isset($row['ID'])) {
             $this->entity->setCacheItem($row['ID'], $row);
-            if (!empty($this->erasedKeys))
+            if (!empty($this->erasedKeys)) {
                 $row = array_diff_key($row, $this->erasedKeys);
+            }
         }
 
         return $row;

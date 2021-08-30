@@ -1,5 +1,6 @@
 <?
 //<title>Yandex simple</title>
+
 /** @global CDatabase $DB */
 /** @global CUser $USER */
 /** @global CMain $APPLICATION */
@@ -18,25 +19,32 @@ $strCatalogDefaultFolder = COption::GetOptionString("catalog", "export_default_p
 $arSetupErrors = array();
 
 if (($ACTION == 'EXPORT_EDIT' || $ACTION == 'EXPORT_COPY') && $STEP == 1) {
-    if (isset($arOldSetupVars['YANDEX_EXPORT']))
+    if (isset($arOldSetupVars['YANDEX_EXPORT'])) {
         $YANDEX_EXPORT = $arOldSetupVars['YANDEX_EXPORT'];
-    if (isset($arOldSetupVars['SETUP_FILE_NAME']))
+    }
+    if (isset($arOldSetupVars['SETUP_FILE_NAME'])) {
         $SETUP_FILE_NAME = str_replace($strCatalogDefaultFolder, '', $arOldSetupVars['SETUP_FILE_NAME']);
-    if (isset($arOldSetupVars['SETUP_PROFILE_NAME']))
+    }
+    if (isset($arOldSetupVars['SETUP_PROFILE_NAME'])) {
         $SETUP_PROFILE_NAME = $arOldSetupVars['SETUP_PROFILE_NAME'];
-    if (isset($arOldSetupVars['SETUP_SERVER_NAME']))
+    }
+    if (isset($arOldSetupVars['SETUP_SERVER_NAME'])) {
         $SETUP_SERVER_NAME = $arOldSetupVars['SETUP_SERVER_NAME'];
-    if (isset($arOldSetupVars['CURRENCY']))
+    }
+    if (isset($arOldSetupVars['CURRENCY'])) {
         $currencyYandex = $arOldSetupVars['CURRENCY'];
-    if (isset($arOldSetupVars['USE_HTTPS']))
+    }
+    if (isset($arOldSetupVars['USE_HTTPS'])) {
         $USE_HTTPS = $arOldSetupVars['USE_HTTPS'];
+    }
 }
 
 if ($STEP > 1) {
-    if (empty($YANDEX_EXPORT) || !is_array($YANDEX_EXPORT))
+    if (empty($YANDEX_EXPORT) || !is_array($YANDEX_EXPORT)) {
         $arSetupErrors[] = GetMessage("CET_ERROR_NO_IBLOCKS");
+    }
 
-    if (strlen($SETUP_FILE_NAME) <= 0) {
+    if ($SETUP_FILE_NAME == '') {
         $arSetupErrors[] = GetMessage("CET_ERROR_NO_FILENAME");
     }
     if (empty($arSetupErrors)) {
@@ -44,14 +52,19 @@ if ($STEP > 1) {
         if (preg_match(BX_CATALOG_FILENAME_REG, $SETUP_FILE_NAME)) {
             $arSetupErrors[] = GetMessage("CES_ERROR_BAD_EXPORT_FILENAME");
         } elseif ($APPLICATION->GetFileAccessPermission($SETUP_FILE_NAME) < "W") {
-            $arSetupErrors[] = str_replace("#FILE#", $SETUP_FILE_NAME, GetMessage('CET_YAND_RUN_ERR_SETUP_FILE_ACCESS_DENIED'));
+            $arSetupErrors[] = str_replace(
+                "#FILE#",
+                $SETUP_FILE_NAME,
+                GetMessage('CET_YAND_RUN_ERR_SETUP_FILE_ACCESS_DENIED')
+            );
         }
     }
 
-    if (!isset($USE_HTTPS) || $USE_HTTPS != 'Y')
+    if (!isset($USE_HTTPS) || $USE_HTTPS != 'Y') {
         $USE_HTTPS = 'N';
+    }
 
-    if (($ACTION == "EXPORT_SETUP" || $ACTION == 'EXPORT_EDIT' || $ACTION == 'EXPORT_COPY') && strlen($SETUP_PROFILE_NAME) <= 0) {
+    if (($ACTION == "EXPORT_SETUP" || $ACTION == 'EXPORT_EDIT' || $ACTION == 'EXPORT_COPY') && $SETUP_PROFILE_NAME == '') {
         $arSetupErrors[] = GetMessage("CET_ERROR_NO_PROFILE_NAME");
     }
 
@@ -73,8 +86,9 @@ $context = new CAdminContextMenu($aMenu);
 
 $context->Show();
 
-if (!empty($arSetupErrors))
+if (!empty($arSetupErrors)) {
     ShowError(implode('<br>', $arSetupErrors));
+}
 
 $actionParams = "";
 if ($adminSidePanelHelper->isSidePanel()) {
@@ -86,8 +100,18 @@ if ($adminSidePanelHelper->isSidePanel()) {
     <?
 
     $aTabs = array(
-        array("DIV" => "edit1", "TAB" => GetMessage("CAT_ADM_MISC_EXP_TAB1"), "ICON" => "store", "TITLE" => GetMessage("CAT_ADM_MISC_EXP_TAB1_TITLE")),
-        array("DIV" => "edit2", "TAB" => GetMessage("CAT_ADM_MISC_EXP_TAB2"), "ICON" => "store", "TITLE" => GetMessage("CAT_ADM_MISC_EXP_TAB2_TITLE")),
+        array(
+            "DIV" => "edit1",
+            "TAB" => GetMessage("CAT_ADM_MISC_EXP_TAB1"),
+            "ICON" => "store",
+            "TITLE" => GetMessage("CAT_ADM_MISC_EXP_TAB1_TITLE")
+        ),
+        array(
+            "DIV" => "edit2",
+            "TAB" => GetMessage("CAT_ADM_MISC_EXP_TAB2"),
+            "ICON" => "store",
+            "TITLE" => GetMessage("CAT_ADM_MISC_EXP_TAB2_TITLE")
+        ),
     );
 
     $tabControl = new CAdminTabControl("tabControl", $aTabs, false, true);
@@ -99,12 +123,14 @@ if ($adminSidePanelHelper->isSidePanel()) {
         ?>
         <tr>
         <td colspan="2"><?
-            if (!isset($YANDEX_EXPORT) || !is_array($YANDEX_EXPORT))
+            if (!isset($YANDEX_EXPORT) || !is_array($YANDEX_EXPORT)) {
                 $YANDEX_EXPORT = array();
+            }
 
             $arYandexKeys = array();
-            if (!empty($YANDEX_EXPORT))
+            if (!empty($YANDEX_EXPORT)) {
                 $arYandexKeys = array_fill_keys($YANDEX_EXPORT, true);
+            }
             $boolAll = false;
             $intCountChecked = 0;
             $intCountAvailIBlock = 0;
@@ -116,11 +142,13 @@ if ($adminSidePanelHelper->isSidePanel()) {
                 false,
                 array('IBLOCK_ID')
             );
-            while ($arCatalog = $rsCatalogs->Fetch())
+            while ($arCatalog = $rsCatalogs->Fetch()) {
                 $arIBlockIDs[] = (int)$arCatalog['IBLOCK_ID'];
+            }
 
-            if (empty($arIBlockIDs))
+            if (empty($arIBlockIDs)) {
                 $arIBlockIDs[] = -1;
+            }
             $arIBlockList = array();
             $db_res = CIBlock::GetList(
                 array("IBLOCK_TYPE" => "ASC", "NAME" => "ASC"),
@@ -141,12 +169,14 @@ if ($adminSidePanelHelper->isSidePanel()) {
                     'YANDEX_EXPORT' => $boolYandex,
                     'SITE_LIST' => '(' . implode(' ', $arSiteList) . ')',
                 );
-                if ($boolYandex)
+                if ($boolYandex) {
                     $intCountChecked++;
+                }
                 $intCountAvailIBlock++;
             }
-            if ($intCountChecked == $intCountAvailIBlock)
+            if ($intCountChecked == $intCountAvailIBlock) {
                 $boolAll = true;
+            }
             ?>
             <table class="internal" width="100%">
                 <tr class="heading">
@@ -159,12 +189,15 @@ if ($adminSidePanelHelper->isSidePanel()) {
                 foreach ($arIBlockList as $key => $arIBlock) {
                     ?>
                     <tr>
-                    <td><? echo htmlspecialcharsEx("[" . $arIBlock["IBLOCK_TYPE_ID"] . "] " . $arIBlock["NAME"] . " " . $arIBlock['SITE_LIST']); ?></td>
+                    <td><? echo htmlspecialcharsEx(
+                            "[" . $arIBlock["IBLOCK_TYPE_ID"] . "] " . $arIBlock["NAME"] . " " . $arIBlock['SITE_LIST']
+                        ); ?></td>
                     <td align="center">
                         <input type="checkbox" name="YANDEX_EXPORT[<? echo $key; ?>]"
                                id="YANDEX_EXPORT_<? echo $key; ?>"
-                               value="<? echo $arIBlock["ID"]; ?>"<? if ($arIBlock['YANDEX_EXPORT']) echo " checked"; ?>
-                               onclick="checkOne(this,<? echo $intCountAvailIBlock; ?>);">
+                               value="<? echo $arIBlock["ID"]; ?>"<? if ($arIBlock['YANDEX_EXPORT']) {
+                            echo " checked";
+                        } ?> onclick="checkOne(this,<? echo $intCountAvailIBlock; ?>);">
                     </td>
                     </tr><?
                 }
@@ -201,7 +234,7 @@ if ($adminSidePanelHelper->isSidePanel()) {
             <td width="40%"><? echo GetMessage("CET_SERVER_NAME"); ?></td>
             <td width="60%">
                 <input type="text" name="SETUP_SERVER_NAME"
-                       value="<? echo (strlen($SETUP_SERVER_NAME) > 0) ? htmlspecialcharsbx($SETUP_SERVER_NAME) : '' ?>"
+                       value="<? echo ($SETUP_SERVER_NAME <> '') ? htmlspecialcharsbx($SETUP_SERVER_NAME) : '' ?>"
                        size="50"/> <input type="button"
                                           onclick="this.form['SETUP_SERVER_NAME'].value = window.location.host;"
                                           value="<? echo GetMessage('CET_SERVER_NAME_SET_CURRENT') ?>"/>
@@ -210,9 +243,13 @@ if ($adminSidePanelHelper->isSidePanel()) {
         <tr>
             <td width="40%"><? echo GetMessage("CET_SAVE_FILENAME"); ?></td>
             <td width="60%"><b><? echo htmlspecialcharsEx($strCatalogDefaultFolder); ?></b>
-                <input type="text" name="SETUP_FILE_NAME"
-                       value="<? echo htmlspecialcharsbx(strlen($SETUP_FILE_NAME) > 0 ? str_replace($strCatalogDefaultFolder, '', $SETUP_FILE_NAME) : "yandex_" . mt_rand(0, 999999) . ".php"); ?>"
-                       size="50">
+                <input type="text" name="SETUP_FILE_NAME" value="<? echo htmlspecialcharsbx(
+                    $SETUP_FILE_NAME <> '' ? str_replace(
+                        $strCatalogDefaultFolder,
+                        '',
+                        $SETUP_FILE_NAME
+                    ) : "yandex_" . mt_rand(0, 999999) . ".php"
+                ); ?>" size="50">
             </td>
         </tr>
         <?

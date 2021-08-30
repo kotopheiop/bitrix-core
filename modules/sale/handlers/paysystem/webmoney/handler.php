@@ -44,7 +44,9 @@ class WebMoneyHandler extends PaySystem\ServiceHandler
         $extraParams = array(
             'URL' => $this->getUrl($payment, 'pay'),
             'ENCODING' => $this->service->getField('ENCODING'),
-            'BX_PAYSYSTEM_CODE' => $payment->getPaymentSystemId()
+            'BX_PAYSYSTEM_CODE' => $this->service->getField('ID'),
+            'WEBMONEY_SUCCESS_URL' => $this->getSuccessUrl($payment),
+            'WEBMONEY_FAIL_URL' => $this->getFailUrl($payment),
         );
 
         $this->setExtraParams($extraParams);
@@ -73,32 +75,73 @@ class WebMoneyHandler extends PaySystem\ServiceHandler
             if ($this->checkHash($payment, $request)) {
                 $psDescription = '';
 
-                if ($request->get("LMI_MODE") != 0)
+                if ($request->get("LMI_MODE") != 0) {
                     $psDescription .= Loc::getMessage('SALE_HPS_WEBMONEY_TEST');
+                }
 
-                $psDescription .= Loc::getMessage('SALE_HPS_WEBMONEY_PAYEE_PURSE', array('#PAYEE_PURSE#' => $request->get("LMI_PAYEE_PURSE"))) . "; ";
-                $psDescription .= Loc::getMessage('SALE_HPS_WEBMONEY_INVS_NO', array('#INVS_NO#' => $request->get("LMI_SYS_INVS_NO"))) . "; ";
-                $psDescription .= Loc::getMessage('SALE_HPS_WEBMONEY_TRANS_NO', array('#TRANS_NO#' => $request->get("LMI_SYS_TRANS_NO"))) . "; ";
-                $psDescription .= Loc::getMessage('SALE_HPS_WEBMONEY_TRANS_DATE', array('#TRANS_DATE#' => $request->get("LMI_SYS_TRANS_DATE"))) . "; ";
+                $psDescription .= Loc::getMessage(
+                        'SALE_HPS_WEBMONEY_PAYEE_PURSE',
+                        array('#PAYEE_PURSE#' => $request->get("LMI_PAYEE_PURSE"))
+                    ) . "; ";
+                $psDescription .= Loc::getMessage(
+                        'SALE_HPS_WEBMONEY_INVS_NO',
+                        array('#INVS_NO#' => $request->get("LMI_SYS_INVS_NO"))
+                    ) . "; ";
+                $psDescription .= Loc::getMessage(
+                        'SALE_HPS_WEBMONEY_TRANS_NO',
+                        array('#TRANS_NO#' => $request->get("LMI_SYS_TRANS_NO"))
+                    ) . "; ";
+                $psDescription .= Loc::getMessage(
+                        'SALE_HPS_WEBMONEY_TRANS_DATE',
+                        array('#TRANS_DATE#' => $request->get("LMI_SYS_TRANS_DATE"))
+                    ) . "; ";
 
                 $psMessage = "";
-                if ($request->get("LMI_PAYER_PURSE") !== null)
-                    $psMessage .= Loc::getMessage('SALE_HPS_WEBMONEY_PAYER_PURSE', array('#PAYER_PURSE#' => $request->get("LMI_PAYER_PURSE"))) . "; ";
+                if ($request->get("LMI_PAYER_PURSE") !== null) {
+                    $psMessage .= Loc::getMessage(
+                            'SALE_HPS_WEBMONEY_PAYER_PURSE',
+                            array('#PAYER_PURSE#' => $request->get("LMI_PAYER_PURSE"))
+                        ) . "; ";
+                }
 
-                if ($request->get("LMI_PAYER_WM") !== null)
-                    $psMessage .= Loc::getMessage('SALE_HPS_WEBMONEY_PAYER_WM', array('#PAYER_WM#' => $request->get("LMI_PAYER_WM"))) . "; ";
+                if ($request->get("LMI_PAYER_WM") !== null) {
+                    $psMessage .= Loc::getMessage(
+                            'SALE_HPS_WEBMONEY_PAYER_WM',
+                            array('#PAYER_WM#' => $request->get("LMI_PAYER_WM"))
+                        ) . "; ";
+                }
 
-                if ($request->get("LMI_PAYMER_NUMBER") !== null)
-                    $psMessage .= Loc::getMessage('SALE_HPS_WEBMONEY_PAYMER_NUMBER', array('#PAYMER_NUMBER#' => $request->get("LMI_PAYMER_NUMBER"))) . "; ";
+                if ($request->get("LMI_PAYMER_NUMBER") !== null) {
+                    $psMessage .= Loc::getMessage(
+                            'SALE_HPS_WEBMONEY_PAYMER_NUMBER',
+                            array('#PAYMER_NUMBER#' => $request->get("LMI_PAYMER_NUMBER"))
+                        ) . "; ";
+                }
 
-                if ($request->get("LMI_PAYMER_EMAIL") !== null)
-                    $psMessage .= Loc::getMessage('SALE_HPS_WEBMONEY_PAYMER_EMAIL', array('#PAYMER_EMAIL#' => $request->get("LMI_PAYMER_EMAIL"))) . "; ";
+                if ($request->get("LMI_PAYMER_EMAIL") !== null) {
+                    $psMessage .= Loc::getMessage(
+                            'SALE_HPS_WEBMONEY_PAYMER_EMAIL',
+                            array('#PAYMER_EMAIL#' => $request->get("LMI_PAYMER_EMAIL"))
+                        ) . "; ";
+                }
 
-                if ($request->get("LMI_TELEPAT_PHONENUMBER") !== null)
-                    $psMessage .= Loc::getMessage('SALE_HPS_WEBMONEY_TELEPAT_PHONENUMBER', array('#TELEPAT_PHONENUMBER#' => $request->get("LMI_TELEPAT_PHONENUMBER"))) . "; ";
+                if ($request->get("LMI_TELEPAT_PHONENUMBER") !== null) {
+                    $psMessage .= Loc::getMessage(
+                            'SALE_HPS_WEBMONEY_TELEPAT_PHONENUMBER',
+                            array(
+                                '#TELEPAT_PHONENUMBER#' => $request->get(
+                                    "LMI_TELEPAT_PHONENUMBER"
+                                )
+                            )
+                        ) . "; ";
+                }
 
-                if ($request->get("LMI_TELEPAT_ORDERID") !== null)
-                    $psMessage .= Loc::getMessage('SALE_HPS_WEBMONEY_TELEPAT_ORDERID', array('#TELEPAT_ORDERID#' => $request->get("LMI_TELEPAT_ORDERID")));
+                if ($request->get("LMI_TELEPAT_ORDERID") !== null) {
+                    $psMessage .= Loc::getMessage(
+                        'SALE_HPS_WEBMONEY_TELEPAT_ORDERID',
+                        array('#TELEPAT_ORDERID#' => $request->get("LMI_TELEPAT_ORDERID"))
+                    );
+                }
 
                 $psFields = array(
                     "PS_STATUS" => "Y",
@@ -180,7 +223,14 @@ class WebMoneyHandler extends PaySystem\ServiceHandler
     {
         $algorithm = $this->getBusinessValue($payment, 'WEBMONEY_HASH_ALGO');
 
-        $string = $request->get("LMI_PAYEE_PURSE") . $request->get("LMI_PAYMENT_AMOUNT") . $request->get("LMI_PAYMENT_NO") . $request->get("LMI_MODE") . $request->get("LMI_SYS_INVS_NO") . $request->get("LMI_SYS_TRANS_NO") . $request->get("LMI_SYS_TRANS_DATE") . $this->getBusinessValue($payment, 'WEBMONEY_CNST_SECRET_KEY') . $request->get("LMI_PAYER_PURSE") . $request->get("LMI_PAYER_WM");
+        $string = $request->get("LMI_PAYEE_PURSE") . $request->get("LMI_PAYMENT_AMOUNT") . $request->get(
+                "LMI_PAYMENT_NO"
+            ) . $request->get("LMI_MODE") . $request->get("LMI_SYS_INVS_NO") . $request->get(
+                "LMI_SYS_TRANS_NO"
+            ) . $request->get("LMI_SYS_TRANS_DATE") . $this->getBusinessValue(
+                $payment,
+                'WEBMONEY_CNST_SECRET_KEY'
+            ) . $request->get("LMI_PAYER_PURSE") . $request->get("LMI_PAYER_WM");
 
         $hash = hash($algorithm, $string);
 
@@ -212,4 +262,21 @@ class WebMoneyHandler extends PaySystem\ServiceHandler
         }
     }
 
+    /**
+     * @param Payment $payment
+     * @return mixed|string
+     */
+    private function getSuccessUrl(Payment $payment)
+    {
+        return $this->getBusinessValue($payment, 'WEBMONEY_SUCCESS_URL') ?: $this->service->getContext()->getUrl();
+    }
+
+    /**
+     * @param Payment $payment
+     * @return mixed|string
+     */
+    private function getFailUrl(Payment $payment)
+    {
+        return $this->getBusinessValue($payment, 'WEBMONEY_FAIL_URL') ?: $this->service->getContext()->getUrl();
+    }
 }

@@ -50,7 +50,7 @@ class Path
         $modifier = Translate\Config::isUtfMode() ? 'u' : '';
         if (preg_match("#/lang/([^/]*?)(/|\$)#" . $modifier, $path, $match)) {
             foreach (Translate\IGNORE_LANG_NAMES as $check) {
-                if (strpos($path, '/lang/' . $match[1] . '/' . $check . '/') !== false) {
+                if (mb_strpos($path, '/lang/' . $match[1] . '/' . $check . '/') !== false) {
                     return false;
                 }
             }
@@ -58,7 +58,7 @@ class Path
                 $arr = explode(self::DIRECTORY_SEPARATOR, $path);
                 $langKey = array_search('lang', $arr) + 1;
 
-                return array_key_exists($langKey, $arr) && strlen($arr[$langKey]) > 0;
+                return array_key_exists($langKey, $arr) && $arr[$langKey] <> '';
             }
 
             return true;
@@ -114,10 +114,12 @@ class Path
         static $defLangs = array();
         if (empty($langs)) {
             if (empty($defLangs)) {
-                $defLangs = array_unique(array_merge(
-                    Translate\Config::getDefaultLanguages(),
-                    Translate\Config::getEnabledLanguages()
-                ));
+                $defLangs = array_unique(
+                    array_merge(
+                        Translate\Config::getDefaultLanguages(),
+                        Translate\Config::getEnabledLanguages()
+                    )
+                );
             }
             $langs = $defLangs;
         }

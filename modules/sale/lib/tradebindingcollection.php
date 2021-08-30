@@ -3,6 +3,7 @@
 namespace Bitrix\Sale;
 
 use Bitrix\Main;
+use Bitrix\Sale\Internals\CollectableEntity;
 use Bitrix\Sale\TradingPlatform;
 
 /**
@@ -22,7 +23,7 @@ class TradeBindingCollection extends Internals\EntityCollection
     }
 
     /**
-     * @return null
+     * @return Order || null
      */
     public function getOrder()
     {
@@ -31,7 +32,6 @@ class TradeBindingCollection extends Internals\EntityCollection
 
     /**
      * @return TradeBindingCollection
-     * @throws \Bitrix\Main\ArgumentException
      */
     private static function createCollectionObject()
     {
@@ -60,9 +60,6 @@ class TradeBindingCollection extends Internals\EntityCollection
     /**
      * @param Order $order
      * @return TradeBindingCollection
-     * @throws Main\ArgumentException
-     * @throws Main\ArgumentTypeException
-     * @throws Main\SystemException
      */
     public static function load(Order $order)
     {
@@ -89,9 +86,6 @@ class TradeBindingCollection extends Internals\EntityCollection
     /**
      * @param array $parameters
      * @return \Bitrix\Main\DB\Result
-     * @throws \Bitrix\Main\ArgumentException
-     * @throws \Bitrix\Main\ObjectPropertyException
-     * @throws \Bitrix\Main\SystemException
      */
     public static function getList(array $parameters = array())
     {
@@ -101,10 +95,6 @@ class TradeBindingCollection extends Internals\EntityCollection
     /**
      * @param TradingPlatform\Platform|null $platform
      * @return mixed
-     * @throws Main\ArgumentException
-     * @throws Main\ArgumentTypeException
-     * @throws Main\NotSupportedException
-     * @throws Main\SystemException
      */
     public function createItem(TradingPlatform\Platform $platform = null)
     {
@@ -119,10 +109,21 @@ class TradeBindingCollection extends Internals\EntityCollection
         return $tradeBinding;
     }
 
+    public function onItemModify(CollectableEntity $item, $name = null, $oldValue = null, $value = null)
+    {
+        /** @var Order $order */
+        $order = $this->getOrder();
+
+        if ($item instanceof TradeBindingEntity) {
+            $order->onTradeBindingCollectionModify(EventActions::UPDATE, $item, $name, $oldValue, $value);
+        }
+
+        return parent::onItemModify($item, $name, $oldValue, $value);
+    }
+
     /**
      * @param Internals\CollectableEntity $item
      * @return Internals\CollectableEntity
-     * @throws Main\ArgumentTypeException
      * @throws Main\NotSupportedException
      */
     public function addItem(Internals\CollectableEntity $item)
@@ -131,16 +132,32 @@ class TradeBindingCollection extends Internals\EntityCollection
             throw new Main\NotSupportedException();
         }
 
-        return parent::addItem($item);
+        /** @var TradeBindingEntity $entity */
+        $entity = parent::addItem($item);
+
+        $order = $this->getOrder();
+        $order->onTradeBindingCollectionModify(EventActions::ADD, $entity);
+
+        return $entity;
+    }
+
+    /**
+     * @param $index
+     * @return mixed|void
+     */
+    public function deleteItem($index)
+    {
+        /** @var TradeBindingEntity $oldItem */
+        $oldItem = parent::deleteItem($index);
+
+        $order = $this->getOrder();
+        $order->onTradeBindingCollectionModify(EventActions::DELETE, $oldItem);
     }
 
     /**
      * @return Result
      * @throws Main\ArgumentException
      * @throws Main\ObjectNotFoundException
-     * @throws Main\ObjectPropertyException
-     * @throws Main\SystemException
-     * @throws \Exception
      */
     public function save()
     {
@@ -181,9 +198,6 @@ class TradeBindingCollection extends Internals\EntityCollection
     /**
      * @param $idOrder
      * @return Result
-     * @throws Main\ArgumentException
-     * @throws Main\ObjectPropertyException
-     * @throws Main\SystemException
      * @internal
      *
      */
@@ -211,7 +225,6 @@ class TradeBindingCollection extends Internals\EntityCollection
     /**
      * @param $primary
      * @return Main\ORM\Data\DeleteResult
-     * @throws \Exception
      */
     protected static function deleteInternal($primary)
     {
@@ -240,5 +253,53 @@ class TradeBindingCollection extends Internals\EntityCollection
         }
 
         return $tradeBindingCollection;
+    }
+
+    /**
+     * Returns an indicator showing either the collection contains the specified platform
+     *
+     * @param string $platformCode
+     * @param string|null $type
+     * @return bool
+     */
+    public function hasTradingPlatform(string $platformCode, string $type = null): bool
+    {
+        return $this->getTradingPlatform($platformCode, $type) ? true : false;
+    }
+
+    /**
+     * Returns the first trading platform by the specified code and type from the collection
+     *
+     * @param string $platformCode
+     * @param string|null $type
+     * @return TradingPlatform\Platform|null
+     */
+    public function getTradingPlatform(string $platformCode, string $type = null)
+    {
+        foreach ($this->collection as $item) {
+            $tradingPlatform = $item->getTradePlatform();
+            if (!$tradingPlatform || $tradingPlatform::TRADING_PLATFORM_CODE !== $platformCode) {
+                continue;
+            }
+
+            if (!is_null($type) && !$tradingPlatform->isOfType($type)) {
+                continue;
+            }
+
+            return $tradingPlatform;
+        }
+
+        return null;
+    }
+
+    public function getTradingPlatformIdList(): array
+    {
+        $result = [];
+
+        foreach ($this->collection as $item) {
+            $result[] = $item->getField('TRADING_PLATFORM_ID');
+        }
+
+        return $result;
     }
 }

@@ -49,16 +49,19 @@ class Delivery extends Restriction
      */
     public static function check($params, array $restrictionParams, $serviceId = 0)
     {
-        if (intval($serviceId) <= 0)
+        if (intval($serviceId) <= 0) {
             return true;
+        }
 
-        if (empty($params))
+        if (empty($params)) {
             return true;
+        }
 
         $deliveries = self::getDeliveryByPaySystemsId($serviceId);
 
-        if (empty($deliveries))
+        if (empty($deliveries)) {
             return true;
+        }
 
         $diff = array_diff($params, $deliveries);
 
@@ -83,7 +86,6 @@ class Delivery extends Restriction
 
             /** @var ShipmentCollection $shipmentCollection */
             $shipmentCollection = $order->getShipmentCollection();
-
         } elseif ($entity instanceof Order) {
             $shipmentCollection = $entity->getShipmentCollection();
         }
@@ -93,8 +95,9 @@ class Delivery extends Restriction
             foreach ($shipmentCollection as $shipment) {
                 if (!$shipment->isSystem()) {
                     $deliveryId = $shipment->getDeliveryId();
-                    if ($deliveryId)
+                    if ($deliveryId) {
                         $result[] = $deliveryId;
+                    }
                 }
             }
         }
@@ -109,25 +112,31 @@ class Delivery extends Restriction
     {
         static $result = null;
 
-        if ($result !== null)
+        if ($result !== null) {
             return $result;
+        }
 
         $serviceList = array();
         $dbRes = Services\Table::getList(array('select' => array('ID', 'NAME', 'PARENT_ID', 'CLASS_NAME')));
-        while ($service = $dbRes->fetch())
+        while ($service = $dbRes->fetch()) {
             $serviceList[$service['ID']] = $service;
+        }
 
         foreach ($serviceList as $service) {
-            if (is_callable($service['CLASS_NAME'] . '::canHasChildren') && $service['CLASS_NAME']::canHasChildren())
+            if (is_callable($service['CLASS_NAME'] . '::canHasChildren') && $service['CLASS_NAME']::canHasChildren()) {
                 continue;
+            }
 
             if ((int)$service['PARENT_ID'] > 0 && array_key_exists($service['PARENT_ID'], $serviceList)) {
                 $parentService = $serviceList[$service['PARENT_ID']];
 
-                if (is_callable($parentService['CLASS_NAME'] . '::canHasChildren') && $parentService['CLASS_NAME']::canHasChildren())
+                if (is_callable(
+                        $parentService['CLASS_NAME'] . '::canHasChildren'
+                    ) && $parentService['CLASS_NAME']::canHasChildren()) {
                     $name = $service['NAME'] . ' [' . $service['ID'] . ']';
-                else
+                } else {
                     $name = $parentService['NAME'] . ': ' . $service['NAME'] . ' [' . $service['ID'] . ']';
+                }
             } else {
                 $name = $service['NAME'] . ' [' . $service['ID'] . ']';
             }
@@ -163,10 +172,15 @@ class Delivery extends Restriction
      */
     protected static function getDeliveryByPaySystemsId($paySystemId = 0)
     {
-        if ($paySystemId == 0)
+        if ($paySystemId == 0) {
             return array();
+        }
 
-        $result = DeliveryPaySystemTable::getLinks($paySystemId, DeliveryPaySystemTable::ENTITY_TYPE_PAYSYSTEM, self::$preparedData);
+        $result = DeliveryPaySystemTable::getLinks(
+            $paySystemId,
+            DeliveryPaySystemTable::ENTITY_TYPE_PAYSYSTEM,
+            self::$preparedData
+        );
         return $result;
     }
 
@@ -179,8 +193,9 @@ class Delivery extends Restriction
      */
     protected static function prepareParamsForSaving(array $params = array(), $paySystemId = 0)
     {
-        if (intval($paySystemId) <= 0)
+        if (intval($paySystemId) <= 0) {
             return $params;
+        }
 
         if (isset($params["DELIVERY"]) && is_array($params["DELIVERY"])) {
             DeliveryPaySystemTable::setLinks(
@@ -247,9 +262,13 @@ class Delivery extends Restriction
      */
     public static function prepareData(array $servicesIds)
     {
-        if (empty($servicesIds))
+        if (empty($servicesIds)) {
             return;
+        }
 
-        self::$preparedData = DeliveryPaySystemTable::prepareData($servicesIds, DeliveryPaySystemTable::ENTITY_TYPE_PAYSYSTEM);
+        self::$preparedData = DeliveryPaySystemTable::prepareData(
+            $servicesIds,
+            DeliveryPaySystemTable::ENTITY_TYPE_PAYSYSTEM
+        );
     }
 } 

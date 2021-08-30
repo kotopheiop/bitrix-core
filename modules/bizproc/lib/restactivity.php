@@ -3,6 +3,9 @@
 namespace Bitrix\Bizproc;
 
 use Bitrix\Main\Entity;
+use Bitrix\Main\ORM\Fields\Field;
+use Bitrix\Main\ORM\Fields\Validators\Validator;
+use Bitrix\Main\Text\BinaryString;
 
 /**
  * Class RestActivityTable
@@ -97,7 +100,7 @@ class RestActivityTable extends Entity\DataManager
             ),
             'USE_PLACEMENT' => array(
                 'data_type' => 'boolean',
-                'values' => ['Y', 'N']
+                'values' => ['N', 'Y']
             ),
             'NAME' => array(
                 'data_type' => 'text',
@@ -113,10 +116,12 @@ class RestActivityTable extends Entity\DataManager
             'PROPERTIES' => array(
                 'data_type' => 'text',
                 'serialized' => true,
+                'validation' => array(__CLASS__, 'validateProperties'),
             ),
             'RETURN_PROPERTIES' => array(
                 'data_type' => 'text',
                 'serialized' => true,
+                'validation' => array(__CLASS__, 'validateProperties'),
             ),
             'DOCUMENT_TYPE' => array(
                 'data_type' => 'text',
@@ -128,7 +133,7 @@ class RestActivityTable extends Entity\DataManager
             ),
             'IS_ROBOT' => array(
                 'data_type' => 'boolean',
-                'values' => array('Y', 'N')
+                'values' => ['N', 'Y']
             ),
         );
     }
@@ -178,13 +183,29 @@ class RestActivityTable extends Entity\DataManager
     }
 
     /**
+     * Returns validators for PROPERTIES and RETURN_PROPERTIES fields
+     *
+     * @return array
+     */
+    public static function validateProperties()
+    {
+        return array(
+            function ($value, $primary, $row, Field $field) {
+                $errorMsg = GetMessage("BPRAT_PROPERTIES_LENGTH_ERROR", array("#FIELD_TITLE#" => $field->getTitle()));
+                return BinaryString::getLength(serialize($value)) < 65535 ? true : $errorMsg;
+            }
+        );
+    }
+
+    /**
      * @param mixed $value Original value.
      * @return array Array to serialize.
      */
     public static function prepareLocalization($value)
     {
-        if (!is_array($value))
+        if (!is_array($value)) {
             $value = array('*' => (string)$value);
+        }
         return $value;
     }
 
@@ -196,17 +217,18 @@ class RestActivityTable extends Entity\DataManager
     public static function getLocalization($field, $langId)
     {
         $result = '';
-        $langId = strtoupper($langId);
-        if (is_string($field))
+        $langId = mb_strtoupper($langId);
+        if (is_string($field)) {
             $result = $field;
-        elseif (!empty($field[$langId]))
+        } elseif (!empty($field[$langId])) {
             $result = $field[$langId];
-        elseif ($langId == 'UA' && !empty($field['RU']))
+        } elseif ($langId == 'UA' && !empty($field['RU'])) {
             $result = $field['RU'];
-        elseif (!empty($field['EN']))
+        } elseif (!empty($field['EN'])) {
             $result = $field['EN'];
-        elseif (!empty($field['*']))
+        } elseif (!empty($field['*'])) {
             $result = $field['*'];
+        }
         return $result;
     }
 }

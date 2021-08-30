@@ -1,4 +1,5 @@
-<?
+<?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/socialnetwork/classes/general/log_comments.php");
 
 use Bitrix\Socialnetwork\Item\LogIndex;
@@ -12,18 +13,28 @@ class CSocNetLogComments extends CAllSocNetLogComments
     /***************************************/
     /********  DATA MODIFICATION  **********/
     /***************************************/
-    function Add($arFields, $bSetSource = false, $bSendEvent = true, $bSetLogUpDate = true)
+    public static function Add($arFields, $bSetSource = false, $bSendEvent = true, $bSetLogUpDate = true)
     {
         global $DB, $APPLICATION, $CACHE_MANAGER, $USER_FIELD_MANAGER;
+
+        if (is_array($bSetSource)) {
+            $params = $bSetSource;
+            $bSetSource = (isset($params['SET_SOURCE']) ? $params['SET_SOURCE'] : false);
+            $bSendEvent = (isset($params['SEND_EVENT']) ? $params['SEND_EVENT'] : true);
+            $bSetLogUpDate = (isset($params['SET_LOG_UPDATE']) ? $params['SET_LOG_UPDATE'] : true);
+            $subscribe = (isset($params['SUBSCRIBE']) ? $params['SUBSCRIBE'] : true);
+        } else {
+            $subscribe = true;
+        }
 
         $arFields1 = Util::getEqualityFields($arFields);
 
         if (
             $bSetSource
-            && strlen($arFields["EVENT_ID"]) > 0) {
+            && $arFields["EVENT_ID"] <> '') {
             $arCommentEvent = CSocNetLogTools::FindLogCommentEventByID($arFields["EVENT_ID"]);
             if (
-                !$arCommentEvent
+                !is_array($arCommentEvent)
                 || !array_key_exists("ADD_CALLBACK", $arCommentEvent)
                 || !is_callable($arCommentEvent["ADD_CALLBACK"])
             ) {
@@ -41,39 +52,44 @@ class CSocNetLogComments extends CAllSocNetLogComments
         if ($bSetSource) {
             $arSource = CSocNetLogComments::SetSource($arFields);
             if (
-                $arSource["NO_SOURCE"] == "Y"
+                $arSource["NO_SOURCE"] === "Y"
                 || intval($arSource["SOURCE_ID"]) > 0
             ) {
-                if ($arSource["NO_SOURCE"] == "Y")
+                if ($arSource["NO_SOURCE"] === "Y") {
                     $bSetSource = false;
-                else
+                } else {
                     $arFields["SOURCE_ID"] = $arSource["SOURCE_ID"];
+                }
 
                 if (
                     array_key_exists("RATING_ENTITY_ID", $arSource)
                     && array_key_exists("RATING_TYPE_ID", $arSource)
                     && intval($arSource["RATING_ENTITY_ID"]) > 0
-                    && strlen($arSource["RATING_TYPE_ID"]) > 0
+                    && $arSource["RATING_TYPE_ID"] <> ''
                 ) {
                     $arFields["RATING_TYPE_ID"] = $arSource["RATING_TYPE_ID"];
                     $arFields["RATING_ENTITY_ID"] = $arSource["RATING_ENTITY_ID"];
                 }
 
-                if (isset($arSource["MESSAGE"]) && strlen($arSource["MESSAGE"]) > 0)
+                if (isset($arSource["MESSAGE"]) && $arSource["MESSAGE"] <> '') {
                     $arFields["MESSAGE"] = $arSource["MESSAGE"];
+                }
 
-                if (isset($arSource["TEXT_MESSAGE"]) && strlen($arSource["TEXT_MESSAGE"]) > 0)
+                if (isset($arSource["TEXT_MESSAGE"]) && $arSource["TEXT_MESSAGE"] <> '') {
                     $arFields["TEXT_MESSAGE"] = $arSource["TEXT_MESSAGE"];
+                }
 
-                if (isset($arSource["URL"]) && strlen($arSource["URL"]) > 0)
+                if (isset($arSource["URL"]) && $arSource["URL"] <> '') {
                     $arFields["URL"] = $arSource["URL"];
+                }
 
                 if (
                     isset($arSource["UF"])
                     && isset($arSource["UF"]["FILE"])
                 ) {
-                    if (!is_array($arSource["UF"]["FILE"]))
+                    if (!is_array($arSource["UF"]["FILE"])) {
                         $arSource["UF"]["FILE"] = array($arSource["UF"]["FILE"]);
+                    }
 
                     $arFields["UF_SONET_COM_FILE"] = $arSource["UF"]["FILE"];
                 }
@@ -82,18 +98,19 @@ class CSocNetLogComments extends CAllSocNetLogComments
                     isset($arSource["UF"])
                     && isset($arSource["UF"]["DOC"])
                 ) {
-                    if (!is_array($arSource["UF"]["DOC"]))
+                    if (!is_array($arSource["UF"]["DOC"])) {
                         $arSource["UF"]["DOC"] = array($arSource["UF"]["DOC"]);
+                    }
 
                     $arFields["UF_SONET_COM_DOC"] = $arSource["UF"]["DOC"];
                 }
             } else {
                 $strMessage =
                     (
-                    array_key_exists("ERROR", $arSource) && strlen($arSource["ERROR"]) > 0
+                    array_key_exists("ERROR", $arSource) && $arSource["ERROR"] <> ''
                         ? $arSource["ERROR"] :
                         (
-                        array_key_exists("NOTES", $arSource) && strlen($arSource["NOTES"]) > 0
+                        array_key_exists("NOTES", $arSource) && $arSource["NOTES"] <> ''
                             ? $arSource["NOTES"]
                             : ""
                         )
@@ -105,7 +122,7 @@ class CSocNetLogComments extends CAllSocNetLogComments
             if ($e = $APPLICATION->GetException()) {
                 $errorMessage = $e->GetString();
             }
-            if (strlen($errorMessage) <= 0) {
+            if ($errorMessage == '') {
                 $errorMessage = GetMessage("SONET_GLC_ERROR_CHECKFIELDS_FAILED");
             }
 
@@ -129,34 +146,41 @@ class CSocNetLogComments extends CAllSocNetLogComments
             \Bitrix\Socialnetwork\Util::processEqualityFieldsToInsert($arFields1, $arInsert);
 
             $ID = false;
-            if (strlen($arInsert[0]) > 0) {
+            if ($arInsert[0] <> '') {
                 $strSql =
                     "INSERT INTO b_sonet_log_comment(" . $arInsert[0] . ") " .
                     "VALUES(" . $arInsert[1] . ")";
-                $DB->Query($strSql, False, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+                $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 
-                $ID = IntVal($DB->LastID());
+                $ID = intval($DB->LastID());
 
                 if ($ID > 0) {
                     if (
                         !array_key_exists("RATING_TYPE_ID", $arFields)
                         || empty($arFields["RATING_TYPE_ID"])
                     ) {
-                        CSocNetLogComments::Update($ID, array(
-                            "RATING_TYPE_ID" => "LOG_COMMENT",
-                            "RATING_ENTITY_ID" => $ID
-                        ));
+                        CSocNetLogComments::Update(
+                            $ID,
+                            array(
+                                "RATING_TYPE_ID" => "LOG_COMMENT",
+                                "RATING_ENTITY_ID" => $ID
+                            )
+                        );
                     }
 
-                    \Bitrix\Socialnetwork\ComponentHelper::userLogSubscribe(array(
-                        'logId' => $arFields["LOG_ID"],
-                        'userId' => $arFields["USER_ID"],
-                        'typeList' => array(
-                            'FOLLOW',
-                            'COUNTER_COMMENT_PUSH'
-                        ),
-                        'followDate' => 'CURRENT'
-                    ));
+                    if ($subscribe) {
+                        \Bitrix\Socialnetwork\ComponentHelper::userLogSubscribe(
+                            [
+                                'logId' => $arFields["LOG_ID"],
+                                'userId' => $arFields["USER_ID"],
+                                'typeList' => [
+                                    'FOLLOW',
+                                    'COUNTER_COMMENT_PUSH'
+                                ],
+                                'followDate' => 'CURRENT'
+                            ]
+                        );
+                    }
 
                     // subscribe log entry owner
                     $rsLog = CSocNetLog::GetList(
@@ -182,20 +206,24 @@ class CSocNetLogComments extends CAllSocNetLogComments
 
                             $arLogFollow = $rsLogFollow->Fetch();
                             if (!$arLogFollow) {
-                                \Bitrix\Socialnetwork\ComponentHelper::userLogSubscribe(array(
-                                    'logId' => $arFields["LOG_ID"],
-                                    'userId' => $arLog["USER_ID"],
-                                    'typeList' => array(
-                                        'FOLLOW',
+                                \Bitrix\Socialnetwork\ComponentHelper::userLogSubscribe(
+                                    array(
+                                        'logId' => $arFields["LOG_ID"],
+                                        'userId' => $arLog["USER_ID"],
+                                        'typeList' => array(
+                                            'FOLLOW',
+                                        )
                                     )
-                                ));
+                                );
                             }
                         }
                     }
 
-                    LogFollow::checkDestinationsFollowStatus(array(
-                        'logId' => $arFields["LOG_ID"]
-                    ));
+                    LogFollow::checkDestinationsFollowStatus(
+                        array(
+                            'logId' => $arFields["LOG_ID"]
+                        )
+                    );
 
                     if ($bSendEvent) {
                         CSocNetLogComments::SendEvent($ID, "SONET_NEW_EVENT");
@@ -210,18 +238,22 @@ class CSocNetLogComments extends CAllSocNetLogComments
 
                     $USER_FIELD_MANAGER->Update("SONET_COMMENT", $ID, $arFields);
 
-                    LogIndex::setIndex(array(
-                        'itemType' => LogIndexTable::ITEM_TYPE_COMMENT,
-                        'itemId' => $ID,
-                        'fields' => $arFields
-                    ));
+                    LogIndex::setIndex(
+                        array(
+                            'itemType' => LogIndexTable::ITEM_TYPE_COMMENT,
+                            'itemId' => $ID,
+                            'fields' => $arFields
+                        )
+                    );
 
                     if (isset($arFields["TAG"])) {
-                        LogTagTable::set(array(
-                            'itemType' => LogTagTable::ITEM_TYPE_COMMENT,
-                            'itemId' => $ID,
-                            'tags' => $arFields["TAG"]
-                        ));
+                        LogTagTable::set(
+                            array(
+                                'itemType' => LogTagTable::ITEM_TYPE_COMMENT,
+                                'itemId' => $ID,
+                                'tags' => $arFields["TAG"]
+                            )
+                        );
                     }
 
                     if (defined("BX_COMP_MANAGED_CACHE")) {
@@ -229,7 +261,11 @@ class CSocNetLogComments extends CAllSocNetLogComments
                     }
 
                     $cache = new CPHPCache;
-                    $cache->CleanDir("/sonet/log/" . intval(intval($arFields["LOG_ID"]) / 1000) . "/" . $arFields["LOG_ID"] . "/comments/");
+                    $cache->CleanDir(
+                        "/sonet/log/" . intval(
+                            intval($arFields["LOG_ID"]) / 1000
+                        ) . "/" . $arFields["LOG_ID"] . "/comments/"
+                    );
 
                     CSocNetLogComments::SendMentionNotification(array_merge($arFields, array("ID" => $ID)));
                 }
@@ -237,20 +273,21 @@ class CSocNetLogComments extends CAllSocNetLogComments
 
             CSocNetLogTools::SetCacheLastLogID("comment", $ID);
             return $ID;
-        } elseif ($bSetSource && strlen($strMessage) > 0)
+        } elseif ($bSetSource && $strMessage <> '') {
             return array(
                 "ID" => false,
                 "MESSAGE" => $strMessage
             );
-        else
+        } else {
             return false;
+        }
     }
 
-    function Update($ID, $arFields, $bSetSource = false)
+    public static function Update($ID, $arFields, $bSetSource = false)
     {
         global $DB, $APPLICATION, $USER_FIELD_MANAGER;
 
-        $ID = IntVal($ID);
+        $ID = intval($ID);
         if ($ID <= 0) {
             $APPLICATION->ThrowException(GetMessage("SONET_LC_WRONG_PARAMETER_ID"), "ERROR_NO_ID");
             return false;
@@ -281,7 +318,7 @@ class CSocNetLogComments extends CAllSocNetLogComments
         }
 
         if ($bSetSource) {
-            if (strlen($arFields["EVENT_ID"]) > 0) {
+            if ($arFields["EVENT_ID"] <> '') {
                 $arCommentEvent = CSocNetLogTools::FindLogCommentEventByID($arFields["EVENT_ID"]);
                 if (
                     !is_array($arCommentEvent)
@@ -318,14 +355,14 @@ class CSocNetLogComments extends CAllSocNetLogComments
             } else {
                 if (
                     isset($arSource["MESSAGE"])
-                    && strlen($arSource["MESSAGE"]) > 0
+                    && $arSource["MESSAGE"] <> ''
                 ) {
                     $arFields["MESSAGE"] = $arSource["MESSAGE"];
                 }
 
                 if (
                     isset($arSource["TEXT_MESSAGE"])
-                    && strlen($arSource["TEXT_MESSAGE"]) > 0
+                    && $arSource["TEXT_MESSAGE"] <> ''
                 ) {
                     $arFields["TEXT_MESSAGE"] = $arSource["TEXT_MESSAGE"];
                 }
@@ -371,19 +408,23 @@ class CSocNetLogComments extends CAllSocNetLogComments
             $strUpdate = $DB->PrepareUpdate("b_sonet_log_comment", $arFields);
             \Bitrix\Socialnetwork\Util::processEqualityFieldsToUpdate($arFields1, $strUpdate);
 
-            if (strlen($strUpdate) > 0) {
+            if ($strUpdate <> '') {
                 $strSql =
                     "UPDATE b_sonet_log_comment SET " .
                     "	" . $strUpdate . " " .
                     "WHERE ID = " . $ID . " ";
-                $DB->Query($strSql, False, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+                $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 
                 $USER_FIELD_MANAGER->Update("SONET_COMMENT", $ID, $arFields);
 
                 $cache = new CPHPCache;
-                $cache->CleanDir("/sonet/log/" . intval(intval($arFields["LOG_ID"]) / 1000) . "/" . $arFields["LOG_ID"] . "/comments/");
+                $cache->CleanDir(
+                    "/sonet/log/" . intval(
+                        intval($arFields["LOG_ID"]) / 1000
+                    ) . "/" . $arFields["LOG_ID"] . "/comments/"
+                );
             } elseif (!$USER_FIELD_MANAGER->Update("SONET_COMMENT", $ID, $arFields)) {
-                $ID = False;
+                $ID = false;
             }
 
             if (intval($ID) > 0) {
@@ -393,24 +434,27 @@ class CSocNetLogComments extends CAllSocNetLogComments
                 }
 
                 if (!empty($arFields['MESSAGE'])) {
-                    LogIndex::setIndex(array(
-                        'itemType' => LogIndexTable::ITEM_TYPE_COMMENT,
-                        'itemId' => $ID,
-                        'fields' => $arFields
-                    ));
+                    LogIndex::setIndex(
+                        array(
+                            'itemType' => LogIndexTable::ITEM_TYPE_COMMENT,
+                            'itemId' => $ID,
+                            'fields' => $arFields
+                        )
+                    );
                 }
 
                 if (isset($arFields["TAG"])) {
-                    LogTagTable::set(array(
-                        'itemType' => LogTagTable::ITEM_TYPE_COMMENT,
-                        'itemId' => $ID,
-                        'tags' => $arFields["TAG"]
-                    ));
+                    LogTagTable::set(
+                        array(
+                            'itemType' => LogTagTable::ITEM_TYPE_COMMENT,
+                            'itemId' => $ID,
+                            'tags' => $arFields["TAG"]
+                        )
+                    );
                 }
             }
-
         } else {
-            $ID = False;
+            $ID = false;
         }
 
         return $ID;
@@ -419,8 +463,14 @@ class CSocNetLogComments extends CAllSocNetLogComments
     /***************************************/
     /**********  DATA SELECTION  ***********/
     /***************************************/
-    function GetList($arOrder = Array("ID" => "DESC"), $arFilter = Array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array(), $arParams = array())
-    {
+    public static function GetList(
+        $arOrder = Array("ID" => "DESC"),
+        $arFilter = Array(),
+        $arGroupBy = false,
+        $arNavStartParams = false,
+        $arSelectFields = array(),
+        $arParams = array()
+    ) {
         global $DB, $arSocNetAllowedEntityTypes, $USER, $USER_FIELD_MANAGER;
 
         $arSocNetAllowedSubscribeEntityTypesDesc = CSocNetAllowed::GetAllowedEntityTypesDesc();
@@ -431,15 +481,49 @@ class CSocNetLogComments extends CAllSocNetLogComments
         $obUserFieldsSql->SetFilter($arFilter);
         $obUserFieldsSql->SetOrder($arOrder);
 
-        if (count($arSelectFields) <= 0)
+        if (count($arSelectFields) <= 0) {
             $arSelectFields = array(
-                "ID", "LOG_ID", "SOURCE_ID", "ENTITY_TYPE", "ENTITY_ID", "USER_ID", "EVENT_ID", "LOG_DATE", "MESSAGE", "TEXT_MESSAGE", "URL", "MODULE_ID",
-                "GROUP_NAME", "GROUP_OWNER_ID", "GROUP_VISIBLE", "GROUP_OPENED", "GROUP_IMAGE_ID",
-                "USER_NAME", "USER_LAST_NAME", "USER_SECOND_NAME", "USER_LOGIN", "USER_PERSONAL_PHOTO", "USER_PERSONAL_GENDER",
-                "CREATED_BY_NAME", "CREATED_BY_LAST_NAME", "CREATED_BY_SECOND_NAME", "CREATED_BY_LOGIN", "CREATED_BY_PERSONAL_PHOTO", "CREATED_BY_PERSONAL_GENDER",
-                "LOG_SITE_ID", "LOG_SOURCE_ID", "LOG_USER_ID",
-                "RATING_TYPE_ID", "RATING_ENTITY_ID", "RATING_TOTAL_VALUE", "RATING_TOTAL_VOTES", "RATING_TOTAL_POSITIVE_VOTES", "RATING_TOTAL_NEGATIVE_VOTES", "RATING_USER_VOTE_VALUE"
+                "ID",
+                "LOG_ID",
+                "SOURCE_ID",
+                "ENTITY_TYPE",
+                "ENTITY_ID",
+                "USER_ID",
+                "EVENT_ID",
+                "LOG_DATE",
+                "MESSAGE",
+                "TEXT_MESSAGE",
+                "URL",
+                "MODULE_ID",
+                "GROUP_NAME",
+                "GROUP_OWNER_ID",
+                "GROUP_VISIBLE",
+                "GROUP_OPENED",
+                "GROUP_IMAGE_ID",
+                "USER_NAME",
+                "USER_LAST_NAME",
+                "USER_SECOND_NAME",
+                "USER_LOGIN",
+                "USER_PERSONAL_PHOTO",
+                "USER_PERSONAL_GENDER",
+                "CREATED_BY_NAME",
+                "CREATED_BY_LAST_NAME",
+                "CREATED_BY_SECOND_NAME",
+                "CREATED_BY_LOGIN",
+                "CREATED_BY_PERSONAL_PHOTO",
+                "CREATED_BY_PERSONAL_GENDER",
+                "LOG_SITE_ID",
+                "LOG_SOURCE_ID",
+                "LOG_USER_ID",
+                "RATING_TYPE_ID",
+                "RATING_ENTITY_ID",
+                "RATING_TOTAL_VALUE",
+                "RATING_TOTAL_VOTES",
+                "RATING_TOTAL_POSITIVE_VOTES",
+                "RATING_TOTAL_NEGATIVE_VOTES",
+                "RATING_USER_VOTE_VALUE"
             );
+        }
 
         static $arFields1 = array(
             "ID" => Array("FIELD" => "LC.ID", "TYPE" => "int"),
@@ -456,82 +540,225 @@ class CSocNetLogComments extends CAllSocNetLogComments
             "TEXT_MESSAGE" => Array("FIELD" => "LC.TEXT_MESSAGE", "TYPE" => "string"),
             "URL" => Array("FIELD" => "LC.URL", "TYPE" => "string"),
             "MODULE_ID" => Array("FIELD" => "LC.MODULE_ID", "TYPE" => "string"),
-            "LOG_SOURCE_ID" => Array("FIELD" => "L.SOURCE_ID", "TYPE" => "int", "FROM" => "LEFT JOIN b_sonet_log L ON (LC.LOG_ID = L.ID)"),
-            "LOG_USER_ID" => Array("FIELD" => "L.USER_ID", "TYPE" => "int", "FROM" => "LEFT JOIN b_sonet_log L ON (LC.LOG_ID = L.ID)"),
-            "LOG_TITLE" => Array("FIELD" => "L1.TITLE", "TYPE" => "string", "FROM" => "INNER JOIN b_sonet_log L1 ON (LC.LOG_ID = L1.ID)"),
-            "LOG_URL" => Array("FIELD" => "L1.URL", "TYPE" => "string", "FROM" => "INNER JOIN b_sonet_log L1 ON (LC.LOG_ID = L1.ID)"),
-            "LOG_PARAMS" => Array("FIELD" => "L1.PARAMS", "TYPE" => "string", "FROM" => "INNER JOIN b_sonet_log L1 ON (LC.LOG_ID = L1.ID)"),
-            "GROUP_NAME" => Array("FIELD" => "G.NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_sonet_group G ON (LC.ENTITY_TYPE = 'G' AND LC.ENTITY_ID = G.ID)"),
-            "GROUP_OWNER_ID" => Array("FIELD" => "G.OWNER_ID", "TYPE" => "int", "FROM" => "LEFT JOIN b_sonet_group G ON (LC.ENTITY_TYPE = 'G' AND LC.ENTITY_ID = G.ID)"),
-            "GROUP_VISIBLE" => Array("FIELD" => "G.VISIBLE", "TYPE" => "string", "FROM" => "LEFT JOIN b_sonet_group G ON (LC.ENTITY_TYPE = 'G' AND LC.ENTITY_ID = G.ID)"),
-            "GROUP_OPENED" => Array("FIELD" => "G.OPENED", "TYPE" => "string", "FROM" => "LEFT JOIN b_sonet_group G ON (LC.ENTITY_TYPE = 'G' AND LC.ENTITY_ID = G.ID)"),
-            "GROUP_IMAGE_ID" => Array("FIELD" => "G.IMAGE_ID", "TYPE" => "int", "FROM" => "LEFT JOIN b_sonet_group G ON (LC.ENTITY_TYPE = 'G' AND LC.ENTITY_ID = G.ID)"),
-            "USER_NAME" => Array("FIELD" => "U.NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_user U ON (LC.ENTITY_TYPE = 'U' AND LC.ENTITY_ID = U.ID)"),
-            "USER_LAST_NAME" => Array("FIELD" => "U.LAST_NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_user U ON (LC.ENTITY_TYPE = 'U' AND LC.ENTITY_ID = U.ID)"),
-            "USER_SECOND_NAME" => Array("FIELD" => "U.SECOND_NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_user U ON (LC.ENTITY_TYPE = 'U' AND LC.ENTITY_ID = U.ID)"),
-            "USER_LOGIN" => Array("FIELD" => "U.LOGIN", "TYPE" => "string", "FROM" => "LEFT JOIN b_user U ON (LC.ENTITY_TYPE = 'U' AND LC.ENTITY_ID = U.ID)"),
-            "USER_PERSONAL_PHOTO" => Array("FIELD" => "U.PERSONAL_PHOTO", "TYPE" => "int", "FROM" => "LEFT JOIN b_user U ON (LC.ENTITY_TYPE = 'U' AND LC.ENTITY_ID = U.ID)"),
-            "USER_PERSONAL_GENDER" => Array("FIELD" => "U.PERSONAL_GENDER", "TYPE" => "string", "FROM" => "LEFT JOIN b_user U ON (LC.ENTITY_TYPE = 'U' AND LC.ENTITY_ID = U.ID)"),
-            "CREATED_BY_NAME" => Array("FIELD" => "U1.NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_user U1 ON LC.USER_ID = U1.ID"),
-            "CREATED_BY_LAST_NAME" => Array("FIELD" => "U1.LAST_NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_user U1 ON LC.USER_ID = U1.ID"),
-            "CREATED_BY_SECOND_NAME" => Array("FIELD" => "U1.SECOND_NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_user U1 ON LC.USER_ID = U1.ID"),
-            "CREATED_BY_LOGIN" => Array("FIELD" => "U1.LOGIN", "TYPE" => "string", "FROM" => "LEFT JOIN b_user U1 ON LC.USER_ID = U1.ID"),
-            "CREATED_BY_PERSONAL_PHOTO" => Array("FIELD" => "U1.PERSONAL_PHOTO", "TYPE" => "int", "FROM" => "LEFT JOIN b_user U1 ON LC.USER_ID = U1.ID"),
-            "CREATED_BY_PERSONAL_GENDER" => Array("FIELD" => "U1.PERSONAL_GENDER", "TYPE" => "string", "FROM" => "LEFT JOIN b_user U1 ON LC.USER_ID = U1.ID"),
-            "CREATED_BY_EXTERNAL_AUTH_ID" => Array("FIELD" => "U1.EXTERNAL_AUTH_ID", "TYPE" => "string", "FROM" => "LEFT JOIN b_user U1 ON LC.USER_ID = U1.ID"),
+            "LOG_SOURCE_ID" => Array(
+                "FIELD" => "L.SOURCE_ID",
+                "TYPE" => "int",
+                "FROM" => "LEFT JOIN b_sonet_log L ON (LC.LOG_ID = L.ID)"
+            ),
+            "LOG_USER_ID" => Array(
+                "FIELD" => "L.USER_ID",
+                "TYPE" => "int",
+                "FROM" => "LEFT JOIN b_sonet_log L ON (LC.LOG_ID = L.ID)"
+            ),
+            "LOG_TITLE" => Array(
+                "FIELD" => "L1.TITLE",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_sonet_log L1 ON (LC.LOG_ID = L1.ID)"
+            ),
+            "LOG_URL" => Array(
+                "FIELD" => "L1.URL",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_sonet_log L1 ON (LC.LOG_ID = L1.ID)"
+            ),
+            "LOG_PARAMS" => Array(
+                "FIELD" => "L1.PARAMS",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_sonet_log L1 ON (LC.LOG_ID = L1.ID)"
+            ),
+            "GROUP_NAME" => Array(
+                "FIELD" => "G.NAME",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_sonet_group G ON (LC.ENTITY_TYPE = 'G' AND LC.ENTITY_ID = G.ID)"
+            ),
+            "GROUP_OWNER_ID" => Array(
+                "FIELD" => "G.OWNER_ID",
+                "TYPE" => "int",
+                "FROM" => "LEFT JOIN b_sonet_group G ON (LC.ENTITY_TYPE = 'G' AND LC.ENTITY_ID = G.ID)"
+            ),
+            "GROUP_VISIBLE" => Array(
+                "FIELD" => "G.VISIBLE",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_sonet_group G ON (LC.ENTITY_TYPE = 'G' AND LC.ENTITY_ID = G.ID)"
+            ),
+            "GROUP_OPENED" => Array(
+                "FIELD" => "G.OPENED",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_sonet_group G ON (LC.ENTITY_TYPE = 'G' AND LC.ENTITY_ID = G.ID)"
+            ),
+            "GROUP_IMAGE_ID" => Array(
+                "FIELD" => "G.IMAGE_ID",
+                "TYPE" => "int",
+                "FROM" => "LEFT JOIN b_sonet_group G ON (LC.ENTITY_TYPE = 'G' AND LC.ENTITY_ID = G.ID)"
+            ),
+            "USER_NAME" => Array(
+                "FIELD" => "U.NAME",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_user U ON (LC.ENTITY_TYPE = 'U' AND LC.ENTITY_ID = U.ID)"
+            ),
+            "USER_LAST_NAME" => Array(
+                "FIELD" => "U.LAST_NAME",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_user U ON (LC.ENTITY_TYPE = 'U' AND LC.ENTITY_ID = U.ID)"
+            ),
+            "USER_SECOND_NAME" => Array(
+                "FIELD" => "U.SECOND_NAME",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_user U ON (LC.ENTITY_TYPE = 'U' AND LC.ENTITY_ID = U.ID)"
+            ),
+            "USER_LOGIN" => Array(
+                "FIELD" => "U.LOGIN",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_user U ON (LC.ENTITY_TYPE = 'U' AND LC.ENTITY_ID = U.ID)"
+            ),
+            "USER_PERSONAL_PHOTO" => Array(
+                "FIELD" => "U.PERSONAL_PHOTO",
+                "TYPE" => "int",
+                "FROM" => "LEFT JOIN b_user U ON (LC.ENTITY_TYPE = 'U' AND LC.ENTITY_ID = U.ID)"
+            ),
+            "USER_PERSONAL_GENDER" => Array(
+                "FIELD" => "U.PERSONAL_GENDER",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_user U ON (LC.ENTITY_TYPE = 'U' AND LC.ENTITY_ID = U.ID)"
+            ),
+            "CREATED_BY_NAME" => Array(
+                "FIELD" => "U1.NAME",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_user U1 ON LC.USER_ID = U1.ID"
+            ),
+            "CREATED_BY_LAST_NAME" => Array(
+                "FIELD" => "U1.LAST_NAME",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_user U1 ON LC.USER_ID = U1.ID"
+            ),
+            "CREATED_BY_SECOND_NAME" => Array(
+                "FIELD" => "U1.SECOND_NAME",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_user U1 ON LC.USER_ID = U1.ID"
+            ),
+            "CREATED_BY_LOGIN" => Array(
+                "FIELD" => "U1.LOGIN",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_user U1 ON LC.USER_ID = U1.ID"
+            ),
+            "CREATED_BY_PERSONAL_PHOTO" => Array(
+                "FIELD" => "U1.PERSONAL_PHOTO",
+                "TYPE" => "int",
+                "FROM" => "LEFT JOIN b_user U1 ON LC.USER_ID = U1.ID"
+            ),
+            "CREATED_BY_PERSONAL_GENDER" => Array(
+                "FIELD" => "U1.PERSONAL_GENDER",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_user U1 ON LC.USER_ID = U1.ID"
+            ),
+            "CREATED_BY_EXTERNAL_AUTH_ID" => Array(
+                "FIELD" => "U1.EXTERNAL_AUTH_ID",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_user U1 ON LC.USER_ID = U1.ID"
+            ),
             "SHARE_DEST" => Array("FIELD" => "LC.SHARE_DEST", "TYPE" => "string"),
         );
 
         if (array_key_exists("LOG_SITE_ID", $arFilter)) {
-            $arFields["LOG_SITE_ID"] = Array("FIELD" => "SLS.SITE_ID", "TYPE" => "string", "FROM" => "LEFT JOIN b_sonet_log_site SLS ON LC.LOG_ID = SLS.LOG_ID");
+            $arFields["LOG_SITE_ID"] = Array(
+                "FIELD" => "SLS.SITE_ID",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_sonet_log_site SLS ON LC.LOG_ID = SLS.LOG_ID"
+            );
             $strDistinct = " DISTINCT ";
-            foreach ($arSelectFields as $i => $strFieldTmp)
-                if ($strFieldTmp == "LOG_SITE_ID")
+            foreach ($arSelectFields as $i => $strFieldTmp) {
+                if ($strFieldTmp == "LOG_SITE_ID") {
                     unset($arSelectFields[$i]);
+                }
+            }
 
-            foreach ($arOrder as $by => $order)
-                if (!in_array($by, $arSelectFields))
+            foreach ($arOrder as $by => $order) {
+                if (!in_array($by, $arSelectFields)) {
                     $arSelectFields[] = $by;
+                }
+            }
         } else {
-            $arFields["LOG_SITE_ID"] = Array("FIELD" => "L.SITE_ID", "TYPE" => "string", "FROM" => "LEFT JOIN b_sonet_log L ON (LC.LOG_ID = L.ID)");
+            $arFields["LOG_SITE_ID"] = Array(
+                "FIELD" => "L.SITE_ID",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_sonet_log L ON (LC.LOG_ID = L.ID)"
+            );
             $strDistinct = " ";
         }
 
         $arFields["RATING_TYPE_ID"] = Array("FIELD" => "LC.RATING_TYPE_ID", "TYPE" => "string");
         $arFields["RATING_ENTITY_ID"] = Array("FIELD" => "LC.RATING_ENTITY_ID", "TYPE" => "int");
-        $arFields["RATING_TOTAL_VALUE"] = Array("FIELD" => $DB->IsNull('RG.TOTAL_VALUE', '0'), "TYPE" => "double", "FROM" => "LEFT JOIN b_rating_voting RG ON LC.RATING_TYPE_ID = RG.ENTITY_TYPE_ID AND LC.RATING_ENTITY_ID = RG.ENTITY_ID");
-        $arFields["RATING_TOTAL_VOTES"] = Array("FIELD" => $DB->IsNull('RG.TOTAL_VOTES', '0'), "TYPE" => "double", "FROM" => "LEFT JOIN b_rating_voting RG ON LC.RATING_TYPE_ID = RG.ENTITY_TYPE_ID AND LC.RATING_ENTITY_ID = RG.ENTITY_ID");
-        $arFields["RATING_TOTAL_POSITIVE_VOTES"] = Array("FIELD" => $DB->IsNull('RG.TOTAL_POSITIVE_VOTES', '0'), "TYPE" => "int", "FROM" => "LEFT JOIN b_rating_voting RG ON LC.RATING_TYPE_ID = RG.ENTITY_TYPE_ID AND LC.RATING_ENTITY_ID = RG.ENTITY_ID");
-        $arFields["RATING_TOTAL_NEGATIVE_VOTES"] = Array("FIELD" => $DB->IsNull('RG.TOTAL_NEGATIVE_VOTES', '0'), "TYPE" => "int", "FROM" => "LEFT JOIN b_rating_voting RG ON LC.RATING_TYPE_ID = RG.ENTITY_TYPE_ID AND LC.RATING_ENTITY_ID = RG.ENTITY_ID");
-        if (isset($USER) && is_object($USER))
-            $arFields["RATING_USER_VOTE_VALUE"] = Array("FIELD" => $DB->IsNull('RV.VALUE', '0'), "TYPE" => "double", "FROM" => "LEFT JOIN b_rating_vote RV ON LC.RATING_TYPE_ID = RV.ENTITY_TYPE_ID AND LC.RATING_ENTITY_ID = RV.ENTITY_ID AND RV.USER_ID = " . intval($USER->GetId()));
+        $arFields["RATING_TOTAL_VALUE"] = Array(
+            "FIELD" => $DB->IsNull('RG.TOTAL_VALUE', '0'),
+            "TYPE" => "double",
+            "FROM" => "LEFT JOIN b_rating_voting RG ON LC.RATING_TYPE_ID = RG.ENTITY_TYPE_ID AND LC.RATING_ENTITY_ID = RG.ENTITY_ID"
+        );
+        $arFields["RATING_TOTAL_VOTES"] = Array(
+            "FIELD" => $DB->IsNull('RG.TOTAL_VOTES', '0'),
+            "TYPE" => "double",
+            "FROM" => "LEFT JOIN b_rating_voting RG ON LC.RATING_TYPE_ID = RG.ENTITY_TYPE_ID AND LC.RATING_ENTITY_ID = RG.ENTITY_ID"
+        );
+        $arFields["RATING_TOTAL_POSITIVE_VOTES"] = Array(
+            "FIELD" => $DB->IsNull('RG.TOTAL_POSITIVE_VOTES', '0'),
+            "TYPE" => "int",
+            "FROM" => "LEFT JOIN b_rating_voting RG ON LC.RATING_TYPE_ID = RG.ENTITY_TYPE_ID AND LC.RATING_ENTITY_ID = RG.ENTITY_ID"
+        );
+        $arFields["RATING_TOTAL_NEGATIVE_VOTES"] = Array(
+            "FIELD" => $DB->IsNull('RG.TOTAL_NEGATIVE_VOTES', '0'),
+            "TYPE" => "int",
+            "FROM" => "LEFT JOIN b_rating_voting RG ON LC.RATING_TYPE_ID = RG.ENTITY_TYPE_ID AND LC.RATING_ENTITY_ID = RG.ENTITY_ID"
+        );
+        if (isset($USER) && is_object($USER)) {
+            $arFields["RATING_USER_VOTE_VALUE"] = Array(
+                "FIELD" => $DB->IsNull('RV.VALUE', '0'),
+                "TYPE" => "double",
+                "FROM" => "LEFT JOIN b_rating_vote RV ON LC.RATING_TYPE_ID = RV.ENTITY_TYPE_ID AND LC.RATING_ENTITY_ID = RV.ENTITY_ID AND RV.USER_ID = " . intval(
+                        $USER->GetId()
+                    )
+            );
+        }
 
         if (array_key_exists("LOG_RIGHTS", $arFilter)) {
             $Rights = array();
             if (is_array($arFilter["LOG_RIGHTS"])) {
-                foreach ($arFilter["LOG_RIGHTS"] as $str)
-                    if (trim($str))
+                foreach ($arFilter["LOG_RIGHTS"] as $str) {
+                    if (trim($str)) {
                         $Rights[] = trim($str);
-            } elseif (trim($arFilter["LOG_RIGHTS"]))
+                    }
+                }
+            } elseif (trim($arFilter["LOG_RIGHTS"])) {
                 $Rights = trim($arFilter["LOG_RIGHTS"]);
+            }
 
             unset($arFilter["LOG_RIGHTS"]);
             if ((is_array($Rights) && !empty($Rights)) || !is_array($Rights)) {
                 $arFilter["LOG_RIGHTS"] = $Rights;
-                $arFields["LOG_RIGHTS"] = Array("FIELD" => "SLR0.GROUP_CODE", "TYPE" => "string", "FROM" => "INNER JOIN b_sonet_log_right SLR0 ON LC.LOG_ID = SLR0.LOG_ID");
+                $arFields["LOG_RIGHTS"] = Array(
+                    "FIELD" => "SLR0.GROUP_CODE",
+                    "TYPE" => "string",
+                    "FROM" => "INNER JOIN b_sonet_log_right SLR0 ON LC.LOG_ID = SLR0.LOG_ID"
+                );
             }
 
-            if (is_array($Rights) && count($Rights) > 1)
+            if (is_array($Rights) && count($Rights) > 1) {
                 $strDistinct = " DISTINCT ";
+            }
         }
 
         $arFields = array_merge($arFields1, $arFields);
 
-        $arSqls = CSocNetGroup::PrepareSql($arFields, $arOrder, $arFilter, $arGroupBy, $arSelectFields, $obUserFieldsSql);
+        $arSqls = CSocNetGroup::PrepareSql(
+            $arFields,
+            $arOrder,
+            $arFilter,
+            $arGroupBy,
+            $arSelectFields,
+            $obUserFieldsSql
+        );
 
         $r = $obUserFieldsSql->GetFilter();
-        if (strlen($r) > 0)
+        if ($r <> '') {
             $strSqlUFFilter = " (" . $r . ") ";
+        }
 
         $arSqls["RIGHTS"] = "";
         $arSqls["CRM_RIGHTS"] = "";
@@ -542,14 +769,16 @@ class CSocNetLogComments extends CAllSocNetLogComments
             && $arParams["CHECK_RIGHTS"] == "Y"
             && !array_key_exists("USER_ID", $arParams)
             && is_object($USER)
-        )
+        ) {
             $arParams["USER_ID"] = $USER->GetID();
+        }
 
         if (
             !empty($arParams)
             && array_key_exists("USER_ID", $arParams)
-        )
+        ) {
             $arParams["CHECK_RIGHTS"] = "Y";
+        }
 
         if (
             !empty($arParams)
@@ -560,24 +789,29 @@ class CSocNetLogComments extends CAllSocNetLogComments
                 if (
                     array_key_exists("USER_ID", $arParams)
                     && intval($arParams["USER_ID"]) > 0
-                )
+                ) {
                     $arParams["SUBSCRIBE_USER_ID"] = $arParams["USER_ID"];
-                else
+                } else {
                     $arParams["SUBSCRIBE_USER_ID"] = $USER->GetID();
+                }
             }
 
             if (!array_key_exists("MY_ENTITIES", $arParams)) {
-                foreach ($arSocNetAllowedSubscribeEntityTypesDesc as $entity_type_tmp => $arEntityTypeTmp)
+                foreach ($arSocNetAllowedSubscribeEntityTypesDesc as $entity_type_tmp => $arEntityTypeTmp) {
                     if (
                         array_key_exists("HAS_MY", $arEntityTypeTmp)
                         && $arEntityTypeTmp["HAS_MY"] == "Y"
                         && array_key_exists("CLASS_MY", $arEntityTypeTmp)
                         && array_key_exists("METHOD_MY", $arEntityTypeTmp)
-                        && strlen($arEntityTypeTmp["CLASS_MY"]) > 0
-                        && strlen($arEntityTypeTmp["METHOD_MY"]) > 0
+                        && $arEntityTypeTmp["CLASS_MY"] <> ''
+                        && $arEntityTypeTmp["METHOD_MY"] <> ''
                         && method_exists($arEntityTypeTmp["CLASS_MY"], $arEntityTypeTmp["METHOD_MY"])
-                    )
-                        $arMyEntities[$entity_type_tmp] = call_user_func(array($arEntityTypeTmp["CLASS_MY"], $arEntityTypeTmp["METHOD_MY"]));
+                    ) {
+                        $arMyEntities[$entity_type_tmp] = call_user_func(
+                            array($arEntityTypeTmp["CLASS_MY"], $arEntityTypeTmp["METHOD_MY"])
+                        );
+                    }
+                }
 
                 $arParams["MY_ENTITIES"] = $arMyEntities;
             }
@@ -593,12 +827,15 @@ class CSocNetLogComments extends CAllSocNetLogComments
             $acc->UpdateCodes();
 
             $arSqls["RIGHTS"] = "EXISTS ( SELECT SLR.ID FROM b_sonet_log_right SLR
-				LEFT JOIN b_user_access UA ON (UA.ACCESS_CODE = SLR.GROUP_CODE AND UA.USER_ID = " . (is_object($USER) ? intval($USER->GetID()) : 0) . ")
+				LEFT JOIN b_user_access UA ON (UA.ACCESS_CODE = SLR.GROUP_CODE AND UA.USER_ID = " . (is_object(
+                    $USER
+                ) ? intval($USER->GetID()) : 0) . ")
 				WHERE LC.LOG_ID = SLR.LOG_ID AND (0=1 " .
                 (is_object($USER) && CSocNetUser::IsCurrentUserModuleAdmin() ? " OR SLR.GROUP_CODE = 'SA'" : "") .
                 (is_object($USER) && $USER->IsAuthorized() ? " OR (SLR.GROUP_CODE = 'AU')" : "") .
                 " OR (SLR.GROUP_CODE = 'G2')" .
-                (is_object($USER) && $USER->IsAuthorized() ? " OR (UA.ACCESS_CODE = SLR.GROUP_CODE AND UA.USER_ID = " . $USER->GetID() . ")" : "") . "))";
+                (is_object($USER) && $USER->IsAuthorized(
+                ) ? " OR (UA.ACCESS_CODE = SLR.GROUP_CODE AND UA.USER_ID = " . $USER->GetID() . ")" : "") . "))";
         }
 
         if (
@@ -635,39 +872,41 @@ class CSocNetLogComments extends CAllSocNetLogComments
 
             $bWhereStarted = false;
 
-            if (strlen($arSqls["WHERE"]) > 0) {
-                $strSql .= "WHERE " . $arSqls["WHERE"] . " " . (strlen($arSqls["SUBSCRIBE"]) > 0 ? "AND (" . $arSqls["SUBSCRIBE"] . ") " : "");
+            if ($arSqls["WHERE"] <> '') {
+                $strSql .= "WHERE " . $arSqls["WHERE"] . " " . ($arSqls["SUBSCRIBE"] <> '' ? "AND (" . $arSqls["SUBSCRIBE"] . ") " : "");
                 $bWhereStarted = true;
-            } elseif (strlen($arSqls["SUBSCRIBE"]) > 0) {
+            } elseif ($arSqls["SUBSCRIBE"] <> '') {
                 $strSql .= "WHERE (" . $arSqls["SUBSCRIBE"] . ") ";
                 $bWhereStarted = true;
             }
 
-            if (strlen($strSqlUFFilter) > 0) {
+            if ($strSqlUFFilter <> '') {
                 $strSql .= ($bWhereStarted ? " AND " : " WHERE ") . $strSqlUFFilter . " ";
                 $bWhereStarted = true;
             }
 
-            if (strlen($arSqls["RIGHTS"]) > 0) {
+            if ($arSqls["RIGHTS"] <> '') {
                 $strSql .= ($bWhereStarted ? " AND " : " WHERE ") . $arSqls["RIGHTS"] . " ";
                 $bWhereStarted = true;
             }
 
-            if (strlen($arSqls["CRM_RIGHTS"]) > 0) {
+            if ($arSqls["CRM_RIGHTS"] <> '') {
                 $strSql .= ($bWhereStarted ? " AND " : " WHERE ") . $arSqls["CRM_RIGHTS"] . " ";
                 $bWhereStarted = true;
             }
 
-            if (strlen($arSqls["GROUPBY"]) > 0)
+            if ($arSqls["GROUPBY"] <> '') {
                 $strSql .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
+            }
 
             //echo "!1!=".htmlspecialcharsbx($strSql)."<br>";
 
             $dbRes = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-            if ($arRes = $dbRes->Fetch())
+            if ($arRes = $dbRes->Fetch()) {
                 return $arRes["CNT"];
-            else
+            } else {
                 return false;
+            }
         }
 
         $strSql =
@@ -679,35 +918,37 @@ class CSocNetLogComments extends CAllSocNetLogComments
 
         $bWhereStarted = false;
 
-        if (strlen($arSqls["WHERE"]) > 0) {
-            $strSql .= "WHERE " . $arSqls["WHERE"] . " " . (strlen($arSqls["SUBSCRIBE"]) > 0 ? "AND (" . $arSqls["SUBSCRIBE"] . ") " : "");
+        if ($arSqls["WHERE"] <> '') {
+            $strSql .= "WHERE " . $arSqls["WHERE"] . " " . ($arSqls["SUBSCRIBE"] <> '' ? "AND (" . $arSqls["SUBSCRIBE"] . ") " : "");
             $bWhereStarted = true;
-        } elseif (strlen($arSqls["SUBSCRIBE"]) > 0) {
+        } elseif ($arSqls["SUBSCRIBE"] <> '') {
             $strSql .= "WHERE (" . $arSqls["SUBSCRIBE"] . ") ";
             $bWhereStarted = true;
         }
 
-        if (strlen($strSqlUFFilter) > 0) {
+        if ($strSqlUFFilter <> '') {
             $strSql .= ($bWhereStarted ? " AND " : " WHERE ") . $strSqlUFFilter . " ";
             $bWhereStarted = true;
         }
 
-        if (strlen($arSqls["RIGHTS"]) > 0) {
+        if ($arSqls["RIGHTS"] <> '') {
             $strSql .= ($bWhereStarted ? " AND " : " WHERE ") . $arSqls["RIGHTS"] . " ";
             $bWhereStarted = true;
         }
 
-        if (strlen($arSqls["CRM_RIGHTS"]) > 0) {
+        if ($arSqls["CRM_RIGHTS"] <> '') {
             $strSql .= ($bWhereStarted ? " AND " : " WHERE ") . $arSqls["CRM_RIGHTS"] . " ";
             $bWhereStarted = true;
         }
 
-        if (strlen($arSqls["GROUPBY"]) > 0)
+        if ($arSqls["GROUPBY"] <> '') {
             $strSql .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
-        if (strlen($arSqls["ORDERBY"]) > 0)
+        }
+        if ($arSqls["ORDERBY"] <> '') {
             $strSql .= "ORDER BY " . $arSqls["ORDERBY"] . " ";
+        }
 
-        if (is_array($arNavStartParams) && IntVal($arNavStartParams["nTopCount"]) <= 0) {
+        if (is_array($arNavStartParams) && intval($arNavStartParams["nTopCount"]) <= 0) {
             $strSql_tmp =
                 "SELECT COUNT('x') as CNT " .
                 $obUserFieldsSql->GetSelect() . " " .
@@ -717,39 +958,41 @@ class CSocNetLogComments extends CAllSocNetLogComments
 
             $bWhereStarted = false;
 
-            if (strlen($arSqls["WHERE"]) > 0) {
-                $strSql_tmp .= "WHERE " . $arSqls["WHERE"] . " " . (strlen($arSqls["SUBSCRIBE"]) > 0 ? "AND (" . $arSqls["SUBSCRIBE"] . ") " : "");
+            if ($arSqls["WHERE"] <> '') {
+                $strSql_tmp .= "WHERE " . $arSqls["WHERE"] . " " . ($arSqls["SUBSCRIBE"] <> '' ? "AND (" . $arSqls["SUBSCRIBE"] . ") " : "");
                 $bWhereStarted = true;
-            } elseif (strlen($arSqls["SUBSCRIBE"]) > 0) {
+            } elseif ($arSqls["SUBSCRIBE"] <> '') {
                 $strSql_tmp .= "WHERE (" . $arSqls["SUBSCRIBE"] . ") ";
                 $bWhereStarted = true;
             }
 
-            if (strlen($strSqlUFFilter) > 0) {
+            if ($strSqlUFFilter <> '') {
                 $strSql_tmp .= ($bWhereStarted ? " AND " : " WHERE ") . $strSqlUFFilter . " ";
                 $bWhereStarted = true;
             }
 
-            if (strlen($arSqls["RIGHTS"]) > 0) {
+            if ($arSqls["RIGHTS"] <> '') {
                 $strSql_tmp .= ($bWhereStarted ? " AND " : " WHERE ") . $arSqls["RIGHTS"] . " ";
                 $bWhereStarted = true;
             }
 
-            if (strlen($arSqls["CRM_RIGHTS"]) > 0) {
+            if ($arSqls["CRM_RIGHTS"] <> '') {
                 $strSql_tmp .= ($bWhereStarted ? " AND " : " WHERE ") . $arSqls["CRM_RIGHTS"] . " ";
                 $bWhereStarted = true;
             }
 
-            if (strlen($arSqls["GROUPBY"]) > 0)
+            if ($arSqls["GROUPBY"] <> '') {
                 $strSql_tmp .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
+            }
 
             //echo "!2.1!=".htmlspecialcharsbx($strSql_tmp)."<br>";
 
             $dbRes = $DB->Query($strSql_tmp, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             $cnt = 0;
-            if (strlen($arSqls["GROUPBY"]) <= 0) {
-                if ($arRes = $dbRes->Fetch())
+            if ($arSqls["GROUPBY"] == '') {
+                if ($arRes = $dbRes->Fetch()) {
                     $cnt = $arRes["CNT"];
+                }
             } else {
                 // MYSQL only, ORACLE has another code
                 $cnt = $dbRes->SelectedRowsCount();
@@ -762,8 +1005,9 @@ class CSocNetLogComments extends CAllSocNetLogComments
             $dbRes->SetUserFields($USER_FIELD_MANAGER->GetUserFields("SONET_COMMENT"));
             $dbRes->NavQuery($strSql, $cnt, $arNavStartParams);
         } else {
-            if (is_array($arNavStartParams) && IntVal($arNavStartParams["nTopCount"]) > 0)
+            if (is_array($arNavStartParams) && intval($arNavStartParams["nTopCount"]) > 0) {
                 $strSql .= "LIMIT " . intval($arNavStartParams["nTopCount"]);
+            }
 
             //echo "!3!=".htmlspecialcharsbx($strSql)."<br>";
             $dbRes = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
@@ -773,12 +1017,15 @@ class CSocNetLogComments extends CAllSocNetLogComments
         return $dbRes;
     }
 
-    function OnBlogDelete($blog_id)
+    public static function OnBlogDelete($blog_id)
     {
         global $DB;
 
-        return $DB->Query("DELETE SLC FROM b_sonet_log_comment SLC INNER JOIN b_blog_comment BC ON SLC.SOURCE_ID = BC.ID AND BC.BLOG_ID = " . intval($blog_id) . " WHERE SLC.EVENT_ID = 'blog_comment_micro' OR SLC.EVENT_ID = 'blog_comment'", true);
+        return $DB->Query(
+            "DELETE SLC FROM b_sonet_log_comment SLC INNER JOIN b_blog_comment BC ON SLC.SOURCE_ID = BC.ID AND BC.BLOG_ID = " . intval(
+                $blog_id
+            ) . " WHERE SLC.EVENT_ID = 'blog_comment_micro' OR SLC.EVENT_ID = 'blog_comment'",
+            true
+        );
     }
 }
-
-?>

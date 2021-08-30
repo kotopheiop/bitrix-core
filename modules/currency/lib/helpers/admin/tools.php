@@ -35,7 +35,9 @@ class Tools
 
         $currencyList = Currency\CurrencyManager::getCurrencyList();
         foreach ($currencyList as $currency => $title) {
-            $result[$currency] = '<a href="/bitrix/admin/currency_edit.php?ID=' . urlencode($currency) . '&lang=' . LANGUAGE_ID .
+            $result[$currency] = '<a href="/bitrix/admin/currency_edit.php?ID=' . urlencode(
+                    $currency
+                ) . '&lang=' . LANGUAGE_ID .
                 '" title="' . $currencyLinkTitle . '">' . Main\Text\HtmlFilter::encode($title) . '</a>';
         }
         unset($currency, $title, $currencyList);

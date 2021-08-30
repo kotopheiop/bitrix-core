@@ -1,4 +1,5 @@
 <?
+
 /*
 ##############################################
 # Bitrix: SiteManager                        #
@@ -14,7 +15,9 @@ $bDemo = (CTicket::IsDemo()) ? "Y" : "N";
 $bAdmin = (CTicket::IsAdmin()) ? "Y" : "N";
 $bSupportTeam = (CTicket::IsSupportTeam()) ? "Y" : "N";
 
-if ($bAdmin != "Y" && $bSupportTeam != "Y" && $bDemo != "Y") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($bAdmin != "Y" && $bSupportTeam != "Y" && $bDemo != "Y") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 include($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/support/colors.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/img.php");
@@ -37,7 +40,10 @@ $arFilter = Array(
     "SOURCE" => $find_source_id,
 );
 $CHECK_RIGHTS = ($bDemo == "Y") ? "N" : "Y";
-$rsTickets = CTicket::GetList($by, $order, $arFilter, $is_filtered, $CHECK_RIGHTS, "N", "N");
+
+global $by, $order;
+
+$rsTickets = CTicket::GetList($by, $order, $arFilter, null, $CHECK_RIGHTS, "N", "N");
 $arrTime = array();
 $arrTime["1"] = 0;
 $arrTime["1_2"] = 0;
@@ -48,22 +54,38 @@ $arrTime["5_6"] = 0;
 $arrTime["6_7"] = 0;
 $arrTime["7"] = 0;
 while ($arTicket = $rsTickets->Fetch()) {
-    if (strlen($arTicket["DATE_CLOSE"]) > 0) {
+    if ($arTicket["DATE_CLOSE"] <> '') {
         // ���������� ����� ��������� �������
         $day_sec = 86400;
         $TT = $arTicket["TICKET_TIME"];
-        if ($TT < $day_sec) $arrTime["1"] += 1;
-        if ($TT > $day_sec && $TT <= 2 * $day_sec) $arrTime["1_2"] += 1;
-        if ($TT > 2 * $day_sec && $TT <= 3 * $day_sec) $arrTime["2_3"] += 1;
-        if ($TT > 3 * $day_sec && $TT <= 4 * $day_sec) $arrTime["3_4"] += 1;
-        if ($TT > 4 * $day_sec && $TT <= 5 * $day_sec) $arrTime["4_5"] += 1;
-        if ($TT > 5 * $day_sec && $TT <= 6 * $day_sec) $arrTime["5_6"] += 1;
-        if ($TT > 6 * $day_sec && $TT <= 7 * $day_sec) $arrTime["6_7"] += 1;
-        if ($TT > 7 * $day_sec) $arrTime["7"] += 1;
+        if ($TT < $day_sec) {
+            $arrTime["1"] += 1;
+        }
+        if ($TT > $day_sec && $TT <= 2 * $day_sec) {
+            $arrTime["1_2"] += 1;
+        }
+        if ($TT > 2 * $day_sec && $TT <= 3 * $day_sec) {
+            $arrTime["2_3"] += 1;
+        }
+        if ($TT > 3 * $day_sec && $TT <= 4 * $day_sec) {
+            $arrTime["3_4"] += 1;
+        }
+        if ($TT > 4 * $day_sec && $TT <= 5 * $day_sec) {
+            $arrTime["4_5"] += 1;
+        }
+        if ($TT > 5 * $day_sec && $TT <= 6 * $day_sec) {
+            $arrTime["5_6"] += 1;
+        }
+        if ($TT > 6 * $day_sec && $TT <= 7 * $day_sec) {
+            $arrTime["6_7"] += 1;
+        }
+        if ($TT > 7 * $day_sec) {
+            $arrTime["7"] += 1;
+        }
     }
 }
 $arr = array();
-while (list($key, $value) = each($arrTime)) {
+foreach ($arrTime as $key => $value) {
     $arr[] = array("COLOR" => $arrColor[$key], "COUNTER" => $arrTime[$key]);
 }
 

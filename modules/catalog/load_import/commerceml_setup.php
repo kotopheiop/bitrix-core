@@ -1,4 +1,5 @@
 <?
+
 //<title>CommerceML</title>
 IncludeModuleLangFile($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/catalog/import_setup_templ.php');
 
@@ -6,34 +7,46 @@ $arSetupErrors = array();
 
 //********************  ACTIONS  **************************************//
 if (($ACTION == 'IMPORT_EDIT' || $ACTION == 'IMPORT_COPY') && $STEP == 1) {
-    if (isset($arOldSetupVars['URL_FILE_1C']))
+    if (isset($arOldSetupVars['URL_FILE_1C'])) {
         $URL_FILE_1C = $arOldSetupVars['URL_FILE_1C'];
-    if (isset($arOldSetupVars['IBLOCK_TYPE_ID']))
+    }
+    if (isset($arOldSetupVars['IBLOCK_TYPE_ID'])) {
         $IBLOCK_TYPE_ID = $arOldSetupVars['IBLOCK_TYPE_ID'];
-    if (isset($arOldSetupVars['outFileAction']))
+    }
+    if (isset($arOldSetupVars['outFileAction'])) {
         $outFileAction = $arOldSetupVars['outFileAction'];
-    if (isset($arOldSetupVars['CONVERT_UTF8']))
+    }
+    if (isset($arOldSetupVars['CONVERT_UTF8'])) {
         $CONVERT_UTF8 = $arOldSetupVars['CONVERT_UTF8'];
-    if (isset($arOldSetupVars['SETUP_PROFILE_NAME']))
+    }
+    if (isset($arOldSetupVars['SETUP_PROFILE_NAME'])) {
         $SETUP_PROFILE_NAME = $arOldSetupVars['SETUP_PROFILE_NAME'];
-    if (isset($arOldSetupVars['USE_TRANSLIT']))
+    }
+    if (isset($arOldSetupVars['USE_TRANSLIT'])) {
         $USE_TRANSLIT = $arOldSetupVars['USE_TRANSLIT'];
-    if (isset($arOldSetupVars['ADD_TRANSLIT']))
+    }
+    if (isset($arOldSetupVars['ADD_TRANSLIT'])) {
         $ADD_TRANSLIT = $arOldSetupVars['ADD_TRANSLIT'];
-    if (isset($arOldSetupVars['keepExistingProperties']))
+    }
+    if (isset($arOldSetupVars['keepExistingProperties'])) {
         $keepExistingProperties = $arOldSetupVars['keepExistingProperties'];
-    if (isset($arOldSetupVars['activateFileData']))
+    }
+    if (isset($arOldSetupVars['activateFileData'])) {
         $activateFileData = $arOldSetupVars['activateFileData'];
+    }
 }
 if ($STEP > 1) {
-    if (strlen($URL_FILE_1C) > 0 && file_exists($_SERVER["DOCUMENT_ROOT"] . $URL_FILE_1C) && is_file($_SERVER["DOCUMENT_ROOT"] . $URL_FILE_1C))
+    if ($URL_FILE_1C <> '' && file_exists($_SERVER["DOCUMENT_ROOT"] . $URL_FILE_1C) && is_file(
+            $_SERVER["DOCUMENT_ROOT"] . $URL_FILE_1C
+        )) {
         $DATA_FILE_NAME = $_SERVER["DOCUMENT_ROOT"] . $URL_FILE_1C;
+    }
 
-    if (strlen($DATA_FILE_NAME) <= 0) {
+    if ($DATA_FILE_NAME == '') {
         $arSetupErrors[] = GetMessage("CICML_ERROR_NO_DATAFILE");
     }
 
-    if (strlen($IBLOCK_TYPE_ID) <= 0) {
+    if ($IBLOCK_TYPE_ID == '') {
         $arSetupErrors[] = GetMessage("CICML_ERROR_NO_IBLOCKTYPE");
     }
 
@@ -61,8 +74,9 @@ $context = new CAdminContextMenu($aMenu);
 
 $context->Show();
 
-if (!empty($arSetupErrors))
+if (!empty($arSetupErrors)) {
     ShowError(implode('<br />', $arSetupErrors));
+}
 
 $actionParams = "";
 if ($adminSidePanelHelper->isSidePanel()) {
@@ -73,8 +87,18 @@ if ($adminSidePanelHelper->isSidePanel()) {
       name="dataload">
     <?
     $aTabs = array(
-        array("DIV" => "edit1", "TAB" => GetMessage("CAT_ADM_CML1_IMP_TAB1"), "ICON" => "store", "TITLE" => GetMessage("CAT_ADM_CML1_IMP_TAB1_TITLE")),
-        array("DIV" => "edit2", "TAB" => GetMessage("CAT_ADM_CML1_IMP_TAB2"), "ICON" => "store", "TITLE" => GetMessage("CAT_ADM_CML1_IMP_TAB2_TITLE")),
+        array(
+            "DIV" => "edit1",
+            "TAB" => GetMessage("CAT_ADM_CML1_IMP_TAB1"),
+            "ICON" => "store",
+            "TITLE" => GetMessage("CAT_ADM_CML1_IMP_TAB1_TITLE")
+        ),
+        array(
+            "DIV" => "edit2",
+            "TAB" => GetMessage("CAT_ADM_CML1_IMP_TAB2"),
+            "ICON" => "store",
+            "TITLE" => GetMessage("CAT_ADM_CML1_IMP_TAB2_TITLE")
+        ),
     );
 
     $tabControl = new CAdminTabControl("tabControl", $aTabs, false, true);
@@ -114,16 +138,20 @@ if ($adminSidePanelHelper->isSidePanel()) {
             <td valign="top" width="40%"><? echo GetMessage("CICML_F_IBLOCK"); ?></td>
             <td valign="top" width="60%">
                 <select name="IBLOCK_TYPE_ID" class="adm-detail-iblock-types"><?
-                    if (!isset($IBLOCK_TYPE_ID))
+                    if (!isset($IBLOCK_TYPE_ID)) {
                         $IBLOCK_TYPE_ID = '';
+                    }
                     ?>
                     <option value="">- <? echo GetMessage("CICML_F_IBLOCK_SELECT"); ?> -</option><?
                     $rsIBlockTypes = CIBlockType::GetList(array('ID' => 'ASC'));
                     while ($arIBlockType = $rsIBlockTypes->Fetch()) {
                         if ($arIBLang = CIBlockType::GetByIDLang($arIBlockType["ID"], LANGUAGE_ID)) {
                             ?>
-                            <option value="<? echo htmlspecialcharsbx($arIBlockType['ID']); ?>"<? echo($arIBlockType['ID'] == $IBLOCK_TYPE_ID ? ' selected' : ''); ?>><? echo htmlspecialcharsex($arIBLang["NAME"]); ?>
-                            [<? echo htmlspecialcharsex($arIBlockType['ID']); ?>]</option><?
+                            <option value="<? echo htmlspecialcharsbx(
+                                $arIBlockType['ID']
+                            ); ?>"<? echo($arIBlockType['ID'] == $IBLOCK_TYPE_ID ? ' selected' : ''); ?>><? echo htmlspecialcharsex(
+                                $arIBLang["NAME"]
+                            ); ?> [<? echo htmlspecialcharsex($arIBlockType['ID']); ?>]</option><?
                         }
                     }
                     ?>
@@ -142,14 +170,15 @@ if ($adminSidePanelHelper->isSidePanel()) {
                     $outFileAction = COption::GetOptionString("catalog", "default_outfile_action");
                 }
                 ?><input type="radio" name="outFileAction" id="outFileAction_D"
-                         value="D" <? if ($outFileAction == "D") echo "checked"; ?>> <label
-                        for="outFileAction_D"><? echo GetMessage("CICML_OF_DEL") ?></label><br>
-                <input type="radio" name="outFileAction" id="outFileAction_H"
-                       value="H" <? if ($outFileAction == "H") echo "checked"; ?>> <label
-                        for="outFileAction_H"><? echo GetMessage("CICML_OF_DEACT") ?></label><br>
-                <input type="radio" name="outFileAction" id="outFileAction_F"
-                       value="F" <? if ($outFileAction == "F") echo "checked"; ?>> <label
-                        for="outFileAction_F"><? echo GetMessage("CICML_OF_KEEP") ?></label>
+                         value="D" <? if ($outFileAction == "D") {
+                    echo "checked";
+                } ?>> <label for="outFileAction_D"><? echo GetMessage("CICML_OF_DEL") ?></label><br>
+                <input type="radio" name="outFileAction" id="outFileAction_H" value="H" <? if ($outFileAction == "H") {
+                    echo "checked";
+                } ?>> <label for="outFileAction_H"><? echo GetMessage("CICML_OF_DEACT") ?></label><br>
+                <input type="radio" name="outFileAction" id="outFileAction_F" value="F" <? if ($outFileAction == "F") {
+                    echo "checked";
+                } ?>> <label for="outFileAction_F"><? echo GetMessage("CICML_OF_KEEP") ?></label>
             </td>
         </tr>
         <tr>
@@ -159,11 +188,13 @@ if ($adminSidePanelHelper->isSidePanel()) {
                     $activateFileData = 'N';
                 }
                 ?><input type="radio" name="activateFileData" id="activateFileData_Y"
-                         value="Y" <? if ($activateFileData == "Y") echo "checked"; ?>> <label
-                        for="activateFileData_Y"><?= GetMessage("CML_S_YES") ?></label><br>
+                         value="Y" <? if ($activateFileData == "Y") {
+                    echo "checked";
+                } ?>> <label for="activateFileData_Y"><?= GetMessage("CML_S_YES") ?></label><br>
                 <input type="radio" name="activateFileData" id="activateFileData_N"
-                       value="N" <? if ($activateFileData == "N") echo "checked"; ?>> <label
-                        for="activateFileData_N"><?= GetMessage("CML_S_NO") ?></label>
+                       value="N" <? if ($activateFileData == "N") {
+                    echo "checked";
+                } ?>> <label for="activateFileData_N"><?= GetMessage("CML_S_NO") ?></label>
             </td>
         </tr>
         <tr>
@@ -171,7 +202,9 @@ if ($adminSidePanelHelper->isSidePanel()) {
             <td valign="top" width="60%">
                 <input type="hidden" name="keepExistingProperties" id="keepExistingProperties_N" value="N">
                 <input type="checkbox" name="keepExistingProperties" id="keepExistingProperties_Y"
-                       value="Y" <? if (isset($keepExistingProperties) && $keepExistingProperties == "Y") echo "checked"; ?>>
+                       value="Y" <? if (isset($keepExistingProperties) && $keepExistingProperties == "Y") {
+                    echo "checked";
+                } ?>>
             </td>
         </tr>
         <tr>
@@ -180,12 +213,12 @@ if ($adminSidePanelHelper->isSidePanel()) {
                 if (!isset($CONVERT_UTF8) || ('N' != $CONVERT_UTF8 && 'Y' != $CONVERT_UTF8)) {
                     $CONVERT_UTF8 = 'N';
                 }
-                ?><input type="radio" name="CONVERT_UTF8" id="CONVERT_UTF8_N"
-                         value="N" <? if ($CONVERT_UTF8 == "N") echo "checked"; ?>> <label
-                        for="CONVERT_UTF8_N"><? echo GetMessage("CICML_CONVERT_NO"); ?></label><br>
-                <input type="radio" name="CONVERT_UTF8" id="CONVERT_UTF8_Y"
-                       value="Y" <? if ($CONVERT_UTF8 == "Y") echo "checked"; ?>> <label
-                        for="CONVERT_UTF8_Y"><? echo GetMessage("CICML_CONVERT_YES"); ?></label>
+                ?><input type="radio" name="CONVERT_UTF8" id="CONVERT_UTF8_N" value="N" <? if ($CONVERT_UTF8 == "N") {
+                    echo "checked";
+                } ?>> <label for="CONVERT_UTF8_N"><? echo GetMessage("CICML_CONVERT_NO"); ?></label><br>
+                <input type="radio" name="CONVERT_UTF8" id="CONVERT_UTF8_Y" value="Y" <? if ($CONVERT_UTF8 == "Y") {
+                    echo "checked";
+                } ?>> <label for="CONVERT_UTF8_Y"><? echo GetMessage("CICML_CONVERT_YES"); ?></label>
             </td>
         </tr>
         <tr>
@@ -245,9 +278,9 @@ if ($adminSidePanelHelper->isSidePanel()) {
         <input type="hidden" name="ACTION" value="<? echo htmlspecialcharsbx($ACTION) ?>">
         <input type="hidden" name="SETUP_FIELDS_LIST"
                value="URL_FILE_1C,IBLOCK_TYPE_ID,USE_TRANSLIT,ADD_TRANSLIT,outFileAction,CONVERT_UTF8,keepExistingProperties,activateFileData">
-        <input type="submit"
-               value="<? echo (($ACTION == "IMPORT") ? GetMessage("CICML_NEXT_STEP_F") : GetMessage("CICML_SAVE")) . " &gt;&gt;" ?>"
-               name="submit_btn"><?
+        <input type="submit"value="<? echo (($ACTION == "IMPORT") ? GetMessage("CICML_NEXT_STEP_F") : GetMessage(
+                "CICML_SAVE"
+            )) . " &gt;&gt;" ?>" name="submit_btn"><?
     }
     $tabControl->End();
 

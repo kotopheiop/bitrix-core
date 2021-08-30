@@ -1,6 +1,7 @@
 <?php
 
 namespace Bitrix\Forum\Internals;
+
 trait EntityBaseMethods
 {
     /** @var int */
@@ -30,11 +31,9 @@ trait EntityBaseMethods
 
     public function offsetSet($offset, $value)
     {
-
     }
 
     public function offsetUnset($offset)
     {
-
     }
 }

@@ -143,16 +143,24 @@ class PaySystemExtraServiceTable extends Main\Entity\DataManager
         $primary = $event->getParameter("primary");
 
         if ((int)$primary['ID'] > 0) {
-            $dbRes = \Bitrix\Sale\Internals\PaymentExtraServiceTable::getList(array(
-                'filter' => array(
-                    '=EXTRA_SERVICE_ID' => $primary['ID']
+            $dbRes = \Bitrix\Sale\Internals\PaymentExtraServiceTable::getList(
+                array(
+                    'filter' => array(
+                        '=EXTRA_SERVICE_ID' => $primary['ID']
+                    )
                 )
-            ));
+            );
 
             if ($row = $dbRes->fetch()) {
-                $result->addError(new Main\Entity\EntityError(
-                    str_replace('#ID#', $primary['ID'], Loc::getMessage('PAY_SYSTEM_EXTRA_SERVICES_ENTITY_ERROR_DELETE'))
-                ));
+                $result->addError(
+                    new Main\Entity\EntityError(
+                        str_replace(
+                            '#ID#',
+                            $primary['ID'],
+                            Loc::getMessage('PAY_SYSTEM_EXTRA_SERVICES_ENTITY_ERROR_DELETE')
+                        )
+                    )
+                );
             }
         }
 

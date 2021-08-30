@@ -1,8 +1,10 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 \Bitrix\Main\Loader::includeModule("forum");
-if ($APPLICATION->GetGroupRight("forum") == "D")
+if ($APPLICATION->GetGroupRight("forum") == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 use Bitrix\Main\HttpRequest;
 use Bitrix\Main\Type\DateTime;
@@ -13,10 +15,12 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/forum/prolog.php");
 \Bitrix\Main\Loader::includeModule("forum");
 //region get Default data
 $forums = [];
-$dbRes = \Bitrix\Forum\ForumTable::getList([
-    "select" => ["ID", "NAME"],
-    "order" => ["SORT" => "ASC", "NAME" => "ASC"]
-]);
+$dbRes = \Bitrix\Forum\ForumTable::getList(
+    [
+        "select" => ["ID", "NAME"],
+        "order" => ["SORT" => "ASC", "NAME" => "ASC"]
+    ]
+);
 while ($res = $dbRes->fetch()) {
     $forums[$res["ID"]] = $res["NAME"];
 }
@@ -86,11 +90,13 @@ if (
     $request->get("action_button_" . $sTableID) === "delete" &&
     CForumUser::IsAdmin()) {
     if ($request->get("action_all_rows_" . $sTableID) === "Y") {
-        $dbRes = \Bitrix\Forum\SubscribeTable::getList([
-            "select" => ["USER_ID"],
-            "filter" => $arFilter,
-            "group" => ["USER_ID"]
-        ]);
+        $dbRes = \Bitrix\Forum\SubscribeTable::getList(
+            [
+                "select" => ["USER_ID"],
+                "filter" => $arFilter,
+                "group" => ["USER_ID"]
+            ]
+        );
         $ids = [];
         while ($id = $dbRes->fetch()) {
             $ids[] = $id["USER_ID"];
@@ -104,26 +110,35 @@ if (
 $nav = $lAdmin->getPageNavigation($sTableID);
 $nav->getOffset();
 $pageSize = $lAdmin->getNavSize();
-$lAdmin->AddHeaders(array(
-    array("id" => "USER_ID", "content" => GetMessage("FM_HEAD_USER_ID"), "sort" => "USER_ID", "default" => true),
-    array("id" => "EMAIL", "content" => GetMessage("FM_HEAD_EMAIL"), "sort" => "USER.EMAIL", "default" => true),
-    array("id" => "LOGIN", "content" => GetMessage("FM_HEAD_LOGIN"), "sort" => "USER.LOGIN", "default" => true),
-    array("id" => "NAME", "content" => GetMessage("FM_HEAD_NAME"), "sort" => "USER.NAME", "default" => true),
-    array("id" => "LAST_NAME", "content" => GetMessage("FM_HEAD_LAST_NAME"), "sort" => "USER.LAST_NAME", "default" => true),
-    array("id" => "CNT", "content" => GetMessage("FM_HEAD_SUBSC"), "sort" => "CNT", "default" => true)
-));
-$dbRes = \Bitrix\Forum\SubscribeTable::getList([
-    "select" => ["CNT", "USER_ID"],
-    "runtime" => [
-        new \Bitrix\Main\Entity\ExpressionField("CNT", "COUNT(*)")
-    ],
-    "order" => [$oSort->getField() => $oSort->getOrder()],
-    "filter" => $arFilter,
-    "limit" => (($limit = $nav->getLimit()) > 0 ? $limit + 1 : 0),
-    "offset" => $nav->getOffset(),
-    "count_total" => $lAdmin->isTotalCountRequest(),
-    "group" => ["USER_ID"]
-]);
+$lAdmin->AddHeaders(
+    array(
+        array("id" => "USER_ID", "content" => GetMessage("FM_HEAD_USER_ID"), "sort" => "USER_ID", "default" => true),
+        array("id" => "EMAIL", "content" => GetMessage("FM_HEAD_EMAIL"), "sort" => "USER.EMAIL", "default" => true),
+        array("id" => "LOGIN", "content" => GetMessage("FM_HEAD_LOGIN"), "sort" => "USER.LOGIN", "default" => true),
+        array("id" => "NAME", "content" => GetMessage("FM_HEAD_NAME"), "sort" => "USER.NAME", "default" => true),
+        array(
+            "id" => "LAST_NAME",
+            "content" => GetMessage("FM_HEAD_LAST_NAME"),
+            "sort" => "USER.LAST_NAME",
+            "default" => true
+        ),
+        array("id" => "CNT", "content" => GetMessage("FM_HEAD_SUBSC"), "sort" => "CNT", "default" => true)
+    )
+);
+$dbRes = \Bitrix\Forum\SubscribeTable::getList(
+    [
+        "select" => ["CNT", "USER_ID"],
+        "runtime" => [
+            new \Bitrix\Main\Entity\ExpressionField("CNT", "COUNT(*)")
+        ],
+        "order" => [$oSort->getField() => $oSort->getOrder()],
+        "filter" => $arFilter,
+        "limit" => (($limit = $nav->getLimit()) > 0 ? $limit + 1 : 0),
+        "offset" => $nav->getOffset(),
+        "count_total" => $lAdmin->isTotalCountRequest(),
+        "group" => ["USER_ID"]
+    ]
+);
 if ($lAdmin->isTotalCountRequest()) {
     $lAdmin->sendTotalCountResponse($dbRes->getCount());
 }
@@ -141,10 +156,12 @@ if ($limit > 0) {
 $lAdmin->setNavigation($nav, GetMessage("FM_TITLE_PAGE"), false);
 
 if (!empty($users)) {
-    $userRes = \Bitrix\Main\UserTable::getList([
-        "select" => ["*"],
-        "filter" => ["@ID" => array_keys($users)]
-    ]);
+    $userRes = \Bitrix\Main\UserTable::getList(
+        [
+            "select" => ["*"],
+            "filter" => ["@ID" => array_keys($users)]
+        ]
+    );
     while ($res = $userRes->fetch()) {
         $users[$res["ID"]] = $res;
     }
@@ -153,25 +170,36 @@ if (!empty($users)) {
 foreach ($records as $key => $res) {
     $row =& $lAdmin->AddRow($res["USER_ID"], $res);
     $user = $users[$res["USER_ID"]];
-    $row->AddViewField("USER_ID", "<a href=\"user_edit.php?lang={LANGUAGE_ID}&ID={$res["USER_ID"]}\" >{$res["USER_ID"]}</a>");
+    $row->AddViewField(
+        "USER_ID",
+        "<a href=\"user_edit.php?lang={LANGUAGE_ID}&ID={$res["USER_ID"]}\" >{$res["USER_ID"]}</a>"
+    );
     $row->AddViewField("EMAIL", TxtToHtml($user["EMAIL"]));
     $row->AddViewField("LOGIN", TxtToHtml($user["LOGIN"]));
     $row->AddViewField("NAME", TxtToHtml($user["NAME"]));
     $row->AddViewField("LAST_NAME", TxtToHtml($user["LAST_NAME"]));
     $row->AddViewField("CNT", $res["CNT"] <= 0 ? GetMessage("FM_NO") : $res["CNT"]);
-    $row->AddActions([
+    $row->AddActions(
         [
-            "ICON" => "edit",
-            "TEXT" => GetMessage("FM_ACT_EDIT"),
-            "ACTION" => $lAdmin->ActionRedirect("forum_subscribe_edit.php?lang=" . LANG . "&USER_ID={$res["USER_ID"]}"),
-            "DEFAULT" => true
-        ],
-        [
-            "ICON" => "delete",
-            "TEXT" => GetMessage("FM_ACT_DELETE"),
-            "ACTION" => "if(confirm('" . GetMessage("FM_ACT_DEL_CONFIRM") . "')) " . $lAdmin->ActionDoGroup($res["USER_ID"], "delete", "lang=" . LANG)
+            [
+                "ICON" => "edit",
+                "TEXT" => GetMessage("FM_ACT_EDIT"),
+                "ACTION" => $lAdmin->ActionRedirect(
+                    "forum_subscribe_edit.php?lang=" . LANG . "&USER_ID={$res["USER_ID"]}"
+                ),
+                "DEFAULT" => true
+            ],
+            [
+                "ICON" => "delete",
+                "TEXT" => GetMessage("FM_ACT_DELETE"),
+                "ACTION" => "if(confirm('" . GetMessage("FM_ACT_DEL_CONFIRM") . "')) " . $lAdmin->ActionDoGroup(
+                        $res["USER_ID"],
+                        "delete",
+                        "lang=" . LANG
+                    )
+            ]
         ]
-    ]);
+    );
 }
 /*******************************************************************/
 $lAdmin->AddGroupActionTable(

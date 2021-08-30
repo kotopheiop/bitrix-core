@@ -16,7 +16,6 @@ class CWikiParser
 
     function __construct()
     {
-
     }
 
     function Parse($text, $type = 'text', $arFile = array(), $arParams = array())
@@ -28,8 +27,9 @@ class CWikiParser
         $this->arFile = $arFile;
         $this->arVersionFile = array();
         // An array can be either array (23,45,67), and array ('file_name' => 'file_path'), if this version of the document in the history of
-        if (!is_array($this->arFile))
+        if (!is_array($this->arFile)) {
             $this->arFile = array();
+        }
         foreach ($this->arFile as $_k => $file) {
             if (!is_numeric($file) && !is_numeric($_k)) {
                 $this->arVersionFile[$_k] = $file;
@@ -38,15 +38,29 @@ class CWikiParser
         }
         reset($this->arFile);
 
-        if (isset($arParams["POST_URL"]))
-            $this->postUrl = (CMain::IsHTTPS() ? "https://" : "http://") . $_SERVER["HTTP_HOST"] . $arParams["POST_URL"];
+        if (isset($arParams["POST_URL"])) {
+            $this->postUrl = (CMain::IsHTTPS(
+                ) ? "https://" : "http://") . $_SERVER["HTTP_HOST"] . $arParams["POST_URL"];
+        }
 
         // cut code
-        $text = preg_replace_callback("/(\{\{\{(.*)\}\}\})/imsU" . BX_UTF_PCRE_MODIFIER, array(&$this, '_codeCallback'), $text);
-        $text = preg_replace_callback("/(\[CODE\](.*)\[\/CODE\])/imsU" . BX_UTF_PCRE_MODIFIER, array(&$this, '_codeCallback'), $text);
+        $text = preg_replace_callback(
+            "/(\{\{\{(.*)\}\}\})/imsU" . BX_UTF_PCRE_MODIFIER,
+            array(&$this, '_codeCallback'),
+            $text
+        );
+        $text = preg_replace_callback(
+            "/(\[CODE\](.*)\[\/CODE\])/imsU" . BX_UTF_PCRE_MODIFIER,
+            array(&$this, '_codeCallback'),
+            $text
+        );
 
         // cut nowiki
-        $text = preg_replace_callback('/(<nowiki>(.*)<\/nowiki>)/isU' . BX_UTF_PCRE_MODIFIER, array(&$this, '_noWikiCallback'), $text);
+        $text = preg_replace_callback(
+            '/(<nowiki>(.*)<\/nowiki>)/isU' . BX_UTF_PCRE_MODIFIER,
+            array(&$this, '_noWikiCallback'),
+            $text
+        );
 
         #if($this->textType == "html")
         #	$text = CWikiUtils::htmlspecialchars_decode($text);
@@ -65,7 +79,8 @@ class CWikiParser
                 '<b>\\1</b>',
                 '<i>\\1</i>'
             ),
-            $text);
+            $text
+        );
 
         // hr
         $text = preg_replace('/-----*/' . BX_UTF_PCRE_MODIFIER, '\\1<hr />', $text);
@@ -73,7 +88,11 @@ class CWikiParser
         // Header
         for ($i = 6; $i >= 1; $i--) {
             $_H = str_repeat('=', $i);
-            $text = preg_replace('/^\s*' . $_H . '(.+?)' . $_H . '\s*$/miU' . BX_UTF_PCRE_MODIFIER, '<H' . $i . '>\\1</H' . $i . '>', $text);
+            $text = preg_replace(
+                '/^\s*' . $_H . '(.+?)' . $_H . '\s*$/miU' . BX_UTF_PCRE_MODIFIER,
+                '<H' . $i . '>\\1</H' . $i . '>',
+                $text
+            );
         }
 
 
@@ -81,25 +100,50 @@ class CWikiParser
         $text = $this->processInternalLink($text);
 
         // External link
-        $text = preg_replace_callback('/\[((http|https|ftp)(.+))( (.+))?\]/iU' . BX_UTF_PCRE_MODIFIER, array(&$this, '_processExternalLinkCallback'), $text);
+        $text = preg_replace_callback(
+            '/\[((http|https|ftp)(.+))( (.+))?\]/iU' . BX_UTF_PCRE_MODIFIER,
+            array(&$this, '_processExternalLinkCallback'),
+            $text
+        );
 
 
         // images and other files
-        $text = preg_replace_callback('/\[?\[(:)?(File|' . GetMessage('FILE_NAME') . '):(.+)\]\]?/iU' . BX_UTF_PCRE_MODIFIER, array(&$this, '_processFileCallback'), $text);
+        $text = preg_replace_callback(
+            '/\[?\[(:)?(File|' . GetMessage('FILE_NAME') . '):(.+)\]\]?/iU' . BX_UTF_PCRE_MODIFIER,
+            array(&$this, '_processFileCallback'),
+            $text
+        );
 
         // TOC
         $text = $this->processToc($text);
 
         // Paste nowiki
-        if (!empty($this->arNowiki))
-            $text = preg_replace_callback('/(##NOWIKI(\d+)##)/isU' . BX_UTF_PCRE_MODIFIER, array(&$this, '_noWikiReturnCallback'), $text);
+        if (!empty($this->arNowiki)) {
+            $text = preg_replace_callback(
+                '/(##NOWIKI(\d+)##)/isU' . BX_UTF_PCRE_MODIFIER,
+                array(&$this, '_noWikiReturnCallback'),
+                $text
+            );
+        }
 
 
-        $text = preg_replace_callback('/(##NOWIKI(\d+)##)/isU' . BX_UTF_PCRE_MODIFIER, array(&$this, '_noWikiReturn2Callback'), $text);
+        $text = preg_replace_callback(
+            '/(##NOWIKI(\d+)##)/isU' . BX_UTF_PCRE_MODIFIER,
+            array(&$this, '_noWikiReturn2Callback'),
+            $text
+        );
 
         if ($type == 'text') {
-            $text = preg_replace("/(<\s*\/?(h(\d+)|li|ul|ol|p|table|tbody|td|tr|hr|div|span)\s*>)\s*(<\s*br\s*\/*\s*>){0,1}(\s*(\r*\n)\s*){1,2}/ism", "$1##NN##", $text);
-            $text = preg_replace("/(<\s*(ul)\s*>)\s*(<\s*br\s*\/*\s*>){0,1}(\s*(\r*\n)\s*){1,2}/ism", "$1##NN##", $text);
+            $text = preg_replace(
+                "/(<\s*\/?(h(\d+)|li|ul|ol|p|table|tbody|td|tr|hr|div|span)\s*>)\s*(<\s*br\s*\/*\s*>){0,1}(\s*(\r*\n)\s*){1,2}/ism",
+                "$1##NN##",
+                $text
+            );
+            $text = preg_replace(
+                "/(<\s*(ul)\s*>)\s*(<\s*br\s*\/*\s*>){0,1}(\s*(\r*\n)\s*){1,2}/ism",
+                "$1##NN##",
+                $text
+            );
             $text = preg_replace("/<\s*br\s*\/*\s*>\s*(\r*\n)/ismU", "##BR##", $text);
             $text = self::NToBr($text);
             $text = preg_replace("/##NN##/ismU", "\n", $text);
@@ -107,7 +151,11 @@ class CWikiParser
         }
 
         // Paste code
-        $text = preg_replace_callback('/(##CODE(\d+)##)/isU' . BX_UTF_PCRE_MODIFIER, array(&$this, '_codeReturnCallback'), $text);
+        $text = preg_replace_callback(
+            '/(##CODE(\d+)##)/isU' . BX_UTF_PCRE_MODIFIER,
+            array(&$this, '_codeReturnCallback'),
+            $text
+        );
 
         //		$text .= '<div style="clear:both"></div>';
 
@@ -183,8 +231,9 @@ class CWikiParser
         $Sanitizer->AddTags($arWhiteTags);
 
         //TODO: delete condition, after main update
-        if (method_exists($Sanitizer, "ApplyDoubleEncode"))
+        if (method_exists($Sanitizer, "ApplyDoubleEncode")) {
             $Sanitizer->ApplyDoubleEncode(false);
+        }
 
         $text = $Sanitizer->SanitizeHtml($text);
 
@@ -195,8 +244,9 @@ class CWikiParser
     {
         static $sImageAlign = '';
         $bLink = false;
-        if ($matches[1] == ':')
+        if ($matches[1] == ':') {
             $bLink = true;
+        }
 
         // if the internal file then get it
         $sFile = $sFileName = $sPath = CWikiUtils::htmlspecialcharsback(trim($matches[3]));
@@ -209,23 +259,27 @@ class CWikiParser
                 $sPath = $arFile['SRC'];
                 $sFileName = $arFile['ORIGINAL_NAME'];
             }
-        } else if (isset($this->arVersionFile[strtolower($sFile)])) {
-            $sPath = $this->arVersionFile[strtolower($sFile)];
-            $sFileName = $sFile;
-        } else if (!empty($this->arFile)) {
-            $arFilter = array(
-                '@ID' => implode(',', $this->arFile)
-            );
+        } else {
+            if (isset($this->arVersionFile[mb_strtolower($sFile)])) {
+                $sPath = $this->arVersionFile[mb_strtolower($sFile)];
+                $sFileName = $sFile;
+            } else {
+                if (!empty($this->arFile)) {
+                    $arFilter = array(
+                        '@ID' => implode(',', $this->arFile)
+                    );
 
-            $rsFile = CFile::GetList(array(), $arFilter);
-            while ($arFile = $rsFile->Fetch()) {
-                if ($arFile['ORIGINAL_NAME'] == $sFile) {
-                    $bOur = true;
-                    $sFile = $arFile['ID'];
+                    $rsFile = CFile::GetList(array(), $arFilter);
+                    while ($arFile = $rsFile->Fetch()) {
+                        if ($arFile['ORIGINAL_NAME'] == $sFile) {
+                            $bOur = true;
+                            $sFile = $arFile['ID'];
 
-                    $sPath = CFile::GetFileSRC($arFile);
-                    $sFileName = $arFile['ORIGINAL_NAME'];
-                    break;
+                            $sPath = CFile::GetFileSRC($arFile);
+                            $sFileName = $arFile['ORIGINAL_NAME'];
+                            break;
+                        }
+                    }
                 }
             }
         }
@@ -238,29 +292,45 @@ class CWikiParser
                 $imageFile = CFile::MakeFileArray($sPath);
                 $checkRes = CFile::CheckImageFile($imageFile);
 
-                if ($checkRes != null)
+                if ($checkRes != null) {
                     return $checkRes;
+                }
 
-                if ($bLink)
-                    $sReturn = '<a href="' . htmlspecialcharsbx($sPath) . '" title="' . ($s = htmlspecialcharsbx($sFileName)) . '">' . $s . '</a>';
-                else {
-                    $sReturn = CFile::ShowImage($sFile,
+                if ($bLink) {
+                    $sReturn = '<a href="' . htmlspecialcharsbx($sPath) . '" title="' . ($s = htmlspecialcharsbx(
+                            $sFileName
+                        )) . '">' . $s . '</a>';
+                } else {
+                    $sReturn = CFile::ShowImage(
+                        $sFile,
                         COption::GetOptionString('wiki', 'image_max_width', 600),
                         COption::GetOptionString('wiki', 'image_max_height', 600),
                         'border="0" align="' . $sImageAlign . '"'
                     );
                 }
             } else {
-                if ($bLink)
-                    $sReturn = '<a href="' . htmlspecialcharsbx($sPath) . '" title="' . ($s = htmlspecialcharsbx($sName)) . '">' . $s . '</a>';
-                else
-                    $sReturn = '<img src="' . htmlspecialcharsbx($sPath) . '" alt="' . htmlspecialcharsbx($sFileName) . '"/>';
+                if ($bLink) {
+                    $sReturn = '<a href="' . htmlspecialcharsbx($sPath) . '" title="' . ($s = htmlspecialcharsbx(
+                            $sName
+                        )) . '">' . $s . '</a>';
+                } else {
+                    $sReturn = '<img src="' . htmlspecialcharsbx($sPath) . '" alt="' . htmlspecialcharsbx(
+                            $sFileName
+                        ) . '"/>';
+                }
             }
-        } else if (strpos($sPath, 'http://') === 0)
-            $sReturn = ' [ <a href="' . htmlspecialcharsbx($sFile) . '" title="' . GetMessage('FILE_FILE_DOWNLOAD') . '">' . GetMessage('FILE_DOWNLOAD') . '</a> ] ';
-        // otherwise the file
-        else
-            $sReturn = '[' . GetMessage('FILE_NAME') . ':' . htmlspecialcharsbx((is_numeric($sFile) || empty($sFileName) ? $sFile : $sFileName)) . ']';
+        } else {
+            if (mb_strpos($sPath, 'http://') === 0) {
+                $sReturn = ' [ <a href="' . htmlspecialcharsbx($sFile) . '" title="' . GetMessage(
+                        'FILE_FILE_DOWNLOAD'
+                    ) . '">' . GetMessage('FILE_DOWNLOAD') . '</a> ] ';
+            } // otherwise the file
+            else {
+                $sReturn = '[' . GetMessage('FILE_NAME') . ':' . htmlspecialcharsbx(
+                        (is_numeric($sFile) || empty($sFileName) ? $sFile : $sFileName)
+                    ) . ']';
+            }
+        }
 
         return $sReturn;
     }
@@ -271,18 +341,25 @@ class CWikiParser
         $sName = $sTitle = $sLink;
 
         $matches[5] = isset($matches[5]) ? trim($matches[5]) : '';
-        if (!empty($matches[5]))
+        if (!empty($matches[5])) {
             $sTitle = trim($matches[5]);
+        }
         $sTitle = strip_tags($sTitle);
 
-        $sReturn = '<a href="' . htmlspecialcharsbx($sLink) . '" title="' . htmlspecialcharsbx($sName) . '">' . $sTitle . '</a>';
+        $sReturn = '<a href="' . htmlspecialcharsbx($sLink) . '" title="' . htmlspecialcharsbx(
+                $sName
+            ) . '">' . $sTitle . '</a>';
         return $sReturn;
     }
 
     function processInternalLink($text)
     {
         global $APPLICATION, $arParams;
-        $text = preg_replace_callback('/\[\[(.+)(\|(.*))?\]\]/iU' . BX_UTF_PCRE_MODIFIER, array(&$this, '_processInternalLinkPrepareCallback'), $text);
+        $text = preg_replace_callback(
+            '/\[\[(.+)(\|(.*))?\]\]/iU' . BX_UTF_PCRE_MODIFIER,
+            array(&$this, '_processInternalLinkPrepareCallback'),
+            $text
+        );
         $text = preg_replace('/(##Category##)(\s)*((\r*)\n)*/', "", $text);
         // check pages for exists
         if (!empty($this->arLink)) {
@@ -291,16 +368,21 @@ class CWikiParser
             $arFilter['IBLOCK_ID'] = $arParams['IBLOCK_ID'];
             $arFilter['ACTIVE'] = 'Y';
             $arFilter['CHECK_PERMISSIONS'] = 'N';
-            if (CWikiSocnet::IsSocNet())
+            if (CWikiSocnet::IsSocNet()) {
                 $arFilter['SUBSECTION'] = CWikiSocnet::$iCatId;
+            }
             $rsElement = CIBlockElement::GetList(array(), $arFilter, false, false, Array());
             while ($obElement = $rsElement->GetNextElement()) {
                 $arFields = $obElement->GetFields();
-                $this->arLinkExists[] = strtolower(CWikiUtils::htmlspecialcharsback($arFields['NAME'], true));
+                $this->arLinkExists[] = mb_strtolower(CWikiUtils::htmlspecialcharsback($arFields['NAME'], true));
             }
         }
 
-        $text = preg_replace_callback('/(##LINK(\d+)##)/isU' . BX_UTF_PCRE_MODIFIER, array(&$this, '_processInternalLinkCallback'), $text);
+        $text = preg_replace_callback(
+            '/(##LINK(\d+)##)/isU' . BX_UTF_PCRE_MODIFIER,
+            array(&$this, '_processInternalLinkCallback'),
+            $text
+        );
 
         return $text;
     }
@@ -312,11 +394,12 @@ class CWikiParser
         $sCatName = '';
         $matches[3] = isset($matches[3]) ? trim($matches[3]) : '';
 
-        if (!empty($matches[3]))
+        if (!empty($matches[3])) {
             $sName = $sTitle = $matches[3];
-        else {
-            if (CWikiUtils::IsCategoryPage($sName, $sCatName))
+        } else {
+            if (CWikiUtils::IsCategoryPage($sName, $sCatName)) {
                 return '##Category##';
+            }
         }
 
         $sTitle = strip_tags($sTitle);
@@ -331,8 +414,9 @@ class CWikiParser
         global $arParams;
 
         $sReturn = '';
-        if (in_array(strtolower($this->arLink[$matches[2]]), $this->arLinkExists)) {
-            $sURL = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_POST'],
+        if (in_array(mb_strtolower($this->arLink[$matches[2]]), $this->arLinkExists)) {
+            $sURL = CComponentEngine::MakePathFromTemplate(
+                $arParams['PATH_TO_POST'],
                 array(
                     'wiki_name' => rawurlencode($this->arLink[$matches[2]]),
                     'group_id' => CWikiSocnet::$iSocNetId
@@ -361,7 +445,12 @@ class CWikiParser
     {
         $matches = array();
         $sToc = '';
-        if (preg_match_all('/<H(?<level>\d)(?<parameters>.*)>(?<innerHtml>.*)<\/H\g<level>>/isU' . BX_UTF_PCRE_MODIFIER, $text, $matches, PREG_SET_ORDER)) {
+        if (preg_match_all(
+            '/<H(?<level>\d)(?<parameters>.*)>(?<innerHtml>.*)<\/H\g<level>>/isU' . BX_UTF_PCRE_MODIFIER,
+            $text,
+            $matches,
+            PREG_SET_ORDER
+        )) {
             if (count($matches) > 4) {
                 $iCurrentToc = 1;
                 // work level TOC
@@ -379,72 +468,99 @@ class CWikiParser
                     $iRealItemTocLevel = (int)$arMatch['level'];
                     $sItemToc = trim($arMatch['innerHtml']);
                     // normalize levels
-                    if ($bfirst && $iRealPrevItemTocLevel < $iRealItemTocLevel)
+                    if ($bfirst && $iRealPrevItemTocLevel < $iRealItemTocLevel) {
                         $iItemTocLevel = 1;
-                    else if ($iCurrentTocLevel == 1 && $iRealItemTocLevel < $iRealPrevItemTocLevel)
-                        $iItemTocLevel = $iCurrentTocLevel;
-                    else if ($iRealItemTocLevel > $iRealPrevItemTocLevel)
-                        $iItemTocLevel = $iCurrentTocLevel + 1;
-                    else if ($iRealItemTocLevel < $iRealPrevItemTocLevel) {
-                        $_delta = $iRealPrevItemTocLevel - $iRealItemTocLevel;
-                        $iItemTocLevel = $iCurrentTocLevel - $_delta;
-                        if ($iItemTocLevel < 1)
-                            $iItemTocLevel = 1;
-                    } else
-                        $iItemTocLevel = $iCurrentTocLevel;
+                    } else {
+                        if ($iCurrentTocLevel == 1 && $iRealItemTocLevel < $iRealPrevItemTocLevel) {
+                            $iItemTocLevel = $iCurrentTocLevel;
+                        } else {
+                            if ($iRealItemTocLevel > $iRealPrevItemTocLevel) {
+                                $iItemTocLevel = $iCurrentTocLevel + 1;
+                            } else {
+                                if ($iRealItemTocLevel < $iRealPrevItemTocLevel) {
+                                    $_delta = $iRealPrevItemTocLevel - $iRealItemTocLevel;
+                                    $iItemTocLevel = $iCurrentTocLevel - $_delta;
+                                    if ($iItemTocLevel < 1) {
+                                        $iItemTocLevel = 1;
+                                    }
+                                } else {
+                                    $iItemTocLevel = $iCurrentTocLevel;
+                                }
+                            }
+                        }
+                    }
 
                     // create a numbering of TOC
                     $iCurrentNumTocLevel = $bfirst ? 1 : $iItemTocLevel;
                     $aNumToc[$iCurrentNumTocLevel] = !isset($aNumToc[$iCurrentNumTocLevel]) ? 1 : $aNumToc[$iCurrentNumTocLevel] + 1;
                     if ($iItemTocLevel < $iPrevItemTocLevel) {
-                        for ($i = $iItemTocLevel + 1; $i <= $iPrevItemTocLevel; $i++)
+                        for ($i = $iItemTocLevel + 1; $i <= $iPrevItemTocLevel; $i++) {
                             unset($aNumToc[$i]);
+                        }
                     }
 
                     // build a TOC
                     if ($iItemTocLevel > $iCurrentTocLevel || empty($sToc)) {
                         $iCurrentTocLevel++;
                         $sToc .= '<ul>';
-                    } else if ($iItemTocLevel < $iCurrentTocLevel) {
-                        if ($iItemTocLevel <= 0)
-                            $iItemTocLevel = 1;
+                    } else {
+                        if ($iItemTocLevel < $iCurrentTocLevel) {
+                            if ($iItemTocLevel <= 0) {
+                                $iItemTocLevel = 1;
+                            }
 
-                        if ($iCurrentTocLevel > 1) {
-                            for ($i = 0; $i < ($iCurrentTocLevel - $iItemTocLevel); $i++)
+                            if ($iCurrentTocLevel > 1) {
+                                for ($i = 0; $i < ($iCurrentTocLevel - $iItemTocLevel); $i++) {
+                                    $sToc .= '</ul>';
+                                }
+                            } else {
                                 $sToc .= '</ul>';
-                        } else
-                            $sToc .= '</ul>';
+                            }
 
-                        if ($iCurrentTocLevel > 1)
-                            $iCurrentTocLevel = $iItemTocLevel;
-
+                            if ($iCurrentTocLevel > 1) {
+                                $iCurrentTocLevel = $iItemTocLevel;
+                            }
+                        }
                     }
 
                     $iRealPrevItemTocLevel = $iRealItemTocLevel;
                     $iPrevItemTocLevel = $iItemTocLevel;
                     $bfirst = false;
                     $sNumToc = implode('.', $aNumToc);
-                    $sItemTocId = str_replace(array('%', '+', '.F2', '..'), array('.', '.', '_', '.'), rawurlencode($sItemToc . $sNumToc));
+                    $sItemTocId = str_replace(
+                        array('%', '+', '.F2', '..'),
+                        array('.', '.', '_', '.'),
+                        rawurlencode($sItemToc . $sNumToc)
+                    );
                     $sToc .= '<li><a href="';
 
                     if ($this->postUrl) //http://jabber.bx/view.php?id=28203
+                    {
                         $sToc .= $this->postUrl;
+                    }
 
                     $sToc .= '#' . $sItemTocId . '">' . $sNumToc . ' ' . strip_tags($sItemToc) . '</a></li>';
                     $matches[$_m]['innerHtml'] = $sItemToc;
                     $matches[$_m]['tocId'] = $sItemTocId;
                 }
 
-                for ($i = $iCurrentTocLevel; $i > 0; $i--)
+                for ($i = $iCurrentTocLevel; $i > 0; $i--) {
                     $sToc .= '</ul>';
+                }
 
                 $bfirst = true;
                 foreach ($matches as $arMatch) {
                     $sReplase = '<H' . $arMatch['level'] . $arMatch['parameters'] . '><span id="' . $arMatch['tocId'] . '">' . $arMatch['innerHtml'] . '</span></H' . $arMatch['level'] . '>';
-                    if ($bfirst)
+                    if ($bfirst) {
                         $sReplase = $sToc . '<br/>' . $sReplase;
+                    }
                     // so as not to replace all of the same titles
-                    $text = preg_replace('/' . preg_quote($arMatch[0], '/') . '/' . BX_UTF_PCRE_MODIFIER, $sReplase, $text, 1);
+                    $text = preg_replace(
+                        '/' . preg_quote($arMatch[0], '/') . '/' . BX_UTF_PCRE_MODIFIER,
+                        $sReplase,
+                        $text,
+                        1
+                    );
                     $bfirst = false;
                 }
             }
@@ -459,8 +575,9 @@ class CWikiParser
         $i = count($this->arCode);
         $codeText = $matches[2];
 
-        if ($this->textType == "html")
+        if ($this->textType == "html") {
             $codeText = CWikiUtils::htmlspecialchars_decode($codeText);
+        }
 
         $this->arCode[] = $codeText;
 
@@ -488,7 +605,6 @@ class CWikiParser
     function _noWikiReturn2Callback($matches)
     {
         return '<nowiki>' . htmlspecialcharsbx($this->arNowiki[$matches[2]]) . '</nowiki>';
-
     }
 
     function parseBeforeSave($text, &$arCat = array(), $nameTemplate = "")
@@ -498,13 +614,22 @@ class CWikiParser
         //$text = preg_replace_callback('/(<nowiki>(.*)<\/nowiki>)/isU'.BX_UTF_PCRE_MODIFIER, array(&$this, '_noWikiCallback'), $text);
 
         // Subscribe
-        $text = preg_replace('/--~~~~*/' . BX_UTF_PCRE_MODIFIER, '\\1--' . $userLogin . ' ' . ConvertTimeStamp(false, 'FULL'), $text);
+        $text = preg_replace(
+            '/--~~~~*/' . BX_UTF_PCRE_MODIFIER,
+            '\\1--' . $userLogin . ' ' . ConvertTimeStamp(false, 'FULL'),
+            $text
+        );
 
         // Category
         $matches = array();
         $textWithoutNowiki = preg_replace('/(<nowiki>(.*)<\/nowiki>)/isU' . BX_UTF_PCRE_MODIFIER, '', $text);
-        if (preg_match_all('/\[\[(Category|' . GetMessage('CATEGORY_NAME') . '):(.+)\]\]/iU' . BX_UTF_PCRE_MODIFIER, $textWithoutNowiki, $matches))
+        if (preg_match_all(
+            '/\[\[(Category|' . GetMessage('CATEGORY_NAME') . '):(.+)\]\]/iU' . BX_UTF_PCRE_MODIFIER,
+            $textWithoutNowiki,
+            $matches
+        )) {
             $arCat = array_unique($matches[2]);
+        }
 
         //$text = preg_replace_callback('/(##NOWIKI(\d+)##)/isU'.BX_UTF_PCRE_MODIFIER, array(&$this, '_noWikiReturn2Callback'), $text);
 
@@ -514,9 +639,17 @@ class CWikiParser
     function parseForSearch($text)
     {
         // delete Category
-        $text = preg_replace('/\[\[(Category|' . GetMessage('CATEGORY_NAME') . '):(.+)\]\]/iU' . BX_UTF_PCRE_MODIFIER, '', $text);
+        $text = preg_replace(
+            '/\[\[(Category|' . GetMessage('CATEGORY_NAME') . '):(.+)\]\]/iU' . BX_UTF_PCRE_MODIFIER,
+            '',
+            $text
+        );
         // delete Files
-        $text = preg_replace('/\[?\[(:)?(File|' . GetMessage('FILE_NAME') . '):(.+)\]\]?/iU' . BX_UTF_PCRE_MODIFIER, '', $text);
+        $text = preg_replace(
+            '/\[?\[(:)?(File|' . GetMessage('FILE_NAME') . '):(.+)\]\]?/iU' . BX_UTF_PCRE_MODIFIER,
+            '',
+            $text
+        );
         // delete External Links
         $text = preg_replace('/\[((http|https|ftp)(.+))( (.+))?\]/iU' . BX_UTF_PCRE_MODIFIER, '\\1\\2 \\5', $text);
         // delete Internal Links

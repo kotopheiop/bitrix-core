@@ -56,7 +56,7 @@ class Page
 
     protected function init($cacheKey)
     {
-        if (is_string($cacheKey) && strlen($cacheKey)) {
+        if (is_string($cacheKey) && mb_strlen($cacheKey)) {
             $this->cacheKey = $cacheKey;
             $this->storage = $this->getStaticHtmlStorage($this->cacheKey);
         }
@@ -305,11 +305,17 @@ class Page
             return false;
         }
 
-        if (isset($_SESSION["SESS_SHOW_TIME_EXEC"]) && ($_SESSION["SESS_SHOW_TIME_EXEC"] == 'Y')) {
+        if (isset(
+                \Bitrix\Main\Application::getInstance()->getKernelSession()["SESS_SHOW_TIME_EXEC"]
+            ) && (\Bitrix\Main\Application::getInstance()->getKernelSession()["SESS_SHOW_TIME_EXEC"] == 'Y')) {
             return false;
-        } elseif (isset($_SESSION["SHOW_SQL_STAT"]) && ($_SESSION["SHOW_SQL_STAT"] == 'Y')) {
+        } elseif (isset(
+                \Bitrix\Main\Application::getInstance()->getKernelSession()["SHOW_SQL_STAT"]
+            ) && (\Bitrix\Main\Application::getInstance()->getKernelSession()["SHOW_SQL_STAT"] == 'Y')) {
             return false;
-        } elseif (isset($_SESSION["SHOW_CACHE_STAT"]) && ($_SESSION["SHOW_CACHE_STAT"] == 'Y')) {
+        } elseif (isset(
+                \Bitrix\Main\Application::getInstance()->getKernelSession()["SHOW_CACHE_STAT"]
+            ) && (\Bitrix\Main\Application::getInstance()->getKernelSession()["SHOW_CACHE_STAT"] == 'Y')) {
             return false;
         }
 
@@ -333,10 +339,12 @@ class Page
         if (Logger::isOn()) {
             $debugBacktrace = debug_backtrace();
 
-            Logger::log(array(
-                "TYPE" => Debug\Logger::TYPE_PAGE_NOT_CACHEABLE,
-                "MESSAGE" => "File: " . $debugBacktrace[0]["file"] . ":" . $debugBacktrace[0]["line"]
-            ));
+            Logger::log(
+                array(
+                    "TYPE" => Debug\Logger::TYPE_PAGE_NOT_CACHEABLE,
+                    "MESSAGE" => "File: " . $debugBacktrace[0]["file"] . ":" . $debugBacktrace[0]["line"]
+                )
+            );
         }
     }
 
@@ -410,10 +418,12 @@ class Page
 
             $this->canCache = false;
 
-            Debug\Logger::log(array(
-                "TYPE" => Debug\Logger::TYPE_COMPONENT_VOTING,
-                "MESSAGE" => $context
-            ));
+            Debug\Logger::log(
+                array(
+                    "TYPE" => Debug\Logger::TYPE_COMPONENT_VOTING,
+                    "MESSAGE" => $context
+                )
+            );
         }
     }
 }

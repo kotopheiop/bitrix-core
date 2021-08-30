@@ -8,8 +8,9 @@
 
 require_once(dirname(__FILE__) . "/../include/prolog_admin_before.php");
 
-if (!$USER->CanDoOperation('edit_ratings'))
+if (!$USER->CanDoOperation('edit_ratings')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $isAdmin = $USER->CanDoOperation('edit_ratings');
 
@@ -22,7 +23,9 @@ $lAdmin = new CAdminList($sTableID, $oSort);
 function CheckFilter()
 {
     global $FilterArr, $lAdmin;
-    foreach ($FilterArr as $f) global $$f;
+    foreach ($FilterArr as $f) {
+        global $$f;
+    }
     return count($lAdmin->arFilterErrors) == 0;
 }
 
@@ -47,9 +50,10 @@ if (CheckFilter()) {
 
 if ($lAdmin->EditAction()) {
     foreach ($FIELDS as $ID => $arFields) {
-        $ID = IntVal($ID);
-        if ($ID <= 0)
+        $ID = intval($ID);
+        if ($ID <= 0) {
             continue;
+        }
         $arUpdate['NAME'] = $arFields['NAME'];
         $arUpdate['ACTIVE'] = $arFields['ACTIVE'] == 'Y' ? 'Y' : 'N';
         if (!CRatings::Update($ID, $arUpdate)) {
@@ -62,22 +66,26 @@ if ($lAdmin->EditAction()) {
 if (($arID = $lAdmin->GroupAction())) {
     if ($_REQUEST['action_target'] == 'selected') {
         $rsData = CRatings::GetList(array($by => $order), $arFilter);
-        while ($arRes = $rsData->Fetch())
+        while ($arRes = $rsData->Fetch()) {
             $arID[] = $arRes['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        $ID = IntVal($ID);
-        if ($ID <= 0)
+        $ID = intval($ID);
+        if ($ID <= 0) {
             continue;
+        }
         switch ($_REQUEST['action']) {
             case "recalculate":
-                if (!CRatings::Calculate($ID, true))
+                if (!CRatings::Calculate($ID, true)) {
                     $lAdmin->AddGroupError(GetMessage("RATING_LIST_ERR_CAL"), $ID);
+                }
                 break;
             case "delete":
-                if (!CRatings::Delete($ID))
+                if (!CRatings::Delete($ID)) {
                     $lAdmin->AddGroupError(GetMessage("RATING_LIST_ERR_DEL"), $ID);
+                }
                 break;
         }
     }
@@ -93,8 +101,18 @@ $aHeaders = array(
     array("id" => "NAME", "content" => GetMessage("RATING_NAME"), "sort" => "name", "default" => true),
     array("id" => "ACTIVE", "content" => GetMessage("RATING_ACTIVE"), "sort" => "active", "default" => true),
     array("id" => "CREATED", "content" => GetMessage("RATING_CREATED"), "sort" => "created", "default" => false),
-    array("id" => "LAST_MODIFIED", "content" => GetMessage("RATING_LAST_MODIFIED"), "sort" => "last_modified", "default" => true),
-    array("id" => "LAST_CALCULATED", "content" => GetMessage("RATING_LAST_CALCULATED"), "sort" => "last_calculated", "default" => true),
+    array(
+        "id" => "LAST_MODIFIED",
+        "content" => GetMessage("RATING_LAST_MODIFIED"),
+        "sort" => "last_modified",
+        "default" => true
+    ),
+    array(
+        "id" => "LAST_CALCULATED",
+        "content" => GetMessage("RATING_LAST_CALCULATED"),
+        "sort" => "last_calculated",
+        "default" => true
+    ),
     array("id" => "CALCULATED", "content" => GetMessage("RATING_STATUS"), "sort" => "status", "default" => true),
     array("id" => "ENTITY_ID", "content" => GetMessage("RATING_ENTITY_ID"), "sort" => "entity_id", "default" => false),
 );
@@ -106,8 +124,16 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
     $row->AddInputField("NAME", array("size" => 20));
     $row->AddViewField("NAME", $f_NAME);
     $row->AddViewField("ACTIVE", $f_ACTIVE == "Y" ? GetMessage("RATING_ACTIVE_YES") : GetMessage("RATING_ACTIVE_NO"));
-    $row->AddViewField("LAST_CALCULATED", empty($f_LAST_CALCULATED) ? GetMessage("RATING_STATUS_WAITING") : $f_LAST_CALCULATED);
-    $row->AddViewField("CALCULATED", $f_CALCULATED != 'N' ? ($f_CALCULATED == 'C' ? GetMessage("RATING_STATUS_WORKING") : GetMessage("RATING_STATUS_DONE")) : GetMessage("RATING_STATUS_WAITING"));
+    $row->AddViewField(
+        "LAST_CALCULATED",
+        empty($f_LAST_CALCULATED) ? GetMessage("RATING_STATUS_WAITING") : $f_LAST_CALCULATED
+    );
+    $row->AddViewField(
+        "CALCULATED",
+        $f_CALCULATED != 'N' ? ($f_CALCULATED == 'C' ? GetMessage("RATING_STATUS_WORKING") : GetMessage(
+            "RATING_STATUS_DONE"
+        )) : GetMessage("RATING_STATUS_WAITING")
+    );
 
     $arActions = Array(
         array(
@@ -124,15 +150,20 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
         array(
             "ICON" => "delete",
             "TEXT" => GetMessage("RATING_LIST_DEL"),
-            "ACTION" => "if(confirm('" . GetMessage("RATING_LIST_DEL_CONF") . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete")
+            "ACTION" => "if(confirm('" . GetMessage("RATING_LIST_DEL_CONF") . "')) " . $lAdmin->ActionDoGroup(
+                    $f_ID,
+                    "delete"
+                )
         ),
     );
     $row->AddActions($arActions);
 }
 
-$lAdmin->AddGroupActionTable(Array(
-    "delete" => true,
-));
+$lAdmin->AddGroupActionTable(
+    Array(
+        "delete" => true,
+    )
+);
 
 $aContext = array(
     array(
@@ -169,8 +200,12 @@ $oFilter = new CAdminFilter(
             <td><? echo GetMessage("RATING_LIST_FLT_ACTIVE") ?></td>
             <td><select name="find_active">
                     <option value=""><? echo GetMessage("RATING_LIST_FLT_ALL") ?></option>
-                    <option value="Y"<? if ($find_active == "Y") echo " selected" ?>><? echo GetMessage("RATING_LIST_FLT_ACTIVE") ?></option>
-                    <option value="N"<? if ($find_active == "N") echo " selected" ?>><? echo GetMessage("RATING_LIST_FLT_INACTIVE") ?></option>
+                    <option value="Y"<? if ($find_active == "Y") echo " selected" ?>><? echo GetMessage(
+                            "RATING_LIST_FLT_ACTIVE"
+                        ) ?></option>
+                    <option value="N"<? if ($find_active == "N") echo " selected" ?>><? echo GetMessage(
+                            "RATING_LIST_FLT_INACTIVE"
+                        ) ?></option>
                 </select>
             </td>
         </tr>

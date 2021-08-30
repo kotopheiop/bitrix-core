@@ -19,8 +19,9 @@ use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\OrderTable;
 
-if (!Loader::includeModule('catalog'))
+if (!Loader::includeModule('catalog')) {
     return;
+}
 
 /**
  * @package bitrix
@@ -66,10 +67,12 @@ class Catalog
                 $iblockId = $productInfo['IBLOCK_ID'];
             } else {
                 // get iblock id
-                $element = \Bitrix\Iblock\ElementTable::getRow(array(
-                    'select' => array('IBLOCK_ID'),
-                    'filter' => array('=ID' => $realProductId)
-                ));
+                $element = \Bitrix\Iblock\ElementTable::getRow(
+                    array(
+                        'select' => array('IBLOCK_ID'),
+                        'filter' => array('=ID' => $realProductId)
+                    )
+                );
 
                 if (!empty($element)) {
                     $iblockId = $element['IBLOCK_ID'];
@@ -109,14 +112,16 @@ class Catalog
                 // select recommendation id
                 $fuser = $result['ID'];
 
-                $viewResult = CatalogViewedProductTable::getList(array(
-                    'select' => array('RECOMMENDATION'),
-                    'filter' => array(
-                        '=FUSER_ID' => $fuser,
-                        '=PRODUCT_ID' => $basketItem->getProductId()
-                    ),
-                    'order' => array('DATE_VISIT' => 'DESC')
-                ))->fetch();
+                $viewResult = CatalogViewedProductTable::getList(
+                    array(
+                        'select' => array('RECOMMENDATION'),
+                        'filter' => array(
+                            '=FUSER_ID' => $fuser,
+                            '=PRODUCT_ID' => $basketItem->getProductId()
+                        ),
+                        'order' => array('DATE_VISIT' => 'DESC')
+                    )
+                )->fetch();
 
                 if (!empty($viewResult['RECOMMENDATION'])) {
                     $recommendationId = $viewResult['RECOMMENDATION'];
@@ -150,10 +155,12 @@ class Catalog
         );
 
         // save
-        CounterDataTable::add(array(
-            'TYPE' => 'basket',
-            'DATA' => $data
-        ));
+        CounterDataTable::add(
+            array(
+                'TYPE' => 'basket',
+                'DATA' => $data
+            )
+        );
 
         // update basket with recommendation id
         if (!empty($recommendationId)) {
@@ -162,7 +169,9 @@ class Catalog
 
             $conn->query(
                 "UPDATE " . $helper->quote('b_sale_basket')
-                . " SET RECOMMENDATION='" . $helper->forSql($recommendationId) . "' WHERE ID=" . (int)$basketItem->getId()
+                . " SET RECOMMENDATION='" . $helper->forSql(
+                    $recommendationId
+                ) . "' WHERE ID=" . (int)$basketItem->getId()
             );
         }
     }
@@ -194,10 +203,12 @@ class Catalog
         $data['bx_user_id'] = static::getBxUserId();
 
         if (empty($data['bx_user_id']) && !empty($data['user_id'])) {
-            $orderUser = UserTable::getRow(array(
-                'select' => array('BX_USER_ID'),
-                'filter' => array('=ID' => $data['user_id'])
-            ));
+            $orderUser = UserTable::getRow(
+                array(
+                    'select' => array('BX_USER_ID'),
+                    'filter' => array('=ID' => $data['user_id'])
+                )
+            );
 
             if (!empty($orderUser) && !empty($orderUser['BX_USER_ID'])) {
                 $data['bx_user_id'] = $orderUser['BX_USER_ID'];
@@ -224,10 +235,12 @@ class Catalog
             || $data['is_admin'] || $data['admin_section'] || $data['admin_panel']
         );
 
-        CounterDataTable::add(array(
-            'TYPE' => 'order',
-            'DATA' => $data
-        ));
+        CounterDataTable::add(
+            array(
+                'TYPE' => 'order',
+                'DATA' => $data
+            )
+        );
 
         // set bxuid to the order
         if (!empty($data['bx_user_id'])) {
@@ -258,10 +271,12 @@ class Catalog
         $data['bx_user_id'] = static::getBxUserId();
 
         if (empty($data['bx_user_id']) && OrderTable::getEntity()->hasField('BX_USER_ID')) {
-            $order = OrderTable::getRow(array(
-                'select' => array('BX_USER_ID'),
-                'filter' => array('=ID' => $orderItem->getId())
-            ));
+            $order = OrderTable::getRow(
+                array(
+                    'select' => array('BX_USER_ID'),
+                    'filter' => array('=ID' => $orderItem->getId())
+                )
+            );
 
             if (!empty($order) && !empty($order['BX_USER_ID'])) {
                 $data['bx_user_id'] = $order['BX_USER_ID'];
@@ -273,10 +288,12 @@ class Catalog
         $data['domain'] = Context::getCurrent()->getServer()->getHttpHost();
         $data['date'] = date(DATE_ISO8601);
 
-        CounterDataTable::add(array(
-            'TYPE' => 'order_pay',
-            'DATA' => $data
-        ));
+        CounterDataTable::add(
+            array(
+                'TYPE' => 'order_pay',
+                'DATA' => $data
+            )
+        );
     }
 
     public static function getOrderInfo($orderId)
@@ -296,7 +313,7 @@ class Catalog
 
         $result = \CSaleOrderPropsValue::GetList(array(), array("ORDER_ID" => $orderId));
         while ($row = $result->fetch()) {
-            if (empty($phone) && stripos($row['CODE'], 'PHONE') !== false) {
+            if (empty($phone) && mb_stripos($row['CODE'], 'PHONE') !== false) {
                 $stPhone = static::normalizePhoneNumber($row['VALUE']);
 
                 if (!empty($stPhone)) {
@@ -306,10 +323,10 @@ class Catalog
                 }
             }
 
-            if (empty($email) && stripos($row['CODE'], 'EMAIL') !== false) {
+            if (empty($email) && mb_stripos($row['CODE'], 'EMAIL') !== false) {
                 if (!empty($row['VALUE'])) {
                     $email = sha1($row['VALUE']);
-                    $email256 = hash('sha256', strtolower(trim($row['VALUE'])));
+                    $email256 = hash('sha256', mb_strtolower(trim($row['VALUE'])));
                 }
             }
         }
@@ -318,7 +335,10 @@ class Catalog
         $products = array();
 
         $result = \CSaleBasket::getList(
-            array(), $arFilter = array('ORDER_ID' => $orderId), false, false,
+            array(),
+            $arFilter = array('ORDER_ID' => $orderId),
+            false,
+            false,
             array('PRODUCT_ID', 'RECOMMENDATION', 'QUANTITY', 'PRICE', 'CURRENCY', 'MODULE')
         );
 
@@ -337,10 +357,12 @@ class Catalog
                     $realProductId = $row['PRODUCT_ID'];
 
                     // get iblock id
-                    $element = \Bitrix\Iblock\ElementTable::getRow(array(
-                        'select' => array('IBLOCK_ID'),
-                        'filter' => array('=ID' => $realProductId)
-                    ));
+                    $element = \Bitrix\Iblock\ElementTable::getRow(
+                        array(
+                            'select' => array('IBLOCK_ID'),
+                            'filter' => array('=ID' => $realProductId)
+                        )
+                    );
 
                     if (!empty($element)) {
                         $iblockId = $element['IBLOCK_ID'];
@@ -375,7 +397,7 @@ class Catalog
         return $data;
     }
 
-    protected function getBxUserId()
+    protected static function getBxUserId()
     {
         return $_COOKIE['BX_USER_ID'];
     }
@@ -386,7 +408,7 @@ class Catalog
 
         $cleanPhone = \NormalizePhone($phone, 6);
 
-        if (strlen($cleanPhone) == 10) {
+        if (mb_strlen($cleanPhone) == 10) {
             $cleanPhone = '7' . $cleanPhone;
         }
 
@@ -395,39 +417,51 @@ class Catalog
 
     public static function isOn()
     {
-        return SiteSpeed::isRussianSiteManager()
+        return SiteSpeed::isOn()
             && Option::get("main", "gather_catalog_stat", "Y") === "Y"
             && defined("LICENSE_KEY") && LICENSE_KEY !== "DEMO";
     }
 
     public static function getProductIdsByOfferIds($offerIds)
     {
-        if (empty($offerIds))
+        if (empty($offerIds)) {
             return array();
+        }
 
         $bestList = array();
         $iblockGroup = array();
-        $itemIterator = \Bitrix\Iblock\ElementTable::getList(array(
-            'select' => array('ID', 'IBLOCK_ID'),
-            'filter' => array('@ID' => $offerIds, '=ACTIVE' => 'Y')
-        ));
+        $itemIterator = \Bitrix\Iblock\ElementTable::getList(
+            array(
+                'select' => array('ID', 'IBLOCK_ID'),
+                'filter' => array('@ID' => $offerIds, '=ACTIVE' => 'Y')
+            )
+        );
         while ($item = $itemIterator->fetch()) {
-            if (!isset($iblockGroup[$item['IBLOCK_ID']]))
+            if (!isset($iblockGroup[$item['IBLOCK_ID']])) {
                 $iblockGroup[$item['IBLOCK_ID']] = array();
+            }
             $iblockGroup[$item['IBLOCK_ID']][] = $item['ID'];
             $bestList[$item['ID']] = array();
         }
 
-        if (empty($iblockGroup))
+        if (empty($iblockGroup)) {
             return array();
+        }
 
         $iblockSku = array();
         $iblockOffers = array();
         if (!empty($iblockGroup)) {
-            $iblockIterator = \Bitrix\Catalog\CatalogIblockTable::getList(array(
-                'select' => array('IBLOCK_ID', 'PRODUCT_IBLOCK_ID', 'SKU_PROPERTY_ID', 'VERSION' => 'IBLOCK.VERSION'),
-                'filter' => array('=IBLOCK_ID' => array_keys($iblockGroup), '!=PRODUCT_IBLOCK_ID' => 0)
-            ));
+            $iblockIterator = \Bitrix\Catalog\CatalogIblockTable::getList(
+                array(
+                    'select' => array(
+                        'IBLOCK_ID',
+                        'PRODUCT_IBLOCK_ID',
+                        'SKU_PROPERTY_ID',
+                        'VERSION' => 'IBLOCK.VERSION'
+                    ),
+                    'filter' => array('=IBLOCK_ID' => array_keys($iblockGroup), '!=PRODUCT_IBLOCK_ID' => 0)
+                )
+            );
             while ($iblock = $iblockIterator->fetch()) {
                 $iblock['IBLOCK_ID'] = (int)$iblock['IBLOCK_ID'];
                 $iblock['PRODUCT_IBLOCK_ID'] = (int)$iblock['PRODUCT_IBLOCK_ID'];
@@ -438,8 +472,9 @@ class Catalog
             }
             unset($iblock, $iblockIterator);
         }
-        if (empty($iblockOffers))
+        if (empty($iblockOffers)) {
             return array();
+        }
 
         $offerLink = array();
         foreach ($iblockOffers as $iblockId => $items) {
@@ -465,39 +500,46 @@ class Catalog
                 } else {
                     $bestList[$offer['ID']]['PARENT_ID'] = $productId;
                     $bestList[$offer['ID']]['PARENT_IBLOCK'] = $iblockSku[$iblockId]['PRODUCT_IBLOCK_ID'];
-                    if (!isset($offerLink[$productId]))
+                    if (!isset($offerLink[$productId])) {
                         $offerLink[$productId] = array();
+                    }
                     $offerLink[$productId][] = $offer['ID'];
                 }
             }
         }
         if (!empty($offerLink)) {
-            $productIterator = \Bitrix\Iblock\ElementTable::getList(array(
-                'select' => array('ID'),
-                'filter' => array('@ID' => array_keys($offerLink), '=ACTIVE' => 'N')
-            ));
+            $productIterator = \Bitrix\Iblock\ElementTable::getList(
+                array(
+                    'select' => array('ID'),
+                    'filter' => array('@ID' => array_keys($offerLink), '=ACTIVE' => 'N')
+                )
+            );
             while ($product = $productIterator->fetch()) {
-                if (empty($offerLink[$product['ID']]))
+                if (empty($offerLink[$product['ID']])) {
                     continue;
+                }
                 foreach ($offerLink[$product['ID']] as $value) {
                     unset($bestList[$value]);
                 }
             }
         }
 
-        if (empty($bestList))
+        if (empty($bestList)) {
             return array();
+        }
 
         $finalIds = array();
         $dublicate = array();
         foreach ($bestList as $id => $info) {
             if (empty($info)) {
-                if (!isset($dublicate[$id]))
+                if (!isset($dublicate[$id])) {
                     $finalIds[] = $id;
+                }
                 $dublicate[$id] = true;
             } else {
-                if (!isset($dublicate[$id]))
+                if (!isset($dublicate[$id])) {
                     $finalIds[] = $info['PARENT_ID'];
+                }
                 $dublicate[$info['PARENT_ID']] = true;
             }
         }

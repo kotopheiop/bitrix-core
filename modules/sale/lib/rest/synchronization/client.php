@@ -35,10 +35,12 @@ class Client
 
     protected function getHttpClient()
     {
-        return new HttpClient(array(
-            'socketTimeout' => static::HTTP_SOCKET_TIMEOUT,
-            'streamTimeout' => static::HTTP_STREAM_TIMEOUT,
-        ));
+        return new HttpClient(
+            array(
+                'socketTimeout' => static::HTTP_SOCKET_TIMEOUT,
+                'streamTimeout' => static::HTTP_STREAM_TIMEOUT,
+            )
+        );
     }
 
     protected function getRequestUrl($methodName)
@@ -55,20 +57,32 @@ class Client
 
             $additionalParams = $this->prepareRequest($additionalParams);
 
-            LoggerDiag::addMessage('CLIENT_CALL_REQUEST', var_export([
-                'getRequestUrl' => $this->getRequestUrl($methodName),
-                'additionalParams' => $additionalParams,
-            ], true));
+            LoggerDiag::addMessage(
+                'CLIENT_CALL_REQUEST',
+                var_export(
+                    [
+                        'getRequestUrl' => $this->getRequestUrl($methodName),
+                        'additionalParams' => $additionalParams,
+                    ],
+                    true
+                )
+            );
 
             $httpResult = $httpClient->post(
                 $this->getRequestUrl($methodName),
                 $additionalParams
             );
 
-            LoggerDiag::addMessage('CLIENT_CALL_PROCESS_RESULT', var_export([
-                'result' => $httpResult,
-                'status' => $httpClient->getStatus()
-            ], true));
+            LoggerDiag::addMessage(
+                'CLIENT_CALL_PROCESS_RESULT',
+                var_export(
+                    [
+                        'result' => $httpResult,
+                        'status' => $httpClient->getStatus()
+                    ],
+                    true
+                )
+            );
 
             $respons = $this->prepareResponse($httpResult);
 
@@ -76,7 +90,7 @@ class Client
                 LoggerDiag::addMessage('CLIENT_CALL_PROCESS_RESULT_SUCCESS');
 
                 if (isset($respons['error'])) {
-                    $result->addError(new Error($respons['error_description'], strtoupper($respons['error'])));
+                    $result->addError(new Error($respons['error_description'], mb_strtoupper($respons['error'])));
                     LoggerDiag::addMessage('CLIENT_CALL_RESULT_ERROR');
                 } else {
                     $result->setData(['DATA' => $respons]);
@@ -135,24 +149,31 @@ class Client
                         'client_id' => $this->clientId,
                         'client_secret' => $this->clientSecret,
                         'refresh_token' => $refreshToken
-                    ]);
+                    ]
+                );
 
             LoggerDiag::addMessage('CLIENT_REFRESH_TOKEN_REQUEST', var_export($request, true));
 
             $httpClient = $this->getHttpClient();
             $httpResult = $httpClient->get($request);
 
-            LoggerDiag::addMessage('CLIENT_REFRESH_TOKEN_PROCESS_RESULT', var_export([
-                'result' => $httpResult,
-                'status' => $httpClient->getStatus()
-            ], true));
+            LoggerDiag::addMessage(
+                'CLIENT_REFRESH_TOKEN_PROCESS_RESULT',
+                var_export(
+                    [
+                        'result' => $httpResult,
+                        'status' => $httpClient->getStatus()
+                    ],
+                    true
+                )
+            );
 
             $respons = $this->prepareResponse($httpResult);
             if ($respons) {
                 LoggerDiag::addMessage('CLIENT_REFRESH_TOKEN_PROCESS_RESULT_SUCCESS');
 
                 if (isset($respons['error'])) {
-                    $result->addError(new Error($respons['error_description'], strtoupper($respons['error'])));
+                    $result->addError(new Error($respons['error_description'], mb_strtoupper($respons['error'])));
                     LoggerDiag::addMessage('CLIENT_REFRESH_TOKEN_RESULT_ERROR');
                 } else {
                     $result->setData(['DATA' => $respons]);
@@ -171,8 +192,9 @@ class Client
     {
         $result = new Result();
 
-        if (!Loader::includeModule('rest'))
+        if (!Loader::includeModule('rest')) {
             $result->addError(new Error('Module REST is not included'));
+        }
 
         if ($result->isSuccess()) {
             if (!\Bitrix\Rest\OAuthService::getEngine()->isRegistered()) {
@@ -186,8 +208,9 @@ class Client
             if ($result->isSuccess()) {
                 $client = \Bitrix\Rest\OAuthService::getEngine()->getClient();
                 $respons = $client->call('app.info', ['auth' => $accessToken]);
-                if (isset($respons['error']))
-                    $result->addError(new Error($respons['error_description'], strtoupper($respons['error'])));
+                if (isset($respons['error'])) {
+                    $result->addError(new Error($respons['error_description'], mb_strtoupper($respons['error'])));
+                }
             }
         }
         return $result;

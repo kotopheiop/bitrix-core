@@ -25,7 +25,9 @@ class User
             'EMAIL' => $fields["EMAIL"],
             'NAME' => (!empty($fields["NAME"]) ? $fields["NAME"] : ''),
             'LAST_NAME' => (!empty($fields["LAST_NAME"]) ? $fields["LAST_NAME"] : ''),
-            'PERSONAL_PHOTO' => (!empty($fields["PERSONAL_PHOTO_ID"]) ? \CFile::makeFileArray($fields['PERSONAL_PHOTO_ID']) : false),
+            'PERSONAL_PHOTO' => (!empty($fields["PERSONAL_PHOTO_ID"]) ? \CFile::makeFileArray(
+                $fields['PERSONAL_PHOTO_ID']
+            ) : false),
             'EXTERNAL_AUTH_ID' => 'email',
         );
 
@@ -62,7 +64,11 @@ class User
     public static function login()
     {
         $eventManager = Main\EventManager::getInstance();
-        $handler = $eventManager->addEventHandlerCompatible('main', 'OnUserLoginExternal', array('\Bitrix\Mail\User', 'onLoginExternal'));
+        $handler = $eventManager->addEventHandlerCompatible(
+            'main',
+            'OnUserLoginExternal',
+            array('\Bitrix\Mail\User', 'onLoginExternal')
+        );
 
         global $USER;
         $USER->login(null, null, 'Y');
@@ -82,14 +88,16 @@ class User
         $request = $context->getRequest();
 
         if ($token = $request->get('token') ?: $request->getCookie('MAIL_AUTH_TOKEN')) {
-            $userRelation = UserRelationsTable::getList(array(
-                'select' => array('USER_ID'),
-                'filter' => array(
-                    '=TOKEN' => $token,
-                    '=USER.EXTERNAL_AUTH_ID' => 'email',
-                    'USER.ACTIVE' => 'Y'
+            $userRelation = UserRelationsTable::getList(
+                array(
+                    'select' => array('USER_ID'),
+                    'filter' => array(
+                        '=TOKEN' => $token,
+                        '=USER.EXTERNAL_AUTH_ID' => 'email',
+                        'USER.ACTIVE' => 'Y'
+                    )
                 )
-            ))->fetch();
+            )->fetch();
 
             if ($userRelation) {
                 $context->getResponse()->addCookie(new Main\Web\Cookie('MAIL_AUTH_TOKEN', $token));
@@ -128,8 +136,9 @@ class User
         }
 
         if (empty($userRelation)) {
-            if (empty($entityLink))
+            if (empty($entityLink)) {
                 return false;
+            }
 
             $userRelation = array(
                 'SITE_ID' => $siteId,
@@ -141,8 +150,9 @@ class User
                 'BACKURL' => $backurl
             );
 
-            if (!UserRelationsTable::add($userRelation)->isSuccess())
+            if (!UserRelationsTable::add($userRelation)->isSuccess()) {
                 return false;
+            }
         }
 
         $site = Main\SiteTable::getByPrimary($siteId)->fetch();
@@ -185,14 +195,16 @@ class User
         if ($cache->initCache(365 * 24 * 3600, $cacheKey, $cacheDir)) {
             $forwardTo = $cache->getVars();
         } else {
-            $userRelation = UserRelationsTable::getList(array(
-                'filter' => array(
-                    '=SITE_ID' => $siteId,
-                    '=USER_ID' => $userId,
-                    '=ENTITY_TYPE' => $entityType,
-                    '=ENTITY_ID' => null
+            $userRelation = UserRelationsTable::getList(
+                array(
+                    'filter' => array(
+                        '=SITE_ID' => $siteId,
+                        '=USER_ID' => $userId,
+                        '=ENTITY_TYPE' => $entityType,
+                        '=ENTITY_ID' => null
+                    )
                 )
-            ))->fetch();
+            )->fetch();
 
             if (empty($userRelation)) {
                 $userRelation = array(
@@ -202,8 +214,9 @@ class User
                     'ENTITY_TYPE' => $entityType
                 );
 
-                if (!UserRelationsTable::add($userRelation)->isSuccess())
+                if (!UserRelationsTable::add($userRelation)->isSuccess()) {
                     return false;
+                }
 
                 // for dav addressbook modification label
                 $user = new \CUser;
@@ -213,8 +226,9 @@ class User
             $site = Main\SiteTable::getByPrimary($siteId)->fetch();
             $domain = $site['SERVER_NAME'] ?: \COption::getOptionString('main', 'server_name', '');
 
-            if (preg_match('/^(?<domain>.+):(?<port>\d+)$/', $domain, $matches))
+            if (preg_match('/^(?<domain>.+):(?<port>\d+)$/', $domain, $matches)) {
                 $domain = $matches['domain'];
+            }
 
             $forwardTo = sprintf('fwd%s@%s', $userRelation['TOKEN'], $domain);
 
@@ -243,12 +257,14 @@ class User
         $type = $matches['type'];
         $token = $matches['token'];
 
-        $userRelation = UserRelationsTable::getList(array(
-            'filter' => array(
-                '=TOKEN' => $token,
-                'USER.ACTIVE' => 'Y'
+        $userRelation = UserRelationsTable::getList(
+            array(
+                'filter' => array(
+                    '=TOKEN' => $token,
+                    'USER.ACTIVE' => 'Y'
+                )
             )
-        ))->fetch();
+        )->fetch();
 
         if (!$userRelation) {
             $error = sprintf('Unknown recipient (%s)', $to);
@@ -273,21 +289,23 @@ class User
 
         $attachments = array_filter(
             array_combine(
-                array_keys((array)$message['files']),
+                array_column((array)$message['files'], 'name'),
                 array_column((array)$message['files'], 'tmp_name')
             )
         );
 
-        $addResult = User\MessageTable::add(array(
-            'TYPE' => $type,
-            'SITE_ID' => $userRelation['SITE_ID'],
-            'ENTITY_TYPE' => $userRelation['ENTITY_TYPE'],
-            'ENTITY_ID' => $userRelation['ENTITY_ID'],
-            'USER_ID' => $userRelation['USER_ID'],
-            'SUBJECT' => $message['subject'],
-            'CONTENT' => $content,
-            'ATTACHMENTS' => serialize($attachments),
-        ));
+        $addResult = User\MessageTable::add(
+            array(
+                'TYPE' => $type,
+                'SITE_ID' => $userRelation['SITE_ID'],
+                'ENTITY_TYPE' => $userRelation['ENTITY_TYPE'],
+                'ENTITY_ID' => $userRelation['ENTITY_ID'],
+                'USER_ID' => $userRelation['USER_ID'],
+                'SUBJECT' => $message['subject'],
+                'CONTENT' => $content,
+                'ATTACHMENTS' => serialize($attachments),
+            )
+        );
 
         if ($addResult->isSuccess()) {
             \CAgent::addAgent(
@@ -312,16 +330,18 @@ class User
             return;
         }
 
-        $res = User\MessageTable::getList(array(
-            'filter' => array(
-                '=ID' => $messageId
+        $res = User\MessageTable::getList(
+            array(
+                'filter' => array(
+                    '=ID' => $messageId
+                )
             )
-        ));
+        );
         if ($messageFields = $res->fetch()) {
             if (intval($cnt) > 10) {
                 if (Main\Loader::includeModule('im')) {
                     $title = trim($messageFields['SUBJECT']);
-                    if (strlen($title) <= 0) {
+                    if ($title == '') {
                         $title = trim($messageFields['CONTENT']);
                         $title = preg_replace("/\[ATTACHMENT\s*=\s*[^\]]*\]/is" . BX_UTF_PCRE_MODIFIER, "", $title);
 
@@ -330,16 +350,21 @@ class User
                         $title = $CBXSanitizer->sanitizeHtml($title);
                     }
 
-                    \CIMNotify::add(array(
-                        "MESSAGE_TYPE" => IM_MESSAGE_SYSTEM,
-                        "NOTIFY_TYPE" => IM_NOTIFY_SYSTEM,
-                        "NOTIFY_MODULE" => "mail",
-                        "NOTIFY_EVENT" => "user_message_failed",
-                        "TO_USER_ID" => $messageFields['USER_ID'],
-                        "NOTIFY_MESSAGE" => Loc::getMessage("MAIL_USER_MESSAGE_FAILED", array(
-                            "#TITLE#" => $title
-                        ))
-                    ));
+                    \CIMNotify::add(
+                        array(
+                            "MESSAGE_TYPE" => IM_MESSAGE_SYSTEM,
+                            "NOTIFY_TYPE" => IM_NOTIFY_SYSTEM,
+                            "NOTIFY_MODULE" => "mail",
+                            "NOTIFY_EVENT" => "user_message_failed",
+                            "TO_USER_ID" => $messageFields['USER_ID'],
+                            "NOTIFY_MESSAGE" => Loc::getMessage(
+                                "MAIL_USER_MESSAGE_FAILED",
+                                array(
+                                    "#TITLE#" => $title
+                                )
+                            )
+                        )
+                    );
                 }
                 User\MessageTable::delete($messageId);
                 return;
@@ -357,7 +382,7 @@ class User
             if (!empty($eventId)) {
                 $attachments = array();
                 if (!empty($messageFields['ATTACHMENTS'])) {
-                    $tmpAttachments = unserialize($messageFields['ATTACHMENTS']);
+                    $tmpAttachments = unserialize($messageFields['ATTACHMENTS'], ['allowed_classes' => false]);
                     if (is_array($tmpAttachments)) {
                         foreach ($tmpAttachments as $key => $uploadFile) {
                             $file = \CFile::makeFileArray($uploadFile);
@@ -365,6 +390,7 @@ class User
                                 is_array($file)
                                 && !empty($file)
                             ) {
+                                $file['name'] = $key;
                                 $attachments[$key] = $file;
                             }
                         }
@@ -418,18 +444,24 @@ class User
 
     public static function getDefaultEmailFrom($serverName = false)
     {
-        if (defined("BX24_HOST_NAME")) {
+        if (Main\ModuleManager::isModuleInstalled('bitrix24') && defined("BX24_HOST_NAME")) {
             if (preg_match("/\\.bitrix24\\.([a-z]+|com\\.br)$/i", BX24_HOST_NAME)) {
                 $domain = BX24_HOST_NAME;
             } else {
                 $domain = str_replace(".", "-", BX24_HOST_NAME) . ".bitrix24.com";
             }
-        } else {
-            $domain = Main\Config\Option::get('main', 'server_name', $GLOBALS["SERVER_NAME"]);
-            $domain = ($serverName ?: $domain);
-        }
 
-        $defaultEmailFrom = "info@" . $domain;
+            $defaultEmailFrom = "info@" . $domain;
+        } else {
+            $defaultEmailFrom = Main\Config\Option::get('main', 'email_from', '');
+            if ($defaultEmailFrom == '') {
+                $defaultEmailFrom = "info@" . ($serverName ?: Main\Config\Option::get(
+                        'main',
+                        'server_name',
+                        $GLOBALS["SERVER_NAME"]
+                    ));
+            }
+        }
 
         return $defaultEmailFrom;
     }
@@ -458,11 +490,13 @@ class User
             $filter["CONFIRM_CODE"] = false;
         }
 
-        $res = \Bitrix\Main\UserTable::getList(array(
-            'order' => array(),
-            'filter' => $filter,
-            'select' => array("ID", "EMAIL", "NAME", "LAST_NAME", "SECOND_NAME", "LOGIN")
-        ));
+        $res = \Bitrix\Main\UserTable::getList(
+            array(
+                'order' => array(),
+                'filter' => $filter,
+                'select' => array("ID", "EMAIL", "NAME", "LAST_NAME", "SECOND_NAME", "LOGIN")
+            )
+        );
 
         while ($user = $res->fetch()) {
             $result[$user["ID"]] = array(

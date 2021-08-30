@@ -3,7 +3,7 @@
  * Bitrix Framework
  * @package bitrix
  * @subpackage main
- * @copyright 2001-2015 Bitrix
+ * @copyright 2001-2020 Bitrix
  */
 
 namespace Bitrix\Main\UI;
@@ -60,7 +60,11 @@ class PageNavigation
         } else {
             //probably parametrs are in the SEF URI
             $matches = array();
-            if (preg_match("'/" . preg_quote($this->id, "'") . "/page-([\\d]+|all)+(/size-([\\d]+))?'", $request->getRequestUri(), $matches)) {
+            if (preg_match(
+                "'/" . preg_quote($this->id, "'") . "/page-([\\d]+|all)+(/size-([\\d]+))?'",
+                $request->getRequestUri(),
+                $matches
+            )) {
                 $navParams["page"] = $matches[1];
                 if (isset($matches[3])) {
                     $navParams["size"] = $matches[3];
@@ -104,7 +108,7 @@ class PageNavigation
         if ($this->allRecords) {
             return 1;
         }
-        $maxPages = floor($this->recordCount / $this->pageSize);
+        $maxPages = (int)floor($this->recordCount / $this->pageSize);
         if (($this->recordCount % $this->pageSize) > 0) {
             $maxPages++;
         }
@@ -266,8 +270,15 @@ class PageNavigation
             $this->clearParams($uri, $sef);
 
             $path = $uri->getPath();
-            $pos = strrpos($path, "/");
-            $path = substr($path, 0, $pos + 1) . $this->id . "/page-" . $page . "/" . ($size !== null ? "size-" . $size . "/" : '') . substr($path, $pos + 1);
+            $pos = mb_strrpos($path, "/");
+            $path = mb_substr(
+                    $path,
+                    0,
+                    $pos + 1
+                ) . $this->id . "/page-" . $page . "/" . ($size !== null ? "size-" . $size . "/" : '') . mb_substr(
+                    $path,
+                    $pos + 1
+                );
             $uri->setPath($path);
         } else {
             $uri->addParams(array($this->id => "page-" . $page . ($size !== null ? "-size-" . $size : '')));
@@ -285,7 +296,11 @@ class PageNavigation
     {
         if ($sef == true) {
             $path = $uri->getPath();
-            $path = preg_replace("'/" . preg_quote($this->id, "'") . "/page-([\\d]+|all)+(/size-([\\d]+))?'", "", $path);
+            $path = preg_replace(
+                "'/" . preg_quote($this->id, "'") . "/page-([\\d]+|all)+(/size-([\\d]+))?'",
+                "",
+                $path
+            );
             $uri->setPath($path);
         } else {
             $uri->deleteParams(array($this->id));

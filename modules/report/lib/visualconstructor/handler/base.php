@@ -96,7 +96,6 @@ abstract class Base
         if ($element instanceof BaseValuable) {
             $this->addToConfiguration($element);
         }
-
     }
 
     /**
@@ -110,7 +109,6 @@ abstract class Base
     {
         $newFormElementsList = array();
         foreach ($this->formElementsList as $key => $element) {
-
             //add new element
             if ($element === $targetElement) {
                 if ($newElement->getKey()) {
@@ -162,7 +160,6 @@ abstract class Base
 
                 if ($newElement instanceof BaseValuable) {
                     $this->addToConfiguration($newElement);
-
                 }
             }
         }
@@ -259,6 +256,22 @@ abstract class Base
     }
 
     /**
+     * Returns value of the form element with given key.
+     *
+     * @param string $fieldKey The key of the field.
+     * @return mixed|null
+     */
+    public function getFormElementValue($fieldKey)
+    {
+        $formElements = $this->getFormElements();
+        if (isset($formElements[$fieldKey])) {
+            return $formElements[$fieldKey]->getValue();
+        }
+
+        return null;
+    }
+
+    /**
      * Find form element by attribute key value pair.
      *
      * @param string $attributeKey Attribute key to find in form elements list.
@@ -347,8 +360,9 @@ abstract class Base
         $configurations = $this->getConfigurations();
         if (!empty($configurations)) {
             foreach ($configurations as $configuration) {
-                if ($configuration->getKey() == $key)
+                if ($configuration->getKey() == $key) {
                     return $configuration;
+                }
             }
         }
 

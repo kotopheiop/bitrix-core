@@ -43,10 +43,23 @@ final class BlogComment extends Provider
                 ),
                 false,
                 false,
-                array("ID", "BLOG_ID", "POST_ID", "PARENT_ID", "AUTHOR_ID", "AUTHOR_NAME", "AUTHOR_EMAIL", "AUTHOR_IP", "AUTHOR_IP1", "TITLE", "POST_TEXT", "SHARE_DEST")
+                array(
+                    "ID",
+                    "BLOG_ID",
+                    "POST_ID",
+                    "PARENT_ID",
+                    "AUTHOR_ID",
+                    "AUTHOR_NAME",
+                    "AUTHOR_EMAIL",
+                    "AUTHOR_IP",
+                    "AUTHOR_IP1",
+                    "TITLE",
+                    "POST_TEXT",
+                    "SHARE_DEST"
+                )
             );
 
-            if ($comment = $res->fetch($commentId)) {
+            if ($comment = $res->fetch()) {
                 $res = \CBlogPost::getList(
                     array(),
                     array(
@@ -56,22 +69,33 @@ final class BlogComment extends Provider
 
                 if (
                     ($post = $res->fetch())
-                    && (BlogPost::canRead(array(
-                        'POST' => $post
-                    )))
+                    && (BlogPost::canRead(
+                        array(
+                            'POST' => $post
+                        )
+                    ))
                 ) {
+                    if (!empty($post['DETAIL_TEXT'])) {
+                        $post['DETAIL_TEXT'] = \Bitrix\Main\Text\Emoji::decode($post['DETAIL_TEXT']);
+                    }
+
                     $this->setSourceFields(array_merge($comment, array("POST" => $post)));
                     $this->setSourceDescription(htmlspecialcharsback($comment['POST_TEXT']));
 
                     $title = htmlspecialcharsback($comment['POST_TEXT']);
-                    $title = preg_replace(
-                        "/\[USER\s*=\s*([^\]]*)\](.+?)\[\/USER\]/is" . BX_UTF_PCRE_MODIFIER,
-                        "\\2",
-                        $title
-                    );
+                    $title = \Bitrix\Socialnetwork\Helper\Mention::clear($title);
+
                     $p = new \blogTextParser();
                     $title = $p->convert($title, false);
-                    $title = preg_replace(array("/\n+/is" . BX_UTF_PCRE_MODIFIER, "/\s+/is" . BX_UTF_PCRE_MODIFIER), " ", \blogTextParser::killAllTags($title));
+                    $title = preg_replace(
+                        [
+                            "/\n+/is" . BX_UTF_PCRE_MODIFIER,
+                            "/\s+/is" . BX_UTF_PCRE_MODIFIER,
+                            "/&nbsp;+/is" . BX_UTF_PCRE_MODIFIER
+                        ],
+                        " ",
+                        \blogTextParser::killAllTags($title)
+                    );
 
                     $this->setSourceTitle(truncateText($title, 100));
                     $this->setSourceAttachedDiskObjects($this->getAttachedDiskObjects());
@@ -123,11 +147,24 @@ final class BlogComment extends Provider
             && ($comment = $this->getSourceFields())
             && isset($comment["POST"])
         ) {
-            $pathToPost = \CComponentEngine::makePathFromTemplate($pathToPost, array("post_id" => $comment["POST"]["ID"], "user_id" => $comment["POST"]["AUTHOR_ID"]));
-            $pathToPost .= (strpos($pathToPost, '?') === false ? '?' : '&') . 'commentId=' . $comment["ID"] . '#com' . $comment["ID"];
+            $pathToPost = \CComponentEngine::makePathFromTemplate(
+                $pathToPost,
+                array(
+                    "post_id" => $comment["POST"]["ID"],
+                    "user_id" => $comment["POST"]["AUTHOR_ID"]
+                )
+            );
+            $pathToPost .= (mb_strpos(
+                    $pathToPost,
+                    '?'
+                ) === false ? '?' : '&') . 'commentId=' . $comment["ID"] . '#com' . $comment["ID"];
         }
 
         return $pathToPost;
     }
 
+    public function getSuffix()
+    {
+        return '2';
+    }
 }

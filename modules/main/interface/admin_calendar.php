@@ -34,20 +34,23 @@ class CAdminCalendar
             self::PERIOD_INTERVAL => GetMessage("admin_lib_calend_interval")
         );
 
-        if (empty($arPeriodParams) || !is_array($arPeriodParams))
+        if (empty($arPeriodParams) || !is_array($arPeriodParams)) {
             return $arPeriod;
+        }
 
         $arReturnPeriod = array();
 
         foreach ($arPeriodParams as $periodName => $lPhrase) {
-            if (isset($arPeriod[$periodName]))
+            if (isset($arPeriod[$periodName])) {
                 $arReturnPeriod[$periodName] = $lPhrase;
-            elseif (isset($arPeriod[$arPeriodParams[$periodName]]))
+            } elseif (isset($arPeriod[$arPeriodParams[$periodName]])) {
                 $arReturnPeriod[$arPeriodParams[$periodName]] = $arPeriod[$arPeriodParams[$periodName]];
+            }
         }
 
-        if (empty($arReturnPeriod))
+        if (empty($arReturnPeriod)) {
             $arReturnPeriod = $arPeriod;
+        }
         return $arReturnPeriod;
     }
 
@@ -62,12 +65,18 @@ class CAdminCalendar
         global $APPLICATION;
 
         ob_start();
-        $APPLICATION->IncludeComponent('bitrix:main.calendar', '', array(
-            'RETURN' => 'Y',
-            'SHOW_INPUT' => 'N',
-            'INPUT_NAME' => $sFieldName,
-            'SHOW_TIME' => $bTime ? 'Y' : 'N'
-        ), null, array('HIDE_ICONS' => 'Y'));
+        $APPLICATION->IncludeComponent(
+            'bitrix:main.calendar',
+            '',
+            array(
+                'RETURN' => 'Y',
+                'SHOW_INPUT' => 'N',
+                'INPUT_NAME' => $sFieldName,
+                'SHOW_TIME' => $bTime ? 'Y' : 'N'
+            ),
+            null,
+            array('HIDE_ICONS' => 'Y')
+        );
         $res = ob_get_contents();
         ob_end_clean();
 
@@ -79,10 +88,13 @@ class CAdminCalendar
         // component can't set 'size' param
         return '
 	<div class="adm-input-wrap adm-input-wrap-calendar">
-		<input class="adm-input adm-input-calendar" type="text" name="' . $sFieldName . '" size="' . (intval($size) + 3) . '" value="' . htmlspecialcharsbx($sValue) . '">
-		<span class="adm-calendar-icon" title="' . GetMessage("admin_lib_calend_title") . '" onclick="BX.calendar({node:this, field:\'' . $sFieldName . '\', form: \'\', bTime: ' . ($bTime ? 'true' : 'false') . ', bHideTime: false});"></span>
+		<input class="adm-input adm-input-calendar" type="text" name="' . $sFieldName . '" size="' . (intval(
+                    $size
+                ) + 3) . '" value="' . htmlspecialcharsbx($sValue) . '">
+		<span class="adm-calendar-icon" title="' . GetMessage(
+                "admin_lib_calend_title"
+            ) . '" onclick="BX.calendar({node:this, field:\'' . $sFieldName . '\', form: \'\', bTime: ' . ($bTime ? 'true' : 'false') . ', bHideTime: false});"></span>
 	</div>';
-
     }
 
     /**
@@ -97,11 +109,30 @@ class CAdminCalendar
      * @param string $periodValue
      * @return string
      */
-    public static function CalendarPeriodCustom($sFromName, $sToName, $sFromVal = "", $sToVal = "", $bSelectShow = false, $size = 10, $bTime = false, $arPeriod = false, $periodValue = '')
-    {
+    public static function CalendarPeriodCustom(
+        $sFromName,
+        $sToName,
+        $sFromVal = "",
+        $sToVal = "",
+        $bSelectShow = false,
+        $size = 10,
+        $bTime = false,
+        $arPeriod = false,
+        $periodValue = ''
+    ) {
         $arPeriodList = self::InitPeriodList($arPeriod);
 
-        return self::GetPeriodHtml($sFromName, $sToName, $sFromVal, $sToVal, $bSelectShow, $size, $bTime, $arPeriodList, $periodValue);
+        return self::GetPeriodHtml(
+            $sFromName,
+            $sToName,
+            $sFromVal,
+            $sToVal,
+            $bSelectShow,
+            $size,
+            $bTime,
+            $arPeriodList,
+            $periodValue
+        );
     }
 
     /**
@@ -114,11 +145,27 @@ class CAdminCalendar
      * @param bool $bTime
      * @return string
      */
-    public static function CalendarPeriod($sFromName, $sToName, $sFromVal = "", $sToVal = "", $bSelectShow = false, $size = 10, $bTime = false)
-    {
+    public static function CalendarPeriod(
+        $sFromName,
+        $sToName,
+        $sFromVal = "",
+        $sToVal = "",
+        $bSelectShow = false,
+        $size = 10,
+        $bTime = false
+    ) {
         $arPeriodList = self::InitPeriodList();
 
-        return self::GetPeriodHtml($sFromName, $sToName, $sFromVal, $sToVal, $bSelectShow, $size, $bTime, $arPeriodList);
+        return self::GetPeriodHtml(
+            $sFromName,
+            $sToName,
+            $sFromVal,
+            $sToVal,
+            $bSelectShow,
+            $size,
+            $bTime,
+            $arPeriodList
+        );
     }
 
     /**
@@ -133,8 +180,17 @@ class CAdminCalendar
      * @param string $periodValue
      * @return string
      */
-    private static function GetPeriodHtml($sFromName, $sToName, $sFromVal = "", $sToVal = "", $bSelectShow = false, $size = 10, $bTime = false, $arPeriod, $periodValue = '')
-    {
+    private static function GetPeriodHtml(
+        $sFromName,
+        $sToName,
+        $sFromVal = "",
+        $sToVal = "",
+        $bSelectShow = false,
+        $size = 10,
+        $bTime = false,
+        $arPeriod,
+        $periodValue = ''
+    ) {
         $size = (int)$size;
 
         $s = '
@@ -151,14 +207,18 @@ class CAdminCalendar
                 "next" => GetMessage("admin_lib_calend_next")
             );
 
-            $s .= '<span class="adm-select-wrap adm-calendar-period" ><select class="adm-select adm-calendar-period" id="' . $sFromName . '_calendar_period" name="' . $sPeriodName . '" onchange="BX.CalendarPeriod.OnChangeP(this);" title="' . GetMessage("admin_lib_calend_period_title") . '">';
+            $s .= '<span class="adm-select-wrap adm-calendar-period" ><select class="adm-select adm-calendar-period" id="' . $sFromName . '_calendar_period" name="' . $sPeriodName . '" onchange="BX.CalendarPeriod.OnChangeP(this);" title="' . GetMessage(
+                    "admin_lib_calend_period_title"
+                ) . '">';
 
             $currentPeriod = '';
-            if (isset($GLOBALS[$sPeriodName]))
+            if (isset($GLOBALS[$sPeriodName])) {
                 $currentPeriod = (string)$GLOBALS[$sPeriodName];
+            }
             $periodValue = (string)$periodValue;
-            if ($periodValue != '')
+            if ($periodValue != '') {
                 $currentPeriod = $periodValue;
+            }
             foreach ($arPeriod as $k => $v) {
                 $k = ($k != "NOT_REF" ? $k : "");
                 $s .= '<option value="' . $k . '"' . (($currentPeriod != '' && $currentPeriod == $k) ? " selected" : "") . '>' . $v . '</option>';
@@ -168,11 +228,15 @@ class CAdminCalendar
             $s .= '</select></span>';
 
             $currentDirection = '';
-            if (isset($GLOBALS[$sDirectionName]))
+            if (isset($GLOBALS[$sDirectionName])) {
                 $currentDirection = (string)$GLOBALS[$sDirectionName];
-            $s .= '<span class="adm-select-wrap adm-calendar-direction" style="display: none;"><select class="adm-select adm-calendar-direction" id="' . $sFromName . '_calendar_direct" name="' . $sDirectionName . '" onchange="BX.CalendarPeriod.OnChangeD(this);"  title="' . GetMessage("admin_lib_calend_direct_title") . '">';
-            foreach ($arDirection as $k => $v)
+            }
+            $s .= '<span class="adm-select-wrap adm-calendar-direction" style="display: none;"><select class="adm-select adm-calendar-direction" id="' . $sFromName . '_calendar_direct" name="' . $sDirectionName . '" onchange="BX.CalendarPeriod.OnChangeD(this);"  title="' . GetMessage(
+                    "admin_lib_calend_direct_title"
+                ) . '">';
+            foreach ($arDirection as $k => $v) {
                 $s .= '<option value="' . $k . '"' . ($currentDirection == $k ? " selected" : "") . '>' . $v . '</option>';
+            }
             unset($currentDirection);
 
             $s .= '</select></span>';
@@ -180,19 +244,28 @@ class CAdminCalendar
 
         $s .= '' .
             '<div class="adm-input-wrap adm-calendar-inp adm-calendar-first" style="display: ' . ($bSelectShow ? 'none' : 'inline-block') . ';">' .
-            '<input type="text" class="adm-input adm-calendar-from" id="' . $sFromName . '_calendar_from" name="' . $sFromName . '" size="' . ($size + 5) . '" value="' . htmlspecialcharsbx($sFromVal) . '">' .
-            '<span class="adm-calendar-icon" title="' . GetMessage("admin_lib_calend_title") . '" onclick="BX.calendar({node:this, field:\'' . $sFromName . '\', form: \'\', bTime: ' . ($bTime ? 'true' : 'false') . ', bHideTime: false});"></span>' .
+            '<input type="text" class="adm-input adm-calendar-from" id="' . $sFromName . '_calendar_from" name="' . $sFromName . '" size="' . ($size + 5) . '" value="' . htmlspecialcharsbx(
+                $sFromVal
+            ) . '">' .
+            '<span class="adm-calendar-icon" title="' . GetMessage(
+                "admin_lib_calend_title"
+            ) . '" onclick="BX.calendar({node:this, field:\'' . $sFromName . '\', form: \'\', bTime: ' . ($bTime ? 'true' : 'false') . ', bHideTime: false});"></span>' .
             '</div>
 		<span class="adm-calendar-separate" style="display: ' . ($bSelectShow ? 'none' : 'inline-block') . '"></span>' .
             '<div class="adm-input-wrap adm-calendar-second" style="display: ' . ($bSelectShow ? 'none' : 'inline-block') . ';">' .
-            '<input type="text" class="adm-input adm-calendar-to" id="' . $sToName . '_calendar_to" name="' . $sToName . '" size="' . ($size + 5) . '" value="' . htmlspecialcharsbx($sToVal) . '">' .
-            '<span class="adm-calendar-icon" title="' . GetMessage("admin_lib_calend_title") . '" onclick="BX.calendar({node:this, field:\'' . $sToName . '\', form: \'\', bTime: ' . ($bTime ? 'true' : 'false') . ', bHideTime: false});"></span>' .
+            '<input type="text" class="adm-input adm-calendar-to" id="' . $sToName . '_calendar_to" name="' . $sToName . '" size="' . ($size + 5) . '" value="' . htmlspecialcharsbx(
+                $sToVal
+            ) . '">' .
+            '<span class="adm-calendar-icon" title="' . GetMessage(
+                "admin_lib_calend_title"
+            ) . '" onclick="BX.calendar({node:this, field:\'' . $sToName . '\', form: \'\', bTime: ' . ($bTime ? 'true' : 'false') . ', bHideTime: false});"></span>' .
             '</div>' .
             '<script type="text/javascript">
 			window["' . $sFromName . '_bTime"] = ' . ($bTime ? "true" : "false") . ';';
 
-        if ($bSelectShow)
+        if ($bSelectShow) {
             $s .= 'BX.CalendarPeriod.Init(BX("' . $sFromName . '_calendar_from"), BX("' . $sToName . '_calendar_to"), BX("' . $sFromName . '_calendar_period"));';
+        }
 
         $s .= '
 		</script>

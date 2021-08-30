@@ -151,9 +151,12 @@ class CBitrixSeoOAuthInterface extends CBitrixServiceOAuthInterface
     public function getCampaignList($engine)
     {
         if ($this->getAppID() && $this->getAppSecret() && $engine) {
-            $res = $this->getTransport()->call(CBitrixSeoTransport::METHOD_CAMPAIGN_LIST, array(
-                'engine' => $engine,
-            ));
+            $res = $this->getTransport()->call(
+                CBitrixSeoTransport::METHOD_CAMPAIGN_LIST,
+                array(
+                    'engine' => $engine,
+                )
+            );
 
             if (!isset($res['error'])) {
                 return $res['result'];
@@ -168,10 +171,13 @@ class CBitrixSeoOAuthInterface extends CBitrixServiceOAuthInterface
     public function archiveCampaign($engine, $campaignId)
     {
         if ($this->getAppID() && $this->getAppSecret() && $engine) {
-            $res = $this->getTransport()->call(CBitrixSeoTransport::METHOD_CAMPAIGN_ARCHIVE, array(
-                "engine" => $engine,
-                "campaign" => $campaignId
-            ));
+            $res = $this->getTransport()->call(
+                CBitrixSeoTransport::METHOD_CAMPAIGN_ARCHIVE,
+                array(
+                    "engine" => $engine,
+                    "campaign" => $campaignId
+                )
+            );
 
             if (!isset($res['error'])) {
                 return $res['result'];
@@ -186,10 +192,13 @@ class CBitrixSeoOAuthInterface extends CBitrixServiceOAuthInterface
     public function unArchiveCampaign($engine, $campaignId)
     {
         if ($this->getAppID() && $this->getAppSecret() && $engine) {
-            $res = $this->getTransport()->call(CBitrixSeoTransport::METHOD_CAMPAIGN_UNARCHIVE, array(
-                "engine" => $engine,
-                "campaign" => $campaignId
-            ));
+            $res = $this->getTransport()->call(
+                CBitrixSeoTransport::METHOD_CAMPAIGN_UNARCHIVE,
+                array(
+                    "engine" => $engine,
+                    "campaign" => $campaignId
+                )
+            );
 
             if (!isset($res['error'])) {
                 return $res['result'];
@@ -204,10 +213,13 @@ class CBitrixSeoOAuthInterface extends CBitrixServiceOAuthInterface
     public function resumeCampaign($engine, $campaignId)
     {
         if ($this->getAppID() && $this->getAppSecret() && $engine) {
-            $res = $this->getTransport()->call(CBitrixSeoTransport::METHOD_CAMPAIGN_RESUME, array(
-                "engine" => $engine,
-                "campaign" => $campaignId
-            ));
+            $res = $this->getTransport()->call(
+                CBitrixSeoTransport::METHOD_CAMPAIGN_RESUME,
+                array(
+                    "engine" => $engine,
+                    "campaign" => $campaignId
+                )
+            );
 
             if (!isset($res['error'])) {
                 return $res['result'];
@@ -222,10 +234,13 @@ class CBitrixSeoOAuthInterface extends CBitrixServiceOAuthInterface
     public function stopCampaign($engine, $campaignId)
     {
         if ($this->getAppID() && $this->getAppSecret() && $engine) {
-            $res = $this->getTransport()->call(CBitrixSeoTransport::METHOD_CAMPAIGN_STOP, array(
-                "engine" => $engine,
-                "campaign" => $campaignId
-            ));
+            $res = $this->getTransport()->call(
+                CBitrixSeoTransport::METHOD_CAMPAIGN_STOP,
+                array(
+                    "engine" => $engine,
+                    "campaign" => $campaignId
+                )
+            );
 
             if (!isset($res['error'])) {
                 return $res['result'];
@@ -240,10 +255,13 @@ class CBitrixSeoOAuthInterface extends CBitrixServiceOAuthInterface
     public function deleteCampaign($engine, $campaignId)
     {
         if ($this->getAppID() && $this->getAppSecret() && $engine) {
-            $res = $this->getTransport()->call(CBitrixSeoTransport::METHOD_CAMPAIGN_DELETE, array(
-                "engine" => $engine,
-                "campaign" => $campaignId
-            ));
+            $res = $this->getTransport()->call(
+                CBitrixSeoTransport::METHOD_CAMPAIGN_DELETE,
+                array(
+                    "engine" => $engine,
+                    "campaign" => $campaignId
+                )
+            );
 
             if (!isset($res['error'])) {
                 return $res['result'];
@@ -300,10 +318,13 @@ class CBitrixSeoOAuthInterface extends CBitrixServiceOAuthInterface
     public function getBannerList($engine, $filter)
     {
         if ($this->getAppID() && $this->getAppSecret() && $engine) {
-            $res = $this->getTransport()->call(CBitrixSeoTransport::METHOD_BANNER_LIST, array(
-                'engine' => $engine,
-                'filter' => $filter
-            ));
+            $res = $this->getTransport()->call(
+                CBitrixSeoTransport::METHOD_BANNER_LIST,
+                array(
+                    'engine' => $engine,
+                    'filter' => $filter
+                )
+            );
 
             if (!isset($res['error'])) {
                 return $res['result'];
@@ -318,10 +339,13 @@ class CBitrixSeoOAuthInterface extends CBitrixServiceOAuthInterface
     public function moderateBanners($engine, $filter)
     {
         if ($this->getAppID() && $this->getAppSecret() && $engine) {
-            $res = $this->getTransport()->call(CBitrixSeoTransport::METHOD_BANNER_MODERATE, array(
-                'engine' => $engine,
-                'filter' => $filter
-            ));
+            $res = $this->getTransport()->call(
+                CBitrixSeoTransport::METHOD_BANNER_MODERATE,
+                array(
+                    'engine' => $engine,
+                    'filter' => $filter
+                )
+            );
 
             if (!isset($res['error'])) {
                 return $res['result'];
@@ -336,10 +360,13 @@ class CBitrixSeoOAuthInterface extends CBitrixServiceOAuthInterface
     public function stopBanners($engine, $filter)
     {
         if ($this->getAppID() && $this->getAppSecret() && $engine) {
-            $res = $this->getTransport()->call(CBitrixSeoTransport::METHOD_BANNER_STOP, array(
-                'engine' => $engine,
-                'filter' => $filter
-            ));
+            $res = $this->getTransport()->call(
+                CBitrixSeoTransport::METHOD_BANNER_STOP,
+                array(
+                    'engine' => $engine,
+                    'filter' => $filter
+                )
+            );
 
             if (!isset($res['error'])) {
                 return $res['result'];
@@ -354,10 +381,13 @@ class CBitrixSeoOAuthInterface extends CBitrixServiceOAuthInterface
     public function resumeBanners($engine, $filter)
     {
         if ($this->getAppID() && $this->getAppSecret() && $engine) {
-            $res = $this->getTransport()->call(CBitrixSeoTransport::METHOD_BANNER_RESUME, array(
-                'engine' => $engine,
-                'filter' => $filter
-            ));
+            $res = $this->getTransport()->call(
+                CBitrixSeoTransport::METHOD_BANNER_RESUME,
+                array(
+                    'engine' => $engine,
+                    'filter' => $filter
+                )
+            );
 
             if (!isset($res['error'])) {
                 return $res['result'];
@@ -372,10 +402,13 @@ class CBitrixSeoOAuthInterface extends CBitrixServiceOAuthInterface
     public function archiveBanners($engine, $filter)
     {
         if ($this->getAppID() && $this->getAppSecret() && $engine) {
-            $res = $this->getTransport()->call(CBitrixSeoTransport::METHOD_BANNER_ARCHIVE, array(
-                'engine' => $engine,
-                'filter' => $filter
-            ));
+            $res = $this->getTransport()->call(
+                CBitrixSeoTransport::METHOD_BANNER_ARCHIVE,
+                array(
+                    'engine' => $engine,
+                    'filter' => $filter
+                )
+            );
 
             if (!isset($res['error'])) {
                 return $res['result'];
@@ -390,10 +423,13 @@ class CBitrixSeoOAuthInterface extends CBitrixServiceOAuthInterface
     public function unArchiveBanners($engine, $filter)
     {
         if ($this->getAppID() && $this->getAppSecret() && $engine) {
-            $res = $this->getTransport()->call(CBitrixSeoTransport::METHOD_BANNER_UNARCHIVE, array(
-                'engine' => $engine,
-                'filter' => $filter
-            ));
+            $res = $this->getTransport()->call(
+                CBitrixSeoTransport::METHOD_BANNER_UNARCHIVE,
+                array(
+                    'engine' => $engine,
+                    'filter' => $filter
+                )
+            );
 
             if (!isset($res['error'])) {
                 return $res['result'];
@@ -408,10 +444,13 @@ class CBitrixSeoOAuthInterface extends CBitrixServiceOAuthInterface
     public function deleteBanners($engine, $filter)
     {
         if ($this->getAppID() && $this->getAppSecret() && $engine) {
-            $res = $this->getTransport()->call(CBitrixSeoTransport::METHOD_BANNER_DELETE, array(
-                'engine' => $engine,
-                'filter' => $filter
-            ));
+            $res = $this->getTransport()->call(
+                CBitrixSeoTransport::METHOD_BANNER_DELETE,
+                array(
+                    'engine' => $engine,
+                    'filter' => $filter
+                )
+            );
 
             if (!isset($res['error'])) {
                 return $res['result'];
@@ -426,9 +465,12 @@ class CBitrixSeoOAuthInterface extends CBitrixServiceOAuthInterface
     public function getRegions($engine)
     {
         if ($this->getAppID() && $this->getAppSecret() && $engine) {
-            $res = $this->getTransport()->call(CBitrixSeoTransport::METHOD_REGION_GET, array(
-                'engine' => $engine
-            ));
+            $res = $this->getTransport()->call(
+                CBitrixSeoTransport::METHOD_REGION_GET,
+                array(
+                    'engine' => $engine
+                )
+            );
 
             if (!isset($res['error'])) {
                 return $res['result'];
@@ -448,9 +490,12 @@ class CBitrixSeoOAuthInterface extends CBitrixServiceOAuthInterface
     public function getClientsSettings($engine)
     {
         if ($this->getAppID() && $this->getAppSecret() && $engine) {
-            $res = $this->getTransport()->call(CBitrixSeoTransport::METHOD_CLIENTS_GET, array(
-                'engine' => $engine
-            ));
+            $res = $this->getTransport()->call(
+                CBitrixSeoTransport::METHOD_CLIENTS_GET,
+                array(
+                    'engine' => $engine
+                )
+            );
 
             if (!isset($res['error'])) {
                 return $res['result'];
@@ -466,10 +511,13 @@ class CBitrixSeoOAuthInterface extends CBitrixServiceOAuthInterface
     public function createWordstatReport($engine, $queryData)
     {
         if ($this->getAppID() && $this->getAppSecret() && $engine) {
-            $res = $this->getTransport()->call(CBitrixSeoTransport::METHOD_REPORT_WORDSTAT_CREATE, array(
-                'engine' => $engine,
-                'query' => $queryData,
-            ));
+            $res = $this->getTransport()->call(
+                CBitrixSeoTransport::METHOD_REPORT_WORDSTAT_CREATE,
+                array(
+                    'engine' => $engine,
+                    'query' => $queryData,
+                )
+            );
 
             if (!isset($res['error'])) {
                 return $res['result'];
@@ -484,10 +532,13 @@ class CBitrixSeoOAuthInterface extends CBitrixServiceOAuthInterface
     public function deleteWordstatReport($engine, $reportId)
     {
         if ($this->getAppID() && $this->getAppSecret() && $engine) {
-            $res = $this->getTransport()->call(CBitrixSeoTransport::METHOD_REPORT_WORDSTAT_DELETE, array(
-                'engine' => $engine,
-                'reportId' => $reportId,
-            ));
+            $res = $this->getTransport()->call(
+                CBitrixSeoTransport::METHOD_REPORT_WORDSTAT_DELETE,
+                array(
+                    'engine' => $engine,
+                    'reportId' => $reportId,
+                )
+            );
 
             if (!isset($res['error'])) {
                 return $res['result'];
@@ -502,10 +553,13 @@ class CBitrixSeoOAuthInterface extends CBitrixServiceOAuthInterface
     public function getWordstatReport($engine, $reportId)
     {
         if ($this->getAppID() && $this->getAppSecret() && $engine) {
-            $res = $this->getTransport()->call(CBitrixSeoTransport::METHOD_REPORT_WORDSTAT_GET, array(
-                'engine' => $engine,
-                'reportId' => $reportId,
-            ));
+            $res = $this->getTransport()->call(
+                CBitrixSeoTransport::METHOD_REPORT_WORDSTAT_GET,
+                array(
+                    'engine' => $engine,
+                    'reportId' => $reportId,
+                )
+            );
 
             if (!isset($res['error'])) {
                 return $res['result'];
@@ -520,9 +574,12 @@ class CBitrixSeoOAuthInterface extends CBitrixServiceOAuthInterface
     public function getWordstatReportList($engine)
     {
         if ($this->getAppID() && $this->getAppSecret() && $engine) {
-            $res = $this->getTransport()->call(CBitrixSeoTransport::METHOD_REPORT_WORDSTAT_LIST, array(
-                'engine' => $engine,
-            ));
+            $res = $this->getTransport()->call(
+                CBitrixSeoTransport::METHOD_REPORT_WORDSTAT_LIST,
+                array(
+                    'engine' => $engine,
+                )
+            );
 
             if (!isset($res['error'])) {
                 return $res['result'];
@@ -537,10 +594,13 @@ class CBitrixSeoOAuthInterface extends CBitrixServiceOAuthInterface
     public function createForecastReport($engine, $queryData)
     {
         if ($this->getAppID() && $this->getAppSecret() && $engine) {
-            $res = $this->getTransport()->call(CBitrixSeoTransport::METHOD_REPORT_FORECAST_CREATE, array(
-                'engine' => $engine,
-                'query' => $queryData,
-            ));
+            $res = $this->getTransport()->call(
+                CBitrixSeoTransport::METHOD_REPORT_FORECAST_CREATE,
+                array(
+                    'engine' => $engine,
+                    'query' => $queryData,
+                )
+            );
 
             if (!isset($res['error'])) {
                 return $res['result'];
@@ -555,10 +615,13 @@ class CBitrixSeoOAuthInterface extends CBitrixServiceOAuthInterface
     public function deleteForecastReport($engine, $reportId)
     {
         if ($this->getAppID() && $this->getAppSecret() && $engine) {
-            $res = $this->getTransport()->call(CBitrixSeoTransport::METHOD_REPORT_FORECAST_DELETE, array(
-                'engine' => $engine,
-                'reportId' => $reportId,
-            ));
+            $res = $this->getTransport()->call(
+                CBitrixSeoTransport::METHOD_REPORT_FORECAST_DELETE,
+                array(
+                    'engine' => $engine,
+                    'reportId' => $reportId,
+                )
+            );
 
             if (!isset($res['error'])) {
                 return $res['result'];
@@ -573,10 +636,13 @@ class CBitrixSeoOAuthInterface extends CBitrixServiceOAuthInterface
     public function getForecastReport($engine, $reportId)
     {
         if ($this->getAppID() && $this->getAppSecret() && $engine) {
-            $res = $this->getTransport()->call(CBitrixSeoTransport::METHOD_REPORT_FORECAST_GET, array(
-                'engine' => $engine,
-                'reportId' => $reportId,
-            ));
+            $res = $this->getTransport()->call(
+                CBitrixSeoTransport::METHOD_REPORT_FORECAST_GET,
+                array(
+                    'engine' => $engine,
+                    'reportId' => $reportId,
+                )
+            );
 
             if (!isset($res['error'])) {
                 return $res['result'];
@@ -591,9 +657,12 @@ class CBitrixSeoOAuthInterface extends CBitrixServiceOAuthInterface
     public function getForecastReportList($engine)
     {
         if ($this->getAppID() && $this->getAppSecret() && $engine) {
-            $res = $this->getTransport()->call(CBitrixSeoTransport::METHOD_REPORT_FORECAST_LIST, array(
-                'engine' => $engine,
-            ));
+            $res = $this->getTransport()->call(
+                CBitrixSeoTransport::METHOD_REPORT_FORECAST_LIST,
+                array(
+                    'engine' => $engine,
+                )
+            );
 
             if (!isset($res['error'])) {
                 return $res['result'];
@@ -608,10 +677,13 @@ class CBitrixSeoOAuthInterface extends CBitrixServiceOAuthInterface
     public function getBannerStats($engine, array $params)
     {
         if ($this->getAppID() && $this->getAppSecret() && $engine) {
-            $res = $this->getTransport()->call(CBitrixSeoTransport::METHOD_STAT_GET, array(
-                'engine' => $engine,
-                'params' => $params,
-            ));
+            $res = $this->getTransport()->call(
+                CBitrixSeoTransport::METHOD_STAT_GET,
+                array(
+                    'engine' => $engine,
+                    'params' => $params,
+                )
+            );
 
             if (!isset($res['error'])) {
                 return $res['result'];

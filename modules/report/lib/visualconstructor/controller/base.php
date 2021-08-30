@@ -32,9 +32,12 @@ abstract class Base extends Controller
 
 
             for ($i = 0; $i < $traceLength && $i < 3; $i++) {
-                $this->addError(new Error('#' . $i . ' ' . $trace[$i]['file'] . ':' . $trace[$i]['line'] . '  ' . $trace[$i]['function']));
+                $this->addError(
+                    new Error(
+                        '#' . $i . ' ' . $trace[$i]['file'] . ':' . $trace[$i]['line'] . '  ' . $trace[$i]['function']
+                    )
+                );
             }
-
         }
     }
 }

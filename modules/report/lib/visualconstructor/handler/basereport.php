@@ -71,12 +71,17 @@ abstract class BaseReport extends BaseHandler implements IReportData
             $mainContainer->addInlineStyle('background-color', $this->getConfiguration('color')->getValue() . '5f');
         } else {
             $reportHandlersCount = count($this->getWidgetHandler()->getReportHandlers());
-            $mainContainer->addInlineStyle('background-color', $this->getView()->getReportDefaultColor($reportHandlersCount) . '5f');
+            $mainContainer->addInlineStyle(
+                'background-color',
+                $this->getView()->getReportDefaultColor($reportHandlersCount) . '5f'
+            );
         }
         $mainContainer->addClass('report-configuration-main');
-        $mainContainer->addAssets(array(
-            'css' => array('/bitrix/js/report/css/visualconstructor/configmain.css')
-        ));
+        $mainContainer->addAssets(
+            array(
+                'css' => array('/bitrix/js/report/css/visualconstructor/configmain.css')
+            )
+        );
         $this->addFormElement($mainContainer->start());
         $fieldListContainer = new Div();
         $fieldListContainer->setKey('field_list_container');
@@ -90,13 +95,19 @@ abstract class BaseReport extends BaseHandler implements IReportData
         $categorySelectField = $this->getReportHandlerCategoryField();
         $reportHandlerSelectField = $this->getReportHandlerSelectField($categorySelectField->getValue());
 
-        $reportHandlerSelectField->addJsEventListener($categorySelectField, $categorySelectField::JS_EVENT_ON_CHANGE, array(
-            'class' => 'BX.Report.VisualConstructor.FieldEventHandlers.ReportHandlerSelect',
-            'action' => 'categorySelected'
-        ));
-        $reportHandlerSelectField->addAssets(array(
-            'js' => array('/bitrix/js/report/js/visualconstructor/fields/reporthandlerselect.js')
-        ));
+        $reportHandlerSelectField->addJsEventListener(
+            $categorySelectField,
+            $categorySelectField::JS_EVENT_ON_CHANGE,
+            array(
+                'class' => 'BX.Report.VisualConstructor.FieldEventHandlers.ReportHandlerSelect',
+                'action' => 'categorySelected'
+            )
+        );
+        $reportHandlerSelectField->addAssets(
+            array(
+                'js' => array('/bitrix/js/report/js/visualconstructor/fields/reporthandlerselect.js')
+            )
+        );
 
         $this->addFormElement($reportHandlerSelectContainer->start());
         $this->addFormElement($categorySelectField);
@@ -106,19 +117,26 @@ abstract class BaseReport extends BaseHandler implements IReportData
 
         $viewCompatibleDataType = $this->getView()->getCompatibleDataType();
 
-        if (in_array($viewCompatibleDataType, array(
-            Common::MULTIPLE_REPORT_TYPE,
-            Common::MULTIPLE_GROUPED_REPORT_TYPE,
-            Common::MULTIPLE_BI_GROUPED_REPORT_TYPE,
-        ))) {
+        if (in_array(
+            $viewCompatibleDataType,
+            array(
+                Common::MULTIPLE_REPORT_TYPE,
+                Common::MULTIPLE_GROUPED_REPORT_TYPE,
+                Common::MULTIPLE_BI_GROUPED_REPORT_TYPE,
+            )
+        )) {
             $groupingField = $this->getGroupingField($whatWillCalculateField);
             $this->addFormElement($groupingField);
             $widgetHandler = $this->getWidgetHandler();
             $previewBlock = $widgetHandler->getFormElement('view_type');
-            $previewBlock->addJsEventListener($groupingField, $groupingField::JS_EVENT_ON_CHANGE, array(
-                'class' => 'BX.Report.VisualConstructor.FieldEventHandlers.PreviewBlock',
-                'action' => 'reloadWidgetPreview'
-            ));
+            $previewBlock->addJsEventListener(
+                $groupingField,
+                $groupingField::JS_EVENT_ON_CHANGE,
+                array(
+                    'class' => 'BX.Report.VisualConstructor.FieldEventHandlers.PreviewBlock',
+                    'action' => 'reloadWidgetPreview'
+                )
+            );
         }
 
         $this->addFormElement($reportHandlerSelectContainer->end());
@@ -156,13 +174,19 @@ abstract class BaseReport extends BaseHandler implements IReportData
         $groupingField = new CustomDropDown('groupingBy');
         $groupingField->setLabel(Loc::getMessage('BASE_REPORT_HANDLER_GROUPING'));
         $groupingField->addOptions($this->getGroupByOptions());
-        $whatWillCalculateField->addJsEventListener($groupingField, $groupingField::JS_EVENT_ON_CHANGE, array(
-            'class' => 'BX.Report.VisualConstructor.FieldEventHandlers.WhatWillCalculate',
-            'action' => 'reloadCompatibleCalculatedTypes',
-        ));
-        $whatWillCalculateField->addAssets(array(
-            'js' => array('/bitrix/js/report/js/visualconstructor/fields/whatwillcalculate.js')
-        ));
+        $whatWillCalculateField->addJsEventListener(
+            $groupingField,
+            $groupingField::JS_EVENT_ON_CHANGE,
+            array(
+                'class' => 'BX.Report.VisualConstructor.FieldEventHandlers.WhatWillCalculate',
+                'action' => 'reloadCompatibleCalculatedTypes',
+            )
+        );
+        $whatWillCalculateField->addAssets(
+            array(
+                'js' => array('/bitrix/js/report/js/visualconstructor/fields/whatwillcalculate.js')
+            )
+        );
 
         return $groupingField;
     }
@@ -279,7 +303,6 @@ abstract class BaseReport extends BaseHandler implements IReportData
      */
     public function setReport($report)
     {
-
         $this->report = $report;
     }
 
@@ -324,7 +347,8 @@ abstract class BaseReport extends BaseHandler implements IReportData
         $configurations = $this->getConfigurations();
         if (!empty($configurations)) {
             foreach ($configurations as $configuration) {
-                if (isset($formElements[$configuration->getKey()]) && ($formElements[$configuration->getKey()] instanceof BaseValuable)) {
+                if (isset($formElements[$configuration->getKey()]) && ($formElements[$configuration->getKey(
+                        )] instanceof BaseValuable)) {
                     /** @var BaseValuable[] $formElements */
                     $formElements[$configuration->getKey()]->setValue($configuration->getValue());
                 }
@@ -401,13 +425,19 @@ abstract class BaseReport extends BaseHandler implements IReportData
         $selectField = new CustomDropDown('reportHandler');
         $selectField->addDataAttribute('field-type', 'report-handler-class');
         $selectField->setLabel(Loc::getMessage('SELECT_DATA_PROVIDER'));
-        $selectField->addJsEventListener($selectField, $selectField::JS_EVENT_ON_CHANGE, array(
-            'class' => 'BX.Report.VisualConstructor.FieldEventHandlers.ReportHandlerSelect',
-            'action' => 'reportHandlerSelected',
-        ));
-        $selectField->addAssets(array(
-            'js' => array('/bitrix/js/report/js/visualconstructor/fields/reporthandlerselect.js')
-        ));
+        $selectField->addJsEventListener(
+            $selectField,
+            $selectField::JS_EVENT_ON_CHANGE,
+            array(
+                'class' => 'BX.Report.VisualConstructor.FieldEventHandlers.ReportHandlerSelect',
+                'action' => 'reportHandlerSelected',
+            )
+        );
+        $selectField->addAssets(
+            array(
+                'js' => array('/bitrix/js/report/js/visualconstructor/fields/reporthandlerselect.js')
+            )
+        );
 
         $reports = new ReportProvider();
         $reports->addFilter('dataType', $this->getView()->getCompatibleDataType());

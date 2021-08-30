@@ -50,9 +50,11 @@ class Dashboard
         $dashboardIds = array();
         foreach ($dashboards as $dashboard) {
             $cellId = 'cell_' . randString(4);
-            $row = Row::getRowDefaultEntity(array(
-                'cellIds' => array($cellId)
-            ));
+            $row = Row::getRowDefaultEntity(
+                array(
+                    'cellIds' => array($cellId)
+                )
+            );
             $widget->setWeight($cellId);
             $widget->setBoardId($boardKey);
             $row->addWidgets($widget->getCopyForCurrentUser());
@@ -121,7 +123,6 @@ class Dashboard
             if (self::getBoardCustomDefaultModeIsDemo($boardKey) != $demo) {
                 self::setBoardCustomDefaultModeIsDemo($boardKey, $demo);
             }
-
         } else {
             self::setBoardCustomDefaultModeIsDemo($boardKey, $demo);
         }
@@ -130,7 +131,7 @@ class Dashboard
     private static function setBoardCustomDefaultModeIsDemo($boardKey, $demo = false)
     {
         $modes = Option::get('report', 'BOARD_CUSTOM_DEFAULT_MODES', serialize(array()));
-        $modes = unserialize($modes);
+        $modes = unserialize($modes, ['allowed_classes' => false]);
         $modes[$boardKey] = $demo ? 1 : 0;
         Option::set('report', 'BOARD_CUSTOM_DEFAULT_MODES', serialize($modes));
     }
@@ -138,14 +139,14 @@ class Dashboard
     private static function checkBoardCustomDefaultModeIsExist($boardKey)
     {
         $modes = Option::get('report', 'BOARD_CUSTOM_DEFAULT_MODES', serialize(array()));
-        $modes = unserialize($modes);
+        $modes = unserialize($modes, ['allowed_classes' => false]);
         return isset($modes[$boardKey]);
     }
 
     private static function getBoardCustomDefaultModeIsDemo($boardKey)
     {
         $modes = Option::get('report', 'BOARD_CUSTOM_DEFAULT_MODES', serialize(array()));
-        $modes = unserialize($modes);
+        $modes = unserialize($modes, ['allowed_classes' => false]);
         return !empty($modes[$boardKey]);
     }
 

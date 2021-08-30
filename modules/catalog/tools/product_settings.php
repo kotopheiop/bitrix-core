@@ -1,5 +1,6 @@
 <?
 /** @global CUser $USER */
+
 /** @global CMain $APPLICATION */
 define('STOP_STATISTICS', true);
 define('NO_AGENT_CHECK', true);
@@ -20,8 +21,9 @@ $settingIds = array(
     'default_subscribe'
 );
 $settings = array();
-foreach ($settingIds as $id)
+foreach ($settingIds as $id) {
     $settings[$id] = (string)Main\Config\Option::get('catalog', $id);
+}
 unset($id);
 
 if (!$USER->CanDoOperation('catalog_settings')) {
@@ -86,16 +88,18 @@ if (
     $newSettings = $settings;
     foreach ($settingIds as $id) {
         $newValue = (string)$request[$id];
-        if ($newValue == 'Y' || $newValue == 'N')
+        if ($newValue == 'Y' || $newValue == 'N') {
             $newSettings[$id] = $newValue;
+        }
         unset($newValue);
     }
     unset($id);
 
     foreach ($newSettings as $id => $value) {
         Main\Config\Option::set('catalog', $id, $value, '');
-        if ($id === 'default_can_buy_zero')
+        if ($id === 'default_can_buy_zero') {
             Main\Config\Option::set('catalog', 'allow_negative_amount', $value, '');
+        }
     }
     unset($id, $value);
 
@@ -118,8 +122,9 @@ if (
 ) {
     $iblockList = $request['iblockList'];
     if (!empty($iblockList) && is_array($iblockList)) {
-        foreach ($iblockList as $iblock)
+        foreach ($iblockList as $iblock) {
             CIBlock::clearIblockTagCache($iblock);
+        }
         unset($iblock);
     }
     require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin_after.php');
@@ -135,18 +140,26 @@ if (
     }
 
     $tabList = array(
-        array('DIV' => 'productSettingsTab01', 'TAB' => Loc::getMessage('BX_CATALOG_PRODUCT_SETTINGS_TAB'), 'ICON' => 'sale', 'TITLE' => Loc::getMessage('BX_CATALOG_PRODUCT_SETTINGS_TAB_TITLE'))
+        array(
+            'DIV' => 'productSettingsTab01',
+            'TAB' => Loc::getMessage('BX_CATALOG_PRODUCT_SETTINGS_TAB'),
+            'ICON' => 'sale',
+            'TITLE' => Loc::getMessage('BX_CATALOG_PRODUCT_SETTINGS_TAB_TITLE')
+        )
     );
     $tabControl = new CAdminTabControl('productSettings', $tabList, true, true);
-    if ($_REQUEST["public_mode"] == "Y")
+    if ($_REQUEST["public_mode"] == "Y") {
         $tabControl->SetPublicMode();
+    }
     Main\Page\Asset::getInstance()->addJs('/bitrix/js/catalog/step_operations.js');
 
     ?>
     <div id="product_settings_error_div" style="margin:0; display: none;">
         <div class="adm-info-message-wrap adm-info-message-red">
             <div class="adm-info-message">
-                <div class="adm-info-message-title"><? echo Loc::getMessage('SALE_DISCOUNT_REINDEX_ERRORS_TITLE'); ?></div>
+                <div class="adm-info-message-title"><? echo Loc::getMessage(
+                        'SALE_DISCOUNT_REINDEX_ERRORS_TITLE'
+                    ); ?></div>
                 <div id="product_settings_error_cont"></div>
                 <div class="adm-info-message-icon"></div>
             </div>
@@ -158,30 +171,32 @@ if (
         $tabControl->BeginNextTab();
         ?>
         <tr>
-            <td width="40%"><label
-                        for="default_quantity_trace"><? echo Loc::getMessage("BX_CATALOG_PRODUCT_SETTINGS_ENABLE_QUANTITY_TRACE"); ?></label>
-            </td>
+            <td width="40%"><label for="default_quantity_trace"><? echo Loc::getMessage(
+                        "BX_CATALOG_PRODUCT_SETTINGS_ENABLE_QUANTITY_TRACE"
+                    ); ?></label></td>
             <td width="60%">
                 <input type="checkbox" name="default_quantity_trace" id="quantity_trace"
                        value="Y"<? echo($settings['default_quantity_trace'] === 'Y' ? ' checked' : ''); ?>>
             </td>
         </tr>
         <tr>
-            <td width="40%"><label
-                        for="default_can_buy_zero"><? echo Loc::getMessage("BX_CATALOG_PRODUCT_SETTINGS_ALLOW_CAN_BUY_ZERO"); ?></label>
-            </td>
+            <td width="40%"><label for="default_can_buy_zero"><? echo Loc::getMessage(
+                        "BX_CATALOG_PRODUCT_SETTINGS_ALLOW_CAN_BUY_ZERO"
+                    ); ?></label></td>
             <td width="60%">
                 <input type="checkbox" name="default_can_buy_zero" id="can_buy_zero"
                        value="Y"<? echo($settings['default_can_buy_zero'] === 'Y' ? ' checked' : ''); ?>>
             </td>
         </tr>
         <tr>
-            <td width="40%"><label
-                        for="default_subscribe"><? echo Loc::getMessage("BX_CATALOG_PRODUCT_SETTINGS_PRODUCT_SUBSCRIBE"); ?></label>
-            </td>
+            <td width="40%"><label for="default_subscribe"><? echo Loc::getMessage(
+                        "BX_CATALOG_PRODUCT_SETTINGS_PRODUCT_SUBSCRIBE"
+                    ); ?></label></td>
             <td width="60%">
                 <input type="checkbox" name="default_subscribe" id="subscribe"
-                       value="Y"<? if ($settings['default_subscribe'] === 'Y') echo " checked"; ?>>
+                       value="Y"<? if ($settings['default_subscribe'] === 'Y') {
+                    echo " checked";
+                } ?>>
             </td>
         </tr>
         <tr>
@@ -234,7 +249,11 @@ if (
     );
     ?>
     <script type="text/javascript">
-        var jsProductSettings = new BX.Catalog.ProductSettings(<? echo CUtil::PhpToJSObject($jsParams, false, true); ?>);
+        var jsProductSettings = new BX.Catalog.ProductSettings(<? echo CUtil::PhpToJSObject(
+            $jsParams,
+            false,
+            true
+        ); ?>);
     </script>
     <?
     if ($_REQUEST["public_mode"] != "Y") {

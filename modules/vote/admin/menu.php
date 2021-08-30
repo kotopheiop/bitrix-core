@@ -1,37 +1,43 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 $rights = $APPLICATION->GetGroupRight("vote");
-if ($rights == "D")
+if ($rights == "D") {
     return false;
+}
 $menuResults1 = array();
 if (CModule::IncludeModule('vote')) {
-    $db_res = \Bitrix\Vote\Channel::getList(array(
-        'select' => array("*"),
-        'filter' => ($rights < "W" ? array(
-            "ACTIVE" => "Y",
-            "HIDDEN" => "N",
-            ">PERMISSION.PERMISSION" => 1,
-            "PERMISSION.GROUP_ID" => $USER->GetUserGroupArray()
-        ) : array()),
-        'order' => array(
-            'TITLE' => 'ASC'
-        ),
-        'group' => array("ID")
-    ));
-    if (($arChannel = $db_res->fetch()) && $arChannel) {
-        $db_res2 = \Bitrix\Vote\Channel::getList(array(
+    $db_res = \Bitrix\Vote\Channel::getList(
+        array(
             'select' => array("*"),
             'filter' => ($rights < "W" ? array(
                 "ACTIVE" => "Y",
                 "HIDDEN" => "N",
-                ">=PERMISSION.PERMISSION" => 4,
+                ">PERMISSION.PERMISSION" => 1,
                 "PERMISSION.GROUP_ID" => $USER->GetUserGroupArray()
             ) : array()),
             'order' => array(
                 'TITLE' => 'ASC'
             ),
             'group' => array("ID")
-        ));
+        )
+    );
+    if (($arChannel = $db_res->fetch()) && $arChannel) {
+        $db_res2 = \Bitrix\Vote\Channel::getList(
+            array(
+                'select' => array("*"),
+                'filter' => ($rights < "W" ? array(
+                    "ACTIVE" => "Y",
+                    "HIDDEN" => "N",
+                    ">=PERMISSION.PERMISSION" => 4,
+                    "PERMISSION.GROUP_ID" => $USER->GetUserGroupArray()
+                ) : array()),
+                'order' => array(
+                    'TITLE' => 'ASC'
+                ),
+                'group' => array("ID")
+            )
+        );
         $channels = array();
         while ($res = $db_res2->fetch()) {
             $channels[$res["ID"]] = $res;
@@ -53,18 +59,26 @@ if (CModule::IncludeModule('vote')) {
             if (method_exists($this, "IsSectionActive") &&
                 ($this->IsSectionActive("vote_channel_" . $arChannel["ID"]) ||
                     $this->IsSectionActive("menu_vote_channels"))) {
-                $dbRes = \Bitrix\Vote\VoteTable::getList(array(
-                    "select" => array("ID", "TITLE"),
-                    "filter" => array("CHANNEL_ID" => $arChannel["ID"]),
-                    "order" => array("ID" => "DESC"),
-                    "limit" => 50));
+                $dbRes = \Bitrix\Vote\VoteTable::getList(
+                    array(
+                        "select" => array("ID", "TITLE"),
+                        "filter" => array("CHANNEL_ID" => $arChannel["ID"]),
+                        "order" => array("ID" => "DESC"),
+                        "limit" => 50
+                    )
+                );
                 while ($row = $dbRes->fetch()) {
                     $menuChannel1["items"][] = array(
                         "items_id" => "vote_item_" . $row['ID'],
                         "text" => htmlspecialcharsEx($row["TITLE"]),
-                        "title" => GetMessage("VOTE_MENU_POLL_DESCRIPTION") . '\'' . htmlspecialcharsEx($row["TITLE"]) . '\'',
+                        "title" => GetMessage("VOTE_MENU_POLL_DESCRIPTION") . '\'' . htmlspecialcharsEx(
+                                $row["TITLE"]
+                            ) . '\'',
                         "module_id" => "vote",
-                        "url" => (array_key_exists($arChannel["ID"], $channels) ? "vote_edit.php?lang=" . LANGUAGE_ID . "&ID=" . $row['ID'] : "vote_results.php?lang=" . LANGUAGE_ID . "&VOTE_ID=" . $row['ID']),
+                        "url" => (array_key_exists(
+                            $arChannel["ID"],
+                            $channels
+                        ) ? "vote_edit.php?lang=" . LANGUAGE_ID . "&ID=" . $row['ID'] : "vote_results.php?lang=" . LANGUAGE_ID . "&VOTE_ID=" . $row['ID']),
                         "more_url" => Array(
                             "vote_edit.php?lang=" . LANGUAGE_ID . "&COPY_ID=" . $row['ID'],
                             "vote_question_list.php?lang=" . LANGUAGE_ID . "&VOTE_ID=" . $row['ID'],
@@ -112,7 +126,7 @@ $aMenu = array(
         )
     )
 );
-if ($rights >= "W")
+if ($rights >= "W") {
     $aMenu["items"][] = array(
         "text" => GetMessage("VOTE_MENU_ADDITIONAL"),
         "title" => "",
@@ -138,5 +152,6 @@ if ($rights >= "W")
             )
         ),
     );
+}
 return $aMenu;
 ?>

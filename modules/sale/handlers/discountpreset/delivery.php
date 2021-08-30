@@ -129,15 +129,25 @@ class Delivery extends SelectProductPreset
 			<table width="100%" border="0" cellspacing="7" cellpadding="0">
 				<tbody>
 				<tr>
-					<td class="adm-detail-content-cell-l" style="width:40%;"><strong>' . Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_SHIPMENT_DELIVERY_ORDER_AMOUNT') . ':</strong></td>
+					<td class="adm-detail-content-cell-l" style="width:40%;"><strong>' . Loc::getMessage(
+                'SALE_HANDLERS_DISCOUNTPRESET_SHIPMENT_DELIVERY_ORDER_AMOUNT'
+            ) . ':</strong></td>
 					<td class="adm-detail-content-cell-r" style="width:60%;">
-						<input type="text" name="discount_order_amount" value="' . htmlspecialcharsbx($state->get('discount_order_amount')) . '" size="39" maxlength="100" style="width: 100px;"> <span>' . $currency . '</span>
+						<input type="text" name="discount_order_amount" value="' . htmlspecialcharsbx(
+                $state->get('discount_order_amount')
+            ) . '" size="39" maxlength="100" style="width: 100px;"> <span>' . $currency . '</span>
 					</td>
 				</tr>' . $this->renderDiscountValue($state, $currency) . ' 
 				<tr>
-					<td class="adm-detail-content-cell-l" style="width:40%;"><strong>' . Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_SHIPMENT_DELIVERY_LABEL') . ':</strong></td>
+					<td class="adm-detail-content-cell-l" style="width:40%;"><strong>' . Loc::getMessage(
+                'SALE_HANDLERS_DISCOUNTPRESET_SHIPMENT_DELIVERY_LABEL'
+            ) . ':</strong></td>
 					<td class="adm-detail-content-cell-r">
-						' . HtmlHelper::generateSelect('discount_delivery', $forSelectData, $state->get('discount_delivery')) . '
+						' . HtmlHelper::generateSelect(
+                'discount_delivery',
+                $forSelectData,
+                $state->get('discount_delivery')
+            ) . '
 					</td>
 				</tr>
 				</tbody>
@@ -151,11 +161,17 @@ class Delivery extends SelectProductPreset
 			<tr>
 				<td class="adm-detail-content-cell-l" style="width:40%;"><strong>' . $this->getLabelDiscountValue() . ':</strong></td>
 				<td class="adm-detail-content-cell-r" style="width:60%;">
-					<input type="text" name="discount_value" value="' . htmlspecialcharsbx($state->get('discount_value')) . '" maxlength="100" style="width: 100px;"> '
-            . HtmlHelper::generateSelect('discount_type', array(
-                'Perc' => Loc::getMessage('SHD_BT_SALE_ACT_GROUP_BASKET_SELECT_PERCENT'),
-                'Cur' => $currency,
-            ), $state->get('discount_type')) . '
+					<input type="text" name="discount_value" value="' . htmlspecialcharsbx(
+                $state->get('discount_value')
+            ) . '" maxlength="100" style="width: 100px;"> '
+            . HtmlHelper::generateSelect(
+                'discount_type',
+                array(
+                    'Perc' => Loc::getMessage('SHD_BT_SALE_ACT_GROUP_BASKET_SELECT_PERCENT'),
+                    'Cur' => $currency,
+                ),
+                $state->get('discount_type')
+            ) . '
 				</td>
 			</tr>		
 		';
@@ -211,48 +227,51 @@ class Delivery extends SelectProductPreset
 
     public function generateDiscount(State $state)
     {
-        return array_merge(parent::generateDiscount($state), array(
-            'CONDITIONS' => array(
-                'CLASS_ID' => 'CondGroup',
-                'DATA' => array(
-                    'All' => 'AND',
-                    'True' => 'True',
-                ),
-                'CHILDREN' => array(
-                    array(
-                        'CLASS_ID' => 'CondBsktAmtGroup',
-                        'DATA' => array(
-                            'logic' => 'EqGr',
-                            'Value' => $state->get('discount_order_amount'),
-                            'All' => 'AND',
-                        ),
-                        'CHILDREN' => array(),
+        return array_merge(
+            parent::generateDiscount($state),
+            array(
+                'CONDITIONS' => array(
+                    'CLASS_ID' => 'CondGroup',
+                    'DATA' => array(
+                        'All' => 'AND',
+                        'True' => 'True',
                     ),
-                    array(
-                        'CLASS_ID' => 'CondSaleDelivery',
-                        'DATA' => array(
-                            'logic' => 'Equal',
-                            'value' => array((int)$state->get('discount_delivery')),
+                    'CHILDREN' => array(
+                        array(
+                            'CLASS_ID' => 'CondBsktAmtGroup',
+                            'DATA' => array(
+                                'logic' => 'EqGr',
+                                'Value' => $state->get('discount_order_amount'),
+                                'All' => 'AND',
+                            ),
+                            'CHILDREN' => array(),
                         ),
-                    ),
-                ),
-            ),
-            'ACTIONS' => array(
-                'CLASS_ID' => 'CondGroup',
-                'DATA' => array(
-                    'All' => 'AND',
-                ),
-                'CHILDREN' => array(
-                    array(
-                        'CLASS_ID' => 'ActSaleDelivery',
-                        'DATA' => array(
-                            'Type' => $this->getTypeOfDiscount(),
-                            'Value' => $state->get('discount_value'),
-                            'Unit' => $state->get('discount_type', 'Cur'),
+                        array(
+                            'CLASS_ID' => 'CondSaleDelivery',
+                            'DATA' => array(
+                                'logic' => 'Equal',
+                                'value' => array((int)$state->get('discount_delivery')),
+                            ),
                         ),
                     ),
                 ),
-            ),
-        ));
+                'ACTIONS' => array(
+                    'CLASS_ID' => 'CondGroup',
+                    'DATA' => array(
+                        'All' => 'AND',
+                    ),
+                    'CHILDREN' => array(
+                        array(
+                            'CLASS_ID' => 'ActSaleDelivery',
+                            'DATA' => array(
+                                'Type' => $this->getTypeOfDiscount(),
+                                'Value' => $state->get('discount_value'),
+                                'Unit' => $state->get('discount_type', 'Cur'),
+                            ),
+                        ),
+                    ),
+                ),
+            )
+        );
     }
 }

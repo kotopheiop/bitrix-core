@@ -51,7 +51,6 @@ final class ContentViewHandler
 
         $subTagList = array();
         if ($contentTypeId == self::CONTENT_TYPE_ID_COMMENT) {
-
         }
 
         if (!empty($subTagList)) {

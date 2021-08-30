@@ -39,7 +39,7 @@ class Service
     const SERVICE_AUTH_CACHE_ID = 'seo|service_auth';
 
     const CLIENT_LIST_CACHE_TLL = 86400;
-    const CLIENT_LIST_CACHE_ID = 'seo|client_list';
+    const CLIENT_LIST_CACHE_ID = 'seo|client_list|2';
 
     const  CLIENT_TYPE_SINGLE = 'S';
     const  CLIENT_TYPE_MULTIPLE = 'M';
@@ -120,9 +120,12 @@ class Service
             }
         }
         if ($engineCode) {
-            return array_filter(static::$clientList, function ($item) use ($engineCode) {
-                return $item['engine_code'] == $engineCode;
-            });
+            return array_filter(
+                static::$clientList,
+                function ($item) use ($engineCode) {
+                    return $item['engine_code'] == $engineCode;
+                }
+            );
         }
         return static::$clientList;
     }
@@ -154,14 +157,15 @@ class Service
         $cache->Clean(static::CLIENT_LIST_CACHE_ID);
         $cache->Clean(static::SERVICE_AUTH_CACHE_ID);
 
-        list($group, $type) = explode('.', $engine, 2);
+        [$group, $type] = explode('.', $engine, 2);
 
         if ($group == \Bitrix\Seo\Retargeting\Service::GROUP) {
             $service = AdsAudience::getService();
             $service->setClientId($clientId);
             $account = $service->getAccount($type);
-            if ($account)
+            if ($account) {
                 $account->clearCache();
+            }
         }
 
         static::$clientList = null;
@@ -194,7 +198,6 @@ class Service
      */
     public static function clearAuthForClient($client, $localOnly = false)
     {
-
         if (!$localOnly) {
             static::getEngine()->getInterface()->clearClientAuth($client['engine_code'], $client['proxy_client_id']);
         }
@@ -212,20 +215,25 @@ class Service
         if (static::isRegistered()) {
             $id = static::getEngine()->getId();
 
-            $result = SearchEngineTable::update($id, array(
-                "CLIENT_ID" => $accessParams["client_id"],
-                "CLIENT_SECRET" => $accessParams["client_secret"],
-                "SETTINGS" => "",
-            ));
+            $result = SearchEngineTable::update(
+                $id,
+                array(
+                    "CLIENT_ID" => $accessParams["client_id"],
+                    "CLIENT_SECRET" => $accessParams["client_secret"],
+                    "SETTINGS" => "",
+                )
+            );
         } else {
-            $result = SearchEngineTable::add(array(
-                "CODE" => Bitrix::ENGINE_ID,
-                "NAME" => "Bitrix",
-                "ACTIVE" => SearchEngineTable::ACTIVE,
-                "CLIENT_ID" => $accessParams["client_id"],
-                "CLIENT_SECRET" => $accessParams["client_secret"],
-                "REDIRECT_URI" => static::getRedirectUri(),
-            ));
+            $result = SearchEngineTable::add(
+                array(
+                    "CODE" => Bitrix::ENGINE_ID,
+                    "NAME" => "Bitrix",
+                    "ACTIVE" => SearchEngineTable::ACTIVE,
+                    "CLIENT_ID" => $accessParams["client_id"],
+                    "CLIENT_SECRET" => $accessParams["client_secret"],
+                    "REDIRECT_URI" => static::getRedirectUri(),
+                )
+            );
         }
 
         if ($result->isSuccess()) {
@@ -257,20 +265,20 @@ class Service
 
         $httpClient = new HttpClient();
 
-        $queryParams = array(
+        $queryParams = [
             "key" => static::getLicense(),
             "scope" => static::getEngine()->getInterface()->getScopeEncode(),
             "redirect_uri" => static::getRedirectUri(),
-        );
+        ];
 
         $result = $httpClient->post(static::SERVICE_URL . static::REGISTER, $queryParams);
         $result = Json::decode($result);
 
         if ($result["error"]) {
             throw new SystemException($result["error"]);
-        } else {
-            static::setAccessSettings($result);
         }
+
+        static::setAccessSettings($result);
     }
 
     /**
@@ -300,7 +308,7 @@ class Service
      * @return array
      * @throws \Bitrix\Main\LoaderException
      */
-    public static function getAuthorizeData($engine, $clientType = false)
+    public static function getAuthorizeData($engine, $clientType = false): array
     {
         $checkKey = "";
         if (Loader::includeModule("socialservices")) {
@@ -309,21 +317,22 @@ class Service
 
         $clientType = $clientType ?: Service::CLIENT_TYPE_COMPATIBLE;
 
-        return array(
+        return [
             "action" => "authorize",
             "type" => $clientType,
             "engine" => $engine,
             "client_id" => static::getEngine()->getClientId(),
             "client_secret" => static::getEngine()->getClientSecret(),
             "key" => static::getLicense(),
-            "check_key" => urlencode($checkKey)
-        );
+            "check_key" => urlencode($checkKey),
+            "redirect_uri" => static::getRedirectUri(),
+        ];
     }
 
     /**
      * @return string
      */
-    protected static function getRedirectUri()
+    protected static function getRedirectUri(): string
     {
         $request = Context::getCurrent()->getRequest();
 
@@ -336,8 +345,35 @@ class Service
     /**
      * @return string
      */
-    protected static function getLicense()
+    protected static function getLicense(): string
     {
         return md5(LICENSE_KEY);
+    }
+
+    /**
+     * If site change domain - need update engine
+     * @param array $domains
+     * @throws \Exception
+     */
+    public static function changeRegisteredDomain(array $domains = []): void
+    {
+        if (!self::isRegistered()) {
+            return;
+        }
+        if (!$engine = static::getEngine()) {
+            return;
+        }
+
+        $newRedirectUri = static::getRedirectUri();
+        if (!empty($domains)) {
+            $newRedirectUri = str_replace($domains['old_domain'], $domains['new_domain'], $newRedirectUri);
+        }
+
+        SearchEngineTable::update(
+            $engine->getId(),
+            [
+                'REDIRECT_URI' => $newRedirectUri
+            ]
+        );
     }
 }

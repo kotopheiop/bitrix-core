@@ -29,7 +29,7 @@ class AdminGridOption extends Stepper
     {
         $listGrid = Option::get(self::$moduleId, "listGridToConvert", "");
         if ($listGrid !== "") {
-            $listGrid = unserialize($listGrid);
+            $listGrid = unserialize($listGrid, ['allowed_classes' => false]);
         }
         $listGrid = is_array($listGrid) ? $listGrid : [];
 
@@ -46,7 +46,7 @@ class AdminGridOption extends Stepper
     {
         $listGrid = Option::get(self::$moduleId, "listGridToConvert", "");
         if ($listGrid !== "") {
-            $listGrid = unserialize($listGrid);
+            $listGrid = unserialize($listGrid, ['allowed_classes' => false]);
         }
         $listGrid = is_array($listGrid) ? $listGrid : [];
         if (empty($listGrid)) {
@@ -59,11 +59,18 @@ class AdminGridOption extends Stepper
         $sqlHelper = $connection->getSqlHelper();
 
         foreach ($listGrid as $tableId => $table) {
-            $queryObject = $connection->query("SELECT * FROM `b_user_option` WHERE `CATEGORY` = 'list' AND `NAME` = '" .
-                $sqlHelper->forSql($table["tableId"]) . "' ORDER BY ID ASC LIMIT " . $this->limit . " OFFSET " . $table["offset"]);
+            $queryObject = $connection->query(
+                "SELECT * FROM `b_user_option` WHERE `CATEGORY` = 'list' AND `NAME` = '" .
+                $sqlHelper->forSql(
+                    $table["tableId"]
+                ) . "' ORDER BY ID ASC LIMIT " . $this->limit . " OFFSET " . $table["offset"]
+            );
             $selectedRowsCount = $queryObject->getSelectedRowsCount();
             while ($optionOldGrid = $queryObject->fetch()) {
-                $oldGridData = (!empty($optionOldGrid["VALUE"]) ? unserialize($optionOldGrid["VALUE"]) : []);
+                $oldGridData = (!empty($optionOldGrid["VALUE"]) ? unserialize(
+                    $optionOldGrid["VALUE"],
+                    ['allowed_classes' => false]
+                ) : []);
 
                 if (!$oldGridData) {
                     continue;
@@ -71,7 +78,8 @@ class AdminGridOption extends Stepper
 
                 $queryResultObject = $connection->query(
                     "SELECT ID FROM `b_user_option` WHERE `CATEGORY` = 'main.interface.grid' AND `NAME` = '" .
-                    $sqlHelper->forSql($table["tableId"]) . "' AND `USER_ID` = '" . $optionOldGrid["USER_ID"] . "'");
+                    $sqlHelper->forSql($table["tableId"]) . "' AND `USER_ID` = '" . $optionOldGrid["USER_ID"] . "'"
+                );
                 if (!$queryResultObject->fetch()) {
                     if (!array_diff_key(array_flip(["page_size", "by", "order", "columns"]), $oldGridData)) {
                         $gridOptions = new \CGridOptions($tableId);
@@ -80,7 +88,12 @@ class AdminGridOption extends Stepper
                         $options = $gridOptions->getOptions();
                         $options["views"]["default"]["page_size"] = intval($oldGridData["page_size"]);
                         \CUserOptions::setOption(
-                            "main.interface.grid", $tableId, $options, false, $optionOldGrid["USER_ID"]);
+                            "main.interface.grid",
+                            $tableId,
+                            $options,
+                            false,
+                            $optionOldGrid["USER_ID"]
+                        );
                     }
                 }
             }

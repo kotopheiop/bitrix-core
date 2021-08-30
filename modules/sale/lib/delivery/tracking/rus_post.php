@@ -48,14 +48,17 @@ class RusPost extends Base
         $trackingNumber = trim($trackingNumber);
         $result = new StatusResult();
 
-        if (!$this->checkTrackNumberFormat($trackingNumber))
+        if (!$this->checkTrackNumberFormat($trackingNumber)) {
             $result->addError(new Error(Loc::getMessage('SALE_DELIVERY_TRACKING_RUS_POST_ERROR_TRNUM_FORMAT')));
+        }
 
-        if (empty($this->params['LOGIN']))
+        if (empty($this->params['LOGIN'])) {
             $result->addError(new Error(Loc::getMessage("SALE_DELIVERY_TRACKING_RUS_POST_LOGIN_ERROR")));
+        }
 
-        if (empty($this->params['PASSWORD']))
+        if (empty($this->params['PASSWORD'])) {
             $result->addError(new Error(Loc::getMessage("SALE_DELIVERY_TRACKING_RUS_POST_PASSWORD_ERROR")));
+        }
 
         if ($result->isSuccess()) {
             $t = new RusPostSingle(
@@ -78,8 +81,9 @@ class RusPost extends Base
     {
         $data = array();
 
-        foreach ($trackingNumbers as $number)
+        foreach ($trackingNumbers as $number) {
             $data[$number] = $this->getStatus($number);
+        }
 
         return $data;
     }
@@ -110,12 +114,13 @@ class RusPost extends Base
      */
     protected function checkTrackNumberFormat($trackNumber)
     {
-        if (strlen($trackNumber) == 13)
+        if (mb_strlen($trackNumber) == 13) {
             return preg_match('/^[A-Z]{2}?\d{9}?[A-Z]{2}$/i', $trackNumber) == 1;
-        elseif (strlen($trackNumber) == 14)
+        } elseif (mb_strlen($trackNumber) == 14) {
             return preg_match('/^\d{14}?$/', $trackNumber) == 1;
-        else
+        } else {
             return false;
+        }
     }
 
     /**
@@ -124,7 +129,7 @@ class RusPost extends Base
      */
     public function getTrackingUrl($trackingNumber = '')
     {
-        return 'https://pochta.ru/tracking' . (strlen($trackingNumber) > 0 ? '#' . $trackingNumber : '');
+        return 'https://pochta.ru/tracking' . ($trackingNumber <> '' ? '#' . $trackingNumber : '');
     }
 }
 
@@ -151,13 +156,15 @@ class RusPostSingle
      */
     public function __construct($login, $password, $lang = self::LANG_RUS)
     {
-        $this->httpClient = new \Bitrix\Main\Web\HttpClient(array(
-            "version" => "1.1",
-            "socketTimeout" => 15,
-            "streamTimeout" => 15,
-            "redirect" => true,
-            "redirectMax" => 5,
-        ));
+        $this->httpClient = new \Bitrix\Main\Web\HttpClient(
+            array(
+                "version" => "1.1",
+                "socketTimeout" => 15,
+                "streamTimeout" => 15,
+                "redirect" => true,
+                "redirectMax" => 5,
+            )
+        );
 
         $this->httpClient->setHeader("Content-Type", "application/soap+xml; charset=utf-8");
         $this->lang = $lang;
@@ -169,8 +176,9 @@ class RusPostSingle
     {
         $result = new Result();
 
-        if (strtolower(SITE_CHARSET) != 'utf-8')
+        if (mb_strtolower(SITE_CHARSET) != 'utf-8') {
             $requestData = Encoding::convertEncoding($requestData, SITE_CHARSET, 'UTF-8');
+        }
 
         $httpRes = $this->httpClient->post(self::$url, $requestData);
         $errors = $this->httpClient->getError();
@@ -178,15 +186,17 @@ class RusPostSingle
         if (!$httpRes && !empty($errors)) {
             $strError = "";
 
-            foreach ($errors as $errorCode => $errMes)
+            foreach ($errors as $errorCode => $errMes) {
                 $strError .= $errorCode . ": " . $errMes;
+            }
 
             $result->addError(new Error($strError));
         } else {
             $status = $this->httpClient->getStatus();
 
-            if (strtolower(SITE_CHARSET) != 'utf-8')
+            if (mb_strtolower(SITE_CHARSET) != 'utf-8') {
                 $httpRes = Encoding::convertEncoding($httpRes, 'UTF-8', SITE_CHARSET);
+            }
 
             $objXML = new \CDataXML();
             $objXML->LoadString($httpRes);
@@ -194,13 +204,25 @@ class RusPostSingle
             $result->addData($data);
 
             if ($status != 200) {
-                $result->addError(new Error(Loc::getMessage('SALE_DELIVERY_TRACKING_RUS_POST_ERROR_HTTP_STATUS') . ': ' . $status));
+                $result->addError(
+                    new Error(Loc::getMessage('SALE_DELIVERY_TRACKING_RUS_POST_ERROR_HTTP_STATUS') . ': ' . $status)
+                );
 
-                if (!empty($data['Envelope']['#']['Body'][0]['#']['Fault'][0]['#']['Reason'][0]['#']['Text'][0]['#']))
-                    $result->addError(new Error($data['Envelope']['#']['Body'][0]['#']['Fault'][0]['#']['Reason'][0]['#']['Text'][0]['#']));
+                if (!empty($data['Envelope']['#']['Body'][0]['#']['Fault'][0]['#']['Reason'][0]['#']['Text'][0]['#'])) {
+                    $result->addError(
+                        new Error(
+                            $data['Envelope']['#']['Body'][0]['#']['Fault'][0]['#']['Reason'][0]['#']['Text'][0]['#']
+                        )
+                    );
+                }
 
-                if (!empty($data['Envelope']['#']['Body'][0]['#']['Fault'][0]['#']['Detail'][0]['#']['AuthorizationFaultReason'][0]['#']))
-                    $result->addError(new Error($data['Envelope']['#']['Body'][0]['#']['Fault'][0]['#']['Detail'][0]['#']['AuthorizationFaultReason'][0]['#']));
+                if (!empty($data['Envelope']['#']['Body'][0]['#']['Fault'][0]['#']['Detail'][0]['#']['AuthorizationFaultReason'][0]['#'])) {
+                    $result->addError(
+                        new Error(
+                            $data['Envelope']['#']['Body'][0]['#']['Fault'][0]['#']['Detail'][0]['#']['AuthorizationFaultReason'][0]['#']
+                        )
+                    );
+                }
             }
         }
 
@@ -249,8 +271,9 @@ class RusPostSingle
             $result->description = $this->createDescription($trackingNumber);
             $lastOperationTS = $this->extractLastChangeDate($lastOperation);
 
-            if ($lastOperationTS > 0)
+            if ($lastOperationTS > 0) {
                 $result->lastChangeTimestamp = $this->extractLastChangeDate($lastOperation);
+            }
 
             $result->trackingNumber = $trackingNumber;
         }
@@ -264,8 +287,9 @@ class RusPostSingle
      */
     protected function extractLastChangeDate($lastOperation)
     {
-        if (empty($lastOperation['#']['OperationParameters'][0]['#']['OperDate'][0]['#']))
+        if (empty($lastOperation['#']['OperationParameters'][0]['#']['OperDate'][0]['#'])) {
             return 0;
+        }
 
         $date = new \DateTime($lastOperation['#']['OperationParameters'][0]['#']['OperDate'][0]['#']);
         return $date->getTimestamp();
@@ -279,11 +303,13 @@ class RusPostSingle
     {
         $history = $answer['Envelope']['#']['Body'][0]['#']['getOperationHistoryResponse'][0]['#']['OperationHistoryData'][0]['#']['historyRecord'];
 
-        if (!is_array($history) || empty($history))
+        if (!is_array($history) || empty($history)) {
             return null;
+        }
 
-        if (!$lastOperation = end($history))
+        if (!$lastOperation = end($history)) {
             return null;
+        }
 
         return $lastOperation;
     }
@@ -295,7 +321,9 @@ class RusPostSingle
     protected function createDescription($trackingNumber)
     {
         $link = 'https://pochta.ru/tracking#' . $trackingNumber;
-        return Loc::getMessage('SALE_DELIVERY_TRACKING_RUS_POST_STATUS_DESCR') . ': ' . '<a href="' . $link . '">' . $link . '</a>';
+        return Loc::getMessage(
+                'SALE_DELIVERY_TRACKING_RUS_POST_STATUS_DESCR'
+            ) . ': ' . '<a href="' . $link . '">' . $link . '</a>';
     }
 
     /**
@@ -304,11 +332,13 @@ class RusPostSingle
      */
     protected function extractStatus(array $lastOperation)
     {
-        if (!isset($lastOperation['#']['OperationParameters']['0']['#']['OperType']['0']['#']['Id']['0']['#']))
+        if (!isset($lastOperation['#']['OperationParameters']['0']['#']['OperType']['0']['#']['Id']['0']['#'])) {
             return Statuses::UNKNOWN;
+        }
 
-        if (!isset($lastOperation['#']['OperationParameters'][0]['#']['OperAttr'][0]['#']['Id'][0]['#']))
+        if (!isset($lastOperation['#']['OperationParameters'][0]['#']['OperAttr'][0]['#']['Id'][0]['#'])) {
             return Statuses::UNKNOWN;
+        }
 
         $oper = $lastOperation['#']['OperationParameters'][0]['#']['OperType'][0]['#']['Id'][0]['#'];
         $att = $lastOperation['#']['OperationParameters'][0]['#']['OperAttr'][0]['#']['Id'][0]['#'];
@@ -324,8 +354,9 @@ class RusPostSingle
      */
     protected function mapStatus($oper, $attr)
     {
-        if (strlen($oper) <= 0)
+        if ($oper == '') {
             return Statuses::UNKNOWN;
+        }
 
         /*
          * if innerStatus1 != innerStatus2 != .......
@@ -453,17 +484,21 @@ class RusPostSingle
             33 => Statuses::ON_THE_WAY,
         );
 
-        if (!isset($rusPostStatuses[$oper]))
+        if (!isset($rusPostStatuses[$oper])) {
             return Statuses::UNKNOWN;
+        }
 
-        if (!is_array($rusPostStatuses[$oper]))
+        if (!is_array($rusPostStatuses[$oper])) {
             return $rusPostStatuses[$oper];
+        }
 
-        if (strlen($attr) <= 0)
+        if ($attr == '') {
             return Statuses::UNKNOWN;
+        }
 
-        if (!isset($rusPostStatuses[$oper][$attr]))
+        if (!isset($rusPostStatuses[$oper][$attr])) {
             return Statuses::UNKNOWN;
+        }
 
         return $rusPostStatuses[$oper][$attr];
     }

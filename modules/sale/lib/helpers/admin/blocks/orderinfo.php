@@ -33,8 +33,9 @@ class OrderInfo
     {
         $payments = $order->getPaymentCollection();
 
-        if (!$payments)
+        if (!$payments) {
             return array();
+        }
 
         $result = array();
 
@@ -43,13 +44,15 @@ class OrderInfo
             $id = $payment->getField("PAY_SYSTEM_ID");
             $ptId = $order->getPersonTypeId();
 
-            if (!$id || !$ptId)
+            if (!$id || !$ptId) {
                 continue;
+            }
 
             $params = OrderPayment::getPaySystemParams($id);
 
-            if (!$params)
+            if (!$params) {
                 continue;
+            }
 
             $result[] = array(
                 "ID" => $payment->getId(),
@@ -68,14 +71,16 @@ class OrderInfo
 
         /** @var \Bitrix\Sale\Shipment $shipment */
         foreach ($shipments as $shipment) {
-            if ($shipment->isSystem())
+            if ($shipment->isSystem()) {
                 continue;
+            }
 
             /** @var \Bitrix\Sale\Delivery\Services\Base $deliveryService */
             $deliveryService = $shipment->getDelivery();
 
-            if (!$deliveryService)
+            if (!$deliveryService) {
                 continue;
+            }
 
             $result[] = array(
                 "ID" => $shipment->getId(),
@@ -98,23 +103,26 @@ class OrderInfo
         $currency = $order->getCurrency();
         $orderProps = $order->getPropertyCollection();
 
-        if ($email = $orderProps->getUserEmail())
+        if ($email = $orderProps->getUserEmail()) {
             $email = $email->getViewHtml();
+        }
 
         if ($phone = $orderProps->getPhone()) {
             $phoneVal = $phone->getValue();
 
             if ($phoneVal != '') {
-                if (!is_array($phoneVal))
+                if (!is_array($phoneVal)) {
                     $phoneVal = array($phoneVal);
+                }
 
                 $phone = '';
 
                 foreach ($phoneVal as $number) {
                     $number = str_replace("'", "", htmlspecialcharsbx($number));
 
-                    if (strlen($phone) > 0)
+                    if ($phone <> '') {
                         $phone .= ', ';
+                    }
 
                     $phone .= '<a href="javascript:void(0)" onclick="BX.Sale.Admin.OrderEditPage.desktopMakeCall(\'' . $number . '\');">' .
                         $number .
@@ -125,13 +133,18 @@ class OrderInfo
             }
         }
 
-        if ($name = $orderProps->getPayerName())
+        if ($name = $orderProps->getPayerName()) {
             $name = $name->getViewHtml();
+        }
 
         $totalPrices = OrderEdit::getTotalPrices($order, $orderBasket, false);
 
         //Here we can receive custom data
-        $event = new Event('sale', 'onSaleAdminOrderInfoBlockShow', array('ORDER' => $order, 'ORDER_BASKET' => $orderBasket));
+        $event = new Event(
+            'sale',
+            'onSaleAdminOrderInfoBlockShow',
+            array('ORDER' => $order, 'ORDER_BASKET' => $orderBasket)
+        );
         $event->send();
         $resultList = $event->getResults();
         $customData = array();
@@ -139,13 +152,15 @@ class OrderInfo
         if (is_array($resultList) && !empty($resultList)) {
             foreach ($resultList as $eventResult) {
                 /** @var  EventResult $eventResult */
-                if ($eventResult->getType() != EventResult::SUCCESS)
+                if ($eventResult->getType() != EventResult::SUCCESS) {
                     continue;
+                }
 
                 $params = $eventResult->getParameters();
 
-                if (!empty($params) && is_array($params))
-                    $customData = $params;
+                if (!empty($params) && is_array($params)) {
+                    $customData = array_merge($customData, $params);
+                }
             }
         }
         ///
@@ -154,18 +169,28 @@ class OrderInfo
 			<div class="adm-bus-orderinfoblock adm-detail-tabs-block-pin" id="sale-order-edit-block-order-info">
 				<div class="adm-bus-orderinfoblock-container">
 				<div class="adm-bus-orderinfoblock-title">
-					<div class="adm-bus-orderinfoblock-title-text">' . Loc::getMessage("SALE_ORDER_INFO", array(
+					<div class="adm-bus-orderinfoblock-title-text">' . Loc::getMessage(
+                "SALE_ORDER_INFO",
+                array(
                     "#ID#" => $order->getId(),
-                    "#NUM#" => strlen($order->getField("ACCOUNT_NUMBER")) > 0 ? $order->getField("ACCOUNT_NUMBER") : $order->getId(),
-                    "#DATE#" => $order->getDateInsert()->toString())
+                    "#NUM#" => $order->getField("ACCOUNT_NUMBER") <> '' ? $order->getField(
+                        "ACCOUNT_NUMBER"
+                    ) : $order->getId(),
+                    "#DATE#" => $order->getDateInsert()->toString()
+                )
             ) . " [" . $order->getSiteId() . "]" . '</div>
-					<div class="adm-bus-orderinfoblock-status success" id="order_info_order_status_name">' . $order->getField('STATUS_ID') . '</div> <!-- TODO -->
+					<div class="adm-bus-orderinfoblock-status success" id="order_info_order_status_name">' . $order->getField(
+                'STATUS_ID'
+            ) . '</div> <!-- TODO -->
 				</div>
+				' . static::getOrderInfoBlock($order) . '
 				<div class="adm-bus-orderinfoblock-content">
 					<div class="adm-bus-orderinfoblock-content-block-customer">
 						<ul class="adm-bus-orderinfoblock-content-customer-info">
 							<li>
-								<span class="adm-bus-orderinfoblock-content-customer-info-param">' . Loc::getMessage("SALE_ORDER_INFO_FIO") . ':</span>
+								<span class="adm-bus-orderinfoblock-content-customer-info-param">' . Loc::getMessage(
+                "SALE_ORDER_INFO_FIO"
+            ) . ':</span>
 								<span class="adm-bus-orderinfoblock-content-customer-info-value" id="order_info_buyer_name">' . $name . '</span>
 							</li>
 							<li>
@@ -173,7 +198,9 @@ class OrderInfo
 								<span class="adm-bus-orderinfoblock-content-customer-info-value"  id="order_info_buyer_email">' . $email . '</span>
 							</li>
 							<li>
-								<span class="adm-bus-orderinfoblock-content-customer-info-param">' . Loc::getMessage("SALE_ORDER_INFO_PHONE") . ':</span>
+								<span class="adm-bus-orderinfoblock-content-customer-info-param">' . Loc::getMessage(
+                "SALE_ORDER_INFO_PHONE"
+            ) . ':</span>
 								<span class="adm-bus-orderinfoblock-content-customer-info-value" id="order_info_buyer_phone">
 									' . $phone . '									
 								</span>
@@ -181,11 +208,13 @@ class OrderInfo
 
         if (!empty($customData)) {
             foreach ($customData as $custom) {
-                if (empty($custom['TITLE']))
+                if (empty($custom['TITLE'])) {
                     throw new ArgumentNullException("customData['TITLE']");
+                }
 
-                if (empty($custom['VALUE']))
+                if (empty($custom['VALUE'])) {
                     throw new ArgumentNullException("customData['VALUE']");
+                }
 
                 $result .= '
 					<li>
@@ -201,19 +230,25 @@ class OrderInfo
 					<div class="adm-bus-orderinfoblock-content-block-order">
 						<ul class="adm-bus-orderinfoblock-content-order-info">
 							<li>
-								<span class="adm-bus-orderinfoblock-content-order-info-param">' . Loc::getMessage("SALE_ORDER_INFO_PRICE") . '</span>
+								<span class="adm-bus-orderinfoblock-content-order-info-param">' . Loc::getMessage(
+                "SALE_ORDER_INFO_PRICE"
+            ) . '</span>
 								<span class="adm-bus-orderinfoblock-content-order-info-value" id="order_info_price_basket">' .
             SaleFormatCurrency(floatval($totalPrices["PRICE_BASKET"]), $currency) .
             '</span>
 							</li>
 							<li class="adm-bus-orderinfoblock-content-redtext">
-								<span class="adm-bus-orderinfoblock-content-order-info-param">' . Loc::getMessage("SALE_ORDER_INFO_DISCOUNT_PRICE") . '</span>
+								<span class="adm-bus-orderinfoblock-content-order-info-param">' . Loc::getMessage(
+                "SALE_ORDER_INFO_DISCOUNT_PRICE"
+            ) . '</span>
 								<span class="adm-bus-orderinfoblock-content-order-info-value" id="order_info_price_basket_discount">' .
             SaleFormatCurrency(floatval($totalPrices["PRICE_BASKET_DISCOUNTED"]), $currency) .
             '</span>
 							</li>
 							<li>
-								<span class="adm-bus-orderinfoblock-content-order-info-param">' . Loc::getMessage("SALE_ORDER_INFO_DELIVERY_PRICE") . '</span>
+								<span class="adm-bus-orderinfoblock-content-order-info-param">' . Loc::getMessage(
+                "SALE_ORDER_INFO_DELIVERY_PRICE"
+            ) . '</span>
 								<span class="adm-bus-orderinfoblock-content-order-info-value" id="order_info_delivery_price">' .
             SaleFormatCurrency(floatval($order->getDeliveryPrice()), $currency) .
             '</span>
@@ -221,7 +256,9 @@ class OrderInfo
 						</ul>
 						<ul class="adm-bus-orderinfoblock-content-order-info-result">
 							<li>
-								<span class="adm-bus-orderinfoblock-content-order-info-param">' . Loc::getMessage("SALE_ORDER_INFO_ALL_PRICE") . '</span>
+								<span class="adm-bus-orderinfoblock-content-order-info-param">' . Loc::getMessage(
+                "SALE_ORDER_INFO_ALL_PRICE"
+            ) . '</span>
 								<span class="adm-bus-orderinfoblock-content-order-info-value" id="order_info_buyer_price">' .
             SaleFormatCurrency(floatval($order->getPrice()), $currency) .
             '</span>
@@ -229,7 +266,10 @@ class OrderInfo
 						</ul>
 					</div>
 					<div class="adm-bus-orderinfoblock-content-block-last">
-						' . Loc::getMessage("SALE_ORDER_INFO_PAYED") . ': ' . SaleFormatCurrency(floatval($order->getSumPaid()), $currency) .
+						' . Loc::getMessage("SALE_ORDER_INFO_PAYED") . ': ' . SaleFormatCurrency(
+                floatval($order->getSumPaid()),
+                $currency
+            ) .
             '<ul class="adm-bus-orderinfoblock-content-last">';
 
         $updatersContent = "";
@@ -247,8 +287,9 @@ class OrderInfo
             $result .= 'title="' . htmlspecialcharsbx($payment["NAME"]) . '"' .
                 '><span></span></li></a>';
 
-            if (strlen($updatersContent) > 0)
+            if ($updatersContent <> '') {
                 $updatersContent .= ",\n";
+            }
 
             $updatersContent .= "\tPAYMENT_PAID_" . $payment["ID"] . ": function(paid) { BX.Sale.Admin.OrderInfo.setIconLamp('payment', '" . $payment["ID"] . "', (paid == 'Y' ? 'green' : 'red')); }";
         }
@@ -267,8 +308,9 @@ class OrderInfo
             $result .= 'title="' . htmlspecialcharsbx($shipment["NAME"]) . '"' .
                 '><span></span></li></a>';
 
-            if (strlen($updatersContent) > 0)
+            if ($updatersContent <> '') {
                 $updatersContent .= ",\n";
+            }
 
             $updatersContent .= "\tSHIPMENT_STATUS_" . $shipment["ID"] . ": function(shipmentStatus) { BX.Sale.Admin.OrderInfo.setIconLamp('shipment', '" . $shipment["ID"] . "', (shipmentStatus == 'DF' ? 'green' : 'red')); }";
         }
@@ -291,7 +333,7 @@ class OrderInfo
 				</script>';
         }
 
-        if (strlen($updatersContent) > 0) {
+        if ($updatersContent <> '') {
             $result .= '
 					<script type="text/javascript">
 						BX.ready(function(){
@@ -300,8 +342,12 @@ class OrderInfo
 							});
 						});
 					</script>';
-
         }
         return $result;
+    }
+
+    protected static function getOrderInfoBlock(Order $order)
+    {
+        return '';
     }
 }

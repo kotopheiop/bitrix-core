@@ -1,5 +1,6 @@
 <?
 /** @global CUser $USER */
+
 /** @global CMain $APPLICATION */
 define('STOP_STATISTICS', true);
 define('NO_AGENT_CHECK', true);
@@ -80,17 +81,21 @@ if (
 ) {
     $iblockList = $request['iblockList'];
     if (!empty($iblockList) && is_array($iblockList)) {
-        foreach ($iblockList as &$iblock)
+        foreach ($iblockList as &$iblock) {
             CIBlock::clearIblockTagCache($iblock);
+        }
         unset($iblock);
     }
-    $emptyAvailable = Catalog\ProductTable::getList(array(
-        'select' => array('ID', 'AVAILABLE'),
-        'filter' => array('=AVAILABLE' => null),
-        'limit' => 1
-    ))->fetch();
-    if (empty($emptyAvailable))
+    $emptyAvailable = Catalog\ProductTable::getList(
+        array(
+            'select' => array('ID', 'AVAILABLE'),
+            'filter' => array('=AVAILABLE' => null),
+            'limit' => 1
+        )
+    )->fetch();
+    if (empty($emptyAvailable)) {
         \CCatalogIblockReindex::removeNotify();
+    }
     unset($emptyAvailable);
     require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin_after.php');
 } else {
@@ -101,7 +106,12 @@ if (
     require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php');
 
     $tabList = array(
-        array('DIV' => 'catalogReindexTab01', 'TAB' => Loc::getMessage('BX_CATALOG_REINDEX_TAB'), 'ICON' => 'sale', 'TITLE' => Loc::getMessage('BX_CATALOG_REINDEX_TAB_TITLE'))
+        array(
+            'DIV' => 'catalogReindexTab01',
+            'TAB' => Loc::getMessage('BX_CATALOG_REINDEX_TAB'),
+            'ICON' => 'sale',
+            'TITLE' => Loc::getMessage('BX_CATALOG_REINDEX_TAB_TITLE')
+        )
     );
     $tabControl = new CAdminTabControl('catalogReindex', $tabList, true, true);
     Main\Page\Asset::getInstance()->addJs('/bitrix/js/catalog/step_operations.js');
@@ -124,26 +134,36 @@ if (
             <td width="40%"><? echo Loc::getMessage('BX_CATALOG_REINDEX_IBLOCK_ID'); ?></td>
             <td width="60%"><?
                 $catalogList = array();
-                $catalogIterator = Catalog\CatalogIblockTable::getList(array(
-                    'select' => array('IBLOCK_ID'),
-                    'filter' => array('=PRODUCT_IBLOCK_ID' => 0)
-                ));
+                $catalogIterator = Catalog\CatalogIblockTable::getList(
+                    array(
+                        'select' => array('IBLOCK_ID'),
+                        'filter' => array('=PRODUCT_IBLOCK_ID' => 0)
+                    )
+                );
                 while ($catalog = $catalogIterator->fetch()) {
                     $catalog['IBLOCK_ID'] = (int)$catalog['IBLOCK_ID'];
                     $catalogList[$catalog['IBLOCK_ID']] = $catalog['IBLOCK_ID'];
                 }
                 unset($catalog, $catalogIterator);
-                $catalogIterator = Catalog\CatalogIblockTable::getList(array(
-                    'select' => array('PRODUCT_IBLOCK_ID'),
-                    'filter' => array('>PRODUCT_IBLOCK_ID' => 0)
-                ));
+                $catalogIterator = Catalog\CatalogIblockTable::getList(
+                    array(
+                        'select' => array('PRODUCT_IBLOCK_ID'),
+                        'filter' => array('>PRODUCT_IBLOCK_ID' => 0)
+                    )
+                );
                 while ($catalog = $catalogIterator->fetch()) {
                     $catalog['PRODUCT_IBLOCK_ID'] = (int)$catalog['PRODUCT_IBLOCK_ID'];
                     $catalogList[$catalog['PRODUCT_IBLOCK_ID']] = $catalog['PRODUCT_IBLOCK_ID'];
                 }
                 unset($catalog, $catalogIterator);
-                if (!empty($catalogList))
-                    echo GetIBlockDropDownList(0, 'catalog_reindex_iblock_type', 'catalog_reindex_iblock_id', array('ID' => $catalogList));
+                if (!empty($catalogList)) {
+                    echo GetIBlockDropDownList(
+                        0,
+                        'catalog_reindex_iblock_type',
+                        'catalog_reindex_iblock_id',
+                        array('ID' => $catalogList)
+                    );
+                }
                 unset($catalogList);
                 ?></td>
         </tr>

@@ -67,44 +67,46 @@ class Base
                         $editable['items'][$enumFields['ID']] = $enumFields['VALUE'];
                     }
                 }
-            } else if ($uf['USER_TYPE']['USER_TYPE_ID'] == 'boolean') {
-                $type = 'list';
+            } else {
+                if ($uf['USER_TYPE']['USER_TYPE_ID'] == 'boolean') {
+                    $type = 'list';
 
-                //Default value must be placed at first position.
-                $defaultValue = (
-                isset($uf['SETTINGS']['DEFAULT_VALUE'])
-                    ? (int)$uf['SETTINGS']['DEFAULT_VALUE']
-                    : 0
-                );
+                    //Default value must be placed at first position.
+                    $defaultValue = (
+                    isset($uf['SETTINGS']['DEFAULT_VALUE'])
+                        ? (int)$uf['SETTINGS']['DEFAULT_VALUE']
+                        : 0
+                    );
 
-                if ($defaultValue === 1) {
+                    if ($defaultValue === 1) {
+                        $editable = [
+                            'items' => [
+                                '1' => GetMessage('MAIN_YES'),
+                                '0' => GetMessage('MAIN_NO')
+                            ]
+                        ];
+                    } else {
+                        $editable = [
+                            'items' => [
+                                '0' => GetMessage('MAIN_NO'),
+                                '1' => GetMessage('MAIN_YES')
+                            ]
+                        ];
+                    }
+                } elseif ($uf['USER_TYPE']['BASE_TYPE'] == 'datetime') {
+                    $type = 'date';
+                } elseif (
+                    $uf['USER_TYPE']['USER_TYPE_ID'] == 'crm_status'
+                    && Loader::includeModule('crm')
+                ) {
+                    $type = 'list';
                     $editable = [
-                        'items' => [
-                            '1' => GetMessage('MAIN_YES'),
-                            '0' => GetMessage('MAIN_NO')
-                        ]
+                        'items' => ['' => ''] + \CCrmStatus::getStatusList($uf['SETTINGS']['ENTITY_TYPE'])
                     ];
-                } else {
-                    $editable = [
-                        'items' => [
-                            '0' => GetMessage('MAIN_NO'),
-                            '1' => GetMessage('MAIN_YES')
-                        ]
-                    ];
+                } elseif (mb_substr($uf['USER_TYPE']['USER_TYPE_ID'], 0, 5) === 'rest_') {
+                    // skip REST type fields here
+                    continue;
                 }
-            } elseif ($uf['USER_TYPE']['BASE_TYPE'] == 'datetime') {
-                $type = 'date';
-            } elseif (
-                $uf['USER_TYPE']['USER_TYPE_ID'] == 'crm_status'
-                && Loader::includeModule('crm')
-            ) {
-                $type = 'list';
-                $editable = [
-                    'items' => ['' => ''] + \CCrmStatus::getStatusList($uf['SETTINGS']['ENTITY_TYPE'])
-                ];
-            } elseif (substr($uf['USER_TYPE']['USER_TYPE_ID'], 0, 5) === 'rest_') {
-                // skip REST type fields here
-                continue;
             }
 
             if ($type === 'string') {
@@ -119,7 +121,7 @@ class Base
 
             $gridHeaders[$FIELD_NAME] = array(
                 'id' => $FIELD_NAME,
-                'name' => htmlspecialcharsbx(strlen($uf['LIST_COLUMN_LABEL']) > 0 ? $uf['LIST_COLUMN_LABEL'] : $FIELD_NAME),
+                'name' => htmlspecialcharsbx($uf['LIST_COLUMN_LABEL'] <> '' ? $uf['LIST_COLUMN_LABEL'] : $FIELD_NAME),
                 'sort' => $uf['MULTIPLE'] == 'N' ? $FIELD_NAME : false,
                 'default' => $uf['SHOW_IN_LIST'] == 'Y',
                 'editable' => $editable,
@@ -134,7 +136,6 @@ class Base
                 );
             }
         }
-
     }
 
     protected function postFilterFields(array $fields)

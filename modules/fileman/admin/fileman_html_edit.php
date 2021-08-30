@@ -1,4 +1,5 @@
 <?
+
 /*
 ##############################################
 # Bitrix: SiteManager                        #
@@ -12,8 +13,9 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/fileman/prolog.php");
 
 $addUrl = 'lang=' . LANGUAGE_ID . ($logical == "Y" ? '&logical=Y' : '');
 
-if (!($USER->CanDoOperation('fileman_admin_files') || $USER->CanDoOperation('fileman_edit_existent_files')))
+if (!($USER->CanDoOperation('fileman_admin_files') || $USER->CanDoOperation('fileman_edit_existent_files'))) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/fileman/include.php");
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/fileman/admin/fileman_html_edit.php");
@@ -22,7 +24,7 @@ $strWarning = "";
 $site_template = false;
 $rsSiteTemplates = CSite::GetTemplateList($site);
 while ($arSiteTemplate = $rsSiteTemplates->Fetch()) {
-    if (strlen($arSiteTemplate["CONDITION"]) <= 0) {
+    if ($arSiteTemplate["CONDITION"] == '') {
         $site_template = $arSiteTemplate["TEMPLATE"];
         break;
     }
@@ -37,7 +39,7 @@ $bVarsFromForm = false; //  if 'true' - we will get content  and variables from 
 $filename = isset($_REQUEST['filename']) ? $_REQUEST['filename'] : '';
 $oldname = isset($_REQUEST['oldname']) ? $_REQUEST['oldname'] : '';
 
-if (strlen($filename) > 0 && ($mess = CFileMan::CheckFileName($filename)) !== true) {
+if ($filename <> '' && ($mess = CFileMan::CheckFileName($filename)) !== true) {
     $filename2 = $filename;
     $filename = '';
     $strWarning = $mess;
@@ -45,28 +47,31 @@ if (strlen($filename) > 0 && ($mess = CFileMan::CheckFileName($filename)) !== tr
 }
 
 $originalPath = $path;
-$new = (isset($new) && strtolower($new) == 'y') ? 'y' : '';
+$new = (isset($new) && mb_strtolower($new) == 'y') ? 'y' : '';
 
-if ($new == 'y' && strlen($filename) > 0)
+if ($new == 'y' && $filename <> '') {
     $path = $path . "/" . $filename;
+}
 
 $site = CFileMan::__CheckSite($site);
-if (!$site)
+if (!$site) {
     $site = CSite::GetSiteByFullPath($_SERVER["DOCUMENT_ROOT"] . $path);
+}
 
 $DOC_ROOT = CSite::GetSiteDocRoot($site);
 $abs_path = $io->CombinePath($DOC_ROOT, $path);
 $arPath = Array($site, $path);
 
-if (GetFileType($abs_path) == "IMAGE")
+if (GetFileType($abs_path) == "IMAGE") {
     $strWarning = GetMessage("FILEMAN_FILEEDIT_FILE_IMAGE_ERROR");
+}
 
-if ($new == '' && strlen($filename) <= 0 && strlen($oldname) <= 0 && !$io->FileExists($abs_path)) {
-    $p = strrpos($path, "/");
+if ($new == '' && $filename == '' && $oldname == '' && !$io->FileExists($abs_path)) {
+    $p = mb_strrpos($path, "/");
     if ($p !== false) {
         $new = "y";
-        $filename = substr($path, $p + 1);
-        $path = substr($path, 0, $p);
+        $filename = mb_substr($path, $p + 1);
+        $path = mb_substr($path, 0, $p);
     }
 }
 
@@ -101,9 +106,10 @@ if
     )
 ) {
     $strWarning = GetMessage("ACCESS_DENIED");
-} elseif (strlen($strWarning) <= 0) {
-    if ($new == 'y' && strlen($filename) > 0 && $io->FileExists($abs_path)) // if we want to create new file, but the file with same name is alredy exists - lets abuse
-
+} elseif ($strWarning == '') {
+    if ($new == 'y' && $filename <> '' && $io->FileExists(
+            $abs_path
+        )) // if we want to create new file, but the file with same name is alredy exists - lets abuse
     {
         $strWarning = GetMessage("FILEMAN_FILEEDIT_FILE_EXISTS");
         $bEdit = false;
@@ -111,7 +117,7 @@ if
         $path = $io->CombinePath("/", $arParsedPath["PREV"]);
         $arParsedPath = CFileMan::ParsePath($path, true, false, "", $logical == "Y");
         $abs_path = $io->CombinePath($DOC_ROOT, $path);
-    } elseif (!$USER->IsAdmin() && substr(CFileman::GetFileName($abs_path), 0, 1) == ".") {
+    } elseif (!$USER->IsAdmin() && mb_substr(CFileman::GetFileName($abs_path), 0, 1) == ".") {
         $strWarning = GetMessage("FILEMAN_FILEEDIT_BAD_FNAME");
         $bEdit = false;
         $bVarsFromForm = true;
@@ -119,54 +125,65 @@ if
         $arParsedPath = CFileMan::ParsePath($path, true, false, "", $logical == "Y");
         $abs_path = $io->CombinePath($DOC_ROOT, $path);
     } elseif ($new == 'y') {
-        if (strlen($filename) < 0)
-            $strWarning = GetMessage("FILEMAN_FILEEDIT_FILENAME_EMPTY");
-
         $bEdit = false;
     } else {
-        if (!$io->FileExists($abs_path))
+        if (!$io->FileExists($abs_path)) {
             $strWarning = GetMessage("FILEMAN_FILEEDIT_FOLDER_EXISTS") . " ";
-        else
+        } else {
             $bEdit = true;
+        }
     }
 
     $limit_php_access = ($USER->CanDoFileOperation('fm_lpa', $arPath) && !$USER->CanDoOperation('edit_php'));
     if ($limit_php_access) {
         //OFP - 'original full path' used for restorin' php code fragments in limit_php_access mode
-        if (!isset($_SESSION['arOFP']))
+        if (!isset($_SESSION['arOFP'])) {
             $_SESSION['arOFP'] = Array();
+        }
 
         if (isset($_POST['ofp_id'])) {
             $ofp_id = $_POST['ofp_id'];
         } else {
-            $ofp_id = substr(md5($site . '|' . $path), 0, 8);
-            if (!isset($_SESSION['arOFP'][$ofp_id]))
+            $ofp_id = mb_substr(md5($site . '|' . $path), 0, 8);
+            if (!isset($_SESSION['arOFP'][$ofp_id])) {
                 $_SESSION['arOFP'][$ofp_id] = $path;
+            }
         }
     }
 }
 
-$bFullScreen = ($_REQUEST['fullscreen'] ? $_REQUEST['fullscreen'] == 'Y' : COption::GetOptionString("fileman", "htmleditor_fullscreen", "N") == "Y");
+$bFullScreen = ($_REQUEST['fullscreen'] ? $_REQUEST['fullscreen'] == 'Y' : COption::GetOptionString(
+        "fileman",
+        "htmleditor_fullscreen",
+        "N"
+    ) == "Y");
 
-if (strlen($back_url) > 0 && strpos($back_url, "/bitrix/admin/fileman_file_edit.php") !== 0)
+if ($back_url <> '' && mb_strpos($back_url, "/bitrix/admin/fileman_file_edit.php") !== 0) {
     $url = "/" . ltrim($back_url, "/");
-else
-    $url = "/bitrix/admin/fileman_admin.php?" . $addUrl . "&site=" . Urlencode($site) . "&path=" . UrlEncode($arParsedPath["PREV"]);
+} else {
+    $url = "/bitrix/admin/fileman_admin.php?" . $addUrl . "&site=" . Urlencode($site) . "&path=" . UrlEncode(
+            $arParsedPath["PREV"]
+        );
+}
 
 $module_id = "fileman";
 $localRedirectUrl = '';
 
-if (strlen($strWarning) <= 0) {
+if ($strWarning == '') {
     if ($bEdit) {
         $oFile = $io->GetFile($abs_path);
         $filesrc_tmp = $oFile->GetContents();
     } else {
         $arTemplates = CFileman::GetFileTemplates(LANGUAGE_ID, array($site_template));
-        if (strlen($template) > 0) {
+        if ($template <> '') {
             $len = count($arTemplates);
             for ($i = 0; $i < $len; $i++) {
                 if ($arTemplates[$i]["file"] == $template) {
-                    $filesrc_tmp = CFileman::GetTemplateContent($arTemplates[$i]["file"], LANGUAGE_ID, array($site_template));
+                    $filesrc_tmp = CFileman::GetTemplateContent(
+                        $arTemplates[$i]["file"],
+                        LANGUAGE_ID,
+                        array($site_template)
+                    );
                     break;
                 }
             }
@@ -175,15 +192,17 @@ if (strlen($strWarning) <= 0) {
         }
     }
 
-    if ($REQUEST_METHOD == "POST" && strlen($save) > 0 && strlen($propeditmore) <= 0) {
+    if ($REQUEST_METHOD == "POST" && $save <> '' && $propeditmore == '') {
         if (!check_bitrix_sessid()) {
             $strWarning = GetMessage("FILEMAN_SESSION_EXPIRED");
             $bVarsFromForm = true;
-        } elseif ((CFileman::IsPHP($filesrc) || $isScriptExt) && !($USER->CanDoOperation('edit_php') || $limit_php_access)) //check rights
+        } elseif ((CFileman::IsPHP($filesrc) || $isScriptExt) && !($USER->CanDoOperation(
+                    'edit_php'
+                ) || $limit_php_access)) //check rights
         {
             $strWarning = GetMessage("FILEMAN_FILEEDIT_CHANGE");
             $bVarsFromForm = true;
-            if ($new == 'y' && strlen($filename) > 0) {
+            if ($new == 'y' && $filename <> '') {
                 $bEdit = false;
                 $path = $io->CombinePath("/", $arParsedPath["PREV"]);
                 $arParsedPath = CFileMan::ParsePath($path, true, false, "", $logical == "Y");
@@ -208,14 +227,24 @@ if (strlen($strWarning) <= 0) {
                 $res = CFileman::ParseFileContent($filesrc_tmp, true);
                 $prolog = CFileman::SetTitle($res["PROLOG"], $title);
                 for ($i = 0; $i <= $maxind; $i++) {
-                    if (strlen(Trim($_POST["CODE_" . $i])) > 0) {
+                    if (Trim($_POST["CODE_" . $i]) <> '') {
                         if ($_POST["CODE_" . $i] != $_POST["H_CODE_" . $i]) {
                             $prolog = CFileman::SetProperty($prolog, Trim($_POST["H_CODE_" . $i]), "");
-                            $prolog = CFileman::SetProperty($prolog, Trim($_POST["CODE_" . $i]), Trim($_POST["VALUE_" . $i]));
-                        } else
-                            $prolog = CFileman::SetProperty($prolog, Trim($_POST["CODE_" . $i]), Trim($_POST["VALUE_" . $i]));
-                    } else
+                            $prolog = CFileman::SetProperty(
+                                $prolog,
+                                Trim($_POST["CODE_" . $i]),
+                                Trim($_POST["VALUE_" . $i])
+                            );
+                        } else {
+                            $prolog = CFileman::SetProperty(
+                                $prolog,
+                                Trim($_POST["CODE_" . $i]),
+                                Trim($_POST["VALUE_" . $i])
+                            );
+                        }
+                    } else {
                         $prolog = CFileman::SetProperty($prolog, Trim($_POST["H_CODE_" . $i]), "");
+                    }
                 }
                 $epilog = $res["EPILOG"];
                 $filesrc_for_save = $prolog . $filesrc . $epilog;
@@ -224,34 +253,37 @@ if (strlen($strWarning) <= 0) {
             }
         }
 
-        if (strlen($strWarning) <= 0) {
+        if ($strWarning == '') {
             if (!CFileMan::CheckOnAllowedComponents($filesrc_for_save)) {
                 $str_err = $APPLICATION->GetException();
-                if ($str_err && ($err = $str_err->GetString()))
+                if ($str_err && ($err = $str_err->GetString())) {
                     $strWarning .= $err;
+                }
                 $bVarsFromForm = true;
             }
         }
 
-        if (strlen($strWarning) <= 0) {
+        if ($strWarning == '') {
             if (!$APPLICATION->SaveFileContent($abs_path, $filesrc_for_save)) {
                 if ($str_err = $APPLICATION->GetException()) {
-                    if ($err = $str_err->GetString())
+                    if ($err = $str_err->GetString()) {
                         $strWarning = $err;
+                    }
 
                     $path = $io->CombinePath("/", $arParsedPath["PREV"]);
                     $arParsedPath = CFileMan::ParsePath($path, true, false, "", $logical == "Y");
                     $abs_path = $io->CombinePath($DOC_ROOT, $path);
                 }
 
-                if (empty($strWarning))
+                if (empty($strWarning)) {
                     $strWarning = GetMessage("FILEMAN_FILE_SAVE_ERROR");
+                }
 
                 $bVarsFromForm = true;
             } else {
                 if (COption::GetOptionString($module_id, "log_page", "Y") == "Y") {
-                    $res_log['path'] = substr($path, 1);
-                    if ($new == 'y' && strlen($filename) > 0)
+                    $res_log['path'] = mb_substr($path, 1);
+                    if ($new == 'y' && $filename <> '') {
                         CEventLog::Log(
                             "content",
                             "FILE_ADD",
@@ -259,7 +291,7 @@ if (strlen($strWarning) <= 0) {
                             "",
                             serialize($res_log)
                         );
-                    else
+                    } else {
                         CEventLog::Log(
                             "content",
                             "FILE_EDIT",
@@ -267,9 +299,12 @@ if (strlen($strWarning) <= 0) {
                             "",
                             serialize($res_log)
                         );
+                    }
                 }
                 // menu saving
-                if ($add_to_menu == "Y" && strlen($menutype) > 0 && $USER->CanDoOperation('fileman_add_element_to_menu') && $USER->CanDoFileOperation('fm_add_to_menu', $arPath)) {
+                if ($add_to_menu == "Y" && $menutype <> '' && $USER->CanDoOperation(
+                        'fileman_add_element_to_menu'
+                    ) && $USER->CanDoFileOperation('fm_add_to_menu', $arPath)) {
                     $menu_path = $io->CombinePath("/", $arParsedPath["PREV"], "." . $menutype . ".menu.php");
 
                     if ($USER->CanDoFileOperation('fm_edit_existent_file', Array($site, $menu_path))) {
@@ -277,30 +312,41 @@ if (strlen($strWarning) <= 0) {
                         $aMenuLinksTmp = $res["aMenuLinks"];
                         $sMenuTemplateTmp = $res["sMenuTemplate"];
 
-                        $menuitem = IntVal($menuitem);
+                        $menuitem = intval($menuitem);
                         if ($itemtype == "e") //means in exist item
                         {
                             $menuitem = $menuitem - 1;
-                            if ($menuitem < count($aMenuLinksTmp)) // number of item must be in bounds of amount of current menu
+                            if ($menuitem < count(
+                                    $aMenuLinksTmp
+                                )) // number of item must be in bounds of amount of current menu
+                            {
                                 $aMenuLinksTmp[$menuitem][2][] = $path;
+                            }
                         } else //else in new
                         {
                             $menuitem = $newppos - 1;
                             // if number of item goes out from bounds of amount of current menu
-                            if ($menuitem < 0 || $menuitem >= count($aMenuLinksTmp))
+                            if ($menuitem < 0 || $menuitem >= count($aMenuLinksTmp)) {
                                 $menuitem = count($aMenuLinksTmp);
+                            }
 
-                            for ($i = count($aMenuLinksTmp) - 1; $i >= $menuitem; $i--)//shift to the right all items > our
+                            for (
+                                $i = count(
+                                        $aMenuLinksTmp
+                                    ) - 1; $i >= $menuitem; $i--
+                            )//shift to the right all items > our
+                            {
                                 $aMenuLinksTmp[$i + 1] = $aMenuLinksTmp[$i];
+                            }
                             $aMenuLinksTmp[$menuitem] = Array($newp, $path, Array(), Array(), "");
                         }
                         CFileMan::SaveMenu(Array($site, $menu_path), $aMenuLinksTmp, $sMenuTemplateTmp);
 
                         if (COption::GetOptionString("main", "event_log_menu", "N") === "Y") {
                             $mt = COption::GetOptionString("fileman", "menutypes", $default_value, $site);
-                            $mt = unserialize(str_replace("\\", "", $mt));
+                            $mt = unserialize(str_replace("\\", "", $mt), ['allowed_classes' => false]);
                             $res_log['menu_name'] = $mt[$menutype];
-                            $res_log['path'] = substr(dirname($path), 1);
+                            $res_log['path'] = mb_substr(dirname($path), 1);
                             CEventLog::Log(
                                 "content",
                                 "MENU_EDIT",
@@ -312,10 +358,17 @@ if (strlen($strWarning) <= 0) {
                     }
                 }
 
-                if (strlen($strWarning) <= 0 && strlen($apply) <= 0 && strlen($apply2) <= 0)
+                if ($strWarning == '' && $apply == '' && $apply2 == '') {
                     $localRedirectUrl = $url;
-                else
-                    $localRedirectUrl = "/bitrix/admin/fileman_html_edit.php?" . $addUrl . "&site=" . Urlencode($site) . "&path=" . UrlEncode($path) . "&back_url=" . UrlEncode($back_url) . "&fullscreen=" . ($bFullScreen ? "Y" : "N") . "&tabControl_active_tab=" . urlencode($tabControl_active_tab);
+                } else {
+                    $localRedirectUrl = "/bitrix/admin/fileman_html_edit.php?" . $addUrl . "&site=" . Urlencode(
+                            $site
+                        ) . "&path=" . UrlEncode($path) . "&back_url=" . UrlEncode(
+                            $back_url
+                        ) . "&fullscreen=" . ($bFullScreen ? "Y" : "N") . "&tabControl_active_tab=" . urlencode(
+                            $tabControl_active_tab
+                        );
+                }
             }
 
             $filesrc_tmp = $filesrc_for_save;
@@ -326,13 +379,15 @@ if (strlen($strWarning) <= 0) {
     }
 }
 
-if (strlen($propeditmore) > 0)
-    $bVarsFromForm = True;
+if ($propeditmore <> '') {
+    $bVarsFromForm = true;
+}
 
 $bEditProps = false;
 if (!$bVarsFromForm) {
-    if (!$bEdit && strlen($filename) <= 0)
+    if (!$bEdit && $filename == '') {
         $filename = ($USER->CanDoOperation('edit_php') || $limit_php_access) ? "untitled.php" : "untitled.html";
+    }
 
     if (!$bFullPHP) {
         $res = CFileman::ParseFileContent($filesrc_tmp, true);
@@ -348,54 +403,78 @@ if (!$bVarsFromForm) {
                 $php_count = 0;
                 for ($n = 0; $n < $l; $n++) {
                     $start = $arPHP[$n][0];
-                    $new_filesrc .= substr($filesrc, $end, $start - $end);
+                    $new_filesrc .= mb_substr($filesrc, $end, $start - $end);
                     $end = $arPHP[$n][1];
 
                     //Trim php tags
                     $src = $arPHP[$n][2];
-                    if (SubStr($src, 0, 5) == "<?" . "php")
-                        $src = SubStr($src, 5);
-                    else
-                        $src = SubStr($src, 2);
-                    $src = SubStr($src, 0, -2);
+                    if (mb_substr($src, 0, 5) == "<?" . "php") {
+                        $src = mb_substr($src, 5);
+                    } else {
+                        $src = mb_substr($src, 2);
+                    }
+                    $src = mb_substr($src, 0, -2);
 
                     //If it's Component 2, keep the php code. If it's component 1 or ordinary PHP - than replace code by #PHPXXXX# (XXXX - count of PHP scripts)
                     $comp2_begin = '$APPLICATION->INCLUDECOMPONENT(';
-                    if (strtoupper(substr($src, 0, strlen($comp2_begin))) == $comp2_begin)
+                    if (mb_strtoupper(mb_substr($src, 0, mb_strlen($comp2_begin))) == $comp2_begin) {
                         $new_filesrc .= $arPHP[$n][2];
-                    else
+                    } else {
                         $new_filesrc .= '#PHP' . str_pad(++$php_count, 4, "0", STR_PAD_LEFT) . '#';
+                    }
                 }
-                $new_filesrc .= substr($filesrc, $end);
+                $new_filesrc .= mb_substr($filesrc, $end);
                 $filesrc = $new_filesrc;
             }
         }
 
-        $bEditProps = strlen($res["PROLOG"]) > 0;
+        $bEditProps = $res["PROLOG"] <> '';
         $title = $res["TITLE"];
         $page_properties = $res["PROPERTIES"];
     } else {
         $filesrc = $filesrc_tmp;
     }
 
-    if ((CFileman::IsPHP($filesrc) || $isScriptExt) && !($USER->CanDoOperation('edit_php') || $limit_php_access))
+    if ((CFileman::IsPHP($filesrc) || $isScriptExt) && !($USER->CanDoOperation('edit_php') || $limit_php_access)) {
         $strWarning = GetMessage("FILEMAN_FILEEDIT_CHANGE_ACCESS");
-} elseif ($prop_edit == "Y")
+    }
+} elseif ($prop_edit == "Y") {
     $bEditProps = true;
+}
 
-if ($bEdit)
-    $APPLICATION->SetTitle(GetMessage("FILEMAN_FILEEDIT_PAGE_TITLE") . " \"" . htmlspecialcharsbx($arParsedPath["LAST"]) . "\"");
-else
+if ($bEdit) {
+    $APPLICATION->SetTitle(
+        GetMessage("FILEMAN_FILEEDIT_PAGE_TITLE") . " \"" . htmlspecialcharsbx($arParsedPath["LAST"]) . "\""
+    );
+} else {
     $APPLICATION->SetTitle(GetMessage("FILEMAN_NEWFILEEDIT_TITLE"));
+}
 
 $aTabs = array();
-$aTabs[] = array("DIV" => "edit1", "TAB" => GetMessage("FILEMAN_H_EDIT_TAB1"), "ICON" => "main_user_edit", "TITLE" => GetMessage("FILEMAN_H_EDIT_TAB2"));
+$aTabs[] = array(
+    "DIV" => "edit1",
+    "TAB" => GetMessage("FILEMAN_H_EDIT_TAB1"),
+    "ICON" => "main_user_edit",
+    "TITLE" => GetMessage("FILEMAN_H_EDIT_TAB2")
+);
 
-if ($bEditProps)
-    $aTabs[] = array("DIV" => "edit2", "TAB" => GetMessage("FILEMAN_H_EDIT_RTAB2"), "ICON" => "main_user_edit", "TITLE" => GetMessage("FILEMAN_H_EDIT_TAB2_TITLE"));
+if ($bEditProps) {
+    $aTabs[] = array(
+        "DIV" => "edit2",
+        "TAB" => GetMessage("FILEMAN_H_EDIT_RTAB2"),
+        "ICON" => "main_user_edit",
+        "TITLE" => GetMessage("FILEMAN_H_EDIT_TAB2_TITLE")
+    );
+}
 
-if ($USER->CanDoOperation('fileman_add_element_to_menu') && $USER->CanDoFileOperation('fm_add_to_menu', $arPath))
-    $aTabs[] = array("DIV" => "edit3", "TAB" => GetMessage("FILEMAN_H_EDIT_TAB3"), "ICON" => "main_user_edit", "TITLE" => GetMessage("FILEMAN_H_EDIT_TAB3_TITLE"));
+if ($USER->CanDoOperation('fileman_add_element_to_menu') && $USER->CanDoFileOperation('fm_add_to_menu', $arPath)) {
+    $aTabs[] = array(
+        "DIV" => "edit3",
+        "TAB" => GetMessage("FILEMAN_H_EDIT_TAB3"),
+        "ICON" => "main_user_edit",
+        "TITLE" => GetMessage("FILEMAN_H_EDIT_TAB3_TITLE")
+    );
+}
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
 // We have to redirect after TabControl for normal work of autosave methods
@@ -416,7 +495,7 @@ foreach ($arParsedPath["AR_PATH"] as $chainLevel) {
     $adminChain->AddItem(
         array(
             "TEXT" => htmlspecialcharsex($chainLevel["TITLE"]),
-            "LINK" => ((strlen($chainLevel["LINK"]) > 0) ? $chainLevel["LINK"] : ""),
+            "LINK" => (($chainLevel["LINK"] <> '') ? $chainLevel["LINK"] : ""),
         )
     );
 }
@@ -426,7 +505,7 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
 
 <? CAdminMessage::ShowMessage($strWarning); ?>
 
-<? if (strlen($strWarning) <= 0 || $bVarsFromForm):
+<? if ($strWarning == '' || $bVarsFromForm):
 //$aMenu = array();
     $aMenu = array(
         array(
@@ -451,10 +530,10 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
             "ACTION" => "window.location='fileman_file_edit.php?" . $addUrl .
                 "&amp;site=" . Urlencode($site) . "&amp;path=" . UrlEncode($path) .
                 ($new == 'y' ? "&amp;new=Y" : "") .
-                (strlen($back_url) > 0 ? "&amp;back_url=" . urlencode($back_url) : "") .
-                (strlen($template) > 0 ? "&amp;template=" . urlencode($template) : "") .
-                (strlen($template) > 0 ? "&amp;template=" . urlencode($template) : "") .
-                (strlen($templateID) > 0 ? "&amp;templateID=" . urlencode($templateID) : "") . "';",
+                ($back_url <> '' ? "&amp;back_url=" . urlencode($back_url) : "") .
+                ($template <> '' ? "&amp;template=" . urlencode($template) : "") .
+                ($template <> '' ? "&amp;template=" . urlencode($template) : "") .
+                ($templateID <> '' ? "&amp;templateID=" . urlencode($templateID) : "") . "';",
         );
     }
 
@@ -463,10 +542,10 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
             "TEXT" => GetMessage("FILEMAN_FILEEDIT_AS_PHP"),
             "ACTION" => "window.location='fileman_file_edit.php?" . $addUrl . "&amp;site=" . Urlencode($site) .
                 "&amp;path=" . UrlEncode($path) . "&amp;full_src=Y" . ($new == 'y' ? "&amp;new=Y" : "") .
-                (strlen($back_url) > 0 ? "&amp;back_url=" . urlencode($back_url) : "") .
-                (strlen($template) > 0 ? "&amp;template=" . urlencode($template) : "") .
-                (strlen($template) > 0 ? "&amp;template=" . urlencode($template) : "") .
-                (strlen($templateID) > 0 ? "&amp;templateID=" . urlencode($templateID) : "") . "';",
+                ($back_url <> '' ? "&amp;back_url=" . urlencode($back_url) : "") .
+                ($template <> '' ? "&amp;template=" . urlencode($template) : "") .
+                ($template <> '' ? "&amp;template=" . urlencode($template) : "") .
+                ($templateID <> '' ? "&amp;templateID=" . urlencode($templateID) : "") . "';",
         );
     }
 
@@ -476,7 +555,7 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
             "ACTION" => "window.location='fileman_menu_edit.php?" . $addUrl .
                 "&amp;site=" . Urlencode($site) . "&amp;path=" . UrlEncode($arParsedPath["PREV"]) .
                 "&amp;name=" . UrlEncode($regs[1]) . ($new == 'y' ? "&amp;new=Y" : "") .
-                (strlen($back_url) > 0 ? "&amp;back_url=" . urlencode($back_url) : "") . "';"
+                ($back_url <> '' ? "&amp;back_url=" . urlencode($back_url) : "") . "';"
         );
     }
 
@@ -497,23 +576,37 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
         if ($USER->CanDoFileOperation('fm_rename_file', $arPath)) {
             $aMenu[] = array(
                 "TEXT" => GetMessage("FILEMAN_FILEEDIT_RENAME"),
-                "LINK" => "fileman_rename.php?" . $addUrl . "&amp;site=" . Urlencode($site) . "&amp;path=" . UrlEncode($arParsedPath["PREV"]) . "&amp;files[]=" . UrlEncode($arParsedPath["LAST"])
+                "LINK" => "fileman_rename.php?" . $addUrl . "&amp;site=" . Urlencode($site) . "&amp;path=" . UrlEncode(
+                        $arParsedPath["PREV"]
+                    ) . "&amp;files[]=" . UrlEncode($arParsedPath["LAST"])
             );
         }
 
-        if (($USER->CanDoFileOperation('fm_download_file', $arPath) && !(HasScriptExtension($path) || substr(CFileman::GetFileName($path), 0, 1) == ".")) || $USER->CanDoOperation('edit_php')) {
+        if (($USER->CanDoFileOperation('fm_download_file', $arPath) && !(HasScriptExtension($path) || mb_substr(
+                        CFileman::GetFileName($path),
+                        0,
+                        1
+                    ) == ".")) || $USER->CanDoOperation('edit_php')) {
             $aMenu[] = array(
                 "TEXT" => GetMessage("FILEMAN_FILEEDIT_DOWNLOAD"),
-                "LINK" => "fileman_file_download.php?" . $addUrl . "&amp;site=" . Urlencode($site) . "&amp;path=" . UrlEncode($path)
+                "LINK" => "fileman_file_download.php?" . $addUrl . "&amp;site=" . Urlencode(
+                        $site
+                    ) . "&amp;path=" . UrlEncode($path)
             );
         }
 
         if ($USER->CanDoFileOperation('fm_delete_file', $arPath)) {
-            $folder_path = substr($path, 0, strrpos($path, "/"));
+            $folder_path = mb_substr($path, 0, mb_strrpos($path, "/"));
             $id = GetFileName($path);
             $aMenu[] = array(
                 "TEXT" => GetMessage("FILEMAN_FILE_DELETE"),
-                "LINK" => "javascript:if(confirm('" . GetMessage("FILEMAN_FILE_DELETE_CONFIRM") . "')) window.location='/bitrix/admin/fileman_admin.php?ID=" . urlencode($id) . "&action=delete&" . $addUrl . "&site=" . urlencode($site) . "&path=" . urlencode($folder_path) . "&" . bitrix_sessid_get() . "';",
+                "LINK" => "javascript:if(confirm('" . GetMessage(
+                        "FILEMAN_FILE_DELETE_CONFIRM"
+                    ) . "')) window.location='/bitrix/admin/fileman_admin.php?ID=" . urlencode(
+                        $id
+                    ) . "&action=delete&" . $addUrl . "&site=" . urlencode($site) . "&path=" . urlencode(
+                        $folder_path
+                    ) . "&" . bitrix_sessid_get() . "';",
                 "TITLE" => GetMessage("FILEMAN_FILE_DELETE")
             );
         }
@@ -539,7 +632,8 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
 
     $u = new CAdminPopup("new_doc_list", "new_doc_list", $arContextTemplates);
 
-    CAdminFileDialog::ShowScript(Array
+    CAdminFileDialog::ShowScript(
+        Array
         (
             "event" => "__bx_fd_save_as",
             "arResultDest" => Array("FUNCTION_NAME" => "OnSaveAs"),
@@ -607,21 +701,31 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
                             $folderPath = $_REQUEST['path'];
                             ?>
 
-                            window.location = '/bitrix/admin/fileman_html_edit.php?lang=<?= LANG?><?=$logic?>&site=<?=Urlencode($site)?>&path=<?= UrlEncode($folderPath)?>&new=y&template=' + encodeURIComponent(_this[_this.selectedIndex].value) + _name + _title;
+                            window.location = '/bitrix/admin/fileman_html_edit.php?lang=<?= LANG?><?=$logic?>&site=<?=Urlencode(
+                                $site
+                            )?>&path=<?= UrlEncode(
+                                $folderPath
+                            )?>&new=y&template=' + encodeURIComponent(_this[_this.selectedIndex].value) + _name + _title;
                         }
                     </script>
 
                     <?
-                    if (isset($_GET['oldtitle']) && strlen($_GET['oldtitle']) > 0 && !$bVarsFromForm)
+                    if (isset($_GET['oldtitle']) && $_GET['oldtitle'] <> '' && !$bVarsFromForm) {
                         $title = $GLOBALS["APPLICATION"]->ConvertCharset($_GET['oldtitle'], "UTF-8", LANG_CHARSET);
-                    if (isset($_GET['oldname']) && strlen($_GET['oldname']) > 0 && !$bVarsFromForm)
+                    }
+                    if (isset($_GET['oldname']) && $_GET['oldname'] <> '' && !$bVarsFromForm) {
                         $filename = $GLOBALS["APPLICATION"]->ConvertCharset($_GET['oldname'], "UTF-8", LANG_CHARSET);
+                    }
                     ?>
                     <select id="bx_template" name="template" onchange="templateOnChange(this);">
                         <?
                         $cntTemp = count($arTemplates);
                         for ($i = 0; $i < $cntTemp; $i++):?>
-                            <option value="<?= htmlspecialcharsbx($arTemplates[$i]["file"]) ?>"<? if ($template == $arTemplates[$i]["file"]) echo " selected" ?>><?= htmlspecialcharsbx($arTemplates[$i]["name"]) ?></option>
+                            <option value="<?= htmlspecialcharsbx(
+                                $arTemplates[$i]["file"]
+                            ) ?>"<? if ($template == $arTemplates[$i]["file"]) echo " selected" ?>><?= htmlspecialcharsbx(
+                                    $arTemplates[$i]["name"]
+                                ) ?></option>
                         <? endfor; ?>
                     </select></td>
             </tr>
@@ -633,8 +737,9 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
             <tr>
                 <td><label for="filename"><?= GetMessage("FILEMAN_FILEEDIT_NAME") ?></td>
                 <td>
-                    <? if (isset($filename2))
-                        $filename = $filename2; ?>
+                    <? if (isset($filename2)) {
+                        $filename = $filename2;
+                    } ?>
                     <input type="text" name="filename" id="filename" style="float: left;" size="60" maxlength="255"
                            value="<?= htmlspecialcharsbx($filename) ?>"/>
                 </td>
@@ -712,15 +817,17 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
                     <input type="hidden" name="bxfm_linked" id="bxfm_linked" value="<? echo $bLinked ? "Y" : "N"; ?>)"/>
                     <?
                     include_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/fileman/classes/general/fileman_utils.php");
-                    CFilemanTransliterate::Init(array(
-                        'fromInputId' => 'title',
-                        'toInputId' => 'filename',
-                        'linkedId' => 'bxfm_linked',
-                        'linked' => $bLinked,
-                        'linkedTitle' => GetMessage('FILEMAN_FILE_TRANS_LINKED'),
-                        'unlinkedTitle' => GetMessage('FILEMAN_FILE_TRANS_UNLINKED'),
-                        'ext' => $USER->CanDoOperation('edit_php') || $limit_php_access ? 'php' : 'html'
-                    ));
+                    CFilemanTransliterate::Init(
+                        array(
+                            'fromInputId' => 'title',
+                            'toInputId' => 'filename',
+                            'linkedId' => 'bxfm_linked',
+                            'linked' => $bLinked,
+                            'linkedTitle' => GetMessage('FILEMAN_FILE_TRANS_LINKED'),
+                            'unlinkedTitle' => GetMessage('FILEMAN_FILE_TRANS_UNLINKED'),
+                            'ext' => $USER->CanDoOperation('edit_php') || $limit_php_access ? 'php' : 'html'
+                        )
+                    );
                 }
                 ?>
 
@@ -819,23 +926,26 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
                         $abs_path = $DOC_ROOT . $__path;
                         $io = CBXVirtualIo::GetInstance();
                         if ($io->FileExists($abs_path)) {
-                            $relPath = substr($relPath, 0, strrpos($relPath, "/"));
-                            if ($relPath == "")
+                            $relPath = mb_substr($relPath, 0, mb_strrpos($relPath, "/"));
+                            if ($relPath == "") {
                                 $relPath = "/";
+                            }
                         }
                     }
 
                     $Editor = new CHTMLEditor;
-                    $Editor->Show(array(
-                        'name' => 'filesrc',
-                        'id' => 'filesrc',
-                        'width' => '100%',
-                        'height' => '650',
-                        'content' => $filesrc,
-                        'bAllowPhp' => $USER->CanDoOperation('edit_php'),
-                        "limitPhpAccess" => $limit_php_access,
-                        "relPath" => $relPath
-                    ));
+                    $Editor->Show(
+                        array(
+                            'name' => 'filesrc',
+                            'id' => 'filesrc',
+                            'width' => '100%',
+                            'height' => '650',
+                            'content' => $filesrc,
+                            'bAllowPhp' => $USER->CanDoOperation('edit_php'),
+                            "limitPhpAccess" => $limit_php_access,
+                            "relPath" => $relPath
+                        )
+                    );
 
                     CUtil::InitJSCore(array('translit'));
                     ?>
@@ -850,14 +960,26 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
                         });
                     </script>
                 <? else:?>
-                    <? CFileman::ShowHTMLEditControl("filesrc", $filesrc, Array(
+                    <? CFileman::ShowHTMLEditControl(
+                        "filesrc",
+                        $filesrc,
+                        Array(
                             "site" => $site,
                             "templateID" => $templateID,
-                            "bUseOnlyDefinedStyles" => COption::GetOptionString("fileman", "show_untitled_styles", "N") != "Y",
+                            "bUseOnlyDefinedStyles" => COption::GetOptionString(
+                                    "fileman",
+                                    "show_untitled_styles",
+                                    "N"
+                                ) != "Y",
                             "bWithoutPHP" => (!$USER->CanDoOperation('edit_php')),
                             "toolbarConfig" => CFileman::GetEditorToolbarConfig("filesrc"),
                             "arToolbars" => Array("manage", "standart", "style", "formating", "source", "template"),
-                            "arTaskbars" => Array("BXComponentsTaskbar", "BXComponents2Taskbar", "BXPropertiesTaskbar", "BXSnippetsTaskbar"),
+                            "arTaskbars" => Array(
+                                "BXComponentsTaskbar",
+                                "BXComponents2Taskbar",
+                                "BXPropertiesTaskbar",
+                                "BXSnippetsTaskbar"
+                            ),
                             "sBackUrl" => $url,
                             "fullscreen" => ($bFullScreen == 'Y'),
                             "path" => $path,
@@ -921,10 +1043,15 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
                                 }
 
                                 if (is_set($arPropTypes, $f_CODE)) {
-                                    $arAllPropFields[] = Array("CODE" => $f_CODE, "VALUE" => $f_VALUE, "NAME" => $arPropTypes[$f_CODE]);
+                                    $arAllPropFields[] = Array(
+                                        "CODE" => $f_CODE,
+                                        "VALUE" => $f_VALUE,
+                                        "NAME" => $arPropTypes[$f_CODE]
+                                    );
                                     unset($arPropTypes[$f_CODE]);
-                                } else
+                                } else {
                                     $arAllPropFields[] = Array("CODE" => $f_CODE, "VALUE" => $f_VALUE);
+                                }
                             }
                         }
 
@@ -952,13 +1079,15 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
                         }
 
                         foreach ($arPropTypes_tmp as $k => $v) {
-                            if (is_set($arDefProps, $k))
+                            if (is_set($arDefProps, $k)) {
                                 $arAllPropFields_tmp[] = $arDefProps[$k];
+                            }
                         }
 
                         if (is_array($arAllPropFields)) {
-                            foreach ($arAllPropFields as $v)
+                            foreach ($arAllPropFields as $v) {
                                 $arAllPropFields_tmp[] = $v;
+                            }
                         }
                         $arAllPropFields = $arAllPropFields_tmp;
                         unset($arPropTypes_tmp);
@@ -981,23 +1110,32 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
                                         <?= htmlspecialcharsbx($arProp["NAME"]); ?>:
                                     <? else:?>
                                         <input type="text" name="CODE_<?= $i ?>" id="CODE_<?= $i ?>"
-                                               value="<? echo htmlspecialcharsbx((isset($_POST["CODE_$i"])) ? $_POST["CODE_$i"] : $arProp["CODE"]); ?>"
-                                               size="30">:
+                                               value="<? echo htmlspecialcharsbx(
+                                                   (isset($_POST["CODE_$i"])) ? $_POST["CODE_$i"] : $arProp["CODE"]
+                                               ); ?>" size="30">:
                                     <?endif; ?>
                                 </td>
                                 <td>
                                     <?
                                     $value_ = (isset($_POST["VALUE_$i"])) ? $_POST["VALUE_$i"] : $arProp["VALUE"];
                                     if ($arProp["CODE"] == $tag_prop_name && $search_exist):
-                                        echo InputTags("VALUE_" . $i, $value_, array($documentSite), 'size="55"', "VALUE_" . $i);
+                                        echo InputTags(
+                                            "VALUE_" . $i,
+                                            $value_,
+                                            array($documentSite),
+                                            'size="55"',
+                                            "VALUE_" . $i
+                                        );
                                     else:?>
                                         <input type="text" name="VALUE_<?= $i ?>" id="VALUE_<?= $i ?>"
                                                value="<?= htmlspecialcharsbx($value_); ?>" size="60">
                                     <?endif;
                                     if ($APPLICATION->GetDirProperty($arProp["CODE"], Array($site, $path))) {
-                                        ?><br><small>
-                                        <b><?= GetMessage("FILEMAN_FILE_EDIT_FOLDER_PROP") ?></b> <? echo htmlspecialcharsbx($APPLICATION->GetDirProperty($arProp["CODE"], Array($site, $path))); ?>
-                                        </small><?
+                                        ?><br><small><b><?= GetMessage(
+                                                "FILEMAN_FILE_EDIT_FOLDER_PROP"
+                                            ) ?></b> <? echo htmlspecialcharsbx(
+                                            $APPLICATION->GetDirProperty($arProp["CODE"], Array($site, $path))
+                                        ); ?></small><?
                                     } ?>
                                 </td>
                             </tr>
@@ -1017,18 +1155,24 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
             <!-- END FILE PROPS -->
         <? endif; ?>
         <?
-        if ($USER->CanDoOperation('fileman_add_element_to_menu') && $USER->CanDoFileOperation('fm_add_to_menu', $arPath)):
+        if ($USER->CanDoOperation('fileman_add_element_to_menu') && $USER->CanDoFileOperation(
+                'fm_add_to_menu',
+                $arPath
+            )):
             $tabControl->BeginNextTab();
             $add_to_menu_check = true;
             ?>
             <tr>
                 <td width="40%"><label for="add_to_menu"><?= GetMessage("FILEMAN_H_EDIT_ADD") ?></label></td>
                 <td width="60%"><input type="checkbox" id="add_to_menu" name="add_to_menu" value="Y"
-                                       onclick="__heAddToMenu()" <? if ($_POST['add_to_menu'] == 'Y') echo 'checked'; ?>>
-                </td>
+                                       onclick="__heAddToMenu()" <? if ($_POST['add_to_menu'] == 'Y') {
+                        echo 'checked';
+                    } ?>></td>
             </tr>
 
-            <tr id="ex"<? if ($_POST['add_to_menu'] != 'Y') echo ' style="display:none;"'; ?>>
+            <tr id="ex"<? if ($_POST['add_to_menu'] != 'Y') {
+                echo ' style="display:none;"';
+            } ?>>
                 <td><?= GetMessage("FILEMAN_H_EDIT_TMENU") ?></td>
                 <td>
                     <select id="menutype" name="menutype" onChange="chtyp()">
@@ -1037,14 +1181,19 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
                         $arAllItems = Array();
                         $strSelected = "";
                         foreach ($armt as $key => $title) {
-                            if (!$USER->CanDoFileOperation('fm_edit_existent_file', Array($site, $__fd_path . "/." . $key . ".menu.php")))
+                            if (!$USER->CanDoFileOperation(
+                                'fm_edit_existent_file',
+                                Array($site, $__fd_path . "/." . $key . ".menu.php")
+                            )) {
                                 continue;
+                            }
 
                             $arItems = Array();
                             $res = CFileMan::GetMenuArray($DOC_ROOT . $__fd_path . "/." . $key . ".menu.php");
                             $aMenuLinksTmp = $res["aMenuLinks"];
-                            if (!is_array($aMenuLinksTmp))
+                            if (!is_array($aMenuLinksTmp)) {
                                 $aMenuLinksTmp = Array();
+                            }
                             $itemcnt = 0;
                             $cntMenu = count($aMenuLinksTmp);
                             for ($j = 0; $j < $cntMenu; $j++) {
@@ -1052,11 +1201,14 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
                                 $arItems[] = htmlspecialcharsbx($aMenuLinksItem[0]);
                             }
                             $arAllItems[$key] = $arItems;
-                            if ($strSelected == "")
+                            if ($strSelected == "") {
                                 $strSelected = $key;
+                            }
                             ?>
                             <option value="<?= htmlspecialcharsex($key) ?>"
-                            <? if (isset($_POST['menutype']) && $_POST['menutype'] == $key) echo 'selected'; ?>>
+                            <? if (isset($_POST['menutype']) && $_POST['menutype'] == $key) {
+                                echo 'selected';
+                            } ?>>
                             <?= htmlspecialcharsex($title . " [" . $key . "]") ?></option><?
                         }
                         ?>
@@ -1097,8 +1249,9 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
                     $strItems .= "[";
                     $cntItems = count($arItems);
                     for ($j = 0; $j < $cntItems; $j++) {
-                        if ($j > 0)
+                        if ($j > 0) {
                             $strItems .= ",";
+                        }
                         $strItems .= "'" . CUtil::JSEscape($arItems[$j]) . "'";
                     }
                     $strItems .= "]";
@@ -1187,7 +1340,9 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
                 }
 
                 function __NewDocTempl(id) {
-                    window.location = '/bitrix/admin/fileman_html_edit.php?lang=<?= LANG?>&site=<?=Urlencode($site)?>&path=<?= UrlEncode($path)?>&new=y&template=' + id;
+                    window.location = '/bitrix/admin/fileman_html_edit.php?lang=<?= LANG?>&site=<?=Urlencode(
+                        $site
+                    )?>&path=<?= UrlEncode($path)?>&new=y&template=' + id;
                     new_doc_list.PopupHide();
                 }
 
@@ -1205,23 +1360,31 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
                     });
                 })
             </script>
-            <tr id="e0"<? if ($_REQUEST['add_to_menu'] != 'Y') echo ' style="display:none;"'; ?>>
+            <tr id="e0"<? if ($_REQUEST['add_to_menu'] != 'Y') {
+                echo ' style="display:none;"';
+            } ?>>
                 <td valign="top"><?= GetMessage("FILEMAN_H_EDIT_MENUIT") ?></td>
                 <td>
                     <input type="radio" name="itemtype" id="itemtype_n" value="n" onclick="chitemtype()"
-                        <? if ($n = (!isset($_POST['itemtype']) || $_POST['itemtype'] != 'e')) echo 'checked'; ?>>
-                    <label for="itemtype_n"><?= GetMessage("FILEMAN_H_EDIT_MENUITNEW") ?></label><br>
-                    <input type="radio" name="itemtype" id="itemtype_e" value="e"
-                           onclick="chitemtype()"<? if (!$n) echo 'checked'; ?>> <label
-                            for="itemtype_e"><? echo GetMessage("FILEMAN_H_EDIT_MENUITEX") ?></label>
+                        <? if ($n = (!isset($_POST['itemtype']) || $_POST['itemtype'] != 'e')) {
+                            echo 'checked';
+                        } ?>> <label for="itemtype_n"><?= GetMessage("FILEMAN_H_EDIT_MENUITNEW") ?></label><br>
+                    <input type="radio" name="itemtype" id="itemtype_e" value="e" onclick="chitemtype()"<? if (!$n) {
+                        echo 'checked';
+                    } ?>> <label for="itemtype_e"><? echo GetMessage("FILEMAN_H_EDIT_MENUITEX") ?></label>
                 </td>
             </tr>
-            <tr id="e1"<? if ($_REQUEST['add_to_menu'] != 'Y') echo ' style="display:none;"'; ?>>
+            <tr id="e1"<? if ($_REQUEST['add_to_menu'] != 'Y') {
+                echo ' style="display:none;"';
+            } ?>>
                 <td><? echo GetMessage("FILEMAN_H_EDIT_MENU_NEW_NAME") ?></td>
-                <td><input type="text" name="newp" id="newp"
-                           value="<? if (isset($_POST['newp'])) echo htmlspecialcharsbx($_POST['newp']); ?>"></td>
+                <td><input type="text" name="newp" id="newp" value="<? if (isset($_POST['newp'])) {
+                        echo htmlspecialcharsbx($_POST['newp']);
+                    } ?>"></td>
             </tr>
-            <tr id="e2"<? if ($_REQUEST['add_to_menu'] != 'Y') echo ' style="display:none;"'; ?>>
+            <tr id="e2"<? if ($_REQUEST['add_to_menu'] != 'Y') {
+                echo ' style="display:none;"';
+            } ?>>
                 <td><? echo GetMessage("FILEMAN_H_EDIT_MENU_INS_BEFORE") ?></td>
                 <td>
                     <select name="newppos" id="newppos"><?
@@ -1230,14 +1393,20 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
                         for ($i = 0; $i < $l; $i++):
                             ?>
                             <option
-                            value="<?= $i + 1 ?>" <? if (isset($_POST['newppos']) && $_POST['newppos'] == $i + 1) echo 'selected'; ?>><?= $arItems[$i] ?></option><?
+                            value="<?= $i + 1 ?>" <? if (isset($_POST['newppos']) && $_POST['newppos'] == $i + 1) {
+                            echo 'selected';
+                        } ?>><?= $arItems[$i] ?></option><?
                         endfor;
                         ?>
-                        <option value="0" <? if (isset($_POST['newppos']) && $_POST['newppos'] == 0) echo 'selected'; ?>><? echo GetMessage("FILEMAN_H_EDIT_MENU_LAST") ?></option>
+                        <option value="0" <? if (isset($_POST['newppos']) && $_POST['newppos'] == 0) {
+                            echo 'selected';
+                        } ?>><? echo GetMessage("FILEMAN_H_EDIT_MENU_LAST") ?></option>
                     </select>
                 </td>
             </tr>
-            <tr id="e3"<? if ($_REQUEST['add_to_menu'] != 'Y') echo ' style="display:none;"'; ?>>
+            <tr id="e3"<? if ($_REQUEST['add_to_menu'] != 'Y') {
+                echo ' style="display:none;"';
+            } ?>>
                 <td><? echo GetMessage("FILEMAN_H_EDIT_MENU_ITEM") ?></td>
                 <td>
                     <select name="menuitem" id="menuitem"><?
@@ -1246,7 +1415,9 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
                         for ($i = 0; $i < $l; $i++):
                             ?>
                             <option
-                            value="<?= $i + 1 ?>" <? if (isset($_POST['menuitem']) && $_POST['menuitem'] == $i + 1) echo 'selected'; ?>><?= $arItems[$i] ?></option><?
+                            value="<?= $i + 1 ?>" <? if (isset($_POST['menuitem']) && $_POST['menuitem'] == $i + 1) {
+                            echo 'selected';
+                        } ?>><?= $arItems[$i] ?></option><?
                         endfor;
                         ?></select>
                     <input type="hidden" name="apply2" id="apply2" value="">

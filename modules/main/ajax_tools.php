@@ -1,7 +1,6 @@
 <?
-IncludeModuleLangFile(__FILE__);
 
-define('BX_AJAX_PARAM_ID', 'bxajaxid');
+IncludeModuleLangFile(__FILE__);
 
 class CAjax
 {
@@ -21,46 +20,68 @@ class CAjax
         $trace_count = count($aTrace);
         $trace_current = $trace_count - 1;
         for ($i = 0; $i < $trace_count; $i++) {
-            if (strtolower($aTrace[$i]['function']) == 'includecomponent' && (($c = strtolower($aTrace[$i]['class'])) == 'callmain' || $c == 'cmain')) {
+            if (mb_strtolower($aTrace[$i]['function']) == 'includecomponent' && (($c = mb_strtolower(
+                        $aTrace[$i]['class']
+                    )) == 'callmain' || $c == 'cmain')) {
                 $trace_current = $i;
                 break;
             }
         }
 
-        $sSrcFile = strtolower(str_replace("\\", "/", $aTrace[$trace_current]["file"]));
+        $sSrcFile = mb_strtolower(str_replace("\\", "/", $aTrace[$trace_current]["file"]));
         $iSrcLine = intval($aTrace[$trace_current]["line"]);
 
         $bSrcFound = false;
 
         if ($iSrcLine > 0 && $sSrcFile <> "") {
             // try to covert absolute path to file within DOCUMENT_ROOT
-            $doc_root = rtrim(str_replace(Array("\\\\", "//", "\\"), Array("\\", "/", "/"), realpath($_SERVER["DOCUMENT_ROOT"])), "\\/");
-            $doc_root = strtolower($doc_root);
+            $doc_root = rtrim(
+                str_replace(Array("\\\\", "//", "\\"), Array("\\", "/", "/"), realpath($_SERVER["DOCUMENT_ROOT"])),
+                "\\/"
+            );
+            $doc_root = mb_strtolower($doc_root);
 
-            if (strpos($sSrcFile, $doc_root . "/") === 0) {
+            if (mb_strpos($sSrcFile, $doc_root . "/") === 0) {
                 //within
-                $sSrcFile = substr($sSrcFile, strlen($doc_root));
+                $sSrcFile = mb_substr($sSrcFile, mb_strlen($doc_root));
                 $bSrcFound = true;
             } else {
                 //outside
-                $sRealBitrix = strtolower(str_replace("\\", "/", realpath($_SERVER["DOCUMENT_ROOT"] . "/bitrix")));
+                $sRealBitrix = mb_strtolower(str_replace("\\", "/", realpath($_SERVER["DOCUMENT_ROOT"] . "/bitrix")));
 
-                if (strpos($sSrcFile, substr($sRealBitrix, 0, -6)) === 0) {
-                    $sSrcFile = substr($sSrcFile, strlen($sRealBitrix) - 7);
+                if (mb_strpos($sSrcFile, mb_substr($sRealBitrix, 0, -6)) === 0) {
+                    $sSrcFile = mb_substr($sSrcFile, mb_strlen($sRealBitrix) - 7);
                     $bSrcFound = true;
                 } else {
                     // special hack
-                    $sRealBitrixModules = substr(strtolower(str_replace("\\", "/", realpath($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main"))), 0, -5);
-                    if (strpos($sSrcFile, $sRealBitrixModules) === 0) {
-                        $sSrcFile = "/bitrix/modules" . substr($sSrcFile, strlen($sRealBitrixModules));
+                    $sRealBitrixModules = mb_substr(
+                        mb_strtolower(
+                            str_replace("\\", "/", realpath($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main"))
+                        ),
+                        0,
+                        -5
+                    );
+                    if (mb_strpos($sSrcFile, $sRealBitrixModules) === 0) {
+                        $sSrcFile = "/bitrix/modules" . mb_substr($sSrcFile, mb_strlen($sRealBitrixModules));
                         $bSrcFound = true;
                     } else {
                         // next special hack
                         $matches = array();
                         if (preg_match("#(?<=/modules/)[^/]+(?=/install/components/bitrix/)#", $sSrcFile, $matches)) {
-                            $sRealBitrixComponentsDir = strtolower(str_replace("\\", "/", realpath($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/" . $matches[0] . "/install/components/bitrix")));
-                            if (strpos($sSrcFile, $sRealBitrixComponentsDir) === 0) {
-                                $sSrcFile = "/bitrix/components/bitrix" . substr($sSrcFile, strlen($sRealBitrixComponentsDir));
+                            $sRealBitrixComponentsDir = mb_strtolower(
+                                str_replace(
+                                    "\\",
+                                    "/",
+                                    realpath(
+                                        $_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/" . $matches[0] . "/install/components/bitrix"
+                                    )
+                                )
+                            );
+                            if (mb_strpos($sSrcFile, $sRealBitrixComponentsDir) === 0) {
+                                $sSrcFile = "/bitrix/components/bitrix" . mb_substr(
+                                        $sSrcFile,
+                                        mb_strlen($sRealBitrixComponentsDir)
+                                    );
                                 $bSrcFound = true;
                             }
                         }
@@ -69,15 +90,17 @@ class CAjax
             }
         }
 
-        if (!$bSrcFound)
+        if (!$bSrcFound) {
             return false;
+        }
 
         $session_string = $sSrcFile . '|' . $iSrcLine . '|' . $componentName;
 
-        if (strlen($componentTemplate) > 0)
+        if ($componentTemplate <> '') {
             $session_string .= '|' . $componentTemplate;
-        else
+        } else {
             $session_string .= '|.default';
+        }
 
         $session_string .= '|' . $additionalID;
 
@@ -86,32 +109,42 @@ class CAjax
 
     public static function GetSession()
     {
-        if (is_set($_REQUEST, BX_AJAX_PARAM_ID))
+        if (is_set($_REQUEST, BX_AJAX_PARAM_ID)) {
             return $_REQUEST[BX_AJAX_PARAM_ID];
-        else
+        } else {
             return false;
+        }
     }
 
     public static function GetSessionParam($ajax_id = false)
     {
-        if (!$ajax_id) $ajax_id = CAjax::GetSession();
-        if (!$ajax_id) return '';
-        else return BX_AJAX_PARAM_ID . '=' . $ajax_id;
+        if (!$ajax_id) {
+            $ajax_id = CAjax::GetSession();
+        }
+        if (!$ajax_id) {
+            return '';
+        } else {
+            return BX_AJAX_PARAM_ID . '=' . $ajax_id;
+        }
     }
 
     public static function AddSessionParam($url, $ajax_id = false)
     {
-        $url_anchor = strstr($url, '#');
-        if ($url_anchor !== false)
-            $url = substr($url, 0, -strlen($url_anchor));
+        $url_anchor = mb_strstr($url, '#');
+        if ($url_anchor !== false) {
+            $url = mb_substr($url, 0, -mb_strlen($url_anchor));
+        }
 
-        $url .= strpos($url, "?") === false ? '?' : '&';
+        $url .= mb_strpos($url, "?") === false ? '?' : '&';
         $url .= CAjax::GetSessionParam($ajax_id);
 
-        if (is_set($_REQUEST['AJAX_CALL'])) $url .= '&AJAX_CALL=Y';
+        if (is_set($_REQUEST['AJAX_CALL'])) {
+            $url .= '&AJAX_CALL=Y';
+        }
 
-        if ($url_anchor !== false)
+        if ($url_anchor !== false) {
             $url .= $url_anchor;
+        }
 
         return $url;
     }
@@ -143,11 +176,14 @@ class CAjax
     public static function GetForm($form_params, $container_id, $ajax_id, $bReplace = true, $bShadow = true)
     {
         static $rndGenerator = null;
-        if (!$rndGenerator)
+        if (!$rndGenerator) {
             $rndGenerator = new \Bitrix\Main\Type\RandomSequence("BX_AJAX");
+        }
         $rnd = $rndGenerator->randString(6);
         return '
-<form ' . trim($form_params) . '><input type="hidden" name="' . BX_AJAX_PARAM_ID . '" id="' . BX_AJAX_PARAM_ID . '_' . $ajax_id . '_' . $rnd . '" value="' . $ajax_id . '" /><input type="hidden" name="AJAX_CALL" value="Y" /><script type="text/javascript">
+<form ' . trim(
+                $form_params
+            ) . '><input type="hidden" name="' . BX_AJAX_PARAM_ID . '" id="' . BX_AJAX_PARAM_ID . '_' . $ajax_id . '_' . $rnd . '" value="' . $ajax_id . '" /><input type="hidden" name="AJAX_CALL" value="Y" /><script type="text/javascript">
 function _processform_' . $rnd . '(){
 	if (BX(\'' . BX_AJAX_PARAM_ID . '_' . $ajax_id . '_' . $rnd . '\'))
 	{
@@ -172,13 +208,17 @@ else
 
     public static function GetFormEvent($container_id)
     {
-        return 'onsubmit="BX.ajax.submitComponentForm(this, \'' . htmlspecialcharsbx(CUtil::JSEscape($container_id)) . '\', true);"';
+        return 'onsubmit="BX.ajax.submitComponentForm(this, \'' . htmlspecialcharsbx(
+                CUtil::JSEscape($container_id)
+            ) . '\', true);"';
     }
 
     public static function GetFormEventValue($container_id, $bReplace = true, $bShadow = true, $event_delimiter = '\'')
     {
         $delimiter = $event_delimiter == '\'' ? '"' : '\'';
-        return 'BX.ajax.submitComponentForm(this, ' . $delimiter . CUtil::JSEscape($container_id) . $delimiter . ', true)';
+        return 'BX.ajax.submitComponentForm(this, ' . $delimiter . CUtil::JSEscape(
+                $container_id
+            ) . $delimiter . ', true)';
         //return 'jsAjaxUtil.'.($bReplace ? 'Insert' : 'Append').'FormDataToNode(this, '.$delimiter.$container_id.$delimiter.', '.($bShadow ? 'true' : 'false').')';
     }
 
@@ -192,13 +232,13 @@ else
     {
         global $APPLICATION;
 
-        $pos = strpos($str, 'view');
+        $pos = mb_strpos($str, 'view');
         if ($pos !== 0) {
             $APPLICATION->ThrowException(GetMessage('AJAX_REDIRECTOR_BAD_URL'));
             return false;
         }
 
-        $str = str_replace(array("\r", "\n"), "", substr($str, 4));
+        $str = str_replace(array("\r", "\n"), "", mb_substr($str, 4));
 
         if (preg_match("'^(/bitrix/|http://|https://|ftp://)'i", $str)) {
             $APPLICATION->ThrowException(GetMessage('AJAX_REDIRECTOR_BAD_URL'));

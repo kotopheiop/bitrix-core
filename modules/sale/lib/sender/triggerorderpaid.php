@@ -38,10 +38,11 @@ class TriggerOrderPaid extends \Bitrix\Sender\TriggerConnector
     {
         $eventData = $this->getParam('EVENT');
 
-        if ($eventData[1] != 'Y')
+        if ($eventData[1] != 'Y') {
             return false;
-        else
+        } else {
             return $this->filterConnectorData();
+        }
     }
 
     public function getConnector()
@@ -77,8 +78,9 @@ class TriggerOrderPaid extends \Bitrix\Sender\TriggerConnector
     {
         $eventData = $this->getParam('EVENT');
         $result = ['ORDER_ID' => $eventData[0]];
-        if ((int)$eventData[0] <= 0)
+        if ((int)$eventData[0] <= 0) {
             return $result;
+        }
 
         $registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
         /** @var Sale\Order $orderClass */

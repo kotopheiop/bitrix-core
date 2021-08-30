@@ -30,7 +30,13 @@ class Exception extends SystemException
             $parameters['PREVIOUS_EXCEPTION'] = null;
         }
 
-        parent::__construct($message, $parameters['CODE'], $parameters['FILE'], $parameters['LINE'], $parameters['PREVIOUS_EXCEPTION']);
+        parent::__construct(
+            $message,
+            $parameters['CODE'],
+            $parameters['FILE'],
+            $parameters['LINE'],
+            $parameters['PREVIOUS_EXCEPTION']
+        );
     }
 
     public function getAdditionalInfo()

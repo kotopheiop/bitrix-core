@@ -96,7 +96,6 @@ class Loader
 $content
 </script>
 EOD;
-
     }
 
     /**
@@ -120,6 +119,5 @@ EOD;
 		var h=d.getElementsByTagName('script')[0];h.parentNode.insertBefore(s,h);
 	})(window,document,'$path');
 EOD;
-
     }
 }

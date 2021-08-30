@@ -6,17 +6,19 @@ class CPerfomanceIndexComplete
     {
         global $DB;
 
-        if (!is_array($arOrder))
+        if (!is_array($arOrder)) {
             $arOrder = array();
-        if (count($arOrder) < 1)
+        }
+        if (count($arOrder) < 1) {
             $arOrder = array(
                 "TABLE_NAME" => "ASC",
             );
+        }
 
         $arQueryOrder = array();
         foreach ($arOrder as $strColumn => $strDirection) {
-            $strColumn = strtoupper($strColumn);
-            $strDirection = strtoupper($strDirection) == "ASC" ? "ASC" : "DESC";
+            $strColumn = mb_strtoupper($strColumn);
+            $strDirection = mb_strtoupper($strDirection) == "ASC" ? "ASC" : "DESC";
             switch ($strColumn) {
                 case "ID":
                 case "TABLE_NAME":
@@ -27,18 +29,21 @@ class CPerfomanceIndexComplete
         }
 
         $obQueryWhere = new CSQLWhere;
-        $obQueryWhere->SetFields(array(
-            "ID" => array(
-                "TABLE_ALIAS" => "s",
-                "FIELD_NAME" => "ID",
-                "FIELD_TYPE" => "int", //int, double, file, enum, int, string, date, datetime
-                "JOIN" => false,
-                //"LEFT_JOIN" => "lt",
-            ),
-        ));
+        $obQueryWhere->SetFields(
+            array(
+                "ID" => array(
+                    "TABLE_ALIAS" => "s",
+                    "FIELD_NAME" => "ID",
+                    "FIELD_TYPE" => "int", //int, double, file, enum, int, string, date, datetime
+                    "JOIN" => false,
+                    //"LEFT_JOIN" => "lt",
+                ),
+            )
+        );
 
-        if (!is_array($arFilter))
+        if (!is_array($arFilter)) {
             $arFilter = array();
+        }
         $strQueryWhere = $obQueryWhere->GetQuery($arFilter);
 
         $strSql = "
@@ -69,24 +74,28 @@ class CPerfomanceIndexComplete
     public static function DeleteByTableName($table, $columns)
     {
         global $DB;
-        $DB->Query("
+        $DB->Query(
+            "
 			delete
 			from b_perf_index_complete
 			where TABLE_NAME = '" . $DB->ForSQL($table) . "'
 			AND COLUMN_NAMES = '" . $DB->ForSQL($columns) . "'
-		");
+		"
+        );
     }
 
     public static function IsBanned($table, $columns)
     {
         global $DB;
-        $rs = $DB->Query("
+        $rs = $DB->Query(
+            "
 			select *
 			from b_perf_index_complete
 			where TABLE_NAME = '" . $DB->ForSQL($table) . "'
 			AND COLUMN_NAMES = '" . $DB->ForSQL($columns) . "'
 			AND BANNED = 'Y'
-		");
+		"
+        );
         return is_array($rs->Fetch());
     }
 }

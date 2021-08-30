@@ -59,10 +59,12 @@ class MobileCounter
             }
         }
 
-        $event = new \Bitrix\Main\Event("pull", "onGetMobileCounter", array(
+        $event = new \Bitrix\Main\Event(
+            "pull", "onGetMobileCounter", array(
             'USER_ID' => $userId,
             'SITE_ID' => $siteId
-        ));
+        )
+        );
         $event->send();
 
         $typeStatus = self::getConfig($userId);
@@ -160,10 +162,13 @@ class MobileCounter
             return false;
         }
 
-        \Bitrix\Pull\Push::add($userId, Array(
-            'module_id' => 'pull',
-            'push' => Array('badge' => 'Y')
-        ));
+        \Bitrix\Pull\Push::add(
+            $userId,
+            Array(
+                'module_id' => 'pull',
+                'push' => Array('badge' => 'Y')
+            )
+        );
 
         return true;
     }

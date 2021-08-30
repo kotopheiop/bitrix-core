@@ -1,5 +1,8 @@
 <?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die(); ?><?
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+} ?><?
 
 use Bitrix\Sale\Order;
 
@@ -8,14 +11,15 @@ function liqpay_parseTag($rs, $tag)
     $rs = str_replace("\n", "", str_replace("\r", "", $rs));
     $tags = '<' . $tag . '>';
     $tage = '</' . $tag;
-    $start = strpos($rs, $tags) + strlen($tags);
-    $end = strpos($rs, $tage);
+    $start = mb_strpos($rs, $tags) + mb_strlen($tags);
+    $end = mb_strpos($rs, $tage);
 
-    return substr($rs, $start, ($end - $start));
+    return mb_substr($rs, $start, ($end - $start));
 }
 
-if ($_POST['signature'] == "" || $_POST['operation_xml'] == "")
+if ($_POST['signature'] == "" || $_POST['operation_xml'] == "") {
     die();
+}
 
 $insig = $_POST['signature'];
 $resp = base64_decode($_POST['operation_xml']);
@@ -36,8 +40,9 @@ if ($orderId > 0) {
             $payment = $paymentCollection->getItemById($paymentId);
             if ($payment) {
                 $service = \Bitrix\Sale\PaySystem\Manager::getObjectById($payment->getPaymentSystemId());
-                if ($service)
+                if ($service) {
                     $service->processRequest($request);
+                }
             }
         }
     }

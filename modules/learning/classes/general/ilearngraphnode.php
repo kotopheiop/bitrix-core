@@ -103,23 +103,30 @@ abstract class CLearnGraphNode implements ILearnGraphNode
     {
         global $DB;
 
-        if (!is_numeric($id))
+        if (!is_numeric($id)) {
             throw new LearnException ('EA_PARAMS', LearnException::EXC_ERR_GN_REMOVE);
+        }
 
         $lessonData = self::GetByID($id);
-        if (!array_key_exists('NAME', $lessonData))
+        if (!array_key_exists('NAME', $lessonData)) {
             throw new LearnException ('EA_NOT_EXISTS', LearnException::EXC_ERR_GN_REMOVE);
+        }
 
         // Remove pictures
-        if (array_key_exists('PREVIEW_PICTURE', $lessonData) && ($lessonData['PREVIEW_PICTURE'] > 0))
+        if (array_key_exists('PREVIEW_PICTURE', $lessonData) && ($lessonData['PREVIEW_PICTURE'] > 0)) {
             CFile::Delete($lessonData['PREVIEW_PICTURE']);
+        }
 
-        if (array_key_exists('DETAIL_PICTURE', $lessonData) && ($lessonData['DETAIL_PICTURE'] > 0))
+        if (array_key_exists('DETAIL_PICTURE', $lessonData) && ($lessonData['DETAIL_PICTURE'] > 0)) {
             CFile::Delete($lessonData['DETAIL_PICTURE']);
+        }
 
         // Remove SCORM data
-        if (array_key_exists('SCORM', $lessonData) && ($lessonData['SCORM'] === 'Y'))
-            DeleteDirFilesEx("/" . (COption::GetOptionString("main", "upload_dir", "upload")) . "/learning/scorm/" . $id);
+        if (array_key_exists('SCORM', $lessonData) && ($lessonData['SCORM'] === 'Y')) {
+            DeleteDirFilesEx(
+                "/" . (COption::GetOptionString("main", "upload_dir", "upload")) . "/learning/scorm/" . $id
+            );
+        }
 
         // Remove graph node
         $rc = $DB->Query(
@@ -128,11 +135,13 @@ abstract class CLearnGraphNode implements ILearnGraphNode
             true    // ignore errors
         );
 
-        if ($rc === false)
+        if ($rc === false) {
             throw new LearnException ('EA_SQLERROR', LearnException::EXC_ERR_GN_REMOVE);
+        }
 
-        if ($rc->AffectedRowsCount() == 0)
+        if ($rc->AffectedRowsCount() == 0) {
             throw new LearnException ('EA_NOT_EXISTS', LearnException::EXC_ERR_GN_REMOVE);
+        }
     }
 
     public static function GetByID($id)
@@ -141,8 +150,9 @@ abstract class CLearnGraphNode implements ILearnGraphNode
 
         static $cacheFieldsToSelect = null;
 
-        if (!(is_numeric($id) && is_int($id + 0)))
+        if (!(is_numeric($id) && is_int($id + 0))) {
             throw new LearnException ('EA_PARAMS', LearnException::EXC_ERR_GN_GETBYID);
+        }
 
         // Prepare list of DB fields to be selected
         if ($cacheFieldsToSelect === null) {
@@ -151,21 +161,24 @@ abstract class CLearnGraphNode implements ILearnGraphNode
             $arFieldsToSelect = array();
             foreach ($arReversedFieldsMap as $fieldNameInDB => $value) {
                 if ($value['access'] & self::SQL_SELECT) {
-                    if (($fieldNameInDB === 'TIMESTAMP_X') || ($fieldNameInDB === 'DATE_CREATE'))
+                    if (($fieldNameInDB === 'TIMESTAMP_X') || ($fieldNameInDB === 'DATE_CREATE')) {
                         $arFieldsToSelect[] = $DB->DateToCharFunction($fieldNameInDB) . ' AS ' . $fieldNameInDB;
-                    else
+                    } else {
                         $arFieldsToSelect[] = $fieldNameInDB;
+                    }
                 }
             }
 
             $cacheFieldsToSelect = implode(',', $arFieldsToSelect);
 
-            if (!(strlen($cacheFieldsToSelect) > 0))
+            if (!($cacheFieldsToSelect <> '')) {
                 $cacheFieldsToSelect = false;
+            }
         }
 
-        if ($cacheFieldsToSelect === false)
+        if ($cacheFieldsToSelect === false) {
             throw new LearnException ('EA_ACCESS_DENIED', LearnException::EXC_ERR_GN_GETBYID);
+        }
 
         // Get graph node data
         $rc = $DB->Query(
@@ -175,11 +188,13 @@ abstract class CLearnGraphNode implements ILearnGraphNode
             true    // ignore errors
         );
 
-        if ($rc === false)
+        if ($rc === false) {
             throw new LearnException ('EA_SQLERROR', LearnException::EXC_ERR_GN_GETBYID);
+        }
 
-        if (!(($arData = $rc->Fetch()) && is_array($arData)))
+        if (!(($arData = $rc->Fetch()) && is_array($arData))) {
             throw new LearnException ('EA_NOT_EXISTS', LearnException::EXC_ERR_GN_GETBYID);
+        }
 
         return ($arData);
     }
@@ -201,10 +216,11 @@ abstract class CLearnGraphNode implements ILearnGraphNode
         global $DB, $USER, $DBType;
 
         $createdBy = 1;
-        if (is_object($USER) && method_exists($USER, 'getId'))
+        if (is_object($USER) && method_exists($USER, 'getId')) {
             $createdBy = (int)$USER->getId();
+        }
 
-        $dbtype = strtolower($DBType);
+        $dbtype = mb_strtolower($DBType);
 
         switch ($mode) {
             case 'update':
@@ -213,8 +229,9 @@ abstract class CLearnGraphNode implements ILearnGraphNode
                 $isInsert = false;
                 $isForUpdate = true;
 
-                if (!is_numeric($id))
+                if (!is_numeric($id)) {
                     throw new LearnException ('EA_PARAMS: $id', $throwErrCode);
+                }
                 break;
 
             case 'insert':
@@ -225,8 +242,10 @@ abstract class CLearnGraphNode implements ILearnGraphNode
                 break;
 
             default:
-                throw new LearnException ('EA_LOGIC',
-                    LearnException::EXC_ERR_ALL_LOGIC);
+                throw new LearnException (
+                    'EA_LOGIC',
+                    LearnException::EXC_ERR_ALL_LOGIC
+                );
                 break;
         }
 
@@ -237,10 +256,11 @@ abstract class CLearnGraphNode implements ILearnGraphNode
         $arFields = self::_CheckAndCanonizeFields($arFieldsMap, $arInFields, $accessLevel, $isForUpdate);
 
         // Prepares array of fields with values for query to DB. Also, uploads/removes files, if there are.
-        if ($isForUpdate)
+        if ($isForUpdate) {
             $arFieldsToDb = self::_PrepareDataForQuery($arFieldsMap, $arFields, $id);
-        else
+        } else {
             $arFieldsToDb = self::_PrepareDataForQuery($arFieldsMap, $arFields, false);
+        }
 
         $newLessonId = null;
 
@@ -260,14 +280,17 @@ abstract class CLearnGraphNode implements ILearnGraphNode
 
                 $arBinds = array();
 
-                if (array_key_exists('PREVIEW_TEXT', $arFieldsToDb))
+                if (array_key_exists('PREVIEW_TEXT', $arFieldsToDb)) {
                     $arBinds['PREVIEW_TEXT'] = $arFieldsToDb['PREVIEW_TEXT'];
+                }
 
-                if (array_key_exists('DETAIL_TEXT', $arFieldsToDb))
+                if (array_key_exists('DETAIL_TEXT', $arFieldsToDb)) {
                     $arBinds['DETAIL_TEXT'] = $arFieldsToDb['DETAIL_TEXT'];
+                }
 
-                if (array_key_exists('KEYWORDS', $arFieldsToDb))
+                if (array_key_exists('KEYWORDS', $arFieldsToDb)) {
                     $arBinds['KEYWORDS'] = $arFieldsToDb['KEYWORDS'];
+                }
 
                 $rc = $DB->QueryBind($strSql, $arBinds, true);
             } elseif (($dbtype === 'mssql') || ($dbtype === 'mysql')) {
@@ -287,8 +310,9 @@ abstract class CLearnGraphNode implements ILearnGraphNode
         {
             $strUpdate = $DB->PrepareUpdate('b_learn_lesson', $arFieldsToDb);
 
-            if ($strUpdate !== '')
+            if ($strUpdate !== '') {
                 $strUpdate .= ', ';
+            }
 
             $strSql = "UPDATE b_learn_lesson SET $strUpdate 
 					TIMESTAMP_X = " . $DB->GetNowFunction()
@@ -297,14 +321,17 @@ abstract class CLearnGraphNode implements ILearnGraphNode
             if ($dbtype === 'oracle') {
                 $arBinds = array();
 
-                if (array_key_exists('PREVIEW_TEXT', $arFieldsToDb))
+                if (array_key_exists('PREVIEW_TEXT', $arFieldsToDb)) {
                     $arBinds['PREVIEW_TEXT'] = $arFieldsToDb['PREVIEW_TEXT'];
+                }
 
-                if (array_key_exists('DETAIL_TEXT', $arFieldsToDb))
+                if (array_key_exists('DETAIL_TEXT', $arFieldsToDb)) {
                     $arBinds['DETAIL_TEXT'] = $arFieldsToDb['DETAIL_TEXT'];
+                }
 
-                if (array_key_exists('KEYWORDS', $arFieldsToDb))
+                if (array_key_exists('KEYWORDS', $arFieldsToDb)) {
                     $arBinds['KEYWORDS'] = $arFieldsToDb['KEYWORDS'];
+                }
 
                 $rc = $DB->QueryBind($strSql, $arBinds);
             } elseif (($dbtype === 'mssql') || ($dbtype === 'mysql')) {
@@ -315,11 +342,13 @@ abstract class CLearnGraphNode implements ILearnGraphNode
             $arFieldsToDb['TIMESTAMP_X'] = $DB->GetNowFunction();
         }
 
-        if ($rc === false)
+        if ($rc === false) {
             throw new LearnException ('EA_SQLERROR', $throwErrCode);
+        }
 
-        if ($isInsert)
-            return ($newLessonId);    // id of created node
+        if ($isInsert) {
+            return ($newLessonId);
+        }    // id of created node
     }
 
     /**
@@ -337,8 +366,9 @@ abstract class CLearnGraphNode implements ILearnGraphNode
         // if data prepartation for update - cache data about lesson to be updated
         if ($lessonId !== false) {
             // if lesson data not cached - get it
-            if ($arLessonData === false)
+            if ($arLessonData === false) {
                 $arLessonData = self::GetByID($lessonId);
+            }
         }
 
         $arFieldsToDb = array();
@@ -352,16 +382,18 @@ abstract class CLearnGraphNode implements ILearnGraphNode
                 || ($fieldNameInDB === 'DETAIL_PICTURE')
             ) {
                 $error = CFile::CheckImageFile($value);
-                if (strlen($error) > 0) {
+                if ($error <> '') {
                     throw new LearnException (
                         'EA_PARAMS: ' . $error,
-                        LearnException::EXC_ERR_GN_CHECK_PARAMS);
+                        LearnException::EXC_ERR_GN_CHECK_PARAMS
+                    );
                 }
 
                 // if data prepartation for update - gets prev pictures names
                 if ($lessonId !== false) {
-                    if (!array_key_exists($field, $arLessonData))
+                    if (!array_key_exists($field, $arLessonData)) {
                         throw new LearnException ('EA_LOGIC', LearnException::EXC_ERR_ALL_LOGIC);
+                    }
 
                     $arFields[$field]['old_file'] = $arLessonData[$field];
                     $value = $arFields[$field];
@@ -369,17 +401,19 @@ abstract class CLearnGraphNode implements ILearnGraphNode
 
                 // throws LearnException on error, returns FALSE if id of image not updated
                 $fileId = self::_UploadFile($fieldNameInDB, $value);
-                if ($fileId === false)
-                    continue;    // id of image not updated
+                if ($fileId === false) {
+                    continue;
+                }    // id of image not updated
 
                 // replace value for current field to fileId
                 $value = $arFields[$field] = $fileId;
             }
 
-            if ($value === NULL)
+            if ($value === null) {
                 $arFieldsToDb[$fieldNameInDB] = false;
-            else
+            } else {
                 $arFieldsToDb[$fieldNameInDB] = $value;
+            }
         }
 
         return ($arFieldsToDb);
@@ -391,24 +425,32 @@ abstract class CLearnGraphNode implements ILearnGraphNode
     protected static function _UploadFile($fieldNameInDB, $arData)
     {
         if (!is_array($arData)) {
-            throw new LearnException ('EA_PARAMS: ' . var_export($arData, true),
-                LearnException::EXC_ERR_GN_CHECK_PARAMS);
+            throw new LearnException (
+                'EA_PARAMS: ' . var_export($arData, true),
+                LearnException::EXC_ERR_GN_CHECK_PARAMS
+            );
         }
 
         // Check for fields needed by CFile::SaveForDB
         $fieldsMustBe = array('name', 'size', 'tmp_name', 'type', 'del', 'MODULE_ID');
         if (count(array_diff($fieldsMustBe, array_keys($arData))) !== 0) {
-            throw new LearnException ('EA_PARAMS: some fields not found',
-                LearnException::EXC_ERR_GN_CHECK_PARAMS);
+            throw new LearnException (
+                'EA_PARAMS: some fields not found',
+                LearnException::EXC_ERR_GN_CHECK_PARAMS
+            );
         }
 
-        if ($arData['del'] !== 'Y')
-            $arData['del'] = '';        // we can't use N' due to bug in CFile::SaveToDB();
+        if ($arData['del'] !== 'Y') {
+            $arData['del'] = '';
+        }        // we can't use N' due to bug in CFile::SaveToDB();
 
         $arFileData = array($fieldNameInDB => $arData);
 
-        $rc = CFile::SaveForDB($arFileData, $fieldNameInDB,
-            'learning');    // learning - is folder in /upload
+        $rc = CFile::SaveForDB(
+            $arFileData,
+            $fieldNameInDB,
+            'learning'
+        );    // learning - is folder in /upload
 
         // This is workaround caused by bug in CFile::SaveToDB();
         if (($rc === false) && ($arData['name'] == '') && ($arData['del'] !== 'Y')) {
@@ -420,16 +462,19 @@ abstract class CLearnGraphNode implements ILearnGraphNode
             || (!isset($arFileData[$fieldNameInDB]))
             || (($arData['del'] !== 'Y') && ($arFileData[$fieldNameInDB] === false))
         ) {
-            throw new LearnException ('EA_OTHER: file uploading error: ' . var_export($rc, true)
+            throw new LearnException (
+                'EA_OTHER: file uploading error: ' . var_export($rc, true)
                 . '; ' . var_export($arFileData, true) . '; ' . var_export($arData, true),
-                LearnException::EXC_ERR_GN_FILE_UPLOAD);
+                LearnException::EXC_ERR_GN_FILE_UPLOAD
+            );
         }
 
         // If file removed - return NULL
-        if ($arFileData[$fieldNameInDB] === false)
-            $fileId = NULL;
-        else
+        if ($arFileData[$fieldNameInDB] === false) {
+            $fileId = null;
+        } else {
             $fileId = intval($arFileData[$fieldNameInDB]);
+        }
 
         return ($fileId);
     }
@@ -440,53 +485,64 @@ abstract class CLearnGraphNode implements ILearnGraphNode
     protected static function _CheckAndCanonizeFields($arFieldsMap, $arFields, $access_level, $forUpdate = false)
     {
         if (!(is_int($access_level) && ($access_level >= 0))) {
-            throw new LearnException ('EA_LOGIC: wrong access level',
-                LearnException::EXC_ERR_GN_CHECK_PARAMS);
+            throw new LearnException (
+                'EA_LOGIC: wrong access level',
+                LearnException::EXC_ERR_GN_CHECK_PARAMS
+            );
         }
 
         // Check params
         $arFieldsNames = array_keys($arFields);
         foreach ($arFieldsNames as $fieldName) {
             // Skip checking user fields
-            if (substr($fieldName, 0, 3) === 'UF_')
+            if (mb_substr($fieldName, 0, 3) === 'UF_') {
                 continue;
+            }
 
             // Is field exists in DB?
             if (!array_key_exists($fieldName, $arFieldsMap)) {
-                throw new LearnException ('EA_PARAMS: ' . $fieldName,
-                    LearnException::EXC_ERR_GN_CHECK_PARAMS);
+                throw new LearnException (
+                    'EA_PARAMS: ' . $fieldName,
+                    LearnException::EXC_ERR_GN_CHECK_PARAMS
+                );
             }
 
             // Is access_level allowed by logic?
             if (($arFieldsMap[$fieldName]['access'] & $access_level) !== $access_level) {
-                throw new LearnException ('EA_LOGIC: ACCESS TO FIELD "' . $fieldName . '" logically prohibited.',
-                    LearnException::EXC_ERR_GN_CHECK_PARAMS);
+                throw new LearnException (
+                    'EA_LOGIC: ACCESS TO FIELD "' . $fieldName . '" logically prohibited.',
+                    LearnException::EXC_ERR_GN_CHECK_PARAMS
+                );
             }
         }
 
         // PREVIEW_TEXT_TYPE
-        if ((!$forUpdate) && (!array_key_exists('PREVIEW_TEXT_TYPE', $arFields)))
-            $arFields['PREVIEW_TEXT_TYPE'] = 'text';    // by default, for backward compatibility
+        if ((!$forUpdate) && (!array_key_exists('PREVIEW_TEXT_TYPE', $arFields))) {
+            $arFields['PREVIEW_TEXT_TYPE'] = 'text';
+        }    // by default, for backward compatibility
 
         if ((!$forUpdate) || array_key_exists('PREVIEW_TEXT_TYPE', $arFields)) {
-            if (!in_array($arFields['PREVIEW_TEXT_TYPE'], array('text', 'html'), true))
+            if (!in_array($arFields['PREVIEW_TEXT_TYPE'], array('text', 'html'), true)) {
                 throw new LearnException ('EA_PARAMS: PREVIEW_TEXT_TYPE', LearnException::EXC_ERR_GN_CHECK_PARAMS);
+            }
         }
 
         // DETAIL_TEXT_TYPE
-        if ((!$forUpdate) && (!array_key_exists('DETAIL_TEXT_TYPE', $arFields)))
-            $arFields['DETAIL_TEXT_TYPE'] = 'text';        // by default, for backward compatibility
+        if ((!$forUpdate) && (!array_key_exists('DETAIL_TEXT_TYPE', $arFields))) {
+            $arFields['DETAIL_TEXT_TYPE'] = 'text';
+        }        // by default, for backward compatibility
 
         if ((!$forUpdate) || array_key_exists('DETAIL_TEXT_TYPE', $arFields)) {
-            if (!in_array($arFields['DETAIL_TEXT_TYPE'], array('text', 'html', 'file'), true))
+            if (!in_array($arFields['DETAIL_TEXT_TYPE'], array('text', 'html', 'file'), true)) {
                 throw new LearnException ('EA_PARAMS: DETAIL_TEXT_TYPE', LearnException::EXC_ERR_GN_CHECK_PARAMS);
+            }
         }
 
         // KEYWORDS
         if (!$forUpdate) {
             if (
                 (!array_key_exists('KEYWORDS', $arFields))
-                || ($arFields['KEYWORDS'] === NULL)
+                || ($arFields['KEYWORDS'] === null)
             ) {
                 $arFields['KEYWORDS'] = '';
             }
@@ -494,7 +550,7 @@ abstract class CLearnGraphNode implements ILearnGraphNode
         {
             if (
                 array_key_exists('KEYWORDS', $arFields)
-                && ($arFields['KEYWORDS'] === NULL)
+                && ($arFields['KEYWORDS'] === null)
             ) {
                 $arFields['KEYWORDS'] = '';
             }
@@ -504,21 +560,25 @@ abstract class CLearnGraphNode implements ILearnGraphNode
         if (array_key_exists('ACTIVE', $arFields)) {
             // canonize
             if (in_array($arFields['ACTIVE'], array(true, false), true)) {
-                if ($arFields['ACTIVE'])
+                if ($arFields['ACTIVE']) {
                     $arFields['ACTIVE'] = 'Y';
-                else
+                } else {
                     $arFields['ACTIVE'] = 'N';
+                }
             }
         } else {
-            if (!$forUpdate)
-                $arFields['ACTIVE'] = 'Y';    // by default, for backward compatibility
+            if (!$forUpdate) {
+                $arFields['ACTIVE'] = 'Y';
+            }    // by default, for backward compatibility
         }
 
         // ACTIVE - check admitted region
         if ((!$forUpdate) || array_key_exists('ACTIVE', $arFields)) {
             if (!in_array($arFields['ACTIVE'], array('Y', 'N'), true)) {
-                throw new LearnException ('EA_PARAMS: ACTIVE is out of range',
-                    LearnException::EXC_ERR_GN_CHECK_PARAMS);
+                throw new LearnException (
+                    'EA_PARAMS: ACTIVE is out of range',
+                    LearnException::EXC_ERR_GN_CHECK_PARAMS
+                );
             }
         }
 
@@ -527,33 +587,44 @@ abstract class CLearnGraphNode implements ILearnGraphNode
             // remove this field, if nothing to do
             if (!is_array($arFields['PREVIEW_PICTURE'])) {
                 unset($arFields['PREVIEW_PICTURE']);
-            } else if (
-                (!array_key_exists('name', $arFields['PREVIEW_PICTURE']) || strlen($arFields['PREVIEW_PICTURE']['name']) == 0)
-                &&
-                (!array_key_exists('del', $arFields['PREVIEW_PICTURE']) || strlen($arFields['PREVIEW_PICTURE']['del']) == 0)
-                &&
-                (!isset($arFields['PREVIEW_PICTURE']['description']) || strlen($arFields['PREVIEW_PICTURE']['description']) == 0)
-            ) {
-                unset($arFields['PREVIEW_PICTURE']);
             } else {
-                // check structure
-                $check = array_key_exists('name', $arFields['PREVIEW_PICTURE'])
-                    && array_key_exists('size', $arFields['PREVIEW_PICTURE'])
-                    && array_key_exists('tmp_name', $arFields['PREVIEW_PICTURE'])
-                    && array_key_exists('type', $arFields['PREVIEW_PICTURE'])
-                    && ((!array_key_exists('del', $arFields['PREVIEW_PICTURE']))
-                        || in_array($arFields['PREVIEW_PICTURE']['del'], array('Y', 'N', NULL), true)
-                    );
+                if (
+                    (!array_key_exists(
+                            'name',
+                            $arFields['PREVIEW_PICTURE']
+                        ) || $arFields['PREVIEW_PICTURE']['name'] == '')
+                    &&
+                    (!array_key_exists(
+                            'del',
+                            $arFields['PREVIEW_PICTURE']
+                        ) || $arFields['PREVIEW_PICTURE']['del'] == '')
+                    &&
+                    (!isset($arFields['PREVIEW_PICTURE']['description']) || $arFields['PREVIEW_PICTURE']['description'] == '')
+                ) {
+                    unset($arFields['PREVIEW_PICTURE']);
+                } else {
+                    // check structure
+                    $check = array_key_exists('name', $arFields['PREVIEW_PICTURE'])
+                        && array_key_exists('size', $arFields['PREVIEW_PICTURE'])
+                        && array_key_exists('tmp_name', $arFields['PREVIEW_PICTURE'])
+                        && array_key_exists('type', $arFields['PREVIEW_PICTURE'])
+                        && ((!array_key_exists('del', $arFields['PREVIEW_PICTURE']))
+                            || in_array($arFields['PREVIEW_PICTURE']['del'], array('Y', 'N', null), true)
+                        );
 
-                if (!$check) {
-                    throw new LearnException ('EA_PARAMS: <pre>' . var_export($arFields['PREVIEW_PICTURE'], true)
-                        . '</pre>', LearnException::EXC_ERR_GN_CHECK_PARAMS);
+                    if (!$check) {
+                        throw new LearnException (
+                            'EA_PARAMS: <pre>' . var_export($arFields['PREVIEW_PICTURE'], true)
+                            . '</pre>', LearnException::EXC_ERR_GN_CHECK_PARAMS
+                        );
+                    }
+
+                    $arFields['PREVIEW_PICTURE']['MODULE_ID'] = CLearnHelper::MODULE_ID;    // learning
+
+                    if ($arFields['PREVIEW_PICTURE']['del'] === null) {
+                        $arFields['PREVIEW_PICTURE']['del'] = 'N';
+                    }
                 }
-
-                $arFields['PREVIEW_PICTURE']['MODULE_ID'] = CLearnHelper::MODULE_ID;    // learning
-
-                if ($arFields['PREVIEW_PICTURE']['del'] === NULL)
-                    $arFields['PREVIEW_PICTURE']['del'] = 'N';
             }
         }
 
@@ -563,11 +634,11 @@ abstract class CLearnGraphNode implements ILearnGraphNode
             if (!is_array($arFields['DETAIL_PICTURE'])) {
                 unset($arFields['DETAIL_PICTURE']);
             } elseif (
-                (!array_key_exists('name', $arFields['DETAIL_PICTURE']) || strlen($arFields['DETAIL_PICTURE']['name']) == 0)
+                (!array_key_exists('name', $arFields['DETAIL_PICTURE']) || $arFields['DETAIL_PICTURE']['name'] == '')
                 &&
-                (!array_key_exists('del', $arFields['DETAIL_PICTURE']) || strlen($arFields['DETAIL_PICTURE']['del']) == 0)
+                (!array_key_exists('del', $arFields['DETAIL_PICTURE']) || $arFields['DETAIL_PICTURE']['del'] == '')
                 &&
-                (!isset($arFields['DETAIL_PICTURE']['description']) || strlen($arFields['DETAIL_PICTURE']['description']) == 0)
+                (!isset($arFields['DETAIL_PICTURE']['description']) || $arFields['DETAIL_PICTURE']['description'] == '')
             ) {
                 unset($arFields['DETAIL_PICTURE']);
             } else {
@@ -577,18 +648,21 @@ abstract class CLearnGraphNode implements ILearnGraphNode
                     && array_key_exists('tmp_name', $arFields['DETAIL_PICTURE'])
                     && array_key_exists('type', $arFields['DETAIL_PICTURE'])
                     && ((!array_key_exists('del', $arFields['DETAIL_PICTURE']))
-                        || in_array($arFields['DETAIL_PICTURE']['del'], array('Y', 'N', NULL), true)
+                        || in_array($arFields['DETAIL_PICTURE']['del'], array('Y', 'N', null), true)
                     );
 
                 if (!$check) {
-                    throw new LearnException ('EA_PARAMS: <pre>' . var_export($arFields['DETAIL_PICTURE'], true)
-                        . '</pre>', LearnException::EXC_ERR_GN_CHECK_PARAMS);
+                    throw new LearnException (
+                        'EA_PARAMS: <pre>' . var_export($arFields['DETAIL_PICTURE'], true)
+                        . '</pre>', LearnException::EXC_ERR_GN_CHECK_PARAMS
+                    );
                 }
 
                 $arFields['DETAIL_PICTURE']['MODULE_ID'] = CLearnHelper::MODULE_ID;    // learning
 
-                if ($arFields['DETAIL_PICTURE']['del'] === NULL)
+                if ($arFields['DETAIL_PICTURE']['del'] === null) {
                     $arFields['DETAIL_PICTURE']['del'] = 'N';
+                }
             }
         }
 
@@ -603,49 +677,64 @@ abstract class CLearnGraphNode implements ILearnGraphNode
             $arFieldsMap = array(
                 'ID' => array(
                     'field' => 'ID',
-                    'access' => self::SQL_SELECT),
+                    'access' => self::SQL_SELECT
+                ),
                 'TIMESTAMP_X' => array(
                     'field' => 'TIMESTAMP_X',
-                    'access' => self::SQL_SELECT),
+                    'access' => self::SQL_SELECT
+                ),
                 'DATE_CREATE' => array(
                     'field' => 'DATE_CREATE',
-                    'access' => self::SQL_SELECT),
+                    'access' => self::SQL_SELECT
+                ),
                 'CREATED_BY' => array(
                     'field' => 'CREATED_BY',
-                    'access' => self::SQL_SELECT),
+                    'access' => self::SQL_SELECT
+                ),
                 'ACTIVE' => array(
                     'field' => 'ACTIVE',
-                    'access' => self::SQL_SELECT + self::SQL_INSERT + self::SQL_UPDATE),
+                    'access' => self::SQL_SELECT + self::SQL_INSERT + self::SQL_UPDATE
+                ),
                 'NAME' => array(
                     'field' => 'NAME',
-                    'access' => self::SQL_SELECT + self::SQL_INSERT + self::SQL_UPDATE),
+                    'access' => self::SQL_SELECT + self::SQL_INSERT + self::SQL_UPDATE
+                ),
                 'CODE' => array(
                     'field' => 'CODE',
-                    'access' => self::SQL_SELECT + self::SQL_INSERT + self::SQL_UPDATE),
+                    'access' => self::SQL_SELECT + self::SQL_INSERT + self::SQL_UPDATE
+                ),
                 'KEYWORDS' => array(
                     'field' => 'KEYWORDS',
-                    'access' => self::SQL_SELECT + self::SQL_INSERT + self::SQL_UPDATE),
+                    'access' => self::SQL_SELECT + self::SQL_INSERT + self::SQL_UPDATE
+                ),
                 'PREVIEW_PICTURE' => array(
                     'field' => 'PREVIEW_PICTURE',
-                    'access' => self::SQL_SELECT + self::SQL_INSERT + self::SQL_UPDATE),
+                    'access' => self::SQL_SELECT + self::SQL_INSERT + self::SQL_UPDATE
+                ),
                 'PREVIEW_TEXT' => array(
                     'field' => 'PREVIEW_TEXT',
-                    'access' => self::SQL_SELECT + self::SQL_INSERT + self::SQL_UPDATE),
+                    'access' => self::SQL_SELECT + self::SQL_INSERT + self::SQL_UPDATE
+                ),
                 'PREVIEW_TEXT_TYPE' => array(
                     'field' => 'PREVIEW_TEXT_TYPE',
-                    'access' => self::SQL_SELECT + self::SQL_INSERT + self::SQL_UPDATE),
+                    'access' => self::SQL_SELECT + self::SQL_INSERT + self::SQL_UPDATE
+                ),
                 'DETAIL_PICTURE' => array(
                     'field' => 'DETAIL_PICTURE',
-                    'access' => self::SQL_SELECT + self::SQL_INSERT + self::SQL_UPDATE),
+                    'access' => self::SQL_SELECT + self::SQL_INSERT + self::SQL_UPDATE
+                ),
                 'DETAIL_TEXT' => array(
                     'field' => 'DETAIL_TEXT',
-                    'access' => self::SQL_SELECT + self::SQL_INSERT + self::SQL_UPDATE),
+                    'access' => self::SQL_SELECT + self::SQL_INSERT + self::SQL_UPDATE
+                ),
                 'DETAIL_TEXT_TYPE' => array(
                     'field' => 'DETAIL_TEXT_TYPE',
-                    'access' => self::SQL_SELECT + self::SQL_INSERT + self::SQL_UPDATE),
+                    'access' => self::SQL_SELECT + self::SQL_INSERT + self::SQL_UPDATE
+                ),
                 'LAUNCH' => array(
                     'field' => 'LAUNCH',
-                    'access' => self::SQL_SELECT + self::SQL_INSERT + self::SQL_UPDATE)
+                    'access' => self::SQL_SELECT + self::SQL_INSERT + self::SQL_UPDATE
+                )
             );
         }
 

@@ -1,32 +1,28 @@
 <?
-global $APPLICATION, $MESS, $DBType;
+
+global $APPLICATION, $DBType;
 IncludeModuleLangFile(__FILE__);
 
-$GLOBALS["aSortTypes"] = array(
-    "reference" => array(GetMessage("FDATE_LAST_MESSAGE"), GetMessage("FMESSAGE_TOPIC"), GetMessage("FNUM_ANSWERS"), GetMessage("FNUM_VIEWS"), GetMessage("FSTART_DATE"), GetMessage("FAUTHOR_TOPIC")),
-    "reference_id" => array("P", "T", "N", "V", "D", "A"));
 
-$GLOBALS["aSortDirection"] = array(
-    "reference" => array(GetMessage("FASC"), GetMessage("FDESC")),
-    "reference_id" => array("ASC", "DESC"));
+if (file_exists(__DIR__ . "/deprecated.php")) {
+    include("deprecated.php");
+}
 
-// A < E < I < M < Q < U < Y
-// A - NO ACCESS		E - READ			I - ANSWER
-// M - NEW TOPIC		Q - MODERATE	U - EDIT			Y - FULL_ACCESS
-$GLOBALS["aForumPermissions"] = array(
-    "reference" => array(GetMessage("FNO_ACCESS"), GetMessage("FREAD_ACCESS"), GetMessage("FANSWER_ACCESS"), GetMessage("FNEW_MESSAGE_ACCESS"), GetMessage("FMODERATE_ACCESS"), GetMessage("FEDIT_ACCESS"), GetMessage("FFULL_ACCESS")),
-    "reference_id" => array("A", "E", "I", "M", "Q", "U", "Y"));
-$GLOBALS["FORUMS_PER_PAGE"] = intVal(COption::GetOptionString("forum", "FORUMS_PER_PAGE", "10"));
-$GLOBALS["FORUM_TOPICS_PER_PAGE"] = intVal(COption::GetOptionString("forum", "TOPICS_PER_PAGE", "10"));
-$GLOBALS["FORUM_MESSAGES_PER_PAGE"] = intVal(COption::GetOptionString("forum", "MESSAGES_PER_PAGE", "10"));
-
-$arNameStatuses = @unserialize(COption::GetOptionString("forum", "statuses_name"));
+$arNameStatuses = @unserialize(COption::GetOptionString("forum", "statuses_name"), ["allowed_classes" => false]);
 $arNameStatuses = is_array($arNameStatuses) ? $arNameStatuses : array();
 $arNameStatuses[LANGUAGE_ID] = is_array($arNameStatuses[LANGUAGE_ID]) ? $arNameStatuses[LANGUAGE_ID] : array();
-$name = array("guest" => "Guest", "user" => "User", "moderator" => "Moderator", "editor" => "Editor", "administrator" => "Administrator");
+$name = array(
+    "guest" => "Guest",
+    "user" => "User",
+    "moderator" => "Moderator",
+    "editor" => "Editor",
+    "administrator" => "Administrator"
+);
 foreach ($name as $k => $v):
-    $name[$k] = trim(!empty($arMess["F_" . strToUpper($k)]) ? $arMess["F_" . strToUpper($k)] : $name[$k]);
-    $arNameStatuses[LANGUAGE_ID][$k] = htmlspecialcharsbx(empty($arNameStatuses[LANGUAGE_ID][$k]) ? $name[$k] : $arNameStatuses[LANGUAGE_ID][$k]);
+    $name[$k] = trim(!empty($arMess["F_" . mb_strtoupper($k)]) ? $arMess["F_" . mb_strtoupper($k)] : $name[$k]);
+    $arNameStatuses[LANGUAGE_ID][$k] = htmlspecialcharsbx(
+        empty($arNameStatuses[LANGUAGE_ID][$k]) ? $name[$k] : $arNameStatuses[LANGUAGE_ID][$k]
+    );
 endforeach;
 
 $GLOBALS["FORUM_STATUS_NAME"] = $arNameStatuses[LANGUAGE_ID];
@@ -36,7 +32,8 @@ $GLOBALS["FORUM_CACHE"] = array(
     "MESSAGE" => array(),
     "USER" => array(),
     "TOPIC" => array(),
-    "TOPIC_INFO" => array());
+    "TOPIC_INFO" => array()
+);
 /* cache structure:
 	[forum] [forum_id]
 			main - main info about forum
@@ -51,18 +48,24 @@ $GLOBALS["FORUM_CACHE"] = array(
 	user - i do not know
 	path to clear cache
 */
-if (!defined("CACHED_b_forum_group"))
+if (!defined("CACHED_b_forum_group")) {
     define("CACHED_b_forum_group", 3600);
-if (!defined("CACHED_b_forum"))
+}
+if (!defined("CACHED_b_forum")) {
     define("CACHED_b_forum", 3600);
-if (!defined("CACHED_b_forum_perms"))
+}
+if (!defined("CACHED_b_forum_perms")) {
     define("CACHED_b_forum_perms", 3600);
-if (!defined("CACHED_b_forum2site"))
+}
+if (!defined("CACHED_b_forum2site")) {
     define("CACHED_b_forum2site", 3600);
-if (!defined("CACHED_b_forum_filter"))
+}
+if (!defined("CACHED_b_forum_filter")) {
     define("CACHED_b_forum_filter", 3600);
-if (!defined("CACHED_b_forum_user"))
+}
+if (!defined("CACHED_b_forum_user")) {
     define("CACHED_b_forum_user", 3600);
+}
 \Bitrix\Main\Loader::registerAutoLoadClasses(
     "forum",
     array(
@@ -74,6 +77,9 @@ if (!defined("CACHED_b_forum_user"))
         "bitrix\\forum\\comments\\taskentity" => "lib/comments/taskentity.php",
         "bitrix\\forum\\comments\\user" => "lib/comments/user.php",
         "bitrix\\forum\\forum" => "lib/forum.php",
+        "bitrix\\forum\\badwords\\dictionary" => "lib/badwords/dictionary.php",
+        "bitrix\\forum\\badwords\\filter" => "lib/badwords/filter.php",
+        "bitrix\\forum\\badwords\\letter" => "lib/badwords/letter.php",
 
         "textParser" => "classes/general/functions.php",
         "forumTextParser" => "classes/general/functions.php",
@@ -120,7 +126,8 @@ if (!defined("CACHED_b_forum_user"))
         "CForumNotifySchema" => "classes/general/forum_notify_schema.php",
 
         "CForumRestService" => "classes/general/rest.php",
-    ));
+    )
+);
 
 new CForumCacheManager();
 \Bitrix\Forum\Comments\EventManager::init();
@@ -134,7 +141,10 @@ function ForumCurrUserPermissions($FID, $arAddParams = array())
         if (CForumUser::IsAdmin()) {
             $result = "Y";
         } else {
-            $strPerms = (!!$arAddParams["PERMISSION"] ? $arAddParams["PERMISSION"] : CForumNew::GetUserPermission($FID, $GLOBALS["USER"]->GetUserGroupArray()));
+            $strPerms = (!!$arAddParams["PERMISSION"] ? $arAddParams["PERMISSION"] : CForumNew::GetUserPermission(
+                $FID,
+                $GLOBALS["USER"]->GetUserGroupArray()
+            ));
             if ($strPerms <= "E") {
                 $result = $strPerms;
             } elseif (CForumUser::IsLocked($GLOBALS["USER"]->GetID())) {
@@ -150,29 +160,68 @@ function ForumCurrUserPermissions($FID, $arAddParams = array())
     return $arCache[$FID . $arAddParams["PERMISSION"]];
 }
 
-function ForumSubscribeNewMessagesEx($FID, $TID, $NEW_TOPIC_ONLY, &$strErrorMessage, &$strOKMessage, $strSite = false, $SOCNET_GROUP_ID = false)
-{
-    if ($strSite === false)
+function ForumSubscribeNewMessagesEx(
+    $FID,
+    $TID,
+    $NEW_TOPIC_ONLY,
+    &$strErrorMessage,
+    &$strOKMessage,
+    $strSite = false,
+    $SOCNET_GROUP_ID = false
+) {
+    if ($strSite === false) {
         $strSite = SITE_ID;
+    }
 
-    return ForumSubscribeNewMessages($FID, $TID, $strErrorMessage, $strOKMessage, $NEW_TOPIC_ONLY, $strSite, $SOCNET_GROUP_ID);
+    return ForumSubscribeNewMessages(
+        $FID,
+        $TID,
+        $strErrorMessage,
+        $strOKMessage,
+        $NEW_TOPIC_ONLY,
+        $strSite,
+        $SOCNET_GROUP_ID
+    );
 }
 
-function ForumUnsubscribeNewMessagesEx($FID, $TID, $NEW_TOPIC_ONLY, &$strErrorMessage, &$strOKMessage, $strSite = false, $SOCNET_GROUP_ID = false)
-{
-    if ($strSite === false)
+function ForumUnsubscribeNewMessagesEx(
+    $FID,
+    $TID,
+    $NEW_TOPIC_ONLY,
+    &$strErrorMessage,
+    &$strOKMessage,
+    $strSite = false,
+    $SOCNET_GROUP_ID = false
+) {
+    if ($strSite === false) {
         $strSite = SITE_ID;
+    }
 
-    return ForumUnsubscribeNewMessages($FID, $TID, $strErrorMessage, $strOKMessage, $NEW_TOPIC_ONLY, $strSite, $SOCNET_GROUP_ID);
+    return ForumUnsubscribeNewMessages(
+        $FID,
+        $TID,
+        $strErrorMessage,
+        $strOKMessage,
+        $NEW_TOPIC_ONLY,
+        $strSite,
+        $SOCNET_GROUP_ID
+    );
 }
 
-function ForumUnsubscribeNewMessages($FID, $TID, &$strErrorMessage, &$strOKMessage, $NEW_TOPIC_ONLY = "N", $strSite = false, $SOCNET_GROUP_ID = false)
-{
+function ForumUnsubscribeNewMessages(
+    $FID,
+    $TID,
+    &$strErrorMessage,
+    &$strOKMessage,
+    $NEW_TOPIC_ONLY = "N",
+    $strSite = false,
+    $SOCNET_GROUP_ID = false
+) {
     global $USER;
 
     $strSite = ($strSite === false ? SITE_ID : $strSite);
-    $FID = IntVal($FID);
-    $TID = IntVal($TID);
+    $FID = intval($FID);
+    $TID = intval($TID);
     $arError = array();
     $arNote = array();
 
@@ -183,36 +232,50 @@ function ForumUnsubscribeNewMessages($FID, $TID, &$strErrorMessage, &$strOKMessa
             "USER_ID" => $USER->GetID(),
             "FORUM_ID" => $FID,
             "SITE_ID" => $strSite,
-            "TOPIC_ID" => ($TID > 0) ? $TID : false);
-        if ($SOCNET_GROUP_ID > 0)
+            "TOPIC_ID" => ($TID > 0) ? $TID : false
+        );
+        if ($SOCNET_GROUP_ID > 0) {
             $arFields['SOCNET_GROUP_ID'] = $SOCNET_GROUP_ID;
+        }
         $db_res = CForumSubscribe::GetListEx(array(), $arFields);
         if ($db_res && ($res = $db_res->Fetch())) {
-            if (!CForumSubscribe::CanUserDeleteSubscribe($res['ID'], $USER->GetUserGroupArray(), $USER->GetID()))
+            if (!CForumSubscribe::CanUserDeleteSubscribe($res['ID'], $USER->GetUserGroupArray(), $USER->GetID())) {
                 $arError[] = GetMessage("FORUM_SUB_ERR_PERMS");
-            else
+            } else {
                 CForumSubscribe::Delete($res["ID"]);
-        } else
+            }
+        } else {
             $arError[] = GetMessage("FORUM_SUB_ERR_UNSUBSCR");
+        }
     }
 
-    if (!empty($arError))
+    if (!empty($arError)) {
         $strErrorMessage .= implode(".\n", $arError);
-    if (!empty($arNote))
+    }
+    if (!empty($arNote)) {
         $strOKMessage .= implode(".\n", $arNote);
-    if (empty($arError))
-        return True;
-    else
-        return False;
+    }
+    if (empty($arError)) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
-function ForumSubscribeNewMessages($FID, $TID, &$strErrorMessage, &$strOKMessage, $NEW_TOPIC_ONLY = "N", $strSite = false, $SOCNET_GROUP_ID = false)
-{
+function ForumSubscribeNewMessages(
+    $FID,
+    $TID,
+    &$strErrorMessage,
+    &$strOKMessage,
+    $NEW_TOPIC_ONLY = "N",
+    $strSite = false,
+    $SOCNET_GROUP_ID = false
+) {
     global $USER;
 
     $strSite = ($strSite === false ? SITE_ID : $strSite);
-    $FID = IntVal($FID);
-    $TID = IntVal($TID);
+    $FID = intval($FID);
+    $TID = intval($TID);
     $arError = array();
     $arNote = array();
 
@@ -225,23 +288,33 @@ function ForumSubscribeNewMessages($FID, $TID, &$strErrorMessage, &$strOKMessage
             "USER_ID" => $USER->GetID(),
             "FORUM_ID" => $FID,
             "SITE_ID" => $strSite,
-            "TOPIC_ID" => ($TID > 0) ? $TID : false);
-        if ($SOCNET_GROUP_ID > 0)
+            "TOPIC_ID" => ($TID > 0) ? $TID : false
+        );
+        if ($SOCNET_GROUP_ID > 0) {
             $arFields['SOCNET_GROUP_ID'] = $SOCNET_GROUP_ID;
+        }
         $db_res = CForumSubscribe::GetListEx(array(), $arFields);
         if ($db_res && ($res = $db_res->Fetch())) {
             $sError = GetMessage("FORUM_SUB_ERR_ALREADY_TOPIC");
             if ($TID <= 0) {
                 if ($res["NEW_TOPIC_ONLY"] == "Y") {
                     $sError = GetMessage("FORUM_SUB_ERR_ALREADY_NEW");
-                    if ($NEW_TOPIC_ONLY != $res["NEW_TOPIC_ONLY"])
-                        $sError = str_replace("#FORUM_NAME#", htmlspecialcharsbx($res["FORUM_NAME"]),
-                            GetMessage("FORUM_SUB_ERR_ALREADY_ALL_HELP"));
+                    if ($NEW_TOPIC_ONLY != $res["NEW_TOPIC_ONLY"]) {
+                        $sError = str_replace(
+                            "#FORUM_NAME#",
+                            htmlspecialcharsbx($res["FORUM_NAME"]),
+                            GetMessage("FORUM_SUB_ERR_ALREADY_ALL_HELP")
+                        );
+                    }
                 } else {
                     $sError = GetMessage("FORUM_SUB_ERR_ALREADY_ALL");
-                    if ($NEW_TOPIC_ONLY != $res["NEW_TOPIC_ONLY"])
-                        $sError = str_replace("#FORUM_NAME#", htmlspecialcharsbx($res["FORUM_NAME"]),
-                            GetMessage("FORUM_SUB_ERR_ALREADY_NEW_HELP"));
+                    if ($NEW_TOPIC_ONLY != $res["NEW_TOPIC_ONLY"]) {
+                        $sError = str_replace(
+                            "#FORUM_NAME#",
+                            htmlspecialcharsbx($res["FORUM_NAME"]),
+                            GetMessage("FORUM_SUB_ERR_ALREADY_NEW_HELP")
+                        );
+                    }
                 }
             }
             $arError[] = $sError;
@@ -249,26 +322,30 @@ function ForumSubscribeNewMessages($FID, $TID, &$strErrorMessage, &$strOKMessage
             $arFields["NEW_TOPIC_ONLY"] = (($arFields["TOPIC_ID"] !== false) ? "N" : $NEW_TOPIC_ONLY);
 
             $subid = CForumSubscribe::Add($arFields);
-            if (IntVal($subid) > 0) {
-                if ($TID > 0)
+            if (intval($subid) > 0) {
+                if ($TID > 0) {
                     $arNote[] = GetMessage("FORUM_SUB_OK_MESSAGE_TOPIC");
-                else
+                } else {
                     $arNote[] = GetMessage("FORUM_SUB_OK_MESSAGE");
+                }
             } else {
                 $arError[] = GetMessage("FORUM_SUB_ERR_UNKNOWN");
             }
         }
     }
 
-    if (!empty($arError))
+    if (!empty($arError)) {
         $strErrorMessage .= implode(".\n", $arError);
-    if (!empty($arError))
+    }
+    if (!empty($arError)) {
         $strOKMessage .= implode(".\n", $arNote);
+    }
 
-    if (empty($arError))
-        return True;
-    else
-        return False;
+    if (empty($arError)) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
 function ForumGetRealIP()
@@ -278,7 +355,10 @@ function ForumGetRealIP()
         $ips = explode(", ", $_SERVER['HTTP_X_FORWARDED_FOR']);
         foreach ($ips as $ipst) {
             // Skip RFC 1918 IP's 10.0.0.0/8, 172.16.0.0/12 and 192.168.0.0/16
-            if (!preg_match("/^(10|172\.16|192\.168)\./", $ipst) && preg_match("/^[^.]+\.[^.]+\.[^.]+\.[^.]+/", $ipst)) {
+            if (!preg_match("/^(10|172\.16|192\.168)\./", $ipst) && preg_match(
+                    "/^[^.]+\.[^.]+\.[^.]+\.[^.]+/",
+                    $ipst
+                )) {
                 $ip = $ipst;
                 break;
             }
@@ -289,11 +369,18 @@ function ForumGetRealIP()
 }
 
 function ForumAddMessage(
-    $MESSAGE_TYPE, $FID, $TID, $MID, $arFieldsG,
-    &$strErrorMessage, &$strOKMessage,
+    $MESSAGE_TYPE,
+    $FID,
+    $TID,
+    $MID,
+    $arFieldsG,
+    &$strErrorMessage,
+    &$strOKMessage,
     $iFileSize = false,
-    $captcha_word = "", $captcha_sid = 0, $captcha_code = "")
-{
+    $captcha_word = "",
+    $captcha_sid = 0,
+    $captcha_code = ""
+) {
     try {
         global $USER;
         $forum = \Bitrix\Forum\Forum::getById($FID);
@@ -303,12 +390,14 @@ function ForumAddMessage(
             include_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/classes/general/captcha.php");
 
             $cpt = new CCaptcha();
-            if (strlen($captcha_code) > 0) {
+            if ($captcha_code <> '') {
                 if (!$cpt->CheckCodeCrypt($captcha_word, $captcha_code)) {
                     throw new \Bitrix\Main\AccessDeniedException(GetMessage("FORUM_POSTM_CAPTCHA"));
                 }
-            } else if (!$cpt->CheckCode($captcha_word, $captcha_sid)) {
-                throw new \Bitrix\Main\AccessDeniedException(GetMessage("FORUM_POSTM_CAPTCHA"));
+            } else {
+                if (!$cpt->CheckCode($captcha_word, $captcha_sid)) {
+                    throw new \Bitrix\Main\AccessDeniedException(GetMessage("FORUM_POSTM_CAPTCHA"));
+                }
             }
         }
         //endregion
@@ -318,12 +407,13 @@ function ForumAddMessage(
                 $usr->setPermissionOnForum($FID, $arFieldsG["PERMISSION_EXTERNAL"]);
             } elseif (!empty($arFieldsG["SONET_PERMS"])) {
                 $externalPermission = "A";
-                if ($arFieldsG["SONET_PERMS"]["bCanFull"] === true)
+                if ($arFieldsG["SONET_PERMS"]["bCanFull"] === true) {
                     $externalPermission = "Y";
-                elseif ($arFieldsG["SONET_PERMS"]["bCanNew"] === true)
+                } elseif ($arFieldsG["SONET_PERMS"]["bCanNew"] === true) {
                     $externalPermission = "M";
-                elseif ($arFieldsG["SONET_PERMS"]["bCanWrite"] === true)
+                } elseif ($arFieldsG["SONET_PERMS"]["bCanWrite"] === true) {
                     $externalPermission = "I";
+                }
                 $usr->setPermissionOnForum($FID, $externalPermission);
             }
         }
@@ -371,7 +461,7 @@ function ForumAddMessage(
             $arFieldsG["AUTHOR_ID"] = $usr->getId();
             $arFieldsG["AUTHOR_EMAIL"] = trim($arFieldsG["AUTHOR_EMAIL"]);
             $arFieldsG["AUTHOR_NAME"] = trim($arFieldsG["AUTHOR_NAME"]);
-            if (strlen($arFieldsG["AUTHOR_NAME"]) <= 0 && $usr->getId() > 0) {
+            if ($arFieldsG["AUTHOR_NAME"] == '' && $usr->getId() > 0) {
                 $arFieldsG["AUTHOR_NAME"] = $usr->getName();
             }
             $arFieldsG["APPROVED"] = $forum["MODERATION"] != "Y" || $usr->canModerate($forum) ? "Y" : "N";
@@ -412,7 +502,6 @@ function ForumAddMessage(
             $strErrorMessage = implode("\n", $result->getErrorMessages());
             return false;
         }
-
     } catch (Exception $e) {
         $strErrorMessage = $e->getMessage();
         return false;
@@ -434,17 +523,23 @@ function ForumModerateMessage($message, $TYPE, &$strErrorMessage, &$strOKMessage
         if ($db_res) {
             while ($arMessage = $db_res->Fetch()) {
                 if (!(ForumCurrUserPermissions($arMessage["FORUM_ID"], $arAddParams) >= "Q" ||
-                    CForumMessage::CanUserUpdateMessage($arMessage["ID"], $USER->GetUserGroupArray(), $USER->GetID(), $arAddParams["PERMISSION"])))
+                    CForumMessage::CanUserUpdateMessage(
+                        $arMessage["ID"],
+                        $USER->GetUserGroupArray(),
+                        $USER->GetID(),
+                        $arAddParams["PERMISSION"]
+                    ))) {
                     $arError[] = GetMessage("MODMESS_NO_PERMS") . " (MID=" . $arMessage["ID"] . "). \n";
-                else {
+                } else {
                     $arFields = array("APPROVED" => ($TYPE == "SHOW" ? "Y" : "N"));
                     $ID = CForumMessage::Update($arMessage["ID"], $arFields);
                     if ($ID > 0) {
                         $TID = $arMessage["TOPIC_ID"];
                         $arTopic = CForumTopic::GetByID($TID);
                         /***************** Events onMessageModerate ************************/
-                        foreach (GetModuleEvents("forum", "onMessageModerate", true) as $arEvent)
+                        foreach (GetModuleEvents("forum", "onMessageModerate", true) as $arEvent) {
                             ExecuteModuleEventEx($arEvent, array($ID, $TYPE, $arMessage, $arTopic));
+                        }
                         /***************** /Events *****************************************/
                         $res = array(
                             "ID" => $arMessage["ID"],
@@ -469,16 +564,18 @@ function ForumModerateMessage($message, $TYPE, &$strErrorMessage, &$strOKMessage
                     }
                 }
             }
-        } else
+        } else {
             $arError[] = GetMessage("DELMES_NO_MESS") . ". \n";
+        }
     }
     $strErrorMessage .= implode("", $arError);
     $strOKMessage .= implode("", $arOK);
 
-    if (count($arError) <= 0)
+    if (count($arError) <= 0) {
         return true;
-    else
+    } else {
         return false;
+    }
 }
 
 function ForumOpenCloseTopic($topicIds, $TYPE, &$strErrorMessage, &$strOKMessage, $arAddParams = array())
@@ -504,9 +601,15 @@ function ForumOpenCloseTopic($topicIds, $TYPE, &$strErrorMessage, &$strOKMessage
             $result = ($TYPE === "OPEN" ? $topic->open() : $topic->close());
 
             if (!$result->isSuccess()) {
-                $arError[] = ($TYPE === "CLOSE" ? GetMessage("OCTOP_ERROR_CLOSE") : GetMessage("OCTOP_ERROR_OPEN")) . " (TID={$topic->getId()})";
-            } else if (!empty($result->getData())) {
-                $arOk[] = ($TYPE === "CLOSE" ? GetMessage("OCTOP_SUCCESS_CLOSE") : GetMessage("OCTOP_SUCCESS_OPEN")) . " (TID={$topic->getId()})";
+                $arError[] = ($TYPE === "CLOSE" ? GetMessage("OCTOP_ERROR_CLOSE") : GetMessage(
+                        "OCTOP_ERROR_OPEN"
+                    )) . " (TID={$topic->getId()})";
+            } else {
+                if (!empty($result->getData())) {
+                    $arOk[] = ($TYPE === "CLOSE" ? GetMessage("OCTOP_SUCCESS_CLOSE") : GetMessage(
+                            "OCTOP_SUCCESS_OPEN"
+                        )) . " (TID={$topic->getId()})";
+                }
             }
         }
     }
@@ -535,50 +638,64 @@ function ForumTopOrdinaryTopic($topic, $TYPE, &$strErrorMessage, &$strOKMessage,
     if (empty($topic)) {
         $arError[] = GetMessage("TOTOP_NO_TOPIC");
     } else {
-        if (!CForumUser::IsAdmin() && !$arAddParams["PERMISSION"])
-            $db_res = CForumTopic::GetListEx(array(), array("@ID" => implode(",", $topic), "PERMISSION_STRONG" => true));
-        else
+        if (!CForumUser::IsAdmin() && !$arAddParams["PERMISSION"]) {
+            $db_res = CForumTopic::GetListEx(
+                array(),
+                array("@ID" => implode(",", $topic), "PERMISSION_STRONG" => true)
+            );
+        } else {
             $db_res = CForumTopic::GetListEx(array(), array("@ID" => implode(",", $topic)));
+        }
         if ($db_res && $res = $db_res->Fetch()) {
             do {
-                if ($arAddParams["PERMISSION"] && !CForumTopic::CanUserUpdateTopic($res["ID"], $USER->GetUserGroupArray(), $USER->GetID(), $arAddParams["PERMISSION"])) {
-                    $arError[] = GetMessage("FMT_NO_PERMS_MODERATE") . " (TID=" . intVal($res["ID"]) . ")";
+                if ($arAddParams["PERMISSION"] && !CForumTopic::CanUserUpdateTopic(
+                        $res["ID"],
+                        $USER->GetUserGroupArray(),
+                        $USER->GetID(),
+                        $arAddParams["PERMISSION"]
+                    )) {
+                    $arError[] = GetMessage("FMT_NO_PERMS_MODERATE") . " (TID=" . intval($res["ID"]) . ")";
                     continue;
                 }
-                $ID = CForumTopic::Update($res["ID"], $arFields, True);
-                if (IntVal($ID) <= 0) {
-                    if ($TYPE == "TOP")
-                        $arError[] = GetMessage("TOTOP_ERROR_TOP") . " (TID=" . intVal($res["ID"]) . ")";
-                    else
-                        $arError[] = GetMessage("TOTOP_ERROR_TOP1") . " (TID=" . intVal($res["ID"]) . ")";
+                $ID = CForumTopic::Update($res["ID"], $arFields, true);
+                if (intval($ID) <= 0) {
+                    if ($TYPE == "TOP") {
+                        $arError[] = GetMessage("TOTOP_ERROR_TOP") . " (TID=" . intval($res["ID"]) . ")";
+                    } else {
+                        $arError[] = GetMessage("TOTOP_ERROR_TOP1") . " (TID=" . intval($res["ID"]) . ")";
+                    }
                 } else {
                     $forumID = $res['FORUM_ID'];
                     $arTopic["SORT"] = $arFields["SORT"];
-                    $res = serialize($res);
+                    $log = serialize($res);
                     if ($TYPE == "TOP"):
-                        $arOk[] = GetMessage("TOTOP_SUCCESS_TOP") . " (TID=" . intVal($res["ID"]) . ")";
-                        CForumEventLog::Log("topic", "stick", $ID, $res);
+                        $arOk[] = GetMessage("TOTOP_SUCCESS_TOP") . " (TID=" . intval($res["ID"]) . ")";
+                        CForumEventLog::Log("topic", "stick", $ID, $log);
                     else:
-                        $arOk[] = GetMessage("TOTOP_SUCCESS_TOP1") . " (TID=" . intVal($res["ID"]) . ")";
-                        CForumEventLog::Log("topic", "unstick", $ID, $res);
+                        $arOk[] = GetMessage("TOTOP_SUCCESS_TOP1") . " (TID=" . intval($res["ID"]) . ")";
+                        CForumEventLog::Log("topic", "unstick", $ID, $log);
                     endif;
                 }
             } while ($res = $db_res->Fetch());
-            if (intval($forumID) > 0)
+            if (intval($forumID) > 0) {
                 CForumCacheManager::ClearTag("F", $forumID);
+            }
         } else {
             $arError[] = GetMessage("FMT_NO_PERMS_EDIT");
         }
     }
-    if (count($arError) > 0)
+    if (count($arError) > 0) {
         $strErrorMessage .= implode(".\n", $arError) . ".\n";
-    if (count($arOk) > 0)
+    }
+    if (count($arOk) > 0) {
         $strOKMessage .= implode(".\n", $arOk) . ".\n";
+    }
 
-    if (empty($arError))
+    if (empty($arError)) {
         return true;
-    else
+    } else {
         return false;
+    }
 }
 
 function ForumDeleteTopic($topic, &$strErrorMessage, &$strOKMessage, $arAddParams = array())
@@ -594,39 +711,50 @@ function ForumDeleteTopic($topic, &$strErrorMessage, &$strOKMessage, $arAddParam
     if (empty($topic)) {
         $arError[] = GetMessage("DELTOP_NO_TOPIC");
     } else {
-        if (!CForumUser::IsAdmin() && !$arAddParams["PERMISSION"])
-            $db_res = CForumTopic::GetListEx(array(), array("@ID" => implode(",", $topic), "PERMISSION_STRONG" => true));
-        else
+        if (!CForumUser::IsAdmin() && !$arAddParams["PERMISSION"]) {
+            $db_res = CForumTopic::GetListEx(
+                array(),
+                array("@ID" => implode(",", $topic), "PERMISSION_STRONG" => true)
+            );
+        } else {
             $db_res = CForumTopic::GetListEx(array(), array("@ID" => implode(",", $topic)));
+        }
         if ($db_res && $res = $db_res->Fetch()) {
             do {
-                if (CForumTopic::CanUserDeleteTopic($res["ID"], $USER->GetUserGroupArray(), $USER->GetID(), $arAddParams["PERMISSION"])) {
+                if (CForumTopic::CanUserDeleteTopic(
+                    $res["ID"],
+                    $USER->GetUserGroupArray(),
+                    $USER->GetID(),
+                    $arAddParams["PERMISSION"]
+                )) {
                     if (CForumTopic::Delete($res["ID"])) {
-                        $arOk[] = GetMessage("DELTOP_OK") . " (TID=" . intVal($res["ID"]) . ")";
+                        $arOk[] = GetMessage("DELTOP_OK") . " (TID=" . intval($res["ID"]) . ")";
                         CForumCacheManager::ClearTag("F", $res['FORUM_ID']);
                         CForumCacheManager::ClearTag("T", $res["ID"]);
                         CForumEventLog::Log("topic", "delete", $res["ID"], serialize($res));
                     } else {
-                        $arError[] = GetMessage("DELTOP_NO") . " (TID=" . intVal($res["ID"]) . ")";
+                        $arError[] = GetMessage("DELTOP_NO") . " (TID=" . intval($res["ID"]) . ")";
                     }
                 } else {
-                    $arError[] = GetMessage("DELTOP_NO_PERMS") . " (TID=" . intVal($res["ID"]) . ")";
+                    $arError[] = GetMessage("DELTOP_NO_PERMS") . " (TID=" . intval($res["ID"]) . ")";
                 }
-
             } while ($res = $db_res->Fetch());
         } else {
             $arError[] = GetMessage("FMT_NO_PERMS_EDIT");
         }
     }
-    if (count($arError) > 0)
+    if (count($arError) > 0) {
         $strErrorMessage .= implode(".\n", $arError) . ".\n";
-    if (count($arOk) > 0)
+    }
+    if (count($arOk) > 0) {
         $strOKMessage .= implode(".\n", $arOk) . ".\n";
+    }
 
-    if (count($arError) > 0)
+    if (count($arError) > 0) {
         return false;
-    else
+    } else {
         return true;
+    }
 }
 
 function ForumDeleteMessage($message, &$strErrorMessage, &$strOKMessage, $arAddParams = array())
@@ -642,9 +770,14 @@ function ForumDeleteMessage($message, &$strErrorMessage, &$strOKMessage, $arAddP
         $arError[] = GetMessage("DELMES_NO_MESS");
     } else {
         foreach ($message as $MID) {
-            if (!CForumMessage::CanUserDeleteMessage($MID, $USER->GetUserGroupArray(), $USER->GetID(), $arAddParams["PERMISSION"]))
+            if (!CForumMessage::CanUserDeleteMessage(
+                $MID,
+                $USER->GetUserGroupArray(),
+                $USER->GetID(),
+                $arAddParams["PERMISSION"]
+            )) {
                 $arError[] = GetMessage("DELMES_NO_PERMS") . "(MID=" . $MID . ")";
-            else {
+            } else {
                 $arMessage = CForumMessage::GetByID($MID, array("FILTER" => "N"));
                 if (CForumMessage::Delete($MID)):
                     $arOK[] = GetMessage("DELMES_OK") . "(MID=" . $MID . ")";
@@ -658,10 +791,12 @@ function ForumDeleteMessage($message, &$strErrorMessage, &$strOKMessage, $arAddP
             }
         }
     }
-    if (!empty($arError))
+    if (!empty($arError)) {
         $strErrorMessage .= implode(".\n", $arError) . ".\n";
-    if (!empty($arOK))
+    }
+    if (!empty($arOK)) {
         $strOKMessage .= implode(".\n", $arOK) . ".\n";
+    }
     return (empty($arError) ? true : false);
 }
 
@@ -678,41 +813,53 @@ function ForumSpamTopic($topic, &$strErrorMessage, &$strOKMessage, $arAddParams 
     if (empty($topic)) {
         $arError[] = GetMessage("SPAMTOP_NO_TOPIC");
     } else {
-        if (!CForumUser::IsAdmin() && !$arAddParams["PERMISSION"])
-            $db_res = CForumTopic::GetListEx(array(), array("@ID" => implode(",", $topic), "PERMISSION_STRONG" => true));
-        else
+        if (!CForumUser::IsAdmin() && !$arAddParams["PERMISSION"]) {
+            $db_res = CForumTopic::GetListEx(
+                array(),
+                array("@ID" => implode(",", $topic), "PERMISSION_STRONG" => true)
+            );
+        } else {
             $db_res = CForumTopic::GetListEx(array(), array("@ID" => implode(",", $topic)));
+        }
         if ($db_res && $res = $db_res->Fetch()) {
             do {
-                if (CForumTopic::CanUserDeleteTopic($res["ID"], $USER->GetUserGroupArray(), $USER->GetID(), $arAddParams["PERMISSION"])) {
+                if (CForumTopic::CanUserDeleteTopic(
+                    $res["ID"],
+                    $USER->GetUserGroupArray(),
+                    $USER->GetID(),
+                    $arAddParams["PERMISSION"]
+                )) {
                     $db_mes = CForumMessage::GetList(array("ID" => "ASC"), array("TOPIC_ID" => $res["ID"]));
                     if ($db_mes && $mes = $db_mes->Fetch() && CModule::IncludeModule("mail")) {
                         CMailMessage::MarkAsSpam($mes["XML_ID"], "Y");
                     }
 
                     if (CForumTopic::Delete($res["ID"])) {
-                        $arOk[] = GetMessage("SPAMTOP_OK") . " (TID=" . intVal($res["ID"]) . ")";
+                        $arOk[] = GetMessage("SPAMTOP_OK") . " (TID=" . intval($res["ID"]) . ")";
                         CForumEventLog::Log("topic", "spam", $res["ID"], print_r($res, true) . print_r($mes, true));
                     } else {
-                        $arError[] = GetMessage("SPAMTOP_NO") . " (TID=" . intVal($res["ID"]) . ")";
+                        $arError[] = GetMessage("SPAMTOP_NO") . " (TID=" . intval($res["ID"]) . ")";
                     }
                 } else {
-                    $arError[] = GetMessage("SPAMTOP_NO_PERMS") . " (TID=" . intVal($res["ID"]) . ")";
+                    $arError[] = GetMessage("SPAMTOP_NO_PERMS") . " (TID=" . intval($res["ID"]) . ")";
                 }
             } while ($res = $db_res->Fetch());
         } else {
             $arError[] = GetMessage("FMT_NO_PERMS_EDIT");
         }
     }
-    if (count($arError) > 0)
+    if (count($arError) > 0) {
         $strErrorMessage .= implode(".\n", $arError) . ".\n";
-    if (count($arOk) > 0)
+    }
+    if (count($arOk) > 0) {
         $strOKMessage .= implode(".\n", $arOk) . ".\n";
+    }
 
-    if (count($arError) > 0)
+    if (count($arError) > 0) {
         return false;
-    else
+    } else {
         return true;
+    }
 }
 
 function ForumSpamMessage($message, &$strErrorMessage, &$strOKMessage, $arAddParams = array())
@@ -727,9 +874,14 @@ function ForumSpamMessage($message, &$strErrorMessage, &$strOKMessage, $arAddPar
         $arError[] = GetMessage("SPAM_NO_MESS");
     } else {
         foreach ($message as $MID) {
-            if (!CForumMessage::CanUserDeleteMessage($MID, $USER->GetUserGroupArray(), $USER->GetID(), $arAddParams["PERMISSION"]))
+            if (!CForumMessage::CanUserDeleteMessage(
+                $MID,
+                $USER->GetUserGroupArray(),
+                $USER->GetID(),
+                $arAddParams["PERMISSION"]
+            )) {
                 $arError[] = GetMessage("SPAM_NO_PERMS") . "(MID=" . $MID . ")";
-            else {
+            } else {
                 $arMessage = CForumMessage::GetByID($MID, array("FILTER" => "N"));
                 if (CModule::IncludeModule("mail")) {
                     CMailMessage::MarkAsSpam($arMessage["XML_ID"], "Y");
@@ -743,10 +895,12 @@ function ForumSpamMessage($message, &$strErrorMessage, &$strOKMessage, $arAddPar
             }
         }
     }
-    if (!empty($arError))
+    if (!empty($arError)) {
         $strErrorMessage .= implode(".\n", $arError) . ".\n";
-    if (!empty($arOK))
+    }
+    if (!empty($arOK)) {
         $strOKMessage .= implode(".\n", $arOK) . ".\n";
+    }
     return (empty($arError) ? true : false);
 }
 
@@ -754,20 +908,22 @@ function ForumMessageExistInArray($message = array())
 {
     $message_exist = false;
     $result = array();
-    if (!is_array($message))
+    if (!is_array($message)) {
         $message = explode(",", $message);
+    }
 
     foreach ($message as $message_id) {
-        if (intVal(trim($message_id)) > 0) {
-            $result[] = intVal(trim($message_id));
+        if (intval(trim($message_id)) > 0) {
+            $result[] = intval(trim($message_id));
             $message_exist = true;
         }
     }
 
-    if ($message_exist)
+    if ($message_exist) {
         return $result;
-    else
+    } else {
         return false;
+    }
 }
 
 function ForumDeleteMessageArray($message, &$strErrorMessage, &$strOKMessage)
@@ -786,18 +942,20 @@ function ForumShowTopicPages($nMessages, $strUrl, $pagen_var = "PAGEN_1", $PAGE_
     global $FORUM_MESSAGES_PER_PAGE;
     $res_str = "";
 
-    if ((!$PAGE_ELEMENTS) && (intVal($PAGE_ELEMENTS) <= 0))
+    if ((!$PAGE_ELEMENTS) && (intval($PAGE_ELEMENTS) <= 0)) {
         $PAGE_ELEMENTS = $FORUM_MESSAGES_PER_PAGE;
+    }
 
-    if (strpos($strUrl, "?") === false)
+    if (mb_strpos($strUrl, "?") === false) {
         $strUrl = $strUrl . "?";
-    else
+    } else {
         $strUrl = $strUrl . "&amp;";
+    }
 
     if ($nMessages > $PAGE_ELEMENTS) {
         $res_str .= "<small>(" . GetMessage("FSTP_PAGES") . ": ";
 
-        $nPages = IntVal(ceil($nMessages / $PAGE_ELEMENTS));
+        $nPages = intval(ceil($nMessages / $PAGE_ELEMENTS));
         $typeDots = true;
         for ($i = 1; $i <= $nPages; $i++) {
             if ($i <= 3 || $i >= $nPages - 2 || ($nPages == 7 && $i == 3)) {
@@ -812,8 +970,16 @@ function ForumShowTopicPages($nMessages, $strUrl, $pagen_var = "PAGEN_1", $PAGE_
     return $res_str;
 }
 
-function ForumMoveMessage($FID, $TID, $Message, $NewTID = 0, $arFields, &$strErrorMessage, &$strOKMessage, $iFileSize = false)
-{
+function ForumMoveMessage(
+    $FID,
+    $TID,
+    $Message,
+    $NewTID = 0,
+    $arFields,
+    &$strErrorMessage,
+    &$strOKMessage,
+    $iFileSize = false
+) {
     global $USER, $DB;
     $arError = array();
     $arOK = array();
@@ -826,35 +992,38 @@ function ForumMoveMessage($FID, $TID, $Message, $NewTID = 0, $arFields, &$strErr
     $SendSubscribe = false;
 
 //************************* Input params **************************************************************************
-    $TID = IntVal($TID);
-    $FID = IntVal($FID);
-    $NewTID = IntVal($NewTID);
+    $TID = intval($TID);
+    $FID = intval($FID);
+    $NewTID = intval($NewTID);
     $Message = ForumDataToArray($Message);
-    if (empty($Message))
+    if (empty($Message)) {
         $arError[] = GetMessage("FMM_NO_MESSAGE");
-    if ($TID <= 0)
+    }
+    if ($TID <= 0) {
         $arError[] = GetMessage("FMM_NO_TOPIC_SOURCE0");
-    else {
+    } else {
         $arTopic = CForumTopic::GetByID($TID);
         if ($arTopic) {
-            $FID = IntVal($arTopic["FORUM_ID"]);
+            $FID = intval($arTopic["FORUM_ID"]);
             $arForum = CForumNew::GetByID($FID);
-        } else
+        } else {
             $arError[] = GetMessage("FMM_NO_TOPIC_SOURCE1");
+        }
     }
 
-    if (($NewTID <= 0) && (strLen(trim($arFields["TITLE"])) <= 0))
+    if (($NewTID <= 0) && (trim($arFields["TITLE"]) == '')) {
         $arError[] = GetMessage("FMM_NO_TOPIC_RECIPIENT0");
-    elseif ($NewTID > 0) {
-        if ($NewTID == $TID)
+    } elseif ($NewTID > 0) {
+        if ($NewTID == $TID) {
             $arError[] = GetMessage("FMM_NO_TOPIC_EQUAL");
+        }
         $arNewTopic = CForumTopic::GetByID($NewTID);
 
-        if (!$arNewTopic)
+        if (!$arNewTopic) {
             $arError[] = GetMessage("FMM_NO_TOPIC_RECIPIENT1");
-        elseif ($arNewTopic["STATE"] == "L")
+        } elseif ($arNewTopic["STATE"] == "L") {
             $arError[] = GetMessage("FMM_TOPIC_IS_LINK");
-        else {
+        } else {
             $NewFID = $arNewTopic["FORUM_ID"];
             $arNewForum = CForumNew::GetByID($NewFID);
         }
@@ -867,20 +1036,25 @@ function ForumMoveMessage($FID, $TID, $Message, $NewTID = 0, $arFields, &$strErr
 //*************************!Proverka prav pol'zovatelya*************************************************************
     $arCurrUser["Perms"]["FID"] = ForumCurrUserPermissions($FID);
     $arCurrUser["Perms"]["NewFID"] = ForumCurrUserPermissions($NewFID);
-    if ($arCurrUser["Perms"]["FID"] < "Q")
+    if ($arCurrUser["Perms"]["FID"] < "Q") {
         $arError[] = GetMessage("FMM_NO_MODERATE");
+    }
 //************************* Actions *******************************************************************************
     $DB->StartTransaction();
     if (count($arError) <= 0) {
         // Create topic
         if ($NewTID <= 0) {
             $arFields["APPROVED"] = ($arNewForum["MODERATION"] == "Y") ? "N" : "Y";
-            if ($arCurrUser["Perms"]["NewFID"] >= "Q")
+            if ($arCurrUser["Perms"]["NewFID"] >= "Q") {
                 $arFields["APPROVED"] = "Y";
+            }
 
             $arRes = array("NAME" => GetMessage("FR_GUEST"));
             $ShowName = GetMessage("FR_GUEST");
-            $db_res = CForumMessage::GetList(array("ID" => "ASC"), array("@ID" => implode(",", $Message), "TOPIC_ID" => $TID));
+            $db_res = CForumMessage::GetList(
+                array("ID" => "ASC"),
+                array("@ID" => implode(",", $Message), "TOPIC_ID" => $TID)
+            );
             if ($db_res && $res = $db_res->Fetch()) {
                 $arRes["NAME"] = $res["AUTHOR_NAME"];
                 $arRes["ID"] = $res["AUTHOR_ID"];
@@ -899,16 +1073,17 @@ function ForumMoveMessage($FID, $TID, $Message, $NewTID = 0, $arFields, &$strErr
                 "APPROVED" => $arFields["APPROVED"],
             );
             $NewTID = CForumTopic::Add($arFieldsTopic);
-            if (IntVal($NewTID) <= 0)
+            if (intval($NewTID) <= 0) {
                 $arError[] = GetMessage("FMM_NO_TOPIC_NOT_CREATED");
-            else {
+            } else {
                 $arNewTopic = CForumTopic::GetByID($NewTID);
                 if ($arNewTopic) {
                     $NewFID = $FID;
                     $arNewForum = $arForum;
                     $SendSubscribe = true;
-                } else
+                } else {
                     $arError[] = GetMessage("FMM_NO_TOPIC_NOT_CREATED");
+                }
             }
         }
     }
@@ -922,8 +1097,9 @@ function ForumMoveMessage($FID, $TID, $Message, $NewTID = 0, $arFields, &$strErr
                 $arMessage = array();
                 if ($NewFID != $FID) {
                     $arMessage["APPROVED"] = ($arNewForum["MODERATION"] == "Y" ? "N" : "Y");
-                    if ($arCurrUser["Perms"]["NewFID"] >= "Q")
+                    if ($arCurrUser["Perms"]["NewFID"] >= "Q") {
                         $arMessage["APPROVED"] = "Y";
+                    }
 
                     $arMessage["FORUM_ID"] = $NewFID;
                     $arMessage["POST_MESSAGE_HTML"] = "";
@@ -936,9 +1112,14 @@ function ForumMoveMessage($FID, $TID, $Message, $NewTID = 0, $arFields, &$strErr
 
                 if (count($arMessage) > 0) {
                     $MID = CForumMessage::Update($res["ID"], $arMessage, true);
-                    $res_log = ($SendSubscribe == true ? GetMessage("F_MESSAGE_WAS_MOVED_TO_NEW") : GetMessage("F_MESSAGE_WAS_MOVED"));
-                    $res_log = str_replace(array("#ID#", "#TOPIC_TITLE#", "#TOPIC_ID#", "#NEW_TOPIC_TITLE#", "#NEW_TOPIC_ID#"),
-                        array($MID, $arTopic["TITLE"], $arTopic["ID"], $arNewTopic['TITLE'], $arNewTopic['ID']), $res_log);
+                    $res_log = ($SendSubscribe == true ? GetMessage("F_MESSAGE_WAS_MOVED_TO_NEW") : GetMessage(
+                        "F_MESSAGE_WAS_MOVED"
+                    ));
+                    $res_log = str_replace(
+                        array("#ID#", "#TOPIC_TITLE#", "#TOPIC_ID#", "#NEW_TOPIC_TITLE#", "#NEW_TOPIC_ID#"),
+                        array($MID, $arTopic["TITLE"], $arTopic["ID"], $arNewTopic['TITLE'], $arNewTopic['ID']),
+                        $res_log
+                    );
                     $res["TITLE"] = $arNewTopic['TITLE'];
                     $res["TOPIC_ID"] = $arNewTopic['ID'];
                     $res["beforeTITLE"] = $arTopic["TITLE"];
@@ -952,7 +1133,7 @@ function ForumMoveMessage($FID, $TID, $Message, $NewTID = 0, $arFields, &$strErr
                         } while ($res2 = $db_res2->Fetch());
                         CForumFiles::UpdateByID($arFiles, $arMessage);
                     }
-                    if (IntVal($MID) <= 0) {
+                    if (intval($MID) <= 0) {
                         $arError[] = str_replace("##", $res["ID"], GetMessage("FMM_NO_MESSAGE_MOVE"));
                         break;
                     }
@@ -977,21 +1158,24 @@ function ForumMoveMessage($FID, $TID, $Message, $NewTID = 0, $arFields, &$strErr
         endif;
 
         CForumNew::SetStat($FID);
-        if ($NewFID != $FID)
+        if ($NewFID != $FID) {
             CForumNew::SetStat($NewFID);
+        }
     }
-    if (count($arError) <= 0)
+    if (count($arError) <= 0) {
         $DB->Commit();
-    else
+    } else {
         $DB->Rollback();
+    }
 
-    if (count($arError) > 0)
+    if (count($arError) > 0) {
         $strErrorMessage .= implode(". \n", $arError) . ". \n";
-    else {
+    } else {
         $strOKMessage .= GetMessage("FMM_YES_MESSAGE_MOVE");
         if ($SendSubscribe) {
-            foreach ($Message as $MID)
+            foreach ($Message as $MID) {
                 CForumMessage::SendMailMessage($MID, array(), false, "NEW_FORUM_MESSAGE");
+            }
         }
         return true;
     }
@@ -1044,7 +1228,7 @@ HTML;
  */
 function ForumPrintSmilesList($num_cols, $strLang = false)
 {
-    $num_cols = intVal($num_cols);
+    $num_cols = intval($num_cols);
     $num_cols = $num_cols > 0 ? $num_cols : 3;
     $strLang = ($strLang === false ? LANGUAGE_ID : $strLang);
     $strPath2Icons = "/bitrix/images/forum/smile/";
@@ -1053,12 +1237,18 @@ function ForumPrintSmilesList($num_cols, $strLang = false)
     $res_str = "";
     $ind = 0;
     foreach ($arSmile as $res) {
-        if ($ind == 0) $res_str .= "<tr align=\"center\">";
-        $res_str .= "<td width=\"" . IntVal(100 / $num_cols) . "%\">";
+        if ($ind == 0) {
+            $res_str .= "<tr align=\"center\">";
+        }
+        $res_str .= "<td width=\"" . intval(100 / $num_cols) . "%\">";
         $strTYPING = strtok($res['TYPING'], " ");
         $res_str .= "<img src=\"" . $strPath2Icons . $res['IMAGE'] . "\" alt=\"" . $res['NAME'] . "\" title=\"" . $res['NAME'] . "\" border=\"0\"";
-        if (IntVal($res['IMAGE_WIDTH']) > 0) $res_str .= " width=\"" . $res['IMAGE_WIDTH'] . "\"";
-        if (IntVal($res['IMAGE_HEIGHT']) > 0) $res_str .= " height=\"" . $res['IMAGE_HEIGHT'] . "\"";
+        if (intval($res['IMAGE_WIDTH']) > 0) {
+            $res_str .= " width=\"" . $res['IMAGE_WIDTH'] . "\"";
+        }
+        if (intval($res['IMAGE_HEIGHT']) > 0) {
+            $res_str .= " height=\"" . $res['IMAGE_HEIGHT'] . "\"";
+        }
         $res_str .= " class=\"smiles-list\" alt=\"smile" . $strTYPING . "\" onclick=\"if(emoticon){emoticon('" . $strTYPING . "');}\" name=\"smile\"  id='" . $strTYPING . "' ";
         $res_str .= "/>&nbsp;</td>\n";
         $ind++;
@@ -1079,24 +1269,31 @@ function ForumPrintSmilesList($num_cols, $strLang = false)
 function ForumMoveMessage2Support($MID, &$strErrorMessage, &$strOKMessage, $arAddParams = array())
 {
     global $USER;
-    $MID = IntVal($MID);
+    $MID = intval($MID);
     $sError = array();
     $sNote = array();
     $arAddParams = (!is_array($arAddParams) ? array($arAddParams) : $arAddParams);
     $arAddParams["PERMISSION"] = (!empty($arAddParams["PERMISSION"]) ? $arAddParams["PERMISSION"] : false);
-    if ($MID <= 0)
+    if ($MID <= 0) {
         $arError[] = GetMessage("MOVEMES_NO_MESS_EX");
+    }
 
-    if (!CModule::IncludeModule("support"))
+    if (!CModule::IncludeModule("support")) {
         $arError[] = GetMessage("MOVEMES_NO_SUPPORT");
+    }
 
     if (empty($arError)) {
         $arMessage = CForumMessage::GetByID($MID, array("FILTER" => "N"));
         if (!$arMessage) {
             $arError[] = GetMessage("MOVEMES_NO_MESS_EX");
-        } elseif (IntVal($arMessage["AUTHOR_ID"]) <= 0) {
+        } elseif (intval($arMessage["AUTHOR_ID"]) <= 0) {
             $arError[] = GetMessage("MOVEMES_NO_ANONYM");
-        } elseif (!CForumMessage::CanUserDeleteMessage($MID, $USER->GetUserGroupArray(), $USER->GetID(), $arAddParams["PERMISSION"])) {
+        } elseif (!CForumMessage::CanUserDeleteMessage(
+            $MID,
+            $USER->GetUserGroupArray(),
+            $USER->GetID(),
+            $arAddParams["PERMISSION"]
+        )) {
             $arError[] = GetMessage("MOVEMES_NO_PERMS2MOVE");
         } else {
             $arTopic = CForumTopic::GetByID($arMessage["TOPIC_ID"]);
@@ -1116,7 +1313,7 @@ function ForumMoveMessage2Support($MID, &$strErrorMessage, &$strOKMessage, $arAd
             }
 
             $SuID = CTicket::SetTicket($arFieldsSu);
-            $SuID = IntVal($SuID);
+            $SuID = intval($SuID);
 
             if ($SuID > 0) {
                 $sNote[] = GetMessage("MOVEMES_SUCCESS_SMOVE");
@@ -1125,52 +1322,18 @@ function ForumMoveMessage2Support($MID, &$strErrorMessage, &$strOKMessage, $arAd
             }
         }
     }
-    if (!empty($arError))
+    if (!empty($arError)) {
         $strErrorMessage .= implode(".\n", $arError) . ".\n";
-    if (!empty($arNote))
+    }
+    if (!empty($arNote)) {
         $strOKMessage .= implode(".\n", $arNote) . ".\n";
+    }
 
-    if (empty($arError))
+    if (empty($arError)) {
         return $SuID;
-    else
-        return False;
-}
-
-function ForumSetAllMessagesReaded($FID = false) // DEPRECATED
-{
-    global $USER;
-
-    if ($FID !== false) {
-        $FID = IntVal($FID);
-        CForumNew::SetLabelsBeRead($FID, $USER->GetUserGroupArray());
-        return true;
+    } else {
+        return false;
     }
-
-    $arFilter = array();
-    if (!CForumUser::IsAdmin()) {
-        $arFilter["LID"] = LANG;
-        $arFilter["PERMS"] = array($USER->GetGroups(), 'A');
-        $arFilter["ACTIVE"] = "Y";
-    }
-    $db_Forum = CForumNew::GetList(array(), $arFilter);
-    while ($ar_Forum = $db_Forum->Fetch()) {
-        CForumNew::SetLabelsBeRead($ar_Forum["ID"], $USER->GetUserGroupArray());
-    }
-
-    return false;
-}
-
-function ForumSetReader($FID) // DEPRECATED
-{
-    global $USER;
-    $FID = intVal($FID);
-    $_SESSION["FORUM"]["LAST_VISIT_FORUM_" . $FID] = CForumNew::GetNowTime("timestamp"); // client TZ
-    return false;
-}
-
-function ForumSetAllMessagesRead($FID = false) // DEPRECATED
-{
-    ForumSetReadForum($FID);
 }
 
 function ForumVote4User($UID, $VOTES, $bDelVote, &$strErrorMessage, &$strOKMessage)
@@ -1179,8 +1342,8 @@ function ForumVote4User($UID, $VOTES, $bDelVote, &$strErrorMessage, &$strOKMessa
     $arError = array();
     $arNote = array();
 
-    $UID = IntVal($UID);
-    $VOTES = IntVal($VOTES);
+    $UID = intval($UID);
+    $VOTES = intval($VOTES);
     $bDelVote = ($bDelVote ? true : false);
     $CurrUserID = 0;
 
@@ -1190,19 +1353,22 @@ function ForumVote4User($UID, $VOTES, $bDelVote, &$strErrorMessage, &$strOKMessa
         if (!$USER->IsAuthorized()) {
             $arError[] = GetMessage("FORUM_GV_ERROR_AUTH");
         } else {
-            $CurrUserID = IntVal($USER->GetParam("USER_ID"));
+            $CurrUserID = intval($USER->GetParam("USER_ID"));
             if ($CurrUserID == $UID && !CForumUser::IsAdmin()) {
                 $arError[] = GetMessage("FORUM_GV_OTHER");
             } else {
                 $arUserRank = CForumUser::GetUserRank($CurrUserID);
 
-                if (IntVal($arUserRank["VOTES"]) <= 0 && !$bDelVote && !CForumUser::IsAdmin()) {
+                if (intval($arUserRank["VOTES"]) <= 0 && !$bDelVote && !CForumUser::IsAdmin()) {
                     $arError[] = GetMessage("FORUM_GV_ERROR_NO_VOTE");
                 } else {
-                    if (!CForumUser::IsAdmin() || $VOTES <= 0)
-                        $VOTES = IntVal($arUserRank["VOTES"]);
+                    if (!CForumUser::IsAdmin() || $VOTES <= 0) {
+                        $VOTES = intval($arUserRank["VOTES"]);
+                    }
 
-                    if ($VOTES == 0) $VOTES = 1; // no ranks configured
+                    if ($VOTES == 0) {
+                        $VOTES = 1;
+                    } // no ranks configured
 
                     $arFields = array(
                         "POINTS" => $VOTES
@@ -1211,17 +1377,19 @@ function ForumVote4User($UID, $VOTES, $bDelVote, &$strErrorMessage, &$strOKMessa
                     $arUserPoints = CForumUserPoints::GetByID($CurrUserID, $UID);
                     if ($arUserPoints) {
                         if ($bDelVote || $VOTES <= 0) {
-                            if (CForumUserPoints::Delete($CurrUserID, $UID))
+                            if (CForumUserPoints::Delete($CurrUserID, $UID)) {
                                 $arNote[] = GetMessage("FORUM_GV_SUCCESS_UNVOTE");
-                            else
+                            } else {
                                 $arError[] = GetMessage("FORUM_GV_ERROR_VOTE");
+                            }
                         } else {
-                            if (IntVal($arUserPoints["POINTS"]) < IntVal($arUserRank["VOTES"])
+                            if (intval($arUserPoints["POINTS"]) < intval($arUserRank["VOTES"])
                                 || CForumUser::IsAdmin()) {
-                                if (CForumUserPoints::Update(IntVal($USER->GetParam("USER_ID")), $UID, $arFields))
+                                if (CForumUserPoints::Update(intval($USER->GetParam("USER_ID")), $UID, $arFields)) {
                                     $arNote[] = GetMessage("FORUM_GV_SUCCESS_VOTE_UPD");
-                                else
+                                } else {
                                     $arError[] = GetMessage("FORUM_GV_ERROR_VOTE_UPD");
+                                }
                             } else {
                                 $arError[] = GetMessage("FORUM_GV_ALREADY_VOTE");
                             }
@@ -1231,10 +1399,11 @@ function ForumVote4User($UID, $VOTES, $bDelVote, &$strErrorMessage, &$strOKMessa
                             $arFields["FROM_USER_ID"] = $USER->GetParam("USER_ID");
                             $arFields["TO_USER_ID"] = $UID;
 
-                            if (CForumUserPoints::Add($arFields))
+                            if (CForumUserPoints::Add($arFields)) {
                                 $arNote[] = GetMessage("FORUM_GV_SUCCESS_VOTE_ADD");
-                            else
+                            } else {
                                 $arError[] = GetMessage("FORUM_GV_ERROR_VOTE_ADD");
+                            }
                         } else {
                             $arError[] = GetMessage("FORUM_GV_ERROR_A");
                         }
@@ -1244,42 +1413,38 @@ function ForumVote4User($UID, $VOTES, $bDelVote, &$strErrorMessage, &$strOKMessa
         }
     }
 
-    if (!empty($arError))
+    if (!empty($arError)) {
         $strErrorMessage .= implode(".\n", $arError) . ".\n";
-    if (!empty($arNote))
+    }
+    if (!empty($arNote)) {
         $strOKMessage .= implode(".\n", $arNote) . ".\n";
+    }
 
-    if (empty($arError))
-        return True;
-    else
-        return False;
-}
-
-function ForumDeleteSubscribe($ID, &$strErr, &$strOk) // DEPRECATED
-{
-    global $USER;
-    $ID = IntVal($ID);
-    if (CForumSubscribe::CanUserDeleteSubscribe($ID, $USER->GetUserGroupArray(), $USER->GetID())) {
-        CForumSubscribe::Delete($ID);
+    if (empty($arError)) {
         return true;
     } else {
-        $strErr = GetMessage("FSUBSC_NO_SPERMS") . ". \n";
+        return false;
     }
-    return false;
 }
 
 function ShowActiveUser($arFields = array())
 {
-    $period = intVal($arFields["PERIOD"]);
-    if ($period <= 0)
+    $period = intval($arFields["PERIOD"]);
+    if ($period <= 0) {
         $period = 600;
+    }
 
-    $date = Date(CDatabase::DateFormatToPHP(CLang::GetDateFormat("FULL", SITE_ID)), time() - $period + CTimeZone::GetOffset());
+    $date = Date(
+        CDatabase::DateFormatToPHP(CLang::GetDateFormat("FULL", SITE_ID)),
+        time() - $period + CTimeZone::GetOffset()
+    );
     $arField = array(">=LAST_VISIT" => $date, "COUNT_GUEST" => true);
-    if (intVal($arFields["FORUM_ID"]) > 0)
+    if (intval($arFields["FORUM_ID"]) > 0) {
         $arField["FORUM_ID"] = $arFields["FORUM_ID"];
-    if (intVal($arFields["TOPIC_ID"]) > 0)
+    }
+    if (intval($arFields["TOPIC_ID"]) > 0) {
         $arField["TOPIC_ID"] = $arFields["TOPIC_ID"];
+    }
 
     $db_res = CForumStat::GetListEx(array("USER_ID" => "DESC"), $arField);
     $OnLineUser = array();
@@ -1293,29 +1458,45 @@ function ShowActiveUser($arFields = array())
         $OnLineUser["USER"] = array();
         do {
             if (($res["USER_ID"] > 0) && ($res["HIDE_FROM_ONLINE"] != "Y")) {
-                $OnLineUser["USER"][] = "<a href=\"view_profile.php?UID=" . $res["USER_ID"] . "\" title='" . GetMessage("FORUM_USER_PROFILE") . "'>" . $res["SHOW_NAME"] . "</a>";
-                $arOnLineUser[] = array_merge($res, array("UID" => $res["USER_ID"], "title" => GetMessage("FORUM_USER_PROFILE"), "text" => $res["SHOW_NAME"]));
-            } elseif (($res["USER_ID"] > 0) && ($res["HIDE_FROM_ONLINE"] == "Y"))
+                $OnLineUser["USER"][] = "<a href=\"view_profile.php?UID=" . $res["USER_ID"] . "\" title='" . GetMessage(
+                        "FORUM_USER_PROFILE"
+                    ) . "'>" . $res["SHOW_NAME"] . "</a>";
+                $arOnLineUser[] = array_merge(
+                    $res,
+                    array(
+                        "UID" => $res["USER_ID"],
+                        "title" => GetMessage("FORUM_USER_PROFILE"),
+                        "text" => $res["SHOW_NAME"]
+                    )
+                );
+            } elseif (($res["USER_ID"] > 0) && ($res["HIDE_FROM_ONLINE"] == "Y")) {
                 $UserHideOnLine++;
-            else
-                $OnLineUser["GUEST"] = intVal($res["COUNT_USER"]);
+            } else {
+                $OnLineUser["GUEST"] = intval($res["COUNT_USER"]);
+            }
         } while ($res = $db_res->GetNext());
 
         $CountAllUsers = count($OnLineUser["USER"]) + $UserHideOnLine + $OnLineUser["GUEST"];
         $result["GUEST"] = $OnLineUser["GUEST"];
         $result["HIDE"] = $UserHideOnLine;
-        $result["REGISTER"] = IntVal(count($OnLineUser["USER"]) + $UserHideOnLine);
+        $result["REGISTER"] = intval(count($OnLineUser["USER"]) + $UserHideOnLine);
         $result["ALL"] = $CountAllUsers;
 
         if ($CountAllUsers > 0) {
-            if (intVal($arFields["TOPIC_ID"]) <= 0) {
+            if (intval($arFields["TOPIC_ID"]) <= 0) {
                 $result["PERIOD"] = round($period / 60);
-                $result["HEAD"] = str_replace("##", "<b>" . round($period / 60) . "</b>", GetMessage("FORUM_AT_LAST_PERIOD")) . " " .
+                $result["HEAD"] = str_replace(
+                        "##",
+                        "<b>" . round($period / 60) . "</b>",
+                        GetMessage("FORUM_AT_LAST_PERIOD")
+                    ) . " " .
                     GetMessage("FORUM_COUNT_ALL_USER") . ": <b>" . $CountAllUsers . "</b><br/>";
             }
-            $OnLineUserStr = GetMessage("FORUM_COUNT_GUEST") . ": <b>" . intVal($OnLineUser["GUEST"]) . "</b>, " .
-                GetMessage("FORUM_COUNT_USER") . ": <b>" . IntVal(count($OnLineUser["USER"]) + $UserHideOnLine) . "</b>,
-				" . GetMessage("FORUM_FROM_THIS") . " " . GetMessage("FORUM_COUNT_USER_HIDEFROMONLINE") . ": <b>" . $UserHideOnLine . "</b>";
+            $OnLineUserStr = GetMessage("FORUM_COUNT_GUEST") . ": <b>" . intval($OnLineUser["GUEST"]) . "</b>, " .
+                GetMessage("FORUM_COUNT_USER") . ": <b>" . intval(count($OnLineUser["USER"]) + $UserHideOnLine) . "</b>,
+				" . GetMessage("FORUM_FROM_THIS") . " " . GetMessage(
+                    "FORUM_COUNT_USER_HIDEFROMONLINE"
+                ) . ": <b>" . $UserHideOnLine . "</b>";
 
             if (count($OnLineUser["USER"]) > 0) {
                 $OnLineUserStr .= "<br/>" . implode(", ", $OnLineUser["USER"]) . "<br/>";
@@ -1345,291 +1526,17 @@ function ForumGetUserForumStatus($userID = false, $perm = false, $arAdditionalPa
     $res = ($userID === false ? $arStatuses : $arStatuses["guest"]);
     if (!empty($userID)) {
         $res = $arStatuses["user"];
-        if ($arStatuses[$perm])
+        if ($arStatuses[$perm]) {
             $res = $arStatuses[$perm];
-        else {
+        } else {
             $arRank = (is_set($arAdditionalParams, "Rank") ?
                 $arAdditionalParams["Rank"] : CForumUser::GetUserRank($userID, LANGUAGE_ID));
-            if (is_array($arRank) && $arRank["NAME"])
+            if (is_array($arRank) && $arRank["NAME"]) {
                 $res = array($arRank["CODE"], $arRank["NAME"]);
+            }
         }
     }
     return $res;
-}
-
-function ForumInitParams()
-{
-//	unset($_SESSION["FORUM"]);
-    $UserLogin = "GUEST";
-    $LastVisit = time() + CTimeZone::GetOffset();
-    if ($GLOBALS["USER"]->IsAuthorized()) {
-        if (!is_array($_SESSION["FORUM"]["USER"]) || $_SESSION["FORUM"]["USER"]["USER_ID"] != $GLOBALS["USER"]->GetID()):
-            $_SESSION["FORUM"]["USER"] = CForumUser::GetByUSER_ID($GLOBALS["USER"]->GetID());
-            if ($_SESSION["FORUM"]["USER"]):
-                $_SESSION["FORUM"]["USER"]["LAST_VISIT_TIMESTAMP"] = MakeTimeStamp($_SESSION["FORUM"]["USER"]["LAST_VISIT"]);
-            else:
-                $_SESSION["FORUM"]["USER"] = array();
-                $_SESSION["FORUM"]["USER"]["LAST_VISIT_TIMESTAMP"] = CForumNew::GetNowTime("timestamp");
-            endif;
-        elseif (empty($_SESSION["FORUM"]["USER"]["LAST_VISIT_TIMESTAMP"])):
-            $_SESSION["FORUM"]["USER"]["LAST_VISIT_TIMESTAMP"] = CForumNew::GetNowTime("timestamp");
-        endif;
-
-        $arUser = $_SESSION["FORUM"]["USER"];
-        $UserLogin = $GLOBALS["USER"]->GetLogin();
-        $LastVisit = $_SESSION["FORUM"]["USER"]["LAST_VISIT_TIMESTAMP"];
-
-        // if info for this user is not exist that info gets from DB
-        if (!is_array($_SESSION["FORUM"][$UserLogin]) || intVal($_SESSION["FORUM"][$UserLogin][0]) <= 0) {
-            $_SESSION["FORUM"][$UserLogin] = array();
-            $db_res = CForumUser::GetListUserForumLastVisit(array(), array("USER_ID" => $GLOBALS["USER"]->GetID()));
-            if ($db_res && $res = $db_res->Fetch()):
-                do {
-                    $_SESSION["FORUM"][$UserLogin][intVal($res["FORUM_ID"])] = MakeTimeStamp($res["LAST_VISIT"]);
-                } while ($res = $db_res->Fetch());
-            endif;
-
-            if (intVal($_SESSION["FORUM"][$UserLogin][0]) <= 0):
-                $_SESSION["FORUM"][$UserLogin] = array();
-                CForumUser::SetUserForumLastVisit($GLOBALS["USER"]->GetID(), 0, false);
-                $db_res = CForumUser::GetListUserForumLastVisit(array(), array("USER_ID" => $GLOBALS["USER"]->GetID(), "FORUM_ID" => 0));
-                if ($db_res && $res = $db_res->Fetch()):
-                    $_SESSION["FORUM"][$UserLogin][0] = MakeTimeStamp($res["LAST_VISIT"]);
-                else:
-                    $_SESSION["FORUM"][$UserLogin][0] = $LastVisit;
-                endif;
-            endif;
-        }
-
-        // synhronize guest session with authorized user session
-        if (is_array($_SESSION["FORUM"]["GUEST_TID"]) && !empty($_SESSION["FORUM"]["GUEST_TID"])) {
-            foreach ($_SESSION["FORUM"]["GUEST_TID"] as $key => $val):
-                CForumTopic::SetReadLabelsNew($key, false, $val, array("UPDATE_TOPIC_VIEWS" => "N"));
-            endforeach;
-        }
-//		if (is_array($_SESSION["FORUM"]["GUEST"]) && (!empty($_SESSION["FORUM"]["GUEST"])))
-//		{
-//			foreach ($_SESSION["FORUM"]["GUEST"] as $key => $val)
-//			{
-//				if (intVal($val) > intVal($_SESSION["FORUM"][$UserLogin][intVal($key)]))
-//					$_SESSION["FORUM"][$UserLogin][intVal($key)] = intVal($val);
-//			}
-//		}
-        unset($_SESSION["FORUM"]["GUEST_TID"]);
-        unset($_SESSION["FORUM"]["GUEST"]);
-    } else // If user is not authorized that get info from cookies only
-    {
-        if (!isset($_SESSION["FORUM"]["GUEST"]) || !is_array($_SESSION["FORUM"]["GUEST"])) {
-            $forum_cookie = COption::GetOptionString("main", "cookie_name", "BITRIX_SM") . "_FORUM_GUEST";
-            if (isset($_COOKIE[$forum_cookie]) && strlen($_COOKIE[$forum_cookie]) > 0) {
-                $arForum = explode("/", $_COOKIE[$forum_cookie]);
-                if (is_array($arForum) && count($arForum) > 0) {
-                    foreach ($arForum as $forumInfo) {
-                        list($f, $lv) = explode("-", $forumInfo);
-                        $_SESSION["FORUM"]["GUEST"][intVal($f)] = intVal($lv);
-                    }
-                }
-            }
-        }
-
-        if (!isset($_SESSION["FORUM"]["GUEST"]) || !is_array($_SESSION["FORUM"]["GUEST"]) || (intVal($_SESSION["FORUM"]["GUEST"][0]) < 0)) {
-            $_SESSION["FORUM"]["GUEST"] = array();
-            $_SESSION["FORUM"]["GUEST"][0] = CForumNew::GetNowTime();
-        }
-        // All geting info put in cookies
-        if (COption::GetOptionString("forum", "USE_COOKIE", "N") == "Y"):
-            $arCookie = array();
-            foreach ($_SESSION["FORUM"]["GUEST"] as $key => $val):
-                $arCookie[] = $key . "-" . $val;
-            endforeach;
-            $GLOBALS["APPLICATION"]->set_cookie("FORUM_GUEST", implode("/", $arCookie), false, "/", false, false, "Y", false);
-        endif;
-
-//		It need to save info about visited topics for GUEST in cookies
-        if (!isset($_SESSION["FORUM"]["GUEST_TID"]) || !is_array($_SESSION["FORUM"]["GUEST_TID"])) {
-            $_SESSION["FORUM"]["GUEST_TID"] = array();
-            $topic_cookie = COption::GetOptionString("main", "cookie_name", "BITRIX_SM") . "_FORUM_GUEST_TID";
-            if (isset($_COOKIE[$topic_cookie]) && strlen($_COOKIE[$topic_cookie]) > 0):
-                $arTopic = explode("/", $_COOKIE[$topic_cookie]);
-                if (is_array($arTopic) && count($arTopic) > 0):
-                    foreach ($arTopic as $topicInfo):
-                        list($f, $lv) = explode("-", $topicInfo);
-                        $_SESSION["FORUM"]["GUEST_TID"][intVal($f)] = intVal($lv);
-                    endforeach;
-                endif;
-            endif;
-        }
-    }
-    // cleaning session date.
-    if (is_array($_SESSION["FORUM"])) {
-        foreach ($_SESSION["FORUM"] as $key => $val):
-            if (substr($key, 0, strLen("LAST_VISIT_FORUM_")) == "LAST_VISIT_FORUM_"):
-                unset($_SESSION["FORUM"][$key]);
-            endif;
-        endforeach;
-    }
-    // and put info in public variable
-    if (is_array($_SESSION["FORUM"][$UserLogin])):
-        foreach ($_SESSION["FORUM"][$UserLogin] as $key => $val):
-            $_SESSION["FORUM"]["LAST_VISIT_FORUM_" . $key] = $val;
-        endforeach;
-    else:
-        $_SESSION["FORUM"]["LAST_VISIT_FORUM_0"] = CForumNew::GetNowTime();
-    endif;
-
-    return $_SESSION;
-}
-
-function NewMessageForum($FID, $LAST_POST_DATE = false)
-{
-    if (intVal($_SESSION["FORUM"]["LAST_VISIT_FORUM_0"]) <= 0)
-        ForumInitParams();
-
-    $FID = intVal($FID);
-    $LAST_VISIT = max($_SESSION["FORUM"]["LAST_VISIT_FORUM_0"], $_SESSION["FORUM"]["LAST_VISIT_FORUM_" . $FID]);
-    $LAST_POST_DATE = MakeTimeStamp($LAST_POST_DATE);
-
-    if (intVal($LAST_POST_DATE) > 0 && $LAST_POST_DATE < $LAST_VISIT):
-        "";
-    elseif ($GLOBALS["USER"]->IsAuthorized()):
-        $arFilter = array("FORUM_ID" => $FID, "RENEW" => $GLOBALS["USER"]->GetID());
-        if (ForumCurrUserPermissions($FID) < "Q"):
-            $arFilter["APPROVED"] = "Y";
-        endif;
-        $db_res = CForumTopic::GetListEx(array("ID" => "DESC"), $arFilter, false, 1);
-        if ($db_res && $res = $db_res->Fetch()):
-            return true;
-        endif;
-    else:
-        $arFilter = array("FORUM_ID" => $FID);
-        if (is_array($_SESSION["FORUM"]["GUEST_TID"]) && !empty($_SESSION["FORUM"]["GUEST_TID"])):
-            $arFilter["RENEW_TOPIC"][0] = ConvertTimeStamp($LAST_VISIT, "FULL");
-            foreach ($_SESSION["FORUM"]["GUEST_TID"] as $key => $val):
-                $arFilter["RENEW_TOPIC"][intVal($key)] = ConvertTimeStamp($val, "FULL");
-            endforeach;
-        else:
-            $arFilter[">LAST_POST_DATE"] = ConvertTimeStamp($LAST_VISIT, "FULL");
-        endif;
-        if (ForumCurrUserPermissions($FID) < "Q"):
-            $arFilter["APPROVED"] = "Y";
-        endif;
-        $db_res = CForumTopic::GetList(array(), $arFilter, false, 1);
-        if ($db_res && $res = $db_res->Fetch()):
-            return true;
-        endif;
-    endif;
-    ForumInitParams();
-    return false;
-}
-
-function NewMessageTopic($FID, $TID, $LAST_POST_DATE, $LAST_VISIT)
-{
-    if (intVal($_SESSION["FORUM"]["LAST_VISIT_FORUM_0"]) <= 0)
-        ForumInitParams();
-    $TID = intVal($TID);
-    $LAST_POST_DATE = intVal(MakeTimeStamp($LAST_POST_DATE));
-    $LAST_VISIT = intVal($GLOBALS["USER"]->IsAuthorized() ? MakeTimeStamp($LAST_VISIT) : $_SESSION["FORUM"]["GUEST_TID"][$TID]);
-    $LAST_VISIT = max($LAST_VISIT, $_SESSION["FORUM"]["LAST_VISIT_FORUM_0"], intVal($_SESSION["FORUM"]["LAST_VISIT_FORUM_" . $FID]));
-    return ($LAST_POST_DATE > $LAST_VISIT);
-}
-
-function ForumSetReadForum($FID = false)
-{
-    $UserLogin = "GUEST";
-    $timestamp = CForumNew::GetNowTime("timestamp");
-    $FID = intVal($FID);
-
-    if ($GLOBALS["USER"]->IsAuthorized()):
-        $UserLogin = $GLOBALS["USER"]->GetLogin();
-        CForumUser::SetUserForumLastVisit($GLOBALS["USER"]->GetID(), $FID, $timestamp);
-    endif;
-
-    if ($FID <= 0) {
-        if (is_array($_SESSION["FORUM"])):
-            foreach ($_SESSION["FORUM"] as $key => $val):
-                if (substr($key, 0, strLen("LAST_VISIT_FORUM_")) == "LAST_VISIT_FORUM_"):
-                    unset($_SESSION["FORUM"][$key]);
-                endif;
-            endforeach;
-        endif;
-        unset($_SESSION["FORUM"][$UserLogin]);
-    }
-    $_SESSION["FORUM"][$UserLogin][$FID] = $timestamp;
-    $_SESSION["FORUM"]["LAST_VISIT_FORUM_" . $FID] = $timestamp;
-    return ForumInitParams();
-}
-
-function ForumSetReadTopic($FID, $TID)
-{
-    CForumTopic::SetReadLabelsNew($TID);
-
-    if (!$GLOBALS['USER']->IsAuthorized()) {
-        if (!isset($_SESSION["FORUM"]["GUEST_TID"]))
-            ForumInitParams();
-        $_SESSION["FORUM"]["GUEST_TID"][intVal($TID)] = CForumNew::GetNowTime();
-        if (COption::GetOptionString("forum", "USE_COOKIE", "N") == "Y") {
-            $arCookie = array();
-            foreach ($_SESSION["FORUM"]["GUEST_TID"] as $key => $val):
-                $arCookie[] = intVal($key) . "-" . intVal($val);
-            endforeach;
-            $GLOBALS["APPLICATION"]->set_cookie("FORUM_GUEST_TID", implode("/", $arCookie), false, "/", false, false, "Y", false);
-        }
-    }
-}
-
-function ForumSetLastVisit($FID = false, $TID = false, $arAddParams = array())
-{
-    global $DB, $USER;
-    // For custom components
-    $GLOBALS["FID"] = $FID = ($FID === false && intVal($GLOBALS["FID"]) > 0 ? intVal($GLOBALS["FID"]) : $FID);
-
-    if ($USER->isAuthorized()) {
-        $GLOBALS["SHOW_FORUM_ICON"] = true; // out-of-date param
-        $USER_ID = $USER->getID();
-        $update = true;
-
-        if (!is_array($_SESSION["FORUM"]["USER"]) || $_SESSION["FORUM"]["USER"]["USER_ID"] != $USER->getID()) {
-            $_SESSION["FORUM"]["USER"] = CForumUser::GetByUSER_ID($USER_ID);
-            if (!$_SESSION["FORUM"]["USER"]) {
-                $update = false;;
-                CForumUser::Add(array("USER_ID" => $USER_ID));
-                $_SESSION["FORUM"]["USER"] = CForumUser::GetByUSER_ID($USER_ID);
-            }
-            $_SESSION["FORUM"]["SHOW_NAME"] = $_SESSION["FORUM"]["USER"]["SHOW_NAME"];
-        }
-        if ($update):
-            CForumUser::Update($USER_ID, array("=LAST_VISIT" => $DB->GetNowFunction()), false, true);
-        endif;
-    }
-
-    ForumInitParams();
-
-    if (!($_SESSION["SESS_SEARCHER_ID"] > 0 && CModule::IncludeModule("statistic")))
-        CForumStat::RegisterUSER(array("SITE_ID" => SITE_ID, "FORUM_ID" => $FID, "TOPIC_ID" => $TID));
-    return true;
-}
-
-function ForumGetFirstUnreadMessage($FID, $TID)
-{
-    global $USER, $DB;
-    $TID = intVal($TID);
-    if ($TID > 0) {
-        if (intVal($_SESSION["FORUM"]["LAST_VISIT_FORUM_0"]) <= 0)
-            ForumInitParams();
-        $LastVisit = max(intVal($_SESSION["FORUM"]["LAST_VISIT_FORUM_0"]), intVal($_SESSION["FORUM"]["LAST_VISIT_FORUM_" . $FID])); // client TZ
-
-        if ($USER->IsAuthorized()) {
-            $db_res = CForumMessage::GetListEx(array("ID" => "ASC"),
-                array("TOPIC_ID" => $TID, "USER_ID" => $USER->GetId(), ">NEW_MESSAGE" => Date(CDatabase::DateFormatToPHP(CLang::GetDateFormat("FULL", LANG)), $LastVisit)), 0, 1);
-        } else {
-            $LastVisit = max($LastVisit, intVal($_SESSION["FORUM"]["GUEST_TID"][$TID]));
-            $db_res = CForumMessage::GetList(array("ID" => "ASC"),
-                array("TOPIC_ID" => $TID, ">POST_DATE" => Date(CDatabase::DateFormatToPHP(CLang::GetDateFormat("FULL", LANG)), $LastVisit)), 0, 1);
-        }
-        if ($db_res && $res = $db_res->Fetch())
-            return $res["ID"];
-    }
-    return false;
 }
 
 function ForumAddPageParams($page_url = "", $params = array(), $addIfNull = false, $htmlSpecialChars = true)
@@ -1641,13 +1548,16 @@ function ForumAddPageParams($page_url = "", $params = array(), $addIfNull = fals
     // Attention: $page_url already is safe.
     if (is_array($params) && (count($params) > 0)) {
         foreach ($params as $key => $val) {
-            if ((is_array($val) && (count($val) > 0)) || ((strLen($val) > 0) && ($val != "0")) || (intVal($val) > 0) || $addIfNull) {
-                if (is_array($val))
+            if ((is_array($val) && (count($val) > 0)) || (($val <> '') && ($val != "0")) || (intval(
+                        $val
+                    ) > 0) || $addIfNull) {
+                if (is_array($val)) {
                     $param = implode(",", $val);
-                else
+                } else {
                     $param = $val;
-                if ((strLen($param) > 0) || ($addIfNull)) {
-                    if (strPos($page_url, $key) !== false) {
+                }
+                if (($param <> '') || ($addIfNull)) {
+                    if (mb_strpos($page_url, $key) !== false) {
                         $page_url = preg_replace("/" . $key . "\=[^\&]*((\&amp\;)|(\&)*)/", "", $page_url);
                     }
                     $arParams[] = $key . "=" . $param;
@@ -1656,16 +1566,21 @@ function ForumAddPageParams($page_url = "", $params = array(), $addIfNull = fals
         }
 
         if (count($arParams) > 0) {
-            if (strPos($page_url, "?") === false)
+            if (mb_strpos($page_url, "?") === false) {
                 $strParams = "?";
-            elseif ((substr($page_url, -5, 5) != "&amp;") && (substr($page_url, -1, 1) != "&") && (substr($page_url, -1, 1) != "?")) {
+            } elseif ((mb_substr($page_url, -5, 5) != "&amp;") && (mb_substr($page_url, -1, 1) != "&") && (mb_substr(
+                        $page_url,
+                        -1,
+                        1
+                    ) != "?")) {
                 $strParams = "&";
             }
             $strParams .= implode("&", $arParams);
-            if ($htmlSpecialChars)
+            if ($htmlSpecialChars) {
                 $page_url .= htmlspecialcharsbx($strParams);
-            else
+            } else {
                 $page_url .= $strParams;
+            }
         }
     }
     return $page_url;
@@ -1682,7 +1597,20 @@ function ForumActions($action, $arFields, &$strErrorMessage, &$strOKMessage)
     } else {
         switch ($action) {
             case "REPLY":
-                $result = ForumAddMessage("REPLY", $arFields["FID"], $arFields["TID"], 0, $arFields, $sError, $sNote, false, $arFields["captcha_word"], 0, $arFields["captcha_code"], $arFields["NAME_TEMPLATE"]);
+                $result = ForumAddMessage(
+                    "REPLY",
+                    $arFields["FID"],
+                    $arFields["TID"],
+                    0,
+                    $arFields,
+                    $sError,
+                    $sNote,
+                    false,
+                    $arFields["captcha_word"],
+                    0,
+                    $arFields["captcha_code"],
+                    $arFields["NAME_TEMPLATE"]
+                );
                 break;
             case "DEL":
                 $result = ForumDeleteMessage($arFields["MID"], $sError, $sNote, $arFields);
@@ -1692,7 +1620,14 @@ function ForumActions($action, $arFields, &$strErrorMessage, &$strOKMessage)
                 $result = ForumModerateMessage($arFields["MID"], $action, $sError, $sNote, $arFields);
                 break;
             case "VOTE4USER":
-                $result = ForumVote4User($arFields["UID"], $arFields["VOTES"], $arFields["VOTE"], $sError, $sNote, $arFields);
+                $result = ForumVote4User(
+                    $arFields["UID"],
+                    $arFields["VOTES"],
+                    $arFields["VOTE"],
+                    $sError,
+                    $sNote,
+                    $arFields
+                );
                 break;
             case "FORUM_MESSAGE2SUPPORT":
                 $result = ForumMoveMessage2Support($arFields["MID"], $sError, $sNote, $arFields);
@@ -1700,16 +1635,23 @@ function ForumActions($action, $arFields, &$strErrorMessage, &$strOKMessage)
             case "FORUM_SUBSCRIBE":
             case "TOPIC_SUBSCRIBE":
             case "FORUM_SUBSCRIBE_TOPICS":
-                $result = ForumSubscribeNewMessagesEx($arFields["FID"], $arFields["TID"], $arFields["NEW_TOPIC_ONLY"], $sError, $sNote);
+                $result = ForumSubscribeNewMessagesEx(
+                    $arFields["FID"],
+                    $arFields["TID"],
+                    $arFields["NEW_TOPIC_ONLY"],
+                    $sError,
+                    $sNote
+                );
                 break;
             case "SET_ORDINARY":
             case "SET_TOP":
             case "ORDINARY":
             case "TOP":
-                if ($action == "SET_ORDINARY")
+                if ($action == "SET_ORDINARY") {
                     $action = "ORDINARY";
-                elseif ($action == "SET_TOP")
+                } elseif ($action == "SET_TOP") {
                     $action = "TOP";
+                }
 
                 $result = ForumTopOrdinaryTopic($arFields["TID"], $action, $sError, $sNote, $arFields);
                 break;
@@ -1720,10 +1662,11 @@ function ForumActions($action, $arFields, &$strErrorMessage, &$strOKMessage)
             case "CLOSE":
             case "STATE_Y":
             case "STATE_N":
-                if ($action == "STATE_Y")
+                if ($action == "STATE_Y") {
                     $action = "OPEN";
-                elseif ($action == "STATE_N")
+                } elseif ($action == "STATE_N") {
                     $action = "CLOSE";
+                }
                 $result = ForumOpenCloseTopic($arFields["TID"], $action, $sError, $sNote, $arFields);
                 break;
             case "SHOW_TOPIC":
@@ -1738,7 +1681,9 @@ function ForumActions($action, $arFields, &$strErrorMessage, &$strOKMessage)
                         $usr->setPermissionOnForum($forum, $arFields["PERMISSION"]);
                     }
                     if (!$usr->canModerate($forum)) {
-                        $result->addError(new \Bitrix\Main\Error(GetMessage("MODMESS_NO_PERMS") . "(TID={$topic->getId()})"));
+                        $result->addError(
+                            new \Bitrix\Main\Error(GetMessage("MODMESS_NO_PERMS") . "(TID={$topic->getId()})")
+                        );
                     } else {
                         $res = ($action == "HIDE_TOPIC" ? $topic->disapprove() : $topic->approve());
                         if (!$res->isSuccess()) {
@@ -1769,17 +1714,19 @@ function ForumActions($action, $arFields, &$strErrorMessage, &$strOKMessage)
 
 function ForumDataToArray(&$message)
 {
-    if (!is_array($message))
+    if (!is_array($message)) {
         $message = explode(",", $message);
-
-    foreach ($message as $key => $val) {
-        $message[$key] = intVal(trim($val));
     }
 
-    if (array_sum($message) > 0)
+    foreach ($message as $key => $val) {
+        $message[$key] = intval(trim($val));
+    }
+
+    if (array_sum($message) > 0) {
         return $message;
-    else
+    } else {
         return false;
+    }
 }
 
 function ForumGetTopicSort(&$field_name, &$direction, $arForumInfo = array())
@@ -1790,16 +1737,20 @@ function ForumGetTopicSort(&$field_name, &$direction, $arForumInfo = array())
         "N" => "POSTS",
         "V" => "VIEWS",
         "D" => "START_DATE",
-        "A" => "USER_START_NAME");
+        "A" => "USER_START_NAME"
+    );
     if (empty($field_name) && !empty($arForumInfo)) {
         $field_name = trim($arForumInfo["ORDER_BY"]);
         $direction = trim($arForumInfo["ORDER_DIRECTION"]);
     }
 
-    $field_name = strToUpper($field_name);
-    $direction = strToUpper($direction);
+    $field_name = mb_strtoupper($field_name);
+    $direction = mb_strtoupper($direction);
 
-    $field_name = (!empty($aSortOrder[$field_name]) ? $aSortOrder[$field_name] : (in_array($field_name, $aSortOrder) ? $field_name : "LAST_POST_DATE"));
+    $field_name = (!empty($aSortOrder[$field_name]) ? $aSortOrder[$field_name] : (in_array(
+        $field_name,
+        $aSortOrder
+    ) ? $field_name : "LAST_POST_DATE"));
     $direction = ($direction == "ASC" ? "ASC" : "DESC");
     return array($field_name => $direction);
 }
@@ -1810,10 +1761,11 @@ function ForumShowError($arError, $bShowErrorCode = false)
     $sReturn = "";
     $tmp = false;
     $arRes = array();
-    if (empty($arError))
+    if (empty($arError)) {
         return $sReturn;
-    elseif (!is_array($arError))
+    } elseif (!is_array($arError)) {
         return $arError;
+    }
 
     if (!empty($arError["title"]) || !empty($arError["code"])) {
         $res = $arError;
@@ -1831,19 +1783,22 @@ function ForumShowError($arError, $bShowErrorCode = false)
 
 function ForumClearComponentCache($components)
 {
-    if (empty($components))
+    if (empty($components)) {
         return false;
+    }
     $aComponents = (is_array($components) ? $components : explode(",", $components));
 
     foreach ($aComponents as $component_name) {
         $componentRelativePath = CComponentEngine::MakeComponentPath($component_name);
-        if (strlen($componentRelativePath) > 0) {
+        if ($componentRelativePath <> '') {
             $arComponentDescription = CComponentUtil::GetComponentDescr($component_name);
             if (is_array($arComponentDescription) && array_key_exists("CACHE_PATH", $arComponentDescription)) {
-                if ($arComponentDescription["CACHE_PATH"] == "Y")
+                if ($arComponentDescription["CACHE_PATH"] == "Y") {
                     $arComponentDescription["CACHE_PATH"] = "/" . SITE_ID . $componentRelativePath;
-                if (strlen($arComponentDescription["CACHE_PATH"]) > 0)
+                }
+                if ($arComponentDescription["CACHE_PATH"] <> '') {
                     BXClearCache(true, $arComponentDescription["CACHE_PATH"]);
+                }
             }
         }
     }
@@ -1858,213 +1813,36 @@ function InitSortingEx($Path = false, $sByVar = "by", $sOrderVar = "order")
     $sOrderVarE = $sOrderVar . $ii;
     global ${$sByVarE}, ${$sOrderVarE};
 
-    if ($Path === false)
+    if ($Path === false) {
         $Path = $APPLICATION->GetCurPage();
+    }
 
     $md5Path = md5($Path);
-    if (!empty(${$sByVarE}))
+    if (!empty(${$sByVarE})) {
         $_SESSION["SESS_SORT_BY_EX"][$md5Path][$sByVarE] = ${$sByVarE};
-    else
+    } else {
         ${$sByVarE} = $_SESSION["SESS_SORT_BY_EX"][$md5Path][$sByVarE];
+    }
 
-    if (!empty(${$sOrderVarE}))
+    if (!empty(${$sOrderVarE})) {
         $_SESSION["SESS_SORT_ORDER_EX"][$md5Path][$sOrderVarE] = ${$sOrderVarE};
-    else
+    } else {
         ${$sOrderVarE} = $_SESSION["SESS_SORT_ORDER_EX"][$md5Path][$sOrderVarE];
+    }
 
-    strtolower(${$sByVarE});
-    strtolower(${$sOrderVarE});
+    mb_strtolower(${$sByVarE});
+    mb_strtolower(${$sOrderVarE});
     ${$sByVar} = ${$sByVarE};
     ${$sOrderVar} = ${$sOrderVarE};
     return $ii;
 }
 
-function ForumAddDeferredScript($script)
-{
-    $url = CUtil::GetAdditionalFileURL($script);
-    return "<script>BX.ready(function(){BX.loadScript(\"" . $url . "\");});</script>\n";
-}
-
-/*
-GetMessage("FORUM_NO_MODULE");
-*/
-
-function CustomizeLHEForForum()
-{
-    ?>
-    <script>
-        LHEButtons['Translit'].handler = function (pBut) {
-            var but = pBut;
-            var translit = function (textbody) {
-                if (typeof but.pLEditor.bTranslited == 'undefined')
-                    but.pLEditor.bTranslited = false;
-
-                var arStack = new Array();
-                var i = 0;
-
-                function bPushTag(str, p1, offset, s) {
-                    arStack.push(p1);
-                    return "\001";
-                }
-
-                function bPopTag(str, p1, offset, s) {
-                    return arStack.shift();
-                }
-
-
-                var r = new RegExp("(\\[[^\\]]*\\])", 'gi');
-                textbody = textbody.replace(r, bPushTag);
-
-                if (but.pLEditor.bTranslited == false) {
-                    for (i = 0; i < capitEngLettersReg.length; i++) textbody = textbody.replace(capitEngLettersReg[i], capitRusLetters[i]);
-                    for (i = 0; i < smallEngLettersReg.length; i++) textbody = textbody.replace(smallEngLettersReg[i], smallRusLetters[i]);
-                    but.pLEditor.bTranslited = true;
-                } else {
-                    for (i = 0; i < capitRusLetters.length; i++) textbody = textbody.replace(capitRusLettersReg[i], capitEngLetters[i]);
-                    for (i = 0; i < smallRusLetters.length; i++) textbody = textbody.replace(smallRusLettersReg[i], smallEngLetters[i]);
-                    but.pLEditor.bTranslited = false;
-                }
-
-                textbody = textbody.replace(new RegExp("\001", "g"), bPopTag);
-
-                return textbody;
-            }
-
-            pBut.pLEditor.SaveContent();
-            var content = translit(pBut.pLEditor.GetContent());
-
-            BX.defer(function () {
-                if (window.oLHE.sEditorMode == 'code')
-                    window.oLHE.SetContent(content);
-                else
-                    window.oLHE.SetEditorContent(content);
-            })();
-        }
-        LHEButtons['SmileList']['SetSmile'] = function (k, pList) {
-            //pList.pLEditor.RestoreSelectionRange();
-            var oSmile = pList.oSmiles[k];
-
-            if (pList.pLEditor.sEditorMode == 'code') // In BB or in HTML
-                pList.pLEditor.WrapWith(' ', ' ', oSmile.code);
-            else // WYSIWYG
-                pList.pLEditor.InsertHTML('<img id="' + pList.pLEditor.SetBxTag(false, {
-                    tag: "smile",
-                    params: oSmile
-                }) + '" src="' + oSmile.path + '" title="' + oSmile.name + '"/>');
-
-            if (pList.bOpened)
-                pList.Close();
-        };
-        LHEButtons['SmileList']['parser']['obj']['UnParse'] = function (bxTag, pNode, pLEditor) {
-            if (!bxTag.params || !bxTag.params.code)
-                return '';
-            return ' ' + bxTag.params.code + ' ';
-        };
-        LHEButtons['ForumVideo'] = {
-            id: 'ForumInputVideo',
-            src: '/bitrix/components/bitrix/forum/templates/.default/images/bbcode/font_video.gif',
-            name: '<?=GetMessage("FR_VIDEO")?>',
-            handler: function (pBut) {
-                pBut.pLEditor.OpenDialog({id: 'ForumVideo', obj: false});
-            },
-            OnBeforeCreate: function (pLEditor, pBut) {
-                // Disable in non BBCode mode in html
-                pBut.disableOnCodeView = !pLEditor.bBBCode || pLEditor.arConfig.bConvertContentFromBBCodes;
-                return pBut;
-            },
-            parser: {
-                name: 'forumvideo',
-                obj: {
-                    Parse: function (sName, sContent, pLEditor) {
-                        sContent = sContent.replace(/\[VIDEO\s*?width=(\d+)\s*?height=(\d+)\s*\]((?:\s|\S)*?)\[\/VIDEO\]/ig, function (str, w, h, src) {
-                            var
-                                w = parseInt(w) || 400,
-                                h = parseInt(h) || 300,
-                                src = BX.util.trim(src);
-
-                            return '<img id="' + pLEditor.SetBxTag(false, {
-                                tag: "forumvideo",
-                                params: {value: src}
-                            }) + '" src="/bitrix/images/1.gif" class="bxed-video" width=' + w + ' height=' + h + ' title="' + BX.message.Video + ": " + src + '" />';
-                        });
-                        return sContent;
-                    },
-                    UnParse: function (bxTag, pNode, pLEditor) {
-                        if (bxTag.tag == 'forumvideo') {
-                            return "[VIDEO WIDTH=" + pNode.arAttributes["width"] + " HEIGHT=" + pNode.arAttributes["height"] + "]" + bxTag.params.value + "[/VIDEO]";
-                        }
-                        return "";
-                    }
-                }
-            }
-        }
-        if (!LHEButtons['InputVideo'])
-            LHEButtons['InputVideo'] = LHEButtons['ForumVideo'];
-
-        window.LHEDailogs['ForumVideo'] = function (pObj) {
-            var str = '<table width="100%"><tr>' +
-                '<td class="lhe-dialog-label lhe-label-imp"><label for="' + pObj.pLEditor.id + 'lhed_forum_video_path"><b><?= GetMessage('FR_VIDEO_P')?>:</b></label></td>' +
-                '<td class="lhe-dialog-param">' +
-                '<input id="' + pObj.pLEditor.id + 'lhed_forum_video_path" value="" size="30"/>' +
-                '</td>' +
-                '</tr><tr>' +
-                '<td></td>' +
-                '<td style="padding: 0!important; font-size: 11px!important;"><?= GetMessageJS('FR_VIDEO_PATH_EXAMPLE')?></td>' +
-                '</tr><tr>' +
-                '<td class="lhe-dialog-label lhe-label-imp"><label for="' + pObj.pLEditor.id + 'lhed_forum_video_width">' + BX.message.ImageSizing + ':</label></td>' +
-                '<td class="lhe-dialog-param">' +
-                '<input id="' + pObj.pLEditor.id + 'lhed_forum_video_width" value="" size="4"/>' +
-                ' x ' +
-                '<input id="' + pObj.pLEditor.id + 'lhed_forum_video_height" value="" size="4" />' +
-                '</td>' +
-                '</tr></table>';
-
-            return {
-                title: "<?= GetMessageJS('FR_VIDEO')?>",
-                innerHTML: str,
-                width: 480,
-                OnLoad: function () {
-                    pObj.pPath = BX(pObj.pLEditor.id + "lhed_forum_video_path");
-                    pObj.pWidth = BX(pObj.pLEditor.id + "lhed_forum_video_width");
-                    pObj.pHeight = BX(pObj.pLEditor.id + "lhed_forum_video_height");
-
-                    pObj.pLEditor.focus(pObj.pPath);
-                },
-                OnSave: function () {
-                    pLEditor = window.oLHE;
-
-                    var
-                        src = BX.util.trim(pObj.pPath.value),
-                        w = parseInt(pObj.pWidth.value) || 400,
-                        h = parseInt(pObj.pHeight.value) || 300;
-
-                    if (src == "")
-                        return;
-
-                    if (pLEditor.sEditorMode == 'code' && pLEditor.bBBCode) // BB Codes
-                    {
-                        pLEditor.WrapWith("", "", "[VIDEO WIDTH=" + w + " HEIGHT=" + h + "]" + src + "[/VIDEO]");
-                    } else if (pLEditor.sEditorMode == 'html') // WYSIWYG
-                    {
-                        pLEditor.InsertHTML('<img id="' + pLEditor.SetBxTag(false, {
-                                tag: "forumvideo",
-                                params: {value: src}
-                            }) +
-                            '" src="/bitrix/images/1.gif" class="bxed-video" width=' + w + ' height=' + h +
-                            ' title="' + BX.message.Video + ": " + src + '" />');
-                    }
-                }
-            };
-        };
-    </script>
-    <?
-}
-
 function ForumGetEntity($entityId, $value = true)
 {
     static $arForumGetEntity = array();
-    if (array_key_exists($entityId, $arForumGetEntity))
+    if (array_key_exists($entityId, $arForumGetEntity)) {
         return $arForumGetEntity[$entityId];
+    }
     $arForumGetEntity[$entityId] = $value;
     return false;
 }

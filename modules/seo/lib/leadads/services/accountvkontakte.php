@@ -2,8 +2,8 @@
 
 namespace Bitrix\Seo\LeadAds\Services;
 
-use Bitrix\Seo\LeadAds\Account;
 use Bitrix\Seo\LeadAds;
+use Bitrix\Seo\LeadAds\Account;
 
 /**
  * Class AccountVkontakte
@@ -49,17 +49,20 @@ class AccountVkontakte extends Account
     public function getList()
     {
         // https://vk.com/dev/groups.get
-        $response = $this->getRequest()->send(array(
-            'method' => 'GET',
-            'endpoint' => 'groups.get',
-            'fields' => array(
-                'fields' => 'id,name',
-                'extended' => 1,
-                'filter' => 'admin'
+        $response = $this->getRequest()->send(
+            array(
+                'method' => 'GET',
+                'endpoint' => 'groups.get',
+                'fields' => array(
+                    'fields' => 'id,name',
+                    'extended' => 1,
+                    'filter' => 'admin'
+                )
             )
-        ));
+        );
         $items = $response->getData();
-        $items = empty($items['items']) ? [] : is_array($items['items']) ? $items['items'] : [];
+        $items = (!empty($items['items']) && is_array($items['items'])) ? $items['items'] : [];
+
         $response->setData($items);
 
         return $response;
@@ -72,14 +75,16 @@ class AccountVkontakte extends Account
      */
     public function getProfile()
     {
-        $response = $this->getRequest()->send(array(
-            'method' => 'GET',
-            'endpoint' => 'users.get',
-            'fields' => array(
-                //'user_ids' => array(),
-                'fields' => 'photo_50,screen_name'
+        $response = $this->getRequest()->send(
+            array(
+                'method' => 'GET',
+                'endpoint' => 'users.get',
+                'fields' => array(
+                    //'user_ids' => array(),
+                    'fields' => 'photo_50,screen_name'
+                )
             )
-        ));
+        );
 
 
         if ($response->isSuccess()) {

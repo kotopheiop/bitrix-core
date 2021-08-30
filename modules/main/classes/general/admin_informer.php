@@ -26,11 +26,13 @@ class CAdminInformer
      */
     public static function AddItem($arParams)
     {
-        if (!isset($arParams["TITLE"]) || empty($arParams["TITLE"]))
+        if (!isset($arParams["TITLE"]) || empty($arParams["TITLE"])) {
             return false;
+        }
 
-        if (!isset($arParams["HTML"]) || empty($arParams["HTML"]))
+        if (!isset($arParams["HTML"]) || empty($arParams["HTML"])) {
             return false;
+        }
 
         $item = array(
             "TITLE" => $arParams["TITLE"],
@@ -43,8 +45,9 @@ class CAdminInformer
         if ($arParams["ALERT"]) {
             $item["SORT"] = 10;
             self::$alertCounter++;
-        } else
+        } else {
             $item["SORT"] = isset($arParams["SORT"]) ? $arParams["SORT"] : 20;
+        }
 
         self::$items[] = $item;
 
@@ -80,8 +83,9 @@ class CAdminInformer
 
     public static function PrintHtmlPublic($visCountParam = 3)
     {
-        if (!$GLOBALS["APPLICATION"]->PanelShowed)
+        if (!$GLOBALS["APPLICATION"]->PanelShowed) {
             return "";
+        }
 
         return self::PrintHtml($visCountParam);
     }
@@ -101,8 +105,9 @@ class CAdminInformer
             if ($itemsCount < $visCountParam || $item["ALERT"]) {
                 $bVisible = true;
                 $visibleCount++;
-            } else
+            } else {
                 $bVisible = false;
+            }
 
             $div .= self::PrintItemHtml($key, $bVisible);
 
@@ -110,7 +115,9 @@ class CAdminInformer
         }
 
         $div .= '
-	<a href="javascript:void(0);" class="adm-informer-footer adm-informer-footer-collapsed" hidefocus="true" id="adm-informer-footer" onclick="return BX.adminInformer.ToggleExtra();" ' . ($itemsCount <= $visibleCount ? ' style="display:none;"' : '') . '>' . GetMessage('MAIN_AI_ALL_NOTIF') . ' (' . $itemsCount . ') </a>
+	<a href="javascript:void(0);" class="adm-informer-footer adm-informer-footer-collapsed" hidefocus="true" id="adm-informer-footer" onclick="return BX.adminInformer.ToggleExtra();" ' . ($itemsCount <= $visibleCount ? ' style="display:none;"' : '') . '>' . GetMessage(
+                'MAIN_AI_ALL_NOTIF'
+            ) . ' (' . $itemsCount . ') </a>
 	<span class="adm-informer-arrow"></span>
 </div>
 
@@ -128,28 +135,34 @@ class CAdminInformer
 
     private static function IsUpdateSystemNeedUpdate($sError)
     {
-        return strpos($sError, 'NEW_UPDATE_SYSTEM');
+        return mb_strpos($sError, 'NEW_UPDATE_SYSTEM');
     }
 
     public static function InsertMainItems()
     {
-        if (defined('BX_PUBLIC_MODE') && BX_PUBLIC_MODE == 1)
+        if (defined('BX_PUBLIC_MODE') && BX_PUBLIC_MODE == 1) {
             return false;
+        }
 
         global $USER;
 
-        if (!$USER->IsAuthorized())
+        if (!$USER->IsAuthorized()) {
             return false;
+        }
 
         if ($USER->CanDoOperation("cache_control") && !Helper::isOn() && !Engine::isSelfHostedPortal()) {
-            self::AddItem(array(
-                "TITLE" => GetMessage("top_panel_ai_composite_title"),
-                "HTML" => GetMessage("top_panel_ai_composite_desc"),
-                "COLOR" => "red",
-                "FOOTER" => '<a href="/bitrix/admin/composite.php?lang=' . LANGUAGE_ID . '">' . GetMessage("top_panel_ai_composite_switch_on") . '</a>',
-                "ALERT" => true,
-                "SORT" => 1
-            ));
+            self::AddItem(
+                array(
+                    "TITLE" => GetMessage("top_panel_ai_composite_title"),
+                    "HTML" => GetMessage("top_panel_ai_composite_desc"),
+                    "COLOR" => "red",
+                    "FOOTER" => '<a href="/bitrix/admin/composite.php?lang=' . LANGUAGE_ID . '">' . GetMessage(
+                            "top_panel_ai_composite_switch_on"
+                        ) . '</a>',
+                    "ALERT" => true,
+                    "SORT" => 1
+                )
+            );
         }
 
         //Updates
@@ -165,25 +178,41 @@ class CAdminInformer
             //update_autocheck == true and we have something to show
             if ($update_res['result'] === true && $update_res['tooltip']) {
                 $updAIParams["HTML"] = $update_res['tooltip'];
-                $updAIParams["FOOTER"] = '<a href="/bitrix/admin/update_system.php?lang=' . LANGUAGE_ID . '">' . GetMessage("top_panel_ai_upd_instl") . '</a>';
+                $updAIParams["FOOTER"] = '<a href="/bitrix/admin/update_system.php?lang=' . LANGUAGE_ID . '">' . GetMessage(
+                        "top_panel_ai_upd_instl"
+                    ) . '</a>';
                 $updAIParams["ALERT"] = true;
-            } else if ($update_res['error'] <> '') // update error
-            {
-                $updAIParams["TITLE"] .= " - " . GetMessage("top_panel_ai_title_err");
-                $updAIParams["HTML"] = trim(self::CutErrorId($update_res['error']));
-                $updAIParams["FOOTER"] = '<a href="/bitrix/admin/update_system.php?refresh=Y&lang=' . LANGUAGE_ID . '">' . GetMessage("top_panel_ai_upd_chk") . '</a>';
-                $updAIParams["ALERT"] = true;
-            } else // update_autocheck == false
-            {
-                //last update date time
-                $updateDate = COption::GetOptionString("main", "update_system_update", false);
-                // remove seconds
-                $updateDate = $updateDate ? CDatabase::FormatDate($updateDate, "DD.MM.YYYY HH:MI:SS", "DD.MM.YYYY HH:MI") : false;
+            } else {
+                if ($update_res['error'] <> '') // update error
+                {
+                    $updAIParams["TITLE"] .= " - " . GetMessage("top_panel_ai_title_err");
+                    $updAIParams["HTML"] = trim(self::CutErrorId($update_res['error']));
+                    $updAIParams["FOOTER"] = '<a href="/bitrix/admin/update_system.php?refresh=Y&lang=' . LANGUAGE_ID . '">' . GetMessage(
+                            "top_panel_ai_upd_chk"
+                        ) . '</a>';
+                    $updAIParams["ALERT"] = true;
+                } else // update_autocheck == false
+                {
+                    //last update date time
+                    $updateDate = COption::GetOptionString("main", "update_system_update", false);
+                    // remove seconds
+                    $updateDate = $updateDate ? CDatabase::FormatDate(
+                        $updateDate,
+                        "DD.MM.YYYY HH:MI:SS",
+                        "DD.MM.YYYY HH:MI"
+                    ) : false;
 
-                $updAIParams["HTML"] = '<span class="adm-informer-strong-text">' . GetMessage("top_panel_ai_sys_ver") . ' ' . SM_VERSION . "</span><br>";
-                $updAIParams["HTML"] .= $updateDate ? GetMessage("top_panel_ai_upd_last") . '<br>' . $updateDate : GetMessage("top_panel_ai_upd_never");
-                $updAIParams["FOOTER"] = '<a href="/bitrix/admin/update_system.php?refresh=Y&lang=' . LANGUAGE_ID . '">' . GetMessage("top_panel_ai_upd_chk") . '</a>';
-                $updAIParams["ALERT"] = false;
+                    $updAIParams["HTML"] = '<span class="adm-informer-strong-text">' . GetMessage(
+                            "top_panel_ai_sys_ver"
+                        ) . ' ' . SM_VERSION . "</span><br>";
+                    $updAIParams["HTML"] .= $updateDate ? GetMessage(
+                            "top_panel_ai_upd_last"
+                        ) . '<br>' . $updateDate : GetMessage("top_panel_ai_upd_never");
+                    $updAIParams["FOOTER"] = '<a href="/bitrix/admin/update_system.php?refresh=Y&lang=' . LANGUAGE_ID . '">' . GetMessage(
+                            "top_panel_ai_upd_chk"
+                        ) . '</a>';
+                    $updAIParams["ALERT"] = false;
+                }
             }
 
             self::AddItem($updAIParams);
@@ -205,14 +234,20 @@ class CAdminInformer
 
             $qAIParams["HTML"] = '
 	<div class="adm-informer-item-section">
-		<span class="adm-informer-item-l"><span class="adm-informer-strong-text">' . GetMessage("top_panel_ai_in_all") . '</span> ' . CFile::FormatSize($maxQuota, 1) . '</span>
-		<span class="adm-informer-item-r"><span class="adm-informer-strong-text">' . GetMessage("top_panel_ai_in_aviable") . '</span> ' . $freeMB . '</span>
+		<span class="adm-informer-item-l"><span class="adm-informer-strong-text">' . GetMessage(
+                    "top_panel_ai_in_all"
+                ) . '</span> ' . CFile::FormatSize($maxQuota, 1) . '</span>
+		<span class="adm-informer-item-r"><span class="adm-informer-strong-text">' . GetMessage(
+                    "top_panel_ai_in_aviable"
+                ) . '</span> ' . $freeMB . '</span>
 	</div>
 	<div class="adm-informer-status-bar-block" >
 		<div class="adm-informer-status-bar-indicator" style="width:' . (100 - $free) . '%; "></div>
 		<div class="adm-informer-status-bar-text">' . (100 - $free) . '%</div>
 	</div>
-	<div class="adm-informer-item-section"><span class="adm-informer-strong-text">' . GetMessage("top_panel_ai_in_recomend") . '</span> ' . GetMessage("top_panel_ai_in_no") . '</div>';
+	<div class="adm-informer-item-section"><span class="adm-informer-strong-text">' . GetMessage(
+                    "top_panel_ai_in_recomend"
+                ) . '</span> ' . GetMessage("top_panel_ai_in_no") . '</div>';
 
             self::AddItem($qAIParams);
         }
@@ -220,8 +255,9 @@ class CAdminInformer
         if ($USER->IsAdmin() && in_array(LANGUAGE_ID, array("ru", "ua"))) {
             $cModules = COption::GetOptionString("main", "mp_modules_date", "");
             $arModules = array();
-            if (strlen($cModules) > 0)
-                $arModules = unserialize($cModules);
+            if ($cModules <> '') {
+                $arModules = unserialize($cModules, ['allowed_classes' => false]);
+            }
 
             $mCnt = count($arModules);
             if ($mCnt > 0) {
@@ -249,12 +285,21 @@ class CAdminInformer
                             $arParams = array(
                                 'TITLE' => GetMessage("top_panel_ai_marketplace"),
                                 'COLOR' => 'green',
-                                'FOOTER' => "<a href=\"javascript:void(0)\" onclick=\"hideMpAnswer(this, '" . CUtil::JSEscape($module["ID"]) . "')\" " .
-                                    "style=\"float: right !important; font-size: 0.8em !important;\">" . GetMessage("top_panel_ai_marketplace_hide") . "</a>" .
+                                'FOOTER' => "<a href=\"javascript:void(0)\" onclick=\"hideMpAnswer(this, '" . CUtil::JSEscape(
+                                        $module["ID"]
+                                    ) . "')\" " .
+                                    "style=\"float: right !important; font-size: 0.8em !important;\">" . GetMessage(
+                                        "top_panel_ai_marketplace_hide"
+                                    ) . "</a>" .
                                     "<a href=\"http://marketplace.1c-bitrix." . LANGUAGE_ID . "/solutions/" . $module["ID"] . "/#tab-rating-link\" target=\"_blank\" " .
-                                    "onclick=\"hideMpAnswer(this, '" . CUtil::JSEscape($module["ID"]) . "')\">" . GetMessage("top_panel_ai_marketplace_add") . "</a>",
+                                    "onclick=\"hideMpAnswer(this, '" . CUtil::JSEscape(
+                                        $module["ID"]
+                                    ) . "')\">" . GetMessage("top_panel_ai_marketplace_add") . "</a>",
                                 'ALERT' => true,
-                                'HTML' => GetMessage("top_panel_ai_marketplace_descr", array("#NAME#" => $module["NAME"], "#ID#" => $module["ID"])) . $script,
+                                'HTML' => GetMessage(
+                                        "top_panel_ai_marketplace_descr",
+                                        array("#NAME#" => $module["NAME"], "#ID#" => $module["ID"])
+                                    ) . $script,
                             );
                             self::AddItem($arParams);
                         }
@@ -266,11 +311,11 @@ class CAdminInformer
                     COption::SetOptionString("main", "mp_modules_date", serialize($arModules));
                 }
             }
-
         }
 
-        foreach (GetModuleEvents("main", "OnAdminInformerInsertItems", true) as $arHandler)
+        foreach (GetModuleEvents("main", "OnAdminInformerInsertItems", true) as $arHandler) {
             ExecuteModuleEventEx($arHandler);
+        }
 
         return count(self::$items);
     }

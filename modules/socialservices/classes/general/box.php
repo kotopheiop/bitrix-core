@@ -44,12 +44,20 @@ class CSocServBoxAuth extends CSocServAuth
     {
         $url = static::getUrl('opener', null, $arParams);
 
-        $phrase = ($arParams["FOR_INTRANET"]) ? GetMessage("socserv_box_form_note_intranet") : GetMessage("socserv_box_form_note");
+        $phrase = ($arParams["FOR_INTRANET"]) ? GetMessage("socserv_box_form_note_intranet") : GetMessage(
+            "socserv_box_form_note"
+        );
 
         if ($arParams["FOR_INTRANET"]) {
-            return array("ON_CLICK" => 'onclick="BX.util.popup(\'' . htmlspecialcharsbx(CUtil::JSEscape($url)) . '\', 680, 600)"');
+            return array(
+                "ON_CLICK" => 'onclick="BX.util.popup(\'' . htmlspecialcharsbx(
+                        CUtil::JSEscape($url)
+                    ) . '\', 680, 600)"'
+            );
         } else {
-            return '<a href="javascript:void(0)" onclick="BX.util.popup(\'' . htmlspecialcharsbx(CUtil::JSEscape($url)) . '\', 680, 600)" class="bx-ss-button box-button"></a><span class="bx-spacer"></span><span>' . $phrase . '</span>';
+            return '<a href="javascript:void(0)" onclick="BX.util.popup(\'' . htmlspecialcharsbx(
+                    CUtil::JSEscape($url)
+                ) . '\', 680, 600)" class="bx-ss-button box-button"></a><span class="bx-spacer"></span><span>' . $phrase . '</span>';
         }
     }
 
@@ -68,10 +76,28 @@ class CSocServBoxAuth extends CSocServAuth
         if (IsModuleInstalled('bitrix24') && defined('BX24_HOST_NAME')) {
             $redirect_uri = static::CONTROLLER_URL . "/redirect.php";
             $state = CBoxOAuthInterface::GetRedirectURI() . "?check_key=" . $_SESSION["UNIQUE_KEY"] . "&state=";
-            $backurl = $APPLICATION->GetCurPageParam('', array("logout", "auth_service_error", "auth_service_id", "backurl"));
-            $state .= urlencode("state=" . urlencode("backurl=" . urlencode($backurl) . '&mode=' . $location . (isset($arParams['BACKURL']) ? '&redirect_url=' . urlencode($arParams['BACKURL']) : '')));
+            $backurl = $APPLICATION->GetCurPageParam(
+                '',
+                array("logout", "auth_service_error", "auth_service_id", "backurl")
+            );
+            $state .= urlencode(
+                "state=" . urlencode(
+                    "backurl=" . urlencode(
+                        $backurl
+                    ) . '&mode=' . $location . (isset($arParams['BACKURL']) ? '&redirect_url=' . urlencode(
+                            $arParams['BACKURL']
+                        ) : '')
+                )
+            );
         } else {
-            $state = 'site_id=' . SITE_ID . '&backurl=' . urlencode($APPLICATION->GetCurPageParam('check_key=' . $_SESSION["UNIQUE_KEY"], array("logout", "auth_service_error", "auth_service_id", "backurl"))) . '&mode=' . $location . (isset($arParams['BACKURL']) ? '&redirect_url=' . urlencode($arParams['BACKURL']) : '');
+            $state = 'site_id=' . SITE_ID . '&backurl=' . urlencode(
+                    $APPLICATION->GetCurPageParam(
+                        'check_key=' . $_SESSION["UNIQUE_KEY"],
+                        array("logout", "auth_service_error", "auth_service_id", "backurl")
+                    )
+                ) . '&mode=' . $location . (isset($arParams['BACKURL']) ? '&redirect_url=' . urlencode(
+                        $arParams['BACKURL']
+                    ) : '');
             $redirect_uri = CBoxOAuthInterface::GetRedirectURI();
         }
 
@@ -83,10 +109,12 @@ class CSocServBoxAuth extends CSocServAuth
         $accessToken = null;
         $userId = intval($this->userId);
         if ($userId > 0) {
-            $dbSocservUser = \Bitrix\Socialservices\UserTable::getList([
-                'filter' => ['=USER_ID' => $userId, "=EXTERNAL_AUTH_ID" => static::ID],
-                'select' => ["USER_ID", "OATOKEN", "REFRESH_TOKEN", "OATOKEN_EXPIRES"]
-            ]);
+            $dbSocservUser = \Bitrix\Socialservices\UserTable::getList(
+                [
+                    'filter' => ['=USER_ID' => $userId, "=EXTERNAL_AUTH_ID" => static::ID],
+                    'select' => ["USER_ID", "OATOKEN", "REFRESH_TOKEN", "OATOKEN_EXPIRES"]
+                ]
+            );
             if ($arOauth = $dbSocservUser->fetch()) {
                 $accessToken = $arOauth["OATOKEN"];
                 $accessTokenExpires = $arOauth["OATOKEN_EXPIRES"];
@@ -130,9 +158,11 @@ class CSocServBoxAuth extends CSocServAuth
             $picture_url = $boxUser['avatar_url'];
             $temp_path = CFile::GetTempName('', 'picture.jpg');
 
-            $ob = new HttpClient(array(
-                "redirect" => true
-            ));
+            $ob = new HttpClient(
+                array(
+                    "redirect" => true
+                )
+            );
             $ob->download($picture_url, $temp_path);
 
             $arPic = CFile::MakeFileArray($temp_path);
@@ -141,7 +171,7 @@ class CSocServBoxAuth extends CSocServAuth
             }
         }
 
-        if (strlen(SITE_ID) > 0) {
+        if (SITE_ID <> '') {
             $arFields["SITE_ID"] = SITE_ID;
         }
 
@@ -170,7 +200,6 @@ class CSocServBoxAuth extends CSocServAuth
             }
 
             if ($this->entityOAuth->GetAccessToken($redirect_uri) !== false) {
-
                 $boxUser = $this->entityOAuth->GetCurrentUser();
 
                 if (is_array($boxUser)) {
@@ -182,7 +211,17 @@ class CSocServBoxAuth extends CSocServAuth
         }
 
         $url = ($APPLICATION->GetCurDir() == "/login/") ? "" : $APPLICATION->GetCurDir();
-        $aRemove = array("logout", "auth_service_error", "auth_service_id", "code", "error_reason", "error", "error_description", "check_key", "current_fieldset");
+        $aRemove = array(
+            "logout",
+            "auth_service_error",
+            "auth_service_id",
+            "code",
+            "error_reason",
+            "error",
+            "error_description",
+            "check_key",
+            "current_fieldset"
+        );
 
         if (!$bProcessState) {
             unset($_REQUEST["state"]);
@@ -196,7 +235,7 @@ class CSocServBoxAuth extends CSocServAuth
 
             if (isset($arState['backurl']) || isset($arState['redirect_url'])) {
                 $url = !empty($arState['redirect_url']) ? $arState['redirect_url'] : $arState['backurl'];
-                if (substr($url, 0, 1) !== "#") {
+                if (mb_substr($url, 0, 1) !== "#") {
                     $parseUrl = parse_url($url);
 
                     $urlPath = $parseUrl["path"];
@@ -204,7 +243,7 @@ class CSocServBoxAuth extends CSocServAuth
 
                     foreach ($arUrlQuery as $key => $value) {
                         foreach ($aRemove as $param) {
-                            if (strpos($value, $param . "=") === 0) {
+                            if (mb_strpos($value, $param . "=") === 0) {
                                 unset($arUrlQuery[$key]);
                                 break;
                             }
@@ -226,10 +265,13 @@ class CSocServBoxAuth extends CSocServAuth
             $url = (preg_match("/\?/", $url)) ? $url . '&' : $url . '?';
             $url .= 'auth_service_id=' . static::ID . '&auth_service_error=' . SOCSERV_REGISTRATION_DENY;
         } elseif ($bSuccess !== true) {
-            $url = (isset($urlPath)) ? $urlPath . '?auth_service_id=' . static::ID . '&auth_service_error=' . $authError : $APPLICATION->GetCurPageParam(('auth_service_id=' . static::ID . '&auth_service_error=' . $authError), $aRemove);
+            $url = (isset($urlPath)) ? $urlPath . '?auth_service_id=' . static::ID . '&auth_service_error=' . $authError : $APPLICATION->GetCurPageParam(
+                ('auth_service_id=' . static::ID . '&auth_service_error=' . $authError),
+                $aRemove
+            );
         }
 
-        if ($addParams && CModule::IncludeModule("socialnetwork") && strpos($url, "current_fieldset=") === false) {
+        if ($addParams && CModule::IncludeModule("socialnetwork") && mb_strpos($url, "current_fieldset=") === false) {
             $url = (preg_match("/\?/", $url)) ? $url . "&current_fieldset=SOCSERV" : $url . "?current_fieldset=SOCSERV";
         }
 
@@ -278,7 +320,7 @@ class CBoxOAuthInterface extends CSocServOAuthTransport
         parent::__construct($appID, $appSecret, $code);
     }
 
-    public function GetRedirectURI()
+    public static function GetRedirectURI()
     {
         return \CHTTP::URN2URI("/bitrix/tools/oauth/box.php");
     }
@@ -318,13 +360,16 @@ class CBoxOAuthInterface extends CSocServOAuthTransport
         }
 
         $h = new HttpClient();
-        $result = $h->post(static::TOKEN_URL, array(
-            "code" => $this->code,
-            "client_id" => $this->appID,
-            "client_secret" => $this->appSecret,
-            "redirect_uri" => $redirect_uri,
-            "grant_type" => "authorization_code",
-        ));
+        $result = $h->post(
+            static::TOKEN_URL,
+            array(
+                "code" => $this->code,
+                "client_id" => $this->appID,
+                "client_secret" => $this->appSecret,
+                "redirect_uri" => $redirect_uri,
+                "grant_type" => "authorization_code",
+            )
+        );
 
         $this->oauthResult = Json::decode($result);
 
@@ -357,12 +402,15 @@ class CBoxOAuthInterface extends CSocServOAuthTransport
 
         $http = new HttpClient(array('socketTimeout' => $this->httpTimeout));
 
-        $result = $http->post(static::TOKEN_URL, array(
-            'client_id' => $this->appID,
-            'client_secret' => $this->appSecret,
-            'refresh_token' => $refreshToken,
-            'grant_type' => 'refresh_token',
-        ));
+        $result = $http->post(
+            static::TOKEN_URL,
+            array(
+                'client_id' => $this->appID,
+                'client_secret' => $this->appSecret,
+                'refresh_token' => $refreshToken,
+                'grant_type' => 'refresh_token',
+            )
+        );
 
         $arResult = Json::decode($result);
 
@@ -372,19 +420,22 @@ class CBoxOAuthInterface extends CSocServOAuthTransport
             $this->refresh_token = $arResult["refresh_token"];
 
             if ($save && intval($userId) > 0) {
-                $dbSocservUser = \Bitrix\Socialservices\UserTable::getList([
-                    'filter' => [
-                        "=USER_ID" => intval($userId),
-                        "=EXTERNAL_AUTH_ID" => CSocServBoxAuth::ID
-                    ],
-                    'select' => ["ID"]
-                ]);
+                $dbSocservUser = \Bitrix\Socialservices\UserTable::getList(
+                    [
+                        'filter' => [
+                            "=USER_ID" => intval($userId),
+                            "=EXTERNAL_AUTH_ID" => CSocServBoxAuth::ID
+                        ],
+                        'select' => ["ID"]
+                    ]
+                );
 
                 $arOauth = $dbSocservUser->fetch();
 
                 if ($arOauth) {
                     \Bitrix\Socialservices\UserTable::update(
-                        $arOauth["ID"], array(
+                        $arOauth["ID"],
+                        array(
                             "OATOKEN" => $this->access_token,
                             "OATOKEN_EXPIRES" => $this->accessTokenExpires,
                             "REFRESH_TOKEN" => $this->refresh_token,
@@ -401,8 +452,9 @@ class CBoxOAuthInterface extends CSocServOAuthTransport
 
     public function GetCurrentUser()
     {
-        if ($this->access_token === false)
+        if ($this->access_token === false) {
             return false;
+        }
 
         $h = new HttpClient();
         $h->setHeader("Authorization", "Bearer " . $this->access_token);

@@ -1,4 +1,5 @@
 <?
+
 global $MESS;
 
 $MESS["SCSP_DTITLE"] = "�������� ������";

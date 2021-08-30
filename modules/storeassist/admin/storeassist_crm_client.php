@@ -37,8 +37,9 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
                         class="adm-detail-toolbar-btn-r"></span></a>
             &nbsp;
             <? if ($docUrl): ?>
-                <span class="adm-btn"
-                      onclick="BX.Storeassist.Admin.showDocumentation('<?= CUtil::JSEscape($docUrl) ?>')"><?= GetMessage("STOREAS_DOC") ?></span>
+                <span class="adm-btn" onclick="BX.Storeassist.Admin.showDocumentation('<?= CUtil::JSEscape(
+                    $docUrl
+                ) ?>')"><?= GetMessage("STOREAS_DOC") ?></span>
             <? endif ?>
             <br/><br/>
         </div>

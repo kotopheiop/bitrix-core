@@ -1,5 +1,7 @@
 <?
-if (!CBXFeatures::IsFeatureEnabled('BizProc'))
+
+if (!CBXFeatures::IsFeatureEnabled('BizProc')) {
     return false;
+}
 /*patchlimitationmutatormark1*/
 ?>

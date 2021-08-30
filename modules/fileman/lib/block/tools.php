@@ -28,7 +28,7 @@ class Tools
     public static function getControlSelect(array $optionList, $haveDefault = true)
     {
         if ($haveDefault) {
-            $optionList = array_merge(array('' => Loc::getMessage('BLOCK_EDITOR_TOOLS_DEFAULT')), $optionList);
+            $optionList = array('' => Loc::getMessage('BLOCK_EDITOR_TOOLS_DEFAULT')) + $optionList;
         }
 
         $options = '';

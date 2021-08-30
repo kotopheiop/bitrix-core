@@ -35,27 +35,37 @@ class BindingTable extends Entity\DataManager
     public static function getMap()
     {
         return array(
-            'ID' => new Entity\IntegerField('ID', array(
+            'ID' => new Entity\IntegerField(
+                'ID', array(
                 'primary' => true,
                 'autocomplete' => true,
                 'title' => 'ID'
-            )),
-            'ENTITY_ID' => new Entity\IntegerField('ENTITY_ID', array(
+            )
+            ),
+            'ENTITY_ID' => new Entity\IntegerField(
+                'ENTITY_ID', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_ENTITY_ID'),
                 'required' => true
-            )),
-            'ENTITY_TYPE' => new Entity\StringField('ENTITY_TYPE', array(
+            )
+            ),
+            'ENTITY_TYPE' => new Entity\StringField(
+                'ENTITY_TYPE', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_ENTITY_TYPE'),
                 'required' => true
-            )),
-            'BINDING_ID' => new Entity\StringField('BINDING_ID', array(
+            )
+            ),
+            'BINDING_ID' => new Entity\StringField(
+                'BINDING_ID', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_BINDING_ID'),
                 'required' => true
-            )),
-            'BINDING_TYPE' => new Entity\StringField('BINDING_TYPE', array(
+            )
+            ),
+            'BINDING_TYPE' => new Entity\StringField(
+                'BINDING_TYPE', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_BINDING_TYPE'),
                 'required' => true
-            ))
+            )
+            )
         );
     }
 
@@ -67,15 +77,17 @@ class BindingTable extends Entity\DataManager
      */
     protected static function entityClear($entityId, $entityType)
     {
-        $res = self::getList([
-            'select' => [
-                'ID'
-            ],
-            'filter' => [
-                '=ENTITY_TYPE' => $entityType,
-                'ENTITY_ID' => $entityId
+        $res = self::getList(
+            [
+                'select' => [
+                    'ID'
+                ],
+                'filter' => [
+                    '=ENTITY_TYPE' => $entityType,
+                    'ENTITY_ID' => $entityId
+                ]
             ]
-        ]);
+        );
         while ($row = $res->fetch()) {
             self::delete($row['ID'])->isSuccess();
         }

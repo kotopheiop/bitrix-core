@@ -45,8 +45,9 @@ class Diff
             //deleted items
             if ($diffItem['deletedA'] > 0) {
                 $result .= $matchA[1][$positionA] . '<s style="color:red">' . $matchA[2][$positionA];
-                for ($i = 1; $i < $diffItem['deletedA']; $i++)
+                for ($i = 1; $i < $diffItem['deletedA']; $i++) {
                     $result .= $matchA[0][$positionA + $i];
+                }
 
                 $result .= '</s>';
                 $positionA = $positionA + $diffItem['deletedA'];
@@ -54,8 +55,9 @@ class Diff
 
             if ($diffItem['insertedB'] > 0) {
                 $result .= $matchB[1][$diffItem['startB']] . '<b style="color:green">' . $matchB[2][$diffItem['startB']];
-                for ($i = 1; $i < $diffItem['insertedB']; $i++)
+                for ($i = 1; $i < $diffItem['insertedB']; $i++) {
                     $result .= $matchB[0][$diffItem['startB'] + $i];
+                }
 
                 $result .= '</b>';
             }
@@ -177,7 +179,6 @@ class Diff
         $this->upVector[$upK - 1] = $upperA;
 
         for ($d = 0; $d <= $maxD; $d++) {
-
             // Extend the forward path.
             for ($k = $downK - $d; $k <= $downK + $d; $k += 2) {
                 // find the only or better starting point
@@ -212,7 +213,6 @@ class Diff
 
             // Extend the reverse path.
             for ($k = $upK - $d; $k <= $upK + $d; $k += 2) {
-
                 // find the only or better starting point
                 $x = 0;
                 $y = 0;
@@ -257,7 +257,9 @@ class Diff
         $indexB = 0;
         $result = array();
         while ($indexA < count($a) || $indexB < count($b)) {
-            if (($indexA < count($a)) && (!$this->modifiedA[$indexA]) && ($indexB < count($b)) && (!$this->modifiedB[$indexB])) {
+            if (($indexA < count($a)) && (!$this->modifiedA[$indexA]) && ($indexB < count(
+                        $b
+                    )) && (!$this->modifiedB[$indexB])) {
                 // equal lines
                 $indexA++;
                 $indexB++;
@@ -276,7 +278,12 @@ class Diff
 
                 if (($startA < $indexA) || ($startB < $indexB)) {
                     // store a new difference-item
-                    $result[] = array("startA" => $startA, "startB" => $startB, "deletedA" => $indexA - $startA, "insertedB" => $indexB - $startB);
+                    $result[] = array(
+                        "startA" => $startA,
+                        "startB" => $startB,
+                        "deletedA" => $indexA - $startA,
+                        "insertedB" => $indexB - $startB
+                    );
                 }
             }
         }

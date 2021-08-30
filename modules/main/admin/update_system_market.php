@@ -1,4 +1,5 @@
 <?
+
 /**
  * Bitrix Framework
  * @package bitrix
@@ -23,19 +24,22 @@ if (in_array(LANGUAGE_ID, array("ru", "ua", "bg"))) {
     $show = "all";
     $moduleCode = "";
 
-    if (strlen($_REQUEST["show"]) > 0 && in_array($_REQUEST["show"], $arShow))
+    if ($_REQUEST["show"] <> '' && in_array($_REQUEST["show"], $arShow)) {
         $show = $_REQUEST["show"];
-    elseif (strlen($_SESSION["mp_show"]) > 0 && in_array($_SESSION["mp_show"], $arShow))
+    } elseif ($_SESSION["mp_show"] <> '' && in_array($_SESSION["mp_show"], $arShow)) {
         $show = $_SESSION["mp_show"];
+    }
 
-    if (strlen($_REQUEST["sort"]) > 0 && in_array($_REQUEST["sort"], $arSort))
+    if ($_REQUEST["sort"] <> '' && in_array($_REQUEST["sort"], $arSort)) {
         $sort = $_REQUEST["sort"];
-    elseif (strlen($_SESSION["mp_sort"]) > 0 && in_array($_SESSION["mp_sort"], $arSort))
+    } elseif ($_SESSION["mp_sort"] <> '' && in_array($_SESSION["mp_sort"], $arSort)) {
         $sort = $_SESSION["mp_sort"];
+    }
 
-    if (intval($_REQUEST["category"]) > 0)
+    if (intval($_REQUEST["category"]) > 0) {
         $category = intval($_REQUEST["category"]);
-    if (strlen($_REQUEST["module"]) > 0) {
+    }
+    if ($_REQUEST["module"] <> '') {
         $moduleCode = $_REQUEST["module"];
         $moduleCode = preg_replace("/[^a-zA-Z0-9.]/is", "", $moduleCode);
     }
@@ -48,8 +52,14 @@ if (in_array(LANGUAGE_ID, array("ru", "ua", "bg"))) {
     $aContext = array();
     foreach ($arShow as $val) {
         $aContext[] = array(
-            "TEXT" => (($val == "action") ? "<span style=\"color:#ba2211;\">" : "") . GetMessage("USM_SHOW_" . ToUpper($val)) . (($val == "action") ? "</span>" : ""),
-            "ONCLICK" => $lAdmin->ActionDoGroup(0, "", "show=" . $val . (($category) > 0 ? "&category=" . $category : "")),
+            "TEXT" => (($val == "action") ? "<span style=\"color:#ba2211;\">" : "") . GetMessage(
+                    "USM_SHOW_" . ToUpper($val)
+                ) . (($val == "action") ? "</span>" : ""),
+            "ONCLICK" => $lAdmin->ActionDoGroup(
+                0,
+                "",
+                "show=" . $val . (($category) > 0 ? "&category=" . $category : "")
+            ),
             "ICON" => (($val == $show) ? "btn_active" : ""),
         );
     }
@@ -58,7 +68,11 @@ if (in_array(LANGUAGE_ID, array("ru", "ua", "bg"))) {
     foreach ($arSort as $val) {
         $arDDSort[] = array(
             "TEXT" => GetMessage("USM_SORT_" . ToUpper($val)),
-            "ACTION" => $lAdmin->ActionDoGroup(0, "", "sort=" . $val . (($category) > 0 ? "&category=" . $category : ""))
+            "ACTION" => $lAdmin->ActionDoGroup(
+                0,
+                "",
+                "sort=" . $val . (($category) > 0 ? "&category=" . $category : "")
+            )
         );
     }
 
@@ -76,8 +90,9 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/classes/general/u
 
 
 if (!in_array(LANGUAGE_ID, array("ru", "ua", "bg"))) {
-    if (!$USER->CanDoOperation('install_updates'))
+    if (!$USER->CanDoOperation('install_updates')) {
         $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+    }
 
     include($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/admin/update_system_market_notru.php");
 } else {
@@ -85,18 +100,20 @@ if (!in_array(LANGUAGE_ID, array("ru", "ua", "bg"))) {
     $arClientModules = CUpdateClientPartner::GetCurrentModules($strError_tmp);
     if (is_array($arClientModules) && !empty($arClientModules)) {
         foreach ($arClientModules as $k => $v) {
-            if (strpos($k, ".") !== false)
+            if (mb_strpos($k, ".") !== false) {
                 $m[htmlspecialcharsbx($k)] = $v["IS_DEMO"];
+            }
         }
     }
 
     $url = "solutions/";
-    if (intval($category) > 0)
+    if (intval($category) > 0) {
         $url = "solutions/category/" . intval($category) . "/";
-    if (strlen($_REQUEST["search_mp"]) > 0) {
+    }
+    if ($_REQUEST["search_mp"] <> '') {
         $url = "search/";
     }
-    if (strlen($moduleCode) > 0) {
+    if ($moduleCode <> '') {
         $url = "solutions/" . htmlspecialcharsbx($moduleCode) . "/";
     }
 
@@ -131,31 +148,39 @@ if (!in_array(LANGUAGE_ID, array("ru", "ua", "bg"))) {
     }
     $ht = new CHTTP();
 
-    if (intval($_REQUEST["PAGEN_1"]) > 0)
+    if (intval($_REQUEST["PAGEN_1"]) > 0) {
         $arFields["PAGEN_1"] = intval($_REQUEST["PAGEN_1"]);
-    if (strlen($_REQUEST["search_mp"]) > 0)
-        $arFields["q"] = $APPLICATION->ConvertCharset(htmlspecialcharsbx($_REQUEST["search_mp"]), SITE_CHARSET, "windows-1251");
+    }
+    if ($_REQUEST["search_mp"] <> '') {
+        $arFields["q"] = \Bitrix\Main\Text\Encoding::convertEncoding(
+            htmlspecialcharsbx($_REQUEST["search_mp"]),
+            SITE_CHARSET,
+            "windows-1251"
+        );
+    }
 
     $getData = "";
     if (is_array($arFields)) {
         foreach ($arFields as $k => $v) {
             if (is_array($v)) {
-                foreach ($v as $kk => $vv)
+                foreach ($v as $kk => $vv) {
                     $getData .= urlencode($k . "[" . $kk . "]") . '=' . urlencode($vv) . "&";
-            } else
+                }
+            } else {
                 $getData .= urlencode($k) . '=' . urlencode($v) . "&";
+            }
         }
     }
-    // $getData = $APPLICATION->ConvertCharset($getData, SITE_CHARSET, "windows-1251");
 
     $sectionName = GetMessage("USM_ALL");
-    if (strlen($_REQUEST["search_mp"]) > 0)
+    if ($_REQUEST["search_mp"] <> '') {
         $sectionName = GetMessage("USM_SEARCH");
+    }
 
     $arModules = array();
     if ($res = $ht->Get("https://marketplace.1c-bitrix.ru/" . $url . "?" . $getData)) {
         if (in_array($ht->status, array("200"))) {
-            $res = $APPLICATION->ConvertCharset($res, "windows-1251", SITE_CHARSET);
+            $res = \Bitrix\Main\Text\Encoding::convertEncoding($res, "windows-1251", SITE_CHARSET);
 
             require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/classes/general/xml.php");
             $objXML = new CDataXML();
@@ -165,8 +190,9 @@ if (!in_array(LANGUAGE_ID, array("ru", "ua", "bg"))) {
             if (!empty($arResult) && is_array($arResult)) {
                 if (!empty($arResult["modules"]["#"])) {
                     $arModules = $arResult["modules"]["#"]["items"][0]["#"]["item"];
-                    if (strlen($arResult["modules"]["#"]["categoryName"][0]["#"]) > 0)
+                    if ($arResult["modules"]["#"]["categoryName"][0]["#"] <> '') {
                         $sectionName = $arResult["modules"]["#"]["categoryName"][0]["#"];
+                    }
                 }
             }
         }
@@ -195,18 +221,24 @@ if (!in_array(LANGUAGE_ID, array("ru", "ua", "bg"))) {
                 <div style="float:right; padding-bottom:1px;">
                     <form action="" method="GET">
                         <input type="hidden" name="lang" value="<?= LANGUAGE_ID ?>"><input type="text"
-                                                                                           value="<?= GetMessage("USM_SEARCH") ?>"
-                                                                                           name="search_mp" size="30"
-                                                                                           onclick="if (this.value=='<?= GetMessageJS("USM_SEARCH") ?>')this.value=''"
-                                                                                           onblur="if (this.value=='')this.value='<?= GetMessageJS("USM_SEARCH") ?>'">
+                                                                                           value="<?= GetMessage(
+                                                                                               "USM_SEARCH"
+                                                                                           ) ?>" name="search_mp"
+                                                                                           size="30"
+                                                                                           onclick="if (this.value=='<?= GetMessageJS(
+                                                                                               "USM_SEARCH"
+                                                                                           ) ?>')this.value=''"
+                                                                                           onblur="if (this.value=='')this.value='<?= GetMessageJS(
+                                                                                               "USM_SEARCH"
+                                                                                           ) ?>'">
                     </form>
                 </div>
             </div>
             <div class="mp-list-div">
                 <?
-                if (count($arModules) > 0)
+                if (is_array($arModules) && count($arModules) > 0)
                 {
-                if (strlen($moduleCode) <= 0)
+                if ($moduleCode == '')
                 {
                 $inRow = 0;
                 ?>
@@ -221,8 +253,9 @@ if (!in_array(LANGUAGE_ID, array("ru", "ua", "bg"))) {
                             if (empty($vv[0]) && !empty($vv["#"])) {
                                 if (is_array($vv["#"])) {
                                     $res[$kk] = convert2normalArray($vv["#"]);
-                                } else
+                                } else {
                                     $res[$kk] = $vv["#"];
+                                }
                             } else {
                                 if (count($vv) > 1) {
                                     $res[$kk] = convert2normalArray($vv);
@@ -245,21 +278,27 @@ if (!in_array(LANGUAGE_ID, array("ru", "ua", "bg"))) {
                         $arM = array();
                         $arM = convert2normalArray($Item["#"]);
 
-                        $arM["url"] = str_replace("#module#", $arM["code"], "update_system_market.php?module=#module#&lang=" . LANGUAGE_ID);
+                        $arM["url"] = str_replace(
+                            "#module#",
+                            $arM["code"],
+                            "update_system_market.php?module=#module#&lang=" . LANGUAGE_ID
+                        );
 
-                        if ($USER->CanDoOperation('install_updates'))
+                        if ($USER->CanDoOperation('install_updates')) {
                             $arM["urlInstall"] = "update_system_partner.php?lang=" . LANGUAGE_ID . "&addmodule=" . $arM["code"];
-                        else
+                        } else {
                             $arM["urlInstall"] = $arM["url"] . "&instadm=Y&" . bitrix_sessid_get();
+                        }
 
                         if (!empty($m[$arM["code"]])) {
                             $arM["installed"] = "Y";
-                            if ($m[$arM["code"]] == "Y")
+                            if ($m[$arM["code"]] == "Y") {
                                 $arM["installedDemo"] = "Y";
+                            }
                         }
                         $arM["canDemo"] = (($arM["freeModule"] == "D" && $arM["installed"] != "Y") ? "Y" : "N");
 
-                        if (strlen($moduleCode) <= 0) {
+                        if ($moduleCode == '') {
                             if ($inRow++ % 3 == 0) {
                                 echo "<tr>";
                             }
@@ -298,10 +337,12 @@ if (!in_array(LANGUAGE_ID, array("ru", "ua", "bg"))) {
                                                     if ($arM["installed"] != "Y") {
                                                         ?>
                                                         <div class="mp-install"><a
-                                                                href="<?= $arM["urlInstall"] ?>"><?= GetMessage("USM_INSTALL") ?></a>
-                                                        </div>
-                                                        <div class="mp-grey">
-                                                        <small><?= GetMessage("USM_FREE") ?></small></div><?
+                                                                href="<?= $arM["urlInstall"] ?>"><?= GetMessage(
+                                                                "USM_INSTALL"
+                                                            ) ?></a></div>
+                                                        <div class="mp-grey"><small><?= GetMessage(
+                                                                "USM_FREE"
+                                                            ) ?></small></div><?
                                                     }
                                                 } else {
                                                     if (intval($arM["oldPrice"]) > 0) {
@@ -316,14 +357,16 @@ if (!in_array(LANGUAGE_ID, array("ru", "ua", "bg"))) {
                                                     if ($arM["installedDemo"] != "Y") {
                                                         ?>
                                                         <div class="mp-buy"><a href="<?= $arM["url2basket"] ?>"
-                                                                               target="_blank"><?= GetMessage("USM_BUY") ?></a>
-                                                        </div><?
+                                                                               target="_blank"><?= GetMessage(
+                                                                "USM_BUY"
+                                                            ) ?></a></div><?
                                                     }
                                                     if ($arM["canDemo"] == "Y") {
                                                         ?>
                                                         <div class="mp-test"><a href="<?= $arM["urlInstall"] ?>"
-                                                                                target="_blank"><?= GetMessage("USM_TEST") ?></a>
-                                                        </div><?
+                                                                                target="_blank"><?= GetMessage(
+                                                                "USM_TEST"
+                                                            ) ?></a></div><?
                                                     }
                                                 }
                                                 ?>
@@ -362,9 +405,11 @@ if (!in_array(LANGUAGE_ID, array("ru", "ua", "bg"))) {
                                     </div>
                                     <div class="mp-item">
                                         <p class="mp-title"><?= GetMessage("USM_DEVELOPER") ?></p>
-                                        <p><? if (strlen($arM["partner"]["href"]) > 0):?>
+                                        <p><? if ($arM["partner"]["href"] <> ''):?>
                                                 <a href="<?= htmlspecialcharsbx($arM["partner"]["href"]) ?>"
-                                                   target="_blank"><?= htmlspecialcharsbx($arM["partner"]["name"]) ?></a>
+                                                   target="_blank"><?= htmlspecialcharsbx(
+                                                        $arM["partner"]["name"]
+                                                    ) ?></a>
                                             <? else:?>
                                                 <?= htmlspecialcharsbx($arM["partner"]["name"]) ?>
                                             <?endif; ?>
@@ -374,7 +419,7 @@ if (!in_array(LANGUAGE_ID, array("ru", "ua", "bg"))) {
                                         <p class="mp-title"><?= GetMessage("USM_DATE_ADD") ?></p>
                                         <p><?= $arM["date"] ?></p>
                                     </div>
-                                    <? if (strlen($arM["version"]) > 0):?>
+                                    <? if ($arM["version"] <> ''):?>
                                         <div class="mp-item">
                                             <p class="mp-title"><?= GetMessage("USM_VERSION") ?></p>
                                             <p><?= $arM["version"] ?></p>
@@ -417,7 +462,9 @@ if (!in_array(LANGUAGE_ID, array("ru", "ua", "bg"))) {
                                         if ($arM["freeModule"] == "Y") {
                                             if ($arM["installed"] != "Y") {
                                                 ?><a href="<?= $arM["urlInstall"] ?>"
-                                                     class="adm-btn adm-btn-green"><?= GetMessage("USM_INSTALL") ?></a><?
+                                                     class="adm-btn adm-btn-green"><?= GetMessage(
+                                                "USM_INSTALL"
+                                            ) ?></a><?
                                             }
                                         } else {
                                             if ($arM["installedDemo"] != "Y") {
@@ -429,7 +476,7 @@ if (!in_array(LANGUAGE_ID, array("ru", "ua", "bg"))) {
                                                      class="adm-btn"><?= GetMessage("USM_TEST") ?></a><?
                                             }
                                         }
-                                        if (strlen($arM["demoLink"]) > 0) {
+                                        if ($arM["demoLink"] <> '') {
                                             ?><a class="adm-btn" href="<?= htmlspecialcharsbx($arM["demoLink"]) ?>"
                                                  target="_blank"><?= GetMessage("USM_ONLINE_DEMO") ?></a><?
                                         }
@@ -457,41 +504,70 @@ if (!in_array(LANGUAGE_ID, array("ru", "ua", "bg"))) {
                                      style="overflow: hidden; height:100px; border-bottom:1px solid #e5e5e5;line-height: 18px; text-align: justify;padding-bottom: 5px;"><?= $arM["descr"] ?></div>
                                 <div class="mp-detail-more"><a class="mp-more-description-btn" onfocus="this.blur();"
                                                                onclick="SlideDescription(BX('mp-detail-description'), this)"
-                                                               href="javascript:void(0)"><?= GetMessage("USM_DETAIL") ?></a>
-                                </div>
+                                                               href="javascript:void(0)"><?= GetMessage(
+                                            "USM_DETAIL"
+                                        ) ?></a></div>
                                 <div id="mp-detail-descripiption-fade"></div>
 
                                 <div class="mp-tabs">
                                     <?
                                     $aTabs1 = array();
-                                    if (!empty($arM["action"]))
-                                        $aTabs1[] = array("DIV" => "oedit1", "TAB" => GetMessage("USM_ACTIONS"), "TITLE" => GetMessage("USM_ACTIONS"));
-                                    if (!empty($arM["images"]))
-                                        $aTabs1[] = array("DIV" => "oedit2", "TAB" => GetMessage("USM_IMAGES"), "TITLE" => GetMessage("USM_IMAGES"));
-                                    if (!empty($arM["updates"]))
-                                        $aTabs1[] = array("DIV" => "oedit3", "TAB" => GetMessage("USM_UPDATES"), "TITLE" => GetMessage("USM_UPDATES"));
-                                    if (!empty($arM["support"]))
-                                        $aTabs1[] = array("DIV" => "oedit4", "TAB" => GetMessage("USM_SUPPORT"), "TITLE" => GetMessage("USM_SUPPORT"));
-                                    if (!empty($arM["install"]))
-                                        $aTabs1[] = array("DIV" => "oedit5", "TAB" => GetMessage("USM_INSTALL_MODULE"), "TITLE" => GetMessage("USM_INSTALL_MODULE"));
+                                    if (!empty($arM["action"])) {
+                                        $aTabs1[] = array(
+                                            "DIV" => "oedit1",
+                                            "TAB" => GetMessage("USM_ACTIONS"),
+                                            "TITLE" => GetMessage("USM_ACTIONS")
+                                        );
+                                    }
+                                    if (!empty($arM["images"])) {
+                                        $aTabs1[] = array(
+                                            "DIV" => "oedit2",
+                                            "TAB" => GetMessage("USM_IMAGES"),
+                                            "TITLE" => GetMessage("USM_IMAGES")
+                                        );
+                                    }
+                                    if (!empty($arM["updates"])) {
+                                        $aTabs1[] = array(
+                                            "DIV" => "oedit3",
+                                            "TAB" => GetMessage("USM_UPDATES"),
+                                            "TITLE" => GetMessage("USM_UPDATES")
+                                        );
+                                    }
+                                    if (!empty($arM["support"])) {
+                                        $aTabs1[] = array(
+                                            "DIV" => "oedit4",
+                                            "TAB" => GetMessage("USM_SUPPORT"),
+                                            "TITLE" => GetMessage("USM_SUPPORT")
+                                        );
+                                    }
+                                    if (!empty($arM["install"])) {
+                                        $aTabs1[] = array(
+                                            "DIV" => "oedit5",
+                                            "TAB" => GetMessage("USM_INSTALL_MODULE"),
+                                            "TITLE" => GetMessage("USM_INSTALL_MODULE")
+                                        );
+                                    }
 
                                     $tabControl1 = new CAdminViewTabControl("tabControl1", $aTabs1);
                                     $tabControl1->Begin();
                                     if (!empty($arM["action"])) {
                                         $tabControl1->BeginNextTab();
-                                        if (strlen($arM["action"]["descr"]) > 0)
+                                        if ($arM["action"]["descr"] <> '') {
                                             echo "<div>" . $arM["action"]["descr"] . "</div>";
+                                        }
                                         echo $arM["action"]["date"];
                                     }
                                     if (!empty($arM["images"])) {
                                         $tabControl1->BeginNextTab();
 
-                                        if (!is_array($arM["images"]["image"][0]))
+                                        if (!is_array($arM["images"]["image"][0])) {
                                             $arM["images"]["image"] = array($arM["images"]["image"]);
+                                        }
 
                                         if (!empty($arM["styles"]["style"])) {
-                                            if (!is_array($arM["styles"]["style"]))
+                                            if (!is_array($arM["styles"]["style"])) {
                                                 $arM["styles"]["style"] = array($arM["styles"]["style"]);
+                                            }
                                             foreach ($arM["styles"]["style"] as $v) {
                                                 ?>
                                                 <link href="<?= $v ?>" type="text/css" rel="stylesheet"><?
@@ -499,8 +575,9 @@ if (!in_array(LANGUAGE_ID, array("ru", "ua", "bg"))) {
                                         }
                                     if (!empty($arM["scripts"]["script"]))
                                     {
-                                        if (!is_array($arM["scripts"]["script"]))
+                                        if (!is_array($arM["scripts"]["script"])) {
                                             $arM["scripts"]["script"] = array($arM["scripts"]["script"]);
+                                        }
                                     foreach ($arM["scripts"]["script"] as $v)
                                     {
                                         ?>
@@ -590,12 +667,12 @@ if (!in_array(LANGUAGE_ID, array("ru", "ua", "bg"))) {
                                             <a class="scroll-next screenshot-next"></a>
                                         </div>
                                         <?
-
                                     }
                                     if (!empty($arM["updates"])) {
                                         $tabControl1->BeginNextTab();
-                                        if (!is_array($arM["updates"]["version"][0]))
+                                        if (!is_array($arM["updates"]["version"][0])) {
                                             $arM["updates"]["version"] = array($arM["updates"]["version"]);
+                                        }
 
                                         ?>
                                         <table width="100%" border="0" cellpadding="2" cellspacing="2"><?
@@ -613,18 +690,17 @@ if (!in_array(LANGUAGE_ID, array("ru", "ua", "bg"))) {
                                     if (!empty($arM["support"])) {
                                         $tabControl1->BeginNextTab();
                                         echo $arM["support"];
-
                                     }
                                     if (!empty($arM["install"])) {
                                         $tabControl1->BeginNextTab();
                                         echo $arM["install"];
-
                                     }
                                     $tabControl1->End();
 
                                     if (!empty($arM["moreItems"]["item"])) {
-                                        if (!is_array($arM["moreItems"]["item"][0]))
+                                        if (!is_array($arM["moreItems"]["item"][0])) {
                                             $arM["moreItems"]["item"] = array($arM["moreItems"]["item"]);
+                                        }
                                         ?>
                                         <h3><?= GetMessage("USM_MORE_MODULES") ?></h3>
                                         <div id="similar-solutions">
@@ -637,14 +713,26 @@ if (!in_array(LANGUAGE_ID, array("ru", "ua", "bg"))) {
                                                              style="visibility: visible; overflow: hidden; position: relative; z-index: 2; left: 0px; width: 735px;">
                                                             <ul style="margin: 0pt; padding: 0pt; position: relative; list-style-type: none; z-index: 1; width: 1470px; left: -490px;">
                                                                 <? foreach ($arM["moreItems"]["item"] as $moreItem) {
-                                                                    $moreItem["url"] = str_replace("#module#", $moreItem["code"], "update_system_market.php?module=#module#&lang=" . LANGUAGE_ID);
-                                                                    $moreItem["urlClick"] = str_replace("#module#", $moreItem["code"], $sTableID . ".GetAdminList('/bitrix/admin/update_system_market.php?module=#module#&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get() . "&table_id=" . $sTableID . ((intval($category) > 0) ? "&category=" . $category : "") . "'); return false;");
+                                                                    $moreItem["url"] = str_replace(
+                                                                        "#module#",
+                                                                        $moreItem["code"],
+                                                                        "update_system_market.php?module=#module#&lang=" . LANGUAGE_ID
+                                                                    );
+                                                                    $moreItem["urlClick"] = str_replace(
+                                                                        "#module#",
+                                                                        $moreItem["code"],
+                                                                        $sTableID . ".GetAdminList('/bitrix/admin/update_system_market.php?module=#module#&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get(
+                                                                        ) . "&table_id=" . $sTableID . ((intval(
+                                                                                $category
+                                                                            ) > 0) ? "&category=" . $category : "") . "'); return false;"
+                                                                    );
 
                                                                     $moreItem["urlInstall"] = "update_system_partner.php?lang=" . LANGUAGE_ID . "&addmodule=" . $moreItem["code"];
                                                                     if (!empty($m[$moreItem["code"]])) {
                                                                         $moreItem["installed"] = "Y";
-                                                                        if ($m[$moreItem["code"]] == "Y")
+                                                                        if ($m[$moreItem["code"]] == "Y") {
                                                                             $moreItem["installedDemo"] = "Y";
+                                                                        }
                                                                     }
                                                                     $moreItem["canDemo"] = (($moreItem["freeModule"] == "D" && $moreItem["installed"] != "Y") ? "Y" : "N");
 
@@ -673,29 +761,39 @@ if (!in_array(LANGUAGE_ID, array("ru", "ua", "bg"))) {
                                                                                 ?>
 																		</span></a>
                                                                         <div class="mp-content">
-                                                                            <span class="mp-ilike"><?= intval($moreItem["votes"]) ?></span>
+                                                                            <span class="mp-ilike"><?= intval(
+                                                                                    $moreItem["votes"]
+                                                                                ) ?></span>
                                                                             <div>
                                                                                 <?
                                                                                 if ($moreItem["installed"] == "Y") {
                                                                                     ?>
-                                                                                    <div class="mp-grey"><?= GetMessage("USM_INSTALLED") ?></div><?
+                                                                                    <div class="mp-grey"><?= GetMessage(
+                                                                                    "USM_INSTALLED"
+                                                                                ) ?></div><?
                                                                                 }
 
                                                                                 if ($moreItem["freeModule"] == "Y") {
                                                                                     if ($moreItem["installed"] != "Y") {
                                                                                         ?>
                                                                                         <div class="mp-install"><a
-                                                                                                href="<?= $moreItem["urlInstall"] ?>"><?= GetMessage("USM_INSTALL") ?></a>
-                                                                                        </div>
+                                                                                                href="<?= $moreItem["urlInstall"] ?>"><?= GetMessage(
+                                                                                                "USM_INSTALL"
+                                                                                            ) ?></a></div>
                                                                                         <div class="mp-grey">
-                                                                                        <small><?= GetMessage("USM_FREE") ?></small>
-                                                                                        </div><?
+                                                                                        <small><?= GetMessage(
+                                                                                                "USM_FREE"
+                                                                                            ) ?></small></div><?
                                                                                     }
                                                                                 } else {
-                                                                                    if (intval($moreItem["oldPrice"]) > 0) {
+                                                                                    if (intval(
+                                                                                            $moreItem["oldPrice"]
+                                                                                        ) > 0) {
                                                                                         ?>
                                                                                         <div class="mp-price">
-                                                                                        <s><?= intval($moreItem["oldPrice"]) ?></s>&nbsp;&nbsp;<span
+                                                                                        <s><?= intval(
+                                                                                                $moreItem["oldPrice"]
+                                                                                            ) ?></s>&nbsp;&nbsp;<span
                                                                                                 style="color:red;"><?= $moreItem["price"] ?></span>
                                                                                         </div><?
                                                                                     } else {
@@ -707,15 +805,19 @@ if (!in_array(LANGUAGE_ID, array("ru", "ua", "bg"))) {
                                                                                         ?>
                                                                                         <div class="mp-buy"><a
                                                                                                 href="<?= $moreItem["url2basket"] ?>"
-                                                                                                target="_blank"><?= GetMessage("USM_BUY") ?></a>
-                                                                                        </div><?
+                                                                                                target="_blank"><?= GetMessage(
+                                                                                                "USM_BUY"
+                                                                                            ) ?></a></div><?
                                                                                     }
                                                                                     if ($moreItem["canDemo"] == "Y") {
                                                                                         ?>
                                                                                         <div class="mp-test"><a
-                                                                                                href="<?= htmlspecialcharsbx($moreItem["urlInstall"]) ?>"
-                                                                                                target="_blank"><?= GetMessage("USM_TEST") ?></a>
-                                                                                        </div><?
+                                                                                                href="<?= htmlspecialcharsbx(
+                                                                                                    $moreItem["urlInstall"]
+                                                                                                ) ?>"
+                                                                                                target="_blank"><?= GetMessage(
+                                                                                                "USM_TEST"
+                                                                                            ) ?></a></div><?
                                                                                     }
                                                                                 }
                                                                                 ?>
@@ -738,15 +840,17 @@ if (!in_array(LANGUAGE_ID, array("ru", "ua", "bg"))) {
                                     }
 
                                     if (!empty($arM["comments"]) > 0) {
-                                        if (!is_array($arM["comments"]["comment"][0]))
+                                        if (!is_array($arM["comments"]["comment"][0])) {
                                             $arM["comments"]["comment"] = array($arM["comments"]["comment"]);
+                                        }
                                         ?>
                                         <h3><?= GetMessage("USM_COMMENTS") ?></h3>
                                         <div id="comments">
                                         <hr class="comments-delimiter" noshade>
                                         <div style="text-align:center;"><a target="_blank"
-                                                                           href="<?= $arM["url2module"] ?>"><?= GetMessage("USM_COMMENTS_ADD") ?></a>
-                                        </div>
+                                                                           href="<?= $arM["url2module"] ?>"><?= GetMessage(
+                                                    "USM_COMMENTS_ADD"
+                                                ) ?></a></div>
                                         <?
                                         foreach ($arM["comments"]["comment"] as $v) {
                                             ?>
@@ -771,7 +875,7 @@ if (!in_array(LANGUAGE_ID, array("ru", "ua", "bg"))) {
                         }
                     }
 
-                    if (strlen($moduleCode) <= 0) {
+                    if ($moduleCode == '') {
                         if ($inRow != 0 || $inRow != 3) {
                             echo str_repeat("<td></td>", 3 - $inRow);
                             echo "</tr>";
@@ -788,12 +892,13 @@ if (!in_array(LANGUAGE_ID, array("ru", "ua", "bg"))) {
     </div>
     <?
 
-    if (strlen($arResult["modules"]["#"]["navData"][0]["#"]) > 0) {
-        $dat = unserialize($arResult["modules"]["#"]["navData"][0]["#"]);
+    if ($arResult["modules"]["#"]["navData"][0]["#"] <> '') {
+        $dat = unserialize($arResult["modules"]["#"]["navData"][0]["#"], ['allowed_classes' => false]);
         if (intval($dat["NavPageCount"]) > 1) {
             $dbRes = new CDBResult;
-            foreach ($dat as $k => $v)
+            foreach ($dat as $k => $v) {
                 $dbRes->{$k} = $v;
+            }
 
             $dbResultList = new CAdminResult($dbRes, $sTableID);
             $dbResultList->NavRecordCountChangeDisable = true;
@@ -811,20 +916,34 @@ if (!in_array(LANGUAGE_ID, array("ru", "ua", "bg"))) {
         die();
     }
 
-    if ($_REQUEST["instadm"] == "Y" && check_bitrix_sessid() && strlen($moduleCode) > 0 && !empty($arM)) {
-        CAdminNotify::Add(array(
-            'MODULE_ID' => 'main',
-            'TAG' => 'mp_inst_' . $moduleCode,
-            'MESSAGE' => GetMessage("USM_NOTIF_INST", array("#USER#" => htmlspecialchars($USER->GetFullName() . " (" . $USER->GetLogin() . ")"), "#MODULE_CODE#" => htmlspecialcharsbx($arM["code"]), "#MODULE_NAME#" => htmlspecialcharsbx($arM["name"]), "#LANG#" => LANG)),
-            'NOTIFY_TYPE' => CAdminNotify::TYPE_NORMAL,
-            'PUBLIC_SECTION' => 'N',
-        ));
+    if ($_REQUEST["instadm"] == "Y" && check_bitrix_sessid() && $moduleCode <> '' && !empty($arM)) {
+        CAdminNotify::Add(
+            array(
+                'MODULE_ID' => 'main',
+                'TAG' => 'mp_inst_' . $moduleCode,
+                'MESSAGE' => GetMessage(
+                    "USM_NOTIF_INST",
+                    array(
+                        "#USER#" => htmlspecialchars(
+                            $USER->GetFullName() . " (" . $USER->GetLogin() . ")"
+                        ),
+                        "#MODULE_CODE#" => htmlspecialcharsbx($arM["code"]),
+                        "#MODULE_NAME#" => htmlspecialcharsbx($arM["name"]),
+                        "#LANG#" => LANG
+                    )
+                ),
+                'NOTIFY_TYPE' => CAdminNotify::TYPE_NORMAL,
+                'PUBLIC_SECTION' => 'N',
+            )
+        );
 
-        $m = new CAdminMessage(array(
-            "TYPE" => "OK",
-            "MESSAGE" => GetMessage("USM_NOTIF_INST_OK"),
-            "HTML" => false
-        ));
+        $m = new CAdminMessage(
+            array(
+                "TYPE" => "OK",
+                "MESSAGE" => GetMessage("USM_NOTIF_INST_OK"),
+                "HTML" => false
+            )
+        );
         echo $m->Show();
     }
     $lAdmin->DisplayList();

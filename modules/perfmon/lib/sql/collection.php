@@ -35,8 +35,9 @@ class Collection
     {
         /** @var BaseObject $object */
         foreach ($this->list as $object) {
-            if ($object->compareName($name) == 0)
+            if ($object->compareName($name) == 0) {
                 return $object;
+            }
         }
         return null;
     }

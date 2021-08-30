@@ -13,8 +13,38 @@ class GeoHash
     protected static $longitudeInterval = array(-180.0, 180.0);
     protected static $bits = array(16, 8, 4, 2, 1);
     protected static $base32Chars = array(
-        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'b', 'c', 'd', 'e', 'f', 'g',
-        'h', 'j', 'k', 'm', 'n', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'
+        '0',
+        '1',
+        '2',
+        '3',
+        '4',
+        '5',
+        '6',
+        '7',
+        '8',
+        '9',
+        'b',
+        'c',
+        'd',
+        'e',
+        'f',
+        'g',
+        'h',
+        'j',
+        'k',
+        'm',
+        'n',
+        'p',
+        'q',
+        'r',
+        's',
+        't',
+        'u',
+        'v',
+        'w',
+        'x',
+        'y',
+        'z'
     );
 
     public static function encode(array $coordinate, $length = self::MAX_LENGTH)
@@ -28,7 +58,7 @@ class GeoHash
 
         $geohash = '';
 
-        while (strlen($geohash) < $length) {
+        while (mb_strlen($geohash) < $length) {
             if ($isEven) {
                 $middle = ($longitudeInterval[0] + $longitudeInterval[1]) / 2;
                 if ($coordinate[1] > $middle) {
@@ -67,7 +97,7 @@ class GeoHash
         $longitudeInterval = static::$longitudeInterval;
 
         $isEven = true;
-        $geohashLength = strlen($geohash);
+        $geohashLength = mb_strlen($geohash);
         for ($i = 0; $i < $geohashLength; $i++) {
             if (!isset($base32DecodeMap[$geohash[$i]])) {
                 throw new SystemException('This geo hash is invalid.');

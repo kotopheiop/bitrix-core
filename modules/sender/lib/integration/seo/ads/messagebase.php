@@ -8,13 +8,11 @@
 
 namespace Bitrix\Sender\Integration\Seo\Ads;
 
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Error;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
-
-use Bitrix\Sender\Message;
 use Bitrix\Sender\Entity;
-
+use Bitrix\Sender\Message;
 use Bitrix\Sender\Message\iLookalikeAds;
 use Bitrix\Seo\Retargeting;
 
@@ -51,7 +49,7 @@ abstract class MessageBase implements Message\iBase, Message\iAds
      */
     public function getName()
     {
-        return Loc::getMessage('SENDER_INTEGRATION_SEO_MESSAGE_NAME_' . strtoupper($this->getCode()));
+        return Loc::getMessage('SENDER_INTEGRATION_SEO_MESSAGE_NAME_' . mb_strtoupper($this->getCode()));
     }
 
     public function getCode()
@@ -72,44 +70,46 @@ abstract class MessageBase implements Message\iBase, Message\iAds
 
     protected function setConfigurationOptions()
     {
-        $this->configuration->setArrayOptions(array(
+        $this->configuration->setArrayOptions(
             array(
-                'type' => 'string',
-                'code' => 'CLIENT_ID',
-                'name' => Loc::getMessage('SENDER_INTEGRATION_SEO_MESSAGE_CONFIG_CLIENT_ID'),
-                'required' => true,
-            ),
-            array(
-                'type' => 'string',
-                'code' => 'ACCOUNT_ID',
-                'name' => Loc::getMessage('SENDER_INTEGRATION_SEO_MESSAGE_CONFIG_ACCOUNT_ID'),
-                'required' => false,
-            ),
-            array(
-                'type' => 'string',
-                'code' => 'AUDIENCE_ID',
-                'name' => Loc::getMessage('SENDER_INTEGRATION_SEO_MESSAGE_CONFIG_AUDIENCE_ID'),
-                'required' => false,
-            ),
-            array(
-                'type' => 'string',
-                'code' => 'AUDIENCE_EMAIL_ID',
-                'name' => Loc::getMessage('SENDER_INTEGRATION_SEO_MESSAGE_CONFIG_AUDIENCE_EMAIL_ID'),
-                'required' => false,
-            ),
-            array(
-                'type' => 'string',
-                'code' => 'AUDIENCE_PHONE_ID',
-                'name' => Loc::getMessage('SENDER_INTEGRATION_SEO_MESSAGE_CONFIG_AUDIENCE_PHONE_ID'),
-                'required' => false,
-            ),
-            array(
-                'type' => 'integer',
-                'code' => 'AUTO_REMOVE_DAY_NUMBER',
-                'name' => Loc::getMessage('SENDER_INTEGRATION_SEO_MESSAGE_CONFIG_AUTO_REMOVE_DAY_NUMBER'),
-                'required' => false,
-            ),
-        ));
+                array(
+                    'type' => 'string',
+                    'code' => 'CLIENT_ID',
+                    'name' => Loc::getMessage('SENDER_INTEGRATION_SEO_MESSAGE_CONFIG_CLIENT_ID'),
+                    'required' => true,
+                ),
+                array(
+                    'type' => 'string',
+                    'code' => 'ACCOUNT_ID',
+                    'name' => Loc::getMessage('SENDER_INTEGRATION_SEO_MESSAGE_CONFIG_ACCOUNT_ID'),
+                    'required' => false,
+                ),
+                array(
+                    'type' => 'string',
+                    'code' => 'AUDIENCE_ID',
+                    'name' => Loc::getMessage('SENDER_INTEGRATION_SEO_MESSAGE_CONFIG_AUDIENCE_ID'),
+                    'required' => false,
+                ),
+                array(
+                    'type' => 'string',
+                    'code' => 'AUDIENCE_EMAIL_ID',
+                    'name' => Loc::getMessage('SENDER_INTEGRATION_SEO_MESSAGE_CONFIG_AUDIENCE_EMAIL_ID'),
+                    'required' => false,
+                ),
+                array(
+                    'type' => 'string',
+                    'code' => 'AUDIENCE_PHONE_ID',
+                    'name' => Loc::getMessage('SENDER_INTEGRATION_SEO_MESSAGE_CONFIG_AUDIENCE_PHONE_ID'),
+                    'required' => false,
+                ),
+                array(
+                    'type' => 'integer',
+                    'code' => 'AUTO_REMOVE_DAY_NUMBER',
+                    'name' => Loc::getMessage('SENDER_INTEGRATION_SEO_MESSAGE_CONFIG_AUTO_REMOVE_DAY_NUMBER'),
+                    'required' => false,
+                ),
+            )
+        );
     }
 
     /**
@@ -146,10 +146,19 @@ abstract class MessageBase implements Message\iBase, Message\iAds
 
                 $containerNodeId = 'seo-ads-' . $configuration->getId();
                 ob_start();
-                $provider = Service::getAdsProvider($self->getAdsType(), $configuration->getOption('CLIENT_ID')->getValue());
-                $audienceSize = $configuration->getOption('AUDIENCE_SIZE') ? $configuration->getOption('AUDIENCE_SIZE')->getValue() : null;
-                $audienceRegion = $configuration->getOption('AUDIENCE_REGION') ? $configuration->getOption('AUDIENCE_REGION')->getValue() : null;
-                $autoRemoveDays = $configuration->getOption('AUTO_REMOVE_DAY_NUMBER') ? $configuration->getOption('AUTO_REMOVE_DAY_NUMBER')->getValue() : null;
+                $provider = Service::getAdsProvider(
+                    $self->getAdsType(),
+                    $configuration->getOption('CLIENT_ID')->getValue()
+                );
+                $audienceSize = $configuration->getOption('AUDIENCE_SIZE') ? $configuration->getOption(
+                    'AUDIENCE_SIZE'
+                )->getValue() : null;
+                $audienceRegion = $configuration->getOption('AUDIENCE_REGION') ? $configuration->getOption(
+                    'AUDIENCE_REGION'
+                )->getValue() : null;
+                $autoRemoveDays = $configuration->getOption('AUTO_REMOVE_DAY_NUMBER') ? $configuration->getOption(
+                    'AUTO_REMOVE_DAY_NUMBER'
+                )->getValue() : null;
 
                 $audienceLookalikeMode = $provider['IS_SUPPORT_LOOKALIKE_AUDIENCE'] && ($this instanceof iLookalikeAds);
 
@@ -176,7 +185,9 @@ abstract class MessageBase implements Message\iBase, Message\iAds
                 $result = ob_get_clean();
                 $result .= "<div id=\"$containerNodeId\"></div>";
                 if (!$audienceLookalikeMode) {
-                    $result .= "<div style=\"padding: 12px 14px; background: #F8F4BC; color: #91711E;\">" . Loc::getMessage('SENDER_INTEGRATION_SEO_MESSAGE_SYNC_WARN') . "</div>";
+                    $result .= "<div style=\"padding: 12px 14px; background: #F8F4BC; color: #91711E;\">" . Loc::getMessage(
+                            'SENDER_INTEGRATION_SEO_MESSAGE_SYNC_WARN'
+                        ) . "</div>";
                 }
                 return $result;
             }

@@ -7,8 +7,9 @@ class CLearnRelationHelper
         global $APPLICATION;
 
         $curDir = $APPLICATION->GetCurDir();
-        if (substr($curDir, -1) !== '/')
+        if (mb_substr($curDir, -1) !== '/') {
             $curDir .= '/';
+        }
 
         ?>
         <script type="text/javascript">
@@ -131,7 +132,10 @@ class CLearnRelationHelper
                             &&
                             (
                                 $oAccess->IsBaseAccess(CLearnAccess::OP_LESSON_UNLINK_DESCENDANTS)
-                                || $oAccess->IsLessonAccessible($arElem['lessonId'], CLearnAccess::OP_LESSON_UNLINK_DESCENDANTS)
+                                || $oAccess->IsLessonAccessible(
+                                    $arElem['lessonId'],
+                                    CLearnAccess::OP_LESSON_UNLINK_DESCENDANTS
+                                )
                             )
                         ) {
                             ?>
@@ -159,7 +163,9 @@ class CLearnRelationHelper
                 ?>
                 <div style="padding:0px;">
                     <a href="javascript:void(0);" class="bx-action-href"
-                       onclick="window.open('<?php echo addslashes(htmlspecialcharsbx($curDir)); ?>learn_unilesson_admin.php?lang=<?php echo LANGUAGE_ID;
+                       onclick="window.open('<?php echo addslashes(
+                           htmlspecialcharsbx($curDir)
+                       ); ?>learn_unilesson_admin.php?lang=<?php echo LANGUAGE_ID;
                        ?>&amp;search_retpoint=module_learning_js_admin_function_add_parent&amp;search_mode_type=parents_candidates',
                                'module_learning_js_admin_window_select_lessons_for_relations',
                                'scrollbars=yes,resizable=yes,width=960,height=500,top='+Math.floor((screen.height - 560)/2-14)+',left='+Math.floor((screen.width - 960)/2-5));"
@@ -184,7 +190,10 @@ class CLearnRelationHelper
                             &&
                             (
                                 $oAccess->IsBaseAccess(CLearnAccess::OP_LESSON_UNLINK_FROM_PARENTS)
-                                || $oAccess->IsLessonAccessible($arElem['lessonId'], CLearnAccess::OP_LESSON_UNLINK_FROM_PARENTS)
+                                || $oAccess->IsLessonAccessible(
+                                    $arElem['lessonId'],
+                                    CLearnAccess::OP_LESSON_UNLINK_FROM_PARENTS
+                                )
                             )
                         ) {
                             ?>
@@ -209,7 +218,9 @@ class CLearnRelationHelper
                 ?>
                 <div style="padding:0px;">
                     <a href="javascript:void(0);" class="bx-action-href"
-                       onclick="window.open('<?php echo addslashes(htmlspecialcharsbx($curDir)); ?>learn_unilesson_admin.php?lang=<?php echo LANGUAGE_ID;
+                       onclick="window.open('<?php echo addslashes(
+                           htmlspecialcharsbx($curDir)
+                       ); ?>learn_unilesson_admin.php?lang=<?php echo LANGUAGE_ID;
                        ?>&amp;search_retpoint=module_learning_js_admin_function_add_child',
                                'module_learning_js_admin_window_select_lessons_for_relations',
                                'scrollbars=yes,resizable=yes,width=960,height=500,top='+Math.floor((screen.height - 560)/2-14)+',left='+Math.floor((screen.width - 960)/2-5));"
@@ -228,27 +239,34 @@ class CLearnRelationHelper
                 $langPhraseBase = 'LEARNING_LIST_OF_ALL_PARENT_PATHES_FOR_';
 
                 $lessonType = 'LESSON';
-                if ($isCourse)
+                if ($isCourse) {
                     $lessonType = 'COURSE';
-                elseif ($isChapter)
+                } elseif ($isChapter) {
                     $lessonType = 'CHAPTER';
+                }
 
                 $isEmpty = '';
-                if ($cntParentPathes === 0)
+                if ($cntParentPathes === 0) {
                     $isEmpty = '_IS_EMPTY';
+                }
 
                 echo '<h3>' . GetMessage($langPhraseBase . $lessonType . $isEmpty) . '</h3>';
 
                 if ($cntParentPathes > 0) {
-                    $pattern = '[<a href="' . addslashes(htmlspecialcharsbx($curDir)) . 'learn_unilesson_edit.php?lang=' . LANG
+                    $pattern = '[<a href="' . addslashes(
+                            htmlspecialcharsbx($curDir)
+                        ) . 'learn_unilesson_edit.php?lang=' . LANG
                         . '&LESSON_ID=#LESSON_ID#&LESSON_PATH=#LESSON_ID#" target="_blank">#LESSON_ID#</a>] #NAME#';
 
                     foreach ($arOPathes as $oPath) {
                         echo $oPath->GetPathAsHumanReadableString(' / ', $pattern);
 
                         if ($oPath->Count() >= 1) {
-                            if (CLearnLesson::IsPublishProhibited($LESSON_ID, $oPath->GetTop()))
-                                echo ' <span style="color:grey;">(' . GetMessage('LEARNING_LESSON_IS_PUBLISH_PROHIBITED') . ')</span>';
+                            if (CLearnLesson::IsPublishProhibited($LESSON_ID, $oPath->GetTop())) {
+                                echo ' <span style="color:grey;">(' . GetMessage(
+                                        'LEARNING_LESSON_IS_PUBLISH_PROHIBITED'
+                                    ) . ')</span>';
+                            }
                         }
 
                         echo '<br>';
@@ -265,8 +283,9 @@ class CLearnRelationHelper
     {
         $isAccessUseCache = true;
 
-        if ($sort === false)
+        if ($sort === false) {
             $sort = 500;
+        }
 
         // Remove/add relations from/to parent
         if ($oAccess->IsBaseAccess(CLearnAccess::OP_LESSON_LINK_TO_PARENTS, $isAccessUseCache)
@@ -276,23 +295,34 @@ class CLearnRelationHelper
         ) {
             $arCurParentsIds = array();
             $resParents = CLearnLesson::GetListOfImmediateParents($LESSON_ID);
-            while ($arParent = $resParents->Fetch())
+            while ($arParent = $resParents->Fetch()) {
                 $arCurParentsIds[] = (int)$arParent['LESSON_ID'];
+            }
 
             $arDestParentsIds = array();
 
-            if (isset($_POST['RELATION_PARENT']) && is_array($_POST['RELATION_PARENT']))
-                foreach ($_POST['RELATION_PARENT'] as $key => $relatedLessonId)
+            if (isset($_POST['RELATION_PARENT']) && is_array($_POST['RELATION_PARENT'])) {
+                foreach ($_POST['RELATION_PARENT'] as $key => $relatedLessonId) {
                     $arDestParentsIds[] = (int)$relatedLessonId;
+                }
+            }
 
             // remove relations
             if ($oAccess->IsBaseAccess(CLearnAccess::OP_LESSON_UNLINK_FROM_PARENTS, $isAccessUseCache)
-                || $oAccess->IsLessonAccessible($LESSON_ID, CLearnAccess::OP_LESSON_UNLINK_FROM_PARENTS, $isAccessUseCache)
+                || $oAccess->IsLessonAccessible(
+                    $LESSON_ID,
+                    CLearnAccess::OP_LESSON_UNLINK_FROM_PARENTS,
+                    $isAccessUseCache
+                )
             ) {
                 $arRemoveIds = array_diff($arCurParentsIds, $arDestParentsIds);
                 foreach ($arRemoveIds as $relatedLessonId) {
                     if ($oAccess->IsBaseAccess(CLearnAccess::OP_LESSON_UNLINK_DESCENDANTS, $isAccessUseCache)
-                        || $oAccess->IsLessonAccessible($relatedLessonId, CLearnAccess::OP_LESSON_UNLINK_DESCENDANTS, $isAccessUseCache)
+                        || $oAccess->IsLessonAccessible(
+                            $relatedLessonId,
+                            CLearnAccess::OP_LESSON_UNLINK_DESCENDANTS,
+                            $isAccessUseCache
+                        )
                     ) {
                         CLearnLesson::RelationRemove($relatedLessonId, $LESSON_ID);
                     }
@@ -306,7 +336,11 @@ class CLearnRelationHelper
                 $arAddIds = array_diff($arDestParentsIds, $arCurParentsIds);
                 foreach ($arAddIds as $relatedLessonId) {
                     if ($oAccess->IsBaseAccess(CLearnAccess::OP_LESSON_LINK_DESCENDANTS, $isAccessUseCache)
-                        || $oAccess->IsLessonAccessible($relatedLessonId, CLearnAccess::OP_LESSON_LINK_DESCENDANTS, $isAccessUseCache)
+                        || $oAccess->IsLessonAccessible(
+                            $relatedLessonId,
+                            CLearnAccess::OP_LESSON_LINK_DESCENDANTS,
+                            $isAccessUseCache
+                        )
                     ) {
                         CLearnLesson::RelationAdd($relatedLessonId, $LESSON_ID, array('SORT' => $sort));
                     }
@@ -322,23 +356,34 @@ class CLearnRelationHelper
         ) {
             $arCurChildsIds = array();
             $resChilds = CLearnLesson::GetListOfImmediateChilds($LESSON_ID);
-            while ($arChild = $resChilds->Fetch())
+            while ($arChild = $resChilds->Fetch()) {
                 $arCurChildsIds[] = (int)$arChild['LESSON_ID'];
+            }
 
             $arDestChildsIds = array();
 
-            if (isset($_POST['RELATION_CHILD']) && is_array($_POST['RELATION_CHILD']))
-                foreach ($_POST['RELATION_CHILD'] as $key => $relatedLessonId)
+            if (isset($_POST['RELATION_CHILD']) && is_array($_POST['RELATION_CHILD'])) {
+                foreach ($_POST['RELATION_CHILD'] as $key => $relatedLessonId) {
                     $arDestChildsIds[] = (int)$relatedLessonId;
+                }
+            }
 
             // remove relations
             if ($oAccess->IsBaseAccess(CLearnAccess::OP_LESSON_UNLINK_DESCENDANTS, $isAccessUseCache)
-                || $oAccess->IsLessonAccessible($LESSON_ID, CLearnAccess::OP_LESSON_UNLINK_DESCENDANTS, $isAccessUseCache)
+                || $oAccess->IsLessonAccessible(
+                    $LESSON_ID,
+                    CLearnAccess::OP_LESSON_UNLINK_DESCENDANTS,
+                    $isAccessUseCache
+                )
             ) {
                 $arRemoveIds = array_diff($arCurChildsIds, $arDestChildsIds);
                 foreach ($arRemoveIds as $relatedLessonId) {
                     if ($oAccess->IsBaseAccess(CLearnAccess::OP_LESSON_UNLINK_FROM_PARENTS, $isAccessUseCache)
-                        || $oAccess->IsLessonAccessible($relatedLessonId, CLearnAccess::OP_LESSON_UNLINK_FROM_PARENTS, $isAccessUseCache)
+                        || $oAccess->IsLessonAccessible(
+                            $relatedLessonId,
+                            CLearnAccess::OP_LESSON_UNLINK_FROM_PARENTS,
+                            $isAccessUseCache
+                        )
                     ) {
                         CLearnLesson::RelationRemove($LESSON_ID, $relatedLessonId);
                     }
@@ -352,7 +397,11 @@ class CLearnRelationHelper
                 $arAddIds = array_diff($arDestChildsIds, $arCurChildsIds);
                 foreach ($arAddIds as $relatedLessonId) {
                     if ($oAccess->IsBaseAccess(CLearnAccess::OP_LESSON_LINK_TO_PARENTS, $isAccessUseCache)
-                        || $oAccess->IsLessonAccessible($relatedLessonId, CLearnAccess::OP_LESSON_LINK_TO_PARENTS, $isAccessUseCache)
+                        || $oAccess->IsLessonAccessible(
+                            $relatedLessonId,
+                            CLearnAccess::OP_LESSON_LINK_TO_PARENTS,
+                            $isAccessUseCache
+                        )
                     ) {
                         CLearnLesson::RelationAdd($LESSON_ID, $relatedLessonId, array('SORT' => $sort));
                     }

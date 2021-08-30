@@ -56,8 +56,9 @@ class CBitrixCloudCDNLocation
         if (is_array($prefixes)) {
             foreach ($prefixes as $prefix) {
                 $prefix = trim($prefix, " \t\n\r");
-                if ($prefix != "")
+                if ($prefix != "") {
                     $this->prefixes[] = $prefix;
+                }
             }
         }
         return $this;
@@ -107,7 +108,9 @@ class CBitrixCloudCDNLocation
      */
     public function addService($file_class, $server_group)
     {
-        if (is_object($file_class) && $file_class instanceof CBitrixCloudCDNClass && is_object($server_group) && $server_group instanceof CBitrixCloudCDNServerGroup) {
+        if (is_object($file_class) && $file_class instanceof CBitrixCloudCDNClass && is_object(
+                $server_group
+            ) && $server_group instanceof CBitrixCloudCDNServerGroup) {
             $this->classes[] = $file_class;
             $this->server_groups[] = $server_group;
         }
@@ -151,7 +154,7 @@ class CBitrixCloudCDNLocation
      */
     public static function fromOptionValue($name, $value, CBitrixCloudCDNConfig $config)
     {
-        $values = unserialize($value);
+        $values = unserialize($value, ['allowed_classes' => false]);
         $proto = "";
         $prefixes = /*.(array[int]string).*/
             array();
@@ -159,8 +162,9 @@ class CBitrixCloudCDNLocation
             array();
         if (is_array($values)) {
             if (isset($values["prefixes"]) && is_array($values["prefixes"])) {
-                foreach ($values["prefixes"] as $prefix)
+                foreach ($values["prefixes"] as $prefix) {
                     $prefixes[] = $prefix;
+                }
             }
             if (isset($values["services"]) && is_array($values["services"])) {
                 $services = $values["services"];
@@ -192,11 +196,13 @@ class CBitrixCloudCDNLocation
             $server_group = $this->server_groups[$i];
             $services[$class_name] = $server_group->getName();
         }
-        return serialize(array(
-            "proto" => $this->proto,
-            "prefixes" => $this->prefixes,
-            "services" => $services,
-        ));
+        return serialize(
+            array(
+                "proto" => $this->proto,
+                "prefixes" => $this->prefixes,
+                "services" => $services,
+            )
+        );
     }
 
     /**
@@ -214,7 +220,7 @@ class CBitrixCloudCDNLocation
                 foreach ($this->classes as $i => $file_class) {
                     /* @var CBitrixCloudCDNClass $file_class */
                     foreach ($file_class->getExtensions() as $extension) {
-                        if (strtolower($p_extension) === $extension) {
+                        if (mb_strtolower($p_extension) === $extension) {
                             /* @var CBitrixCloudCDNServerGroup $server_group */
                             $server_group = $this->server_groups[$i];
                             $servers = $server_group->getServers();

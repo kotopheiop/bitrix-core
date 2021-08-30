@@ -12,8 +12,9 @@ abstract class DirectoryEntry
 
     public function create()
     {
-        if ($this->isExists())
+        if ($this->isExists()) {
             return;
+        }
 
         $arMissingDirs = array($this->getName());
         $dir = $this->getDirectory();
@@ -23,8 +24,9 @@ abstract class DirectoryEntry
         }
 
         $arMissingDirs = array_reverse($arMissingDirs);
-        foreach ($arMissingDirs as $dirName)
+        foreach ($arMissingDirs as $dirName) {
             $dir = $dir->createSubdirectory($dirName);
+        }
     }
 
     /**

@@ -11,7 +11,9 @@
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/workflow/prolog.php");
 $WORKFLOW_RIGHT = $APPLICATION->GetGroupRight("workflow");
-if ($WORKFLOW_RIGHT == "D") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($WORKFLOW_RIGHT == "D") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/workflow/include.php");
 IncludeModuleLangFile(__FILE__);
@@ -36,7 +38,8 @@ if ($ID > 0) {
                 "TEXT" => GetMessage("FLOW_DOCUMENT_LIST"),
                 "LINK" => "workflow_list.php?lang=" . LANG,
                 "TITLE" => GetMessage("FLOW_DOCUMENT_LIST"),
-            ));
+            )
+        );
 
         $context = new CAdminContextMenu($aMenu);
         $context->Show();
@@ -62,7 +65,8 @@ if ($PREV_ID > 0) {
                 "TEXT" => GetMessage("FLOW_DOCUMENT_LIST"),
                 "LINK" => "workflow_list.php?lang=" . LANG,
                 "TITLE" => GetMessage("FLOW_DOCUMENT_LIST"),
-            ));
+            )
+        );
 
         $context = new CAdminContextMenu($aMenu);
         $context->Show();
@@ -78,15 +82,17 @@ $history = CWorkflow::GetHistoryByID($ID);
 ClearVars();
 $ar = $history->ExtractFields();
 $z = CWorkflow::GetByID($str_DOCUMENT_ID);
-if ($zr = $z->Fetch())
+if ($zr = $z->Fetch()) {
     $document_exist = "Y";
+}
 
 
 $prev_history = CWorkflow::GetHistoryByID($PREV_ID);
 $prev_ar = $prev_history->Fetch();
 $prev_z = CWorkflow::GetByID($prev_ar["DOCUMENT_ID"]);
-if ($prev_zr = $prev_z->Fetch())
+if ($prev_zr = $prev_z->Fetch()) {
     $prev_document_exist = "Y";
+}
 
 $sDocTitle = str_replace("#ID#", "$ID", GetMessage("FLOW_PAGE_TITLE"));
 $APPLICATION->SetTitle($sDocTitle);
@@ -187,14 +193,30 @@ elseif (COption::GetOptionString("workflow", "USE_HTML_EDIT", "Y") == "Y" && CMo
     <tr>
         <td align="center" colspan="2"><?
             $bWithoutPHP = !$USER->IsAdmin();
-            CFileMan::AddHTMLEditorFrame("BODY", $str_BODY, "BODY_TYPE", $str_BODY_TYPE, 300, "Y", $str_DOCUMENT_ID, GetDirPath($str_FILENAME), "", false, $bWithoutPHP);
+            CFileMan::AddHTMLEditorFrame(
+                "BODY",
+                $str_BODY,
+                "BODY_TYPE",
+                $str_BODY_TYPE,
+                300,
+                "Y",
+                $str_DOCUMENT_ID,
+                GetDirPath($str_FILENAME),
+                "",
+                false,
+                $bWithoutPHP
+            );
             ?></td>
     </tr>
 <? else:?>
     <tr>
-        <td align="center" colspan="2"><? echo GetMessage("FLOW_TEXT") ?>
-            &nbsp;<? echo InputType("radio", "BODY_TYPE", "text", $str_BODY_TYPE, false) ?>
-            &nbsp;HTML&nbsp;<? echo InputType("radio", "BODY_TYPE", "html", $str_BODY_TYPE, false) ?></td>
+        <td align="center" colspan="2"><? echo GetMessage("FLOW_TEXT") ?>&nbsp;<? echo InputType(
+                "radio",
+                "BODY_TYPE",
+                "text",
+                $str_BODY_TYPE,
+                false
+            ) ?>&nbsp;HTML&nbsp;<? echo InputType("radio", "BODY_TYPE", "html", $str_BODY_TYPE, false) ?></td>
     </tr>
 <? endif; ?>
 <? if ($str_DOCUMENT_ID > 0): ?>
@@ -232,28 +254,37 @@ if ($document_exist == "Y"):
     <tr>
         <td><?= GetMessage("FLOW_DOCUMENT_DATE_ENTER") ?></td>
         <td><?= $zr["DATE_ENTER"] ?>&nbsp;&nbsp;[<a href="user_edit.php?ID=<?= $zr["ENTERED_BY"] ?>&lang=<?= LANG ?>"
-                                                    title="<?= GetMessage('FLOW_USER_ALT') ?>"><?= $zr["ENTERED_BY"] ?></a>]&nbsp;<? echo htmlspecialcharsbx($zr["EUSER_NAME"]) ?>
-        </td>
+                                                    title="<?= GetMessage(
+                                                        'FLOW_USER_ALT'
+                                                    ) ?>"><?= $zr["ENTERED_BY"] ?></a>]&nbsp;<? echo htmlspecialcharsbx(
+                $zr["EUSER_NAME"]
+            ) ?></td>
     </tr>
     <tr>
         <td><?= GetMessage("FLOW_DOCUMENT_DATE_MODIFY") ?></td>
         <td><?= $zr["DATE_MODIFY"] ?>&nbsp;&nbsp;[<a href="user_edit.php?ID=<?= $zr["MODIFIED_BY"] ?>&lang=<?= LANG ?>"
-                                                     title="<?= GetMessage('FLOW_USER_ALT') ?>"><?= $zr["MODIFIED_BY"] ?></a>]&nbsp;<? echo htmlspecialcharsbx($zr["MUSER_NAME"]) ?>
-        </td>
+                                                     title="<?= GetMessage(
+                                                         'FLOW_USER_ALT'
+                                                     ) ?>"><?= $zr["MODIFIED_BY"] ?></a>]&nbsp;<? echo htmlspecialcharsbx(
+                $zr["MUSER_NAME"]
+            ) ?></td>
     </tr>
-    <? if (strlen($zr["DATE_LOCK"]) > 0) : ?>
+    <? if ($zr["DATE_LOCK"] <> '') : ?>
     <tr>
         <td><?= GetMessage("FLOW_DOCUMENT_DATE_LOCK") ?></td>
         <td><?= $zr["DATE_LOCK"] ?>&nbsp;&nbsp;[<a href="user_edit.php?ID=<?= $zr["LOCKED_BY"] ?>&lang=<?= LANG ?>"
-                                                   title="<?= GetMessage('FLOW_USER_ALT') ?>"><?= $zr["LOCKED_BY"] ?></a>]&nbsp;<? echo htmlspecialcharsbx($zr["LUSER_NAME"]) ?>
-            &nbsp;<? if ($zr["LOCKED_BY"] == $USER->GetID()): ?><span class="required">(!)</span><? endif; ?></td>
+                                                   title="<?= GetMessage(
+                                                       'FLOW_USER_ALT'
+                                                   ) ?>"><?= $zr["LOCKED_BY"] ?></a>]&nbsp;<? echo htmlspecialcharsbx(
+                $zr["LUSER_NAME"]
+            ) ?>&nbsp;<? if ($zr["LOCKED_BY"] == $USER->GetID()): ?><span class="required">(!)</span><? endif; ?></td>
     </tr>
 <? endif; ?>
     <tr>
         <td><?= GetMessage("FLOW_DOCUMENT_STATUS") ?></td>
-        <td>[<a href="workflow_status_edit.php?ID=<?= $zr["STATUS_ID"] ?>&lang=<?= LANG ?>"
-                title="<?= GetMessage('FLOW_STATUS_ALT') ?>"><?= $zr["STATUS_ID"] ?></a>]&nbsp;<? echo htmlspecialcharsbx($zr["STATUS_TITLE"]) ?>
-        </td>
+        <td>[<a href="workflow_status_edit.php?ID=<?= $zr["STATUS_ID"] ?>&lang=<?= LANG ?>" title="<?= GetMessage(
+                'FLOW_STATUS_ALT'
+            ) ?>"><?= $zr["STATUS_ID"] ?></a>]&nbsp;<? echo htmlspecialcharsbx($zr["STATUS_TITLE"]) ?></td>
     </tr>
     <?
     $tabControl->EndTab();

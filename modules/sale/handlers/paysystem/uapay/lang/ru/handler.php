@@ -1,11 +1,12 @@
 <?php
-$MESS["SALE_HPS_UAPAY_ERROR_HTTP_STATUS"] = "Получен ответ от сервера с http статусом: #STATUS_CODE#";
-$MESS["SALE_HPS_UAPAY_ERROR_RESPONSE_STATUS"] = "Получен ответ со статусом: Ошибка";
-$MESS["SALE_HPS_UAPAY_ERROR_CLIENT_ID"] = "Идентификатор клиента не найден";
-$MESS["SALE_HPS_UAPAY_ERROR_CHECK_SUM"] = "Токент не совпадает";
-$MESS["SALE_HPS_UAPAY_TRANSACTION"] = "Транзакция #ID#, номер платежа #PAYMENT_NUMBER#";
-$MESS["SALE_HPS_UAPAY_ERROR_SUM"] = "Сумма платежа не совпадает с суммой оплаты";
-$MESS["SALE_HPS_UAPAY_ERROR_PAYMENT_ID"] = "Идентификатор оплаты не найден";
-$MESS["SALE_HPS_UAPAY_ERROR_CREATE_JWT"] = "Не удалось сформировать JWT";
-$MESS["SALE_HPS_UAPAY_ERROR_PARSE_JWT"] = "Не удалось получить данные из JWT";
-$MESS["SALE_HPS_UAPAY_ERROR_RESPONSE"] = "Ошибка при получении ответа";
+
+$MESS["SALE_HPS_UAPAY_ERROR_HTTP_STATUS"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ http пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: #STATUS_CODE#";
+$MESS["SALE_HPS_UAPAY_ERROR_RESPONSE_STATUS"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: пїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_UAPAY_ERROR_CLIENT_ID"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_UAPAY_ERROR_CHECK_SUM"] = "пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_UAPAY_TRANSACTION"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ #ID#, пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ #PAYMENT_NUMBER#";
+$MESS["SALE_HPS_UAPAY_ERROR_SUM"] = "пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_UAPAY_ERROR_PAYMENT_ID"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_UAPAY_ERROR_CREATE_JWT"] = "пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ JWT";
+$MESS["SALE_HPS_UAPAY_ERROR_PARSE_JWT"] = "пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ JWT";
+$MESS["SALE_HPS_UAPAY_ERROR_RESPONSE"] = "пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ";

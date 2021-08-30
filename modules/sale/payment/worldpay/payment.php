@@ -1,4 +1,6 @@
-<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die(); ?><?
+<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+} ?><?
 $iTestTransaction = CSalePaySystemAction::GetParamValue("TEST_TRANSACTION");
 $strYourInstId = CSalePaySystemAction::GetParamValue("SHOP_ID");
 ?>
@@ -12,25 +14,32 @@ $strYourInstId = CSalePaySystemAction::GetParamValue("SHOP_ID");
                             <font class="tablebodytext">
                                 <input type="hidden" name="instId" value="<?= $strYourInstId ?>">
                                 <input type="hidden" name="cartId"
-                                       value="<?= IntVal($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["ID"]) ?>">
-                                <input type="hidden" name="amount"
-                                       value="<?= htmlspecialcharsbx($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["SHOULD_PAY"]) ?>">
-                                <input type="hidden" name="currency"
-                                       value="<?= htmlspecialcharsbx($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"]) ?>">
-                                <? if (IntVal($iTestTransaction) > 0): ?>
+                                       value="<?= intval($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["ID"]) ?>">
+                                <input type="hidden" name="amount" value="<?= htmlspecialcharsbx(
+                                    $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["SHOULD_PAY"]
+                                ) ?>">
+                                <input type="hidden" name="currency" value="<?= htmlspecialcharsbx(
+                                    $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"]
+                                ) ?>">
+                                <? if (intval($iTestTransaction) > 0): ?>
                                     <input type="hidden" name="testMode" value="<?= $iTestTransaction ?>">
                                 <? endif; ?>
                                 <input type="hidden" name="desc"
-                                       value="Order #<?= IntVal($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["ID"]) ?>">
+                                       value="Order #<?= intval($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["ID"]) ?>">
 
                                 <!--  order properties codes ->  -->
                                 <?
-                                $arTmp = array("name" => "PAYER_NAME", "tel" => "PHONE", "email" => "EMAIL",
-                                    "fax" => "FAX", "address" => "ADDRESS", "postcode" => "ZIP",
+                                $arTmp = array(
+                                    "name" => "PAYER_NAME",
+                                    "tel" => "PHONE",
+                                    "email" => "EMAIL",
+                                    "fax" => "FAX",
+                                    "address" => "ADDRESS",
+                                    "postcode" => "ZIP",
                                     "country" => "COUNTRY"
                                 );
                                 foreach ($arTmp as $key => $value) {
-                                    if (($val = CSalePaySystemAction::GetParamValue($value)) !== False) {
+                                    if (($val = CSalePaySystemAction::GetParamValue($value)) !== false) {
                                         ?><input type="hidden" name="<?= $key ?>"
                                                  value="<?= htmlspecialcharsbx($val) ?>"><?
                                     }
@@ -38,7 +47,7 @@ $strYourInstId = CSalePaySystemAction::GetParamValue("SHOP_ID");
                                 ?>
 
                                 <input type="hidden" name="MC_CurrentStep"
-                                       value="<?= IntVal($GLOBALS["CurrentStep"]) ?>">
+                                       value="<?= intval($GLOBALS["CurrentStep"]) ?>">
                                 <input type="submit" value="Submit to WorldPay for Payment Now" class="inputbutton">
                             </font>
                         </td>

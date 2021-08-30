@@ -74,18 +74,38 @@ class ParamPhotogallery
         }
 
         Util::checkEmptyParamString($componentParams, 'PATH_TO_USER_PHOTO', $folderUsers . 'user/#user_id#/photo/');
-        Util::checkEmptyParamString($componentParams, 'PATH_TO_GROUP_PHOTO', $folderWorkgroups . 'group/#group_id#/photo/');
-        Util::checkEmptyParamString($componentParams, 'PATH_TO_USER_PHOTO_SECTION', $folderUsers . 'user/#user_id#/photo/album/#section_id#/');
-        Util::checkEmptyParamString($componentParams, 'PATH_TO_GROUP_PHOTO_SECTION', $folderWorkgroups . 'group/#group_id#/photo/album/#section_id#/');
-        Util::checkEmptyParamString($componentParams, 'PATH_TO_USER_PHOTO_ELEMENT', $folderUsers . 'user/#user_id#/photo/photo/#section_id#/#element_id#/');
-        Util::checkEmptyParamString($componentParams, 'PATH_TO_GROUP_PHOTO_ELEMENT', $folderWorkgroups . 'group/#group_id#/photo/#section_id#/#element_id#/');
+        Util::checkEmptyParamString(
+            $componentParams,
+            'PATH_TO_GROUP_PHOTO',
+            $folderWorkgroups . 'group/#group_id#/photo/'
+        );
+        Util::checkEmptyParamString(
+            $componentParams,
+            'PATH_TO_USER_PHOTO_SECTION',
+            $folderUsers . 'user/#user_id#/photo/album/#section_id#/'
+        );
+        Util::checkEmptyParamString(
+            $componentParams,
+            'PATH_TO_GROUP_PHOTO_SECTION',
+            $folderWorkgroups . 'group/#group_id#/photo/album/#section_id#/'
+        );
+        Util::checkEmptyParamString(
+            $componentParams,
+            'PATH_TO_USER_PHOTO_ELEMENT',
+            $folderUsers . 'user/#user_id#/photo/photo/#section_id#/#element_id#/'
+        );
+        Util::checkEmptyParamString(
+            $componentParams,
+            'PATH_TO_GROUP_PHOTO_ELEMENT',
+            $folderWorkgroups . 'group/#group_id#/photo/#section_id#/#element_id#/'
+        );
     }
 
     public function prepareParentPhotogalleryParams(&$componentParams)
     {
         if (
             (
-                strlen($componentParams['PHOTO_GROUP_IBLOCK_TYPE']) <= 0
+                $componentParams['PHOTO_GROUP_IBLOCK_TYPE'] == ''
                 || intval($componentParams['PHOTO_GROUP_IBLOCK_ID']) <= 0
             )
             && Loader::includeModule('iblock')) {
@@ -118,10 +138,12 @@ class ParamPhotogallery
                 }
 
                 if ($cache->startDataCache()) {
-                    $cache->endDataCache([
-                        'PHOTO_GROUP_IBLOCK_TYPE' => $componentParams['PHOTO_GROUP_IBLOCK_TYPE'],
-                        'PHOTO_GROUP_IBLOCK_ID' => $componentParams['PHOTO_GROUP_IBLOCK_ID']
-                    ]);
+                    $cache->endDataCache(
+                        [
+                            'PHOTO_GROUP_IBLOCK_TYPE' => $componentParams['PHOTO_GROUP_IBLOCK_TYPE'],
+                            'PHOTO_GROUP_IBLOCK_ID' => $componentParams['PHOTO_GROUP_IBLOCK_ID']
+                        ]
+                    );
                 }
             }
             unset($cache);

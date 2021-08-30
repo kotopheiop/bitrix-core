@@ -86,7 +86,8 @@ class Knowledge extends Scope
             'ROBOTS',
             'SETTINGS',
             'SPEED',
-            'YACOUNTER'
+            'YACOUNTER',
+            'COOKIES'
         ];
     }
 }

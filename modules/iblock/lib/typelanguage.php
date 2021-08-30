@@ -154,7 +154,9 @@ class TypeLanguageTable extends Entity\DataManager
         $helper = $connection->getSqlHelper();
         $entity = self::getEntity();
 
-        $sql = "DELETE FROM " . $entity->getDBTableName() . " WHERE IBLOCK_TYPE_ID = '" . $helper->forSql($iblockTypeId) . "'";
+        $sql = "DELETE FROM " . $entity->getDBTableName() . " WHERE IBLOCK_TYPE_ID = '" . $helper->forSql(
+                $iblockTypeId
+            ) . "'";
         $connection->queryExecute($sql);
 
         $result = new \Bitrix\Main\Entity\DeleteResult();

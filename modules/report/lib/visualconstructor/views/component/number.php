@@ -50,13 +50,19 @@ class Number extends Base
         $whatWillCalculateField = $reportHandler->getFormElement('calculate');
         $labelField = $reportHandler->getFormElement('label');
         if ($whatWillCalculateField) {
-            $labelField->addJsEventListener($whatWillCalculateField, $whatWillCalculateField::JS_EVENT_ON_CHANGE, array(
-                'class' => 'BX.Report.VisualConstructor.FieldEventHandlers.Title',
-                'action' => 'whatWillCalculateChange',
-            ));
-            $whatWillCalculateField->addAssets(array(
-                'js' => array('/bitrix/js/report/js/visualconstructor/fields/reporttitle.js')
-            ));
+            $labelField->addJsEventListener(
+                $whatWillCalculateField,
+                $whatWillCalculateField::JS_EVENT_ON_CHANGE,
+                array(
+                    'class' => 'BX.Report.VisualConstructor.FieldEventHandlers.Title',
+                    'action' => 'whatWillCalculateChange',
+                )
+            );
+            $whatWillCalculateField->addAssets(
+                array(
+                    'js' => array('/bitrix/js/report/js/visualconstructor/fields/reporttitle.js')
+                )
+            );
         }
     }
 
@@ -74,8 +80,12 @@ class Number extends Base
         $resultWidget = parent::prepareWidgetContent($widget, $withCalculatedData);
 
         if ($withCalculatedData) {
-            $resultWidget['config']['color'] = $widget->getWidgetHandler()->getReportHandlers()[0]->getFormElement('color')->getValue();
-            $resultWidget['config']['title'] = $widget->getWidgetHandler()->getReportHandlers()[0]->getFormElement('label')->getValue();
+            $resultWidget['config']['color'] = $widget->getWidgetHandler()->getReportHandlers()[0]->getFormElement(
+                'color'
+            )->getValue();
+            $resultWidget['config']['title'] = $widget->getWidgetHandler()->getReportHandlers()[0]->getFormElement(
+                'label'
+            )->getValue();
         }
 
         return $resultWidget;

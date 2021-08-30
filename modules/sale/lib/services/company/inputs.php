@@ -1,7 +1,8 @@
 <?php
 
 namespace Bitrix\Sale\Company\Inputs;
-require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/lib/internals/input.php");
+
+require_once __DIR__ . '/../../internals/input.php';
 
 use Bitrix\Sale\Internals\CompanyLocationTable;
 use    Bitrix\Sale\Internals\Input;
@@ -24,8 +25,9 @@ class LocationMulti extends Input\Base
             )
         );
 
-        while ($loc = $res->fetch())
+        while ($loc = $res->fetch()) {
             $result .= htmlspecialcharsbx($loc["LNAME"]) . "<br>\n";
+        }
 
         $res = CompanyLocationTable::getConnectedGroups(
             $input["COMPANY_ID"],
@@ -35,8 +37,9 @@ class LocationMulti extends Input\Base
             )
         );
 
-        while ($loc = $res->fetch())
+        while ($loc = $res->fetch()) {
             $result .= htmlspecialcharsbx($loc["LNAME"]) . "<br>\n";
+        }
 
         return $result;
     }
@@ -120,7 +123,10 @@ class LocationMulti extends Input\Base
     }
 }
 
-Input\Manager::register('COMPANY_LOCATION_MULTI', array(
-    'CLASS' => __NAMESPACE__ . '\\LocationMulti',
-    'NAME' => Loc::getMessage('INPUT_company_LOCATION_MULTI')
-));
+Input\Manager::register(
+    'COMPANY_LOCATION_MULTI',
+    array(
+        'CLASS' => __NAMESPACE__ . '\\LocationMulti',
+        'NAME' => Loc::getMessage('INPUT_company_LOCATION_MULTI')
+    )
+);

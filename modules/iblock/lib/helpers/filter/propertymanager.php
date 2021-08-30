@@ -44,7 +44,10 @@ class PropertyManager
             foreach ($listProperty as $property) {
                 $fieldId = $property['FIELD_ID'];
                 $fieldName = ($offers
-                    ? Loc::getMessage('IBLOCK_PROPERTY_FILTER_MANAGER_MESS_OFFER_TITLE', ['#NAME#' => $property['NAME']])
+                    ? Loc::getMessage(
+                        'IBLOCK_PROPERTY_FILTER_MANAGER_MESS_OFFER_TITLE',
+                        ['#NAME#' => $property['NAME']]
+                    )
                     : $property['NAME']
                 );
 
@@ -69,7 +72,8 @@ class PropertyManager
                                     "value" => "",
                                     "filterable" => ""
                                 );
-                                call_user_func_array($property["PROPERTY_USER_TYPE"]["GetUIFilterProperty"],
+                                call_user_func_array(
+                                    $property["PROPERTY_USER_TYPE"]["GetUIFilterProperty"],
                                     array(
                                         $property,
                                         array("VALUE" => $fieldId, "FORM_NAME" => "main-ui-filter"),
@@ -135,13 +139,16 @@ class PropertyManager
                             $items = [
                                 'NOT_REF' => Loc::getMessage('IBLOCK_PM_LIST_DEFAULT_OPTION')
                             ];
-                            $enumIterator = Iblock\PropertyEnumerationTable::getList([
-                                'select' => ['ID', 'VALUE', 'SORT'],
-                                'filter' => ['PROPERTY_ID' => $property['ID']],
-                                'order' => ['SORT' => 'ASC', 'VALUE' => 'ASC', 'ID' => 'ASC']
-                            ]);
-                            while ($enumRow = $enumIterator->fetch())
+                            $enumIterator = Iblock\PropertyEnumerationTable::getList(
+                                [
+                                    'select' => ['ID', 'VALUE', 'SORT'],
+                                    'filter' => ['PROPERTY_ID' => $property['ID']],
+                                    'order' => ['SORT' => 'ASC', 'VALUE' => 'ASC', 'ID' => 'ASC']
+                                ]
+                            );
+                            while ($enumRow = $enumIterator->fetch()) {
                                 $items[$enumRow['ID']] = $enumRow['VALUE'];
+                            }
                             unset($enumRow, $enumIterator);
                             $this->filterFields[] = array(
                                 "id" => $fieldId,
@@ -172,7 +179,10 @@ class PropertyManager
                                 array('ID', 'IBLOCK_ID', 'DEPTH_LEVEL', 'NAME', 'LEFT_MARGIN')
                             );
                             while ($section = $sectionQueryObject->fetch()) {
-                                $items[$section["ID"]] = str_repeat(". ", $section["DEPTH_LEVEL"] - 1) . $section["NAME"];
+                                $items[$section["ID"]] = str_repeat(
+                                        ". ",
+                                        $section["DEPTH_LEVEL"] - 1
+                                    ) . $section["NAME"];
                             }
                             unset($section, $sectionQueryObject);
                             $this->filterFields[] = array(
@@ -203,11 +213,14 @@ class PropertyManager
     {
         foreach ($this->getFilterFields() as $filterField) {
             if (isset($filterField["customRender"])) {
-                echo call_user_func_array($filterField["customRender"], array(
-                    $filterId,
-                    $filterField["property"]["PROPERTY_TYPE"],
-                    array($filterField["property"]),
-                ));
+                echo call_user_func_array(
+                    $filterField["customRender"],
+                    array(
+                        $filterId,
+                        $filterField["property"]["PROPERTY_TYPE"],
+                        array($filterField["property"]),
+                    )
+                );
             }
         }
     }
@@ -261,12 +274,15 @@ class PropertyManager
             } elseif (isset($listProperty[$propertyId]['PROPERTY_USER_TYPE']['AddFilterFields'])) {
                 $filtered = false;
                 $row = $listProperty[$propertyId];
-                call_user_func_array($row['PROPERTY_USER_TYPE']['AddFilterFields'], array(
-                    $row,
-                    array('VALUE' => $row['FIELD_ID'], 'FILTER_ID' => $filterId),
-                    &$filter,
-                    &$filtered,
-                ));
+                call_user_func_array(
+                    $row['PROPERTY_USER_TYPE']['AddFilterFields'],
+                    array(
+                        $row,
+                        array('VALUE' => $row['FIELD_ID'], 'FILTER_ID' => $filterId),
+                        &$filter,
+                        &$filtered,
+                    )
+                );
                 unset($filtered);
                 unset($row);
             } else {
@@ -288,14 +304,16 @@ class PropertyManager
                                 $newValues[] = ($value === 'NOT_REF' ? false : $value);
                             }
                             unset($filter[$index]);
-                            if (!empty($newValues))
+                            if (!empty($newValues)) {
                                 $filter['=' . $propertyId] = $newValues;
+                            }
                             unset($newValues);
                         } else {
                             $value = $filter[$index];
                             unset($filter[$index]);
-                            if ($value === 'NOT_REF')
+                            if ($value === 'NOT_REF') {
                                 $value = false;
+                            }
                             $filter['=' . $propertyId] = $value;
                             unset($value);
                         }
@@ -314,11 +332,13 @@ class PropertyManager
     {
         if ($this->listProperty === null) {
             $this->listProperty = [];
-            $iterator = Iblock\PropertyTable::getList([
-                'select' => ['*'],
-                'filter' => ['=IBLOCK_ID' => $this->iblockId, '=ACTIVE' => 'Y', '=FILTRABLE' => 'Y'],
-                'order' => ['SORT' => 'ASC', 'NAME' => 'ASC']
-            ]);
+            $iterator = Iblock\PropertyTable::getList(
+                [
+                    'select' => ['*'],
+                    'filter' => ['=IBLOCK_ID' => $this->iblockId, '=ACTIVE' => 'Y', '=FILTRABLE' => 'Y'],
+                    'order' => ['SORT' => 'ASC', 'NAME' => 'ASC']
+                ]
+            );
             while ($property = $iterator->fetch()) {
                 $property['FIELD_ID'] = 'PROPERTY_' . $property['ID'];
                 $property['USER_TYPE_SETTINGS'] = $property['USER_TYPE_SETTINGS_LIST'];

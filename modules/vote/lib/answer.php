@@ -67,7 +67,8 @@ class AnswerTable extends Entity\DataManager
             (new IntegerField('QUESTION_ID')),
             (new IntegerField('C_SORT')),
             (new IntegerField('IMAGE_ID')),
-            (new Reference('IMAGE',
+            (new Reference(
+                'IMAGE',
                 \Bitrix\Main\FileTable::class,
                 Join::on('this.IMAGE_ID', 'ref.ID')
             )),
@@ -93,16 +94,22 @@ class AnswerTable extends Entity\DataManager
     public static function setCounter(array $id, $increment = true)
     {
         $id = implode(", ", array_map('intval', $id));
-        if (empty($id))
+        if (empty($id)) {
             return;
+        }
         $connection = \Bitrix\Main\Application::getInstance()->getConnection();
 
         $sql = intval($increment);
-        if ($increment === true)
+        if ($increment === true) {
             $sql = "COUNTER+1";
-        else if ($increment === false)
-            $sql = "COUNTER-1";
-        $connection->queryExecute("UPDATE " . self::getTableName() . " SET COUNTER=" . $sql . " WHERE ID IN (" . $id . ")");
+        } else {
+            if ($increment === false) {
+                $sql = "COUNTER-1";
+            }
+        }
+        $connection->queryExecute(
+            "UPDATE " . self::getTableName() . " SET COUNTER=" . $sql . " WHERE ID IN (" . $id . ")"
+        );
     }
 }
 

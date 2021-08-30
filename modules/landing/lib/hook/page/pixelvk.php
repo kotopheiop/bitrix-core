@@ -18,10 +18,13 @@ class PixelVk extends \Bitrix\Landing\Hook\Page
     {
         $helpUrl = \Bitrix\Landing\Help::getHelpUrl('PIXEL');
         return array(
-            'USE' => new Field\Checkbox('USE', array(
+            'USE' => new Field\Checkbox(
+                'USE', array(
                 'title' => Loc::getMessage('LANDING_HOOK_PIXEL_VK_USE')
-            )),
-            'COUNTER' => new Field\Text('COUNTER', array(
+            )
+            ),
+            'COUNTER' => new Field\Text(
+                'COUNTER', array(
                 'title' => Loc::getMessage('LANDING_HOOK_PIXEL_VK_COUNTER'),
                 'placeholder' => Loc::getMessage('LANDING_HOOK_PIXEL_VK_PLACEHOLDER2'),
                 'help' => $helpUrl
@@ -29,7 +32,8 @@ class PixelVk extends \Bitrix\Landing\Hook\Page
                     Loc::getMessage('LANDING_HOOK_PIXEL_VK_HELP') .
                     '</a>'
                     : ''
-            ))
+            )
+            )
         );
     }
 
@@ -68,20 +72,19 @@ class PixelVk extends \Bitrix\Landing\Hook\Page
         $counter = \htmlspecialcharsbx(trim($this->fields['COUNTER']));
         $counter = \CUtil::jsEscape($counter);
         if ($counter) {
-            Manager::setPageView('AfterHeadOpen',
-                '<script type="text/javascript" data-skip-moving="true">
-					!function(){
-						var t=document.createElement("script");
-						t.type="text/javascript",
-						t.async=!0,
-						t.src="https://vk.com/js/api/openapi.js?160",
-						t.onload=function(){VK.Retargeting.Init("' . $counter . '"),
-						VK.Retargeting.Hit()},document.head.appendChild(t)
-					}();
-				</script>'
+            Cookies::addCookieScript(
+                'vkp',
+                '!function(){
+					var t=document.createElement("script");
+					t.type="text/javascript",
+					t.async=!0,
+					t.src="https://vk.com/js/api/openapi.js?160",
+					t.onload=function(){VK.Retargeting.Init("' . $counter . '"),
+					VK.Retargeting.Hit()},document.head.appendChild(t)
+				}();'
             );
             Manager::setPageView(
-                'AfterBodyOpen',
+                'Noscript',
                 '<noscript>
 					<img src="https://vk.com/rtrg?p=' . $counter . '" style="position:fixed; left:-999px;" alt=""/>
 				</noscript>'

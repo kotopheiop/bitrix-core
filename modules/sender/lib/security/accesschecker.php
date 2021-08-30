@@ -33,7 +33,7 @@ class AccessChecker
      */
     public static function getMessage($code)
     {
-        $message = Loc::getMessage('SENDER_SECURITY_ACCESS_CHECKER_' . strtoupper($code));
+        $message = Loc::getMessage('SENDER_SECURITY_ACCESS_CHECKER_' . mb_strtoupper($code));
         return $message ?: 'Unknown error.';
     }
 
@@ -71,10 +71,12 @@ class AccessChecker
     {
         $user = $user ?: User::current();
         if (!$user->canView()) {
-            $collection->setError(new Error(
-                self::getMessage(self::ERR_CODE_VIEW),
-                self::ERR_CODE_VIEW
-            ));
+            $collection->setError(
+                new Error(
+                    self::getMessage(self::ERR_CODE_VIEW),
+                    self::ERR_CODE_VIEW
+                )
+            );
             return false;
         }
 

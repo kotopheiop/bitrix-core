@@ -8,7 +8,8 @@ $APPLICATION->IncludeComponent(
     'mobile',
     array("MENU_FILE_PATH" => "/#folder#/.mobile_menu.php"),
     false,
-    Array('HIDE_ICONS' => 'Y'));
+    Array('HIDE_ICONS' => 'Y')
+);
 ?>
 
 

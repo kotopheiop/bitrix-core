@@ -1,4 +1,5 @@
 <?
+
 /*
 ##############################################
 # Bitrix: SiteManager                        #
@@ -9,25 +10,33 @@
 */
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
-if (!check_bitrix_sessid())
+if (!check_bitrix_sessid()) {
     die();
+}
 
-if (!CModule::IncludeModule('mail'))
+if (!CModule::IncludeModule('mail')) {
     die();
+}
 
 $MOD_RIGHT = $APPLICATION->GetGroupRight("mail");
-if ($MOD_RIGHT < "R")
+if ($MOD_RIGHT < "R") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $res = '';
 switch ($_REQUEST['action']) {
     case 'start':
         $bWindowsHosting = false;
         $strCurrentOS = PHP_OS;
-        if (StrToUpper(SubStr($strCurrentOS, 0, 3)) === "WIN")
+        if (mb_strtoupper(mb_substr($strCurrentOS, 0, 3)) === "WIN") {
             $bWindowsHosting = true;
+        }
 
-        $phpPath = COption::GetOptionString("mail", "php_path", $bWindowsHosting ? "../apache/php.exe -c ../apache/php.ini" : "authbind php -c /etc/php.ini");
+        $phpPath = COption::GetOptionString(
+            "mail",
+            "php_path",
+            $bWindowsHosting ? "../apache/php.exe -c ../apache/php.ini" : "authbind php -c /etc/php.ini"
+        );
         $serverPath = $_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/mail/smtpd.php";
 
         chdir($_SERVER["DOCUMENT_ROOT"]);
@@ -54,7 +63,7 @@ switch ($_REQUEST['action']) {
                     $startErrorMessage .= "[".$execReturnVar."] ".$s;
                 }
         */
-        if (strlen($startErrorMessage) <= 0) {
+        if ($startErrorMessage == '') {
             if ($bWindowsHosting) {
                 pclose(popen("start " . $phpPath . " \"" . $serverPath . "\"", "r"));
             } else {
@@ -63,10 +72,11 @@ switch ($_REQUEST['action']) {
             }
         }
 
-        if (strlen($startErrorMessage) <= 0)
+        if ($startErrorMessage == '') {
             $res = "success";
-        else
+        } else {
             $res = $startErrorMessage;
+        }
         break;
     case 'stop':
         $CACHE_MANAGER->Read(3600000, $cache_id = "smtpd_stop");

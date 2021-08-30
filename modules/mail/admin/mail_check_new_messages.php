@@ -1,4 +1,5 @@
 <?
+
 /*
 ##############################################
 # Bitrix: SiteManager                        #
@@ -11,7 +12,9 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
 require_once($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/prolog.php");
 
 $MOD_RIGHT = $APPLICATION->GetGroupRight("mail");
-if ($MOD_RIGHT < "R") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($MOD_RIGHT < "R") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 IncludeModuleLangFile(__FILE__);
 Bitrix\Main\Loader::includeModule('mail');
 ClearVars("mb_");
@@ -33,7 +36,10 @@ require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admi
                         <select name="mailbox_id">
                             <option value=""><? echo GetMessage("MAIL_CHECK_CHECK_ALL") ?></option>
                             <?
-                            $l = CMailbox::GetList(array('NAME' => 'ASC', 'ID' => 'ASC'), array('ACTIVE' => 'Y', 'USER_ID' => 0));
+                            $l = CMailbox::GetList(
+                                array('NAME' => 'ASC', 'ID' => 'ASC'),
+                                array('ACTIVE' => 'Y', 'USER_ID' => 0)
+                            );
                             while ($l->ExtractFields("mb_")):
                                 ?>
                                 <option value="<? echo $mb_ID ?>"<? if ($mailbox_id == $mb_ID) echo " selected" ?>><? echo $mb_NAME ?></option><?
@@ -51,8 +57,9 @@ require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admi
 <?
 if (check_bitrix_sessid()) {
     $arFilter = array('ACTIVE' => 'Y', 'USER_ID' => 0);
-    if ($mailbox_id > 0)
+    if ($mailbox_id > 0) {
         $arFilter["ID"] = $mailbox_id;
+    }
 
     $dbr = CMailBox::GetList(array(), $arFilter);
     ClearVars("f_");
@@ -66,23 +73,27 @@ if (check_bitrix_sessid()) {
 
         if (in_array($res['SERVER_TYPE'], array('imap', 'controller', 'domain', 'crdomain'))) {
             $newMessages = \Bitrix\Mail\Helper::syncMailbox($res['ID'], $error);
-        } else if (in_array($res['SERVER_TYPE'], array('pop3'))) {
-            if ($mb->connect($res['ID'])) {
-                $newMessages = $mb->new_mess_count;
-            } else {
-                $error = \CMailError::getErrorsText();
+        } else {
+            if (in_array($res['SERVER_TYPE'], array('pop3'))) {
+                if ($mb->connect($res['ID'])) {
+                    $newMessages = $mb->new_mess_count;
+                } else {
+                    $error = \CMailError::getErrorsText();
+                }
             }
         }
 
         $aContext = array();
 
         if ($newMessages !== false && empty($error)) {
-            \CAdminMessage::showNote(sprintf(
-                '%s %u %s',
-                getMessage('MAIL_CHECK_CNT'),
-                $newMessages,
-                getMessage('MAIL_CHECK_CNT_NEW')
-            ));
+            \CAdminMessage::showNote(
+                sprintf(
+                    '%s %u %s',
+                    getMessage('MAIL_CHECK_CNT'),
+                    $newMessages,
+                    getMessage('MAIL_CHECK_CNT_NEW')
+                )
+            );
 
             if ($newMessages > 0) {
                 $aContext[] = array(
@@ -93,11 +104,13 @@ if (check_bitrix_sessid()) {
                 );
             }
         } else {
-            \CAdminMessage::showMessage(sprintf(
-                '%s %s',
-                getMessage('MAIL_CHECK_ERR'),
-                $error
-            ));
+            \CAdminMessage::showMessage(
+                sprintf(
+                    '%s %s',
+                    getMessage('MAIL_CHECK_ERR'),
+                    $error
+                )
+            );
 
             $aContext = array(
                 array(

@@ -152,10 +152,12 @@ class DashboardRow extends Model
      */
     public static function getRowsByGIdsAndBoardId(array $gIds, $boardId)
     {
-        return static::getModelList(array(
-            'select' => array('*'),
-            'filter' => Query::filter()->where('BOARD_ID', $boardId)->logic('and')->whereIn('GID', $gIds)
-        ));
+        return static::getModelList(
+            array(
+                'select' => array('*'),
+                'filter' => Query::filter()->where('BOARD_ID', $boardId)->logic('and')->whereIn('GID', $gIds)
+            )
+        );
     }
 
     /**
@@ -166,12 +168,14 @@ class DashboardRow extends Model
      */
     public static function getRowsWithWidgetsByBoard($boardId)
     {
-        $rows = static::getModelList(array(
-            'select' => array('*'),
-            'filter' => array('=BOARD_ID' => $boardId),
-            'with' => array('widgets', 'widgets.configurations'),
-            'order' => array('WEIGHT' => 'ASC'),
-        ));
+        $rows = static::getModelList(
+            array(
+                'select' => array('*'),
+                'filter' => array('=BOARD_ID' => $boardId),
+                'with' => array('widgets', 'widgets.configurations'),
+                'order' => array('WEIGHT' => 'ASC'),
+            )
+        );
         return $rows;
     }
 
@@ -215,12 +219,14 @@ class DashboardRow extends Model
      */
     public static function getRowsWithReportsByBoard($boardId)
     {
-        $rows = static::getModelList(array(
-            'select' => array('*'),
-            'filter' => Query::filter()->where('BOARD_ID', $boardId),
-            'with' => array('widgets', 'widgets.configurations', 'widgets.reports.configurations'),
-            'order' => array('WEIGHT' => 'ASC'),
-        ));
+        $rows = static::getModelList(
+            array(
+                'select' => array('*'),
+                'filter' => Query::filter()->where('BOARD_ID', $boardId),
+                'with' => array('widgets', 'widgets.configurations', 'widgets.reports.configurations'),
+                'order' => array('WEIGHT' => 'ASC'),
+            )
+        );
         return $rows;
     }
 
@@ -229,7 +235,7 @@ class DashboardRow extends Model
      */
     public function getLayoutMap()
     {
-        return unserialize($this->layoutMap);
+        return unserialize($this->layoutMap, ['allowed_classes' => false]);
     }
 
     /**

@@ -33,11 +33,13 @@ class ConversionHandler
                 'NAME' => Loc::getMessage('SEO_CONVERSION_ATTRIBUTE_YANDEX_DIRECT_NAME'),
                 'BG_COLOR' => '#4bbedb',
                 'GET_VALUES' => function (array $ids) {
-                    $dbRes = YandexBannerTable::getList(array(
-                        'filter' => array("=XML_ID" => $ids),
-                        'select' => array("XML_ID", "NAME"),
-                        'order' => array('NAME' => 'ASC'),
-                    ));
+                    $dbRes = YandexBannerTable::getList(
+                        array(
+                            'filter' => array("=XML_ID" => $ids),
+                            'select' => array("XML_ID", "NAME"),
+                            'order' => array('NAME' => 'ASC'),
+                        )
+                    );
 
                     $bannerList = array();
                     while ($banner = $dbRes->fetch()) {

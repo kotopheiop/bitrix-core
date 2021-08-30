@@ -1,8 +1,8 @@
-<?
+<?php
 
 class CSeoKeywords
 {
-    function GetList($arOrder, $arFilter)
+    public static function GetList($arOrder, $arFilter)
     {
         global $DB;
 
@@ -22,10 +22,11 @@ class CSeoKeywords
                         break;
 
                     case 'URL':
-                        if (array_key_exists('URL_EXACT_MATCH', $arFilter) && $arFilter['URL_EXACT_MATCH'] == 'N')
+                        if (array_key_exists('URL_EXACT_MATCH', $arFilter) && $arFilter['URL_EXACT_MATCH'] == 'N') {
                             $arWhere[] = 'URL LIKE \'' . $DB->ForSql($value) . '%\'';
-                        else
+                        } else {
                             $arWhere[] = 'URL=\'' . $DB->ForSql($value) . '\'';
+                        }
                         break;
 
                     case 'KEYWORDS':
@@ -36,22 +37,26 @@ class CSeoKeywords
         }
 
         $strWhere = '';
-        if (count($arWhere) > 0)
+        if (count($arWhere) > 0) {
             $strWhere = 'WHERE ' . implode(' AND ', $arWhere);
+        }
 
         $strOrder = '';
         foreach ($arOrder as $key => $dir) {
             $dir = ToUpper($dir);
             $key = ToUpper($key);
 
-            if ($dir != 'DESC') $dir = 'ASC';
+            if ($dir != 'DESC') {
+                $dir = 'ASC';
+            }
 
             if (in_array($key, $arAllFields)) {
                 $strOrder .= ($strOrder == '' ? '' : ', ') . $DB->ForSql($key) . ' ' . $dir;
             }
-
         }
-        if ($strOrder != '') $strOrder = 'ORDER BY ' . $strOrder;
+        if ($strOrder != '') {
+            $strOrder = 'ORDER BY ' . $strOrder;
+        }
 
         $query = 'SELECT * FROM b_seo_keywords ';
         $query .= $strWhere . ' ';
@@ -60,26 +65,30 @@ class CSeoKeywords
         return $DB->Query($query);
     }
 
-    function CheckFields($ACTION, &$arFields)
+    public static function CheckFields($ACTION, &$arFields)
     {
-        if ($ACTION == 'UPDATE' && isset($arFields['ID']))
+        if ($ACTION == 'UPDATE' && isset($arFields['ID'])) {
             $arFields['ID'] = intval($arFields['ID']);
+        }
 
         $arFields['URL'] = CSeoUtils::CleanURL($arFields['URL']);
 
         if (isset($arFields['KEYWORDS'])) {
-            if (!is_array($arFields['KEYWORDS']))
+            if (!is_array($arFields['KEYWORDS'])) {
                 $arKeywords = explode(",", $arFields['KEYWORDS']);
-            else
+            } else {
                 $arKeywords = array_values($arFields['KEYWORDS']);
+            }
 
-            if (!is_array($arKeywords))
+            if (!is_array($arKeywords)) {
                 $arKeywords = array();
+            }
 
             foreach ($arKeywords as $key => $value) {
                 $arKeywords[$key] = trim($value);
-                if (strlen($arKeywords[$key]) <= 0)
+                if ($arKeywords[$key] == '') {
                     unset($arKeywords[$key]);
+                }
             }
 
             $arFields['KEYWORDS'] = implode(', ', $arKeywords);
@@ -87,13 +96,14 @@ class CSeoKeywords
             $arFields['KEYWORDS'] = '';
         }
 
-        if (!isset($arFields['SITE_ID']) && defined('SITE_ID'))
+        if (!isset($arFields['SITE_ID']) && defined('SITE_ID')) {
             $arFields['SITE_ID'] = SITE_ID;
+        }
 
         return true;
     }
 
-    function Add($arFields)
+    public static function Add($arFields)
     {
         global $APPLICATION, $DB;
 
@@ -114,7 +124,7 @@ class CSeoKeywords
         return $ID;
     }
 
-    function Update($arFields)
+    public static function Update($arFields)
     {
         global $APPLICATION, $DB;
 
@@ -142,8 +152,9 @@ class CSeoKeywords
         }
 
         $condition = $strUpdateBy == 'ID' ? 'WHERE ID=\'' . $ID . '\'' : 'WHERE URL=\'' . $URL . '\'';
-        if ($siteId = $DB->ForSql($arFields['SITE_ID']))
+        if ($siteId = $DB->ForSql($arFields['SITE_ID'])) {
             $condition .= ' AND SITE_ID=\'' . $siteId . '\'';
+        }
         $cnt = $DB->Update('b_seo_keywords', $arUpdate, $condition);
 
         if ($cnt <= 0 && $strUpdateBy == 'URL') {
@@ -154,16 +165,19 @@ class CSeoKeywords
         return $cnt;
     }
 
-    function GetByURL($URL, $SITE_ID = false, $bPart = false, $bCleanUrl = false)
+    public static function GetByURL($URL, $SITE_ID = false, $bPart = false, $bCleanUrl = false)
     {
-        if ($bCleanUrl)
+        if ($bCleanUrl) {
             $URL = CSeoUtils::CleanURL($URL);
+        }
 
         $arFilter = array('URL' => $URL);
-        if ($bPart)
+        if ($bPart) {
             $arFilter['URL_EXACT_MATCH'] = 'N';
-        if ($SITE_ID)
+        }
+        if ($SITE_ID) {
             $arFilter['SITE_ID'] = $SITE_ID;
+        }
 
         $dbRes = CSeoKeywords::GetList(array('URL' => 'ASC', 'ID' => 'ASC'), $arFilter);
         $arKeywords = array();
@@ -174,5 +188,3 @@ class CSeoKeywords
         return $arKeywords;
     }
 }
-
-?>

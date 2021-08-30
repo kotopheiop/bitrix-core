@@ -1,11 +1,12 @@
 <?
+
 //Include Lang
 IncludeModuleLangFile(__FILE__);
 
 //System, not for use
 Class CIdeaManagmentSonetNotify
 {
-    private $Notify = NULL;
+    private $Notify = null;
     private static $Enable = true;
 
     public function __construct($parent)
@@ -15,7 +16,9 @@ Class CIdeaManagmentSonetNotify
 
     public function IsAvailable()
     {
-        return CModule::IncludeModule('socialnetwork') && CModule::IncludeModule('blog') && NULL != $this->Notify && self::$Enable;
+        return CModule::IncludeModule('socialnetwork') && CModule::IncludeModule(
+                'blog'
+            ) && null != $this->Notify && self::$Enable;
     }
 
     /*
@@ -52,8 +55,9 @@ Class CIdeaManagmentSonetNotify
      */
     public static function CallBack_AddComment($arFields)
     {
-        if (!CModule::IncludeModule('blog'))
+        if (!CModule::IncludeModule('blog')) {
             return false;
+        }
 
         $arResult = array();
 
@@ -99,14 +103,21 @@ Class CIdeaManagmentSonetNotify
 
                 if (intval($IdeaCommentId) == 0) {
                     global $APPLICATION;
-                    if ($ex = $APPLICATION->GetException())
+                    if ($ex = $APPLICATION->GetException()) {
                         $arResult["ERROR"] = $ex->GetString();
+                    }
                 } else {
                     //clear cache on succcess
-                    BXClearCache(True, "/" . SITE_ID . "/idea/" . $arIdeaPost["BLOG_ID"] . "/first_page/");
-                    BXClearCache(True, "/" . SITE_ID . "/idea/" . $arIdeaPost["BLOG_ID"] . "/pages/");
-                    BXClearCache(True, "/" . SITE_ID . "/idea/" . $arIdeaPost["BLOG_ID"] . "/comment/" . $arIdeaPost["ID"] . "/");
-                    BXClearCache(True, "/" . SITE_ID . "/idea/" . $arIdeaPost["BLOG_ID"] . "/post/" . $arIdeaPost["ID"] . "/");
+                    BXClearCache(true, "/" . SITE_ID . "/idea/" . $arIdeaPost["BLOG_ID"] . "/first_page/");
+                    BXClearCache(true, "/" . SITE_ID . "/idea/" . $arIdeaPost["BLOG_ID"] . "/pages/");
+                    BXClearCache(
+                        true,
+                        "/" . SITE_ID . "/idea/" . $arIdeaPost["BLOG_ID"] . "/comment/" . $arIdeaPost["ID"] . "/"
+                    );
+                    BXClearCache(
+                        true,
+                        "/" . SITE_ID . "/idea/" . $arIdeaPost["BLOG_ID"] . "/post/" . $arIdeaPost["ID"] . "/"
+                    );
                 }
             }
         }
@@ -145,16 +156,29 @@ Class CIdeaManagmentSonetNotify
             }
 
             if ($messageId = CBlogComment::Update($messageId, $arBlogCommentFields)) {
-                $ufDocID = $GLOBALS["USER_FIELD_MANAGER"]->GetUserFieldValue("BLOG_COMMENT", "UF_BLOG_COMMENT_FILE", $messageId, LANGUAGE_ID);
+                $ufDocID = $GLOBALS["USER_FIELD_MANAGER"]->GetUserFieldValue(
+                    "BLOG_COMMENT",
+                    "UF_BLOG_COMMENT_FILE",
+                    $messageId,
+                    LANGUAGE_ID
+                );
                 $sNote = GetMessage("IDEA_SONET_UPDATE_COMMENT_SOURCE_SUCCESS");
 
                 $cache = new CPHPCache;
-                $cache->CleanDir(SITE_ID . "/idea/" . $arBlogComment["BLOG_ID"] . "/comment/" . $arBlogComment["POST_ID"] . "/");
+                $cache->CleanDir(
+                    SITE_ID . "/idea/" . $arBlogComment["BLOG_ID"] . "/comment/" . $arBlogComment["POST_ID"] . "/"
+                );
 
-                BXClearCache(True, "/" . SITE_ID . "/idea/" . $arBlogComment["BLOG_ID"] . "/first_page/");
-                BXClearCache(True, "/" . SITE_ID . "/idea/" . $arBlogComment["BLOG_ID"] . "/pages/");
-                BXClearCache(True, "/" . SITE_ID . "/idea/" . $arBlogComment["BLOG_ID"] . "/comment/" . $arBlogComment["POST_ID"] . "/");
-                BXClearCache(True, "/" . SITE_ID . "/idea/" . $arBlogComment["BLOG_ID"] . "/post/" . $arBlogComment["POST_ID"] . "/");
+                BXClearCache(true, "/" . SITE_ID . "/idea/" . $arBlogComment["BLOG_ID"] . "/first_page/");
+                BXClearCache(true, "/" . SITE_ID . "/idea/" . $arBlogComment["BLOG_ID"] . "/pages/");
+                BXClearCache(
+                    true,
+                    "/" . SITE_ID . "/idea/" . $arBlogComment["BLOG_ID"] . "/comment/" . $arBlogComment["POST_ID"] . "/"
+                );
+                BXClearCache(
+                    true,
+                    "/" . SITE_ID . "/idea/" . $arBlogComment["BLOG_ID"] . "/post/" . $arBlogComment["POST_ID"] . "/"
+                );
             } else {
                 if ($ex = $GLOBALS["APPLICATION"]->GetException()) {
                     $sError = $ex->GetString();
@@ -198,12 +222,20 @@ Class CIdeaManagmentSonetNotify
             $strOKMessage = GetMessage("IDEA_SONET_DELETE_COMMENT_SOURCE_SUCCESS");
 
             $cache = new CPHPCache;
-            $cache->CleanDir(SITE_ID . "/idea/" . $arBlogComment["BLOG_ID"] . "/comment/" . $arBlogComment["POST_ID"] . "/");
+            $cache->CleanDir(
+                SITE_ID . "/idea/" . $arBlogComment["BLOG_ID"] . "/comment/" . $arBlogComment["POST_ID"] . "/"
+            );
 
-            BXClearCache(True, "/" . SITE_ID . "/idea/" . $arBlogComment["BLOG_ID"] . "/first_page/");
-            BXClearCache(True, "/" . SITE_ID . "/idea/" . $arBlogComment["BLOG_ID"] . "/pages/");
-            BXClearCache(True, "/" . SITE_ID . "/idea/" . $arBlogComment["BLOG_ID"] . "/comment/" . $arBlogComment["POST_ID"] . "/");
-            BXClearCache(True, "/" . SITE_ID . "/idea/" . $arBlogComment["BLOG_ID"] . "/post/" . $arBlogComment["POST_ID"] . "/");
+            BXClearCache(true, "/" . SITE_ID . "/idea/" . $arBlogComment["BLOG_ID"] . "/first_page/");
+            BXClearCache(true, "/" . SITE_ID . "/idea/" . $arBlogComment["BLOG_ID"] . "/pages/");
+            BXClearCache(
+                true,
+                "/" . SITE_ID . "/idea/" . $arBlogComment["BLOG_ID"] . "/comment/" . $arBlogComment["POST_ID"] . "/"
+            );
+            BXClearCache(
+                true,
+                "/" . SITE_ID . "/idea/" . $arBlogComment["BLOG_ID"] . "/post/" . $arBlogComment["POST_ID"] . "/"
+            );
         } else {
             $strErrorMessage = GetMessage("IDEA_SONET_DELETE_COMMENT_SOURCE_ERROR");
         }
@@ -305,7 +337,8 @@ Class CIdeaManagmentSonetNotify
             array(
                 "ENTITY_TYPE" => SONET_ENTITY_USER,
                 "EVENT_ID" => "idea",
-                "SOURCE_ID" => $arNotification["POST_ID"]),
+                "SOURCE_ID" => $arNotification["POST_ID"]
+            ),
             false,
             false,
             array("ID", "RATING_ENTITY_ID")
@@ -344,7 +377,8 @@ Class CIdeaManagmentSonetNotify
                     array(
                         "ENTITY_TYPE" => SONET_ENTITY_USER,
                         "EVENT_ID" => "idea_comment",
-                        "SOURCE_ID" => $arNotification["ID"]),
+                        "SOURCE_ID" => $arNotification["ID"]
+                    ),
                     false,
                     false,
                     array("ID")
@@ -362,22 +396,25 @@ Class CIdeaManagmentSonetNotify
 
     public function Send()
     {
-        if (!$this->IsAvailable())
+        if (!$this->IsAvailable()) {
             return false;
+        }
 
         $arNotification = $this->Notify->getNotification();
-        if ($arNotification["TYPE"] == 'IDEA')
+        if ($arNotification["TYPE"] == 'IDEA') {
             return $this->AddMessage();
-        elseif ($arNotification["TYPE"] == 'IDEA_COMMENT')
+        } elseif ($arNotification["TYPE"] == 'IDEA_COMMENT') {
             return $this->AddComment();
+        }
 
         return false;
     }
 
     public function HideMessage()
     {
-        if (!$this->IsAvailable())
+        if (!$this->IsAvailable()) {
             return false;
+        }
 
         $arNotification = $this->Notify->getNotification();
 
@@ -401,8 +438,9 @@ Class CIdeaManagmentSonetNotify
 
     public function ShowMessage()
     {
-        if (!$this->IsAvailable())
+        if (!$this->IsAvailable()) {
             return false;
+        }
 
         $arNotification = $this->Notify->getNotification();
 
@@ -441,8 +479,9 @@ Class CIdeaManagmentSonetNotify
             false,
             array("ID")
         );
-        while ($arLogComment = $oLogComment->Fetch())
+        while ($arLogComment = $oLogComment->Fetch()) {
             CSocNetLogComments::Delete($arLogComment["ID"]);
+        }
     }
 
     /*
@@ -462,8 +501,9 @@ Class CIdeaManagmentSonetNotify
             false,
             array("ID")
         );
-        while ($arComment = $oComment->Fetch())
+        while ($arComment = $oComment->Fetch()) {
             $this->RemoveComment($arComment["ID"]);
+        }
 
         //Remove message
         $oLogMessage = CSocNetLog::GetList(
@@ -477,20 +517,23 @@ Class CIdeaManagmentSonetNotify
             false,
             array("ID")
         );
-        while ($arLogMessage = $oLogMessage->Fetch())
+        while ($arLogMessage = $oLogMessage->Fetch()) {
             CSocNetLog::Delete($arLogMessage["ID"]);
+        }
     }
 
     public function Remove()
     {
-        if (!$this->IsAvailable())
+        if (!$this->IsAvailable()) {
             return false;
+        }
 
         $arNotification = $this->Notify->getNotification();
-        if ($arNotification["TYPE"] == 'IDEA')
+        if ($arNotification["TYPE"] == 'IDEA') {
             return $this->RemoveMessage();
-        elseif ($arNotification["TYPE"] == 'IDEA_COMMENT')
+        } elseif ($arNotification["TYPE"] == 'IDEA_COMMENT') {
             return $this->RemoveComment();
+        }
 
         return false;
     }

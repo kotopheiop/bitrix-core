@@ -1,4 +1,5 @@
 <?
+
 global $MESS;
 
 $MESS["SPCP_DTITLE"] = "Ukreximbank";
@@ -26,16 +27,16 @@ $MESS["SHOULD_PAY_DESCR"] = "Amount to be paid";
 $MESS["CURRENCY"] = "Currency";
 $MESS["CURRENCY_DESCR"] = "Currency description";
 $MESS["IS_TEST"] = "Test regime";
-$MESS["IS_TEST_DESCR"] = "If empty – the store will work in the usual regime";
+$MESS["IS_TEST_DESCR"] = "If empty ï¿½ the store will work in the usual regime";
 $MESS["PAY_BUTTON"] = "Pay";
 $MESS["EXTCODE"] = "Expanded report";
 $MESS["EXTCODE_AS_FAIL"] = "The card was not authenticated by its issuing bank";
-$MESS["EXTCODE_UNAVAIL"] = "The client’s bank cannot pass authentication";
+$MESS["EXTCODE_UNAVAIL"] = "The clientï¿½s bank cannot pass authentication";
 $MESS["EXTCODE_AS_ERROR"] = "Technical failure in 3D authentication";
 $MESS["ERROR_CHECKSUM"] = "The checksum does not match";
 $MESS["ERROR_SUM"] = "Order amount invalid";
-$MESS["ERROR_FROM_SERVER"] = "Payment for Order ¹#ID# was not successful. Please confirm the data entered and try to pay the order again.";
-$MESS["PAYMENT_OK"] = "Payment for Order ¹#ID# has been made successfully.  Your order is paid and will be shipped soon.";
+$MESS["ERROR_FROM_SERVER"] = "Payment for Order ï¿½#ID# was not successful. Please confirm the data entered and try to pay the order again.";
+$MESS["PAYMENT_OK"] = "Payment for Order ï¿½#ID# has been made successfully.  Your order is paid and will be shipped soon.";
 $MESS["ALLOW_DELIVERY"] = "Allow delivery";
 $MESS["ALLOW_DELIVERY_DESCR"] = "If Y, then delivery will be approved upon reception of payment";
 $MESS["PAY_OK"] = "Message concerning successful payment";

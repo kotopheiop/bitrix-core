@@ -46,8 +46,9 @@ class GroupTable extends Entity\DataManager
             $primary = $addResult->getId();
 
             // names
-            if (isset($name))
+            if (isset($name)) {
                 Name\GroupTable::addMultipleForOwner($primary, $name);
+            }
 
             // set flag that indicates whether project still uses groups or not
             self::setGroupUsage();
@@ -72,8 +73,9 @@ class GroupTable extends Entity\DataManager
         // update connected data
         if ($updResult->isSuccess()) {
             // names
-            if (isset($name))
+            if (isset($name)) {
                 Name\GroupTable::updateMultipleForOwner($primary, $name);
+            }
         }
 
         return $updResult;
@@ -101,7 +103,9 @@ class GroupTable extends Entity\DataManager
     {
         $optValue = Config\Option::get("sale", self::PROJECT_USES_GROUPS_OPT, '', '');
         if (!$optValue) // option is undefined, we are not sure if there are groups or not
+        {
             return self::getGroupUsage();
+        }
 
         return $optValue == 'Y';
     }

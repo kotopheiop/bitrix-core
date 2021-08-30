@@ -5,8 +5,9 @@ require_once(dirname(__FILE__) . "/../include/prolog_admin_before.php");
 
 ClearVars();
 
-if (!$USER->CanDoOperation('edit_other_settings'))
+if (!$USER->CanDoOperation('edit_other_settings')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 
@@ -27,38 +28,40 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && ($_POST['save'] <> "" || $_POST['app
         "URL" => $_REQUEST["URL"],
     );
 
-    if ($ID > 0)
+    if ($ID > 0) {
         $res = $hotKeyCodes->Update($ID, $arFields);
-
-    else {
+    } else {
         $ID = $hotKeyCodes->Add($arFields);
         $res = ($ID > 0);
     }
 
     if ($res) {
-        if (isset($_POST['apply']))
+        if (isset($_POST['apply'])) {
             LocalRedirect("hot_keys_edit.php?ID=" . $ID . "&lang=" . LANG . "&applied=ok");
-        else
+        } else {
             LocalRedirect(($_REQUEST["addhk"] <> "" ? $_REQUEST["addhk"] : "hot_keys_list.php?lang=" . LANG));
+        }
     } else {
-        if ($e = $APPLICATION->GetException())
+        if ($e = $APPLICATION->GetException()) {
             $errMess = new CAdminMessage(GetMessage("HK_EDIT_ERROR"), $e);
-        else
+        } else {
             $errMess = new CAdminMessage(GetMessage("HK_EDIT_ERROR"));
+        }
 
         $bVarsFromForm = true;
     }
-
 }
 
 if ($ID > 0) {
     $hk = $hotKeyCodes->GetByID($ID);
-    if (!($hk_arr = $hk->ExtractFields("str_")))
+    if (!($hk_arr = $hk->ExtractFields("str_"))) {
         $ID = 0;
+    }
 }
 
-if ($bVarsFromForm)
+if ($bVarsFromForm) {
     $DB->InitTableVarsForEdit("b_hot_keys_code", "", "str_");
+}
 
 
 $sDocTitle = ($ID > 0 ? GetMessage("HK_EDIT_RECORD", array("#ID#" => $ID)) : GetMessage("HK_NEW_RECORD"));
@@ -84,22 +87,28 @@ if ($ID > 0) {
         "ICON" => "btn_new",
     );
 
-    if ($str_IS_CUSTOM)
+    if ($str_IS_CUSTOM) {
         $aMenu[] = array(
             "TEXT" => GetMessage("HK_DELETE"),
             "TITLE" => GetMessage("HK_DELETE_TITLE"),
-            "LINK" => "javascript:if(confirm('" . GetMessage("HK_DEL_CONFIRM") . "')) window.location='hot_keys_list.php?ID=" . $ID . "&action=delete&lang=" . LANG . "&" . bitrix_sessid_get() . "';",
+            "LINK" => "javascript:if(confirm('" . GetMessage(
+                    "HK_DEL_CONFIRM"
+                ) . "')) window.location='hot_keys_list.php?ID=" . $ID . "&action=delete&lang=" . LANG . "&" . bitrix_sessid_get(
+                ) . "';",
             "ICON" => "btn_delete",
         );
+    }
 }
 $context = new CAdminContextMenu($aMenu);
 $context->Show();
 
-if ($_GET["applied"] == "ok")
+if ($_GET["applied"] == "ok") {
     CAdminMessage::ShowMessage(array("MESSAGE" => GetMessage("HK_EDIT_SUCCESS"), "TYPE" => "OK"));
+}
 
-if ($errMess)
+if ($errMess) {
     echo $errMess->Show();
+}
 
 $aTabs = array(
     array("DIV" => "edit1", "TAB" => GetMessage("HK_EDIT_TAB"), "TITLE" => GetMessage("HK_EDIT_TAB_TITLE")),
@@ -129,9 +138,9 @@ $tabControl = new CAdminTabControl("tabControl", $aTabs);
     <? endif; ?>
     <tr class="adm-detail-required-field">
         <td><?= GetMessage("HK_NAME") ?>:</td>
-        <td><input type="text" name="NAME" size="45" maxlength="255"
-                   value="<?= $str_IS_CUSTOM ? $str_NAME : GetMessage($str_NAME); ?>" <?= $str_IS_CUSTOM ? '' : 'disabled' ?> >
-        </td>
+        <td><input type="text" name="NAME" size="45" maxlength="255" value="<?= $str_IS_CUSTOM ? $str_NAME : GetMessage(
+                $str_NAME
+            ); ?>" <?= $str_IS_CUSTOM ? '' : 'disabled' ?> ></td>
     </tr>
     <tr class="adm-detail-required-field">
         <td class="adm-detail-valign-top"><?= GetMessage("HK_CODE") ?>:</td>
@@ -146,8 +155,9 @@ $tabControl = new CAdminTabControl("tabControl", $aTabs);
     <tr>
         <td><?= GetMessage("HK_COMMENTS") ?>:</td>
         <td><input type="text" name="COMMENTS" size="45" maxlength="255"
-                   value="<?= $str_IS_CUSTOM ? $str_COMMENTS : GetMessage($str_COMMENTS) ?>" <?= $str_IS_CUSTOM ? '' : 'disabled' ?>>
-        </td>
+                   value="<?= $str_IS_CUSTOM ? $str_COMMENTS : GetMessage(
+                       $str_COMMENTS
+                   ) ?>" <?= $str_IS_CUSTOM ? '' : 'disabled' ?>></td>
     </tr>
 
     <tr>
@@ -163,10 +173,12 @@ $tabControl = new CAdminTabControl("tabControl", $aTabs);
     </tr>
 
     <?
-    $tabControl->Buttons(array(
-        "disabled" => $str_IS_CUSTOM ? false : true,
-        "back_url" => ($_REQUEST["addhk"] <> "" ? $_REQUEST["addhk"] : "hot_keys_list.php?lang=" . LANG),
-    ));
+    $tabControl->Buttons(
+        array(
+            "disabled" => $str_IS_CUSTOM ? false : true,
+            "back_url" => ($_REQUEST["addhk"] <> "" ? $_REQUEST["addhk"] : "hot_keys_list.php?lang=" . LANG),
+        )
+    );
     $tabControl->End();
     ?>
 </form>

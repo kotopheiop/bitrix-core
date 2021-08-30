@@ -62,24 +62,26 @@ class MessageSms implements Message\iBase, Message\iMailable
             return;
         }
 
-        $this->configuration->setArrayOptions(array(
+        $this->configuration->setArrayOptions(
             array(
-                'type' => 'string',
-                'code' => 'SENDER',
-                'name' => Loc::getMessage('SENDER_INTEGRATION_SMS_MESSAGE_CONFIG_SENDER'),
-                'required' => true,
-                'show_in_list' => true,
-                'readonly_view' => function ($value) {
-                    return Service::getFormattedOutputNumber($value);
-                },
-            ),
-            array(
-                'type' => 'text',
-                'code' => 'MESSAGE_TEXT',
-                'name' => Loc::getMessage('SENDER_INTEGRATION_SMS_MESSAGE_CONFIG_MESSAGE_TEXT'),
-                'required' => true,
-            ),
-        ));
+                array(
+                    'type' => 'string',
+                    'code' => 'SENDER',
+                    'name' => Loc::getMessage('SENDER_INTEGRATION_SMS_MESSAGE_CONFIG_SENDER'),
+                    'required' => true,
+                    'show_in_list' => true,
+                    'readonly_view' => function ($value) {
+                        return Service::getFormattedOutputNumber($value);
+                    },
+                ),
+                array(
+                    'type' => 'text',
+                    'code' => 'MESSAGE_TEXT',
+                    'name' => Loc::getMessage('SENDER_INTEGRATION_SMS_MESSAGE_CONFIG_MESSAGE_TEXT'),
+                    'required' => true,
+                ),
+            )
+        );
     }
 
     /**

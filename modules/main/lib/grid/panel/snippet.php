@@ -35,8 +35,18 @@ class Snippet
         if (!is_array($this->saveButton)) {
             $onchange = new Onchange();
             $onchange->addAction(array("ACTION" => Actions::SHOW_ALL, "DATA" => array()));
-            $onchange->addAction(array("ACTION" => Actions::CALLBACK, "DATA" => array(array("JS" => "Grid.editSelectedSave()"))));
-            $onchange->addAction(array("ACTION" => Actions::REMOVE, "DATA" => array(array("ID" => DefaultValue::SAVE_BUTTON_ID), array("ID" => DefaultValue::CANCEL_BUTTON_ID))));
+            $onchange->addAction(
+                array("ACTION" => Actions::CALLBACK, "DATA" => array(array("JS" => "Grid.editSelectedSave()")))
+            );
+            $onchange->addAction(
+                array(
+                    "ACTION" => Actions::REMOVE,
+                    "DATA" => array(
+                        array("ID" => DefaultValue::SAVE_BUTTON_ID),
+                        array("ID" => DefaultValue::CANCEL_BUTTON_ID)
+                    )
+                )
+            );
 
             $saveButton = new Button();
             $saveButton->setClass(DefaultValue::SAVE_BUTTON_CLASS);
@@ -60,8 +70,18 @@ class Snippet
         if (!is_array($this->cancelButton)) {
             $onchange = new Onchange();
             $onchange->addAction(array("ACTION" => Actions::SHOW_ALL, "DATA" => array()));
-            $onchange->addAction(array("ACTION" => Actions::CALLBACK, "DATA" => array(array("JS" => "Grid.editSelectedCancel()"))));
-            $onchange->addAction(array("ACTION" => Actions::REMOVE, "DATA" => array(array("ID" => DefaultValue::SAVE_BUTTON_ID), array("ID" => DefaultValue::CANCEL_BUTTON_ID))));
+            $onchange->addAction(
+                array("ACTION" => Actions::CALLBACK, "DATA" => array(array("JS" => "Grid.editSelectedCancel()")))
+            );
+            $onchange->addAction(
+                array(
+                    "ACTION" => Actions::REMOVE,
+                    "DATA" => array(
+                        array("ID" => DefaultValue::SAVE_BUTTON_ID),
+                        array("ID" => DefaultValue::CANCEL_BUTTON_ID)
+                    )
+                )
+            );
 
             $cancelButton = new Button();
             $cancelButton->setClass(DefaultValue::CANCEL_BUTTON_CLASS);
@@ -84,9 +104,24 @@ class Snippet
     {
         if (!is_array($this->editButton)) {
             $onchange = new Onchange();
-            $onchange->addAction(array("ACTION" => Actions::CREATE, "DATA" => array($this->getSaveEditButton(), $this->getCancelEditButton())));
-            $onchange->addAction(array("ACTION" => Actions::CALLBACK, "DATA" => array(array("JS" => "Grid.editSelected()"))));
-            $onchange->addAction(array("ACTION" => Actions::HIDE_ALL_EXPECT, "DATA" => array(array("ID" => DefaultValue::SAVE_BUTTON_ID), array("ID" => DefaultValue::CANCEL_BUTTON_ID))));
+            $onchange->addAction(
+                array(
+                    "ACTION" => Actions::CREATE,
+                    "DATA" => array($this->getSaveEditButton(), $this->getCancelEditButton())
+                )
+            );
+            $onchange->addAction(
+                array("ACTION" => Actions::CALLBACK, "DATA" => array(array("JS" => "Grid.editSelected()")))
+            );
+            $onchange->addAction(
+                array(
+                    "ACTION" => Actions::HIDE_ALL_EXPECT,
+                    "DATA" => array(
+                        array("ID" => DefaultValue::SAVE_BUTTON_ID),
+                        array("ID" => DefaultValue::CANCEL_BUTTON_ID)
+                    )
+                )
+            );
 
             $editButton = new Button();
             $editButton->setClass(DefaultValue::EDIT_BUTTON_CLASS);
@@ -112,9 +147,18 @@ class Snippet
             "NAME" => GetMessage("EDIT_ACTION_NAME"),
             "VALUE" => "edit",
             "ONCHANGE" => array(
-                array("ACTION" => Actions::CREATE, "DATA" => array($this->getSaveEditButton(), $this->getCancelEditButton())),
+                array(
+                    "ACTION" => Actions::CREATE,
+                    "DATA" => array($this->getSaveEditButton(), $this->getCancelEditButton())
+                ),
                 array("ACTION" => Actions::CALLBACK, "DATA" => array(array("JS" => "Grid.editSelected()"))),
-                array("ACTION" => Actions::HIDE_ALL_EXPECT, "DATA" => array(array("ID" => DefaultValue::SAVE_BUTTON_ID), array("ID" => DefaultValue::CANCEL_BUTTON_ID)))
+                array(
+                    "ACTION" => Actions::HIDE_ALL_EXPECT,
+                    "DATA" => array(
+                        array("ID" => DefaultValue::SAVE_BUTTON_ID),
+                        array("ID" => DefaultValue::CANCEL_BUTTON_ID)
+                    )
+                )
             )
         );
     }
@@ -201,7 +245,9 @@ class Snippet
     {
         if (!is_array($this->forAllCheckbox)) {
             $onchange = new Onchange();
-            $onchange->addAction(array("ACTION" => Actions::CALLBACK, "DATA" => array(array("JS" => "Grid.confirmForAll()"))));
+            $onchange->addAction(
+                array("ACTION" => Actions::CALLBACK, "DATA" => array(array("JS" => "Grid.confirmForAll()")))
+            );
 
             $checkbox = new Checkbox();
             $checkbox->setId(DefaultValue::FOR_ALL_CHECKBOX_ID);

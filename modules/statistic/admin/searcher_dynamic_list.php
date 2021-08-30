@@ -1,9 +1,12 @@
 <?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/prolog.php");
 /** @var CMain $APPLICATION */
 $STAT_RIGHT = $APPLICATION->GetGroupRight("statistic");
-if ($STAT_RIGHT == "D") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($STAT_RIGHT == "D") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 
@@ -35,13 +38,16 @@ $arFilter = Array(
     "DATE2" => $find_date2
 );
 
+global $by, $order;
+
 $rsData = CSearcher::GetDynamicList($find_searcher_id, $by, $order, $arMaxMin, $arFilter);
 $rsData = new CAdminResult($rsData, $sTableID);
 $rsData->NavStart();
 
 $lAdmin->NavText($rsData->GetNavPrint(GetMessage("STAT_SEARCHER_PAGES")));
 
-$lAdmin->AddHeaders(array(
+$lAdmin->AddHeaders(
+    array(
         array("id" => "DATE_STAT", "content" => GetMessage("STAT_DATE"), "sort" => "s_date", "default" => true),
         array("id" => "HITS", "content" => GetMessage("STAT_HITS"), "align" => "right", "default" => true),
     )
@@ -51,11 +57,19 @@ $sumDays = 0;
 while ($arRes = $rsData->NavNext(true, "f_")) {
     $row =& $lAdmin->AddRow($f_ID, $arRes);
 
-    $row->AddViewField("HITS", "<a title=\"" . GetMessage("STAT_HITS_LIST_OPEN") . "\" href=\"hit_searcher_list.php?lang=" . LANGUAGE_ID . "&find_searcher_id=$find_searcher_id&find_date1=$f_DATE_STAT&find_date2=$f_DATE_STAT&set_filter=Y\">" . intval($f_TOTAL_HITS) . "</a>");
+    $row->AddViewField(
+        "HITS",
+        "<a title=\"" . GetMessage(
+            "STAT_HITS_LIST_OPEN"
+        ) . "\" href=\"hit_searcher_list.php?lang=" . LANGUAGE_ID . "&find_searcher_id=$find_searcher_id&find_date1=$f_DATE_STAT&find_date2=$f_DATE_STAT&set_filter=Y\">" . intval(
+            $f_TOTAL_HITS
+        ) . "</a>"
+    );
     $sumDays += $f_TOTAL_HITS;
 }
 
-$lAdmin->AddFooter(array(
+$lAdmin->AddFooter(
+    array(
         array("title" => GetMessage("MAIN_ADMIN_LIST_SELECTED"), "value" => $rsData->SelectedRowsCount()),
         array("title" => GetMessage("STAT_TOTAL_HITS"), "value" => $sumDays),
     )
@@ -100,12 +114,23 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
         ?>
         <tr>
             <td><? echo GetMessage("STAT_F_SEARCHER_ID") ?></td>
-            <td><? echo SelectBox("find_searcher_id", CSearcher::GetDropDownList(), "", htmlspecialcharsbx($find_searcher_id)); ?></td>
+            <td><? echo SelectBox(
+                    "find_searcher_id",
+                    CSearcher::GetDropDownList(),
+                    "",
+                    htmlspecialcharsbx($find_searcher_id)
+                ); ?></td>
         </tr>
         <tr>
             <td width="0%" nowrap><? echo GetMessage("STAT_F_PERIOD") . ":" ?></td>
-            <td width="0%"
-                nowrap><? echo CalendarPeriod("find_date1", $find_date1, "find_date2", $find_date2, "form1", "Y") ?></td>
+            <td width="0%" nowrap><? echo CalendarPeriod(
+                    "find_date1",
+                    $find_date1,
+                    "find_date2",
+                    $find_date2,
+                    "form1",
+                    "Y"
+                ) ?></td>
         </tr>
         <?
         $oFilter->Buttons(array("table_id" => $sTableID, "url" => $APPLICATION->GetCurPage()));
@@ -114,8 +139,9 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
     </form>
 
 <?
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 $lAdmin->DisplayList();
 ?>
 

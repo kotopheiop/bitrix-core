@@ -2,9 +2,10 @@
 
 namespace Bitrix\Mail\Helper\Mailbox;
 
-use Bitrix\Mail\Helper\MessageFolder;
-use Bitrix\Main;
 use Bitrix\Mail;
+use Bitrix\Mail\Helper\MailboxDirectoryHelper;
+use Bitrix\Mail\MailboxDirectory;
+use Bitrix\Main;
 
 class Imap extends Mail\Helper\Mailbox
 {
@@ -18,8 +19,6 @@ class Imap extends Mail\Helper\Mailbox
     {
         parent::__construct($mailbox);
 
-        $mailbox = &$this->mailbox;
-
         $this->client = new Mail\Imap(
             $mailbox['SERVER'],
             $mailbox['PORT'],
@@ -30,39 +29,84 @@ class Imap extends Mail\Helper\Mailbox
         );
     }
 
-    protected function normalizeMailboxOptions()
+    public function getSyncStatusTotal()
     {
-        $options = &$this->mailbox['OPTIONS'];
+        $currentDir = null;
 
-        if (empty($options['imap']) || !is_array($options['imap'])) {
-            $options['imap'] = array();
+        if (!empty($this->syncParams['currentDir'])) {
+            $currentDir = $this->syncParams['currentDir'];
         }
 
-        $imapOptions = &$options['imap'];
-        if (empty($imapOptions[MessageFolder::INCOME]) || !is_array($imapOptions[MessageFolder::INCOME])) {
-            $imapOptions[MessageFolder::INCOME] = array();
-        }
-        if (empty($imapOptions[MessageFolder::OUTCOME]) || !is_array($imapOptions[MessageFolder::OUTCOME])) {
-            $imapOptions[MessageFolder::OUTCOME] = array();
+        $totalSyncDirs = count($this->getDirsHelper()->getSyncDirs());
+        $currentSyncDirPath = MailboxDirectoryHelper::getCurrentSyncDir();
+        $currentSyncDir = $this->getDirsHelper()->getDirByPath($currentSyncDirPath);
+
+        if ($totalSyncDirs > 0 && $currentSyncDir != null) {
+            $currentSyncDirMessages = Mail\MailMessageUidTable::getList(
+                [
+                    'select' => [
+                        new Main\Entity\ExpressionField('TOTAL', 'COUNT(1)'),
+                    ],
+                    'filter' => [
+                        '=MAILBOX_ID' => $this->mailbox['ID'],
+                        '=DIR_MD5' => $currentSyncDir->getDirMd5(),
+                        '=DELETE_TIME' => 'IS NULL',
+                    ],
+                ]
+            )->fetch();
+
+            $currentSyncDirMessagesCount = (int)$currentSyncDirMessages['TOTAL'];
+            $currentSyncDirMessagesAll = (int)$currentSyncDir->getMessageCount();
+            $currentSyncDirPosition = $this->getDirsHelper()->getCurrentSyncDirPositionByDefault(
+                $currentSyncDir->getPath(),
+                $currentDir
+            );
+
+            if ($currentDir != null) {
+                $totalSyncDirs--;
+            }
+
+            if ($currentSyncDirMessagesAll <= 0) {
+                $progress = ($currentSyncDirPosition + 1) / $totalSyncDirs;
+            } else {
+                $progress = ($currentSyncDirMessagesCount / $currentSyncDirMessagesAll + $currentSyncDirPosition) / $totalSyncDirs;
+            }
+
+            return $progress;
+        } else {
+            return parent::getSyncStatus();
         }
     }
 
     public function getSyncStatus()
     {
-        $meta = Mail\MailMessageUidTable::getList(array(
-            'select' => array(
-                new Main\Entity\ExpressionField('TOTAL', 'COUNT(1)'),
-            ),
-            'filter' => array(
-                '=MAILBOX_ID' => $this->mailbox['ID'],
-            ),
-        ))->fetch();
-
-        if ($meta['TOTAL'] > 0 && $this->mailbox['OPTIONS']['imap']['total'] > 0) {
-            return $meta['TOTAL'] / $this->mailbox['OPTIONS']['imap']['total'];
-        } else {
-            return parent::getSyncStatus();
+        if (!empty($this->syncParams['currentDir'])) {
+            $currentSyncDir = $this->getDirsHelper()->getDirByPath($this->syncParams['currentDir']);
         }
+
+        if (!empty($currentSyncDir)) {
+            $currentSyncDirMessages = Mail\MailMessageUidTable::getList(
+                [
+                    'select' => [
+                        new Main\Entity\ExpressionField('TOTAL', 'COUNT(1)'),
+                    ],
+                    'filter' => [
+                        '=MAILBOX_ID' => $this->mailbox['ID'],
+                        '=DIR_MD5' => $currentSyncDir->getDirMd5(),
+                        '=DELETE_TIME' => 'IS NULL',
+                    ],
+                ]
+            )->fetch();
+
+            $currentSyncDirMessagesCount = (int)$currentSyncDirMessages['TOTAL'];
+            $currentSyncDirMessagesAll = (int)$currentSyncDir->getMessageCount();
+
+            if ($currentSyncDirMessagesAll > 0) {
+                return ($currentSyncDirMessagesCount / $currentSyncDirMessagesAll);
+            }
+        }
+
+        return 1;
     }
 
     protected function syncInternal()
@@ -77,12 +121,12 @@ class Imap extends Mail\Helper\Mailbox
 
     protected function createMessage(Main\Mail\Mail $message, array $fields = array())
     {
-        $dir = reset($this->mailbox['OPTIONS']['imap'][MessageFolder::OUTCOME]) ?: 'INBOX';
+        $dirPath = $this->getDirsHelper()->getOutcomePath() ?: 'INBOX';
 
         $fields = array_merge(
             $fields,
             array(
-                'DIR_MD5' => md5($dir),
+                'DIR_MD5' => md5($dirPath),
                 'DIR_UIDV' => 0,
                 'MSG_UID' => 0,
             )
@@ -100,9 +144,9 @@ class Imap extends Mail\Helper\Mailbox
 
     public function uploadMessage(Main\Mail\Mail $message, array &$excerpt = null)
     {
-        $dir = reset($this->mailbox['OPTIONS']['imap'][MessageFolder::OUTCOME]) ?: 'INBOX';
+        $dirPath = $this->getDirsHelper()->getOutcomePath() ?: 'INBOX';
 
-        $data = $this->client->select($dir, $error);
+        $data = $this->client->select($dirPath, $error);
 
         if (false === $data) {
             $this->errors = new Main\ErrorCollection($this->client->getErrors()->toArray());
@@ -111,19 +155,25 @@ class Imap extends Mail\Helper\Mailbox
         }
 
         if (!empty($excerpt['__unique_headers'])) {
-            if ($this->client->searchByHeader(false, $dir, $excerpt['__unique_headers'], $error)) {
+            if ($this->client->searchByHeader(false, $dirPath, $excerpt['__unique_headers'], $error)) {
                 return false;
             }
         }
 
-        $flags = array('\Seen');
-        if (!empty($excerpt['ID']) && preg_grep('/^ \x5c \* $/ix', $data['permanentflags'])) {
-            $flags[] = sprintf('bxuid%s', $excerpt['ID']);
+        if (!empty($excerpt['ID'])) {
+            class_exists('Bitrix\Mail\Helper');
+
+            Mail\DummyMail::overwriteMessageHeaders(
+                $message,
+                array(
+                    'X-Bitrix-Mail-Message-UID' => $excerpt['ID'],
+                )
+            );
         }
 
         $result = $this->client->append(
-            $dir,
-            $flags,
+            $dirPath,
+            array('\Seen'),
             new \DateTime,
             sprintf(
                 '%1$s%3$s%3$s%2$s',
@@ -140,7 +190,7 @@ class Imap extends Mail\Helper\Mailbox
             return false;
         }
 
-        $this->syncDir($dir);
+        $this->syncDir($dirPath);
 
         return $result;
     }
@@ -151,12 +201,12 @@ class Imap extends Mail\Helper\Mailbox
             return false;
         }
 
-        $dir = MessageFolder::getFolderNameByHash($excerpt['DIR_MD5'], $this->mailbox['OPTIONS']);
-        if (empty($dir)) {
+        $dirPath = $this->getDirsHelper()->getDirPathByHash($excerpt['DIR_MD5']);
+        if (empty($dirPath)) {
             return false;
         }
 
-        $body = $this->client->fetch(true, $dir, $excerpt['MSG_UID'], '(BODY.PEEK[])', $error);
+        $body = $this->client->fetch(true, $dirPath, $excerpt['MSG_UID'], '(BODY.PEEK[])', $error);
 
         if (false === $body) {
             $this->errors = new Main\ErrorCollection($this->client->getErrors()->toArray());
@@ -167,14 +217,17 @@ class Imap extends Mail\Helper\Mailbox
         return empty($body['BODY[]']) ? null : $body['BODY[]'];
     }
 
-    public function downloadMessageParts(array &$excerpt, Mail\Imap\BodyStructure $bodystructure, $flags = Imap::MESSAGE_PARTS_ALL)
-    {
+    public function downloadMessageParts(
+        array &$excerpt,
+        Mail\Imap\BodyStructure $bodystructure,
+        $flags = Imap::MESSAGE_PARTS_ALL
+    ) {
         if (empty($excerpt['MSG_UID']) || empty($excerpt['DIR_MD5'])) {
             return false;
         }
 
-        $dir = MessageFolder::getFolderNameByHash($excerpt['DIR_MD5'], $this->mailbox['OPTIONS']);
-        if (empty($dir)) {
+        $dirPath = $this->getDirsHelper()->getDirPathByHash($excerpt['DIR_MD5']);
+        if (empty($dirPath)) {
             return false;
         }
 
@@ -187,7 +240,7 @@ class Imap extends Mail\Helper\Mailbox
                         return;
                     }
 
-                    $isTextItem = $item->isText() && !$item->isAttachment();
+                    $isTextItem = $item->isBodyText();
                     if ($flags & ($isTextItem ? Imap::MESSAGE_PARTS_TEXT : Imap::MESSAGE_PARTS_ATTACHMENT)) {
                         // due to yandex bug
                         if ('message' === $item->getType() && 'rfc822' === $item->getSubtype()) {
@@ -209,7 +262,7 @@ class Imap extends Mail\Helper\Mailbox
 
         $parts = $this->client->fetch(
             true,
-            $dir,
+            $dirPath,
             $excerpt['MSG_UID'],
             sprintf('(%s)', join(' ', $select)),
             $error
@@ -232,7 +285,7 @@ class Imap extends Mail\Helper\Mailbox
                 }
 
                 if (!empty($item->getDisposition()[0])) {
-                    $partMime .= sprintf("\r\nContent-Disposition: ", $item->getDisposition()[0]);
+                    $partMime .= sprintf("\r\nContent-Disposition: %s", $item->getDisposition()[0]);
                     if (!empty($item->getDisposition()[1]) && is_array($item->getDisposition()[1])) {
                         foreach ($item->getDisposition()[1] as $name => $value) {
                             $partMime .= sprintf('; %s="%s"', $name, $value);
@@ -256,176 +309,59 @@ class Imap extends Mail\Helper\Mailbox
 
     public function cacheDirs()
     {
-        $dirs = $this->client->listMailboxes('*', $error, true);
+        static $lastCacheSession;
+
+        if ($this->session === $lastCacheSession) {
+            return;
+        }
+
+        $dirs = $this->client->listex('', '%', $error);
         if (false === $dirs) {
             $this->errors = new Main\ErrorCollection($this->client->getErrors()->toArray());
 
             return false;
         }
 
-        $imapDirs = array();
-        $disabledDirs = array();
-        $availableDirs = array();
+        $list = [];
+        foreach ($dirs as $item) {
+            $parts = explode($item['delim'], $item['name']);
 
-        $outcomeDirs = array();
-        $draftsDirs = array();
-        $trashDirs = array();
-        $spamDirs = array();
-        $inboxDirs = array();
-        $inboxTrees = array();
+            $item['path'] = $item['name'];
+            $item['name'] = end($parts);
 
-        foreach ($dirs as $i => $item) {
-            if (strtoupper($item['name']) === 'INBOX') {
-                if (!$inboxDirs) {
-                    $inboxDirs = [$item['name']];
-                } else {
-                    $disabledDirs[] = $item['name'];
-                }
-            }
+            $list[$item['name']] = $item;
         }
 
-        foreach ($dirs as $i => $item) {
-            $imapDirs[$item['name']] = $item['path'];
+        $this->getDirsHelper()->syncDbDirs($list);
 
-            if (in_array(reset($item['path']), $inboxDirs)) {
-                $inboxTrees[$item['name']] = $item['path'];
-            }
+        $lastCacheSession = $this->session;
+    }
 
-            if (preg_grep('/^ \x5c Noselect $/ix', $item['flags'])) {
-                $disabledDirs[] = $item['name'];
-            }
+    public function listDirs($pattern, $useDb = false)
+    {
+        $dirs = $this->client->listex('', $pattern, $error);
+        if (false === $dirs) {
+            $this->errors = new Main\ErrorCollection($this->client->getErrors()->toArray());
 
-            if (preg_grep('/^ \x5c Sent $/ix', $item['flags'])) {
-                $outcomeDirs[] = $item['name'];
-            }
-
-            if (preg_grep('/^ \x5c Drafts $/ix', $item['flags'])) {
-                $draftsDirs[] = $item['name'];
-            }
-
-            if (preg_grep('/^ \x5c Trash $/ix', $item['flags'])) {
-                $trashDirs[] = $item['name'];
-            }
-
-            if (preg_grep('/^ \x5c ( Junk | Spam ) $/ix', $item['flags'])) {
-                $spamDirs[] = $item['name'];
-            }
+            return false;
         }
 
-        // @TODO: filter disabled from income, outcome etc.
+        $list = [];
 
-        $this->reloadMailboxOptions();
+        foreach ($dirs as $dir) {
+            $parts = explode($dir['delim'], $dir['name']);
 
-        $options = &$this->mailbox['OPTIONS'];
-
-        $options['imap']['dirs'] = $imapDirs = $inboxTrees + $imapDirs;
-        $options['imap']['disabled'] = $disabledDirs;
-
-        $availableDirs = array_diff(array_keys($imapDirs), $disabledDirs);
-
-        $options['imap'][MessageFolder::INCOME] = $inboxDirs;
-
-        $options['imap'][MessageFolder::OUTCOME] = array_intersect(
-            (array)$options['imap'][MessageFolder::OUTCOME],
-            $availableDirs
-        ) ?: $outcomeDirs;
-
-        $options['imap'][MessageFolder::DRAFTS] = array_intersect(
-            (array)$options['imap'][MessageFolder::DRAFTS],
-            $availableDirs
-        ) ?: $draftsDirs;
-        $options['imap'][MessageFolder::DRAFTS] = $draftsDirs; // @TODO: remove if drafts dir settings implemented
-
-        $options['imap'][MessageFolder::TRASH] = array_intersect(
-            (array)$options['imap'][MessageFolder::TRASH],
-            $availableDirs
-        ) ?: $trashDirs;
-
-        $options['imap'][MessageFolder::SPAM] = array_intersect(
-            (array)$options['imap'][MessageFolder::SPAM],
-            $availableDirs
-        ) ?: $spamDirs;
-
-        if (!empty($options['imap']['!sync_dirs'])) {
-            $options['imap']['sync_dirs'] = $options['imap']['!sync_dirs'];
+            $dir['path'] = $dir['name'];
+            $dir['name'] = end($parts);
+            $list[$dir['path']] = $dir;
         }
 
-        if (!empty($options['imap']['sync_dirs'])) {
-            $options['imap']['ignore'] = array_values(array_diff(
-                array_keys($imapDirs),
-                (array)$options['imap']['sync_dirs']
-            ));
-
-            unset($options['imap']['sync_dirs']);
-        }
-
-        if (!array_key_exists('ignore', $options['imap'])) {
-            $options['imap']['ignore'] = array_merge(
-                (array)$options['imap'][MessageFolder::DRAFTS],
-                (array)$options['imap'][MessageFolder::TRASH],
-                (array)$options['imap'][MessageFolder::SPAM]
-            );
-        }
-
-        $options['imap']['ignore'] = array_unique(array_merge(
-            (array)$options['imap']['ignore'],
-            $disabledDirs
-        ));
-
-        Mail\MailboxTable::update(
-            $this->mailbox['ID'],
-            array(
-                'OPTIONS' => $options,
-            )
-        );
-
-        return $dirs;
+        return $list;
     }
 
     public function cacheMeta()
     {
-        $dirs = $this->cacheDirs();
-        if (false === $dirs) {
-            return false;
-        }
-
-        $meta = array();
-
-        foreach ($dirs as $i => $item) {
-            if (!in_array($item['name'], (array)$this->mailbox['OPTIONS']['imap']['ignore'])) {
-                if (!preg_grep('/^ \x5c Noselect $/ix', $item['flags'])) {
-                    $data = $this->client->examine($item['name'], $error);
-                    if (false === $data) {
-                        $this->warnings->add($this->client->getErrors()->toArray());
-                    } else {
-                        $item = array_merge($item, $data);
-                    }
-                }
-            }
-
-            $meta[$item['name']] = $item;
-        }
-
-        $this->reloadMailboxOptions();
-
-        $options = &$this->mailbox['OPTIONS'];
-
-        $options['imap']['total'] = array_reduce(
-            $meta,
-            function ($sum, $item) use (&$options) {
-                return $sum + (in_array($item['name'], (array)$options['imap']['ignore']) ? 0 : $item['exists']);
-            },
-            0
-        );
-
-        Mail\MailboxTable::update(
-            $this->mailbox['ID'],
-            array(
-                'OPTIONS' => $options,
-            )
-        );
-
-        return $meta;
+        return $this->getDirsHelper()->getSyncDirs();
     }
 
     protected function getFolderToMessagesMap($messages)
@@ -437,7 +373,7 @@ class Imap extends Mail\Helper\Mailbox
         $result = new Main\Result();
         foreach ($messages as $message) {
             $id = $message['MSG_UID'];
-            $folderFrom = MessageFolder::getFolderNameByHash($message['DIR_MD5'], $this->mailbox['OPTIONS']);
+            $folderFrom = $this->getDirsHelper()->getDirPathByHash($message['DIR_MD5']);
             $data[$folderFrom][] = $id;
             $results[$folderFrom][] = $message;
         }
@@ -499,64 +435,61 @@ class Imap extends Mail\Helper\Mailbox
             return false;
         }
 
-        $meta = $this->cacheMeta();
-        if (false === $meta) {
-            return false;
-        }
-
         $count = 0;
 
-        $queue = array(
-            'inbox' => array(),
-            MessageFolder::OUTCOME => array(),
-            'other' => array(),
-            MessageFolder::TRASH => array(),
-            MessageFolder::SPAM => array(),
-        );
-        foreach ($meta as $dir => $item) {
-            if (in_array($dir, (array)$this->mailbox['OPTIONS']['imap']['ignore'])) {
-                continue;
+        $this->cacheDirs();
+
+        $currentDir = null;
+
+        if (!empty($this->syncParams['currentDir'])) {
+            $currentDir = $this->syncParams['currentDir'];
+        }
+
+        $meta = $this->getDirsHelper()->getSyncDirsOrderByTime($currentDir);
+
+        if (empty($meta)) {
+            return $count;
+        }
+
+        $lastDir = $this->getDirsHelper()->getLastSyncDirByDefault($currentDir);
+
+        foreach ($meta as $item) {
+            MailboxDirectoryHelper::setCurrentSyncDir($item->getPath());
+
+            $count += $this->syncDir($item->getPath());
+
+            if ($this->isTimeQuotaExceeded()) {
+                break;
             }
 
-            if ('inbox' == strtolower(reset($item['path']))) {
-                $queue['inbox'][$dir] = $item;
-            } else if (in_array($dir, (array)$this->mailbox['OPTIONS']['imap'][MessageFolder::OUTCOME])) {
-                $queue[MessageFolder::OUTCOME][$dir] = $item;
-            } else if (in_array($dir, (array)$this->mailbox['OPTIONS']['imap'][MessageFolder::TRASH])) {
-                $queue[MessageFolder::TRASH][$dir] = $item;
-            } else if (in_array($dir, (array)$this->mailbox['OPTIONS']['imap'][MessageFolder::SPAM])) {
-                $queue[MessageFolder::SPAM][$dir] = $item;
-            } else {
-                $queue['other'][$dir] = $item;
+            MailboxDirectory::updateSyncTime($item->getId(), time());
+
+            if ($lastDir != null && $item->getPath() == $lastDir->getPath()) {
+                MailboxDirectoryHelper::setCurrentSyncDir('');
+                break;
             }
         }
 
-        $meta = call_user_func_array('array_merge', $queue);
-
-        foreach ($meta as $dir => $item) {
-            if ($item['exists'] > 0) {
-                $count += $this->syncDir($dir);
-
-                if ($this->isTimeQuotaExceeded()) {
-                    break;
-                }
-            }
-        }
+        $this->setLastSyncResult(['updatedMessages' => 0, 'deletedMessages' => 0]);
 
         if (!$this->isTimeQuotaExceeded()) {
-            $this->unregisterMessages(array(
-                '!@DIR_MD5' => array_map(
-                    'md5',
-                    array_diff(
-                        array_keys($meta),
-                        (array)$this->mailbox['OPTIONS']['imap']['ignore']
-                    )
-                ),
-            ));
+            //mark emails from unsynchronized folders (unchecked) for deletion
+            $result = $this->unregisterMessages(
+                [
+                    '!@DIR_MD5' => array_map(
+                        'md5',
+                        $this->getDirsHelper()->getSyncDirsPath()
+                    ),
+                ]
+            );
+
+            $countDeleted = $result ? $result->getCount() : 0;
+
+            $this->lastSyncResult['deletedMessages'] += $countDeleted;
 
             if (!empty($this->syncParams['full'])) {
-                foreach ($meta as $dir => $item) {
-                    $this->resyncDir($dir);
+                foreach ($meta as $item) {
+                    $this->resyncDir($item->getPath());
 
                     if ($this->isTimeQuotaExceeded()) {
                         break;
@@ -568,22 +501,72 @@ class Imap extends Mail\Helper\Mailbox
         return $count;
     }
 
-    public function syncDir($dir)
+    public function syncDir($dirPath)
+    {
+        $dir = $this->getDirsHelper()->getDirByPath($dirPath);
+
+        if (!$dir || !$dir->isSync()) {
+            return false;
+        }
+
+        if ($dir->isSyncLock() || !$dir->startSyncLock()) {
+            return null;
+        }
+
+        $pushParams = ['dir' => $dir->getPath()];
+
+        $result = $this->syncDirInternal($dir);
+
+        $dir->stopSyncLock();
+
+        if (false === $result) {
+            $pushParams['complete'] = -1;
+            $pushParams['status'] = -1;
+            $pushParams['errors'] = $this->client->getErrors()->toArray();
+        } else {
+            $pushParams['complete'] = $this->isTimeQuotaExceeded() ? -1 : $dir->getPath(
+                ) !== $this->syncParams['currentDir'];
+            $pushParams['new'] = $result;
+        }
+
+        $this->lastSyncResult['newMessages'] += $result;
+        if (!$dir->isTrash() && !$dir->isSpam()) // && !$dir->isDraft() && !$dir->isOutcome()
+        {
+            $this->lastSyncResult['newMessagesNotify'] += $result;
+        }
+
+        return $result;
+    }
+
+    protected function syncDirInternal($dir)
     {
         $count = 0;
 
-        if (in_array($dir, (array)$this->mailbox['OPTIONS']['imap']['ignore'])) {
-            return $count;
+        $meta = $this->client->select($dir->getPath(), $error);
+
+        if (false === $meta) {
+            $this->warnings->add($this->client->getErrors()->toArray());
+
+            if ($this->client->isExistsDir($dir->getPath(), $error) === false) {
+                $this->getDirsHelper()->removeDirsLikePath([$dir]);
+            }
+
+            return false;
         }
 
-        while ($range = $this->getSyncRange($dir, $uidtoken)) {
+        $this->getDirsHelper()->updateMessageCount($dir->getId(), $meta['exists']);
+
+        $time = time();
+        $timeout = 5;
+
+        while ($range = $this->getSyncRange($dir->getPath(), $uidtoken)) {
             $reverse = $range[0] > $range[1];
 
             sort($range);
 
             $messages = $this->client->fetch(
                 true,
-                $dir,
+                $dir->getPath(),
                 join(':', $range),
                 '(UID FLAGS INTERNALDATE RFC822.SIZE BODYSTRUCTURE BODY.PEEK[HEADER])',
                 $error
@@ -592,6 +575,8 @@ class Imap extends Mail\Helper\Mailbox
             if (empty($messages)) {
                 if (false === $messages) {
                     $this->warnings->add($this->client->getErrors()->toArray());
+
+                    return false;
                 } else {
                     // @TODO: log
                 }
@@ -603,14 +588,41 @@ class Imap extends Mail\Helper\Mailbox
 
             $this->parseHeaders($messages);
 
-            $this->blacklistMessages($dir, $messages);
+            $this->blacklistMessages($dir->getPath(), $messages);
 
-            $this->prepareMessages($dir, $uidtoken, $messages);
+            $this->prepareMessages($dir->getPath(), $uidtoken, $messages);
 
             $hashesMap = array();
+
+            //To display new messages(grid reload) until synchronization is complete
+            $numberOfMessagesInABatch = 1;
+            $numberLeftToFillTheBatch = $numberOfMessagesInABatch;
+
             foreach ($messages as $id => $item) {
-                if ($this->syncMessage($dir, $uidtoken, $item, $hashesMap)) {
+                if ($this->syncMessage($dir->getPath(), $uidtoken, $item, $hashesMap)) {
+                    $this->lastSyncResult['newMessageId'] = end($hashesMap);
                     $count++;
+
+                    if ($time < time() - $timeout) {
+                        $time = time();
+                    }
+
+                    $numberLeftToFillTheBatch--;
+                    if ($numberLeftToFillTheBatch === 0 and Main\Loader::includeModule('pull')) {
+                        $numberOfMessagesInABatch *= 2;
+                        $numberLeftToFillTheBatch = $numberOfMessagesInABatch;
+                        \CPullWatch::addToStack(
+                            'mail_mailbox_' . $this->mailbox['ID'],
+                            array(
+                                'params' => array(
+                                    'dir' => $dir->getPath()
+                                ),
+                                'module_id' => 'mail',
+                                'command' => 'new_message_is_synchronized',
+                            )
+                        );
+                        \Bitrix\Pull\Event::send();
+                    }
                 }
 
                 if ($this->isTimeQuotaExceeded()) {
@@ -621,49 +633,85 @@ class Imap extends Mail\Helper\Mailbox
 
         if (false === $range) {
             $this->warnings->add($this->client->getErrors()->toArray());
+
+            return false;
         }
 
         return $count;
     }
 
-    public function resyncDir($dir)
+    public function resyncDir($dirPath)
     {
-        if (in_array($dir, (array)$this->mailbox['OPTIONS']['imap']['ignore'])) {
-            $this->unregisterMessages(array(
-                '=DIR_MD5' => md5($dir),
-            ));
+        $dir = $this->getDirsHelper()->getDirByPath($dirPath);
 
-            return;
+        if (!$dir || !$dir->isSync()) {
+            return false;
         }
 
-        $meta = $this->client->select($dir, $error);
+        $pushParams = [
+            'dir' => $dir->getPath(),
+            'updated' => -$this->lastSyncResult['updatedMessages'],
+            'deleted' => -$this->lastSyncResult['deletedMessages'],
+        ];
+
+        $result = $this->resyncDirInternal($dir);
+
+        $pushParams['updated'] += $this->lastSyncResult['updatedMessages'];
+        $pushParams['deleted'] += $this->lastSyncResult['deletedMessages'];
+
+        if (false === $result) {
+            $pushParams['complete'] = -1;
+            $pushParams['status'] = -1;
+            $pushParams['errors'] = $this->client->getErrors()->toArray();
+        } else {
+            $pushParams['complete'] = $this->isTimeQuotaExceeded() ? -1 : 1;
+        }
+    }
+
+    protected function resyncDirInternal($dir)
+    {
+        $meta = $this->client->select($dir->getPath(), $error);
         if (false === $meta) {
             $this->warnings->add($this->client->getErrors()->toArray());
 
-            return;
+            return false;
         }
 
         $uidtoken = $meta['uidvalidity'];
 
         if ($meta['exists'] > 0) {
             if ($uidtoken > 0) {
-                $this->unregisterMessages(array(
-                    '=DIR_MD5' => md5($dir),
-                    '<DIR_UIDV' => $uidtoken,
-                ));
+                $result = $this->unregisterMessages(
+                    array(
+                        '=DIR_MD5' => md5($dir->getPath()),
+                        '<DIR_UIDV' => $uidtoken,
+                    ),
+                    []
+                );
+
+                $countDeleted = $result ? $result->getCount() : 0;
+
+                $this->lastSyncResult['deletedMessages'] += $countDeleted;
             }
         } else {
-            if ($this->client->ensureEmpty($dir, $error)) {
-                $this->unregisterMessages(array(
-                    '=DIR_MD5' => md5($dir),
-                ));
+            if ($this->client->ensureEmpty($dir->getPath(), $error)) {
+                $result = $this->unregisterMessages(
+                    array(
+                        '=DIR_MD5' => md5($dir->getPath()),
+                    ),
+                    []
+                );
+
+                $countDeleted = $result ? $result->getCount() : 0;
+
+                $this->lastSyncResult['deletedMessages'] += $countDeleted;
             }
 
             return;
         }
 
         $fetcher = function ($range) use ($dir) {
-            $messages = $this->client->fetch(false, $dir, $range, '(UID FLAGS)', $error);
+            $messages = $this->client->fetch(false, $dir->getPath(), $range, '(UID FLAGS)', $error);
 
             if (empty($messages)) {
                 if (false === $messages) {
@@ -672,7 +720,7 @@ class Imap extends Mail\Helper\Mailbox
                     // @TODO: log
                 }
 
-                return;
+                return false;
             }
 
             krsort($messages);
@@ -680,30 +728,46 @@ class Imap extends Mail\Helper\Mailbox
             return $messages;
         };
 
-        $messages = $fetcher($meta['exists'] > 10000 ? sprintf('1,%u', $meta['exists']) : '1:*');
+        $messagesNumberInTheMailService = $meta['exists'];
+        $messages = $fetcher(
+            $messagesNumberInTheMailService > 10000 ? sprintf('1,%u', $messagesNumberInTheMailService) : '1:*'
+        );
 
         if (empty($messages)) {
-            return;
+            return (false === $messages ? false : null);
         }
 
+        //interval of messages in the directory
         $range = array(
             reset($messages)['UID'],
             end($messages)['UID'],
         );
         sort($range);
 
-        $this->unregisterMessages(array(
-            '=DIR_MD5' => md5($dir),
-            '>MSG_UID' => 0,
+        if ($range[0] === $range[1] and $messagesNumberInTheMailService > 1) {
+            return false;
+        }
+
+        //deleting non-existent messages in the service ( not included in the message interval on the service )
+        $result = $this->unregisterMessages(
             array(
-                'LOGIC' => 'OR',
-                '<MSG_UID' => $range[0],
-                '>MSG_UID' => $range[1],
+                '=DIR_MD5' => md5($dir->getPath()),
+                '>MSG_UID' => 0,
+                array(
+                    'LOGIC' => 'OR',
+                    '<MSG_UID' => $range[0],
+                    '>MSG_UID' => $range[1],
+                ),
             ),
-        ));
+            []
+        );
+
+        $countDeleted = $result ? $result->getCount() : 0;
+
+        $this->lastSyncResult['deletedMessages'] += $countDeleted;
 
         if (!($meta['exists'] > 10000)) {
-            $this->resyncMessages($dir, $uidtoken, $messages);
+            $this->resyncMessages($dir->getPath(), $uidtoken, $messages);
 
             return;
         }
@@ -719,7 +783,7 @@ class Imap extends Mail\Helper\Mailbox
                 return;
             }
 
-            $this->resyncMessages($dir, $uidtoken, $messages);
+            $this->resyncMessages($dir->getPath(), $uidtoken, $messages);
 
             if ($this->isTimeQuotaExceeded()) {
                 return;
@@ -732,22 +796,34 @@ class Imap extends Mail\Helper\Mailbox
     protected function parseHeaders(&$messages)
     {
         foreach ($messages as $id => $item) {
-            $messages[$id]['__header'] = \CMailMessage::parseHeader($item['BODY[HEADER]'], $this->mailbox['LANG_CHARSET']);
-            $messages[$id]['__from'] = array_unique(array_map('strtolower', array_filter(array_merge(
-                \CMailUtil::extractAllMailAddresses($messages[$id]['__header']->getHeader('FROM')),
-                \CMailUtil::extractAllMailAddresses($messages[$id]['__header']->getHeader('REPLY-TO'))
-            ), 'trim')));
+            $messages[$id]['__header'] = \CMailMessage::parseHeader(
+                $item['BODY[HEADER]'],
+                $this->mailbox['LANG_CHARSET']
+            );
+            $messages[$id]['__from'] = array_unique(
+                array_map(
+                    'mb_strtolower',
+                    array_filter(
+                        array_merge(
+                            \CMailUtil::extractAllMailAddresses($messages[$id]['__header']->getHeader('FROM')),
+                            \CMailUtil::extractAllMailAddresses($messages[$id]['__header']->getHeader('REPLY-TO'))
+                        ),
+                        'trim'
+                    )
+                )
+            );
         }
     }
 
-    protected function blacklistMessages($dir, &$messages)
+    protected function blacklistMessages($dirPath, &$messages)
     {
-        $trashDirs = (array)$this->mailbox['OPTIONS']['imap'][MessageFolder::TRASH];
-        $spamDirs = (array)$this->mailbox['OPTIONS']['imap'][MessageFolder::SPAM];
+        $trashDir = $this->getDirsHelper()->getTrashPath();
+        $spamDir = $this->getDirsHelper()->getSpamPath();
 
-        $targetDir = reset($spamDirs) ?: reset($trashDirs) ?: null;
+        $targetDir = $spamDir ?: $trashDir ?: null;
+        $dir = $this->getDirsHelper()->getDirByPath($dirPath);
 
-        if (empty($targetDir) || in_array($dir, array_merge($trashDirs, $spamDirs))) {
+        if (empty($targetDir) || ($dir && ($dir->isTrash() || $dir->isSpam()))) {
             return;
         }
 
@@ -758,17 +834,19 @@ class Imap extends Mail\Helper\Mailbox
 
         $blacklistEmails = Mail\BlacklistTable::query()
             ->addSelect('*')
-            ->setFilter(array(
-                '=SITE_ID' => $this->mailbox['LID'],
+            ->setFilter(
                 array(
-                    'LOGIC' => 'OR',
-                    '=MAILBOX_ID' => $this->mailbox['ID'],
+                    '=SITE_ID' => $this->mailbox['LID'],
                     array(
-                        '=MAILBOX_ID' => 0,
-                        '@USER_ID' => array(0, $this->mailbox['USER_ID']),
+                        'LOGIC' => 'OR',
+                        '=MAILBOX_ID' => $this->mailbox['ID'],
+                        array(
+                            '=MAILBOX_ID' => 0,
+                            '@USER_ID' => array(0, $this->mailbox['USER_ID']),
+                        ),
                     ),
-                ),
-            ))
+                )
+            )
             ->exec()
             ->fetchCollection();
         foreach ($blacklistEmails as $blacklistEmail) {
@@ -784,14 +862,20 @@ class Imap extends Mail\Helper\Mailbox
         }
 
         $targetMessages = [];
-        $emailAddresses = array_map(function ($element) {
-            /** @var Mail\Internals\Entity\BlacklistEmail $element */
-            return $element->getItemValue();
-        }, $blacklist['email']);
-        $domains = array_map(function ($element) {
-            /** @var Mail\Internals\Entity\BlacklistEmail $element */
-            return $element->getItemValue();
-        }, $blacklist['domain']);
+        $emailAddresses = array_map(
+            function ($element) {
+                /** @var Mail\Internals\Entity\BlacklistEmail $element */
+                return $element->getItemValue();
+            },
+            $blacklist['email']
+        );
+        $domains = array_map(
+            function ($element) {
+                /** @var Mail\Internals\Entity\BlacklistEmail $element */
+                return $element->getItemValue();
+            },
+            $blacklist['domain']
+        );
 
         foreach ($messages as $id => $item) {
             if (!empty($blacklist['email'])) {
@@ -812,7 +896,7 @@ class Imap extends Mail\Helper\Mailbox
 
             if (!empty($blacklist['domain'])) {
                 foreach ($messages[$id]['__from'] as $email) {
-                    $domain = substr($email, strrpos($email, '@'));
+                    $domain = mb_substr($email, mb_strrpos($email, '@'));
                     if (in_array($domain, $domains)) {
                         $targetMessages[$id] = $item['UID'];
 
@@ -823,13 +907,13 @@ class Imap extends Mail\Helper\Mailbox
         }
 
         if (!empty($targetMessages)) {
-            if ($this->client->moveMails($targetMessages, $dir, $targetDir)->isSuccess()) {
+            if ($this->client->moveMails($targetMessages, $dirPath, $targetDir)->isSuccess()) {
                 $messages = array_diff_key($messages, $targetMessages);
             }
         }
     }
 
-    protected function prepareMessages($dir, $uidtoken, &$messages)
+    protected function prepareMessages($dirPath, $uidtoken, &$messages)
     {
         $excerpt = array();
 
@@ -839,15 +923,18 @@ class Imap extends Mail\Helper\Mailbox
         );
         sort($range);
 
-        $result = $this->listMessages(array(
-            'select' => array('ID'),
-            'filter' => array(
-                '=DIR_MD5' => md5($dir),
-                '=DIR_UIDV' => $uidtoken,
-                '>=MSG_UID' => $range[0],
-                '<=MSG_UID' => $range[1],
+        $result = $this->listMessages(
+            array(
+                'select' => array('ID'),
+                'filter' => array(
+                    '=DIR_MD5' => md5($dirPath),
+                    '=DIR_UIDV' => $uidtoken,
+                    '>=MSG_UID' => $range[0],
+                    '<=MSG_UID' => $range[1],
+                ),
             ),
-        ), false);
+            false
+        );
 
         while ($item = $result->fetch()) {
             $excerpt[] = $item['ID'];
@@ -856,7 +943,7 @@ class Imap extends Mail\Helper\Mailbox
         $uids = array();
         $hashes = array();
         foreach ($messages as $id => $item) {
-            $messageUid = md5(sprintf('%s:%u:%u', $dir, $uidtoken, $item['UID']));
+            $messageUid = md5(sprintf('%s:%u:%u', $dirPath, $uidtoken, $item['UID']));
 
             if (in_array($messageUid, $excerpt)) {
                 unset($messages[$id]);
@@ -865,12 +952,14 @@ class Imap extends Mail\Helper\Mailbox
 
             $excerpt[] = $uids[$id] = $messageUid;
 
-            $hashes[$id] = md5(sprintf(
-                '%s:%s:%u',
-                trim($item['BODY[HEADER]']),
-                $item['INTERNALDATE'],
-                $item['RFC822.SIZE']
-            ));
+            $hashes[$id] = md5(
+                sprintf(
+                    '%s:%s:%u',
+                    trim($item['BODY[HEADER]']),
+                    $item['INTERNALDATE'],
+                    $item['RFC822.SIZE']
+                )
+            );
 
             $messages[$id]['__internaldate'] = Main\Type\DateTime::createFromPhp(
                 \DateTime::createFromFormat(
@@ -881,7 +970,7 @@ class Imap extends Mail\Helper\Mailbox
 
             $messages[$id]['__fields'] = array(
                 'ID' => $messageUid,
-                'DIR_MD5' => md5($dir),
+                'DIR_MD5' => md5($dirPath),
                 'DIR_UIDV' => $uidtoken,
                 'MSG_UID' => $item['UID'],
                 'INTERNALDATE' => $messages[$id]['__internaldate'],
@@ -890,9 +979,7 @@ class Imap extends Mail\Helper\Mailbox
                 'MESSAGE_ID' => 0,
             );
 
-            if ($bxuid = preg_grep('/^bxuid:?[a-f0-9]+$/i', $item['FLAGS'])) {
-                $messages[$id]['__replaces'] = preg_replace('/^bxuid:?/i', '', end($bxuid));
-            } else if (preg_match('/X-Bitrix-Mail-Message-UID:\s*([a-f0-9]+)/i', $item['BODY[HEADER]'], $matches)) {
+            if (preg_match('/X-Bitrix-Mail-Message-UID:\s*([a-f0-9]+)/i', $item['BODY[HEADER]'], $matches)) {
                 $messages[$id]['__replaces'] = $matches[1];
             }
         }
@@ -906,12 +993,15 @@ class Imap extends Mail\Helper\Mailbox
             $hashesMap[$hash][] = $id;
         }
 
-        $result = $this->listMessages(array(
-            'select' => array('HEADER_MD5', 'MESSAGE_ID', 'DATE_INSERT'),
-            'filter' => array(
-                '@HEADER_MD5' => array_keys($hashesMap),
+        $result = $this->listMessages(
+            array(
+                'select' => array('HEADER_MD5', 'MESSAGE_ID', 'DATE_INSERT'),
+                'filter' => array(
+                    '@HEADER_MD5' => array_keys($hashesMap),
+                ),
             ),
-        ), false);
+            false
+        );
 
         while ($item = $result->fetch()) {
             foreach ((array)$hashesMap[$item['HEADER_MD5']] as $id) {
@@ -920,13 +1010,16 @@ class Imap extends Mail\Helper\Mailbox
             }
         }
 
-        $result = $this->listMessages(array(
-            'select' => array('ID', 'MESSAGE_ID', 'DATE_INSERT'),
-            'filter' => array(
-                '@ID' => array_values($uids),
-                // DIR_MD5 can be empty in DB
+        $result = $this->listMessages(
+            array(
+                'select' => array('ID', 'MESSAGE_ID', 'DATE_INSERT'),
+                'filter' => array(
+                    '@ID' => array_values($uids),
+                    // DIR_MD5 can be empty in DB
+                ),
             ),
-        ), false);
+            false
+        );
 
         while ($item = $result->fetch()) {
             $id = array_search($item['ID'], $uids);
@@ -936,7 +1029,7 @@ class Imap extends Mail\Helper\Mailbox
         }
     }
 
-    protected function resyncMessages($dir, $uidtoken, &$messages)
+    protected function resyncMessages($dirPath, $uidtoken, &$messages)
     {
         $excerpt = array();
 
@@ -946,15 +1039,18 @@ class Imap extends Mail\Helper\Mailbox
         );
         sort($range);
 
-        $result = $this->listMessages(array(
-            'select' => array('ID', 'MESSAGE_ID', 'IS_SEEN'),
-            'filter' => array(
-                '=DIR_MD5' => md5($dir),
-                '=DIR_UIDV' => $uidtoken,
-                '>=MSG_UID' => $range[0],
-                '<=MSG_UID' => $range[1],
+        $result = $this->listMessages(
+            array(
+                'select' => array('ID', 'MESSAGE_ID', 'IS_SEEN'),
+                'filter' => array(
+                    '=DIR_MD5' => md5($dirPath),
+                    '=DIR_UIDV' => $uidtoken,
+                    '>=MSG_UID' => $range[0],
+                    '<=MSG_UID' => $range[1],
+                ),
             ),
-        ), false);
+            false
+        );
 
         while ($item = $result->fetch()) {
             $item['MAILBOX_USER_ID'] = $this->mailbox['USER_ID'];
@@ -968,7 +1064,7 @@ class Imap extends Mail\Helper\Mailbox
             'U' => array(),
         );
         foreach ($messages as $id => $item) {
-            $messageUid = md5(sprintf('%s:%u:%u', $dir, $uidtoken, $item['UID']));
+            $messageUid = md5(sprintf('%s:%u:%u', $dirPath, $uidtoken, $item['UID']));
 
             if (array_key_exists($messageUid, $excerpt)) {
                 $excerptSeen = $excerpt[$messageUid]['IS_SEEN'];
@@ -995,7 +1091,7 @@ class Imap extends Mail\Helper\Mailbox
                 addMessage2Log(
                     sprintf(
                         'IMAP: message lost (%u:%s:%u:%s)',
-                        $this->mailbox['ID'], $dir, $uidtoken, $item['UID']
+                        $this->mailbox['ID'], $dirPath, $uidtoken, $item['UID']
                     ),
                     'mail', 0, false
                 );
@@ -1003,12 +1099,17 @@ class Imap extends Mail\Helper\Mailbox
             }
         }
 
+        $countUpdated = 0;
+        $countDeleted = count($excerpt);
+
         foreach ($update as $seen => $items) {
             if (!empty($items)) {
                 if (in_array($seen, array('S', 'U'))) {
                     $method = 'S' == $seen ? 'seen' : 'unseen';
-                    $this->client->$method($items, $dir);
+                    $this->client->$method($items, $dirPath);
                 } else {
+                    $countUpdated += count($items);
+
                     $this->updateMessagesRegistry(
                         array(
                             '@ID' => array_keys($items),
@@ -1023,16 +1124,21 @@ class Imap extends Mail\Helper\Mailbox
         }
 
         if (!empty($excerpt)) {
-            $this->unregisterMessages(
+            $result = $this->unregisterMessages(
                 array(
                     '@ID' => array_keys($excerpt),
                 ),
                 $excerpt
             );
+
+            $countDeleted += $result ? $result->getCount() : 0;
         }
+
+        $this->lastSyncResult['updatedMessages'] += $countUpdated;
+        $this->lastSyncResult['deletedMessages'] += $countDeleted;
     }
 
-    protected function syncMessage($dir, $uidtoken, $message, &$hashesMap = array())
+    protected function syncMessage($dirPath, $uidtoken, $message, &$hashesMap = array())
     {
         $fields = $message['__fields'];
 
@@ -1044,12 +1150,14 @@ class Imap extends Mail\Helper\Mailbox
             }
         }
 
-        if (!$this->registerMessage($fields, $message['__replaces'])) {
+        if (!$this->registerMessage($fields, isset($message['__replaces']) ? $message['__replaces'] : null)) {
             return false;
         }
 
         if (Mail\Helper\LicenseManager::getSyncOldLimit() > 0) {
-            if ($message['__internaldate']->getTimestamp() < strtotime(sprintf('-%u days', Mail\Helper\LicenseManager::getSyncOldLimit()))) {
+            if ($message['__internaldate']->getTimestamp() < strtotime(
+                    sprintf('-%u days', Mail\Helper\LicenseManager::getSyncOldLimit())
+                )) {
                 return false;
             }
         }
@@ -1093,15 +1201,17 @@ class Imap extends Mail\Helper\Mailbox
         }
 
         if (false !== $message['__parts']) {
+            $dir = $this->getDirsHelper()->getDirByPath($dirPath);
+
             $messageId = $this->cacheMessage(
                 $message,
                 array(
                     'timestamp' => $message['__internaldate']->getTimestamp(),
                     'size' => $message['RFC822.SIZE'],
                     'outcome' => in_array($this->mailbox['EMAIL'], $message['__from']),
-                    'draft' => in_array($dir, $this->mailbox['OPTIONS']['imap'][MessageFolder::DRAFTS]) || preg_grep('/^ \x5c Draft $/ix', $message['FLAGS']),
-                    'trash' => in_array($dir, $this->mailbox['OPTIONS']['imap'][MessageFolder::TRASH]),
-                    'spam' => in_array($dir, $this->mailbox['OPTIONS']['imap'][MessageFolder::SPAM]),
+                    'draft' => $dir != null && $dir->isDraft() || preg_grep('/^ \x5c Draft $/ix', $message['FLAGS']),
+                    'trash' => $dir != null && $dir->isTrash(),
+                    'spam' => $dir != null && $dir->isSpam(),
                     'seen' => $fields['IS_SEEN'] == 'Y',
                     'hash' => $fields['HEADER_MD5'],
                     'lazy_attachments' => $this->isSupportLazyAttachments(),
@@ -1125,13 +1235,15 @@ class Imap extends Mail\Helper\Mailbox
             return false;
         }
 
-        $dir = MessageFolder::getFolderNameByHash($excerpt['DIR_MD5'], $this->mailbox['OPTIONS']);
-        if (empty($dir)) {
+        $dirPath = $this->getDirsHelper()->getDirPathByHash($excerpt['DIR_MD5']);
+        if (empty($dirPath)) {
             return false;
         }
 
-        $message = $this->client->fetch(true, $dir, $excerpt['MSG_UID'], '(BODYSTRUCTURE)', $error);
+        $message = $this->client->fetch(true, $dirPath, $excerpt['MSG_UID'], '(BODYSTRUCTURE)', $error);
         if (empty($message['BODYSTRUCTURE'])) {
+            // @TODO: fallback
+
             if (false === $message) {
                 $this->errors = new Main\ErrorCollection($this->client->getErrors()->toArray());
             }
@@ -1140,10 +1252,12 @@ class Imap extends Mail\Helper\Mailbox
         }
 
         if (!is_array($message['BODYSTRUCTURE'])) {
-            $this->errors = new Main\ErrorCollection(array(
-                new Main\Error('Helper\Mailbox\Imap: Invalid BODYSTRUCTURE', 0),
-                new Main\Error((string)$message['BODYSTRUCTURE'], -1),
-            ));
+            $this->errors = new Main\ErrorCollection(
+                array(
+                    new Main\Error('Helper\Mailbox\Imap: Invalid BODYSTRUCTURE', 0),
+                    new Main\Error((string)$message['BODYSTRUCTURE'], -1),
+                )
+            );
             return false;
         }
 
@@ -1159,7 +1273,7 @@ class Imap extends Mail\Helper\Mailbox
 
         $message['__bodystructure']->traverse(
             function (Mail\Imap\BodyStructure $item) use (&$parts, &$attachments) {
-                if ($item->isMultipart() || $item->isText() && !$item->isAttachment()) {
+                if ($item->isMultipart() || $item->isBodyText()) {
                     return;
                 }
 
@@ -1195,8 +1309,20 @@ class Imap extends Mail\Helper\Mailbox
             return false;
         }
 
+        $complete = function (&$html, &$text) {
+            if ('' !== $html && '' === $text) {
+                $text = html_entity_decode(
+                    htmlToTxt($html),
+                    ENT_QUOTES | ENT_HTML401,
+                    $this->mailbox['LANG_CHARSET']
+                );
+            } elseif ('' === $html && '' !== $text) {
+                $html = txtToHtml($text, false, 120);
+            }
+        };
+
         list($bodyHtml, $bodyText, $attachments) = $message['__bodystructure']->traverse(
-            function (Mail\Imap\BodyStructure $item, &$subparts) use (&$message) {
+            function (Mail\Imap\BodyStructure $item, &$subparts) use (&$message, &$complete) {
                 $parts = &$message['__parts'];
 
                 $html = '';
@@ -1221,28 +1347,12 @@ class Imap extends Mail\Helper\Mailbox
                             }
                         }
 
-                        if ('' !== $html && '' === $text) {
-                            $text = html_entity_decode(
-                                htmlToTxt($html),
-                                ENT_QUOTES | ENT_HTML401,
-                                $this->mailbox['LANG_CHARSET']
-                            );
-                        } else if ('' === $html && '' !== $text) {
-                            $html = txtToHtml($text, false, 120);
-                        }
+                        $complete($html, $text);
                     } else {
                         foreach ($subparts as $part) {
                             $part = $part[0];
 
-                            if ('' !== $part[0] && '' === $part[1]) {
-                                $part[1] = html_entity_decode(
-                                    htmlToTxt($part[0]),
-                                    ENT_QUOTES | ENT_HTML401,
-                                    $this->mailbox['LANG_CHARSET']
-                                );
-                            } else if ('' === $part[0] && '' !== $part[1]) {
-                                $part[0] = txtToHtml($part[1], false, 120);
-                            }
+                            $complete($part[0], $part[1]);
 
                             if ('' !== $part[0] || '' !== $part[1]) {
                                 $html .= $part[0] . "\r\n\r\n";
@@ -1265,11 +1375,18 @@ class Imap extends Mail\Helper\Mailbox
                             $parts[sprintf('BODY[%s]', $item->getNumber())],
                             $this->mailbox['LANG_CHARSET']
                         );
+                    } else {
+                        $part = [
+                            'CONTENT-TYPE' => $item->getType() . '/' . $item->getSubtype(),
+                            'CONTENT-ID' => $item->getId(),
+                            'BODY' => '',
+                            'FILENAME' => $item->getParams()['name']
+                        ];
                     }
 
-                    if (!$item->isText() || $item->isAttachment()) {
-                        $attachments[] = empty($part) ? $item->getNumber() : $part;
-                    } else if (!empty($part)) {
+                    if (!$item->isBodyText()) {
+                        $attachments[] = $part;
+                    } elseif (!empty($part)) {
                         if ('html' === $item->getSubtype()) {
                             $html = $part['BODY'];
                         } else {
@@ -1282,7 +1399,8 @@ class Imap extends Mail\Helper\Mailbox
             }
         )[0];
 
-        $dummyBody;
+        $complete($bodyHtml, $bodyText);
+
         return \CMailMessage::saveMessage(
             $this->mailbox['ID'],
             $dummyBody,
@@ -1294,9 +1412,9 @@ class Imap extends Mail\Helper\Mailbox
         );
     }
 
-    protected function getSyncRange($dir, &$uidtoken)
+    protected function getSyncRange($dirPath, &$uidtoken)
     {
-        $meta = $this->client->select($dir, $error);
+        $meta = $this->client->select($dirPath, $error);
         if (false === $meta) {
             $this->warnings->add($this->client->getErrors()->toArray());
 
@@ -1309,22 +1427,32 @@ class Imap extends Mail\Helper\Mailbox
 
         $uidtoken = $meta['uidvalidity'];
 
-        $rangeGetter = function ($min, $max) use ($dir, $uidtoken, &$rangeGetter) {
+        $rangeGetter = function ($min, $max) use ($dirPath, $uidtoken, &$rangeGetter) {
             $size = $max - $min + 1;
 
             $set = array();
             $d = $size < 1000 ? 100 : pow(10, round(ceil(log10($size) - 0.7) / 2) * 2 - 2);
+
+            //take every $d (usually 100) id starting from the first one
             for ($i = $min; $i <= $max; $i = $i + $d) {
                 $set[] = $i;
             }
 
+            /*if the interval from the last message id(we will add it later)
+            to the penultimate id in the set is less than one hundred,
+            we will delete the last one to increase the interval.
+                Example: 5000, 5100, 5200... 13900... 14000... 14023.
+            */
             if (count($set) > 1 && end($set) + 100 >= $max) {
                 array_pop($set);
             }
 
+            //the last item in the set must match the last item on the service
             $set[] = $max;
 
-            $set = $this->client->fetch(false, $dir, join(',', $set), '(UID)', $error);
+            //returns messages starting from the 1st existing one
+            $set = $this->client->fetch(false, $dirPath, join(',', $set), '(UID)', $error);
+
             if (empty($set)) {
                 return false;
             }
@@ -1334,7 +1462,7 @@ class Imap extends Mail\Helper\Mailbox
             static $uidMin, $uidMax;
 
             if (!isset($uidMin, $uidMax)) {
-                $minmax = $this->getUidRange($dir, $uidtoken);
+                $minmax = $this->getUidRange($dirPath, $uidtoken);
 
                 if ($minmax) {
                     $uidMin = $minmax['MIN'];
@@ -1350,8 +1478,12 @@ class Imap extends Mail\Helper\Mailbox
                 if ($uid > $uidMax || $uid < $uidMin) {
                     return array($uid, $uid);
                 }
-            } else if (end($set)['UID'] > $uidMax) {
+            } elseif (end($set)['UID'] > $uidMax) {
                 $max = current($set)['id'];
+
+                /*select the closest element with the largest uid
+                from the set of messages on the service (every hundredth)
+                to a message from the database (synchronized) with the maximum uid.*/
                 do {
                     $exmax = $max;
 
@@ -1359,9 +1491,14 @@ class Imap extends Mail\Helper\Mailbox
                     $min = prev($set)['id'];
                 } while (current($set)['UID'] > $uidMax && prev($set) && next($set));
 
+                //if the interval of messages for downloading is more than 200 - we repeat the splitting.
                 if ($max - $min > 200) {
                     return $rangeGetter($min, $max);
                 } else {
+                    /*if the synchronization interval turned out to be too small,
+                    we take the nearest largest to the end of the interval from the set (every 100).
+                    Thus the interval will increase by a hundred
+                    (or another value, if at the end of the set).*/
                     if ($set[$max]['UID'] - $uidMax < 100) {
                         $max = $exmax;
                     }
@@ -1371,7 +1508,7 @@ class Imap extends Mail\Helper\Mailbox
                         $set[$max]['UID'],
                     );
                 }
-            } else if (reset($set)['UID'] < $uidMin) {
+            } elseif (reset($set)['UID'] < $uidMin) {
                 $min = current($set)['id'];
                 do {
                     $exmin = $min;
@@ -1400,10 +1537,10 @@ class Imap extends Mail\Helper\Mailbox
         return $rangeGetter(1, $meta['exists']);
     }
 
-    protected function getUidRange($dir, $uidtoken)
+    protected function getUidRange($dirPath, $uidtoken)
     {
         $filter = array(
-            '=DIR_MD5' => md5($dir),
+            '=DIR_MD5' => md5($dirPath),
             '=DIR_UIDV' => $uidtoken,
             '>MSG_UID' => 0,
         );

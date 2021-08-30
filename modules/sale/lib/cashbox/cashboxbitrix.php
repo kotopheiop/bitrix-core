@@ -47,8 +47,9 @@ class CashboxBitrix extends Cashbox
         $result['items'] = array();
         foreach ($data['items'] as $item) {
             $vat = $this->getValueFromSettings('VAT', $item['vat']);
-            if ($vat === null)
+            if ($vat === null) {
                 $vat = $this->getValueFromSettings('VAT', 'NOT_VAT');
+            }
 
             $value = array(
                 'name' => $item['name'],
@@ -147,19 +148,21 @@ class CashboxBitrix extends Cashbox
                     static::showAlarmMessage($result->getId());
                 }
 
-                Internals\CashboxZReportTable::add(array(
-                    'STATUS' => 'Y',
-                    'CASHBOX_ID' => $result->getId(),
-                    'DATE_CREATE' => new Main\Type\DateTime(),
-                    'DATE_PRINT_START' => new Main\Type\DateTime(),
-                    'LINK_PARAMS' => '',
-                    'CASH_SUM' => $cashbox['CACHE'],
-                    'CASHLESS_SUM' => $cashbox['INCOME'] - $cashbox['CACHE'],
-                    'CUMULATIVE_SUM' => $cashbox['NZ_SUM'],
-                    'RETURNED_SUM' => 0,
-                    'CURRENCY' => 'RUB',
-                    'DATE_PRINT_END' => new Main\Type\DateTime()
-                ));
+                Internals\CashboxZReportTable::add(
+                    array(
+                        'STATUS' => 'Y',
+                        'CASHBOX_ID' => $result->getId(),
+                        'DATE_CREATE' => new Main\Type\DateTime(),
+                        'DATE_PRINT_START' => new Main\Type\DateTime(),
+                        'LINK_PARAMS' => '',
+                        'CASH_SUM' => $cashbox['CACHE'],
+                        'CASHLESS_SUM' => $cashbox['INCOME'] - $cashbox['CACHE'],
+                        'CUMULATIVE_SUM' => $cashbox['NZ_SUM'],
+                        'RETURNED_SUM' => 0,
+                        'CURRENCY' => 'RUB',
+                        'DATE_PRINT_END' => new Main\Type\DateTime()
+                    )
+                );
             }
         }
     }
@@ -176,15 +179,17 @@ class CashboxBitrix extends Cashbox
     {
         $email = Main\Config\Option::get('main', 'email_from');
         if (!$email) {
-            $dbRes = Main\UserGroupTable::getList([
-                'select' => ['EMAIL' => 'USER.EMAIL'],
-                'filter' => [
-                    '=GROUP_ID' => 1
-                ],
-                'order' => [
-                    'USER.ID' => 'ASC'
+            $dbRes = Main\UserGroupTable::getList(
+                [
+                    'select' => ['EMAIL' => 'USER.EMAIL'],
+                    'filter' => [
+                        '=GROUP_ID' => 1
+                    ],
+                    'order' => [
+                        'USER.ID' => 'ASC'
+                    ]
                 ]
-            ]);
+            );
 
             $data = $dbRes->fetch();
             if ($data) {
@@ -208,13 +213,18 @@ class CashboxBitrix extends Cashbox
             return;
         }
 
-        \CAdminNotify::Add([
-            "MESSAGE" => Localization\Loc::getMessage('SALE_CASHBOX_ACCESS_UNAVAILABLE', ['#CASHBOX_ID#' => $cashboxId]),
-            "TAG" => $tag,
-            "MODULE_ID" => "SALE",
-            "ENABLE_CLOSE" => "Y",
-            "NOTIFY_TYPE" => \CAdminNotify::TYPE_ERROR
-        ]);
+        \CAdminNotify::Add(
+            [
+                "MESSAGE" => Localization\Loc::getMessage(
+                    'SALE_CASHBOX_ACCESS_UNAVAILABLE',
+                    ['#CASHBOX_ID#' => $cashboxId]
+                ),
+                "TAG" => $tag,
+                "MODULE_ID" => "SALE",
+                "ENABLE_CLOSE" => "Y",
+                "NOTIFY_TYPE" => \CAdminNotify::TYPE_ERROR
+            ]
+        );
     }
 
 
@@ -312,8 +322,9 @@ class CashboxBitrix extends Cashbox
 
         if ($data['code'] !== 0 && isset($data['message'])) {
             $errorMsg = Localization\Loc::getMessage('SALE_CASHBOX_BITRIX_ERR' . $data['code']);
-            if (!$errorMsg)
+            if (!$errorMsg) {
                 $errorMsg = $data['message'];
+            }
 
             $errorType = static::getErrorType($data['code']);
 
@@ -364,12 +375,14 @@ class CashboxBitrix extends Cashbox
 
         if ($data['code'] !== 0 && isset($data['message'])) {
             $errorMsg = Localization\Loc::getMessage('SALE_CASHBOX_BITRIX_ERR' . $data['code']);
-            if (!$errorMsg)
+            if (!$errorMsg) {
                 $errorMsg = $data['message'];
+            }
 
             $errorType = static::getErrorType($data['code']);
-            if ($errorType == null)
+            if ($errorType == null) {
                 $errorType = Errors\Warning::TYPE;
+            }
 
             $result['ERROR'] = array('MESSAGE' => $errorMsg, 'CODE' => $data['code'], 'TYPE' => $errorType);
         }
@@ -428,7 +441,7 @@ class CashboxBitrix extends Cashbox
                         $key = Check::PARAM_CALCULATION_ATTR;
                         break;
                     default:
-                        continue;
+                        continue 2;
                 }
 
                 $result[$key] = $value;
@@ -446,12 +459,14 @@ class CashboxBitrix extends Cashbox
     protected static function getErrorType($errorCode)
     {
         $errors = array(-3800, -3803, -3804, -3805, -3816, -3807, -3896, -3897, -4026);
-        if (in_array($errorCode, $errors))
+        if (in_array($errorCode, $errors)) {
             return Errors\Error::TYPE;
+        }
 
         $warnings = array();
-        if (in_array($errorCode, $warnings))
+        if (in_array($errorCode, $warnings)) {
             return Errors\Warning::TYPE;
+        }
 
         return null;
     }
@@ -478,7 +493,9 @@ class CashboxBitrix extends Cashbox
                 foreach ($defaultSettings['PAYMENT_TYPE'] as $type => $value) {
                     $settings['PAYMENT_TYPE']['ITEMS'][$type] = array(
                         'TYPE' => 'STRING',
-                        'LABEL' => Localization\Loc::getMessage('SALE_CASHBOX_BITRIX_SETTINGS_P_TYPE_LABEL_' . ToUpper($type)),
+                        'LABEL' => Localization\Loc::getMessage(
+                            'SALE_CASHBOX_BITRIX_SETTINGS_P_TYPE_LABEL_' . ToUpper($type)
+                        ),
                         'VALUE' => $value
                     );
                 }
@@ -503,8 +520,9 @@ class CashboxBitrix extends Cashbox
                 if ($vatList) {
                     foreach ($vatList as $vat) {
                         $value = '';
-                        if (isset($defaultSettings['VAT'][(int)$vat['RATE']]))
+                        if (isset($defaultSettings['VAT'][(int)$vat['RATE']])) {
                             $value = $defaultSettings['VAT'][(int)$vat['RATE']];
+                        }
 
                         $settings['VAT']['ITEMS'][(int)$vat['ID']] = array(
                             'TYPE' => 'STRING',
@@ -566,10 +584,11 @@ class CashboxBitrix extends Cashbox
         if ($settings['PAYMENT_TYPE']) {
             /* hack is for difference between real values of payment cashbox's settings and user view (diff is '-1') */
             foreach ($settings['PAYMENT_TYPE'] as $i => $payment) {
-                if ((int)$payment)
+                if ((int)$payment) {
                     $settings['PAYMENT_TYPE'][$i] = (int)$payment - 1;
-                else
+                } else {
                     $settings['PAYMENT_TYPE'][$i] = 0;
+                }
             }
         }
 

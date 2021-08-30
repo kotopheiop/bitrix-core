@@ -66,10 +66,12 @@ class Landing extends CopyImplementer
      */
     public function getFields(Container $container, $landingId)
     {
-        $queryObject = \Bitrix\Landing\Landing::getList([
-            'select' => ['*'],
-            'filter' => ['ID' => $landingId]
-        ]);
+        $queryObject = \Bitrix\Landing\Landing::getList(
+            [
+                'select' => ['*'],
+                'filter' => ['ID' => $landingId]
+            ]
+        );
         return (($fields = $queryObject->fetch()) ? $fields : []);
     }
 
@@ -144,8 +146,10 @@ class Landing extends CopyImplementer
         $folderId = null;
         if (array_key_exists($fields['FOLDER_ID'], $this->folderMapIds)) {
             $folderId = (int)$this->folderMapIds[$fields['FOLDER_ID']];
-        } else if ($siteId == $fields['SITE_ID']) {
-            $folderId = (int)$fields['FOLDER_ID'];
+        } else {
+            if ($siteId == $fields['SITE_ID']) {
+                $folderId = (int)$fields['FOLDER_ID'];
+            }
         }
         return $folderId;
     }

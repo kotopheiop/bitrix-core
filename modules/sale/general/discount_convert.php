@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 class CSaleDiscountConvert
@@ -14,27 +15,33 @@ class CSaleDiscountConvert
 
     public function __construct()
     {
-
     }
 
     public static function InitStep()
     {
-        if ('' == self::$strSessID)
+        if ('' == self::$strSessID) {
             self::$strSessID = 'DC' . time();
+        }
         if (array_key_exists(self::$strSessID, $_SESSION) && is_array($_SESSION[self::$strSessID])) {
-            if (isset($_SESSION[self::$strSessID]['ERRORS_COUNT']) && 0 < intval($_SESSION[self::$strSessID]['ERRORS_COUNT']))
+            if (isset($_SESSION[self::$strSessID]['ERRORS_COUNT']) && 0 < intval(
+                    $_SESSION[self::$strSessID]['ERRORS_COUNT']
+                )) {
                 self::$intErrors = intval($_SESSION[self::$strSessID]['ERRORS_COUNT']);
-            if (isset($_SESSION[self::$strSessID]['ERRORS']) && is_array($_SESSION[self::$strSessID]['ERRORS']))
+            }
+            if (isset($_SESSION[self::$strSessID]['ERRORS']) && is_array($_SESSION[self::$strSessID]['ERRORS'])) {
                 self::$arErrors = $_SESSION[self::$strSessID]['ERRORS'];
+            }
         }
     }
 
     public static function SaveStep()
     {
-        if ('' == self::$strSessID)
+        if ('' == self::$strSessID) {
             self::$strSessID = 'DC' . time();
-        if (!array_key_exists(self::$strSessID, $_SESSION) || !is_array($_SESSION[self::$strSessID]))
+        }
+        if (!array_key_exists(self::$strSessID, $_SESSION) || !is_array($_SESSION[self::$strSessID])) {
             $_SESSION[self::$strSessID] = array();
+        }
         if (0 < self::$intErrors) {
             $_SESSION[self::$strSessID]['ERRORS_COUNT'] = self::$intErrors;
         }
@@ -66,11 +73,13 @@ class CSaleDiscountConvert
                 break;
         }
         $res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-        if (!$res)
+        if (!$res) {
             return 0;
+        }
 
-        if ($row = $res->Fetch())
+        if ($row = $res->Fetch()) {
             return intval($row['CNT']);
+        }
     }
 
     public static function GetCount()
@@ -91,11 +100,13 @@ class CSaleDiscountConvert
                 break;
         }
         $res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-        if (!$res)
+        if (!$res) {
             return 0;
+        }
 
-        if ($row = $res->Fetch())
+        if ($row = $res->Fetch()) {
             return intval($row['CNT']);
+        }
     }
 
     public static function ConvertDiscount($intStep = 100, $intMaxExecutionTime = 15)
@@ -107,8 +118,9 @@ class CSaleDiscountConvert
         self::InitStep();
 
         $intStep = intval($intStep);
-        if (0 >= $intStep)
+        if (0 >= $intStep) {
             $intStep = 100;
+        }
         $startConvertTime = getmicrotime();
 
         $obDiscount = new CSaleDiscount();
@@ -128,12 +140,11 @@ class CSaleDiscountConvert
 
         $intCount = CSaleDiscountConvert::GetCount();
         if (0 == $intCount) {
-
         }
         $strStatus = (1 < $intCount ? 'N' : 'Y');
 
         $arBaseCurrencies = array();
-        $rsSites = CSite::GetList($b = "id", $o = "asc");
+        $rsSites = CSite::GetList("id", "asc");
         while ($arSite = $rsSites->Fetch()) {
             $arBaseCurrencies[$arSite['ID']] = CSaleLang::GetLangCurrency($arSite['ID']);
         }
@@ -147,9 +158,15 @@ class CSaleDiscountConvert
             false,
             array('nTopCount' => $intStep),
             array(
-                'ID', 'SITE_ID', 'MODIFIED_BY', 'TIMESTAMP_X',
-                'PRICE_FROM', 'PRICE_TO', 'CURRENCY',
-                'DISCOUNT_VALUE', 'DISCOUNT_TYPE'
+                'ID',
+                'SITE_ID',
+                'MODIFIED_BY',
+                'TIMESTAMP_X',
+                'PRICE_FROM',
+                'PRICE_TO',
+                'CURRENCY',
+                'DISCOUNT_VALUE',
+                'DISCOUNT_TYPE'
             )
         );
         while ($arDiscount = $rsDiscounts->Fetch()) {
@@ -182,7 +199,14 @@ class CSaleDiscountConvert
             $arDiscount['PRICE_TO'] = doubleval($arDiscount['PRICE_TO']);
             $arDiscount['DISCOUNT_VALUE'] = doubleval($arDiscount['DISCOUNT_VALUE']);
             if (0 < $arDiscount['PRICE_FROM']) {
-                $dblValue = roundEx(($boolCurrency ? $arDiscount['PRICE_FROM'] : CCurrencyRates::ConvertCurrency($arDiscount['PRICE_FROM'], $arDiscount['CURRENCY'], $arBaseCurrencies[$arDiscount['SITE_ID']])), SALE_VALUE_PRECISION);
+                $dblValue = roundEx(
+                    ($boolCurrency ? $arDiscount['PRICE_FROM'] : CCurrencyRates::ConvertCurrency(
+                        $arDiscount['PRICE_FROM'],
+                        $arDiscount['CURRENCY'],
+                        $arBaseCurrencies[$arDiscount['SITE_ID']]
+                    )),
+                    SALE_VALUE_PRECISION
+                );
                 $arConditions['CHILDREN'][] = array(
                     'CLASS_ID' => 'CondBsktAmtGroup',
                     'DATA' => array(
@@ -195,10 +219,21 @@ class CSaleDiscountConvert
                 if (!$boolCurrency) {
                     $arFields['PRICE_FROM'] = $dblValue;
                 }
-                $strFrom = str_replace('#VALUE#', $dblValue . ' ' . $arBaseCurrencies[$arDiscount['SITE_ID']], GetMessage('BT_MOD_SALE_DSC_FORMAT_NAME_FROM'));
+                $strFrom = str_replace(
+                    '#VALUE#',
+                    $dblValue . ' ' . $arBaseCurrencies[$arDiscount['SITE_ID']],
+                    GetMessage('BT_MOD_SALE_DSC_FORMAT_NAME_FROM')
+                );
             }
             if (0 < $arDiscount['PRICE_TO']) {
-                $dblValue = roundEx($boolCurrency ? $arDiscount['PRICE_TO'] : CCurrencyRates::ConvertCurrency($arDiscount['PRICE_TO'], $arDiscount['CURRENCY'], $arBaseCurrencies[$arDiscount['SITE_ID']]), SALE_VALUE_PRECISION);
+                $dblValue = roundEx(
+                    $boolCurrency ? $arDiscount['PRICE_TO'] : CCurrencyRates::ConvertCurrency(
+                        $arDiscount['PRICE_TO'],
+                        $arDiscount['CURRENCY'],
+                        $arBaseCurrencies[$arDiscount['SITE_ID']]
+                    ),
+                    SALE_VALUE_PRECISION
+                );
                 $arConditions['CHILDREN'][] = array(
                     'CLASS_ID' => 'CondBsktAmtGroup',
                     'DATA' => array(
@@ -211,7 +246,11 @@ class CSaleDiscountConvert
                 if (!$boolCurrency) {
                     $arFields['PRICE_TO'] = $dblValue;
                 }
-                $strTo = str_replace('#VALUE#', $dblValue . ' ' . $arBaseCurrencies[$arDiscount['SITE_ID']], GetMessage('BT_MOD_SALE_DSC_FORMAT_NAME_TO'));
+                $strTo = str_replace(
+                    '#VALUE#',
+                    $dblValue . ' ' . $arBaseCurrencies[$arDiscount['SITE_ID']],
+                    GetMessage('BT_MOD_SALE_DSC_FORMAT_NAME_TO')
+                );
             }
             if (CSaleDiscount::OLD_DSC_TYPE_PERCENT == $arDiscount['DISCOUNT_TYPE']) {
                 $arActions['CHILDREN'][] = array(
@@ -226,7 +265,14 @@ class CSaleDiscountConvert
                 );
                 $strValue = $arDiscount['DISCOUNT_VALUE'] . ' %';
             } else {
-                $dblValue = roundEx(($boolCurrency ? $arDiscount['DISCOUNT_VALUE'] : CCurrencyRates::ConvertCurrency($arDiscount['DISCOUNT_VALUE'], $arDiscount['CURRENCY'], $arBaseCurrencies[$arDiscount['SITE_ID']])), SALE_VALUE_PRECISION);
+                $dblValue = roundEx(
+                    ($boolCurrency ? $arDiscount['DISCOUNT_VALUE'] : CCurrencyRates::ConvertCurrency(
+                        $arDiscount['DISCOUNT_VALUE'],
+                        $arDiscount['CURRENCY'],
+                        $arBaseCurrencies[$arDiscount['SITE_ID']]
+                    )),
+                    SALE_VALUE_PRECISION
+                );
                 $arActions['CHILDREN'][] = array(
                     'CLASS_ID' => 'ActSaleBsktGrp',
                     'DATA' => array(
@@ -244,7 +290,11 @@ class CSaleDiscountConvert
             }
 
             if ('' != $strFrom || '' != $strTo) {
-                $strName = str_replace(array('#VALUE#', '#FROM#', '#TO#'), array($strValue, $strFrom, $strTo), GetMessage('BT_MOD_SALE_DSC_FORMAT_NAME'));
+                $strName = str_replace(
+                    array('#VALUE#', '#FROM#', '#TO#'),
+                    array($strValue, $strFrom, $strTo),
+                    GetMessage('BT_MOD_SALE_DSC_FORMAT_NAME')
+                );
             } else {
                 $strName = str_replace('#VALUE#', $strValue, GetMessage('BT_MOD_SALE_DSC_FORMAT_SHORT_NAME'));
             }
@@ -267,8 +317,9 @@ class CSaleDiscountConvert
                 if ($ex = $APPLICATION->GetException()) {
                     $strError = $ex->GetString();
                 }
-                if (empty($strError))
+                if (empty($strError)) {
                     $strError = GetMessage('');
+                }
                 self::$arErrors[] = array(
                     'ID' => $arDiscount['ID'],
                     'NAME' => $strName,
@@ -286,16 +337,18 @@ class CSaleDiscountConvert
                 self::$intConvertPerStep++;
             }
 
-            if ($intMaxExecutionTime > 0 && (getmicrotime() - $startConvertTime > $intMaxExecutionTime))
+            if ($intMaxExecutionTime > 0 && (getmicrotime() - $startConvertTime > $intMaxExecutionTime)) {
                 break;
+            }
         }
 
         CTimeZone::Enable();
 
-        if ($intMaxExecutionTime > (2 * (getmicrotime() - $startConvertTime)))
+        if ($intMaxExecutionTime > (2 * (getmicrotime() - $startConvertTime))) {
             self::$intNextConvertPerStep = $intStep * 2;
-        else
+        } else {
             self::$intNextConvertPerStep = $intStep;
+        }
 
         self::SaveStep();
     }

@@ -38,19 +38,25 @@ class CAllVote
             if ($arFields["CHANNEL_ID"] <= 0):
                 $aMsg[] = array(
                     "id" => "CHANNEL_ID",
-                    "text" => GetMessage("VOTE_EMPTY_CHANNEL_ID"));
+                    "text" => GetMessage("VOTE_EMPTY_CHANNEL_ID")
+                );
             else:
-                $rChannel = CVoteChannel::GetList($by, $order, arraY('ID' => intval($arFields['CHANNEL_ID'])), $filtered);
+                $rChannel = CVoteChannel::GetList('', '', array('ID' => intval($arFields['CHANNEL_ID'])));
                 if (!($rChannel && $arChannel = $rChannel->Fetch())) {
                     $aMsg[] = array(
                         "id" => "CHANNEL_ID",
-                        "text" => GetMessage("VOTE_WRONG_CHANNEL_ID"));
+                        "text" => GetMessage("VOTE_WRONG_CHANNEL_ID")
+                    );
                 }
             endif;
         }
 
-        if (is_set($arFields, "C_SORT")) $arFields["C_SORT"] = intval($arFields["C_SORT"]);
-        if (is_set($arFields, "ACTIVE") || $ACTION == "ADD") $arFields["ACTIVE"] = ($arFields["ACTIVE"] == "N" ? "N" : "Y");
+        if (is_set($arFields, "C_SORT")) {
+            $arFields["C_SORT"] = intval($arFields["C_SORT"]);
+        }
+        if (is_set($arFields, "ACTIVE") || $ACTION == "ADD") {
+            $arFields["ACTIVE"] = ($arFields["ACTIVE"] == "N" ? "N" : "Y");
+        }
 
         unset($arFields["TIMESTAMP_X"]);
         $date_start = false;
@@ -60,13 +66,14 @@ class CAllVote
             if (!$date_start):
                 $aMsg[] = array(
                     "id" => "DATE_START",
-                    "text" => GetMessage("VOTE_WRONG_DATE_START"));
+                    "text" => GetMessage("VOTE_WRONG_DATE_START")
+                );
             endif;
         }
 
         if (is_set($arFields, "DATE_END") || $ACTION == "ADD") {
             $arFields["DATE_END"] = trim($arFields["DATE_END"]);
-            if (strlen($arFields["DATE_END"]) <= 0):
+            if ($arFields["DATE_END"] == ''):
                 if ($date_start != false):
                     $date_end = $date_start + 2592000;
                     $arFields["DATE_END"] = GetTime($date_end, "FULL");
@@ -80,37 +87,53 @@ class CAllVote
             if (!$date_end):
                 $aMsg[] = array(
                     "id" => "DATE_END",
-                    "text" => GetMessage("VOTE_WRONG_DATE_END"));
+                    "text" => GetMessage("VOTE_WRONG_DATE_END")
+                );
             elseif ($date_start >= $date_end && !empty($arFields["DATE_START"])):
                 $aMsg[] = array(
                     "id" => "DATE_END",
-                    "text" => GetMessage("VOTE_WRONG_DATE_TILL"));
+                    "text" => GetMessage("VOTE_WRONG_DATE_TILL")
+                );
             endif;
         }
-        if (empty($aMsg) && (is_set($arFields, "DATE_START") || is_set($arFields, "DATE_END") || is_set($arFields, "CHANNEL_ID") || is_set($arFields, "ACTIVE"))) {
+        if (empty($aMsg) && (is_set($arFields, "DATE_START") || is_set($arFields, "DATE_END") || is_set(
+                    $arFields,
+                    "CHANNEL_ID"
+                ) || is_set($arFields, "ACTIVE"))) {
             $vid = 0;
             if ($ACTION == "ADD" && $arFields["ACTIVE"] == "Y") {
-                $vid = CVote::WrongDateInterval(0, $arFields["DATE_START"], $arFields["DATE_END"], $arFields["CHANNEL_ID"]);
+                $vid = CVote::WrongDateInterval(
+                    0,
+                    $arFields["DATE_START"],
+                    $arFields["DATE_END"],
+                    $arFields["CHANNEL_ID"]
+                );
             } elseif ($ACTION != "ADD" && !(is_set($arFields, "ACTIVE") && $arFields["ACTIVE"] != "Y")) {
                 $res = array(
                     "DATE_START" => (is_set($arFields, "DATE_START") ? $arFields["DATE_START"] : false),
                     "DATE_END" => (is_set($arFields, "DATE_END") ? $arFields["DATE_END"] : false),
-                    "CHANNEL_ID" => (is_set($arFields, "CHANNEL_ID") ? $arFields["CHANNEL_ID"] : false));
+                    "CHANNEL_ID" => (is_set($arFields, "CHANNEL_ID") ? $arFields["CHANNEL_ID"] : false)
+                );
                 $vid = CVote::WrongDateInterval($ID, $res["DATE_START"], $res["DATE_END"], $res["CHANNEL_ID"]);
             }
             if (intval($vid) > 0):
                 $aMsg[] = array(
                     "id" => "DATE_START",
-                    "text" => str_replace("#ID#", $vid, GetMessage("VOTE_WRONG_INTERVAL")));
+                    "text" => str_replace("#ID#", $vid, GetMessage("VOTE_WRONG_INTERVAL"))
+                );
             endif;
         }
-        if (is_set($arFields, "IMAGE_ID") && strlen($arFields["IMAGE_ID"]["name"]) <= 0 && strlen($arFields["IMAGE_ID"]["del"]) <= 0) {
+        if (is_set(
+                $arFields,
+                "IMAGE_ID"
+            ) && $arFields["IMAGE_ID"]["name"] == '' && $arFields["IMAGE_ID"]["del"] == '') {
             unset($arFields["IMAGE_ID"]);
         } elseif (is_set($arFields, "IMAGE_ID")) {
             if ($str = CFile::CheckImageFile($arFields["IMAGE_ID"])):
                 $aMsg[] = array(
                     "id" => "IMAGE_ID",
-                    "text" => $str);
+                    "text" => $str
+                );
             else:
                 $arFields["IMAGE_ID"]["MODULE_ID"] = "vote";
                 if (!empty($arVote)):
@@ -119,17 +142,32 @@ class CAllVote
             endif;
         }
 
-        if (is_set($arFields, "COUNTER")) $arFields["COUNTER"] = intval($arFields["COUNTER"]);
-        if (is_set($arFields, "TITLE")) $arFields["TITLE"] = trim($arFields["TITLE"]);
-        if (is_set($arFields, "DESCRIPTION")) $arFields["DESCRIPTION"] = trim($arFields["DESCRIPTION"]);
-        if (is_set($arFields, "DESCRIPTION_TYPE") || $ACTION == "ADD") $arFields["DESCRIPTION_TYPE"] = ($arFields["DESCRIPTION_TYPE"] == "html" ? "html" : "text");
+        if (is_set($arFields, "COUNTER")) {
+            $arFields["COUNTER"] = intval($arFields["COUNTER"]);
+        }
+        if (is_set($arFields, "TITLE")) {
+            $arFields["TITLE"] = trim($arFields["TITLE"]);
+        }
+        if (is_set($arFields, "DESCRIPTION")) {
+            $arFields["DESCRIPTION"] = trim($arFields["DESCRIPTION"]);
+        }
+        if (is_set($arFields, "DESCRIPTION_TYPE") || $ACTION == "ADD") {
+            $arFields["DESCRIPTION_TYPE"] = ($arFields["DESCRIPTION_TYPE"] == "html" ? "html" : "text");
+        }
 
-        if (is_set($arFields, "EVENT1")) $arFields["EVENT1"] = trim($arFields["EVENT1"]);
-        if (is_set($arFields, "EVENT2")) $arFields["EVENT2"] = trim($arFields["EVENT2"]);
-        if (is_set($arFields, "EVENT3")) $arFields["EVENT3"] = trim($arFields["EVENT3"]);
-        if (is_set($arFields, "UNIQUE_TYPE")) $arFields["UNIQUE_TYPE"] = intval($arFields["UNIQUE_TYPE"]);
+        if (is_set($arFields, "EVENT1")) {
+            $arFields["EVENT1"] = trim($arFields["EVENT1"]);
+        }
+        if (is_set($arFields, "EVENT2")) {
+            $arFields["EVENT2"] = trim($arFields["EVENT2"]);
+        }
+        if (is_set($arFields, "EVENT3")) {
+            $arFields["EVENT3"] = trim($arFields["EVENT3"]);
+        }
+        if (is_set($arFields, "UNIQUE_TYPE")) {
+            $arFields["UNIQUE_TYPE"] = intval($arFields["UNIQUE_TYPE"]);
+        }
         if (is_set($arFields, "OPTIONS")) {
-
             $arFields["OPTIONS"] = intval($arFields["OPTIONS"]);
         }
 
@@ -143,8 +181,10 @@ class CAllVote
                 "D" => 86400
             );
             $arFields["KEEP_IP_SEC"] = $arFields["DELAY"] * $typeMultiplier[$type];
-        } else if (array_key_exists("KEEP_IP_SEC", $arFields) || $ACTION == "ADD") {
-            $arFields["KEEP_IP_SEC"] = intval($arFields["KEEP_IP_SEC"]);
+        } else {
+            if (array_key_exists("KEEP_IP_SEC", $arFields) || $ACTION == "ADD") {
+                $arFields["KEEP_IP_SEC"] = intval($arFields["KEEP_IP_SEC"]);
+            }
         }
         unset ($arFields["DELAY"]);
         unset ($arFields["DELAY_TYPE"]);
@@ -154,11 +194,21 @@ class CAllVote
             unset($arFields["RESULT_TEMPLATE"]);
         }
 
-        if (is_set($arFields, "TEMPLATE")) $arFields["TEMPLATE"] = trim($arFields["TEMPLATE"]);
-        if (is_set($arFields, "RESULT_TEMPLATE")) $arFields["RESULT_TEMPLATE"] = trim($arFields["RESULT_TEMPLATE"]);
-        if (is_set($arFields, "NOTIFY")) $arFields["NOTIFY"] = (in_array($arFields["NOTIFY"], array("Y", "N", "I")) ? $arFields["NOTIFY"] : "N");
-        if (is_set($arFields, "REQUIRED")) $arFields["REQUIRED"] = ($arFields["REQUIRED"] == "Y" ? "Y" : "N");
-        if (is_set($arFields, "AUTHOR_ID")) $arFields["AUTHOR_ID"] = intval($arFields["AUTHOR_ID"]);
+        if (is_set($arFields, "TEMPLATE")) {
+            $arFields["TEMPLATE"] = trim($arFields["TEMPLATE"]);
+        }
+        if (is_set($arFields, "RESULT_TEMPLATE")) {
+            $arFields["RESULT_TEMPLATE"] = trim($arFields["RESULT_TEMPLATE"]);
+        }
+        if (is_set($arFields, "NOTIFY")) {
+            $arFields["NOTIFY"] = (in_array($arFields["NOTIFY"], array("Y", "N", "I")) ? $arFields["NOTIFY"] : "N");
+        }
+        if (is_set($arFields, "REQUIRED")) {
+            $arFields["REQUIRED"] = ($arFields["REQUIRED"] == "Y" ? "Y" : "N");
+        }
+        if (is_set($arFields, "AUTHOR_ID")) {
+            $arFields["AUTHOR_ID"] = intval($arFields["AUTHOR_ID"]);
+        }
 
         if (!empty($aMsg)) {
             global $APPLICATION;
@@ -229,9 +279,11 @@ class CAllVote
         endif;
 
         /***************** Event onBeforeVoteDelete *************************/
-        foreach (GetModuleEvents("vote", "onBeforeVoteDelete", true) as $arEvent)
-            if (ExecuteModuleEventEx($arEvent, array(&$ID)) === false)
+        foreach (GetModuleEvents("vote", "onBeforeVoteDelete", true) as $arEvent) {
+            if (ExecuteModuleEventEx($arEvent, array(&$ID)) === false) {
                 return false;
+            }
+        }
         /***************** /Event ******************************************/
 
         @set_time_limit(1000);
@@ -243,7 +295,9 @@ class CAllVote
         // delete vote images
         $strSql = "SELECT IMAGE_ID FROM b_vote WHERE ID = " . $ID . " AND IMAGE_ID > 0";
         $z = $DB->Query($strSql, false, $err_mess . __LINE__);
-        while ($zr = $z->Fetch()) CFile::Delete($zr["IMAGE_ID"]);
+        while ($zr = $z->Fetch()) {
+            CFile::Delete($zr["IMAGE_ID"]);
+        }
 
         // delete vote events
         $DB->Query("DELETE FROM b_vote_event WHERE VOTE_ID='$ID'", false, $err_mess . __LINE__);
@@ -251,8 +305,9 @@ class CAllVote
         $res = $DB->Query("DELETE FROM b_vote WHERE ID='$ID'", false, $err_mess . __LINE__);
         $DB->Commit();
         /***************** Event onAfterVoteDelete *************************/
-        foreach (GetModuleEvents("vote", "onAfterVoteDelete", true) as $arEvent)
+        foreach (GetModuleEvents("vote", "onAfterVoteDelete", true) as $arEvent) {
             ExecuteModuleEventEx($arEvent, array($ID));
+        }
         /***************** /Event ******************************************/
         return $res;
     }
@@ -261,8 +316,9 @@ class CAllVote
     {
         \Bitrix\Vote\Event::resetStatistic($ID);
         unset($GLOBALS["VOTE_CACHE_VOTING"][$ID]);
-        if (array_key_exists("VOTE", $_SESSION) && array_key_exists("VOTES", $_SESSION["VOTE"]))
+        if (array_key_exists("VOTE", $_SESSION) && array_key_exists("VOTES", $_SESSION["VOTE"])) {
             unset($_SESSION["VOTE"]["VOTES"][$ID]);
+        }
         return true;
     }
 
@@ -275,8 +331,9 @@ class CAllVote
             return false;
         endif;
         $rCurrentVote = CVote::GetByID($ID);
-        if (!$arCurrentVote = $rCurrentVote->Fetch())
+        if (!$arCurrentVote = $rCurrentVote->Fetch()) {
             return false;
+        }
         unset($arCurrentVote["ID"]);
         $arCurrentVote['ACTIVE'] = "N";
 
@@ -284,38 +341,45 @@ class CAllVote
         if (intval($arCurrentVote['IMAGE_ID'] > 0)) {
             $imageId = $arCurrentVote['IMAGE_ID'];
             $newImageId = CFile::CopyFile($imageId);
-            $arCurrentVote["IMAGE_ID"] = NULL;
+            $arCurrentVote["IMAGE_ID"] = null;
         }
         $newID = CVote::Add($arCurrentVote);
-        if ($newID === false)
+        if ($newID === false) {
             return false;
+        }
         $DB->Update("b_vote", array("COUNTER" => "0"), "WHERE ID=" . $newID, $err_mess . __LINE__);
         if ($newImageId) {
             $DB->Update("b_vote", array("IMAGE_ID" => $newImageId), "WHERE ID=" . $newID, $err_mess . __LINE__);
         }
 
         $state = true;
-        $rQuestions = CVoteQuestion::GetList($ID, $by, $order, array(), $is_filtered);
+        $rQuestions = CVoteQuestion::GetList($ID);
         while ($arQuestion = $rQuestions->Fetch()) {
             $state = $state && (CVoteQuestion::Copy($arQuestion['ID'], $newID) !== false);
         }
 
-        if ($state == true)
+        if ($state == true) {
             return $newID;
-        else return $state;
+        } else {
+            return $state;
+        }
     }
 
     public static function IsOldVersion()
     {
         $res = "N";
         $arr = GetTemplateList("RV");
-        if (is_array($arr) && count($arr["reference"]) > 0) $res = "Y";
-        else {
+        if (is_array($arr) && count($arr["reference"]) > 0) {
+            $res = "Y";
+        } else {
             $arr = GetTemplateList("SV");
-            if (is_array($arr) && count($arr["reference"]) > 0) $res = "Y";
-            else {
+            if (is_array($arr) && count($arr["reference"]) > 0) {
+                $res = "Y";
+            } else {
                 $arr = GetTemplateList("RQ");
-                if (is_array($arr) && count($arr["reference"]) > 0) $res = "Y";
+                if (is_array($arr) && count($arr["reference"]) > 0) {
+                    $res = "Y";
+                }
             }
         }
         return $res;
@@ -324,14 +388,15 @@ class CAllVote
     public static function GetByID($ID)
     {
         $ID = intval($ID);
-        return CVote::GetList($by = "s_id", $order = "desc", array("ID" => $ID), $is_filtered = false);
+        return CVote::GetList("s_id", "desc", array("ID" => $ID));
     }
 
     public static function GetByIDEx($ID)
     {
         $ID = intval($ID);
-        if ($ID <= 0)
+        if ($ID <= 0) {
             return false;
+        }
 
         if (!isset($GLOBALS["VOTE_CACHE"]["VOTE"][$ID])) {
             global $CACHE_MANAGER;
@@ -341,8 +406,9 @@ class CAllVote
                 $db_res = CVote::GetListEx(array("ID" => "ASC"), array("ID" => $ID));
                 if ($db_res && ($res = $db_res->Fetch())) {
                     $GLOBALS["VOTE_CACHE"]["VOTE"][$ID] = $res;
-                    if (!!VOTE_CACHE_TIME)
+                    if (!!VOTE_CACHE_TIME) {
                         $CACHE_MANAGER->Set($ID, $res);
+                    }
                 }
             }
         }
@@ -360,12 +426,17 @@ class CAllVote
         $VOTE_USER_ID = intval($VOTE_USER_ID);
         $USER_ID = intval($USER_ID);
 
-        if ($voteId <= 0 || $UNIQUE_TYPE <= 0)
+        if ($voteId <= 0 || $UNIQUE_TYPE <= 0) {
             return false;
+        }
 
         //One session
-        if (($UNIQUE_TYPE & 1) && IsModuleInstalled('statistic') && array_key_exists($voteId, $_SESSION["VOTE"]["VOTES"]))
+        if (($UNIQUE_TYPE & 1) && IsModuleInstalled('statistic') && array_key_exists(
+                $voteId,
+                $_SESSION["VOTE"]["VOTES"]
+            )) {
             return 1;
+        }
 
 
         $return = array();
@@ -408,13 +479,18 @@ class CAllVote
         }
 
         if (!empty($arSqlSearch)) {
-            $db_res = $DB->Query("SELECT " . implode(",", $arSqlSelect) . "
+            $db_res = $DB->Query(
+                "SELECT " . implode(",", $arSqlSelect) . "
 				FROM b_vote_event VE
 				LEFT JOIN b_vote_user VU ON (VE.VOTE_USER_ID = VU.ID)
-				WHERE VE.VOTE_ID=" . $voteId . " AND ((" . implode(") OR (", $arSqlSearch) . "))", false, $err_mess . __LINE__);
+				WHERE VE.VOTE_ID=" . $voteId . " AND ((" . implode(") OR (", $arSqlSearch) . "))",
+                false,
+                $err_mess . __LINE__
+            );
             while ($res = $db_res->Fetch()) {
-                if ($USER_ID > 0 && $USER_ID == $USER->GetID())
+                if ($USER_ID > 0 && $USER_ID == $USER->GetID()) {
                     $_SESSION["VOTE"]["VOTES"][$voteId] = $res["ID"];
+                }
                 // $UNIQUE_TYPE & 2
                 if (isset($res["VOTE_USER_ID"]) && $res["VOTE_USER_ID"] == $VOTE_USER_ID) {
                     $return[] = 2;
@@ -464,35 +540,42 @@ class CAllVote
         /** @var $r \Bitrix\Main\HttpRequest */
         $r = \Bitrix\Main\Context::getCurrent()->getRequest();
         $request = array_merge($r->getQueryList()->toArray(), $r->getPostList()->toArray());
-        if ($request["AJAX_POST"] == "Y")
+        if ($request["AJAX_POST"] == "Y") {
             CUtil::decodeURIComponent($request);
+        }
 
         $PUBLIC_VOTE_ID = intval($request["PUBLIC_VOTE_ID"]);
         $errorCollection = new \Bitrix\Main\ErrorCollection();
 
         try {
-            if (empty($request["vote"]) || $PUBLIC_VOTE_ID <= 0 || !check_bitrix_sessid())
+            if (empty($request["vote"]) || $PUBLIC_VOTE_ID <= 0 || !check_bitrix_sessid()) {
                 throw new \Bitrix\Main\ArgumentException(GetMessage("VOTE_NOT_FOUND"), "bad_params");
+            }
 
             $vote = new \Bitrix\Vote\Vote($PUBLIC_VOTE_ID);
 
-            if (\CVote::UserGroupPermission($vote["CHANNEL_ID"]) < 2)
+            if (\CVote::UserGroupPermission($vote["CHANNEL_ID"]) < 2) {
                 throw new \Bitrix\Main\AccessDeniedException();
+            }
 
             $channel = $vote->getChannel();
             if ($channel["USE_CAPTCHA"] == "Y" && !$USER->IsAuthorized()) {
                 include_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/classes/general/captcha.php");
                 $cpt = new CCaptcha();
-                if ((!empty($request["captcha_code"]) && !$cpt->CheckCodeCrypt($request["captcha_word"], $request["captcha_code"])) ||
+                if ((!empty($request["captcha_code"]) && !$cpt->CheckCodeCrypt(
+                            $request["captcha_word"],
+                            $request["captcha_code"]
+                        )) ||
                     empty($request["captcha_code"]) && !$cpt->CheckCode($request["captcha_word"], 0)) {
                     $GLOBALS["BAD_CAPTCHA"] = "Y";
                     throw new \Bitrix\Main\ArgumentException(GetMessage("VOTE_BAD_CAPTCHA"), "captcha");
                 }
             }
-            if (!$vote->voteFor($request))
+            if (!$vote->voteFor($request)) {
                 $errorCollection->add($vote->getErrors());
-            else
+            } else {
                 $GLOBALS["VOTING_ID"] = $vote->getId();
+            }
         } catch (\Exception $e) {
             $errorCollection->add(array(new \Bitrix\Main\Error($e->getMessage(), $e->getCode())));
         }
@@ -539,18 +622,22 @@ class CAllVote
             return 0;
         } elseif ($CHANNEL_ID > 0) {
             $db_res = CVoteChannel::GetByID($CHANNEL_ID);
-            if ($db_res && $res = $db_res->Fetch())
-                if ($res["VOTE_SINGLE"] != "Y")
+            if ($db_res && $res = $db_res->Fetch()) {
+                if ($res["VOTE_SINGLE"] != "Y") {
                     return 0;
+                }
+            }
         }
 
         $st = ($DATE_START == false ? "VV.DATE_START" : $DB->CharToDateFunction($DATE_START, "FULL"));
         $en = ($DATE_END == false ? "VV.DATE_END" : $DB->CharToDateFunction($DATE_END, "FULL"));
         if ($CURRENT_VOTE_ID <= 0) {
-            if ($DATE_START == false)
+            if ($DATE_START == false) {
                 $st = $DB->CurrentTimeFunction();
-            if ($DATE_END == false)
-                $en = $DB->CharToDateFunction(ConvertTimeStamp(1924984799, "FULL"), "FULL"); // '31.12.2030 23:59:59'
+            }
+            if ($DATE_END == false) {
+                $en = $DB->CharToDateFunction(ConvertTimeStamp(1924984799, "FULL"), "FULL");
+            } // '31.12.2030 23:59:59'
         }
 
         $strSql = "
@@ -571,8 +658,9 @@ class CAllVote
 					(V.DATE_END between " . $st . " and " . $en . ")
 				)";
         $db_res = $DB->Query($strSql, false, $err_mess . __LINE__);
-        if ($db_res && $res = $db_res->Fetch())
+        if ($db_res && $res = $db_res->Fetch()) {
             return intval($res["ID"]);
+        }
 
         return 0;
     }
@@ -580,9 +668,9 @@ class CAllVote
 
 class _CVoteDBResult extends CDBResult
 {
-    function _CVoteDBResult($res, $params = array())
+    public function __construct($res, $params = array())
     {
-        parent::CDBResult($res);
+        parent::__construct($res);
     }
 
     function Fetch()

@@ -33,7 +33,7 @@ class Permission
         $path = (string)$path;
         $allowPath = false;
         foreach ($initFolders as $oneFolder) {
-            if (strpos($path, $oneFolder) === 0) {
+            if (mb_strpos($path, $oneFolder) === 0) {
                 $allowPath = true;
                 break;
             }
@@ -77,7 +77,9 @@ class Permission
         }
 
         try {
-            if (\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24') && \Bitrix\Main\Loader::includeModule('bitrix24')) {
+            if (\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24') && \Bitrix\Main\Loader::includeModule(
+                    'bitrix24'
+                )) {
                 return \CBitrix24::isPortalAdmin($checkUser->getId());
             }
         } catch (\Exception $e) {

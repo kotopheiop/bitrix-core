@@ -10,7 +10,9 @@
  * @global int $ID
  */
 
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+}
 
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\Text\Converter;
@@ -25,7 +27,13 @@ if (count($arLinks) > 0) {
         switch ($link['LINK_TYPE']) {
             case Adv\LinkTable::TYPE_IBLOCK_ELEMENT:
 
-                echo '<div><a href="/bitrix/admin/iblock_element_edit.php?IBLOCK_ID=' . $link['ELEMENT_IBLOCK_ID'] . '&type=' . Converter::getHtmlConverter()->encode($link['ELEMENT_IBLOCK_TYPE_ID']) . '&ID=' . $link['LINK_ID'] . '&lang=' . LANGUAGE_ID . '&find_section_section=' . $link['ELEMENT_IBLOCK_SECTION_ID'] . '" style="display: inline-block; height: 20px; vertical-align: top; margin-top: 2px;">' . Converter::getHtmlConverter()->encode($link['ELEMENT_NAME']) . '</a>' . ($bAllowDelete ? '&nbsp;<span class="yandex-delete" onclick="deleteLink(\'' . $link['LINK_ID'] . '\', \'' . $link['LINK_TYPE'] . '\', this)"></span>' : '') . '</div>';
+                echo '<div><a href="/bitrix/admin/iblock_element_edit.php?IBLOCK_ID=' . $link['ELEMENT_IBLOCK_ID'] . '&type=' . Converter::getHtmlConverter(
+                    )->encode(
+                        $link['ELEMENT_IBLOCK_TYPE_ID']
+                    ) . '&ID=' . $link['LINK_ID'] . '&lang=' . LANGUAGE_ID . '&find_section_section=' . $link['ELEMENT_IBLOCK_SECTION_ID'] . '" style="display: inline-block; height: 20px; vertical-align: top; margin-top: 2px;">' . Converter::getHtmlConverter(
+                    )->encode(
+                        $link['ELEMENT_NAME']
+                    ) . '</a>' . ($bAllowDelete ? '&nbsp;<span class="yandex-delete" onclick="deleteLink(\'' . $link['LINK_ID'] . '\', \'' . $link['LINK_TYPE'] . '\', this)"></span>' : '') . '</div>';
 
                 break;
         }

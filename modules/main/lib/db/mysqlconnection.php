@@ -11,7 +11,7 @@ class MysqlConnection extends MysqlCommonConnection
      **********************************************************/
 
     /**
-     * @return \Bitrix\Main\Db\SqlHelper
+     * @inheritDoc
      */
     protected function createSqlHelper()
     {
@@ -43,12 +43,17 @@ class MysqlConnection extends MysqlCommonConnection
         }
 
         if (!$connection) {
-            throw new ConnectionException('Mysql connect error [' . $this->host . ', ' . gethostbyname($this->host) . ']', mysql_error());
+            throw new ConnectionException(
+                'Mysql connect error [' . $this->host . ', ' . gethostbyname($this->host) . ']', mysql_error()
+            );
         }
 
         if ($this->database !== null) {
             if (!mysql_select_db($this->database, $connection)) {
-                throw new ConnectionException('Mysql select db error [' . $this->database . ']', mysql_error($connection));
+                throw new ConnectionException(
+                    'Mysql select db error [' . $this->database . ']',
+                    mysql_error($connection)
+                );
             }
         }
 
@@ -66,8 +71,9 @@ class MysqlConnection extends MysqlCommonConnection
      */
     public function disconnectInternal()
     {
-        if (!$this->isConnected)
+        if (!$this->isConnected) {
             return;
+        }
 
         mysql_close($this->resource);
 
@@ -79,46 +85,33 @@ class MysqlConnection extends MysqlCommonConnection
      *********************************************************/
 
     /**
-     * Executes a query against connected database.
-     * Rises SqlQueryException on any database error.
-     * <p>
-     * When object $trackerQuery passed then calls its startQuery and finishQuery
-     * methods before and after query execution.
-     *
-     * @param string $sql Sql query.
-     * @param array $binds Array of binds.
-     * @param \Bitrix\Main\Diag\SqlTrackerQuery $trackerQuery Debug collector object.
-     *
-     * @return resource
-     * @throws \Bitrix\Main\Db\SqlQueryException
+     * @inheritDoc
      */
     protected function queryInternal($sql, array $binds = null, \Bitrix\Main\Diag\SqlTrackerQuery $trackerQuery = null)
     {
         $this->connectInternal();
 
-        if ($trackerQuery != null)
+        if ($trackerQuery != null) {
             $trackerQuery->startQuery($sql, $binds);
+        }
 
         $result = mysql_query($sql, $this->resource);
 
-        if ($trackerQuery != null)
+        if ($trackerQuery != null) {
             $trackerQuery->finishQuery();
+        }
 
         $this->lastQueryResult = $result;
 
-        if (!$result)
+        if (!$result) {
             throw new SqlQueryException('Mysql query error', mysql_error($this->resource), $sql);
+        }
 
         return $result;
     }
 
     /**
-     * Returns database depended result of the query.
-     *
-     * @param resource $result Result of internal query function.
-     * @param \Bitrix\Main\Diag\SqlTrackerQuery $trackerQuery Debug collector object.
-     *
-     * @return Result
+     * @inheritDoc
      */
     protected function createResult($result, \Bitrix\Main\Diag\SqlTrackerQuery $trackerQuery = null)
     {
@@ -126,7 +119,7 @@ class MysqlConnection extends MysqlCommonConnection
     }
 
     /**
-     * @return integer
+     * @inheritDoc
      */
     public function getInsertedId()
     {
@@ -135,9 +128,7 @@ class MysqlConnection extends MysqlCommonConnection
     }
 
     /**
-     * Returns affected rows count from last executed query.
-     *
-     * @return integer
+     * @inheritDoc
      */
     public function getAffectedRowsCount()
     {
@@ -149,27 +140,7 @@ class MysqlConnection extends MysqlCommonConnection
      *********************************************************/
 
     /**
-     * Returns database type.
-     * <ul>
-     * <li> mysql
-     * </ul>
-     *
-     * @return string
-     * @see \Bitrix\Main\DB\Connection::getType
-     */
-    public function getType()
-    {
-        return "mysql";
-    }
-
-    /**
-     * Returns connected database version.
-     * Version presented in array of two elements.
-     * - First (with index 0) is database version.
-     * - Second (with index 1) is true when light/express version of database is used.
-     *
-     * @return array
-     * @throws \Bitrix\Main\Db\SqlQueryException
+     * @inheritDoc
      */
     public function getVersion()
     {
@@ -186,9 +157,7 @@ class MysqlConnection extends MysqlCommonConnection
     }
 
     /**
-     * Returns error message of last failed database operation.
-     *
-     * @return string
+     * @inheritDoc
      */
     protected function getErrorMessage()
     {

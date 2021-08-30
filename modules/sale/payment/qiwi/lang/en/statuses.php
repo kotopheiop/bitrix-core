@@ -1,4 +1,5 @@
 <?
+
 $MESS["SALE_QWH_ERROR_CODE_0"] = "Success";
 $MESS["SALE_QWH_ERROR_CODE_5"] = "Invalid request data";
 $MESS["SALE_QWH_ERROR_CODE_13"] = "Server is busy. Please try again later.";

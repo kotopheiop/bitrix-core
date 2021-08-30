@@ -1,6 +1,10 @@
 <?
+
 include_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/classes/general/virtual_file.php");
 
+/**
+ * @deprecated Use \Bitrix\Main\IO
+ */
 interface IBXVirtualIO
 {
     function CombinePath();
@@ -44,6 +48,9 @@ interface IBXVirtualIO
     function ClearCache();
 }
 
+/**
+ * @deprecated Use \Bitrix\Main\IO
+ */
 interface IBXGetErrors
 {
     function GetErrors();
@@ -51,9 +58,9 @@ interface IBXGetErrors
 
 /**
  * Proxy class for file IO. Provides a set of methods to retrieve resources from a file system.
+ * @deprecated Use \Bitrix\Main\IO
  */
-class CBXVirtualIo
-    implements IBXVirtualIO, IBXGetErrors
+class CBXVirtualIo implements IBXVirtualIO, IBXGetErrors
 {
     private static $instance;
     private $io;
@@ -90,19 +97,22 @@ class CBXVirtualIo
     public function CombinePath()
     {
         $numArgs = func_num_args();
-        if ($numArgs <= 0)
+        if ($numArgs <= 0) {
             return "";
+        }
 
         $arParts = array();
         for ($i = 0; $i < $numArgs; $i++) {
             $arg = func_get_arg($i);
-            if (empty($arg))
+            if (empty($arg)) {
                 continue;
+            }
 
             if (is_array($arg)) {
                 foreach ($arg as $v) {
-                    if (empty($v))
+                    if (empty($v)) {
                         continue;
+                    }
                     $arParts[] = $v;
                 }
             } else {
@@ -140,7 +150,7 @@ class CBXVirtualIo
         return $this->io->GetPhysicalName($path);
     }
 
-    function GetLogicalName($path)
+    public function GetLogicalName($path)
     {
         return $this->io->GetLogicalName($path);
     }
@@ -297,7 +307,7 @@ class CBXVirtualIo
      *
      * @return void
      */
-    function ClearCache()
+    public function ClearCache()
     {
         $this->io->ClearCache();
     }
@@ -323,5 +333,3 @@ class CBXVirtualIo
         return $this->io->GetErrors();
     }
 }
-
-?>

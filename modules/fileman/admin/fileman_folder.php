@@ -1,9 +1,11 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/fileman/prolog.php");
 
-if (!($USER->CanDoOperation('fileman_edit_existent_folders') || $USER->CanDoOperation('fileman_admin_folders')))
+if (!($USER->CanDoOperation('fileman_edit_existent_folders') || $USER->CanDoOperation('fileman_admin_folders'))) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/fileman/include.php");
 IncludeModuleLangFile(__FILE__);
@@ -27,114 +29,139 @@ $abs_path = $DOC_ROOT . $path;
 $arPath = Array($site, $path);
 
 // let's check rights on this folder
-if (!$USER->CanDoFileOperation('fm_edit_existent_folder', $arPath))
+if (!$USER->CanDoFileOperation('fm_edit_existent_folder', $arPath)) {
     $strWarning = GetMessage("ACCESS_DENIED");
-else if (!$io->DirectoryExists($abs_path))
-    $strWarning = GetMessage("FILEMAN_FOLDER_NOT_FOUND");
-else {
-    function GetAccessArrTmp($path)
-    {
-        global $DOC_ROOT;
+} else {
+    if (!$io->DirectoryExists($abs_path)) {
+        $strWarning = GetMessage("FILEMAN_FOLDER_NOT_FOUND");
+    } else {
+        function GetAccessArrTmp($path)
+        {
+            global $DOC_ROOT;
 
-        $io = CBXVirtualIo::GetInstance();
-        if ($io->DirectoryExists($DOC_ROOT . $path)) {
-            @include($io->GetPhysicalName($DOC_ROOT . $path . "/.access.php"));
-            return $PERM;
-        }
-        return Array();
-    }
-
-    // let's get array of access rights for whole folder
-    $CUR_PERM = GetAccessArrTmp($arParsedPath["PREV"]);
-
-    if ($REQUEST_METHOD == "POST" && strlen($save) > 0 && strlen($propeditmore) <= 0 && check_bitrix_sessid()) {
-        $bNeedSectionFile = False;
-
-        $strSectionName = "";
-        if (strlen($sectionname) > 0) {
-            $strSectionName = "\$sSectionName = \"" . CFileMan::EscapePHPString($sectionname) . "\";\n";
-            $bNeedSectionFile = True;
-        }
-
-        $strDirProperties = "\$arDirProperties = array(\n";
-        $numpropsvals = IntVal($numpropsvals);
-        $bNeedComma = False;
-        for ($i = 0; $i < $numpropsvals; $i++) {
-            if (strlen(Trim($_POST["CODE_" . $i])) > 0 && strlen(Trim($_POST["VALUE_" . $i])) > 0) {
-                if ($bNeedComma) $strDirProperties .= ",\n";
-                $strDirProperties .= "   \"" . CFileMan::EscapePHPString(Trim($_POST["CODE_" . $i])) . "\" => \"" . CFileMan::EscapePHPString(Trim($_POST["VALUE_" . $i])) . "\"";
-                $bNeedComma = True;
-                $bNeedSectionFile = True;
+            $io = CBXVirtualIo::GetInstance();
+            if ($io->DirectoryExists($DOC_ROOT . $path)) {
+                @include($io->GetPhysicalName($DOC_ROOT . $path . "/.access.php"));
+                return $PERM;
             }
+            return Array();
         }
-        $strDirProperties .= "\n);\n";
 
-        if ($bNeedSectionFile)
-            $APPLICATION->SaveFileContent($DOC_ROOT . $path . "/.section.php", "<" . "?\n" . $strSectionName . $strDirProperties . "?" . ">");
-        else
-            CFileman::DeleteFile(Array($site, $path . "/.section.php"));
+        // let's get array of access rights for whole folder
+        $CUR_PERM = GetAccessArrTmp($arParsedPath["PREV"]);
 
-        if ($USER->CanDoFileOperation('fm_edit_permission', $arPath)) {
-            $arPermissions = Array();
-            $db_groups = CGroup::GetList($order = "sort", $by = "asc");
-            while ($arGroup = $db_groups->Fetch()) {
-                $gperm = isset($_POST["g_" . $arGroup["ID"]]) ? $_POST["g_" . $arGroup["ID"]] : '';
-                if (!isset($gperm)) {
-                    if ($path == "")
-                        $gperm = $CUR_PERM["/"][$arGroup['ID']];
-                    else
-                        $gperm = $CUR_PERM[$arParsedPath["LAST"]][$arGroup['ID']];
-                } else {
-                    if ($gperm == 'NOT_REF')
-                        $gperm = '';
-                    if (intval($gperm) > 0) {
-                        $z = CTask::GetById($gperm);
-                        $r = $z->Fetch();
-                        if ($r && $r['LETTER'] && $r['SYS'] == 'Y')
-                            $gperm = $r['LETTER'];
-                        else
-                            $gperm = 'T_' . $gperm;
+        if ($REQUEST_METHOD == "POST" && $save <> '' && $propeditmore == '' && check_bitrix_sessid()) {
+            $bNeedSectionFile = false;
+
+            $strSectionName = "";
+            if ($sectionname <> '') {
+                $strSectionName = "\$sSectionName = \"" . CFileMan::EscapePHPString($sectionname) . "\";\n";
+                $bNeedSectionFile = true;
+            }
+
+            $strDirProperties = "\$arDirProperties = array(\n";
+            $numpropsvals = intval($numpropsvals);
+            $bNeedComma = false;
+            for ($i = 0; $i < $numpropsvals; $i++) {
+                if (Trim($_POST["CODE_" . $i]) <> '' && Trim($_POST["VALUE_" . $i]) <> '') {
+                    if ($bNeedComma) {
+                        $strDirProperties .= ",\n";
+                    }
+                    $strDirProperties .= "   \"" . CFileMan::EscapePHPString(
+                            Trim($_POST["CODE_" . $i])
+                        ) . "\" => \"" . CFileMan::EscapePHPString(Trim($_POST["VALUE_" . $i])) . "\"";
+                    $bNeedComma = true;
+                    $bNeedSectionFile = true;
+                }
+            }
+            $strDirProperties .= "\n);\n";
+
+            if ($bNeedSectionFile) {
+                $APPLICATION->SaveFileContent(
+                    $DOC_ROOT . $path . "/.section.php",
+                    "<" . "?\n" . $strSectionName . $strDirProperties . "?" . ">"
+                );
+            } else {
+                CFileman::DeleteFile(Array($site, $path . "/.section.php"));
+            }
+
+            if ($USER->CanDoFileOperation('fm_edit_permission', $arPath)) {
+                $arPermissions = Array();
+                $db_groups = CGroup::GetList("sort", "asc");
+                while ($arGroup = $db_groups->Fetch()) {
+                    $gperm = isset($_POST["g_" . $arGroup["ID"]]) ? $_POST["g_" . $arGroup["ID"]] : '';
+                    if (!isset($gperm)) {
+                        if ($path == "") {
+                            $gperm = $CUR_PERM["/"][$arGroup['ID']];
+                        } else {
+                            $gperm = $CUR_PERM[$arParsedPath["LAST"]][$arGroup['ID']];
+                        }
+                    } else {
+                        if ($gperm == 'NOT_REF') {
+                            $gperm = '';
+                        }
+                        if (intval($gperm) > 0) {
+                            $z = CTask::GetById($gperm);
+                            $r = $z->Fetch();
+                            if ($r && $r['LETTER'] && $r['SYS'] == 'Y') {
+                                $gperm = $r['LETTER'];
+                            } else {
+                                $gperm = 'T_' . $gperm;
+                            }
+                        }
+                    }
+                    $arPermissions[$arGroup["ID"]] = $gperm;
+                }
+                //$gperm = $g_ALL;
+                $gperm = $_POST['g_ALL'];
+                if ($gperm == 'NOT_REF') {
+                    $gperm = '';
+                }
+                if (intval($gperm) > 0) {
+                    $z = CTask::GetById($gperm);
+                    $r = $z->Fetch();
+                    if ($r && $r['LETTER'] && $r['SYS'] == 'Y') {
+                        $gperm = $r['LETTER'];
+                    } else {
+                        $gperm = 'T_' . $gperm;
                     }
                 }
-                $arPermissions[$arGroup["ID"]] = $gperm;
+                $arPermissions["*"] = $gperm;
+                $APPLICATION->SetFileAccessPermission(Array($site, $path), $arPermissions);
             }
-            //$gperm = $g_ALL;
-            $gperm = $_POST['g_ALL'];
-            if ($gperm == 'NOT_REF')
-                $gperm = '';
-            if (intval($gperm) > 0) {
-                $z = CTask::GetById($gperm);
-                $r = $z->Fetch();
-                if ($r && $r['LETTER'] && $r['SYS'] == 'Y')
-                    $gperm = $r['LETTER'];
-                else
-                    $gperm = 'T_' . $gperm;
-            }
-            $arPermissions["*"] = $gperm;
-            $APPLICATION->SetFileAccessPermission(Array($site, $path), $arPermissions);
-        }
 
-        if ($e = $APPLICATION->GetException())
-            $strNotice = $e->msg;
-        else {
-            if (strlen($apply) <= 0) {
-                if (strlen($back_url) > 0)
-                    LocalRedirect("/" . ltrim($back_url, "/"));
-                else
-                    LocalRedirect("/bitrix/admin/fileman_admin.php?" . $addUrl . "&site=" . $site . "&path=" . UrlEncode($path));
-            } else
-                LocalRedirect("/bitrix/admin/fileman_folder.php?" . $addUrl . "&site=" . $site . "&path=" . UrlEncode($path));
+            if ($e = $APPLICATION->GetException()) {
+                $strNotice = $e->msg;
+            } else {
+                if ($apply == '') {
+                    if ($back_url <> '') {
+                        LocalRedirect("/" . ltrim($back_url, "/"));
+                    } else {
+                        LocalRedirect(
+                            "/bitrix/admin/fileman_admin.php?" . $addUrl . "&site=" . $site . "&path=" . UrlEncode(
+                                $path
+                            )
+                        );
+                    }
+                } else {
+                    LocalRedirect(
+                        "/bitrix/admin/fileman_folder.php?" . $addUrl . "&site=" . $site . "&path=" . UrlEncode($path)
+                    );
+                }
+            }
         }
     }
 }
 
-if (strlen($propeditmore) > 0) $bInitVars = True;
+if ($propeditmore <> '') {
+    $bInitVars = true;
+}
 
 foreach ($arParsedPath["AR_PATH"] as $chainLevel) {
     $adminChain->AddItem(
         array(
             "TEXT" => htmlspecialcharsex($chainLevel["TITLE"]),
-            "LINK" => ((strlen($chainLevel["LINK"]) > 0) ? $chainLevel["LINK"] : ""),
+            "LINK" => (($chainLevel["LINK"] <> '') ? $chainLevel["LINK"] : ""),
         )
     );
 }
@@ -158,7 +185,7 @@ $context->Show();
 <? CAdminMessage::ShowMessage($strWarning); ?>
 
 <?
-if (strlen($strWarning) <= 0):
+if ($strWarning == ''):
     $sectionname = "";
     $arDirProperties = false;
     $sSectionName = "";
@@ -184,9 +211,22 @@ if (strlen($strWarning) <= 0):
         <?= bitrix_sessid_post() ?>
 
         <?
-        $aTabs = array(array("DIV" => "edit1", "TAB" => GetMessage("FILEMAN_TAB"), "ICON" => "fileman", "TITLE" => GetMessage("FILEMAN_TAB_ALT")));
-        if ($USER->CanDoFileOperation('fm_edit_permission', $arPath))
-            $aTabs[] = array("DIV" => "edit2", "TAB" => GetMessage("FILEMAN_ACCESS"), "ICON" => "fileman", "TITLE" => GetMessage("FILEMAN_FOLDER_ACCESS"));
+        $aTabs = array(
+            array(
+                "DIV" => "edit1",
+                "TAB" => GetMessage("FILEMAN_TAB"),
+                "ICON" => "fileman",
+                "TITLE" => GetMessage("FILEMAN_TAB_ALT")
+            )
+        );
+        if ($USER->CanDoFileOperation('fm_edit_permission', $arPath)) {
+            $aTabs[] = array(
+                "DIV" => "edit2",
+                "TAB" => GetMessage("FILEMAN_ACCESS"),
+                "ICON" => "fileman",
+                "TITLE" => GetMessage("FILEMAN_FOLDER_ACCESS")
+            );
+        }
 
         $tabControl = new CAdminTabControl("tabControl", $aTabs);
         $tabControl->Begin();
@@ -223,9 +263,9 @@ if (strlen($strWarning) <= 0):
                                 $f_VALUE = $_POST["VALUE_" . $oldind];
                             }
 
-                            $bPredefinedProperty = False;
+                            $bPredefinedProperty = false;
                             if (is_set($arPropTypes, $f_CODE)) {
-                                $bPredefinedProperty = True;
+                                $bPredefinedProperty = true;
                                 $f_CODE_NAME = $arPropTypes[$f_CODE];
                                 unset($arPropTypes[$f_CODE]);
                             }
@@ -253,18 +293,20 @@ if (strlen($strWarning) <= 0):
                         }
                     }
 
-                    $numpropsvals = IntVal($numpropsvals);
+                    $numpropsvals = intval($numpropsvals);
                     $numnewpropsvals = $numpropsvals - $oldind;
                     if ($bInitVars && $numnewpropsvals > 0) {
                         for ($i = 0; $i < $numnewpropsvals; $i++) {
                             $oldind++;
                             $f_CODE = $_POST["CODE_" . $oldind];
                             $f_VALUE = $_POST["VALUE_" . $oldind];
-                            if (strlen($f_CODE) <= 0) continue;
+                            if ($f_CODE == '') {
+                                continue;
+                            }
 
-                            $bPredefinedProperty = False;
+                            $bPredefinedProperty = false;
                             if (is_set($arPropTypes, $f_CODE)) {
-                                $bPredefinedProperty = True;
+                                $bPredefinedProperty = true;
                                 $f_CODE_NAME = $arPropTypes[$f_CODE];
                                 unset($arPropTypes[$f_CODE]);
                             }
@@ -287,10 +329,12 @@ if (strlen($strWarning) <= 0):
                                 </td>
                                 <td><input type="text" name="VALUE_<? echo $ind; ?>"
                                            value="<? echo htmlspecialcharsbx($f_VALUE); ?>" size="60"><?
-                                    if ($APPLICATION->GetDirProperty($f_CODE, Array($site, $path)) && strlen($f_VALUE) <= 0) {
-                                        ?><br><small>
-                                        <b><? echo GetMessage("FILEMAN_FOLDER_CURVAL") ?></b> <? echo htmlspecialcharsbx($APPLICATION->GetDirProperty($f_CODE, Array($site, $path))); ?>
-                                        </small><?
+                                    if ($APPLICATION->GetDirProperty($f_CODE, Array($site, $path)) && $f_VALUE == '') {
+                                        ?><br><small><b><? echo GetMessage(
+                                                "FILEMAN_FOLDER_CURVAL"
+                                            ) ?></b> <? echo htmlspecialcharsbx(
+                                            $APPLICATION->GetDirProperty($f_CODE, Array($site, $path))
+                                        ); ?></small><?
                                     }
                                     ?></td>
                             </tr>
@@ -316,9 +360,11 @@ if (strlen($strWarning) <= 0):
                                 <td><input type="text" name="VALUE_<? echo $ind; ?>"
                                            value="<? echo htmlspecialcharsbx($f_VALUE); ?>" size="60"><?
                                     if ($APPLICATION->GetDirProperty($f_CODE, Array($site, $path))) {
-                                        ?><br><small>
-                                        <b><? echo GetMessage("FILEMAN_FOLDER_CURVAL") ?></b> <? echo htmlspecialcharsbx($APPLICATION->GetDirProperty($f_CODE, Array($site, $path))); ?>
-                                        </small><?
+                                        ?><br><small><b><? echo GetMessage(
+                                                "FILEMAN_FOLDER_CURVAL"
+                                            ) ?></b> <? echo htmlspecialcharsbx(
+                                            $APPLICATION->GetDirProperty($f_CODE, Array($site, $path))
+                                        ); ?></small><?
                                     }
                                     ?></td>
                             </tr>
@@ -370,13 +416,18 @@ if (strlen($strWarning) <= 0):
                         <?
                         $arPermTypes = Array();
 
-                        $res = CTask::GetList(Array('LETTER' => 'asc'), Array('MODULE_ID' => 'main', 'BINDING' => 'file'));
+                        $res = CTask::GetList(
+                            Array('LETTER' => 'asc'),
+                            Array('MODULE_ID' => 'main', 'BINDING' => 'file')
+                        );
                         while ($arRes = $res->Fetch()) {
                             $name = '';
-                            if ($arRes['SYS'])
-                                $name = GetMessage(strtoupper($arRes['NAME']));
-                            if (strlen($name) == 0)
+                            if ($arRes['SYS']) {
+                                $name = GetMessage(mb_strtoupper($arRes['NAME']));
+                            }
+                            if ($name == '') {
                                 $name = $arRes['NAME'];
+                            }
 
                             $arPermTypes[$arRes['ID']] = Array(
                                 'title' => $name,
@@ -389,55 +440,68 @@ if (strlen($strWarning) <= 0):
                         );
 
                         //**** Inherit access level *******
-                        if ($path == "/")
+                        if ($path == "/") {
                             $inh_perm = $CUR_PERM["/"]["*"];
-                        else
+                        } else {
                             $inh_perm = $CUR_PERM[$arParsedPath["LAST"]]["*"];
+                        }
 
-                        if (substr($inh_perm, 0, 2) == 'T_')
-                            $inh_taskId = intval(substr($inh_perm, 2));
-                        elseif (strlen($inh_perm) == 1)
+                        if (mb_substr($inh_perm, 0, 2) == 'T_') {
+                            $inh_taskId = intval(mb_substr($inh_perm, 2));
+                        } elseif (mb_strlen($inh_perm) == 1) {
                             $inh_taskId = CTask::GetIdByLetter($inh_perm, 'main', 'file');
-                        else
+                        } else {
                             $inh_taskId = 'NOT_REF';
+                        }
 
                         if ($inh_taskId != 'NOT_REF') {
                             $z = CTask::GetById($inh_taskId);
-                            if (!($r = $z->Fetch()))
+                            if (!($r = $z->Fetch())) {
                                 $inh_taskId = 'NOT_REF';
+                            }
                         }
                         // *****************************
                         // If user can manage only subordinate groups
-                        if (false && $USER->CanDoOperation('edit_subordinate_users') && !$USER->CanDoOperation('edit_all_users')) {
+                        if (false && $USER->CanDoOperation('edit_subordinate_users') && !$USER->CanDoOperation(
+                                'edit_all_users'
+                            )) {
                             $arSubordGroups = Array();
                             $arGroups = explode(',', $USER->GetGroups());
-                            for ($i = 0, $l = count($arGroups); $i < $l; $i++)
-                                $arSubordGroups = array_merge($arSubordGroups, CGroup::GetSubordinateGroups($arGroups[$i]));
+                            for ($i = 0, $l = count($arGroups); $i < $l; $i++) {
+                                $arSubordGroups = array_merge(
+                                    $arSubordGroups,
+                                    CGroup::GetSubordinateGroups($arGroups[$i])
+                                );
+                            }
                             $arSubordGroups = array_values(array_unique($arSubordGroups));
                             $hide_groups = '';
                         }
 
                         //for each groups
-                        $db_groups = CGroup::GetList($order = "sort", $by = "asc", array("ACTIVE" => "Y", "ADMIN" => "N"));
+                        $db_groups = CGroup::GetList("sort", "asc", array("ACTIVE" => "Y", "ADMIN" => "N"));
                         while ($db_groups->ExtractFields("g_")):
-                            if ($g_ANONYMOUS == "Y")
+                            if ($g_ANONYMOUS == "Y") {
                                 $anonym = $g_NAME;
-                            if ($path == "/")
+                            }
+                            if ($path == "/") {
                                 $perm = $CUR_PERM["/"][$g_ID];
-                            else
+                            } else {
                                 $perm = $CUR_PERM[$arParsedPath["LAST"]][$g_ID];
+                            }
 
-                            if (substr($perm, 0, 2) == 'T_')
-                                $taskId = intval(substr($perm, 2));
-                            elseif (strlen($perm) == 1)
+                            if (mb_substr($perm, 0, 2) == 'T_') {
+                                $taskId = intval(mb_substr($perm, 2));
+                            } elseif (mb_strlen($perm) == 1) {
                                 $taskId = CTask::GetIdByLetter($perm, 'main', 'file');
-                            else
+                            } else {
                                 $taskId = 'NOT_REF';
+                            }
 
                             if ($taskId != 'NOT_REF') {
                                 $z = CTask::GetById($taskId);
-                                if (!($r = $z->Fetch()))
+                                if (!($r = $z->Fetch())) {
                                     $taskId = 'NOT_REF';
+                                }
                             }
                             //if(isset($arSubordGroups) && !in_array($g_ID,$arSubordGroups))
                             //{
@@ -455,21 +519,30 @@ if (strlen($strWarning) <= 0):
                                     // Inherit access level
                                     if ($inh_taskId == 'NOT_REF') {
                                         //Prev folder access level
-                                        $pAr = $APPLICATION->GetFileAccessPermission(Array($site, $arParsedPath["PREV"]), Array($g_ID), true);
-                                        if (count($pAr) > 0)
+                                        $pAr = $APPLICATION->GetFileAccessPermission(
+                                            Array($site, $arParsedPath["PREV"]),
+                                            Array($g_ID),
+                                            true
+                                        );
+                                        if (count($pAr) > 0) {
                                             $pr_taskId = $pAr[0];
-                                        else
+                                        } else {
                                             $pr_taskId = 'NOT_REF';
-                                    } else
+                                        }
+                                    } else {
                                         $pr_taskId = $inh_taskId;
+                                    }
                                     ?>
                                     <select name="g_<? echo $g_ID ?>" class="typeselect">
                                         <?
                                         foreach ($arPermTypes as $id => $ar):?>
-                                            <option value="<?= $id ?>"<? if ($id == $taskId) echo " selected"; ?>>
+                                            <option value="<?= $id ?>"<? if ($id == $taskId) {
+                                                echo " selected";
+                                            } ?>>
                                                 <? echo htmlspecialcharsbx($ar['title']) ?>
-                                                <? if ($id == "NOT_REF")
-                                                    echo "[" . $arPermTypes[$pr_taskId]['title'] . "]"; ?>
+                                                <? if ($id == "NOT_REF") {
+                                                    echo "[" . $arPermTypes[$pr_taskId]['title'] . "]";
+                                                } ?>
                                             </option>
                                         <? endforeach; ?>
                                     </select>
@@ -485,7 +558,9 @@ if (strlen($strWarning) <= 0):
                                     <?
                                     foreach ($arPermTypes as $id => $ar):
                                         ?>
-                                        <option value="<?= $id ?>"<? if ($id == $inh_taskId) echo " selected"; ?>>
+                                        <option value="<?= $id ?>"<? if ($id == $inh_taskId) {
+                                            echo " selected";
+                                        } ?>>
                                             <? echo htmlspecialcharsbx($ar['title']) ?>
                                         </option>
                                     <? endforeach; ?>
@@ -503,7 +578,9 @@ if (strlen($strWarning) <= 0):
         $tabControl->Buttons(
             array(
                 "disabled" => (!$USER->CanDoFileOperation('fm_edit_existent_folder', $arPath)),
-                "back_url" => (strlen($back_url) > 0 ? $back_url : "fileman_admin.php?" . $addUrl . "&site=" . $site . "&path=" . UrlEncode($path))
+                "back_url" => ($back_url <> '' ? $back_url : "fileman_admin.php?" . $addUrl . "&site=" . $site . "&path=" . UrlEncode(
+                        $path
+                    ))
             )
         );
         $tabControl->End();

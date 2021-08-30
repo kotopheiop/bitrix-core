@@ -82,18 +82,18 @@ class BodyStructure
                 $this->number = 1;
             }
 
-            $bodystructure[0] = strtolower($bodystructure[0]);
-            $bodystructure[5] = strtolower($bodystructure[5]);
+            $bodystructure[0] = mb_strtolower($bodystructure[0]);
+            $bodystructure[5] = mb_strtolower($bodystructure[5]);
         }
 
-        $bodystructure[1] = strtolower($bodystructure[1]);
+        $bodystructure[1] = mb_strtolower($bodystructure[1]);
 
         if (!empty($bodystructure[2]) && is_array($bodystructure[2])) {
             $params = array();
 
             $count = count($bodystructure[2]);
             for ($i = 0; $i < $count; $i += 2) {
-                $params[strtolower($bodystructure[2][$i])] = $bodystructure[2][$i + 1];
+                $params[mb_strtolower($bodystructure[2][$i])] = $bodystructure[2][$i + 1];
             }
 
             $bodystructure[2] = $params;
@@ -101,13 +101,13 @@ class BodyStructure
 
         $disposition = &$bodystructure[$this->getDispositionIndex()];
 
-        $disposition[0] = strtolower($disposition[0]);
+        $disposition[0] = mb_strtolower($disposition[0]);
         if (!empty($disposition[1]) && is_array($disposition[1])) {
             $params = array();
 
             $count = count($disposition[1]);
             for ($i = 0; $i < $count; $i += 2) {
-                $params[strtolower($disposition[1][$i])] = $disposition[1][$i + 1];
+                $params[mb_strtolower($disposition[1][$i])] = $disposition[1][$i + 1];
             }
 
             $disposition[1] = $params;
@@ -176,6 +176,11 @@ class BodyStructure
     public function isAttachment()
     {
         return $this->getDisposition()[0] === 'attachment';
+    }
+
+    public function isBodyText()
+    {
+        return $this->isText() && !$this->isAttachment() && $this->getSubtype() != 'calendar';
     }
 
     public function traverse(callable $callback, $flat = false)

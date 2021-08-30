@@ -24,12 +24,14 @@ class CSocNetLogRights
             }
 
             if (!isset($logDataCache[$LOG_ID])) {
-                $res = LogTable::getList(array(
-                    'filter' => array(
-                        'ID' => $LOG_ID
-                    ),
-                    'select' => array('LOG_UPDATE')
-                ));
+                $res = LogTable::getList(
+                    array(
+                        'filter' => array(
+                            'ID' => $LOG_ID
+                        ),
+                        'select' => array('LOG_UPDATE')
+                    )
+                );
                 if ($logEntry = $res->fetch()) {
                     $logDataCache[$LOG_ID] = $logEntry;
                 }
@@ -59,14 +61,16 @@ class CSocNetLogRights
             if ($NEW_RIGHT_ID) {
                 if (preg_match('/^U(\d+)$/', $GROUP_CODE, $matches)) {
                     if ($followSet) {
-                        \Bitrix\Socialnetwork\ComponentHelper::userLogSubscribe(array(
-                            'logId' => $LOG_ID,
-                            'userId' => $matches[1],
-                            'typeList' => array(
-                                'FOLLOW',
-                            ),
-                            'followDate' => 'CURRENT'
-                        ));
+                        \Bitrix\Socialnetwork\ComponentHelper::userLogSubscribe(
+                            array(
+                                'logId' => $LOG_ID,
+                                'userId' => $matches[1],
+                                'typeList' => array(
+                                    'FOLLOW',
+                                ),
+                                'followDate' => 'CURRENT'
+                            )
+                        );
                     }
                 } elseif (
                     $bShare
@@ -178,9 +182,12 @@ class CSocNetLogRights
                 }
             }
 
-            $strUpdate = $DB->PrepareUpdate("b_sonet_log_right", array(
-                "GROUP_CODE" => $GROUP_CODE
-            ));
+            $strUpdate = $DB->PrepareUpdate(
+                "b_sonet_log_right",
+                array(
+                    "GROUP_CODE" => $GROUP_CODE
+                )
+            );
             $DB->Query("UPDATE b_sonet_log_right SET " . $strUpdate . " WHERE ID = " . $RIGHT_ID);
             return $RIGHT_ID;
         }
@@ -213,11 +220,11 @@ class CSocNetLogRights
         $arFilter = array();
         foreach ($aFilter as $key => $val) {
             $val = $DB->ForSql($val);
-            if (strlen($val) <= 0) {
+            if ($val == '') {
                 continue;
             }
 
-            switch (strtoupper($key)) {
+            switch (mb_strtoupper($key)) {
                 case "ID":
                     $arFilter[] = "R.ID=" . intval($val);
                     break;
@@ -232,8 +239,8 @@ class CSocNetLogRights
 
         $arOrder = array();
         foreach ($aSort as $key => $val) {
-            $ord = (strtoupper($val) <> "ASC" ? "DESC" : "ASC");
-            switch (strtoupper($key)) {
+            $ord = (mb_strtoupper($val) <> "ASC" ? "DESC" : "ASC");
+            switch (mb_strtoupper($key)) {
                 case "ID":
                     $arOrder[] = "R.ID " . $ord;
                     break;
@@ -248,10 +255,11 @@ class CSocNetLogRights
 
         $sOrder = (count($arOrder) > 0 ? "\n ORDER BY " . implode(", ", $arOrder) : "");
 
-        if (count($arFilter) == 0)
+        if (count($arFilter) == 0) {
             $sFilter = "";
-        else
+        } else {
             $sFilter = "\nWHERE " . implode("\nAND ", $arFilter);
+        }
 
         $strSql = "
 			SELECT
@@ -293,15 +301,54 @@ class CSocNetLogRights
                 }
 
                 if ($bExtranet && $extranet_site_id) {
-                    if ($entity_type == SONET_ENTITY_GROUP && $perm == SONET_ROLES_OWNER)
-                        CSocNetLogRights::Add($logID, array("SA", "S" . SONET_ENTITY_GROUP . $entity_id, "S" . SONET_ENTITY_GROUP . $entity_id . "_" . SONET_ROLES_OWNER));
-                    elseif ($entity_type == SONET_ENTITY_GROUP && $perm == SONET_ROLES_MODERATOR)
-                        CSocNetLogRights::Add($logID, array("SA", "S" . SONET_ENTITY_GROUP . $entity_id, "S" . SONET_ENTITY_GROUP . $entity_id . "_" . SONET_ROLES_OWNER, "S" . SONET_ENTITY_GROUP . $entity_id . "_" . SONET_ROLES_MODERATOR));
-                    elseif ($entity_type == SONET_ENTITY_GROUP && in_array($perm, array(SONET_ROLES_USER, SONET_ROLES_AUTHORIZED, SONET_ROLES_ALL)))
-                        CSocNetLogRights::Add($logID, array("SA", "S" . SONET_ENTITY_GROUP . $entity_id, "S" . SONET_ENTITY_GROUP . $entity_id . "_" . SONET_ROLES_OWNER, "S" . SONET_ENTITY_GROUP . $entity_id . "_" . SONET_ROLES_MODERATOR, "S" . SONET_ENTITY_GROUP . $entity_id . "_" . SONET_ROLES_USER));
-                    elseif ($entity_type == SONET_ENTITY_USER && $perm == SONET_RELATIONS_TYPE_NONE)
+                    if ($entity_type == SONET_ENTITY_GROUP && $perm == SONET_ROLES_OWNER) {
+                        CSocNetLogRights::Add(
+                            $logID,
+                            array(
+                                "SA",
+                                "S" . SONET_ENTITY_GROUP . $entity_id,
+                                "S" . SONET_ENTITY_GROUP . $entity_id . "_" . SONET_ROLES_OWNER
+                            )
+                        );
+                    } elseif ($entity_type == SONET_ENTITY_GROUP && $perm == SONET_ROLES_MODERATOR) {
+                        CSocNetLogRights::Add(
+                            $logID,
+                            array(
+                                "SA",
+                                "S" . SONET_ENTITY_GROUP . $entity_id,
+                                "S" . SONET_ENTITY_GROUP . $entity_id . "_" . SONET_ROLES_OWNER,
+                                "S" . SONET_ENTITY_GROUP . $entity_id . "_" . SONET_ROLES_MODERATOR
+                            )
+                        );
+                    } elseif ($entity_type == SONET_ENTITY_GROUP && in_array(
+                            $perm,
+                            array(
+                                SONET_ROLES_USER,
+                                SONET_ROLES_AUTHORIZED,
+                                SONET_ROLES_ALL
+                            )
+                        )) {
+                        CSocNetLogRights::Add(
+                            $logID,
+                            array(
+                                "SA",
+                                "S" . SONET_ENTITY_GROUP . $entity_id,
+                                "S" . SONET_ENTITY_GROUP . $entity_id . "_" . SONET_ROLES_OWNER,
+                                "S" . SONET_ENTITY_GROUP . $entity_id . "_" . SONET_ROLES_MODERATOR,
+                                "S" . SONET_ENTITY_GROUP . $entity_id . "_" . SONET_ROLES_USER
+                            )
+                        );
+                    } elseif ($entity_type == SONET_ENTITY_USER && $perm == SONET_RELATIONS_TYPE_NONE) {
                         CSocNetLogRights::Add($logID, array("SA", "U" . $entity_id));
-                    elseif ($entity_type == SONET_ENTITY_USER && in_array($perm, array(SONET_RELATIONS_TYPE_FRIENDS, SONET_RELATIONS_TYPE_FRIENDS2, SONET_RELATIONS_TYPE_AUTHORIZED, SONET_RELATIONS_TYPE_ALL))) {
+                    } elseif ($entity_type == SONET_ENTITY_USER && in_array(
+                            $perm,
+                            array(
+                                SONET_RELATIONS_TYPE_FRIENDS,
+                                SONET_RELATIONS_TYPE_FRIENDS2,
+                                SONET_RELATIONS_TYPE_AUTHORIZED,
+                                SONET_RELATIONS_TYPE_ALL
+                            )
+                        )) {
                         $arCode = array("SA");
                         $arLog = CSocNetLog::GetByID($logID);
                         if ($arLog) {
@@ -318,7 +365,10 @@ class CSocNetLogRights
                                 array("ID", "GROUP_ID")
                             );
                             while ($arUsersInGroup = $dbUsersInGroup->Fetch()) {
-                                if (!in_array("S" . SONET_ENTITY_GROUP . $arUsersInGroup["GROUP_ID"] . "_" . SONET_ROLES_USER, $arCode)) {
+                                if (!in_array(
+                                    "S" . SONET_ENTITY_GROUP . $arUsersInGroup["GROUP_ID"] . "_" . SONET_ROLES_USER,
+                                    $arCode
+                                )) {
                                     $arCode = array_merge(
                                         $arCode,
                                         array(
@@ -334,25 +384,76 @@ class CSocNetLogRights
                         }
                     }
                 } else {
-                    if ($entity_type == SONET_ENTITY_GROUP && $perm == SONET_ROLES_OWNER)
-                        CSocNetLogRights::Add($logID, array("SA", "S" . SONET_ENTITY_GROUP . $entity_id, "S" . SONET_ENTITY_GROUP . $entity_id . "_" . SONET_ROLES_OWNER));
-                    elseif ($entity_type == SONET_ENTITY_GROUP && $perm == SONET_ROLES_MODERATOR)
-                        CSocNetLogRights::Add($logID, array("SA", "S" . SONET_ENTITY_GROUP . $entity_id, "S" . SONET_ENTITY_GROUP . $entity_id . "_" . SONET_ROLES_OWNER, "S" . SONET_ENTITY_GROUP . $entity_id . "_" . SONET_ROLES_MODERATOR));
-                    elseif ($entity_type == SONET_ENTITY_GROUP && $perm == SONET_ROLES_USER)
-                        CSocNetLogRights::Add($logID, array("SA", "S" . SONET_ENTITY_GROUP . $entity_id, "S" . SONET_ENTITY_GROUP . $entity_id . "_" . SONET_ROLES_OWNER, "S" . SONET_ENTITY_GROUP . $entity_id . "_" . SONET_ROLES_MODERATOR, "S" . SONET_ENTITY_GROUP . $entity_id . "_" . SONET_ROLES_USER));
-                    elseif ($entity_type == SONET_ENTITY_USER && in_array($perm, array(SONET_RELATIONS_TYPE_FRIENDS, SONET_RELATIONS_TYPE_FRIENDS2))) {
-                        $arCodes = array("SA", "U" . $entity_id, "S" . $entity_type . $entity_id . "_" . SONET_RELATIONS_TYPE_FRIENDS);
+                    if ($entity_type == SONET_ENTITY_GROUP && $perm == SONET_ROLES_OWNER) {
+                        CSocNetLogRights::Add(
+                            $logID,
+                            array(
+                                "SA",
+                                "S" . SONET_ENTITY_GROUP . $entity_id,
+                                "S" . SONET_ENTITY_GROUP . $entity_id . "_" . SONET_ROLES_OWNER
+                            )
+                        );
+                    } elseif ($entity_type == SONET_ENTITY_GROUP && $perm == SONET_ROLES_MODERATOR) {
+                        CSocNetLogRights::Add(
+                            $logID,
+                            array(
+                                "SA",
+                                "S" . SONET_ENTITY_GROUP . $entity_id,
+                                "S" . SONET_ENTITY_GROUP . $entity_id . "_" . SONET_ROLES_OWNER,
+                                "S" . SONET_ENTITY_GROUP . $entity_id . "_" . SONET_ROLES_MODERATOR
+                            )
+                        );
+                    } elseif ($entity_type == SONET_ENTITY_GROUP && $perm == SONET_ROLES_USER) {
+                        CSocNetLogRights::Add(
+                            $logID,
+                            array(
+                                "SA",
+                                "S" . SONET_ENTITY_GROUP . $entity_id,
+                                "S" . SONET_ENTITY_GROUP . $entity_id . "_" . SONET_ROLES_OWNER,
+                                "S" . SONET_ENTITY_GROUP . $entity_id . "_" . SONET_ROLES_MODERATOR,
+                                "S" . SONET_ENTITY_GROUP . $entity_id . "_" . SONET_ROLES_USER
+                            )
+                        );
+                    } elseif ($entity_type == SONET_ENTITY_USER && in_array(
+                            $perm,
+                            array(
+                                SONET_RELATIONS_TYPE_FRIENDS,
+                                SONET_RELATIONS_TYPE_FRIENDS2
+                            )
+                        )) {
+                        $arCodes = array(
+                            "SA",
+                            "U" . $entity_id,
+                            "S" . $entity_type . $entity_id . "_" . SONET_RELATIONS_TYPE_FRIENDS
+                        );
                         CSocNetLogRights::Add($logID, $arCodes);
-                    } elseif ($entity_type == SONET_ENTITY_USER && $perm == SONET_RELATIONS_TYPE_NONE)
+                    } elseif ($entity_type == SONET_ENTITY_USER && $perm == SONET_RELATIONS_TYPE_NONE) {
                         CSocNetLogRights::Add($logID, array("SA", "U" . $entity_id));
-                    elseif ($entity_type == SONET_ENTITY_GROUP && $perm == SONET_ROLES_AUTHORIZED)
-                        CSocNetLogRights::Add($logID, array("SA", "S" . $entity_type . $entity_id, "S" . $entity_type . $entity_id . "_" . SONET_ROLES_USER, "AU"));
-                    elseif ($entity_type == SONET_ENTITY_USER && $perm == SONET_RELATIONS_TYPE_AUTHORIZED)
+                    } elseif ($entity_type == SONET_ENTITY_GROUP && $perm == SONET_ROLES_AUTHORIZED) {
+                        CSocNetLogRights::Add(
+                            $logID,
+                            array(
+                                "SA",
+                                "S" . $entity_type . $entity_id,
+                                "S" . $entity_type . $entity_id . "_" . SONET_ROLES_USER,
+                                "AU"
+                            )
+                        );
+                    } elseif ($entity_type == SONET_ENTITY_USER && $perm == SONET_RELATIONS_TYPE_AUTHORIZED) {
                         CSocNetLogRights::Add($logID, array("SA", "AU"));
-                    elseif ($entity_type == SONET_ENTITY_GROUP && $perm == SONET_ROLES_ALL)
-                        CSocNetLogRights::Add($logID, array("SA", "S" . $entity_type . $entity_id, "S" . $entity_type . $entity_id . "_" . SONET_ROLES_USER, "G2"));
-                    elseif ($entity_type == SONET_ENTITY_USER && $perm == SONET_RELATIONS_TYPE_ALL)
+                    } elseif ($entity_type == SONET_ENTITY_GROUP && $perm == SONET_ROLES_ALL) {
+                        CSocNetLogRights::Add(
+                            $logID,
+                            array(
+                                "SA",
+                                "S" . $entity_type . $entity_id,
+                                "S" . $entity_type . $entity_id . "_" . SONET_ROLES_USER,
+                                "G2"
+                            )
+                        );
+                    } elseif ($entity_type == SONET_ENTITY_USER && $perm == SONET_RELATIONS_TYPE_ALL) {
                         CSocNetLogRights::Add($logID, array("SA", "G2"));
+                    }
                 }
             }
         }
@@ -420,11 +521,14 @@ class CSocNetLogRights
         if (
             intval($logID) <= 0
             || intval($userID) <= 0
-        )
+        ) {
             return false;
+        }
 
         $strSql = "SELECT SLR.ID FROM b_sonet_log_right SLR
-			INNER JOIN b_user_access UA ON 0=1 OR (UA.ACCESS_CODE = SLR.GROUP_CODE AND UA.USER_ID = " . intval($userID) . ") 
+			INNER JOIN b_user_access UA ON 0=1 OR (UA.ACCESS_CODE = SLR.GROUP_CODE AND UA.USER_ID = " . intval(
+                $userID
+            ) . ") 
 			WHERE SLR.LOG_ID = " . intval($logID);
 
         $result = $DB->Query($strSql, false, "FILE: " . __FILE__ . "<br> LINE: " . __LINE__);

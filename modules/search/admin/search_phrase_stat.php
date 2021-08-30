@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/search/prolog.php");
 IncludeModuleLangFile(__FILE__);
@@ -8,17 +9,16 @@ global $APPLICATION;
 $searchDB = CDatabase::GetModuleConnection('search');
 
 $SEARCH_RIGHT = $APPLICATION->GetGroupRight("search");
-if ($SEARCH_RIGHT == "D")
+if ($SEARCH_RIGHT == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $sTableID = "tbl_search_phrase_list";
 $oSort = new CAdminSorting($sTableID, "COUNT", "DESC");
 $lAdmin = new CAdminList($sTableID, $oSort);
 
 $ref = $ref_id = array();
-$v1 = "sort";
-$v2 = "asc";
-$rs = CSite::GetList($v1, $v2);
+$rs = CSite::GetList();
 while ($ar = $rs->Fetch()) {
     $ref[] = $ar["ID"];
     $ref_id[] = $ar["ID"];
@@ -45,35 +45,44 @@ if ($lAdmin->IsDefaultFilter()) {
 
 $arFilter = array();
 
-if ($_REQUEST["find_id_exact_match"] == "Y")
+if ($_REQUEST["find_id_exact_match"] == "Y") {
     $arFilter["=ID"] = $find_id;
-else
+} else {
     $arFilter["ID"] = $find_id;
+}
 
 $arFilter[">=TIMESTAMP_X"] = $find_date1;
-$arFilter["<=TIMESTAMP_X"] = $find_date2 && search_isShortDate($find_date2) ? ConvertTimeStamp(AddTime(MakeTimeStamp($find_date2), 1, "D"), "FULL") : $find_date2;
+$arFilter["<=TIMESTAMP_X"] = $find_date2 && search_isShortDate($find_date2) ? ConvertTimeStamp(
+    AddTime(MakeTimeStamp($find_date2), 1, "D"),
+    "FULL"
+) : $find_date2;
 $arFilter["=SITE_ID"] = $find_site_id;
 
-if ($_REQUEST["find_phrase_exact_match"] == "Y")
+if ($_REQUEST["find_phrase_exact_match"] == "Y") {
     $arFilter["=PHRASE"] = $find_phrase;
-else
+} else {
     $arFilter["PHRASE"] = $find_phrase;
+}
 
-if ($_REQUEST["find_stat_sess_id_exact_match"] == "Y")
+if ($_REQUEST["find_stat_sess_id_exact_match"] == "Y") {
     $arFilter["=STAT_SESS_ID"] = $find_stat_sess_id;
-else
+} else {
     $arFilter["STAT_SESS_ID"] = $find_stat_sess_id;
+}
 
-if ($_REQUEST["find_url_to_exact_match"] == "Y")
+if ($_REQUEST["find_url_to_exact_match"] == "Y") {
     $arFilter["=URL_TO"] = $find_url_to;
-else
+} else {
     $arFilter["URL_TO"] = $find_url_to;
+}
 
 $arFilter["=URL_TO_404"] = $find_url_to_404;
 
-foreach ($arFilter as $key => $value)
-    if (!strlen($value))
+foreach ($arFilter as $key => $value) {
+    if ($value == '') {
         unset($arFilter[$key]);
+    }
+}
 $arFilter["!PHRASE"] = false;
 
 $aContext = array();
@@ -81,7 +90,13 @@ $aContext = array();
 $lAdmin->AddAdminContextMenu($aContext);
 $arHeaders = array(
     array("id" => "PHRASE", "content" => GetMessage("SEARCH_PHS_PHRASE"), "sort" => "PHRASE", "default" => true),
-    array("id" => "COUNT", "content" => GetMessage("SEARCH_PHS_COUNT"), "sort" => "COUNT", "default" => true, "align" => "right"),
+    array(
+        "id" => "COUNT",
+        "content" => GetMessage("SEARCH_PHS_COUNT"),
+        "sort" => "COUNT",
+        "default" => true,
+        "align" => "right"
+    ),
 );
 
 $lAdmin->AddHeaders($arHeaders);
@@ -100,7 +115,8 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
     $row =& $lAdmin->AddRow($f_ID, $arRes);
 }
 
-$lAdmin->AddFooter(array(
+$lAdmin->AddFooter(
+    array(
         array("title" => GetMessage("MAIN_ADMIN_LIST_SELECTED"), "value" => $rsData->SelectedRowsCount()),
     )
 );
@@ -112,8 +128,9 @@ $lAdmin->CheckListMode();
 $APPLICATION->SetTitle(GetMessage("SEARCH_PHS_TITLE"));
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
-if (is_object($message))
+if (is_object($message)) {
     echo $message->Show();
+}
 ?>
 
 <form name="form1" method="GET" action="<?= $APPLICATION->GetCurPage() ?>">
@@ -141,18 +158,37 @@ if (is_object($message))
     </tr>
     <tr>
         <td width="0%" nowrap><? echo GetMessage("SEARCH_PHS_DATE") ?>:</td>
-        <td width="0%"
-            nowrap><? echo CalendarPeriod("find_date1", $find_date1, "find_date2", $find_date2, "form1", "Y") ?></td>
+        <td width="0%" nowrap><? echo CalendarPeriod(
+                "find_date1",
+                $find_date1,
+                "find_date2",
+                $find_date2,
+                "form1",
+                "Y"
+            ) ?></td>
     </tr>
     <tr>
         <td><? echo GetMessage("SEARCH_PHS_SITE_ID") ?>:</td>
-        <td><? echo SelectBoxFromArray("find_site_id", $arSiteDropdown, $find_site_id, GetMessage("SEARCH_PHS_SITE")); ?></td>
+        <td><? echo SelectBoxFromArray(
+                "find_site_id",
+                $arSiteDropdown,
+                $find_site_id,
+                GetMessage("SEARCH_PHS_SITE")
+            ); ?></td>
     </tr>
 
     <tr>
         <td nowrap><? echo GetMessage("SEARCH_PHS_URL_TO") ?></td>
         <td><?
-            echo SelectBoxFromArray("find_url_to_404", array("reference" => array(GetMessage("MAIN_YES"), GetMessage("MAIN_NO")), "reference_id" => array("Y", "N")), htmlspecialcharsbx($find_url_to_404), GetMessage("SEARCH_PHS_404"));
+            echo SelectBoxFromArray(
+                "find_url_to_404",
+                array(
+                    "reference" => array(GetMessage("MAIN_YES"), GetMessage("MAIN_NO")),
+                    "reference_id" => array("Y", "N")
+                ),
+                htmlspecialcharsbx($find_url_to_404),
+                GetMessage("SEARCH_PHS_404")
+            );
             ?>&nbsp;<input type="text" name="find_url_to" size="33" value="<? echo htmlspecialcharsbx($find_url_to) ?>">
         </td>
     </tr>

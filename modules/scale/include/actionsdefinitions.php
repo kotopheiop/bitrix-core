@@ -30,7 +30,9 @@
  *      ASYNC  (Y|N) optional. If command must be executed async asynchronously
  */
 
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+}
 
 use \Bitrix\Main\Localization\Loc;
 
@@ -120,6 +122,16 @@ $actionsDefinitions = array(
         )
     ),
 
+    "CHANGE_PASSWD_FIRST_ALL" => array(
+        "TYPE" => "CHAIN",
+        "NAME" => Loc::getMessage("SCALE_ADEF_NEW_SERVER_CHAIN"),
+        "ACTIONS" => array(
+            "CHANGE_PASSWD_FIRST",
+            "CHANGE_PASSWD_BITRIX"
+        ),
+        "PAGE_REFRESH" => "Y"
+    ),
+
     "CHANGE_PASSWD_FIRST" => array(
         "START_COMMAND_TEMPLATE" => "sudo -u root /opt/webdir/bin/wrapper_ansible_conf -a pw -i ##USER_PARAMS:SERVER_IP## -p ##USER_PARAMS:OLD_PASSWD## -P ##USER_PARAMS:NEW_PASSWD## -o json",
         "NAME" => Loc::getMessage("SCALE_ADEF_CHPASS_NAME"),
@@ -149,7 +161,7 @@ $actionsDefinitions = array(
         "PAGE_REFRESH" => "Y",
         "CONDITION" => array(
             "COMMAND" => "sudo -u root /opt/webdir/bin/bx-monitor -o json",
-            "PARAMS" => array("monitor:monitoring_status", "===", "'disable'")
+            "PARAMS" => array("monitor:monitoring_status", "===", "disable")
         )
     ),
 
@@ -160,7 +172,7 @@ $actionsDefinitions = array(
         "PAGE_REFRESH" => "Y",
         "CONDITION" => array(
             "COMMAND" => "sudo -u root /opt/webdir/bin/bx-monitor -o json",
-            "PARAMS" => array("monitor:monitoring_status", "===", "'enable'")
+            "PARAMS" => array("monitor:monitoring_status", "===", "enable")
         )
     ),
 

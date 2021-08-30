@@ -41,15 +41,17 @@ class BatchDocF103 extends BaseFile
             return $result;
         }
 
-        $res = Requests\RequestTable::getList(array(
-            'filter' => array(
-                '=ID' => $requestId
+        $res = Requests\RequestTable::getList(
+            array(
+                'filter' => array(
+                    '=ID' => $requestId
+                )
             )
-        ));
+        );
 
         $row = $res->fetch();
 
-        if (!$row || strlen($row['EXTERNAL_ID']) <= 0) {
+        if (!$row || $row['EXTERNAL_ID'] == '') {
             $result->addError(new Main\Error(Loc::getMessage('SALE_DLVRS_ADD_DREQ_RBATCDF103_03')));
             return $result;
         }
@@ -63,8 +65,9 @@ class BatchDocF103 extends BaseFile
                 $deliveryRequest = $this->deliveryService->getDeliveryRequestHandler();
                 $result = $deliveryRequest->getRequestObject('BATCH_DOC_PREPARE')->process($requestIds, array());
 
-                if ($result->isSuccess())
+                if ($result->isSuccess()) {
                     $result = $this->send();
+                }
 
                 break;
             }

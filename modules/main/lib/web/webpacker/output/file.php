@@ -229,7 +229,7 @@ class File extends Base
 
     protected static function getMimeTypeByFileName($fileName)
     {
-        $extension = strtolower(getFileExtension($fileName));
+        $extension = mb_strtolower(getFileExtension($fileName));
         $list = MimeType::getMimeTypeList();
         if (isset($list[$extension])) {
             return $list[$extension];

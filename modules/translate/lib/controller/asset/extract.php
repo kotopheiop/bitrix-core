@@ -68,9 +68,14 @@ class Extract
 
         $this->tmpFolder = Translate\IO\Directory::generateTemporalDirectory('translate');
         if (!$this->tmpFolder->isExists() || !$this->tmpFolder->isDirectory()) {
-            $this->addError(new Error(
-                Loc::getMessage('TR_ERROR_CREATE_TEMP_FOLDER', array('#PATH#' => $this->tmpFolder->getPhysicalPath()))
-            ));
+            $this->addError(
+                new Error(
+                    Loc::getMessage(
+                        'TR_ERROR_CREATE_TEMP_FOLDER',
+                        array('#PATH#' => $this->tmpFolder->getPhysicalPath())
+                    )
+                )
+            );
         } else {
             $this->tmpFolderPath = $this->tmpFolder->getPhysicalPath();
         }

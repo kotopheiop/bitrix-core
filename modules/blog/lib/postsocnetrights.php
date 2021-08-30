@@ -101,8 +101,12 @@ class PostSocnetRightsTable extends Entity\DataManager
                     $sql = "INSERT INTO " . self::getTableName() . " (POST_ID, ENTITY_TYPE, ENTITY_ID, ENTITY) " .
                         "SELECT SL.SOURCE_ID, 'SG', " . $groupId . ", '" . $right . "' " .
                         "FROM " . LogTable::getTableName() . " SL " .
-                        "INNER JOIN " . LogRightTable::getTableName() . " SLR ON SLR.LOG_ID = SL.ID AND SLR.GROUP_CODE = 'SG" . $groupId . "' " .
-                        "WHERE SL.EVENT_ID IN ('" . implode("', '", \Bitrix\Blog\Integration\Socialnetwork\Log::getEventIdList()) . "')";
+                        "INNER JOIN " . LogRightTable::getTableName(
+                        ) . " SLR ON SLR.LOG_ID = SL.ID AND SLR.GROUP_CODE = 'SG" . $groupId . "' " .
+                        "WHERE SL.EVENT_ID IN ('" . implode(
+                            "', '",
+                            \Bitrix\Blog\Integration\Socialnetwork\Log::getEventIdList()
+                        ) . "')";
 
                     try {
                         $connection->query($sql);
@@ -114,7 +118,12 @@ class PostSocnetRightsTable extends Entity\DataManager
                 if ($queryRes) {
                     $sql = "DELETE " . LogRightTable::getTableName() . " " .
                         "FROM " . LogRightTable::getTableName() . " " .
-                        "INNER JOIN " . LogTable::getTableName() . " ON " . LogTable::getTableName() . ".ID = " . LogRightTable::getTableName() . ".LOG_ID AND " . LogTable::getTableName() . ".EVENT_ID IN ('" . implode("', '", \Bitrix\Blog\Integration\Socialnetwork\Log::getEventIdList()) . "') " .
+                        "INNER JOIN " . LogTable::getTableName() . " ON " . LogTable::getTableName(
+                        ) . ".ID = " . LogRightTable::getTableName() . ".LOG_ID AND " . LogTable::getTableName(
+                        ) . ".EVENT_ID IN ('" . implode(
+                            "', '",
+                            \Bitrix\Blog\Integration\Socialnetwork\Log::getEventIdList()
+                        ) . "') " .
                         "WHERE GROUP_CODE LIKE 'SG" . $groupId . "%'";
 
                     try {
@@ -127,7 +136,12 @@ class PostSocnetRightsTable extends Entity\DataManager
                 if ($queryRes) {
                     $sql = "DELETE " . LogRightTable::getTableName() . " " .
                         "FROM " . LogRightTable::getTableName() . " " .
-                        "INNER JOIN " . LogTable::getTableName() . " ON " . LogTable::getTableName() . ".ID = " . LogRightTable::getTableName() . ".LOG_ID AND " . LogTable::getTableName() . ".EVENT_ID IN ('" . implode("', '", \Bitrix\Blog\Integration\Socialnetwork\Log::getEventIdList()) . "') " .
+                        "INNER JOIN " . LogTable::getTableName() . " ON " . LogTable::getTableName(
+                        ) . ".ID = " . LogRightTable::getTableName() . ".LOG_ID AND " . LogTable::getTableName(
+                        ) . ".EVENT_ID IN ('" . implode(
+                            "', '",
+                            \Bitrix\Blog\Integration\Socialnetwork\Log::getEventIdList()
+                        ) . "') " .
                         "WHERE GROUP_CODE LIKE 'OSG" . $groupId . "%'";
 
                     try {
@@ -141,8 +155,12 @@ class PostSocnetRightsTable extends Entity\DataManager
                     $sql = "INSERT INTO " . LogRightTable::getTableName() . " (LOG_ID, GROUP_CODE, LOG_UPDATE) " .
                         "SELECT SL.ID, BSR.ENTITY, SL.LOG_UPDATE " .
                         "FROM " . LogTable::getTableName() . " SL " .
-                        "INNER JOIN " . self::getTableName() . " BSR ON BSR.POST_ID = SL.SOURCE_ID AND (BSR.ENTITY LIKE 'SG" . $groupId . "%' OR BSR.ENTITY LIKE 'OSG" . $groupId . "%') " .
-                        "WHERE SL.EVENT_ID IN ('" . implode("', '", \Bitrix\Blog\Integration\Socialnetwork\Log::getEventIdList()) . "')";
+                        "INNER JOIN " . self::getTableName(
+                        ) . " BSR ON BSR.POST_ID = SL.SOURCE_ID AND (BSR.ENTITY LIKE 'SG" . $groupId . "%' OR BSR.ENTITY LIKE 'OSG" . $groupId . "%') " .
+                        "WHERE SL.EVENT_ID IN ('" . implode(
+                            "', '",
+                            \Bitrix\Blog\Integration\Socialnetwork\Log::getEventIdList()
+                        ) . "')";
 
                     try {
                         $connection->query($sql);
@@ -160,7 +178,7 @@ class PostSocnetRightsTable extends Entity\DataManager
 
     public static function deleteByEntity($value = '')
     {
-        if (strlen($value) <= 0) {
+        if ($value == '') {
             return false;
         }
 

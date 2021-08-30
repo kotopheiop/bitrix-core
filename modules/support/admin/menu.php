@@ -1,7 +1,9 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
-if (!$USER->IsAuthorized())
+if (!$USER->IsAuthorized()) {
     return false;
+}
 $SUP_RIGHT = $APPLICATION->GetGroupRight("support");
 if ($SUP_RIGHT > "D") {
     $aMenu = array(
@@ -17,13 +19,14 @@ if ($SUP_RIGHT > "D") {
         "items" => array()
     );
 
-    if ($SUP_RIGHT >= "T")
+    if ($SUP_RIGHT >= "T") {
         $aMenu["items"][] = array(
             "text" => GetMessage("SUP_M_REPORT_TABLE"),
             "url" => "ticket_desktop.php?lang=" . LANGUAGE_ID . "&amp;set_default=Y",
             "more_url" => Array("ticket_desktop.php"),
             "title" => GetMessage("SUP_M_REPORT_TABLE_ALT")
         );
+    }
 
     $aMenu["items"][] = array(
         "text" => GetMessage("SUP_M_TICKETS"),
@@ -36,13 +39,14 @@ if ($SUP_RIGHT > "D") {
         "title" => GetMessage("SUP_M_TICKETS_ALT")
     );
 
-    if ($SUP_RIGHT >= "T")
+    if ($SUP_RIGHT >= "T") {
         $aMenu["items"][] = array(
             "text" => GetMessage("SUP_M_REPORT_GRAPH"),
             "url" => "ticket_report_graph.php?lang=" . LANGUAGE_ID . "&amp;set_default=Y",
             "more_url" => Array("ticket_report_graph.php"),
             "title" => GetMessage("SUP_M_REPORT_GRAPH_ALT")
         );
+    }
 
     if ($SUP_RIGHT >= "V") {
         $aMenu["items"][] = array(

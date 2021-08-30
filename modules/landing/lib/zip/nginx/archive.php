@@ -74,11 +74,15 @@ class Archive
         $httpResponse->addHeader('X-Archive-Files', 'zip');
 
         $utfName = \CHTTP::urnEncode($this->name, 'UTF-8');
-        $translitName = \CUtil::translit($this->name, LANGUAGE_ID, [
-            'max_len' => 1024,
-            'safe_chars' => '.',
-            'replace_space' => '-',
-        ]);
+        $translitName = \CUtil::translit(
+            $this->name,
+            LANGUAGE_ID,
+            [
+                'max_len' => 1024,
+                'safe_chars' => '.',
+                'replace_space' => '-',
+            ]
+        );
         $httpResponse->addHeader(
             'Content-Disposition',
             "attachment; filename=\"" . $translitName . "\"; filename*=utf-8''" . $utfName

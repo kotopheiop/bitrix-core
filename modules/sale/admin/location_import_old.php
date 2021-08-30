@@ -3,8 +3,9 @@
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions < "W")
+if ($saleModulePermissions < "W") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 \Bitrix\Main\Loader::includeModule('sale');
 
@@ -30,8 +31,18 @@ echo ShowError($strWarning);
 echo ShowNote($strOK, "oktext");
 
 $aTabs = array(
-    array("DIV" => "edit1", "TAB" => GetMessage("location_admin_import_tab"), "ICON" => "sale", "TITLE" => GetMessage("LOCA_LOADING")),
-    array("DIV" => "edit3", "TAB" => GetMessage("LOCATION_CLEAR"), "ICON" => "sale", "TITLE" => GetMessage("LOCATION_CLEAR_DESC"))
+    array(
+        "DIV" => "edit1",
+        "TAB" => GetMessage("location_admin_import_tab"),
+        "ICON" => "sale",
+        "TITLE" => GetMessage("LOCA_LOADING")
+    ),
+    array(
+        "DIV" => "edit3",
+        "TAB" => GetMessage("LOCATION_CLEAR"),
+        "ICON" => "sale",
+        "TITLE" => GetMessage("LOCATION_CLEAR_DESC")
+    )
 );
 
 $tabControl = new CAdminTabControl("tabControl", $aTabs, true, true);
@@ -89,7 +100,9 @@ echo '<li>' . GetMessage('LOCA_LOCATIONS_LOC_STATS') . ': ' . $numLocations . '<
 
 $rsLocationGroups = CSaleLocationGroup::GetList();
 $numGroups = 0;
-while ($arGroup = $rsLocationGroups->Fetch()) $numGroups++;
+while ($arGroup = $rsLocationGroups->Fetch()) {
+    $numGroups++;
+}
 
 echo '<li>' . GetMessage('LOCA_LOCATIONS_GROUP_STATS') . ': ' . $numGroups . '</li>';
 echo '</ul>';

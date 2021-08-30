@@ -1,4 +1,5 @@
 <?
+
 define("PUBLIC_AJAX_MODE", true);
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_before.php");
 
@@ -12,14 +13,16 @@ if (!$USER->IsAuthorized()):
 endif;
 
 $arParams = false;
-if (is_array($_REQUEST["arParams"]))
+if (is_array($_REQUEST["arParams"])) {
     $arParams = $_REQUEST["arParams"];
+}
 
 $arParams["SITE_ID"] = '';
 if ($_REQUEST["site_id"] <> '') {
     $res = CSite::GetByID($_REQUEST["site_id"]);
-    if ($arSite = $res->Fetch())
+    if ($arSite = $res->Fetch()) {
         $arParams["SITE_ID"] = $arSite["ID"];
+    }
 }
 
 $access = new CAccess($arParams);
@@ -30,8 +33,9 @@ if ($_REQUEST["mode"] == "ajax") {
 }
 
 if ($_REQUEST["mode"] == "save_lru" && check_bitrix_sessid()) {
-    if (is_array($_REQUEST["LRU"]))
+    if (is_array($_REQUEST["LRU"])) {
         CAccess::SaveLastRecentlyUsed($_REQUEST["LRU"]);
+    }
     die();
 }
 ?>
@@ -43,13 +47,16 @@ if ($_REQUEST["mode"] == "save_lru" && check_bitrix_sessid()) {
         <div class="access-providers-container">
             <?
             $first = '';
-            foreach ($arHtml as $ID => $provider)
-                if ($provider["SELECTED"] == true)
+            foreach ($arHtml as $ID => $provider) {
+                if ($provider["SELECTED"] == true) {
                     $first = $ID;
+                }
+            }
 
             foreach ($arHtml as $ID => $provider):
-                if ($first == '')
+                if ($first == '') {
                     $first = $ID;
+                }
                 ?>
                 <a href="javascript:void(0);" onclick="BX.Access.SelectProvider('<?= $ID ?>')"
                    id="access_btn_<?= $ID ?>"
@@ -84,7 +91,9 @@ if ($_REQUEST["mode"] == "save_lru" && check_bitrix_sessid()) {
 </div>
 
 <script type="text/javascript">
-    BX.Finder(BX('access_content_container'), 'Access', <?=CUtil::PhpToJsObject(array_keys($arHtml))?>, {
+    BX.Finder(BX('access_content_container'), 'Access', <?=CUtil::PhpToJsObject(
+        array_keys($arHtml)
+    )?>, {
         'text-search-wait': '<?=CUtil::JSEscape(GetMessage("acc_dialog_wait"))?>',
         'text-search-no-result': '<?=CUtil::JSEscape(GetMessage("acc_dialog_not_found"))?>'
     });

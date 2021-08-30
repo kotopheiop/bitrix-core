@@ -1,4 +1,5 @@
-<?
+<?php
+
 IncludeModuleLangFile(__FILE__);
 
 class CAllSocNetMessages
@@ -6,33 +7,39 @@ class CAllSocNetMessages
     /***************************************/
     /********  DATA MODIFICATION  **********/
     /***************************************/
-    function CheckFields($ACTION, &$arFields, $ID = 0)
+    public static function CheckFields($ACTION, &$arFields, $ID = 0)
     {
         global $DB;
 
-        if ($ACTION != "ADD" && IntVal($ID) <= 0) {
+        if ($ACTION != "ADD" && intval($ID) <= 0) {
             $GLOBALS["APPLICATION"]->ThrowException("System error 870164", "ERROR");
             return false;
         }
 
-        if ((is_set($arFields, "FROM_USER_ID") || $ACTION == "ADD") && IntVal($arFields["FROM_USER_ID"]) <= 0) {
+        if ((is_set($arFields, "FROM_USER_ID") || $ACTION == "ADD") && intval($arFields["FROM_USER_ID"]) <= 0) {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_M_EMPTY_FROM_USER_ID"), "EMPTY_FROM_USER_ID");
             return false;
         } elseif (is_set($arFields, "FROM_USER_ID")) {
             $dbResult = CUser::GetByID($arFields["FROM_USER_ID"]);
             if (!$dbResult->Fetch()) {
-                $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_M_ERROR_NO_FROM_USER_ID"), "ERROR_NO_FROM_USER_ID");
+                $GLOBALS["APPLICATION"]->ThrowException(
+                    GetMessage("SONET_M_ERROR_NO_FROM_USER_ID"),
+                    "ERROR_NO_FROM_USER_ID"
+                );
                 return false;
             }
         }
 
-        if ((is_set($arFields, "TO_USER_ID") || $ACTION == "ADD") && IntVal($arFields["TO_USER_ID"]) <= 0) {
+        if ((is_set($arFields, "TO_USER_ID") || $ACTION == "ADD") && intval($arFields["TO_USER_ID"]) <= 0) {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_M_EMPTY_TO_USER_ID"), "EMPTY_TO_USER_ID");
             return false;
         } elseif (is_set($arFields, "TO_USER_ID")) {
             $dbResult = CUser::GetByID($arFields["TO_USER_ID"]);
             if (!$dbResult->Fetch()) {
-                $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_M_ERROR_NO_TO_USER_ID"), "ERROR_NO_TO_USER_ID");
+                $GLOBALS["APPLICATION"]->ThrowException(
+                    GetMessage("SONET_M_ERROR_NO_TO_USER_ID"),
+                    "ERROR_NO_TO_USER_ID"
+                );
                 return false;
             }
         }
@@ -42,67 +49,100 @@ class CAllSocNetMessages
             return false;
         }
 
-        if (is_set($arFields, "DATE_VIEW") && $arFields["DATE_VIEW"] !== false && (!$DB->IsDate($arFields["DATE_VIEW"], false, LANG, "FULL"))) {
+        if (is_set($arFields, "DATE_VIEW") && $arFields["DATE_VIEW"] !== false && (!$DB->IsDate(
+                $arFields["DATE_VIEW"],
+                false,
+                LANG,
+                "FULL"
+            ))) {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_MM_EMPTY_DATE_VIEW"), "EMPTY_DATE_UPDATE");
             return false;
         }
 
-        if ((is_set($arFields, "MESSAGE_TYPE") || $ACTION == "ADD") && $arFields["MESSAGE_TYPE"] != SONET_MESSAGE_PRIVATE && $arFields["MESSAGE_TYPE"] != SONET_MESSAGE_SYSTEM)
+        if ((is_set(
+                    $arFields,
+                    "MESSAGE_TYPE"
+                ) || $ACTION == "ADD") && $arFields["MESSAGE_TYPE"] != SONET_MESSAGE_PRIVATE && $arFields["MESSAGE_TYPE"] != SONET_MESSAGE_SYSTEM) {
             $arFields["MESSAGE_TYPE"] = SONET_MESSAGE_PRIVATE;
+        }
 
-        if ((is_set($arFields, "FROM_DELETED") || $ACTION == "ADD") && $arFields["FROM_DELETED"] != "Y" && $arFields["FROM_DELETED"] != "N")
+        if ((is_set(
+                    $arFields,
+                    "FROM_DELETED"
+                ) || $ACTION == "ADD") && $arFields["FROM_DELETED"] != "Y" && $arFields["FROM_DELETED"] != "N") {
             $arFields["FROM_DELETED"] = "N";
+        }
 
-        if ((is_set($arFields, "TO_DELETED") || $ACTION == "ADD") && $arFields["TO_DELETED"] != "Y" && $arFields["TO_DELETED"] != "N")
+        if ((is_set(
+                    $arFields,
+                    "TO_DELETED"
+                ) || $ACTION == "ADD") && $arFields["TO_DELETED"] != "Y" && $arFields["TO_DELETED"] != "N") {
             $arFields["TO_DELETED"] = "N";
+        }
 
-        if ((is_set($arFields, "SEND_MAIL") || $ACTION == "ADD") && $arFields["SEND_MAIL"] != "Y" && $arFields["SEND_MAIL"] != "N")
+        if ((is_set(
+                    $arFields,
+                    "SEND_MAIL"
+                ) || $ACTION == "ADD") && $arFields["SEND_MAIL"] != "Y" && $arFields["SEND_MAIL"] != "N") {
             $arFields["SEND_MAIL"] = "N";
+        }
 
-        if ((is_set($arFields, "IS_LOG") || $ACTION == "ADD") && $arFields["IS_LOG"] != "Y" && $arFields["SEND_MAIL"] != "N")
+        if ((is_set(
+                    $arFields,
+                    "IS_LOG"
+                ) || $ACTION == "ADD") && $arFields["IS_LOG"] != "Y" && $arFields["SEND_MAIL"] != "N") {
             $arFields["SEND_MAIL"] = "N";
+        }
 
-        return True;
+        return true;
     }
 
-    function Delete($ID)
+    public static function Delete($ID)
     {
         global $DB;
 
-        if (!CSocNetGroup::__ValidateID($ID))
+        if (!CSocNetGroup::__ValidateID($ID)) {
             return false;
+        }
 
-        $ID = IntVal($ID);
-        $bSuccess = True;
+        $ID = intval($ID);
+        $bSuccess = true;
 
         $db_events = GetModuleEvents("socialnetwork", "OnBeforeSocNetMessagesDelete");
-        while ($arEvent = $db_events->Fetch())
-            if (ExecuteModuleEventEx($arEvent, array($ID)) === false)
+        while ($arEvent = $db_events->Fetch()) {
+            if (ExecuteModuleEventEx($arEvent, array($ID)) === false) {
                 return false;
+            }
+        }
 
         $events = GetModuleEvents("socialnetwork", "OnSocNetMessagesDelete");
-        while ($arEvent = $events->Fetch())
+        while ($arEvent = $events->Fetch()) {
             ExecuteModuleEventEx($arEvent, array($ID));
+        }
 
-        if ($bSuccess)
+        if ($bSuccess) {
             $bSuccess = $DB->Query("DELETE FROM b_sonet_messages WHERE ID = " . $ID . "", true);
+        }
 
         return $bSuccess;
     }
 
-    function DeleteMessage($ID, $userID, $bCheckMessages = true)
+    public static function DeleteMessage($ID, $userID, $bCheckMessages = true)
     {
         global $DB;
 
-        $ID = IntVal($ID);
+        $ID = intval($ID);
         if ($ID <= 0) {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_UR_EMPTY_MESSAGE_ID"), "ERROR_MESSAGE_ID");
             return false;
         }
 
-        $userID = IntVal($userID);
+        $userID = intval($userID);
         if ($userID <= 0) {
-            $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_UR_EMPTY_SENDER_USER_ID"), "ERROR_SENDER_USER_ID");
+            $GLOBALS["APPLICATION"]->ThrowException(
+                GetMessage("SONET_UR_EMPTY_SENDER_USER_ID"),
+                "ERROR_SENDER_USER_ID"
+            );
             return false;
         }
 
@@ -115,10 +155,12 @@ class CAllSocNetMessages
         if (($arMessage["FROM_USER_ID"] == $userID) && ($arMessage["TO_USER_ID"] == $userID)) {
             if (!CSocNetMessages::Delete($arMessage["ID"])) {
                 $errorMessage = "";
-                if ($e = $GLOBALS["APPLICATION"]->GetException())
+                if ($e = $GLOBALS["APPLICATION"]->GetException()) {
                     $errorMessage = $e->GetString();
-                if (StrLen($errorMessage) <= 0)
+                }
+                if ($errorMessage == '') {
                     $errorMessage = GetMessage("SONET_M_ERROR_DELETE_MESSAGE");
+                }
                 $GLOBALS["APPLICATION"]->ThrowException($errorMessage, "ERROR_DELETE_MESSAGE");
                 return false;
             }
@@ -126,10 +168,12 @@ class CAllSocNetMessages
             if ($arMessage["TO_DELETED"] == "Y") {
                 if (!CSocNetMessages::Delete($arMessage["ID"])) {
                     $errorMessage = "";
-                    if ($e = $GLOBALS["APPLICATION"]->GetException())
+                    if ($e = $GLOBALS["APPLICATION"]->GetException()) {
                         $errorMessage = $e->GetString();
-                    if (StrLen($errorMessage) <= 0)
+                    }
+                    if ($errorMessage == '') {
                         $errorMessage = GetMessage("SONET_M_ERROR_DELETE_MESSAGE");
+                    }
 
                     $GLOBALS["APPLICATION"]->ThrowException($errorMessage, "ERROR_DELETE_MESSAGE");
                     return false;
@@ -137,10 +181,12 @@ class CAllSocNetMessages
             } else {
                 if (!CSocNetMessages::Update($arMessage["ID"], array("FROM_DELETED" => "Y"))) {
                     $errorMessage = "";
-                    if ($e = $GLOBALS["APPLICATION"]->GetException())
+                    if ($e = $GLOBALS["APPLICATION"]->GetException()) {
                         $errorMessage = $e->GetString();
-                    if (StrLen($errorMessage) <= 0)
+                    }
+                    if ($errorMessage == '') {
                         $errorMessage = GetMessage("SONET_UR_ERROR_UPDATE_MESSAGE");
+                    }
 
                     $GLOBALS["APPLICATION"]->ThrowException($errorMessage, "ERROR_UPDATE_MESSAGE");
                     return false;
@@ -150,10 +196,12 @@ class CAllSocNetMessages
             if ($arMessage["FROM_DELETED"] == "Y") {
                 if (!CSocNetMessages::Delete($arMessage["ID"])) {
                     $errorMessage = "";
-                    if ($e = $GLOBALS["APPLICATION"]->GetException())
+                    if ($e = $GLOBALS["APPLICATION"]->GetException()) {
                         $errorMessage = $e->GetString();
-                    if (StrLen($errorMessage) <= 0)
+                    }
+                    if ($errorMessage == '') {
                         $errorMessage = GetMessage("SONET_M_ERROR_DELETE_MESSAGE");
+                    }
 
                     $GLOBALS["APPLICATION"]->ThrowException($errorMessage, "ERROR_DELETE_MESSAGE");
                     return false;
@@ -161,18 +209,21 @@ class CAllSocNetMessages
             } else {
                 if (!CSocNetMessages::Update($arMessage["ID"], array("TO_DELETED" => "Y"))) {
                     $errorMessage = "";
-                    if ($e = $GLOBALS["APPLICATION"]->GetException())
+                    if ($e = $GLOBALS["APPLICATION"]->GetException()) {
                         $errorMessage = $e->GetString();
-                    if (StrLen($errorMessage) <= 0)
+                    }
+                    if ($errorMessage == '') {
                         $errorMessage = GetMessage("SONET_UR_ERROR_UPDATE_MESSAGE");
+                    }
 
                     $GLOBALS["APPLICATION"]->ThrowException($errorMessage, "ERROR_UPDATE_MESSAGE");
                     return false;
                 }
             }
 
-            if ($bCheckMessages)
+            if ($bCheckMessages) {
                 CSocNetMessages::__SpeedFileCheckMessages($userID);
+            }
         } else {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_UR_NO_MESSAGE"), "ERROR_NO_MESSAGE");
             return false;
@@ -185,14 +236,19 @@ class CAllSocNetMessages
     {
         global $DB;
 
-        if (!CSocNetGroup::__ValidateID($userID))
+        if (!CSocNetGroup::__ValidateID($userID)) {
             return false;
+        }
 
-        $userID = IntVal($userID);
-        $bSuccess = True;
+        $userID = intval($userID);
+        $bSuccess = true;
 
-        if ($bSuccess)
-            $bSuccess = $DB->Query("DELETE FROM b_sonet_messages WHERE FROM_USER_ID = " . $userID . " OR TO_USER_ID = " . $userID . "", true);
+        if ($bSuccess) {
+            $bSuccess = $DB->Query(
+                "DELETE FROM b_sonet_messages WHERE FROM_USER_ID = " . $userID . " OR TO_USER_ID = " . $userID . "",
+                true
+            );
+        }
 
         CSocNetMessages::__SpeedFileDelete($userID);
 
@@ -202,48 +258,67 @@ class CAllSocNetMessages
     /***************************************/
     /**********  DATA SELECTION  ***********/
     /***************************************/
-    function GetByID($ID)
+    public static function GetByID($ID)
     {
         global $DB;
 
-        if (!CSocNetGroup::__ValidateID($ID))
+        if (!CSocNetGroup::__ValidateID($ID)) {
             return false;
+        }
 
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
         $dbResult = CSocNetMessages::GetList(Array(), Array("ID" => $ID, "IS_LOG_ALL" => "Y"));
         if ($arResult = $dbResult->GetNext()) {
             return $arResult;
         }
 
-        return False;
+        return false;
     }
 
     /***************************************/
     /**********  SEND EVENTS  **************/
     /***************************************/
-    function SendEvent($messageID, $mailTemplate = "SONET_NEW_MESSAGE")
+    public static function SendEvent($messageID, $mailTemplate = "SONET_NEW_MESSAGE")
     {
-        $messageID = IntVal($messageID);
-        if ($messageID <= 0)
+        $messageID = intval($messageID);
+        if ($messageID <= 0) {
             return false;
+        }
 
         $dbMessage = CSocNetMessages::GetList(
             array(),
             array("ID" => $messageID, "IS_LOG_ALL" => "Y"),
             false,
             false,
-            array("ID", "FROM_USER_ID", "TO_USER_ID", "TITLE", "MESSAGE", "DATE_CREATE", "FROM_USER_NAME", "FROM_USER_LAST_NAME", "FROM_USER_LOGIN", "TO_USER_NAME", "TO_USER_LAST_NAME", "TO_USER_LOGIN", "TO_USER_EMAIL", "TO_USER_LID")
+            array(
+                "ID",
+                "FROM_USER_ID",
+                "TO_USER_ID",
+                "TITLE",
+                "MESSAGE",
+                "DATE_CREATE",
+                "FROM_USER_NAME",
+                "FROM_USER_LAST_NAME",
+                "FROM_USER_LOGIN",
+                "TO_USER_NAME",
+                "TO_USER_LAST_NAME",
+                "TO_USER_LOGIN",
+                "TO_USER_EMAIL",
+                "TO_USER_LID"
+            )
         );
         $arMessage = $dbMessage->Fetch();
-        if (!$arMessage)
+        if (!$arMessage) {
             return false;
+        }
 
         $defSiteID = (Defined("SITE_ID") ? SITE_ID : $arMessage["TO_USER_LID"]);
 
         $siteID = CSocNetUserEvents::GetEventSite($arMessage["TO_USER_ID"], $mailTemplate, $defSiteID);
-        if ($siteID == false || StrLen($siteID) <= 0)
+        if ($siteID == false || $siteID == '') {
             return false;
+        }
 
         $arFields = array(
             "MESSAGE_ID" => $messageID,
@@ -264,21 +339,23 @@ class CAllSocNetMessages
         return true;
     }
 
-
     /***************************************/
     /************  ACTIONS  ****************/
     /***************************************/
-    function MarkMessageRead($senderUserID, $messageID, $bRead = true)
+    public static function MarkMessageRead($senderUserID, $messageID, $bRead = true)
     {
         global $APPLICATION;
 
-        $senderUserID = IntVal($senderUserID);
+        $senderUserID = intval($senderUserID);
         if ($senderUserID <= 0) {
-            $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_UR_EMPTY_SENDER_USER_ID"), "ERROR_SENDER_USER_ID");
+            $GLOBALS["APPLICATION"]->ThrowException(
+                GetMessage("SONET_UR_EMPTY_SENDER_USER_ID"),
+                "ERROR_SENDER_USER_ID"
+            );
             return false;
         }
 
-        $messageID = IntVal($messageID);
+        $messageID = intval($messageID);
         if ($messageID <= 0) {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_UR_EMPTY_MESSAGE_ID"), "ERROR_MESSAGE_ID");
             return false;
@@ -289,8 +366,9 @@ class CAllSocNetMessages
             "TO_USER_ID" => $senderUserID,
             "IS_LOG_ALL" => "Y"
         );
-        if ($bRead)
+        if ($bRead) {
             $arFilter["DATE_VIEW"] = "";
+        }
 
         $dbResult = CSocNetMessages::GetList(
             array(),
@@ -301,17 +379,20 @@ class CAllSocNetMessages
         );
 
         if ($arResult = $dbResult->Fetch()) {
-            if ($bRead)
+            if ($bRead) {
                 $arFields = array("=DATE_VIEW" => $GLOBALS["DB"]->CurrentTimeFunction());
-            else
+            } else {
                 $arFields = array("DATE_VIEW" => false);
+            }
 
             if (!CSocNetMessages::Update($arResult["ID"], $arFields)) {
                 $errorMessage = "";
-                if ($e = $GLOBALS["APPLICATION"]->GetException())
+                if ($e = $GLOBALS["APPLICATION"]->GetException()) {
                     $errorMessage = $e->GetString();
-                if (StrLen($errorMessage) <= 0)
+                }
+                if ($errorMessage == '') {
                     $errorMessage = GetMessage("SONET_UR_ERROR_UPDATE_MESSAGE");
+                }
 
                 $GLOBALS["APPLICATION"]->ThrowException($errorMessage, "ERROR_UPDATE_MESSAGE");
                 return false;
@@ -326,24 +407,30 @@ class CAllSocNetMessages
         return true;
     }
 
-    function CreateMessage($senderUserID, $targetUserID, $message, $title = false)
+    public static function CreateMessage($senderUserID, $targetUserID, $message, $title = false)
     {
         global $APPLICATION;
 
-        $senderUserID = IntVal($senderUserID);
+        $senderUserID = intval($senderUserID);
         if ($senderUserID <= 0) {
-            $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_UR_EMPTY_SENDER_USER_ID"), "ERROR_SENDER_USER_ID");
+            $GLOBALS["APPLICATION"]->ThrowException(
+                GetMessage("SONET_UR_EMPTY_SENDER_USER_ID"),
+                "ERROR_SENDER_USER_ID"
+            );
             return false;
         }
 
-        $targetUserID = IntVal($targetUserID);
+        $targetUserID = intval($targetUserID);
         if ($targetUserID <= 0) {
-            $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_UR_EMPTY_TARGET_USER_ID"), "ERROR_TARGET_USER_ID");
+            $GLOBALS["APPLICATION"]->ThrowException(
+                GetMessage("SONET_UR_EMPTY_TARGET_USER_ID"),
+                "ERROR_TARGET_USER_ID"
+            );
             return false;
         }
 
         $message = Trim($message);
-        if (StrLen($message) <= 0) {
+        if ($message == '') {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_UR_EMPTY_MESSAGE"), "ERROR_MESSAGE");
             return false;
         }
@@ -362,10 +449,12 @@ class CAllSocNetMessages
         );
         if (!CSocNetMessages::Add($arFields)) {
             $errorMessage = "";
-            if ($e = $GLOBALS["APPLICATION"]->GetException())
+            if ($e = $GLOBALS["APPLICATION"]->GetException()) {
                 $errorMessage = $e->GetString();
-            if (StrLen($errorMessage) <= 0)
+            }
+            if ($errorMessage == '') {
                 $errorMessage = GetMessage("SONET_UR_ERROR_CREATE_MESSAGE");
+            }
 
             $GLOBALS["APPLICATION"]->ThrowException($errorMessage, "ERROR_CREATE_MESSAGE");
             return false;
@@ -376,50 +465,54 @@ class CAllSocNetMessages
         return true;
     }
 
-    function MarkMessageReadMultiple($userID, $arIDs)
+    public static function MarkMessageReadMultiple($userID, $arIDs)
     {
         global $APPLICATION, $DB;
 
-        $userID = IntVal($userID);
+        $userID = intval($userID);
         if ($userID <= 0) {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_UR_EMPTY_SENDER_USER_ID"), "ERROR_USER_ID");
             return false;
         }
 
-        if (!is_array($arIDs))
+        if (!is_array($arIDs)) {
             return true;
+        }
 
-        foreach ($arIDs as $ID)
+        foreach ($arIDs as $ID) {
             CSocNetMessages::MarkMessageRead($userID, $ID);
+        }
 
         return true;
     }
 
-    function DeleteMessageMultiple($userID, $arIDs)
+    public static function DeleteMessageMultiple($userID, $arIDs)
     {
         global $APPLICATION, $DB;
 
-        $userID = IntVal($userID);
+        $userID = intval($userID);
         if ($userID <= 0) {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_UR_EMPTY_SENDER_USER_ID"), "ERROR_USER_ID");
             return false;
         }
 
-        if (!is_array($arIDs))
+        if (!is_array($arIDs)) {
             return true;
+        }
 
-        foreach ($arIDs as $ID)
+        foreach ($arIDs as $ID) {
             CSocNetMessages::DeleteMessage($ID, $userID);
+        }
 
         return true;
     }
 
-    function DeleteConversation($CurrentUserID, $PartnerUserID)
+    public static function DeleteConversation($CurrentUserID, $PartnerUserID)
     {
         global $APPLICATION, $DB;
 
-        $CurrentUserID = IntVal($CurrentUserID);
-        $PartnerUserID = IntVal($PartnerUserID);
+        $CurrentUserID = intval($CurrentUserID);
+        $PartnerUserID = intval($PartnerUserID);
 
         if ($CurrentUserID <= 0) {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_UR_EMPTY_SENDER_USER_ID"), "ERROR_USER_ID");
@@ -441,11 +534,12 @@ class CAllSocNetMessages
         return true;
     }
 
-    function __SpeedFileCheckMessages($userID)
+    public static function __SpeedFileCheckMessages($userID)
     {
-        $userID = IntVal($userID);
-        if ($userID <= 0)
+        $userID = intval($userID);
+        if ($userID <= 0) {
             return;
+        }
 
         $cnt = 0;
         $dbResult = $GLOBALS["DB"]->Query(
@@ -455,26 +549,29 @@ class CAllSocNetMessages
             "	AND DATE_VIEW IS NULL " .
             "	AND TO_DELETED = 'N' "
         );
-        if ($arResult = $dbResult->Fetch())
-            $cnt = IntVal($arResult["CNT"]);
+        if ($arResult = $dbResult->Fetch()) {
+            $cnt = intval($arResult["CNT"]);
+        }
 
-        if ($cnt > 0)
+        if ($cnt > 0) {
             CSocNetMessages::__SpeedFileCreate($userID);
-        else
+        } else {
             CSocNetMessages::__SpeedFileDelete($userID);
+        }
     }
 
-    function __SpeedFileCreate($userID)
+    public static function __SpeedFileCreate($userID)
     {
         global $CACHE_MANAGER;
 
-        $userID = IntVal($userID);
-        if ($userID <= 0)
+        $userID = intval($userID);
+        if ($userID <= 0) {
             return;
+        }
 
-        if ($CACHE_MANAGER->Read(86400 * 30, "socnet_cm_" . $userID))
+        if ($CACHE_MANAGER->Read(86400 * 30, "socnet_cm_" . $userID)) {
             $CACHE_MANAGER->Clean("socnet_cm_" . $userID);
-
+        }
         /*
 
                 $filePath = $_SERVER["DOCUMENT_ROOT"].BX_PERSONAL_ROOT."/managed_flags/socnet/c/".IntVal($userID / 1000)."/";
@@ -488,16 +585,18 @@ class CAllSocNetMessages
         */
     }
 
-    function __SpeedFileDelete($userID)
+    public static function __SpeedFileDelete($userID)
     {
         global $CACHE_MANAGER;
 
-        $userID = IntVal($userID);
-        if ($userID <= 0)
+        $userID = intval($userID);
+        if ($userID <= 0) {
             return;
+        }
 
-        if (!$CACHE_MANAGER->Read(86400 * 30, "socnet_cm_" . $userID))
+        if (!$CACHE_MANAGER->Read(86400 * 30, "socnet_cm_" . $userID)) {
             $CACHE_MANAGER->Set("socnet_cm_" . $userID, true);
+        }
         /*
                 $fileName = $_SERVER["DOCUMENT_ROOT"].BX_PERSONAL_ROOT."/managed_flags/socnet/c/".IntVal($userID / 1000)."/".$userID."_m";
                 if (file_exists($fileName))
@@ -505,13 +604,14 @@ class CAllSocNetMessages
         */
     }
 
-    function SpeedFileExists($userID)
+    public static function SpeedFileExists($userID)
     {
         global $CACHE_MANAGER;
 
-        $userID = IntVal($userID);
-        if ($userID <= 0)
+        $userID = intval($userID);
+        if ($userID <= 0) {
             return;
+        }
 
         return (!$CACHE_MANAGER->Read(86400 * 30, "socnet_cm_" . $userID));
         /*
@@ -520,12 +620,13 @@ class CAllSocNetMessages
         */
     }
 
-    function SendEventAgent()
+    public static function SendEventAgent()
     {
         global $DB;
 
-        if (IsModuleInstalled("im"))
+        if (IsModuleInstalled("im")) {
             return "CSocNetMessages::SendEventAgent();";
+        }
 
         $dbMessage = CSocNetMessages::GetList(
             array(),
@@ -537,22 +638,42 @@ class CAllSocNetMessages
             ),
             false,
             false,
-            array("ID", "FROM_USER_ID", "TO_USER_ID", "TITLE", "MESSAGE", "DATE_CREATE", "FROM_USER_NAME", "FROM_USER_LAST_NAME", "FROM_USER_LOGIN", "TO_USER_NAME", "TO_USER_LAST_NAME", "TO_USER_LOGIN", "TO_USER_EMAIL", "TO_USER_LID", "EMAIL_TEMPLATE", "IS_LOG")
+            array(
+                "ID",
+                "FROM_USER_ID",
+                "TO_USER_ID",
+                "TITLE",
+                "MESSAGE",
+                "DATE_CREATE",
+                "FROM_USER_NAME",
+                "FROM_USER_LAST_NAME",
+                "FROM_USER_LOGIN",
+                "TO_USER_NAME",
+                "TO_USER_LAST_NAME",
+                "TO_USER_LOGIN",
+                "TO_USER_EMAIL",
+                "TO_USER_LID",
+                "EMAIL_TEMPLATE",
+                "IS_LOG"
+            )
         );
 
         while ($arMessage = $dbMessage->Fetch()) {
-            if (isset($arMessage["EMAIL_TEMPLATE"]) && strlen($arMessage["EMAIL_TEMPLATE"]) > 0)
+            if (isset($arMessage["EMAIL_TEMPLATE"]) && $arMessage["EMAIL_TEMPLATE"] <> '') {
                 $mailTemplate = $arMessage["EMAIL_TEMPLATE"];
-            else
+            } else {
                 $mailTemplate = "SONET_NEW_MESSAGE";
+            }
 
             $defSiteID = $arMessage["TO_USER_LID"];
             $siteID = CSocNetUserEvents::GetEventSite($arMessage["TO_USER_ID"], $mailTemplate, $defSiteID);
-            if ($siteID == false || StrLen($siteID) <= 0)
+            if ($siteID == false || $siteID == '') {
                 $siteID = CSite::GetDefSite();
+            }
 
-            if ($siteID == false || StrLen($siteID) <= 0)
+            if ($siteID == false || $siteID == '') {
                 continue;
+            }
 
             $arFields = array(
                 "MESSAGE_ID" => $arMessage["ID"],
@@ -576,5 +697,3 @@ class CAllSocNetMessages
         return "CSocNetMessages::SendEventAgent();";
     }
 }
-
-?>

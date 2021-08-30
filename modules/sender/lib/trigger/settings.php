@@ -48,8 +48,9 @@ class Settings
 
     public function __construct(array $settings = null)
     {
-        if (empty($settings))
+        if (empty($settings)) {
             return;
+        }
 
         $this->setEndpoint($settings['CODE'], $settings['MODULE_ID']);
         $this->setFields($settings['FIELDS']);
@@ -112,10 +113,11 @@ class Settings
     public function getTriggerId()
     {
         $endpoint = $this->getEndpoint();
-        if (!empty($endpoint['CODE']))
+        if (!empty($endpoint['CODE'])) {
             $triggerId = $endpoint['MODULE_ID'] . '_' . $endpoint['CODE'];
-        else
+        } else {
             $triggerId = '';
+        }
 
         return $triggerId;
     }
@@ -128,8 +130,9 @@ class Settings
     {
         if ($key) {
             return (isset($this->endpoint[$key]) ? $this->endpoint[$key] : '');
-        } else
+        } else {
             return $this->endpoint;
+        }
     }
 
     /**
@@ -140,8 +143,9 @@ class Settings
     {
         if (!empty($code)) {
             $this->endpoint['CODE'] = $code;
-            if (!empty($moduleId))
+            if (!empty($moduleId)) {
                 $this->endpoint['MODULE_ID'] = $moduleId;
+            }
         }
     }
 
@@ -271,10 +275,11 @@ class Settings
      */
     public function getClosedTriggerInterval()
     {
-        if ($this->isClosedTrigger())
+        if ($this->isClosedTrigger()) {
             return (int)$this->closedTriggerInterval;
-        else
+        } else {
             return 0;
+        }
     }
 
     /**
@@ -366,10 +371,11 @@ class Settings
      */
     public function getFullEventType()
     {
-        if (!empty($this->eventModuleId) && !empty($this->eventType))
+        if (!empty($this->eventModuleId) && !empty($this->eventType)) {
             return $this->eventModuleId . '_' . $this->eventType;
-        else
+        } else {
             return '';
+        }
     }
 
     /**
@@ -388,7 +394,9 @@ class Settings
     public function getInterval()
     {
         $value = $this->getIntervalValue();
-        if ($value <= 0) return 0;
+        if ($value <= 0) {
+            return 0;
+        }
 
         $type = $this->getIntervalType();
         switch ($type) {

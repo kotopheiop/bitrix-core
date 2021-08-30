@@ -34,10 +34,11 @@ class VkExportedData
     {
         $this->exportId = intval($exportId);
 
-        if (in_array($type, array('PRODUCTS', 'ALBUMS')))
+        if (in_array($type, array('PRODUCTS', 'ALBUMS'))) {
             $this->type = $type;
-        else
+        } else {
             throw new ArgumentNullException("EXPORT_ID");
+        }
 
         $this->cacheId = $this->getCacheId();
     }
@@ -51,7 +52,7 @@ class VkExportedData
     public function getData()
     {
         $cacheManager = Application::getInstance()->getManagedCache();
-        $result = NULL;
+        $result = null;
 
         if ($cacheManager->read(self::CACHE_TTL, $this->cacheId)) {
             $result = $cacheManager->get($this->cacheId);
@@ -87,12 +88,12 @@ class VkExportedData
         $cacheManager = Application::getInstance()->getManagedCache();
 
 //		get saved data from cache, if exist...
-        if ($cacheManager->read(self::CACHE_TTL, $this->cacheId))
+        if ($cacheManager->read(self::CACHE_TTL, $this->cacheId)) {
             $savedData = $cacheManager->get($this->cacheId);
-
-//		...or from VK
-        else
+        } //		...or from VK
+        else {
             $savedData = $this->getDataFromVk();
+        }
 
 //		add new data to existing
         $dataToSave = $savedData + $newData;

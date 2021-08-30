@@ -1,4 +1,5 @@
 <?
+
 //<title>CommerceML MySql Fast</title>
 IncludeModuleLangFile($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/catalog/import_setup_templ.php');
 
@@ -6,40 +7,54 @@ $arSetupErrors = array();
 
 //********************  ACTIONS  **************************************//
 if (($ACTION == 'IMPORT_EDIT' || $ACTION == 'IMPORT_COPY') && $STEP == 1) {
-    if (isset($arOldSetupVars['URL_FILE_1C']))
+    if (isset($arOldSetupVars['URL_FILE_1C'])) {
         $URL_FILE_1C = $arOldSetupVars['URL_FILE_1C'];
-    if (isset($arOldSetupVars['IBLOCK_TYPE_ID']))
+    }
+    if (isset($arOldSetupVars['IBLOCK_TYPE_ID'])) {
         $IBLOCK_TYPE_ID = $arOldSetupVars['IBLOCK_TYPE_ID'];
-    if (isset($arOldSetupVars['keepExistingProperties']))
+    }
+    if (isset($arOldSetupVars['keepExistingProperties'])) {
         $keepExistingProperties = $arOldSetupVars['keepExistingProperties'];
-    if (isset($arOldSetupVars['keepExistingData']))
+    }
+    if (isset($arOldSetupVars['keepExistingData'])) {
         $keepExistingData = $arOldSetupVars['keepExistingData'];
-    if (isset($arOldSetupVars['activateFileData']))
+    }
+    if (isset($arOldSetupVars['activateFileData'])) {
         $activateFileData = $arOldSetupVars['activateFileData'];
-    if (isset($arOldSetupVars['deleteComments']))
+    }
+    if (isset($arOldSetupVars['deleteComments'])) {
         $deleteComments = $arOldSetupVars['deleteComments'];
-    if (isset($arOldSetupVars['cmlDebug']))
+    }
+    if (isset($arOldSetupVars['cmlDebug'])) {
         $cmlDebug = $arOldSetupVars['cmlDebug'];
-    if (isset($arOldSetupVars['cmlMemoryDebug']))
+    }
+    if (isset($arOldSetupVars['cmlMemoryDebug'])) {
         $cmlMemoryDebug = $arOldSetupVars['cmlMemoryDebug'];
-    if (isset($arOldSetupVars['SETUP_PROFILE_NAME']))
+    }
+    if (isset($arOldSetupVars['SETUP_PROFILE_NAME'])) {
         $SETUP_PROFILE_NAME = $arOldSetupVars['SETUP_PROFILE_NAME'];
-    if (isset($arOldSetupVars['USE_TRANSLIT']))
+    }
+    if (isset($arOldSetupVars['USE_TRANSLIT'])) {
         $USE_TRANSLIT = $arOldSetupVars['USE_TRANSLIT'];
-    if (isset($arOldSetupVars['ADD_TRANSLIT']))
+    }
+    if (isset($arOldSetupVars['ADD_TRANSLIT'])) {
         $ADD_TRANSLIT = $arOldSetupVars['ADD_TRANSLIT'];
+    }
 }
 if ($STEP > 1) {
     $DATA_FILE_NAME = "";
 
-    if (strlen($URL_FILE_1C) > 0 && file_exists($_SERVER["DOCUMENT_ROOT"] . $URL_FILE_1C) && is_file($_SERVER["DOCUMENT_ROOT"] . $URL_FILE_1C))
+    if ($URL_FILE_1C <> '' && file_exists($_SERVER["DOCUMENT_ROOT"] . $URL_FILE_1C) && is_file(
+            $_SERVER["DOCUMENT_ROOT"] . $URL_FILE_1C
+        )) {
         $DATA_FILE_NAME = $_SERVER["DOCUMENT_ROOT"] . $URL_FILE_1C;
+    }
 
-    if (strlen($DATA_FILE_NAME) <= 0) {
+    if ($DATA_FILE_NAME == '') {
         $arSetupErrors[] = GetMessage("CICML_ERROR_NO_DATAFILE");
     }
 
-    if (strlen($IBLOCK_TYPE_ID) <= 0) {
+    if ($IBLOCK_TYPE_ID == '') {
         $arSetupErrors[] = GetMessage("CICML_ERROR_NO_IBLOCKTYPE");
     }
 
@@ -65,8 +80,9 @@ $context = new CAdminContextMenu($aMenu);
 
 $context->Show();
 
-if (!empty($arSetupErrors))
+if (!empty($arSetupErrors)) {
     ShowError(implode('<br />', $arSetupErrors));
+}
 
 $actionParams = "";
 if ($adminSidePanelHelper->isSidePanel()) {
@@ -77,8 +93,18 @@ if ($adminSidePanelHelper->isSidePanel()) {
       name="dataload">
     <?
     $aTabs = array(
-        array("DIV" => "edit1", "TAB" => GetMessage("CAT_ADM_CML1_IMP_TAB1"), "ICON" => "store", "TITLE" => GetMessage("CAT_ADM_CML1_IMP_TAB1_TITLE")),
-        array("DIV" => "edit2", "TAB" => GetMessage("CAT_ADM_CML1_IMP_TAB2"), "ICON" => "store", "TITLE" => GetMessage("CAT_ADM_CML1_IMP_TAB2_TITLE")),
+        array(
+            "DIV" => "edit1",
+            "TAB" => GetMessage("CAT_ADM_CML1_IMP_TAB1"),
+            "ICON" => "store",
+            "TITLE" => GetMessage("CAT_ADM_CML1_IMP_TAB1_TITLE")
+        ),
+        array(
+            "DIV" => "edit2",
+            "TAB" => GetMessage("CAT_ADM_CML1_IMP_TAB2"),
+            "ICON" => "store",
+            "TITLE" => GetMessage("CAT_ADM_CML1_IMP_TAB2_TITLE")
+        ),
     );
 
     $tabControl = new CAdminTabControl("tabControl", $aTabs, false, true);
@@ -118,16 +144,20 @@ if ($adminSidePanelHelper->isSidePanel()) {
             <td valign="top" width="40%"><? echo GetMessage("CICML_F_IBLOCK"); ?></td>
             <td valign="top" width="60%">
                 <select name="IBLOCK_TYPE_ID" class="adm-detail-iblock-types"><?
-                    if (!isset($IBLOCK_TYPE_ID))
+                    if (!isset($IBLOCK_TYPE_ID)) {
                         $IBLOCK_TYPE_ID = '';
+                    }
                     ?>
                     <option value="">- <? echo GetMessage("CICML_F_IBLOCK_SELECT") ?> -</option><?
                     $rsIBlockTypes = CIBlockType::GetList(array('ID' => 'ASC'));
                     while ($arIBlockType = $rsIBlockTypes->Fetch()) {
                         if ($arIBLang = CIBlockType::GetByIDLang($arIBlockType["ID"], LANGUAGE_ID)) {
                             ?>
-                            <option value="<? echo htmlspecialcharsbx($arIBlockType['ID']); ?>"<? echo($arIBlockType['ID'] == $IBLOCK_TYPE_ID ? ' selected' : ''); ?>><? echo htmlspecialcharsex($arIBLang["NAME"]); ?>
-                            [<? echo htmlspecialcharsex($arIBlockType['ID']); ?>]</option><?
+                            <option value="<? echo htmlspecialcharsbx(
+                                $arIBlockType['ID']
+                            ); ?>"<? echo($arIBlockType['ID'] == $IBLOCK_TYPE_ID ? ' selected' : ''); ?>><? echo htmlspecialcharsex(
+                                $arIBLang["NAME"]
+                            ); ?> [<? echo htmlspecialcharsex($arIBlockType['ID']); ?>]</option><?
                         }
                     }
                     ?>
@@ -144,11 +174,13 @@ if ($adminSidePanelHelper->isSidePanel()) {
                     $keepExistingProperties = 'Y';
                 }
                 ?><input type="radio" name="keepExistingProperties" id="keepExistingProperties_N"
-                         value="N" <? if ($keepExistingProperties == "N") echo "checked"; ?>> <label
-                        for="keepExistingProperties_N"><? echo GetMessage("CML_S_NO"); ?></label><br>
+                         value="N" <? if ($keepExistingProperties == "N") {
+                    echo "checked";
+                } ?>> <label for="keepExistingProperties_N"><? echo GetMessage("CML_S_NO"); ?></label><br>
                 <input type="radio" name="keepExistingProperties" id="keepExistingProperties_Y"
-                       value="Y" <? if ($keepExistingProperties == "Y") echo "checked"; ?>> <label
-                        for="keepExistingProperties_Y"><? echo GetMessage("CML_S_YES"); ?></label>
+                       value="Y" <? if ($keepExistingProperties == "Y") {
+                    echo "checked";
+                } ?>> <label for="keepExistingProperties_Y"><? echo GetMessage("CML_S_YES"); ?></label>
             </td>
         </tr>
         <tr>
@@ -158,11 +190,13 @@ if ($adminSidePanelHelper->isSidePanel()) {
                     $keepExistingData = 'Y';
                 }
                 ?><input type="radio" name="keepExistingData" id="keepExistingData_N"
-                         value="N" <? if ($keepExistingData == "N") echo "checked"; ?>> <label
-                        for="keepExistingData_N"><? echo GetMessage("CML_S_NO"); ?></label><br>
+                         value="N" <? if ($keepExistingData == "N") {
+                    echo "checked";
+                } ?>> <label for="keepExistingData_N"><? echo GetMessage("CML_S_NO"); ?></label><br>
                 <input type="radio" name="keepExistingData" id="keepExistingData_Y"
-                       value="Y" <? if ($keepExistingData == "Y") echo "checked"; ?>> <label
-                        for="keepExistingData_Y"><? echo GetMessage("CML_S_YES"); ?></label>
+                       value="Y" <? if ($keepExistingData == "Y") {
+                    echo "checked";
+                } ?>> <label for="keepExistingData_Y"><? echo GetMessage("CML_S_YES"); ?></label>
             </td>
         </tr>
         <tr>
@@ -172,11 +206,13 @@ if ($adminSidePanelHelper->isSidePanel()) {
                     $activateFileData = 'Y';
                 }
                 ?><input type="radio" name="activateFileData" id="activateFileData_Y"
-                         value="Y" <? if ($activateFileData == "Y") echo "checked"; ?>> <label
-                        for="activateFileData_Y"><? echo GetMessage("CML_S_YES"); ?></label><br>
+                         value="Y" <? if ($activateFileData == "Y") {
+                    echo "checked";
+                } ?>> <label for="activateFileData_Y"><? echo GetMessage("CML_S_YES"); ?></label><br>
                 <input type="radio" name="activateFileData" id="activateFileData_N"
-                       value="N" <? if ($activateFileData == "N") echo "checked"; ?>> <label
-                        for="activateFileData_N"><? echo GetMessage("CML_S_NO"); ?></label>
+                       value="N" <? if ($activateFileData == "N") {
+                    echo "checked";
+                } ?>> <label for="activateFileData_N"><? echo GetMessage("CML_S_NO"); ?></label>
             </td>
         </tr>
         <tr>
@@ -186,11 +222,13 @@ if ($adminSidePanelHelper->isSidePanel()) {
                     $deleteComments = 'N';
                 }
                 ?><input type="radio" name="deleteComments" id="deleteComments_N"
-                         value="N" <? if ($deleteComments == "N") echo "checked"; ?>> <label
-                        for="deleteComments_N"><? echo GetMessage("CML_S_NO"); ?></label><br>
+                         value="N" <? if ($deleteComments == "N") {
+                    echo "checked";
+                } ?>> <label for="deleteComments_N"><? echo GetMessage("CML_S_NO"); ?></label><br>
                 <input type="radio" name="deleteComments" id="deleteComments_Y"
-                       value="Y" <? if ($deleteComments == "Y") echo "checked"; ?>> <label
-                        for="deleteComments_Y"><? echo GetMessage("CML_S_YES"); ?></label>
+                       value="Y" <? if ($deleteComments == "Y") {
+                    echo "checked";
+                } ?>> <label for="deleteComments_Y"><? echo GetMessage("CML_S_YES"); ?></label>
             </td>
         </tr>
         <tr>
@@ -199,12 +237,12 @@ if ($adminSidePanelHelper->isSidePanel()) {
                 if (!isset($cmlDebug) || ('N' != $cmlDebug && 'Y' != $cmlDebug)) {
                     $cmlDebug = 'N';
                 }
-                ?><input type="radio" name="cmlDebug" id="cmlDebug_N"
-                         value="N" <? if ($cmlDebug == "N") echo "checked"; ?>> <label
-                        for="cmlDebug_N"><? echo GetMessage("CML_S_NO"); ?></label><br>
-                <input type="radio" name="cmlDebug" id="cmlDebug_Y"
-                       value="Y" <? if ($cmlDebug == "Y") echo "checked"; ?>> <label
-                        for="cmlDebug_Y"><? echo GetMessage("CML_S_YES"); ?></label>
+                ?><input type="radio" name="cmlDebug" id="cmlDebug_N" value="N" <? if ($cmlDebug == "N") {
+                    echo "checked";
+                } ?>> <label for="cmlDebug_N"><? echo GetMessage("CML_S_NO"); ?></label><br>
+                <input type="radio" name="cmlDebug" id="cmlDebug_Y" value="Y" <? if ($cmlDebug == "Y") {
+                    echo "checked";
+                } ?>> <label for="cmlDebug_Y"><? echo GetMessage("CML_S_YES"); ?></label>
             </td>
         </tr>
         <tr>
@@ -214,11 +252,13 @@ if ($adminSidePanelHelper->isSidePanel()) {
                     $cmlMemoryDebug = 'N';
                 }
                 ?><input type="radio" name="cmlMemoryDebug" id="cmlMemoryDebug_N"
-                         value="N" <? if ($cmlMemoryDebug == "N") echo "checked"; ?>> <label
-                        for="cmlMemoryDebug_N"><? echo GetMessage("CML_S_NO"); ?></label><br>
+                         value="N" <? if ($cmlMemoryDebug == "N") {
+                    echo "checked";
+                } ?>> <label for="cmlMemoryDebug_N"><? echo GetMessage("CML_S_NO"); ?></label><br>
                 <input type="radio" name="cmlMemoryDebug" id="cmlMemoryDebug_Y"
-                       value="Y" <? if ($cmlMemoryDebug == "Y") echo "checked"; ?>> <label
-                        for="cmlMemoryDebug_Y"><? echo GetMessage("CML_S_YES"); ?></label>
+                       value="Y" <? if ($cmlMemoryDebug == "Y") {
+                    echo "checked";
+                } ?>> <label for="cmlMemoryDebug_Y"><? echo GetMessage("CML_S_YES"); ?></label>
             </td>
         </tr>
         <tr>
@@ -278,9 +318,9 @@ if ($adminSidePanelHelper->isSidePanel()) {
         <input type="hidden" name="ACTION" value="<? echo htmlspecialcharsbx($ACTION); ?>">
         <input type="hidden" name="SETUP_FIELDS_LIST"
                value="URL_FILE_1C,IBLOCK_TYPE_ID,keepExistingProperties,keepExistingData,clearTempTables,deleteComments,cmlDebug,cmlMemoryDebug,activateFileData,USE_TRANSLIT,ADD_TRANSLIT">
-        <input type="submit"
-               value="<? echo (($ACTION == "IMPORT") ? GetMessage("CICML_NEXT_STEP_F") : GetMessage("CICML_SAVE")) . " &gt;&gt;" ?>"
-               name="submit_btn"><?
+        <input type="submit"value="<? echo (($ACTION == "IMPORT") ? GetMessage("CICML_NEXT_STEP_F") : GetMessage(
+                "CICML_SAVE"
+            )) . " &gt;&gt;" ?>" name="submit_btn"><?
     }
 
     $tabControl->End();

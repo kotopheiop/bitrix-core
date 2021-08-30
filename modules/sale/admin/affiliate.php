@@ -1,11 +1,13 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 \Bitrix\Main\Loader::includeModule('sale');
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions == "D")
+if ($saleModulePermissions == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 if (!CBXFeatures::IsFeatureEnabled('SaleAffiliate')) {
     require($DOCUMENT_ROOT . "/bitrix/modules/main/include/prolog_admin_after.php");
 
@@ -40,43 +42,54 @@ $lAdmin->InitFilter($arFilterFields);
 
 $arFilter = array();
 
-if ($filter_site_id != "NOT_REF" && StrLen($filter_site_id) > 0)
+if ($filter_site_id != "NOT_REF" && $filter_site_id <> '') {
     $arFilter["SITE_ID"] = $filter_site_id;
-else
+} else {
     Unset($arFilter["SITE_ID"]);
+}
 
-if (strlen($filter_user) > 0)
+if ($filter_user <> '') {
     $arFilter["%USER_USER"] = $filter_user;
-if (IntVal($filter_plan_id) > 0)
-    $arFilter["PLAN_ID"] = IntVal($filter_plan_id);
-if (StrLen($filter_active) > 0)
+}
+if (intval($filter_plan_id) > 0) {
+    $arFilter["PLAN_ID"] = intval($filter_plan_id);
+}
+if ($filter_active <> '') {
     $arFilter["ACTIVE"] = (($filter_active == "Y") ? "Y" : "N");
-if (StrLen($filter_last_calculate_from) > 0)
+}
+if ($filter_last_calculate_from <> '') {
     $arFilter[">=LAST_CALCULATE"] = $filter_last_calculate_from;
-if (StrLen($filter_last_calculate_to) > 0)
+}
+if ($filter_last_calculate_to <> '') {
     $arFilter["<=LAST_CALCULATE"] = $filter_last_calculate_to;
-if (StrLen($filter_date_create_from) > 0)
+}
+if ($filter_date_create_from <> '') {
     $arFilter[">=DATE_CREATE"] = $filter_date_create_from;
-if (StrLen($filter_date_create_to) > 0)
+}
+if ($filter_date_create_to <> '') {
     $arFilter["<=DATE_CREATE"] = $filter_date_create_to;
-if (IntVal($filter_affiliate_id) > 0)
-    $arFilter["AFFILIATE_ID"] = IntVal($filter_affiliate_id);
+}
+if (intval($filter_affiliate_id) > 0) {
+    $arFilter["AFFILIATE_ID"] = intval($filter_affiliate_id);
+}
 
 $arBaseLangCurrencies = array();
 
 if ($lAdmin->EditAction() && $saleModulePermissions >= "W") {
     foreach ($FIELDS as $ID => $arFields) {
         $DB->StartTransaction();
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
-        if (!$lAdmin->IsUpdated($ID))
+        if (!$lAdmin->IsUpdated($ID)) {
             continue;
+        }
 
         if (!CSaleAffiliate::Update($ID, $arFields)) {
-            if ($ex = $APPLICATION->GetException())
+            if ($ex = $APPLICATION->GetException()) {
                 $lAdmin->AddUpdateError($ex->GetString(), $ID);
-            else
+            } else {
                 $lAdmin->AddUpdateError(GetMessage("SAA_ERROR_UPDATE"), $ID);
+            }
 
             $DB->Rollback();
         }
@@ -89,13 +102,15 @@ if (($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "W") {
     if ($_REQUEST['action_target'] == 'selected') {
         $arID = Array();
         $dbResultList = CSaleAffiliate::GetList(array(), $arFilter, false, false, array("ID"));
-        while ($arResult = $dbResultList->Fetch())
+        while ($arResult = $dbResultList->Fetch()) {
             $arID[] = $arResult['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
 
         switch ($_REQUEST['action']) {
             case "delete":
@@ -106,10 +121,11 @@ if (($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "W") {
                 if (!CSaleAffiliate::Delete($ID)) {
                     $DB->Rollback();
 
-                    if ($ex = $APPLICATION->GetException())
+                    if ($ex = $APPLICATION->GetException()) {
                         $lAdmin->AddGroupError($ex->GetString(), $ID);
-                    else
+                    } else {
                         $lAdmin->AddGroupError(GetMessage("SAA_ERROR_DELETE"), $ID);
+                    }
                 }
 
                 $DB->Commit();
@@ -124,50 +140,55 @@ if (($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "W") {
                 );
 
                 if (!CSaleAffiliate::Update($ID, $arFields)) {
-                    if ($ex = $APPLICATION->GetException())
+                    if ($ex = $APPLICATION->GetException()) {
                         $lAdmin->AddGroupError($ex->GetString(), $ID);
-                    else
+                    } else {
                         $lAdmin->AddGroupError(GetMessage("SAA_ERROR_ACTIVATE"), $ID);
+                    }
                 }
 
                 break;
 
             case "calculate":
                 if (!CSaleAffiliate::CalculateAffiliate($ID, false, false, false, false)) {
-                    if ($ex = $APPLICATION->GetException())
+                    if ($ex = $APPLICATION->GetException()) {
                         $lAdmin->AddGroupError($ex->GetString(), $ID);
-                    else
+                    } else {
                         $lAdmin->AddGroupError(GetMessage("SAA_ERROR_CALCULATE"), $ID);
+                    }
                 }
 
                 break;
 
             case "pay_affiliate":
                 if (!CSaleAffiliate::PayAffiliate($ID, "P", $sum = 0)) {
-                    if ($ex = $APPLICATION->GetException())
+                    if ($ex = $APPLICATION->GetException()) {
                         $lAdmin->AddGroupError($ex->GetString(), $ID);
-                    else
+                    } else {
                         $lAdmin->AddGroupError(GetMessage("SAA_ERROR_PAY"), $ID);
+                    }
                 }
 
                 break;
 
             case "pay_affiliate_account":
                 if (!CSaleAffiliate::PayAffiliate($ID, "U", $sum = 0)) {
-                    if ($ex = $APPLICATION->GetException())
+                    if ($ex = $APPLICATION->GetException()) {
                         $lAdmin->AddGroupError($ex->GetString(), $ID);
-                    else
+                    } else {
                         $lAdmin->AddGroupError(GetMessage("SAA_ERROR_PAY"), $ID);
+                    }
                 }
 
                 break;
 
             case "affiliate_0":
                 if (!CSaleAffiliate::ClearAffiliateSum($ID)) {
-                    if ($ex = $APPLICATION->GetException())
+                    if ($ex = $APPLICATION->GetException()) {
                         $lAdmin->AddGroupError($ex->GetString(), $ID);
-                    else
+                    } else {
                         $lAdmin->AddGroupError(GetMessage("SAA_ERROR_CLEAR"), $ID);
+                    }
                 }
 
                 break;
@@ -180,7 +201,27 @@ $dbResultList = CSaleAffiliate::GetList(
     $arFilter,
     false,
     array("nPageSize" => CAdminResult::GetNavSize($sTableID)),
-    array("ID", "SITE_ID", "USER_ID", "AFFILIATE_ID", "PLAN_ID", "ACTIVE", "TIMESTAMP_X", "DATE_CREATE", "PAID_SUM", "APPROVED_SUM", "PENDING_SUM", "ITEMS_NUMBER", "ITEMS_SUM", "LAST_CALCULATE", "FIX_PLAN", "USER_LOGIN", "USER_NAME", "USER_LAST_NAME", "USER_EMAIL")
+    array(
+        "ID",
+        "SITE_ID",
+        "USER_ID",
+        "AFFILIATE_ID",
+        "PLAN_ID",
+        "ACTIVE",
+        "TIMESTAMP_X",
+        "DATE_CREATE",
+        "PAID_SUM",
+        "APPROVED_SUM",
+        "PENDING_SUM",
+        "ITEMS_NUMBER",
+        "ITEMS_SUM",
+        "LAST_CALCULATE",
+        "FIX_PLAN",
+        "USER_LOGIN",
+        "USER_NAME",
+        "USER_LAST_NAME",
+        "USER_EMAIL"
+    )
 );
 
 $dbResultList = new CAdminResult($dbResultList, $sTableID);
@@ -188,78 +229,127 @@ $dbResultList->NavStart();
 
 $lAdmin->NavText($dbResultList->GetNavPrint(GetMessage("SAA_AFFILIATES")));
 
-$lAdmin->AddHeaders(array(
-    array("id" => "ID", "content" => "ID", "sort" => "ID", "default" => true),
-    array("id" => "SITE_ID", "content" => GetMessage("SAA_SITE"), "sort" => "SITE_ID", "default" => true),
-    array("id" => "USER_ID", "content" => GetMessage("SAA_USER"), "sort" => "USER_ID", "default" => true),
-    array("id" => "PLAN_ID", "content" => GetMessage("SAA_PLAN"), "sort" => "PLAN_ID", "default" => true),
-    array("id" => "ACTIVE", "content" => GetMessage("SAA_ACTIVE"), "sort" => "ACTIVE", "default" => true),
-    array("id" => "DATE_CREATE", "content" => GetMessage("SAA_DATE_CREATE"), "sort" => "DATE_CREATE", "default" => true),
-    array("id" => "PAID_SUM", "content" => GetMessage("SAA_PAYED_SUM"), "sort" => "PAID_SUM", "default" => true),
-    array("id" => "PENDING_SUM", "content" => GetMessage("SAA_PENDING_SUM"), "sort" => "PENDING_SUM", "default" => true),
-    array("id" => "LAST_CALCULATE", "content" => GetMessage("SAA_LAST_CALCULATE"), "sort" => "LAST_CALCULATE", "default" => true),
-));
+$lAdmin->AddHeaders(
+    array(
+        array("id" => "ID", "content" => "ID", "sort" => "ID", "default" => true),
+        array("id" => "SITE_ID", "content" => GetMessage("SAA_SITE"), "sort" => "SITE_ID", "default" => true),
+        array("id" => "USER_ID", "content" => GetMessage("SAA_USER"), "sort" => "USER_ID", "default" => true),
+        array("id" => "PLAN_ID", "content" => GetMessage("SAA_PLAN"), "sort" => "PLAN_ID", "default" => true),
+        array("id" => "ACTIVE", "content" => GetMessage("SAA_ACTIVE"), "sort" => "ACTIVE", "default" => true),
+        array(
+            "id" => "DATE_CREATE",
+            "content" => GetMessage("SAA_DATE_CREATE"),
+            "sort" => "DATE_CREATE",
+            "default" => true
+        ),
+        array("id" => "PAID_SUM", "content" => GetMessage("SAA_PAYED_SUM"), "sort" => "PAID_SUM", "default" => true),
+        array(
+            "id" => "PENDING_SUM",
+            "content" => GetMessage("SAA_PENDING_SUM"),
+            "sort" => "PENDING_SUM",
+            "default" => true
+        ),
+        array(
+            "id" => "LAST_CALCULATE",
+            "content" => GetMessage("SAA_LAST_CALCULATE"),
+            "sort" => "LAST_CALCULATE",
+            "default" => true
+        ),
+    )
+);
 
 $arVisibleColumns = $lAdmin->GetVisibleHeaderColumns();
 
 $arSites = array();
-$dbSiteList = CSite::GetList(($b = "sort"), ($o = "asc"));
-while ($arSite = $dbSiteList->Fetch())
+$dbSiteList = CSite::GetList();
+while ($arSite = $dbSiteList->Fetch()) {
     $arSites[$arSite["LID"]] = "[" . $arSite["LID"] . "]&nbsp;" . $arSite["NAME"];
+}
 
 $arPlans = array();
 $dbPlanList = CSaleAffiliatePlan::GetList(array("NAME" => "ASC"), array(), false, false, array("ID", "NAME"));
-while ($arPlan = $dbPlanList->Fetch())
+while ($arPlan = $dbPlanList->Fetch()) {
     $arPlans[$arPlan["ID"]] = "[" . $arPlan["ID"] . "]&nbsp;" . $arPlan["NAME"];
+}
 
 while ($arAffiliate = $dbResultList->NavNext(true, "f_")) {
-    $row =& $lAdmin->AddRow($f_ID, $arAffiliate, "sale_affiliate_edit.php?ID=" . $f_ID . "&lang=" . LANG . GetFilterParams("filter_"), GetMessage("SAA_UPDATE_AFFILIATE"));
+    $row =& $lAdmin->AddRow(
+        $f_ID,
+        $arAffiliate,
+        "sale_affiliate_edit.php?ID=" . $f_ID . "&lang=" . LANG . GetFilterParams("filter_"),
+        GetMessage("SAA_UPDATE_AFFILIATE")
+    );
 
     $row->AddField("ID", $f_ID);
     $row->AddSelectField("SITE_ID", $arSites, array());
 
-    $fieldValue = "[<a href=\"/bitrix/admin/user_edit.php?ID=" . $f_USER_ID . "&lang=" . LANG . "\" title=\"" . GetMessage("SAA_GOTO_USER") . "\">" . $f_USER_ID . "</a>] ";
-    $fieldValue .= $f_USER_NAME . ((strlen($f_USER_NAME) <= 0 || strlen($f_USER_LAST_NAME) <= 0) ? "" : " ") . $f_USER_LAST_NAME . "<br>";
+    $fieldValue = "[<a href=\"/bitrix/admin/user_edit.php?ID=" . $f_USER_ID . "&lang=" . LANG . "\" title=\"" . GetMessage(
+            "SAA_GOTO_USER"
+        ) . "\">" . $f_USER_ID . "</a>] ";
+    $fieldValue .= $f_USER_NAME . (($f_USER_NAME == '' || $f_USER_LAST_NAME == '') ? "" : " ") . $f_USER_LAST_NAME . "<br>";
     $fieldValue .= $f_USER_LOGIN . "&nbsp;&nbsp;&nbsp; ";
-    $fieldValue .= "<a href=\"mailto:" . $f_USER_EMAIL . "\" title=\"" . GetMessage("SAA_USER_EMAIL") . "\">" . $f_USER_EMAIL . "</a>";
+    $fieldValue .= "<a href=\"mailto:" . $f_USER_EMAIL . "\" title=\"" . GetMessage(
+            "SAA_USER_EMAIL"
+        ) . "\">" . $f_USER_EMAIL . "</a>";
     $row->AddField("USER_ID", $fieldValue);
 
     $row->AddSelectField("PLAN_ID", $arPlans, array());
     $row->AddCheckField("ACTIVE");
     $row->AddCalendarField("DATE_CREATE", array("size" => "10"));
 
-    if (!array_key_exists($f_SITE_ID, $arBaseLangCurrencies))
+    if (!array_key_exists($f_SITE_ID, $arBaseLangCurrencies)) {
         $arBaseLangCurrencies[$f_SITE_ID] = CSaleLang::GetLangCurrency($f_SITE_ID);
+    }
 
     $fieldValue = SaleFormatCurrency($f_PAID_SUM, $arBaseLangCurrencies[$f_SITE_ID]);
 
-    if ($row->VarsFromForm() && $_REQUEST["FIELDS"])
+    if ($row->VarsFromForm() && $_REQUEST["FIELDS"]) {
         $val = $_REQUEST["FIELDS"][$f_ID]["PAID_SUM"];
-    else
+    } else {
         $val = $f_PAID_SUM;
+    }
 
-    $fieldEdit = "<input type=\"text\" name=\"FIELDS[" . $f_ID . "][PAID_SUM]\" value=\"" . htmlspecialcharsbx($val) . "\" size=\"7\">";
+    $fieldEdit = "<input type=\"text\" name=\"FIELDS[" . $f_ID . "][PAID_SUM]\" value=\"" . htmlspecialcharsbx(
+            $val
+        ) . "\" size=\"7\">";
 
     $row->AddField("PAID_SUM", $fieldValue, $fieldEdit);
 
     $fieldValue = SaleFormatCurrency($f_PENDING_SUM, $arBaseLangCurrencies[$f_SITE_ID]);
 
-    if ($row->VarsFromForm() && $_REQUEST["FIELDS"])
+    if ($row->VarsFromForm() && $_REQUEST["FIELDS"]) {
         $val = $_REQUEST["FIELDS"][$f_ID]["PENDING_SUM"];
-    else
+    } else {
         $val = $f_PENDING_SUM;
+    }
 
-    $fieldEdit = "<input type=\"text\" name=\"FIELDS[" . $f_ID . "][PENDING_SUM]\" value=\"" . htmlspecialcharsbx($val) . "\" size=\"7\">";
+    $fieldEdit = "<input type=\"text\" name=\"FIELDS[" . $f_ID . "][PENDING_SUM]\" value=\"" . htmlspecialcharsbx(
+            $val
+        ) . "\" size=\"7\">";
 
     $row->AddField("PENDING_SUM", $fieldValue, $fieldEdit);
 
     $row->AddCalendarField("LAST_CALCULATE", array("size" => "10"));
 
     $arActions = Array();
-    $arActions[] = array("ICON" => "edit", "TEXT" => GetMessage("SAA_EDIT"), "ACTION" => $lAdmin->ActionRedirect("sale_affiliate_edit.php?ID=" . $f_ID . "&lang=" . LANG . GetFilterParams("filter_") . ""), "DEFAULT" => true);
+    $arActions[] = array(
+        "ICON" => "edit",
+        "TEXT" => GetMessage("SAA_EDIT"),
+        "ACTION" => $lAdmin->ActionRedirect(
+            "sale_affiliate_edit.php?ID=" . $f_ID . "&lang=" . LANG . GetFilterParams("filter_") . ""
+        ),
+        "DEFAULT" => true
+    );
     if ($saleModulePermissions >= "W") {
         $arActions[] = array("SEPARATOR" => true);
-        $arActions[] = array("ICON" => "delete", "TEXT" => GetMessage("SAA_DELETE"), "ACTION" => "if(confirm('" . GetMessage("SAA_DELETE_CONF") . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete"));
+        $arActions[] = array(
+            "ICON" => "delete",
+            "TEXT" => GetMessage("SAA_DELETE"),
+            "ACTION" => "if(confirm('" . GetMessage("SAA_DELETE_CONF") . "')) " . $lAdmin->ActionDoGroup(
+                    $f_ID,
+                    "delete"
+                )
+        );
     }
 
     $row->AddActions($arActions);
@@ -386,10 +476,18 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
                 <select name="filter_plan_id">
                     <option value=""><?= htmlspecialcharsex(GetMessage("SAA_ALL")); ?></option>
                     <?
-                    $dbPlan = CSaleAffiliatePlan::GetList(array("NAME" => "ASC"), array(), false, false, array("ID", "NAME", "SITE_ID"));
+                    $dbPlan = CSaleAffiliatePlan::GetList(
+                        array("NAME" => "ASC"),
+                        array(),
+                        false,
+                        false,
+                        array("ID", "NAME", "SITE_ID")
+                    );
                     while ($arPlan = $dbPlan->Fetch()) {
                         ?>
-                        <option value="<?= $arPlan["ID"] ?>"<? if ($filter_plan_id == $arPlan["ID"]) echo " selected" ?>><?= htmlspecialcharsex("[" . $arPlan["ID"] . "] " . $arPlan["NAME"] . " (" . $arPlan["SITE_ID"] . ")") ?></option><?
+                        <option value="<?= $arPlan["ID"] ?>"<? if ($filter_plan_id == $arPlan["ID"]) echo " selected" ?>><?= htmlspecialcharsex(
+                        "[" . $arPlan["ID"] . "] " . $arPlan["NAME"] . " (" . $arPlan["SITE_ID"] . ")"
+                    ) ?></option><?
                     }
                     ?>
                 </select>
@@ -400,27 +498,45 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
             <td>
                 <select name="filter_active">
                     <option value=""><?= htmlspecialcharsex(GetMessage("SAA_ALL")); ?></option>
-                    <option value="Y"<? if ($filter_active == "Y") echo " selected" ?>><?= htmlspecialcharsex(GetMessage("SAA_YES")) ?></option>
-                    <option value="N"<? if ($filter_active == "N") echo " selected" ?>><?= htmlspecialcharsex(GetMessage("SAA_NO")) ?></option>
+                    <option value="Y"<? if ($filter_active == "Y") echo " selected" ?>><?= htmlspecialcharsex(
+                            GetMessage("SAA_YES")
+                        ) ?></option>
+                    <option value="N"<? if ($filter_active == "N") echo " selected" ?>><?= htmlspecialcharsex(
+                            GetMessage("SAA_NO")
+                        ) ?></option>
                 </select>
             </td>
         </tr>
         <tr>
             <td><? echo GetMessage("SAA_LAST_CALCULATE1") ?></td>
             <td>
-                <? echo CalendarPeriod("filter_last_calculate_from", $filter_last_calculate_from, "filter_last_calculate_to", $filter_last_calculate_to, "find_form", "Y") ?>
+                <? echo CalendarPeriod(
+                    "filter_last_calculate_from",
+                    $filter_last_calculate_from,
+                    "filter_last_calculate_to",
+                    $filter_last_calculate_to,
+                    "find_form",
+                    "Y"
+                ) ?>
             </td>
         </tr>
         <tr>
             <td><? echo GetMessage("SAA_REG_DATE1") ?></td>
             <td>
-                <? echo CalendarPeriod("filter_date_create_from", $filter_date_create_from, "filter_date_create_to", $filter_date_create_to, "find_form", "Y") ?>
+                <? echo CalendarPeriod(
+                    "filter_date_create_from",
+                    $filter_date_create_from,
+                    "filter_date_create_to",
+                    $filter_date_create_to,
+                    "find_form",
+                    "Y"
+                ) ?>
             </td>
         </tr>
         <tr>
             <td><? echo GetMessage("SAA_PAR_AFFILIATE") ?>:</td>
             <td>
-                <input type="text" name="filter_affiliate_id" value="<?= IntVal($filter_affiliate_id) ?>" size="10"
+                <input type="text" name="filter_affiliate_id" value="<?= intval($filter_affiliate_id) ?>" size="10"
                        maxlength="10">
                 <IFRAME name="hiddenframe_affiliate" id="id_hiddenframe_affiliate" src="" width="0" height="0"
                         style="width:0px; height:0px; border: 0px"></IFRAME>
@@ -438,7 +554,9 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
                         if (val != "NA")
                             document.getElementById('div_affiliate_name').innerHTML = val;
                         else
-                            document.getElementById('div_affiliate_name').innerHTML = '<?= GetMessage("SAA_NO_AFFILIATE") ?>';
+                            document.getElementById('div_affiliate_name').innerHTML = '<?= GetMessage(
+                                "SAA_NO_AFFILIATE"
+                            ) ?>';
                     }
 
                     var affiliateID = '';
@@ -447,7 +565,9 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
                         if (affiliateID != document.find_form.filter_affiliate_id.value) {
                             affiliateID = document.find_form.filter_affiliate_id.value;
                             if (affiliateID != '' && !isNaN(parseInt(affiliateID, 10))) {
-                                document.getElementById('div_affiliate_name').innerHTML = '<i><?= GetMessage("SAA_WAIT") ?></i>';
+                                document.getElementById('div_affiliate_name').innerHTML = '<i><?= GetMessage(
+                                    "SAA_WAIT"
+                                ) ?></i>';
                                 window.frames["hiddenframe_affiliate"].location.replace('/bitrix/admin/sale_affiliate_get.php?ID=' + affiliateID + '&func_name=SetAffiliateName');
                             } else
                                 document.getElementById('div_affiliate_name').innerHTML = '';

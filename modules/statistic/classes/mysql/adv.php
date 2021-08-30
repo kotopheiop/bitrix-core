@@ -1,4 +1,5 @@
 <?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/classes/general/adv.php");
 
 class CAdv extends CAllAdv
@@ -74,8 +75,15 @@ class CAdv extends CAllAdv
         return $strSql;
     }
 
-    public static function GetList(&$by, &$order, $arFilter = Array(), &$is_filtered, $limit = "", &$arrGROUP_DAYS, &$strSql_res)
-    {
+    public static function GetList(
+        $by = '',
+        $order = 'desc',
+        $arFilter = [],
+        &$is_filtered = false,
+        $limit = '',
+        &$arrGROUP_DAYS = [],
+        &$strSql_res = ''
+    ) {
         $err_mess = "File: " . __FILE__ . "<br>Line: ";
         $DB = CDatabase::GetModuleConnection('statistic');
         $find_group = $arFilter["GROUP"];
@@ -92,16 +100,16 @@ class CAdv extends CAllAdv
             $date2 = $arFilter["DATE2_PERIOD"];
             $date_from = MkDateTime(ConvertDateTime($date1, "D.M.Y"), "d.m.Y");
             $date_to = MkDateTime(ConvertDateTime($date2, "D.M.Y") . " 23:59", "d.m.Y H:i");
-            if (strlen($date1) > 0) {
+            if ($date1 <> '') {
                 $filter_period = true;
-                if (strlen($date2) > 0) {
+                if ($date2 <> '') {
                     $strSqlPeriod = "sum(if(D.DATE_STAT<FROM_UNIXTIME('$date_from'),0, if(D.DATE_STAT>FROM_UNIXTIME('$date_to'),0,";
                     $strT = ")))";
                 } else {
                     $strSqlPeriod = "sum(if(D.DATE_STAT<FROM_UNIXTIME('$date_from'),0,";
                     $strT = "))";
                 }
-            } elseif (strlen($date2) > 0) {
+            } elseif ($date2 <> '') {
                 $filter_period = true;
                 $strSqlPeriod = "sum(if(D.DATE_STAT>FROM_UNIXTIME('$date_to'),0,";
                 $strT = "))";
@@ -109,11 +117,13 @@ class CAdv extends CAllAdv
 
             foreach ($arFilter as $key => $val) {
                 if (is_array($val)) {
-                    if (count($val) <= 0)
+                    if (count($val) <= 0) {
                         continue;
+                    }
                 } else {
-                    if ((strlen($val) <= 0) || ($val === "NOT_REF"))
+                    if (((string)$val == '') || ($val === "NOT_REF")) {
                         continue;
+                    }
                 }
                 $match_value_set = array_key_exists($key . "_EXACT_MATCH", $arFilter);
                 $key = strtoupper($key);
@@ -123,20 +133,30 @@ class CAdv extends CAllAdv
                         $arSqlSearch[] = GetFilterQuery("A." . $key, $val, $match);
                         break;
                     case "DATE1_FIRST":
-                        if (CheckDateTime($val))
+                        if (CheckDateTime($val)) {
                             $arSqlSearch_h[] = "C_TIME_FIRST >= " . $DB->CharToDateFunction($val, "SHORT");
+                        }
                         break;
                     case "DATE2_FIRST":
-                        if (CheckDateTime($val))
-                            $arSqlSearch_h[] = "C_TIME_FIRST < " . $DB->CharToDateFunction($val, "SHORT") . " + INTERVAL 1 DAY";
+                        if (CheckDateTime($val)) {
+                            $arSqlSearch_h[] = "C_TIME_FIRST < " . $DB->CharToDateFunction(
+                                    $val,
+                                    "SHORT"
+                                ) . " + INTERVAL 1 DAY";
+                        }
                         break;
                     case "DATE1_LAST":
-                        if (CheckDateTime($val))
+                        if (CheckDateTime($val)) {
                             $arSqlSearch_h[] = "C_TIME_LAST >= " . $DB->CharToDateFunction($val, "SHORT");
+                        }
                         break;
                     case "DATE2_LAST":
-                        if (CheckDateTime($val))
-                            $arSqlSearch_h[] = "C_TIME_LAST < " . $DB->CharToDateFunction($val, "SHORT") . " + INTERVAL 1 DAY";
+                        if (CheckDateTime($val)) {
+                            $arSqlSearch_h[] = "C_TIME_LAST < " . $DB->CharToDateFunction(
+                                    $val,
+                                    "SHORT"
+                                ) . " + INTERVAL 1 DAY";
+                        }
                         break;
                     case "REFERER1":
                     case "REFERER2":
@@ -156,64 +176,74 @@ class CAdv extends CAllAdv
                         $arSqlSearch_h[] = "NEW_GUESTS<='" . intval($val) . "'";
                         break;
                     case "GUESTS1":
-                        if ($arFilter["GUESTS_BACK"] == "Y")
+                        if ($arFilter["GUESTS_BACK"] == "Y") {
                             $arSqlSearch_h[] = "GUESTS_BACK>='" . intval($val) . "'";
-                        else
+                        } else {
                             $arSqlSearch_h[] = "GUESTS>='" . intval($val) . "'";
+                        }
                         break;
                     case "GUESTS2":
-                        if ($arFilter["GUESTS_BACK"] == "Y")
+                        if ($arFilter["GUESTS_BACK"] == "Y") {
                             $arSqlSearch_h[] = "GUESTS_BACK<='" . intval($val) . "'";
-                        else
+                        } else {
                             $arSqlSearch_h[] = "GUESTS<='" . intval($val) . "'";
+                        }
                         break;
                     case "FAVORITES1":
-                        if ($arFilter["FAVORITES_BACK"] == "Y")
+                        if ($arFilter["FAVORITES_BACK"] == "Y") {
                             $arSqlSearch_h[] = "FAVORITES_BACK>='" . intval($val) . "'";
-                        else
+                        } else {
                             $arSqlSearch_h[] = "FAVORITES>='" . intval($val) . "'";
+                        }
                         break;
                     case "FAVORITES2":
-                        if ($arFilter["FAVORITES_BACK"] == "Y")
+                        if ($arFilter["FAVORITES_BACK"] == "Y") {
                             $arSqlSearch_h[] = "FAVORITES_BACK<='" . intval($val) . "'";
-                        else
+                        } else {
                             $arSqlSearch_h[] = "FAVORITES<='" . intval($val) . "'";
+                        }
                         break;
                     case "HOSTS1":
-                        if ($arFilter["HOSTS_BACK"] == "Y")
+                        if ($arFilter["HOSTS_BACK"] == "Y") {
                             $arSqlSearch_h[] = "HOSTS_BACK>='" . intval($val) . "'";
-                        else
+                        } else {
                             $arSqlSearch_h[] = "C_HOSTS>='" . intval($val) . "'";
+                        }
                         break;
                     case "HOSTS2":
-                        if ($arFilter["HOSTS_BACK"] == "Y")
+                        if ($arFilter["HOSTS_BACK"] == "Y") {
                             $arSqlSearch_h[] = "HOSTS_BACK<='" . intval($val) . "'";
-                        else
+                        } else {
                             $arSqlSearch_h[] = "C_HOSTS<='" . intval($val) . "'";
+                        }
                         break;
                     case "SESSIONS1":
-                        if ($arFilter["SESSIONS_BACK"] == "Y")
+                        if ($arFilter["SESSIONS_BACK"] == "Y") {
                             $arSqlSearch_h[] = "SESSIONS_BACK>='" . intval($val) . "'";
-                        else
+                        } else {
                             $arSqlSearch_h[] = "SESSIONS>='" . intval($val) . "'";
+                        }
                         break;
                     case "SESSIONS2":
-                        if ($arFilter["SESSIONS_BACK"] == "Y")
+                        if ($arFilter["SESSIONS_BACK"] == "Y") {
                             $arSqlSearch_h[] = "SESSIONS_BACK<='" . intval($val) . "'";
-                        else
+                        } else {
                             $arSqlSearch_h[] = "SESSIONS<='" . intval($val) . "'";
+                        }
                         break;
                     case "HITS1":
-                        if ($arFilter["HITS_BACK"] == "Y")
+                        if ($arFilter["HITS_BACK"] == "Y") {
                             $arSqlSearch_h[] = "HITS_BACK>='" . intval($val) . "'";
-                        else
+                        } else {
                             $arSqlSearch_h[] = "HITS>='" . intval($val) . "'";
+                        }
                         break;
                     case "HITS2":
-                        if ($arFilter["HITS_BACK"] == "Y")
+                        if ($arFilter["HITS_BACK"] == "Y") {
                             $arSqlSearch_h[] = "HITS_BACK<='" . intval($val) . "'";
-                        else
+                        } else {
                             $arSqlSearch_h[] = "HITS<='" . intval($val) . "'";
+                        }
                         break;
                     case "COST1":
                         $arSqlSearch_h[] = "COST>='" . doubleval($val) . "'";
@@ -240,17 +270,19 @@ class CAdv extends CAllAdv
                         $arSqlSearch_h[] = "ROI<='" . doubleval($val) . "'";
                         break;
                     case "ATTENT1":
-                        if ($arFilter["ATTENT_BACK"] == "Y")
+                        if ($arFilter["ATTENT_BACK"] == "Y") {
                             $arSqlSearch_h[] = "ATTENT_BACK>='" . doubleval($val) . "'";
-                        else
+                        } else {
                             $arSqlSearch_h[] = "ATTENT>='" . doubleval($val) . "'";
+                        }
                         break;
                         break;
                     case "ATTENT2":
-                        if ($arFilter["ATTENT_BACK"] == "Y")
+                        if ($arFilter["ATTENT_BACK"] == "Y") {
                             $arSqlSearch_h[] = "ATTENT_BACK<='" . doubleval($val) . "'";
-                        else
+                        } else {
                             $arSqlSearch_h[] = "ATTENT<='" . doubleval($val) . "'";
+                        }
                         break;
                         break;
                     case "VISITORS_PER_DAY1":
@@ -279,9 +311,9 @@ class CAdv extends CAllAdv
         $rate = 1;
         $base_currency = GetStatisticBaseCurrency();
         $view_currency = $base_currency;
-        if (strlen($base_currency) > 0) {
+        if ($base_currency <> '') {
             if (CModule::IncludeModule("currency")) {
-                if ($CURRENCY != $base_currency && strlen($CURRENCY) > 0) {
+                if ($CURRENCY != $base_currency && $CURRENCY <> '') {
                     $rate = CCurrencyRates::GetConvertFactor($base_currency, $CURRENCY);
                     $view_currency = $CURRENCY;
                 }
@@ -289,70 +321,131 @@ class CAdv extends CAllAdv
         }
 
         $strSqlSearch = GetFilterSqlSearch($arSqlSearch);
-        foreach ($arSqlSearch_h as $sqlWhere)
+        foreach ($arSqlSearch_h as $sqlWhere) {
             $strSqlSearch_h .= " and (" . $sqlWhere . ") ";
+        }
 
         $group = false;
-        $find_group = (strlen($find_group) <= 0) ? "NOT_REF" : $find_group;
+        $find_group = ($find_group == '') ? "NOT_REF" : $find_group;
 
         $arrFields_1 = array(
-            "C_TIME_FIRST", "C_TIME_LAST", "CURRENCY",
-            "DATE_FIRST", "DATE_LAST", "ADV_TIME",
-            "GUESTS", "NEW_GUESTS", "FAVORITES",
-            "C_HOSTS", "SESSIONS", "HITS",
-            "GUESTS_BACK", "FAVORITES_BACK", "HOSTS_BACK",
-            "SESSIONS_BACK", "HITS_BACK", "ATTENT",
-            "ATTENT_BACK", "NEW_VISITORS", "RETURNED_VISITORS",
-            "VISITORS_PER_DAY", "COST", "REVENUE",
-            "BENEFIT", "SESSION_COST", "VISITOR_COST", "ROI",
+            "C_TIME_FIRST",
+            "C_TIME_LAST",
+            "CURRENCY",
+            "DATE_FIRST",
+            "DATE_LAST",
+            "ADV_TIME",
+            "GUESTS",
+            "NEW_GUESTS",
+            "FAVORITES",
+            "C_HOSTS",
+            "SESSIONS",
+            "HITS",
+            "GUESTS_BACK",
+            "FAVORITES_BACK",
+            "HOSTS_BACK",
+            "SESSIONS_BACK",
+            "HITS_BACK",
+            "ATTENT",
+            "ATTENT_BACK",
+            "NEW_VISITORS",
+            "RETURNED_VISITORS",
+            "VISITORS_PER_DAY",
+            "COST",
+            "REVENUE",
+            "BENEFIT",
+            "SESSION_COST",
+            "VISITOR_COST",
+            "ROI",
         );
-        if ($find_group == "referer1") array_push($arrFields_1, "REFERER1");
-        if ($find_group == "referer2") array_push($arrFields_1, "REFERER2");
+        if ($find_group == "referer1") {
+            array_push($arrFields_1, "REFERER1");
+        }
+        if ($find_group == "referer2") {
+            array_push($arrFields_1, "REFERER2");
+        }
 
         $arrFields_2 = array(
-            "GUESTS_TODAY", "NEW_GUESTS_TODAY", "FAVORITES_TODAY",
-            "C_HOSTS_TODAY", "SESSIONS_TODAY", "HITS_TODAY",
-            "GUESTS_BACK_TODAY", "FAVORITES_BACK_TODAY", "HOSTS_BACK_TODAY",
-            "SESSIONS_BACK_TODAY", "HITS_BACK_TODAY", "GUESTS_YESTERDAY",
-            "NEW_GUESTS_YESTERDAY", "FAVORITES_YESTERDAY", "C_HOSTS_YESTERDAY",
-            "SESSIONS_YESTERDAY", "HITS_YESTERDAY", "GUESTS_BACK_YESTERDAY",
-            "FAVORITES_BACK_YESTERDAY", "HOSTS_BACK_YESTERDAY", "SESSIONS_BACK_YESTERDAY",
-            "HITS_BACK_YESTERDAY", "GUESTS_BEF_YESTERDAY", "NEW_GUESTS_BEF_YESTERDAY",
-            "FAVORITES_BEF_YESTERDAY", "C_HOSTS_BEF_YESTERDAY", "SESSIONS_BEF_YESTERDAY",
-            "HITS_BEF_YESTERDAY", "GUESTS_BACK_BEF_YESTERDAY", "FAVORITES_BACK_BEF_YESTERDAY",
-            "HOSTS_BACK_BEF_YESTERDAY", "SESSIONS_BACK_BEF_YESTERDAY", "HITS_BACK_BEF_YESTERDAY",
-            "A.ID", "REFERER1", "REFERER2",
-            "A.PRIORITY", "A.EVENTS_VIEW", "A.DESCRIPTION",
-            "GUESTS_PERIOD", "C_HOSTS_PERIOD", "NEW_GUESTS_PERIOD",
-            "FAVORITES_PERIOD", "SESSIONS_PERIOD", "HITS_PERIOD",
-            "GUESTS_BACK_PERIOD", "HOSTS_BACK_PERIOD", "FAVORITES_BACK_PERIOD",
-            "SESSIONS_BACK_PERIOD", "HITS_BACK_PERIOD",
+            "GUESTS_TODAY",
+            "NEW_GUESTS_TODAY",
+            "FAVORITES_TODAY",
+            "C_HOSTS_TODAY",
+            "SESSIONS_TODAY",
+            "HITS_TODAY",
+            "GUESTS_BACK_TODAY",
+            "FAVORITES_BACK_TODAY",
+            "HOSTS_BACK_TODAY",
+            "SESSIONS_BACK_TODAY",
+            "HITS_BACK_TODAY",
+            "GUESTS_YESTERDAY",
+            "NEW_GUESTS_YESTERDAY",
+            "FAVORITES_YESTERDAY",
+            "C_HOSTS_YESTERDAY",
+            "SESSIONS_YESTERDAY",
+            "HITS_YESTERDAY",
+            "GUESTS_BACK_YESTERDAY",
+            "FAVORITES_BACK_YESTERDAY",
+            "HOSTS_BACK_YESTERDAY",
+            "SESSIONS_BACK_YESTERDAY",
+            "HITS_BACK_YESTERDAY",
+            "GUESTS_BEF_YESTERDAY",
+            "NEW_GUESTS_BEF_YESTERDAY",
+            "FAVORITES_BEF_YESTERDAY",
+            "C_HOSTS_BEF_YESTERDAY",
+            "SESSIONS_BEF_YESTERDAY",
+            "HITS_BEF_YESTERDAY",
+            "GUESTS_BACK_BEF_YESTERDAY",
+            "FAVORITES_BACK_BEF_YESTERDAY",
+            "HOSTS_BACK_BEF_YESTERDAY",
+            "SESSIONS_BACK_BEF_YESTERDAY",
+            "HITS_BACK_BEF_YESTERDAY",
+            "A.ID",
+            "REFERER1",
+            "REFERER2",
+            "A.PRIORITY",
+            "A.EVENTS_VIEW",
+            "A.DESCRIPTION",
+            "GUESTS_PERIOD",
+            "C_HOSTS_PERIOD",
+            "NEW_GUESTS_PERIOD",
+            "FAVORITES_PERIOD",
+            "SESSIONS_PERIOD",
+            "HITS_PERIOD",
+            "GUESTS_BACK_PERIOD",
+            "HOSTS_BACK_PERIOD",
+            "FAVORITES_BACK_PERIOD",
+            "SESSIONS_BACK_PERIOD",
+            "HITS_BACK_PERIOD",
         );
 
         $arrFields = $arrFields_1;
-        if ($find_group == "NOT_REF")
+        if ($find_group == "NOT_REF") {
             $arrFields = array_merge($arrFields, $arrFields_2);
+        }
 
-        if ($order != "asc")
+        if ($order != "asc") {
             $order = "desc";
+        } else {
+            $order = "asc";
+        }
 
         $key = array_search(strtoupper($by), $arrFields);
-        if ($key === NULL || $key === false)
+        if ($key === null || $key === false) {
             $key = array_search("A." . strtoupper($by), $arrFields);
+        }
 
-        if ($key !== NULL && $key !== false)
+        if ($key !== null && $key !== false) {
             $strSqlOrder = " ORDER BY " . $arrFields[$key];
-        elseif ($by == "s_dropdown")
+        } elseif ($by == "s_dropdown") {
             $strSqlOrder = "ORDER BY A.ID desc, A.REFERER1, A.REFERER2";
-        elseif ($by == "s_referers")
+        } elseif ($by == "s_referers") {
             $strSqlOrder = "ORDER BY A.REFERER1, A.REFERER2";
-        else {
+        } else {
             if ($find_group == "NOT_REF") {
                 $strSqlOrder = " ORDER BY SESSIONS_TODAY $order, SESSIONS_YESTERDAY $order, SESSIONS_BEF_YESTERDAY $order, SESSIONS_PERIOD $order, SESSIONS ";
             } else {
                 $strSqlOrder = " ORDER BY SESSIONS ";
             }
-            $by = "BY_DEFAULT";
         }
         $strSqlOrder .= " " . $order;
 
@@ -452,10 +545,11 @@ class CAdv extends CAllAdv
 					A.ID, A.REFERER1, A.REFERER2, A.COST, A.REVENUE, A.PRIORITY, A.EVENTS_VIEW, A.DESCRIPTION, A.DATE_FIRST, A.DATE_LAST, A.GUESTS, A.NEW_GUESTS, A.FAVORITES, A.C_HOSTS, A.SESSIONS, A.HITS, A.GUESTS_BACK, A.FAVORITES_BACK, A.HOSTS_BACK, A.SESSIONS_BACK, A.HITS_BACK
 			";
         } else {
-            if ($find_group == "referer1")
+            if ($find_group == "referer1") {
                 $group = "REFERER1";
-            else
+            } else {
                 $group = "REFERER2";
+            }
 
             // total data
             $strSql = "
@@ -531,7 +625,9 @@ class CAdv extends CAllAdv
 				";
 
             $z = $DB->Query($strSql_days, false, $err_mess . __LINE__);
-            while ($zr = $z->Fetch()) $arrGROUP_DAYS[$zr[$group]] = $zr;
+            while ($zr = $z->Fetch()) {
+                $arrGROUP_DAYS[$zr[$group]] = $zr;
+            }
         }
         $strSql_res = $strSql;
 
@@ -544,7 +640,7 @@ class CAdv extends CAllAdv
 			";
 
         $res = $DB->Query($strSql, false, $err_mess . __LINE__);
-        $is_filtered = (IsFiltered($strSqlSearch) || strlen($strSqlSearch_h) > 0 || $group || $filter_period);
+        $is_filtered = (IsFiltered($strSqlSearch) || $strSqlSearch_h <> '' || $group || $filter_period);
         return $res;
     }
 
@@ -569,7 +665,7 @@ class CAdv extends CAllAdv
         return $res;
     }
 
-    public static function GetEventList($ID, &$by, &$order, $arFilter = Array(), &$is_filtered)
+    public static function GetEventList($ID, $by = 's_counter', $order = 'desc', $arFilter = [])
     {
         $err_mess = "File: " . __FILE__ . "<br>Line: ";
         $DB = CDatabase::GetModuleConnection('statistic');
@@ -586,27 +682,29 @@ class CAdv extends CAllAdv
             $date2 = $arFilter["DATE2_PERIOD"];
             $date_from = MkDateTime(ConvertDateTime($date1, "D.M.Y"), "d.m.Y");
             $date_to = MkDateTime(ConvertDateTime($date2, "D.M.Y") . " 23:59", "d.m.Y H:i");
-            if (strlen($date1) > 0) {
+            if ($date1 <> '') {
                 $filter_period = true;
-                if (strlen($date2) > 0) {
+                if ($date2 <> '') {
                     $strSqlPeriod = "sum(if(AE.DATE_STAT<FROM_UNIXTIME('$date_from'),0, if(AE.DATE_STAT>FROM_UNIXTIME('$date_to'),0,";
                     $strT = ")))";
                 } else {
                     $strSqlPeriod = "sum(if(AE.DATE_STAT<FROM_UNIXTIME('$date_from'),0,";
                     $strT = "))";
                 }
-            } elseif (strlen($date2) > 0) {
+            } elseif ($date2 <> '') {
                 $filter_period = true;
                 $strSqlPeriod = "sum(if(AE.DATE_STAT>FROM_UNIXTIME('$date_to'),0,";
                 $strT = "))";
             }
             foreach ($arFilter as $key => $val) {
                 if (is_array($val)) {
-                    if (count($val) <= 0)
+                    if (count($val) <= 0) {
                         continue;
+                    }
                 } else {
-                    if ((strlen($val) <= 0) || ($val === "NOT_REF"))
+                    if (((string)$val == '') || ($val === "NOT_REF")) {
                         continue;
+                    }
                 }
                 $match_value_set = array_key_exists($key . "_EXACT_MATCH", $arFilter);
                 $key = strtoupper($key);
@@ -637,7 +735,9 @@ class CAdv extends CAllAdv
                         $arSqlSearch_h[] = "COUNTER_BACK_PERIOD<='" . intval($val) . "'";
                         break;
                     case "COUNTER_ADV_DYNAMIC_LIST":
-                        $arSqlSearch_h[] = "(COUNTER_PERIOD>='" . intval($val) . "' or COUNTER_BACK_PERIOD>='" . intval($val) . "')";
+                        $arSqlSearch_h[] = "(COUNTER_PERIOD>='" . intval($val) . "' or COUNTER_BACK_PERIOD>='" . intval(
+                                $val
+                            ) . "')";
                         break;
                     case "MONEY1":
                         $arSqlSearch_h[] = "(MONEY+MONEY_BACK)>='" . roundDB($val) . "'";
@@ -655,23 +755,39 @@ class CAdv extends CAllAdv
             }
         }
 
-        if ($by == "s_id") $strSqlOrder = "ORDER BY E.ID";
-        elseif ($by == "s_event1") $strSqlOrder = "ORDER BY E.EVENT1";
-        elseif ($by == "s_event2") $strSqlOrder = "ORDER BY E.EVENT2";
-        elseif ($by == "s_sort") $strSqlOrder = "ORDER BY C_SORT";
-        elseif ($by == "s_name") $strSqlOrder = "ORDER BY E.NAME";
-        elseif ($by == "s_description") $strSqlOrder = "ORDER BY E.DESCRIPTION";
-        elseif ($by == "s_counter") $strSqlOrder = "ORDER BY COUNTER";
-        elseif ($by == "s_counter_back") $strSqlOrder = "ORDER BY COUNTER_BACK";
-        elseif ($by == "s_counter_period") $strSqlOrder = "ORDER BY COUNTER_PERIOD";
-        elseif ($by == "s_counter_back_period") $strSqlOrder = "ORDER BY COUNTER_BACK_PERIOD";
-        elseif ($by == "s_counter_today") $strSqlOrder = "ORDER BY COUNTER_TODAY";
-        elseif ($by == "s_counter_back_today") $strSqlOrder = "ORDER BY COUNTER_BACK_TODAY";
-        elseif ($by == "s_counter_yestoday") $strSqlOrder = "ORDER BY COUNTER_YESTERDAY";
-        elseif ($by == "s_counter_back_yestoday") $strSqlOrder = "ORDER BY COUNTER_BACK_YESTERDAY";
-        elseif ($by == "s_counter_bef_yestoday") $strSqlOrder = "ORDER BY COUNTER_BEF_YESTERDAY";
-        elseif ($by == "s_counter_back_bef_yestoday") $strSqlOrder = "ORDER BY COUNTER_BACK_BEF_YESTERDAY";
-        elseif ($by == "s_def") {
+        if ($by == "s_id") {
+            $strSqlOrder = "ORDER BY E.ID";
+        } elseif ($by == "s_event1") {
+            $strSqlOrder = "ORDER BY E.EVENT1";
+        } elseif ($by == "s_event2") {
+            $strSqlOrder = "ORDER BY E.EVENT2";
+        } elseif ($by == "s_sort") {
+            $strSqlOrder = "ORDER BY C_SORT";
+        } elseif ($by == "s_name") {
+            $strSqlOrder = "ORDER BY E.NAME";
+        } elseif ($by == "s_description") {
+            $strSqlOrder = "ORDER BY E.DESCRIPTION";
+        } elseif ($by == "s_counter") {
+            $strSqlOrder = "ORDER BY COUNTER";
+        } elseif ($by == "s_counter_back") {
+            $strSqlOrder = "ORDER BY COUNTER_BACK";
+        } elseif ($by == "s_counter_period") {
+            $strSqlOrder = "ORDER BY COUNTER_PERIOD";
+        } elseif ($by == "s_counter_back_period") {
+            $strSqlOrder = "ORDER BY COUNTER_BACK_PERIOD";
+        } elseif ($by == "s_counter_today") {
+            $strSqlOrder = "ORDER BY COUNTER_TODAY";
+        } elseif ($by == "s_counter_back_today") {
+            $strSqlOrder = "ORDER BY COUNTER_BACK_TODAY";
+        } elseif ($by == "s_counter_yestoday") {
+            $strSqlOrder = "ORDER BY COUNTER_YESTERDAY";
+        } elseif ($by == "s_counter_back_yestoday") {
+            $strSqlOrder = "ORDER BY COUNTER_BACK_YESTERDAY";
+        } elseif ($by == "s_counter_bef_yestoday") {
+            $strSqlOrder = "ORDER BY COUNTER_BEF_YESTERDAY";
+        } elseif ($by == "s_counter_back_bef_yestoday") {
+            $strSqlOrder = "ORDER BY COUNTER_BACK_BEF_YESTERDAY";
+        } elseif ($by == "s_def") {
             $strSqlOrder = "
 			ORDER BY
 				E.C_SORT desc,
@@ -682,20 +798,19 @@ class CAdv extends CAllAdv
 				COUNTER desc, COUNTER_BACK
 			";
         } else {
-            $by = "s_counter";
             $strSqlOrder = "ORDER BY COUNTER";
         }
 
         if ($order != "asc") {
             $strSqlOrder .= " desc ";
-            $order = "desc";
         }
 
         $strSqlSearch = GetFilterSqlSearch($arSqlSearch);
-        foreach ($arSqlSearch_h as $sqlWhere)
+        foreach ($arSqlSearch_h as $sqlWhere) {
             $strSqlSearch_h .= " and (" . $sqlWhere . ") ";
+        }
 
-        $find_group = (strlen($find_group) <= 0) ? "NOT_REF" : $find_group;
+        $find_group = ($find_group == '') ? "NOT_REF" : $find_group;
 
         $sqlDays = "
 			sum(if(to_days(curdate())=to_days(AE.DATE_STAT),ifnull(AE.COUNTER,0),0))						COUNTER_TODAY,
@@ -745,10 +860,11 @@ class CAdv extends CAllAdv
 				LIMIT " . intval(COption::GetOptionString('statistic', 'RECORDS_LIMIT')) . "
 				";
         } else {
-            if ($find_group == "event1")
+            if ($find_group == "event1") {
                 $group = "E.EVENT1";
-            else
+            } else {
                 $group = "E.EVENT2";
+            }
 
             $strSql = "
 				SELECT
@@ -777,7 +893,7 @@ class CAdv extends CAllAdv
         }
 
         $res = $DB->Query($strSql, false, $err_mess . __LINE__);
-        $is_filtered = (IsFiltered($strSqlSearch) || $filter_period || strlen($strSqlSearch_h) > 0 || $find_group != "NOT_REF");
+
         return $res;
     }
 
@@ -785,10 +901,11 @@ class CAdv extends CAllAdv
     {
         $err_mess = "File: " . __FILE__ . "<br>Line: ";
         $DB = CDatabase::GetModuleConnection('statistic');
-        if ($arFilter["GROUP"] == "referer1")
+        if ($arFilter["GROUP"] == "referer1") {
             $group = "A.REFERER1";
-        else
+        } else {
             $group = "A.REFERER2";
+        }
 
         $where = "";
         $filter_period = false;
@@ -800,16 +917,16 @@ class CAdv extends CAllAdv
             $date2 = $arFilter["DATE2_PERIOD"];
             $date_from = MkDateTime(ConvertDateTime($date1, "D.M.Y"), "d.m.Y");
             $date_to = MkDateTime(ConvertDateTime($date2, "D.M.Y") . " 23:59", "d.m.Y H:i");
-            if (strlen($date1) > 0) {
+            if ($date1 <> '') {
                 $filter_period = true;
-                if (strlen($date2) > 0) {
+                if ($date2 <> '') {
                     $strSqlPeriod = "sum(if(AE.DATE_STAT<FROM_UNIXTIME('$date_from'),0, if(AE.DATE_STAT>FROM_UNIXTIME('$date_to'),0,";
                     $strT = ")))";
                 } else {
                     $strSqlPeriod = "sum(if(AE.DATE_STAT<FROM_UNIXTIME('$date_from'),0,";
                     $strT = "))";
                 }
-            } elseif (strlen($date2) > 0) {
+            } elseif ($date2 <> '') {
                 $filter_period = true;
                 $strSqlPeriod = "sum(if(AE.DATE_STAT>FROM_UNIXTIME('$date_to'),0,";
                 $strT = "))";
@@ -817,10 +934,12 @@ class CAdv extends CAllAdv
         }
 
         $arFilter["GROUP"] = "";
-        $a = CAdv::GetList($by, $order, $arFilter, $is_filtered, "", $arrGROUP_DAYS, $strSql_res);
+        $a = CAdv::GetList('', '', $arFilter, $is_filtered);
         if ($is_filtered) {
             $str_id = "0";
-            while ($ar = $a->Fetch()) $str_id .= "," . intval($ar["ID"]);
+            while ($ar = $a->Fetch()) {
+                $str_id .= "," . intval($ar["ID"]);
+            }
             $where = "and A.ID in ($str_id)";
         }
 
@@ -878,7 +997,7 @@ class CAdv extends CAllAdv
         return $res;
     }
 
-    public static function GetDynamicList($ADV_ID, &$by, &$order, &$arMaxMin, $arFilter = Array())
+    public static function GetDynamicList($ADV_ID, $by = 's_date', $order = 'desc', &$arMaxMin = [], $arFilter = [])
     {
         $err_mess = "File: " . __FILE__ . "<br>Line: ";
         $DB = CDatabase::GetModuleConnection('statistic');
@@ -888,40 +1007,46 @@ class CAdv extends CAllAdv
         if (is_array($arFilter)) {
             foreach ($arFilter as $key => $val) {
                 if (is_array($val)) {
-                    if (count($val) <= 0)
+                    if (count($val) <= 0) {
                         continue;
+                    }
                 } else {
-                    if ((strlen($val) <= 0) || ($val === "NOT_REF"))
+                    if (((string)$val == '') || ($val === "NOT_REF")) {
                         continue;
+                    }
                 }
 
                 $key = strtoupper($key);
                 switch ($key) {
                     case "DATE1":
-                        if (CheckDateTime($val))
+                        if (CheckDateTime($val)) {
                             $arSqlSearch[] = "D.DATE_STAT>=" . $DB->CharToDateFunction($val, "SHORT");
+                        }
                         break;
                     case "DATE2":
-                        if (CheckDateTime($val))
-                            $arSqlSearch[] = "D.DATE_STAT<" . $DB->CharToDateFunction($val, "SHORT") . " + INTERVAL 1 DAY";
+                        if (CheckDateTime($val)) {
+                            $arSqlSearch[] = "D.DATE_STAT<" . $DB->CharToDateFunction(
+                                    $val,
+                                    "SHORT"
+                                ) . " + INTERVAL 1 DAY";
+                        }
                         break;
                 }
             }
         }
 
-        foreach ($arSqlSearch as $sqlWhere)
+        foreach ($arSqlSearch as $sqlWhere) {
             $strSqlSearch .= " and (" . $sqlWhere . ") ";
+        }
 
-        if ($by == "s_date")
+        if ($by == "s_date") {
             $strSqlOrder = "ORDER BY D.DATE_STAT";
-        else {
-            $by = "s_date";
+        } else {
             $strSqlOrder = "ORDER BY D.DATE_STAT";
         }
 
         if ($order != "asc") {
             $strSqlOrder .= " desc ";
-            $order = "desc";
         }
 
         $strSql = "
@@ -997,7 +1122,7 @@ class CAdv extends CAllAdv
         return $res;
     }
 
-    public static function GetSimpleList(&$by, &$order, $arFilter = Array(), &$is_filtered)
+    public static function GetSimpleList($by = 's_referer1', $order = 'asc', $arFilter = [])
     {
         $err_mess = "File: " . __FILE__ . "<br>Line: ";
         $DB = CDatabase::GetModuleConnection('statistic');
@@ -1005,11 +1130,13 @@ class CAdv extends CAllAdv
         if (is_array($arFilter)) {
             foreach ($arFilter as $key => $val) {
                 if (is_array($val)) {
-                    if (count($val) <= 0)
+                    if (count($val) <= 0) {
                         continue;
+                    }
                 } else {
-                    if ((strlen($val) <= 0) || ($val === "NOT_REF"))
+                    if (((string)$val == '') || ($val === "NOT_REF")) {
                         continue;
+                    }
                 }
                 $match_value_set = array_key_exists($key . "_EXACT_MATCH", $arFilter);
                 $key = strtoupper($key);
@@ -1029,15 +1156,21 @@ class CAdv extends CAllAdv
         }
 
         $strSqlSearch = GetFilterSqlSearch($arSqlSearch);
-        $order = ($order != "desc") ? "asc" : "desc";
-        if ($by == "s_id") $strSqlOrder = "ORDER BY A.ID " . $order;
-        elseif ($by == "s_referer1") $strSqlOrder = "ORDER BY A.REFERER1 " . $order . ", A.REFERER2";
-        elseif ($by == "s_referer2") $strSqlOrder = "ORDER BY A.REFERER2 " . $order;
-        elseif ($by == "s_description") $strSqlOrder = "ORDER BY A.DESCRIPTION " . $order;
-        else {
-            $by = "s_referer1";
+
+        $order = ($order != "desc" ? "asc" : "desc");
+
+        if ($by == "s_id") {
+            $strSqlOrder = "ORDER BY A.ID " . $order;
+        } elseif ($by == "s_referer1") {
+            $strSqlOrder = "ORDER BY A.REFERER1 " . $order . ", A.REFERER2";
+        } elseif ($by == "s_referer2") {
+            $strSqlOrder = "ORDER BY A.REFERER2 " . $order;
+        } elseif ($by == "s_description") {
+            $strSqlOrder = "ORDER BY A.DESCRIPTION " . $order;
+        } else {
             $strSqlOrder = "ORDER BY A.REFERER1 " . $order . ", A.REFERER2";
         }
+
         $strSql = "
 			SELECT
 				A.ID,

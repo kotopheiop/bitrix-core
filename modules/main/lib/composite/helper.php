@@ -23,9 +23,9 @@ class Helper
     public static function getRequestUri()
     {
         if (self::isSpaMode()) {
-            return isset($options["SPA_REQUEST_URI"]) ? $options["SPA_REQUEST_URI"] : "/";
+            return ($options["SPA_REQUEST_URI"] ?? "/");
         } else {
-            return $_SERVER["REQUEST_URI"];
+            return ($_SERVER["REQUEST_URI"] ?? '');
         }
     }
 
@@ -38,7 +38,7 @@ class Helper
      */
     public static function getHttpHost($host = null)
     {
-        return preg_replace("/:(80|443)$/", "", $host === null ? $_SERVER["HTTP_HOST"] : $host);
+        return preg_replace("/:(80|443)$/", "", $host === null ? ($_SERVER["HTTP_HOST"] ?? '') : $host);
     }
 
     /**
@@ -59,7 +59,7 @@ class Helper
     public static function getSpaPostfixByUri($requestUri)
     {
         $options = self::getOptions();
-        $requestUri = ($p = strpos($requestUri, "?")) === false ? $requestUri : substr($requestUri, 0, $p);
+        $requestUri = ($p = mb_strpos($requestUri, "?")) === false ? $requestUri : mb_substr($requestUri, 0, $p);
 
         if (isset($options["SPA_MAP"]) && is_array($options["SPA_MAP"])) {
             foreach ($options["SPA_MAP"] as $mask => $postfix) {
@@ -107,7 +107,7 @@ class Helper
     public static function setUserPrivateKey($prefix, $expire = 0)
     {
         $options = self::getOptions();
-        if (isset($options["COOKIE_PK"]) && strlen($options["COOKIE_PK"]) > 0) {
+        if (isset($options["COOKIE_PK"]) && $options["COOKIE_PK"] <> '') {
             setcookie($options["COOKIE_PK"], $prefix, $expire, "/", false, false, true);
         }
     }
@@ -115,7 +115,7 @@ class Helper
     public static function deleteUserPrivateKey()
     {
         $options = self::getOptions();
-        if (isset($options["COOKIE_PK"]) && strlen($options["COOKIE_PK"]) > 0) {
+        if (isset($options["COOKIE_PK"]) && $options["COOKIE_PK"] <> '') {
             setcookie($options["COOKIE_PK"], "", 0, "/");
         }
     }
@@ -161,7 +161,7 @@ class Helper
         $requestUri = "/" . ltrim($_SERVER["REQUEST_URI"], "/");
         foreach ($folders as $folder) {
             $folder = rtrim($folder, "/") . "/";
-            if (strncmp($requestUri, $folder, strlen($folder)) == 0) {
+            if (strncmp($requestUri, $folder, mb_strlen($folder)) == 0) {
                 return true;
             }
         }
@@ -216,10 +216,10 @@ class Helper
         }
 
         if (func_num_args() > 2) {
-            return substr($str, $start, func_get_arg(2));
+            return mb_substr($str, $start, func_get_arg(2));
         }
 
-        return substr($str, $start);
+        return mb_substr($str, $start);
     }
 
     /**
@@ -231,7 +231,7 @@ class Helper
      */
     public static function getBinaryLength($str)
     {
-        return function_exists("mb_strlen") ? mb_strlen($str, "latin1") : strlen($str);
+        return function_exists("mb_strlen") ? mb_strlen($str, "latin1") : mb_strlen($str);
     }
 
     /**
@@ -312,13 +312,13 @@ class Helper
         $queryString = str_replace(".", "_", $queryString);
 
         $host = self::getHttpHost($host);
-        if (strlen($host) > 0) {
+        if ($host <> '') {
             $host = "/" . $host;
             $host = preg_replace("/:(\\d+)\$/", "-\\1", $host);
         }
 
         $privateKey = preg_replace("~[^a-z0-9/_]~i", "", $privateKey);
-        if (strlen($privateKey) > 0) {
+        if ($privateKey <> '') {
             $privateKey = "/" . trim($privateKey, "/");
         }
 
@@ -434,7 +434,7 @@ class Helper
 
             $content .= ");\n?>";
             $written = fwrite($fh, $content);
-            $len = function_exists('mb_strlen') ? mb_strlen($content, 'latin1') : strlen($content);
+            $len = function_exists('mb_strlen') ? mb_strlen($content, 'latin1') : mb_strlen($content);
             if ($written === $len) {
                 fclose($fh);
                 if (file_exists($fileName)) {
@@ -458,9 +458,9 @@ class Helper
         $path = str_replace(array("\\", "//"), "/", $path);
 
         //remove file name
-        if (substr($path, -1) != "/") {
-            $p = strrpos($path, "/");
-            $path = substr($path, 0, $p);
+        if (mb_substr($path, -1) != "/") {
+            $p = mb_strrpos($path, "/");
+            $path = mb_substr($path, 0, $p);
         }
 
         $path = rtrim($path, "/");
@@ -572,7 +572,7 @@ class Helper
         $arIncTmp = explode(";", $inc);
         foreach ($arIncTmp as $mask) {
             $mask = trim($mask);
-            if (strlen($mask) > 0) {
+            if ($mask <> '') {
                 $arOptions["~INCLUDE_MASK"][] = "'^" . $mask . "$'";
             }
         }
@@ -586,7 +586,7 @@ class Helper
         $arExcTmp = explode(";", $exc);
         foreach ($arExcTmp as $mask) {
             $mask = trim($mask);
-            if (strlen($mask) > 0) {
+            if ($mask <> '') {
                 $arOptions["~EXCLUDE_MASK"][] = "'^" . $mask . "$'";
             }
         }
@@ -602,7 +602,7 @@ class Helper
         $onlyParams = explode(";", $arOptions["ONLY_PARAMETERS"]);
         foreach ($onlyParams as $str) {
             $str = trim($str);
-            if (strlen($str) > 0) {
+            if ($str <> '') {
                 $arOptions["~GET"][] = $str;
             }
         }
@@ -611,7 +611,7 @@ class Helper
         $ignoredParams = explode(";", $arOptions["IGNORED_PARAMETERS"]);
         foreach ($ignoredParams as $str) {
             $str = trim($str);
-            if (strlen($str) > 0) {
+            if ($str <> '') {
                 $arOptions["~IGNORED_PARAMETERS"][] = $str;
             }
         }
@@ -620,13 +620,13 @@ class Helper
         $excludeParams = explode(";", $arOptions["EXCLUDE_PARAMS"]);
         foreach ($excludeParams as $str) {
             $str = trim($str);
-            if (strlen($str) > 0) {
+            if ($str <> '') {
                 $arOptions["~EXCLUDE_PARAMS"][] = $str;
             }
         }
 
         if (function_exists("IsModuleInstalled")) {
-            $arOptions["COMPRESS"] = IsModuleInstalled('compression');
+            $arOptions["COMPRESS"] = false;
             $arOptions["STORE_PASSWORD"] = \COption::GetOptionString("main", "store_password", "Y");
             $cookie_prefix = \COption::GetOptionString('main', 'cookie_name', 'BITRIX_SM');
             $arOptions["COOKIE_LOGIN"] = $cookie_prefix . '_LOGIN';
@@ -733,7 +733,7 @@ class Helper
                 $writings === false ? 0 : (isset($fileValues[1]) ? intval($fileValues[1]) + $writings : $writings),
                 $quota === false ? 0 : (isset($fileValues[2]) ? intval($fileValues[2]) + $quota : $quota),
                 $posts === false ? 0 : (isset($fileValues[3]) ? intval($fileValues[3]) + $posts : $posts),
-                $files === false ? 0 : $cacheSize > 0 ? $cacheSize : 0,
+                $files === false ? 0 : ($cacheSize > 0 ? $cacheSize : 0),
             );
 
             fseek($fp, 0);
@@ -782,9 +782,9 @@ class Helper
     //When you reinstall updates (main 17.1.0 with previous ones).
     public static function __callStatic($name, $arguments)
     {
-        if (strtoupper($name) === strtoupper("OnUserLogin")) {
+        if (mb_strtoupper($name) === mb_strtoupper("OnUserLogin")) {
             \Bitrix\Main\Composite\Engine::onUserLogin();
-        } elseif (strtoupper($name) === strtoupper("OnUserLogout")) {
+        } elseif (mb_strtoupper($name) === mb_strtoupper("OnUserLogout")) {
             \Bitrix\Main\Composite\Engine::onUserLogout();
         }
     }

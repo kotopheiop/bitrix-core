@@ -45,6 +45,7 @@ class Otp
     protected $userLogin = null;
     protected $userGroupPolicy = array();
     protected $active = null;
+    protected $userActive = null;
     protected $secret = null;
     protected $issuer = null;
     protected $label = null;
@@ -81,13 +82,27 @@ class Otp
     {
         $userId = (int)$userId;
 
-        if ($userId <= 0)
+        if ($userId <= 0) {
             throw new ArgumentTypeException('userId', 'positive integer');
+        }
 
-        $userInfo = UserTable::getList(array(
-            'filter' => array('=USER_ID' => $userId),
-            'select' => array('ACTIVE', 'USER_ID', 'SECRET', 'PARAMS', 'TYPE', 'ATTEMPTS', 'INITIAL_DATE', 'SKIP_MANDATORY', 'DEACTIVATE_UNTIL')
-        ));
+        $userInfo = UserTable::getList(
+            array(
+                'filter' => array('=USER_ID' => $userId),
+                'select' => array(
+                    'ACTIVE',
+                    'USER_ID',
+                    'SECRET',
+                    'PARAMS',
+                    'TYPE',
+                    'ATTEMPTS',
+                    'INITIAL_DATE',
+                    'SKIP_MANDATORY',
+                    'DEACTIVATE_UNTIL',
+                    'USER_ACTIVE' => 'USER.ACTIVE'
+                )
+            )
+        );
 
         $userInfo = $userInfo->fetch();
 
@@ -99,7 +114,8 @@ class Otp
         } else {
             $type = $userInfo['TYPE'] ?: self::TYPE_DEFAULT;
             $userInfo['SECRET'] = pack('H*', $userInfo['SECRET']);
-            $userInfo['ACTIVE'] = $userInfo['ACTIVE'] === 'Y';
+            $userInfo['ACTIVE'] = ($userInfo['ACTIVE'] === 'Y');
+            $userInfo['USER_ACTIVE'] = ($userInfo['USER_ACTIVE'] === 'Y');
             $userInfo['SKIP_MANDATORY'] = $userInfo['SKIP_MANDATORY'] === 'Y';
 
             $instance = static::getByType($type);
@@ -118,8 +134,9 @@ class Otp
      */
     public static function getByType($type)
     {
-        if (!in_array($type, static::$availableTypes))
+        if (!in_array($type, static::$availableTypes)) {
             throw new ArgumentOutOfRangeException('type', static::$availableTypes);
+        }
 
         $algo = static::$typeMap[$type];
         $instance = new static($algo);
@@ -136,8 +153,9 @@ class Otp
      */
     public function setType($type)
     {
-        if (!in_array($type, static::$availableTypes))
+        if (!in_array($type, static::$availableTypes)) {
             throw new ArgumentOutOfRangeException('type', static::$availableTypes);
+        }
 
         $this->algorithmClass = static::$typeMap[$type];
         $this->type = $type;
@@ -275,16 +293,18 @@ class Otp
      */
     public function syncParameters($inputA, $inputB = null)
     {
-        if (!$inputA)
+        if (!$inputA) {
             throw new OtpException(Loc::getMessage('SECURITY_OTP_ERROR_PASS1_EMPTY'));
-        elseif (!preg_match('/^\d{6}$/D', $inputA))
+        } elseif (!preg_match('/^\d{6}$/D', $inputA)) {
             throw new OtpException(getMessage('SECURITY_OTP_ERROR_PASS1_INVALID'));
+        }
 
         if ($this->getAlgorithm()->isTwoCodeRequired()) {
-            if (!$inputB)
+            if (!$inputB) {
                 throw new OtpException(Loc::getMessage('SECURITY_OTP_ERROR_PASS2_EMPTY'));
-            elseif (!preg_match('/^\d{6}$/D', $inputB))
+            } elseif (!preg_match('/^\d{6}$/D', $inputB)) {
                 throw new OtpException(Loc::getMessage('SECURITY_OTP_ERROR_PASS2_INVALID'));
+            }
         }
 
         try {
@@ -318,8 +338,9 @@ class Otp
         );
 
         if ($this->regenerated) {
-            if (!$this->isInitialized())
+            if (!$this->isInitialized()) {
                 throw new OtpException('Missing OTP params, forgot to call syncParameters?');
+            }
 
             // Clear recovery codes when we connect new device
             RecoveryCodesTable::clearByUser($this->getUserId());
@@ -361,8 +382,11 @@ class Otp
      */
     public function activate()
     {
-        if (!$this->isInitialized())
-            throw new OtpException('OTP not initialized, if your activate it - user can\'t login anymore. Do you forgot to call regenerate?');
+        if (!$this->isInitialized()) {
+            throw new OtpException(
+                'OTP not initialized, if your activate it - user can\'t login anymore. Do you forgot to call regenerate?'
+            );
+        }
 
         $this
             ->setActive(true)
@@ -381,8 +405,9 @@ class Otp
      */
     public function deactivate($days = 0)
     {
-        if (!$this->isActivated())
+        if (!$this->isActivated()) {
             throw new OtpException('Otp not activated. Do your mean deffer?');
+        }
 
         $this->setActive(false);
         $this->setSkipMandatory(true);
@@ -408,8 +433,9 @@ class Otp
      */
     public function defer($days = 0)
     {
-        if ($this->isActivated())
+        if ($this->isActivated()) {
             throw new OtpException('Otp already activated. Do your mean deactivate?');
+        }
 
         $this->setSkipMandatory(true);
         if ($days <= 0) {
@@ -441,6 +467,7 @@ class Otp
     public function setUserInfo(array $userInfo)
     {
         $this->setActive($userInfo['ACTIVE']);
+        $this->setUserActive($userInfo['USER_ACTIVE']);
         $this->setUserId($userInfo['USER_ID']);
         $this->setAttempts($userInfo['ATTEMPTS']);
         $this->setSecret($userInfo['SECRET']);
@@ -449,11 +476,13 @@ class Otp
 
         // Old users haven't INITIAL_DATE and DEACTIVATE_UNTIL
         // ToDo: maybe it's not the best approach, think about it later
-        if ($userInfo['INITIAL_DATE'])
+        if ($userInfo['INITIAL_DATE']) {
             $this->setInitialDate($userInfo['INITIAL_DATE']);
+        }
 
-        if ($userInfo['DEACTIVATE_UNTIL'])
+        if ($userInfo['DEACTIVATE_UNTIL']) {
             $this->setDeactivateUntil($userInfo['DEACTIVATE_UNTIL']);
+        }
 
         return $this;
     }
@@ -533,8 +562,9 @@ class Otp
     protected function getInitialTimestamp()
     {
         $initialDate = $this->getInitialDate();
-        if (!$initialDate)
+        if (!$initialDate) {
             return 0;
+        }
 
         return $initialDate->getTimestamp();
     }
@@ -583,6 +613,18 @@ class Otp
     public function isActivated()
     {
         return (bool)$this->active;
+    }
+
+    public function setUserActive($isActive)
+    {
+        $this->userActive = $isActive;
+
+        return $this;
+    }
+
+    public function isUserActive()
+    {
+        return (bool)$this->userActive;
     }
 
     /**
@@ -727,8 +769,9 @@ class Otp
      */
     public function getIssuer()
     {
-        if ($this->issuer === null)
+        if ($this->issuer === null) {
             $this->issuer = $this->getDefaultIssuer();
+        }
 
         return $this->issuer;
     }
@@ -754,8 +797,9 @@ class Otp
      */
     public function getLabel($issuer = null)
     {
-        if ($this->label === null)
+        if ($this->label === null) {
             $this->label = $this->generateLabel($issuer);
+        }
 
         return $this->label;
     }
@@ -779,8 +823,9 @@ class Otp
      */
     public function getContext()
     {
-        if ($this->context === null)
+        if ($this->context === null) {
             $this->context = Application::getInstance()->getContext();
+        }
 
         return $this->context;
     }
@@ -854,10 +899,11 @@ class Otp
      */
     protected function generateLabel($issuer = null)
     {
-        if ($issuer)
+        if ($issuer) {
             return sprintf('%s:%s', $issuer, $this->getUserLogin());
-        else
+        } else {
             return $this->getUserLogin();
+        }
     }
 
     /**
@@ -867,8 +913,9 @@ class Otp
      */
     protected function getMaxLoginAttempts()
     {
-        if (!$this->isActivated())
+        if (!$this->isActivated()) {
             return 0;
+        }
 
         return (int)$this->getPolicy('LOGIN_ATTEMPTS');
     }
@@ -880,8 +927,9 @@ class Otp
      */
     protected function getRememberLifetime()
     {
-        if (!$this->isActivated())
+        if (!$this->isActivated()) {
             return 0;
+        }
 
         return ((int)$this->getPolicy('STORE_TIMEOUT')) * 60;
     }
@@ -893,8 +941,9 @@ class Otp
      */
     protected function getRememberIpMask()
     {
-        if (!$this->isActivated())
+        if (!$this->isActivated()) {
             return '255.255.255.255';
+        }
 
         return $this->getPolicy('STORE_IP_MASK');
     }
@@ -943,13 +992,15 @@ class Otp
      */
     protected function canSkipByCookie()
     {
-        if (Option::get('security', 'otp_allow_remember') !== 'Y')
+        if (Option::get('security', 'otp_allow_remember') !== 'Y') {
             return false;
+        }
 
         $signedValue = $this->getContext()->getRequest()->getCookie(static::SKIP_COOKIE);
 
-        if (!$signedValue || !is_string($signedValue))
+        if (!$signedValue || !is_string($signedValue)) {
             return false;
+        }
 
         try {
             $signer = new TimeSigner();
@@ -1034,13 +1085,15 @@ class Otp
      */
     protected function getPolicy($name)
     {
-        if (!$this->userGroupPolicy)
+        if (!$this->userGroupPolicy) {
             $this->userGroupPolicy = \CUser::getGroupPolicy($this->getUserId());
+        }
 
-        if (isset($this->userGroupPolicy[$name]))
+        if (isset($this->userGroupPolicy[$name])) {
             return $this->userGroupPolicy[$name];
-        else
+        } else {
             return null;
+        }
     }
 
     /**
@@ -1062,15 +1115,15 @@ class Otp
      *
      * @param array $params Event parameters.
      * @return bool
-     * @throws ArgumentTypeException
      */
     public static function verifyUser(array $params)
     {
-        /** @global \CMain $APPLICATION */
         global $APPLICATION;
 
         if (!static::isOtpEnabled()) // OTP disabled in settings
+        {
             return true;
+        }
 
         $isSuccess = false;
 
@@ -1100,7 +1153,13 @@ class Otp
                 static::setDeferredParams($params);
                 return false;
             }
+        } else {
+            if (!$otp->isUserActive()) {
+                //non-active user can't login by OTP
+                return false;
+            }
         }
+
 
         if (!$isSuccess) {
             // User skip OTP on this browser by cookie
@@ -1117,9 +1176,9 @@ class Otp
                 && Option::get('security', 'otp_allow_remember') === 'Y'
             );
 
-            if (!$isCaptchaChecked && !$_SESSION['BX_LOGIN_NEED_CAPTCHA']) {
+            if (!$isCaptchaChecked && !$APPLICATION->NeedCAPTHA()) {
                 // Backward compatibility with old login page
-                $_SESSION['BX_LOGIN_NEED_CAPTCHA'] = true;
+                $APPLICATION->SetNeedCAPTHA(true);
             }
 
             $isOtpPassword = (bool)preg_match('/^\d{6}$/D', $params['OTP']);
@@ -1129,12 +1188,13 @@ class Otp
             );
 
             if ($isCaptchaChecked && ($isOtpPassword || $isRecoveryCode)) {
-                if ($isOtpPassword)
+                if ($isOtpPassword) {
                     $isSuccess = $otp->verify($params['OTP'], true);
-                elseif ($isRecoveryCode)
+                } elseif ($isRecoveryCode) {
                     $isSuccess = RecoveryCodesTable::useCode($otp->getUserId(), $params['OTP']);
-                else
+                } else {
                     $isSuccess = false;
+                }
 
                 if (!$isSuccess) {
                     $otp
@@ -1157,16 +1217,44 @@ class Otp
             }
         }
 
-
         if ($isSuccess) {
             static::setDeferredParams(null);
         } else {
             // Save a flag which indicates that a form for OTP is required
             $params[static::REJECTED_KEY] = static::REJECT_BY_CODE;
             static::setDeferredParams($params);
+
+            //the OTP form will be shown on the next hit, send the event
+            static::sendEvent($otp);
+
+            //write to the log ("on" by default)
+            if (Option::get("security", "otp_log") <> "N") {
+                \CSecurityEvent::getInstance()->doLog("SECURITY", "SECURITY_OTP", $otp->getUserId(), "");
+            }
         }
 
         return $isSuccess;
+    }
+
+    protected static function sendEvent(Otp $otp)
+    {
+        $code = null;
+        $algo = $otp->getAlgorithm();
+
+        //code value only for TOTP
+        if ($algo instanceof \Bitrix\Main\Security\Mfa\TotpAlgorithm) {
+            //value based on the current time
+            $timeCode = $algo->timecode(time());
+            $code = $algo->generateOTP($timeCode);
+        }
+
+        $eventParams = [
+            "userId" => $otp->getUserId(),
+            "code" => $code,
+        ];
+
+        $event = new \Bitrix\Main\Event("security", "onOtpRequired", $eventParams);
+        $event->send();
     }
 
     /**
@@ -1206,8 +1294,9 @@ class Otp
     {
         $params = static::getDeferredParams();
 
-        if (!$params || !isset($params['USER_ID']))
+        if (!$params || !isset($params['USER_ID'])) {
             return false;
+        }
 
         $otp = static::getByUser($params['USER_ID']);
         return $otp && $otp->isAttemptsReached();
@@ -1220,8 +1309,9 @@ class Otp
      */
     public static function getDeferredParams()
     {
-        if (isset($_SESSION['BX_SECURITY_OTP']) && is_array($_SESSION['BX_SECURITY_OTP'])) {
-            return $_SESSION['BX_SECURITY_OTP'];
+        $kernelSession = Application::getInstance()->getKernelSession();
+        if (isset($kernelSession['BX_SECURITY_OTP']) && is_array($kernelSession['BX_SECURITY_OTP'])) {
+            return $kernelSession['BX_SECURITY_OTP'];
         }
 
         return null;
@@ -1235,15 +1325,17 @@ class Otp
      */
     public static function setDeferredParams($params)
     {
+        $kernelSession = Application::getInstance()->getKernelSession();
         if ($params === null) {
-            unset($_SESSION['BX_SECURITY_OTP']);
+            unset($kernelSession['BX_SECURITY_OTP']);
         } else {
             // Probably we does not need save password in deferred params
             // Or need? I don't know right now...
-            if (isset($params['PASSWORD']))
+            if (isset($params['PASSWORD'])) {
                 unset($params['PASSWORD']);
+            }
 
-            $_SESSION['BX_SECURITY_OTP'] = $params;
+            $kernelSession['BX_SECURITY_OTP'] = $params;
         }
     }
 
@@ -1308,9 +1400,10 @@ class Otp
     public static function getMandatoryRights()
     {
         $targetRights = Option::get('security', 'otp_mandatory_rights');
-        $targetRights = unserialize($targetRights);
-        if (!is_array($targetRights))
+        $targetRights = unserialize($targetRights, ['allowed_classes' => false]);
+        if (!is_array($targetRights)) {
             $targetRights = array();
+        }
 
         return $targetRights;
     }
@@ -1324,8 +1417,9 @@ class Otp
      */
     public static function setDefaultType($value)
     {
-        if (!in_array($value, static::$availableTypes))
+        if (!in_array($value, static::$availableTypes)) {
             throw new ArgumentOutOfRangeException('value', static::$availableTypes);
+        }
 
         Option::set('security', 'otp_default_algo', $value, null);
     }

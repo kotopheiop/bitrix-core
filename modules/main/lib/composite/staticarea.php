@@ -137,8 +137,9 @@ class StaticArea
     public function setContainerId($containerId)
     {
         $this->containerId = $containerId;
-        if ($this->containerId !== null)
+        if ($this->containerId !== null) {
             self::$containers[$this->id] = $containerId;
+        }
     }
 
     public function getContainerId()

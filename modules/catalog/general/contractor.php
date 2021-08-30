@@ -6,7 +6,7 @@ Loc::loadMessages(__FILE__);
 
 class CAllCatalogContractor
 {
-    protected function checkFields($action, &$arFields)
+    protected static function checkFields($action, &$arFields)
     {
         $personType = intval($arFields["PERSON_TYPE"]);
 
@@ -14,32 +14,40 @@ class CAllCatalogContractor
             $GLOBALS["APPLICATION"]->ThrowException(Loc::getMessage("CC_EMPTY_COMPANY"));
             return false;
         }
-        if (((($action == 'ADD' || is_set($arFields, "PERSON_NAME")) && strlen($arFields["PERSON_NAME"]) <= 0) && $personType == CONTRACTOR_INDIVIDUAL)) {
+        if (((($action == 'ADD' || is_set(
+                        $arFields,
+                        "PERSON_NAME"
+                    )) && $arFields["PERSON_NAME"] == '') && $personType == CONTRACTOR_INDIVIDUAL)) {
             $GLOBALS["APPLICATION"]->ThrowException(Loc::getMessage("CC_WRONG_PERSON_LASTNAME"));
             return false;
         }
-        if (($action == 'UPDATE') && is_set($arFields, "ID"))
+        if (($action == 'UPDATE') && is_set($arFields, "ID")) {
             unset($arFields["ID"]);
+        }
 
         return true;
     }
 
-    static function update($id, $arFields)
+    public static function update($id, $arFields)
     {
         global $DB;
         $id = intval($id);
 
-        if (array_key_exists('DATE_CREATE', $arFields))
+        if (array_key_exists('DATE_CREATE', $arFields)) {
             unset($arFields['DATE_CREATE']);
-        if (array_key_exists('DATE_MODIFY', $arFields))
+        }
+        if (array_key_exists('DATE_MODIFY', $arFields)) {
             unset($arFields['DATE_MODIFY']);
-        if (array_key_exists('CREATED_BY', $arFields))
+        }
+        if (array_key_exists('CREATED_BY', $arFields)) {
             unset($arFields['CREATED_BY']);
+        }
 
         $arFields['~DATE_MODIFY'] = $DB->GetNowFunction();
 
-        if ($id <= 0 || !self::checkFields('UPDATE', $arFields))
+        if ($id <= 0 || !self::checkFields('UPDATE', $arFields)) {
             return false;
+        }
         $strUpdate = $DB->PrepareUpdate("b_catalog_contractor", $arFields);
 
         if (!empty($strUpdate)) {
@@ -49,7 +57,7 @@ class CAllCatalogContractor
         return $id;
     }
 
-    static function delete($id)
+    public static function delete($id)
     {
         global $DB;
         $id = intval($id);

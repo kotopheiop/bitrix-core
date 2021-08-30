@@ -47,7 +47,9 @@ final class DiscountExecutionModeIndex extends Stepper
             $mode = Analyzer::getInstance()->canCalculateSeparately($discountRow) ?
                 DiscountTable::EXECUTE_MODE_SEPARATELY : DiscountTable::EXECUTE_MODE_GENERAL;
 
-            $connection->queryExecute("UPDATE b_sale_discount SET EXECUTE_MODE = {$mode} WHERE ID = {$discountRow['ID']}");
+            $connection->queryExecute(
+                "UPDATE b_sale_discount SET EXECUTE_MODE = {$mode} WHERE ID = {$discountRow['ID']}"
+            );
 
             $newStatus['lastId'] = $discountRow['ID'];
             $newStatus['steps']++;

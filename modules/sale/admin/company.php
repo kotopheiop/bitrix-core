@@ -9,8 +9,9 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
 \Bitrix\Main\Loader::includeModule('sale');
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions < "U")
+if ($saleModulePermissions < "U") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/prolog.php");
@@ -35,14 +36,17 @@ $USER_FIELD_MANAGER->AdminListAddFilterFields($entity_id, $filterFields);
 $lAdmin->InitFilter($filterFields);
 $filter = array();
 
-if (strlen($filter_name) > 0)
+if ($filter_name <> '') {
     $filter["?NAME"] = $filter_name;
+}
 
-if (strlen($filter_location_id) > 0)
+if ($filter_location_id <> '') {
     $filter["LOCATION_ID"] = $filter_location_id;
+}
 
-if (strlen($filter_active) > 0 && $filter_active != 'NOT_REF')
+if ($filter_active <> '' && $filter_active != 'NOT_REF') {
     $filter["ACTIVE"] = $filter_active;
+}
 
 $USER_FIELD_MANAGER->AdminListAddFilter(CompanyTable::getUfId(), $filter);
 
@@ -51,8 +55,9 @@ if ($lAdmin->EditAction() && $saleModulePermissions >= 'W') {
         $error = false;
         $id = intval($id);
 
-        if ($id <= 0 || !$lAdmin->IsUpdated($id))
+        if ($id <= 0 || !$lAdmin->IsUpdated($id)) {
             continue;
+        }
 
         $reqFields = array('NAME'); // , 'LOCATION_ID'
         foreach ($reqFields as $reqField) {
@@ -87,26 +92,30 @@ if (($ids = $lAdmin->GroupAction()) && $saleModulePermissions >= "W") {
         );
         $dbResultList = CompanyTable::getList($params);
 
-        while ($result = $dbResultList->Fetch())
+        while ($result = $dbResultList->Fetch()) {
             $ids[] = $result['ID'];
+        }
     }
 
     foreach ($ids as $id) {
-        if (empty($id))
+        if (empty($id)) {
             continue;
+        }
 
         switch ($_REQUEST['action']) {
             case "delete":
                 @set_time_limit(0);
 
-                $dbRes = \Bitrix\Sale\Internals\OrderTable::getList(array(
-                    'select' => array('ID'),
-                    'filter' => array(
-                        'LOGIC' => 'OR',
-                        'SHIPMENT.COMPANY_ID' => $id,
-                        'PAYMENT.COMPANY_ID' => $id
+                $dbRes = \Bitrix\Sale\Internals\OrderTable::getList(
+                    array(
+                        'select' => array('ID'),
+                        'filter' => array(
+                            'LOGIC' => 'OR',
+                            'SHIPMENT.COMPANY_ID' => $id,
+                            'PAYMENT.COMPANY_ID' => $id
+                        )
                     )
-                ));
+                );
 
                 if ($dbRes->fetch()) {
                     $lAdmin->AddGroupError(Loc::getMessage("SALE_COMPANY_ERROR_DELETE_LINK"), $id);
@@ -115,10 +124,11 @@ if (($ids = $lAdmin->GroupAction()) && $saleModulePermissions >= "W") {
 
                 $result = CompanyTable::delete($id);
                 if (!$result->isSuccess()) {
-                    if ($error = $result->getErrorMessages())
+                    if ($error = $result->getErrorMessages()) {
                         $lAdmin->AddGroupError(join("\n", $error), $id);
-                    else
+                    } else {
                         $lAdmin->AddGroupError(Loc::getMessage("SALE_COMPANY_ERROR_DELETE"), $id);
+                    }
                 }
                 break;
         }
@@ -127,8 +137,9 @@ if (($ids = $lAdmin->GroupAction()) && $saleModulePermissions >= "W") {
 
 $fields = $USER_FIELD_MANAGER->GetUserFields(CompanyTable::getUfId());
 $select = array('*');
-foreach ($fields as $field)
+foreach ($fields as $field) {
     $select[] = $field['FIELD_NAME'];
+}
 
 $params = array(
     'select' => $select,
@@ -205,17 +216,28 @@ while ($company = $dbResultList->NavNext(true, "f_")) {
         );
 
         $path = array();
-        while ($item = $res->fetch())
+        while ($item = $res->fetch()) {
             $path[] = $item['CHAIN'];
+        }
 
         $company['LOCATION_ID'] = implode(', ', array_reverse($path));
     } catch (\Bitrix\Main\SystemException $e) {
         $company['LOCATION_ID'] = '';
     }
 
-    $row = &$lAdmin->AddRow($f_ID, $company, "sale_company_edit.php?ID=" . $f_ID . "&lang=" . $lang, Loc::getMessage("SALE_COMPANY_EDIT_DESCR"));
+    $row = &$lAdmin->AddRow(
+        $f_ID,
+        $company,
+        "sale_company_edit.php?ID=" . $f_ID . "&lang=" . $lang,
+        Loc::getMessage("SALE_COMPANY_EDIT_DESCR")
+    );
 
-    $row->AddField("ID", "<a href=\"sale_company_edit.php?ID=" . $f_ID . "&lang=" . $lang . GetFilterParams("filter_") . "\">" . $f_ID . "</a>");
+    $row->AddField(
+        "ID",
+        "<a href=\"sale_company_edit.php?ID=" . $f_ID . "&lang=" . $lang . GetFilterParams(
+            "filter_"
+        ) . "\">" . $f_ID . "</a>"
+    );
     $row->AddCheckField("ACTIVE");
     $row->AddInputField("NAME");
     $row->AddField("LOCATION_ID", $company['LOCATION_ID']);
@@ -238,7 +260,10 @@ while ($company = $dbResultList->NavNext(true, "f_")) {
             "ICON" => "delete",
             "TEXT" => Loc::getMessage("SALE_COMPANY_DELETE"),
             "TITLE" => Loc::getMessage("SALE_COMPANY_DELETE_DESCR"),
-            "ACTION" => "if(confirm('" . Loc::getMessage('SALE_COMPANY_CONFIRM_DEL') . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete"),
+            "ACTION" => "if(confirm('" . Loc::getMessage('SALE_COMPANY_CONFIRM_DEL') . "')) " . $lAdmin->ActionDoGroup(
+                    $f_ID,
+                    "delete"
+                ),
         );
     }
 
@@ -266,14 +291,16 @@ if ($saleModulePermissions == "W") {
         )
     );
 
-    $lAdmin->AddAdminContextMenu(array(
+    $lAdmin->AddAdminContextMenu(
         array(
-            "TEXT" => Loc::getMessage("SALE_COMPANY_ADD_NEW"),
-            "TITLE" => Loc::getMessage("SALE_COMPANY_ADD_NEW_ALT"),
-            "LINK" => "sale_company_edit.php?lang=" . $lang,
-            "ICON" => "btn_new"
-        ),
-    ));
+            array(
+                "TEXT" => Loc::getMessage("SALE_COMPANY_ADD_NEW"),
+                "TITLE" => Loc::getMessage("SALE_COMPANY_ADD_NEW_ALT"),
+                "LINK" => "sale_company_edit.php?lang=" . $lang,
+                "ICON" => "btn_new"
+            ),
+        )
+    );
 }
 
 $lAdmin->CheckListMode();
@@ -313,8 +340,12 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
             <td>
                 <select name="filter_active">
                     <option value="NOT_REF">(<?= Loc::getMessage("SALE_COMPANY_ALL"); ?>)</option>
-                    <option value="Y"<? if ($filter_active == "Y") echo " selected" ?>><?= Loc::getMessage("SALE_COMPANY_YES"); ?></option>
-                    <option value="N"<? if ($filter_active == "N") echo " selected" ?>><?= Loc::getMessage("SALE_COMPANY_NO"); ?></option>
+                    <option value="Y"<? if ($filter_active == "Y") echo " selected" ?>><?= Loc::getMessage(
+                            "SALE_COMPANY_YES"
+                        ); ?></option>
+                    <option value="N"<? if ($filter_active == "N") echo " selected" ?>><?= Loc::getMessage(
+                            "SALE_COMPANY_NO"
+                        ); ?></option>
                 </select>
             </td>
         </tr>
@@ -322,21 +353,26 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
             <td><?= Loc::getMessage('SALE_COMPANY_LOCATION'); ?>:</td>
             <td>
                 <div style="width: 100%; margin-left: 12px">
-                    <? $APPLICATION->IncludeComponent("bitrix:sale.location.selector.search"/*.\Bitrix\Sale\Location\Admin\LocationHelper::getWidgetAppearance()*/, "", array(
-                        "ID" => "",
-                        "CODE" => $fields['LOCATION_ID'],
-                        "INPUT_NAME" => "filter_location_id",
-                        "PROVIDE_LINK_BY" => "code",
-                        "SHOW_ADMIN_CONTROLS" => 'Y',
-                        "SELECT_WHEN_SINGLE" => 'N',
-                        "FILTER_BY_SITE" => 'N',
-                        "FILTER_SITE_ID" => '',
-                        "SHOW_DEFAULT_LOCATIONS" => 'N',
-                        "SEARCH_BY_PRIMARY" => 'Y',
+                    <? $APPLICATION->IncludeComponent(
+                        "bitrix:sale.location.selector.search"
+                        /*.\Bitrix\Sale\Location\Admin\LocationHelper::getWidgetAppearance()*/,
+                        "",
+                        array(
+                            "ID" => "",
+                            "CODE" => $fields['LOCATION_ID'],
+                            "INPUT_NAME" => "filter_location_id",
+                            "PROVIDE_LINK_BY" => "code",
+                            "SHOW_ADMIN_CONTROLS" => 'Y',
+                            "SELECT_WHEN_SINGLE" => 'N',
+                            "FILTER_BY_SITE" => 'N',
+                            "FILTER_SITE_ID" => '',
+                            "SHOW_DEFAULT_LOCATIONS" => 'N',
+                            "SEARCH_BY_PRIMARY" => 'Y',
 
-                        "INITIALIZE_BY_GLOBAL_EVENT" => 'onAdminFilterInited', // this allows js logic to be initialized after admin filter
-                        "GLOBAL_EVENT_SCOPE" => 'window'
-                    ),
+                            "INITIALIZE_BY_GLOBAL_EVENT" => 'onAdminFilterInited',
+                            // this allows js logic to be initialized after admin filter
+                            "GLOBAL_EVENT_SCOPE" => 'window'
+                        ),
                         false
                     ); ?>
                 </div>

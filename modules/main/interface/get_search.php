@@ -1,4 +1,5 @@
 <?
+
 define("NO_KEEP_STATISTIC", true);
 define("NO_AGENT_STATISTIC", true);
 define("NOT_CHECK_PERMISSIONS", true);
@@ -38,7 +39,17 @@ if (
 
     $arPhrase = stemming_split($query, LANGUAGE_ID);
 
-    $preg_template = "/(^|[^" . $arStemFunc["pcre_letters"] . "])(" . str_replace("/", "\\/", implode("|", array_map('preg_quote', array_keys($arPhrase)))) . ")/i" . BX_UTF_PCRE_MODIFIER;
+    $preg_template = "/(^|[^" . $arStemFunc["pcre_letters"] . "])(" . str_replace(
+            "/",
+            "\\/",
+            implode(
+                "|",
+                array_map(
+                    'preg_quote',
+                    array_keys($arPhrase)
+                )
+            )
+        ) . ")/i" . BX_UTF_PCRE_MODIFIER;
     $bFound = false;
 
     function GetStrings(&$item, $key, $p)
@@ -57,15 +68,25 @@ if (
                     if (defined("BX_UTF")) {
                         for ($j = $c - 1; $j >= 0; $j--) {
                             $prefix = mb_substr($item["text"], 0, $arMatches[2][$j][1], 'latin1');
-                            $instr = mb_substr($item["text"], $arMatches[2][$j][1], mb_strlen($arMatches[2][$j][0], 'latin1'), 'latin1');
-                            $suffix = mb_substr($item["text"], $arMatches[2][$j][1] + mb_strlen($arMatches[2][$j][0], 'latin1'), mb_strlen($item["text"], 'latin1'), 'latin1');
+                            $instr = mb_substr(
+                                $item["text"],
+                                $arMatches[2][$j][1],
+                                mb_strlen($arMatches[2][$j][0], 'latin1'),
+                                'latin1'
+                            );
+                            $suffix = mb_substr(
+                                $item["text"],
+                                $arMatches[2][$j][1] + mb_strlen($arMatches[2][$j][0], 'latin1'),
+                                mb_strlen($item["text"], 'latin1'),
+                                'latin1'
+                            );
                             $item["text"] = $prefix . "<b>" . $instr . "</b>" . $suffix;
                         }
                     } else {
                         for ($j = $c - 1; $j >= 0; $j--) {
-                            $prefix = substr($item["text"], 0, $arMatches[2][$j][1]);
-                            $instr = substr($item["text"], $arMatches[2][$j][1], strlen($arMatches[2][$j][0]));
-                            $suffix = substr($item["text"], $arMatches[2][$j][1] + strlen($arMatches[2][$j][0]));
+                            $prefix = mb_substr($item["text"], 0, $arMatches[2][$j][1]);
+                            $instr = mb_substr($item["text"], $arMatches[2][$j][1], mb_strlen($arMatches[2][$j][0]));
+                            $suffix = mb_substr($item["text"], $arMatches[2][$j][1] + mb_strlen($arMatches[2][$j][0]));
                             $item["text"] = $prefix . "<b>" . $instr . "</b>" . $suffix;
                         }
                     }
@@ -73,56 +94,71 @@ if (
                 $searchstring .= $item["text"];
             }
 
-            if ($item["title"])
+            if ($item["title"]) {
                 $searchstring .= " " . $item["title"];
+            }
 
-            if ($item["keywords"])
+            if ($item["keywords"]) {
                 $searchstring .= " " . $item["keywords"];
+            }
 
-            if ($item["icon"] == '')
+            if ($item["icon"] == '') {
                 $item["icon"] = $icon;
+            }
 
             if (preg_match_all($preg_template, ToUpper($searchstring), $arMatches, PREG_OFFSET_CAPTURE)) {
                 $ar = Array();
-                foreach ($arMatches[0] as $m)
+                foreach ($arMatches[0] as $m) {
                     $ar[] = trim($m[0], " ,;>");
+                }
                 if (count(array_unique($ar)) == count($arPhrase)) {
-                    $arRes = array("NAME" => $item["text"], "URL" => $item["url"], "TITLE" => $item["title"], "ICON" => $item['icon']);
+                    $arRes = array(
+                        "NAME" => $item["text"],
+                        "URL" => $item["url"],
+                        "TITLE" => $item["title"],
+                        "ICON" => $item['icon']
+                    );
                 }
             }
         }
 
         if (is_array($arRes)) {
-            if ($item['category'] == '')
+            if ($item['category'] == '') {
                 $item['category'] = $category;
+            }
 
             if (!is_array($arResult["CATEGORIES"][$item['category']])) {
                 $arResult["CATEGORIES"][$item['category']] = Array('TITLE' => '', 'ITEMS' => Array());
-                if ($item['category_name'] != '')
+                if ($item['category_name'] != '') {
                     $arResult["CATEGORIES"][$item['category']]['TITLE'] = $item['category_name'];
+                }
             }
             $arResult["CATEGORIES"][$item['category']]["ITEMS"][] = $arRes;
             $bFound = true;
         }
 
-        if (is_array($item["items"]))
+        if (is_array($item["items"])) {
             array_walk($item['items'], 'GetStrings', array($category, $item["icon"]));
+        }
     }
 
-    foreach ($adminMenu->aGlobalMenu as $menu_id => $menu)
+    foreach ($adminMenu->aGlobalMenu as $menu_id => $menu) {
         array_walk($menu['items'], 'GetStrings', array($menu_id, ''));
+    }
 
 
     if ($bFound) {
         ?>
         <table class="adm-search-result">
             <? foreach ($arResult["CATEGORIES"] as $category_id => $arCategory):
-                if (count($arCategory["ITEMS"]) == 0)
+                if (count($arCategory["ITEMS"]) == 0) {
                     continue;
+                }
                 ?>
                 <? foreach ($arCategory["ITEMS"] as $i => $arItem):
-                if ($i > 9)
+                if ($i > 9) {
                     break;
+                }
                 ?>
                 <tr onclick="window.location='<?= CUtil::JSEscape($arItem["URL"]); ?>';">
                     <? if ($i == 0):?>

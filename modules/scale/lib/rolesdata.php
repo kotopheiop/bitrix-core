@@ -16,14 +16,16 @@ class RolesData
      */
     public static function getRole($roleId)
     {
-        if (strlen($roleId) <= 0)
+        if ($roleId == '') {
             throw new \Bitrix\Main\ArgumentNullException("roleId");
+        }
 
         $rolesDefinitions = self::getList();
         $result = array();
 
-        if (isset($rolesDefinitions[$roleId]))
+        if (isset($rolesDefinitions[$roleId])) {
             $result = $rolesDefinitions[$roleId];
+        }
 
         return $result;
     }
@@ -37,18 +39,21 @@ class RolesData
         static $def = null;
 
         if ($def == null) {
-            $filename = \Bitrix\Main\Application::getDocumentRoot() . "/bitrix/modules/scale/include/rolesdefinitions.php";
+            $filename = \Bitrix\Main\Application::getDocumentRoot(
+                ) . "/bitrix/modules/scale/include/rolesdefinitions.php";
             $file = new \Bitrix\Main\IO\File($filename);
 
-            if ($file->isExists())
+            if ($file->isExists()) {
                 require_once($filename);
-            else
+            } else {
                 throw new \Bitrix\Main\IO\FileNotFoundException($filename);
+            }
 
-            if (isset($rolesDefinitions))
+            if (isset($rolesDefinitions)) {
                 $def = $rolesDefinitions;
-            else
+            } else {
                 $def = array();
+            }
         }
 
         return $def;
@@ -61,14 +66,16 @@ class RolesData
      */
     public static function getGraphsCategories($roleId)
     {
-        if (strlen($roleId) <= 0)
+        if ($roleId == '') {
             throw new \Bitrix\Main\ArgumentNullException("roleId");
+        }
 
         $result = array();
         $role = static::getRole($roleId);
 
-        if (isset($role["GRAPH_CATEGORIES"]))
+        if (isset($role["GRAPH_CATEGORIES"])) {
             $result = $role["GRAPH_CATEGORIES"];
+        }
 
         return $result;
     }

@@ -2,6 +2,11 @@
 
 namespace Bitrix\Mail\Helper;
 
+use Bitrix\Mail\Internals\MessageAccessTable;
+use Bitrix\Mail\Internals\MessageClosureTable;
+use Bitrix\Mail\MailboxDirectory;
+use Bitrix\Mail\MailboxTable;
+use Bitrix\Mail\MailMessageUidTable;
 use Bitrix\Main;
 use Bitrix\Main\Security;
 use Bitrix\Mail;
@@ -9,6 +14,13 @@ use Bitrix\Mail;
 class Message
 {
 
+    /**
+     * Adapts a message(result of Mail\MailMessageTable::getList) for output in the public interface.
+     *
+     * @param array &$message (result of Mail\MailMessageTable::getList. Changes the data in a variable!).
+     *
+     * @return array(modified $message).
+     */
     public static function prepare(&$message)
     {
         $message['__email'] = null;
@@ -31,17 +43,20 @@ class Message
 
         if ('' != $message['HEADER']) {
             foreach ($fieldsMap as $field) {
-                if (strlen($message[$field]) == 255) {
+                if (mb_strlen($message[$field]) == 255) {
                     $parsedHeader = \CMailMessage::parseHeader($message['HEADER'], LANG_CHARSET);
 
                     $message['FIELD_FROM'] = $parsedHeader->getHeader('FROM');
                     $message['FIELD_REPLY_TO'] = $parsedHeader->getHeader('REPLY-TO');
                     $message['FIELD_TO'] = $parsedHeader->getHeader('TO');
                     $message['FIELD_CC'] = $parsedHeader->getHeader('CC');
-                    $message['FIELD_BCC'] = join(', ', array_merge(
-                        (array)$parsedHeader->getHeader('X-Original-Rcpt-to'),
-                        (array)$parsedHeader->getHeader('BCC')
-                    ));
+                    $message['FIELD_BCC'] = join(
+                        ', ',
+                        array_merge(
+                            (array)$parsedHeader->getHeader('X-Original-Rcpt-to'),
+                            (array)$parsedHeader->getHeader('BCC')
+                        )
+                    );
 
                     break;
                 }
@@ -98,13 +113,15 @@ class Message
                         'url' => $urlManager->getUrlForShowFile($diskFile, $urlParams),
                         'size' => \CFile::formatSize($diskFile->getSize()),
                         'fileId' => $diskFile->getFileId(),
+                        'objectId' => $diskFile->getId(),
+                        'bytes' => $diskFile->getSize(),
                     );
 
                     if (\Bitrix\Disk\TypeFile::isImage($diskFile)) {
                         $message['__files'][$k]['preview'] = $urlManager->getUrlForShowFile(
                             $diskFile,
                             array_merge(
-                                array('width' => 80, 'height' => 80),
+                                array('width' => 80, 'height' => 80, 'exact' => 'Y'),
                                 $urlParams
                             )
                         );
@@ -128,12 +145,15 @@ class Message
                             'url' => $file['SRC'],
                             'size' => \CFile::formatSize($file['FILE_SIZE']),
                             'fileId' => $file['ID'],
+                            'bytes' => $file['FILE_SIZE'],
                         );
 
                         if (\CFile::isImage($item['FILE_NAME'], $item['CONTENT_TYPE'])) {
                             $preview = \CFile::resizeImageGet(
-                                $file, array('width' => 80, 'height' => 80),
-                                BX_RESIZE_IMAGE_EXACT, false
+                                $file,
+                                array('width' => 80, 'height' => 80),
+                                BX_RESIZE_IMAGE_EXACT,
+                                false
                             );
 
                             if (!empty($preview['src'])) {
@@ -168,25 +188,30 @@ class Message
             $userId = $USER->getId();
         }
 
-        $access = (bool)Mail\MailboxTable::getUserMailbox($message['MAILBOX_ID'], $userId);
+        $access = (bool)MailboxTable::getUserMailbox($message['MAILBOX_ID'], $userId);
 
         $message['__access_level'] = $access ? 'full' : false;
 
         if (!$access && isset($_REQUEST['mail_uf_message_token'])) {
             $token = $signature = '';
-            if (is_string($_REQUEST['mail_uf_message_token']) && strpos($_REQUEST['mail_uf_message_token'], ':') > 0) {
+            if (is_string($_REQUEST['mail_uf_message_token']) && mb_strpos(
+                    $_REQUEST['mail_uf_message_token'],
+                    ':'
+                ) > 0) {
                 list($token, $signature) = explode(':', $_REQUEST['mail_uf_message_token'], 2);
             }
 
-            if (strlen($token) > 0 && strlen($signature) > 0) {
-                $excerpt = Mail\Internals\MessageAccessTable::getList(array(
-                    'select' => array('SECRET', 'MESSAGE_ID'),
-                    'filter' => array(
-                        '=TOKEN' => $token,
-                        '=MAILBOX_ID' => $message['MAILBOX_ID'],
-                    ),
-                    'limit' => 1,
-                ))->fetch();
+            if ($token <> '' && $signature <> '') {
+                $excerpt = MessageAccessTable::getList(
+                    array(
+                        'select' => array('SECRET', 'MESSAGE_ID'),
+                        'filter' => array(
+                            '=TOKEN' => $token,
+                            '=MAILBOX_ID' => $message['MAILBOX_ID'],
+                        ),
+                        'limit' => 1,
+                    )
+                )->fetch();
 
                 if (!empty($excerpt['SECRET'])) {
                     $signer = new Security\Sign\Signer(new Security\Sign\HmacAlgorithm('md5'));
@@ -196,13 +221,15 @@ class Message
 
                         if (!$access) // check parent access
                         {
-                            $access = (bool)Mail\Internals\MessageClosureTable::getList(array(
-                                'select' => array('PARENT_ID'),
-                                'filter' => array(
-                                    '=MESSAGE_ID' => $message['ID'],
-                                    '=PARENT_ID' => $excerpt['MESSAGE_ID'],
-                                ),
-                            ))->fetch();
+                            $access = (bool)MessageClosureTable::getList(
+                                array(
+                                    'select' => array('PARENT_ID'),
+                                    'filter' => array(
+                                        '=MESSAGE_ID' => $message['ID'],
+                                        '=PARENT_ID' => $excerpt['MESSAGE_ID'],
+                                    ),
+                                )
+                            )->fetch();
                         }
                     }
                 }
@@ -219,18 +246,20 @@ class Message
     public static function prepareSearchContent(&$fields)
     {
         // @TODO: filter short words, filter duplicates, str_rot13?
-        return str_rot13(join(
-            ' ',
-            array(
-                $fields['FIELD_FROM'],
-                $fields['FIELD_REPLY_TO'],
-                $fields['FIELD_TO'],
-                $fields['FIELD_CC'],
-                $fields['FIELD_BCC'],
-                $fields['SUBJECT'],
-                $fields['BODY'],
+        return str_rot13(
+            join(
+                ' ',
+                array(
+                    $fields['FIELD_FROM'],
+                    $fields['FIELD_REPLY_TO'],
+                    $fields['FIELD_TO'],
+                    $fields['FIELD_CC'],
+                    $fields['FIELD_BCC'],
+                    $fields['SUBJECT'],
+                    $fields['BODY'],
+                )
             )
-        ));
+        );
     }
 
     public static function prepareSearchString($string)
@@ -250,7 +279,7 @@ class Message
 
     public static function getTotalUnseenForMailboxes($userId)
     {
-        $mailboxes = Mail\MailboxTable::getUserMailboxes($userId);
+        $mailboxes = MailboxTable::getUserMailboxes($userId);
 
         if (empty($mailboxes)) {
             return array();
@@ -265,35 +294,34 @@ class Message
             'LOGIC' => 'OR',
         );
         foreach ($mailboxes as $item) {
+            $dirs = MailboxDirectory::fetchTrashAndSpamHash($item['ID']);
+
             $mailboxFilter[] = array(
                 '=MAILBOX_ID' => $item['ID'],
-                '!@DIR_MD5' => array_map(
-                    'md5',
-                    array_merge(
-                        (array)$item['OPTIONS']['imap'][MessageFolder::TRASH],
-                        (array)$item['OPTIONS']['imap'][MessageFolder::SPAM]
-                    )
-                ),
+                '!@DIR_MD5' => $dirs,
             );
         }
-        $totalUnseen = Mail\MailMessageUidTable::getList(array(
-            'select' => array(
-                'MAILBOX_ID',
-                new \Bitrix\Main\Entity\ExpressionField('TOTAL', 'COUNT(1)'),
-                new \Bitrix\Main\Entity\ExpressionField(
-                    'UNSEEN',
-                    "COUNT(IF(%s IN('N','U'), 1, NULL))",
-                    array('IS_SEEN')
+        $totalUnseen = MailMessageUidTable::getList(
+            array(
+                'select' => array(
+                    'MAILBOX_ID',
+                    new \Bitrix\Main\Entity\ExpressionField('TOTAL', 'COUNT(1)'),
+                    new \Bitrix\Main\Entity\ExpressionField(
+                        'UNSEEN',
+                        "COUNT(IF(%s IN('N','U'), 1, NULL))",
+                        array('IS_SEEN')
+                    ),
                 ),
-            ),
-            'filter' => array(
-                $mailboxFilter,
-                '>MESSAGE_ID' => 0,
-            ),
-            'group' => array(
-                'MAILBOX_ID',
-            ),
-        ))->fetchAll();
+                'filter' => array(
+                    $mailboxFilter,
+                    '>MESSAGE_ID' => 0,
+                    '=DELETE_TIME' => 'IS NULL',
+                ),
+                'group' => array(
+                    'MAILBOX_ID',
+                ),
+            )
+        )->fetchAll();
         $result = [];
         foreach ($totalUnseen as $index => $item) {
             $result[$item['MAILBOX_ID']] = [

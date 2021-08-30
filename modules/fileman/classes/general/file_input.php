@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 class CFileInput
@@ -49,7 +50,7 @@ class CFileInput
         self::$minPreviewWidth = min((isset($showInfo['MIN_SIZE']['W']) ? $showInfo['MIN_SIZE']['W'] : 120), 500);
         self::$minPreviewHeight = min((isset($showInfo['MIN_SIZE']['H']) ? $showInfo['MIN_SIZE']['H'] : 100), 500);
 
-        self::$jsId = 'bx_file_' . strtolower(preg_replace("/[^a-z0-9]/i", "_", $inputName));
+        self::$jsId = 'bx_file_' . mb_strtolower(preg_replace("/[^a-z0-9]/i", "_", $inputName));
     }
 
     /**
@@ -64,8 +65,7 @@ class CFileInput
         $strFileId = "",
         $showInfo = false,
         $inputs = array()
-    )
-    {
+    ) {
         global $USER;
 
         CJSCore::Init('file_input');
@@ -81,22 +81,25 @@ class CFileInput
         //1. Upload from PC
         if (is_array($uploadInput)) {
             self::$bUseUpload = true;
-            if (!array_key_exists("NAME", $uploadInput))
+            if (!array_key_exists("NAME", $uploadInput)) {
                 $uploadInput["NAME"] = $strInputName;
+            }
         }
 
         //2. Select file from medialib
         if (COption::GetOptionString('fileman', "use_medialib", "Y") != "N" && is_array($medialibInput)) {
             self::$bUseMedialib = true;
-            if (!array_key_exists("NAME", $medialibInput))
+            if (!array_key_exists("NAME", $medialibInput)) {
                 $medialibInput["NAME"] = $strInputName;
+            }
         }
 
         //3. Select file from file dialog
         if (is_array($fileDialogInput)) {
             self::$bUseFileDialog = true;
-            if (!array_key_exists("NAME", $fileDialogInput))
+            if (!array_key_exists("NAME", $fileDialogInput)) {
                 $fileDialogInput["NAME"] = $strInputName;
+            }
         }
 
         //4. Select file from cloud
@@ -107,36 +110,49 @@ class CFileInput
             && CCloudStorage::HasActiveBuckets()
         ) {
             self::$bUseCloud = true;
-            if (!array_key_exists("NAME", $cloudInput))
+            if (!array_key_exists("NAME", $cloudInput)) {
                 $cloudInput["NAME"] = $strInputName;
+            }
         }
 
         if ($inputs['description'] !== false) {
             self::$bShowDescInput = true;
-            self::$descInputName = isset($inputs['description']["NAME"]) ? $inputs['description']["NAME"] : self::GetInputName($strInputName, "_descr");
+            self::$descInputName = isset($inputs['description']["NAME"]) ? $inputs['description']["NAME"] : self::GetInputName(
+                $strInputName,
+                "_descr"
+            );
         }
 
         if ($inputs['del'] !== false) {
             self::$bShowDelInput = true;
-            self::$delInputName = isset($inputs['del']["NAME"]) ? $inputs['del']["NAME"] : self::GetInputName($strInputName, "_del");
+            self::$delInputName = isset($inputs['del']["NAME"]) ? $inputs['del']["NAME"] : self::GetInputName(
+                $strInputName,
+                "_del"
+            );
         }
 
         // $arFile - Array with current file or false if it's empty
-        self::$curFileIds = is_array($strFileId) && !array_key_exists("tmp_name", $strFileId) ? $strFileId : array($strFileId);
+        self::$curFileIds = is_array($strFileId) && !array_key_exists(
+            "tmp_name",
+            $strFileId
+        ) ? $strFileId : array($strFileId);
         self::$curFiles = array();
         self::$bFileExists = false;
 
         foreach (self::$curFileIds as $fileId) {
-            if (is_array($fileId))
+            if (is_array($fileId)) {
                 continue;
-            if (strlen($fileId) <= 1 && intVal($fileId) === 0)
+            }
+            if (mb_strlen($fileId) <= 1 && intval($fileId) === 0) {
                 continue;
+            }
 
             self::$bFileExists = true;
             if ($arFile = self::GetFile($fileId)) {
                 $arFile['FILE_NOT_FOUND'] = false;
-                if (self::$bShowDescInput && isset($inputs['description']['VALUE']))
+                if (self::$bShowDescInput && isset($inputs['description']['VALUE'])) {
                     $arFile['DESCRIPTION'] = $inputs['description']['VALUE'];
+                }
             } else {
                 $arFile = array(
                     'FILE_NOT_FOUND' => true,
@@ -147,8 +163,9 @@ class CFileInput
         }
 
         self::$bViewMode = self::IsViewMode();
-        if (self::$bViewMode)
+        if (self::$bViewMode) {
             self::$bShowDelInput = false;
+        }
 
         if (!self::$bViewMode || self::$bFileExists) {
             $inputs = array(
@@ -189,8 +206,7 @@ class CFileInput
         $showInfo = false,
         $maxCount = false,
         $inputs = array()
-    )
-    {
+    ) {
         CJSCore::Init('file_input');
         ob_start();
 
@@ -198,13 +214,21 @@ class CFileInput
         self::Init($showInfo, $inputNameTemplate, $maxCount);
         self::$bMultiple = true;
 
-        $arDescInput = (is_array($inputs['description']) && isset($inputs['description']['VALUES']) && isset($inputs['description']['NAME_TEMPLATE'])) ? $inputs['description'] : false;
+        $arDescInput = (is_array(
+                $inputs['description']
+            ) && isset($inputs['description']['VALUES']) && isset($inputs['description']['NAME_TEMPLATE'])) ? $inputs['description'] : false;
 
         $inputs = array(
             'upload' => $inputs['upload'] === true,
-            'medialib' => $inputs['medialib'] === true && COption::GetOptionString('fileman', "use_medialib", "Y") != "N",
+            'medialib' => $inputs['medialib'] === true && COption::GetOptionString(
+                    'fileman',
+                    "use_medialib",
+                    "Y"
+                ) != "N",
             'file_dialog' => $inputs['file_dialog'] === true,
-            'cloud' => $inputs['cloud'] === true && $USER->CanDoOperation("clouds_browse") && CModule::IncludeModule("clouds") && CCloudStorage::HasActiveBuckets(),
+            'cloud' => $inputs['cloud'] === true && $USER->CanDoOperation("clouds_browse") && CModule::IncludeModule(
+                    "clouds"
+                ) && CCloudStorage::HasActiveBuckets(),
             'del' => $inputs['del'] !== false,
             'description' => $inputs['description'] === true || $arDescInput
         );
@@ -218,19 +242,23 @@ class CFileInput
         self::$inputNameTemplate = $inputNameTemplate;
 
         self::$bViewMode = self::IsViewMode();
-        if (self::$bViewMode)
+        if (self::$bViewMode) {
             self::$bShowDelInput = false;
+        }
 
-        if (self::$bShowDelInput)
+        if (self::$bShowDelInput) {
             self::$delInputName = self::GetInputName($inputNameTemplate, "_del");
+        }
 
         if (self::$bShowDescInput) {
             self::$descInputName = '';
-            if ($arDescInput)
+            if ($arDescInput) {
                 self::$descInputName = $arDescInput['NAME_TEMPLATE'];
+            }
 
-            if (empty(self::$descInputName))
+            if (empty(self::$descInputName)) {
                 self::$descInputName = self::GetInputName($inputNameTemplate, "_descr");
+            }
         }
 
         // $arFile - Array with current file or false if it's empty
@@ -238,8 +266,9 @@ class CFileInput
         self::$bFileExists = false;
 
         foreach ($values as $inputName => $fileId) {
-            if (strlen($fileId) <= 1 && intVal($fileId) === 0)
+            if (mb_strlen($fileId) <= 1 && intval($fileId) === 0) {
                 continue;
+            }
 
             self::$bFileExists = true;
             if ($arFile = self::GetFile($fileId)) {
@@ -249,9 +278,8 @@ class CFileInput
                 $arFile['DESC_NAME'] = self::GetInputName($inputName, '_descr');
 
                 if ($arDescInput) {
-                    list($descName, $descVal) = each($arDescInput['VALUES']);
-                    $arFile['DESC_NAME'] = $descName;
-                    $arFile['DESCRIPTION'] = $descVal;
+                    $arFile['DESC_NAME'] = key($arDescInput['VALUES']);
+                    $arFile['DESCRIPTION'] = current($arDescInput['VALUES']);
                 }
             } else {
                 $arFile = array(
@@ -307,14 +335,17 @@ class CFileInput
         $sImagePath = isset($arFile["PATH"]) ? $arFile["PATH"] : $arFile["SRC"];
         if (
             $arFile["HANDLER_ID"]
-            || (defined("BX_IMG_SERVER") && substr($sImagePath, 0, strlen(BX_IMG_SERVER)) === BX_IMG_SERVER)
+            || (defined("BX_IMG_SERVER") && mb_substr($sImagePath, 0, mb_strlen(BX_IMG_SERVER)) === BX_IMG_SERVER)
             || $io->FileExists($_SERVER["DOCUMENT_ROOT"] . $sImagePath)
         ) {
             $arFile["FORMATED_SIZE"] = CFile::FormatSize($arFile["FILE_SIZE"]);
             $arFile["IS_IMAGE"] = $arFile["WIDTH"] > 0 && $arFile["HEIGHT"] > 0 && self::$showInfo['IMAGE'] != 'N';
 
             //Mantis:#65168
-            if ($arFile["CONTENT_TYPE"] && $arFile["IS_IMAGE"] && strpos($arFile["CONTENT_TYPE"], 'application') !== false) {
+            if ($arFile["CONTENT_TYPE"] && $arFile["IS_IMAGE"] && mb_strpos(
+                    $arFile["CONTENT_TYPE"],
+                    'application'
+                ) !== false) {
                 $arFile["IS_IMAGE"] = false;
             }
 
@@ -331,21 +362,55 @@ class CFileInput
         self::$menuExist = array();
 
         if ($inputs['upload']) {
-            self::$menuNew[] = array("ID" => "upload", "GLOBAL_ICON" => "adm-menu-upload-pc", "TEXT" => GetMessage("ADM_FILE_UPLOAD"), "CLOSE_ON_CLICK" => false);
-            self::$menuExist[] = array("ID" => "upload", "GLOBAL_ICON" => "adm-menu-upload-pc", "TEXT" => GetMessage("ADM_FILE_NEW_UPLOAD"), "CLOSE_ON_CLICK" => false);
+            self::$menuNew[] = array(
+                "ID" => "upload",
+                "GLOBAL_ICON" => "adm-menu-upload-pc",
+                "TEXT" => GetMessage("ADM_FILE_UPLOAD"),
+                "CLOSE_ON_CLICK" => false
+            );
+            self::$menuExist[] = array(
+                "ID" => "upload",
+                "GLOBAL_ICON" => "adm-menu-upload-pc",
+                "TEXT" => GetMessage("ADM_FILE_NEW_UPLOAD"),
+                "CLOSE_ON_CLICK" => false
+            );
         }
         if ($inputs['medialib']) {
-            self::$menuNew[] = array("TEXT" => GetMessage("ADM_FILE_MEDIALIB"), "GLOBAL_ICON" => "adm-menu-upload-medialib", "ONCLICK" => "OpenMedialibDialog" . self::$jsId . "()");
-            self::$menuExist[] = array("TEXT" => GetMessage("ADM_FILE_NEW_MEDIALIB"), "GLOBAL_ICON" => "adm-menu-upload-medialib", "ONCLICK" => "OpenMedialibDialog" . self::$jsId . "()");
+            self::$menuNew[] = array(
+                "TEXT" => GetMessage("ADM_FILE_MEDIALIB"),
+                "GLOBAL_ICON" => "adm-menu-upload-medialib",
+                "ONCLICK" => "OpenMedialibDialog" . self::$jsId . "()"
+            );
+            self::$menuExist[] = array(
+                "TEXT" => GetMessage("ADM_FILE_NEW_MEDIALIB"),
+                "GLOBAL_ICON" => "adm-menu-upload-medialib",
+                "ONCLICK" => "OpenMedialibDialog" . self::$jsId . "()"
+            );
         }
         if ($inputs['file_dialog']) {
-            self::$menuNew[] = array("TEXT" => GetMessage("ADM_FILE_SITE"), "GLOBAL_ICON" => "adm-menu-upload-site", "ONCLICK" => "OpenFileDialog" . self::$jsId . "()");
-            self::$menuExist[] = array("TEXT" => GetMessage("ADM_FILE_NEW_SITE"), "GLOBAL_ICON" => "adm-menu-upload-site", "ONCLICK" => "OpenFileDialog" . self::$jsId . "()");
+            self::$menuNew[] = array(
+                "TEXT" => GetMessage("ADM_FILE_SITE"),
+                "GLOBAL_ICON" => "adm-menu-upload-site",
+                "ONCLICK" => "OpenFileDialog" . self::$jsId . "()"
+            );
+            self::$menuExist[] = array(
+                "TEXT" => GetMessage("ADM_FILE_NEW_SITE"),
+                "GLOBAL_ICON" => "adm-menu-upload-site",
+                "ONCLICK" => "OpenFileDialog" . self::$jsId . "()"
+            );
         }
 
         if ($inputs['cloud']) {
-            self::$menuNew[] = array("TEXT" => GetMessage("ADM_FILE_CLOUD"), "GLOBAL_ICON" => "adm-menu-upload-cloud", "ONCLICK" => "OpenCloudDialog" . self::$jsId . "()");
-            self::$menuExist[] = array("TEXT" => GetMessage("ADM_FILE_NEW_CLOUD"), "GLOBAL_ICON" => "adm-menu-upload-cloud", "ONCLICK" => "OpenCloudDialog" . self::$jsId . "()");
+            self::$menuNew[] = array(
+                "TEXT" => GetMessage("ADM_FILE_CLOUD"),
+                "GLOBAL_ICON" => "adm-menu-upload-cloud",
+                "ONCLICK" => "OpenCloudDialog" . self::$jsId . "()"
+            );
+            self::$menuExist[] = array(
+                "TEXT" => GetMessage("ADM_FILE_NEW_CLOUD"),
+                "GLOBAL_ICON" => "adm-menu-upload-cloud",
+                "ONCLICK" => "OpenCloudDialog" . self::$jsId . "()"
+            );
         }
 
         $arConfig = array(
@@ -370,26 +435,36 @@ class CFileInput
             'viewMode' => self::$bViewMode
         );
 
-        if (self::$bMultiple)
+        if (self::$bMultiple) {
             $arConfig['inputNameTemplate'] = self::$inputNameTemplate;
-        else
+        } else {
             $arConfig['inputs'] = self::$arInputs;
+        }
 
-        if (self::$bUseCloud)
+        if (self::$bUseCloud) {
             $arConfig['cloudDialogPath'] = '/bitrix/admin/clouds_file_search.php?lang=' . LANGUAGE_ID . '&n=';
+        }
 
 
         //Base container
         ?>
         <div class="adm-input-file-control" id="<?= self::$jsId . '_cont' ?>"><?
-        if (!self::$bViewMode)
+        if (!self::$bViewMode) {
             self::DisplayDialogs();
+        }
 
-        if (self::$bFileExists)
-            foreach (self::$curFiles as $ind => $arFile)
+        if (self::$bFileExists) {
+            foreach (self::$curFiles as $ind => $arFile) {
                 self::DisplayFile($arFile, $ind);
+            }
+        }
         ?>
-        <script type="text/javascript">(top.BX.file_input) ? new top.BX.file_input(<?= CUtil::PHPToJSObject($arConfig)?>) : new BX.file_input(<?= CUtil::PHPToJSObject($arConfig)?>)</script>
+        <script type="text/javascript">
+            var topWindow = BX.PageObject.getRootWindow();
+            (topWindow.BX.file_input) ? new topWindow.BX.file_input(<?= CUtil::PHPToJSObject(
+                $arConfig
+            )?>) : new BX.file_input(<?= CUtil::PHPToJSObject($arConfig)?>)
+        </script>
         </div>
         <?/* Used to refresh form content - workaround for IE bug (mantis:37969) */ ?>
         <div id="<?= self::$jsId . '_ie_bogus_container' ?>"><input type="hidden" value=""/></div>
@@ -399,12 +474,14 @@ class CFileInput
     private static function DisplayDialogs()
     {
         if (self::$bUseMedialib) {
-            CMedialib::ShowDialogScript(array(
-                "event" => "OpenMedialibDialog" . self::$jsId,
-                "arResultDest" => array(
-                    "FUNCTION_NAME" => "SetValueFromMedialib" . self::$jsId,
+            CMedialib::ShowDialogScript(
+                array(
+                    "event" => "OpenMedialibDialog" . self::$jsId,
+                    "arResultDest" => array(
+                        "FUNCTION_NAME" => "SetValueFromMedialib" . self::$jsId,
+                    )
                 )
-            ));
+            );
         }
 
         if (self::$bUseFileDialog) {
@@ -436,16 +513,30 @@ class CFileInput
             $sImagePath = isset($arFile["PATH"]) ? $arFile["PATH"] : $arFile["SRC"];
             $descName = isset($arFile['DESC_NAME']) ? $arFile['DESC_NAME'] : self::$descInputName;
 
-            if ($arFile['FORMATED_SIZE'] != '')
-                $hint .= '<span class="adm-input-file-hint-row">' . GetMessage('ADM_FILE_INFO_SIZE') . ':&nbsp;&nbsp;' . $arFile['FORMATED_SIZE'] . '</span>';
+            if ($arFile['FORMATED_SIZE'] != '') {
+                $hint .= '<span class="adm-input-file-hint-row">' . GetMessage(
+                        'ADM_FILE_INFO_SIZE'
+                    ) . ':&nbsp;&nbsp;' . $arFile['FORMATED_SIZE'] . '</span>';
+            }
 
-            if ($arFile['IS_IMAGE'])
-                $hint .= '<span class="adm-input-file-hint-row">' . GetMessage('ADM_FILE_INFO_DIM') . ':&nbsp;&nbsp;' . $arFile['WIDTH'] . 'x' . $arFile['HEIGHT'] . '</span>';
-            if ($sImagePath != '')
-                $hint .= '<span class="adm-input-file-hint-row">' . GetMessage('ADM_FILE_INFO_LINK') . ':&nbsp;&nbsp;<a href="' . CHTTP::urnEncode($sImagePath, "UTF-8") . '">' . htmlspecialcharsbx($sImagePath) . '</a></span>';
+            if ($arFile['IS_IMAGE']) {
+                $hint .= '<span class="adm-input-file-hint-row">' . GetMessage(
+                        'ADM_FILE_INFO_DIM'
+                    ) . ':&nbsp;&nbsp;' . $arFile['WIDTH'] . 'x' . $arFile['HEIGHT'] . '</span>';
+            }
+            if ($sImagePath != '') {
+                $hint .= '<span class="adm-input-file-hint-row">' . GetMessage(
+                        'ADM_FILE_INFO_LINK'
+                    ) . ':&nbsp;&nbsp;<a href="' . CHTTP::urnEncode($sImagePath, "UTF-8") . '">' . htmlspecialcharsbx(
+                        $sImagePath
+                    ) . '</a></span>';
+            }
 
-            if (!self::$bShowDescInput && $arFile['DESCRIPTION'] != "")
-                $hint .= '<span class="adm-input-file-hint-row">' . GetMessage('ADM_FILE_DESCRIPTION') . ':&nbsp;&nbsp;' . htmlspecialcharsbx($arFile['DESCRIPTION']) . '</span>';
+            if (!self::$bShowDescInput && $arFile['DESCRIPTION'] != "") {
+                $hint .= '<span class="adm-input-file-hint-row">' . GetMessage(
+                        'ADM_FILE_DESCRIPTION'
+                    ) . ':&nbsp;&nbsp;' . htmlspecialcharsbx($arFile['DESCRIPTION']) . '</span>';
+            }
         }
         ?><span class="adm-input-file-exist-cont" id="<?= self::$jsId ?>_file_cont_<?= $ind ?>">
         <div class="adm-input-file-ex-wrap<? if (self::$bMultiple) {
@@ -459,18 +550,30 @@ class CFileInput
 			</span>
             <?
         } elseif ($arFile['IS_IMAGE']) {
-            $file = CFile::ResizeImageGet($arFile['ID'], array('width' => self::$maxPreviewWidth, 'height' => self::$maxPreviewHeight), BX_RESIZE_IMAGE_PROPORTIONAL, true);
+            $file = CFile::ResizeImageGet(
+                $arFile['ID'],
+                array('width' => self::$maxPreviewWidth, 'height' => self::$maxPreviewHeight),
+                BX_RESIZE_IMAGE_PROPORTIONAL,
+                true
+            );
             ?>
             <span id="<?= $hintId ?>" class="adm-input-file-preview" style="<? if (self::$minPreviewWidth > 0) {
                 echo 'min-width: ' . self::$minPreviewWidth . 'px;';
             } ?> <? if (self::$minPreviewHeight > 0) {
                 echo 'min-height:' . self::$minPreviewHeight . 'px;';
             } ?>">
-				<?= CFile::Show2Images($file['src'], $arFile['SRC'], self::$maxPreviewWidth, self::$maxPreviewHeight); ?><?
+				<?= CFile::Show2Images(
+                    $file['src'],
+                    $arFile['SRC'],
+                    self::$maxPreviewWidth,
+                    self::$maxPreviewHeight
+                ); ?><?
                 if (!self::IsViewMode() || self::$bShowDelInput) {
                     ?>
                     <div id="<?= self::$jsId . '_file_del_lbl_' . $ind ?>" class="adm-input-file-del-lbl"><?= GetMessage
-                ('ADM_FILE_DELETED_TITLE') ?></div><?
+                (
+                    'ADM_FILE_DELETED_TITLE'
+                ) ?></div><?
                 }
                 ?></span>
             <?
@@ -485,8 +588,8 @@ class CFileInput
         if ($hint != '') {
             ?>
             <script type="text/javascript">
-			new top.BX.CHint({
-                parent: top.BX("<?= $hintId?>"),
+			new (BX.PageObject.getRootWindow()).BX.CHint({
+                parent: (BX.PageObject.getRootWindow()).BX("<?= $hintId?>"),
                 show_timeout: 10,
                 hide_timeout: 200,
                 dx: 2,
@@ -498,8 +601,9 @@ class CFileInput
             <?
         }
 
-        if (!self::$bViewMode)
+        if (!self::$bViewMode) {
             self::ShowOpenerMenuHtml(self::$jsId . '_menu_' . $ind, $ind);
+        }
 
         if (!$bNotFound && self::$bShowDescInput) {
             ?>
@@ -530,10 +634,11 @@ class CFileInput
 
     private static function GetInputName($inputName, $type = "")
     {
-        if ($type == "")
+        if ($type == "") {
             return $inputName;
-        $p = strpos($inputName, "[");
-        return ($p > 0) ? substr($inputName, 0, $p) . $type . substr($inputName, $p) : $inputName . $type;
+        }
+        $p = mb_strpos($inputName, "[");
+        return ($p > 0) ? mb_substr($inputName, 0, $p) . $type . mb_substr($inputName, $p) : $inputName . $type;
     }
 
     private static function IsViewMode()

@@ -64,25 +64,27 @@ class User extends Base
 
             if (in_array($uf['USER_TYPE']['USER_TYPE_ID'], ['enumeration', 'iblock_section', 'iblock_element'])) {
                 $type = 'list';
-            } else if ($uf['USER_TYPE']['USER_TYPE_ID'] == 'boolean') {
-                $type = 'list';
+            } else {
+                if ($uf['USER_TYPE']['USER_TYPE_ID'] == 'boolean') {
+                    $type = 'list';
 
-                //Default value must be placed at first position.
-                $defaultValue = (
-                isset($uf['SETTINGS']['DEFAULT_VALUE'])
-                    ? (int)$uf['SETTINGS']['DEFAULT_VALUE']
-                    : 0
-                );
-            } elseif ($uf['USER_TYPE']['BASE_TYPE'] == 'datetime') {
-                $type = 'date';
-            } elseif (
-                $uf['USER_TYPE']['USER_TYPE_ID'] == 'crm_status'
-                && Loader::includeModule('crm')
-            ) {
-                $type = 'list';
-            } elseif (substr($uf['USER_TYPE']['USER_TYPE_ID'], 0, 5) === 'rest_') {
-                // skip REST type fields here
-                continue;
+                    //Default value must be placed at first position.
+                    $defaultValue = (
+                    isset($uf['SETTINGS']['DEFAULT_VALUE'])
+                        ? (int)$uf['SETTINGS']['DEFAULT_VALUE']
+                        : 0
+                    );
+                } elseif ($uf['USER_TYPE']['BASE_TYPE'] == 'datetime') {
+                    $type = 'date';
+                } elseif (
+                    $uf['USER_TYPE']['USER_TYPE_ID'] == 'crm_status'
+                    && Loader::includeModule('crm')
+                ) {
+                    $type = 'list';
+                } elseif (mb_substr($uf['USER_TYPE']['USER_TYPE_ID'], 0, 5) === 'rest_') {
+                    // skip REST type fields here
+                    continue;
+                }
             }
 
             if ($type === 'string') {
@@ -97,7 +99,7 @@ class User extends Base
 
             $gridHeaders[$FIELD_NAME] = array(
                 'id' => $FIELD_NAME,
-                'name' => htmlspecialcharsbx(strlen($uf['LIST_COLUMN_LABEL']) > 0 ? $uf['LIST_COLUMN_LABEL'] : $FIELD_NAME),
+                'name' => htmlspecialcharsbx($uf['LIST_COLUMN_LABEL'] <> '' ? $uf['LIST_COLUMN_LABEL'] : $FIELD_NAME),
                 'sort' => $uf['MULTIPLE'] == 'N' ? $FIELD_NAME : false,
                 'default' => false,
                 'editable' => false,
@@ -112,7 +114,6 @@ class User extends Base
                 );
             }
         }
-
     }
 
 }

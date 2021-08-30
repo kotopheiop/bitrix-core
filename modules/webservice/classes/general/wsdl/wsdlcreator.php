@@ -25,13 +25,18 @@ class CWSDLCreator
     var $targetNamespace;
     var $classes = array();
 
-    function CWSDLCreator($serviceName, $serviceUrl = "", $targetNamespace = "")
+    public function __construct($serviceName, $serviceUrl = "", $targetNamespace = "")
     {
         global $APPLICATION;
 
         $serviceName = str_replace(" ", "_", $serviceName);
-        if (!$serviceUrl) $serviceUrl = ($APPLICATION->IsHTTPS() ? "https" : "http") . "://" . $_SERVER["HTTP_HOST"] . $APPLICATION->GetCurPage();
-        if (!$targetNamespace) $targetNamespace = ($APPLICATION->IsHTTPS() ? "https" : "http") . "://" . $_SERVER["HTTP_HOST"] . "/";
+        if (!$serviceUrl) {
+            $serviceUrl = ($APPLICATION->IsHTTPS(
+                ) ? "https" : "http") . "://" . $_SERVER["HTTP_HOST"] . $APPLICATION->GetCurPage();
+        }
+        if (!$targetNamespace) {
+            $targetNamespace = ($APPLICATION->IsHTTPS() ? "https" : "http") . "://" . $_SERVER["HTTP_HOST"] . "/";
+        }
 
         $this->WSDLXML = new CXMLCreator("wsdl:definitions");
         $this->WSDLXML->setAttribute("name", $serviceName);
@@ -59,22 +64,28 @@ class CWSDLCreator
     function AddComplexDataType($name, $vars)
     {
         global $xsd_simple_type;
-        if (isset($this->typensVars[$name]))
+        if (isset($this->typensVars[$name])) {
             return true;
+        }
 
-        if (!count($vars)) return false;
+        if (!count($vars)) {
+            return false;
+        }
 
         $this->typensDefined[$name] = $name;
         $this->typensXSDType[$name] = "type";
 
         foreach ($vars as $pname => $param) {
-            if (!is_array($param) or !isset($param["varType"])) continue;
+            if (!is_array($param) or !isset($param["varType"])) {
+                continue;
+            }
             $this->typensVars[$name][$pname] = $param;
             if (!isset($xsd_simple_type[$param["varType"]])) {
-                if (isset($param["arrType"]))
+                if (isset($param["arrType"])) {
                     $this->AddArrayType($pname, $param);
-                else
+                } else {
                     $this->AddComplexDataType($pname, $param);
+                }
             }
         }
 
@@ -84,14 +95,17 @@ class CWSDLCreator
     function AddArrayType($pname, $param)
     {
         if (isset($param["varType"])
-            and isset($this->typensVars[$param["varType"]]))
+            and isset($this->typensVars[$param["varType"]])) {
             return true;
+        }
 
         if (isset($param["arrType"])) {
             $arrType = $param["arrType"];
 
             $maxOccurs = "unbounded";
-            if (isset($param["maxOccursA"])) $maxOccurs = $param["maxOccursA"];
+            if (isset($param["maxOccursA"])) {
+                $maxOccurs = $param["maxOccursA"];
+            }
 
             $this->typensXSDType[$param["varType"]] = "type";
             $this->typensDefined[$param["varType"]] = $param["varType"];
@@ -99,12 +113,14 @@ class CWSDLCreator
                 $param["varType"] . "El" =>
                     array(
                         "varType" => $param["arrType"],
-                        "maxOccurs" => $maxOccurs)
+                        "maxOccurs" => $maxOccurs
+                    )
             );
 
-            if (isset($param["nillableA"]))
+            if (isset($param["nillableA"])) {
                 $this->typensVars[$param["varType"]][$param["varType"] . "El"]["nillable"] =
                     $param["nillableA"];
+            }
 
             return true;
         }
@@ -264,7 +280,9 @@ class CWSDLCreator
     function createWSDL()
     {
         global $xsd_simple_type;
-        if (!$this->classes or !count($this->classes)) return 0;
+        if (!$this->classes or !count($this->classes)) {
+            return 0;
+        }
 
         foreach ($this->classes as $class => $methods) {
             $pbs = array();
@@ -295,41 +313,46 @@ class CWSDLCreator
             $xsdSchema->setAttribute("targetNamespace", $this->targetNamespace);
             foreach ($this->typensDefined as $typensDefined) {
                 $xsdtype = "element";
-                if (isset($this->typensXSDType[$typensDefined])) $xsdtype = "type";
+                if (isset($this->typensXSDType[$typensDefined])) {
+                    $xsdtype = "type";
+                }
 
                 if ($xsdtype == "element") {
                     $elroot = new CXMLCreator("xsd:element");
                     $elroot->setAttribute("name", $typensDefined);
                 }
                 $complexType = new CXMLCreator("xsd:complexType");
-                if ($xsdtype == "type")
+                if ($xsdtype == "type") {
                     $complexType->setAttribute("name", $typensDefined);
+                }
 
                 $all = new CXMLCreator("xsd:sequence");
                 if (isset($this->typensVars[$typensDefined])
                     and is_array($this->typensVars[$typensDefined])) {
-
                     //commented by Sigurd;
 
                     //ksort($this->typensVars[$typensDefined]);
                     foreach ($this->typensVars[$typensDefined] as $varName => $varType) {
-
                         // check minOccurs|maxOccurs here!
 
                         $element = new CXMLCreator("xsd:element");
                         $element->setAttribute("minOccurs", 0);
 
-                        if (is_array($varType) and isset($varType["maxOccurs"]))
+                        if (is_array($varType) and isset($varType["maxOccurs"])) {
                             $element->setAttribute("maxOccurs", $varType["maxOccurs"]);
-                        else
+                        } else {
                             $element->setAttribute("maxOccurs", 1);
+                        }
 
-                        if (is_array($varType) and isset($varType["nillable"]))
+                        if (is_array($varType) and isset($varType["nillable"])) {
                             $element->setAttribute("nillable", $varType["nillable"]);
+                        }
 
                         $element->setAttribute("name", $varName);
 
-                        if (is_array($varType)) $varType = $varType["varType"];
+                        if (is_array($varType)) {
+                            $varType = $varType["varType"];
+                        }
 
                         if ($varType == 'any') {
                             $any = new CXMLCreator('xsd:any');
@@ -385,7 +408,6 @@ class CWSDLCreator
         $this->WSDL = "<?xml version='1.0' encoding='UTF-8'?>\n";
         //$this->WSDL .= "<!-- WSDL file generated by BITRIX WSDLCreator (http://www.bitrix.ru) -->\n";
         $this->WSDL .= $this->WSDLXML->getXML();
-
     }
 
     function getWSDL()
@@ -415,7 +437,12 @@ class CWSDLCreator
         header("Content-Type: application/force-download");
         header("Content-Disposition: attachment; filename=" . $this->name . ".wsdl");
         header("Accept-Ranges: bytes");
-        header("Content-Length: " . (defined('BX_UTF') && BX_UTF == 1 && function_exists('mb_strlen') ? mb_strlen($this->WSDL, 'latin1') : strlen($this->WSDL)));
+        header(
+            "Content-Length: " . (defined('BX_UTF') && BX_UTF == 1 && function_exists('mb_strlen') ? mb_strlen(
+                $this->WSDL,
+                'latin1'
+            ) : mb_strlen($this->WSDL))
+        );
         $this->printWSDL();
         die();
     }

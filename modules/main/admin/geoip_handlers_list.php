@@ -1,4 +1,5 @@
 <?
+
 /**
  * @global CUser $USER
  * @global CMain $APPLICATION
@@ -10,18 +11,21 @@ use \Bitrix\Main\Service\GeoIp,
 
 Loc::loadMessages(__FILE__);
 
-if (!$USER->CanDoOperation('view_other_settings'))
+if (!$USER->CanDoOperation('view_other_settings')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $isAdmin = $USER->CanDoOperation('edit_other_settings');
 
 $sTableID = "tbl_geoip_handlers";
 $oSort = new CAdminSorting($sTableID, "SORT", "ASC");
 
-if (!isset($by))
+if (!isset($by)) {
     $by = 'SORT';
-if (!isset($order))
+}
+if (!isset($order)) {
     $order = 'ASC';
+}
 
 $lAdmin = new CAdminList($sTableID, $oSort);
 $backUrl = urlencode($APPLICATION->GetCurPageParam());
@@ -31,15 +35,17 @@ if ($isAdmin) {
         foreach ($ids as $id) {
             $id = intval($id);
 
-            if ($id <= 0)
+            if ($id <= 0) {
                 continue;
+            }
 
             switch ($_REQUEST['action']) {
                 case "delete":
                     $res = GeoIp\HandlerTable::delete($id);
 
-                    if (!$res->isSuccess())
+                    if (!$res->isSuccess()) {
                         $lAdmin->AddGroupError(implode("\n<br>", $res->getErrorMessages()), $id);
+                    }
 
                     break;
             }
@@ -103,13 +109,20 @@ foreach ($handlers as $fields) {
             "ICON" => "edit",
             "DEFAULT" => true,
             "TEXT" => Loc::getMessage('GEOIP_LIST_EDIT'),
-            "ACTION" => $lAdmin->ActionRedirect("geoip_handler_edit.php?lang=" . LANG . "&ID=" . $fields['ID'] . "&CLASS_NAME=" . urlencode($fields['CLASS_NAME']))
+            "ACTION" => $lAdmin->ActionRedirect(
+                "geoip_handler_edit.php?lang=" . LANG . "&ID=" . $fields['ID'] . "&CLASS_NAME=" . urlencode(
+                    $fields['CLASS_NAME']
+                )
+            )
         );
 
         $arActions[] = array(
             "ICON" => "delete",
             "TEXT" => Loc::getMessage('GEOIP_LIST_DELETE'),
-            "ACTION" => "if(confirm('" . Loc::getMessage('GEOIP_LIST_DELETE_CONFIRM') . "')) " . $lAdmin->ActionDoGroup($fields['ID'], "delete")
+            "ACTION" => "if(confirm('" . Loc::getMessage('GEOIP_LIST_DELETE_CONFIRM') . "')) " . $lAdmin->ActionDoGroup(
+                    $fields['ID'],
+                    "delete"
+                )
         );
 
         $row->AddActions($arActions);
@@ -124,12 +137,15 @@ if ($isAdmin) {
     foreach ($recordlessHandlers as $className) {
         $handler = GeoIp\Manager::getHandlerByClassName($className);
 
-        if (!$handler)
+        if (!$handler) {
             continue;
+        }
 
         $menu[] = array(
             "TEXT" => $handler->getTitle(),
-            "LINK" => "geoip_handler_edit.php?lang=" . LANG . "&CLASS_NAME=" . urlencode($className) . "&back_url=" . $backUrl
+            "LINK" => "geoip_handler_edit.php?lang=" . LANG . "&CLASS_NAME=" . urlencode(
+                    $className
+                ) . "&back_url=" . $backUrl
         );
     }
 

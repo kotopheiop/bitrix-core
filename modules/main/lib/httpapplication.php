@@ -9,10 +9,13 @@
 namespace Bitrix\Main;
 
 use Bitrix\Main\Config\Configuration;
-use Bitrix\Main\Engine\Binder;
+use Bitrix\Main\Engine\AutoWire;
 use Bitrix\Main\Engine\Controller;
+use Bitrix\Main\Engine\ControllerBuilder;
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Engine\Response\AjaxJson;
 use Bitrix\Main\Engine\Router;
+use Bitrix\Main\Engine\JsonPayload;
 use Bitrix\Main\UI\PageNavigation;
 
 /**
@@ -47,7 +50,7 @@ class HttpApplication extends Application
             $params["cookie"]
         );
 
-        $response = new HttpResponse($context);
+        $response = new HttpResponse();
 
         $context->initialize($request, $response, $server, array('env' => $params["env"]));
 
@@ -64,7 +67,6 @@ class HttpApplication extends Application
      */
     public function start()
     {
-        //register_shutdown_function(array($this, "finish"));
     }
 
     /**
@@ -73,7 +75,6 @@ class HttpApplication extends Application
      */
     public function finish()
     {
-        //$this->managedCache->finalize();
     }
 
     private function getSourceParametersList()
@@ -98,73 +99,125 @@ class HttpApplication extends Application
     public function run()
     {
         try {
-            $e = null;
-            $result = null;
-            $errorCollection = new ErrorCollection();
-
             $router = new Router($this->context->getRequest());
 
             /** @var Controller $controller */
             /** @var string $actionName */
-            list($controller, $actionName) = $router->getControllerAndAction();
+            [$controller, $actionName] = $router->getControllerAndAction();
             if (!$controller) {
                 throw new SystemException('Could not find controller for the request');
             }
 
+            $this->runController($controller, $actionName);
+        } catch (\Throwable $e) {
+            $errorCollection = new ErrorCollection();
+
+            $this->processRunError($e, $errorCollection);
+            $this->finalizeControllerResult($controller ?? null, null, $errorCollection);
+        }
+    }
+
+    /**
+     * @param Controller|string $controller
+     * @param string $action
+     * @return void
+     */
+    final public function runController($controller, $action): void
+    {
+        $result = null;
+        $errorCollection = new ErrorCollection();
+
+        try {
+            if (is_string($controller)) {
+                $controller = ControllerBuilder::build(
+                    $controller,
+                    [
+                        'scope' => Controller::SCOPE_AJAX,
+                        'currentUser' => CurrentUser::get(),
+                    ]
+                );
+            }
+
             $this->registerAutoWirings();
 
-            $result = $controller->run($actionName, $this->getSourceParametersList());
+            $result = $controller->run($action, $this->getSourceParametersList());
             $errorCollection->add($controller->getErrors());
-        } catch (\Exception $e) {
-            $errorCollection[] = new Error($e->getMessage(), $e->getCode());
-        } catch (\Error $e) {
-            //todo add work with debug mode to show extend errors and exceptions
-            $errorCollection[] = new Error($e->getMessage(), $e->getCode());
+        } catch (\Throwable $e) {
+            $this->processRunError($e, $errorCollection);
         } finally {
-            $exceptionHandling = Configuration::getValue('exception_handling');
-            if ($e && !empty($exceptionHandling['debug'])) {
-                $errorCollection[] = new Error(Diag\ExceptionHandlerFormatter::format($e));
-                if ($e->getPrevious()) {
-                    $errorCollection[] = new Error(Diag\ExceptionHandlerFormatter::format($e->getPrevious()));
-                }
+            $this->finalizeControllerResult($controller, $result, $errorCollection);
+        }
+    }
+
+    /**
+     * @param Controller|null $controller
+     * @param HttpResponse|null $result
+     * @param ErrorCollection $errorCollection
+     */
+    private function finalizeControllerResult($controller, $result, ErrorCollection $errorCollection): void
+    {
+        $response = $this->buildResponse($result, $errorCollection);
+        $response = $this->context->getResponse()->copyHeadersTo($response);
+
+        if ($controller) {
+            $controller->finalizeResponse($response);
+        }
+
+        $this->context->setResponse($response);
+
+        $response->send();
+
+        //todo exit code in Response?
+        $this->terminate(0);
+    }
+
+    private function processRunError(\Throwable $e, ErrorCollection $errorCollection): void
+    {
+        $exceptionHandler = $this->getExceptionHandler();
+        $exceptionHandler->writeToLog($e);
+
+        $errorCollection[] = new Error($e->getMessage(), $e->getCode());
+        $exceptionHandling = Configuration::getValue('exception_handling');
+        if (!empty($exceptionHandling['debug'])) {
+            $errorCollection[] = new Error(Diag\ExceptionHandlerFormatter::format($e));
+            if ($e->getPrevious()) {
+                $errorCollection[] = new Error(Diag\ExceptionHandlerFormatter::format($e->getPrevious()));
             }
-
-            if ($e instanceof \Exception || $e instanceof \Error) {
-                $exceptionHandler = $this->getExceptionHandler();
-                $exceptionHandler->writeToLog($e);
-            }
-
-            $response = $this->buildResponse($result, $errorCollection);
-            $this->clonePreviousHeadersAndCookies($this->context->getResponse(), $response);
-            if (isset($controller)) {
-                $controller->finalizeResponse($response);
-            }
-
-            $this->context->setResponse($response);
-
-            global $APPLICATION;
-            $APPLICATION->restartBuffer();
-
-            $response->send();
-
-            //todo exit code in Response?
-            $this->terminate(0);
         }
     }
 
     private function registerAutoWirings()
     {
-        /** @see \Bitrix\Main\UI\PageNavigation */
-        Binder::registerParameter(
-            '\\Bitrix\\Main\\UI\\PageNavigation',
-            function () {
-                $pageNavigation = new PageNavigation('nav');
-                $pageNavigation
-                    ->setPageSizes(range(1, 50))
-                    ->initFromUri();
+        AutoWire\Binder::registerGlobalAutoWiredParameter(
+            new AutoWire\Parameter(
+                PageNavigation::class,
+                static function () {
+                    $pageNavigation = new PageNavigation('nav');
+                    $pageNavigation
+                        ->setPageSizes(range(1, 50))
+                        ->initFromUri();
 
-                return $pageNavigation;
-            }
+                    return $pageNavigation;
+                }
+            )
+        );
+
+        AutoWire\Binder::registerGlobalAutoWiredParameter(
+            new AutoWire\Parameter(
+                JsonPayload::class,
+                static function () {
+                    return new JsonPayload();
+                }
+            )
+        );
+
+        AutoWire\Binder::registerGlobalAutoWiredParameter(
+            new AutoWire\Parameter(
+                CurrentUser::class,
+                static function () {
+                    return CurrentUser::get();
+                }
+            )
         );
     }
 
@@ -194,43 +247,5 @@ class HttpApplication extends Application
         }
 
         return new AjaxJson($actionResult);
-    }
-
-    private function clonePreviousHeadersAndCookies(HttpResponse $previousResponse, HttpResponse $response)
-    {
-        $httpHeaders = $response->getHeaders();
-
-        $status = $response->getStatus();
-        $previousStatus = $previousResponse->getStatus();
-        foreach ($previousResponse->getHeaders() as $headerName => $values) {
-            if ($this->shouldIgnoreHeaderToClone($headerName)) {
-                continue;
-            }
-
-            if ($status && $headerName === $previousStatus) {
-                continue;
-            }
-
-            if ($httpHeaders->get($headerName)) {
-                continue;
-            }
-
-            $httpHeaders->add($headerName, $values);
-        }
-
-        foreach ($previousResponse->getCookies() as $cookie) {
-            $response->addCookie($cookie, false);
-        }
-
-        return $response;
-    }
-
-    private function shouldIgnoreHeaderToClone($headerName)
-    {
-        return in_array(strtolower($headerName), [
-            'content-encoding',
-            'content-length',
-            'content-type',
-        ]);
     }
 }

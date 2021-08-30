@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Bitrix\Translate;
 
@@ -9,7 +9,7 @@ use Bitrix\Main;
  */
 trait Error
 {
-    /** @var  Main\ErrorCollection */
+    /** @var Main\ErrorCollection */
     protected $errorCollection;
 
     /**
@@ -19,7 +19,7 @@ trait Error
      *
      * @return $this
      */
-    final public function addError(Main\Error $error)
+    final public function addError(Main\Error $error): self
     {
         if (!$this->errorCollection instanceof Main\ErrorCollection) {
             $this->errorCollection = new Main\ErrorCollection;
@@ -37,7 +37,7 @@ trait Error
      *
      * @return $this
      */
-    final public function addErrors(array $errors)
+    final public function addErrors(array $errors): self
     {
         if (!$this->errorCollection instanceof Main\ErrorCollection) {
             $this->errorCollection = new Main\ErrorCollection;
@@ -53,7 +53,7 @@ trait Error
      *
      * @return Main\Error[]
      */
-    final public function getErrors()
+    final public function getErrors(): array
     {
         if (!$this->errorCollection instanceof Main\ErrorCollection) {
             return array();
@@ -65,11 +65,11 @@ trait Error
     /**
      * Getting once error with the necessary code.
      *
-     * @param string $code Code of error.
+     * @param string|int $code Code of error.
      *
      * @return Main\Error|null
      */
-    final public function getErrorByCode($code)
+    final public function getErrorByCode($code): ?Main\Error
     {
         if (!$this->errorCollection instanceof Main\ErrorCollection) {
             return null;
@@ -83,7 +83,7 @@ trait Error
      *
      * @return Main\Error|null
      */
-    final public function getLastError()
+    final public function getLastError(): ?Main\Error
     {
         if (!$this->errorCollection instanceof Main\ErrorCollection) {
             return null;
@@ -93,6 +93,7 @@ trait Error
         }
 
         $offset = $this->errorCollection->count() - 1;
+
         return $this->errorCollection->offsetGet($offset);
     }
 
@@ -101,7 +102,7 @@ trait Error
      *
      * @return Main\Error|null
      */
-    final public function getFirstError()
+    final public function getFirstError(): ?Main\Error
     {
         if (!$this->errorCollection instanceof Main\ErrorCollection) {
             return null;
@@ -118,7 +119,7 @@ trait Error
      *
      * @return boolean
      */
-    final public function hasErrors()
+    final public function hasErrors(): bool
     {
         if (!$this->errorCollection instanceof Main\ErrorCollection) {
             return false;
@@ -133,7 +134,7 @@ trait Error
      *
      * @return boolean
      */
-    final public function hasError($code)
+    final public function hasError($code): bool
     {
         if (
             !$this->errorCollection instanceof Main\ErrorCollection ||

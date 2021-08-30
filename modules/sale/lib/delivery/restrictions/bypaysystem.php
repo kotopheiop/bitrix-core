@@ -33,16 +33,19 @@ class ByPaySystem extends Base
 
     public static function check($paySystemIds, array $restrictionParams, $deliveryId = 0)
     {
-        if (intval($deliveryId) <= 0)
+        if (intval($deliveryId) <= 0) {
             return true;
+        }
 
-        if (empty($paySystemIds))
+        if (empty($paySystemIds)) {
             return true;
+        }
 
         $paySystems = self::getPaySystemsByDeliveryId($deliveryId);
 
-        if (empty($paySystems))
+        if (empty($paySystems)) {
             return true;
+        }
 
         $diff = array_diff($paySystemIds, $paySystems);
 
@@ -64,14 +67,16 @@ class ByPaySystem extends Base
             $order = $entity;
         }
 
-        if (!$order)
+        if (!$order) {
             return $result;
+        }
 
         /** @var \Bitrix\Sale\Payment $payment */
         foreach ($order->getPaymentCollection() as $payment) {
             $paySystemId = $payment->getPaymentSystemId();
-            if ($paySystemId)
+            if ($paySystemId) {
                 $result[] = $paySystemId;
+            }
         }
 
         return $result;
@@ -81,8 +86,9 @@ class ByPaySystem extends Base
     {
         static $result = null;
 
-        if ($result !== null)
+        if ($result !== null) {
             return $result;
+        }
 
         $result = array();
 
@@ -95,7 +101,9 @@ class ByPaySystem extends Base
         );
 
         while ($arPayType = $dbResultList->Fetch()) {
-            $name = (strlen($arPayType["LID"]) > 0) ? htmlspecialcharsbx($arPayType["NAME"]) . " (" . $arPayType["LID"] . ")" : htmlspecialcharsbx($arPayType["NAME"]);
+            $name = ($arPayType["LID"] <> '') ? htmlspecialcharsbx(
+                    $arPayType["NAME"]
+                ) . " (" . $arPayType["LID"] . ")" : htmlspecialcharsbx($arPayType["NAME"]);
             $result[$arPayType["ID"]] = $name;
         }
 
@@ -118,17 +126,23 @@ class ByPaySystem extends Base
 
     protected static function getPaySystemsByDeliveryId($deliveryId = 0)
     {
-        if ($deliveryId == 0)
+        if ($deliveryId == 0) {
             return array();
+        }
 
-        $result = DeliveryPaySystemTable::getLinks($deliveryId, DeliveryPaySystemTable::ENTITY_TYPE_DELIVERY, self::$preparedData);
+        $result = DeliveryPaySystemTable::getLinks(
+            $deliveryId,
+            DeliveryPaySystemTable::ENTITY_TYPE_DELIVERY,
+            self::$preparedData
+        );
         return $result;
     }
 
     protected static function prepareParamsForSaving(array $params = array(), $deliveryId = 0)
     {
-        if (intval($deliveryId) <= 0)
+        if (intval($deliveryId) <= 0) {
             return $params;
+        }
 
         if (isset($params["PAY_SYSTEMS"]) && is_array($params["PAY_SYSTEMS"])) {
             DeliveryPaySystemTable::setLinks(
@@ -159,8 +173,13 @@ class ByPaySystem extends Base
     {
         $result = array();
 
-        if (intval($deliveryId > 0))
-            $result = DeliveryPaySystemTable::getLinks($deliveryId, DeliveryPaySystemTable::ENTITY_TYPE_DELIVERY, array());
+        if (intval($deliveryId > 0)) {
+            $result = DeliveryPaySystemTable::getLinks(
+                $deliveryId,
+                DeliveryPaySystemTable::ENTITY_TYPE_DELIVERY,
+                array()
+            );
+        }
 
         return array("PAY_SYSTEMS" => $result);
     }
@@ -179,9 +198,13 @@ class ByPaySystem extends Base
 
     public static function prepareData(array $deliveryIds)
     {
-        if (empty($deliveryIds))
+        if (empty($deliveryIds)) {
             return;
+        }
 
-        self::$preparedData = \Bitrix\Sale\Internals\DeliveryPaySystemTable::prepareData($deliveryIds, DeliveryPaySystemTable::ENTITY_TYPE_DELIVERY);
+        self::$preparedData = \Bitrix\Sale\Internals\DeliveryPaySystemTable::prepareData(
+            $deliveryIds,
+            DeliveryPaySystemTable::ENTITY_TYPE_DELIVERY
+        );
     }
 } 

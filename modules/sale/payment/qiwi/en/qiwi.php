@@ -1,4 +1,5 @@
 <?
+
 global $MESS;
 $MESS["SALE_TITLE"] = "QIWI";
 $MESS["SALE_DESCRIPTION"] = "The system requires that HTTP and SOAP are enabled in in the web store settings in the <a href=\"https://ishop.qiwi.ru\" target=\"_blank\">personal profile</a>.<br />

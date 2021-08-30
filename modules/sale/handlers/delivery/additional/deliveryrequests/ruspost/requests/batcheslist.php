@@ -41,19 +41,24 @@ class BatchesList extends Base
         }
 
         if (!empty($externalIds)) {
-            $dbRes = Requests\RequestTable::getList(array(
-                'filter' => array(
-                    '=EXTERNAL_ID' => $externalIds
+            $dbRes = Requests\RequestTable::getList(
+                array(
+                    'filter' => array(
+                        '=EXTERNAL_ID' => $externalIds
+                    )
                 )
-            ));
+            );
 
-            while ($row = $dbRes->fetch())
-                if (isset($batchesResults[$row['EXTERNAL_ID']]))
+            while ($row = $dbRes->fetch()) {
+                if (isset($batchesResults[$row['EXTERNAL_ID']])) {
                     $batchesResults[$row['EXTERNAL_ID']]->setInternalId($row['ID']);
+                }
+            }
         }
 
-        if (!empty($batchesResults))
+        if (!empty($batchesResults)) {
             $result->setData($batchesResults);
+        }
 
         return $result;
     }

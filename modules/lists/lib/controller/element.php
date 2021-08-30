@@ -34,7 +34,6 @@ class Element extends Entity
         if ($result->getErrors()) {
             $this->addErrors($result->getErrors());
             return null;
-
         } else {
             $resultData = $result->getData();
             return $resultData[$params["ELEMENT_ID"]];

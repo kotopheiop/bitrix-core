@@ -29,38 +29,40 @@ class MessageLookalikeFb extends MessageLookalike
 
     protected function setConfigurationOptions()
     {
-        $this->configuration->setArrayOptions(array(
+        $this->configuration->setArrayOptions(
             array(
-                'type' => 'string',
-                'code' => 'CLIENT_ID',
-                'name' => Loc::getMessage('SENDER_INTEGRATION_SEO_MESSAGE_CONFIG_CLIENT_ID'),
-                'required' => true,
-            ),
-            array(
-                'type' => 'string',
-                'code' => 'ACCOUNT_ID',
-                'name' => Loc::getMessage('SENDER_INTEGRATION_SEO_MESSAGE_CONFIG_ACCOUNT_ID'),
-                'required' => true,
-            ),
-            array(
-                'type' => 'string',
-                'code' => 'AUDIENCE_ID',
-                'name' => Loc::getMessage('SENDER_INTEGRATION_SEO_MESSAGE_CONFIG_AUDIENCE_ID'),
-                'required' => false,
-            ),
-            array(
-                'type' => 'string',
-                'code' => 'AUDIENCE_SIZE',
-                'name' => Loc::getMessage('SENDER_INTEGRATION_SEO_MESSAGE_CONFIG_AUDIENCE_SIZE'),
-                'required' => false,
-            ),
-            array(
-                'type' => 'string',
-                'code' => 'AUDIENCE_REGION',
-                'name' => Loc::getMessage('SENDER_INTEGRATION_SEO_MESSAGE_CONFIG_AUDIENCE_REGION'),
-                'required' => false,
+                array(
+                    'type' => 'string',
+                    'code' => 'CLIENT_ID',
+                    'name' => Loc::getMessage('SENDER_INTEGRATION_SEO_MESSAGE_CONFIG_CLIENT_ID'),
+                    'required' => true,
+                ),
+                array(
+                    'type' => 'string',
+                    'code' => 'ACCOUNT_ID',
+                    'name' => Loc::getMessage('SENDER_INTEGRATION_SEO_MESSAGE_CONFIG_ACCOUNT_ID'),
+                    'required' => true,
+                ),
+                array(
+                    'type' => 'string',
+                    'code' => 'AUDIENCE_ID',
+                    'name' => Loc::getMessage('SENDER_INTEGRATION_SEO_MESSAGE_CONFIG_AUDIENCE_ID'),
+                    'required' => false,
+                ),
+                array(
+                    'type' => 'string',
+                    'code' => 'AUDIENCE_SIZE',
+                    'name' => Loc::getMessage('SENDER_INTEGRATION_SEO_MESSAGE_CONFIG_AUDIENCE_SIZE'),
+                    'required' => false,
+                ),
+                array(
+                    'type' => 'string',
+                    'code' => 'AUDIENCE_REGION',
+                    'name' => Loc::getMessage('SENDER_INTEGRATION_SEO_MESSAGE_CONFIG_AUDIENCE_REGION'),
+                    'required' => false,
+                )
             )
-        ));
+        );
     }
 
     public function getLookalikeOptions()

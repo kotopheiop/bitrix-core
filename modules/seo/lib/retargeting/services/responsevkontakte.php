@@ -39,8 +39,10 @@ class ResponseVkontakte extends Response
         $result = array();
         if ($parsed['response']) {
             $result = $parsed['response'];
-        } else if (!isset($parsed['error'])) {
-            $result = $parsed;
+        } else {
+            if (!isset($parsed['error'])) {
+                $result = $parsed;
+            }
         }
 
         $this->setData(is_array($result) ? $result : array($result));

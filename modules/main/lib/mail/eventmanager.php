@@ -30,8 +30,9 @@ class EventManager
         }
 
         $manage_cache = Main\Application::getInstance()->getManagedCache();
-        if (CACHED_b_event !== false && $manage_cache->read(CACHED_b_event, "events"))
+        if (CACHED_b_event !== false && $manage_cache->read(CACHED_b_event, "events")) {
             return "";
+        }
 
         return static::executeEvents();
     }
@@ -45,35 +46,25 @@ class EventManager
     {
         $manage_cache = Main\Application::getInstance()->getManagedCache();
 
-        if (defined("BX_FORK_AGENTS_AND_EVENTS_FUNCTION")) {
-            if (\CMain::ForkActions(array("CEvent", "ExecuteEvents")))
-                return "";
-        }
-
         $bulk = intval(Main\Config\Option::get("main", "mail_event_bulk", 5));
-        if ($bulk <= 0)
+        if ($bulk <= 0) {
             $bulk = 5;
+        }
 
         $rsMails = null;
 
         $connection = Main\Application::getConnection();
         if ($connection instanceof Main\DB\MysqlCommonConnection) {
-            $uniq = Main\Config\Option::get("main", "server_uniq_id", "");
-            if (strlen($uniq) <= 0) {
-                $uniq = md5(uniqid(rand(), true));
-                Main\Config\Option::set("main", "server_uniq_id", $uniq);
-            }
-
             $strSql = "SELECT 'x' FROM b_event WHERE SUCCESS_EXEC='N' LIMIT 1";
             $resultEventDb = $connection->query($strSql);
             if ($resultEventDb->fetch()) {
-                $lockDb = $connection->query("SELECT GET_LOCK('" . $uniq . "_event', 0) as L");
-                $arLock = $lockDb->fetch();
-                if ($arLock["L"] == "0")
+                if (!$connection->lock('event')) {
                     return "";
+                }
             } else {
-                if (CACHED_b_event !== false)
+                if (CACHED_b_event !== false) {
                     $manage_cache->set("events", true);
+                }
 
                 return "";
             }
@@ -132,14 +123,17 @@ class EventManager
                 }
             }
             while ($arMail = $rsMails->fetch()) {
-                foreach ($arCallableModificator as $callableModificator)
+                foreach ($arCallableModificator as $callableModificator) {
                     $arMail['C_FIELDS'] = call_user_func_array($callableModificator, array($arMail['C_FIELDS']));
+                }
 
                 $arFiles = array();
-                $fileListDb = Internal\EventAttachmentTable::getList(array(
-                    'select' => array('FILE_ID'),
-                    'filter' => array('=EVENT_ID' => $arMail["ID"])
-                ));
+                $fileListDb = Internal\EventAttachmentTable::getList(
+                    array(
+                        'select' => array('FILE_ID'),
+                        'filter' => array('=EVENT_ID' => $arMail["ID"])
+                    )
+                );
                 while ($file = $fileListDb->fetch()) {
                     $arFiles[] = $file['FILE_ID'];
                 }
@@ -150,9 +144,15 @@ class EventManager
                 }
                 try {
                     $flag = Event::handleEvent($arMail);
-                    Internal\EventTable::update($arMail["ID"], array('SUCCESS_EXEC' => $flag, 'DATE_EXEC' => new Main\Type\DateTime));
+                    Internal\EventTable::update(
+                        $arMail["ID"],
+                        array('SUCCESS_EXEC' => $flag, 'DATE_EXEC' => new Main\Type\DateTime)
+                    );
                 } catch (\Exception $e) {
-                    Internal\EventTable::update($arMail["ID"], array('SUCCESS_EXEC' => "E", 'DATE_EXEC' => new Main\Type\DateTime));
+                    Internal\EventTable::update(
+                        $arMail["ID"],
+                        array('SUCCESS_EXEC' => "E", 'DATE_EXEC' => new Main\Type\DateTime)
+                    );
 
                     $application = Main\Application::getInstance();
                     $exceptionHandler = $application->getExceptionHandler();
@@ -162,13 +162,14 @@ class EventManager
                 }
 
                 $cnt++;
-                if ($cnt >= $bulk)
+                if ($cnt >= $bulk) {
                     break;
+                }
             }
         }
 
         if ($connection instanceof Main\DB\MysqlCommonConnection) {
-            $connection->query("SELECT RELEASE_LOCK('" . $uniq . "_event')");
+            $connection->unlock('event');
         } elseif ($connection instanceof Main\DB\MssqlConnection) {
             $connection->query("SET LOCK_TIMEOUT -1");
             $connection->commitTransaction();
@@ -176,8 +177,9 @@ class EventManager
             $connection->commitTransaction();
         }
 
-        if ($cnt === 0 && CACHED_b_event !== false)
+        if ($cnt === 0 && CACHED_b_event !== false) {
             $manage_cache->set("events", true);
+        }
 
         return null;
     }
@@ -222,14 +224,16 @@ class EventManager
     public static function cleanUpAttachmentAgent()
     {
         $connection = Main\Application::getConnection();
-        $rows = Internal\EventAttachmentTable::getList([
-            'select' => ['EVENT_ID', 'FILE_ID'],
-            'filter' => [
-                '=IS_FILE_COPIED' => 'Y',
-                '=EVENT.ID' => null,
-            ],
-            'limit' => 5
-        ])->fetchAll();
+        $rows = Internal\EventAttachmentTable::getList(
+            [
+                'select' => ['EVENT_ID', 'FILE_ID'],
+                'filter' => [
+                    '=IS_FILE_COPIED' => 'Y',
+                    '=EVENT.ID' => null,
+                ],
+                'limit' => 5
+            ]
+        )->fetchAll();
         foreach ($rows as $row) {
             \CFile::Delete($row['FILE_ID']);
             $strSql = "DELETE FROM b_event_attachment "
@@ -249,10 +253,12 @@ class EventManager
      */
     public static function onMailEventSubscriptionList(array $data)
     {
-        $row = Internal\BlacklistTable::getRow([
-            'select' => ['ID'],
-            'filter' => ['=CODE' => $data['FIELDS']['CODE']]
-        ]);
+        $row = Internal\BlacklistTable::getRow(
+            [
+                'select' => ['ID'],
+                'filter' => ['=CODE' => $data['FIELDS']['CODE']]
+            ]
+        );
         if ($row) {
             return [];
         }
@@ -279,15 +285,17 @@ class EventManager
             return false;
         }
 
-        $code = strtolower(trim($data['FIELDS']['CODE']));
+        $code = mb_strtolower(trim($data['FIELDS']['CODE']));
         if (!check_email($code)) {
             return false;
         }
 
-        return Internal\BlacklistTable::add([
-            'CODE' => $code,
-            'CATEGORY_ID' => Internal\BlacklistTable::CategoryManual,
-            'DATE_INSERT' => new Main\Type\DateTime()
-        ])->isSuccess();
+        return Internal\BlacklistTable::add(
+            [
+                'CODE' => $code,
+                'CATEGORY_ID' => Internal\BlacklistTable::CategoryManual,
+                'DATE_INSERT' => new Main\Type\DateTime()
+            ]
+        )->isSuccess();
     }
 }

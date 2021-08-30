@@ -49,8 +49,9 @@ class Restorer
         );
         $orderFields = $archivedOrder->fetch();
 
-        if (!$orderFields)
+        if (!$orderFields) {
             return null;
+        }
 
         $restorer = new self($id);
         if (!$restorer->checkVersion($orderFields['VERSION'])) {
@@ -167,9 +168,11 @@ class Restorer
     {
         $eventManager = Main\EventManager::getInstance();
         if ($eventsList = $eventManager->findEventHandlers('sale', self::EVENT_ON_ARCHIVE_ORDER_BEFORE_RESTORED)) {
-            $event = new Main\Event('sale', self::EVENT_ON_ARCHIVE_ORDER_BEFORE_RESTORED, array(
+            $event = new Main\Event(
+                'sale', self::EVENT_ON_ARCHIVE_ORDER_BEFORE_RESTORED, array(
                 'ENTITY' => $this
-            ));
+            )
+            );
             $event->send();
         }
 

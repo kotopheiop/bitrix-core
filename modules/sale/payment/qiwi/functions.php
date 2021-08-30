@@ -23,17 +23,18 @@ if (!function_exists("qiwiWalletGetAuthHeader")) {
     function qiwiWalletGetAuthHeader()
     {
         $incomingToken = false;
-        if (isset($_SERVER["REMOTE_USER"]) && strlen($_SERVER["REMOTE_USER"]) > 0)
+        if (isset($_SERVER["REMOTE_USER"]) && $_SERVER["REMOTE_USER"] <> '') {
             $incomingToken = $_SERVER["REMOTE_USER"];
-        elseif (isset($_SERVER["REDIRECT_REMOTE_USER"]) && strlen($_SERVER["REDIRECT_REMOTE_USER"]) > 0)
+        } elseif (isset($_SERVER["REDIRECT_REMOTE_USER"]) && $_SERVER["REDIRECT_REMOTE_USER"] <> '') {
             $incomingToken = $_SERVER["REDIRECT_REMOTE_USER"];
-        elseif (isset($_SERVER["HTTP_AUTHORIZATION"]) && strlen($_SERVER["HTTP_AUTHORIZATION"]) > 0)
+        } elseif (isset($_SERVER["HTTP_AUTHORIZATION"]) && $_SERVER["HTTP_AUTHORIZATION"] <> '') {
             $incomingToken = $_SERVER["HTTP_AUTHORIZATION"];
-        elseif (function_exists("apache_request_headers")) {
+        } elseif (function_exists("apache_request_headers")) {
             $headers = \apache_request_headers();
 
-            if (array_key_exists("Authorization", $headers))
+            if (array_key_exists("Authorization", $headers)) {
                 $incomingToken = $headers["Authorization"];
+            }
         }
         return $incomingToken;
     }
@@ -42,13 +43,15 @@ if (!function_exists("qiwiWalletGetAuthHeader")) {
 if (!function_exists("qiwiWalletCheckAuth")) {
     function qiwiWalletCheckAuth($login, $password)
     {
-        if (strlen($password) <= 0)
+        if ($password == '') {
             return false;
+        }
 
         $header = qiwiWalletGetAuthHeader();
 
-        if (!$header)
+        if (!$header) {
             return false;
+        }
 
         $check = "Basic " . base64_encode("{$login}:{$password}");
         return $header == $check;

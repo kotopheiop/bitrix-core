@@ -1,20 +1,22 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 $forumPermissions = $APPLICATION->GetGroupRight("forum");
-if ($forumPermissions == "D")
+if ($forumPermissions == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 \Bitrix\Main\Loader::includeModule("forum");
 ClearVars();
 IncludeModuleLangFile(__FILE__);
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/forum/prolog.php");
 
-$ID = IntVal($ID);
+$ID = intval($ID);
 $message = false;
 $arSysLangs = array();
 $arSysLangNames = array();
-$db_lang = CLangAdmin::GetList(($b = "sort"), ($o = "asc"));
+$db_lang = CLangAdmin::GetList();
 $langCount = 0;
 while ($arLang = $db_lang->Fetch()) {
     $arSysLangs[$langCount] = $arLang["LID"];
@@ -24,46 +26,57 @@ while ($arLang = $db_lang->Fetch()) {
 
 
 $bInitVars = false;
-if ($REQUEST_METHOD == "POST" && $forumPermissions == "W" && (!empty($save) || !empty($apply)) && check_bitrix_sessid()) {
+if ($REQUEST_METHOD == "POST" && $forumPermissions == "W" && (!empty($save) || !empty($apply)) && check_bitrix_sessid(
+    )) {
     $arFields = array(
         "MIN_POINTS" => $MIN_POINTS,
-        "CODE" => $CODE);
+        "CODE" => $CODE
+    );
 
-    if (isset($VOTES))
-        $arFields["VOTES"] = IntVal($VOTES);
+    if (isset($VOTES)) {
+        $arFields["VOTES"] = intval($VOTES);
+    }
 
     for ($i = 0; $i < count($arSysLangs); $i++) {
         if (!empty(${"NAME_" . $arSysLangs[$i]})) {
             $arFields["LANG"][] = array(
                 "LID" => $arSysLangs[$i],
-                "NAME" => ${"NAME_" . $arSysLangs[$i]});
+                "NAME" => ${"NAME_" . $arSysLangs[$i]}
+            );
         }
     }
 
     $res = 0;
-    if ($ID > 0)
+    if ($ID > 0) {
         $res = CForumPoints::Update($ID, $arFields);
-    else
+    } else {
         $res = CForumPoints::Add($arFields);
-    if (intVal($res) <= 0 && $e = $GLOBALS["APPLICATION"]->GetException()) {
-        $message = new CAdminMessage(($ID > 0 ? GetMessage("FORUM_PE_ERROR_UPDATE") : GetMessage("FORUM_PE_ERROR_ADD")), $e);
-        $bInitVars = True;
-    } elseif (strlen($save) > 0)
+    }
+    if (intval($res) <= 0 && $e = $GLOBALS["APPLICATION"]->GetException()) {
+        $message = new CAdminMessage(
+            ($ID > 0 ? GetMessage("FORUM_PE_ERROR_UPDATE") : GetMessage("FORUM_PE_ERROR_ADD")),
+            $e
+        );
+        $bInitVars = true;
+    } elseif ($save <> '') {
         LocalRedirect("forum_points.php?lang=" . LANG . "&" . GetFilterParams("filter_", false));
-    else
+    } else {
         $ID = $res;
+    }
 }
 
 if ($ID > 0) {
     $db_points = CForumPoints::GetList(array(), array("ID" => $ID));
-    $db_points->ExtractFields("str_", False);
+    $db_points->ExtractFields("str_", false);
 }
 
 if ($bInitVars) {
     $DB->InitTableVarsForEdit("b_forum_points", "", "str_");
 }
 
-$sDocTitle = ($ID > 0) ? str_replace("#ID#", $ID, GetMessage("FORUM_PE_TITLE_UPDATE")) : GetMessage("FORUM_PE_TITLE_ADD");
+$sDocTitle = ($ID > 0) ? str_replace("#ID#", $ID, GetMessage("FORUM_PE_TITLE_UPDATE")) : GetMessage(
+    "FORUM_PE_TITLE_ADD"
+);
 $APPLICATION->SetTitle($sDocTitle);
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
@@ -93,15 +106,19 @@ if ($ID > 0 && $forumPermissions == "W") {
 
     $aMenu[] = array(
         "TEXT" => GetMessage("FPN_DELETE_POINT"),
-        "LINK" => "javascript:if(confirm('" . GetMessage("FPN_DELETE_POINT_CONFIRM") . "')) window.location='/bitrix/admin/forum_points.php?action=delete&ID[]=" . $ID . "&lang=" . LANG . "&" . bitrix_sessid_get() . "#tb';",
+        "LINK" => "javascript:if(confirm('" . GetMessage(
+                "FPN_DELETE_POINT_CONFIRM"
+            ) . "')) window.location='/bitrix/admin/forum_points.php?action=delete&ID[]=" . $ID . "&lang=" . LANG . "&" . bitrix_sessid_get(
+            ) . "#tb';",
         "ICON" => "btn_delete",
     );
 }
 $context = new CAdminContextMenu($aMenu);
 $context->Show();
 
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 ?>
     <form method="POST" action="<? echo $APPLICATION->GetCurPage() ?>" name="forum_edit">
         <input type="hidden" name="Update" value="Y">
@@ -111,7 +128,12 @@ if ($message)
 
         <?
         $aTabs = array(
-            array("DIV" => "edit1", "TAB" => GetMessage("FPN_TAB_POINT"), "ICON" => "forum", "TITLE" => GetMessage("FPN_TAB_POINT_DESCR")),
+            array(
+                "DIV" => "edit1",
+                "TAB" => GetMessage("FPN_TAB_POINT"),
+                "ICON" => "forum",
+                "TITLE" => GetMessage("FPN_TAB_POINT_DESCR")
+            ),
         );
 
         $tabControl = new CAdminTabControl("tabControl", $aTabs);

@@ -76,7 +76,6 @@ abstract class EntityImport extends Exchange\ImportBase
         $entity = null;
 
         if (!empty($fields['ID'])) {
-
             $registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
             /** @var Sale\Order $orderClass */
             $orderClass = $registry->getOrderClassName();
@@ -127,7 +126,9 @@ abstract class EntityImport extends Exchange\ImportBase
     {
         if (Exchange\EntityCollisionType::getErrorGroup($tipeId) == Exchange\EntityCollisionType::GROUP_E_ERROR) {
             $this->collisionErrors = true;
-        } elseif (Exchange\EntityCollisionType::getErrorGroup($tipeId) == Exchange\EntityCollisionType::GROUP_E_WARNING) {
+        } elseif (Exchange\EntityCollisionType::getErrorGroup(
+                $tipeId
+            ) == Exchange\EntityCollisionType::GROUP_E_WARNING) {
             $this->collisionWarnings = true;
         }
 
@@ -167,7 +168,12 @@ abstract class EntityImport extends Exchange\ImportBase
         /** @var Exchange\ICollision $collision */
         foreach ($collisions as $collision) {
             $result = new Sale\Result();
-            $result->addWarning(new Sale\ResultError(Exchange\EntityCollisionType::getDescription($collision->getTypeId()) . ($collision->getMessage() != null ? " " . $collision->getMessage() : ''), $collision->getTypeName()));
+            $result->addWarning(
+                new Sale\ResultError(
+                    Exchange\EntityCollisionType::getDescription($collision->getTypeId()) . ($collision->getMessage(
+                    ) != null ? " " . $collision->getMessage() : ''), $collision->getTypeName()
+                )
+            );
 
             $entity->setField('MARKED', 'Y');
             $this->marked = true;
@@ -227,8 +233,9 @@ abstract class EntityImport extends Exchange\ImportBase
         $result = parent::import($params);
         if ($result->isSuccess()) {
             /** @var Sale\Internals\Entity $entity */
-            if (($entity = $this->getEntity()))
+            if (($entity = $this->getEntity())) {
                 $this->marked($entity, $params['TRAITS']);
+            }
         }
         return $result;
     }
@@ -246,10 +253,11 @@ abstract class EntityImport extends Exchange\ImportBase
      */
     function marked(Sale\Internals\Entity $entity, array $fields)
     {
-        if ($this->isExternal())
+        if ($this->isExternal()) {
             $entity->setField($this->getExternalFieldName(), 'Y');
-        else
+        } else {
             $entity->setField('UPDATED_1C', 'Y');
+        }
 
         if (!$this->hasCollisions()) {
             $entity->setField('VERSION_1C', $fields['VERSION_1C']);

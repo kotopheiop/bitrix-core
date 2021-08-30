@@ -62,11 +62,13 @@ class Manager extends Base\RestrictionManager
         while ($data = $dbRes->fetch()) {
             $range = $data['CLASS_NAME']::getRange($payment, $data['PARAMS']);
 
-            if (!$result['MAX'] || $range['MAX'] < $result['MAX'])
+            if (!$result['MAX'] || $range['MAX'] < $result['MAX']) {
                 $result['MAX'] = $range['MAX'];
+            }
 
-            if (!$result['MIN'] || $range['MIN'] > $result['MIN'])
+            if (!$result['MIN'] || $range['MIN'] > $result['MIN']) {
                 $result['MIN'] = $range['MIN'];
+            }
         }
 
         return $result;

@@ -1,4 +1,5 @@
 <?php
+
 IncludeModuleLangFile(__FILE__);
 
 class CSupportTimetableCache
@@ -30,7 +31,7 @@ class CSupportTimetableCache
             return false;
         }
         try {
-            if (strlen($d) > 0) {
+            if ($d <> '') {
                 $res = new DateTime($d);
             } else {
                 $res = new DateTime(null, new DateTimeZone(date_default_timezone_get()));
@@ -47,7 +48,9 @@ class CSupportTimetableCache
             if (self::Possible()) {
                 self::$timeZone = new DateTimeZone(date_default_timezone_get());
                 $serverZone = COption::GetOptionString("main", "default_time_zone", "");
-                if ($serverZone != "") self::$timeZone = new DateTimeZone($serverZone);
+                if ($serverZone != "") {
+                    self::$timeZone = new DateTimeZone($serverZone);
+                }
             }
         }
         return self::$timeZone;
@@ -172,11 +175,10 @@ class CSupportTimetableCache
 
         $arSqlSearch = Array();
         foreach ($arFilter as $key => $val) {
-
-            if ((is_array($val) && count($val) <= 0) || (!is_array($val) && strlen($val) <= 0)) {
+            if ((is_array($val) && count($val) <= 0) || (!is_array($val) && (string)$val == '')) {
                 continue;
             }
-            $key = strtoupper($key);
+            $key = mb_strtoupper($key);
             if (is_array($val)) {
                 $val = implode(" | ", $val);
             }
@@ -185,7 +187,6 @@ class CSupportTimetableCache
                     $arSqlSearch[] = GetFilterQuery("HS.SLA_ID", $val, "N");
                     break;
             }
-
         }
         $strSqlSearch = GetFilterSqlSearch($arSqlSearch);
 
@@ -215,12 +216,17 @@ class CSupportTimetableCache
         $oldSLA = -1;
         $goodSLA = array_keys($arrS);
         while ($arrR = $q->Fetch()) {
-            if (!CSupportTools::array_keys_exists("SLA_ID,OPEN_TIME,DATE_FROM,DATE_TILL", $arrR) || !in_array($arrR["SLA_ID"], $goodSLA)) {
+            if (!CSupportTools::array_keys_exists("SLA_ID,OPEN_TIME,DATE_FROM,DATE_TILL", $arrR) || !in_array(
+                    $arrR["SLA_ID"],
+                    $goodSLA
+                )) {
                 continue;
             }
             $cSLA = $arrR["SLA_ID"];
             if ($oldSLA != $cSLA) {
-                if (count($res0) > 0) $res[$oldSLA] = self::MergeIntervalsH($res0, $arrS[$oldSLA]);
+                if (count($res0) > 0) {
+                    $res[$oldSLA] = self::MergeIntervalsH($res0, $arrS[$oldSLA]);
+                }
                 $res0 = array();
                 $oldSLA = $cSLA;
             }
@@ -235,7 +241,10 @@ class CSupportTimetableCache
                 if (substr_count($cOT, "WORKDAY_") > 0) {
                     $WN = str_replace("WORKDAY_", "", $cOT);
                     if ($WN == "H") {
-                        $res0[$dtC]["W"][] = array("F" => (max($dtB, $dtCB) - $dtCB), "T" => (min($dtE, $dtCE) - $dtCB));
+                        $res0[$dtC]["W"][] = array(
+                            "F" => (max($dtB, $dtCB) - $dtCB),
+                            "T" => (min($dtE, $dtCE) - $dtCB)
+                        );
                     } elseif (isset($arrS[$cSLA][$WN])) {
                         if (count($arrS[$cSLA][$WN]) > 0) {
                             foreach ($arrS[$cSLA][$WN] as $k => $v) {
@@ -244,18 +253,19 @@ class CSupportTimetableCache
                         } else {
                             $res0[$dtC]["C"] = true;
                         }
-
                     }
                 } else {
                     if ($cOT == "HOLIDAY_H") {
-                        $res0[$dtC]["H"][] = array("F" => (max($dtB, $dtCB) - $dtCB), "T" => (min($dtE, $dtCE) - $dtCB));
+                        $res0[$dtC]["H"][] = array(
+                            "F" => (max($dtB, $dtCB) - $dtCB),
+                            "T" => (min($dtE, $dtCE) - $dtCB)
+                        );
                     } elseif ($cOT == "HOLIDAY") {
                         $res0[$dtC]["C"] = true;
                     }
                 }
                 $dtC += 24 * 60 * 60;
             }
-
         }
         if (count($res0) > 0) {
             $res[$oldSLA] = self::MergeIntervalsH($res0, $arrS[$oldSLA]);
@@ -301,7 +311,9 @@ class CSupportTimetableCache
                 }
                 if ($h > $hC) {
                     // ������� $wC � ���������
-                    for ($i = $w; $i <= $wC; $i++) $res[$dtC][] = array("F" => $arrW[$i]["F"], "T" => $arrW[$i]["T"]);
+                    for ($i = $w; $i <= $wC; $i++) {
+                        $res[$dtC][] = array("F" => $arrW[$i]["F"], "T" => $arrW[$i]["T"]);
+                    }
                     break;
                 }
 
@@ -315,7 +327,6 @@ class CSupportTimetableCache
                         //h ---     | ---
                         //w     --- |  ---
                         $arrW[$w]["F"] = max($arrW[$w]["F"], $arrH[$h]["T"]);
-
                     }
                     $h++;
                 } else {
@@ -376,7 +387,6 @@ class CSupportTimetableCache
                 $DB->Insert($t_sla_shedule, $arInsStr, $err_mess . __LINE__);
             }
         }
-
     }
 
     static function GetShedule($arFilter)
@@ -389,11 +399,10 @@ class CSupportTimetableCache
 
         $arSqlSearch = Array();
         foreach ($arFilter as $key => $val) {
-
-            if ((is_array($val) && count($val) <= 0) || (!is_array($val) && strlen($val) <= 0)) {
+            if ((is_array($val) && count($val) <= 0) || (!is_array($val) && (string)$val == '')) {
                 continue;
             }
-            $key = strtoupper($key);
+            $key = mb_strtoupper($key);
             if (is_array($val)) {
                 $val = implode(" | ", $val);
             }
@@ -402,7 +411,6 @@ class CSupportTimetableCache
                     $arSqlSearch[] = GetFilterQuery("SLA.ID", $val, "N");
                     break;
             }
-
         }
         $strSqlSearch = GetFilterSqlSearch($arSqlSearch);
 
@@ -441,14 +449,18 @@ class CSupportTimetableCache
             $cWN = intval($arrR["WEEKDAY_NUMBER"]);
 
             if ($oldSLA != $cSLA || $oldWN != $cWN) {
-                if ($oldSLA != -1) $res[$oldSLA][$oldWN] = self::MergeIntervals($res0);
+                if ($oldSLA != -1) {
+                    $res[$oldSLA][$oldWN] = self::MergeIntervals($res0);
+                }
                 $res0 = array();
                 $oldSLA = $cSLA;
                 $oldWN = $cWN;
             }
 
             $cOT = $arrR["OPEN_TIME"];
-            if (isset($noAdd[$cSLA][$cWN])) continue;
+            if (isset($noAdd[$cSLA][$cWN])) {
+                continue;
+            }
 
             switch ($cOT) {
                 case "24H":
@@ -460,12 +472,16 @@ class CSupportTimetableCache
                     $noAdd[$cSLA][$cWN] = true;
                     break;
                 case "CUSTOM":
-                    $res0[] = array("F" => min(intval($arrR["MINUTE_FROM"]) * 60, intval($arrR["MINUTE_TILL"]) * 60), "T" => max(intval($arrR["MINUTE_FROM"]) * 60, intval($arrR["MINUTE_TILL"]) * 60));
+                    $res0[] = array(
+                        "F" => min(intval($arrR["MINUTE_FROM"]) * 60, intval($arrR["MINUTE_TILL"]) * 60),
+                        "T" => max(intval($arrR["MINUTE_FROM"]) * 60, intval($arrR["MINUTE_TILL"]) * 60)
+                    );
                     break;
             }
-
         }
-        if ($oldSLA > 0) $res[$oldSLA][$oldWN] = self::MergeIntervals($res0);
+        if ($oldSLA > 0) {
+            $res[$oldSLA][$oldWN] = self::MergeIntervals($res0);
+        }
         return $res;
     }
 
@@ -494,7 +510,7 @@ class CSupportTimetableCache
         return date("H:i", mktime($h, $m, 0, 1, 1, 2000));
     }
 
-    static function ToCache($arFilter = array(), $RSD = true, $arFromGetEndDate = null)
+    public static function ToCache($arFilter = array(), $RSD = true, $arFromGetEndDate = null)
     {
         /*
         $arFilter(
@@ -504,13 +520,13 @@ class CSupportTimetableCache
         global $DB;
         $currD = time();
         $uniq = "";
-        $dbType = strtolower($DB->type);
+        $dbType = mb_strtolower($DB->type);
 
         if ($dbType === "mysql") {
             $DB->StartUsingMasterOnly();
 
             $uniq = COption::GetOptionString("main", "server_uniq_id", "");
-            if (strlen($uniq) <= 0) {
+            if ($uniq == '') {
                 $uniq = md5(uniqid(rand(), true));
                 COption::SetOptionString("main", "server_uniq_id", $uniq);
             }
@@ -523,7 +539,12 @@ class CSupportTimetableCache
 
             //����� ���������� ��������� � ����������� ���� ��� ������ ������������� ���, �� ����� ������� �������� ������ � �������� ����(������ ��� MYSQL)
             if (is_array($arFromGetEndDate)) {
-                $res = self::getEndDate($arFromGetEndDate["SLA"], $arFromGetEndDate["PERIOD_MIN"], $arFromGetEndDate["DATE_FROM"], true);
+                $res = self::getEndDate(
+                    $arFromGetEndDate["SLA"],
+                    $arFromGetEndDate["PERIOD_MIN"],
+                    $arFromGetEndDate["DATE_FROM"],
+                    true
+                );
                 if ($res !== null) {
                     return $res;
                 }
@@ -548,10 +569,10 @@ class CSupportTimetableCache
 
         $arSqlSearch = Array();
         foreach ($arFilter as $key => $val) {
-            if ((is_array($val) && count($val) <= 0) || (!is_array($val) && strlen($val) <= 0)) {
+            if ((is_array($val) && count($val) <= 0) || (!is_array($val) && (string)$val == '')) {
                 continue;
             }
-            $key = strtoupper($key);
+            $key = mb_strtoupper($key);
             if (is_array($val)) {
                 $val = implode(" | ", $val);
             }
@@ -561,7 +582,6 @@ class CSupportTimetableCache
                     $arSqlSearch[] = GetFilterQuery("SLA_ID", $val, "N");
                     break;
             }
-
         }
         $strSqlSearch = GetFilterSqlSearch($arSqlSearch);
 
@@ -594,7 +614,7 @@ class CSupportTimetableCache
                             $colNames = implode(", ", array_keys($arCurrTicketFields));
                         }
                         $strCurrTicketFields = "(" . implode(",", $arCurrTicketFields) . ")";
-                        if (strlen($strList . ", " . $strCurrTicketFields) > 2000) {
+                        if (mb_strlen($strList . ", " . $strCurrTicketFields) > 2000) {
                             $strSql = "INSERT INTO " . $timetable_cache . " (" . $colNames . ") VALUES " . $strList;
                             $strList = $strCurrTicketFields;
                         } else {
@@ -604,7 +624,11 @@ class CSupportTimetableCache
                         }
                         $DB->Query($strSql, false, $err_mess . __LINE__);
                     } else {
-                        $DB->Insert($timetable_cache, $f->ToArray(CSupportTableFields::ALL, array(CSupportTableFields::NOT_NULL), true), $err_mess . __LINE__);
+                        $DB->Insert(
+                            $timetable_cache,
+                            $f->ToArray(CSupportTableFields::ALL, array(CSupportTableFields::NOT_NULL), true),
+                            $err_mess . __LINE__
+                        );
                     }
                     CTimeZone::Enable();
                 }
@@ -612,7 +636,7 @@ class CSupportTimetableCache
             }
         }
         if ($dbType === "mysql") {
-            if (strlen($strList) > 0) {
+            if ($strList <> '') {
                 $strSql = "INSERT INTO " . $timetable_cache . " (" . $colNames . ") VALUES " . $strList;
                 $DB->Query($strSql, false, $err_mess . __LINE__);
             }
@@ -667,8 +691,10 @@ class CSupportTimetableCache
         CTimeZone::Enable();
 
         if ($arrR = $q->Fetch()) {
-
-            $delta = intval($arrR["W_TIME_INC"]) - intval($arrR["W_TIME"]) + min(($dateFromTS - MakeTimeStamp($arrR["DATE_FROM"])), intval($arrR["W_TIME"]));
+            $delta = intval($arrR["W_TIME_INC"]) - intval($arrR["W_TIME"]) + min(
+                    ($dateFromTS - MakeTimeStamp($arrR["DATE_FROM"])),
+                    intval($arrR["W_TIME"])
+                );
             $findD = $delta + $periodMin;
 
             //CTimeZone::Disable();

@@ -16,7 +16,7 @@
                                 <tbody>
                                 <tr>
                                     <td valign="top" class=""
-                                        style="padding-top: 5px; padding-right: 10px; padding-bottom: 5px; padding-left: 10px; font-size: 12px;">
+                                        style="padding-top: 5px; padding-right: 10px; padding-bottom: 5px; padding-left: 10px;">
                                         <a class="bxBlockContentSocial" href="http://instagram.com/" target="_blank"
                                            style="font-weight: bold; letter-spacing: normal; line-height: 100%; text-align: center; font-size: 12px;">instagram</a>
                                     </td>
@@ -29,9 +29,9 @@
                                 <tbody>
                                 <tr>
                                     <td valign="top" class=""
-                                        style="padding-top: 5px; padding-right: 10px; padding-bottom: 5px; padding-left: 10px; font-size: 12px;">
+                                        style="padding-top: 5px; padding-right: 10px; padding-bottom: 5px; padding-left: 10px;">
                                         <a class="bxBlockContentSocial" href="http://facebook.com/" target="_blank"
-                                           style="font-weight: bold; letter-spacing: normal; line-height: 100%; text-align: center; font-size: 12px;">facebook</a>
+                                           style="font-weight: bold; letter-spacing: normal; line-height: 100%; text-align: center; font-size: 12px">facebook</a>
                                     </td>
                                 </tr>
                                 </tbody>

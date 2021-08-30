@@ -34,8 +34,8 @@ class Engine
         if (!is_array($this->engine)) {
             throw new SystemException("Unknown search engine");
         } else {
-            if (strlen($this->engine['SETTINGS']) > 0) {
-                $this->engineSettings = unserialize($this->engine['SETTINGS']);
+            if ($this->engine['SETTINGS'] <> '') {
+                $this->engineSettings = unserialize($this->engine['SETTINGS'], ['allowed_classes' => false]);
             }
         }
     }
@@ -67,7 +67,7 @@ class Engine
 
     public function getAuthSettings()
     {
-        return $this->engineSettings['AUTH'];
+        return ($this->engineSettings['AUTH'] ?? false);
     }
 
     public function clearAuthSettings()
@@ -78,9 +78,12 @@ class Engine
 
     protected function saveSettings()
     {
-        SearchEngineTable::update($this->engine['ID'], array(
-            'SETTINGS' => serialize($this->engineSettings)
-        ));
+        SearchEngineTable::update(
+            $this->engine['ID'],
+            array(
+                'SETTINGS' => serialize($this->engineSettings)
+            )
+        );
     }
 
     protected static function getEngine($engineId)

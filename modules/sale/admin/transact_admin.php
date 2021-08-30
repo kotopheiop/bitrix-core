@@ -12,8 +12,9 @@ $publicMode = $adminPage->publicMode;
 $selfFolderUrl = $adminPage->getSelfFolderUrl();
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions == "D")
+if ($saleModulePermissions == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 \Bitrix\Main\Loader::includeModule('sale');
 
@@ -35,7 +36,7 @@ $arTransactTypes = array(
 
 $sTableID = "tbl_sale_transact";
 
-$oSort = new CAdminSorting($sTableID, "ID", "desc");
+$oSort = new CAdminUiSorting($sTableID, "ID", "desc");
 $lAdmin = new CAdminUiList($sTableID, $oSort);
 
 $listCurrency = array();
@@ -106,15 +107,22 @@ $dbTransactList = new CAdminUiResult($dbTransactList, $sTableID);
 $dbTransactList->NavStart();
 $lAdmin->SetNavigationParams($dbTransactList, array("BASE_LINK" => $selfFolderUrl . "sale_transact_admin.php"));
 
-$lAdmin->AddHeaders(array(
-    array("id" => "ID", "content" => "ID", "sort" => "id", "default" => true),
-    array("id" => "TRANSACT_DATE", "content" => GetMessage("STA_TRANS_DATE1"), "sort" => "transact_date", "default" => true),
-    array("id" => "USER_ID", "content" => GetMessage('STA_USER1'), "sort" => "user_id", "default" => true),
-    array("id" => "AMOUNT", "content" => GetMessage("STA_SUM"), "sort" => "amount", "default" => true),
-    array("id" => "ORDER_ID", "content" => GetMessage("STA_ORDER"), "sort" => "order_id", "default" => true),
-    array("id" => "TYPE", "content" => GetMessage("STA_TYPE"), "sort" => "description", "default" => true),
-    array("id" => "DESCR", "content" => GetMessage("STA_DESCR"), "sort" => "", "default" => true),
-));
+$lAdmin->AddHeaders(
+    array(
+        array("id" => "ID", "content" => "ID", "sort" => "id", "default" => true),
+        array(
+            "id" => "TRANSACT_DATE",
+            "content" => GetMessage("STA_TRANS_DATE1"),
+            "sort" => "transact_date",
+            "default" => true
+        ),
+        array("id" => "USER_ID", "content" => GetMessage('STA_USER1'), "sort" => "user_id", "default" => true),
+        array("id" => "AMOUNT", "content" => GetMessage("STA_SUM"), "sort" => "amount", "default" => true),
+        array("id" => "ORDER_ID", "content" => GetMessage("STA_ORDER"), "sort" => "order_id", "default" => true),
+        array("id" => "TYPE", "content" => GetMessage("STA_TYPE"), "sort" => "description", "default" => true),
+        array("id" => "DESCR", "content" => GetMessage("STA_DESCR"), "sort" => "", "default" => true),
+    )
+);
 
 $arVisibleColumns = $lAdmin->GetVisibleHeaderColumns();
 $LOCAL_TRANS_USER_CACHE = array();
@@ -131,14 +139,22 @@ if (in_array("DESCR", $arVisibleColumns)) {
     $arTrUsers = array();
     while ($arTransact = $dbTransactList1->Fetch()) {
         $tmpTrans[] = $arTransact;
-        if (IntVal($arTransact["EMPLOYEE_ID"]) > 0 && !in_array($arTransact["EMPLOYEE_ID"], $arTrUsers))
+        if (intval($arTransact["EMPLOYEE_ID"]) > 0 && !in_array($arTransact["EMPLOYEE_ID"], $arTrUsers)) {
             $arTrUsers[] = $arTransact["EMPLOYEE_ID"];
+        }
     }
 
     if (!empty($arTrUsers)) {
-        $dbUser = CUser::GetList($by = "ID", $or = "ASC", array("ID" => implode(' || ', array_keys($arTrUsers))), array("FIELDS" => array("ID", "LOGIN", "NAME", "LAST_NAME")));
+        $dbUser = CUser::GetList(
+            "ID",
+            "ASC",
+            array("ID" => implode(' || ', array_keys($arTrUsers))),
+            array("FIELDS" => array("ID", "LOGIN", "NAME", "LAST_NAME"))
+        );
         while ($arUser = $dbUser->Fetch()) {
-            $LOCAL_TRANS_USER_CACHE[$arUser["ID"]] = htmlspecialcharsEx($arUser["NAME"] . ((strlen($arUser["NAME"]) <= 0 || strlen($arUser["LAST_NAME"]) <= 0) ? "" : " ") . $arUser["LAST_NAME"] . " (" . $arUser["LOGIN"] . ")");
+            $LOCAL_TRANS_USER_CACHE[$arUser["ID"]] = htmlspecialcharsEx(
+                $arUser["NAME"] . (($arUser["NAME"] == '' || $arUser["LAST_NAME"] == '') ? "" : " ") . $arUser["LAST_NAME"] . " (" . $arUser["LOGIN"] . ")"
+            );
         }
     }
 }
@@ -154,38 +170,52 @@ while ($arTransact = $dbTransactList->NavNext(false)) {
         $urlToUser = $selfFolderUrl . "sale_buyers_profile.php?USER_ID=" . $arTransact["USER_ID"] . "&lang=" . LANGUAGE_ID;
         $urlToUser = $adminSidePanelHelper->editUrlToPublicPage($urlToUser);
     }
-    $fieldValue = "[<a href=\"" . $urlToUser . "\" title=\"" . GetMessage("STA_USER_INFO") . "\">" . $arTransact["USER_ID"] . "</a>] ";
-    $fieldValue .= htmlspecialcharsEx($arTransact["USER_NAME"] . ((strlen($arTransact["USER_NAME"]) <= 0 ||
-                strlen($arTransact["USER_LAST_NAME"]) <= 0) ? "" : " ") . $arTransact["USER_LAST_NAME"]) . "<br>";
+    $fieldValue = "[<a href=\"" . $urlToUser . "\" title=\"" . GetMessage(
+            "STA_USER_INFO"
+        ) . "\">" . $arTransact["USER_ID"] . "</a>] ";
+    $fieldValue .= htmlspecialcharsEx(
+            $arTransact["USER_NAME"] . (($arTransact["USER_NAME"] == '' ||
+                $arTransact["USER_LAST_NAME"] == '') ? "" : " ") . $arTransact["USER_LAST_NAME"]
+        ) . "<br>";
     $fieldValue .= htmlspecialcharsEx($arTransact["USER_LOGIN"]) . "&nbsp;&nbsp;&nbsp; ";
     $fieldValue .= "<a href=\"mailto:" . htmlspecialcharsbx($arTransact["USER_EMAIL"]) . "\" title=\"" .
         GetMessage("STA_MAILTO") . "\">" . htmlspecialcharsEx($arTransact["USER_EMAIL"]) . "</a>";
     $row->AddField("USER_ID", $fieldValue);
 
-    $row->AddField("AMOUNT", (($arTransact["DEBIT"] == "Y") ? "+" : "-") . SaleFormatCurrency($arTransact["AMOUNT"],
-            $arTransact["CURRENCY"]) . "<br><small>" . (($arTransact["DEBIT"] == "Y") ? GetMessage("STA_TO_ACCOUNT") : GetMessage("STA_FROM_ACCOUNT")) . "</small>");
+    $row->AddField(
+        "AMOUNT",
+        (($arTransact["DEBIT"] == "Y") ? "+" : "-") . SaleFormatCurrency(
+            $arTransact["AMOUNT"],
+            $arTransact["CURRENCY"]
+        ) . "<br><small>" . (($arTransact["DEBIT"] == "Y") ? GetMessage("STA_TO_ACCOUNT") : GetMessage(
+            "STA_FROM_ACCOUNT"
+        )) . "</small>"
+    );
 
     if (intval($arTransact["ORDER_ID"]) > 0) {
         $orderViewUrl = $selfFolderUrl . "sale_order_view.php?ID=" . $arTransact["ORDER_ID"] . "&lang=" . LANGUAGE_ID;
         if ($publicMode) {
             $orderViewUrl = "/shop/orders/details/" . $arTransact["ORDER_ID"] . "/";
         }
-        $fieldValue = "<a href=\"" . $orderViewUrl . "\" title=\"" . GetMessage("STA_ORDER_VIEW") . "\">" . $arTransact["ORDER_ID"] . "</a>";
+        $fieldValue = "<a href=\"" . $orderViewUrl . "\" title=\"" . GetMessage(
+                "STA_ORDER_VIEW"
+            ) . "\">" . $arTransact["ORDER_ID"] . "</a>";
     } else {
         $fieldValue = "&nbsp;";
     }
     $row->AddField("ORDER_ID", $fieldValue);
 
-    if (array_key_exists($arTransact["DESCRIPTION"], $arTransactTypes))
+    if (array_key_exists($arTransact["DESCRIPTION"], $arTransactTypes)) {
         $fieldValue = htmlspecialcharsEx($arTransactTypes[$arTransact["DESCRIPTION"]]);
-    else
+    } else {
         $fieldValue = htmlspecialcharsEx($arTransact["DESCRIPTION"]);
+    }
     $row->AddField("TYPE", $fieldValue);
 
     $fieldValue = "&nbsp;";
     if (in_array("DESCR", $arVisibleColumns)) {
         $fieldValue .= "<small>";
-        if (IntVal($arTransact["EMPLOYEE_ID"]) > 0) {
+        if (intval($arTransact["EMPLOYEE_ID"]) > 0) {
             if (isset($LOCAL_TRANS_USER_CACHE[$arTransact["EMPLOYEE_ID"]])
                 && !empty($LOCAL_TRANS_USER_CACHE[$arTransact["EMPLOYEE_ID"]])) {
                 $urlToUser = $selfFolderUrl . "user_edit.php?ID=" . $arTransact["EMPLOYEE_ID"] . "&lang=" . LANGUAGE_ID;
@@ -193,7 +223,9 @@ while ($arTransact = $dbTransactList->NavNext(false)) {
                     $urlToUser = $selfFolderUrl . "sale_buyers_profile.php?USER_ID=" . $arTransact["EMPLOYEE_ID"] . "&lang=" . LANGUAGE_ID;
                     $urlToUser = $adminSidePanelHelper->editUrlToPublicPage($urlToUser);
                 }
-                $fieldValue .= "[<a href=\"" . $urlToUser . "\" title=\"" . GetMessage("STA_USER_INFO") . "\">" . $arTransact["EMPLOYEE_ID"] . "</a>] ";
+                $fieldValue .= "[<a href=\"" . $urlToUser . "\" title=\"" . GetMessage(
+                        "STA_USER_INFO"
+                    ) . "\">" . $arTransact["EMPLOYEE_ID"] . "</a>] ";
                 $fieldValue .= $LOCAL_TRANS_USER_CACHE[$arTransact["EMPLOYEE_ID"]];
                 $fieldValue .= "<br />";
             }

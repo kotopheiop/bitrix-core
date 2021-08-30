@@ -40,14 +40,6 @@ class Extension
 
             return true;
         }
-
-        if (preg_match("/^((?P<MODULE_ID>[\w\.]+):)?(?P<EXT_NAME>[\w\.\-]+)$/", $extName, $matches)) {
-            if (strlen($matches['MODULE_ID']) > 0 && $matches['MODULE_ID'] !== 'main') {
-                \Bitrix\Main\Loader::includeModule($matches['MODULE_ID']);
-            }
-            $extName = $matches['EXT_NAME'];
-        }
-
         return \CJSCore::isExtRegistered($extName);
     }
 
@@ -124,6 +116,10 @@ class Extension
                 } else {
                     $config["lang"] = $extensionPath . "/config.php";
                 }
+            }
+
+            if (!isset($config['settings']) || !is_array($config['settings'])) {
+                $config['settings'] = [];
             }
         }
 
@@ -248,6 +244,12 @@ class Extension
                     $assets['css'][] = $config['css'];
                 }
             }
+
+            if (isset($config['post_rel'])) {
+                $relAssets = static::getAssets($config['post_rel']);
+                $assets['js'] = array_merge($assets['js'], $relAssets['js']);
+                $assets['css'] = array_merge($assets['css'], $relAssets['css']);
+            }
         }
 
         $assets['js'] = array_unique($assets['js']);
@@ -275,6 +277,7 @@ class Extension
         $skipCoreJS = isset($option['skip_core_js']) && $option['skip_core_js'] === true;
         $withDependency = !(isset($option['with_dependency']) && $option['with_dependency'] === false);
         $skipExtensions = isset($option['skip_extensions']) ? $option['skip_extensions'] : [];
+        $getResolvedExtensionList = isset($option['get_resolved_extension_list']) && $option['get_resolved_extension_list'] === true;
 
         \CJSCore::init();
 
@@ -314,18 +317,18 @@ class Extension
                 );
 
                 if (is_array($callbackResult)) {
-                    foreach ($callbackResult as $key => $value) {
+                    foreach ($callbackResult as $option => $value) {
                         if (!is_array($value)) {
                             $value = array($value);
                         }
 
-                        if (!isset($extension[1][$key])) {
-                            $extension[1][$key] = array();
-                        } elseif (!is_array($extension[1][$key])) {
-                            $extension[1][$key] = array($extension[1][$key]);
+                        if (!isset($extension[1][$option])) {
+                            $extension[1][$option] = array();
+                        } elseif (!is_array($extension[1][$option])) {
+                            $extension[1][$option] = array($extension[1][$option]);
                         }
 
-                        $extensions[$index][1][$key] = array_merge($extension[1][$key], $value);
+                        $extensions[$index][1][$option] = array_merge($extension[1][$option], $value);
                     }
                 }
 
@@ -340,15 +343,28 @@ class Extension
             'lang_additional' => [],
             'layout' => [],
             'options' => [],
+            'settings' => [],
         ];
 
+        if ($getResolvedExtensionList) {
+            $result['resolved_extension'] = array_diff($alreadyResolved, $skipExtensions);
+        }
+
+        $options = array_keys($result);
         foreach ($extensions as $extension) {
-            foreach (['js', 'css', 'lang', 'lang_additional', 'layout', 'options'] as $key) {
-                if (is_array($extension[1]) && array_key_exists($key, $extension[1])) {
-                    if (is_array($extension[1][$key])) {
-                        $result[$key] = array_merge($result[$key], $extension[1][$key]);
+            $extensionName = $extension[0];
+            $config = $extension[1];
+
+            foreach ($options as $option) {
+                if (is_array($config) && array_key_exists($option, $config)) {
+                    if ($option === 'settings' && is_array($config[$option]) && !empty($config[$option])) {
+                        $result[$option][$extensionName] = $config[$option];
                     } else {
-                        $result[$key][] = $extension[1][$key];
+                        if (is_array($config[$option])) {
+                            $result[$option] = array_merge($result[$option], $config[$option]);
+                        } else {
+                            $result[$option][] = $config[$option];
+                        }
                     }
                 }
             }
@@ -365,8 +381,13 @@ class Extension
      * @param array $alreadyResolved
      * @return array
      */
-    private static function getDependencyListRecursive($name, $storeConfig = false, $storeSelf = false, &$resultList = [], &$alreadyResolved = [])
-    {
+    private static function getDependencyListRecursive(
+        $name,
+        $storeConfig = false,
+        $storeSelf = false,
+        &$resultList = [],
+        &$alreadyResolved = []
+    ) {
         $config = self::getConfig($name);
         if ($config === null) {
             $namespaces = explode(".", $name);
@@ -381,26 +402,14 @@ class Extension
 
         if ($config && !empty($config['rel'])) {
             foreach ($config['rel'] as $dependencyName) {
-                if (in_array($dependencyName, $alreadyResolved)) {
-                    continue;
-                }
-
-                $dependencyConfig = self::getConfig($dependencyName);
-                if ($dependencyConfig === null) {
-                    $namespaces = explode(".", $dependencyName);
-                    if (count($namespaces) == 1) {
-                        $dependencyConfig = self::getCoreConfigForDependencyList($dependencyName, $storeConfig, $resultList, $alreadyResolved);
-                    }
-                }
-
-                if (empty($dependencyConfig['rel'])) {
-                    if ($storeConfig) {
-                        $resultList[] = [$dependencyName, $dependencyConfig];
-                    } else {
-                        $resultList[] = $dependencyName;
-                    }
-                } else if (!in_array($dependencyName, $alreadyResolved)) {
-                    self::getDependencyListRecursive($dependencyName, $storeConfig, true, $resultList, $alreadyResolved);
+                if (!in_array($dependencyName, $alreadyResolved)) {
+                    self::getDependencyListRecursive(
+                        $dependencyName,
+                        $storeConfig,
+                        true,
+                        $resultList,
+                        $alreadyResolved
+                    );
                 }
             }
         }
@@ -410,6 +419,20 @@ class Extension
                 $resultList[] = [$name, $config];
             } else {
                 $resultList[] = $name;
+            }
+        }
+
+        if ($config && !empty($config['post_rel'])) {
+            foreach ($config['post_rel'] as $dependencyName) {
+                if (!in_array($dependencyName, $alreadyResolved)) {
+                    self::getDependencyListRecursive(
+                        $dependencyName,
+                        $storeConfig,
+                        true,
+                        $resultList,
+                        $alreadyResolved
+                    );
+                }
             }
         }
 
@@ -429,19 +452,13 @@ class Extension
         return $resultList;
     }
 
-    private static function getCoreConfigForDependencyList($name, $storeConfig = false, &$resultList = [], &$alreadyResolved = [])
-    {
+    private static function getCoreConfigForDependencyList(
+        $name,
+        $storeConfig = false,
+        &$resultList = [],
+        &$alreadyResolved = []
+    ) {
         $alreadyResolved[] = $name;
-
-        if (preg_match("/^((?P<MODULE_ID>[\w\.]+):)?(?P<EXT_NAME>[\w\.\-]+)$/", $name, $matches)) {
-            if (strlen($matches['MODULE_ID']) > 0 && $matches['MODULE_ID'] !== 'main') {
-                \Bitrix\Main\Loader::includeModule($matches['MODULE_ID']);
-            }
-
-            $name = $matches['EXT_NAME'];
-
-            $alreadyResolved[] = $name;
-        }
 
         $config = \CJSCore::getExtInfo($name);
         if ($config) {

@@ -1,4 +1,5 @@
 <?php
+
 IncludeModuleLangFile(__FILE__);
 
 class CSupportHolidays
@@ -7,7 +8,22 @@ class CSupportHolidays
         "ID" => array("TYPE" => CSupportTableFields::VT_NUMBER, "DEF_VAL" => 0, "AUTO_CALCULATED" => true),
         "NAME" => array("TYPE" => CSupportTableFields::VT_STRING, "DEF_VAL" => "", "MAX_STR_LEN" => 255),
         "DESCRIPTION" => array("TYPE" => CSupportTableFields::VT_STRING, "DEF_VAL" => "", "MAX_STR_LEN" => 2000),
-        "OPEN_TIME" => array("TYPE" => CSupportTableFields::VT_STRING, "DEF_VAL" => "HOLIDAY", "LIST" => array("HOLIDAY_H", "HOLIDAY", "WORKDAY_H", "WORKDAY_0", "WORKDAY_1", "WORKDAY_2", "WORKDAY_3", "WORKDAY_4", "WORKDAY_5", "WORKDAY_6")),
+        "OPEN_TIME" => array(
+            "TYPE" => CSupportTableFields::VT_STRING,
+            "DEF_VAL" => "HOLIDAY",
+            "LIST" => array(
+                "HOLIDAY_H",
+                "HOLIDAY",
+                "WORKDAY_H",
+                "WORKDAY_0",
+                "WORKDAY_1",
+                "WORKDAY_2",
+                "WORKDAY_3",
+                "WORKDAY_4",
+                "WORKDAY_5",
+                "WORKDAY_6"
+            )
+        ),
         "DATE_FROM" => array("TYPE" => CSupportTableFields::VT_DATE_TIME, "DEF_VAL" => null),
         "DATE_TILL" => array("TYPE" => CSupportTableFields::VT_DATE_TIME, "DEF_VAL" => null),
 
@@ -21,15 +37,17 @@ class CSupportHolidays
     const table_s2h = "b_ticket_sla_2_holidays";
     const table_sla = "b_ticket_sla";
 
-
-    static function err_mess()
+    public static function err_mess()
     {
         $module_id = "support";
         @include($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/" . $module_id . "/install/version.php");
         return "<br>Module: " . $module_id . " <br>Class: CSupportHolidays<br>File: " . __FILE__;
     }
 
-    function Set($arFields, $arFieldsSLA) //$arFields, $arFieldsSLA = array(0 => array("HOLIDAYS_ID" => 1, "SLA_ID" => 1), 1 => array("HOLIDAYS_ID" => 2, "SLA_ID" => 2) ...)
+    public static function Set(
+        $arFields,
+        $arFieldsSLA
+    ) //$arFields, $arFieldsSLA = array(0 => array("HOLIDAYS_ID" => 1, "SLA_ID" => 1), 1 => array("HOLIDAYS_ID" => 2, "SLA_ID" => 2) ...)
     {
         global $DB, $APPLICATION;
         $err_mess = (self::err_mess()) . "<br>Function: Set<br>Line: ";
@@ -51,11 +69,15 @@ class CSupportHolidays
         if (is_array($arFields)) {
             $f = new CSupportTableFields(self::$holidays);
             $f->FromArray($arFields);
-        } else $f = $arFields;
+        } else {
+            $f = $arFields;
+        }
         if (is_array($arFieldsSLA)) {
             $f_s = new CSupportTableFields(self::$sla2holidays, CSupportTableFields::C_Table);
             $f_s->FromTable($arFieldsSLA);
-        } else $f_s = $arFieldsSLA;
+        } else {
+            $f_s = $arFieldsSLA;
+        }
 
 
         $table = self::table;
@@ -64,10 +86,10 @@ class CSupportHolidays
         $isNew = ($f->ID <= 0);
 
         $objError = new CAdminException(array());
-        if (strlen($f->NAME) <= 0) {
+        if ($f->NAME == '') {
             $objError->AddMessage(array("text" => GetMessage('SUP_ERROR_EMPTY_NAME')));
         }
-        if (strlen($f->OPEN_TIME) <= 0) {
+        if ($f->OPEN_TIME == '') {
             $objError->AddMessage(array("text" => GetMessage('SUP_ERROR_EMPTY_OPEN_TIME')));
         }
         $zd = mktime(0, 0, 0, 1, 1, 2010);
@@ -119,20 +141,27 @@ class CSupportHolidays
     }
 
     // get Holidays list
-    function GetList($arSort, $arFilter)
+    public static function GetList($arSort, $arFilter)
     {
-
         $err_mess = (self::err_mess()) . "<br>Function: GetList<br>Line: ";
         global $DB, $USER, $APPLICATION;
         $filter_keys = array_keys($arFilter);
         $table = self::table;
         $table_s2h = self::table_s2h;
         $arSqlSearch = Array();
-        if (!is_array($arFilter)) $arFilter = Array();
+        if (!is_array($arFilter)) {
+            $arFilter = Array();
+        }
         foreach ($arFilter as $key => $val) {
-            if ((is_array($val) && count($val) <= 0) || (!is_array($val) && (strlen($val) <= 0 || $val === 'NOT_REF'))) continue;
-            $key = strtoupper($key);
-            if (is_array($val)) $val = implode(" | ", $val);
+            if ((is_array($val) && count($val) <= 0) || (!is_array(
+                        $val
+                    ) && ((string)$val == '' || $val === 'NOT_REF'))) {
+                continue;
+            }
+            $key = mb_strtoupper($key);
+            if (is_array($val)) {
+                $val = implode(" | ", $val);
+            }
             switch ($key) {
                 case "ID":
                     $arSqlSearch[] = GetFilterQuery("H.ID", $val, "N");
@@ -153,11 +182,14 @@ class CSupportHolidays
 							" . GetFilterQuery("S2H.SLA_ID", $val, "N") . ")";
                     break;
                 case "PERIOD":
-                    if (is_array($val) && isset($val["FROM"]) && intval($val["FROM"]) > 0 && isset($val["TILL"]) && intval($val["TILL"]) > 0) {
-                        $arSqlSearch[] = "H.DATE_FROM <= " . $DB->CharToDateFunction(GetTime($val["TILL"], "FULL")) . " AND H.DATE_TILL >= " . $DB->CharToDateFunction(GetTime($val["FROM"], "FULL"));
+                    if (is_array($val) && isset($val["FROM"]) && intval(
+                            $val["FROM"]
+                        ) > 0 && isset($val["TILL"]) && intval($val["TILL"]) > 0) {
+                        $arSqlSearch[] = "H.DATE_FROM <= " . $DB->CharToDateFunction(
+                                GetTime($val["TILL"], "FULL")
+                            ) . " AND H.DATE_TILL >= " . $DB->CharToDateFunction(GetTime($val["FROM"], "FULL"));
                     }
                     break;
-
             }
         }
 
@@ -168,12 +200,20 @@ class CSupportHolidays
             $ar1 = array_merge($DB->GetTableFieldsList($table), array());
             $ar2 = array_keys($arSort);
             $arDiff = array_diff($ar2, $ar1);
-            if (is_array($arDiff) && count($arDiff) > 0) foreach ($arDiff as $value) unset($arSort[$value]);
+            if (is_array($arDiff) && count($arDiff) > 0) {
+                foreach ($arDiff as $value) {
+                    unset($arSort[$value]);
+                }
+            }
         }
-        if (count($arSort) <= 0) $arSort = array("ID" => "ASC");
+        if (count($arSort) <= 0) {
+            $arSort = array("ID" => "ASC");
+        }
         $fs = "";
         foreach ($arSort as $by => $order) {
-            if (strtoupper($order) != "DESC") $order = "ASC";
+            if (mb_strtoupper($order) != "DESC") {
+                $order = "ASC";
+            }
             if ($by === "DATE_TILL" || $by === "DATE_FROM") {
                 $fs .= ",
 				" . $by . " " . $by . "_SORT";
@@ -181,9 +221,10 @@ class CSupportHolidays
             } else {
                 $arSqlOrder[] = $by . " " . $order;
             }
-
         }
-        if (is_array($arSqlOrder) && count($arSqlOrder) > 0) $strSqlOrder = " ORDER BY " . implode(",", $arSqlOrder);
+        if (is_array($arSqlOrder) && count($arSqlOrder) > 0) {
+            $strSqlOrder = " ORDER BY " . implode(",", $arSqlOrder);
+        }
 
         $strSql = "
 			SELECT
@@ -204,7 +245,7 @@ class CSupportHolidays
     }
 
     // get Holidays list
-    function GetSLAByID($id, $needObj = false)
+    public static function GetSLAByID($id, $needObj = false)
     {
         $err_mess = (self::err_mess()) . "<br>Function: GetList<br>Line: ";
         global $DB, $USER, $APPLICATION;
@@ -226,7 +267,9 @@ class CSupportHolidays
 				SLA.NAME
 			";
         $res = $DB->Query($strSql, false, $err_mess . __LINE__);
-        if (!$needObj) return $res;
+        if (!$needObj) {
+            return $res;
+        }
         $f_s = new CSupportTableFields(self::$sla2holidays, CSupportTableFields::C_Table);
         $f_s->RemoveExistingRows();
         while ($resR = $res->Fetch()) {
@@ -236,7 +279,7 @@ class CSupportHolidays
         return $f_s;
     }
 
-    function GetOpenTimeArray()
+    public static function GetOpenTimeArray()
     {
         return array(
             "GB_1" => "SUP_OPEN_TIME_HOLIDAY_G",
@@ -254,17 +297,16 @@ class CSupportHolidays
             "WORKDAY_6" => "SUP_OPEN_TIME_WORKDAY_6",
             "GE_2" => "",
         );
-
     }
 
-    function GetOpenTimeT($v)
+    public static function GetOpenTimeT($v)
     {
         $arr = self::GetOpenTimeArray();
         return (isset($arr[$v]) ? $arr[$v] : "");
     }
 
     // delete Holiday
-    function Delete($id, $checkRights = true)
+    public static function Delete($id, $checkRights = true)
     {
         $err_mess = (self::err_mess()) . "<br>Function: Delete<br>Line: ";
         global $DB, $USER, $APPLICATION;
@@ -272,7 +314,9 @@ class CSupportHolidays
         $table = self::table;
         $table_s2h = self::table_s2h;
 
-        if ($id <= 0) return false;
+        if ($id <= 0) {
+            return false;
+        }
 
         $isDemo = null;
         $isSupportClient = null;
@@ -308,7 +352,4 @@ class CSupportHolidays
 
         return true;
     }
-
 }
-
-?>

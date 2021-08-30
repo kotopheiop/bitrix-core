@@ -54,7 +54,7 @@ class MetadataProvider
      */
     public function getCountryMetadata($country)
     {
-        $country = strtoupper($country);
+        $country = mb_strtoupper($country);
         return isset($this->metadata[$country]) ? $this->metadata[$country] : false;
     }
 
@@ -80,15 +80,16 @@ class MetadataProvider
         $codeToCountries = array();
 
         foreach ($metadata as $metadataRecord) {
-            $country = strtoupper($metadataRecord['id']);
+            $country = mb_strtoupper($metadataRecord['id']);
             if (!is_array($codeToCountries[$metadataRecord['countryCode']])) {
                 $codeToCountries[$metadataRecord['countryCode']] = array();
             }
 
-            if ($metadataRecord['mainCountryForCode'])
+            if ($metadataRecord['mainCountryForCode']) {
                 array_unshift($codeToCountries[$metadataRecord['countryCode']], $country);
-            else
+            } else {
                 $codeToCountries[$metadataRecord['countryCode']][] = $country;
+            }
         }
 
         return array(
@@ -104,8 +105,9 @@ class MetadataProvider
      */
     protected function loadMetadata()
     {
-        if (File::isFileExists(static::PARSED_METADATA_FILENAME))
+        if (File::isFileExists(static::PARSED_METADATA_FILENAME)) {
             throw new SystemException("Metadata file is not found");
+        }
 
         $parsedMetadata = include(static::PARSED_METADATA_FILENAME);
 

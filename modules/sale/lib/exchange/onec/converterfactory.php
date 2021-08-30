@@ -45,7 +45,9 @@ class ConverterFactory
         } elseif ($typeId === EntityType::INVOICE_SHIPMENT) {
             return new ConverterDocumentShipmentInvoice();
         } else {
-            throw new NotSupportedException("Entity type: '" . DocumentType::ResolveName($typeId) . "' is not supported in current context");
+            throw new NotSupportedException(
+                "Entity type: '" . DocumentType::ResolveName($typeId) . "' is not supported in current context"
+            );
         }
     }
 }

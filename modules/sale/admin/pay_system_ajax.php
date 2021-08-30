@@ -1,11 +1,11 @@
-<?
+<?php
 
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Sale\Delivery\Services;
 use Bitrix\Main\Application;
 use Bitrix\Sale\Services\PaySystem\Restrictions\Manager;
 use Bitrix\Sale\BusinessValue;
 use Bitrix\Main\IO;
+use Bitrix\Sale\PaySystem\Domain\Verification;
 
 define("NO_KEEP_STATISTIC", true);
 define("NO_AGENT_STATISTIC", true);
@@ -25,15 +25,16 @@ Loc::loadMessages(__FILE__);
 
 $arResult = array("ERROR" => "");
 
-if (!\Bitrix\Main\Loader::includeModule('sale'))
+if (!\Bitrix\Main\Loader::includeModule('sale')) {
     $arResult["ERROR"] = "Error! Can't include module \"Sale\"";
+}
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/lib/delivery/inputs.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/lib/cashbox/inputs/file.php");
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
 
-if (strlen($arResult["ERROR"]) <= 0 && $saleModulePermissions >= "W" && check_bitrix_sessid()) {
+if ($arResult["ERROR"] == '' && $saleModulePermissions >= "W" && check_bitrix_sessid()) {
     $action = ($request->get('action') !== null) ? trim($request->get('action')) : '';
 
     switch ($action) {
@@ -43,8 +44,9 @@ if (strlen($arResult["ERROR"]) <= 0 && $saleModulePermissions >= "W" && check_bi
             $paySystemId = ($request->get('paySystemId') !== null) ? intval($request->get('paySystemId')) : 0;
             $sort = ($request->get('sort') !== null) ? intval($request->get('sort')) : 100;
 
-            if (!$className)
+            if (!$className) {
                 throw new \Bitrix\Main\ArgumentNullException("className");
+            }
 
             Manager::getClassesList();
             $paramsStructure = $className::getParamsStructure($paySystemId);
@@ -52,13 +54,20 @@ if (strlen($arResult["ERROR"]) <= 0 && $saleModulePermissions >= "W" && check_bi
 
             $paramsField = "<table>";
 
-            if ($className == '\\' . \Bitrix\Sale\Services\PaySystem\Restrictions\Price::class)
-                $paramsField .= '<tr><td colspan=\'2\' style=\'padding-bottom:5px\'><b>' . Loc::getMessage('SALE_PS_PRICE_INFO') . '</b></td></tr>';
+            if ($className == '\\' . \Bitrix\Sale\Services\PaySystem\Restrictions\Price::class) {
+                $paramsField .= '<tr><td colspan=\'2\' style=\'padding-bottom:5px\'><b>' . Loc::getMessage(
+                        'SALE_PS_PRICE_INFO'
+                    ) . '</b></td></tr>';
+            }
 
             foreach ($paramsStructure as $name => $param) {
                 $paramsField .= "<tr>" .
-                    "<td>" . (strlen($param["LABEL"]) > 0 ? $param["LABEL"] . ": " : "") . "</td>" .
-                    "<td>" . \Bitrix\Sale\Internals\Input\Manager::getEditHtml("RESTRICTION[" . $name . "]", $param, (isset($params[$name]) ? $params[$name] : null)) . "</td>" .
+                    "<td>" . ($param["LABEL"] <> '' ? $param["LABEL"] . ": " : "") . "</td>" .
+                    "<td>" . \Bitrix\Sale\Internals\Input\Manager::getEditHtml(
+                        "RESTRICTION[" . $name . "]",
+                        $param,
+                        (isset($params[$name]) ? $params[$name] : null)
+                    ) . "</td>" .
                     "</tr>";
             }
 
@@ -80,16 +89,21 @@ if (strlen($arResult["ERROR"]) <= 0 && $saleModulePermissions >= "W" && check_bi
             $paySystemId = ($request->get('paySystemId') !== null) ? (int)$request->get('paySystemId') : 0;
             $restrictionId = ($request->get('restrictionId') !== null) ? (int)$request->get('restrictionId') : 0;
 
-            if (!class_exists($className) || !(is_subclass_of($className, '\Bitrix\Sale\Services\Base\Restriction')))
+            if (!class_exists($className) || !(is_subclass_of($className, '\Bitrix\Sale\Services\Base\Restriction'))) {
                 throw new \Bitrix\Main\ArgumentNullException("className");
+            }
 
-            if (!$paySystemId)
+            if (!$paySystemId) {
                 throw new \Bitrix\Main\ArgumentNullException("paySystemId");
+            }
 
             foreach ($className::getParamsStructure() as $key => $rParams) {
                 $errors = \Bitrix\Sale\Internals\Input\Manager::getError($rParams, $params[$key]);
-                if (!empty($errors))
-                    $arResult["ERROR"] .= Loc::getMessage('SALE_PS_ERROR_FIELD') . ': "' . $rParams["LABEL"] . '" ' . implode("\n", $errors) . "\n";
+                if (!empty($errors)) {
+                    $arResult["ERROR"] .= Loc::getMessage(
+                            'SALE_PS_ERROR_FIELD'
+                        ) . ': "' . $rParams["LABEL"] . '" ' . implode("\n", $errors) . "\n";
+                }
             }
 
             if ($arResult["ERROR"] == '') {
@@ -103,8 +117,9 @@ if (strlen($arResult["ERROR"]) <= 0 && $saleModulePermissions >= "W" && check_bi
                 /** @var \Bitrix\Sale\Result $res */
                 $res = $className::save($fields, $restrictionId);
 
-                if (!$res->isSuccess())
+                if (!$res->isSuccess()) {
                     $arResult["ERROR"] .= implode(".", $res->getErrorMessages());
+                }
                 $arResult["HTML"] = getRestrictionHtml($paySystemId);
             }
 
@@ -116,8 +131,9 @@ if (strlen($arResult["ERROR"]) <= 0 && $saleModulePermissions >= "W" && check_bi
             $restrictionId = ($request->get('restrictionId') !== null) ? (int)$request->get('restrictionId') : 0;
             $paySystemId = ($request->get('paySystemId') !== null) ? (int)$request->get('paySystemId') : 0;
 
-            if (!$restrictionId)
+            if (!$restrictionId) {
                 throw new \Bitrix\Main\ArgumentNullException('restrictionId');
+            }
 
             $dbRes = \Bitrix\Sale\Internals\ServiceRestrictionTable::getById($restrictionId);
 
@@ -125,8 +141,9 @@ if (strlen($arResult["ERROR"]) <= 0 && $saleModulePermissions >= "W" && check_bi
                 /** @var \Bitrix\Sale\Result $res */
                 $res = $fields["CLASS_NAME"]::delete($restrictionId, $paySystemId);
 
-                if (!$res->isSuccess())
+                if (!$res->isSuccess()) {
                     $arResult["ERROR"] .= implode(".", $res->getErrorMessages());
+                }
             } else {
                 $arResult["ERROR"] .= "Can't find restriction with id: " . $restrictionId;
             }
@@ -139,73 +156,24 @@ if (strlen($arResult["ERROR"]) <= 0 && $saleModulePermissions >= "W" && check_bi
 
             $handler = $request->get('handler');
             $paySystemId = (int)$request->get('paySystemId');
-
-            $data = \Bitrix\Sale\PaySystem\Manager::getHandlerDescription($handler);
-
-            if ($paySystemId <= 0) {
-                $consumerKey = 'PAYSYSTEM_NEW';
-                BusinessValue::addConsumer($consumerKey, $data);
-            } else {
-                $consumerKey = 'PAYSYSTEM_' . $paySystemId;
-                BusinessValue::changeConsumer($consumerKey, $data);
-            }
-
-            $businessValueControl = new \Bitrix\Sale\Helpers\Admin\BusinessValueControl('PAYSYSTEM');
-
-            $tariff = \Bitrix\Sale\PaySystem\Manager::getTariff($handler);
-            if (!$tariff)
-                $tariff = CSalePaySystemsHelper::getPaySystemTarif($handler, 0, 0);
-
-            $tariffBlock = '';
-            if ($tariff) {
-                $tariffBlock = '<tr class="heading"><td align="center" colspan="2">' . Loc::getMessage('SALE_PS_TARIFF') . '</td></tr>';
-
-                $arMultiControlQuery = array();
-                foreach ($tariff as $fieldId => $arField) {
-                    if (!empty($arMultiControlQuery)
-                        &&
-                        (!isset($arField['MCS_ID']) || !array_key_exists($arField['MCS_ID'], $arMultiControlQuery))
-                    ) {
-                        $tariffBlock .= CSaleHelper::getAdminMultilineControl($arMultiControlQuery);
-                        $arMultiControlQuery = array();
-                    }
-
-                    $controlHtml = CSaleHelper::getAdminHtml($fieldId, $arField, 'TARIF', 'pay_sys_form');
-
-                    if ($arField["TYPE"] == 'MULTI_CONTROL_STRING') {
-                        $arMultiControlQuery[$arField['MCS_ID']]['CONFIG'] = $arField;
-                        continue;
-                    } elseif (isset($arField['MCS_ID'])) {
-                        $arMultiControlQuery[$arField['MCS_ID']]['ITEMS'][] = $controlHtml;
-                        continue;
-                    }
-
-                    $tariffBlock .= CSaleHelper::wrapAdminHtml($controlHtml, $arField);
-                }
-
-                if (!empty($arMultiControlQuery))
-                    $tariffBlock .= CSaleHelper::getAdminMultilineControl($arMultiControlQuery);
-            }
-
-            $arResult["TARIF"] = $tariffBlock;
+            $psMode = $request->get('PS_MODE');
 
             $map = CSalePaySystemAction::getOldToNewHandlersMap();
-            if (isset($map[$handler]))
+            if (isset($map[$handler])) {
                 $handler = $map[$handler];
+            }
 
             $className = \Bitrix\Sale\PaySystem\Manager::getClassNameFromPath($handler);
 
             $path = \Bitrix\Sale\PaySystem\Manager::getPathToHandlerFolder($handler);
-
-            if (!class_exists($className) && IO\File::isFileExists($_SERVER['DOCUMENT_ROOT'] . $path . '/handler.php'))
-                require_once $_SERVER['DOCUMENT_ROOT'] . $path . '/handler.php';
+            list($className) = \Bitrix\Sale\PaySystem\Manager::includeHandler($handler);
 
             if (class_exists($className)) {
-                $isOrderHandler = strpos($handler, 'orderdocument') === 0;
                 $modeList = $className::getHandlerModeList();
+                $isOrderHandler = mb_strpos($handler, 'orderdocument') === 0;
                 if ($modeList || $isOrderHandler) {
                     if ($modeList) {
-                        $psMode = ($request->get('PS_MODE') !== null) ? $request->get('PS_MODE') : $paySystem['PS_MODE'];
+                        $psMode = $psMode ?? array_shift(array_keys($modeList));
                         $arResult["PAYMENT_MODE"] = Bitrix\Sale\Internals\Input\Enum::getEditHtml(
                             'PS_MODE',
                             array(
@@ -234,6 +202,59 @@ if (strlen($arResult["ERROR"]) <= 0 && $saleModulePermissions >= "W" && check_bi
                 }
             }
 
+            $data = \Bitrix\Sale\PaySystem\Manager::getHandlerDescription($handler, $psMode);
+
+            if ($paySystemId <= 0) {
+                $consumerKey = 'PAYSYSTEM_NEW';
+                BusinessValue::addConsumer($consumerKey, $data);
+            } else {
+                $consumerKey = 'PAYSYSTEM_' . $paySystemId;
+                BusinessValue::changeConsumer($consumerKey, $data);
+            }
+
+            $businessValueControl = new \Bitrix\Sale\Helpers\Admin\BusinessValueControl('PAYSYSTEM');
+
+            $tariff = \Bitrix\Sale\PaySystem\Manager::getTariff($handler);
+            if (!$tariff) {
+                $tariff = CSalePaySystemsHelper::getPaySystemTarif($handler, 0, 0);
+            }
+
+            $tariffBlock = '';
+            if ($tariff) {
+                $tariffBlock = '<tr class="heading"><td align="center" colspan="2">' . Loc::getMessage(
+                        'SALE_PS_TARIFF'
+                    ) . '</td></tr>';
+
+                $arMultiControlQuery = array();
+                foreach ($tariff as $fieldId => $arField) {
+                    if (!empty($arMultiControlQuery)
+                        &&
+                        (!isset($arField['MCS_ID']) || !array_key_exists($arField['MCS_ID'], $arMultiControlQuery))
+                    ) {
+                        $tariffBlock .= CSaleHelper::getAdminMultilineControl($arMultiControlQuery);
+                        $arMultiControlQuery = array();
+                    }
+
+                    $controlHtml = CSaleHelper::getAdminHtml($fieldId, $arField, 'TARIF', 'pay_sys_form');
+
+                    if ($arField["TYPE"] == 'MULTI_CONTROL_STRING') {
+                        $arMultiControlQuery[$arField['MCS_ID']]['CONFIG'] = $arField;
+                        continue;
+                    } elseif (isset($arField['MCS_ID'])) {
+                        $arMultiControlQuery[$arField['MCS_ID']]['ITEMS'][] = $controlHtml;
+                        continue;
+                    }
+
+                    $tariffBlock .= CSaleHelper::wrapAdminHtml($controlHtml, $arField);
+                }
+
+                if (!empty($arMultiControlQuery)) {
+                    $tariffBlock .= CSaleHelper::getAdminMultilineControl($arMultiControlQuery);
+                }
+            }
+
+            $arResult["TARIF"] = $tariffBlock;
+
             if (IO\File::isFileExists($_SERVER['DOCUMENT_ROOT'] . $path . '/.description.php')) {
                 require $_SERVER['DOCUMENT_ROOT'] . $path . '/.description.php';
 
@@ -241,36 +262,67 @@ if (strlen($arResult["ERROR"]) <= 0 && $saleModulePermissions >= "W" && check_bi
                 {
                     $arResult["DESCRIPTION"] = $psDescription;
                 } elseif (isset($description)) {
-                    if (is_array($description))
-                        $arResult["DESCRIPTION"] = (array_key_exists('MAIN', $description)) ? $description['MAIN'] : implode("\n", $description);
-                    else
+                    if (is_array($description)) {
+                        $arResult["DESCRIPTION"] = (array_key_exists(
+                            'MAIN',
+                            $description
+                        )) ? $description['MAIN'] : implode("\n", $description);
+                    } else {
                         $arResult["DESCRIPTION"] = $description;
+                    }
                 }
 
                 if ($paySystemId <= 0) {
-                    if (isset($data))
+                    if (isset($data)) {
                         $arResult["NAME"] = $arResult["PSA_NAME"] = $data['NAME'];
-                    elseif (isset($psTitle))
+                    } elseif (isset($psTitle)) {
                         $arResult["NAME"] = $arResult["PSA_NAME"] = $psTitle;
+                    }
 
                     $arResult['SORT'] = 100;
 
-                    $psMode = $request->get('PS_MODE') ? $request->get('PS_MODE') : $paySystem['PS_MODE'];
                     if ($psMode) {
                         $fullPath = $handler . '/' . $psMode;
-                        if (IO\File::isFileExists($_SERVER['DOCUMENT_ROOT'] . '/bitrix/images/sale/sale_payments/' . $fullPath . '.png')) {
+                        if (IO\File::isFileExists(
+                            $_SERVER['DOCUMENT_ROOT'] . '/bitrix/images/sale/sale_payments/' . $fullPath . '.png'
+                        )) {
                             $arResult['LOGOTIP']['NAME'] = $fullPath . '.png';
                             $arResult['LOGOTIP']['PATH'] = '/bitrix/images/sale/sale_payments/' . $fullPath . '.png';
                         }
                     }
 
                     if (!isset($arResult['LOGOTIP'])
-                        && IO\File::isFileExists($_SERVER['DOCUMENT_ROOT'] . '/bitrix/images/sale/sale_payments/' . $handler . '.png')) {
+                        && IO\File::isFileExists(
+                            $_SERVER['DOCUMENT_ROOT'] . '/bitrix/images/sale/sale_payments/' . $handler . '.png'
+                        )) {
                         $arResult['LOGOTIP']['NAME'] = $handler . '.png';
                         $arResult['LOGOTIP']['PATH'] = '/bitrix/images/sale/sale_payments/' . $handler . '.png';
                     }
                 }
             }
+
+            $entityName = $handler;
+            if ($psMode) {
+                $entityName .= $psMode;
+            }
+            $arResult["DOMAIN_VERIFICATION"]["NEED_VERIFICATION"] = Verification\Manager::needVerification($entityName);
+            if ($arResult["DOMAIN_VERIFICATION"]["NEED_VERIFICATION"]) {
+                $domainVerificationFormUrl = \CComponentEngine::makeComponentPath(
+                    'bitrix:sale.domain.verification.form'
+                );
+                $domainVerificationFormUrl = getLocalPath('components' . $domainVerificationFormUrl . '/slider.php');
+                $domainVerificationFormUrl = new \Bitrix\Main\Web\Uri($domainVerificationFormUrl);
+                $domainVerificationFormUrl->addParams(
+                    [
+                        'analyticsLabel' => 'paySystemDomainVerification',
+                        'entity' => $entityName,
+                        'manager' => Verification\Manager::class,
+                    ]
+                );
+
+                $arResult["DOMAIN_VERIFICATION"]["FORM_LINK"] = $domainVerificationFormUrl;
+            }
+
             ob_start();
             $businessValueControl->renderMap(array('CONSUMER_KEY' => $consumerKey));
             $arResult["BUS_VAL"] = ob_get_contents();
@@ -296,27 +348,31 @@ if (strlen($arResult["ERROR"]) <= 0 && $saleModulePermissions >= "W" && check_bi
             break;
     }
 } else {
-    if ($request->get('mode') == 'settings')
+    if ($request->get('mode') == 'settings') {
         getRestrictionHtml($request->get('ID'));
-    elseif (strlen($arResult["ERROR"]) <= 0)
+    } elseif ($arResult["ERROR"] == '') {
         $arResult["ERROR"] = "Error! Access denied";
+    }
 }
 
-if (strlen($arResult["ERROR"]) > 0)
+if ($arResult["ERROR"] <> '') {
     $arResult["RESULT"] = "ERROR";
-else
+} else {
     $arResult["RESULT"] = "OK";
+}
 
-if (strtolower(SITE_CHARSET) != 'utf-8')
+if (mb_strtolower(SITE_CHARSET) != 'utf-8') {
     $arResult = $APPLICATION->ConvertCharsetArray($arResult, SITE_CHARSET, 'utf-8');
+}
 
 header('Content-Type: application/json');
 die(json_encode($arResult));
 
 function getRestrictionHtml($paySystemId)
 {
-    if (intval($paySystemId) <= 0)
+    if (intval($paySystemId) <= 0) {
         throw new \Bitrix\Main\ArgumentNullException("paySystemId");
+    }
 
     $_REQUEST['table_id'] = 'table_delivery_restrictions';
     $_REQUEST['admin_history'] = 'Y';

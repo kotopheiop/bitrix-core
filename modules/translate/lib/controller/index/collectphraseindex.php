@@ -19,6 +19,9 @@ class CollectPhraseIndex
     /** @var string */
     private $seekPathId;
 
+    /** @var string[] */
+    private $languages;
+
     /**
      * \Bitrix\Main\Engine\Action constructor.
      *
@@ -28,7 +31,7 @@ class CollectPhraseIndex
      */
     public function __construct($name, Main\Engine\Controller $controller, $config = array())
     {
-        $this->keepField('seekPathId');
+        $this->keepField(['seekPathId', 'languages']);
 
         parent::__construct($name, $controller, $config);
     }
@@ -53,7 +56,20 @@ class CollectPhraseIndex
         $path = '/' . trim($path, '/.\\');
 
         if ($this->isNewProcess) {
-            $this->totalItems = (new Index\PhraseIndexCollection())->countItemsToProcess(new Translate\Filter(['path' => $path]));
+            $languages = $this->controller->getRequest()->get('languages');
+            if (is_array($languages) && !in_array('all', $languages)) {
+                $languages = array_intersect($languages, Translate\Config::getEnabledLanguages());
+                if (!empty($languages)) {
+                    $this->languages = $languages;
+                }
+            }
+
+            $filter = new Translate\Filter(['path' => $path]);
+            if (!empty($this->languages)) {
+                $filter->langId = $this->languages;
+            }
+
+            $this->totalItems = (new Index\PhraseIndexCollection())->countItemsToProcess($filter);
 
             $this->saveProgressParameters();
 
@@ -92,6 +108,9 @@ class CollectPhraseIndex
         }
 
         $filter = new Translate\Filter(['path' => $path]);
+        if (!empty($this->languages)) {
+            $filter->langId = $this->languages;
+        }
 
         $indexer = new Index\PhraseIndexCollection();
 

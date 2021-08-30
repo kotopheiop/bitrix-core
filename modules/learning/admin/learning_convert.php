@@ -1,10 +1,12 @@
 <?php
+
 require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_before.php');
 
 global $USER;
 
-if (!$USER->IsAdmin())
+if (!$USER->IsAdmin()) {
     $APPLICATION->AuthForm(GetMessage('ACCESS_DENIED'));
+}
 
 require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/learning/classes/general/legacy/converter_to_11.5.0.php');
 IncludeModuleLangFile(__FILE__);
@@ -17,14 +19,16 @@ if (isset($_REQUEST['learning_process']) && ($_REQUEST['learning_process'] === '
     $processedSummary = 0;
     $processedAtLastStep = false;
 
-    if (isset($_REQUEST['processedSummary']))
+    if (isset($_REQUEST['processedSummary'])) {
         $processedSummary = (int)$_REQUEST['processedSummary'];
+    }
 
     try {
         $rc = CLearnInstall201203ConvertDB::run();
 
-        if (strlen($rc) > 0)
+        if ($rc <> '') {
             throw new Exception($rc);
+        }
 
         $processedAtLastStep = (int)CLearnInstall201203ConvertDB::$items_processed;
     } catch (Exception $e) {
@@ -37,8 +41,9 @@ if (isset($_REQUEST['learning_process']) && ($_REQUEST['learning_process'] === '
     </script>
     <?php
 
-    if (is_int($processedAtLastStep))
+    if (is_int($processedAtLastStep)) {
         $processedSummary += $processedAtLastStep;
+    }
 
     if ($processedAtLastStep === false) {
         CAdminMessage::ShowMessage(

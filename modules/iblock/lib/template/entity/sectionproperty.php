@@ -46,9 +46,9 @@ class SectionProperty extends Base
             && $this->iblockId > 0
         ) {
             foreach ($this->fields as $id => $value) {
-                if (substr($id, 0, 3) === "UF_") {
+                if (mb_substr($id, 0, 3) === "UF_") {
                     $propertyCode = $id;
-                    $fieldCode = strtolower(substr($id, 3));
+                    $fieldCode = mb_strtolower(mb_substr($id, 3));
                     $this->fieldMap[$fieldCode] = $propertyCode;
                 }
             }
@@ -72,7 +72,7 @@ class SectionProperty extends Base
                 $this->id
             );
             foreach ($userFields as $id => $uf) {
-                $this->addField(substr($id, 3), $id, $uf["VALUE"]);
+                $this->addField(mb_substr($id, 3), $id, $uf["VALUE"]);
             }
         }
         return is_array($this->fields);

@@ -3,6 +3,7 @@
 namespace Bitrix\Landing\Hook\Page;
 
 use \Bitrix\Landing\Field;
+use \Bitrix\Landing\Manager;
 use \Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
@@ -17,31 +18,41 @@ class GaCounter extends \Bitrix\Landing\Hook\Page
     {
         $helpUrl = \Bitrix\Landing\Help::getHelpUrl('GACOUNTER');
         return array(
-            'USE' => new Field\Checkbox('USE', array(
+            'USE' => new Field\Checkbox(
+                'USE', array(
                 'title' => Loc::getMessage('LANDING_HOOK_GACOUNTER_USE')
-            )),
-            'COUNTER' => new Field\Text('COUNTER', array(
+            )
+            ),
+            'COUNTER' => new Field\Text(
+                'COUNTER', array(
                 'title' => Loc::getMessage('LANDING_HOOK_GACOUNTER_COUNTER'),
                 'placeholder' => Loc::getMessage('LANDING_HOOK_GACOUNTER_PLACEHOLDER')
-            )),
-            'SEND_CLICK' => new Field\Checkbox('SEND_CLICK', array(
+            )
+            ),
+            'SEND_CLICK' => new Field\Checkbox(
+                'SEND_CLICK', array(
                 'title' => Loc::getMessage('LANDING_HOOK_GACOUNTER_SEND_CLICK')
-            )),
-            'CLICK_TYPE' => new Field\Select('CLICK_TYPE', array(
+            )
+            ),
+            'CLICK_TYPE' => new Field\Select(
+                'CLICK_TYPE', array(
                 'title' => Loc::getMessage('LANDING_HOOK_GACOUNTER_CLICK_TYPE'),
                 'options' => [
                     'href' => Loc::getMessage('LANDING_HOOK_GACOUNTER_CLICK_TYPE_HREF'),
                     'text' => Loc::getMessage('LANDING_HOOK_GACOUNTER_CLICK_TYPE_TEXT'),
                 ]
-            )),
-            'SEND_SHOW' => new Field\Checkbox('SEND_SHOW', array(
+            )
+            ),
+            'SEND_SHOW' => new Field\Checkbox(
+                'SEND_SHOW', array(
                 'title' => Loc::getMessage('LANDING_HOOK_GACOUNTER_SEND_SHOW'),
                 'help' => $helpUrl
                     ? '<a href="' . $helpUrl . '" target="_blank">' .
                     Loc::getMessage('LANDING_HOOK_DETAIL_HELP') .
                     '</a>'
                     : ''
-            ))
+            )
+            )
         );
     }
 
@@ -55,12 +66,14 @@ class GaCounter extends \Bitrix\Landing\Hook\Page
     }
 
     /**
-     * Gets message for locked state.
-     * @return string
+     * Locked or not current hook in free plan.
+     * @return bool
      */
-    public function getLockedMessage()
+    public function isLocked()
     {
-        return Loc::getMessage('LANDING_HOOK_GACOUNTER_LOCKED');
+        return !\Bitrix\Landing\Restriction\Manager::isAllowed(
+            'limit_sites_google_analytics'
+        );
     }
 
     /**
@@ -71,6 +84,10 @@ class GaCounter extends \Bitrix\Landing\Hook\Page
     {
         if ($this->isLocked()) {
             return false;
+        }
+
+        if ($this->issetCustomExec()) {
+            return true;
         }
 
         return $this->fields['USE']->getValue() == 'Y';
@@ -95,23 +112,14 @@ class GaCounter extends \Bitrix\Landing\Hook\Page
             return;
         }
 
-        $counter = \htmlspecialcharsbx(trim($this->fields['COUNTER']));
-        $counter = \CUtil::jsEscape($counter);
-        if ($counter) {
-            \Bitrix\Main\Page\Asset::getInstance()->addString(
-                '<!-- Global Site Tag (gtag.js) - Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=' . $counter . '" data-skip-moving="true"></script>
-<script type="text/javascript" data-skip-moving="true">
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments)};
-  gtag(\'js\', new Date());
-
-  gtag(\'config\', \'' . $counter . '\');
-</script>'
-            );
+        if ($this->fields['USE']->getValue() != 'Y') {
+            return;
         }
+
+        $this->setCounter($this->fields['COUNTER']);
+
         // send analytics
-        $sendData = array();
+        $sendData = [];
         if ($this->fields['SEND_CLICK']->getValue() == 'Y') {
             $sendData[] = 'click';
         }
@@ -134,6 +142,35 @@ class GaCounter extends \Bitrix\Landing\Hook\Page
                 );
             }
         }
+    }
 
+    /**
+     * Sets counter to the page.
+     * @param string $counter Counter code.
+     * @return void
+     */
+    public static function setCounter(string $counter): void
+    {
+        $counter = \htmlspecialcharsbx(trim($counter));
+        $counter = \CUtil::jsEscape($counter);
+
+        if (!$counter) {
+            return;
+        }
+
+        Manager::setPageView(
+            'AfterHeadOpen',
+            '<script async 
+					src="https://www.googletagmanager.com/gtag/js?id=' . $counter . '" 
+					data-skip-moving="true"
+				></script>'
+        );
+        Cookies::addCookieScript(
+            'ga',
+            'window.dataLayer = window.dataLayer || [];
+				function gtag(){dataLayer.push(arguments)};
+				gtag("js", new Date());
+				gtag("config", "' . $counter . '");'
+        );
     }
 }

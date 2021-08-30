@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/catalog/prolog.php");
 IncludeModuleLangFile(__FILE__);
@@ -56,11 +57,15 @@ $rsCatalog = CCatalog::GetList(
     array('IBLOCK_ID', 'PRODUCT_IBLOCK_ID')
 );
 while ($ar = $rsCatalog->Fetch()) {
-    if (!$ar["PRODUCT_IBLOCK_ID"])
+    if (!$ar["PRODUCT_IBLOCK_ID"]) {
         $arCatalogs[$ar["IBLOCK_ID"]] = 1;
+    }
 }
 
-$rsIBlocks = CIBlock::GetList(array("SORT" => "asc", "NAME" => "ASC"), array('ID' => array_keys($arCatalogs), "MIN_PERMISSION" => "U"));
+$rsIBlocks = CIBlock::GetList(
+    array("SORT" => "asc", "NAME" => "ASC"),
+    array('ID' => array_keys($arCatalogs), "MIN_PERMISSION" => "U")
+);
 $rsIBlocks = new CAdminResult($rsIBlocks, $sTableID);
 
 while ($dbrs = $rsIBlocks->NavNext(true, "f_")) {
@@ -68,11 +73,17 @@ while ($dbrs = $rsIBlocks->NavNext(true, "f_")) {
 
     $f_LID = '';
     $db_LID = CIBlock::GetSite($f_ID);
-    while ($ar_LID = $db_LID->Fetch())
+    while ($ar_LID = $db_LID->Fetch()) {
         $f_LID .= ($f_LID != "" ? " / " : "") . htmlspecialcharsbx($ar_LID["LID"]);
+    }
 
     $row->AddViewField("LID", $f_LID);
-    $row->AddViewField("NAME", '<a href="' . htmlspecialcharsbx('cat_catalog_edit.php?IBLOCK_ID=' . $f_ID . '&lang=' . LANGUAGE_ID) . '">' . $f_NAME . '</a>');
+    $row->AddViewField(
+        "NAME",
+        '<a href="' . htmlspecialcharsbx(
+            'cat_catalog_edit.php?IBLOCK_ID=' . $f_ID . '&lang=' . LANGUAGE_ID
+        ) . '">' . $f_NAME . '</a>'
+    );
     $row->AddCheckField("ACTIVE", false);
 
     $arActions = array();
@@ -82,12 +93,15 @@ while ($dbrs = $rsIBlocks->NavNext(true, "f_")) {
             "ICON" => "edit",
             "TEXT" => GetMessage("MAIN_ADMIN_MENU_EDIT"),
             "DEFAULT" => $_REQUEST["admin"] == "Y",
-            "ACTION" => "window.location='" . CUtil::JSEscape('cat_catalog_edit.php?IBLOCK_ID=' . $f_ID . '&lang=' . LANGUAGE_ID) . "';",
+            "ACTION" => "window.location='" . CUtil::JSEscape(
+                    'cat_catalog_edit.php?IBLOCK_ID=' . $f_ID . '&lang=' . LANGUAGE_ID
+                ) . "';",
         );
     }
 
-    if (!empty($arActions))
+    if (!empty($arActions)) {
         $row->AddActions($arActions);
+    }
 }
 
 $lAdmin->CheckListMode();

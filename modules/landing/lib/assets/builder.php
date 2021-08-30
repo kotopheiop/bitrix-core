@@ -12,7 +12,7 @@ abstract class Builder
     protected const TYPE_STANDART = 'STANDART';
     protected const TYPE_WEBPACK = 'WEBPACK';
 
-    public const PACKAGE_NAME = 'landing_assets';
+    protected const PACKAGE_NAME = 'landing_assets';
 
     /**
      * @var ResourceCollection
@@ -54,8 +54,10 @@ abstract class Builder
         switch ($type) {
             case self::TYPE_STANDART:
                 return new StandartBuilder($resources);
+
             case self::TYPE_WEBPACK:
                 return new WebpackBuilder($resources);
+
             default:
                 throw new ArgumentException("Unknown landing asset builder type `$type`.");
         }
@@ -85,10 +87,13 @@ abstract class Builder
         }
         $extFullName = $extName . '_' . md5(serialize($resources));
 
-        $resources = array_merge($resources, [
-            'bundle_js' => $extFullName,
-            'bundle_css' => $extFullName,
-        ]);
+        $resources = array_merge(
+            $resources,
+            [
+                'bundle_js' => $extFullName,
+                'bundle_css' => $extFullName,
+            ]
+        );
         /** @noinspection PhpMethodOrClassCallIsNotCaseSensitiveInspection */
         \CJSCore::registerExt($extName, $resources);
         \CJSCore::Init($extName);

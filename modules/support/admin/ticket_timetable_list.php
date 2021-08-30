@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/support/include.php");
 
@@ -24,7 +25,7 @@ $USER_FIELD_MANAGER->AdminListAddFilterFields("TIMETABLE", $arFilterFields);
 $lAdmin->InitFilter($arFilterFields);
 
 $arFilter = array();
-if (strlen($filter_name) > 0) {
+if ($filter_name <> '') {
     $arFilter["~NAME"] = "%" . $filter_name . "%";
 }
 
@@ -34,12 +35,13 @@ if (($arID = $lAdmin->GroupAction())) {
     if ($_REQUEST['action_target'] == 'selected') {
         $arID = Array();
         $dbResultList = CSupportTimetable::GetList(array($by => $order), $arFilter);
-        while ($arResult = $dbResultList->Fetch())
+        while ($arResult = $dbResultList->Fetch()) {
             $arID[] = $arResult['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0) {
+        if ($ID == '') {
             continue;
         }
         switch ($_REQUEST['action']) {
@@ -83,18 +85,44 @@ $dbResultList->NavStart();
 $lAdmin->NavText($dbResultList->GetNavPrint(GetMessage("SUP_GROUP_NAV")));
 
 while ($arBlog = $dbResultList->NavNext(true, "f_")) {
-    $row =& $lAdmin->AddRow($f_ID, $arBlog, "/bitrix/admin/ticket_timetable_edit.php?ID=" . $f_ID . "&lang=" . LANGUAGE_ID, GetMessage("SUP_UPDATE_ALT"));
+    $row =& $lAdmin->AddRow(
+        $f_ID,
+        $arBlog,
+        "/bitrix/admin/ticket_timetable_edit.php?ID=" . $f_ID . "&lang=" . LANGUAGE_ID,
+        GetMessage("SUP_UPDATE_ALT")
+    );
 
-    $row->AddField("ID", '<a href="/bitrix/admin/ticket_timetable_edit.php?ID=' . $f_ID . '&lang=' . LANGUAGE_ID . '" title="' . GetMessage("SUP_UPDATE_ALT") . '">' . $f_ID . '</a>');
-    $row->AddField("NAME", '<a href="/bitrix/admin/ticket_timetable_edit.php?ID=' . $f_ID . '&lang=' . LANGUAGE_ID . '" title="' . GetMessage("SUP_UPDATE_ALT") . '">' . $f_NAME . '</a>');
+    $row->AddField(
+        "ID",
+        '<a href="/bitrix/admin/ticket_timetable_edit.php?ID=' . $f_ID . '&lang=' . LANGUAGE_ID . '" title="' . GetMessage(
+            "SUP_UPDATE_ALT"
+        ) . '">' . $f_ID . '</a>'
+    );
+    $row->AddField(
+        "NAME",
+        '<a href="/bitrix/admin/ticket_timetable_edit.php?ID=' . $f_ID . '&lang=' . LANGUAGE_ID . '" title="' . GetMessage(
+            "SUP_UPDATE_ALT"
+        ) . '">' . $f_NAME . '</a>'
+    );
     $row->AddField("DESCRIPTION", $f_DESCRIPTION);
 
     //$USER_FIELD_MANAGER->AddUserFields("TIMETABLE", $arBlog, $row);
 
     $arActions = Array();
-    $arActions[] = array("ICON" => "edit", "TEXT" => GetMessage("SUP_UPDATE_ALT"), "ACTION" => $lAdmin->ActionRedirect("ticket_timetable_edit.php?ID=" . $f_ID . "&lang=" . LANG . "&" . GetFilterParams("filter_") . ""), "DEFAULT" => true);
+    $arActions[] = array(
+        "ICON" => "edit",
+        "TEXT" => GetMessage("SUP_UPDATE_ALT"),
+        "ACTION" => $lAdmin->ActionRedirect(
+            "ticket_timetable_edit.php?ID=" . $f_ID . "&lang=" . LANG . "&" . GetFilterParams("filter_") . ""
+        ),
+        "DEFAULT" => true
+    );
     $arActions[] = array("SEPARATOR" => true);
-    $arActions[] = array("ICON" => "delete", "TEXT" => GetMessage("SUP_DELETE_ALT"), "ACTION" => "if(confirm('" . GetMessage('SUP_DELETE_CONF') . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete"));
+    $arActions[] = array(
+        "ICON" => "delete",
+        "TEXT" => GetMessage("SUP_DELETE_ALT"),
+        "ACTION" => "if(confirm('" . GetMessage('SUP_DELETE_CONF') . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete")
+    );
 
 
     $row->AddActions($arActions);

@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 abstract class CBXAllShortUri
@@ -39,8 +40,9 @@ abstract class CBXAllShortUri
             return false;
         }
 
-        if (!self::ParseFields($arFields, $id))
+        if (!self::ParseFields($arFields, $id)) {
             return false;
+        }
 
         $strUpdate = $DB->PrepareUpdate("b_short_uri", $arFields);
 
@@ -49,7 +51,7 @@ abstract class CBXAllShortUri
             "	" . $strUpdate . ", " .
             "	MODIFIED = " . $DB->CurrentTimeFunction() . " " .
             "WHERE ID = " . $id;
-        $DB->Query($strSql, False, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+        $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 
         return $id;
     }
@@ -60,8 +62,9 @@ abstract class CBXAllShortUri
 
         $dbResult = CBXShortUri::GetList(array(), array("URI_CRC" => $uriCrc32));
         while ($arResult = $dbResult->Fetch()) {
-            if ($arResult["URI"] == $uri)
+            if ($arResult["URI"] == $uri) {
                 return "/" . $arResult["SHORT_URI"];
+            }
         }
 
         $arFields = array(
@@ -72,8 +75,9 @@ abstract class CBXAllShortUri
 
         $id = CBXShortUri::Add($arFields);
 
-        if ($id)
+        if ($id) {
             return "/" . $arFields["SHORT_URI"];
+        }
 
         return "";
     }
@@ -83,8 +87,9 @@ abstract class CBXAllShortUri
         $shortUri = trim($shortUri);
 
         $ar = @parse_url($shortUri);
-        if (isset($ar["path"]))
+        if (isset($ar["path"])) {
             $shortUri = $ar["path"];
+        }
 
         $shortUri = trim($shortUri, "/");
 
@@ -92,8 +97,9 @@ abstract class CBXAllShortUri
 
         $dbResult = CBXShortUri::GetList(array(), array("SHORT_URI_CRC" => $uriCrc32));
         while ($arResult = $dbResult->Fetch()) {
-            if ($arResult["SHORT_URI"] == $shortUri)
+            if ($arResult["SHORT_URI"] == $shortUri) {
                 return array("URI" => $arResult["URI"], "STATUS" => $arResult["STATUS"], "ID" => $arResult["ID"]);
+            }
         }
 
         return null;
@@ -108,7 +114,7 @@ abstract class CBXAllShortUri
             "	NUMBER_USED = NUMBER_USED + 1, " .
             "	LAST_USED = " . $DB->CurrentTimeFunction() . " " .
             "WHERE ID = " . intval($id);
-        $DB->Query($strSql, False, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+        $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
     }
 
     public static function Delete($id)
@@ -125,10 +131,11 @@ abstract class CBXAllShortUri
 
         foreach (GetModuleEvents("main", "OnBeforeShortUriDelete", true) as $arEvent) {
             if (ExecuteModuleEventEx($arEvent, array($id)) === false) {
-                if (($ex = $APPLICATION->GetException()))
+                if (($ex = $APPLICATION->GetException())) {
                     $err = $ex->GetString();
-                else
+                } else {
                     $err = GetMessage("MN_SU_DELETE_ERROR");
+                }
                 self::AddError($err);
                 return false;
             }
@@ -147,8 +154,9 @@ abstract class CBXAllShortUri
     public static function Crc32($str)
     {
         $c = crc32($str);
-        if ($c > 0x7FFFFFFF)
+        if ($c > 0x7FFFFFFF) {
             $c = -(0xFFFFFFFF - $c + 1);
+        }
         return $c;
     }
 
@@ -160,7 +168,7 @@ abstract class CBXAllShortUri
 
         if (is_set($arFields, "URI") || $addMode) {
             $arFields["URI"] = trim($arFields["URI"]);
-            if (strlen($arFields["URI"]) <= 0) {
+            if ($arFields["URI"] == '') {
                 self::AddError(GetMessage("MN_SU_NO_URI"));
                 return false;
             }
@@ -170,18 +178,19 @@ abstract class CBXAllShortUri
 
         if (is_set($arFields, "SHORT_URI") || $addMode) {
             $arFields["SHORT_URI"] = trim($arFields["SHORT_URI"]);
-            if (strlen($arFields["SHORT_URI"]) <= 0) {
+            if ($arFields["SHORT_URI"] == '') {
                 self::AddError(GetMessage("MN_SU_NO_SHORT_URI"));
                 return false;
             }
 
             $ar = @parse_url($arFields["SHORT_URI"]);
-            if (isset($ar["path"]))
+            if (isset($ar["path"])) {
                 $arFields["SHORT_URI"] = $ar["path"];
+            }
 
             //$arFields["SHORT_URI"] = @parse_url($arFields["SHORT_URI"], PHP_URL_PATH);
             $arFields["SHORT_URI"] = trim($arFields["SHORT_URI"], "/");
-            if (strlen($arFields["SHORT_URI"]) <= 0) {
+            if ($arFields["SHORT_URI"] == '') {
                 self::AddError(GetMessage("MN_SU_WRONG_SHORT_URI"));
                 return false;
             }
@@ -202,8 +211,9 @@ abstract class CBXAllShortUri
 
         if (is_set($arFields, "NUMBER_USED") || $addMode) {
             $arFields["NUMBER_USED"] = intval($arFields["NUMBER_USED"]);
-            if ($arFields["NUMBER_USED"] <= 0)
+            if ($arFields["NUMBER_USED"] <= 0) {
                 $arFields["NUMBER_USED"] = 0;
+            }
         }
 
         return true;
@@ -213,8 +223,9 @@ abstract class CBXAllShortUri
     {
         $code = intval($code);
 
-        if (array_key_exists($code, self::$httpStatusCodes))
+        if (array_key_exists($code, self::$httpStatusCodes)) {
             return self::$httpStatusCodes[$code];
+        }
 
         return "";
     }
@@ -227,10 +238,15 @@ abstract class CBXAllShortUri
         foreach (self::$httpStatusCodes as $code => $codeText) {
             $found = ($code == $value);
             $m = GetMessage("MN_SU_HTTP_STATUS_" . $code);
-            $s1 .= '<option value="' . $code . '"' . ($found ? ' selected' : '') . '>' . (empty($m) ? htmlspecialcharsex($codeText) : htmlspecialcharsex($m)) . '</option>' . "\n";
+            $s1 .= '<option value="' . $code . '"' . ($found ? ' selected' : '') . '>' . (empty($m) ? htmlspecialcharsex(
+                    $codeText
+                ) : htmlspecialcharsex($m)) . '</option>' . "\n";
         }
-        if (strlen($defaultValue) > 0)
-            $s .= "<option value='' " . ($found ? "" : "selected") . ">" . htmlspecialcharsex($defaultValue) . "</option>";
+        if ($defaultValue <> '') {
+            $s .= "<option value='' " . ($found ? "" : "selected") . ">" . htmlspecialcharsex(
+                    $defaultValue
+                ) . "</option>";
+        }
         return $s . $s1 . '</select>';
     }
 

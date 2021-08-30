@@ -36,8 +36,9 @@ final class CSVReader extends \CCSVData
         parent::LoadFile($filename);
 
         $this->SetFieldsType("R");
-        if ($firstHeader)
+        if ($firstHeader) {
             $this->SetFirstHeader();
+        }
         $this->SetDelimiter(";");
     }
 
@@ -49,11 +50,13 @@ final class CSVReader extends \CCSVData
 
     public function ReadHeader()
     {
-        if (!$this->useHeader || !$this->__file)
+        if (!$this->useHeader || !$this->__file) {
             return false;
+        }
 
-        if ($this->cFieldsType == 'F')
-            return false; // sorry, not implemented for that
+        if ($this->cFieldsType == 'F') {
+            return false;
+        } // sorry, not implemented for that
 
         $fPos = ftell($this->__file);
         fseek($this->__file, $this->__hasBOM ? 3 : 0);
@@ -67,11 +70,13 @@ final class CSVReader extends \CCSVData
 
     public function FetchAssoc()
     {
-        if (!($line = $this->Fetch()))
+        if (!($line = $this->Fetch())) {
             return false;
+        }
 
-        if (!$this->useHeader || $this->legacy)
+        if (!$this->useHeader || $this->legacy) {
             return $line;
+        }
 
         $header = $this->header;
 
@@ -82,7 +87,9 @@ final class CSVReader extends \CCSVData
             $fld = trim(array_shift($header));
 
             if (!$fld) // column grid appeared shorter than data field
+            {
                 break;
+            }
 
             $resLine = array();
             $prev =& $resLine;
@@ -98,8 +105,9 @@ final class CSVReader extends \CCSVData
             $prev = trim($line[$k]);
 
             // keep for charset conversion
-            if (strpos($fld, 'NAME') !== false)
+            if (mb_strpos($fld, 'NAME') !== false) {
                 $langFields[] = &$prev;
+            }
 
             $result = array_merge_recursive($result, $resLine);
         }
@@ -131,16 +139,18 @@ final class CSVReader extends \CCSVData
             $this->SetDelimiter(",");
         }
 
-        if ($bytesRead !== false)
+        if ($bytesRead !== false) {
             $this->SetPos($bytesRead);
+        }
 
         $result = array();
         $i = -1;
         while ($line = $this->FetchAssoc()) {
             $i++;
 
-            if ($lineLimit !== false && $lineLimit + 1 == $i)
+            if ($lineLimit !== false && $lineLimit + 1 == $i) {
                 break;
+            }
 
             if (!$i && !$bytesRead) {
                 continue; // header, skip
@@ -148,8 +158,9 @@ final class CSVReader extends \CCSVData
 
             $result[] = $line;
 
-            if ($bytesRead !== false)
+            if ($bytesRead !== false) {
                 $bytesRead = $this->GetPos();
+            }
         }
 
         return $result;
@@ -157,11 +168,14 @@ final class CSVReader extends \CCSVData
 
     public function ReadBlock($file, &$bytesRead = false, $lineLimit = false)
     {
-        if (strpos($file, $_SERVER['DOCUMENT_ROOT']) != 0) // not found or somwhere else
+        if (mb_strpos($file, $_SERVER['DOCUMENT_ROOT']) != 0) // not found or somwhere else
+        {
             $file = $_SERVER['DOCUMENT_ROOT'] . $file;
+        }
 
-        if (!file_exists($file) || !is_readable($file))
+        if (!file_exists($file) || !is_readable($file)) {
             throw new Main\SystemException('Cannot open file ' . $file . ' for reading');
+        }
 
         $this->LoadFile($file);
 
@@ -185,8 +199,9 @@ final class CSVReader extends \CCSVData
 
     public function AddEventCallback($event, $callback)
     {
-        if ((string)$event != '' && is_callable($callback))
+        if ((string)$event != '' && is_callable($callback)) {
             $this->callbacks[$event] = $callback;
+        }
     }
 
     private function GetAssocLineByHeader($line, $header)
@@ -197,7 +212,9 @@ final class CSVReader extends \CCSVData
             $fld = array_shift($header);
 
             if (!$fld) // column grid appeared shorter than data field
+            {
                 break;
+            }
 
             $resLine = array();
             $prev =& $resLine;

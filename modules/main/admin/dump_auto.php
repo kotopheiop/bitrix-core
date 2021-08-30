@@ -15,19 +15,21 @@
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 define("HELP_FILE", "utilities/dump_auto.php");
 
-if (!$USER->CanDoOperation('edit_php'))
+if (!$USER->CanDoOperation('edit_php')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
-if (!defined("START_EXEC_TIME"))
+if (!defined("START_EXEC_TIME")) {
     define("START_EXEC_TIME", microtime(true));
+}
 
 IncludeModuleLangFile(dirname(__FILE__) . '/dump.php');
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/classes/general/backup.php");
 $strBXError = '';
 $bGzip = function_exists('gzcompress');
-$bMcrypt = function_exists('mcrypt_encrypt') || function_exists('openssl_encrypt');
-$bBitrixCloud = $bMcrypt;
+$encrypt = function_exists('openssl_encrypt');
+$bBitrixCloud = $encrypt;
 if (!CModule::IncludeModule('bitrixcloud')) {
     $bBitrixCloud = false;
     $strBXError = GetMessage('ERR_NO_BX_CLOUD');
@@ -36,7 +38,9 @@ if (!CModule::IncludeModule('bitrixcloud')) {
     $strBXError = GetMessage('ERR_NO_CLOUDS');
 }
 
-$bCron = COption::GetOptionString("main", "agents_use_crontab", "N") == 'Y' || defined('BX_CRONTAB_SUPPORT') && BX_CRONTAB_SUPPORT === true || COption::GetOptionString("main", "check_agents", "Y") != 'Y';
+$bCron = COption::GetOptionString("main", "agents_use_crontab", "N") == 'Y' || defined(
+        'BX_CRONTAB_SUPPORT'
+    ) && BX_CRONTAB_SUPPORT === true || COption::GetOptionString("main", "check_agents", "Y") != 'Y';
 
 require_once($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/prolog.php");
 $APPLICATION->SetTitle(GetMessage("MAIN_DUMP_AUTO_PAGE_TITLE"));
@@ -45,19 +49,23 @@ require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admi
 $arAllBucket = CBackup::GetBucketList();
 $strError = '';
 
-if ($DB->type != 'MYSQL')
+if ($DB->type != 'MYSQL') {
     echo BeginNote() . GetMessage('MAIN_DUMP_MYSQL_ONLY') . EndNote();
+}
 
 $server_name = COption::GetOptionString("main", "server_name", "");
-if (!$server_name)
+if (!$server_name) {
     $server_name = $_SERVER['HTTP_HOST'];
+}
 $server_name = rtrim($server_name, '/');
 if (!preg_match('/^[a-z0-9\.\-]+$/i', $server_name)) // cyrillic domain hack
 {
     $converter = new CBXPunycode(defined('BX_UTF') && BX_UTF === true ? 'UTF-8' : 'windows-1251');
     $host = $converter->Encode($server_name);
     if (!preg_match('#--p1ai$#', $host)) // trying to guess
+    {
         $host = $converter->Encode(\Bitrix\Main\Text\Encoding::convertEncoding($server_name, 'utf-8', 'windows-1251'));
+    }
     $server_name = $host;
 }
 $url = (CMain::IsHTTPS() ? "https://" : "http://") . $server_name;
@@ -66,34 +74,44 @@ define('LOCK_FILE', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/backup/auto_lock');
 $dump_auto_enable = IntOption('dump_auto_enable');
 if ($_REQUEST['save']) {
     if (!check_bitrix_sessid()) {
-        CAdminMessage::ShowMessage(array(
-            "MESSAGE" => GetMessage("MAIN_DUMP_ERROR"),
-            "DETAILS" => GetMessage("DUMP_MAIN_SESISON_ERROR"),
-            "TYPE" => "ERROR",
-            "HTML" => true));
+        CAdminMessage::ShowMessage(
+            array(
+                "MESSAGE" => GetMessage("MAIN_DUMP_ERROR"),
+                "DETAILS" => GetMessage("DUMP_MAIN_SESISON_ERROR"),
+                "TYPE" => "ERROR",
+                "HTML" => true
+            )
+        );
     } else {
         $BUCKET_ID = $_REQUEST['dump_bucket_id'];
-        if (!$bMcrypt) {
+        if (!$encrypt) {
             $_REQUEST['dump_encrypt_key'] = '';
-            if ($BUCKET_ID == -1)
+            if ($BUCKET_ID == -1) {
                 $BUCKET_ID = 0;
+            }
         }
         CPasswordStorage::Set('dump_temporary_cache', $_REQUEST['dump_encrypt_key']);
 
         IntOptionSet("dump_bucket_id", $BUCKET_ID);
 
         $dump_auto_set = intval($_REQUEST['dump_auto_enable']);
-        if ($bBitrixCloud)
+        if ($bBitrixCloud) {
             CBitrixCloudBackup::getInstance()->deleteBackupJob();
+        }
         $dump_site_id = $_REQUEST['dump_site_id'];
         if ($dump_auto_set) {
-            $t = preg_match('#^([0-9]{2}):([0-9]{2})$#', $_REQUEST['dump_auto_time'], $regs) ? $regs[1] * 60 + $regs[2] : 0;
+            $t = preg_match(
+                '#^([0-9]{2}):([0-9]{2})$#',
+                $_REQUEST['dump_auto_time'],
+                $regs
+            ) ? $regs[1] * 60 + $regs[2] : 0;
             IntOptionSet("dump_auto_time", $t);
             $sec = $t * 60;
 
             $i = intval($_REQUEST['dump_auto_interval']);
-            if (!$i)
+            if (!$i) {
                 $i = 1;
+            }
             IntOptionSet("dump_auto_interval", $i);
             COption::SetOptionInt('main', 'last_backup_start_time', 0);
             COption::SetOptionInt('main', 'last_backup_end_time', 0);
@@ -125,10 +143,11 @@ if ($_REQUEST['save']) {
                     $arWeekDays = array(0, 1, 2, 3, 4, 5, 6);
                     break;
                 case 2:
-                    if ($w % 2)
+                    if ($w % 2) {
                         $arWeekDays = array(1, 3, 5, 0);
-                    else
+                    } else {
                         $arWeekDays = array(0, 2, 4, 6);
+                    }
                     break;
                 case 3:
                     $arWeekDays = array($w, ($w + 3) % 7);
@@ -138,7 +157,19 @@ if ($_REQUEST['save']) {
                     $arWeekDays = array($w);
             }
 
-            $strMessage = GetMessage("MAIN_DUMP_SHED_CLOSEST_TIME_" . $day) . FormatDate('FULL', strtotime(date('Y-m-d ' . sprintf('%02d:%02d', floor($t / 60), $t % 60), $start_time))) . ' ' . GetMessage('DUMP_LOCAL_TIME');
+            $strMessage = GetMessage("MAIN_DUMP_SHED_CLOSEST_TIME_" . $day) . FormatDate(
+                    'FULL',
+                    strtotime(
+                        date(
+                            'Y-m-d ' . sprintf(
+                                '%02d:%02d',
+                                floor($t / 60),
+                                $t % 60
+                            ),
+                            $start_time
+                        )
+                    )
+                ) . ' ' . GetMessage('DUMP_LOCAL_TIME');
 
             if ($dump_auto_set == 2) {
                 $backup_secret_key = randString(16);
@@ -149,12 +180,16 @@ if ($_REQUEST['save']) {
                     $sec,
                     $arWeekDays
                 );
-                $strMessage .= '<br>' . GetMessage('DUMP_CHECK_BITRIXCLOUD', array('#LINK#' => '/bitrix/admin/bitrixcloud_backup_job.php?lang=' . LANGUAGE_ID));
+                $strMessage .= '<br>' . GetMessage(
+                        'DUMP_CHECK_BITRIXCLOUD',
+                        array('#LINK#' => '/bitrix/admin/bitrixcloud_backup_job.php?lang=' . LANGUAGE_ID)
+                    );
             }
-        } elseif ($_REQUEST['dump_auto_green_button'])
+        } elseif ($_REQUEST['dump_auto_green_button']) {
             $strError = GetMessage('DUMP_WARN_NO_BITRIXCLOUD');
-        else
+        } else {
             $strMessage = GetMessage('DUMP_SAVED_DISABLED');
+        }
 
         if (!$strError) {
             IntOptionSet("dump_auto_enable", $dump_auto_set);
@@ -174,8 +209,9 @@ if ($_REQUEST['save']) {
         IntOptionSet("dump_max_exec_time_sleep", $_REQUEST['dump_max_exec_time_sleep']);
 
         $dump_archive_size_limit = intval($_REQUEST['dump_archive_size_limit'] * 1024 * 1024);
-        if ($dump_archive_size_limit <= 10240 * 1024)
+        if ($dump_archive_size_limit <= 10240 * 1024) {
             $dump_archive_size_limit = 100 * 1024 * 1024;
+        }
         IntOptionSet("dump_archive_size_limit", $dump_archive_size_limit);
 
         /*		$bDumpCloud = false;
@@ -209,52 +245,75 @@ if ($_REQUEST['save']) {
 
         IntOptionSet('dump_max_file_size', intval($_REQUEST['max_file_size']));
 
-        if ($strError)
-            CAdminMessage::ShowMessage(array(
-                "MESSAGE" => GetMessage("MAIN_DUMP_ERROR"),
-                "DETAILS" => $strError,
-                "TYPE" => "ERROR",
-                "HTML" => true));
-        else
-            CAdminMessage::ShowMessage(array(
-                "MESSAGE" => GetMessage("MAIN_DUMP_SUCCESS_SAVED"),
-                "DETAILS" => $strMessage,
-                "TYPE" => "OK",
-                "HTML" => true));
+        if ($strError) {
+            CAdminMessage::ShowMessage(
+                array(
+                    "MESSAGE" => GetMessage("MAIN_DUMP_ERROR"),
+                    "DETAILS" => $strError,
+                    "TYPE" => "ERROR",
+                    "HTML" => true
+                )
+            );
+        } else {
+            CAdminMessage::ShowMessage(
+                array(
+                    "MESSAGE" => GetMessage("MAIN_DUMP_SUCCESS_SAVED"),
+                    "DETAILS" => $strMessage,
+                    "TYPE" => "OK",
+                    "HTML" => true
+                )
+            );
+        }
     }
 } elseif (file_exists(LOCK_FILE)) {
-    if ($t = intval(file_get_contents(LOCK_FILE)))
-        CAdminMessage::ShowMessage(array(
-            "MESSAGE" => GetMessage("MAIN_DUMP_AUTO_LOCK"),
-            "DETAILS" => GetMessage("MAIN_DUMP_AUTO_LOCK_TIME", array('#TIME#' => HumanTime(time() - $t))),
-            "TYPE" => "OK",
-            "HTML" => true));
-    else
-        CAdminMessage::ShowMessage(array(
-            "MESSAGE" => GetMessage("MAIN_DUMP_ERROR"),
-            "DETAILS" => GetMessage("MAIN_DUMP_ERR_OPEN_FILE") . ' ' . LOCK_FILE,
-            "TYPE" => "ERROR",
-            "HTML" => true));
-
+    if ($t = intval(file_get_contents(LOCK_FILE))) {
+        CAdminMessage::ShowMessage(
+            array(
+                "MESSAGE" => GetMessage("MAIN_DUMP_AUTO_LOCK"),
+                "DETAILS" => GetMessage("MAIN_DUMP_AUTO_LOCK_TIME", array('#TIME#' => HumanTime(time() - $t))),
+                "TYPE" => "OK",
+                "HTML" => true
+            )
+        );
+    } else {
+        CAdminMessage::ShowMessage(
+            array(
+                "MESSAGE" => GetMessage("MAIN_DUMP_ERROR"),
+                "DETAILS" => GetMessage("MAIN_DUMP_ERR_OPEN_FILE") . ' ' . LOCK_FILE,
+                "TYPE" => "ERROR",
+                "HTML" => true
+            )
+        );
+    }
 } else {
-    if ($dump_auto_enable)
-        CAdminMessage::ShowMessage(array(
-            "MESSAGE" => GetMessage('DUMP_AUTO_INFO_ON'),
-            "TYPE" => "OK",
-            "HTML" => true));
-    else
-        CAdminMessage::ShowMessage(array(
-            "MESSAGE" => GetMessage('DUMP_AUTO_INFO_OFF'),
-            "TYPE" => "ERROR",
-            "HTML" => true));
+    if ($dump_auto_enable) {
+        CAdminMessage::ShowMessage(
+            array(
+                "MESSAGE" => GetMessage('DUMP_AUTO_INFO_ON'),
+                "TYPE" => "OK",
+                "HTML" => true
+            )
+        );
+    } else {
+        CAdminMessage::ShowMessage(
+            array(
+                "MESSAGE" => GetMessage('DUMP_AUTO_INFO_OFF'),
+                "TYPE" => "ERROR",
+                "HTML" => true
+            )
+        );
+    }
 }
 
-if (!$bMcrypt) {
-    CAdminMessage::ShowMessage(array(
-        "MESSAGE" => GetMessage("MAIN_DUMP_NOT_INSTALLED"),
-        "DETAILS" => GetMessage("MAIN_DUMP_NO_ENC_FUNCTIONS"),
-        "TYPE" => "ERROR",
-        "HTML" => true));
+if (!$encrypt) {
+    CAdminMessage::ShowMessage(
+        array(
+            "MESSAGE" => GetMessage("MAIN_DUMP_NOT_INSTALLED1"),
+            "DETAILS" => GetMessage("MAIN_DUMP_NO_ENC_FUNCTIONS"),
+            "TYPE" => "ERROR",
+            "HTML" => true
+        )
+    );
 }
 
 $aMenu = array(
@@ -406,8 +465,12 @@ CAdminFileDialog::ShowScript(
                         echo '<div style="color:red" id=password_error></div>';
                         echo CUtil::JSEscape(BeginNote() . GetMessage('MAIN_DUMP_SAVE_PASS_AUTO') . EndNote());
                         echo '<table>';
-                        echo '<tr><td>' . GetMessage('MAIN_DUMP_ENC_PASS') . '</td><td><input type="password" value="" id="dump_encrypt_key" onkeyup="if(event.keyCode==13) {BX(&quot;dump_encrypt_key_confirm&quot;).focus()}"/></td></tr>';
-                        echo '<tr><td>' . GetMessage('DUMP_MAIN_PASSWORD_CONFIRM') . '</td><td><input type="password" value="" id="dump_encrypt_key_confirm"  onkeyup="if(event.keyCode==13) {SavePassword()}"/></td></tr>';
+                        echo '<tr><td>' . GetMessage(
+                                'MAIN_DUMP_ENC_PASS'
+                            ) . '</td><td><input type="password" value="" id="dump_encrypt_key" onkeyup="if(event.keyCode==13) {BX(&quot;dump_encrypt_key_confirm&quot;).focus()}"/></td></tr>';
+                        echo '<tr><td>' . GetMessage(
+                                'DUMP_MAIN_PASSWORD_CONFIRM'
+                            ) . '</td><td><input type="password" value="" id="dump_encrypt_key_confirm"  onkeyup="if(event.keyCode==13) {SavePassword()}"/></td></tr>';
                         echo '</table>';
                         ?>',
                     height: 300,
@@ -439,8 +502,18 @@ CAdminFileDialog::ShowScript(
     <input type=hidden name=dump_auto_green_button>
     <?
     $aTabs = array();
-    $aTabs[] = array("DIV" => "main", "TAB" => GetMessage('DUMP_AUTO_TAB'), "ICON" => "main_user_edit", "TITLE" => GetMessage("MAIN_DUMP_AUTO_PAGE_TITLE"));
-    $aTabs[] = array("DIV" => "expert", "TAB" => GetMessage("DUMP_MAIN_PARAMETERS"), "ICON" => "main_user_edit", "TITLE" => GetMessage("DUMP_MAIN_AUTO_PARAMETERS"));
+    $aTabs[] = array(
+        "DIV" => "main",
+        "TAB" => GetMessage('DUMP_AUTO_TAB'),
+        "ICON" => "main_user_edit",
+        "TITLE" => GetMessage("MAIN_DUMP_AUTO_PAGE_TITLE")
+    );
+    $aTabs[] = array(
+        "DIV" => "expert",
+        "TAB" => GetMessage("DUMP_MAIN_PARAMETERS"),
+        "ICON" => "main_user_edit",
+        "TITLE" => GetMessage("DUMP_MAIN_AUTO_PARAMETERS")
+    );
 
     $editTab = new CAdminTabControl("editTab", $aTabs, true, true);
     $editTab->Begin();
@@ -449,10 +522,15 @@ CAdminFileDialog::ShowScript(
     <tr>
         <td colspan=2>
             <?
-            if ($dump_auto_enable)
-                echo '<input type="button" value="' . GetMessage('DUMP_BTN_AUTO_DISABLE') . '" onclick="BigGreyButton()">';
-            else
-                echo '<input type="button" value="' . GetMessage('DUMP_BTN_AUTO_ENABLE') . '" onclick="BigGreenButton()" class="adm-btn-save">';
+            if ($dump_auto_enable) {
+                echo '<input type="button" value="' . GetMessage(
+                        'DUMP_BTN_AUTO_DISABLE'
+                    ) . '" onclick="BigGreyButton()">';
+            } else {
+                echo '<input type="button" value="' . GetMessage(
+                        'DUMP_BTN_AUTO_ENABLE'
+                    ) . '" onclick="BigGreenButton()" class="adm-btn-save">';
+            }
             ?>
         </td>
     </tr>
@@ -469,8 +547,9 @@ CAdminFileDialog::ShowScript(
     $editTab->BeginNextTab();
 
     $BUCKET_ID = IntOption('dump_bucket_id', -1);
-    if ($BUCKET_ID == -1 && !$bBitrixCloud)
+    if ($BUCKET_ID == -1 && !$bBitrixCloud) {
         $BUCKET_ID = 0;
+    }
     ?>
     <tr>
         <td class="adm-detail-valign-top" width=40%><?= GetMessage('MAIN_DUMP_ARC_LOCATION') ?></td>
@@ -485,8 +564,11 @@ CAdminFileDialog::ShowScript(
             <?
             $arWriteBucket = CBackup::GetBucketList($arFilter = array('READ_ONLY' => 'N'));
             if ($arWriteBucket) {
-                foreach ($arWriteBucket as $f)
-                    echo '<div><label><input type=radio name=dump_bucket_id value="' . $f['ID'] . '" ' . ($BUCKET_ID == $f['ID'] ? "checked" : "") . ' onclick="CheckEncrypt()"> ' . GetMessage('DUMP_MAIN_IN_THE_CLOUD') . ' ' . htmlspecialcharsbx($f['BUCKET'] . ' (' . $f['SERVICE_ID'] . ')') . '</label></div>';
+                foreach ($arWriteBucket as $f) {
+                    echo '<div><label><input type=radio name=dump_bucket_id value="' . $f['ID'] . '" ' . ($BUCKET_ID == $f['ID'] ? "checked" : "") . ' onclick="CheckEncrypt()"> ' . GetMessage(
+                            'DUMP_MAIN_IN_THE_CLOUD'
+                        ) . ' ' . htmlspecialcharsbx($f['BUCKET'] . ' (' . $f['SERVICE_ID'] . ')') . '</label></div>';
+                }
             }
             ?>
         </td>
@@ -510,8 +592,10 @@ CAdminFileDialog::ShowScript(
             </div>
             <div><label><input type="radio" name="dump_auto_enable" id="dump_auto_disable"
                                value="0" <?= $dump_auto_enable == 0 ? 'checked' : '' ?>
-                               onclick="CheckEnabled()"> <?= GetMessage('AUTO_EXEC_FROM_MAN', array('#SCRIPT#' => '<b>/bitrix/modules/main/tools/backup.php</b>')) ?>
-            </div>
+                               onclick="CheckEnabled()"> <?= GetMessage(
+                    'AUTO_EXEC_FROM_MAN',
+                    array('#SCRIPT#' => '<b>/bitrix/modules/main/tools/backup.php</b>')
+                ) ?></div>
         </td>
     </tr>
     <tr>
@@ -519,7 +603,8 @@ CAdminFileDialog::ShowScript(
         <td><?
             require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/tools/clock.php");
             $min = IntOption('dump_auto_time');
-            CClock::Show(array(
+            CClock::Show(
+                array(
                     'view' => 'select',
                     'inputName' => 'dump_auto_time',
                     'initTime' => sprintf('%02d:%02d', floor($min / 60), ($min % 60))
@@ -533,17 +618,22 @@ CAdminFileDialog::ShowScript(
         <td>
             <select name=dump_auto_interval>
                 <?
-                foreach (array(
-                             1 => GetMessage("MAIN_DUMP_PER_1"),
-                             2 => GetMessage("MAIN_DUMP_PER_2"),
-                             3 => GetMessage("MAIN_DUMP_PER_3"),
+                foreach (
+                    array(
+                        1 => GetMessage("MAIN_DUMP_PER_1"),
+                        2 => GetMessage("MAIN_DUMP_PER_2"),
+                        3 => GetMessage("MAIN_DUMP_PER_3"),
 //				5 => GetMessage("MAIN_DUMP_PER_5"),
-                             7 => GetMessage("MAIN_DUMP_PER_7"),
+                        7 => GetMessage("MAIN_DUMP_PER_7"),
 //				14 => GetMessage("MAIN_DUMP_PER_14"),
 //				21 => GetMessage("MAIN_DUMP_PER_21"),
 //				30 => GetMessage("MAIN_DUMP_PER_30"),
-                         ) as $k => $v)
-                    echo '<option value="' . $k . '" ' . (IntOption('dump_auto_interval') == $k ? 'selected' : '') . '>' . $v . '</option>';
+                    ) as $k => $v
+                ) {
+                    echo '<option value="' . $k . '" ' . (IntOption(
+                            'dump_auto_interval'
+                        ) == $k ? 'selected' : '') . '>' . $v . '</option>';
+                }
                 ?>
             </select>
         </td>
@@ -558,19 +648,38 @@ CAdminFileDialog::ShowScript(
             $dump_delete_old = IntOption('dump_delete_old', 1);
             ?>
             <div><label><input type=radio name=dump_delete_old
-                               value=0 <?= $dump_delete_old == 0 ? "checked" : "" ?>> <?= GetMessage('DUMP_NOT_DELETE') ?>
-                </label></div>
+                               value=0 <?= $dump_delete_old == 0 ? "checked" : "" ?>> <?= GetMessage(
+                        'DUMP_NOT_DELETE'
+                    ) ?></label></div>
             <div><label><input type=radio name=dump_delete_old value=1 <?= $dump_delete_old == 1 ? "checked" : "" ?>
                                id="dump_delete_old_1"> <?= GetMessage('DUMP_CLOUD_DELETE') ?></label></div>
             <div><label><input type=radio name=dump_delete_old
-                               value=2 <?= $dump_delete_old == 2 ? "checked" : "" ?>> <?= GetMessage('DUMP_RM_BY_TIME', array('#TIME#' => '<input type=text name=dump_old_time size=2 value="' . IntOption('dump_old_time') . '">')) ?>
-                </label></div>
+                               value=2 <?= $dump_delete_old == 2 ? "checked" : "" ?>> <?= GetMessage(
+                        'DUMP_RM_BY_TIME',
+                        array(
+                            '#TIME#' => '<input type=text name=dump_old_time size=2 value="' . IntOption(
+                                    'dump_old_time'
+                                ) . '">'
+                        )
+                    ) ?></label></div>
             <div><label><input type=radio name=dump_delete_old value=4 <?= $dump_delete_old == 4 ? "checked" : "" ?>
-                               id="dump_delete_old_4"> <?= GetMessage('DUMP_RM_BY_CNT', array('#CNT#' => '<input type=text name=dump_old_cnt size=2 value="' . IntOption('dump_old_cnt') . '">')) ?>
-                </label></div>
+                               id="dump_delete_old_4"> <?= GetMessage(
+                        'DUMP_RM_BY_CNT',
+                        array(
+                            '#CNT#' => '<input type=text name=dump_old_cnt size=2 value="' . IntOption(
+                                    'dump_old_cnt'
+                                ) . '">'
+                        )
+                    ) ?></label></div>
             <div><label><input type=radio name=dump_delete_old
-                               value=8 <?= $dump_delete_old == 8 ? "checked" : "" ?>> <?= GetMessage('DUMP_RM_BY_SIZE', array('#SIZE#' => '<input type=text name=dump_old_size size=1 value="' . IntOption('dump_old_size') . '">')) ?>
-                </label></div>
+                               value=8 <?= $dump_delete_old == 8 ? "checked" : "" ?>> <?= GetMessage(
+                        'DUMP_RM_BY_SIZE',
+                        array(
+                            '#SIZE#' => '<input type=text name=dump_old_size size=1 value="' . IntOption(
+                                    'dump_old_size'
+                                ) . '">'
+                        )
+                    ) ?></label></div>
         </td>
     </tr>
 
@@ -580,11 +689,12 @@ CAdminFileDialog::ShowScript(
     </tr>
     <?
     $arSitePath = array();
-    $res = CSite::GetList($by = 'sort', $order = 'asc', array('ACTIVE' => 'Y'));
+    $res = CSite::GetList('sort', 'asc', array('ACTIVE' => 'Y'));
     while ($f = $res->Fetch()) {
         $root = rtrim($f['ABS_DOC_ROOT'], '/');
-        if (is_dir($root))
+        if (is_dir($root)) {
             $arSitePath[$root] = array($f['ID'] => '[' . $f['ID'] . '] ' . $f['NAME']);
+        }
     }
 
     if (count($arSitePath) > 1) {
@@ -593,15 +703,24 @@ CAdminFileDialog::ShowScript(
             <td class="adm-detail-valign-top"><?= GetMessage("DUMP_MAIN_SITE") ?></td>
             <td>
                 <?
-                if ($s = COption::GetOptionString("main", "dump_site_id" . "_auto", ($NS['dump_site_id'])))
-                    $dump_site_id = unserialize($s);
-                else
+                if ($s = COption::GetOptionString("main", "dump_site_id" . "_auto", ($NS['dump_site_id']))) {
+                    $dump_site_id = unserialize($s, ['allowed_classes' => false]);
+                } else {
                     $dump_site_id = array();
+                }
                 $i = 0;
                 foreach ($arSitePath as $path => $val) {
                     $path = rtrim(str_replace('\\', '/', $path), '/');
-                    list($k, $v) = each($val);
-                    echo '<div><input type=checkbox id="dump_site_id' . $i . '" name="dump_site_id[]" value="' . htmlspecialcharsbx($k) . '" ' . (in_array($k, $dump_site_id) ? ' checked' : '') . '> <label for="dump_site_id' . $i . '">' . htmlspecialcharsbx($v) . '</label></div>';
+                    $k = key($val);
+                    $v = current($val);
+                    echo '<div><input type=checkbox id="dump_site_id' . $i . '" name="dump_site_id[]" value="' . htmlspecialcharsbx(
+                            $k
+                        ) . '" ' . (in_array(
+                            $k,
+                            $dump_site_id
+                        ) ? ' checked' : '') . '> <label for="dump_site_id' . $i . '">' . htmlspecialcharsbx(
+                            $v
+                        ) . '</label></div>';
                     $i++;
                 }
                 ?>
@@ -616,8 +735,10 @@ CAdminFileDialog::ShowScript(
         <tr>
             <td class="adm-detail-valign-top"><?= GetMessage("DUMP_MAIN_DOWNLOAD_CLOUDS") ?></td>
             <td>
-                <input type="checkbox" name="dump_do_clouds"
-                       value=Y <?= (IntOption("dump_do_clouds", 1) ? "checked" : "") ?>>
+                <input type="checkbox" name="dump_do_clouds" value=Y <?= (IntOption(
+                    "dump_do_clouds",
+                    1
+                ) ? "checked" : "") ?>>
                 <?
                 //		foreach($arAllBucket as $arBucket)
                 //			echo '<div><input type="checkbox" id="dump_cloud_'.$arBucket['ID'].'" name="dump_cloud['.$arBucket['ID'].']" value=Y '.(IntOption("dump_cloud_".$arBucket['ID'], 1) ? "checked" : "").'> <label for="dump_cloud_'.$arBucket['ID'].'">'.htmlspecialcharsbx($arBucket['BUCKET'].' ('.$arBucket['SERVICE_ID'].')').'</label></div>';
@@ -637,17 +758,23 @@ CAdminFileDialog::ShowScript(
         <tr>
             <td class="adm-detail-valign-top"><?= GetMessage("DUMP_MAIN_DB_EXCLUDE") ?></td>
             <td>
-                <div><input type="checkbox" name="dump_base_skip_stat"
-                            value=Y <?= IntOption("dump_base_skip_stat", 0) ? "checked" : "" ?>
-                            id="dump_base_skip_stat"> <label
-                            for="dump_base_skip_stat"><? echo GetMessage("MAIN_DUMP_BASE_STAT") ?></label></div>
-                <div><input type="checkbox" name="dump_base_skip_search"
-                            value="Y" <?= IntOption("dump_base_skip_search", 0) ? "checked" : "" ?>
-                            id="dump_base_skip_search"> <label
+                <div><input type="checkbox" name="dump_base_skip_stat" value=Y <?= IntOption(
+                        "dump_base_skip_stat",
+                        0
+                    ) ? "checked" : "" ?> id="dump_base_skip_stat"> <label for="dump_base_skip_stat"><? echo GetMessage(
+                            "MAIN_DUMP_BASE_STAT"
+                        ) ?></label></div>
+                <div><input type="checkbox" name="dump_base_skip_search" value="Y" <?= IntOption(
+                        "dump_base_skip_search",
+                        0
+                    ) ? "checked" : "" ?> id="dump_base_skip_search"> <label
                             for="dump_base_skip_search"><? echo GetMessage("MAIN_DUMP_BASE_SINDEX") ?></label></div>
-                <div><input type="checkbox" name="dump_base_skip_log"
-                            value="Y"<?= IntOption("dump_base_skip_log", 0) ? "checked" : "" ?> id="dump_base_skip_log">
-                    <label for="dump_base_skip_log"><? echo GetMessage("MAIN_DUMP_EVENT_LOG") ?></label></div>
+                <div><input type="checkbox" name="dump_base_skip_log" value="Y"<?= IntOption(
+                        "dump_base_skip_log",
+                        0
+                    ) ? "checked" : "" ?> id="dump_base_skip_log"> <label for="dump_base_skip_log"><? echo GetMessage(
+                            "MAIN_DUMP_EVENT_LOG"
+                        ) ?></label></div>
             </td>
         </tr>
         <?
@@ -655,13 +782,17 @@ CAdminFileDialog::ShowScript(
     ?>
     <tr>
         <td><? echo GetMessage("MAIN_DUMP_FILE_KERNEL") ?></td>
-        <td><input type="checkbox" name="dump_file_kernel"
-                   value="Y" <?= IntOption("dump_file_kernel", 1) ? "checked" : '' ?>></td>
+        <td><input type="checkbox" name="dump_file_kernel" value="Y" <?= IntOption(
+                "dump_file_kernel",
+                1
+            ) ? "checked" : '' ?>></td>
     </tr>
     <tr>
         <td><? echo GetMessage("MAIN_DUMP_FILE_PUBLIC") ?></td>
-        <td><input type="checkbox" name="dump_file_public"
-                   value="Y" <?= IntOption("dump_file_public", 1) ? "checked" : '' ?>></td>
+        <td><input type="checkbox" name="dump_file_public" value="Y" <?= IntOption(
+                "dump_file_public",
+                1
+            ) ? "checked" : '' ?>></td>
     </tr>
     <tr>
         <td class="adm-detail-valign-top"><? echo GetMessage("MAIN_DUMP_MASK") ?></span></td>
@@ -671,14 +802,19 @@ CAdminFileDialog::ShowScript(
                 <?
                 $i = -1;
 
-                $res = unserialize(COption::GetOptionString("main", "skip_mask_array_auto"));
+                $res = unserialize(
+                    COption::GetOptionString("main", "skip_mask_array_auto"),
+                    ['allowed_classes' => false]
+                );
                 $skip_mask_array = is_array($res) ? $res : array();
 
                 foreach ($skip_mask_array as $mask) {
                     $i++;
                     echo
                         '<tr><td>
-				<input type="text" name="arMask[]" id="mnu_FILES_' . $i . '" value="' . htmlspecialcharsbx($mask) . '" size=30>' .
+				<input type="text" name="arMask[]" id="mnu_FILES_' . $i . '" value="' . htmlspecialcharsbx(
+                            $mask
+                        ) . '" size=30>' .
                         '<input type="button" id="mnu_FILES_btn_' . $i . '" value="..." onclick="showMenu(this, \'' . $i . '\')">' .
                         '</tr>';
                 }
@@ -706,19 +842,21 @@ CAdminFileDialog::ShowScript(
 
     <tr>
         <td><?= GetMessage("MAIN_DUMP_ENABLE_ENC") ?><span class="required"><sup>2</sup></td>
-        <td><input type="checkbox" name="dump_encrypt"
-                   value="Y" <?= ($BUCKET_ID == -1 || CPasswordStorage::Get('dump_temporary_cache') ? "checked" : "") ?> <?= !$bMcrypt || $BUCKET_ID == -1 ? 'disabled' : '' ?>>
-        </td>
+        <td><input type="checkbox" name="dump_encrypt" value="Y" <?= ($BUCKET_ID == -1 || CPasswordStorage::Get(
+                'dump_temporary_cache'
+            ) ? "checked" : "") ?> <?= !$encrypt || $BUCKET_ID == -1 ? 'disabled' : '' ?>></td>
     </tr>
     <tr>
         <td width=40%><?= GetMessage('INTEGRITY_CHECK_OPTION') ?></td>
-        <td><input type="checkbox" name="dump_integrity_check"
-                   value="Y" <?= IntOption('dump_integrity_check') ? 'checked' : '' ?>>
+        <td><input type="checkbox" name="dump_integrity_check" value="Y" <?= IntOption(
+                'dump_integrity_check'
+            ) ? 'checked' : '' ?>>
     </tr>
     <tr>
         <td><?= GetMessage('DISABLE_GZIP') ?></td>
-        <td><input type="checkbox" name="dump_disable_gzip"
-                   value="Y" <?= IntOption('dump_use_compression') && $bGzip ? '' : 'checked' ?> <?= !$bGzip ? 'disabled' : '' ?>>
+        <td><input type="checkbox" name="dump_disable_gzip" value="Y" <?= IntOption(
+                'dump_use_compression'
+            ) && $bGzip ? '' : 'checked' ?> <?= !$bGzip ? 'disabled' : '' ?>>
     </tr>
     <tr>
         <td width=40%><?= GetMessage('STEP_LIMIT') ?></td>
@@ -763,8 +901,9 @@ function IntOption($name, $def = 0)
     static $CACHE;
     $name .= '_auto';
 
-    if (!$CACHE[$name])
+    if (!$CACHE[$name]) {
         $CACHE[$name] = COption::GetOptionInt("main", $name, $def);
+    }
     return $CACHE[$name];
 }
 

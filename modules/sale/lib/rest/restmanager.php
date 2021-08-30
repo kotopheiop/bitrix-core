@@ -156,14 +156,20 @@ class RestManager
 
         $instance = Manager::getInstance();
 
-        LoggerDiag::addMessage('processEvent', var_export([
-            'processEvent [process-01]' => [
-                'eventName' => $eventName,
-                'action' => $instance->getAction()
-            ]
-        ], true));
+        LoggerDiag::addMessage(
+            'processEvent',
+            var_export(
+                [
+                    'processEvent [process-01]' => [
+                        'eventName' => $eventName,
+                        'action' => $instance->getAction()
+                    ]
+                ],
+                true
+            )
+        );
 
-        switch (strtolower($eventName)) {
+        switch (mb_strtolower($eventName)) {
             case 'onsaleordersaved':
 
                 /** @var Entity $entity */
@@ -173,7 +179,8 @@ class RestManager
                 // ���� ��������� ��������, �� ���� ������ ������� �.�. ������� onsaleordersaved ��� ����� ���������� ��� ��������
                 // �������� �� deleted ����� ������ ����� ������ ������� onsalebeforeorderdeleterest
                 // ���� ���������� ��������, �� ������ ��������� ������� ������ ��� ��������� ������������ ������� �����������
-                if ($instance->getAction() == Manager::ACTION_IMPORT || $instance->getAction() == Manager::ACTION_DELETED) {
+                if ($instance->getAction() == Manager::ACTION_IMPORT || $instance->getAction(
+                    ) == Manager::ACTION_DELETED) {
                     // ������ ��� ��������
                     throw new RestException("Event stopped");
                 } elseif ($instance->isExecutedHandler($eventHandler)) {
@@ -187,13 +194,25 @@ class RestManager
                 }
 
                 //�������� ������� �������, ��� ������ �� ����� ��������� ��� ������������� ����������|��������
-                $parameters = ['FIELDS' => ['ID' => $entity->getId(), 'XML_ID' => $entity->getField('XML_ID'), 'ACTION' => Synchronizer::MODE_SAVE]];
-
-                LoggerDiag::addMessage(strtolower($eventName), var_export([
-                    'processEvent [process-02]' => [
-                        'parameters' => $parameters
+                $parameters = [
+                    'FIELDS' => [
+                        'ID' => $entity->getId(),
+                        'XML_ID' => $entity->getField('XML_ID'),
+                        'ACTION' => Synchronizer::MODE_SAVE
                     ]
-                ], true));
+                ];
+
+                LoggerDiag::addMessage(
+                    mb_strtolower($eventName),
+                    var_export(
+                        [
+                            'processEvent [process-02]' => [
+                                'parameters' => $parameters
+                            ]
+                        ],
+                        true
+                    )
+                );
 
                 // ��������� ��������� ���������� �����������, ���� ��������� ������ ������� ���������� �������������� ������, �������� ����������� �����
                 $instance->pushHandlerExecuted($eventHandler);
@@ -208,20 +227,34 @@ class RestManager
                 // ���� �������� ����� ������, �� ������ ��������� �������
                 // ���� ��������� ��������, �� ���������� ��������� ��������� �� ������� �������� � ��������� ��������
                 // ���� ��������� �������� � ������� �������� �������� ������ �������� (onpropertyvaluedeleted)
-                if ($instance->getAction() == Manager::ACTION_IMPORT || $instance->getAction() == Manager::ACTION_DELETED)
+                if ($instance->getAction() == Manager::ACTION_IMPORT || $instance->getAction(
+                    ) == Manager::ACTION_DELETED) {
                     throw new RestException("Event stopped");
+                }
 
                 //TODO: chack - ������������� action � deleted ��� ����� �������� ��������� ������� onsaleordersavedrest.
                 $instance->setAction(Manager::ACTION_DELETED);
 
                 //�������� ������� �������, ��� ������ �� ����� ��������� ��� ������������� ����������|��������
-                $parameters = ['FIELDS' => ['ID' => $entity->getId(), 'XML_ID' => $entity->getField('XML_ID'), 'ACTION' => Synchronizer::MODE_DELETE]];
-
-                LoggerDiag::addMessage(strtolower($eventName), var_export([
-                    'processEvent [process-03]' => [
-                        'parameters' => $parameters
+                $parameters = [
+                    'FIELDS' => [
+                        'ID' => $entity->getId(),
+                        'XML_ID' => $entity->getField('XML_ID'),
+                        'ACTION' => Synchronizer::MODE_DELETE
                     ]
-                ], true));
+                ];
+
+                LoggerDiag::addMessage(
+                    mb_strtolower($eventName),
+                    var_export(
+                        [
+                            'processEvent [process-03]' => [
+                                'parameters' => $parameters
+                            ]
+                        ],
+                        true
+                    )
+                );
 
                 return $parameters;
                 break;
@@ -246,11 +279,17 @@ class RestManager
 
                 $parameters = ['FIELDS' => ['ID' => $entityId]];
 
-                LoggerDiag::addMessage(strtolower($eventName), var_export([
-                    'processEvent [process-04]' => [
-                        'parameters' => $parameters
-                    ]
-                ], true));
+                LoggerDiag::addMessage(
+                    mb_strtolower($eventName),
+                    var_export(
+                        [
+                            'processEvent [process-04]' => [
+                                'parameters' => $parameters
+                            ]
+                        ],
+                        true
+                    )
+                );
 
                 return $parameters;
                 break;

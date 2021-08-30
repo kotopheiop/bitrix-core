@@ -37,7 +37,20 @@ Loc::loadMessages(__FILE__);
  * </ul>
  *
  * @package Bitrix\Catalog
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Store_Query query()
+ * @method static EO_Store_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Store_Result getById($id)
+ * @method static EO_Store_Result getList(array $parameters = array())
+ * @method static EO_Store_Entity getEntity()
+ * @method static \Bitrix\Catalog\EO_Store createObject($setDefaultValues = true)
+ * @method static \Bitrix\Catalog\EO_Store_Collection createCollection()
+ * @method static \Bitrix\Catalog\EO_Store wakeUpObject($row)
+ * @method static \Bitrix\Catalog\EO_Store_Collection wakeUpCollection($rows)
+ */
 class StoreTable extends Main\Entity\DataManager
 {
     /**
@@ -58,101 +71,145 @@ class StoreTable extends Main\Entity\DataManager
     public static function getMap()
     {
         return array(
-            'ID' => new Main\Entity\IntegerField('ID', array(
+            'ID' => new Main\Entity\IntegerField(
+                'ID', array(
                 'primary' => true,
                 'autocomplete' => true,
                 'title' => Loc::getMessage('STORE_ENTITY_ID_FIELD')
-            )),
-            'TITLE' => new Main\Entity\StringField('TITLE', array(
+            )
+            ),
+            'TITLE' => new Main\Entity\StringField(
+                'TITLE', array(
                 'validation' => array(__CLASS__, 'validateTitle'),
                 'title' => Loc::getMessage('STORE_ENTITY_TITLE_FIELD')
-            )),
-            'ACTIVE' => new Main\Entity\BooleanField('ACTIVE', array(
+            )
+            ),
+            'ACTIVE' => new Main\Entity\BooleanField(
+                'ACTIVE', array(
                 'values' => array('N', 'Y'),
                 'default_value' => 'Y',
                 'title' => Loc::getMessage('STORE_ENTITY_ACTIVE_FIELD')
-            )),
-            'ADDRESS' => new Main\Entity\StringField('ADDRESS', array(
+            )
+            ),
+            'ADDRESS' => new Main\Entity\StringField(
+                'ADDRESS', array(
                 'required' => true,
                 'validation' => array(__CLASS__, 'validateAddress'),
                 'title' => Loc::getMessage('STORE_ENTITY_ADDRESS_FIELD')
-            )),
-            'DESCRIPTION' => new Main\Entity\TextField('DESCRIPTION', array(
+            )
+            ),
+            'DESCRIPTION' => new Main\Entity\TextField(
+                'DESCRIPTION', array(
                 'title' => Loc::getMessage('STORE_ENTITY_DESCRIPTION_FIELD')
-            )),
-            'GPS_N' => new Main\Entity\StringField('GPS_N', array(
+            )
+            ),
+            'GPS_N' => new Main\Entity\StringField(
+                'GPS_N', array(
                 'validation' => array(__CLASS__, 'validateGpsN'),
                 'title' => Loc::getMessage('STORE_ENTITY_GPS_N_FIELD')
-            )),
-            'GPS_S' => new Main\Entity\StringField('GPS_S', array(
+            )
+            ),
+            'GPS_S' => new Main\Entity\StringField(
+                'GPS_S', array(
                 'validation' => array(__CLASS__, 'validateGpsS'),
                 'title' => Loc::getMessage('STORE_ENTITY_GPS_S_FIELD')
-            )),
-            'IMAGE_ID' => new Main\Entity\StringField('IMAGE_ID', array(
+            )
+            ),
+            'IMAGE_ID' => new Main\Entity\StringField(
+                'IMAGE_ID', array(
                 'validation' => array(__CLASS__, 'validateImageId'),
                 'title' => Loc::getMessage('STORE_ENTITY_IMAGE_ID_FIELD')
-            )),
-            'LOCATION_ID' => new Main\Entity\IntegerField('LOCATION_ID', array(
+            )
+            ),
+            'LOCATION_ID' => new Main\Entity\IntegerField(
+                'LOCATION_ID', array(
                 'title' => Loc::getMessage('STORE_ENTITY_LOCATION_ID_FIELD')
-            )),
-            'DATE_MODIFY' => new Main\Entity\DatetimeField('DATE_MODIFY', array(
+            )
+            ),
+            'DATE_MODIFY' => new Main\Entity\DatetimeField(
+                'DATE_MODIFY', array(
                 'default_value' => function () {
                     return new Main\Type\DateTime();
                 },
                 'title' => Loc::getMessage('STORE_ENTITY_DATE_MODIFY_FIELD')
-            )),
-            'DATE_CREATE' => new Main\Entity\DatetimeField('DATE_CREATE', array(
+            )
+            ),
+            'DATE_CREATE' => new Main\Entity\DatetimeField(
+                'DATE_CREATE', array(
                 'default_value' => function () {
                     return new Main\Type\DateTime();
                 },
                 'title' => Loc::getMessage('STORE_ENTITY_DATE_CREATE_FIELD')
-            )),
-            'USER_ID' => new Main\Entity\IntegerField('USER_ID', array(
+            )
+            ),
+            'USER_ID' => new Main\Entity\IntegerField(
+                'USER_ID', array(
                 'default_value' => null,
                 'title' => Loc::getMessage('STORE_ENTITY_USER_ID_FIELD')
-            )),
-            'MODIFIED_BY' => new Main\Entity\IntegerField('MODIFIED_BY', array(
+            )
+            ),
+            'MODIFIED_BY' => new Main\Entity\IntegerField(
+                'MODIFIED_BY', array(
                 'default_value' => null,
                 'title' => Loc::getMessage('STORE_ENTITY_MODIFIED_BY_FIELD')
-            )),
-            'PHONE' => new Main\Entity\StringField('PHONE', array(
+            )
+            ),
+            'PHONE' => new Main\Entity\StringField(
+                'PHONE', array(
                 'validation' => array(__CLASS__, 'validatePhone'),
                 'title' => Loc::getMessage('STORE_ENTITY_PHONE_FIELD')
-            )),
-            'SCHEDULE' => new Main\Entity\StringField('SCHEDULE', array(
+            )
+            ),
+            'SCHEDULE' => new Main\Entity\StringField(
+                'SCHEDULE', array(
                 'validation' => array(__CLASS__, 'validateSchedule'),
                 'title' => Loc::getMessage('STORE_ENTITY_SCHEDULE_FIELD')
-            )),
-            'XML_ID' => new Main\Entity\StringField('XML_ID', array(
+            )
+            ),
+            'XML_ID' => new Main\Entity\StringField(
+                'XML_ID', array(
                 'validation' => array(__CLASS__, 'validateXmlId'),
                 'title' => Loc::getMessage('STORE_ENTITY_XML_ID_FIELD')
-            )),
-            'SORT' => new Main\Entity\IntegerField('SORT', array(
+            )
+            ),
+            'SORT' => new Main\Entity\IntegerField(
+                'SORT', array(
                 'default_value' => 100,
                 'title' => Loc::getMessage('STORE_ENTITY_SORT_FIELD')
-            )),
-            'EMAIL' => new Main\Entity\StringField('EMAIL', array(
+            )
+            ),
+            'EMAIL' => new Main\Entity\StringField(
+                'EMAIL', array(
                 'validation' => array(__CLASS__, 'validateEmail'),
                 'title' => Loc::getMessage('STORE_ENTITY_EMAIL_FIELD')
-            )),
-            'ISSUING_CENTER' => new Main\Entity\BooleanField('ISSUING_CENTER', array(
+            )
+            ),
+            'ISSUING_CENTER' => new Main\Entity\BooleanField(
+                'ISSUING_CENTER', array(
                 'values' => array('N', 'Y'),
                 'default_value' => 'Y',
                 'title' => Loc::getMessage('STORE_ENTITY_ISSUING_CENTER_FIELD')
-            )),
-            'SHIPPING_CENTER' => new Main\Entity\BooleanField('SHIPPING_CENTER', array(
+            )
+            ),
+            'SHIPPING_CENTER' => new Main\Entity\BooleanField(
+                'SHIPPING_CENTER', array(
                 'values' => array('N', 'Y'),
                 'default_value' => 'Y',
                 'title' => Loc::getMessage('STORE_ENTITY_SHIPPING_CENTER_FIELD')
-            )),
-            'SITE_ID' => new Main\Entity\StringField('SITE_ID', array(
+            )
+            ),
+            'SITE_ID' => new Main\Entity\StringField(
+                'SITE_ID', array(
                 'validation' => array(__CLASS__, 'validateSiteId'),
                 'title' => Loc::getMessage('STORE_ENTITY_SITE_ID_FIELD')
-            )),
-            'CODE' => new Main\Entity\StringField('CODE', array(
+            )
+            ),
+            'CODE' => new Main\Entity\StringField(
+                'CODE', array(
                 'validation' => array(__CLASS__, 'validateCode'),
                 'title' => Loc::getMessage('STORE_ENTITY_CODE_FIELD')
-            ))
+            )
+            )
         );
     }
 

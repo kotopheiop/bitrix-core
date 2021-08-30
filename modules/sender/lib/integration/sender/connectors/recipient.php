@@ -48,31 +48,37 @@ class Recipient extends ConnectorBase
             '=POSTING.MAILING_ID' => $mailingId,
         );
 
-        if ($send == 'Y')
+        if ($send == 'Y') {
             $filter['!STATUS'] = PostingRecipientTable::SEND_RESULT_NONE;
-        elseif ($send == 'N')
+        } elseif ($send == 'N') {
             $filter['=STATUS'] = PostingRecipientTable::SEND_RESULT_NONE;
+        }
 
-        if ($read == 'Y')
+        if ($read == 'Y') {
             $filter['=IS_READ'] = 'Y';
-        elseif ($read == 'N')
+        } elseif ($read == 'N') {
             $filter['=IS_READ'] = 'N';
+        }
 
-        if ($click == 'Y')
+        if ($click == 'Y') {
             $filter['=IS_CLICK'] = 'Y';
-        elseif ($click == 'N')
+        } elseif ($click == 'N') {
             $filter['=IS_CLICK'] = 'N';
+        }
 
-        if ($unsub == 'Y')
+        if ($unsub == 'Y') {
             $filter['=IS_UNSUB'] = 'Y';
-        elseif ($unsub == 'N')
+        } elseif ($unsub == 'N') {
             $filter['=IS_UNSUB'] = 'N';
+        }
 
-        return PostingRecipientTable::getList(array(
-            'select' => array('NAME' => 'CONTACT.NAME', 'EMAIL' => 'CONTACT.CODE'),
-            'filter' => $filter,
-            'group' => array('NAME', 'EMAIL'),
-        ));
+        return PostingRecipientTable::getList(
+            array(
+                'select' => array('NAME' => 'CONTACT.NAME', 'EMAIL' => 'CONTACT.CODE'),
+                'filter' => $filter,
+                'group' => array('NAME', 'EMAIL'),
+            )
+        );
     }
 
     /**
@@ -82,10 +88,12 @@ class Recipient extends ConnectorBase
     public function getForm()
     {
         $mailingInput = '<select name="' . $this->getFieldName('MAILING_ID') . '">';
-        $mailingDb = MailingTable::getList(array(
-            'select' => array('ID', 'NAME',),
-            'order' => array('NAME' => 'ASC', 'ID' => 'DESC')
-        ));
+        $mailingDb = MailingTable::getList(
+            array(
+                'select' => array('ID', 'NAME',),
+                'order' => array('NAME' => 'ASC', 'ID' => 'DESC')
+            )
+        );
         while ($mailing = $mailingDb->fetch()) {
             $inputSelected = ($mailing['ID'] == $this->getFieldValue('MAILING_ID') ? 'selected' : '');
             $mailingInput .= '<option value="' . $mailing['ID'] . '" ' . $inputSelected . '>';

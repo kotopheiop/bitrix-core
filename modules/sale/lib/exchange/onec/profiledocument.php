@@ -25,7 +25,10 @@ class ProfileDocument extends UserProfileDocument
      */
     static protected function getMessageExport()
     {
-        return Loc::loadLanguageFile($_SERVER["DOCUMENT_ROOT"] . '/bitrix/modules/sale/general/export.php', self::CML_LANG_ID);
+        return Loc::loadLanguageFile(
+            $_SERVER["DOCUMENT_ROOT"] . '/bitrix/modules/sale/general/export.php',
+            self::CML_LANG_ID
+        );
     }
 
     public function outputXml(array $fields, $level = 0)
@@ -44,8 +47,9 @@ class ProfileDocument extends UserProfileDocument
                         $xml .= $this->closeNodeDirectory($level + 2, $name);
                         break;
                 }
-            } else
+            } else {
                 $xml .= $this->formatXMLNode($level + 2, $name, $value);
+            }
         }
         return $xml;
     }

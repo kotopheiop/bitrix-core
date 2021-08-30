@@ -59,12 +59,15 @@ class Limitation
 
     public static function getRetryTime()
     {
-        $time = static::getOption('retryTime', [
-            'h' => 9,
-            'i' => 0,
-            'auto' => true,
-            'tz' => ''
-        ]);
+        $time = static::getOption(
+            'retryTime',
+            [
+                'h' => 9,
+                'i' => 0,
+                'auto' => true,
+                'tz' => ''
+            ]
+        );
 
         return $time;
     }
@@ -104,7 +107,7 @@ class Limitation
         if (static::$options === null) {
             $optionsString = Option::get('messageservice', static::$optionName);
             if (\CheckSerializedData($optionsString)) {
-                static::$options = unserialize($optionsString);
+                static::$options = unserialize($optionsString, ['allowed_classes' => false]);
             }
 
             if (!is_array(static::$options)) {

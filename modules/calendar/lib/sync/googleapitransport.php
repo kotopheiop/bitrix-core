@@ -13,7 +13,7 @@ use Bitrix\Main\Web;
  *
  * @package Bitrix\Calendar\Sync
  */
-final class GoogleApiTransport //implements IErrorable
+final class GoogleApiTransport
 {
     const API_BASE_URL = "https://www.googleapis.com/calendar/v3/";
     private $client;
@@ -35,7 +35,11 @@ final class GoogleApiTransport //implements IErrorable
     public function openCalendarListChannel($channelInfo)
     {
         $requestBody = Web\Json::encode($channelInfo, JSON_UNESCAPED_SLASHES);
-        return $this->doRequest(Web\HttpClient::HTTP_POST, self::API_BASE_URL . 'users/me/calendarList/watch', $requestBody);
+        return $this->doRequest(
+            Web\HttpClient::HTTP_POST,
+            self::API_BASE_URL . 'users/me/calendarList/watch',
+            $requestBody
+        );
     }
 
     /**
@@ -48,7 +52,11 @@ final class GoogleApiTransport //implements IErrorable
     {
         $this->currentMethod = __METHOD__;
         $requestBody = Web\Json::encode($channelInfo, JSON_UNESCAPED_SLASHES);
-        return $this->doRequest(Web\HttpClient::HTTP_POST, self::API_BASE_URL . 'calendars/' . urlencode($calendarId) . '/events/watch', $requestBody);
+        return $this->doRequest(
+            Web\HttpClient::HTTP_POST,
+            self::API_BASE_URL . 'calendars/' . urlencode($calendarId) . '/events/watch',
+            $requestBody
+        );
     }
 
     /**
@@ -83,7 +91,9 @@ final class GoogleApiTransport //implements IErrorable
         $this->client = new Web\HttpClient();
 
         $oAuth = new \CSocServGoogleOAuth($userId);
-        $oAuth->getEntityOAuth()->addScope(array('https://www.googleapis.com/auth/calendar', 'https://www.googleapis.com/auth/calendar.readonly'));
+        $oAuth->getEntityOAuth()->addScope(
+            array('https://www.googleapis.com/auth/calendar', 'https://www.googleapis.com/auth/calendar.readonly')
+        );
         $oAuth->getEntityOAuth()->setUser($userId);
         if ($oAuth->getEntityOAuth()->GetAccessToken()) {
             $this->client->setHeader('Authorization', 'Bearer ' . $oAuth->getEntityOAuth()->getToken());
@@ -105,9 +115,18 @@ final class GoogleApiTransport //implements IErrorable
      */
     private function doRequest($type, $url, $requestParams = '')
     {
-        $this->errors = $response = array();
+        $this->errors = $response = [];
 
-        if (!in_array($type, array(Web\HttpClient::HTTP_PATCH, Web\HttpClient::HTTP_PUT, Web\HttpClient::HTTP_DELETE, Web\HttpClient::HTTP_GET, Web\HttpClient::HTTP_POST))) {
+        if (!in_array(
+            $type,
+            [
+                Web\HttpClient::HTTP_PATCH,
+                Web\HttpClient::HTTP_PUT,
+                Web\HttpClient::HTTP_DELETE,
+                Web\HttpClient::HTTP_GET,
+                Web\HttpClient::HTTP_POST
+            ]
+        )) {
             throw new ArgumentException('Bad request type');
         }
 
@@ -125,10 +144,13 @@ final class GoogleApiTransport //implements IErrorable
         } else {
             try {
                 $error = Web\Json::decode($this->client->getResult());
-                $this->errors[] = array("code" => "CONNECTION", "message" => "[" . $error['error']['code'] . "] " . $error['error']['message']);
+                $this->errors[] = [
+                    "code" => "CONNECTION",
+                    "message" => "[" . $error['error']['code'] . "] " . $error['error']['message']
+                ];
             } catch (\Bitrix\Main\ArgumentException $exception) {
                 foreach ($this->client->getError() as $code => $error) {
-                    $this->errors[] = array("code" => $code, "message" => $error);
+                    $this->errors[] = ["code" => $code, "message" => $error];
                 }
             }
         }
@@ -146,7 +168,14 @@ final class GoogleApiTransport //implements IErrorable
     public function deleteEvent($eventId, $calendarId)
     {
         $this->currentMethod = __METHOD__;
-        return $this->doRequest(Web\HttpClient::HTTP_DELETE, self::API_BASE_URL . 'calendars/' . $calendarId . '/events/' . str_replace('@google.com', '', $eventId));
+        return $this->doRequest(
+            Web\HttpClient::HTTP_DELETE,
+            self::API_BASE_URL . 'calendars/' . $calendarId . '/events/' . str_replace(
+                '@google.com',
+                '',
+                $eventId
+            )
+        );
     }
 
     /**
@@ -161,7 +190,11 @@ final class GoogleApiTransport //implements IErrorable
     {
         $this->currentMethod = __METHOD__;
         $requestBody = Web\Json::encode($patchData, JSON_UNESCAPED_SLASHES);
-        return $this->doRequest(Web\HttpClient::HTTP_PATCH, self::API_BASE_URL . 'calendars/' . $calendarId . '/events/' . $eventId, $requestBody);
+        return $this->doRequest(
+            Web\HttpClient::HTTP_PATCH,
+            self::API_BASE_URL . 'calendars/' . $calendarId . '/events/' . $eventId,
+            $requestBody
+        );
     }
 
     /**
@@ -176,7 +209,11 @@ final class GoogleApiTransport //implements IErrorable
     {
         $this->currentMethod = __METHOD__;
         $requestBody = Web\Json::encode($eventData, JSON_UNESCAPED_SLASHES);
-        return $this->doRequest(Web\HttpClient::HTTP_PUT, self::API_BASE_URL . 'calendars/' . $calendarId . '/events/' . $eventId, $requestBody);
+        return $this->doRequest(
+            Web\HttpClient::HTTP_PUT,
+            self::API_BASE_URL . 'calendars/' . $calendarId . '/events/' . $eventId,
+            $requestBody
+        );
     }
 
     /**
@@ -190,7 +227,11 @@ final class GoogleApiTransport //implements IErrorable
     {
         $this->currentMethod = __METHOD__;
         $requestBody = Web\Json::encode($eventData, JSON_UNESCAPED_SLASHES);
-        return $this->doRequest(Web\HttpClient::HTTP_POST, self::API_BASE_URL . 'calendars/' . $calendarId . '/events/', $requestBody);
+        return $this->doRequest(
+            Web\HttpClient::HTTP_POST,
+            self::API_BASE_URL . 'calendars/' . $calendarId . '/events/',
+            $requestBody
+        );
     }
 
     /**
@@ -204,7 +245,11 @@ final class GoogleApiTransport //implements IErrorable
     {
         $this->currentMethod = __METHOD__;
         $requestBody = Web\Json::encode($eventData, JSON_UNESCAPED_SLASHES);
-        return $this->doRequest(Web\HttpClient::HTTP_POST, self::API_BASE_URL . 'calendars/' . $calendarId . '/events/import', $requestBody);
+        return $this->doRequest(
+            Web\HttpClient::HTTP_POST,
+            self::API_BASE_URL . 'calendars/' . $calendarId . '/events/import',
+            $requestBody
+        );
     }
 
     /**
@@ -263,9 +308,12 @@ final class GoogleApiTransport //implements IErrorable
      */
     public function getErrorsByCode($code)
     {
-        return array_filter($this->errors, function ($error) use ($code) {
-            return $error['code'] == $code;
-        });
+        return array_filter(
+            $this->errors,
+            function ($error) use ($code) {
+                return $error['code'] == $code;
+            }
+        );
     }
 
     /**
@@ -280,9 +328,12 @@ final class GoogleApiTransport //implements IErrorable
             return array();
         }
 
-        $errorsByCode = array_filter($this->errors, function ($error) use ($code) {
-            return $error['code'] == $code;
-        });
+        $errorsByCode = array_filter(
+            $this->errors,
+            function ($error) use ($code) {
+                return $error['code'] == $code;
+            }
+        );
 
         if (!empty($errorsByCode)) {
             return end($errorsByCode);
@@ -305,8 +356,16 @@ final class GoogleApiTransport //implements IErrorable
 
         $requestParameters = ['originalStart' => $originalStart];
         $requestParameters = array_filter($requestParameters);
-        $url = self::API_BASE_URL . 'calendars/' . urlencode($calendarId) . '/events/' . str_replace('@google.com', '', $eventId) . '/instances/';
-        $url .= empty($requestParameters) ? '' : '?' . preg_replace('/(%3D)/', '=', http_build_query($requestParameters));
+        $url = self::API_BASE_URL . 'calendars/' . urlencode($calendarId) . '/events/' . str_replace(
+                '@google.com',
+                '',
+                $eventId
+            ) . '/instances/';
+        $url .= empty($requestParameters) ? '' : '?' . preg_replace(
+                '/(%3D)/',
+                '=',
+                http_build_query($requestParameters)
+            );
 
         return $this->doRequest(Web\HttpClient::HTTP_GET, $url);
     }
@@ -413,9 +472,9 @@ final class GoogleApiTransport //implements IErrorable
                 if (preg_match('#HTTP\S+ (\d+)#', $header, $find)) {
                     $data['status'] = intval($find[1]);
                 }
-            } elseif (strpos($header, ':') !== false) {
+            } elseif (mb_strpos($header, ':') !== false) {
                 list($headerName, $headerValue) = explode(':', $header, 2);
-                if (strtolower($headerName) == 'etag') {
+                if (mb_strtolower($headerName) == 'etag') {
                     $data['etag'] = trim($headerValue);
                 }
             }
@@ -427,9 +486,9 @@ final class GoogleApiTransport //implements IErrorable
     private function getId($headers)
     {
         foreach (explode("\n", $headers) as $k => $header) {
-            if (strpos($header, ':') !== false) {
+            if (mb_strpos($header, ':') !== false) {
                 list($headerName, $headerValue) = explode(':', $header, 2);
-                if (strtolower($headerName) == 'content-id') {
+                if (mb_strtolower($headerName) == 'content-id') {
                     $part = explode(':', $headerValue);
                     $id = rtrim($part[1], ">");
                 }

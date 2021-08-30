@@ -4,6 +4,7 @@ namespace Bitrix\Mail;
 
 use Bitrix\Main\Entity;
 use Bitrix\Main\Localization;
+use Bitrix\Main\ORM;
 
 Localization\Loc::loadMessages(__FILE__);
 
@@ -28,22 +29,32 @@ class MailServicesTable extends Entity\DataManager
             $selectResult = \Bitrix\Main\SiteTable::getByPrimary($data['SITE_ID']);
             if (!$selectResult->fetch()) {
                 $field = static::getEntity()->getField('SITE_ID');
-                $result->addError(new Entity\FieldError(
-                    $field,
-                    Localization\Loc::getMessage('MAIN_ENTITY_FIELD_INVALID', array('#FIELD_TITLE#' => $field->getTitle())),
-                    Entity\FieldError::INVALID_VALUE
-                ));
+                $result->addError(
+                    new Entity\FieldError(
+                        $field,
+                        Localization\Loc::getMessage(
+                            'MAIN_ENTITY_FIELD_INVALID',
+                            array('#FIELD_TITLE#' => $field->getTitle())
+                        ),
+                        Entity\FieldError::INVALID_VALUE
+                    )
+                );
             }
         }
 
         if (!empty($data['ICON'])) {
             if (!is_scalar($data['ICON']) || !preg_match('/[0-9]+/', $data['ICON'])) {
                 $field = static::getEntity()->getField('ICON');
-                $result->addError(new Entity\FieldError(
-                    $field,
-                    Localization\Loc::getMessage('MAIN_ENTITY_FIELD_INVALID', array('#FIELD_TITLE#' => $field->getTitle())),
-                    Entity\FieldError::INVALID_VALUE
-                ));
+                $result->addError(
+                    new Entity\FieldError(
+                        $field,
+                        Localization\Loc::getMessage(
+                            'MAIN_ENTITY_FIELD_INVALID',
+                            array('#FIELD_TITLE#' => $field->getTitle())
+                        ),
+                        Entity\FieldError::INVALID_VALUE
+                    )
+                );
             }
         }
 
@@ -66,14 +77,18 @@ class MailServicesTable extends Entity\DataManager
 
     public static function update($primary, array $data)
     {
-        if (empty($data))
+        if (empty($data)) {
             return new Entity\UpdateResult();
+        }
 
         $serviceForUpdate = static::getByPrimary(
             $primary,
             array(
                 'select' => array(
-                    'ID', 'SITE_ID', 'ACTIVE', 'SERVICE_TYPE',
+                    'ID',
+                    'SITE_ID',
+                    'ACTIVE',
+                    'SERVICE_TYPE',
                 ),
             )
         )->fetch();
@@ -101,19 +116,21 @@ class MailServicesTable extends Entity\DataManager
             $isSiteChanged = isset($data['SITE_ID']) && $data['SITE_ID'] != $serviceForUpdate['SITE_ID'];
             $isDeactivated = isset($data['ACTIVE']) && $data['ACTIVE'] == 'N' && $serviceForUpdate['ACTIVE'] == 'Y';
             if (($isSiteChanged || $isDeactivated) && $serviceForUpdate['SERVICE_TYPE'] == 'imap') {
-                $emptyService = static::getList(array(
-                    'select' => array('ID'),
-                    'filter' => array(
-                        '=SITE_ID' => $serviceForUpdate['SITE_ID'],
-                        'ACTIVE' => 'Y',
-                        '=SERVICE_TYPE' => 'imap',
-                        '=SERVER' => '',
-                        '=PORT' => '',
-                        '=ENCRYPTION' => '',
-                        '=LINK' => '',
-                    ),
-                    'limit' => 1,
-                ))->fetch();
+                $emptyService = static::getList(
+                    array(
+                        'select' => array('ID'),
+                        'filter' => array(
+                            '=SITE_ID' => $serviceForUpdate['SITE_ID'],
+                            'ACTIVE' => 'Y',
+                            '=SERVICE_TYPE' => 'imap',
+                            '=SERVER' => '',
+                            '=PORT' => '',
+                            '=ENCRYPTION' => '',
+                            '=LINK' => '',
+                        ),
+                        'limit' => 1,
+                    )
+                )->fetch();
             }
 
             if ($isSiteChanged || $isDeactivated && $emptyService) {
@@ -123,8 +140,9 @@ class MailServicesTable extends Entity\DataManager
             } else {
                 $mbData = array();
                 foreach ($data as $key => $value) {
-                    if (empty($value))
+                    if (empty($value)) {
                         continue;
+                    }
 
                     switch ($key) {
                         case 'ACTIVE':
@@ -142,8 +160,9 @@ class MailServicesTable extends Entity\DataManager
             }
 
             $selectResult = \CMailbox::getList(array(), array('SERVICE_ID' => $serviceId));
-            while ($mailbox = $selectResult->fetch())
+            while ($mailbox = $selectResult->fetch()) {
                 \CMailbox::update($mailbox['ID'], $mbData);
+            }
         }
 
         return $updateResult;
@@ -157,7 +176,9 @@ class MailServicesTable extends Entity\DataManager
             return $icon['SRC'];
         } else {
             $icons = array(
-                'bitrix24' => '/bitrix/images/mail/mailservice-icon/' . Localization\Loc::getMessage('mail_mailservice_bitrix24_icon'),
+                'bitrix24' => '/bitrix/images/mail/mailservice-icon/' . Localization\Loc::getMessage(
+                        'mail_mailservice_bitrix24_icon'
+                    ),
                 'gmail' => '/bitrix/images/mail/mailservice-icon/post-gmail-icon.png',
                 'icloud' => '/bitrix/images/mail/mailservice-icon/post-icloud-icon.png',
                 'outlook.com' => '/bitrix/images/mail/mailservice-icon/post-outlook-icon.png',
@@ -171,8 +192,9 @@ class MailServicesTable extends Entity\DataManager
                 'other' => '/bitrix/images/mail/mailservice-icon/post-imap-icon.png',
             );
 
-            if ($icons[$serviceName])
+            if ($icons[$serviceName]) {
                 return $icons[$serviceName];
+            }
         }
     }
 
@@ -209,17 +231,19 @@ class MailServicesTable extends Entity\DataManager
             if (in_array($serviceForDelete['SERVICE_TYPE'], array('controller', 'domain', 'crdomain'))) {
                 $mbData = array('ACTIVE' => 'N', 'SERVICE_ID' => 0);
             } else {
-                $emptyService = static::getList(array(
-                    'filter' => array(
-                        '=SITE_ID' => $serviceForDelete['SITE_ID'],
-                        'ACTIVE' => 'Y',
-                        '=SERVER' => '',
-                        '=PORT' => '',
-                        '=ENCRYPTION' => '',
-                        '=LINK' => ''
-                    ),
-                    'limit' => 1
-                ))->fetch();
+                $emptyService = static::getList(
+                    array(
+                        'filter' => array(
+                            '=SITE_ID' => $serviceForDelete['SITE_ID'],
+                            'ACTIVE' => 'Y',
+                            '=SERVER' => '',
+                            '=PORT' => '',
+                            '=ENCRYPTION' => '',
+                            '=LINK' => ''
+                        ),
+                        'limit' => 1
+                    )
+                )->fetch();
 
                 $mbData = $emptyService
                     ? array('SERVICE_ID' => $emptyService['ID'], 'NAME' => $emptyService['NAME'])
@@ -227,8 +251,9 @@ class MailServicesTable extends Entity\DataManager
             }
 
             $selectResult = \CMailbox::getList(array(), array('SERVICE_ID' => $serviceId));
-            while ($mailbox = $selectResult->fetch())
+            while ($mailbox = $selectResult->fetch()) {
                 \CMailbox::update($mailbox['ID'], $mbData);
+            }
         }
 
         return $deleteResult;
@@ -274,14 +299,14 @@ class MailServicesTable extends Entity\DataManager
                 'save_data_modification' => function () {
                     return array(
                         function ($value) {
-                            return strtolower($value);
+                            return mb_strtolower($value);
                         }
                     );
                 },
                 'fetch_data_modification' => function () {
                     return array(
                         function ($value) {
-                            return strtolower($value);
+                            return mb_strtolower($value);
                         }
                     );
                 },
@@ -317,14 +342,30 @@ class MailServicesTable extends Entity\DataManager
             ),
             new Entity\StringField('SMTP_SERVER'),
             new Entity\IntegerField('SMTP_PORT'),
-            new Entity\BooleanField('SMTP_LOGIN_AS_IMAP', [
-                'values' => array('Y', 'N'),
+            new Entity\BooleanField(
+                'SMTP_LOGIN_AS_IMAP', [
+                'values' => array('N', 'Y'),
                 'default_value' => 'N',
-            ]),
-            new Entity\BooleanField('SMTP_PASSWORD_AS_IMAP', [
-                'values' => array('Y', 'N'),
+            ]
+            ),
+            new Entity\BooleanField(
+                'SMTP_PASSWORD_AS_IMAP', [
+                'values' => array('N', 'Y'),
                 'default_value' => 'N',
-            ]),
+            ]
+            ),
+            new ORM\Fields\BooleanField(
+                'SMTP_ENCRYPTION',
+                array(
+                    'values' => array('N', 'Y'),
+                )
+            ),
+            new ORM\Fields\BooleanField(
+                'UPLOAD_OUTGOING',
+                array(
+                    'values' => array('N', 'Y'),
+                )
+            ),
         );
     }
 

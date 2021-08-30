@@ -10,11 +10,13 @@ class CIBlockOffersTmp extends CAllIBlockOffersTmp
         $intOffersIBlockID = (int)$intOffersIBlockID;
         $intInterval = (int)$intInterval;
 
-        if ($intProductIBlockID <= 0 || $intOffersIBlockID <= 0)
+        if ($intProductIBlockID <= 0 || $intOffersIBlockID <= 0) {
             return false;
+        }
 
-        if ($intInterval <= 0)
+        if ($intInterval <= 0) {
             $intInterval = 1800;
+        }
 
         $strQuery = '
 			select ID
@@ -34,11 +36,13 @@ class CIBlockOffersTmp extends CAllIBlockOffersTmp
         $intOffersIBlockID = (int)$intOffersIBlockID;
         $intInterval = (int)$intInterval;
 
-        if ($intProductIBlockID <= 0)
+        if ($intProductIBlockID <= 0) {
             return false;
+        }
 
-        if ($intInterval <= 0)
+        if ($intInterval <= 0) {
             $intInterval = 86400;
+        }
 
         $strQuery = '
 			delete from b_iblock_offers_tmp

@@ -11,8 +11,9 @@ require_once($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/prolog.php");
 define("HELP_FILE", "utilities/sql.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/filter_tools.php");
 
-if (!$USER->CanDoOperation('view_other_settings'))
+if (!$USER->CanDoOperation('view_other_settings')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $isAdmin = $USER->CanDoOperation('edit_php');
 
@@ -29,19 +30,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $query <> "" && $isAdmin && check_bi
     $arQuery = $DB->ParseSQLBatch(str_replace("\r", "", $query));
     foreach ($arQuery as $i => $sql) {
         $dbr = $DB->Query($sql, true);
-        if (!$dbr)
+        if (!$dbr) {
             $arErrors[$i] = $DB->GetErrorMessage();
+        }
     }
     if (count($arErrors) <= 0) {
         $exec_time = round(getmicrotime() - $first, 5);
         $rsData = new CAdminResult($dbr, $sTableID);
 
-        $message = new CAdminMessage(array(
-            "MESSAGE" => GetMessage("SQL_SUCCESS_EXECUTE"),
-            "DETAILS" => GetMessage("SQL_EXEC_TIME") . "<b>" . $exec_time . "</b> " . GetMessage("SQL_SEC"),
-            "TYPE" => "OK",
-            "HTML" => true,
-        ));
+        $message = new CAdminMessage(
+            array(
+                "MESSAGE" => GetMessage("SQL_SUCCESS_EXECUTE"),
+                "DETAILS" => GetMessage("SQL_EXEC_TIME") . "<b>" . $exec_time . "</b> " . GetMessage("SQL_SEC"),
+                "TYPE" => "OK",
+                "HTML" => true,
+            )
+        );
 
         $rsData = new CAdminResult($rsData, $sTableID);
         $rsData->bPostNavigation = true;
@@ -55,7 +59,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $query <> "" && $isAdmin && check_bi
         while ($i < $intNumFields) {
             $fieldName = htmlspecialcharsbx($rsData->FieldName($i));
             $header[] =
-                array("id" => $fieldName, "content" => $fieldName, "sort" => $fieldName, "default" => true, "align" => "left", "valign" => "top");
+                array(
+                    "id" => $fieldName,
+                    "content" => $fieldName,
+                    "sort" => $fieldName,
+                    "default" => true,
+                    "align" => "left",
+                    "valign" => "top"
+                );
             $arFieldName[] = $fieldName;
             $i++;
         }
@@ -99,7 +110,9 @@ require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admi
         if (confirm('<?echo GetMessage("SQL_CONFIRM_EXECUTE")?>')) {
             document.getElementById('query').value = document.getElementById('sql').value;
             window.scrollTo(0, 500);
-            <?=$lAdmin->ActionPost(CUtil::JSEscape($APPLICATION->GetCurPageParam("mode=frame", Array("mode", "PAGEN_1"))))?>
+            <?=$lAdmin->ActionPost(
+            CUtil::JSEscape($APPLICATION->GetCurPageParam("mode=frame", Array("mode", "PAGEN_1")))
+        )?>
         }
     }
 </script>
@@ -119,8 +132,9 @@ $editTab = new CAdminTabControl("editTab", $aTabs);
     <tr valign="top">
         <td width="100%" colspan="2">
             <input type="hidden" name="lang" value="<?= LANG ?>">
-            <textarea cols="60" name="sql" id="sql" rows="15" wrap="OFF"
-                      style="width:100%;"><? echo htmlspecialcharsbx($query); ?></textarea><br/></td>
+            <textarea cols="60" name="sql" id="sql" rows="15" wrap="OFF" style="width:100%;"><? echo htmlspecialcharsbx(
+                    $query
+                ); ?></textarea><br/></td>
     </tr>
     <? $editTab->Buttons(); ?>
     <input <? if (!$isAdmin) echo "disabled" ?> type="button" accesskey="x" name="execute"
@@ -133,8 +147,9 @@ $editTab = new CAdminTabControl("editTab", $aTabs);
 </form>
 
 <?
-if (COption::GetOptionString('fileman', "use_code_editor", "Y") == "Y" && CModule::IncludeModule('fileman'))
+if (COption::GetOptionString('fileman', "use_code_editor", "Y") == "Y" && CModule::IncludeModule('fileman')) {
     CCodeEditor::Show(array('textareaId' => 'sql', 'height' => 350, 'forceSyntax' => 'sql'));
+}
 
 $lAdmin->DisplayList();
 

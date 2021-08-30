@@ -19,7 +19,8 @@ class Favicon extends \Bitrix\Landing\Hook\Page
     protected function getMap()
     {
         return array(
-            'PICTURE' => new Field\Hidden('PICTURE', array(
+            'PICTURE' => new Field\Hidden(
+                'PICTURE', array(
                 'title' => Loc::getMessage('LANDING_HOOK_FI_PICTURE'),
                 'fetch_data_modification' => function ($value) {
                     if (PublicAction::restApplication()) {
@@ -33,7 +34,8 @@ class Favicon extends \Bitrix\Landing\Hook\Page
                     }
                     return $value;
                 }
-            ))
+            )
+            )
         );
     }
 
@@ -94,7 +96,8 @@ class Favicon extends \Bitrix\Landing\Hook\Page
                     ),
                     BX_RESIZE_IMAGE_EXACT
                 );
-                $ext = array_pop(explode('.', $file['src']));
+                $srcExplode = explode('.', $file['src']);
+                $ext = array_pop($srcExplode);
                 $icons .= '<link rel="icon" type="image/' . $ext .
                     '" href="' . $file['src'] . '" sizes="' . $size . '">';
             }

@@ -16,12 +16,10 @@ class OrderProcessor
 {
     function __construct()
     {
-
     }
 
     public static function calculate()
     {
-
     }
 
 }

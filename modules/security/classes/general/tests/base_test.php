@@ -55,8 +55,9 @@ abstract class CSecurityBaseTest
         }
 
         foreach ($this->tests as $name => $test) {
-            if ($neededTests && !empty($neededTests) && !in_array($name, $neededTests, true))
+            if ($neededTests && !empty($neededTests) && !in_array($name, $neededTests, true)) {
                 continue;
+            }
 
             if (isset($test["params"]) && is_array($test["params"])) {
                 $testParams = $test["params"];
@@ -115,7 +116,7 @@ abstract class CSecurityBaseTest
      */
     protected function isRunOnWin()
     {
-        return (strtoupper(substr(PHP_OS, 0, 3)) === "WIN");
+        return (mb_strtoupper(mb_substr(PHP_OS, 0, 3)) === "WIN");
     }
 
     /**
@@ -125,8 +126,9 @@ abstract class CSecurityBaseTest
      */
     protected static function getFilePerm($path)
     {
-        if (!(is_dir($path) || is_file($path)))
+        if (!(is_dir($path) || is_file($path))) {
             return false;
+        }
 
         return fileperms($path);
     }

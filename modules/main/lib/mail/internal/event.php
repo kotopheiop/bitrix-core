@@ -48,14 +48,19 @@ class EventTable extends Entity\DataManager
             ),
 
             (new ArrayField('C_FIELDS'))
-                ->configureSerializeCallback(function ($value) {
-                    return EventTable::serialize($value);
-                })
-                ->configureUnserializeCallback(function ($str) {
-                    return unserialize(
-                        EventTable::getFetchModificationForFieldsField($str)
-                    );
-                }),
+                ->configureSerializeCallback(
+                    function ($value) {
+                        return EventTable::serialize($value);
+                    }
+                )
+                ->configureUnserializeCallback(
+                    function ($str) {
+                        return unserialize(
+                            EventTable::getFetchModificationForFieldsField($str),
+                            ['allowed_classes' => false]
+                        );
+                    }
+                ),
 
             'DATE_INSERT' => array(
                 'data_type' => 'datetime',
@@ -117,10 +122,11 @@ class EventTable extends Entity\DataManager
     protected static function replaceValuesBeforeSerialize(&$item)
     {
         if (is_object($item)) {
-            if (method_exists($item, '__toString'))
+            if (method_exists($item, '__toString')) {
                 $item = (string)$item;
-            else
+            } else {
                 $item = '';
+            }
         }
     }
 
@@ -132,25 +138,29 @@ class EventTable extends Entity\DataManager
     {
         $str = trim($str);
 
-        if ($str == 'N;')
+        if ($str == 'N;') {
             return true;
+        }
 
-        if (!preg_match('/^([abdiOs]):/', $str, $matches))
+        if (!preg_match('/^([abdiOs]):/', $str, $matches)) {
             return false;
+        }
 
         switch ($matches[1]) {
             case 'b':
             case 'i':
             case 'd':
-                if (preg_match("/^" . $matches[1] . ":[0-9.E-]+;\$/", $str))
+                if (preg_match("/^" . $matches[1] . ":[0-9.E-]+;\$/", $str)) {
                     return true;
+                }
                 break;
 
             case 'a':
             case 'O':
             case 's':
-                if (preg_match("/^" . $matches[1] . ":[0-9]+:.*[;}]\$/s", $str))
+                if (preg_match("/^" . $matches[1] . ":[0-9]+:.*[;}]\$/s", $str)) {
                     return true;
+                }
                 break;
         }
 
@@ -163,12 +173,13 @@ class EventTable extends Entity\DataManager
      */
     public static function getFetchModificationForFieldsField($str)
     {
-        if (static::isFieldSerialized($str))
+        if (static::isFieldSerialized($str)) {
             return $str;
+        }
 
         $ar = explode("&", $str);
         $newar = array();
-        while (list (, $val) = each($ar)) {
+        foreach ($ar as $val) {
             $val = str_replace("%1", "&", $val);
             $tar = explode("=", $val);
             $key = $tar[0];
@@ -177,8 +188,9 @@ class EventTable extends Entity\DataManager
             $val = str_replace("%3", "=", $val);
             $key = str_replace("%2", "%", $key);
             $val = str_replace("%2", "%", $val);
-            if ($key != "")
+            if ($key != "") {
                 $newar[$key] = $val;
+            }
         }
 
         $field = new Entity\StringField('FIELDS', array());

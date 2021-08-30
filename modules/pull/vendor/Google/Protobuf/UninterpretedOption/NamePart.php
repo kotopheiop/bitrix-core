@@ -140,8 +140,11 @@ class NamePart extends \Protobuf\AbstractMessage
         }
 
         $message = new self();
-        $values = array_merge([
-        ], $values);
+        $values = array_merge(
+            [
+            ],
+            $values
+        );
 
         $message->setNamePart($values['name_part']);
         $message->setIsExtension($values['is_extension']);
@@ -154,23 +157,29 @@ class NamePart extends \Protobuf\AbstractMessage
      */
     public static function descriptor()
     {
-        return \google\protobuf\DescriptorProto::fromArray([
-            'name' => 'NamePart',
-            'field' => [
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 1,
-                    'name' => 'name_part',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_STRING(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_REQUIRED()
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 2,
-                    'name' => 'is_extension',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_BOOL(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_REQUIRED()
-                ]),
-            ],
-        ]);
+        return \google\protobuf\DescriptorProto::fromArray(
+            [
+                'name' => 'NamePart',
+                'field' => [
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 1,
+                            'name' => 'name_part',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_STRING(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_REQUIRED()
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 2,
+                            'name' => 'is_extension',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_BOOL(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_REQUIRED()
+                        ]
+                    ),
+                ],
+            ]
+        );
     }
 
     /**
@@ -198,11 +207,15 @@ class NamePart extends \Protobuf\AbstractMessage
         $sizeContext = $context->getComputeSizeContext();
 
         if ($this->name_part === null) {
-            throw new \UnexpectedValueException('Field "\\google\\protobuf\\UninterpretedOption\\NamePart#name_part" (tag 1) is required but has no value.');
+            throw new \UnexpectedValueException(
+                'Field "\\google\\protobuf\\UninterpretedOption\\NamePart#name_part" (tag 1) is required but has no value.'
+            );
         }
 
         if ($this->is_extension === null) {
-            throw new \UnexpectedValueException('Field "\\google\\protobuf\\UninterpretedOption\\NamePart#is_extension" (tag 2) is required but has no value.');
+            throw new \UnexpectedValueException(
+                'Field "\\google\\protobuf\\UninterpretedOption\\NamePart#is_extension" (tag 2) is required but has no value.'
+            );
         }
 
         if ($this->name_part !== null) {
@@ -236,7 +249,6 @@ class NamePart extends \Protobuf\AbstractMessage
             : null;
 
         while ($limit === null || $stream->tell() < $limit) {
-
             if ($stream->eof()) {
                 break;
             }
@@ -282,7 +294,6 @@ class NamePart extends \Protobuf\AbstractMessage
             $unknown = new \Protobuf\Unknown($tag, $wire, $data);
 
             $this->unknownFieldSet->add($unknown);
-
         }
     }
 
@@ -326,7 +337,9 @@ class NamePart extends \Protobuf\AbstractMessage
     public function merge(\Protobuf\Message $message)
     {
         if (!$message instanceof \google\protobuf\UninterpretedOption\NamePart) {
-            throw new \InvalidArgumentException(sprintf('Argument 1 passed to %s must be a %s, %s given', __METHOD__, __CLASS__, get_class($message)));
+            throw new \InvalidArgumentException(
+                sprintf('Argument 1 passed to %s must be a %s, %s given', __METHOD__, __CLASS__, get_class($message))
+            );
         }
 
         $this->name_part = ($message->name_part !== null) ? $message->name_part : $this->name_part;

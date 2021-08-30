@@ -16,12 +16,14 @@ class Registry
      */
     public static function getCallWithId($id)
     {
-        if (static::$calls[$id])
+        if (static::$calls[$id]) {
             return static::$calls[$id];
+        }
 
         $row = CallTable::getRowById($id);
-        if (!$row)
+        if (!$row) {
             return false;
+        }
 
         static::$calls[$id] = Call::createWithArray($row);
         return static::$calls[$id];
@@ -29,11 +31,9 @@ class Registry
 
     public static function getCallWithPublicId($publicId)
     {
-
     }
 
     public static function getCallWithEntity($entityType, $entityId)
     {
-
     }
 }

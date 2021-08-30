@@ -64,15 +64,40 @@ class TradeBinding extends Base
     {
         $r = new Result();
 
-        $listFieldsInfoAdd = $this->getListFieldInfo($this->getFields(), ['filter' => ['ignoredAttributes' => [Attributes::Hidden, Attributes::ReadOnly], 'ignoredFields' => ['ORDER_ID', 'EXTERNAL_ORDER_ID']]]);
-        $listFieldsInfoUpdate = $this->getListFieldInfo($this->getFields(), ['filter' => ['ignoredAttributes' => [Attributes::Hidden, Attributes::ReadOnly, Attributes::Immutable]]]);
+        $listFieldsInfoAdd = $this->getListFieldInfo(
+            $this->getFields(),
+            [
+                'filter' => [
+                    'ignoredAttributes' => [
+                        Attributes::Hidden,
+                        Attributes::ReadOnly
+                    ],
+                    'ignoredFields' => ['ORDER_ID', 'EXTERNAL_ORDER_ID']
+                ]
+            ]
+        );
+        $listFieldsInfoUpdate = $this->getListFieldInfo(
+            $this->getFields(),
+            [
+                'filter' => [
+                    'ignoredAttributes' => [
+                        Attributes::Hidden,
+                        Attributes::ReadOnly,
+                        Attributes::Immutable
+                    ]
+                ]
+            ]
+        );
 
         foreach ($fields['ORDER']['TRADE_BINDINGS'] as $k => $item) {
-            $required = $this->checkRequiredFields($item,
+            $required = $this->checkRequiredFields(
+                $item,
                 $this->isNewItem($item) ? $listFieldsInfoAdd : $listFieldsInfoUpdate
             );
             if (!$required->isSuccess()) {
-                $r->addError(new Error('[tradeBindings][' . $k . '] - ' . implode(', ', $required->getErrorMessages()) . '.'));
+                $r->addError(
+                    new Error('[tradeBindings][' . $k . '] - ' . implode(', ', $required->getErrorMessages()) . '.')
+                );
             }
         }
         return $r;
@@ -83,12 +108,36 @@ class TradeBinding extends Base
         $result = [];
 
         $fieldsInfo = empty($fieldsInfo) ? $this->getFields() : $fieldsInfo;
-        $listFieldsInfoAdd = $this->getListFieldInfo($fieldsInfo, ['filter' => ['ignoredAttributes' => [Attributes::Hidden, Attributes::ReadOnly], ['ignoredFields' => ['ORDER_ID', 'EXTERNAL_ORDER_ID']]]]);
-        $listFieldsInfoUpdate = $this->getListFieldInfo($fieldsInfo, ['filter' => ['ignoredAttributes' => [Attributes::Hidden, Attributes::ReadOnly, Attributes::Immutable], 'skipFields' => ['ID']]]);
+        $listFieldsInfoAdd = $this->getListFieldInfo(
+            $fieldsInfo,
+            [
+                'filter' => [
+                    'ignoredAttributes' => [
+                        Attributes::Hidden,
+                        Attributes::ReadOnly
+                    ],
+                    ['ignoredFields' => ['ORDER_ID', 'EXTERNAL_ORDER_ID']]
+                ]
+            ]
+        );
+        $listFieldsInfoUpdate = $this->getListFieldInfo(
+            $fieldsInfo,
+            [
+                'filter' => [
+                    'ignoredAttributes' => [
+                        Attributes::Hidden,
+                        Attributes::ReadOnly,
+                        Attributes::Immutable
+                    ],
+                    'skipFields' => ['ID']
+                ]
+            ]
+        );
 
         if (isset($fields['ORDER']['TRADE_BINDINGS'])) {
             foreach ($fields['ORDER']['TRADE_BINDINGS'] as $k => $item) {
-                $result['ORDER']['TRADE_BINDINGS'][$k] = $this->internalizeFields($item,
+                $result['ORDER']['TRADE_BINDINGS'][$k] = $this->internalizeFields(
+                    $item,
                     $this->isNewItem($item) ? $listFieldsInfoAdd : $listFieldsInfoUpdate
                 );
             }

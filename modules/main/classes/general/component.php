@@ -145,8 +145,9 @@ class CBitrixComponent
         } else {
             $this->setSiteId(SITE_ID);
             $this->setLanguageId(LANGUAGE_ID);
-            if (defined('SITE_TEMPLATE_ID'))
+            if (defined('SITE_TEMPLATE_ID')) {
                 $this->setSiteTemplateId(SITE_TEMPLATE_ID);
+            }
         }
 
         $this->request = \Bitrix\Main\Context::getCurrent()->getRequest();
@@ -161,10 +162,11 @@ class CBitrixComponent
      */
     final public function getName()
     {
-        if ($this->__bInited)
+        if ($this->__bInited) {
             return $this->__name;
-        else
+        } else {
             return null;
+        }
     }
 
     /**
@@ -176,10 +178,11 @@ class CBitrixComponent
      */
     final public function getRelativePath()
     {
-        if ($this->__bInited)
+        if ($this->__bInited) {
             return $this->__relativePath;
-        else
+        } else {
             return null;
+        }
     }
 
     /**
@@ -191,10 +194,11 @@ class CBitrixComponent
      */
     final public function getPath()
     {
-        if ($this->__bInited)
+        if ($this->__bInited) {
             return $this->__path;
-        else
+        } else {
             return null;
+        }
     }
 
     /**
@@ -206,10 +210,11 @@ class CBitrixComponent
      */
     final public function getTemplateName()
     {
-        if ($this->__bInited)
+        if ($this->__bInited) {
             return $this->__templateName;
-        else
+        } else {
             return null;
+        }
     }
 
     /**
@@ -222,8 +227,9 @@ class CBitrixComponent
      */
     final public function setTemplateName($templateName)
     {
-        if (!$this->__bInited)
+        if (!$this->__bInited) {
             return null;
+        }
 
         $this->__templateName = $templateName;
         return true;
@@ -324,10 +330,11 @@ class CBitrixComponent
      */
     final public function getTemplatePage()
     {
-        if ($this->__bInited)
+        if ($this->__bInited) {
             return $this->__templatePage;
-        else
+        } else {
             return null;
+        }
     }
 
     /**
@@ -339,10 +346,11 @@ class CBitrixComponent
      */
     final public function getTemplate()
     {
-        if ($this->__bInited && $this->__template)
+        if ($this->__bInited && $this->__template) {
             return $this->__template;
-        else
+        } else {
             return null;
+        }
     }
 
     /**
@@ -354,10 +362,11 @@ class CBitrixComponent
      */
     final public function getParent()
     {
-        if ($this->__bInited && $this->__parent)
+        if ($this->__bInited && $this->__parent) {
             return $this->__parent;
-        else
+        } else {
             return null;
+        }
     }
 
     /**
@@ -369,10 +378,11 @@ class CBitrixComponent
      */
     final public function getTemplateCachedData()
     {
-        if ($this->__bInited && $this->__template)
+        if ($this->__bInited && $this->__template) {
             return $this->__template->GetCachedData();
-        else
+        } else {
             return null;
+        }
     }
 
     /**
@@ -385,8 +395,9 @@ class CBitrixComponent
      */
     final public function setTemplateCachedData($templateCachedData)
     {
-        if ($this->__bInited && $this->__template)
+        if ($this->__bInited && $this->__template) {
             $this->__template->ApplyCachedData($templateCachedData);
+        }
     }
 
     /**
@@ -413,7 +424,7 @@ class CBitrixComponent
      * @return string
      *
      */
-    final private function __getClassForPath($componentPath)
+    private function __getClassForPath($componentPath)
     {
         if (!isset(self::$__classes_map[$componentPath])) {
             $fname = $_SERVER["DOCUMENT_ROOT"] . $componentPath . "/class.php";
@@ -425,8 +436,14 @@ class CBitrixComponent
                 $afterClassesCount = count($afterClasses);
 
                 for ($i = $beforeClassesCount; $i < $afterClassesCount; $i++) {
-                    if (!isset(self::$classes[$afterClasses[$i]]) && is_subclass_of($afterClasses[$i], "cbitrixcomponent")) {
-                        if (!isset(self::$__classes_map[$componentPath]) || is_subclass_of($afterClasses[$i], self::$__classes_map[$componentPath])) {
+                    if (!isset(self::$classes[$afterClasses[$i]]) && is_subclass_of(
+                            $afterClasses[$i],
+                            "cbitrixcomponent"
+                        )) {
+                        if (!isset(self::$__classes_map[$componentPath]) || is_subclass_of(
+                                $afterClasses[$i],
+                                self::$__classes_map[$componentPath]
+                            )) {
                             self::$__classes_map[$componentPath] = $afterClasses[$i];
 
                             //recursion control
@@ -435,6 +452,7 @@ class CBitrixComponent
                     }
                 }
             } else {
+                //no need to try for several times
                 self::$__classes_map[$componentPath] = "";
             }
         }
@@ -488,8 +506,9 @@ class CBitrixComponent
         $this->__parent = null;
         $this->__arIncludeAreaIcons = array();
         $this->__cache = null;
-        if ($componentTemplate !== false)
+        if ($componentTemplate !== false) {
             $this->__templateName = $componentTemplate;
+        }
 
         $this->__bInited = true;
 
@@ -541,11 +560,13 @@ class CBitrixComponent
      */
     final public function includeComponentLang($relativePath = "", $lang = false)
     {
-        if (!$this->__bInited)
+        if (!$this->__bInited) {
             return null;
+        }
 
-        if ($relativePath == "")
+        if ($relativePath == "") {
             $relativePath = "component.php";
+        }
 
         $path = $_SERVER["DOCUMENT_ROOT"] . $this->__path . "/" . $relativePath;
 
@@ -569,8 +590,9 @@ class CBitrixComponent
         /** @noinspection PhpUnusedLocalVariableInspection */
         global $APPLICATION, $USER, $DB;
 
-        if (!$this->__bInited)
+        if (!$this->__bInited) {
             return null;
+        }
 
         //these vars are used in the component file
         $arParams = &$this->arParams;
@@ -603,19 +625,23 @@ class CBitrixComponent
      * @return mixed
      *
      */
-    final public function includeComponent($componentTemplate, $arParams, $parentComponent)
+    final public function includeComponent($componentTemplate, $arParams, $parentComponent, $returnResult = false)
     {
-        if (!$this->__bInited)
+        if (!$this->__bInited) {
             return null;
+        }
 
-        if ($componentTemplate !== false)
+        if ($componentTemplate !== false) {
             $this->setTemplateName($componentTemplate);
+        }
 
-        if ($parentComponent instanceof cbitrixcomponent)
+        if ($parentComponent instanceof cbitrixcomponent) {
             $this->__parent = $parentComponent;
+        }
 
-        if ($arParams["CACHE_TYPE"] != "Y" && $arParams["CACHE_TYPE"] != "N")
+        if (!isset($arParams["CACHE_TYPE"]) || ($arParams["CACHE_TYPE"] != "Y" && $arParams["CACHE_TYPE"] != "N")) {
             $arParams["CACHE_TYPE"] = "A";
+        }
 
         if ($this->classOfComponent) {
             /** @var CBitrixComponent $component */
@@ -624,7 +650,9 @@ class CBitrixComponent
 
             $keysToExport = $component->listKeysSignedParameters();
             if ($keysToExport) {
-                $component->storeSignedParameters(array_intersect_key($arParams, array_combine($keysToExport, $keysToExport)));
+                $component->storeSignedParameters(
+                    array_intersect_key($arParams, array_combine($keysToExport, $keysToExport))
+                );
             }
 
             $component->arParams = $component->onPrepareComponentParams($arParams);
@@ -633,7 +661,13 @@ class CBitrixComponent
             $componentFrame = new \Bitrix\Main\Composite\Internals\AutomaticArea($component);
             $componentFrame->start();
 
-            $result = $component->executeComponent();
+            if ($returnResult) {
+                $component->executeComponent();
+                $result = $component->arResult;
+            } else {
+                $result = $component->executeComponent();
+            }
+
             $this->__arIncludeAreaIcons = $component->__arIncludeAreaIcons;
             $frameMode = $component->getFrameMode();
 
@@ -646,7 +680,13 @@ class CBitrixComponent
             $componentFrame = new \Bitrix\Main\Composite\Internals\AutomaticArea($this);
             $componentFrame->start();
 
-            $result = $this->__IncludeComponent();
+            if ($returnResult) {
+                $this->__IncludeComponent();
+                $result = $this->arResult;
+            } else {
+                $result = $this->__IncludeComponent();
+            }
+
             $frameMode = $this->getFrameMode();
 
             $componentFrame->end();
@@ -671,20 +711,24 @@ class CBitrixComponent
      */
     final public function includeComponentTemplate($templatePage = "", $customTemplatePath = "")
     {
-        if (!$this->__bInited)
+        if (!$this->__bInited) {
             return null;
+        }
 
         if ($this->initComponentTemplate($templatePage, $this->getSiteTemplateId(), $customTemplatePath)) {
             $this->showComponentTemplate();
-            if ($this->__component_epilog)
+            if ($this->__component_epilog) {
                 $this->includeComponentEpilog($this->__component_epilog);
+            }
         } else {
             $this->abortResultCache();
-            $this->__showError(str_replace(
-                array("#PAGE#", "#NAME#"),
-                array($templatePage, $this->getTemplateName()),
-                "Cannot find '#NAME#' template with page '#PAGE#'"
-            ));
+            $this->__showError(
+                str_replace(
+                    array("#PAGE#", "#NAME#"),
+                    array($templatePage, $this->getTemplateName()),
+                    "Cannot find '#NAME#' template with page '#PAGE#'"
+                )
+            );
         }
     }
 
@@ -701,17 +745,19 @@ class CBitrixComponent
      */
     final public function initComponentTemplate($templatePage = "", $siteTemplate = false, $customTemplatePath = "")
     {
-        if (!$this->__bInited)
+        if (!$this->__bInited) {
             return null;
+        }
 
         $this->__templatePage = $templatePage;
 
         $this->__template = new CBitrixComponentTemplate();
         $this->__template->setLanguageId($this->getLanguageId());
-        if ($this->__template->Init($this, $siteTemplate, $customTemplatePath))
+        if ($this->__template->Init($this, $siteTemplate, $customTemplatePath)) {
             return true;
-        else
+        } else {
             return false;
+        }
     }
 
     /**
@@ -723,26 +769,31 @@ class CBitrixComponent
      */
     final public function showComponentTemplate()
     {
-        if (!$this->__bInited)
+        if (!$this->__bInited) {
             return null;
+        }
 
-        if ($this->__template)
+        if ($this->__template) {
             $this->__template->includeTemplate($this->arResult);
+        }
 
         if (is_array($this->arResultCacheKeys)) {
             $arNewResult = array();
-            foreach ($this->arResultCacheKeys as $key)
-                if (array_key_exists($key, $this->arResult))
+            foreach ($this->arResultCacheKeys as $key) {
+                if (array_key_exists($key, $this->arResult)) {
                     $arNewResult[$key] = $this->arResult[$key];
+                }
+            }
             $this->arResult = $arNewResult;
         }
 
         if (!empty($this->__editButtons)) {
             foreach ($this->__editButtons as $button) {
-                if ($button[0] == 'AddEditAction')
+                if ($button[0] == 'AddEditAction') {
                     $this->addEditAction($button[1], $button[2], $button[3], $button[4]);
-                else
+                } else {
                     $this->addDeleteAction($button[1], $button[2], $button[3], $button[4]);
+                }
             }
         }
 
@@ -760,8 +811,9 @@ class CBitrixComponent
      */
     final public function addIncludeAreaIcon($arIcon)
     {
-        if (!isset($this->__arIncludeAreaIcons) || !is_array($this->__arIncludeAreaIcons))
+        if (!isset($this->__arIncludeAreaIcons) || !is_array($this->__arIncludeAreaIcons)) {
             $this->__arIncludeAreaIcons = array();
+        }
 
         $this->__arIncludeAreaIcons[] = $arIcon;
     }
@@ -775,8 +827,9 @@ class CBitrixComponent
      */
     final public function addIncludeAreaIcons($arIcons)
     {
-        if (is_array($arIcons))
+        if (is_array($arIcons)) {
             $this->__arIncludeAreaIcons = $arIcons;
+        }
     }
 
     /**
@@ -798,32 +851,40 @@ class CBitrixComponent
      */
     public function getCacheID($additionalCacheID = false)
     {
-        if (!$this->getSiteId())
+        if (!$this->getSiteId()) {
             $SITE_ID = SITE_ID;
-        else
+        } else {
             $SITE_ID = $this->getSiteId();
+        }
 
-        if (!$this->getLanguageId())
+        if (!$this->getLanguageId()) {
             $LANGUAGE_ID = LANGUAGE_ID;
-        else
+        } else {
             $LANGUAGE_ID = $this->getLanguageId();
+        }
 
-        if (!$this->getSiteTemplateId())
+        if (!$this->getSiteTemplateId()) {
             $SITE_TEMPLATE_ID = (defined("SITE_TEMPLATE_ID") ? SITE_TEMPLATE_ID : "");
-        else
+        } else {
             $SITE_TEMPLATE_ID = $this->getSiteTemplateId();
+        }
 
-        $cacheID = $SITE_ID . "|" . $LANGUAGE_ID . ($SITE_TEMPLATE_ID != "" ? "|" . $SITE_TEMPLATE_ID : "") . "|" . $this->__name . "|" . $this->getTemplateName() . "|";
+        $cacheID = $SITE_ID . "|" . $LANGUAGE_ID . ($SITE_TEMPLATE_ID != "" ? "|" . $SITE_TEMPLATE_ID : "") . "|" . $this->__name . "|" . $this->getTemplateName(
+            ) . "|";
 
-        foreach ($this->arParams as $k => $v)
-            if (strncmp("~", $k, 1))
+        foreach ($this->arParams as $k => $v) {
+            if (strncmp("~", $k, 1)) {
                 $cacheID .= "," . $k . "=" . serialize($v);
+            }
+        }
 
-        if (($offset = CTimeZone::getOffset()) <> 0)
+        if (($offset = CTimeZone::getOffset()) <> 0) {
             $cacheID .= "|" . $offset;
+        }
 
-        if ($additionalCacheID !== false)
+        if ($additionalCacheID !== false) {
             $cacheID .= "|" . serialize($additionalCacheID);
+        }
 
         if ($this->__currentCounter > 1) {
             $cacheID .= "|" . $this->__currentCounter;
@@ -846,27 +907,36 @@ class CBitrixComponent
         /** @global CMain $APPLICATION */
         global $APPLICATION, $CACHE_MANAGER;
 
-        if (!$this->__bInited)
+        if (!$this->__bInited) {
             return null;
+        }
 
-        if ($this->arParams["CACHE_TYPE"] == "N" || ($this->arParams["CACHE_TYPE"] == "A" && COption::getOptionString("main", "component_cache_on", "Y") == "N"))
+        if ($this->arParams["CACHE_TYPE"] == "N" || ($this->arParams["CACHE_TYPE"] == "A" && COption::getOptionString(
+                    "main",
+                    "component_cache_on",
+                    "Y"
+                ) == "N")) {
             return true;
+        }
 
-        if ($cacheTime === false)
+        if ($cacheTime === false) {
             $cacheTime = intval($this->arParams["CACHE_TIME"]);
+        }
 
         $this->__cacheID = $this->getCacheID($additionalCacheID);
         $this->__cachePath = $cachePath;
-        if ($this->__cachePath === false)
+        if ($this->__cachePath === false) {
             $this->__cachePath = $CACHE_MANAGER->getCompCachePath($this->__relativePath);
+        }
 
         $this->__cache = \Bitrix\Main\Data\Cache::createInstance(['actual_data' => false]);
         if ($this->__cache->startDataCache($cacheTime, $this->__cacheID, $this->__cachePath)) {
             $this->__NavNum = $GLOBALS["NavNum"];
             $this->__currentCounters = self::$__componentCounter;
 
-            if (defined("BX_COMP_MANAGED_CACHE") && $this->__cache->isStarted())
+            if (defined("BX_COMP_MANAGED_CACHE") && $this->__cache->isStarted()) {
                 $CACHE_MANAGER->startTagCache($this->__cachePath);
+            }
 
             return true;
         } else {
@@ -876,16 +946,24 @@ class CBitrixComponent
                 $templateCachedData = &$arCache["templateCachedData"];
 
                 if ($templateCachedData && is_array($templateCachedData)) {
-                    if (array_key_exists("additionalCSS", $templateCachedData) && strlen($templateCachedData["additionalCSS"]) > 0) {
+                    if (array_key_exists(
+                            "additionalCSS",
+                            $templateCachedData
+                        ) && $templateCachedData["additionalCSS"] <> '') {
                         $APPLICATION->SetAdditionalCSS($templateCachedData["additionalCSS"]);
-                        if ($this->__parent)
+                        if ($this->__parent) {
                             $this->__parent->addChildCSS($templateCachedData["additionalCSS"]);
+                        }
                     }
 
-                    if (array_key_exists("additionalJS", $templateCachedData) && strlen($templateCachedData["additionalJS"]) > 0) {
+                    if (array_key_exists(
+                            "additionalJS",
+                            $templateCachedData
+                        ) && $templateCachedData["additionalJS"] <> '') {
                         $APPLICATION->AddHeadScript($templateCachedData["additionalJS"]);
-                        if ($this->__parent)
+                        if ($this->__parent) {
                             $this->__parent->addChildJS($templateCachedData["additionalJS"]);
+                        }
                     }
 
                     if (array_key_exists("frames", $templateCachedData) && is_array($templateCachedData["frames"])) {
@@ -927,8 +1005,9 @@ class CBitrixComponent
                         foreach ($templateCachedData["externalCss"] as $cssPath) {
                             $APPLICATION->SetAdditionalCSS($cssPath);
                             //Check if parent component exists and plug css it to it's "collection"
-                            if ($this->__parent)
+                            if ($this->__parent) {
                                 $this->__parent->addChildCSS($cssPath);
+                            }
                         }
                     }
 
@@ -936,28 +1015,34 @@ class CBitrixComponent
                         foreach ($templateCachedData["externalJs"] as $jsPath) {
                             $APPLICATION->AddHeadScript($jsPath);
                             //Check if parent component exists and plug js it to it's "collection"
-                            if ($this->__parent)
+                            if ($this->__parent) {
                                 $this->__parent->addChildJS($jsPath);
+                            }
                         }
                     }
                 }
 
                 if ($templateCachedData["__editButtons"]) {
                     foreach ($templateCachedData["__editButtons"] as $button) {
-                        if ($button[0] == 'AddEditAction')
+                        if ($button[0] == 'AddEditAction') {
                             $this->addEditAction($button[1], $button[2], $button[3], $button[4]);
-                        else
+                        } else {
                             $this->addDeleteAction($button[1], $button[2], $button[3], $button[4]);
+                        }
                     }
                 }
 
-                if ($templateCachedData["__view"])
-                    foreach ($templateCachedData["__view"] as $view_id => $target)
-                        foreach ($target as $view_content)
+                if ($templateCachedData["__view"]) {
+                    foreach ($templateCachedData["__view"] as $view_id => $target) {
+                        foreach ($target as $view_content) {
                             $APPLICATION->addViewContent($view_id, $view_content[0], $view_content[1]);
+                        }
+                    }
+                }
 
-                if (array_key_exists("__NavNum", $templateCachedData))
+                if (array_key_exists("__NavNum", $templateCachedData)) {
                     $GLOBALS["NavNum"] += $templateCachedData["__NavNum"];
+                }
 
                 if (array_key_exists("__currentCounters", $templateCachedData)) {
                     foreach ($templateCachedData["__currentCounters"] as $componentName => $counter) {
@@ -966,18 +1051,21 @@ class CBitrixComponent
                 }
 
                 if (array_key_exists("__children_css", $templateCachedData)) {
-                    foreach ($templateCachedData["__children_css"] as $css_url)
+                    foreach ($templateCachedData["__children_css"] as $css_url) {
                         $APPLICATION->setAdditionalCSS($css_url);
+                    }
                 }
 
                 if (array_key_exists("__children_js", $templateCachedData)) {
-                    foreach ($templateCachedData["__children_js"] as $js_url)
+                    foreach ($templateCachedData["__children_js"] as $js_url) {
                         $APPLICATION->addHeadScript($js_url);
+                    }
                 }
 
                 if (array_key_exists("__children_epilogs", $templateCachedData)) {
-                    foreach ($templateCachedData["__children_epilogs"] as $component_epilog)
+                    foreach ($templateCachedData["__children_epilogs"] as $component_epilog) {
                         $this->includeComponentEpilog($component_epilog);
+                    }
                 }
 
                 if (array_key_exists("component_epilog", $templateCachedData)) {
@@ -999,8 +1087,9 @@ class CBitrixComponent
     {
         global $NavNum, $CACHE_MANAGER;
 
-        if (!$this->__bInited)
+        if (!$this->__bInited) {
             return null;
+        }
 
         if (!$this->__cache) {
             if ($this->__parent) {
@@ -1028,8 +1117,9 @@ class CBitrixComponent
         );
         if ($this->__template) {
             $arCache["templateCachedData"] = &$this->__template->getCachedData();
-            if ($this->__component_epilog)
+            if ($this->__component_epilog) {
                 $arCache["templateCachedData"]["component_epilog"] = $this->__component_epilog;
+            }
         } else {
             $arCache["templateCachedData"] = array();
         }
@@ -1057,24 +1147,27 @@ class CBitrixComponent
         if (!empty($this->__children_css)) {
             $arCache["templateCachedData"]["__children_css"] = $this->__children_css;
             if ($this->__parent) {
-                foreach ($this->__children_css as $cssPath)
+                foreach ($this->__children_css as $cssPath) {
                     $this->__parent->addChildCSS($cssPath);
+                }
             }
         }
 
         if (!empty($this->__children_js)) {
             $arCache["templateCachedData"]["__children_js"] = $this->__children_js;
             if ($this->__parent) {
-                foreach ($this->__children_js as $jsPath)
+                foreach ($this->__children_js as $jsPath) {
                     $this->__parent->addChildJS($jsPath);
+                }
             }
         }
 
         if (!empty($this->__children_epilogs)) {
             $arCache["templateCachedData"]["__children_epilogs"] = $this->__children_epilogs;
             if ($this->__parent) {
-                foreach ($this->__children_epilogs as $epilogFile)
+                foreach ($this->__children_epilogs as $epilogFile) {
                     $this->__parent->addChildEpilog($epilogFile);
+                }
             }
         }
 
@@ -1094,17 +1187,20 @@ class CBitrixComponent
             }
         }
 
-        if (!empty($this->__view))
+        if (!empty($this->__view)) {
             $arCache["templateCachedData"]["__view"] = $this->__view;
+        }
 
-        if (!empty($this->__editButtons))
+        if (!empty($this->__editButtons)) {
             $arCache["templateCachedData"]["__editButtons"] = $this->__editButtons;
+        }
 
         $cacheWasStarted = $this->__cache->isStarted();
         $this->__cache->endDataCache($arCache);
 
-        if (defined("BX_COMP_MANAGED_CACHE") && $cacheWasStarted)
+        if (defined("BX_COMP_MANAGED_CACHE") && $cacheWasStarted) {
             $CACHE_MANAGER->endTagCache();
+        }
 
         $this->__cache = null;
     }
@@ -1120,17 +1216,20 @@ class CBitrixComponent
     {
         global $CACHE_MANAGER;
 
-        if (!$this->__bInited)
+        if (!$this->__bInited) {
             return null;
+        }
 
-        if (!$this->__cache)
+        if (!$this->__cache) {
             return null;
+        }
 
         $cacheWasStarted = $this->__cache->isStarted();
         $this->__cache->abortDataCache();
 
-        if (defined("BX_COMP_MANAGED_CACHE") && $cacheWasStarted)
+        if (defined("BX_COMP_MANAGED_CACHE") && $cacheWasStarted) {
             $CACHE_MANAGER->abortTagCache();
+        }
 
         $this->__cache = null;
     }
@@ -1148,14 +1247,16 @@ class CBitrixComponent
     {
         global $CACHE_MANAGER;
 
-        if (!$this->__bInited)
+        if (!$this->__bInited) {
             return null;
+        }
 
         $this->__cacheID = $this->getCacheID($additionalCacheID);
 
         $this->__cachePath = $cachePath;
-        if ($this->__cachePath === false)
+        if ($this->__cachePath === false) {
             $this->__cachePath = $CACHE_MANAGER->getCompCachePath($this->__relativePath);
+        }
 
         $cache = new CPHPCache();
         $cache->clean($this->__cacheID, $this->__cachePath);
@@ -1196,8 +1297,9 @@ class CBitrixComponent
                 BXClearCache(true, $componentCachePath);
             }
 
-            if (defined("BX_COMP_MANAGED_CACHE"))
+            if (defined("BX_COMP_MANAGED_CACHE")) {
                 $CACHE_MANAGER->ClearByTag($componentName);
+            }
         }
     }
 
@@ -1222,10 +1324,11 @@ class CBitrixComponent
      */
     final public function setResultCacheKeys($arResultCacheKeys)
     {
-        if ($this->arResultCacheKeys === false)
+        if ($this->arResultCacheKeys === false) {
             $this->arResultCacheKeys = $arResultCacheKeys;
-        else
+        } else {
             $this->arResultCacheKeys = array_merge($this->arResultCacheKeys, $arResultCacheKeys);
+        }
     }
 
     /**
@@ -1255,42 +1358,52 @@ class CBitrixComponent
         /** @global CMain $APPLICATION */
         global $APPLICATION;
 
-        if (!$entryId || !$editLink)
+        if (!$entryId || !$editLink) {
             return;
+        }
 
         if (!$editTitle) {
             IncludeModuleLangFile(__FILE__);
             $editTitle = GetMessage('EDIT_ACTION_TITLE_DEFAULT');
         }
 
-        if (!is_array($arParams))
+        if (!is_array($arParams)) {
             $arParams = array();
+        }
 
-        if (!$arParams['WINDOW'])
+        if (!($arParams['WINDOW'] ?? null)) {
             $arParams['WINDOW'] = array(
                 "width" => 780,
                 "height" => 500,
             );
+        }
 
-        if (!$arParams['ICON'] && !$arParams['SRC'] && !$arParams['IMAGE'])
+        if (!($arParams['ICON'] ?? '') && !($arParams['SRC'] ?? '') && !($arParams['IMAGE'] ?? '')) {
             $arParams['ICON'] = 'bx-context-toolbar-edit-icon';
+        }
 
         $arBtn = array(
-            'URL' => 'javascript:' . $APPLICATION->getPopupLink(array(
-                    'URL' => $editLink,
-                    "PARAMS" => $arParams['WINDOW'],
-                )),
+            'URL' => 'javascript:' . $APPLICATION->getPopupLink(
+                    array(
+                        'URL' => $editLink,
+                        "PARAMS" => $arParams['WINDOW'],
+                    )
+                ),
             'TITLE' => $editTitle,
         );
 
-        if ($arParams['ICON'])
+        if ($arParams['ICON']) {
             $arBtn['ICON'] = $arParams['ICON'];
-        elseif ($arParams['SRC'] || $arParams['IMAGE'])
+        } elseif ($arParams['SRC'] || $arParams['IMAGE']) {
             $arBtn['SRC'] = $arParams['IMAGE'] ? $arParams['IMAGE'] : $arParams['SRC'];
+        }
 
-        $APPLICATION->setEditArea($this->getEditAreaId($entryId), array(
-            $arBtn,
-        ));
+        $APPLICATION->setEditArea(
+            $this->getEditAreaId($entryId),
+            array(
+                $arBtn,
+            )
+        );
     }
 
     /**
@@ -1313,28 +1426,34 @@ class CBitrixComponent
         /** @global CMain $APPLICATION */
         global $APPLICATION;
 
-        if (!$entryId || !$deleteLink)
+        if (!$entryId || !$deleteLink) {
             return;
+        }
 
         includeModuleLangFile(__FILE__);
         if (!$deleteTitle) {
             $deleteTitle = GetMessage('DELETE_ACTION_TITLE_DEFAULT');
         }
 
-        if (!is_array($arParams))
+        if (!is_array($arParams)) {
             $arParams = array();
+        }
 
-        if (!$arParams['ICON'] && !$arParams['SRC'] && !$arParams['IMAGE'])
+        if (!($arParams['ICON'] ?? '') && !($arParams['SRC'] ?? '') && !($arParams['IMAGE'] ?? '')) {
             $arParams['ICON'] = 'bx-context-toolbar-delete-icon';
+        }
 
-        if (substr($deleteLink, 0, 11) != 'javascript:') {
-            if (false === strpos($deleteLink, 'return_url='))
+        if (mb_substr($deleteLink, 0, 11) != 'javascript:') {
+            if (false === mb_strpos($deleteLink, 'return_url=')) {
                 $deleteLink .= '&return_url=' . urlencode($APPLICATION->getCurPageParam());
+            }
 
             $deleteLink .= '&' . bitrix_sessid_get();
             if ($arParams['CONFIRM'] !== false) {
                 $confirmText = $arParams['CONFIRM'] ? $arParams['CONFIRM'] : GetMessage('DELETE_ACTION_CONFIRM');
-                $deleteLink = 'javascript:if(confirm(\'' . CUtil::JSEscape($confirmText) . '\')) jsUtils.Redirect([], \'' . CUtil::JSEscape($deleteLink) . '\');';
+                $deleteLink = 'javascript:if(confirm(\'' . CUtil::JSEscape(
+                        $confirmText
+                    ) . '\')) jsUtils.Redirect([], \'' . CUtil::JSEscape($deleteLink) . '\');';
             }
         }
 
@@ -1343,14 +1462,18 @@ class CBitrixComponent
             'TITLE' => $deleteTitle,
         );
 
-        if ($arParams['ICON'])
+        if ($arParams['ICON']) {
             $arBtn['ICON'] = $arParams['ICON'];
-        elseif ($arParams['SRC'] || $arParams['IMAGE'])
+        } elseif ($arParams['SRC'] || $arParams['IMAGE']) {
             $arBtn['SRC'] = $arParams['IMAGE'] ? $arParams['IMAGE'] : $arParams['SRC'];
+        }
 
-        $APPLICATION->setEditArea($this->getEditAreaId($entryId), array(
-            $arBtn,
-        ));
+        $APPLICATION->setEditArea(
+            $this->getEditAreaId($entryId),
+            array(
+                $arBtn,
+            )
+        );
     }
 
     /**
@@ -1364,8 +1487,9 @@ class CBitrixComponent
     {
         $this->__component_epilog = $arEpilogInfo;
         //Check if parent component exists and plug epilog it to it's "collection"
-        if ($this->__parent)
+        if ($this->__parent) {
             $this->__parent->addChildEpilog($this->__component_epilog);
+        }
     }
 
     /**
@@ -1404,8 +1528,11 @@ class CBitrixComponent
      */
     public function __showError($errorMessage, $errorCode = "")
     {
-        if ($errorMessage <> '')
-            echo "<font color=\"#FF0000\">" . htmlspecialcharsbx($errorMessage . ($errorCode <> '' ? " [" . $errorCode . "]" : "")) . "</font>";
+        if ($errorMessage <> '') {
+            echo "<font color=\"#FF0000\">" . htmlspecialcharsbx(
+                    $errorMessage . ($errorCode <> '' ? " [" . $errorCode . "]" : "")
+                ) . "</font>";
+        }
     }
 
     /**
@@ -1479,8 +1606,9 @@ class CBitrixComponent
      */
     final public function addViewTarget($target, $content, $pos)
     {
-        if (!isset($this->__view[$target]))
+        if (!isset($this->__view[$target])) {
             $this->__view[$target] = array();
+        }
 
         $this->__view[$target][] = array($content, $pos);
     }
@@ -1553,8 +1681,10 @@ class CBitrixComponent
             in_array($componentParams["COMPOSITE_FRAME_MODE"], array("Y", "N"))
         ) {
             $frameMode = $componentParams["COMPOSITE_FRAME_MODE"] === "Y";
-        } else if (isset($compositeOptions["FRAME_MODE"])) {
-            $frameMode = $compositeOptions["FRAME_MODE"] === "Y";
+        } else {
+            if (isset($compositeOptions["FRAME_MODE"])) {
+                $frameMode = $compositeOptions["FRAME_MODE"] === "Y";
+            }
         }
 
         return $frameMode;

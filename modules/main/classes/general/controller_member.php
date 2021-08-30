@@ -24,22 +24,24 @@ class CControllerClient
 
         $prefix = COption::GetOptionString("main", "auth_controller_prefix", "controller");
         if (
-            ($prefix != '' && substr(strtolower($arParams["LOGIN"]), 0, strlen($prefix) + 1) == $prefix . '\\')
+            ($prefix != '' && mb_substr(mb_strtolower($arParams["LOGIN"]), 0, mb_strlen($prefix) + 1) == $prefix . '\\')
             ||
-            ($prefix == '' && strpos($arParams["LOGIN"], "\\") === false)
+            ($prefix == '' && mb_strpos($arParams["LOGIN"], "\\") === false)
         ) {
             $site = $prefix;
-            if ($prefix == '')
+            if ($prefix == '') {
                 $login = $arParams["LOGIN"];
-            else
-                $login = substr($arParams["LOGIN"], strlen($prefix) + 1);
+            } else {
+                $login = mb_substr($arParams["LOGIN"], mb_strlen($prefix) + 1);
+            }
             $password = $arParams["PASSWORD"];
             $arVars = array("login" => $login, "password" => $password);
 
             $oRequest = new CControllerClientRequestTo("check_auth", $arVars);
             $oResponse = $oRequest->SendWithCheck();
-            if ($oResponse == false)
+            if ($oResponse == false) {
                 return false;
+            }
 
             if (!$oResponse->OK()) {
                 $e = new CApplicationException(GetMessage("MAIN_CMEMBER_ERR1") . ": " . $oResponse->text);
@@ -48,20 +50,20 @@ class CControllerClient
             }
 
             $arUser = $oResponse->arParameters['USER_INFO'];
-
         } elseif (
             COption::GetOptionString("main", "auth_controller_sso", "N") == "Y"
-            && strpos($arParams["LOGIN"], "\\") > 0
+            && mb_strpos($arParams["LOGIN"], "\\") > 0
         ) {
-            $site = substr($arParams["LOGIN"], 0, strpos($arParams["LOGIN"], "\\"));
-            $login = substr($arParams["LOGIN"], strpos($arParams["LOGIN"], "\\") + 1);
+            $site = mb_substr($arParams["LOGIN"], 0, mb_strpos($arParams["LOGIN"], "\\"));
+            $login = mb_substr($arParams["LOGIN"], mb_strpos($arParams["LOGIN"], "\\") + 1);
             $password = $arParams["PASSWORD"];
             $arVars = array("login" => $login, "password" => $password, "site" => $site);
 
             $oRequest = new CControllerClientRequestTo("remote_auth", $arVars);
             $oResponse = $oRequest->SendWithCheck();
-            if ($oResponse == false)
+            if ($oResponse == false) {
                 return false;
+            }
 
             if (!$oResponse->OK()) {
                 $e = new CApplicationException(GetMessage("MAIN_CMEMBER_ERR1") . ": " . $oResponse->text);
@@ -72,16 +74,17 @@ class CControllerClient
             $arUser = $oResponse->arParameters['USER_INFO'];
         } elseif (
             COption::GetOptionString("controller", "auth_controller_enabled", "N") === "Y"
-            && strpos($arParams["LOGIN"], "\\") > 0
+            && mb_strpos($arParams["LOGIN"], "\\") > 0
             && CModule::IncludeModule("controller")
         ) {
-            $site = substr($arParams["LOGIN"], 0, strpos($arParams["LOGIN"], "\\"));
-            $login = substr($arParams["LOGIN"], strpos($arParams["LOGIN"], "\\") + 1);
+            $site = mb_substr($arParams["LOGIN"], 0, mb_strpos($arParams["LOGIN"], "\\"));
+            $login = mb_substr($arParams["LOGIN"], mb_strpos($arParams["LOGIN"], "\\") + 1);
             $password = $arParams["PASSWORD"];
 
-            $url = strtolower(trim($site, " \t\r\n./"));
-            if (substr($url, 0, 7) != "http://" && substr($url, 0, 8) != "https://")
+            $url = mb_strtolower(trim($site, " \t\r\n./"));
+            if (mb_substr($url, 0, 7) != "http://" && mb_substr($url, 0, 8) != "https://") {
                 $url = array("http://" . $url, "https://" . $url);
+            }
 
             $dbr_mem = CControllerMember::GetList(
                 Array(),
@@ -92,22 +95,30 @@ class CControllerClient
                 )
             );
             $ar_mem = $dbr_mem->Fetch();
-            if (!$ar_mem)
+            if (!$ar_mem) {
                 return false;
+            }
 
-            $arGroupsMap = unserialize(COption::GetOptionString("controller", "auth_controller", serialize(array())));
+            $arGroupsMap = unserialize(
+                COption::GetOptionString("controller", "auth_controller", serialize(array())),
+                ['allowed_classes' => false]
+            );
             $res = CControllerMember::CheckUserAuth($ar_mem["ID"], $login, $password, $arGroupsMap);
 
-            if (!is_array($res))
+            if (!is_array($res)) {
                 return false;
+            }
 
             $arUser = $res['USER_INFO'];
-            if (is_array($arUser))
+            if (is_array($arUser)) {
                 $arUser["CONTROLLER_ADMIN"] = "N";
-            if (isset($res["FORMAT_DATE"]))
+            }
+            if (isset($res["FORMAT_DATE"])) {
                 $FORMAT_DATE = $res["FORMAT_DATE"];
-            if (isset($res["FORMAT_DATETIME"]))
+            }
+            if (isset($res["FORMAT_DATETIME"])) {
                 $FORMAT_DATETIME = $res["FORMAT_DATETIME"];
+            }
         } else {
             return false;
         }
@@ -115,20 +126,22 @@ class CControllerClient
         ////////////////////////////////////////////////////////
         /// ���������� �� ������ �����, � ���������\�����
         /////////////////////////
-        if (is_array($arUser) && strtolower($arUser['LOGIN']) == strtolower($login)) {
+        if (is_array($arUser) && mb_strtolower($arUser['LOGIN']) == mb_strtolower($login)) {
             //When user did not fill any inforamtion about
             //we'll use first part of his e-mail like login
-            if (strlen($arUser["NAME"]) == 0 && strlen($arUser["SECOND_NAME"]) == 0) {
-                if (preg_match("/^(.+)@/", $arUser["LOGIN"], $match))
+            if ($arUser["NAME"] == '' && $arUser["SECOND_NAME"] == '') {
+                if (preg_match("/^(.+)@/", $arUser["LOGIN"], $match)) {
                     $arUser["NAME"] = $match[1];
-                else
+                } else {
                     $arUser["NAME"] = $arUser["LOGIN"];
+                }
             }
 
-            if ($site == '')
+            if ($site == '') {
                 $arUser['LOGIN'] = $arUser['LOGIN'];
-            else
+            } else {
                 $arUser['LOGIN'] = $site . "\\" . $arUser['LOGIN'];
+            }
 
             $USER_ID = CControllerClient::UpdateUser($arUser, $FORMAT_DATE, $FORMAT_DATETIME);
 
@@ -163,8 +176,9 @@ class CControllerClient
     public static function OnAfterUserLogin(&$arParams)
     {
         global $USER;
-        if ($arParams["CONTROLLER_ADMIN"] === "Y")
+        if ($arParams["CONTROLLER_ADMIN"] === "Y") {
             $USER->SetControllerAdmin();
+        }
     }
 
     public static function UpdateUser($arFields = Array(), $FORMAT_DATE = false, $FORMAT_DATETIME = false)
@@ -186,10 +200,14 @@ class CControllerClient
             $arFields["PERSONAL_BIRTHDAY"] = $DB->FormatDate($arFields["PERSONAL_BIRTHDAY"], $FORMAT_DATE, FORMAT_DATE);
         }
 
-        $dbr_user = CUser::GetList($O = '', $B = '', array(
-            "LOGIN_EQUAL_EXACT" => $arFields["LOGIN"],
-            "EXTERNAL_AUTH_ID" => "__controller",
-        ));
+        $dbr_user = CUser::GetList(
+            '',
+            '',
+            array(
+                "LOGIN_EQUAL_EXACT" => $arFields["LOGIN"],
+                "EXTERNAL_AUTH_ID" => "__controller",
+            )
+        );
         if ($ar_user = $dbr_user->Fetch()) {
             $arFields['EXTERNAL_AUTH_ID'] = "__controller";
             $USER_ID = $ar_user["ID"];
@@ -200,27 +218,31 @@ class CControllerClient
                     $group_id = CGroup::GetIDByCode($group_id);
                     if ($group_id > 0) {
                         $p = array_search($group_id, $arFields["GROUP_ID"]);
-                        if ($p !== false)
+                        if ($p !== false) {
                             unset($arFields["GROUP_ID"][$p]);
+                        }
                     }
                 }
                 foreach ($arFields["GROUPS_TO_ADD"] as $group_id) {
                     $group_id = CGroup::GetIDByCode($group_id);
-                    if ($group_id > 0)
+                    if ($group_id > 0) {
                         $arFields["GROUP_ID"][] = $group_id;
+                    }
                 }
             } elseif (is_array($arFields["GROUP_ID"])) {
                 $groups = $arFields["GROUP_ID"];
                 $arFields["GROUP_ID"] = array();
                 foreach ($groups as $group_id) {
                     $group_id = CGroup::GetIDByCode($group_id);
-                    if ($group_id > 0)
+                    if ($group_id > 0) {
                         $arFields["GROUP_ID"][] = $group_id;
+                    }
                 }
             }
 
-            if (!$oUser->Update($USER_ID, $arFields))
+            if (!$oUser->Update($USER_ID, $arFields)) {
                 return false;
+            }
         } else {
             $arFields['EXTERNAL_AUTH_ID'] = "__controller";
             $arFields["LID"] = SITE_ID;
@@ -229,8 +251,9 @@ class CControllerClient
                 $arFields["GROUP_ID"] = array();
                 foreach ($groups as $group_id) {
                     $group_id = CGroup::GetIDByCode($group_id);
-                    if ($group_id > 0)
+                    if ($group_id > 0) {
                         $arFields["GROUP_ID"][] = $group_id;
+                    }
                 }
             }
 
@@ -244,9 +267,9 @@ class CControllerClient
     {
         global $USER;
         $ADMIN_ID = 0;
-        if ($arParams["ID"] > 0)
+        if ($arParams["ID"] > 0) {
             $ADMIN_ID = $arParams["ID"];
-        else {
+        } else {
             unset($arParams["GROUP_ID"]);
             $ADMIN_ID = CControllerClient::UpdateUser($arParams);
         }
@@ -330,8 +353,9 @@ class CControllerClient
         );
 
         $arSaveUser = array();
-        foreach ($arFields as $key)
+        foreach ($arFields as $key) {
             $arSaveUser[$key] = $arUser[$key];
+        }
 
         return $arSaveUser;
     }
@@ -347,8 +371,9 @@ class CControllerClient
             );
 
         $oRequest = new CControllerClientRequestTo("log", $arVars);
-        if (($oResponse = $oRequest->SendWithCheck()) == false)
+        if (($oResponse = $oRequest->SendWithCheck()) == false) {
             return false;
+        }
 
         if (!$oResponse->OK()) {
             $e = new CApplicationException(GetMessage("MAIN_CMEMBER_ERR2") . ": " . $oResponse->text);
@@ -373,13 +398,19 @@ class CControllerClient
         return array($member_id, $member_secret_id, $ticket_id);
     }
 
-    public static function JoinToControllerEx($controller_url, $controller_login, $controller_password, $arMemberParams = Array())
-    {
-        if (COption::GetOptionString("main", "controller_member", "N") == "Y")
+    public static function JoinToControllerEx(
+        $controller_url,
+        $controller_login,
+        $controller_password,
+        $arMemberParams = Array()
+    ) {
+        if (COption::GetOptionString("main", "controller_member", "N") == "Y") {
             return false;
+        }
 
-        if (strlen($arMemberParams["URL"]) <= 0)
+        if ($arMemberParams["URL"] == '') {
             $arMemberParams["URL"] = $_SERVER['HTTP_HOST'];
+        }
 
         list($member_id, $member_secret_id, $ticket_id) = CControllerClient::InitTicket($controller_url);
 
@@ -397,12 +428,14 @@ class CControllerClient
                 "shared_kernel" => ($arMemberParams["SHARED_KERNEL"] ? "Y" : "N"),
             );
 
-        if ($arMemberParams["CONTROLLER_GROUP"] > 0)
+        if ($arMemberParams["CONTROLLER_GROUP"] > 0) {
             $arVars['group_id'] = $arMemberParams["CONTROLLER_GROUP"];
+        }
 
         $oRequest = new CControllerClientRequestTo("join", $arVars);
-        if (($oResponse = $oRequest->Send()) == false)
+        if (($oResponse = $oRequest->Send()) == false) {
             return false;
+        }
 
         if (!$oResponse->OK()) {
             $e = new CApplicationException(GetMessage("MAIN_CMEMBER_ERR3") . ": " . $oResponse->text);
@@ -418,8 +451,15 @@ class CControllerClient
         return true;
     }
 
-    public static function JoinToController($controller_url, $controller_login, $controller_password, $site_url = false, $controller_group = false, $site_name = false, $bSharedKernel = false)
-    {
+    public static function JoinToController(
+        $controller_url,
+        $controller_login,
+        $controller_password,
+        $site_url = false,
+        $controller_group = false,
+        $site_name = false,
+        $bSharedKernel = false
+    ) {
         $arMemberParams = Array(
             "URL" => $site_url,
             "NAME" => $site_name,
@@ -427,14 +467,20 @@ class CControllerClient
             "CONTROLLER_GROUP" => $controller_group
         );
 
-        return CControllerClient::JoinToControllerEx($controller_url, $controller_login, $controller_password, $arMemberParams);
+        return CControllerClient::JoinToControllerEx(
+            $controller_url,
+            $controller_login,
+            $controller_password,
+            $arMemberParams
+        );
     }
 
 
     public static function RemoveFromController($controller_login, $controller_password)
     {
-        if (COption::GetOptionString("main", "controller_member", "N") != "Y")
+        if (COption::GetOptionString("main", "controller_member", "N") != "Y") {
             return false;
+        }
 
         // send to controller
         $arVars =
@@ -444,8 +490,9 @@ class CControllerClient
             );
 
         $oRequest = new CControllerClientRequestTo("remove", $arVars);
-        if (($oResponse = $oRequest->SendWithCheck()) == false)
+        if (($oResponse = $oRequest->SendWithCheck()) == false) {
             return false;
+        }
 
         if (!$oResponse->OK()) {
             $e = new CApplicationException(GetMessage("MAIN_CMEMBER_ERR4") . ": " . $oResponse->text);
@@ -466,10 +513,11 @@ class CControllerClient
             $oRequest = new CControllerClientRequestTo("update_counters");
             $oResponse = $oRequest->SendWithCheck();
 
-            if ($oResponse == false)
+            if ($oResponse == false) {
                 throw new \Bitrix\Main\SystemException("CControllerClient::UpdateCounters: unknown error");
-            elseif (!$oResponse->OK())
+            } elseif (!$oResponse->OK()) {
                 throw new \Bitrix\Main\SystemException("CControllerClient::UpdateCounters: " . $oResponse->text);
+            }
 
             return "CControllerClient::UpdateCounters();";
         }
@@ -482,22 +530,25 @@ class CControllerClient
             return null;
         } else {
             $APPLICATION->ResetException();
-            $oRequest = new CControllerClientRequestTo("execute_event", array(
+            $oRequest = new CControllerClientRequestTo(
+                "execute_event", array(
                 "event_name" => $eventName,
                 "parameters" => $arParams,
-            ));
+            )
+            );
             $oResponse = $oRequest->SendWithCheck();
 
             if ($oResponse == false || !$oResponse->OK()) {
                 $e = $APPLICATION ? $APPLICATION->GetException() : false;
-                if (is_object($e))
+                if (is_object($e)) {
                     $errorMessage = $e->GetString();
-                elseif ($oResponse && $oResponse->text)
+                } elseif ($oResponse && $oResponse->text) {
                     $errorMessage = $oResponse->text;
-                elseif ($oResponse)
+                } elseif ($oResponse) {
                     $errorMessage = "http headers: [" . $oResponse->httpHeaders . "]";
-                else
+                } else {
                     $errorMessage = "unknown error";
+                }
                 error_log("CControllerClient::ExecuteEvent($eventName): " . $errorMessage);
             }
 
@@ -508,16 +559,21 @@ class CControllerClient
     public static function Unlink()
     {
         $disconnect_command = COption::GetOptionString("main", "~controller_disconnect_command", "");
-        if (strlen($disconnect_command) > 0)
+        if ($disconnect_command <> '') {
             eval($disconnect_command);
+        }
         COption::SetOptionString("main", "controller_member", "N");
     }
 
     public static function GetBackup($bRefresh = false)
     {
         static $arCachedData;
-        if (!isset($arCachedData) || $bRefresh)
-            $arCachedData = unserialize(COption::GetOptionString("main", "~controller_backup", ""));
+        if (!isset($arCachedData) || $bRefresh) {
+            $arCachedData = unserialize(
+                COption::GetOptionString("main", "~controller_backup", ""),
+                ['allowed_classes' => false]
+            );
+        }
 
         return $arCachedData;
     }
@@ -554,8 +610,9 @@ class CControllerClient
     {
         $arInstalled = Array();
         $arm = CModule::_GetCache();
-        foreach ($arm as $module_id => $tr)
+        foreach ($arm as $module_id => $tr) {
             $arInstalled[] = $module_id;
+        }
         $arBackup = CControllerClient::GetBackup();
         if (!isset($arBackup["modules"])) {
             $arBackup["modules"] = $arInstalled;
@@ -563,12 +620,14 @@ class CControllerClient
         }
 
         foreach ($arModules as $module_id => $status) {
-            if (!($oModule = CModule::CreateModuleObject($module_id)))
+            if (!($oModule = CModule::CreateModuleObject($module_id))) {
                 continue;
+            }
 
             if ($status == "Y" && !in_array($module_id, $arInstalled)) {
-                if (!method_exists($oModule, "InstallDB") || $oModule->InstallDB() === false)
+                if (!method_exists($oModule, "InstallDB") || $oModule->InstallDB() === false) {
                     $oModule->Add();
+                }
             } elseif ($status == "N" && in_array($module_id, $arInstalled)) {
                 $oModule->Remove();
             }
@@ -586,15 +645,17 @@ class CControllerClient
 
             $arNowInstalled = Array();
             $arm = CModule::_GetCache();
-            foreach ($arm as $module_id => $tr)
+            foreach ($arm as $module_id => $tr) {
                 $arNowInstalled[] = $module_id;
+            }
 
             foreach ($arNowInstalled as $module_id) {
                 if (!in_array($module_id, $arWasInstalled)) {
                     $oModule->MODULE_ID = $module_id;
                     $oModule->Remove();
-                } else
+                } else {
                     unset($arWasInstalled[array_search($module_id, $arWasInstalled)]);
+                }
             }
 
             foreach ($arWasInstalled as $module_id) {
@@ -611,17 +672,20 @@ class CControllerClient
     {
         $arBackup = CControllerClient::GetBackup();
 
-        if (($group_id = CGroup::GetIDByCode($group_code)) <= 0)
+        if (($group_id = CGroup::GetIDByCode($group_code)) <= 0) {
             return false;
+        }
 
         $arBackup = CControllerClient::GetBackup();
         $old_settings = $arBackup["security"][$group_code];
-        if (!isset($old_settings))
+        if (!isset($old_settings)) {
             return;
+        }
 
         foreach ($old_settings as $module_id => $level) {
-            if (!in_array($module_id, $arModules))
+            if (!in_array($module_id, $arModules)) {
                 continue;
+            }
 
             CGroup::SetModulePermission($group_id, $module_id, $level);
             unset($arBackup["security"][$group_code][$module_id]);
@@ -633,10 +697,14 @@ class CControllerClient
     public static function SetTaskSecurity($task_id, $module_id, $arOperations, $letter = '')
     {
         $ID = 0;
-        $dbr_task = CTask::GetList(Array(), Array('NAME' => $task_id, 'MODULE_ID' => $module_id, "BINDING" => 'module'));
+        $dbr_task = CTask::GetList(
+            Array(),
+            Array('NAME' => $task_id, 'MODULE_ID' => $module_id, "BINDING" => 'module')
+        );
         if ($ar_task = $dbr_task->Fetch()) {
-            if ($ar_task['SYS'] == 'Y')
+            if ($ar_task['SYS'] == 'Y') {
                 return false;
+            }
             $ID = $ar_task['ID'];
         }
 
@@ -647,9 +715,9 @@ class CControllerClient
             "MODULE_ID" => $module_id
         );
 
-        if ($ID > 0)
+        if ($ID > 0) {
             $res = CTask::Update($arFields, $ID);
-        else {
+        } else {
             $ID = CTask::Add($arFields);
             $res = ($ID > 0);
             if ($res) {
@@ -666,8 +734,9 @@ class CControllerClient
 
     public static function SetGroupSecurity($group_code, $arPermissions, $arSubGroups = false)
     {
-        if (($group_id = CGroup::GetIDByCode($group_code)) <= 0)
+        if (($group_id = CGroup::GetIDByCode($group_code)) <= 0) {
             return false;
+        }
 
         $arBackup = CControllerClient::GetBackup();
         foreach ($arPermissions as $module_id => $level) {
@@ -682,8 +751,9 @@ class CControllerClient
             $arSubordGroupID = Array();
             foreach ($arSubGroups as $sub_group_id) {
                 $sub_group_id = CGroup::GetIDByCode($sub_group_id);
-                if ($sub_group_id > 0)
+                if ($sub_group_id > 0) {
                     $arSubordGroupID[] = $sub_group_id;
+                }
             }
 
             if (!is_set($arBackup["security_subord_groups"], $group_code)) {
@@ -699,27 +769,32 @@ class CControllerClient
     public static function RestoreSecurity($arExcludeGroups = array())
     {
         $arBackup = CControllerClient::GetBackup();
-        if (!is_array($arBackup))
+        if (!is_array($arBackup)) {
             return true;
+        }
 
         if (is_array($arBackup["security"])) {
             foreach ($arBackup["security"] as $group_code => $perms) {
-                if (in_array($group_code, $arExcludeGroups))
+                if (in_array($group_code, $arExcludeGroups)) {
                     continue;
+                }
 
                 if (($group_id = CGroup::GetIDByCode($group_code)) > 0) {
-                    foreach ($perms as $module_id => $level)
+                    foreach ($perms as $module_id => $level) {
                         CGroup::SetModulePermission($group_id, $module_id, $level);
+                    }
 
-                    if (isset($arBackup["security_subord_groups"][$group_code]))
+                    if (isset($arBackup["security_subord_groups"][$group_code])) {
                         CGroup::SetSubordinateGroups($group_id, $arBackup["security_subord_groups"][$group_code]);
+                    }
                 }
                 unset($arBackup["security"][$group_code]);
                 unset($arBackup["security_subord_groups"][$group_code]);
             }
 
-            if (count($arBackup["security"]) <= 0)
+            if (count($arBackup["security"]) <= 0) {
                 unset($arBackup["security"]);
+            }
 
             CControllerClient::SetBackup($arBackup);
         }
@@ -730,8 +805,9 @@ class CControllerClient
     public static function RestoreAll()
     {
         $arBackup = CControllerClient::GetBackup();
-        if (!is_array($arBackup))
+        if (!is_array($arBackup)) {
             return true;
+        }
 
         if (is_array($arBackup["options"])) {
             foreach ($arBackup["options"] as $module_id => $options) {
@@ -742,9 +818,11 @@ class CControllerClient
         }
         CControllerClient::RestoreModules();
         CControllerClient::RestoreSecurity();
-        if (is_array($arBackup['security_task']))
-            foreach ($arBackup['security_task'] as $task_id)
+        if (is_array($arBackup['security_task'])) {
+            foreach ($arBackup['security_task'] as $task_id) {
                 CTask::Delete($task_id);
+            }
+        }
         CControllerClient::SetBackup(array());
         return true;
     }
@@ -753,8 +831,9 @@ class CControllerClient
     {
         $arOptions = CControllerClient::GetBackup();
         $arOptions = $arOptions["options"][$module_id];
-        if (!is_array($arOptions))
+        if (!is_array($arOptions)) {
             return Array();
+        }
         return $arOptions;
     }
 
@@ -796,10 +875,11 @@ class __CControllerPacket
             $this->debug_const
             && defined($this->debug_const)
             && constant($this->debug_const) === true
-        )
+        ) {
             return true;
-        else
+        } else {
             return false;
+        }
     }
 
     /**
@@ -813,10 +893,11 @@ class __CControllerPacket
      */
     public function getDebugLogDirectory()
     {
-        if ($this->debug_file_const && defined($this->debug_file_const))
+        if ($this->debug_file_const && defined($this->debug_file_const)) {
             return (string)constant($this->debug_file_const);
-        else
+        } else {
             return $_SERVER['DOCUMENT_ROOT'] . '/bitrix/controller_logs/';
+        }
     }
 
     /**
@@ -827,11 +908,11 @@ class __CControllerPacket
      */
     public function getDebugLogFileName()
     {
-        if ($this->session_id)
+        if ($this->session_id) {
             return $this->session_id . ".log";
-        else
+        } else {
             return "gen_" . \Bitrix\Main\Security\Random::getString(32) . ".log";
-
+        }
     }
 
     /**
@@ -846,15 +927,23 @@ class __CControllerPacket
      */
     public function Debug($sText)
     {
-        if (!$this->isDebugEnabled())
+        if (!$this->isDebugEnabled()) {
             return;
+        }
 
         $filename = $this->getDebugLogDirectory() . $this->getDebugLogFileName();
 
         ignore_user_abort(true);
 
         CheckDirPath($filename);
-        file_put_contents($filename, date("Y-m-d H:i:s") . " - " . (is_array($sText) ? print_r($sText, true) : $sText) . "\n----------\n", FILE_APPEND | LOCK_EX);
+        file_put_contents(
+            $filename,
+            date("Y-m-d H:i:s") . " - " . (is_array($sText) ? print_r(
+                $sText,
+                true
+            ) : $sText) . "\n----------\n",
+            FILE_APPEND | LOCK_EX
+        );
 
         ignore_user_abort(false);
     }
@@ -871,7 +960,7 @@ class __CControllerPacket
     protected function unpackParameters($parameters, $encoding = '')
     {
         if (CheckSerializedData($parameters)) {
-            $arParameters = unserialize($parameters);
+            $arParameters = unserialize($parameters, ['allowed_classes' => false]);
             if ($encoding) {
                 if (array_key_exists("file", $arParameters)) {
                     $file = $arParameters["file"];
@@ -899,23 +988,7 @@ class __CControllerPacket
      */
     protected function _decode(&$arParameters, $encodingFrom, $encodingTo)
     {
-        global $APPLICATION;
-
-        if (is_array($arParameters)) {
-            $res = array();
-            foreach ($arParameters as $key => $value) {
-                if (is_string($key)) {
-                    $key = $APPLICATION->ConvertCharset($key, $encodingFrom, $encodingTo);
-                }
-
-                $this->_decode($value, $encodingFrom, $encodingTo);
-
-                $res[$key] = $value;
-            }
-            $arParameters = $res;
-        } elseif (is_string($arParameters)) {
-            $arParameters = $APPLICATION->ConvertCharset($arParameters, $encodingFrom, $encodingTo);
-        }
+        $arParameters = \Bitrix\Main\Text\Encoding::convertEncoding($arParameters, $encodingFrom, $encodingTo);
     }
 
     /**
@@ -934,7 +1007,9 @@ class __CControllerPacket
 
         if ($md5hash != $this->hash) {
             if (is_object($APPLICATION)) {
-                $e = new CApplicationException("Hash check failed: hash(" . $hash . ")=" . $md5hash . " != " . $this->hash);
+                $e = new CApplicationException(
+                    "Hash check failed: hash(" . $hash . ")=" . $md5hash . " != " . $this->hash
+                );
                 $APPLICATION->ThrowException($e);
             }
             return false;
@@ -986,15 +1061,20 @@ class __CControllerPacketRequest extends __CControllerPacket
         $this->session_id = $_REQUEST['session_id'];
         $this->operation = $_REQUEST['operation'];
 
-        if (isset($_REQUEST['version']))
+        if (isset($_REQUEST['version'])) {
             $this->version = $_REQUEST['version'];
+        }
 
-        if (isset($_REQUEST['encoding']))
+        if (isset($_REQUEST['encoding'])) {
             $this->encoding = $_REQUEST['encoding'];
+        }
 
         if (isset($_REQUEST['parameters'])) {
             $this->strParameters = base64_decode($_REQUEST['parameters']);
-            $arParameters = $this->unpackParameters($this->strParameters, isset($_REQUEST['encoding']) ? $_REQUEST['encoding'] : '');
+            $arParameters = $this->unpackParameters(
+                $this->strParameters,
+                isset($_REQUEST['encoding']) ? $_REQUEST['encoding'] : ''
+            );
             if ($arParameters) {
                 $this->arParameters = $arParameters;
             }
@@ -1068,20 +1148,23 @@ class __CControllerPacketRequest extends __CControllerPacket
      **/
     public function RedirectRequest($url)
     {
-        if (strpos($url, "?") > 0)
+        if (mb_strpos($url, "?") > 0) {
             $url .= '&';
-        else
+        } else {
             $url .= '?';
+        }
 
         $url .= $this->MakeRequestString();
 
         if ($this->isDebugEnabled()) {
-            $this->Debug(array(
-                __FILE__ . ":" . __LINE__,
-                "Request by redirect",
-                "url" => $url,
-                "Packet" => $this,
-            ));
+            $this->Debug(
+                array(
+                    __FILE__ . ":" . __LINE__,
+                    "Request by redirect",
+                    "url" => $url,
+                    "Packet" => $this,
+                )
+            );
         }
 
         LocalRedirect($url, true);
@@ -1099,33 +1182,34 @@ class __CControllerPacketRequest extends __CControllerPacket
         global $APPLICATION;
 
         $server_port = 80;
-        $server_name = strtolower(trim($url, "/ \r\n\t"));
-        if (substr($server_name, 0, 7) == 'http://') {
-            $server_name = substr($server_name, 7);
-        } elseif (substr($server_name, 0, 8) == 'https://') {
-            $server_name = substr($server_name, 8);
+        $server_name = mb_strtolower(trim($url, "/ \r\n\t"));
+        if (mb_substr($server_name, 0, 7) == 'http://') {
+            $server_name = mb_substr($server_name, 7);
+        } elseif (mb_substr($server_name, 0, 8) == 'https://') {
+            $server_name = mb_substr($server_name, 8);
             $server_port = 443;
         }
 
         if (preg_match('/.+:([0-9]+)$/', $server_name, $matches)) {
             $server_port = $matches[1];
-            $server_name = substr($server_name, 0, 0 - strlen($server_port) - 1);
+            $server_name = mb_substr($server_name, 0, 0 - mb_strlen($server_port) - 1);
         }
 
         $proxy_url = CPageOption::GetOptionString("main", "controller_proxy_url", "");
         $proxy_port = CPageOption::GetOptionString("main", "controller_proxy_port", "");
-        $bUseProxy = (strlen($proxy_url) > 0 && strlen($proxy_port) > 0);
+        $bUseProxy = ($proxy_url <> '' && $proxy_port <> '');
         if (!$bUseProxy) {
             $proxy_url = COption::GetOptionString("main", "controller_proxy_url", "");
             $proxy_port = COption::GetOptionString("main", "controller_proxy_port", "");
-            $bUseProxy = (strlen($proxy_url) > 0 && strlen($proxy_port) > 0);
+            $bUseProxy = ($proxy_url <> '' && $proxy_port <> '');
         }
 
         // ����������� � ��������� ��������
         if ($bUseProxy) {
             $proxy_port = intval($proxy_port);
-            if ($proxy_port <= 0)
+            if ($proxy_port <= 0) {
                 $proxy_port = 80;
+            }
 
             $requestIP = $proxy_url;
             $requestPort = $proxy_port;
@@ -1140,13 +1224,15 @@ class __CControllerPacketRequest extends __CControllerPacket
         $conn = @fsockopen(($requestPort == 443 ? 'ssl://' : '') . $requestIP, $requestPort, $errno, $errstr, 30);
         if (!$conn) {
             if ($this->isDebugEnabled()) {
-                $this->Debug(array(
-                    __FILE__ . ":" . __LINE__,
-                    "We can't send request to the $server_name:$server_port from member#" . $this->member_id,
-                    "errno" => $errno,
-                    "errstr" => $errstr,
-                    "Packet" => $this,
-                ));
+                $this->Debug(
+                    array(
+                        __FILE__ . ":" . __LINE__,
+                        "We can't send request to the $server_name:$server_port from member#" . $this->member_id,
+                        "errno" => $errno,
+                        "errstr" => $errstr,
+                        "Packet" => $this,
+                    )
+                );
             }
 
             if (is_object($APPLICATION)) {
@@ -1165,8 +1251,10 @@ class __CControllerPacketRequest extends __CControllerPacket
 
             $proxy_user = COption::GetOptionString("main", "controller_proxy_user", "");
             $proxy_password = COption::GetOptionString("main", "controller_proxy_password", "");
-            if (strlen($proxy_user) > 0) {
-                $strRequest .= "Proxy-Authorization: Basic " . base64_encode($proxy_user . ":" . $proxy_password) . "\r\n";
+            if ($proxy_user <> '') {
+                $strRequest .= "Proxy-Authorization: Basic " . base64_encode(
+                        $proxy_user . ":" . $proxy_password
+                    ) . "\r\n";
             }
         } else {
             $strRequest = "POST " . $page . " HTTP/1.0\r\n";
@@ -1176,16 +1264,18 @@ class __CControllerPacketRequest extends __CControllerPacket
         $strRequest .= "Host: " . $server_name . "\r\n";
         $strRequest .= "Accept-Language: en\r\n";
         $strRequest .= "Content-type: application/x-www-form-urlencoded\r\n";
-        $strRequest .= "Content-length: " . strlen($strVars) . "\r\n\r\n";
+        $strRequest .= "Content-length: " . mb_strlen($strVars) . "\r\n\r\n";
         $strRequest .= $strVars . "\r\n";
 
         if ($this->isDebugEnabled()) {
-            $this->Debug(array(
-                __FILE__ . ":" . __LINE__,
-                "We send request to the $server_name:$server_port from member#" . $this->member_id,
-                "strVars" => strVars,
-                "Packet" => $this,
-            ));
+            $this->Debug(
+                array(
+                    __FILE__ . ":" . __LINE__,
+                    "We send request to the $server_name:$server_port from member#" . $this->member_id,
+                    "strVars" => strVars,
+                    "Packet" => $this,
+                )
+            );
         }
 
         fputs($conn, $strRequest);
@@ -1208,14 +1298,16 @@ class __CControllerPacketRequest extends __CControllerPacket
         $packet_result->ParseResult($result);
 
         if ($this->isDebugEnabled()) {
-            $this->Debug(array(
-                __FILE__ . ":" . __LINE__,
-                "We get response from $server_name:$server_port to member#" . $packet_result->member_id,
-                "secret_id" => $this->secret_id,
-                "result" => $result,
-                "Packet security check" => ($packet_result->Check() ? "passed" : "failed"),
-                "Packet" => $packet_result,
-            ));
+            $this->Debug(
+                array(
+                    __FILE__ . ":" . __LINE__,
+                    "We get response from $server_name:$server_port to member#" . $packet_result->member_id,
+                    "secret_id" => $this->secret_id,
+                    "result" => $result,
+                    "Packet security check" => ($packet_result->Check() ? "passed" : "failed"),
+                    "Packet" => $packet_result,
+                )
+            );
         }
 
         return $packet_result;
@@ -1279,14 +1371,12 @@ class __CControllerPacketResponse extends __CControllerPacket
     // ���������� ������� �� ���������� ������ �� ������ ��� ������
     function OK()
     {
-        return (substr($this->status, 0, 1) == "2");
+        return (mb_substr($this->status, 0, 1) == "2");
     }
 
     // ��������� ������ ������ �� ����� �������
     function ParseResult($result)
     {
-        global $APPLICATION;
-
         $ar_result = array();
         $pairs = explode('&', trim($result, " \n\r\t"));
         foreach ($pairs as $pair) {
@@ -1300,28 +1390,37 @@ class __CControllerPacketResponse extends __CControllerPacket
         $this->status = urldecode($ar_result['status']);
         $this->text = urldecode($ar_result['text']);
 
-        if (isset($ar_result['encoding']))
+        if (isset($ar_result['encoding'])) {
             $this->encoding = urldecode($ar_result['encoding']);
+        }
 
         $this->strParameters = base64_decode(urldecode($ar_result['parameters']));
-        $arParameters = $this->unpackParameters($this->strParameters, isset($_REQUEST['encoding']) ? $_REQUEST['encoding'] : '');
+        $arParameters = $this->unpackParameters(
+            $this->strParameters,
+            isset($_REQUEST['encoding']) ? $_REQUEST['encoding'] : ''
+        );
         if ($arParameters) {
             $this->arParameters = $arParameters;
             if (isset($ar_result['encoding'])) {
-                if ($this->text && is_object($APPLICATION))
-                    $this->text = $APPLICATION->ConvertCharset($this->text, $this->encoding, SITE_CHARSET);
+                if ($this->text) {
+                    $this->text = \Bitrix\Main\Text\Encoding::convertEncoding(
+                        $this->text,
+                        $this->encoding,
+                        SITE_CHARSET
+                    );
+                }
             }
         }
 
         $this->version = $ar_result['version'];
 
         if (
-            strlen($this->status) <= 0
-            && strlen($this->text) <= 0
-            && strlen($this->member_id) <= 0
+            $this->status == ''
+            && $this->text == ''
+            && $this->member_id == ''
         ) {
             $this->status = "479";
-            $this->text = GetMessage("MAIN_CMEMBER_ERR7") . " " . substr($result, 0, 1000);
+            $this->text = GetMessage("MAIN_CMEMBER_ERR7") . " " . mb_substr($result, 0, 1000);
         }
     }
 
@@ -1346,12 +1445,14 @@ class __CControllerPacketResponse extends __CControllerPacket
         $result .= "&hash=" . urlencode($this->hash);
 
         if ($log && $this->isDebugEnabled()) {
-            $this->Debug(array(
-                __FILE__ . ":" . __LINE__,
-                "We send errored response back",
-                "result" => $result,
-                "Packet" => $this,
-            ));
+            $this->Debug(
+                array(
+                    __FILE__ . ":" . __LINE__,
+                    "We send errored response back",
+                    "result" => $result,
+                    "Packet" => $this,
+                )
+            );
         }
 
         return $result;
@@ -1361,15 +1462,19 @@ class __CControllerPacketResponse extends __CControllerPacket
     function Send()
     {
         if ($this->isDebugEnabled()) {
-            $this->Debug(array(
-                __FILE__ . ":" . __LINE__,
-                "We send response back",
-                "response body" => $this->GetResponseBody(),
-                "Packet" => $this,
-            ));
+            $this->Debug(
+                array(
+                    __FILE__ . ":" . __LINE__,
+                    "We send response back",
+                    "response body" => $this->GetResponseBody(),
+                    "Packet" => $this,
+                )
+            );
         }
 
-        while (@ob_end_flush()) ;
+        while (@ob_end_flush()) {
+            ;
+        }
 
         echo $this->GetResponseBody();
     }
@@ -1393,8 +1498,9 @@ class CControllerClientRequestTo extends __CControllerPacketRequest
     function SendWithCheck($page = "/bitrix/admin/controller_ws.php")
     {
         $oResponse = $this->Send("", $page);
-        if ($oResponse === false)
+        if ($oResponse === false) {
             return false;
+        }
 
         if (!$oResponse->Check()) {
             if (is_object($GLOBALS["APPLICATION"])) {
@@ -1411,8 +1517,9 @@ class CControllerClientRequestTo extends __CControllerPacketRequest
     {
         $this->Sign();
         $oResponsePacket = parent::Send(COption::GetOptionString("main", "controller_url", ""), $page);
-        if ($oResponsePacket === false)
+        if ($oResponsePacket === false) {
             return false;
+        }
 
         $oResponse = new CControllerClientResponseFrom($oResponsePacket);
         return $oResponse;
@@ -1440,17 +1547,19 @@ class CControllerClientRequestFrom extends __CControllerPacketRequest
     public function __construct()
     {
         $this->InitFromRequest();
-        $this->Debug(array(
-            "Request received from controller",
-            "check" => ($this->Check() ? 'checked' : 'check failed'),
-            "Packet" => $this,
-        ));
+        $this->Debug(
+            array(
+                "Request received from controller",
+                "check" => ($this->Check() ? 'checked' : 'check failed'),
+                "Packet" => $this,
+            )
+        );
     }
 
     function Check()
     {
         $member_id = COption::GetOptionString("main", "controller_member_id", "");
-        if (strlen($member_id) <= 0 || $member_id != $this->member_id) {
+        if ($member_id == '' || $member_id != $this->member_id) {
             $e = new CApplicationException("Bad member_id: ((get)" . $member_id . "!=(own)" . $this->member_id . ")");
             $GLOBALS["APPLICATION"]->ThrowException($e);
 
@@ -1519,8 +1628,9 @@ class CControllerTools
                 $arErrors = $ob->GetErrors();
                 if (count($arErrors)) {
                     $strError = "";
-                    foreach ($arErrors as $error)
+                    foreach ($arErrors as $error) {
                         $strError .= $error[1] . "<br>";
+                    }
 
                     $e = new CApplicationException($strError);
                     $APPLICATION->ThrowException($e);

@@ -96,8 +96,9 @@ class PaymentCollection extends Internals\EntityCollection
         if (!empty($this->collection) && is_array($this->collection)) {
             /** @var Payment $payment */
             foreach ($this->collection as $payment) {
-                if (!$payment->isPaid())
+                if (!$payment->isPaid()) {
                     return false;
+                }
             }
 
             return true;
@@ -131,39 +132,30 @@ class PaymentCollection extends Internals\EntityCollection
                     }
 
                     if ($isPaid) {
-                        $result->addError(new ResultError(Loc::getMessage('SALE_ORDER_CANCEL_PAYMENT_EXIST_ACTIVE'), 'SALE_ORDER_CANCEL_PAYMENT_EXIST_ACTIVE'));
+                        $result->addError(
+                            new ResultError(
+                                Loc::getMessage('SALE_ORDER_CANCEL_PAYMENT_EXIST_ACTIVE'),
+                                'SALE_ORDER_CANCEL_PAYMENT_EXIST_ACTIVE'
+                            )
+                        );
                     }
                 }
 
                 break;
 
             case "PRICE":
-                if (($order = $this->getOrder()) && !$order->isCanceled()) {
-                    $currentPayment = false;
-                    $allowSumChange = false;
-                    if (count($this->collection) == 1) {
-                        /** @var Payment $currentPayment */
-                        if ($currentPayment = $this->rewind()) {
-                            $allowSumChange = (bool)(!$currentPayment->isPaid() && !$currentPayment->isReturn() && ($currentPayment->getSum() == $oldValue));
-
-                            if ($allowSumChange) {
-                                if ($paySystemService = $currentPayment->getPaysystem()) {
-                                    $allowSumChange = $paySystemService->isAllowEditPayment();
-                                }
-                            }
-                        }
-                    }
-
-                    if ($allowSumChange && $currentPayment) {
-                        $r = $currentPayment->setField("SUM", $value);
+                if ($this->isAllowAutoEdit()) {
+                    $payment = $this->getItemForAutoEdit();
+                    if ($payment !== null) {
+                        $r = $payment->setField("SUM", $value);
                         if (!$r->isSuccess()) {
                             $result->addErrors($r->getErrors());
                         }
 
-                        $service = $currentPayment->getPaySystem();
+                        $service = $payment->getPaySystem();
                         if ($service) {
-                            $price = $service->getPaymentPrice($currentPayment);
-                            $currentPayment->setField('PRICE_COD', $price);
+                            $price = $service->getPaymentPrice($payment);
+                            $payment->setField('PRICE_COD', $price);
                         }
                     }
                 }
@@ -171,6 +163,47 @@ class PaymentCollection extends Internals\EntityCollection
         }
 
         return $result;
+    }
+
+    protected function isAllowAutoEdit()
+    {
+        if (
+            !$this->getOrder()->isCanceled()
+            &&
+            $this->count() === 1
+        ) {
+            /** @var Payment $payment */
+            foreach ($this as $payment) {
+                $isAllowEditPayment =
+                    !$payment->isPaid()
+                    &&
+                    !$payment->isReturn()
+                    &&
+                    !$payment->getFields()->isChanged('SUM');
+
+                if ($isAllowEditPayment) {
+                    if ($service = $payment->getPaySystem()) {
+                        $isAllowEditPayment = $service->isAllowEditPayment();
+                    }
+                }
+
+                return $isAllowEditPayment;
+            }
+        }
+
+        return false;
+    }
+
+    private function getItemForAutoEdit()
+    {
+        if ($this->isAllowAutoEdit()) {
+            /** @var Payment $payment */
+            foreach ($this as $payment) {
+                return $payment;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -321,8 +354,9 @@ class PaymentCollection extends Internals\EntityCollection
                     "select" => array("ID", "PAY_SYSTEM_NAME", "PAY_SYSTEM_ID")
                 )
             );
-            while ($itemsFromDbItem = $itemsFromDbList->fetch())
+            while ($itemsFromDbItem = $itemsFromDbList->fetch()) {
                 $itemsFromDb[$itemsFromDbItem["ID"]] = $itemsFromDbItem;
+            }
         }
 
         $changeMeaningfulFields = array(
@@ -347,10 +381,13 @@ class PaymentCollection extends Internals\EntityCollection
                 $originalValues = $fields->getOriginalValues();
 
                 foreach ($originalValues as $originalFieldName => $originalFieldValue) {
-                    if (in_array($originalFieldName, $changeMeaningfulFields) && $payment->getField($originalFieldName) != $originalFieldValue) {
+                    if (in_array($originalFieldName, $changeMeaningfulFields) && $payment->getField(
+                            $originalFieldName
+                        ) != $originalFieldValue) {
                         $logFields[$originalFieldName] = $payment->getField($originalFieldName);
-                        if (!$isNew)
+                        if (!$isNew) {
                             $logFields['OLD_' . $originalFieldName] = $originalFieldValue;
+                        }
                     }
                 }
             }
@@ -383,31 +420,35 @@ class PaymentCollection extends Internals\EntityCollection
                             OrderHistory::SALE_ORDER_HISTORY_ACTION_LOG_LEVEL_1
                         );
                     }
-
                 }
             } else {
                 $result->addErrors($r->getErrors());
             }
 
-            if (isset($itemsFromDb[$payment->getId()]))
+            if (isset($itemsFromDb[$payment->getId()])) {
                 unset($itemsFromDb[$payment->getId()]);
+            }
         }
 
         foreach ($itemsFromDb as $k => $v) {
             $v['ENTITY_REGISTRY_TYPE'] = static::getRegistryType();
 
             /** @var Main\Event $event */
-            $event = new Main\Event('sale', "OnBeforeSalePaymentDeleted", array(
+            $event = new Main\Event(
+                'sale', "OnBeforeSalePaymentDeleted", array(
                 'VALUES' => $v,
-            ));
+            )
+            );
             $event->send();
 
             static::deleteInternal($k);
 
             /** @var Main\Event $event */
-            $event = new Main\Event('sale', "OnSalePaymentDeleted", array(
+            $event = new Main\Event(
+                'sale', "OnSalePaymentDeleted", array(
                 'VALUES' => $v,
-            ));
+            )
+            );
             $event->send();
 
             if ($order->getId() > 0) {
@@ -415,22 +456,30 @@ class PaymentCollection extends Internals\EntityCollection
 
                 /** @var OrderHistory $orderHistory */
                 $orderHistory = $registry->getOrderHistoryClassName();
-                $orderHistory::addAction('PAYMENT', $order->getId(), 'PAYMENT_REMOVE', $k, null, array(
-                    "PAY_SYSTEM_NAME" => $v["PAY_SYSTEM_NAME"],
-                    "PAY_SYSTEM_ID" => $v["PAY_SYSTEM_ID"],
-                ));
+                $orderHistory::addAction(
+                    'PAYMENT',
+                    $order->getId(),
+                    'PAYMENT_REMOVE',
+                    $k,
+                    null,
+                    array(
+                        "PAY_SYSTEM_NAME" => $v["PAY_SYSTEM_NAME"],
+                        "PAY_SYSTEM_ID" => $v["PAY_SYSTEM_ID"],
+                    )
+                );
 
                 $registry = Registry::getInstance(static::getRegistryType());
 
                 /** @var EntityMarker $entityMarker */
                 $entityMarker = $registry->getEntityMarkerClassName();
-                $entityMarker::deleteByFilter(array(
-                    '=ORDER_ID' => $order->getId(),
-                    '=ENTITY_TYPE' => $entityMarker::ENTITY_TYPE_PAYMENT,
-                    '=ENTITY_ID' => $k,
-                ));
+                $entityMarker::deleteByFilter(
+                    array(
+                        '=ORDER_ID' => $order->getId(),
+                        '=ENTITY_TYPE' => $entityMarker::ENTITY_TYPE_PAYMENT,
+                        '=ENTITY_ID' => $k,
+                    )
+                );
             }
-
         }
 
         if ($order->getId() > 0) {
@@ -458,8 +507,9 @@ class PaymentCollection extends Internals\EntityCollection
         if ($paySystemId = PaySystem\Manager::getInnerPaySystemId()) {
             /** @var Payment $payment */
             foreach ($this->collection as $payment) {
-                if ($payment->getPaymentSystemId() == $paySystemId)
+                if ($payment->getPaymentSystemId() == $paySystemId) {
                     return $payment;
+                }
             }
         }
 
@@ -497,8 +547,9 @@ class PaymentCollection extends Internals\EntityCollection
         if ($paySystemId = PaySystem\Manager::getInnerPaySystemId()) {
             /** @var Payment $payment */
             foreach ($this->collection as $payment) {
-                if ($payment->getPaymentSystemId() == $paySystemId)
+                if ($payment->getPaymentSystemId() == $paySystemId) {
                     return true;
+                }
             }
         }
 
@@ -569,8 +620,9 @@ class PaymentCollection extends Internals\EntityCollection
         if (!empty($this->collection) && is_array($this->collection)) {
             /** @var Payment $payment */
             foreach ($this->collection as $payment) {
-                if ($payment->isMarked())
+                if ($payment->isMarked()) {
                     return true;
+                }
             }
         }
 

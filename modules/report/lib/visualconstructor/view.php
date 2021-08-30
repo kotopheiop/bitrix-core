@@ -167,7 +167,11 @@ abstract class View
     public function addDefaultReportHandlersToWidgetHandler(BaseWidget $widgetHandler)
     {
         for ($emptyReportNum = 0; $emptyReportNum < static::DEFAULT_EMPTY_REPORT_COUNT; $emptyReportNum++) {
-            $reportHandler = Report::buildReportHandlerForWidget(EmptyReport::getClassName(), $widgetHandler->getWidget(), true);
+            $reportHandler = Report::buildReportHandlerForWidget(
+                EmptyReport::getClassName(),
+                $widgetHandler->getWidget(),
+                true
+            );
             $widgetHandler->addReportHandler($reportHandler);
         }
 
@@ -220,9 +224,11 @@ abstract class View
     {
         $label = new LabelField('label', 'big');
         $label->setDefaultValue(Loc::getMessage('REPORT_WIDGET_DEFAULT_TITLE'));
-        $label->addAssets(array(
-            'js' => array('/bitrix/js/report/js/visualconstructor/fields/reporttitle.js')
-        ));
+        $label->addAssets(
+            array(
+                'js' => array('/bitrix/js/report/js/visualconstructor/fields/reporttitle.js')
+            )
+        );
         $label->setIsDisplayLabel(false);
 
         $timePeriod = new TimePeriod('time_period', $widgetHandler->getWidget()->getFilterId());
@@ -234,23 +240,37 @@ abstract class View
 
         $previewBlockField = new PreviewBlock('view_type');
         $previewBlockField->setWidget($widgetHandler->getWidget());
-        $previewBlockField->addJsEventListener($previewBlockField, $previewBlockField::JS_EVENT_ON_VIEW_SELECT, array(
-            'class' => 'BX.Report.VisualConstructor.FieldEventHandlers.PreviewBlock',
-            'action' => 'viewTypeSelect'
-        ));
+        $previewBlockField->addJsEventListener(
+            $previewBlockField,
+            $previewBlockField::JS_EVENT_ON_VIEW_SELECT,
+            array(
+                'class' => 'BX.Report.VisualConstructor.FieldEventHandlers.PreviewBlock',
+                'action' => 'viewTypeSelect'
+            )
+        );
 
-        $previewBlockField->addJsEventListener($label, $label::JS_EVENT_ON_CHANGE, array(
-            'class' => 'BX.Report.VisualConstructor.FieldEventHandlers.PreviewBlock',
-            'action' => 'reloadWidgetPreview'
-        ));
-        $previewBlockField->addJsEventListener($timePeriod, $timePeriod::JS_EVENT_ON_SELECT, array(
-            'class' => 'BX.Report.VisualConstructor.FieldEventHandlers.PreviewBlock',
-            'action' => 'reloadWidgetPreview'
-        ));
+        $previewBlockField->addJsEventListener(
+            $label,
+            $label::JS_EVENT_ON_CHANGE,
+            array(
+                'class' => 'BX.Report.VisualConstructor.FieldEventHandlers.PreviewBlock',
+                'action' => 'reloadWidgetPreview'
+            )
+        );
+        $previewBlockField->addJsEventListener(
+            $timePeriod,
+            $timePeriod::JS_EVENT_ON_SELECT,
+            array(
+                'class' => 'BX.Report.VisualConstructor.FieldEventHandlers.PreviewBlock',
+                'action' => 'reloadWidgetPreview'
+            )
+        );
 
-        $previewBlockField->addAssets(array(
-            'js' => array('/bitrix/js/report/js/visualconstructor/fields/previewblock.js')
-        ));
+        $previewBlockField->addAssets(
+            array(
+                'js' => array('/bitrix/js/report/js/visualconstructor/fields/previewblock.js')
+            )
+        );
         $titleContainer = new Div();
         $titleContainer->addClass('report-configuration-row');
         $titleContainer->addClass('report-configuration-no-padding-bottom');
@@ -286,9 +306,11 @@ abstract class View
     public function collectReportHandlerFormElements($reportHandler)
     {
         $headContainer = new Div();
-        $headContainer->addAssets(array(
-            'css' => array('/bitrix/js/report/css/visualconstructor/configheader.css')
-        ));
+        $headContainer->addAssets(
+            array(
+                'css' => array('/bitrix/js/report/css/visualconstructor/configheader.css')
+            )
+        );
 
         $widgetHandler = $reportHandler->getWidgetHandler();
         $previewBlock = $widgetHandler->getFormElement('view_type');
@@ -302,23 +324,35 @@ abstract class View
         $labelField = new LabelField('label');
         $labelField->setDefaultValue(Loc::getMessage('REPORT_DEFAULT_TITLE'));
         $labelField->setIsDisplayLabel(false);
-        $labelField->addAssets(array(
-            'js' => array('/bitrix/js/report/js/visualconstructor/fields/reporttitle.js')
-        ));
-        $previewBlock->addJsEventListener($labelField, $labelField::JS_EVENT_ON_CHANGE, array(
-            'class' => 'BX.Report.VisualConstructor.FieldEventHandlers.PreviewBlock',
-            'action' => 'reloadWidgetPreview'
-        ));
+        $labelField->addAssets(
+            array(
+                'js' => array('/bitrix/js/report/js/visualconstructor/fields/reporttitle.js')
+            )
+        );
+        $previewBlock->addJsEventListener(
+            $labelField,
+            $labelField::JS_EVENT_ON_CHANGE,
+            array(
+                'class' => 'BX.Report.VisualConstructor.FieldEventHandlers.PreviewBlock',
+                'action' => 'reloadWidgetPreview'
+            )
+        );
 
         $colorField = new ColorPicker('color');
         $colorField->setDefaultValue('#4fc3f7');
-        $colorField->addAssets(array(
-            'js' => array('/bitrix/js/report/js/visualconstructor/fields/colorfield.js')
-        ));
-        $colorField->addJsEventListener($colorField, $colorField::JS_EVENT_ON_SELECT, array(
-            'class' => 'BX.Report.VisualConstructor.FieldEventHandlers.ColorField',
-            'action' => 'selectColorInConfigurationForm'
-        ));
+        $colorField->addAssets(
+            array(
+                'js' => array('/bitrix/js/report/js/visualconstructor/fields/colorfield.js')
+            )
+        );
+        $colorField->addJsEventListener(
+            $colorField,
+            $colorField::JS_EVENT_ON_SELECT,
+            array(
+                'class' => 'BX.Report.VisualConstructor.FieldEventHandlers.ColorField',
+                'action' => 'selectColorInConfigurationForm'
+            )
+        );
 
         if ($reportHandler->getConfiguration('color')) {
             $headContainer->addInlineStyle('background-color', $reportHandler->getConfiguration('color')->getValue());
@@ -329,21 +363,36 @@ abstract class View
             $colorField->setValue($colorDefaultValue);
         }
 
-        $previewBlock->addJsEventListener($colorField, $colorField::JS_EVENT_ON_SELECT, array(
-            'class' => 'BX.Report.VisualConstructor.FieldEventHandlers.PreviewBlock',
-            'action' => 'reloadWidgetPreview'
-        ));
+        $previewBlock->addJsEventListener(
+            $colorField,
+            $colorField::JS_EVENT_ON_SELECT,
+            array(
+                'class' => 'BX.Report.VisualConstructor.FieldEventHandlers.PreviewBlock',
+                'action' => 'reloadWidgetPreview'
+            )
+        );
         $container = new Container();
         $container->addDataAttribute('role', 'report-remove-button');
-        $removeButton = new ComplexHtml('report-remove-button-' . $reportHandler->getReport()->getGId(), '<div class="report-remove-button"></div>');
-        $removeButton->addJsEventListener($removeButton, $removeButton::JS_EVENT_ON_CLICK, array(
-            'class' => 'BX.Report.VisualConstructor.FieldEventHandlers.ReportHandlerSelect',
-            'action' => 'removeReportFromConfiguration'
-        ));
-        $previewBlock->addJsEventListener($removeButton, $removeButton::JS_EVENT_ON_CLICK, array(
-            'class' => 'BX.Report.VisualConstructor.FieldEventHandlers.PreviewBlock',
-            'action' => 'reloadWidgetPreview'
-        ));
+        $removeButton = new ComplexHtml(
+            'report-remove-button-' . $reportHandler->getReport()->getGId(),
+            '<div class="report-remove-button"></div>'
+        );
+        $removeButton->addJsEventListener(
+            $removeButton,
+            $removeButton::JS_EVENT_ON_CLICK,
+            array(
+                'class' => 'BX.Report.VisualConstructor.FieldEventHandlers.ReportHandlerSelect',
+                'action' => 'removeReportFromConfiguration'
+            )
+        );
+        $previewBlock->addJsEventListener(
+            $removeButton,
+            $removeButton::JS_EVENT_ON_CLICK,
+            array(
+                'class' => 'BX.Report.VisualConstructor.FieldEventHandlers.PreviewBlock',
+                'action' => 'reloadWidgetPreview'
+            )
+        );
 
         $container->addElement($removeButton);
         $headContainerStart = $headContainer->start();
@@ -423,7 +472,9 @@ abstract class View
         $timePeriodField = $widgetHandler->getFormElement('time_period');
         if ($timePeriodField) {
             $timePeriodTitle = $timePeriodField->getValueForHuman();
-            $resultWidget['config']['timePeriod'] = Loc::getMessage('REPORT_TIME_PERIOD_MARK_TEXT') . ': ' . $timePeriodTitle;
+            $resultWidget['config']['timePeriod'] = Loc::getMessage(
+                    'REPORT_TIME_PERIOD_MARK_TEXT'
+                ) . ': ' . $timePeriodTitle;
         }
 
         return $resultWidget;

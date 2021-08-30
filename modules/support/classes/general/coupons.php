@@ -1,16 +1,17 @@
-<?
+<?php
+
 IncludeModuleLangFile(__FILE__);
 
 class CSupportSuperCoupon
 {
-    function Generate($arParams = array())
+    public static function Generate($arParams = array())
     {
         global $DB, $USER, $APPLICATION;
         if (!is_array($arParams)) {
             $arParams = array();
         }
 
-        if (array_key_exists('KEY_FORMAT', $arParams) && strlen($arParams['KEY_FORMAT']) > 0) {
+        if (array_key_exists('KEY_FORMAT', $arParams) && $arParams['KEY_FORMAT'] <> '') {
             $couponFormat = $arParams['KEY_FORMAT'];
         } else {
             $couponFormat = COption::GetOptionString('support', 'SUPERTICKET_COUPON_FORMAT');
@@ -21,7 +22,10 @@ class CSupportSuperCoupon
             $count = 5;
         }
 
-        $slaID = array_key_exists('SLA_ID', $arParams) ? $arParams['SLA_ID'] : COption::GetOptionString("support", 'SUPERTICKET_DEFAULT_SLA');
+        $slaID = array_key_exists('SLA_ID', $arParams) ? $arParams['SLA_ID'] : COption::GetOptionString(
+            "support",
+            'SUPERTICKET_DEFAULT_SLA'
+        );
         $slaID = intval($slaID);
         if ($slaID <= 0) {
             $slaID = false;
@@ -30,7 +34,11 @@ class CSupportSuperCoupon
         $coupon = false;
         $DB->StartTransaction();
         for ($i = 0; $i < 100; ++$i) {
-            $coupon = preg_replace_callback('|#|' . BX_UTF_PCRE_MODIFIER, array('CSupportSuperCoupon', '_getrandsymbol'), $couponFormat);
+            $coupon = preg_replace_callback(
+                '|#|' . BX_UTF_PCRE_MODIFIER,
+                array('CSupportSuperCoupon', '_getrandsymbol'),
+                $couponFormat
+            );
             $rs = CSupportSuperCoupon::GetList(false, array('COUPON' => $coupon));
             if ($rs->Fetch()) {
                 $coupon = false;
@@ -54,7 +62,6 @@ class CSupportSuperCoupon
                 $DB->Rollback();
                 return $ID;
             }
-
         } else {
             $DB->Rollback();
             $APPLICATION->ThrowException(GetMessage('SUP_ST_ERROR_NO_NEW_COUPON'));
@@ -64,12 +71,13 @@ class CSupportSuperCoupon
         return $coupon;
     }
 
-    function Add($arFields)
+    public static function Add($arFields)
     {
         global $DB, $USER;
 
-        if (!CSupportSuperCoupon::__CheckFields($arFields))
+        if (!CSupportSuperCoupon::__CheckFields($arFields)) {
             return false;
+        }
 
         $arFields['~TIMESTAMP_X'] = $DB->GetNowFunction();
         $arFields['~DATE_CREATE'] = $DB->GetNowFunction();
@@ -89,13 +97,14 @@ class CSupportSuperCoupon
         return $DB->Add('b_ticket_supercoupons', $arFields);
     }
 
-    function Update($ID, $arFields)
+    public static function Update($ID, $arFields)
     {
         global $DB, $APPLICATION, $USER;
 
         $ID = intval($ID);
-        if (!CSupportSuperCoupon::__CheckFields($arFields))
+        if (!CSupportSuperCoupon::__CheckFields($arFields)) {
             return false;
+        }
 
         $arFields['~TIMESTAMP_X'] = $DB->GetNowFunction();
         if (isset($USER) && is_object($USER)) {
@@ -103,7 +112,7 @@ class CSupportSuperCoupon
         }
 
         $strUpdate = $DB->PrepareUpdate('b_ticket_supercoupons', $arFields);
-        if (strlen($strUpdate) > 0) {
+        if ($strUpdate <> '') {
             $strSql = "UPDATE b_ticket_supercoupons SET $strUpdate WHERE ID=$ID";
             $q = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             $rows = intval($q->AffectedRowsCount());
@@ -120,7 +129,7 @@ class CSupportSuperCoupon
         return true;
     }
 
-    function UseCoupon($coupon)
+    public static function UseCoupon($coupon)
     {
         global $DB, $USER;
         $ret = false;
@@ -219,7 +228,7 @@ class CSupportSuperCoupon
         return $ret;
     }
 
-    function GetList($arOrder = array(), $arFilter = array())
+    public static function GetList($arOrder = array(), $arFilter = array())
     {
         global $DB;
         $arFields = array(
@@ -312,11 +321,11 @@ class CSupportSuperCoupon
         if (is_array($arOrder)) {
             foreach ($arOrder as $k => $v) {
                 if (array_key_exists($k, $arFields)) {
-                    $v = strtoupper($v);
+                    $v = mb_strtoupper($v);
                     if ($v != 'DESC') {
                         $v = 'ASC';
                     }
-                    if (strlen($order) > 0) {
+                    if ($order <> '') {
                         $order .= ', ';
                     }
                     $order .= $arFields[$k]['FIELD_NAME'] . ' ' . $v;
@@ -338,28 +347,32 @@ class CSupportSuperCoupon
 		LEFT JOIN b_ticket_sla S ON (C.SLA_ID IS NOT NULL AND C.SLA_ID = S.ID)
 		';
 
-        if (strlen($where) > 0) {
+        if ($where <> '') {
             $strQuery .= ' WHERE ' . $where;
         }
 
-        if (strlen($order) > 0) {
+        if ($order <> '') {
             $strQuery .= ' ORDER BY ' . $order;
         }
 
         return $DB->Query($strQuery, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
     }
 
-    function Delete($ID)
+    public static function Delete($ID)
     {
         global $DB;
         $ID = intval($ID);
         if ($ID > 0) {
-            $DB->Query('DELETE FROM b_ticket_supercoupons WHERE ID=' . $ID, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+            $DB->Query(
+                'DELETE FROM b_ticket_supercoupons WHERE ID=' . $ID,
+                false,
+                "File: " . __FILE__ . "<br>Line: " . __LINE__
+            );
         }
         return true;
     }
 
-    function GetLogList($arOrder = array(), $arFilter = array())
+    public static function GetLogList($arOrder = array(), $arFilter = array())
     {
         global $DB;
         $arFields = array(
@@ -406,11 +419,11 @@ class CSupportSuperCoupon
         if (is_array($arOrder)) {
             foreach ($arOrder as $k => $v) {
                 if (array_key_exists($k, $arFields)) {
-                    $v = strtoupper($v);
+                    $v = mb_strtoupper($v);
                     if ($v != 'DESC') {
                         $v = 'ASC';
                     }
-                    if (strlen($order) > 0) {
+                    if ($order <> '') {
                         $order .= ', ';
                     }
                     $order .= $arFields[$k]['FIELD_NAME'] . ' ' . $v;
@@ -427,25 +440,23 @@ class CSupportSuperCoupon
 		LEFT JOIN b_ticket_supercoupons C ON (L.COUPON_ID = C.ID)
 		LEFT JOIN b_user U ON (L.USER_ID IS NOT NULL AND L.USER_ID = U.ID)";
 
-        if (strlen($where) > 0) {
+        if ($where <> '') {
             $strQuery .= ' WHERE ' . $where;
         }
 
-        if (strlen($order) > 0) {
+        if ($order <> '') {
             $strQuery .= ' ORDER BY ' . $order;
         }
 
         return $DB->Query($strQuery, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-
-
     }
 
-    function _getrandsymbol($x)
+    public static function _getrandsymbol($x)
     {
         return ToUpper(randString(1));
     }
 
-    function __CheckFields($arFields)
+    public static function __CheckFields($arFields)
     {
         $aMsg = array();
 
@@ -456,15 +467,16 @@ class CSupportSuperCoupon
 
             $dateElementsTo = explode(".", $arFields["ACTIVE_TO"]);
             $_activeTo = mktime(0, 0, 0, $dateElementsTo[1], $dateElementsTo[0], $dateElementsTo[2]);
-            if ($_activeTo <= $_activeFrom)
+            if ($_activeTo <= $_activeFrom) {
                 $aMsg[] = array("id" => "ACTIVE_TO", "text" => GetMessage("SUP_ST_ERR_DATE_INTERVAL"));
+            }
         }
 
         if (is_set($arFields, "ACTIVE") && !in_array($arFields['ACTIVE'], Array('Y', 'N'))) {
             $aMsg[] = array("id" => "ACTIVE", "text" => GetMessage("SUP_ST_ERR_ACTIVE"));
         }
 
-        if (is_set($arFields, "SLA_ID") && IntVal($arFields['SLA_ID']) == 0) {
+        if (is_set($arFields, "SLA_ID") && intval($arFields['SLA_ID']) == 0) {
             $aMsg[] = array("id" => "SLA_ID", "text" => GetMessage("SUP_ST_ERR_SLA_ID"));
         }
 
@@ -477,5 +489,3 @@ class CSupportSuperCoupon
         return true;
     }
 }
-
-?>

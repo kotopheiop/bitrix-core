@@ -41,9 +41,9 @@ class PHPParser
         $arParams = array();
         $brackets = 0;
         $param_tmp = "";
-        $params_l = strlen($params);
+        $params_l = mb_strlen($params);
         for ($i = 0; $i < $params_l; $i++) {
-            $ch = substr($params, $i, 1);
+            $ch = mb_substr($params, $i, 1);
             if ($ch == "(" || $ch == "[") {
                 $brackets++;
             } elseif ($ch == ")" || $ch == "]") {
@@ -54,8 +54,9 @@ class PHPParser
                 continue;
             }
 
-            if ($brackets < 0)
+            if ($brackets < 0) {
                 break;
+            }
 
             $param_tmp .= $ch;
         }
@@ -70,17 +71,17 @@ class PHPParser
     {
         $found = false;
         $paramsList = "";
-        if (strtolower(substr($params, 0, 6)) == 'array(') {
+        if (mb_strtolower(mb_substr($params, 0, 6)) == 'array(') {
             $found = true;
-            $paramsList = substr($params, 6);
-        } elseif (substr($params, 0, 1) == "[") {
+            $paramsList = mb_substr($params, 6);
+        } elseif (mb_substr($params, 0, 1) == "[") {
             $found = true;
-            $paramsList = substr($params, 1);
+            $paramsList = mb_substr($params, 1);
         }
         if ($found) {
             $arParams = PHPParser::GetParams($paramsList);
             foreach ($arParams as $i => $el) {
-                $p = strpos($el, "=>");
+                $p = mb_strpos($el, "=>");
                 if ($p === false) {
                     if (is_string($arResult)) {
                         $arResult = PHPParser::ReplString($el, $arAllStr);
@@ -88,8 +89,8 @@ class PHPParser
                         PHPParser::GetParamsRec($el, $arAllStr, $arResult[$i]);
                     }
                 } else {
-                    $el_ind = PHPParser::ReplString(substr($el, 0, $p), $arAllStr);
-                    $el_val = substr($el, $p + 2);
+                    $el_ind = PHPParser::ReplString(mb_substr($el, 0, $p), $arAllStr);
+                    $el_val = mb_substr($el, $p + 2);
                     PHPParser::GetParamsRec($el_val, $arAllStr, $arResult[$el_ind]);
                 }
             }
@@ -101,12 +102,13 @@ class PHPParser
     // Parse string and check if it is a component call. Return call params array
     public static function CheckForComponent($str)
     {
-        if (substr($str, 0, 5) == "<?" . "php")
-            $str = substr($str, 5);
-        else
-            $str = substr($str, 2);
+        if (mb_substr($str, 0, 5) == "<?" . "php") {
+            $str = mb_substr($str, 5);
+        } else {
+            $str = mb_substr($str, 2);
+        }
 
-        $str = substr($str, 0, -2);
+        $str = mb_substr($str, 0, -2);
 
         $bSlashed = false;
         $bInString = false;
@@ -115,10 +117,10 @@ class PHPParser
         $string_tmp = "";
         $quote_ch = "";
         $i = -1;
-        $length = strlen($str);
+        $length = mb_strlen($str);
         while ($i < $length - 1) {
             $i++;
-            $ch = substr($str, $i, 1);
+            $ch = mb_substr($str, $i, 1);
             if (!$bInString) {
                 if ($string_tmp != "") {
                     $arAllStr[] = $string_tmp;
@@ -129,19 +131,22 @@ class PHPParser
                 //comment
                 if ($ch == "/" && $i + 1 < $length) {
                     $ti = 0;
-                    if (substr($str, $i + 1, 1) == "*" && ($ti = strpos($str, "*/", $i + 2)) !== false)
+                    if (mb_substr($str, $i + 1, 1) == "*" && ($ti = mb_strpos($str, "*/", $i + 2)) !== false) {
                         $ti += 2;
-                    elseif (substr($str, $i + 1, 1) == "/" && ($ti = strpos($str, "\n", $i + 2)) !== false)
+                    } elseif (mb_substr($str, $i + 1, 1) == "/" && ($ti = mb_strpos($str, "\n", $i + 2)) !== false) {
                         $ti += 1;
+                    }
 
-                    if ($ti)
+                    if ($ti) {
                         $i = $ti;
+                    }
 
                     continue;
                 }
 
-                if ($ch == " " || $ch == "\r" || $ch == "\n" || $ch == "\t")
+                if ($ch == " " || $ch == "\r" || $ch == "\n" || $ch == "\t") {
                     continue;
+                }
             }
 
             if ($bInString && $ch == "\\" && !$bSlashed) {
@@ -171,36 +176,38 @@ class PHPParser
             $new_str .= $ch;
         }
 
-        if ($pos = strpos($new_str, "(")) {
-            $func_name = substr($new_str, 0, $pos + 1);
+        if ($pos = mb_strpos($new_str, "(")) {
+            $func_name = mb_substr($new_str, 0, $pos + 1);
             if (preg_match("/^(\\\$[A-Z_][A-Z0-9_]*)(\\s*=\\s*)/i", $func_name, $arMatch)) {
                 $var_name = $arMatch[1];
-                $func_name = substr($func_name, strlen($arMatch[0]));
+                $func_name = mb_substr($func_name, mb_strlen($arMatch[0]));
             } else {
                 $var_name = "";
             }
             $func_name = preg_replace("'\\\$GLOBALS\\[(\"|\\')(.+?)(\"|\\')\\]'s", "\$\\2", $func_name);
-            switch (strtoupper($func_name)) {
+            switch (mb_strtoupper($func_name)) {
                 case '$APPLICATION->INCLUDEFILE(':
-                    $params = substr($new_str, $pos + 1);
+                    $params = mb_substr($new_str, $pos + 1);
                     $arParams = PHPParser::GetParams($params);
                     $arIncludeParams = array();
 
                     if (preg_match("/^array\\(/i", $arParams[1])) {
-                        $arParams2 = PHPParser::GetParams(substr($arParams[1], 6));
+                        $arParams2 = PHPParser::GetParams(mb_substr($arParams[1], 6));
                         foreach ($arParams2 as $el) {
-                            $p = strpos($el, "=>");
-                            $el_ind = PHPParser::ReplString(substr($el, 0, $p), $arAllStr);
-                            $el_val = substr($el, $p + 2);
+                            $p = mb_strpos($el, "=>");
+                            $el_ind = PHPParser::ReplString(mb_substr($el, 0, $p), $arAllStr);
+                            $el_val = mb_substr($el, $p + 2);
                             if (preg_match("/^array\\(/i", $el_val)) {
                                 $res_ar = array();
-                                $arParamsN = PHPParser::GetParams(substr($el_val, 6));
-                                foreach ($arParamsN as $param)
+                                $arParamsN = PHPParser::GetParams(mb_substr($el_val, 6));
+                                foreach ($arParamsN as $param) {
                                     $res_ar[] = PHPParser::ReplString($param, $arAllStr);
+                                }
 
                                 $arIncludeParams[$el_ind] = $res_ar;
-                            } else
+                            } else {
                                 $arIncludeParams[$el_ind] = PHPParser::ReplString($el_val, $arAllStr);
+                            }
                         }
                     }
                     return array(
@@ -215,15 +222,15 @@ class PHPParser
 
     public static function GetComponentParams($instruction, $arAllStr)
     {
-        if ($pos = strpos($instruction, "(")) {
-            $func_name = substr($instruction, 0, $pos + 1);
+        if ($pos = mb_strpos($instruction, "(")) {
+            $func_name = mb_substr($instruction, 0, $pos + 1);
             if (preg_match("/(\\\$[A-Z_][A-Z0-9_]*)(\\s*=\\s*)/i", $func_name, $arMatch)) {
                 $var_name = $arMatch[1];
             } else {
                 $var_name = "";
             }
 
-            $params = substr($instruction, $pos + 1);
+            $params = mb_substr($instruction, $pos + 1);
             $arParams = PHPParser::GetParams($params);
 
             $arIncludeParams = array();
@@ -259,12 +266,13 @@ class PHPParser
         $instruction = "";
 
         //mb_substr is catastrophic slow, so in UTF we use array of characters
-        if (defined("BX_UTF"))
+        if (defined("BX_UTF")) {
             $allChars = preg_split('//u', $scriptContent, -1, PREG_SPLIT_NO_EMPTY);
-        else
+        } else {
             $allChars = &$scriptContent;
+        }
 
-        $scriptContentLength = strlen($scriptContent);
+        $scriptContentLength = mb_strlen($scriptContent);
         $arAllStr = array();
         $ind = -1;
         while ($ind < $scriptContentLength - 1) {
@@ -274,14 +282,18 @@ class PHPParser
             if ($bInPHP) {
                 if (!$bInString) {
                     if (!$bInComponent && $instruction <> '') {
-                        if (preg_match("#\\s*((\\\$[A-Z_][A-Z0-9_]*\\s*=)?\\s*\\\$APPLICATION->IncludeComponent\\s*\\()#is", $instruction, $arMatches)) {
+                        if (preg_match(
+                            "#\\s*((\\\$[A-Z_][A-Z0-9_]*\\s*=)?\\s*\\\$APPLICATION->IncludeComponent\\s*\\()#is",
+                            $instruction,
+                            $arMatches
+                        )) {
                             $arAllStr = array();
                             $bInComponent = true;
                             $componentNumber++;
                             $instruction = $arMatches[1];
 
                             $arComponents[$componentNumber] = array(
-                                "START" => ($ind - strlen($arMatches[1])),
+                                "START" => ($ind - mb_strlen($arMatches[1])),
                                 "END" => false,
                                 "DATA" => array()
                             );
@@ -298,7 +310,10 @@ class PHPParser
                         if ($bInComponent) {
                             $bInComponent = false;
                             $arComponents[$componentNumber]["END"] = $ind + 1;
-                            $arComponents[$componentNumber]["DATA"] = PHPParser::GetComponentParams(preg_replace("#[ \r\n\t]#", "", $instruction), $arAllStr);
+                            $arComponents[$componentNumber]["DATA"] = PHPParser::GetComponentParams(
+                                preg_replace("#[ \r\n\t]#", "", $instruction),
+                                $arAllStr
+                            );
                         }
                         $instruction = "";
                         continue;
@@ -306,21 +321,23 @@ class PHPParser
                     if ($ch == "/" && $ind < $scriptContentLength - 2) {
                         $nextChar = $allChars[$ind + 1];
                         if ($nextChar == "/") {
-                            $endPos = strpos($scriptContent, "\n", $ind + 2);
+                            $endPos = mb_strpos($scriptContent, "\n", $ind + 2);
 
-                            if ($endPos === false)
+                            if ($endPos === false) {
                                 $ind = $scriptContentLength - 1;
-                            else
+                            } else {
                                 $ind = $endPos;
+                            }
 
                             continue;
                         } elseif ($nextChar == "*") {
-                            $endPos = strpos($scriptContent, "*/", $ind + 2);
+                            $endPos = mb_strpos($scriptContent, "*/", $ind + 2);
 
-                            if ($endPos === false)
+                            if ($endPos === false) {
                                 $ind = $scriptContentLength - 1;
-                            else
+                            } else {
                                 $ind = $endPos + 1;
+                            }
 
                             continue;
                         }
@@ -338,7 +355,10 @@ class PHPParser
                         if ($bInComponent) {
                             $bInComponent = false;
                             $arComponents[$componentNumber]["END"] = $ind - 1;
-                            $arComponents[$componentNumber]["DATA"] = PHPParser::GetComponentParams(preg_replace("#[ \r\n\t]#", "", $instruction), $arAllStr);
+                            $arComponents[$componentNumber]["DATA"] = PHPParser::GetComponentParams(
+                                preg_replace("#[ \r\n\t]#", "", $instruction),
+                                $arAllStr
+                            );
                         }
                         $instruction = "";
                         $bInPHP = false;
@@ -347,8 +367,9 @@ class PHPParser
 
                     $instruction .= $ch;
 
-                    if ($ch == " " || $ch == "\r" || $ch == "\n" || $ch == "\t")
+                    if ($ch == " " || $ch == "\r" || $ch == "\n" || $ch == "\t") {
                         continue;
+                    }
                 } else {
                     if ($ch == "\\" && !$bSlashed) {
                         $bSlashed = true;
@@ -380,12 +401,13 @@ class PHPParser
     // Components 2. Parse string and check if it is a component call. Return call params array
     public static function CheckForComponent2($str)
     {
-        if (substr($str, 0, 5) == "<?" . "php")
-            $str = substr($str, 5);
-        else
-            $str = substr($str, 2);
+        if (mb_substr($str, 0, 5) == "<?" . "php") {
+            $str = mb_substr($str, 5);
+        } else {
+            $str = mb_substr($str, 2);
+        }
 
-        $str = substr($str, 0, -2);
+        $str = mb_substr($str, 0, -2);
 
         $bSlashed = false;
         $bInString = false;
@@ -394,10 +416,10 @@ class PHPParser
         $string_tmp = "";
         $quote_ch = "";
         $i = -1;
-        $length = strlen($str);
+        $length = mb_strlen($str);
         while ($i < $length - 1) {
             $i++;
-            $ch = substr($str, $i, 1);
+            $ch = mb_substr($str, $i, 1);
             if (!$bInString) {
                 if ($string_tmp != "") {
                     $arAllStr[] = $string_tmp;
@@ -408,19 +430,22 @@ class PHPParser
                 //comment
                 if ($ch == "/" && $i + 1 < $length) {
                     $ti = 0;
-                    if (substr($str, $i + 1, 1) == "*" && ($ti = strpos($str, "*/", $i + 2)) !== false)
+                    if (mb_substr($str, $i + 1, 1) == "*" && ($ti = mb_strpos($str, "*/", $i + 2)) !== false) {
                         $ti += 1;
-                    elseif (substr($str, $i + 1, 1) == "/" && ($ti = strpos($str, "\n", $i + 2)) !== false)
+                    } elseif (mb_substr($str, $i + 1, 1) == "/" && ($ti = mb_strpos($str, "\n", $i + 2)) !== false) {
                         $ti += 0;
+                    }
 
-                    if ($ti)
+                    if ($ti) {
                         $i = $ti;
+                    }
 
                     continue;
                 }
 
-                if ($ch == " " || $ch == "\r" || $ch == "\n" || $ch == "\t")
+                if ($ch == " " || $ch == "\r" || $ch == "\n" || $ch == "\t") {
                     continue;
+                }
             }
 
             if ($bInString && $ch == "\\" && !$bSlashed) {
@@ -450,11 +475,11 @@ class PHPParser
             $new_str .= $ch;
         }
 
-        if ($pos = strpos($new_str, "(")) {
-            $func_name = substr($new_str, 0, $pos + 1);
+        if ($pos = mb_strpos($new_str, "(")) {
+            $func_name = mb_substr($new_str, 0, $pos + 1);
             if (preg_match("/^(\\\$[A-Z_][A-Z0-9_]*)(\\s*=\\s*)/i", $func_name, $arMatch)) {
                 $var_name = $arMatch[1];
-                $func_name = substr($func_name, strlen($arMatch[0]));
+                $func_name = mb_substr($func_name, mb_strlen($arMatch[0]));
             } else {
                 $var_name = "";
             }
@@ -465,14 +490,14 @@ class PHPParser
             $isComponent2Begin = false;
             $arIncludeComponentFunctionStrings = self::getComponentFunctionStrings();
             foreach ($arIncludeComponentFunctionStrings as $functionName) {
-                $component2Begin = strtoupper($functionName) . '(';
-                if (strtoupper($func_name) == $component2Begin) {
+                $component2Begin = mb_strtoupper($functionName) . '(';
+                if (mb_strtoupper($func_name) == $component2Begin) {
                     $isComponent2Begin = true;
                     break;
                 }
             }
             if ($isComponent2Begin) {
-                $params = substr($new_str, $pos + 1);
+                $params = mb_substr($new_str, $pos + 1);
                 $arParams = PHPParser::GetParams($params);
 
                 $arIncludeParams = array();
@@ -498,20 +523,20 @@ class PHPParser
     {
         $arScripts = array();
         $p = 0;
-        $nLen = strlen($filesrc);
-        while (($p = strpos($filesrc, "<?", $p)) !== false) {
+        $nLen = mb_strlen($filesrc);
+        while (($p = mb_strpos($filesrc, "<?", $p)) !== false) {
             $i = $p + 2;
             $bSlashed = false;
             $bInString = false;
             $quote_ch = "";
             while ($i < $nLen - 1) {
                 $i++;
-                $ch = substr($filesrc, $i, 1);
+                $ch = mb_substr($filesrc, $i, 1);
                 if (!$bInString) {
                     //comment
                     if ($ch == "/" && $i + 1 < $nLen) {
                         //php tag
-                        $posnext = strpos($filesrc, "?>", $i);
+                        $posnext = mb_strpos($filesrc, "?>", $i);
                         if ($posnext === false) {
                             //no final tag
                             break;
@@ -519,18 +544,27 @@ class PHPParser
                         $posnext += 2;
 
                         $ti = 0;
-                        if (substr($filesrc, $i + 1, 1) == "*" && ($ti = strpos($filesrc, "*/", $i + 2)) !== false)
+                        if (mb_substr($filesrc, $i + 1, 1) == "*" && ($ti = mb_strpos(
+                                $filesrc,
+                                "*/",
+                                $i + 2
+                            )) !== false) {
                             $ti += 2;
-                        elseif (substr($filesrc, $i + 1, 1) == "/" && ($ti = strpos($filesrc, "\n", $i + 2)) !== false)
+                        } elseif (mb_substr($filesrc, $i + 1, 1) == "/" && ($ti = mb_strpos(
+                                $filesrc,
+                                "\n",
+                                $i + 2
+                            )) !== false) {
                             $ti += 1;
+                        }
 
                         if ($ti) {
                             // begin ($i) and end ($ti) of comment
                             // �������� ��� ������ ����� ������� ��� ����� ����������� (�������� � ����� ������ "//comment ? >")
-                            if ($ti > $posnext && substr($filesrc, $i + 1, 1) != "*") {
+                            if ($ti > $posnext && mb_substr($filesrc, $i + 1, 1) != "*") {
                                 // ������ ���������� ������ �����������
                                 // ������� ������
-                                $arScripts[] = array($p, $posnext, substr($filesrc, $p, $posnext - $p));
+                                $arScripts[] = array($p, $posnext, mb_substr($filesrc, $p, $posnext - $p));
                                 break;
                             } else {
                                 // ����������� ���������� ������ �������
@@ -540,9 +574,9 @@ class PHPParser
                         continue;
                     }
 
-                    if ($ch == "?" && $i + 1 < $nLen && substr($filesrc, $i + 1, 1) == ">") {
+                    if ($ch == "?" && $i + 1 < $nLen && mb_substr($filesrc, $i + 1, 1) == ">") {
                         $i = $i + 2;
-                        $arScripts[] = array($p, $i, substr($filesrc, $p, $i - $p));
+                        $arScripts[] = array($p, $i, mb_substr($filesrc, $p, $i - $p));
                         break;
                     }
                 }
@@ -554,8 +588,9 @@ class PHPParser
 
                 if ($ch == "\"" || $ch == "'") {
                     if ($bInString) {
-                        if (!$bSlashed && $quote_ch == $ch)
+                        if (!$bSlashed && $quote_ch == $ch) {
                             $bInString = false;
+                        }
                     } else {
                         $bInString = true;
                         $quote_ch = $ch;
@@ -564,10 +599,12 @@ class PHPParser
 
                 $bSlashed = false;
             }
-            if ($i >= $nLen)
+            if ($i >= $nLen) {
                 break;
-            if ($limit && count($arScripts) == $limit)
+            }
+            if ($limit && count($arScripts) == $limit) {
                 break;
+            }
             $p = $i;
         }
         return $arScripts;
@@ -575,8 +612,9 @@ class PHPParser
 
     public static function PreparePHP($str)
     {
-        if (substr($str, 0, 2) == "={" && substr($str, -1, 1) == "}" && strlen($str) > 3)
-            return substr($str, 2, -1);
+        if (mb_substr($str, 0, 2) == "={" && mb_substr($str, -1, 1) == "}" && mb_strlen($str) > 3) {
+            return mb_substr($str, 2, -1);
+        }
 
         return '"' . EscapePHPString($str) . '"';
     }
@@ -589,37 +627,43 @@ class PHPParser
         $i = 0;
         foreach ($arVals as $key => $val) {
             $i++;
-            $comm = (strlen($arParams[$key]["NAME"]) > 0 ? "$un|$i|// " . $arParams[$key]["NAME"] : "");
+            $comm = ($arParams[$key]["NAME"] <> '' ? "$un|$i|// " . $arParams[$key]["NAME"] : "");
             $res .= "\r\n\t\"" . $key . "\"\t=>\t";
-            if (is_array($val) && count($val) > 1)
+            if (is_array($val) && count($val) > 1) {
                 $res .= "array(" . $comm . "\r\n";
+            }
 
             if (is_array($val) && count($val) > 1) {
                 $zn = '';
                 foreach ($val as $p) {
-                    if ($zn != '') $zn .= ",\r\n";
+                    if ($zn != '') {
+                        $zn .= ",\r\n";
+                    }
                     $zn .= "\t\t\t\t\t" . PHPParser::PreparePHP($p);
                 }
                 $res .= $zn . "\r\n\t\t\t\t),";
             } elseif (is_array($val)) {
                 $res .= "array(" . PHPParser::PreparePHP($val[0]) . ")," . $comm;
-            } else
+            } else {
                 $res .= PHPParser::PreparePHP($val) . "," . $comm;
+            }
         }
 
         $max = 0;
         $lngth = array();
         for ($j = 1; $j <= $i; $j++) {
-            $p = strpos($res, "$un|$j|");
-            $pn = strrpos(substr($res, 0, $p), "\n");
+            $p = mb_strpos($res, "$un|$j|");
+            $pn = mb_strrpos(mb_substr($res, 0, $p), "\n");
             $l = ($p - $pn);
             $lngth[$j] = $l;
-            if ($max < $l)
+            if ($max < $l) {
                 $max = $l;
+            }
         }
 
-        for ($j = 1; $j <= $i; $j++)
+        for ($j = 1; $j <= $i; $j++) {
             $res = str_replace($un . "|$j|", str_repeat("\t", intval(($max - $lngth[$j] + 7) / 8)), $res);
+        }
 
         return trim($res, " \t,\r\n");
     }
@@ -631,8 +675,11 @@ class PHPParser
         $pref = str_repeat("\t", $level + 1);
         if (is_array($arVal)) {
             $result .= "array(" . (($level == 1) ? $comm : "") . "\n";
-            foreach ($arVal as $key => $value)
-                $result .= $pref . "\t" . ((intval($key) . "|" == $key . "|") ? $key : PHPParser::PreparePHP($key)) . " => " . PHPParser::ReturnPHPStrRec($value, $level + 1);
+            foreach ($arVal as $key => $value) {
+                $result .= $pref . "\t" . ((intval($key) . "|" == $key . "|") ? $key : PHPParser::PreparePHP(
+                        $key
+                    )) . " => " . PHPParser::ReturnPHPStrRec($value, $level + 1);
+            }
             $result .= $pref . "),\n";
         } else {
             $result .= PHPParser::PreparePHP($arVal) . "," . (($level == 1) ? $comm : "") . "\n";
@@ -661,8 +708,8 @@ class PHPParser
         /* identify the component by line number */
         $arComponent = false;
         for ($i = 0, $cnt = count($arComponents); $i < $cnt; $i++) {
-            $nLineFrom = substr_count(substr($filesrc, 0, $arComponents[$i]["START"]), "\n") + 1;
-            $nLineTo = substr_count(substr($filesrc, 0, $arComponents[$i]["END"]), "\n") + 1;
+            $nLineFrom = substr_count(mb_substr($filesrc, 0, $arComponents[$i]["START"]), "\n") + 1;
+            $nLineTo = substr_count(mb_substr($filesrc, 0, $arComponents[$i]["END"]), "\n") + 1;
 
             if ($nLineFrom <= $src_line && $nLineTo >= $src_line) {
                 if ($arComponents[$i]["DATA"]["COMPONENT_NAME"] == $component_name) {
@@ -670,8 +717,9 @@ class PHPParser
                     break;
                 }
             }
-            if ($nLineTo > $src_line)
+            if ($nLineTo > $src_line) {
                 break;
+            }
         }
         return $arComponent;
     }
@@ -690,8 +738,9 @@ class PHPParser
                             $chunks[] = $chunk;
                             $chunk = '';
                             $php = false;
-                            if ($limit && count($chunks) == $limit)
+                            if ($limit && count($chunks) == $limit) {
                                 break;
+                            }
                         }
                     } else {
                         $chunk .= $token;
@@ -706,13 +755,14 @@ class PHPParser
                 }
             }
         } else {
-            foreach (PHPParser::ParseFile($filesrc, $limit) as $chunk)
+            foreach (PHPParser::ParseFile($filesrc, $limit) as $chunk) {
                 $chunks[] = $chunk[2];
-
+            }
         }
 
-        if ($php && $chunk != '')
+        if ($php && $chunk != '') {
             $chunks[] = $chunk;
+        }
 
         return $chunks;
     }
@@ -721,25 +771,28 @@ class PHPParser
     {
         if ($prolog === false) {
             $chunks = PHPParser::getPhpChunks($filesrc, 1);
-            if (!empty($chunks))
+            if (!empty($chunks)) {
                 $prolog = &$chunks[0];
-            else
+            } else {
                 $prolog = '';
+            }
         }
 
         $title = false;
 
         if ($prolog != '') {
-            if (preg_match("/\\\$APPLICATION->SetTitle\\s*\\(\\s*\"(.*?)(?<!\\\\)\"\\s*\\);/is", $prolog, $regs))
+            if (preg_match("/\\\$APPLICATION->SetTitle\\s*\\(\\s*\"(.*?)(?<!\\\\)\"\\s*\\);/is", $prolog, $regs)) {
                 $title = UnEscapePHPString($regs[1]);
-            elseif (preg_match("/\\\$APPLICATION->SetTitle\\s*\\(\\s*'(.*?)(?<!\\\\)'\\s*\\);/is", $prolog, $regs))
+            } elseif (preg_match("/\\\$APPLICATION->SetTitle\\s*\\(\\s*'(.*?)(?<!\\\\)'\\s*\\);/is", $prolog, $regs)) {
                 $title = UnEscapePHPString($regs[1]);
-            elseif (preg_match("'<title[^>]*>([^>]+)</title[^>]*>'i", $prolog, $regs))
+            } elseif (preg_match("'<title[^>]*>([^>]+)</title[^>]*>'i", $prolog, $regs)) {
                 $title = $regs[1];
+            }
         }
 
-        if (!$title && preg_match("'<title[^>]*>([^>]+)</title[^>]*>'i", $filesrc, $regs))
+        if (!$title && preg_match("'<title[^>]*>([^>]+)</title[^>]*>'i", $filesrc, $regs)) {
             $title = $regs[1];
+        }
 
         return $title;
     }

@@ -1,4 +1,6 @@
-<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die(); ?><?
+<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+} ?><?
 /*
 ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ "NDS". ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
@@ -20,6 +22,7 @@ $arParams - ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿
 
 $arUser - ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½
 */
+
 ?>
 <html xmlns:o="urn:schemas-microsoft-com:office:office"
       xmlns:x="urn:schemas-microsoft-com:office:excel"
@@ -580,14 +583,19 @@ width:86pt'>
                 $arVal = CSaleLocation::GetByID($arOrderProps["F_LOCATION"], "ru");
                 echo htmlspecialcharsbx($arVal["COUNTRY_NAME"] . " - " . $arVal["CITY_NAME"]);
                 ?>
-                <? if (strlen($arOrderProps["F_CITY"]) > 0) echo ", ï¿½. " . $arOrderProps["F_CITY"]; ?>
-                <? if (strlen($arOrderProps["F_ADDRESS"]) > 0) echo ", " . $arOrderProps["F_ADDRESS"]; ?>
+                <? if ($arOrderProps["F_CITY"] <> '') {
+                    echo ", ï¿½. " . $arOrderProps["F_CITY"];
+                } ?>
+                <? if ($arOrderProps["F_ADDRESS"] <> '') {
+                    echo ", " . $arOrderProps["F_ADDRESS"];
+                } ?>
                 <?
             } else {
-                if (strlen($arParams["BUYER_COMPANY_NAME"]) > 0)
+                if ($arParams["BUYER_COMPANY_NAME"] <> '') {
                     $buyerName = $arParams["BUYER_COMPANY_NAME"];
-                else
+                } else {
                     $buyerName = $arParams["BUYER_LAST_NAME"] . " " . $arParams["BUYER_FIRST_NAME"] . " " . $arParams["BUYER_SECOND_NAME"];
+                }
                 ?>
                 <?= $buyerName; ?>, <?= $arParams["BUYER_COUNTRY"] ?>, <?= $arParams["BUYER_INDEX"] ?>, ï¿½. <?= $arParams["BUYER_CITY"] ?>, <?= $arParams["BUYER_ADDRESS"] ?>
                 <?
@@ -616,14 +624,16 @@ width:86pt'>
         <td height=18 class=xl50 style='height:13.5pt'>ï¿½ï¿½ï¿½ï¿½ï¿½</td>
         <td colspan=10 class=xl50 style='mso-ignore:colspan'>
             <? if (empty($arParams)) {
-
                 //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ F_INDEX, F_LOCATION,... ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
                 echo $arOrderProps["F_INDEX"];
                 $arVal = CSaleLocation::GetByID($arOrderProps["F_LOCATION"], "ru");
                 echo htmlspecialcharsbx($arVal["COUNTRY_NAME"] . " - " . $arVal["CITY_NAME"]);
-                if (strlen($arOrderProps["F_CITY"]) > 0) echo ", ï¿½. " . $arOrderProps["F_CITY"];
-                if (strlen($arOrderProps["F_ADDRESS"]) > 0) echo ", " . $arOrderProps["F_ADDRESS"];
-
+                if ($arOrderProps["F_CITY"] <> '') {
+                    echo ", ï¿½. " . $arOrderProps["F_CITY"];
+                }
+                if ($arOrderProps["F_ADDRESS"] <> '') {
+                    echo ", " . $arOrderProps["F_ADDRESS"];
+                }
             } else {
                 echo $arParams["BUYER_COUNTRY"] . ", " . $arParams["BUYER_INDEX"] . ", ï¿½. " . $arParams["BUYER_CITY"] . ", " . $arParams["BUYER_ADDRESS"];
             } ?>
@@ -701,8 +711,9 @@ width:86pt'>
                 for ($i = 0, $max = count($arBasketIDs); $i < $max; $i++) {
                     $arBasketTmp = CSaleBasket::GetByID($arBasketIDs[$i]);
 
-                    if (floatval($arBasketTmp["VAT_RATE"]) > 0)
+                    if (floatval($arBasketTmp["VAT_RATE"]) > 0) {
                         $bUseVat = true;
+                    }
 
                     $priceTotal += $arBasketTmp["PRICE"] * $arBasketTmp["QUANTITY"];
 
@@ -715,8 +726,9 @@ width:86pt'>
                             false,
                             array("ID", "BASKET_ID", "NAME", "VALUE", "CODE", "SORT")
                         );
-                        while ($arBasketProps = $dbBasketProps->GetNext())
+                        while ($arBasketProps = $dbBasketProps->GetNext()) {
                             $arBasketTmp["PROPS"][$arBasketProps["ID"]] = $arBasketProps;
+                        }
                     }
 
                     $arBasketOrder[] = $arBasketTmp;
@@ -745,8 +757,9 @@ width:86pt'>
                     // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ - ï¿½ï¿½ï¿½
                     // ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ NDS, ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
                     // ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
-                    if ($arTaxList[$i]["CODE"] == "NDS")
+                    if ($arTaxList[$i]["CODE"] == "NDS") {
                         $iNds = $i;
+                    }
                     $i++;
                 }
 
@@ -761,8 +774,9 @@ width:86pt'>
                     $nds_val = 0;
                     $taxRate = 0;
 
-                    if (floatval($arQuantities[$mi]) <= 0)
+                    if (floatval($arQuantities[$mi]) <= 0) {
                         $arQuantities[$mi] = DoubleVal($arBasket["QUANTITY"]);
+                    }
 
                     $b_AMOUNT = DoubleVal($arBasket["PRICE"]);
 
@@ -777,7 +791,11 @@ width:86pt'>
                         $item_price = $b_AMOUNT - $nds_val;
                         $taxRate = $arBasket["VAT_RATE"] * 100;
                     } elseif (!$bUseVat) {
-                        $basket_tax = CSaleOrderTax::CountTaxes($b_AMOUNT * $arQuantities[$mi], $arTaxList, $arOrder["CURRENCY"]);
+                        $basket_tax = CSaleOrderTax::CountTaxes(
+                            $b_AMOUNT * $arQuantities[$mi],
+                            $arTaxList,
+                            $arOrder["CURRENCY"]
+                        );
 
                         for ($i = 0, $max = count($arTaxList); $i < $max; $i++) {
                             if ($arTaxList[$i]["IS_IN_PRICE"] == "Y") {
@@ -795,8 +813,9 @@ width:86pt'>
                             <?
                             if (is_array($arBasket["PROPS"]) && $_GET["PROPS_ENABLE"] == "Y") {
                                 foreach ($arBasket["PROPS"] as $vv) {
-                                    if (strlen($vv["VALUE"]) > 0 && $vv["CODE"] != "CATALOG.XML_ID" && $vv["CODE"] != "PRODUCT.XML_ID")
+                                    if ($vv["VALUE"] <> '' && $vv["CODE"] != "CATALOG.XML_ID" && $vv["CODE"] != "PRODUCT.XML_ID") {
                                         echo "<div style=\"font-size:8pt\">" . $vv["NAME"] . ": " . $vv["VALUE"] . "</div>";
+                                    }
                                 }
                             }
                             ?>
@@ -805,12 +824,22 @@ width:86pt'>
                         <td class=xl40 width=40
                             style='border-top:none;border-left:none;width:30pt'><?= $arBasket['MEASURE_TEXT'] ?></td>
                         <td class=xl41
-                            style='border-top:none;border-left:none'><? echo Bitrix\Sale\BasketItem::formatQuantity($arQuantities[$mi]); ?></td>
+                            style='border-top:none;border-left:none'><? echo Bitrix\Sale\BasketItem::formatQuantity(
+                                $arQuantities[$mi]
+                            ); ?></td>
                         <td align="right" class=xl42
-                            style='border-top:none;border-left:none'><?= CCurrencyLang::CurrencyFormat($item_price, $arOrder["CURRENCY"], false); ?></td>
+                            style='border-top:none;border-left:none'><?= CCurrencyLang::CurrencyFormat(
+                                $item_price,
+                                $arOrder["CURRENCY"],
+                                false
+                            ); ?></td>
                         <td class=xl42 align=right style='border-top:none;border-left:none' x:num>
                             <?
-                            echo CCurrencyLang::CurrencyFormat($item_price * $arQuantities[$mi], $arOrder["CURRENCY"], false);
+                            echo CCurrencyLang::CurrencyFormat(
+                                $item_price * $arQuantities[$mi],
+                                $arOrder["CURRENCY"],
+                                false
+                            );
                             if (empty($arBasket['SET_PARENT_ID'])) {
                                 $total_price += ($item_price * $arQuantities[$mi]);
                             }
@@ -822,7 +851,11 @@ width:86pt'>
                         <td class=xl45 align=right width=78 style='border-top:none;border-left:none;
 	width:59pt' x:num>
                             <?
-                            echo CCurrencyLang::CurrencyFormat($nds_val * $arQuantities[$mi], $arOrder["CURRENCY"], false);
+                            echo CCurrencyLang::CurrencyFormat(
+                                $nds_val * $arQuantities[$mi],
+                                $arOrder["CURRENCY"],
+                                false
+                            );
                             if (empty($arBasket['SET_PARENT_ID'])) {
                                 $total_nds += $nds_val * $arQuantities[$mi];
                             }
@@ -832,7 +865,11 @@ width:86pt'>
                         <td class=xl45 align=right width=83 style='border-top:none;border-left:none;
 	width:62pt' x:num>
                             <?
-                            echo CCurrencyLang::CurrencyFormat($item_price * $arQuantities[$mi] + $nds_val * $arQuantities[$mi], $arOrder["CURRENCY"], false);
+                            echo CCurrencyLang::CurrencyFormat(
+                                $item_price * $arQuantities[$mi] + $nds_val * $arQuantities[$mi],
+                                $arOrder["CURRENCY"],
+                                false
+                            );
                             if (empty($arBasket['SET_PARENT_ID'])) {
                                 $total_sum += $item_price * $arQuantities[$mi] + $nds_val * $arQuantities[$mi];
                             }
@@ -851,7 +888,11 @@ width:86pt'>
                 endforeach;
 
                 if ($arOrder["DELIVERY_ID"]):
-                    $basket_tax = CSaleOrderTax::CountTaxes(DoubleVal($arOrder["PRICE_DELIVERY"]), $arTaxList, $arOrder["CURRENCY"]);
+                    $basket_tax = CSaleOrderTax::CountTaxes(
+                        DoubleVal($arOrder["PRICE_DELIVERY"]),
+                        $arTaxList,
+                        $arOrder["CURRENCY"]
+                    );
                     //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
                     $nds_val = $arOrder['DELIVERY_VAT_SUM'];
                     $taxRate = $arOrder['DELIVERY_VAT_RATE'] * 100;
@@ -865,7 +906,11 @@ width:86pt'>
                         <td class=xl40 width=40 style='border-top:none;border-left:none;width:30pt'></td>
                         <td class=xl41 style='border-top:none;border-left:none'>1</td>
                         <td align="right" class=xl42
-                            style='border-top:none;border-left:none'><?= CCurrencyLang::CurrencyFormat($item_price, $arOrder["CURRENCY"], false); ?></td>
+                            style='border-top:none;border-left:none'><?= CCurrencyLang::CurrencyFormat(
+                                $item_price,
+                                $arOrder["CURRENCY"],
+                                false
+                            ); ?></td>
                         <td class=xl42 align=right style='border-top:none;border-left:none'
                             x:num><?= CCurrencyLang::CurrencyFormat($item_price, $arOrder["CURRENCY"], false);
                             $total_price += $item_price; ?></td>
@@ -915,14 +960,14 @@ width:86pt'>
                         _______________ <input size="16"
                                                style="border:0px solid #000000;font-size:14px;font-style:bold;"
                                                type="text"
-                                               value="/ <? echo((strlen($arParams["DIRECTOR"]) > 0) ? $arParams["DIRECTOR"] : "_______________") ?> /">
+                                               value="/ <? echo(($arParams["DIRECTOR"] <> '') ? $arParams["DIRECTOR"] : "_______________") ?> /">
                     </td>
                     <td class=xl36 colspan=2 style='mso-ignore:colspan'></td>
                     <td colspan=6 class=xl32 style='mso-ignore:colspan'>ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½<br> ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
                         ï¿½ï¿½ï¿½ï¿½ _______________ <input size="16"
                                                     style="border:0px solid #000000;font-size:14px;font-style:bold;"
                                                     type="text"
-                                                    value="/ <? echo((strlen($arParams["BUHG"]) > 0) ? $arParams["BUHG"] : "_______________") ?> /">
+                                                    value="/ <? echo(($arParams["BUHG"] <> '') ? $arParams["BUHG"] : "_______________") ?> /">
                     </td>
                 </tr>
                 <tr height=0 style='display:none'>

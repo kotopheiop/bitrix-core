@@ -147,11 +147,13 @@ class ProviderBuilder extends ProviderBuilderBase
                 continue;
             }
 
-            if (empty($productData['SHIPMENT_ITEM_DATA_LIST']))
+            if (empty($productData['SHIPMENT_ITEM_DATA_LIST'])) {
                 continue;
+            }
 
-            if (empty($productData['SHIPMENT_ITEM_LIST']))
+            if (empty($productData['SHIPMENT_ITEM_LIST'])) {
                 continue;
+            }
 
             /**
              * @var int $shipmentItemIndex
@@ -177,7 +179,8 @@ class ProviderBuilder extends ProviderBuilderBase
                         throw new Main\ObjectNotFoundException('Entity "Shipment" not found');
                     }
 
-                    if ($shipment->needShip() === Sale\Internals\Catalog\Provider::SALE_TRANSFER_PROVIDER_SHIPMENT_NEED_NOT_SHIP) {
+                    if ($shipment->needShip(
+                        ) === Sale\Internals\Catalog\Provider::SALE_TRANSFER_PROVIDER_SHIPMENT_NEED_NOT_SHIP) {
                         $coefficient = 1;
                     }
                 }
@@ -206,7 +209,6 @@ class ProviderBuilder extends ProviderBuilderBase
                     if (!$foundItem) {
                         Sale\Internals\ItemsPool::add($order->getInternalId(), $productId, $shipmentItem);
                     }
-
                 }
             }
         }

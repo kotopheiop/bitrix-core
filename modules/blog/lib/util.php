@@ -73,7 +73,7 @@ class Util
         }
 
         if (Option::get("blog", "send_blog_ping", "N") == "Y") {
-            if (strlen($serverName) <= 0) {
+            if ($serverName == '') {
                 $res = \CSite::getById($siteId);
                 $siteFields = $res->fetch();
 
@@ -82,7 +82,7 @@ class Util
                 if (empty($serverName)) {
                     $serverName = (
                     defined("SITE_SERVER_NAME")
-                    && strlen(SITE_SERVER_NAME) > 0
+                    && SITE_SERVER_NAME <> ''
                         ? SITE_SERVER_NAME
                         : Option::get("main", "server_name", "")
                     );
@@ -93,14 +93,17 @@ class Util
                 }
             }
 
-            \CBlog::sendPing($blogFields["NAME"], "http://" . $serverName . \CComponentEngine::makePathFromTemplate(
+            \CBlog::sendPing(
+                $blogFields["NAME"],
+                "http://" . $serverName . \CComponentEngine::makePathFromTemplate(
                     htmlspecialcharsBack($pathToBlog),
                     array(
                         "blog" => $blogFields["URL"],
                         "user_id" => $blogFields["OWNER_ID"],
                         "group_id" => $blogFields["SOCNET_GROUP_ID"]
                     )
-                ));
+                )
+            );
 
             return true;
         }

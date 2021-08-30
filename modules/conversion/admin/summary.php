@@ -15,24 +15,31 @@ Loc::loadMessages(__FILE__);
 
 Loader::IncludeModule('conversion');
 
-if ($APPLICATION->GetGroupRight('conversion') < 'R')
+if ($APPLICATION->GetGroupRight('conversion') < 'R') {
     $APPLICATION->AuthForm(Loc::getMessage('ACCESS_DENIED'));
+}
 
 $userOptions = CUserOptions::GetOption('conversion', 'filter', array());
 
 // PERIOD
 
-$from = ($d = $_GET['from'] ?: $userOptions['from']) && Date::isCorrect($d) ? new Date($d) : Date::createFromPhp(new DateTime('first day of last month'));
-$to = ($d = $_GET['to'] ?: $userOptions['to']) && Date::isCorrect($d) ? new Date($d) : Date::createFromPhp(new DateTime('last day of this month'));
+$from = ($d = $_GET['from'] ?: $userOptions['from']) && Date::isCorrect($d) ? new Date($d) : Date::createFromPhp(
+    new DateTime('first day of last month')
+);
+$to = ($d = $_GET['to'] ?: $userOptions['to']) && Date::isCorrect($d) ? new Date($d) : Date::createFromPhp(
+    new DateTime('last day of this month')
+);
 
 // SITES
 
 $sites = array();
 
-$result = SiteTable::getList(array(
-    'select' => array('LID', 'NAME'),
-    'order' => array('DEF' => 'DESC', 'SORT' => 'ASC'),
-));
+$result = SiteTable::getList(
+    array(
+        'select' => array('LID', 'NAME'),
+        'order' => array('DEF' => 'DESC', 'SORT' => 'ASC'),
+    )
+);
 
 while ($row = $result->fetch()) {
     $sites[$row['LID']] = $row['NAME'];
@@ -41,7 +48,8 @@ while ($row = $result->fetch()) {
 $site = $_GET['site'] ?: $userOptions['site'];
 
 if (!$siteName = $sites[$site]) {
-    list ($site, $siteName) = each($sites);
+    $site = key($sites);
+    $siteName = current($sites);
 }
 
 // SPLITS
@@ -53,7 +61,8 @@ $attributeGroupName = $_GET['split'] ?: $userOptions['split']; // $splitGroupKey
 
 if (!$attributeTypes = $groupedAttributeTypes[$attributeGroupName]) // $splitGroup
 {
-    list ($attributeGroupName, $attributeTypes) = each($groupedAttributeTypes);
+    $attributeGroupName = key($groupedAttributeTypes);
+    $attributeTypes = current($groupedAttributeTypes);
 }
 
 $attributeGroupTypes = \Bitrix\Conversion\AttributeGroupManager::getTypes();
@@ -90,7 +99,8 @@ if ($rateTypes = RateManager::getTypes(array('ACTIVE' => true))) {
     if ($topRateType = $rateTypes[$topRateName]) {
         $rateTypes = array($topRateName => $topRateType) + $rateTypes;
     } else {
-        list ($topRateName, $topRateType) = each($rateTypes);
+        $topRateName = key($rateTypes);
+        $topRateType = current($rateTypes);
     }
 
     if (is_array($topRateType['SCALE']) && count($topRateType['SCALE']) === 5) {
@@ -123,10 +133,15 @@ $context = new ReportContext();
 
 $context->setAttribute('conversion_site', $site);
 
-$splitRates = $context->getSplitRatesDeprecated($splits, $rateTypes, array(
-    '>=DAY' => $from,
-    '<=DAY' => $to,
-), array('FORMAT' => 'Y-m-d', 'SELECT' => 'RATE'));
+$splitRates = $context->getSplitRatesDeprecated(
+    $splits,
+    $rateTypes,
+    array(
+        '>=DAY' => $from,
+        '<=DAY' => $to,
+    ),
+    array('FORMAT' => 'Y-m-d', 'SELECT' => 'RATE')
+);
 
 $totalRates = $splitRates['total'];
 unset($splitRates['total']);
@@ -176,7 +191,9 @@ function conversion_renderRate(array $rate, array $rateType)
                     ?>
                     <span class="stat-item-block-title"><?= Loc::getMessage('CONVERSION_SALE_RATE_SUM') ?></span>
                     <span class="stat-item-block-digit"><?= number_format($rate['SUM']) ?>
-						<span><? if (isset($rateType['UNITS']['SUM'])) echo $rateType['UNITS']['SUM']; ?></span>
+						<span><? if (isset($rateType['UNITS']['SUM'])) {
+                                echo $rateType['UNITS']['SUM'];
+                            } ?></span>
 					</span>
                     <?
                 }
@@ -343,23 +360,30 @@ Bitrix\Conversion\AdminHelpers\renderFilter($filter);
                         $menuItems[sprintf('%s (%s)', $name, $id)] = array_merge($filter, array('site' => $id));
                     }
 
-                    Bitrix\Conversion\AdminHelpers\renderScale(array(
-                        'SITE_NAME' => sprintf('%s (%s)', $siteName, $site),
-                        'SITE_MENU' => $menuItems,
-                        'CONVERSION' => $totalTopConversion,
-                        'SCALE' => $scale,
-                    ));
+                    Bitrix\Conversion\AdminHelpers\renderScale(
+                        array(
+                            'SITE_NAME' => sprintf('%s (%s)', $siteName, $site),
+                            'SITE_MENU' => $menuItems,
+                            'CONVERSION' => $totalTopConversion,
+                            'SCALE' => $scale,
+                        )
+                    );
 
                     ?>
                     <div class="stat-item-container item-total">
                         <div class="stat-item-title">
-                            <?= Loc::getMessage('CONVERSION_SUMMARY_PERIOD', array(
-                                '#from#' => $from,
-                                '#to#' => $to,
-                            )) ?>
+                            <?= Loc::getMessage(
+                                'CONVERSION_SUMMARY_PERIOD',
+                                array(
+                                    '#from#' => $from,
+                                    '#to#' => $to,
+                                )
+                            ) ?>
                         </div>
                         <div class="stat-graph-container">
-                            <span class="stat-graph-title"><?= Loc::getMessage('CONVERSION_SUMMARY_TOTAL_GRAPH') ?></span>
+                            <span class="stat-graph-title"><?= Loc::getMessage(
+                                    'CONVERSION_SUMMARY_TOTAL_GRAPH'
+                                ) ?></span>
                             <? conversion_renderGraph(array('total' => $totalRates), $splits, '200px') ?>
                         </div>
                     </div>
@@ -383,7 +407,10 @@ Bitrix\Conversion\AdminHelpers\renderFilter($filter);
                     $menuItems = array();
 
                     foreach ($groupedAttributeTypes as $name => $types) {
-                        $menuItems[($g = $attributeGroupTypes[$name]) ? $g['NAME'] : $name] = array_merge($filter, array('split' => $name));
+                        $menuItems[($g = $attributeGroupTypes[$name]) ? $g['NAME'] : $name] = array_merge(
+                            $filter,
+                            array('split' => $name)
+                        );
                     }
 
                     Bitrix\Conversion\AdminHelpers\renderMenu('bitrix-conversion-split', $menuItems);
@@ -491,7 +518,12 @@ Bitrix\Conversion\AdminHelpers\renderFilter($filter);
 
                                 if ($split['SPLIT_BY']) {
                                     echo '<a href="conversion_detailed.php?'
-                                        . http_build_query(array_merge($filter, array('split' => $split['SPLIT_BY'], $split['NAME'] => '')))
+                                        . http_build_query(
+                                            array_merge(
+                                                $filter,
+                                                array('split' => $split['SPLIT_BY'], $split['NAME'] => '')
+                                            )
+                                        )
                                         . '">'
                                         . $split['TITLE']
                                         . '</a>';
@@ -504,7 +536,9 @@ Bitrix\Conversion\AdminHelpers\renderFilter($filter);
 									<span><?= Loc::getMessage('CONVERSION_SUMMARY_TRAFFIC') ?>:</span>
 									<?= $denominator ?>
 									<span>|</span>
-									<?= $totalTopDenominator ? number_format($denominator / $totalTopDenominator * 100) : 0 ?>%
+									<?= $totalTopDenominator ? number_format(
+                                        $denominator / $totalTopDenominator * 100
+                                    ) : 0 ?>%
 								</span>
                             </div>
                             <?
@@ -530,7 +564,9 @@ Bitrix\Conversion\AdminHelpers\renderFilter($filter);
                                         : '<?= Loc::getMessage('CONVERSION_SUMMARY_MORE') ?>';
                                         return false;
 
-                                        "><span><span><?= Loc::getMessage('CONVERSION_SUMMARY_MORE') ?></span></span></a>
+                                        "><span><span><?= Loc::getMessage(
+                                                'CONVERSION_SUMMARY_MORE'
+                                            ) ?></span></span></a>
                             </div>
                         </div>
                         <?

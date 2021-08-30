@@ -1,4 +1,5 @@
 <?
+
 $support_default_option = array(
     "SUPPORT_DIR" => "#SITE_DIR#support/",
     "SUPPORT_EDIT" => "",

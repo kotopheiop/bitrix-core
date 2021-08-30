@@ -62,9 +62,10 @@ class ReportDispatcher implements IErrorable
                 } else {
                     $result = array();
                 }
-
             } else {
-                $this->errors[] = new Error('Report handler ' . $reportHandler::getClassName() . ' does not implement a compatible interface');
+                $this->errors[] = new Error(
+                    'Report handler ' . $reportHandler::getClassName() . ' does not implement a compatible interface'
+                );
                 return null;
             }
         }

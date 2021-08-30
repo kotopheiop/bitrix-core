@@ -41,14 +41,16 @@ class Segment implements Preset\Installation\iInstallable
      */
     public function isInstalled()
     {
-        $list = Entity\Segment::getList(array(
-            'select' => array('ID'),
-            'filter' => array(
-                '=IS_SYSTEM' => true,
-                '%CODE' => 'crm_%'
-            ),
-            'limit' => 1
-        ));
+        $list = Entity\Segment::getList(
+            array(
+                'select' => array('ID'),
+                'filter' => array(
+                    '=IS_SYSTEM' => true,
+                    '%CODE' => 'crm_%'
+                ),
+                'limit' => 1
+            )
+        );
 
         return ($list->fetch()) ? true : false;
     }
@@ -73,12 +75,10 @@ class Segment implements Preset\Installation\iInstallable
                 $segment = new Entity\Segment;
                 $segment->mergeData($data)->save();
             } catch (SqlQueryException $exception) {
-                if (strpos($exception->getDatabaseMessage(), '(1062)') === false) {
+                if (mb_strpos($exception->getDatabaseMessage(), '(1062)') === false) {
                     throw $exception;
                 }
             }
-
-
         }
 
         return true;
@@ -91,13 +91,15 @@ class Segment implements Preset\Installation\iInstallable
      */
     public function uninstall()
     {
-        $segments = Entity\Segment::getList(array(
-            'select' => array('ID'),
-            'filter' => array(
-                '=IS_SYSTEM' => true,
-                '%CODE' => 'crm_%'
+        $segments = Entity\Segment::getList(
+            array(
+                'select' => array('ID'),
+                'filter' => array(
+                    '=IS_SYSTEM' => true,
+                    '%CODE' => 'crm_%'
+                )
             )
-        ));
+        );
         foreach ($segments as $segment) {
             if (Entity\Segment::removeById($segment['ID'])) {
                 continue;
@@ -205,8 +207,8 @@ class Segment implements Preset\Installation\iInstallable
             $baseKey = null;
             foreach ($codes as $code) {
                 $code = "_" . $code;
-                if (substr($key, -strlen($code)) == $code) {
-                    $baseKey = substr($key, 0, -strlen($code));
+                if (mb_substr($key, -mb_strlen($code)) == $code) {
+                    $baseKey = mb_substr($key, 0, -mb_strlen($code));
                     break;
                 }
             }
@@ -236,11 +238,13 @@ class Segment implements Preset\Installation\iInstallable
             $filter['CODE'] = 'crm_%';
         }
 
-        $list = Entity\Segment::getList(array(
-            'select' => array('ID'),
-            'filter' => $filter,
-            'limit' => 1
-        ));
+        $list = Entity\Segment::getList(
+            array(
+                'select' => array('ID'),
+                'filter' => $filter,
+                'limit' => 1
+            )
+        );
         if ($segment = $list->fetch()) {
             return $segment['ID'];
         } else {

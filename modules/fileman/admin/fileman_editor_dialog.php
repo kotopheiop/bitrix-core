@@ -1,9 +1,11 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/fileman/prolog.php");
 
-if (!check_bitrix_sessid())
+if (!check_bitrix_sessid()) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/fileman/include.php");
 IncludeModuleLangFile(__FILE__);
@@ -108,7 +110,9 @@ define("FROMDIALOGS", true);
             }
 
             // Set title
-            window.oBXEditorDialog.SetTitle((pElement && bxTag) ? '<?=GetMessage("FILEMAN_ED_LE_TITLE")?>' : '<?=GetMessage("FILEMAN_ED_LN_TITLE")?>');
+            window.oBXEditorDialog.SetTitle((pElement && bxTag) ? '<?=GetMessage(
+                "FILEMAN_ED_LE_TITLE"
+            )?>' : '<?=GetMessage("FILEMAN_ED_LN_TITLE")?>');
 
             if (BX("OpenFileBrowserWindLink_button"))
                 BX("OpenFileBrowserWindLink_button").onclick = OpenFileBrowserWindFile;
@@ -174,31 +178,6 @@ define("FROMDIALOGS", true);
                     }
                 } else if (href.indexOf("://") !== -1 || href.substr(0, 'www.'.length) == 'www.' || href.indexOf("&goto=") !== -1) {
                     tip = "t2";
-                    // Fix link in statistic
-                    if (href.substr(0, '/bitrix/redirect.php'.length) == '/bitrix/redirect.php') {
-                        BX("bx_fixstat").checked = true;
-                        ChangeFixStat();
-                        var sParams = href.substring('/bitrix/redirect.php'.length);
-
-                        var __ExtrParam = function (p, s) {
-                            var pos = s.indexOf(p + '=');
-                            if (pos < 0)
-                                return '';
-                            var pos2 = s.indexOf('&', pos + p.length + 1);
-                            if (pos2 < 0)
-                                s = s.substring(pos + p.length + 1);
-                            else
-                                s = s.substr(pos + p.length + 1, pos2 - pos - 1 - p.length);
-                            return unescape(s);
-                        };
-
-                        BX("event1").value = __ExtrParam('event1', sParams);
-                        BX("event2").value = __ExtrParam('event2', sParams);
-                        BX("event3").value = __ExtrParam('event3', sParams);
-
-                        href = __ExtrParam('goto', sParams);
-                    }
-
                     if (href.substr(0, 'www.'.length) == 'www.')
                         href = "http://" + href;
 
@@ -275,8 +254,6 @@ define("FROMDIALOGS", true);
                     if (BX("bx_url_type").value && href.indexOf('://') == -1)
                         href = BX("bx_url_type").value + href;
 
-                    if (BX("bx_fixstat").checked)
-                        href = '/bitrix/redirect.php?event1=' + escape(BX("event1").value) + '&event2=' + escape(BX("event2").value) + '&event3=' + escape(BX("event3").value) + '&goto=' + escape(href);
                     break;
                 case 't3':
                     href = BX('bx_url_3').value;
@@ -392,13 +369,6 @@ define("FROMDIALOGS", true);
             window.oBXEditorDialog.adjustSizeEx();
         }
 
-        function ChangeFixStat() {
-            var bFix = BX("bx_fixstat").checked;
-            BX("bx_fixstat_div").style.display = bFix ? 'block' : 'none';
-            BX("event1").disabled = BX("event2").disabled = BX("event3").disabled = !bFix;
-            window.oBXEditorDialog.adjustSizeEx();
-        }
-
         function SetUrl(filename, path, site) {
             var
                 url,
@@ -478,20 +448,6 @@ define("FROMDIALOGS", true);
             </td>
         </tr>
 
-        <tr class="bx-link-t2">
-            <td style="text-align: right; vertical-align: top;"><input type="checkbox" id="bx_fixstat" value=""
-                                                                       onclick="ChangeFixStat();"></td>
-            <td>
-                <label for="bx_fixstat"
-                       style="display: block; margin-top: 3px;"><?= GetMessage("FILEMAN_ED_LINK_STAT") ?></label>
-                <div id="bx_fixstat_div" style="margin: 8px 5px; display: none;">
-                    <label for="event1">Event1:</label> <input type="event1" id="event1" size="10" value=""><br/>
-                    <label for="event2">Event2:</label> <input type="event2" id="event2" size="10" value=""><br/>
-                    <label for="event3">Event3:</label> <input type="event3" id="event3" size="10" value=""><br/>
-                </div>
-            </td>
-        </tr>
-
         <!-- anchor -->
         <tr class="bx-link-t3">
             <td class="bx-par-title"><label for="bx_url_3"><?= GetMessage("FILEMAN_ED_LINK_ACH") ?></label></td>
@@ -533,8 +489,9 @@ define("FROMDIALOGS", true);
             <td class="bx-par-val"><label for="bx_noindex"><?= GetMessage("FILEMAN_ED_LINK_NOINDEX") ?></label></td>
         </tr>
         <tr class="bx-adv">
-            <td class="bx-par-title"><label
-                        for="BXEditorDialog_title"><?= GetMessage("FILEMAN_ED_LINK_ATITLE") ?></label></td>
+            <td class="bx-par-title"><label for="BXEditorDialog_title"><?= GetMessage(
+                        "FILEMAN_ED_LINK_ATITLE"
+                    ) ?></label></td>
             <td class="bx-par-val">
                 <input type="text" size="30" value="" id="BXEditorDialog_title">
             </td>
@@ -561,7 +518,8 @@ define("FROMDIALOGS", true);
     ob_end_flush(); ?>
 
     <?
-    CAdminFileDialog::ShowScript(Array
+    CAdminFileDialog::ShowScript(
+        Array
         (
             "event" => "OpenFileBrowserWindFile",
             "arResultDest" => Array("FUNCTION_NAME" => "SetUrl"),
@@ -781,16 +739,23 @@ define("FROMDIALOGS", true);
     </script>
 
     <?
-    CAdminFileDialog::ShowScript(Array
+    CAdminFileDialog::ShowScript(
+        Array
         (
             "event" => "OpenFileBrowserWindImage",
             "arResultDest" => Array("FUNCTION_NAME" => "SetUrl"),
-            "arPath" => Array("SITE" => $_GET["site"], "PATH" => (strlen($str_FILENAME) > 0 ? GetDirPath($str_FILENAME) : '')),
-            "select" => 'F',// F - file only, D - folder only
-            "operation" => 'O',// O - open, S - save
+            "arPath" => Array(
+                "SITE" => $_GET["site"],
+                "PATH" => ($str_FILENAME <> '' ? GetDirPath($str_FILENAME) : '')
+            ),
+            "select" => 'F',
+            // F - file only, D - folder only
+            "operation" => 'O',
+            // O - open, S - save
             "showUploadTab" => true,
             "showAddToMenuTab" => false,
-            "fileFilter" => 'image',//'' - don't shjow select, 'image' - only images; "ext1,ext2" - Only files with ext1 and ext2 extentions;
+            "fileFilter" => 'image',
+            //'' - don't shjow select, 'image' - only images; "ext1,ext2" - Only files with ext1 and ext2 extentions;
             "allowAllFiles" => true,
             "SaveConfig" => true
         )
@@ -1292,7 +1257,11 @@ define("FROMDIALOGS", true);
             c.className = "bx-par-val";
             id = 'BX_dialog_VALUE_' + cnt;
             name = 'BX_dialog_VALUE_' + cnt;
-            c.innerHTML = '<input name="' + name + '" id="' + id + '" type="text" autocomplete="off" value="' + value + '" onfocus="window.oObject[this.id] = new JsTc(this, []);"  size="50"/><input type="checkbox" id="ck_' + id + '" name="ck_' + name + '" <? echo(CUserOptions::GetOption("search_tags", "order", "CNT") == "NAME" ? "checked" : "");?> title="<?=GetMessage("SEARCH_TAGS_SORTING_TIP")?>">';
+            c.innerHTML = '<input name="' + name + '" id="' + id + '" type="text" autocomplete="off" value="' + value + '" onfocus="window.oObject[this.id] = new JsTc(this, []);"  size="50"/><input type="checkbox" id="ck_' + id + '" name="ck_' + name + '" <? echo(CUserOptions::GetOption(
+                "search_tags",
+                "order",
+                "CNT"
+            ) == "NAME" ? "checked" : "");?> title="<?=GetMessage("SEARCH_TAGS_SORTING_TIP")?>">';
 
             if (!finput)
                 finput = BX('BX_dialog_VALUE_' + cnt);
@@ -1327,8 +1296,9 @@ define("FROMDIALOGS", true);
     <? ob_start(); ?>
     <table id="pageprops_t1" class="bx-par-tbl">
         <tr>
-            <td class="bx-par-title"><label
-                        for="BX_dialog_title"><b><?= GetMessage("FILEMAN_DIALOG_TITLE") ?></b></label></td>
+            <td class="bx-par-title"><label for="BX_dialog_title"><b><?= GetMessage(
+                            "FILEMAN_DIALOG_TITLE"
+                        ) ?></b></label></td>
             <td class="bx-par-val"><input type="text" id="BX_dialog_title" value="" size="30"></td>
         </tr>
         <tr>
@@ -1688,12 +1658,18 @@ define("FROMDIALOGS", true);
             var oTable = oCont.appendChild(pObj.pMainObj.CreateElement('TABLE', {width: '100%'}));
             _displayTitle(oTable, '<?=GetMessage("FILEMAN_ED_ADDITIONAL_PROPS")?>');
 
-            oBXEditorUtils.setCheckbox(_displayRow(oTable, '<?=GetMessage("FILEMAN_ED_SHOW_TOOLTIPS")?>', '__bx_show_tooltips'), pObj.pMainObj.showTooltips4Components);
+            oBXEditorUtils.setCheckbox(_displayRow(oTable, '<?=GetMessage(
+                "FILEMAN_ED_SHOW_TOOLTIPS"
+            )?>', '__bx_show_tooltips'), pObj.pMainObj.showTooltips4Components);
 
-            oBXEditorUtils.setCheckbox(_displayRow(oTable, '<?=GetMessage("FILEMAN_ED_VIS_EFFECTS")?>', '__bx_visual_effects'), pObj.pMainObj.visualEffects);
+            oBXEditorUtils.setCheckbox(_displayRow(oTable, '<?=GetMessage(
+                "FILEMAN_ED_VIS_EFFECTS"
+            )?>', '__bx_visual_effects'), pObj.pMainObj.visualEffects);
 
             if (pObj.pMainObj.arConfig.allowRenderComp2)
-                oBXEditorUtils.setCheckbox(_displayRow(oTable, '<?=GetMessage("FILEMAN_ED_RENDER_COMPONENTS2")?>', '__bx_render_comp2'), pObj.pMainObj.bRenderComponents);
+                oBXEditorUtils.setCheckbox(_displayRow(oTable, '<?=GetMessage(
+                    "FILEMAN_ED_RENDER_COMPONENTS2"
+                )?>', '__bx_render_comp2'), pObj.pMainObj.bRenderComponents);
         }
 
         function restoreSettings() {
@@ -1782,12 +1758,31 @@ define("FROMDIALOGS", true);
 
     <?
     $arTabs = array();
-    if (!isset($_GET['light_mode']) || $_GET['light_mode'] != 'Y')
-        $arTabs[] = array("DIV" => "__bx_set_1_toolbar", "TAB" => GetMessage("FILEMAN_ED_TOOLBARS"), "ICON" => "", "TITLE" => GetMessage("FILEMAN_ED_TOOLBARS_SETTINGS"), "ONSELECT" => "window.oBXEditorDialog.adjustSizeEx();");
+    if (!isset($_GET['light_mode']) || $_GET['light_mode'] != 'Y') {
+        $arTabs[] = array(
+            "DIV" => "__bx_set_1_toolbar",
+            "TAB" => GetMessage("FILEMAN_ED_TOOLBARS"),
+            "ICON" => "",
+            "TITLE" => GetMessage("FILEMAN_ED_TOOLBARS_SETTINGS"),
+            "ONSELECT" => "window.oBXEditorDialog.adjustSizeEx();"
+        );
+    }
 
-    $arTabs[] = array("DIV" => "__bx_set_2_taskbar", "TAB" => GetMessage("FILEMAN_ED_TASKBARS"), "ICON" => "", "TITLE" => GetMessage("FILEMAN_ED_TASKBARS_SETTINGS"), "ONSELECT" => "window.oBXEditorDialog.adjustSizeEx();");
+    $arTabs[] = array(
+        "DIV" => "__bx_set_2_taskbar",
+        "TAB" => GetMessage("FILEMAN_ED_TASKBARS"),
+        "ICON" => "",
+        "TITLE" => GetMessage("FILEMAN_ED_TASKBARS_SETTINGS"),
+        "ONSELECT" => "window.oBXEditorDialog.adjustSizeEx();"
+    );
 
-    $arTabs[] = array("DIV" => "__bx_set_3_add_props", "TAB" => GetMessage("FILEMAN_ED_ADDITIONAL_PROPS"), "ICON" => "", "TITLE" => GetMessage("FILEMAN_ED_ADDITIONAL_PROPS"), "ONSELECT" => "window.oBXEditorDialog.adjustSizeEx();");
+    $arTabs[] = array(
+        "DIV" => "__bx_set_3_add_props",
+        "TAB" => GetMessage("FILEMAN_ED_ADDITIONAL_PROPS"),
+        "ICON" => "",
+        "TITLE" => GetMessage("FILEMAN_ED_ADDITIONAL_PROPS"),
+        "ONSELECT" => "window.oBXEditorDialog.adjustSizeEx();"
+    );
 
     $tabControlDialog = new CAdmintabControl("tabControlDialog_opt", $arTabs, false, true);
     $tabControlDialog->Begin();
@@ -1947,7 +1942,9 @@ define("FROMDIALOGS", true);
             oDiv.style.padding = "5px";
             oDiv.innerHTML = '<table width="100%" border="0" height="260">' +
                 '<tr>' +
-                '<td align="left" width="100%" style="padding-left: 30px !important;"><?=GetMessage("FILEMAN_ED_SWF_HTML_CODE")?>:<br />' +
+                '<td align="left" width="100%" style="padding-left: 30px !important;"><?=GetMessage(
+                    "FILEMAN_ED_SWF_HTML_CODE"
+                )?>:<br />' +
                 '<textarea id="bx_flash_html_code" cols="49" rows="12"></textarea>' +
                 '</td>' +
                 '</tr>' +
@@ -2103,26 +2100,53 @@ define("FROMDIALOGS", true);
     </script>
 
     <?
-    CAdminFileDialog::ShowScript(Array
+    CAdminFileDialog::ShowScript(
+        Array
         (
             "event" => "OpenFileBrowserWindFlash",
             "arResultDest" => Array("FUNCTION_NAME" => "SetUrl"),
-            "arPath" => Array("SITE" => $_GET["site"], "PATH" => (strlen($str_FILENAME) > 0 ? GetDirPath($str_FILENAME) : '')),
-            "select" => 'F',// F - file only, D - folder only,
-            "operation" => 'O',// O - open, S - save
+            "arPath" => Array(
+                "SITE" => $_GET["site"],
+                "PATH" => ($str_FILENAME <> '' ? GetDirPath($str_FILENAME) : '')
+            ),
+            "select" => 'F',
+            // F - file only, D - folder only,
+            "operation" => 'O',
+            // O - open, S - save
             "showUploadTab" => true,
             "showAddToMenuTab" => false,
-            "fileFilter" => 'swf',//'' - don't shjow select, 'image' - only images; "ext1,ext2" - Only files with ext1 and ext2 extentions;
+            "fileFilter" => 'swf',
+            //'' - don't shjow select, 'image' - only images; "ext1,ext2" - Only files with ext1 and ext2 extentions;
             "allowAllFiles" => true,
             "SaveConfig" => true
         )
     );
 
-    $tabControlDialog = new CAdminTabControl("tabControlDialog_flash", array(
-        array("DIV" => "__bx_base_params", "TAB" => GetMessage("FILEMAN_ED_BASE_PARAMS"), "ICON" => "", "TITLE" => GetMessage("FILEMAN_ED_BASE_PARAMS"), "ONSELECT" => "window.oBXEditorDialog.adjustSizeEx();"),
-        array("DIV" => "__bx_additional_params", "TAB" => GetMessage("FILEMAN_ED_ADD_PARAMS"), "ICON" => "", "TITLE" => GetMessage("FILEMAN_ED_ADD_PARAMS"), "ONSELECT" => "window.oBXEditorDialog.adjustSizeEx();"),
-        array("DIV" => "__bx_code", "TAB" => GetMessage("FILEMAN_ED_HTML_CODE"), "ICON" => "", "TITLE" => GetMessage("FILEMAN_ED_SWF_HTML_CODE"), "ONSELECT" => "window.oBXEditorDialog.adjustSizeEx();")
-    ), false, true);
+    $tabControlDialog = new CAdminTabControl(
+        "tabControlDialog_flash", array(
+        array(
+            "DIV" => "__bx_base_params",
+            "TAB" => GetMessage("FILEMAN_ED_BASE_PARAMS"),
+            "ICON" => "",
+            "TITLE" => GetMessage("FILEMAN_ED_BASE_PARAMS"),
+            "ONSELECT" => "window.oBXEditorDialog.adjustSizeEx();"
+        ),
+        array(
+            "DIV" => "__bx_additional_params",
+            "TAB" => GetMessage("FILEMAN_ED_ADD_PARAMS"),
+            "ICON" => "",
+            "TITLE" => GetMessage("FILEMAN_ED_ADD_PARAMS"),
+            "ONSELECT" => "window.oBXEditorDialog.adjustSizeEx();"
+        ),
+        array(
+            "DIV" => "__bx_code",
+            "TAB" => GetMessage("FILEMAN_ED_HTML_CODE"),
+            "ICON" => "",
+            "TITLE" => GetMessage("FILEMAN_ED_SWF_HTML_CODE"),
+            "ONSELECT" => "window.oBXEditorDialog.adjustSizeEx();"
+        )
+    ), false, true
+    );
     $tabControlDialog->Begin(); ?>
 
     <? $tabControlDialog->BeginNextTab(); ?>
@@ -2144,7 +2168,9 @@ define("FROMDIALOGS", true);
     <script>
         function OnLoad() {
             window.oBXEditorDialog.PARTS.CONTENT_DATA.style.height = 'auto';
-            window.oBXEditorDialog.SetTitle(pObj.params.mode == 'add' ? '<?=GetMessage("FILEMAN_ED_ADD_SNIPPET")?>' : '<?=GetMessage("FILEMAN_ED_EDIT_SNIPPET")?>');
+            window.oBXEditorDialog.SetTitle(pObj.params.mode == 'add' ? '<?=GetMessage(
+                "FILEMAN_ED_ADD_SNIPPET"
+            )?>' : '<?=GetMessage("FILEMAN_ED_EDIT_SNIPPET")?>');
 
             window.arBXSnippetsTaskbars = [];
             for (var k in ar_BXTaskbarS) {
@@ -2542,7 +2568,8 @@ define("FROMDIALOGS", true);
     </script>
 
     <?
-    CAdminFileDialog::ShowScript(Array
+    CAdminFileDialog::ShowScript(
+        Array
         (
             "event" => "OpenFileDialog_thumb",
             "arResultDest" => Array("FUNCTION_NAME" => "SetUrl"),
@@ -2557,11 +2584,28 @@ define("FROMDIALOGS", true);
         )
     );
 
-    $tabControlDialog = new CAdmintabControl("tabControlDialog_sn", array(
-        array("DIV" => "__bx_sn_base_params", "TAB" => GetMessage("FILEMAN_ED_BASE_PARAMS"), "ICON" => "", "ONSELECT" => "window.oBXEditorDialog.adjustSizeEx();"),
-        array("DIV" => "__bx_sn_location", "TAB" => GetMessage("FILEMAN_ED_LOCATION"), "ICON" => "", "ONSELECT" => "window.oBXEditorDialog.adjustSizeEx();"),
-        array("DIV" => "__bx_sn_additional_params", "TAB" => GetMessage("FILEMAN_ED_ADD_PARAMS"), "ICON" => "", "ONSELECT" => "window.oBXEditorDialog.adjustSizeEx();"),
-    ), false, true);
+    $tabControlDialog = new CAdmintabControl(
+        "tabControlDialog_sn", array(
+        array(
+            "DIV" => "__bx_sn_base_params",
+            "TAB" => GetMessage("FILEMAN_ED_BASE_PARAMS"),
+            "ICON" => "",
+            "ONSELECT" => "window.oBXEditorDialog.adjustSizeEx();"
+        ),
+        array(
+            "DIV" => "__bx_sn_location",
+            "TAB" => GetMessage("FILEMAN_ED_LOCATION"),
+            "ICON" => "",
+            "ONSELECT" => "window.oBXEditorDialog.adjustSizeEx();"
+        ),
+        array(
+            "DIV" => "__bx_sn_additional_params",
+            "TAB" => GetMessage("FILEMAN_ED_ADD_PARAMS"),
+            "ICON" => "",
+            "ONSELECT" => "window.oBXEditorDialog.adjustSizeEx();"
+        ),
+    ), false, true
+    );
 
     $tabControlDialog->Begin();
     $tabControlDialog->BeginNextTab(); ?>
@@ -2729,8 +2773,20 @@ define("FROMDIALOGS", true);
     </script>
     <?
     $aTabs_dialog = array(
-        array("DIV" => "__bx_head", "TAB" => GetMessage("FILEMAN_ED_TOP_AREA"), "ICON" => "", "TITLE" => GetMessage("FILEMAN_ED_EDIT_HEAD"), "ONSELECT" => "window.oBXEditorDialog.adjustSizeEx();"),
-        array("DIV" => "__bx_footer", "TAB" => GetMessage("FILEMAN_ED_BOTTOM_AREA"), "ICON" => "", "TITLE" => GetMessage("FILEMAN_ED_EDIT_FOOTER"), "ONSELECT" => "window.oBXEditorDialog.adjustSizeEx();")
+        array(
+            "DIV" => "__bx_head",
+            "TAB" => GetMessage("FILEMAN_ED_TOP_AREA"),
+            "ICON" => "",
+            "TITLE" => GetMessage("FILEMAN_ED_EDIT_HEAD"),
+            "ONSELECT" => "window.oBXEditorDialog.adjustSizeEx();"
+        ),
+        array(
+            "DIV" => "__bx_footer",
+            "TAB" => GetMessage("FILEMAN_ED_BOTTOM_AREA"),
+            "ICON" => "",
+            "TITLE" => GetMessage("FILEMAN_ED_EDIT_FOOTER"),
+            "ONSELECT" => "window.oBXEditorDialog.adjustSizeEx();"
+        )
     );
     $tabControlDialog = new CAdminTabControl("tabControlDialog_templ", $aTabs_dialog, false, true);
 

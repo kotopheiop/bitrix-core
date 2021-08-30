@@ -55,7 +55,8 @@ class MessageUserType
 
         foreach ((array)$userField['VALUE'] as $item) {
             $APPLICATION->includeComponent(
-                'bitrix:mail.uf.message', '',
+                'bitrix:mail.uf.message',
+                '',
                 array(
                     'USER_FIELD' => $userField,
                     'MESSAGE_ID' => (int)$item,
@@ -73,12 +74,14 @@ class MessageUserType
     {
         $previousMailsIds = (array)$userField['VALUE'];
         if ($previousMailsIds !== false) {
-            $result = static::deleteList([
-                '!@MESSAGE_ID' => $mailIds,
-                '=ENTITY_UF_ID' => $userField['ID'],
-                '=ENTITY_TYPE' => $userField['ENTITY_ID'],
-                '=ENTITY_ID' => $userField['VALUE_ID'],
-            ]);
+            $result = static::deleteList(
+                [
+                    '!@MESSAGE_ID' => $mailIds,
+                    '=ENTITY_UF_ID' => $userField['ID'],
+                    '=ENTITY_TYPE' => $userField['ENTITY_ID'],
+                    '=ENTITY_ID' => $userField['VALUE_ID'],
+                ]
+            );
         }
         $newMailIdsToSave = array_diff($mailIds, $previousMailsIds);
         foreach ($newMailIdsToSave as $mailMessageId) {
@@ -90,42 +93,51 @@ class MessageUserType
     {
         $previousMailsIds = (array)$userField['VALUE'];
         if (!in_array($mailMessageId, $previousMailsIds)) {
-            $message = MailMessageTable::getList([
-                'select' => [
-                    'ID', 'MAILBOX_ID',
-                ],
-                'filter' => [
-                    '=ID' => $mailMessageId,
-                ],
-            ])->fetch();
+            $message = MailMessageTable::getList(
+                [
+                    'select' => [
+                        'ID',
+                        'MAILBOX_ID',
+                    ],
+                    'filter' => [
+                        '=ID' => $mailMessageId,
+                    ],
+                ]
+            )->fetch();
 
             if (MailboxTable::getUserMailbox($message['MAILBOX_ID'], $userId)) {
                 if ($userField['VALUE'] !== false && $userField['MULTIPLE'] === 'N') {
-                    $result = static::deleteList([
-                        '!=MESSAGE_ID' => $mailMessageId,
-                        '=ENTITY_UF_ID' => $userField['ID'],
-                        '=ENTITY_TYPE' => $userField['ENTITY_ID'],
-                        '=ENTITY_ID' => $userField['VALUE_ID'],
-                    ]);
+                    $result = static::deleteList(
+                        [
+                            '!=MESSAGE_ID' => $mailMessageId,
+                            '=ENTITY_UF_ID' => $userField['ID'],
+                            '=ENTITY_TYPE' => $userField['ENTITY_ID'],
+                            '=ENTITY_ID' => $userField['VALUE_ID'],
+                        ]
+                    );
                 }
-                Internals\MessageAccessTable::add([
-                    'TOKEN' => md5(sprintf(
-                        '%u:%u:%u:%s:%s:%u',
-                        time(),
-                        $message['MAILBOX_ID'],
-                        $mailMessageId,
-                        $userField['ENTITY_ID'],
-                        $userField['ID'],
-                        $userField['VALUE_ID']
-                    )),
-                    'MAILBOX_ID' => $message['MAILBOX_ID'],
-                    'MESSAGE_ID' => $mailMessageId,
-                    'ENTITY_UF_ID' => $userField['ID'],
-                    'ENTITY_TYPE' => $userField['ENTITY_ID'],
-                    'ENTITY_ID' => $userField['VALUE_ID'],
-                    'SECRET' => bin2hex(Main\Security\Random::getBytes(16)),
-                    'OPTIONS' => [],
-                ]);
+                Internals\MessageAccessTable::add(
+                    [
+                        'TOKEN' => md5(
+                            sprintf(
+                                '%u:%u:%u:%s:%s:%u',
+                                time(),
+                                $message['MAILBOX_ID'],
+                                $mailMessageId,
+                                $userField['ENTITY_ID'],
+                                $userField['ID'],
+                                $userField['VALUE_ID']
+                            )
+                        ),
+                        'MAILBOX_ID' => $message['MAILBOX_ID'],
+                        'MESSAGE_ID' => $mailMessageId,
+                        'ENTITY_UF_ID' => $userField['ID'],
+                        'ENTITY_TYPE' => $userField['ENTITY_ID'],
+                        'ENTITY_ID' => $userField['VALUE_ID'],
+                        'SECRET' => bin2hex(Main\Security\Random::getBytes(16)),
+                        'OPTIONS' => [],
+                    ]
+                );
                 static::sendEntityCreatedEvents($message, $userField);
             }
         }
@@ -135,26 +147,30 @@ class MessageUserType
 
     public static function onDelete($userField, $messageId)
     {
-        $result = static::deleteList([
-            '=MESSAGE_ID' => $messageId,
-            '=ENTITY_UF_ID' => $userField['ID'],
-            '=ENTITY_TYPE' => $userField['ENTITY_ID'],
-            '=ENTITY_ID' => $userField['ENTITY_VALUE_ID'],
-        ]);
+        $result = static::deleteList(
+            [
+                '=MESSAGE_ID' => $messageId,
+                '=ENTITY_UF_ID' => $userField['ID'],
+                '=ENTITY_TYPE' => $userField['ENTITY_ID'],
+                '=ENTITY_ID' => $userField['ENTITY_VALUE_ID'],
+            ]
+        );
     }
 
     private static function deleteList($filter)
     {
         $entity = Internals\MessageAccessTable::getEntity();
         $connection = $entity->getConnection();
-        return $connection->query(sprintf(
-            'DELETE FROM %s WHERE %s',
-            $connection->getSqlHelper()->quote($entity->getDbTableName()),
-            Main\Entity\Query::buildFilterSql(
-                $entity,
-                $filter
+        return $connection->query(
+            sprintf(
+                'DELETE FROM %s WHERE %s',
+                $connection->getSqlHelper()->quote($entity->getDbTableName()),
+                Main\Entity\Query::buildFilterSql(
+                    $entity,
+                    $filter
+                )
             )
-        ));
+        );
     }
 
     private static function sendEntityCreatedEvents($message, $userField)
@@ -171,7 +187,10 @@ class MessageUserType
                     ->fetch();
 
                 if ($bindingEntity) {
-                    $bindingEntityLink = \CCrmOwnerType::GetEntityShowPath($bindingEntity['OWNER_TYPE_ID'], $bindingEntity['OWNER_ID']);
+                    $bindingEntityLink = \CCrmOwnerType::GetEntityShowPath(
+                        $bindingEntity['OWNER_TYPE_ID'],
+                        $bindingEntity['OWNER_ID']
+                    );
                 }
             }
             \CPullWatch::addToStack(

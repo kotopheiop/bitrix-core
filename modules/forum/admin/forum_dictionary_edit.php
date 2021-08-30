@@ -1,12 +1,14 @@
 <?
+
 /********************************************************************
  * Unquotable words.
  ********************************************************************/
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 \Bitrix\Main\Loader::includeModule("forum");
 $forumPermissions = $APPLICATION->GetGroupRight("forum");
-if ($forumPermissions == "D")
+if ($forumPermissions == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 IncludeModuleLangFile(__FILE__);
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/forum/prolog.php");
 
@@ -14,7 +16,7 @@ $bVarsFromForm = false;
 $sError = false;
 $TYPE = ($TYPE == "T" ? "T" : "W");
 /*******************************************************************/
-if ($REQUEST_METHOD == "POST" && strlen($Update) > 0 && (CFilterUnquotableWords::FilterPerm()) && check_bitrix_sessid()) {
+if ($REQUEST_METHOD == "POST" && $Update <> '' && (CFilterUnquotableWords::FilterPerm()) && check_bitrix_sessid()) {
     $erMsg = array();
     $arFields = array();
     $APPLICATION->ResetException();
@@ -22,9 +24,9 @@ if ($REQUEST_METHOD == "POST" && strlen($Update) > 0 && (CFilterUnquotableWords:
     $arFields = array("TITLE" => $_REQUEST["TITLE"]);
 
     if ($_REQUEST["DICTIONARY_ID"] > 0) {
-        if (!CFilterDictionary::Update($_REQUEST["DICTIONARY_ID"], $arFields))
+        if (!CFilterDictionary::Update($_REQUEST["DICTIONARY_ID"], $arFields)) {
             $erMsg[] = GetMessage("FLTR_IS_NOT_UPDATE");
-        else {
+        } else {
             $db_res = CFilterDictionary::GetList(array(), array("ID" => $_REQUEST["DICTIONARY_ID"]));
             if ($db_res && $res = $db_res->Fetch()) {
                 $arFields["TYPE"] = $res["TYPE"];
@@ -32,17 +34,19 @@ if ($REQUEST_METHOD == "POST" && strlen($Update) > 0 && (CFilterUnquotableWords:
         }
     } else {
         $arFields["TYPE"] = ($_REQUEST["TYPE"] == "T" ? "T" : "W");
-        if (!CFilterDictionary::Add($arFields))
+        if (!CFilterDictionary::Add($arFields)) {
             $erMsg[] = GetMessage("FLTR_IS_NOT_ADD");
+        }
     }
 
     $err = $APPLICATION->GetException();
-    if (!$err && !empty($_REQUEST['save']))
+    if (!$err && !empty($_REQUEST['save'])) {
         LocalRedirect("forum_dictionary.php?TYPE=" . $arFields["TYPE"] . "&lang=" . LANG);
-    elseif ($err) {
+    } elseif ($err) {
         $bVarsFromForm = true;
-        if ($err = $APPLICATION->GetException())
+        if ($err = $APPLICATION->GetException()) {
             $sError = $err->GetString();
+        }
     }
 }
 $arFields = array();
@@ -53,7 +57,8 @@ if ($_REQUEST["DICTIONARY_ID"] > 0) {
         $arFields = array(
             "ID" => $res["ID"],
             "TYPE" => $res["TYPE"],
-            "TITLE" => $res["TITLE"]);
+            "TITLE" => $res["TITLE"]
+        );
         $bAdd = false;
     }
 }
@@ -61,29 +66,35 @@ if ($bAdd) {
     $arFields = array(
         "ID" => 0,
         "TYPE" => "",
-        "TITLE" => "");
+        "TITLE" => ""
+    );
 }
 if ($bVarsFromForm) {
     $arFields = array(
         "ID" => $_REQUEST["DICTIONARY_ID"],
         "TYPE" => $_REQUEST["TYPE"],
-        "TITLE" => $_REQUEST["TITLE"]);
+        "TITLE" => $_REQUEST["TITLE"]
+    );
 }
-if ($bAdd)
+if ($bAdd) {
     $APPLICATION->SetTitle(GetMessage("FLTR_NEW"));
-else
+} else {
     $APPLICATION->SetTitle(GetMessage("FLTR_UPDATE"));
+}
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 /*******************************************************************/
 $aMenu = array(
     array(
         "TEXT" => GetMessage("FLTR_LIST"),
         "LINK" => "/bitrix/admin/forum_dictionary.php?TYPE=" . $TYPE . "&lang=" . LANG,
-        "ICON" => "btn_list"));
+        "ICON" => "btn_list"
+    )
+);
 $context = new CAdminContextMenu($aMenu);
 $context->Show();
-if ($sError)
+if ($sError) {
     CAdminMessage::ShowMessage($sError);
+}
 
 /*******************************************************************/
 ?>
@@ -108,8 +119,12 @@ $tabControl->BeginNextTab();
         <td width="40%"><?= GetMessage("FLTR_HEAD_TYPE") ?>:</td>
         <td width="60%">
             <select name="TYPE" <?= (!empty($arFields["ID"]) ? "disabled=\"disabled\"" : "") ?>>
-                <option value="T" <?= ($arFields["TYPE"] == "T" ? " selected" : "") ?>><?= GetMessage("FLTR_HEAD_TYPE_T") ?></option>
-                <option value="W" <?= ($arFields["TYPE"] == "T" ? "" : " selected") ?>><?= GetMessage("FLTR_HEAD_TYPE_W") ?></option>
+                <option value="T" <?= ($arFields["TYPE"] == "T" ? " selected" : "") ?>><?= GetMessage(
+                        "FLTR_HEAD_TYPE_T"
+                    ) ?></option>
+                <option value="W" <?= ($arFields["TYPE"] == "T" ? "" : " selected") ?>><?= GetMessage(
+                        "FLTR_HEAD_TYPE_W"
+                    ) ?></option>
             </select>
         </td>
     </tr>

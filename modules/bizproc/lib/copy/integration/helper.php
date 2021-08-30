@@ -17,7 +17,12 @@ class Helper
     {
         $templateIds = [];
         $queryResult = \CBPWorkflowTemplateLoader::getList(
-            [], ["DOCUMENT_TYPE" => $this->documentType], false, false, ["ID"]);
+            [],
+            ["DOCUMENT_TYPE" => $this->documentType],
+            false,
+            false,
+            ["ID"]
+        );
         while ($template = $queryResult->fetch()) {
             $templateIds[] = $template["ID"];
         }
@@ -28,14 +33,16 @@ class Helper
     {
         $triggerIds = [];
 
-        $queryResult = TriggerTable::getList([
-            "select" => ["ID"],
-            "filter" => [
-                "=MODULE_ID" => $this->documentType[0],
-                "=ENTITY" => $this->documentType[1],
-                "=DOCUMENT_TYPE" => $this->documentType[2]
+        $queryResult = TriggerTable::getList(
+            [
+                "select" => ["ID"],
+                "filter" => [
+                    "=MODULE_ID" => $this->documentType[0],
+                    "=ENTITY" => $this->documentType[1],
+                    "=DOCUMENT_TYPE" => $this->documentType[2]
+                ]
             ]
-        ]);
+        );
         while ($trigger = $queryResult->fetch()) {
             $triggerIds[] = $trigger["ID"];
         }

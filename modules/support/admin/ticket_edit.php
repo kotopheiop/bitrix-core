@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/support/prolog.php");
 define("HELP_FILE", "ticket_list.php");
@@ -20,10 +21,13 @@ $bSupportTeam = (CTicket::IsSupportTeam()) ? "Y" : "N";
 $message = null;
 $messageA = array();
 
-if ($bAdmin != "Y" && $bSupportTeam != "Y" && $bDemo != "Y" && $bSupportClient != "Y") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($bAdmin != "Y" && $bSupportTeam != "Y" && $bDemo != "Y" && $bSupportClient != "Y") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/support/include.php");
-IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/support/admin/ticket_edit.php");
+\Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
+
 
 $err_mess = "File: " . __FILE__ . "<br>Line: ";
 define("HELP_FILE", "ticket_list.php");
@@ -40,14 +44,16 @@ function CheckFields()
     $max_size = 0;
 
     $arMsg = Array();
-    if (strlen(trim($TITLE)) <= 0 && intval($ID) <= 0)
-        //$str .= GetMessage("SUP_FORGOT_TITLE")."<br>";
+    if (trim($TITLE) == '' && intval($ID) <= 0) //$str .= GetMessage("SUP_FORGOT_TITLE")."<br>";
+    {
         $arMsg[] = array("id" => "TITLE", "text" => GetMessage("SUP_FORGOT_TITLE"));
+    }
 
 
-    if (strlen(trim($MESSAGE)) <= 0 && intval($ID) <= 0)
-        //$str .= GetMessage("SUP_FORGOT_MESSAGE")."<br>";
+    if (trim($MESSAGE) == '' && intval($ID) <= 0) //$str .= GetMessage("SUP_FORGOT_MESSAGE")."<br>";
+    {
         $arMsg[] = array("id" => "MESSAGE", "text" => GetMessage("SUP_FORGOT_MESSAGE"));
+    }
 
     if ($bSupportTeam != "Y" && $bAdmin != "Y") {
         $max_size = COption::GetOptionString("support", "SUPPORT_MAX_FILESIZE");
@@ -56,10 +62,14 @@ function CheckFields()
 
     if ($max_size > 0 && is_array($arFILES) && count($arFILES) > 0) {
         $i = -1;
-        while (list($key, $arFILE) = each($arFILES)) {
+        foreach ($arFILES as $key => $arFILE) {
             $i++;
-            if (intval($arFILE["size"]) > $max_size)
-                $arMsg[] = array("id" => "FILE_" . $i, "text" => str_replace("#FILE_NAME#", $arFILE["name"], GetMessage("SUP_MAX_FILE_SIZE_EXCEEDING")));
+            if (intval($arFILE["size"]) > $max_size) {
+                $arMsg[] = array(
+                    "id" => "FILE_" . $i,
+                    "text" => str_replace("#FILE_NAME#", $arFILE["name"], GetMessage("SUP_MAX_FILE_SIZE_EXCEEDING"))
+                );
+            }
         }
     }
 
@@ -70,7 +80,6 @@ function CheckFields()
     }
 
     return true;
-
 }
 
 function Support_GetUserInfo($USER_ID, &$login, &$name, $safe_for_html = true)
@@ -129,10 +138,11 @@ function _Support_GetDictionaryInfoEx($arDictionary = Array())
 
     $arID = Array();
     foreach ($arDictionary as $dic => $value) {
-        if (intval($value) > 0)
+        if (intval($value) > 0) {
             $arID[] = $value;
-        else
+        } else {
             $GLOBALS["str_" . $dic . "_NAME"] = $GLOBALS["str_" . $dic . "_DESC"] = $GLOBALS["str_" . $dic . "_SID"] = "";
+        }
     }
 
     if (!empty($arID)) {
@@ -146,8 +156,7 @@ function _Support_GetDictionaryInfoEx($arDictionary = Array())
             "D" => "DIFFICULTY"
         );
 
-        $v1 = $v2 = $v3 = null;
-        $rs = CTicketDictionary::GetList($v1, $v2, array("ID" => $arID), $v3);
+        $rs = CTicketDictionary::GetList('', '', array("ID" => $arID));
         while ($ar = $rs->Fetch()) {
             $dic = $ar["C_TYPE"];
             $GLOBALS["str_" . $arTypes[$dic] . "_NAME"] = $ar["NAME"];
@@ -198,23 +207,33 @@ function Support_GetSLAInfo($ID, &$name, &$description, $safe_for_html = true)
  * Work with GET | POST
  ***************************************************************************/
 $ID = intval($ID);
-if ($ID <= 0) $bOwner = "Y"; else $bOwner = CTicket::IsOwner($ID) ? "Y" : "N";
+if ($ID <= 0) {
+    $bOwner = "Y";
+} else {
+    $bOwner = CTicket::IsOwner($ID) ? "Y" : "N";
+}
 
 if ($bDemo == "Y" && $bOwner == "Y") {
     $bSupportClient = "Y";
     $bDemo = "N";
 }
 
-$TICKET_LIST_URL = strlen($TICKET_LIST_URL) > 0 ? CUtil::AddSlashes(htmlspecialcharsbx((substr($TICKET_LIST_URL, 0, 4) == 'http' ? '' : '/') . $TICKET_LIST_URL)) : "ticket_list.php";
-$TICKET_EDIT_URL = strlen($TICKET_EDIT_URL) > 0 ? CUtil::AddSlashes(htmlspecialcharsbx((substr($TICKET_EDIT_URL, 0, 4) == 'http' ? '' : '/') . $TICKET_EDIT_URL)) : "ticket_edit.php";
-$TICKET_MESSAGE_EDIT_URL = strlen($TICKET_MESSAGE_EDIT_URL) > 0 ? CUtil::AddSlashes(htmlspecialcharsbx((substr($TICKET_MESSAGE_EDIT_URL, 0, 4) == 'http' ? '' : '/') . $TICKET_MESSAGE_EDIT_URL)) : "ticket_message_edit.php";
+$TICKET_LIST_URL = $TICKET_LIST_URL <> '' ? CUtil::AddSlashes(
+    htmlspecialcharsbx((mb_substr($TICKET_LIST_URL, 0, 4) == 'http' ? '' : '/') . $TICKET_LIST_URL)
+) : "ticket_list.php";
+$TICKET_EDIT_URL = $TICKET_EDIT_URL <> '' ? CUtil::AddSlashes(
+    htmlspecialcharsbx((mb_substr($TICKET_EDIT_URL, 0, 4) == 'http' ? '' : '/') . $TICKET_EDIT_URL)
+) : "ticket_edit.php";
+$TICKET_MESSAGE_EDIT_URL = $TICKET_MESSAGE_EDIT_URL <> '' ? CUtil::AddSlashes(
+    htmlspecialcharsbx((mb_substr($TICKET_MESSAGE_EDIT_URL, 0, 4) == 'http' ? '' : '/') . $TICKET_MESSAGE_EDIT_URL)
+) : "ticket_message_edit.php";
 
 if (intval($mdel_id) > 0 && check_bitrix_sessid()) {
     CTicket::DeleteMessage($mdel_id, "Y");
     LocalRedirect($TICKET_EDIT_URL . "?ID=" . $ID . "&lang=" . LANGUAGE_ID);
 }
 
-if (strlen($action) > 0 && check_bitrix_sessid()) {
+if ($action <> '' && check_bitrix_sessid()) {
     switch ($action) {
         case "close":
             CTicket::SetTicket(array("CLOSE" => "Y"), $ID);
@@ -240,19 +259,23 @@ if (strlen($action) > 0 && check_bitrix_sessid()) {
 }
 
 // if button "Save" pressed
-if ((strlen($save) > 0 || strlen($apply) > 0) && $REQUEST_METHOD == "POST" && check_bitrix_sessid()) {
+if (($save <> '' || $apply <> '') && $REQUEST_METHOD == "POST" && check_bitrix_sessid()) {
     $arFILES = array();
-    if (is_array($HTTP_POST_FILES) && count($HTTP_POST_FILES) > 0) {
-        while (list($key, $arFILE) = each($HTTP_POST_FILES)) {
-            if (strlen($arFILE["name"]) > 0) {
+    if (is_array($_FILES) && count($_FILES) > 0) {
+        foreach ($_FILES as $key => $arFILE) {
+            if ($arFILE["name"] <> '') {
                 $arFILE["MODULE_ID"] = "support";
                 $arFILES[] = $arFILE;
             }
         }
     }
     if (CheckFields()) {
-        if ($OPEN == "Y") $CLOSE = "N";
-        if ($CLOSE == "Y") $OPEN = "N";
+        if ($OPEN == "Y") {
+            $CLOSE = "N";
+        }
+        if ($CLOSE == "Y") {
+            $OPEN = "N";
+        }
         if ($bAdmin != "Y" && $bSupportTeam != "Y") {
             $HIDDEN = "N";
             $NOT_CHANGE_STATUS = "N";
@@ -292,18 +315,26 @@ if ((strlen($save) > 0 || strlen($apply) > 0) && $REQUEST_METHOD == "POST" && ch
         $NOTIFY = ($HIDDEN == "Y") ? "N" : "Y";
 
         $bSetTicket = false;
-        if (CTicket::IsAdmin())
+        if (CTicket::IsAdmin()) {
             $bSetTicket = true;
-        else {
-            $rsTicket = CTicket::GetByID($ID, SITE_ID, $check_rights = "Y", $get_user_name = "N", $get_extra_names = "N");
-            if ($arTicket = $rsTicket->GetNext())
+        } else {
+            $rsTicket = CTicket::GetByID(
+                $ID,
+                SITE_ID,
+                $check_rights = "Y",
+                $get_user_name = "N",
+                $get_extra_names = "N"
+            );
+            if ($arTicket = $rsTicket->GetNext()) {
                 $bSetTicket = true;
+            }
         }
 
         if ($bDemo != "Y" && $bAdmin != "Y" && ($bSupportTeam == "Y" && intval($ID) > 0 && !$bSetTicket)) {
             // send to ticket list
-            if ($OWNER_USER_ID != $USER->GetID())
+            if ($OWNER_USER_ID != $USER->GetID()) {
                 LocalRedirect($TICKET_LIST_URL . "?lang=" . LANGUAGE_ID);
+            }
         }
 
         $USER_FIELD_MANAGER->EditFormAddFields($PROPERTY_ID, $arFields);
@@ -334,13 +365,17 @@ if ((strlen($save) > 0 || strlen($apply) > 0) && $REQUEST_METHOD == "POST" && ch
                 unset($_SESSION['MESSAGE_NUM']);
                 unset($_SESSION['MESSAGE_DATE']);
 
-                if (strlen($save) > 0) // save -> new ticket
+                if ($save <> '') // save -> new ticket
+                {
                     LocalRedirect($TICKET_EDIT_URL . "?ID=" . $ID . "&lang=" . LANGUAGE_ID);
-                elseif (strlen($apply) > 0) // apply -> original ticket
+                } elseif ($apply <> '') // apply -> original ticket
+                {
                     LocalRedirect($TICKET_EDIT_URL . "?ID=" . $intLastTicketID . "&lang=" . LANGUAGE_ID);
+                }
             } else {
-                if (strlen($save) > 0) LocalRedirect($TICKET_LIST_URL . "?lang=" . LANGUAGE_ID);
-                elseif (strlen($apply) > 0) {
+                if ($save <> '') {
+                    LocalRedirect($TICKET_LIST_URL . "?lang=" . LANGUAGE_ID);
+                } elseif ($apply <> '') {
                     // change responsible
                     if ($bDemo != "Y" && $bAdmin != "Y" && ($bSupportTeam == "Y" && $RESPONSIBLE_USER_ID != $arTicket['RESPONSIBLE_USER_ID'])) {
                         // send to ticket list
@@ -361,7 +396,7 @@ if ((strlen($save) > 0 || strlen($apply) > 0) && $REQUEST_METHOD == "POST" && ch
 
 $arrSiteRef = array();
 $arrSiteID = array();
-$rs = CSite::GetList(($v1 = "sort"), ($v2 = "asc"));
+$rs = CSite::GetList();
 while ($ar = $rs->Fetch()) {
     $arrSiteRef[] = "[" . $ar["ID"] . "] " . $ar["NAME"];
     $arrSiteID[] = $ar["ID"];
@@ -381,18 +416,24 @@ if (!($ticket && $ticket->ExtractFields())) {
 } else {
     $str_lang = $TICKET_SITE = $str_SITE_ID;
 
-    if (strlen($str_DATE_CLOSE) > 0) $str_CLOSE = "Y";
+    if ($str_DATE_CLOSE <> '') {
+        $str_CLOSE = "Y";
+    }
     CTicket::UpdateOnline($ID);
 
-    $rsFiles = CTicket::GetFileList($v1 = "s_id", $v2 = "asc", array("TICKET_ID" => $ID));
+    $rsFiles = CTicket::GetFileList("s_id", "asc", array("TICKET_ID" => $ID));
     {
         while ($arFile = $rsFiles->Fetch()) {
-            $name = strlen($arFile["ORIGINAL_NAME"]) > 0 ? $arFile["ORIGINAL_NAME"] : $arFile["FILE_NAME"];
-            if (strlen($arFile["EXTENSION_SUFFIX"]) > 0) {
-                $suffix_length = strlen($arFile["EXTENSION_SUFFIX"]);
-                $name = substr($name, 0, strlen($name) - $suffix_length);
+            $name = $arFile["ORIGINAL_NAME"] <> '' ? $arFile["ORIGINAL_NAME"] : $arFile["FILE_NAME"];
+            if ($arFile["EXTENSION_SUFFIX"] <> '') {
+                $suffix_length = mb_strlen($arFile["EXTENSION_SUFFIX"]);
+                $name = mb_substr($name, 0, mb_strlen($name) - $suffix_length);
             }
-            $ALL_TICKET_FILES[$arFile["MESSAGE_ID"]][] = array("HASH" => $arFile["HASH"], "NAME" => $name, "FILE_SIZE" => $arFile["FILE_SIZE"]);
+            $ALL_TICKET_FILES[$arFile["MESSAGE_ID"]][] = array(
+                "HASH" => $arFile["HASH"],
+                "NAME" => $name,
+                "FILE_SIZE" => $arFile["FILE_SIZE"]
+            );
         }
     }
 
@@ -435,14 +476,18 @@ if ($e = $APPLICATION->GetException()) {
     $message = new CAdminMessage(GetMessage("SUP_ERROR"), $e);
     $DB->InitTableVarsForEdit("b_ticket", "", "str_");
 }
-if ($ID > 0) $sDocTitle = GetMessage("SUP_EDIT_RECORD", array("#ID#" => $ID, "#TITLE#" => htmlspecialcharsback($str_TITLE)));
-else $sDocTitle = GetMessage("SUP_NEW_RECORD");
+if ($ID > 0) {
+    $sDocTitle = GetMessage("SUP_EDIT_RECORD", array("#ID#" => $ID, "#TITLE#" => htmlspecialcharsback($str_TITLE)));
+} else {
+    $sDocTitle = GetMessage("SUP_NEW_RECORD");
+}
 
-if (($bSupportTeam == "Y" || $bAdmin == "Y" || $bDemo == "Y") && strlen($str_IS_SPAM) > 0) {
-    if ($str_IS_SPAM == "Y")
+if (($bSupportTeam == "Y" || $bAdmin == "Y" || $bDemo == "Y") && $str_IS_SPAM <> '') {
+    if ($str_IS_SPAM == "Y") {
         $sDocTitle .= " [" . GetMessage("SUP_SPAM") . "!]";
-    else
+    } else {
         $sDocTitle .= " [" . GetMessage("SUP_SPAM") . "?]";
+    }
 }
 
 $APPLICATION->SetTitle($sDocTitle);
@@ -455,7 +500,7 @@ $VIEW_TICKET_DEFAULT_MODE = COption::GetOptionString("support", "VIEW_TICKET_DEF
 $DEFAULT_AUTO_CLOSE_DAYS = COption::GetOptionString("support", "DEFAULT_AUTO_CLOSE_DAYS");
 $ONLINE_AUTO_REFRESH = COption::GetOptionString("support", "ONLINE_AUTO_REFRESH");
 
-$str_AUTO_CLOSE_DAYS = strlen($str_AUTO_CLOSE_DAYS) > 0 ? $str_AUTO_CLOSE_DAYS : $DEFAULT_AUTO_CLOSE_DAYS;
+$str_AUTO_CLOSE_DAYS = $str_AUTO_CLOSE_DAYS <> '' ? $str_AUTO_CLOSE_DAYS : $DEFAULT_AUTO_CLOSE_DAYS;
 
 $bResponsible = $bSupportTeam;
 
@@ -472,7 +517,9 @@ $can_select_mark = "N";
 $can_select_mode = "N";
 
 $default_mode = "edit";
-if (strlen($VIEW_TICKET_DEFAULT_MODE) > 0) $default_mode = $VIEW_TICKET_DEFAULT_MODE;
+if ($VIEW_TICKET_DEFAULT_MODE <> '') {
+    $default_mode = $VIEW_TICKET_DEFAULT_MODE;
+}
 
 if ($ID > 0) {
     if ($bSupportTeam == "Y" || $bAdmin == "Y" || $bDemo == "Y") {
@@ -486,8 +533,9 @@ if ($ID > 0) {
         $can_select_responsible = "Y";
         $can_select_criticality = "Y";
 
-        if (strlen($str_DATE_CLOSE) <= 0 && strlen($VIEW_TICKET_DEFAULT_MODE) > 0)
+        if ($str_DATE_CLOSE == '' && $VIEW_TICKET_DEFAULT_MODE <> '') {
             $can_select_mode = "Y";
+        }
     }
     if ($bOwner == "Y") {
         $can_select_criticality = "Y";
@@ -496,7 +544,9 @@ if ($ID > 0) {
 }
 
 if ($ID <= 0) {
-    if (defined("ADMIN_SECTION") && ADMIN_SECTION == true) $can_select_site = "Y";
+    if (defined("ADMIN_SECTION") && ADMIN_SECTION == true) {
+        $can_select_site = "Y";
+    }
     if ($bSupportTeam == "Y" || $bAdmin == "Y" || $bDemo == "Y") {
         $can_select_owner = "Y";
         $can_select_sla = "Y";
@@ -520,7 +570,9 @@ if ($can_select_sla == "Y") {
         $arrSlaRef[] = $ar["REFERENCE"];
         $arrSlaID[] = $ar["ID"];
     }
-} else $TICKET_SLA = (intval($str_SLA_ID) > 0) ? $str_SLA_ID : CTicketSLA::GetForUser($TICKET_SITE);
+} else {
+    $TICKET_SLA = (intval($str_SLA_ID) > 0) ? $str_SLA_ID : CTicketSLA::GetForUser($TICKET_SITE);
+}
 $arrSUPPORT_TEAM = array();
 
 $TICKET_DICTIONARY = CTicketDictionary::GetDropDownArray($TICKET_SITE, $TICKET_SLA);
@@ -549,19 +601,21 @@ if (intval($ID) > 0) {
         "LINK" => "/bitrix/admin/ticket_edit.php?lang=" . LANGUAGE_ID,
     );
 
-    if (strlen($str_DATE_CLOSE) <= 0) {
+    if ($str_DATE_CLOSE == '') {
         $aMenu[] = array(
             //"ICON" => "btn_close",
             "TEXT" => GetMessage("MAIN_ADMIN_MENU_CLOSE"),
             "TITLE" => GetMessage("SUP_CLOSE_TICKET"),
-            "LINK" => "/bitrix/admin/ticket_edit.php?ID=" . $ID . "&action=close&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get()
+            "LINK" => "/bitrix/admin/ticket_edit.php?ID=" . $ID . "&action=close&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get(
+                )
         );
     } else {
         $aMenu[] = array(
             //"ICON" => "btn_open",
             "TEXT" => GetMessage("MAIN_ADMIN_MENU_OPEN"),
             "TITLE" => GetMessage("SUP_OPEN_TICKET"),
-            "LINK" => "/bitrix/admin/ticket_edit.php?ID=" . $ID . "&action=open&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get()
+            "LINK" => "/bitrix/admin/ticket_edit.php?ID=" . $ID . "&action=open&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get(
+                )
         );
     }
 
@@ -569,38 +623,47 @@ if (intval($ID) > 0) {
         //$aMenu[] = array("NEWBAR"=>"Y");
         $arSpamMenu = Array();
 
-        if (strlen($str_IS_SPAM) > 0) {
+        if ($str_IS_SPAM <> '') {
             $arSpamMenu[] = array(
                 "TEXT" => GetMessage("SUP_UNMARK_TICKET"),
-                "ACTION" => "window.location='/bitrix/admin/ticket_edit.php?ID=" . $ID . "&action=unmark_spam&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get() . "';"
+                "ACTION" => "window.location='/bitrix/admin/ticket_edit.php?ID=" . $ID . "&action=unmark_spam&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get(
+                    ) . "';"
             );
         }
 
         if ($str_IS_SPAM != "N") {
             $arSpamMenu[] = array(
                 "TEXT" => GetMessage("SUP_MARK_AS_POSSIBLE_SPAM"),
-                "ACTION" => "window.location='/bitrix/admin/ticket_edit.php?ID=" . $ID . "&action=maybe_spam&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get() . "';"
+                "ACTION" => "window.location='/bitrix/admin/ticket_edit.php?ID=" . $ID . "&action=maybe_spam&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get(
+                    ) . "';"
             );
         }
 
         if ($str_IS_SPAM != "Y" && $bAdmin == "Y") {
             $arSpamMenu[] = array(
                 "TEXT" => GetMessage("SUP_MARK_AS_SPAM"),
-                "ACTION" => "window.location='/bitrix/admin/ticket_edit.php?ID=" . $ID . "&action=mark_spam&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get() . "';"
+                "ACTION" => "window.location='/bitrix/admin/ticket_edit.php?ID=" . $ID . "&action=mark_spam&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get(
+                    ) . "';"
             );
         }
 
         if ($bAdmin == "Y" || $bDemo == "Y") {
             $arSpamMenu[] = array(
                 "TEXT" => GetMessage("SUP_MARK_AS_SPAM_DELETE"),
-                "ACTION" => "javascript:if(confirm('" . GetMessage("SUP_MARK_AS_SPAM_DELETE_CONFIRM") . "')) window.location='/bitrix/admin/ticket_list.php?ID=" . $ID . "&action=mark_spam_delete&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get() . "';",
+                "ACTION" => "javascript:if(confirm('" . GetMessage(
+                        "SUP_MARK_AS_SPAM_DELETE_CONFIRM"
+                    ) . "')) window.location='/bitrix/admin/ticket_list.php?ID=" . $ID . "&action=mark_spam_delete&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get(
+                    ) . "';",
             );
 
             $aMenu[] = array(
                 "TEXT" => GetMessage("MAIN_ADMIN_MENU_DELETE"),
                 "TITLE" => GetMessage("SUP_DELETE_TICKET"),
                 "ICON" => "btn_delete",
-                "LINK" => "javascript:if(confirm('" . GetMessage("SUP_DELETE_TICKET_CONFIRM") . "')) window.location='/bitrix/admin/ticket_list.php?ID=" . $ID . "&action=delete&redirectafter=Y&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get() . "';",
+                "LINK" => "javascript:if(confirm('" . GetMessage(
+                        "SUP_DELETE_TICKET_CONFIRM"
+                    ) . "')) window.location='/bitrix/admin/ticket_list.php?ID=" . $ID . "&action=delete&redirectafter=Y&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get(
+                    ) . "';",
             );
         }
 
@@ -611,7 +674,6 @@ if (intval($ID) > 0) {
                 "MENU" => $arSpamMenu,
             );
         }
-
     }
 }
 //echo ShowSubMenu($aMenu);
@@ -661,15 +723,17 @@ foreach ($arHK as $n => $s) {
  * SPLIT MESSAGE
  ****************************************************************************/
 if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
-    $_SESSION["TICKET_ID"] = IntVal($_GET['TICKET_ID']);
-    $_SESSION["MESSAGE_ID"] = IntVal($_GET['MESSAGE_ID']);
+    $_SESSION["TICKET_ID"] = intval($_GET['TICKET_ID']);
+    $_SESSION["MESSAGE_ID"] = intval($_GET['MESSAGE_ID']);
 
     $ticket = CTicket::GetByID($_SESSION['TICKET_ID'], $site_id, "Y", $get_user_name, $get_extra_names);
     if ($ticket && $ticket->ExtractFields()) {
         $obUserTiket = $USER->GetByID($str_OWNER_USER_ID);
         $arUserTiket = $obUserTiket->Fetch();
         $str_OWNER_LOGIN = htmlspecialcharsbx($arUserTiket['LOGIN']);
-        $str_OWNER_NAME = htmlspecialcharsbx($arUserTiket['NAME']) . ' ' . htmlspecialcharsbx($arUserTiket['LAST_NAME']);
+        $str_OWNER_NAME = htmlspecialcharsbx($arUserTiket['NAME']) . ' ' . htmlspecialcharsbx(
+                $arUserTiket['LAST_NAME']
+            );
         $str_lang = $TICKET_SITE = $str_SITE_ID;
         $TICKET_SLA = $str_SLA_ID = CTicketSLA::GetForUser($str_SITE_ID, $str_OWNER_USER_ID);
         $str_DIFFICULTY_ID = '';
@@ -677,18 +741,18 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
         $obTicketMessage = CTicket::GetMessageByID($_SESSION['MESSAGE_ID']);
         $arTicketMessage = $obTicketMessage->Fetch();
         $MESSAGE = $arTicketMessage['MESSAGE'];
-        $_SESSION['MESSAGE_NUM'] = IntVal($arTicketMessage['C_NUMBER']);
+        $_SESSION['MESSAGE_NUM'] = intval($arTicketMessage['C_NUMBER']);
         $_SESSION['MESSAGE_DATE'] = $arTicketMessage['DATE_CREATE'];
         $_SESSION["TICKET_TITLE"] = $str_TITLE;
         $str_TITLE = '';
         $str_DATE_CLOSE = null;
         $arFiles = array();
-        if ($rsFiles = CTicket::GetFileList($v1 = "s_id", $v2 = "asc", array("MESSAGE_ID" => $_SESSION['MESSAGE_ID']))) {
+        if ($rsFiles = CTicket::GetFileList("s_id", "asc", array("MESSAGE_ID" => $_SESSION['MESSAGE_ID']))) {
             while ($arFile = $rsFiles->Fetch()) {
                 $name = $arFile["ORIGINAL_NAME"];
-                if (strlen($arFile["EXTENSION_SUFFIX"]) > 0) {
-                    $suffix_length = strlen($arFile["EXTENSION_SUFFIX"]);
-                    $name = substr($name, 0, strlen($name) - $suffix_length);
+                if ($arFile["EXTENSION_SUFFIX"] <> '') {
+                    $suffix_length = mb_strlen($arFile["EXTENSION_SUFFIX"]);
+                    $name = mb_substr($name, 0, mb_strlen($name) - $suffix_length);
                 }
                 $arFile["NAME"] = $name;
                 $arFiles[] = $arFile;
@@ -707,8 +771,11 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
     <?
 
     $aTabs = array();
-    $aTabs[] = array("DIV" => "edit1", "TAB" => GetMessage("SUP_RECORD"), "ICON" => "ticket_edit",
-        "TITLE" => ($ID > 0 && strlen(trim($str_TITLE)) > 0 ? $str_TITLE : $APPLICATION->GetTitle())
+    $aTabs[] = array(
+        "DIV" => "edit1",
+        "TAB" => GetMessage("SUP_RECORD"),
+        "ICON" => "ticket_edit",
+        "TITLE" => ($ID > 0 && trim($str_TITLE) <> '' ? $str_TITLE : $APPLICATION->GetTitle())
     );
     //$aTabs[] = $USER_FIELD_MANAGER->EditFormTab($PROPERTY_ID);
 
@@ -720,8 +787,16 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
     <? if ($can_select_site == "Y"): ?>
         <tr valign="middle">
             <td align="right" width="20%" nowrap><?= GetMessage("SUP_SITE") ?></td>
-            <td width="80%"
-                nowrap><? echo SelectBoxFromArray("SITE_ID", array("reference" => $arrSiteRef, "reference_id" => $arrSiteID), htmlspecialcharsbx($TICKET_SITE), "", "onChange=\"OnSiteChange(this[this.selectedIndex].value)\" id=\"SITE_ID\""); ?></td>
+            <td width="80%" nowrap><? echo SelectBoxFromArray(
+                    "SITE_ID",
+                    array(
+                        "reference" => $arrSiteRef,
+                        "reference_id" => $arrSiteID
+                    ),
+                    htmlspecialcharsbx($TICKET_SITE),
+                    "",
+                    "onChange=\"OnSiteChange(this[this.selectedIndex].value)\" id=\"SITE_ID\""
+                ); ?></td>
         </tr>
         <script language="JavaScript">
             <!--
@@ -758,7 +833,9 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
                 if (isset($arSiteSLA[$sid])) {
                     $c0 = "";
                     foreach ($arSiteSLA[$sid] as $key => $cSlaID) {
-                        echo $c0 . "Array('" . addslashes(htmlspecialcharsbx($arSLA[$cSlaID]["REFERENCE_ID"])) . "', '" . addslashes(htmlspecialcharsbx($arSLA[$cSlaID]["REFERENCE"])) . "')";
+                        echo $c0 . "Array('" . addslashes(
+                                htmlspecialcharsbx($arSLA[$cSlaID]["REFERENCE_ID"])
+                            ) . "', '" . addslashes(htmlspecialcharsbx($arSLA[$cSlaID]["REFERENCE"])) . "')";
                         $c0 = ", ";
                     }
                 }
@@ -788,7 +865,9 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
 
                 if (isset($allDictionary['S'])) {
                     foreach ($allDictionary['S'] as $ar) {
-                        echo ", Array('" . addslashes(htmlspecialcharsbx($ar["REFERENCE_ID"])) . "', '" . addslashes(htmlspecialcharsbx($ar["REFERENCE"])) . "')";
+                        echo ", Array('" . addslashes(htmlspecialcharsbx($ar["REFERENCE_ID"])) . "', '" . addslashes(
+                                htmlspecialcharsbx($ar["REFERENCE"])
+                            ) . "')";
                     }
                 }
                 ?>);
@@ -803,7 +882,9 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
 
                 if (isset($allDictionary['D'])) {
                     foreach ($allDictionary['D'] as $ar) {
-                        echo ", Array('" . addslashes(htmlspecialcharsbx($ar["REFERENCE_ID"])) . "', '" . addslashes(htmlspecialcharsbx($ar["REFERENCE"])) . "')";
+                        echo ", Array('" . addslashes(htmlspecialcharsbx($ar["REFERENCE_ID"])) . "', '" . addslashes(
+                                htmlspecialcharsbx($ar["REFERENCE"])
+                            ) . "')";
                     }
                 }
                 ?>);
@@ -818,7 +899,9 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
 
                 if (isset($allDictionary['C'])) {
                     foreach ($allDictionary['C'] as $ar) {
-                        echo ", Array('" . addslashes(htmlspecialcharsbx($ar["REFERENCE_ID"])) . "', '" . addslashes(htmlspecialcharsbx($ar["REFERENCE"])) . "')";
+                        echo ", Array('" . addslashes(htmlspecialcharsbx($ar["REFERENCE_ID"])) . "', '" . addslashes(
+                                htmlspecialcharsbx($ar["REFERENCE"])
+                            ) . "')";
                     }
                 }
                 ?>);
@@ -833,7 +916,9 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
 
                 if (isset($allDictionary['M'])) {
                     foreach ($allDictionary['M'] as $ar) {
-                        echo ", Array('" . addslashes(htmlspecialcharsbx($ar["REFERENCE_ID"])) . "', '" . addslashes(htmlspecialcharsbx($ar["REFERENCE"])) . "')";
+                        echo ", Array('" . addslashes(htmlspecialcharsbx($ar["REFERENCE_ID"])) . "', '" . addslashes(
+                                htmlspecialcharsbx($ar["REFERENCE"])
+                            ) . "')";
                     }
                 }
                 ?>);
@@ -848,7 +933,9 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
 
                 if (isset($allDictionary['K'])) {
                     foreach ($allDictionary['K'] as $ar) {
-                        echo ", Array('" . addslashes(htmlspecialcharsbx($ar["REFERENCE_ID"])) . "', '" . addslashes(htmlspecialcharsbx($ar["REFERENCE"])) . "')";
+                        echo ", Array('" . addslashes(htmlspecialcharsbx($ar["REFERENCE_ID"])) . "', '" . addslashes(
+                                htmlspecialcharsbx($ar["REFERENCE"])
+                            ) . "')";
                     }
                 }
                 ?>);
@@ -863,7 +950,9 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
 
                 if (isset($allDictionary['SR'])) {
                     foreach ($allDictionary['SR'] as $ar) {
-                        echo ", Array('" . addslashes(htmlspecialcharsbx($ar["REFERENCE_ID"])) . "', '" . addslashes(htmlspecialcharsbx($ar["REFERENCE"])) . "')";
+                        echo ", Array('" . addslashes(htmlspecialcharsbx($ar["REFERENCE_ID"])) . "', '" . addslashes(
+                                htmlspecialcharsbx($ar["REFERENCE"])
+                            ) . "')";
                     }
                 }
                 ?>);
@@ -961,7 +1050,7 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
         //$tmp[] = htmlspecialcharsback($str_OWNER_LOGIN);
         $tmp[] = $arStrUsers["arUsers"][intval($str_OWNER_USER_ID)]["LOGIN"];
     }
-    if (strlen($str_OWNER_SID) > 0) {
+    if ($str_OWNER_SID <> '') {
         $tmp[] = htmlspecialcharsback($str_OWNER_SID);
     } else {
         $arAuthorFilter[] = "find_owner_exact_match=Y";
@@ -992,7 +1081,13 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
             <td width="80%" nowrap><?
                 //echo SelectBox("SOURCE_ID", CTicketDictionary::GetDropDown("SR", $TICKET_SITE), "< web >", $str_SOURCE_ID, "OnChange=SelectSource() class='typeselect'");
 
-                echo SelectBoxFromArray("SOURCE_ID", __GetDropDown("SR", $TICKET_DICTIONARY), $str_SOURCE_ID, "< web >", "OnChange=SelectSource() class='inputselect'");
+                echo SelectBoxFromArray(
+                    "SOURCE_ID",
+                    __GetDropDown("SR", $TICKET_DICTIONARY),
+                    $str_SOURCE_ID,
+                    "< web >",
+                    "OnChange=SelectSource() class='inputselect'"
+                );
 
 
                 ?>&nbsp;<input type="text" size="20" name="OWNER_SID" id="OWNER_SID" value="<?= $str_OWNER_SID ?>">
@@ -1008,7 +1103,10 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
                 echo FindUserID("OWNER_USER_ID", $str_OWNER_USER_ID, $owner_name);
                 if ($ID > 0):
                     ?><br>[&nbsp;<a
-                        href="/bitrix/admin/ticket_list.php?set_filter=Y&lang=<?= LANGUAGE_ID ?>&<?= implode("&", $arAuthorFilter) ?>"><?= GetMessage("SUP_AUTHOR_TICKETS") ?></a>&nbsp;]<?
+                        href="/bitrix/admin/ticket_list.php?set_filter=Y&lang=<?= LANGUAGE_ID ?>&<?= implode(
+                            "&",
+                            $arAuthorFilter
+                        ) ?>"><?= GetMessage("SUP_AUTHOR_TICKETS") ?></a>&nbsp;]<?
                 endif;
                 ?>
             </td>
@@ -1023,22 +1121,28 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
             <td valign="top" align="right" width="20%" nowrap><?= GetMessage("SUP_AUTHOR") ?></td>
             <td width="80%" nowrap><?
 
-                echo (strlen($str_SOURCE_NAME) > 0) ? "[" . $str_SOURCE_NAME . "]&nbsp;" : "[web]&nbsp;";
+                echo ($str_SOURCE_NAME <> '') ? "[" . $str_SOURCE_NAME . "]&nbsp;" : "[web]&nbsp;";
 
-                if (strlen($str_OWNER_SID) > 0) {
+                if ($str_OWNER_SID <> '') {
                     echo TxtToHtml($str_OWNER_SID) . "&nbsp;";
-                    if (intval($str_OWNER_USER_ID) > 0) echo "/&nbsp;";
+                    if (intval($str_OWNER_USER_ID) > 0) {
+                        echo "/&nbsp;";
+                    }
                 }
 
                 $uid = $str_OWNER_USER_ID;
                 if ($uid > 0 && !in_array($uid, array_keys($arrSUPPORT_TEAM))) {
-                    $arrSUPPORT_TEAM[$uid] = (CTicket::IsSupportTeam($uid) || CTicket::IsAdmin($uid)) ? "(<span class=\"supportrequired\">" . GetMessage("SUP_TECHSUPPORT") . "</span>)" : "";
+                    $arrSUPPORT_TEAM[$uid] = (CTicket::IsSupportTeam($uid) || CTicket::IsAdmin(
+                            $uid
+                        )) ? "(<span class=\"supportrequired\">" . GetMessage("SUP_TECHSUPPORT") . "</span>)" : "";
                 }
 
                 if ($bAdmin == "Y" || $bDemo == "Y" || $bSupportTeam == "Y") {
                     if (intval($str_OWNER_USER_ID) > 0) {
                         /*?>[<a title="<?echo GetMessage("SUP_USER_PROFILE")?>" href="/bitrix/admin/user_edit.php?lang=<?echo LANG?>&ID=<?=$str_OWNER_USER_ID?>"><?echo $str_OWNER_USER_ID?></a>]  (<?=$str_OWNER_LOGIN?>) <?=$str_OWNER_NAME?> */
-                        echo $arStrUsers["arUsers"][intval($str_OWNER_USER_ID)]["HTML_NAME"] . " " . $arrSUPPORT_TEAM[$str_OWNER_USER_ID];
+                        echo $arStrUsers["arUsers"][intval(
+                                $str_OWNER_USER_ID
+                            )]["HTML_NAME"] . " " . $arrSUPPORT_TEAM[$str_OWNER_USER_ID];
                     }
 
                     if (intval($str_OWNER_GUEST_ID) > 0 && CModule::IncludeModule("statistic")) {
@@ -1050,7 +1154,6 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
                         /*echo "[".$str_OWNER_USER_ID."] (".$str_OWNER_LOGIN.") ".$str_OWNER_NAME." ".$arrSUPPORT_TEAM[$str_OWNER_USER_ID]."";*/
                         echo $arStrUsers["arUsers"][intval($str_OWNER_USER_ID)]["HTML_NAME_S"];
                     }
-
                 }
 
                 ?></td>
@@ -1062,14 +1165,15 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
         <tr valign="middle">
             <td align="right" width="20%"><?= GetMessage("SUP_CREATE") ?></td>
             <td align="left" width="80%"><?= $str_DATE_CREATE ?>&nbsp;&nbsp;&nbsp;<?
-                if (strlen($str_CREATED_MODULE_NAME) <= 0 || $str_CREATED_MODULE_NAME == "support") {
+                if ($str_CREATED_MODULE_NAME == '' || $str_CREATED_MODULE_NAME == "support") {
                     $uid = intval($str_CREATED_USER_ID);
                     if ($uid > 0 && !in_array($uid, array_keys($arrSUPPORT_TEAM))) {
-                        $arrSUPPORT_TEAM[$uid] = (CTicket::IsSupportTeam($uid) || CTicket::IsAdmin($uid)) ? "(<span class=\"supportrequired\">" . GetMessage("SUP_TECHSUPPORT") . "</span>)" : "";
+                        $arrSUPPORT_TEAM[$uid] = (CTicket::IsSupportTeam($uid) || CTicket::IsAdmin(
+                                $uid
+                            )) ? "(<span class=\"supportrequired\">" . GetMessage("SUP_TECHSUPPORT") . "</span>)" : "";
                     }
 
                     if ($bAdmin == "Y" || $bDemo == "Y" || $bSupportTeam == "Y") {
-
                         /*?>[<a title="<?=GetMessage("SUP_USER_PROFILE")?>" href="/bitrix/admin/user_edit.php?lang=<?=LANGUAGE_ID?>&ID=<?=$str_CREATED_USER_ID?>"><?echo $str_CREATED_USER_ID?></a>] (<?=$str_CREATED_LOGIN?>) <?=$str_CREATED_NAME?> <?=$arrSUPPORT_TEAM[$str_CREATED_USER_ID]?><?*/
 
                         if ($uid <= 0 && intval($str_CREATED_GUEST_ID) > 0 && CModule::IncludeModule("statistic")) {
@@ -1095,23 +1199,27 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
                 <td align="right" width="20%"><?= GetMessage("SUP_TIMESTAMP") ?></td>
                 <td align="left" width="80%"><?= $str_TIMESTAMP_X ?>&nbsp;&nbsp;&nbsp;<?
 
-                    if (strlen($str_MODIFIED_MODULE_NAME) <= 0 || $str_MODIFIED_MODULE_NAME == "support") {
+                    if ($str_MODIFIED_MODULE_NAME == '' || $str_MODIFIED_MODULE_NAME == "support") {
                         $uid = intval($str_MODIFIED_USER_ID);
                         if ($uid > 0 && !in_array($uid, array_keys($arrSUPPORT_TEAM))) {
-                            $arrSUPPORT_TEAM[$uid] = (CTicket::IsSupportTeam($uid) || CTicket::IsAdmin($uid)) ? "(<span class=\"supportrequired\">" . GetMessage("SUP_TECHSUPPORT") . "</span>)" : "";
+                            $arrSUPPORT_TEAM[$uid] = (CTicket::IsSupportTeam($uid) || CTicket::IsAdmin(
+                                    $uid
+                                )) ? "(<span class=\"supportrequired\">" . GetMessage(
+                                    "SUP_TECHSUPPORT"
+                                ) . "</span>)" : "";
                         }
 
                         if ($bAdmin == "Y" || $bDemo == "Y" || $bSupportTeam == "Y") {
-
                             /*?>[<a title="<?=GetMessage("SUP_USER_PROFILE")?>" href="/bitrix/admin/user_edit.php?lang=<?=LANGUAGE_ID?>&ID=<?echo $str_MODIFIED_USER_ID?>"><?=$str_MODIFIED_USER_ID?></a>] (<?=$str_MODIFIED_BY_LOGIN?>) <?=$str_MODIFIED_BY_NAME?> <?=$arrSUPPORT_TEAM[$str_MODIFIED_USER_ID]?><?*/
 
-                            if ($uid <= 0 && intval($str_MODIFIED_GUEST_ID) > 0 && CModule::IncludeModule("statistic")) {
+                            if ($uid <= 0 && intval($str_MODIFIED_GUEST_ID) > 0 && CModule::IncludeModule(
+                                    "statistic"
+                                )) {
                                 echo $arStrUsers["arGuests"][intval($str_MODIFIED_GUEST_ID)]["HTML_NAME"];
                                 /*echo " [<a title='".GetMessage("SUP_GUEST_ID")."'  href='/bitrix/admin/guest_list.php?lang=".LANG."&find_id=".$str_MODIFIED_GUEST_ID."&find_id_exact_match=Y&set_filter=Y' >".$str_MODIFIED_GUEST_ID."</a>]";*/
                             } elseif ($uid > 0) {
                                 echo $arStrUsers["arUsers"][$uid]["HTML_NAME"] . " " . $arrSUPPORT_TEAM[$uid];
                             }
-
                         } else {
                             echo $arStrUsers["arUsers"][$uid]["HTML_NAME_S"];
                             /*echo "[".$str_MODIFIED_USER_ID."] (".$str_MODIFIED_BY_LOGIN.") ".$str_MODIFIED_BY_NAME." ".$arrSUPPORT_TEAM[$str_MODIFIED_USER_ID]."";*/
@@ -1124,20 +1232,22 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
             <?
         }
 
-        if (strlen($str_DATE_CLOSE) > 0) {
+        if ($str_DATE_CLOSE <> '') {
             ?>
             <tr valign="middle">
                 <td align="right"><?= GetMessage("SUP_CLOSE") ?></td>
                 <td><?= $str_DATE_CLOSE ?></td>
             </tr>
             <?
-        } elseif (strlen($str_AUTO_CLOSE_DAYS_LEFT) > 0 && !empty($str_AUTO_CLOSE_DATE)) {
+        } elseif ($str_AUTO_CLOSE_DAYS_LEFT <> '' && !empty($str_AUTO_CLOSE_DATE)) {
             ?>
             <tr valign="middle">
                 <td align="right"><?= GetMessage("SUP_DATE_AUTO_CLOSE") ?></td>
-                <td><?= $str_AUTO_CLOSE_DATE ?>
-                    &nbsp;&nbsp;&nbsp;(<?= str_replace("#DAYS#", "<span class=\"supportrequired\">$str_AUTO_CLOSE_DAYS_LEFT</span>", GetMessage("SUP_LEFT")) ?>
-                    )
+                <td><?= $str_AUTO_CLOSE_DATE ?>&nbsp;&nbsp;&nbsp;(<?= str_replace(
+                        "#DAYS#",
+                        "<span class=\"supportrequired\">$str_AUTO_CLOSE_DAYS_LEFT</span>",
+                        GetMessage("SUP_LEFT")
+                    ) ?>)
                 </td>
             </tr>
             <?
@@ -1191,35 +1301,35 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
             </tr>
         <? endif;
     endif; ?>
-    <? if ($can_select_sla == "N" && strlen($str_SLA_NAME) > 0) { ?>
+    <? if ($can_select_sla == "N" && $str_SLA_NAME <> '') { ?>
         <tr valign="middle">
             <td align="right"><?= GetMessage("SUP_SLA") ?>:</td>
             <td><font title="<?= $str_SLA_DESCRIPTION ?>"><?= $str_SLA_NAME ?></td>
         </tr>
     <? } ?>
 
-    <? if ($can_select_category == "N" && strlen($str_CATEGORY_NAME) > 0) { ?>
+    <? if ($can_select_category == "N" && $str_CATEGORY_NAME <> '') { ?>
         <tr valign="middle">
             <td align="right"><?= GetMessage("SUP_CATEGORY") ?></td>
             <td><font title="<?= $str_CATEGORY_DESC ?>"><?= $str_CATEGORY_NAME ?></td>
         </tr>
     <? } ?>
 
-    <? if ($can_select_criticality == "N" && strlen($str_CRITICALITY_NAME) > 0) { ?>
+    <? if ($can_select_criticality == "N" && $str_CRITICALITY_NAME <> '') { ?>
         <tr valign="middle">
             <td align="right"><?= GetMessage("SUP_CRITICALITY") ?></td>
             <td><?= $str_CRITICALITY_NAME ?></td>
         </tr>
     <? } ?>
 
-    <? if ($can_select_difficulty == "N" && strlen($str_DIFFICULTY_NAME) > 0) { ?>
+    <? if ($can_select_difficulty == "N" && $str_DIFFICULTY_NAME <> '') { ?>
         <tr valign="middle">
             <td align="right" nowrap><?= GetMessage("SUP_DIFFICULTY_COLNAME") ?></td>
             <td nowrap><font title="<?= $str_DIFFICULTY_DESC ?>"><?= $str_DIFFICULTY_NAME ?></td>
         </tr>
     <? } ?>
 
-    <? if ($can_select_status == "N" && strlen($str_STATUS_NAME) > 0) { ?>
+    <? if ($can_select_status == "N" && $str_STATUS_NAME <> '') { ?>
         <tr valign="middle">
             <td align="right" nowrap><?= GetMessage("SUP_STATUS") ?></td>
             <td nowrap><font title="<?= $str_STATUS_DESC ?>"><?= $str_STATUS_NAME ?></td>
@@ -1230,19 +1340,23 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
     if ($can_select_responsible == "N" && intval($str_RESPONSIBLE_USER_ID) > 0) {
         $uid = $str_RESPONSIBLE_USER_ID;
         if ($uid > 0 && !in_array($uid, array_keys($arrSUPPORT_TEAM))) {
-            $arrSUPPORT_TEAM[$uid] = (CTicket::IsSupportTeam($uid) || CTicket::IsAdmin($uid)) ? "(<span class='supportrequired'>" . GetMessage("SUP_TECHSUPPORT") . ")</span>" : "";
+            $arrSUPPORT_TEAM[$uid] = (CTicket::IsSupportTeam($uid) || CTicket::IsAdmin(
+                    $uid
+                )) ? "(<span class='supportrequired'>" . GetMessage("SUP_TECHSUPPORT") . ")</span>" : "";
         }
         ?>
         <tr valign="middle">
             <td align="right" nowrap><?= GetMessage("SUP_RESPONSIBLE") ?></td>
             <? /*<td nowrap><?echo "[".$str_RESPONSIBLE_USER_ID."] (".$str_RESPONSIBLE_LOGIN.") ".$str_RESPONSIBLE_NAME." ".$arrSUPPORT_TEAM[$str_RESPONSIBLE_USER_ID]?></td>*/ ?>
             <td nowrap><?
-                echo $arStrUsers["arUsers"][intval($str_RESPONSIBLE_USER_ID)]["HTML_NAME"] . " " . $arrSUPPORT_TEAM[$str_RESPONSIBLE_USER_ID];
+                echo $arStrUsers["arUsers"][intval(
+                        $str_RESPONSIBLE_USER_ID
+                    )]["HTML_NAME"] . " " . $arrSUPPORT_TEAM[$str_RESPONSIBLE_USER_ID];
                 ?></td>
         </tr>
     <? } ?>
 
-    <? if ($can_select_mark == "N" && strlen($str_MARK_NAME) > 0) { ?>
+    <? if ($can_select_mark == "N" && $str_MARK_NAME <> '') { ?>
         <tr valign="middle">
             <td align="right" nowrap><?= GetMessage("SUP_MARK") ?></td>
             <td nowrap><font title="<?= htmlspecialcharsbx($str_MARK_DESC) ?>"><?= htmlspecialcharsbx($str_MARK_NAME) ?>
@@ -1250,7 +1364,9 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
         </tr>
     <? } ?>
 
-    <? if ($ID > 0 && intval($str_OVERDUE_MESSAGES) > 0 && ($bSupportTeam == "Y" || $bAdmin == "Y" || $bDemo == "Y")) { ?>
+    <? if ($ID > 0 && intval(
+            $str_OVERDUE_MESSAGES
+        ) > 0 && ($bSupportTeam == "Y" || $bAdmin == "Y" || $bDemo == "Y")) { ?>
         <tr valign="middle">
             <td align="right"><?= GetMessage("SUP_OVERDUE_MESSAGES") ?></td>
             <td><?= $str_OVERDUE_MESSAGES ?></td>
@@ -1264,7 +1380,7 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
         </tr>
     <? } ?>
 
-    <? if ($ID > 0 && strlen($str_COUPON) > 0) { ?>
+    <? if ($ID > 0 && $str_COUPON <> '') { ?>
         <tr valign="middle">
             <td align="right"><?= GetMessage("SUP_COUPON") ?></td>
             <td><?= $str_COUPON ?></td>
@@ -1274,8 +1390,19 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
     <?
     if ($ID > 0) :
 
-        if ($bDemo == "Y") $CHECK_RIGHTS = "N"; else $CHECK_RIGHTS = "Y";
-        $mess = CTicket::GetMessageList($a, $b, array("TICKET_ID" => $ID, "TICKET_ID_EXACT_MATCH" => "Y"), $c, $CHECK_RIGHTS, $get_user_name);
+        if ($bDemo == "Y") {
+            $CHECK_RIGHTS = "N";
+        } else {
+            $CHECK_RIGHTS = "Y";
+        }
+        $mess = CTicket::GetMessageList(
+            '',
+            '',
+            array("TICKET_ID" => $ID, "TICKET_ID_EXACT_MATCH" => "Y"),
+            null,
+            $CHECK_RIGHTS,
+            $get_user_name
+        );
         $mess->NavStart(COption::GetOptionString("support", "MESSAGES_PER_PAGE", 50));
         //$mess->NavStart(5);
         $messages = $mess->SelectedRowsCount();
@@ -1356,43 +1483,70 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
                                                                 ?>
                                                                 <a title="<? echo GetMessage("SUP_SPLIT_ALT"); ?>"
                                                                    href="<? echo $TICKET_EDIT_URL; ?>?lang=<? echo LANGUAGE_ID; ?>&TICKET_ID=<?= $ID ?>&MESSAGE_ID=<? echo $arM["ID"]; ?>"
-                                                                   onclick="return (confirm('<? echo AddSlashes(GetMessage("SUP_SPLIT_CONFIRM")); ?>') ? true : false)"><? echo GetMessage("SUP_SPLIT"); ?></a>
+                                                                   onclick="return (confirm('<? echo AddSlashes(
+                                                                       GetMessage("SUP_SPLIT_CONFIRM")
+                                                                   ); ?>') ? true : false)"><? echo GetMessage(
+                                                                        "SUP_SPLIT"
+                                                                    ); ?></a>
                                                                 <?
-                                                                if ($bSep)
+                                                                if ($bSep) {
                                                                     echo " | ";
+                                                                }
                                                             }
                                                             $bSep = false;
-                                                            if (strlen($str_DATE_CLOSE) <= 0):
-                                                                echo '<a href="#postform" OnMouseDown="javascript:SupQuoteMessage(\'quotetd' . $arM["ID"] . '\')" title="' . GetMessage("SUP_QUOTE_LINK_DESCR") . '">' . GetMessage("SUP_QUOTE_LINK") . '</a>';
+                                                            if ($str_DATE_CLOSE == ''):
+                                                                echo '<a href="#postform" OnMouseDown="javascript:SupQuoteMessage(\'quotetd' . $arM["ID"] . '\')" title="' . GetMessage(
+                                                                        "SUP_QUOTE_LINK_DESCR"
+                                                                    ) . '">' . GetMessage("SUP_QUOTE_LINK") . '</a>';
                                                                 $bSep = true;
                                                             endif;
 
                                                             if ($bAdmin == "Y" || $bDemo == "Y") :
 
-                                                                if (intval($arM["SOURCE_ID"]) > 0 && IsModuleInstalled("mail") && intval($arM["EXTERNAL_ID"]) > 0) {
+                                                                if (intval($arM["SOURCE_ID"]) > 0 && IsModuleInstalled(
+                                                                        "mail"
+                                                                    ) && intval($arM["EXTERNAL_ID"]) > 0) {
+                                                                    Support_GetDictionaryInfo(
+                                                                        $arM["SOURCE_ID"],
+                                                                        $arM["SOURCE_NAME"],
+                                                                        $arM["SOURCE_DESC"],
+                                                                        $arM["SOURCE_SID"]
+                                                                    );
 
-                                                                    Support_GetDictionaryInfo($arM["SOURCE_ID"], $arM["SOURCE_NAME"], $arM["SOURCE_DESC"], $arM["SOURCE_SID"]);
-
-                                                                    if (strtolower($arM["SOURCE_SID"]) == "email") {
+                                                                    if (mb_strtolower($arM["SOURCE_SID"]) == "email") {
                                                                         if ($bSep) {
                                                                             echo " | ";
                                                                         }
-                                                                        echo '<a title="' . GetMessage("SUP_VIEW_SOURCE_ALT") . '" href="/bitrix/admin/mail_message_view.php?lang=' . LANGUAGE_ID . '&ID=' . $arM["EXTERNAL_ID"] . '">' . GetMessage("SUP_VIEW_SOURCE") . '</a>';
+                                                                        echo '<a title="' . GetMessage(
+                                                                                "SUP_VIEW_SOURCE_ALT"
+                                                                            ) . '" href="/bitrix/admin/mail_message_view.php?lang=' . LANGUAGE_ID . '&ID=' . $arM["EXTERNAL_ID"] . '">' . GetMessage(
+                                                                                "SUP_VIEW_SOURCE"
+                                                                            ) . '</a>';
                                                                         $bSep = true;
                                                                     }
-
                                                                 }
                                                                 if ($bSep) {
                                                                     echo " | ";
                                                                 }
 
 
-                                                                echo '<a title="' . GetMessage("SUP_EDIT_ALT") . '" href="' . $TICKET_MESSAGE_EDIT_URL . '?lang=' . LANGUAGE_ID . '&TICKET_ID=' . $ID . '&ID=' . $arM["ID"] . '">' . GetMessage("SUP_EDIT") . '</a>';
+                                                                echo '<a title="' . GetMessage(
+                                                                        "SUP_EDIT_ALT"
+                                                                    ) . '" href="' . $TICKET_MESSAGE_EDIT_URL . '?lang=' . LANGUAGE_ID . '&TICKET_ID=' . $ID . '&ID=' . $arM["ID"] . '">' . GetMessage(
+                                                                        "SUP_EDIT"
+                                                                    ) . '</a>';
 
                                                                 if ($messages > 1) {
-                                                                    echo ' | ' . '<a title="' . GetMessage("SUP_DELETE_ALT") . '" ' .
-                                                                        'href="javascript:if(confirm(\'' . GetMessage("SUP_CONF") . '\')) ' .
-                                                                        'window.location=\'' . urlencode(urlencode($TICKET_EDIT_URL)) . '?lang=' . LANGUAGE_ID . '&ID=' . $ID . '&mdel_id=' . $arM["ID"] . '&' . bitrix_sessid_get() . '\'">' . GetMessage("SUP_DELETE") . '</a>';
+                                                                    echo ' | ' . '<a title="' . GetMessage(
+                                                                            "SUP_DELETE_ALT"
+                                                                        ) . '" ' .
+                                                                        'href="javascript:if(confirm(\'' . GetMessage(
+                                                                            "SUP_CONF"
+                                                                        ) . '\')) ' .
+                                                                        'window.location=\'' . urlencode(
+                                                                            urlencode($TICKET_EDIT_URL)
+                                                                        ) . '?lang=' . LANGUAGE_ID . '&ID=' . $ID . '&mdel_id=' . $arM["ID"] . '&' . bitrix_sessid_get(
+                                                                        ) . '\'">' . GetMessage("SUP_DELETE") . '</a>';
                                                                 }
 
                                                             endif;
@@ -1402,12 +1556,18 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
                                                         <td style="padding:4px;text-align:left;<? echo $backcolor; ?>"><?
 
                                                             if ($arM["IS_LOG"] != "Y") {
-                                                                echo (strlen($arM["SOURCE_NAME"]) > 0) ? "[" . htmlspecialcharsbx($arM["SOURCE_NAME"]) . "]&nbsp;" : "";
+                                                                echo ($arM["SOURCE_NAME"] <> '') ? "[" . htmlspecialcharsbx(
+                                                                        $arM["SOURCE_NAME"]
+                                                                    ) . "]&nbsp;" : "";
 
-                                                                $oUID = isset($arM["OWNER_USER_ID"]) ? intval($arM["OWNER_USER_ID"]) : 0;
-                                                                $oGID = isset($arM["OWNER_GUEST_ID"]) ? intval($arM["OWNER_GUEST_ID"]) : 0;
+                                                                $oUID = isset($arM["OWNER_USER_ID"]) ? intval(
+                                                                    $arM["OWNER_USER_ID"]
+                                                                ) : 0;
+                                                                $oGID = isset($arM["OWNER_GUEST_ID"]) ? intval(
+                                                                    $arM["OWNER_GUEST_ID"]
+                                                                ) : 0;
 
-                                                                if (strlen($arM["OWNER_SID"]) > 0) {
+                                                                if ($arM["OWNER_SID"] <> '') {
                                                                     echo TxtToHtml($arM["OWNER_SID"]) . "&nbsp;";
                                                                     if ($oUID > 0) {
                                                                         echo "/&nbsp;";
@@ -1417,14 +1577,24 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
                                                                 if ($oUID > 0) {
                                                                     //Support_GetUserInfo($arM["OWNER_USER_ID"], $arM["OWNER_LOGIN"], $arM["OWNER_USER_NAME"]);
 
-                                                                    if (!in_array($oUID, array_keys($arrSUPPORT_TEAM))) {
+                                                                    if (!in_array(
+                                                                        $oUID,
+                                                                        array_keys($arrSUPPORT_TEAM)
+                                                                    )) {
                                                                         if ($arM["MESSAGE_BY_SUPPORT_TEAM"] == "Y") {
-                                                                            $arrSUPPORT_TEAM[$oUID] = "(<span class=\"supportrequired\">" . GetMessage("SUP_TECHSUPPORT") . "</span>)";
-
+                                                                            $arrSUPPORT_TEAM[$oUID] = "(<span class=\"supportrequired\">" . GetMessage(
+                                                                                    "SUP_TECHSUPPORT"
+                                                                                ) . "</span>)";
                                                                         } elseif ($arM["MESSAGE_BY_SUPPORT_TEAM"] == "N") {
                                                                             $arrSUPPORT_TEAM[$oUID] = "";
                                                                         } else {
-                                                                            $arrSUPPORT_TEAM[$oUID] = (CTicket::IsSupportTeam($uid) || CTicket::IsAdmin($uid)) ? "(<span class=\"supportrequired\">" . GetMessage("SUP_TECHSUPPORT") . "</span>)" : "";
+                                                                            $arrSUPPORT_TEAM[$oUID] = (CTicket::IsSupportTeam(
+                                                                                    $uid
+                                                                                ) || CTicket::IsAdmin(
+                                                                                    $uid
+                                                                                )) ? "(<span class=\"supportrequired\">" . GetMessage(
+                                                                                    "SUP_TECHSUPPORT"
+                                                                                ) . "</span>)" : "";
                                                                         }
                                                                     }
                                                                 }
@@ -1437,7 +1607,9 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
 															<?
 														}*/
 
-                                                                    if ($oUID <= 0 && $oGID > 0 && CModule::IncludeModule("statistic")) {
+                                                                    if ($oUID <= 0 && $oGID > 0 && CModule::IncludeModule(
+                                                                            "statistic"
+                                                                        )) {
                                                                         echo $arStrUsersM["arGuests"][$oGID]["HTML_NAME"];
                                                                         ?>
                                                                         <? echo($oUID > 0 ? $arrSUPPORT_TEAM[$oUID] : ""); ?>
@@ -1455,28 +1627,44 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
                                                                     }
                                                                 }
                                                             } else {
-                                                                $cUID = isset($arM["CREATED_USER_ID"]) ? intval($arM["CREATED_USER_ID"]) : 0;
-                                                                $cGID = isset($arM["CREATED_GUEST_ID"]) ? intval($arM["CREATED_GUEST_ID"]) : 0;
+                                                                $cUID = isset($arM["CREATED_USER_ID"]) ? intval(
+                                                                    $arM["CREATED_USER_ID"]
+                                                                ) : 0;
+                                                                $cGID = isset($arM["CREATED_GUEST_ID"]) ? intval(
+                                                                    $arM["CREATED_GUEST_ID"]
+                                                                ) : 0;
 
                                                                 if ($cUID > 0) {
                                                                     //Support_GetUserInfo($arM["CREATED_USER_ID"], $arM["CREATED_LOGIN"], $arM["CREATED_USER_NAME"]);
 
-                                                                    if (!in_array($cUID, array_keys($arrSUPPORT_TEAM))) {
+                                                                    if (!in_array(
+                                                                        $cUID,
+                                                                        array_keys($arrSUPPORT_TEAM)
+                                                                    )) {
                                                                         if ($arM["MESSAGE_BY_SUPPORT_TEAM"] == "Y") {
-                                                                            $arrSUPPORT_TEAM[$cUID] = "(<span class=\"supportrequired\">" . GetMessage("SUP_TECHSUPPORT") . "</span>)";
+                                                                            $arrSUPPORT_TEAM[$cUID] = "(<span class=\"supportrequired\">" . GetMessage(
+                                                                                    "SUP_TECHSUPPORT"
+                                                                                ) . "</span>)";
                                                                         } elseif ($arM["MESSAGE_BY_SUPPORT_TEAM"] == "N") {
                                                                             $arrSUPPORT_TEAM[$cUID] = "";
                                                                         } else {
-                                                                            $arrSUPPORT_TEAM[$cUID] = (CTicket::IsSupportTeam($cUID) || CTicket::IsAdmin($cUID)) ? "(<span class=\"supportrequired\">" . GetMessage("SUP_TECHSUPPORT") . ")</span>" : "";
+                                                                            $arrSUPPORT_TEAM[$cUID] = (CTicket::IsSupportTeam(
+                                                                                    $cUID
+                                                                                ) || CTicket::IsAdmin(
+                                                                                    $cUID
+                                                                                )) ? "(<span class=\"supportrequired\">" . GetMessage(
+                                                                                    "SUP_TECHSUPPORT"
+                                                                                ) . ")</span>" : "";
                                                                         }
                                                                     }
-
                                                                 }
 
-                                                                if (strlen($arM["CREATED_MODULE_NAME"]) <= 0 || $arM["CREATED_MODULE_NAME"] == "support") {
+                                                                if ($arM["CREATED_MODULE_NAME"] == '' || $arM["CREATED_MODULE_NAME"] == "support") {
                                                                     /*?>[<a title="<?=GetMessage("SUP_USER_PROFILE")?>" href="/bitrix/admin/user_edit.php?lang=<?=LANGUAGE_ID?>&ID=<? echo $arM["CREATED_USER_ID"]; ?>"><? echo $arM["CREATED_USER_ID"]; ?></a>] (<? echo $arM["CREATED_LOGIN"]; ?>) <? echo $arM["CREATED_USER_NAME"]; ?> <? echo $arrSUPPORT_TEAM[$arM["CREATED_USER_ID"]]; ?><?*/
 
-                                                                    if ($cUID <= 0 && $cGID > 0 && CModule::IncludeModule("statistic")) {
+                                                                    if ($cUID <= 0 && $cGID > 0 && CModule::IncludeModule(
+                                                                            "statistic"
+                                                                        )) {
                                                                         echo $arStrUsersM["arGuests"][$cGID]["HTML_NAME"];
                                                                         echo($cUID > 0 ? " " . $arrSUPPORT_TEAM[$cUID] : "");
                                                                         /*echo " [<a title='".GetMessage("SUP_GUEST_ID")."'  href='/bitrix/admin/guest_list.php?lang=".LANG."&find_id=". $arM["CREATED_GUEST_ID"]."&find_id_exact_match=Y&set_filter=Y'>".$arM["CREATED_GUEST_ID"]."</a>]";*/
@@ -1487,13 +1675,14 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
                                                                 } else {
                                                                     echo $arM["CREATED_MODULE_NAME"];
                                                                 }
-
                                                             }
                                                             ?></td>
                                                         <td align="right" style="padding:4px;<?= $backcolor ?>">&nbsp;
                                                             <?
-                                                            if (($bAdmin == "Y" || $bDemo == "Y" || $bSupportTeam == "Y") && strlen($arM["IS_SPAM"]) > 0):
-                                                                ?>&nbsp;&nbsp;&nbsp;[<?= GetMessage("SUP_SPAM") ?><? echo ($arM["IS_SPAM"] == "Y") ? "!" : "?" ?>]<?
+                                                            if (($bAdmin == "Y" || $bDemo == "Y" || $bSupportTeam == "Y") && $arM["IS_SPAM"] <> ''):
+                                                                ?>&nbsp;&nbsp;&nbsp;[<?= GetMessage(
+                                                                "SUP_SPAM"
+                                                            ) ?><? echo ($arM["IS_SPAM"] == "Y") ? "!" : "?" ?>]<?
 
                                                             elseif ($arM["IS_LOG"] == "Y") :
                                                                 ?>&nbsp;&nbsp;&nbsp;<span style="color:#939300">
@@ -1504,17 +1693,23 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
                                                                     $str = "";
                                                                     $days = intval($arM["TASK_TIME"] / 1440);
                                                                     if ($days > 0) {
-                                                                        $str .= $days . "&nbsp;" . GetMessage("SUP_DAYS") . " ";
+                                                                        $str .= $days . "&nbsp;" . GetMessage(
+                                                                                "SUP_DAYS"
+                                                                            ) . " ";
                                                                         $arM["TASK_TIME"] = $arM["TASK_TIME"] - $days * 1440;
                                                                     }
 
                                                                     $hours = intval($arM["TASK_TIME"] / 60);
                                                                     if ($hours > 0) {
-                                                                        $str .= $hours . "&nbsp;" . GetMessage("SUP_HOURS") . " ";
+                                                                        $str .= $hours . "&nbsp;" . GetMessage(
+                                                                                "SUP_HOURS"
+                                                                            ) . " ";
                                                                         $arM["TASK_TIME"] = $arM["TASK_TIME"] - $hours * 60;
                                                                     }
 
-                                                                    $str .= ($arM["TASK_TIME"] % 60) . "&nbsp;" . GetMessage("SUP_MINUTES");
+                                                                    $str .= ($arM["TASK_TIME"] % 60) . "&nbsp;" . GetMessage(
+                                                                            "SUP_MINUTES"
+                                                                        );
 
                                                                     echo $str;
 
@@ -1522,8 +1717,9 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
                                                                 endif;
 
                                                                 if ($arM["IS_HIDDEN"] == "Y"):?>&nbsp;&nbsp;&nbsp;<span
-                                                                        style="color:#2F9567">
-                                                                    [<?= GetMessage("SUP_HIDDEN") ?>]</span><?endif ?>
+                                                                        style="color:#2F9567">[<?= GetMessage(
+                                                                        "SUP_HIDDEN"
+                                                                    ) ?>]</span><?endif ?>
 
                                                             <?endif; ?></td>
                                                     </tr>
@@ -1541,7 +1737,9 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
 														$arFiles[] = array("HASH" => $arFile["HASH"], "NAME" => $name, "FILE_SIZE" => $arFile["FILE_SIZE"]);
 													endwhile;
 												endif;*/
-                                                        if (array_key_exists($arM["ID"], $ALL_TICKET_FILES) && is_array($ALL_TICKET_FILES[$arM["ID"]])) {
+                                                        if (array_key_exists($arM["ID"], $ALL_TICKET_FILES) && is_array(
+                                                                $ALL_TICKET_FILES[$arM["ID"]]
+                                                            )) {
                                                             ?>
 
                                                             <tr>
@@ -1564,15 +1762,32 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
                                                                             <td <?= $headerbackcolor ?>
                                                                                     style="width:0%;text-align:left;"
                                                                                     nowrap><?
-                                                                                $aImg = array("gif", "png", "jpg", "jpeg", "bmp");
+                                                                                $aImg = array(
+                                                                                    "gif",
+                                                                                    "png",
+                                                                                    "jpg",
+                                                                                    "jpeg",
+                                                                                    "bmp"
+                                                                                );
                                                                                 foreach ($ALL_TICKET_FILES[$arM["ID"]] as $arFile) {
-                                                                                    if (in_array(strtolower(GetFileExtension($arFile["NAME"])), $aImg)):
-                                                                                        ?><a
-                                                                                        title="<?= GetMessage("SUP_VIEW_ALT") ?>"
-                                                                                        target="_blank"
-                                                                                        href="/bitrix/tools/ticket_show_file.php?hash=<? echo $arFile["HASH"] ?>&lang=<?= LANGUAGE_ID ?>"><? echo htmlspecialcharsbx($arFile["NAME"]) ?></a>
+                                                                                    if (in_array(
+                                                                                        mb_strtolower(
+                                                                                            GetFileExtension(
+                                                                                                $arFile["NAME"]
+                                                                                            )
+                                                                                        ),
+                                                                                        $aImg
+                                                                                    )):
+                                                                                        ?><atitle="<?= GetMessage(
+                                                                                        "SUP_VIEW_ALT"
+                                                                                    ) ?>" target="_blank"
+                                                                                            href="/bitrix/tools/ticket_show_file.php?hash=<? echo $arFile["HASH"] ?>&lang=<?= LANGUAGE_ID ?>"><? echo htmlspecialcharsbx(
+                                                                                        $arFile["NAME"]
+                                                                                    ) ?></a>
                                                                                     <? else:?>
-                                                                                        <? echo htmlspecialcharsbx($arFile["NAME"]) ?>
+                                                                                        <? echo htmlspecialcharsbx(
+                                                                                            $arFile["NAME"]
+                                                                                        ) ?>
                                                                                     <?endif ?>
                                                                                     (<?
                                                                                     /*$a = array("b", "kb", "mb", "gb");
@@ -1584,17 +1799,28 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
 																			$pos++;
 																		}
 																		echo round($size,2)." ".$a[$pos];*/
-                                                                                    echo CFile::FormatSize($arFile["FILE_SIZE"]);
+                                                                                    echo CFile::FormatSize(
+                                                                                        $arFile["FILE_SIZE"]
+                                                                                    );
                                                                                     ?>)<br><?
                                                                                 }
                                                                                 ?></td>
-                                                                            <td <?= $headerbackcolor ?>
-                                                                                    style="width:0%;" nowrap><?
+                                                                            <td <?= $headerbackcolor ?>style="width:0%;"
+                                                                                                       nowrap><?
                                                                                 foreach ($ALL_TICKET_FILES[$arM["ID"]] as $arFile) {
-                                                                                    $alt = str_replace("#FILE_NAME#", htmlspecialcharsbx($arFile["NAME"]), GetMessage("SUP_DOWNLOAD_ALT"));
+                                                                                    $alt = str_replace(
+                                                                                        "#FILE_NAME#",
+                                                                                        htmlspecialcharsbx(
+                                                                                            $arFile["NAME"]
+                                                                                        ),
+                                                                                        GetMessage(
+                                                                                            "SUP_DOWNLOAD_ALT"
+                                                                                        )
+                                                                                    );
                                                                                     ?>&nbsp;[<a title="<?= $alt ?>"
-                                                                                                href="/bitrix/tools/ticket_show_file.php?hash=<? echo $arFile["HASH"] ?>&lang=<?= LANGUAGE_ID ?>&action=download"><? echo GetMessage("SUP_DOWNLOAD") ?></a>]
-                                                                                    <br><?
+                                                                                                href="/bitrix/tools/ticket_show_file.php?hash=<? echo $arFile["HASH"] ?>&lang=<?= LANGUAGE_ID ?>&action=download"><? echo GetMessage(
+                                                                                            "SUP_DOWNLOAD"
+                                                                                        ) ?></a>]<br><?
                                                                                 }
                                                                                 ?></td>
                                                                         </tr>
@@ -1670,7 +1896,7 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
         <? endif; ?>
     <? endif; ?>
 
-    <? if (strlen($str_DATE_CLOSE) <= 0): ?>
+    <? if ($str_DATE_CLOSE == ''): ?>
 
         <? if ($ID > 0): ?>
             <tr class="heading">
@@ -1826,7 +2052,9 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
                     document.getElementById("icon_2").style.display = "inline";
                 }
 
-                document.getElementById("online_frame").src = "/bitrix/admin/ticket_online.php?TICKET_ID=<?=$ID?>&OWNER_USER_ID=<?=intval($str_OWNER_USER_ID)?>&lang=<?=LANGUAGE_ID?>&mode=" + mode + "&ONLINE_AUTO_REFRESH=<?=$ONLINE_AUTO_REFRESH?>";
+                document.getElementById("online_frame").src = "/bitrix/admin/ticket_online.php?TICKET_ID=<?=$ID?>&OWNER_USER_ID=<?=intval(
+                    $str_OWNER_USER_ID
+                )?>&lang=<?=LANGUAGE_ID?>&mode=" + mode + "&ONLINE_AUTO_REFRESH=<?=$ONLINE_AUTO_REFRESH?>";
 
                 EnDisUserFields(mode);
             }
@@ -1857,7 +2085,7 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
                     color_backgroud = "";
                     color_checkbox = "";
                 }
-                <?if (strlen($str_DATE_CLOSE) <= 0):?>
+                <?if ($str_DATE_CLOSE == ''):?>
                 document.getElementById("MESSAGE_AUTHOR_SID").style.backgroundColor = color_backgroud;
                 document.getElementById("MESSAGE_SOURCE_ID").style.backgroundColor = color_backgroud;
                 document.getElementById("MESSAGE_AUTHOR_USER_ID").style.backgroundColor = color_backgroud;
@@ -1902,27 +2130,49 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
 
         <tr valign="top">
             <td align="right" id="edit_38"><?= GetMessage('SUP_TITLE') ?></td>
-            <td valign="center"
-                id="edit_39"><? echo InputType("input", "TITLE", $str_TITLE, '', false, "", "id=\"TITLE\"") ?></td>
+            <td valign="center" id="edit_39"><? echo InputType(
+                    "input",
+                    "TITLE",
+                    $str_TITLE,
+                    '',
+                    false,
+                    "",
+                    "id=\"TITLE\""
+                ) ?></td>
         </tr>
 
         <tr valign="top">
             <td align="right" id="edit_1"><?
-                echo (strlen($str_DATE_CLOSE) <= 0) ? GetMessage("SUP_HIDDEN_MESSAGE") : GetMessage("SUP_DO_NOT_NOTIFY_AUTHOR") ?></td>
-            <td valign="center"
-                id="edit_2"><? echo InputType("checkbox", "HIDDEN", "Y", $str_HIDDEN, false, "", "OnClick=\"HiddenClick()\" id=\"HIDDEN\"") ?>
-                <br><?= GetMessage("SUP_HIDDEN_MESSAGE_ALT") ?></td>
+                echo ($str_DATE_CLOSE == '') ? GetMessage("SUP_HIDDEN_MESSAGE") : GetMessage(
+                    "SUP_DO_NOT_NOTIFY_AUTHOR"
+                ) ?></td>
+            <td valign="center" id="edit_2"><? echo InputType(
+                    "checkbox",
+                    "HIDDEN",
+                    "Y",
+                    $str_HIDDEN,
+                    false,
+                    "",
+                    "OnClick=\"HiddenClick()\" id=\"HIDDEN\""
+                ) ?><br><?= GetMessage("SUP_HIDDEN_MESSAGE_ALT") ?></td>
         </tr>
 
-    <? if (strlen($str_DATE_CLOSE) <= 0): ?>
+    <? if ($str_DATE_CLOSE == ''): ?>
         <tr valign="top">
             <td align="right" id="edit_28"><?= GetMessage("CHANGE_STATUS") ?>:</td>
-            <td valign="center"
-                id="edit_29"><? echo InputType("checkbox", "NOT_CHANGE_STATUS", "Y", $str_NOT_CHANGE_STATUS, false, "", "id=\"NOT_CHANGE_STATUS\"") ?></td>
+            <td valign="center" id="edit_29"><? echo InputType(
+                    "checkbox",
+                    "NOT_CHANGE_STATUS",
+                    "Y",
+                    $str_NOT_CHANGE_STATUS,
+                    false,
+                    "",
+                    "id=\"NOT_CHANGE_STATUS\""
+                ) ?></td>
         </tr>
     <? endif ?>
 
-    <? if (strlen($str_DATE_CLOSE) <= 0): ?>
+    <? if ($str_DATE_CLOSE == ''): ?>
 
         <script type="text/javascript">
             <!--
@@ -1942,12 +2192,19 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
         </SCRIPT>
 
         <tr valign="middle">
-            <td id="edit_3" align="right" width="20%"
-                nowrap><?= GetMessage("SUP_SOURCE") . " / " . GetMessage("SUP_FROM") ?></td>
+            <td id="edit_3" align="right" width="20%" nowrap><?= GetMessage("SUP_SOURCE") . " / " . GetMessage(
+                    "SUP_FROM"
+                ) ?></td>
             <td id="edit_4" width="80%" nowrap><?
                 //echo SelectBox("MESSAGE_SOURCE_ID", CTicketDictionary::GetDropDown("SR", $TICKET_SITE), "< web >", $str_MESSAGE_SOURCE_ID, "OnChange=SelectMessageSource() id=\"MESSAGE_SOURCE_ID\"");
 
-                echo SelectBoxFromArray("MESSAGE_SOURCE_ID", __GetDropDown("SR", $TICKET_DICTIONARY), $str_MESSAGE_SOURCE_ID, "< web >", "OnChange=SelectMessageSource() id=\"MESSAGE_SOURCE_ID\"");
+                echo SelectBoxFromArray(
+                    "MESSAGE_SOURCE_ID",
+                    __GetDropDown("SR", $TICKET_DICTIONARY),
+                    $str_MESSAGE_SOURCE_ID,
+                    "< web >",
+                    "OnChange=SelectMessageSource() id=\"MESSAGE_SOURCE_ID\""
+                );
 
                 ?>&nbsp;<input type="text" size="12" name="MESSAGE_AUTHOR_SID" id="MESSAGE_AUTHOR_SID"
                                value="<?= $str_MESSAGE_AUTHOR_SID ?>">
@@ -1971,7 +2228,7 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
 
     <? endif; ?>
 
-    <? if (strlen($str_DATE_CLOSE) <= 0): ?>
+    <? if ($str_DATE_CLOSE == ''): ?>
 
         <? if (($bAdmin == "Y" || $bDemo == "Y" || $bSupportTeam == "Y") && $ID > 0) : ?>
         <script type="text/javascript">
@@ -1987,15 +2244,24 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
             $z = CTicket::GetFUA($TICKET_SITE);
             while ($zr = $z->Fetch()) :
             $src = $zr["DESCR"];
-            $src = preg_replace('#<SCRIPT#i', '<S"+"CRIPT',
-                preg_replace('#</SCRIPT#i', '</S"+"CRIPT',
+            $src = preg_replace(
+                '#<SCRIPT#i',
+                '<S"+"CRIPT',
+                preg_replace(
+                    '#</SCRIPT#i',
+                    '</S"+"CRIPT',
                     addcslashes(
-                        str_replace('"', '\"',
-                            str_replace("\\", "\\\\",
+                        str_replace(
+                            '"',
+                            '\"',
+                            str_replace(
+                                "\\",
+                                "\\\\",
                                 $src
                             )
                         ),
-                        "\0..\37")
+                        "\0..\37"
+                    )
                 )
             );
             ?>
@@ -2006,7 +2272,13 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
         <tr valign="middle">
             <td id="edit_5" align="right"><?= GetMessage("SUP_FUA") ?></td>
             <td id="edit_6"><?
-                echo SelectBox("FUA_ID", CTicket::GetFUA($TICKET_SITE), GetMessage("SUP_NO"), "", "OnChange=\"OnChangeFUA_ID()\" id=\"FUA_ID\"");
+                echo SelectBox(
+                    "FUA_ID",
+                    CTicket::GetFUA($TICKET_SITE),
+                    GetMessage("SUP_NO"),
+                    "",
+                    "OnChange=\"OnChangeFUA_ID()\" id=\"FUA_ID\""
+                );
                 ?></td>
         </tr>
     <? endif; ?>
@@ -2057,10 +2329,13 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
                 <td align="right">
                     <table cellspacing=0 cellpadding=0 width="100%" border=0>
                         <tr>
-                            <td style="padding-top:13px; padding-right: 10px"
-                                nowrap><?= GetMessage("SUP_ONLINE_TITLE") ?></td>
+                            <td style="padding-top:13px; padding-right: 10px" nowrap><?= GetMessage(
+                                    "SUP_ONLINE_TITLE"
+                                ) ?></td>
                             <td style="padding-top:13px;" width="100%" align="left"><a target="online_frame"
-                                                                                       href="/bitrix/admin/ticket_online.php?TICKET_ID=<?= $ID ?>&OWNER_USER_ID=<?= intval($str_OWNER_USER_ID) ?>&lang=<?= LANGUAGE_ID ?>&ONLINE_AUTO_REFRESH=<?= $ONLINE_AUTO_REFRESH ?>"><img
+                                                                                       href="/bitrix/admin/ticket_online.php?TICKET_ID=<?= $ID ?>&OWNER_USER_ID=<?= intval(
+                                                                                           $str_OWNER_USER_ID
+                                                                                       ) ?>&lang=<?= LANGUAGE_ID ?>&ONLINE_AUTO_REFRESH=<?= $ONLINE_AUTO_REFRESH ?>"><img
                                             src="/bitrix/images/support/refresh.gif" width="14" height="14" border="0"
                                             alt="<?= GetMessage("SUP_REFRESH_ALT") ?>"></a></td>
                         </tr>
@@ -2068,7 +2343,9 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
                             <td colspan="2" width="100%" nowrap>
                                 <iframe name="online_frame" id="online_frame" frameborder="0"
                                         style="width:100%; border:0; height:300px;"
-                                        src="/bitrix/admin/ticket_online.php?TICKET_ID=<?= $ID ?>&OWNER_USER_ID=<?= intval($str_OWNER_USER_ID) ?>&lang=<?= LANGUAGE_ID ?>&mode=<?= $default_mode ?>&ONLINE_AUTO_REFRESH=<?= $ONLINE_AUTO_REFRESH ?>"></iframe>
+                                        src="/bitrix/admin/ticket_online.php?TICKET_ID=<?= $ID ?>&OWNER_USER_ID=<?= intval(
+                                            $str_OWNER_USER_ID
+                                        ) ?>&lang=<?= LANGUAGE_ID ?>&mode=<?= $default_mode ?>&ONLINE_AUTO_REFRESH=<?= $ONLINE_AUTO_REFRESH ?>"></iframe>
                             </td>
                         </tr>
                     </table>
@@ -2102,9 +2379,9 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
                                    style="vertical-align: middle; width: 100px" name="CODE" id="CODE"
                                    title="<? echo GetMessage("SUP_CODE_ALT");
                                    echo $hkInst->GetTitle("TICKET_EDIT_CODE_T"); ?>">
-                            <input type="button"
-                                   value="<?= GetMessage("SUP_TRANSLIT") . $hkInst->GetTitle("TICKET_EDIT_TRANSLIT_T") ?>"
-                                   onClick="translit(document.form1.MESSAGE)"
+                            <input type="button" value="<?= GetMessage("SUP_TRANSLIT") . $hkInst->GetTitle(
+                                "TICKET_EDIT_TRANSLIT_T"
+                            ) ?>" onClick="translit(document.form1.MESSAGE)"
                                    style="vertical-align: middle; width: 135px" name="TRANSLIT" id="TRANSLIT"
                                    title="<? echo GetMessage("SUP_TRANSLIT_ALT");
                                    echo $hkInst->GetTitle("TICKET_EDIT_TRANSLIT_T"); ?>"></td>
@@ -2144,7 +2421,9 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
                     $max_size = COption::GetOptionString("support", "SUPPORT_MAX_FILESIZE");
                 }
                 if (intval($max_size) > 0) {
-                    echo GetMessage("SUP_ATTACH") . "<br>(max - " . intval($max_size) . " " . GetMessage("SUP_KB") . "):";
+                    echo GetMessage("SUP_ATTACH") . "<br>(max - " . intval($max_size) . " " . GetMessage(
+                            "SUP_KB"
+                        ) . "):";
                     $ms = intval($max_size) * 1024;
                     echo "<input type='hidden' name='MAX_FILE_SIZE' value='" . $ms . "'>";
                 } else {
@@ -2162,8 +2441,9 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
                             <tr>
                                 <td><?
                                     ?><a title="<?= GetMessage("SUP_VIEW_ALT") ?>" target="_blank"
-                                         href="/bitrix/tools/ticket_show_file.php?hash=<? echo $arFile["HASH"] ?>&lang=<?= LANG ?>"><? echo htmlspecialcharsbx($arFile["NAME"]) ?></a>
-                                    (<?
+                                         href="/bitrix/tools/ticket_show_file.php?hash=<? echo $arFile["HASH"] ?>&lang=<?= LANG ?>"><? echo htmlspecialcharsbx(
+                                            $arFile["NAME"]
+                                        ) ?></a> (<?
                                     /*$a = array("b", "kb", "mb", "gb");
 						$pos = 0;
 						$size = $arFile["FILE_SIZE"];
@@ -2171,8 +2451,10 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
 						echo round($size,2)." ".$a[$pos];*/
                                     echo CFile::FormatSize($arFile["FILE_SIZE"]);
                                     ?>)&nbsp;&nbsp;[&nbsp;<a
-                                            href="/bitrix/tools/ticket_show_file.php?hash=<? echo $arFile["HASH"] ?>&lang=<?= LANG ?>&action=download"><? echo GetMessage("SUP_DOWNLOAD") ?></a>&nbsp;]&nbsp;&nbsp;<input
-                                            type="checkbox" name="ATTACH_FILE[]" value="<?= $arFile["ID"] ?>" checked>
+                                            href="/bitrix/tools/ticket_show_file.php?hash=<? echo $arFile["HASH"] ?>&lang=<?= LANG ?>&action=download"><? echo GetMessage(
+                                            "SUP_DOWNLOAD"
+                                        ) ?></a>&nbsp;]&nbsp;&nbsp;<input type="checkbox" name="ATTACH_FILE[]"
+                                                                          value="<?= $arFile["ID"] ?>" checked>
                                 </td>
                             </tr>
                             <?
@@ -2195,7 +2477,13 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
             <td id="edit_10" align="right" nowrap><?= GetMessage("SUP_STATUS") ?></td>
             <td id="edit_11" nowrap><?
                 //echo SelectBox("STATUS_ID", CTicketDictionary::GetDropDown("S", $TICKET_SITE), " ", $str_STATUS_ID," id=\"STATUS_ID\"");
-                echo SelectBoxFromArray("STATUS_ID", __GetDropDown("S", $TICKET_DICTIONARY), $str_STATUS_ID, " ", " id=\"STATUS_ID\"");
+                echo SelectBoxFromArray(
+                    "STATUS_ID",
+                    __GetDropDown("S", $TICKET_DICTIONARY),
+                    $str_STATUS_ID,
+                    " ",
+                    " id=\"STATUS_ID\""
+                );
 
                 ?></td>
         </tr>
@@ -2206,7 +2494,13 @@ if (isset($_GET['TICKET_ID']) && isset($_GET['MESSAGE_ID'])) {
             <td id="edit_30" align="right" nowrap><?= GetMessage("SUP_DIFFICULTY") ?></td>
             <td id="edit_31" nowrap><?
                 //echo SelectBox("DIFFICULTY_ID", CTicketDictionary::GetDropDown("D", $TICKET_SITE), " ", $str_DIFFICULTY_ID," id=\"DIFFICULTY_ID\"");
-                echo SelectBoxFromArray("DIFFICULTY_ID", __GetDropDown("D", $TICKET_DICTIONARY), $str_DIFFICULTY_ID, " ", "  id=\"DIFFICULTY_ID\"");
+                echo SelectBoxFromArray(
+                    "DIFFICULTY_ID",
+                    __GetDropDown("D", $TICKET_DICTIONARY),
+                    $str_DIFFICULTY_ID,
+                    " ",
+                    "  id=\"DIFFICULTY_ID\""
+                );
                 ?></td>
         </tr>
     <? endif; ?>
@@ -2299,7 +2593,7 @@ while ($arTeam = $dbTeam->Fetch())
 	{
 		echo "<option ";
 		if($reference_id == $str_RESPONSIBLE_USER_ID)
-			echo " selected ";
+			{echo " selected ";}
 		echo "value=\"".htmlspecialcharsbx($reference_id). "\">". htmlspecialcharsbx($reference)."</option>";
 	}
 }
@@ -2316,7 +2610,13 @@ while ($arTeam = $dbTeam->Fetch())
 
                 //if ($ID<=0 && strlen($strError)<=0) $str_CRITICALITY_ID = CTicketDictionary::GetDefault("K", $TICKET_SITE);
                 //echo SelectBox("CRITICALITY_ID", CTicketDictionary::GetDropDown("K", $TICKET_SITE, $TICKET_SLA), " ", $str_CRITICALITY_ID, " id=\"CRITICALITY_ID\"");
-                echo SelectBoxFromArray("CRITICALITY_ID", __GetDropDown("K", $TICKET_DICTIONARY), $str_CRITICALITY_ID, " ", " id=\"CRITICALITY_ID\"");
+                echo SelectBoxFromArray(
+                    "CRITICALITY_ID",
+                    __GetDropDown("K", $TICKET_DICTIONARY),
+                    $str_CRITICALITY_ID,
+                    " ",
+                    " id=\"CRITICALITY_ID\""
+                );
                 ?></td>
         </tr>
     <? endif; ?>
@@ -2326,7 +2626,13 @@ while ($arTeam = $dbTeam->Fetch())
             <td id="edit_16" align="right" nowrap><?= GetMessage("SUP_MARK") ?></td>
             <td id="edit_17" nowrap><?
                 //echo SelectBox("MARK_ID", CTicketDictionary::GetDropDown("M", $TICKET_SITE, $TICKET_SLA), " ", $str_MARK_ID, " id=\"MARK_ID\"");
-                echo SelectBoxFromArray("MARK_ID", __GetDropDown("M", $TICKET_DICTIONARY), $str_MARK_ID, " ", " id=\"MARK_ID\"");
+                echo SelectBoxFromArray(
+                    "MARK_ID",
+                    __GetDropDown("M", $TICKET_DICTIONARY),
+                    $str_MARK_ID,
+                    " ",
+                    " id=\"MARK_ID\""
+                );
                 ?></td>
         </tr>
     <? endif; ?>
@@ -2338,14 +2644,21 @@ while ($arTeam = $dbTeam->Fetch())
                 //if ($ID<=0 && strlen($strError)<=0) $str_CATEGORY_ID = CTicketDictionary::GetDefault("C", $TICKET_SITE);
                 //echo SelectBox("CATEGORY_ID", CTicketDictionary::GetDropDown("C", $TICKET_SITE, $TICKET_SLA), " ", $str_CATEGORY_ID, " id =\"CATEGORY_ID\"");
 
-                echo SelectBoxFromArray("CATEGORY_ID", __GetDropDown("C", $TICKET_DICTIONARY), $str_CATEGORY_ID, " ", " id =\"CATEGORY_ID\"");
+                echo SelectBoxFromArray(
+                    "CATEGORY_ID",
+                    __GetDropDown("C", $TICKET_DICTIONARY),
+                    $str_CATEGORY_ID,
+                    " ",
+                    " id =\"CATEGORY_ID\""
+                );
 
                 ?><? if ($can_select_responsible == "Y"): ?>&nbsp;&nbsp;<a
                         title="<?= GetMessage("SUP_RESPONSIBLE_SELECT_BY_CATEGORY_ALT") ?>" id="icon_1"
                         href="javascript:SetResponsible('CATEGORY_ID')"><img src="/bitrix/images/support/resp.gif"
                                                                              width="16" height="16" border="0"
-                                                                             alt="<?= GetMessage("SUP_RESPONSIBLE_SELECT_BY_CATEGORY_ALT") ?>">
-                    </a><? endif; ?></td>
+                                                                             alt="<?= GetMessage(
+                                                                                 "SUP_RESPONSIBLE_SELECT_BY_CATEGORY_ALT"
+                                                                             ) ?>"></a><? endif; ?></td>
         </tr>
     <? endif; ?>
 
@@ -2354,12 +2667,19 @@ while ($arTeam = $dbTeam->Fetch())
             <td id="edit_20" align="right" width="20%" nowrap><?= GetMessage("SUP_SLA") ?>:</td>
             <td id="edit_21" width="80%" nowrap><?
                 $rsSLA = CTicketSLA::GetDropDown($TICKET_SITE);
-                echo SelectBox("SLA_ID", $rsSLA, "", $TICKET_SLA, "onChange=\"OnSLAChange(this[this.selectedIndex].value)\" id=\"SLA_ID\"");
-                ?><? if ($can_select_responsible == "Y"): ?>&nbsp;&nbsp;<a id="icon_2"
-                                                                           title="<?= GetMessage("SUP_RESPONSIBLE_SELECT_BY_SLA_ALT") ?>"
-                                                                           href="javascript:SetResponsible('SLA_ID')">
-                    <img src="/bitrix/images/support/resp.gif" width="16" height="16" border="0"
-                         alt="<?= GetMessage("SUP_RESPONSIBLE_SELECT_BY_SLA_ALT") ?>"></a><? endif; ?></td>
+                echo SelectBox(
+                    "SLA_ID",
+                    $rsSLA,
+                    "",
+                    $TICKET_SLA,
+                    "onChange=\"OnSLAChange(this[this.selectedIndex].value)\" id=\"SLA_ID\""
+                );
+                ?><? if ($can_select_responsible == "Y"): ?>&nbsp;&nbsp;<a id="icon_2" title="<?= GetMessage(
+                    "SUP_RESPONSIBLE_SELECT_BY_SLA_ALT"
+                ) ?>" href="javascript:SetResponsible('SLA_ID')"><img src="/bitrix/images/support/resp.gif" width="16"
+                                                                      height="16" border="0" alt="<?= GetMessage(
+                        "SUP_RESPONSIBLE_SELECT_BY_SLA_ALT"
+                    ) ?>"></a><? endif; ?></td>
         </tr>
 
         <script type="text/javascript">
@@ -2382,7 +2702,9 @@ while ($arTeam = $dbTeam->Fetch())
 
                 if (isset($slaDictionary['C'])) {
                     foreach ($slaDictionary['C'] as $ar) {
-                        echo ", Array('" . addslashes(htmlspecialcharsbx($ar["REFERENCE_ID"])) . "', '" . addslashes(htmlspecialcharsbx($ar["REFERENCE"])) . "')";
+                        echo ", Array('" . addslashes(htmlspecialcharsbx($ar["REFERENCE_ID"])) . "', '" . addslashes(
+                                htmlspecialcharsbx($ar["REFERENCE"])
+                            ) . "')";
                     }
                 }
                 ?>);
@@ -2397,7 +2719,9 @@ while ($arTeam = $dbTeam->Fetch())
 
                 if (isset($slaDictionary['M'])) {
                     foreach ($slaDictionary['M'] as $ar) {
-                        echo ", Array('" . addslashes(htmlspecialcharsbx($ar["REFERENCE_ID"])) . "', '" . addslashes(htmlspecialcharsbx($ar["REFERENCE"])) . "')";
+                        echo ", Array('" . addslashes(htmlspecialcharsbx($ar["REFERENCE_ID"])) . "', '" . addslashes(
+                                htmlspecialcharsbx($ar["REFERENCE"])
+                            ) . "')";
                     }
                 }
                 ?>);
@@ -2412,7 +2736,9 @@ while ($arTeam = $dbTeam->Fetch())
 
                 if (isset($slaDictionary['K'])) {
                     foreach ($slaDictionary['K'] as $ar) {
-                        echo ", Array('" . addslashes(htmlspecialcharsbx($ar["REFERENCE_ID"])) . "', '" . addslashes(htmlspecialcharsbx($ar["REFERENCE"])) . "')";
+                        echo ", Array('" . addslashes(htmlspecialcharsbx($ar["REFERENCE_ID"])) . "', '" . addslashes(
+                                htmlspecialcharsbx($ar["REFERENCE"])
+                            ) . "')";
                     }
                 }
                 ?>);
@@ -2489,14 +2815,21 @@ while ($arTeam = $dbTeam->Fetch())
 
         <tr valign="middle">
             <td id="edit_34" align="right" nowrap><? echo GetMessage("SUP_HOLD_ON") ?>:</td>
-            <td id="edit_35"
-                nowrap><? echo InputType("checkbox", "HOLD_ON", "Y", $str_HOLD_ON, false, "", "id=\"HOLD_ON\"") ?></td>
+            <td id="edit_35" nowrap><? echo InputType(
+                    "checkbox",
+                    "HOLD_ON",
+                    "Y",
+                    $str_HOLD_ON,
+                    false,
+                    "",
+                    "id=\"HOLD_ON\""
+                ) ?></td>
         </tr>
 
     <? endif; ?>
 
 
-    <? if (($bAdmin == "Y" || $bDemo == "Y" || $bSupportTeam == "Y") && strlen($str_DATE_CLOSE) <= 0) : ?>
+    <? if (($bAdmin == "Y" || $bDemo == "Y" || $bSupportTeam == "Y") && $str_DATE_CLOSE == '') : ?>
         <tr valign="middle">
             <td id="edit_22" align="right" nowrap><?= GetMessage("SUP_AUTO_CLOSE_TICKET") ?></td>
             <td id="edit_23" nowrap><?
@@ -2512,7 +2845,7 @@ while ($arTeam = $dbTeam->Fetch())
         </tr>
     <? endif; ?>
 
-    <? if (strlen($str_DATE_CLOSE) <= 0): ?>
+    <? if ($str_DATE_CLOSE == ''): ?>
 
         <script type="text/javascript">
             <!--
@@ -2528,8 +2861,15 @@ while ($arTeam = $dbTeam->Fetch())
 
         <tr valign="middle">
             <td id="edit_24" align="right" nowrap><? echo GetMessage("SUP_CLOSE_TICKET") ?>:</td>
-            <td id="edit_25"
-                nowrap><? echo InputType("checkbox", "CLOSE", "Y", $str_CLOSE, false, "", "OnClick=\"CloseClick()\" id=\"CLOSE\"") ?></td>
+            <td id="edit_25" nowrap><? echo InputType(
+                    "checkbox",
+                    "CLOSE",
+                    "Y",
+                    $str_CLOSE,
+                    false,
+                    "",
+                    "OnClick=\"CloseClick()\" id=\"CLOSE\""
+                ) ?></td>
         </tr>
         <script type="text/javascript">
             <!--
@@ -2552,7 +2892,15 @@ while ($arTeam = $dbTeam->Fetch())
         </SCRIPT>
         <tr valign="middle">
             <td align="right" nowrap><? echo GetMessage("SUP_OPEN_TICKET") ?>:</td>
-            <td nowrap><? echo InputType("checkbox", "OPEN", "Y", "", false, "", "OnClick=\"OpenClick()\" id=\"OPEN\"") ?></td>
+            <td nowrap><? echo InputType(
+                    "checkbox",
+                    "OPEN",
+                    "Y",
+                    "",
+                    false,
+                    "",
+                    "OnClick=\"OpenClick()\" id=\"OPEN\""
+                ) ?></td>
         </tr>
         <script type="text/javascript">
             <!--
@@ -2669,8 +3017,9 @@ while ($arTeam = $dbTeam->Fetch())
         <td valign="center" nowrap>
             <div class="lamp-red"></div>
         </td>
-        <td valign="center"
-            nowrap><? echo ($bAdmin == "Y" || $bDemo == "Y" || $bSupportTeam == "Y") ? GetMessage("SUP_RED_ALT") : GetMessage("SUP_RED_ALT_2") ?></td>
+        <td valign="center" nowrap><? echo ($bAdmin == "Y" || $bDemo == "Y" || $bSupportTeam == "Y") ? GetMessage(
+                "SUP_RED_ALT"
+            ) : GetMessage("SUP_RED_ALT_2") ?></td>
     </tr>
     <? if ($bAdmin == "Y" || $bDemo == "Y") : ?>
         <tr>

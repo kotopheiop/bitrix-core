@@ -12,10 +12,12 @@ class Google extends Mail\Helper\OAuth
     {
         $this->oauthEntity = new GoogleInterface;
 
-        $this->oauthEntity->addScope(array(
-            'email',
-            'https://mail.google.com/',
-        ));
+        $this->oauthEntity->addScope(
+            array(
+                'email',
+                'https://mail.google.com/',
+            )
+        );
     }
 
     protected function check()

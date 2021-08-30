@@ -1,4 +1,5 @@
-<?
+<?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/socialnetwork/classes/general/event_user_view.php");
 
 class CSocNetEventUserView extends CAllSocNetEventUserView
@@ -6,20 +7,21 @@ class CSocNetEventUserView extends CAllSocNetEventUserView
     /***************************************/
     /********  DATA MODIFICATION  **********/
     /***************************************/
-    function Add($arFields)
+    public static function Add($arFields)
     {
         global $DB;
 
-        if (!CSocNetEventUserView::CheckFields("ADD", $arFields))
+        if (!CSocNetEventUserView::CheckFields("ADD", $arFields)) {
             return false;
+        }
 
         $arInsert = $DB->PrepareInsert("b_sonet_event_user_view", $arFields);
 
-        if (strlen($arInsert[0]) > 0) {
+        if ($arInsert[0] <> '') {
             $strSql =
                 "INSERT INTO b_sonet_event_user_view(" . $arInsert[0] . ") " .
                 "VALUES(" . $arInsert[1] . ")";
-            $DB->Query($strSql, False, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+            $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
         }
 
         return true;
@@ -28,13 +30,18 @@ class CSocNetEventUserView extends CAllSocNetEventUserView
     /***************************************/
     /**********  DATA SELECTION  ***********/
     /***************************************/
-
-    function GetList($arOrder = Array("ENTITY_ID" => "DESC"), $arFilter = Array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
-    {
+    public static function GetList(
+        $arOrder = Array("ENTITY_ID" => "DESC"),
+        $arFilter = Array(),
+        $arGroupBy = false,
+        $arNavStartParams = false,
+        $arSelectFields = array()
+    ) {
         global $DB;
 
-        if (count($arSelectFields) <= 0)
+        if (count($arSelectFields) <= 0) {
             $arSelectFields = array("ENTITY_TYPE", "ENTITY_ID", "EVENT_ID", "USER_ID", "USER_ANONYMOUS");
+        }
 
         static $arFields = array(
             "ENTITY_TYPE" => Array("FIELD" => "EUV.ENTITY_TYPE", "TYPE" => "string"),
@@ -53,18 +60,21 @@ class CSocNetEventUserView extends CAllSocNetEventUserView
                 "SELECT " . $arSqls["SELECT"] . " " .
                 "FROM b_sonet_event_user_view EUV " .
                 "	" . $arSqls["FROM"] . " ";
-            if (strlen($arSqls["WHERE"]) > 0)
+            if ($arSqls["WHERE"] <> '') {
                 $strSql .= "WHERE " . $arSqls["WHERE"] . " ";
-            if (strlen($arSqls["GROUPBY"]) > 0)
+            }
+            if ($arSqls["GROUPBY"] <> '') {
                 $strSql .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
+            }
 
             //echo "!1!=".htmlspecialcharsbx($strSql)."<br>";
 
             $dbRes = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-            if ($arRes = $dbRes->Fetch())
+            if ($arRes = $dbRes->Fetch()) {
                 return $arRes["CNT"];
-            else
-                return False;
+            } else {
+                return false;
+            }
         }
 
 
@@ -72,30 +82,36 @@ class CSocNetEventUserView extends CAllSocNetEventUserView
             "SELECT " . $arSqls["SELECT"] . " " .
             "FROM b_sonet_event_user_view EUV " .
             "	" . $arSqls["FROM"] . " ";
-        if (strlen($arSqls["WHERE"]) > 0)
+        if ($arSqls["WHERE"] <> '') {
             $strSql .= "WHERE " . $arSqls["WHERE"] . " ";
-        if (strlen($arSqls["GROUPBY"]) > 0)
+        }
+        if ($arSqls["GROUPBY"] <> '') {
             $strSql .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
-        if (strlen($arSqls["ORDERBY"]) > 0)
+        }
+        if ($arSqls["ORDERBY"] <> '') {
             $strSql .= "ORDER BY " . $arSqls["ORDERBY"] . " ";
+        }
 
-        if (is_array($arNavStartParams) && IntVal($arNavStartParams["nTopCount"]) <= 0) {
+        if (is_array($arNavStartParams) && intval($arNavStartParams["nTopCount"]) <= 0) {
             $strSql_tmp =
                 "SELECT COUNT('x') as CNT " .
                 "FROM b_sonet_event_user_view EUV " .
                 "	" . $arSqls["FROM"] . " ";
-            if (strlen($arSqls["WHERE"]) > 0)
+            if ($arSqls["WHERE"] <> '') {
                 $strSql_tmp .= "WHERE " . $arSqls["WHERE"] . " ";
-            if (strlen($arSqls["GROUPBY"]) > 0)
+            }
+            if ($arSqls["GROUPBY"] <> '') {
                 $strSql_tmp .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
+            }
 
             //echo "!2.1!=".htmlspecialcharsbx($strSql_tmp)."<br>";
 
             $dbRes = $DB->Query($strSql_tmp, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             $cnt = 0;
-            if (strlen($arSqls["GROUPBY"]) <= 0) {
-                if ($arRes = $dbRes->Fetch())
+            if ($arSqls["GROUPBY"] == '') {
+                if ($arRes = $dbRes->Fetch()) {
                     $cnt = $arRes["CNT"];
+                }
             } else {
                 // MYSQL ONLY!!!
                 $cnt = $dbRes->SelectedRowsCount();
@@ -107,8 +123,9 @@ class CSocNetEventUserView extends CAllSocNetEventUserView
 
             $dbRes->NavQuery($strSql, $cnt, $arNavStartParams);
         } else {
-            if (is_array($arNavStartParams) && IntVal($arNavStartParams["nTopCount"]) > 0)
-                $strSql .= "LIMIT " . IntVal($arNavStartParams["nTopCount"]);
+            if (is_array($arNavStartParams) && intval($arNavStartParams["nTopCount"]) > 0) {
+                $strSql .= "LIMIT " . intval($arNavStartParams["nTopCount"]);
+            }
 
             //echo "!3!=".htmlspecialcharsbx($strSql)."<br>";
 
@@ -117,7 +134,4 @@ class CSocNetEventUserView extends CAllSocNetEventUserView
 
         return $dbRes;
     }
-
 }
-
-?>

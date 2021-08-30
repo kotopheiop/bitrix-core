@@ -14,11 +14,13 @@ Loc::loadMessages(__FILE__);
 $selfFolderUrl = $adminPage->getSelfFolderUrl();
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions < "W")
+if ($saleModulePermissions < "W") {
     $APPLICATION->AuthForm(Loc::getMessage("ACCESS_DENIED"));
+}
 
-if ($_SERVER["REQUEST_METHOD"] == "POST" && !check_bitrix_sessid())
+if ($_SERVER["REQUEST_METHOD"] == "POST" && !check_bitrix_sessid()) {
     $APPLICATION->AuthForm(Loc::getMessage("ACCESS_DENIED"));
+}
 
 $APPLICATION->SetAdditionalCSS("/bitrix/panel/sale/preset.css");
 
@@ -112,24 +114,28 @@ $APPLICATION->SetTitle($preset->getTitle());
         <div style="margin-top: 20px">
             <? if ($preset->hasPrevStep()) { ?>
                 <a href="javascript:  BX('__run_prev_step').value = 'Y';BX.submit(document.forms['__preset_form'])"
-                   style="margin-right: 10px;"
-                   class="adm-btn adm-btn-grey"><?= Loc::getMessage('SALE_DISCOUNT_PRESET_DETAIL_PREV_STEP') ?></a>
+                   style="margin-right: 10px;" class="adm-btn adm-btn-grey"><?= Loc::getMessage(
+                        'SALE_DISCOUNT_PRESET_DETAIL_PREV_STEP'
+                    ) ?></a>
             <? } ?>
             <? if (!$preset->isLastStep()) { ?>
                 <a href="javascript: BX.submit(document.forms['__preset_form'])"
                    class="adm-btn adm-btn-grey"><?= Loc::getMessage('SALE_DISCOUNT_PRESET_DETAIL_NEXT_STEP') ?></a>
                 <?
             } else {
-                $listDiscountLink = $selfFolderUrl . 'sale_discount.php?' . http_build_query(array(
-                        'from_list' => 'preset',
-                        'lang' => LANGUAGE_ID,
-                        'PRESET_DISCOUNT_ID' => $preset::className(),
-                        'apply_filter' => 'Y'
-                    ));
+                $listDiscountLink = $selfFolderUrl . 'sale_discount.php?' . http_build_query(
+                        array(
+                            'from_list' => 'preset',
+                            'lang' => LANGUAGE_ID,
+                            'PRESET_DISCOUNT_ID' => $preset::className(),
+                            'apply_filter' => 'Y'
+                        )
+                    );
                 $listDiscountLink = $adminSidePanelHelper->editUrlToPublicPage($listDiscountLink);
                 ?>
-                <a href="<?= $listDiscountLink ?>" class="adm-btn adm-btn-grey"
-                   target="_top"><?= Loc::getMessage('SALE_DISCOUNT_PRESET_DETAIL_PRESET_DISCOUNT_GO_TO_LIST') ?></a>
+                <a href="<?= $listDiscountLink ?>" class="adm-btn adm-btn-grey" target="_top"><?= Loc::getMessage(
+                        'SALE_DISCOUNT_PRESET_DETAIL_PRESET_DISCOUNT_GO_TO_LIST'
+                    ) ?></a>
             <? } ?>
         </div>
     </div>

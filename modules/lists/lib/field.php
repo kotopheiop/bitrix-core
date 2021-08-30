@@ -55,30 +55,40 @@ class Field
             $result = self::$renderMethod($field);
         } elseif (isset($field['PROPERTY_USER_TYPE']['GetPublicViewHTMLMulty'])) {
             $result = call_user_func_array(
-                $field['PROPERTY_USER_TYPE']['GetPublicViewHTMLMulty'], array($field, $field, $controlSettings));
+                $field['PROPERTY_USER_TYPE']['GetPublicViewHTMLMulty'],
+                array($field, $field, $controlSettings)
+            );
         } elseif (isset($field['PROPERTY_USER_TYPE']['GetPublicViewHTML'])) {
             if ($field['MULTIPLE'] === 'Y' && is_array($field['VALUE'])) {
                 $results = array();
                 if (\CLists::isAssociativeArray($field['VALUE'])) {
                     $result = call_user_func_array(
-                        $field['PROPERTY_USER_TYPE']['GetPublicViewHTML'], array($field, $field, $controlSettings));
+                        $field['PROPERTY_USER_TYPE']['GetPublicViewHTML'],
+                        array($field, $field, $controlSettings)
+                    );
                 } else {
                     foreach ($field['VALUE'] as $value) {
                         $fieldParam = array('VALUE' => $value);
-                        $results[] = call_user_func_array($field['PROPERTY_USER_TYPE']['GetPublicViewHTML'],
-                            array($field, $fieldParam, $controlSettings));
+                        $results[] = call_user_func_array(
+                            $field['PROPERTY_USER_TYPE']['GetPublicViewHTML'],
+                            array($field, $fieldParam, $controlSettings)
+                        );
                     }
                     $result = implode(self::$separator, $results);
                 }
             } else {
                 $result = call_user_func_array(
-                    $field['PROPERTY_USER_TYPE']['GetPublicViewHTML'], array($field, $field, $controlSettings));
+                    $field['PROPERTY_USER_TYPE']['GetPublicViewHTML'],
+                    array($field, $field, $controlSettings)
+                );
             }
 
             if ($field['TYPE'] == 'S:DiskFile' && $field['READ'] == 'Y') {
                 $field['VALUE'] = array_filter((is_array($field['VALUE']) ? $field['VALUE'] : array($field['VALUE'])));
                 foreach ($field['VALUE'] as $key => $value) {
-                    $result .= '<input type="hidden" name="' . $field['FIELD_ID'] . '[n' . $key . '][VALUE][]" value="' . HtmlFilter::encode($value) . '">';
+                    $result .= '<input type="hidden" name="' . $field['FIELD_ID'] . '[n' . $key . '][VALUE][]" value="' . HtmlFilter::encode(
+                            $value
+                        ) . '">';
                 }
             }
         } elseif ($field['PROPERTY_TYPE'] != '') {
@@ -105,24 +115,31 @@ class Field
         self::$renderForForm = true;
 
         $field['SHOW'] = 'Y';
-        if ($field['ELEMENT_ID'] > 0 && !empty($field['SETTINGS']['SHOW_EDIT_FORM']))
+        if ($field['ELEMENT_ID'] > 0 && !empty($field['SETTINGS']['SHOW_EDIT_FORM'])) {
             $field['SHOW'] = $field['SETTINGS']['SHOW_EDIT_FORM'];
-        if (!$field['ELEMENT_ID'] && !empty($field['SETTINGS']['SHOW_ADD_FORM']))
+        }
+        if (!$field['ELEMENT_ID'] && !empty($field['SETTINGS']['SHOW_ADD_FORM'])) {
             $field['SHOW'] = $field['SETTINGS']['SHOW_ADD_FORM'];
+        }
 
         $field['READ'] = 'N';
-        if ($field['ELEMENT_ID'] > 0 && !empty($field['SETTINGS']['EDIT_READ_ONLY_FIELD']))
+        if ($field['ELEMENT_ID'] > 0 && !empty($field['SETTINGS']['EDIT_READ_ONLY_FIELD'])) {
             $field['READ'] = $field['SETTINGS']['EDIT_READ_ONLY_FIELD'];
-        if (!$field['ELEMENT_ID'] && !empty($field['SETTINGS']['ADD_READ_ONLY_FIELD']))
+        }
+        if (!$field['ELEMENT_ID'] && !empty($field['SETTINGS']['ADD_READ_ONLY_FIELD'])) {
             $field['READ'] = $field['SETTINGS']['ADD_READ_ONLY_FIELD'];
+        }
 
         if (isset($field['PROPERTY_USER_TYPE']['USER_TYPE']) && method_exists(
-                __CLASS__, 'prepareEditFieldByUserType' . $field['PROPERTY_USER_TYPE']['USER_TYPE'])) {
+                __CLASS__,
+                'prepareEditFieldByUserType' . $field['PROPERTY_USER_TYPE']['USER_TYPE']
+            )) {
             $prepareEditMethod = 'prepareEditFieldByUserType' . $field['PROPERTY_USER_TYPE']['USER_TYPE'];
             $result = self::$prepareEditMethod($field);
         } elseif (isset($field['PROPERTY_USER_TYPE']['GetPublicEditHTMLMulty']) && $field['MULTIPLE'] == 'Y') {
-            if (!is_array($field['VALUE']))
+            if (!is_array($field['VALUE'])) {
                 $field['VALUE'] = array($field['VALUE']);
+            }
             $html = '';
             $isEmptyValue = true;
             foreach ($field['VALUE'] as $key => $value) {
@@ -134,17 +151,33 @@ class Field
                         $field['CURRENT_VALUE'] = $value['VALUE'];
                         $html .= ' ' . self::renderField($field);
                     }
-                    $result['customHtml'] .= '<input type="hidden" name="' .
-                        $field['FIELD_ID'] . '[' . $key . '][VALUE]" value="' . HtmlFilter::encode($value['VALUE']) . '">';
+                    $value['VALUE'] = (!is_array($value['VALUE']) ? [$value['VALUE']] : $value['VALUE']);
+                    foreach ($value['VALUE'] as $innerKey => $innerValue) {
+                        $result['customHtml'] .= '<input type="hidden" name="' .
+                            $field['FIELD_ID'] . '[n' . $innerKey . '][VALUE]" value="' . HtmlFilter::encode(
+                                $innerValue
+                            ) . '">';
+                    }
                 }
             }
             if ($field['READ'] == 'N') {
-                $html .= call_user_func_array($field['PROPERTY_USER_TYPE']['GetPublicEditHTMLMulty'], array(
-                    $field, $field['VALUE'], array('VALUE' => $field['FIELD_ID'], 'DESCRIPTION' => '',
-                        'FORM_NAME' => 'form_' . $field['FORM_ID'], 'MODE' => 'FORM_FILL')));
+                $html .= call_user_func_array(
+                    $field['PROPERTY_USER_TYPE']['GetPublicEditHTMLMulty'],
+                    array(
+                        $field,
+                        $field['VALUE'],
+                        array(
+                            'VALUE' => $field['FIELD_ID'],
+                            'DESCRIPTION' => '',
+                            'FORM_NAME' => 'form_' . $field['FORM_ID'],
+                            'MODE' => 'FORM_FILL'
+                        )
+                    )
+                );
             } else {
-                if ($isEmptyValue)
+                if ($isEmptyValue) {
                     $html .= Loc::getMessage('LISTS_FIELD_NOT_DATA');
+                }
             }
             $result['id'] = $field['FIELD_ID'];
             $result['name'] = $field['NAME'];
@@ -154,8 +187,9 @@ class Field
             $result['show'] = $field['SHOW'];
         } elseif (isset($field['PROPERTY_USER_TYPE']['GetPublicEditHTML'])) {
             $listTypeNotMultiple = array('S:DiskFile', 'S:ECrm');
-            if (!is_array($field['VALUE']))
+            if (!is_array($field['VALUE'])) {
                 $field['VALUE'] = array($field['VALUE']);
+            }
 
             if ($field['MULTIPLE'] == 'Y' && !in_array($field['TYPE'], $listTypeNotMultiple)) {
                 $html = '<table id="tbl' . $field['FIELD_ID'] . '">';
@@ -172,7 +206,8 @@ class Field
                         $result['customHtml'] .= '<input type="hidden" name="' . $field['FIELD_ID'] .
                             '[' . $key . '][VALUE]" value="' . HtmlFilter::encode($value['VALUE']) . '">';
                     } else {
-                        $html .= '<tr><td>' . call_user_func_array($field['PROPERTY_USER_TYPE']['GetPublicEditHTML'],
+                        $html .= '<tr><td>' . call_user_func_array(
+                                $field['PROPERTY_USER_TYPE']['GetPublicEditHTML'],
                                 array(
                                     $field,
                                     $value,
@@ -183,12 +218,14 @@ class Field
                                         'MODE' => "FORM_FILL",
                                         'COPY' => $field['COPY_ID'] > 0,
                                     )
-                                )) . '</td></tr>';
+                                )
+                            ) . '</td></tr>';
                     }
                 }
                 if ($field['READ'] == 'Y') {
-                    if ($isEmptyValue)
+                    if ($isEmptyValue) {
                         $html .= Loc::getMessage('LISTS_FIELD_NOT_DATA');
+                    }
                 }
                 $html .= '</table>';
                 if ($field['READ'] == 'N') {
@@ -215,10 +252,13 @@ class Field
                         }
                     } else {
                         if ($field['TYPE'] == 'S:DiskFile') {
-                            $html .= call_user_func_array($field['PROPERTY_USER_TYPE']['GetPublicViewHTML'],
-                                array($field, $value, array()));
+                            $html .= call_user_func_array(
+                                $field['PROPERTY_USER_TYPE']['GetPublicViewHTML'],
+                                array($field, $value, array())
+                            );
                         }
-                        $html .= call_user_func_array($field['PROPERTY_USER_TYPE']['GetPublicEditHTML'],
+                        $html .= call_user_func_array(
+                            $field['PROPERTY_USER_TYPE']['GetPublicEditHTML'],
                             array(
                                 $field,
                                 $value,
@@ -229,13 +269,15 @@ class Field
                                     'MODE' => 'FORM_FILL',
                                     'COPY' => $field['COPY_ID'] > 0,
                                 ),
-                            ));
+                            )
+                        );
                     }
                     break;
                 }
                 if ($field['READ'] == 'Y') {
-                    if ($isEmptyValue)
+                    if ($isEmptyValue) {
                         $html .= Loc::getMessage('LISTS_FIELD_NOT_DATA');
+                    }
                 }
             }
             $result['id'] = $field['FIELD_ID'];
@@ -303,8 +345,9 @@ class Field
         } elseif ($field['TYPE'] == 'L') {
             $items = array();
             $queryObject = \CIBlockProperty::getPropertyEnum($field['ID'], array('SORT' => 'ASC', 'NAME' => 'ASC'));
-            while ($queryResult = $queryObject->fetch())
+            while ($queryResult = $queryObject->fetch()) {
                 $items[$queryResult['ID']] = $queryResult['VALUE'];
+            }
 
             $result = array(
                 'id' => $field['FIELD_ID'],
@@ -331,8 +374,9 @@ class Field
                 false,
                 array('ID', 'NAME', 'SORT')
             );
-            while ($queryResult = $queryObject->fetch())
+            while ($queryResult = $queryObject->fetch()) {
                 $items[$queryResult['ID']] = $queryResult['NAME'];
+            }
 
             $result = array(
                 'id' => $field['FIELD_ID'],
@@ -350,8 +394,9 @@ class Field
                 false,
                 array('ID', 'IBLOCK_ID', 'NAME', 'DEPTH_LEVEL', 'LEFT_MARGIN')
             );
-            while ($queryResult = $queryObject->fetch())
+            while ($queryResult = $queryObject->fetch()) {
                 $items[$queryResult['ID']] = str_repeat('. ', $queryResult['DEPTH_LEVEL'] - 1) . $queryResult['NAME'];
+            }
 
             $result = array(
                 'id' => $field['FIELD_ID'],
@@ -423,8 +468,9 @@ class Field
                     );
                 }
             }
-            if (array_key_exists('AddFilterFields', $field['PROPERTY_USER_TYPE']))
+            if (array_key_exists('AddFilterFields', $field['PROPERTY_USER_TYPE'])) {
                 $result['customFilter'] = $field['PROPERTY_USER_TYPE']['AddFilterFields'];
+            }
         } else {
             $listLikeField = array('NAME', 'DETAIL_TEXT', 'PREVIEW_TEXT', 'S');
             $result = array(
@@ -456,8 +502,9 @@ class Field
 
     protected static function renderFieldByTypeN(array $field)
     {
-        if (empty($field['VALUE']))
+        if (empty($field['VALUE'])) {
             return '';
+        }
 
         if ($field['MULTIPLE'] == 'Y' && is_array($field['VALUE'])) {
             $results = array();
@@ -477,8 +524,9 @@ class Field
             $items = self::$cache[$field['ID']];
         } else {
             $items = array();
-            if (empty($field['DEFAULT']))
+            if (empty($field['DEFAULT'])) {
                 $items[] = Loc::getMessage('LISTS_FIELD_NO_VALUE');
+            }
             $listElements = \CIBlockProperty::getPropertyEnum($field['ID']);
             while ($listElement = $listElements->fetch()) {
                 if (!empty($field['DEFAULT'])) {
@@ -512,8 +560,9 @@ class Field
 
     protected static function renderFieldByTypeF(array $field)
     {
-        if ((empty($field['VALUE']) || !empty($field['DEFAULT'])) && !self::$renderForForm)
+        if ((empty($field['VALUE']) || !empty($field['DEFAULT'])) && !self::$renderForForm) {
             return '';
+        }
 
         $iblockId = !empty($field['IBLOCK_ID']) ? intval($field['IBLOCK_ID']) : 0;
         $sectionId = !empty($field['SECTION_ID']) ? intval($field['SECTION_ID']) : 0;
@@ -532,14 +581,17 @@ class Field
             'download_text' => Loc::getMessage('LISTS_FIELD_FILE_DOWNLOAD'),
             'show_input' => false
         );
-        if (!empty($field['READ']) && $field['READ'] == 'N')
+        if (!empty($field['READ']) && $field['READ'] == 'N') {
             $params['show_input'] = true;
+        }
 
         if ($field['MULTIPLE'] == 'Y' && is_array($field['VALUE'])) {
             $results = array();
             foreach ($field['VALUE'] as $key => $value) {
-                $file = new \CListFile($iblockId, $sectionId, $elementId, $fieldId,
-                    is_array($value) && isset($value['VALUE']) ? $value['VALUE'] : $value);
+                $file = new \CListFile(
+                    $iblockId, $sectionId, $elementId, $fieldId,
+                    is_array($value) && isset($value['VALUE']) ? $value['VALUE'] : $value
+                );
                 $file->setSocnetGroup($socnetGroupId);
                 $fieldControlId = $field['TYPE'] == 'F' && self::$renderForForm ?
                     $fieldId . '[' . $key . '][VALUE]' : $fieldId;
@@ -551,8 +603,10 @@ class Field
             if (is_array($field['VALUE'])) {
                 $results = array();
                 foreach ($field['VALUE'] as $key => $value) {
-                    $file = new \CListFile($iblockId, $sectionId, $elementId, $fieldId,
-                        is_array($value) && isset($value['VALUE']) ? $value['VALUE'] : $value);
+                    $file = new \CListFile(
+                        $iblockId, $sectionId, $elementId, $fieldId,
+                        is_array($value) && isset($value['VALUE']) ? $value['VALUE'] : $value
+                    );
                     $file->setSocnetGroup($socnetGroupId);
                     $fieldControlId = $field['TYPE'] == 'F' && self::$renderForForm ?
                         $fieldId . '[' . $key . '][VALUE]' : $fieldId;
@@ -578,11 +632,13 @@ class Field
 
     protected static function renderFieldByTypeG(array $field)
     {
-        if (empty($field['VALUE']))
+        if (empty($field['VALUE'])) {
             return Loc::getMessage('LISTS_FIELD_NOT_DATA');
+        }
 
-        if (!is_array($field['VALUE']))
+        if (!is_array($field['VALUE'])) {
             $field['VALUE'] = array($field['VALUE']);
+        }
 
         $urlTemplate = !empty($field['LIST_URL']) ? $field['LIST_URL'] : '';
         $socnetGroupId = !empty($field['SOCNET_GROUP_ID']) ? intval($field['SOCNET_GROUP_ID']) : 0;
@@ -590,25 +646,37 @@ class Field
         $result = array();
         $filter = array();
         foreach ($field['VALUE'] as $value) {
-            if (!empty(self::$cache[$field['TYPE']][$value]))
+            if (!empty(self::$cache[$field['TYPE']][$value])) {
                 $result[] = self::$cache[$field['TYPE']][$value];
+            }
 
             $filter['ID'][] = $value;
         }
 
-        if (!empty($result) && (count($result) == count($field['VALUE'])))
+        if (!empty($result) && (count($result) == count($field['VALUE']))) {
             return implode(self::$separator, $result);
-        else
+        } else {
             $result = array();
+        }
 
-        $queryObject = \CIBlockSection::getList(array(),
-            array('=ID' => $field['VALUE']), false, array('ID', 'IBLOCK_ID', 'NAME'));
+        $queryObject = \CIBlockSection::getList(
+            array(),
+            array('=ID' => $field['VALUE']),
+            false,
+            array('ID', 'IBLOCK_ID', 'NAME')
+        );
         while ($section = $queryObject->getNext()) {
             if ($urlTemplate) {
-                $sectionUrl = \CHTTP::URN2URI(\CHTTP::urlAddParams(
-                    str_replace(array("#list_id#", "#section_id#", "#group_id#"),
-                        array($section['IBLOCK_ID'], 0, $socnetGroupId),
-                        $urlTemplate), array('list_section_id' => $section['ID'])));
+                $sectionUrl = \CHTTP::URN2URI(
+                    \CHTTP::urlAddParams(
+                        str_replace(
+                            array("#list_id#", "#section_id#", "#group_id#"),
+                            array($section['IBLOCK_ID'], 0, $socnetGroupId),
+                            $urlTemplate
+                        ),
+                        array('list_section_id' => $section['ID'])
+                    )
+                );
 
                 $html = '<a href="' . HtmlFilter::encode($sectionUrl) . '"  target="_blank">' .
                     HtmlFilter::encode($section['~NAME']) . '</a>';
@@ -662,8 +730,9 @@ class Field
     {
         $userId = (int)$field['VALUE'];
 
-        if (!empty(self::$cache[$field['TYPE']][$userId]))
+        if (!empty(self::$cache[$field['TYPE']][$userId])) {
             return self::$cache[$field['TYPE']][$userId];
+        }
 
         $user = new \CUser();
         $userDetails = $user->getByID($userId)->fetch();
@@ -673,8 +742,11 @@ class Field
             $siteNameFormat = \CSite::getNameFormat(false);
             $formattedUsersName = \CUser::formatName($siteNameFormat, $userDetails, true, true);
 
-            $pathToUser = str_replace(array('#user_id#'), $userId,
-                Option::get('main', 'TOOLTIP_PATH_TO_USER', false, SITE_ID));
+            $pathToUser = str_replace(
+                array('#user_id#'),
+                $userId,
+                Option::get('main', 'TOOLTIP_PATH_TO_USER', false, SITE_ID)
+            );
 
             $result = '<a href="' . $pathToUser . '" target="_blank" bx-tooltip-user-id="' . $userId . '">' . $formattedUsersName . '</a>';
 
@@ -691,29 +763,33 @@ class Field
 
     protected static function renderFieldByFieldDetailText(array $field)
     {
-        if (isset($field["SETTINGS"]["USE_EDITOR"]) && $field["SETTINGS"]["USE_EDITOR"] == "Y")
+        if (isset($field["SETTINGS"]["USE_EDITOR"]) && $field["SETTINGS"]["USE_EDITOR"] == "Y") {
             return nl2br($field['VALUE']);
-        else
+        } else {
             return nl2br(HtmlFilter::encode($field['VALUE']));
+        }
     }
 
     protected static function renderFieldByFieldPreviewText(array $field)
     {
-        if (isset($field["SETTINGS"]["USE_EDITOR"]) && $field["SETTINGS"]["USE_EDITOR"] == "Y")
+        if (isset($field["SETTINGS"]["USE_EDITOR"]) && $field["SETTINGS"]["USE_EDITOR"] == "Y") {
             return nl2br($field['VALUE']);
-        else
+        } else {
             return nl2br(HtmlFilter::encode($field['VALUE']));
+        }
     }
 
     protected static function renderDateField(array $field)
     {
-        if (empty($field['VALUE']))
+        if (empty($field['VALUE'])) {
             return '';
+        }
 
-        if ($field['VALUE'] === '=now')
+        if ($field['VALUE'] === '=now') {
             return ConvertTimeStamp(time() + \CTimeZone::getOffset(), 'FULL');
-        elseif ($field['VALUE'] === '=today')
+        } elseif ($field['VALUE'] === '=today') {
             return ConvertTimeStamp(time() + \CTimeZone::getOffset(), 'SHORT');
+        }
 
         if ($field['MULTIPLE'] == 'Y' && is_array($field['VALUE'])) {
             $results = array();
@@ -729,8 +805,9 @@ class Field
 
     protected static function renderFieldByFieldName(array $field)
     {
-        if (empty($field['LIST_ELEMENT_URL']))
+        if (empty($field['LIST_ELEMENT_URL'])) {
             return self::renderDefaultField($field);
+        }
 
         $iblockId = !empty($field['IBLOCK_ID']) ? intval($field['IBLOCK_ID']) : 0;
         $sectionId = !empty($field['SECTION_ID']) ? intval($field['SECTION_ID']) : 0;
@@ -745,7 +822,9 @@ class Field
         );
         $url = \CHTTP::urlAddParams($url, ['list_section_id' => ($sectionId ? $sectionId : '')]);
 
-        $result = '<a href="' . \CHTTP::URN2URI(HtmlFilter::encode($url)) . '">' . HtmlFilter::encode($field['VALUE']) . '</a>';
+        $result = '<a href="' . \CHTTP::URN2URI(HtmlFilter::encode($url)) . '">' . HtmlFilter::encode(
+                $field['VALUE']
+            ) . '</a>';
         return $result;
     }
 
@@ -765,33 +844,38 @@ class Field
 
     protected static function getLinkToElement(array $field)
     {
-        if (empty($field['VALUE']))
+        if (empty($field['VALUE'])) {
             return Loc::getMessage('LISTS_FIELD_NOT_DATA');
+        }
 
-        if (!is_array($field['VALUE']))
+        if (!is_array($field['VALUE'])) {
             $field['VALUE'] = array($field['VALUE']);
+        }
 
         $result = array();
         $filter = array();
         foreach ($field['VALUE'] as $value) {
-            if (!empty(self::$cache[$field['TYPE']][$value]))
+            if (!empty(self::$cache[$field['TYPE']][$value])) {
                 $result[] = self::$cache[$field['TYPE']][$value];
+            }
 
             $filter['ID'][] = $value;
         }
 
-        if (!empty($result) && (count($result) == count($field['VALUE'])))
+        if (!empty($result) && (count($result) == count($field['VALUE']))) {
             return implode(self::$separator, $result);
-        else
+        } else {
             $result = array();
+        }
 
         $urlTemplate = \CList::getUrlByIblockId($field['LINK_IBLOCK_ID']);
-        if (!$urlTemplate && !empty($field["LIST_ELEMENT_URL"]))
+        if (!$urlTemplate && !empty($field["LIST_ELEMENT_URL"])) {
             $urlTemplate = $field["LIST_ELEMENT_URL"];
-        $filter['ACTIVE'] = 'Y';
+        }
         $filter['CHECK_PERMISSIONS'] = 'Y';
-        if ($field['LINK_IBLOCK_ID'] > 0)
+        if ($field['LINK_IBLOCK_ID'] > 0) {
             $filter['IBLOCK_ID'] = $field['LINK_IBLOCK_ID'];
+        }
 
         $queryObject = \CIBlockElement::getList(array(), $filter, false, false, array('*'));
         while ($element = $queryObject->getNext()) {
@@ -802,11 +886,13 @@ class Field
             );
             $elementUrl = \CHTTP::urlAddParams($elementUrl, array("list_section_id" => ""));
             $result[] = '<a href="' . HtmlFilter::encode($elementUrl) . '" target="_blank">' . HtmlFilter::encode(
-                    $element['~NAME']) . '</a>';
+                    $element['~NAME']
+                ) . '</a>';
 
             self::$cache[$field['TYPE']][$element['ID']] =
                 '<a href="' . HtmlFilter::encode($elementUrl) . '" target="_blank">' . HtmlFilter::encode(
-                    $element['~NAME']) . '</a>';
+                    $element['~NAME']
+                ) . '</a>';
         }
 
         return implode(self::$separator, $result);
@@ -814,13 +900,15 @@ class Field
 
     protected static function renderCustomDefaultValueDiskFile(array $field)
     {
-        if (!Loader::includeModule('disk'))
+        if (!Loader::includeModule('disk')) {
             return '';
+        }
 
-        if (is_array($field['VALUE']))
+        if (is_array($field['VALUE'])) {
             $field['VALUE'] = array_diff($field['VALUE'], array(''));
-        else
+        } else {
             $field['VALUE'] = explode(',', $field['VALUE']);
+        }
 
         $listValue = array();
         foreach ($field['VALUE'] as $value) {
@@ -893,26 +981,33 @@ class Field
     {
         $html = '';
         $disabled = $field['READ'] == 'Y' ? 'disabled' : '';
-        if (!is_array($field['VALUE']))
+        if (!is_array($field['VALUE'])) {
             $field['VALUE'] = array($field['VALUE']);
+        }
 
         if ($field['MULTIPLE'] == 'Y') {
             $html .= '<table id="tbl' . $field['FIELD_ID'] . '">';
             if ($field["ROW_COUNT"] > 1) {
                 foreach ($field['VALUE'] as $key => $value) {
                     if ($field['READ'] == 'Y') {
-                        if (empty($value['VALUE'])) continue;
+                        if (empty($value['VALUE'])) {
+                            continue;
+                        }
                         $html .= '<input type="hidden" name="' . $field['FIELD_ID'] . '[' . $key . '][VALUE]" value="' .
                             HtmlFilter::encode($value["VALUE"]) . '">';
                     }
                     $html .= '<tr><td><textarea ' . $disabled . ' style="width:auto;height:auto;" name="' . $field['FIELD_ID'] .
                         '[' . $key . '][VALUE]" rows="' . intval($field["ROW_COUNT"]) . '" cols="' .
-                        intval($field["COL_COUNT"]) . '">' . HtmlFilter::encode($value["VALUE"]) . '</textarea></td></tr>';
+                        intval($field["COL_COUNT"]) . '">' . HtmlFilter::encode(
+                            $value["VALUE"]
+                        ) . '</textarea></td></tr>';
                 }
             } else {
                 foreach ($field['VALUE'] as $key => $value) {
                     if ($field['READ'] == 'Y') {
-                        if (empty($value['VALUE'])) continue;
+                        if (empty($value['VALUE'])) {
+                            continue;
+                        }
                         $html .= '<input type="hidden" name="' . $field['FIELD_ID'] . '[' . $key . '][VALUE]" value="' .
                             HtmlFilter::encode($value["VALUE"]) . '">';
                     }
@@ -932,9 +1027,12 @@ class Field
                 foreach ($field['VALUE'] as $key => $value) {
                     $html .= '<textarea ' . $disabled . ' style="width:auto;height:auto;" name="' . $field['FIELD_ID'] .
                         '[' . $key . '][VALUE]" rows="' . intval($field["ROW_COUNT"]) . '" cols="' . intval(
-                            $field["COL_COUNT"]) . '">' . HtmlFilter::encode($value["VALUE"]) . '</textarea>';
+                            $field["COL_COUNT"]
+                        ) . '">' . HtmlFilter::encode($value["VALUE"]) . '</textarea>';
                     if ($field['READ'] == 'Y') {
-                        if (empty($value['VALUE'])) continue;
+                        if (empty($value['VALUE'])) {
+                            continue;
+                        }
                         $html .= '<input type="hidden" name="' . $field['FIELD_ID'] . '[' . $key . '][VALUE]" value="' .
                             HtmlFilter::encode($value["VALUE"]) . '">';
                     }
@@ -944,7 +1042,9 @@ class Field
                     $html .= '<input ' . $disabled . ' type="text" name="' . $field['FIELD_ID'] . '[' . $key . '][VALUE]" value="' .
                         HtmlFilter::encode($value["VALUE"]) . '" size="' . intval($field["COL_COUNT"]) . '">';
                     if ($field['READ'] == 'Y') {
-                        if (empty($value['VALUE'])) continue;
+                        if (empty($value['VALUE'])) {
+                            continue;
+                        }
                         $html .= '<input type="hidden" name="' . $field['FIELD_ID'] . '[' . $key . '][VALUE]" value="' .
                             HtmlFilter::encode($value["VALUE"]) . '">';
                     }
@@ -975,14 +1075,17 @@ class Field
         );
         $html = '';
         $disabled = $field['READ'] == 'Y' ? 'disabled' : '';
-        if (!is_array($field['VALUE']))
+        if (!is_array($field['VALUE'])) {
             $field['VALUE'] = array($field['VALUE']);
+        }
 
         if ($field['MULTIPLE'] == 'Y') {
             $html .= '<table id="tbl' . $field['FIELD_ID'] . '">';
             foreach ($field['VALUE'] as $key => $value) {
                 if ($field['READ'] == 'Y') {
-                    if (empty($value['VALUE'])) continue;
+                    if (empty($value['VALUE'])) {
+                        continue;
+                    }
                     $result['customHtml'] .= '<input type="hidden" name="' . $field['FIELD_ID'] .
                         '[' . $key . '][VALUE]" value="' . $value['VALUE'] . '">';
                 }
@@ -1000,7 +1103,9 @@ class Field
                 $html .= '<input ' . $disabled . ' type="text" name="' . $field['FIELD_ID'] .
                     '[' . $key . '][VALUE]" value="' . HtmlFilter::encode($value["VALUE"]) . '">';
                 if ($field['READ'] == 'Y') {
-                    if (empty($value['VALUE'])) continue;
+                    if (empty($value['VALUE'])) {
+                        continue;
+                    }
                     $result['customHtml'] .= '<input type="hidden" name="' . $field['FIELD_ID'] .
                         '[' . $key . '][VALUE]" value="' . $value["VALUE"] . '">';
                 }
@@ -1021,13 +1126,15 @@ class Field
             'show' => $field['SHOW']
         );
         $html = '';
-        if (!is_array($field['VALUE']))
+        if (!is_array($field['VALUE'])) {
             $field['VALUE'] = array($field['VALUE']);
+        }
 
         $isEmptyValue = true;
         foreach ($field['VALUE'] as $value) {
-            if (!empty($value['VALUE']))
+            if (!empty($value['VALUE'])) {
                 $isEmptyValue = false;
+            }
         }
         if ($isEmptyValue && $field['READ'] == 'Y') {
             $result['value'] = Loc::getMessage('LISTS_FIELD_NOT_DATA');
@@ -1039,7 +1146,8 @@ class Field
             $html .= '<table id="tbl' . $field['FIELD_ID'] . '">';
             foreach ($field['VALUE'] as $key => $value) {
                 if ($field['READ'] == 'Y') {
-                    $html .= call_user_func_array($field['PROPERTY_USER_TYPE']['GetPublicViewHTML'],
+                    $html .= call_user_func_array(
+                        $field['PROPERTY_USER_TYPE']['GetPublicViewHTML'],
                         array(
                             $field,
                             $value,
@@ -1050,7 +1158,8 @@ class Field
                                 'MODE' => 'FORM_FILL',
                                 'COPY' => $field['COPY_ID'] > 0,
                             ),
-                        ));
+                        )
+                    );
                     if (is_array($value['VALUE'])) {
                         $value['VALUE']['TEXT'] ? $htmlContent = $value['VALUE']['TEXT'] : $htmlContent = '';
                     } else {
@@ -1061,15 +1170,20 @@ class Field
                     $result['customHtml'] .= '<input type="hidden" name="' . $field['FIELD_ID'] .
                         '[' . $key . '][VALUE][TEXT]" value="' . HtmlFilter::encode($htmlContent) . '">';
                 } else {
-                    if (is_array($value['VALUE']))
+                    if (is_array($value['VALUE'])) {
                         $htmlContent = $value['VALUE']['TEXT'] ? $value['VALUE']['TEXT'] : '';
-                    else
+                    } else {
                         $htmlContent = $value['VALUE'] ? $value['VALUE'] : '';
+                    }
                     $fieldIdForHtml = 'id_' . $field['FIELD_ID'] . '__' . $key . '_';
                     $fieldNameForHtml = $field['FIELD_ID'] . "[" . $key . "][VALUE][TEXT]";
                     $html .= '<tr><td><input type="hidden" name="' . $field['FIELD_ID'] .
                         '[' . $key . '][VALUE][TYPE]" value="html">' . self::renderHtmlEditor(
-                            $fieldIdForHtml, $fieldNameForHtml, $params, $htmlContent) . '</td></tr>';
+                            $fieldIdForHtml,
+                            $fieldNameForHtml,
+                            $params,
+                            $htmlContent
+                        ) . '</td></tr>';
                 }
             }
             $html .= '</table>';
@@ -1078,11 +1192,11 @@ class Field
 				onclick="BX.Lists.createAdditionalHtmlEditor(\'tbl' . $field['FIELD_ID'] . '\',
 				\'' . $field['FIELD_ID'] . '\', \'' . $field['FIELD_ID'] . '\');">';
             }
-
         } else {
             foreach ($field['VALUE'] as $key => $value) {
                 if ($field['READ'] == 'Y') {
-                    $html .= call_user_func_array($field['PROPERTY_USER_TYPE']['GetPublicViewHTML'],
+                    $html .= call_user_func_array(
+                        $field['PROPERTY_USER_TYPE']['GetPublicViewHTML'],
                         array(
                             $field,
                             $value,
@@ -1093,17 +1207,20 @@ class Field
                                 'MODE' => 'FORM_FILL',
                                 'COPY' => $field['COPY_ID'] > 0,
                             ),
-                        ));
-                    if (is_array($value['VALUE']))
+                        )
+                    );
+                    if (is_array($value['VALUE'])) {
                         $value['VALUE']['TEXT'] ? $htmlContent = $value['VALUE']['TEXT'] : $htmlContent = '';
-                    else
+                    } else {
                         $value['VALUE'] ? $htmlContent = $value['VALUE'] : $htmlContent = '';
+                    }
                     $result['customHtml'] .= '<input type="hidden" name="' . $field['FIELD_ID'] .
                         '[' . $key . '][VALUE][TYPE]" value="html">';
                     $result['customHtml'] .= '<input type="hidden" name="' . $field['FIELD_ID'] .
                         '[' . $key . '][VALUE][TEXT]" value="' . HtmlFilter::encode($htmlContent) . '">';
                 } else {
-                    $html .= call_user_func_array($field['PROPERTY_USER_TYPE']['GetPublicEditHTML'],
+                    $html .= call_user_func_array(
+                        $field['PROPERTY_USER_TYPE']['GetPublicEditHTML'],
                         array(
                             $field,
                             $value,
@@ -1114,7 +1231,8 @@ class Field
                                 'MODE' => 'FORM_FILL',
                                 'COPY' => $field['COPY_ID'] > 0,
                             ),
-                        ));
+                        )
+                    );
                 }
             }
         }
@@ -1223,7 +1341,9 @@ class Field
                 'required' => $field['IS_REQUIRED'] == 'Y' ? true : false,
                 'type' => 'custom',
                 'value' => '<textarea disabled>' . HtmlFilter::encode($field['VALUE']) . '</textarea>
-					<input type="hidden" name="' . $field['FIELD_ID'] . '" value="' . HtmlFilter::encode($field['VALUE']) . '">',
+					<input type="hidden" name="' . $field['FIELD_ID'] . '" value="' . HtmlFilter::encode(
+                        $field['VALUE']
+                    ) . '">',
                 'show' => $field['SHOW']
             );
         } else {
@@ -1237,20 +1357,28 @@ class Field
             if ($field['SETTINGS']['USE_EDITOR'] == 'Y') {
                 $params = array('width' => '100%', 'height' => '200px');
                 $match = array();
-                if (preg_match('/\s*(\d+)\s*(px|%|)/', $field['SETTINGS']['WIDTH'], $match) && ($match[1] > 0))
+                if (preg_match('/\s*(\d+)\s*(px|%|)/', $field['SETTINGS']['WIDTH'], $match) && ($match[1] > 0)) {
                     $params['width'] = $match[1] . $match[2];
-                if (preg_match('/\s*(\d+)\s*(px|%|)/', $field['SETTINGS']['HEIGHT'], $match) && ($match[1] > 0))
+                }
+                if (preg_match('/\s*(\d+)\s*(px|%|)/', $field['SETTINGS']['HEIGHT'], $match) && ($match[1] > 0)) {
                     $params['height'] = $match[1] . $match[2];
+                }
                 $result['type'] = 'custom';
                 $result['params'] = $params;
                 $result['value'] = self::renderHtmlEditor(
-                    $field['FIELD_ID'], $field['FIELD_ID'], $params, $field['VALUE']);
+                    $field['FIELD_ID'],
+                    $field['FIELD_ID'],
+                    $params,
+                    $field['VALUE']
+                );
             } else {
                 $params = array('style' => '');
-                if (preg_match('/\s*(\d+)\s*(px|%|)/', $field['SETTINGS']['WIDTH'], $match) && ($match[1] > 0))
+                if (preg_match('/\s*(\d+)\s*(px|%|)/', $field['SETTINGS']['WIDTH'], $match) && ($match[1] > 0)) {
                     $params['style'] .= 'width:' . $match[1] . 'px;';
-                if (preg_match('/\s*(\d+)\s*(px|%|)/', $field['SETTINGS']['HEIGHT'], $match) && ($match[1] > 0))
+                }
+                if (preg_match('/\s*(\d+)\s*(px|%|)/', $field['SETTINGS']['HEIGHT'], $match) && ($match[1] > 0)) {
                     $params['style'] .= 'height:' . $match[1] . 'px;';
+                }
                 $result['params'] = $params;
             }
         }
@@ -1271,8 +1399,9 @@ class Field
             );
         }
 
-        if (!is_array($field['VALUE']))
+        if (!is_array($field['VALUE'])) {
             $field['VALUE'] = array($field['VALUE']);
+        }
 
         $currentElements = array();
         foreach ($field['VALUE'] as $value) {
@@ -1282,12 +1411,14 @@ class Field
         }
 
         $randomGenerator = new RandomSequence($field['FIELD_ID']);
-        $randString = strtolower($randomGenerator->randString(6));
+        $randString = mb_strtolower($randomGenerator->randString(6));
 
         $html = '';
         global $APPLICATION;
         ob_start();
-        $APPLICATION->includeComponent('bitrix:iblock.element.selector', '',
+        $APPLICATION->includeComponent(
+            'bitrix:iblock.element.selector',
+            '',
             array(
                 'SELECTOR_ID' => $randString,
                 'INPUT_NAME' => $field['FIELD_ID'],
@@ -1299,7 +1430,8 @@ class Field
                 'PANEL_SELECTED_VALUES' => 'Y',
                 'TEMPLATE_URL' => $field['LIST_ELEMENT_URL']
             ),
-            null, array('HIDE_ICONS' => 'Y')
+            null,
+            array('HIDE_ICONS' => 'Y')
         );
         $html .= ob_get_contents();
         ob_end_clean();
@@ -1318,14 +1450,16 @@ class Field
 
     protected static function prepareEditFieldByTypeG(array $field)
     {
-        if ($field['IS_REQUIRED'] == 'Y')
+        if ($field['IS_REQUIRED'] == 'Y') {
             $items = array();
-        else
+        } else {
             $items = array('' => Loc::getMessage('LISTS_FIELD_NO_VALUE'));
+        }
 
         $queryObject = \CIBlockSection::getTreeList(array('IBLOCK_ID' => $field['LINK_IBLOCK_ID']));
-        while ($section = $queryObject->getNext())
+        while ($section = $queryObject->getNext()) {
             $items[$section['ID']] = str_repeat(' . ', $section['DEPTH_LEVEL']) . $section['~NAME'];
+        }
 
         $inputName = $field['FIELD_ID'];
         if ($field['MULTIPLE'] == 'Y') {
@@ -1334,11 +1468,13 @@ class Field
         } else {
             $params = array();
         }
-        if ($field['READ'] == 'Y')
+        if ($field['READ'] == 'Y') {
             $params["disabled"] = 'disabled';
+        }
 
-        if (!is_array($field['VALUE']))
+        if (!is_array($field['VALUE'])) {
             $field['VALUE'] = array($field['VALUE']);
+        }
 
         $result = array(
             'id' => $inputName,
@@ -1352,9 +1488,10 @@ class Field
         );
 
         if ($field['READ'] == 'Y') {
-            foreach ($field['VALUE'] as $value)
+            foreach ($field['VALUE'] as $value) {
                 $result['customHtml'] .= '<input type="hidden" name="' . $field['FIELD_ID'] . '[]" value="' .
                     HtmlFilter::encode($value) . '">';
+            }
         }
 
         return $result;
@@ -1363,13 +1500,15 @@ class Field
     protected static function prepareEditFieldByTypeF(array $field)
     {
         $html = '';
-        if (!is_array($field['VALUE']))
+        if (!is_array($field['VALUE'])) {
             $field['VALUE'] = array($field['VALUE']);
+        }
 
         $isEmptyValue = true;
         foreach ($field['VALUE'] as $value) {
-            if (!empty($value['VALUE']))
+            if (!empty($value['VALUE'])) {
                 $isEmptyValue = false;
+            }
         }
 
         if ($field['MULTIPLE'] == 'Y') {
@@ -1397,8 +1536,10 @@ class Field
                 );
                 foreach ($field['VALUE'] as $key => $value) {
                     $html .= '<tr><td>';
-                    $file = new \CListFile($iblockId, $sectionId, $elementId, $fieldId,
-                        is_array($value) && isset($value['VALUE']) ? $value['VALUE'] : $value);
+                    $file = new \CListFile(
+                        $iblockId, $sectionId, $elementId, $fieldId,
+                        is_array($value) && isset($value['VALUE']) ? $value['VALUE'] : $value
+                    );
                     $file->setSocnetGroup($socnetGroupId);
                     $fieldControlId = $field['TYPE'] == 'F' && self::$renderForForm ?
                         $fieldId . '[' . $key . '][VALUE]' : $fieldId;
@@ -1464,7 +1605,9 @@ class Field
         if ($field['READ'] == 'Y') {
             $result['type'] = 'custom';
             $result['value'] = '<input disabled type="text" value="' . HtmlFilter::encode($field['VALUE']) .
-                '"><input type="hidden" name="' . $field["FIELD_ID"] . '" value="' . HtmlFilter::encode($field['VALUE']) . '">';
+                '"><input type="hidden" name="' . $field["FIELD_ID"] . '" value="' . HtmlFilter::encode(
+                    $field['VALUE']
+                ) . '">';
         }
         return $result;
     }

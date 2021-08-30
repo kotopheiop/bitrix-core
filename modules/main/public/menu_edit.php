@@ -1,12 +1,15 @@
 <?
+
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_js.php");
 
-if (!CModule::IncludeModule('fileman'))
+if (!CModule::IncludeModule('fileman')) {
     die();
+}
 
-if (!$USER->CanDoOperation('fileman_edit_menu_elements'))
+if (!$USER->CanDoOperation('fileman_edit_menu_elements')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 CUtil::JSPostUnescape();
 
@@ -57,9 +60,9 @@ if ($_REQUEST["action"] == "delete" && check_bitrix_sessid()) {
 
         if (COption::GetOptionString($module_id, "log_menu", "Y") == "Y") {
             $mt = COption::GetOptionString("fileman", "menutypes", "", $site);
-            $mt = unserialize(str_replace("\\", "", $mt));
+            $mt = unserialize(str_replace("\\", "", $mt), ['allowed_classes' => false]);
             $res_log['menu_name'] = $mt[$name];
-            $res_log['path'] = substr($path, 1);
+            $res_log['path'] = mb_substr($path, 1);
             CEventLog::Log(
                 "content",
                 "MENU_DELETE",
@@ -87,20 +90,29 @@ if ($_REQUEST["action"] == "delete" && check_bitrix_sessid()) {
     die();
 }
 
-if ($io->FileExists($abs_path) && strlen($new) <= 0)
+if ($io->FileExists($abs_path) && $new == '') {
     $bEdit = true;
-else
+} else {
     $bEdit = false;
+}
 
-$only_edit = !$USER->CanDoOperation('fileman_add_element_to_menu') || !$USER->CanDoFileOperation('fm_create_new_file', $arPath_m);
+$only_edit = !$USER->CanDoOperation('fileman_add_element_to_menu') || !$USER->CanDoFileOperation(
+        'fm_create_new_file',
+        $arPath_m
+    );
 
 /******* POST **********/
 //�������� ����� �� ������ � ��� �����
-if (!$USER->CanDoOperation('fileman_edit_existent_files') || !$USER->CanDoFileOperation('fm_edit_existent_file', $arPath_m) || (!$bEdit && $only_edit)) {
+if (!$USER->CanDoOperation('fileman_edit_existent_files') || !$USER->CanDoFileOperation(
+        'fm_edit_existent_file',
+        $arPath_m
+    ) || (!$bEdit && $only_edit)) {
     $strWarning = GetMessage("ACCESS_DENIED");
 } else {
     if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST['save'] == 'Y') {
-        if (!is_array($ids)) $ids = array();
+        if (!is_array($ids)) {
+            $ids = array();
+        }
 
         $arValues = $_POST;
 
@@ -113,29 +125,36 @@ if (!$USER->CanDoOperation('fileman_edit_existent_files') || !$USER->CanDoFileOp
         $aMenuSort = Array();
         for ($i = 0; $i < count($ids); $i++) {
             $num = $ids[$i];
-            if (!isset($aMenuLinksTmp[$num - 1]) && $only_edit)
+            if (!isset($aMenuLinksTmp[$num - 1]) && $only_edit) {
                 continue;
+            }
 
-            if (${"del_" . $num} == "Y" && !$only_edit)
+            if (${"del_" . $num} == "Y" && !$only_edit) {
                 continue;
+            }
 
             $aMenuItem = Array($arValues["text_" . $num], $arValues["link_" . $num]);
 
             $arAdditionalParams = array(array(), array());
-            if (check_bitrix_sessid() && $arValues['additional_params_' . $num] && CheckSerializedData($arValues['additional_params_' . $num])) {
-                $arAdditionalParams = @unserialize($arValues['additional_params_' . $num]);
+            if (check_bitrix_sessid() && $arValues['additional_params_' . $num] && CheckSerializedData(
+                    $arValues['additional_params_' . $num]
+                )) {
+                $arAdditionalParams = @unserialize(
+                    $arValues['additional_params_' . $num],
+                    ['allowed_classes' => false]
+                );
             }
 
             $aMenuItem = array_merge($aMenuItem, $arAdditionalParams);
 
             $aMenuLinksTmp_[] = $aMenuItem;
-            $aMenuSort[] = IntVal(${"sort_" . $num});
+            $aMenuSort[] = intval(${"sort_" . $num});
         }
 
         $aMenuLinksTmp = $aMenuLinksTmp_;
 
-        for ($i = 0; $i < count($aMenuSort) - 1; $i++)
-            for ($j = $i + 1; $j < count($aMenuSort); $j++)
+        for ($i = 0; $i < count($aMenuSort) - 1; $i++) {
+            for ($j = $i + 1; $j < count($aMenuSort); $j++) {
                 if ($aMenuSort[$i] > $aMenuSort[$j]) {
                     $tmpSort = $aMenuLinksTmp[$i];
                     $aMenuLinksTmp[$i] = $aMenuLinksTmp[$j];
@@ -145,6 +164,8 @@ if (!$USER->CanDoOperation('fileman_edit_existent_files') || !$USER->CanDoFileOp
                     $aMenuSort[$i] = $aMenuSort[$j];
                     $aMenuSort[$j] = $tmpSort;
                 }
+            }
+        }
 
         //������ $aMenuLinksTmp ����� � ����� ������� ����, ��� ���� ���� ����� :-)
         if (!check_bitrix_sessid()) {
@@ -152,7 +173,7 @@ if (!$USER->CanDoOperation('fileman_edit_existent_files') || !$USER->CanDoFileOp
         } else {
             $f = $io->GetFile($abs_path);
 
-            if ($io->FileExists($abs_path))
+            if ($io->FileExists($abs_path)) {
                 $arUndoParams = array(
                     'module' => 'fileman',
                     'undoType' => 'edit_menu',
@@ -162,7 +183,7 @@ if (!$USER->CanDoOperation('fileman_edit_existent_files') || !$USER->CanDoFileOp
                         'content' => $f->GetContents()
                     )
                 );
-            else
+            } else {
                 $arUndoParams = array(
                     'module' => 'fileman',
                     'undoType' => 'edit_menu',
@@ -173,15 +194,16 @@ if (!$USER->CanDoOperation('fileman_edit_existent_files') || !$USER->CanDoFileOp
                         'site' => $site
                     )
                 );
+            }
 
             CFileMan::SaveMenu(Array($site, $menufilename), $aMenuLinksTmp, $res["sMenuTemplate"]);
 
             if (COption::GetOptionString($module_id, "log_menu", "Y") == "Y") {
                 $mt = COption::GetOptionString("fileman", "menutypes", false, $site);
-                $mt = unserialize(str_replace("\\", "", $mt));
+                $mt = unserialize(str_replace("\\", "", $mt), ['allowed_classes' => false]);
                 $res_log['menu_name'] = $mt[$name];
-                $res_log['path'] = substr($path, 1);
-                if ($bEdit)
+                $res_log['path'] = mb_substr($path, 1);
+                if ($bEdit) {
                     CEventLog::Log(
                         "content",
                         "MENU_EDIT",
@@ -189,7 +211,7 @@ if (!$USER->CanDoOperation('fileman_edit_existent_files') || !$USER->CanDoFileOp
                         "",
                         serialize($res_log)
                     );
-                else
+                } else {
                     CEventLog::Log(
                         "content",
                         "MENU_ADD",
@@ -197,9 +219,11 @@ if (!$USER->CanDoOperation('fileman_edit_existent_files') || !$USER->CanDoFileOp
                         "",
                         serialize($res_log)
                     );
+                }
             }
-            if ($e = $APPLICATION->GetException())
+            if ($e = $APPLICATION->GetException()) {
                 $strWarning = $e->GetString();
+            }
 
             if ($strWarning == '') {
                 CUndo::ShowUndoMessage(CUndo::Add($arUndoParams));
@@ -223,14 +247,17 @@ $arMenuTypes = GetMenuTypes($site);
 $TITLE = GetMessage("MENU_EDIT_TITLE_" . ($bEdit ? "EDIT" : "ADD"));
 $DESCRIPTION = str_replace(
     array("#TYPE#", "#DIR#"),
-    array(strlen($arMenuTypes[$name]) > 0 ? $arMenuTypes[$name] : $name, $path),
+    array($arMenuTypes[$name] <> '' ? $arMenuTypes[$name] : $name, $path),
     GetMessage("MENU_EDIT_DESCRIPTION_" . ($bEdit ? "EDIT" : "ADD"))
 );
 
-$obJSPopup = new CJSPopup('',
+$obJSPopup = new CJSPopup(
+    '',
     array(
         'TITLE' => GetMessage('MENU_EDIT_TITLE'),
-        'ARGS' => "lang=" . urlencode($_GET["lang"]) . "&site=" . urlencode($_GET["site"]) . "&back_url=" . urlencode($_GET["back_url"]) . "&path=" . urlencode($_GET["path"]) . "&name=" . urlencode($_GET["name"])
+        'ARGS' => "lang=" . urlencode($_GET["lang"]) . "&site=" . urlencode($_GET["site"]) . "&back_url=" . urlencode(
+                $_GET["back_url"]
+            ) . "&path=" . urlencode($_GET["path"]) . "&name=" . urlencode($_GET["name"])
     )
 );
 
@@ -246,11 +273,16 @@ $obJSPopup->StartDescription('bx-core-edit-menu');
     <p class="title"><?= $TITLE ?></p>
     <p class="note"><?= $DESCRIPTION ?>
     </p><p>
-    <a href="/bitrix/admin/fileman_menu_edit.php?<?= "lang=" . urlencode($_GET["lang"]) . "&site=" . urlencode($_GET["site"]) . "&back_url=" . urlencode($_GET["back_url"]) . "&path=" . urlencode($_GET["path"]) . "&name=" . urlencode($_GET["name"]) ?>"><?= GetMessage('MENU_EDIT_OLD_STYLE') ?></a>
+    <a href="/bitrix/admin/fileman_menu_edit.php?<?= "lang=" . urlencode($_GET["lang"]) . "&site=" . urlencode(
+        $_GET["site"]
+    ) . "&back_url=" . urlencode($_GET["back_url"]) . "&path=" . urlencode($_GET["path"]) . "&name=" . urlencode(
+        $_GET["name"]
+    ) ?>"><?= GetMessage('MENU_EDIT_OLD_STYLE') ?></a>
 </p>
 <?
-if ($strWarning <> "")
+if ($strWarning <> "") {
     $obJSPopup->ShowValidationError($strWarning);
+}
 
 ?>
 
@@ -258,13 +290,14 @@ if ($strWarning <> "")
 // ======================== Show content ============================= //
 $obJSPopup->StartContent();
 
-if ($bEdit && strlen($strWarning) <= 0) {
+if ($bEdit && $strWarning == '') {
     $res = CFileMan::GetMenuArray($abs_path);
     $aMenuLinksTmp = $res["aMenuLinks"];
 }
 
-if (!is_array($aMenuLinksTmp))
+if (!is_array($aMenuLinksTmp)) {
     $aMenuLinksTmp = Array();
+}
 ?>
     <input type="hidden" name="save" value="Y"/>
     <table border="0" cellpadding="0" cellspacing="0" class="bx-width100" class="menu-table">
@@ -296,16 +329,20 @@ if (!is_array($aMenuLinksTmp))
                         <td><input type="hidden" name="sort_<?= $i ?>" value="<? echo $i * 10 ?>"/>
                             <input type="hidden" name="ids[]" value="<?= $i ?>"/>
                             <input type="hidden" name="del_<?= $i ?>" value="N"/>
-                            <input type="hidden" name="additional_params_<?= $i ?>"
-                                   value="<?= htmlspecialcharsex(serialize(array($aMenuLinksItem[2], $aMenuLinksItem[3], $aMenuLinksItem[4]))) ?>"/>
+                            <input type="hidden" name="additional_params_<?= $i ?>" value="<?= htmlspecialcharsex(
+                                serialize(array($aMenuLinksItem[2], $aMenuLinksItem[3], $aMenuLinksItem[4]))
+                            ) ?>"/>
                             <span class="rowcontrol drag" title="<?= GetMessage('MENU_EDIT_TOOLTIP_DRAG') ?>"></span>
                         </td>
                         </td>
                         <td>
                             <div onmouseout="rowMouseOut(this)" onmouseover="rowMouseOver(this)"
                                  class="edit-field view-area" id="view_area_text_<?= $i ?>"
-                                 onclick="editArea('text_<?= $i ?>')"
-                                 title="<?= GetMessage('MENU_EDIT_TOOLTIP_TEXT_EDIT') ?>"><?= strlen($aMenuLinksItem[0]) > 0 ? htmlspecialcharsbx($aMenuLinksItem[0]) : GetMessage('MENU_EDIT_JS_NONAME') ?></div>
+                                 onclick="editArea('text_<?= $i ?>')" title="<?= GetMessage(
+                                'MENU_EDIT_TOOLTIP_TEXT_EDIT'
+                            ) ?>"><?= $aMenuLinksItem[0] <> '' ? htmlspecialcharsbx($aMenuLinksItem[0]) : GetMessage(
+                                    'MENU_EDIT_JS_NONAME'
+                                ) ?></div>
                             <div class="edit-area" id="edit_area_text_<?= $i ?>" style="display: none;"><input
                                         type="text" style="width: 220px;" name="text_<? echo $i ?>"
                                         value="<?= htmlspecialcharsbx($aMenuLinksItem[0]) ?>"
@@ -315,8 +352,11 @@ if (!is_array($aMenuLinksTmp))
                         <td>
                             <div onmouseout="rowMouseOut(this)" onmouseover="rowMouseOver(this)"
                                  class="edit-field view-area" id="view_area_link_<?= $i ?>"
-                                 onclick="editArea('link_<?= $i ?>')"
-                                 title="<?= GetMessage('MENU_EDIT_TOOLTIP_LINK_EDIT') ?>"><?= strlen($aMenuLinksItem[1]) > 0 ? htmlspecialcharsbx($aMenuLinksItem[1]) : GetMessage('MENU_EDIT_JS_NONAME') ?></div>
+                                 onclick="editArea('link_<?= $i ?>')" title="<?= GetMessage(
+                                'MENU_EDIT_TOOLTIP_LINK_EDIT'
+                            ) ?>"><?= $aMenuLinksItem[1] <> '' ? htmlspecialcharsbx($aMenuLinksItem[1]) : GetMessage(
+                                    'MENU_EDIT_JS_NONAME'
+                                ) ?></div>
                             <div class="edit-area" id="edit_area_link_<?= $i ?>" style="display: none;"><input
                                         type="text" style="width: 220px;" name="link_<? echo $i ?>"
                                         value="<?= htmlspecialcharsbx($aMenuLinksItem[1]) ?>"
@@ -493,8 +533,8 @@ if (!is_array($aMenuLinksTmp))
             $out = ob_get_contents();
             ob_end_clean();
             $out = trim($out);
-            $unscript_pos = strpos($out, '</script>');
-            $out = substr($out, 8, $unscript_pos - 8);
+            $unscript_pos = mb_strpos($out, '</script>');
+            $out = mb_substr($out, 8, $unscript_pos - 8);
             $out = trim($out);
 
             $out = CUtil::JSEscape($out);
@@ -503,13 +543,23 @@ if (!is_array($aMenuLinksTmp))
             ?>
 
             var arCellsHTML = [
-                '<span class="rowcontrol drag" title="<?=CUtil::JSEscape(GetMessage('MENU_EDIT_TOOLTIP_DRAG'))?>"></span>',
+                '<span class="rowcontrol drag" title="<?=CUtil::JSEscape(
+                    GetMessage('MENU_EDIT_TOOLTIP_DRAG')
+                )?>"></span>',
                 getAreaHTML('text_' + nums, '', '<?=CUtil::JSEscape(GetMessage('MENU_EDIT_TOOLTIP_TEXT_EDIT'))?>'),
                 getAreaHTML('link_' + nums, '', '<?=CUtil::JSEscape(GetMessage('MENU_EDIT_TOOLTIP_LINK_EDIT'))?>'),
-                '<span onclick="if (!GLOBAL_bDisableActions) {currentLink = \'' + nums + '\'; OpenFileBrowserWindFile_' + nums + '();}" class="rowcontrol folder" title="<?=CUtil::JSEscape(GetMessage('MENU_EDIT_TOOLTIP_FD'))?>"></span>',
-                '<span onclick="menuMoveUp(' + nums + ')" class="rowcontrol up" style="visibility: ' + (nums == 1 ? 'hidden' : 'visible') + '" title="<?=CUtil::JSEscape(GetMessage('MENU_EDIT_TOOLTIP_UP'))?>"></span>',
-                '<span onclick="menuMoveDown(' + nums + ')" class="rowcontrol down" style="visibility: hidden" title="<?=CUtil::JSEscape(GetMessage('MENU_EDIT_TOOLTIP_DOWN'))?>"></span>',
-                '<span onclick="menuDelete(' + nums + ')" class="rowcontrol delete" title="<?=CUtil::JSEscape(GetMessage('MENU_EDIT_TOOLTIP_DELETE'))?>"></span>'
+                '<span onclick="if (!GLOBAL_bDisableActions) {currentLink = \'' + nums + '\'; OpenFileBrowserWindFile_' + nums + '();}" class="rowcontrol folder" title="<?=CUtil::JSEscape(
+                    GetMessage('MENU_EDIT_TOOLTIP_FD')
+                )?>"></span>',
+                '<span onclick="menuMoveUp(' + nums + ')" class="rowcontrol up" style="visibility: ' + (nums == 1 ? 'hidden' : 'visible') + '" title="<?=CUtil::JSEscape(
+                    GetMessage('MENU_EDIT_TOOLTIP_UP')
+                )?>"></span>',
+                '<span onclick="menuMoveDown(' + nums + ')" class="rowcontrol down" style="visibility: hidden" title="<?=CUtil::JSEscape(
+                    GetMessage('MENU_EDIT_TOOLTIP_DOWN')
+                )?>"></span>',
+                '<span onclick="menuDelete(' + nums + ')" class="rowcontrol delete" title="<?=CUtil::JSEscape(
+                    GetMessage('MENU_EDIT_TOOLTIP_DELETE')
+                )?>"></span>'
             ];
 
             var row_content = '<table border="0" cellpadding="0" cellspacing="0" class="bx-width100 internal" class="menu-table"><tbody><tr>';

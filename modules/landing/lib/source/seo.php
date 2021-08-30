@@ -14,7 +14,6 @@ class Seo
 
     public function __construct()
     {
-
     }
 
     /**

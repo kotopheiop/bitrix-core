@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Bitrix\Translate\IO;
 
@@ -18,7 +18,7 @@ class Directory
      * @param string $path Folder path.
      * @param string|null $siteId Site id.
      */
-    public function __construct($path, $siteId = null)
+    public function __construct(string $path, ?string $siteId = null)
     {
         parent::__construct($path, $siteId);
     }
@@ -27,11 +27,11 @@ class Directory
      * Creates temporal directory.
      *
      * @param string $prefix Name prefix.
-     * @param float $timeToLive Hours to keep files alive.
+     * @param int $timeToLive Hours to keep files alive.
      *
      * @return self
      */
-    public static function generateTemporalDirectory($prefix, $timeToLive = 1)
+    public static function generateTemporalDirectory(string $prefix, int $timeToLive = 3): self
     {
         $tempDirPath = \CTempFile::GetDirectoryName($timeToLive, array($prefix, uniqid($prefix, true)));
         $tempDir = new static($tempDirPath);
@@ -55,9 +55,15 @@ class Directory
      *
      * @return boolean
      */
-    public function copy(Main\IO\Directory $target, $reWrite = true, $recursive = false, $convertEncoding = false, $sourceEncoding = '', $targetEncoding = '')
-    {
-        if (strpos($target->getPhysicalPath(), $this->getPhysicalPath()) === 0) {
+    public function copy(
+        Main\IO\Directory $target,
+        bool $reWrite = true,
+        bool $recursive = false,
+        bool $convertEncoding = false,
+        string $sourceEncoding = '',
+        string $targetEncoding = ''
+    ): bool {
+        if (mb_strpos($target->getPhysicalPath(), $this->getPhysicalPath()) === 0) {
             $this->addError(new Main\Error('Destination is inside in the source folder.'));
 
             return false;
@@ -77,7 +83,7 @@ class Directory
 
         /** @var Main\IO\Directory $dir */
         foreach ($children as $entry) {
-            if (in_array($entry->getName(), Translate\IGNORE_FS_NAMES)) {
+            if (in_array($entry->getName(), Translate\IGNORE_FS_NAMES, true)) {
                 continue;
             }
 
@@ -99,7 +105,6 @@ class Directory
                     $retFlag = false;
                     $this->addErrors($source->getErrors());
                 }
-
             } elseif (
                 ($entry instanceof Main\IO\File) &&
                 $entry->isFile()
@@ -114,12 +119,11 @@ class Directory
                     $content = str_replace(array("\r\n", "\r"), array("\n", "\n"), $content);
 
                     if ($convertEncoding) {
-                        $errorMessage = '';
-                        $content = \Bitrix\Main\Text\Encoding::convertEncoding($content, $sourceEncoding, $targetEncoding, $errorMessage);
-                        if (!$content && !empty($errorMessage)) {
-                            $retFlag = false;
-                            $this->addError(new Main\Error($errorMessage));
-                        }
+                        $content = \Bitrix\Main\Text\Encoding::convertEncoding(
+                            $content,
+                            $sourceEncoding,
+                            $targetEncoding
+                        );
                     }
 
                     $file->putContents($content);
@@ -145,9 +149,14 @@ class Directory
      *
      * @return boolean
      */
-    public function copyLangOnly(Main\IO\Directory $target, $languageId, $convertEncoding = false, $sourceEncoding = '', $targetEncoding = '')
-    {
-        if (strpos($target->getPhysicalPath(), $this->getPhysicalPath()) === 0) {
+    public function copyLangOnly(
+        Main\IO\Directory $target,
+        string $languageId,
+        bool $convertEncoding = false,
+        string $sourceEncoding = '',
+        string $targetEncoding = ''
+    ): bool {
+        if (mb_strpos($target->getPhysicalPath(), $this->getPhysicalPath()) === 0) {
             $this->addError(new Main\Error('Destination is inside in the source folder.'));
 
             return false;
@@ -168,7 +177,7 @@ class Directory
             if (
                 !$dir instanceof Main\IO\Directory ||
                 !$dir->isDirectory() ||
-                in_array($dirName, Translate\IGNORE_FS_NAMES)
+                in_array($dirName, Translate\IGNORE_FS_NAMES, true)
             ) {
                 continue;
             }
@@ -210,7 +219,6 @@ class Directory
             }
         }
 
-
         return $retFlag;
     }
 
@@ -218,21 +226,27 @@ class Directory
     /**
      * Wipes folder out of children.
      *
+     * @param \Closure|null $filter Filter function.
      * @return bool
      */
-    public function wipe()
+    public function wipe(?\Closure $filter = null): bool
     {
         if (!$this->isExists()) {
             throw new Main\IO\FileNotFoundException($this->originalPath);
         }
 
-        if ($this->getPath() == '/') {
+        if ($this->getPath() === '/') {
             throw new Main\IO\InvalidPathException($this->originalPath);
         }
 
         $children = $this->getChildren();
         $result = true;
         foreach ($children as $entry) {
+            if ($filter instanceof \Closure) {
+                if ($filter($entry) !== true) {
+                    continue;
+                }
+            }
             $result = $entry->delete();
 
             if (!$result) {

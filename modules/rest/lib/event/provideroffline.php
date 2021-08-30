@@ -5,6 +5,7 @@ namespace Bitrix\Rest\Event;
 use Bitrix\Main\Loader;
 use Bitrix\Pull;
 use Bitrix\Rest\EventOfflineTable;
+use Bitrix\Main\EventManager;
 
 class ProviderOffline implements ProviderOfflineInterface
 {
@@ -27,6 +28,7 @@ class ProviderOffline implements ProviderOfflineInterface
         $serverAuthData = $this->getServerAuthData();
 
         $offlineEventsCount = array();
+        $offlineEventsApp = array();
 
         foreach ($eventList as $item) {
             $application = $item['APPLICATION'];
@@ -44,20 +46,27 @@ class ProviderOffline implements ProviderOfflineInterface
                     $offlineEventsCount[$application['CLIENT_ID']][$handler['CONNECTOR_ID']] = 0;
                 }
 
-                EventOfflineTable::callEvent(array(
-                    'APP_ID' => $application['ID'],
-                    'EVENT_NAME' => $handler['EVENT_NAME'],
-                    'EVENT_DATA' => $item['DATA'],
-                    'EVENT_ADDITIONAL' => $item['AUTH'],
-                    'CONNECTOR_ID' => $handler['CONNECTOR_ID'],
-                ));
+                EventOfflineTable::callEvent(
+                    array(
+                        'APP_ID' => $application['ID'],
+                        'EVENT_NAME' => $handler['EVENT_NAME'],
+                        'EVENT_DATA' => $item['DATA'],
+                        'EVENT_ADDITIONAL' => $item['AUTH'],
+                        'CONNECTOR_ID' => $handler['CONNECTOR_ID'],
+                    )
+                );
 
                 $offlineEventsCount[$application['CLIENT_ID']][$handler['CONNECTOR_ID']]++;
+                $offlineEventsApp[$application['ID']] = true;
             }
         }
 
         if (count($offlineEventsCount) > 0) {
             $this->notifyApplications($offlineEventsCount);
+        }
+
+        if (count($offlineEventsApp) > 0) {
+            $this->sendOfflineEvent(array_keys($offlineEventsApp));
         }
     }
 
@@ -75,6 +84,19 @@ class ProviderOffline implements ProviderOfflineInterface
         }
 
         return $serverAuthData;
+    }
+
+
+    protected function sendOfflineEvent(array $appList)
+    {
+        foreach (
+            EventManager::getInstance()->findEventHandlers(
+                "rest",
+                "onAfterOfflineEventCall"
+            ) as $event
+        ) {
+            ExecuteModuleEventEx($event, [['APP_LIST' => $appList]]);
+        }
     }
 
     protected function notifyApplications(array $counters)
@@ -98,11 +120,15 @@ class ProviderOffline implements ProviderOfflineInterface
                 );
             }
 
-            Pull\Event::add(Pull\Event::SHARED_CHANNEL, array(
-                'module_id' => 'rest',
-                'command' => 'event_offline',
-                'params' => $eventParam,
-            ), $clientId);
+            Pull\Event::add(
+                Pull\Event::SHARED_CHANNEL,
+                array(
+                    'module_id' => 'rest',
+                    'command' => 'event_offline',
+                    'params' => $eventParam,
+                ),
+                $clientId
+            );
         }
     }
 

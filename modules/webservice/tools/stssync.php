@@ -1,4 +1,5 @@
 <?php
+
 define("NOT_CHECK_PERMISSIONS", true);
 
 require_once($_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/main/include/prolog_before.php");
@@ -6,7 +7,9 @@ require_once($_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/main/include/prolog_be
 $result = array();
 $request = Bitrix\Main\Context::getCurrent()->getRequest();
 
-if ($USER->IsAuthorized() && $request->isPost() && check_bitrix_sessid() && \Bitrix\Main\Loader::includeModule('webservice')) {
+if ($USER->IsAuthorized() && $request->isPost() && check_bitrix_sessid() && \Bitrix\Main\Loader::includeModule(
+        'webservice'
+    )) {
     $action = $request["action"];
 
     switch ($action) {

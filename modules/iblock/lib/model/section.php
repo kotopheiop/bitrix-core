@@ -11,8 +11,9 @@ class Section
     final public static function compileEntityByIblock($iblockId)
     {
         $iblockId = (int)$iblockId;
-        if ($iblockId <= 0)
+        if ($iblockId <= 0) {
             return null;
+        }
 
         if (!isset(self::$entityInstance[$iblockId])) {
             $className = 'Section' . $iblockId . 'Table';

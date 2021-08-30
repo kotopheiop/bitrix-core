@@ -9,8 +9,9 @@ class MetadataBuilder
 
     public function __construct($fileName)
     {
-        if (!\Bitrix\Main\IO\File::isFileExists($fileName))
+        if (!\Bitrix\Main\IO\File::isFileExists($fileName)) {
             throw new \Bitrix\Main\ArgumentException('File is not found');
+        }
 
         $this->fileName = $fileName;
         $this->parser = new \Bitrix\Main\PhoneNumber\Tools\GoogleMetadata\Root();
@@ -24,7 +25,9 @@ class MetadataBuilder
         }
 
         // looking for the root element
-        while ($xmlReader->read() && $xmlReader->nodeType !== \XMLReader::ELEMENT) ;
+        while ($xmlReader->read() && $xmlReader->nodeType !== \XMLReader::ELEMENT) {
+            ;
+        }
 
         $parsedData = $this->parser->parseElement($xmlReader, '/');
         $xmlReader->close();

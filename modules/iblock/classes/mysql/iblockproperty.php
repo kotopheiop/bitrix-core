@@ -179,11 +179,13 @@ class CIBlockProperty extends CAllIBlockProperty
                 }
             } else {//WITH_DESCRIPTION=N
                 if (isset($tableFields["DESCRIPTION_" . $ID])) {
-                    $rs = $DB->Query("
+                    $rs = $DB->Query(
+                        "
 						SELECT COUNT(1) CNT
 						FROM b_iblock_element_prop_s" . $arProperty["IBLOCK_ID"] . "
 						WHERE DESCRIPTION_" . $ID . " IS NOT NULL AND DESCRIPTION_" . $ID . " <> ''
-					");
+					"
+                    );
                     $ar = $rs->Fetch();
                     if ($ar["CNT"] <= 0) {
                         $strSql = "
@@ -202,30 +204,33 @@ class CIBlockProperty extends CAllIBlockProperty
         return true;
     }
 
-    function DropColumnSQL($strTable, $arColumns)
+    public static function DropColumnSQL($strTable, $arColumns)
     {
         global $DB;
         $tableFields = $DB->GetTableFields($strTable);
         foreach ($arColumns as $i => $columnName) {
-            if (!isset($tableFields[$columnName]))
+            if (!isset($tableFields[$columnName])) {
                 unset($arColumns[$i]);
+            }
         }
-        if ($arColumns)
+        if ($arColumns) {
             return array("ALTER TABLE " . $strTable . " DROP " . implode(", DROP ", $arColumns));
-        else
+        } else {
             return array();
+        }
     }
 
     function _Add($ID, $arFields)
     {
         global $DB;
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
-        if ($arFields["MULTIPLE"] == "Y")
+        if ($arFields["MULTIPLE"] == "Y") {
             $strType = "longtext";
-        else {
-            if ($arFields["PROPERTY_TYPE"] === null)
+        } else {
+            if ($arFields["PROPERTY_TYPE"] === null) {
                 $arFields["PROPERTY_TYPE"] = "S";
+            }
             switch ($arFields["PROPERTY_TYPE"]) {
                 case "S":
                     $strType = "text";

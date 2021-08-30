@@ -82,15 +82,26 @@ class OrderPerDay extends BasePreset
 			<table width="100%" border="0" cellspacing="7" cellpadding="0">
 				<tbody>
 				<tr>
-					<td class="adm-detail-content-cell-l" style="width:40%;"><strong>' . Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_ORDER_PERDAY_ORDER_DISCOUNT_VALUE') . ':</strong></td>
+					<td class="adm-detail-content-cell-l" style="width:40%;"><strong>' . Loc::getMessage(
+                'SALE_HANDLERS_DISCOUNTPRESET_ORDER_PERDAY_ORDER_DISCOUNT_VALUE'
+            ) . ':</strong></td>
 					<td class="adm-detail-content-cell-r" style="width:60%;">
-						<input type="text" name="discount_value" value="' . htmlspecialcharsbx($state->get('discount_value')) . '" maxlength="100" style="width: 100px;"> <span>' . $currency . '</span>
+						<input type="text" name="discount_value" value="' . htmlspecialcharsbx(
+                $state->get('discount_value')
+            ) . '" maxlength="100" style="width: 100px;"> <span>' . $currency . '</span>
 					</td>
 				</tr>
 				<tr>
-					<td class="adm-detail-content-cell-l" style="width:40%;"><strong>' . Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_ORDER_PERDAY_DAY_LABEL') . ':</strong></td>
+					<td class="adm-detail-content-cell-l" style="width:40%;"><strong>' . Loc::getMessage(
+                'SALE_HANDLERS_DISCOUNTPRESET_ORDER_PERDAY_DAY_LABEL'
+            ) . ':</strong></td>
 					<td class="adm-detail-content-cell-r">
-						' . HtmlHelper::generateMultipleSelect('discount_days[]', $days, $state->get('discount_days', array()), array('size=7')) . '
+						' . HtmlHelper::generateMultipleSelect(
+                'discount_days[]',
+                $days,
+                $state->get('discount_days', array()),
+                array('size=7')
+            ) . '
 					</td>
 				</tr>
 				</tbody>
@@ -105,7 +116,9 @@ class OrderPerDay extends BasePreset
         }
 
         if (!$state->get('discount_days')) {
-            $this->errorCollection[] = new Error(Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_ERROR_EMPTY_VALUE_DAYS'));
+            $this->errorCollection[] = new Error(
+                Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_ERROR_EMPTY_VALUE_DAYS')
+            );
         }
 
         if (!$this->errorCollection->isEmpty()) {
@@ -143,43 +156,46 @@ class OrderPerDay extends BasePreset
 
     public function generateDiscount(State $state)
     {
-        return array_merge(parent::generateDiscount($state), array(
-            'CONDITIONS' => array(
-                'CLASS_ID' => 'CondGroup',
-                'DATA' => array(
-                    'All' => 'AND',
-                    'True' => 'True',
-                ),
-                'CHILDREN' => array(
-                    array(
-                        'CLASS_ID' => 'CondSaleCmnDayOfWeek',
-                        'DATA' => array(
-                            'logic' => 'Equal',
-                            'value' => $state->get('discount_days'),
+        return array_merge(
+            parent::generateDiscount($state),
+            array(
+                'CONDITIONS' => array(
+                    'CLASS_ID' => 'CondGroup',
+                    'DATA' => array(
+                        'All' => 'AND',
+                        'True' => 'True',
+                    ),
+                    'CHILDREN' => array(
+                        array(
+                            'CLASS_ID' => 'CondSaleCmnDayOfWeek',
+                            'DATA' => array(
+                                'logic' => 'Equal',
+                                'value' => $state->get('discount_days'),
+                            ),
                         ),
                     ),
                 ),
-            ),
-            'ACTIONS' => array(
-                'CLASS_ID' => 'CondGroup',
-                'DATA' => array(
-                    'All' => 'AND',
-                ),
-                'CHILDREN' => array(
-                    array(
-                        'CLASS_ID' => 'ActSaleBsktGrp',
-                        'DATA' => array(
-                            'Type' => 'Discount',
-                            'Value' => $state->get('discount_value'),
-                            'Unit' => $state->get('discount_type', 'CurAll'),
-                            'Max' => 0,
-                            'All' => 'AND',
-                            'True' => 'True',
+                'ACTIONS' => array(
+                    'CLASS_ID' => 'CondGroup',
+                    'DATA' => array(
+                        'All' => 'AND',
+                    ),
+                    'CHILDREN' => array(
+                        array(
+                            'CLASS_ID' => 'ActSaleBsktGrp',
+                            'DATA' => array(
+                                'Type' => 'Discount',
+                                'Value' => $state->get('discount_value'),
+                                'Unit' => $state->get('discount_type', 'CurAll'),
+                                'Max' => 0,
+                                'All' => 'AND',
+                                'True' => 'True',
+                            ),
+                            'CHILDREN' => array(),
                         ),
-                        'CHILDREN' => array(),
                     ),
                 ),
-            ),
-        ));
+            )
+        );
     }
 }

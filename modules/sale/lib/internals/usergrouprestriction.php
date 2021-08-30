@@ -43,22 +43,30 @@ class UserGroupRestrictionTable extends Main\ORM\Data\DataManager
     public static function getMap()
     {
         return [
-            new Main\ORM\Fields\IntegerField('ID', [
+            new Main\ORM\Fields\IntegerField(
+                'ID', [
                 'primary' => true,
                 'autocomplete' => true
-            ]),
+            ]
+            ),
 
-            new Main\ORM\Fields\IntegerField('ENTITY_ID', [
+            new Main\ORM\Fields\IntegerField(
+                'ENTITY_ID', [
                 'required' => true
-            ]),
+            ]
+            ),
 
-            new Main\ORM\Fields\IntegerField('ENTITY_TYPE_ID', [
+            new Main\ORM\Fields\IntegerField(
+                'ENTITY_TYPE_ID', [
                 'required' => true
-            ]),
+            ]
+            ),
 
-            new Main\ORM\Fields\IntegerField('GROUP_ID', [
+            new Main\ORM\Fields\IntegerField(
+                'GROUP_ID', [
                 'required' => true
-            ])
+            ]
+            )
         ];
     }
 
@@ -66,6 +74,10 @@ class UserGroupRestrictionTable extends Main\ORM\Data\DataManager
     {
         $conn = Main\Application::getConnection();
         $helper = $conn->getSqlHelper();
-        $conn->queryExecute('DELETE FROM ' . $helper->quote(self::getTableName()) . ' WHERE ENTITY_TYPE_ID=' . (string)(int)$entityType . ' AND ENTITY_ID=' . (string)(int)$entityId);
+        $conn->queryExecute(
+            'DELETE FROM ' . $helper->quote(
+                self::getTableName()
+            ) . ' WHERE ENTITY_TYPE_ID=' . (string)(int)$entityType . ' AND ENTITY_ID=' . (string)(int)$entityId
+        );
     }
 }

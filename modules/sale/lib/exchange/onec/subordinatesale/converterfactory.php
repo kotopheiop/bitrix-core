@@ -40,7 +40,9 @@ class ConverterFactory
             $typeId == EntityType::USER_PROFILE) {
             return new ConverterDocumentProfile();
         } else {
-            throw new NotSupportedException("Entity type: '" . EntityType::ResolveName($typeId) . "' is not supported in current context");
+            throw new NotSupportedException(
+                "Entity type: '" . EntityType::ResolveName($typeId) . "' is not supported in current context"
+            );
         }
     }
 }

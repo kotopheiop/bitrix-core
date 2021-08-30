@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/tools.php");
 
 IncludeModuleLangFile(__FILE__);
@@ -94,18 +95,21 @@ class CWizardBase
         $obStep->SetStepID($stepID);
         $this->wizardSteps[$stepID] = $obStep;
 
-        if ($this->firstStepID === null)
+        if ($this->firstStepID === null) {
             $this->SetFirstStep($stepID);
+        }
     }
 
     function AddSteps($arClasses)
     {
-        if (!is_array($arClasses))
+        if (!is_array($arClasses)) {
             return false;
+        }
 
         foreach ($arClasses as $className) {
-            if (!class_exists($className))
+            if (!class_exists($className)) {
                 continue;
+            }
 
             $this->AddStep(new $className);
         }
@@ -113,15 +117,17 @@ class CWizardBase
 
     function SetTemplate($obStepTemplate, $stepID = null)
     {
-        if (!is_subclass_of($obStepTemplate, "CWizardTemplate"))
+        if (!is_subclass_of($obStepTemplate, "CWizardTemplate")) {
             return;
+        }
 
         $obStepTemplate->_SetWizard($this);
 
-        if ($stepID === null)
+        if ($stepID === null) {
             $this->defaultTemplate = $obStepTemplate;
-        else
+        } else {
             $this->arTemplates[$stepID] = $obStepTemplate;
+        }
     }
 
     function DisableAdminTemplate()
@@ -136,8 +142,9 @@ class CWizardBase
 
     function SetCurrentStep($stepID)
     {
-        if (array_key_exists($stepID, $this->wizardSteps))
+        if (array_key_exists($stepID, $this->wizardSteps)) {
             $this->currentStepID = $stepID;
+        }
     }
 
     function GetCurrentStepID()
@@ -150,8 +157,9 @@ class CWizardBase
      */
     function GetCurrentStep()
     {
-        if (array_key_exists($this->currentStepID, $this->wizardSteps))
+        if (array_key_exists($this->currentStepID, $this->wizardSteps)) {
             return $this->wizardSteps[$this->currentStepID];
+        }
 
         return null;
     }
@@ -165,10 +173,11 @@ class CWizardBase
     {
         $arVars = Array();
         $prefix = $this->GetVarPrefix();
-        $prefixLength = strlen($prefix);
+        $prefixLength = mb_strlen($prefix);
         foreach ($_REQUEST as $varName => $varValue) {
-            if (strncmp($prefix, $varName, $prefixLength) == 0)
-                $arVars[substr($varName, $prefixLength)] = $varValue;
+            if (strncmp($prefix, $varName, $prefixLength) == 0) {
+                $arVars[mb_substr($varName, $prefixLength)] = $varValue;
+            }
         }
 
         if ($useDefault) {
@@ -184,16 +193,18 @@ class CWizardBase
         $varName = str_replace("[]", "", $varName);
         $trueName = $this->GetRealName($varName);
 
-        if (array_key_exists($trueName, $_REQUEST))
+        if (array_key_exists($trueName, $_REQUEST)) {
             return $_REQUEST[$trueName];
-        elseif (strpos($trueName, '[')) {
+        } elseif (mb_strpos($trueName, '[')) {
             $varValue = $this->__GetComplexVar($trueName, $_REQUEST);
-            if ($varValue !== null)
+            if ($varValue !== null) {
                 return $varValue;
-            elseif ($useDefault)
+            } elseif ($useDefault) {
                 return $this->GetDefaultVar($varName);
-        } elseif ($useDefault)
+            }
+        } elseif ($useDefault) {
             return $this->GetDefaultVar($varName);
+        }
 
         return null;
     }
@@ -202,20 +213,22 @@ class CWizardBase
     {
         $trueName = $this->GetRealName($varName);
 
-        if (!strpos($varName, '['))
+        if (!mb_strpos($varName, '[')) {
             $_REQUEST[$trueName] = $varValue;
-        else
+        } else {
             $this->__SetComplexVar($trueName, $varValue, $_REQUEST);
+        }
     }
 
     function UnSetVar($varName)
     {
         $trueName = $this->GetRealName($varName);
 
-        if (!strpos($varName, '['))
+        if (!mb_strpos($varName, '[')) {
             unset($_REQUEST[$trueName]);
-        else
+        } else {
             $this->__UnSetComplexVar($trueName, $_REQUEST);
+        }
     }
 
     function __GetComplexVar($varName, &$arVars)
@@ -224,8 +237,9 @@ class CWizardBase
         $arValues =& $arVars;
         do {
             $token = array_shift($tokens);
-            if (!isset($arValues[$token]))
+            if (!isset($arValues[$token])) {
                 return null;
+            }
             $arValues =& $arValues[$token];
         } while (!empty($tokens));
 
@@ -238,8 +252,9 @@ class CWizardBase
         $arValues =& $arVars;
         do {
             $token = array_shift($tokens);
-            if (!isset($arValues[$token]))
+            if (!isset($arValues[$token])) {
                 $arValues[$token] = Array();
+            }
             $arValues =& $arValues[$token];
         } while (count($tokens) > 1);
         $arValues[$tokens[0]] = $value;
@@ -251,8 +266,9 @@ class CWizardBase
         $arValues =& $arVars;
         do {
             $token = array_shift($tokens);
-            if (!isset($arValues[$token]))
+            if (!isset($arValues[$token])) {
                 return null;
+            }
             $arValues =& $arValues[$token];
         } while (count($tokens) > 1);
         unset($arValues[array_pop($tokens)]);
@@ -277,29 +293,33 @@ class CWizardBase
     {
         $varName = str_replace("[]", "", $varName);
 
-        if (!strpos($varName, '['))
+        if (!mb_strpos($varName, '[')) {
             $this->defaultVars[$varName] = $varValue;
-        else
+        } else {
             $this->__SetComplexVar($varName, $varValue, $this->defaultVars);
+        }
     }
 
     function SetDefaultVars($arVars)
     {
-        if (!is_array($arVars))
+        if (!is_array($arVars)) {
             return;
+        }
 
-        foreach ($arVars as $varName => $varValue)
+        foreach ($arVars as $varName => $varValue) {
             $this->SetDefaultVar($varName, $varValue);
+        }
     }
 
     function GetDefaultVar($varName)
     {
         $varName = str_replace("[]", "", $varName);
 
-        if (array_key_exists($varName, $this->defaultVars))
+        if (array_key_exists($varName, $this->defaultVars)) {
             return $this->defaultVars[$varName];
-        elseif (strpos($varName, '['))
+        } elseif (mb_strpos($varName, '[')) {
             return $this->__GetComplexVar($varName, $this->defaultVars);
+        }
 
         return null;
     }
@@ -366,8 +386,9 @@ class CWizardBase
 
     function GetNextStepID()
     {
-        if (isset($_REQUEST[$this->nextStepHiddenID]))
+        if (isset($_REQUEST[$this->nextStepHiddenID])) {
             return $_REQUEST[$this->nextStepHiddenID];
+        }
 
         return null;
     }
@@ -384,8 +405,9 @@ class CWizardBase
 
     function GetPrevStepID()
     {
-        if (isset($_REQUEST[$this->prevStepHiddenID]))
+        if (isset($_REQUEST[$this->prevStepHiddenID])) {
             return $_REQUEST[$this->prevStepHiddenID];
+        }
 
         return null;
     }
@@ -402,8 +424,9 @@ class CWizardBase
 
     function GetFinishStepID()
     {
-        if (isset($_REQUEST[$this->finishStepHiddenID]))
+        if (isset($_REQUEST[$this->finishStepHiddenID])) {
             return $_REQUEST[$this->finishStepHiddenID];
+        }
 
         return null;
     }
@@ -420,8 +443,9 @@ class CWizardBase
 
     function GetCancelStepID()
     {
-        if (isset($_REQUEST[$this->cancelStepHiddenID]))
+        if (isset($_REQUEST[$this->cancelStepHiddenID])) {
             return $_REQUEST[$this->cancelStepHiddenID];
+        }
 
         return null;
     }
@@ -441,30 +465,32 @@ class CWizardBase
         $currentStep = &$this->currentStepID;
 
         //What button has just been pressed
-        if ($this->IsPrevButtonClick())
+        if ($this->IsPrevButtonClick()) {
             $currentStep = $this->GetPrevStepID();
-        elseif ($this->IsNextButtonClick())
+        } elseif ($this->IsNextButtonClick()) {
             $currentStep = $this->GetNextStepID();
-        elseif ($this->IsCancelButtonClick())
+        } elseif ($this->IsCancelButtonClick()) {
             $currentStep = $this->GetCancelStepID();
-        elseif ($this->IsFinishButtonClick())
+        } elseif ($this->IsFinishButtonClick()) {
             $currentStep = $this->GetFinishStepID();
+        }
 
         //Execute current step action
         if (isset($_REQUEST[$this->currentStepHiddenID]) && isset($this->wizardSteps[$_REQUEST[$this->currentStepHiddenID]])) {
             $oCurrentStep = $this->wizardSteps[$_REQUEST[$this->currentStepHiddenID]];
             if (method_exists($oCurrentStep, "OnPostForm")) {
                 $oCurrentStep->OnPostForm();
-                if (count($oCurrentStep->stepErrors) > 0)
+                if (count($oCurrentStep->stepErrors) > 0) {
                     $currentStep = $_REQUEST[$this->currentStepHiddenID];
+                }
             }
         }
 
         //If step is not found, show a first step
         if (!isset($this->wizardSteps[$currentStep])) {
-            if (isset($this->wizardSteps[$this->firstStepID]))
+            if (isset($this->wizardSteps[$this->firstStepID])) {
                 $currentStep = $this->firstStepID;
-            else {
+            } else {
                 $this->__ShowError("Wizard has no any step");
                 return;
             }
@@ -478,8 +504,14 @@ class CWizardBase
         $oStep = $this->GetCurrentStep();
         $oStep->ShowStep();
 
-        $formStart = '<form action="' . htmlspecialcharsbx($this->formActionScript) . '" enctype="multipart/form-data" method="post" name="' . htmlspecialcharsbx($this->formName) . '" id="' . htmlspecialcharsbx($this->formName) . '">';
-        $formStart .= '<input type="hidden" name="' . htmlspecialcharsbx($this->currentStepHiddenID) . '" value="' . htmlspecialcharsbx($this->currentStepID) . '">';
+        $formStart = '<form action="' . htmlspecialcharsbx(
+                $this->formActionScript
+            ) . '" enctype="multipart/form-data" method="post" name="' . htmlspecialcharsbx(
+                $this->formName
+            ) . '" id="' . htmlspecialcharsbx($this->formName) . '">';
+        $formStart .= '<input type="hidden" name="' . htmlspecialcharsbx(
+                $this->currentStepHiddenID
+            ) . '" value="' . htmlspecialcharsbx($this->currentStepID) . '">';
         $formStart .= $this->__DisplayHiddenVars($this->GetVars(), $oStep);
 
         /*
@@ -517,21 +549,21 @@ class CWizardBase
         if ($oStep->nextStepID !== null) {
             $formStart .= '<input type="hidden" name="' . $this->nextStepHiddenID . '" value="' . $oStep->nextStepID . '">';
             $nextButtonHtml = '<input type="submit" class="wizard-next-button" name="' . $this->nextButtonID . '" value="' . $oStep->nextCaption . '">';
-            $buttonsHtml .= (strlen($buttonsHtml) > 0 ? "&nbsp;" : "") . $nextButtonHtml;
+            $buttonsHtml .= ($buttonsHtml <> '' ? "&nbsp;" : "") . $nextButtonHtml;
         }
 
         $finishButtonHtml = "";
         if ($oStep->finishStepID !== null) {
             $formStart .= '<input type="hidden" name="' . $this->finishStepHiddenID . '" value="' . $oStep->finishStepID . '">';
             $finishButtonHtml = '<input type="submit" class="wizard-finish-button" name="' . $this->finishButtonID . '" value="' . $oStep->finishCaption . '">';
-            $buttonsHtml .= (strlen($buttonsHtml) > 0 ? "&nbsp;" : "") . $finishButtonHtml;
+            $buttonsHtml .= ($buttonsHtml <> '' ? "&nbsp;" : "") . $finishButtonHtml;
         }
 
         $cancelButtonHtml = "";
         if ($oStep->cancelStepID !== null) {
             $formStart .= '<input type="hidden" name="' . $this->cancelStepHiddenID . '" value="' . $oStep->cancelStepID . '">';
             $cancelButtonHtml = '<input type="submit" class="wizard-cancel-button" name="' . $this->cancelButtonID . '" value="' . $oStep->cancelCaption . '">';
-            $buttonsHtml .= (strlen($buttonsHtml) > 0 ? "&nbsp;&nbsp;&nbsp;" : "") . $cancelButtonHtml;
+            $buttonsHtml .= ($buttonsHtml <> '' ? "&nbsp;&nbsp;&nbsp;" : "") . $cancelButtonHtml;
         }
 
         $output = str_replace("{#FORM_START#}", $formStart, $stepLayout);
@@ -545,10 +577,11 @@ class CWizardBase
         $output = str_replace("{#BUTTON_CANCEL#}", $finishButtonHtml, $output);
         $output = str_replace("{#BUTTON_FINISH#}", $cancelButtonHtml, $output);
 
-        if ($this->returnOutput)
+        if ($this->returnOutput) {
             return $output;
-        else
+        } else {
             echo $output;
+        }
     }
 
     function __GetStepLayout()
@@ -573,17 +606,22 @@ class CWizardBase
         $strReturn = "";
 
         foreach ($arVars as $varName => $varValue) {
-            if ($concatString !== null)
+            if ($concatString !== null) {
                 $varName = $concatString . "[" . $varName . "]";
+            }
 
-            if ($oStep->DisplayVarExists($varName))
+            if ($oStep->DisplayVarExists($varName)) {
                 continue;
+            }
 
-            if (is_array($varValue))
+            if (is_array($varValue)) {
                 $strReturn .= $this->__DisplayHiddenVars($varValue, $oStep, $varName);
-            else
-                $strReturn .= '<input type="hidden" name="' . htmlspecialcharsbx($this->GetVarPrefix() . $varName) . '" value="' . htmlspecialcharsEx($varValue) . '">
+            } else {
+                $strReturn .= '<input type="hidden" name="' . htmlspecialcharsbx(
+                        $this->GetVarPrefix() . $varName
+                    ) . '" value="' . htmlspecialcharsEx($varValue) . '">
 			';
+            }
         }
 
         return $strReturn;
@@ -591,53 +629,60 @@ class CWizardBase
 
     function __ShowError($errorMessage)
     {
-        if (strlen($errorMessage) > 0)
+        if ($errorMessage <> '') {
             echo '<span style="color:#FF0000">' . $errorMessage . '</span>';
+        }
     }
 
     /* Old  compatible Methods*/
     function GetID()
     {
-        if ($this->package === null)
+        if ($this->package === null) {
             return "";
+        }
         return $this->package->GetID();
     }
 
     function GetPath()
     {
-        if ($this->package === null)
+        if ($this->package === null) {
             return "";
+        }
         return $this->package->GetPath();
     }
 
     function GetSiteTemplateID()
     {
-        if ($this->package === null)
+        if ($this->package === null) {
             return null;
+        }
 
         return $this->package->GetSiteTemplateID();
     }
 
     function GetSiteGroupID()
     {
-        if ($this->package === null)
+        if ($this->package === null) {
             return null;
+        }
 
         return $this->package->GetSiteGroupID();
     }
 
     function GetSiteID()
     {
-        if ($this->package === null)
+        if ($this->package === null) {
             return null;
+        }
 
         return $this->package->GetSiteID();
     }
 
     function GetSiteServiceID()
     {
-        if ($this->package === null)
+        if ($this->package === null) {
             return null;
+        }
 
         return $this->package->GetSiteServiceID();
     }
@@ -692,12 +737,6 @@ class CWizardStep
         $this->content = "";
 
         $this->autoSubmit = false;
-    }
-
-    /** @deprecated */
-    public function CWizardStep()
-    {
-        self::__construct();
     }
 
     //Step initialization
@@ -830,14 +869,16 @@ class CWizardStep
 
     function SetDisplayVars($arVars)
     {
-        if (!is_array($arVars))
+        if (!is_array($arVars)) {
             return;
+        }
 
         $wizard = $this->GetWizard();
         foreach ($arVars as $varName) {
             $varName = str_replace("[]", "", $varName);
-            if (!in_array($varName, $this->displayVars))
+            if (!in_array($varName, $this->displayVars)) {
                 $this->displayVars[] = $varName;
+            }
         }
     }
 
@@ -845,8 +886,9 @@ class CWizardStep
     {
         $varName = str_replace("[]", "", $varName);
 
-        if (in_array($varName, $this->displayVars, true))
+        if (in_array($varName, $this->displayVars, true)) {
             return true;
+        }
         return null;
     }
 
@@ -877,19 +919,27 @@ class CWizardStep
 
         switch ($type) {
             case "text":
-                if (!isset($arAttributes["size"]))
+                if (!isset($arAttributes["size"])) {
                     $arAttributes["size"] = 10;
-                $strReturn .= '<input type="text" name="' . htmlspecialcharsbx($prefixName) . '" value="' . htmlspecialcharsEx($value) . '"' . $this->_ShowAttributes($arAttributes) . ' />';
+                }
+                $strReturn .= '<input type="text" name="' . htmlspecialcharsbx(
+                        $prefixName
+                    ) . '" value="' . htmlspecialcharsEx($value) . '"' . $this->_ShowAttributes($arAttributes) . ' />';
                 break;
 
             case "password":
-                if (!isset($arAttributes["size"]))
+                if (!isset($arAttributes["size"])) {
                     $arAttributes["size"] = 10;
-                $strReturn .= '<input type="password" name="' . htmlspecialcharsbx($prefixName) . '" value="' . htmlspecialcharsEx($value) . '"' . $this->_ShowAttributes($arAttributes) . ' />';
+                }
+                $strReturn .= '<input type="password" name="' . htmlspecialcharsbx(
+                        $prefixName
+                    ) . '" value="' . htmlspecialcharsEx($value) . '"' . $this->_ShowAttributes($arAttributes) . ' />';
                 break;
 
             case "textarea":
-                $strReturn .= '<textarea name="' . htmlspecialcharsbx($prefixName) . '"' . $this->_ShowAttributes($arAttributes) . '>' . htmlspecialcharsEx($value) . '</textarea>';
+                $strReturn .= '<textarea name="' . htmlspecialcharsbx($prefixName) . '"' . $this->_ShowAttributes(
+                        $arAttributes
+                    ) . '>' . htmlspecialcharsEx($value) . '</textarea>';
                 break;
         }
 
@@ -903,12 +953,14 @@ class CWizardStep
         $wizard = $this->GetWizard();
 
         $valueFromPost = $wizard->GetVar($name);
-        if ($valueFromPost !== null && !is_array($valueFromPost))
+        if ($valueFromPost !== null && !is_array($valueFromPost)) {
             $valueFromPost = Array($valueFromPost);
+        }
 
         $valueFromDefault = $wizard->GetDefaultVar($name);
-        if ($valueFromDefault !== null && !is_array($valueFromDefault))
+        if ($valueFromDefault !== null && !is_array($valueFromDefault)) {
             $valueFromDefault = Array($valueFromDefault);
+        }
 
         $checked = (
             (($valueFromPost !== null && in_array($value, $valueFromPost)) ||
@@ -923,14 +975,19 @@ class CWizardStep
 
         if (!in_array($viewName, $arViewedField) /*&& !$valueWasViewed*/) {
             $arViewedField[] = $viewName;
-            $strReturn .= '<input name="' . htmlspecialcharsbx($wizard->GetRealName($viewName)) . '" value="" type="hidden" />';
+            $strReturn .= '<input name="' . htmlspecialcharsbx(
+                    $wizard->GetRealName($viewName)
+                ) . '" value="" type="hidden" />';
         }
 
         $prefixName = $wizard->GetRealName($name);
-        $strReturn .= '<input name="' . htmlspecialcharsbx($prefixName) . '" ' . ($checked ? "checked=\"checked\" " : "") . 'type="checkbox" value="' . htmlspecialcharsEx($value) . '"' . $this->_ShowAttributes($arAttributes) . ' />';
+        $strReturn .= '<input name="' . htmlspecialcharsbx(
+                $prefixName
+            ) . '" ' . ($checked ? "checked=\"checked\" " : "") . 'type="checkbox" value="' . htmlspecialcharsEx(
+                $value
+            ) . '"' . $this->_ShowAttributes($arAttributes) . ' />';
 
         return $strReturn;
-
     }
 
     //Radio button control
@@ -940,12 +997,14 @@ class CWizardStep
         $wizard = $this->GetWizard();
 
         $valueFromPost = $wizard->GetVar($name);
-        if ($valueFromPost !== null && !is_array($valueFromPost))
+        if ($valueFromPost !== null && !is_array($valueFromPost)) {
             $valueFromPost = Array($valueFromPost);
+        }
 
         $valueFromDefault = $wizard->GetDefaultVar($name);
-        if ($valueFromDefault !== null && !is_array($valueFromDefault))
+        if ($valueFromDefault !== null && !is_array($valueFromDefault)) {
             $valueFromDefault = Array($valueFromDefault);
+        }
 
         static $arCheckedField = Array();
         $checked = false;
@@ -957,12 +1016,17 @@ class CWizardStep
                 ($valueFromDefault !== null && $valueFromPost === null && in_array($value, $valueFromDefault))
             );
 
-            if ($checked)
+            if ($checked) {
                 $arCheckedField[] = $checkName;
+            }
         }
 
         $prefixName = $wizard->GetRealName($name);
-        return '<input name="' . htmlspecialcharsbx($prefixName) . '" type="radio" ' . ($checked ? "checked=\"checked\" " : "") . 'value="' . htmlspecialcharsEx($value) . '"' . $this->_ShowAttributes($arAttributes) . ' />';
+        return '<input name="' . htmlspecialcharsbx(
+                $prefixName
+            ) . '" type="radio" ' . ($checked ? "checked=\"checked\" " : "") . 'value="' . htmlspecialcharsEx(
+                $value
+            ) . '"' . $this->_ShowAttributes($arAttributes) . ' />';
     }
 
     //Dropdown and multiple controls
@@ -982,18 +1046,25 @@ class CWizardStep
             )
         );
 
-        if (!is_array($selectedValues))
+        if (!is_array($selectedValues)) {
             $selectedValues = Array($selectedValues);
+        }
 
         $viewName = $wizard->GetRealName(str_replace("[]", "", $name));
         $strReturn = '<input name="' . htmlspecialcharsbx($viewName) . '" value="" type="hidden" />';
 
         $prefixName = $wizard->GetRealName($name);
-        $strReturn .= '<select name="' . htmlspecialcharsbx($prefixName) . '"' . $this->_ShowAttributes($arAttributes) . '>';
+        $strReturn .= '<select name="' . htmlspecialcharsbx($prefixName) . '"' . $this->_ShowAttributes(
+                $arAttributes
+            ) . '>';
 
-        foreach ($arValues as $optionValue => $optionName)
-            $strReturn .= '<option value="' . htmlspecialcharsEx($optionValue) . '"' . (in_array($optionValue, $selectedValues) ? " selected=\"selected\"" : "") . '>' . htmlspecialcharsEx($optionName) . '</option>
+        foreach ($arValues as $optionValue => $optionName) {
+            $strReturn .= '<option value="' . htmlspecialcharsEx($optionValue) . '"' . (in_array(
+                    $optionValue,
+                    $selectedValues
+                ) ? " selected=\"selected\"" : "") . '>' . htmlspecialcharsEx($optionName) . '</option>
 			';
+        }
 
         $strReturn .= '</select>';
 
@@ -1008,7 +1079,9 @@ class CWizardStep
         $this->SetDisplayVars(Array($name));
         $trueName = $wizard->GetRealName($name);
 
-        $strReturn = '<input type="hidden" name="' . htmlspecialcharsbx($trueName) . '" value="' . htmlspecialcharsEx($value) . '"' . $this->_ShowAttributes($arAttributes) . ' />';
+        $strReturn = '<input type="hidden" name="' . htmlspecialcharsbx($trueName) . '" value="' . htmlspecialcharsEx(
+                $value
+            ) . '"' . $this->_ShowAttributes($arAttributes) . ' />';
 
         return $strReturn;
     }
@@ -1020,11 +1093,15 @@ class CWizardStep
         $strReturn = "";
 
         if (array_key_exists("max_file_size", $arAttributes)) {
-            $strReturn .= '<input type="hidden" name="MAX_FILE_SIZE" value="' . intval($arAttributes["max_file_size"]) . '" />';
+            $strReturn .= '<input type="hidden" name="MAX_FILE_SIZE" value="' . intval(
+                    $arAttributes["max_file_size"]
+                ) . '" />';
             unset($arAttributes["max_file_size"]);
         }
 
-        $strReturn .= '<input type="file" name="' . htmlspecialcharsbx($wizard->GetRealName($name . "_new")) . '"' . $this->_ShowAttributes($arAttributes) . ' />';
+        $strReturn .= '<input type="file" name="' . htmlspecialcharsbx(
+                $wizard->GetRealName($name . "_new")
+            ) . '"' . $this->_ShowAttributes($arAttributes) . ' />';
 
         $fileID = intval($wizard->GetVar($name));
         if ($fileID > 0) {
@@ -1036,11 +1113,17 @@ class CWizardStep
                 $show_file_info = (isset($arAttributes["show_file_info"]) && $arAttributes["show_file_info"] == "N" ? false : true);
 
                 if ($show_file_info) {
-                    $strReturn .= "<br />&nbsp;" . GetMessage("MAIN_WIZARD_FILE_NAME") . ": " . htmlspecialcharsEx($arFile["ORIGINAL_NAME"]);
+                    $strReturn .= "<br />&nbsp;" . GetMessage("MAIN_WIZARD_FILE_NAME") . ": " . htmlspecialcharsEx(
+                            $arFile["ORIGINAL_NAME"]
+                        );
 
                     if ($arFile["HEIGHT"] > 0 && $arFile["WIDTH"]) {
-                        $strReturn .= "<br />&nbsp;" . GetMessage("MAIN_WIZARD_FILE_WIDTH") . ": " . intval($arFile["WIDTH"]);
-                        $strReturn .= "<br />&nbsp;" . GetMessage("MAIN_WIZARD_FILE_HEIGHT") . ": " . intval($arFile["HEIGHT"]);
+                        $strReturn .= "<br />&nbsp;" . GetMessage("MAIN_WIZARD_FILE_WIDTH") . ": " . intval(
+                                $arFile["WIDTH"]
+                            );
+                        $strReturn .= "<br />&nbsp;" . GetMessage("MAIN_WIZARD_FILE_HEIGHT") . ": " . intval(
+                                $arFile["HEIGHT"]
+                            );
                     }
 
                     $sizes = array("b", "Kb", "Mb", "Gb");
@@ -1050,7 +1133,10 @@ class CWizardStep
                         $size /= 1024;
                         $pos++;
                     }
-                    $strReturn .= "<br />&nbsp;" . GetMessage("MAIN_WIZARD_FILE_SIZE") . ": " . round($size, 2) . " " . $sizes[$pos];
+                    $strReturn .= "<br />&nbsp;" . GetMessage("MAIN_WIZARD_FILE_SIZE") . ": " . round(
+                            $size,
+                            2
+                        ) . " " . $sizes[$pos];
                 }
 
                 $strReturn .= '<br />';
@@ -1060,7 +1146,6 @@ class CWizardStep
         }
 
         return $strReturn;
-
     }
 
     function SaveFile($name, $arRestriction = Array())
@@ -1071,10 +1156,11 @@ class CWizardStep
         $oldFileID = $wizard->GetVar($name);
         $fileNew = $wizard->GetRealName($name . "_new");
 
-        if (!array_key_exists($fileNew, $_FILES) || (strlen($_FILES[$fileNew]["name"]) <= 0 && $deleteFile === null))
+        if (!array_key_exists($fileNew, $_FILES) || ($_FILES[$fileNew]["name"] == '' && $deleteFile === null)) {
             return;
+        }
 
-        if (strlen($_FILES[$fileNew]["tmp_name"]) <= 0 && $deleteFile === null) {
+        if ($_FILES[$fileNew]["tmp_name"] == '' && $deleteFile === null) {
             $this->SetError(GetMessage("MAIN_WIZARD_FILE_UPLOAD_ERROR"), $name . "_new");
             return;
         }
@@ -1085,51 +1171,68 @@ class CWizardStep
                 "MODULE_ID" => "tmp_wizard"
             );
 
-        $max_file_size = (array_key_exists("max_file_size", $arRestriction) ? intval($arRestriction["max_file_size"]) : 0);
+        $max_file_size = (array_key_exists("max_file_size", $arRestriction) ? intval(
+            $arRestriction["max_file_size"]
+        ) : 0);
         $max_width = (array_key_exists("max_width", $arRestriction) ? intval($arRestriction["max_width"]) : 0);
         $max_height = (array_key_exists("max_height", $arRestriction) ? intval($arRestriction["max_height"]) : 0);
-        $extensions = (array_key_exists("extensions", $arRestriction) && strlen($arRestriction["extensions"]) > 0 ? trim($arRestriction["extensions"]) : false);
-        $make_preview = (array_key_exists("make_preview", $arRestriction) && $arRestriction["make_preview"] == "Y" ? true : false);
+        $extensions = (array_key_exists("extensions", $arRestriction) && $arRestriction["extensions"] <> '' ? trim(
+            $arRestriction["extensions"]
+        ) : false);
+        $make_preview = (array_key_exists(
+            "make_preview",
+            $arRestriction
+        ) && $arRestriction["make_preview"] == "Y" ? true : false);
 
         $error = CFile::CheckFile($arFile, $max_file_size, false, $extensions);
-        if (strlen($error) > 0) {
+        if ($error <> '') {
             $this->SetError($error, $name . "_new");
             return;
         }
 
         if ($make_preview && $max_width > 0 && $max_height > 0) {
-            list($sourceWidth, $sourceHeight, $type, $attr) = CFile::GetImageSize($arFile["tmp_name"]);
-
-            if ($sourceWidth > $max_width || $sourceHeight > $max_height) {
-                $success = CWizardUtil::CreateThumbnail($arFile["tmp_name"], $arFile["tmp_name"], $max_width, $max_height);
-                if ($success)
-                    $arFile["size"] = @filesize($arFile["tmp_name"]);
+            $info = (new \Bitrix\Main\File\Image($arFile["tmp_name"]))->getInfo();
+            if ($info) {
+                if ($info->getWidth() > $max_width || $info->getHeight() > $max_height) {
+                    $success = CWizardUtil::CreateThumbnail(
+                        $arFile["tmp_name"],
+                        $arFile["tmp_name"],
+                        $max_width,
+                        $max_height
+                    );
+                    if ($success) {
+                        $arFile["size"] = @filesize($arFile["tmp_name"]);
+                    }
+                }
             }
         } elseif ($max_width > 0 || $max_height > 0) {
             $error = CFile::CheckImageFile($arFile, $max_file_size, $max_width, $max_height);
-            if (strlen($error) > 0) {
+            if ($error <> '') {
                 $this->SetError($error, $name . "_new");
                 return;
             }
         }
 
         $fileID = (int)CFile::SaveFile($arFile, "tmp");
-        if ($fileID > 0)
+        if ($fileID > 0) {
             $wizard->SetVar($name, $fileID);
-        else
+        } else {
             $wizard->UnSetVar($name);
+        }
 
         return $fileID;
     }
 
     function _ShowAttributes($arAttributes)
     {
-        if (!is_array($arAttributes))
+        if (!is_array($arAttributes)) {
             return "";
+        }
 
         $strReturn = "";
-        foreach ($arAttributes as $name => $value)
+        foreach ($arAttributes as $name => $value) {
             $strReturn .= ' ' . htmlspecialcharsbx($name) . '="' . htmlspecialcharsEx($value) . '"';
+        }
 
         return $strReturn;
     }
@@ -1243,8 +1346,9 @@ STYLES;
         $arErrors = $obStep->GetErrors();
         $strError = "";
         if (count($arErrors) > 0) {
-            foreach ($arErrors as $arError)
+            foreach ($arErrors as $arError) {
                 $strError .= $arError[0] . "<br />";
+            }
 
             $strError = '<tr><td style="padding-top: 10px; padding-left: 20px; color:red;">' . $strError . '</td></tr>';
         }
@@ -1253,8 +1357,9 @@ STYLES;
         $stepSubTitle = $obStep->GetSubTitle();
 
         $autoSubmit = "";
-        if ($obStep->IsAutoSubmit())
+        if ($obStep->IsAutoSubmit()) {
             $autoSubmit = 'setTimeout("WizardAutoSubmit();", 500);';
+        }
 
         $BX_ROOT = BX_ROOT;
 
@@ -1424,12 +1529,16 @@ class CWizardAdminTemplate extends CWizardTemplate
             foreach ($arErrors as $arError) {
                 $strError .= $arError[0] . "<br />";
 
-                if ($arError[1] !== false)
-                    $strJsError .= ($strJsError <> "" ? ", " : "") . "{'name':'" . CUtil::addslashes($wizard->GetRealName($arError[1])) . "', 'title':'" . CUtil::addslashes(htmlspecialcharsback($arError[0])) . "'}";
+                if ($arError[1] !== false) {
+                    $strJsError .= ($strJsError <> "" ? ", " : "") . "{'name':'" . CUtil::addslashes(
+                            $wizard->GetRealName($arError[1])
+                        ) . "', 'title':'" . CUtil::addslashes(htmlspecialcharsback($arError[0])) . "'}";
+                }
             }
 
-            if (strlen($strError) > 0)
+            if ($strError <> '') {
                 $strError = '<div id="step_error">' . $strError . "</div>";
+            }
 
             $strJsError = '
 			<script type="text/javascript">
@@ -1441,8 +1550,9 @@ class CWizardAdminTemplate extends CWizardTemplate
         $stepSubTitle = $obStep->GetSubTitle();
 
         $autoSubmit = "";
-        if ($obStep->IsAutoSubmit())
+        if ($obStep->IsAutoSubmit()) {
             $autoSubmit = 'setTimeout("AutoSubmit();", 500);';
+        }
 
         $alertText = GetMessageJS("MAIN_WIZARD_WANT_TO_CANCEL");
         $loadingText = GetMessageJS("MAIN_WIZARD_WAIT_WINDOW_TEXT");
@@ -1775,7 +1885,6 @@ class CWizardAdminTemplate extends CWizardTemplate
 	</body>
 </html>
 HTML;
-
     }
 
 }

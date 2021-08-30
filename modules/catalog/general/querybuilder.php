@@ -10,14 +10,15 @@ Loc::loadMessages(__FILE__);
 
 final class CProductQueryBuilder
 {
-    private const ENTITY_PRODUCT = 'PRODUCT';
-    private const ENTITY_PRICE = 'PRICE';
-    private const ENTITY_WARENHOUSE = 'WARENHOUSE';
-    private const ENTITY_FLAT_PRICE = 'FLAT_PRICES';
-    private const ENTITY_FLAT_WAREHNOUSE = 'FLAT_WARENHOUSES';
-    private const ENTITY_OLD_PRODUCT = 'OLD_PRODUCT';
-    private const ENTITY_OLD_PRICE = 'OLD_PRICE';
-    private const ENTITY_OLD_STORE = 'OLD_STORE';
+    public const ENTITY_PRODUCT = 'PRODUCT';
+    public const ENTITY_PRICE = 'PRICE';
+    public const ENTITY_WARENHOUSE = 'WARENHOUSE';
+    public const ENTITY_FLAT_PRICE = 'FLAT_PRICES';
+    public const ENTITY_FLAT_WAREHNOUSE = 'FLAT_WARENHOUSES';
+    public const ENTITY_FLAT_BARCODE = 'FLAT_BARCODE';
+    public const ENTITY_OLD_PRODUCT = 'OLD_PRODUCT';
+    public const ENTITY_OLD_PRICE = 'OLD_PRICE';
+    public const ENTITY_OLD_STORE = 'OLD_STORE';
     private const ENTITY_CATALOG_IBLOCK = 'CATALOG_IBLOCK';
     private const ENTITY_VAT = 'VAT';
 
@@ -47,13 +48,15 @@ final class CProductQueryBuilder
      * @param array $options
      * @return null|array
      */
-    public static function makeFilter(array $filter, array $options = [])
+    public static function makeFilter(array $filter, array $options = []): ?array
     {
         $query = self::prepareQuery(['filter' => $filter], $options);
-        if ($query === null)
+        if ($query === null) {
             return null;
-        if (empty($query['filter']) && empty($query['join']))
+        }
+        if (empty($query['filter']) && empty($query['join'])) {
             return null;
+        }
 
         return $query;
     }
@@ -63,13 +66,15 @@ final class CProductQueryBuilder
      * @param array $options
      * @return array|null
      */
-    public static function makeQuery(array $parameters, array $options = [])
+    public static function makeQuery(array $parameters, array $options = []): ?array
     {
         $query = self::prepareQuery($parameters, $options);
-        if ($query === null)
+        if ($query === null) {
             return null;
-        if (empty($query['select']) && empty($query['filter']) && empty($query['order']))
+        }
+        if (empty($query['select']) && empty($query['filter']) && empty($query['order'])) {
             return null;
+        }
 
         return $query;
     }
@@ -78,32 +83,39 @@ final class CProductQueryBuilder
      * @param string $field
      * @return bool
      */
-    public static function isValidField($field)
+    public static function isValidField(string $field): bool
     {
-        $field = strtoupper($field);
-        if ($field === '')
+        $field = mb_strtoupper($field);
+        if ($field === '') {
             return false;
+        }
 
         self::initEntityDescription();
         self::initEntityFields();
 
         $prepared = [];
 
-        if (preg_match(self::FIELD_PATTERN_OLD_STORE, $field, $prepared))
+        if (preg_match(self::FIELD_PATTERN_OLD_STORE, $field, $prepared)) {
             return true;
-        if (preg_match(self::FIELD_PATTERN_OLD_PRICE_ROW, $field, $prepared))
+        }
+        if (preg_match(self::FIELD_PATTERN_OLD_PRICE_ROW, $field, $prepared)) {
             return true;
-        if (preg_match(self::FIELD_PATTERN_OLD_PRICE, $field, $prepared))
+        }
+        if (preg_match(self::FIELD_PATTERN_OLD_PRICE, $field, $prepared)) {
             return true;
-        if (preg_match(self::FIELD_PATTERN_OLD_PRODUCT, $field, $prepared))
+        }
+        if (preg_match(self::FIELD_PATTERN_OLD_PRODUCT, $field, $prepared)) {
             return true;
+        }
         if (preg_match(self::FIELD_PATTERN_SEPARATE_ENTITY, $field, $prepared)) {
-            if (self::searchFieldEntity($prepared[1], self::ENTITY_TYPE_SEPARATE))
+            if (self::searchFieldEntity($prepared[1], self::ENTITY_TYPE_SEPARATE)) {
                 return true;
+            }
         }
         if (preg_match(self::FIELD_PATTERN_FLAT_ENTITY, $field, $prepared)) {
-            if (self::searchFieldEntity($prepared[1], self::ENTITY_TYPE_FLAT))
+            if (self::searchFieldEntity($prepared[1], self::ENTITY_TYPE_FLAT)) {
                 return true;
+            }
         }
 
         return false;
@@ -113,23 +125,27 @@ final class CProductQueryBuilder
      * @param string $field
      * @return bool
      */
-    public static function isRealFilterField($field)
+    public static function isRealFilterField(string $field): bool
     {
         self::initEntityDescription();
         self::initEntityFields();
 
         $prepareField = self::parseField($field);
-        if (!self::checkPreparedField($prepareField))
+        if (!self::checkPreparedField($prepareField)) {
             return false;
-        if (!self::checkAllowedAction($prepareField['ALLOWED'], self::FIELD_ALLOWED_FILTER))
+        }
+        if (!self::checkAllowedAction($prepareField['ALLOWED'], self::FIELD_ALLOWED_FILTER)) {
             return false;
+        }
 
         $description = self::getFieldDescription($prepareField['ENTITY'], $prepareField['FIELD']);
-        if (empty($description))
+        if (empty($description)) {
             return false;
+        }
 
-        if (isset($description['PHANTOM']))
+        if (isset($description['PHANTOM'])) {
             return false;
+        }
 
         return true;
     }
@@ -138,7 +154,7 @@ final class CProductQueryBuilder
      * @param string $field
      * @return bool
      */
-    public static function isCatalogFilterField($field)
+    public static function isCatalogFilterField(string $field): bool
     {
         return self::isEntityFilterField(
             $field,
@@ -150,6 +166,7 @@ final class CProductQueryBuilder
                 self::ENTITY_FLAT_PRICE => true,
                 self::ENTITY_WARENHOUSE => true,
                 self::ENTITY_FLAT_WAREHNOUSE => true,
+                self::ENTITY_FLAT_BARCODE => true,
                 self::ENTITY_OLD_STORE => true
             ]
         );
@@ -159,7 +176,7 @@ final class CProductQueryBuilder
      * @param string $field
      * @return bool
      */
-    public static function isProductFilterField($field)
+    public static function isProductFilterField(string $field): bool
     {
         return self::isEntityFilterField(
             $field,
@@ -174,7 +191,7 @@ final class CProductQueryBuilder
      * @param string $field
      * @return bool
      */
-    public static function isPriceFilterField($field)
+    public static function isPriceFilterField(string $field): bool
     {
         return self::isEntityFilterField(
             $field,
@@ -190,7 +207,7 @@ final class CProductQueryBuilder
      * @param string $field
      * @return bool
      */
-    public static function isWarenhouseFilterField($field)
+    public static function isWarenhouseFilterField(string $field): bool
     {
         return self::isEntityFilterField(
             $field,
@@ -208,20 +225,22 @@ final class CProductQueryBuilder
      * @param array $options
      * @return array
      */
-    public static function modifyFilterFromOrder(array $filter, array $order, array $options)
+    public static function modifyFilterFromOrder(array $filter, array $order, array $options): array
     {
         $result = $filter;
 
         self::initEntityDescription();
         self::initEntityFields();
 
-        if (empty($order) || empty($options['QUANTITY']))
+        if (empty($order) || empty($options['QUANTITY'])) {
             return $result;
+        }
 
         foreach (array_keys($order) as $field) {
             $prepareField = self::parseField($field);
-            if (!self::checkPreparedField($prepareField))
+            if (!self::checkPreparedField($prepareField)) {
                 continue;
+            }
             switch ($prepareField['ENTITY']) {
                 case self::ENTITY_OLD_PRICE:
                     if (
@@ -237,8 +256,9 @@ final class CProductQueryBuilder
                         $filterField = self::getField($filterFieldDescription, []);
                         if (!empty($filterField)) {
                             $filterField = $filterField['ALIAS'];
-                            if (!isset($result[$filterField]))
+                            if (!isset($result[$filterField])) {
                                 $result[$filterField] = $options['QUANTITY'];
+                            }
                         }
                         unset($filterField, $filterFieldDescription);
                     }
@@ -258,8 +278,9 @@ final class CProductQueryBuilder
                         $filterField = self::getField($filterFieldDescription, []);
                         if (!empty($filterField)) {
                             $filterField = $filterField['ALIAS'];
-                            if (!isset($result[$filterField]))
+                            if (!isset($result[$filterField])) {
                                 $result[$filterField] = $options['QUANTITY'];
+                            }
                         }
                         unset($filterField, $filterFieldDescription);
                     }
@@ -275,7 +296,7 @@ final class CProductQueryBuilder
      * @param int $useMode
      * @return string|null
      */
-    public static function convertOldField($field, $useMode)
+    public static function convertOldField(string $field, int $useMode): ?string
     {
         $result = null;
 
@@ -283,10 +304,12 @@ final class CProductQueryBuilder
         self::initEntityFields();
 
         $prepareField = self::parseField($field);
-        if (!self::checkPreparedField($prepareField))
+        if (!self::checkPreparedField($prepareField)) {
             return $result;
-        if (!self::checkAllowedAction($prepareField['ALLOWED'], $useMode))
+        }
+        if (!self::checkAllowedAction($prepareField['ALLOWED'], $useMode)) {
             return $result;
+        }
 
         $newEntity = null;
         switch ($prepareField['ENTITY']) {
@@ -300,18 +323,21 @@ final class CProductQueryBuilder
                 $newEntity = self::ENTITY_WARENHOUSE;
                 break;
         }
-        if ($newEntity === null)
+        if ($newEntity === null) {
             return $result;
+        }
 
         $description = self::getFieldDescription($prepareField['ENTITY'], $prepareField['FIELD']);
-        if (empty($description))
+        if (empty($description)) {
             return $result;
+        }
 
         if ($useMode == self::FIELD_ALLOWED_ORDER) {
             if (isset($description['ORDER_TRANSFORM'])) {
                 $description = self::getFieldDescription($prepareField['ENTITY'], $description['ORDER_TRANSFORM']);
-                if (empty($description))
+                if (empty($description)) {
                     return $result;
+                }
             }
         }
 
@@ -323,8 +349,9 @@ final class CProductQueryBuilder
         unset($newEntity, $prepareField);
 
         $description = self::getFieldDescription($newField['ENTITY'], $newField['FIELD']);
-        if (empty($description))
+        if (empty($description)) {
             return $result;
+        }
 
         $result = str_replace('#ENTITY_ID#', $newField['ENTITY_ID'], $description['ALIAS']);
         unset($description, $newField);
@@ -336,19 +363,21 @@ final class CProductQueryBuilder
      * @param array $select
      * @return array
      */
-    public static function convertOldSelect(array $select)
+    public static function convertOldSelect(array $select): array
     {
         $result = [];
 
-        if (empty($select))
+        if (empty($select)) {
             return $result;
+        }
 
         foreach ($select as $index => $field) {
             $newField = self::convertOldField($field, self::FIELD_ALLOWED_SELECT);
-            if ($newField === null)
+            if ($newField === null) {
                 $result[$index] = $field;
-            else
+            } else {
                 $result[$index] = $newField;
+            }
         }
         unset($newField, $index, $field);
 
@@ -359,28 +388,31 @@ final class CProductQueryBuilder
      * @param array $filter
      * @return array
      */
-    public static function convertOldFilter(array $filter)
+    public static function convertOldFilter(array $filter): array
     {
         $result = [];
 
-        if (empty($filter))
+        if (empty($filter)) {
             return $result;
+        }
 
         foreach ($filter as $field => $value) {
             if (is_object($value)) {
                 $result[$field] = $value;
             } elseif (is_numeric($field)) {
-                if (is_array($value))
+                if (is_array($value)) {
                     $result[$field] = self::convertOldFilter($value);
-                else
+                } else {
                     $result[$field] = $value;
+                }
             } else {
                 $filterItem = \CIBlock::MkOperationFilter($field);
                 $newField = self::convertOldField($filterItem['FIELD'], self::FIELD_ALLOWED_FILTER);
-                if ($newField !== null)
+                if ($newField !== null) {
                     $result[$filterItem['PREFIX'] . $newField] = $value;
-                else
+                } else {
                     $result[$field] = $value;
+                }
                 unset($newField, $filterItem);
             }
         }
@@ -393,21 +425,63 @@ final class CProductQueryBuilder
      * @param array $order
      * @return array
      */
-    public static function convertOldOrder(array $order)
+    public static function convertOldOrder(array $order): array
     {
         $result = [];
 
-        if (empty($order))
+        if (empty($order)) {
             return $result;
+        }
 
         foreach ($order as $field => $direction) {
             $newField = self::convertOldField($field, self::FIELD_ALLOWED_ORDER);
-            if ($newField === null)
+            if ($newField === null) {
                 $result[$field] = $direction;
-            else
+            } else {
                 $result[$newField] = $direction;
+            }
         }
         unset($newField, $field, $direction);
+
+        return $result;
+    }
+
+    /**
+     * @param string $entity
+     * @param array $options
+     * @return array|null
+     */
+    public static function getEntityFieldAliases(string $entity, array $options = []): ?array
+    {
+        $result = null;
+
+        $entity = (string)$entity;
+        if ($entity === '') {
+            return $result;
+        }
+
+        $entity = mb_strtoupper($entity);
+
+        self::initEntityDescription();
+        self::initEntityFields();
+
+        if (!isset(self::$entityFields[$entity])) {
+            return $result;
+        }
+
+        $entityId = '';
+        if (
+            isset($options['ENTITY_ID'])
+            && (is_string($options['ENTITY_ID']) || is_int($options['ENTITY_ID']))
+        ) {
+            $entityId = (string)$options['ENTITY_ID'];
+        }
+
+        $result = [];
+        foreach (self::$entityFields[$entity] as $field) {
+            $result[] = str_replace('#ENTITY_ID#', $entityId, $field['ALIAS']);
+        }
+        unset($field);
 
         return $result;
     }
@@ -417,8 +491,9 @@ final class CProductQueryBuilder
      */
     private static function initEntityDescription()
     {
-        if (!empty(self::$entityDescription))
+        if (!empty(self::$entityDescription)) {
             return;
+        }
 
         self::$entityDescription = [
             self::ENTITY_PRODUCT => [
@@ -444,6 +519,11 @@ final class CProductQueryBuilder
             self::ENTITY_FLAT_WAREHNOUSE => [
                 'NAME' => 'b_catalog_store_product',
                 'ALIAS' => 'WHS_FT',
+                'JOIN' => 'left join #NAME# as #ALIAS# on (#ALIAS#.PRODUCT_ID = #ELEMENT#.ID)'
+            ],
+            self::ENTITY_FLAT_BARCODE => [
+                'NAME' => 'b_catalog_store_barcode',
+                'ALIAS' => 'BRC_FT',
                 'JOIN' => 'left join #NAME# as #ALIAS# on (#ALIAS#.PRODUCT_ID = #ELEMENT#.ID)'
             ],
             self::ENTITY_OLD_PRODUCT => [
@@ -480,8 +560,9 @@ final class CProductQueryBuilder
      */
     private static function initEntityFields()
     {
-        if (!empty(self::$entityFields))
+        if (!empty(self::$entityFields)) {
             return;
+        }
 
         self::$entityFields = [
             self::ENTITY_PRODUCT => [
@@ -813,6 +894,26 @@ final class CProductQueryBuilder
                     'ORDER_NULLABLE' => true,
                 ]
             ],
+            self::ENTITY_FLAT_BARCODE => [
+                'PRODUCT_BARCODE' => [
+                    'NAME' => 'BARCODE',
+                    'ALIAS' => 'PRODUCT_BARCODE',
+                    'TYPE' => 'string',
+                    'ALLOWED' => self::FIELD_ALLOWED_FILTER
+                ],
+                'PRODUCT_BARCODE_STORE' => [
+                    'NAME' => 'STORE_ID',
+                    'ALIAS' => 'PRODUCT_BARCODE_STORE',
+                    'TYPE' => 'int',
+                    'ALLOWED' => self::FIELD_ALLOWED_FILTER
+                ],
+                'PRODUCT_BARCODE_ORDER' => [
+                    'NAME' => 'ORDER_ID',
+                    'ALIAS' => 'PRODUCT_BARCODE_ORDER',
+                    'TYPE' => 'int',
+                    'ALLOWED' => self::FIELD_ALLOWED_FILTER
+                ]
+            ],
             self::ENTITY_OLD_PRODUCT => [
                 'QUANTITY' => [
                     'NAME' => 'QUANTITY',
@@ -1117,12 +1218,14 @@ final class CProductQueryBuilder
      * @param string $field
      * @return int
      */
-    private static function getFieldAllowed($entity, $field)
+    private static function getFieldAllowed(string $entity, string $field): int
     {
-        if (!isset(self::$entityFields[$entity][$field]))
+        if (!isset(self::$entityFields[$entity][$field])) {
             return 0;
-        if (!isset(self::$entityFields[$entity][$field]['ALLOWED']))
+        }
+        if (!isset(self::$entityFields[$entity][$field]['ALLOWED'])) {
             return 0;
+        }
         return (self::$entityFields[$entity][$field]['ALLOWED']);
     }
 
@@ -1130,7 +1233,7 @@ final class CProductQueryBuilder
      * @param string $entity
      * @return array|null
      */
-    private static function getFieldsAllowedToSelect($entity)
+    private static function getFieldsAllowedToSelect(string $entity): ?array
     {
         $filter = function ($field) {
             return (isset($field['ALLOWED']) && ($field['ALLOWED'] & self::FIELD_ALLOWED_SELECT > 0));
@@ -1145,13 +1248,14 @@ final class CProductQueryBuilder
      * @param string $field
      * @return array|null
      */
-    private static function parseField($field)
+    private static function parseField(string $field): ?array
     {
         $field = (string)$field;
-        if ($field === '')
+        if ($field === '') {
             return null;
+        }
 
-        $field = strtoupper($field);
+        $field = mb_strtoupper($field);
 
         $entity = '';
         $entityId = 0;
@@ -1202,12 +1306,14 @@ final class CProductQueryBuilder
 
         if ($checked) {
             $allowed = self::getFieldAllowed($entity, $field);
-            if (empty($allowed))
+            if (empty($allowed)) {
                 $checked = false;
+            }
         }
 
-        if (!$checked)
+        if (!$checked) {
             return null;
+        }
 
         return [
             'ENTITY' => $entity,
@@ -1223,24 +1329,26 @@ final class CProductQueryBuilder
      * @param int $type
      * @return null|string
      */
-    private static function searchFieldEntity($field, $type)
+    private static function searchFieldEntity(string $field, int $type): ?string
     {
         $result = null;
 
         switch ($type) {
             case self::ENTITY_TYPE_FLAT:
-                if (isset(self::$entityFields[self::ENTITY_PRODUCT][$field]))
+                if (isset(self::$entityFields[self::ENTITY_PRODUCT][$field])) {
                     $result = self::ENTITY_PRODUCT;
-                elseif (isset(self::$entityFields[self::ENTITY_FLAT_PRICE][$field]))
+                } elseif (isset(self::$entityFields[self::ENTITY_FLAT_PRICE][$field])) {
                     $result = self::ENTITY_FLAT_PRICE;
-                elseif (isset(self::$entityFields[self::ENTITY_FLAT_WAREHNOUSE][$field]))
+                } elseif (isset(self::$entityFields[self::ENTITY_FLAT_WAREHNOUSE][$field])) {
                     $result = self::ENTITY_FLAT_WAREHNOUSE;
+                }
                 break;
             case self::ENTITY_TYPE_SEPARATE:
-                if (isset(self::$entityFields[self::ENTITY_WARENHOUSE][$field]))
+                if (isset(self::$entityFields[self::ENTITY_WARENHOUSE][$field])) {
                     $result = self::ENTITY_WARENHOUSE;
-                elseif (isset(self::$entityFields[self::ENTITY_PRICE][$field]))
+                } elseif (isset(self::$entityFields[self::ENTITY_PRICE][$field])) {
                     $result = self::ENTITY_PRICE;
+                }
                 break;
         }
 
@@ -1252,7 +1360,7 @@ final class CProductQueryBuilder
      * @param int $action
      * @return bool
      */
-    private static function checkAllowedAction($allowed, $action)
+    private static function checkAllowedAction(int $allowed, int $action): bool
     {
         return ($allowed & $action) > 0;
     }
@@ -1262,14 +1370,16 @@ final class CProductQueryBuilder
      * @param array $entityList
      * @return bool
      */
-    private static function isEntityFilterField($field, array $entityList)
+    private static function isEntityFilterField(string $field, array $entityList): bool
     {
         $result = false;
 
-        if (!is_string($field))
+        if (!is_string($field)) {
             return $result;
-        if (is_numeric($field))
+        }
+        if (is_numeric($field)) {
             return $result;
+        }
 
         self::initEntityDescription();
         self::initEntityFields();
@@ -1280,8 +1390,9 @@ final class CProductQueryBuilder
             self::checkPreparedField($prepareField)
             && self::checkAllowedAction($prepareField['ALLOWED'], self::FIELD_ALLOWED_FILTER)
         ) {
-            if (isset($entityList[$prepareField['ENTITY']]))
+            if (isset($entityList[$prepareField['ENTITY']])) {
                 $result = true;
+            }
         }
         unset($prepareField, $filterItem);
 
@@ -1292,7 +1403,7 @@ final class CProductQueryBuilder
      * @param array $field
      * @return string
      */
-    private static function getEntityIndex(array $field)
+    private static function getEntityIndex(array $field): string
     {
         return $field['ENTITY'] . ':' . $field['ENTITY_ID'];
     }
@@ -1303,10 +1414,11 @@ final class CProductQueryBuilder
      * @param array $entity
      * @return array|null
      */
-    private static function getEntityDescription(array $entity)
+    private static function getEntityDescription(array $entity): ?array
     {
-        if (!isset(self::$entityDescription[$entity['ENTITY']]))
+        if (!isset(self::$entityDescription[$entity['ENTITY']])) {
             return null;
+        }
         $row = self::$entityDescription[$entity['ENTITY']];
         $row['ALIAS'] = str_replace('#ENTITY_ID#', $entity['ENTITY_ID'], $row['ALIAS']);
 
@@ -1316,8 +1428,9 @@ final class CProductQueryBuilder
             '#ENTITY_ID#' => $entity['ENTITY_ID']
         ];
         $additionalAliases = self::getOption('ALIASES');
-        if (!empty($additionalAliases))
+        if (!empty($additionalAliases)) {
             $joinTemplates = $joinTemplates + $additionalAliases;
+        }
         unset($additionalAliases);
         $row['JOIN'] = str_replace(
             array_keys($joinTemplates),
@@ -1333,7 +1446,7 @@ final class CProductQueryBuilder
      * @param array $field
      * @return string
      */
-    private static function getFieldIndex(array $field)
+    private static function getFieldIndex(array $field): string
     {
         return $field['ENTITY'] . ':' . $field['ENTITY_ID'] . ':' . $field['FIELD'];
     }
@@ -1342,7 +1455,7 @@ final class CProductQueryBuilder
      * @param array $field
      * @return bool
      */
-    private static function isPhantomField(array $field)
+    private static function isPhantomField(array $field): bool
     {
         return isset($field['PHANTOM']);
     }
@@ -1352,10 +1465,11 @@ final class CProductQueryBuilder
      * @param string $field
      * @return null|array
      */
-    private static function getFieldDescription($entity, $field)
+    private static function getFieldDescription(string $entity, string $field): ?array
     {
-        if (empty(self::$entityFields[$entity][$field]))
+        if (empty(self::$entityFields[$entity][$field])) {
             return null;
+        }
         return self::$entityFields[$entity][$field];
     }
 
@@ -1364,7 +1478,7 @@ final class CProductQueryBuilder
      * @param array $options
      * @return null|array
      */
-    private static function getField(array $queryItem, array $options)
+    private static function getField(array $queryItem, array $options): ?array
     {
         $whiteList = [
             'ALIAS' => true,
@@ -1375,12 +1489,14 @@ final class CProductQueryBuilder
         ];
 
         $field = self::getFieldDescription($queryItem['ENTITY'], $queryItem['FIELD']);
-        if (empty($field))
+        if (empty($field)) {
             return null;
+        }
 
         $entity = self::getEntityDescription($queryItem);
-        if (empty($entity))
+        if (empty($entity)) {
             return null;
+        }
 
         $fantomField = self::isPhantomField($field);
 
@@ -1409,7 +1525,9 @@ final class CProductQueryBuilder
             self::checkAllowedAction($field['ALLOWED'], self::FIELD_ALLOWED_FILTER)
             && isset($options['filter'])
         ) {
-            if (isset($field['FILTER_PREPARE_VALUE_EXPRESSION']) && is_callable($field['FILTER_PREPARE_VALUE_EXPRESSION'])) {
+            if (isset($field['FILTER_PREPARE_VALUE_EXPRESSION']) && is_callable(
+                    $field['FILTER_PREPARE_VALUE_EXPRESSION']
+                )) {
                 call_user_func_array(
                     $field['FILTER_PREPARE_VALUE_EXPRESSION'],
                     [&$queryItem, &$entity, &$field]
@@ -1418,10 +1536,11 @@ final class CProductQueryBuilder
 
             if (!$fantomField) {
                 $valueType = 'string';
-                if ($field['TYPE'] == 'int' || $field['TYPE'] == 'float')
+                if ($field['TYPE'] == 'int' || $field['TYPE'] == 'float') {
                     $valueType = 'number';
-                elseif ($field['TYPE'] == 'char')
+                } elseif ($field['TYPE'] == 'char') {
                     $valueType = 'string_equal';
+                }
 
                 $field['FILTER'] = \CIBlock::FilterCreate(
                     '#FULL_NAME#',
@@ -1472,21 +1591,23 @@ final class CProductQueryBuilder
     }
 
     /**
-     * @param $field
+     * @param array|null $field
      * @return bool
      */
-    private static function checkPreparedField($field)
+    private static function checkPreparedField($field): bool
     {
-        if (empty($field))
+        if (empty($field)) {
             return false;
+        }
         if ($field['ENTITY_ID'] == 0) {
             if (
                 $field['ENTITY'] != self::ENTITY_PRODUCT
                 && $field['ENTITY'] != self::ENTITY_FLAT_PRICE
                 && $field['ENTITY'] != self::ENTITY_FLAT_WAREHNOUSE
                 && $field['ENTITY'] != self::ENTITY_OLD_PRODUCT
-            )
+            ) {
                 return false;
+            }
         }
         return true;
     }
@@ -1495,7 +1616,7 @@ final class CProductQueryBuilder
      * @param array $field
      * @return array
      */
-    private static function getFieldSignature(array $field)
+    private static function getFieldSignature(array $field): array
     {
         return [
             'ENTITY' => $field['ENTITY'],
@@ -1505,7 +1626,7 @@ final class CProductQueryBuilder
     }
 
     /**
-     * @param array $parameters
+     * @param array &$parameters
      * @return void
      */
     private static function prepareSelectedCompatibleFields(array &$parameters)
@@ -1513,8 +1634,9 @@ final class CProductQueryBuilder
         if ($parameters['compatible_mode'] && !empty($parameters['compatible_entities'])) {
             foreach ($parameters['compatible_entities'] as $entity) {
                 $list = self::getFieldsAllowedToSelect($entity['ENTITY']);
-                if ($list === null)
+                if ($list === null) {
                     continue;
+                }
                 foreach ($list as $fieldId) {
                     $field = [
                         'ENTITY' => $entity['ENTITY'],
@@ -1537,8 +1659,9 @@ final class CProductQueryBuilder
      */
     private static function fillCompatibleEntities(array &$result, array $field)
     {
-        if (!$field['COMPATIBLE'])
+        if (!$field['COMPATIBLE']) {
             return;
+        }
         $result['compatible_mode'] = true;
         $result['compatible_entities'][self::getEntityIndex($field)] = [
             'ENTITY' => $field['ENTITY'],
@@ -1556,15 +1679,14 @@ final class CProductQueryBuilder
         ];
         $result['compatible_entities'][self::getEntityIndex($entity)] = $entity;
         unset($entity);
-
     }
 
     /**
      * @param array $parameters
      * @param array $options
-     * @return array
+     * @return array|null
      */
-    private static function prepareQuery(array $parameters, array $options)
+    private static function prepareQuery(array $parameters, array $options): ?array
     {
         self::initEntityDescription();
         self::initEntityFields();
@@ -1582,10 +1704,12 @@ final class CProductQueryBuilder
         if (!empty($parameters['select']) && is_array($parameters['select'])) {
             foreach ($parameters['select'] as $field) {
                 $prepareField = self::parseField($field);
-                if (!self::checkPreparedField($prepareField))
+                if (!self::checkPreparedField($prepareField)) {
                     continue;
-                if (!self::checkAllowedAction($prepareField['ALLOWED'], self::FIELD_ALLOWED_SELECT))
+                }
+                if (!self::checkAllowedAction($prepareField['ALLOWED'], self::FIELD_ALLOWED_SELECT)) {
                     continue;
+                }
 
                 self::fillCompatibleEntities($result, $prepareField);
                 $result['select'][self::getFieldIndex($prepareField)] = self::getFieldSignature($prepareField);
@@ -1597,10 +1721,12 @@ final class CProductQueryBuilder
             foreach (array_keys($parameters['filter']) as $key) {
                 $filter = \CIBlock::MkOperationFilter($key);
                 $prepareField = self::parseField($filter['FIELD']);
-                if (!self::checkPreparedField($prepareField))
+                if (!self::checkPreparedField($prepareField)) {
                     continue;
-                if (!self::checkAllowedAction($prepareField['ALLOWED'], self::FIELD_ALLOWED_FILTER))
+                }
+                if (!self::checkAllowedAction($prepareField['ALLOWED'], self::FIELD_ALLOWED_FILTER)) {
                     continue;
+                }
 
                 self::fillCompatibleEntities($result, $prepareField);
                 $prepareField = self::getFieldSignature($prepareField);
@@ -1613,17 +1739,20 @@ final class CProductQueryBuilder
 
         if (!empty($parameters['order']) && is_array($parameters['order'])) {
             foreach ($parameters['order'] as $index => $value) {
-                if (empty($value) || !is_array($value))
+                if (empty($value) || !is_array($value)) {
                     continue;
+                }
 
                 $order = reset($value);
                 $field = key($value);
 
                 $prepareField = self::parseField($field);
-                if (!self::checkPreparedField($prepareField))
+                if (!self::checkPreparedField($prepareField)) {
                     continue;
-                if (!self::checkAllowedAction($prepareField['ALLOWED'], self::FIELD_ALLOWED_ORDER))
+                }
+                if (!self::checkAllowedAction($prepareField['ALLOWED'], self::FIELD_ALLOWED_ORDER)) {
                     continue;
+                }
 
                 self::orderTransformField($prepareField);
 
@@ -1663,15 +1792,19 @@ final class CProductQueryBuilder
     {
         global $USER;
 
-        if (!isset($options['ALIASES']))
+        if (!isset($options['ALIASES'])) {
             $options['ALIASES'] = [];
-        if (!isset($options['ALIASES']['#ELEMENT#']))
+        }
+        if (!isset($options['ALIASES']['#ELEMENT#'])) {
             $options['ALIASES']['#ELEMENT#'] = 'BE';
+        }
 
-        if (!isset($options['USER']))
+        if (!isset($options['USER'])) {
             $options['USER'] = [];
-        if (!isset($options['USER']['ID']))
+        }
+        if (!isset($options['USER']['ID'])) {
             $options['USER']['ID'] = (\CCatalog::IsUserExists() ? $USER->GetID() : 0);
+        }
         $options['USER']['ID'] = (int)$options['USER']['ID'];
 
         self::$options = $options;
@@ -1683,8 +1816,9 @@ final class CProductQueryBuilder
      */
     private static function getOption(string $index)
     {
-        if (!isset(self::$options[$index]))
+        if (!isset(self::$options[$index])) {
             return null;
+        }
         return self::$options[$index];
     }
 
@@ -1692,7 +1826,7 @@ final class CProductQueryBuilder
      * @param array $parameters
      * @return array|null
      */
-    private static function build(array $parameters)
+    private static function build(array $parameters): ?array
     {
         $founded = false;
         $result = [
@@ -1705,22 +1839,26 @@ final class CProductQueryBuilder
 
         if (!empty($parameters['select'])) {
             self::buildSelect($result, $parameters['select']);
-            if (!empty($result['select']))
+            if (!empty($result['select'])) {
                 $founded = true;
+            }
         }
         if (!empty($parameters['filter'])) {
             self::buildFilter($result, $parameters['filter']);
-            if (!empty($result['filter']))
+            if (!empty($result['filter']) || !empty($result['join'])) {
                 $founded = true;
+            }
         }
         if (!empty($parameters['order'])) {
             self::buildOrder($result, $parameters['order']);
-            if (!empty($result['order']))
+            if (!empty($result['order'])) {
                 $founded = true;
+            }
         }
 
-        if (!$founded)
+        if (!$founded) {
             return null;
+        }
 
         self::buildJoin($result);
 
@@ -1739,11 +1877,13 @@ final class CProductQueryBuilder
     {
         foreach ($list as $item) {
             $field = self::getField($item, ['select' => true]);
-            if (empty($field))
+            if (empty($field)) {
                 continue;
+            }
 
-            if (isset($field['SELECT']))
+            if (isset($field['SELECT'])) {
                 $result['select'][] = $field['SELECT'] . ' as ' . $field['ALIAS'];
+            }
 
             $item['ENTITY_DESCRIPTION'] = $field['ENTITY_DESCRIPTION'];
             self::addJoin($result, $item);
@@ -1761,11 +1901,13 @@ final class CProductQueryBuilder
         self::filterModify($list);
         foreach ($list as $item) {
             $field = self::getField($item, ['filter' => true]);
-            if (empty($field))
+            if (empty($field)) {
                 continue;
+            }
 
-            if (isset($field['FILTER']))
+            if (isset($field['FILTER'])) {
                 $result['filter'][] = $field['FILTER'];
+            }
 
             $item['ENTITY_DESCRIPTION'] = $field['ENTITY_DESCRIPTION'];
             self::addJoin($result, $item);
@@ -1782,11 +1924,13 @@ final class CProductQueryBuilder
     {
         foreach ($list as $item) {
             $field = self::getField($item, ['order' => true]);
-            if (empty($field))
+            if (empty($field)) {
                 continue;
+            }
 
-            if (isset($field['ORDER']))
+            if (isset($field['ORDER'])) {
                 $result['order'][$item['INDEX']] = $field['ORDER'];
+            }
 
             $item['ENTITY_DESCRIPTION'] = $field['ENTITY_DESCRIPTION'];
             self::addJoin($result, $item);
@@ -1819,12 +1963,14 @@ final class CProductQueryBuilder
         foreach (array_keys($list) as $index) {
             $item = $list[$index];
             $field = self::getFieldDescription($item['ENTITY'], $item['FIELD']);
-            if (empty($field))
+            if (empty($field)) {
                 continue;
+            }
 
             $entity = self::getEntityDescription($item);
-            if (empty($entity))
+            if (empty($entity)) {
                 continue;
+            }
 
             if (isset($field['FILTER_MODIFY_EXPRESSION']) && is_callable($field['FILTER_MODIFY_EXPRESSION'])) {
                 call_user_func_array(
@@ -1856,11 +2002,13 @@ final class CProductQueryBuilder
                         ];
                     }
                     $ownerIndex = self::getEntityIndex($item);
-                    if (isset($result['join'][$ownerIndex]))
+                    if (isset($result['join'][$ownerIndex])) {
                         continue;
+                    }
                     $owner = self::getEntityDescription($item);
-                    if (empty($owner))
+                    if (empty($owner)) {
                         continue;
+                    }
                     $result['join'][$ownerIndex] = $owner['JOIN'];
                 }
                 unset($owner, $ownerIndex, $parent, $item);
@@ -1868,8 +2016,9 @@ final class CProductQueryBuilder
             $result['join'][$index] = $description['JOIN'];
         }
         if (!empty($description['JOIN_MODIFY'])) {
-            if (!isset($result['join_modify'][$index]))
+            if (!isset($result['join_modify'][$index])) {
                 $result['join_modify'][$index] = [];
+            }
             $result['join_modify'][$index][] = $description['JOIN_MODIFY'];
         }
         unset($description, $index);
@@ -1882,14 +2031,15 @@ final class CProductQueryBuilder
     private static function orderTransformField(array &$item)
     {
         $field = self::getFieldDescription($item['ENTITY'], $item['FIELD']);
-        if (empty($field))
+        if (empty($field)) {
             return;
-        if (isset($field['ORDER_TRANSFORM']))
+        }
+        if (isset($field['ORDER_TRANSFORM'])) {
             $item['FIELD'] = $field['ORDER_TRANSFORM'];
+        }
         unset($field);
     }
 
-    /** @noinspection PhpUnusedPrivateMethodInspection */
     /**
      * Returns sql code for select QUANTITY_TRACE with converted default value.
      *
@@ -1897,13 +2047,15 @@ final class CProductQueryBuilder
      * @param array &$entity
      * @param array &$field
      * @return void
+     *
+     * @noinspection PhpUnusedPrivateMethodInspection
+     * @noinspection PhpUnusedParameterInspection
      */
     private static function selectQuantityTrace(array &$parameters, array &$entity, array &$field)
     {
         $field['SELECT'] = self::getReplaceSqlFunction(Main\Config\Option::get('catalog', 'default_quantity_trace'));
     }
 
-    /** @noinspection PhpUnusedPrivateMethodInspection */
     /**
      * Returns sql code for select CAN_BUY_ZERO with converted default value.
      *
@@ -1911,13 +2063,15 @@ final class CProductQueryBuilder
      * @param array &$entity
      * @param array &$field
      * @return void
+     *
+     * @noinspection PhpUnusedPrivateMethodInspection
+     * @noinspection PhpUnusedParameterInspection
      */
     private static function selectCanBuyZero(array &$parameters, array &$entity, array &$field)
     {
         $field['SELECT'] = self::getReplaceSqlFunction(Main\Config\Option::get('catalog', 'default_can_buy_zero'));
     }
 
-    /** @noinspection PhpUnusedPrivateMethodInspection */
     /**
      * Returns sql code for select NEGATIVE_AMOUNT_TRACE with converted default value.
      *
@@ -1925,13 +2079,15 @@ final class CProductQueryBuilder
      * @param array &$entity
      * @param array &$field
      * @return void
+     *
+     * @noinspection PhpUnusedPrivateMethodInspection
+     * @noinspection PhpUnusedParameterInspection
      */
     private static function selectNegativeAmountTrace(array &$parameters, array &$entity, array &$field)
     {
         $field['SELECT'] = self::getReplaceSqlFunction(Main\Config\Option::get('catalog', 'allow_negative_amount'));
     }
 
-    /** @noinspection PhpUnusedPrivateMethodInspection */
     /**
      * Returns sql code for select SUBSCRIBE with converted default value.
      *
@@ -1939,6 +2095,9 @@ final class CProductQueryBuilder
      * @param array &$entity
      * @param array &$field
      * @return void
+     *
+     * @noinspection PhpUnusedPrivateMethodInspection
+     * @noinspection PhpUnusedParameterInspection
      */
     private static function selectSubscribe(array &$parameters, array &$entity, array &$field)
     {
@@ -1956,12 +2115,14 @@ final class CProductQueryBuilder
         return 'IF (#FULL_NAME# = \'' . ProductTable::STATUS_DEFAULT . '\', \'' . $defaultValue . '\', #FULL_NAME#)';
     }
 
-    /** @noinspection PhpUnusedPrivateMethodInspection */
     /**
      * @param array &$parameters
      * @param array &$entity
      * @param array &$field
      * @return void
+     *
+     * @noinspection PhpUnusedPrivateMethodInspection
+     * @noinspection PhpUnusedParameterInspection
      */
     private static function selectPriceTypeName(array &$parameters, array &$entity, array &$field)
     {
@@ -1983,12 +2144,14 @@ final class CProductQueryBuilder
         unset($result);
     }
 
-    /** @noinspection PhpUnusedPrivateMethodInspection */
     /**
      * @param array &$parameters
      * @param array &$entity
      * @param array &$field
      * @return void
+     *
+     * @noinspection PhpUnusedPrivateMethodInspection
+     * @noinspection PhpUnusedParameterInspection
      */
     private static function selectPriceTypeAllowedView(array &$parameters, array &$entity, array &$field)
     {
@@ -1996,12 +2159,14 @@ final class CProductQueryBuilder
         $field['SELECT'] = self::getPriceTypeAccess($parameters);
     }
 
-    /** @noinspection PhpUnusedPrivateMethodInspection */
     /**
      * @param array &$parameters
      * @param array &$entity
      * @param array &$field
      * @return void
+     *
+     * @noinspection PhpUnusedPrivateMethodInspection
+     * @noinspection PhpUnusedParameterInspection
      */
     private static function selectPriceTypeAllowedBuy(array &$parameters, array &$entity, array &$field)
     {
@@ -2019,20 +2184,24 @@ final class CProductQueryBuilder
 
         $user = self::getOption('USER');
         if (!empty($user)) {
-            if (empty($user['GROUPS']) || !is_array($user['GROUPS']))
+            if (empty($user['GROUPS']) || !is_array($user['GROUPS'])) {
                 $user['GROUPS'] = self::getUserGroups($user['ID']);
-            $iterator = GroupAccessTable::getList([
-                'select' => ['ID'],
-                'filter' => [
-                    '=CATALOG_GROUP_ID' => $parameters['ENTITY_ID'],
-                    '@GROUP_ID' => $user['GROUPS'],
-                    '=ACCESS' => $parameters['ACCESS']
-                ],
-                'limit' => 1
-            ]);
+            }
+            $iterator = GroupAccessTable::getList(
+                [
+                    'select' => ['ID'],
+                    'filter' => [
+                        '=CATALOG_GROUP_ID' => $parameters['ENTITY_ID'],
+                        '@GROUP_ID' => $user['GROUPS'],
+                        '=ACCESS' => $parameters['ACCESS']
+                    ],
+                    'limit' => 1
+                ]
+            );
             $row = $iterator->fetch();
-            if (!empty($row))
+            if (!empty($row)) {
                 $result = 'Y';
+            }
             unset($row, $iterator);
         }
         unset($user);
@@ -2040,12 +2209,14 @@ final class CProductQueryBuilder
         return '\'' . $result . '\'';
     }
 
-    /** @noinspection PhpUnusedPrivateMethodInspection */
     /**
      * @param array &$parameters
      * @param array &$entity
      * @param array &$field
      * @return void
+     *
+     * @noinspection PhpUnusedPrivateMethodInspection
+     * @noinspection PhpUnusedParameterInspection
      */
     private static function prepareFilterQuantityTrace(array &$parameters, array &$entity, array &$field)
     {
@@ -2055,12 +2226,14 @@ final class CProductQueryBuilder
         );
     }
 
-    /** @noinspection PhpUnusedPrivateMethodInspection */
     /**
      * @param array &$parameters
      * @param array &$entity
      * @param array &$field
      * @return void
+     *
+     * @noinspection PhpUnusedPrivateMethodInspection
+     * @noinspection PhpUnusedParameterInspection
      */
     private static function prepareFilterCanBuyZero(array &$parameters, array &$entity, array &$field)
     {
@@ -2070,12 +2243,14 @@ final class CProductQueryBuilder
         );
     }
 
-    /** @noinspection PhpUnusedPrivateMethodInspection */
     /**
      * @param array &$parameters
      * @param array &$entity
      * @param array &$field
      * @return void
+     *
+     * @noinspection PhpUnusedPrivateMethodInspection
+     * @noinspection PhpUnusedParameterInspection
      */
     private static function prepareFilterSubscribe(array &$parameters, array &$entity, array &$field)
     {
@@ -2107,80 +2282,98 @@ final class CProductQueryBuilder
         return $values;
     }
 
-    /** @noinspection PhpUnusedPrivateMethodInspection */
     /**
      * @param array &$parameters
      * @param array &$entity
      * @param array &$field
      * @return void
+     *
+     * @noinspection PhpUnusedPrivateMethodInspection
+     * @noinspection PhpUnusedParameterInspection
      */
     private static function priceParametersFilter(array &$parameters, array &$entity, array &$field)
     {
-        if (empty($parameters['VALUES']))
+        if (empty($parameters['VALUES'])) {
             return;
-        if (!is_string($parameters['VALUES']) && !is_int($parameters['VALUES']))
+        }
+        if (!is_string($parameters['VALUES']) && !is_int($parameters['VALUES'])) {
             return;
+        }
         $value = (int)$parameters['VALUES'];
-        if ($value <= 0)
+        if ($value <= 0) {
             return;
+        }
 
         $field['JOIN_MODIFY'] = ' and ' . ($parameters['OPERATION'] == 'N' ? 'not' : '') .
             ' ((#TABLE#.QUANTITY_FROM <= ' . $value . ' or #TABLE#.QUANTITY_FROM IS NULL)' .
             ' and (#TABLE#.QUANTITY_TO >= ' . $value . ' or #TABLE#.QUANTITY_TO IS NULL))';
     }
 
-    /** @noinspection PhpUnusedPrivateMethodInspection */
     /**
      * @param array &$filter
      * @param int $filterKey
      * @param array $entity
      * @param array $field
      * @return void
+     *
+     * @noinspection PhpUnusedPrivateMethodInspection
+     * @noinspection PhpUnusedParameterInspection
      */
     private static function filterModifierCurrencyScale(array &$filter, $filterKey, array $entity, array $field)
     {
         $activeItem = $filter[$filterKey];
 
-        if ($activeItem['FIELD'] != 'CURRENCY_FOR_SCALE')
+        if ($activeItem['FIELD'] != 'CURRENCY_FOR_SCALE') {
             return;
-        if ($activeItem['OPERATION'] != 'E')
+        }
+        if ($activeItem['OPERATION'] != 'E' && $activeItem['OPERATION'] != 'I') {
             return;
+        }
 
         $value = $activeItem['VALUES'];
-        if (!is_string($value))
+        if (!is_string($value)) {
             return;
+        }
 
         $currencyId = Currency\CurrencyManager::checkCurrencyID($value);
-        if ($currencyId === false)
+        if ($currencyId === false) {
             return;
+        }
 
         $currency = \CCurrency::GetByID($currencyId);
-        if (empty($currency))
+        if (empty($currency)) {
             return;
+        }
         $currency['CURRENT_BASE_RATE'] = (float)$currency['CURRENT_BASE_RATE'];
-        if ($currency['CURRENT_BASE_RATE'] <= 0)
+        if ($currency['CURRENT_BASE_RATE'] <= 0) {
             return;
+        }
 
         foreach (array_keys($filter) as $index) {
-            if ($index == $filterKey)
+            if ($index == $filterKey) {
                 continue;
+            }
             $filterItem = $filter[$index];
             if (
                 $filterItem['ENTITY'] != $activeItem['ENTITY']
                 || $filterItem['ENTITY_ID'] != $activeItem['ENTITY_ID']
-            )
+            ) {
                 continue;
-            if ($filterItem['FIELD'] != 'PRICE')
+            }
+            if ($filterItem['FIELD'] != 'PRICE') {
                 continue;
+            }
             if (is_array($filter[$index]['VALUES'])) {
                 $newPrices = [];
-                foreach ($filter[$index]['VALUES'] as $oldPrice)
+                foreach ($filter[$index]['VALUES'] as $oldPrice) {
                     $newPrices[] = (float)$oldPrice * $currency['CURRENT_BASE_RATE'];
+                }
                 $filter[$index]['VALUES'] = $newPrices;
                 unset($oldPrice, $newPrices);
             } else {
                 $filter[$index]['VALUES'] = (float)$filter[$index]['VALUES'] * $currency['CURRENT_BASE_RATE'];
             }
+            $filter[$index]['FIELD'] = 'SCALED_PRICE';
         }
         unset($index);
     }
@@ -2189,7 +2382,7 @@ final class CProductQueryBuilder
      * @param int $userId
      * @return array
      */
-    private static function getUserGroups(int $userId)
+    private static function getUserGroups(int $userId): array
     {
         return Main\UserTable::getUserGroupIds($userId);
     }

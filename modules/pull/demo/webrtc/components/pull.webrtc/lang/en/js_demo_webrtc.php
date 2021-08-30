@@ -1,4 +1,5 @@
 <?
+
 $MESS["DW_PUT_USER_ID"] = "Enter USER_ID";
 $MESS["DW_VIDEO_CALL"] = "Video call";
 $MESS["DW_VIDEO_WAIT"] = "Waiting for answer";

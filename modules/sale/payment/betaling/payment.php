@@ -1,24 +1,31 @@
-<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die(); ?><?
+<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+} ?><?
 $butiksnr = CSalePaySystemAction::GetParamValue("SHOP_CODE");
 $ordrenr = IntVal($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["ID"]);
 $belob = $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["SHOULD_PAY"];
 $testthis = ((CSalePaySystemAction::GetParamValue("TEST_TRANSACTION")) ? "&test=TRUE" : "");
 
 $langthis = "en";
-if (LANGUAGE_ID == "dk" || LANGUAGE_ID == "de")
+if (LANGUAGE_ID == "dk" || LANGUAGE_ID == "de") {
     $langthis = LANGUAGE_ID;
+}
 
 $valuta = 840;
-if ($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"] == "DKK")
+if ($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"] == "DKK") {
     $valuta = 208;
-if ($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"] == "EUR")
+}
+if ($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"] == "EUR") {
     $valuta = 978;
+}
 
 $SERVER_NAME_tmp = "";
-if (defined("SITE_SERVER_NAME"))
+if (defined("SITE_SERVER_NAME")) {
     $SERVER_NAME_tmp = SITE_SERVER_NAME;
-if (strlen($SERVER_NAME_tmp) <= 0)
+}
+if (strlen($SERVER_NAME_tmp) <= 0) {
     $SERVER_NAME_tmp = COption::GetOptionString("main", "server_name", "");
+}
 
 $afvist = "http://" . $SERVER_NAME_tmp;
 $godkendt = "http://" . $SERVER_NAME_tmp;

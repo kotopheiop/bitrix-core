@@ -23,8 +23,12 @@ $absent = array();
 if (is_array($indexes) && !empty($indexes)) {
     foreach ($indexes as $name => $params) {
         if ((string)$params['TABLE'] != '' && !$params['DROP_ONLY']) {
-            if (!\Bitrix\Sale\Location\DB\Helper::checkIndexNameExists($name, $params['TABLE']))
-                $absent[] = 'create index ' . $name . ' on ' . $params['TABLE'] . ' (' . implode(', ', $params['COLUMNS']) . ')' . \Bitrix\Sale\Location\DB\Helper::getQuerySeparatorSql();
+            if (!\Bitrix\Sale\Location\DB\Helper::checkIndexNameExists($name, $params['TABLE'])) {
+                $absent[] = 'create index ' . $name . ' on ' . $params['TABLE'] . ' (' . implode(
+                        ', ',
+                        $params['COLUMNS']
+                    ) . ')' . \Bitrix\Sale\Location\DB\Helper::getQuerySeparatorSql();
+            }
         }
     }
 }
@@ -33,10 +37,13 @@ if (!empty($absent) && !$adminSidePanelHelper->isPublicSidePanel()) {
     ?>
 
     <span style="color: #ff0000">
-		<?= Loc::getMessage('SALE_LOCATION_IMPORT_NO_INDEXES_WARNING', array(
-            '#ANCHOR_SQL_CONSOLE#' => '<a href="/bitrix/admin/sql.php" target="_blank">',
-            '#ANCHOR_END#' => '</a>'
-        )) ?>
+		<?= Loc::getMessage(
+            'SALE_LOCATION_IMPORT_NO_INDEXES_WARNING',
+            array(
+                '#ANCHOR_SQL_CONSOLE#' => '<a href="/bitrix/admin/sql.php" target="_blank">',
+                '#ANCHOR_END#' => '</a>'
+            )
+        ) ?>
 	</span>
     <br/>
     <br/>

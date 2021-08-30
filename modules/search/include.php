@@ -1,12 +1,17 @@
 <?
-if (!defined("CACHED_b_search_tags")) define("CACHED_b_search_tags", 3600);
-if (!defined("CACHED_b_search_tags_len")) define("CACHED_b_search_tags_len", 2);
+
+if (!defined("CACHED_b_search_tags")) {
+    define("CACHED_b_search_tags", 3600);
+}
+if (!defined("CACHED_b_search_tags_len")) {
+    define("CACHED_b_search_tags_len", 2);
+}
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/search/tools/stemming.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/search/tools/tags.php");
 
 global $DB;
-$db_type = strtolower($DB->type);
+$db_type = mb_strtolower($DB->type);
 CModule::AddAutoloadClasses(
     "search",
     array(
@@ -32,9 +37,12 @@ CModule::AddAutoloadClasses(
     )
 );
 
-CJSCore::RegisterExt('search_tags', array(
-    'js' => '/bitrix/js/search/tags.js',
-));
+CJSCore::RegisterExt(
+    'search_tags',
+    array(
+        'js' => '/bitrix/js/search/tags.js',
+    )
+);
 /**
  * Returns filtered sName concatenated with random number.
  *
@@ -47,8 +55,9 @@ function GenerateUniqId($sName)
     static $arPostfix = array();
 
     $sPostfix = rand();
-    while (isset($arPostfix[$sPostfix]))
+    while (isset($arPostfix[$sPostfix])) {
         $sPostfix = rand();
+    }
 
     $arPostfix[$sPostfix] = 1;
 
@@ -56,14 +65,16 @@ function GenerateUniqId($sName)
 }
 
 $DB_test = CDatabase::GetModuleConnection('search', true);
-if (!is_object($DB_test))
+if (!is_object($DB_test)) {
     return false;
+}
 
-if (COption::GetOptionString("search", "version", "") === "v2.0")
+if (COption::GetOptionString("search", "version", "") === "v2.0") {
     define("BX_SEARCH_VERSION", 2);
-elseif ($DB->TableExists("b_search_stem")) {
+} elseif ($DB->TableExists("b_search_stem")) {
     define("BX_SEARCH_VERSION", 2);
     COption::SetOptionString("search", "version", "v2.0");
-} else
+} else {
     define("BX_SEARCH_VERSION", 1);
+}
 ?>

@@ -9,7 +9,8 @@ class Revision
      *
      * @filesource synchronize im/install/js/im/im.js:17
      */
-    const WEB = 124;
+    const WEB = 130;
+
     /**
      * Mobile Api revision
      *
@@ -20,9 +21,14 @@ class Revision
     const MOBILE = 19;
 
     /**
+     * Desktop Api revision
+     */
+    const DESKTOP = 3;
+
+    /**
      * Rest Api revision
      */
-    const REST = 24;
+    const REST = 30;
 
     public static function getWeb()
     {
@@ -32,6 +38,11 @@ class Revision
     public static function getMobile()
     {
         return static::MOBILE;
+    }
+
+    public static function getDesktop()
+    {
+        return static::DESKTOP;
     }
 
     public static function getRest()
@@ -45,6 +56,7 @@ class Revision
             'rest' => static::getRest(),
             'web' => static::getWeb(),
             'mobile' => static::getMobile(),
+            'desktop' => static::getDesktop(),
         ];
     }
 }

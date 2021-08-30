@@ -29,7 +29,8 @@ class StatusTable extends Main\Entity\DataManager
     {
         return array(
 
-            new Main\Entity\StringField('ID', array(
+            new Main\Entity\StringField(
+                'ID', array(
                 'primary' => true,
                 'validation' => function () {
                     return array(
@@ -38,33 +39,44 @@ class StatusTable extends Main\Entity\DataManager
                     );
                 },
                 'title' => Loc::getMessage('B_SALE_STATUS_ID'),
-            )),
+            )
+            ),
 
-            new Main\Entity\BooleanField('TYPE', array(
+            new Main\Entity\BooleanField(
+                'TYPE', array(
                 'default_value' => 'O',
                 'values' => array('O', 'D'),
                 'title' => Loc::getMessage('B_SALE_STATUS_TYPE'),
-            )),
+            )
+            ),
 
-            new Main\Entity\IntegerField('SORT', array(
+            new Main\Entity\IntegerField(
+                'SORT', array(
                 'default_value' => 100,
                 'format' => '/^[0-9]{1,11}$/',
                 'title' => Loc::getMessage('B_SALE_STATUS_SORT'),
-            )),
+            )
+            ),
 
-            new Main\Entity\BooleanField('NOTIFY', array(
+            new Main\Entity\BooleanField(
+                'NOTIFY', array(
                 'default_value' => 'Y',
                 'values' => array('N', 'Y'),
                 'title' => Loc::getMessage('B_SALE_STATUS_NOTIFY'),
-            )),
+            )
+            ),
 
-            new Main\Entity\StringField('COLOR', array(
+            new Main\Entity\StringField(
+                'COLOR', array(
                 'title' => Loc::getMessage('B_SALE_STATUS_COLOR'),
-            )),
+            )
+            ),
 
-            new Main\Entity\StringField('XML_ID', array(
+            new Main\Entity\StringField(
+                'XML_ID', array(
                 'title' => Loc::getMessage('B_SALE_STATUS_XML_ID'),
-            )),
+            )
+            ),
 
             new Main\ORM\Fields\Relations\Reference(
                 'STATUS_LANG',

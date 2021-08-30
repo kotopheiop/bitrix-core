@@ -47,14 +47,16 @@ class AudienceGoogle extends Audience
 
     public function add(array $data)
     {
-        $response = $this->request->send(array(
-            'methodName' => 'audience.add',
-            'parameters' => array(
-                'ACCOUNT_ID' => $this->accountId,
-                'NAME' => $data['NAME'],
-                'DESCRIPTION' => ''
+        $response = $this->request->send(
+            array(
+                'methodName' => 'audience.add',
+                'parameters' => array(
+                    'ACCOUNT_ID' => $this->accountId,
+                    'NAME' => $data['NAME'],
+                    'DESCRIPTION' => ''
+                )
             )
-        ));
+        );
 
         $responseData = $response->getData();
         if (isset($responseData['id'])) {
@@ -84,40 +86,46 @@ class AudienceGoogle extends Audience
 
     public function importContacts($audienceId, array $contacts = array(), array $options)
     {
-        $response = $this->request->send(array(
-            'methodName' => 'audience.importcontacts',
-            'parameters' => array(
-                'ACCOUNT_ID' => $this->accountId,
-                'AUDIENCE_ID' => $audienceId,
-                'LIST' => $this->prepareContacts($contacts, $options['type'])
+        $response = $this->request->send(
+            array(
+                'methodName' => 'audience.importcontacts',
+                'parameters' => array(
+                    'ACCOUNT_ID' => $this->accountId,
+                    'AUDIENCE_ID' => $audienceId,
+                    'LIST' => $this->prepareContacts($contacts, $options['type'])
+                )
             )
-        ));
+        );
 
         return $response;
     }
 
     public function removeContacts($audienceId, array $contacts = array(), array $options)
     {
-        $response = $this->request->send(array(
-            'methodName' => 'audience.removecontacts',
-            'parameters' => array(
-                'ACCOUNT_ID' => $this->accountId,
-                'AUDIENCE_ID' => $audienceId,
-                'LIST' => $this->prepareContacts($contacts, $options['type'])
+        $response = $this->request->send(
+            array(
+                'methodName' => 'audience.removecontacts',
+                'parameters' => array(
+                    'ACCOUNT_ID' => $this->accountId,
+                    'AUDIENCE_ID' => $audienceId,
+                    'LIST' => $this->prepareContacts($contacts, $options['type'])
+                )
             )
-        ));
+        );
 
         return $response;
     }
 
     public function getList()
     {
-        $response = $this->request->send(array(
-            'methodName' => 'audience.list',
-            'parameters' => array(
-                'ACCOUNT_ID' => $this->accountId,
+        $response = $this->request->send(
+            array(
+                'methodName' => 'audience.list',
+                'parameters' => array(
+                    'ACCOUNT_ID' => $this->accountId,
+                )
             )
-        ));
+        );
 
         return $response;
     }

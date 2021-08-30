@@ -51,7 +51,10 @@ class Factory
     {
         $methods = self::prepareMethods();
         if (isset($methods[$entityTypeName])) {
-            $result = call_user_func_array($methods[$entityTypeName], [$entityTypeName, $settingsParams, $additionalParams]);
+            $result = call_user_func_array(
+                $methods[$entityTypeName],
+                [$entityTypeName, $settingsParams, $additionalParams]
+            );
             if ($result instanceof Filter) {
                 return $result;
             }

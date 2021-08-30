@@ -70,11 +70,14 @@ class CSecuritySiteConfigurationTest
             $this->addUnformattedDetailError(
                 "SECURITY_SITE_CHECKER_DANGER_EXTENSIONS",
                 CSecurityCriticalLevel::HIGHT,
-                getMessage("SECURITY_SITE_CHECKER_DANGER_EXTENSIONS_ADDITIONAL", array(
-                    "#EXPECTED#" => self::$expectedScriptExtensions,
-                    "#ACTUAL#" => join(",", $actualExtensions),
-                    "#MISSING#" => join(",", $missingExtensions)
-                ))
+                getMessage(
+                    "SECURITY_SITE_CHECKER_DANGER_EXTENSIONS_ADDITIONAL",
+                    array(
+                        "#EXPECTED#" => self::$expectedScriptExtensions,
+                        "#ACTUAL#" => join(",", $actualExtensions),
+                        "#MISSING#" => join(",", $missingExtensions)
+                    )
+                )
             );
             return self::STATUS_FAILED;
         }
@@ -103,10 +106,11 @@ class CSecuritySiteConfigurationTest
             $isFailed = true;
         }
 
-        if ($isFailed)
+        if ($isFailed) {
             return self::STATUS_FAILED;
-        else
+        } else {
             return self::STATUS_PASSED;
+        }
     }
 
     /**
@@ -120,10 +124,11 @@ class CSecuritySiteConfigurationTest
         /** @global CDataBase $DB */
         global $DB;
 
-        if ($DB->debug)
+        if ($DB->debug) {
             return self::STATUS_FAILED;
-        else
+        } else {
             return self::STATUS_PASSED;
+        }
     }
 
     /**
@@ -138,10 +143,11 @@ class CSecuritySiteConfigurationTest
         if (
             COption::GetOptionInt("main", "error_reporting", $validErrorReporting) != $validErrorReporting
             && COption::GetOptionInt("main", "error_reporting", "") != 0
-        )
+        ) {
             return self::STATUS_FAILED;
-        else
+        } else {
             return self::STATUS_PASSED;
+        }
     }
 
     /**
@@ -157,10 +163,11 @@ class CSecuritySiteConfigurationTest
             is_array($exceptionConfig)
             && isset($exceptionConfig['debug'])
             && $exceptionConfig['debug']
-        )
+        ) {
             return self::STATUS_FAILED;
-        else
+        } else {
             return self::STATUS_PASSED;
+        }
     }
 
     /**
@@ -177,14 +184,20 @@ class CSecuritySiteConfigurationTest
                 $this->addUnformattedDetailError(
                     "SECURITY_SITE_CHECKER_MODULES_VERSION",
                     CSecurityCriticalLevel::HIGHT,
-                    getMessage("SECURITY_SITE_CHECKER_MODULES_VERSION_ARRITIONAL", array(
-                        "#MODULES#" => nl2br(htmlspecialcharsbx(join("\n", $updates)))
-                    ))
+                    getMessage(
+                        "SECURITY_SITE_CHECKER_MODULES_VERSION_ARRITIONAL",
+                        array(
+                            "#MODULES#" => nl2br(htmlspecialcharsbx(join("\n", $updates)))
+                        )
+                    )
                 );
                 return self::STATUS_FAILED;
             }
         } catch (SystemException $e) {
-            $this->addUnformattedDetailError("SECURITY_SITE_CHECKER_MODULES_VERSION_ERROR", CSecurityCriticalLevel::HIGHT);
+            $this->addUnformattedDetailError(
+                "SECURITY_SITE_CHECKER_MODULES_VERSION_ERROR",
+                CSecurityCriticalLevel::HIGHT
+            );
             return self::STATUS_FAILED;
         }
 
@@ -201,17 +214,26 @@ class CSecuritySiteConfigurationTest
         if (trim($password) == "") {
             $this->addUnformattedDetailError("SECURITY_SITE_CHECKER_DB_EMPTY_PASS", CSecurityCriticalLevel::HIGHT);
         } else {
-            if ($password == strtolower($password)) {
-                $this->addUnformattedDetailError("SECURITY_SITE_CHECKER_DB_SAME_REGISTER_PASS", CSecurityCriticalLevel::HIGHT);
+            if ($password == mb_strtolower($password)) {
+                $this->addUnformattedDetailError(
+                    "SECURITY_SITE_CHECKER_DB_SAME_REGISTER_PASS",
+                    CSecurityCriticalLevel::HIGHT
+                );
             }
             if (strpbrk($password, $sign) === false) {
-                $this->addUnformattedDetailError("SECURITY_SITE_CHECKER_DB_NO_SIGN_PASS", CSecurityCriticalLevel::HIGHT);
+                $this->addUnformattedDetailError(
+                    "SECURITY_SITE_CHECKER_DB_NO_SIGN_PASS",
+                    CSecurityCriticalLevel::HIGHT
+                );
             }
             if (strpbrk($password, $dit) === false) {
                 $this->addUnformattedDetailError("SECURITY_SITE_CHECKER_DB_NO_DIT_PASS", CSecurityCriticalLevel::HIGHT);
             }
-            if (strlen($password) < 8) {
-                $this->addUnformattedDetailError("SECURITY_SITE_CHECKER_DB_MIN_LEN_PASS", CSecurityCriticalLevel::HIGHT);
+            if (mb_strlen($password) < 8) {
+                $this->addUnformattedDetailError(
+                    "SECURITY_SITE_CHECKER_DB_MIN_LEN_PASS",
+                    CSecurityCriticalLevel::HIGHT
+                );
             }
         }
     }
@@ -227,14 +249,16 @@ class CSecuritySiteConfigurationTest
 
         $errors = null;
         $installedModules = CUpdateClient::GetCurrentModules($errors);
-        if ($errors !== null)
+        if ($errors !== null) {
             throw new SystemException($errors);
+        }
 
         $stableVersionsOnly = COption::GetOptionString('main', 'stable_versions_only', 'Y');
         $errors = null;
         $updateList = CUpdateClient::GetUpdatesList($errors, LANG, $stableVersionsOnly);
-        if ($errors !== null)
+        if ($errors !== null) {
             throw new SystemException($errors);
+        }
 
         if (
             !isset($updateList['MODULES'])
@@ -257,8 +281,9 @@ class CSecuritySiteConfigurationTest
         }
 
         foreach ($updateList['MODULES'][0]['#']['MODULE'] as $module) {
-            if (array_key_exists($module['@']['ID'], $installedModules))
+            if (array_key_exists($module['@']['ID'], $installedModules)) {
                 $result[] = $module['@']['ID'];
+            }
         }
 
         return $result;
@@ -339,36 +364,40 @@ class CSecuritySiteConfigurationTest
                     case "MAX_STORE_NUM":
                     case "STORE_TIMEOUT":
                     case "CHECKWORD_TIMEOUT":
-                        if (intval($el2_value) <= intval($arGroupPolicy['high'][$key]))
+                        if (intval($el2_value) <= intval($arGroupPolicy['high'][$key])) {
                             $clevel = 'high';
-                        elseif (intval($el2_value) <= intval($arGroupPolicy['middle'][$key]))
+                        } elseif (intval($el2_value) <= intval($arGroupPolicy['middle'][$key])) {
                             $clevel = 'middle';
-                        else
+                        } else {
                             $clevel = 'low';
+                        }
                         break;
                     case "PASSWORD_LENGTH":
-                        if (intval($el2_value) >= intval($arGroupPolicy['high'][$key]))
+                        if (intval($el2_value) >= intval($arGroupPolicy['high'][$key])) {
                             $clevel = 'high';
-                        elseif (intval($el2_value) >= intval($arGroupPolicy['middle'][$key]))
+                        } elseif (intval($el2_value) >= intval($arGroupPolicy['middle'][$key])) {
                             $clevel = 'middle';
-                        else
+                        } else {
                             $clevel = 'low';
+                        }
                         break;
                     case "LOGIN_ATTEMPTS":
                         if (intval($el2_value) > 0) {
-                            if (intval($el2_value) <= intval($arGroupPolicy['high'][$key]))
+                            if (intval($el2_value) <= intval($arGroupPolicy['high'][$key])) {
                                 $clevel = 'high';
-                            elseif (intval($el2_value) <= intval($arGroupPolicy['middle'][$key]))
+                            } elseif (intval($el2_value) <= intval($arGroupPolicy['middle'][$key])) {
                                 $clevel = 'middle';
-                            else
+                            } else {
                                 $clevel = 'low';
+                            }
                         } else {
-                            if (intval($arGroupPolicy['high'][$key]) <= 0)
+                            if (intval($arGroupPolicy['high'][$key]) <= 0) {
                                 $clevel = 'high';
-                            elseif (intval($arGroupPolicy['middle'][$key]) <= 0)
+                            } elseif (intval($arGroupPolicy['middle'][$key]) <= 0) {
                                 $clevel = 'middle';
-                            else
+                            } else {
                                 $clevel = 'low';
+                            }
                         }
                         break;
                     case "PASSWORD_UPPERCASE":
@@ -376,19 +405,21 @@ class CSecuritySiteConfigurationTest
                     case "PASSWORD_DIGITS":
                     case "PASSWORD_PUNCTUATION":
                         if ($el2_checked) {
-                            if ($arGroupPolicy['high'][$key] == 'Y')
+                            if ($arGroupPolicy['high'][$key] == 'Y') {
                                 $clevel = 'high';
-                            elseif ($arGroupPolicy['middle'][$key] == 'Y')
+                            } elseif ($arGroupPolicy['middle'][$key] == 'Y') {
                                 $clevel = 'middle';
-                            else
+                            } else {
                                 $clevel = 'low';
+                            }
                         } else {
-                            if ($arGroupPolicy['high'][$key] == 'N')
+                            if ($arGroupPolicy['high'][$key] == 'N') {
                                 $clevel = 'high';
-                            elseif ($arGroupPolicy['middle'][$key] == 'N')
+                            } elseif ($arGroupPolicy['middle'][$key] == 'N') {
                                 $clevel = 'middle';
-                            else
+                            } else {
                                 $clevel = 'low';
+                            }
                         }
                         break;
                     case "SESSION_IP_MASK":
@@ -396,22 +427,24 @@ class CSecuritySiteConfigurationTest
                         $gp_ip = ip2long($el2_value);
                         $high_ip = ip2long($arGroupPolicy['high'][$key]);
                         $middle_ip = ip2long($arGroupPolicy['middle'][$key]);
-                        if (($gp_ip & $high_ip) == (0xFFFFFFFF & $high_ip))
+                        if (($gp_ip & $high_ip) == (0xFFFFFFFF & $high_ip)) {
                             $clevel = 'high';
-                        elseif (($gp_ip & $middle_ip) == (0xFFFFFFFF & $middle_ip))
+                        } elseif (($gp_ip & $middle_ip) == (0xFFFFFFFF & $middle_ip)) {
                             $clevel = 'middle';
-                        else
+                        } else {
                             $clevel = 'low';
+                        }
                         break;
                     default:
                         $clevel = 'low';
                         break;
                 }
 
-                if ($clevel == 'low')
+                if ($clevel == 'low') {
                     $level = $clevel;
-                elseif ($clevel == 'middle' && $level == 'high')
+                } elseif ($clevel == 'middle' && $level == 'high') {
                     $level = $clevel;
+                }
             }
         }
 

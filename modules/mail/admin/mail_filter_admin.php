@@ -1,4 +1,5 @@
 <?
+
 /*
 ##############################################
 # Bitrix: SiteManager                        #
@@ -11,7 +12,9 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
 require_once($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/mail/prolog.php");
 
 $MOD_RIGHT = $APPLICATION->GetGroupRight("mail");
-if ($MOD_RIGHT < "R") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($MOD_RIGHT < "R") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 IncludeModuleLangFile(__FILE__);
 
 \Bitrix\Main\Loader::includeModule('mail');
@@ -55,8 +58,9 @@ if ($MOD_RIGHT == "W" && $lAdmin->EditAction()) //ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï
     foreach ($FIELDS as $ID => $arFields) {
         $ID = intval($ID);
 
-        if (!$lAdmin->IsUpdated($ID))
+        if (!$lAdmin->IsUpdated($ID)) {
             continue;
+        }
 
         $DB->StartTransaction();
         if (!CMailFilter::Update($ID, $arFields)) {
@@ -73,14 +77,16 @@ if ($MOD_RIGHT == "W" && $lAdmin->EditAction()) //ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï
 if ($MOD_RIGHT == "W" && $arID = $lAdmin->GroupAction()) {
     if ($_REQUEST['action_target'] == 'selected') {
         $rsData = CMailFilter::GetList(Array($by => $order), $arFilter);
-        while ($arRes = $rsData->Fetch())
+        while ($arRes = $rsData->Fetch()) {
             $arID[] = $arRes['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
-        $ID = IntVal($ID);
+        }
+        $ID = intval($ID);
 
         switch ($_REQUEST['action']) {
             case "delete":
@@ -98,9 +104,14 @@ if ($MOD_RIGHT == "W" && $arID = $lAdmin->GroupAction()) {
             case "deactivate":
 
                 $arFields = Array("ACTIVE" => ($_REQUEST['action'] == "activate" ? "Y" : "N"));
-                if (!CMailFilter::Update($ID, $arFields))
-                    if ($e = $APPLICATION->GetException())
-                        $lAdmin->AddGroupError(GetMessage("MAIL_SAVE_ERROR") . " #" . $ID . ": " . $e->GetString(), $ID);
+                if (!CMailFilter::Update($ID, $arFields)) {
+                    if ($e = $APPLICATION->GetException()) {
+                        $lAdmin->AddGroupError(
+                            GetMessage("MAIL_SAVE_ERROR") . " #" . $ID . ": " . $e->GetString(),
+                            $ID
+                        );
+                    }
+                }
                 break;
         }
     }
@@ -116,11 +127,36 @@ $lAdmin->NavText($rsData->GetNavPrint(GetMessage("MAIL_FILT_ADM_NAVIGATION")));
 
 $arHeaders = Array();
 $arHeaders[] = Array("id" => "ID", "content" => "ID", "default" => true, "sort" => "id");
-$arHeaders[] = Array("id" => "TIMESTAMP_X", "content" => GetMessage("MAIL_FILT_ADM_DATECH"), "default" => true, "sort" => "timestamp_x");
-$arHeaders[] = Array("id" => "NAME", "content" => GetMessage("MAIL_FILT_ADM_NAME"), "default" => true, "sort" => "name");
-$arHeaders[] = Array("id" => "ACTIVE", "content" => GetMessage("MAIL_FILT_ADM_ACT"), "default" => true, "sort" => "active");
-$arHeaders[] = Array("id" => "SORT", "content" => GetMessage("MAIL_FILT_ADM_SORT"), "default" => true, "sort" => "sort");
-$arHeaders[] = Array("id" => "MAILBOX_NAME", "content" => GetMessage("MAIL_FILT_ADM_MBOX"), "default" => true, "sort" => "mailbox_name");
+$arHeaders[] = Array(
+    "id" => "TIMESTAMP_X",
+    "content" => GetMessage("MAIL_FILT_ADM_DATECH"),
+    "default" => true,
+    "sort" => "timestamp_x"
+);
+$arHeaders[] = Array(
+    "id" => "NAME",
+    "content" => GetMessage("MAIL_FILT_ADM_NAME"),
+    "default" => true,
+    "sort" => "name"
+);
+$arHeaders[] = Array(
+    "id" => "ACTIVE",
+    "content" => GetMessage("MAIL_FILT_ADM_ACT"),
+    "default" => true,
+    "sort" => "active"
+);
+$arHeaders[] = Array(
+    "id" => "SORT",
+    "content" => GetMessage("MAIL_FILT_ADM_SORT"),
+    "default" => true,
+    "sort" => "sort"
+);
+$arHeaders[] = Array(
+    "id" => "MAILBOX_NAME",
+    "content" => GetMessage("MAIL_FILT_ADM_MBOX"),
+    "default" => true,
+    "sort" => "mailbox_name"
+);
 
 
 $lAdmin->AddHeaders($arHeaders);
@@ -148,14 +184,18 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
         }
 
         if ($arRes["WHEN_MANUALLY_RUN"] == "Y") {
-            $strWhen .= ($strWhen != "" ? GetMessage("MAIL_FILT_ADM_WHEN_OR") : "") . GetMessage("MAIL_FILT_ADM_WHEN_MANUAL");
+            $strWhen .= ($strWhen != "" ? GetMessage("MAIL_FILT_ADM_WHEN_OR") : "") . GetMessage(
+                    "MAIL_FILT_ADM_WHEN_MANUAL"
+                );
         }
 
         $strCond = "";
         $res = CMailFilterCondition::GetList(Array("id" => "asc"), Array("FILTER_ID" => $f_ID));
         while ($ar = $res->Fetch()) {
             $strCond .= '';
-            if ($strCond != "") $strCond .= GetMessage("MAIL_FILT_ADM_WHEN_AND");
+            if ($strCond != "") {
+                $strCond .= GetMessage("MAIL_FILT_ADM_WHEN_AND");
+            }
             switch ($ar["TYPE"]) {
                 case "SENDER":
                     $strCond .= GetMessage("MAIL_FILT_ADM_SENDER");
@@ -210,12 +250,17 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
             }
 
             $ar["STRINGS"] = trim($ar["STRINGS"]);
-            if (strpos($ar["STRINGS"], "\n") > 0) {
+            if (mb_strpos($ar["STRINGS"], "\n") > 0) {
                 $ar["STRINGS"] = str_replace("\r", '', $ar["STRINGS"]);
                 $ar["STRINGS"] = '"' . str_replace("\n", '","', $ar["STRINGS"]) . '"';
-                $strCond .= " " . $strNameTmp2 . " {" . htmlspecialcharsbx(substr($ar["STRINGS"], 0, 30)) . (strlen(trim($ar["STRINGS"])) > 30 ? "..." : "") . "}";
-            } else
-                $strCond .= " " . $strNameTmp1 . " &quot;" . htmlspecialcharsbx(substr($ar["STRINGS"], 0, 30)) . (strlen($ar["STRINGS"]) > 30 ? "..." : "") . "&quot;";
+                $strCond .= " " . $strNameTmp2 . " {" . htmlspecialcharsbx(
+                        mb_substr($ar["STRINGS"], 0, 30)
+                    ) . (mb_strlen(trim($ar["STRINGS"])) > 30 ? "..." : "") . "}";
+            } else {
+                $strCond .= " " . $strNameTmp1 . " &quot;" . htmlspecialcharsbx(
+                        mb_substr($ar["STRINGS"], 0, 30)
+                    ) . (mb_strlen($ar["STRINGS"]) > 30 ? "..." : "") . "&quot;";
+            }
         }
 
         $strAction = "";
@@ -227,12 +272,14 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
             $strAction .= ($strAction != "" ? ", " : "") . GetMessage("MAIL_FILT_ADM_DELETE");
         }
 
-        if (strlen($arRes["ACTION_PHP"]) > 0) {
+        if ($arRes["ACTION_PHP"] <> '') {
             $strAction .= ($strAction != "" ? ", " : "") . GetMessage("MAIL_FILT_ADM_PHP_ACTION");
         }
 
         if ($arRes["ACTION_STOP_EXEC"] == "Y") {
-            $strAction .= ($strAction != "" ? GetMessage("MAIL_FILT_ADM_WHEN_AND") : "") . GetMessage("MAIL_FILT_ADM_CANCEL_RULES");
+            $strAction .= ($strAction != "" ? GetMessage("MAIL_FILT_ADM_WHEN_AND") : "") . GetMessage(
+                    "MAIL_FILT_ADM_CANCEL_RULES"
+                );
         }
 
         $strDesc = $strType .
@@ -244,7 +291,9 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
         $row->AddViewField("NAME", $f_NAME . "<br>" . $strDesc);
     }
 
-    $str = $f_MAILBOX_NAME . '&nbsp;[<a title="' . GetMessage("MAIL_FILT_ADM_CHANGE_MBOX") . '" href="mail_mailbox_edit.php?ID=' . $f_MAILBOX_ID . '&lang=' . LANG . '">' . $f_MAILBOX_ID . '</a>]';
+    $str = $f_MAILBOX_NAME . '&nbsp;[<a title="' . GetMessage(
+            "MAIL_FILT_ADM_CHANGE_MBOX"
+        ) . '" href="mail_mailbox_edit.php?ID=' . $f_MAILBOX_ID . '&lang=' . LANG . '">' . $f_MAILBOX_ID . '</a>]';
     $row->AddViewField("MAILBOX_NAME", $str);
 
     $row->AddCheckField("ACTIVE");
@@ -273,7 +322,10 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
         $arActions[] = array(
             "ICON" => "delete",
             "TEXT" => GetMessage("MAIL_FILT_ADM_DEL"),
-            "ACTION" => "if(confirm('" . GetMessage('MAIL_FILT_ADM_DEL_CONFIRM') . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete"),
+            "ACTION" => "if(confirm('" . GetMessage('MAIL_FILT_ADM_DEL_CONFIRM') . "')) " . $lAdmin->ActionDoGroup(
+                    $f_ID,
+                    "delete"
+                ),
         );
     }
 
@@ -291,7 +343,8 @@ $lAdmin->AddFooter(
 
 if ($MOD_RIGHT == "W") {
     // ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
-    $lAdmin->AddGroupActionTable(Array(
+    $lAdmin->AddGroupActionTable(
+        Array(
             "activate" => GetMessage("MAIN_ADMIN_LIST_ACTIVATE"),
             "deactivate" => GetMessage("MAIN_ADMIN_LIST_DEACTIVATE"),
             "delete" => GetMessage("MAIN_ADMIN_LIST_DELETE"),
@@ -368,7 +421,10 @@ require_once($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog
     <tr>
         <td nowrap><? echo GetMessage("MAIL_FILT_ADM_FILT_ACT") ?>:</td>
         <td nowrap><?
-            $arr = array("reference" => array(GetMessage("MAIN_YES"), GetMessage("MAIN_NO")), "reference_id" => array("Y", "N"));
+            $arr = array(
+                "reference" => array(GetMessage("MAIN_YES"), GetMessage("MAIN_NO")),
+                "reference_id" => array("Y", "N")
+            );
             echo SelectBoxFromArray("find_active", $arr, htmlspecialcharsbx($find_active), GetMessage("MAIN_ALL"));
             ?></td>
     </tr>

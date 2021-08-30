@@ -81,15 +81,17 @@ class Notification
      */
     public function toAllAuthors()
     {
-        $list = Entity\Letter::getList(array(
-            'select' => array('CREATED_BY'),
-            'filter' => array(
-                '=MESSAGE_CODE',
-                '!=CREATED_BY' => null
-            ),
-            'group' => array('CREATED_BY'),
-            'cache' => array('ttl' => 3600),
-        ));
+        $list = Entity\Letter::getList(
+            array(
+                'select' => array('CREATED_BY'),
+                'filter' => array(
+                    '=MESSAGE_CODE',
+                    '!=CREATED_BY' => null
+                ),
+                'group' => array('CREATED_BY'),
+                'cache' => array('ttl' => 3600),
+            )
+        );
         foreach ($list as $item) {
             $this->addTo($item['CREATED_BY']);
         }

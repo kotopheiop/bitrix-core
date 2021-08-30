@@ -19,10 +19,12 @@ class Hidden extends \Bitrix\Landing\Field
         ?><?= isset($params['additional']) ? $params['additional'] . ' ' : '' ?><?
         ?><?= isset($params['id']) ? 'id="' . \htmlspecialcharsbx($params['id']) . '" ' : '' ?><?
         ?>data-code="<?= \htmlspecialcharsbx($this->code) ?>" <?
-               ?>name="<?= \htmlspecialcharsbx(isset($params['name_format'])
-            ? str_replace('#field_code#', $this->code, $params['name_format'])
-            : $this->code) ?>" <?
-               ?>value="<?= \htmlspecialcharsbx($this->value) ?>" <?
+               ?>name="<?= \htmlspecialcharsbx(
+            isset($params['name_format'])
+                ? str_replace('#field_code#', $this->code, $params['name_format'])
+                : $this->code
+        ) ?>" <?
+               ?>value="<?= \htmlspecialcharsbx($this->value ? $this->value : $this->default) ?>" <?
         ?> />
         <?
     }

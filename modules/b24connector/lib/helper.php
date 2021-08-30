@@ -25,8 +25,9 @@ class Helper
 
         $moduleAccess = $APPLICATION->GetGroupRight('b24connector');
 
-        if ($moduleAccess < "R")
+        if ($moduleAccess < "R") {
             return false;
+        }
 
         $menu = array(
             "parent_menu" => "global_menu_b24connector",
@@ -104,7 +105,8 @@ class Helper
                 "items_id" => "global_menu_b24connector",
                 "help_section" => "b24connector",
                 "items" => array($menu)
-            ));
+            )
+        );
     }
 
     /**
@@ -115,8 +117,9 @@ class Helper
     {
         global $APPLICATION;
 
-        if (defined("ADMIN_SECTION") && ADMIN_SECTION === true)
+        if (defined("ADMIN_SECTION") && ADMIN_SECTION === true) {
             return;
+        }
 
         if (defined('B24CONNECTOR_SKIP') && B24CONNECTOR_SKIP === true) {
             return;
@@ -125,26 +128,41 @@ class Helper
         if ($connection = Connection::getFields()) {
             $result = '';
 
-            $dbRes = ButtonTable::getList(array(
-                'filter' => array(
-                    '=APP_ID' => $connection['ID']
+            $dbRes = ButtonTable::getList(
+                array(
+                    'filter' => array(
+                        '=APP_ID' => $connection['ID']
+                    )
                 )
-            ));
+            );
 
             while ($row = $dbRes->fetch()) {
-                if (strlen($row['SCRIPT']) > 0)
+                if ($row['SCRIPT'] <> '') {
                     $result .= $row['SCRIPT'] . "\n";
+                }
             }
 
-            if (strlen($result) > 0) {
-                \Bitrix\Main\Page\Asset::getInstance()->addString($result, false, \Bitrix\Main\Page\AssetLocation::BODY_END);
+            if ($result <> '') {
+                \Bitrix\Main\Page\Asset::getInstance()->addString(
+                    $result,
+                    false,
+                    \Bitrix\Main\Page\AssetLocation::BODY_END
+                );
 
                 ob_start();
-                $APPLICATION->IncludeComponent("bitrix:b24connector.openline.info", "", Array("COMPOSITE_FRAME_TYPE" => "STATIC"));
+                $APPLICATION->IncludeComponent(
+                    "bitrix:b24connector.openline.info",
+                    "",
+                    Array("COMPOSITE_FRAME_TYPE" => "STATIC")
+                );
                 $saoRes = ob_get_contents();
                 ob_end_clean();
 
-                \Bitrix\Main\Page\Asset::getInstance()->addString($saoRes, false, \Bitrix\Main\Page\AssetLocation::BODY_END);
+                \Bitrix\Main\Page\Asset::getInstance()->addString(
+                    $saoRes,
+                    false,
+                    \Bitrix\Main\Page\AssetLocation::BODY_END
+                );
             }
         }
     }

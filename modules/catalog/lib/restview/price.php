@@ -75,8 +75,9 @@ final class Price extends Base
         if ($name == 'modify') {
             if (isset($arguments['fields'])) {
                 $fields = $arguments['fields'];
-                if (!empty($fields))
+                if (!empty($fields)) {
                     $arguments['fields'] = $this->convertKeysToSnakeCaseFields($fields);
+                }
             }
         } else {
             $arguments = parent::convertKeysToSnakeCaseArguments($name, $arguments);
@@ -102,15 +103,40 @@ final class Price extends Base
         $result = [];
 
         $fieldsInfo = empty($fieldsInfo) ? $this->getFields() : $fieldsInfo;
-        $listFieldsInfoAdd = $this->getListFieldInfo($fieldsInfo, ['filter' => ['ignoredAttributes' => [Attributes::HIDDEN, Attributes::READONLY], 'ignoredFields' => ['PRODUCT_ID']]]);
-        $listFieldsInfoUpdate = $this->getListFieldInfo($fieldsInfo, ['filter' => ['ignoredAttributes' => [Attributes::HIDDEN, Attributes::READONLY, Attributes::IMMUTABLE], 'skipFields' => ['ID']]]);
+        $listFieldsInfoAdd = $this->getListFieldInfo(
+            $fieldsInfo,
+            [
+                'filter' => [
+                    'ignoredAttributes' => [
+                        Attributes::HIDDEN,
+                        Attributes::READONLY
+                    ],
+                    'ignoredFields' => ['PRODUCT_ID']
+                ]
+            ]
+        );
+        $listFieldsInfoUpdate = $this->getListFieldInfo(
+            $fieldsInfo,
+            [
+                'filter' => [
+                    'ignoredAttributes' => [
+                        Attributes::HIDDEN,
+                        Attributes::READONLY,
+                        Attributes::IMMUTABLE
+                    ],
+                    'skipFields' => ['ID']
+                ]
+            ]
+        );
 
-        if (isset($fields['PRODUCT']['ID']))
+        if (isset($fields['PRODUCT']['ID'])) {
             $result['PRODUCT']['ID'] = (int)$fields['PRODUCT']['ID'];
+        }
 
         if (isset($fields['PRODUCT']['PRICES'])) {
             foreach ($fields['PRODUCT']['PRICES'] as $k => $item) {
-                $result['PRODUCT']['PRICES'][$k] = $this->internalizeFields($item,
+                $result['PRODUCT']['PRICES'][$k] = $this->internalizeFields(
+                    $item,
                     $this->isNewItem($item) ? $listFieldsInfoAdd : $listFieldsInfoUpdate
                 );
             }
@@ -145,8 +171,9 @@ final class Price extends Base
             $r->addError(new Error('Required fields: ' . implode(', ', $emptyFields)));
         } else {
             $required = $this->checkRequiredFieldsModify($fields);
-            if (!$required->isSuccess())
+            if (!$required->isSuccess()) {
                 $r->addError(new Error('Required fields: ' . implode(' ', $required->getErrorMessages())));
+            }
         }
 
         return $r;
@@ -156,11 +183,34 @@ final class Price extends Base
     {
         $r = new Result();
 
-        $listFieldsInfoAdd = $this->getListFieldInfo($this->getFields(), ['filter' => ['ignoredAttributes' => [Attributes::HIDDEN, Attributes::READONLY], 'ignoredFields' => ['PRODUCT_ID']]]);
-        $listFieldsInfoUpdate = $this->getListFieldInfo($this->getFields(), ['filter' => ['ignoredAttributes' => [Attributes::HIDDEN, Attributes::READONLY, Attributes::IMMUTABLE]]]);
+        $listFieldsInfoAdd = $this->getListFieldInfo(
+            $this->getFields(),
+            [
+                'filter' => [
+                    'ignoredAttributes' => [
+                        Attributes::HIDDEN,
+                        Attributes::READONLY
+                    ],
+                    'ignoredFields' => ['PRODUCT_ID']
+                ]
+            ]
+        );
+        $listFieldsInfoUpdate = $this->getListFieldInfo(
+            $this->getFields(),
+            [
+                'filter' => [
+                    'ignoredAttributes' => [
+                        Attributes::HIDDEN,
+                        Attributes::READONLY,
+                        Attributes::IMMUTABLE
+                    ]
+                ]
+            ]
+        );
 
         foreach ($fields['PRODUCT']['PRICES'] as $k => $item) {
-            $required = $this->checkRequiredFields($item,
+            $required = $this->checkRequiredFields(
+                $item,
                 $this->isNewItem($item) ? $listFieldsInfoAdd : $listFieldsInfoUpdate
             );
             if (!$required->isSuccess()) {

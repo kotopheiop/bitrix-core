@@ -193,8 +193,9 @@ class ImportOneCPackage extends ImportOneCBase
             }
         }
 
-        if (empty($parentEntityId))
+        if (empty($parentEntityId)) {
             $result->addErrors(array(new Error('Order not found')));
+        }
 
         foreach ($items as $item) {
             if ($item->getOwnerTypeId() <> static::getParentEntityTypeId()) {
@@ -210,8 +211,9 @@ class ImportOneCPackage extends ImportOneCBase
             }
         }
 
-        if ($result->isSuccess())
+        if ($result->isSuccess()) {
             $result = parent::checkFields($items);
+        }
 
         return $result;
     }
@@ -222,11 +224,36 @@ class ImportOneCPackage extends ImportOneCBase
 
         static::setConfig(static::DELETE_IF_NOT_FOUND_RELATED_PAYMENT_DOCUMENT);
 
-        ManagerImport::registerInstance(static::getParentEntityTypeId(), OneC\ImportSettings::getCurrent(), new OneC\CollisionOrder(), new OneC\CriterionOrder());
-        ManagerImport::registerInstance(static::getShipmentEntityTypeId(), OneC\ImportSettings::getCurrent(), new OneC\CollisionShipment(), new OneC\CriterionShipment());
-        ManagerImport::registerInstance(static::getPaymentCashEntityTypeId(), OneC\ImportSettings::getCurrent(), new OneC\CollisionPayment(), new OneC\CriterionPayment());
-        ManagerImport::registerInstance(static::getPaymentCashLessEntityTypeId(), OneC\ImportSettings::getCurrent(), new OneC\CollisionPayment(), new OneC\CriterionPayment());
-        ManagerImport::registerInstance(static::getPaymentCardEntityTypeId(), OneC\ImportSettings::getCurrent(), new OneC\CollisionPayment(), new OneC\CriterionPayment());
+        ManagerImport::registerInstance(
+            static::getParentEntityTypeId(),
+            OneC\ImportSettings::getCurrent(),
+            new OneC\CollisionOrder(),
+            new OneC\CriterionOrder()
+        );
+        ManagerImport::registerInstance(
+            static::getShipmentEntityTypeId(),
+            OneC\ImportSettings::getCurrent(),
+            new OneC\CollisionShipment(),
+            new OneC\CriterionShipment()
+        );
+        ManagerImport::registerInstance(
+            static::getPaymentCashEntityTypeId(),
+            OneC\ImportSettings::getCurrent(),
+            new OneC\CollisionPayment(),
+            new OneC\CriterionPayment()
+        );
+        ManagerImport::registerInstance(
+            static::getPaymentCashLessEntityTypeId(),
+            OneC\ImportSettings::getCurrent(),
+            new OneC\CollisionPayment(),
+            new OneC\CriterionPayment()
+        );
+        ManagerImport::registerInstance(
+            static::getPaymentCardEntityTypeId(),
+            OneC\ImportSettings::getCurrent(),
+            new OneC\CollisionPayment(),
+            new OneC\CriterionPayment()
+        );
         ManagerImport::registerInstance(EntityType::USER_PROFILE, OneC\ImportSettings::getCurrent());
     }
 
@@ -252,7 +279,8 @@ class ImportOneCPackage extends ImportOneCBase
         }
 
         foreach ($items as $item) {
-            if ($item->getOwnerTypeId() <> static::getParentEntityTypeId() && $item->getOwnerTypeId() <> EntityType::USER_PROFILE) {
+            if ($item->getOwnerTypeId() <> static::getParentEntityTypeId() && $item->getOwnerTypeId(
+                ) <> EntityType::USER_PROFILE) {
                 $list[$i++] = $item;
             }
         }
@@ -281,8 +309,9 @@ class ImportOneCPackage extends ImportOneCBase
             }
 
             $r = $this->onBeforeEntityModify($itemParent, $items);
-            if ($r->hasWarnings())
+            if ($r->hasWarnings()) {
                 $this->marker($itemParent, $r);
+            }
         }
 
         if (!$this->hasCollisionErrors($items)) {
@@ -299,7 +328,11 @@ class ImportOneCPackage extends ImportOneCBase
 
                         $property = $params['ORDER_PROPS'];
                         if (!empty($property)) {
-                            $params['ORDER_PROP'] = $item->getPropertyOrdersByConfig($personalTypeId, array(), $property);
+                            $params['ORDER_PROP'] = $item->getPropertyOrdersByConfig(
+                                $personalTypeId,
+                                array(),
+                                $property
+                            );
                         }
 
                         unset($params['ORDER_PROPS']);
@@ -307,8 +340,16 @@ class ImportOneCPackage extends ImportOneCBase
 
                         $r = $item->load($fields);
 
-                        if (intval($personalTypeId) <= 0)
-                            $r->addError(new Error(GetMessage("SALE_EXCHANGE_PACKAGE_ERROR_PERSONAL_TYPE_IS_EMPTY", array("#DOCUMENT_ID#" => $fields['XML_ID'])), "PACKAGE_ERROR_PERSONAL_TYPE_IS_EPMTY"));
+                        if (intval($personalTypeId) <= 0) {
+                            $r->addError(
+                                new Error(
+                                    GetMessage(
+                                        "SALE_EXCHANGE_PACKAGE_ERROR_PERSONAL_TYPE_IS_EMPTY",
+                                        array("#DOCUMENT_ID#" => $fields['XML_ID'])
+                                    ), "PACKAGE_ERROR_PERSONAL_TYPE_IS_EPMTY"
+                                )
+                            );
+                        }
 
                         if ($r->isSuccess()) {
                             if (!$this->importableItems($item)) {
@@ -317,8 +358,16 @@ class ImportOneCPackage extends ImportOneCBase
 
                             $r = $this->modifyEntity($item);
 
-                            if (intval($item->getId()) <= 0)
-                                $r->addError(new Error(GetMessage("SALE_EXCHANGE_PACKAGE_ERROR_USER_IS_EMPTY", array("#DOCUMENT_ID#" => $fields['XML_ID'])), "PACKAGE_ERROR_USER_IS_EPMTY"));
+                            if (intval($item->getId()) <= 0) {
+                                $r->addError(
+                                    new Error(
+                                        GetMessage(
+                                            "SALE_EXCHANGE_PACKAGE_ERROR_USER_IS_EMPTY",
+                                            array("#DOCUMENT_ID#" => $fields['XML_ID'])
+                                        ), "PACKAGE_ERROR_USER_IS_EPMTY"
+                                    )
+                                );
+                            }
 
                             if ($r->isSuccess()) {
                                 /** prepare for import Order */
@@ -359,8 +408,9 @@ class ImportOneCPackage extends ImportOneCBase
 
                             if ($r->isSuccess()) {
                                 if ($item->getOwnerTypeId() == static::getShipmentEntityTypeId()) {
-                                    if (!$isShipped && $order->isShipped())
+                                    if (!$isShipped && $order->isShipped()) {
                                         $this->onAfterShipmentModifyChangeStatusOnDelivery($itemParent);
+                                    }
                                 }
                             }
                         }
@@ -378,19 +428,23 @@ class ImportOneCPackage extends ImportOneCBase
 
             if ($result->isSuccess() && !$result->hasWarnings() && !$this->hasCollisionErrors($items)) {
                 $r = $this->onAfterEntitiesModify($itemParent, $items);
-                if (!$r->isSuccess())
+                if (!$r->isSuccess()) {
                     $result->addErrors($r->getErrors());
-                if ($r->hasWarnings())
+                }
+                if ($r->hasWarnings()) {
                     $result->addWarnings($r->getWarnings());
+                }
             }
         }
 
         if ($result->isSuccess()) {
             $r = $this->save($itemParent, $items);
-            if (!$r->isSuccess())
+            if (!$r->isSuccess()) {
                 $result->addErrors($r->getErrors());
-            if ($r->hasWarnings())
+            }
+            if ($r->hasWarnings()) {
                 $result->addWarnings($r->getWarnings());
+            }
         }
 
         return $result;
@@ -493,8 +547,9 @@ class ImportOneCPackage extends ImportOneCBase
 
         /** @var Order $order */
         $order = $orderImport->getEntity();
-        if (empty($order))
+        if (empty($order)) {
             throw new ArgumentNullException('Order');
+        }
 
         foreach ($items as $item) {
             switch ($item->getOwnerTypeId()) {
@@ -502,8 +557,9 @@ class ImportOneCPackage extends ImportOneCBase
                     $params = $item->getFieldValues();
                     $fields = $params['TRAITS'];
 
-                    if (!empty($fields['ID']))
+                    if (!empty($fields['ID'])) {
                         $shipmentItems[] = $fields['ID'];
+                    }
                     break;
             }
         }
@@ -512,11 +568,13 @@ class ImportOneCPackage extends ImportOneCBase
         $shipmentList = array();
         $shipmentCollection = $order->getShipmentCollection();
         foreach ($shipmentCollection as $shipment) {
-            if ($shipment->isSystem())
+            if ($shipment->isSystem()) {
                 continue;
+            }
 
-            if (!in_array($shipment->getId(), $shipmentItems))
+            if (!in_array($shipment->getId(), $shipmentItems)) {
                 $shipmentList[$shipment->getId()] = $shipment;
+            }
         }
 
         if (!empty($shipmentList)) {
@@ -534,7 +592,10 @@ class ImportOneCPackage extends ImportOneCBase
                 if (!$item->hasCollisionErrors()) {
                     $result = $item->delete();
                 } else {
-                    $item->setCollisions(EntityCollisionType::BeforeUpdateShipmentDeletedError, $item->getParentEntity());
+                    $item->setCollisions(
+                        EntityCollisionType::BeforeUpdateShipmentDeletedError,
+                        $item->getParentEntity()
+                    );
                 }
 
                 $collisions = $item->getCollisions();
@@ -549,12 +610,13 @@ class ImportOneCPackage extends ImportOneCBase
     {
         $typeId = EntityType::UNDEFINED;
 
-        if ($entity instanceof Order)
+        if ($entity instanceof Order) {
             $typeId = Exchange\Entity\OrderImport::resolveEntityTypeId($entity);
-        elseif ($entity instanceof Payment)
+        } elseif ($entity instanceof Payment) {
             $typeId = Exchange\Entity\PaymentImport::resolveEntityTypeId($entity);
-        elseif ($entity instanceof Shipment)
+        } elseif ($entity instanceof Shipment) {
             $typeId = Exchange\Entity\ShipmentImport::resolveEntityTypeId($entity);
+        }
 
         return $typeId;
     }
@@ -578,8 +640,9 @@ class ImportOneCPackage extends ImportOneCBase
 
         /** @var Order $order */
         $order = $orderImport->getEntity();
-        if (empty($order))
+        if (empty($order)) {
             throw new ArgumentNullException('Order');
+        }
 
         foreach ($items as $item) {
             switch ($item->getOwnerTypeId()) {
@@ -589,8 +652,9 @@ class ImportOneCPackage extends ImportOneCBase
                     $params = $item->getFieldValues();
                     $fields = $params['TRAITS'];
 
-                    if (!empty($fields['ID']))
+                    if (!empty($fields['ID'])) {
                         $paymentItems[] = $fields['ID'];
+                    }
                     break;
             }
         }
@@ -599,15 +663,17 @@ class ImportOneCPackage extends ImportOneCBase
         $paymentList = array();
         $paymentCollection = $order->getPaymentCollection();
         foreach ($paymentCollection as $payment) {
-            if (!in_array($payment->getId(), $paymentItems))
+            if (!in_array($payment->getId(), $paymentItems)) {
                 $paymentList[$payment->getId()] = $payment;
+            }
         }
 
         if (!empty($paymentList)) {
             foreach ($paymentList as $id => $payment) {
                 $result = $this->paymentDelete($payment);
-                if (!$result->isSuccess())
+                if (!$result->isSuccess()) {
                     break;
+                }
             }
         }
 
@@ -632,7 +698,10 @@ class ImportOneCPackage extends ImportOneCBase
         if (!$item->hasCollisionErrors()) {
             $result = $item->delete();
         } else {
-            $item->setCollisions(Exchange\EntityCollisionType::BeforeUpdatePaymentDeletedError, $item->getParentEntity());
+            $item->setCollisions(
+                Exchange\EntityCollisionType::BeforeUpdatePaymentDeletedError,
+                $item->getParentEntity()
+            );
         }
 
         $collisions = $item->getCollisions();
@@ -656,8 +725,9 @@ class ImportOneCPackage extends ImportOneCBase
 
         /** @var Order $order */
         $order = $orderImport->getEntity();
-        if (empty($order))
+        if (empty($order)) {
             throw new ArgumentNullException('Order');
+        }
 
         $basket = $order->getBasket();
 
@@ -698,17 +768,25 @@ class ImportOneCPackage extends ImportOneCBase
 
         if (static::$config & static::DELETE_IF_NOT_FOUND_RELATED_PAYMENT_DOCUMENT) {
             $paymentResult = $this->onBeforePaymentCollectionModify($orderImport, $items);
-            if (!$paymentResult->isSuccess())
+            if (!$paymentResult->isSuccess()) {
                 $result->addWarnings($paymentResult->getErrors());
+            }
         }
 
         $shipmentResult = $this->onBeforeShipmentCollectionModify($orderImport, $items);
 
-        if (!$shipmentResult->isSuccess())
+        if (!$shipmentResult->isSuccess()) {
             $result->addWarnings($shipmentResult->getErrors());
+        }
 
-        if (!$basketItemsResult->isSuccess() || !$shipmentResult->isSuccess() || !$paymentResult->isSuccess())
-            $result->addWarning(new ResultWarning(GetMessage('SALE_EXCHANGE_PACKAGE_ERROR_ORDER_CANNOT_UPDATE'), "PACKAGE_ERROR_ORDER_CANNOT_UPDATE"));
+        if (!$basketItemsResult->isSuccess() || !$shipmentResult->isSuccess() || !$paymentResult->isSuccess()) {
+            $result->addWarning(
+                new ResultWarning(
+                    GetMessage('SALE_EXCHANGE_PACKAGE_ERROR_ORDER_CANNOT_UPDATE'),
+                    "PACKAGE_ERROR_ORDER_CANNOT_UPDATE"
+                )
+            );
+        }
 
         return $result;
     }
@@ -729,8 +807,9 @@ class ImportOneCPackage extends ImportOneCBase
             /** @var ISettingsImport $settings */
             $settings = $orderImport->getSettings();
             $status = $settings->finalStatusOnDeliveryFor($orderImport->getOwnerTypeId());
-            if ($status !== '')
+            if ($status !== '') {
                 $order->setField("STATUS_ID", $status);
+            }
         }
         return $result;
     }
@@ -787,10 +866,24 @@ class ImportOneCPackage extends ImportOneCBase
                 case static::getPaymentCashEntityTypeId():
                 case static::getPaymentCardEntityTypeId():
                 case static::getPaymentCashLessEntityTypeId():
-                    $result->addWarning(new ResultWarning(GetMessage("SALE_EXCHANGE_PACKAGE_ERROR_PAYMENT_IS_NOT_RELATED_TO_ORDER_OR_DELETED", array("#DOCUMENT_ID#" => $id)), "PACKAGE_ERROR_PAYMENT_IS_NOT_RELATED_TO_ORDER_OR_DELETED"));
+                    $result->addWarning(
+                        new ResultWarning(
+                            GetMessage(
+                                "SALE_EXCHANGE_PACKAGE_ERROR_PAYMENT_IS_NOT_RELATED_TO_ORDER_OR_DELETED",
+                                array("#DOCUMENT_ID#" => $id)
+                            ), "PACKAGE_ERROR_PAYMENT_IS_NOT_RELATED_TO_ORDER_OR_DELETED"
+                        )
+                    );
                     break;
                 case static::getShipmentEntityTypeId():
-                    $result->addWarning(new ResultWarning(GetMessage("SALE_EXCHANGE_PACKAGE_ERROR_SHIPMENT_IS_NOT_RELATED_TO_ORDER_OR_DELETED", array("#DOCUMENT_ID#" => $id)), "PACKAGE_ERROR_SHIPMENT_IS_NOT_RELATED_TO_ORDER_OR_DELETED"));
+                    $result->addWarning(
+                        new ResultWarning(
+                            GetMessage(
+                                "SALE_EXCHANGE_PACKAGE_ERROR_SHIPMENT_IS_NOT_RELATED_TO_ORDER_OR_DELETED",
+                                array("#DOCUMENT_ID#" => $id)
+                            ), "PACKAGE_ERROR_SHIPMENT_IS_NOT_RELATED_TO_ORDER_OR_DELETED"
+                        )
+                    );
                     break;
             }
         }
@@ -810,7 +903,14 @@ class ImportOneCPackage extends ImportOneCBase
             $params = $itemOrder->getFieldValues();
             $fields = $params['TRAITS'];
 
-            $result->addWarning(new ResultWarning(GetMessage("SALE_EXCHANGE_PACKAGE_ERROR_ORDER_IS_NOT_LOADED", array("#DOCUMENT_ID#" => $fields['ID_1C'])), "PACKAGE_ERROR_ORDER_IS_NOT_LOADED"));
+            $result->addWarning(
+                new ResultWarning(
+                    GetMessage(
+                        "SALE_EXCHANGE_PACKAGE_ERROR_ORDER_IS_NOT_LOADED",
+                        array("#DOCUMENT_ID#" => $fields['ID_1C'])
+                    ), "PACKAGE_ERROR_ORDER_IS_NOT_LOADED"
+                )
+            );
         }
 
         return $result;
@@ -855,8 +955,9 @@ class ImportOneCPackage extends ImportOneCBase
     protected function hasCollisionErrors($items)
     {
         foreach ($items as $item) {
-            if ($item->hasCollisionErrors())
+            if ($item->hasCollisionErrors()) {
                 return true;
+            }
         }
         return false;
     }

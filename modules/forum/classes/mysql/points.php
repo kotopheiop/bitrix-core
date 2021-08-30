@@ -1,4 +1,5 @@
-<?
+<?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/forum/classes/general/points.php");
 
 /**********************************************************************/
@@ -7,17 +8,18 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/forum/classes/general/
 
 class CForumPoints extends CAllForumPoints
 {
-    function Add($arFields)
+    public static function Add($arFields)
     {
         global $DB;
 
-        if (!CForumPoints::CheckFields("ADD", $arFields))
+        if (!CForumPoints::CheckFields("ADD", $arFields)) {
             return false;
+        }
 
         $arInsert = $DB->PrepareInsert("b_forum_points", $arFields);
         $strSql = "INSERT INTO b_forum_points(" . $arInsert[0] . ") VALUES(" . $arInsert[1] . ")";
         $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-        $ID = IntVal($DB->LastID());
+        $ID = intval($DB->LastID());
 
         foreach ($arFields["LANG"] as $i => $val) {
             $arInsert = $DB->PrepareInsert("b_forum_points_lang", $arFields["LANG"][$i]);
@@ -34,17 +36,18 @@ class CForumPoints extends CAllForumPoints
 
 class CForumPoints2Post extends CAllForumPoints2Post
 {
-    function Add($arFields)
+    public static function Add($arFields)
     {
         global $DB;
 
-        if (!CForumPoints2Post::CheckFields("ADD", $arFields))
+        if (!CForumPoints2Post::CheckFields("ADD", $arFields)) {
             return false;
+        }
 
         $arInsert = $DB->PrepareInsert("b_forum_points2post", $arFields);
         $strSql = "INSERT INTO b_forum_points2post(" . $arInsert[0] . ") VALUES(" . $arInsert[1] . ")";
         $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-        $ID = intVal($DB->LastID());
+        $ID = intval($DB->LastID());
 
         return $ID;
     }
@@ -56,12 +59,13 @@ class CForumPoints2Post extends CAllForumPoints2Post
 
 class CForumUserPoints extends CAllForumUserPoints
 {
-    function Add($arFields)
+    public static function Add($arFields)
     {
         global $DB;
 
-        if (!CForumUserPoints::CheckFields("ADD", $arFields))
+        if (!CForumUserPoints::CheckFields("ADD", $arFields)) {
             return false;
+        }
 
         $arInsert = $DB->PrepareInsert("b_forum_user_points", $arFields);
 
@@ -76,13 +80,14 @@ class CForumUserPoints extends CAllForumUserPoints
         $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 
         // Recount user points
-        if (intVal($arFields["TO_USER_ID"]) > 0) {
+        if (intval($arFields["TO_USER_ID"]) > 0) {
             $arUserFields = array(
-                "POINTS" => CForumUser::CountUserPoints($arFields["TO_USER_ID"]));
+                "POINTS" => CForumUser::CountUserPoints($arFields["TO_USER_ID"])
+            );
 
             $arUser = CForumUser::GetByUSER_ID($arFields["TO_USER_ID"]);
             if ($arUser) {
-                CForumUser::Update(intVal($arUser["ID"]), $arUserFields);
+                CForumUser::Update(intval($arUser["ID"]), $arUserFields);
             } else {
                 $arUserFields["USER_ID"] = $arFields["TO_USER_ID"];
                 $ID_tmp = CForumUser::Add($arUserFields);
@@ -91,5 +96,3 @@ class CForumUserPoints extends CAllForumUserPoints
         return true;
     }
 }
-
-?>

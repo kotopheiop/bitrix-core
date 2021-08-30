@@ -30,40 +30,52 @@ class AgreementTable extends Entity\DataManager
     public static function getMap()
     {
         return array(
-            new Entity\IntegerField('ID', array(
+            new Entity\IntegerField(
+                'ID', array(
                 'primary' => true,
                 'autocomplete' => true
-            )),
-            new Entity\IntegerField('USER_ID', array(
+            )
+            ),
+            new Entity\IntegerField(
+                'USER_ID', array(
                 'required' => true
-            )),
-            new Entity\StringField('NAME', array(
+            )
+            ),
+            new Entity\StringField(
+                'NAME', array(
                 'validation' => function () {
                     return array(
                         new Entity\Validator\Length(null, 100),
                     );
                 }
-            )),
-            new Entity\StringField('EMAIL', array(
-                'required' => true,
+            )
+            ),
+            new Entity\StringField(
+                'EMAIL', array(
+                'required' => false,
                 'validation' => function () {
                     return array(
                         new Entity\Validator\Length(null, 255),
                     );
                 }
-            )),
-            new Entity\DatetimeField('DATE', array(
+            )
+            ),
+            new Entity\DatetimeField(
+                'DATE', array(
                 'required' => true,
                 'default_value' => new DateTime()
-            )),
-            new Entity\StringField('IP_ADDRESS', array(
+            )
+            ),
+            new Entity\StringField(
+                'IP_ADDRESS', array(
                 'required' => true,
                 'validation' => function () {
                     return array(
                         new Entity\Validator\Length(null, 39),
                     );
                 }
-            )),
+            )
+            ),
         );
     }
 }

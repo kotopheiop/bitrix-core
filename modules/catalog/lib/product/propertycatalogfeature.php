@@ -66,15 +66,18 @@ if (Loader::includeModule('iblock')) {
         public static function getBasketPropertyCodes($iblockId, array $parameters = [])
         {
             $iblockId = (int)$iblockId;
-            if ($iblockId <= 0)
+            if ($iblockId <= 0) {
                 return null;
+            }
 
             $catalog = \CCatalogSku::GetInfoByIBlock($iblockId);
-            if (empty($catalog))
+            if (empty($catalog)) {
                 return null;
+            }
 
-            if (!self::isEnabledFeatures())
+            if (!self::isEnabledFeatures()) {
                 return self::getBasketPropertyByTypes($catalog, $parameters);
+            }
 
             $filter = null;
             switch ($catalog['CATALOG_TYPE']) {
@@ -107,14 +110,15 @@ if (Loader::includeModule('iblock')) {
                 case \CCatalogSku::TYPE_OFFERS:
                     $filter = [
                         '!=PROPERTY.PROPERTY_TYPE' => Iblock\PropertyTable::TYPE_FILE,
-                        '!=ID' => $catalog['SKU_PROPERTY_ID']
+                        '!=PROPERTY.ID' => $catalog['SKU_PROPERTY_ID']
                     ];
                     break;
             }
             unset($catalog);
 
-            if ($filter === null)
+            if ($filter === null) {
                 return null;
+            }
 
             $filter['=MODULE_ID'] = 'catalog';
             $filter['=FEATURE_ID'] = self::FEATURE_ID_BASKET_PROPERTY;
@@ -141,15 +145,18 @@ if (Loader::includeModule('iblock')) {
         public static function getOfferTreePropertyCodes($iblockId, array $parameters = [])
         {
             $iblockId = (int)$iblockId;
-            if ($iblockId <= 0)
+            if ($iblockId <= 0) {
                 return null;
+            }
 
             $catalog = \CCatalogSku::GetInfoByOfferIBlock($iblockId);
-            if (empty($catalog))
+            if (empty($catalog)) {
                 return null;
+            }
 
-            if (!self::isEnabledFeatures())
+            if (!self::isEnabledFeatures()) {
                 return self::getOfferTreePropertyByTypes($catalog, $parameters);
+            }
 
             $filter = [
                 '=MODULE_ID' => 'catalog',
@@ -257,13 +264,16 @@ if (Loader::includeModule('iblock')) {
             }
             $filter['=ACTIVE'] = 'Y';
 
-            $iterator = Iblock\PropertyTable::getList([
-                'select' => ['ID', 'CODE', 'SORT'],
-                'filter' => $filter,
-                'order' => ['SORT' => 'ASC', 'ID' => 'ASC']
-            ]);
-            while ($row = $iterator->fetch())
+            $iterator = Iblock\PropertyTable::getList(
+                [
+                    'select' => ['ID', 'CODE', 'SORT'],
+                    'filter' => $filter,
+                    'order' => ['SORT' => 'ASC', 'ID' => 'ASC']
+                ]
+            );
+            while ($row = $iterator->fetch()) {
                 $result[(int)$row['ID']] = self::getPropertyCode($row, $getCode);
+            }
             unset($row, $iterator);
             unset($filter, $getCode);
 
@@ -309,13 +319,16 @@ if (Loader::includeModule('iblock')) {
                     ]
                 ]
             ];
-            $iterator = Iblock\PropertyTable::getList([
-                'select' => ['ID', 'CODE', 'SORT'],
-                'filter' => $filter,
-                'order' => ['SORT' => 'ASC', 'ID' => 'ASC']
-            ]);
-            while ($row = $iterator->fetch())
+            $iterator = Iblock\PropertyTable::getList(
+                [
+                    'select' => ['ID', 'CODE', 'SORT'],
+                    'filter' => $filter,
+                    'order' => ['SORT' => 'ASC', 'ID' => 'ASC']
+                ]
+            );
+            while ($row = $iterator->fetch()) {
                 $result[(int)$row['ID']] = self::getPropertyCode($row, $getCode);
+            }
             unset($row, $iterator);
             unset($filter, $getCode);
 
@@ -332,23 +345,28 @@ if (Loader::includeModule('iblock')) {
          */
         private static function checkBasketProperty(array $property, array $description)
         {
-            if (!isset($property['IBLOCK_ID']))
+            if (!isset($property['IBLOCK_ID'])) {
                 return false;
+            }
             $catalogType = null;
             if ((int)$property['IBLOCK_ID'] > 0) {
                 $catalog = \CCatalogSku::GetInfoByIBlock($property['IBLOCK_ID']);
-                if (empty($catalog))
+                if (empty($catalog)) {
                     return false;
+                }
                 $catalogType = $catalog['CATALOG_TYPE'];
             } else {
                 return false;
             }
-            if ($catalogType === null)
+            if ($catalogType === null) {
                 return false;
-            if (!isset($property['PROPERTY_TYPE']))
+            }
+            if (!isset($property['PROPERTY_TYPE'])) {
                 return false;
-            if (!isset($property['MULTIPLE']))
+            }
+            if (!isset($property['MULTIPLE'])) {
                 return false;
+            }
 
             switch ($catalogType) {
                 case \CCatalogSku::TYPE_PRODUCT:
@@ -361,21 +379,24 @@ if (Loader::includeModule('iblock')) {
                             && $property['PROPERTY_TYPE'] !== Iblock\PropertyTable::TYPE_LIST
                             && $property['PROPERTY_TYPE'] !== Iblock\PropertyTable::TYPE_NUMBER
                             && $property['PROPERTY_TYPE'] !== Iblock\PropertyTable::TYPE_STRING
-                        )
+                        ) {
                             return false;
+                        }
                     } elseif ($property['MULTIPLE'] == 'N') {
                         if (
                             $property['PROPERTY_TYPE'] !== Iblock\PropertyTable::TYPE_ELEMENT
                             && $property['PROPERTY_TYPE'] !== Iblock\PropertyTable::TYPE_LIST
-                        )
+                        ) {
                             return false;
+                        }
                     } else {
                         return false;
                     }
                     break;
                 case \CCatalogSku::TYPE_OFFERS:
-                    if ($property['PROPERTY_TYPE'] == Iblock\PropertyTable::TYPE_FILE)
+                    if ($property['PROPERTY_TYPE'] == Iblock\PropertyTable::TYPE_FILE) {
                         return false;
+                    }
                     break;
             }
 
@@ -392,12 +413,14 @@ if (Loader::includeModule('iblock')) {
          */
         private static function checkOfferTreeProperty(array $property, array $description)
         {
-            if (!isset($property['IBLOCK_ID']))
+            if (!isset($property['IBLOCK_ID'])) {
                 return false;
+            }
             if ((int)$property['IBLOCK_ID'] > 0) {
                 $catalog = \CCatalogSku::GetInfoByOfferIBlock($property['IBLOCK_ID']);
-                if (empty($catalog))
+                if (empty($catalog)) {
                     return false;
+                }
             } else {
                 return false;
             }
@@ -409,18 +432,22 @@ if (Loader::includeModule('iblock')) {
                     && $property['PROPERTY_TYPE'] != Iblock\PropertyTable::TYPE_LIST
                     && $property['PROPERTY_TYPE'] != Iblock\PropertyTable::TYPE_STRING
                 )
-            )
+            ) {
                 return false;
+            }
             if ($property['PROPERTY_TYPE'] == Iblock\PropertyTable::TYPE_ELEMENT) {
-                if (isset($property['USER_TYPE']) && $property['USER_TYPE'] == \CIBlockPropertySKU::USER_TYPE)
+                if (isset($property['USER_TYPE']) && $property['USER_TYPE'] == \CIBlockPropertySKU::USER_TYPE) {
                     return false;
+                }
             }
             if ($property['PROPERTY_TYPE'] == Iblock\PropertyTable::TYPE_STRING) {
-                if (!isset($property['USER_TYPE']) || $property['USER_TYPE'] != 'directory')
+                if (!isset($property['USER_TYPE']) || $property['USER_TYPE'] != 'directory') {
                     return false;
+                }
             }
-            if (!isset($property['MULTIPLE']) || $property['MULTIPLE'] != 'N')
+            if (!isset($property['MULTIPLE']) || $property['MULTIPLE'] != 'N') {
                 return false;
+            }
 
             return true;
         }

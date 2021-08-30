@@ -46,8 +46,12 @@ final class ManagerImport extends ManagerBase
      * @throws ArgumentOutOfRangeException
      * @internal
      */
-    static public function registerInstance($typeId, ISettingsImport $settings, ICollision $collision = null, ICriterion $criterion = null)
-    {
+    static public function registerInstance(
+        $typeId,
+        ISettingsImport $settings,
+        ICollision $collision = null,
+        ICriterion $criterion = null
+    ) {
         static::IsDefinedTypeId($typeId);
 
         if (self::$instance[$typeId] === null) {

@@ -26,7 +26,11 @@ class EntityImportFactory
         }
 
         if (!Exchange\EntityType::IsDefined($entityTypeID)) {
-            throw new Main\ArgumentOutOfRangeException('Is not defined', Exchange\EntityType::FIRST, Exchange\EntityType::LAST);
+            throw new Main\ArgumentOutOfRangeException(
+                'Is not defined',
+                Exchange\EntityType::FIRST,
+                Exchange\EntityType::LAST
+            );
         }
 
         if ($entityTypeID === Exchange\EntityType::ORDER) {
@@ -42,7 +46,11 @@ class EntityImportFactory
         } elseif ($entityTypeID === Exchange\EntityType::USER_PROFILE) {
             return new Exchange\Entity\UserProfileImport();
         } else {
-            throw new Main\NotSupportedException("Entity type: '" . Exchange\EntityType::ResolveName($entityTypeID) . "' is not supported in current context");
+            throw new Main\NotSupportedException(
+                "Entity type: '" . Exchange\EntityType::ResolveName(
+                    $entityTypeID
+                ) . "' is not supported in current context"
+            );
         }
     }
 }

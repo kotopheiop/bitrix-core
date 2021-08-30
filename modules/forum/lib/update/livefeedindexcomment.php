@@ -30,7 +30,7 @@ final class LivefeedIndexComment extends Stepper
         $return = false;
 
         $params = Option::get("forum", "livefeedindexcomment", "");
-        $params = ($params !== "" ? @unserialize($params) : array());
+        $params = ($params !== "" ? @unserialize($params, ["allowed_classes" => false]) : array());
         $params = (is_array($params) ? $params : array());
         if (empty($params)) {
             $params = array(
@@ -51,25 +51,29 @@ final class LivefeedIndexComment extends Stepper
             $result["steps"] = "";
             $result["count"] = $params["count"];
 
-            $res = LogCommentTable::getList(array(
-                'order' => array('ID' => 'ASC'),
-                'filter' => array(
-                    '>ID' => $params["lastId"],
-                    '@EVENT_ID' => Integration\Socialnetwork\LogComment::getEventIdList(),
-                    '!SOURCE_ID' => false
-                ),
-                'select' => array('ID', 'EVENT_ID', 'SOURCE_ID'),
-                'offset' => 0,
-                'limit' => 100
-            ));
+            $res = LogCommentTable::getList(
+                array(
+                    'order' => array('ID' => 'ASC'),
+                    'filter' => array(
+                        '>ID' => $params["lastId"],
+                        '@EVENT_ID' => Integration\Socialnetwork\LogComment::getEventIdList(),
+                        '!SOURCE_ID' => false
+                    ),
+                    'select' => array('ID', 'EVENT_ID', 'SOURCE_ID'),
+                    'offset' => 0,
+                    'limit' => 100
+                )
+            );
 
             $found = false;
             while ($record = $res->fetch()) {
-                LogIndex::setIndex(array(
-                    'itemType' => LogIndexTable::ITEM_TYPE_COMMENT,
-                    'itemId' => $record['ID'],
-                    'fields' => $record
-                ));
+                LogIndex::setIndex(
+                    array(
+                        'itemType' => LogIndexTable::ITEM_TYPE_COMMENT,
+                        'itemId' => $record['ID'],
+                        'fields' => $record
+                    )
+                );
 
                 $params["lastId"] = $record['ID'];
                 $params["number"]++;

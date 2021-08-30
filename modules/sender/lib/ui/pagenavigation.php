@@ -31,13 +31,16 @@ class PageNavigation extends UI\PageNavigation
         }
     }
 
-    protected function setSessionVar($page)
+    protected function setSessionVar($page = 1, $allRecords = false)
     {
         if (!isset($_SESSION[$this->sessionKeyName])) {
             $_SESSION[$this->sessionKeyName] = array();
         }
 
-        $_SESSION[$this->sessionKeyName][$this->id] = $page;
+        $_SESSION[$this->sessionKeyName][$this->id] = [
+            'page' => $page,
+            'allRecords' => $allRecords
+        ];
     }
 
     protected function getSessionVar()
@@ -70,12 +73,13 @@ class PageNavigation extends UI\PageNavigation
         }
 
         if ($page > 0) {
-            $this->setSessionVar($page);
+            $this->setSessionVar($page, $this->allRecords);
         } else {
-            $page = $this->getSessionVar();
+            $page = $this->getSessionVar()['page'];
         }
 
         $page = $page > 0 ? $page : 1;
         $this->setCurrentPage($page);
+        $this->allRecords = $this->getSessionVar()['allRecords'];
     }
 }

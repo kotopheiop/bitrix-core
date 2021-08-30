@@ -26,8 +26,8 @@ class HttpCookies extends \Bitrix\Main\Type\Dictionary
 
     public function addFromString($str)
     {
-        if (($pos = strpos($str, ';')) !== false && $pos > 0) {
-            $cookie = trim(substr($str, 0, $pos));
+        if (($pos = mb_strpos($str, ';')) !== false && $pos > 0) {
+            $cookie = trim(mb_substr($str, 0, $pos));
         } else {
             $cookie = trim($str);
         }

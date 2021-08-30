@@ -1,4 +1,5 @@
 <?
+
 define("STOP_STATISTICS", true);
 define("NOT_CHECK_PERMISSIONS", true);
 set_time_limit(1800);
@@ -22,21 +23,25 @@ function CheckCacheFiles_Rec($strDir)
 
     if ($handle = @opendir($strDir)) {
         while (($file = readdir($handle)) !== false) {
-            if ($file == "." || $file == "..") continue;
+            if ($file == "." || $file == "..") {
+                continue;
+            }
 
             if (is_dir($strDir . "/" . $file)) {
                 CheckCacheFiles_Rec($strDir . "/" . $file);
             } elseif (is_file($strDir . "/" . $file)) {
                 $ext = "";
                 $ext_pos = bxstrrpos($file, ".");
-                if ($ext_pos !== false)
+                if ($ext_pos !== false) {
                     $ext = substr($file, $ext_pos + 1);
+                }
 
-                $bCacheExp = False;
-                if ($ext == "html")
+                $bCacheExp = false;
+                if ($ext == "html") {
                     $bCacheExp = CPageCache::IsCacheExpired($strDir . "/" . $file);
-                elseif ($ext == "php")
+                } elseif ($ext == "php") {
                     $bCacheExp = CPHPCache::IsCacheExpired($strDir . "/" . $file);
+                }
 
                 if ($bCacheExp) {
                     $iOldNum++;
@@ -51,11 +56,13 @@ function CheckCacheFiles_Rec($strDir)
 
     clearstatcache();
 
-    $bEmptyFolder = True;
+    $bEmptyFolder = true;
     if ($handle = @opendir($strDir)) {
         while (($file = readdir($handle)) !== false) {
-            if ($file == "." || $file == "..") continue;
-            $bEmptyFolder = False;
+            if ($file == "." || $file == "..") {
+                continue;
+            }
+            $bEmptyFolder = false;
             break;
         }
     }

@@ -1,4 +1,5 @@
 <?
+
 global $DB, $MESS, $APPLICATION;
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/filter_tools.php");
 
@@ -7,7 +8,7 @@ IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/form/errors.p
 
 define('FORM_CRM_DEFAULT_PATH', '/crm/configs/import/lead.php');
 
-$DBType = strtolower($DB->type);
+$DBType = mb_strtolower($DB->type);
 
 CModule::AddAutoloadClasses(
     "form",
@@ -55,12 +56,12 @@ $path = $_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/form/validators";
 $handle = opendir($path);
 if ($handle) {
     while (($filename = readdir($handle)) !== false) {
-        if ($filename == "." || $filename == "..")
+        if ($filename == "." || $filename == "..") {
             continue;
+        }
 
-        if (!is_dir($path . "/" . $filename) && substr($filename, 0, 4) == "val_") {
+        if (!is_dir($path . "/" . $filename) && mb_substr($filename, 0, 4) == "val_") {
             require_once($path . "/" . $filename);
         }
     }
 }
-?>

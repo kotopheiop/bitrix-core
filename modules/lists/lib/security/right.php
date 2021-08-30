@@ -42,15 +42,21 @@ class Right implements Errorable
         if ($this->listsPermission < 0) {
             switch ($this->listsPermission) {
                 case \CListPermissions::WRONG_IBLOCK_TYPE:
-                    $this->errorCollection->setError(new Error("Invalid iblock type ID"), self::ACCESS_DENIED
+                    $this->errorCollection->setError(
+                        new Error("Invalid iblock type ID"),
+                        self::ACCESS_DENIED
                     );
                     break;
                 case \CListPermissions::WRONG_IBLOCK:
-                    $this->errorCollection->setError(new Error("Invalid list ID"), self::ACCESS_DENIED
+                    $this->errorCollection->setError(
+                        new Error("Invalid list ID"),
+                        self::ACCESS_DENIED
                     );
                     break;
                 case \CListPermissions::LISTS_FOR_SONET_GROUP_DISABLED:
-                    $this->errorCollection->setError(new Error("Lists for this group is disabled", self::ACCESS_DENIED));
+                    $this->errorCollection->setError(
+                        new Error("Lists for this group is disabled", self::ACCESS_DENIED)
+                    );
                     break;
                 default:
                     $this->errorCollection->setError(new Error("Access denied", self::ACCESS_DENIED));

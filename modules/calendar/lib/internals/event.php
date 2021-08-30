@@ -27,166 +27,254 @@ class EventTable extends Main\Entity\DataManager
     public static function getMap()
     {
         return array(
-            new Entity\IntegerField('ID', array(
+            new Entity\IntegerField(
+                'ID', array(
                 'primary' => true,
                 'autocomplete' => true,
                 'title' => Loc::getMessage('SECTION_ENTITY_ID_FIELD'),
-            )),
-            new Entity\IntegerField('PARENT_ID', array(
+            )
+            ),
+            new Entity\IntegerField(
+                'PARENT_ID', array(
                 'title' => Loc::getMessage('SECTION_ENTITY_PARENT_ID_FIELD'),
-            )),
-            new Entity\BooleanField('ACTIVE', array(
+            )
+            ),
+            new Entity\BooleanField(
+                'ACTIVE', array(
                 'values' => array('N', 'Y'),
                 'title' => Loc::getMessage('SECTION_ENTITY_ACTIVE_FIELD'),
-            )),
-            new Entity\BooleanField('DELETED', array(
+            )
+            ),
+            new Entity\BooleanField(
+                'DELETED', array(
                 'data_type' => 'boolean',
                 'values' => array('N', 'Y'),
                 'title' => Loc::getMessage('SECTION_ENTITY_DELETED_FIELD'),
-            )),
-            new Entity\StringField('CAL_TYPE', array(
+            )
+            ),
+            new Entity\StringField(
+                'CAL_TYPE', array(
                 'validation' => array(__CLASS__, 'validateCalType'),
                 'title' => Loc::getMessage('SECTION_ENTITY_CAL_TYPE_FIELD'),
-            )),
-            new Entity\IntegerField('OWNER_ID', array(
+            )
+            ),
+            new Entity\IntegerField(
+                'OWNER_ID', array(
                 'title' => Loc::getMessage('SECTION_ENTITY_OWNER_ID_FIELD'),
-            )),
-            new Entity\StringField('NAME', array(
+            )
+            ),
+            new Entity\StringField(
+                'NAME', array(
                 'validation' => array(__CLASS__, 'validateName'),
                 'title' => Loc::getMessage('SECTION_ENTITY_NAME_FIELD'),
-            )),
-            new Entity\DatetimeField('DATE_FROM', array(
+            )
+            ),
+            new Entity\DatetimeField(
+                'DATE_FROM', array(
                 'title' => Loc::getMessage('SECTION_ENTITY_DATE_FROM_FIELD'),
-            )),
-            new Entity\DatetimeField('DATE_TO', array(
+            )
+            ),
+            new Entity\DatetimeField(
+                'DATE_TO', array(
                 'title' => Loc::getMessage('SECTION_ENTITY_DATE_TO_FIELD'),
-            )),
-            new Entity\StringField('TZ_FROM', array(
+            )
+            ),
+            new Entity\StringField(
+                'TZ_FROM', array(
                 'validation' => array(__CLASS__, 'validateTzFrom'),
                 'title' => Loc::getMessage('SECTION_ENTITY_TZ_FROM_FIELD'),
-            )),
-            new Entity\StringField('TZ_TO', array(
+            )
+            ),
+            new Entity\StringField(
+                'TZ_TO', array(
                 'validation' => array(__CLASS__, 'validateTzTo'),
                 'title' => Loc::getMessage('SECTION_ENTITY_TZ_TO_FIELD'),
-            )),
-            new Entity\IntegerField('TZ_OFFSET_FROM', array(
+            )
+            ),
+            new Entity\IntegerField(
+                'TZ_OFFSET_FROM', array(
                 'title' => Loc::getMessage('SECTION_ENTITY_TZ_OFFSET_FROM_FIELD'),
-            )),
-            new Entity\IntegerField('TZ_OFFSET_TO', array(
+            )
+            ),
+            new Entity\IntegerField(
+                'TZ_OFFSET_TO', array(
                 'data_type' => 'integer',
                 'title' => Loc::getMessage('SECTION_ENTITY_TZ_OFFSET_TO_FIELD'),
-            )),
-            new Entity\IntegerField('DATE_FROM_TS_UTC', array(
+            )
+            ),
+            new Entity\IntegerField(
+                'DATE_FROM_TS_UTC', array(
                 'title' => Loc::getMessage('SECTION_ENTITY_DATE_FROM_TS_UTC_FIELD'),
-            )),
-            new Entity\IntegerField('DATE_TO_TS_UTC', array(
+            )
+            ),
+            new Entity\IntegerField(
+                'DATE_TO_TS_UTC', array(
                 'title' => Loc::getMessage('SECTION_ENTITY_DATE_TO_TS_UTC_FIELD'),
-            )),
-            new Entity\BooleanField('DT_SKIP_TIME', array(
+            )
+            ),
+            new Entity\BooleanField(
+                'DT_SKIP_TIME', array(
                 'values' => array('N', 'Y'),
                 'title' => Loc::getMessage('SECTION_ENTITY_DT_SKIP_TIME_FIELD'),
-            )),
-            new Entity\IntegerField('DT_LENGTH', array(
+            )
+            ),
+            new Entity\IntegerField(
+                'DT_LENGTH', array(
                 'title' => Loc::getMessage('SECTION_ENTITY_DT_LENGTH_FIELD'),
-            )),
-            new Entity\IntegerField('CREATED_BY', array(
+            )
+            ),
+            new Entity\IntegerField(
+                'CREATED_BY', array(
                 'required' => true,
                 'title' => Loc::getMessage('SECTION_ENTITY_CREATED_BY_FIELD'),
-            )),
-            new Entity\DatetimeField('DATE_CREATE', array(
+            )
+            ),
+            new Entity\DatetimeField(
+                'DATE_CREATE', array(
                 'title' => Loc::getMessage('SECTION_ENTITY_DATE_CREATE_FIELD'),
-            )),
-            new Entity\DatetimeField('TIMESTAMP_X', array(
+            )
+            ),
+            new Entity\DatetimeField(
+                'TIMESTAMP_X', array(
                 'title' => Loc::getMessage('SECTION_ENTITY_TIMESTAMP_X_FIELD'),
-            )),
-            new Entity\TextField('DESCRIPTION', array(
+            )
+            ),
+            new Entity\TextField(
+                'DESCRIPTION', array(
                 'title' => Loc::getMessage('SECTION_ENTITY_DESCRIPTION_FIELD'),
-            )),
-            new Entity\StringField('PRIVATE_EVENT', array(
+            )
+            ),
+            new Entity\StringField(
+                'PRIVATE_EVENT', array(
                 'validation' => array(__CLASS__, 'validatePrivateEvent'),
                 'title' => Loc::getMessage('SECTION_ENTITY_PRIVATE_EVENT_FIELD'),
-            )),
-            new Entity\StringField('ACCESSIBILITY', array(
+            )
+            ),
+            new Entity\StringField(
+                'ACCESSIBILITY', array(
                 'validation' => array(__CLASS__, 'validateAccessibility'),
                 'title' => Loc::getMessage('SECTION_ENTITY_ACCESSIBILITY_FIELD'),
-            )),
-            new Entity\StringField('IMPORTANCE', array(
+            )
+            ),
+            new Entity\StringField(
+                'IMPORTANCE', array(
                 'validation' => array(__CLASS__, 'validateImportance'),
                 'title' => Loc::getMessage('SECTION_ENTITY_IMPORTANCE_FIELD'),
-            )),
-            new Entity\StringField('IS_MEETING', array(
+            )
+            ),
+            new Entity\StringField(
+                'IS_MEETING', array(
                 'validation' => array(__CLASS__, 'validateIsMeeting'),
                 'title' => Loc::getMessage('SECTION_ENTITY_IS_MEETING_FIELD'),
-            )),
-            new Entity\StringField('MEETING_STATUS', array(
+            )
+            ),
+            new Entity\StringField(
+                'MEETING_STATUS', array(
                 'validation' => array(__CLASS__, 'validateMeetingStatus'),
                 'title' => Loc::getMessage('SECTION_ENTITY_MEETING_STATUS_FIELD'),
-            )),
-            new Entity\IntegerField('MEETING_HOST', array(
+            )
+            ),
+            new Entity\IntegerField(
+                'MEETING_HOST', array(
                 'title' => Loc::getMessage('SECTION_ENTITY_MEETING_HOST_FIELD'),
-            )),
-            new Entity\StringField('MEETING', array(
+            )
+            ),
+            new Entity\StringField(
+                'MEETING', array(
                 'validation' => array(__CLASS__, 'validateMeeting'),
                 'title' => Loc::getMessage('SECTION_ENTITY_MEETING_FIELD'),
-            )),
-            new Entity\StringField('LOCATION', array(
+            )
+            ),
+            new Entity\StringField(
+                'LOCATION', array(
                 'validation' => array(__CLASS__, 'validateLocation'),
                 'title' => Loc::getMessage('SECTION_ENTITY_LOCATION_FIELD'),
-            )),
-            new Entity\StringField('REMIND', array(
+            )
+            ),
+            new Entity\StringField(
+                'REMIND', array(
                 'validation' => array(__CLASS__, 'validateRemind'),
                 'title' => Loc::getMessage('SECTION_ENTITY_REMIND_FIELD'),
-            )),
-            new Entity\StringField('COLOR', array(
+            )
+            ),
+            new Entity\StringField(
+                'COLOR', array(
                 'validation' => array(__CLASS__, 'validateColor'),
                 'title' => Loc::getMessage('SECTION_ENTITY_COLOR_FIELD'),
-            )),
-            new Entity\StringField('TEXT_COLOR', array(
+            )
+            ),
+            new Entity\StringField(
+                'TEXT_COLOR', array(
                 'validation' => array(__CLASS__, 'validateTextColor'),
                 'title' => Loc::getMessage('SECTION_ENTITY_TEXT_COLOR_FIELD'),
-            )),
-            new Entity\StringField('RRULE', array(
+            )
+            ),
+            new Entity\StringField(
+                'RRULE', array(
                 'validation' => array(__CLASS__, 'validateRrule'),
                 'title' => Loc::getMessage('SECTION_ENTITY_RRULE_FIELD'),
-            )),
-            new Entity\TextField('EXDATE', array(
+            )
+            ),
+            new Entity\TextField(
+                'EXDATE', array(
                 'title' => Loc::getMessage('SECTION_ENTITY_EXDATE_FIELD'),
-            )),
-            new Entity\StringField('DAV_XML_ID', array(
+            )
+            ),
+            new Entity\StringField(
+                'DAV_XML_ID', array(
                 'validation' => array(__CLASS__, 'validateDavXmlId'),
                 'title' => Loc::getMessage('SECTION_ENTITY_DAV_XML_ID_FIELD'),
-            )),
-            new Entity\StringField('DAV_EXCH_LABEL', array(
+            )
+            ),
+            new Entity\StringField(
+                'DAV_EXCH_LABEL', array(
                 'validation' => array(__CLASS__, 'validateDavExchLabel'),
                 'title' => Loc::getMessage('SECTION_ENTITY_DAV_EXCH_LABEL_FIELD'),
-            )),
-            new Entity\StringField('VERSION', array(
+            )
+            ),
+            new Entity\StringField(
+                'VERSION', array(
                 'validation' => array(__CLASS__, 'validateVersion'),
                 'title' => Loc::getMessage('SECTION_ENTITY_VERSION_FIELD'),
-            )),
-            new Entity\StringField('ATTENDEES_CODES', array(
+            )
+            ),
+            new Entity\StringField(
+                'ATTENDEES_CODES', array(
                 'validation' => array(__CLASS__, 'validateAttendeesCodes'),
                 'title' => Loc::getMessage('SECTION_ENTITY_ATTENDEES_CODES_FIELD'),
-            )),
-            new Entity\IntegerField('RECURRENCE_ID', array(
+            )
+            ),
+            new Entity\IntegerField(
+                'RECURRENCE_ID', array(
                 'title' => Loc::getMessage('SECTION_ENTITY_RECURRENCE_ID_FIELD'),
-            )),
-            new Entity\IntegerField('RELATIONS', array(
+            )
+            ),
+            new Entity\IntegerField(
+                'RELATIONS', array(
                 'title' => Loc::getMessage('SECTION_ENTITY_RELATIONS_FIELD'),
-            )),
-            new Entity\TextField('SEARCHABLE_CONTENT', array(
+            )
+            ),
+            new Entity\TextField(
+                'SEARCHABLE_CONTENT', array(
                 'title' => Loc::getMessage('SECTION_ENTITY_SEARCHABLE_CONTENT_FIELD'),
-            )),
-            new Entity\IntegerField('SECTION_ID', array(
+            )
+            ),
+            new Entity\IntegerField(
+                'SECTION_ID', array(
                 'title' => Loc::getMessage('SECTION_ENTITY_SECTION_ID_FIELD'),
-            )),
-            new Entity\StringField('G_EVENT_ID', array(
+            )
+            ),
+            new Entity\StringField(
+                'G_EVENT_ID', array(
                 'validation' => array(__CLASS__, 'validateGEventId'),
                 'title' => Loc::getMessage('SECTION_ENTITY_G_EVENT_ID_FIELD'),
-            )),
-            new Entity\DatetimeField('ORIGINAL_DATE_FROM', array(
+            )
+            ),
+            new Entity\DatetimeField(
+                'ORIGINAL_DATE_FROM', array(
                 'title' => Loc::getMessage('SECTION_ENTITY_ORIGINAL_DATE_FROM_FIELD'),
-            )),
+            )
+            ),
         );
     }
 
@@ -404,5 +492,12 @@ class EventTable extends Main\Entity\DataManager
         return array(
             new Main\Entity\Validator\Length(null, 255),
         );
+    }
+
+    public static function validateMeetingStatus()
+    {
+        return [
+            new Main\Entity\Validator\Length(null, 1),
+        ];
     }
 }

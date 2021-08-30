@@ -56,10 +56,11 @@ class CCloudSecurityService_HotBox
                 && isset($Credentials["AccessKey"][0])
                 && is_array($Credentials["AccessKey"][0])
                 && isset($Credentials["AccessKey"][0]["#"])
-            )
+            ) {
                 $AccessKeyId = $Credentials["AccessKey"][0]["#"];
-            else
+            } else {
                 return 1;
+            }
 
             if (
                 isset($Credentials["SecretKey"])
@@ -67,10 +68,11 @@ class CCloudSecurityService_HotBox
                 && isset($Credentials["SecretKey"][0])
                 && is_array($Credentials["SecretKey"][0])
                 && isset($Credentials["SecretKey"][0]["#"])
-            )
+            ) {
                 $SecretAccessKey = $Credentials["SecretKey"][0]["#"];
-            else
+            } else {
                 return 2;
+            }
 
             return array(
                 "ACCESS_KEY" => $AccessKeyId,

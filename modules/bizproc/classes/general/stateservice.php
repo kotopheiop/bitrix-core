@@ -1,4 +1,5 @@
 <?
+
 include_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/bizproc/classes/general/runtimeservice.php");
 
 use Bitrix\Bizproc\Workflow\Entity\WorkflowStateTable;
@@ -14,12 +15,13 @@ class CBPAllStateService
         global $DB;
 
         $workflowId = trim($workflowId);
-        if (strlen($workflowId) <= 0)
+        if ($workflowId == '') {
             throw new Exception("workflowId");
+        }
 
         $DB->Query(
             "UPDATE b_bp_workflow_state SET " .
-            "	STATE_TITLE = " . (strlen($stateTitle) > 0 ? "'" . $DB->ForSql($stateTitle) . "'" : "NULL") . ", " .
+            "	STATE_TITLE = " . ($stateTitle <> '' ? "'" . $DB->ForSql($stateTitle) . "'" : "NULL") . ", " .
             "	MODIFIED = " . $DB->CurrentTimeFunction() . " " .
             "WHERE ID = '" . $DB->ForSql($workflowId) . "' "
         );
@@ -30,12 +32,15 @@ class CBPAllStateService
         global $DB;
 
         $workflowId = trim($workflowId);
-        if (strlen($workflowId) <= 0)
+        if ($workflowId == '') {
             throw new Exception("workflowId");
+        }
 
         // @TODO: add new logic to CBPSetPermissionsMode::Rewrite
         if (!is_array($bRewrite) && $bRewrite == true
-            || is_array($bRewrite) && isset($bRewrite['setMode']) && $bRewrite['setMode'] == CBPSetPermissionsMode::Clear) {
+            || is_array(
+                $bRewrite
+            ) && isset($bRewrite['setMode']) && $bRewrite['setMode'] == CBPSetPermissionsMode::Clear) {
             $DB->Query(
                 "DELETE FROM b_bp_workflow_permissions " .
                 "WHERE WORKFLOW_ID = '" . $DB->ForSql($workflowId) . "' "
@@ -45,14 +50,17 @@ class CBPAllStateService
         $documentService = $this->runtime->GetService("DocumentService");
         $documentService->SetPermissions($arState["DOCUMENT_ID"], $workflowId, $arStatePermissions, $bRewrite);
         $documentType = $documentService->GetDocumentType($arState["DOCUMENT_ID"]);
-        if ($documentType)
+        if ($documentType) {
             $arStatePermissions = $documentService->toInternalOperations($documentType, $arStatePermissions);
+        }
 
         foreach ($arStatePermissions as $permission => $arObjects) {
             foreach ($arObjects as $object) {
                 $DB->Query(
                     "INSERT INTO b_bp_workflow_permissions (WORKFLOW_ID, OBJECT_ID, PERMISSION) " .
-                    "VALUES ('" . $DB->ForSql($workflowId) . "', '" . $DB->ForSql($object) . "', '" . $DB->ForSql($permission) . "')"
+                    "VALUES ('" . $DB->ForSql($workflowId) . "', '" . $DB->ForSql($object) . "', '" . $DB->ForSql(
+                        $permission
+                    ) . "')"
                 );
             }
         }
@@ -63,12 +71,14 @@ class CBPAllStateService
         global $DB;
 
         $workflowId = trim($workflowId);
-        if (strlen($workflowId) <= 0)
+        if ($workflowId == '') {
             throw new Exception("workflowId");
+        }
 
         $db = $DB->Query("SELECT STATE_TITLE FROM b_bp_workflow_state WHERE ID = '" . $DB->ForSql($workflowId) . "' ");
-        if ($ar = $db->Fetch())
+        if ($ar = $db->Fetch()) {
             return $ar["STATE_TITLE"];
+        }
 
         return "";
     }
@@ -78,12 +88,18 @@ class CBPAllStateService
         global $DB;
 
         $workflowId = trim($workflowId);
-        if (strlen($workflowId) <= 0)
+        if ($workflowId == '') {
             throw new Exception("workflowId");
+        }
 
-        $db = $DB->Query("SELECT MODULE_ID, ENTITY, DOCUMENT_ID FROM b_bp_workflow_state WHERE ID = '" . $DB->ForSql($workflowId) . "' ");
-        if ($ar = $db->Fetch())
+        $db = $DB->Query(
+            "SELECT MODULE_ID, ENTITY, DOCUMENT_ID FROM b_bp_workflow_state WHERE ID = '" . $DB->ForSql(
+                $workflowId
+            ) . "' "
+        );
+        if ($ar = $db->Fetch()) {
             return array($ar["MODULE_ID"], $ar["ENTITY"], $ar["DOCUMENT_ID"]);
+        }
 
         return false;
     }
@@ -95,16 +111,19 @@ class CBPAllStateService
         $arDocumentId = CBPHelper::ParseDocumentId($documentId);
 
         $workflowId = trim($workflowId);
-        if (strlen($workflowId) <= 0)
+        if ($workflowId == '') {
             throw new Exception("workflowId");
+        }
 
         $workflowTemplateId = intval($workflowTemplateId);
-        if ($workflowTemplateId <= 0)
+        if ($workflowTemplateId <= 0) {
             throw new Exception("workflowTemplateId");
+        }
 
         $starterUserId = intval($starterUserId);
-        if ($starterUserId <= 0)
+        if ($starterUserId <= 0) {
             $starterUserId = "NULL";
+        }
 
         $dbResult = $DB->Query(
             "SELECT ID " .
@@ -112,16 +131,23 @@ class CBPAllStateService
             "WHERE ID = '" . $DB->ForSql($workflowId) . "' "
         );
 
-        if ($arResult = $dbResult->Fetch())
+        if ($arResult = $dbResult->Fetch()) {
             throw new Exception("WorkflowAlreadyExists");
+        }
 
         $DB->Query(
             "INSERT INTO b_bp_workflow_state (ID, MODULE_ID, ENTITY, DOCUMENT_ID, DOCUMENT_ID_INT, WORKFLOW_TEMPLATE_ID, MODIFIED, STARTED, STARTED_BY) " .
-            "VALUES ('" . $DB->ForSql($workflowId) . "', " . ((strlen($arDocumentId[0]) > 0) ? "'" . $DB->ForSql($arDocumentId[0]) . "'" : "NULL") . ", '" . $DB->ForSql($arDocumentId[1]) . "', '" . $DB->ForSql($arDocumentId[2]) . "', " . intval($arDocumentId[2]) . ", " . intval($workflowTemplateId) . ", " . $DB->CurrentTimeFunction() . ", " . $DB->CurrentTimeFunction() . ", " . $starterUserId . ")"
+            "VALUES ('" . $DB->ForSql($workflowId) . "', " . (($arDocumentId[0] <> '') ? "'" . $DB->ForSql(
+                    $arDocumentId[0]
+                ) . "'" : "NULL") . ", '" . $DB->ForSql($arDocumentId[1]) . "', '" . $DB->ForSql(
+                $arDocumentId[2]
+            ) . "', " . intval($arDocumentId[2]) . ", " . intval($workflowTemplateId) . ", " . $DB->CurrentTimeFunction(
+            ) . ", " . $DB->CurrentTimeFunction() . ", " . $starterUserId . ")"
         );
 
-        if (is_int($starterUserId))
+        if (is_int($starterUserId)) {
             self::cleanRunningCountersCache($starterUserId);
+        }
     }
 
     public static function DeleteWorkflow($workflowId)
@@ -129,12 +155,14 @@ class CBPAllStateService
         global $DB;
 
         $workflowId = trim($workflowId);
-        if (strlen($workflowId) <= 0)
+        if ($workflowId == '') {
             throw new Exception("workflowId");
+        }
 
         $info = self::getWorkflowStateInfo($workflowId);
-        if (!empty($info['STARTED_BY']))
+        if (!empty($info['STARTED_BY'])) {
             self::cleanRunningCountersCache($info['STARTED_BY']);
+        }
 
         $DB->Query(
             "DELETE FROM b_bp_workflow_permissions " .
@@ -161,8 +189,9 @@ class CBPAllStateService
                 self::cleanRunningCountersCache($userId);
             }
 
-            foreach (GetModuleEvents('bizproc', 'OnWorkflowComplete', true) as $event)
+            foreach (GetModuleEvents('bizproc', 'OnWorkflowComplete', true) as $event) {
                 ExecuteModuleEventEx($event, array($workflowId, $status));
+            }
         }
     }
 
@@ -177,7 +206,10 @@ class CBPAllStateService
                 "STATE_MODIFIED" => $arResult["MODIFIED"],
                 "STATE_NAME" => $arResult["STATE"],
                 "STATE_TITLE" => $arResult["STATE_TITLE"],
-                "STATE_PARAMETERS" => (strlen($arResult["STATE_PARAMETERS"]) > 0 ? unserialize($arResult["STATE_PARAMETERS"]) : array()),
+                "STATE_PARAMETERS" => ($arResult["STATE_PARAMETERS"] <> '' ? unserialize(
+                    $arResult["STATE_PARAMETERS"],
+                    ['allowed_classes' => false]
+                ) : array()),
                 "WORKFLOW_STATUS" => $arResult["STATUS"],
                 "STATE_PERMISSIONS" => array(),
                 "DOCUMENT_ID" => array($arResult["MODULE_ID"], $arResult["ENTITY"], $arResult["DOCUMENT_ID"]),
@@ -187,11 +219,12 @@ class CBPAllStateService
             );
         }
 
-        if (strlen($arResult["PERMISSION"]) > 0 && strlen($arResult["OBJECT_ID"]) > 0) {
-            $arResult["PERMISSION"] = strtolower($arResult["PERMISSION"]);
+        if ($arResult["PERMISSION"] <> '' && $arResult["OBJECT_ID"] <> '') {
+            $arResult["PERMISSION"] = mb_strtolower($arResult["PERMISSION"]);
 
-            if (!array_key_exists($arResult["PERMISSION"], $arStates[$arResult["ID"]]["STATE_PERMISSIONS"]))
+            if (!array_key_exists($arResult["PERMISSION"], $arStates[$arResult["ID"]]["STATE_PERMISSIONS"])) {
                 $arStates[$arResult["ID"]]["STATE_PERMISSIONS"][$arResult["PERMISSION"]] = array();
+            }
 
             $arStates[$arResult["ID"]]["STATE_PERMISSIONS"][$arResult["PERMISSION"]][] = $arResult["OBJECT_ID"];
         }
@@ -208,7 +241,9 @@ class CBPAllStateService
             "FROM b_bp_workflow_instance WI " .
             "WHERE WI.DOCUMENT_ID = '" . $DB->ForSql($arDocumentId[2]) . "' " .
             "	AND WI.ENTITY = '" . $DB->ForSql($arDocumentId[1]) . "' " .
-            "	AND WI.MODULE_ID " . ((strlen($arDocumentId[0]) > 0) ? "= '" . $DB->ForSql($arDocumentId[0]) . "'" : "IS NULL") .
+            "	AND WI.MODULE_ID " . (($arDocumentId[0] <> '') ? "= '" . $DB->ForSql(
+                    $arDocumentId[0]
+                ) . "'" : "IS NULL") .
             "	AND WI.STARTED_EVENT_TYPE <> " . (int)CBPDocumentEventType::Automation
         );
 
@@ -231,10 +266,22 @@ class CBPAllStateService
             $idsCondition[] = 'WS.DOCUMENT_ID = \'' . $DB->ForSql($id) . '\'';
         }
 
+        if (empty($idsCondition)) {
+            return [];
+        }
+
         $sqlAdditionalFilter = "";
-        $workflowId = trim($workflowId);
-        if (strlen($workflowId) > 0)
-            $sqlAdditionalFilter = " AND WS.ID = '" . $DB->ForSql($workflowId) . "' ";
+        if (is_array($workflowId) && count($workflowId) > 0) {
+            $workflowId = array_map(
+                function ($id) use ($DB) {
+                    return '\'' . $DB->ForSql((string)$id) . '\'';
+                },
+                $workflowId
+            );
+            $sqlAdditionalFilter = " AND WS.ID IN (" . implode(',', $workflowId) . ")";
+        } elseif (is_string($workflowId) && $workflowId) {
+            $sqlAdditionalFilter = " AND WS.ID = '" . $DB->ForSql(trim($workflowId)) . "' ";
+        }
 
         $dbResult = $DB->Query(
             "SELECT WS.ID, WS.WORKFLOW_TEMPLATE_ID, WS.STATE, WS.STATE_TITLE, WS.STATE_PARAMETERS, " .
@@ -248,28 +295,37 @@ class CBPAllStateService
             "	LEFT JOIN b_bp_workflow_instance WI ON (WS.ID = WI.ID) " .
             "WHERE (" . implode(' OR ', $idsCondition) . ") " .
             "	AND WS.ENTITY = '" . $DB->ForSql($arDocumentId[1]) . "' " .
-            "	AND WS.MODULE_ID " . ((strlen($arDocumentId[0]) > 0) ? "= '" . $DB->ForSql($arDocumentId[0]) . "'" : "IS NULL") . " " .
+            "	AND WS.MODULE_ID " . (($arDocumentId[0] <> '') ? "= '" . $DB->ForSql(
+                    $arDocumentId[0]
+                ) . "'" : "IS NULL") . " " .
             $sqlAdditionalFilter
         );
 
         $arStates = array();
-        while ($arResult = $dbResult->Fetch())
+        while ($arResult = $dbResult->Fetch()) {
             self::__ExtractState($arStates, $arResult);
+        }
 
         return $arStates;
     }
 
-    public static function getIdsByDocument(array $documentId)
+    public static function getIdsByDocument(array $documentId, int $limit = null)
     {
         $documentId = \CBPHelper::ParseDocumentId($documentId);
-        $rows = WorkflowStateTable::getList([
+        $params = [
             'select' => ['ID'],
             'filter' => [
                 '=MODULE_ID' => $documentId[0],
                 '=ENTITY' => $documentId[1],
                 '=DOCUMENT_ID' => $documentId[2]
             ]
-        ])->fetchAll();
+        ];
+
+        if ($limit) {
+            $params['limit'] = $limit;
+        }
+
+        $rows = WorkflowStateTable::getList($params)->fetchAll();
 
         return array_column($rows, 'ID');
     }
@@ -279,15 +335,19 @@ class CBPAllStateService
         global $DB;
 
         $workflowId = trim($workflowId);
-        if (strlen($workflowId) <= 0)
+        if ($workflowId == '') {
             throw new Exception("workflowId");
+        }
 
         $dbResult = $DB->Query(
             "SELECT WS.ID, WS.WORKFLOW_TEMPLATE_ID, WS.STATE, WS.STATE_TITLE, WS.STATE_PARAMETERS, " .
             "	" . $DB->DateToCharFunction("WS.MODIFIED", "FULL") . " as MODIFIED, " .
             "	WS.MODULE_ID, WS.ENTITY, WS.DOCUMENT_ID, " .
             "	WT.NAME, WT.DESCRIPTION, WP.OBJECT_ID, WP.PERMISSION, WI.STATUS, " .
-            "	WS.STARTED, WS.STARTED_BY, " . $DB->DateToCharFunction("WS.STARTED", "FULL") . " as STARTED_FORMATTED " .
+            "	WS.STARTED, WS.STARTED_BY, " . $DB->DateToCharFunction(
+                "WS.STARTED",
+                "FULL"
+            ) . " as STARTED_FORMATTED " .
             "FROM b_bp_workflow_state WS " .
             "	LEFT JOIN b_bp_workflow_permissions WP ON (WS.ID = WP.WORKFLOW_ID) " .
             "	LEFT JOIN b_bp_workflow_template WT ON (WS.WORKFLOW_TEMPLATE_ID = WT.ID) " .
@@ -296,12 +356,14 @@ class CBPAllStateService
         );
 
         $arStates = array();
-        while ($arResult = $dbResult->Fetch())
+        while ($arResult = $dbResult->Fetch()) {
             self::__ExtractState($arStates, $arResult);
+        }
 
         $keys = array_keys($arStates);
-        if (count($keys) > 0)
+        if (count($keys) > 0) {
             $arStates = $arStates[$keys[0]];
+        }
 
         return $arStates;
     }
@@ -311,8 +373,9 @@ class CBPAllStateService
         global $DB;
 
         $workflowId = trim($workflowId);
-        if (strlen($workflowId) <= 0)
+        if ($workflowId == '') {
             throw new Exception("workflowId");
+        }
 
         $dbResult = $DB->Query(
             "SELECT 
@@ -341,13 +404,19 @@ class CBPAllStateService
         return $state;
     }
 
+    public static function exists(string $workflowId)
+    {
+        return WorkflowStateTable::getCount(['=ID' => $workflowId]) > 0;
+    }
+
     public static function getWorkflowIntegerId($workflowId)
     {
         global $DB;
 
         $workflowId = trim($workflowId);
-        if (strlen($workflowId) <= 0)
+        if ($workflowId == '') {
             throw new Exception("workflowId");
+        }
 
         $dbResult = $DB->Query(
             "SELECT ID FROM b_bp_workflow_state_identify WHERE WORKFLOW_ID = '" . $DB->ForSql($workflowId) . "' "
@@ -364,7 +433,9 @@ class CBPAllStateService
                 $result = array('ID' => $DB->LastID());
             } else {
                 $dbResult = $DB->Query(
-                    "SELECT ID FROM b_bp_workflow_state_identify WHERE WORKFLOW_ID = '" . $DB->ForSql($workflowId) . "' "
+                    "SELECT ID FROM b_bp_workflow_state_identify WHERE WORKFLOW_ID = '" . $DB->ForSql(
+                        $workflowId
+                    ) . "' "
                 );
 
                 $result = $dbResult->fetch();
@@ -378,8 +449,9 @@ class CBPAllStateService
         global $DB;
 
         $integerId = intval($integerId);
-        if ($integerId <= 0)
+        if ($integerId <= 0) {
             throw new Exception("integerId");
+        }
 
         $dbResult = $DB->Query(
             "SELECT WORKFLOW_ID FROM b_bp_workflow_state_identify WHERE ID = " . $integerId . " "
@@ -404,22 +476,27 @@ class CBPAllStateService
             "FROM b_bp_workflow_state " .
             "WHERE DOCUMENT_ID = '" . $DB->ForSql($arDocumentId[2]) . "' " .
             "	AND ENTITY = '" . $DB->ForSql($arDocumentId[1]) . "' " .
-            "	AND MODULE_ID " . ((strlen($arDocumentId[0]) > 0) ? "= '" . $DB->ForSql($arDocumentId[0]) . "'" : "IS NULL") . " "
+            "	AND MODULE_ID " . (($arDocumentId[0] <> '') ? "= '" . $DB->ForSql(
+                    $arDocumentId[0]
+                ) . "'" : "IS NULL") . " "
         );
         while ($arRes = $dbRes->Fetch()) {
             $DB->Query(
                 "DELETE FROM b_bp_workflow_permissions " .
                 "WHERE WORKFLOW_ID = '" . $DB->ForSql($arRes["ID"]) . "' "
             );
-            if (!empty($arRes['STARTED_BY']))
+            if (!empty($arRes['STARTED_BY'])) {
                 $users[] = $arRes['STARTED_BY'];
+            }
         }
 
         $DB->Query(
             "DELETE FROM b_bp_workflow_state " .
             "WHERE DOCUMENT_ID = '" . $DB->ForSql($arDocumentId[2]) . "' " .
             "	AND ENTITY = '" . $DB->ForSql($arDocumentId[1]) . "' " .
-            "	AND MODULE_ID " . ((strlen($arDocumentId[0]) > 0) ? "= '" . $DB->ForSql($arDocumentId[0]) . "'" : "IS NULL") . " "
+            "	AND MODULE_ID " . (($arDocumentId[0] <> '') ? "= '" . $DB->ForSql(
+                    $arDocumentId[0]
+                ) . "'" : "IS NULL") . " "
         );
 
         self::cleanRunningCountersCache($users);
@@ -432,22 +509,28 @@ class CBPAllStateService
 
         list($moduleId, $entity, $docId) = \CBPHelper::ParseDocumentId($documentId);
 
-        $connection->queryExecute(sprintf('DELETE P FROM b_bp_workflow_permissions P '
-            . 'INNER JOIN b_bp_workflow_state S ON (P.WORKFLOW_ID = S.ID) '
-            . 'LEFT JOIN b_bp_workflow_instance I ON (S.ID = I.ID)'
-            . 'WHERE I.ID IS NULL AND S.MODULE_ID = \'%s\' AND S.ENTITY = \'%s\' AND S.DOCUMENT_ID = \'%s\'',
-            $helper->forSql($moduleId),
-            $helper->forSql($entity),
-            $helper->forSql($docId)
-        ));
+        $connection->queryExecute(
+            sprintf(
+                'DELETE P FROM b_bp_workflow_permissions P '
+                . 'INNER JOIN b_bp_workflow_state S ON (P.WORKFLOW_ID = S.ID) '
+                . 'LEFT JOIN b_bp_workflow_instance I ON (S.ID = I.ID)'
+                . 'WHERE I.ID IS NULL AND S.MODULE_ID = \'%s\' AND S.ENTITY = \'%s\' AND S.DOCUMENT_ID = \'%s\'',
+                $helper->forSql($moduleId),
+                $helper->forSql($entity),
+                $helper->forSql($docId)
+            )
+        );
 
-        $connection->queryExecute(sprintf('DELETE S FROM b_bp_workflow_state S LEFT JOIN b_bp_workflow_instance I '
-            . 'ON (S.ID = I.ID) '
-            . 'WHERE I.ID IS NULL AND S.MODULE_ID = \'%s\' AND S.ENTITY = \'%s\' AND S.DOCUMENT_ID = \'%s\'',
-            $helper->forSql($moduleId),
-            $helper->forSql($entity),
-            $helper->forSql($docId)
-        ));
+        $connection->queryExecute(
+            sprintf(
+                'DELETE S FROM b_bp_workflow_state S LEFT JOIN b_bp_workflow_instance I '
+                . 'ON (S.ID = I.ID) '
+                . 'WHERE I.ID IS NULL AND S.MODULE_ID = \'%s\' AND S.ENTITY = \'%s\' AND S.DOCUMENT_ID = \'%s\'',
+                $helper->forSql($moduleId),
+                $helper->forSql($entity),
+                $helper->forSql($docId)
+            )
+        );
     }
 
     public static function MergeStates($firstDocumentId, $secondDocumentId)
@@ -491,20 +574,24 @@ class CBPAllStateService
         global $DB;
 
         $workflowId = trim($workflowId);
-        if (strlen($workflowId) <= 0)
+        if ($workflowId == '') {
             throw new Exception("workflowId");
+        }
 
         $state = trim($arState["STATE"]);
         $stateTitle = trim($arState["TITLE"]);
         $stateParameters = "";
-        if (count($arState["PARAMETERS"]) > 0)
+        if (count($arState["PARAMETERS"]) > 0) {
             $stateParameters = serialize($arState["PARAMETERS"]);
+        }
 
         $DB->Query(
             "UPDATE b_bp_workflow_state SET " .
-            "	STATE = " . (strlen($state) > 0 ? "'" . $DB->ForSql($state) . "'" : "NULL") . ", " .
-            "	STATE_TITLE = " . (strlen($stateTitle) > 0 ? "'" . $DB->ForSql($stateTitle) . "'" : "NULL") . ", " .
-            "	STATE_PARAMETERS = " . (strlen($stateParameters) > 0 ? "'" . $DB->ForSql($stateParameters) . "'" : "NULL") . ", " .
+            "	STATE = " . ($state <> '' ? "'" . $DB->ForSql($state) . "'" : "NULL") . ", " .
+            "	STATE_TITLE = " . ($stateTitle <> '' ? "'" . $DB->ForSql($stateTitle) . "'" : "NULL") . ", " .
+            "	STATE_PARAMETERS = " . ($stateParameters <> '' ? "'" . $DB->ForSql(
+                    $stateParameters
+                ) . "'" : "NULL") . ", " .
             "	MODIFIED = " . $DB->CurrentTimeFunction() . " " .
             "WHERE ID = '" . $DB->ForSql($workflowId) . "' "
         );
@@ -512,13 +599,15 @@ class CBPAllStateService
         if ($arStatePermissions !== false) {
             $arState = self::GetWorkflowState($workflowId);
             $runtime = $this->runtime;
-            if (!isset($runtime) || !is_object($runtime))
+            if (!isset($runtime) || !is_object($runtime)) {
                 $runtime = CBPRuntime::GetRuntime();
+            }
             $documentService = $runtime->GetService("DocumentService");
             $documentService->SetPermissions($arState["DOCUMENT_ID"], $workflowId, $arStatePermissions, true);
             $documentType = $documentService->GetDocumentType($arState["DOCUMENT_ID"]);
-            if ($documentType)
+            if ($documentType) {
                 $arStatePermissions = $documentService->toInternalOperations($documentType, $arStatePermissions);
+            }
 
             $DB->Query(
                 "DELETE FROM b_bp_workflow_permissions " .
@@ -529,7 +618,9 @@ class CBPAllStateService
                 foreach ($arObjects as $object) {
                     $DB->Query(
                         "INSERT INTO b_bp_workflow_permissions (WORKFLOW_ID, OBJECT_ID, PERMISSION) " .
-                        "VALUES ('" . $DB->ForSql($workflowId) . "', '" . $DB->ForSql($object) . "', '" . $DB->ForSql($permission) . "')"
+                        "VALUES ('" . $DB->ForSql($workflowId) . "', '" . $DB->ForSql($object) . "', '" . $DB->ForSql(
+                            $permission
+                        ) . "')"
                     );
                 }
             }
@@ -541,16 +632,20 @@ class CBPAllStateService
         global $DB;
 
         $workflowId = trim($workflowId);
-        if (strlen($workflowId) <= 0)
+        if ($workflowId == '') {
             throw new Exception("workflowId");
+        }
 
         $stateParameters = "";
-        if (count($arStateParameters) > 0)
+        if (count($arStateParameters) > 0) {
             $stateParameters = serialize($arStateParameters);
+        }
 
         $DB->Query(
             "UPDATE b_bp_workflow_state SET " .
-            "	STATE_PARAMETERS = " . (strlen($stateParameters) > 0 ? "'" . $DB->ForSql($stateParameters) . "'" : "NULL") . ", " .
+            "	STATE_PARAMETERS = " . ($stateParameters <> '' ? "'" . $DB->ForSql(
+                    $stateParameters
+                ) . "'" : "NULL") . ", " .
             "	MODIFIED = " . $DB->CurrentTimeFunction() . " " .
             "WHERE ID = '" . $DB->ForSql($workflowId) . "' "
         );
@@ -561,8 +656,9 @@ class CBPAllStateService
         global $DB;
 
         $workflowId = trim($workflowId);
-        if (strlen($workflowId) <= 0)
+        if ($workflowId == '') {
             throw new Exception("workflowId");
+        }
 
         $dbResult = $DB->Query(
             "SELECT STATE_PARAMETERS " .
@@ -572,8 +668,9 @@ class CBPAllStateService
 
         if ($arResult = $dbResult->Fetch()) {
             $stateParameters = array();
-            if (strlen($arResult["STATE_PARAMETERS"]) > 0)
-                $stateParameters = unserialize($arResult["STATE_PARAMETERS"]);
+            if ($arResult["STATE_PARAMETERS"] <> '') {
+                $stateParameters = unserialize($arResult["STATE_PARAMETERS"], ['allowed_classes' => false]);
+            }
 
             $stateParameters[] = $arStateParameter;
 
@@ -581,7 +678,9 @@ class CBPAllStateService
 
             $DB->Query(
                 "UPDATE b_bp_workflow_state SET " .
-                "	STATE_PARAMETERS = " . (strlen($stateParameters) > 0 ? "'" . $DB->ForSql($stateParameters) . "'" : "NULL") . ", " .
+                "	STATE_PARAMETERS = " . ($stateParameters <> '' ? "'" . $DB->ForSql(
+                        $stateParameters
+                    ) . "'" : "NULL") . ", " .
                 "	MODIFIED = " . $DB->CurrentTimeFunction() . " " .
                 "WHERE ID = '" . $DB->ForSql($workflowId) . "' "
             );
@@ -593,8 +692,9 @@ class CBPAllStateService
         global $DB;
 
         $workflowId = trim($workflowId);
-        if (strlen($workflowId) <= 0)
+        if ($workflowId == '') {
             throw new Exception("workflowId");
+        }
 
         $dbResult = $DB->Query(
             "SELECT STATE_PARAMETERS " .
@@ -604,42 +704,64 @@ class CBPAllStateService
 
         if ($arResult = $dbResult->Fetch()) {
             $stateParameters = array();
-            if (strlen($arResult["STATE_PARAMETERS"]) > 0)
-                $stateParameters = unserialize($arResult["STATE_PARAMETERS"]);
+            if ($arResult["STATE_PARAMETERS"] <> '') {
+                $stateParameters = unserialize($arResult["STATE_PARAMETERS"], ['allowed_classes' => false]);
+            }
 
             $ar = array();
             foreach ($stateParameters as $v) {
-                if ($v["NAME"] != $name)
+                if ($v["NAME"] != $name) {
                     $ar[] = $v;
+                }
             }
 
             $stateParameters = "";
-            if (count($ar) > 0)
+            if (count($ar) > 0) {
                 $stateParameters = serialize($ar);
+            }
 
             $DB->Query(
                 "UPDATE b_bp_workflow_state SET " .
-                "	STATE_PARAMETERS = " . (strlen($stateParameters) > 0 ? "'" . $DB->ForSql($stateParameters) . "'" : "NULL") . ", " .
+                "	STATE_PARAMETERS = " . ($stateParameters <> '' ? "'" . $DB->ForSql(
+                        $stateParameters
+                    ) . "'" : "NULL") . ", " .
                 "	MODIFIED = " . $DB->CurrentTimeFunction() . " " .
                 "WHERE ID = '" . $DB->ForSql($workflowId) . "' "
             );
         }
     }
 
-    public static function __InsertStateHack($id, $moduleId, $entity, $documentId, $templateId, $state, $stateTitle, $stateParameters, $arStatePermissions)
-    {
+    public static function __InsertStateHack(
+        $id,
+        $moduleId,
+        $entity,
+        $documentId,
+        $templateId,
+        $state,
+        $stateTitle,
+        $stateParameters,
+        $arStatePermissions
+    ) {
         global $DB;
 
         $DB->Query(
             "INSERT INTO b_bp_workflow_state (ID, MODULE_ID, ENTITY, DOCUMENT_ID, DOCUMENT_ID_INT, WORKFLOW_TEMPLATE_ID, MODIFIED, STATE, STATE_TITLE, STATE_PARAMETERS) " .
-            "VALUES ('" . $DB->ForSql($id) . "', '" . $DB->ForSql($moduleId) . "', '" . $DB->ForSql($entity) . "', '" . $DB->ForSql($documentId) . "', " . intval($documentId) . ", " . intval($templateId) . ", " . $DB->CurrentTimeFunction() . ", '" . $DB->ForSql($state) . "', '" . $DB->ForSql($stateTitle) . "', " . (strlen($stateParameters) > 0 ? "'" . $DB->ForSql($stateParameters) . "'" : "NULL") . ")"
+            "VALUES ('" . $DB->ForSql($id) . "', '" . $DB->ForSql($moduleId) . "', '" . $DB->ForSql(
+                $entity
+            ) . "', '" . $DB->ForSql($documentId) . "', " . intval($documentId) . ", " . intval(
+                $templateId
+            ) . ", " . $DB->CurrentTimeFunction() . ", '" . $DB->ForSql($state) . "', '" . $DB->ForSql(
+                $stateTitle
+            ) . "', " . ($stateParameters <> '' ? "'" . $DB->ForSql($stateParameters) . "'" : "NULL") . ")"
         );
 
         foreach ($arStatePermissions as $permission => $arObjects) {
             foreach ($arObjects as $object) {
                 $DB->Query(
                     "INSERT INTO b_bp_workflow_permissions (WORKFLOW_ID, OBJECT_ID, PERMISSION) " .
-                    "VALUES ('" . $DB->ForSql($id) . "', '" . $DB->ForSql($object) . "', '" . $DB->ForSql($permission) . "')"
+                    "VALUES ('" . $DB->ForSql($id) . "', '" . $DB->ForSql($object) . "', '" . $DB->ForSql(
+                        $permission
+                    ) . "')"
                 );
             }
         }
@@ -666,8 +788,9 @@ class CBPAllStateService
                 while ($row = $iterator->fetch()) {
                     $cnt = (int)$row['CNT'];
                     $counters[$row['MODULE_ID']][$row['ENTITY']] = $cnt;
-                    if (!isset($counters[$row['MODULE_ID']]['*']))
+                    if (!isset($counters[$row['MODULE_ID']]['*'])) {
                         $counters[$row['MODULE_ID']]['*'] = 0;
+                    }
                     $counters[$row['MODULE_ID']]['*'] += $cnt;
                     $counters['*'] += $cnt;
                 }

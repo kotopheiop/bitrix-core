@@ -47,7 +47,6 @@ class RecipientController extends Timeline\EntityController
      */
     public function onCreate($id, array $params)
     {
-
     }
 
     /**
@@ -58,7 +57,6 @@ class RecipientController extends Timeline\EntityController
      */
     public function onModify($id, array $params)
     {
-
     }
 
     /**
@@ -69,7 +67,6 @@ class RecipientController extends Timeline\EntityController
      */
     public function onDelete($ownerID, array $params)
     {
-
     }
 
     /**
@@ -96,10 +93,12 @@ class RecipientController extends Timeline\EntityController
         $settings->letterTitle = $entity->get('TITLE');
 
         if ($settings->recipient) {
-            $row = PostingRecipientTable::getRow([
-                'select' => ['IS_READ', 'IS_CLICK', 'IS_UNSUB'],
-                'filter' => ['=ID' => $settings->recipient['id']]
-            ]);
+            $row = PostingRecipientTable::getRow(
+                [
+                    'select' => ['IS_READ', 'IS_CLICK', 'IS_UNSUB'],
+                    'filter' => ['=ID' => $settings->recipient['id']]
+                ]
+            );
             $settings->isRead = $row ? $row['IS_READ'] == 'Y' : false;
             $settings->isClick = $row ? $row['IS_CLICK'] == 'Y' : false;
             $settings->isUnsub = $row ? $row['IS_UNSUB'] == 'Y' : false;

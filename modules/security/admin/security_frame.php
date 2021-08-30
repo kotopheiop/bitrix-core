@@ -1,4 +1,5 @@
 <?
+
 define("ADMIN_MODULE_NAME", "security");
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
@@ -13,8 +14,9 @@ IncludeModuleLangFile(__FILE__);
 
 $canRead = $USER->CanDoOperation('security_frame_settings_read');
 $canWrite = $USER->CanDoOperation('security_frame_settings_write');
-if (!$canRead && !$canWrite)
+if (!$canRead && !$canWrite) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $aTabs = array(
     array(
@@ -34,37 +36,46 @@ $tabControl = new CAdminTabControl("tabControl", $aTabs, true, true);
 
 $bVarsFromForm = false;
 
-if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["save"] . $_REQUEST["apply"] . $_REQUEST["frame_siteb"] != "" && $canWrite && check_bitrix_sessid()) {
-    if ($_REQUEST["frame_siteb"] != "")
+if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["save"] . $_REQUEST["apply"] . $_REQUEST["frame_siteb"] != "" && $canWrite && check_bitrix_sessid(
+    )) {
+    if ($_REQUEST["frame_siteb"] != "") {
         CSecurityFrame::SetActive($_POST["frame_active"] === "Y");
+    }
 
     CSecurityFrameMask::Update($_POST["FRAME_MASKS"]);
 
-    if ($_REQUEST["save"] != "" && $_GET["return_url"] != "")
+    if ($_REQUEST["save"] != "" && $_GET["return_url"] != "") {
         LocalRedirect($_GET["return_url"]);
+    }
 
     $returnUrl = $_GET["return_url"] ? "&return_url=" . urlencode($_GET["return_url"]) : "";
-    LocalRedirect("/bitrix/admin/security_frame.php?lang=" . LANGUAGE_ID . $returnUrl . "&" . $tabControl->ActiveTabParam());
+    LocalRedirect(
+        "/bitrix/admin/security_frame.php?lang=" . LANGUAGE_ID . $returnUrl . "&" . $tabControl->ActiveTabParam()
+    );
 }
 
 $rsSecurityFrameExclMask = CSecurityFrameMask::GetList();
-if ($rsSecurityFrameExclMask->Fetch())
+if ($rsSecurityFrameExclMask->Fetch()) {
     $bSecurityFrameExcl = true;
-else
+} else {
     $bSecurityFrameExcl = false;
+}
 
 $messageDetails = "";
 if (CHTMLPagesCache::IsOn()) {
     $messageType = "ERROR";
     $messageText = GetMessage("SEC_FRAME_HTML_CACHE");
-} else if (CSecurityFrame::IsActive()) {
-    $messageType = "OK";
-    $messageText = GetMessage("SEC_FRAME_ON");
-    if ($bSecurityFrameExcl)
-        $messageDetails = "<span style=\"font-style: italic;\">" . GetMessage("SEC_FRAME_EXCL_FOUND") . "</span>";
 } else {
-    $messageType = "ERROR";
-    $messageText = GetMessage("SEC_FRAME_OFF");
+    if (CSecurityFrame::IsActive()) {
+        $messageType = "OK";
+        $messageText = GetMessage("SEC_FRAME_ON");
+        if ($bSecurityFrameExcl) {
+            $messageDetails = "<span style=\"font-style: italic;\">" . GetMessage("SEC_FRAME_EXCL_FOUND") . "</span>";
+        }
+    } else {
+        $messageType = "ERROR";
+        $messageText = GetMessage("SEC_FRAME_OFF");
+    }
 }
 
 $APPLICATION->SetTitle(GetMessage("SEC_FRAME_TITLE"));
@@ -74,7 +85,8 @@ $APPLICATION->AddHeadScript('/bitrix/js/security/admin/interface.js');
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
-CAdminMessage::ShowMessage(array(
+CAdminMessage::ShowMessage(
+    array(
         "MESSAGE" => $messageText,
         "TYPE" => $messageType,
         "DETAILS" => $messageDetails,
@@ -84,8 +96,9 @@ CAdminMessage::ShowMessage(array(
 ?>
 
     <form method="POST"
-          action="security_frame.php?lang=<? echo LANGUAGE_ID ?><? echo $_GET["return_url"] ? "&amp;return_url=" . urlencode($_GET["return_url"]) : "" ?>"
-          enctype="multipart/form-data" name="editform">
+          action="security_frame.php?lang=<? echo LANGUAGE_ID ?><? echo $_GET["return_url"] ? "&amp;return_url=" . urlencode(
+                  $_GET["return_url"]
+              ) : "" ?>" enctype="multipart/form-data" name="editform">
         <?
         $tabControl->Begin();
         ?>
@@ -116,19 +129,22 @@ CAdminMessage::ShowMessage(array(
         $tabControl->BeginNextTab();
         $arMasks = array();
         if ($bVarsFromForm) {
-            if (is_array($_POST["FRAME_MASKS"]))
-                foreach ($_POST["FRAME_MASKS"] as $i => $POST_MASK)
+            if (is_array($_POST["FRAME_MASKS"])) {
+                foreach ($_POST["FRAME_MASKS"] as $i => $POST_MASK) {
                     $arMasks[] = array(
                         "SITE_ID" => htmlspecialcharsbx($POST_MASK["SITE_ID"]),
                         "FRAME_MASK" => htmlspecialcharsbx($POST_MASK["FRAME_MASK"]),
                     );
+                }
+            }
         } else {
             $rs = CSecurityFrameMask::GetList();
-            while ($ar = $rs->Fetch())
+            while ($ar = $rs->Fetch()) {
                 $arMasks[] = array(
                     "SITE_ID" => htmlspecialcharsbx($ar["SITE_ID"]),
                     "FRAME_MASK" => htmlspecialcharsbx($ar["FRAME_MASK"]),
                 );
+            }
         }
         ?>
         <tr>
@@ -139,9 +155,14 @@ CAdminMessage::ShowMessage(array(
                         <tr>
                             <td nowrap style="padding-bottom: 3px;">
                                 <input type="text" size="45" name="FRAME_MASKS[<? echo $i ?>][MASK]"
-                                       value="<? echo $arMask["FRAME_MASK"] ?>">&nbsp;<? echo GetMessage("SEC_FRAME_SITE") ?>
-                                &nbsp;<? echo CSite::SelectBox("FRAME_MASKS[$i][SITE_ID]", $arMask["SITE_ID"], GetMessage("MAIN_ALL"), ""); ?>
-                                <br>
+                                       value="<? echo $arMask["FRAME_MASK"] ?>">&nbsp;<? echo GetMessage(
+                                    "SEC_FRAME_SITE"
+                                ) ?>&nbsp;<? echo CSite::SelectBox(
+                                    "FRAME_MASKS[$i][SITE_ID]",
+                                    $arMask["SITE_ID"],
+                                    GetMessage("MAIN_ALL"),
+                                    ""
+                                ); ?><br>
                             </td>
                         </tr>
                     <? endforeach; ?>
@@ -150,8 +171,12 @@ CAdminMessage::ShowMessage(array(
                             <td nowrap style="padding-bottom: 3px;">
                                 <input type="text" size="45" name="FRAME_MASKS[n0][MASK]"
                                        value="">&nbsp;<? echo GetMessage("SEC_FRAME_SITE") ?>
-                                &nbsp;<? echo CSite::SelectBox("FRAME_MASKS[n0][SITE_ID]", "", GetMessage("MAIN_ALL"), ""); ?>
-                                <br>
+                                &nbsp;<? echo CSite::SelectBox(
+                                    "FRAME_MASKS[n0][SITE_ID]",
+                                    "",
+                                    GetMessage("MAIN_ALL"),
+                                    ""
+                                ); ?><br>
                             </td>
                         </tr>
                     <? endif; ?>

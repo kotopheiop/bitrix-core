@@ -1,18 +1,22 @@
 <?
+
+use Bitrix\Main\Loader;
+
 define("ADMIN_MODULE_NAME", "perfmon");
 define("PERFMON_STOP", true);
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 /** @global CMain $APPLICATION */
 /** @global CDatabase $DB */
 /** @global CUser $USER */
-require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/perfmon/include.php");
+Loader::includeModule('perfmon');
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/perfmon/prolog.php");
 
 IncludeModuleLangFile(__FILE__);
 
 $RIGHT = $APPLICATION->GetGroupRight("perfmon");
-if ($RIGHT == "D" || $DB->type !== "MYSQL")
+if ($RIGHT == "D" || $DB->type !== "MYSQL") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $sTableID = "tbl_perfmon_index_list";
 $oSort = new CAdminSorting($sTableID, "TABLE_NAME", "asc");
@@ -49,7 +53,11 @@ if ($lAdmin->GroupAction()) {
                     if (!array_key_exists($sql_md5, $sql_cache)) {
                         $sql_cache[$sql_md5] = true;
 
-                        $rsInd = CPerfomanceIndexSuggest::GetList(array("SQL_MD5"), array("=SQL_MD5" => $sql_md5), array());
+                        $rsInd = CPerfomanceIndexSuggest::GetList(
+                            array("SQL_MD5"),
+                            array("=SQL_MD5" => $sql_md5),
+                            array()
+                        );
                         if ($rsInd->Fetch()) {
                             CPerfomanceIndexSuggest::UpdateStat($sql_md5, 1, $arSQL["QUERY_TIME"], $arSQL["ID"]);
                         } else {
@@ -66,19 +74,20 @@ if ($lAdmin->GroupAction()) {
                                         $arExplain[] = $arRes;
                                         if (
                                             $arRes["type"] === "ALL"
-                                            && strlen($arRes["key"]) == 0
+                                            && $arRes["key"] == ''
                                             && is_object($q)
                                             && ($i > 1 || $q->has_where($arRes["table"]))
                                         ) {
                                             $missed_keys = $q->suggest_index($arRes["table"]);
-                                            if ($missed_keys)
+                                            if ($missed_keys) {
                                                 $arMissedKeys = array_merge($arMissedKeys, $missed_keys);
-                                            elseif ($q->has_where()) {
+                                            } elseif ($q->has_where()) {
                                                 //Check if it is possible to find missed keys on joined tables
                                                 foreach ($q->table_joins($arRes["table"]) as $alias => $join_columns) {
                                                     $missed_keys = $q->suggest_index($alias);
-                                                    if ($missed_keys)
+                                                    if ($missed_keys) {
                                                         $arMissedKeys = array_merge($arMissedKeys, $missed_keys);
+                                                    }
                                                 }
                                             }
                                         }
@@ -95,19 +104,21 @@ if ($lAdmin->GroupAction()) {
                                         if (
                                             CPerfQueryStat::GatherExpressStat($table, $columns, $q)
                                             && !CPerfQueryStat::IsSelective($table, $columns, $q)
-                                        )
+                                        ) {
                                             CPerfQueryStat::Ban($table, $columns);
-                                        else {
-                                            CPerfomanceIndexSuggest::Add(array(
-                                                "TABLE_NAME" => $table,
-                                                "TABLE_ALIAS" => $alias,
-                                                "COLUMN_NAMES" => $columns,
-                                                "SQL_TEXT" => $arSQL["SQL_TEXT"],
-                                                "SQL_MD5" => $sql_md5,
-                                                "SQL_COUNT" => 0,
-                                                "SQL_TIME" => 0,
-                                                "SQL_EXPLAIN" => serialize($arExplain),
-                                            ));
+                                        } else {
+                                            CPerfomanceIndexSuggest::Add(
+                                                array(
+                                                    "TABLE_NAME" => $table,
+                                                    "TABLE_ALIAS" => $alias,
+                                                    "COLUMN_NAMES" => $columns,
+                                                    "SQL_TEXT" => $arSQL["SQL_TEXT"],
+                                                    "SQL_MD5" => $sql_md5,
+                                                    "SQL_COUNT" => 0,
+                                                    "SQL_TIME" => 0,
+                                                    "SQL_EXPLAIN" => serialize($arExplain),
+                                                )
+                                            );
                                         }
                                     }
                                 }
@@ -126,12 +137,17 @@ if ($lAdmin->GroupAction()) {
 
     if ($go) {
         $lAdmin->BeginPrologContent();
-        $message = new CAdminMessage(array(
-            "MESSAGE" => GetMessage("PERFMON_INDEX_IN_PROGRESS"),
-            "DETAILS" => GetMessage("PERFMON_INDEX_QUERIES_ANALYZED", array("#QUERIES#" => "<b>" . intval($_SESSION["queries"]) . "</b>")) . "<br>",
-            "HTML" => true,
-            "TYPE" => "PROGRESS",
-        ));
+        $message = new CAdminMessage(
+            array(
+                "MESSAGE" => GetMessage("PERFMON_INDEX_IN_PROGRESS"),
+                "DETAILS" => GetMessage(
+                        "PERFMON_INDEX_QUERIES_ANALYZED",
+                        array("#QUERIES#" => "<b>" . intval($_SESSION["queries"]) . "</b>")
+                    ) . "<br>",
+                "HTML" => true,
+                "TYPE" => "PROGRESS",
+            )
+        );
         echo $message->Show();
         ?>
         <script>
@@ -141,12 +157,17 @@ if ($lAdmin->GroupAction()) {
         $lAdmin->EndPrologContent();
     } else {
         $lAdmin->BeginPrologContent();
-        $message = new CAdminMessage(array(
-            "MESSAGE" => GetMessage("PERFMON_INDEX_COMPLETE"),
-            "DETAILS" => GetMessage("PERFMON_INDEX_QUERIES_ANALYZED", array("#QUERIES#" => "<b>" . intval($_SESSION["queries"]) . "</b>")) . "<br>",
-            "HTML" => true,
-            "TYPE" => "OK",
-        ));
+        $message = new CAdminMessage(
+            array(
+                "MESSAGE" => GetMessage("PERFMON_INDEX_COMPLETE"),
+                "DETAILS" => GetMessage(
+                        "PERFMON_INDEX_QUERIES_ANALYZED",
+                        array("#QUERIES#" => "<b>" . intval($_SESSION["queries"]) . "</b>")
+                    ) . "<br>",
+                "HTML" => true,
+                "TYPE" => "OK",
+            )
+        );
         echo $message->Show();
         $lAdmin->EndPrologContent();
     }
@@ -154,63 +175,67 @@ if ($lAdmin->GroupAction()) {
 
 if (!$go && CPerfomanceKeeper::IsActive()) {
     $lAdmin->BeginPrologContent();
-    $message = new CAdminMessage(array(
-        "MESSAGE" => GetMessage("PERFMON_INDEX_KEEPER_NOTE_IS_ACTIVE"),
-        "DETAILS" => GetMessage("PERFMON_INDEX_KEEPER_NOTE_ANALYZE") . "<br>",
-        "HTML" => true,
-        "TYPE" => "OK",
-    ));
+    $message = new CAdminMessage(
+        array(
+            "MESSAGE" => GetMessage("PERFMON_INDEX_KEEPER_NOTE_IS_ACTIVE"),
+            "DETAILS" => GetMessage("PERFMON_INDEX_KEEPER_NOTE_ANALYZE") . "<br>",
+            "HTML" => true,
+            "TYPE" => "OK",
+        )
+    );
     echo $message->Show();
     $lAdmin->EndPrologContent();
 }
 
-$lAdmin->AddHeaders(array(
+$lAdmin->AddHeaders(
     array(
-        "id" => "BANNED",
-        "content" => GetMessage("PERFMON_INDEX_BANNED"),
-        "align" => "center",
-        "default" => true,
-    ),
-    array(
-        "id" => "TABLE_NAME",
-        "content" => GetMessage("PERFMON_INDEX_TABLE_NAME"),
-        "default" => true,
-        "sort" => "TABLE_NAME",
-    ),
-    array(
-        "id" => "COLUMN_NAMES",
-        "content" => GetMessage("PERFMON_INDEX_COLUMN_NAMES"),
-        "default" => true,
-    ),
-    array(
-        "id" => "SQL_COUNT",
-        "content" => GetMessage("PERFMON_INDEX_SQL_COUNT"),
-        "align" => "right",
-        "default" => true,
-        "sort" => "SQL_COUNT",
-    ),
-    array(
-        "id" => "SQL_TIME_AVG",
-        "content" => GetMessage("PERFMON_INDEX_SQL_TIME_AVG"),
-        "align" => "right",
-        "default" => true,
-    ),
-    array(
-        "id" => "SQL_TIME",
-        "content" => GetMessage("PERFMON_INDEX_SQL_TIME"),
-        "align" => "right",
-        "default" => true,
-        "sort" => "SQL_TIME",
-    ),
-    array(
-        "id" => "SQL_TEXT",
-        "content" => GetMessage("PERFMON_INDEX_SQL_TEXT"),
-        "default" => true,
-    ),
-));
+        array(
+            "id" => "BANNED",
+            "content" => GetMessage("PERFMON_INDEX_BANNED"),
+            "align" => "center",
+            "default" => true,
+        ),
+        array(
+            "id" => "TABLE_NAME",
+            "content" => GetMessage("PERFMON_INDEX_TABLE_NAME"),
+            "default" => true,
+            "sort" => "TABLE_NAME",
+        ),
+        array(
+            "id" => "COLUMN_NAMES",
+            "content" => GetMessage("PERFMON_INDEX_COLUMN_NAMES"),
+            "default" => true,
+        ),
+        array(
+            "id" => "SQL_COUNT",
+            "content" => GetMessage("PERFMON_INDEX_SQL_COUNT"),
+            "align" => "right",
+            "default" => true,
+            "sort" => "SQL_COUNT",
+        ),
+        array(
+            "id" => "SQL_TIME_AVG",
+            "content" => GetMessage("PERFMON_INDEX_SQL_TIME_AVG"),
+            "align" => "right",
+            "default" => true,
+        ),
+        array(
+            "id" => "SQL_TIME",
+            "content" => GetMessage("PERFMON_INDEX_SQL_TIME"),
+            "align" => "right",
+            "default" => true,
+            "sort" => "SQL_TIME",
+        ),
+        array(
+            "id" => "SQL_TEXT",
+            "content" => GetMessage("PERFMON_INDEX_SQL_TEXT"),
+            "default" => true,
+        ),
+    )
+);
 
 $arSelectedFields = $lAdmin->GetVisibleHeaderColumns();
-if (!is_array($arSelectedFields) || (count($arSelectedFields) < 1))
+if (!is_array($arSelectedFields) || (count($arSelectedFields) < 1)) {
     $arSelectedFields = array(
         "TABLE_NAME",
         "COLUMN_NAMES",
@@ -218,6 +243,7 @@ if (!is_array($arSelectedFields) || (count($arSelectedFields) < 1))
         "SQL_TIME",
         "SQL_TEXT",
     );
+}
 $arSelectedFields[] = "ID";
 
 $cData = new CPerfomanceIndexSuggest;
@@ -237,14 +263,33 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
         $row->AddViewField("SQL_TIME_AVG", perfmon_NumberFormat($f_SQL_TIME / $f_SQL_COUNT, 6));
     }
 
-    $row->AddViewField("SQL_COUNT", '<a href="perfmon_sql_list.php?lang=' . LANGUAGE_ID . '&amp;set_filter=Y&amp;find_suggest_id=' . $f_ID . '">' . $f_SQL_COUNT . '</a>');
+    $row->AddViewField(
+        "SQL_COUNT",
+        '<a href="perfmon_sql_list.php?lang=' . LANGUAGE_ID . '&amp;set_filter=Y&amp;find_suggest_id=' . $f_ID . '">' . $f_SQL_COUNT . '</a>'
+    );
     $row->AddViewField("COLUMN_NAMES", str_replace(",", "<br>", $f_COLUMN_NAMES));
-    if ($f_BANNED == "N")
-        $row->AddViewField("BANNED", '<span class="adm-lamp adm-lamp-in-list adm-lamp-green" title="' . htmlspecialcharsbx(GetMessage("PERFMON_INDEX_GREEN_ALT")) . '"></span>');
-    elseif ($f_BANNED == "Y")
-        $row->AddViewField("BANNED", '<span class="adm-lamp adm-lamp-in-list adm-lamp-red" title="' . htmlspecialcharsbx(GetMessage("PERFMON_INDEX_RED_ALT")) . '"></span>');
-    else
-        $row->AddViewField("BANNED", '<span class="adm-lamp adm-lamp-in-list adm-lamp-yellow" title="' . htmlspecialcharsbx(GetMessage("PERFMON_INDEX_YELLOW_ALT")) . '"></span>');
+    if ($f_BANNED == "N") {
+        $row->AddViewField(
+            "BANNED",
+            '<span class="adm-lamp adm-lamp-in-list adm-lamp-green" title="' . htmlspecialcharsbx(
+                GetMessage("PERFMON_INDEX_GREEN_ALT")
+            ) . '"></span>'
+        );
+    } elseif ($f_BANNED == "Y") {
+        $row->AddViewField(
+            "BANNED",
+            '<span class="adm-lamp adm-lamp-in-list adm-lamp-red" title="' . htmlspecialcharsbx(
+                GetMessage("PERFMON_INDEX_RED_ALT")
+            ) . '"></span>'
+        );
+    } else {
+        $row->AddViewField(
+            "BANNED",
+            '<span class="adm-lamp adm-lamp-in-list adm-lamp-yellow" title="' . htmlspecialcharsbx(
+                GetMessage("PERFMON_INDEX_YELLOW_ALT")
+            ) . '"></span>'
+        );
+    }
 
     $rsQueries = CPerfomanceSQL::GetList(
         array("ID"),
@@ -253,10 +298,11 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
         false,
         array("nTopCount" => 1)
     );
-    if ($arQuery = $rsQueries->GetNext())
+    if ($arQuery = $rsQueries->GetNext()) {
         $f_SQL_ID = $arQuery["ID"];
-    else
+    } else {
         $f_SQL_ID = "";
+    }
 
     if (class_exists("geshi") && $f_SQL_TEXT) {
         $obGeSHi = new GeSHi($arRes["SQL_TEXT"], 'sql');

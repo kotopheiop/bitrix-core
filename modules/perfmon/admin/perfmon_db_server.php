@@ -1,18 +1,22 @@
 <?
+
+use Bitrix\Main\Loader;
+
 define("ADMIN_MODULE_NAME", "perfmon");
 define("PERFMON_STOP", true);
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 /** @global CMain $APPLICATION */
 /** @global CDatabase $DB */
 /** @global CUser $USER */
-require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/perfmon/include.php");
+Loader::includeModule('perfmon');
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/perfmon/prolog.php");
 
 IncludeModuleLangFile(__FILE__);
 
 $RIGHT = $APPLICATION->GetGroupRight("perfmon");
-if ($RIGHT == "D")
+if ($RIGHT == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $bCluster = CModule::IncludeModule('cluster');
 
@@ -44,15 +48,18 @@ $data = array();
 if ($statDB->type == "MYSQL") {
     $stat = array();
     $rs = $statDB->Query("SHOW GLOBAL STATUS", true, "", $queryOptions);
-    if (!$rs)
+    if (!$rs) {
         $rs = $statDB->Query("SHOW STATUS", true, "", $queryOptions);
-    while ($ar = $rs->Fetch())
+    }
+    while ($ar = $rs->Fetch()) {
         $stat[$ar["Variable_name"]] = $ar["Value"];
+    }
 
     $vars = array();
     $rs = $statDB->Query("SHOW GLOBAL VARIABLES", false, "", $queryOptions);
-    while ($ar = $rs->Fetch())
+    while ($ar = $rs->Fetch()) {
         $vars[$ar["Variable_name"]] = $ar["Value"];
+    }
 
     if (isset($vars["have_innodb"])) {
         $have_innodb = ($vars["have_innodb"] == "YES");
@@ -60,8 +67,9 @@ if ($statDB->type == "MYSQL") {
         $rs = $statDB->Query("SHOW ENGINES", true, "", $queryOptions);
         if ($rs) {
             while ($ar = $rs->Fetch()) {
-                if ($ar['Engine'] === 'InnoDB')
+                if ($ar['Engine'] === 'InnoDB') {
                     $have_innodb = true;
+                }
             }
         }
     }
@@ -94,12 +102,13 @@ if ($statDB->type == "MYSQL") {
 
     $arVersion = array();
     if (preg_match("/^(\\d+)\\.(\\d+)/", $vars["version"], $arVersion)) {
-        if ($arVersion[1] < 5)
+        if ($arVersion[1] < 5) {
             $rec = GetMessage("PERFMON_KPI_REC_VERSION_OLD");
-        elseif ($arVersion[1] == 5)
+        } elseif ($arVersion[1] == 5) {
             $rec = GetMessage("PERFMON_KPI_REC_VERSION_OK");
-        else
+        } else {
             $rec = GetMessage("PERFMON_KPI_REC_VERSION_NEW");
+        }
         $data[0]["ITEMS"][] = array(
             "KPI_NAME" => GetMessage("PERFMON_KPI_NAME_VERSION"),
             "IS_OK" => $arVersion[1] == 5,
@@ -114,10 +123,11 @@ if ($statDB->type == "MYSQL") {
         "#DAYS#" => intval($stat['Uptime'] / (86400)),
     );
 
-    if ($stat['Uptime'] >= 86400)
+    if ($stat['Uptime'] >= 86400) {
         $rec = GetMessage("PERFMON_KPI_REC_UPTIME_OK");
-    else
+    } else {
         $rec = GetMessage("PERFMON_KPI_REC_UPTIME_TOO_SHORT");
+    }
     $data[0]["ITEMS"][] = array(
         "KPI_NAME" => GetMessage("PERFMON_KPI_NAME_UPTIME"),
         "IS_OK" => $stat['Uptime'] >= 86400,
@@ -166,7 +176,10 @@ if ($statDB->type == "MYSQL") {
         $data[0]["ITEMS"][] = array(
             "KPI_NAME" => GetMessage("PERFMON_KPI_NAME_GBUFFERS"),
             "KPI_VALUE" => CFile::FormatSize($calc['server_buffers']),
-            "KPI_RECOMMENDATION" => GetMessage("PERFMON_KPI_REC_GBUFFERS", array("#VALUE#" => "<span class=\"perfmon_code\">" . $server_buffers . "</span>")),
+            "KPI_RECOMMENDATION" => GetMessage(
+                "PERFMON_KPI_REC_GBUFFERS",
+                array("#VALUE#" => "<span class=\"perfmon_code\">" . $server_buffers . "</span>")
+            ),
         );
 
         // Per thread
@@ -175,14 +188,20 @@ if ($statDB->type == "MYSQL") {
         $data[0]["ITEMS"][] = array(
             "KPI_NAME" => GetMessage("PERFMON_KPI_NAME_CBUFFERS"),
             "KPI_VALUE" => CFile::FormatSize($calc['per_thread_buffers']),
-            "KPI_RECOMMENDATION" => GetMessage("PERFMON_KPI_REC_CBUFFERS", array("#VALUE#" => "<span class=\"perfmon_code\">" . $per_thread_buffers . "</span>")),
+            "KPI_RECOMMENDATION" => GetMessage(
+                "PERFMON_KPI_REC_CBUFFERS",
+                array("#VALUE#" => "<span class=\"perfmon_code\">" . $per_thread_buffers . "</span>")
+            ),
         );
 
         $max_connections = 'max_connections';
         $data[0]["ITEMS"][] = array(
             "KPI_NAME" => GetMessage("PERFMON_KPI_NAME_CONNECTIONS"),
             "KPI_VALUE" => $vars['max_connections'],
-            "KPI_RECOMMENDATION" => GetMessage("PERFMON_KPI_REC_CONNECTIONS", array("#VALUE#" => "<span class=\"perfmon_code\">" . $max_connections . "</span>")),
+            "KPI_RECOMMENDATION" => GetMessage(
+                "PERFMON_KPI_REC_CONNECTIONS",
+                array("#VALUE#" => "<span class=\"perfmon_code\">" . $max_connections . "</span>")
+            ),
         );
 
         // Global memory
@@ -196,7 +215,12 @@ if ($statDB->type == "MYSQL") {
         // Key buffers
         $total_myisam_indexes = 0;
         if ($arVersion[1] >= 5) {
-            $rs = $statDB->Query("SELECT IFNULL(SUM(INDEX_LENGTH),0) IND_SIZE FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema') AND ENGINE = 'MyISAM'", false, "", $queryOptions);
+            $rs = $statDB->Query(
+                "SELECT IFNULL(SUM(INDEX_LENGTH),0) IND_SIZE FROM information_schema.TABLES WHERE TABLE_SCHEMA NOT IN ('information_schema') AND ENGINE = 'MyISAM'",
+                false,
+                "",
+                $queryOptions
+            );
             $ar = $rs->Fetch();
             if ($ar["IND_SIZE"] > 0) {
                 $total_myisam_indexes = $ar["IND_SIZE"];
@@ -217,37 +241,51 @@ if ($statDB->type == "MYSQL") {
         );
 
         if ($total_myisam_indexes > 0) {
-            if ($stat['Key_read_requests'] > 0)
+            if ($stat['Key_read_requests'] > 0) {
                 $calc['pct_keys_from_disk'] = round($stat['Key_reads'] / $stat['Key_read_requests'] * 100, 2);
-            else
+            } else {
                 $calc['pct_keys_from_disk'] = 0;
+            }
             $data[0]["ITEMS"][] = array(
                 "KPI_NAME" => GetMessage("PERFMON_KPI_NAME_KEY_MISS"),
                 "IS_OK" => $calc['pct_keys_from_disk'] <= 5,
                 "KPI_VALUE" => $calc['pct_keys_from_disk'] . "%",
-                "KPI_RECOMMENDATION" => GetMessage("PERFMON_KPI_REC_KEY_MISS", array(
-                    "#PARAM_VALUE#" => CFile::FormatSize($vars["key_buffer_size"]),
-                    "#PARAM_NAME#" => "<span class=\"perfmon_code\">key_buffer_size</span>",
-                )),
+                "KPI_RECOMMENDATION" => GetMessage(
+                    "PERFMON_KPI_REC_KEY_MISS",
+                    array(
+                        "#PARAM_VALUE#" => CFile::FormatSize($vars["key_buffer_size"]),
+                        "#PARAM_NAME#" => "<span class=\"perfmon_code\">key_buffer_size</span>",
+                    )
+                ),
             );
         }
 
         // Query cache
-        if ($vars['query_cache_size'] < 1)
-            $rec = GetMessage("PERFMON_KPI_REC_QCACHE_ZERO_SIZE", array(
-                "#PARAM_NAME#" => "<span class=\"perfmon_code\">query_cache_size</span>",
-                "#PARAM_VALUE_LOW#" => "8M",
-                "#PARAM_VALUE_HIGH#" => "128M",
-            ));
-        elseif ($vars['query_cache_size'] > 128 * 1024 * 1024)
-            $rec = GetMessage("PERFMON_KPI_REC_QCACHE_TOOLARGE_SIZE", array(
-                "#PARAM_NAME#" => "<span class=\"perfmon_code\">query_cache_size</span>",
-                "#PARAM_VALUE_HIGH#" => "128M",
-            ));
-        else
-            $rec = GetMessage("PERFMON_KPI_REC_QCACHE_OK_SIZE", array(
-                "#PARAM_NAME#" => "<span class=\"perfmon_code\">query_cache_size</span>",
-            ));
+        if ($vars['query_cache_size'] < 1) {
+            $rec = GetMessage(
+                "PERFMON_KPI_REC_QCACHE_ZERO_SIZE",
+                array(
+                    "#PARAM_NAME#" => "<span class=\"perfmon_code\">query_cache_size</span>",
+                    "#PARAM_VALUE_LOW#" => "8M",
+                    "#PARAM_VALUE_HIGH#" => "128M",
+                )
+            );
+        } elseif ($vars['query_cache_size'] > 128 * 1024 * 1024) {
+            $rec = GetMessage(
+                "PERFMON_KPI_REC_QCACHE_TOOLARGE_SIZE",
+                array(
+                    "#PARAM_NAME#" => "<span class=\"perfmon_code\">query_cache_size</span>",
+                    "#PARAM_VALUE_HIGH#" => "128M",
+                )
+            );
+        } else {
+            $rec = GetMessage(
+                "PERFMON_KPI_REC_QCACHE_OK_SIZE",
+                array(
+                    "#PARAM_NAME#" => "<span class=\"perfmon_code\">query_cache_size</span>",
+                )
+            );
+        }
         $data[0]["ITEMS"][] = array(
             "KPI_NAME" => GetMessage("PERFMON_KPI_NAME_QCACHE_SIZE"),
             "IS_OK" => $vars['query_cache_size'] > 0 && $vars['query_cache_size'] <= 128 * 1024 * 1024,
@@ -264,14 +302,20 @@ if ($statDB->type == "MYSQL") {
                     "KPI_RECOMMENDATION" => GetMessage("PERFMON_KPI_REC_QCACHE_NO"),
                 );
             } elseif ($stat['Com_select'] > $stat['Qcache_not_cached']) {
-                $calc['query_cache_efficiency'] = round($stat['Qcache_hits'] / (($stat['Com_select'] - $stat['Qcache_not_cached']) + $stat['Qcache_hits']) * 100, 2);
+                $calc['query_cache_efficiency'] = round(
+                    $stat['Qcache_hits'] / (($stat['Com_select'] - $stat['Qcache_not_cached']) + $stat['Qcache_hits']) * 100,
+                    2
+                );
 
                 $value = $calc['query_cache_efficiency'] . "%";
-                $rec = GetMessage("PERFMON_KPI_REC_QCACHE", array(
-                    "#PARAM_NAME#" => "<span class=\"perfmon_code\">query_cache_limit</span>",
-                    "#PARAM_VALUE#" => CFile::FormatSize($vars['query_cache_limit']),
-                    "#GOOD_VALUE#" => "20%",
-                ));
+                $rec = GetMessage(
+                    "PERFMON_KPI_REC_QCACHE",
+                    array(
+                        "#PARAM_NAME#" => "<span class=\"perfmon_code\">query_cache_limit</span>",
+                        "#PARAM_VALUE#" => CFile::FormatSize($vars['query_cache_limit']),
+                        "#GOOD_VALUE#" => "20%",
+                    )
+                );
 
                 $data[0]["ITEMS"][] = array(
                     "KPI_NAME" => GetMessage("PERFMON_KPI_NAME_QCACHE"),
@@ -285,12 +329,15 @@ if ($statDB->type == "MYSQL") {
                 $data[0]["ITEMS"][] = array(
                     "KPI_NAME" => GetMessage("PERFMON_KPI_NAME_QCACHE_PRUNES"),
                     "KPI_VALUE" => perfmon_NumberFormat($stat['Qcache_lowmem_prunes'], 0),
-                    "KPI_RECOMMENDATION" => GetMessage("PERFMON_KPI_REC_QCACHE_PRUNES", array(
-                        "#STAT_NAME#" => "<span class=\"perfmon_code\">Qcache_lowmem_prunes</span>",
-                        "#PARAM_VALUE#" => CFile::FormatSize($vars['query_cache_size']),
-                        "#PARAM_NAME#" => "<span class=\"perfmon_code\">query_cache_size</span>",
-                        "#PARAM_VALUE_HIGH#" => "128M",
-                    )),
+                    "KPI_RECOMMENDATION" => GetMessage(
+                        "PERFMON_KPI_REC_QCACHE_PRUNES",
+                        array(
+                            "#STAT_NAME#" => "<span class=\"perfmon_code\">Qcache_lowmem_prunes</span>",
+                            "#PARAM_VALUE#" => CFile::FormatSize($vars['query_cache_size']),
+                            "#PARAM_NAME#" => "<span class=\"perfmon_code\">query_cache_size</span>",
+                            "#PARAM_VALUE_HIGH#" => "128M",
+                        )
+                    ),
                 );
             }
         }
@@ -300,9 +347,12 @@ if ($statDB->type == "MYSQL") {
         $data[0]["ITEMS"][] = array(
             "KPI_NAME" => GetMessage("PERFMON_KPI_NAME_SORTS"),
             "KPI_VALUE" => perfmon_NumberFormat($calc['total_sorts'], 0),
-            "KPI_RECOMMENDATION" => GetMessage("PERFMON_KPI_REC_SORTS", array(
-                "#STAT_NAME#" => "<span class=\"perfmon_code\">" . $total_sorts . "</span>",
-            )),
+            "KPI_RECOMMENDATION" => GetMessage(
+                "PERFMON_KPI_REC_SORTS",
+                array(
+                    "#STAT_NAME#" => "<span class=\"perfmon_code\">" . $total_sorts . "</span>",
+                )
+            ),
         );
 
         if ($calc['total_sorts'] > 0) {
@@ -311,14 +361,17 @@ if ($statDB->type == "MYSQL") {
                 "KPI_NAME" => GetMessage("PERFMON_KPI_NAME_SORTS_DISK"),
                 "IS_OK" => $calc['pct_temp_sort_table'] <= 10,
                 "KPI_VALUE" => $calc['pct_temp_sort_table'] . "%",
-                "KPI_RECOMMENDATION" => GetMessage("PERFMON_KPI_REC_SORTS_DISK", array(
-                    "#STAT_NAME#" => "<span class=\"perfmon_code\">Sort_merge_passes / (Sort_scan + Sort_range)</span>",
-                    "#GOOD_VALUE#" => "10",
-                    "#PARAM1_VALUE#" => CFile::FormatSize($vars['sort_buffer_size']),
-                    "#PARAM1_NAME#" => "<span class=\"perfmon_code\">sort_buffer_size</span>",
-                    "#PARAM2_VALUE#" => CFile::FormatSize($vars['read_rnd_buffer_size']),
-                    "#PARAM2_NAME#" => "<span class=\"perfmon_code\">read_rnd_buffer_size</span>",
-                )),
+                "KPI_RECOMMENDATION" => GetMessage(
+                    "PERFMON_KPI_REC_SORTS_DISK",
+                    array(
+                        "#STAT_NAME#" => "<span class=\"perfmon_code\">Sort_merge_passes / (Sort_scan + Sort_range)</span>",
+                        "#GOOD_VALUE#" => "10",
+                        "#PARAM1_VALUE#" => CFile::FormatSize($vars['sort_buffer_size']),
+                        "#PARAM1_NAME#" => "<span class=\"perfmon_code\">sort_buffer_size</span>",
+                        "#PARAM2_VALUE#" => CFile::FormatSize($vars['read_rnd_buffer_size']),
+                        "#PARAM2_NAME#" => "<span class=\"perfmon_code\">read_rnd_buffer_size</span>",
+                    )
+                ),
             );
         }
 
@@ -329,48 +382,64 @@ if ($statDB->type == "MYSQL") {
             $data[0]["ITEMS"][] = array(
                 "KPI_NAME" => GetMessage("PERFMON_KPI_NAME_JOINS"),
                 "KPI_VALUE" => perfmon_NumberFormat($calc['joins_without_indexes'], 0),
-                "KPI_RECOMMENDATION" => GetMessage("PERFMON_KPI_REC_JOINS", array(
-                    "#STAT_NAME#" => "<span class=\"perfmon_code\">Select_range_check + Select_full_join</span>",
-                    "#PARAM_VALUE#" => CFile::FormatSize($vars['join_buffer_size']),
-                    "#PARAM_NAME#" => "<span class=\"perfmon_code\">join_buffer_size</span>",
-                )),
+                "KPI_RECOMMENDATION" => GetMessage(
+                    "PERFMON_KPI_REC_JOINS",
+                    array(
+                        "#STAT_NAME#" => "<span class=\"perfmon_code\">Select_range_check + Select_full_join</span>",
+                        "#PARAM_VALUE#" => CFile::FormatSize($vars['join_buffer_size']),
+                        "#PARAM_NAME#" => "<span class=\"perfmon_code\">join_buffer_size</span>",
+                    )
+                ),
             );
         }
 
         // Temporary tables
         if ($stat['Created_tmp_tables'] > 0) {
             $calc['tmp_table_size'] = ($vars['tmp_table_size'] > $vars['max_heap_table_size']) ? $vars['max_heap_table_size'] : $vars['tmp_table_size'];
-            if ($stat['Created_tmp_disk_tables'] > 0)
-                $calc['pct_temp_disk'] = round(($stat['Created_tmp_disk_tables'] / ($stat['Created_tmp_tables'] + $stat['Created_tmp_disk_tables'])) * 100, 2);
-            else
+            if ($stat['Created_tmp_disk_tables'] > 0) {
+                $calc['pct_temp_disk'] = round(
+                    ($stat['Created_tmp_disk_tables'] / ($stat['Created_tmp_tables'] + $stat['Created_tmp_disk_tables'])) * 100,
+                    2
+                );
+            } else {
                 $calc['pct_temp_disk'] = 0;
+            }
             $pct_temp_disk = 30;
 
             if ($calc['pct_temp_disk'] > $pct_temp_disk && $calc['max_tmp_table_size'] < 256 * 1024 * 1024) {
                 $is_ok = false;
                 $value = $calc['pct_temp_disk'] . "%";
-                $rec = GetMessage("PERFMON_KPI_REC_TMP_DISK_1", array(
-                    "#STAT_NAME#" => "<span class=\"perfmon_code\">Created_tmp_disk_tables / (Created_tmp_tables + Created_tmp_disk_tables)</span>",
-                    "#STAT_VALUE#" => $pct_temp_disk . "%",
-                    "#PARAM1_NAME#" => "<span class=\"perfmon_code\">tmp_table_size</span>",
-                    "#PARAM1_VALUE#" => CFile::FormatSize($vars['tmp_table_size']),
-                    "#PARAM2_NAME#" => "<span class=\"perfmon_code\">max_heap_table_size</span>",
-                    "#PARAM2_VALUE#" => CFile::FormatSize($vars['max_heap_table_size']),
-                ));
+                $rec = GetMessage(
+                    "PERFMON_KPI_REC_TMP_DISK_1",
+                    array(
+                        "#STAT_NAME#" => "<span class=\"perfmon_code\">Created_tmp_disk_tables / (Created_tmp_tables + Created_tmp_disk_tables)</span>",
+                        "#STAT_VALUE#" => $pct_temp_disk . "%",
+                        "#PARAM1_NAME#" => "<span class=\"perfmon_code\">tmp_table_size</span>",
+                        "#PARAM1_VALUE#" => CFile::FormatSize($vars['tmp_table_size']),
+                        "#PARAM2_NAME#" => "<span class=\"perfmon_code\">max_heap_table_size</span>",
+                        "#PARAM2_VALUE#" => CFile::FormatSize($vars['max_heap_table_size']),
+                    )
+                );
             } elseif ($calc['pct_temp_disk'] > $pct_temp_disk && $calc['max_tmp_table_size'] >= 256) {
                 $is_ok = false;
                 $value = $calc['pct_temp_disk'] . "%";
-                $rec = GetMessage("PERFMON_KPI_REC_TMP_DISK_2", array(
-                    "#STAT_NAME#" => "<span class=\"perfmon_code\">Created_tmp_disk_tables / (Created_tmp_tables + Created_tmp_disk_tables)</span>",
-                    "#STAT_VALUE#" => $pct_temp_disk . "%",
-                ));
+                $rec = GetMessage(
+                    "PERFMON_KPI_REC_TMP_DISK_2",
+                    array(
+                        "#STAT_NAME#" => "<span class=\"perfmon_code\">Created_tmp_disk_tables / (Created_tmp_tables + Created_tmp_disk_tables)</span>",
+                        "#STAT_VALUE#" => $pct_temp_disk . "%",
+                    )
+                );
             } else {
                 $is_ok = true;
                 $value = $calc['pct_temp_disk'] . "%";
-                $rec = GetMessage("PERFMON_KPI_REC_TMP_DISK_3", array(
-                    "#STAT_NAME#" => "<span class=\"perfmon_code\">Created_tmp_disk_tables / (Created_tmp_tables + Created_tmp_disk_tables)</span>",
-                    "#STAT_VALUE#" => $pct_temp_disk . "%",
-                ));
+                $rec = GetMessage(
+                    "PERFMON_KPI_REC_TMP_DISK_3",
+                    array(
+                        "#STAT_NAME#" => "<span class=\"perfmon_code\">Created_tmp_disk_tables / (Created_tmp_tables + Created_tmp_disk_tables)</span>",
+                        "#STAT_VALUE#" => $pct_temp_disk . "%",
+                    )
+                );
             }
             $data[0]["ITEMS"][] = array(
                 "KPI_NAME" => GetMessage("PERFMON_KPI_NAME_TMP_DISK"),
@@ -384,20 +453,26 @@ if ($statDB->type == "MYSQL") {
         if ($vars['thread_cache_size'] == 0) {
             $is_ok = false;
             $value = $vars['thread_cache_size'];
-            $rec = GetMessage("PERFMON_KPI_REC_THREAD_NO_CACHE", array(
-                "#PARAM_VALUE#" => 4,
-                "#PARAM_NAME#" => "<span class=\"perfmon_code\">thread_cache_size</span>",
-            ));
+            $rec = GetMessage(
+                "PERFMON_KPI_REC_THREAD_NO_CACHE",
+                array(
+                    "#PARAM_VALUE#" => 4,
+                    "#PARAM_NAME#" => "<span class=\"perfmon_code\">thread_cache_size</span>",
+                )
+            );
         } else {
             $calc['thread_cache_hit_rate'] = round(100 - (($stat['Threads_created'] / $stat['Connections']) * 100), 2);
             $is_ok = $calc['thread_cache_hit_rate'] > 50;
             $value = $calc['thread_cache_hit_rate'] . "%";
-            $rec = GetMessage("PERFMON_KPI_REC_THREAD_CACHE", array(
-                "#STAT_NAME#" => "<span class=\"perfmon_code\">1 - Threads_created / Connections</span>",
-                "#GOOD_VALUE#" => "50%",
-                "#PARAM_VALUE#" => $vars['thread_cache_size'],
-                "#PARAM_NAME#" => "<span class=\"perfmon_code\">thread_cache_size</span>",
-            ));
+            $rec = GetMessage(
+                "PERFMON_KPI_REC_THREAD_CACHE",
+                array(
+                    "#STAT_NAME#" => "<span class=\"perfmon_code\">1 - Threads_created / Connections</span>",
+                    "#GOOD_VALUE#" => "50%",
+                    "#PARAM_VALUE#" => $vars['thread_cache_size'],
+                    "#PARAM_NAME#" => "<span class=\"perfmon_code\">thread_cache_size</span>",
+                )
+            );
         }
         $data[0]["ITEMS"][] = array(
             "KPI_NAME" => GetMessage("PERFMON_KPI_NAME_THREAD_CACHE"),
@@ -413,21 +488,28 @@ if ($statDB->type == "MYSQL") {
                 "KPI_NAME" => GetMessage("PERFMON_KPI_NAME_OPEN_FILES"),
                 "IS_OK" => $calc['pct_files_open'] <= 85,
                 "KPI_VALUE" => $calc['pct_files_open'] . "%",
-                "KPI_RECOMMENDATION" => GetMessage("PERFMON_KPI_REC_OPEN_FILES", array(
-                    "#STAT_NAME#" => "<span class=\"perfmon_code\">Open_files / open_files_limit</span>",
-                    "#GOOD_VALUE#" => "85%",
-                    "#PARAM_VALUE#" => $vars['open_files_limit'],
-                    "#PARAM_NAME#" => "<span class=\"perfmon_code\">open_files_limit</span>",
-                )),
+                "KPI_RECOMMENDATION" => GetMessage(
+                    "PERFMON_KPI_REC_OPEN_FILES",
+                    array(
+                        "#STAT_NAME#" => "<span class=\"perfmon_code\">Open_files / open_files_limit</span>",
+                        "#GOOD_VALUE#" => "85%",
+                        "#PARAM_VALUE#" => $vars['open_files_limit'],
+                        "#PARAM_NAME#" => "<span class=\"perfmon_code\">open_files_limit</span>",
+                    )
+                ),
             );
         }
 
         // Table locks
         if ($stat['Table_locks_immediate'] > 0) {
-            if ($stat['Table_locks_waited'] == 0)
+            if ($stat['Table_locks_waited'] == 0) {
                 $calc['pct_table_locks_immediate'] = 100;
-            else
-                $calc['pct_table_locks_immediate'] = round($stat['Table_locks_immediate'] / ($stat['Table_locks_waited'] + $stat['Table_locks_immediate']) * 100, 2);
+            } else {
+                $calc['pct_table_locks_immediate'] = round(
+                    $stat['Table_locks_immediate'] / ($stat['Table_locks_waited'] + $stat['Table_locks_immediate']) * 100,
+                    2
+                );
+            }
             $data[0]["ITEMS"][] = array(
                 "KPI_NAME" => GetMessage("PERFMON_KPI_NAME_LOCKS"),
                 "KPI_VALUE" => (
@@ -435,10 +517,13 @@ if ($statDB->type == "MYSQL") {
                     $calc['pct_table_locks_immediate'] . "%" :
                     '<span class="errortext">' . $calc['pct_table_locks_immediate'] . '%</span>'
                 ),
-                "KPI_RECOMMENDATION" => GetMessage("PERFMON_KPI_REC_LOCKS", array(
-                    "#STAT_NAME#" => "<span class=\"perfmon_code\">Table_locks_immediate / (Table_locks_waited + Table_locks_immediate)</span>",
-                    "#GOOD_VALUE#" => "95%",
-                )),
+                "KPI_RECOMMENDATION" => GetMessage(
+                    "PERFMON_KPI_REC_LOCKS",
+                    array(
+                        "#STAT_NAME#" => "<span class=\"perfmon_code\">Table_locks_immediate / (Table_locks_waited + Table_locks_immediate)</span>",
+                        "#GOOD_VALUE#" => "95%",
+                    )
+                ),
             );
         }
 
@@ -447,19 +532,25 @@ if ($statDB->type == "MYSQL") {
             $data[0]["ITEMS"][] = array(
                 "KPI_NAME" => GetMessage("PERFMON_KPI_NAME_INSERTS"),
                 "KPI_VALUE" => "<span class=\"errortext\">OFF</span>",
-                "KPI_RECOMMENDATION" => GetMessage("PERFMON_KPI_REC_INSERTS", array(
-                    "#PARAM_NAME#" => "<span class=\"perfmon_code\">concurrent_insert</span>",
-                    "#REC_VALUE#" => "'ON'",
-                )),
+                "KPI_RECOMMENDATION" => GetMessage(
+                    "PERFMON_KPI_REC_INSERTS",
+                    array(
+                        "#PARAM_NAME#" => "<span class=\"perfmon_code\">concurrent_insert</span>",
+                        "#REC_VALUE#" => "'ON'",
+                    )
+                ),
             );
         } elseif ($vars['concurrent_insert'] == "0") {
             $data[0]["ITEMS"][] = array(
                 "KPI_NAME" => GetMessage("PERFMON_KPI_NAME_INSERTS"),
                 "KPI_VALUE" => "<span class=\"errortext\">0</span>",
-                "KPI_RECOMMENDATION" => GetMessage("PERFMON_KPI_REC_INSERTS", array(
-                    "#PARAM_NAME#" => "<span class=\"perfmon_code\">concurrent_insert</span>",
-                    "#REC_VALUE#" => "1",
-                )),
+                "KPI_RECOMMENDATION" => GetMessage(
+                    "PERFMON_KPI_REC_INSERTS",
+                    array(
+                        "#PARAM_NAME#" => "<span class=\"perfmon_code\">concurrent_insert</span>",
+                        "#REC_VALUE#" => "1",
+                    )
+                ),
             );
         }
 
@@ -477,73 +568,102 @@ if ($statDB->type == "MYSQL") {
         // InnoDB
         if ($have_innodb) {
             if ($stat['Innodb_buffer_pool_reads'] > 0 && $stat['Innodb_buffer_pool_read_requests'] > 0) {
-                $calc['innodb_buffer_hit_rate'] = round((1 - $stat['Innodb_buffer_pool_reads'] / $stat['Innodb_buffer_pool_read_requests']) * 100, 2);
+                $calc['innodb_buffer_hit_rate'] = round(
+                    (1 - $stat['Innodb_buffer_pool_reads'] / $stat['Innodb_buffer_pool_read_requests']) * 100,
+                    2
+                );
                 $data[0]["ITEMS"][] = array(
                     "KPI_NAME" => GetMessage("PERFMON_KPI_NAME_INNODB_BUFFER"),
                     "IS_OK" => $calc['innodb_buffer_hit_rate'] > 95,
                     "KPI_VALUE" => $calc['innodb_buffer_hit_rate'] . "%",
-                    "KPI_RECOMMENDATION" => GetMessage("PERFMON_KPI_REC_INNODB_BUFFER", array(
-                        "#STAT_NAME#" => "<span class=\"perfmon_code\">1 - Innodb_buffer_pool_reads / Innodb_buffer_pool_read_requests</span>",
-                        "#GOOD_VALUE#" => 95,
-                        "#PARAM_NAME#" => "<span class=\"perfmon_code\">innodb_buffer_pool_size</span>",
-                        "#PARAM_VALUE#" => CFile::FormatSize($vars['innodb_buffer_pool_size']),
-                    )),
+                    "KPI_RECOMMENDATION" => GetMessage(
+                        "PERFMON_KPI_REC_INNODB_BUFFER",
+                        array(
+                            "#STAT_NAME#" => "<span class=\"perfmon_code\">1 - Innodb_buffer_pool_reads / Innodb_buffer_pool_read_requests</span>",
+                            "#GOOD_VALUE#" => 95,
+                            "#PARAM_NAME#" => "<span class=\"perfmon_code\">innodb_buffer_pool_size</span>",
+                            "#PARAM_VALUE#" => CFile::FormatSize($vars['innodb_buffer_pool_size']),
+                        )
+                    ),
                 );
             }
             $data[0]["ITEMS"][] = array(
                 "KPI_NAME" => "innodb_flush_log_at_trx_commit",
                 "IS_OK" => $vars['innodb_flush_log_at_trx_commit'] == 2 || $vars['innodb_flush_log_at_trx_commit'] == 0,
-                "KPI_VALUE" => strlen($vars['innodb_flush_log_at_trx_commit']) ? $vars['innodb_flush_log_at_trx_commit'] : GetMessage("PERFMON_KPI_EMPTY"),
-                "KPI_RECOMMENDATION" => GetMessage("PERFMON_KPI_REC_INNODB_FLUSH_LOG", array(
-                    "#GOOD_VALUE#" => 2,
-                    "#PARAM_NAME#" => "<span class=\"perfmon_code\">innodb_flush_log_at_trx_commit</span>",
-                )),
+                "KPI_VALUE" => $vars['innodb_flush_log_at_trx_commit'] <> '' ? $vars['innodb_flush_log_at_trx_commit'] : GetMessage(
+                    "PERFMON_KPI_EMPTY"
+                ),
+                "KPI_RECOMMENDATION" => GetMessage(
+                    "PERFMON_KPI_REC_INNODB_FLUSH_LOG",
+                    array(
+                        "#GOOD_VALUE#" => 2,
+                        "#PARAM_NAME#" => "<span class=\"perfmon_code\">innodb_flush_log_at_trx_commit</span>",
+                    )
+                ),
             );
             if ($vars['log_bin'] !== 'OFF') {
                 $data[0]["ITEMS"][] = array(
                     "KPI_NAME" => "sync_binlog",
                     "IS_OK" => $vars['sync_binlog'] == 0 || $vars['sync_binlog'] >= 1000,
                     "KPI_VALUE" => intval($vars['sync_binlog']),
-                    "KPI_RECOMMENDATION" => GetMessage("PERFMON_KPI_REC_SYNC_BINLOG", array(
-                        "#GOOD_VALUE_1#" => 0,
-                        "#GOOD_VALUE_2#" => 1000,
-                        "#PARAM_NAME#" => "<span class=\"perfmon_code\">sync_binlog</span>",
-                    )),
+                    "KPI_RECOMMENDATION" => GetMessage(
+                        "PERFMON_KPI_REC_SYNC_BINLOG",
+                        array(
+                            "#GOOD_VALUE_1#" => 0,
+                            "#GOOD_VALUE_2#" => 1000,
+                            "#PARAM_NAME#" => "<span class=\"perfmon_code\">sync_binlog</span>",
+                        )
+                    ),
                 );
             }
             $data[0]["ITEMS"][] = array(
                 "KPI_NAME" => "innodb_flush_method",
                 "IS_OK" => $vars['innodb_flush_method'] == "O_DIRECT",
-                "KPI_VALUE" => strlen($vars['innodb_flush_method']) ? $vars['innodb_flush_method'] : GetMessage("PERFMON_KPI_EMPTY"),
-                "KPI_RECOMMENDATION" => GetMessage("PERFMON_KPI_REC_INNODB_FLUSH_METHOD", array(
-                    "#GOOD_VALUE#" => "O_DIRECT",
-                    "#PARAM_NAME#" => "<span class=\"perfmon_code\">innodb_flush_method</span>",
-                )),
+                "KPI_VALUE" => $vars['innodb_flush_method'] <> '' ? $vars['innodb_flush_method'] : GetMessage(
+                    "PERFMON_KPI_EMPTY"
+                ),
+                "KPI_RECOMMENDATION" => GetMessage(
+                    "PERFMON_KPI_REC_INNODB_FLUSH_METHOD",
+                    array(
+                        "#GOOD_VALUE#" => "O_DIRECT",
+                        "#PARAM_NAME#" => "<span class=\"perfmon_code\">innodb_flush_method</span>",
+                    )
+                ),
             );
             $data[0]["ITEMS"][] = array(
                 "KPI_NAME" => "transaction-isolation",
                 "IS_OK" => $vars['tx_isolation'] == "READ-COMMITTED",
-                "KPI_VALUE" => strlen($vars['tx_isolation']) ? $vars['tx_isolation'] : GetMessage("PERFMON_KPI_EMPTY"),
-                "KPI_RECOMMENDATION" => GetMessage("PERFMON_KPI_REC_TX_ISOLATION", array(
-                    "#GOOD_VALUE#" => "READ-COMMITTED",
-                    "#PARAM_NAME#" => "<span class=\"perfmon_code\">transaction-isolation</span>",
-                )),
+                "KPI_VALUE" => $vars['tx_isolation'] <> '' ? $vars['tx_isolation'] : GetMessage("PERFMON_KPI_EMPTY"),
+                "KPI_RECOMMENDATION" => GetMessage(
+                    "PERFMON_KPI_REC_TX_ISOLATION",
+                    array(
+                        "#GOOD_VALUE#" => "READ-COMMITTED",
+                        "#PARAM_NAME#" => "<span class=\"perfmon_code\">transaction-isolation</span>",
+                    )
+                ),
             );
             $data[0]["ITEMS"][] = array(
                 "KPI_NAME" => GetMessage("PERFMON_KPI_NAME_INNODB_LOG_WAITS"),
                 "KPI_VALUE" => $stat["Innodb_log_waits"],
-                "KPI_RECOMMENDATION" => GetMessage("PERFMON_KPI_REC_INNODB_LOG_WAITS", array("#VALUE#" => CFile::FormatSize($vars["innodb_log_file_size"]))),
+                "KPI_RECOMMENDATION" => GetMessage(
+                    "PERFMON_KPI_REC_INNODB_LOG_WAITS",
+                    array("#VALUE#" => CFile::FormatSize($vars["innodb_log_file_size"]))
+                ),
             );
             $data[0]["ITEMS"][] = array(
                 "KPI_NAME" => GetMessage("PERFMON_KPI_NAME_BINLOG"),
                 "KPI_VALUE" => $stat["Binlog_cache_disk_use"],
-                "KPI_RECOMMENDATION" => GetMessage("PERFMON_KPI_REC_BINLOG", array("#VALUE#" => CFile::FormatSize($vars["binlog_cache_size"]))),
+                "KPI_RECOMMENDATION" => GetMessage(
+                    "PERFMON_KPI_REC_BINLOG",
+                    array("#VALUE#" => CFile::FormatSize($vars["binlog_cache_size"]))
+                ),
             );
         }
     }
 } elseif ($statDB->type == "ORACLE") {
     $module_name = "";
-    $rs = $statDB->Query("
+    $rs = $statDB->Query(
+        "
 		select
 			event as WAIT_EVENT
 			,round(RATIO_TO_REPORT(sum(time_waited)) OVER ()*100,2) AS PCTTOT
@@ -636,7 +756,11 @@ if ($statDB->type == "MYSQL") {
 	and average_wait > 1/100
 	group by event
 	order by PCTTOT desc
-	", true, "", $queryOptions);
+	",
+        true,
+        "",
+        $queryOptions
+    );
     if (!$rs) {
         $message = new CAdminMessage(array("MESSAGE" => GetMessage("PERFMON_KPI_ORA_PERMISSIONS"), "HTML" => true));
     } else {
@@ -668,17 +792,21 @@ if ($statDB->type == "MYSQL") {
             ),
             "ITEMS" => array(),
         );
-        while ($ar = $rs->Fetch())
+        while ($ar = $rs->Fetch()) {
             $data[0]["ITEMS"][] = array(
                 "WAIT_EVENT" => $ar["WAIT_EVENT"],
                 "WAIT_PCT" => $ar["PCTTOT"] . "%",
                 "WAIT_AVERAGE_WAIT_MS" => $ar["AVERAGE_WAIT_MS"],
-                "KPI_RECOMMENDATION" => GetMessage("PERFMON_KPI_ORA_REC_" . strtoupper(str_replace(array(" ", ":", "*"), "_", $ar["WAIT_EVENT"]))),
+                "KPI_RECOMMENDATION" => GetMessage(
+                    "PERFMON_KPI_ORA_REC_" . mb_strtoupper(str_replace(array(" ", ":", "*"), "_", $ar["WAIT_EVENT"]))
+                ),
             );
+        }
         $param = array();
         $rs = $statDB->Query("SELECT NAME,VALUE from v\$parameter", false, "", $queryOptions);
-        while ($ar = $rs->Fetch())
+        while ($ar = $rs->Fetch()) {
             $param[$ar["NAME"]] = $ar["VALUE"];
+        }
 
         $data[1] = array(
             "TITLE" => GetMessage("PERFMON_PARAMETERS_TITLE"),
@@ -751,7 +879,8 @@ if ($statDB->type == "MYSQL") {
                 ),
             ),
         );
-        $rs = $statDB->Query("
+        $rs = $statDB->Query(
+            "
 			SELECT
 				USER USER_NAME,
 				" . $statDB->DateToCharFunction('min(min_last_analyzed)') . " MIN_LAST_ANALYZED,
@@ -767,7 +896,11 @@ if ($statDB->type == "MYSQL") {
 				select min(last_analyzed) min_last_analyzed, max(last_analyzed) max_last_analyzed from dba_tables
 				where owner = user
 			)
-		", false, "", $queryOptions);
+		",
+            false,
+            "",
+            $queryOptions
+        );
         $stat = $rs->Fetch();
         $data[2] = array(
             "TITLE" => GetMessage("PERFMON_STATS_TITLE"),
@@ -817,8 +950,9 @@ $APPLICATION->SetTitle(GetMessage("PERFMON_DB_SERVER_TITLE"));
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 
 if (count($data)) {
     foreach ($data as $i => $arTable) {
@@ -847,10 +981,11 @@ if (count($data)) {
         while ($arRes = $rsData->NavNext(true, "f_")) {
             $row =& $lAdmin->AddRow($j++, $arRes);
             foreach ($arRes as $key => $value) {
-                if ($key == "KPI_VALUE" && array_key_exists("IS_OK", $arRes) && !$arRes["IS_OK"])
+                if ($key == "KPI_VALUE" && array_key_exists("IS_OK", $arRes) && !$arRes["IS_OK"]) {
                     $row->AddViewField($key, "<span class=\"errortext\">" . $value . "</span>");
-                else
+                } else {
                     $row->AddViewField($key, $value);
+                }
             }
         }
         $lAdmin->CheckListMode();

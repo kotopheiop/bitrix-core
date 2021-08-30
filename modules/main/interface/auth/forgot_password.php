@@ -1,5 +1,8 @@
 <?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+}
 
 $bNeedCaptcha = (COption::GetOptionString("main", "captcha_restoring_password", "N") == "Y");
 ?>
@@ -47,9 +50,10 @@ $bNeedCaptcha = (COption::GetOptionString("main", "captcha_restoring_password", 
             </div>
             <div class="login-btn-wrap" id="forgot_password_message_button"><a
                         class="login-popup-link login-popup-return-auth" href="javascript:void(0)"
-                        onclick="BX.adminLogin.toggleAuthForm('authorize')"><?= GetMessage('AUTH_GOTO_AUTH_FORM_1') ?></a><input
-                        type="submit" value="<?= GetMessage("AUTH_SEND") ?>" class="login-btn" name="send_account_info">
-            </div>
+                        onclick="BX.adminLogin.toggleAuthForm('authorize')"><?= GetMessage(
+                        'AUTH_GOTO_AUTH_FORM_1'
+                    ) ?></a><input type="submit" value="<?= GetMessage("AUTH_SEND") ?>" class="login-btn"
+                                   name="send_account_info"></div>
         </div>
     </div>
     <div class="login-popup-request-text" id="forgot_password_note">
@@ -60,7 +64,9 @@ $bNeedCaptcha = (COption::GetOptionString("main", "captcha_restoring_password", 
 <script type="text/javascript">
     var obForgMsg = new BX.authFormForgotPasswordMessage('forgot_password_message', {url: ''}),
         obForg = new BX.authFormForgotPassword('forgot_password', {
-            url: '<?echo CUtil::JSEscape($authUrl . "?forgot_password=yes" . (($s = DeleteParam(array("forgot_password"))) == "" ? "" : "&" . $s))?>',
+            url: '<?echo CUtil::JSEscape(
+                $authUrl . "?forgot_password=yes" . (($s = DeleteParam(array("forgot_password"))) == "" ? "" : "&" . $s)
+            )?>',
             needCaptcha: <?=$bNeedCaptcha ? 'true' : 'false'?>,
             message: obForgMsg
         });

@@ -1,5 +1,8 @@
 <?
 
+/**
+ * Class CCalendarUserSettings
+ */
 class CCalendarUserSettings
 {
     private static
@@ -21,18 +24,21 @@ class CCalendarUserSettings
 
     public static function Set($settings = array(), $userId = false)
     {
-        if (!$userId)
+        if (!$userId) {
             $userId = CCalendar::GetUserId();
-        if (!$userId)
+        }
+        if (!$userId) {
             return;
+        }
 
         if ($settings === false) {
             CUserOptions::SetOption("calendar", "user_settings", false, false, $userId);
         } elseif (is_array($settings)) {
             $curSet = self::Get($userId);
             foreach ($settings as $key => $val) {
-                if (isset(self::$settings[$key]))
+                if (isset(self::$settings[$key])) {
                     $curSet[$key] = $val;
+                }
             }
             CUserOptions::SetOption("calendar", "user_settings", $curSet, false, $userId);
         }
@@ -62,7 +68,9 @@ class CCalendarUserSettings
             // We will ask him but we should suggest some suitable for his offset
             // We will ask him but we should suggest some suitable for his offset
             if (!$resSettings['timezoneName']) {
-                $resSettings['timezoneDefaultName'] = CCalendar::GetGoodTimezoneForOffset($resSettings['timezoneOffsetUTC']);
+                $resSettings['timezoneDefaultName'] = CCalendar::GetGoodTimezoneForOffset(
+                    $resSettings['timezoneOffsetUTC']
+                );
             }
 
             $workTime = CUserOptions::GetOption("calendar", "workTime", false, $userId);
@@ -80,38 +88,42 @@ class CCalendarUserSettings
 
     public static function getFormSettings($formType, $userId = false)
     {
-        if (!$userId)
+        if (!$userId) {
             $userId = CCalendar::GetUserId();
+        }
 
         $defaultValues = array(
             'slider_main' => array(
                 'pinnedFields' => implode(',', array('location', 'rrule'))
             )
         );
-        if (!isset($defaultValues[$formType]))
+        if (!isset($defaultValues[$formType])) {
             $defaultValues[$formType] = false;
+        }
 
         //CUserOptions::DeleteOption("calendar", $formType);
         $settings = CUserOptions::GetOption("calendar", $formType, $defaultValues[$formType], $userId);
-        if (!is_array($settings['pinnedFields']))
+        if (!is_array($settings['pinnedFields'])) {
             $settings['pinnedFields'] = explode(',', $settings['pinnedFields']);
+        }
         return $settings;
     }
 
     public static function getTrackingUsers($userId = false, $params = array())
     {
-        if (!$userId)
+        if (!$userId) {
             $userId = CCalendar::GetUserId();
+        }
 
         $res = array();
         $str = CUserOptions::GetOption("calendar", "superpose_tracking_users", false, $userId);
 
         if ($str !== false && CheckSerializedData($str)) {
-            $ids = unserialize($str);
+            $ids = unserialize($str, ['allowed_classes' => false]);
             if (is_array($ids) && count($ids) > 0) {
                 foreach ($ids as $id) {
-                    if (intVal($id) > 0) {
-                        $res[] = intVal($id);
+                    if (intval($id) > 0) {
+                        $res[] = intval($id);
                     }
                 }
             }
@@ -144,11 +156,13 @@ class CCalendarUserSettings
 
     public static function setTrackingUsers($userId = false, $value = array())
     {
-        if (!$userId)
+        if (!$userId) {
             $userId = CCalendar::GetUserId();
+        }
 
-        if (!is_array($value))
+        if (!is_array($value)) {
             $value = array();
+        }
 
         CUserOptions::SetOption("calendar", "superpose_tracking_users", serialize($value), false, $userId);
     }
@@ -159,11 +173,11 @@ class CCalendarUserSettings
         $str = CUserOptions::GetOption("calendar", "superpose_tracking_groups", false, $userId);
 
         if ($str !== false && CheckSerializedData($str)) {
-            $ids = unserialize($str);
+            $ids = unserialize($str, ['allowed_classes' => false]);
             if (is_array($ids) && count($ids) > 0) {
                 foreach ($ids as $id) {
-                    if (intVal($id) > 0) {
-                        $res[] = intVal($id);
+                    if (intval($id) > 0) {
+                        $res[] = intval($id);
                     }
                 }
             }
@@ -183,11 +197,13 @@ class CCalendarUserSettings
 
     public static function setTrackingGroups($userId = false, $value = array())
     {
-        if (!$userId)
+        if (!$userId) {
             $userId = CCalendar::GetUserId();
+        }
 
-        if (!is_array($value))
+        if (!is_array($value)) {
             $value = array();
+        }
 
         CUserOptions::SetOption("calendar", "superpose_tracking_groups", serialize($value), false, $userId);
     }
@@ -197,31 +213,13 @@ class CCalendarUserSettings
         $res = array();
 
         if (class_exists('CUserOptions') && $userId > 0) {
-            //CUserOptions::DeleteOption("calendar", "hidden_sections");
             $res = CUserOptions::GetOption("calendar", "hidden_sections", false, $userId);
-            if ($res !== false && is_array($res) && isset($res['hidden_sections']))
+            if ($res !== false && is_array($res) && isset($res['hidden_sections'])) {
                 $res = explode(',', $res['hidden_sections']);
+            }
         }
-        if (!is_array($res))
+        if (!is_array($res)) {
             $res = array();
-
-        return $res;
-    }
-
-    public static function getSectionCustomization($userId = false)
-    {
-        $res = array(
-//			'tasks' => array(
-//				'name' => 'awdawd',
-//				'color' => '#FF0000'
-//			)
-        );
-
-        if (class_exists('CUserOptions') && $userId > 0) {
-            //CUserOptions::DeleteOption("calendar", "hidden_sections");
-//			$res = CUserOptions::GetOption("calendar", "hidden_sections", false, $userId);
-//			if ($res !== false && is_array($res) && isset($res['hidden_sections']))
-//				$res = explode(',', $res['hidden_sections']);
         }
 
         return $res;

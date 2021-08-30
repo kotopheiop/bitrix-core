@@ -123,10 +123,11 @@ class CLearnPath implements ILearnPath
     {
         $tmp = urldecode($str);
 
-        if (strpos($tmp, self::DELIMITER) !== false)
+        if (mb_strpos($tmp, self::DELIMITER) !== false) {
             return (true);
-        else
+        } else {
             return (false);
+        }
     }
 
 
@@ -135,7 +136,7 @@ class CLearnPath implements ILearnPath
         $this->arPath = array();
 
         $tmp = urldecode($str);
-        if (strlen($tmp) == 0) {
+        if ($tmp == '') {
             return;
         }
 
@@ -159,8 +160,9 @@ class CLearnPath implements ILearnPath
 
     public function GetTop()
     {
-        if (!isset($this->arPath[0]))
+        if (!isset($this->arPath[0])) {
             return (false);
+        }
 
         return ($this->arPath[0]);
     }
@@ -168,8 +170,9 @@ class CLearnPath implements ILearnPath
     public function GetBottom()
     {
         $count = count($this->arPath);
-        if (!isset($this->arPath[$count - 1]))
+        if (!isset($this->arPath[$count - 1])) {
             return (false);
+        }
 
         return ($this->arPath[$count - 1]);
     }
@@ -180,8 +183,9 @@ class CLearnPath implements ILearnPath
         $popped = array_pop($this->arPath);
 
         // If there is no elements was in path
-        if ($popped === NULL)
+        if ($popped === null) {
             return (false);
+        }
 
         return ($popped);
     }
@@ -192,8 +196,9 @@ class CLearnPath implements ILearnPath
         $shifted = array_shift($this->arPath);
 
         // If there is no elements was in path
-        if ($shifted === NULL)
+        if ($shifted === null) {
             return (false);
+        }
 
         return ($shifted);
     }
@@ -207,11 +212,13 @@ class CLearnPath implements ILearnPath
             $rc = $rc->Fetch();
             $id = '???';
             $name = '???';
-            if (isset($rc['LESSON_ID']))
+            if (isset($rc['LESSON_ID'])) {
                 $id = $rc['LESSON_ID'];
+            }
 
-            if (isset($rc['NAME']))
+            if (isset($rc['NAME'])) {
                 $name = htmlspecialcharsbx($rc['NAME']);
+            }
 
             $txt = $pattern;
             $txt = str_replace('#LESSON_ID#', $id, $txt);

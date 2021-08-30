@@ -24,7 +24,7 @@ $composerJsonFile = $_SERVER["DOCUMENT_ROOT"] . '/bitrix/composer.json';
 $composerSettings = \Bitrix\Main\Config\Configuration::getValue('composer');
 if (!empty($composerSettings['config_path'])) {
     $jsonPath = $composerSettings['config_path'];
-    $jsonPath = ($jsonPath{0} == '/')
+    $jsonPath = ($jsonPath[0] == '/')
         ? $jsonPath // absolute
         : realpath($_SERVER["DOCUMENT_ROOT"] . '/' . $jsonPath); // relative
 
@@ -43,10 +43,13 @@ if (file_exists($composerJsonFile) && is_readable($composerJsonFile)) {
         $vendorPath = realpath(dirname($composerJsonFile) . DIRECTORY_SEPARATOR . $jsonContent['config']['vendor-dir']);
 
         if ($vendorPath === false) {
-            throw new \Bitrix\Main\SystemException(sprintf(
-                'Failed to load vendor libs from %s, path \'%s\' is not readable',
-                $composerJsonFile, $jsonContent['config']['vendor-dir']
-            ));
+            throw new \Bitrix\Main\SystemException(
+                sprintf(
+                    'Failed to load vendor libs from %s, path \'%s\' is not readable',
+                    $composerJsonFile,
+                    $jsonContent['config']['vendor-dir']
+                )
+            );
         }
     }
 }

@@ -2,7 +2,7 @@
 
 class CAutoDetect
 {
-    public static function GetList(&$by, &$order, $arFilter = Array(), &$is_filtered)
+    public static function GetList($by = 's_counter', $order = 'desc', $arFilter = [])
     {
         $err_mess = "File: " . __FILE__ . "<br>Line: ";
         $DB = CDatabase::GetModuleConnection('statistic');
@@ -12,11 +12,13 @@ class CAutoDetect
         if (is_array($arFilter)) {
             foreach ($arFilter as $key => $val) {
                 if (is_array($val)) {
-                    if (count($val) <= 0)
+                    if (count($val) <= 0) {
                         continue;
+                    }
                 } else {
-                    if ((strlen($val) <= 0) || ($val === "NOT_REF"))
+                    if (((string)$val == '') || ($val === "NOT_REF")) {
                         continue;
+                    }
                 }
                 $match_value_set = array_key_exists($key . "_EXACT_MATCH", $arFilter);
                 $key = strtoupper($key);
@@ -36,21 +38,21 @@ class CAutoDetect
                         break;
                 }
             }
-            foreach ($arSqlSearch_h as $sqlWhere)
+            foreach ($arSqlSearch_h as $sqlWhere) {
                 $strSqlSearch_h .= " and (" . $sqlWhere . ") ";
+            }
         }
 
-        if ($by == "s_user_agent")
+        if ($by == "s_user_agent") {
             $strSqlOrder = "ORDER BY S.USER_AGENT";
-        elseif ($by == "s_counter")
+        } elseif ($by == "s_counter") {
             $strSqlOrder = "ORDER BY COUNTER";
-        else {
-            $by = "s_counter";
+        } else {
             $strSqlOrder = "ORDER BY COUNTER";
         }
+
         if ($order != "asc") {
             $strSqlOrder .= " desc ";
-            $order = "desc";
         }
 
         $strSqlSearch = GetFilterSqlSearch($arSqlSearch);
@@ -84,7 +86,7 @@ class CAutoDetect
 		";
 
         $res = $DB->Query($strSql, false, $err_mess . __LINE__);
-        $is_filtered = (IsFiltered($strSqlSearch) || strlen($strSqlSearch_h) > 0);
+
         return $res;
     }
 }

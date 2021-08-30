@@ -1,11 +1,17 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 class CSecurityFrame
 {
     public static function SetHeader()
     {
-        if ((!defined("BX_SECURITY_SKIP_FRAMECHECK") || BX_SECURITY_SKIP_FRAMECHECK !== true) && !CSecurityFrameMask::Check(SITE_ID, $_SERVER["REQUEST_URI"])) {
+        if ((!defined(
+                    "BX_SECURITY_SKIP_FRAMECHECK"
+                ) || BX_SECURITY_SKIP_FRAMECHECK !== true) && !CSecurityFrameMask::Check(
+                SITE_ID,
+                $_SERVER["REQUEST_URI"]
+            )) {
             header("X-Frame-Options: SAMEORIGIN");
         }
     }
@@ -57,8 +63,9 @@ class CSecurityFrameMask
                 $i = 10;
                 foreach ($arMasks as $arMask) {
                     $site_id = trim($arMask["SITE_ID"]);
-                    if ($site_id == "NOT_REF")
+                    if ($site_id == "NOT_REF") {
                         $site_id = "";
+                    }
 
                     $mask = trim($arMask["MASK"]);
                     if ($mask && !array_key_exists($mask, $added)) {
@@ -68,8 +75,9 @@ class CSecurityFrameMask
                             "LIKE_MASK" => str_replace($arLikeSearch, $arLikeReplace, $mask),
                             "PREG_MASK" => str_replace($arPregSearch, $arPregReplace, $mask),
                         );
-                        if ($site_id)
+                        if ($site_id) {
                             $arMask["SITE_ID"] = $site_id;
+                        }
 
                         $DB->Add("b_sec_frame_mask", $arMask);
                         $i += 10;
@@ -77,9 +85,9 @@ class CSecurityFrameMask
                     }
                 }
 
-                if (CACHED_b_sec_frame_mask !== false)
+                if (CACHED_b_sec_frame_mask !== false) {
                     $CACHE_MANAGER->CleanDir("b_sec_frame_mask");
-
+                }
             }
         }
 
@@ -135,7 +143,6 @@ class CSecurityFrameMask
                     }
                 }
             }
-
         } else {
             $sql = "
 				SELECT m.*
@@ -151,8 +158,9 @@ class CSecurityFrameMask
             }
 
             $rs = $DB->Query($sql);
-            if ($rs->Fetch())
+            if ($rs->Fetch()) {
                 $bFound = true;
+            }
         }
 
         return $bFound;

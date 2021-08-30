@@ -9,8 +9,9 @@ use Bitrix\Catalog;
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/catalog/prolog.php");
-if (!($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_discount')))
+if (!($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_discount'))) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 Main\Loader::includeModule('catalog');
 $bReadOnly = !$USER->CanDoOperation('catalog_discount');
 
@@ -25,14 +26,19 @@ IncludeModuleLangFile(__FILE__);
 $returnUrl = '';
 if (!empty($_REQUEST['return_url'])) {
     $currentUrl = $APPLICATION->GetCurPage();
-    if (strtolower(substr($_REQUEST['return_url'], strlen($currentUrl))) != strtolower($currentUrl)) {
+    if (mb_strtolower(mb_substr($_REQUEST['return_url'], mb_strlen($currentUrl))) != mb_strtolower($currentUrl)) {
         $returnUrl = $_REQUEST['return_url'];
     }
     unset($currentUrl);
 }
 
 $aTabs = array(
-    array("DIV" => "edit1", "TAB" => GetMessage("CDEN_TAB_DISCOUNT"), "ICON" => "catalog", "TITLE" => GetMessage("CDEN_TAB_DISCOUNT_DESCR")),
+    array(
+        "DIV" => "edit1",
+        "TAB" => GetMessage("CDEN_TAB_DISCOUNT"),
+        "ICON" => "catalog",
+        "TITLE" => GetMessage("CDEN_TAB_DISCOUNT_DESCR")
+    ),
 );
 
 $tabControl = new CAdminForm('catalogCouponEdit', $aTabs);
@@ -44,8 +50,9 @@ $bVarsFromForm = false;
 $ID = 0;
 if (isset($_REQUEST['ID'])) {
     $ID = (int)$_REQUEST['ID'];
-    if ($ID < 0)
+    if ($ID < 0) {
         $ID = 0;
+    }
 }
 $arFields = array();
 
@@ -69,25 +76,37 @@ if (!$bReadOnly && $_SERVER['REQUEST_METHOD'] == "POST" && !empty($_POST['Update
     }
 
     if (!$res) {
-        if ($ex = $APPLICATION->GetException())
+        if ($ex = $APPLICATION->GetException()) {
             $errorMessage .= $ex->GetString() . "<br>";
-        else
-            $errorMessage .= (0 < $ID ? str_replace('#ID#', $ID, GetMessage('DSC_CPN_ERR_UPDATE')) : GetMessage('DSC_CPN_ERR_ADD')) . "<br>";
+        } else {
+            $errorMessage .= (0 < $ID ? str_replace('#ID#', $ID, GetMessage('DSC_CPN_ERR_UPDATE')) : GetMessage(
+                    'DSC_CPN_ERR_ADD'
+                )) . "<br>";
+        }
         $bVarsFromForm = true;
         $DB->Rollback();
     } else {
         $DB->Commit();
-        if (empty($_POST['apply']))
-            LocalRedirect("/bitrix/admin/cat_discount_coupon.php?lang=" . LANGUAGE_ID . GetFilterParams("filter_", false));
-        else
-            LocalRedirect("/bitrix/admin/cat_discount_coupon_edit.php?lang=" . LANGUAGE_ID . "&ID=" . $ID . GetFilterParams("filter_", false));
+        if (empty($_POST['apply'])) {
+            LocalRedirect(
+                "/bitrix/admin/cat_discount_coupon.php?lang=" . LANGUAGE_ID . GetFilterParams("filter_", false)
+            );
+        } else {
+            LocalRedirect(
+                "/bitrix/admin/cat_discount_coupon_edit.php?lang=" . LANGUAGE_ID . "&ID=" . $ID . GetFilterParams(
+                    "filter_",
+                    false
+                )
+            );
+        }
     }
 }
 
-if ($ID > 0)
+if ($ID > 0) {
     $APPLICATION->SetTitle(str_replace("#ID#", $ID, GetMessage("DSC_TITLE_UPDATE")));
-else
+} else {
     $APPLICATION->SetTitle(GetMessage("DSC_TITLE_ADD"));
+}
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
@@ -142,18 +161,23 @@ if ($ID > 0 && !$bReadOnly) {
     $aMenu[] = array(
         "TEXT" => GetMessage("CDEN_DELETE_DISCOUNT"),
         "ICON" => "btn_delete",
-        "LINK" => "javascript:if(confirm('" . GetMessage("CDEN_DELETE_DISCOUNT_CONFIRM") . "')) window.location='/bitrix/admin/cat_discount_coupon.php?action=delete&ID[]=" . $ID . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get() . "#tb';",
+        "LINK" => "javascript:if(confirm('" . GetMessage(
+                "CDEN_DELETE_DISCOUNT_CONFIRM"
+            ) . "')) window.location='/bitrix/admin/cat_discount_coupon.php?action=delete&ID[]=" . $ID . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get(
+            ) . "#tb';",
         "WARNING" => "Y"
     );
 }
 $context = new CAdminContextMenu($aMenu);
 $context->Show();
-if ($errorMessage !== '')
+if ($errorMessage !== '') {
     CAdminMessage::ShowMessage($errorMessage);
+}
 
 $filterDiscount = array();
-if ($ID > 0)
+if ($ID > 0) {
     $filterDiscount = array('ID' => $arCoupon['DISCOUNT_ID']);
+}
 $arDiscountList = array();
 $rsDiscounts = CCatalogDiscount::GetList(
     array("NAME" => "ASC"),
@@ -181,13 +205,16 @@ if (!empty($returnUrl)) {
     ?><input type="hidden" name="return_url" value="<? echo htmlspecialcharsbx($returnUrl); ?>"><?
 }
 $tabControl->EndEpilogContent();
-$tabControl->Begin(array(
-    "FORM_ACTION" => '/bitrix/admin/cat_discount_coupon_edit.php?lang=' . LANGUAGE_ID,
-));
+$tabControl->Begin(
+    array(
+        "FORM_ACTION" => '/bitrix/admin/cat_discount_coupon_edit.php?lang=' . LANGUAGE_ID,
+    )
+);
 
 $tabControl->BeginNextFormTab();
-if ($ID > 0)
+if ($ID > 0) {
     $tabControl->AddViewField('ID', 'ID:', $ID, false);
+}
 if (!empty($arDiscountList)) {
     if (0 < $ID) {
         $tabControl->BeginCustomField("DISCOUNT_ID", GetMessage('DSC_CPN_DISC') . ':', false);
@@ -202,7 +229,13 @@ if (!empty($arDiscountList)) {
         </tr><?
         $tabControl->EndCustomField('DISCOUNT_ID');
     } else {
-        $tabControl->AddDropDownField("DISCOUNT_ID", GetMessage('DSC_CPN_DISC') . ':', true, $arDiscountList, $arCoupon['DISCOUNT_ID']);
+        $tabControl->AddDropDownField(
+            "DISCOUNT_ID",
+            GetMessage('DSC_CPN_DISC') . ':',
+            true,
+            $arDiscountList,
+            $arCoupon['DISCOUNT_ID']
+        );
     }
 } else {
     $tabControl->BeginCustomField("DISCOUNT_ID", GetMessage('DSC_CPN_DISC') . ':', true);
@@ -210,8 +243,9 @@ if (!empty($arDiscountList)) {
     <tr id="tr_DISCOUNT_ID" class="adm-detail-required-field">
     <td width="40%"><? echo $tabControl->GetCustomLabelHTML(); ?></td>
     <td width="60%">&nbsp;<a
-                href="/bitrix/admin/cat_discount_edit.php?lang=<? echo LANGUAGE_ID; ?>&return_url=<? echo urlencode($APPLICATION->GetCurPage() . "?lang=" . LANGUAGE_ID); ?>"><? echo GetMessage('DSC_ADD_DISCOUNT'); ?></a>
-    </td>
+                href="/bitrix/admin/cat_discount_edit.php?lang=<? echo LANGUAGE_ID; ?>&return_url=<? echo urlencode(
+                    $APPLICATION->GetCurPage() . "?lang=" . LANGUAGE_ID
+                ); ?>"><? echo GetMessage('DSC_ADD_DISCOUNT'); ?></a></td>
     </tr><?
     $tabControl->EndCustomField('DISCOUNT_ID');
 }
@@ -232,7 +266,8 @@ $tabControl->BeginCustomField('ONE_TIME', GetMessage('DSC_COUPON_TYPE') . ':', t
             </select>
         </td>
     </tr><?
-$tabControl->EndCustomField('ONE_TIME',
+$tabControl->EndCustomField(
+    'ONE_TIME',
     '<input type="hidden" name="ONE_TIME" value="' . htmlspecialcharsbx($arCoupon['ONE_TIME']) . '">'
 );
 $tabControl->BeginCustomField('COUPON', GetMessage("DSC_CPN_CODE") . ':', true);
@@ -245,11 +280,17 @@ $tabControl->BeginCustomField('COUPON', GetMessage("DSC_CPN_CODE") . ':', true);
             <input type="button" value="<? echo GetMessage("DSC_CPN_GEN") ?>" id="COUPON_GENERATE">
         </td>
     </tr><?
-$tabControl->EndCustomField('COUPON',
+$tabControl->EndCustomField(
+    'COUPON',
     '<input type="hidden" name="COUPON" value="' . htmlspecialcharsbx($arCoupon['COUPON']) . '">'
 );
 $tabControl->AddCalendarField('DATE_APPLY', GetMessage("DDSC_CPN_DATE") . ':', $arCoupon['DATE_APPLY']);
-$tabControl->AddTextField("DESCRIPTION", GetMessage("DSC_CPN_DESCRIPTION") . ':', htmlspecialcharsbx($arCoupon['DESCRIPTION']), array("cols" => 50, 'rows' => 6));
+$tabControl->AddTextField(
+    "DESCRIPTION",
+    GetMessage("DSC_CPN_DESCRIPTION") . ':',
+    htmlspecialcharsbx($arCoupon['DESCRIPTION']),
+    array("cols" => 50, 'rows' => 6)
+);
 
 $arButtonsParams = array(
     "disabled" => $bReadOnly,
@@ -261,8 +302,9 @@ $tabControl->Buttons($arButtonsParams);
 $tabControl->Show();
 
 echo BeginNote();
-?><span class="required"
-        style="vertical-align: super; font-size: smaller;">1</span> <? echo GetMessage('DSC_CPN_ONE_ORDER_NOTE');
+?><span class="required" style="vertical-align: super; font-size: smaller;">1</span> <? echo GetMessage(
+    'DSC_CPN_ONE_ORDER_NOTE'
+);
 echo EndNote();
 ?>
     <script type="text/javascript">

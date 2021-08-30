@@ -45,15 +45,17 @@ final class Manager
             return $result;
         }
 
-        $res = ShipmentTable::getList(array(
-            'filter' => array(
-                '=SHIPMENT_ID' => $shipmentId
-            ),
-            'select' => array(
-                '*',
-                'DELIVERY_ID' => 'SHIPMENT.DELIVERY_ID'
+        $res = ShipmentTable::getList(
+            array(
+                'filter' => array(
+                    '=SHIPMENT_ID' => $shipmentId
+                ),
+                'select' => array(
+                    '*',
+                    'DELIVERY_ID' => 'SHIPMENT.DELIVERY_ID'
+                )
             )
-        ));
+        );
 
         if (!($row = $res->fetch())) {
             $result->addError(
@@ -61,7 +63,9 @@ final class Manager
                     Loc::getMessage(
                         'SALE_DLVR_REQ_MNGR_ERROR_SHIPMENT_NOT_IN_REQUEST',
                         array('#SHIPMENT_ID#' => $shipmentId)
-                    )));
+                    )
+                )
+            );
 
             return $result;
         }
@@ -73,7 +77,10 @@ final class Manager
                 new Main\Error(
                     Loc::getMessage(
                         'SALE_DLVR_REQ_MNGR_ERROR_DELIVERY_NOT_FOUND',
-                        array('#SHIPMENT_LINK#' => Helper::getShipmentEditLink($shipmentId)))));
+                        array('#SHIPMENT_LINK#' => Helper::getShipmentEditLink($shipmentId))
+                    )
+                )
+            );
 
             return $result;
         }
@@ -85,7 +92,10 @@ final class Manager
                 new Main\Error(
                     Loc::getMessage(
                         'SALE_DLVR_REQ_MNGR_ERROR_DELIVERY_NOT_SUPPORT',
-                        array('#DELIVERY_LINK#' => Helper::getDeliveryEditLink($deliveryId)))));
+                        array('#DELIVERY_LINK#' => Helper::getDeliveryEditLink($deliveryId))
+                    )
+                )
+            );
 
             return $result;
         }
@@ -102,14 +112,17 @@ final class Manager
     {
         $deliveryId = $shipment->getDeliveryId();
 
-        if ($deliveryId <= 0)
+        if ($deliveryId <= 0) {
             return array();
+        }
 
-        if (!($delivery = Services\Manager::getObjectById($deliveryId)))
+        if (!($delivery = Services\Manager::getObjectById($deliveryId))) {
             return array();
+        }
 
-        if (!($deliveryRequestHandler = $delivery->getDeliveryRequestHandler()))
+        if (!($deliveryRequestHandler = $delivery->getDeliveryRequestHandler())) {
             return array();
+        }
 
         return $deliveryRequestHandler->getShipmentActions($shipment);
     }
@@ -124,8 +137,9 @@ final class Manager
         $result = array();
         $deliveryRequestHandler = self::getDeliveryRequestHandlerByRequestId($requestId);
 
-        if ($deliveryRequestHandler)
+        if ($deliveryRequestHandler) {
             $result = $deliveryRequestHandler->getActions($requestId);
+        }
 
         return $result;
     }
@@ -137,14 +151,17 @@ final class Manager
      */
     protected static function getDeliveryRequestHandlerByRequestId($requestId)
     {
-        if (intval($requestId) <= 0)
+        if (intval($requestId) <= 0) {
             return null;
+        }
 
-        if (!($requestFields = RequestTable::getById($requestId)->fetch()))
+        if (!($requestFields = RequestTable::getById($requestId)->fetch())) {
             return null;
+        }
 
-        if (intval($requestFields['DELIVERY_ID']) <= 0)
+        if (intval($requestFields['DELIVERY_ID']) <= 0) {
             return null;
+        }
 
         return self::getDeliveryRequestHandlerByDeliveryId($requestFields['DELIVERY_ID']);
     }
@@ -158,11 +175,13 @@ final class Manager
 
     public static function getDeliveryRequestHandlerByDeliveryId($deliveryId)
     {
-        if (intval($deliveryId) <= 0)
+        if (intval($deliveryId) <= 0) {
             return null;
+        }
 
-        if (!($delivery = Services\Manager::getObjectById($deliveryId)))
+        if (!($delivery = Services\Manager::getObjectById($deliveryId))) {
             return null;
+        }
 
         return $delivery->getDeliveryRequestHandler();
     }
@@ -188,7 +207,9 @@ final class Manager
                     Loc::getMessage(
                         'SALE_DLVR_REQ_MNGR_ERROR_NOT_SUPPORT',
                         array('#DELIVERY_LINK#' => Helper::getDeliveryEditLink($deliveryId))
-                    )));
+                    )
+                )
+            );
 
             return $result;
         }
@@ -197,13 +218,15 @@ final class Manager
         $checkResults = self::checkShipmentIdsBeforeAdd($shipmentIds);
 
         foreach ($checkResults as $res) {
-            if ($res->isSuccess())
+            if ($res->isSuccess()) {
                 continue;
+            }
 
             $result->addResult(
                 self::processShipmentResult(
                     $res
-                ));
+                )
+            );
 
             unset($shipmentIds[array_search($res->getInternalId(), $shipmentIds)]);
         }
@@ -220,8 +243,9 @@ final class Manager
         } else {
             $result->addErrors($res->getErrors());
 
-            foreach ($res->getShipmentResults() as $sRes)
+            foreach ($res->getShipmentResults() as $sRes) {
                 $result->addResult(self::processShipmentResult($sRes));
+            }
 
             return $result;
         }
@@ -241,11 +265,13 @@ final class Manager
                 $requestId = 0;
                 /** @var RequestResult $requestResult */
                 if ($requestResult->isSuccess()) {
-                    $res = RequestTable::add(array(
-                        'DELIVERY_ID' => $deliveryRequestHandler->getHandlingDeliveryServiceId(),
-                        'EXTERNAL_ID' => $requestResult->getExternalId(),
-                        'STATUS' => Manager::STATUS_SENT
-                    ));
+                    $res = RequestTable::add(
+                        array(
+                            'DELIVERY_ID' => $deliveryRequestHandler->getHandlingDeliveryServiceId(),
+                            'EXTERNAL_ID' => $requestResult->getExternalId(),
+                            'STATUS' => Manager::STATUS_SENT
+                        )
+                    );
 
                     if (!$res->isSuccess()) {
                         $requestResult->addErrors($res->getErrors());
@@ -254,21 +280,28 @@ final class Manager
 
                     $requestId = $res->getId();
 
-                    if ($requestId > 0)
+                    if ($requestId > 0) {
                         $requestResult->setInternalId($requestId);
+                    }
                 }
 
                 $shipmentsResults = $requestResult->getShipmentResults();
 
-                if (empty($shipmentsResults))
+                if (empty($shipmentsResults)) {
                     continue;
+                }
 
-                foreach ($shipmentsResults as $sResIdx => $shipmentResult)
+                foreach ($shipmentsResults as $sResIdx => $shipmentResult) {
                     $shipmentsResults[$sResIdx] = self::processShipmentResult($shipmentResult, $requestId);
+                }
 
                 $requestResult->setResults($shipmentsResults);
             } else {
-                $result->addError(new Main\Error(Loc::getMessage('SALE_DLVR_REQ_MNGR_ERROR_ANSW_TYPE') . ' "' . get_class($requestResult) . '"'));
+                $result->addError(
+                    new Main\Error(
+                        Loc::getMessage('SALE_DLVR_REQ_MNGR_ERROR_ANSW_TYPE') . ' "' . get_class($requestResult) . '"'
+                    )
+                );
                 continue;
             }
 
@@ -286,8 +319,9 @@ final class Manager
      */
     protected static function processShipmentResult($result, $requestId = 0)
     {
-        if (!($result instanceof ShipmentResult))
+        if (!($result instanceof ShipmentResult)) {
             return $result;
+        }
 
         $shipmentId = $result->getInternalId();
 
@@ -300,26 +334,32 @@ final class Manager
 
         if ($result->isSuccess()) {
             if (intval($requestId) > 0) {
-                $res = ShipmentTable::setShipment(array(
-                    'REQUEST_ID' => $requestId,
-                    'SHIPMENT_ID' => $shipmentId,
-                    'EXTERNAL_ID' => $extShipmentId,
-                    'ERROR_DESCRIPTION' => ''
-                ));
+                $res = ShipmentTable::setShipment(
+                    array(
+                        'REQUEST_ID' => $requestId,
+                        'SHIPMENT_ID' => $shipmentId,
+                        'EXTERNAL_ID' => $extShipmentId,
+                        'ERROR_DESCRIPTION' => ''
+                    )
+                );
 
-                if (!$res->isSuccess())
+                if (!$res->isSuccess()) {
                     $result->addErrors($res->getErrors());
+                }
 
                 $res = self::saveShipmentResult($shipmentId, $result);
 
-                if (!$res->isSuccess())
+                if (!$res->isSuccess()) {
                     $result->addErrors($res->getErrors());
+                }
             }
         } else {
-            ShipmentTable::setShipment(array(
-                'SHIPMENT_ID' => $shipmentId,
-                'ERROR_DESCRIPTION' => implode("\n", $result->getErrorMessages())
-            ));
+            ShipmentTable::setShipment(
+                array(
+                    'SHIPMENT_ID' => $shipmentId,
+                    'ERROR_DESCRIPTION' => implode("\n", $result->getErrorMessages())
+                )
+            );
         }
 
         return $result;
@@ -333,10 +373,15 @@ final class Manager
      * @return array Form fields
      * @throws Main\ArgumentNullException
      */
-    public static function getDeliveryRequestFormFields($deliveryId, $formFieldsType, array $shipmentIds, array $additional = array())
-    {
-        if (!$deliveryRequestHandler = self::getDeliveryRequestHandlerByDeliveryId($deliveryId))
+    public static function getDeliveryRequestFormFields(
+        $deliveryId,
+        $formFieldsType,
+        array $shipmentIds,
+        array $additional = array()
+    ) {
+        if (!$deliveryRequestHandler = self::getDeliveryRequestHandlerByDeliveryId($deliveryId)) {
             return array();
+        }
 
         return $deliveryRequestHandler->getFormFields($formFieldsType, $shipmentIds, $additional);
     }
@@ -358,17 +403,21 @@ final class Manager
         if ($deliveryRequestHandler = self::getDeliveryRequestHandlerByRequestId($requestId)) {
             $res = $deliveryRequestHandler->delete($requestId);
 
-            if (!$res->isSuccess())
+            if (!$res->isSuccess()) {
                 $result->addErrors($res->getErrors());
+            }
         }
 
         if ($result->isSuccess()) {
             $con = Main\Application::getConnection();
-            $con->queryExecute("DELETE FROM " . ShipmentTable::getTableName() . " WHERE REQUEST_ID=" . intval($requestId));
+            $con->queryExecute(
+                "DELETE FROM " . ShipmentTable::getTableName() . " WHERE REQUEST_ID=" . intval($requestId)
+            );
             $res = RequestTable::delete($requestId);
 
-            if (!$res->isSuccess())
+            if (!$res->isSuccess()) {
                 $result->addErrors($res->getErrors());
+            }
         }
 
         return $result;
@@ -398,7 +447,9 @@ final class Manager
                 new Main\Error(
                     Loc::getMessage(
                         'SALE_DLVR_REQ_MNGR_ERROR_REQ_OBJ'
-                    )));
+                    )
+                )
+            );
 
             return $result;
         }
@@ -412,8 +463,9 @@ final class Manager
             }
         }
 
-        if (empty($shipmentIds))
+        if (empty($shipmentIds)) {
             return $result;
+        }
 
         $res = $deliveryRequestHandler->deleteShipments($requestId, $shipmentIds);
         $result->setResults($res->getResults());
@@ -435,7 +487,11 @@ final class Manager
         /** @var  ShipmentResult $shpRes */
         foreach ($results as $resId => $shpRes) {
             if (!($shpRes instanceof ShipmentResult)) {
-                $result->addError(new Main\Error(Loc::getMessage('SALE_DLVR_REQ_MNGR_ERROR_ANSW_TYPE') . ' "' . get_class($shpRes) . '"'));
+                $result->addError(
+                    new Main\Error(
+                        Loc::getMessage('SALE_DLVR_REQ_MNGR_ERROR_ANSW_TYPE') . ' "' . get_class($shpRes) . '"'
+                    )
+                );
                 continue;
             }
 
@@ -447,7 +503,11 @@ final class Manager
                     continue;
                 }
 
-                $con->queryExecute("DELETE FROM " . ShipmentTable::getTableName() . " WHERE REQUEST_ID=" . intval($requestId) . " AND SHIPMENT_ID=" . intval($shpId));
+                $con->queryExecute(
+                    "DELETE FROM " . ShipmentTable::getTableName() . " WHERE REQUEST_ID=" . intval(
+                        $requestId
+                    ) . " AND SHIPMENT_ID=" . intval($shpId)
+                );
                 //Unset mark about changed shipment
                 self::unSetMarkerShipmentChanged($shpId);
 
@@ -461,7 +521,9 @@ final class Manager
                                 Loc::getMessage(
                                     'SALE_DLVR_REQ_MNGR_EMPTY_REQ_DELETED',
                                     array('#REQUEST_ID#' => $requestId)
-                                )));
+                                )
+                            )
+                        );
                     } else {
                         $result->addError(
                             new Main\Error(
@@ -469,7 +531,8 @@ final class Manager
                                     'SALE_DLVR_REQ_MNGR_EMPTY_REQ_NOT_DELETED',
                                     array('#REQUEST_LINK#' => Helper::getRequestViewLink($requestId))
                                 ) . implode('; ', $result->getErrorMessages())
-                            ));
+                            )
+                        );
                     }
                 }
             }
@@ -510,7 +573,13 @@ final class Manager
 
         if (!$deliveryRequestHandler) {
             $result = new Result();
-            $result->addError(new Main\Error(Loc::getMessage('SALE_DLVR_REQ_MNGR_ERROR_ACTION_EXEC') . '. ' . Loc::getMessage('SALE_DLVR_REQ_MNGR_ERROR_REQ_OBJ')));
+            $result->addError(
+                new Main\Error(
+                    Loc::getMessage('SALE_DLVR_REQ_MNGR_ERROR_ACTION_EXEC') . '. ' . Loc::getMessage(
+                        'SALE_DLVR_REQ_MNGR_ERROR_REQ_OBJ'
+                    )
+                )
+            );
             return $result;
         }
 
@@ -524,13 +593,23 @@ final class Manager
      * @param array $additional
      * @return Result
      */
-    public static function executeDeliveryRequestShipmentAction($requestId, $shipmentId, $actionType, array $additional = array())
-    {
+    public static function executeDeliveryRequestShipmentAction(
+        $requestId,
+        $shipmentId,
+        $actionType,
+        array $additional = array()
+    ) {
         $deliveryRequestHandler = self::getDeliveryRequestHandlerByRequestId($requestId);
 
         if (!$deliveryRequestHandler) {
             $result = new Result();
-            $result->addError(new Main\Error(Loc::getMessage('SALE_DLVR_REQ_MNGR_ERROR_ACTION_EXEC') . '. ' . Loc::getMessage('SALE_DLVR_REQ_MNGR_ERROR_REQ_OBJ')));
+            $result->addError(
+                new Main\Error(
+                    Loc::getMessage('SALE_DLVR_REQ_MNGR_ERROR_ACTION_EXEC') . '. ' . Loc::getMessage(
+                        'SALE_DLVR_REQ_MNGR_ERROR_REQ_OBJ'
+                    )
+                )
+            );
             return $result;
         }
 
@@ -553,7 +632,8 @@ final class Manager
                 new Main\Error(
                     Loc::getMessage('SALE_DLVR_REQ_MNGR_ERROR_SHIPMENT_ID') . ' "' . $id . '"',
                     $id
-                ));
+                )
+            );
             $result[] = $shpRes;
         }
 
@@ -564,7 +644,8 @@ final class Manager
             $shpRes->addError(
                 new Main\Error(
                     Loc::getMessage('SALE_DLVR_REQ_MNGR_ALREADY_ADDED')
-                ));
+                )
+            );
             $result[] = $shpRes;
         }
 
@@ -574,8 +655,12 @@ final class Manager
             $shpRes = new ShipmentResult($id);
             $shpRes->addError(
                 new Main\Error(
-                    Loc::getMessage('SALE_DLVR_REQ_MNGR_SHP_NOT_FOUND', array('#SHIPMENT_ID#' => $id)
-                    )));
+                    Loc::getMessage(
+                        'SALE_DLVR_REQ_MNGR_SHP_NOT_FOUND',
+                        array('#SHIPMENT_ID#' => $id)
+                    )
+                )
+            );
             $result[] = $shpRes;
         }
 
@@ -590,14 +675,17 @@ final class Manager
     {
         $result = array();
 
-        $res = Internals\ShipmentTable::getList(array(
-            'filter' => array(
-                '=ID' => $shipmentIds,
+        $res = Internals\ShipmentTable::getList(
+            array(
+                'filter' => array(
+                    '=ID' => $shipmentIds,
+                )
             )
-        ));
+        );
 
-        while ($row = $res->fetch())
+        while ($row = $res->fetch()) {
             $result[] = $row['ID'];
+        }
 
         return $result;
     }
@@ -610,15 +698,18 @@ final class Manager
     {
         $result = array();
 
-        $res = ShipmentTable::getList(array(
-            'filter' => array(
-                '=SHIPMENT_ID' => $shipmentIds,
-                '!=REQUEST_ID' => false
+        $res = ShipmentTable::getList(
+            array(
+                'filter' => array(
+                    '=SHIPMENT_ID' => $shipmentIds,
+                    '!=REQUEST_ID' => false
+                )
             )
-        ));
+        );
 
-        while ($row = $res->fetch())
+        while ($row = $res->fetch()) {
             $result[] = $row['SHIPMENT_ID'];
+        }
 
         return $result;
     }
@@ -631,9 +722,11 @@ final class Manager
     {
         $result = array();
 
-        foreach ($shipmentIds as $id)
-            if (intval($id) > 0)
+        foreach ($shipmentIds as $id) {
+            if (intval($id) > 0) {
                 $result[] = $id;
+            }
+        }
 
         return $result;
     }
@@ -661,7 +754,8 @@ final class Manager
             $shpRes = new ShipmentResult($id);
             $shpRes->addError(
                 new Main\Error(
-                    Loc::getMessage('SALE_DLVR_REQ_MNGR_ERROR_SHIPMENT_ID') . ' "' . $id . '"')
+                    Loc::getMessage('SALE_DLVR_REQ_MNGR_ERROR_SHIPMENT_ID') . ' "' . $id . '"'
+                )
             );
             $result[] = $shpRes;
         }
@@ -672,8 +766,12 @@ final class Manager
             $shpRes = new ShipmentResult($id);
             $shpRes->addError(
                 new Main\Error(
-                    Loc::getMessage('SALE_DLVR_REQ_MNGR_ERROR_SHIPMENT_NOT_IN_REQUEST', array('#SHIPMENT_ID#' => $id)
-                    )));
+                    Loc::getMessage(
+                        'SALE_DLVR_REQ_MNGR_ERROR_SHIPMENT_NOT_IN_REQUEST',
+                        array('#SHIPMENT_ID#' => $id)
+                    )
+                )
+            );
             $result[] = $shpRes;
         }
 
@@ -683,8 +781,12 @@ final class Manager
             $shpRes = new ShipmentResult($id);
             $shpRes->addError(
                 new Main\Error(
-                    Loc::getMessage('SALE_DLVR_REQ_MNGR_SHP_NOT_FOUND', array('#SHIPMENT_ID#' => $id)
-                    )));
+                    Loc::getMessage(
+                        'SALE_DLVR_REQ_MNGR_SHP_NOT_FOUND',
+                        array('#SHIPMENT_ID#' => $id)
+                    )
+                )
+            );
             $result[] = $shpRes;
         }
 
@@ -708,14 +810,17 @@ final class Manager
     {
         $result = 0;
 
-        $res = ShipmentTable::getList(array(
-            'filter' => array(
-                '=SHIPMENT_ID' => $shipmentId,
+        $res = ShipmentTable::getList(
+            array(
+                'filter' => array(
+                    '=SHIPMENT_ID' => $shipmentId,
+                )
             )
-        ));
+        );
 
-        if ($row = $res->fetch())
+        if ($row = $res->fetch()) {
             $result = $row['REQUEST_ID'];
+        }
 
         return $result;
     }
@@ -744,23 +849,28 @@ final class Manager
             $result->addError(
                 new Main\Error(
                     Loc::getMessage('SALE_DLVR_REQ_MNGR_ERROR_SHP_ADD2') . '. ' .
-                    Loc::getMessage('SALE_DLVR_REQ_MNGR_ERROR_REQ_OBJ',
+                    Loc::getMessage(
+                        'SALE_DLVR_REQ_MNGR_ERROR_REQ_OBJ',
                         "",
                         $requestId
-                    )));
+                    )
+                )
+            );
             return $result;
         }
 
         $checkResults = self::checkShipmentIdsBeforeAdd($shipmentIds);
 
         foreach ($checkResults as $res) {
-            if ($res->isSuccess())
+            if ($res->isSuccess()) {
                 continue;
+            }
 
             $result->addResult(
                 self::processShipmentResult(
                     $res
-                ));
+                )
+            );
 
             unset($shipmentIds[array_search($res->getInternalId(), $shipmentIds)]);
         }
@@ -777,8 +887,9 @@ final class Manager
         } else {
             $result->addErrors($res->getErrors());
 
-            foreach ($res->getShipmentResults() as $sRes)
+            foreach ($res->getShipmentResults() as $sRes) {
                 $result->addResult(self::processShipmentResult($sRes));
+            }
 
             return $result;
         }
@@ -802,8 +913,9 @@ final class Manager
                 foreach ($reqShpResults as $id => $shpRes) {
                     $reqShpResults[$id] = self::processShipmentResult($shpRes, $requestId);
 
-                    if ($shpRes->isSuccess())
+                    if ($shpRes->isSuccess()) {
                         $successResCount++;
+                    }
                 }
 
                 $reqRes->setResults($reqShpResults);
@@ -825,8 +937,9 @@ final class Manager
             }
         }
 
-        if ($successResCount <= 0)
+        if ($successResCount <= 0) {
             $result->addError(new Main\Error(Loc::getMessage('SALE_DLVR_REQ_MNGR_ERROR_SHP_ABSENT2')));
+        }
 
         $result->setResults($results);
         return $result;
@@ -855,8 +968,9 @@ final class Manager
         $checkResults = self::checkShipmentIdsBeforeUpdate($shipmentIds);
 
         foreach ($checkResults as $res) {
-            if ($res->isSuccess())
+            if ($res->isSuccess()) {
                 continue;
+            }
 
             $result->addResult(
                 self::processShipmentResult($res, $requestId)
@@ -871,7 +985,9 @@ final class Manager
                     Loc::getMessage(
                         'SALE_DLVR_REQ_MNGR_ERROR_SHP_UPD',
                         array('#REQUEST_LINK#' => Helper::getRequestViewLink($requestId))
-                    )));
+                    )
+                )
+            );
             return $result;
         }
 
@@ -885,7 +1001,8 @@ final class Manager
                         array('#REQUEST_LINK#' => Helper::getRequestViewLink($requestId))
                     ) . '. ' .
                     Loc::getMessage('SALE_DLVR_REQ_MNGR_ERROR_REQ_OBJ')
-                ));
+                )
+            );
 
             return $result;
         }
@@ -923,8 +1040,9 @@ final class Manager
 
                         $dbRes = self::saveShipmentResult($shpRes->getInternalId(), $shpRes);
 
-                        if (!$dbRes->isSuccess())
+                        if (!$dbRes->isSuccess()) {
                             $shpRes->addErrors($dbRes->getErrors());
+                        }
                     }
 
                     $resultsFinal[] = $shpRes;
@@ -933,7 +1051,8 @@ final class Manager
                 $result->addError(
                     new Main\Error(
                         Loc::getMessage('SALE_DLVR_REQ_MNGR_RES_WRONG_UPD')
-                    ));
+                    )
+                );
 
                 continue;
             }
@@ -960,25 +1079,32 @@ final class Manager
         $shipments = Helper::getShipmentsByIds(array($shipmentId));
 
         if ($shipments[$shipmentId]) {
-            $shipments[$shipmentId]->setFields(array(
-                'TRACKING_NUMBER' => $shipmentResult->getTrackingNumber(),
-                'DELIVERY_DOC_NUM' => $shipmentResult->getDeliveryDocNum(),
-                'DELIVERY_DOC_DATE' => $shipmentResult->getDeliveryDocDate()
-            ));
+            $shipments[$shipmentId]->setFields(
+                array(
+                    'TRACKING_NUMBER' => $shipmentResult->getTrackingNumber(),
+                    'DELIVERY_DOC_NUM' => $shipmentResult->getDeliveryDocNum(),
+                    'DELIVERY_DOC_DATE' => $shipmentResult->getDeliveryDocDate()
+                )
+            );
 
             static::$isChangedShipmentNeedsMark = false;
             $res = $shipments[$shipmentId]->getOrder()->save();
             static::$isChangedShipmentNeedsMark = true;
 
-            if (!$res->isSuccess())
-                $result->addError(new Main\Error(Loc::getMessage('SALE_DLVR_REQ_MNGR_ERROR_SAVE_SHIPMENT') . '"' . $shipmentId . '"'));
+            if (!$res->isSuccess()) {
+                $result->addError(
+                    new Main\Error(Loc::getMessage('SALE_DLVR_REQ_MNGR_ERROR_SAVE_SHIPMENT') . '"' . $shipmentId . '"')
+                );
+            }
         } else {
             $result->addError(
                 new Main\Error(
                     Loc::getMessage(
                         'SALE_DLVR_REQ_MNGR_SHP_NOT_FOUND',
                         array('#SHIPMENT_ID#' => $shipmentId)
-                    )));
+                    )
+                )
+            );
         }
 
         return $result;
@@ -1024,7 +1150,8 @@ final class Manager
                     'SALE_DLVR_REQ_MNGR_NOT_UPDATED'
                 ),
                 'DELIVERY_REQUEST_NOT_UPDATED'
-            ));
+            )
+        );
 
         EntityMarker::addMarker($order, $shipment, $r);
         $shipment->setField('MARKED', 'Y');
@@ -1035,20 +1162,25 @@ final class Manager
      */
     protected static function unSetMarkerShipmentChanged($shipmentId)
     {
-        EntityMarker::deleteByFilter(array(
-            '=ENTITY_TYPE' => EntityMarker::ENTITY_TYPE_SHIPMENT,
-            '=ENTITY_ID' => $shipmentId,
-            '=CODE' => 'DELIVERY_REQUEST_NOT_UPDATED'
-        ));
+        EntityMarker::deleteByFilter(
+            array(
+                '=ENTITY_TYPE' => EntityMarker::ENTITY_TYPE_SHIPMENT,
+                '=ENTITY_ID' => $shipmentId,
+                '=CODE' => 'DELIVERY_REQUEST_NOT_UPDATED'
+            )
+        );
     }
 
     public static function initJs()
     {
-        \CJSCore::RegisterExt('sale_delivery_requests', array(
-            'js' => '/bitrix/js/sale/delivery_request.js',
-            'lang' => '/bitrix/modules/sale/lang/' . LANGUAGE_ID . '/admin/js/sale_delivery_requests.php',
-            'rel' => array('core', 'ajax')
-        ));
+        \CJSCore::RegisterExt(
+            'sale_delivery_requests',
+            array(
+                'js' => '/bitrix/js/sale/delivery_request.js',
+                'lang' => '/bitrix/modules/sale/lang/' . LANGUAGE_ID . '/admin/js/sale_delivery_requests.php',
+                'rel' => array('core', 'ajax')
+            )
+        );
 
         \CUtil::InitJSCore(array('sale_delivery_requests'));
     }

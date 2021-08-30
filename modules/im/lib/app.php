@@ -22,7 +22,7 @@ class App
     public static function register(array $fields)
     {
         $moduleId = $fields['MODULE_ID'];
-        if (strlen($moduleId) <= 0) {
+        if ($moduleId == '') {
             return false;
         }
 
@@ -35,11 +35,13 @@ class App
         if (isset($fields['IFRAME']) && $fields['IFRAME']) {
             $check = parse_url($fields['IFRAME']);
             if (!isset($check['scheme']) && !isset($check['host'])) {
-                if (strpos($fields['IFRAME'], '/desktop_app/iframe/') !== 0) {
+                if (mb_strpos($fields['IFRAME'], '/desktop_app/iframe/') !== 0) {
                     return false;
                 }
-            } else if (!in_array($check['scheme'], Array('http', 'https')) || empty($check['host'])) {
-                return false;
+            } else {
+                if (!in_array($check['scheme'], Array('http', 'https')) || empty($check['host'])) {
+                    return false;
+                }
             }
             $iframe = $fields['IFRAME'] . (isset($check['query']) ? '&' : '?');
             if (isset($fields['IFRAME_WIDTH'])) {
@@ -49,8 +51,10 @@ class App
                 $iframeHeight = intval($fields['IFRAME_HEIGHT']) > 50 ? $fields['IFRAME_HEIGHT'] : 50;
             }
             $iframePopup = isset($fields['IFRAME_POPUP']) && $fields['IFRAME_POPUP'] == 'Y' ? 'Y' : $iframePopup;
-        } else if (!$jscommand) {
-            return false;
+        } else {
+            if (!$jscommand) {
+                return false;
+            }
         }
 
         $code = $fields['CODE'];
@@ -61,11 +65,15 @@ class App
         $iconFileId = intval($fields['ICON_ID']);
 
         $botId = isset($fields['BOT_ID']) ? intval($fields['BOT_ID']) : 0;
-        $hash = isset($fields['HASH']) && !empty($fields['HASH']) ? substr($fields['HASH'], 0, 32) : md5($botId . $fields['CODE'] . \CMain::GetServerUniqID());
+        $hash = isset($fields['HASH']) && !empty($fields['HASH']) ? mb_substr($fields['HASH'], 0, 32) : md5(
+            $botId . $fields['CODE'] . \CMain::GetServerUniqID()
+        );
         $context = isset($fields['CONTEXT']) ? $fields['CONTEXT'] : 'ALL';
         $registered = isset($fields['REGISTERED']) && $fields['REGISTERED'] == 'N' ? 'N' : 'Y';
         $hidden = isset($fields['HIDDEN']) && $fields['HIDDEN'] == 'Y' ? 'Y' : 'N';
-        if ($botId > 0 && (!\Bitrix\Im\User::getInstance($botId)->isExists() || !\Bitrix\Im\User::getInstance($botId)->isBot())) {
+        if ($botId > 0 && (!\Bitrix\Im\User::getInstance($botId)->isExists() || !\Bitrix\Im\User::getInstance(
+                    $botId
+                )->isBot())) {
             $botId = 0;
         }
 
@@ -96,38 +104,45 @@ class App
                 if ($botId == $cmd['BOT_ID'] && $code == $cmd['CODE']) {
                     return $cmd['ID'];
                 }
-            } else if ($restAppId) {
-                if ($restAppId == $cmd['APP_ID'] && $code == $cmd['CODE']) {
-                    return $cmd['ID'];
+            } else {
+                if ($restAppId) {
+                    if ($restAppId == $cmd['APP_ID'] && $code == $cmd['CODE']) {
+                        return $cmd['ID'];
+                    }
+                } else {
+                    if ($moduleId == $cmd['MODULE_ID'] && $code == $cmd['CODE']) {
+                        return $cmd['ID'];
+                    }
                 }
-            } else if ($moduleId == $cmd['MODULE_ID'] && $code == $cmd['CODE']) {
-                return $cmd['ID'];
             }
         }
 
-        $result = \Bitrix\Im\Model\AppTable::add(Array(
-            'HASH' => $hash,
-            'BOT_ID' => $botId,
-            'MODULE_ID' => $moduleId,
-            'CODE' => $code,
-            'ICON_FILE_ID' => $iconFileId,
-            'CONTEXT' => ToLower($context),
-            'HIDDEN' => $hidden,
-            'REGISTERED' => $registered,
-            'IFRAME' => $iframe,
-            'IFRAME_WIDTH' => $iframeWidth,
-            'IFRAME_HEIGHT' => $iframeHeight,
-            'IFRAME_POPUP' => $iframePopup,
-            'JS' => $jscommand,
-            'EXTRANET_SUPPORT' => $extranetSupport,
-            'LIVECHAT_SUPPORT' => $livechatSupport,
-            'CLASS' => $class,
-            'METHOD_LANG_GET' => $methodLangGet,
-            'APP_ID' => $restAppId
-        ));
+        $result = \Bitrix\Im\Model\AppTable::add(
+            Array(
+                'HASH' => $hash,
+                'BOT_ID' => $botId,
+                'MODULE_ID' => $moduleId,
+                'CODE' => $code,
+                'ICON_FILE_ID' => $iconFileId,
+                'CONTEXT' => ToLower($context),
+                'HIDDEN' => $hidden,
+                'REGISTERED' => $registered,
+                'IFRAME' => $iframe,
+                'IFRAME_WIDTH' => $iframeWidth,
+                'IFRAME_HEIGHT' => $iframeHeight,
+                'IFRAME_POPUP' => $iframePopup,
+                'JS' => $jscommand,
+                'EXTRANET_SUPPORT' => $extranetSupport,
+                'LIVECHAT_SUPPORT' => $livechatSupport,
+                'CLASS' => $class,
+                'METHOD_LANG_GET' => $methodLangGet,
+                'APP_ID' => $restAppId
+            )
+        );
 
-        if (!$result->isSuccess())
+        if (!$result->isSuccess()) {
             return false;
+        }
 
         $cache = \Bitrix\Main\Data\Cache::createInstance();
         $cache->cleanDir(self::CACHE_PATH);
@@ -136,20 +151,24 @@ class App
 
         if ($moduleId == 'rest') {
             foreach ($langSet as $lang) {
-                if (!isset($lang['LANGUAGE_ID']) || empty($lang['LANGUAGE_ID']))
+                if (!isset($lang['LANGUAGE_ID']) || empty($lang['LANGUAGE_ID'])) {
                     continue;
+                }
 
-                if (!isset($lang['TITLE']) && empty($lang['TITLE']))
+                if (!isset($lang['TITLE']) && empty($lang['TITLE'])) {
                     continue;
+                }
 
                 try {
-                    \Bitrix\Im\Model\AppLangTable::add(array(
-                        'APP_ID' => $appId,
-                        'LANGUAGE_ID' => strtolower($lang['LANGUAGE_ID']),
-                        'TITLE' => $lang['TITLE'],
-                        'DESCRIPTION' => $lang['DESCRIPTION'],
-                        'COPYRIGHT' => $lang['COPYRIGHT']
-                    ));
+                    \Bitrix\Im\Model\AppLangTable::add(
+                        array(
+                            'APP_ID' => $appId,
+                            'LANGUAGE_ID' => mb_strtolower($lang['LANGUAGE_ID']),
+                            'TITLE' => $lang['TITLE'],
+                            'DESCRIPTION' => $lang['DESCRIPTION'],
+                            'COPYRIGHT' => $lang['COPYRIGHT']
+                        )
+                    );
                 } catch (Exception $e) {
                 }
             }
@@ -164,26 +183,32 @@ class App
         $moduleId = isset($app['MODULE_ID']) ? $app['MODULE_ID'] : '';
         $restAppId = isset($app['APP_ID']) ? $app['APP_ID'] : '';
 
-        if (intval($appId) <= 0)
+        if (intval($appId) <= 0) {
             return false;
+        }
 
         if (!isset($app['FORCE']) || $app['FORCE'] == 'N') {
             $icons = self::getListCache();
-            if (!isset($icons[$appId]))
+            if (!isset($icons[$appId])) {
                 return false;
+            }
 
-            if (strlen($moduleId) > 0 && $icons[$appId]['MODULE_ID'] != $moduleId)
+            if ($moduleId <> '' && $icons[$appId]['MODULE_ID'] != $moduleId) {
                 return false;
+            }
 
-            if (strlen($restAppId) > 0 && $icons[$appId]['APP_ID'] != $restAppId)
+            if ($restAppId <> '' && $icons[$appId]['APP_ID'] != $restAppId) {
                 return false;
+            }
         }
 
         \Bitrix\Im\Model\AppTable::delete($appId);
 
-        $orm = \Bitrix\Im\Model\AppLangTable::getList(Array(
-            'filter' => Array('=APP_ID' => $appId)
-        ));
+        $orm = \Bitrix\Im\Model\AppLangTable::getList(
+            Array(
+                'filter' => Array('=APP_ID' => $appId)
+            )
+        );
         while ($row = $orm->fetch()) {
             \Bitrix\Im\Model\AppLangTable::delete($row['ID']);
         }
@@ -192,14 +217,16 @@ class App
         $cache->cleanDir(self::CACHE_PATH);
 
         if (\Bitrix\Main\Loader::includeModule('pull')) {
-            \CPullStack::AddShared(Array(
-                'module_id' => 'im',
-                'command' => 'deleteAppIcon',
-                'params' => Array(
-                    'iconId' => $appId
-                ),
-                'extra' => \Bitrix\Im\Common::getPullExtra()
-            ));
+            \CPullStack::AddShared(
+                Array(
+                    'module_id' => 'im',
+                    'command' => 'deleteAppIcon',
+                    'params' => Array(
+                        'iconId' => $appId
+                    ),
+                    'extra' => \Bitrix\Im\Common::getPullExtra()
+                )
+            );
         }
 
         return true;
@@ -212,41 +239,51 @@ class App
         $moduleId = isset($app['MODULE_ID']) ? $app['MODULE_ID'] : '';
         $restAppId = isset($app['APP_ID']) ? $app['APP_ID'] : '';
 
-        if (intval($appId) <= 0)
+        if (intval($appId) <= 0) {
             return false;
+        }
 
         $apps = self::getListCache();
-        if (!isset($apps[$appId]))
+        if (!isset($apps[$appId])) {
             return false;
+        }
 
-        if (strlen($moduleId) > 0 && $apps[$appId]['MODULE_ID'] != $moduleId)
+        if ($moduleId <> '' && $apps[$appId]['MODULE_ID'] != $moduleId) {
             return false;
+        }
 
-        if (strlen($restAppId) > 0 && $apps[$appId]['APP_ID'] != $restAppId)
+        if ($restAppId <> '' && $apps[$appId]['APP_ID'] != $restAppId) {
             return false;
+        }
 
         if (isset($updateFields['LANG']) && $apps[$appId]['MODULE_ID'] == 'rest') {
-            $orm = \Bitrix\Im\Model\AppLangTable::getList(Array(
-                'filter' => Array('=APP_ID' => $appId)
-            ));
+            $orm = \Bitrix\Im\Model\AppLangTable::getList(
+                Array(
+                    'filter' => Array('=APP_ID' => $appId)
+                )
+            );
             while ($row = $orm->fetch()) {
                 \Bitrix\Im\Model\AppLangTable::delete($row['ID']);
             }
             foreach ($updateFields['LANG'] as $lang) {
-                if (!isset($lang['LANGUAGE_ID']) || empty($lang['LANGUAGE_ID']))
+                if (!isset($lang['LANGUAGE_ID']) || empty($lang['LANGUAGE_ID'])) {
                     continue;
+                }
 
-                if (!isset($lang['TITLE']) && empty($lang['TITLE']))
+                if (!isset($lang['TITLE']) && empty($lang['TITLE'])) {
                     continue;
+                }
 
                 try {
-                    \Bitrix\Im\Model\AppLangTable::add(array(
-                        'APP_ID' => $appId,
-                        'LANGUAGE_ID' => strtolower($lang['LANGUAGE_ID']),
-                        'TITLE' => $lang['TITLE'],
-                        'DESCRIPTION' => $lang['DESCRIPTION'],
-                        'COPYRIGHT' => $lang['COPYRIGHT']
-                    ));
+                    \Bitrix\Im\Model\AppLangTable::add(
+                        array(
+                            'APP_ID' => $appId,
+                            'LANGUAGE_ID' => mb_strtolower($lang['LANGUAGE_ID']),
+                            'TITLE' => $lang['TITLE'],
+                            'DESCRIPTION' => $lang['DESCRIPTION'],
+                            'COPYRIGHT' => $lang['COPYRIGHT']
+                        )
+                    );
                 } catch (Exception $e) {
                 }
             }
@@ -268,21 +305,29 @@ class App
         if (isset($updateFields['IFRAME']) && !empty($updateFields['IFRAME'])) {
             $check = parse_url($updateFields['IFRAME']);
             if (!isset($check['scheme']) && !isset($check['host'])) {
-                if (strpos($updateFields['IFRAME'], '/desktop_app/iframe/') !== 0) {
+                if (mb_strpos($updateFields['IFRAME'], '/desktop_app/iframe/') !== 0) {
                     return false;
                 }
-            } else if (!in_array($check['scheme'], Array('http', 'https')) || empty($check['host'])) {
-                return false;
+            } else {
+                if (!in_array($check['scheme'], Array('http', 'https')) || empty($check['host'])) {
+                    return false;
+                }
             }
             $update['IFRAME'] = $updateFields['IFRAME'] . (isset($check['query']) ? '&' : '?');
-        } else if (isset($updateFields['JS']) && !empty($updateFields['JS'])) {
-            $update['JS'] = $updateFields['JS'];
+        } else {
+            if (isset($updateFields['JS']) && !empty($updateFields['JS'])) {
+                $update['JS'] = $updateFields['JS'];
+            }
         }
         if (isset($updateFields['IFRAME_WIDTH'])) {
-            $update['IFRAME_WIDTH'] = intval($updateFields['IFRAME_WIDTH']) > 250 ? intval($updateFields['IFRAME_WIDTH']) : 250;
+            $update['IFRAME_WIDTH'] = intval($updateFields['IFRAME_WIDTH']) > 250 ? intval(
+                $updateFields['IFRAME_WIDTH']
+            ) : 250;
         }
         if (isset($updateFields['IFRAME_HEIGHT'])) {
-            $update['IFRAME_HEIGHT'] = intval($updateFields['IFRAME_HEIGHT']) > 50 ? intval($updateFields['IFRAME_HEIGHT']) : 50;
+            $update['IFRAME_HEIGHT'] = intval($updateFields['IFRAME_HEIGHT']) > 50 ? intval(
+                $updateFields['IFRAME_HEIGHT']
+            ) : 50;
         }
         if (isset($updateFields['IFRAME_POPUP'])) {
             $update['IFRAME_POPUP'] = $updateFields['IFRAME_POPUP'] == 'Y' ? 'Y' : 'N';
@@ -321,32 +366,38 @@ class App
                 || $update['IFRAME_HEIGHT']
                 || $update['IFRAME_POPUP']
             ) {
-                \CPullStack::AddShared(Array(
-                    'module_id' => 'im',
-                    'command' => 'updateAppIcon',
-                    'params' => Array(
-                        'iconId' => $appId,
-                        'userId' => $userId,
-                        'domainHash' => $update['HASH'],
-                        'context' => $update['CONTEXT'],
-                        'js' => $update['JS'],
-                        'iframe' => $update['IFRAME'],
-                        'iframeWidth' => $update['IFRAME_WIDTH'],
-                        'iframeHeight' => $update['IFRAME_HEIGHT'],
-                        'iframePopup' => $update['IFRAME_POPUP'],
-                    ),
-                    'extra' => \Bitrix\Im\Common::getPullExtra()
-                ));
-            } else if ($update['ICON_ID']) {
+                \CPullStack::AddShared(
+                    Array(
+                        'module_id' => 'im',
+                        'command' => 'updateAppIcon',
+                        'params' => Array(
+                            'iconId' => $appId,
+                            'userId' => $userId,
+                            'domainHash' => $update['HASH'],
+                            'context' => $update['CONTEXT'],
+                            'js' => $update['JS'],
+                            'iframe' => $update['IFRAME'],
+                            'iframeWidth' => $update['IFRAME_WIDTH'],
+                            'iframeHeight' => $update['IFRAME_HEIGHT'],
+                            'iframePopup' => $update['IFRAME_POPUP'],
+                        ),
+                        'extra' => \Bitrix\Im\Common::getPullExtra()
+                    )
+                );
             } else {
-                \CPullStack::AddShared(Array(
-                    'module_id' => 'im',
-                    'command' => 'deleteAppIcon',
-                    'params' => Array(
-                        'iconId' => $appId
-                    ),
-                    'extra' => \Bitrix\Im\Common::getPullExtra()
-                ));
+                if ($update['ICON_ID']) {
+                } else {
+                    \CPullStack::AddShared(
+                        Array(
+                            'module_id' => 'im',
+                            'command' => 'deleteAppIcon',
+                            'params' => Array(
+                                'iconId' => $appId
+                            ),
+                            'extra' => \Bitrix\Im\Common::getPullExtra()
+                        )
+                    );
+                }
             }
         }
 
@@ -378,23 +429,27 @@ class App
         $moduleId = isset($app['MODULE_ID']) ? $app['MODULE_ID'] : '';
         $restAppId = isset($app['APP_ID']) ? $app['APP_ID'] : '';
 
-        if ($appId <= 0)
+        if ($appId <= 0) {
             return false;
+        }
 
         $apps = self::getListCache();
-        if (!isset($apps[$appId]))
+        if (!isset($apps[$appId])) {
             return false;
+        }
 
-        if (strlen($moduleId) > 0 && $apps[$appId]['MODULE_ID'] != $moduleId)
+        if ($moduleId <> '' && $apps[$appId]['MODULE_ID'] != $moduleId) {
             return false;
+        }
 
-        if (strlen($restAppId) > 0 && $apps[$appId]['APP_ID'] != $restAppId)
+        if ($restAppId <> '' && $apps[$appId]['APP_ID'] != $restAppId) {
             return false;
+        }
 
         $botId = intval($apps[$appId]['BOT_ID']);
 
         if (Common::isChatId($messageFields['DIALOG_ID'])) {
-            $relations = \CIMChat::GetRelationById(substr($messageFields['DIALOG_ID'], 4));
+            $relations = \CIMChat::GetRelationById(mb_substr($messageFields['DIALOG_ID'], 4));
         } else {
             $userId = intval($messageFields['DIALOG_ID']);
             if (!$userId || $botId == $userId) {
@@ -413,9 +468,10 @@ class App
         $fromUserId = isset($messageFields['FROM_USER_ID']) ? $messageFields['FROM_USER_ID'] : $botId;
 
         if (Common::isChatId($messageFields['DIALOG_ID'])) {
-            $chatId = intval(substr($messageFields['DIALOG_ID'], 4));
-            if ($chatId <= 0)
+            $chatId = intval(mb_substr($messageFields['DIALOG_ID'], 4));
+            if ($chatId <= 0) {
                 return false;
+            }
 
             if (isset($relations[$fromUserId]) && $messageFields['SYSTEM'] != 'Y') {
                 $ar = Array(
@@ -515,8 +571,13 @@ class App
                 }
 
                 if (!empty($row['CLASS']) && !empty($row['METHOD_LANG_GET'])) {
-                    if (\Bitrix\Main\Loader::includeModule($row['MODULE_ID']) && class_exists($row["CLASS"]) && method_exists($row["CLASS"], $row["METHOD_LANG_GET"])) {
-                        $localize = call_user_func_array(array($row["CLASS"], $row["METHOD_LANG_GET"]), Array($row['CODE'], $lang));
+                    if (\Bitrix\Main\Loader::includeModule($row['MODULE_ID']) && class_exists(
+                            $row["CLASS"]
+                        ) && method_exists($row["CLASS"], $row["METHOD_LANG_GET"])) {
+                        $localize = call_user_func_array(
+                            array($row["CLASS"], $row["METHOD_LANG_GET"]),
+                            Array($row['CODE'], $lang)
+                        );
                         if ($localize) {
                             $row['TITLE'] = $localize['TITLE'];
                             $row['DESCRIPTION'] = $localize['DESCRIPTION'];
@@ -543,8 +604,9 @@ class App
                 $langSet = Array();
                 $orm = \Bitrix\Im\Model\AppLangTable::getList();
                 while ($row = $orm->fetch()) {
-                    if (!isset($result[$row['APP_ID']]))
+                    if (!isset($result[$row['APP_ID']])) {
                         continue;
+                    }
 
                     $langSet[$row['APP_ID']][$row['LANGUAGE_ID']]['TITLE'] = $row['TITLE'];
                     $langSet[$row['APP_ID']][$row['LANGUAGE_ID']]['DESCRIPTION'] = $row['DESCRIPTION'];
@@ -557,15 +619,19 @@ class App
                         $result[$appId]['TITLE'] = $langSet[$appId][$lang]['TITLE'];
                         $result[$appId]['DESCRIPTION'] = $langSet[$appId][$lang]['DESCRIPTION'];
                         $result[$appId]['COPYRIGHT'] = $langSet[$appId][$lang]['COPYRIGHT'];
-                    } else if (isset($langSet[$appId][$langAlter])) {
-                        $result[$appId]['TITLE'] = $langSet[$appId][$langAlter]['TITLE'];
-                        $result[$appId]['DESCRIPTION'] = $langSet[$appId][$langAlter]['DESCRIPTION'];
-                        $result[$appId]['COPYRIGHT'] = $langSet[$appId][$langAlter]['COPYRIGHT'];
-                    } else if (isset($langSet[$appId])) {
-                        $langSetCommand = array_values($langSet[$appId]);
-                        $result[$appId]['TITLE'] = $langSetCommand[0]['TITLE'];
-                        $result[$appId]['DESCRIPTION'] = $langSetCommand[0]['DESCRIPTION'];
-                        $result[$appId]['COPYRIGHT'] = $langSetCommand[0]['COPYRIGHT'];
+                    } else {
+                        if (isset($langSet[$appId][$langAlter])) {
+                            $result[$appId]['TITLE'] = $langSet[$appId][$langAlter]['TITLE'];
+                            $result[$appId]['DESCRIPTION'] = $langSet[$appId][$langAlter]['DESCRIPTION'];
+                            $result[$appId]['COPYRIGHT'] = $langSet[$appId][$langAlter]['COPYRIGHT'];
+                        } else {
+                            if (isset($langSet[$appId])) {
+                                $langSetCommand = array_values($langSet[$appId]);
+                                $result[$appId]['TITLE'] = $langSetCommand[0]['TITLE'];
+                                $result[$appId]['DESCRIPTION'] = $langSetCommand[0]['DESCRIPTION'];
+                                $result[$appId]['COPYRIGHT'] = $langSetCommand[0]['COPYRIGHT'];
+                            }
+                        }
                     }
                 }
 
@@ -593,10 +659,13 @@ class App
 
         $result = Array();
         foreach ($apps as $app) {
-            if ($isConnector && $app['LIVECHAT_SUPPORT'] != 'Y')
+            if ($isConnector && $app['LIVECHAT_SUPPORT'] != 'Y') {
                 continue;
-            else if ($isExtranet && $app['EXTRANET_SUPPORT'] != 'Y')
-                continue;
+            } else {
+                if ($isExtranet && $app['EXTRANET_SUPPORT'] != 'Y') {
+                    continue;
+                }
+            }
 
             $botData = \Bitrix\Im\Bot::getCache($app['BOT_ID']);
             $result[] = Array(
@@ -625,10 +694,11 @@ class App
 
     public static function getUserHash($userId, $hash = 'register')
     {
-        if ($hash == 'register')
+        if ($hash == 'register') {
             $result = md5($userId . \CMain::GetServerUniqID());
-        else
+        } else {
             $result = md5($userId . $hash);
+        }
 
         return $result;
     }

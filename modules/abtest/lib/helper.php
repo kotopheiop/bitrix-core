@@ -18,23 +18,27 @@ class Helper
         static $abtest;
         static $defined;
 
-        if (!defined('SITE_ID') || !SITE_ID)
+        if (!defined('SITE_ID') || !SITE_ID) {
             return null;
+        }
 
         if (empty($defined)) {
             $cache = new \CPHPCache();
 
-            if ($cache->initCache(30 * 24 * 3600, 'abtest_active_' . SITE_ID, '/abtest')) {
+            if ($cache->initCache(30 * 24 * 3600, 'abtest_active_' . SITE_ID, 'abtest/')) {
                 $abtest = $cache->getVars();
             } else {
-                $abtest = ABTestTable::getList(array(
-                    'order' => array('SORT' => 'ASC'),
-                    'filter' => array(
-                        'SITE_ID' => SITE_ID,
-                        'ACTIVE' => 'Y',
-                        '<=START_DATE' => new Type\DateTime()
+                $abtest = ABTestTable::getList(
+                    array(
+                        'order' => array('SORT' => 'ASC'),
+                        'filter' => array(
+                            '=SITE_ID' => SITE_ID,
+                            '=ACTIVE' => 'Y',
+                            '<=START_DATE' => new Type\DateTime()
+                        ),
+                        'limit' => 1
                     )
-                ))->fetch() ?: null;
+                )->fetch() ?: null;
 
                 $cache->startDataCache();
                 $cache->endDataCache($abtest);
@@ -62,13 +66,15 @@ class Helper
                             $abtest = null;
                         }
                     }
-                } else if (intval($abtest['DURATION']) > 0) {
-                    $end = clone $abtest['START_DATE'];
-                    $end->add(intval($abtest['DURATION']) . ' days');
+                } else {
+                    if (intval($abtest['DURATION']) > 0) {
+                        $end = clone $abtest['START_DATE'];
+                        $end->add(intval($abtest['DURATION']) . ' days');
 
-                    if (time() > $end->format('U')) {
-                        Helper::stopTest($abtest['ID'], true);
-                        $abtest = null;
+                        if (time() > $end->format('U')) {
+                            Helper::stopTest($abtest['ID'], true);
+                            $abtest = null;
+                        }
                     }
                 }
             }
@@ -104,8 +110,9 @@ class Helper
 
         static $context;
 
-        if (!defined('SITE_ID') || !SITE_ID)
+        if (!defined('SITE_ID') || !SITE_ID) {
             return null;
+        }
 
         if (empty($context)) {
             $activeTest = Helper::getActiveTest();
@@ -113,22 +120,28 @@ class Helper
             $isAbtestAdmin = is_object($USER) && $USER->canDoOperation('view_other_settings');
             if ($isAbtestAdmin && !empty($_SESSION['ABTEST_MODE'])) {
                 if ($_SESSION['ABTEST_MODE'] == 'reset') {
-                    if (!empty($activeTest))
+                    if (!empty($activeTest)) {
                         $context = Helper::context($activeTest, 'N');
+                    }
 
                     unset($_SESSION['ABTEST_MODE']);
-                } else if (preg_match('/^(\d+)\|(A|B|N)$/', $_SESSION['ABTEST_MODE'], $matches)) {
-                    if (!empty($activeTest) && $activeTest['ID'] == intval($matches[1])) {
-                        $context = Helper::context($activeTest, $matches[2]);
+                } else {
+                    if (preg_match('/^(\d+)\|(A|B|N)$/', $_SESSION['ABTEST_MODE'], $matches)) {
+                        if (!empty($activeTest) && $activeTest['ID'] == intval($matches[1])) {
+                            $context = Helper::context($activeTest, $matches[2]);
 
-                        unset($_SESSION['ABTEST_MODE']);
-                    } else {
-                        $abtest = ABTestTable::getList(array(
-                            'filter' => array('=ID' => intval($matches[1]), 'ENABLED' => 'Y')
-                        ))->fetch();
+                            unset($_SESSION['ABTEST_MODE']);
+                        } else {
+                            $abtest = ABTestTable::getList(
+                                array(
+                                    'filter' => array('=ID' => intval($matches[1]), 'ENABLED' => 'Y')
+                                )
+                            )->fetch();
 
-                        if (!empty($abtest) && $abtest['SITE_ID'] == SITE_ID)
-                            $context = Helper::context($abtest, $matches[2]);
+                            if (!empty($abtest) && $abtest['SITE_ID'] == SITE_ID) {
+                                $context = Helper::context($abtest, $matches[2]);
+                            }
+                        }
                     }
                 }
             }
@@ -139,19 +152,23 @@ class Helper
                 $abtest = $activeTest;
 
                 if (!empty($cookieValue)) {
-                    if (preg_match('/^' . intval($abtest['ID']) . '\|(A|B|N)$/i', $cookieValue, $matches))
+                    if (preg_match('/^' . intval($abtest['ID']) . '\|(A|B|N)$/i', $cookieValue, $matches)) {
                         $section = $matches[1];
+                    }
                 }
 
                 if (empty($section)) {
                     $dice = mt_rand(1, 100);
 
-                    if ($dice <= intval($abtest['PORTION']) / 2)
+                    if ($dice <= intval($abtest['PORTION']) / 2) {
                         $section = 'A';
-                    else if ($dice <= intval($abtest['PORTION']))
-                        $section = 'B';
-                    else
-                        $section = 'N';
+                    } else {
+                        if ($dice <= intval($abtest['PORTION'])) {
+                            $section = 'B';
+                        } else {
+                            $section = 'N';
+                        }
+                    }
                 }
 
                 $context = Helper::context($abtest, $section);
@@ -213,8 +230,9 @@ class Helper
 
             if (!$abtest['MIN_AMOUNT']) {
                 $capacity = AdminHelper::getSiteCapacity($abtest['SITE_ID']);
-                if ($capacity['min'] > 0)
+                if ($capacity['min'] > 0) {
                     $fields['MIN_AMOUNT'] = $capacity['min'];
+                }
             }
 
             $result = ABTestTable::update(intval($id), $fields);
@@ -246,8 +264,9 @@ class Helper
                 'ACTIVE' => 'N',
             );
 
-            if (!$auto)
+            if (!$auto) {
                 $fields['USER_ID'] = $USER->getID();
+            }
 
             $result = ABTestTable::update(intval($id), $fields);
 
@@ -273,8 +292,9 @@ class Helper
             $result = ABTestTable::delete(intval($id));
 
             if ($result->isSuccess()) {
-                if ($abtest['ACTIVE'] == 'Y')
+                if ($abtest['ACTIVE'] == 'Y') {
                     Helper::clearCache($abtest['SITE_ID']);
+                }
 
                 return true;
             }

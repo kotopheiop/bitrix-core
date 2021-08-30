@@ -1,18 +1,22 @@
 <?
+
+use Bitrix\Main\Loader;
+
 define("ADMIN_MODULE_NAME", "perfmon");
 define("PERFMON_STOP", true);
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 /** @global CMain $APPLICATION */
 /** @global CDatabase $DB */
 /** @global CUser $USER */
-require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/perfmon/include.php");
+Loader::includeModule('perfmon');
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/perfmon/prolog.php");
 
 IncludeModuleLangFile(__FILE__);
 
 $RIGHT = $APPLICATION->GetGroupRight("perfmon");
-if ($RIGHT == "D")
+if ($RIGHT == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $bFileMan = CModule::IncludeModule('fileman');
 
@@ -64,8 +68,9 @@ $arFilter = array(
     "%ERRSTR" => ($find != "" && $find_type == "file" ? $find : $find_errstr),
 );
 foreach ($arFilter as $key => $value) {
-    if (!$value)
+    if (!$value) {
         unset($arFilter[$key]);
+    }
 }
 
 $arHeaders = array();
@@ -123,7 +128,7 @@ if ($group === "Y") {
 $lAdmin->AddHeaders($arHeaders);
 
 $arSelectedFields = $lAdmin->GetVisibleHeaderColumns();
-if (!is_array($arSelectedFields) || (count($arSelectedFields) < 1))
+if (!is_array($arSelectedFields) || (count($arSelectedFields) < 1)) {
     $arSelectedFields = array(
         "ID",
         "HIT_ID",
@@ -132,6 +137,7 @@ if (!is_array($arSelectedFields) || (count($arSelectedFields) < 1))
         "ERRLINE",
         "ERRSTR",
     );
+}
 
 $cData = new CPerfomanceError;
 $rsData = $cData->GetList($arSelectedFields, $arFilter, array($by => $order), $group === "Y");
@@ -141,19 +147,29 @@ $rsData->NavStart();
 $lAdmin->NavText($rsData->GetNavPrint(GetMessage("PERFMON_ERR_PAGE")));
 
 while ($arRes = $rsData->NavNext(true, "f_")) {
-    if ($group == "Y")
+    if ($group == "Y") {
         $ID = md5($f_ERRFILE . "|" . $f_ERRLINE);
-    else
+    } else {
         $ID = $f_ID;
+    }
 
     $row = $lAdmin->AddRow($ID, $arRes);
 
     $row->AddViewField("ERRNO", $arErrorCodes[$f_ERRNO]);
 
-    if ($bFileMan)
-        $row->AddViewField("ERRFILE", '<a href="fileman_file_edit.php?lang=' . LANGUAGE_ID . '&amp;full_src=Y&amp;site=&amp;set_filter=Y&amp;filter=&amp;path=' . urlencode(substr($arRes["ERRFILE"], strlen($_SERVER["DOCUMENT_ROOT"]))) . '">' . $f_ERRFILE . '</a>');
+    if ($bFileMan) {
+        $row->AddViewField(
+            "ERRFILE",
+            '<a href="fileman_file_edit.php?lang=' . LANGUAGE_ID . '&amp;full_src=Y&amp;site=&amp;set_filter=Y&amp;filter=&amp;path=' . urlencode(
+                mb_substr($arRes["ERRFILE"], mb_strlen($_SERVER["DOCUMENT_ROOT"]))
+            ) . '">' . $f_ERRFILE . '</a>'
+        );
+    }
 
-    $row->AddViewField("HIT_ID", '<a href="perfmon_hit_list.php?lang=' . LANGUAGE_ID . '&amp;set_filter=Y&amp;find_id=' . $f_HIT_ID . '">' . $f_HIT_ID . '</a>');
+    $row->AddViewField(
+        "HIT_ID",
+        '<a href="perfmon_hit_list.php?lang=' . LANGUAGE_ID . '&amp;set_filter=Y&amp;find_id=' . $f_HIT_ID . '">' . $f_HIT_ID . '</a>'
+    );
 
     if ($group == "Y") {
         $arActions = array();
@@ -275,11 +291,13 @@ $oFilter = new CAdminFilter(
         </td>
     </tr>
     <?
-    $oFilter->Buttons(array(
-        "table_id" => $sTableID,
-        "url" => $APPLICATION->GetCurPage(),
-        "form" => "find_form",
-    ));
+    $oFilter->Buttons(
+        array(
+            "table_id" => $sTableID,
+            "url" => $APPLICATION->GetCurPage(),
+            "form" => "find_form",
+        )
+    );
     $oFilter->End();
     ?>
 </form>

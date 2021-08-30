@@ -38,8 +38,9 @@ abstract class OrderDiscountBase
      */
     public static function init()
     {
-        if (self::$init)
+        if (self::$init) {
             return;
+        }
 
         static::initDiscountProviders();
         self::$init = true;
@@ -53,14 +54,21 @@ abstract class OrderDiscountBase
      */
     public static function setManagerConfig($config)
     {
-        if (empty($config) || empty($config['SITE_ID']))
+        if (empty($config) || empty($config['SITE_ID'])) {
             return false;
-        if (empty($config['CURRENCY']))
+        }
+        if (empty($config['CURRENCY'])) {
             $config['CURRENCY'] = Internals\SiteCurrencyTable::getSiteCurrency($config['SITE_ID']);
-        if (!isset($config['USE_BASE_PRICE']) || ($config['USE_BASE_PRICE'] != 'Y' && $config['USE_BASE_PRICE'] != 'N'))
-            $config['USE_BASE_PRICE'] = ((string)Main\Config\Option::get('sale', 'get_discount_percent_from_base_price') == 'Y' ? 'Y' : 'N');
-        if (empty($config['BASKET_ITEM']))
+        }
+        if (!isset($config['USE_BASE_PRICE']) || ($config['USE_BASE_PRICE'] != 'Y' && $config['USE_BASE_PRICE'] != 'N')) {
+            $config['USE_BASE_PRICE'] = ((string)Main\Config\Option::get(
+                'sale',
+                'get_discount_percent_from_base_price'
+            ) == 'Y' ? 'Y' : 'N');
+        }
+        if (empty($config['BASKET_ITEM'])) {
             $config['BASKET_ITEM'] = '$basketItem';
+        }
         self::$managerConfig = $config;
         return true;
     }
@@ -116,31 +124,40 @@ abstract class OrderDiscountBase
 
         if (empty($config)) {
             $process = false;
-            $result->addError(new Main\Entity\EntityError(
-                Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_EMPTY_MANAGER_PARAMS'),
-                self::ERROR_ID
-            ));
+            $result->addError(
+                new Main\Entity\EntityError(
+                    Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_EMPTY_MANAGER_PARAMS'),
+                    self::ERROR_ID
+                )
+            );
         }
 
         if (empty($discount) || empty($discount['MODULE_ID'])) {
             $process = false;
-            $result->addError(new Main\Entity\EntityError(
-                Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_EMPTY_DISCOUNT'),
-                self::ERROR_ID
-            ));
+            $result->addError(
+                new Main\Entity\EntityError(
+                    Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_EMPTY_DISCOUNT'),
+                    self::ERROR_ID
+                )
+            );
         }
 
         if ($process) {
             if (!static::isNativeModule($discount['MODULE_ID'])) {
                 if (!static::checkDiscountProvider($discount['MODULE_ID'])) {
                     $process = false;
-                    $result->addError(new Main\Entity\EntityError(
-                        Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_BAD_DISCOUNT_MODULE'),
-                        self::ERROR_ID
-                    ));
+                    $result->addError(
+                        new Main\Entity\EntityError(
+                            Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_BAD_DISCOUNT_MODULE'),
+                            self::ERROR_ID
+                        )
+                    );
                 } else {
                     $discountData = static::executeDiscountProvider(
-                        array('MODULE_ID' => $discount['MODULE_ID'], 'METHOD' => self::PROVIDER_ACTION_PREPARE_DISCOUNT),
+                        array(
+                            'MODULE_ID' => $discount['MODULE_ID'],
+                            'METHOD' => self::PROVIDER_ACTION_PREPARE_DISCOUNT
+                        ),
                         array($discount, $config)
                     );
                 }
@@ -149,10 +166,12 @@ abstract class OrderDiscountBase
             }
             if (empty($discountData) || !is_array($discountData)) {
                 $process = false;
-                $result->addError(new Main\Entity\EntityError(
-                    Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_BAD_PREPARE_DISCOUNT'),
-                    self::ERROR_ID
-                ));
+                $result->addError(
+                    new Main\Entity\EntityError(
+                        Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_BAD_PREPARE_DISCOUNT'),
+                        self::ERROR_ID
+                    )
+                );
             }
         }
 
@@ -160,16 +179,20 @@ abstract class OrderDiscountBase
             $fields = static::normalizeDiscountFields($discountData);
             if (empty($fields) || !is_array($fields)) {
                 $process = false;
-                $result->addError(new Main\Entity\EntityError(
-                    Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_BAD_PREPARE_DISCOUNT'),
-                    self::ERROR_ID
-                ));
+                $result->addError(
+                    new Main\Entity\EntityError(
+                        Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_BAD_PREPARE_DISCOUNT'),
+                        self::ERROR_ID
+                    )
+                );
             } elseif ($fields['DISCOUNT_HASH'] === null) {
                 $process = false;
-                $result->addError(new Main\Entity\EntityError(
-                    Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_BAD_DISCOUNT_HASH'),
-                    self::ERROR_ID
-                ));
+                $result->addError(
+                    new Main\Entity\EntityError(
+                        Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_BAD_DISCOUNT_HASH'),
+                        self::ERROR_ID
+                    )
+                );
             }
         }
 
@@ -230,35 +253,43 @@ abstract class OrderDiscountBase
 
         if (empty($coupon) || !is_array($coupon)) {
             $process = false;
-            $result->addError(new Main\Entity\EntityError(
-                Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_EMPTY_COUPON'),
-                self::ERROR_ID
-            ));
+            $result->addError(
+                new Main\Entity\EntityError(
+                    Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_EMPTY_COUPON'),
+                    self::ERROR_ID
+                )
+            );
         }
         if ($process) {
             if (empty($coupon['ORDER_DISCOUNT_ID']) || (int)$coupon['ORDER_DISCOUNT_ID'] <= 0) {
                 $process = false;
-                $result->addError(new Main\Entity\EntityError(
-                    Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_EMPTY_COUPON'),
-                    self::ERROR_ID
-                ));
+                $result->addError(
+                    new Main\Entity\EntityError(
+                        Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_EMPTY_COUPON'),
+                        self::ERROR_ID
+                    )
+                );
             }
             if (empty($coupon['COUPON'])) {
                 $process = false;
-                $result->addError(new Main\Entity\EntityError(
-                    Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_COUPON_CODE_ABSENT'),
-                    self::ERROR_ID
-                ));
+                $result->addError(
+                    new Main\Entity\EntityError(
+                        Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_COUPON_CODE_ABSENT'),
+                        self::ERROR_ID
+                    )
+                );
             }
             if (!isset($coupon['TYPE'])) {
                 $process = false;
-                $result->addError(new Main\Entity\EntityError(
-                    Loc::getMessage(
-                        'SALE_ORDER_DISCOUNT_ERR_COUPON_TYPE_ABSENT',
-                        array('#COUPON#' => $coupon['COUPON'])
-                    ),
-                    self::ERROR_ID
-                ));
+                $result->addError(
+                    new Main\Entity\EntityError(
+                        Loc::getMessage(
+                            'SALE_ORDER_DISCOUNT_ERR_COUPON_TYPE_ABSENT',
+                            array('#COUPON#' => $coupon['COUPON'])
+                        ),
+                        self::ERROR_ID
+                    )
+                );
             }
         }
 
@@ -272,10 +303,12 @@ abstract class OrderDiscountBase
         }
 
         if ($process) {
-            $iterator = static::getOrderCouponIterator(array(
-                'select' => array('*'),
-                'filter' => array('=COUPON' => $coupon['COUPON'], '=ORDER_ID' => $coupon['ORDER_ID'])
-            ));
+            $iterator = static::getOrderCouponIterator(
+                array(
+                    'select' => array('*'),
+                    'filter' => array('=COUPON' => $coupon['COUPON'], '=ORDER_ID' => $coupon['ORDER_ID'])
+                )
+            );
             if ($row = $iterator->fetch()) {
                 $resultData = $row;
             } else {
@@ -315,8 +348,9 @@ abstract class OrderDiscountBase
         static::init();
 
         $module = (string)$module;
-        if (static::isNativeModule($module))
+        if (static::isNativeModule($module)) {
             return false;
+        }
 
         return static::executeDiscountProvider(
             array('MODULE_ID' => $module, 'METHOD' => self::PROVIDER_ACTION_APPLY_COUPON),
@@ -335,21 +369,25 @@ abstract class OrderDiscountBase
     {
         static::init();
 
-        if (empty($basketItem))
+        if (empty($basketItem)) {
             return array();
+        }
 
         $result = static::executeDiscountProvider(
             array('MODULE_ID' => $basketItem['MODULE'], 'METHOD' => self::PROVIDER_ACTION_ROUND_ITEM_PRICE),
             array($basketItem, $roundData)
         );
-        if (empty($result))
+        if (empty($result)) {
             return array();
+        }
 
-        if (!isset($result['PRICE']) || !isset($result['DISCOUNT_PRICE']))
+        if (!isset($result['PRICE']) || !isset($result['DISCOUNT_PRICE'])) {
             return array();
+        }
 
-        if (!isset($result['ROUND_RULE']))
+        if (!isset($result['ROUND_RULE'])) {
             return array();
+        }
 
         return $result;
     }
@@ -366,15 +404,17 @@ abstract class OrderDiscountBase
     {
         static::init();
 
-        if (empty($basket))
+        if (empty($basket)) {
             return array();
+        }
 
         $result = array();
         $basketByModules = array();
         $roundByModules = array();
         foreach ($basket as $basketCode => $basketItem) {
-            if (!isset($basketItem['MODULE']))
+            if (!isset($basketItem['MODULE'])) {
                 continue;
+            }
             $module = $basketItem['MODULE'];
             if (!isset($basketByModules[$module])) {
                 $basketByModules[$module] = array();
@@ -394,15 +434,18 @@ abstract class OrderDiscountBase
                 $moduleResult = array();
                 foreach ($moduleItems as $basketCode => $basketItem) {
                     $itemResult = static::roundPrice($basketItem, $roundByModules[$module][$basketCode]);
-                    if (!empty($itemResult))
+                    if (!empty($itemResult)) {
                         $moduleResult[$basketCode] = $itemResult;
+                    }
                 }
             }
-            if (empty($moduleResult))
+            if (empty($moduleResult)) {
                 continue;
+            }
 
-            foreach (array_keys($moduleResult) as $basketCode)
+            foreach (array_keys($moduleResult) as $basketCode) {
                 $result[$basketCode] = $moduleResult[$basketCode];
+            }
             unset($moduleResult);
         }
         unset($moduleResult, $module, $moduleItems);
@@ -420,8 +463,9 @@ abstract class OrderDiscountBase
     {
         static::init();
         $module = (string)$module;
-        if (static::isNativeModule($module))
+        if (static::isNativeModule($module)) {
             return true;
+        }
         return ($module != '' && isset(self::$discountProviders[$module]));
     }
 
@@ -434,8 +478,9 @@ abstract class OrderDiscountBase
     public static function getEditUrl(array $discount)
     {
         $result = '';
-        if (!empty($discount['ID']))
+        if (!empty($discount['ID'])) {
             $result = '/bitrix/admin/sale_discount_edit.php?lang=' . LANGUAGE_ID . '&ID=' . $discount['ID'];
+        }
         return $result;
     }
 
@@ -447,8 +492,9 @@ abstract class OrderDiscountBase
     public static function clearCache()
     {
         $entity = get_called_class();
-        if (!isset(self::$discountCache[$entity]))
+        if (!isset(self::$discountCache[$entity])) {
             return;
+        }
         unset(self::$discountCache[$entity]);
     }
 
@@ -471,10 +517,12 @@ abstract class OrderDiscountBase
 
         $order = (int)$order;
         if ($order <= 0) {
-            $result->addError(new Main\Entity\EntityError(
-                Loc::getMessage('SALE_ORDER_DISCOUNT_BAD_ORDER_ID'),
-                self::ERROR_ID
-            ));
+            $result->addError(
+                new Main\Entity\EntityError(
+                    Loc::getMessage('SALE_ORDER_DISCOUNT_BAD_ORDER_ID'),
+                    self::ERROR_ID
+                )
+            );
             return $result;
         }
         $resultData = [
@@ -495,15 +543,18 @@ abstract class OrderDiscountBase
 
         $resultData['COUPON_LIST'] = static::loadCouponsFromDb($order);
         if (!empty($resultData['COUPON_LIST'])) {
-            foreach ($resultData['COUPON_LIST'] as $coupon)
+            foreach ($resultData['COUPON_LIST'] as $coupon) {
                 $couponList[$coupon['ID']] = $coupon['COUPON'];
+            }
             unset($coupon);
         }
 
-        $ruleIterator = static::getResultIterator([
-            'filter' => ['=ORDER_ID' => $order],
-            'order' => ['ID' => 'ASC']
-        ]);
+        $ruleIterator = static::getResultIterator(
+            [
+                'filter' => ['=ORDER_ID' => $order],
+                'order' => ['ID' => 'ASC']
+            ]
+        );
         while ($rule = $ruleIterator->fetch()) {
             $rule['ID'] = (int)$rule['ID'];
             $rule['ORDER_DISCOUNT_ID'] = (int)$rule['ORDER_DISCOUNT_ID'];
@@ -512,26 +563,31 @@ abstract class OrderDiscountBase
 
             if ($rule['ORDER_COUPON_ID'] > 0) {
                 if (!isset($couponList[$rule['COUPON_ID']])) {
-                    $result->addError(new Main\Entity\EntityError(
-                        Loc::getMessage(
-                            'SALE_ORDER_DISCOUNT_ERR_RULE_COUPON_NOT_FOUND',
-                            array('#ID#' => $rule['ID'], '#COUPON_ID#' => $rule['COUPON_ID'])
+                    $result->addError(
+                        new Main\Entity\EntityError(
+                            Loc::getMessage(
+                                'SALE_ORDER_DISCOUNT_ERR_RULE_COUPON_NOT_FOUND',
+                                array('#ID#' => $rule['ID'], '#COUPON_ID#' => $rule['COUPON_ID'])
+                            )
                         )
-                    ));
+                    );
                 } else {
                     $rule['COUPON_ID'] = $couponList[$rule['ORDER_COUPON_ID']];
                 }
             }
-            if (!isset($rule['RULE_DESCR_ID']))
+            if (!isset($rule['RULE_DESCR_ID'])) {
                 $rule['RULE_DESCR_ID'] = 0;
+            }
             $rule['RULE_DESCR_ID'] = (int)$rule['RULE_DESCR_ID'];
 
             $rule['APPLY_BLOCK_COUNTER'] = (int)$rule['APPLY_BLOCK_COUNTER'];
             $blockCounter = $rule['APPLY_BLOCK_COUNTER'];
-            if (!isset($applyBlocks[$blockCounter]))
+            if (!isset($applyBlocks[$blockCounter])) {
                 $applyBlocks[$blockCounter] = $emptyApplyBlock;
-            if (!isset($orderDiscountIndex[$blockCounter]))
+            }
+            if (!isset($orderDiscountIndex[$blockCounter])) {
                 $orderDiscountIndex[$blockCounter] = 0;
+            }
 
             if (!isset($discountList[$rule['ORDER_DISCOUNT_ID']])) {
                 $discountList[$rule['ORDER_DISCOUNT_ID']] = $rule['ORDER_DISCOUNT_ID'];
@@ -541,7 +597,9 @@ abstract class OrderDiscountBase
             if (static::isNativeModule($rule['MODULE_ID'])) {
                 $discountId = (int)$rule['ORDER_DISCOUNT_ID'];
                 if (!isset($orderDiscountLink[$discountId])) {
-                    $applyBlocks[$blockCounter]['ORDER'][$orderDiscountIndex[$blockCounter]] = static::formatSaleRuleResult($rule);
+                    $applyBlocks[$blockCounter]['ORDER'][$orderDiscountIndex[$blockCounter]] = static::formatSaleRuleResult(
+                        $rule
+                    );
                     $orderDiscountLink[$discountId] = &$applyBlocks[$blockCounter]['ORDER'][$orderDiscountIndex[$blockCounter]];
                     $orderDiscountIndex[$blockCounter]++;
                 }
@@ -551,20 +609,24 @@ abstract class OrderDiscountBase
                 switch (static::getResultEntityFromInternal($rule['ENTITY_TYPE'])) {
                     case $discountClassName::ENTITY_BASKET_ITEM:
                         $index = static::transferEntityCodeFromInternal($rule, $basketList);
-                        if ($index == '')
+                        if ($index == '') {
                             continue 2;
+                        }
 
                         $ruleItem['BASKET_ID'] = static::transferEntityCodeFromInternal($rule, []);
                         static::fillRuleProductFields($ruleItem, $basketData, $index);
-                        if (!isset($orderDiscountLink[$discountId]['RESULT']['BASKET']))
+                        if (!isset($orderDiscountLink[$discountId]['RESULT']['BASKET'])) {
                             $orderDiscountLink[$discountId]['RESULT']['BASKET'] = [];
+                        }
                         $orderDiscountLink[$discountId]['RESULT']['BASKET'][$index] = $ruleItem;
-                        if ($ruleItem['ACTION_BLOCK_LIST'] === null)
+                        if ($ruleItem['ACTION_BLOCK_LIST'] === null) {
                             $orderDiscountLink[$discountId]['ACTION_BLOCK_LIST'] = false;
+                        }
                         break;
                     case $discountClassName::ENTITY_DELIVERY:
-                        if (!isset($orderDiscountLink[$discountId]['RESULT']['DELIVERY']))
+                        if (!isset($orderDiscountLink[$discountId]['RESULT']['DELIVERY'])) {
                             $orderDiscountLink[$discountId]['RESULT']['DELIVERY'] = [];
+                        }
                         $ruleItem['DELIVERY_ID'] = static::transferEntityCodeFromInternal($rule, []);
                         $orderDiscountLink[$discountId]['RESULT']['DELIVERY'] = $ruleItem;
                         break;
@@ -573,19 +635,24 @@ abstract class OrderDiscountBase
             } else {
                 if (
                     $rule['ENTITY_ID'] <= 0
-                    || static::getResultEntityFromInternal($rule['ENTITY_TYPE']) != $discountClassName::ENTITY_BASKET_ITEM
-                )
+                    || static::getResultEntityFromInternal(
+                        $rule['ENTITY_TYPE']
+                    ) != $discountClassName::ENTITY_BASKET_ITEM
+                ) {
                     continue;
+                }
 
                 $index = static::transferEntityCodeFromInternal($rule, $basketList);
-                if ($index == '')
+                if ($index == '') {
                     continue;
+                }
 
                 $ruleResult = static::formatBasketRuleResult($rule);
                 static::fillRuleProductFields($ruleResult, $basketData, $index);
 
-                if (!isset($applyBlocks[$blockCounter]['BASKET'][$index]))
+                if (!isset($applyBlocks[$blockCounter]['BASKET'][$index])) {
                     $applyBlocks[$blockCounter]['BASKET'][$index] = [];
+                }
                 $applyBlocks[$blockCounter]['BASKET'][$index][] = $ruleResult;
 
                 unset($ruleResult);
@@ -597,8 +664,9 @@ abstract class OrderDiscountBase
 
         if (!empty($discountList)) {
             $resultData['DISCOUNT_LIST'] = static::loadOrderDiscountFromDb($discountList, $discountSort);
-            if ($resultData['DISCOUNT_LIST'] === null)
+            if ($resultData['DISCOUNT_LIST'] === null) {
                 $resultData['DISCOUNT_LIST'] = [];
+            }
         }
         unset($discountSort, $discountList);
 
@@ -606,25 +674,30 @@ abstract class OrderDiscountBase
             $order,
             self::STORAGE_TYPE_DISCOUNT_ACTION_DATA
         );
-        if ($actionsData !== null)
+        if ($actionsData !== null) {
             $resultData['STORED_ACTION_DATA'] = $actionsData;
+        }
         unset($actionsData);
 
-        $dataIterator = static::getRoundResultIterator([
-            'select' => ['*'],
-            'filter' => [
-                '=ORDER_ID' => $order,
-                '=ENTITY_TYPE' => static::getRoundEntityInternal($discountClassName::ENTITY_BASKET_ITEM)
+        $dataIterator = static::getRoundResultIterator(
+            [
+                'select' => ['*'],
+                'filter' => [
+                    '=ORDER_ID' => $order,
+                    '=ENTITY_TYPE' => static::getRoundEntityInternal($discountClassName::ENTITY_BASKET_ITEM)
+                ]
             ]
-        ]);
+        );
         while ($data = $dataIterator->fetch()) {
             $data['APPLY_BLOCK_COUNTER'] = (int)$data['APPLY_BLOCK_COUNTER'];
             $blockCounter = $data['APPLY_BLOCK_COUNTER'];
-            if (!isset($applyBlocks[$blockCounter]))
+            if (!isset($applyBlocks[$blockCounter])) {
                 $applyBlocks[$blockCounter] = $emptyApplyBlock;
+            }
             $basketCode = static::transferEntityCodeFromInternal($data, $basketList);
-            if ($basketCode == '')
+            if ($basketCode == '') {
                 continue;
+            }
 
             $applyBlocks[$blockCounter]['BASKET_ROUND'][$basketCode] = array(
                 'RULE_ID' => (int)$data['ID'],
@@ -635,8 +708,9 @@ abstract class OrderDiscountBase
         }
         unset($data, $dataIterator);
 
-        if (!empty($applyBlocks))
+        if (!empty($applyBlocks)) {
             ksort($applyBlocks);
+        }
 
         $resultData['APPLY_BLOCKS'] = $applyBlocks;
         unset($applyBlocks);
@@ -658,30 +732,35 @@ abstract class OrderDiscountBase
      */
     protected static function loadOrderDiscountFromDb(array $discountIds, array $discountOrder)
     {
-        if (empty($discountIds) || empty($discountOrder))
+        if (empty($discountIds) || empty($discountOrder)) {
             return null;
+        }
 
         $result = [];
         $list = [];
-        $iterator = static::getOrderDiscountIterator([
-            'select' => ['*'],
-            'filter' => ['@ID' => $discountIds]
-        ]);
+        $iterator = static::getOrderDiscountIterator(
+            [
+                'select' => ['*'],
+                'filter' => ['@ID' => $discountIds]
+            ]
+        );
         while ($row = $iterator->fetch()) {
             $row['ID'] = (int)$row['ID'];
             $row['ORDER_DISCOUNT_ID'] = $row['ID'];
             $row['MODULES'] = [];
             $row['SIMPLE_ACTION'] = true;
-            if (static::isNativeModule($row['MODULE_ID']))
+            if (static::isNativeModule($row['MODULE_ID'])) {
                 $row['SIMPLE_ACTION'] = self::isSimpleAction($row['APPLICATION']);
+            }
             $list[$row['ID']] = $row;
         }
         unset($row, $iterator);
 
         if (!empty($list)) {
             foreach ($discountOrder as $id) {
-                if (!isset($list[$id]))
+                if (!isset($list[$id])) {
                     continue;
+                }
                 $result[$id] = $list[$id];
             }
             unset($id);
@@ -692,8 +771,9 @@ abstract class OrderDiscountBase
             $resultIds = array_keys($result);
             $discountModules = static::loadModulesFromDb($resultIds);
             if ($discountModules !== null) {
-                foreach ($discountModules as $id => $modules)
+                foreach ($discountModules as $id => $modules) {
                     $result[$id]['MODULES'] = $modules;
+                }
                 unset($id, $modules);
             }
             unset($discountModules);
@@ -731,33 +811,40 @@ abstract class OrderDiscountBase
         $result = null;
 
         $order = (int)$order;
-        if ($order <= 0)
+        if ($order <= 0) {
             return $result;
+        }
 
         $storageType = static::getStorageTypeInternal($storageType);
-        if ($storageType === null)
+        if ($storageType === null) {
             return $result;
+        }
         $filter = [
             '=ORDER_ID' => $order,
             '=ENTITY_TYPE' => $storageType,
         ];
-        if (!empty($additionalFilter))
+        if (!empty($additionalFilter)) {
             $filter = $filter + $additionalFilter;
+        }
 
         $list = [];
-        $iterator = static::getStoredDataIterator(array(
-            'select' => ['*'],
-            'filter' => $filter
-        ));
+        $iterator = static::getStoredDataIterator(
+            array(
+                'select' => ['*'],
+                'filter' => $filter
+            )
+        );
         while ($row = $iterator->fetch()) {
-            if (empty($row['ENTITY_DATA']) || !is_array($row['ENTITY_DATA']))
+            if (empty($row['ENTITY_DATA']) || !is_array($row['ENTITY_DATA'])) {
                 continue;
+            }
             $index = static::getEntityIndex($row);
             $list[$index] = $row['ENTITY_DATA'];
         }
         unset($index, $row, $iterator);
-        if (!empty($list))
+        if (!empty($list)) {
             $result = $list;
+        }
         unset($list);
 
         return $result;
@@ -780,12 +867,15 @@ abstract class OrderDiscountBase
             $storageType,
             ['=ENTITY_ID' => $order]
         );
-        if ($data === null)
+        if ($data === null) {
             return $result;
-        if (count($data) > 1)
+        }
+        if (count($data) > 1) {
             return $result;
-        if (isset($data[$order]))
+        }
+        if (isset($data[$order])) {
             $result = $data[$order];
+        }
         unset($data);
 
         return $result;
@@ -805,11 +895,13 @@ abstract class OrderDiscountBase
         return static::saveStoredDataBlock(
             $order,
             $storageType,
-            [$order => [
-                'ENTITY_ID' => $order,
-                'ENTITY_VALUE' => $order,
-                'ENTITY_DATA' => $data
-            ]],
+            [
+                $order => [
+                    'ENTITY_ID' => $order,
+                    'ENTITY_VALUE' => $order,
+                    'ENTITY_DATA' => $data
+                ]
+            ],
             $options
         );
     }
@@ -830,19 +922,23 @@ abstract class OrderDiscountBase
 
         $order = (int)$order;
         if ($order <= 0) {
-            $result->addError(new Main\Error(
-                Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_BAD_ORDER_ID'),
-                self::ERROR_ID
-            ));
+            $result->addError(
+                new Main\Error(
+                    Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_BAD_ORDER_ID'),
+                    self::ERROR_ID
+                )
+            );
             return $result;
         }
 
         $storageType = static::getStorageTypeInternal($storageType);
         if ($storageType === null) {
-            $result->addError(new Main\Error(
-                Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_BAD_STORAGE_TYPE'),
-                self::ERROR_ID
-            ));
+            $result->addError(
+                new Main\Error(
+                    Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_BAD_STORAGE_TYPE'),
+                    self::ERROR_ID
+                )
+            );
             return $result;
         }
 
@@ -851,13 +947,15 @@ abstract class OrderDiscountBase
 
         $collection = [];
         $deleteList = [];
-        $iterator = static::getStoredDataIterator([
-            'select' => ['*'],
-            'filter' => [
-                '=ORDER_ID' => $order,
-                '=ENTITY_TYPE' => $storageType,
+        $iterator = static::getStoredDataIterator(
+            [
+                'select' => ['*'],
+                'filter' => [
+                    '=ORDER_ID' => $order,
+                    '=ENTITY_TYPE' => $storageType,
+                ]
             ]
-        ]);
+        );
         while ($row = $iterator->fetch()) {
             $index = static::getEntityIndex($row);
             $collection[$index] = $row;
@@ -867,8 +965,9 @@ abstract class OrderDiscountBase
 
         $existError = false;
         foreach ($block as $index => $row) {
-            if (isset($deleteList[$index]))
+            if (isset($deleteList[$index])) {
                 unset($deleteList[$index]);
+            }
             if (!empty($collection[$index]) && !$allowUpdate) {
                 $existError = true;
                 continue;
@@ -883,22 +982,26 @@ abstract class OrderDiscountBase
                     ['ENTITY_DATA' => $row['ENTITY_DATA']]
                 );
             }
-            if (!$resultInternal->isSuccess())
+            if (!$resultInternal->isSuccess()) {
                 $result->addErrors($resultInternal->getErrors());
+            }
         }
         unset($resultInternal, $index, $row);
 
         if ($existError) {
-            $result->addError(new Main\Error(
-                Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_ORDER_STORED_DATA_ALREADY_EXISTS'),
-                self::ERROR_ID
-            ));
+            $result->addError(
+                new Main\Error(
+                    Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_ORDER_STORED_DATA_ALREADY_EXISTS'),
+                    self::ERROR_ID
+                )
+            );
         }
         unset($existError);
 
         if ($result->isSuccess()) {
-            if ($deleteMissing && !empty($deleteList))
+            if ($deleteMissing && !empty($deleteList)) {
                 static::deleteRowsByIndex(static::getStoredDataTableInternal(), 'ID', $deleteList);
+            }
         }
         unset($deleteList, $deleteMissing);
 
@@ -911,28 +1014,34 @@ abstract class OrderDiscountBase
 
         $order = (int)$order;
         if ($order <= 0) {
-            $result->addError(new Main\Error(
-                Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_BAD_ORDER_ID'),
-                self::ERROR_ID
-            ));
+            $result->addError(
+                new Main\Error(
+                    Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_BAD_ORDER_ID'),
+                    self::ERROR_ID
+                )
+            );
             return $result;
         }
 
-        if (empty($block))
+        if (empty($block)) {
             return $result;
+        }
 
         foreach ($block as $row) {
             $row['ORDER_ID'] = $order;
             $row['ENTITY_TYPE'] = static::getResultEntityInternal($row['ENTITY_TYPE']);
             if (!isset($row['APPLY_BLOCK_COUNTER']) || $row['APPLY_BLOCK_COUNTER'] < 0) {
-                $result->addError(new Main\Entity\EntityError(
-                    Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_BAD_APPLY_BLOCK_COUNTER')
-                ));
+                $result->addError(
+                    new Main\Entity\EntityError(
+                        Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_BAD_APPLY_BLOCK_COUNTER')
+                    )
+                );
                 return $result;
             }
             $resultInternal = static::addResultRow($row);
-            if (!$resultInternal->isSuccess())
+            if (!$resultInternal->isSuccess()) {
                 $result->addErrors($resultInternal->getErrors());
+            }
         }
         unset($resultInternal, $row);
 
@@ -945,19 +1054,23 @@ abstract class OrderDiscountBase
 
         $order = (int)$order;
         if ($order <= 0) {
-            $result->addError(new Main\Error(
-                Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_BAD_ORDER_ID'),
-                self::ERROR_ID
-            ));
+            $result->addError(
+                new Main\Error(
+                    Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_BAD_ORDER_ID'),
+                    self::ERROR_ID
+                )
+            );
             return $result;
         }
 
         $deleteList = array();
-        $iterator = static::getResultIterator(array(
-            'select' => array('ID'),
-            'filter' => array('=ORDER_ID' => $order),
-            'order' => array('ID' => 'ASC')
-        ));
+        $iterator = static::getResultIterator(
+            array(
+                'select' => array('ID'),
+                'filter' => array('=ORDER_ID' => $order),
+                'order' => array('ID' => 'ASC')
+            )
+        );
         while ($row = $iterator->fetch()) {
             $row['ID'] = (int)$row['ID'];
             $deleteList[$row['ID']] = $row['ID'];
@@ -967,34 +1080,41 @@ abstract class OrderDiscountBase
         if (!empty($block)) {
             foreach ($block as $row) {
                 $id = null;
-                if (isset($row['RULE_ID']) && $row['RULE_ID'] > 0)
+                if (isset($row['RULE_ID']) && $row['RULE_ID'] > 0) {
                     $id = $row['RULE_ID'];
+                }
                 unset($row['RULE_ID']);
                 if ($id === null) {
-                    $result->addError(new Main\Error(
-                        Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_RESULT_ROW_ID_IS_ABSENT'),
-                        self::ERROR_ID
-                    ));
+                    $result->addError(
+                        new Main\Error(
+                            Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_RESULT_ROW_ID_IS_ABSENT'),
+                            self::ERROR_ID
+                        )
+                    );
                     continue;
                 }
                 if (!isset($deleteList[$id])) {
-                    $result->addError(new Main\Error(
-                        Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_BAD_RESULT_ROW_ID'),
-                        self::ERROR_ID
-                    ));
+                    $result->addError(
+                        new Main\Error(
+                            Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_BAD_RESULT_ROW_ID'),
+                            self::ERROR_ID
+                        )
+                    );
                     continue;
                 }
                 unset($deleteList[$id]);
 
                 $resultInternal = static::updateResultRow($id, $row);
-                if (!$resultInternal->isSuccess())
+                if (!$resultInternal->isSuccess()) {
                     $result->addErrors($resultInternal->getErrors());
+                }
             }
             unset($resultInternal, $row);
         }
 
-        if (!$result->isSuccess())
+        if (!$result->isSuccess()) {
             return $result;
+        }
 
         if (!empty($deleteList)) {
             self::deleteRowsByIndex(static::getResultTableNameInternal(), 'ID', $deleteList);
@@ -1010,29 +1130,35 @@ abstract class OrderDiscountBase
 
         $order = (int)$order;
         if ($order <= 0) {
-            $result->addError(new Main\Error(
-                Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_BAD_ORDER_ID'),
-                self::ERROR_ID
-            ));
+            $result->addError(
+                new Main\Error(
+                    Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_BAD_ORDER_ID'),
+                    self::ERROR_ID
+                )
+            );
             return $result;
         }
 
-        if (empty($block))
+        if (empty($block)) {
             return $result;
+        }
 
         foreach ($block as $row) {
             $row['ORDER_ID'] = $order;
             $row['ENTITY_TYPE'] = static::getRoundEntityInternal($row['ENTITY_TYPE']);
             $row['ORDER_ROUND'] = 'N';
             if (!isset($row['APPLY_BLOCK_COUNTER']) || $row['APPLY_BLOCK_COUNTER'] < 0) {
-                $result->addError(new Main\Entity\EntityError(
-                    Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_BAD_APPLY_BLOCK_COUNTER')
-                ));
+                $result->addError(
+                    new Main\Entity\EntityError(
+                        Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_BAD_APPLY_BLOCK_COUNTER')
+                    )
+                );
                 return $result;
             }
             $resultInternal = static::addRoundResultInternal($row);
-            if (!$resultInternal->isSuccess())
+            if (!$resultInternal->isSuccess()) {
                 $result->addErrors($resultInternal->getErrors());
+            }
         }
         unset($resultInternal, $row);
 
@@ -1045,18 +1171,22 @@ abstract class OrderDiscountBase
 
         $order = (int)$order;
         if ($order <= 0) {
-            $result->addError(new Main\Error(
-                Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_BAD_ORDER_ID'),
-                self::ERROR_ID
-            ));
+            $result->addError(
+                new Main\Error(
+                    Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_BAD_ORDER_ID'),
+                    self::ERROR_ID
+                )
+            );
             return $result;
         }
 
         $deleteList = array();
-        $iterator = static::getRoundResultIterator([
-            'select' => ['ID'],
-            'filter' => ['=ORDER_ID' => $order]
-        ]);
+        $iterator = static::getRoundResultIterator(
+            [
+                'select' => ['ID'],
+                'filter' => ['=ORDER_ID' => $order]
+            ]
+        );
         while ($row = $iterator->fetch()) {
             $row['ID'] = (int)$row['ID'];
             $deleteList[$row['ID']] = $row['ID'];
@@ -1066,37 +1196,45 @@ abstract class OrderDiscountBase
         if (!empty($block)) {
             foreach ($block as $row) {
                 $id = null;
-                if (isset($row['RULE_ID']) && $row['RULE_ID'] > 0)
+                if (isset($row['RULE_ID']) && $row['RULE_ID'] > 0) {
                     $id = $row['RULE_ID'];
+                }
                 if ($id === null) {
-                    $result->addError(new Main\Error(
-                        Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_ROUND_ROW_ID_IS_ABSENT'),
-                        self::ERROR_ID
-                    ));
+                    $result->addError(
+                        new Main\Error(
+                            Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_ROUND_ROW_ID_IS_ABSENT'),
+                            self::ERROR_ID
+                        )
+                    );
                     continue;
                 }
                 if (!isset($deleteList[$id])) {
-                    $result->addError(new Main\Error(
-                        Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_BAD_ROUND_ROW_ID'),
-                        self::ERROR_ID
-                    ));
+                    $result->addError(
+                        new Main\Error(
+                            Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_BAD_ROUND_ROW_ID'),
+                            self::ERROR_ID
+                        )
+                    );
                     continue;
                 }
                 unset($deleteList[$id]);
 
                 unset($row['RULE_ID']);
                 $resultInternal = static::updateRoundResultInternal($id, $row);
-                if (!$resultInternal->isSuccess())
+                if (!$resultInternal->isSuccess()) {
                     $result->addErrors($resultInternal->getErrors());
+                }
             }
             unset($resultInternal, $row);
         }
 
-        if (!$result->isSuccess())
+        if (!$result->isSuccess()) {
             return $result;
+        }
 
-        if (!empty($deleteList))
+        if (!empty($deleteList)) {
             self::deleteRowsByIndex(static::getRoundTableNameInternal(), 'ID', $deleteList);
+        }
 
         return $result;
     }
@@ -1167,25 +1305,30 @@ abstract class OrderDiscountBase
         $event = new Main\Event('sale', self::EVENT_ON_BUILD_DISCOUNT_PROVIDERS, array());
         $event->send();
         $resultList = $event->getResults();
-        if (empty($resultList) || !is_array($resultList))
+        if (empty($resultList) || !is_array($resultList)) {
             return;
+        }
         $actionList = static::getDiscountProviderActions();
         /** @var Main\EventResult $eventResult */
         foreach ($resultList as $eventResult) {
-            if ($eventResult->getType() != Main\EventResult::SUCCESS)
+            if ($eventResult->getType() != Main\EventResult::SUCCESS) {
                 continue;
+            }
             $module = (string)$eventResult->getModuleId();
             $provider = $eventResult->getParameters();
-            if (empty($provider) || !is_array($provider))
+            if (empty($provider) || !is_array($provider)) {
                 continue;
-            if (!isset($provider[self::PROVIDER_ACTION_PREPARE_DISCOUNT]))
+            }
+            if (!isset($provider[self::PROVIDER_ACTION_PREPARE_DISCOUNT])) {
                 continue;
+            }
             self::$discountProviders[$module] = array(
                 'module' => $module
             );
             foreach ($actionList as $action) {
-                if (isset($provider[$action]))
+                if (isset($provider[$action])) {
                     self::$discountProviders[$module][$action] = $provider[$action];
+                }
             }
         }
         unset($provider, $module, $actionList, $eventResult, $resultList, $event);
@@ -1208,8 +1351,9 @@ abstract class OrderDiscountBase
         $module = $provider['MODULE_ID'];
         $method = $provider['METHOD'];
 
-        if (!isset(self::$discountProviders[$module]) || !isset(self::$discountProviders[$module][$method]))
+        if (!isset(self::$discountProviders[$module]) || !isset(self::$discountProviders[$module][$method])) {
             return false;
+        }
 
         return call_user_func_array(
             self::$discountProviders[$module][$method],
@@ -1226,12 +1370,14 @@ abstract class OrderDiscountBase
     protected static function prepareData($discount)
     {
         $fields = static::fillAbsentDiscountFields($discount);
-        if ($fields === null)
+        if ($fields === null) {
             return false;
+        }
 
         $discountId = (int)$fields['ID'];
-        if (!isset($fields['NAME']) || (string)$fields['NAME'] == '')
+        if (!isset($fields['NAME']) || (string)$fields['NAME'] == '') {
             $fields['NAME'] = Loc::getMessage('SALE_ORDER_DISCOUNT_NAME_TEMPLATE', array('#ID#' => $fields['ID']));
+        }
         $fields['DISCOUNT_ID'] = $discountId;
         $fields['EDIT_PAGE_URL'] = static::getEditUrl(array('ID' => $discountId));
         unset($fields['ID']);
@@ -1247,29 +1393,36 @@ abstract class OrderDiscountBase
      */
     protected static function fillAbsentDiscountFields(array $fields)
     {
-        if (empty($fields) || empty($fields['ID']))
+        if (empty($fields) || empty($fields['ID'])) {
             return null;
+        }
 
         $discountId = (int)$fields['ID'];
-        if ($discountId <= 0)
+        if ($discountId <= 0) {
             return null;
+        }
 
         $requiredFields = static::checkRequiredOrderDiscountFields($fields);
         if (!empty($requiredFields)) {
-            if (in_array('ACTIONS_DESCR', $requiredFields))
+            if (in_array('ACTIONS_DESCR', $requiredFields)) {
                 return null;
+            }
             $requiredFields[] = 'ID';
-            $iterator = static::getDiscountIterator(array(
-                'select' => $requiredFields,
-                'filter' => array('=ID' => $discountId)
-            ));
+            $iterator = static::getDiscountIterator(
+                array(
+                    'select' => $requiredFields,
+                    'filter' => array('=ID' => $discountId)
+                )
+            );
             $row = $iterator->fetch();
             unset($iterator);
-            if (empty($row))
+            if (empty($row)) {
                 return null;
+            }
             foreach ($row as $field => $value) {
-                if (isset($fields[$field]))
+                if (isset($fields[$field])) {
                     continue;
+                }
                 $fields[$field] = $value;
             }
             unset($field, $value);
@@ -1288,8 +1441,9 @@ abstract class OrderDiscountBase
     protected static function normalizeDiscountFields(array $rawFields)
     {
         $result = static::normalizeOrderDiscountFieldsInternal($rawFields);
-        if (!is_array($result))
+        if (!is_array($result)) {
             return null;
+        }
         $result['DISCOUNT_HASH'] = static::calculateOrderDiscountHashInternal($result);
         return $result;
     }
@@ -1303,19 +1457,24 @@ abstract class OrderDiscountBase
     protected static function searchDiscount($hash)
     {
         $hash = (string)$hash;
-        if ($hash === '')
+        if ($hash === '') {
             return null;
+        }
         $entity = get_called_class();
-        if (!isset(self::$discountCache[$entity]))
+        if (!isset(self::$discountCache[$entity])) {
             self::$discountCache[$entity] = array();
+        }
         if (!isset(self::$discountCache[$entity][$hash])) {
-            $iterator = static::getOrderDiscountIterator(array(
-                'select' => array('*'),
-                'filter' => array('=DISCOUNT_HASH' => $hash)
-            ));
+            $iterator = static::getOrderDiscountIterator(
+                array(
+                    'select' => array('*'),
+                    'filter' => array('=DISCOUNT_HASH' => $hash)
+                )
+            );
             $row = $iterator->fetch();
-            if (!empty($row))
+            if (!empty($row)) {
                 self::setCacheItem($entity, $row);
+            }
             unset($row, $iterator);
         }
 
@@ -1350,23 +1509,27 @@ abstract class OrderDiscountBase
         if (
         !static::isValidCouponTypeInternal($fields['TYPE'])
         ) {
-            $result->addError(new Main\Entity\EntityError(
-                Loc::getMessage(
-                    'SALE_ORDER_DISCOUNT_ERR_COUPON_TYPE_BAD',
-                    array('#COUPON#' => $fields['COUPON'])
-                ),
-                self::ERROR_ID
-            ));
+            $result->addError(
+                new Main\Entity\EntityError(
+                    Loc::getMessage(
+                        'SALE_ORDER_DISCOUNT_ERR_COUPON_TYPE_BAD',
+                        array('#COUPON#' => $fields['COUPON'])
+                    ),
+                    self::ERROR_ID
+                )
+            );
         }
 
         if (empty($fields['COUPON_ID']) || (int)$fields['COUPON_ID'] <= 0) {
-            $result->addError(new Main\Entity\EntityError(
-                Loc::getMessage(
-                    'SALE_ORDER_DISCOUNT_ERR_COUPON_ID_BAD',
-                    array('#COUPON#' => $fields['COUPON'])
-                ),
-                self::ERROR_ID
-            ));
+            $result->addError(
+                new Main\Entity\EntityError(
+                    Loc::getMessage(
+                        'SALE_ORDER_DISCOUNT_ERR_COUPON_ID_BAD',
+                        array('#COUPON#' => $fields['COUPON'])
+                    ),
+                    self::ERROR_ID
+                )
+            );
         }
 
         return $result;
@@ -1382,8 +1545,9 @@ abstract class OrderDiscountBase
     {
         $result = new Result();
 
-        if (array_key_exists('ID', $fields))
+        if (array_key_exists('ID', $fields)) {
             unset($fields['ID']);
+        }
         $tabletResult = static::addOrderCouponInternal($fields);
         if ($tabletResult->isSuccess()) {
             $fields['ID'] = $tabletResult->getId();
@@ -1429,18 +1593,21 @@ abstract class OrderDiscountBase
                 );
                 if (!$resultModule) {
                     $process = false;
-                    $result->addError(new Main\Entity\EntityError(
-                        Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_SAVE_DISCOUNT_MODULES'),
-                        self::ERROR_ID
-                    ));
+                    $result->addError(
+                        new Main\Entity\EntityError(
+                            Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_SAVE_DISCOUNT_MODULES'),
+                            self::ERROR_ID
+                        )
+                    );
                 }
                 unset($resultModule);
             }
             unset($moduleList);
         }
 
-        if ($process)
+        if ($process) {
             $result->setId($orderDiscountId);
+        }
 
         return $result;
     }
@@ -1453,22 +1620,27 @@ abstract class OrderDiscountBase
      */
     protected static function loadModulesFromDb(array $discountIds)
     {
-        if (empty($discountIds))
+        if (empty($discountIds)) {
             return null;
+        }
 
         Main\Type\Collection::normalizeArrayValuesByInt($discountIds, true);
-        if (empty($discountIds))
+        if (empty($discountIds)) {
             return null;
+        }
 
         $result = array();
-        $iterator = static::getOrderDiscountModuleIterator(array(
-            'select' => array('MODULE_ID', 'ORDER_DISCOUNT_ID'),
-            'filter' => array('@ORDER_DISCOUNT_ID' => $discountIds)
-        ));
+        $iterator = static::getOrderDiscountModuleIterator(
+            array(
+                'select' => array('MODULE_ID', 'ORDER_DISCOUNT_ID'),
+                'filter' => array('@ORDER_DISCOUNT_ID' => $discountIds)
+            )
+        );
         while ($row = $iterator->fetch()) {
             $orderDiscountId = (int)$row['ORDER_DISCOUNT_ID'];
-            if (!isset($result[$orderDiscountId]))
+            if (!isset($result[$orderDiscountId])) {
                 $result[$orderDiscountId] = array();
+            }
             $result[$orderDiscountId][] = $row['MODULE_ID'];
         }
         unset($row, $iterator);
@@ -1498,8 +1670,9 @@ abstract class OrderDiscountBase
         if (!empty($needDiscountModules)) {
             foreach ($needDiscountModules as &$module) {
                 $module = trim((string)$module);
-                if (!empty($module))
+                if (!empty($module)) {
                     $result[$module] = $module;
+                }
             }
             unset($module);
             $result = array_values($result);
@@ -1517,14 +1690,16 @@ abstract class OrderDiscountBase
     protected static function transferEntityCodeFromInternal(array $row, array $transferList)
     {
         $code = '';
-        if (empty($row))
+        if (empty($row)) {
             return $code;
+        }
         $row['ENTITY_VALUE'] = (string)$row['ENTITY_VALUE'];
         if (!empty($transferList)) {
-            if ($row['ENTITY_ID'] > 0 && isset($transferList[$row['ENTITY_ID']]))
+            if ($row['ENTITY_ID'] > 0 && isset($transferList[$row['ENTITY_ID']])) {
                 $code = $transferList[$row['ENTITY_ID']];
-            elseif ($row['ENTITY_VALUE'] !== '' && isset($transferList[$row['ENTITY_VALUE']]))
+            } elseif ($row['ENTITY_VALUE'] !== '' && isset($transferList[$row['ENTITY_VALUE']])) {
                 $code = $transferList[$row['ENTITY_VALUE']];
+            }
         } else {
             $code = ($row['ENTITY_ID'] > 0 ? $row['ENTITY_ID'] : $row['ENTITY_VALUE']);
         }
@@ -1743,11 +1918,13 @@ abstract class OrderDiscountBase
     {
         $result = array();
 
-        $couponIterator = static::getOrderCouponIterator(array(
-            'select' => array('*'),
-            'filter' => array('=ORDER_ID' => $order),
-            'order' => array('ID' => 'ASC')
-        ));
+        $couponIterator = static::getOrderCouponIterator(
+            array(
+                'select' => array('*'),
+                'filter' => array('=ORDER_ID' => $order),
+                'order' => array('ID' => 'ASC')
+            )
+        );
         while ($coupon = $couponIterator->fetch()) {
             $coupon['ID'] = (int)$coupon['ID'];
             $coupon['ORDER_ID'] = (int)$coupon['ORDER_ID'];
@@ -1836,33 +2013,40 @@ abstract class OrderDiscountBase
      */
     protected static function addResultRow(array $fields)
     {
-        if (array_key_exists('ID', $fields))
+        if (array_key_exists('ID', $fields)) {
             unset($fields['ID']);
+        }
         $resultFields = static::checkResultTableWhiteList($fields);
         if (empty($resultFields)) {
             $result = new Main\Entity\AddResult();
-            $result->addError(new Main\Entity\EntityError(
-                Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_RESULT_ROW_IS_EMPTY')
-            ));
+            $result->addError(
+                new Main\Entity\EntityError(
+                    Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_RESULT_ROW_IS_EMPTY')
+                )
+            );
             return $result;
         }
         $result = static::addResultInternal($resultFields);
         unset($resultFields);
-        if (!$result->isSuccess())
+        if (!$result->isSuccess()) {
             return $result;
+        }
 
         $fields['RULE_ID'] = (int)$result->getId();
         $descriptionFields = static::checkResultDescriptionTableWhiteList($fields);
         if (empty($descriptionFields)) {
-            $result->addError(new Main\Entity\EntityError(
-                Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_RESULT_ROW_DESCRIPTION_IS_EMPTY')
-            ));
+            $result->addError(
+                new Main\Entity\EntityError(
+                    Loc::getMessage('SALE_ORDER_DISCOUNT_ERR_RESULT_ROW_DESCRIPTION_IS_EMPTY')
+                )
+            );
             return $result;
         }
         $descriptionResult = static::addResultDescriptionInternal($descriptionFields);
         unset($descriptionFields);
-        if (!$descriptionResult->isSuccess())
+        if (!$descriptionResult->isSuccess()) {
             $result->addErrors($descriptionResult->getErrors());
+        }
         unset($descriptionResult);
 
         return $result;
@@ -1878,32 +2062,40 @@ abstract class OrderDiscountBase
     protected static function updateResultRow($id, array $fields)
     {
         $rowUpdate = ['APPLY' => $fields['APPLY']];
-        if (isset($fields['ACTION_BLOCK_LIST']))
+        if (isset($fields['ACTION_BLOCK_LIST'])) {
             $rowUpdate['ACTION_BLOCK_LIST'] = $fields['ACTION_BLOCK_LIST'];
+        }
         $result = static::updateResultInternal($id, $rowUpdate);
         unset($rowUpdate);
-        if (!$result->isSuccess())
+        if (!$result->isSuccess()) {
             return $result;
+        }
 
         $descrId = null;
-        if (isset($fields['DESCR_ID']) && $fields['DESCR_ID'] > 0)
+        if (isset($fields['DESCR_ID']) && $fields['DESCR_ID'] > 0) {
             $descrId = $fields['DESCR_ID'];
+        }
         if ($descrId === null) {
-            $iterator = static::getResultDescriptionIterator([
-                'select' => ['ID'],
-                'filter' => ['=RULE_ID' => $id]
-            ]);
+            $iterator = static::getResultDescriptionIterator(
+                [
+                    'select' => ['ID'],
+                    'filter' => ['=RULE_ID' => $id]
+                ]
+            );
             $row = $iterator->fetch();
-            if (!empty($row['ID']))
+            if (!empty($row['ID'])) {
                 $descrId = (int)$row['ID'];
+            }
             unset($row, $iterator);
         }
         if ($descrId === null) {
-            $iterator = static::getResultIterator([
-                'select' => ['MODULE_ID', 'ORDER_DISCOUNT_ID', 'ORDER_ID'],
-                'filter' => ['=ID' => $id],
-                'order' => []
-            ]);
+            $iterator = static::getResultIterator(
+                [
+                    'select' => ['MODULE_ID', 'ORDER_DISCOUNT_ID', 'ORDER_ID'],
+                    'filter' => ['=ID' => $id],
+                    'order' => []
+                ]
+            );
             $row = $iterator->fetch();
             unset($iterator);
             $row['RULE_ID'] = $id;
@@ -1917,8 +2109,9 @@ abstract class OrderDiscountBase
             );
         }
 
-        if (!$resultDescr->isSuccess())
+        if (!$resultDescr->isSuccess()) {
             $result->addErrors($resultDescr->getErrors());
+        }
         unset($resultDescr);
 
         return $result;
@@ -2151,19 +2344,22 @@ abstract class OrderDiscountBase
         $result = true;
 
         $action = (string)$action;
-        if ($action == '')
+        if ($action == '') {
             return $result;
+        }
 
-        $action = trim(substr($action, 8));
-        $action = substr($action, 2);
-        $key = strpos($action, ')');
-        if ($key === false)
+        $action = trim(mb_substr($action, 8));
+        $action = mb_substr($action, 2);
+        $key = mb_strpos($action, ')');
+        if ($key === false) {
             return $result;
-        $orderName = '\\' . substr($action, 0, $key);
+        }
+        $orderName = '\\' . mb_substr($action, 0, $key);
 
         preg_match_all("/" . $orderName . "(?:,|\))/" . BX_UTF_PCRE_MODIFIER, $action, $list);
-        if (isset($list[0]) && is_array($list[0]))
+        if (isset($list[0]) && is_array($list[0])) {
             $result = count($list[0]) <= 2;
+        }
 
         return $result;
     }
@@ -2179,17 +2375,21 @@ abstract class OrderDiscountBase
     private static function deleteRowsByIndex($tableName, $indexField, array $ids)
     {
         $tableName = (string)$tableName;
-        if ($tableName === '')
+        if ($tableName === '') {
             return;
+        }
         $indexField = (string)$indexField;
-        if ($indexField === '')
+        if ($indexField === '') {
             return;
+        }
 
-        if (empty($ids))
+        if (empty($ids)) {
             return;
+        }
         Main\Type\Collection::normalizeArrayValuesByInt($ids, true);
-        if (empty($ids))
+        if (empty($ids)) {
             return;
+        }
 
         $conn = Main\Application::getConnection();
         $helper = $conn->getSqlHelper();

@@ -11,8 +11,9 @@ class CSaleTfpdf extends tFPDF
 
     public function SetBackground($image, $bgHeight = 0, $bgWidth = 0, $style = 'none')
     {
-        if (!in_array($style, array('none', 'tile', 'stretch')))
+        if (!in_array($style, array('none', 'tile', 'stretch'))) {
             $style = 'none';
+        }
 
         if ($image && $bgHeight && $bgWidth) {
             $this->background = array(
@@ -54,8 +55,10 @@ class CSaleTfpdf extends tFPDF
                 case 'stretch':
                     $this->Image(
                         $this->background['image'],
-                        0, 0,
-                        $this->GetPageWidth(), $this->GetPageHeight()
+                        0,
+                        0,
+                        $this->GetPageWidth(),
+                        $this->GetPageHeight()
                     );
                     break;
             }
@@ -78,8 +81,9 @@ class CSaleTfpdf extends tFPDF
         $name = preg_replace('/[\x00-\x1F\x22\x25\x2A\x3A\x3C\x3E\x3F\x7C\x7F-\xFF]+/', '', $name);
         $name = str_replace('\\', '/', $name);
 
-        if (in_array($dest, array('I', 'D')))
+        if (in_array($dest, array('I', 'D'))) {
             $name = basename($name);
+        }
 
         return parent::Output($name, $dest, $utfName);
     }
@@ -87,11 +91,13 @@ class CSaleTfpdf extends tFPDF
     function _parsebmp($file)
     {
         // Extract info from a BMP file (via PNG conversion)
-        if (!function_exists('imagepng'))
+        if (!function_exists('imagepng')) {
             $this->Error('GD extension is required for BMP support');
+        }
         $im = CFile::ImageCreateFromBMP($file);
-        if (!$im)
+        if (!$im) {
             $this->Error('Missing or incorrect image file: ' . $file);
+        }
         imageinterlace($im, 0);
         $f = @fopen('php://temp', 'rb+');
         if ($f) {
@@ -107,10 +113,12 @@ class CSaleTfpdf extends tFPDF
         } else {
             // Use temporary file
             $tmp = tempnam('.', 'gif');
-            if (!$tmp)
+            if (!$tmp) {
                 $this->Error('Unable to create a temporary file');
-            if (!imagepng($im, $tmp))
+            }
+            if (!imagepng($im, $tmp)) {
                 $this->Error('Error while saving to temporary file');
+            }
             imagedestroy($im);
             $info = $this->_parsepng($tmp);
             unlink($tmp);
@@ -124,10 +132,11 @@ class CSaleTfpdf extends tFPDF
         $arRowsWidth = array();
         $arRowsContentWidth = array();
 
-        if ($margin === null || $margin < 0)
+        if ($margin === null || $margin < 0) {
             $margin = 5;
-        else
+        } else {
             $margin = (int)$margin;
+        }
 
         // last columns always digital
         end($cols);
@@ -172,13 +181,15 @@ class CSaleTfpdf extends tFPDF
 
             $noDigitWidth = array_sum($arRowsWidth) - $digitWidth;
             if ($noDigitWidth - $requiredWidth > $eps) {
-                if (!in_array($lastColumn, $digitColumns))
+                if (!in_array($lastColumn, $digitColumns)) {
                     $digitColumns[] = $lastColumn;
+                }
 
                 $digitWidth = 0;
                 foreach ($digitColumns as $columnId) {
-                    if (!isset($cols[$columnId]))
+                    if (!isset($cols[$columnId])) {
                         continue;
+                    }
 
                     $max = $this->GetStringWidth($this->getMaximumWord($cols[$columnId]['NAME']) . " ");
                     foreach ($cells as $i => $cell) {
@@ -196,12 +207,15 @@ class CSaleTfpdf extends tFPDF
             }
         }
 
-        $additionalWidth = $requiredWidth / (count($arRowsWidth) - 1);
+        $additionalWidth = $requiredWidth / count($digitColumns);
         reset($cols);
         $firstColumnKey = key($cols);
         $digitWidth = 0;
+        $onlyDigit = true;
         foreach ($arRowsWidth as $columnId => $rowWidth) {
-            if ($columnId == $firstColumnKey) {
+            if ($columnId === $firstColumnKey
+                && $cols[$columnId]['IS_DIGIT']
+            ) {
                 $digitWidth += $arRowsWidth[$columnId];
                 continue;
             }
@@ -217,13 +231,18 @@ class CSaleTfpdf extends tFPDF
 
             if ($cols[$columnId]['IS_DIGIT'] === true) {
                 $digitWidth += $arRowsWidth[$columnId];
+            } else {
+                $onlyDigit = false;
             }
         }
 
         $requiredWidth = $docWidth - $digitWidth;
         if ($requiredWidth > 0) {
             foreach ($arRowsWidth as $columnId => $rowWidth) {
-                if ($cols[$columnId]['IS_DIGIT'] !== true) {
+                if ($onlyDigit) {
+                    $arRowsWidth[$columnId] += $requiredWidth / count($digitColumns);
+                    $arRowsContentWidth[$columnId] += $requiredWidth / count($digitColumns);
+                } elseif ($cols[$columnId]['IS_DIGIT'] !== true) {
                     $ratio = $requiredWidth / $noDigitWidth;
                     $arRowsWidth[$columnId] *= $ratio;
                     $arRowsContentWidth[$columnId] *= $ratio;
@@ -263,11 +282,15 @@ class CSalePdf
 
     public static function isPdfAvailable()
     {
-        if (!extension_loaded("mbstring"))
+        if (!extension_loaded("mbstring")) {
             return false;
+        }
 
-        if (!file_exists(FPDF_FONTPATH . '/pt_serif-regular.ttf') || !file_exists(FPDF_FONTPATH . '/pt_serif-bold.ttf'))
+        if (!file_exists(FPDF_FONTPATH . '/pt_serif-regular.ttf') || !file_exists(
+                FPDF_FONTPATH . '/pt_serif-bold.ttf'
+            )) {
             return false;
+        }
 
         return true;
     }
@@ -294,8 +317,9 @@ class CSalePdf
                 $string = mb_substr($string, 0, $p, 'UTF-8');
             }
 
-            if ($p == 0)
+            if ($p == 0) {
                 $p++;
+            }
 
             return array(
                 $string,
@@ -352,10 +376,11 @@ class CSalePdf
         if (intval($file) > 0) {
             $arFile = CFile::MakeFileArray($file);
 
-            if ($arFile)
+            if ($arFile) {
                 $path = $arFile['tmp_name'];
+            }
         } elseif ($file) {
-            $path = strpos($file, $_SERVER['DOCUMENT_ROOT']) === 0
+            $path = mb_strpos($file, $_SERVER['DOCUMENT_ROOT']) === 0
                 ? $file
                 : $_SERVER['DOCUMENT_ROOT'] . $file;
         }

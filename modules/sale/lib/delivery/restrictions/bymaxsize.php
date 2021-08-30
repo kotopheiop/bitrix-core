@@ -34,24 +34,29 @@ class ByMaxSize extends Restrictions\Base
      */
     public static function check($dimensionsList, array $restrictionParams, $deliveryId = 0)
     {
-        if (empty($restrictionParams))
+        if (empty($restrictionParams)) {
             return true;
+        }
 
         $maxSize = intval($restrictionParams["MAX_SIZE"]);
 
-        if ($maxSize <= 0)
+        if ($maxSize <= 0) {
             return true;
+        }
 
         foreach ($dimensionsList as $dimensions) {
-            if (!is_array($dimensions))
+            if (!is_array($dimensions)) {
                 continue;
+            }
 
             foreach ($dimensions as $dimension) {
-                if (intval($dimension) <= 0)
+                if (intval($dimension) <= 0) {
                     continue;
+                }
 
-                if (intval($dimension) > $maxSize)
+                if (intval($dimension) > $maxSize) {
                     return false;
+                }
             }
         }
 
@@ -66,13 +71,15 @@ class ByMaxSize extends Restrictions\Base
             foreach ($entity->getShipmentItemCollection() as $shipmentItem) {
                 $basketItem = $shipmentItem->getBasketItem();
 
-                if (!$basketItem)
+                if (!$basketItem) {
                     continue;
+                }
 
                 $dimensions = $basketItem->getField("DIMENSIONS");
 
-                if (is_string($dimensions))
-                    $dimensions = unserialize($dimensions);
+                if (is_string($dimensions)) {
+                    $dimensions = unserialize($dimensions, ['allowed_classes' => false]);
+                }
 
                 $result[] = $dimensions;
             }

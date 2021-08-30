@@ -11,9 +11,9 @@ namespace Bitrix\Fileman\Block;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\SiteTable;
 use Bitrix\Main\Mail\EventMessageCompiler;
-use \Bitrix\Main\Web\DOM\StyleInliner;
+use Bitrix\Main\SiteTable;
+use Bitrix\Main\Web\DOM\StyleInliner;
 
 Loc::loadMessages(__FILE__);
 
@@ -38,11 +38,27 @@ class EditorMail
         $editor = new Editor($params);
 
         $editor->componentsAsBlocks = array(
-            'bitrix:sale.basket.basket.small.mail' => array('NAME' => Loc::getMessage('BLOCK_EDITOR_BLOCK_COMPONENT_BASKET_NAME')),
-            'bitrix:sale.personal.order.detail.mail' => array('NAME' => Loc::getMessage('BLOCK_EDITOR_BLOCK_COMPONENT_ORDER_NAME')),
+            'bitrix:sale.basket.basket.small.mail' => array(
+                'NAME' => Loc::getMessage(
+                    'BLOCK_EDITOR_BLOCK_COMPONENT_BASKET_NAME'
+                )
+            ),
+            'bitrix:sale.personal.order.detail.mail' => array(
+                'NAME' => Loc::getMessage(
+                    'BLOCK_EDITOR_BLOCK_COMPONENT_ORDER_NAME'
+                )
+            ),
             'bitrix:catalog.top.mail' => array('NAME' => Loc::getMessage('BLOCK_EDITOR_BLOCK_COMPONENT_CATALOG_NAME')),
-            'bitrix:sale.discount.coupon.mail' => array('NAME' => Loc::getMessage('BLOCK_EDITOR_BLOCK_COMPONENT_COUPON_NAME')),
-            'bitrix:bigdata.recommends.mail' => array('NAME' => Loc::getMessage('BLOCK_EDITOR_BLOCK_COMPONENT_BIGDATA_NAME')),
+            'bitrix:sale.discount.coupon.mail' => array(
+                'NAME' => Loc::getMessage(
+                    'BLOCK_EDITOR_BLOCK_COMPONENT_COUPON_NAME'
+                )
+            ),
+            'bitrix:bigdata.recommends.mail' => array(
+                'NAME' => Loc::getMessage(
+                    'BLOCK_EDITOR_BLOCK_COMPONENT_BIGDATA_NAME'
+                )
+            ),
         );
 
         $editor->setBlockList(self::getBlockList());
@@ -59,10 +75,13 @@ class EditorMail
     public static function show(array $params)
     {
         $result = self::createInstance($params)->show();
-        \CJSCore::RegisterExt('block_editor_mail', array(
-            'js' => array('/bitrix/js/fileman/block_editor/mail_handlers.js'),
-            'rel' => array('core', 'block_editor')
-        ));
+        \CJSCore::RegisterExt(
+            'block_editor_mail',
+            array(
+                'js' => array('/bitrix/js/fileman/block_editor/mail_handlers.js'),
+                'rel' => array('core', 'block_editor')
+            )
+        );
         \CJSCore::Init(array('block_editor_mail'));
 
         return $result;
@@ -81,16 +100,18 @@ class EditorMail
     {
         if (!$canEditPhp && $canUseLpa) {
             $html = \LPA::Process($html, $previousHtml);
-        } else if (!$canEditPhp) {
-            $phpList = \PHPParser::ParseFile($html);
-            foreach ($phpList as $php) {
-                $surrogate = '<span class="bxhtmled-surrogate" title="">'
-                    . htmlspecialcharsbx(Loc::getMessage('BLOCK_EDITOR_BLOCK_DYNAMIC_CONTENT'))
-                    . '</span>';
-                $html = str_replace($php[2], $surrogate, $html);
-            }
+        } else {
+            if (!$canEditPhp) {
+                $phpList = \PHPParser::ParseFile($html);
+                foreach ($phpList as $php) {
+                    $surrogate = '<span class="bxhtmled-surrogate" title="">'
+                        . htmlspecialcharsbx(Loc::getMessage('BLOCK_EDITOR_BLOCK_DYNAMIC_CONTENT'))
+                        . '</span>';
+                    $html = str_replace($php[2], $surrogate, $html);
+                }
 
-            $html = str_replace(['<?', '?>'], ['< ?', '? >'], $html);
+                $html = str_replace(['<?', '?>'], ['< ?', '? >'], $html);
+            }
         }
 
         return $html;
@@ -124,15 +145,19 @@ class EditorMail
             $fields['NAME'] = htmlspecialcharsbx($GLOBALS["USER"]->GetFirstName() ?: $GLOBALS["USER"]->GetLastName());
         }
 
-        $siteDb = SiteTable::getList(array(
-            'select' => array('LID', 'SERVER_NAME', 'SITE_NAME', 'CULTURE_CHARSET' => 'CULTURE.CHARSET'),
-            'filter' => array('LID' => $site)
-        ));
-        if (!$siteRow = $siteDb->fetch()) {
-            $siteDb = SiteTable::getList(array(
+        $siteDb = SiteTable::getList(
+            array(
                 'select' => array('LID', 'SERVER_NAME', 'SITE_NAME', 'CULTURE_CHARSET' => 'CULTURE.CHARSET'),
-                'filter' => array('DEF' => true)
-            ));
+                'filter' => array('LID' => $site)
+            )
+        );
+        if (!$siteRow = $siteDb->fetch()) {
+            $siteDb = SiteTable::getList(
+                array(
+                    'select' => array('LID', 'SERVER_NAME', 'SITE_NAME', 'CULTURE_CHARSET' => 'CULTURE.CHARSET'),
+                    'filter' => array('DEF' => true)
+                )
+            );
             $siteRow = $siteDb->fetch();
         }
 
@@ -186,7 +211,8 @@ class EditorMail
     {
         return array(
             array(
-                'CODE' => 'text', 'NAME' => Loc::getMessage('BLOCK_EDITOR_BLOCK_TEXT_NAME'),
+                'CODE' => 'text',
+                'NAME' => Loc::getMessage('BLOCK_EDITOR_BLOCK_TEXT_NAME'),
                 'DESC' => Loc::getMessage('BLOCK_EDITOR_BLOCK_TEXT_DESC'),
                 'HTML' => '
 				<table border="0" cellpadding="0" cellspacing="0" width="100%" class="bxBlockText">
@@ -209,7 +235,8 @@ class EditorMail
 			'
             ),
             array(
-                'CODE' => 'boxedtext', 'NAME' => Loc::getMessage('BLOCK_EDITOR_BLOCK_BOXEDTEXT_NAME'),
+                'CODE' => 'boxedtext',
+                'NAME' => Loc::getMessage('BLOCK_EDITOR_BLOCK_BOXEDTEXT_NAME'),
                 'DESC' => Loc::getMessage('BLOCK_EDITOR_BLOCK_BOXEDTEXT_DESC'),
                 'HTML' => '
 				<table border="0" cellpadding="0" cellspacing="0" width="100%" class="bxBlockBoxedText">
@@ -240,7 +267,8 @@ class EditorMail
 			'
             ),
             array(
-                'CODE' => 'line', 'NAME' => Loc::getMessage('BLOCK_EDITOR_BLOCK_LINE_NAME'),
+                'CODE' => 'line',
+                'NAME' => Loc::getMessage('BLOCK_EDITOR_BLOCK_LINE_NAME'),
                 'DESC' => Loc::getMessage('BLOCK_EDITOR_BLOCK_LINE_DESC'),
                 'HTML' => '
 				<table border="0" cellpadding="0" cellspacing="0" width="100%" class="bxBlockLine">
@@ -263,7 +291,8 @@ class EditorMail
 			'
             ),
             array(
-                'CODE' => 'image', 'NAME' => Loc::getMessage('BLOCK_EDITOR_BLOCK_IMAGE_NAME'),
+                'CODE' => 'image',
+                'NAME' => Loc::getMessage('BLOCK_EDITOR_BLOCK_IMAGE_NAME'),
                 'DESC' => Loc::getMessage('BLOCK_EDITOR_BLOCK_IMAGE_DESC'),
                 'HTML' => '
 				<table border="0" cellpadding="0" cellspacing="0" width="100%" class="bxBlockImage">
@@ -288,7 +317,8 @@ class EditorMail
 			'
             ),
             array(
-                'CODE' => 'imagegroup', 'NAME' => Loc::getMessage('BLOCK_EDITOR_BLOCK_IMAGEGROUP_NAME'),
+                'CODE' => 'imagegroup',
+                'NAME' => Loc::getMessage('BLOCK_EDITOR_BLOCK_IMAGEGROUP_NAME'),
                 'DESC' => Loc::getMessage('BLOCK_EDITOR_BLOCK_IMAGEGROUP_DESC'),
                 'HTML' => '
 				<table border="0" cellpadding="0" cellspacing="0" width="100%" class="bxBlockImageGroup">
@@ -303,9 +333,7 @@ class EditorMail
 									<tbody>
 										<tr>
 											<td valign="top" class="bxBlockPadding bxBlockContentImage">
-												<a href="#">
-													<img align="left" data-bx-editor-def-image="1" src="/bitrix/images/fileman/block_editor/photo-default.png" class="bxImage">
-												</a>
+												<img align="left" data-bx-editor-def-image="1" src="/bitrix/images/fileman/block_editor/photo-default.png" class="bxImage">
 											</td>
 										</tr>
 									</tbody>
@@ -313,9 +341,7 @@ class EditorMail
 									<tbody>
 										<tr>
 											<td valign="top" class="bxBlockPadding bxBlockContentImage">
-												<a href="#">
-													<img align="left" data-bx-editor-def-image="1" src="/bitrix/images/fileman/block_editor/photo-default.png" class="bxImage">
-												</a>
+												<img align="left" data-bx-editor-def-image="1" src="/bitrix/images/fileman/block_editor/photo-default.png" class="bxImage">
 											</td>
 										</tr>
 									</tbody>
@@ -331,7 +357,8 @@ class EditorMail
 			'
             ),
             array(
-                'CODE' => 'boxedimage', 'NAME' => Loc::getMessage('BLOCK_EDITOR_BLOCK_BOXEDIMAGE_NAME'),
+                'CODE' => 'boxedimage',
+                'NAME' => Loc::getMessage('BLOCK_EDITOR_BLOCK_BOXEDIMAGE_NAME'),
                 'DESC' => Loc::getMessage('BLOCK_EDITOR_BLOCK_BOXEDIMAGE_DESC'),
                 'HTML' => '
 				<table border="0" cellpadding="0" cellspacing="0" width="100%" class="bxBlockBoxedImage">
@@ -369,7 +396,8 @@ class EditorMail
 			'
             ),
             array(
-                'CODE' => 'imagetext', 'NAME' => Loc::getMessage('BLOCK_EDITOR_BLOCK_IMAGETEXT_NAME'),
+                'CODE' => 'imagetext',
+                'NAME' => Loc::getMessage('BLOCK_EDITOR_BLOCK_IMAGETEXT_NAME'),
                 'DESC' => Loc::getMessage('BLOCK_EDITOR_BLOCK_IMAGETEXT_DESC'),
                 'HTML' => '
 				<table border="0" cellpadding="0" cellspacing="0" width="100%" class="bxBlockImageText">
@@ -404,7 +432,8 @@ class EditorMail
 			'
             ),
             array(
-                'CODE' => 'button', 'NAME' => Loc::getMessage('BLOCK_EDITOR_BLOCK_BUTTON_NAME'),
+                'CODE' => 'button',
+                'NAME' => Loc::getMessage('BLOCK_EDITOR_BLOCK_BUTTON_NAME'),
                 'DESC' => Loc::getMessage('BLOCK_EDITOR_BLOCK_BUTTON_DESC'),
                 'HTML' => '
 				<table border="0" cellpadding="0" cellspacing="0" width="100%" class="bxBlockButton">
@@ -434,7 +463,8 @@ class EditorMail
 			'
             ),
             array(
-                'CODE' => 'code', 'NAME' => Loc::getMessage('BLOCK_EDITOR_BLOCK_CODE_NAME'),
+                'CODE' => 'code',
+                'NAME' => Loc::getMessage('BLOCK_EDITOR_BLOCK_CODE_NAME'),
                 'DESC' => Loc::getMessage('BLOCK_EDITOR_BLOCK_CODE_DESC'),
                 'HTML' => '
 				<table border="0" cellpadding="0" cellspacing="0" width="100%" class="bxBlockCode">
@@ -448,7 +478,9 @@ class EditorMail
 				</table>'
             ),
             array(
-                'CODE' => 'footer', 'TYPE' => 'text', 'NAME' => Loc::getMessage('BLOCK_EDITOR_BLOCK_FOOTER_NAME'),
+                'CODE' => 'footer',
+                'TYPE' => 'text',
+                'NAME' => Loc::getMessage('BLOCK_EDITOR_BLOCK_FOOTER_NAME'),
                 'DESC' => Loc::getMessage('BLOCK_EDITOR_BLOCK_FOOTER_DESC'),
                 'HTML' => '
 				<table border="0" cellpadding="0" cellspacing="0" width="100%" class="bxBlockText">
@@ -459,7 +491,9 @@ class EditorMail
 						<tbody>
 							<tr>
 								<td valign="top" class="bxBlockPadding bxBlockContentText" style="text-align: center;">
-									<br><a href="#UNSUBSCRIBE_LINK#">' . Loc::getMessage('BLOCK_EDITOR_BLOCK_FOOTER_EXAMPLE') . '</a>
+									<br><a href="#UNSUBSCRIBE_LINK#">' . Loc::getMessage(
+                        'BLOCK_EDITOR_BLOCK_FOOTER_EXAMPLE'
+                    ) . '</a>
 								</td>
 							</tr>
 						</tbody>
@@ -471,7 +505,8 @@ class EditorMail
 			'
             ),
             array(
-                'CODE' => 'social', 'NAME' => Loc::getMessage('BLOCK_EDITOR_BLOCK_SOCIAL_NAME'),
+                'CODE' => 'social',
+                'NAME' => Loc::getMessage('BLOCK_EDITOR_BLOCK_SOCIAL_NAME'),
                 'DESC' => Loc::getMessage('BLOCK_EDITOR_BLOCK_SOCIAL_DESC'),
                 'HTML' => '
 				<table border="0" cellpadding="0" cellspacing="0" width="100%" class="bxBlockSocial">

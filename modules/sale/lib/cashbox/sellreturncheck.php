@@ -50,7 +50,6 @@ class SellReturnCheck extends SellCheck
                 $result['PAYMENTS'][$i]['IS_CASH'] = 'N';
                 $result['PAYMENTS'][$i]['TYPE'] = static::PAYMENT_TYPE_CASHLESS;
             }
-
         }
 
         return $result;

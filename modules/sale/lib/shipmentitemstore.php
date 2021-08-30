@@ -84,7 +84,6 @@ class ShipmentItemStore
         }
 
         return $shipmentItemStore;
-
     }
 
     /**
@@ -122,10 +121,12 @@ class ShipmentItemStore
         $oldEntityValues = $this->fields->getOriginalValues();
 
         /** @var Main\Event $event */
-        $event = new Main\Event('sale', "OnBeforeSaleShipmentItemStoreEntityDeleted", [
+        $event = new Main\Event(
+            'sale', "OnBeforeSaleShipmentItemStoreEntityDeleted", [
             'ENTITY' => $this,
             'VALUES' => $oldEntityValues,
-        ]);
+        ]
+        );
         $event->send();
 
         if ($event->getResults()) {
@@ -158,10 +159,12 @@ class ShipmentItemStore
         }
 
         /** @var Main\Event $event */
-        $event = new Main\Event('sale', "OnSaleShipmentItemStoreEntityDeleted", array(
+        $event = new Main\Event(
+            'sale', "OnSaleShipmentItemStoreEntityDeleted", array(
             'ENTITY' => $this,
             'VALUES' => $this->fields->getOriginalValues(),
-        ));
+        )
+        );
         $event->send();
 
         if ($event->getResults()) {
@@ -247,10 +250,12 @@ class ShipmentItemStore
 
         $items = [];
 
-        $itemDataList = static::getList([
-            'filter' => ['=ORDER_DELIVERY_BASKET_ID' => $id],
-            'order' => ['DATE_CREATE' => 'ASC', 'ID' => 'ASC']
-        ]);
+        $itemDataList = static::getList(
+            [
+                'filter' => ['=ORDER_DELIVERY_BASKET_ID' => $id],
+                'order' => ['DATE_CREATE' => 'ASC', 'ID' => 'ASC']
+            ]
+        );
 
         while ($itemData = $itemDataList->fetch()) {
             $items[] = static::createShipmentItemStoreObject($itemData);
@@ -309,7 +314,10 @@ class ShipmentItemStore
         $shipmentCollection = $itemCollection->getShipment()->getCollection();
 
         if (!$shipmentCollection->getOrder()->isSaveRunning()) {
-            trigger_error("Incorrect call to the save process. Use method save() on \Bitrix\Sale\Order entity", E_USER_WARNING);
+            trigger_error(
+                "Incorrect call to the save process. Use method save() on \Bitrix\Sale\Order entity",
+                E_USER_WARNING
+            );
         }
     }
 
@@ -382,10 +390,12 @@ class ShipmentItemStore
     protected function callEventOnBeforeItemStoreEntitySaved()
     {
         /** @var Main\Entity\Event $event */
-        $event = new Main\Event('sale', 'OnBeforeSaleShipmentItemStoreEntitySaved', [
+        $event = new Main\Event(
+            'sale', 'OnBeforeSaleShipmentItemStoreEntitySaved', [
             'ENTITY' => $this,
             'VALUES' => $this->fields->getOriginalValues()
-        ]);
+        ]
+        );
 
         $event->send();
     }
@@ -396,10 +406,12 @@ class ShipmentItemStore
     protected function callEventOnItemStoreEntitySaved()
     {
         /** @var Main\Event $event */
-        $event = new Main\Event('sale', 'OnSaleShipmentItemStoreEntitySaved', [
+        $event = new Main\Event(
+            'sale', 'OnSaleShipmentItemStoreEntitySaved', [
             'ENTITY' => $this,
             'VALUES' => $this->fields->getOriginalValues(),
-        ]);
+        ]
+        );
 
         $event->send();
     }

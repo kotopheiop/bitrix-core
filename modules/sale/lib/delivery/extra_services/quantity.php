@@ -10,14 +10,15 @@ class Quantity extends Base
 {
     public function __construct($id, array $structure, $currency, $value = null, array $additionalParams = array())
     {
-        if (isset($structure["PARAMS"]["PRICE"]))
+        if (isset($structure["PARAMS"]["PRICE"])) {
             $structure["PARAMS"]["ONCHANGE"] = $this->createJSOnchange($id, $structure["PARAMS"]["PRICE"]);
+        }
 
         parent::__construct($id, $structure, $currency, $value);
         $this->params["TYPE"] = "STRING";
     }
 
-    public function getClassTitle()
+    public static function getClassTitle()
     {
         return Loc::getMessage("DELIVERY_EXTRA_SERVICE_QUANTITY_TITLE");
     }
@@ -39,12 +40,15 @@ class Quantity extends Base
 
     public static function getAdminParamsControl($name, array $params = array(), $currency = "")
     {
-        if (!empty($params["PARAMS"]["PRICE"]))
+        if (!empty($params["PARAMS"]["PRICE"])) {
             $price = roundEx(floatval($params["PARAMS"]["PRICE"]), SALE_VALUE_PRECISION);
-        else
+        } else {
             $price = 0;
+        }
 
-        return '<input type="text" name="' . $name . '[PARAMS][PRICE]" value="' . $price . '">' . (strlen($currency) > 0 ? " (" . htmlspecialcharsbx($currency) . ")" : "");
+        return '<input type="text" name="' . $name . '[PARAMS][PRICE]" value="' . $price . '">' . ($currency <> '' ? " (" . htmlspecialcharsbx(
+                    $currency
+                ) . ")" : "");
     }
 
     public function setOperatingCurrency($currency)

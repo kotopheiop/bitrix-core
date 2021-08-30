@@ -15,11 +15,13 @@ use \Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
-if (!\Bitrix\Main\Loader::includeModule("scale"))
+if (!\Bitrix\Main\Loader::includeModule("scale")) {
     ShowError(Loc::getMessage("SCALE_GRAPH_MODULE_NOT_INSTALLED"));
+}
 
-if (!$USER->IsAdmin())
+if (!$USER->IsAdmin()) {
     $APPLICATION->AuthForm(Loc::getMessage("SCALE_GRAPH_ACCESS_DENIED"));
+}
 
 $APPLICATION->SetTitle(Loc::getMessage("SCALE_GRAPH_TITLE"));
 
@@ -33,8 +35,12 @@ if (\Bitrix\Scale\Helper::checkBxEnvVersion()) {
     if (\Bitrix\Scale\Monitoring::isEnabled()) {
         $serversList = \Bitrix\Scale\ServersData::getList();
         reset($serversList);
-        $serverHostname = isset($_REQUEST["SERVER_HOSTNAME"]) ? htmlspecialcharsbx($_REQUEST["SERVER_HOSTNAME"]) : key($serversList);
-        $monitoringCategoryId = isset($_REQUEST["GRAPH_CATEGORY"]) ? htmlspecialcharsbx($_REQUEST["GRAPH_CATEGORY"]) : "SYSTEM";
+        $serverHostname = isset($_REQUEST["SERVER_HOSTNAME"]) ? htmlspecialcharsbx($_REQUEST["SERVER_HOSTNAME"]) : key(
+            $serversList
+        );
+        $monitoringCategoryId = isset($_REQUEST["GRAPH_CATEGORY"]) ? htmlspecialcharsbx(
+            $_REQUEST["GRAPH_CATEGORY"]
+        ) : "SYSTEM";
         $period = isset($_REQUEST["PERIOD"]) ? htmlspecialcharsbx($_REQUEST["PERIOD"]) : "day";
         $graphCategories = array();
 
@@ -54,8 +60,9 @@ if (\Bitrix\Scale\Helper::checkBxEnvVersion()) {
             $graphCategories[$hostname] = \Bitrix\Scale\ServersData::getGraphCategories($hostname);
 
             foreach ($graphCategories[$hostname] as $key => $category) {
-                if (!isset($graphs[$category]))
+                if (!isset($graphs[$category])) {
                     continue;
+                }
 
                 $graphCategories[$hostname][$category] = isset($graphs[$category]["NAME"]) ? $graphs[$category]["NAME"] : $category;
                 unset($graphCategories[$hostname][$key]);
@@ -71,7 +78,11 @@ if (\Bitrix\Scale\Helper::checkBxEnvVersion()) {
                 <td width="0%" nowrap>
                     <select id="SERVER_HOSTNAME" name="SERVER_HOSTNAME" onchange="changeGraphCategories();">
                         <? foreach ($serversList as $hostName => $data):?>
-                            <option value="<?= htmlspecialcharsbx($hostName) ?>"<?= ($hostName == $serverHostname ? " selected" : "") ?>><?= htmlspecialcharsbx($hostName) ?></option>
+                            <option value="<?= htmlspecialcharsbx(
+                                $hostName
+                            ) ?>"<?= ($hostName == $serverHostname ? " selected" : "") ?>><?= htmlspecialcharsbx(
+                                    $hostName
+                                ) ?></option>
                         <?endforeach; ?>
                     </select>
                 </td>
@@ -82,7 +93,11 @@ if (\Bitrix\Scale\Helper::checkBxEnvVersion()) {
                 <td width="0%" nowrap>
                     <select id="GRAPH_CATEGORY" name="GRAPH_CATEGORY">
                         <? foreach ($graphCategories[$serverHostname] as $categoryId => $category):?>
-                            <option value="<?= htmlspecialcharsbx($categoryId) ?>"<?= ($categoryId == $monitoringCategoryId ? " selected" : "") ?>><?= htmlspecialcharsbx($category) ?></option>
+                            <option value="<?= htmlspecialcharsbx(
+                                $categoryId
+                            ) ?>"<?= ($categoryId == $monitoringCategoryId ? " selected" : "") ?>><?= htmlspecialcharsbx(
+                                    $category
+                                ) ?></option>
                         <?endforeach; ?>
                     </select>
                 </td>
@@ -92,10 +107,18 @@ if (\Bitrix\Scale\Helper::checkBxEnvVersion()) {
                 </td>
                 <td width="0%" nowrap>
                     <select id="PERIOD" name="PERIOD">
-                        <option value="day"<?= ($period == "day" ? " selected" : "") ?>><?= Loc::getMessage("SCALE_GRAPH_PERIOD_DAY") ?></option>
-                        <option value="week"<?= ($period == "week" ? " selected" : "") ?>><?= Loc::getMessage("SCALE_GRAPH_PERIOD_WEEK") ?></option>
-                        <option value="month"<?= ($period == "month" ? " selected" : "") ?>><?= Loc::getMessage("SCALE_GRAPH_PERIOD_MONTH") ?></option>
-                        <option value="year"<?= ($period == "year" ? " selected" : "") ?>><?= Loc::getMessage("SCALE_GRAPH_PERIOD_YEAR") ?></option>
+                        <option value="day"<?= ($period == "day" ? " selected" : "") ?>><?= Loc::getMessage(
+                                "SCALE_GRAPH_PERIOD_DAY"
+                            ) ?></option>
+                        <option value="week"<?= ($period == "week" ? " selected" : "") ?>><?= Loc::getMessage(
+                                "SCALE_GRAPH_PERIOD_WEEK"
+                            ) ?></option>
+                        <option value="month"<?= ($period == "month" ? " selected" : "") ?>><?= Loc::getMessage(
+                                "SCALE_GRAPH_PERIOD_MONTH"
+                            ) ?></option>
+                        <option value="year"<?= ($period == "year" ? " selected" : "") ?>><?= Loc::getMessage(
+                                "SCALE_GRAPH_PERIOD_YEAR"
+                            ) ?></option>
                     </select>
                 </td>
             </tr>
@@ -114,11 +137,13 @@ if (\Bitrix\Scale\Helper::checkBxEnvVersion()) {
             <? if (\Bitrix\Scale\Monitoring::isDatabaseCreated($serverHostname)):?>
                 <div class="bx-scale-graph">
                     <div class="bx-scale-graph-category"><?= $graphs[$monitoringCategoryId]["NAME"] ?></div>
-                    <? if (isset($graphs[$monitoringCategoryId]["ITEMS"]) && is_array($graphs[$monitoringCategoryId]["ITEMS"])): ?>
+                    <? if (isset($graphs[$monitoringCategoryId]["ITEMS"]) && is_array(
+                            $graphs[$monitoringCategoryId]["ITEMS"]
+                        )): ?>
                         <? foreach ($graphs[$monitoringCategoryId]["ITEMS"] as $param): ?>
-                            <div><img class="adm-scale-graph-img"
-                                      src="scale_image.php?SERVER=<?= htmlspecialcharsbx($serverHostname) ?>&PARAM=<?= $param ?>&PERIOD=<?= $period ?>">
-                            </div>
+                            <div><img class="adm-scale-graph-img" src="scale_image.php?SERVER=<?= htmlspecialcharsbx(
+                                    $serverHostname
+                                ) ?>&PARAM=<?= $param ?>&PERIOD=<?= $period ?>"></div>
                         <?endforeach; ?>
                     <?endif; ?>
                 </div>

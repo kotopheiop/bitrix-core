@@ -1,22 +1,30 @@
-<?
+<?php
+
 IncludeModuleLangFile(__FILE__);
 
 class CFormValidatorTextLen
 {
-    function GetDescription()
+    public static function GetDescription()
     {
         return array(
-            "NAME" => "text_len", // unique validator string ID
-            "DESCRIPTION" => GetMessage('FORM_VALIDATOR_VAL_TEXT_LEN_DESCRIPTION'), // validator description
-            "TYPES" => array("text", "textarea", "password", "email", "url"), //  list of types validator can be applied.
-            "SETTINGS" => array("CFormValidatorTextLen", "GetSettings"), // method returning array of validator settings, optional
-            "CONVERT_TO_DB" => array("CFormValidatorTextLen", "ToDB"), // method, processing validator settings to string to put to db, optional
-            "CONVERT_FROM_DB" => array("CFormValidatorTextLen", "FromDB"), // method, processing validator settings from string from db, optional
-            "HANDLER" => array("CFormValidatorTextLen", "DoValidate") // main validation method
+            "NAME" => "text_len",
+            // unique validator string ID
+            "DESCRIPTION" => GetMessage('FORM_VALIDATOR_VAL_TEXT_LEN_DESCRIPTION'),
+            // validator description
+            "TYPES" => array("text", "textarea", "password", "email", "url"),
+            //  list of types validator can be applied.
+            "SETTINGS" => array("CFormValidatorTextLen", "GetSettings"),
+            // method returning array of validator settings, optional
+            "CONVERT_TO_DB" => array("CFormValidatorTextLen", "ToDB"),
+            // method, processing validator settings to string to put to db, optional
+            "CONVERT_FROM_DB" => array("CFormValidatorTextLen", "FromDB"),
+            // method, processing validator settings from string from db, optional
+            "HANDLER" => array("CFormValidatorTextLen", "DoValidate")
+            // main validation method
         );
     }
 
-    function GetSettings()
+    public static function GetSettings()
     {
         return array(
             "LENGTH_FROM" => array(
@@ -33,7 +41,7 @@ class CFormValidatorTextLen
         );
     }
 
-    function ToDB($arParams)
+    public static function ToDB($arParams)
     {
         $arParams["LENGTH_FROM"] = intval($arParams["LENGTH_FROM"]);
         $arParams["LENGTH_TO"] = intval($arParams["LENGTH_TO"]);
@@ -47,24 +55,24 @@ class CFormValidatorTextLen
         return serialize($arParams);
     }
 
-    function FromDB($strParams)
+    public static function FromDB($strParams)
     {
-        return unserialize($strParams);
+        return unserialize($strParams, ['allowed_classes' => false]);
     }
 
-    function DoValidate($arParams, $arQuestion, $arAnswers, $arValues)
+    public static function DoValidate($arParams, $arQuestion, $arAnswers, $arValues)
     {
         global $APPLICATION;
 
         foreach ($arValues as $value) {
             // check minimum length
-            if (strlen($value) < $arParams["LENGTH_FROM"]) {
+            if (mb_strlen($value) < $arParams["LENGTH_FROM"]) {
                 $APPLICATION->ThrowException(GetMessage("FORM_VALIDATOR_VAL_TEXT_LEN_ERROR_LESS"));
                 return false;
             }
 
             // check maximum length
-            if (strlen($value) > $arParams["LENGTH_TO"]) {
+            if (mb_strlen($value) > $arParams["LENGTH_TO"]) {
                 $APPLICATION->ThrowException(GetMessage("FORM_VALIDATOR_VAL_TEXT_LEN_ERROR_MORE"));
                 return false;
             }
@@ -75,4 +83,3 @@ class CFormValidatorTextLen
 }
 
 AddEventHandler("form", "onFormValidatorBuildList", array("CFormValidatorTextLen", "GetDescription"));
-?>

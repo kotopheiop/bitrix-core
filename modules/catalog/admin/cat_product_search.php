@@ -1,8 +1,10 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
-if (!$USER->CanDoOperation('catalog_read') && !$USER->CanDoOperation('catalog_view'))
+if (!$USER->CanDoOperation('catalog_read') && !$USER->CanDoOperation('catalog_view')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/catalog/include.php");
 
@@ -63,19 +65,28 @@ if (!$bBadBlock) {
         "SHOW_NEW" => "Y"
     );
 
-    if (intval($filter_section) < 0 || strlen($filter_section) <= 0)
+    if (intval($filter_section) < 0 || $filter_section == '') {
         unset($arFilter["SECTION_ID"]);
-    elseif ($filter_subsections == "Y") {
-        if ($arFilter["SECTION_ID"] == 0)
+    } elseif ($filter_subsections == "Y") {
+        if ($arFilter["SECTION_ID"] == 0) {
             unset($arFilter["SECTION_ID"]);
-        else
+        } else {
             $arFilter["INCLUDE_SUBSECTIONS"] = "Y";
+        }
     }
 
-    if (!empty(${"filter_id_start"})) $arFilter[">=ID"] = ${"filter_id_start"};
-    if (!empty(${"filter_id_end"})) $arFilter["<=ID"] = ${"filter_id_end"};
-    if (!empty(${"filter_timestamp_from"})) $arFilter["DATE_MODIFY_FROM"] = ${"filter_timestamp_from"};
-    if (!empty(${"filter_timestamp_to"})) $arFilter["DATE_MODIFY_TO"] = ${"filter_timestamp_to"};
+    if (!empty(${"filter_id_start"})) {
+        $arFilter[">=ID"] = ${"filter_id_start"};
+    }
+    if (!empty(${"filter_id_end"})) {
+        $arFilter["<=ID"] = ${"filter_id_end"};
+    }
+    if (!empty(${"filter_timestamp_from"})) {
+        $arFilter["DATE_MODIFY_FROM"] = ${"filter_timestamp_from"};
+    }
+    if (!empty(${"filter_timestamp_to"})) {
+        $arFilter["DATE_MODIFY_TO"] = ${"filter_timestamp_to"};
+    }
 
     $dbResultList = CIBlockElement::GetList(
         array($by => $order),
@@ -109,7 +120,14 @@ if (!$bBadBlock) {
         $row->AddField("NAME", $f_NAME);
 
         $URL = CIBlock::ReplaceDetailUrl($arItems["DETAIL_PAGE_URL"], $arItems, true);
-        $row->AddField("ACT", "<a href=\"javascript:void(0)\" onClick=\"SelEl(" . $arItems["ID"] . ", '" . htmlspecialcharsbx(str_replace("'", "\'", str_replace("\\", "\\\\", $arItems["NAME"]))) . "', '" . htmlspecialcharsbx(str_replace("'", "\'", str_replace("\\", "\\\\", $URL))) . "')\">" . GetMessage("SPS_SELECT") . "</a>");
+        $row->AddField(
+            "ACT",
+            "<a href=\"javascript:void(0)\" onClick=\"SelEl(" . $arItems["ID"] . ", '" . htmlspecialcharsbx(
+                str_replace("'", "\'", str_replace("\\", "\\\\", $arItems["NAME"]))
+            ) . "', '" . htmlspecialcharsbx(
+                str_replace("'", "\'", str_replace("\\", "\\\\", $URL))
+            ) . "')\">" . GetMessage("SPS_SELECT") . "</a>"
+        );
     }
 
     $lAdmin->AddFooter(
@@ -145,17 +163,17 @@ $alt_name = preg_replace("/[^a-z0-9_\\[\\]:]/i", "", $_REQUEST['alt_name']);
             el = eval("window.opener.document.<?= $form_name ?>.<?= $field_name ?>");
             if (el)
                 el.value = id;
-            <?if (strlen($field_name_name) > 0):?>
+            <?if ($field_name_name <> ''):?>
             el = eval("window.opener.document.<?= $form_name ?>.<?= $field_name_name ?>");
             if (el)
                 el.value = name;
             <?endif;?>
-            <?if (strlen($field_name_url) > 0):?>
+            <?if ($field_name_url <> ''):?>
             el = eval("window.opener.document.<?= $form_name ?>.<?= $field_name_url ?>");
             if (el)
                 el.value = url;
             <?endif;?>
-            <?if (strlen($alt_name) > 0):?>
+            <?if ($alt_name <> ''):?>
             el = window.opener.document.getElementById("<?= $alt_name ?>");
             if (el)
                 el.innerHTML = name;
@@ -222,7 +240,13 @@ $alt_name = preg_replace("/[^a-z0-9_\\[\\]:]/i", "", $_REQUEST['alt_name']);
 
         <tr>
             <td nowrap><?= GetMessage("SPS_TIMESTAMP") ?>:</td>
-            <td nowrap><? echo CalendarPeriod("filter_timestamp_from", htmlspecialcharsex($filter_timestamp_from), "filter_timestamp_to", htmlspecialcharsex($filter_timestamp_to), "form1") ?></td>
+            <td nowrap><? echo CalendarPeriod(
+                    "filter_timestamp_from",
+                    htmlspecialcharsex($filter_timestamp_from),
+                    "filter_timestamp_to",
+                    htmlspecialcharsex($filter_timestamp_to),
+                    "form1"
+                ) ?></td>
         </tr>
 
         <?
@@ -233,17 +257,24 @@ $alt_name = preg_replace("/[^a-z0-9_\\[\\]:]/i", "", $_REQUEST['alt_name']);
                 <td nowrap>
                     <select name="filter_section">
                         <option value="">(<?= GetMessage("SPS_ANY") ?>)</option>
-                        <option value="0"<? if ($filter_section == "0") echo " selected" ?>><?= GetMessage("SPS_TOP_LEVEL") ?></option>
+                        <option value="0"<? if ($filter_section == "0") echo " selected" ?>><?= GetMessage(
+                                "SPS_TOP_LEVEL"
+                            ) ?></option>
                         <?
                         $bsections = CIBlockSection::GetTreeList(array("IBLOCK_ID" => $IBLOCK_ID));
                         while ($bsections->ExtractFields("s_")):
                             ?>
-                            <option value="<? echo $s_ID ?>"<? if ($s_ID == $filter_section) echo " selected" ?>><? echo str_repeat("&nbsp;.&nbsp;", $s_DEPTH_LEVEL) ?><? echo $s_NAME ?></option><?
+                            <option value="<? echo $s_ID ?>"<? if ($s_ID == $filter_section) echo " selected" ?>><? echo str_repeat(
+                            "&nbsp;.&nbsp;",
+                            $s_DEPTH_LEVEL
+                        ) ?><? echo $s_NAME ?></option><?
                         endwhile;
                         ?>
                     </select><br>
                     <input type="checkbox" name="filter_subsections"
-                           value="Y"<? if ($filter_subsections == "Y") echo " checked" ?>> <?= GetMessage("SPS_INCLUDING_SUBS") ?>
+                           value="Y"<? if ($filter_subsections == "Y") echo " checked" ?>> <?= GetMessage(
+                        "SPS_INCLUDING_SUBS"
+                    ) ?>
                 </td>
             </tr>
         <?
@@ -255,8 +286,12 @@ $alt_name = preg_replace("/[^a-z0-9_\\[\\]:]/i", "", $_REQUEST['alt_name']);
             <td nowrap>
                 <select name="filter_active">
                     <option value=""><?= htmlspecialcharsex("(" . GetMessage("SPS_ANY") . ")") ?></option>
-                    <option value="Y"<? if ($filter_active == "Y") echo " selected" ?>><?= htmlspecialcharsex(GetMessage("SPS_YES")) ?></option>
-                    <option value="N"<? if ($filter_active == "N") echo " selected" ?>><?= htmlspecialcharsex(GetMessage("SPS_NO")) ?></option>
+                    <option value="Y"<? if ($filter_active == "Y") echo " selected" ?>><?= htmlspecialcharsex(
+                            GetMessage("SPS_YES")
+                        ) ?></option>
+                    <option value="N"<? if ($filter_active == "N") echo " selected" ?>><?= htmlspecialcharsex(
+                            GetMessage("SPS_NO")
+                        ) ?></option>
                 </select>
             </td>
         </tr>

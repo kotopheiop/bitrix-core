@@ -1,4 +1,6 @@
-<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+}
 IncludeModuleLangFile(__FILE__);
 
 class CBPTemplates_BusinessTrips
@@ -143,8 +145,9 @@ class CBPTemplates_BusinessTrips
         );
 
         $ar = GetCountryArray();
-        for ($i = 0, $cnt = count($ar["reference"]); $i < $cnt; $i++)
+        for ($i = 0, $cnt = count($ar["reference"]); $i < $cnt; $i++) {
             $arBPTemplateParameters['COUNTRY']['Options'][$ar["reference"][$i]] = $ar["reference"][$i];
+        }
 
         return $arBPTemplateParameters;
     }
@@ -157,7 +160,11 @@ class CBPTemplates_BusinessTrips
                 'Name' => 'Template',
                 'Properties' => array(
                     'Title' => GetMessage("BPT_BT_SWA"),
-                    'Permission' => array("read" => array('Variable', 'ParameterOpRead'), "create" => array('Variable', 'ParameterOpCreate'), "admin" => array('Variable', 'ParameterOpAdmin'))
+                    'Permission' => array(
+                        "read" => array('Variable', 'ParameterOpRead'),
+                        "create" => array('Variable', 'ParameterOpCreate'),
+                        "admin" => array('Variable', 'ParameterOpAdmin')
+                    )
                 ),
                 'Children' => array(
                     array(
@@ -455,8 +462,9 @@ class CBPTemplates_BusinessTrips
         );
 
         $ar = GetCountryArray();
-        for ($i = 0, $cnt = count($ar["reference"]); $i < $cnt; $i++)
+        for ($i = 0, $cnt = count($ar["reference"]); $i < $cnt; $i++) {
             $arDocumentFields[0]['options'] .= (($i > 0) ? "\n" : "") . $ar["reference"][$i];
+        }
 
         return $arDocumentFields;
     }

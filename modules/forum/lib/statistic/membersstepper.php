@@ -10,7 +10,7 @@ Loc::loadMessages(__FILE__);
 class MembersStepper extends \Bitrix\Main\Update\Stepper
 {
     protected static $moduleId = "forum";
-    private static $offset = 50;
+    private static $offset = 100;
 
     public static function getTitle()
     {
@@ -24,12 +24,14 @@ class MembersStepper extends \Bitrix\Main\Update\Stepper
     {
         $return = self::FINISH_EXECUTION;
 
-        $dbRes = UserTable::getList([
-            "select" => ["ID", "USER_ID"],
-            "filter" => (array_key_exists("last_id", $option) ? ["<ID" => $option["last_id"]] : []),
-            "limit" => self::$offset + 1,
-            "order" => ["ID" => "DESC"]
-        ]);
+        $dbRes = UserTable::getList(
+            [
+                "select" => ["ID", "USER_ID"],
+                "filter" => (array_key_exists("last_id", $option) ? ["<ID" => $option["last_id"]] : []),
+                "limit" => self::$offset + 1,
+                "order" => ["ID" => "DESC"]
+            ]
+        );
         if ($r = $dbRes->fetch()) {
             $count = 0;
             if (!array_key_exists("max_id", $option)) {

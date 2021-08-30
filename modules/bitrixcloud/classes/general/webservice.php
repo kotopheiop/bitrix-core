@@ -1,4 +1,5 @@
 <?php
+
 IncludeModuleLangFile(__FILE__);
 
 abstract class CBitrixCloudWebService
@@ -29,36 +30,55 @@ abstract class CBitrixCloudWebService
         /* @var CMain $APPLICATION */
         global $APPLICATION;
 
-        $url = $this->getActionURL(array(
-            "action" => $action,
-            "debug" => ($this->debug ? "y" : "n"),
-        ));
+        $url = $this->getActionURL(
+            array(
+                "action" => $action,
+                "debug" => ($this->debug ? "y" : "n"),
+            )
+        );
 
         $this->server = new CHTTP;
         $this->server->follow_redirect = true;
-        if ($this->timeout > 0)
+        if ($this->timeout > 0) {
             $this->server->http_timeout = $this->timeout;
+        }
 
         $strXML = $this->server->Get($url);
         if ($strXML === false) {
             $e = $APPLICATION->GetException();
-            if (is_object($e))
+            if (is_object($e)) {
                 throw new CBitrixCloudException($e->GetString(), "");
-            else
-                throw new CBitrixCloudException(GetMessage("BCL_CDN_WS_SERVER", array(
-                    "#STATUS#" => "-1",
-                )), "");
+            } else {
+                throw new CBitrixCloudException(
+                    GetMessage(
+                        "BCL_CDN_WS_SERVER",
+                        array(
+                            "#STATUS#" => "-1",
+                        )
+                    ), ""
+                );
+            }
         }
         if ($this->server->status != 200) {
-            throw new CBitrixCloudException(GetMessage("BCL_CDN_WS_SERVER", array(
-                "#STATUS#" => (string)$this->server->status,
-            )), "");
+            throw new CBitrixCloudException(
+                GetMessage(
+                    "BCL_CDN_WS_SERVER",
+                    array(
+                        "#STATUS#" => (string)$this->server->status,
+                    )
+                ), ""
+            );
         }
         $obXML = new CDataXML;
         if (!$obXML->LoadString($strXML)) {
-            throw new CBitrixCloudException(GetMessage("BCL_CDN_WS_XML_PARSE", array(
-                "#CODE#" => "1",
-            )), "");
+            throw new CBitrixCloudException(
+                GetMessage(
+                    "BCL_CDN_WS_XML_PARSE",
+                    array(
+                        "#CODE#" => "1",
+                    )
+                ), ""
+            );
         }
 
         $node = $obXML->SelectNodes("/error/code");
@@ -79,15 +99,22 @@ abstract class CBitrixCloudWebService
 
             $debug_content = "";
             $node = $obXML->SelectNodes("/error/debug");
-            if (is_object($node))
+            if (is_object($node)) {
                 $debug_content = $node->textContent();
+            }
 
-            if (HasMessage($message_id))
+            if (HasMessage($message_id)) {
                 throw new CBitrixCloudException(GetMessage($message_id), $error_code, $debug_content);
-            else
-                throw new CBitrixCloudException(GetMessage("BCL_CDN_WS_SERVER", array(
-                    "#STATUS#" => $error_code,
-                )), $error_code, $debug_content);
+            } else {
+                throw new CBitrixCloudException(
+                    GetMessage(
+                        "BCL_CDN_WS_SERVER",
+                        array(
+                            "#STATUS#" => $error_code,
+                        )
+                    ), $error_code, $debug_content
+                );
+            }
         }
         return $obXML;
     }
@@ -128,10 +155,11 @@ abstract class CBitrixCloudWebService
      */
     public function getServerStatus()
     {
-        if (is_object($this->server))
+        if (is_object($this->server)) {
             return $this->server->status;
-        else
+        } else {
             return null;
+        }
     }
 
     /**
@@ -143,9 +171,10 @@ abstract class CBitrixCloudWebService
      */
     public function getServerResult()
     {
-        if (is_object($this->server))
+        if (is_object($this->server)) {
             return $this->server->result;
-        else
+        } else {
             return null;
+        }
     }
 }

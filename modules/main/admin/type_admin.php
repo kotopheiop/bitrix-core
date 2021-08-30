@@ -20,8 +20,9 @@ $error = false;
  * @global CUser $USER
  * @global CMain $APPLICATION
  */
-if (!$USER->CanDoOperation('edit_other_settings') && !$USER->CanDoOperation('view_other_settings'))
+if (!$USER->CanDoOperation('edit_other_settings') && !$USER->CanDoOperation('view_other_settings')) {
     $APPLICATION->AuthForm(Loc::getMessage("ACCESS_DENIED"));
+}
 
 $isAdmin = $USER->CanDoOperation('edit_other_settings');
 
@@ -44,8 +45,8 @@ $arFilterFields = Array(
     "find_event_type",
 );
 $lAdmin->InitFilter($arFilterFields);
-if ($find <> '' && in_array(strtoupper($find_type), array('EVENT_NAME', 'NAME', 'DESCRIPTION'))) {
-    $arFilter["=%" . strtoupper($find_type)] = '%' . $find . '%';
+if ($find <> '' && in_array(mb_strtoupper($find_type), array('EVENT_NAME', 'NAME', 'DESCRIPTION'))) {
+    $arFilter["=%" . mb_strtoupper($find_type)] = '%' . $find . '%';
 }
 if ($find_type_id <> '') {
     $arFilter["ID"] = $find_type_id;
@@ -60,19 +61,21 @@ if ($find_event_type <> '') {
 if (($arID = $lAdmin->GroupAction()) && $isAdmin && check_bitrix_sessid()) {
     if ($_REQUEST['action_target'] == 'selected') {
         $rsData = CEventType::GetListEx(array($by => $order), $arFilter, array("type" => "none"));
-        while ($arRes = $rsData->Fetch())
+        while ($arRes = $rsData->Fetch()) {
             $arID[] = $arRes['EVENT_NAME'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
         switch ($_REQUEST['action']) {
             case "delete":
             case "clean":
                 $DB->StartTransaction();
                 $ID = array("EVENT_NAME" => $ID);
-                $db_res = CEventMessage::GetList($by, $order, $ID);
+                $db_res = CEventMessage::GetList('', '', $ID);
                 if ($db_res && ($res = $db_res->Fetch())) {
                     do {
                         if (!CEventMessage::Delete($res["ID"])) {
@@ -85,14 +88,15 @@ if (($arID = $lAdmin->GroupAction()) && $isAdmin && check_bitrix_sessid()) {
                 if ($error || !CEventType::Delete($ID)) {
                     $DB->Rollback();
                     $lAdmin->AddGroupError(Loc::getMessage("DELETE_ERROR"), $ID);
-                } else
+                } else {
                     $DB->Commit();
+                }
                 break;
         }
     }
 }
 $arLID = array();
-$db_res = CLanguage::GetList($by_ = "sort", $order_ = "asc");
+$db_res = CLanguage::GetList();
 if ($db_res && $res = $db_res->GetNext()) {
     do {
         $arLID[$res["LID"]] = $res["LID"];
@@ -100,18 +104,27 @@ if ($db_res && $res = $db_res->GetNext()) {
 }
 
 
-$lAdmin->AddHeaders(array(
+$lAdmin->AddHeaders(
+    array(
         array("id" => "ID", "content" => "ID", "default" => true),
         array("id" => "LID", "content" => Loc::getMessage("LANG"), "default" => true),
-        array("id" => "EVENT_NAME", "content" => Loc::getMessage("EVENT_TYPE"), "sort" => "event_name", "default" => true),
+        array(
+            "id" => "EVENT_NAME",
+            "content" => Loc::getMessage("EVENT_TYPE"),
+            "sort" => "event_name",
+            "default" => true
+        ),
         array("id" => "NAME", "content" => Loc::getMessage("EVENT_NAME"), "default" => true),
         array("id" => "EVENT_TYPE", "content" => Loc::getMessage("event_type_admin_type"), "default" => false),
         array("id" => "DESCRIPTION", "content" => Loc::getMessage("EVENT_DESCRIPTION"), "default" => false),
-        array("id" => "TEMPLATES", "content" => Loc::getMessage("EVENT_TEMPLATES"), "default" => false))
+        array("id" => "TEMPLATES", "content" => Loc::getMessage("EVENT_TEMPLATES"), "default" => false)
+    )
 );
 
 $resultMessageByTypeList = array();
-$resultMessageByTypeDb = \Bitrix\Main\Mail\Internal\EventMessageTable::getList(array('select' => array('ID', 'EVENT_NAME')));
+$resultMessageByTypeDb = \Bitrix\Main\Mail\Internal\EventMessageTable::getList(
+    array('select' => array('ID', 'EVENT_NAME'))
+);
 while ($messageByType = $resultMessageByTypeDb->fetch()) {
     $resultMessageByTypeList[$messageByType['EVENT_NAME']][] = $messageByType['ID'];
 }
@@ -128,11 +141,13 @@ if (isset($arFilter['MESSAGE_ID'])) {
     $arFilter['MESSAGE.ID'] = $arFilter['MESSAGE_ID'];
     unset($arFilter['MESSAGE_ID']);
 }
-$resultDb = \Bitrix\Main\Mail\Internal\EventTypeTable::getList(array(
-    'filter' => $arFilter,
-    'runtime' => $runtimeList,
-    'order' => array('EVENT_NAME' => (strtoupper($order) == 'DESC' ? 'DESC' : 'ASC'))
-));
+$resultDb = \Bitrix\Main\Mail\Internal\EventTypeTable::getList(
+    array(
+        'filter' => $arFilter,
+        'runtime' => $runtimeList,
+        'order' => array('EVENT_NAME' => (mb_strtoupper($order) == 'DESC' ? 'DESC' : 'ASC'))
+    )
+);
 $resultTypeList = $resultDb->fetchAll();
 foreach ($resultTypeList as $type) {
     $key = $type['EVENT_NAME'];
@@ -191,7 +206,12 @@ foreach ($resultList as $resultItem) {
 
     $arr = $resultItem['ID'];
     $f_ID = htmlspecialcharsEx($resultItem['EVENT_NAME']);
-    $row =& $lAdmin->AddRow($f_ID, $resultItem, "type_edit.php?EVENT_NAME=" . $f_ID, Loc::getMessage("type_admin_edit_title1"));
+    $row =& $lAdmin->AddRow(
+        $f_ID,
+        $resultItem,
+        "type_edit.php?EVENT_NAME=" . $f_ID,
+        Loc::getMessage("type_admin_edit_title1")
+    );
     $row->AddViewField("ID", implode("<br />", $arr));
     $row->AddViewField("LID", implode("<br />", array_intersect($arLID, $resultItem['LID'])));
     $row->AddViewField("EVENT_NAME", "<a href=\"type_edit.php?EVENT_NAME=" . $f_ID . "\">" . $f_ID . "</a>");
@@ -202,22 +222,37 @@ foreach ($resultList as $resultItem) {
     if (is_array($resultItem['TEMPLATES']) && !empty($resultItem['TEMPLATES'])) {
         $templates = array();
         foreach ($resultItem['TEMPLATES'] as $k) {
-            $templates[$k] = "<a href=\"" . BX_ROOT . "/admin/message_edit.php?ID=" . intVal($k) . "&lang=" . LANGUAGE_ID . "\">" . intVal($k) . "</a>";
+            $templates[$k] = "<a href=\"" . BX_ROOT . "/admin/message_edit.php?ID=" . intval(
+                    $k
+                ) . "&lang=" . LANGUAGE_ID . "\">" . intval($k) . "</a>";
         }
     }
     $row->AddViewField("TEMPLATES", implode("<br />", $templates));
 
     $arActions = Array();
-    $arActions[] = array("ICON" => "edit", "TEXT" => Loc::getMessage("MAIN_ADMIN_MENU_EDIT"), "ACTION" => $lAdmin->ActionRedirect("type_edit.php?EVENT_NAME=" . $f_ID));
+    $arActions[] = array(
+        "ICON" => "edit",
+        "TEXT" => Loc::getMessage("MAIN_ADMIN_MENU_EDIT"),
+        "ACTION" => $lAdmin->ActionRedirect("type_edit.php?EVENT_NAME=" . $f_ID)
+    );
     if ($isAdmin) {
-        $arActions[] = array("ICON" => "delete", "TEXT" => Loc::getMessage("MAIN_ADMIN_MENU_DELETE"), "ACTION" => "if(confirm('" . Loc::getMessage('CONFIRM_DEL_ALL_MESSAGE') . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete"));
+        $arActions[] = array(
+            "ICON" => "delete",
+            "TEXT" => Loc::getMessage("MAIN_ADMIN_MENU_DELETE"),
+            "ACTION" => "if(confirm('" . Loc::getMessage('CONFIRM_DEL_ALL_MESSAGE') . "')) " . $lAdmin->ActionDoGroup(
+                    $f_ID,
+                    "delete"
+                )
+        );
     }
     $row->AddActions($arActions);
 }
 
-$lAdmin->AddGroupActionTable(Array(
-    "delete" => true,
-));
+$lAdmin->AddGroupActionTable(
+    Array(
+        "delete" => true,
+    )
+);
 
 $aContext = array(
     array(
@@ -233,11 +268,13 @@ $APPLICATION->SetTitle(Loc::getMessage("TITLE1"));
 require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admin_after.php");
 ?>
     <form name="find_form" method="GET" action="<?= $APPLICATION->GetCurPage() ?>?"><?
-$oFilter = new CAdminFilter($sTableID . "_filter", array(
+$oFilter = new CAdminFilter(
+    $sTableID . "_filter", array(
     Loc::getMessage('F_ID') . " " . Loc::getMessage('F_TYPE1'),
     Loc::getMessage('F_ID') . " " . Loc::getMessage('F_TMPL'),
     Loc::getMessage("event_type_admin_type_flt"),
-));
+)
+);
 $oFilter->Begin();
 ?>
     <tr>
@@ -246,9 +283,15 @@ $oFilter->Begin();
         <input type="text" size="25" name="find" value="<?= htmlspecialcharsbx($find) ?>"
                title="<?= Loc::getMessage("F_SEARCH_TITLE") ?>">
         <select name="find_type">
-            <option value="event_name"<? if ($find_type == "event_name") echo " selected" ?>><?= Loc::getMessage('F_EVENT_NAME1') ?></option>
-            <option value="name"<? if ($find_type == "subject") echo " selected" ?>><?= Loc::getMessage('F_NAME') ?></option>
-            <option value="description"<? if ($find_type == "from") echo " selected" ?>><?= Loc::getMessage('F_DESCRIPTION') ?></option>
+            <option value="event_name"<? if ($find_type == "event_name") echo " selected" ?>><?= Loc::getMessage(
+                    'F_EVENT_NAME1'
+                ) ?></option>
+            <option value="name"<? if ($find_type == "subject") echo " selected" ?>><?= Loc::getMessage(
+                    'F_NAME'
+                ) ?></option>
+            <option value="description"<? if ($find_type == "from") echo " selected" ?>><?= Loc::getMessage(
+                    'F_DESCRIPTION'
+                ) ?></option>
         </select>
     </td>
     </tr>
@@ -264,8 +307,12 @@ $oFilter->Begin();
         <td><?= Loc::getMessage("event_type_admin_type_flt") ?>:</td>
         <td><select name="find_event_type">
                 <option value=""><? echo Loc::getMessage("event_type_admin_type_flt_all") ?></option>
-                <option value="<?= EventTypeTable::TYPE_EMAIL ?>"<? if ($find_event_type == EventTypeTable::TYPE_EMAIL) echo " selected" ?>><? echo Loc::getMessage("event_type_admin_type_flt_email") ?></option>
-                <option value="<?= EventTypeTable::TYPE_SMS ?>"<? if ($find_event_type == EventTypeTable::TYPE_SMS) echo " selected" ?>><? echo Loc::getMessage("event_type_admin_type_flt_sms") ?></option>
+                <option value="<?= EventTypeTable::TYPE_EMAIL ?>"<? if ($find_event_type == EventTypeTable::TYPE_EMAIL) echo " selected" ?>><? echo Loc::getMessage(
+                        "event_type_admin_type_flt_email"
+                    ) ?></option>
+                <option value="<?= EventTypeTable::TYPE_SMS ?>"<? if ($find_event_type == EventTypeTable::TYPE_SMS) echo " selected" ?>><? echo Loc::getMessage(
+                        "event_type_admin_type_flt_sms"
+                    ) ?></option>
             </select></td>
     </tr>
 <?

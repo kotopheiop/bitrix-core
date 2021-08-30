@@ -49,6 +49,8 @@ class HttpRequest extends Request
      */
     protected $headers;
 
+    protected $httpHost;
+
     /**
      * Creates new HttpRequest object
      *
@@ -88,29 +90,36 @@ class HttpRequest extends Request
      */
     public function addFilter(Type\IRequestFilter $filter)
     {
-        $filteredValues = $filter->filter(array(
-            "get" => $this->queryString->values,
-            "post" => $this->postData->values,
-            "files" => $this->files->values,
-            "headers" => $this->headers,
-            "cookie" => $this->cookiesRaw->values
-        ));
+        $filteredValues = $filter->filter(
+            array(
+                "get" => $this->queryString->values,
+                "post" => $this->postData->values,
+                "files" => $this->files->values,
+                "headers" => $this->headers,
+                "cookie" => $this->cookiesRaw->values
+            )
+        );
 
-        if (isset($filteredValues['get']))
+        if (isset($filteredValues['get'])) {
             $this->queryString->setValuesNoDemand($filteredValues['get']);
-        if (isset($filteredValues['post']))
+        }
+        if (isset($filteredValues['post'])) {
             $this->postData->setValuesNoDemand($filteredValues['post']);
-        if (isset($filteredValues['files']))
+        }
+        if (isset($filteredValues['files'])) {
             $this->files->setValuesNoDemand($filteredValues['files']);
-        if (isset($filteredValues['headers']) && ($this->headers instanceof HttpHeaders))
+        }
+        if (isset($filteredValues['headers']) && ($this->headers instanceof HttpHeaders)) {
             $this->headers = $filteredValues['headers'];
+        }
         if (isset($filteredValues['cookie'])) {
             $this->cookiesRaw->setValuesNoDemand($filteredValues['cookie']);
             $this->cookies = new Type\ParameterDictionary($this->prepareCookie($filteredValues['cookie']));
         }
 
-        if (isset($filteredValues['get']) || isset($filteredValues['post']))
+        if (isset($filteredValues['get']) || isset($filteredValues['post'])) {
             $this->values = array_merge($this->queryString->values, $this->postData->values);
+        }
     }
 
     /**
@@ -331,16 +340,16 @@ class HttpRequest extends Request
      */
     public function getHttpHost()
     {
-        static $host = null;
-
-        if ($host === null) {
+        if ($this->httpHost === null) {
             //scheme can be anything, it's used only for parsing
             $url = new Web\Uri("http://" . $this->server->getHttpHost());
             $host = $url->getHost();
             $host = trim($host, "\t\r\n\0 .");
+
+            $this->httpHost = $host;
         }
 
-        return $host;
+        return $this->httpHost;
     }
 
     public function isHttps()
@@ -350,7 +359,7 @@ class HttpRequest extends Request
         }
 
         $https = $this->server->get("HTTPS");
-        if ($https <> '' && strtolower($https) <> "off") {
+        if ($https <> '' && mb_strtolower($https) <> "off") {
             //From the PHP manual: Set to a non-empty value if the script was queried through the HTTPS protocol.
             //Note that when using ISAPI with IIS, the value will be off if the request was not made through the HTTPS protocol.
             return true;
@@ -376,18 +385,31 @@ class HttpRequest extends Request
     protected function prepareCookie(array $cookies)
     {
         static $cookiePrefix = null;
-        if ($cookiePrefix === null)
+        if ($cookiePrefix === null) {
             $cookiePrefix = Config\Option::get("main", "cookie_name", "BITRIX_SM") . "_";
-
-        $cookiePrefixLength = strlen($cookiePrefix);
-
-        $cookiesNew = array();
-        foreach ($cookies as $name => $value) {
-            if (strpos($name, $cookiePrefix) !== 0)
-                continue;
-
-            $cookiesNew[substr($name, $cookiePrefixLength)] = $value;
         }
+
+        $cookiePrefixLength = mb_strlen($cookiePrefix);
+
+        $cookiesCrypter = new Web\CookiesCrypter();
+        $cookiesNew = $cookiesToDecrypt = [];
+        foreach ($cookies as $name => $value) {
+            if (mb_strpos($name, $cookiePrefix) !== 0) {
+                continue;
+            }
+
+            $name = mb_substr($name, $cookiePrefixLength);
+            if (is_string($value) && $cookiesCrypter->shouldDecrypt($name, $value)) {
+                $cookiesToDecrypt[$name] = $value;
+            } else {
+                $cookiesNew[$name] = $value;
+            }
+        }
+
+        foreach ($cookiesToDecrypt as $name => $value) {
+            $cookiesNew[$name] = $cookiesCrypter->decrypt($name, $value, $cookiesNew);
+        }
+
         return $cookiesNew;
     }
 
@@ -395,9 +417,11 @@ class HttpRequest extends Request
     {
         $headers = [];
         foreach ($server as $name => $value) {
-            if (substr($name, 0, 5) === 'HTTP_') {
-                $headerName = substr($name, 5);
+            if (mb_strpos($name, 'HTTP_') === 0) {
+                $headerName = mb_substr($name, 5);
                 $headers[$headerName] = $value;
+            } elseif (in_array($name, ['CONTENT_TYPE', 'CONTENT_LENGTH'], true)) {
+                $headers[$name] = $value;
             }
         }
 
@@ -408,7 +432,7 @@ class HttpRequest extends Request
     {
         $normalizedHeaders = [];
         foreach ($headers as $name => $value) {
-            $headerName = strtolower(str_replace('_', '-', $name));
+            $headerName = mb_strtolower(str_replace('_', '-', $name));
             $normalizedHeaders[$headerName] = $value;
         }
 
@@ -417,7 +441,7 @@ class HttpRequest extends Request
 
     protected static function normalize($path)
     {
-        if (substr($path, -1, 1) === "/") {
+        if (mb_substr($path, -1, 1) === "/") {
             $path .= "index.php";
         }
 
@@ -434,7 +458,7 @@ class HttpRequest extends Request
     public function getScriptFile()
     {
         $scriptName = $this->getScriptName();
-        if ($scriptName == "/bitrix/urlrewrite.php" || $scriptName == "/404.php" || $scriptName == "/bitrix/virtual_file_system.php") {
+        if ($scriptName == "/bitrix/routing_index.php" || $scriptName == "/bitrix/urlrewrite.php" || $scriptName == "/404.php" || $scriptName == "/bitrix/virtual_file_system.php") {
             if (($v = $this->server->get("REAL_FILE_PATH")) != null) {
                 $scriptName = $v;
             }

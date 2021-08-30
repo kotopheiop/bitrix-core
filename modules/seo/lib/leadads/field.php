@@ -40,7 +40,6 @@ class Field
 
     public function getMapItem(array $map = [])
     {
-
     }
 
     /**

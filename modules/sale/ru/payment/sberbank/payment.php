@@ -1,5 +1,6 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();?><!DOCTYPE HTML PUBLIC
-        "-//W3C//DTD HTML 4.0 Transitional//EN">
+<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+}?><!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
 <html>
 <head>
     <title>���������</title>
@@ -37,12 +38,15 @@
     <!-- ���������� ������ (������) -->
     <TR>
         <TD vAlign=middle width=270 height="53"><font size="-1"><STRONG>������ ������ �
-                    <?= IntVal($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["ID"]) ?>
+                    <?= intval($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["ID"]) ?>
                     ��
                     <?= htmlspecialcharsbx($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["DATE_INSERT_DATE"]) ?></STRONG>
             </font></TD>
         <TD valign="middle" align="center"><b> <font size="-1">
-                    <?= SaleFormatCurrency($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["SHOULD_PAY"], $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"]) ?>
+                    <?= SaleFormatCurrency(
+                        $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["SHOULD_PAY"],
+                        $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"]
+                    ) ?>
                 </font></b></TD>
     </TR>
     <!-- ���������� ������ (�����) -->
@@ -77,14 +81,18 @@
     <!-- ���������� ������ (������) -->
     <TR>
         <TD height=53 vAlign=middle width=270><font size="-1"><strong>������ ������ �
-                    <?= IntVal($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["ID"]) ?>
+                    <?= intval($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["ID"]) ?>
                     ��
-                    <?= htmlspecialcharsEx($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["DATE_INSERT_DATE"]) ?></strong></font>
-        </TD>
+                    <?= htmlspecialcharsEx(
+                        $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["DATE_INSERT_DATE"]
+                    ) ?></strong></font></TD>
         <TD>
             <center>
                 <font size="-1"><b> <font size="-1">
-                            <?= SaleFormatCurrency($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["SHOULD_PAY"], $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"]) ?>
+                            <?= SaleFormatCurrency(
+                                $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["SHOULD_PAY"],
+                                $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"]
+                            ) ?>
                         </font></b> </font>
             </center>
         </TD>

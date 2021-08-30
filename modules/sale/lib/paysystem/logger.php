@@ -37,10 +37,12 @@ class Logger
             return;
         }
 
-        PaySystemErrLogTable::add([
-            'DATE_INSERT' => new DateTime(),
-            'MESSAGE' => $error,
-        ]);
+        PaySystemErrLogTable::add(
+            [
+                'DATE_INSERT' => new DateTime(),
+                'MESSAGE' => $error,
+            ]
+        );
     }
 
     /**
@@ -60,10 +62,12 @@ class Logger
             return;
         }
 
-        PaySystemErrLogTable::add([
-            'DATE_INSERT' => new DateTime(),
-            'MESSAGE' => $debugInfo,
-        ]);
+        PaySystemErrLogTable::add(
+            [
+                'DATE_INSERT' => new DateTime(),
+                'MESSAGE' => $debugInfo,
+            ]
+        );
     }
 
     /**

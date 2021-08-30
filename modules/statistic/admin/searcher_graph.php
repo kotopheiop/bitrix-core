@@ -1,24 +1,30 @@
 <?php
+
 define("STOP_STATISTICS", true);
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 /** @var CMain $APPLICATION */
 $STAT_RIGHT = $APPLICATION->GetGroupRight("statistic");
-if ($STAT_RIGHT == "D") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($STAT_RIGHT == "D") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 include($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/colors.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/img.php");
 
-if (strlen($find_date1_DAYS_TO_BACK) > 0 && $find_date1_DAYS_TO_BACK != "NOT_REF")
+if ($find_date1_DAYS_TO_BACK <> '' && $find_date1_DAYS_TO_BACK != "NOT_REF") {
     $find_date1 = GetTime(time() - 86400 * intval($find_date1_DAYS_TO_BACK));
+}
 
 $width = intval($_GET["width"]);
 $max_width = COption::GetOptionInt("statistic", "GRAPH_WEIGHT");
-if ($width <= 0 || $width > $max_width)
+if ($width <= 0 || $width > $max_width) {
     $width = $max_width;
+}
 
 $height = intval($_GET["height"]);
 $max_height = COption::GetOptionInt("statistic", "GRAPH_HEIGHT");
-if ($height <= 0 || $height > $max_height)
+if ($height <= 0 || $height > $max_height) {
     $height = $max_height;
+}
 
 // create image canvas
 $ImageHandle = CreateImageHandle($width, $height);
@@ -40,8 +46,7 @@ $arF = array(
     "SUMMA" => $find_summa
 );
 $arrDays = CSearcher::GetGraphArray($arF, $arrLegend);
-reset($arrDays);
-while (list($keyD, $arD) = each($arrDays)) {
+foreach ($arrDays as $keyD => $arD) {
     $date = mktime(0, 0, 0, $arD["M"], $arD["D"], $arD["Y"]);
     $date_tmp = 0;
     $next_date = AddTime($prev_date, 1, "D");
@@ -49,8 +54,7 @@ while (list($keyD, $arD) = each($arrDays)) {
         $date_tmp = $next_date;
         while ($date_tmp < $date) {
             $arrX[] = $date_tmp;
-            reset($arrLegend);
-            while (list($keyL, $arrL) = each($arrLegend)) {
+            foreach ($arrLegend as $keyL => $arrL) {
                 $arrY_data[$keyL][] = 0;
                 $arrY[] = 0;
             }
@@ -58,8 +62,7 @@ while (list($keyD, $arD) = each($arrDays)) {
         }
     }
     $arrX[] = $date;
-    reset($arrLegend);
-    while (list($keyL, $arrL) = each($arrLegend)) {
+    foreach ($arrLegend as $keyL => $arrL) {
         $value = ($arrL["COUNTER_TYPE"] == "DETAIL") ? $arD[$keyL]["TOTAL_HITS"] : $arD["TOTAL_HITS"];
         $arrY_data[$keyL][] = $value;
         $arrY[] = $value;
@@ -87,7 +90,7 @@ DrawCoordinatGrid($arrayX, $arrayY, $width, $height, $ImageHandle);
  *******************************************************/
 
 foreach ($arrLegend as $keyL => $arrL) {
-    if (strlen($keyL) > 0) {
+    if ($keyL <> '') {
         Graf($arrX, $arrY_data[$keyL], $ImageHandle, $MinX, $MaxX, $MinY, $MaxY, $arrL["COLOR"]);
     }
 }

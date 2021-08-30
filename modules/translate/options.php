@@ -1,4 +1,5 @@
 <?php
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
@@ -34,13 +35,13 @@ $RestoreDefaults = !empty($_REQUEST['RestoreDefaults']) ? 'Y' : '';
 $hasPermissionEdit = Translate\Permission::canEdit($USER);
 
 if (
-    $_SERVER["REQUEST_METHOD"] == "GET" &&
+    $_SERVER["REQUEST_METHOD"] === "GET" &&
     $hasPermissionEdit &&
-    strlen($RestoreDefaults) > 0 &&
+    $RestoreDefaults <> '' &&
     check_bitrix_sessid()
 ) {
     \COption::RemoveOption("translate");
-    $z = \CGroup::GetList($v1 = "id", $v2 = "asc", array("ACTIVE" => "Y", "ADMIN" => "N"));
+    $z = \CGroup::GetList("id", "asc", array("ACTIVE" => "Y", "ADMIN" => "N"));
     while ($zr = $z->Fetch()) {
         $APPLICATION->DelGroupRight($module_id, array($zr["ID"]));
     }
@@ -50,12 +51,12 @@ $arAllOptions = array(
     array(
         Translate\Config::OPTION_INIT_FOLDERS,
         Loc::getMessage('TRANS_RESTRICTED_FOLDERS'),
-        Translate\Config::getDefaultPath(),
+        Translate\Config::getModuleDefault(Translate\Config::OPTION_INIT_FOLDERS),
         array('text', 50)
     ),
     array(
         Translate\Config::OPTION_BUTTON_LANG_FILES,
-        Loc::getMessage("TRANS_BUTTON_LANG_FILES"),
+        Loc::getMessage("TRANS_SHOW_BUTTON_LANG_FILES"),
         Translate\Config::getModuleDefault(Translate\Config::OPTION_BUTTON_LANG_FILES),
         array("checkbox")
     ),
@@ -87,11 +88,20 @@ $arAllOptions = array(
         Translate\Config::OPTION_EXPORT_CSV_DELIMITER,
         Loc::getMessage("TRANS_EXPORT_CSV_DELIMITER"),
         Translate\Config::getModuleDefault(Translate\Config::OPTION_EXPORT_CSV_DELIMITER),
-        array("selectbox", array(
-            'TZP' => Loc::getMessage('TRANS_EXPORT_CSV_DELIMITER_SEMICOLON'),
-            'TAB' => Loc::getMessage('TRANS_EXPORT_CSV_DELIMITER_TABULATION'),
-            'ZPT' => Loc::getMessage('TRANS_EXPORT_CSV_DELIMITER_COMMA'),
-        ))
+        array(
+            "selectbox",
+            array(
+                'TZP' => Loc::getMessage('TRANS_EXPORT_CSV_DELIMITER_SEMICOLON'),
+                'TAB' => Loc::getMessage('TRANS_EXPORT_CSV_DELIMITER_TABULATION'),
+                'ZPT' => Loc::getMessage('TRANS_EXPORT_CSV_DELIMITER_COMMA'),
+            )
+        )
+    ),
+    array(
+        Translate\Config::OPTION_EXPORT_FOLDER,
+        Loc::getMessage("TRANS_EXPORT_FOLDER"),
+        Translate\Config::getModuleDefault(Translate\Config::OPTION_EXPORT_FOLDER),
+        array('text', 50)
     ),
 );
 
@@ -115,13 +125,13 @@ $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
 if (
     $_SERVER["REQUEST_METHOD"] == "POST" &&
-    strlen($Update . $Apply . $RestoreDefaults) > 0 &&
+    $Update . $Apply . $RestoreDefaults <> '' &&
     $hasPermissionEdit &&
     check_bitrix_sessid()
 ) {
-    if (strlen($RestoreDefaults) > 0) {
+    if ($RestoreDefaults <> '') {
         \COption::RemoveOption("translate");
-        $z = \CGroup::GetList($v1 = "id", $v2 = "asc", array("ACTIVE" => "Y", "ADMIN" => "N"));
+        $z = \CGroup::GetList("id", "asc", array("ACTIVE" => "Y", "ADMIN" => "N"));
         while ($zr = $z->Fetch()) {
             $APPLICATION->DelGroupRight($module_id, array($zr["ID"]));
         }
@@ -158,14 +168,24 @@ if (
     require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/admin/group_rights.php");
     ob_end_clean();
 
-    if (strlen($_REQUEST["back_url_settings"]) > 0) {
-        if ((strlen($Apply) > 0) || (strlen($RestoreDefaults) > 0)) {
-            LocalRedirect($APPLICATION->GetCurPage() . "?mid=" . urlencode($mid) . "&lang=" . LANGUAGE_ID . "&mid_menu=1&back_url_settings=" . urlencode($_REQUEST["back_url_settings"]) . "&" . $tabControl->ActiveTabParam());
+    if ($_REQUEST["back_url_settings"] <> '') {
+        if (($Apply <> '') || ($RestoreDefaults <> '')) {
+            LocalRedirect(
+                $APPLICATION->GetCurPage() . "?mid=" . urlencode(
+                    $mid
+                ) . "&lang=" . LANGUAGE_ID . "&mid_menu=1&back_url_settings=" . urlencode(
+                    $_REQUEST["back_url_settings"]
+                ) . "&" . $tabControl->ActiveTabParam()
+            );
         } else {
             LocalRedirect($_REQUEST["back_url_settings"]);
         }
     } else {
-        LocalRedirect($APPLICATION->GetCurPage() . "?mid=" . urlencode($mid) . "&lang=" . LANGUAGE_ID . "&mid_menu=1&" . $tabControl->ActiveTabParam());
+        LocalRedirect(
+            $APPLICATION->GetCurPage() . "?mid=" . urlencode(
+                $mid
+            ) . "&lang=" . LANGUAGE_ID . "&mid_menu=1&" . $tabControl->ActiveTabParam()
+        );
     }
 }
 
@@ -173,8 +193,9 @@ if (
 
 //region Form
 ?>
-    <form method="post"
-          action="<?= $APPLICATION->GetCurPage() ?>?mid=<?= htmlspecialcharsbx($mid) ?>&amp;lang=<?= LANGUAGE_ID ?>&mid_menu=1">
+    <form method="post" action="<?= $APPLICATION->GetCurPage() ?>?mid=<?= htmlspecialcharsbx(
+        $mid
+    ) ?>&amp;lang=<?= LANGUAGE_ID ?>&mid_menu=1">
         <?
         $tabControl->Begin();
 
@@ -196,21 +217,31 @@ if (
                                                               value="<?= Loc::getMessage("MAIN_OPT_APPLY") ?>"
                                                               title="<?= Loc::getMessage("MAIN_OPT_APPLY_TITLE") ?>">
         <?
-        if (strlen($_REQUEST["back_url_settings"]) > 0):
+        if ($_REQUEST["back_url_settings"] <> ''):
             ?>
             <input <? if ($TRANS_RIGHT < Translate\Permission::WRITE) echo "disabled" ?> type="button" name="Cancel"
-                                                                                         value="<?= Loc::getMessage("MAIN_OPT_CANCEL") ?>"
-                                                                                         title="<?= Loc::getMessage("MAIN_OPT_CANCEL_TITLE") ?>"
-                                                                                         onclick="window.location='<?= htmlspecialcharsbx(CUtil::addslashes($_REQUEST["back_url_settings"])) ?>'">
+                                                                                         value="<?= Loc::getMessage(
+                                                                                             "MAIN_OPT_CANCEL"
+                                                                                         ) ?>"
+                                                                                         title="<?= Loc::getMessage(
+                                                                                             "MAIN_OPT_CANCEL_TITLE"
+                                                                                         ) ?>"
+                                                                                         onclick="window.location='<?= htmlspecialcharsbx(
+                                                                                             CUtil::addslashes(
+                                                                                                 $_REQUEST["back_url_settings"]
+                                                                                             )
+                                                                                         ) ?>'">
             <input type="hidden" name="back_url_settings"
                    value="<?= htmlspecialcharsbx($_REQUEST["back_url_settings"]) ?>">
         <?
         endif;
         ?>
         <input <?= (!$hasPermissionEdit ? "disabled" : '') ?> type="submit" name="RestoreDefaults"
-                                                              title="<?= Loc::getMessage("MAIN_HINT_RESTORE_DEFAULTS") ?>"
-                                                              onclick="return confirm('<?= AddSlashes(Loc::getMessage("MAIN_HINT_RESTORE_DEFAULTS_WARNING")) ?>')"
-                                                              value="<?= Loc::getMessage("MAIN_RESTORE_DEFAULTS") ?>">
+                                                              title="<?= Loc::getMessage(
+                                                                  "MAIN_HINT_RESTORE_DEFAULTS"
+                                                              ) ?>" onclick="return confirm('<?= AddSlashes(
+            Loc::getMessage("MAIN_HINT_RESTORE_DEFAULTS_WARNING")
+        ) ?>')" value="<?= Loc::getMessage("MAIN_RESTORE_DEFAULTS") ?>">
         <?= bitrix_sessid_post(); ?>
         <?
 

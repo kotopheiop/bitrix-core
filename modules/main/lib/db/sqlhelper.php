@@ -69,8 +69,12 @@ abstract class SqlHelper
             $quotedIdentifier = str_replace([$this->getLeftQuote(), $this->getRightQuote()], '', $identifier);
 
             // shield [[database.]tablename.]columnname
-            if (strpos($quotedIdentifier, '.') !== false) {
-                $quotedIdentifier = str_replace('.', $this->getRightQuote() . '.' . $this->getLeftQuote(), $quotedIdentifier);
+            if (mb_strpos($quotedIdentifier, '.') !== false) {
+                $quotedIdentifier = str_replace(
+                    '.',
+                    $this->getRightQuote() . '.' . $this->getLeftQuote(),
+                    $quotedIdentifier
+                );
             }
 
             // shield general borders
@@ -181,8 +185,9 @@ abstract class SqlHelper
     {
         $sql = 'SUBSTR(' . $str . ', ' . $from;
 
-        if (!is_null($length))
+        if (!is_null($length)) {
             $sql .= ', ' . $length;
+        }
 
         return $sql . ')';
     }
@@ -517,7 +522,7 @@ abstract class SqlHelper
     public function convertFromDbString($value, $length = null)
     {
         if ($length > 0) {
-            $value = substr($value, 0, $length);
+            $value = mb_substr($value, 0, $length);
         }
 
         return strval($value);

@@ -1,9 +1,11 @@
 <?
+
 /*.require_module 'bitrix_main_include_prolog_admin_before';.*/
 IncludeModuleLangFile(__FILE__);
 
-if (!$USER->CanDoOperation("clouds_config"))
+if (!$USER->CanDoOperation("clouds_config")) {
     return false;
+}
 
 $arMenu = array(
     "parent_menu" => "global_menu_settings",

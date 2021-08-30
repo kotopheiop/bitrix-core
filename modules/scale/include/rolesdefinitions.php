@@ -1,5 +1,8 @@
 <?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+}
 
 use \Bitrix\Main\Localization\Loc;
 
@@ -79,7 +82,14 @@ $rolesDefinitions = array(
 
     "SERVER" => array(
         "NAME" => "server",
-        "ACTIONS" => array("DEL_SERVER", "REBOOT", "UPDATE_BVM", "UPDATE_SYSTEM", "CHANGE_PASSWD", "CHANGE_PASSWD_BITRIX"),
+        "ACTIONS" => array(
+            "DEL_SERVER",
+            "REBOOT",
+            "UPDATE_BVM",
+            "UPDATE_SYSTEM",
+            "CHANGE_PASSWD",
+            "CHANGE_PASSWD_BITRIX"
+        ),
         "COLOR" => "invisible",
         "MONITORING_CATEGORIES" => array("AVG_LOAD", "MEMORY", "HDD", "NET", "HDDACT"),
         "GRAPH_CATEGORIES" => array("DISC", "NETWORK", "PROCESSES", "SYSTEM")

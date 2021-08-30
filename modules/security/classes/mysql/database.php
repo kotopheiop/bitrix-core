@@ -40,10 +40,16 @@ class CSecurityDB
                 || BX_SECURITY_SQL_LOG_BIN === "N"
             )
         ) {
-            CSecurityDB::Query("SET sql_log_bin = 0", "Module: security; Class: CSecurityDB; Function: Init; File: " . __FILE__ . "; Line: " . __LINE__);
+            CSecurityDB::Query(
+                "SET sql_log_bin = 0",
+                "Module: security; Class: CSecurityDB; Function: Init; File: " . __FILE__ . "; Line: " . __LINE__
+            );
         }
 
-        $rs = CSecurityDB::Query("SHOW TABLES LIKE 'b_sec_session'", "Module: security; Class: CSecurityDB; Function: Init; File: " . __FILE__ . "; Line: " . __LINE__);
+        $rs = CSecurityDB::Query(
+            "SHOW TABLES LIKE 'b_sec_session'",
+            "Module: security; Class: CSecurityDB; Function: Init; File: " . __FILE__ . "; Line: " . __LINE__
+        );
         if (!is_object($rs)) {
             return false;
         }
@@ -53,14 +59,18 @@ class CSecurityDB
             return true;
         }
 
-        if (defined("MYSQL_TABLE_TYPE") && strlen(MYSQL_TABLE_TYPE) > 0) {
-            $rs = CSecurityDB::Query("SET storage_engine = '" . MYSQL_TABLE_TYPE . "'", "Module: security; Class: CSecurityDB; Function: Init; File: " . __FILE__ . "; Line: " . __LINE__);
+        if (defined("MYSQL_TABLE_TYPE") && MYSQL_TABLE_TYPE <> '') {
+            $rs = CSecurityDB::Query(
+                "SET storage_engine = '" . MYSQL_TABLE_TYPE . "'",
+                "Module: security; Class: CSecurityDB; Function: Init; File: " . __FILE__ . "; Line: " . __LINE__
+            );
             if (!is_object($rs)) {
                 return false;
             }
         }
 
-        $rs = CSecurityDB::Query("CREATE TABLE b_sec_session
+        $rs = CSecurityDB::Query(
+            "CREATE TABLE b_sec_session
 			(
 				SESSION_ID VARCHAR(250) NOT NULL,
 				TIMESTAMP_X TIMESTAMP NOT NULL,
@@ -68,7 +78,9 @@ class CSecurityDB
 				PRIMARY KEY(SESSION_ID),
 				KEY ix_b_sec_session_time (TIMESTAMP_X)
 			)
-		", "Module: security; Class: CSecurityDB; Function: Init; File: " . __FILE__ . "; Line: " . __LINE__);
+		",
+            "Module: security; Class: CSecurityDB; Function: Init; File: " . __FILE__ . "; Line: " . __LINE__
+        );
 
         return is_object($rs);
     }
@@ -112,8 +124,9 @@ class CSecurityDB
 
     public static function QueryBind($strSql, $arBinds, $error_position)
     {
-        foreach ($arBinds as $key => $value)
+        foreach ($arBinds as $key => $value) {
             $strSql = str_replace(":" . $key, "'" . $value . "'", $strSql);
+        }
         return CSecurityDB::Query($strSql, $error_position);
     }
 
@@ -123,10 +136,11 @@ class CSecurityDB
      */
     public static function Fetch($result)
     {
-        if ($result)
+        if ($result) {
             return $result->fetch();
-        else
+        } else {
             return false;
+        }
     }
 
     public static function Lock($id, $timeout = 60)
@@ -135,18 +149,25 @@ class CSecurityDB
 
         if ($id === false) {
             if ($lock_id) {
-                $rsLock = CSecurityDB::Query("DO RELEASE_LOCK('" . $lock_id . "')", "Module: security; Class: CSecurityDB; Function: Lock; File: " . __FILE__ . "; Line: " . __LINE__);
+                $rsLock = CSecurityDB::Query(
+                    "DO RELEASE_LOCK('" . $lock_id . "')",
+                    "Module: security; Class: CSecurityDB; Function: Lock; File: " . __FILE__ . "; Line: " . __LINE__
+                );
             } else {
                 $rsLock = false;
             }
         } else {
-            $rsLock = CSecurityDB::Query("SELECT GET_LOCK('" . md5($id) . "', " . intval($timeout) . ") as L", "Module: security; Class: CSecurityDB; Function: Lock; File: " . __FILE__ . "; Line: " . __LINE__);
+            $rsLock = CSecurityDB::Query(
+                "SELECT GET_LOCK('" . md5($id) . "', " . intval($timeout) . ") as L",
+                "Module: security; Class: CSecurityDB; Function: Lock; File: " . __FILE__ . "; Line: " . __LINE__
+            );
             if ($rsLock) {
                 $arLock = CSecurityDB::Fetch($rsLock);
-                if ($arLock["L"] == "0")
+                if ($arLock["L"] == "0") {
                     return false;
-                else
+                } else {
                     $lock_id = md5($id);
+                }
             }
         }
         return is_object($rsLock);
@@ -154,13 +175,17 @@ class CSecurityDB
 
     public static function LockTable($table_name, $lock_id)
     {
-        $rsLock = CSecurityDB::Query("SELECT GET_LOCK('" . md5($lock_id) . "', 0) as L", "Module: security; Class: CSecurityDB; Function: LockTable; File: " . __FILE__ . "; Line: " . __LINE__);
+        $rsLock = CSecurityDB::Query(
+            "SELECT GET_LOCK('" . md5($lock_id) . "', 0) as L",
+            "Module: security; Class: CSecurityDB; Function: LockTable; File: " . __FILE__ . "; Line: " . __LINE__
+        );
         if ($rsLock) {
             $arLock = CSecurityDB::Fetch($rsLock);
-            if ($arLock["L"] == "0")
+            if ($arLock["L"] == "0") {
                 return false;
-            else
+            } else {
                 return array("lock_id" => $lock_id);
+            }
         } else {
             return false;
         }
@@ -169,7 +194,10 @@ class CSecurityDB
     public static function UnlockTable($table_lock)
     {
         if (is_array($table_lock)) {
-            CSecurityDB::Query("SELECT RELEASE_LOCK('" . $table_lock["lock_id"] . "')", "Module: security; Class: CSecurityDB; Function: UnlockTable; File: " . __FILE__ . "; Line: " . __LINE__);
+            CSecurityDB::Query(
+                "SELECT RELEASE_LOCK('" . $table_lock["lock_id"] . "')",
+                "Module: security; Class: CSecurityDB; Function: UnlockTable; File: " . __FILE__ . "; Line: " . __LINE__
+            );
         }
     }
 }

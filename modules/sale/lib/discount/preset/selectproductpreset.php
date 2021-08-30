@@ -22,11 +22,14 @@ abstract class SelectProductPreset extends BasePreset
             throw new SystemException('Could not include iblock module');
         }
 
-        \CJSCore::RegisterExt('select_product_preset', array(
-            'js' => '/bitrix/js/sale/admin/discountpreset/select_product_preset.js',
-            'lang' => '/bitrix/modules/sale/lang/' . LANGUAGE_ID . '/admin/js/discountpreset/select_product_preset.php',
-            'rel' => array('core'),
-        ));
+        \CJSCore::RegisterExt(
+            'select_product_preset',
+            array(
+                'js' => '/bitrix/js/sale/admin/discountpreset/select_product_preset.js',
+                'lang' => '/bitrix/modules/sale/lang/' . LANGUAGE_ID . '/admin/js/discountpreset/select_product_preset.php',
+                'rel' => array('core'),
+            )
+        );
 
         \CUtil::InitJSCore(array('select_product_preset'));
     }
@@ -45,7 +48,9 @@ abstract class SelectProductPreset extends BasePreset
 				</div>
 				<div class="adm-sl-content-container">
 					<div class="sale-discount-btn-container">
-						<a href="#" class="adm-btn adm-btn-save adm-btn-add" title="" id="sale_discount_preset_product_add">' . Loc::getMessage('SALE_BASE_PRESET_ADD_ELEMENTS') . '</a>
+						<a href="#" class="adm-btn adm-btn-save adm-btn-add" title="" id="sale_discount_preset_product_add">' . Loc::getMessage(
+                'SALE_BASE_PRESET_ADD_ELEMENTS'
+            ) . '</a>
 					</div>
 				</div>				
 				<div class="sale-discount-content-container">
@@ -89,7 +94,9 @@ abstract class SelectProductPreset extends BasePreset
 				</div>
 				<div class="adm-sl-content-container">
 					<div class="sale-discount-btn-container">
-						<a href="#" class="adm-btn adm-btn-save adm-btn-add" title="" id="sale_discount_preset_section_add">' . Loc::getMessage('SALE_BASE_PRESET_ADD_ELEMENTS') . '</a>
+						<a href="#" class="adm-btn adm-btn-save adm-btn-add" title="" id="sale_discount_preset_section_add">' . Loc::getMessage(
+                'SALE_BASE_PRESET_ADD_ELEMENTS'
+            ) . '</a>
 					</div>
 				</div>				
 				<div class="sale-discount-content-container" style="margin-top:20px;">
@@ -112,10 +119,12 @@ abstract class SelectProductPreset extends BasePreset
 
         $sectionIds = $state->get($inputName);
         if ($sectionIds) {
-            $sectionsIterator = SectionTable::getList(array(
-                'select' => array('ID', 'NAME'),
-                'filter' => array('@ID' => $sectionIds),
-            ));
+            $sectionsIterator = SectionTable::getList(
+                array(
+                    'select' => array('ID', 'NAME'),
+                    'filter' => array('@ID' => $sectionIds),
+                )
+            );
 
             while ($row = $sectionsIterator->fetch()) {
                 $currentValue[] = "{$row['NAME']} [{$row['ID']}]";
@@ -138,7 +147,9 @@ abstract class SelectProductPreset extends BasePreset
                 'WITHOUT_IBLOCK' => 'Y',
                 'FILTER' => 'Y',
                 'TYPE' => 'SECTION',
-            ), null, array('HIDE_ICONS' => 'Y')
+            ),
+            null,
+            array('HIDE_ICONS' => 'Y')
         );
         $htmlResult = ob_get_contents();
         ob_end_clean();
@@ -282,11 +293,13 @@ abstract class SelectProductPreset extends BasePreset
         }
 
         foreach ($productIds as $productId) {
-            $productData[] = $this->processAjaxActionGetProductDetails(array(
-                'productId' => $productId,
-                'quantity' => 1,
-                'siteId' => $siteId,
-            ));
+            $productData[] = $this->processAjaxActionGetProductDetails(
+                array(
+                    'productId' => $productId,
+                    'quantity' => 1,
+                    'siteId' => $siteId,
+                )
+            );
         }
 
         return $productData;

@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 $selfFolderUrl = $adminPage->getSelfFolderUrl();
@@ -6,8 +7,9 @@ $listUrl = $selfFolderUrl . "sale_tax_exempt.php?lang=" . LANGUAGE_ID;
 $listUrl = $adminSidePanelHelper->editUrlToPublicPage($listUrl);
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions < "W")
+if ($saleModulePermissions < "W") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 ClearVars("f_");
 
@@ -17,7 +19,7 @@ IncludeModuleLangFile(__FILE__);
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/prolog.php");
 
-$ID = IntVal($ID);
+$ID = intval($ID);
 $z = CGroup::GetByID($ID);
 if (!$z->ExtractFields("f_")) {
     $adminSidePanelHelper->localRedirect($listUrl);
@@ -26,7 +28,8 @@ if (!$z->ExtractFields("f_")) {
 
 $strError = "";
 $bInitVars = false;
-if ((strlen($save) > 0 || strlen($apply) > 0) && $_SERVER['REQUEST_METHOD'] == "POST" && $saleModulePermissions == "W" && check_bitrix_sessid()) {
+if (($save <> '' || $apply <> '') && $_SERVER['REQUEST_METHOD'] == "POST" && $saleModulePermissions == "W" && check_bitrix_sessid(
+    )) {
     $adminSidePanelHelper->decodeUriComponent();
 
     $arTAX = array();
@@ -36,20 +39,20 @@ if ((strlen($save) > 0 || strlen($apply) > 0) && $_SERVER['REQUEST_METHOD'] == "
     if (isset($TAX_ID) && is_array($TAX_ID)) {
         $cnt = count($TAX_ID);
         for ($i = 0; $i < $cnt; $i++) {
-            if (IntVal($TAX_ID[$i]) > 0) {
-                CSaleTax::AddExempt(array("GROUP_ID" => $ID, "TAX_ID" => IntVal($TAX_ID[$i])));
+            if (intval($TAX_ID[$i]) > 0) {
+                CSaleTax::AddExempt(array("GROUP_ID" => $ID, "TAX_ID" => intval($TAX_ID[$i])));
             }
         }
     }
 
-    if (strlen($strError) > 0) {
+    if ($strError <> '') {
         $adminSidePanelHelper->sendJsonErrorResponse($strError);
         $bInitVars = true;
     }
 
     $adminSidePanelHelper->sendSuccessResponse("base");
 
-    if (strlen($save) > 0 && strlen($strError) <= 0) {
+    if ($save <> '' && $strError == '') {
         $adminSidePanelHelper->localRedirect($listUrl);
         LocalRedirect($listUrl);
     }
@@ -89,7 +92,12 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
 
         <?
         $aTabs = array(
-            array("DIV" => "edit1", "TAB" => GetMessage("STEEN_TAB_EXMPT"), "ICON" => "sale", "TITLE" => GetMessage("STEEN_TAB_EXMPT_DESCR"))
+            array(
+                "DIV" => "edit1",
+                "TAB" => GetMessage("STEEN_TAB_EXMPT"),
+                "ICON" => "sale",
+                "TITLE" => GetMessage("STEEN_TAB_EXMPT_DESCR")
+            )
         );
 
         $tabControl = new CAdminTabControl("tabControl", $aTabs);
@@ -145,7 +153,12 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
                     }
                     ?>
                     <? while ($vars = $db_vars->Fetch()): ?>
-                        <option value="<? echo $vars["ID"] ?>"<? if (in_array(IntVal($vars["ID"]), $arTAX_ID)) echo " selected" ?>><? echo htmlspecialcharsbx($vars["NAME"] . " (" . $vars["LID"] . ")") ?></option>
+                        <option value="<? echo $vars["ID"] ?>"<? if (in_array(
+                            intval($vars["ID"]),
+                            $arTAX_ID
+                        )) echo " selected" ?>><? echo htmlspecialcharsbx(
+                                $vars["NAME"] . " (" . $vars["LID"] . ")"
+                            ) ?></option>
                     <? endwhile; ?>
                 </select>
             </td>

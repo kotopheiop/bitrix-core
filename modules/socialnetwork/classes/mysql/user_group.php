@@ -1,4 +1,5 @@
-<?
+<?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/socialnetwork/classes/general/user_group.php");
 
 class CSocNetUserToGroup extends CAllSocNetUserToGroup
@@ -6,7 +7,7 @@ class CSocNetUserToGroup extends CAllSocNetUserToGroup
     /***************************************/
     /********  DATA MODIFICATION  **********/
     /***************************************/
-    function Add($arFields)
+    public static function Add($arFields)
     {
         global $DB, $CACHE_MANAGER;
 
@@ -30,15 +31,15 @@ class CSocNetUserToGroup extends CAllSocNetUserToGroup
         \Bitrix\Socialnetwork\Util::processEqualityFieldsToUpdate($arFields1, $strUpdate);
 
         $ID = false;
-        if (strlen($arInsert[0]) > 0) {
+        if ($arInsert[0] <> '') {
             $strSql =
                 "INSERT INTO b_sonet_user2group(" . $arInsert[0] . ") " .
                 "VALUES(" . $arInsert[1] . ") 
 				ON DUPLICATE KEY UPDATE " . $strUpdate;
 
-            $DB->Query($strSql, False, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+            $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 
-            $ID = IntVal($DB->LastID());
+            $ID = intval($DB->LastID());
         }
 
         if ($ID) {
@@ -73,14 +74,15 @@ class CSocNetUserToGroup extends CAllSocNetUserToGroup
         return $ID;
     }
 
-    function Update($ID, $arFields)
+    public static function Update($ID, $arFields)
     {
         global $DB, $APPLICATION, $CACHE_MANAGER;
 
-        if (!CSocNetGroup::__ValidateID($ID))
+        if (!CSocNetGroup::__ValidateID($ID)) {
             return false;
+        }
 
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
         $arUser2GroupOld = CSocNetUserToGroup::GetByID($ID);
         if (!$arUser2GroupOld) {
@@ -90,23 +92,26 @@ class CSocNetUserToGroup extends CAllSocNetUserToGroup
 
         $arFields1 = \Bitrix\Socialnetwork\Util::getEqualityFields($arFields);
 
-        if (!CSocNetUserToGroup::CheckFields("UPDATE", $arFields, $ID))
+        if (!CSocNetUserToGroup::CheckFields("UPDATE", $arFields, $ID)) {
             return false;
+        }
 
         $db_events = GetModuleEvents("socialnetwork", "OnBeforeSocNetUserToGroupUpdate");
-        while ($arEvent = $db_events->Fetch())
-            if (ExecuteModuleEventEx($arEvent, array($ID, $arFields)) === false)
+        while ($arEvent = $db_events->Fetch()) {
+            if (ExecuteModuleEventEx($arEvent, array($ID, $arFields)) === false) {
                 return false;
+            }
+        }
 
         $strUpdate = $DB->PrepareUpdate("b_sonet_user2group", $arFields);
         \Bitrix\Socialnetwork\Util::processEqualityFieldsToUpdate($arFields1, $strUpdate);
 
-        if (strlen($strUpdate) > 0) {
+        if ($strUpdate <> '') {
             $strSql =
                 "UPDATE b_sonet_user2group SET " .
                 "	" . $strUpdate . " " .
                 "WHERE ID = " . $ID . " ";
-            $DB->Query($strSql, False, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+            $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 
             CSocNetGroup::SetStat($arUser2GroupOld["GROUP_ID"]);
             CSocNetSearch::OnUserRelationsChange($arUser2GroupOld["USER_ID"]);
@@ -132,7 +137,7 @@ class CSocNetUserToGroup extends CAllSocNetUserToGroup
                 $CACHE_MANAGER->ClearByTag("sonet_user2group");
             }
         } else {
-            $ID = False;
+            $ID = false;
         }
 
         return $ID;
@@ -141,12 +146,28 @@ class CSocNetUserToGroup extends CAllSocNetUserToGroup
     /***************************************/
     /**********  DATA SELECTION  ***********/
     /***************************************/
-    public static function GetList($arOrder = Array("ID" => "DESC"), $arFilter = Array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
-    {
+    public static function GetList(
+        $arOrder = Array("ID" => "DESC"),
+        $arFilter = Array(),
+        $arGroupBy = false,
+        $arNavStartParams = false,
+        $arSelectFields = array()
+    ) {
         global $DB;
 
         if (count($arSelectFields) <= 0) {
-            $arSelectFields = array("ID", "USER_ID", "GROUP_ID", "ROLE", "AUTO_MEMBER", "DATE_CREATE", "DATE_UPDATE", "INITIATED_BY_TYPE", "INITIATED_BY_USER_ID", "MESSAGE");
+            $arSelectFields = array(
+                "ID",
+                "USER_ID",
+                "GROUP_ID",
+                "ROLE",
+                "AUTO_MEMBER",
+                "DATE_CREATE",
+                "DATE_UPDATE",
+                "INITIATED_BY_TYPE",
+                "INITIATED_BY_USER_ID",
+                "MESSAGE"
+            );
         }
 
         $online_interval = (
@@ -167,43 +188,176 @@ class CSocNetUserToGroup extends CAllSocNetUserToGroup
             "INITIATED_BY_TYPE" => Array("FIELD" => "UG.INITIATED_BY_TYPE", "TYPE" => "string"),
             "INITIATED_BY_USER_ID" => Array("FIELD" => "UG.INITIATED_BY_USER_ID", "TYPE" => "int"),
             "MESSAGE" => Array("FIELD" => "UG.MESSAGE", "TYPE" => "string"),
-            "GROUP_NAME" => Array("FIELD" => "G.NAME", "TYPE" => "string", "FROM" => "INNER JOIN b_sonet_group G ON (UG.GROUP_ID = G.ID)"),
-            "GROUP_DESCRIPTION" => Array("FIELD" => "G.DESCRIPTION", "TYPE" => "string", "FROM" => "INNER JOIN b_sonet_group G ON (UG.GROUP_ID = G.ID)"),
-            "GROUP_ACTIVE" => Array("FIELD" => "G.ACTIVE", "TYPE" => "string", "FROM" => "INNER JOIN b_sonet_group G ON (UG.GROUP_ID = G.ID)"),
-            "GROUP_PROJECT" => Array("FIELD" => "G.PROJECT", "TYPE" => "string", "FROM" => "INNER JOIN b_sonet_group G ON (UG.GROUP_ID = G.ID)"),
-            "GROUP_IMAGE_ID" => Array("FIELD" => "G.IMAGE_ID", "TYPE" => "int", "FROM" => "INNER JOIN b_sonet_group G ON (UG.GROUP_ID = G.ID)"),
-            "GROUP_VISIBLE" => Array("FIELD" => "G.VISIBLE", "TYPE" => "string", "FROM" => "INNER JOIN b_sonet_group G ON (UG.GROUP_ID = G.ID)"),
-            "GROUP_OWNER_ID" => Array("FIELD" => "G.OWNER_ID", "TYPE" => "int", "FROM" => "INNER JOIN b_sonet_group G ON (UG.GROUP_ID = G.ID)"),
-            "GROUP_INITIATE_PERMS" => Array("FIELD" => "G.INITIATE_PERMS", "TYPE" => "string", "FROM" => "INNER JOIN b_sonet_group G ON (UG.GROUP_ID = G.ID)"),
-            "GROUP_OPENED" => Array("FIELD" => "G.OPENED", "TYPE" => "string", "FROM" => "INNER JOIN b_sonet_group G ON (UG.GROUP_ID = G.ID)"),
-            "GROUP_NUMBER_OF_MEMBERS" => Array("FIELD" => "G.NUMBER_OF_MEMBERS", "TYPE" => "string", "FROM" => "INNER JOIN b_sonet_group G ON (UG.GROUP_ID = G.ID)"),
-            "GROUP_DATE_ACTIVITY" => Array("FIELD" => "G.DATE_ACTIVITY", "TYPE" => "datetime", "FROM" => "INNER JOIN b_sonet_group G ON (UG.GROUP_ID = G.ID)"),
-            "GROUP_CLOSED" => Array("FIELD" => "G.CLOSED", "TYPE" => "string", "FROM" => "INNER JOIN b_sonet_group G ON (UG.GROUP_ID = G.ID)"),
-            "GROUP_LANDING" => Array("FIELD" => "G.LANDING", "TYPE" => "string", "FROM" => "INNER JOIN b_sonet_group G ON (UG.GROUP_ID = G.ID)"),
-            "USER_ACTIVE" => Array("FIELD" => "U.ACTIVE", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (UG.USER_ID = U.ID)"),
-            "USER_NAME" => Array("FIELD" => "U.NAME", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (UG.USER_ID = U.ID)"),
-            "USER_LAST_NAME" => Array("FIELD" => "U.LAST_NAME", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (UG.USER_ID = U.ID)"),
-            "USER_SECOND_NAME" => Array("FIELD" => "U.SECOND_NAME", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (UG.USER_ID = U.ID)"),
-            "USER_WORK_POSITION" => Array("FIELD" => "U.WORK_POSITION", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (UG.USER_ID = U.ID)"),
-            "USER_LOGIN" => Array("FIELD" => "U.LOGIN", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (UG.USER_ID = U.ID)"),
-            "USER_EMAIL" => Array("FIELD" => "U.EMAIL", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (UG.USER_ID = U.ID)"),
-            "USER_CONFIRM_CODE" => Array("FIELD" => "U.CONFIRM_CODE", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (UG.USER_ID = U.ID)"),
-            "USER_PERSONAL_PHOTO" => Array("FIELD" => "U.PERSONAL_PHOTO", "TYPE" => "int", "FROM" => "INNER JOIN b_user U ON (UG.USER_ID = U.ID)"),
-            "USER_PERSONAL_GENDER" => Array("FIELD" => "U.PERSONAL_GENDER", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (UG.USER_ID = U.ID)"),
-            "USER_LID" => Array("FIELD" => "U.LID", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (UG.USER_ID = U.ID)"),
-            "INITIATED_BY_USER_NAME" => Array("FIELD" => "U1.NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_user U1 ON (UG.INITIATED_BY_USER_ID = U1.ID)"),
-            "INITIATED_BY_USER_LAST_NAME" => Array("FIELD" => "U1.LAST_NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_user U1 ON (UG.INITIATED_BY_USER_ID = U1.ID)"),
-            "INITIATED_BY_USER_SECOND_NAME" => Array("FIELD" => "U1.SECOND_NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_user U1 ON (UG.INITIATED_BY_USER_ID = U1.ID)"),
-            "INITIATED_BY_USER_LOGIN" => Array("FIELD" => "U1.LOGIN", "TYPE" => "string", "FROM" => "LEFT JOIN b_user U1 ON (UG.INITIATED_BY_USER_ID = U1.ID)"),
-            "INITIATED_BY_USER_EMAIL" => Array("FIELD" => "U1.EMAIL", "TYPE" => "string", "FROM" => "LEFT JOIN b_user U1 ON (UG.INITIATED_BY_USER_ID = U1.ID)"),
-            "INITIATED_BY_USER_PHOTO" => Array("FIELD" => "U1.PERSONAL_PHOTO", "TYPE" => "int", "FROM" => "LEFT JOIN b_user U1 ON (UG.INITIATED_BY_USER_ID = U1.ID)"),
-            "INITIATED_BY_USER_GENDER" => Array("FIELD" => "U1.PERSONAL_GENDER", "TYPE" => "string", "FROM" => "LEFT JOIN b_user U1 ON (UG.INITIATED_BY_USER_ID = U1.ID)"),
+            "GROUP_NAME" => Array(
+                "FIELD" => "G.NAME",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_sonet_group G ON (UG.GROUP_ID = G.ID)"
+            ),
+            "GROUP_DESCRIPTION" => Array(
+                "FIELD" => "G.DESCRIPTION",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_sonet_group G ON (UG.GROUP_ID = G.ID)"
+            ),
+            "GROUP_ACTIVE" => Array(
+                "FIELD" => "G.ACTIVE",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_sonet_group G ON (UG.GROUP_ID = G.ID)"
+            ),
+            "GROUP_PROJECT" => Array(
+                "FIELD" => "G.PROJECT",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_sonet_group G ON (UG.GROUP_ID = G.ID)"
+            ),
+            "GROUP_IMAGE_ID" => Array(
+                "FIELD" => "G.IMAGE_ID",
+                "TYPE" => "int",
+                "FROM" => "INNER JOIN b_sonet_group G ON (UG.GROUP_ID = G.ID)"
+            ),
+            "GROUP_VISIBLE" => Array(
+                "FIELD" => "G.VISIBLE",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_sonet_group G ON (UG.GROUP_ID = G.ID)"
+            ),
+            "GROUP_OWNER_ID" => Array(
+                "FIELD" => "G.OWNER_ID",
+                "TYPE" => "int",
+                "FROM" => "INNER JOIN b_sonet_group G ON (UG.GROUP_ID = G.ID)"
+            ),
+            "GROUP_INITIATE_PERMS" => Array(
+                "FIELD" => "G.INITIATE_PERMS",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_sonet_group G ON (UG.GROUP_ID = G.ID)"
+            ),
+            "GROUP_OPENED" => Array(
+                "FIELD" => "G.OPENED",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_sonet_group G ON (UG.GROUP_ID = G.ID)"
+            ),
+            "GROUP_NUMBER_OF_MEMBERS" => Array(
+                "FIELD" => "G.NUMBER_OF_MEMBERS",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_sonet_group G ON (UG.GROUP_ID = G.ID)"
+            ),
+            "GROUP_DATE_ACTIVITY" => Array(
+                "FIELD" => "G.DATE_ACTIVITY",
+                "TYPE" => "datetime",
+                "FROM" => "INNER JOIN b_sonet_group G ON (UG.GROUP_ID = G.ID)"
+            ),
+            "GROUP_CLOSED" => Array(
+                "FIELD" => "G.CLOSED",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_sonet_group G ON (UG.GROUP_ID = G.ID)"
+            ),
+            "GROUP_LANDING" => Array(
+                "FIELD" => "G.LANDING",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_sonet_group G ON (UG.GROUP_ID = G.ID)"
+            ),
+            "USER_ACTIVE" => Array(
+                "FIELD" => "U.ACTIVE",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_user U ON (UG.USER_ID = U.ID)"
+            ),
+            "USER_NAME" => Array(
+                "FIELD" => "U.NAME",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_user U ON (UG.USER_ID = U.ID)"
+            ),
+            "USER_LAST_NAME" => Array(
+                "FIELD" => "U.LAST_NAME",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_user U ON (UG.USER_ID = U.ID)"
+            ),
+            "USER_SECOND_NAME" => Array(
+                "FIELD" => "U.SECOND_NAME",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_user U ON (UG.USER_ID = U.ID)"
+            ),
+            "USER_WORK_POSITION" => Array(
+                "FIELD" => "U.WORK_POSITION",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_user U ON (UG.USER_ID = U.ID)"
+            ),
+            "USER_LOGIN" => Array(
+                "FIELD" => "U.LOGIN",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_user U ON (UG.USER_ID = U.ID)"
+            ),
+            "USER_EMAIL" => Array(
+                "FIELD" => "U.EMAIL",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_user U ON (UG.USER_ID = U.ID)"
+            ),
+            "USER_CONFIRM_CODE" => Array(
+                "FIELD" => "U.CONFIRM_CODE",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_user U ON (UG.USER_ID = U.ID)"
+            ),
+            "USER_PERSONAL_PHOTO" => Array(
+                "FIELD" => "U.PERSONAL_PHOTO",
+                "TYPE" => "int",
+                "FROM" => "INNER JOIN b_user U ON (UG.USER_ID = U.ID)"
+            ),
+            "USER_PERSONAL_GENDER" => Array(
+                "FIELD" => "U.PERSONAL_GENDER",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_user U ON (UG.USER_ID = U.ID)"
+            ),
+            "USER_LID" => Array(
+                "FIELD" => "U.LID",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_user U ON (UG.USER_ID = U.ID)"
+            ),
+            "INITIATED_BY_USER_NAME" => Array(
+                "FIELD" => "U1.NAME",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_user U1 ON (UG.INITIATED_BY_USER_ID = U1.ID)"
+            ),
+            "INITIATED_BY_USER_LAST_NAME" => Array(
+                "FIELD" => "U1.LAST_NAME",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_user U1 ON (UG.INITIATED_BY_USER_ID = U1.ID)"
+            ),
+            "INITIATED_BY_USER_SECOND_NAME" => Array(
+                "FIELD" => "U1.SECOND_NAME",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_user U1 ON (UG.INITIATED_BY_USER_ID = U1.ID)"
+            ),
+            "INITIATED_BY_USER_LOGIN" => Array(
+                "FIELD" => "U1.LOGIN",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_user U1 ON (UG.INITIATED_BY_USER_ID = U1.ID)"
+            ),
+            "INITIATED_BY_USER_EMAIL" => Array(
+                "FIELD" => "U1.EMAIL",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_user U1 ON (UG.INITIATED_BY_USER_ID = U1.ID)"
+            ),
+            "INITIATED_BY_USER_PHOTO" => Array(
+                "FIELD" => "U1.PERSONAL_PHOTO",
+                "TYPE" => "int",
+                "FROM" => "LEFT JOIN b_user U1 ON (UG.INITIATED_BY_USER_ID = U1.ID)"
+            ),
+            "INITIATED_BY_USER_GENDER" => Array(
+                "FIELD" => "U1.PERSONAL_GENDER",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_user U1 ON (UG.INITIATED_BY_USER_ID = U1.ID)"
+            ),
             "RAND" => Array("FIELD" => "RAND()", "TYPE" => "string"),
+            "SCRUM_OWNER_ID" => Array("FIELD" => "G.SCRUM_OWNER_ID", "TYPE" => "int"),
         );
-        $arFields["USER_IS_ONLINE"] = Array("FIELD" => "IF(U.LAST_ACTIVITY_DATE > DATE_SUB(NOW(), INTERVAL " . $online_interval . " SECOND), 'Y', 'N')", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (UG.USER_ID = U.ID)");
+        $arFields["USER_IS_ONLINE"] = Array(
+            "FIELD" => "IF(U.LAST_ACTIVITY_DATE > DATE_SUB(NOW(), INTERVAL " . $online_interval . " SECOND), 'Y', 'N')",
+            "TYPE" => "string",
+            "FROM" => "INNER JOIN b_user U ON (UG.USER_ID = U.ID)"
+        );
 
         if (array_key_exists("GROUP_SITE_ID", $arFilter)) {
-            $arFields["GROUP_SITE_ID"] = Array("FIELD" => "SGS.SITE_ID", "TYPE" => "string", "FROM" => "LEFT JOIN b_sonet_group_site SGS ON UG.GROUP_ID = SGS.GROUP_ID");
+            $arFields["GROUP_SITE_ID"] = Array(
+                "FIELD" => "SGS.SITE_ID",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_sonet_group_site SGS ON UG.GROUP_ID = SGS.GROUP_ID"
+            );
             $strDistinct = " DISTINCT ";
             foreach ($arSelectFields as $i => $strFieldTmp) {
                 if ($strFieldTmp == "GROUP_SITE_ID") {
@@ -217,7 +371,11 @@ class CSocNetUserToGroup extends CAllSocNetUserToGroup
                 }
             }
         } else {
-            $arFields["GROUP_SITE_ID"] = Array("FIELD" => "G.SITE_ID", "TYPE" => "string", "FROM" => "INNER JOIN b_sonet_group G ON (UG.GROUP_ID = G.ID)");
+            $arFields["GROUP_SITE_ID"] = Array(
+                "FIELD" => "G.SITE_ID",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_sonet_group G ON (UG.GROUP_ID = G.ID)"
+            );
             $strDistinct = " ";
         }
 
@@ -230,10 +388,12 @@ class CSocNetUserToGroup extends CAllSocNetUserToGroup
                 "SELECT " . $arSqls["SELECT"] . " " .
                 "FROM b_sonet_user2group UG " .
                 "	" . $arSqls["FROM"] . " ";
-            if (strlen($arSqls["WHERE"]) > 0)
+            if ($arSqls["WHERE"] <> '') {
                 $strSql .= "WHERE " . $arSqls["WHERE"] . " ";
-            if (strlen($arSqls["GROUPBY"]) > 0)
+            }
+            if ($arSqls["GROUPBY"] <> '') {
                 $strSql .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
+            }
 
             //echo "!1!=".htmlspecialcharsbx($strSql)."<br>";
 
@@ -245,28 +405,33 @@ class CSocNetUserToGroup extends CAllSocNetUserToGroup
             "SELECT " . $arSqls["SELECT"] . " " .
             "FROM b_sonet_user2group UG " .
             "	" . $arSqls["FROM"] . " ";
-        if (strlen($arSqls["WHERE"]) > 0)
+        if ($arSqls["WHERE"] <> '') {
             $strSql .= "WHERE " . $arSqls["WHERE"] . " ";
-        if (strlen($arSqls["GROUPBY"]) > 0)
+        }
+        if ($arSqls["GROUPBY"] <> '') {
             $strSql .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
-        if (strlen($arSqls["ORDERBY"]) > 0)
+        }
+        if ($arSqls["ORDERBY"] <> '') {
             $strSql .= "ORDER BY " . $arSqls["ORDERBY"] . " ";
+        }
 
-        if (is_array($arNavStartParams) && IntVal($arNavStartParams["nTopCount"]) <= 0) {
+        if (is_array($arNavStartParams) && intval($arNavStartParams["nTopCount"]) <= 0) {
             $strSql_tmp =
                 "SELECT COUNT('x') as CNT " .
                 "FROM b_sonet_user2group UG " .
                 "	" . $arSqls["FROM"] . " ";
-            if (strlen($arSqls["WHERE"]) > 0)
+            if ($arSqls["WHERE"] <> '') {
                 $strSql_tmp .= "WHERE " . $arSqls["WHERE"] . " ";
-            if (strlen($arSqls["GROUPBY"]) > 0)
+            }
+            if ($arSqls["GROUPBY"] <> '') {
                 $strSql_tmp .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
+            }
 
             //echo "!2.1!=".htmlspecialcharsbx($strSql_tmp)."<br>";
 
             $dbRes = $DB->Query($strSql_tmp, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             $cnt = 0;
-            if (strlen($arSqls["GROUPBY"]) <= 0) {
+            if ($arSqls["GROUPBY"] == '') {
                 if ($arRes = $dbRes->Fetch()) {
                     $cnt = $arRes["CNT"];
                 }
@@ -283,7 +448,7 @@ class CSocNetUserToGroup extends CAllSocNetUserToGroup
         } else {
             if (
                 is_array($arNavStartParams)
-                && IntVal($arNavStartParams["nTopCount"]) > 0
+                && intval($arNavStartParams["nTopCount"]) > 0
             ) {
                 $strSql .= "LIMIT " . intval($arNavStartParams["nTopCount"]);
             }
@@ -296,5 +461,3 @@ class CSocNetUserToGroup extends CAllSocNetUserToGroup
         return $dbRes;
     }
 }
-
-?>

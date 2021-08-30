@@ -50,11 +50,34 @@ class BasketProperties extends Base
         $result = [];
 
         $fieldsInfo = empty($fieldsInfo) ? $this->getFields() : $fieldsInfo;
-        $listFieldsInfoAdd = $this->getListFieldInfo($fieldsInfo, ['filter' => ['ignoredAttributes' => [Attributes::Hidden, Attributes::ReadOnly]]]);
-        $listFieldsInfoUpdate = $this->getListFieldInfo($fieldsInfo, ['filter' => ['ignoredAttributes' => [Attributes::Hidden, Attributes::ReadOnly, Attributes::Immutable], 'skipFields' => ['ID']]]);
+        $listFieldsInfoAdd = $this->getListFieldInfo(
+            $fieldsInfo,
+            [
+                'filter' => [
+                    'ignoredAttributes' => [
+                        Attributes::Hidden,
+                        Attributes::ReadOnly
+                    ]
+                ]
+            ]
+        );
+        $listFieldsInfoUpdate = $this->getListFieldInfo(
+            $fieldsInfo,
+            [
+                'filter' => [
+                    'ignoredAttributes' => [
+                        Attributes::Hidden,
+                        Attributes::ReadOnly,
+                        Attributes::Immutable
+                    ],
+                    'skipFields' => ['ID']
+                ]
+            ]
+        );
 
         foreach ($fields['BASKET_ITEM']['PROPERTIES'] as $k => $item) {
-            $result['BASKET_ITEM']['PROPERTIES'][$k] = $this->internalizeFields($item,
+            $result['BASKET_ITEM']['PROPERTIES'][$k] = $this->internalizeFields(
+                $item,
                 $this->isNewItem($item) ? $listFieldsInfoAdd : $listFieldsInfoUpdate
             );
         }
@@ -88,15 +111,39 @@ class BasketProperties extends Base
     {
         $r = new Result();
 
-        $listFieldsInfoAdd = $this->getListFieldInfo($this->getFields(), ['filter' => ['ignoredAttributes' => [Attributes::Hidden, Attributes::ReadOnly]]]);
-        $listFieldsInfoUpdate = $this->getListFieldInfo($this->getFields(), ['filter' => ['ignoredAttributes' => [Attributes::Hidden, Attributes::ReadOnly, Attributes::Immutable]]]);
+        $listFieldsInfoAdd = $this->getListFieldInfo(
+            $this->getFields(),
+            [
+                'filter' => [
+                    'ignoredAttributes' => [
+                        Attributes::Hidden,
+                        Attributes::ReadOnly
+                    ]
+                ]
+            ]
+        );
+        $listFieldsInfoUpdate = $this->getListFieldInfo(
+            $this->getFields(),
+            [
+                'filter' => [
+                    'ignoredAttributes' => [
+                        Attributes::Hidden,
+                        Attributes::ReadOnly,
+                        Attributes::Immutable
+                    ]
+                ]
+            ]
+        );
 
         foreach ($fields['BASKET_ITEM']['PROPERTIES'] as $k => $item) {
-            $required = $this->checkRequiredFields($item,
+            $required = $this->checkRequiredFields(
+                $item,
                 $this->isNewItem($item) ? $listFieldsInfoAdd : $listFieldsInfoUpdate
             );
             if (!$required->isSuccess()) {
-                $r->addError(new Error('[properties][' . $k . '] - ' . implode(', ', $required->getErrorMessages()) . '.'));
+                $r->addError(
+                    new Error('[properties][' . $k . '] - ' . implode(', ', $required->getErrorMessages()) . '.')
+                );
             }
         }
 

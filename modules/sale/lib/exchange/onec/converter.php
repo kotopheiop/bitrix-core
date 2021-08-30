@@ -80,8 +80,11 @@ abstract class Converter implements IConverter
         return $this->documentTypeId;
     }
 
-    public function init(ISettings $settings, $entityTypeId = EntityType::UNDEFINED, $documentTypeId = DocumentType::UNDEFINED)
-    {
+    public function init(
+        ISettings $settings,
+        $entityTypeId = EntityType::UNDEFINED,
+        $documentTypeId = DocumentType::UNDEFINED
+    ) {
         $this->settings = $settings;
         $this->entityTypeId = EntityType::isDefined($entityTypeId) ? $entityTypeId : EntityType::UNDEFINED;
         $this->documentTypeId = DocumentType::isDefined($documentTypeId) ? $documentTypeId : DocumentType::UNDEFINED;
@@ -99,16 +102,31 @@ abstract class Converter implements IConverter
                     $value = self::toText($value);
                     break;
                 case 'time':
-                    if ($value instanceof DateTime)
-                        $value = \CAllDatabase::FormatDate($value->toString(), \CAllSite::GetDateFormat("FULL", LANG), "HH:MI:SS");
+                    if ($value instanceof DateTime) {
+                        $value = \CAllDatabase::FormatDate(
+                            $value->toString(),
+                            \CAllSite::GetDateFormat("FULL", LANG),
+                            "HH:MI:SS"
+                        );
+                    }
                     break;
                 case 'date':
-                    if ($value instanceof DateTime)
-                        $value = \CAllDatabase::FormatDate($value->toString(), \CAllSite::GetDateFormat("FULL", LANG), "YYYY-MM-DD");
+                    if ($value instanceof DateTime) {
+                        $value = \CAllDatabase::FormatDate(
+                            $value->toString(),
+                            \CAllSite::GetDateFormat("FULL", LANG),
+                            "YYYY-MM-DD"
+                        );
+                    }
                     break;
                 case 'datetime':
-                    if ($value instanceof DateTime)
-                        $value = \CAllDatabase::FormatDate($value->toString(), \CAllSite::GetDateFormat("FULL", LANG), "YYYY-MM-DD HH:MI:SS");
+                    if ($value instanceof DateTime) {
+                        $value = \CAllDatabase::FormatDate(
+                            $value->toString(),
+                            \CAllSite::GetDateFormat("FULL", LANG),
+                            "YYYY-MM-DD HH:MI:SS"
+                        );
+                    }
                     break;
                 case 'bool':
                     $value = $value == 'Y' ? 'true' : 'false';
@@ -145,8 +163,9 @@ abstract class Converter implements IConverter
     {
         $xml_id = $code;
         list($productXmlId, $offerXmlId) = explode("#", $xml_id, 2);
-        if ($productXmlId === $offerXmlId)
+        if ($productXmlId === $offerXmlId) {
             $xml_id = $productXmlId;
+        }
 
         return $xml_id;
     }
@@ -169,8 +188,9 @@ abstract class Converter implements IConverter
                         break;
                     case 'VALUE':
                         $value = $vRekv;
-                        if ($value instanceof DateTime)
+                        if ($value instanceof DateTime) {
                             $fieldInfo['TYPE'] = 'datetime';
+                        }
                         break;
                 }
                 $this->externalizeField($value, $fieldInfo);
@@ -211,7 +231,6 @@ abstract class Converter implements IConverter
      */
     protected function modifyTrim(array $fields)
     {
-
         $result = array();
         foreach ($fields as $key => $value) {
             if (is_array($value)) {
@@ -224,19 +243,22 @@ abstract class Converter implements IConverter
                             }
                             $groupFieldValues = $fields[$key];
                         }
-                        if (count($groupFieldValues) > 0)
+                        if (count($groupFieldValues) > 0) {
                             $result[$key] = $groupFieldValues;
-                        else
+                        } else {
                             unset($fields[$key]);
+                        }
                     } else {
                         $value = $this->modifyTrim($value);
-                        if (count($value) > 0)
+                        if (count($value) > 0) {
                             $result[$key] = $value;
+                        }
                     }
                 }
             } else {
-                if ($value <> '')
+                if ($value <> '') {
                     $result[$key] = $value;
+                }
             }
         }
 
@@ -252,7 +274,7 @@ abstract class Converter implements IConverter
         static $sites;
 
         if ($sites === null) {
-            $res = \CSite::getList($by = "sort", $order = "desc");
+            $res = \CSite::getList("sort", "desc");
             while ($site = $res->fetch()) {
                 $sites[$site['LID']] = $site['NAME'];
             }

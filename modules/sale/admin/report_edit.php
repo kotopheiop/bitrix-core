@@ -1,9 +1,11 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions <= "D")
+if ($saleModulePermissions <= "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 
@@ -50,26 +52,31 @@ $arFieldsBuyer = Array(
 
 $errorMessage = "";
 if ($_SERVER["REQUEST_METHOD"] == "POST"
-    && (strlen($save) > 0 || strlen($apply) > 0)
+    && ($save <> '' || $apply <> '')
     && $saleModulePermissions == "W"
     && check_bitrix_sessid()) {
     $arOpt = Array();
     foreach ($arFieldsShop as $key => $val) {
-        $arOpt[$key] = Array("TYPE" => $_POST["TYPE_" . $key], "VALUE" => (strlen($_POST["TYPE_" . $key]) > 0 ? $_POST["VALUE_" . $key] : trim($_POST["VALUE2_" . $key])));
+        $arOpt[$key] = Array(
+            "TYPE" => $_POST["TYPE_" . $key],
+            "VALUE" => ($_POST["TYPE_" . $key] <> '' ? $_POST["VALUE_" . $key] : trim($_POST["VALUE2_" . $key]))
+        );
     }
 
     foreach ($arFieldsBuyer as $key => $val) {
-        $arOpt[$key] = Array("TYPE" => $_POST["TYPE_" . $key], "VALUE" => (strlen($_POST["TYPE_" . $key]) > 0 ? $_POST["VALUE_" . $key] : trim($_POST["VALUE2_" . $key])));
+        $arOpt[$key] = Array(
+            "TYPE" => $_POST["TYPE_" . $key],
+            "VALUE" => ($_POST["TYPE_" . $key] <> '' ? $_POST["VALUE_" . $key] : trim($_POST["VALUE2_" . $key]))
+        );
     }
 
     $serResult = serialize($arOpt);
-    $lenght = strlen($serResult);
-    if (IntVal($lenght) > 2000) {
+    $lenght = mb_strlen($serResult);
+    if (intval($lenght) > 2000) {
         for ($i = 1; $i <= ceil($lenght / 2000); $i++) {
-            COption::SetOptionString("sale", "reports" . $i, substr($serResult, ($i - 1) * 2000, $i * 2000));
+            COption::SetOptionString("sale", "reports" . $i, mb_substr($serResult, ($i - 1) * 2000, $i * 2000));
         }
         COption::SetOptionInt("sale", "reports_count", $i);
-
     } else {
         COption::SetOptionString("sale", "reports", serialize($arOpt));
         COption::RemoveOption("sale", "reports_count");
@@ -79,15 +86,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST"
 }
 
 $report = "";
-$serCount = IntVal(COption::GetOptionInt("sale", "reports_count"));
+$serCount = intval(COption::GetOptionInt("sale", "reports_count"));
 if ($serCount > 0) {
     for ($i = 1; $i <= $serCount; $i++) {
         $report .= COption::GetOptionString("sale", "reports" . $i);
     }
-} else
+} else {
     $report = COption::GetOptionString("sale", "reports");
+}
 
-$arOptions = unserialize($report);
+$arOptions = unserialize($report, ['allowed_classes' => false]);
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/prolog.php");
 
@@ -104,10 +112,38 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
         <!--
 
         var arUserFieldsList = new Array("ID", "LOGIN", "NAME", "SECOND_NAME", "LAST_NAME", "EMAIL", "LID", "PERSONAL_PROFESSION", "PERSONAL_WWW", "PERSONAL_ICQ", "PERSONAL_GENDER", "PERSONAL_FAX", "PERSONAL_MOBILE", "PERSONAL_STREET", "PERSONAL_MAILBOX", "PERSONAL_CITY", "PERSONAL_STATE", "PERSONAL_ZIP", "PERSONAL_COUNTRY", "WORK_COMPANY", "WORK_DEPARTMENT", "WORK_POSITION", "WORK_WWW", "WORK_PHONE", "WORK_FAX", "WORK_STREET", "WORK_MAILBOX", "WORK_CITY", "WORK_STATE", "WORK_ZIP", "WORK_COUNTRY");
-        var arUserFieldsNameList = new Array("<?= GetMessage("SPS_USER_ID") ?>", "<?= GetMessage("SPS_USER_LOGIN") ?>", "<?= GetMessage("SPS_USER_NAME") ?>", "<?= GetMessage("SPS_USER_SECOND_NAME") ?>", "<?= GetMessage("SPS_USER_LAST_NAME") ?>", "EMail", "<?= GetMessage("SPS_USER_SITE") ?>", "<?= GetMessage("SPS_USER_PROF") ?>", "<?= GetMessage("SPS_USER_WEB") ?>", "<?= GetMessage("SPS_USER_ICQ") ?>", "<?= GetMessage("SPS_USER_SEX") ?>", "<?= GetMessage("SPS_USER_FAX") ?>", "<?= GetMessage("SPS_USER_PHONE") ?>", "<?= GetMessage("SPS_USER_ADDRESS") ?>", "<?= GetMessage("SPS_USER_POST") ?>", "<?= GetMessage("SPS_USER_CITY") ?>", "<?= GetMessage("SPS_USER_STATE") ?>", "<?= GetMessage("SPS_USER_ZIP") ?>", "<?= GetMessage("SPS_USER_COUNTRY") ?>", "<?= GetMessage("SPS_USER_COMPANY") ?>", "<?= GetMessage("SPS_USER_DEPT") ?>", "<?= GetMessage("SPS_USER_DOL") ?>", "<?= GetMessage("SPS_USER_COM_WEB") ?>", "<?= GetMessage("SPS_USER_COM_PHONE") ?>", "<?= GetMessage("SPS_USER_COM_FAX") ?>", "<?= GetMessage("SPS_USER_COM_ADDRESS") ?>", "<?= GetMessage("SPS_USER_COM_POST") ?>", "<?= GetMessage("SPS_USER_COM_CITY") ?>", "<?= GetMessage("SPS_USER_COM_STATE") ?>", "<?= GetMessage("SPS_USER_COM_ZIP") ?>", "<?= GetMessage("SPS_USER_COM_COUNTRY") ?>");
+        var arUserFieldsNameList = new Array("<?= GetMessage("SPS_USER_ID") ?>", "<?= GetMessage(
+            "SPS_USER_LOGIN"
+        ) ?>", "<?= GetMessage("SPS_USER_NAME") ?>", "<?= GetMessage("SPS_USER_SECOND_NAME") ?>", "<?= GetMessage(
+            "SPS_USER_LAST_NAME"
+        ) ?>", "EMail", "<?= GetMessage("SPS_USER_SITE") ?>", "<?= GetMessage("SPS_USER_PROF") ?>", "<?= GetMessage(
+            "SPS_USER_WEB"
+        ) ?>", "<?= GetMessage("SPS_USER_ICQ") ?>", "<?= GetMessage("SPS_USER_SEX") ?>", "<?= GetMessage(
+            "SPS_USER_FAX"
+        ) ?>", "<?= GetMessage("SPS_USER_PHONE") ?>", "<?= GetMessage("SPS_USER_ADDRESS") ?>", "<?= GetMessage(
+            "SPS_USER_POST"
+        ) ?>", "<?= GetMessage("SPS_USER_CITY") ?>", "<?= GetMessage("SPS_USER_STATE") ?>", "<?= GetMessage(
+            "SPS_USER_ZIP"
+        ) ?>", "<?= GetMessage("SPS_USER_COUNTRY") ?>", "<?= GetMessage("SPS_USER_COMPANY") ?>", "<?= GetMessage(
+            "SPS_USER_DEPT"
+        ) ?>", "<?= GetMessage("SPS_USER_DOL") ?>", "<?= GetMessage("SPS_USER_COM_WEB") ?>", "<?= GetMessage(
+            "SPS_USER_COM_PHONE"
+        ) ?>", "<?= GetMessage("SPS_USER_COM_FAX") ?>", "<?= GetMessage("SPS_USER_COM_ADDRESS") ?>", "<?= GetMessage(
+            "SPS_USER_COM_POST"
+        ) ?>", "<?= GetMessage("SPS_USER_COM_CITY") ?>", "<?= GetMessage("SPS_USER_COM_STATE") ?>", "<?= GetMessage(
+            "SPS_USER_COM_ZIP"
+        ) ?>", "<?= GetMessage("SPS_USER_COM_COUNTRY") ?>");
 
         var arOrderFieldsList = new Array("ID", "DATE_INSERT", "DATE_INSERT_DATE", "SHOULD_PAY", "CURRENCY", "PRICE", "LID", "PRICE_DELIVERY", "DISCOUNT_VALUE", "USER_ID", "PAY_SYSTEM_ID", "DELIVERY_ID", "TAX_VALUE");
-        var arOrderFieldsNameList = new Array("<?= GetMessage("SPS_ORDER_ID") ?>", "<?= GetMessage("SPS_ORDER_DATETIME") ?>", "<?= GetMessage("SPS_ORDER_DATE") ?>", "<?= GetMessage("SPS_ORDER_PRICE") ?>", "<?= GetMessage("SPS_ORDER_CURRENCY") ?>", "<?= GetMessage("SPS_ORDER_SUM") ?>", "<?= GetMessage("SPS_ORDER_SITE") ?>", "<?= GetMessage("SPS_ORDER_PRICE_DELIV") ?>", "<?= GetMessage("SPS_ORDER_DESCOUNT") ?>", "<?= GetMessage("SPS_ORDER_USER_ID") ?>", "<?= GetMessage("SPS_ORDER_PS") ?>", "<?= GetMessage("SPS_ORDER_DELIV") ?>", "<?= GetMessage("SPS_ORDER_TAX") ?>");
+        var arOrderFieldsNameList = new Array("<?= GetMessage("SPS_ORDER_ID") ?>", "<?= GetMessage(
+            "SPS_ORDER_DATETIME"
+        ) ?>", "<?= GetMessage("SPS_ORDER_DATE") ?>", "<?= GetMessage("SPS_ORDER_PRICE") ?>", "<?= GetMessage(
+            "SPS_ORDER_CURRENCY"
+        ) ?>", "<?= GetMessage("SPS_ORDER_SUM") ?>", "<?= GetMessage("SPS_ORDER_SITE") ?>", "<?= GetMessage(
+            "SPS_ORDER_PRICE_DELIV"
+        ) ?>", "<?= GetMessage("SPS_ORDER_DESCOUNT") ?>", "<?= GetMessage("SPS_ORDER_USER_ID") ?>", "<?= GetMessage(
+            "SPS_ORDER_PS"
+        ) ?>", "<?= GetMessage("SPS_ORDER_DELIV") ?>", "<?= GetMessage("SPS_ORDER_TAX") ?>");
 
         var arPropFieldsList = new Array();
         var arPropFieldsNameList = new Array();
@@ -191,7 +227,7 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
         $arOrderSel = Array();
         while ($arOrderProps = $dbOrderProps->GetNext())
         {
-        $orderID = ((strlen($arOrderProps["CODE"]) > 0) ? $arOrderProps["CODE"] : $arOrderProps["ID"]);
+        $orderID = (($arOrderProps["CODE"] <> '') ? $arOrderProps["CODE"] : $arOrderProps["ID"]);
         if(!in_array($orderID, $arOrderSel))
         {
         $arOrderSel[] = $orderID;
@@ -205,13 +241,17 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
         $i++;
         ?>
         arPropFieldsList[<?= $i ?>] = '<?= CUtil::JSEscape($orderID . "_COUNTRY") ?>';
-        arPropFieldsNameList[<?= $i ?>] = '<?= CUtil::JSEscape("[" . $orderID . "] " . $arOrderProps["NAME"] . " (" . GetMessage("SPS_JCOUNTRY") . ")") ?>';
+        arPropFieldsNameList[<?= $i ?>] = '<?= CUtil::JSEscape(
+            "[" . $orderID . "] " . $arOrderProps["NAME"] . " (" . GetMessage("SPS_JCOUNTRY") . ")"
+        ) ?>';
         <?
 
         $i++;
         ?>
         arPropFieldsList[<?= $i ?>] = '<?= CUtil::JSEscape($orderID . "_CITY") ?>';
-        arPropFieldsNameList[<?= $i ?>] = '<?= CUtil::JSEscape("[" . $orderID . "] " . $arOrderProps["NAME"] . " (" . GetMessage("SPS_JCITY") . ")") ?>';
+        arPropFieldsNameList[<?= $i ?>] = '<?= CUtil::JSEscape(
+            "[" . $orderID . "] " . $arOrderProps["NAME"] . " (" . GetMessage("SPS_JCITY") . ")"
+        ) ?>';
         <?
         }
         }
@@ -261,9 +301,15 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
                             <td><select name="TYPE_<?= $key ?>" id="TYPE_<?= $key ?>"
                                         onchange="PropertyTypeChange('<?= $key ?>');">
                                     <option value=""><?= GetMessage("SRE_PARAM_PROP_TYPE_1") ?></option>
-                                    <option value="USER"<? if ($val["TYPE"] == "USER") echo " selected"; ?>><?= GetMessage("SRE_PARAM_PROP_TYPE_2") ?></option>
-                                    <option value="ORDER"<? if ($val["TYPE"] == "ORDER") echo " selected"; ?>><?= GetMessage("SRE_PARAM_PROP_TYPE_3") ?></option>
-                                    <option value="PROPERTY"<? if ($val["TYPE"] == "PROPERTY") echo " selected"; ?>><?= GetMessage("SRE_PARAM_PROP_TYPE_4") ?></option>
+                                    <option value="USER"<? if ($val["TYPE"] == "USER") {
+                                        echo " selected";
+                                    } ?>><?= GetMessage("SRE_PARAM_PROP_TYPE_2") ?></option>
+                                    <option value="ORDER"<? if ($val["TYPE"] == "ORDER") {
+                                        echo " selected";
+                                    } ?>><?= GetMessage("SRE_PARAM_PROP_TYPE_3") ?></option>
+                                    <option value="PROPERTY"<? if ($val["TYPE"] == "PROPERTY") {
+                                        echo " selected";
+                                    } ?>><?= GetMessage("SRE_PARAM_PROP_TYPE_4") ?></option>
                                 </select>
                             </td>
                             <td>
@@ -271,12 +317,14 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
                                     <option value="">--</option>
                                 </select>
                                 <input type="text" name="VALUE2_<?= $key ?>" id="VALUE2_<?= $key ?>"
-                                       value="<? if (strlen($val["TYPE"]) <= 0) echo htmlspecialcharsbx($val["VALUE"]) ?>"
+                                       value="<? if ($val["TYPE"] == '') echo htmlspecialcharsbx($val["VALUE"]) ?>"
                                        size="40">
-                                <? if (strlen($val["VALUE"]) > 0 && strlen($val["TYPE"]) > 0) {
+                                <? if ($val["VALUE"] <> '' && $val["TYPE"] <> '') {
                                     ?>
                                     <script>
-                                        PropertyTypeChange('<?=CUtil::JSEscape($key)?>', '<?=CUtil::JSEscape($val["VALUE"])?>');
+                                        PropertyTypeChange('<?=CUtil::JSEscape($key)?>', '<?=CUtil::JSEscape(
+                                            $val["VALUE"]
+                                        )?>');
                                     </script>
                                     <?
                                 }
@@ -301,9 +349,15 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
                             <td><select name="TYPE_<?= $key ?>" id="TYPE_<?= $key ?>"
                                         onchange="PropertyTypeChange('<?= $key ?>');">
                                     <option value=""><?= GetMessage("SRE_PARAM_PROP_TYPE_1") ?></option>
-                                    <option value="USER"<? if ($val["TYPE"] == "USER") echo " selected"; ?>><?= GetMessage("SRE_PARAM_PROP_TYPE_2") ?></option>
-                                    <option value="ORDER"<? if ($val["TYPE"] == "ORDER") echo " selected"; ?>><?= GetMessage("SRE_PARAM_PROP_TYPE_3") ?></option>
-                                    <option value="PROPERTY"<? if ($val["TYPE"] == "PROPERTY") echo " selected"; ?>><?= GetMessage("SRE_PARAM_PROP_TYPE_4") ?></option>
+                                    <option value="USER"<? if ($val["TYPE"] == "USER") {
+                                        echo " selected";
+                                    } ?>><?= GetMessage("SRE_PARAM_PROP_TYPE_2") ?></option>
+                                    <option value="ORDER"<? if ($val["TYPE"] == "ORDER") {
+                                        echo " selected";
+                                    } ?>><?= GetMessage("SRE_PARAM_PROP_TYPE_3") ?></option>
+                                    <option value="PROPERTY"<? if ($val["TYPE"] == "PROPERTY") {
+                                        echo " selected";
+                                    } ?>><?= GetMessage("SRE_PARAM_PROP_TYPE_4") ?></option>
                                 </select>
                             </td>
                             <td>
@@ -311,10 +365,12 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
                                     <option value="">--</option>
                                 </select>
                                 <input type="text" name="VALUE2_<?= $key ?>" id="VALUE2_<?= $key ?>" value="" size="40">
-                                <? if (strlen($val["VALUE"]) > 0) {
+                                <? if ($val["VALUE"] <> '') {
                                     ?>
                                     <script>
-                                        PropertyTypeChange('<?=CUtil::JSEscape($key)?>', '<?=CUtil::JSEscape($val["VALUE"])?>');
+                                        PropertyTypeChange('<?=CUtil::JSEscape($key)?>', '<?=CUtil::JSEscape(
+                                            $val["VALUE"]
+                                        )?>');
                                     </script>
                                     <?
                                 }

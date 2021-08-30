@@ -110,15 +110,19 @@ class AdvSession
             $banner = null;
             switch ($_SESSION['SEO_ADV']['ENGINE']) {
                 case YandexDirect::ENGINE_ID:
-                    $dbRes = YandexBannerTable::getList(array(
-                        'filter' => array(
-                            '=XML_ID' => $_SESSION['SEO_ADV']['BANNER_ID'],
-                            '=ENGINE.CODE' => YandexDirect::ENGINE_ID,
-                        ),
-                        'select' => array(
-                            'ID', 'CAMPAIGN_ID', 'ENGINE_ID',
+                    $dbRes = YandexBannerTable::getList(
+                        array(
+                            'filter' => array(
+                                '=XML_ID' => $_SESSION['SEO_ADV']['BANNER_ID'],
+                                '=ENGINE.CODE' => YandexDirect::ENGINE_ID,
+                            ),
+                            'select' => array(
+                                'ID',
+                                'CAMPAIGN_ID',
+                                'ENGINE_ID',
+                            )
                         )
-                    ));
+                    );
                     $banner = $dbRes->fetch();
                     break;
             }
@@ -127,12 +131,14 @@ class AdvSession
                 $linkedProductsList = static::getBannerLinkedProducts($banner['ID']);
 
                 if (count($linkedProductsList) > 0) {
-                    $basket = BasketTable::getList(array(
-                        'filter' => array(
-                            '=ORDER_ID' => $orderId,
-                        ),
-                        'select' => array('PRODUCT_ID'),
-                    ));
+                    $basket = BasketTable::getList(
+                        array(
+                            'filter' => array(
+                                '=ORDER_ID' => $orderId,
+                            ),
+                            'select' => array('PRODUCT_ID'),
+                        )
+                    );
 
                     $addEntry = false;
                     while ($item = $basket->fetch()) {
@@ -173,23 +179,33 @@ class AdvSession
             && Main\Loader::includeModule('catalog')
             && Main\Loader::includeModule('currency')
         ) {
-            $orderLinks = OrderTable::getList(array(
-                'filter' => array(
-                    '=ORDER_ID' => $orderId,
-                    '=PROCESSED' => OrderTable::NOT_PROCESSED,
-                ),
-                'select' => array('ID', 'BANNER_ID')
-            ));
+            $orderLinks = OrderTable::getList(
+                array(
+                    'filter' => array(
+                        '=ORDER_ID' => $orderId,
+                        '=PROCESSED' => OrderTable::NOT_PROCESSED,
+                    ),
+                    'select' => array('ID', 'BANNER_ID')
+                )
+            );
             $orderLink = $orderLinks->fetch();
             if ($orderLink) {
                 $linkedProductsList = static::getBannerLinkedProducts($orderLink['BANNER_ID']);
                 if (count($linkedProductsList) > 0) {
-                    $basket = BasketTable::getList(array(
-                        'filter' => array(
-                            '=ORDER_ID' => $orderId,
-                        ),
-                        'select' => array('PRODUCT_ID', 'GROSS_PROFIT', 'SUMMARY_PRICE', 'SUMMARY_PURCHASING_PRICE', 'QUANTITY'),
-                    ));
+                    $basket = BasketTable::getList(
+                        array(
+                            'filter' => array(
+                                '=ORDER_ID' => $orderId,
+                            ),
+                            'select' => array(
+                                'PRODUCT_ID',
+                                'GROSS_PROFIT',
+                                'SUMMARY_PRICE',
+                                'SUMMARY_PURCHASING_PRICE',
+                                'QUANTITY'
+                            ),
+                        )
+                    );
 
                     $sum = 0;
                     while ($item = $basket->fetch()) {
@@ -204,10 +220,13 @@ class AdvSession
                         }
                     }
 
-                    OrderTable::update($orderLink['ID'], array(
-                        'SUM' => $sum,
-                        'PROCESSED' => OrderTable::PROCESSED,
-                    ));
+                    OrderTable::update(
+                        $orderLink['ID'],
+                        array(
+                            'SUM' => $sum,
+                            'PROCESSED' => OrderTable::PROCESSED,
+                        )
+                    );
                 }
             }
         }
@@ -238,21 +257,25 @@ class AdvSession
     // TODO: remove all this math when /sale_refactoring_mince releases
     protected static function getProductProfit($productInfo)
     {
-        if (strlen($productInfo['GROSS_PROFIT']) > 0) {
+        if ($productInfo['GROSS_PROFIT'] <> '') {
             $profit = doubleval($productInfo['GROSS_PROFIT']);
         } else {
             $purchasingCost = 0;
-            if (strlen($productInfo['SUMMARY_PURCHASING_PRICE']) > 0) {
+            if ($productInfo['SUMMARY_PURCHASING_PRICE'] <> '') {
                 $purchasingCost = doubleval($productInfo['SUMMARY_PURCHASING_PRICE']);
             } else {
-                $dbRes = ProductTable::getList(array(
-                    'filter' => array(
-                        '=ID' => $productInfo['PRODUCT_ID'],
-                    ),
-                    'select' => array(
-                        'ID', 'PURCHASING_PRICE', 'PURCHASING_CURRENCY'
+                $dbRes = ProductTable::getList(
+                    array(
+                        'filter' => array(
+                            '=ID' => $productInfo['PRODUCT_ID'],
+                        ),
+                        'select' => array(
+                            'ID',
+                            'PURCHASING_PRICE',
+                            'PURCHASING_CURRENCY'
+                        )
                     )
-                ));
+                );
                 $productInfoBase = $dbRes->fetch();
                 if ($productInfoBase) {
                     $purchasingCost = $productInfoBase['PURCHASING_PRICE'] * $productInfo['QUANTITY'];

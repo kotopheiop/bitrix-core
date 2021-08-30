@@ -32,7 +32,11 @@ class RandomNumberGenerator extends NumberGenerator implements UserConfigurable
     /** @inheritdoc */
     public function parseTemplate($template)
     {
-        return str_replace(static::getPatternFor(static::TEMPLATE_WORD_RANDOM), $this->generateRandomString(), $template);
+        return str_replace(
+            static::getPatternFor(static::TEMPLATE_WORD_RANDOM),
+            $this->generateRandomString(),
+            $template
+        );
     }
 
     /** @inheritdoc */

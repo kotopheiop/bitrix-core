@@ -42,12 +42,7 @@ class CSocNetSearchReindex extends CSocNetSearch
         FILES_USER_IBLOCK_ID
         PATH_TO_USER_FILES_ELEMENT
     */
-    function __construct($user_id = 0, $group_id = 0, $arParams = array())
-    {
-        $this->CSocNetSearchReindex($user_id, $group_id, $arParams);
-    }
-
-    function CSocNetSearchReindex($user_id = 0, $group_id = 0, $arParams = array())
+    public function __construct($user_id = 0, $group_id = 0, $arParams = array())
     {
         $this->_user_id = intval($user_id);
         $this->_group_id = intval($group_id);
@@ -62,12 +57,14 @@ class CSocNetSearchReindex extends CSocNetSearch
 
     function InitSession($arType)
     {
-        if (!array_key_exists("BX_SOCNET_REINDEX_SESS_ID", $_SESSION))
+        if (!array_key_exists("BX_SOCNET_REINDEX_SESS_ID", $_SESSION)) {
             $_SESSION["BX_SOCNET_REINDEX_SESS_ID"] = array();
+        }
 
         $key = md5(uniqid(""));
-        foreach ($arType as $type)
+        foreach ($arType as $type) {
             $_SESSION["BX_SOCNET_REINDEX_SESS_ID"][$type] = $key;
+        }
 
         $_SESSION["BX_SOCNET_REINDEX_SESS_ID"]["KEY"] = $key;
     }
@@ -76,10 +73,12 @@ class CSocNetSearchReindex extends CSocNetSearch
     {
         global $DB;
 
-        if (!CModule::IncludeModule('forum'))
+        if (!CModule::IncludeModule('forum')) {
             return false;
+        }
 
-        $rsForumMessages = $DB->Query("
+        $rsForumMessages = $DB->Query(
+            "
 			SELECT ft.ID TOPIC_ID, ft.SOCNET_GROUP_ID, ft.OWNER_ID, fm.ID
 			FROM
 				b_forum_topic ft
@@ -91,7 +90,8 @@ class CSocNetSearchReindex extends CSocNetSearch
                 "AND (ft.SOCNET_GROUP_ID IS NULL OR ft.SOCNET_GROUP_ID = 0) AND ft.OWNER_ID IS NOT NULL"
             ) . "
 			ORDER BY fm.ID
-		");
+		"
+        );
         while ($arMessage = $rsForumMessages->Fetch()) {
             $url = str_replace(
                 array(
@@ -111,9 +111,13 @@ class CSocNetSearchReindex extends CSocNetSearch
                 $path_template
             );
 
-            CSearch::ChangeSite("forum", array(
-                SITE_ID => $url,
-            ), $arMessage["ID"]);
+            CSearch::ChangeSite(
+                "forum",
+                array(
+                    SITE_ID => $url,
+                ),
+                $arMessage["ID"]
+            );
 
             $arGroups = $this->GetSearchGroups(
                 $entity_type,
@@ -134,8 +138,9 @@ class CSocNetSearchReindex extends CSocNetSearch
 
             $this->_counter++;
 
-            if ($this->_end_time && $this->_end_time <= time())
+            if ($this->_end_time && $this->_end_time <= time()) {
                 return $arMessage["ID"];
+            }
         }
 
         return false;
@@ -143,17 +148,20 @@ class CSocNetSearchReindex extends CSocNetSearch
 
     function GetBlog($ID)
     {
-        if (!is_array($this->_blog_cache))
+        if (!is_array($this->_blog_cache)) {
             $this->_blog_cache = array();
+        }
         if (!array_key_exists($ID, $this->_blog_cache)) {
             global $DB;
-            $rsBlog = $DB->Query("
+            $rsBlog = $DB->Query(
+                "
 				SELECT ID, OWNER_ID, SOCNET_GROUP_ID
 				FROM b_blog
 				WHERE ID = " . intval($ID) . "
 				AND USE_SOCNET='Y'
 				AND GROUP_ID = " . intval($this->_params["BLOG_GROUP_ID"]) . "
-			");
+			"
+            );
             $this->_blog_cache[$ID] = $rsBlog->Fetch();
         }
         return $this->_blog_cache[$ID];
@@ -164,18 +172,19 @@ class CSocNetSearchReindex extends CSocNetSearch
         global $DB;
 
         $ID = $arFields["ID"];
-        if ($ID == "")
+        if ($ID == "") {
             return true;
+        }
         unset($arFields["ID"]);
 
-        switch (substr($ID, 0, 1)) {
+        switch (mb_substr($ID, 0, 1)) {
             case "P":
                 $blog = $this->GetBlog($arFields["PARAM2"]);
                 if (
                     is_array($blog)
                     && intval($blog["SOCNET_GROUP_ID"]) <= 0
                     && intval($blog["OWNER_ID"]) > 0
-                    && strlen($this->_params["PATH_TO_USER_BLOG_POST"]) > 0
+                    && $this->_params["PATH_TO_USER_BLOG_POST"] <> ''
                 ) {
                     $paramsTmp = $this->GetSearchParams(
                         "U",
@@ -183,10 +192,11 @@ class CSocNetSearchReindex extends CSocNetSearch
                         'blog',
                         'view_post'
                     );
-                    if (!empty($arFields["PARAMS"]))
+                    if (!empty($arFields["PARAMS"])) {
                         $arFields["PARAMS"] = array_merge($paramsTmp, $arFields["PARAMS"]);
-                    else
+                    } else {
                         $arFields["PARAMS"] = $paramsTmp;
+                    }
 
                     foreach ($arFields["SITE_ID"] as $site_id => $url) {
                         $arFields["SITE_ID"][$site_id] = str_replace(
@@ -198,7 +208,7 @@ class CSocNetSearchReindex extends CSocNetSearch
                             array(
                                 $blog["OWNER_ID"],
                                 $blog["SOCNET_GROUP_ID"],
-                                substr($ID, 1),
+                                mb_substr($ID, 1),
                             ),
                             $this->_params["PATH_TO_USER_BLOG_POST"]
                         );
@@ -215,7 +225,7 @@ class CSocNetSearchReindex extends CSocNetSearch
                     is_array($blog)
                     && intval($blog["SOCNET_GROUP_ID"]) <= 0
                     && intval($blog["OWNER_ID"]) > 0
-                    && strlen($this->_params["PATH_TO_USER_BLOG_COMMENT"]) > 0
+                    && $this->_params["PATH_TO_USER_BLOG_COMMENT"] <> ''
                 ) {
                     $paramsTmp = $this->GetSearchParams(
                         "U",
@@ -223,10 +233,11 @@ class CSocNetSearchReindex extends CSocNetSearch
                         'blog',
                         'view_comment'
                     );
-                    if (!empty($arFields["PARAMS"]))
+                    if (!empty($arFields["PARAMS"])) {
                         $arFields["PARAMS"] = array_merge($paramsTmp, $arFields["PARAMS"]);
-                    else
+                    } else {
                         $arFields["PARAMS"] = $paramsTmp;
+                    }
 
                     foreach ($arFields["SITE_ID"] as $site_id => $url) {
                         $arFields["SITE_ID"][$site_id] = str_replace(
@@ -239,8 +250,8 @@ class CSocNetSearchReindex extends CSocNetSearch
                             array(
                                 $blog["OWNER_ID"],
                                 $blog["SOCNET_GROUP_ID"],
-                                substr($arFields["PARAM2"], strpos($arFields["PARAM2"], "|") + 1),
-                                substr($ID, 1),
+                                mb_substr($arFields["PARAM2"], mb_strpos($arFields["PARAM2"], "|") + 1),
+                                mb_substr($ID, 1),
                             ),
                             $this->_params["PATH_TO_USER_BLOG_COMMENT"]
                         );
@@ -253,53 +264,63 @@ class CSocNetSearchReindex extends CSocNetSearch
                 break;
         }
 
-        if ($this->_end_time && $this->_end_time <= time())
+        if ($this->_end_time && $this->_end_time <= time()) {
             return false;
-        else
+        } else {
             return true;
+        }
     }
 
     function IndexBlogItemGroup($arFields)
     {
-        if ($this->_end_time && $this->_end_time <= time())
+        if ($this->_end_time && $this->_end_time <= time()) {
             return false;
-        else
+        } else {
             return true;
+        }
     }
 
     function ReindexBlog($entity_type, $last_id)
     {
         global $DB;
 
-        if (!CModule::IncludeModule('blog'))
+        if (!CModule::IncludeModule('blog')) {
             return false;
+        }
 
-        if (substr($last_id, 0, 1) == "0")
+        if (mb_substr($last_id, 0, 1) == "0") {
             $last_id = "";
+        }
 
-        if ($entity_type == "G")
+        if ($entity_type == "G") {
             return false;
+        }
 
-        return CBlogSearch::OnSearchReindex(array(
-            "ID" => $last_id,
-            "MODULE" => "blog",
-        ), $this, "IndexBlogItemUser");
-
+        return CBlogSearch::OnSearchReindex(
+            array(
+                "ID" => $last_id,
+                "MODULE" => "blog",
+            ),
+            $this,
+            "IndexBlogItemUser"
+        );
     }
 
     function UpdateForumTopicIndex($topic_id, $entity_type, $entity_id, $feature, $operation, $path_template)
     {
         global $DB;
 
-        if (!CModule::IncludeModule("forum"))
+        if (!CModule::IncludeModule("forum")) {
             return;
+        }
 
         $topic_id = intval($topic_id);
 
         $rsForumTopic = $DB->Query("SELECT FORUM_ID FROM b_forum_topic WHERE ID = " . $topic_id);
         $arForumTopic = $rsForumTopic->Fetch();
-        if (!$arForumTopic)
+        if (!$arForumTopic) {
             return;
+        }
 
         $arGroups = $this->GetSearchGroups(
             $entity_type,
@@ -310,11 +331,13 @@ class CSocNetSearchReindex extends CSocNetSearch
 
         CSearch::ChangePermission("forum", $arGroups, false, $arForumTopic["FORUM_ID"], $topic_id);
 
-        $rsForumMessages = $DB->Query("
+        $rsForumMessages = $DB->Query(
+            "
 			SELECT ID
 			FROM b_forum_message
 			WHERE TOPIC_ID = " . intval($topic_id) . "
-		");
+		"
+        );
         while ($arMessage = $rsForumMessages->Fetch()) {
             $url = str_replace(
                 array(
@@ -330,9 +353,13 @@ class CSocNetSearchReindex extends CSocNetSearch
                 $path_template
             );
 
-            CSearch::ChangeSite("forum", array(
-                SITE_ID => $url,
-            ), $arMessage["ID"]);
+            CSearch::ChangeSite(
+                "forum",
+                array(
+                    SITE_ID => $url,
+                ),
+                $arMessage["ID"]
+            );
 
             $this->_counter++;
         }
@@ -344,15 +371,22 @@ class CSocNetSearchReindex extends CSocNetSearch
             $operation
         );
 
-        CSearch::ChangeIndex("forum", array("UPD" => $this->_sess_id, "PARAMS" => $arParams), false, $arForumTopic["FORUM_ID"], $topic_id);
+        CSearch::ChangeIndex(
+            "forum",
+            array("UPD" => $this->_sess_id, "PARAMS" => $arParams),
+            false,
+            $arForumTopic["FORUM_ID"],
+            $topic_id
+        );
     }
 
     function ReindexIBlock($iblock_id, $entity_type, $feature, $operation, $path_template, $arFieldList, $last_id)
     {
         global $DB;
 
-        if (!CModule::IncludeModule("iblock"))
+        if (!CModule::IncludeModule("iblock")) {
             return false;
+        }
 
         $arSections = array();
 
@@ -363,7 +397,8 @@ class CSocNetSearchReindex extends CSocNetSearch
                 ">ID" => intval($last_id),
                 "CHECK_PERMISSIONS" => "N",
             ),
-            false, false,
+            false,
+            false,
             array_merge(
                 array("ID", "IBLOCK_ID", "IBLOCK_TYPE_ID", "NAME", "TAGS", "TIMESTAMP_X", "IBLOCK_SECTION_ID"),
                 $arFieldList
@@ -373,10 +408,11 @@ class CSocNetSearchReindex extends CSocNetSearch
             if (!array_key_exists($arFields["IBLOCK_SECTION_ID"], $arSections)) {
                 $rsPath = CIBlockSection::GetNavChain($arFields["IBLOCK_ID"], $arFields["IBLOCK_SECTION_ID"]);
                 $arSection = $rsPath->Fetch();
-                if ($entity_type == "G")
+                if ($entity_type == "G") {
                     $arSections[$arFields["IBLOCK_SECTION_ID"]] = intval($arSection["SOCNET_GROUP_ID"]);
-                else
+                } else {
                     $arSections[$arFields["IBLOCK_SECTION_ID"]] = intval($arSection["CREATED_BY"]);
+                }
             }
             $entity_id = $arSections[$arFields["IBLOCK_SECTION_ID"]];
 
@@ -404,37 +440,59 @@ class CSocNetSearchReindex extends CSocNetSearch
                 );
 
                 $body = "";
-                if ($feature == "wiki")
+                if ($feature == "wiki") {
                     $CWikiParser = new CWikiParser();
+                }
                 foreach ($arFieldList as $field) {
                     $text = "";
 
                     if ($field == "PREVIEW_TEXT" || $field == "DETAIL_TEXT") {
-                        if (isset($CWikiParser))
+                        if (isset($CWikiParser)) {
                             $text = HTMLToTxt($CWikiParser->parseForSearch($arFields[$field]));
-                        elseif (isset($arFields[$field . "_TYPE"]) && $arFields[$field . "_TYPE"] === "html")
+                        } elseif (isset($arFields[$field . "_TYPE"]) && $arFields[$field . "_TYPE"] === "html") {
                             $text = HTMLToTxt($arFields[$field]);
-                        else
+                        } else {
                             $text = $arFields[$field];
+                        }
                     } elseif ($field == $this->_file_property) {
                         $arFile = CIBlockElement::__GetFileContent($arFields[$this->_file_property . "_VALUE"]);
                         if (is_array($arFile)) {
                             $text = $arFile["CONTENT"];
-                            $arFields["TAGS"] .= "," . $arFile["PROPERTIES"][COption::GetOptionString("search", "page_tag_property")];
+                            $arFields["TAGS"] .= "," . $arFile["PROPERTIES"][COption::GetOptionString(
+                                    "search",
+                                    "page_tag_property"
+                                )];
                         }
                     } elseif ($field == "PROPERTY_FORUM_TOPIC_ID") {
                         $topic_id = intval($arFields["PROPERTY_FORUM_TOPIC_ID_VALUE"]);
-                        if ($topic_id)
-                            $this->UpdateForumTopicIndex($topic_id, $entity_type, $entity_id, $feature, $operation, $this->Url($url, array("MID" => "#message_id#"), "message#message_id#"));
+                        if ($topic_id) {
+                            $this->UpdateForumTopicIndex(
+                                $topic_id,
+                                $entity_type,
+                                $entity_id,
+                                $feature,
+                                $operation,
+                                $this->Url(
+                                    $url,
+                                    array("MID" => "#message_id#"),
+                                    "message#message_id#"
+                                )
+                            );
+                        }
                     }
 
                     $body .= $text . "\n\r";
                 }
 
-                if (isset($CWikiParser))
-                    $title = preg_replace('/^category:/i' . BX_UTF_PCRE_MODIFIER, GetMessage('CATEGORY_NAME') . ':', $arFields['NAME']);
-                else
+                if (isset($CWikiParser)) {
+                    $title = preg_replace(
+                        '/^category:/i' . BX_UTF_PCRE_MODIFIER,
+                        GetMessage('CATEGORY_NAME') . ':',
+                        $arFields['NAME']
+                    );
+                } else {
                     $title = $arFields["NAME"];
+                }
 
                 $arPermissions = $this->GetSearchGroups(
                     $entity_type,
@@ -448,30 +506,37 @@ class CSocNetSearchReindex extends CSocNetSearch
                     $arPermissions = $obElementRights->GetGroups(array("element_read"));
                 }
 
-                CSearch::Index("socialnetwork", $arFields["ID"], array(
-                    "LAST_MODIFIED" => $arFields["TIMESTAMP_X"],
-                    "TITLE" => $title,
-                    "BODY" => $body,
-                    "SITE_ID" => array(SITE_ID => $url),
-                    "PARAM1" => $arFields["IBLOCK_TYPE_ID"],
-                    "PARAM2" => $arFields["IBLOCK_ID"],
-                    "PARAM3" => $entity_id,
-                    "TAGS" => $arFields["TAGS"],
-                    "PERMISSIONS" => $arPermissions,
-                    "PARAMS" => $this->GetSearchParams(
-                        $entity_type,
-                        $entity_id,
-                        $feature,
-                        $operation
+                CSearch::Index(
+                    "socialnetwork",
+                    $arFields["ID"],
+                    array(
+                        "LAST_MODIFIED" => $arFields["TIMESTAMP_X"],
+                        "TITLE" => $title,
+                        "BODY" => $body,
+                        "SITE_ID" => array(SITE_ID => $url),
+                        "PARAM1" => $arFields["IBLOCK_TYPE_ID"],
+                        "PARAM2" => $arFields["IBLOCK_ID"],
+                        "PARAM3" => $entity_id,
+                        "TAGS" => $arFields["TAGS"],
+                        "PERMISSIONS" => $arPermissions,
+                        "PARAMS" => $this->GetSearchParams(
+                            $entity_type,
+                            $entity_id,
+                            $feature,
+                            $operation
+                        ),
+                        "REINDEX_FLAG" => true,
                     ),
-                    "REINDEX_FLAG" => true,
-                ), true, $this->_sess_id);
+                    true,
+                    $this->_sess_id
+                );
 
                 $this->_counter++;
             }
 
-            if ($this->_end_time && $this->_end_time <= time())
+            if ($this->_end_time && $this->_end_time <= time()) {
                 return $arFields["ID"];
+            }
         }
 
         return false;
@@ -479,16 +544,21 @@ class CSocNetSearchReindex extends CSocNetSearch
 
     function ReindexGroups($last_id)
     {
-        return $this->OnSearchReindex(array(
-            "MODULE" => "socialnetwork",
-        ), $this, "IndexItem");
+        return $this->OnSearchReindex(
+            array(
+                "MODULE" => "socialnetwork",
+            ),
+            $this,
+            "IndexItem"
+        );
     }
 
     function IndexItem($arFields)
     {
         $ID = $arFields["ID"];
-        if ($ID == "")
+        if ($ID == "") {
             return true;
+        }
         unset($arFields["ID"]);
 
         $arFields["REINDEX_FLAG"] = true;
@@ -506,16 +576,19 @@ class CSocNetSearchReindex extends CSocNetSearch
     {
         global $DB;
 
-        if (!CModule::IncludeModule('search'))
+        if (!CModule::IncludeModule('search')) {
             return false;
+        }
 
-        foreach ($_SESSION["BX_SOCNET_REINDEX_SESS_ID"] as $key => $value)
+        foreach ($_SESSION["BX_SOCNET_REINDEX_SESS_ID"] as $key => $value) {
             $_SESSION["BX_SOCNET_REINDEX_SESS_ID"][$key] = $DB->ForSQL($value);
+        }
 
-        if ($timeout > 0)
+        if ($timeout > 0) {
             $this->_end_time = time() + $timeout;
-        else
+        } else {
             $this->_end_time = 0;
+        }
 
         $this->_counter = 0;
 
@@ -525,13 +598,13 @@ class CSocNetSearchReindex extends CSocNetSearch
             $next_step = array_shift($arSteps);
         } while ($next_step != $current_step);
 
-        if (count($arSteps) <= 0)
+        if (count($arSteps) <= 0) {
             $next_step = "end";
-        else
+        } else {
             $next_step = array_shift($arSteps);
+        }
 
         switch ($current_step) {
-
             case "init":
                 $last_id = 0;
                 break;
@@ -542,71 +615,112 @@ class CSocNetSearchReindex extends CSocNetSearch
 
             case "group_blogs":
                 $blog_group = intval($this->_params["BLOG_GROUP_ID"]);
-                if ($blog_group)
+                if ($blog_group) {
                     $last_id = $this->ReindexBlog("G", $last_id);
+                }
                 break;
 
             case "user_blogs":
                 $blog_group = intval($this->_params["BLOG_GROUP_ID"]);
-                if ($blog_group)
+                if ($blog_group) {
                     $last_id = $this->ReindexBlog("U", $last_id);
+                }
                 break;
 
             case "group_forums":
                 $path_template = trim($this->_params["PATH_TO_GROUP_FORUM_MESSAGE"]);
-                if (strlen($path_template))
+                if ($path_template <> '') {
                     $last_id = $this->ReindexForum("G", $last_id, $path_template);
+                }
                 break;
 
             case "user_forums":
                 $path_template = trim($this->_params["PATH_TO_USER_FORUM_MESSAGE"]);
-                if (strlen($path_template))
+                if ($path_template <> '') {
                     $last_id = $this->ReindexForum("U", $last_id, $path_template);
+                }
                 break;
 
             case "group_photos":
                 $path_template = trim($this->_params["PATH_TO_GROUP_PHOTO_ELEMENT"]);
                 $iblock = intval($this->_params["PHOTO_GROUP_IBLOCK_ID"]);
 
-                if (strlen($path_template) && $iblock)
-                    $last_id = $this->ReindexIBlock($iblock, "G", "photo", "view", $path_template, array("PREVIEW_TEXT", "PROPERTY_FORUM_TOPIC_ID"), $last_id);
-                else
+                if (mb_strlen($path_template) && $iblock) {
+                    $last_id = $this->ReindexIBlock(
+                        $iblock,
+                        "G",
+                        "photo",
+                        "view",
+                        $path_template,
+                        array("PREVIEW_TEXT", "PROPERTY_FORUM_TOPIC_ID"),
+                        $last_id
+                    );
+                } else {
                     $last_id = 0;
+                }
                 break;
 
             case "user_photos":
                 $path_template = trim($this->_params["PATH_TO_USER_PHOTO_ELEMENT"]);
                 $iblock = intval($this->_params["PHOTO_USER_IBLOCK_ID"]);
 
-                if (strlen($path_template) && $iblock)
-                    $last_id = $this->ReindexIBlock($iblock, "U", "photo", "view", $path_template, array("PREVIEW_TEXT", "PROPERTY_FORUM_TOPIC_ID"), $last_id);
-                else
+                if (mb_strlen($path_template) && $iblock) {
+                    $last_id = $this->ReindexIBlock(
+                        $iblock,
+                        "U",
+                        "photo",
+                        "view",
+                        $path_template,
+                        array("PREVIEW_TEXT", "PROPERTY_FORUM_TOPIC_ID"),
+                        $last_id
+                    );
+                } else {
                     $last_id = 0;
+                }
                 break;
 
             case "group_calendars":
                 $path_template = trim($this->_params["PATH_TO_GROUP_CALENDAR_ELEMENT"]);
                 $iblock = intval($this->_params["CALENDAR_GROUP_IBLOCK_ID"]);
 
-                if (strlen($path_template) && $iblock)
-                    $last_id = $this->ReindexIBlock($iblock, "G", "calendar", "view", $path_template, array("DETAIL_TEXT"), $last_id);
-                else
+                if (mb_strlen($path_template) && $iblock) {
+                    $last_id = $this->ReindexIBlock(
+                        $iblock,
+                        "G",
+                        "calendar",
+                        "view",
+                        $path_template,
+                        array("DETAIL_TEXT"),
+                        $last_id
+                    );
+                } else {
                     $last_id = 0;
+                }
                 break;
 
             case "group_files":
                 $path_template = trim($this->_params["PATH_TO_GROUP_FILES_ELEMENT"]);
                 $iblock = intval($this->_params["FILES_GROUP_IBLOCK_ID"]);
 
-                $property = strtoupper(trim($this->_params["FILES_PROPERTY_CODE"]));
-                if (strlen($property) <= 0)
+                $property = mb_strtoupper(trim($this->_params["FILES_PROPERTY_CODE"]));
+                if ($property == '') {
                     $property = "FILE";
+                }
                 $this->_file_property = "PROPERTY_" . $property;
 
-                if (strlen($path_template) && $iblock)
-                    $last_id = $this->ReindexIBlock($iblock, "G", "files", "view", $path_template, array($this->_file_property, "PROPERTY_FORUM_TOPIC_ID"), $last_id);
-                else
+                if (mb_strlen($path_template) && $iblock) {
+                    $last_id = $this->ReindexIBlock(
+                        $iblock,
+                        "G",
+                        "files",
+                        "view",
+                        $path_template,
+                        array($this->_file_property, "PROPERTY_FORUM_TOPIC_ID"),
+                        $last_id
+                    );
+                } else {
                     $last_id = 0;
+                }
                 break;
 
             case "group_wiki":
@@ -614,10 +728,19 @@ class CSocNetSearchReindex extends CSocNetSearch
                     $path_template = trim($this->_params["PATH_TO_GROUP"]) . "wiki/#name#/";
                     $iblock = intval(COption::GetOptionInt("wiki", "socnet_iblock_id"));
 
-                    if (strlen($path_template) && $iblock)
-                        $last_id = $this->ReindexIBlock($iblock, "G", "wiki", "view", $path_template, array("DETAIL_TEXT"), $last_id);
-                    else
+                    if (mb_strlen($path_template) && $iblock) {
+                        $last_id = $this->ReindexIBlock(
+                            $iblock,
+                            "G",
+                            "wiki",
+                            "view",
+                            $path_template,
+                            array("DETAIL_TEXT"),
+                            $last_id
+                        );
+                    } else {
                         $last_id = 0;
+                    }
                 }
                 break;
 
@@ -625,15 +748,25 @@ class CSocNetSearchReindex extends CSocNetSearch
                 $path_template = trim($this->_params["PATH_TO_USER_FILES_ELEMENT"]);
                 $iblock = intval($this->_params["FILES_USER_IBLOCK_ID"]);
 
-                $property = strtoupper(trim($this->_params["FILES_PROPERTY_CODE"]));
-                if (strlen($property) <= 0)
+                $property = mb_strtoupper(trim($this->_params["FILES_PROPERTY_CODE"]));
+                if ($property == '') {
                     $property = "FILE";
+                }
                 $this->_file_property = "PROPERTY_" . $property;
 
-                if (strlen($path_template) && $iblock)
-                    $last_id = $this->ReindexIBlock($iblock, "U", "files", "view", $path_template, array($this->_file_property, "PROPERTY_FORUM_TOPIC_ID"), $last_id);
-                else
+                if (mb_strlen($path_template) && $iblock) {
+                    $last_id = $this->ReindexIBlock(
+                        $iblock,
+                        "U",
+                        "files",
+                        "view",
+                        $path_template,
+                        array($this->_file_property, "PROPERTY_FORUM_TOPIC_ID"),
+                        $last_id
+                    );
+                } else {
                     $last_id = 0;
+                }
                 break;
 
             case "delete_old":
@@ -646,19 +779,18 @@ class CSocNetSearchReindex extends CSocNetSearch
                 break;
         }
 
-        if ($last_id > 0 || preg_match('/^.\d/', $last_id))
+        if ($last_id > 0 || preg_match('/^.\d/', $last_id)) {
             return array("step" => $current_step, "last_id" => $last_id);
-        else
+        } else {
             return array("step" => $next_step, "last_id" => 0);
+        }
     }
 
-    function OnBeforeFullReindexClear()
+    public static function OnBeforeFullReindexClear()
     {
     }
 
-    function OnBeforeIndexDelete($strWhere)
+    public static function OnBeforeIndexDelete($strWhere)
     {
     }
 }
-
-?>

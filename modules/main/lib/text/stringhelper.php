@@ -27,7 +27,7 @@ class StringHelper
         static $cache;
 
         if (empty($cache[$str])) {
-            $cache[$str] = strtoupper($str);
+            $cache[$str] = mb_strtoupper($str);
         }
 
         return $cache[$str];
@@ -42,7 +42,7 @@ class StringHelper
      */
     public static function camel2snake($str)
     {
-        return strtolower(preg_replace('/(.)([A-Z])/', '$1_$2', $str));
+        return mb_strtolower(preg_replace('/(.)([A-Z])/', '$1_$2', $str));
     }
 
     /**
@@ -54,7 +54,30 @@ class StringHelper
      */
     public static function snake2camel($str)
     {
-        $str = str_replace('_', ' ', strtolower($str));
+        $str = str_replace('_', ' ', mb_strtolower($str));
         return str_replace(' ', '', ucwords($str));
+    }
+
+    /**
+     * Compatible with php 8 for nested arrays. Only the first level of the array is processed.
+     *
+     * @param mixed $search
+     * @param mixed $replace
+     * @param mixed $str
+     * @return mixed
+     */
+    public static function str_replace($search, $replace, $str)
+    {
+        if (is_array($str)) {
+            foreach ($str as $key => $value) {
+                if (is_scalar($value)) {
+                    $str[$key] = str_replace($search, $replace, $value);
+                }
+            }
+        } else {
+            $str = str_replace($search, $replace, $str);
+        }
+
+        return $str;
     }
 }

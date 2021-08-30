@@ -28,17 +28,30 @@ $queryType = "M";
 $arRequestedModules = array();
 if (array_key_exists("reqm", $_REQUEST)) {
     $arRequestedModulesTmp = explode(",", $_REQUEST["reqm"]);
-    for ($i = 0, $cnt = count($arRequestedModulesTmp); $i < $cnt; $i++)
-        if (!in_array($arRequestedModulesTmp[$i], $arRequestedModules))
+    for ($i = 0, $cnt = count($arRequestedModulesTmp); $i < $cnt; $i++) {
+        if (!in_array($arRequestedModulesTmp[$i], $arRequestedModules)) {
             $arRequestedModules[] = $arRequestedModulesTmp[$i];
+        }
+    }
 } else {
     $arRequestedModules = CUpdateClientPartner::GetRequestedModules($_REQUEST["addmodule"]);
 }
 
-COption::SetOptionString("main", "update_system_update", Date($GLOBALS["DB"]->DateFormatToPHP(CSite::GetDateFormat("FULL")), time()));
+COption::SetOptionString(
+    "main",
+    "update_system_update",
+    Date($GLOBALS["DB"]->DateFormatToPHP(CSite::GetDateFormat("FULL")), time())
+);
 /************************************/
 $arUpdatedModulesList = array();
-$loadResult = CUpdateClientPartner::LoadModulesUpdates($errorMessage, $arUpdateDescription, LANG, $stableVersionsOnly, $arRequestedModules, array_key_exists("reqm", $_REQUEST));
+$loadResult = CUpdateClientPartner::LoadModulesUpdates(
+    $errorMessage,
+    $arUpdateDescription,
+    LANG,
+    $stableVersionsOnly,
+    $arRequestedModules,
+    array_key_exists("reqm", $_REQUEST)
+);
 
 if ($loadResult == "S") {
     CUpdateClientPartner::AddMessage2Log("LoadModulesUpdates-Step", "LMU01");
@@ -46,18 +59,21 @@ if ($loadResult == "S") {
     $message = "";
     if (isset($arUpdateDescription["DATA"]["#"]["ITEM"])) {
         for ($i = 0, $cnt = count($arUpdateDescription["DATA"]["#"]["ITEM"]); $i < $cnt; $i++) {
-            if (strlen($message) > 0)
+            if ($message <> '') {
                 $message .= ", ";
+            }
             $message .= $arUpdateDescription["DATA"]["#"]["ITEM"][$i]["@"]["NAME"];
-            if (strlen($arUpdateDescription["DATA"]["#"]["ITEM"][$i]["@"]["VALUE"]) > 0)
+            if ($arUpdateDescription["DATA"]["#"]["ITEM"][$i]["@"]["VALUE"] <> '') {
                 $message .= " (" . $arUpdateDescription["DATA"]["#"]["ITEM"][$i]["@"]["VALUE"] . ")";
+            }
         }
     }
 
     die("STP0|" . $message);
 } elseif ($loadResult == "E") {
-    if (strlen($errorMessage) <= 0)
+    if ($errorMessage == '') {
         $errorMessage = "[CL02] " . GetMessage("SUPC_ME_PACK");
+    }
     CUpdateClientPartner::AddMessage2Log($errorMessage, "CL02");
 } elseif ($loadResult == "F") {
     CUpdateClientPartner::AddMessage2Log("Finish - NOUPDATES", "STEP");
@@ -70,7 +86,7 @@ if ($loadResult == "S") {
 	CUpdateClientPartner::AddMessage2Log(GetMessage("SUPC_ME_LOAD"), "CL01");
 }*/
 
-if (StrLen($errorMessage) <= 0) {
+if ($errorMessage == '') {
     $temporaryUpdatesDir = "";
     if (!CUpdateClientPartner::UnGzipArchive($temporaryUpdatesDir, $errorMessage, true)) {
         $errorMessage .= "[CL02] " . GetMessage("SUPC_ME_PACK") . ". ";
@@ -78,7 +94,7 @@ if (StrLen($errorMessage) <= 0) {
     }
 }
 
-if (strlen($errorMessage) <= 0) {
+if ($errorMessage == '') {
     if (!CUpdateClientPartner::CheckUpdatability($temporaryUpdatesDir, $errorMessage)) {
         $errorMessage .= "[CL03] " . GetMessage("SUPC_ME_CHECK") . ". ";
         CUpdateClientPartner::AddMessage2Log(GetMessage("SUPC_ME_CHECK"), "CL03");
@@ -92,16 +108,17 @@ $arStepUpdateInfo = $arUpdateDescription;
 	//CUpdateClientPartner::AddMessage2Log(print_r($arStepUpdateInfo, true), "!!!!!");
 }*/
 
-if (StrLen($errorMessage) <= 0) {
+if ($errorMessage == '') {
     if (isset($arStepUpdateInfo["DATA"]["#"]["ERROR"])) {
-        for ($i = 0, $cnt = count($arStepUpdateInfo["DATA"]["#"]["ERROR"]); $i < $cnt; $i++)
+        for ($i = 0, $cnt = count($arStepUpdateInfo["DATA"]["#"]["ERROR"]); $i < $cnt; $i++) {
             $errorMessage .= "[" . $arStepUpdateInfo["DATA"]["#"]["ERROR"][$i]["@"]["TYPE"] . "] " . $arStepUpdateInfo["DATA"]["#"]["ERROR"][$i]["#"];
+        }
     }
 }
 
 $arItemsUpdated = array();
 $arItemsUpdatedDescr = array();
-if (StrLen($errorMessage) <= 0) {
+if ($errorMessage == '') {
     if (isset($arStepUpdateInfo["DATA"]["#"]["ITEM"])) {
         for ($i = 0, $cnt = count($arStepUpdateInfo["DATA"]["#"]["ITEM"]); $i < $cnt; $i++) {
             $arItemsUpdated[$arStepUpdateInfo["DATA"]["#"]["ITEM"][$i]["@"]["NAME"]] = $arStepUpdateInfo["DATA"]["#"]["ITEM"][$i]["@"]["VALUE"];
@@ -110,41 +127,45 @@ if (StrLen($errorMessage) <= 0) {
     }
 }
 
-if (StrLen($errorMessage) <= 0) {
+if ($errorMessage == '') {
     if (isset($arStepUpdateInfo["DATA"]["#"]["NOUPDATES"])) {
         CUpdateClientPartner::ClearUpdateFolder($_SERVER["DOCUMENT_ROOT"] . "/bitrix/updates/" . $temporaryUpdatesDir);
         CUpdateClientPartner::AddMessage2Log("Finish - NOUPDATES", "STEP");
         echo "FIN";
     } else {
-        if (strlen($errorMessage) <= 0) {
+        if ($errorMessage == '') {
             if (!CUpdateClientPartner::UpdateStepModules($temporaryUpdatesDir, $errorMessage)) {
                 $errorMessage .= "[CL04] " . GetMessage("SUPC_ME_UPDATE") . ". ";
                 CUpdateClientPartner::AddMessage2Log(GetMessage("SUPC_ME_UPDATE"), "CL04");
             }
         }
 
-        if (StrLen($errorMessage) > 0) {
+        if ($errorMessage <> '') {
             CUpdateClientPartner::AddMessage2Log("Error: " . $errorMessage, "UPD_ERROR");
             echo "ERR" . $errorMessage;
         } else {
             echo "STP";
             echo count($arItemsUpdated) . "|";
-            $bFirst = True;
+            $bFirst = true;
             foreach ($arItemsUpdated as $key => $value) {
                 $strModuleDescr = "";
-                if (strlen($arItemsUpdatedDescr[$key]) > 0) {
+                if ($arItemsUpdatedDescr[$key] <> '') {
                     $strModuleDescr = "<br>" . htmlspecialcharsback($arItemsUpdatedDescr[$key]);
                     $strModuleDescr = preg_replace("#</?pre>#i", " ", $strModuleDescr);
                     $strModuleDescr = preg_replace("/[\s\n\r]+/", " ", $strModuleDescr);
                     $strModuleDescr = addslashes($strModuleDescr);
                 }
 
-                CUpdateClientPartner::AddMessage2Log("Updated: " . $key . ((StrLen($value) > 0) ? " (" . $value . ")" : "") . $strModuleDescr, "UPD_SUCCESS");
-                if (COption::GetOptionString("main", "event_log_marketplace", "Y") === "Y")
+                CUpdateClientPartner::AddMessage2Log(
+                    "Updated: " . $key . (($value <> '') ? " (" . $value . ")" : "") . $strModuleDescr,
+                    "UPD_SUCCESS"
+                );
+                if (COption::GetOptionString("main", "event_log_marketplace", "Y") === "Y") {
                     CEventLog::Log("INFO", "MP_MODULE_DOWNLOADED", "main", $key, $value);
+                }
 
-                echo ($bFirst ? "" : ", ") . $key . ((StrLen($value) > 0) ? " (" . $value . ")" : "");
-                $bFirst = False;
+                echo ($bFirst ? "" : ", ") . $key . (($value <> '') ? " (" . $value . ")" : "");
+                $bFirst = false;
             }
         }
     }

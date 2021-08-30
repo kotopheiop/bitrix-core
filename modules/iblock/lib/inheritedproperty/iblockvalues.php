@@ -78,7 +78,8 @@ class IblockValues extends BaseValues
         $result = array();
         if ($this->hasTemplates()) {
             $connection = \Bitrix\Main\Application::getConnection();
-            $query = $connection->query("
+            $query = $connection->query(
+                "
 				SELECT
 					P.ID
 					,P.CODE
@@ -91,7 +92,8 @@ class IblockValues extends BaseValues
 					INNER JOIN b_iblock_iproperty P ON P.ID = IP.IPROP_ID
 				WHERE
 					IP.IBLOCK_ID = " . $this->iblockId . "
-			");
+			"
+            );
 
             while ($row = $query->fetch()) {
                 $result[$row["CODE"]] = $row;
@@ -127,17 +129,23 @@ class IblockValues extends BaseValues
     function clearValues()
     {
         $connection = \Bitrix\Main\Application::getConnection();
-        $connection->query("
+        $connection->query(
+            "
 			DELETE FROM b_iblock_element_iprop
 			WHERE IBLOCK_ID = " . $this->iblockId . "
-		");
-        $connection->query("
+		"
+        );
+        $connection->query(
+            "
 			DELETE FROM b_iblock_section_iprop
 			WHERE IBLOCK_ID = " . $this->iblockId . "
-		");
-        $connection->query("
+		"
+        );
+        $connection->query(
+            "
 			DELETE FROM b_iblock_iblock_iprop
 			WHERE IBLOCK_ID = " . $this->iblockId . "
-		");
+		"
+        );
     }
 }

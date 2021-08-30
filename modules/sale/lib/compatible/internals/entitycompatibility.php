@@ -104,8 +104,14 @@ abstract class EntityCompatibility
      * @param $callback
      * @return Compatible\CDBResult
      */
-    public static function getList($sort = array(), $filter = array(), $group = null, $nav = array(), $select = array(), $callback = false)
-    {
+    public static function getList(
+        $sort = array(),
+        $filter = array(),
+        $group = null,
+        $nav = array(),
+        $select = array(),
+        $callback = false
+    ) {
         /** @var EntityCompatibility $compatibility */
         $compatibility = new static();
         return static::setGetListParameters($compatibility, $sort, $filter, $group, $nav, $select, $callback);
@@ -122,8 +128,15 @@ abstract class EntityCompatibility
      *
      * @return Compatible\CDBResult|int
      */
-    protected static function setGetListParameters(EntityCompatibility $compatibility, $sort = array(), $filter = array(), $group = null, $nav = array(), $select = array(), $callback = false)
-    {
+    protected static function setGetListParameters(
+        EntityCompatibility $compatibility,
+        $sort = array(),
+        $filter = array(),
+        $group = null,
+        $nav = array(),
+        $select = array(),
+        $callback = false
+    ) {
         if (empty($select)) {
             $select = array('*');
         }
@@ -170,7 +183,6 @@ abstract class EntityCompatibility
      */
     public function setFilter(array $filter = array())
     {
-
         $aliasFields = static::getAliasFields();
         foreach ($filter as $fieldName => $fieldValue) {
             $fieldName = ToUpper($fieldName);
@@ -186,8 +198,9 @@ abstract class EntityCompatibility
             if ($propKey = $this->parseField($fieldClearName)) {
                 $this->addFilter($filterMatch['modifier'] . $filterMatch['operator'] . $propKey, $fieldValue);
             } else {
-                if (!$this->checkWhiteListFields($fieldClearName))
+                if (!$this->checkWhiteListFields($fieldClearName)) {
                     continue;
+                }
 
                 if (!is_array($aliasFields[$fieldClearName])) {
                     $this->addFilter($fieldName, $fieldValue);
@@ -276,7 +289,7 @@ abstract class EntityCompatibility
     public function setSort(array $sort = array())
     {
         foreach ($sort as $fieldName => $fieldValue) {
-            $fieldName = strtoupper($fieldName);
+            $fieldName = mb_strtoupper($fieldName);
             if ($propKey = $this->parseField($fieldName)) {
                 $this->sort[$propKey] = $fieldValue;
             } else {
@@ -298,9 +311,9 @@ abstract class EntityCompatibility
      */
     public function setCallback(array $callback)
     {
-
         if (($sql = call_user_func_array($callback, array())) && strval(trim($sql)) != '') {
-            $this->query->registerRuntimeField('',
+            $this->query->registerRuntimeField(
+                '',
                 new Entity\ExpressionField(
                     '__CALLBACK',
                     '(CASE WHEN (' . $sql . ') THEN 1 ELSE 0 END)'
@@ -317,8 +330,9 @@ abstract class EntityCompatibility
      */
     protected function addFilter($name, $value)
     {
-        if (isset($this->filter[$name]))
+        if (isset($this->filter[$name])) {
             return false;
+        }
 
         $this->filter[$name] = $value;
 
@@ -356,8 +370,9 @@ abstract class EntityCompatibility
      */
     protected function addSelect($name)
     {
-        if (in_array($name, $this->select))
+        if (in_array($name, $this->select)) {
             return false;
+        }
 
         $this->select[] = $name;
 
@@ -404,7 +419,6 @@ abstract class EntityCompatibility
 
             $this->queryAliasList[] = $fieldName;
             $this->query->addAlias($fieldName, $fieldValue);
-
         }
 
         return true;
@@ -482,8 +496,9 @@ abstract class EntityCompatibility
      */
     protected static function clearFields(array $fields, array $availableFields = array())
     {
-        if (empty($availableFields))
+        if (empty($availableFields)) {
             $availableFields = static::getAvailableFields();
+        }
 
         foreach ($fields as $fieldName => $fieldValue) {
             if (!in_array($fieldName, $availableFields)) {
@@ -524,8 +539,8 @@ abstract class EntityCompatibility
     protected static function convertDateField($name, $value, array $dateFields = array())
     {
         $key = $name;
-        if (substr($key, 0, 1) == '=') {
-            $key = substr($key, 1);
+        if (mb_substr($key, 0, 1) == '=') {
+            $key = mb_substr($key, 1);
         }
 
         if (!array_key_exists($key, $dateFields)) {
@@ -536,11 +551,13 @@ abstract class EntityCompatibility
 
         if (!($value instanceof DateTime)
             && !($value instanceof Date)) {
-            if ($value === null)
+            if ($value === null) {
                 return null;
+            }
 
-            if (strval($value) == '')
+            if (strval($value) == '') {
                 return false;
+            }
 
 
             $setValue = null;
@@ -625,8 +642,9 @@ abstract class EntityCompatibility
      */
     protected static function replaceFields(array $fields, array $replace = array())
     {
-        if (empty($replace))
+        if (empty($replace)) {
             return $fields;
+        }
 
         $replacedFields = $fields;
 
@@ -677,17 +695,19 @@ abstract class EntityCompatibility
             throw new ArgumentOutOfRangeException('entityName');
         }
 
-        if (empty($availableFields))
+        if (empty($availableFields)) {
             $availableFields = static::getAvailableFields();
+        }
 
         foreach ($fields as $name => $value) {
-            $firstLetter = substr($name, 0, 1);
+            $firstLetter = mb_substr($name, 0, 1);
             if ($firstLetter == "~" || $firstLetter == "=") {
                 $fieldName = ltrim($name, '=');
                 $fieldName = ltrim($fieldName, '~');
 
-                if (!in_array($fieldName, $availableFields))
+                if (!in_array($fieldName, $availableFields)) {
                     continue;
+                }
 
                 $this->rawFields[$entityName][$firstLetter . $fieldName] = $value;
                 unset($fields[$name]);
@@ -715,8 +735,9 @@ abstract class EntityCompatibility
             throw new ArgumentOutOfRangeException('entityName');
         }
 
-        if (empty($this->rawFields[$entityName]) || !is_array($this->rawFields[$entityName]))
+        if (empty($this->rawFields[$entityName]) || !is_array($this->rawFields[$entityName])) {
             return new Sale\Result();
+        }
 
         $tableName = null;
         if ($entityName == static::ENTITY_ORDER) {
@@ -747,13 +768,15 @@ abstract class EntityCompatibility
         $queryValue = $DB->PrepareUpdate($tableName, $this->rawFields[$entityName]);
 
         foreach ($this->rawFields[$entityName] as $key => $value) {
-            if (substr($key, 0, 1) != "=")
+            if (mb_substr($key, 0, 1) != "=") {
                 continue;
+            }
 
-            if (strval($queryValue) != '')
+            if (strval($queryValue) != '') {
                 $queryValue .= ", ";
+            }
 
-            $queryValue .= substr($key, 1) . "=" . $value . " ";
+            $queryValue .= mb_substr($key, 1) . "=" . $value . " ";
         }
 
         $sql =
@@ -761,7 +784,12 @@ abstract class EntityCompatibility
             "	" . $queryValue . " WHERE ID = " . $entity->getId() . " ";
 
         if (!($DB->Query($sql, true, "File: " . __FILE__ . "<br>Line: " . __LINE__))) {
-            $result->addError(new Sale\ResultError(Loc::getMessage('SALE_COMPATIBLE_' . $entityName . '_RAW_FIELD_UPDATE_ERROR'), 'SALE_' . $entityName . '_COMPATIBLE_RAW_FIELD_UPDATE_ERROR'));
+            $result->addError(
+                new Sale\ResultError(
+                    Loc::getMessage('SALE_COMPATIBLE_' . $entityName . '_RAW_FIELD_UPDATE_ERROR'),
+                    'SALE_' . $entityName . '_COMPATIBLE_RAW_FIELD_UPDATE_ERROR'
+                )
+            );
             return $result;
         }
 
@@ -782,8 +810,9 @@ abstract class EntityCompatibility
             throw new ArgumentOutOfRangeException('entityName');
         }
 
-        if (empty($fields))
+        if (empty($fields)) {
             return array();
+        }
 
         foreach ($fields as $name => $value) {
             $fields[$separator . $name] = $value;
@@ -808,11 +837,13 @@ abstract class EntityCompatibility
     {
         $fields = $this->getWhiteListFields();
         if (!empty($fields)) {
-            if (in_array($fieldName, $fields))
+            if (in_array($fieldName, $fields)) {
                 return true;
+            }
 
-            if (strpos($fieldName, 'UF_') === 0)
+            if (mb_strpos($fieldName, 'UF_') === 0) {
                 return true;
+            }
         }
 
         return false;

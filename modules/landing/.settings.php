@@ -1,8 +1,12 @@
 <?php
+
 return [
     'controllers' => [
         'value' => [
-            'defaultNamespace' => '\\Bitrix\\Landing\\Controller',
+            'namespaces' => [
+                '\\Bitrix\\Landing\\Controller' => 'api'
+            ],
+            'defaultNamespace' => '\\Bitrix\\Landing\\Controller'
         ],
         'readonly' => true
     ]

@@ -3,7 +3,7 @@
 namespace Bitrix\Rest;
 
 use Bitrix\Main;
-use Bitrix\Main\Web\HttpClient;
+use Bitrix\Main\DB\SqlQueryException;
 
 /**
  * Class UsageStatTable
@@ -40,11 +40,22 @@ use Bitrix\Main\Web\HttpClient;
  * </ul>
  *
  * @package Bitrix\Rest
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_UsageStat_Query query()
+ * @method static EO_UsageStat_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_UsageStat_Result getById($id)
+ * @method static EO_UsageStat_Result getList(array $parameters = array())
+ * @method static EO_UsageStat_Entity getEntity()
+ * @method static \Bitrix\Rest\EO_UsageStat createObject($setDefaultValues = true)
+ * @method static \Bitrix\Rest\EO_UsageStat_Collection createCollection()
+ * @method static \Bitrix\Rest\EO_UsageStat wakeUpObject($row)
+ * @method static \Bitrix\Rest\EO_UsageStat_Collection wakeUpCollection($rows)
+ */
 class UsageStatTable extends Main\Entity\DataManager
 {
-
-    const SEND_STATISTIC_URL = '';//todo: set current url
 
     protected static $data = array();
 
@@ -76,7 +87,10 @@ class UsageStatTable extends Main\Entity\DataManager
             ),
             'IS_SENT' => array(
                 'data_type' => 'boolean',
-                'values' => array('N', 'Y')
+                'values' => array(
+                    'N',
+                    'Y'
+                )
             ),
             'HOUR_0' => array(
                 'data_type' => 'integer',
@@ -246,6 +260,21 @@ class UsageStatTable extends Main\Entity\DataManager
         );
     }
 
+    /**
+     * Saves statistic used application from bizproc
+     * @param mixed $clientId 'ID' or 'CODE' of application
+     * @param string $clientCode additional information about saving statistic
+     */
+    public static function logBizProc($clientId, string $clientCode): void
+    {
+        static::increment(
+            UsageEntityTable::ENTITY_TYPE_APPLICATION,
+            $clientId,
+            UsageEntityTable::SUB_ENTITY_TYPE_BIZ_PROC,
+            $clientCode
+        );
+    }
+
     public static function logActivity($clientId, $clientCode)
     {
         static::increment(
@@ -256,13 +285,72 @@ class UsageStatTable extends Main\Entity\DataManager
         );
     }
 
+    public static function logConfiguration($clientId, $clientCode)
+    {
+        static::increment(
+            UsageEntityTable::ENTITY_TYPE_APPLICATION,
+            $clientId,
+            UsageEntityTable::SUB_ENTITY_TYPE_CONFIGURATION,
+            $clientCode
+        );
+    }
+
+    public static function logMessage($clientId, $messageType)
+    {
+        static::increment(
+            UsageEntityTable::ENTITY_TYPE_APPLICATION,
+            $clientId,
+            UsageEntityTable::SUB_ENTITY_TYPE_SEND_MESSAGE,
+            $messageType
+        );
+    }
+
+    public static function logLanding($clientId, $type, $count = 1)
+    {
+        $entityKey = static::getEntityKey(
+            UsageEntityTable::ENTITY_TYPE_APPLICATION,
+            $clientId,
+            UsageEntityTable::SUB_ENTITY_TYPE_LANDING,
+            $type
+        );
+        if (!isset(static::$data[$entityKey])) {
+            static::$data[$entityKey] = 0;
+        }
+        static::$data[$entityKey] += (int)$count;
+    }
+
+    /**
+     * Saves statistic of usage base of knowledge
+     * @param int|string $clientId
+     * @param string $type
+     * @param int $count
+     */
+    public static function logLandingKnowledge($clientId, string $type, int $count = 1)
+    {
+        $entityKey = static::getEntityKey(
+            UsageEntityTable::ENTITY_TYPE_APPLICATION,
+            $clientId,
+            UsageEntityTable::SUB_ENTITY_TYPE_LANDING_KNOWLEDGE,
+            $type
+        );
+        if (!isset(static::$data[$entityKey])) {
+            static::$data[$entityKey] = 0;
+        }
+        static::$data[$entityKey] += $count;
+    }
+
     protected static function increment($entityType, $entityId, $subEntityType, $subEntityName)
     {
-        $entityKey = $entityType . "|" . $entityId . "|" . $subEntityType . "|" . $subEntityName;
+        $entityKey = static::getEntityKey($entityType, $entityId, $subEntityType, $subEntityName);
         if (!isset(static::$data[$entityKey])) {
             static::$data[$entityKey] = 0;
         }
         static::$data[$entityKey]++;
+    }
+
+    protected static function getEntityKey($entityType, $entityId, $subEntityType, $subEntityName)
+    {
+        return $entityType . "|" . $entityId . "|" . $subEntityType . "|" . $subEntityName;
     }
 
     public static function finalize()
@@ -280,7 +368,11 @@ class UsageStatTable extends Main\Entity\DataManager
         ksort(static::$data);
         foreach (static::$data as $entityKey => $count) {
             list($entityType, $entityId, $subEntityType, $subEntityName) = explode("|", $entityKey, 4);
-            $statId = UsageEntityTable::register($entityType, $entityId, $subEntityType, $subEntityName);
+            try {
+                $statId = UsageEntityTable::register($entityType, $entityId, $subEntityType, $subEntityName);
+            } catch (SqlQueryException $e) {
+                $statId = false;
+            }
 
             if ($statId) {
                 $insertFields = array(
@@ -294,7 +386,10 @@ class UsageStatTable extends Main\Entity\DataManager
 
                 $queries = $helper->prepareMerge(
                     static::getTableName(),
-                    array('STAT_DATE', 'ENTITY_ID'),
+                    array(
+                        'STAT_DATE',
+                        'ENTITY_ID'
+                    ),
                     $insertFields,
                     $updateFields
                 );
@@ -352,10 +447,10 @@ class UsageStatTable extends Main\Entity\DataManager
         $date->add("-60D");
 
         static::deleteByFilter(
-            [
+            array(
                 "<STAT_DATE" => $date,
                 "=IS_SENT" => "Y",
-            ]
+            )
         );
 
         return "\\Bitrix\\Rest\\UsageStatTable::cleanUpAgent();";
@@ -371,10 +466,11 @@ class UsageStatTable extends Main\Entity\DataManager
 			SELECT MIN(STAT_DATE) STAT_DATE_MIN
 			FROM {$sqlTableName}
 			WHERE IS_SENT = 'N'
-			AND STAT_DATE < " . $helper->getCurrentDateFunction() . "
+			AND (STAT_DATE < " . $helper->getCurrentDateFunction() . ")
 		";
         $result = $connection->query($select);
-        if ($date = $result->fetch()) {
+        $date = $result->fetch();
+        if ($date && $date["STAT_DATE_MIN"]) {
             if (static::sendDateStat($date["STAT_DATE_MIN"])) {
                 static::updateByFilter(array("=STAT_DATE" => $date["STAT_DATE_MIN"]), array("IS_SENT" => "Y"));
             }
@@ -382,57 +478,66 @@ class UsageStatTable extends Main\Entity\DataManager
         return "\\Bitrix\\Rest\\UsageStatTable::sendAgent();";
     }
 
-    public static function sendDateStat($date)//todo: finish it
+    public static function sendDateStat($date)
     {
-        $usage = [];
         $return = true;
-        $r = static::getList(
-            [
-                "select" => [
+
+        $statList = static::getList(
+            array(
+                "select" => array(
+                    "ENTITY_ID" => "ENTITY_ID",
                     "ENTITY_TYPE" => "ENTITY.ENTITY_TYPE",
                     "ENTITY_CODE" => "ENTITY.ENTITY_CODE",
                     "SUB_ENTITY_TYPE" => "ENTITY.SUB_ENTITY_TYPE",
                     "SUB_ENTITY_NAME" => "ENTITY.SUB_ENTITY_NAME",
                     "STAT_DATE",
-                    "HOUR_0", "HOUR_1", "HOUR_2", "HOUR_3", "HOUR_4", "HOUR_5", "HOUR_6", "HOUR_7", "HOUR_8", "HOUR_9",
-                    "HOUR_10", "HOUR_11", "HOUR_12", "HOUR_13", "HOUR_14", "HOUR_15", "HOUR_16", "HOUR_17", "HOUR_18",
-                    "HOUR_19", "HOUR_20", "HOUR_21", "HOUR_22", "HOUR_23",
-                ],
-                "filter" => [
+                    "HOUR_0",
+                    "HOUR_1",
+                    "HOUR_2",
+                    "HOUR_3",
+                    "HOUR_4",
+                    "HOUR_5",
+                    "HOUR_6",
+                    "HOUR_7",
+                    "HOUR_8",
+                    "HOUR_9",
+                    "HOUR_10",
+                    "HOUR_11",
+                    "HOUR_12",
+                    "HOUR_13",
+                    "HOUR_14",
+                    "HOUR_15",
+                    "HOUR_16",
+                    "HOUR_17",
+                    "HOUR_18",
+                    "HOUR_19",
+                    "HOUR_20",
+                    "HOUR_21",
+                    "HOUR_22",
+                    "HOUR_23",
+                ),
+                "filter" => array(
                     "=STAT_DATE" => $date,
-                ]
-            ]
-        );
-        while ($a = $r->fetch()) {
-            if ($a["ENTITY_CODE"])
-                $usage[] = $a;
-        }
-        if (count($usage) > 0) {
-            $request = [
-                'DATA' => $usage
-            ];
-
-            $httpClient = new HttpClient(
-                [
-                    "socketTimeout" => 10,
-                    "streamTimeout" => 10,
-                    "disableSslVerification" => true
-                ]
-            );
-            /*
-            if(
-                $httpClient->query(HttpClient::HTTP_POST, static::SEND_STATISTIC_URL, $request)
-                && $httpClient->getStatus() == '200'
+                ),
             )
-            {
-                $return = true;
+        );
+
+        $usage = array();
+        while ($dayStat = $statList->fetch()) {
+            if ($dayStat["ENTITY_CODE"] && $dayStat["STAT_DATE"]) {
+                $dayStat["STAT_DATE"] = $dayStat["STAT_DATE"]->format("Y-m-d");
+                $dayStat['HOUR_TOTAL'] = 0;
+                for ($i = 0; $i < 24; $i++) {
+                    $dayStat['HOUR_TOTAL'] += (int)$dayStat['HOUR_' . $i];
+                    unset($dayStat['HOUR_' . $i]);
+                }
+                $usage[] = $dayStat;
             }
-            else
-            {
-                $return = false;
-            }
-            */
-            $return = true;
+        }
+
+        if ($usage) {
+            $response = \Bitrix\Rest\OAuthService::getEngine()->getClient()->sendApplicationUsage($usage);
+            $return = is_array($response) && $response['result'] === true;
         }
 
         return $return;

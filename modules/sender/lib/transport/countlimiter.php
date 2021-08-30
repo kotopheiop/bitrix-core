@@ -266,8 +266,8 @@ class CountLimiter implements iLimiter
 
 
         $formatted = \FormatDate($format, $this->getCurrentTimestamp() - $this->interval);
-        if (substr($formatted, 0, 2) == '1 ') {
-            $formatted = substr($formatted, 2);
+        if (mb_substr($formatted, 0, 2) == '1 ') {
+            $formatted = mb_substr($formatted, 2);
         }
 
         return Loc::getMessage('SENDER_TRANSPORT_COUNT_LIMIT_UNIT_DATE_AT') . ' ' . $formatted;
@@ -358,10 +358,12 @@ class CountLimiter implements iLimiter
 
         $current = $this->getCurrent() + $amount;
         if ($current >= $this->getLimit()) {
-            throw new SystemException(Loc::getMessage(
-                'SENDER_TRANSPORT_COUNT_LIMIT_EXCEEDED',
-                array('%limit%' => $this->getLimit(), '%unit%' => $this->getUnitName())
-            ));
+            throw new SystemException(
+                Loc::getMessage(
+                    'SENDER_TRANSPORT_COUNT_LIMIT_EXCEEDED',
+                    array('%limit%' => $this->getLimit(), '%unit%' => $this->getUnitName())
+                )
+            );
         }
 
         if (!$isNewPeriod) {

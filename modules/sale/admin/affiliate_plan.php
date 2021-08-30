@@ -1,11 +1,13 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 \Bitrix\Main\Loader::includeModule('sale');
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions == "D")
+if ($saleModulePermissions == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 if (!CBXFeatures::IsFeatureEnabled('SaleAffiliate')) {
     require($DOCUMENT_ROOT . "/bitrix/modules/main/include/prolog_admin_after.php");
@@ -33,27 +35,31 @@ $lAdmin->InitFilter($arFilterFields);
 
 $arFilter = array();
 
-if ($filter_site_id != "NOT_REF" && StrLen($filter_site_id) > 0)
+if ($filter_site_id != "NOT_REF" && $filter_site_id <> '') {
     $arFilter["SITE_ID"] = $filter_site_id;
-else
+} else {
     Unset($arFilter["SITE_ID"]);
+}
 
-if (StrLen($filter_active) > 0)
+if ($filter_active <> '') {
     $arFilter["ACTIVE"] = (($filter_active == "Y") ? "Y" : "N");
+}
 
 if ($lAdmin->EditAction() && $saleModulePermissions >= "W") {
     foreach ($FIELDS as $ID => $arFields) {
         $DB->StartTransaction();
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
-        if (!$lAdmin->IsUpdated($ID))
+        if (!$lAdmin->IsUpdated($ID)) {
             continue;
+        }
 
         if (!CSaleAffiliatePlan::Update($ID, $arFields)) {
-            if ($ex = $APPLICATION->GetException())
+            if ($ex = $APPLICATION->GetException()) {
                 $lAdmin->AddUpdateError($ex->GetString(), $ID);
-            else
+            } else {
                 $lAdmin->AddUpdateError(GetMessage("SAP1_ERROR_UPDATE_PLAN"), $ID);
+            }
 
             $DB->Rollback();
         }
@@ -66,13 +72,15 @@ if (($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "W") {
     if ($_REQUEST['action_target'] == 'selected') {
         $arID = Array();
         $dbResultList = CSaleAffiliatePlan::GetList(array(), $arFilter, false, false, array("ID"));
-        while ($arResult = $dbResultList->Fetch())
+        while ($arResult = $dbResultList->Fetch()) {
             $arID[] = $arResult['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
 
         switch ($_REQUEST['action']) {
             case "delete":
@@ -83,10 +91,11 @@ if (($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "W") {
                 if (!CSaleAffiliatePlan::Delete($ID)) {
                     $DB->Rollback();
 
-                    if ($ex = $APPLICATION->GetException())
+                    if ($ex = $APPLICATION->GetException()) {
                         $lAdmin->AddGroupError($ex->GetString(), $ID);
-                    else
+                    } else {
                         $lAdmin->AddGroupError(GetMessage("SAP1_ERROR_DELETE_PLAN"), $ID);
+                    }
                 }
 
                 $DB->Commit();
@@ -101,10 +110,11 @@ if (($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "W") {
                 );
 
                 if (!CSaleAffiliatePlan::Update($ID, $arFields)) {
-                    if ($ex = $APPLICATION->GetException())
+                    if ($ex = $APPLICATION->GetException()) {
                         $lAdmin->AddGroupError($ex->GetString(), $ID);
-                    else
+                    } else {
                         $lAdmin->AddGroupError(GetMessage("SAP1_ERROR_ACTIVE_PLAN"), $ID);
+                    }
                 }
 
                 break;
@@ -117,7 +127,19 @@ $dbResultList = CSaleAffiliatePlan::GetList(
     $arFilter,
     false,
     false,
-    array("ID", "SITE_ID", "NAME", "DESCRIPTION", "TIMESTAMP_X", "ACTIVE", "BASE_RATE", "BASE_RATE_TYPE", "BASE_RATE_CURRENCY", "MIN_PAY", "MIN_PLAN_VALUE")
+    array(
+        "ID",
+        "SITE_ID",
+        "NAME",
+        "DESCRIPTION",
+        "TIMESTAMP_X",
+        "ACTIVE",
+        "BASE_RATE",
+        "BASE_RATE_TYPE",
+        "BASE_RATE_CURRENCY",
+        "MIN_PAY",
+        "MIN_PLAN_VALUE"
+    )
 );
 
 $dbResultList = new CAdminResult($dbResultList, $sTableID);
@@ -125,32 +147,46 @@ $dbResultList->NavStart();
 
 $lAdmin->NavText($dbResultList->GetNavPrint(GetMessage("SAP1_PLANS")));
 
-$lAdmin->AddHeaders(array(
-    array("id" => "ID", "content" => "ID", "sort" => "ID", "default" => true),
-    array("id" => "SITE_ID", "content" => GetMessage("SAP1_SITE"), "sort" => "SITE_ID", "default" => true),
-    array("id" => "ACTIVE", "content" => GetMessage("SAP1_ACTIVE"), "sort" => "ACTIVE", "default" => true),
-    array("id" => "NAME", "content" => GetMessage("SAP1_NAME"), "sort" => "NAME", "default" => true),
-    array("id" => "RATE", "content" => GetMessage("SAP1_RATE"), "sort" => "", "default" => true),
-    array("id" => "MIN_PLAN_VALUE", "content" => GetMessage("SAP1_NOT_LESS"), "sort" => "MIN_PLAN_VALUE", "default" => true),
-));
+$lAdmin->AddHeaders(
+    array(
+        array("id" => "ID", "content" => "ID", "sort" => "ID", "default" => true),
+        array("id" => "SITE_ID", "content" => GetMessage("SAP1_SITE"), "sort" => "SITE_ID", "default" => true),
+        array("id" => "ACTIVE", "content" => GetMessage("SAP1_ACTIVE"), "sort" => "ACTIVE", "default" => true),
+        array("id" => "NAME", "content" => GetMessage("SAP1_NAME"), "sort" => "NAME", "default" => true),
+        array("id" => "RATE", "content" => GetMessage("SAP1_RATE"), "sort" => "", "default" => true),
+        array(
+            "id" => "MIN_PLAN_VALUE",
+            "content" => GetMessage("SAP1_NOT_LESS"),
+            "sort" => "MIN_PLAN_VALUE",
+            "default" => true
+        ),
+    )
+);
 
 $arVisibleColumns = $lAdmin->GetVisibleHeaderColumns();
 
 $arSites = array();
-$dbSiteList = CSite::GetList(($b = "sort"), ($o = "asc"));
-while ($arSite = $dbSiteList->Fetch())
+$dbSiteList = CSite::GetList();
+while ($arSite = $dbSiteList->Fetch()) {
     $arSites[$arSite["LID"]] = "[" . $arSite["LID"] . "]&nbsp;" . $arSite["NAME"];
+}
 
 $arCurrencies = array("P" => "%");
-$dbCurrencyList = CCurrency::GetList(($b = "currency"), ($o = "asc"));
-while ($arCurrency = $dbCurrencyList->Fetch())
+$dbCurrencyList = CCurrency::GetList("currency", "asc");
+while ($arCurrency = $dbCurrencyList->Fetch()) {
     $arCurrencies[$arCurrency["CURRENCY"]] = "[" . $arCurrency["CURRENCY"] . "]&nbsp;" . $arCurrency["FULL_NAME"];
+}
 
 $affiliatePlanType = COption::GetOptionString("sale", "affiliate_plan_type", "N");
 $arBaseLangCurrencies = array();
 
 while ($arPlan = $dbResultList->NavNext(true, "f_")) {
-    $row =& $lAdmin->AddRow($f_ID, $arPlan, "sale_affiliate_plan_edit.php?ID=" . $f_ID . "&lang=" . LANG . GetFilterParams("filter_"), GetMessage("SAP1_UPDATE_PLAN"));
+    $row =& $lAdmin->AddRow(
+        $f_ID,
+        $arPlan,
+        "sale_affiliate_plan_edit.php?ID=" . $f_ID . "&lang=" . LANG . GetFilterParams("filter_"),
+        GetMessage("SAP1_UPDATE_PLAN")
+    );
 
     $row->AddField("ID", $f_ID);
     $row->AddSelectField("SITE_ID", $arSites, array());
@@ -158,57 +194,81 @@ while ($arPlan = $dbResultList->NavNext(true, "f_")) {
     $row->AddInputField("NAME", array("size" => "20"));
 
 
-    if ($f_BASE_RATE_TYPE == "P")
+    if ($f_BASE_RATE_TYPE == "P") {
         $fieldValue = $f_BASE_RATE . "%";
-    else
+    } else {
         $fieldValue = SaleFormatCurrency($f_BASE_RATE, $f_BASE_RATE_CURRENCY);
+    }
 
-    if ($row->VarsFromForm() && $_REQUEST["FIELDS"])
+    if ($row->VarsFromForm() && $_REQUEST["FIELDS"]) {
         $val = $_REQUEST["FIELDS"][$f_ID]["BASE_RATE"];
-    else
+    } else {
         $val = $f_BASE_RATE;
+    }
 
-    $fieldEdit = "<input type=\"text\" name=\"FIELDS[" . $f_ID . "][BASE_RATE]\" value=\"" . htmlspecialcharsbx($val) . "\" size=\"7\"> ";
+    $fieldEdit = "<input type=\"text\" name=\"FIELDS[" . $f_ID . "][BASE_RATE]\" value=\"" . htmlspecialcharsbx(
+            $val
+        ) . "\" size=\"7\"> ";
 
     if ($f_BASE_RATE_TYPE == "P") {
         $val = "P";
     } else {
-        if ($row->VarsFromForm() && $_REQUEST["FIELDS"])
+        if ($row->VarsFromForm() && $_REQUEST["FIELDS"]) {
             $val = $_REQUEST["FIELDS"][$f_ID]["BASE_RATE_CURRENCY"];
-        else
+        } else {
             $val = $f_BASE_RATE_CURRENCY;
+        }
     }
 
     $fieldEdit .= "<select name=\"FIELDS[" . $f_ID . "][BASE_RATE_CURRENCY]\">";
-    foreach ($arCurrencies as $key => $value)
+    foreach ($arCurrencies as $key => $value) {
         $fieldEdit .= "<option value=\"" . $key . "\"" . (($key == $val) ? " selected" : "") . ">" . $value . "</option>";
+    }
     $fieldEdit .= "</select>";
 
     $row->AddField("RATE", $fieldValue, $fieldEdit);
 
     if ($affiliatePlanType == "N") {
-        $fieldValue = IntVal($f_MIN_PLAN_VALUE) . "&nbsp;" . GetMessage("SAP1_SHT");
+        $fieldValue = intval($f_MIN_PLAN_VALUE) . "&nbsp;" . GetMessage("SAP1_SHT");
     } else {
-        if (!array_key_exists($f_SITE_ID, $arBaseLangCurrencies))
+        if (!array_key_exists($f_SITE_ID, $arBaseLangCurrencies)) {
             $arBaseLangCurrencies[$f_SITE_ID] = CSaleLang::GetLangCurrency($f_SITE_ID);
+        }
 
         $fieldValue = SaleFormatCurrency($f_MIN_PLAN_VALUE, $arBaseLangCurrencies[$f_SITE_ID]);
     }
 
-    if ($row->VarsFromForm() && $_REQUEST["FIELDS"])
+    if ($row->VarsFromForm() && $_REQUEST["FIELDS"]) {
         $val = $_REQUEST["FIELDS"][$f_ID]["MIN_PLAN_VALUE"];
-    else
+    } else {
         $val = $f_MIN_PLAN_VALUE;
+    }
 
-    $fieldEdit = "<input type=\"text\" name=\"FIELDS[" . $f_ID . "][MIN_PLAN_VALUE]\" value=\"" . htmlspecialcharsbx($val) . "\" size=\"7\"> ";
+    $fieldEdit = "<input type=\"text\" name=\"FIELDS[" . $f_ID . "][MIN_PLAN_VALUE]\" value=\"" . htmlspecialcharsbx(
+            $val
+        ) . "\" size=\"7\"> ";
 
     $row->AddField("MIN_PLAN_VALUE", $fieldValue, $fieldEdit);
 
     $arActions = Array();
-    $arActions[] = array("ICON" => "edit", "TEXT" => GetMessage("SAP1_UPDATE"), "ACTION" => $lAdmin->ActionRedirect("sale_affiliate_plan_edit.php?ID=" . $f_ID . "&lang=" . LANG . GetFilterParams("filter_") . ""), "DEFAULT" => true);
+    $arActions[] = array(
+        "ICON" => "edit",
+        "TEXT" => GetMessage("SAP1_UPDATE"),
+        "ACTION" => $lAdmin->ActionRedirect(
+            "sale_affiliate_plan_edit.php?ID=" . $f_ID . "&lang=" . LANG . GetFilterParams("filter_") . ""
+        ),
+        "DEFAULT" => true
+    );
     if ($saleModulePermissions >= "W") {
         $arActions[] = array("SEPARATOR" => true);
-        $arActions[] = array("ICON" => "delete", "TEXT" => GetMessage("SAP1_DELETE"), "ACTION" => "if(confirm('" . GetMessage("SAP1_DELETE_CONF") . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete"));
+        $arActions[] = array(
+            "ICON" => "delete",
+            "TEXT" => GetMessage("SAP1_DELETE"),
+            "ACTION" => "if(confirm('" . GetMessage("SAP1_DELETE_CONF") . "')) " . $lAdmin->ActionDoGroup(
+                    $f_ID,
+                    "delete"
+                )
+        );
     }
 
     $row->AddActions($arActions);
@@ -278,8 +338,12 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
         <td>
             <select name="filter_active">
                 <option value=""><?= htmlspecialcharsex(GetMessage("SAP1_ALL")); ?></option>
-                <option value="Y"<? if ($filter_active == "Y") echo " selected" ?>><?= htmlspecialcharsex(GetMessage("SAP1_YES")) ?></option>
-                <option value="N"<? if ($filter_active == "N") echo " selected" ?>><?= htmlspecialcharsex(GetMessage("SAP1_NO")) ?></option>
+                <option value="Y"<? if ($filter_active == "Y") echo " selected" ?>><?= htmlspecialcharsex(
+                        GetMessage("SAP1_YES")
+                    ) ?></option>
+                <option value="N"<? if ($filter_active == "N") echo " selected" ?>><?= htmlspecialcharsex(
+                        GetMessage("SAP1_NO")
+                    ) ?></option>
             </select>
         </td>
     </tr>

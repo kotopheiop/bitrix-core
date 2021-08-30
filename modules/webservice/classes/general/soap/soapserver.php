@@ -49,8 +49,12 @@ class CWSSOAPResponser extends CSOAPServerResponser
         $this->FunctionList[] = $name;
         $this->TypensVars[$name] = $params;
 
-        if ($params["request"]) $this->MessageTags[$params["request"]] = $name;
-        if ($params["response"]) $this->MessageTags[$params["response"]] = $name;
+        if ($params["request"]) {
+            $this->MessageTags[$params["request"]] = $name;
+        }
+        if ($params["response"]) {
+            $this->MessageTags[$params["response"]] = $name;
+        }
     }
 
     /*
@@ -110,8 +114,9 @@ class CWSSOAPResponser extends CSOAPServerResponser
 
         $requestParams = array(); // reorganize params
         foreach ($requestNode->children() as $parameterNode) {
-            if (!$parameterNode->name())
+            if (!$parameterNode->name()) {
                 continue;
+            }
             $requestParams[$parameterNode->name()] = $parameterNode;
         }
 
@@ -142,8 +147,9 @@ class CWSSOAPResponser extends CSOAPServerResponser
 
         $object = null;
 
-        if (class_exists($objectName))
+        if (class_exists($objectName)) {
             $object = new $objectName;
+        }
 
         if (is_object($object) && method_exists($object, $functionName)) {
             $this->ShowResponse(
@@ -155,20 +161,22 @@ class CWSSOAPResponser extends CSOAPServerResponser
                     $params
                 )
             );
-        } else if (!class_exists($objectName)) {
-            $this->ShowResponse(
-                $cserver,
-                $functionName,
-                $namespaceURI,
-                new CSOAPFault('Server Error', 'Object not found')
-            );
         } else {
-            $this->ShowResponse(
-                $cserver,
-                $functionName,
-                $namespaceURI,
-                new CSOAPFault('Server Error', 'Method not found')
-            );
+            if (!class_exists($objectName)) {
+                $this->ShowResponse(
+                    $cserver,
+                    $functionName,
+                    $namespaceURI,
+                    new CSOAPFault('Server Error', 'Object not found')
+                );
+            } else {
+                $this->ShowResponse(
+                    $cserver,
+                    $functionName,
+                    $namespaceURI,
+                    new CSOAPFault('Server Error', 'Method not found')
+                );
+            }
         }
 
         return true;
@@ -188,7 +196,12 @@ class CWSSOAPResponser extends CSOAPServerResponser
 
         header("SOAPServer: BITRIX SOAP");
         header("Content-Type: text/xml; charset=\"UTF-8\"");
-        Header("Content-Length: " . (defined('BX_UTF') && BX_UTF == 1 && function_exists('mb_strlen') ? mb_strlen($payload, 'latin1') : strlen($payload)));
+        Header(
+            "Content-Length: " . (defined('BX_UTF') && BX_UTF == 1 && function_exists('mb_strlen') ? mb_strlen(
+                $payload,
+                'latin1'
+            ) : mb_strlen($payload))
+        );
 
         $APPLICATION->RestartBuffer();
         $cserver->RawPayloadData = $payload;
@@ -205,7 +218,7 @@ class CSOAPServer
     /// Consists of instances of CSOAPServerResponser
     var $OnRequestEvent = array();
 
-    function CSOAPServer()
+    public function __construct()
     {
         $this->RawPostData = file_get_contents("php://input");
     }
@@ -254,7 +267,12 @@ class CSOAPServer
 
         header("SOAPServer: BITRIX SOAP");
         header("Content-Type: text/xml; charset=\"UTF-8\"");
-        Header("Content-Length: " . (defined('BX_UTF') && BX_UTF == 1 && function_exists('mb_strlen') ? mb_strlen($payload, 'latin1') : strlen($payload)));
+        Header(
+            "Content-Length: " . (defined('BX_UTF') && BX_UTF == 1 && function_exists('mb_strlen') ? mb_strlen(
+                $payload,
+                'latin1'
+            ) : mb_strlen($payload))
+        );
 
         $APPLICATION->RestartBuffer();
         $this->RawPayloadData = $payload;
@@ -275,7 +293,12 @@ class CSOAPServer
 
         header("SOAPServer: BITRIX SOAP");
         header("Content-Type: text/xml; charset=\"UTF-8\"");
-        Header("Content-Length: " . (defined('BX_UTF') && BX_UTF == 1 && function_exists('mb_strlen') ? mb_strlen($payload, 'latin1') : strlen($payload)));
+        Header(
+            "Content-Length: " . (defined('BX_UTF') && BX_UTF == 1 && function_exists('mb_strlen') ? mb_strlen(
+                $payload,
+                'latin1'
+            ) : mb_strlen($payload))
+        );
 
         $APPLICATION->RestartBuffer();
 
@@ -283,21 +306,28 @@ class CSOAPServer
         echo $payload;
     }
 
-    /* static */
-    function ShowSOAPFault($errorString)
+    public static function ShowSOAPFault($errorString)
     {
         global $APPLICATION;
         $response = new CSOAPResponse('unknown_function_name', 'unknown_namespace_uri');
-        if (is_object($errorString) and (get_class($errorString) == "CSOAPFault" or get_class($errorString) == "csoapfault"))
+        if (is_object($errorString) and (get_class($errorString) == "CSOAPFault" or get_class(
+                    $errorString
+                ) == "csoapfault")) {
             $response->setValue($errorString /*CSOAPFault*/);
-        else
+        } else {
             $response->setValue(new CSOAPFault('Server Error', $errorString));
+        }
 
         $payload = $response->payload();
 
         header("SOAPServer: BITRIX SOAP");
         header("Content-Type: text/xml; charset=\"UTF-8\"");
-        Header("Content-Length: " . (defined('BX_UTF') && BX_UTF == 1 && function_exists('mb_strlen') ? mb_strlen($payload, 'latin1') : strlen($payload)));
+        Header(
+            "Content-Length: " . (defined('BX_UTF') && BX_UTF == 1 && function_exists('mb_strlen') ? mb_strlen(
+                $payload,
+                'latin1'
+            ) : mb_strlen($payload))
+        );
 
         $APPLICATION->RestartBuffer();
         echo $payload;
@@ -387,7 +417,7 @@ class CSOAPServer
     function stripHTTPHeader($data)
     {
         //$start = strpos( $data, "<"."?xml" );
-        $start = strpos($data, "\r\n\r\n");
-        return substr($data, $start, strlen($data) - $start);
+        $start = mb_strpos($data, "\r\n\r\n");
+        return mb_substr($data, $start, mb_strlen($data) - $start);
     }
 }

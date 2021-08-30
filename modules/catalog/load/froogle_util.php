@@ -1,4 +1,5 @@
 <?
+
 define("STOP_STATISTICS", true);
 define("BX_SECURITY_SHOW_MESSAGE", true);
 define('NO_AGENT_CHECK', true);
@@ -22,11 +23,13 @@ if (check_bitrix_sessid()) {
                 $bIBlock = true;
                 $db_section = CIBlockSection::GetList(array("LEFT_MARGIN" => "ASC"), array("IBLOCK_ID" => $IBLOCK_ID));
                 while ($ar_section = $db_section->Fetch()) {
-                    $bNoTree = False;
+                    $bNoTree = false;
                     if (intval($ar_section["RIGHT_MARGIN"]) - intval($ar_section["LEFT_MARGIN"]) > 1) {
                         ?>window.parent.Tree[<? echo intval($ar_section["ID"]); ?>]=new Array();<?
                     }
-                    ?>window.parent.Tree[<? echo intval($ar_section["IBLOCK_SECTION_ID"]); ?>][<? echo intval($ar_section["ID"]); ?>]=Array('<? echo CUtil::JSEscape(htmlspecialcharsbx($ar_section["NAME"])); ?>', '');<?
+                    ?>window.parent.Tree[<? echo intval($ar_section["IBLOCK_SECTION_ID"]); ?>][<? echo intval(
+                        $ar_section["ID"]
+                    ); ?>]=Array('<? echo CUtil::JSEscape(htmlspecialcharsbx($ar_section["NAME"])); ?>', '');<?
                 }
             }
         }

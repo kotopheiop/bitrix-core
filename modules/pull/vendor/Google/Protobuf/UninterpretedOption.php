@@ -335,15 +335,18 @@ class UninterpretedOption extends \Protobuf\AbstractMessage
     public static function fromArray(array $values)
     {
         $message = new self();
-        $values = array_merge([
-            'name' => [],
-            'identifier_value' => null,
-            'positive_int_value' => null,
-            'negative_int_value' => null,
-            'double_value' => null,
-            'string_value' => null,
-            'aggregate_value' => null
-        ], $values);
+        $values = array_merge(
+            [
+                'name' => [],
+                'identifier_value' => null,
+                'positive_int_value' => null,
+                'negative_int_value' => null,
+                'double_value' => null,
+                'string_value' => null,
+                'aggregate_value' => null
+            ],
+            $values
+        );
 
         $message->setIdentifierValue($values['identifier_value']);
         $message->setPositiveIntValue($values['positive_int_value']);
@@ -364,54 +367,70 @@ class UninterpretedOption extends \Protobuf\AbstractMessage
      */
     public static function descriptor()
     {
-        return \google\protobuf\DescriptorProto::fromArray([
-            'name' => 'UninterpretedOption',
-            'field' => [
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 2,
-                    'name' => 'name',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_MESSAGE(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_REPEATED(),
-                    'type_name' => '.google.protobuf.UninterpretedOption.NamePart'
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 3,
-                    'name' => 'identifier_value',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_STRING(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 4,
-                    'name' => 'positive_int_value',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_UINT64(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 5,
-                    'name' => 'negative_int_value',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_INT64(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 6,
-                    'name' => 'double_value',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_DOUBLE(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 7,
-                    'name' => 'string_value',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_BYTES(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 8,
-                    'name' => 'aggregate_value',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_STRING(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
-                ]),
-            ],
-        ]);
+        return \google\protobuf\DescriptorProto::fromArray(
+            [
+                'name' => 'UninterpretedOption',
+                'field' => [
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 2,
+                            'name' => 'name',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_MESSAGE(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_REPEATED(),
+                            'type_name' => '.google.protobuf.UninterpretedOption.NamePart'
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 3,
+                            'name' => 'identifier_value',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_STRING(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 4,
+                            'name' => 'positive_int_value',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_UINT64(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 5,
+                            'name' => 'negative_int_value',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_INT64(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 6,
+                            'name' => 'double_value',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_DOUBLE(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 7,
+                            'name' => 'string_value',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_BYTES(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 8,
+                            'name' => 'aggregate_value',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_STRING(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
+                        ]
+                    ),
+                ],
+            ]
+        );
     }
 
     /**
@@ -497,7 +516,6 @@ class UninterpretedOption extends \Protobuf\AbstractMessage
             : null;
 
         while ($limit === null || $stream->tell() < $limit) {
-
             if ($stream->eof()) {
                 break;
             }
@@ -594,7 +612,6 @@ class UninterpretedOption extends \Protobuf\AbstractMessage
             $unknown = new \Protobuf\Unknown($tag, $wire, $data);
 
             $this->unknownFieldSet->add($unknown);
-
         }
     }
 
@@ -673,7 +690,9 @@ class UninterpretedOption extends \Protobuf\AbstractMessage
     public function merge(\Protobuf\Message $message)
     {
         if (!$message instanceof \google\protobuf\UninterpretedOption) {
-            throw new \InvalidArgumentException(sprintf('Argument 1 passed to %s must be a %s, %s given', __METHOD__, __CLASS__, get_class($message)));
+            throw new \InvalidArgumentException(
+                sprintf('Argument 1 passed to %s must be a %s, %s given', __METHOD__, __CLASS__, get_class($message))
+            );
         }
 
         $this->name = ($message->name !== null) ? $message->name : $this->name;

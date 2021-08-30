@@ -218,18 +218,21 @@ class MailingTable extends Entity\DataManager
 
         $resultListTmp = Integration\EventHandler::onSenderTriggerCampaignPreset();
         foreach ($resultList as $result) {
-            if (empty($result['TRIGGER']['START']['ENDPOINT']['CODE']))
+            if (empty($result['TRIGGER']['START']['ENDPOINT']['CODE'])) {
                 continue;
+            }
 
             $trigger = Trigger\Manager::getOnce($result['TRIGGER']['START']['ENDPOINT']);
-            if (!$trigger)
+            if (!$trigger) {
                 continue;
+            }
 
             $result['TRIGGER']['START']['ENDPOINT']['NAME'] = $trigger->getName();
             if (!empty($result['TRIGGER']['START']['ENDPOINT']['CODE'])) {
                 $trigger = Trigger\Manager::getOnce($result['TRIGGER']['END']['ENDPOINT']);
-                if (!$trigger)
+                if (!$trigger) {
                     $result['TRIGGER']['END']['ENDPOINT']['NAME'] = $trigger->getName();
+                }
             }
 
 
@@ -262,8 +265,9 @@ class MailingTable extends Entity\DataManager
             );
 
             $chainId = 0;
-            if (!empty($item['ID']))
+            if (!empty($item['ID'])) {
                 $chainId = $item['ID'];
+            }
 
             if ($chainId > 0) {
                 $chain = MailingChainTable::getRowById(array('ID' => $chainId));
@@ -272,15 +276,15 @@ class MailingTable extends Entity\DataManager
                 }
             }
 
-            if (empty($chainFields['STATUS']))
+            if (empty($chainFields['STATUS'])) {
                 $chainFields['STATUS'] = MailingChainTable::STATUS_WAIT;
+            }
 
             $chainFields['ID'] = $chainId;
 
             $resultItem = new Entity\Result;
             MailingChainTable::checkFields($resultItem, null, $chainFields);
             if ($resultItem->isSuccess()) {
-
             } else {
                 $errorList[$errorCurrentNumber] = $resultItem->getErrors();
             }
@@ -290,9 +294,12 @@ class MailingTable extends Entity\DataManager
         foreach ($errorList as $number => $errors) {
             /* @var \Bitrix\Main\Entity\FieldError[] $errors */
             foreach ($errors as $error) {
-                $result->addError(new Entity\FieldError(
+                $result->addError(
+                    new Entity\FieldError(
                         $error->getField(),
-                        $delimiter . Loc::getMessage('SENDER_ENTITY_MAILING_CHAIN_ITEM_NUMBER') . $number . ': ' . $error->getMessage(),
+                        $delimiter . Loc::getMessage(
+                            'SENDER_ENTITY_MAILING_CHAIN_ITEM_NUMBER'
+                        ) . $number . ': ' . $error->getMessage(),
                         $error->getCode()
                     )
                 );
@@ -312,8 +319,9 @@ class MailingTable extends Entity\DataManager
         $result = new Entity\Result;
 
         static::checkFieldsChain($result, $id, $fields);
-        if (!$result->isSuccess(true))
+        if (!$result->isSuccess(true)) {
             return $result;
+        }
 
         $parentChainId = null;
         $existChildIdList = array();
@@ -334,8 +342,9 @@ class MailingTable extends Entity\DataManager
                     unset($chainFields['CREATED_BY']);
                 }
             }
-            if (empty($chainFields['STATUS']))
+            if (empty($chainFields['STATUS'])) {
                 $chainFields['STATUS'] = MailingChainTable::STATUS_WAIT;
+            }
 
 
             // add or update
@@ -344,7 +353,6 @@ class MailingTable extends Entity\DataManager
 
                 $chainUpdateDb = Model\LetterTable::update($chainId, $chainFields);
                 if ($chainUpdateDb->isSuccess()) {
-
                 } else {
                     $result->addErrors($chainUpdateDb->getErrors());
                 }
@@ -358,17 +366,22 @@ class MailingTable extends Entity\DataManager
                 }
             }
 
-            if (!empty($errorList)) break;
+            if (!empty($errorList)) {
+                break;
+            }
 
             $parentChainId = null;
-            if ($chainId !== null)
+            if ($chainId !== null) {
                 $parentChainId = $chainId;
+            }
         }
 
-        $deleteChainDb = MailingChainTable::getList(array(
-            'select' => array('ID'),
-            'filter' => array('MAILING_ID' => $id, '!ID' => $existChildIdList),
-        ));
+        $deleteChainDb = MailingChainTable::getList(
+            array(
+                'select' => array('ID'),
+                'filter' => array('MAILING_ID' => $id, '!ID' => $existChildIdList),
+            )
+        );
         while ($deleteChain = $deleteChainDb->fetch()) {
             Model\LetterTable::delete($deleteChain['ID']);
         }
@@ -384,14 +397,27 @@ class MailingTable extends Entity\DataManager
         $parentId = null;
 
         do {
-            $chainDb = MailingChainTable::getList(array(
-                'select' => array(
-                    'ID', 'SUBJECT', 'EMAIL_FROM', 'MESSAGE', 'TIME_SHIFT', 'PARENT_ID',
-                    'DATE_INSERT', 'PRIORITY', 'LINK_PARAMS', 'TEMPLATE_TYPE', 'TEMPLATE_ID',
-                    'CREATED_BY', 'CREATED_BY_NAME' => 'CREATED_BY_USER.NAME', 'CREATED_BY_LAST_NAME' => 'CREATED_BY_USER.LAST_NAME'
-                ),
-                'filter' => array('=MAILING_ID' => $id, '=PARENT_ID' => $parentId),
-            ));
+            $chainDb = MailingChainTable::getList(
+                array(
+                    'select' => array(
+                        'ID',
+                        'SUBJECT',
+                        'EMAIL_FROM',
+                        'MESSAGE',
+                        'TIME_SHIFT',
+                        'PARENT_ID',
+                        'DATE_INSERT',
+                        'PRIORITY',
+                        'LINK_PARAMS',
+                        'TEMPLATE_TYPE',
+                        'TEMPLATE_ID',
+                        'CREATED_BY',
+                        'CREATED_BY_NAME' => 'CREATED_BY_USER.NAME',
+                        'CREATED_BY_LAST_NAME' => 'CREATED_BY_USER.LAST_NAME'
+                    ),
+                    'filter' => array('=MAILING_ID' => $id, '=PARENT_ID' => $parentId),
+                )
+            );
 
             $parentId = null;
             while ($chain = $chainDb->fetch()) {
@@ -399,8 +425,6 @@ class MailingTable extends Entity\DataManager
                 $result[] = $chain;
                 $parentId = $chain['ID'];
             }
-
-
         } while ($parentId !== null);
 
 
@@ -410,24 +434,31 @@ class MailingTable extends Entity\DataManager
     public static function updateChainTrigger($id)
     {
         // get first item of chain
-        $chainDb = MailingChainTable::getList(array(
-            'select' => array('ID', 'TRIGGER_FIELDS' => 'MAILING.TRIGGER_FIELDS'),
-            'filter' => array('=MAILING_ID' => $id, '=IS_TRIGGER' => 'Y', '=PARENT_ID' => null),
-        ));
+        $chainDb = MailingChainTable::getList(
+            array(
+                'select' => array('ID', 'TRIGGER_FIELDS' => 'MAILING.TRIGGER_FIELDS'),
+                'filter' => array('=MAILING_ID' => $id, '=IS_TRIGGER' => 'Y', '=PARENT_ID' => null),
+            )
+        );
 
         $chain = $chainDb->fetch();
-        if (!$chain) return;
+        if (!$chain) {
+            return;
+        }
         $chainId = $chain['ID'];
 
         // get trigger settings from mailing
         $triggerFields = $chain['TRIGGER_FIELDS'];
-        if (!is_array($triggerFields))
+        if (!is_array($triggerFields)) {
             $triggerFields = array();
+        }
 
         // init TriggerSettings objects
         $settingsList = array();
         foreach ($triggerFields as $key => $point) {
-            if (empty($point['CODE'])) continue;
+            if (empty($point['CODE'])) {
+                continue;
+            }
 
             $point['IS_EVENT_OCCUR'] = true;
             $point['IS_PREVENT_EMAIL'] = false;
@@ -466,10 +497,12 @@ class MailingTable extends Entity\DataManager
 
 
         // add new, update exists, delete old rows
-        $triggerDb = MailingTriggerTable::getList(array(
-            'select' => array('EVENT', 'MAILING_CHAIN_ID', 'IS_TYPE_START'),
-            'filter' => array('=MAILING_CHAIN_ID' => $chainId)
-        ));
+        $triggerDb = MailingTriggerTable::getList(
+            array(
+                'select' => array('EVENT', 'MAILING_CHAIN_ID', 'IS_TYPE_START'),
+                'filter' => array('=MAILING_CHAIN_ID' => $chainId)
+            )
+        );
         while ($trigger = $triggerDb->fetch()) {
             $triggerFindId = $trigger['EVENT'] . "/" . ((int)$trigger['IS_TYPE_START']);
             if (!isset($mailingTriggerList[$triggerFindId])) {
@@ -518,17 +551,19 @@ class MailingTable extends Entity\DataManager
         $result = array();
 
         // fetch all connectors for getting emails
-        $groupConnectorDb = MailingGroupTable::getList(array(
-            'select' => array(
-                'CONNECTOR_ENDPOINT' => 'GROUP.GROUP_CONNECTOR.ENDPOINT',
-                'GROUP_ID'
-            ),
-            'filter' => array(
-                'MAILING_ID' => $id,
-                'INCLUDE' => true,
-            ),
-            'order' => array('GROUP_ID' => 'ASC')
-        ));
+        $groupConnectorDb = MailingGroupTable::getList(
+            array(
+                'select' => array(
+                    'CONNECTOR_ENDPOINT' => 'GROUP.GROUP_CONNECTOR.ENDPOINT',
+                    'GROUP_ID'
+                ),
+                'filter' => array(
+                    'MAILING_ID' => $id,
+                    'INCLUDE' => true,
+                ),
+                'order' => array('GROUP_ID' => 'ASC')
+            )
+        );
         while ($groupConnector = $groupConnectorDb->fetch()) {
             $connector = null;
             if (is_array($groupConnector['CONNECTOR_ENDPOINT'])) {
@@ -549,24 +584,30 @@ class MailingTable extends Entity\DataManager
     {
         $result = array();
 
-        $mailingDb = MailingTable::getList(array(
-            'select' => array('ID', 'TRIGGER_FIELDS'),
-            'filter' => array(
-                //'=ACTIVE' => 'Y',
-                '=IS_TRIGGER' => 'Y',
-                '=ID' => $id
-            ),
-        ));
-        if (!$mailing = $mailingDb->fetch())
+        $mailingDb = MailingTable::getList(
+            array(
+                'select' => array('ID', 'TRIGGER_FIELDS'),
+                'filter' => array(
+                    //'=ACTIVE' => 'Y',
+                    '=IS_TRIGGER' => 'Y',
+                    '=ID' => $id
+                ),
+            )
+        );
+        if (!$mailing = $mailingDb->fetch()) {
             return $result;
+        }
 
         $triggerFields = $mailing['TRIGGER_FIELDS'];
-        if (!is_array($triggerFields))
+        if (!is_array($triggerFields)) {
             $triggerFields = array();
+        }
 
         $settingsList = array();
         foreach ($triggerFields as $key => $point) {
-            if (empty($point['CODE'])) continue;
+            if (empty($point['CODE'])) {
+                continue;
+            }
 
             $point['IS_EVENT_OCCUR'] = true;
             $point['IS_PREVENT_EMAIL'] = false;
@@ -587,8 +628,9 @@ class MailingTable extends Entity\DataManager
 
         foreach ($settingsList as $settings) {
             /* @var \Bitrix\Sender\Trigger\Settings $settings */
-            if (!$settings->isTypeStart())
+            if (!$settings->isTypeStart()) {
                 continue;
+            }
 
             $trigger = Trigger\Manager::getOnce($settings->getEndpoint());
             if ($trigger) {

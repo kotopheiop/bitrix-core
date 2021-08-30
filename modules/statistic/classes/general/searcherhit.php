@@ -2,7 +2,7 @@
 
 class CSearcherHit
 {
-    public static function GetList(&$by, &$order, $arFilter = Array(), &$is_filtered)
+    public static function GetList($by = 's_date_hit', $order = 'desc', $arFilter = [])
     {
         $err_mess = "File: " . __FILE__ . "<br>Line: ";
         $DB = CDatabase::GetModuleConnection('statistic');
@@ -11,11 +11,13 @@ class CSearcherHit
         if (is_array($arFilter)) {
             foreach ($arFilter as $key => $val) {
                 if (is_array($val)) {
-                    if (count($val) <= 0)
+                    if (count($val) <= 0) {
                         continue;
+                    }
                 } else {
-                    if ((strlen($val) <= 0) || ($val === "NOT_REF"))
+                    if (((string)$val == '') || ($val === "NOT_REF")) {
                         continue;
+                    }
                 }
                 $match_value_set = array_key_exists($key . "_EXACT_MATCH", $arFilter);
                 $key = strtoupper($key);
@@ -37,12 +39,17 @@ class CSearcherHit
                         $arSqlSearch[] = GetFilterQuery("S.NAME", $val, $match);
                         break;
                     case "DATE1":
-                        if (CheckDateTime($val))
+                        if (CheckDateTime($val)) {
                             $arSqlSearch[] = "H.DATE_HIT >= " . $DB->CharToDateFunction($val, "SHORT");
+                        }
                         break;
                     case "DATE2":
-                        if (CheckDateTime($val))
-                            $arSqlSearch[] = "H.DATE_HIT < " . CStatistics::DBDateAdd($DB->CharToDateFunction($val, "SHORT"), 1);
+                        if (CheckDateTime($val)) {
+                            $arSqlSearch[] = "H.DATE_HIT < " . CStatistics::DBDateAdd(
+                                    $DB->CharToDateFunction($val, "SHORT"),
+                                    1
+                                );
+                        }
                         break;
                     case "IP":
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "Y" && $match_value_set) ? "N" : "Y";
@@ -53,7 +60,9 @@ class CSearcherHit
                         $arSqlSearch[] = GetFilterQuery("H.USER_AGENT", $val, $match);
                         break;
                     case "SITE_ID":
-                        if (is_array($val)) $val = implode(" | ", $val);
+                        if (is_array($val)) {
+                            $val = implode(" | ", $val);
+                        }
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "N" && $match_value_set) ? "Y" : "N";
                         $arSqlSearch[] = GetFilterQuery("H.SITE_ID", $val, $match);
                         break;
@@ -62,21 +71,28 @@ class CSearcherHit
         }
 
         $strSqlSearch = GetFilterSqlSearch($arSqlSearch);
-        if ($by == "s_id") $strSqlOrder = "ORDER BY H.ID";
-        elseif ($by == "s_site_id") $strSqlOrder = "ORDER BY H.SITE_ID";
-        elseif ($by == "s_date_hit") $strSqlOrder = "ORDER BY H.DATE_HIT";
-        elseif ($by == "s_searcher_id") $strSqlOrder = "ORDER BY H.SEARCHER_ID";
-        elseif ($by == "s_user_agent") $strSqlOrder = "ORDER BY H.USER_AGENT";
-        elseif ($by == "s_ip") $strSqlOrder = "ORDER BY H.IP";
-        elseif ($by == "s_url") $strSqlOrder = "ORDER BY H.URL ";
-        else {
-            $by = "s_date_hit";
+        if ($by == "s_id") {
+            $strSqlOrder = "ORDER BY H.ID";
+        } elseif ($by == "s_site_id") {
+            $strSqlOrder = "ORDER BY H.SITE_ID";
+        } elseif ($by == "s_date_hit") {
+            $strSqlOrder = "ORDER BY H.DATE_HIT";
+        } elseif ($by == "s_searcher_id") {
+            $strSqlOrder = "ORDER BY H.SEARCHER_ID";
+        } elseif ($by == "s_user_agent") {
+            $strSqlOrder = "ORDER BY H.USER_AGENT";
+        } elseif ($by == "s_ip") {
+            $strSqlOrder = "ORDER BY H.IP";
+        } elseif ($by == "s_url") {
+            $strSqlOrder = "ORDER BY H.URL ";
+        } else {
             $strSqlOrder = "ORDER BY H.DATE_HIT";
         }
+
         if ($order != "asc") {
             $strSqlOrder .= " desc ";
-            $order = "desc";
         }
+
         $strSql = "
 			SELECT /*TOP*/
 				H.ID, H.SEARCHER_ID, H.URL, H.URL_404, H.IP, H.USER_AGENT, H.HIT_KEEP_DAYS, H.SITE_ID,
@@ -91,7 +107,7 @@ class CSearcherHit
 		";
 
         $res = $DB->Query(CStatistics::DBTopSql($strSql), false, $err_mess . __LINE__);
-        $is_filtered = (IsFiltered($strSqlSearch));
+
         return $res;
     }
 }

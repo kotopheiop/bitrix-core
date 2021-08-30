@@ -1,4 +1,5 @@
 <?
+
 $module_id = "seo";
 
 if (!$USER->CanDoOperation('seo_settings')) {
@@ -28,31 +29,53 @@ if ($seoRight >= "R") :
     $aTabs = array();
 
     if ($bShowYandexServices) {
-        $aTabs[] = array("DIV" => "edit0", "TAB" => GetMessage('SEO_OPT_TAB_CLOUDADV'), "ICON" => "seo_settings", "TITLE" => GetMessage('SEO_OPT_TAB_CLOUDADV_TITLE'));
+        $aTabs[] = array(
+            "DIV" => "edit0",
+            "TAB" => GetMessage('SEO_OPT_TAB_CLOUDADV'),
+            "ICON" => "seo_settings",
+            "TITLE" => GetMessage('SEO_OPT_TAB_CLOUDADV_TITLE')
+        );
     }
 
 
-    $aTabs[] = array("DIV" => "edit1", "TAB" => GetMessage('SEO_OPT_TAB_PROP'), "ICON" => "seo_settings", "TITLE" => GetMessage('SEO_OPT_TAB_PROP_TITLE'));
-    $aTabs[] = array("DIV" => "edit3", "TAB" => GetMessage('SEO_OPT_TAB_SEARCHERS'), "ICON" => "seo_settings", "TITLE" => GetMessage('SEO_OPT_TAB_SEARCHERS_TITLE'));
-    $aTabs[] = array("DIV" => "edit2", "TAB" => GetMessage("MAIN_TAB_RIGHTS"), "ICON" => "seo_settings", "TITLE" => GetMessage("MAIN_TAB_TITLE_RIGHTS"));
+    $aTabs[] = array(
+        "DIV" => "edit1",
+        "TAB" => GetMessage('SEO_OPT_TAB_PROP'),
+        "ICON" => "seo_settings",
+        "TITLE" => GetMessage('SEO_OPT_TAB_PROP_TITLE')
+    );
+    $aTabs[] = array(
+        "DIV" => "edit3",
+        "TAB" => GetMessage('SEO_OPT_TAB_SEARCHERS'),
+        "ICON" => "seo_settings",
+        "TITLE" => GetMessage('SEO_OPT_TAB_SEARCHERS_TITLE')
+    );
+    $aTabs[] = array(
+        "DIV" => "edit2",
+        "TAB" => GetMessage("MAIN_TAB_RIGHTS"),
+        "ICON" => "seo_settings",
+        "TITLE" => GetMessage("MAIN_TAB_TITLE_RIGHTS")
+    );
 
     $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
-    if ($REQUEST_METHOD == "POST" && strlen($Update . $Apply . $RestoreDefaults) > 0 && check_bitrix_sessid()) {
-        if (strlen($RestoreDefaults) > 0) {
+    if ($REQUEST_METHOD == "POST" && $Update . $Apply . $RestoreDefaults <> '' && check_bitrix_sessid()) {
+        if ($RestoreDefaults <> '') {
             COption::RemoveOption('seo');
 
-            $z = CGroup::GetList($v1 = "id", $v2 = "asc", array("ACTIVE" => "Y", "ADMIN" => "N"));
-            while ($zr = $z->Fetch())
+            $z = CGroup::GetList("id", "asc", array("ACTIVE" => "Y", "ADMIN" => "N"));
+            while ($zr = $z->Fetch()) {
                 $APPLICATION->DelGroupRight($module_id, array($zr["ID"]));
+            }
 
             if (CModule::IncludeModule('statistic')) {
                 $arFilter = array('ACTIVE' => 'Y', 'NAME' => 'Google|MSN|Bing', 'NAME_EXACT_MATCH' => 'Y');
-                if (COption::GetOptionString('main', 'vendor') == '1c_bitrix')
+                if (COption::GetOptionString('main', 'vendor') == '1c_bitrix') {
                     $arFilter['NAME'] .= '|Yandex';
+                }
 
                 $strSearchers = '';
-                $dbRes = CSearcher::GetList($by = 's_id', $order = 'asc', $arFilter, $is_filtered);
+                $dbRes = CSearcher::GetList('s_id', 'asc', $arFilter);
                 while ($arRes = $dbRes->Fetch()) {
                     $strSearchers .= ($strSearchers == '' ? '' : ',') . $arRes['ID'];
                 }
@@ -63,23 +86,28 @@ if ($seoRight >= "R") :
             foreach ($arAllOptions as $arOption) {
                 $name = $arOption[0];
                 $val = $_POST[$name];
-                if ($arOption[2][0] == "checkbox" && $val != "Y")
+                if ($arOption[2][0] == "checkbox" && $val != "Y") {
                     $val = "N";
+                }
 
                 COption::SetOptionString("seo", $name, $val, $arOption[1]);
             }
 
-            COption::SetOptionString('seo', 'searchers_list', is_array($_POST['arSearchersList']) ? implode(',', $_POST['arSearchersList']) : '');
+            COption::SetOptionString(
+                'seo',
+                'searchers_list',
+                is_array($_POST['arSearchersList']) ? implode(',', $_POST['arSearchersList']) : ''
+            );
             COption::SetOptionString('seo', 'counters', $_POST['counters']);
         }
     }
 
     $arCurrentSearchers = array();
     $searchers = COption::GetOptionString('seo', 'searchers_list', '');
-    if (strlen($searchers) > 0 && CModule::IncludeModule('statistic')) {
+    if ($searchers <> '' && CModule::IncludeModule('statistic')) {
         $arSearchersList = explode(',', $searchers);
 
-        $dbRes = CSearcher::GetList($by = 's_name', $order = 'asc', array('ID' => implode('|', $arSearchersList)), $is_filtered);
+        $dbRes = CSearcher::GetList('s_name', 'asc', array('ID' => implode('|', $arSearchersList)));
         while ($arRes = $dbRes->GetNext()) {
             $arCurrentSearchers[$arRes['ID']] = $arRes['NAME'];
         }
@@ -115,8 +143,9 @@ if ($seoRight >= "R") :
 
                     if (\Bitrix\Seo\Service::isRegistered()) {
                         ?>
-                        <a href="javascript:void(0)"
-                           onclick="return clearCloudAdvRegister()"><?= GetMessage("SEO_OPT_TAB_CLOUDADV_CLEAR") ?></a>
+                        <a href="javascript:void(0)" onclick="return clearCloudAdvRegister()"><?= GetMessage(
+                                "SEO_OPT_TAB_CLOUDADV_CLEAR"
+                            ) ?></a>
                         <script>
                             function clearCloudAdvRegister() {
                                 if (confirm('<?=CUtil::JSEscape(GetMessage('SEO_OPT_TAB_CLOUDADV_CLEAR_CONFIRM'))?>')) {
@@ -124,7 +153,9 @@ if ($seoRight >= "R") :
                                         if (result['result']) {
                                             BX.reload();
                                         } else if (result["error"]) {
-                                            alert('<?=CUtil::JSEscape(GetMessage("SEO_ERROR"))?> : ' + result['error']['message']);
+                                            alert('<?=CUtil::JSEscape(
+                                                GetMessage("SEO_ERROR")
+                                            )?> : ' + result['error']['message']);
                                         }
                                     });
                                 }
@@ -147,24 +178,28 @@ if ($seoRight >= "R") :
             ?>
             <tr>
                 <td valign="top" width="50%"><?
-                    if ($type[0] == "checkbox")
+                    if ($type[0] == "checkbox") {
                         echo "<label for=\"" . htmlspecialcharsbx($arOption[0]) . "\">" . $arOption[1] . "</label>";
-                    else
+                    } else {
                         echo $arOption[1];
+                    }
                     ?>:
                 </td>
                 <td valign="top" width="50%"><?
                     if ($type[0] == "checkbox"):
                         ?><input type="checkbox" name="<? echo htmlspecialcharsbx($arOption[0]) ?>"
-                                 id="<? echo htmlspecialcharsbx($arOption[0]) ?>"
-                                 value="Y"<? if ($val == "Y") echo " checked"; ?> /><?
+                                 id="<? echo htmlspecialcharsbx($arOption[0]) ?>" value="Y"<? if ($val == "Y") {
+                        echo " checked";
+                    } ?> /><?
                     elseif ($type[0] == "text"):
                         ?><input type="text" size="<? echo $type[1] ?>" maxlength="255"
                                  value="<? echo htmlspecialcharsbx($val) ?>"
                                  name="<? echo htmlspecialcharsbx($arOption[0]) ?>" /><?
                     elseif ($type[0] == "textarea"):
                         ?><textarea rows="<? echo $type[1] ?>" cols="<? echo $type[2] ?>"
-                                    name="<? echo htmlspecialcharsbx($arOption[0]) ?>"><? echo htmlspecialcharsbx($val) ?></textarea><?
+                                    name="<? echo htmlspecialcharsbx($arOption[0]) ?>"><? echo htmlspecialcharsbx(
+                        $val
+                    ) ?></textarea><?
                     endif;
                     ?></td>
             </tr>
@@ -174,16 +209,21 @@ if ($seoRight >= "R") :
         ?>
         <tr>
             <td width="30%" valign="top"><? echo GetMessage('SEO_OPT_COUNTERS') ?>:</td>
-            <td width="70%"><textarea cols="50" rows="7"
-                                      name="counters"><? echo htmlspecialcharsbx($counters) ?></textarea></td>
+            <td width="70%"><textarea cols="50" rows="7" name="counters"><? echo htmlspecialcharsbx(
+                        $counters
+                    ) ?></textarea></td>
         </tr>
         <tr>
             <td width="30%" valign="top"><? echo GetMessage('SEO_OPT_SEARCHERS') ?>:</td>
             <td width="70%">
                 <?
                 if (CModule::IncludeModule('statistic')) {
-                    if (count($arCurrentSearchers) > 0)
-                        echo GetMessage('SEO_OPT_SEARCHERS_SELECTED'), ": <b>", implode(', ', $arCurrentSearchers) . '</b><br /><br />';
+                    if (count($arCurrentSearchers) > 0) {
+                        echo GetMessage('SEO_OPT_SEARCHERS_SELECTED'), ": <b>", implode(
+                                ', ',
+                                $arCurrentSearchers
+                            ) . '</b><br /><br />';
+                    }
 
                     echo SelectBoxM("arSearchersList[]", CSearcher::GetDropdownList(), $arSearchersList, "", false, 20);
                 } else {

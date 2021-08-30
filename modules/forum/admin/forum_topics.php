@@ -1,12 +1,14 @@
 <?
+
 /********************************************************************
  * Topics
  **************************************!*****************************/
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 \Bitrix\Main\Loader::includeModule("forum");
 $forumModulePermissions = $APPLICATION->GetGroupRight("forum");
-if ($forumModulePermissions == "D")
+if ($forumModulePermissions == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 IncludeModuleLangFile(__FILE__);
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/forum/prolog.php");
 /*******************************************************************/
@@ -27,11 +29,21 @@ while ($dbForum = $db_Forum->Fetch()) {
 $sTableID = "tbl_topic";
 $oSort = new CAdminSorting($sTableID, "ID", "asc");
 $lAdmin = new CAdminList($sTableID, $oSort);
-$lAdmin->InitFilter(array(
-    "FORUM_ID", "TITLE", "DESCRIPTION", "USER_START_ID",
-    "ACTIVE", "PINNED", "OPENED",
-    "DATE_FROM", "DATE_TO",
-    "CREATE_DATE_FROM", "CREATE_DATE_TO"));
+$lAdmin->InitFilter(
+    array(
+        "FORUM_ID",
+        "TITLE",
+        "DESCRIPTION",
+        "USER_START_ID",
+        "ACTIVE",
+        "PINNED",
+        "OPENED",
+        "DATE_FROM",
+        "DATE_TO",
+        "CREATE_DATE_FROM",
+        "CREATE_DATE_TO"
+    )
+);
 /*******************************************************************/
 $arMsg = array();
 $err = false;
@@ -52,9 +64,14 @@ if (!empty($CREATE_DATE_FROM) || !empty($CREATE_DATE_TO) || $CREATE_DATE_FROM_DA
         if (!empty($CREATE_DATE_TO)) {
             $date2_create_stm = MkDateTime(ConvertDateTime($CREATE_DATE_TO, "D.M.Y") . " 23:59:59", "d.m.Y H:i:s");
             $CREATE_DATE_TO .= " 23:59:59";
-        } else if ($CREATE_DATE_FROM_FILTER_PERIOD == "after") {
-            $date1_create_stm = MkDateTime(ConvertDateTime($CREATE_DATE_FROM, "D.M.Y") . " 23:59:59", "d.m.Y H:i:s");
-            $CREATE_DATE_FROM .= " 23:59:59";
+        } else {
+            if ($CREATE_DATE_FROM_FILTER_PERIOD == "after") {
+                $date1_create_stm = MkDateTime(
+                    ConvertDateTime($CREATE_DATE_FROM, "D.M.Y") . " 23:59:59",
+                    "d.m.Y H:i:s"
+                );
+                $CREATE_DATE_FROM .= " 23:59:59";
+            }
         }
     }
 
@@ -62,12 +79,14 @@ if (!empty($CREATE_DATE_FROM) || !empty($CREATE_DATE_TO) || $CREATE_DATE_FROM_DA
         $date1_create_stm = time() - 86400 * $CREATE_DATE_FROM_DAYS_TO_BACK;
         $date1_create_stm = GetTime($date1_create_stm);
     }
-    if (!$date1_create_stm && !empty($CREATE_DATE_FROM))
+    if (!$date1_create_stm && !empty($CREATE_DATE_FROM)) {
         $arMsg[] = array("id" => ">=START_DATE", "text" => GetMessage("FM_WRONG_DATE_CREATE_FROM"));
-    if (!$date2_create_stm && !empty($CREATE_DATE_TO))
+    }
+    if (!$date2_create_stm && !empty($CREATE_DATE_TO)) {
         $arMsg[] = array("id" => "<=START_DATE", "text" => GetMessage("FM_WRONG_DATE_CREATE_TILL"));
-    elseif ($date1_create_stm && $date2_create_stm && ($date2_create_stm <= $date1_create_stm))
+    } elseif ($date1_create_stm && $date2_create_stm && ($date2_create_stm <= $date1_create_stm)) {
         $arMsg[] = array("id" => "find_date_create_timestamp2", "text" => GetMessage("FM_FROM_TILL_TIMESTAMP"));
+    }
 }
 
 // LAST TOPIC
@@ -82,9 +101,11 @@ if (!empty($DATE_FROM) || !empty($DATE_TO) || $DATE_FROM_DAYS_TO_BACK > 0) {
         if (!empty($DATE_TO)) {
             $date2_stm = MkDateTime(ConvertDateTime($DATE_TO, "D.M.Y") . " 23:59:59", "d.m.Y H:i:s");
             $DATE_TO .= " 23:59:59";
-        } else if ($DATE_FROM_FILTER_PERIOD == "after") {
-            $date1_stm = MkDateTime(ConvertDateTime($DATE_FROM, "D.M.Y") . " 23:59:59", "d.m.Y H:i:s");
-            $DATE_FROM .= " 23:59:59";
+        } else {
+            if ($DATE_FROM_FILTER_PERIOD == "after") {
+                $date1_stm = MkDateTime(ConvertDateTime($DATE_FROM, "D.M.Y") . " 23:59:59", "d.m.Y H:i:s");
+                $DATE_FROM .= " 23:59:59";
+            }
         }
     }
 
@@ -92,28 +113,30 @@ if (!empty($DATE_FROM) || !empty($DATE_TO) || $DATE_FROM_DAYS_TO_BACK > 0) {
         $date1_stm = time() - 86400 * $DATE_FROM_DAYS_TO_BACK;
         $date1_stm = GetTime($date1_stm);
     }
-    if (!$date1_stm && !empty($DATE_FROM))
+    if (!$date1_stm && !empty($DATE_FROM)) {
         $arMsg[] = array("id" => ">=LAST_POST_DATE", "text" => GetMessage("FM_WRONG_DATE_FROM"));
-    if (!$date2_stm && !empty($DATE_TO))
+    }
+    if (!$date2_stm && !empty($DATE_TO)) {
         $arMsg[] = array("id" => "<=LAST_POST_DATE", "text" => GetMessage("FM_WRONG_DATE_TO"));
-    elseif ($date1_stm && $date2_stm && ($date2_stm <= $date1_stm))
+    } elseif ($date1_stm && $date2_stm && ($date2_stm <= $date1_stm)) {
         $arMsg[] = array("id" => "find_date_timestamp2", "text" => GetMessage("FM_FROM_TILL_TIMESTAMP"));
+    }
 }
 
 $arFilter = array();
-$FORUM_ID = intVal($FORUM_ID);
+$FORUM_ID = intval($FORUM_ID);
 if ($FORUM_ID > 0):
     $arFilter["FORUM_ID"] = $FORUM_ID;
 endif;
 $TITLE = trim($TITLE);
-if (strLen($TITLE) > 0):
+if ($TITLE <> ''):
     $arFilter["TITLE"] = $TITLE;
 endif;
 $DESCRIPTION = trim($DESCRIPTION);
-if (strLen($DESCRIPTION) > 0):
+if ($DESCRIPTION <> ''):
     $arFilter["DESCRIPTION"] = $DESCRIPTION;
 endif;
-$USER_START_ID = intVal($USER_START_ID);
+$USER_START_ID = intval($USER_START_ID);
 if ($USER_START_ID > 0):
     $arFilter["USER_START_ID"] = $USER_START_ID;
 elseif (trim($_REQUEST["USER_START_ID"]) == "0"):
@@ -137,15 +160,19 @@ else:
     $STATE = "";
 endif;
 
-if (!empty($date1_create_stm))
+if (!empty($date1_create_stm)) {
     $arFilter[">=START_DATE"] = $CREATE_DATE_FROM;
-if (!empty($date2_create_stm))
+}
+if (!empty($date2_create_stm)) {
     $arFilter["<=START_DATE"] = $CREATE_DATE_TO;
+}
 
-if (!empty($date1_stm))
+if (!empty($date1_stm)) {
     $arFilter[">=LAST_POST_DATE"] = $DATE_FROM;
-if (!empty($date2_stm))
+}
+if (!empty($date2_stm)) {
     $arFilter["<=LAST_POST_DATE"] = $DATE_TO;
+}
 
 if (!empty($arMsg)) {
     $err = new CAdminException($arMsg);
@@ -159,7 +186,7 @@ if ($lAdmin->EditAction() && $forumModulePermissions >= "R") {
     $sError = "";
     $sOk = "";
     foreach ($FIELDS as $ID => $arFields) {
-        $ID = intVal($ID);
+        $ID = intval($ID);
 
         if (!$lAdmin->IsUpdated($ID)):
             continue;
@@ -172,7 +199,12 @@ if ($lAdmin->EditAction() && $forumModulePermissions >= "R") {
         if (is_set($arFields, "APPROVED")):
             $arFields["APPROVED"] = ($arFields["APPROVED"] == "N" ? "N" : "Y");
             if ($res["APPROVED"] != $arFields["APPROVED"]):
-                ForumActions(($arFields["APPROVED"] == "Y" ? "SHOW_TOPIC" : "HIDE_TOPIC"), array("TID" => $ID), $sError, $sOk);
+                ForumActions(
+                    ($arFields["APPROVED"] == "Y" ? "SHOW_TOPIC" : "HIDE_TOPIC"),
+                    array("TID" => $ID),
+                    $sError,
+                    $sOk
+                );
             endif;
             unset($arFields["APPROVED"]);
         endif;
@@ -193,10 +225,11 @@ if ($lAdmin->EditAction() && $forumModulePermissions >= "R") {
         endif;
 
         if (!CForumTopic::Update($ID, $arFields)) {
-            if ($ex = $APPLICATION->GetException())
+            if ($ex = $APPLICATION->GetException()) {
                 $lAdmin->AddUpdateError($ex->GetString(), $ID);
-            else
+            } else {
                 $lAdmin->AddUpdateError(GetMessage("FM_WRONG_UPDATE"), $ID);
+            }
         } else {
             $clearCache = true;
             if (is_set($arFields, "STATE") && $arFields["STATE"] != $res["STATE"]) {
@@ -204,7 +237,12 @@ if ($lAdmin->EditAction() && $forumModulePermissions >= "R") {
                 unset($arFields["STATE"]);
             }
             if (is_set($arFields, "SORT") && $arFields["SORT"] != $res["SORT"]) {
-                CForumEventLog::Log("topic", (intval($arFields["SORT"]) == 100 ? "stick" : "unstick"), $ID, serialize($res));
+                CForumEventLog::Log(
+                    "topic",
+                    (intval($arFields["SORT"]) == 100 ? "stick" : "unstick"),
+                    $ID,
+                    serialize($res)
+                );
                 unset($arFields["SORT"]);
             }
             if (!empty($arFields)) {
@@ -228,8 +266,7 @@ if ($arID = $lAdmin->GroupAction()) {
     $sError = "";
     $sOk = "";
     if (!check_bitrix_sessid()) {
-
-    } elseif ($_REQUEST['action'] == "move" && intVal($_REQUEST['move_to']) <= 0) {
+    } elseif ($_REQUEST['action'] == "move" && intval($_REQUEST['move_to']) <= 0) {
         $lAdmin->AddFilterError(GetMessage("FM_WRONG_FORUM_ID"));
     } else {
         $arFilterAction = $arFilter;
@@ -244,11 +281,11 @@ if ($arID = $lAdmin->GroupAction()) {
         endif;
         $rsData = CForumTopic::GetListEx(array($by => $order), $arFilterAction);
         $arID = array();
-        while ($res = $rsData->Fetch())
+        while ($res = $rsData->Fetch()) {
             $arID[] = $res['ID'];
+        }
 
         if (empty($arID)) {
-
         } else {
             $clearCache = true;
             switch ($_REQUEST['action']) {
@@ -256,7 +293,7 @@ if ($arID = $lAdmin->GroupAction()) {
                     ForumDeleteTopic($arID, $sError, $sOk);
                     break;
                 case "move":
-                    if (!CForumTopic::MoveTopic2Forum($arID, intVal($_REQUEST['move_to']))):
+                    if (!CForumTopic::MoveTopic2Forum($arID, intval($_REQUEST['move_to']))):
                         $ex = $APPLICATION->GetException();
                         if ($ex && $err = $ex->GetString()):
                             $lAdmin->AddUpdateError($err, $ID);
@@ -275,7 +312,7 @@ if ($arID = $lAdmin->GroupAction()) {
 if ($clearCache) {
     // Clear cache.
     $arSites = array();
-    if ($db_res = CSite::GetList($by = "sort", $order = "asc")) {
+    if ($db_res = CSite::GetList()) {
         while ($res = $db_res->GetNext()) {
             $arSites[] = $res["LID"];
         }
@@ -291,20 +328,24 @@ if ($clearCache) {
         $nameSpace . ":forum.topic.reviews",
         $nameSpace . ":forum.topic.search",
         $nameSpace . ":forum.user.list",
-        $nameSpace . ":forum.user.post");
+        $nameSpace . ":forum.user.post"
+    );
     foreach ($arComponentPath as $path) {
         $componentRelativePath = CComponentEngine::MakeComponentPath($path);
         $arComponentDescription = CComponentUtil::GetComponentDescr($path);
-        if (strLen($componentRelativePath) <= 0 || !is_array($arComponentDescription))
+        if ($componentRelativePath == '' || !is_array($arComponentDescription)) {
             continue;
-        elseif (!array_key_exists("CACHE_PATH", $arComponentDescription))
+        } elseif (!array_key_exists("CACHE_PATH", $arComponentDescription)) {
             continue;
+        }
         foreach ($arSites as $siteId) {
             $path = $componentRelativePath;
-            if ($arComponentDescription["CACHE_PATH"] == "Y")
+            if ($arComponentDescription["CACHE_PATH"] == "Y") {
                 $path = "/" . $siteId . $path;
-            if (!empty($path))
+            }
+            if (!empty($path)) {
                 BXClearCache(true, $path);
+            }
         }
     }
 }
@@ -315,20 +356,47 @@ $rsData->NavStart();
 $lAdmin->NavText($rsData->GetNavPrint(GetMessage("FM_TOPICS")));
 
 /*******************************************************************/
-$lAdmin->AddHeaders(array(
-    array("id" => "ID", "content" => "ID", "sort" => "ID", "default" => true),
-    array("id" => "TITLE", "content" => GetMessage("FM_TITLE_NAME"), "sort" => "TITLE", "default" => true),
-    array("id" => "DESCRIPTION", "content" => GetMessage("FM_TITLE_DESCRIPTION"), "sort" => "DESCRIPTION", "default" => false),
-    array("id" => "STATE", "content" => GetMessage("FM_TITLE_STATE"), "sort" => "STATE", "default" => true),
-    array("id" => "APPROVED", "content" => GetMessage("FM_TITLE_APPROVED"), "sort" => "APPROVED", "default" => true),
-    array("id" => "SORT", "content" => GetMessage("FM_TITLE_SORT"), "sort" => "SORT", "default" => true),
-    array("id" => "USER_START_NAME", "content" => GetMessage("FM_TITLE_AUTHOR"), "sort" => "USER_START_NAME", "default" => true),
-    array("id" => "START_DATE", "content" => GetMessage("FM_TITLE_DATE_CREATE"), "sort" => "START_DATE", "default" => true),
-    array("id" => "POSTS", "content" => GetMessage("FM_TITLE_MESSAGES"), "sort" => "POSTS", "default" => false),
-    array("id" => "VIEWS", "content" => GetMessage("FM_TITLE_VIEWS"), "sort" => "VIEWS", "default" => false),
-    array("id" => "FORUM_ID", "content" => GetMessage("FM_TITLE_FORUM"), "sort" => "FORUM_NAME", "default" => true),
-    array("id" => "LAST_POST_DATE", "content" => GetMessage("FM_TITLE_LAST_MESSAGE"), "sort" => "LAST_POST_DATE", "default" => false)
-));
+$lAdmin->AddHeaders(
+    array(
+        array("id" => "ID", "content" => "ID", "sort" => "ID", "default" => true),
+        array("id" => "TITLE", "content" => GetMessage("FM_TITLE_NAME"), "sort" => "TITLE", "default" => true),
+        array(
+            "id" => "DESCRIPTION",
+            "content" => GetMessage("FM_TITLE_DESCRIPTION"),
+            "sort" => "DESCRIPTION",
+            "default" => false
+        ),
+        array("id" => "STATE", "content" => GetMessage("FM_TITLE_STATE"), "sort" => "STATE", "default" => true),
+        array(
+            "id" => "APPROVED",
+            "content" => GetMessage("FM_TITLE_APPROVED"),
+            "sort" => "APPROVED",
+            "default" => true
+        ),
+        array("id" => "SORT", "content" => GetMessage("FM_TITLE_SORT"), "sort" => "SORT", "default" => true),
+        array(
+            "id" => "USER_START_NAME",
+            "content" => GetMessage("FM_TITLE_AUTHOR"),
+            "sort" => "USER_START_NAME",
+            "default" => true
+        ),
+        array(
+            "id" => "START_DATE",
+            "content" => GetMessage("FM_TITLE_DATE_CREATE"),
+            "sort" => "START_DATE",
+            "default" => true
+        ),
+        array("id" => "POSTS", "content" => GetMessage("FM_TITLE_MESSAGES"), "sort" => "POSTS", "default" => false),
+        array("id" => "VIEWS", "content" => GetMessage("FM_TITLE_VIEWS"), "sort" => "VIEWS", "default" => false),
+        array("id" => "FORUM_ID", "content" => GetMessage("FM_TITLE_FORUM"), "sort" => "FORUM_NAME", "default" => true),
+        array(
+            "id" => "LAST_POST_DATE",
+            "content" => GetMessage("FM_TITLE_LAST_MESSAGE"),
+            "sort" => "LAST_POST_DATE",
+            "default" => false
+        )
+    )
+);
 /*******************************************************************/
 while ($res = $rsData->NavNext(true, "t_")) {
     $row =& $lAdmin->AddRow($t_ID, $res);
@@ -339,10 +407,11 @@ while ($res = $rsData->NavNext(true, "t_")) {
     $row->AddField("ID", $t_ID);
     $row->AddInputField("TITLE", array("size" => "35"));
     $row->AddInputField("DESCRIPTION", array("size" => "35"));
-    if ($t_STATE != "L")
+    if ($t_STATE != "L") {
         $row->AddSelectField("STATE", array("Y" => GetMessage("F_OPEN"), "N" => GetMessage("F_CLOSE")));
-    else
+    } else {
         $row->AddField("STATE", "Link");
+    }
 
     $row->AddSelectField("APPROVED", array("Y" => GetMessage("F_SHOW"), "N" => GetMessage("F_HIDE")));
     $row->AddSelectField("SORT", array("100" => GetMessage("F_PINN"), "150" => GetMessage("F_UNPINN")));
@@ -366,7 +435,8 @@ $lAdmin->AddGroupActionTable(
         "move" => GetMessage("FM_ACT_MOVE"),
         "space" => array(
             "type" => "html",
-            "value" => "&nbsp;"),
+            "value" => "&nbsp;"
+        ),
         "move_to" => array(
             "type" => "html",
             "value" =>
@@ -416,31 +486,56 @@ $oFilter = new CAdminFilter(
     <tr valign="center">
         <td><?= GetMessage("FM_TITLE_APPROVED") ?>:</td>
         <td><select name="APPROVED">
-                <option value="" <?= ($APPROVED == "" ? " selected='selected'" : "") ?>><?= GetMessage("F_ALL") ?></option>
-                <option value="Y"<?= ($APPROVED == "Y" ? " selected='selected'" : "") ?>><?= GetMessage("F_SHOW") ?></option>
-                <option value="N"<?= ($APPROVED == "N" ? " selected='selected'" : "") ?>><?= GetMessage("F_HIDE") ?></option>
+                <option value="" <?= ($APPROVED == "" ? " selected='selected'" : "") ?>><?= GetMessage(
+                        "F_ALL"
+                    ) ?></option>
+                <option value="Y"<?= ($APPROVED == "Y" ? " selected='selected'" : "") ?>><?= GetMessage(
+                        "F_SHOW"
+                    ) ?></option>
+                <option value="N"<?= ($APPROVED == "N" ? " selected='selected'" : "") ?>><?= GetMessage(
+                        "F_HIDE"
+                    ) ?></option>
             </select></td>
     </tr>
     <tr valign="center">
         <td><?= GetMessage("FM_TITLE_SORT") ?>:</td>
         <td><select name="PINNED">
-                <option value="" <?= ($PINNED == "" ? " selected='selected'" : "") ?>><?= GetMessage("F_ALL") ?></option>
-                <option value="Y"<?= ($PINNED == "Y" ? " selected='selected'" : "") ?>><?= GetMessage("F_PINN") ?></option>
-                <option value="N"<?= ($PINNED == "N" ? " selected='selected'" : "") ?>><?= GetMessage("F_UNPINN") ?></option>
+                <option value="" <?= ($PINNED == "" ? " selected='selected'" : "") ?>><?= GetMessage(
+                        "F_ALL"
+                    ) ?></option>
+                <option value="Y"<?= ($PINNED == "Y" ? " selected='selected'" : "") ?>><?= GetMessage(
+                        "F_PINN"
+                    ) ?></option>
+                <option value="N"<?= ($PINNED == "N" ? " selected='selected'" : "") ?>><?= GetMessage(
+                        "F_UNPINN"
+                    ) ?></option>
             </select></td>
     </tr>
     <tr valign="center">
         <td><?= GetMessage("FM_TITLE_STATE") ?>:</td>
         <td><select name="STATE">
                 <option value="" <?= ($STATE == "" ? " selected='selected'" : "") ?>><?= GetMessage("F_ALL") ?></option>
-                <option value="Y"<?= ($STATE == "Y" ? " selected='selected'" : "") ?>><?= GetMessage("F_OPEN") ?></option>
-                <option value="N"<?= ($STATE == "N" ? " selected='selected'" : "") ?>><?= GetMessage("F_CLOSE") ?></option>
-                <option value="L"<?= ($STATE == "L" ? " selected='selected'" : "") ?>><?= GetMessage("F_LINK") ?></option>
+                <option value="Y"<?= ($STATE == "Y" ? " selected='selected'" : "") ?>><?= GetMessage(
+                        "F_OPEN"
+                    ) ?></option>
+                <option value="N"<?= ($STATE == "N" ? " selected='selected'" : "") ?>><?= GetMessage(
+                        "F_CLOSE"
+                    ) ?></option>
+                <option value="L"<?= ($STATE == "L" ? " selected='selected'" : "") ?>><?= GetMessage(
+                        "F_LINK"
+                    ) ?></option>
             </select></td>
     </tr>
     <tr valign="center">
         <td><? echo GetMessage("FM_TITLE_DATE_CREATE") . ":" ?></td>
-        <td><? echo CalendarPeriod("CREATE_DATE_FROM", $CREATE_DATE_FROM, "CREATE_DATE_TO", $CREATE_DATE_TO, "form1", "Y") ?></td>
+        <td><? echo CalendarPeriod(
+                "CREATE_DATE_FROM",
+                $CREATE_DATE_FROM,
+                "CREATE_DATE_TO",
+                $CREATE_DATE_TO,
+                "form1",
+                "Y"
+            ) ?></td>
     </tr>
     <tr valign="center">
         <td><? echo GetMessage("FM_TITLE_DATE_LAST_POST") . ":" ?></td>

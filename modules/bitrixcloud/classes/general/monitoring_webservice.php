@@ -1,4 +1,5 @@
 <?php
+
 IncludeModuleLangFile(__FILE__);
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/classes/general/update_client.php");
 
@@ -20,13 +21,18 @@ class CBitrixCloudMonitoringWebService extends CBitrixCloudWebService
         $arParams["spd"] = CUpdateClient::getSpd();
         $arParams["CHHB"] = $_SERVER["HTTP_HOST"];
         $arParams["CSAB"] = $_SERVER["SERVER_ADDR"];
-        foreach ($this->addParams as $key => $value)
+        foreach ($this->addParams as $key => $value) {
             $arParams[$key] = $value;
+        }
 
         $url = COption::GetOptionString("bitrixcloud", "monitoring_policy_url");
-        $url = CHTTP::urlAddParams($url, $arParams, array(
-                "encode" => true,
-            )) . $this->addStr;
+        $url = CHTTP::urlAddParams(
+                $url,
+                $arParams,
+                array(
+                    "encode" => true,
+                )
+            ) . $this->addStr;
 
         return $url;
     }
@@ -44,12 +50,18 @@ class CBitrixCloudMonitoringWebService extends CBitrixCloudWebService
         $node = $obXML->SelectNodes("/control");
         if (is_object($node)) {
             $spd = $node->getAttribute("crc_code");
-            if (strlen($spd) > 0)
+            if ($spd <> '') {
                 CUpdateClient::setSpd($spd);
+            }
         } else {
-            throw new CBitrixCloudException(GetMessage("BCL_MON_WS_SERVER", array(
-                "#STATUS#" => "-1",
-            )), $this->getServerResult());
+            throw new CBitrixCloudException(
+                GetMessage(
+                    "BCL_MON_WS_SERVER",
+                    array(
+                        "#STATUS#" => "-1",
+                    )
+                ), $this->getServerResult()
+            );
         }
 
         return $obXML;
@@ -87,16 +99,18 @@ class CBitrixCloudMonitoringWebService extends CBitrixCloudWebService
         if (is_array($emails)) {
             foreach ($emails as $email) {
                 $email = trim($email);
-                if (strlen($email) > 0)
+                if ($email <> '') {
                     $this->addStr .= "&ar_emails[]=" . urlencode($email);
+                }
             }
         }
 
         if (is_array($tests)) {
             foreach ($tests as $test) {
                 $test = trim($test);
-                if (strlen($test) > 0)
+                if ($test <> '') {
                     $this->addStr .= "&ar_tests[]=" . urlencode($test);
+                }
             }
         }
 
@@ -104,8 +118,9 @@ class CBitrixCloudMonitoringWebService extends CBitrixCloudWebService
         $devices = $option->getArrayValue();
         foreach ($devices as $domain_device) {
             if (list ($myDomain, $myDevice) = explode("|", $domain_device, 2)) {
-                if ($myDomain === $domain)
+                if ($myDomain === $domain) {
                     $this->addStr .= "&ar_devices[]=" . urlencode($myDevice);
+                }
             }
         }
 

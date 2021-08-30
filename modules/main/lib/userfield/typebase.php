@@ -5,6 +5,11 @@ namespace Bitrix\Main\UserField;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\Text\HtmlFilter;
 
+/**
+ * Class TypeBase
+ * @package Bitrix\Main\UserField
+ * @deprecated
+ */
 abstract class TypeBase
 {
     static $helper = array();
@@ -83,8 +88,20 @@ abstract class TypeBase
                                 : \ConvertTimeStamp(time(), 'SHORT');
                         } else {
                             $value = $full
-                                ? str_replace(" 00:00:00", "", \CDatabase::formatDate($arUserField["SETTINGS"]["DEFAULT_VALUE"]["VALUE"], "YYYY-MM-DD HH:MI:SS", \CLang::getDateFormat("FULL")))
-                                : \CDatabase::formatDate($arUserField["SETTINGS"]["DEFAULT_VALUE"]["VALUE"], $full ? '' : "YYYY-MM-DD", \CLang::getDateFormat('SHORT'));
+                                ? str_replace(
+                                    " 00:00:00",
+                                    "",
+                                    \CDatabase::formatDate(
+                                        $arUserField["SETTINGS"]["DEFAULT_VALUE"]["VALUE"],
+                                        "YYYY-MM-DD HH:MI:SS",
+                                        \CLang::getDateFormat("FULL")
+                                    )
+                                )
+                                : \CDatabase::formatDate(
+                                    $arUserField["SETTINGS"]["DEFAULT_VALUE"]["VALUE"],
+                                    $full ? '' : "YYYY-MM-DD",
+                                    \CLang::getDateFormat('SHORT')
+                                );
                         }
 
                         break;
@@ -122,9 +139,15 @@ abstract class TypeBase
     {
         $value = static::normalizeFieldValue($userField['VALUE']);
 
-        return join(', ', array_map(function ($v) {
-            return is_null($v) || is_scalar($v) ? (string)$v : '';
-        }, $value));
+        return join(
+            ', ',
+            array_map(
+                function ($v) {
+                    return is_null($v) || is_scalar($v) ? (string)$v : '';
+                },
+                $value
+            )
+        );
     }
 
 }

@@ -69,7 +69,9 @@ class UserIndexSelectorTable extends Main\Entity\DataManager
         if (isset($updateData['SEARCH_SELECTOR_CONTENT'])) {
             $value = $DB->forSql($updateData['SEARCH_SELECTOR_CONTENT']);
             $encryptedValue = sha1($updateData['SEARCH_SELECTOR_CONTENT']);
-            $updateData['SEARCH_SELECTOR_CONTENT'] = new \Bitrix\Main\DB\SqlExpression("IF(SHA1(SEARCH_SELECTOR_CONTENT) = '{$encryptedValue}', SEARCH_SELECTOR_CONTENT, '{$value}')");
+            $updateData['SEARCH_SELECTOR_CONTENT'] = new \Bitrix\Main\DB\SqlExpression(
+                "IF(SHA1(SEARCH_SELECTOR_CONTENT) = '{$encryptedValue}', SEARCH_SELECTOR_CONTENT, '{$value}')"
+            );
         }
 
         $merge = $helper->prepareMerge(

@@ -164,8 +164,9 @@ class Sku
      */
     public static function updateAvailable($productId, $iblockId = 0, array $productFields = array())
     {
-        if (!self::allowedUpdateAvailable())
+        if (!self::allowedUpdateAvailable()) {
             return true;
+        }
         static::disableUpdateAvailable();
 
         $result = true;
@@ -182,8 +183,9 @@ class Sku
         }
         if ($process) {
             $iblockId = (int)$iblockId;
-            if ($iblockId <= 0)
+            if ($iblockId <= 0) {
                 $iblockId = (int)\CIBlockElement::GetIBlockByID($productId);
+            }
             if ($iblockId <= 0) {
                 $process = false;
                 $result = false;
@@ -201,10 +203,11 @@ class Sku
         if ($process) {
             switch ($iblockData['CATALOG_TYPE']) {
                 case \CCatalogSku::TYPE_PRODUCT:
-                    if (self::isSeparateSkuMode())
+                    if (self::isSeparateSkuMode()) {
                         $fields = static::getParentDataAsProduct($productId, $productFields);
-                    else
+                    } else {
                         $fields = static::getDefaultParentSettings(static::getOfferState($productId, $iblockId), true);
+                    }
                     break;
                 case \CCatalogSku::TYPE_FULL:
                     $offerState = static::getOfferState($productId, $iblockId);
@@ -212,10 +215,11 @@ class Sku
                         switch ($offerState) {
                             case self::OFFERS_AVAILABLE:
                             case self::OFFERS_NOT_AVAILABLE:
-                                if (self::isSeparateSkuMode())
+                                if (self::isSeparateSkuMode()) {
                                     $fields = static::getParentDataAsProduct($productId, $productFields);
-                                else
+                                } else {
                                     $fields = static::getDefaultParentSettings($offerState, false);
+                                }
                                 break;
                             case self::OFFERS_NOT_EXIST:
                                 $product = Catalog\Model\Product::getCacheItem($productId, true);
@@ -279,8 +283,9 @@ class Sku
             && $parentIblockId > 0
         ) {
             $result = self::updateParentAvailable($parentId, $parentIblockId);
-            if (!$result)
+            if (!$result) {
                 $process = false;
+            }
         }
         unset($parentIblockId, $parentId, $fields, $iblockData);
         unset($process);
@@ -300,24 +305,28 @@ class Sku
      */
     public static function calculateComplete($id, $iblockId = null, $type = null)
     {
-        if (!self::allowedUpdateAvailable())
+        if (!self::allowedUpdateAvailable()) {
             return;
+        }
 
         $id = (int)$id;
-        if ($id <= 0)
+        if ($id <= 0) {
             return;
+        }
 
         if (
             $type == Catalog\ProductTable::TYPE_FREE_OFFER
             || ($type == Catalog\ProductTable::TYPE_PRODUCT && !self::isSeparateSkuMode())
             || $type == Catalog\ProductTable::TYPE_SET
-        )
+        ) {
             return;
+        }
 
         if ($iblockId !== null) {
             $iblockId = (int)$iblockId;
-            if ($iblockId <= 0)
+            if ($iblockId <= 0) {
                 $iblockId = null;
+            }
         }
 
         switch ($type) {
@@ -329,16 +338,18 @@ class Sku
                 self::setCalculateData(self::$deferredOffers, $id, $iblockId);
                 break;
             default:
-                if (isset(self::$deferredSku[$id]))
+                if (isset(self::$deferredSku[$id])) {
                     self::setCalculateData(self::$deferredSku, $id, $iblockId);
-                elseif (isset(self::$deferredOffers[$id]))
+                } elseif (isset(self::$deferredOffers[$id])) {
                     self::setCalculateData(self::$deferredOffers, $id, $iblockId);
-                else
+                } else {
                     self::setCalculateData(self::$deferredUnknown, $id, $iblockId);
+                }
                 break;
         }
-        if (!self::usedDeferredCalculation())
+        if (!self::usedDeferredCalculation()) {
             self::calculate();
+        }
     }
 
     /**
@@ -353,27 +364,32 @@ class Sku
      */
     public static function calculatePrice($id, $iblockId = null, $type = null, array $priceTypes = [])
     {
-        if (!self::allowedUpdateAvailable())
+        if (!self::allowedUpdateAvailable()) {
             return;
+        }
 
-        if (self::isSeparateSkuMode())
+        if (self::isSeparateSkuMode()) {
             return;
+        }
 
         $id = (int)$id;
-        if ($id <= 0)
+        if ($id <= 0) {
             return;
+        }
 
         if (
             $type == Catalog\ProductTable::TYPE_FREE_OFFER
             || $type == Catalog\ProductTable::TYPE_PRODUCT
             || $type == Catalog\ProductTable::TYPE_SET
-        )
+        ) {
             return;
+        }
 
         if ($iblockId !== null) {
             $iblockId = (int)$iblockId;
-            if ($iblockId <= 0)
+            if ($iblockId <= 0) {
                 $iblockId = null;
+            }
         }
 
         switch ($type) {
@@ -385,17 +401,19 @@ class Sku
                 self::setCalculatePriceTypes(self::$deferredOffers, $id, $iblockId, $priceTypes);
                 break;
             default:
-                if (isset(self::$deferredSku[$id]))
+                if (isset(self::$deferredSku[$id])) {
                     self::setCalculatePriceTypes(self::$deferredSku, $id, $iblockId, $priceTypes);
-                elseif (isset(self::$deferredOffers[$id]))
+                } elseif (isset(self::$deferredOffers[$id])) {
                     self::setCalculatePriceTypes(self::$deferredOffers, $id, $iblockId, $priceTypes);
-                else
+                } else {
                     self::setCalculatePriceTypes(self::$deferredUnknown, $id, $iblockId, $priceTypes);
+                }
                 break;
         }
 
-        if (!self::usedDeferredCalculation())
+        if (!self::usedDeferredCalculation()) {
             self::calculate();
+        }
     }
 
     /**
@@ -405,8 +423,9 @@ class Sku
      */
     public static function calculate()
     {
-        if (!self::allowedUpdateAvailable())
+        if (!self::allowedUpdateAvailable()) {
             return;
+        }
 
         static::disableUpdateAvailable();
 
@@ -416,8 +435,9 @@ class Sku
             self::clearStepData();
 
             self::$calculatePriceTypes = array_keys(self::$calculatePriceTypes);
-            if (!empty(self::$calculatePriceTypes))
+            if (!empty(self::$calculatePriceTypes)) {
                 sort(self::$calculatePriceTypes);
+            }
 
             self::loadProductIblocks();
 
@@ -478,11 +498,13 @@ class Sku
         static::disablePropertyHandler();
 
         $iblockData = \CCatalogSku::GetInfoByOfferIBlock($newFields['IBLOCK_ID']);
-        if (empty($iblockData))
+        if (empty($iblockData)) {
             return;
+        }
 
-        if (isset($newFields['ACTIVE']) && $newFields['ACTIVE'] != $oldFields['ACTIVE'])
+        if (isset($newFields['ACTIVE']) && $newFields['ACTIVE'] != $oldFields['ACTIVE']) {
             self::$changeActive[$newFields['ID']] = $newFields['ACTIVE'];
+        }
         self::$currentActive[$newFields['ID']] = $oldFields['ACTIVE'];
     }
 
@@ -501,10 +523,11 @@ class Sku
         $iblockData = false;
         $elementId = 0;
 
-        if (!$fields['RESULT'])
+        if (!$fields['RESULT']) {
             $process = false;
-        else
+        } else {
             $elementId = $fields['ID'];
+        }
 
         if ($process) {
             $modifyActive = isset(self::$changeActive[$elementId]);
@@ -523,12 +546,13 @@ class Sku
         if ($process) {
             if ($modifyActive && !isset(self::$offers[$elementId])) {
                 $parent = \CCatalogSku::getProductList($elementId, $fields['IBLOCK_ID']);
-                if (!empty($parent[$elementId]))
+                if (!empty($parent[$elementId])) {
                     self::$offers[$elementId] = array(
                         'CURRENT_PRODUCT' => $parent[$elementId]['ID'],
                         'NEW_PRODUCT' => $parent[$elementId]['ID'],
                         'PRODUCT_IBLOCK_ID' => $parent[$elementId]['IBLOCK_ID']
                     );
+                }
                 unset($parent);
             }
 
@@ -575,17 +599,23 @@ class Sku
                 unset($offerDescr);
             } else {
                 self::disableUpdateAvailable();
-                $result = Catalog\Model\Product::update($elementId, array('TYPE' => Catalog\ProductTable::TYPE_FREE_OFFER));
+                $result = Catalog\Model\Product::update(
+                    $elementId,
+                    array('TYPE' => Catalog\ProductTable::TYPE_FREE_OFFER)
+                );
                 unset($result);
                 self::enableUpdateAvailable();
             }
         }
-        if (isset(self::$offers[$elementId]))
+        if (isset(self::$offers[$elementId])) {
             unset(self::$offers[$elementId]);
-        if (isset(self::$currentActive[$elementId]))
+        }
+        if (isset(self::$currentActive[$elementId])) {
             unset(self::$currentActive[$elementId]);
-        if (isset(self::$changeActive[$elementId]))
+        }
+        if (isset(self::$changeActive[$elementId])) {
             unset(self::$changeActive[$elementId]);
+        }
         static::enablePropertyHandler();
     }
 
@@ -599,20 +629,23 @@ class Sku
      */
     public static function handlerIblockElementDelete($elementId, $elementData)
     {
-        if ((int)$elementData['WF_PARENT_ELEMENT_ID'] > 0)
+        if ((int)$elementData['WF_PARENT_ELEMENT_ID'] > 0) {
             return;
+        }
 
         $iblockData = \CCatalogSku::GetInfoByOfferIBlock($elementData['IBLOCK_ID']);
-        if (empty($iblockData))
+        if (empty($iblockData)) {
             return;
+        }
 
         $parent = \CCatalogSku::getProductList($elementId, $elementData['IBLOCK_ID']);
-        if (!empty($parent[$elementId]))
+        if (!empty($parent[$elementId])) {
             self::$offers[$elementId] = array(
                 'CURRENT_PRODUCT' => $parent[$elementId]['ID'],
                 'NEW_PRODUCT' => 0,
                 'PRODUCT_IBLOCK_ID' => $parent[$elementId]['IBLOCK_ID']
             );
+        }
         unset($parent);
     }
 
@@ -626,8 +659,9 @@ class Sku
     public static function handlerAfterIblockElementDelete($elementData)
     {
         $elementId = $elementData['ID'];
-        if (!isset(self::$offers[$elementId]))
+        if (!isset(self::$offers[$elementId])) {
             return;
+        }
 
         self::calculateComplete(
             self::$offers[$elementId]['CURRENT_PRODUCT'],
@@ -635,8 +669,9 @@ class Sku
             Catalog\ProductTable::TYPE_SKU
         );
 
-        if (isset(self::$offers[$elementId]))
+        if (isset(self::$offers[$elementId])) {
             unset(self::$offers[$elementId]);
+        }
     }
 
     /**
@@ -658,18 +693,20 @@ class Sku
         $propertyIdentifyer,
         $propertyList,
         $currentValues
-    )
-    {
+    ) {
         $iblockData = \CCatalogSku::GetInfoByOfferIBlock($iblockId);
-        if (empty($iblockData))
+        if (empty($iblockData)) {
             return;
+        }
 
         $skuPropertyId = $iblockData['SKU_PROPERTY_ID'];
-        if (!isset($propertyList[$skuPropertyId]))
+        if (!isset($propertyList[$skuPropertyId])) {
             return;
+        }
         $skuPropertyCode = (string)$propertyList[$skuPropertyId]['CODE'];
-        if ($skuPropertyCode === '')
+        if ($skuPropertyCode === '') {
             $skuPropertyCode = (string)$skuPropertyId;
+        }
 
         $foundValue = false;
         $skuValue = null;
@@ -678,8 +715,9 @@ class Sku
                 $propertyId = $propertyIdentifyer;
             } else {
                 $propertyId = (int)$propertyIdentifyer;
-                if ($propertyId . '' != $propertyIdentifyer)
+                if ($propertyId . '' != $propertyIdentifyer) {
                     $propertyId = ($skuPropertyCode == $propertyIdentifyer ? $skuPropertyId : 0);
+                }
             }
             if ($propertyId == $skuPropertyId) {
                 $skuValue = $newValues;
@@ -695,8 +733,9 @@ class Sku
                 $foundValue = true;
             }
         }
-        if (!$foundValue)
+        if (!$foundValue) {
             return;
+        }
         unset($foundValue);
 
         $newSkuPropertyValue = 0;
@@ -705,25 +744,29 @@ class Sku
                 $newSkuPropertyValue = (int)$skuValue;
             } else {
                 $skuValue = current($skuValue);
-                if (!is_array($skuValue))
+                if (!is_array($skuValue)) {
                     $newSkuPropertyValue = (int)$skuValue;
-                elseif (!empty($skuValue['VALUE']))
+                } elseif (!empty($skuValue['VALUE'])) {
                     $newSkuPropertyValue = (int)$skuValue['VALUE'];
+                }
             }
         }
         unset($skuValue);
-        if ($newSkuPropertyValue < 0)
+        if ($newSkuPropertyValue < 0) {
             $newSkuPropertyValue = 0;
+        }
 
         $currentSkuPropertyValue = 0;
         if (!empty($currentValues[$skuPropertyId]) && is_array($currentValues[$skuPropertyId])) {
             $currentSkuProperty = current($currentValues[$skuPropertyId]);
-            if (!empty($currentSkuProperty['VALUE']))
+            if (!empty($currentSkuProperty['VALUE'])) {
                 $currentSkuPropertyValue = (int)$currentSkuProperty['VALUE'];
+            }
             unset($currentSkuProperty);
         }
-        if ($currentSkuPropertyValue < 0)
+        if ($currentSkuPropertyValue < 0) {
             $currentSkuPropertyValue = 0;
+        }
 
         // no error - first condition for event OnAfterIblockElementUpdate handler
         if (!static::allowedPropertyHandler() || ($currentSkuPropertyValue != $newSkuPropertyValue)) {
@@ -750,10 +793,10 @@ class Sku
         $iblockId,
         $newValues,
         $propertyIdentifyer
-    )
-    {
-        if (!static::allowedPropertyHandler())
+    ) {
+        if (!static::allowedPropertyHandler()) {
             return;
+        }
 
         self::calculateOfferChange($elementId, $iblockId);
     }
@@ -775,18 +818,20 @@ class Sku
         $newValues,
         $propertyList,
         $currentValues
-    )
-    {
+    ) {
         $iblockData = \CCatalogSku::GetInfoByOfferIBlock($iblockId);
-        if (empty($iblockData))
+        if (empty($iblockData)) {
             return;
+        }
 
         $skuPropertyId = $iblockData['SKU_PROPERTY_ID'];
-        if (!isset($propertyList[$skuPropertyId]))
+        if (!isset($propertyList[$skuPropertyId])) {
             return;
+        }
         $skuPropertyCode = (string)$propertyList[$skuPropertyId]['CODE'];
-        if ($skuPropertyCode === '')
+        if ($skuPropertyCode === '') {
             $skuPropertyCode = (string)$skuPropertyId;
+        }
 
         $foundValue = false;
         $skuValue = null;
@@ -797,8 +842,9 @@ class Sku
             $skuValue = $newValues[$skuPropertyCode];
             $foundValue = true;
         }
-        if (!$foundValue)
+        if (!$foundValue) {
             return;
+        }
         unset($foundValue);
 
         $newSkuPropertyValue = 0;
@@ -810,28 +856,32 @@ class Sku
                     $newSkuPropertyValue = (int)$skuValue['VALUE'];
                 } else {
                     foreach ($skuValue as $row) {
-                        if (!is_array($row))
+                        if (!is_array($row)) {
                             $newSkuPropertyValue = (int)$row;
-                        elseif (array_key_exists('VALUE', $row))
+                        } elseif (array_key_exists('VALUE', $row)) {
                             $newSkuPropertyValue = (int)$row['VALUE'];
+                        }
                     }
                     unset($row);
                 }
             }
         }
         unset($skuValue);
-        if ($newSkuPropertyValue < 0)
+        if ($newSkuPropertyValue < 0) {
             $newSkuPropertyValue = 0;
+        }
 
         $currentSkuPropertyValue = 0;
         if (!empty($currentValues[$skuPropertyId]) && is_array($currentValues[$skuPropertyId])) {
             $currentSkuProperty = current($currentValues[$skuPropertyId]);
-            if (!empty($currentSkuProperty['VALUE']))
+            if (!empty($currentSkuProperty['VALUE'])) {
                 $currentSkuPropertyValue = (int)$currentSkuProperty['VALUE'];
+            }
             unset($currentSkuProperty);
         }
-        if ($currentSkuPropertyValue < 0)
+        if ($currentSkuPropertyValue < 0) {
             $currentSkuPropertyValue = 0;
+        }
 
         if (!static::allowedPropertyHandler() || ($currentSkuPropertyValue != $newSkuPropertyValue)) {
             self::$offers[$elementId] = [
@@ -857,8 +907,7 @@ class Sku
         $iblockId,
         $newValues,
         $flags
-    )
-    {
+    ) {
         self::calculateOfferChange($elementId, $iblockId);
     }
 
@@ -876,13 +925,16 @@ class Sku
     {
         $result = self::OFFERS_ERROR;
         $productId = (int)$productId;
-        if ($productId <= 0)
+        if ($productId <= 0) {
             return $result;
+        }
         $iblockId = (int)$iblockId;
-        if ($iblockId <= 0)
+        if ($iblockId <= 0) {
             $iblockId = (int)\CIBlockElement::GetIBlockByID($productId);
-        if ($iblockId <= 0)
+        }
+        if ($iblockId <= 0) {
             return $result;
+        }
 
         $result = self::OFFERS_NOT_EXIST;
         $offerList = \CCatalogSku::getOffersList($productId, $iblockId, array(), array('ID', 'ACTIVE'));
@@ -890,13 +942,19 @@ class Sku
             $result = self::OFFERS_NOT_AVAILABLE;
             $activeOffers = array_filter($offerList[$productId], '\Bitrix\Catalog\Product\Sku::filterActive');
             if (!empty($activeOffers)) {
-                $existOffers = Catalog\ProductTable::getList(array(
-                    'select' => array('ID', 'AVAILABLE'),
-                    'filter' => array('@ID' => array_keys($activeOffers), '=AVAILABLE' => Catalog\ProductTable::STATUS_YES),
-                    'limit' => 1
-                ))->fetch();
-                if (!empty($existOffers))
+                $existOffers = Catalog\ProductTable::getList(
+                    array(
+                        'select' => array('ID', 'AVAILABLE'),
+                        'filter' => array(
+                            '@ID' => array_keys($activeOffers),
+                            '=AVAILABLE' => Catalog\ProductTable::STATUS_YES
+                        ),
+                        'limit' => 1
+                    )
+                )->fetch();
+                if (!empty($existOffers)) {
                     $result = self::OFFERS_AVAILABLE;
+                }
                 unset($existOffers);
             }
             unset($activeOffers);
@@ -919,8 +977,9 @@ class Sku
     protected static function updateProductAvailable($productId, $iblockId)
     {
         $productId = (int)$productId;
-        if ($productId <= 0)
+        if ($productId <= 0) {
             return false;
+        }
 
         self::calculateComplete($productId, $iblockId, Catalog\ProductTable::TYPE_SKU);
 
@@ -943,8 +1002,9 @@ class Sku
     {
         $offerId = (int)$offerId;
         $type = (int)$type;
-        if ($offerId <= 0 || ($type != Catalog\ProductTable::TYPE_OFFER && $type != Catalog\ProductTable::TYPE_FREE_OFFER))
+        if ($offerId <= 0 || ($type != Catalog\ProductTable::TYPE_OFFER && $type != Catalog\ProductTable::TYPE_FREE_OFFER)) {
             return false;
+        }
         static::disableUpdateAvailable();
         $updateResult = Catalog\Model\Product::update($offerId, array('TYPE' => $type));
         $result = $updateResult->isSuccess();
@@ -1005,8 +1065,9 @@ class Sku
      */
     private static function isSeparateSkuMode()
     {
-        if (self::$separateSkuMode === null)
+        if (self::$separateSkuMode === null) {
             self::$separateSkuMode = (string)Main\Config\Option::get('catalog', 'show_catalog_tab_with_offers') == 'Y';
+        }
 
         return self::$separateSkuMode;
     }
@@ -1027,8 +1088,9 @@ class Sku
         if (!isset($productFields['QUANTITY'])
             || !isset($productFields['QUANTITY_TRACE'])
             || !isset($productFields['CAN_BUY_ZERO'])
-        )
+        ) {
             $productFields = array_merge(Catalog\Model\Product::getCacheItem($productId, true), $productFields);
+        }
 
         return array(
             'TYPE' => Catalog\ProductTable::TYPE_SKU,
@@ -1049,8 +1111,9 @@ class Sku
     {
         $fields = array();
 
-        if (isset($productFields['AVAILABLE']))
+        if (isset($productFields['AVAILABLE'])) {
             return $fields;
+        }
 
         if (
             isset($productFields['QUANTITY'])
@@ -1061,8 +1124,9 @@ class Sku
                 !isset($productFields['QUANTITY'])
                 || !isset($productFields['QUANTITY_TRACE'])
                 || !isset($productFields['CAN_BUY_ZERO'])
-            )
+            ) {
                 $productFields = array_merge(Catalog\Model\Product::getCacheItem($productId, true), $productFields);
+            }
             $fields['AVAILABLE'] = Catalog\ProductTable::calculateAvailable($productFields);
         }
 
@@ -1085,19 +1149,24 @@ class Sku
         if (
             empty($parentIBlock)
             || (self::isSeparateSkuMode() && $parentIBlock['CATALOG_TYPE'] == \CCatalogSku::TYPE_FULL)
-        )
+        ) {
             return $result;
+        }
 
-        $parentFields = static::getDefaultParentSettings(static::getOfferState(
-            $parentId,
-            $parentIblockId
-        ));
+        $parentFields = static::getDefaultParentSettings(
+            static::getOfferState(
+                $parentId,
+                $parentIblockId
+            )
+        );
 
         self::disableUpdateAvailable();
-        $iterator = Catalog\Model\Product::getList(array(
-            'select' => array('ID'),
-            'filter' => array('=ID' => $parentId)
-        ));
+        $iterator = Catalog\Model\Product::getList(
+            array(
+                'select' => array('ID'),
+                'filter' => array('=ID' => $parentId)
+            )
+        );
         $row = $iterator->fetch();
         if (!empty($row)) {
             $updateResult = Catalog\Model\Product::update($parentId, $parentFields);
@@ -1106,8 +1175,9 @@ class Sku
             $updateResult = Catalog\Model\Product::add($parentFields);
         }
 
-        if (!$updateResult->isSuccess())
+        if (!$updateResult->isSuccess()) {
             $result = false;
+        }
         unset($updateResult);
 
         self::enableUpdateAvailable();
@@ -1129,19 +1199,22 @@ class Sku
             $list = array_keys(self::$deferredUnknown);
             sort($list);
             foreach (array_chunk($list, 500) as $pageIds) {
-                $iterator = Catalog\ProductTable::getList(array(
-                    'select' => array('ID', 'TYPE'),
-                    'filter' => array(
-                        '@ID' => $pageIds,
-                        '@TYPE' => array(Catalog\ProductTable::TYPE_SKU, Catalog\ProductTable::TYPE_OFFER)
+                $iterator = Catalog\ProductTable::getList(
+                    array(
+                        'select' => array('ID', 'TYPE'),
+                        'filter' => array(
+                            '@ID' => $pageIds,
+                            '@TYPE' => array(Catalog\ProductTable::TYPE_SKU, Catalog\ProductTable::TYPE_OFFER)
+                        )
                     )
-                ));
+                );
                 while ($row = $iterator->fetch()) {
                     $row['ID'] = (int)$row['ID'];
-                    if ($row['TYPE'] == Catalog\ProductTable::TYPE_SKU)
+                    if ($row['TYPE'] == Catalog\ProductTable::TYPE_SKU) {
                         self::migrateCalculateData(self::$deferredUnknown, self::$deferredSku, $row['ID']);
-                    else
+                    } else {
                         self::migrateCalculateData(self::$deferredUnknown, self::$deferredOffers, $row['ID']);
+                    }
                 }
             }
             unset($row, $iterator, $pageIds, $list);
@@ -1151,8 +1224,15 @@ class Sku
         if (!empty(self::$deferredOffers)) {
             $productList = \CCatalogSku::getProductList(array_keys(self::$deferredOffers));
             if (!empty($productList)) {
-                foreach ($productList as $id => $row)
-                    self::transferCalculationData(self::$deferredOffers, self::$deferredSku, $id, $row['ID'], $row['IBLOCK_ID']);
+                foreach ($productList as $id => $row) {
+                    self::transferCalculationData(
+                        self::$deferredOffers,
+                        self::$deferredSku,
+                        $id,
+                        $row['ID'],
+                        $row['IBLOCK_ID']
+                    );
+                }
                 unset($id, $row);
             }
             unset($productList);
@@ -1186,8 +1266,9 @@ class Sku
         self::$calculatePriceTypes = $priceTypeKeys;
 
         if ($iblockId === null) {
-            if (isset($list[$id]))
+            if (isset($list[$id])) {
                 $iblockId = $list[$id]['IBLOCK_ID'];
+            }
         }
 
         $list[$id] = array(
@@ -1213,18 +1294,22 @@ class Sku
         static $allPriceTypes = null;
 
         //TODO:: replace \CCatalogGroup::GetListArray after create cached d7 method
-        if ($allPriceTypes === null)
+        if ($allPriceTypes === null) {
             $allPriceTypes = array_keys(\CCatalogGroup::GetListArray());
+        }
 
-        if (empty($priceTypes))
+        if (empty($priceTypes)) {
             $priceTypes = $allPriceTypes;
+        }
 
-        foreach ($priceTypes as $typeId)
+        foreach ($priceTypes as $typeId) {
             self::$calculatePriceTypes[$typeId] = true;
+        }
 
         if ($iblockId === null) {
-            if (isset($list[$id]))
+            if (isset($list[$id])) {
                 $iblockId = $list[$id]['IBLOCK_ID'];
+            }
         }
 
         if (!isset($list[$id])) {
@@ -1233,14 +1318,17 @@ class Sku
                 'PRICE' => array_fill_keys($priceTypes, true)
             );
         } elseif (!isset($list[$id]['PRICE'])) {
-            if ($iblockId !== null)
+            if ($iblockId !== null) {
                 $list[$id]['IBLOCK_ID'] = $iblockId;
+            }
             $list[$id]['PRICE'] = array_fill_keys($priceTypes, true);
         } else {
-            if ($iblockId !== null)
+            if ($iblockId !== null) {
                 $list[$id]['IBLOCK_ID'] = $iblockId;
-            foreach ($priceTypes as $typeId)
+            }
+            foreach ($priceTypes as $typeId) {
                 $list[$id]['PRICE'][$typeId] = true;
+            }
         }
 
         unset($typeId);
@@ -1258,14 +1346,21 @@ class Sku
      */
     private static function migrateCalculateData(array &$source, array &$destination, $id)
     {
-        if (!isset($source[$id]))
+        if (!isset($source[$id])) {
             return;
+        }
 
         if (isset($destination[$id])) {
-            if (isset($source[$id]['AVAILABLE']))
+            if (isset($source[$id]['AVAILABLE'])) {
                 self::setCalculateData($destination, $id, $source[$id]['IBLOCK_ID']);
-            elseif (isset($source[$id]['PRICE']))
-                self::setCalculatePriceTypes($destination, $id, $source[$id]['IBLOCK_ID'], array_keys($source[$id]['PRICE']));
+            } elseif (isset($source[$id]['PRICE'])) {
+                self::setCalculatePriceTypes(
+                    $destination,
+                    $id,
+                    $source[$id]['IBLOCK_ID'],
+                    array_keys($source[$id]['PRICE'])
+                );
+            }
         } else {
             $destination[$id] = $source[$id];
         }
@@ -1284,16 +1379,28 @@ class Sku
      * @internal
      *
      */
-    private static function transferCalculationData(array &$source, array &$destination, $sourceId, $destinationId, $iblockId)
-    {
-        if (!isset($source[$sourceId]))
+    private static function transferCalculationData(
+        array &$source,
+        array &$destination,
+        $sourceId,
+        $destinationId,
+        $iblockId
+    ) {
+        if (!isset($source[$sourceId])) {
             return;
+        }
 
         if (isset($destination[$destinationId])) {
-            if (isset($source[$sourceId]['AVAILABLE']))
+            if (isset($source[$sourceId]['AVAILABLE'])) {
                 self::setCalculateData($destination, $destinationId, $iblockId);
-            elseif (isset($source[$sourceId]['PRICE']))
-                self::setCalculatePriceTypes($destination, $destinationId, $iblockId, array_keys($source[$sourceId]['PRICE']));
+            } elseif (isset($source[$sourceId]['PRICE'])) {
+                self::setCalculatePriceTypes(
+                    $destination,
+                    $destinationId,
+                    $iblockId,
+                    array_keys($source[$sourceId]['PRICE'])
+                );
+            }
         } else {
             $destination[$destinationId] = $source[$sourceId];
             $destination[$destinationId]['IBLOCK_ID'] = $iblockId;
@@ -1326,8 +1433,9 @@ class Sku
     {
         $listIds = array();
         foreach (array_keys(self::$deferredSku) as $id) {
-            if (self::$deferredSku[$id]['IBLOCK_ID'] === null)
+            if (self::$deferredSku[$id]['IBLOCK_ID'] === null) {
                 $listIds[] = $id;
+            }
         }
         unset($id);
         if (!empty($listIds)) {
@@ -1350,10 +1458,12 @@ class Sku
      */
     private static function loadProductData(array $listIds)
     {
-        $iterator = Catalog\Model\Product::getList(array(
-            'select' => array('ID'),
-            'filter' => array('@ID' => $listIds)
-        ));
+        $iterator = Catalog\Model\Product::getList(
+            array(
+                'select' => array('ID'),
+                'filter' => array('@ID' => $listIds)
+            )
+        );
         while ($row = $iterator->fetch()) {
             $row['ID'] = (int)$row['ID'];
             self::$skuExist[$row['ID']] = true;
@@ -1367,16 +1477,18 @@ class Sku
         );
         foreach ($listIds as $id) {
             self::$skuAvailable[$id] = self::OFFERS_NOT_EXIST;
-            if (empty($offers[$id]))
+            if (empty($offers[$id])) {
                 continue;
+            }
 
             self::$skuAvailable[$id] = self::OFFERS_NOT_AVAILABLE;
             $allOffers = array();
             $availableOffers = array();
             foreach ($offers[$id] as $offerId => $row) {
                 $allOffers[] = $offerId;
-                if ($row['ACTIVE'] != 'Y' || $row['AVAILABLE'] != 'Y')
+                if ($row['ACTIVE'] != 'Y' || $row['AVAILABLE'] != 'Y') {
                     continue;
+                }
                 self::$skuAvailable[$id] = self::OFFERS_AVAILABLE;
                 $availableOffers[] = $offerId;
             }
@@ -1395,8 +1507,9 @@ class Sku
         }
         unset($offerId, $availableOffers, $allOffers, $id);
 
-        if (!self::isSeparateSkuMode())
+        if (!self::isSeparateSkuMode()) {
             self::loadProductPrices();
+        }
     }
 
     /**
@@ -1412,27 +1525,33 @@ class Sku
         $separateMode = self::isSeparateSkuMode();
         if (self::$calculateAvailable) {
             foreach ($listIds as $id) {
-                if (empty(self::$deferredSku[$id]['AVAILABLE']))
+                if (empty(self::$deferredSku[$id]['AVAILABLE'])) {
                     continue;
-                if (empty(self::$deferredSku[$id]['IBLOCK_ID']))
+                }
+                if (empty(self::$deferredSku[$id]['IBLOCK_ID'])) {
                     continue;
-                if (!isset(self::$skuAvailable[$id]))
+                }
+                if (!isset(self::$skuAvailable[$id])) {
                     continue;
+                }
 
                 $iblockData = \CCatalogSku::GetInfoByIBlock(self::$deferredSku[$id]['IBLOCK_ID']);
-                if (empty($iblockData))
+                if (empty($iblockData)) {
                     continue;
+                }
 
                 $fields = self::getDefaultParentSettings(
                     self::$skuAvailable[$id],
                     $iblockData['CATALOG_TYPE'] == \CCatalogSku::TYPE_PRODUCT
                 );
-                if (empty($fields))
+                if (empty($fields)) {
                     continue;
+                }
 
                 // for separate only
-                if ($separateMode)
+                if ($separateMode) {
                     $fields = ['TYPE' => $fields['TYPE']];
+                }
 
                 if (isset(self::$skuExist[$id])) {
                     $result = Catalog\Model\Product::update($id, $fields);
@@ -1442,14 +1561,14 @@ class Sku
                     $result = Catalog\Model\Product::add($fields);
                 }
                 if (!$result->isSuccess()) {
-
                 }
             }
             unset($result, $id);
         }
 
-        if (!$separateMode)
+        if (!$separateMode) {
             self::updateProductPrices($listIds);
+        }
     }
 
     /**
@@ -1462,25 +1581,36 @@ class Sku
      */
     private static function loadProductPrices()
     {
-        if (empty(self::$calculatePriceTypes) || empty(self::$offersIds))
+        if (empty(self::$calculatePriceTypes) || empty(self::$offersIds)) {
             return;
+        }
 
         sort(self::$offersIds);
         foreach (array_chunk(self::$offersIds, 500) as $pageOfferIds) {
             $filter = Main\Entity\Query::filter();
             $filter->whereIn('PRODUCT_ID', $pageOfferIds);
             $filter->whereIn('CATALOG_GROUP_ID', self::$calculatePriceTypes);
-            $filter->where(Main\Entity\Query::filter()->logic('or')->where('QUANTITY_FROM', '<=', 1)->whereNull('QUANTITY_FROM'));
-            $filter->where(Main\Entity\Query::filter()->logic('or')->where('QUANTITY_TO', '>=', 1)->whereNull('QUANTITY_TO'));
+            $filter->where(
+                Main\Entity\Query::filter()->logic('or')->where('QUANTITY_FROM', '<=', 1)->whereNull('QUANTITY_FROM')
+            );
+            $filter->where(
+                Main\Entity\Query::filter()->logic('or')->where('QUANTITY_TO', '>=', 1)->whereNull('QUANTITY_TO')
+            );
 
-            $iterator = Catalog\PriceTable::getList(array(
-                'select' => array(
-                    'PRODUCT_ID', 'CATALOG_GROUP_ID', 'PRICE', 'CURRENCY',
-                    'PRICE_SCALE', 'TMP_ID'  //TODO: add MEASURE_RATIO_ID
-                ),
-                'filter' => $filter,
-                'order' => array('PRODUCT_ID' => 'ASC', 'CATALOG_GROUP_ID' => 'ASC')
-            ));
+            $iterator = Catalog\PriceTable::getList(
+                array(
+                    'select' => array(
+                        'PRODUCT_ID',
+                        'CATALOG_GROUP_ID',
+                        'PRICE',
+                        'CURRENCY',
+                        'PRICE_SCALE',
+                        'TMP_ID'  //TODO: add MEASURE_RATIO_ID
+                    ),
+                    'filter' => $filter,
+                    'order' => array('PRODUCT_ID' => 'ASC', 'CATALOG_GROUP_ID' => 'ASC')
+                )
+            );
             while ($row = $iterator->fetch()) {
                 /*
                 if ($row['MEASURE_RATIO_ID'] !== null)
@@ -1491,14 +1621,16 @@ class Sku
                 $typeId = (int)$row['CATALOG_GROUP_ID'];
                 $offerId = (int)$row['PRODUCT_ID'];
                 $productId = self::$offersMap[$offerId];
-                if (!isset(self::$deferredSku[$productId]['PRICE'][$typeId]))
+                if (!isset(self::$deferredSku[$productId]['PRICE'][$typeId])) {
                     continue;
+                }
                 unset($row['PRODUCT_ID']);
 
-                if (!isset(self::$skuPrices[$productId][$typeId]))
+                if (!isset(self::$skuPrices[$productId][$typeId])) {
                     self::$skuPrices[$productId][$typeId] = $row;
-                elseif (self::$skuPrices[$productId][$typeId]['PRICE_SCALE'] > $row['PRICE_SCALE'])
+                } elseif (self::$skuPrices[$productId][$typeId]['PRICE_SCALE'] > $row['PRICE_SCALE']) {
                     self::$skuPrices[$productId][$typeId] = $row;
+                }
             }
             unset($row, $iterator);
             unset($filter);
@@ -1519,34 +1651,40 @@ class Sku
      */
     private static function updateProductPrices(array $listIds)
     {
-        if (empty(self::$calculatePriceTypes))
+        if (empty(self::$calculatePriceTypes)) {
             return;
+        }
 
         $process = true;
 
         if (!empty(self::$skuPrices)) {
             $existIds = array();
             $existIdsByType = array();
-            $iterator = Catalog\PriceTable::getList(array(
-                'select' => array('ID', 'CATALOG_GROUP_ID', 'PRODUCT_ID'),
-                'filter' => array('@PRODUCT_ID' => $listIds, '@CATALOG_GROUP_ID' => self::$calculatePriceTypes),
-                'order' => array('ID' => 'ASC')
-            ));
+            $iterator = Catalog\PriceTable::getList(
+                array(
+                    'select' => array('ID', 'CATALOG_GROUP_ID', 'PRODUCT_ID'),
+                    'filter' => array('@PRODUCT_ID' => $listIds, '@CATALOG_GROUP_ID' => self::$calculatePriceTypes),
+                    'order' => array('ID' => 'ASC')
+                )
+            );
             while ($row = $iterator->fetch()) {
                 $row['ID'] = (int)$row['ID'];
                 $priceTypeId = (int)$row['CATALOG_GROUP_ID'];
                 $productId = (int)$row['PRODUCT_ID'];
                 $existIds[$row['ID']] = $row['ID'];
-                if (!isset($existIdsByType[$productId]))
+                if (!isset($existIdsByType[$productId])) {
                     $existIdsByType[$productId] = array();
-                if (!isset($existIdsByType[$productId][$priceTypeId]))
+                }
+                if (!isset($existIdsByType[$productId][$priceTypeId])) {
                     $existIdsByType[$productId][$priceTypeId] = array();
+                }
                 $existIdsByType[$productId][$priceTypeId][] = $row['ID'];
             }
             unset($row, $iterator);
             foreach ($listIds as $productId) {
-                if (!isset(self::$skuPrices[$productId]))
+                if (!isset(self::$skuPrices[$productId])) {
                     continue;
+                }
 
                 foreach (array_keys(self::$skuPrices[$productId]) as $resultPriceType) {
                     $rowId = null;
@@ -1579,7 +1717,10 @@ class Sku
                     $tableName = $helper->quote(Catalog\PriceTable::getTableName());
                     foreach (array_chunk($existIds, 500) as $pageIds) {
                         $conn->queryExecute(
-                            'delete from ' . $tableName . ' where ' . $helper->quote('ID') . ' in (' . implode(',', $pageIds) . ')'
+                            'delete from ' . $tableName . ' where ' . $helper->quote('ID') . ' in (' . implode(
+                                ',',
+                                $pageIds
+                            ) . ')'
                         );
                     }
                     unset($pageIds);
@@ -1610,10 +1751,12 @@ class Sku
     private static function updateProductFacetIndex(array $listIds)
     {
         foreach ($listIds as $id) {
-            if (empty(self::$deferredSku[$id]['IBLOCK_ID']))
+            if (empty(self::$deferredSku[$id]['IBLOCK_ID'])) {
                 continue;
-            if (!isset(self::$skuAvailable[$id]))
+            }
+            if (!isset(self::$skuAvailable[$id])) {
                 continue;
+            }
             Iblock\PropertyIndex\Manager::updateElementIndex(
                 self::$deferredSku[$id]['IBLOCK_ID'],
                 $id
@@ -1631,8 +1774,9 @@ class Sku
      */
     private static function calculateOfferChange($elementId, $iblockId)
     {
-        if (!isset(self::$offers[$elementId]))
+        if (!isset(self::$offers[$elementId])) {
             return;
+        }
 
         $iblockData = \CCatalogSku::GetInfoByOfferIBlock($iblockId);
         if (!empty($iblockData)) {

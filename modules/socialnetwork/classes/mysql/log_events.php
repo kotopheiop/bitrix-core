@@ -1,4 +1,5 @@
-<?
+<?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/socialnetwork/classes/general/log_events.php");
 
 class CSocNetLogEvents extends CAllSocNetLogEvents
@@ -6,37 +7,37 @@ class CSocNetLogEvents extends CAllSocNetLogEvents
     /***************************************/
     /********  DATA MODIFICATION  **********/
     /***************************************/
-    function Add($arFields)
+    public static function Add($arFields)
     {
         global $DB;
 
         $arFields1 = \Bitrix\Socialnetwork\Util::getEqualityFields($arFields);
 
-        if (!CSocNetLogEvents::CheckFields("ADD", $arFields))
+        if (!CSocNetLogEvents::CheckFields("ADD", $arFields)) {
             return false;
+        }
 
         $arInsert = $DB->PrepareInsert("b_sonet_log_events", $arFields);
         \Bitrix\Socialnetwork\Util::processEqualityFieldsToInsert($arFields1, $arInsert);
 
         $ID = false;
-        if (strlen($arInsert[0]) > 0) {
+        if ($arInsert[0] <> '') {
             $strSql =
                 "INSERT INTO b_sonet_log_events(" . $arInsert[0] . ") " .
                 "VALUES(" . $arInsert[1] . ")";
-            $DB->Query($strSql, False, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+            $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 
-            $ID = IntVal($DB->LastID());
+            $ID = intval($DB->LastID());
         }
 
         return $ID;
     }
 
-
-    function Update($ID, $arFields)
+    public static function Update($ID, $arFields)
     {
         global $DB;
 
-        $ID = IntVal($ID);
+        $ID = intval($ID);
         if ($ID <= 0) {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_LE_WRONG_PARAMETER_ID"), "ERROR_NO_ID");
             return false;
@@ -44,20 +45,21 @@ class CSocNetLogEvents extends CAllSocNetLogEvents
 
         $arFields1 = \Bitrix\Socialnetwork\Util::getEqualityFields($arFields);
 
-        if (!CSocNetLogEvents::CheckFields("UPDATE", $arFields, $ID))
+        if (!CSocNetLogEvents::CheckFields("UPDATE", $arFields, $ID)) {
             return false;
+        }
 
         $strUpdate = $DB->PrepareUpdate("b_sonet_log_events", $arFields);
         \Bitrix\Socialnetwork\Util::processEqualityFieldsToUpdate($arFields1, $strUpdate);
 
-        if (strlen($strUpdate) > 0) {
+        if ($strUpdate <> '') {
             $strSql =
                 "UPDATE b_sonet_log_events SET " .
                 "	" . $strUpdate . " " .
                 "WHERE ID = " . $ID . " ";
-            $DB->Query($strSql, False, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+            $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
         } else {
-            $ID = False;
+            $ID = false;
         }
 
         return $ID;
@@ -66,12 +68,31 @@ class CSocNetLogEvents extends CAllSocNetLogEvents
     /***************************************/
     /**********  DATA SELECTION  ***********/
     /***************************************/
-    function GetList($arOrder = Array("ID" => "DESC"), $arFilter = Array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array(), $arParams = array())
-    {
+    public static function GetList(
+        $arOrder = Array("ID" => "DESC"),
+        $arFilter = Array(),
+        $arGroupBy = false,
+        $arNavStartParams = false,
+        $arSelectFields = array(),
+        $arParams = array()
+    ) {
         global $DB;
 
-        if (count($arSelectFields) <= 0)
-            $arSelectFields = array("ID", "USER_ID", "ENTITY_TYPE", "ENTITY_ID", "ENTITY_CB", "ENTITY_MY", "EVENT_ID", "SITE_ID", "MAIL_EVENT", "TRANSPORT", "VISIBLE");
+        if (count($arSelectFields) <= 0) {
+            $arSelectFields = array(
+                "ID",
+                "USER_ID",
+                "ENTITY_TYPE",
+                "ENTITY_ID",
+                "ENTITY_CB",
+                "ENTITY_MY",
+                "EVENT_ID",
+                "SITE_ID",
+                "MAIL_EVENT",
+                "TRANSPORT",
+                "VISIBLE"
+            );
+        }
 
         static $arFields1 = array(
             "ID" => Array("FIELD" => "LE.ID", "TYPE" => "int"),
@@ -85,29 +106,73 @@ class CSocNetLogEvents extends CAllSocNetLogEvents
             "MAIL_EVENT" => Array("FIELD" => "LE.MAIL_EVENT", "TYPE" => "string"),
             "TRANSPORT" => Array("FIELD" => "LE.TRANSPORT", "TYPE" => "string"),
             "VISIBLE" => Array("FIELD" => "LE.VISIBLE", "TYPE" => "string"),
-            "USER_NAME" => Array("FIELD" => "U.NAME", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (LE.USER_ID = U.ID)"),
-            "USER_LAST_NAME" => Array("FIELD" => "U.LAST_NAME", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (LE.USER_ID = U.ID)"),
-            "USER_LOGIN" => Array("FIELD" => "U.LOGIN", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (LE.USER_ID = U.ID)"),
-            "USER_LID" => Array("FIELD" => "U.LID", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (LE.USER_ID = U.ID)"),
-            "USER_EMAIL" => Array("FIELD" => "U.EMAIL", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (LE.USER_ID = U.ID)"),
-            "USER_ACTIVE" => Array("FIELD" => "U.ACTIVE", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (LE.USER_ID = U.ID)"),
+            "USER_NAME" => Array(
+                "FIELD" => "U.NAME",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_user U ON (LE.USER_ID = U.ID)"
+            ),
+            "USER_LAST_NAME" => Array(
+                "FIELD" => "U.LAST_NAME",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_user U ON (LE.USER_ID = U.ID)"
+            ),
+            "USER_LOGIN" => Array(
+                "FIELD" => "U.LOGIN",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_user U ON (LE.USER_ID = U.ID)"
+            ),
+            "USER_LID" => Array(
+                "FIELD" => "U.LID",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_user U ON (LE.USER_ID = U.ID)"
+            ),
+            "USER_EMAIL" => Array(
+                "FIELD" => "U.EMAIL",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_user U ON (LE.USER_ID = U.ID)"
+            ),
+            "USER_ACTIVE" => Array(
+                "FIELD" => "U.ACTIVE",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_user U ON (LE.USER_ID = U.ID)"
+            ),
         );
 
         if (array_key_exists("GROUP_SITE_ID", $arFilter) || array_key_exists("COMMON_GROUP_SITE_ID", $arFilter)) {
-            $arFields["GROUP_SITE_ID"] = Array("FIELD" => "SGS.SITE_ID", "TYPE" => "string", "FROM" => "INNER JOIN b_sonet_group G on G.ID = LE.ENTITY_ID LEFT JOIN b_sonet_group_site SGS on SGS.GROUP_ID = G.ID");
-            $arFields["COMMON_GROUP_SITE_ID"] = Array("FIELD" => "SGS.SITE_ID", "TYPE" => "string_or_null", "FROM" => "LEFT JOIN b_sonet_group G ON G.ID = LE.ENTITY_ID LEFT JOIN b_sonet_group_site SGS on SGS.GROUP_ID = G.ID");
+            $arFields["GROUP_SITE_ID"] = Array(
+                "FIELD" => "SGS.SITE_ID",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_sonet_group G on G.ID = LE.ENTITY_ID LEFT JOIN b_sonet_group_site SGS on SGS.GROUP_ID = G.ID"
+            );
+            $arFields["COMMON_GROUP_SITE_ID"] = Array(
+                "FIELD" => "SGS.SITE_ID",
+                "TYPE" => "string_or_null",
+                "FROM" => "LEFT JOIN b_sonet_group G ON G.ID = LE.ENTITY_ID LEFT JOIN b_sonet_group_site SGS on SGS.GROUP_ID = G.ID"
+            );
 
             $strDistinct = " DISTINCT ";
-            foreach ($arSelectFields as $i => $strFieldTmp)
-                if (in_array($strFieldTmp, array("GROUP_SITE_ID", "COMMON_GROUP_SITE_ID")))
+            foreach ($arSelectFields as $i => $strFieldTmp) {
+                if (in_array($strFieldTmp, array("GROUP_SITE_ID", "COMMON_GROUP_SITE_ID"))) {
                     unset($arSelectFields[$i]);
+                }
+            }
 
-            foreach ($arOrder as $by => $order)
-                if (!in_array($by, $arSelectFields))
+            foreach ($arOrder as $by => $order) {
+                if (!in_array($by, $arSelectFields)) {
                     $arSelectFields[] = $by;
+                }
+            }
         } else {
-            $arFields["GROUP_SITE_ID"] = Array("FIELD" => "G.SITE_ID", "TYPE" => "string", "FROM" => "INNER JOIN b_sonet_group G on G.ID = LE.ENTITY_ID");
-            $arFields["COMMON_GROUP_SITE_ID"] = Array("FIELD" => "G.SITE_ID", "TYPE" => "string_or_null", "FROM" => "LEFT JOIN b_sonet_group G ON G.ID = LE.ENTITY_ID");
+            $arFields["GROUP_SITE_ID"] = Array(
+                "FIELD" => "G.SITE_ID",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_sonet_group G on G.ID = LE.ENTITY_ID"
+            );
+            $arFields["COMMON_GROUP_SITE_ID"] = Array(
+                "FIELD" => "G.SITE_ID",
+                "TYPE" => "string_or_null",
+                "FROM" => "LEFT JOIN b_sonet_group G ON G.ID = LE.ENTITY_ID"
+            );
             $strDistinct = " ";
         }
 
@@ -124,7 +189,7 @@ class CSocNetLogEvents extends CAllSocNetLogEvents
                 array_key_exists("TRANSPORT", $arParams)
                 || array_key_exists("VISIBLE", $arParams)
             )
-        )
+        ) {
             $arSqls["SUBSCRIBE"] = CSocNetLogEvents::GetSQLForEvent(
                 $arParams["ENTITY_TYPE"],
                 $arParams["ENTITY_ID"],
@@ -134,6 +199,7 @@ class CSocNetLogEvents extends CAllSocNetLogEvents
                 $arParams["VISIBLE"],
                 $arParams["OF_ENTITIES"]
             );
+        }
 
         $arSqls["SELECT"] = str_replace("%%_DISTINCT_%%", $strDistinct, $arSqls["SELECT"]);
 
@@ -142,57 +208,66 @@ class CSocNetLogEvents extends CAllSocNetLogEvents
                 "SELECT " . $arSqls["SELECT"] . " " .
                 "FROM b_sonet_log_events LE " .
                 "	" . $arSqls["FROM"] . " ";
-            if (strlen($arSqls["WHERE"]) > 0) {
+            if ($arSqls["WHERE"] <> '') {
                 $strSql .= "WHERE " . $arSqls["WHERE"] . " ";
-                if (strlen($arSqls["SUBSCRIBE"]) > 0)
+                if ($arSqls["SUBSCRIBE"] <> '') {
                     $strSql .= $arSqls["SUBSCRIBE"] . " ";
+                }
             }
-            if (strlen($arSqls["GROUPBY"]) > 0)
+            if ($arSqls["GROUPBY"] <> '') {
                 $strSql .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
+            }
 
             //echo "!1!=".htmlspecialcharsbx($strSql)."<br>";
 
             $dbRes = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-            if ($arRes = $dbRes->Fetch())
+            if ($arRes = $dbRes->Fetch()) {
                 return $arRes["CNT"];
-            else
-                return False;
+            } else {
+                return false;
+            }
         }
 
         $strSql =
             "SELECT " . $arSqls["SELECT"] . " " .
             "FROM b_sonet_log_events LE " .
             "	" . $arSqls["FROM"] . " ";
-        if (strlen($arSqls["WHERE"]) > 0) {
+        if ($arSqls["WHERE"] <> '') {
             $strSql .= "WHERE " . $arSqls["WHERE"] . " ";
-            if (strlen($arSqls["SUBSCRIBE"]) > 0)
+            if ($arSqls["SUBSCRIBE"] <> '') {
                 $strSql .= $arSqls["SUBSCRIBE"] . " ";
+            }
         }
-        if (strlen($arSqls["GROUPBY"]) > 0)
+        if ($arSqls["GROUPBY"] <> '') {
             $strSql .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
-        if (strlen($arSqls["ORDERBY"]) > 0)
+        }
+        if ($arSqls["ORDERBY"] <> '') {
             $strSql .= "ORDER BY " . $arSqls["ORDERBY"] . " ";
+        }
 
-        if (is_array($arNavStartParams) && IntVal($arNavStartParams["nTopCount"]) <= 0) {
+        if (is_array($arNavStartParams) && intval($arNavStartParams["nTopCount"]) <= 0) {
             $strSql_tmp =
                 "SELECT COUNT('x') as CNT " .
                 "FROM b_sonet_log_events LE " .
                 "	" . $arSqls["FROM"] . " ";
-            if (strlen($arSqls["WHERE"]) > 0) {
+            if ($arSqls["WHERE"] <> '') {
                 $strSql_tmp .= "WHERE " . $arSqls["WHERE"] . " ";
-                if (strlen($arSqls["SUBSCRIBE"]) > 0)
+                if ($arSqls["SUBSCRIBE"] <> '') {
                     $strSql .= $arSqls["SUBSCRIBE"] . " ";
+                }
             }
-            if (strlen($arSqls["GROUPBY"]) > 0)
+            if ($arSqls["GROUPBY"] <> '') {
                 $strSql_tmp .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
+            }
 
             //echo "!2.1!=".htmlspecialcharsbx($strSql_tmp)."<br>";
 
             $dbRes = $DB->Query($strSql_tmp, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             $cnt = 0;
-            if (strlen($arSqls["GROUPBY"]) <= 0) {
-                if ($arRes = $dbRes->Fetch())
+            if ($arSqls["GROUPBY"] == '') {
+                if ($arRes = $dbRes->Fetch()) {
                     $cnt = $arRes["CNT"];
+                }
             } else {
                 // ������ ��� MYSQL!!! ��� ORACLE ������ ���
                 $cnt = $dbRes->SelectedRowsCount();
@@ -204,8 +279,9 @@ class CSocNetLogEvents extends CAllSocNetLogEvents
 
             $dbRes->NavQuery($strSql, $cnt, $arNavStartParams);
         } else {
-            if (is_array($arNavStartParams) && IntVal($arNavStartParams["nTopCount"]) > 0)
+            if (is_array($arNavStartParams) && intval($arNavStartParams["nTopCount"]) > 0) {
                 $strSql .= "LIMIT " . intval($arNavStartParams["nTopCount"]);
+            }
 
             //echo "!3!=".htmlspecialcharsbx($strSql)."<br>";
 
@@ -215,13 +291,14 @@ class CSocNetLogEvents extends CAllSocNetLogEvents
         return $dbRes;
     }
 
-    function GetUserLogEvents($userID, $arFilter = array())
+    public static function GetUserLogEvents($userID, $arFilter = array())
     {
         global $DB;
 
-        $userID = IntVal($userID);
-        if ($userID <= 0)
+        $userID = intval($userID);
+        if ($userID <= 0) {
             return false;
+        }
 
         $strWhere = "";
         if (is_array($arFilter) && count($arFilter) > 0) {
@@ -231,17 +308,18 @@ class CSocNetLogEvents extends CAllSocNetLogEvents
                         $strWhere .= " AND L.ENTITY_TYPE = '" . $DB->ForSql($value, 1) . "' ";
                         break;
                     case "ENTITY_ID":
-                        $strWhere .= " AND L.ENTITY_ID = " . IntVal($value) . " ";
+                        $strWhere .= " AND L.ENTITY_ID = " . intval($value) . " ";
                         break;
                     case "EVENT_ID":
-                        if (!is_array($value))
+                        if (!is_array($value)) {
                             $strWhere .= " AND L.EVENT_ID = '" . $DB->ForSql($value, 50) . "' ";
-                        else {
+                        } else {
                             if (!function_exists('__tmp_str_apos')) {
                                 function __tmp_str_apos(&$tmpval, $tmpind)
                                 {
-                                    if (strlen($tmpval) > 0)
+                                    if ($tmpval <> '') {
                                         $tmpval = "'" . $GLOBALS["DB"]->ForSql($tmpval, 50) . "'";
+                                    }
                                 }
                             }
                             array_walk($value, '__tmp_str_apos');
@@ -249,7 +327,7 @@ class CSocNetLogEvents extends CAllSocNetLogEvents
                         }
                         break;
                     case "LOG_DATE_DAYS":
-                        $strWhere .= " AND L.LOG_DATE >= DATE_SUB(NOW(), INTERVAL " . IntVal($value) . " DAY) ";
+                        $strWhere .= " AND L.LOG_DATE >= DATE_SUB(NOW(), INTERVAL " . intval($value) . " DAY) ";
                         break;
                     case "SITE_ID":
                         if (!is_array($value)):
@@ -258,10 +336,14 @@ class CSocNetLogEvents extends CAllSocNetLogEvents
                             $counter = 0;
                             $strWhere .= " AND (";
                             foreach ($value as $site_id):
-                                if ($site_id === false)
+                                if ($site_id === false) {
                                     $strWhere .= ($counter > 0 ? " OR" : "") . " L.SITE_ID IS NULL ";
-                                else
-                                    $strWhere .= ($counter > 0 ? " OR" : "") . " L.SITE_ID = '" . $DB->ForSql($site_id, 2) . "' ";
+                                } else {
+                                    $strWhere .= ($counter > 0 ? " OR" : "") . " L.SITE_ID = '" . $DB->ForSql(
+                                            $site_id,
+                                            2
+                                        ) . "' ";
+                                }
                                 $counter++;
                             endforeach;
                             $strWhere .= ") ";
@@ -280,7 +362,7 @@ class CSocNetLogEvents extends CAllSocNetLogEvents
             "	U.NAME as USER_NAME, U.LAST_NAME as USER_LAST_NAME, U.SECOND_NAME as USER_SECOND_NAME, U.LOGIN as USER_LOGIN " .
             "FROM b_sonet_log L ";
 
-        if (!Array_Key_Exists("ALL", $arFilter) || StrToUpper($arFilter["ALL"]) != "Y") {
+        if (!Array_Key_Exists("ALL", $arFilter) || mb_strtoupper($arFilter["ALL"]) != "Y") {
             $strSql .=
                 "	INNER JOIN b_sonet_log_events LE " .
                 "		ON (L.ENTITY_TYPE = LE.ENTITY_TYPE AND L.ENTITY_ID = LE.ENTITY_ID AND (L.EVENT_ID = LE.EVENT_ID OR ((L.EVENT_ID = 'blog_post' OR L.EVENT_ID = 'blog_comment' OR L.EVENT_ID = 'blog_post_micro') AND LE.EVENT_ID = 'blog'))) ";
@@ -291,8 +373,9 @@ class CSocNetLogEvents extends CAllSocNetLogEvents
             "	LEFT JOIN b_user U " .
             "		ON (L.ENTITY_TYPE = 'U' AND L.ENTITY_ID = U.ID) " .
             "WHERE 1 = 1 ";
-        if (!Array_Key_Exists("ALL", $arFilter) || StrToUpper($arFilter["ALL"]) != "Y")
+        if (!Array_Key_Exists("ALL", $arFilter) || mb_strtoupper($arFilter["ALL"]) != "Y") {
             $strSql .= "	AND LE.USER_ID = " . $userID . " ";
+        }
 
         $strSql .=
             $strWhere .
@@ -303,5 +386,3 @@ class CSocNetLogEvents extends CAllSocNetLogEvents
         return $dbRes;
     }
 }
-
-?>

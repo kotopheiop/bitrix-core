@@ -45,10 +45,12 @@ class Comment
                     $select[] = 'UF_BLOG_COMMENT_FILE';
                 }
 
-                $res = CommentTable::getList(array(
-                    'filter' => array('=ID' => $commentId),
-                    'select' => $select
-                ));
+                $res = CommentTable::getList(
+                    array(
+                        'filter' => array('=ID' => $commentId),
+                        'select' => $select
+                    )
+                );
                 if ($fields = $res->fetch()) {
                     $commentFields = $fields;
 
@@ -66,7 +68,7 @@ class Comment
         return $commentItem;
     }
 
-    public function setFields($fields = array())
+    public function setFields($fields = array()): void
     {
         $this->fields = $fields;
     }
@@ -76,61 +78,65 @@ class Comment
         return $this->fields;
     }
 
-    public static function checkDuplicate(array $params)
+    public static function checkDuplicate(array $params = [], int &$duplicateCommentId = 0): bool
     {
         $message = (
-        isset($params["MESSAGE"])
-        && strlen(trim($params["MESSAGE"])) > 0
-            ? trim($params["MESSAGE"])
+        isset($params['MESSAGE'])
+        && trim((string)$params['MESSAGE']) !== ''
+            ? trim((string)$params['MESSAGE'])
             : ''
         );
 
         $blogId = (
-        isset($params["BLOG_ID"])
-        && intval($params["BLOG_ID"]) > 0
-            ? intval($params["BLOG_ID"])
+        isset($params['BLOG_ID'])
+        && (int)$params['BLOG_ID'] > 0
+            ? (int)$params['BLOG_ID']
             : 0
         );
 
         $postId = (
-        isset($params["POST_ID"])
-        && intval($params["POST_ID"]) > 0
-            ? intval($params["POST_ID"])
+        isset($params['POST_ID'])
+        && (int)$params['POST_ID'] > 0
+            ? (int)$params['POST_ID']
             : 0
         );
 
         $authorId = (
-        isset($params["AUTHOR_ID"])
-        && intval($params["AUTHOR_ID"]) > 0
-            ? intval($params["AUTHOR_ID"])
+        isset($params['AUTHOR_ID'])
+        && (int)$params['AUTHOR_ID'] > 0
+            ? (int)$params['AUTHOR_ID']
             : 0
         );
 
         if (
-            strlen($message) <= 0
+            $message === ''
             || $blogId <= 0
             || $postId <= 0
         ) {
             return false;
         }
 
+        \CTimeZone::Disable();
         $res = \CBlogComment::getList(
-            array("ID" => "DESC"),
-            array(
+            ["ID" => "DESC"],
+            [
                 "BLOG_ID" => $blogId,
                 "POST_ID" => $postId,
-                "AUTHOR_ID" => $authorId
-            ),
+                "AUTHOR_ID" => $authorId,
+                ">DATE_CREATE" => ConvertTimeStamp(time() - 60 * 30, "FULL")
+            ],
             false,
-            array("nTopCount" => 1),
-            array("ID", "POST_ID", "BLOG_ID", "AUTHOR_ID", "POST_TEXT")
+            ["nTopCount" => 1],
+            ['ID', 'POST_TEXT']
         );
+        \CTimeZone::Enable();
 
         if (
             ($duplicateComment = $res->fetch())
-            && md5($duplicateComment["POST_TEXT"]) == md5($message)
-            && strlen($message) > 10
+            && mb_strlen($message) > 10
+            && md5((string)$duplicateComment['POST_TEXT']) === md5($message)
         ) {
+            $duplicateCommentId = (int)$duplicateComment['ID'];
             return false;
         }
 
@@ -202,7 +208,7 @@ class Comment
         );
 
         if (
-            strlen($message) <= 0
+            $message == ''
             || $blogId <= 0
             || $blogOwnerId <= 0
             || $postAuthorId <= 0
@@ -217,7 +223,11 @@ class Comment
         $connection = \Bitrix\Main\Application::getConnection();
         $helper = $connection->getSqlHelper();
 
-        $connection->query("UPDATE b_blog_image SET COMMENT_ID=" . intval($commentId) . " WHERE BLOG_ID=" . $blogId . " AND POST_ID=" . $postId . " AND IS_COMMENT = 'Y' AND (COMMENT_ID = 0 OR COMMENT_ID is null) AND USER_ID=" . $commentAuthorId);
+        $connection->query(
+            "UPDATE b_blog_image SET COMMENT_ID=" . intval(
+                $commentId
+            ) . " WHERE BLOG_ID=" . $blogId . " AND POST_ID=" . $postId . " AND IS_COMMENT = 'Y' AND (COMMENT_ID = 0 OR COMMENT_ID is null) AND USER_ID=" . $commentAuthorId
+        );
 
         if ($blogPostEventIdList === null) {
             $blogPostLivefeedProvider = new \Bitrix\Socialnetwork\Livefeed\BlogPost;
@@ -255,7 +265,12 @@ class Comment
                 : $logSiteId[0]
             );
 
-            $postUrl = Option::get("socialnetwork", "userblogpost_page", '/company/personal/users/' . $blogOwnerId . '/blog/#post_id#/', $siteId);
+            $postUrl = Option::get(
+                "socialnetwork",
+                "userblogpost_page",
+                '/company/personal/users/' . $blogOwnerId . '/blog/#post_id#/',
+                $siteId
+            );
             $postUrl = \CComponentEngine::makePathFromTemplate(
                 $postUrl,
                 array(
@@ -343,31 +358,36 @@ class Comment
             \CBlogPost::notifyIm($fieldsIM);
 
             if (!empty($mailUserId)) {
-                \CBlogPost::notifyMail(array(
-                    "type" => "COMMENT",
-                    "userId" => $mailUserId,
-                    "authorId" => $commentAuthorId,
-                    "postId" => $postId,
-                    "commentId" => $commentId,
-                    "siteId" => $siteId,
-                    "postUrl" => \CComponentEngine::makePathFromTemplate(
-                        '/pub/post.php?post_id=#post_id#',
-                        array(
-                            "post_id" => $postId
+                \CBlogPost::notifyMail(
+                    array(
+                        "type" => "COMMENT",
+                        "userId" => $mailUserId,
+                        "authorId" => $commentAuthorId,
+                        "postId" => $postId,
+                        "commentId" => $commentId,
+                        "siteId" => $siteId,
+                        "postUrl" => \CComponentEngine::makePathFromTemplate(
+                            '/pub/post.php?post_id=#post_id#',
+                            array(
+                                "post_id" => $postId
+                            )
                         )
                     )
-                ));
+                );
             }
 
             $siteResult = \CSite::getByID($siteId);
 
             if ($site = $siteResult->fetch()) {
-                \CBlogComment::addLiveComment($commentId, array(
-                    "DATE_TIME_FORMAT" => $site["FORMAT_DATETIME"],
-                    "NAME_TEMPLATE" => \CSite::getNameFormat(null, $siteId),
-                    "SHOW_LOGIN" => "Y",
-                    "MODE" => "PULL_MESSAGE"
-                ));
+                \CBlogComment::addLiveComment(
+                    $commentId,
+                    array(
+                        "DATE_TIME_FORMAT" => $site["FORMAT_DATETIME"],
+                        "NAME_TEMPLATE" => \CSite::getNameFormat(null, $siteId),
+                        "SHOW_LOGIN" => "Y",
+                        "MODE" => "PULL_MESSAGE"
+                    )
+                );
             }
         }
 
@@ -383,7 +403,7 @@ class Comment
         $siteId = (isset($params['siteId']) ? $params['siteId'] : SITE_ID);
 
         if (
-            strlen($commentText) <= 0
+            $commentText == ''
             || $postId <= 0
         ) {
             return false;
@@ -404,17 +424,19 @@ class Comment
 
         if (!empty($matches)) {
             foreach ($matches[1] as $userId) {
-                $userId = intVal($userId);
+                $userId = intval($userId);
                 if (
                     $userId > 0
                     && $userId != $authorId
                 ) {
-                    $postPerm = \CBlogPost::getSocNetPostPerms(array(
-                        "POST_ID" => $postId,
-                        "NEED_FULL" => true,
-                        "USER_ID" => $userId,
-                        "IGNORE_ADMIN" => true
-                    ));
+                    $postPerm = \CBlogPost::getSocNetPostPerms(
+                        array(
+                            "POST_ID" => $postId,
+                            "NEED_FULL" => true,
+                            "USER_ID" => $userId,
+                            "IGNORE_ADMIN" => true
+                        )
+                    );
 
                     if ($postPerm < \Bitrix\Blog\Item\Permissions::PREMODERATE) {
                         $userIdToShareList[] = $userId;
@@ -454,8 +476,18 @@ class Comment
                 "USER_ID" => $authorId
             ),
             array(
-                "PATH_TO_USER" => Option::get("main", "TOOLTIP_PATH_TO_USER", '/company/personal/user/#user_id#/', $siteId),
-                "PATH_TO_POST" => Option::get("socialnetwork", "userblogpost_page", '/company/personal/user/#user_id#/blog/#post_id#', $siteId),
+                "PATH_TO_USER" => Option::get(
+                    "main",
+                    "TOOLTIP_PATH_TO_USER",
+                    '/company/personal/user/#user_id#/',
+                    $siteId
+                ),
+                "PATH_TO_POST" => Option::get(
+                    "socialnetwork",
+                    "userblogpost_page",
+                    '/company/personal/user/#user_id#/blog/#post_id#',
+                    $siteId
+                ),
                 "NAME_TEMPLATE" => \CSite::getNameFormat(),
                 "SHOW_LOGIN" => "Y",
                 "LIVE" => "N",

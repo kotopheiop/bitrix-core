@@ -51,7 +51,10 @@ class PathLangCollection
             self::$translationRepositoryRoot = rtrim(Localization\Translation::getTranslationRepositoryPath(), '/');
 
             // only active languages
-            self::$translationEnabledLanguages = array_intersect(self::$translationRepositoryLanguages, self::$enabledLanguages);
+            self::$translationEnabledLanguages = array_intersect(
+                self::$translationRepositoryLanguages,
+                self::$enabledLanguages
+            );
         }
     }
 
@@ -85,8 +88,11 @@ class PathLangCollection
      *
      * @return int
      */
-    public function collect(Translate\Filter $filter = null, Translate\Controller\ITimeLimit $timer = null, Translate\Filter $seek = null)
-    {
+    public function collect(
+        Translate\Filter $filter = null,
+        Translate\Controller\ITimeLimit $timer = null,
+        Translate\Filter $seek = null
+    ) {
         self::configure();
 
         if (isset($filter, $filter->path)) {
@@ -194,7 +200,13 @@ class PathLangCollection
                             }
 
                             if (!$isLang) {
-                                foreach ($lookForLangDirectory($startRoot, $relChildPath, $depthLevel + 1) as $subChildPath)// go deeper
+                                foreach (
+                                    $lookForLangDirectory(
+                                        $startRoot,
+                                        $relChildPath,
+                                        $depthLevel + 1
+                                    ) as $subChildPath
+                                )// go deeper
                                 {
                                 }
                             }
@@ -214,7 +226,13 @@ class PathLangCollection
                             $cache = [];
                         }
                     } else {
-                        foreach ($lookForLangDirectory($startRoot, $relChildPath, $depthLevel + 1) as $subChildPath)// go deeper
+                        foreach (
+                            $lookForLangDirectory(
+                                $startRoot,
+                                $relChildPath,
+                                $depthLevel + 1
+                            ) as $subChildPath
+                        )// go deeper
                         {
                             yield $subChildPath;
                         }

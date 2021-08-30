@@ -17,8 +17,9 @@ Loc::loadMessages(__FILE__);
 $publicMode = $adminPage->publicMode;
 $selfFolderUrl = $adminPage->getSelfFolderUrl();
 
-if ($APPLICATION->GetGroupRight("sale") < "W")
+if ($APPLICATION->GetGroupRight("sale") < "W") {
     $APPLICATION->AuthForm(Loc::getMessage('SALE_MODULE_ACCES_DENIED'));
+}
 
 $userIsAdmin = $APPLICATION->GetGroupRight("sale") >= "W";
 
@@ -63,7 +64,7 @@ try {
     }
 
     $sTableID = "tbl_type_list";
-    $oSort = new CAdminSorting($sTableID, "SORT", "asc");
+    $oSort = new CAdminUiSorting($sTableID, "SORT", "asc");
     $lAdmin = new CAdminUiList($sTableID, $oSort);
 
     // order, select and filter for the list
@@ -82,21 +83,30 @@ try {
             $DB->StartTransaction();
 
             if (!$lAdmin->IsUpdated($id)) // if there were no data change on this row - do nothing with it
+            {
                 continue;
+            }
 
             try {
                 $res = Helper::update($id, $arFields);
 
                 if (!empty($res['errors'])) {
-                    foreach ($res['errors'] as &$error)
+                    foreach ($res['errors'] as &$error) {
                         $error = '&nbsp;&nbsp;' . $error;
+                    }
                     unset($error);
 
                     throw new Main\SystemException(implode(',<br />', $res['errors']));
                 }
             } catch (Main\SystemException $e) {
                 // todo: do smth
-                $lAdmin->AddUpdateError(Loc::getMessage('SALE_LOCATION_L_ITEM_SAVE_ERROR', array('#ITEM#' => $id)) . ": <br />" . $e->getMessage() . '<br />', $id);
+                $lAdmin->AddUpdateError(
+                    Loc::getMessage(
+                        'SALE_LOCATION_L_ITEM_SAVE_ERROR',
+                        array('#ITEM#' => $id)
+                    ) . ": <br />" . $e->getMessage() . '<br />',
+                    $id
+                );
                 $DB->Rollback();
             }
 
@@ -106,24 +116,36 @@ try {
 
     if (($ids = $lAdmin->GroupAction()) && $userIsAdmin) {
         if ($_REQUEST['action_target'] == 'selected') // get all ids if they were not specified (user choice was "for all")
+        {
             $ids = Helper::getIdsByFilter($listParams['filter']);
+        }
 
         @set_time_limit(0);
 
         foreach ($ids as $id) {
-            if (!($id = intval($id)))
+            if (!($id = intval($id))) {
                 continue;
+            }
 
             if ($_REQUEST['action'] == 'delete') {
                 $DB->StartTransaction();
 
                 try {
                     $res = Helper::delete($id);
-                    if (!$res['success'])
-                        throw new Main\SystemException(Loc::getMessage('SALE_LOCATION_L_ITEM') . ' ' . $id . ' : ' . implode('<br />', $res['errors']));
+                    if (!$res['success']) {
+                        throw new Main\SystemException(
+                            Loc::getMessage('SALE_LOCATION_L_ITEM') . ' ' . $id . ' : ' . implode(
+                                '<br />',
+                                $res['errors']
+                            )
+                        );
+                    }
                     $DB->Commit();
                 } catch (Main\SystemException $e) {
-                    $lAdmin->AddGroupError(Loc::getMessage('SALE_LOCATION_L_ITEM_DELETE_ERROR') . ": <br /><br />" . $e->getMessage(), $id);
+                    $lAdmin->AddGroupError(
+                        Loc::getMessage('SALE_LOCATION_L_ITEM_DELETE_ERROR') . ": <br /><br />" . $e->getMessage(),
+                        $id
+                    );
                     $DB->Rollback();
                 }
             }
@@ -135,7 +157,12 @@ try {
         }
     }
 
-    $adminResult = Helper::getList($listParams, $sTableID, CAdminUiResult::GetNavSize($sTableID), array("uiMode" => true));
+    $adminResult = Helper::getList(
+        $listParams,
+        $sTableID,
+        CAdminUiResult::GetNavSize($sTableID),
+        array("uiMode" => true)
+    );
     $adminResult = new \CAdminUiResult($adminResult, $sTableID);
     $lAdmin->SetNavigationParams($adminResult, array("BASE_LINK" => $selfFolderUrl . "sale_location_type_list.php"));
 } catch (Main\SystemException $e) {
@@ -149,8 +176,9 @@ try {
 
 if (empty($fatal)) {
     $headers = array();
-    foreach ($columns as $code => $fld)
+    foreach ($columns as $code => $fld) {
         $headers[] = array("id" => $code, "content" => $fld['title'], "sort" => $code, "default" => true);
+    }
 
     $lAdmin->AddHeaders($headers);
     while ($elem = $adminResult->NavNext(false)) {
@@ -163,10 +191,16 @@ if (empty($fatal)) {
         $row =& $lAdmin->AddRow($elem["ID"], $elem, $editUrl, Loc::getMessage('SALE_LOCATION_L_EDIT_ITEM'));
 
         foreach ($columns as $code => $fld) {
-            if ($code == 'ID')
-                $row->AddViewField($code, '<a href="' . $editUrl . '" title="' . Loc::getMessage('SALE_LOCATION_L_EDIT_ITEM') . '">' . $elem["ID"] . '</a>');
-            else
+            if ($code == 'ID') {
+                $row->AddViewField(
+                    $code,
+                    '<a href="' . $editUrl . '" title="' . Loc::getMessage(
+                        'SALE_LOCATION_L_EDIT_ITEM'
+                    ) . '">' . $elem["ID"] . '</a>'
+                );
+            } else {
                 $row->AddInputField($code);
+            }
         }
 
         $arActions = array();
@@ -187,16 +221,20 @@ if (empty($fatal)) {
             $arActions[] = array(
                 "ICON" => "delete",
                 "TEXT" => Loc::getMessage('SALE_LOCATION_L_DELETE_ITEM'),
-                "ACTION" => "if(confirm('" . CUtil::JSEscape(Loc::getMessage('SALE_LOCATION_L_CONFIRM_DELETE_ITEM')) . "')) " . $lAdmin->ActionDoGroup($elem["ID"], "delete")
+                "ACTION" => "if(confirm('" . CUtil::JSEscape(
+                        Loc::getMessage('SALE_LOCATION_L_CONFIRM_DELETE_ITEM')
+                    ) . "')) " . $lAdmin->ActionDoGroup($elem["ID"], "delete")
             );
         }
 
         $row->AddActions($arActions);
     }
 
-    $lAdmin->AddGroupActionTable(Array(
-        "delete" => true
-    ));
+    $lAdmin->AddGroupActionTable(
+        Array(
+            "delete" => true
+        )
+    );
 
     $aContext = array(
         array(
@@ -209,7 +247,6 @@ if (empty($fatal)) {
     $lAdmin->setContextSettings(array("pagePath" => $selfFolderUrl . "sale_location_type_list.php"));
     $lAdmin->AddAdminContextMenu($aContext);
     $lAdmin->CheckListMode();
-
 } // empty($fatal)
 ?>
 
@@ -224,13 +261,15 @@ if (empty($fatal)) {
 ?>
 
 <? //temporal code?>
-<? if (!CSaleLocation::locationProCheckEnabled()) require($DOCUMENT_ROOT . "/bitrix/modules/main/include/epilog_admin.php");
+<? if (!CSaleLocation::locationProCheckEnabled()) {
+    require($DOCUMENT_ROOT . "/bitrix/modules/main/include/epilog_admin.php");
+}
 if (!$publicMode && \Bitrix\Sale\Update\CrmEntityCreatorStepper::isNeedStub()) {
     $APPLICATION->IncludeComponent("bitrix:sale.admin.page.stub", ".default");
 } else {
     SearchHelper::checkIndexesValid();
 
-    if (strlen($fatal)) {
+    if ($fatal <> '') {
         $messageParams = array('MESSAGE' => $fatal, 'type' => 'ERROR');
         if ($publicMode) {
             $messageParams["SKIP_PUBLIC_MODE"] = true;

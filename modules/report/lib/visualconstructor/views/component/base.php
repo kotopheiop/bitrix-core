@@ -99,7 +99,9 @@ abstract class Base extends View
             return $resultWidget;
         }
         if ($withCalculatedData) {
-            $resultWidget['content']['params']['color'] = $widget->getWidgetHandler()->getFormElement('color')->getValue();
+            $resultWidget['content']['params']['color'] = $widget->getWidgetHandler()->getFormElement(
+                'color'
+            )->getValue();
         }
 
         $result = $this->getCalculatedPerformedData($widget, $withCalculatedData);
@@ -107,18 +109,25 @@ abstract class Base extends View
         if (!empty($result['data']) && static::MAX_RENDER_REPORT_COUNT > 1) {
             foreach ($result['data'] as $num => &$reportResult) {
                 if (!isset($reportResult['config']['color'])) {
-                    $reportResult['config']['color'] = $widget->getWidgetHandler()->getReportHandlers()[$num]->getFormElement('color')->getValue();
+                    $reportResult['config']['color'] = $widget->getWidgetHandler()->getReportHandlers(
+                    )[$num]->getFormElement('color')->getValue();
                 }
 
                 if (!isset($reportResult['config']['title'])) {
-                    $reportResult['title'] = $widget->getWidgetHandler()->getReportHandlers()[$num]->getFormElement('label')->getValue();
+                    $reportResult['title'] = $widget->getWidgetHandler()->getReportHandlers()[$num]->getFormElement(
+                        'label'
+                    )->getValue();
                 } else {
                     $reportResult['title'] = $reportResult['config']['title'];
                 }
             }
         } elseif (!empty($result['data'])) {
-            $reportResult['config']['color'] = $widget->getWidgetHandler()->getReportHandlers()[0]->getFormElement('color')->getValue();
-            $reportResult['title'] = $widget->getWidgetHandler()->getReportHandlers()[0]->getFormElement('label')->getValue();
+            $reportResult['config']['color'] = $widget->getWidgetHandler()->getReportHandlers()[0]->getFormElement(
+                'color'
+            )->getValue();
+            $reportResult['title'] = $widget->getWidgetHandler()->getReportHandlers()[0]->getFormElement(
+                'label'
+            )->getValue();
         }
 
         $this->addComponentParameters('WIDGET', $widget);

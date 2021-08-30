@@ -19,8 +19,9 @@ class CListsLiveFeed
         );
         $element = $elementObject->fetch();
 
-        if (!CLists::getLiveFeed($element["IBLOCK_ID"]))
+        if (!CLists::getLiveFeed($element["IBLOCK_ID"])) {
             return false;
+        }
 
         $listSystemIblockCode = array(
             'bitrix_holiday',
@@ -42,7 +43,12 @@ class CListsLiveFeed
                     if ($ar = $db->GetNext()) {
                         $ix = randString(5);
                         return '<a class="feed-post-user-name" href="/company/personal/user/' . $userId . '/"
-						bx-post-author-id="' . $userId . '" bx-post-author-gender="' . $ar['PERSONAL_GENDER'] . '" bx-tooltip-user-id="' . $userId . '">' . CUser::FormatName(CSite::GetNameFormat(false), $ar, true, false) . '</a>';
+						bx-post-author-id="' . $userId . '" bx-post-author-gender="' . $ar['PERSONAL_GENDER'] . '" bx-tooltip-user-id="' . $userId . '">' . CUser::FormatName(
+                                CSite::GetNameFormat(false),
+                                $ar,
+                                true,
+                                false
+                            ) . '</a>';
                     }
                     return $matches[0];
                 },
@@ -51,18 +57,23 @@ class CListsLiveFeed
         }
 
         $path = rtrim($element['LANG_DIR'], '/');
-        $urlElement = $path . COption::GetOptionString('lists', 'livefeed_url') . '?livefeed=y&list_id=' . $element["IBLOCK_ID"] . '&element_id=' . $elementId;
+        $urlElement = $path . COption::GetOptionString(
+                'lists',
+                'livefeed_url'
+            ) . '?livefeed=y&list_id=' . $element["IBLOCK_ID"] . '&element_id=' . $elementId;
         $createdBy = $element['CREATED_BY'];
-        if (!Loader::includeModule('socialnetwork') || $createdBy <= 0)
+        if (!Loader::includeModule('socialnetwork') || $createdBy <= 0) {
             return false;
+        }
 
         $sourceId = CBPStateService::getWorkflowIntegerId($workflowId);
         $logId = 0;
         $userObject = CUser::getByID($createdBy);
         $siteId = array();
         $siteObject = CSite::getList($by = "sort", $order = "desc", array("ACTIVE" => "Y"));
-        while ($site = $siteObject->fetch())
+        while ($site = $siteObject->fetch()) {
             $siteId[] = $site['LID'];
+        }
 
         if ($userObject->fetch()) {
             global $DB;
@@ -86,12 +97,15 @@ class CListsLiveFeed
                 'URL' => '#SITE_DIR#' . COption::GetOptionString('socialnetwork', 'user_page', false, SITE_ID) . 'log/'
             );
 
-            $logObject = CSocNetLog::getList(array(), array(
-                'ENTITY_TYPE' => $soFields['ENTITY_TYPE'],
-                'ENTITY_ID' => $soFields['ENTITY_ID'],
-                'EVENT_ID' => $soFields['EVENT_ID'],
-                'SOURCE_ID' => $soFields['SOURCE_ID'],
-            ));
+            $logObject = CSocNetLog::getList(
+                array(),
+                array(
+                    'ENTITY_TYPE' => $soFields['ENTITY_TYPE'],
+                    'ENTITY_ID' => $soFields['ENTITY_ID'],
+                    'EVENT_ID' => $soFields['EVENT_ID'],
+                    'SOURCE_ID' => $soFields['SOURCE_ID'],
+                )
+            );
 
             $iblockPicture = CIBlock::getArrayByID($element['IBLOCK_ID'], 'PICTURE');
             $imageFile = CFile::getFileArray($iblockPicture);
@@ -103,15 +117,19 @@ class CListsLiveFeed
                     false
                 );
             }
-            if (empty($imageFile['src']))
+            if (empty($imageFile['src'])) {
                 $imageFile['src'] = '/bitrix/images/lists/default.png';
+            }
 
             $soFields['TEXT_MESSAGE'] = '
 				<span class="bp-title-desc">
 					<span class="bp-title-desc-icon">
 						<img src="' . $imageFile['src'] . '" width="36" height="30" border="0" />
 					</span>
-					' . in_array($element['IBLOCK_CODE'], $listSystemIblockCode) ? $element['NAME'] : htmlspecialcharsbx($element['NAME']) . '
+					' . in_array(
+                $element['IBLOCK_CODE'],
+                $listSystemIblockCode
+            ) ? $element['NAME'] : htmlspecialcharsbx($element['NAME']) . '
 				</span>
 			';
 
@@ -267,7 +285,13 @@ class CListsLiveFeed
                         'IS_IMPORTANT' => false,
                         'STYLE' => 'new-employee',
                         'AVATAR_STYLE' => 'avatar-info',
-                        'DESTINATION' => CSocNetLogTools::formatDestinationFromRights($rights, array_merge($params, array('CREATED_BY' => $fields['USER_ID']))),
+                        'DESTINATION' => CSocNetLogTools::formatDestinationFromRights(
+                            $rights,
+                            array_merge(
+                                $params,
+                                array('CREATED_BY' => $fields['USER_ID'])
+                            )
+                        ),
                         'URL' => $url
                     ),
                     'CREATED_BY' => CSocNetLogTools::formatEvent_GetCreatedBy($fields, $params, $mail),
@@ -297,8 +321,9 @@ class CListsLiveFeed
     {
         global $DB, $USER_FIELD_MANAGER;
 
-        if (!CModule::IncludeModule('forum') || !CModule::IncludeModule('bizproc'))
+        if (!CModule::IncludeModule('forum') || !CModule::IncludeModule('bizproc')) {
             return false;
+        }
 
         $ufFileId = array();
         $ufDocId = array();
@@ -317,15 +342,22 @@ class CListsLiveFeed
         if ($sonetLog = $sonetLogQuery->fetch()) {
             $users = CBPTaskService::getWorkflowParticipants($sonetLog['MESSAGE'], CBPTaskUserStatus::Waiting);
 
-            if (preg_match_all("/(?<=\[USER=)(?P<id>[0-9]+)(?=\])/", $fields['TEXT_MESSAGE'], $matches))
+            if (preg_match_all("/(?<=\[USER=)(?P<id>[0-9]+)(?=\])/", $fields['TEXT_MESSAGE'], $matches)) {
                 $users = array_unique(array_merge($users, $matches['id']));
+            }
 
             $users[] = $sonetLog['USER_ID'];
             self::setSocnetFollow($users, $sonetLog['ID'], 'Y', false, true);
 
             $forumId = CBPHelper::getForumId();
             if ($forumId) {
-                $topicQuery = CForumTopic::GetList(array(), array('FORUM_ID' => $forumId, 'XML_ID' => 'WF_' . $sonetLog['MESSAGE']));
+                $topicQuery = CForumTopic::GetList(
+                    array(),
+                    array(
+                        'FORUM_ID' => $forumId,
+                        'XML_ID' => 'WF_' . $sonetLog['MESSAGE']
+                    )
+                );
                 if ($topicQuery && ($topic = $topicQuery->fetch())) {
                     $topicId = $topic['ID'];
                 } else {
@@ -374,7 +406,11 @@ class CListsLiveFeed
                             "PERMISSION_EXTERNAL" => 'Q',
                             "PERMISSION" => 'Y',
                         );
-                        $startMessageId = CForumMessage::Add($dataFields, false, array("SKIP_INDEXING" => "Y", "SKIP_STATISTIC" => "N"));
+                        $startMessageId = CForumMessage::Add(
+                            $dataFields,
+                            false,
+                            array("SKIP_INDEXING" => "Y", "SKIP_STATISTIC" => "N")
+                        );
                         if (intVal($startMessageId) <= 0) {
                             CForumTopic::Delete($topicId);
                             $topicId = 0;
@@ -417,12 +453,25 @@ class CListsLiveFeed
                     $messageId = ForumAddMessage("REPLY", $forumId, $topicId, 0, $fieldsMessage, $error, $note);
 
                     if ($messageId > 0) {
-                        $addedMessageFilesQuery = CForumFiles::getList(array('ID' => 'ASC'), array('MESSAGE_ID' => $messageId));
+                        $addedMessageFilesQuery = CForumFiles::getList(
+                            array('ID' => 'ASC'),
+                            array('MESSAGE_ID' => $messageId)
+                        );
                         while ($addedMessageFiles = $addedMessageFilesQuery->fetch()) {
                             $ufFileId[] = $addedMessageFiles['FILE_ID'];
                         }
-                        $ufDocId = $USER_FIELD_MANAGER->getUserFieldValue('FORUM_MESSAGE', 'UF_FORUM_MESSAGE_DOC', $messageId, LANGUAGE_ID);
-                        $ufUrlPreview = $USER_FIELD_MANAGER->GetUserFieldValue("FORUM_MESSAGE", "UF_FORUM_MES_URL_PRV", $messageId, LANGUAGE_ID);
+                        $ufDocId = $USER_FIELD_MANAGER->getUserFieldValue(
+                            'FORUM_MESSAGE',
+                            'UF_FORUM_MESSAGE_DOC',
+                            $messageId,
+                            LANGUAGE_ID
+                        );
+                        $ufUrlPreview = $USER_FIELD_MANAGER->GetUserFieldValue(
+                            "FORUM_MESSAGE",
+                            "UF_FORUM_MES_URL_PRV",
+                            $messageId,
+                            LANGUAGE_ID
+                        );
                     }
                 }
             }
@@ -453,8 +502,9 @@ class CListsLiveFeed
         $rights[] = 'SA'; //socnet admin
 
         if (!empty($users)) {
-            if ($method == 'post')
+            if ($method == 'post') {
                 $users[] = $createdBy;
+            }
 
             foreach ($users as $userId) {
                 $rights[] = 'U' . $userId;
@@ -477,29 +527,44 @@ class CListsLiveFeed
         return $users;
     }
 
-    protected static function setSocnetFollow($users = array(), $logId, $type, $manualMode = false, $addingComment = false)
-    {
+    protected static function setSocnetFollow(
+        $users = array(),
+        $logId,
+        $type,
+        $manualMode = false,
+        $addingComment = false
+    ) {
         if ($manualMode) {
             foreach ($users as $userId) {
                 $logFollowObject = CSocNetLogFollow::getList(
-                    array('USER_ID' => $userId, 'REF_ID' => $logId), array('BY_WF', 'TYPE'));
+                    array('USER_ID' => $userId, 'REF_ID' => $logId),
+                    array('BY_WF', 'TYPE')
+                );
                 $logFollow = $logFollowObject->fetch();
                 if (!empty($logFollow) && $logFollow['TYPE'] == 'Y' && !$logFollow['BY_WF']) {
                     CSocNetLogFollow::delete($userId, 'L' . $logId, false);
-                    CSocNetLogFollow::set($userId, 'L' . $logId, $type,
-                        ConvertTimeStamp(time() + CTimeZone::GetOffset(), "FULL", SITE_ID), SITE_ID, true);
+                    CSocNetLogFollow::set(
+                        $userId,
+                        'L' . $logId,
+                        $type,
+                        ConvertTimeStamp(time() + CTimeZone::GetOffset(), "FULL", SITE_ID),
+                        SITE_ID,
+                        true
+                    );
 
                     if (
                         $type == 'Y'
                         && method_exists('\Bitrix\Socialnetwork\ComponentHelper', 'userLogSubscribe')
                     ) {
-                        \Bitrix\Socialnetwork\ComponentHelper::userLogSubscribe(array(
-                            'logId' => $logId,
-                            'userId' => $userId,
-                            'typeList' => array(
-                                'COUNTER_COMMENT_PUSH'
+                        \Bitrix\Socialnetwork\ComponentHelper::userLogSubscribe(
+                            array(
+                                'logId' => $logId,
+                                'userId' => $userId,
+                                'typeList' => array(
+                                    'COUNTER_COMMENT_PUSH'
+                                )
                             )
-                        ));
+                        );
                     }
                 }
             }
@@ -507,7 +572,9 @@ class CListsLiveFeed
             if ($type == 'Y') {
                 foreach ($users as $userId) {
                     $logFollowObject = CSocNetLogFollow::getList(
-                        array('USER_ID' => $userId, 'REF_ID' => $logId), array('BY_WF'));
+                        array('USER_ID' => $userId, 'REF_ID' => $logId),
+                        array('BY_WF')
+                    );
                     $logFollow = $logFollowObject->fetch();
 
                     if (
@@ -517,26 +584,36 @@ class CListsLiveFeed
                         CSocNetLogFollow::delete($userId, 'L' . $logId, false);
 
                         if (method_exists('\Bitrix\Socialnetwork\ComponentHelper', 'userLogSubscribe')) {
-                            \Bitrix\Socialnetwork\ComponentHelper::userLogSubscribe(array(
-                                'logId' => $logId,
-                                'userId' => $userId,
-                                'typeList' => array(
-                                    'FOLLOW',
-                                    'COUNTER_COMMENT_PUSH'
-                                ),
-                                'followDate' => 'CURRENT',
-                                'followByWF' => true
-                            ));
+                            \Bitrix\Socialnetwork\ComponentHelper::userLogSubscribe(
+                                array(
+                                    'logId' => $logId,
+                                    'userId' => $userId,
+                                    'typeList' => array(
+                                        'FOLLOW',
+                                        'COUNTER_COMMENT_PUSH'
+                                    ),
+                                    'followDate' => 'CURRENT',
+                                    'followByWF' => true
+                                )
+                            );
                         } else {
-                            CSocNetLogFollow::set($userId, 'L' . $logId, 'Y',
-                                ConvertTimeStamp(time() + CTimeZone::GetOffset(), "FULL", SITE_ID), SITE_ID, true);
+                            CSocNetLogFollow::set(
+                                $userId,
+                                'L' . $logId,
+                                'Y',
+                                ConvertTimeStamp(time() + CTimeZone::GetOffset(), "FULL", SITE_ID),
+                                SITE_ID,
+                                true
+                            );
                         }
                     }
                 }
             } else {
                 foreach ($users as $userId) {
                     $logFollowObject = CSocNetLogFollow::getList(
-                        array('USER_ID' => $userId, 'REF_ID' => $logId), array('BY_WF'));
+                        array('USER_ID' => $userId, 'REF_ID' => $logId),
+                        array('BY_WF')
+                    );
                     $logFollow = $logFollowObject->fetch();
 
                     if (
@@ -675,8 +752,9 @@ class CListsLiveFeed
      */
     public static function OnForumCommentIMNotify($entityType, $entityId, $comment)
     {
-        if ($entityType != "WF")
+        if ($entityType != "WF") {
             return;
+        }
 
         $logQuery = CSocNetLog::getList(
             array(),
@@ -707,17 +785,21 @@ class CListsLiveFeed
 
     public static function NotifyComment($comment)
     {
-        if (!Loader::includeModule("im"))
+        if (!Loader::includeModule("im")) {
             return;
-        if ($comment["TO_USER_ID"] == $comment["FROM_USER_ID"])
+        }
+        if ($comment["TO_USER_ID"] == $comment["FROM_USER_ID"]) {
             return;
+        }
 
         $siteDir = rtrim(SITE_DIR, '/');
         $url = str_replace('#SITE_DIR#', $siteDir, $comment["URL"]);
         $url .= '' . $comment['LOG_ID'] . '/';
 
-        $messageAddComment = Loc::getMessage("LISTS_LF_COMMENT_MESSAGE_ADD",
-            array("#PROCESS#" => '<a href="' . $url . '" class="bx-notifier-item-action">' . $comment["TITLE"] . '</a>'));
+        $messageAddComment = Loc::getMessage(
+            "LISTS_LF_COMMENT_MESSAGE_ADD",
+            array("#PROCESS#" => '<a href="' . $url . '" class="bx-notifier-item-action">' . $comment["TITLE"] . '</a>')
+        );
         $userQuery = CUser::getList(
             $by = "id",
             $order = "asc",
@@ -728,8 +810,10 @@ class CListsLiveFeed
             switch ($user["PERSONAL_GENDER"]) {
                 case "F":
                 case "M":
-                    $messageAddComment = Loc::getMessage("LISTS_LF_COMMENT_MESSAGE_ADD" . '_' . $user["PERSONAL_GENDER"],
-                        array("#PROCESS#" => '<a href="' . $url . '" class="bx-notifier-item-action">' . $comment["TITLE"] . '</a>'));
+                    $messageAddComment = Loc::getMessage(
+                        "LISTS_LF_COMMENT_MESSAGE_ADD" . '_' . $user["PERSONAL_GENDER"],
+                        array("#PROCESS#" => '<a href="' . $url . '" class="bx-notifier-item-action">' . $comment["TITLE"] . '</a>')
+                    );
                     break;
                 default:
                     break;
@@ -780,11 +864,29 @@ class CListsLiveFeed
             $params = unserialize($log["~PARAMS"]);
             $title = $log["TITLE"] . " - " . $params["ELEMENT_NAME"];
             $entityName = GetMessage("LISTS_LF_COMMENT_MENTION_TITLE", Array("#PROCESS#" => $title));
-            $notifyMessage = GetMessage("LISTS_LF_COMMENT_MENTION" . (strlen($genderSuffix) > 0 ? "_" . $genderSuffix : ""), Array("#title#" => "<a href=\"#url#\" class=\"bx-notifier-item-action\">" . $entityName . "</a>"));
-            $notifyMessageOut = GetMessage("LISTS_LF_COMMENT_MENTION" . (strlen($genderSuffix) > 0 ? "_" . $genderSuffix : ""), Array("#title#" => $entityName)) . " (" . "#server_name##url#)";
+            $notifyMessage = GetMessage(
+                "LISTS_LF_COMMENT_MENTION" . (strlen($genderSuffix) > 0 ? "_" . $genderSuffix : ""),
+                Array("#title#" => "<a href=\"#url#\" class=\"bx-notifier-item-action\">" . $entityName . "</a>")
+            );
+            $notifyMessageOut = GetMessage(
+                    "LISTS_LF_COMMENT_MENTION" . (strlen($genderSuffix) > 0 ? "_" . $genderSuffix : ""),
+                    Array("#title#" => $entityName)
+                ) . " (" . "#server_name##url#)";
 
-            $strPathToLogEntry = str_replace("#log_id#", $log["ID"], COption::GetOptionString("socialnetwork", "log_entry_page", "/company/personal/log/#log_id#/", SITE_ID));
-            $strPathToLogEntryComment = $strPathToLogEntry . (strpos($strPathToLogEntry, "?") !== false ? "&" : "?") . "commentID=" . $commentFields["ID"] . "#com" . $commentFields["ID"];
+            $strPathToLogEntry = str_replace(
+                "#log_id#",
+                $log["ID"],
+                COption::GetOptionString(
+                    "socialnetwork",
+                    "log_entry_page",
+                    "/company/personal/log/#log_id#/",
+                    SITE_ID
+                )
+            );
+            $strPathToLogEntryComment = $strPathToLogEntry . (strpos(
+                    $strPathToLogEntry,
+                    "?"
+                ) !== false ? "&" : "?") . "commentID=" . $commentFields["ID"] . "#com" . $commentFields["ID"];
 
             $return = array(
                 "URL" => $strPathToLogEntryComment,

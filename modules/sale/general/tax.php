@@ -1,12 +1,16 @@
-<?
+<?php
+
 IncludeModuleLangFile(__FILE__);
 
 class CAllSaleTax
 {
     public static function DoProcessOrderBasket(&$arOrder, $arOptions, &$arErrors)
     {
-        if ((!array_key_exists("TAX_LOCATION", $arOrder) || intval($arOrder["TAX_LOCATION"]) <= 0) && (!$arOrder["USE_VAT"] || $arOrder["USE_VAT"] != "Y"))
+        if ((!array_key_exists("TAX_LOCATION", $arOrder) || intval(
+                    $arOrder["TAX_LOCATION"]
+                ) <= 0) && (!$arOrder["USE_VAT"] || $arOrder["USE_VAT"] != "Y")) {
             return;
+        }
 
         $arOrder["TAX_LOCATION"] = \CSaleLocation::tryTranslateIDToCode($arOrder["TAX_LOCATION"]);
 
@@ -19,10 +23,13 @@ class CAllSaleTax
      * @param $arErrors
      * @internal
      */
-    public static function calculateTax(&$arOrder, $arOptions, &$arErrors)
+    public static function calculateTax(&$arOrder, $arOptions, &$arErrors = [])
     {
-        if ((!array_key_exists("TAX_LOCATION", $arOrder) || strval(trim($arOrder["TAX_LOCATION"])) == "") && (!$arOrder["USE_VAT"] || $arOrder["USE_VAT"] != "Y"))
+        if ((!array_key_exists("TAX_LOCATION", $arOrder) || strval(
+                    trim($arOrder["TAX_LOCATION"])
+                ) == "") && (!$arOrder["USE_VAT"] || $arOrder["USE_VAT"] != "Y")) {
             return;
+        }
 
         if (!$arOrder["USE_VAT"]) {
             if (!array_key_exists("TAX_EXEMPT", $arOrder)) {
@@ -31,8 +38,9 @@ class CAllSaleTax
 
                 $dbTaxExemptList = CSaleTax::GetExemptList(array("GROUP_ID" => $arUserGroups));
                 while ($TaxExemptList = $dbTaxExemptList->Fetch()) {
-                    if (!in_array(intval($TaxExemptList["TAX_ID"]), $arOrder["TAX_EXEMPT"]))
+                    if (!in_array(intval($TaxExemptList["TAX_ID"]), $arOrder["TAX_EXEMPT"])) {
                         $arOrder["TAX_EXEMPT"][] = intval($TaxExemptList["TAX_ID"]);
+                    }
                 }
             }
 
@@ -58,7 +66,13 @@ class CAllSaleTax
                     while ($arTaxRate = $dbTaxRate->GetNext()) {
                         if (!in_array(intval($arTaxRate["TAX_ID"]), $arOrder["TAX_EXEMPT"])) {
                             if ($arTaxRate["IS_PERCENT"] != "Y") {
-                                $arTaxRate["VALUE"] = \Bitrix\Sale\PriceMaths::roundPrecision(CCurrencyRates::ConvertCurrency($arTaxRate["VALUE"], $arTaxRate["CURRENCY"], $arOrder["CURRENCY"]));
+                                $arTaxRate["VALUE"] = \Bitrix\Sale\PriceMaths::roundPrecision(
+                                    CCurrencyRates::ConvertCurrency(
+                                        $arTaxRate["VALUE"],
+                                        $arTaxRate["CURRENCY"],
+                                        $arOrder["CURRENCY"]
+                                    )
+                                );
                                 $arTaxRate["CURRENCY"] = $arOrder["CURRENCY"];
                             }
                             $arOrder["TAX_LIST"][] = $arTaxRate;
@@ -70,8 +84,9 @@ class CAllSaleTax
             } else {
                 if (!empty($arOrder["TAX_LIST"]) && is_array($arOrder["TAX_LIST"])) {
                     foreach ($arOrder["TAX_LIST"] as &$taxValue) {
-                        if (isset($taxValue['VALUE_MONEY']))
+                        if (isset($taxValue['VALUE_MONEY'])) {
                             unset($taxValue['VALUE_MONEY']);
+                        }
                     }
                     unset($taxValue);
                 }
@@ -88,7 +103,10 @@ class CAllSaleTax
 
                         foreach ($arOrder["TAX_LIST"] as &$arTax) {
                             $arTax["VALUE_MONEY"] += $arTax["TAX_VAL"];
-                            $arTax["VALUE_MONEY_FORMATED"] = SaleFormatCurrency($arTax["VALUE_MONEY"], $arOrder["CURRENCY"]);
+                            $arTax["VALUE_MONEY_FORMATED"] = SaleFormatCurrency(
+                                $arTax["VALUE_MONEY"],
+                                $arOrder["CURRENCY"]
+                            );
                         }
                         unset($arTax);
                     }
@@ -103,8 +121,6 @@ class CAllSaleTax
                     $arOrder["TAX_LIST"] = array();
                     $arOrder["TAX_PRICE"] = 0;
                 }
-
-
             }
         } else {
             if (!array_key_exists("TAX_LIST", $arOrder)) {
@@ -112,7 +128,9 @@ class CAllSaleTax
                     "NAME" => GetMessage("SOA_VAT"),
                     "IS_PERCENT" => "Y",
                     "VALUE" => $arOrder["VAT_RATE"] * 100,
-                    "VALUE_FORMATED" => "(" . ($arOrder["VAT_RATE"] * 100) . "%, " . GetMessage("SOA_VAT_INCLUDED") . ")",
+                    "VALUE_FORMATED" => "(" . ($arOrder["VAT_RATE"] * 100) . "%, " . GetMessage(
+                            "SOA_VAT_INCLUDED"
+                        ) . ")",
                     "VALUE_MONEY" => $arOrder["VAT_SUM"],
                     "VALUE_MONEY_FORMATED" => SaleFormatCurrency($arOrder["VAT_SUM"], $arOrder["CURRENCY"]),
                     "APPLY_ORDER" => 100,
@@ -127,8 +145,11 @@ class CAllSaleTax
 
     public static function DoProcessOrderDelivery(&$arOrder, $arOptions, &$arErrors)
     {
-        if ((!array_key_exists("TAX_LOCATION", $arOrder) || intval($arOrder["TAX_LOCATION"]) <= 0) && (!$arOrder["USE_VAT"] || $arOrder["USE_VAT"] != "Y"))
+        if ((!array_key_exists("TAX_LOCATION", $arOrder) || intval(
+                    $arOrder["TAX_LOCATION"]
+                ) <= 0) && (!$arOrder["USE_VAT"] || $arOrder["USE_VAT"] != "Y")) {
             return;
+        }
 
         $arOrder["TAX_LOCATION"] = \CSaleLocation::tryTranslateIDToCode($arOrder["TAX_LOCATION"]);
 
@@ -141,16 +162,21 @@ class CAllSaleTax
      * @param $arErrors
      * @internal
      */
-    public static function calculateDeliveryTax(&$arOrder, $arOptions, &$arErrors)
+    public static function calculateDeliveryTax(&$arOrder, $arOptions, &$arErrors = [])
     {
-        if ((!array_key_exists("TAX_LOCATION", $arOrder) || strval(trim($arOrder["TAX_LOCATION"])) == "") && (!$arOrder["USE_VAT"] || $arOrder["USE_VAT"] != "Y"))
+        if ((!array_key_exists("TAX_LOCATION", $arOrder) || strval(
+                    trim($arOrder["TAX_LOCATION"])
+                ) == "") && (!$arOrder["USE_VAT"] || $arOrder["USE_VAT"] != "Y")) {
             return;
+        }
 
-        if (!array_key_exists("COUNT_DELIVERY_TAX", $arOptions))
+        if (!array_key_exists("COUNT_DELIVERY_TAX", $arOptions)) {
             $arOptions["COUNT_DELIVERY_TAX"] = COption::GetOptionString("sale", "COUNT_DELIVERY_TAX", "N");
+        }
 
-        if (doubleval($arOrder["DELIVERY_PRICE"]) <= 0 || $arOptions["COUNT_DELIVERY_TAX"] != "Y")
+        if (doubleval($arOrder["DELIVERY_PRICE"]) <= 0 || $arOptions["COUNT_DELIVERY_TAX"] != "Y") {
             return;
+        }
 
         if (!$arOrder["USE_VAT"] || $arOrder["USE_VAT"] != "Y") {
             if (!array_key_exists("TAX_EXEMPT", $arOrder)) {
@@ -158,8 +184,9 @@ class CAllSaleTax
 
                 $dbTaxExemptList = CSaleTax::GetExemptList(array("GROUP_ID" => $arUserGroups));
                 while ($TaxExemptList = $dbTaxExemptList->Fetch()) {
-                    if (!in_array(intval($TaxExemptList["TAX_ID"]), $arOrder["TAX_EXEMPT"]))
+                    if (!in_array(intval($TaxExemptList["TAX_ID"]), $arOrder["TAX_EXEMPT"])) {
                         $arOrder["TAX_EXEMPT"][] = intval($TaxExemptList["TAX_ID"]);
+                    }
                 }
             }
 
@@ -176,9 +203,18 @@ class CAllSaleTax
                     )
                 );
                 while ($arTaxRate = $dbTaxRate->GetNext()) {
-                    if (is_array($arOrder["TAX_EXEMPT"]) && !in_array(intval($arTaxRate["TAX_ID"]), $arOrder["TAX_EXEMPT"])) {
+                    if (is_array($arOrder["TAX_EXEMPT"]) && !in_array(
+                            intval($arTaxRate["TAX_ID"]),
+                            $arOrder["TAX_EXEMPT"]
+                        )) {
                         if ($arTaxRate["IS_PERCENT"] != "Y") {
-                            $arTaxRate["VALUE"] = \Bitrix\Sale\PriceMaths::roundPrecision(CurrencyRates::ConvertCurrency($arTaxRate["VALUE"], $arTaxRate["CURRENCY"], $arOrder["CURRENCY"]));
+                            $arTaxRate["VALUE"] = \Bitrix\Sale\PriceMaths::roundPrecision(
+                                CurrencyRates::ConvertCurrency(
+                                    $arTaxRate["VALUE"],
+                                    $arTaxRate["CURRENCY"],
+                                    $arOrder["CURRENCY"]
+                                )
+                            );
                             $arTaxRate["CURRENCY"] = $arOrder["CURRENCY"];
                         }
                         $arOrder["TAX_LIST"][] = $arTaxRate;
@@ -202,13 +238,10 @@ class CAllSaleTax
                         || (!empty($arOptions['ENABLE_INCLUSIVE_TAX']) && $arOptions['ENABLE_INCLUSIVE_TAX'] == "Y")) {
                         $arOrder["TAX_PRICE"] += $arTax["VALUE_MONEY"];
                     }
-
                 }
                 unset($arTax);
-
             }
         } else {
-
             $deliveryVat = $arOrder["DELIVERY_PRICE"] * $arOrder["VAT_RATE"] / (1 + $arOrder["VAT_RATE"]);
 
             $arOrder["VAT_SUM"] += $deliveryVat;
@@ -233,10 +266,9 @@ class CAllSaleTax
         $arOrder["TAX_PRICE"] = \Bitrix\Sale\PriceMaths::roundPrecision($arOrder["TAX_PRICE"]);
         $arOrder["VAT_SUM"] = \Bitrix\Sale\PriceMaths::roundPrecision($arOrder["VAT_SUM"]);
         $arOrder["VAT_DELIVERY"] = \Bitrix\Sale\PriceMaths::roundPrecision($arOrder["VAT_DELIVERY"]);
-
     }
 
-    static function DoSaveOrderTax($orderId, $taxList, &$arErrors)
+    public static function DoSaveOrderTax($orderId, $taxList, &$arErrors = [])
     {
         $duplicateList = array();
         $idList = array();
@@ -361,15 +393,15 @@ class CAllSaleTax
         }
     }
 
-    function CheckFields($ACTION, &$arFields)
+    public static function CheckFields($ACTION, &$arFields)
     {
         global $DB;
 
-        if ((is_set($arFields, "LID") || $ACTION == "ADD") && strlen($arFields["LID"]) <= 0) {
+        if ((is_set($arFields, "LID") || $ACTION == "ADD") && $arFields["LID"] == '') {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SKGT_EMPTY_SITE"), "ERROR_NO_LID");
             return false;
         }
-        if ((is_set($arFields, "NAME") || $ACTION == "ADD") && strlen($arFields["NAME"]) <= 0) {
+        if ((is_set($arFields, "NAME") || $ACTION == "ADD") && $arFields["NAME"] == '') {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SKGT_EMPTY_NAME"), "ERROR_NO_NAME");
             return false;
         }
@@ -377,23 +409,29 @@ class CAllSaleTax
         if (is_set($arFields, "LID")) {
             $dbSite = CSite::GetByID($arFields["LID"]);
             if (!$dbSite->Fetch()) {
-                $GLOBALS["APPLICATION"]->ThrowException(str_replace("#ID#", $arFields["LID"], GetMessage("SKGT_NO_SITE")), "ERROR_NO_SITE");
+                $GLOBALS["APPLICATION"]->ThrowException(
+                    str_replace("#ID#", $arFields["LID"], GetMessage("SKGT_NO_SITE")),
+                    "ERROR_NO_SITE"
+                );
                 return false;
             }
         }
 
-        if ((is_set($arFields, "CODE") || $ACTION == "ADD") && strlen($arFields["CODE"]) <= 0)
+        if ((is_set($arFields, "CODE") || $ACTION == "ADD") && $arFields["CODE"] == '') {
             $arFields["CODE"] = false;
+        }
 
         return true;
     }
 
-    function Update($ID, $arFields)
+    public static function Update($ID, $arFields)
     {
         global $DB;
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
-        if (!CSaleTax::CheckFields("UPDATE", $arFields)) return false;
+        if (!CSaleTax::CheckFields("UPDATE", $arFields)) {
+            return false;
+        }
 
         $strUpdate = $DB->PrepareUpdate("b_sale_tax", $arFields);
         $strSql = "UPDATE b_sale_tax SET " .
@@ -405,10 +443,10 @@ class CAllSaleTax
         return $ID;
     }
 
-    function Delete($ID)
+    public static function Delete($ID)
     {
         global $DB;
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
         $db_taxrates = CSaleTaxRate::GetList(Array(), Array("TAX_ID" => $ID));
         while ($ar_taxrates = $db_taxrates->Fetch()) {
@@ -419,13 +457,16 @@ class CAllSaleTax
         return $DB->Query("DELETE FROM b_sale_tax WHERE ID = " . $ID . "", true);
     }
 
-    function GetByID($ID)
+    public static function GetByID($ID)
     {
         global $DB;
 
-        $ID = IntVal($ID);
+        $ID = intval($ID);
         $strSql =
-            "SELECT ID, LID, NAME, CODE, DESCRIPTION, " . $DB->DateToCharFunction("TIMESTAMP_X", "FULL") . " as TIMESTAMP_X " .
+            "SELECT ID, LID, NAME, CODE, DESCRIPTION, " . $DB->DateToCharFunction(
+                "TIMESTAMP_X",
+                "FULL"
+            ) . " as TIMESTAMP_X " .
             "FROM b_sale_tax " .
             "WHERE ID = " . $ID . "";
         $db_res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
@@ -433,34 +474,38 @@ class CAllSaleTax
         if ($res = $db_res->Fetch()) {
             return $res;
         }
-        return False;
+        return false;
     }
 
-    function GetList($arOrder = Array("NAME" => "ASC"), $arFilter = Array())
+    public static function GetList($arOrder = Array("NAME" => "ASC"), $arFilter = Array())
     {
         global $DB;
         $arSqlSearch = Array();
 
-        if (!is_array($arFilter))
+        if (!is_array($arFilter)) {
             $filter_keys = Array();
-        else
+        } else {
             $filter_keys = array_keys($arFilter);
+        }
 
         $countFiltersKeys = count($filter_keys);
         for ($i = 0; $i < $countFiltersKeys; $i++) {
             $val = $DB->ForSql($arFilter[$filter_keys[$i]]);
-            if (strlen($val) <= 0) continue;
+            if ($val == '') {
+                continue;
+            }
 
             $key = $filter_keys[$i];
             if ($key[0] == "!") {
-                $key = substr($key, 1);
+                $key = mb_substr($key, 1);
                 $bInvert = true;
-            } else
+            } else {
                 $bInvert = false;
+            }
 
             switch (ToUpper($key)) {
                 case "ID":
-                    $arSqlSearch[] = "T.ID " . ($bInvert ? "<>" : "=") . " " . IntVal($val) . " ";
+                    $arSqlSearch[] = "T.ID " . ($bInvert ? "<>" : "=") . " " . intval($val) . " ";
                     break;
                 case "LID":
                     $arSqlSearch[] = "T.LID " . ($bInvert ? "<>" : "=") . " '" . $val . "' ";
@@ -479,7 +524,10 @@ class CAllSaleTax
         }
 
         $strSql =
-            "SELECT T.ID, T.LID, T.NAME, T.CODE, T.DESCRIPTION, " . $DB->DateToCharFunction("T.TIMESTAMP_X", "FULL") . " as TIMESTAMP_X " .
+            "SELECT T.ID, T.LID, T.NAME, T.CODE, T.DESCRIPTION, " . $DB->DateToCharFunction(
+                "T.TIMESTAMP_X",
+                "FULL"
+            ) . " as TIMESTAMP_X " .
             "FROM b_sale_tax T " .
             "WHERE 1 = 1 " .
             "	" . $strSqlSearch . " ";
@@ -488,14 +536,19 @@ class CAllSaleTax
         foreach ($arOrder as $by => $order) {
             $by = ToUpper($by);
             $order = ToUpper($order);
-            if ($order != "ASC")
+            if ($order != "ASC") {
                 $order = "DESC";
+            }
 
-            if ($by == "ID") $arSqlOrder[] = " T.ID " . $order . " ";
-            elseif ($by == "LID") $arSqlOrder[] = " T.LID " . $order . " ";
-            elseif ($by == "CODE") $arSqlOrder[] = " T.CODE " . $order . " ";
-            elseif ($by == "TIMESTAMP_X") $arSqlOrder[] = " T.TIMESTAMP_X " . $order . " ";
-            else {
+            if ($by == "ID") {
+                $arSqlOrder[] = " T.ID " . $order . " ";
+            } elseif ($by == "LID") {
+                $arSqlOrder[] = " T.LID " . $order . " ";
+            } elseif ($by == "CODE") {
+                $arSqlOrder[] = " T.CODE " . $order . " ";
+            } elseif ($by == "TIMESTAMP_X") {
+                $arSqlOrder[] = " T.TIMESTAMP_X " . $order . " ";
+            } else {
                 $arSqlOrder[] = " T.NAME " . $order . " ";
                 $by = "NAME";
             }
@@ -505,10 +558,11 @@ class CAllSaleTax
         $countSqlOrder = count($arSqlOrder);
         DelDuplicateSort($arSqlOrder);
         for ($i = 0; $i < $countSqlOrder; $i++) {
-            if ($i == 0)
+            if ($i == 0) {
                 $strSqlOrder = " ORDER BY ";
-            else
+            } else {
                 $strSqlOrder .= ",";
+            }
 
             $strSqlOrder .= $arSqlOrder[$i];
         }
@@ -517,28 +571,31 @@ class CAllSaleTax
         return $db_res;
     }
 
-    function GetExemptList($arFilter = array())
+    public static function GetExemptList($arFilter = array())
     {
         global $DB;
         $arSqlSearch = Array();
 
-        if (!is_array($arFilter))
+        if (!is_array($arFilter)) {
             $filter_keys = Array();
-        else
+        } else {
             $filter_keys = array_keys($arFilter);
+        }
 
         $countFilterKeys = count($filter_keys);
         for ($i = 0; $i < $countFilterKeys; $i++) {
             $vals = $arFilter[$filter_keys[$i]];
-            if (!is_array($vals))
+            if (!is_array($vals)) {
                 $vals = array($vals);
+            }
 
             $key = $filter_keys[$i];
             if ($key[0] == "!") {
-                $key = substr($key, 1);
+                $key = mb_substr($key, 1);
                 $bInvert = true;
-            } else
+            } else {
                 $bInvert = false;
+            }
 
             $arSqlSearch_tmp = array();
 
@@ -548,10 +605,10 @@ class CAllSaleTax
 
                 switch (ToUpper($key)) {
                     case "GROUP_ID":
-                        $arSqlSearch_tmp[] = "TE2G.GROUP_ID " . ($bInvert ? "<>" : "=") . " " . IntVal($val) . " ";
+                        $arSqlSearch_tmp[] = "TE2G.GROUP_ID " . ($bInvert ? "<>" : "=") . " " . intval($val) . " ";
                         break;
                     case "TAX_ID":
-                        $arSqlSearch_tmp[] = "TE2G.TAX_ID " . ($bInvert ? "<>" : "=") . " " . IntVal($val) . " ";
+                        $arSqlSearch_tmp[] = "TE2G.TAX_ID " . ($bInvert ? "<>" : "=") . " " . intval($val) . " ";
                         break;
                 }
             }
@@ -559,13 +616,15 @@ class CAllSaleTax
             $strSqlSearch_tmp = "";
             $countSqlSearchTmp = count($arSqlSearch_tmp);
             for ($j = 0; $j < $countSqlSearchTmp; $j++) {
-                if ($j > 0)
+                if ($j > 0) {
                     $strSqlSearch_tmp .= ($bInvert ? " AND " : " OR ");
+                }
                 $strSqlSearch_tmp .= "(" . $arSqlSearch_tmp[$j] . ")";
             }
 
-            if ($strSqlSearch_tmp != "")
+            if ($strSqlSearch_tmp != "") {
                 $arSqlSearch[] = "(" . $strSqlSearch_tmp . ")";
+            }
         }
 
         $strSqlSearch = "";
@@ -588,25 +647,26 @@ class CAllSaleTax
         return $db_res;
     }
 
-    function AddExempt($arFields)
+    public static function AddExempt($arFields)
     {
         global $DB;
 
-        $arFields["GROUP_ID"] = IntVal($arFields["GROUP_ID"]);
-        $arFields["TAX_ID"] = IntVal($arFields["TAX_ID"]);
+        $arFields["GROUP_ID"] = intval($arFields["GROUP_ID"]);
+        $arFields["TAX_ID"] = intval($arFields["TAX_ID"]);
 
-        if ($arFields["GROUP_ID"] <= 0 || $arFields["TAX_ID"] <= 0)
-            return False;
+        if ($arFields["GROUP_ID"] <= 0 || $arFields["TAX_ID"] <= 0) {
+            return false;
+        }
 
         $strSql =
             "INSERT INTO b_sale_tax_exempt2group(GROUP_ID, TAX_ID) " .
             "VALUES(" . $arFields["GROUP_ID"] . ", " . $arFields["TAX_ID"] . ")";
         $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 
-        return True;
+        return true;
     }
 
-    function DeleteExempt($arFields)
+    public static function DeleteExempt($arFields)
     {
         global $DB;
 
@@ -614,28 +674,35 @@ class CAllSaleTax
 
         $arSqlSearch = Array();
 
-        if (!is_array($arFields))
-            return False;
-        else
+        if (!is_array($arFields)) {
+            return false;
+        } else {
             $filter_keys = array_keys($arFields);
+        }
 
         $countFilterKeys = count($filter_keys);
         for ($i = 0; $i < $countFilterKeys; $i++) {
             $val = $arFields[$filter_keys[$i]];
-            if (IntVal($val) <= 0) continue;
+            if (intval($val) <= 0) {
+                continue;
+            }
             $key = $filter_keys[$i];
-            $arSqlSearch[] = " " . $key . " = " . IntVal($val) . " ";
+            $arSqlSearch[] = " " . $key . " = " . intval($val) . " ";
         }
 
         $countSqlSearch = count($arSqlSearch);
-        if ($countSqlSearch <= 0)
-            return False;
+        if ($countSqlSearch <= 0) {
+            return false;
+        }
 
         $strSqlSearch = "";
 
         for ($i = 0; $i < $countSqlSearch; $i++) {
-            if ($i == 0) $strSqlSearch .= " ";
-            else $strSqlSearch .= " AND ";
+            if ($i == 0) {
+                $strSqlSearch .= " ";
+            } else {
+                $strSqlSearch .= " AND ";
+            }
             $strSqlSearch .= " (" . $arSqlSearch[$i] . ") ";
         }
 
@@ -660,5 +727,3 @@ class CAllSaleTax
         return \Bitrix\Sale\OrderHistory::class;
     }
 }
-
-?>

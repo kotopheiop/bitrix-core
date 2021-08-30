@@ -10,7 +10,7 @@ Loc::loadMessages(__FILE__);
 if (!defined('B24NETWORK_NODE')) {
     $defaultValue = \Bitrix\Main\Config\Option::get('socialservices', 'network_url', '');
 
-    if (strlen($defaultValue) > 0) {
+    if ($defaultValue <> '') {
         define('B24NETWORK_NODE', $defaultValue);
     } elseif (defined('B24NETWORK_URL')) {
         define('B24NETWORK_NODE', B24NETWORK_URL);
@@ -46,11 +46,19 @@ class CSocServBitrix24Net extends CSocServAuth
     {
         $url = $this->getUrl("popup");
 
-        $phrase = ($arParams["FOR_INTRANET"]) ? Loc::getMessage("socserv_b24net_note_intranet") : Loc::getMessage("socserv_b24net_note");
+        $phrase = ($arParams["FOR_INTRANET"]) ? Loc::getMessage("socserv_b24net_note_intranet") : Loc::getMessage(
+            "socserv_b24net_note"
+        );
 
         return $arParams["FOR_INTRANET"]
-            ? array("ON_CLICK" => 'onclick="BX.util.popup(\'' . htmlspecialcharsbx(CUtil::JSEscape($url)) . '\', 800, 600)"')
-            : '<a href="javascript:void(0)" onclick="BX.util.popup(\'' . htmlspecialcharsbx(CUtil::JSEscape($url)) . '\', 800, 600)" class="bx-ss-button bitrix24net-button bitrix24net-button-' . LANGUAGE_ID . '"></a><span class="bx-spacer"></span><span>' . $phrase . '</span>';
+            ? array(
+                "ON_CLICK" => 'onclick="BX.util.popup(\'' . htmlspecialcharsbx(
+                        CUtil::JSEscape($url)
+                    ) . '\', 800, 600)"'
+            )
+            : '<a href="javascript:void(0)" onclick="BX.util.popup(\'' . htmlspecialcharsbx(
+                CUtil::JSEscape($url)
+            ) . '\', 800, 600)" class="bx-ss-button bitrix24net-button bitrix24net-button-' . LANGUAGE_ID . '"></a><span class="bx-spacer"></span><span>' . $phrase . '</span>';
     }
 
     public function GetOnClickJs()
@@ -78,12 +86,20 @@ class CSocServBitrix24Net extends CSocServAuth
 
         $state =
             (defined("ADMIN_SECTION") && ADMIN_SECTION == true ? 'admin=1' : 'site_id=' . SITE_ID)
-            . '&backurl=' . urlencode($GLOBALS["APPLICATION"]->GetCurPageParam(
-                'check_key=' . CSocServAuthManager::GetUniqueKey(),
-                array_merge(array(
-                    "auth_service_error", "auth_service_id", "check_key", "error_message"
-                ), \Bitrix\Main\HttpRequest::getSystemParameters())
-            ))
+            . '&backurl=' . urlencode(
+                $GLOBALS["APPLICATION"]->GetCurPageParam(
+                    'check_key=' . CSocServAuthManager::GetUniqueKey(),
+                    array_merge(
+                        array(
+                            "auth_service_error",
+                            "auth_service_id",
+                            "check_key",
+                            "error_message"
+                        ),
+                        \Bitrix\Main\HttpRequest::getSystemParameters()
+                    )
+                )
+            )
             . '&mode=' . $mode;
 
         return $this->getEntityOAuth()->GetAuthUrl($redirect_uri, $state, $mode);
@@ -159,11 +175,16 @@ class CSocServBitrix24Net extends CSocServAuth
                     }
 
                     if ($authError === true) {
-                        if (strlen(SITE_ID) > 0) {
+                        if (SITE_ID <> '') {
                             $arFields["SITE_ID"] = SITE_ID;
                         }
 
-                        $authError = $this->AuthorizeUser($arFields);
+                        $bSaveNetworkAuth = COption::GetOptionString(
+                                "main",
+                                "allow_external_auth_stored_hash",
+                                "N"
+                            ) == "Y";
+                        $authError = $this->AuthorizeUser($arFields, $bSaveNetworkAuth);
                     }
                 }
 
@@ -178,13 +199,33 @@ class CSocServBitrix24Net extends CSocServAuth
 
         $bSuccess = $authError === true;
 
+        if ($bSuccess) {
+            CSocServAuthManager::SetAuthorizedServiceId(self::ID);
+        }
+
         // hack to update option used for visualization in module options
         if ($bSuccess && !self::GetOption("bitrix24net_domain")) {
             $request = \Bitrix\Main\Context::getCurrent()->getRequest();
-            self::SetOption("bitrix24net_domain", ($request->isHttps() ? "https://" : "http://") . $request->getHttpHost());
+            self::SetOption(
+                "bitrix24net_domain",
+                ($request->isHttps() ? "https://" : "http://") . $request->getHttpHost()
+            );
         }
 
-        $aRemove = array_merge(array("auth_service_error", "auth_service_id", "code", "error_reason", "error", "error_description", "check_key", "current_fieldset", "checkword"), \Bitrix\Main\HttpRequest::getSystemParameters());
+        $aRemove = array_merge(
+            array(
+                "auth_service_error",
+                "auth_service_id",
+                "code",
+                "error_reason",
+                "error",
+                "error_description",
+                "check_key",
+                "current_fieldset",
+                "checkword"
+            ),
+            \Bitrix\Main\HttpRequest::getSystemParameters()
+        );
 
         $url = ($APPLICATION->GetCurDir() == "/login/") ? "" : $APPLICATION->GetCurDir();
 
@@ -206,7 +247,7 @@ class CSocServBitrix24Net extends CSocServAuth
 
                 foreach ($arUrlQuery as $key => $value) {
                     foreach ($aRemove as $param) {
-                        if (strpos($value, $param . "=") === 0) {
+                        if (mb_strpos($value, $param . "=") === 0) {
                             unset($arUrlQuery[$key]);
                             break;
                         }
@@ -221,7 +262,7 @@ class CSocServBitrix24Net extends CSocServAuth
             }
         }
 
-        if (strlen($url) <= 0 || preg_match("'^(http://|https://|ftp://|//)'i", $url)) {
+        if ($url == '' || preg_match("'^(http://|https://|ftp://|//)'i", $url)) {
             $url = \CHTTP::URN2URI('/');
         }
 
@@ -234,7 +275,9 @@ class CSocServBitrix24Net extends CSocServAuth
                 if (isset($_SESSION['B24_NETWORK_REDIRECT_TRY'])) {
                     unset($_SESSION['B24_NETWORK_REDIRECT_TRY']);
                     $url = self::getUrl();
-                    $url .= (strpos($url, '?') >= 0 ? '&' : '?') . 'skip_redirect=1&error_message=' . urlencode($errorMessage);
+                    $url .= (mb_strpos($url, '?') >= 0 ? '&' : '?') . 'skip_redirect=1&error_message=' . urlencode(
+                            $errorMessage
+                        );
                 } else {
                     $_SESSION['B24_NETWORK_REDIRECT_TRY'] = true;
                     $url = '/';
@@ -244,16 +287,19 @@ class CSocServBitrix24Net extends CSocServAuth
                     $url = (preg_match("/\?/", $url)) ? $url . '&' : $url . '?';
                     $url .= 'auth_service_id=' . self::ID . '&auth_service_error=' . $authError;
                 } elseif ($bSuccess !== true) {
-                    $url = (isset($urlPath)) ? $urlPath . '?auth_service_id=' . self::ID . '&auth_service_error=' . $authError : $GLOBALS['APPLICATION']->GetCurPageParam(('auth_service_id=' . self::ID . '&auth_service_error=' . $authError), $aRemove);
+                    $url = (isset($urlPath)) ? $urlPath . '?auth_service_id=' . self::ID . '&auth_service_error=' . $authError : $GLOBALS['APPLICATION']->GetCurPageParam(
+                        ('auth_service_id=' . self::ID . '&auth_service_error=' . $authError),
+                        $aRemove
+                    );
                 }
-                if (strlen($errorMessage)) {
+                if ($errorMessage <> '') {
                     $url .= '&error_message=' . urlencode($errorMessage);
                 }
             }
         }
 
-        if (CModule::IncludeModule("socialnetwork") && strpos($url, "current_fieldset=") === false) {
-            $url .= ((strpos($url, "?") === false) ? '?' : '&') . "current_fieldset=SOCSERV";
+        if (CModule::IncludeModule("socialnetwork") && mb_strpos($url, "current_fieldset=") === false) {
+            $url .= ((mb_strpos($url, "?") === false) ? '?' : '&') . "current_fieldset=SOCSERV";
         }
 
         if ($url === $APPLICATION->GetCurPageParam()) {
@@ -277,14 +323,17 @@ class CSocServBitrix24Net extends CSocServAuth
     {
         if (defined("LICENSE_KEY") && LICENSE_KEY !== "DEMO") {
             $query = new \Bitrix\Main\Web\HttpClient();
-            $result = $query->get(static::NETWORK_URL . '/client.php?action=register&redirect_uri=' . urlencode($domain . '/bitrix/tools/oauth/bitrix24net.php') . '&key=' . urlencode(LICENSE_KEY));
+            $result = $query->get(
+                static::NETWORK_URL . '/client.php?action=register&redirect_uri=' . urlencode(
+                    $domain . '/bitrix/tools/oauth/bitrix24net.php'
+                ) . '&key=' . urlencode(LICENSE_KEY)
+            );
 
             $arResult = null;
             if ($result) {
                 try {
                     $arResult = Json::decode($result);
                 } catch (\Bitrix\Main\ArgumentException $e) {
-
                 }
             }
 
@@ -403,10 +452,11 @@ class CBitrix24NetOAuthInterface
 
     public function addScope($scope)
     {
-        if (is_array($scope))
+        if (is_array($scope)) {
             $this->scope = array_merge($this->scope, $scope);
-        else
+        } else {
             $this->scope[] = $scope;
+        }
         return $this;
     }
 
@@ -476,19 +526,25 @@ class CBitrix24NetOAuthInterface
             return false;
         }
 
-        $http = new \Bitrix\Main\Web\HttpClient(array(
-            'socketTimeout' => $this->httpTimeout,
-            'streamTimeout' => $this->httpTimeout,
-        ));
+        $http = new \Bitrix\Main\Web\HttpClient(
+            array(
+                'socketTimeout' => $this->httpTimeout,
+                'streamTimeout' => $this->httpTimeout,
+            )
+        );
 
-        $result = $http->get(self::NET_URL . self::TOKEN_URL . '?' . http_build_query(array(
-                'code' => $this->code,
-                'client_id' => $this->appID,
-                'client_secret' => $this->appSecret,
-                'redirect_uri' => $redirect_uri,
-                'scope' => implode(',', $this->getScope()),
-                'grant_type' => 'authorization_code',
-            )));
+        $result = $http->get(
+            self::NET_URL . self::TOKEN_URL . '?' . http_build_query(
+                array(
+                    'code' => $this->code,
+                    'client_id' => $this->appID,
+                    'client_secret' => $this->appSecret,
+                    'redirect_uri' => $redirect_uri,
+                    'scope' => implode(',', $this->getScope()),
+                    'grant_type' => 'authorization_code',
+                )
+            )
+        );
 
         try {
             $arResult = Json::decode($result);
@@ -513,27 +569,36 @@ class CBitrix24NetOAuthInterface
 
     public function getNewAccessToken($refreshToken = false, $userId = 0, $save = false, $scope = array())
     {
-        if ($this->appID == false || $this->appSecret == false)
+        if ($this->appID == false || $this->appSecret == false) {
             return false;
+        }
 
-        if ($refreshToken == false)
+        if ($refreshToken == false) {
             $refreshToken = $this->refresh_token;
+        }
 
-        if ($scope != null)
+        if ($scope != null) {
             $this->addScope($scope);
+        }
 
-        $http = new \Bitrix\Main\Web\HttpClient(array(
-            'socketTimeout' => $this->httpTimeout,
-            'streamTimeout' => $this->httpTimeout,
-        ));
+        $http = new \Bitrix\Main\Web\HttpClient(
+            array(
+                'socketTimeout' => $this->httpTimeout,
+                'streamTimeout' => $this->httpTimeout,
+            )
+        );
 
-        $result = $http->get(self::NET_URL . self::TOKEN_URL . '?' . http_build_query(array(
-                'client_id' => $this->appID,
-                'client_secret' => $this->appSecret,
-                'refresh_token' => $refreshToken,
-                'scope' => implode(',', $this->getScope()),
-                'grant_type' => 'refresh_token',
-            )));
+        $result = $http->get(
+            self::NET_URL . self::TOKEN_URL . '?' . http_build_query(
+                array(
+                    'client_id' => $this->appID,
+                    'client_secret' => $this->appSecret,
+                    'refresh_token' => $refreshToken,
+                    'scope' => implode(',', $this->getScope()),
+                    'grant_type' => 'refresh_token',
+                )
+            )
+        );
 
         try {
             $arResult = Json::decode($result);
@@ -547,18 +612,21 @@ class CBitrix24NetOAuthInterface
             $this->refresh_token = $arResult["refresh_token"];
 
             if ($save && intval($userId) > 0) {
-                $dbSocservUser = UserTable::getList([
-                    'filter' => [
-                        "=USER_ID" => intval($userId),
-                        "=EXTERNAL_AUTH_ID" => CSocServBitrix24Net::ID
-                    ],
-                    'select' => ['ID']
-                ]);
+                $dbSocservUser = UserTable::getList(
+                    [
+                        'filter' => [
+                            "=USER_ID" => intval($userId),
+                            "=EXTERNAL_AUTH_ID" => CSocServBitrix24Net::ID
+                        ],
+                        'select' => ['ID']
+                    ]
+                );
 
                 $arOauth = $dbSocservUser->fetch();
                 if ($arOauth) {
                     UserTable::update(
-                        $arOauth["ID"], array(
+                        $arOauth["ID"],
+                        array(
                             "OATOKEN" => $this->access_token,
                             "OATOKEN_EXPIRES" => $this->accessTokenExpires,
                             "REFRESH_TOKEN" => $this->refresh_token,
@@ -614,13 +682,15 @@ class CBitrix24NetOAuthInterface
 
         $accessToken = '';
         if (is_object($USER) && $USER->IsAuthorized()) {
-            $dbSocservUser = UserTable::getList([
-                'filter' => [
-                    '=USER_ID' => $USER->GetID(),
-                    '=EXTERNAL_AUTH_ID' => CSocServBitrix24Net::ID
-                ],
-                'select' => ["USER_ID", "OATOKEN", "OATOKEN_EXPIRES", "REFRESH_TOKEN"]
-            ]);
+            $dbSocservUser = UserTable::getList(
+                [
+                    'filter' => [
+                        '=USER_ID' => $USER->GetID(),
+                        '=EXTERNAL_AUTH_ID' => CSocServBitrix24Net::ID
+                    ],
+                    'select' => ["USER_ID", "OATOKEN", "OATOKEN_EXPIRES", "REFRESH_TOKEN"]
+                ]
+            );
 
             $accessToken = $dbSocservUser->fetch();
         }
@@ -675,7 +745,10 @@ class CBitrix24NetTransport
     {
         $result = Json::decode($result);
 
-        if (is_array($result) && is_array($result["result"]) && array_key_exists(static::REPONSE_KEY_BROADCAST, $result["result"])) {
+        if (is_array($result) && is_array($result["result"]) && array_key_exists(
+                static::REPONSE_KEY_BROADCAST,
+                $result["result"]
+            )) {
             try {
                 Network::processBroadcastData($result["result"][static::REPONSE_KEY_BROADCAST]);
             } catch (Exception $e) {
@@ -711,10 +784,12 @@ class CBitrix24NetTransport
 
         $request = $this->prepareRequest($additionalParams);
 
-        $http = new \Bitrix\Main\Web\HttpClient(array(
-            'socketTimeout' => $this->httpTimeout,
-            'streamTimeout' => $this->httpTimeout,
-        ));
+        $http = new \Bitrix\Main\Web\HttpClient(
+            array(
+                'socketTimeout' => $this->httpTimeout,
+                'streamTimeout' => $this->httpTimeout,
+            )
+        );
         $result = $http->post(
             CBitrix24NetOAuthInterface::NET_URL . self::SERVICE_URL . $methodName,
             $request
@@ -790,7 +865,10 @@ class CBitrix24NetTransport
      */
     public function restoreProfilePassword($userId, $restoreMethod)
     {
-        return $this->call(self::METHOD_PROFILE_RESTORE_PASSWORD, array("USER_ID" => $userId, 'RESTORE_METHOD' => $restoreMethod, 'LANGUAGE_ID' => LANGUAGE_ID));
+        return $this->call(
+            self::METHOD_PROFILE_RESTORE_PASSWORD,
+            array("USER_ID" => $userId, 'RESTORE_METHOD' => $restoreMethod, 'LANGUAGE_ID' => LANGUAGE_ID)
+        );
     }
 }
 

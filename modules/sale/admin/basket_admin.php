@@ -15,8 +15,9 @@ $publicMode = $adminPage->publicMode;
 $selfFolderUrl = $adminPage->getSelfFolderUrl();
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions == "D")
+if ($saleModulePermissions == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 Main\Loader::includeModule('sale');
 
@@ -39,24 +40,23 @@ $usedProtocol = ($request->isHttps() ? 'https://' : 'http://');
 
 $sTableID = "tbl_sale_basket";
 
-$oSort = new CAdminSorting($sTableID, "DATE_UPDATE_MAX", "DESC");
+$oSort = new CAdminUiSorting($sTableID, "DATE_UPDATE_MAX", "DESC");
 $lAdmin = new CAdminUiList($sTableID, $oSort);
 
 $siteName = Array();
 $serverName = Array();
 $listSite = array();
-$b = "sort";
-$o = "asc";
-$dbSite = CSite::GetList($b, $o, array());
+$dbSite = CSite::GetList();
 while ($arSite = $dbSite->Fetch()) {
     $serverName[$arSite["LID"]] = $arSite["SERVER_NAME"];
     $siteName[$arSite["LID"]] = $arSite["NAME"];
     $listSite[$arSite["LID"]] = $arSite["NAME"] . " [" . $arSite["LID"] . "]";
-    if (strlen($serverName[$arSite["LID"]]) <= 0) {
-        if (defined("SITE_SERVER_NAME") && strlen(SITE_SERVER_NAME) > 0)
+    if ($serverName[$arSite["LID"]] == '') {
+        if (defined("SITE_SERVER_NAME") && SITE_SERVER_NAME <> '') {
             $serverName[$arSite["LID"]] = SITE_SERVER_NAME;
-        else
+        } else {
             $serverName[$arSite["LID"]] = COption::GetOptionString("main", "server_name", "");
+        }
     }
 }
 $arAccessibleSites = array();
@@ -68,8 +68,9 @@ $dbAccessibleSites = CSaleGroupAccessToSite::GetList(
     array("SITE_ID")
 );
 while ($arAccessibleSite = $dbAccessibleSites->Fetch()) {
-    if (!in_array($arAccessibleSite["SITE_ID"], $arAccessibleSites))
+    if (!in_array($arAccessibleSite["SITE_ID"], $arAccessibleSites)) {
         $arAccessibleSites[] = $arAccessibleSite["SITE_ID"];
+    }
 }
 
 $listGroup = array();
@@ -214,15 +215,16 @@ if (isset($arFilter["BASKET_TYPE"])) {
 }
 
 if (!$USER->IsAdmin() && !empty($arAccessibleSites) && count($arAccessibleSites) != count($siteName)) {
-    if (empty($arFilter["LID"]))
+    if (empty($arFilter["LID"])) {
         $arFilter["LID"] = $arAccessibleSites;
+    }
 }
 
 if (isset($_REQUEST['action'])) {
     if ($_REQUEST['action'] == "order_basket") {
-        $fuserID = IntVal($_REQUEST["FUSER_ID"]);
+        $fuserID = intval($_REQUEST["FUSER_ID"]);
         if ($fuserID > 0) {
-            $userID = IntVal($_REQUEST["USER_ID"]);
+            $userID = intval($_REQUEST["USER_ID"]);
             $siteID = $_REQUEST["SITE_ID"];
             if ($publicMode) {
                 $url = "/shop/orders/details/0/?lang=" . LANG . "&SITE_ID=" . $siteID . "&USER_ID=" . $userID . "&FUSER_ID=" . $fuserID . "&ABANDONED=Y";
@@ -235,16 +237,18 @@ if (isset($_REQUEST['action'])) {
             /** @var Sale\Basket $basketClass */
             $basketClass = $registry->getBasketClassName();
 
-            $basketData = $basketClass::getList([
-                'filter' => [
-                    "=FUSER_ID" => $fuserID,
-                    "=LID" => $siteID,
-                    "=ORDER_ID" => false,
-                    "CAN_BUY" => "Y",
-                    "DELAY" => "N",
-                ],
-                'limit' => 1
-            ]);
+            $basketData = $basketClass::getList(
+                [
+                    'filter' => [
+                        "=FUSER_ID" => $fuserID,
+                        "=LID" => $siteID,
+                        "=ORDER_ID" => false,
+                        "CAN_BUY" => "Y",
+                        "DELAY" => "N",
+                    ],
+                    'limit' => 1
+                ]
+            );
             if ($basketData->fetch()) {
                 LocalRedirect($url);
                 die();
@@ -264,20 +268,67 @@ $dbResultList->NavStart();
 
 $lAdmin->SetNavigationParams($dbResultList, array("BASE_LINK" => $selfFolderUrl . "sale_basket.php"));
 
-$lAdmin->AddHeaders(array(
-    array("id" => "DATE_UPDATE_MAX", "content" => GetMessage("SB_DATE_UPDATE"), "sort" => "DATE_UPDATE_MAX", "default" => true),
-    array("id" => "USER_ID", "content" => GetMessage("SB_USER"), "sort" => "user_id", "default" => true),
-    array("id" => "PRICE_ALL", "content" => GetMessage("SB_PRICE_ALL"), "sort" => "PRICE_ALL", "default" => true, "align" => "right"),
-    array("id" => "QUANTITY_ALL", "content" => GetMessage('SB_QUANTITY_ALL'), "sort" => "QUANTITY_ALL", "default" => false, "align" => "right"),
-    array("id" => "PR_COUNT", "content" => GetMessage("SB_CNT"), "sort" => "PR_COUNT", "default" => true, "align" => "right"),
-    array("id" => "LID", "content" => GetMessage("SB_LID"), "sort" => "LID", "default" => (count($siteName) == 1) ? false : true),
-    array("id" => "BASKET", "content" => GetMessage("SB_BASKET"), "sort" => "", "default" => true),
-    array("id" => "BASKET_NAME", "content" => GetMessage("SB_BASKET_NAME"), "sort" => "", "default" => false),
-    array("id" => "BASKET_QUANTITY", "content" => GetMessage("SB_BASKET_QUANTITY"), "sort" => "", "default" => false, "align" => "right"),
-    array("id" => "BASKET_PRICE", "content" => GetMessage("SB_BASKET_PRICE"), "sort" => "", "default" => false, "align" => "right"),
-    array("id" => "DATE_INSERT_MIN", "content" => GetMessage("SB_DATE_INSERT"), "sort" => "DATE_INSERT_MIN", "default" => true),
-    array("id" => "FUSER_ID", "content" => GetMessage("SB_FUSER_ID"), "sort" => "FUSER_ID", "default" => false),
-));
+$lAdmin->AddHeaders(
+    array(
+        array(
+            "id" => "DATE_UPDATE_MAX",
+            "content" => GetMessage("SB_DATE_UPDATE"),
+            "sort" => "DATE_UPDATE_MAX",
+            "default" => true
+        ),
+        array("id" => "USER_ID", "content" => GetMessage("SB_USER"), "sort" => "user_id", "default" => true),
+        array(
+            "id" => "PRICE_ALL",
+            "content" => GetMessage("SB_PRICE_ALL"),
+            "sort" => "PRICE_ALL",
+            "default" => true,
+            "align" => "right"
+        ),
+        array(
+            "id" => "QUANTITY_ALL",
+            "content" => GetMessage('SB_QUANTITY_ALL'),
+            "sort" => "QUANTITY_ALL",
+            "default" => false,
+            "align" => "right"
+        ),
+        array(
+            "id" => "PR_COUNT",
+            "content" => GetMessage("SB_CNT"),
+            "sort" => "PR_COUNT",
+            "default" => true,
+            "align" => "right"
+        ),
+        array(
+            "id" => "LID",
+            "content" => GetMessage("SB_LID"),
+            "sort" => "LID",
+            "default" => (count($siteName) == 1) ? false : true
+        ),
+        array("id" => "BASKET", "content" => GetMessage("SB_BASKET"), "sort" => "", "default" => true),
+        array("id" => "BASKET_NAME", "content" => GetMessage("SB_BASKET_NAME"), "sort" => "", "default" => false),
+        array(
+            "id" => "BASKET_QUANTITY",
+            "content" => GetMessage("SB_BASKET_QUANTITY"),
+            "sort" => "",
+            "default" => false,
+            "align" => "right"
+        ),
+        array(
+            "id" => "BASKET_PRICE",
+            "content" => GetMessage("SB_BASKET_PRICE"),
+            "sort" => "",
+            "default" => false,
+            "align" => "right"
+        ),
+        array(
+            "id" => "DATE_INSERT_MIN",
+            "content" => GetMessage("SB_DATE_INSERT"),
+            "sort" => "DATE_INSERT_MIN",
+            "default" => true
+        ),
+        array("id" => "FUSER_ID", "content" => GetMessage("SB_FUSER_ID"), "sort" => "FUSER_ID", "default" => false),
+    )
+);
 
 $arVisibleColumns = $lAdmin->GetVisibleHeaderColumns();
 
@@ -293,13 +344,24 @@ while ($arBasket = $dbResultList->Fetch()) {
             $userEditUrl = $selfFolderUrl . "sale_buyers_profile.php?USER_ID=" . $arBasket["USER_ID"] . "&lang=" . LANGUAGE_ID;
             $userEditUrl = $adminSidePanelHelper->editUrlToPublicPage($userEditUrl);
         }
-        $fieldValue = "[<a href=" . $userEditUrl . " title=\"" . GetMessage("SB_USER_INFO") . "\">" . $arBasket["USER_ID"] . "</a>] ";
+        $fieldValue = "[<a href=" . $userEditUrl . " title=\"" . GetMessage(
+                "SB_USER_INFO"
+            ) . "\">" . $arBasket["USER_ID"] . "</a>] ";
         $fieldValue .= " (" . htmlspecialcharsEx($arBasket["USER_LOGIN"]) . ") ";
-        $fieldValue .= "<a href=\"" . $userEditUrl . "\" title=\"" . GetMessage("SB_FUSER_INFO") . "\">" . htmlspecialcharsEx($arBasket["USER_NAME"] . ((strlen($arBasket["USER_NAME"]) <= 0 || strlen($arBasket["USER_LAST_NAME"]) <= 0) ? "" : " ") . $arBasket["USER_LAST_NAME"]) . "</a><br />";
-        $fieldValue .= "<a href=\"mailto:" . htmlspecialcharsEx($arBasket["USER_EMAIL"]) . "\" title=\"" . GetMessage("SB_MAILTO") . "\">" . htmlspecialcharsEx($arBasket["USER_EMAIL"]) . "</a>";
+        $fieldValue .= "<a href=\"" . $userEditUrl . "\" title=\"" . GetMessage(
+                "SB_FUSER_INFO"
+            ) . "\">" . htmlspecialcharsEx(
+                $arBasket["USER_NAME"] . (($arBasket["USER_NAME"] == '' || $arBasket["USER_LAST_NAME"] == '') ? "" : " ") . $arBasket["USER_LAST_NAME"]
+            ) . "</a><br />";
+        $fieldValue .= "<a href=\"mailto:" . htmlspecialcharsEx($arBasket["USER_EMAIL"]) . "\" title=\"" . GetMessage(
+                "SB_MAILTO"
+            ) . "\">" . htmlspecialcharsEx($arBasket["USER_EMAIL"]) . "</a>";
     }
     $row->AddField("USER_ID", $fieldValue);
-    $row->AddField("LID", "[" . htmlspecialcharsbx($arBasket["LID"]) . "] " . htmlspecialcharsbx($siteName[$arBasket["LID"]]));
+    $row->AddField(
+        "LID",
+        "[" . htmlspecialcharsbx($arBasket["LID"]) . "] " . htmlspecialcharsbx($siteName[$arBasket["LID"]])
+    );
 
     $row->AddField("PRICE_ALL", SaleFormatCurrency($arBasket["PRICE_ALL"], $arBasket["CURRENCY"]));
 
@@ -307,12 +369,15 @@ while ($arBasket = $dbResultList->Fetch()) {
     $fieldValue = "";
     $productId = "";
     $arFilterBasket = Array("ORDER_ID" => false, "FUSER_ID" => $arBasket["FUSER_ID"], "LID" => $arBasket["LID"]);
-    if (isset($arFilter["CAN_BUY"]))
+    if (isset($arFilter["CAN_BUY"])) {
         $arFilterBasket["CAN_BUY"] = $arFilter["CAN_BUY"];
-    if (isset($arFilter["DELAY"]))
+    }
+    if (isset($arFilter["DELAY"])) {
         $arFilterBasket["DELAY"] = $arFilter["DELAY"];
-    if (isset($arFilter["SUBCRIBE"]))
+    }
+    if (isset($arFilter["SUBCRIBE"])) {
         $arFilterBasket["SUBCRIBE"] = $arFilter["SUBCRIBE"];
+    }
 
     $bNeedLine = false;
     $basket = "";
@@ -327,7 +392,18 @@ while ($arBasket = $dbResultList->Fetch()) {
         $arFilterBasket,
         false,
         false,
-        array("ID", "PRODUCT_ID", "NAME", "QUANTITY", "PRICE", "CURRENCY", "DETAIL_PAGE_URL", "LID", "SET_PARENT_ID", "TYPE")
+        array(
+            "ID",
+            "PRODUCT_ID",
+            "NAME",
+            "QUANTITY",
+            "PRICE",
+            "CURRENCY",
+            "DETAIL_PAGE_URL",
+            "LID",
+            "SET_PARENT_ID",
+            "TYPE"
+        )
     );
     while ($arB = $dbB->Fetch()) {
         $arBasketItems[] = $arB;
@@ -335,8 +411,9 @@ while ($arBasket = $dbResultList->Fetch()) {
 
     $arBasketItems = getMeasures($arBasketItems);
     foreach ($arBasketItems as $arB) {
-        if (CSaleBasketHelper::isSetItem($arB))
+        if (CSaleBasketHelper::isSetItem($arB)) {
             continue;
+        }
 
         $productId .= "&product[]=" . $arB["PRODUCT_ID"];
         if ($bNeedLine) {
@@ -347,15 +424,23 @@ while ($arBasket = $dbResultList->Fetch()) {
         }
         $bNeedLine = true;
 
-        if (strlen($arB["DETAIL_PAGE_URL"]) > 0) {
-            if (strpos($arB["DETAIL_PAGE_URL"], "http") === false)
+        if ($arB["DETAIL_PAGE_URL"] <> '') {
+            if (mb_strpos($arB["DETAIL_PAGE_URL"], "http") === false) {
                 $url = $usedProtocol . $serverName[$arB["LID"]] . $arB["DETAIL_PAGE_URL"];
-            else
+            } else {
                 $url = $arB["DETAIL_PAGE_URL"];
+            }
 
             if ($publicMode) {
-                $elementQueryObject = CIBlockElement::getList(array(), array(
-                    "ID" => $arB["PRODUCT_ID"]), false, false, array("IBLOCK_ID", "IBLOCK_TYPE_ID"));
+                $elementQueryObject = CIBlockElement::getList(
+                    array(),
+                    array(
+                        "ID" => $arB["PRODUCT_ID"]
+                    ),
+                    false,
+                    false,
+                    array("IBLOCK_ID", "IBLOCK_TYPE_ID")
+                );
                 if ($elementData = $elementQueryObject->fetch()) {
                     $url = $selfFolderUrl . "cat_product_edit.php?IBLOCK_ID=" . $elementData["IBLOCK_ID"] .
                         "&type=" . $elementData["IBLOCK_TYPE_ID"] . "&ID=" . $arB["PRODUCT_ID"] . "&lang=" . LANGUAGE_ID . "&WF=Y";
@@ -368,22 +453,30 @@ while ($arBasket = $dbResultList->Fetch()) {
         }
         $basket .= htmlspecialcharsbx($arB["NAME"]);
         $basketName .= htmlspecialcharsbx($arB["NAME"]);
-        if (strlen($arB["DETAIL_PAGE_URL"]) > 0) {
+        if ($arB["DETAIL_PAGE_URL"] <> '') {
             $basketName .= "</a></nobr>";
             $basket .= "</a></nobr>";
         }
 
         $measure = (isset($arB["MEASURE_TEXT"])) ? htmlspecialcharsbx($arB["MEASURE_TEXT"]) : GetMessage("SB_SHT");
 
-        $basket .= " (" . $arB["QUANTITY"] . " " . $measure . ") - " . "<nobr>" . SaleFormatCurrency($arB["PRICE"], $arB["CURRENCY"]) . "</nobr><br>";
-        $dbProp = CSaleBasket::GetPropsList(Array("SORT" => "ASC", "ID" => "ASC"), Array("BASKET_ID" => $arB["ID"], "!CODE" => array("CATALOG.XML_ID", "PRODUCT.XML_ID")));
+        $basket .= " (" . $arB["QUANTITY"] . " " . $measure . ") - " . "<nobr>" . SaleFormatCurrency(
+                $arB["PRICE"],
+                $arB["CURRENCY"]
+            ) . "</nobr><br>";
+        $dbProp = CSaleBasket::GetPropsList(
+            Array("SORT" => "ASC", "ID" => "ASC"),
+            Array(
+                "BASKET_ID" => $arB["ID"],
+                "!CODE" => array("CATALOG.XML_ID", "PRODUCT.XML_ID")
+            )
+        );
         while ($arProp = $dbProp->GetNext()) {
             $basket .= "<div><small>" . $arProp["NAME"] . ": " . $arProp["VALUE"] . "</small></div>";
         }
 
         $basketPrice .= "<nobr>" . SaleFormatCurrency($arB["PRICE"], $arB["CURRENCY"]) . "</nobr>";
         $basketQuantity .= $arB["QUANTITY"];
-
     }
     $row->AddField("BASKET", $basket);
     $row->AddField("BASKET_NAME", $basketName);
@@ -394,13 +487,17 @@ while ($arBasket = $dbResultList->Fetch()) {
     $orderAction = array(
         "ICON" => "",
         "TEXT" => GetMessage("SB_CREATE_ORDER"),
-        "ACTION" => $lAdmin->ActionRedirect("sale_basket.php?FUSER_ID=" . $arBasket["FUSER_ID"] . "&SITE_ID=" .
-            $arBasket["LID"] . "&USER_ID=" . $arBasket["USER_ID"] . "&action=order_basket&lang=" . LANGUAGE_ID),
+        "ACTION" => $lAdmin->ActionRedirect(
+            "sale_basket.php?FUSER_ID=" . $arBasket["FUSER_ID"] . "&SITE_ID=" .
+            $arBasket["LID"] . "&USER_ID=" . $arBasket["USER_ID"] . "&action=order_basket&lang=" . LANGUAGE_ID
+        ),
         "DEFAULT" => true
     );
     if ($publicMode) {
         $orderAction["ACTION"] = "top.BX.adminSidePanel.onOpenPage('/shop/orders/details/0/?FUSER_ID=" .
-            CUtil::JSEscape($arBasket["FUSER_ID"]) . "&lang=" . LANGUAGE_ID . "&SITE_ID=" . CUtil::JSEscape($arBasket["LID"]) .
+            CUtil::JSEscape($arBasket["FUSER_ID"]) . "&lang=" . LANGUAGE_ID . "&SITE_ID=" . CUtil::JSEscape(
+                $arBasket["LID"]
+            ) .
             "&USER_ID=" . $arBasket["USER_ID"] . "');";
     }
     $arActions[] = $orderAction;

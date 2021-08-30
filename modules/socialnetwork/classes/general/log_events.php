@@ -1,4 +1,5 @@
-<?
+<?php
+
 IncludeModuleLangFile(__FILE__);
 
 class CAllSocNetLogEvents
@@ -6,24 +7,27 @@ class CAllSocNetLogEvents
     /***************************************/
     /********  DATA MODIFICATION  **********/
     /***************************************/
-    function CheckFields($ACTION, &$arFields, $ID = 0)
+    public static function CheckFields($ACTION, &$arFields, $ID = 0)
     {
         global $DB, $arSocNetAllowedEntityTypes;
 
         $arSocNetFeaturesSettings = CSocNetAllowed::GetAllowedFeatures();
         $arSocNetLogEvents = CSocNetAllowed::GetAllowedLogEvents();
 
-        if ($ACTION != "ADD" && IntVal($ID) <= 0) {
+        if ($ACTION != "ADD" && intval($ID) <= 0) {
             $GLOBALS["APPLICATION"]->ThrowException("System error 870164", "ERROR");
             return false;
         }
 
-        if ((is_set($arFields, "ENTITY_TYPE") || $ACTION == "ADD") && StrLen($arFields["ENTITY_TYPE"]) <= 0) {
+        if ((is_set($arFields, "ENTITY_TYPE") || $ACTION == "ADD") && $arFields["ENTITY_TYPE"] == '') {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_LE_EMPTY_ENTITY_TYPE"), "EMPTY_ENTITY_TYPE");
             return false;
         } elseif (is_set($arFields, "ENTITY_TYPE")) {
             if (!in_array($arFields["ENTITY_TYPE"], CSocNetAllowed::GetAllowedEntityTypes())) {
-                $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_LE_ERROR_NO_ENTITY_TYPE"), "ERROR_NO_ENTITY_TYPE");
+                $GLOBALS["APPLICATION"]->ThrowException(
+                    GetMessage("SONET_LE_ERROR_NO_ENTITY_TYPE"),
+                    "ERROR_NO_ENTITY_TYPE"
+                );
                 return false;
             }
         }
@@ -34,18 +38,25 @@ class CAllSocNetLogEvents
                 $type = $arFields["ENTITY_TYPE"];
             } elseif ($ACTION != "ADD") {
                 $arRe = CAllSocNetLog::GetByID($ID);
-                if ($arRe)
+                if ($arRe) {
                     $type = $arRe["ENTITY_TYPE"];
+                }
             }
-            if (StrLen($type) <= 0) {
-                $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_LE_ERROR_CALC_ENTITY_TYPE"), "ERROR_CALC_ENTITY_TYPE");
+            if ($type == '') {
+                $GLOBALS["APPLICATION"]->ThrowException(
+                    GetMessage("SONET_LE_ERROR_CALC_ENTITY_TYPE"),
+                    "ERROR_CALC_ENTITY_TYPE"
+                );
                 return false;
             }
 
             if ($type == SONET_SUBSCRIBE_ENTITY_GROUP && intval($arFields["ENTITY_ID"]) > 0) {
                 $arResult = CSocNetGroup::GetByID($arFields["ENTITY_ID"]);
                 if ($arResult == false) {
-                    $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_LE_ERROR_NO_ENTITY_ID"), "ERROR_NO_ENTITY_ID");
+                    $GLOBALS["APPLICATION"]->ThrowException(
+                        GetMessage("SONET_LE_ERROR_NO_ENTITY_ID"),
+                        "ERROR_NO_ENTITY_ID"
+                    );
                     return false;
                 }
             } elseif (
@@ -54,17 +65,20 @@ class CAllSocNetLogEvents
             ) {
                 $dbResult = CUser::GetByID($arFields["ENTITY_ID"]);
                 if (!$dbResult->Fetch()) {
-                    $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_LE_ERROR_NO_ENTITY_ID"), "ERROR_NO_ENTITY_ID");
+                    $GLOBALS["APPLICATION"]->ThrowException(
+                        GetMessage("SONET_LE_ERROR_NO_ENTITY_ID"),
+                        "ERROR_NO_ENTITY_ID"
+                    );
                     return false;
                 }
             }
         }
 
-        if ((is_set($arFields, "EVENT_ID") || $ACTION == "ADD") && StrLen($arFields["EVENT_ID"]) <= 0) {
+        if ((is_set($arFields, "EVENT_ID") || $ACTION == "ADD") && $arFields["EVENT_ID"] == '') {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_LE_EMPTY_EVENT_ID"), "EMPTY_EVENT_ID");
             return false;
         } elseif (is_set($arFields, "EVENT_ID")) {
-            $arFields["EVENT_ID"] = strtolower($arFields["EVENT_ID"]);
+            $arFields["EVENT_ID"] = mb_strtolower($arFields["EVENT_ID"]);
             if (
                 !array_key_exists($arFields["EVENT_ID"], $arSocNetFeaturesSettings)
                 && $arFields["EVENT_ID"] != "all"
@@ -81,11 +95,15 @@ class CAllSocNetLogEvents
                     }
                 }
 
-                if (!$bFound && CSocNetLogTools::FindLogCommentEventByID($arFields["EVENT_ID"]))
+                if (!$bFound && CSocNetLogTools::FindLogCommentEventByID($arFields["EVENT_ID"])) {
                     $bFound = true;
+                }
 
                 if (!$bFound) {
-                    $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_LE_ERROR_NO_FEATURE_ID"), "ERROR_NO_FEATURE");
+                    $GLOBALS["APPLICATION"]->ThrowException(
+                        GetMessage("SONET_LE_ERROR_NO_FEATURE_ID"),
+                        "ERROR_NO_FEATURE"
+                    );
                     return false;
                 }
             }
@@ -94,34 +112,43 @@ class CAllSocNetLogEvents
         if (is_set($arFields, "SITE_ID") && $arFields["SITE_ID"] != false) {
             $dbResult = CSite::GetByID($arFields["SITE_ID"]);
             if (!$dbResult->Fetch()) {
-                $GLOBALS["APPLICATION"]->ThrowException(str_replace("#ID#", $arFields["SITE_ID"], GetMessage("SONET_LE_ERROR_NO_SITE")), "ERROR_NO_SITE");
+                $GLOBALS["APPLICATION"]->ThrowException(
+                    str_replace("#ID#", $arFields["SITE_ID"], GetMessage("SONET_LE_ERROR_NO_SITE")),
+                    "ERROR_NO_SITE"
+                );
                 return false;
             }
         }
 
-        if ((is_set($arFields, "MAIL_EVENT") || $ACTION == "ADD") && $arFields["MAIL_EVENT"] != "Y" && $arFields["MAIL_EVENT"] != "N")
+        if ((is_set(
+                    $arFields,
+                    "MAIL_EVENT"
+                ) || $ACTION == "ADD") && $arFields["MAIL_EVENT"] != "Y" && $arFields["MAIL_EVENT"] != "N") {
             $arFields["MAIL_EVENT"] = "N";
+        }
 
-        if (is_set($arFields, "MAIL_EVENT") && $arFields["MAIL_EVENT"] == "Y")
+        if (is_set($arFields, "MAIL_EVENT") && $arFields["MAIL_EVENT"] == "Y") {
             $arFields["TRANSPORT"] = "M";
+        }
 
-        return True;
+        return true;
     }
 
     public static function Delete($ID)
     {
         global $DB;
 
-        $ID = IntVal($ID);
+        $ID = intval($ID);
         if ($ID <= 0) {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_LE_WRONG_PARAMETER_ID"), "ERROR_NO_ID");
             return false;
         }
 
-        $bSuccess = True;
+        $bSuccess = true;
 
-        if ($bSuccess)
+        if ($bSuccess) {
             $bSuccess = $DB->Query("DELETE FROM b_sonet_log_events WHERE ID = " . $ID . "", true);
+        }
 
         return $bSuccess;
     }
@@ -130,23 +157,28 @@ class CAllSocNetLogEvents
     {
         global $DB;
 
-        $userID = IntVal($userID);
-        if ($userID <= 0)
+        $userID = intval($userID);
+        if ($userID <= 0) {
             return false;
+        }
 
         $DB->Query("DELETE FROM b_sonet_log_events WHERE USER_ID = " . $userID . "", true);
-        $DB->Query("DELETE FROM b_sonet_log_events WHERE ENTITY_TYPE = '" . SONET_SUBSCRIBE_ENTITY_USER . "' AND ENTITY_ID = " . $userID . "", true);
+        $DB->Query(
+            "DELETE FROM b_sonet_log_events WHERE ENTITY_TYPE = '" . SONET_SUBSCRIBE_ENTITY_USER . "' AND ENTITY_ID = " . $userID . "",
+            true
+        );
 
         return true;
     }
 
-    function DeleteByUserAndEntity($userID, $entityType, $entityID)
+    public static function DeleteByUserAndEntity($userID, $entityType, $entityID)
     {
         global $DB;
 
-        $userID = IntVal($userID);
-        if ($userID <= 0)
+        $userID = intval($userID);
+        if ($userID <= 0) {
             return false;
+        }
 
         $entityType = Trim($entityType);
 
@@ -154,9 +186,10 @@ class CAllSocNetLogEvents
             return false;
         }
 
-        $entityID = IntVal($entityID);
-        if ($entityID <= 0)
+        $entityID = intval($entityID);
+        if ($entityID <= 0) {
             return false;
+        }
 
         $bSuccess = $DB->Query(
             "DELETE FROM b_sonet_log_events " .
@@ -172,11 +205,11 @@ class CAllSocNetLogEvents
     /***************************************/
     /**********  DATA SELECTION  ***********/
     /***************************************/
-    function GetByID($ID)
+    public static function GetByID($ID)
     {
         global $DB;
 
-        $ID = IntVal($ID);
+        $ID = intval($ID);
         if ($ID <= 0) {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_LE_WRONG_PARAMETER_ID"), "ERROR_NO_ID");
             return false;
@@ -187,7 +220,7 @@ class CAllSocNetLogEvents
             return $arResult;
         }
 
-        return False;
+        return false;
     }
 
     /***************************************/
@@ -199,13 +232,16 @@ class CAllSocNetLogEvents
             array(),
             array("USER_ID" => $userID, "ENTITY_TYPE" => $entityType, "ENTITY_ID" => $entityID)
         );
-        if ($dbRes->Fetch())
+        if ($dbRes->Fetch()) {
             return;
+        }
 
         $SiteID = false;
-        if ($entityType == SONET_SUBSCRIBE_ENTITY_GROUP)
-            if ($arGroupTmp = CSocNetGroup::GetByID($entityID))
+        if ($entityType == SONET_SUBSCRIBE_ENTITY_GROUP) {
+            if ($arGroupTmp = CSocNetGroup::GetByID($entityID)) {
                 $SiteID = $arGroupTmp["SITE_ID"];
+            }
+        }
 
         $arLogEvent = array(
             "USER_ID" => $userID,
@@ -246,35 +282,46 @@ class CAllSocNetLogEvents
     {
         global $DB;
 
-        if (intval($user_id) <= 0)
+        if (intval($user_id) <= 0) {
             return false;
+        }
 
-        if ((!defined("DisableSonetLogVisibleSubscr") || DisableSonetLogVisibleSubscr !== true) && $visible && strlen($visible) > 0) {
+        if ((!defined(
+                    "DisableSonetLogVisibleSubscr"
+                ) || DisableSonetLogVisibleSubscr !== true) && $visible && $visible <> '') {
             $key_res = CSocNetGroup::GetFilterOperation($visible);
             $strField = $key_res["FIELD"];
             $strNegative = $key_res["NEGATIVE"];
             $strOperation = $key_res["OPERATION"];
-            $visibleFilter = "AND (" . ($strNegative == "Y" ? " SLE.VISIBLE IS NULL OR NOT " : "") . "(SLE.VISIBLE " . $strOperation . " '" . $DB->ForSql($strField) . "'))";
+            $visibleFilter = "AND (" . ($strNegative == "Y" ? " SLE.VISIBLE IS NULL OR NOT " : "") . "(SLE.VISIBLE " . $strOperation . " '" . $DB->ForSql(
+                    $strField
+                ) . "'))";
 
             $transportFilter = "";
         } else {
             $visibleFilter = "";
 
-            if ($transport && strlen($transport) > 0) {
+            if ($transport && $transport <> '') {
                 $key_res = CSocNetGroup::GetFilterOperation($transport);
                 $strField = $key_res["FIELD"];
                 $strNegative = $key_res["NEGATIVE"];
                 $strOperation = $key_res["OPERATION"];
-                $transportFilter = "AND (" . ($strNegative == "Y" ? " SLE.TRANSPORT IS NULL OR NOT " : "") . "(SLE.TRANSPORT " . $strOperation . " '" . $DB->ForSql($strField) . "'))";
-            } else
+                $transportFilter = "AND (" . ($strNegative == "Y" ? " SLE.TRANSPORT IS NULL OR NOT " : "") . "(SLE.TRANSPORT " . $strOperation . " '" . $DB->ForSql(
+                        $strField
+                    ) . "'))";
+            } else {
                 $transportFilter = "";
+            }
         }
 
         $strMyEntities = array();
         foreach ($arMyEntities as $entity_type_tmp => $arMyEntity) {
             if (is_array($arMyEntity) && count($arMyEntity) > 0) {
                 $strMyEntities[$entity_type_tmp] = $table_alias . ".ENTITY_ID IN (" . implode(",", $arMyEntity) . ")";
-                $strNotMyEntities[$entity_type_tmp] = "(" . $table_alias . ".ENTITY_ID NOT IN (" . implode(",", $arMyEntity) . ") AND " . $table_alias . ".ENTITY_TYPE = '" . $entity_type_tmp . "')";
+                $strNotMyEntities[$entity_type_tmp] = "(" . $table_alias . ".ENTITY_ID NOT IN (" . implode(
+                        ",",
+                        $arMyEntity
+                    ) . ") AND " . $table_alias . ".ENTITY_TYPE = '" . $entity_type_tmp . "')";
             }
         }
 
@@ -291,8 +338,14 @@ class CAllSocNetLogEvents
         }
 
         if (is_array($arCBFilterEntityType) && count($arCBFilterEntityType) > 0) {
-            $strCBFilterEntityType = $table_alias . ".ENTITY_TYPE IN (" . implode(",", $arCBFilterEntityType) . ") AND ";
-            $strNotCBFilterEntityType = $table_alias . ".ENTITY_TYPE NOT IN (" . implode(",", $arCBFilterEntityType) . ") OR ";
+            $strCBFilterEntityType = $table_alias . ".ENTITY_TYPE IN (" . implode(
+                    ",",
+                    $arCBFilterEntityType
+                ) . ") AND ";
+            $strNotCBFilterEntityType = $table_alias . ".ENTITY_TYPE NOT IN (" . implode(
+                    ",",
+                    $arCBFilterEntityType
+                ) . ") OR ";
         } else {
             $strCBFilterEntityType = "";
             $strNotCBFilterEntityType = "";
@@ -462,7 +515,7 @@ class CAllSocNetLogEvents
 
         if (count($strMyEntities) > 0) {
             foreach ($strMyEntities as $entity_type_tmp => $strMyEntity) {
-                $strSQL .= (strlen($strMyEntity) > 0 ? "
+                $strSQL .= ($strMyEntity <> '' ? "
 						(
 							" . $strMyEntity . "
 							AND
@@ -618,34 +671,43 @@ class CAllSocNetLogEvents
 		)";
 
         return $strSQL;
-
     }
 
-    function GetSQLForEvent($entity_type, $entity_id, $event_id, $user_id, $transport = false, $visible = true, $arOfEntities = array())
-    {
+    public static function GetSQLForEvent(
+        $entity_type,
+        $entity_id,
+        $event_id,
+        $user_id,
+        $transport = false,
+        $visible = true,
+        $arOfEntities = array()
+    ) {
         if (!in_array($entity_type, CSocNetAllowed::GetAllowedEntityTypes())) {
             return false;
         }
 
-        if (intval($entity_id) <= 0)
+        if (intval($entity_id) <= 0) {
             return false;
+        }
 
         $strSQL = "";
 
         if (
             is_array($arOfEntities)
             && count($arOfEntities) > 0
-        )
+        ) {
             $strOfEntities = "AND LE.USER_ID IN (" . implode(",", $arOfEntities) . ")";
-        else
+        } else {
             $strOfEntities = "";
+        }
 
-        if (is_array($transport) && count($transport) > 0)
+        if (is_array($transport) && count($transport) > 0) {
             $strTransport = "AND LE.TRANSPORT IN ('" . implode("', '", $transport) . "')";
-        elseif (!is_array($transport) && strlen($transport) > 0)
+        } elseif (!is_array($transport) && $transport <> '') {
             $strTransport = "AND LE.TRANSPORT = '" . $transport . "'";
-        else
+        } else {
             $strTransport = "";
+        }
 
         $strSQL .= "AND (
 			(	
@@ -717,5 +779,3 @@ class CAllSocNetLogEvents
         return $strSQL;
     }
 }
-
-?>

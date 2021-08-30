@@ -1,4 +1,5 @@
 <?
+
 require_once(dirname(__FILE__) . "/../include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/prolog.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/classes/general/wizard.php");
@@ -20,8 +21,9 @@ else:
     $arWizardName = array();
     foreach ($arWizardNameTmp as $a) {
         $a = preg_replace("#[^a-z0-9_.-]+#i", "", $a);
-        if (strlen($a) > 0)
+        if ($a <> '') {
             $arWizardName[] = $a;
+        }
     }
 
     if (count($arWizardName) > 2) {

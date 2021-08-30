@@ -1,4 +1,5 @@
 <?
+
 /* This code captures parse errors*/
 register_shutdown_function('error_alert');
 
@@ -12,7 +13,11 @@ function error_alert()
     if (is_null($e) === false && isset($arErrorType[$e['type']])) {
         ob_end_clean();
         echo "<h2>" . GetMessage("php_cmd_error") . "&nbsp;</h2><p>";
-        echo '<b>' . $arErrorType[$e['type']] . '</b>: ' . htmlspecialcharsbx($e['message']) . ' in <b>' . htmlspecialcharsbx($e['file']) . '</b> on line <b>' . htmlspecialcharsbx($e['line']) . '</b>';
+        echo '<b>' . $arErrorType[$e['type']] . '</b>: ' . htmlspecialcharsbx(
+                $e['message']
+            ) . ' in <b>' . htmlspecialcharsbx($e['file']) . '</b> on line <b>' . htmlspecialcharsbx(
+                $e['line']
+            ) . '</b>';
     } else {
         global $DB;
         if (
@@ -22,7 +27,9 @@ function error_alert()
         ) {
             ob_end_clean();
             echo "<h2>" . GetMessage("php_cmd_error") . "&nbsp;</h2><p>";
-            echo '<font color=#ff0000>Query Error: ' . htmlspecialcharsbx($DB->GetErrorSQL()) . '</font> [' . htmlspecialcharsbx($DB->GetErrorMessage()) . ']';
+            echo '<font color=#ff0000>Query Error: ' . htmlspecialcharsbx(
+                    $DB->GetErrorSQL()
+                ) . '</font> [' . htmlspecialcharsbx($DB->GetErrorMessage()) . ']';
         }
     }
 }
@@ -31,19 +38,17 @@ function fancy_output($content)
 {
     if (isTextMode()) {
         $flags = ENT_COMPAT;
-        if (defined('ENT_SUBSTITUTE'))
+        if (defined('ENT_SUBSTITUTE')) {
             $flags |= ENT_SUBSTITUTE;
-        else
+        } else {
             $flags |= ENT_IGNORE;
+        }
 
         return sprintf('<pre>%s</pre>', htmlspecialcharsbx($content, $flags));
     }
 
     return sprintf('<p>%s</e>', $content);
 }
-
-define("BX_COMPRESSION_DISABLED", true);
-/* This code captures parse errors*/
 
 function isTextMode()
 {
@@ -58,8 +63,9 @@ define("HELP_FILE", "utilities/php_command_line.php");
  * @global \CMain $APPLICATION
  **/
 
-if (!$USER->CanDoOperation('view_other_settings'))
+if (!$USER->CanDoOperation('view_other_settings')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $isAdmin = $USER->CanDoOperation('edit_php');
 
@@ -75,8 +81,9 @@ if (isset($_REQUEST["query_count"]) && $_REQUEST["query_count"] > 1 && check_bit
     CUserOptions::SetOption("php_command_line", "count", $query_count);
 }
 $query_count = CUserOptions::GetOption("php_command_line", "count", 1);
-if ($query_count <= 1)
+if ($query_count <= 1) {
     $remove = 0;
+}
 
 if (isset($_REQUEST["save"]) && check_bitrix_sessid()) {
     CUtil::JSPostUnescape();
@@ -89,7 +96,7 @@ if (isset($_REQUEST["save"]) && check_bitrix_sessid()) {
         }
         $i++;
     }
-    while (strlen(CUserOptions::GetOption("php_command_line", "query" . $i, ''))) {
+    while (CUserOptions::GetOption("php_command_line", "query" . $i, '') <> '') {
         CUserOptions::DeleteOption("php_command_line", "query" . $i);
         $i++;
     }
@@ -115,8 +122,9 @@ if (
     ) {
         printf('<h2>%s</h2>', getMessage('php_cmd_result'));
 
-        if (isTextMode())
+        if (isTextMode()) {
             ini_set('html_errors', 0);
+        }
 
         ob_start('fancy_output');
         $query = rtrim($_POST['query'], ";\x20\n") . ";\n";
@@ -288,6 +296,11 @@ $editTab = new CAdminTabControl("editTab", $aTabs);
             }
         );
 
+        function __FPHPRenderResult(result) {
+            document.getElementById('result_div').innerHTML = result;
+            CloseWaitWindow();
+        }
+
         function __FPHPSubmit() {
             if (confirm('<?=GetMessageJS("php_cmd_confirm")?>')) {
                 var resultAsText = BX('result_as_text').checked ? 'y' : 'n';
@@ -299,18 +312,25 @@ $editTab = new CAdminTabControl("editTab", $aTabs);
 
                 window.scrollTo(0, 500);
                 ShowWaitWindow();
-                BX.ajax.post(
-                    'php_command_line.php?lang=' + phpVars.LANGUAGE_ID + '&sessid=' + phpVars.bitrix_sessid,
-                    {
-                        query: BX('query' + m[1]).value,
-                        result_as_text: resultAsText,
-                        ajax: 'y'
+
+                var data = BX.ajax.prepareData({
+                    query: BX('query' + m[1]).value,
+                    result_as_text: resultAsText,
+                    ajax: 'y'
+                });
+
+                BX.ajax({
+                    'method': 'POST',
+                    'dataType': 'html',
+                    'url': 'php_command_line.php?lang=' + phpVars.LANGUAGE_ID + '&sessid=' + phpVars.bitrix_sessid,
+                    'data': data,
+                    'onsuccess': function (result) {
+                        __FPHPRenderResult(result);
                     },
-                    function (result) {
-                        document.getElementById('result_div').innerHTML = result;
-                        CloseWaitWindow();
+                    'onfailure': function (type, status, config) {
+                        __FPHPRenderResult(config.xhr.responseText);
                     }
-                );
+                });
             }
         }
 
@@ -360,10 +380,11 @@ $editTab = new CAdminTabControl("editTab", $aTabs);
             $editTab->Begin();
             for ($i = 1; $i <= $query_count - ($remove ? 1 : 0); $i++) {
                 $index = $remove ? ($i >= $remove ? $i + 1 : $i) : $i;
-                if (isset($_REQUEST['query' . $index]))
+                if (isset($_REQUEST['query' . $index])) {
                     $query = $_REQUEST['query' . $index];
-                else
+                } else {
                     $query = CUserOptions::GetOption("php_command_line", "query" . $index, '');
+                }
 
                 $editTab->BeginNextTab();
                 ?>
@@ -372,12 +393,18 @@ $editTab = new CAdminTabControl("editTab", $aTabs);
                         <textarea cols="60" name="query<? echo $i ?>" id="query<? echo $i ?>" rows="15" wrap="OFF"
                                   style="width:100%;"><? echo htmlspecialcharsbx($query); ?></textarea><br/>
                         <?
-                        if (COption::GetOptionString('fileman', "use_code_editor", "Y") == "Y" && CModule::IncludeModule('fileman')) {
-                            CCodeEditor::Show(array(
-                                'textareaId' => 'query' . $i,
-                                'height' => 350,
-                                'forceSyntax' => 'php',
-                            ));
+                        if (COption::GetOptionString(
+                                'fileman',
+                                "use_code_editor",
+                                "Y"
+                            ) == "Y" && CModule::IncludeModule('fileman')) {
+                            CCodeEditor::Show(
+                                array(
+                                    'textareaId' => 'query' . $i,
+                                    'height' => 350,
+                                    'forceSyntax' => 'php',
+                                )
+                            );
                         }
                         ?>
                     </td>

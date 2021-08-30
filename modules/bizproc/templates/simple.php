@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 $arFields = Array(
@@ -43,7 +44,8 @@ $arFields = Array(
                         "MailUserTo" => '',
                         "MailUserToArray" => Array
                         (
-                            'Template', 'Voters'
+                            'Template',
+                            'Voters'
                         ),
 
                         "Title" => GetMessage("BPT_SM_ACT_TITLE")

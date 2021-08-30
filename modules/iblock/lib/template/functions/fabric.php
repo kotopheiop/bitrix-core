@@ -6,6 +6,7 @@
  */
 
 namespace Bitrix\Iblock\Template\Functions;
+
 /**
  * Class Fabric
  * Provides function object instance by it's name.
@@ -28,25 +29,25 @@ class Fabric
      */
     public static function createInstance($functionName, $data = null) //todo rename createInstance
     {
-        if ($functionName === "upper")
+        if ($functionName === "upper") {
             return new FunctionUpper($data);
-        elseif ($functionName === "lower")
+        } elseif ($functionName === "lower") {
             return new FunctionLower($data);
-        elseif ($functionName === "translit")
+        } elseif ($functionName === "translit") {
             return new FunctionTranslit($data);
-        elseif ($functionName === "concat")
+        } elseif ($functionName === "concat") {
             return new FunctionConcat($data);
-        elseif ($functionName === "limit")
+        } elseif ($functionName === "limit") {
             return new FunctionLimit($data);
-        elseif ($functionName === "contrast")
+        } elseif ($functionName === "contrast") {
             return new FunctionContrast($data);
-        elseif ($functionName === "min")
+        } elseif ($functionName === "min") {
             return new FunctionMin($data);
-        elseif ($functionName === "max")
+        } elseif ($functionName === "max") {
             return new FunctionMax($data);
-        elseif ($functionName === "distinct")
+        } elseif ($functionName === "distinct") {
             return new FunctionDistinct($data);
-        elseif (isset(self::$functionMap[$functionName])) {
+        } elseif (isset(self::$functionMap[$functionName])) {
             $functionClass = self::$functionMap[$functionName];
             return new $functionClass($data);
         } else {
@@ -131,10 +132,11 @@ class FunctionBase
     {
         $result = array();
         foreach ($parameters as $param) {
-            if (is_array($param))
+            if (is_array($param)) {
                 $result[] = implode(" ", $param);
-            elseif ($param != "")
+            } elseif ($param != "") {
                 $result[] = $param;
+            }
         }
         return implode(" ", $result);
     }
@@ -151,8 +153,9 @@ class FunctionBase
         $result = array();
         foreach ($parameters as $param) {
             if (is_array($param)) {
-                foreach ($param as $p)
+                foreach ($param as $p) {
                     $result[] = $p;
+                }
             } elseif ($param != "") {
                 $result[] = $param;
             }
@@ -241,13 +244,17 @@ class FunctionTranslit extends FunctionBase
         }
 
 
-        return \CUtil::translit($this->parametersToString($parameters), LANGUAGE_ID, array(
-            //"max_len" => 50,
-            "change_case" => $changeCase, // 'L' - toLower, 'U' - toUpper, false - do not change
-            "replace_space" => $replaceChar,
-            "replace_other" => $replaceChar,
-            "delete_repeat_replace" => true,
-        ));
+        return \CUtil::translit(
+            $this->parametersToString($parameters),
+            LANGUAGE_ID,
+            array(
+                //"max_len" => 50,
+                "change_case" => $changeCase, // 'L' - toLower, 'U' - toUpper, false - do not change
+                "replace_space" => $replaceChar,
+                "replace_other" => $replaceChar,
+                "delete_repeat_replace" => true,
+            )
+        );
     }
 }
 
@@ -328,8 +335,9 @@ class FunctionContrast extends FunctionBase
         $result = preg_split("/([" . preg_quote($delimiter, "/") . "]+)/", $text);
         if ($result) {
             foreach ($result as $word) {
-                if (strlen($word) > 1)
+                if (mb_strlen($word) > 1) {
                     $words[$word]++;
+                }
             }
             $len = log(max(20, array_sum($words)));
             foreach ($words as $word => $count) {
@@ -431,8 +439,9 @@ class FunctionDistinct extends FunctionBase
     public function calculate(array $parameters)
     {
         $result = array();
-        foreach ($this->parametersToArray($parameters) as $value)
+        foreach ($this->parametersToArray($parameters) as $value) {
             $result[$value] = $value;
+        }
         return array_values($result);
     }
 }

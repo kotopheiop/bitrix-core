@@ -10,7 +10,9 @@
  * @global array $iblockElementInfo
  */
 
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+}
 
 global $APPLICATION;
 
@@ -28,18 +30,26 @@ $bNeedAuth = !is_array($currentUser);
 
 if ($bNeedAuth) {
     if (!defined('BX_PUBLIC_MODE') || !BX_PUBLIC_MODE) {
-        $message = new CAdminMessage(array(
-            "TYPE" => "OK",
-            "DETAILS" => Loc::getMessage("SEO_ERROR_NO_YANDEX_AUTH", array(
-                "#LANGUAGE_ID#" => LANGUAGE_ID,
-            )),
-            "HTML" => true
-        ));
+        $message = new CAdminMessage(
+            array(
+                "TYPE" => "OK",
+                "DETAILS" => Loc::getMessage(
+                    "SEO_ERROR_NO_YANDEX_AUTH",
+                    array(
+                        "#LANGUAGE_ID#" => LANGUAGE_ID,
+                    )
+                ),
+                "HTML" => true
+            )
+        );
         echo $message->Show();
     } else {
-        echo BeginNote() . Loc::getMessage("SEO_ERROR_NO_YANDEX_AUTH", array(
-                "#LANGUAGE_ID#" => LANGUAGE_ID,
-            )) . EndNote();
+        echo BeginNote() . Loc::getMessage(
+                "SEO_ERROR_NO_YANDEX_AUTH",
+                array(
+                    "#LANGUAGE_ID#" => LANGUAGE_ID,
+                )
+            ) . EndNote();
     }
 
     return;
@@ -47,16 +57,22 @@ if ($bNeedAuth) {
 
 $request = Main\Context::getCurrent()->getRequest();
 
-$dbRes = Adv\YandexCampaignTable::getList(array(
-    "order" => array("NAME" => "asc"),
-    "filter" => array(
-        '=ACTIVE' => Adv\YandexCampaignTable::ACTIVE,
-        '=ENGINE_ID' => $engine->getId(),
-    ),
-    'select' => array(
-        "ID", "NAME", "XML_ID", "OWNER_ID", "SETTINGS"
+$dbRes = Adv\YandexCampaignTable::getList(
+    array(
+        "order" => array("NAME" => "asc"),
+        "filter" => array(
+            '=ACTIVE' => Adv\YandexCampaignTable::ACTIVE,
+            '=ENGINE_ID' => $engine->getId(),
+        ),
+        'select' => array(
+            "ID",
+            "NAME",
+            "XML_ID",
+            "OWNER_ID",
+            "SETTINGS"
+        )
     )
-));
+);
 $campaignList = array();
 
 while ($campaign = $dbRes->fetch()) {
@@ -67,35 +83,52 @@ while ($campaign = $dbRes->fetch()) {
 
 if (count($campaignList) <= 0) {
     if (!defined('BX_PUBLIC_MODE') || !BX_PUBLIC_MODE) {
-        $message = new CAdminMessage(array(
-            "TYPE" => "OK",
-            "DETAILS" => Loc::getMessage("SEO_ERROR_NO_CAMPAIGNS", array(
-                "#LANGUAGE_ID#" => LANGUAGE_ID,
-            )),
-            "HTML" => true
-        ));
+        $message = new CAdminMessage(
+            array(
+                "TYPE" => "OK",
+                "DETAILS" => Loc::getMessage(
+                    "SEO_ERROR_NO_CAMPAIGNS",
+                    array(
+                        "#LANGUAGE_ID#" => LANGUAGE_ID,
+                    )
+                ),
+                "HTML" => true
+            )
+        );
         echo $message->Show();
     } else {
-        echo BeginNote() . Loc::getMessage("SEO_ERROR_NO_CAMPAIGNS", array(
-                "#LANGUAGE_ID#" => LANGUAGE_ID,
-            )) . EndNote();
+        echo BeginNote() . Loc::getMessage(
+                "SEO_ERROR_NO_CAMPAIGNS",
+                array(
+                    "#LANGUAGE_ID#" => LANGUAGE_ID,
+                )
+            ) . EndNote();
     }
 
     ?>
-    <a href="/bitrix/admin/seo_search_yandex_direct_edit.php?lang=<?= LANGUAGE_ID ?>&back_url=<?= urlencode($APPLICATION->GetCurPageParam('form_element_' . $iblockElementInfo["IBLOCK"]["ID"] . '_active_tab=seo_adv_seo_adv', array('form_element_' . $iblockElementInfo["IBLOCK"]["ID"] . '_active_tab'))) ?>"><?= Loc::getMessage("SEO_CREATE_NEW_CAMPAIGN") ?></a>
+    <a href="/bitrix/admin/seo_search_yandex_direct_edit.php?lang=<?= LANGUAGE_ID ?>&back_url=<?= urlencode(
+        $APPLICATION->GetCurPageParam(
+            'form_element_' . $iblockElementInfo["IBLOCK"]["ID"] . '_active_tab=seo_adv_seo_adv',
+            array('form_element_' . $iblockElementInfo["IBLOCK"]["ID"] . '_active_tab')
+        )
+    ) ?>"><?= Loc::getMessage("SEO_CREATE_NEW_CAMPAIGN") ?></a>
     <?
 } else {
-    $dbRes = Adv\LinkTable::getList(array(
-        "filter" => array(
-            'LINK_TYPE' => Adv\LinkTable::TYPE_IBLOCK_ELEMENT,
-            'LINK_ID' => $iblockElementInfo['ID'],
-            "BANNER.ENGINE_ID" => $engine->getId(),
-        ),
-        "select" => array(
-            "BANNER_ID", "BANNER_NAME" => "BANNER.NAME", "BANNER_XML_ID" => "BANNER.XML_ID",
-            "BANNER_CAMPAIGN_ID" => "BANNER.CAMPAIGN_ID",
+    $dbRes = Adv\LinkTable::getList(
+        array(
+            "filter" => array(
+                'LINK_TYPE' => Adv\LinkTable::TYPE_IBLOCK_ELEMENT,
+                'LINK_ID' => $iblockElementInfo['ID'],
+                "BANNER.ENGINE_ID" => $engine->getId(),
+            ),
+            "select" => array(
+                "BANNER_ID",
+                "BANNER_NAME" => "BANNER.NAME",
+                "BANNER_XML_ID" => "BANNER.XML_ID",
+                "BANNER_CAMPAIGN_ID" => "BANNER.CAMPAIGN_ID",
+            )
         )
-    ));
+    );
 
     $arBanners = array();
     while ($banner = $dbRes->fetch()) {
@@ -220,12 +253,19 @@ if (count($campaignList) <= 0) {
                         );
                         ?>
                         <option value="<?= $campaign["ID"] ?>"
-                                data-add="<?= $canAdd ? 1 : 0 ?>"><?= Converter::getHtmlConverter()->encode($campaign["NAME"]) ?></option>
+                                data-add="<?= $canAdd ? 1 : 0 ?>"><?= Converter::getHtmlConverter()->encode(
+                                $campaign["NAME"]
+                            ) ?></option>
                         <?
                     }
                     ?>
                 </select>&nbsp;&nbsp;<a
-                        href="/bitrix/admin/seo_search_yandex_direct_edit.php?lang=<?= LANGUAGE_ID ?>&back_url=<?= urlencode($APPLICATION->GetCurPageParam('form_element_' . $iblockElementInfo["IBLOCK"]["ID"] . '_active_tab=seo_adv_seo_adv', array('form_element_' . $iblockElementInfo["IBLOCK"]["ID"] . '_active_tab'))) ?>"><?= Loc::getMessage("SEO_CREATE_NEW_CAMPAIGN") ?></a>
+                        href="/bitrix/admin/seo_search_yandex_direct_edit.php?lang=<?= LANGUAGE_ID ?>&back_url=<?= urlencode(
+                            $APPLICATION->GetCurPageParam(
+                                'form_element_' . $iblockElementInfo["IBLOCK"]["ID"] . '_active_tab=seo_adv_seo_adv',
+                                array('form_element_' . $iblockElementInfo["IBLOCK"]["ID"] . '_active_tab')
+                            )
+                        ) ?>"><?= Loc::getMessage("SEO_CREATE_NEW_CAMPAIGN") ?></a>
             </td>
         </tr>
         <tr>
@@ -235,8 +275,14 @@ if (count($campaignList) <= 0) {
                         onchange="BX('seo_adv_link_btn').disabled=this.value<=0">
                     <option value="0"><?= Loc::getMessage("SEO_CAMPAIGN_CHOOSE_OPTION") ?></option>
                 </select>&nbsp;&nbsp;<a id="adv_banner_link"
-                                        href="/bitrix/admin/seo_search_yandex_direct_banner_edit.php?lang=<?= LANGUAGE_ID ?>&element=<?= $iblockElementInfo['ID'] ?>&back_url=<?= urlencode($APPLICATION->GetCurPageParam('form_element_' . $iblockElementInfo["IBLOCK"]["ID"] . '_active_tab=seo_adv_seo_adv', array('form_element_' . $iblockElementInfo["IBLOCK"]["ID"] . '_active_tab'))); ?>"
-                                        style="display: none;"><?= Loc::getMessage('SEO_CREATE_NEW_BANNER') ?></a>
+                                        href="/bitrix/admin/seo_search_yandex_direct_banner_edit.php?lang=<?= LANGUAGE_ID ?>&element=<?= $iblockElementInfo['ID'] ?>&back_url=<?= urlencode(
+                                            $APPLICATION->GetCurPageParam(
+                                                'form_element_' . $iblockElementInfo["IBLOCK"]["ID"] . '_active_tab=seo_adv_seo_adv',
+                                                array('form_element_' . $iblockElementInfo["IBLOCK"]["ID"] . '_active_tab')
+                                            )
+                                        ); ?>" style="display: none;"><?= Loc::getMessage(
+                        'SEO_CREATE_NEW_BANNER'
+                    ) ?></a>
                 <small id="adv_banner_strategy_warning"
                        style="display: none;"><?= Loc::getMessage('SEO_YANDEX_STRATEGY_WARNING') ?></small>
             </td>
@@ -448,7 +494,9 @@ if (count($campaignList) <= 0) {
 
                 if (!!res.session) {
                     BX.defer(loadBannerStats)(bannerId, dateStart, res.session);
-                    BX('yandex_banner_message_' + bannerId).innerHTML = '<?=Loc::getMessage('SEO_YANDEX_STATS_WAIT')?>: ' + Math.floor(100 - (res.left / res.amount) * 100) + '%';
+                    BX('yandex_banner_message_' + bannerId).innerHTML = '<?=Loc::getMessage(
+                        'SEO_YANDEX_STATS_WAIT'
+                    )?>: ' + Math.floor(100 - (res.left / res.amount) * 100) + '%';
                 } else if (!!res.data) {
                     loadStat(bannerId);
 

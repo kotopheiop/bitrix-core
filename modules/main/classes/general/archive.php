@@ -38,8 +38,9 @@ class CBXArchive
         if ($strType == "") {
             $strType = self::DetectTypeByFilename($strArcName);
 
-            if (!$strType)
+            if (!$strType) {
                 $strType = "TAR.GZ";
+            }
         }
 
         $arFormats = self::GetAvailableFormats();
@@ -70,8 +71,9 @@ class CBXArchive
         $filename = ToLower($filename);
 
         foreach ($arFormats as $type => $data) {
-            if (in_array(GetFileExtension($filename), $data["ext"]))
+            if (in_array(GetFileExtension($filename), $data["ext"])) {
                 return $type;
+            }
         }
         return false;
     }
@@ -84,13 +86,18 @@ class CBXArchive
     public static function GetAvailableFormats()
     {
         $arFormats = array(
-            "TAR.GZ" => array("classname" => "CArchiver",
+            "TAR.GZ" => array(
+                "classname" => "CArchiver",
                 "ext" => array("gz", "tgz"),
-                "path" => "/bitrix/modules/main/classes/general/tar_gz.php")
+                "path" => "/bitrix/modules/main/classes/general/tar_gz.php"
+            )
         ,
-            "ZIP" => array("classname" => "CZip",
+            "ZIP" => array(
+                "classname" => "CZip",
                 "ext" => array("zip"),
-                "path" => "/bitrix/modules/main/classes/general/zip.php"));
+                "path" => "/bitrix/modules/main/classes/general/zip.php"
+            )
+        );
 
         return $arFormats;
     }
@@ -124,8 +131,9 @@ class CBXArchive
         $arFormats = self::GetAvailableFormats();
 
         foreach ($arFormats as $type => $data) {
-            if (in_array($strFileExt, $data["ext"]))
+            if (in_array($strFileExt, $data["ext"])) {
                 return true;
+            }
         }
         return false;
     }
@@ -145,12 +153,13 @@ class CBXArchive
         global $USER;
 
         if (!$isFile) {
-            if ($USER->CanDoFileOperation("fm_view_listing", array(SITE_ID, $path)))
+            if ($USER->CanDoFileOperation("fm_view_listing", array(SITE_ID, $path))) {
                 $result = true;
+            }
         } else {
             if ($USER->CanDoFileOperation('fm_view_file', array(SITE_ID, $path)) &&
                 ($USER->CanDoOperation('edit_php') || $USER->CanDoFileOperation('fm_lpa', array(SITE_ID, $path)) ||
-                    !(HasScriptExtension($path) || substr(GetFileName($path), 0, 1) == "."))) {
+                    !(HasScriptExtension($path) || mb_substr(GetFileName($path), 0, 1) == "."))) {
                 $result = true;
             }
         }

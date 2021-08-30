@@ -1,5 +1,6 @@
 <?
 /** @global CDatabase $DB */
+
 /** @global CUser $USER */
 
 /** @global CMain $APPLICATION */
@@ -38,7 +39,7 @@ if (!$USER->CanDoOperation('catalog_export_edit')) {
     die();
 }
 
-if ((!isset($_REQUEST['IBLOCK_ID'])) || (0 == strlen($_REQUEST['IBLOCK_ID']))) {
+if ((!isset($_REQUEST['IBLOCK_ID'])) || ($_REQUEST['IBLOCK_ID'] == '')) {
     require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
     ShowError(GetMessage("YANDEX_ERR_NO_IBLOCK_CHOSEN"));
     require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_admin.php");
@@ -111,7 +112,6 @@ if (!empty($arOffers['IBLOCK_ID'])) {
         die();
     }
     $boolOffers = true;
-
 }
 $arCondSelectProp = array(
     'ZERO' => GetMessage('YANDEX_SKU_EXPORT_PROP_SELECT_ZERO'),
@@ -122,23 +122,62 @@ $arCondSelectProp = array(
 
 $arTypesConfig = array(
     'none' => array(
-        'vendor', 'vendorCode', 'sales_notes', 'manufacturer_warranty', 'country_of_origin',
+        'vendor',
+        'vendorCode',
+        'sales_notes',
+        'manufacturer_warranty',
+        'country_of_origin',
         //'adult'
     ),
     'vendor.model' => array(
-        'typePrefix', 'vendor', 'vendorCode', 'model', 'sales_notes', 'manufacturer_warranty', 'country_of_origin',
+        'typePrefix',
+        'vendor',
+        'vendorCode',
+        'model',
+        'sales_notes',
+        'manufacturer_warranty',
+        'country_of_origin',
         //'adult'
     ),
     'book' => array(
-        'author', 'publisher', 'series', 'year', 'ISBN', 'volume', 'part', 'language', 'binding',
-        'page_extent', 'table_of_contents', 'sales_notes'
+        'author',
+        'publisher',
+        'series',
+        'year',
+        'ISBN',
+        'volume',
+        'part',
+        'language',
+        'binding',
+        'page_extent',
+        'table_of_contents',
+        'sales_notes'
     ),
     'audiobook' => array(
-        'author', 'publisher', 'series', 'year', 'ISBN', 'performed_by', 'performance_type',
-        'language', 'volume', 'part', 'format', 'storage', 'recording_length', 'table_of_contents'
+        'author',
+        'publisher',
+        'series',
+        'year',
+        'ISBN',
+        'performed_by',
+        'performance_type',
+        'language',
+        'volume',
+        'part',
+        'format',
+        'storage',
+        'recording_length',
+        'table_of_contents'
     ),
     'artist.title' => array(
-        'title', 'artist', 'director', 'starring', 'originalName', 'country', 'year', 'media', //'adult'
+        'title',
+        'artist',
+        'director',
+        'starring',
+        'originalName',
+        'country',
+        'year',
+        'media', //'adult'
     )
 
     // a bit later
@@ -176,19 +215,27 @@ while ($arRes = $dbRes->Fetch()) {
     $arIBlock['PROPERTY'][$arRes['ID']] = $arRes;
 }
 if ($boolOffers) {
-    $rsProps = CIBlockProperty::GetList(array('SORT' => 'ASC'), array('IBLOCK_ID' => $intOfferIBlockID, 'ACTIVE' => 'Y'));
+    $rsProps = CIBlockProperty::GetList(
+        array('SORT' => 'ASC'),
+        array('IBLOCK_ID' => $intOfferIBlockID, 'ACTIVE' => 'Y')
+    );
     while ($arProp = $rsProps->Fetch()) {
         if ($arOffers['SKU_PROPERTY_ID'] != $arProp['ID']) {
             if ($arProp['PROPERTY_TYPE'] == 'L') {
                 $arProp['VALUES'] = array();
-                $rsPropEnums = CIBlockProperty::GetPropertyEnum($arProp['ID'], array('sort' => 'asc'), array('IBLOCK_ID' => $intOfferIBlockID));
+                $rsPropEnums = CIBlockProperty::GetPropertyEnum(
+                    $arProp['ID'],
+                    array('sort' => 'asc'),
+                    array('IBLOCK_ID' => $intOfferIBlockID)
+                );
                 while ($arPropEnum = $rsPropEnums->Fetch()) {
                     $arProp['VALUES'][$arPropEnum['ID']] = $arPropEnum['VALUE'];
                 }
             }
             $arIBlock['OFFERS_PROPERTY'][$arProp['ID']] = $arProp;
-            if (in_array($arProp['PROPERTY_TYPE'], $arSelectedPropTypes))
+            if (in_array($arProp['PROPERTY_TYPE'], $arSelectedPropTypes)) {
                 $arSelectOfferProps[] = $arProp['ID'];
+            }
         }
     }
 }
@@ -209,8 +256,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
         $type = trim($_POST['type']);
-        if ($type == '' || ($type != 'none' && !isset($arTypesConfig[$type])))
+        if ($type == '' || ($type != 'none' && !isset($arTypesConfig[$type]))) {
             $type = 'none';
+        }
 
         $addParams = array(
             'PARAMS' => array(),
@@ -220,10 +268,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             if (isset($_POST['XML_DATA']['PARAMS']) && is_array($_POST['XML_DATA']['PARAMS'])) {
                 $arTempo = $_POST['XML_DATA']['PARAMS'];
                 for ($i = 0; $i < $intCount; $i++) {
-                    if (empty($arTempo['ID_' . $i]))
+                    if (empty($arTempo['ID_' . $i])) {
                         continue;
+                    }
                     $value = $arTempo['ID_' . $i];
-                    if (array_key_exists($value, $arIBlock['PROPERTY']) || array_key_exists($value, $arIBlock['OFFERS_PROPERTY'])) {
+                    if (array_key_exists($value, $arIBlock['PROPERTY']) || array_key_exists(
+                            $value,
+                            $arIBlock['OFFERS_PROPERTY']
+                        )) {
                         $addParams['PARAMS'][] = $value;
                     }
                 }
@@ -236,7 +288,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             foreach ($arTypeParams as $key => $value) {
                 if (!in_array($key, $arTypesConfig[$type])) {
                     unset($arTypeParams[$key]);
-                } elseif (!array_key_exists($value, $arIBlock['PROPERTY']) && !array_key_exists($value, $arIBlock['OFFERS_PROPERTY'])) {
+                } elseif (!array_key_exists($value, $arIBlock['PROPERTY']) && !array_key_exists(
+                        $value,
+                        $arIBlock['OFFERS_PROPERTY']
+                    )) {
                     $arTypeParams[$key] = '';
                 }
             }
@@ -244,15 +299,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $XML_DATA = array_merge($arTypeParams, $addParams);
 
         foreach ($XML_DATA as $key => $value) {
-            if (!$value)
+            if (!$value) {
                 unset($XML_DATA[$key]);
+            }
         }
 
         $commonFields = [];
         if (!empty($_POST['COMMON_FIELDS']) && is_array($_POST['COMMON_FIELDS'])) {
             foreach ($_POST['COMMON_FIELDS'] as $index => $value) {
-                if (empty($value))
+                if (empty($value)) {
                     continue;
+                }
                 $commonFields[$index] = $value;
             }
             unset($index, $value);
@@ -293,15 +350,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 if ($boolCheck) {
                     $strPropCond = $_POST['SKU_PROP_SELECT'];
                     if ($strPropCond == 'EQUAL' || $strPropCond == 'NONEQUAL') {
-                        if (!isset($_POST['SKU_PROP_VALUE_' . $intPropID]) || !is_array($_POST['SKU_PROP_VALUE_' . $intPropID])) {
+                        if (!isset($_POST['SKU_PROP_VALUE_' . $intPropID]) || !is_array(
+                                $_POST['SKU_PROP_VALUE_' . $intPropID]
+                            )) {
                             $arErrors[] = GetMessage('YANDEX_SKU_EXPORT_ERR_PROPERTY_VALUES_ABSENT');
                             $boolCheck = false;
                         }
 
                         if ($boolCheck) {
-                            foreach ($_POST['SKU_PROP_VALUE_' . $intPropID] as $strValue)
-                                if (strlen($strValue) > 0)
+                            foreach ($_POST['SKU_PROP_VALUE_' . $intPropID] as $strValue) {
+                                if ($strValue <> '') {
                                     $arPropValues[] = $strValue;
+                                }
+                            }
                         }
                         if (empty($arPropValues)) {
                             $arErrors[] = GetMessage('YANDEX_SKU_EXPORT_ERR_PROPERTY_VALUES_ABSENT');
@@ -321,12 +382,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         $vatExport = $defaultVatExport;
         if (isset($_POST['USE_VAT_EXPORT']) && is_string($_POST['USE_VAT_EXPORT'])) {
-            if ($_POST['USE_VAT_EXPORT'] == 'Y')
+            if ($_POST['USE_VAT_EXPORT'] == 'Y') {
                 $vatExport['ENABLE'] = 'Y';
+            }
             if ($vatExport['ENABLE'] == 'Y') {
                 if (isset($_POST['BASE_VAT']) && is_string($_POST['BASE_VAT']) && $_POST['BASE_VAT'] !== '') {
-                    if (isset($vatRates[$_POST['BASE_VAT']]))
+                    if (isset($vatRates[$_POST['BASE_VAT']])) {
                         $vatExport['BASE_VAT'] = $_POST['BASE_VAT'];
+                    }
                 }
                 if ($vatExport['BASE_VAT'] === '') {
                     $arErrors[] = GetMessage('YANDEX_VAT_ERR_BASE_VAT_ABSENT');
@@ -360,9 +423,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     } else {
         $aTabs = array(
-            array("DIV" => "yandex-settings-types", "TAB" => GetMessage('YANDEX_TAB1_TITLE'), "TITLE" => GetMessage('YANDEX_TAB1_DESC')),
-            array("DIV" => "yandex-settings-prices", "TAB" => GetMessage('YANDEX_TAB2_TITLE'), "TITLE" => GetMessage('YANDEX_TAB2_DESC')),
-            array("DIV" => "yandex-settings-vats", "TAB" => GetMessage('YANDEX_TAB_VAT_TITLE'), "TITLE" => GetMessage('YANDEX_TAB_VAT_DESC')),
+            array(
+                "DIV" => "yandex-settings-types",
+                "TAB" => GetMessage('YANDEX_TAB1_TITLE'),
+                "TITLE" => GetMessage('YANDEX_TAB1_DESC')
+            ),
+            array(
+                "DIV" => "yandex-settings-prices",
+                "TAB" => GetMessage('YANDEX_TAB2_TITLE'),
+                "TITLE" => GetMessage('YANDEX_TAB2_DESC')
+            ),
+            array(
+                "DIV" => "yandex-settings-vats",
+                "TAB" => GetMessage('YANDEX_TAB_VAT_TITLE'),
+                "TITLE" => GetMessage('YANDEX_TAB_VAT_DESC')
+            ),
         );
         $tabControl = new CAdminTabControl("tabControl", $aTabs, true, true);
 
@@ -410,7 +485,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         function __addParamUnit(&$IBLOCK, $intCount, $value)
         {
-            return '<input type="text" size="3" name="XML_DATA[PARAMS][UNIT_' . $intCount . ']" value="' . htmlspecialcharsbx($value) . '">';
+            return '<input type="text" size="3" name="XML_DATA[PARAMS][UNIT_' . $intCount . ']" value="' . htmlspecialcharsbx(
+                    $value
+                ) . '">';
         }
 
         function __addParamRow(&$IBLOCK, $intCount, $strParam, $strUnit)
@@ -428,8 +505,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $arTypeValues = array();
         foreach ($arTypesConfigKeys as $key) {
             $arTempo = array();
-            foreach ($arTypesConfig[$key] as $value)
+            foreach ($arTypesConfig[$key] as $value) {
                 $arTempo[$value] = '';
+            }
             $arTypeValues[$key] = $arTempo;
         }
         $arAddParams = array();
@@ -454,21 +532,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $arXmlData = array();
         if (!empty($_REQUEST['XML_DATA'])) {
             $xmlData = base64_decode($_REQUEST['XML_DATA']);
-            if (CheckSerializedData($xmlData))
-                $arXmlData = unserialize($xmlData);
+            if (CheckSerializedData($xmlData)) {
+                $arXmlData = unserialize($xmlData, ['allowed_classes' => false]);
+            }
             unset($xmlData);
         }
 
-        if (isset($arXmlData['PRICE']))
+        if (isset($arXmlData['PRICE'])) {
             $PRICE = (int)$arXmlData['PRICE'];
-        if (isset($arXmlData['CURRENCY']))
+        }
+        if (isset($arXmlData['CURRENCY'])) {
             $CURRENCY = $arXmlData['CURRENCY'];
-        if (isset($arXmlData['TYPE']))
+        }
+        if (isset($arXmlData['TYPE'])) {
             $type = $arXmlData['TYPE'];
-        if ($type != 'none' && !in_array($type, $arTypesConfigKeys))
+        }
+        if ($type != 'none' && !in_array($type, $arTypesConfigKeys)) {
             $type = 'none';
-        if (isset($arXmlData['COMMON_FIELDS']) && is_array($arXmlData['COMMON_FIELDS']))
+        }
+        if (isset($arXmlData['COMMON_FIELDS']) && is_array($arXmlData['COMMON_FIELDS'])) {
             $commonFields = array_merge($commonFields, $arXmlData['COMMON_FIELDS']);
+        }
         if (isset($arXmlData['XML_DATA'])) {
             foreach ($arXmlData['XML_DATA'] as $key => $value) {
                 if ($key == 'PARAMS') {
@@ -486,18 +570,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             }
         }
         if (!empty($arXmlData['SKU_EXPORT'])) {
-            if (!empty($arXmlData['SKU_EXPORT']['SKU_EXPORT_COND']))
+            if (!empty($arXmlData['SKU_EXPORT']['SKU_EXPORT_COND'])) {
                 $arSKUExport['SKU_EXPORT_COND'] = $arXmlData['SKU_EXPORT']['SKU_EXPORT_COND'];
-            if (!empty($arXmlData['SKU_EXPORT']['SKU_PROP_COND']))
+            }
+            if (!empty($arXmlData['SKU_EXPORT']['SKU_PROP_COND'])) {
                 $arSKUExport['SKU_PROP_COND'] = $arXmlData['SKU_EXPORT']['SKU_PROP_COND'];
+            }
         }
         if (!empty($arXmlData['VAT_EXPORT']) && is_array($arXmlData['VAT_EXPORT'])) {
             $vatExport['ENABLE'] = $arXmlData['VAT_EXPORT']['ENABLE'];
-            if ($vatExport['ENABLE'] != 'Y' && $vatExport['ENABLE'] != 'N')
+            if ($vatExport['ENABLE'] != 'Y' && $vatExport['ENABLE'] != 'N') {
                 $vatExport['ENABLE'] = 'N';
+            }
             $vatExport['BASE_VAT'] = $arXmlData['VAT_EXPORT']['BASE_VAT'];
-            if ($vatExport['BASE_VAT'] !== '' && !isset($vatRates[$vatExport['BASE_VAT']]))
+            if ($vatExport['BASE_VAT'] !== '' && !isset($vatRates[$vatExport['BASE_VAT']])) {
                 $vatExport['BASE_VAT'] = '';
+            }
         }
 
         ?>
@@ -555,8 +643,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             <tr>
                                 <td align="right"><?= GetMessage('BX_CATALOG_EXPORT_YANDEX_DESCRIPTION'); ?></td>
                                 <td style="white-space: nowrap;"><select name="COMMON_FIELDS[DESCRIPTION]">
-                                        <option value="PREVIEW_TEXT"<?= ($commonFields['DESCRIPTION'] == 'PREVIEW_TEXT' ? ' selected' : ''); ?>><?= GetMessage('BX_CATALOG_EXPORT_YANDEX_DESCRIPTION_PREVIEW_TEXT'); ?></option>
-                                        <option value="DETAIL_TEXT"<?= ($commonFields['DESCRIPTION'] == 'DETAIL_TEXT' ? ' selected' : ''); ?>><?= GetMessage('BX_CATALOG_EXPORT_YANDEX_DESCRIPTION_DETAIL_TEXT'); ?></option>
+                                        <option value="PREVIEW_TEXT"<?= ($commonFields['DESCRIPTION'] == 'PREVIEW_TEXT' ? ' selected' : ''); ?>><?= GetMessage(
+                                                'BX_CATALOG_EXPORT_YANDEX_DESCRIPTION_PREVIEW_TEXT'
+                                            ); ?></option>
+                                        <option value="DETAIL_TEXT"<?= ($commonFields['DESCRIPTION'] == 'DETAIL_TEXT' ? ' selected' : ''); ?>><?= GetMessage(
+                                                'BX_CATALOG_EXPORT_YANDEX_DESCRIPTION_DETAIL_TEXT'
+                                            ); ?></option>
                                     </select></td>
                             </tr>
                         </table>
@@ -581,8 +673,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                         <td align="right"><?= htmlspecialcharsbx(GetMessage('YANDEX_PROP_' . $prop)) ?>
                                             :
                                         </td>
-                                        <td style="white-space: nowrap;"><? __yand_show_selector($key, $prop, $arIBlock, (isset($arTypeValues[$key][$prop]) ? $arTypeValues[$key][$prop] : '')) ?>
-                                            &nbsp;<small>(<?= htmlspecialcharsbx($prop) ?>)</small></td>
+                                        <td style="white-space: nowrap;"><? __yand_show_selector(
+                                                $key,
+                                                $prop,
+                                                $arIBlock,
+                                                (isset($arTypeValues[$key][$prop]) ? $arTypeValues[$key][$prop] : '')
+                                            ) ?>&nbsp;<small>(<?= htmlspecialcharsbx($prop) ?>)</small></td>
                                     </tr>
                                 <?
                                 endforeach;
@@ -625,8 +721,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <div style="width: 100%; text-align: center;"><input type="button"
                                                                              onclick="__addYP(); return false;"
                                                                              name="yandex_params_add"
-                                                                             value="<? echo GetMessage('YANDEX_PROPS_ADDITIONAL_MORE'); ?>">
-                        </div>
+                                                                             value="<? echo GetMessage(
+                                                                                 'YANDEX_PROPS_ADDITIONAL_MORE'
+                                                                             ); ?>"></div>
                     </div>
                     <script type="text/javascript">
                         function changeVatExport() {
@@ -696,8 +793,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         ?><select name="SKU_EXPORT_COND" id="SKU_EXPORT_COND"><?
                             foreach ($arOffersSelect as $key => $value) {
                                 ?>
-                                <option
-                                value="<? echo htmlspecialcharsbx($key); ?>" <? echo($key == $arSKUExport['SKU_EXPORT_COND'] ? 'selected' : ''); ?>><? echo htmlspecialcharsEx($value); ?></option><?
+                                <optionvalue="<? echo htmlspecialcharsbx(
+                                    $key
+                                ); ?>" <? echo($key == $arSKUExport['SKU_EXPORT_COND'] ? 'selected' : ''); ?>><? echo htmlspecialcharsEx(
+                                    $value
+                                ); ?></option><?
                             }
                             ?></select><?
                         if (!empty($arSelectOfferProps)) {
@@ -714,7 +814,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             </tr>
                             <tr>
                                 <td valign="top"><select name="SKU_PROP_COND" id="SKU_PROP_COND">
-                                        <option value="0" <? echo(empty($arSKUExport['SKU_PROP_COND']) ? 'selected' : ''); ?>><? echo GetMessage('YANDEX_SKU_EXPORT_PROP_EMPTY') ?></option>
+                                        <option value="0" <? echo(empty($arSKUExport['SKU_PROP_COND']) ? 'selected' : ''); ?>><? echo GetMessage(
+                                                'YANDEX_SKU_EXPORT_PROP_EMPTY'
+                                            ) ?></option>
                                         <?
                                         foreach ($arSelectOfferProps as $intPropID) {
                                             $strSelected = '';
@@ -723,17 +825,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                             }
                                             ?>
                                             <option
-                                            value="<?= $intPropID; ?>" <? echo $strSelected; ?>><? echo htmlspecialcharsEx($arIBlock['OFFERS_PROPERTY'][$intPropID]['NAME']); ?></option><?
+                                            value="<?= $intPropID; ?>" <? echo $strSelected; ?>><? echo htmlspecialcharsEx(
+                                                $arIBlock['OFFERS_PROPERTY'][$intPropID]['NAME']
+                                            ); ?></option><?
                                         }
                                         ?></select></td>
                                 <td valign="top"><select name="SKU_PROP_SELECT" id="SKU_PROP_SELECT">
-                                        <option value="">
-                                            --- <? echo ToLower(GetMessage('YANDEX_SKU_EXPORT_PROP_COND')); ?> ---
+                                        <option value="">--- <? echo ToLower(
+                                                GetMessage('YANDEX_SKU_EXPORT_PROP_COND')
+                                            ); ?> ---
                                         </option><?
                                         foreach ($arCondSelectProp as $key => $value) {
                                             ?>
-                                            <option
-                                            value="<? echo htmlspecialcharsbx($key); ?>" <? echo($key == $arSKUExport['SKU_PROP_COND']['COND'] ? 'selected' : ''); ?>><? echo htmlspecialcharsEx($value); ?></option><?
+                                            <optionvalue="<? echo htmlspecialcharsbx(
+                                                $key
+                                            ); ?>" <? echo($key == $arSKUExport['SKU_PROP_COND']['COND'] ? 'selected' : ''); ?>><? echo htmlspecialcharsEx(
+                                                $value
+                                            ); ?></option><?
                                         }
                                         ?></select></td>
                                 <td>
@@ -747,8 +855,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                                 ?><select name="SKU_PROP_VALUE_<? echo $arProp['ID'] ?>[]" multiple><?
                                                 foreach ($arProp['VALUES'] as $intValueID => $strValue) {
                                                     ?>
-                                                    <option
-                                                    value="<? echo htmlspecialcharsbx($intValueID); ?>" <? echo(!empty($arSKUExport['SKU_PROP_COND']['VALUES']) && in_array($intValueID, $arSKUExport['SKU_PROP_COND']['VALUES']) ? 'selected' : ''); ?>><? echo htmlspecialcharsEx($strValue); ?></option><?
+                                                    <optionvalue="<? echo htmlspecialcharsbx(
+                                                        $intValueID
+                                                    ); ?>" <? echo(!empty($arSKUExport['SKU_PROP_COND']['VALUES']) && in_array(
+                                                        $intValueID,
+                                                        $arSKUExport['SKU_PROP_COND']['VALUES']
+                                                    ) ? 'selected' : ''); ?>><? echo htmlspecialcharsEx(
+                                                        $strValue
+                                                    ); ?></option><?
                                                 }
                                                 ?></select><?
                                             } else {
@@ -837,8 +951,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $arGroups = array();
             $dbRes = CCatalogGroup::GetGroupsList(array("GROUP_ID" => 2));
             while ($arRes = $dbRes->Fetch()) {
-                if ($arRes['BUY'] == 'Y')
+                if ($arRes['BUY'] == 'Y') {
                     $arGroups[] = $arRes['CATALOG_GROUP_ID'];
+                }
             }
             ?>
             <tr class="heading">
@@ -848,7 +963,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <tr>
                 <td><?= GetMessage('YANDEX_PRICE_TYPE'); ?>:</td>
                 <td><br/><select name="PRICE">
-                        <option value=""<? echo($PRICE == "" || $PRICE == 0 ? ' selected' : ''); ?>><?= GetMessage('YANDEX_PRICE_TYPE_NONE'); ?></option>
+                        <option value=""<? echo($PRICE == "" || $PRICE == 0 ? ' selected' : ''); ?>><?= GetMessage(
+                                'YANDEX_PRICE_TYPE_NONE'
+                            ); ?></option>
                         <?
                         if (!empty($arGroups)) {
                             $dbRes = CCatalogGroup::GetListEx(
@@ -860,7 +977,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             );
                             while ($arRes = $dbRes->Fetch()) {
                                 ?>
-                                <option value="<?= $arRes['ID'] ?>"<? echo($PRICE == $arRes['ID'] ? ' selected' : ''); ?>><?= '[' . $arRes['ID'] . '] ' . htmlspecialcharsEx($arRes['NAME']); ?></option><?
+                                <option value="<?= $arRes['ID'] ?>"<? echo($PRICE == $arRes['ID'] ? ' selected' : ''); ?>><?= '[' . $arRes['ID'] . '] ' . htmlspecialcharsEx(
+                                    $arRes['NAME']
+                                ); ?></option><?
                             }
                         }
                         ?>
@@ -885,7 +1004,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         'KZT' => true
                     );
                     $existCurrrencies = Currency\CurrencyManager::getCurrencyList();
-                    $arCurrencyList = array_intersect_key(Currency\CurrencyManager::getCurrencyList(), $arCurrencyAllowed);
+                    $arCurrencyList = array_intersect_key(
+                        Currency\CurrencyManager::getCurrencyList(),
+                        $arCurrencyAllowed
+                    );
 
                     $arValues = array(
                         'SITE' => GetMessage('YANDEX_CURRENCY_RATE_SITE'),
@@ -917,23 +1039,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                             onchange="BX('CURRENCY_PLUS_<?= $strCurrency ?>').disabled = this[this.selectedIndex].value == 'SITE'">
                                         <?
                                         $strRate = 'SITE';
-                                        if (isset($CURRENCY[$strCurrency]) && isset($CURRENCY[$strCurrency]['rate']))
+                                        if (isset($CURRENCY[$strCurrency]) && isset($CURRENCY[$strCurrency]['rate'])) {
                                             $strRate = $CURRENCY[$strCurrency]['rate'];
-                                        if (!array_key_exists($strRate, $arValues))
+                                        }
+                                        if (!array_key_exists($strRate, $arValues)) {
                                             $strRate = 'SITE';
+                                        }
                                         foreach ($arValues as $key => $title) {
                                             ?>
-                                            <option value="<?= htmlspecialcharsbx($key) ?>"<? echo($strRate == $key ? ' selected' : ''); ?>>
-                                                (<?= htmlspecialcharsEx($key) ?>
-                                                ) <?= htmlspecialcharsEx($title) ?></option>
+                                            <option value="<?= htmlspecialcharsbx(
+                                                $key
+                                            ) ?>"<? echo($strRate == $key ? ' selected' : ''); ?>>
+                                                (<?= htmlspecialcharsEx($key) ?>) <?= htmlspecialcharsEx(
+                                                    $title
+                                                ) ?></option>
                                             <?
                                         }
                                         ?>
                                     </select></td>
                                 <?
                                 $strPlus = '';
-                                if (isset($CURRENCY[$strCurrency]) && isset($CURRENCY[$strCurrency]['plus']))
+                                if (isset($CURRENCY[$strCurrency]) && isset($CURRENCY[$strCurrency]['plus'])) {
                                     $strPlus = $CURRENCY[$strCurrency]['plus'];
+                                }
                                 ?>
                                 <td>+<input type="text" size="3" id="CURRENCY_PLUS_<?= $strCurrency ?>"
                                             name="CURRENCY_PLUS[<?= $strCurrency ?>]"<? echo($strRate == 'SITE' ? ' disabled="disabled"' : ''); ?>
@@ -970,11 +1098,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <tr id="tr_BASE_VAT" style="display: <?= ($vatExport['ENABLE'] == 'Y' ? 'table-row' : 'none'); ?>;">
                 <td><?= GetMessage('YANDEX_BASE_VAT') ?></td>
                 <td><select name="BASE_VAT">
-                        <option value=""<?= ($vatExport['BASE_VAT'] === '' ? ' selected' : ''); ?>><?= GetMessage('YANDEX_BASE_VAT_ABSENT'); ?></option>
+                        <option value=""<?= ($vatExport['BASE_VAT'] === '' ? ' selected' : ''); ?>><?= GetMessage(
+                                'YANDEX_BASE_VAT_ABSENT'
+                            ); ?></option>
                         <?
                         foreach ($vatRates as $value => $title) {
                             ?>
-                            <option value="<?= htmlspecialcharsbx($value); ?>"<?= ($vatExport['BASE_VAT'] === $value ? ' selected' : ''); ?>><?= htmlspecialcharsbx($title); ?></option><?
+                            <option value="<?= htmlspecialcharsbx(
+                                $value
+                            ); ?>"<?= ($vatExport['BASE_VAT'] === $value ? ' selected' : ''); ?>><?= htmlspecialcharsbx(
+                                $title
+                            ); ?></option><?
                         }
                         unset($value, $title);
                         ?>

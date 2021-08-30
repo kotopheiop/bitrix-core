@@ -1,17 +1,24 @@
 <?
+
 // set EUV for logged events
 $dbResult = CSocNetLog::GetList(Array("ENTITY_ID" => "ASC"), Array(), array("ENTITY_TYPE", "ENTITY_ID"));
 while ($arResult = $dbResult->Fetch()) {
-    if ($arResult["ENTITY_TYPE"] == "U" && intval($arResult["ENTITY_ID"]) > 0)
+    if ($arResult["ENTITY_TYPE"] == "U" && intval($arResult["ENTITY_ID"]) > 0) {
         CSocNetEventUserView::SetUser($arResult["ENTITY_ID"], false, false, true);
-    elseif ($arResult["ENTITY_TYPE"] == "G" && intval($arResult["ENTITY_ID"]) > 0)
+    } elseif ($arResult["ENTITY_TYPE"] == "G" && intval($arResult["ENTITY_ID"]) > 0) {
         CSocNetEventUserView::SetGroup($arResult["ENTITY_ID"], true);
+    }
 }
 
 // set EUV for wiki
-$dbResult = CSocNetEventUserView::GetList(array("ENTITY_ID" => "DESC"), Array("ENTITY_TYPE" => "G"), array("ENTITY_ID"));
-while ($arResult = $dbResult->Fetch())
+$dbResult = CSocNetEventUserView::GetList(
+    array("ENTITY_ID" => "DESC"),
+    Array("ENTITY_TYPE" => "G"),
+    array("ENTITY_ID")
+);
+while ($arResult = $dbResult->Fetch()) {
     CSocNetEventUserView::SetFeature("G", $arResult["ENTITY_ID"], "wiki");
+}
 
 // set EUV for news
 if (IsModuleInstalled("intranet")) {
@@ -22,7 +29,7 @@ if (IsModuleInstalled("intranet")) {
         )
     );
     $arResult = $dbResult->Fetch();
-    if (!$arResult)
+    if (!$arResult) {
         CSocNetEventUserView::Add(
             array(
                 "ENTITY_TYPE" => "N",
@@ -32,11 +39,17 @@ if (IsModuleInstalled("intranet")) {
                 "USER_ANONYMOUS" => "N"
             )
         );
+    }
 }
 
-$dbResult = CSocNetEventUserView::GetList(array("ENTITY_ID" => "DESC"), Array("ENTITY_TYPE" => "G"), array("ENTITY_ID"));
-while ($arResult = $dbResult->Fetch())
+$dbResult = CSocNetEventUserView::GetList(
+    array("ENTITY_ID" => "DESC"),
+    Array("ENTITY_TYPE" => "G"),
+    array("ENTITY_ID")
+);
+while ($arResult = $dbResult->Fetch()) {
     CSocNetEventUserView::SetFeature("G", $arResult["ENTITY_ID"], "wiki");
+}
 
 // set blog_comment and blog_post for blog
 $dbResult = CSocNetLogEvents::GetList(
@@ -52,8 +65,9 @@ $dbResult = CSocNetLogEvents::GetList(
     false,
     array("ID")
 );
-while ($arResult = $dbResult->Fetch())
+while ($arResult = $dbResult->Fetch()) {
     CSocNetLogEvents::Delete($arResult["ID"]);
+}
 
 $dbResult = CSocNetLogEvents::GetList(array("ENTITY_ID" => "DESC"), Array("EVENT_ID" => "blog"));
 while ($arResult = $dbResult->Fetch()) {
@@ -67,10 +81,11 @@ while ($arResult = $dbResult->Fetch()) {
         "TRANSPORT" => $arResult["TRANSPORT"],
         "VISIBLE" => $arResult["VISIBLE"]
     );
-    if (strlen($arResult["SITE_ID"]) > 0)
+    if ($arResult["SITE_ID"] <> '') {
         $arLogEvent["SITE_ID"] = $arResult["SITE_ID"];
-    else
+    } else {
         $arLogEvent["SITE_ID"] = false;
+    }
 
     $arLogEventToAdd = array_merge($arLogEvent, array("EVENT_ID" => "blog_post"));
     CSocNetLogEvents::Add($arLogEventToAdd);
@@ -96,8 +111,9 @@ $dbResult = CSocNetLogEvents::GetList(
     false,
     array("ID")
 );
-while ($arResult = $dbResult->Fetch())
+while ($arResult = $dbResult->Fetch()) {
     CSocNetLogEvents::Delete($arResult["ID"]);
+}
 
 $dbResult = CSocNetLogEvents::GetList(
     array("ENTITY_ID" => "DESC"),
@@ -117,10 +133,11 @@ while ($arResult = $dbResult->Fetch()) {
         "TRANSPORT" => $arResult["TRANSPORT"],
         "VISIBLE" => $arResult["VISIBLE"]
     );
-    if (strlen($arResult["SITE_ID"]) > 0)
+    if ($arResult["SITE_ID"] <> '') {
         $arLogEvent["SITE_ID"] = $arResult["SITE_ID"];
-    else
+    } else {
         $arLogEvent["SITE_ID"] = false;
+    }
 
     $arLogEventToAdd = array_merge($arLogEvent, array("EVENT_ID" => "system_friends"));
     CSocNetLogEvents::Add($arLogEventToAdd);

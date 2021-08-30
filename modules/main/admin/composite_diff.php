@@ -22,12 +22,14 @@ Loc::loadMessages(__FILE__);
 $request = Context::getCurrent()->getRequest();
 
 $logId = intval($request->get("log_id"));
-$logRecord = LogTable::getList(array(
-    "filter" => array(
-        "ID" => $logId,
-        "TYPE" => \Bitrix\Main\Composite\Debug\Logger::TYPE_CACHE_REWRITING
+$logRecord = LogTable::getList(
+    array(
+        "filter" => array(
+            "ID" => $logId,
+            "TYPE" => \Bitrix\Main\Composite\Debug\Logger::TYPE_CACHE_REWRITING
+        )
     )
-))->fetch();
+)->fetch();
 
 
 $page = null;
@@ -75,8 +77,9 @@ foreach ($diffScript as $scriptRecord) {
         <meta http-equiv="Content-Type" content="text/html; charset=<?= htmlspecialcharsbx(LANG_CHARSET) ?>">
         <meta name="viewport" content="initial-scale=1.0, width=device-width">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <title><?= htmlspecialcharsbx($page["TITLE"]) ?>
-            : <?= Loc::getMessage("MAIN_COMPOSITE_DIFF_VERSION_COMPARISON") ?></title>
+        <title><?= htmlspecialcharsbx($page["TITLE"]) ?>: <?= Loc::getMessage(
+                "MAIN_COMPOSITE_DIFF_VERSION_COMPARISON"
+            ) ?></title>
     </head>
     <body class="adm-composite-diff-body">
 

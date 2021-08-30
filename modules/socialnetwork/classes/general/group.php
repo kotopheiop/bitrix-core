@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 use Bitrix\Main\ModuleManager;
@@ -15,7 +16,7 @@ class CAllSocNetGroup
     {
         global $DB, $APPLICATION, $USER_FIELD_MANAGER, $arSocNetAllowedInitiatePerms, $arSocNetAllowedSpamPerms;
 
-        if ($ACTION != "ADD" && IntVal($ID) <= 0) {
+        if ($ACTION != "ADD" && intval($ID) <= 0) {
             $APPLICATION->ThrowException("System error 870164", "ERROR");
             return false;
         }
@@ -28,26 +29,30 @@ class CAllSocNetGroup
                 && (
                     (is_array($arFields["SITE_ID"]) && count($arFields["SITE_ID"]) <= 0)
                     ||
-                    (!is_array($arFields["SITE_ID"]) && strlen($arFields["SITE_ID"]) <= 0)
+                    (!is_array($arFields["SITE_ID"]) && $arFields["SITE_ID"] == '')
                 )
             )
         ) {
             $APPLICATION->ThrowException(GetMessage("SONET_GG_EMPTY_SITE_ID"), "EMPTY_SITE_ID");
             return false;
         } elseif (is_set($arFields, "SITE_ID")) {
-            if (!is_array($arFields["SITE_ID"]))
+            if (!is_array($arFields["SITE_ID"])) {
                 $arFields["SITE_ID"] = array($arFields["SITE_ID"]);
+            }
 
             foreach ($arFields["SITE_ID"] as $v) {
                 $r = CSite::GetByID($v);
                 if (!$r->Fetch()) {
-                    $APPLICATION->ThrowException(str_replace("#ID#", $v, GetMessage("SONET_GG_ERROR_NO_SITE")), "ERROR_NO_SITE");
+                    $APPLICATION->ThrowException(
+                        str_replace("#ID#", $v, GetMessage("SONET_GG_ERROR_NO_SITE")),
+                        "ERROR_NO_SITE"
+                    );
                     return false;
                 }
             }
         }
 
-        if ((is_set($arFields, "NAME") || $ACTION == "ADD") && strlen($arFields["NAME"]) <= 0) {
+        if ((is_set($arFields, "NAME") || $ACTION == "ADD") && $arFields["NAME"] == '') {
             $APPLICATION->ThrowException(GetMessage("SONET_GB_EMPTY_NAME"), "EMPTY_NAME");
             return false;
         }
@@ -67,7 +72,7 @@ class CAllSocNetGroup
             return false;
         }
 
-        if ((is_set($arFields, "OWNER_ID") || $ACTION == "ADD") && IntVal($arFields["OWNER_ID"]) <= 0) {
+        if ((is_set($arFields, "OWNER_ID") || $ACTION == "ADD") && intval($arFields["OWNER_ID"]) <= 0) {
             $APPLICATION->ThrowException(GetMessage("SONET_GB_EMPTY_OWNER_ID"), "EMPTY_OWNER_ID");
             return false;
         } elseif (is_set($arFields, "OWNER_ID")) {
@@ -78,7 +83,7 @@ class CAllSocNetGroup
             }
         }
 
-        if ((is_set($arFields, "SUBJECT_ID") || $ACTION == "ADD") && IntVal($arFields["SUBJECT_ID"]) <= 0) {
+        if ((is_set($arFields, "SUBJECT_ID") || $ACTION == "ADD") && intval($arFields["SUBJECT_ID"]) <= 0) {
             $APPLICATION->ThrowException(GetMessage("SONET_GB_EMPTY_SUBJECT_ID"), "EMPTY_SUBJECT_ID");
             return false;
         } elseif (is_set($arFields, "SUBJECT_ID")) {
@@ -89,41 +94,73 @@ class CAllSocNetGroup
             }
         }
 
-        if ((is_set($arFields, "ACTIVE") || $ACTION == "ADD") && $arFields["ACTIVE"] != "Y" && $arFields["ACTIVE"] != "N")
+        if ((is_set(
+                    $arFields,
+                    "ACTIVE"
+                ) || $ACTION == "ADD") && $arFields["ACTIVE"] != "Y" && $arFields["ACTIVE"] != "N") {
             $arFields["ACTIVE"] = "Y";
+        }
 
-        if ((is_set($arFields, "VISIBLE") || $ACTION == "ADD") && $arFields["VISIBLE"] != "Y" && $arFields["VISIBLE"] != "N")
+        if ((is_set(
+                    $arFields,
+                    "VISIBLE"
+                ) || $ACTION == "ADD") && $arFields["VISIBLE"] != "Y" && $arFields["VISIBLE"] != "N") {
             $arFields["VISIBLE"] = "Y";
+        }
 
-        if ((is_set($arFields, "OPENED") || $ACTION == "ADD") && $arFields["OPENED"] != "Y" && $arFields["OPENED"] != "N")
+        if ((is_set(
+                    $arFields,
+                    "OPENED"
+                ) || $ACTION == "ADD") && $arFields["OPENED"] != "Y" && $arFields["OPENED"] != "N") {
             $arFields["OPENED"] = "N";
+        }
 
-        if ((is_set($arFields, "CLOSED") || $ACTION == "ADD") && $arFields["CLOSED"] != "Y" && $arFields["CLOSED"] != "N")
+        if ((is_set(
+                    $arFields,
+                    "CLOSED"
+                ) || $ACTION == "ADD") && $arFields["CLOSED"] != "Y" && $arFields["CLOSED"] != "N") {
             $arFields["CLOSED"] = "N";
+        }
 
-        if ((is_set($arFields, "INITIATE_PERMS") || $ACTION == "ADD") && strlen($arFields["INITIATE_PERMS"]) <= 0) {
+        if ((is_set($arFields, "INITIATE_PERMS") || $ACTION == "ADD") && $arFields["INITIATE_PERMS"] == '') {
             $APPLICATION->ThrowException(GetMessage("SONET_UG_EMPTY_INITIATE_PERMS"), "EMPTY_INITIATE_PERMS");
             return false;
-        } elseif (is_set($arFields, "INITIATE_PERMS") && !in_array($arFields["INITIATE_PERMS"], $arSocNetAllowedInitiatePerms)) {
-            $APPLICATION->ThrowException(str_replace("#ID#", $arFields["INITIATE_PERMS"], GetMessage("SONET_UG_ERROR_NO_INITIATE_PERMS")), "ERROR_NO_INITIATE_PERMS");
+        } elseif (is_set($arFields, "INITIATE_PERMS") && !in_array(
+                $arFields["INITIATE_PERMS"],
+                $arSocNetAllowedInitiatePerms
+            )) {
+            $APPLICATION->ThrowException(
+                str_replace("#ID#", $arFields["INITIATE_PERMS"], GetMessage("SONET_UG_ERROR_NO_INITIATE_PERMS")),
+                "ERROR_NO_INITIATE_PERMS"
+            );
             return false;
         }
 
-        if ((is_set($arFields, "SPAM_PERMS") || $ACTION == "ADD") && strlen($arFields["SPAM_PERMS"]) <= 0) {
+        if ((is_set($arFields, "SPAM_PERMS") || $ACTION == "ADD") && $arFields["SPAM_PERMS"] == '') {
             $APPLICATION->ThrowException(GetMessage("SONET_UG_EMPTY_SPAM_PERMS"), "EMPTY_SPAM_PERMS");
             return false;
         } elseif (is_set($arFields, "SPAM_PERMS") && !in_array($arFields["SPAM_PERMS"], $arSocNetAllowedSpamPerms)) {
-            $APPLICATION->ThrowException(str_replace("#ID#", $arFields["SPAM_PERMS"], GetMessage("SONET_UG_ERROR_NO_SPAM_PERMS")), "ERROR_NO_SPAM_PERMS");
+            $APPLICATION->ThrowException(
+                str_replace("#ID#", $arFields["SPAM_PERMS"], GetMessage("SONET_UG_ERROR_NO_SPAM_PERMS")),
+                "ERROR_NO_SPAM_PERMS"
+            );
             return false;
         }
 
-        if (is_set($arFields, "IMAGE_ID") && strlen($arFields["IMAGE_ID"]["name"]) <= 0 && (strlen($arFields["IMAGE_ID"]["del"]) <= 0 || $arFields["IMAGE_ID"]["del"] != "Y"))
+        if (is_set(
+                $arFields,
+                "IMAGE_ID"
+            ) && $arFields["IMAGE_ID"]["name"] == '' && ($arFields["IMAGE_ID"]["del"] == '' || $arFields["IMAGE_ID"]["del"] != "Y")) {
             unset($arFields["IMAGE_ID"]);
+        }
 
         if (is_set($arFields, "IMAGE_ID")) {
             $arResult = CFile::CheckImageFile($arFields["IMAGE_ID"], 0, 0, 0);
-            if (strlen($arResult) > 0) {
-                $APPLICATION->ThrowException(GetMessage("SONET_GP_ERROR_IMAGE_ID") . ": " . $arResult, "ERROR_IMAGE_ID");
+            if ($arResult <> '') {
+                $APPLICATION->ThrowException(
+                    GetMessage("SONET_GP_ERROR_IMAGE_ID") . ": " . $arResult,
+                    "ERROR_IMAGE_ID"
+                );
                 return false;
             }
         }
@@ -132,7 +169,7 @@ class CAllSocNetGroup
             return false;
         }
 
-        return True;
+        return true;
     }
 
     public static function Delete($ID)
@@ -143,8 +180,8 @@ class CAllSocNetGroup
             return false;
         }
 
-        $ID = IntVal($ID);
-        $bSuccess = True;
+        $ID = intval($ID);
+        $bSuccess = true;
 
         $db_events = GetModuleEvents("socialnetwork", "OnBeforeSocNetGroupDelete");
         while ($arEvent = $db_events->Fetch()) {
@@ -167,12 +204,14 @@ class CAllSocNetGroup
         }
 
         if ($bSuccess) {
-            $res = UserToGroupTable::getList([
-                'filter' => [
-                    '=GROUP_ID' => $ID
-                ],
-                'select' => ['USER_ID']
-            ]);
+            $res = UserToGroupTable::getList(
+                [
+                    'filter' => [
+                        '=GROUP_ID' => $ID
+                    ],
+                    'select' => ['USER_ID']
+                ]
+            );
             while ($relationFields = $res->fetch()) {
                 \CSocNetSearch::onUserRelationsChange($relationFields['USER_ID']);
             }
@@ -180,9 +219,11 @@ class CAllSocNetGroup
         }
 
         if ($bSuccess) {
-            Bitrix\Socialnetwork\Integration\Im\Chat\Workgroup::unlinkChat(array(
-                'group_id' => $ID
-            ));
+            Bitrix\Socialnetwork\Integration\Im\Chat\Workgroup::unlinkChat(
+                array(
+                    'group_id' => $ID
+                )
+            );
 
             $bSuccessTmp = true;
             $dbResult = CSocNetFeatures::GetList(
@@ -190,7 +231,10 @@ class CAllSocNetGroup
                 array("ENTITY_ID" => $ID, "ENTITY_TYPE" => SONET_ENTITY_GROUP)
             );
             while ($arResult = $dbResult->Fetch()) {
-                $bSuccessTmp = $DB->Query("DELETE FROM b_sonet_features2perms WHERE FEATURE_ID = " . $arResult["ID"] . "", true);
+                $bSuccessTmp = $DB->Query(
+                    "DELETE FROM b_sonet_features2perms WHERE FEATURE_ID = " . $arResult["ID"] . "",
+                    true
+                );
                 if (!$bSuccessTmp) {
                     break;
                 }
@@ -200,7 +244,13 @@ class CAllSocNetGroup
             }
         }
         if ($bSuccess) {
-            $bSuccess = $DB->Query("DELETE FROM b_sonet_features WHERE ENTITY_ID = " . $ID . " AND ENTITY_TYPE = '" . $DB->ForSql(SONET_ENTITY_GROUP, 1) . "'", true);
+            $bSuccess = $DB->Query(
+                "DELETE FROM b_sonet_features WHERE ENTITY_ID = " . $ID . " AND ENTITY_TYPE = '" . $DB->ForSql(
+                    SONET_ENTITY_GROUP,
+                    1
+                ) . "'",
+                true
+            );
         }
         if ($bSuccess) {
             $dbResult = CSocNetLog::GetList(
@@ -226,13 +276,19 @@ class CAllSocNetGroup
             }
         }
         if ($bSuccess) {
-            $bSuccess = $DB->Query("DELETE FROM b_sonet_log WHERE ENTITY_TYPE = '" . SONET_ENTITY_GROUP . "' AND ENTITY_ID = " . $ID . "", true);
+            $bSuccess = $DB->Query(
+                "DELETE FROM b_sonet_log WHERE ENTITY_TYPE = '" . SONET_ENTITY_GROUP . "' AND ENTITY_ID = " . $ID . "",
+                true
+            );
         }
         if ($bSuccess) {
             $bSuccess = CSocNetLog::DeleteSystemEventsByGroupID($ID);
         }
         if ($bSuccess) {
-            $bSuccess = $DB->Query("DELETE FROM b_sonet_log_events WHERE ENTITY_TYPE = 'G' AND ENTITY_ID = " . $ID . "", true);
+            $bSuccess = $DB->Query(
+                "DELETE FROM b_sonet_log_events WHERE ENTITY_TYPE = 'G' AND ENTITY_ID = " . $ID . "",
+                true
+            );
         }
         if ($bSuccess) {
             $bSuccess = $DB->Query("DELETE FROM b_sonet_group_site WHERE GROUP_ID = " . $ID . "", true);
@@ -293,7 +349,10 @@ class CAllSocNetGroup
         }
 
         if ($bSuccess) {
-            $DB->Query("DELETE FROM b_sonet_event_user_view WHERE ENTITY_TYPE = '" . SONET_ENTITY_GROUP . "' AND ENTITY_ID = " . $ID, true);
+            $DB->Query(
+                "DELETE FROM b_sonet_event_user_view WHERE ENTITY_TYPE = '" . SONET_ENTITY_GROUP . "' AND ENTITY_ID = " . $ID,
+                true
+            );
         }
 
         if ($bSuccess) {
@@ -311,7 +370,7 @@ class CAllSocNetGroup
             return false;
         }
 
-        $userID = IntVal($userID);
+        $userID = intval($userID);
 
         $err = "";
         $dbResult = CSocNetGroup::GetList(array(), array("OWNER_ID" => $userID), false, false, array("ID", "NAME"));
@@ -319,7 +378,7 @@ class CAllSocNetGroup
             $err .= $arResult["NAME"] . "<br>";
         }
 
-        if (strlen($err) <= 0) {
+        if ($err == '') {
             return true;
         } else {
             $err = GetMessage("SONET_GG_ERROR_CANNOT_DELETE_USER_1") . $err;
@@ -331,10 +390,11 @@ class CAllSocNetGroup
 
     public static function SetStat($ID)
     {
-        if (!CSocNetGroup::__ValidateID($ID))
+        if (!CSocNetGroup::__ValidateID($ID)) {
             return false;
+        }
 
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
         $num = CSocNetUserToGroup::GetList(
             array(),
@@ -378,13 +438,15 @@ class CAllSocNetGroup
             return false;
         }
 
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
-        CSocNetGroup::Update($ID, (
-        $date
-            ? array("DATE_ACTIVITY" => $date)
-            : array("=DATE_ACTIVITY" => $DB->CurrentTimeFunction())
-        ),
+        CSocNetGroup::Update(
+            $ID,
+            (
+            $date
+                ? array("DATE_ACTIVITY" => $date)
+                : array("=DATE_ACTIVITY" => $DB->CurrentTimeFunction())
+            ),
             true,
             false,
             false
@@ -408,7 +470,7 @@ class CAllSocNetGroup
             return false;
         }
 
-        $ID = IntVal($ID);
+        $ID = intval($ID);
         $cacheArrayKey = ($bCheckPermissions ? "Y" : "N");
 
         $sonetGroupCache = self::getStaticCache();
@@ -425,7 +487,8 @@ class CAllSocNetGroup
             if (!$bCheckPermissions) {
                 $cache = new CPHPCache;
                 $cache_time = 31536000;
-                $cache_id = "group_" . $ID . "_" . LANGUAGE_ID . "_" . CTimeZone::GetOffset() . "_" . Bitrix\Main\Context::getCurrent()->getCulture()->getDateTimeFormat();
+                $cache_id = "group_" . $ID . "_" . LANGUAGE_ID . "_" . CTimeZone::GetOffset(
+                    ) . "_" . Bitrix\Main\Context::getCurrent()->getCulture()->getDateTimeFormat();
                 $cache_path = "/sonet/group/" . $ID . "/";
             }
 
@@ -449,12 +512,45 @@ class CAllSocNetGroup
                     $arFilter["CHECK_PERMISSIONS"] = $USER->GetID();
                 }
 
-                $arSelect = array("ID", "SITE_ID", "NAME", "DESCRIPTION", "DATE_CREATE", "DATE_UPDATE", "ACTIVE", "VISIBLE", "OPENED", "CLOSED", "SUBJECT_ID", "OWNER_ID", "KEYWORDS", "IMAGE_ID", "NUMBER_OF_MEMBERS", "NUMBER_OF_MODERATORS", "INITIATE_PERMS", "SPAM_PERMS", "DATE_ACTIVITY", "SUBJECT_NAME", "UF_*");
+                $arSelect = array(
+                    "ID",
+                    "SITE_ID",
+                    "NAME",
+                    "DESCRIPTION",
+                    "DATE_CREATE",
+                    "DATE_UPDATE",
+                    "ACTIVE",
+                    "VISIBLE",
+                    "OPENED",
+                    "CLOSED",
+                    "SUBJECT_ID",
+                    "OWNER_ID",
+                    "KEYWORDS",
+                    "IMAGE_ID",
+                    "NUMBER_OF_MEMBERS",
+                    "NUMBER_OF_MODERATORS",
+                    "INITIATE_PERMS",
+                    "SPAM_PERMS",
+                    "DATE_ACTIVITY",
+                    "SUBJECT_NAME",
+                    "UF_*"
+                );
                 if (ModuleManager::isModuleInstalled('intranet')) {
                     $arSelect = array_merge($arSelect, array("PROJECT", "PROJECT_DATE_START", "PROJECT_DATE_FINISH"));
                 }
                 if (ModuleManager::isModuleInstalled('landing')) {
                     $arSelect = array_merge($arSelect, array("LANDING"));
+                }
+                if (ModuleManager::isModuleInstalled('tasks')) {
+                    $arSelect = array_merge(
+                        $arSelect,
+                        [
+                            "SCRUM_OWNER_ID",
+                            "SCRUM_MASTER_ID",
+                            "SCRUM_SPRINT_DURATION",
+                            "SCRUM_TASK_RESPONSIBLE"
+                        ]
+                    );
                 }
                 $dbResult = CSocNetGroup::getList(
                     array(),
@@ -518,34 +614,40 @@ class CAllSocNetGroup
     /***************************************/
     public static function CanUserInitiate($userID, $groupID)
     {
-        $userID = IntVal($userID);
-        $groupID = IntVal($groupID);
-        if ($groupID <= 0)
+        $userID = intval($userID);
+        $groupID = intval($groupID);
+        if ($groupID <= 0) {
             return false;
+        }
 
         $userRoleInGroup = CSocNetUserToGroup::GetUserRole($userID, $groupID);
-        if ($userRoleInGroup == false)
+        if ($userRoleInGroup == false) {
             return false;
+        }
 
         $arGroup = CSocNetGroup::GetById($groupID);
-        if ($arGroup == false)
+        if ($arGroup == false) {
             return false;
+        }
 
         if ($arGroup["INITIATE_PERMS"] == SONET_ROLES_MODERATOR) {
-            if ($userRoleInGroup == SONET_ROLES_MODERATOR || $userRoleInGroup == SONET_ROLES_OWNER)
+            if ($userRoleInGroup == SONET_ROLES_MODERATOR || $userRoleInGroup == SONET_ROLES_OWNER) {
                 return true;
-            else
+            } else {
                 return false;
+            }
         } elseif ($arGroup["INITIATE_PERMS"] == SONET_ROLES_USER) {
-            if ($userRoleInGroup == SONET_ROLES_MODERATOR || $userRoleInGroup == SONET_ROLES_OWNER || $userRoleInGroup == SONET_ROLES_USER)
+            if ($userRoleInGroup == SONET_ROLES_MODERATOR || $userRoleInGroup == SONET_ROLES_OWNER || $userRoleInGroup == SONET_ROLES_USER) {
                 return true;
-            else
+            } else {
                 return false;
+            }
         } elseif ($arGroup["INITIATE_PERMS"] == SONET_ROLES_OWNER) {
-            if ($userRoleInGroup == SONET_ROLES_OWNER)
+            if ($userRoleInGroup == SONET_ROLES_OWNER) {
                 return true;
-            else
+            } else {
                 return false;
+            }
         }
 
         return false;
@@ -553,42 +655,50 @@ class CAllSocNetGroup
 
     public static function CanUserViewGroup($userID, $groupID)
     {
-        $userID = IntVal($userID);
-        $groupID = IntVal($groupID);
-        if ($groupID <= 0)
+        $userID = intval($userID);
+        $groupID = intval($groupID);
+        if ($groupID <= 0) {
             return false;
+        }
 
         $arGroup = CSocNetGroup::GetById($groupID);
-        if ($arGroup == false)
+        if ($arGroup == false) {
             return false;
+        }
 
-        if ($arGroup["VISIBLE"] == "Y")
+        if ($arGroup["VISIBLE"] == "Y") {
             return true;
+        }
 
         $userRoleInGroup = CSocNetUserToGroup::GetUserRole($userID, $groupID);
-        if ($userRoleInGroup == false)
+        if ($userRoleInGroup == false) {
             return false;
+        }
 
         return in_array($userRoleInGroup, array(SONET_ROLES_OWNER, SONET_ROLES_MODERATOR, SONET_ROLES_USER));
     }
 
     public static function CanUserReadGroup($userID, $groupID)
     {
-        $userID = IntVal($userID);
-        $groupID = IntVal($groupID);
-        if ($groupID <= 0)
+        $userID = intval($userID);
+        $groupID = intval($groupID);
+        if ($groupID <= 0) {
             return false;
+        }
 
         $arGroup = CSocNetGroup::GetById($groupID);
-        if ($arGroup == false)
+        if ($arGroup == false) {
             return false;
+        }
 
-        if ($arGroup["OPENED"] == "Y")
+        if ($arGroup["OPENED"] == "Y") {
             return true;
+        }
 
         $userRoleInGroup = CSocNetUserToGroup::GetUserRole($userID, $groupID);
-        if ($userRoleInGroup == false)
+        if ($userRoleInGroup == false) {
             return false;
+        }
 
         return in_array($userRoleInGroup, array(SONET_ROLES_OWNER, SONET_ROLES_MODERATOR, SONET_ROLES_USER));
     }
@@ -600,7 +710,7 @@ class CAllSocNetGroup
     {
         global $APPLICATION, $DB;
 
-        $ownerID = IntVal($ownerID);
+        $ownerID = intval($ownerID);
         if ($ownerID <= 0) {
             $APPLICATION->ThrowException(GetMessage("SONET_UR_EMPTY_OWNERID") . ". ", "ERROR_OWNERID");
             return false;
@@ -628,7 +738,7 @@ class CAllSocNetGroup
         $arFields["ACTIVE"] = "Y";
         $arFields["OWNER_ID"] = $ownerID;
 
-        if (!is_set($arFields, "SPAM_PERMS") || strlen($arFields["SPAM_PERMS"]) <= 0) {
+        if (!is_set($arFields, "SPAM_PERMS") || $arFields["SPAM_PERMS"] == '') {
             $arFields["SPAM_PERMS"] = SONET_ROLES_OWNER;
         }
 
@@ -636,7 +746,7 @@ class CAllSocNetGroup
 
         if (
             !$groupID
-            || IntVal($groupID) <= 0
+            || intval($groupID) <= 0
         ) {
             $errorMessage = $errorID = "";
             if ($e = $APPLICATION->getException()) {
@@ -644,7 +754,7 @@ class CAllSocNetGroup
                 $errorID = $e->GetID();
 
                 if (
-                    StrLen($errorID) <= 0
+                    $errorID == ''
                     && isset($e->messages)
                     && is_array($e->messages)
                     && is_array($e->messages[0])
@@ -654,11 +764,11 @@ class CAllSocNetGroup
                 }
             }
 
-            if (StrLen($errorMessage) <= 0) {
+            if ($errorMessage == '') {
                 $errorMessage = GetMessage("SONET_UR_ERROR_CREATE_GROUP") . ". ";
             }
 
-            if (StrLen($errorID) <= 0) {
+            if ($errorID == '') {
                 $errorID = "ERROR_CREATE_GROUP";
             }
 
@@ -685,7 +795,7 @@ class CAllSocNetGroup
                 $errorMessage = $e->GetString();
             }
 
-            if (StrLen($errorMessage) <= 0) {
+            if ($errorMessage == '') {
                 $errorMessage = GetMessage("SONET_UR_ERROR_CREATE_U_GROUP") . ". ";
             }
 
@@ -712,8 +822,9 @@ class CAllSocNetGroup
     {
         global $APPLICATION;
 
-        if (IntVal($ID) . "|" == $ID . "|")
+        if (intval($ID) . "|" == $ID . "|") {
             return true;
+        }
 
         $APPLICATION->ThrowException(GetMessage("SONET_WRONG_PARAMETER_ID"), "ERROR_NO_ID");
         return false;
@@ -722,43 +833,48 @@ class CAllSocNetGroup
     public static function GetFilterOperation($key)
     {
         $strNegative = "N";
-        if (substr($key, 0, 1) == "!") {
-            $key = substr($key, 1);
+        if (mb_substr($key, 0, 1) == "!") {
+            $key = mb_substr($key, 1);
             $strNegative = "Y";
         }
 
         $strOrNull = "N";
-        if (substr($key, 0, 1) == "+") {
-            $key = substr($key, 1);
+        if (mb_substr($key, 0, 1) == "+") {
+            $key = mb_substr($key, 1);
             $strOrNull = "Y";
         }
 
-        if (substr($key, 0, 2) == ">=") {
-            $key = substr($key, 2);
+        if (mb_substr($key, 0, 2) == ">=") {
+            $key = mb_substr($key, 2);
             $strOperation = ">=";
-        } elseif (substr($key, 0, 1) == ">") {
-            $key = substr($key, 1);
+        } elseif (mb_substr($key, 0, 1) == ">") {
+            $key = mb_substr($key, 1);
             $strOperation = ">";
-        } elseif (substr($key, 0, 2) == "<=") {
-            $key = substr($key, 2);
+        } elseif (mb_substr($key, 0, 2) == "<=") {
+            $key = mb_substr($key, 2);
             $strOperation = "<=";
-        } elseif (substr($key, 0, 1) == "<") {
-            $key = substr($key, 1);
+        } elseif (mb_substr($key, 0, 1) == "<") {
+            $key = mb_substr($key, 1);
             $strOperation = "<";
-        } elseif (substr($key, 0, 1) == "@") {
-            $key = substr($key, 1);
+        } elseif (mb_substr($key, 0, 1) == "@") {
+            $key = mb_substr($key, 1);
             $strOperation = "IN";
-        } elseif (substr($key, 0, 1) == "~") {
-            $key = substr($key, 1);
+        } elseif (mb_substr($key, 0, 1) == "~") {
+            $key = mb_substr($key, 1);
             $strOperation = "LIKE";
-        } elseif (substr($key, 0, 1) == "%") {
-            $key = substr($key, 1);
+        } elseif (mb_substr($key, 0, 1) == "%") {
+            $key = mb_substr($key, 1);
             $strOperation = "QUERY";
         } else {
             $strOperation = "=";
         }
 
-        return array("FIELD" => $key, "NEGATIVE" => $strNegative, "OPERATION" => $strOperation, "OR_NULL" => $strOrNull);
+        return array(
+            "FIELD" => $key,
+            "NEGATIVE" => $strNegative,
+            "OPERATION" => $strOperation,
+            "OR_NULL" => $strOrNull
+        );
     }
 
     public static function PrepareSql(&$arFields, $arOrder, $arFilter, $arGroupBy, $arSelectFields, $arUF = array())
@@ -788,18 +904,20 @@ class CAllSocNetGroup
         if (is_array($arGroupBy) && count($arGroupBy) > 0) {
             $arSelectFields = $arGroupBy;
             foreach ($arGroupBy as $key => $val) {
-                $val = strtoupper($val);
-                $key = strtoupper($key);
+                $val = mb_strtoupper($val);
+                $key = mb_strtoupper($key);
                 if (array_key_exists($val, $arFields) && !in_array($key, $arGroupByFunct)) {
-                    if (strlen($strSqlGroupBy) > 0)
+                    if ($strSqlGroupBy <> '') {
                         $strSqlGroupBy .= ", ";
+                    }
                     $strSqlGroupBy .= $arFields[$val]["FIELD"];
 
                     if (isset($arFields[$val]["FROM"])
-                        && strlen($arFields[$val]["FROM"]) > 0
+                        && $arFields[$val]["FROM"] <> ''
                         && !in_array($arFields[$val]["FROM"], $arAlreadyJoined)) {
-                        if (strlen($strSqlFrom) > 0)
+                        if ($strSqlFrom <> '') {
                             $strSqlFrom .= " ";
+                        }
                         $strSqlFrom .= $arFields[$val]["FROM"];
                         $arAlreadyJoined[] = $arFields[$val]["FROM"];
                     }
@@ -830,74 +948,87 @@ class CAllSocNetGroup
         $arAlreadyJoinedDiff = array_diff($arAlreadyJoined, $arAlreadyJoinedOld);
 
         foreach ($arAlreadyJoinedDiff as $from_tmp) {
-            if (strlen($strSqlFrom) > 0)
+            if ($strSqlFrom <> '') {
                 $strSqlFrom .= " ";
+            }
             $strSqlFrom .= $from_tmp;
         }
 
         if ($obUserFieldsSql) {
             $r = $obUserFieldsSql->GetFilter();
-            if (strlen($r) > 0)
-                $strSqlWhere .= (strlen($strSqlWhere) > 0 ? " AND" : "") . " (" . $r . ") ";
+            if ($r <> '') {
+                $strSqlWhere .= ($strSqlWhere <> '' ? " AND" : "") . " (" . $r . ") ";
+            }
         }
         // <-- WHERE
 
         // ORDER BY -->
         $arSqlOrder = Array();
         foreach ($arOrder as $by => $order) {
-            $by = strtoupper($by);
-            $order = strtoupper($order);
+            $by = mb_strtoupper($by);
+            $order = mb_strtoupper($order);
 
-            if ($order != "ASC")
+            if ($order != "ASC") {
                 $order = "DESC";
-            else
+            } else {
                 $order = "ASC";
+            }
 
             if (array_key_exists($by, $arFields)) {
                 if ($arFields[$by]["TYPE"] == "datetime" || $arFields[$by]["TYPE"] == "date") {
                     $arSqlOrder[] = " " . $by . "_X1 " . $order . " ";
-                    if (!is_array($arSelectFields) || !in_array($by, $arSelectFields))
+                    if (!is_array($arSelectFields) || !in_array($by, $arSelectFields)) {
                         $arSelectFields[] = $by;
-                } else
+                    }
+                } else {
                     $arSqlOrder[] = " " . $arFields[$by]["FIELD"] . " " . $order . " ";
+                }
 
                 if (isset($arFields[$by]["FROM"])
-                    && strlen($arFields[$by]["FROM"]) > 0
+                    && $arFields[$by]["FROM"] <> ''
                     && !in_array($arFields[$by]["FROM"], $arAlreadyJoined)) {
-                    if (strlen($strSqlFrom) > 0)
+                    if ($strSqlFrom <> '') {
                         $strSqlFrom .= " ";
+                    }
                     $strSqlFrom .= $arFields[$by]["FROM"];
                     $arAlreadyJoined[] = $arFields[$by]["FROM"];
                 }
-            } elseif ($obUserFieldsSql && $s = $obUserFieldsSql->GetOrder($by))
+            } elseif ($obUserFieldsSql && $s = $obUserFieldsSql->GetOrder($by)) {
                 $arSqlOrder[$by] = " " . $s . " " . $order . " ";
+            }
         }
 
         $strSqlOrderBy = "";
         DelDuplicateSort($arSqlOrder);
         $tmp_count = count($arSqlOrder);
         for ($i = 0; $i < $tmp_count; $i++) {
-            if (strlen($strSqlOrderBy) > 0)
+            if ($strSqlOrderBy <> '') {
                 $strSqlOrderBy .= ", ";
+            }
 
-            if (strtoupper($DB->type) == "ORACLE") {
-                if (substr($arSqlOrder[$i], -3) == "ASC")
+            if ($DB->type == "ORACLE") {
+                if (mb_substr($arSqlOrder[$i], -3) == "ASC") {
                     $strSqlOrderBy .= $arSqlOrder[$i] . " NULLS FIRST";
-                else
+                } else {
                     $strSqlOrderBy .= $arSqlOrder[$i] . " NULLS LAST";
-            } else
+                }
+            } else {
                 $strSqlOrderBy .= $arSqlOrder[$i];
+            }
         }
         // <-- ORDER BY
 
         // SELECT -->
         $arFieldsKeys = array_keys($arFields);
 
-        if (is_array($arGroupBy) && count($arGroupBy) == 0)
+        if (is_array($arGroupBy) && count($arGroupBy) == 0) {
             $strSqlSelect = "COUNT(%%_DISTINCT_%% " . $arFields[$arFieldsKeys[0]]["FIELD"] . ") as CNT ";
-        else {
-            if (isset($arSelectFields) && !is_array($arSelectFields) && is_string($arSelectFields) && strlen($arSelectFields) > 0 && array_key_exists($arSelectFields, $arFields))
+        } else {
+            if (isset($arSelectFields) && !is_array($arSelectFields) && is_string(
+                    $arSelectFields
+                ) && $arSelectFields <> '' && array_key_exists($arSelectFields, $arFields)) {
                 $arSelectFields = array($arSelectFields);
+            }
 
             if (!isset($arSelectFields)
                 || !is_array($arSelectFields)
@@ -906,64 +1037,87 @@ class CAllSocNetGroup
                 $tmp_count = count($arFieldsKeys);
                 for ($i = 0; $i < $tmp_count; $i++) {
                     if (isset($arFields[$arFieldsKeys[$i]]["WHERE_ONLY"])
-                        && $arFields[$arFieldsKeys[$i]]["WHERE_ONLY"] == "Y")
+                        && $arFields[$arFieldsKeys[$i]]["WHERE_ONLY"] == "Y") {
                         continue;
+                    }
 
-                    if (strlen($strSqlSelect) > 0)
+                    if ($strSqlSelect <> '') {
                         $strSqlSelect .= ", ";
+                    }
 
                     if ($arFields[$arFieldsKeys[$i]]["TYPE"] == "datetime") {
-                        if (array_key_exists($arFieldsKeys[$i], $arOrder))
+                        if (array_key_exists($arFieldsKeys[$i], $arOrder)) {
                             $strSqlSelect .= $arFields[$arFieldsKeys[$i]]["FIELD"] . " as " . $arFieldsKeys[$i] . "_X1, ";
+                        }
 
-                        $strSqlSelect .= $DB->DateToCharFunction($arFields[$arFieldsKeys[$i]]["FIELD"], "FULL") . " as " . $arFieldsKeys[$i];
+                        $strSqlSelect .= $DB->DateToCharFunction(
+                                $arFields[$arFieldsKeys[$i]]["FIELD"],
+                                "FULL"
+                            ) . " as " . $arFieldsKeys[$i];
                     } elseif ($arFields[$arFieldsKeys[$i]]["TYPE"] == "date") {
-                        if (array_key_exists($arFieldsKeys[$i], $arOrder))
+                        if (array_key_exists($arFieldsKeys[$i], $arOrder)) {
                             $strSqlSelect .= $arFields[$arFieldsKeys[$i]]["FIELD"] . " as " . $arFieldsKeys[$i] . "_X1, ";
+                        }
 
-                        $strSqlSelect .= $DB->DateToCharFunction($arFields[$arFieldsKeys[$i]]["FIELD"], "SHORT") . " as " . $arFieldsKeys[$i];
-                    } else
+                        $strSqlSelect .= $DB->DateToCharFunction(
+                                $arFields[$arFieldsKeys[$i]]["FIELD"],
+                                "SHORT"
+                            ) . " as " . $arFieldsKeys[$i];
+                    } else {
                         $strSqlSelect .= $arFields[$arFieldsKeys[$i]]["FIELD"] . " as " . $arFieldsKeys[$i];
+                    }
 
                     if (isset($arFields[$arFieldsKeys[$i]]["FROM"])
-                        && strlen($arFields[$arFieldsKeys[$i]]["FROM"]) > 0
+                        && $arFields[$arFieldsKeys[$i]]["FROM"] <> ''
                         && !in_array($arFields[$arFieldsKeys[$i]]["FROM"], $arAlreadyJoined)) {
-                        if (strlen($strSqlFrom) > 0)
+                        if ($strSqlFrom <> '') {
                             $strSqlFrom .= " ";
+                        }
                         $strSqlFrom .= $arFields[$arFieldsKeys[$i]]["FROM"];
                         $arAlreadyJoined[] = $arFields[$arFieldsKeys[$i]]["FROM"];
                     }
                 }
             } else {
                 foreach ($arSelectFields as $key => $val) {
-                    $val = strtoupper($val);
-                    $key = strtoupper($key);
+                    $val = mb_strtoupper($val);
+                    $key = mb_strtoupper($key);
                     if (array_key_exists($val, $arFields)) {
-                        if (strlen($strSqlSelect) > 0)
+                        if ($strSqlSelect <> '') {
                             $strSqlSelect .= ", ";
+                        }
 
-                        if (in_array($key, $arGroupByFunct))
+                        if (in_array($key, $arGroupByFunct)) {
                             $strSqlSelect .= $key . "(" . $arFields[$val]["FIELD"] . ") as " . $val;
-                        else {
+                        } else {
                             if ($arFields[$val]["TYPE"] == "datetime") {
-                                if (array_key_exists($val, $arOrder))
+                                if (array_key_exists($val, $arOrder)) {
                                     $strSqlSelect .= $arFields[$val]["FIELD"] . " as " . $val . "_X1, ";
+                                }
 
-                                $strSqlSelect .= $DB->DateToCharFunction($arFields[$val]["FIELD"], "FULL") . " as " . $val;
+                                $strSqlSelect .= $DB->DateToCharFunction(
+                                        $arFields[$val]["FIELD"],
+                                        "FULL"
+                                    ) . " as " . $val;
                             } elseif ($arFields[$val]["TYPE"] == "date") {
-                                if (array_key_exists($val, $arOrder))
+                                if (array_key_exists($val, $arOrder)) {
                                     $strSqlSelect .= $arFields[$val]["FIELD"] . " as " . $val . "_X1, ";
+                                }
 
-                                $strSqlSelect .= $DB->DateToCharFunction($arFields[$val]["FIELD"], "SHORT") . " as " . $val;
-                            } else
+                                $strSqlSelect .= $DB->DateToCharFunction(
+                                        $arFields[$val]["FIELD"],
+                                        "SHORT"
+                                    ) . " as " . $val;
+                            } else {
                                 $strSqlSelect .= $arFields[$val]["FIELD"] . " as " . $val;
+                            }
                         }
 
                         if (isset($arFields[$val]["FROM"])
-                            && strlen($arFields[$val]["FROM"]) > 0
+                            && $arFields[$val]["FROM"] <> ''
                             && !in_array($arFields[$val]["FROM"], $arAlreadyJoined)) {
-                            if (strlen($strSqlFrom) > 0)
+                            if ($strSqlFrom <> '') {
                                 $strSqlFrom .= " ";
+                            }
                             $strSqlFrom .= $arFields[$val]["FROM"];
                             $arAlreadyJoined[] = $arFields[$val]["FROM"];
                         }
@@ -971,11 +1125,12 @@ class CAllSocNetGroup
                 }
             }
 
-            if ($obUserFieldsSql)
-                $strSqlSelect .= (strlen($strSqlSelect) <= 0 ? $arFields["ID"]["FIELD"] : "") . $obUserFieldsSql->GetSelect();
+            if ($obUserFieldsSql) {
+                $strSqlSelect .= ($strSqlSelect == '' ? $arFields["ID"]["FIELD"] : "") . $obUserFieldsSql->GetSelect();
+            }
 
-            if (strlen($strSqlGroupBy) > 0) {
-                if (strlen($strSqlSelect) > 0) {
+            if ($strSqlGroupBy <> '') {
+                if ($strSqlSelect <> '') {
                     $strSqlSelect .= ", ";
                 }
                 $strSqlSelect .= "COUNT(%%_DISTINCT_%% " . $arFields[$arFieldsKeys[0]]["FIELD"] . ") as CNT";
@@ -1014,14 +1169,16 @@ class CAllSocNetGroup
             $strVal = "";
 
             foreach ($group_id as $val) {
-                if (strlen($strVal) > 0) {
+                if ($strVal <> '') {
                     $strVal .= ', ';
                 }
                 $strVal .= intval($val);
             }
             $strSql = "SELECT L.*, SGS.* FROM b_sonet_group_site SGS, b_lang L WHERE L.LID=SGS.SITE_ID AND SGS.GROUP_ID IN (" . $strVal . ")";
         } else {
-            $strSql = "SELECT L.*, SGS.* FROM b_sonet_group_site SGS, b_lang L WHERE L.LID=SGS.SITE_ID AND SGS.GROUP_ID=" . IntVal($group_id);
+            $strSql = "SELECT L.*, SGS.* FROM b_sonet_group_site SGS, b_lang L WHERE L.LID=SGS.SITE_ID AND SGS.GROUP_ID=" . intval(
+                    $group_id
+                );
         }
 
         return $DB->Query($strSql);
@@ -1052,20 +1209,26 @@ class CAllSocNetGroup
     public static function OnBeforeLangDelete($lang)
     {
         global $APPLICATION, $DB;
-        $r = $DB->Query("
+        $r = $DB->Query(
+            "
 			SELECT GROUP_ID
 			FROM b_sonet_group_site
 			WHERE SITE_ID='" . $DB->ForSQL($lang, 2) . "'
 			ORDER BY GROUP_ID
-		");
+		"
+        );
         $arSocNetGroups = array();
-        while ($a = $r->Fetch())
+        while ($a = $r->Fetch()) {
             $arSocNetGroups[] = $a["GROUP_ID"];
+        }
         if (count($arSocNetGroups) > 0) {
-            $APPLICATION->ThrowException(GetMessage("SONET_GROUP_SITE_LINKS_EXISTS", array("#ID_LIST#" => implode(", ", $arSocNetGroups))));
+            $APPLICATION->ThrowException(
+                GetMessage("SONET_GROUP_SITE_LINKS_EXISTS", array("#ID_LIST#" => implode(", ", $arSocNetGroups)))
+            );
             return false;
-        } else
+        } else {
             return true;
+        }
     }
 
     public static function SearchIndex($groupId, $arSiteID = array(), $arGroupOld = array(), $bAutoSubscribe = true)
@@ -1095,12 +1258,30 @@ class CAllSocNetGroup
                         && !empty($arSiteID)
                     ) {
                         foreach ($arSiteID as $site_id_tmp) {
-                            $arSearchIndexSiteID[$site_id_tmp] = str_replace("#group_id#", $groupId, COption::GetOptionString("socialnetwork", "group_path_template", "/workgroups/group/#group_id#/", $site_id_tmp));
+                            $arSearchIndexSiteID[$site_id_tmp] = str_replace(
+                                "#group_id#",
+                                $groupId,
+                                COption::GetOptionString(
+                                    "socialnetwork",
+                                    "group_path_template",
+                                    "/workgroups/group/#group_id#/",
+                                    $site_id_tmp
+                                )
+                            );
                         }
                     } else {
                         $rsGroupSite = CSocNetGroup::GetSite($groupId);
                         while ($arGroupSite = $rsGroupSite->Fetch()) {
-                            $arSearchIndexSiteID[$arGroupSite["LID"]] = str_replace("#group_id#", $groupId, COption::GetOptionString("socialnetwork", "group_path_template", "/workgroups/group/#group_id#/", $arGroupSite["LID"]));
+                            $arSearchIndexSiteID[$arGroupSite["LID"]] = str_replace(
+                                "#group_id#",
+                                $groupId,
+                                COption::GetOptionString(
+                                    "socialnetwork",
+                                    "group_path_template",
+                                    "/workgroups/group/#group_id#/",
+                                    $arGroupSite["LID"]
+                                )
+                            );
                         }
                     }
 
@@ -1128,7 +1309,7 @@ class CAllSocNetGroup
                         "TAGS" => $arGroupNew["~KEYWORDS"],
                     );
 
-                    CSearch::Index("socialnetwork", "G" . $groupId, $arSearchIndex, True);
+                    CSearch::Index("socialnetwork", "G" . $groupId, $arSearchIndex, true);
                 }
             }
         }

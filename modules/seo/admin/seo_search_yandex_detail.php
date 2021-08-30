@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 define('ADMIN_MODULE_NAME', 'seo');
@@ -40,8 +41,9 @@ if ($domain) {
         }
     }
 
-    if (!$bFound)
+    if (!$bFound) {
         $domain = false;
+    }
 }
 
 if (!$domain) {
@@ -55,7 +57,8 @@ $APPLICATION->SetAdditionalCSS('/bitrix/panel/seo/seo.css');
 $engine = new Engine\Yandex();
 
 $siteDomainEnc = Converter::getHtmlConverter()->encode($arDomain['DOMAIN']);
-$siteDomainEncView = Converter::getHtmlConverter()->encode(\CBXPunycode::ToUnicode($arDomain['DOMAIN'], $e = null));
+$e = [];
+$siteDomainEncView = Converter::getHtmlConverter()->encode(\CBXPunycode::ToUnicode($arDomain['DOMAIN'], $e));
 $siteDirEnc = Converter::getHtmlConverter()->encode($arDomain['SITE_DIR']);
 try {
     $arSiteInfo = $engine->getSiteInfo($arDomain['DOMAIN'], $arDomain['SITE_DIR']);
@@ -66,10 +69,27 @@ try {
 }
 
 $aTabs = array(
-    array("DIV" => "seo_info1", "TAB" => Loc::getMessage('SEO_DETAIL_INFO'), "ICON" => "main_settings", "TITLE" => Loc::getMessage('SEO_DETAIL_INFO_TITLE', array('#DOMAIN#' => $siteDomainEncView))),
-    array("DIV" => "seo_info2", "TAB" => Loc::getMessage('SEO_DETAIL_TOP_QUERIES'), "ICON" => "main_settings", "TITLE" => Loc::getMessage('SEO_DETAIL_TOP_QUERIES_TITLE', array('#DOMAIN#' => $siteDomainEncView)), 'ONSELECT' => 'window.BXLoadInfo(\'top-queries\')'),
+    array(
+        "DIV" => "seo_info1",
+        "TAB" => Loc::getMessage('SEO_DETAIL_INFO'),
+        "ICON" => "main_settings",
+        "TITLE" => Loc::getMessage('SEO_DETAIL_INFO_TITLE', array('#DOMAIN#' => $siteDomainEncView))
+    ),
+    array(
+        "DIV" => "seo_info2",
+        "TAB" => Loc::getMessage('SEO_DETAIL_TOP_QUERIES'),
+        "ICON" => "main_settings",
+        "TITLE" => Loc::getMessage('SEO_DETAIL_TOP_QUERIES_TITLE', array('#DOMAIN#' => $siteDomainEncView)),
+        'ONSELECT' => 'window.BXLoadInfo(\'top-queries\')'
+    ),
 //	array("DIV" => "seo_info3", "TAB" => Loc::getMessage('SEO_DETAIL_CRAWLING'), "ICON" => "main_settings", "TITLE" => Loc::getMessage('SEO_DETAIL_CRAWLING_TITLE', array('#DOMAIN#' => $siteDomainEncView)), 'ONSELECT' => 'window.BXLoadInfo(\'crawling\')'),
-    array("DIV" => "seo_info4", "TAB" => Loc::getMessage('SEO_DETAIL_ORIGINAL'), "ICON" => "main_settings", "TITLE" => Loc::getMessage('SEO_DETAIL_ORIGINAL_TITLE', array('#DOMAIN#' => $siteDomainEncView)), 'ONSELECT' => 'window.BXLoadInfo(\'original_texts\')'),
+    array(
+        "DIV" => "seo_info4",
+        "TAB" => Loc::getMessage('SEO_DETAIL_ORIGINAL'),
+        "ICON" => "main_settings",
+        "TITLE" => Loc::getMessage('SEO_DETAIL_ORIGINAL_TITLE', array('#DOMAIN#' => $siteDomainEncView)),
+        'ONSELECT' => 'window.BXLoadInfo(\'original_texts\')'
+    ),
 );
 
 $tabControl = new CAdminTabControl("seoYandexTabControl", $aTabs, true, true);
@@ -100,9 +120,9 @@ $siteNameEnc = Converter::getHtmlConverter()->encode($arDomain['SITE_NAME']);
     </tr>
     <tr>
         <td><?= Loc::getMessage('SEO_SITE') ?>:</td>
-        <td>
-            [<a href="site_edit.php?lang=<?= LANGUAGE_ID ?>&amp;LID=<?= urlencode($siteIdEnc) ?>"><?= $siteIdEnc ?></a>] <?= $siteNameEnc ?>
-        </td>
+        <td>[<a href="site_edit.php?lang=<?= LANGUAGE_ID ?>&amp;LID=<?= urlencode(
+                $siteIdEnc
+            ) ?>"><?= $siteIdEnc ?></a>] <?= $siteNameEnc ?></td>
     </tr>
 <?
 if (is_array($arSiteInfo[$domain])) {
@@ -165,15 +185,17 @@ if (is_array($arSiteInfo[$domain])) {
     ?>
     <tr>
         <td colspan="2" align="center"><?= BeginNote() ?><a href="http://webmaster.yandex.ru/"
-                                                            target="_blank"><?= Loc::getMessage('SEO_YANDEX_WEBMASTER_TOOLS_LINK') ?></a><?= EndNote() ?>
-        </td>
+                                                            target="_blank"><?= Loc::getMessage(
+                    'SEO_YANDEX_WEBMASTER_TOOLS_LINK'
+                ) ?></a><?= EndNote() ?></td>
     </tr>
     <?
 } else {
     ?>
     <tr>
         <td></td>
-        <td><?= BeginNote(), Loc::getMessage('SEO_ERROR_NO_INFO', array("#DOMAIN#" => $siteDomainEncView)), EndNote() ?></td>
+        <td><?= BeginNote(), Loc::getMessage('SEO_ERROR_NO_INFO', array("#DOMAIN#" => $siteDomainEncView)), EndNote(
+            ) ?></td>
     </tr>
     <?
 }
@@ -182,8 +204,8 @@ $tabControl->BeginNextTab();
 ?>
     <tr>
         <td>
-            <div id="seo_yandex_top-queries"
-                 align="center"><?= BeginNote(), Loc::getMessage('SEO_LOADING'), EndNote(); ?></div>
+            <div id="seo_yandex_top-queries" align="center"><?= BeginNote(), Loc::getMessage('SEO_LOADING'), EndNote(
+                ); ?></div>
         </td>
     </tr>
 <?
@@ -191,8 +213,8 @@ $tabControl->BeginNextTab();
 ?>
     <tr>
         <td>
-            <div id="seo_yandex_original_texts"
-                 align="center"><?= BeginNote(), Loc::getMessage('SEO_LOADING'), EndNote(); ?></div>
+            <div id="seo_yandex_original_texts" align="center"><?= BeginNote(), Loc::getMessage('SEO_LOADING'), EndNote(
+                ); ?></div>
         </td>
     </tr>
     <tr>
@@ -205,7 +227,9 @@ $tabControl->End();
 
         function BXLoadInfo(action) {
             BX.ajax.loadJSON(
-                '/bitrix/tools/seo_yandex.php?action=' + action + '&domain=<?=urlencode($arDomain['DOMAIN'])?>&dir=<?=urlencode($arDomain['SITE_DIR'])?>&<?=bitrix_sessid_get()?>',
+                '/bitrix/tools/seo_yandex.php?action=' + action + '&domain=<?=urlencode(
+                    $arDomain['DOMAIN']
+                )?>&dir=<?=urlencode($arDomain['SITE_DIR'])?>&<?=bitrix_sessid_get()?>',
                 function (res) {
                     var node = BX('seo_yandex_' + action);
                     if (!!node) {
@@ -217,7 +241,15 @@ $tabControl->End();
                             switch (action) {
                                 case 'original_texts':
                                     if (res.count > 0) {
-                                        s += '<table class="internal" width="70%"><tr><td width="50%" align="right"><?=CUtil::JSEscape(Loc::getMessage('SEO_DETAIL_ORIGINAL_TOTAL'))?>:</td><td width="50%"><b>' + res.count + '</b></td></tr><tr><td align="right"><?=CUtil::JSEscape(Loc::getMessage('SEO_DETAIL_ORIGINAL_CAN_ADD'))?>:</td><td><b>' + (res['can-add'] ? '<?=CUtil::JSEscape(Loc::getMessage('MAIN_YES'))?> (' + res['quota_remainder'] + ')' : '<?=CUtil::JSEscape(Loc::getMessage('MAIN_NO'))?>') + '</b></td></tr><tr><td valign="top" colspan="2"><ol>';
+                                        s += '<table class="internal" width="70%"><tr><td width="50%" align="right"><?=CUtil::JSEscape(
+                                            Loc::getMessage('SEO_DETAIL_ORIGINAL_TOTAL')
+                                        )?>:</td><td width="50%"><b>' + res.count + '</b></td></tr><tr><td align="right"><?=CUtil::JSEscape(
+                                            Loc::getMessage('SEO_DETAIL_ORIGINAL_CAN_ADD')
+                                        )?>:</td><td><b>' + (res['can-add'] ? '<?=CUtil::JSEscape(
+                                            Loc::getMessage('MAIN_YES')
+                                        )?> (' + res['quota_remainder'] + ')' : '<?=CUtil::JSEscape(
+                                            Loc::getMessage('MAIN_NO')
+                                        )?>') + '</b></td></tr><tr><td valign="top" colspan="2"><ol>';
 
                                         for (i = 0; i < res.original_texts.length; i++) {
                                             s += '<li>' + BX.util.htmlspecialchars(res.original_texts[i]['content_snippet']) + '</li>';
@@ -225,26 +257,40 @@ $tabControl->End();
 
                                         s += '</ol></td></tr></table>';
                                     } else {
-                                        s += '<b><?=CUtil::JSEscape(Loc::getMessage('SEO_DETAIL_ORIGINAL_EMPTY'))?></b>';
+                                        s += '<b><?=CUtil::JSEscape(
+                                            Loc::getMessage('SEO_DETAIL_ORIGINAL_EMPTY')
+                                        )?></b>';
                                     }
                                     break;
                                 case 'top-queries':
                                     if (res['QUERIES'].length > 0) {
 //								dates
-                                        s += '<i><?=CUtil::JSEscape(Loc::getMessage('SEO_DETAIL_QUERIES_PERIOD_FROM'))?> ' + res['DATE_FROM']
-                                            + ' <?=CUtil::JSEscape(Loc::getMessage('SEO_DETAIL_QUERIES_PERIOD_TO'))?> ' + res['DATE_TO'] + '</i><br><br>';
+                                        s += '<i><?=CUtil::JSEscape(
+                                                Loc::getMessage('SEO_DETAIL_QUERIES_PERIOD_FROM')
+                                            )?> ' + res['DATE_FROM']
+                                            + ' <?=CUtil::JSEscape(
+                                                Loc::getMessage('SEO_DETAIL_QUERIES_PERIOD_TO')
+                                            )?> ' + res['DATE_TO'] + '</i><br><br>';
 
 //								header
                                         s += '<table class="internal" width="70%"><tr class="heading">';
                                         s += '<td><?=CUtil::JSEscape(Loc::getMessage('SEO_DETAIL_QUERY_TEXT'))?></td>';
                                         s += '<td><?=CUtil::JSEscape(Loc::getMessage('SEO_DETAIL_QUERY_SHOWS'))?></td>';
-                                        s += '<td><?=CUtil::JSEscape(Loc::getMessage('SEO_DETAIL_QUERY_AVG_SHOW_POSITION'))?></td>';
-                                        s += '<td><?=CUtil::JSEscape(Loc::getMessage('SEO_DETAIL_QUERY_CLICKS'))?></td>';
-                                        s += '<td><?=CUtil::JSEscape(Loc::getMessage('SEO_DETAIL_QUERY_AVG_CLICK_POSITION'))?></td>';
+                                        s += '<td><?=CUtil::JSEscape(
+                                            Loc::getMessage('SEO_DETAIL_QUERY_AVG_SHOW_POSITION')
+                                        )?></td>';
+                                        s += '<td><?=CUtil::JSEscape(
+                                            Loc::getMessage('SEO_DETAIL_QUERY_CLICKS')
+                                        )?></td>';
+                                        s += '<td><?=CUtil::JSEscape(
+                                            Loc::getMessage('SEO_DETAIL_QUERY_AVG_CLICK_POSITION')
+                                        )?></td>';
                                         s += '</tr>';
 //								all count
                                         s += '<tr>';
-                                        s += '<td><b><?=CUtil::JSEscape(Loc::getMessage('SEO_DETAIL_QUERY_COUNT_ALL'))?></b></td>';
+                                        s += '<td><b><?=CUtil::JSEscape(
+                                            Loc::getMessage('SEO_DETAIL_QUERY_COUNT_ALL')
+                                        )?></b></td>';
                                         s += '<td align="right"><b>' + res['TOTAL_SHOWS'] + '</b></td>';
                                         s += '<td align="right"></td>';
                                         s += '<td align="right"><b>' + res['TOTAL_CLICKS'] + '</b></td>';

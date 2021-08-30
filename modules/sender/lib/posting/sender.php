@@ -9,24 +9,26 @@
 namespace Bitrix\Sender\Posting;
 
 use Bitrix\Main;
-use Bitrix\Main\Entity\ReferenceField;
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\DB;
-use Bitrix\Main\Type;
 use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\DB;
 use Bitrix\Main\Event;
-
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Type;
 use Bitrix\Sender\Entity\Campaign;
-use Bitrix\Sender\MailingTable;
-use Bitrix\Sender\PostingRecipientTable;
-use Bitrix\Sender\PostingTable;
 use Bitrix\Sender\Entity\Letter;
 use Bitrix\Sender\Integration;
+use Bitrix\Sender\Integration\Bitrix24;
 use Bitrix\Sender\Internals\Model;
-use Bitrix\Sender\Recipient;
+use Bitrix\Sender\Internals\Model\PostingThreadTable;
+use Bitrix\Sender\MailingTable;
+use Bitrix\Sender\Message;
 use Bitrix\Sender\Message\Adapter;
-
+use Bitrix\Sender\Posting\ThreadStrategy\IThreadStrategy;
+use Bitrix\Sender\PostingRecipientTable;
+use Bitrix\Sender\PostingTable;
+use Bitrix\Sender\Recipient;
+use Bitrix\Sender\Runtime\TimeLineJob;
 
 Loc::loadMessages(__FILE__);
 
@@ -40,6 +42,8 @@ class Sender
     const RESULT_SENT = 1;
     const RESULT_CONTINUE = 2;
     const RESULT_ERROR = 3;
+    const RESULT_WAIT = 4;
+    const RESULT_WAITING_RECIPIENT = 5;
 
     /** @var  Letter $letter Letter. */
     protected $letter;
@@ -84,7 +88,13 @@ class Sender
     protected $resultCode = self::RESULT_NONE;
 
     /**
+     * @var IThreadStrategy
+     */
+    protected $threadStrategy;
+
+    /**
      * Sender constructor.
+     *
      * @param Letter $letter Letter.
      */
     public function __construct(Letter $letter)
@@ -97,32 +107,202 @@ class Sender
     }
 
     /**
+     * Set limit.
+     *
+     * @param integer $limit Limit.
+     *
+     * @return $this
+     */
+    public function setLimit($limit)
+    {
+        $this->limit = $limit;
+
+        return $this;
+    }
+
+    /**
+     * Set timeout.
+     *
+     * @param integer $timeout Timeout.
+     *
+     * @return $this
+     */
+    public function setTimeout($timeout)
+    {
+        $this->timeout = $timeout;
+
+        return $this;
+    }
+
+    /**
+     * Get result code.
+     *
+     * @return int
+     */
+    public function getResultCode()
+    {
+        return $this->resultCode;
+    }
+
+    /**
+     * Send.
+     *
+     * @return void
+     * @throws DB\Exception
+     */
+    public function send()
+    {
+        $this->load($this->letter->get('POSTING_ID'));
+
+        if (!$this->postingId) {
+            $this->resultCode = self::RESULT_ERROR;
+
+            return;
+        }
+
+        $this->startTime();
+
+        $this->threadStrategy->setPostingId($this->postingId);
+        $this->threadStrategy->fillThreads();
+        $this->threadStrategy->lockThread();
+        $threadId = $this->threadStrategy->getThreadId();
+
+        // lock posting for exclude double parallel sending
+
+        if (is_null($threadId)) {
+            $this->resultCode = static::RESULT_CONTINUE;
+            return;
+        }
+
+        if (static::lock($this->postingId, $threadId) === false) {
+            $this->threadStrategy->updateStatus(PostingThreadTable::STATUS_NEW);
+            throw new DB\Exception(Loc::getMessage('SENDER_POSTING_MANAGER_ERR_LOCK'));
+        }
+
+        if ($this->status == PostingTable::STATUS_NEW && $threadId !== 0) {
+            $this->resultCode = static::RESULT_CONTINUE;
+            $this->threadStrategy->updateStatus(PostingThreadTable::STATUS_NEW);
+            static::unlock($this->postingId, $threadId);
+            return;
+        }
+
+        // posting not in right status
+        if (!$this->initRecipients()) {
+            $this->resultCode = static::RESULT_WAITING_RECIPIENT;
+            $this->threadStrategy->updateStatus(PostingThreadTable::STATUS_NEW);
+            static::unlock($this->postingId, $threadId);
+            return;
+        }
+
+        $this->changeStatusToPart();
+
+        // posting not in right status
+        if ($this->status != PostingTable::STATUS_PART) {
+            $this->resultCode = static::RESULT_ERROR;
+            $this->threadStrategy->updateStatus(PostingThreadTable::STATUS_NEW);
+            static::unlock($this->postingId, $threadId);
+            return;
+        }
+
+        if ($this->isTransportLimitsExceeded()) {
+            $this->resultCode = static::RESULT_CONTINUE;
+            static::unlock($this->postingId, $threadId);
+
+            return;
+        }
+
+        $recipients = $this->threadStrategy->getRecipients($this->limit);
+        if ($recipients->getSelectedRowsCount() > 0) {
+            $this->message->getTransport()->setSendCount($recipients->getSelectedRowsCount());
+            if (!$this->message->getTransport()->start()) {
+                $this->prevent();
+            }
+        }
+
+        $this->sendToRecipients($recipients);
+
+
+        $this->message->getTransport()->end();
+
+        // unlock posting for exclude double parallel sending
+        static::unlock($this->postingId, $threadId);
+        if ($recipients->getSelectedRowsCount() === 0) {
+            $this->threadStrategy->updateStatus(PostingThreadTable::STATUS_DONE);
+        } else {
+            $this->threadStrategy->updateStatus(PostingThreadTable::STATUS_NEW);
+        }
+
+        // update status of posting
+        $status = self::updateActualStatus(
+            $this->postingId,
+            $this->isPrevented(),
+            $this->threadStrategy->hasUnprocessedThreads()
+        );
+
+        if ($threadId < $this->threadStrategy->lastThreadId()) {
+            $this->resultCode = static::RESULT_CONTINUE;
+            return;
+        }
+
+        if ($this->threadStrategy->hasUnprocessedThreads()) {
+            $this->resultCode = static::RESULT_CONTINUE;
+
+            return;
+        }
+
+        if (!PostingRecipientTable::hasUnprocessed($this->postingId)) {
+            $onAfterEndResult = $this->message->onAfterEnd();
+            if (!$onAfterEndResult->isSuccess()) {
+                $this->resultCode = static::RESULT_CONTINUE;
+
+                return;
+            }
+            $errorMessage = implode(', ', $onAfterEndResult->getErrorMessages());
+            if (strlen($errorMessage)) {
+                Model\LetterTable::update($this->letterId, ['ERROR_MESSAGE' => $errorMessage]);
+            }
+        }
+
+        // set result code to continue or end of sending
+        $isContinue = $status == PostingTable::STATUS_PART;
+        $this->resultCode = $isContinue ? static::RESULT_CONTINUE : static::RESULT_SENT;
+
+        if ($this->resultCode == static::RESULT_SENT) {
+            $this->resultCode = !$this->threadStrategy->finalize() ? static::RESULT_CONTINUE : static::RESULT_SENT;
+            TimeLineJob::addEventAgent($this->letterId);
+        }
+    }
+
+    /**
      * Load posting.
      *
      * @param integer $postingId Posting ID.
+     *
      * @return void
      */
     public function load($postingId)
     {
-        $postingDb = PostingTable::getList(array(
-            'select' => array(
-                'ID',
-                'STATUS',
-                'MAILING_ID',
-                'MAILING_CHAIN_ID',
-                'MAILING_CHAIN_REITERATE' => 'MAILING_CHAIN.REITERATE',
-                'MAILING_CHAIN_IS_TRIGGER' => 'MAILING_CHAIN.IS_TRIGGER',
-                'COUNT_SEND_ALL'
-            ),
-            'filter' => array(
-                '=ID' => $postingId,
-                '=MAILING.ACTIVE' => 'Y',
-                '=MAILING_CHAIN.STATUS' => array(
-                    Model\LetterTable::STATUS_SEND,
-                    Model\LetterTable::STATUS_PLAN
-                ),
-            )
-        ));
+        $postingDb = PostingTable::getList(
+            [
+                'select' => [
+                    'ID',
+                    'STATUS',
+                    'MAILING_ID',
+                    'MAILING_CHAIN_ID',
+                    'MAILING_CHAIN_REITERATE' => 'MAILING_CHAIN.REITERATE',
+                    'MAILING_CHAIN_IS_TRIGGER' => 'MAILING_CHAIN.IS_TRIGGER',
+                    'COUNT_SEND_ALL'
+                ],
+                'filter' => [
+                    '=ID' => $postingId,
+                    '=MAILING.ACTIVE' => 'Y',
+                    '=MAILING_CHAIN.STATUS' => [
+                        Model\LetterTable::STATUS_SEND,
+                        Model\LetterTable::STATUS_PLAN,
+                    ],
+                ]
+            ]
+        );
         if ($postingData = $postingDb->fetch()) {
             $this->postingId = $postingData['ID'];
             $this->status = $postingData['STATUS'];
@@ -134,30 +314,6 @@ class Sender
             $this->isReiterate = $postingData['MAILING_CHAIN_REITERATE'] == 'Y';
             $this->isTrigger = $postingData['MAILING_CHAIN_IS_TRIGGER'] == 'Y';
         }
-    }
-
-    /**
-     * Set limit.
-     *
-     * @param integer $limit Limit.
-     * @return $this
-     */
-    public function setLimit($limit)
-    {
-        $this->limit = $limit;
-        return $this;
-    }
-
-    /**
-     * Set timeout.
-     *
-     * @param integer $timeout Timeout.
-     * @return $this
-     */
-    public function setTimeout($timeout)
-    {
-        $this->timeout = $timeout;
-        return $this;
     }
 
     /**
@@ -175,61 +331,123 @@ class Sender
         @set_time_limit(0);
     }
 
-    /**
-     * Check timeout.
-     *
-     * @return bool
-     */
-    public function isTimeout()
+    protected function initRecipients(): bool
     {
-        if (!$this->timeout) {
-            return false;
+        // if posting in new status, then import recipients from groups
+        // and set right status for sending
+
+        if (!$this->postingId) {
+            return true;
         }
 
-        return (getmicrotime() - $this->timeAtStart >= $this->timeout);
+        if ($this->isTrigger) {
+            return true;
+        }
+
+        if ($this->status != PostingTable::STATUS_NEW) {
+            return true;
+        }
+
+        return Builder::create()->run($this->postingId);
+    }
+
+    protected function changeStatusToPart()
+    {
+        if (!$this->postingId) {
+            return;
+        }
+
+        if ($this->status == PostingTable::STATUS_PART) {
+            return;
+        }
+
+        if ($this->status != PostingTable::STATUS_NEW && !$this->isTrigger) {
+            return;
+        }
+        $onBeforeStartResult = $this->message->onBeforeStart();
+        if ($onBeforeStartResult->isSuccess()) {
+            $this->status = PostingTable::STATUS_PART;
+            Model\PostingTable::update($this->postingId, ['STATUS' => $this->status]);
+        } else {
+            static::updateActualStatus($this->postingId, true);
+        }
+
+        $errorMessage = implode(', ', $onBeforeStartResult->getErrorMessages());
+        if ($errorMessage <> '') {
+            Model\LetterTable::update($this->letterId, ['ERROR_MESSAGE' => $errorMessage]);
+        }
     }
 
     /**
-     * Check limits.
+     * Update actual status.
      *
-     * @return bool
+     * @param int $postingId Posting ID.
+     * @param bool $isPrevented Is sending prevented.
+     *
+     * @return string
      */
-    public function isLimitExceeded()
+    public static function updateActualStatus($postingId, $isPrevented = false, $awaitThread = false)
     {
-        if (!$this->limit) {
-            return false;
+        //set status and delivered and error emails
+        $statusList = PostingTable::getRecipientCountByStatus($postingId);
+        $hasStatusError = array_key_exists(PostingRecipientTable::SEND_RESULT_ERROR, $statusList);
+        $hasStatusNone = array_key_exists(PostingRecipientTable::SEND_RESULT_NONE, $statusList);
+        if ($isPrevented) {
+            $status = PostingTable::STATUS_ABORT;
+        } elseif (!$hasStatusNone && !$awaitThread) {
+            $status = $hasStatusError ? PostingTable::STATUS_SENT_WITH_ERRORS : PostingTable::STATUS_SENT;
+        } else {
+            $status = PostingTable::STATUS_PART;
         }
 
-        return ($this->sentCount > $this->limit);
-    }
+        $postingUpdateFields = [
+            'STATUS' => $status,
+            'DATE_SENT' => $status == PostingTable::STATUS_PART ? null : new Type\DateTime(),
+            'COUNT_SEND_ALL' => 0
+        ];
 
-    /**
-     * Check transport limits.
-     *
-     * @return bool
-     */
-    public function isTransportLimitsExceeded()
-    {
-        return $this->message->getTransport()->isLimitsExceeded($this->message);
+        $recipientStatusToPostingFieldMap = PostingTable::getRecipientStatusToPostingFieldMap();
+        foreach ($recipientStatusToPostingFieldMap as $recipientStatus => $postingFieldName) {
+            if (!array_key_exists($recipientStatus, $statusList)) {
+                $postingCountFieldValue = 0;
+            } else {
+                $postingCountFieldValue = $statusList[$recipientStatus];
+            }
+
+            $postingUpdateFields['COUNT_SEND_ALL'] += $postingCountFieldValue;
+            $postingUpdateFields[$postingFieldName] = $postingCountFieldValue;
+        }
+
+        Model\PostingTable::update($postingId, $postingUpdateFields);
+
+        return $status;
     }
 
     /**
      * Lock posting for preventing double sending
      *
      * @param integer $id ID.
+     * @param $threadId default 0
+     *
      * @return bool
-     * @throws \Bitrix\Main\Db\SqlQueryException
-     * @throws \Exception
+     * @throws Main\Db\SqlQueryException
+     * @throws Main\SystemException
      */
-    public static function lock($id)
+    public static function lock($id, $threadId = 0)
     {
         $id = intval($id);
+        $threadId = intval($threadId);
 
         $uniqueSalt = self::getLockUniqueSalt();
         $connection = Application::getInstance()->getConnection();
         if ($connection instanceof DB\MysqlCommonConnection) {
             $lockDb = $connection->query(
-                "SELECT GET_LOCK('" . $uniqueSalt . "_sendpost_" . $id . "', 0) as L",
+                sprintf(
+                    "SELECT GET_LOCK('%s_sendpost_%d_%d', 0) as L",
+                    $uniqueSalt,
+                    $id,
+                    $threadId
+                ),
                 false,
                 "File: " . __FILE__ . "<br>Line: " . __LINE__
             );
@@ -238,35 +456,6 @@ class Sender
                 return true;
             } else {
                 return false;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * UnLock posting that was locking for preventing double sending
-     *
-     * @param integer $id ID.
-     * @return bool
-     */
-    public static function unlock($id)
-    {
-        $id = intval($id);
-
-        $connection = Application::getInstance()->getConnection();
-        if ($connection instanceof DB\MysqlCommonConnection) {
-            $uniqueSalt = self::getLockUniqueSalt(false);
-            if (!$uniqueSalt) {
-                return false;
-            }
-
-            $lockDb = $connection->query("SELECT RELEASE_LOCK('" . $uniqueSalt . "_sendpost_" . $id . "') as L");
-            $lock = $lockDb->fetch();
-            if ($lock["L"] == "0") {
-                return false;
-            } else {
-                return true;
             }
         }
 
@@ -285,45 +474,148 @@ class Sender
     }
 
     /**
-     * Apply recipient data to message.
+     * Check transport limits.
      *
-     * @param Adapter $message Message.
-     * @param array $recipient Recipient.
-     * @param bool $isTest Is test.
-     * @return void
+     * @return bool
      */
-    public static function applyRecipientToMessage(Adapter $message, array $recipient, $isTest = false)
+    public function isTransportLimitsExceeded()
     {
-        $siteId = MailingTable::getMailingSiteId($recipient['CAMPAIGN_ID'] ?: Campaign::getDefaultId(SITE_ID));
-        $message->getReadTracker()
-            ->setModuleId('sender')
-            ->setFields(array('RECIPIENT_ID' => $recipient["ID"]))
-            ->setHandlerUri(Option::get('sender', 'read_link'))
-            ->setSiteId($siteId);
-        $message->getClickTracker()
-            ->setModuleId('sender')
-            ->setFields(array('RECIPIENT_ID' => $recipient["ID"]))
-            ->setUriParameters(array('bx_sender_conversion_id' => $recipient["ID"]))
-            ->setHandlerUri(Option::get('sender', 'click_link'))
-            ->setSiteId($siteId);
-        $message->getUnsubTracker()
-            ->setModuleId('sender')
-            ->setFields(array(
-                'RECIPIENT_ID' => $recipient["ID"],
-                'MAILING_ID' => isset($recipient['CAMPAIGN_ID']) ? $recipient['CAMPAIGN_ID'] : 0,
-                'EMAIL' => $message->getRecipientCode(),
-                'CODE' => $message->getRecipientCode(),
-                'TEST' => $isTest ? 'Y' : 'N'
-            ))
-            ->setHandlerUri(Option::get('sender', 'unsub_link'))
-            ->setSiteId($siteId);
+        return $this->message->getTransport()->isLimitsExceeded($this->message);
+    }
 
-        $fields = self::prepareRecipientFields($recipient);
-        $message->setFields($fields);
-        $message->setRecipientId($recipient['ID']);
-        $message->setRecipientCode($recipient['CONTACT_CODE']);
-        $message->setRecipientType(Recipient\Type::getCode($recipient['CONTACT_TYPE_ID']));
-        $message->setRecipientData($recipient);
+    protected function prevent()
+    {
+        return $this->isPrevented = true;
+    }
+
+    /**
+     * @param $recipients
+     *
+     * @return bool
+     * @throws \Exception
+     */
+    private function sendToRecipients($recipients)
+    {
+        $dataToInsert = [];
+        try {
+            foreach ($recipients as $recipient) {
+                if ($this->isPrevented()) {
+                    break;
+                }
+
+                if ($this->isStoppedOnRun()) {
+                    break;
+                }
+
+                $this->setPostingDateSend();
+
+                if (
+                    empty($recipient['CONTACT_CODE']) ||
+                    $recipient['CONTACT_BLACKLISTED'] === 'Y' ||
+                    $recipient['CONTACT_UNSUBSCRIBED'] === 'Y'
+                ) {
+                    $sendResult = false;
+                } else {
+                    $sendResult = $this->sendToRecipient($recipient);
+                    if ($this->isPrevented()) {
+                        break;
+                    }
+                }
+
+                $sendResultStatus = $sendResult ? PostingRecipientTable::SEND_RESULT_SUCCESS
+                    : PostingRecipientTable::SEND_RESULT_ERROR;
+                Model\Posting\RecipientTable::update(
+                    $recipient["ID"],
+                    [
+                        'STATUS' => $sendResultStatus,
+                        'DATE_SENT' => new Type\DateTime()
+                    ]
+                );
+
+                // send event
+                $eventData = [
+                    'SEND_RESULT' => $sendResult,
+                    'RECIPIENT' => $recipient,
+                    'POSTING' => [
+                        'ID' => $this->postingId,
+                        'STATUS' => $this->status,
+                        'MAILING_ID' => $this->mailingId,
+                        'MAILING_CHAIN_ID' => $this->letterId,
+                    ]
+                ];
+                $event = new Event('sender', 'OnAfterPostingSendRecipient', [$eventData, $this->letter]);
+                $event->send();
+
+                if (
+                    Bitrix24\Service::isCloud()
+                    && $eventData['SEND_RESULT']
+                    && $this->letter->getMessage()->getCode() === Message\iBase::CODE_MAIL) {
+                    Bitrix24\Limitation\DailyLimit::increment();
+                }
+
+                $dataToInsert[] = $eventData;
+
+                // limit executing script by time
+                if ($this->isTimeout() || $this->isLimitExceeded() || $this->isTransportLimitsExceeded()) {
+                    break;
+                }
+
+                // increment sending statistic
+                $this->sentCount++;
+            }
+        } catch (\Exception $e) {
+        }
+
+        try {
+            if ($dataToInsert) {
+                Integration\EventHandler::onAfterPostingSendRecipientMultiple(
+                    $dataToInsert,
+                    $this->letter
+                );
+            }
+        } catch (\Exception $e) {
+        }
+
+        return $sendResult;
+    }
+
+    protected function isPrevented()
+    {
+        return $this->isPrevented;
+    }
+
+    protected function isStoppedOnRun()
+    {
+        // check pause or stop status
+        if (++$this->checkStatusCounter < $this->checkStatusStep) {
+            return false;
+        }
+
+        $checkStatusDb = Model\LetterTable::getList(
+            [
+                'select' => ['ID'],
+                'filter' => [
+                    '=ID' => $this->letterId,
+                    '=STATUS' => Model\LetterTable::STATUS_SEND
+                ]
+            ]
+        );
+        if (!$checkStatusDb->fetch()) {
+            return true;
+        }
+
+        $this->checkStatusCounter = 0;
+
+        return false;
+    }
+
+    protected function setPostingDateSend()
+    {
+        if ($this->letter->get('DATE_SEND')) {
+            return;
+        }
+
+        Model\PostingTable::update($this->postingId, ['DATE_SEND' => new Type\DateTime()]);
     }
 
     protected function sendToRecipient($recipient)
@@ -358,7 +650,6 @@ class Sender
             $this->message->getReadTracker()->setArray($eventSendParams['TRACK_CLICK']);
         }
 
-
         try {
             $sendResult = $this->message->send();
         } catch (Main\Mail\StopException $e) {
@@ -369,281 +660,41 @@ class Sender
         return $sendResult;
     }
 
-    protected function initRecipients()
-    {
-        // if posting in new status, then import recipients from groups
-        // and set right status for sending
-
-        if (!$this->postingId) {
-            return;
-        }
-
-        if ($this->isTrigger) {
-            return;
-        }
-
-        if ($this->status != PostingTable::STATUS_NEW) {
-            return;
-        }
-
-        Builder::create()->run($this->postingId);
-    }
-
-    protected function changeStatusToPart()
-    {
-        if (!$this->postingId) {
-            return;
-        }
-
-        if ($this->status == PostingTable::STATUS_PART) {
-            return;
-        }
-
-        if ($this->status != PostingTable::STATUS_NEW && !$this->isTrigger) {
-            return;
-        }
-        $onBeforeStartResult = $this->message->onBeforeStart();
-        if ($onBeforeStartResult->isSuccess()) {
-            $this->status = PostingTable::STATUS_PART;
-            Model\PostingTable::update($this->postingId, ['STATUS' => $this->status]);
-        } else {
-            static::updateActualStatus($this->postingId, true);
-        }
-
-        $errorMessage = implode(', ', $onBeforeStartResult->getErrorMessages());
-        if (strlen($errorMessage)) {
-            Model\LetterTable::update($this->letterId, ['ERROR_MESSAGE' => $errorMessage]);
-        }
-    }
-
     /**
-     * Get result code.
+     * Apply recipient data to message.
      *
-     * @return int
-     */
-    public function getResultCode()
-    {
-        return $this->resultCode;
-    }
-
-    /**
-     * Send.
+     * @param Adapter $message Message.
+     * @param array $recipient Recipient.
+     * @param bool $isTest Is test.
      *
      * @return void
-     * @throws DB\Exception
      */
-    public function send()
+    public static function applyRecipientToMessage(Adapter $message, array $recipient, $isTest = false)
     {
-        $this->load($this->letter->get('POSTING_ID'));
+        $siteId = MailingTable::getMailingSiteId($recipient['CAMPAIGN_ID'] ?: Campaign::getDefaultId(SITE_ID));
+        $message->getReadTracker()->setModuleId('sender')->setFields(['RECIPIENT_ID' => $recipient["ID"]])
+            ->setHandlerUri(Option::get('sender', 'read_link'))->setSiteId($siteId);
+        $message->getClickTracker()->setModuleId('sender')->setFields(['RECIPIENT_ID' => $recipient["ID"]])
+            ->setUriParameters(['bx_sender_conversion_id' => $recipient["ID"]])->setHandlerUri(
+                Option::get('sender', 'click_link')
+            )->setSiteId($siteId);
+        $message->getUnsubTracker()->setModuleId('sender')->setFields(
+            [
+                'RECIPIENT_ID' => $recipient['ID'],
+                'CONTACT_ID' => $recipient['CONTACT_ID'],
+                'MAILING_ID' => isset($recipient['CAMPAIGN_ID']) ? $recipient['CAMPAIGN_ID'] : 0,
+                'EMAIL' => $message->getRecipientCode(),
+                'CODE' => $message->getRecipientCode(),
+                'TEST' => $isTest ? 'Y' : 'N'
+            ]
+        )->setHandlerUri(Option::get('sender', 'unsub_link'))->setSiteId($siteId);
 
-        if (!$this->postingId) {
-            $this->resultCode = self::RESULT_ERROR;
-            return;
-        }
-
-        $this->startTime();
-        $this->initRecipients();
-        $this->changeStatusToPart();
-
-        // posting not in right status
-        if ($this->status != PostingTable::STATUS_PART) {
-            $this->resultCode = static::RESULT_ERROR;
-            return;
-        }
-
-        // lock posting for exclude double parallel sending
-        if (static::lock($this->postingId) === false) {
-            throw new DB\Exception(Loc::getMessage('SENDER_POSTING_MANAGER_ERR_LOCK'));
-        }
-
-        if ($this->isTransportLimitsExceeded()) {
-            $this->resultCode = static::RESULT_CONTINUE;
-            return;
-        }
-
-        $recipients = $this->getRecipients();
-        if ($recipients->getSelectedRowsCount() > 0) {
-            $this->message->getTransport()->setSendCount($this->sendCount);
-            if (!$this->message->getTransport()->start()) {
-                $this->prevent();
-            }
-        }
-
-        foreach ($recipients as $recipient) {
-
-            if ($this->isPrevented()) {
-                break;
-            }
-
-            if ($this->isStoppedOnRun()) {
-                break;
-            }
-
-            $this->setPostingDateSend();
-
-            if (
-                empty($recipient['CONTACT_CODE']) ||
-                $recipient['CONTACT_BLACKLISTED'] === 'Y' ||
-                $recipient['CONTACT_UNSUBSCRIBED'] === 'Y'
-            ) {
-                $sendResult = false;
-            } else {
-                $sendResult = $this->sendToRecipient($recipient);
-                if ($this->isPrevented()) {
-                    break;
-                }
-            }
-
-            $sendResultStatus = $sendResult ? PostingRecipientTable::SEND_RESULT_SUCCESS : PostingRecipientTable::SEND_RESULT_ERROR;
-            Model\Posting\RecipientTable::update(
-                $recipient["ID"],
-                [
-                    'STATUS' => $sendResultStatus,
-                    'DATE_SENT' => new Type\DateTime()
-                ]
-            );
-
-            // send event
-            $eventData = array(
-                'SEND_RESULT' => $sendResult,
-                'RECIPIENT' => $recipient,
-                'POSTING' => array(
-                    'ID' => $this->postingId,
-                    'STATUS' => $this->status,
-                    'MAILING_ID' => $this->mailingId,
-                    'MAILING_CHAIN_ID' => $this->letterId,
-                )
-            );
-            $event = new Event('sender', 'OnAfterPostingSendRecipient', array($eventData, $this->letter));
-            $event->send();
-
-            Integration\EventHandler::onAfterPostingSendRecipient($eventData, $this->letter);
-
-            // limit executing script by time
-            if ($this->isTimeout() || $this->isLimitExceeded() || $this->isTransportLimitsExceeded()) {
-                break;
-            }
-
-            // increment sending statistic
-            $this->sentCount++;
-        }
-
-        $this->message->getTransport()->end();
-
-        // unlock posting for exclude double parallel sending
-        self::unlock($this->postingId);
-
-        if (!PostingRecipientTable::hasUnprocessed($this->postingId)) {
-            $onAfterEndResult = $this->message->onAfterEnd();
-            if (!$onAfterEndResult->isSuccess()) {
-                $this->resultCode = static::RESULT_CONTINUE;
-                return;
-            }
-            $errorMessage = implode(', ', $onAfterEndResult->getErrorMessages());
-            if (strlen($errorMessage)) {
-                Model\LetterTable::update($this->letterId, ['ERROR_MESSAGE' => $errorMessage]);
-            }
-        }
-        // update status of posting
-        $status = self::updateActualStatus($this->postingId, $this->isPrevented());
-
-        // set result code to continue or end of sending
-        $isContinue = $status == PostingTable::STATUS_PART;
-        $this->resultCode = $isContinue ? static::RESULT_CONTINUE : static::RESULT_SENT;
-    }
-
-    protected function setPostingDateSend()
-    {
-        if ($this->letter->get('DATE_SEND')) {
-            return;
-        }
-
-        Model\PostingTable::update($this->postingId, ['DATE_SEND' => new Type\DateTime()]);
-    }
-
-    /**
-     * Update actual status.
-     *
-     * @param int $postingId Posting ID.
-     * @param bool $isPrevented Is sending prevented.
-     * @return string
-     */
-    public static function updateActualStatus($postingId, $isPrevented = false)
-    {
-        //set status and delivered and error emails
-        $statusList = PostingTable::getRecipientCountByStatus($postingId);
-        $hasStatusError = array_key_exists(PostingRecipientTable::SEND_RESULT_ERROR, $statusList);
-        $hasStatusNone = array_key_exists(PostingRecipientTable::SEND_RESULT_NONE, $statusList);
-        if ($isPrevented) {
-            $status = PostingTable::STATUS_ABORT;
-        } elseif (!$hasStatusNone) {
-            $status = $hasStatusError ? PostingTable::STATUS_SENT_WITH_ERRORS : PostingTable::STATUS_SENT;
-        } else {
-            $status = PostingTable::STATUS_PART;
-        }
-
-        $postingUpdateFields = array(
-            'STATUS' => $status,
-            'DATE_SENT' => $status == PostingTable::STATUS_PART ? null : new Type\DateTime(),
-            'COUNT_SEND_ALL' => 0
-        );
-
-        $recipientStatusToPostingFieldMap = PostingTable::getRecipientStatusToPostingFieldMap();
-        foreach ($recipientStatusToPostingFieldMap as $recipientStatus => $postingFieldName) {
-            if (!array_key_exists($recipientStatus, $statusList)) {
-                $postingCountFieldValue = 0;
-            } else {
-                $postingCountFieldValue = $statusList[$recipientStatus];
-            }
-
-            $postingUpdateFields['COUNT_SEND_ALL'] += $postingCountFieldValue;
-            $postingUpdateFields[$postingFieldName] = $postingCountFieldValue;
-        }
-
-        Model\PostingTable::update($postingId, $postingUpdateFields);
-
-        return $status;
-    }
-
-    protected function getRecipients()
-    {
-        // select all recipients of posting, only not processed
-        $recipients = PostingRecipientTable::getList(array(
-            'select' => array(
-                '*',
-                'NAME' => 'CONTACT.NAME',
-                'CONTACT_CODE' => 'CONTACT.CODE',
-                'CONTACT_TYPE_ID' => 'CONTACT.TYPE_ID',
-                'CONTACT_IS_SEND_SUCCESS' => 'CONTACT.IS_SEND_SUCCESS',
-                'CONTACT_BLACKLISTED' => 'CONTACT.BLACKLISTED',
-                'CONTACT_UNSUBSCRIBED' => 'MAILING_SUB.IS_UNSUB',
-                'CAMPAIGN_ID' => 'POSTING.MAILING_ID'
-            ),
-            'filter' => array(
-                '=POSTING_ID' => $this->postingId,
-                '=STATUS' => PostingRecipientTable::SEND_RESULT_NONE
-            ),
-            'runtime' => [
-                new ReferenceField(
-                    'MAILING_SUB',
-                    'Bitrix\\Sender\\MailingSubscriptionTable',
-                    [
-                        '=this.CONTACT_ID' => 'ref.CONTACT_ID',
-                        '=this.POSTING.MAILING_ID' => 'ref.MAILING_ID'
-                    ],
-                    ['join_type' => 'LEFT']
-                )
-            ],
-            'limit' => $this->limit
-        ));
-        $recipients->addFetchDataModifier(
-            function ($row) {
-                $row['FIELDS'] = is_array($row['FIELDS']) ? $row['FIELDS'] : array();
-                return $row;
-            }
-        );
-
-        return $recipients;
+        $fields = self::prepareRecipientFields($recipient);
+        $message->setFields($fields);
+        $message->setRecipientId($recipient['ID']);
+        $message->setRecipientCode($recipient['CONTACT_CODE']);
+        $message->setRecipientType(Recipient\Type::getCode($recipient['CONTACT_TYPE_ID']));
+        $message->setRecipientData($recipient);
     }
 
     protected static function prepareRecipientFields($recipient)
@@ -653,16 +704,17 @@ class Sender
             $recipient["NAME"] = Recipient\Field::getDefaultName();
         }
 
-        $senderChainId = (int)$recipient["MAILING_CHAIN_ID"] > 0 ? (int)$recipient["MAILING_CHAIN_ID"] : (int)$recipient['CAMPAIGN_ID'];
+        $senderChainId = (int)$recipient["MAILING_CHAIN_ID"] > 0 ? (int)$recipient["MAILING_CHAIN_ID"]
+            : (int)$recipient['CAMPAIGN_ID'];
 
         // prepare params for send
-        $fields = array(
+        $fields = [
             'EMAIL_TO' => $recipient['CONTACT_CODE'],
             'NAME' => $recipient['NAME'],
             'USER_ID' => $recipient["USER_ID"],
             'SENDER_CHAIN_ID' => $senderChainId,
             'SENDER_CHAIN_CODE' => 'sender_chain_item_' . $senderChainId
-        );
+        ];
 
         if (is_array($recipient['FIELDS']) && count($recipient) > 0) {
             $fields = $fields + $recipient['FIELDS'];
@@ -671,35 +723,99 @@ class Sender
         return $fields;
     }
 
-    protected function isPrevented()
+    /**
+     * Check timeout.
+     *
+     * @return bool
+     */
+    public function isTimeout()
     {
-        return $this->isPrevented;
-    }
-
-    protected function prevent()
-    {
-        return $this->isPrevented = true;
-    }
-
-    protected function isStoppedOnRun()
-    {
-        // check pause or stop status
-        if (++$this->checkStatusCounter < $this->checkStatusStep) {
+        if (!$this->timeout) {
             return false;
         }
 
-        $checkStatusDb = Model\LetterTable::getList(array(
-            'select' => array('ID'),
-            'filter' => array(
-                '=ID' => $this->letterId,
-                '=STATUS' => Model\LetterTable::STATUS_SEND
-            )
-        ));
-        if (!$checkStatusDb->fetch()) {
-            return true;
+        return (getmicrotime() - $this->timeAtStart >= $this->timeout);
+    }
+
+    /**
+     * Check limits.
+     *
+     * @return bool
+     */
+    public function isLimitExceeded()
+    {
+        if (!$this->limit) {
+            return false;
         }
 
-        $this->checkStatusCounter = 0;
+        return ($this->sentCount > $this->limit);
+    }
+
+    /**
+     * UnLock posting that was locking for preventing double sending
+     *
+     * @param integer $id ID.
+     * @param int $threadId
+     *
+     * @return bool
+     * @throws Main\Db\SqlQueryException
+     * @throws Main\SystemException
+     */
+    public static function unlock($id, $threadId = 0)
+    {
+        $id = intval($id);
+        $threadId = intval($threadId);
+
+        $connection = Application::getInstance()->getConnection();
+        if ($connection instanceof DB\MysqlCommonConnection) {
+            $uniqueSalt = self::getLockUniqueSalt(false);
+            if (!$uniqueSalt) {
+                return false;
+            }
+
+            $lockDb = $connection->query(
+                sprintf(
+                    "SELECT RELEASE_LOCK('%s_sendpost_%d_%d') as L",
+                    $uniqueSalt,
+                    $id,
+                    $threadId
+                )
+            );
+            $lock = $lockDb->fetch();
+            if ($lock["L"] == "0") {
+                return false;
+            } else {
+                return true;
+            }
+        }
+
         return false;
+    }
+
+    /**
+     * @return IThreadStrategy
+     */
+    public function getThreadStrategy(): IThreadStrategy
+    {
+        return $this->threadStrategy;
+    }
+
+    /**
+     * @param IThreadStrategy $threadStrategy
+     *
+     * @return Sender
+     */
+    public function setThreadStrategy(IThreadStrategy $threadStrategy): Sender
+    {
+        $this->threadStrategy = $threadStrategy;
+        return $this;
+    }
+
+    /**
+     * @return Adapter
+     */
+    public function getMessage(): Adapter
+    {
+        return $this->message;
     }
 }

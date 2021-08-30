@@ -50,21 +50,27 @@ class Client
             return $result;
         }
         if ($httpClient->getStatus() != 200) {
-            return $result->addError(new Error("Unexpected server response code " . $httpClient->getStatus(), "WRONG_RESPONSE_CODE"));
+            return $result->addError(
+                new Error("Unexpected server response code " . $httpClient->getStatus(), "WRONG_RESPONSE_CODE")
+            );
         }
-        $result->setData([
-            'hostname' => $response
-        ]);
+        $result->setData(
+            [
+                'hostname' => $response
+            ]
+        );
         return $result;
     }
 
     public static function getServerList()
     {
         $result = new Result();
-        $httpClient = new HttpClient([
-            "socketTimeout" => 5,
-            "streamTimeout" => 5
-        ]);
+        $httpClient = new HttpClient(
+            [
+                "socketTimeout" => 5,
+                "streamTimeout" => 5
+            ]
+        );
         $response = $httpClient->get("https://" . Config::DEFAULT_SERVER . Config::SERVER_LIST_URL);
         if (!$response) {
             $errors = $httpClient->getError();
@@ -74,12 +80,17 @@ class Client
             return $result;
         }
         if ($httpClient->getStatus() != 200) {
-            return $result->addError(new Error("Unexpected server response code " . $httpClient->getStatus(), "WRONG_RESPONSE_CODE"));
+            return $result->addError(
+                new Error("Unexpected server response code " . $httpClient->getStatus(), "WRONG_RESPONSE_CODE")
+            );
         }
         $list = explode("\n", $response);
-        $list = array_filter($list, function ($a) {
-            return $a != "";
-        });
+        $list = array_filter(
+            $list,
+            function ($a) {
+                return $a != "";
+            }
+        );
         $list = array_map(
             function ($a) {
                 list($url, $region) = explode(";", $a);
@@ -91,9 +102,11 @@ class Client
             $list
         );
 
-        $result->setData([
-            'serverList' => $list
-        ]);
+        $result->setData(
+            [
+                'serverList' => $list
+            ]
+        );
         return $result;
     }
 
@@ -105,14 +118,17 @@ class Client
             "BX_TYPE" => static::TYPE_CP,
         ];
         $params["BX_HASH"] = static::signRequest($params);
+        $params["BX_ALL"] = "y";
 
         $request = [
             "verificationQuery" => http_build_query($params)
         ];
 
-        $httpClient = new HttpClient([
-            "disableSslVerification" => true
-        ]);
+        $httpClient = new HttpClient(
+            [
+                "disableSslVerification" => true
+            ]
+        );
         $queryResult = $httpClient->query(HttpClient::HTTP_POST, Config::getRegisterUrl(), $request);
 
         if (!$queryResult) {

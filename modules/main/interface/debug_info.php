@@ -1,5 +1,5 @@
 <?
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) {die();}
 IncludeModuleLangFile(__FILE__);
 
 // ************************************************************************
@@ -31,46 +31,56 @@ if($bShowTime || $bShowStat || $bShowCacheStat)
 }
 
 $bShowExtTime = $bShowTime && !defined("ADMIN_SECTION") && $bShowStat;
-$DOCUMENT_ROOT_LEN = strlen($_SERVER["DOCUMENT_ROOT"]);
+$DOCUMENT_ROOT_LEN = mb_strlen($_SERVER["DOCUMENT_ROOT"]);
 
 if($bShowExtTime)
 {
-	$START_EXEC_CURRENT_TIME = microtime();
+	$CURRENT_TIME = microtime(true);
 
-	list($usec, $sec) = explode(" ", START_EXEC_PROLOG_AFTER_2);
-	$PROLOG_AFTER_2 = (float)$sec + (float)$usec;
-	list($usec, $sec) = explode(" ", START_EXEC_PROLOG_AFTER_1);
-	$PROLOG_AFTER_1 = (float)$sec + (float)$usec;
+	$PROLOG_AFTER_2 = (float)START_EXEC_PROLOG_AFTER_2;
+	$PROLOG_AFTER_1 = (float)START_EXEC_PROLOG_AFTER_1;
 	$PROLOG_AFTER = $PROLOG_AFTER_2 - $PROLOG_AFTER_1;
 
-	list($usec, $sec) = explode(" ", START_EXEC_AGENTS_2);
-	$AGENTS_2 = (float)$sec + (float)$usec;
-	list($usec, $sec) = explode(" ", START_EXEC_AGENTS_1);
-	$AGENTS_1 = (float)$sec + (float)$usec;
-	$AGENTS = $AGENTS_2 - $AGENTS_1;
+	$AGENTS = 0;
+	if(defined("START_EXEC_AGENTS_1") && defined("START_EXEC_AGENTS_2"))
+	{
+		$AGENTS_2 = (float)START_EXEC_AGENTS_2;
+		$AGENTS_1 = (float)START_EXEC_AGENTS_1;
+		$AGENTS = $AGENTS_2 - $AGENTS_1;
+	}
 
-	list($usec, $sec) = explode(" ", START_EXEC_PROLOG_BEFORE_1);
-	$PROLOG_BEFORE_1 = (float)$sec + (float)$usec;
+	$PROLOG_BEFORE_1 = (float)START_EXEC_PROLOG_BEFORE_1;
 	$PROLOG_BEFORE = $PROLOG_AFTER_1 - $PROLOG_BEFORE_1 - $AGENTS;
 
 	$PROLOG = $PROLOG_AFTER_2 - $PROLOG_BEFORE_1;
 
-	list($usec, $sec) = explode(" ", START_EXEC_EPILOG_BEFORE_1);
-	$EPILOG_BEFORE_1 = (float)$sec + (float)$usec;
+	if (defined("START_EXEC_EPILOG_BEFORE_1"))
+	{
+		$EPILOG_BEFORE_1 = (float)START_EXEC_EPILOG_BEFORE_1;
 
-	$WORK_AREA = $EPILOG_BEFORE_1 - $PROLOG_AFTER_2;
+		$WORK_AREA = $EPILOG_BEFORE_1 - $PROLOG_AFTER_2;
 
-	list($usec, $sec) = explode(" ", START_EXEC_EPILOG_AFTER_1);
-	$EPILOG_AFTER_1 = (float)$sec + (float)$usec;
+		if (defined("START_EXEC_EPILOG_AFTER_1"))
+		{
+			$EPILOG_AFTER_1 = (float)START_EXEC_EPILOG_AFTER_1;
+			$EPILOG_BEFORE = $EPILOG_AFTER_1 - $EPILOG_BEFORE_1;
+			$EPILOG_AFTER = $CURRENT_TIME - $EPILOG_AFTER_1;
+		}
+		else
+		{
+			$EPILOG_BEFORE = 0;
+			$EPILOG_AFTER = 0;
+		}
 
-	$EPILOG_BEFORE = $EPILOG_AFTER_1 - $EPILOG_BEFORE_1;
-
-	list($usec, $sec) = explode(" ", $START_EXEC_CURRENT_TIME);
-	$CURRENT_TIME = (float)$sec + (float)$usec;
-
-	$EPILOG_AFTER = $CURRENT_TIME - $EPILOG_AFTER_1;
-
-	$EPILOG = $CURRENT_TIME - $EPILOG_BEFORE_1;
+		$EPILOG = $CURRENT_TIME - $EPILOG_BEFORE_1;
+	}
+	else
+	{
+		$WORK_AREA = $CURRENT_TIME - $PROLOG_AFTER_2;
+		$EPILOG_BEFORE = 0;
+		$EPILOG_AFTER = 0;
+		$EPILOG = 0;
+	}
 
 	$PAGE = $CURRENT_TIME - $PROLOG_BEFORE_1;
 
@@ -109,8 +119,8 @@ if($bShowExtTime)
 	$state = "PB";
 	foreach($sqlTracker->getQueries() as $arQueryDebug)
 	{
-		if (strlen($arQueryDebug["BX_STATE"]) > 0)
-			$state = $arQueryDebug["BX_STATE"];
+		if ($arQueryDebug["BX_STATE"] <> '')
+			{$state = $arQueryDebug["BX_STATE"];}
 
 		foreach($arAreas as $i => $arArea)
 		{
@@ -126,8 +136,8 @@ if($bShowExtTime)
 	$state = "PA";
 	foreach($APPLICATION->arIncludeDebug as $arIncludeDebug)
 	{
-		if (strlen($arIncludeDebug["BX_STATE"]) > 0)
-			$state = $arIncludeDebug["BX_STATE"];
+		if ($arIncludeDebug["BX_STATE"] <> '')
+			{$state = $arIncludeDebug["BX_STATE"];}
 
 		foreach($arAreas as $i => $arArea)
 		{
@@ -279,10 +289,10 @@ if ($bShowStat || $bShowCacheStat) //2
 				<?
 				foreach($arCacheDebug as $j => $cacheDebug)
 				{
-					if (substr($cacheDebug["path"], 0, $DOCUMENT_ROOT_LEN) === $_SERVER["DOCUMENT_ROOT"])
-						$path = '<a target="blank" href="/bitrix/admin/fileman_file_view.php?path='.urlencode(substr($cacheDebug["path"], $DOCUMENT_ROOT_LEN)).'&lang='.LANGUAGE_ID.'">'.htmlspecialcharsEx(substr($cacheDebug["path"], $DOCUMENT_ROOT_LEN)).'</a>';
+					if (mb_substr($cacheDebug["path"],0,$DOCUMENT_ROOT_LEN) === $_SERVER["DOCUMENT_ROOT"])
+						{$path = '<a target="blank" href="/bitrix/admin/fileman_file_view.php?path='.urlencode(mb_substr($cacheDebug["path"],$DOCUMENT_ROOT_LEN)).'&lang='.LANGUAGE_ID.'">'.htmlspecialcharsEx(mb_substr($cacheDebug["path"],$DOCUMENT_ROOT_LEN)).'</a>';}
 					else
-						$path = '&nbsp;';
+						{$path = '&nbsp;';}
 				?>
 				<tr class="cache-row">
 					<td class="number"><?echo $j+1?></td>
@@ -310,9 +320,9 @@ if ($bShowStat || $bShowCacheStat) //2
 						<?
 						echo $tr["file"].":".$tr["line"]."<br /><nobr>".htmlspecialcharsbx($tr["func"]);
 						if($n == 0)
-							echo "(...)</nobr>";
+							{echo "(...)</nobr>";}
 						else
-							echo "</nobr>(".htmlspecialcharsbx(print_r($tr["args"], true)).")";
+							{echo "</nobr>(".htmlspecialcharsbx(print_r($tr["args"], true)).")";}
 					} //$back_trace
 					?></div>
 					<?
@@ -377,11 +387,11 @@ if ($bShowStat || $bShowCacheStat) //2
 					{
 						?><tr>
 							<td class="number" valign="top"><?echo $j?></td>
-							<td><a href="javascript:BX_DEBUG_INFO_<?=$i?>.ShowDetails('BX_DEBUG_INFO_<?=$i."_".$j?>')"><?echo htmlspecialcharsbx(substr($strSql, 0, 100))."..."?></a>&nbsp;(<?echo $query["COUNT"]?>) </td>
+							<td><a href="javascript:BX_DEBUG_INFO_<?=$i?>.ShowDetails('BX_DEBUG_INFO_<?=$i."_".$j?>')"><?echo htmlspecialcharsbx(mb_substr($strSql,0,100))."..."?></a>&nbsp;(<?echo $query["COUNT"]?>) </td>
 							<td class="number" valign="top"><?
 								$t = 0.0;
 								foreach($query["CALLS"] as $call)
-									$t += $call["TIME"];
+									{$t += $call["TIME"];}
 								echo number_format($t/$query["COUNT"], 5);
 							?></td>
 						</tr><?
@@ -428,11 +438,11 @@ if ($bShowStat || $bShowCacheStat) //2
 								<?
 								echo $tr["file"].":".$tr["line"]."<br /><nobr>".htmlspecialcharsbx($tr["class"].$tr["type"].$tr["function"]);
 								if($n == 0)
-									echo "(...)</nobr>";
+									{echo "(...)</nobr>";}
 								else
-									echo "</nobr>(".htmlspecialcharsbx(print_r($tr["args"], true)).")";
+									{echo "</nobr>(".htmlspecialcharsbx(print_r($tr["args"], true)).")";}
 								if($n > 3)
-									break;
+									{break;}
 							} //$back_trace
 						}
 						else //is_array($back_trace)
@@ -486,10 +496,10 @@ if ($bShowStat || $bShowCacheStat) //2
 					<?
 					foreach($arIncludeDebug["CACHE"] as $j => $cacheDebug)
 					{
-						if (substr($cacheDebug["path"], 0, $DOCUMENT_ROOT_LEN) === $_SERVER["DOCUMENT_ROOT"])
-							$path = '<a target="blank" href="/bitrix/admin/fileman_file_view.php?path='.urlencode(substr($cacheDebug["path"], $DOCUMENT_ROOT_LEN)).'&lang='.LANGUAGE_ID.'">'.htmlspecialcharsEx(substr($cacheDebug["path"], $DOCUMENT_ROOT_LEN)).'</a>';
+						if (mb_substr($cacheDebug["path"],0,$DOCUMENT_ROOT_LEN) === $_SERVER["DOCUMENT_ROOT"])
+							{$path = '<a target="blank" href="/bitrix/admin/fileman_file_view.php?path='.urlencode(mb_substr($cacheDebug["path"],$DOCUMENT_ROOT_LEN)).'&lang='.LANGUAGE_ID.'">'.htmlspecialcharsEx(mb_substr($cacheDebug["path"],$DOCUMENT_ROOT_LEN)).'</a>';}
 						else
-							$path = '&nbsp;';
+							{$path = '&nbsp;';}
 					?>
 					<tr class="cache-row">
 						<td class="number"><?echo $j+1?></td>
@@ -517,9 +527,9 @@ if ($bShowStat || $bShowCacheStat) //2
 						<?
 						echo $tr["file"].":".$tr["line"]."<br /><nobr>".htmlspecialcharsbx($tr["func"]);
 						if($n == 0)
-							echo "(...)</nobr>";
+							{echo "(...)</nobr>";}
 						else
-							echo "</nobr>(".htmlspecialcharsbx(print_r($tr["args"], true)).")";
+							{echo "</nobr>(".htmlspecialcharsbx(print_r($tr["args"], true)).")";}
 					} //$back_trace
 					?></div>
 					<?
@@ -546,12 +556,12 @@ var jsDebugTimeWindow = new BX.CDebugDialog();
 	$obJSPopup->StartDescription('bx-core-debug-info');
 ?>
 	<p><?echo GetMessage("debug_info_page")?> <?=$APPLICATION->GetCurPage()?></p>
-	<p><?echo GetMessage("debug_info_comps_cache")?> <?if(COption::GetOptionString("main", "component_cache_on", "Y")=="Y") echo GetMessage("debug_info_comps_cache_on"); else echo "<a href=\"/bitrix/admin/cache.php\"><font class=\"errortext\">".GetMessage("debug_info_comps_cache_off")."</font></a>";?>.</p>
+	<p><?echo GetMessage("debug_info_comps_cache")?> <?if(COption::GetOptionString("main", "component_cache_on", "Y")=="Y") {echo GetMessage("debug_info_comps_cache_on");} else {echo "<a href=\"/bitrix/admin/cache.php\"><font class=\"errortext\">".GetMessage("debug_info_comps_cache_off")."</font></a>";}?>.</p>
 	<p><?
 	if(\Bitrix\Main\Data\Cache::getShowCacheStat())
-		echo GetMessage("debug_info_cache_size")." ",CFile::FormatSize(\Bitrix\Main\Diag\CacheTracker::getCacheStatBytes(), 0);
+		{echo GetMessage("debug_info_cache_size")." ",CFile::FormatSize(\Bitrix\Main\Diag\CacheTracker::getCacheStatBytes(), 0);}
 	else
-		echo "&nbsp;";
+		{echo "&nbsp;";}
 	?></p>
 <?
 	$obJSPopup->StartContent(array('buffer' => true));
@@ -807,7 +817,7 @@ var jsDebugTimeWindow = new BX.CDebugDialog();
 						$tim += $arIncludeDebug["TIME"];
 					}
 				}
-				if($tim > $arArea["TIME"]) $tim = $arArea["TIME"];
+				if($tim > $arArea["TIME"]) {$tim = $arArea["TIME"];}
 				?>
 					<tr>
 						<td class="number" valign="top">0</td>
@@ -821,7 +831,7 @@ var jsDebugTimeWindow = new BX.CDebugDialog();
 						<td>&nbsp;</td>
 						<td class="number">&nbsp;<?
 							if($arArea["TRACE"]["CACHE_SIZE"])
-								echo CFile::FormatSize($arArea["TRACE"]["CACHE_SIZE"],0);
+								{echo CFile::FormatSize($arArea["TRACE"]["CACHE_SIZE"],0);}
 						?></td>
 						<td class="number"><?if($arArea["TIME"] > 0):?><?echo number_format((1-$tim/$arArea["TIME"])*100, 2)?>%<?endif?></td>
 						<td class="number"><?echo number_format($arArea["TIME"] - $tim, 4)?> <?echo GetMessage("debug_info_sec")?></td>
@@ -833,7 +843,7 @@ var jsDebugTimeWindow = new BX.CDebugDialog();
 					<tr>
 						<td class="number" valign="top"><?echo $k?></td>
 						<td>
-						<?if($arIncludeDebug["LEVEL"] > 0) echo str_repeat("&nbsp;&nbsp;", $arIncludeDebug["LEVEL"]);?>
+						<?if($arIncludeDebug["LEVEL"] > 0) {echo str_repeat("&nbsp;&nbsp;", $arIncludeDebug["LEVEL"]);}?>
 						<?if($bShowStat):?>
 							<a title="<?echo GetMessage("debug_info_query_title")?>" href="javascript:BX_DEBUG_INFO_<?echo $i?>.Show(); BX_DEBUG_INFO_<?echo $i?>.ShowDetails('BX_DEBUG_INFO_<?echo $i?>_1');"><?echo htmlspecialcharsbx($arIncludeDebug["REL_PATH"])?></a>
 						<?else:?>
@@ -850,7 +860,7 @@ var jsDebugTimeWindow = new BX.CDebugDialog();
 						?></td>
 						<td class="number" nowrap>&nbsp;<?
 							if($arIncludeDebug["CACHE_SIZE"])
-								echo CFile::FormatSize($arIncludeDebug["CACHE_SIZE"],0);
+								{echo CFile::FormatSize($arIncludeDebug["CACHE_SIZE"],0);}
 						?></td>
 						<td class="number" nowrap><?if($arArea["TIME"] > 0):?><?echo number_format($arIncludeDebug["TIME"]/$arArea["TIME"]*100, 2)?>%<?endif?></td>
 						<td class="number" nowrap><?echo number_format($arIncludeDebug["TIME"], 4)?> <?echo GetMessage("debug_info_sec")?></td>
@@ -876,6 +886,6 @@ var jsDebugTimeWindow = new BX.CDebugDialog();
 		&& $_GET["show_sql_stat_immediate"] === "Y"
 		&& preg_match("#/admin/perfmon_hit_list.php#", $_SERVER["HTTP_REFERER"])
 	)
-		echo "<script>BX.ready(function() {jsDebugTimeWindow.Show(); jsDebugTimeWindow.ShowDetails('BX_DEBUG_TIME_1_1');});</script>";
+		{echo "<script>BX.ready(function() {jsDebugTimeWindow.Show(); jsDebugTimeWindow.ShowDetails('BX_DEBUG_TIME_1_1');});</script>";}
 }
 ?>

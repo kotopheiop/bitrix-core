@@ -118,11 +118,12 @@ class User
      * Return access instance.
      *
      * @return Access
+     * @throws \Bitrix\Main\ArgumentException
      */
     public function getAccess()
     {
         if (!$this->access) {
-            $this->access = new Access($this);
+            $this->access = Access::getInstance($this);
         }
 
         return $this->access;
@@ -266,7 +267,9 @@ class User
         }
 
         if ($this->isCurrent()) {
-            $this->object = (is_object($GLOBALS['USER']) && ($GLOBALS['USER'] instanceof \CAllUser)) ? $GLOBALS['USER'] : null;
+            $this->object = (is_object(
+                    $GLOBALS['USER']
+                ) && ($GLOBALS['USER'] instanceof \CAllUser)) ? $GLOBALS['USER'] : null;
         }
 
         if (!$this->object) {

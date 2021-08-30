@@ -19,21 +19,25 @@ class FileExceptionHandlerLog
     public function initialize(array $options)
     {
         $this->logFile = static::DEFAULT_LOG_FILE;
-        if (isset($options["file"]) && !empty($options["file"]))
+        if (isset($options["file"]) && !empty($options["file"])) {
             $this->logFile = $options["file"];
+        }
 
         $this->logFile = preg_replace("'[\\\\/]+'", "/", $this->logFile);
-        if ((substr($this->logFile, 0, 1) !== "/") && !preg_match("#^[a-z]:/#", $this->logFile))
+        if ((mb_substr($this->logFile, 0, 1) !== "/") && !preg_match("#^[a-z]:/#", $this->logFile)) {
             $this->logFile = Main\Application::getDocumentRoot() . "/" . $this->logFile;
+        }
 
         $this->logFileHistory = $this->logFile . ".old";
 
         $this->maxLogSize = static::MAX_LOG_SIZE;
-        if (isset($options["log_size"]) && ($options["log_size"] > 0))
+        if (isset($options["log_size"]) && ($options["log_size"] > 0)) {
             $this->maxLogSize = intval($options["log_size"]);
+        }
 
-        if (isset($options["level"]) && ($options["level"] > 0))
+        if (isset($options["level"]) && ($options["level"] > 0)) {
             $this->level = intval($options["level"]);
+        }
     }
 
     /**
@@ -43,13 +47,18 @@ class FileExceptionHandlerLog
     public function write($exception, $logType)
     {
         $text = ExceptionHandlerFormatter::format($exception, false, $this->level);
-        $this->writeToLog(date("Y-m-d H:i:s") . " - Host: " . $_SERVER["HTTP_HOST"] . " - " . static::logTypeToString($logType) . " - " . $text . "\n");
+        $this->writeToLog(
+            date("Y-m-d H:i:s") . " - Host: " . $_SERVER["HTTP_HOST"] . " - " . static::logTypeToString(
+                $logType
+            ) . " - " . $text . "\n"
+        );
     }
 
     protected function writeToLog($text)
     {
-        if (empty($text))
+        if (empty($text)) {
             return;
+        }
 
         $logFile = $this->logFile;
         $logFileHistory = $this->logFileHistory;

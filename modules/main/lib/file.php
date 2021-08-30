@@ -2,6 +2,10 @@
 
 namespace Bitrix\Main;
 
+use Bitrix\Main\ORM\Fields;
+use Bitrix\Main\ORM\Query;
+use Bitrix\Main\File\Internal;
+
 /**
  * Class FileTable
  *
@@ -23,6 +27,7 @@ namespace Bitrix\Main;
  * </ul>
  *
  * @package Bitrix\File
+ * @internal
  **/
 class FileTable extends Entity\DataManager
 {
@@ -44,41 +49,67 @@ class FileTable extends Entity\DataManager
     public static function getMap()
     {
         return array(
-            'ID' => new Entity\IntegerField('ID', array(
+            'ID' => new Entity\IntegerField(
+                'ID', array(
                 'primary' => true,
                 'autocomplete' => true,
-            )),
-            'TIMESTAMP_X' => new Entity\DatetimeField('TIMESTAMP_X', array(
+            )
+            ),
+            'TIMESTAMP_X' => new Entity\DatetimeField(
+                'TIMESTAMP_X', array(
                 'default_value' => new Type\DateTime
-            )),
-            'MODULE_ID' => new Entity\StringField('MODULE_ID', array(
+            )
+            ),
+            'MODULE_ID' => new Entity\StringField(
+                'MODULE_ID', array(
                 'validation' => array(__CLASS__, 'validateModuleId'),
-            )),
+            )
+            ),
             'HEIGHT' => new Entity\IntegerField('HEIGHT'),
             'WIDTH' => new Entity\IntegerField('WIDTH'),
             'FILE_SIZE' => new Entity\IntegerField('FILE_SIZE'),
-            'CONTENT_TYPE' => new Entity\StringField('CONTENT_TYPE', array(
+            'CONTENT_TYPE' => new Entity\StringField(
+                'CONTENT_TYPE', array(
                 'validation' => array(__CLASS__, 'validateContentType'),
-            )),
-            'SUBDIR' => new Entity\StringField('SUBDIR', array(
+            )
+            ),
+            'SUBDIR' => new Entity\StringField(
+                'SUBDIR', array(
                 'validation' => array(__CLASS__, 'validateSubdir'),
-            )),
-            'FILE_NAME' => new Entity\StringField('FILE_NAME', array(
+            )
+            ),
+            'FILE_NAME' => new Entity\StringField(
+                'FILE_NAME', array(
                 'validation' => array(__CLASS__, 'validateFileName'),
                 'required' => true,
-            )),
-            'ORIGINAL_NAME' => new Entity\StringField('ORIGINAL_NAME', array(
+            )
+            ),
+            'ORIGINAL_NAME' => new Entity\StringField(
+                'ORIGINAL_NAME', array(
                 'validation' => array(__CLASS__, 'validateOriginalName'),
-            )),
-            'DESCRIPTION' => new Entity\StringField('DESCRIPTION', array(
+            )
+            ),
+            'DESCRIPTION' => new Entity\StringField(
+                'DESCRIPTION', array(
                 'validation' => array(__CLASS__, 'validateDescription'),
-            )),
-            'HANDLER_ID' => new Entity\StringField('HANDLER_ID', array(
+            )
+            ),
+            'HANDLER_ID' => new Entity\StringField(
+                'HANDLER_ID', array(
                 'validation' => array(__CLASS__, 'validateHandlerId'),
-            )),
-            'EXTERNAL_ID' => new Entity\StringField('EXTERNAL_ID', array(
+            )
+            ),
+            'EXTERNAL_ID' => new Entity\StringField(
+                'EXTERNAL_ID', array(
                 'validation' => array(__CLASS__, 'validateExternalId'),
-            )),
+            )
+            ),
+            (new Fields\Relations\Reference(
+                'HASH',
+                Internal\FileHashTable::class,
+                Query\Join::on('this.ID', 'ref.FILE_ID')
+            ))
+                ->configureJoinType(Query\Join::TYPE_LEFT),
         );
     }
 

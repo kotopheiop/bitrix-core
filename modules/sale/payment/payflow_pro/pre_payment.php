@@ -1,4 +1,6 @@
-<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die(); ?><?
+<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+} ?><?
 include(dirname(__FILE__) . "/common.php");
 
 $strPaySysError = "";
@@ -15,40 +17,48 @@ if ($bDoPayAction) {
     $ORDER_ID = IntVal($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["ID"]);
 
     $cardnum = Trim($_REQUEST["cardnum"]);
-    if (!isset($cardnum) || strlen($cardnum) <= 0)
+    if (!isset($cardnum) || strlen($cardnum) <= 0) {
         $strPaySysError .= "Please enter valid credit card number" . ". ";
+    }
 
     $cardnum = preg_replace("/[\D]+/", "", $cardnum);
-    if (strlen($cardnum) <= 0)
+    if (strlen($cardnum) <= 0) {
         $strPaySysError .= "Please enter valid credit card number" . ". ";
+    }
 
     $cvv2 = Trim($_REQUEST["cvv2"]);
-    if (!isset($cvv2) || strlen($cvv2) <= 0)
+    if (!isset($cvv2) || strlen($cvv2) <= 0) {
         $strPaySysError .= "Please enter valid credit card CVC2" . ". ";
+    }
 
     $cardexp1 = IntVal($_REQUEST["cardexp1"]);
-    if ($cardexp1 < 1 || $cardexp1 > 12)
+    if ($cardexp1 < 1 || $cardexp1 > 12) {
         $strPaySysError .= "Please enter valid credit card expiration month" . ". ";
-    elseif (strlen($cardexp1) < 2)
+    } elseif (strlen($cardexp1) < 2) {
         $cardexp1 = "0" . $cardexp1;
+    }
 
     $cardexp2 = IntVal($_REQUEST["cardexp2"]);
-    if ($cardexp2 < 5 || $cardexp2 > 50)
+    if ($cardexp2 < 5 || $cardexp2 > 50) {
         $strPaySysError .= "Please enter valid credit card expiration year" . ". ";
-    elseif (strlen($cardexp2) < 2)
+    } elseif (strlen($cardexp2) < 2) {
         $cardexp2 = "0" . $cardexp2;
+    }
 
     $noc = Trim($_REQUEST["noc"]);
-    if (strlen($noc) <= 0)
+    if (strlen($noc) <= 0) {
         $strPaySysError .= "Please enter valid cardholder name" . ". ";
+    }
 
     $address1 = Trim($_REQUEST["address1"]);
-    if (strlen($address1) <= 0)
+    if (strlen($address1) <= 0) {
         $strPaySysError .= "Please enter valid cardholder address" . ". ";
+    }
 
     $zipcode = Trim($_REQUEST["zipcode"]);
-    if (strlen($zipcode) <= 0)
+    if (strlen($zipcode) <= 0) {
         $strPaySysError .= "Please enter valid cardholder zip" . ". ";
+    }
 
     if (strlen($strPaySysError) <= 0) {
         $ret_var = "";
@@ -58,12 +68,14 @@ if ($bDoPayAction) {
             $AMT = CCurrencyRates::ConvertCurrency($AMT, $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"], "USD");
 
             $additor = 1;
-            for ($i = 0; $i < SALE_VALUE_PRECISION; $i++)
+            for ($i = 0; $i < SALE_VALUE_PRECISION; $i++) {
                 $additor = $additor / 10;
+            }
 
             $AMT_tmp = round($AMT, SALE_VALUE_PRECISION);
-            while ($AMT_tmp < $AMT)
+            while ($AMT_tmp < $AMT) {
                 $AMT_tmp = round($AMT_tmp + $additor, SALE_VALUE_PRECISION);
+            }
 
             $AMT = $AMT_tmp;
         }
@@ -113,20 +125,21 @@ if ($bDoPayAction) {
 
             $arResult["RESULT"] = IntVal($arResult["RESULT"]);
             if ($arResult["RESULT"] != 0) {
-                if ($arResult["RESULT"] < 0)
+                if ($arResult["RESULT"] < 0) {
                     $strPaySysError .= "Communication Error: [" . $arResult["RESULT"] . "] " . $arResult["RESPMSG"] . " - " . $arResult["PREFPSMSG"] . ". ";
-                elseif ($arPaySysRes_tmp["RESULT"] == 125)
+                } elseif ($arPaySysRes_tmp["RESULT"] == 125) {
                     $strPaySysError .= "Your payment is declined by Fraud Service. Please contact us to make payment" . ". ";
-                elseif ($arResult["RESULT"] == 126)
+                } elseif ($arResult["RESULT"] == 126) {
                     $strPaySysWarning .= "Your payment is under review by Fraud Service. We contact you in 48 hours to get more specific information" . ". ";
-                elseif (is_set($arErrorCodes, $arResult["RESULT"]))
+                } elseif (is_set($arErrorCodes, $arResult["RESULT"])) {
                     $strPaySysError .= $arErrorCodes[$arResult["RESULT"]] . ". ";
-                else
+                } else {
                     $strPaySysError .= "Unknown error" . ". ";
+                }
             }
-        } else
+        } else {
             $strPaySysError .= "Response error" . ". ";
-
+        }
         /*
                 $arPaySysResult = array(
                         "PS_STATUS" => "Y",
@@ -180,7 +193,9 @@ if ($bDoPayAction) {
                     for ($i = 1; $i <= 12; $i++) {
                         $val = (($i < 10) ? "0" : "") . $i;
                         ?>
-                        <option value="<?= $val ?>" <? if ($_REQUEST["cardexp1"] == $val) echo "selected"; ?>><?= $val ?></option>
+                        <option value="<?= $val ?>" <? if ($_REQUEST["cardexp1"] == $val) {
+                            echo "selected";
+                        } ?>><?= $val ?></option>
                         <?
                     }
                     ?>
@@ -191,7 +206,9 @@ if ($bDoPayAction) {
                     for ($i = 4; $i <= 11; $i++) {
                         $val = (($i < 10) ? "0" : "") . $i;
                         ?>
-                        <option value="<?= $val ?>" <? if ($_REQUEST["cardexp2"] == $val) echo "selected"; ?>><?= $val ?></option>
+                        <option value="<?= $val ?>" <? if ($_REQUEST["cardexp2"] == $val) {
+                            echo "selected";
+                        } ?>><?= $val ?></option>
                         <?
                     }
                     ?>
@@ -213,7 +230,9 @@ if ($bDoPayAction) {
             </td>
             <td class="tablebody" width="60%">
                 <input type="text" class="inputtext" size="40" name="address1"
-                       value="<?= (strlen($_REQUEST["address1"]) > 0) ? htmlspecialcharsbx($_REQUEST["address1"]) : $address1_def ?>">
+                       value="<?= (strlen($_REQUEST["address1"]) > 0) ? htmlspecialcharsbx(
+                           $_REQUEST["address1"]
+                       ) : $address1_def ?>">
             </td>
         </tr>
         <tr>
@@ -222,7 +241,9 @@ if ($bDoPayAction) {
             </td>
             <td class="tablebody" width="60%">
                 <input type="text" class="inputtext" size="7" name="zipcode"
-                       value="<?= (strlen($_REQUEST["zipcode"]) > 0) ? htmlspecialcharsbx($_REQUEST["zipcode"]) : $zipcode_def ?>">
+                       value="<?= (strlen($_REQUEST["zipcode"]) > 0) ? htmlspecialcharsbx(
+                           $_REQUEST["zipcode"]
+                       ) : $zipcode_def ?>">
             </td>
         </tr>
     </table>

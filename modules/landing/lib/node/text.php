@@ -42,7 +42,7 @@ class Text extends \Bitrix\Landing\Node
                 $value = $value['text'];
             }
 
-            if (!is_string($value)) {
+            if (!is_string($value) && !is_int($value)) {
                 continue;
             }
 
@@ -59,7 +59,7 @@ class Text extends \Bitrix\Landing\Node
                     ' style="',
                     $value
                 );
-                $resultList[$pos]->setInnerHTML(!$value ? ' ' : $value);
+                $resultList[$pos]->setInnerHTML(!strlen($value) ? ' ' : $value);
                 if ($url) {
                     $resultList[$pos]->setAttribute('data-pseudo-url', $url);
                 }
@@ -96,7 +96,7 @@ class Text extends \Bitrix\Landing\Node
 
     /**
      * This node may participate in searching.
-     * @param \Bitrix\Landing\Block &$block Block instance.
+     * @param \Bitrix\Landing\Block $block Block instance.
      * @param string $selector Selector.
      * @return array
      */

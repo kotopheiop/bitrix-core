@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/catalog/general/store_barcode.php");
 
 class CCatalogStoreBarCode
@@ -8,32 +9,39 @@ class CCatalogStoreBarCode
     {
         global $DB;
 
-        foreach (GetModuleEvents("catalog", "OnBeforeCatalogStoreBarCodeAdd", true) as $arEvent)
-            if (ExecuteModuleEventEx($arEvent, array(&$arFields)) === false)
+        foreach (GetModuleEvents("catalog", "OnBeforeCatalogStoreBarCodeAdd", true) as $arEvent) {
+            if (ExecuteModuleEventEx($arEvent, array(&$arFields)) === false) {
                 return false;
+            }
+        }
 
-        if (array_key_exists('DATE_CREATE', $arFields))
+        if (array_key_exists('DATE_CREATE', $arFields)) {
             unset($arFields['DATE_CREATE']);
-        if (array_key_exists('DATE_MODIFY', $arFields))
+        }
+        if (array_key_exists('DATE_MODIFY', $arFields)) {
             unset($arFields['DATE_MODIFY']);
+        }
 
         $arFields['~DATE_MODIFY'] = $DB->GetNowFunction();
         $arFields['~DATE_CREATE'] = $DB->GetNowFunction();
 
-        if (!self::CheckFields('ADD', $arFields))
+        if (!self::CheckFields('ADD', $arFields)) {
             return false;
+        }
 
         $arInsert = $DB->PrepareInsert("b_catalog_store_barcode", $arFields);
 
         $strSql = "INSERT INTO b_catalog_store_barcode (" . $arInsert[0] . ") VALUES(" . $arInsert[1] . ")";
 
         $res = $DB->Query($strSql, true, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-        if (!$res)
+        if (!$res) {
             return false;
+        }
         $lastId = intval($DB->LastID());
 
-        foreach (GetModuleEvents("catalog", "OnCatalogStoreBarCodeAdd", true) as $arEvent)
+        foreach (GetModuleEvents("catalog", "OnCatalogStoreBarCodeAdd", true) as $arEvent) {
             ExecuteModuleEventEx($arEvent, array($lastId, $arFields));
+        }
 
         return $lastId;
     }
@@ -46,11 +54,17 @@ class CCatalogStoreBarCode
      * @param array $arSelectFields
      * @return bool|CDBResult
      */
-    public static function getList($arOrder = array(), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
-    {
+    public static function getList(
+        $arOrder = array(),
+        $arFilter = array(),
+        $arGroupBy = false,
+        $arNavStartParams = false,
+        $arSelectFields = array()
+    ) {
         global $DB;
-        if (empty($arSelectFields))
+        if (empty($arSelectFields)) {
             $arSelectFields = array("ID", "PRODUCT_ID", "STORE_ID", "BARCODE", "ORDER_ID");
+        }
 
         $arFields = array(
             "ID" => array("FIELD" => "CB.ID", "TYPE" => "int"),
@@ -64,25 +78,31 @@ class CCatalogStoreBarCode
 
         if (empty($arGroupBy) && is_array($arGroupBy)) {
             $strSql = "SELECT " . $arSqls["SELECT"] . " FROM b_catalog_store_barcode CB " . $arSqls["FROM"];
-            if (!empty($arSqls["WHERE"]))
+            if (!empty($arSqls["WHERE"])) {
                 $strSql .= " WHERE " . $arSqls["WHERE"];
-            if (!empty($arSqls["GROUPBY"]))
+            }
+            if (!empty($arSqls["GROUPBY"])) {
                 $strSql .= " GROUP BY " . $arSqls["GROUPBY"];
+            }
 
             $dbRes = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-            if ($arRes = $dbRes->Fetch())
+            if ($arRes = $dbRes->Fetch()) {
                 return $arRes["CNT"];
-            else
+            } else {
                 return false;
+            }
         }
 
         $strSql = "SELECT " . $arSqls["SELECT"] . " FROM b_catalog_store_barcode CB " . $arSqls["FROM"];
-        if (!empty($arSqls["WHERE"]))
+        if (!empty($arSqls["WHERE"])) {
             $strSql .= " WHERE " . $arSqls["WHERE"];
-        if (!empty($arSqls["GROUPBY"]))
+        }
+        if (!empty($arSqls["GROUPBY"])) {
             $strSql .= " GROUP BY " . $arSqls["GROUPBY"];
-        if (!empty($arSqls["ORDERBY"]))
+        }
+        if (!empty($arSqls["ORDERBY"])) {
             $strSql .= " ORDER BY " . $arSqls["ORDERBY"];
+        }
 
         $intTopCount = 0;
         $boolNavStartParams = (!empty($arNavStartParams) && is_array($arNavStartParams));
@@ -91,16 +111,19 @@ class CCatalogStoreBarCode
         }
         if ($boolNavStartParams && 0 >= $intTopCount) {
             $strSql_tmp = "SELECT COUNT('x') as CNT FROM b_catalog_store_barcode CB " . $arSqls["FROM"];
-            if (!empty($arSqls["WHERE"]))
+            if (!empty($arSqls["WHERE"])) {
                 $strSql_tmp .= " WHERE " . $arSqls["WHERE"];
-            if (!empty($arSqls["GROUPBY"]))
+            }
+            if (!empty($arSqls["GROUPBY"])) {
                 $strSql_tmp .= " GROUP BY " . $arSqls["GROUPBY"];
+            }
 
             $dbRes = $DB->Query($strSql_tmp, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             $cnt = 0;
             if (empty($arSqls["GROUPBY"])) {
-                if ($arRes = $dbRes->Fetch())
+                if ($arRes = $dbRes->Fetch()) {
                     $cnt = $arRes["CNT"];
+                }
             } else {
                 $cnt = $dbRes->SelectedRowsCount();
             }

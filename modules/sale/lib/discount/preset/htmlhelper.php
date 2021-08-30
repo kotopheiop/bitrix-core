@@ -34,7 +34,10 @@ final class HtmlHelper
 
         foreach ($selectData as $key => $val) {
             $html .=
-                '<option value="' . htmlspecialcharsbx($key) . '"' . (in_array($key, $values) ? ' selected' : '') . '>' .
+                '<option value="' . htmlspecialcharsbx($key) . '"' . (in_array(
+                    $key,
+                    $values
+                ) ? ' selected' : '') . '>' .
                 htmlspecialcharsex($val) .
                 '</option>';
         }

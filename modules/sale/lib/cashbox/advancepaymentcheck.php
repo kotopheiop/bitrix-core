@@ -58,6 +58,11 @@ class AdvancePaymentCheck extends Check
         return $result;
     }
 
+    protected function needPrintMarkingCode($basketItem): bool
+    {
+        return false;
+    }
+
     /**
      * @return string
      */

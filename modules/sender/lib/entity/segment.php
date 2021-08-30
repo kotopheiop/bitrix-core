@@ -12,12 +12,14 @@ use Bitrix\Main\Application;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
-use Bitrix\Sender\ContactTable;
-use Bitrix\Sender\ListTable;
-use Bitrix\Sender\GroupTable;
-use Bitrix\Sender\GroupConnectorTable;
 use Bitrix\Sender\Connector;
+use Bitrix\Sender\ContactTable;
+use Bitrix\Sender\GroupConnectorTable;
+use Bitrix\Sender\GroupDealCategoryTable;
+use Bitrix\Sender\GroupTable;
 use Bitrix\Sender\Internals\Model\GroupCounterTable;
+use Bitrix\Sender\ListTable;
+use Bitrix\Sender\Posting\SegmentDataBuilder;
 
 Loc::loadMessages(__FILE__);
 
@@ -52,12 +54,14 @@ class Segment extends Base
      */
     public static function getIdByCode($code)
     {
-        $row = self::getList(array(
-            'select' => array('ID'),
-            'filter' => array('=CODE' => $code),
-            'limit' => 1,
-            'cache' => array('ttl' => 36000)
-        ))->fetch();
+        $row = self::getList(
+            array(
+                'select' => array('ID'),
+                'filter' => array('=CODE' => $code),
+                'limit' => 1,
+                'cache' => array('ttl' => 36000)
+            )
+        )->fetch();
 
         return $row ? $row['ID'] : null;
     }
@@ -100,16 +104,19 @@ class Segment extends Base
         }
 
         $data['ENDPOINTS'] = array();
-        $groupConnectorDb = GroupConnectorTable::getList(array(
-            'filter' => array(
-                '=GROUP_ID' => $id
+        $groupConnectorDb = GroupConnectorTable::getList(
+            array(
+                'filter' => array(
+                    '=GROUP_ID' => $id
+                )
             )
-        ));
+        );
         while ($groupConnector = $groupConnectorDb->fetch()) {
             if (empty($groupConnector['ENDPOINT']) || !is_array($groupConnector['ENDPOINT'])) {
                 continue;
             }
 
+            $groupConnector['ENDPOINT']['FILTER_ID'] = $groupConnector['FILTER_ID'];
             $data['ENDPOINTS'][] = $groupConnector['ENDPOINT'];
         }
 
@@ -128,11 +135,6 @@ class Segment extends Base
         $endpoints = $data['ENDPOINTS'];
         unset($data['ENDPOINTS']);
 
-        if (!is_array($endpoints) || count($endpoints) == 0) {
-            $this->addError(Loc::getMessage('SENDER_ENTITY_SEGMENT_ERROR_NO_FILTERS'));
-            return $id;
-        }
-
         $id = $this->saveByEntity(GroupTable::getEntity(), $id, $data);
         if ($this->hasErrors()) {
             return $id;
@@ -140,40 +142,73 @@ class Segment extends Base
 
         $dataCounters = array();
         GroupConnectorTable::delete(array('GROUP_ID' => $id));
-        foreach ($endpoints as $endpoint) {
-            $connector = Connector\Manager::getConnector($endpoint);
-            if (!$connector) {
+
+        if ($endpoints) {
+            foreach ($endpoints as $endpoint) {
+                $connector = Connector\Manager::getConnector($endpoint);
+                if (!$connector) {
+                    continue;
+                }
+
+                if ($this->isFilterOnly() && !($connector instanceof Connector\BaseFilter)) {
+                    continue;
+                }
+
+                $connector->setFieldValues($endpoint['FIELDS']);
+                $endpoint['FIELDS'] = $connector->getFieldValues();
+                $statFields = $connector->getStatFields();
+
+                foreach (array_intersect($statFields, array_keys($endpoint['FIELDS'])) as $field) {
+                    \Bitrix\Sender\Log::stat('segment_field', $field, $id);
+                }
+
+                $groupConnector = array(
+                    'GROUP_ID' => $id,
+                    'NAME' => $connector->getName(),
+                    'ENDPOINT' => $endpoint,
+                    'ADDRESS_COUNT' => $connector->getDataCounter()->getSummary()
+                );
+
+                if ($endpoint['FILTER_ID']) {
+                    $groupConnector['FILTER_ID'] = $endpoint['FILTER_ID'];
+                }
+
+                $connectorResultDb = GroupConnectorTable::add($groupConnector);
+                if ($connectorResultDb->isSuccess()) {
+                    $dataCounters[] = $connector->getDataCounter();
+                }
+
+                $this->updateDealCategory($id, $connector);
+            }
+
+            SegmentDataBuilder::checkIsSegmentPrepared($id);
+            $this->updateAddressCounters($id, $dataCounters);
+        }
+
+        return $id;
+    }
+
+    private function updateDealCategory(int $groupId, $connector)
+    {
+        $groupDealCategory = [];
+
+        foreach ($connector->getFieldValues() as $fieldKey => $fieldValue) {
+            if ($fieldKey != 'DEAL_CATEGORY_ID') {
                 continue;
             }
+            GroupDealCategoryTable::delete(array('GROUP_ID' => $groupId));
 
-            if ($this->isFilterOnly() && !($connector instanceof Connector\BaseFilter)) {
-                continue;
-            }
-
-            $connector->setFieldValues($endpoint['FIELDS']);
-            $endpoint['FIELDS'] = $connector->getFieldValues();
-            $statFields = $connector->getStatFields();
-
-            foreach (array_intersect($statFields, array_keys($endpoint['FIELDS'])) as $field) {
-                \Bitrix\Sender\Log::stat('segment_field', $field, $id);
-            }
-
-            $groupConnector = array(
-                'GROUP_ID' => $id,
-                'NAME' => $connector->getName(),
-                'ENDPOINT' => $endpoint,
-                'ADDRESS_COUNT' => $connector->getDataCounter()->getSummary()
-            );
-
-            $connectorResultDb = GroupConnectorTable::add($groupConnector);
-            if ($connectorResultDb->isSuccess()) {
-                $dataCounters[] = $connector->getDataCounter();
+            foreach ($fieldValue as $dealCategory) {
+                $groupDealCategory[] = [
+                    'GROUP_ID' => $groupId,
+                    'DEAL_CATEGORY_ID' => $dealCategory
+                ];
             }
         }
 
-        $this->updateAddressCounters($id, $dataCounters);
-
-        return $id;
+        if (!empty($groupDealCategory)) {
+            GroupDealCategoryTable::addMulti($groupDealCategory);
+        }
     }
 
     /**
@@ -333,11 +368,13 @@ class Segment extends Base
                 continue;
             }
 
-            GroupCounterTable::add(array(
-                'GROUP_ID' => $segmentId,
-                'TYPE_ID' => $typeId,
-                'CNT' => $typeCount,
-            ));
+            GroupCounterTable::add(
+                array(
+                    'GROUP_ID' => $segmentId,
+                    'TYPE_ID' => $typeId,
+                    'CNT' => $typeCount,
+                )
+            );
         }
 
         return true;
@@ -364,11 +401,13 @@ class Segment extends Base
     public static function getAddressCounters(array $list)
     {
         $data = array();
-        $list = GroupCounterTable::getList(array(
-            'select' => array('GROUP_ID', 'TYPE_ID', 'CNT'),
-            'filter' => array('=GROUP_ID' => $list),
-            'order' => array('GROUP_ID' => 'ASC')
-        ));
+        $list = GroupCounterTable::getList(
+            array(
+                'select' => array('GROUP_ID', 'TYPE_ID', 'CNT'),
+                'filter' => array('=GROUP_ID' => $list),
+                'order' => array('GROUP_ID' => 'ASC')
+            )
+        );
         foreach ($list as $row) {
             $data[$row['GROUP_ID']][$row['TYPE_ID']] = $row['CNT'];
         }
@@ -391,7 +430,8 @@ class Segment extends Base
         $tableName = GroupTable::getTableName();
         $now = Application::getConnection()->getSqlHelper()->convertToDbDateTime(new DateTime());
         $ids = array();
-        foreach ($list as $id) {
+        foreach ($list as $element) {
+            $id = $element['ID'];
             if (!$id || !is_numeric($id)) {
                 continue;
             }

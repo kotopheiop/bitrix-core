@@ -6,16 +6,18 @@ namespace Bitrix\Sale\Cashbox\AdminPage\OfdSettings {
     use Bitrix\Sale\Internals\Input;
     use Bitrix\Sale\Cashbox;
 
-    if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+    if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
         die();
+    }
 
     require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/lib/delivery/inputs.php");
 
     global $APPLICATION;
 
     $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-    if ($saleModulePermissions < "W")
+    if ($saleModulePermissions < "W") {
         $APPLICATION->AuthForm(Loc::getMessage("SALE_ACCESS_DENIED"));
+    }
 
     Loc::loadMessages(__FILE__);
 
@@ -33,18 +35,30 @@ namespace Bitrix\Sale\Cashbox\AdminPage\OfdSettings {
                     $result .= '<tr class="heading"><td colspan="2">' . $block['LABEL'] . '</td></tr>';
                     foreach ($block['ITEMS'] as $code => $item) {
                         $value = null;
-                        if (isset($cashboxSettings[$group][$code]))
+                        if (isset($cashboxSettings[$group][$code])) {
                             $value = $cashboxSettings[$group][$code];
+                        }
 
-                        $result .= '<td width="45%" class="adm-detail-content-cell-l">' . $item['LABEL'] . ':</td><td width="55%" valign="top" class="adm-detail-content-cell-r">' . Input\Manager::getEditHtml('OFD_SETTINGS[' . $group . '][' . $code . ']', $item, $value) . '</td></tr>';
+                        $className = 'adm-detail-content-cell-l';
+
+                        if (isset($item['REQUIRED']) && $item['REQUIRED'] === 'Y') {
+                            $className .= ' adm-required-field';
+                        }
+
+                        $result .= '<td width="45%" class="' . $className . '">' . $item['LABEL'] . ':</td><td width="55%" valign="top" class="adm-detail-content-cell-r">' . Input\Manager::getEditHtml(
+                                'OFD_SETTINGS[' . $group . '][' . $code . ']',
+                                $item,
+                                $value
+                            ) . '</td></tr>';
                     }
                 }
             }
         }
     }
 
-    if ($result === '')
+    if ($result === '') {
         $result = '<tr><td colspan="2">' . Loc::getMessage('SALE_CASHBOX_NO_OFD') . '</td></tr>';
+    }
 
     echo $result;
 }

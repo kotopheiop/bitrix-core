@@ -19,12 +19,14 @@ CModule::includeModule('mail');
 
 try {
     $hostname = $request->getPostList()->getRaw('hostname');
-    if (empty($hostname))
+    if (empty($hostname)) {
         throw new Bitrix\Mail\ReceiverException('Empty \'hostname\' request parameter');
+    }
 
     $message = $request->getPostList()->getRaw('message');
-    if (empty($message))
+    if (empty($message)) {
         throw new Bitrix\Mail\ReceiverException('Empty \'message\' request parameter');
+    }
 
     try {
         $message = Bitrix\Main\Web\Json::decode($message);
@@ -32,23 +34,28 @@ try {
         throw new Bitrix\Mail\ReceiverException('Invalid \'message\' request parameter');
     }
 
-    if (empty($message['rcpt_to']))
+    if (empty($message['rcpt_to'])) {
         throw new Bitrix\Mail\ReceiverException('Empty recipients list');
+    }
 
     $rcpt = array();
     foreach ($message['rcpt_to'] as $to) {
-        if (empty($to['user']) || empty($to['host']))
+        if (empty($to['user']) || empty($to['host'])) {
             continue;
-        if (strtolower($hostname) != strtolower($to['host']))
+        }
+        if (mb_strtolower($hostname) != mb_strtolower($to['host'])) {
             continue;
-        if (preg_match('/^no-?reply$/i', $to['user']))
+        }
+        if (preg_match('/^no-?reply$/i', $to['user'])) {
             continue;
+        }
 
         $rcpt[] = sprintf('%s@%s', $to['user'], $to['host']);
     }
 
-    if (empty($rcpt))
+    if (empty($rcpt)) {
         throw new Bitrix\Mail\ReceiverException('Invalid recipients list');
+    }
 
     $message['files'] = array();
     if (!empty($message['attachments']) && is_array($message['attachments'])) {
@@ -79,20 +86,23 @@ try {
             if (empty($item['fileName'])) {
                 $item['fileName'] = $fileId;
 
-                if (strpos($item['contentType'], 'message/') === 0)
+                if (mb_strpos($item['contentType'], 'message/') === 0) {
                     $item['fileName'] .= '.eml';
+                }
             }
 
             if ($item['contentType']) {
-                if (in_array($item['contentType'], $jpegTypes))
+                if (in_array($item['contentType'], $jpegTypes)) {
                     $item['contentType'] = 'image/jpeg';
+                }
 
                 if (is_set($imageExts, $item['contentType'])) {
-                    $extPos = strrpos($item['fileName'], '.');
-                    $ext = substr($item['fileName'], $extPos);
+                    $extPos = mb_strrpos($item['fileName'], '.');
+                    $ext = mb_substr($item['fileName'], $extPos);
 
-                    if ($extPos === false || !in_array($ext, $imageExts[$item['contentType']]))
+                    if ($extPos === false || !in_array($ext, $imageExts[$item['contentType']])) {
                         $item['fileName'] .= $imageExts[$item['contentType']][0];
+                    }
                 }
             }
 
@@ -105,7 +115,7 @@ try {
             );
 
             if (is_uploaded_file($file['tmp_name']) && $file['size'] > 0) {
-                $uploadFile = $tmpDir . bx_basename($file['name']);
+                $uploadFile = $tmpDir . md5(mt_rand() . $file['name']);
                 move_uploaded_file($file['tmp_name'], $uploadFile);
 
                 $file['tmp_name'] = $uploadFile;
@@ -122,15 +132,17 @@ try {
         $error = null;
         $result = Bitrix\Mail\User::onEmailReceived($to, $message, $error);
 
-        if ($result)
+        if ($result) {
             $success = true;
-        elseif ($error)
+        } elseif ($error) {
             $rcptErrors[$to] = $error;
+        }
     }
 
     if (!$success) {
-        if (count($rcptErrors) == count($rcpt))
+        if (count($rcptErrors) == count($rcpt)) {
             throw new Bitrix\Mail\ReceiverException(join('; ', $rcptErrors));
+        }
 
         throw new Bitrix\Main\SystemException(sprintf('Message processing failed (rcpt: %s)', join(', ', $rcpt)));
     }
@@ -142,10 +154,6 @@ try {
 } catch (Exception $e) {
     addMessage2Log(sprintf('Mail entry: %s', $e->getMessage()), 'mail', 0, false);
     $response->setStatus('500 Internal Server Error');
-}
-
-if (\Bitrix\Main\Loader::includeModule('compression')) {
-    \CCompress::disableCompression();
 }
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_after.php';

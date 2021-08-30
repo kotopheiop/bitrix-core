@@ -91,7 +91,9 @@ class CBitrixCloudMonitoringTest
     {
         return new CBitrixCloudMonitoringTest(
             $node->getAttribute("id"),
-            $node->getAttribute("status") == 2 ? CBitrixCloudMonitoringResult::RED_LAMP : CBitrixCloudMonitoringResult::GREEN_LAMP,
+            $node->getAttribute(
+                "status"
+            ) == 2 ? CBitrixCloudMonitoringResult::RED_LAMP : CBitrixCloudMonitoringResult::GREEN_LAMP,
             strtotime($node->getAttribute("time")),
             $node->getAttribute("uptime"),
             $node->textContent()
@@ -125,8 +127,9 @@ class CBitrixCloudMonitoringDomainResult implements CBitrixCloudMonitoring_Acces
     public function getStatus()
     {
         foreach ($this->tests as $testName => $testResult) {
-            if ($testResult->getStatus() === CBitrixCloudMonitoringResult::RED_LAMP)
+            if ($testResult->getStatus() === CBitrixCloudMonitoringResult::RED_LAMP) {
                 return CBitrixCloudMonitoringResult::RED_LAMP;
+            }
         }
         return CBitrixCloudMonitoringResult::GREEN_LAMP;
     }
@@ -188,12 +191,14 @@ class CBitrixCloudMonitoringDomainResult implements CBitrixCloudMonitoring_Acces
     {
         $tests = array();
         foreach ($this->tests as $testName => $testResult) {
-            $tests[$testName] = serialize(array(
-                "status" => $testResult->getStatus(),
-                "time" => $testResult->getTime(),
-                "uptime" => $testResult->getUptime(),
-                "result" => $testResult->getResult(),
-            ));
+            $tests[$testName] = serialize(
+                array(
+                    "status" => $testResult->getStatus(),
+                    "time" => $testResult->getTime(),
+                    "uptime" => $testResult->getUptime(),
+                    "result" => $testResult->getResult(),
+                )
+            );
         }
         $option->setArrayValue($tests);
     }
@@ -202,7 +207,7 @@ class CBitrixCloudMonitoringDomainResult implements CBitrixCloudMonitoring_Acces
     {
         $tests = array();
         foreach ($option->getArrayValue() as $testName => $testResult) {
-            $testResult = unserialize($testResult);
+            $testResult = unserialize($testResult, ['allowed_classes' => false]);
             if (is_array($testResult)) {
                 $test = new CBitrixCloudMonitoringTest(
                     $testName,
@@ -322,8 +327,9 @@ class CBitrixCloudMonitoringResult implements CBitrixCloudMonitoring_Access
     public function getStatus()
     {
         foreach ($this->domains as $domainName => $domainResult) {
-            if ($domainResult->getStatus() === CBitrixCloudMonitoringResult::RED_LAMP)
+            if ($domainResult->getStatus() === CBitrixCloudMonitoringResult::RED_LAMP) {
                 return CBitrixCloudMonitoringResult::RED_LAMP;
+            }
         }
         return CBitrixCloudMonitoringResult::GREEN_LAMP;
     }
@@ -350,10 +356,12 @@ class CBitrixCloudMonitoringResult implements CBitrixCloudMonitoring_Access
     {
         $domains = new CBitrixCloudMonitoringResult;
         foreach (CBitrixCloudOption::getOption("monitoring_result")->getArrayValue() as $i => $domainName) {
-            $domains->addDomainResult(CBitrixCloudMonitoringDomainResult::loadFromOptions(
-                $domainName,
-                CBitrixCloudOption::getOption("monitoring_result_$i")
-            ));
+            $domains->addDomainResult(
+                CBitrixCloudMonitoringDomainResult::loadFromOptions(
+                    $domainName,
+                    CBitrixCloudOption::getOption("monitoring_result_$i")
+                )
+            );
         }
         return $domains;
     }

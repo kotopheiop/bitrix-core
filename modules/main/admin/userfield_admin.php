@@ -1,22 +1,26 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 define("HELP_FILE", "settings/userfield_admin.php");
 
-if (!$USER->CanDoOperation('view_other_settings'))
+if (!$USER->CanDoOperation('view_other_settings')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 
 $back_url = $_REQUEST["back_url"];
-if (substr($back_url, 0, 1) <> '/')
+if (mb_substr($back_url, 0, 1) <> '/') {
     $back_url = '';
+}
 
 $sTableID = "tbl_user_type";
 $oSort = new CAdminSorting($sTableID, "ID", "desc");
 $lAdmin = new CAdminList($sTableID, $oSort);
 
 $FilterArr = Array(
-    "find", "find_type",
+    "find",
+    "find_type",
     "find_entity_id",
     "find_id",
     "find_field_name",
@@ -49,17 +53,20 @@ $arFilter = array(
 if ($lAdmin->EditAction()) {
     $obUserField = new CUserTypeEntity;
     foreach ($FIELDS as $ID => $arFields) {
-        if (!$lAdmin->IsUpdated($ID))
+        if (!$lAdmin->IsUpdated($ID)) {
             continue;
+        }
         //Rights check
-        if ($USER_FIELD_MANAGER->GetRights(false, $ID) < "W")
+        if ($USER_FIELD_MANAGER->GetRights(false, $ID) < "W") {
             continue;
+        }
         //Update
         $DB->StartTransaction();
-        $ID = IntVal($ID);
+        $ID = intval($ID);
         if (!$obUserField->Update($ID, $arFields)) {
-            if ($e = $APPLICATION->GetException())
+            if ($e = $APPLICATION->GetException()) {
                 $lAdmin->AddGroupError(GetMessage("USERTYPE_UPDATE_ERROR") . " " . $e->GetString(), $ID);
+            }
             $DB->Rollback();
         }
         $DB->Commit();
@@ -69,18 +76,21 @@ if ($lAdmin->EditAction()) {
 if ($arID = $lAdmin->GroupAction()) {
     if ($_REQUEST['action_target'] == 'selected') {
         $rsData = CUserTypeEntity::GetList(array($by => $order), $arFilter);
-        while ($arRes = $rsData->Fetch())
+        while ($arRes = $rsData->Fetch()) {
             $arID[] = $arRes['ID'];
+        }
     }
 
     $obUserField = new CUserTypeEntity;
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
-        $ID = IntVal($ID);
+        }
+        $ID = intval($ID);
         //Rights check
-        if ($USER_FIELD_MANAGER->GetRights(false, $ID) < "W")
+        if ($USER_FIELD_MANAGER->GetRights(false, $ID) < "W") {
             continue;
+        }
         //Do action
         switch ($_REQUEST['action']) {
             case "delete":
@@ -102,81 +112,84 @@ $rsData = new CAdminResult($rsData, $sTableID);
 $rsData->NavStart();
 $lAdmin->NavText($rsData->GetNavPrint(GetMessage("USERTYPE_NAV")));
 
-$lAdmin->AddHeaders(array(
+$lAdmin->AddHeaders(
     array(
-        "id" => "ID",
-        "content" => "ID",
-        "sort" => "ID",
-        "align" => "right",
-        "default" => true,
-    ),
-    array(
-        "id" => "ENTITY_ID",
-        "content" => GetMessage("USERTYPE_ENTITY_ID"),
-        "sort" => "ENTITY_ID",
-        "default" => true,
-    ),
-    array(
-        "id" => "FIELD_NAME",
-        "content" => GetMessage("USERTYPE_FIELD_NAME"),
-        "sort" => "FIELD_NAME",
-        "default" => true,
-    ),
-    array(
-        "id" => "USER_TYPE_ID",
-        "content" => GetMessage("USERTYPE_USER_TYPE_ID"),
-        "sort" => "USER_TYPE_ID",
-        "default" => true,
-    ),
-    array(
-        "id" => "XML_ID",
-        "content" => GetMessage("USERTYPE_XML_ID"),
-        "sort" => "XML_ID",
-        "default" => false,
-    ),
-    array(
-        "id" => "SORT",
-        "content" => GetMessage("USERTYPE_SORT"),
-        "sort" => "SORT",
-        "align" => "right",
-        "default" => true,
-    ),
-    array(
-        "id" => "MULTIPLE",
-        "content" => GetMessage("USERTYPE_MULTIPLE"),
-        "default" => false,
-    ),
-    array(
-        "id" => "MANDATORY",
-        "content" => GetMessage("USERTYPE_MANDATORY"),
-        "default" => false,
-    ),
-    array(
-        "id" => "SHOW_FILTER",
-        "content" => GetMessage("USERTYPE_SHOW_FILTER"),
-        "default" => false,
-    ),
-    array(
-        "id" => "SHOW_IN_LIST",
-        "content" => GetMessage("USERTYPE_SHOW_IN_LIST"),
-        "default" => false,
-    ),
-    array(
-        "id" => "EDIT_IN_LIST",
-        "content" => GetMessage("USERTYPE_EDIT_IN_LIST"),
-        "default" => false,
-    ),
-    array(
-        "id" => "IS_SEARCHABLE",
-        "content" => GetMessage("USERTYPE_IS_SEARCHABLE"),
-        "default" => false,
-    ),
-));
+        array(
+            "id" => "ID",
+            "content" => "ID",
+            "sort" => "ID",
+            "align" => "right",
+            "default" => true,
+        ),
+        array(
+            "id" => "ENTITY_ID",
+            "content" => GetMessage("USERTYPE_ENTITY_ID"),
+            "sort" => "ENTITY_ID",
+            "default" => true,
+        ),
+        array(
+            "id" => "FIELD_NAME",
+            "content" => GetMessage("USERTYPE_FIELD_NAME"),
+            "sort" => "FIELD_NAME",
+            "default" => true,
+        ),
+        array(
+            "id" => "USER_TYPE_ID",
+            "content" => GetMessage("USERTYPE_USER_TYPE_ID"),
+            "sort" => "USER_TYPE_ID",
+            "default" => true,
+        ),
+        array(
+            "id" => "XML_ID",
+            "content" => GetMessage("USERTYPE_XML_ID"),
+            "sort" => "XML_ID",
+            "default" => false,
+        ),
+        array(
+            "id" => "SORT",
+            "content" => GetMessage("USERTYPE_SORT"),
+            "sort" => "SORT",
+            "align" => "right",
+            "default" => true,
+        ),
+        array(
+            "id" => "MULTIPLE",
+            "content" => GetMessage("USERTYPE_MULTIPLE"),
+            "default" => false,
+        ),
+        array(
+            "id" => "MANDATORY",
+            "content" => GetMessage("USERTYPE_MANDATORY"),
+            "default" => false,
+        ),
+        array(
+            "id" => "SHOW_FILTER",
+            "content" => GetMessage("USERTYPE_SHOW_FILTER"),
+            "default" => false,
+        ),
+        array(
+            "id" => "SHOW_IN_LIST",
+            "content" => GetMessage("USERTYPE_SHOW_IN_LIST"),
+            "default" => false,
+        ),
+        array(
+            "id" => "EDIT_IN_LIST",
+            "content" => GetMessage("USERTYPE_EDIT_IN_LIST"),
+            "default" => false,
+        ),
+        array(
+            "id" => "IS_SEARCHABLE",
+            "content" => GetMessage("USERTYPE_IS_SEARCHABLE"),
+            "default" => false,
+        ),
+    )
+);
 
 while ($arRes = $rsData->NavNext(true, "f_")):
     //Rights check
-    if ($USER_FIELD_MANAGER->GetRights(false, $f_ID) < "W")
+    if ($USER_FIELD_MANAGER->GetRights(false, $f_ID) < "W") {
         continue;
+    }
 
     $row =& $lAdmin->AddRow($f_ID, $arRes);
 
@@ -185,12 +198,15 @@ while ($arRes = $rsData->NavNext(true, "f_")):
     $row->AddInputField("SORT", array("size" => 5));
     $row->AddViewField("MULTIPLE", $f_MULTIPLE == "Y" ? GetMessage("MAIN_YES") : GetMessage("MAIN_NO"));
     $row->AddCheckField("MANDATORY");
-    $row->AddSelectField("SHOW_FILTER", array(
-        "N" => GetMessage("USER_TYPE_FILTER_N"),
-        "I" => GetMessage("USER_TYPE_FILTER_I"),
-        "E" => GetMessage("USER_TYPE_FILTER_E"),
-        "S" => GetMessage("USER_TYPE_FILTER_S"),
-    ));
+    $row->AddSelectField(
+        "SHOW_FILTER",
+        array(
+            "N" => GetMessage("USER_TYPE_FILTER_N"),
+            "I" => GetMessage("USER_TYPE_FILTER_I"),
+            "E" => GetMessage("USER_TYPE_FILTER_E"),
+            "S" => GetMessage("USER_TYPE_FILTER_S"),
+        )
+    );
     $row->AddCheckField("SHOW_IN_LIST");
     $row->AddCheckField("EDIT_IN_LIST");
     $row->AddCheckField("IS_SEARCHABLE");
@@ -206,15 +222,25 @@ while ($arRes = $rsData->NavNext(true, "f_")):
     $arActions[] = array(
         "ICON" => "delete",
         "TEXT" => GetMessage("MAIN_DELETE"),
-        "ACTION" => "if(confirm('" . GetMessageJS('USERTYPE_DELETE_CONF') . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete", 'back_url=' . urlencode($back_url) . '&list_url=' . urlencode($list_url))
+        "ACTION" => "if(confirm('" . GetMessageJS('USERTYPE_DELETE_CONF') . "')) " . $lAdmin->ActionDoGroup(
+                $f_ID,
+                "delete",
+                'back_url=' . urlencode(
+                    $back_url
+                ) . '&list_url=' . urlencode(
+                    $list_url
+                )
+            )
     );
 
     $row->AddActions($arActions);
 endwhile;
 
-$lAdmin->AddGroupActionTable(Array(
-    "delete" => true,
-));
+$lAdmin->AddGroupActionTable(
+    Array(
+        "delete" => true,
+    )
+);
 
 $aContext = array();
 
@@ -236,7 +262,9 @@ if ($find_type === 'ENTITY_ID' && !empty($find)) {
     $add_url .= '&ENTITY_ID=' . urlencode($find);
 
     if ($back_url <> '') {
-        $add_url .= '&back_url=' . urlencode($APPLICATION->GetCurPageParam()) . '&list_url=' . urlencode($APPLICATION->GetCurPageParam());
+        $add_url .= '&back_url=' . urlencode($APPLICATION->GetCurPageParam()) . '&list_url=' . urlencode(
+                $APPLICATION->GetCurPageParam()
+            );
     }
 }
 
@@ -389,7 +417,13 @@ $arrYN = array(
         <tr>
             <td><?= GetMessage("USERTYPE_IS_SEARCHABLE") ?>:</td>
             <td>
-                <?= SelectBoxFromArray("find_is_searchable", $arrYN, $find_is_searchable, GetMessage("MAIN_ALL"), ""); ?>
+                <?= SelectBoxFromArray(
+                    "find_is_searchable",
+                    $arrYN,
+                    $find_is_searchable,
+                    GetMessage("MAIN_ALL"),
+                    ""
+                ); ?>
             </td>
         </tr>
         <?

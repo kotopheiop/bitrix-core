@@ -25,12 +25,14 @@ class Expenses
             if (isset($data[$name])) {
                 $value = $data[$name];
                 if (is_array($value)) {
-                    $value = array_sum(array_map(
-                        function ($value) {
-                            return is_numeric($value) ? $value : 0;
-                        },
-                        array_column($value, 'value')
-                    ));
+                    $value = array_sum(
+                        array_map(
+                            function ($value) {
+                                return is_numeric($value) ? $value : 0;
+                            },
+                            array_column($value, 'value')
+                        )
+                    );
                 }
                 if (is_numeric($value)) {
                     $this->data[$name] += $value;

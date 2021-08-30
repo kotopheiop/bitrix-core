@@ -7,7 +7,9 @@ use Bitrix\Main,
     Bitrix\Socialnetwork\WorkgroupTable,
     Bitrix\Socialnetwork\UserToGroupTable;
 
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
+    die();
+}
 
 abstract class EntitySelector extends \CBitrixComponent implements Main\Engine\Contract\Controllerable, Main\Errorable
 {
@@ -103,7 +105,6 @@ abstract class EntitySelector extends \CBitrixComponent implements Main\Engine\C
      */
     protected function prepareRequest()
     {
-
     }
 
     /**
@@ -209,14 +210,16 @@ abstract class EntitySelector extends \CBitrixComponent implements Main\Engine\C
                 $filter["=WorkgroupSite:GROUP.SITE_ID"] = $this->arParams['SITE_ID'];
             }
 
-            $res = WorkgroupTable::getList([
-                'filter' => $filter,
-                'limit' => 100,
-                'select' => [
-                    'GROUP_ID' => 'ID',
-                    'GROUP_NAME' => 'NAME'
+            $res = WorkgroupTable::getList(
+                [
+                    'filter' => $filter,
+                    'limit' => 100,
+                    'select' => [
+                        'GROUP_ID' => 'ID',
+                        'GROUP_NAME' => 'NAME'
+                    ]
                 ]
-            ]);
+            );
         } else {
             $filter = [
                 '=GROUP.LANDING' => 'Y',
@@ -228,14 +231,16 @@ abstract class EntitySelector extends \CBitrixComponent implements Main\Engine\C
                 $filter["=GROUP.WorkgroupSite:GROUP.SITE_ID"] = $this->arParams['SITE_ID'];
             }
 
-            $res = UserToGroupTable::getList([
-                'filter' => $filter,
-                'limit' => 100,
-                'select' => [
-                    'GROUP_ID' => 'GROUP_ID',
-                    'GROUP_NAME' => 'GROUP.NAME'
+            $res = UserToGroupTable::getList(
+                [
+                    'filter' => $filter,
+                    'limit' => 100,
+                    'select' => [
+                        'GROUP_ID' => 'GROUP_ID',
+                        'GROUP_NAME' => 'GROUP.NAME'
+                    ]
                 ]
-            ]);
+            );
         }
 
         while ($workgroupFields = $res->fetch()) {
@@ -281,10 +286,13 @@ abstract class EntitySelector extends \CBitrixComponent implements Main\Engine\C
             'FILTER_ID' => $this->getFilterId(),
             'FILTER' => $this->getFilter(),
             'FILTER_PRESETS' => $this->getFilterPresets(),
-            'CURRENT_DATETIME_FORMAT' => ($intranetInstalled ? \CIntranetUtils::getCurrentDateTimeFormat() : preg_replace('/[\/.,\s:][s]/', '', $dateTimeformat)),
-            'CURRENT_DATETIME_FORMAT_WOYEAR' => ($intranetInstalled ? \CIntranetUtils::getCurrentDateTimeFormat([
-                'woYear' => true
-            ]) : preg_replace('/[\/.,\s-][Yyo]/', '', $dateTimeformat)),
+            'CURRENT_DATETIME_FORMAT' => ($intranetInstalled ? \CIntranetUtils::getCurrentDateTimeFormat(
+            ) : preg_replace('/[\/.,\s:][s]/', '', $dateTimeformat)),
+            'CURRENT_DATETIME_FORMAT_WOYEAR' => ($intranetInstalled ? \CIntranetUtils::getCurrentDateTimeFormat(
+                [
+                    'woYear' => true
+                ]
+            ) : preg_replace('/[\/.,\s-][Yyo]/', '', $dateTimeformat)),
             'CURRENT_USER_ID' => $this->getCurrentUserId()
         ];
     }

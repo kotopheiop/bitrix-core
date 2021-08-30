@@ -30,16 +30,18 @@ class ReiteratedJob extends Job
             return $this;
         }
 
-        $reiterated = LetterTable::getRow([
-            'select' => ['AUTO_SEND_TIME'],
-            'filter' => [
-                '=CAMPAIGN.ACTIVE' => 'Y',
-                '=REITERATE' => 'Y',
-                '=STATUS' => LetterTable::STATUS_WAIT,
-            ],
-            'order' => ['AUTO_SEND_TIME' => 'ASC'],
-            'limit' => 1
-        ]);
+        $reiterated = LetterTable::getRow(
+            [
+                'select' => ['AUTO_SEND_TIME'],
+                'filter' => [
+                    '=CAMPAIGN.ACTIVE' => 'Y',
+                    '=REITERATE' => 'Y',
+                    '=STATUS' => LetterTable::STATUS_WAIT,
+                ],
+                'order' => ['AUTO_SEND_TIME' => 'ASC'],
+                'limit' => 1
+            ]
+        );
         if (!$reiterated) {
             return $this;
         }

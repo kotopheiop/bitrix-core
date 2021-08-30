@@ -8,6 +8,7 @@ use \Bitrix\Landing\Field;
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\ModuleManager;
 use \Bitrix\Main\Loader;
+use \Bitrix\Currency\CurrencyManager;
 
 Loc::loadMessages(__FILE__);
 
@@ -46,8 +47,30 @@ class Settings extends \Bitrix\Landing\Hook\Page
         'USE_ENHANCED_ECOMMERCE' => 'Y',
         'DATA_LAYER_NAME' => 'dataLayer',
         'BRAND_PROPERTY' => 'BRAND_REF',
-        'CART_POSITION' => 'BL'
+        'CART_POSITION' => 'BL',
+        'AGREEMENT_ID' => 0,
     );
+
+    /**
+     * Returns transform $defValues.
+     * @return array
+     */
+    protected static function getDefaultValues(): array
+    {
+        static $defValues = [];
+
+        if (!$defValues) {
+            $defValues = self::$defValues;
+            if (
+                !$defValues['CURRENCY_ID']
+                && Loader::includeModule('currency')
+            ) {
+                $defValues['CURRENCY_ID'] = CurrencyManager::getBaseCurrency();
+            }
+        }
+
+        return $defValues;
+    }
 
     /**
      * Build local allowed codes array.
@@ -64,24 +87,37 @@ class Settings extends \Bitrix\Landing\Hook\Page
         if (ModuleManager::isModuleInstalled('catalog')) {
             $codes = array(
                 '' => array(
-                    'IBLOCK_ID', 'SECTION_ID'
+                    'IBLOCK_ID',
+                    'SECTION_ID'
                 ),
                 'VIEW' => array(
-                    'HIDE_NOT_AVAILABLE', 'HIDE_NOT_AVAILABLE_OFFERS', 'PRODUCT_SUBSCRIPTION',
-                    'USE_PRODUCT_QUANTITY', 'DISPLAY_COMPARE', 'CART_POSITION'
+                    'HIDE_NOT_AVAILABLE',
+                    'HIDE_NOT_AVAILABLE_OFFERS',
+                    'PRODUCT_SUBSCRIPTION',
+                    'USE_PRODUCT_QUANTITY',
+                    'DISPLAY_COMPARE',
+                    'CART_POSITION'
                 ),
                 'PRICE' => array(
-                    'PRICE_CODE', 'USE_PRICE_COUNT', 'SHOW_PRICE_COUNT', 'CURRENCY_ID',
-                    'PRICE_VAT_INCLUDE', 'SHOW_OLD_PRICE', 'SHOW_DISCOUNT_PERCENT'
+                    'PRICE_CODE',
+                    'USE_PRICE_COUNT',
+                    'SHOW_PRICE_COUNT',
+                    'CURRENCY_ID',
+                    'PRICE_VAT_INCLUDE',
+                    'SHOW_OLD_PRICE',
+                    'SHOW_DISCOUNT_PERCENT'
                 ),
                 'ANAL' => array(
-                    'USE_ENHANCED_ECOMMERCE', 'DATA_LAYER_NAME', 'BRAND_PROPERTY'
+                    'USE_ENHANCED_ECOMMERCE',
+                    'DATA_LAYER_NAME',
+                    'BRAND_PROPERTY'
                 )
             );
         } else {
             $codes = array(
                 '' => array(
-                    'IBLOCK_ID', 'SECTION_ID'
+                    'IBLOCK_ID',
+                    'SECTION_ID'
                 )
             );
         }
@@ -103,7 +139,8 @@ class Settings extends \Bitrix\Landing\Hook\Page
         switch ($type) {
             case 'LIST':
             {
-                $field = new Field\Select($code, array(
+                $field = new Field\Select(
+                    $code, array(
                     'title' => isset($params['NAME'])
                         ? $params['NAME']
                         : '',
@@ -112,31 +149,36 @@ class Settings extends \Bitrix\Landing\Hook\Page
                         : array(),
                     'multiple' => isset($params['MULTIPLE'])
                         && $params['MULTIPLE'] == 'Y'
-                ));
+                )
+                );
                 break;
             }
             case 'CHECKBOX':
             {
-                $field = new Field\Checkbox($code, array(
+                $field = new Field\Checkbox(
+                    $code, array(
                     'title' => isset($params['NAME'])
                         ? $params['NAME']
                         : ''
-                ));
+                )
+                );
                 break;
             }
             default:
             {
-                $field = new Field\Text($code, array(
+                $field = new Field\Text(
+                    $code, array(
                     'title' => isset($params['NAME'])
                         ? $params['NAME']
                         : ''
-                ));
+                )
+                );
                 break;
             }
         }
 
-        if ($field && isset(self::$defValues[$code])) {
-            $field->setValue(self::$defValues[$code]);
+        if ($field && isset(self::getDefaultValues()[$code])) {
+            $field->setValue(self::getDefaultValues()[$code]);
         }
 
         return $field;
@@ -152,9 +194,11 @@ class Settings extends \Bitrix\Landing\Hook\Page
 
         if (empty($params)) {
             // get real manifest
-            $block = new \Bitrix\Landing\Block(0, array(
+            $block = new \Bitrix\Landing\Block(
+                0, array(
                 'CODE' => self::SOURCE_BLOCK
-            ));
+            )
+            );
             $manifest = $block->getManifest(
                 true,
                 true,
@@ -212,11 +256,14 @@ class Settings extends \Bitrix\Landing\Hook\Page
             $catalogIncluded = Loader::includeModule('catalog');
 
             if ($catalogIncluded) {
-                $iterator = \Bitrix\Catalog\CatalogIblockTable::getList(array(
-                    'select' => array(
-                        'IBLOCK_ID', 'PRODUCT_IBLOCK_ID'
+                $iterator = \Bitrix\Catalog\CatalogIblockTable::getList(
+                    array(
+                        'select' => array(
+                            'IBLOCK_ID',
+                            'PRODUCT_IBLOCK_ID'
+                        )
                     )
-                ));
+                );
                 while ($row = $iterator->fetch()) {
                     $row['IBLOCK_ID'] = (int)$row['IBLOCK_ID'];
                     $row['PRODUCT_IBLOCK_ID'] = (int)$row['PRODUCT_IBLOCK_ID'];
@@ -266,8 +313,13 @@ class Settings extends \Bitrix\Landing\Hook\Page
             }
         }
 
+        $fields['AGREEMENT_USE'] = self::getFieldByType(
+            'CHECKBOX',
+            'AGREEMENT_USE'
+        );
         $fields['AGREEMENT_ID'] = self::getFieldByType(
-            null, 'AGREEMENT_ID'
+            null,
+            'AGREEMENT_ID'
         );
 
         // cart position
@@ -322,7 +374,6 @@ class Settings extends \Bitrix\Landing\Hook\Page
             return $settings[$id];
         }
 
-        $default = self::getComponentsParams();
         $settings[$id] = array();
 
         if ($id) {
@@ -332,13 +383,11 @@ class Settings extends \Bitrix\Landing\Hook\Page
             );
         }
 
-        foreach ($default as $key => $item) {
+        foreach (self::getDefaultValues() as $key => $defValue) {
             if (isset($hooks['SETTINGS'][$key])) {
                 $settings[$id][$key] = $hooks['SETTINGS'][$key];
-            } elseif (isset(self::$defValues[$key])) {
-                $settings[$id][$key] = self::$defValues[$key];
             } else {
-                $settings[$id][$key] = $item['VALUE'];
+                $settings[$id][$key] = $defValue;
             }
         }
 
@@ -349,12 +398,21 @@ class Settings extends \Bitrix\Landing\Hook\Page
                 : 0;
         } else {
             $settings[$id]['IBLOCK_ID'] = \Bitrix\Main\Config\Option::get(
-                'crm', 'default_product_catalog_id'
+                'crm',
+                'default_product_catalog_id'
             );
         }
-        if (isset($hooks['SETTINGS']['AGREEMENT_ID'])) {
-            $settings[$id]['AGREEMENT_ID'] = $hooks['SETTINGS']['AGREEMENT_ID'];
+
+        // agreement
+        if (isset($hooks['SETTINGS']['AGREEMENT_USE'])) {
+            $settings[$id]['AGREEMENT_USE'] = $hooks['SETTINGS']['AGREEMENT_USE'];
+            if ($hooks['SETTINGS']['AGREEMENT_USE'] === 'N') {
+                $settings[$id]['AGREEMENT_ID'] = 0;
+            }
+        } else {
+            $settings[$id]['AGREEMENT_USE'] = $settings[$id]['AGREEMENT_ID'] ? 'Y' : 'N';
         }
+
         if (isset($hooks['SETTINGS']['CART_POSITION'])) {
             $settings[$id]['CART_POSITION'] = $hooks['SETTINGS']['CART_POSITION'];
         }

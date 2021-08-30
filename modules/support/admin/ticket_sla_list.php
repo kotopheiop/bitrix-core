@@ -16,8 +16,9 @@ IncludeModuleLangFile(__FILE__);
 $bDemo = (CTicket::IsDemo()) ? "Y" : "N";
 $bAdmin = (CTicket::IsAdmin()) ? "Y" : "N";
 
-if ($bAdmin != "Y" && $bDemo != "Y")
+if ($bAdmin != "Y" && $bDemo != "Y") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 //CTicket::GetRoles($isDemo, $isSupportClient, $isSupportTeam, $isAdmin, $isAccess, $USER_ID, $CHECK_RIGHTS);
 //if(!$isAdmin && !$isDemo) $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
@@ -78,8 +79,10 @@ $lAdmin->InitFilter($arFilterFields);//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï
 
 
 foreach ($arFilterFields as $key) {
-    if (strpos($key, "_exact_match") !== false) InitBVar(${$key});
-    $arFilter[strtoupper(substr($key, 5))] = ${$key};
+    if (mb_strpos($key, "_exact_match") !== false) {
+        InitBVar(${$key});
+    }
+    $arFilter[mb_strtoupper(mb_substr($key, 5))] = ${$key};
 }
 
 
@@ -88,12 +91,13 @@ if ($bAdmin == "Y" && $lAdmin->EditAction()) //ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï
     foreach ($FIELDS as $ID => $arFields) {
         $ID = intval($ID);
 
-        if (!$lAdmin->IsUpdated($ID))
+        if (!$lAdmin->IsUpdated($ID)) {
             continue;
+        }
 
         $arFields["PRIORITY"] = intval($arFields["PRIORITY"]);
 
-        if (strlen(trim($arFields["NAME"])) > 0) {
+        if (trim($arFields["NAME"]) <> '') {
             CTicketSLA::Set(array("NAME" => $arFields["NAME"], "PRIORITY" => $arFields["PRIORITY"]), $ID);
         } else {
             $lAdmin->AddUpdateError(str_replace("#ID#", $ID, GetMessage("SUP_FORGOT_NAME")), $ID);
@@ -105,13 +109,15 @@ if ($bAdmin == "Y" && $lAdmin->EditAction()) //ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï
 if ($bAdmin == "Y" && $arID = $lAdmin->GroupAction()) {
     if ($_REQUEST['action_target'] == 'selected') {
         $rsData = CTicketSLA::GetList($arSort, $arFilter, $is_filtered);
-        while ($arRes = $rsData->Fetch())
+        while ($arRes = $rsData->Fetch()) {
             $arID[] = $arRes['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
         $ID = intval($ID);
 
         switch ($_REQUEST['action']) {
@@ -127,7 +133,7 @@ if ($bAdmin == "Y" && $arID = $lAdmin->GroupAction()) {
     }
 }
 
-$arSort = (strlen($by) > 0 && strlen($order) > 0) ? array($by => $order) : "";
+$arSort = ($by <> '' && $order <> '') ? array($by => $order) : "";
 
 
 $rsData = CTicketSLA::GetList($arSort, $arFilter, $is_filtered);
@@ -144,8 +150,9 @@ $slaResponsibles = array();
 
 while ($arRes = $rsData->NavNext()) {
     $fetchedRows[] = $arRes;
-    if ($arRes['RESPONSIBLE_USER_ID'])
+    if ($arRes['RESPONSIBLE_USER_ID']) {
         $slaResponsibles[] = $arRes['RESPONSIBLE_USER_ID'];
+    }
 }
 
 // get co-result data
@@ -164,7 +171,7 @@ foreach ($slaGroupList as $slaId => $groups) {
 $groupIds = array_unique($groupIds);
 
 $slaGroupNames = array();
-$res = CGroup::getList($_by = null, $_order = null, array('ID' => join('|', $groupIds)));
+$res = CGroup::getList('', '', array('ID' => join('|', $groupIds)));
 while ($arRes = $res->Fetch()) {
     $slaGroupNames[$arRes['ID']] = $arRes['NAME'];
 }
@@ -174,7 +181,7 @@ $slaResponsiblesInfo = array();
 $slaResponsibles = array_unique($slaResponsibles);
 
 if ($slaResponsibles) {
-    $res = CUser::getList($_by = null, $_order = null, array('ID' => join('|', $slaResponsibles)));
+    $res = CUser::getList('', '', array('ID' => join('|', $slaResponsibles)));
     while ($arRes = $res->Fetch()) {
         $slaResponsiblesInfo[$arRes['ID']] = array(
             'NAME' => htmlspecialcharsbx($arRes["NAME"] . " " . $arRes["LAST_NAME"]),
@@ -195,14 +202,39 @@ while ($arRes = $res->Fetch()) {
 
 $arHeaders = Array();
 $arHeaders[] = Array("id" => "ID", "content" => "ID", "default" => true, "sort" => "ID");
-$arHeaders[] = Array("id" => "PRIORITY", "content" => GetMessage("SUP_PRIORITY"), "default" => true, "sort" => "PRIORITY");
+$arHeaders[] = Array(
+    "id" => "PRIORITY",
+    "content" => GetMessage("SUP_PRIORITY"),
+    "default" => true,
+    "sort" => "PRIORITY"
+);
 $arHeaders[] = Array("id" => "SITE_ID", "content" => GetMessage("SUP_SITE"), "default" => true);
 $arHeaders[] = Array("id" => "NAME", "content" => GetMessage("SUP_NAME"), "default" => true, "sort" => "NAME");
-$arHeaders[] = Array("id" => "DESCRIPTION", "content" => GetMessage("SUP_DESCRIPTION"), "default" => false, "sort" => "DESCRIPTION");
-$arHeaders[] = Array("id" => "RESPONSE_TIME", "content" => GetMessage("SUP_RESPONSE_TIME"), "default" => true, "sort" => "RESPONSE_TIME");
+$arHeaders[] = Array(
+    "id" => "DESCRIPTION",
+    "content" => GetMessage("SUP_DESCRIPTION"),
+    "default" => false,
+    "sort" => "DESCRIPTION"
+);
+$arHeaders[] = Array(
+    "id" => "RESPONSE_TIME",
+    "content" => GetMessage("SUP_RESPONSE_TIME"),
+    "default" => true,
+    "sort" => "RESPONSE_TIME"
+);
 $arHeaders[] = Array("id" => "GROUP_ID", "content" => GetMessage("SUP_USER_GROUPS"), "default" => true,);
-$arHeaders[] = Array("id" => "RESPONSIBLE_USER_ID", "content" => GetMessage("SUP_RESPONSIBLE"), "default" => true, "sort" => "RESPONSIBLE_USER_ID");
-$arHeaders[] = Array("id" => "TIMETABLE_ID", "content" => GetMessage("SUP_SHEDULE_S"), "default" => true, "sort" => "TIMETABLE_ID");
+$arHeaders[] = Array(
+    "id" => "RESPONSIBLE_USER_ID",
+    "content" => GetMessage("SUP_RESPONSIBLE"),
+    "default" => true,
+    "sort" => "RESPONSIBLE_USER_ID"
+);
+$arHeaders[] = Array(
+    "id" => "TIMETABLE_ID",
+    "content" => GetMessage("SUP_SHEDULE_S"),
+    "default" => true,
+    "sort" => "TIMETABLE_ID"
+);
 
 $lAdmin->AddHeaders($arHeaders);
 
@@ -218,8 +250,12 @@ foreach ($fetchedRows as $arRes) {
 
         foreach ($arrSITE as $sid) {
             if ($sid != "ALL") {
-                $str_SITE .= ($str_SITE == "" ? "" : " / ") . '<a title="' . GetMessage("MAIN_ADMIN_MENU_EDIT") . '" href="/bitrix/admin/site_edit.php?LID=' . $sid . '&lang=' . LANG . '">' . $sid . '</a>';
-            } else $str_SITE .= GetMessage("SUP_ALL");
+                $str_SITE .= ($str_SITE == "" ? "" : " / ") . '<a title="' . GetMessage(
+                        "MAIN_ADMIN_MENU_EDIT"
+                    ) . '" href="/bitrix/admin/site_edit.php?LID=' . $sid . '&lang=' . LANG . '">' . $sid . '</a>';
+            } else {
+                $str_SITE .= GetMessage("SUP_ALL");
+            }
         }
     }
 
@@ -234,15 +270,32 @@ foreach ($fetchedRows as $arRes) {
         $str .= $arRes['RESPONSE_TIME'] . " ";
         switch ($arRes['RESPONSE_TIME_UNIT']) {
             case "hour":
-                $str .= __PrintRussian($arRes['RESPONSE_TIME'], array(GetMessage("SUP_HOUR_1"), GetMessage("SUP_HOUR_3"), GetMessage("SUP_HOUR_5")));
+                $str .= __PrintRussian(
+                    $arRes['RESPONSE_TIME'],
+                    array(
+                        GetMessage("SUP_HOUR_1"),
+                        GetMessage("SUP_HOUR_3"),
+                        GetMessage("SUP_HOUR_5")
+                    )
+                );
                 break;
 
             case "minute":
-                $str .= __PrintRussian($arRes['RESPONSE_TIME'], array(GetMessage("SUP_MINUTE_1"), GetMessage("SUP_MINUTE_3"), GetMessage("SUP_MINUTE_5")));
+                $str .= __PrintRussian(
+                    $arRes['RESPONSE_TIME'],
+                    array(
+                        GetMessage("SUP_MINUTE_1"),
+                        GetMessage("SUP_MINUTE_3"),
+                        GetMessage("SUP_MINUTE_5")
+                    )
+                );
                 break;
 
             case "day":
-                $str .= __PrintRussian($arRes['RESPONSE_TIME'], array(GetMessage("SUP_DAY_1"), GetMessage("SUP_DAY_3"), GetMessage("SUP_DAY_5")));
+                $str .= __PrintRussian(
+                    $arRes['RESPONSE_TIME'],
+                    array(GetMessage("SUP_DAY_1"), GetMessage("SUP_DAY_3"), GetMessage("SUP_DAY_5"))
+                );
                 break;
         }
     else:
@@ -258,7 +311,11 @@ foreach ($fetchedRows as $arRes) {
         $arG = $slaGroupList[$arRes['ID']];
 
         foreach ($arG as $gid) {
-            $str .= '[<a title="' . GetMessage("MAIN_ADMIN_MENU_EDIT") . '" href="/bitrix/admin/group_edit.php?ID=' . $gid . '&lang=' . LANG . '">' . $gid . '</a>] ' . htmlspecialcharsbx($slaGroupNames[$gid]) . '<br>';
+            $str .= '[<a title="' . GetMessage(
+                    "MAIN_ADMIN_MENU_EDIT"
+                ) . '" href="/bitrix/admin/group_edit.php?ID=' . $gid . '&lang=' . LANG . '">' . $gid . '</a>] ' . htmlspecialcharsbx(
+                    $slaGroupNames[$gid]
+                ) . '<br>';
         }
     }
 
@@ -267,7 +324,9 @@ foreach ($fetchedRows as $arRes) {
     $str = "&nbsp;";
 
     if (intval($arRes['RESPONSIBLE_USER_ID']) > 0) {
-        $str = '[<a title="' . GetMessage("SUP_USER_PROFILE") . '" href="/bitrix/admin/user_edit.php?lang=' . LANG . '&ID=' . $arRes['RESPONSIBLE_USER_ID'] . '">' . $arRes['RESPONSIBLE_USER_ID'] . '</a>] (' . $slaResponsiblesInfo[$arRes['RESPONSIBLE_USER_ID']]['LOGIN'] . ') ' . $slaResponsiblesInfo[$arRes['RESPONSIBLE_USER_ID']]['NAME'];
+        $str = '[<a title="' . GetMessage(
+                "SUP_USER_PROFILE"
+            ) . '" href="/bitrix/admin/user_edit.php?lang=' . LANG . '&ID=' . $arRes['RESPONSIBLE_USER_ID'] . '">' . $arRes['RESPONSIBLE_USER_ID'] . '</a>] (' . $slaResponsiblesInfo[$arRes['RESPONSIBLE_USER_ID']]['LOGIN'] . ') ' . $slaResponsiblesInfo[$arRes['RESPONSIBLE_USER_ID']]['NAME'];
     }
 
     $row->AddViewField("RESPONSIBLE_USER_ID", $str);
@@ -275,7 +334,9 @@ foreach ($fetchedRows as $arRes) {
     $str = "&nbsp;";
 
     if ($arRes['TIMETABLE_ID']) {
-        $str = '<a href="/bitrix/admin/ticket_timetable_edit.php?ID=' . intval($arRes['TIMETABLE_ID']) . '&lang=' . LANG . '">' . htmlspecialcharsbx($slaTimeTableList[$arRes['TIMETABLE_ID']]) . '</a>';
+        $str = '<a href="/bitrix/admin/ticket_timetable_edit.php?ID=' . intval(
+                $arRes['TIMETABLE_ID']
+            ) . '&lang=' . LANG . '">' . htmlspecialcharsbx($slaTimeTableList[$arRes['TIMETABLE_ID']]) . '</a>';
     }
 
     $row->AddViewField('TIMETABLE_ID', $str);
@@ -295,12 +356,14 @@ foreach ($fetchedRows as $arRes) {
         $arActions[] = array(
             "ICON" => "delete",
             "TEXT" => GetMessage("SUP_DELETE"),
-            "ACTION" => "if(confirm('" . GetMessage('SUP_DELETE_CONFIRMATION') . "')) " . $lAdmin->ActionDoGroup($arRes['ID'], "delete"),
+            "ACTION" => "if(confirm('" . GetMessage('SUP_DELETE_CONFIRMATION') . "')) " . $lAdmin->ActionDoGroup(
+                    $arRes['ID'],
+                    "delete"
+                ),
         );
     }
 
     $row->AddActions($arActions);
-
 }
 
 // "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½" ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
@@ -312,7 +375,8 @@ $lAdmin->AddFooter(
 );
 
 if ($bAdmin == "Y") {
-    $lAdmin->AddGroupActionTable(Array(
+    $lAdmin->AddGroupActionTable(
+        Array(
             "delete" => GetMessage("MAIN_ADMIN_LIST_DELETE"),
         )
     );
@@ -347,16 +411,28 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
     <? $filter->Begin(); ?>
     <tr>
         <td><?= GetMessage("SUP_NAME") ?>:</td>
-        <td><input type="text" name="find_name" size="47"
-                   value="<?= htmlspecialcharsbx($find_name) ?>"><?= InputType("checkbox", "find_name_exact_match", "Y", $find_name_exact_match, false, "", "title='" . GetMessage("SUP_EXACT_MATCH") . "'") ?>
-            &nbsp;<?= ShowFilterLogicHelp() ?></td>
+        <td><input type="text" name="find_name" size="47" value="<?= htmlspecialcharsbx($find_name) ?>"><?= InputType(
+                "checkbox",
+                "find_name_exact_match",
+                "Y",
+                $find_name_exact_match,
+                false,
+                "",
+                "title='" . GetMessage("SUP_EXACT_MATCH") . "'"
+            ) ?>&nbsp;<?= ShowFilterLogicHelp() ?></td>
     </tr>
 
     <tr>
         <td>ID:</td>
-        <td><input type="text" name="find_id" size="47"
-                   value="<?= htmlspecialcharsbx($find_id) ?>"><?= InputType("checkbox", "find_id_exact_match", "Y", $find_id_exact_match, false, "", "title='" . GetMessage("SUP_EXACT_MATCH") . "'") ?>
-            &nbsp;<?= ShowFilterLogicHelp() ?></td>
+        <td><input type="text" name="find_id" size="47" value="<?= htmlspecialcharsbx($find_id) ?>"><?= InputType(
+                "checkbox",
+                "find_id_exact_match",
+                "Y",
+                $find_id_exact_match,
+                false,
+                "",
+                "title='" . GetMessage("SUP_EXACT_MATCH") . "'"
+            ) ?>&nbsp;<?= ShowFilterLogicHelp() ?></td>
     </tr>
     <tr valign="top">
         <td valign="top"><?= GetMessage("SUP_SITE") ?>:<br><img src="/bitrix/images/support/mouse.gif" width="44"
@@ -364,20 +440,36 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
         <td><?
             $ref = array(GetMessage("SUP_ALL"));
             $ref_id = array("ALL");
-            $rs = CSite::GetList(($v1 = "sort"), ($v2 = "asc"));
+            $rs = CSite::GetList();
             while ($ar = $rs->Fetch()) {
                 $ref[] = "[" . $ar["ID"] . "] " . $ar["NAME"];
                 $ref_id[] = $ar["ID"];
             }
-            echo SelectBoxMFromArray("find_site[]", array("reference" => $ref, "reference_id" => $ref_id), $find_site, "", false, "4");
+            echo SelectBoxMFromArray(
+                "find_site[]",
+                array("reference" => $ref, "reference_id" => $ref_id),
+                $find_site,
+                "",
+                false,
+                "4"
+            );
             ?></td>
     </tr>
 
     <tr>
         <td><?= GetMessage("SUP_DESCRIPTION") ?>:</td>
         <td><input type="text" name="find_description" size="47"
-                   value="<?= htmlspecialcharsbx($find_description) ?>"><?= InputType("checkbox", "find_description_exact_match", "Y", $find_description_exact_match, false, "", "title='" . GetMessage("SUP_EXACT_MATCH") . "'") ?>
-            &nbsp;<?= ShowFilterLogicHelp() ?></td>
+                   value="<?= htmlspecialcharsbx($find_description) ?>"><?= InputType(
+                "checkbox",
+                "find_description_exact_match",
+                "Y",
+                $find_description_exact_match,
+                false,
+                "",
+                "title='" . GetMessage(
+                    "SUP_EXACT_MATCH"
+                ) . "'"
+            ) ?>&nbsp;<?= ShowFilterLogicHelp() ?></td>
     </tr>
 
     <?

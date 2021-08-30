@@ -24,6 +24,7 @@ use \Bitrix\Vote\Base\BaseObject;
 use \Bitrix\Vote\DBResult;
 use \Bitrix\Main\SystemException;
 use \Bitrix\Vote\Event;
+use \Bitrix\Main\ObjectNotFoundException;
 
 Loc::loadMessages(__FILE__);
 
@@ -122,10 +123,12 @@ class AttachTable extends Entity\DataManager
             throw new \Bitrix\Main\ArgumentNullException('filter');
         }
 
-        $result = static::getList(array(
-            'select' => array('ID'),
-            'filter' => $filter,
-        ));
+        $result = static::getList(
+            array(
+                'select' => array('ID'),
+                'filter' => $filter,
+            )
+        );
         while ($row = $result->fetch()) {
             if (!empty($row['ID'])) {
                 $resultDelete = static::delete($row['ID']);
@@ -168,19 +171,24 @@ class Attach extends BaseObject implements \ArrayAccess
             $attach = $this->id;
         } else {
             $data = self::getData($this->id);
-            if (is_null($data))
-                throw new ArgumentNullException("Attach");
-            list($attach, $vote) = $data;
+            if (is_null($data)) {
+                throw new ObjectNotFoundException("Attach");
+            }
+            [$attach, $vote] = $data;
         }
-        if (!is_array($attach) || empty($attach))
-            throw new ArgumentException("Wrong attach id!");
-        if (!array_key_exists("MODULE_ID", $attach) || strlen($attach["MODULE_ID"]) <= 0)
+        if (!is_array($attach) || empty($attach)) {
+            throw new ObjectNotFoundException("Wrong attach id!");
+        }
+
+        if (!array_key_exists("MODULE_ID", $attach) || $attach["MODULE_ID"] == '') {
             throw new ArgumentNullException("module ID");
-        if (!array_key_exists("ENTITY_TYPE", $attach) || strlen($attach["ENTITY_TYPE"]) <= 0)
+        }
+        if (!array_key_exists("ENTITY_TYPE", $attach) || $attach["ENTITY_TYPE"] == '') {
             throw new ArgumentNullException("entity type");
-        if (array_key_exists("ID", $attach))
+        }
+        if (array_key_exists("ID", $attach)) {
             $this->id = intval($attach["ID"]);
-        else {
+        } else {
             $this->id = null;
             unset($attach["ID"]);
         }
@@ -198,10 +206,11 @@ class Attach extends BaseObject implements \ArrayAccess
      */
     public function setVote($vote)
     {
-        if ($vote instanceof Vote)
+        if ($vote instanceof Vote) {
             $this->vote = $vote;
-        else
+        } else {
             $this->vote = Vote::loadFromId($vote);
+        }
     }
 
     /**
@@ -225,30 +234,35 @@ class Attach extends BaseObject implements \ArrayAccess
         if (is_array($id)) {
             $filter = array_change_key_case($id, CASE_UPPER);
             $id = md5(serialize($filter));
-        } else if (($id = intval($id)) && $id > 0)
-            $filter["ID"] = $id;
-        else
-            return null;
+        } else {
+            if (($id = intval($id)) && $id > 0) {
+                $filter["ID"] = $id;
+            } else {
+                return null;
+            }
+        }
 
         if (!array_key_exists($id, self::$storage)) {
             self::$storage[$id] = null;
-            $dbRes = AttachTable::getList(array(
-                'select' => array(
-                    'O_' => "*",
-                    'V_' => 'VOTE.*',
-                    'V_LAMP' => 'VOTE.LAMP',
-                    'Q_' => 'VOTE.QUESTION.*',
-                    'A_' => 'VOTE.QUESTION.ANSWER',
-                ),
-                'order' => array(
-                    'VOTE.ID' => 'ASC',
-                    'VOTE.QUESTION.C_SORT' => 'ASC',
-                    'VOTE.QUESTION.ID' => 'ASC',
-                    'VOTE.QUESTION.ANSWER.C_SORT' => 'ASC',
-                    'VOTE.QUESTION.ANSWER.ID' => 'ASC',
-                ),
-                'filter' => $filter
-            ));
+            $dbRes = AttachTable::getList(
+                array(
+                    'select' => array(
+                        'O_' => "*",
+                        'V_' => 'VOTE.*',
+                        'V_LAMP' => 'VOTE.LAMP',
+                        'Q_' => 'VOTE.QUESTION.*',
+                        'A_' => 'VOTE.QUESTION.ANSWER',
+                    ),
+                    'order' => array(
+                        'VOTE.ID' => 'ASC',
+                        'VOTE.QUESTION.C_SORT' => 'ASC',
+                        'VOTE.QUESTION.ID' => 'ASC',
+                        'VOTE.QUESTION.ANSWER.C_SORT' => 'ASC',
+                        'VOTE.QUESTION.ANSWER.ID' => 'ASC',
+                    ),
+                    'filter' => $filter
+                )
+            );
             $attaches = [];
             $images = [];
             $attach = ["ID" => null];
@@ -260,14 +274,21 @@ class Attach extends BaseObject implements \ArrayAccess
                 unset($answer);
                 $answer = [];
                 foreach ($res as $key => $val) {
-                    if (strpos($key, "O_") === 0)
-                        $buffer["attach"][substr($key, 2)] = $val;
-                    else if (strpos($key, "V_") === 0)
-                        $buffer["vote"][substr($key, 2)] = $val;
-                    else if (strpos($key, "Q_") === 0)
-                        $buffer["question"][substr($key, 2)] = $val;
-                    else if (strpos($key, "A_") === 0)
-                        $answer[substr($key, 2)] = $val;
+                    if (mb_strpos($key, "O_") === 0) {
+                        $buffer["attach"][mb_substr($key, 2)] = $val;
+                    } else {
+                        if (mb_strpos($key, "V_") === 0) {
+                            $buffer["vote"][mb_substr($key, 2)] = $val;
+                        } else {
+                            if (mb_strpos($key, "Q_") === 0) {
+                                $buffer["question"][mb_substr($key, 2)] = $val;
+                            } else {
+                                if (mb_strpos($key, "A_") === 0) {
+                                    $answer[mb_substr($key, 2)] = $val;
+                                }
+                            }
+                        }
+                    }
                 }
                 if ($buffer["attach"]["ID"] != $attach["ID"]) {
                     unset($attach);
@@ -279,11 +300,14 @@ class Attach extends BaseObject implements \ArrayAccess
                     $vote = $buffer["vote"] + array(
                             "FIELD_NAME" => \Bitrix\Vote\Event::getExtrasFieldName($attach["ID"], "#ENTITY_ID#"),
                             "IMAGE" => null,
-                            "QUESTIONS" => array());
-                    if ($vote["IMAGE_ID"] > 0)
+                            "QUESTIONS" => array()
+                        );
+                    if ($vote["IMAGE_ID"] > 0) {
                         $images[$vote["IMAGE_ID"]] = &$vote["IMAGE"];
-                    if (!array_key_exists($vote["ID"], Vote::$storage))
+                    }
+                    if (!array_key_exists($vote["ID"], Vote::$storage)) {
                         Vote::$storage[$vote["ID"]] = &$vote;
+                    }
                 }
                 if ($buffer["question"]["ID"] != $question["ID"]) {
                     unset($question);
@@ -292,22 +316,34 @@ class Attach extends BaseObject implements \ArrayAccess
                             "IMAGE" => null,
                             "ANSWERS" => array()
                         );
-                    if ($question["IMAGE_ID"] > 0)
+                    if ($question["IMAGE_ID"] > 0) {
                         $images[$question["IMAGE_ID"]] = &$question["IMAGE"];
-                    if (!array_key_exists($question["ID"], Question::$storage))
+                    }
+                    if (!array_key_exists($question["ID"], Question::$storage)) {
                         Question::$storage[$question["ID"]] = &$question;
+                    }
                     $vote["QUESTIONS"][$question["ID"]] = &$question;
                 }
-                $answer["FIELD_NAME"] = $answer["~FIELD_NAME"] = \Bitrix\Vote\Event::getFieldName($attach["ID"], $question["ID"]);
-                $answer["MESSAGE_FIELD_NAME"] = \Bitrix\Vote\Event::getMessageFieldName($attach["ID"], $question["ID"], $answer["ID"]);
+                $answer["FIELD_NAME"] = $answer["~FIELD_NAME"] = \Bitrix\Vote\Event::getFieldName(
+                    $attach["ID"],
+                    $question["ID"]
+                );
+                $answer["MESSAGE_FIELD_NAME"] = \Bitrix\Vote\Event::getMessageFieldName(
+                    $attach["ID"],
+                    $question["ID"],
+                    $answer["ID"]
+                );
                 if (
                     $answer["FIELD_TYPE"] == \Bitrix\Vote\AnswerTypes::TEXT ||
                     $answer["FIELD_TYPE"] == \Bitrix\Vote\AnswerTypes::TEXTAREA
                 ) {
-                    if ($question["FIELD_TYPE"] == \Bitrix\Vote\QuestionTypes::COMPATIBILITY)
+                    if ($question["FIELD_TYPE"] == \Bitrix\Vote\QuestionTypes::COMPATIBILITY) {
                         $answer["FIELD_NAME"] = $answer["MESSAGE_FIELD_NAME"];
-                } else if ($question["FIELD_TYPE"] != \Bitrix\Vote\QuestionTypes::COMPATIBILITY) {
-                    $answer["FIELD_TYPE"] = $question["FIELD_TYPE"];
+                    }
+                } else {
+                    if ($question["FIELD_TYPE"] != \Bitrix\Vote\QuestionTypes::COMPATIBILITY) {
+                        $answer["FIELD_TYPE"] = $question["FIELD_TYPE"];
+                    }
                 }
                 $answer["~PERCENT"] = ($question["COUNTER"] > 0 ? $answer["COUNTER"] * 100 / $question["COUNTER"] : 0);
                 $answer["PERCENT"] = round($answer["~PERCENT"], 2);
@@ -319,7 +355,9 @@ class Attach extends BaseObject implements \ArrayAccess
             unset($question);
             //region Getting images
             if (count($images) > 0) {
-                $dbRes = \Bitrix\Main\FileTable::getList(array('select' => array('*'), 'filter' => array('ID' => array_keys($images))));
+                $dbRes = \Bitrix\Main\FileTable::getList(
+                    array('select' => array('*'), 'filter' => array('ID' => array_keys($images)))
+                );
                 while ($res = $dbRes->fetch()) {
                     $images[$res["ID"]] = $res + array("SRC" => \CFile::GetFileSRC($res));
                 }
@@ -349,57 +387,69 @@ class Attach extends BaseObject implements \ArrayAccess
         if (!array_key_exists($id1, self::$storage)) {
             self::$storage[$id1] = array();
 
-            $dbRes = AttachTable::getList(array(
-                'select' => array(
-                    'O_' => "*",
-                    'V_' => 'VOTE.*',
-                    'V_LAMP' => 'VOTE.LAMP',
-                    'Q_' => 'VOTE.QUESTION.*',
-                    'A_' => 'VOTE.QUESTION.ANSWER',
-                ),
-                'order' => array(
-                    'VOTE.QUESTION.C_SORT' => 'ASC',
-                    'VOTE.QUESTION.ID' => 'ASC',
-                    'VOTE.QUESTION.ANSWER.C_SORT' => 'ASC',
-                    'VOTE.QUESTION.ANSWER.ID' => 'ASC',
-                ),
-                'filter' => array(
-                    'ENTITY_TYPE' => $id['ENTITY_TYPE'],
-                    'ENTITY_ID' => $id['ENTITY_ID']
+            $dbRes = AttachTable::getList(
+                array(
+                    'select' => array(
+                        'O_' => "*",
+                        'V_' => 'VOTE.*',
+                        'V_LAMP' => 'VOTE.LAMP',
+                        'Q_' => 'VOTE.QUESTION.*',
+                        'A_' => 'VOTE.QUESTION.ANSWER',
+                    ),
+                    'order' => array(
+                        'VOTE.QUESTION.C_SORT' => 'ASC',
+                        'VOTE.QUESTION.ID' => 'ASC',
+                        'VOTE.QUESTION.ANSWER.C_SORT' => 'ASC',
+                        'VOTE.QUESTION.ANSWER.ID' => 'ASC',
+                    ),
+                    'filter' => array(
+                        'ENTITY_TYPE' => $id['ENTITY_TYPE'],
+                        'ENTITY_ID' => $id['ENTITY_ID']
+                    )
                 )
-            ));
+            );
             if (($res = $dbRes->fetch()) && $res) {
                 $attach = array();
                 $vote = array();
-                foreach ($res as $key => $val)
-                    if (strpos($key, "O_") === 0)
-                        $attach[substr($key, 2)] = $val;
-                    else if (strpos($key, "V_") === 0)
-                        $vote[substr($key, 2)] = $val;
+                foreach ($res as $key => $val) {
+                    if (mb_strpos($key, "O_") === 0) {
+                        $attach[mb_substr($key, 2)] = $val;
+                    } else {
+                        if (mb_strpos($key, "V_") === 0) {
+                            $vote[mb_substr($key, 2)] = $val;
+                        }
+                    }
+                }
                 $vote["QUESTIONS"] = array();
                 $questions = &$vote["QUESTIONS"];
                 do {
                     $question = array();
                     $answer = array();
                     foreach ($res as $key => $val) {
-                        if (strpos($key, "Q_") === 0)
-                            $question[substr($key, 2)] = $val;
-                        else if (strpos($key, "A_") === 0)
-                            $answer[substr($key, 2)] = $val;
+                        if (mb_strpos($key, "Q_") === 0) {
+                            $question[mb_substr($key, 2)] = $val;
+                        } else {
+                            if (mb_strpos($key, "A_") === 0) {
+                                $answer[mb_substr($key, 2)] = $val;
+                            }
+                        }
                     }
                     $qid = "" . $question["ID"];
-                    if (!array_key_exists($qid, $questions))
+                    if (!array_key_exists($qid, $questions)) {
                         $questions[$qid] = array_merge($question, array("ANSWERS" => array()));
-                    if (!array_key_exists($qid, Question::$storage))
+                    }
+                    if (!array_key_exists($qid, Question::$storage)) {
                         Question::$storage[$qid] = $question;
+                    }
                     $answers = &$questions[$qid]["ANSWERS"];
                     if (!empty($answer)) {
-                        if (!array_key_exists($answer["ID"], $answers))
+                        if (!array_key_exists($answer["ID"], $answers)) {
                             $answers[$answer["ID"]] = $answer;
-                        if (!array_key_exists($answer["ID"], Answer::$storage))
+                        }
+                        if (!array_key_exists($answer["ID"], Answer::$storage)) {
                             Answer::$storage[$answer["ID"]] = $answer;
+                        }
                     }
-
                 } while (($res = $dbRes->fetch()) && $res);
                 Vote::$storage[$vote["ID"]] = $vote;
                 self::$storage[$id1] = array($attach, $vote);
@@ -530,8 +580,9 @@ class Attach extends BaseObject implements \ArrayAccess
      */
     public function fillStatistic()
     {
-        if (is_object($this->vote))
+        if (is_object($this->vote)) {
             $this->vote->fillStatistic();
+        }
     }
 
     /**
@@ -540,22 +591,27 @@ class Attach extends BaseObject implements \ArrayAccess
      */
     public function delete()
     {
-        if (empty($this->vote))
+        if (empty($this->vote)) {
             return true;
+        }
 
-        if ($this->attach["ID"] > 0)
+        if ($this->attach["ID"] > 0) {
             AttachTable::delete($this->attach["ID"]);
+        }
 
-        $othersAttaches = AttachTable::getList(array(
-            "select" => array("ID", "OBJECT_ID"),
-            "filter" => array("OBJECT_ID" => $this->vote["ID"]),
-            'order' => array(
-                'ID' => 'ASC'
+        $othersAttaches = AttachTable::getList(
+            array(
+                "select" => array("ID", "OBJECT_ID"),
+                "filter" => array("OBJECT_ID" => $this->vote["ID"]),
+                'order' => array(
+                    'ID' => 'ASC'
+                )
             )
-        ))->fetch();
+        )->fetch();
 
-        if (empty($othersAttaches) && ($channel = $this->getStorage()) && $channel["HIDDEN"] == "Y")
+        if (empty($othersAttaches) && ($channel = $this->getStorage()) && $channel["HIDDEN"] == "Y") {
             Vote::delete($this->vote["ID"]);
+        }
 
         return true;
     }
@@ -584,20 +640,25 @@ class Attach extends BaseObject implements \ArrayAccess
     public function checkData(array &$data)
     {
         $channel = $this->getStorage();
-        if ($channel["ACTIVE"] !== "Y")
+        if ($channel["ACTIVE"] !== "Y") {
             throw new AccessDeniedException(Loc::getMessage("VOTE_CHANNEL_IS_NOT_ACTIVE"));
-        $data = array_merge($data, (is_null($this->vote) ? [
-            "ACTIVE" => "Y",
-            "DATE_START" => new DateTime(),
-        ] : []), [
-            "CHANNEL_ID" => $channel["ID"],
-            "DATE_END" => (isset($data["DATE_END"]) ? new DateTime($data["DATE_END"]) : (new DateTime())->add("1Y"))
-        ]);
+        }
+        $data = array_merge(
+            $data,
+            (is_null($this->vote) ? [
+                "ACTIVE" => "Y",
+                "DATE_START" => new DateTime(),
+            ] : []),
+            [
+                "CHANNEL_ID" => $channel["ID"],
+                "DATE_END" => (isset($data["DATE_END"]) ? new DateTime($data["DATE_END"]) : (new DateTime())->add("1Y"))
+            ]
+        );
         $this->getConnector()->checkFields($data);
         Vote::checkData($data, $data["ID"]);
-        if (strlen($data["TITLE"]) <= 0 && is_array($data["QUESTIONS"])) {
+        if ($data["TITLE"] == '' && is_array($data["QUESTIONS"])) {
             $q = reset($data["QUESTIONS"]);
-            if (is_array($q) && strlen($q["QUESTION"]) > 0) {
+            if (is_array($q) && $q["QUESTION"] <> '') {
                 $data["TITLE"] = $q["QUESTION"];
             }
         }
@@ -626,31 +687,36 @@ class Attach extends BaseObject implements \ArrayAccess
      */
     public function save($data, $createdBy = 0)
     {
-        if (!isset($data["AUTHOR_ID"]))
+        if (!isset($data["AUTHOR_ID"])) {
             $data["AUTHOR_ID"] = $createdBy;
+        }
 
         $this->checkData($data);
 
         $voteId = Vote::saveData(is_null($this->vote) ? 0 : $this->vote["ID"], $data);
         if ($voteId > 0) {
             if (!array_key_exists("ID", $this->attach)) {
-                $id = AttachTable::add(array(
-                    'MODULE_ID' => $this->getModuleId(),
-                    'OBJECT_ID' => $voteId,
-                    'ENTITY_ID' => $this->getEntityId(),
-                    'ENTITY_TYPE' => $this->getEntityType(),
-                    'CREATED_BY' => $createdBy,
-                    'CREATE_TIME' => new DateTime()
-                ))->getId();
+                $id = AttachTable::add(
+                    array(
+                        'MODULE_ID' => $this->getModuleId(),
+                        'OBJECT_ID' => $voteId,
+                        'ENTITY_ID' => $this->getEntityId(),
+                        'ENTITY_TYPE' => $this->getEntityType(),
+                        'CREATED_BY' => $createdBy,
+                        'CREATE_TIME' => new DateTime()
+                    )
+                )->getId();
             } else {
                 $id = $this->attach["ID"];
             }
-            list($attach, $vote) = \Bitrix\Vote\Attach::getData($id);
+            [$attach, $vote] = \Bitrix\Vote\Attach::getData($id);
             $this->attach = $attach;
             $this->vote = $vote;
-        } else if ($this->attach["ID"] > 0) {
-            $this->attach = null;
-            $this->vote = null;
+        } else {
+            if ($this->attach["ID"] > 0) {
+                $this->attach = null;
+                $this->vote = null;
+            }
         }
         return true;
     }
@@ -668,15 +734,19 @@ class Attach extends BaseObject implements \ArrayAccess
      */
     public function voteFor(array $request)
     {
-        if (!is_object($this->vote))
+        if (!is_object($this->vote)) {
             throw new InvalidOperationException("Poll is not found.");
+        }
         $res = \Bitrix\Vote\Event::getDataFromRequest($this->getAttachId(), $request);
         if (empty($res)) // for custom templates
+        {
             $result = $this->vote->voteFor($request, ["revote" => true]);
-        else
+        } else {
             $result = $this->vote->registerEvent($res, ["revote" => true], User::getCurrent());
-        if (!$result)
+        }
+        if (!$result) {
             $this->errorCollection->add($this->vote->getErrors());
+        }
         return $result;
     }
 
@@ -687,8 +757,9 @@ class Attach extends BaseObject implements \ArrayAccess
      */
     public function exportExcel()
     {
-        if (!is_object($this->vote))
+        if (!is_object($this->vote)) {
             throw new InvalidOperationException("Poll is not found.");
+        }
         $this->vote->exportExcel();
     }
 
@@ -699,8 +770,9 @@ class Attach extends BaseObject implements \ArrayAccess
      */
     public function isVotedFor($userId)
     {
-        if ($this->vote)
+        if ($this->vote) {
             return $this->vote->isVotedFor($userId);
+        }
         return false;
     }
 
@@ -711,8 +783,9 @@ class Attach extends BaseObject implements \ArrayAccess
      */
     public function resume()
     {
-        if (!is_object($this->vote))
+        if (!is_object($this->vote)) {
             throw new InvalidOperationException("Poll is not found.");
+        }
         return $this->vote->resume();
     }
 
@@ -723,8 +796,9 @@ class Attach extends BaseObject implements \ArrayAccess
      */
     public function stop()
     {
-        if (!is_object($this->vote))
+        if (!is_object($this->vote)) {
             throw new InvalidOperationException("Poll is not found.");
+        }
         return $this->vote->stop();
     }
 
@@ -734,10 +808,14 @@ class Attach extends BaseObject implements \ArrayAccess
      */
     public function offsetExists($offset)
     {
-        if (is_array($this->attach) && array_key_exists($offset, $this->attach) || is_object($this->vote) && isset($this->vote[$offset]))
+        if (is_array($this->attach) && array_key_exists($offset, $this->attach) || is_object(
+                $this->vote
+            ) && isset($this->vote[$offset])) {
             return true;
-        if ($offset == "VOTE_ID" && is_object($this->vote))
+        }
+        if ($offset == "VOTE_ID" && is_object($this->vote)) {
             return true;
+        }
         return false;
     }
 
@@ -747,13 +825,16 @@ class Attach extends BaseObject implements \ArrayAccess
      */
     public function offsetGet($offset)
     {
-        if (is_array($this->attach) && array_key_exists($offset, $this->attach))
+        if (is_array($this->attach) && array_key_exists($offset, $this->attach)) {
             return $this->attach[$offset];
+        }
         if (is_object($this->vote)) {
-            if (isset($this->vote[$offset]))
+            if (isset($this->vote[$offset])) {
                 return $this->vote[$offset];
-            if ($offset == "VOTE_ID")
+            }
+            if ($offset == "VOTE_ID") {
                 return $this->vote["ID"];
+            }
         }
         return null;
     }

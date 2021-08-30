@@ -1,4 +1,5 @@
 <?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 /** @var CMain $APPLICATION */
 $sTableID = "tbl_autodetect_list";
@@ -7,8 +8,9 @@ $lAdmin = new CAdminList($sTableID, $oSort);
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/prolog.php");
 $STAT_RIGHT = $APPLICATION->GetGroupRight("statistic");
-if ($STAT_RIGHT == "D")
+if ($STAT_RIGHT == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $statDB = CDatabase::GetModuleConnection('statistic');
 IncludeModuleLangFile(__FILE__);
@@ -41,7 +43,7 @@ function checkIfSearcher($mask)
 		FROM
 			b_stat_searcher
 		WHERE
-			upper('" . $statDB->ForSql($mask, 255) . "') like " . $statDB->Concat("'%'", USER_AGENT, "'%'") . "
+			upper('" . $statDB->ForSql($mask, 255) . "') like " . $statDB->Concat("'%'", "USER_AGENT", "'%'") . "
 		and USER_AGENT is not null
 		and " . $statDB->Length("USER_AGENT") . ">0
 	";
@@ -87,22 +89,17 @@ $added_searchers = 0;
 if ($STAT_RIGHT >= "W" && check_bitrix_sessid()) {
     if ($lAdmin->EditAction()) {
         foreach ($FIELDS as $ID => $arFields) {
-            if ($arFields["type"] === "b")
+            if ($arFields["type"] === "b") {
                 $added_browsers += addAsBrowser($arFields["FAKE_MASK"]);
-            elseif ($arFields["type"] === "s")
+            } elseif ($arFields["type"] === "s") {
                 $added_searchers += addAsSearcher($arFields["FAKE_MASK"]);
+            }
         }
     } elseif ($arID = $lAdmin->GroupAction()) {
-        if ($_REQUEST['action_target'] == 'selected') {
-            $cData = new CPosting;
-            $rsData = $cData->GetList(array($by => $order), $arFilter);
-            while ($arRes = $rsData->Fetch())
-                $arID[] = $arRes['ID'];
-        }
-
         foreach ($arID as $ID) {
-            if (strlen($ID) <= 0)
+            if ($ID == '') {
                 continue;
+            }
             switch ($_REQUEST['action']) {
                 case "add_as_searcher":
                     $added_searchers += addAsSearcher($_REQUEST["mask"]);
@@ -115,11 +112,15 @@ if ($STAT_RIGHT >= "W" && check_bitrix_sessid()) {
     }
 
     $lAdmin->BeginPrologContent();
-    CAdminMessage::ShowMessage(array(
-        "DETAILS" => GetMessage("STAT_ADDED_SEARCHERS") . " <b>" . $added_searchers . "</b><br>" . GetMessage("STAT_ADDED_BROWSERS") . " <b>" . $added_browsers . "</b>",
-        "HTML" => true,
-        "TYPE" => "OK",
-    ));
+    CAdminMessage::ShowMessage(
+        array(
+            "DETAILS" => GetMessage("STAT_ADDED_SEARCHERS") . " <b>" . $added_searchers . "</b><br>" . GetMessage(
+                    "STAT_ADDED_BROWSERS"
+                ) . " <b>" . $added_browsers . "</b>",
+            "HTML" => true,
+            "TYPE" => "OK",
+        )
+    );
     $lAdmin->EndPrologContent();
 }
 
@@ -144,47 +145,48 @@ $arFilter = array(
     "COUNTER2" => $find_counter2,
 );
 $arFilter = array_merge($arFilter, array_convert_name_2_value($arrExactMatch));
-$first = getmicrotime();
-$etime = round((getmicrotime() - $first), 5);
 
-$rsData = CAutoDetect::GetList($by, $order, $arFilter, $is_filtered);
+$rsData = CAutoDetect::GetList('', '', $arFilter);
+
 $rsData = new CAdminResult($rsData, $sTableID);
 $rsData->NavStart();
 $lAdmin->NavText($rsData->GetNavPrint(GetMessage("STAT_USER_AGENT_PAGES")));
 
-$lAdmin->AddHeaders(array(
+$lAdmin->AddHeaders(
     array(
-        "id" => "USER_AGENT",
-        "content" => GetMessage("STAT_USER_AGENT"),
-        "sort" => "",
-        "default" => true,
-    ),
-    array(
-        "id" => "COUNTER",
-        "content" => GetMessage("STAT_SESSIONS"),
-        "sort" => "",
-        "default" => true,
-        "align" => "right",
-    ),
-    array(
-        "id" => "FAKE_MASK",
-        "content" => GetMessage("STAT_MASK"),
-        "sort" => "",
-        "default" => true,
-    ),
-    array(
-        "id" => "FAKE_SRCH_S",
-        "content" => GetMessage("STAT_SEARCHER"),
-        "align" => "center",
-        "default" => true,
-    ),
-    array(
-        "id" => "FAKE_SRCH_B",
-        "content" => GetMessage("STAT_BROWSER"),
-        "align" => "center",
-        "default" => true,
-    ),
-));
+        array(
+            "id" => "USER_AGENT",
+            "content" => GetMessage("STAT_USER_AGENT"),
+            "sort" => "",
+            "default" => true,
+        ),
+        array(
+            "id" => "COUNTER",
+            "content" => GetMessage("STAT_SESSIONS"),
+            "sort" => "",
+            "default" => true,
+            "align" => "right",
+        ),
+        array(
+            "id" => "FAKE_MASK",
+            "content" => GetMessage("STAT_MASK"),
+            "sort" => "",
+            "default" => true,
+        ),
+        array(
+            "id" => "FAKE_SRCH_S",
+            "content" => GetMessage("STAT_SEARCHER"),
+            "align" => "center",
+            "default" => true,
+        ),
+        array(
+            "id" => "FAKE_SRCH_B",
+            "content" => GetMessage("STAT_BROWSER"),
+            "align" => "center",
+            "default" => true,
+        ),
+    )
+);
 
 $i = 0;
 while ($arRes = $rsData->NavNext(true, "f_")) {
@@ -193,10 +195,27 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
 
     $row = $lAdmin->AddRow($f_ID, $arRes);
 
-    $row->AddViewField("COUNTER", "<a title=\"" . GetMessage("STAT_SESS_LIST") . "\" href=\"/bitrix/admin/session_list.php?lang=" . LANGUAGE_ID . "&find_user_agent=" . urlencode("\"" . str_replace(array("\\", "\'", "\""), "_", $f_USER_AGENT) . "\"") . "&set_filter=Y\">$f_COUNTER</a>");
+    $row->AddViewField(
+        "COUNTER",
+        "<a title=\"" . GetMessage(
+            "STAT_SESS_LIST"
+        ) . "\" href=\"/bitrix/admin/session_list.php?lang=" . LANGUAGE_ID . "&find_user_agent=" . urlencode(
+            "\"" . str_replace(array("\\", "\'", "\""), "_", $f_USER_AGENT) . "\""
+        ) . "&set_filter=Y\">$f_COUNTER</a>"
+    );
     $row->AddInputField("FAKE_MASK", array("size" => 35));
-    $row->AddEditField("FAKE_SRCH_S", "<input type=\"radio\" name=\"" . htmlspecialcharsbx("FIELDS[" . $f_ID . "][type]") . "\" value=\"s\" checked> ");
-    $row->AddEditField("FAKE_SRCH_B", "<input type=\"radio\" name=\"" . htmlspecialcharsbx("FIELDS[" . $f_ID . "][type]") . "\" value=\"b\"> ");
+    $row->AddEditField(
+        "FAKE_SRCH_S",
+        "<input type=\"radio\" name=\"" . htmlspecialcharsbx(
+            "FIELDS[" . $f_ID . "][type]"
+        ) . "\" value=\"s\" checked> "
+    );
+    $row->AddEditField(
+        "FAKE_SRCH_B",
+        "<input type=\"radio\" name=\"" . htmlspecialcharsbx(
+            "FIELDS[" . $f_ID . "][type]"
+        ) . "\" value=\"b\"> "
+    );
 
     $arActions = array(
         array(
@@ -211,17 +230,19 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
     $row->AddActions($arActions);
 }
 
-$lAdmin->AddFooter(array(
+$lAdmin->AddFooter(
     array(
-        "title" => GetMessage("MAIN_ADMIN_LIST_SELECTED"),
-        "value" => $rsData->SelectedRowsCount(),
-    ),
-    array(
-        "counter" => true,
-        "title" => GetMessage("MAIN_ADMIN_LIST_CHECKED"),
-        "value" => "0",
-    ),
-));
+        array(
+            "title" => GetMessage("MAIN_ADMIN_LIST_SELECTED"),
+            "value" => $rsData->SelectedRowsCount(),
+        ),
+        array(
+            "counter" => true,
+            "title" => GetMessage("MAIN_ADMIN_LIST_CHECKED"),
+            "value" => "0",
+        ),
+    )
+);
 $lAdmin->AddGroupActionTable(
     array(),
     array(
@@ -251,15 +272,19 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
         <tr>
             <td nowrap><b><? echo GetMessage("STAT_F_USER_AGENT") ?></b></td>
             <td><input type="text" name="find_user_agent" size="28"
-                       value="<? echo htmlspecialcharsbx($find_user_agent) ?>"><?= ShowExactMatchCheckbox("find_user_agent") ?>
-                &nbsp;<?= ShowFilterLogicHelp() ?></td>
+                       value="<? echo htmlspecialcharsbx($find_user_agent) ?>"><?= ShowExactMatchCheckbox(
+                    "find_user_agent"
+                ) ?>&nbsp;<?= ShowFilterLogicHelp() ?></td>
         </tr>
         <tr>
             <td>
                 <? echo GetMessage("STAT_F_LAST_DAY") ?></td>
             <td>
                 <?
-                $arr = array("reference" => array(GetMessage("STAT_YES"), GetMessage("STAT_NO")), "reference_id" => array("Y", "N"));
+                $arr = array(
+                    "reference" => array(GetMessage("STAT_YES"), GetMessage("STAT_NO")),
+                    "reference_id" => array("Y", "N")
+                );
                 echo SelectBoxFromArray("find_last", $arr, htmlspecialcharsbx($find_last), GetMessage("MAIN_ALL"));
                 ?></td>
         </tr>
@@ -268,9 +293,10 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
                 <? echo GetMessage("STAT_F_COUNTER") ?></td>
             <td>
                 <input type="text" name="find_counter1" size="10"
-                       value="<? echo htmlspecialcharsbx($find_counter1) ?>"><? echo "&nbsp;" . GetMessage("STAT_TILL") . "&nbsp;" ?>
-                <input type="text" name="find_counter2" size="10" value="<? echo htmlspecialcharsbx($find_counter2) ?>">
-            </td>
+                       value="<? echo htmlspecialcharsbx($find_counter1) ?>"><? echo "&nbsp;" . GetMessage(
+                        "STAT_TILL"
+                    ) . "&nbsp;" ?><input type="text" name="find_counter2" size="10"
+                                          value="<? echo htmlspecialcharsbx($find_counter2) ?>"></td>
         </tr>
         <?
         $oFilter->Buttons(array("table_id" => $sTableID, "url" => $APPLICATION->GetCurPage()));

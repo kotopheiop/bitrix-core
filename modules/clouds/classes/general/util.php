@@ -11,15 +11,19 @@ class CCloudUtil
     {
         global $APPLICATION;
         $strEncodedURL = '';
-        if ($file_name)
+        if ($file_name) {
             $arUrlComponents = preg_split("#(://|/)#", $str, -1, PREG_SPLIT_DELIM_CAPTURE);
-        else
+        } else {
             $arUrlComponents = preg_split("#(://|/|\\?|=|&)#", $str, -1, PREG_SPLIT_DELIM_CAPTURE);
+        }
         foreach ($arUrlComponents as $i => $part_of_url) {
-            if ((intval($i) % 2) == 1)
+            if ((intval($i) % 2) == 1) {
                 $strEncodedURL .= (string)$part_of_url;
-            else
-                $strEncodedURL .= urlencode($APPLICATION->ConvertCharset(urldecode((string)$part_of_url), LANG_CHARSET, $charset));
+            } else {
+                $strEncodedURL .= urlencode(
+                    $APPLICATION->ConvertCharset(urldecode((string)$part_of_url), LANG_CHARSET, $charset)
+                );
+            }
         }
         return $strEncodedURL;
     }

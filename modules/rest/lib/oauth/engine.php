@@ -14,7 +14,8 @@ use Bitrix\Main\Config\Option;
 class Engine
 {
     protected $scope = array(
-        "rest", "application"
+        "rest",
+        "application"
     );
 
     protected $client = null;
@@ -65,10 +66,12 @@ class Engine
 
     public function clearAccess()
     {
-        $this->setAccess(array(
-            "client_id" => false,
-            "client_secret" => false,
-        ));
+        $this->setAccess(
+            array(
+                "client_id" => false,
+                "client_secret" => false,
+            )
+        );
 
         $this->client = null;
     }

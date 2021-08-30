@@ -1,10 +1,12 @@
 <?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/prolog.php");
 /** @var CMain $APPLICATION */
 $STAT_RIGHT = $APPLICATION->GetGroupRight("statistic");
-if ($STAT_RIGHT == "D")
+if ($STAT_RIGHT == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 
@@ -23,7 +25,9 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_popup_a
                         <tr>
                             <td valign="top" nowrap>ID:</td>
                             <td valign="top" width="100%">&nbsp;<span
-                                        title="<? echo ($f_ID == $_SESSION["SESS_GUEST_ID"]) ? GetMessage("STAT_CURRENT_GUEST") : "" ?>"><span
+                                        title="<? echo ($f_ID == $_SESSION["SESS_GUEST_ID"]) ? GetMessage(
+                                            "STAT_CURRENT_GUEST"
+                                        ) : "" ?>"><span
                                             class="<? echo ($f_ID == $_SESSION["SESS_GUEST_ID"]) ? "stat_attention" : "" ?>"><? echo $f_ID ?></span></span>&nbsp;
                             </td>
                         </tr>
@@ -32,8 +36,9 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_popup_a
                             <td valign="top">&nbsp;<a target="_blank"
                                                       title="<? echo GetMessage("STAT_VIEW_SESSIONS_LIST") ?>"
                                                       href="session_list.php?lang=<?= LANGUAGE_ID ?>&amp;find_guest_id=<? echo $f_ID ?>&amp;find_guest_id_exact_match=Y&amp;set_filter=Y"><? echo $f_SESSIONS ?></a>&nbsp;<span
-                                        class="<? echo ($f_SESSIONS > 1) ? "stat_oldguest" : "stat_newguest" ?>"><? echo ($f_SESSIONS > 1) ? GetMessage("STAT_OLD_GUEST") : GetMessage("STAT_NEW_GUEST") ?></span>
-                            </td>
+                                        class="<? echo ($f_SESSIONS > 1) ? "stat_oldguest" : "stat_newguest" ?>"><? echo ($f_SESSIONS > 1) ? GetMessage(
+                                        "STAT_OLD_GUEST"
+                                    ) : GetMessage("STAT_NEW_GUEST") ?></span></td>
                         </tr>
                         <tr>
                             <td valign="top" nowrap><? echo GetMessage("STAT_EVENTS") ?></td>
@@ -70,6 +75,7 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_popup_a
                         <tr>
                             <td valign="top" nowrap><? echo GetMessage("STAT_TIME") ?></td>
                             <td valign="top" nowrap>&nbsp;<?
+                                $f_FSESSION_TIME = intval($f_FSESSION_TIME);
                                 $hours = intval($f_FSESSION_TIME / 3600);
                                 if ($hours > 0) :
                                     echo $hours . "&nbsp;" . GetMessage("STAT_HOUR") . "&nbsp;";
@@ -81,25 +87,31 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_popup_a
                         </tr>
                         <tr>
                             <td valign="top" nowrap><? echo GetMessage("STAT_FROM") ?></td>
-                            <td valign="top">&nbsp;<? echo StatAdminListFormatURL($arGuest["FIRST_URL_FROM"], array(
-                                    "new_window" => true,
-                                    "chars_per_line" => 40,
-                                    "line_delimiter" => "<wbr>",
-                                    "kill_sessid" => $STAT_RIGHT < "W",
-                                )) ?></td>
+                            <td valign="top">&nbsp;<? echo StatAdminListFormatURL(
+                                    $arGuest["FIRST_URL_FROM"],
+                                    array(
+                                        "new_window" => true,
+                                        "chars_per_line" => 40,
+                                        "line_delimiter" => "<wbr>",
+                                        "kill_sessid" => $STAT_RIGHT < "W",
+                                    )
+                                ) ?></td>
                         </tr>
                         <tr>
                             <td valign="top" nowrap><? echo GetMessage("STAT_TO") ?></td>
-                            <td valign="top"><? if (strlen($f_FIRST_SITE_ID) > 0): ?>[<a
+                            <td valign="top"><? if ($f_FIRST_SITE_ID <> ''): ?>[<a
                                         title="<?= GetMessage("STAT_SITE") ?>"
                                         href="/bitrix/admin/site_edit.php?LID=<?= $f_FIRST_SITE_ID ?>&lang=<?= LANGUAGE_ID ?>"><?= $f_FIRST_SITE_ID ?></a>]&nbsp;<? endif; ?>
-                                &nbsp;<? echo StatAdminListFormatURL($arGuest["FIRST_URL_TO"], array(
-                                    "new_window" => true,
-                                    "attention" => $f_FIRST_URL_TO_404 == "Y",
-                                    "chars_per_line" => 40,
-                                    "line_delimiter" => "<wbr>",
-                                    "kill_sessid" => $STAT_RIGHT < "W",
-                                )) ?></td>
+                                &nbsp;<? echo StatAdminListFormatURL(
+                                    $arGuest["FIRST_URL_TO"],
+                                    array(
+                                        "new_window" => true,
+                                        "attention" => $f_FIRST_URL_TO_404 == "Y",
+                                        "chars_per_line" => 40,
+                                        "line_delimiter" => "<wbr>",
+                                        "kill_sessid" => $STAT_RIGHT < "W",
+                                    )
+                                ) ?></td>
                         </tr>
                         <? if (intval($f_FIRST_ADV_ID) > 0) : ?>
                             <tr>
@@ -140,6 +152,7 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_popup_a
                         <tr>
                             <td valign="top" nowrap><? echo GetMessage("STAT_TIME") ?></td>
                             <td valign="top" nowrap>&nbsp;<?
+                                $f_LSESSION_TIME = intval($f_LSESSION_TIME);
                                 $hours = intval($f_LSESSION_TIME / 3600);
                                 if ($hours > 0) :
                                     echo $hours . "&nbsp;" . GetMessage("STAT_HOUR") . "&nbsp;";
@@ -154,29 +167,33 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_popup_a
                                 <td valign="top" nowrap><? echo GetMessage("STAT_USER") ?></td>
                                 <td valign="top">[<a target="_blank" title="<? echo GetMessage("STAT_EDIT_USER") ?>"
                                                      href="user_edit.php?lang=<?= LANGUAGE_ID ?>&amp;ID=<? echo $f_LAST_USER_ID ?>"><? echo $f_LAST_USER_ID ?></a>]&nbsp;(<? echo $f_LOGIN ?>
-                                    )&nbsp;<? echo $f_USER_NAME ?><? echo ($f_LAST_USER_AUTH != "Y") ? "&nbsp;<span class=\"stat_notauth\">" . GetMessage("STAT_NOT_AUTH") . "</span>" : ""; ?>
-                                </td>
+                                    )&nbsp;<? echo $f_USER_NAME ?><? echo ($f_LAST_USER_AUTH != "Y") ? "&nbsp;<span class=\"stat_notauth\">" . GetMessage(
+                                            "STAT_NOT_AUTH"
+                                        ) . "</span>" : ""; ?></td>
                             </tr>
                         <? endif; ?>
                         <tr>
                             <td valign="top" nowrap><? echo GetMessage("STAT_LAST_PAGE") ?></td>
-                            <td valign="top"><? if (strlen($f_LAST_SITE_ID) > 0): ?>[<a
-                                        title="<?= GetMessage("STAT_SITE") ?>"
-                                        href="/bitrix/admin/site_edit.php?LID=<?= $f_LAST_SITE_ID ?>&amp;lang=<?= LANGUAGE_ID ?>"><?= $f_LAST_SITE_ID ?></a>]&nbsp;<? endif; ?>
-                                &nbsp;<? echo StatAdminListFormatURL($arGuest["LAST_URL_LAST"], array(
-                                    "new_window" => true,
-                                    "attention" => $f_LAST_URL_LAST_404 == "Y",
-                                    "chars_per_line" => 40,
-                                    "line_delimiter" => "<wbr>",
-                                    "kill_sessid" => $STAT_RIGHT < "W",
-                                )) ?></td>
+                            <td valign="top"><? if ($f_LAST_SITE_ID <> ''): ?>[<a title="<?= GetMessage("STAT_SITE") ?>"
+                                                                                  href="/bitrix/admin/site_edit.php?LID=<?= $f_LAST_SITE_ID ?>&amp;lang=<?= LANGUAGE_ID ?>"><?= $f_LAST_SITE_ID ?></a>]&nbsp;<? endif; ?>
+                                &nbsp;<? echo StatAdminListFormatURL(
+                                    $arGuest["LAST_URL_LAST"],
+                                    array(
+                                        "new_window" => true,
+                                        "attention" => $f_LAST_URL_LAST_404 == "Y",
+                                        "chars_per_line" => 40,
+                                        "line_delimiter" => "<wbr>",
+                                        "kill_sessid" => $STAT_RIGHT < "W",
+                                    )
+                                ) ?></td>
                         </tr>
                         <tr>
                             <td nowrap><? echo GetMessage("STAT_IP") ?></td>
                             <td>&nbsp;<? $arr = explode(".", $f_LAST_IP) ?><?= GetWhoisLink($f_LAST_IP) ?>&nbsp;[<a
                                         target="_blank" title="<? echo GetMessage("STAT_ADD_TO_STOPLIST_TITLE") ?>"
-                                        href="stoplist_edit.php?lang=<?= LANGUAGE_ID ?>&amp;net1=<? echo $arr[0] ?>&amp;net2=<? echo $arr[1] ?>&amp;net3=<? echo $arr[2] ?>&amp;net4=<? echo $arr[3] ?>"><? echo GetMessage("STAT_STOP") ?></a>]&nbsp;(<? echo @gethostbyaddr($f_LAST_IP) ?>
-                                )
+                                        href="stoplist_edit.php?lang=<?= LANGUAGE_ID ?>&amp;net1=<? echo $arr[0] ?>&amp;net2=<? echo $arr[1] ?>&amp;net3=<? echo $arr[2] ?>&amp;net4=<? echo $arr[3] ?>"><? echo GetMessage(
+                                        "STAT_STOP"
+                                    ) ?></a>]&nbsp;(<? echo @gethostbyaddr($f_LAST_IP) ?>)
                             </td>
                         </tr>
                         <tr>
@@ -186,7 +203,7 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_popup_a
                         <tr>
                             <td nowrap><? echo GetMessage("STAT_COUNTRY") ?>:</td>
                             <td>&nbsp;<?
-                                if (strlen($f_LAST_COUNTRY_ID) > 0) :
+                                if ($f_LAST_COUNTRY_ID <> '') :
                                     ?><? echo "[" . $f_LAST_COUNTRY_ID . "] " . $f_COUNTRY_NAME ?><?
                                 endif;
                                 ?></td>
@@ -194,7 +211,7 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_popup_a
                         <tr>
                             <td nowrap><? echo GetMessage("STAT_CITY") ?>:</td>
                             <td>
-                                <? if (strlen($f_LAST_CITY_INFO) > 0): ?>
+                                <? if ($f_LAST_CITY_INFO <> ''): ?>
                                     <table cellpadding="1" cellspacing="1" border="0">
                                         <?
                                         $obCity = new CCity($arGuest["LAST_CITY_INFO"]);
@@ -206,7 +223,7 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_popup_a
                                             </tr>
                                         <? endforeach ?>
                                     </table>
-                                <? elseif (strlen($f_LAST_CITY_ID) > 0): ?>
+                                <? elseif ($f_LAST_CITY_ID <> ''): ?>
                                     <? echo "[" . $f_LAST_CITY_ID . "] " . $f_CITY_NAME ?>
                                 <? endif; ?>
                                 &nbsp;
@@ -244,7 +261,13 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_popup_a
                                     <? echo GetMessage("STAT_COOKIE") ?></td>
                                 <td>
                                     <? if ($f_LAST_COOKIE): ?>
-                                        <div style="overflow:auto;"><? echo str_replace("\n", "<br>", htmlspecialcharsEx(urldecode($f_LAST_COOKIE))) ?></div>
+                                        <div style="overflow:auto;"><? echo str_replace(
+                                                "\n",
+                                                "<br>",
+                                                htmlspecialcharsEx(
+                                                    urldecode($f_LAST_COOKIE)
+                                                )
+                                            ) ?></div>
                                     <? else: ?>
                                         &nbsp;
                                     <? endif ?>

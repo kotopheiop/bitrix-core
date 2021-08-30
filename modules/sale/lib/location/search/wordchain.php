@@ -69,7 +69,6 @@ final class WordChainTable extends Entity\DataManager
 
         foreach ($allowedTypes as $type) {
         }
-
         /*
             create table b_sale_loc_wc_region
             (
@@ -122,8 +121,6 @@ final class WordChainTable extends Entity\DataManager
                 WORD_COUNT tinyint default '0'
             )
         */
-
-
     }
 
     public static function reCreateIndex()
@@ -166,8 +163,9 @@ final class WordChainTable extends Entity\DataManager
         $allowedTypes = array('REGION', 'SUBREGION', 'CITY', 'VILLAGE', 'STREET');
 
         while ($item = $res->fetch()) {
-            if (in_array($item['CODE'], $allowedTypes))
+            if (in_array($item['CODE'], $allowedTypes)) {
                 $types[$item['CODE']] = $item['ID'];
+            }
 
             $typeSort[$item['ID']] = $item['SORT'];
         }
@@ -184,24 +182,26 @@ final class WordChainTable extends Entity\DataManager
 
         $prevDepth = 0;
         while (true) {
-            $res = Location\LocationTable::getList(array(
-                'select' => array(
-                    'ID',
-                    'TYPE_ID',
-                    'LNAME' => 'NAME.NAME',
-                    'DEPTH_LEVEL',
-                    'SORT'
-                ),
-                'filter' => array(
-                    '=TYPE_ID' => array_values($types),
-                    '=NAME.LANGUAGE_ID' => LANGUAGE_ID
-                ),
-                'order' => array(
-                    'LEFT_MARGIN' => 'asc'
-                ),
-                'limit' => self::STEP_SIZE,
-                'offset' => $offset
-            ));
+            $res = Location\LocationTable::getList(
+                array(
+                    'select' => array(
+                        'ID',
+                        'TYPE_ID',
+                        'LNAME' => 'NAME.NAME',
+                        'DEPTH_LEVEL',
+                        'SORT'
+                    ),
+                    'filter' => array(
+                        '=TYPE_ID' => array_values($types),
+                        '=NAME.LANGUAGE_ID' => LANGUAGE_ID
+                    ),
+                    'order' => array(
+                        'LEFT_MARGIN' => 'asc'
+                    ),
+                    'limit' => self::STEP_SIZE,
+                    'offset' => $offset
+                )
+            );
 
             $cnt = 0;
             while ($item = $res->fetch()) {
@@ -212,8 +212,9 @@ final class WordChainTable extends Entity\DataManager
                     $newWC = array();
                     $newPC = array();
                     foreach ($wordChain as $dl => $name) {
-                        if ($dl >= $item['DEPTH_LEVEL'])
+                        if ($dl >= $item['DEPTH_LEVEL']) {
                             break;
+                        }
 
                         $newWC[$dl] = $name;
                     }
@@ -221,8 +222,9 @@ final class WordChainTable extends Entity\DataManager
                     $wordChain = $newWC;
 
                     foreach ($pathChain as $dl => $id) {
-                        if ($dl >= $item['DEPTH_LEVEL'])
+                        if ($dl >= $item['DEPTH_LEVEL']) {
                             break;
+                        }
 
                         $newPC[$dl] = $id;
                     }
@@ -245,16 +247,21 @@ final class WordChainTable extends Entity\DataManager
                     $i++;
                 }
                 $pathMap = array();
-                foreach ($pathChain as $elem)
+                foreach ($pathChain as $elem) {
                     $pathMap[$typesBack[$elem['TYPE']] . '_ID'] = $elem['ID'];
+                }
 
-                $data = array_merge($wordMap, $pathMap, array(
-                    'LOCATION_ID' => $item['ID'],
-                    'TYPE_ID' => $item['TYPE_ID'],
-                    'TYPE_SORT' => $typeSort[$item['TYPE_ID']],
-                    'SORT' => $item['SORT'],
-                    'WORD_COUNT' => count($wordMap)
-                ));
+                $data = array_merge(
+                    $wordMap,
+                    $pathMap,
+                    array(
+                        'LOCATION_ID' => $item['ID'],
+                        'TYPE_ID' => $item['TYPE_ID'],
+                        'TYPE_SORT' => $typeSort[$item['TYPE_ID']],
+                        'SORT' => $item['SORT'],
+                        'WORD_COUNT' => count($wordMap)
+                    )
+                );
 
                 //print('<pre>');
                 //print('</pre>');
@@ -269,8 +276,9 @@ final class WordChainTable extends Entity\DataManager
                 $cnt++;
             }
 
-            if (!$cnt)
+            if (!$cnt) {
                 break;
+            }
 
             $offset += self::STEP_SIZE;
         }
@@ -293,7 +301,8 @@ final class WordChainTable extends Entity\DataManager
         }
 
         $sql = "
-			select SQL_NO_CACHE IX.LOCATION_ID as ID, L.CODE, IX.TYPE_ID, L.LEFT_MARGIN, L.RIGHT_MARGIN, N.NAME as NAME from " . static::getTableName() . " IX
+			select SQL_NO_CACHE IX.LOCATION_ID as ID, L.CODE, IX.TYPE_ID, L.LEFT_MARGIN, L.RIGHT_MARGIN, N.NAME as NAME from " . static::getTableName(
+            ) . " IX
 
 				inner join b_sale_location L on IX.LOCATION_ID = L.ID
 				inner join b_sale_loc_name N on IX.LOCATION_ID = N.LOCATION_ID and N.LANGUAGE_ID = 'ru'

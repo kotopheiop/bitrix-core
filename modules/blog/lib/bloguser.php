@@ -21,7 +21,7 @@ Loc::loadMessages(__FILE__);
 class BlogUser
 {
     const CACHE_ID = 'BLOG_USERS';
-    private $blogId = NULL;
+    private $blogId = null;
 
 //	this values was be hardcoded in components. If we want customization - need add settings and remake
     private $avatarSizes = array(
@@ -37,7 +37,7 @@ class BlogUser
         $height = intval($height);
 
 //		overwrite params if key exist or create new
-        $key = strlen($key) > 0 ? $key : "IMG_" . (count($this->avatarSizes) + 1);
+        $key = $key <> '' ? $key : "IMG_" . (count($this->avatarSizes) + 1);
         $this->avatarSizes[$key] = array('WIDTH' => $width, 'HEIGHT' => $height);
     }
 
@@ -50,8 +50,9 @@ class BlogUser
      */
     public function __construct($cacheTime = 0)
     {
-        if ($cacheTime > 0)
+        if ($cacheTime > 0) {
             $this->cacheTime = intval($cacheTime);
+        }
     }
 
     /**
@@ -65,8 +66,9 @@ class BlogUser
 
     public function setCacheTime($cacheTime)
     {
-        if ($cacheTime > 0)
+        if ($cacheTime > 0) {
             $this->cacheTime = $cacheTime;
+        }
     }
 
 
@@ -78,8 +80,9 @@ class BlogUser
      */
     public function getUsers($ids = array())
     {
-        if (empty($ids))
+        if (empty($ids)) {
             return array();
+        }
 
         if ($this->cacheTime > 0) {
             $result = $this->getUsersFromCache($ids);
@@ -118,7 +121,7 @@ class BlogUser
      *
      * @return mixed
      */
-    public static function cleanCache($blogId = NULL)
+    public static function cleanCache($blogId = null)
     {
         $cache = Cache::createInstance();
 
@@ -126,7 +129,7 @@ class BlogUser
     }
 
 
-    private static function createCacheDir($blogId = NULL)
+    private static function createCacheDir($blogId = null)
     {
         $dir = '/' . SITE_ID;
         $dir .= $blogId ? '/BLOG_ID_' . $blogId : '/BLOGS_ALL';
@@ -158,19 +161,34 @@ class BlogUser
 
 //		BLOG users
         $filter = array();
-        if (!empty($ids))
+        if (!empty($ids)) {
             $filter["=USER_ID"] = $ids;
-        $resBlogUsers = Internals\BlogUserTable::getList(array(
-            'select' => array(
-                'ID', 'USER_ID', 'ALIAS', 'DESCRIPTION', 'AVATAR', 'INTERESTS', 'LAST_VISIT', 'DATE_REG', 'ALLOW_POST',
-                'USER.PERSONAL_PHOTO', 'USER.LOGIN', 'USER.NAME', 'USER.LAST_NAME'
-            ),
-            'filter' => $filter,
-        ));
+        }
+        $resBlogUsers = Internals\BlogUserTable::getList(
+            array(
+                'select' => array(
+                    'ID',
+                    'USER_ID',
+                    'ALIAS',
+                    'DESCRIPTION',
+                    'AVATAR',
+                    'INTERESTS',
+                    'LAST_VISIT',
+                    'DATE_REG',
+                    'ALLOW_POST',
+                    'USER.PERSONAL_PHOTO',
+                    'USER.LOGIN',
+                    'USER.NAME',
+                    'USER.LAST_NAME'
+                ),
+                'filter' => $filter,
+            )
+        );
 
 //		find Users then not exists as BlogUser
-        if (is_array($ids) && !empty($ids))
-            $notExistingUsersIds = array_combine($ids, $ids);    // set keys = value in new array
+        if (is_array($ids) && !empty($ids)) {
+            $notExistingUsersIds = array_combine($ids, $ids);
+        }    // set keys = value in new array
 
         while ($row = $resBlogUsers->fetch()) {
             unset($notExistingUsersIds[$row["USER_ID"]]);
@@ -184,10 +202,12 @@ class BlogUser
                 "INTERESTS" => $row["INTERESTS"],
             );
             $row["BlogUser"] = \CBlogTools::htmlspecialcharsExArray($row["BlogUser"]);
-            if ($row["DATE_REG"])
+            if ($row["DATE_REG"]) {
                 $row["BlogUser"]["DATE_REG"] = FormatDate("FULL", $row["DATE_REG"]->getTimestamp());
-            if ($row["LAST_VISIT"])
+            }
+            if ($row["LAST_VISIT"]) {
                 $row["BlogUser"]["LAST_VISIT"] = FormatDate("FULL", $row["LAST_VISIT"]->getTimestamp());
+            }
             $row["BlogUser"]["ID"] = $row["ID"];
             $row["BlogUser"]["USER_ID"] = $row["USER_ID"];
             $row["BlogUser"]["AVATAR"] = $row["AVATAR"];
@@ -237,8 +257,9 @@ class BlogUser
         }
 
 //		create new empty BlogUsers for not existing Users
-        if (!empty($notExistingUsersIds))
+        if (!empty($notExistingUsersIds)) {
             $result = $result + $this->addNotExistingUsers($notExistingUsersIds);
+        }
 
         return $result;
     }
@@ -250,8 +271,8 @@ class BlogUser
 
 //		get Users data
         $rsUsers = \CUser::GetList(
-            $by = 'id',
-            $order = 'asc',
+            'id',
+            'asc',
             array('ID' => implode('|', $ids)),
             array('FIELDS' => array('ID', 'DATE_REGISTER'/*, 'NAME', 'LAST_NAME', 'LOGIN'*/))
         );
@@ -259,8 +280,9 @@ class BlogUser
         while ($user = $rsUsers->Fetch()) {
 //			todo: use new BlogUser class, when finish them
 //			check correctly date
-            if (!is_set($user, "DATE_REGISTER") || (!$DB->IsDate($user["DATE_REGISTER"], false, LANG, "FULL")))
+            if (!is_set($user, "DATE_REGISTER") || (!$DB->IsDate($user["DATE_REGISTER"], false, LANG, "FULL"))) {
                 $user["DATE_REGISTER"] = new DateTime();
+            }
 
             $resId = \CBlogUser::Add(
                 array(
@@ -270,9 +292,11 @@ class BlogUser
             );
 
 //			during ADD process we can catch errors. If not process them - we get infinity cicle between getUsersFromDB>addNotExistingUsers
-            if (!$resId)
-                if ($ex = $APPLICATION->GetException())
+            if (!$resId) {
+                if ($ex = $APPLICATION->GetException()) {
                     throw new SystemException($ex->GetString());
+                }
+            }
         }
 
 //		get created BlogUsers from DB
@@ -287,15 +311,17 @@ class BlogUser
      */
     public static function getCommentAuthorsIdsByPostId($postId)
     {
-        if (!$postId)
+        if (!$postId) {
             throw new ArgumentNullException('post ID');
+        }
         $postId = intval($postId);
         $result = array();
 
         $resComment = \CBlogComment::GetList(array(), array("POST_ID" => $postId), false, false, array("AUTHOR_ID"));
         while ($comment = $resComment->Fetch()) {
-            if ($comment["AUTHOR_ID"])
+            if ($comment["AUTHOR_ID"]) {
                 $result[$comment["AUTHOR_ID"]] = $comment["AUTHOR_ID"];
+            }
         }
 
         return $result;
@@ -307,15 +333,18 @@ class BlogUser
      */
     public static function getPostAuthorsIdsByBlogId($blogId)
     {
-        if (!$blogId)
+        if (!$blogId) {
             throw new ArgumentNullException('blog ID');
+        }
         $blogId = intval($blogId);
         $result = array();
 
         $resPost = \CBlogPost::GetList(array(), array("BLOG_ID" => $blogId), false, false, array("AUTHOR_ID"));
-        while ($post = $resPost->Fetch())
-            if ($post["AUTHOR_ID"])
+        while ($post = $resPost->Fetch()) {
+            if ($post["AUTHOR_ID"]) {
                 $result[$post["AUTHOR_ID"]] = $post["AUTHOR_ID"];
+            }
+        }
 
         return $result;
     }
@@ -330,16 +359,20 @@ class BlogUser
      */
     public static function getPostAuthorsIdsByDbFilter($arFilter)
     {
-        if (!$arFilter)
+        if (!$arFilter) {
             throw new ArgumentNullException('blog ID');
-        if (!is_array($arFilter))
+        }
+        if (!is_array($arFilter)) {
             return array();
+        }
 
         $result = array();
         $resPost = \CBlogPost::GetList(array(), $arFilter, false, false, array("AUTHOR_ID"));
-        while ($post = $resPost->Fetch())
-            if ($post["AUTHOR_ID"])
+        while ($post = $resPost->Fetch()) {
+            if ($post["AUTHOR_ID"]) {
                 $result[$post["AUTHOR_ID"]] = $post["AUTHOR_ID"];
+            }
+        }
 
         return $result;
     }
@@ -361,16 +394,19 @@ class BlogUser
         $result = "";
 
         $canUseAlias = \COption::GetOptionString("blog", "allow_alias", "Y");
-        if ($canUseAlias == "Y")
+        if ($canUseAlias == "Y") {
             $result = $alias;
+        }
 
-        if (strlen($result) <= 0) {
+        if ($result == '') {
             $result = \CUser::FormatName(
                 \CSite::GetNameFormat(false),
-                array("NAME" => $name,
+                array(
+                    "NAME" => $name,
                     "LAST_NAME" => $lastName,
                     "SECOND_NAME" => $secondName,
-                    "LOGIN" => $login),
+                    "LOGIN" => $login
+                ),
                 true,
                 false
             );
@@ -384,11 +420,12 @@ class BlogUser
         $result = "";
         if (!$params["bSoNet"]) {
             $canUseAlias = \COption::GetOptionString("blog", "allow_alias", "Y");
-            if ($canUseAlias == "Y")
+            if ($canUseAlias == "Y") {
                 $result = $blogUser["ALIAS"];
+            }
         }
 
-        if (strlen($result) <= 0) {
+        if ($result == '') {
             $params["NAME_TEMPLATE"] = $params["NAME_TEMPLATE"] ? $params["NAME_TEMPLATE"] : \CSite::GetNameFormat();
             $params["NAME_TEMPLATE"] = str_replace(
                 array("#NOBR#", "#/NOBR#"),
@@ -416,10 +453,12 @@ class BlogUser
      */
     public static function isUserGivenConsent($userId, $agreementId)
     {
-        if (!$userId || $userId <= 0)
+        if (!$userId || $userId <= 0) {
             throw new ArgumentNullException('User ID');
-        if (!$agreementId || $agreementId <= 0)
+        }
+        if (!$agreementId || $agreementId <= 0) {
             throw new ArgumentNullException('Agreement ID');
+        }
 
 //		Find root URL for current component. We will check this URL in consents table.
 //		URL will be common for any constnt in this component
@@ -436,8 +475,9 @@ class BlogUser
 
         $isGivenAgreement = false;
         $consents = ConsentTable::getList(array('filter' => $filter));
-        if ($consents->fetch())
+        if ($consents->fetch()) {
             $isGivenAgreement = true;
+        }
 
         return $isGivenAgreement;
     }
@@ -447,7 +487,7 @@ class BlogUser
      *
      * @return bool
      */
-    public static function onUserDelete($userId = NULL)
+    public static function onUserDelete($userId = null)
     {
         $userId = intval($userId);
         if ($userId <= 0) {

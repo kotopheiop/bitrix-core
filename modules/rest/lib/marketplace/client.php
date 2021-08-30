@@ -6,7 +6,9 @@ use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ModuleManager;
 use Bitrix\Rest\AppTable;
+use Bitrix\Rest\Engine\Access;
 
 if (!defined('REST_MP_CATEGORIES_CACHE_TTL')) {
     define('REST_MP_CATEGORIES_CACHE_TTL', 86400);
@@ -15,6 +17,13 @@ if (!defined('REST_MP_CATEGORIES_CACHE_TTL')) {
 class Client
 {
     const CATEGORIES_CACHE_TTL = REST_MP_CATEGORIES_CACHE_TTL;
+    private const SUBSCRIPTION_REGION = [
+        'ru',
+        'ua',
+    ];
+    private const SUBSCRIPTION_DEFAULT_START_TIME = [
+        'ua' => 1625090400,
+    ];
 
     protected static $buyLinkList = array(
         'bitrix24' => '/settings/order/make.php?limit=#NUM#&module=#CODE#',
@@ -25,13 +34,15 @@ class Client
     );
 
     private static $appTop = null;
+    private static $isPayApplicationAvailable;
 
     public static function getTop($action, $fields = array())
     {
         $allowedActions = array(
             Transport::METHOD_GET_LAST,
             Transport::METHOD_GET_DEV,
-            Transport::METHOD_GET_BEST
+            Transport::METHOD_GET_BEST,
+            Transport::METHOD_GET_SALE_OUT
         );
 
         if (in_array($action, $allowedActions)) {
@@ -60,6 +71,13 @@ class Client
         );
     }
 
+    public static function getImmuneApp()
+    {
+        return Transport::instance()->call(
+            Transport::METHOD_GET_IMMUNE
+        );
+    }
+
     public static function getUpdates($codeList)
     {
         $updatesList = Transport::instance()->call(
@@ -68,10 +86,6 @@ class Client
                 "code" => serialize($codeList)
             )
         );
-
-        if (is_array($updatesList) && is_array($updatesList["ITEMS"])) {
-            static::setAvailableUpdate($updatesList["ITEMS"]);
-        }
 
         return $updatesList;
     }
@@ -101,7 +115,7 @@ class Client
     public static function getAvailableUpdate($code = false)
     {
         $updates = Option::get("rest", "mp_updates", "");
-        $updates = $updates == "" ? array() : unserialize($updates);
+        $updates = $updates == "" ? array() : unserialize($updates, ['allowed_classes' => false]);
 
         if ($code !== false) {
             return array_key_exists($code, $updates) ? $updates[$code] : false;
@@ -115,11 +129,17 @@ class Client
         return intval(Option::get("rest", "mp_num_updates", 0));
     }
 
-    public static function getCategories($forceReload = false)
+    /**
+     * Return marketplace category query result
+     * @param bool $forceReload
+     *
+     * @return array
+     */
+    public static function getCategoriesFull($forceReload = false)
     {
         $managedCache = Application::getInstance()->getManagedCache();
 
-        $cacheId = 'rest|marketplace|categories|' . LANGUAGE_ID;
+        $cacheId = 'rest|marketplace|categories|full|' . LANGUAGE_ID;
 
         $requestNeeded = true;
 
@@ -128,29 +148,39 @@ class Client
             && static::CATEGORIES_CACHE_TTL > 0
             && $managedCache->read(static::CATEGORIES_CACHE_TTL, $cacheId)
         ) {
-            $categoriesList = $managedCache->get($cacheId);
-            if (is_array($categoriesList)) {
+            $result = $managedCache->get($cacheId);
+            if (is_array($result)) {
                 $requestNeeded = false;
-            } elseif (intval($categoriesList) > time()) {
+            } elseif (intval($result) > time()) {
                 $requestNeeded = false;
-                $categoriesList = [];
+                $result = [];
             }
         }
 
         if ($requestNeeded) {
-            $categoriesList = Transport::instance()->call(Transport::METHOD_GET_CATEGORIES);
-            if (is_array($categoriesList)) {
-                $categoriesList = $categoriesList["ITEMS"];
-            } else {
-                $categoriesList = time() + 300;
+            $result = Transport::instance()->call(Transport::METHOD_GET_CATEGORIES);
+            if (!is_array($result)) {
+                $result = time() + 300;
             }
 
             if (static::CATEGORIES_CACHE_TTL > 0) {
-                $managedCache->set($cacheId, $categoriesList);
+                $managedCache->set($cacheId, $result);
             }
         }
 
-        return (is_array($categoriesList) ? $categoriesList : []);
+        return (is_array($result) ? $result : []);
+    }
+
+    /**
+     * Return marketplace category items
+     * @param bool $forceReload
+     *
+     * @return array
+     */
+    public static function getCategories($forceReload = false)
+    {
+        $categories = static::getCategoriesFull($forceReload);
+        return (is_array($categories['ITEMS']) ? $categories['ITEMS'] : []);
     }
 
     public static function getCategory($code, $page = false, $pageSize = false)
@@ -193,12 +223,17 @@ class Client
         );
     }
 
-    public static function getLastByTag($tag, $pageSize = false)
+    public static function getLastByTag($tag, $page = false, $pageSize = false)
     {
         $queryFields = Array(
             "tag" => $tag,
             "sort" => "date_public"
         );
+
+        $page = intval($page);
+        if ($page > 0) {
+            $queryFields["page"] = $page;
+        }
 
         if ($pageSize > 0) {
             $queryFields["onPageSize"] = $pageSize;
@@ -229,10 +264,33 @@ class Client
         );
     }
 
+    public static function getAppPublic($code, $version = false, $checkHash = false, $installHash = false)
+    {
+        $queryFields = [
+            "code" => $code
+        ];
+
+        $version = intval($version);
+        if ($version > 0) {
+            $queryFields["ver"] = $version;
+        }
+
+        if ($checkHash !== false) {
+            $queryFields["check_hash"] = $checkHash;
+            $queryFields["install_hash"] = $installHash;
+        }
+
+        return Transport::instance()->call(
+            Transport::METHOD_GET_APP_PUBLIC,
+            $queryFields
+        );
+    }
+
     public static function filterApp($fields, $page = false)
     {
-        if (!is_array($fields))
+        if (!is_array($fields)) {
             $fields = array($fields);
+        }
 
         $queryFields = $fields;
 
@@ -311,13 +369,15 @@ class Client
     public static function getNumUpdates()
     {
         $appCodes = array();
-        $dbApps = AppTable::getList(array(
-            'filter' => array(
-                "=ACTIVE" => AppTable::ACTIVE,
-                "!=STATUS" => AppTable::STATUS_LOCAL,
-            ),
-            'select' => array('CODE', 'VERSION')
-        ));
+        $dbApps = AppTable::getList(
+            array(
+                'filter' => array(
+                    "=ACTIVE" => AppTable::ACTIVE,
+                    "!=STATUS" => AppTable::STATUS_LOCAL,
+                ),
+                'select' => array('CODE', 'VERSION')
+            )
+        );
         while ($app = $dbApps->fetch()) {
             $appCodes[$app["CODE"]] = $app["VERSION"];
         }
@@ -325,7 +385,7 @@ class Client
         if (!empty($appCodes)) {
             $updateList = static::getUpdates($appCodes);
 
-            if ($updateList) {
+            if (is_array($updateList)) {
                 self::setAvailableUpdate($updateList['ITEMS']);
             } else {
                 self::setAvailableUpdate();
@@ -338,8 +398,12 @@ class Client
     public static function getTagByPlacement($placement)
     {
         $tag = array();
-        if (strlen($placement) > 0) {
-            if (substr($placement, 0, 4) === 'CRM_' || $placement === \Bitrix\Rest\Api\UserFieldType::PLACEMENT_UF_TYPE) {
+        if ($placement <> '') {
+            if (mb_substr(
+                    $placement,
+                    0,
+                    4
+                ) === 'CRM_' || $placement === \Bitrix\Rest\Api\UserFieldType::PLACEMENT_UF_TYPE) {
                 if ($placement !== 'CRM_ROBOT_TRIGGERS') {
                     $tag[] = 'placement';
                 } else {
@@ -347,7 +411,7 @@ class Client
                 }
 
                 $tag[] = 'crm';
-            } elseif (substr($placement, 0, 5) === 'CALL_') {
+            } elseif (mb_substr($placement, 0, 5) === 'CALL_') {
                 $tag[] = 'placement';
                 $tag[] = 'telephony';
             }
@@ -370,7 +434,36 @@ class Client
      */
     public static function isSubscriptionAvailable()
     {
-        return \Bitrix\Main\Config\Option::get("bitrix24", "~mp24_paid", "N") === "Y";
+        if (ModuleManager::isModuleInstalled('bitrix24')) {
+            $status = Option::get('bitrix24', '~mp24_paid', 'N');
+        } else {
+            $status = Option::get('main', '~mp24_paid', 'N');
+            if ($status === 'T' && Option::get('main', '~mp24_used_trial', 'N') !== 'Y') {
+                Option::set('main', '~mp24_used_trial', 'Y');
+            }
+        }
+
+        $result = ($status === 'Y' || $status === 'T');
+
+        if (
+            $status === 'Y'
+            && ModuleManager::isModuleInstalled('bitrix24')
+            && Loader::includeModule('bitrix24')
+            && \CBitrix24::getLicenseFamily() === 'project'
+            && Option::get('rest', 'can_use_subscription_project', 'N') === 'N'
+        ) {
+            $result = false;
+        } elseif ($result) {
+            $date = static::getSubscriptionFinalDate();
+            if ($date) {
+                $now = new \Bitrix\Main\Type\Date();
+                if ($date < $now) {
+                    $result = false;
+                }
+            }
+        }
+
+        return $result;
     }
 
     /**
@@ -378,7 +471,97 @@ class Client
      */
     public static function getSubscriptionFinalDate()
     {
-        return new \Bitrix\Main\Type\Date(\Bitrix\Main\Config\Option::get("bitrix24", "~mp24_paid_date"));
+        $result = false;
+        if (ModuleManager::isModuleInstalled('bitrix24')) {
+            $timestamp = Option::get('bitrix24', '~mp24_paid_date');
+        } else {
+            $timestamp = Option::get('main', '~mp24_paid_date');
+        }
+
+        if ($timestamp > 0) {
+            $result = \Bitrix\Main\Type\Date::createFromTimestamp($timestamp);
+        }
+
+        return $result;
     }
 
+    private static function checkSubscriptionAccessStart($region): bool
+    {
+        $canStart = true;
+        if (!empty(static::SUBSCRIPTION_DEFAULT_START_TIME[$region])) {
+            $time = Option::get(
+                'rest',
+                'subscription_region_start_time_' . $region,
+                static::SUBSCRIPTION_DEFAULT_START_TIME[$region]
+            );
+            $canStart = $time < time();
+        }
+
+        return $canStart && in_array($region, static::SUBSCRIPTION_REGION, true);
+    }
+
+    public static function isSubscriptionAccess()
+    {
+        if (ModuleManager::isModuleInstalled('bitrix24') && Loader::includeModule('bitrix24')) {
+            $result = static::checkSubscriptionAccessStart(\CBitrix24::getLicensePrefix());
+        } else {
+            $result = Option::get(Access::MODULE_ID, Access::OPTION_SUBSCRIPTION_AVAILABLE, 'N') === 'Y';
+        }
+
+        return $result;
+    }
+
+    public static function canBuySubscription()
+    {
+        $result = false;
+        if (
+            static::isSubscriptionAccess()
+            && Access::isFeatureEnabled()
+            && !(
+                ModuleManager::isModuleInstalled('bitrix24')
+                && Loader::includeModule('bitrix24')
+                && \CBitrix24::getLicenseFamily() === "demo"
+            )
+        ) {
+            $result = true;
+        }
+
+        return $result;
+    }
+
+    public static function isSubscriptionDemoAvailable()
+    {
+        if (ModuleManager::isModuleInstalled('bitrix24')) {
+            $used = Option::get('bitrix24', '~mp24_used_trial', 'N') === 'Y';
+        } else {
+            $used = Option::get('main', '~mp24_used_trial', 'N') === 'Y';
+        }
+
+        return !$used && static::isSubscriptionAccess();
+    }
+
+    /**
+     * Returns available pay application
+     * @return bool
+     */
+    public static function isPayApplicationAvailable(): bool
+    {
+        if (is_null(static::$isPayApplicationAvailable)) {
+            static::$isPayApplicationAvailable = true;
+            $time = (int)Option::get('rest', 'time_pay_application_off', 1621029600);
+            if (time() > $time) {
+                if (Loader::includeModule('bitrix24')) {
+                    $region = \CBitrix24::getLicensePrefix();
+                } else {
+                    $region = Option::get('main', '~PARAM_CLIENT_LANG', '');
+                }
+
+                if ($region === 'ru') {
+                    static::$isPayApplicationAvailable = false;
+                }
+            }
+        }
+
+        return static::$isPayApplicationAvailable;
+    }
 }

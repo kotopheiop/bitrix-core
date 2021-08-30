@@ -101,7 +101,6 @@ class Board extends Base
             $this->addError(new Error('Board id might be not blank'));
             return false;
         }
-
     }
 
     /**
@@ -121,9 +120,11 @@ class Board extends Base
         $copy = $widget->getCopyForCurrentUser();
         $cellId = 'cell_' . randString(4);
         try {
-            $row = Row::getRowDefaultEntity(array(
-                'cellIds' => array($cellId)
-            ));
+            $row = Row::getRowDefaultEntity(
+                array(
+                    'cellIds' => array($cellId)
+                )
+            );
         } catch (ArgumentException $e) {
             $this->errorCollection[] = new Error($e->getMessage());
             return false;

@@ -19,11 +19,13 @@ class SkuProps
      */
     protected static function filterByProps(array $skuProps, array $offersIds = array())
     {
-        if (empty($offersIds))
+        if (empty($offersIds)) {
             return array();
+        }
 
-        if (!Loader::includeModule('iblock'))
+        if (!Loader::includeModule('iblock')) {
             return array();
+        }
 
         $result = array();
         $filter = array('ID' => $offersIds);
@@ -31,16 +33,18 @@ class SkuProps
         foreach ($skuProps as $id => $value) {
             $propField = 'PROPERTY_' . $id;
 
-            if ($value == '-')
+            if ($value == '-') {
                 $filter[$propField] = false;
-            else
+            } else {
                 $filter[$propField] = $value;
+            }
         }
 
         $res = \CIBlockElement::GetList(array("SORT" => "ASC"), $filter, false, false, array('ID'));
 
-        while ($el = $res->Fetch())
+        while ($el = $res->Fetch()) {
             $result[] = $el['ID'];
+        }
 
         return $result;
     }
@@ -56,11 +60,13 @@ class SkuProps
         $result = array();
 
         foreach ($skuOrder as $skuId) {
-            if (!empty($skuProps[$skuId]))
+            if (!empty($skuProps[$skuId])) {
                 $result[$skuId] = $skuProps[$skuId];
+            }
 
-            if ($skuId == $changedSkuId)
+            if ($skuId == $changedSkuId) {
                 break;
+            }
         }
 
         return $result;
@@ -83,11 +89,13 @@ class SkuProps
                 continue;
             }
 
-            if ($skuId != $changedSkuId && !$changedAchieved)
+            if ($skuId != $changedSkuId && !$changedAchieved) {
                 continue;
+            }
 
-            if (!empty($skuProps[$skuId]))
+            if (!empty($skuProps[$skuId])) {
                 $result[$skuId] = $skuProps[$skuId];
+            }
         }
 
         return $result;
@@ -116,26 +124,31 @@ class SkuProps
         $requiredProps = self::extractRequiredProps($skuProps, $skuOrder, $changedSkuId);
         $offersIds = self::filterByProps($requiredProps, $offersIds[$productId]);
 
-        if (count($offersIds) == 0)
+        if (count($offersIds) == 0) {
             return 0;
+        }
 
-        if (count($offersIds) == 1)
+        if (count($offersIds) == 1) {
             return current($offersIds);
+        }
 
         $optionalProps = self::extractOptionalProps($skuProps, $skuOrder, $changedSkuId);
 
-        if (empty($optionalProps))
+        if (empty($optionalProps)) {
             return current($offersIds);
+        }
 
         foreach ($optionalProps as $id => $val) {
             $prevProducts = $offersIds;
             $offersIds = self::filterByProps(array($id => $val), $offersIds);
 
-            if (count($offersIds) == 0)
+            if (count($offersIds) == 0) {
                 return current($prevProducts);
+            }
 
-            if (count($offersIds) == 1)
+            if (count($offersIds) == 1) {
                 return current($offersIds);
+            }
         }
 
         return current($offersIds);
@@ -148,19 +161,22 @@ class SkuProps
      */
     protected static function getOffersIds($productIds)
     {
-        if (!Loader::includeModule('catalog'))
+        if (!Loader::includeModule('catalog')) {
             return array();
+        }
 
         $result = array();
         $offers = \CCatalogSKU::getOffersList($productIds, 0, array(), array('ID'));
 
         if (is_array($offers)) {
             foreach ($offers as $productId => $items) {
-                if (!is_array($result[$productId]))
+                if (!is_array($result[$productId])) {
                     $result[$productId] = array();
+                }
 
-                foreach ($items as $item)
+                foreach ($items as $item) {
                     $result[$productId][] = $item['ID'];
+                }
             }
         }
 
@@ -176,8 +192,9 @@ class SkuProps
      */
     protected static function getSkuPropValues($propId, $currentValue, array &$offersIds)
     {
-        if (!Loader::includeModule('iblock'))
+        if (!Loader::includeModule('iblock')) {
             return array();
+        }
 
         $result = array();
         $foundElements = array();
@@ -194,21 +211,24 @@ class SkuProps
         );
 
         while ($el = $res->Fetch()) {
-            if (isset($el['PROPERTY_' . $propId . '_ENUM_ID']))
+            if (isset($el['PROPERTY_' . $propId . '_ENUM_ID'])) {
                 $value = $el['PROPERTY_' . $propId . '_ENUM_ID'];
-            else
+            } else {
                 $value = $el['PROPERTY_' . $propId . '_VALUE'];
+            }
 
-            if (!in_array($value, $result))
+            if (!in_array($value, $result)) {
                 $result[] = $value;
+            }
 
             $foundElements[] = $el['ID'];
 
             if ($value != $currentValue) {
                 $key = array_search($el['ID'], $offersIds);
 
-                if ($key !== false)
+                if ($key !== false) {
                     unset($offersIds[$key]);
+                }
             }
         }
 
@@ -216,11 +236,13 @@ class SkuProps
         $valueLess = array_diff($offersIds, $foundElements);
 
         if (!empty($valueLess)) {
-            if (!empty($result))
+            if (!empty($result)) {
                 $result[] = '-';
+            }
 
-            if ($currentValue != '-')
+            if ($currentValue != '-') {
                 $offersIds = array_diff($offersIds, $valueLess);
+            }
         }
 
         return $result;
@@ -236,38 +258,46 @@ class SkuProps
         $result = array();
         $productIds = array();
 
-        foreach ($params as $param)
+        foreach ($params as $param) {
             $productIds[] = $param['PRODUCT_ID'];
+        }
 
         $productOffersIds = self::getOffersIds($productIds);
 
         foreach ($params as $param) {
-            if (intval($param['PRODUCT_ID']) <= 0)
+            if (intval($param['PRODUCT_ID']) <= 0) {
                 continue;
+            }
 
-            if (empty($productOffersIds[$param['PRODUCT_ID']]))
+            if (empty($productOffersIds[$param['PRODUCT_ID']])) {
                 continue;
+            }
 
             $offerId = intval($param['OFFER_ID']);
 
-            if (!is_array($result[$offerId]))
+            if (!is_array($result[$offerId])) {
                 $result[$offerId] = array();
+            }
 
-            if (empty($param['SKU_PROPS']) || empty($param['SKU_ORDER']))
+            if (empty($param['SKU_PROPS']) || empty($param['SKU_ORDER'])) {
                 continue;
+            }
 
             $offersIds = $productOffersIds[$param['PRODUCT_ID']];
 
             foreach ($param['SKU_ORDER'] as $propId) {
-                if (empty($param['SKU_PROPS'][$propId]))
+                if (empty($param['SKU_PROPS'][$propId])) {
                     continue;
-
-                if (count($offersIds) > 0)
-                    $res = self::getSkuPropValues($propId, $param['SKU_PROPS'][$propId], $offersIds);
+                }
 
                 if (count($offersIds) > 0) {
-                    if (!empty($res))
+                    $res = self::getSkuPropValues($propId, $param['SKU_PROPS'][$propId], $offersIds);
+                }
+
+                if (count($offersIds) > 0) {
+                    if (!empty($res)) {
                         $result[$offerId][$propId] = $res;
+                    }
                 } else {
                     $result[$offerId][$propId] = $param['SKU_PROPS'][$propId];
                 }

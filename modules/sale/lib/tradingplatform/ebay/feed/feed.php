@@ -25,20 +25,25 @@ class Feed
 
     public function __construct($params)
     {
-        if (isset($params["TIMER"]) && $params["DATA_SOURCE"] instanceof Timer)
+        if (isset($params["TIMER"]) && $params["DATA_SOURCE"] instanceof Timer) {
             $this->timer = $params["TIMER"];
+        }
 
-        if (!isset($params["DATA_SOURCE"]) || (!($params["DATA_SOURCE"] instanceof Data\Sources\DataSource)))
+        if (!isset($params["DATA_SOURCE"]) || (!($params["DATA_SOURCE"] instanceof Data\Sources\DataSource))) {
             throw new ArgumentException("DATA_SOURCE must be instanceof DataSource!", "DATA_SOURCE");
+        }
 
-        if (!isset($params["DATA_CONVERTER"]) || (!($params["DATA_CONVERTER"] instanceof Data\Converters\DataConverter)))
+        if (!isset($params["DATA_CONVERTER"]) || (!($params["DATA_CONVERTER"] instanceof Data\Converters\DataConverter))) {
             throw new ArgumentException("DATA_CONVERTER must be instanceof DataConverter!", "DATA_CONVERTER");
+        }
 
-        if (!isset($params["DATA_PROCESSOR"]) || (!($params["DATA_PROCESSOR"] instanceof Data\Processors\DataProcessor)))
+        if (!isset($params["DATA_PROCESSOR"]) || (!($params["DATA_PROCESSOR"] instanceof Data\Processors\DataProcessor))) {
             throw new ArgumentException("DATA_PROCESSOR must be instanceof DataProcessor!", "DATA_PROCESSOR");
+        }
 
-        if (empty($params["SITE_ID"]))
+        if (empty($params["SITE_ID"])) {
             throw new ArgumentNullException("params[\"SITE_ID\"]");
+        }
 
         $this->sourceDataIterator = $params["DATA_SOURCE"];
         $this->dataConvertor = $params["DATA_CONVERTER"];
@@ -60,8 +65,9 @@ class Feed
             }
 
             if ($this->timer !== null && !$this->timer->check()) {
-                if (!empty($errorsMsgs))
+                if (!empty($errorsMsgs)) {
                     $_SESSION['SALE_EBAY_FEED_PROCESSDATA_ERRORS'] .= $errorsMsgs;
+                }
 
                 throw new TimeIsOverException("Timelimit is over", $position);
             }
@@ -72,8 +78,9 @@ class Feed
             unset($_SESSION['SALE_EBAY_FEED_PROCESSDATA_ERRORS']);
         }
 
-        if (!empty($errorsMsgs))
+        if (!empty($errorsMsgs)) {
             Ebay::log(Logger::LOG_LEVEL_ERROR, "EBAY_FEED_PROCESS_DATA_ERRORS", '', $errorsMsgs, $this->site);
+        }
     }
 
     public function setSourceData($data)

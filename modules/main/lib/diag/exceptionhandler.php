@@ -181,8 +181,9 @@ class ExceptionHandler
     {
         if ($this->handlerOutput === null) {
             $h = $this->handlerOutputCreator;
-            if (is_callable($h))
+            if (is_callable($h)) {
                 $this->handlerOutput = call_user_func_array($h, array());
+            }
         }
 
         return $this->handlerOutput;
@@ -197,8 +198,9 @@ class ExceptionHandler
     {
         if ($this->handlerLog === null) {
             $h = $this->handlerLogCreator;
-            if (is_callable($h))
+            if (is_callable($h)) {
                 $this->handlerLog = call_user_func_array($h, array());
+            }
         }
 
         return $this->handlerLog;
@@ -215,8 +217,9 @@ class ExceptionHandler
      */
     public function initialize($exceptionHandlerOutputCreator, $exceptionHandlerLogCreator = null)
     {
-        if ($this->isInitialized)
+        if ($this->isInitialized) {
             return;
+        }
 
         $this->initializeEnvironment();
 
@@ -235,7 +238,6 @@ class ExceptionHandler
             assert_options(ASSERT_ACTIVE, 1);
             assert_options(ASSERT_WARNING, 0);
             assert_options(ASSERT_BAIL, 0);
-            assert_options(ASSERT_QUIET_EVAL, 0);
             assert_options(ASSERT_CALLBACK, array($this, "handleAssertion"));
         } else {
             assert_options(ASSERT_ACTIVE, 0);
@@ -249,13 +251,14 @@ class ExceptionHandler
      *
      * @param \Exception|\Error $exception Exception object.
      *
+     * @param int $logType
      * @return void
      * @see \Bitrix\Main\Diag\ExceptionHandler::writeToLog
      * @see \Bitrix\Main\Diag\ExceptionHandler::initialize
      */
-    public function handleException($exception)
+    public function handleException($exception, $logType = ExceptionHandlerLog::UNCAUGHT_EXCEPTION)
     {
-        $this->writeToLog($exception, ExceptionHandlerLog::UNCAUGHT_EXCEPTION);
+        $this->writeToLog($exception, $logType);
         $out = $this->getHandlerOutput();
         $out->renderExceptionMessage($exception, $this->debug);
         die();
@@ -328,8 +331,14 @@ class ExceptionHandler
         if ($error = error_get_last()) {
             if (($error['type'] & (E_ERROR | E_USER_ERROR | E_PARSE | E_CORE_ERROR | E_COMPILE_ERROR | E_RECOVERABLE_ERROR))) {
                 if (($error['type'] & $this->handledErrorsTypes)) {
-                    $exception = new \ErrorException($error['message'], 0, $error['type'], $error['file'], $error['line']);
-                    $this->writeToLog($exception, ExceptionHandlerLog::FATAL);
+                    $exception = new \ErrorException(
+                        $error['message'],
+                        0,
+                        $error['type'],
+                        $error['file'],
+                        $error['line']
+                    );
+                    $this->handleException($exception, ExceptionHandlerLog::FATAL);
                 }
             }
         }
@@ -347,7 +356,8 @@ class ExceptionHandler
     public function writeToLog($exception, $logType = null)
     {
         $log = $this->getHandlerLog();
-        if ($log !== null)
+        if ($log !== null) {
             $log->write($exception, $logType);
+        }
     }
 }

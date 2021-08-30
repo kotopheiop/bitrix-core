@@ -11,8 +11,9 @@ use Bitrix\Main,
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 IncludeModuleLangFile(__FILE__);
 
-if (!Main\Loader::includeModule('catalog'))
+if (!Main\Loader::includeModule('catalog')) {
     die();
+}
 Main\Loader::includeModule('fileman');
 
 Main\Page\Asset::getInstance()->addJs('/bitrix/js/catalog/tbl_edit.js');
@@ -54,7 +55,9 @@ function __AddCellPriceType($intRangeID, $strPrefix)
     $dbCatalogGroups = CCatalogGroup::GetList(array("SORT" => "ASC", "NAME" => "ASC", "ID" => "ASC"));
     $priceTypeCellOption = '';
     while ($arCatalogGroup = $dbCatalogGroups->Fetch()) {
-        $priceTypeCellOption .= "<option value=" . $arCatalogGroup['ID'] . ">" . htmlspecialcharsbx($arCatalogGroup["NAME"]) . "</option>";
+        $priceTypeCellOption .= "<option value=" . $arCatalogGroup['ID'] . ">" . htmlspecialcharsbx(
+                $arCatalogGroup["NAME"]
+            ) . "</option>";
     }
 
     return <<<"PRICETYPECELL"
@@ -89,7 +92,14 @@ PRICECELL;
  */
 function __AddCellCurrency($intRangeID, $strPrefix)
 {
-    $currencySelectbox = CCurrency::SelectBox("{$strPrefix}CURRENCY[{$intRangeID}]", '', "", true, "", "class=\"adm-select\" style=\"width: 169px;\"");
+    $currencySelectbox = CCurrency::SelectBox(
+        "{$strPrefix}CURRENCY[{$intRangeID}]",
+        '',
+        "",
+        true,
+        "",
+        "class=\"adm-select\" style=\"width: 169px;\""
+    );
 
     return <<<"CURRENCYCELL"
 	<td width="30%">
@@ -105,7 +115,7 @@ function __showPopup($element_id, $items)
     echo
         '<script type="text/javascript">
 			var currentWindow = top.window;
-			if (top.BX.SidePanel.Instance && top.BX.SidePanel.Instance.getTopSlider())
+			if (top.BX.SidePanel && top.BX.SidePanel.Instance && top.BX.SidePanel.Instance.getTopSlider())
 			{
 				currentWindow = top.BX.SidePanel.Instance.getTopSlider().getWindow();
 			}
@@ -124,7 +134,10 @@ function __showPopup($element_id, $items)
  */
 function __AddRangeRow($intRangeID, $strPrefix)
 {
-    return '<tr id="' . $strPrefix . $intRangeID . '">' . __AddCellPriceType($intRangeID, $strPrefix) . __AddCellPrice($intRangeID, $strPrefix) . __AddCellCurrency($intRangeID, $strPrefix) . '</tr>';
+    return '<tr id="' . $strPrefix . $intRangeID . '">' . __AddCellPriceType($intRangeID, $strPrefix) . __AddCellPrice(
+            $intRangeID,
+            $strPrefix
+        ) . __AddCellCurrency($intRangeID, $strPrefix) . '</tr>';
 }
 
 /**
@@ -153,8 +166,9 @@ function arraysCombination(&$arr, $index = 0)
     } else {
         $results[] = $line;
     }
-    if ($index == 0)
+    if ($index == 0) {
         return $results;
+    }
     return array();
 }
 
@@ -164,7 +178,10 @@ $arAllProperties = $arAllParentProperties = array();
 $arFileProperties = array();
 $arFilePropertiesExt = array();
 $arDirProperties = array();
-$dbIBlockProperty = CIBlockProperty::GetList(array("SORT" => "ASC", "NAME" => "ASC"), array("IBLOCK_ID" => $subIBlockId, "ACTIVE" => 'Y'));
+$dbIBlockProperty = CIBlockProperty::GetList(
+    array("SORT" => "ASC", "NAME" => "ASC"),
+    array("IBLOCK_ID" => $subIBlockId, "ACTIVE" => 'Y')
+);
 while ($arIBlockProperty = $dbIBlockProperty->Fetch()) {
     $arIBlockProperty['ID'] = (int)$arIBlockProperty['ID'];
     $propertyType = $arIBlockProperty["PROPERTY_TYPE"];
@@ -172,15 +189,19 @@ while ($arIBlockProperty = $dbIBlockProperty->Fetch()) {
     $isMultiply = ($arIBlockProperty["MULTIPLE"] == 'Y');
     $arAllProperties[] = $arIBlockProperty;
 
-    if ('L' != $propertyType && 'F' != $propertyType && !('S' == $propertyType && 'directory' == $userType))
+    if ('L' != $propertyType && 'F' != $propertyType && !('S' == $propertyType && 'directory' == $userType)) {
         continue;
+    }
     if ('S' == $propertyType && 'directory' == $userType) {
-        if (!isset($arIBlockProperty['USER_TYPE_SETTINGS']['TABLE_NAME']) || empty($arIBlockProperty['USER_TYPE_SETTINGS']['TABLE_NAME']))
+        if (!isset($arIBlockProperty['USER_TYPE_SETTINGS']['TABLE_NAME']) || empty($arIBlockProperty['USER_TYPE_SETTINGS']['TABLE_NAME'])) {
             continue;
-        if (null === $boolHighLoad)
+        }
+        if (null === $boolHighLoad) {
             $boolHighLoad = CModule::IncludeModule('highloadblock');
-        if (!$boolHighLoad)
+        }
+        if (!$boolHighLoad) {
             continue;
+        }
     }
 
     if ('F' == $propertyType) {
@@ -188,7 +209,10 @@ while ($arIBlockProperty = $dbIBlockProperty->Fetch()) {
         $arFilePropertiesExt[$arIBlockProperty['ID']] = $arIBlockProperty;
     } elseif ('L' == $propertyType) {
         $arIBlockProperty['VALUE'] = array();
-        $dbIBlockPropertyEnum = CIBlockPropertyEnum::GetList(array("SORT" => "ASC"), array("PROPERTY_ID" => $arIBlockProperty["ID"]));
+        $dbIBlockPropertyEnum = CIBlockPropertyEnum::GetList(
+            array("SORT" => "ASC"),
+            array("PROPERTY_ID" => $arIBlockProperty["ID"])
+        );
         while ($arIBlockPropertyEnum = $dbIBlockPropertyEnum->Fetch()) {
             $arIBlockProperty['VALUE'][] = $arIBlockPropertyEnum;
         }
@@ -199,14 +223,17 @@ while ($arIBlockProperty = $dbIBlockProperty->Fetch()) {
         $arIBlockProperty['VALUE'] = array();
         $arConvert = array();
         if (isset($arIBlockProperty["USER_TYPE_SETTINGS"]["TABLE_NAME"]) && !empty($arIBlockProperty["USER_TYPE_SETTINGS"]["TABLE_NAME"])) {
-            $hlblock = HL\HighloadBlockTable::getList(array('filter' => array('=TABLE_NAME' => $arIBlockProperty['USER_TYPE_SETTINGS']['TABLE_NAME'])))->fetch();
+            $hlblock = HL\HighloadBlockTable::getList(
+                array('filter' => array('=TABLE_NAME' => $arIBlockProperty['USER_TYPE_SETTINGS']['TABLE_NAME']))
+            )->fetch();
             if (!empty($hlblock) && is_array($hlblock)) {
                 $entity = HL\HighloadBlockTable::compileEntity($hlblock);
                 $entity_data_class = $entity->getDataClass();
                 $fieldsList = $entity_data_class::getEntity()->getFields();
                 $order = array();
-                if (isset($fieldsList['UF_SORT']))
+                if (isset($fieldsList['UF_SORT'])) {
                     $order['UF_SORT'] = 'ASC';
+                }
                 $order['UF_NAME'] = 'ASC';
                 $order['ID'] = 'ASC';
                 $rsData = $entity_data_class::getList(array('order' => $order));
@@ -228,10 +255,14 @@ while ($arIBlockProperty = $dbIBlockProperty->Fetch()) {
     }
 }
 
-$dbParentIBlockProperty = CIBlockProperty::GetList(array("SORT" => "ASC", "NAME" => "ASC"), array("IBLOCK_ID" => $iBlockId, "ACTIVE" => 'Y'));
+$dbParentIBlockProperty = CIBlockProperty::GetList(
+    array("SORT" => "ASC", "NAME" => "ASC"),
+    array("IBLOCK_ID" => $iBlockId, "ACTIVE" => 'Y')
+);
 while ($arParentIBlockProperty = $dbParentIBlockProperty->Fetch()) {
-    if ($arParentIBlockProperty['PROPERTY_TYPE'] == 'L' || $arParentIBlockProperty['PROPERTY_TYPE'] == 'S')
+    if ($arParentIBlockProperty['PROPERTY_TYPE'] == 'L' || $arParentIBlockProperty['PROPERTY_TYPE'] == 'S') {
         $arAllParentProperties[] = $arParentIBlockProperty;
+    }
 }
 
 $errorMessage = '';
@@ -243,31 +274,39 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !$bReadOnly && check_bitrix_sessid()
         // this code for fill description
         if (!empty($arImageCombinationResult) && is_array($arImageCombinationResult)) {
             $fileDescription = array();
-            if (!empty($_POST['DESCRIPTION_PROP']) && is_array($_POST['DESCRIPTION_PROP']))
+            if (!empty($_POST['DESCRIPTION_PROP']) && is_array($_POST['DESCRIPTION_PROP'])) {
                 $fileDescription = $_POST['DESCRIPTION_PROP'];
-            elseif (!empty($_POST['PROP_descr']) && is_array($_POST['PROP_descr']))
+            } elseif (!empty($_POST['PROP_descr']) && is_array($_POST['PROP_descr'])) {
                 $fileDescription = $_POST['PROP_descr'];
+            }
             if (!empty($fileDescription)) {
                 foreach ($arImageCombinationResult as $fieldCode => $fieldValues) {
-                    if (empty($fieldValues) || !is_array($fieldValues))
+                    if (empty($fieldValues) || !is_array($fieldValues)) {
                         continue;
-                    if (empty($fileDescription[$fieldCode]))
+                    }
+                    if (empty($fileDescription[$fieldCode])) {
                         continue;
+                    }
                     foreach ($fieldValues as $valueCode => $valueData) {
-                        if (empty($valueData) || !is_array($valueData))
+                        if (empty($valueData) || !is_array($valueData)) {
                             continue;
-                        if (!isset($fileDescription[$fieldCode][$valueCode]))
+                        }
+                        if (!isset($fileDescription[$fieldCode][$valueCode])) {
                             continue;
+                        }
                         if (array_key_exists('tmp_name', $valueData)) {
                             $arImageCombinationResult[$fieldCode][$valueCode]['description'] = $fileDescription[$fieldCode][$valueCode];
                         } else {
                             foreach ($valueData as $valueIndex => $value) {
-                                if (empty($value) || !is_array($value))
+                                if (empty($value) || !is_array($value)) {
                                     continue;
-                                if (!isset($fileDescription[$fieldCode][$valueCode][$valueIndex]))
+                                }
+                                if (!isset($fileDescription[$fieldCode][$valueCode][$valueIndex])) {
                                     continue;
-                                if (!array_key_exists('tmp_name', $value))
+                                }
+                                if (!array_key_exists('tmp_name', $value)) {
                                     continue;
+                                }
                                 $arImageCombinationResult[$fieldCode][$valueCode][$valueIndex]['description'] = $fileDescription[$fieldCode][$valueCode][$valueIndex];
                             }
                             unset($valueIndex, $value);
@@ -294,28 +333,41 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !$bReadOnly && check_bitrix_sessid()
     $arCombinationResult = $arPropertyValue = $arPriceGroup = array();
     $idNewElement = false;
     $obIBlockElement = new CIBlockElement();
-    $arPropertyValues = (isset($_POST["PROPERTY_VALUE"]) && is_array($_POST["PROPERTY_VALUE"])) ? $_POST["PROPERTY_VALUE"] : array();
-    $arPropertyChecks = (isset($_POST["PROPERTY_CHECK"]) && is_array($_POST["PROPERTY_CHECK"])) ? $_POST["PROPERTY_CHECK"] : array();
+    $arPropertyValues = (isset($_POST["PROPERTY_VALUE"]) && is_array(
+            $_POST["PROPERTY_VALUE"]
+        )) ? $_POST["PROPERTY_VALUE"] : array();
+    $arPropertyChecks = (isset($_POST["PROPERTY_CHECK"]) && is_array(
+            $_POST["PROPERTY_CHECK"]
+        )) ? $_POST["PROPERTY_CHECK"] : array();
     $title = $_POST["IB_SEG_TITLE"];
-    if (trim($title) == '')
+    if (trim($title) == '') {
         $title = '{=this.property.CML2_LINK.NAME} ';
+    }
     if (is_array($_POST['IB_SEG_PRICETYPE'])) {
         foreach ($_POST['IB_SEG_PRICETYPE'] as $key => $priceTypeId) {
-            $arPriceGroup[$priceTypeId] = array("TYPE" => $_POST['IB_SEG_PRICETYPE'][$key], "PRICE" => $_POST['IB_SEG_PRICE'][$key], "CURRENCY" => $_POST['IB_SEG_CURRENCY'][$key]);
+            $arPriceGroup[$priceTypeId] = array(
+                "TYPE" => $_POST['IB_SEG_PRICETYPE'][$key],
+                "PRICE" => $_POST['IB_SEG_PRICE'][$key],
+                "CURRENCY" => $_POST['IB_SEG_CURRENCY'][$key]
+            );
         }
     }
     foreach ($arPropertyValues as $propertyId => $arValues) {
-        if (isset($arPropertyChecks[$propertyId]))
+        if (isset($arPropertyChecks[$propertyId])) {
             $arPropertyValue[$propertyId] = array_intersect_key($arValues, $arPropertyChecks[$propertyId]);
+        }
     }
     $arCombinationResult = arraysCombination($arPropertyValue);
 
     if ($_POST['AJAX_MODE'] == 'Y') {
         $APPLICATION->RestartBuffer();
-        foreach ($arPropertyValue as &$value)
-            foreach ($value as &$value2)
-                if (!defined("BX_UTF"))
+        foreach ($arPropertyValue as &$value) {
+            foreach ($value as &$value2) {
+                if (!defined("BX_UTF")) {
                     $value2 = CharsetConverter::ConvertCharset($value2, "utf-8", LANG_CHARSET);
+                }
+            }
+        }
 
         echo CUtil::PhpToJSObject(array($arPropertyValue));
         exit;
@@ -324,7 +376,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !$bReadOnly && check_bitrix_sessid()
 
     $arIBlockElement = $dbIBlockElement->Fetch();
 
-    if (strlen($_POST['save']) > 0) {
+    if ($_POST['save'] <> '') {
         $parentElementId = (0 < $subPropValue ? $subPropValue : -$subTmpId);
         $parentElement = new \Bitrix\Iblock\Template\Entity\Element($parentElementId);
         if ($parentElementId < 0) {
@@ -343,8 +395,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !$bReadOnly && check_bitrix_sessid()
             'VAT_INCLUDED' => $_POST['IB_SEG_VAT_INCLUDED'],
             'MEASURE' => $_POST['IB_SEG_MEASURE']
         );
-        if (!$useStoreControl)
+        if (!$useStoreControl) {
             $productData['QUANTITY'] = $_POST['IB_SEG_QUANTITY'];
+        }
         if ($USER->CanDoOperation('catalog_purchas_info') && !$useStoreControl) {
             if (!empty($_POST['IB_SEG_PURCHASING_CURRENCY']) && $_POST['IB_SEG_PURCHASING_PRICE'] !== '') {
                 $productData['PURCHASING_PRICE'] = $_POST['IB_SEG_PURCHASING_PRICE'];
@@ -373,11 +426,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !$bReadOnly && check_bitrix_sessid()
 
             if (!empty($arPropertyPopup) && is_array($arPropertyPopup)) {
                 foreach ($arPropertyPopup as $action => $acValue) {
-                    if ($action != 'CODE')
+                    if ($action != 'CODE') {
                         continue;
+                    }
                     foreach ($arAllProperties as $key => $value) {
-                        if ($value["CODE"] != $acValue["CODE"])
+                        if ($value["CODE"] != $acValue["CODE"]) {
                             continue;
+                        }
                         $arReplace['#' . $acValue["CODE"] . '#'] = $arPropertySaveValues[$arAllProperties[$key]['ID']];
                     }
                     unset($key, $value);
@@ -386,8 +441,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !$bReadOnly && check_bitrix_sessid()
             }
 
             $arIBlockElementAdd = array("NAME" => null, "IBLOCK_ID" => $subIBlockId, "ACTIVE" => "Y");
-            if (0 >= $subPropValue)
+            if (0 >= $subPropValue) {
                 $arIBlockElementAdd['TMP_ID'] = $subTmpId;
+            }
 
             if (is_array($arImageCombinationResult) && $imageRowId !== null) {
                 foreach ($arImageCombinationResult as $propertyId => $arImageType) {
@@ -415,26 +471,30 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !$bReadOnly && check_bitrix_sessid()
             }
             if ($imageRowId !== null) {
                 foreach ($arPropertyValueCombinationResult[$imageRowId] as $srcKey => $srcValue) {
-                    if ($srcValue == '-1')
+                    if ($srcValue == '-1') {
                         continue;
-                    if (!isset($arFilePropertiesExt[$srcKey]) && $srcKey != 'DETAIL' && $srcKey != 'ANNOUNCE')
+                    }
+                    if (!isset($arFilePropertiesExt[$srcKey]) && $srcKey != 'DETAIL' && $srcKey != 'ANNOUNCE') {
                         continue;
+                    }
                     switch ($srcKey) {
                         case 'ANNOUNCE':
                             $arIBlockElementAdd['PREVIEW_PICTURE'] = CIBlock::makeFileArray(
                                 $srcValue,
                                 false
                             );
-                            if ($arIBlockElementAdd['PREVIEW_PICTURE']['error'] == 0)
+                            if ($arIBlockElementAdd['PREVIEW_PICTURE']['error'] == 0) {
                                 $arIBlockElementAdd['PREVIEW_PICTURE']['COPY_FILE'] = 'Y';
+                            }
                             break;
                         case 'DETAIL':
                             $arIBlockElementAdd['DETAIL_PICTURE'] = CIBlock::makeFileArray(
                                 $srcValue,
                                 false
                             );
-                            if ($arIBlockElementAdd['DETAIL_PICTURE']['error'] == 0)
+                            if ($arIBlockElementAdd['DETAIL_PICTURE']['error'] == 0) {
                                 $arIBlockElementAdd['DETAIL_PICTURE']['COPY_FILE'] = 'Y';
+                            }
                             break;
                         default:
                             if (is_array($srcValue)) {
@@ -466,13 +526,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !$bReadOnly && check_bitrix_sessid()
             if ($idNewElement) {
                 $productData['ID'] = $idNewElement;
                 CCatalogProduct::Add($productData, false);
-                foreach ($arPriceGroup as $price)
-                    CPrice::Add(array("PRODUCT_ID" => $idNewElement, "CURRENCY" => $price["CURRENCY"], "PRICE" => $price["PRICE"], "CATALOG_GROUP_ID" => $price["TYPE"]));
+                foreach ($arPriceGroup as $price) {
+                    CPrice::Add(
+                        array(
+                            "PRODUCT_ID" => $idNewElement,
+                            "CURRENCY" => $price["CURRENCY"],
+                            "PRICE" => $price["PRICE"],
+                            "CATALOG_GROUP_ID" => $price["TYPE"]
+                        )
+                    );
+                }
                 $element = new \Bitrix\Iblock\InheritedProperty\ElementValues($subIBlockId, $idNewElement);
                 $template = new \Bitrix\Iblock\InheritedProperty\BaseTemplate($element);
-                $template->set(array(
-                    "MY_TEMPLATE" => $title,
-                ));
+                $template->set(
+                    array(
+                        "MY_TEMPLATE" => $title,
+                    )
+                );
                 CCatalogMeasureRatio::add(array('PRODUCT_ID' => $idNewElement, 'RATIO' => 1, 'IS_DEFAULT' => 'Y'));
             } else {
                 $errorMessage .= $obIBlockElement->LAST_ERROR;
@@ -485,7 +555,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !$bReadOnly && check_bitrix_sessid()
             ?>
             <script type="text/javascript">
                 var currentWindow = top.window;
-                if (top.BX.SidePanel.Instance && top.BX.SidePanel.Instance.getTopSlider()) {
+                if (top.BX.SidePanel && top.BX.SidePanel.Instance && top.BX.SidePanel.Instance.getTopSlider()) {
                     currentWindow = top.BX.SidePanel.Instance.getTopSlider().getWindow();
                 }
                 currentWindow.BX.closeWait();
@@ -514,8 +584,9 @@ foreach ($arResult as $key => $property) {
         "ONCLICK" => "obPropertyTable.addPropertyTable('" . $key . "')",
     );
 }
-if (count($arPropertyPopup) > 0)
+if (count($arPropertyPopup) > 0) {
     __showPopup("mnu_ADD_PROPERTY", $arPropertyPopup);
+}
 
 $arPropertyPopupIB1 = array();
 foreach ($arResult as $key => $property) {
@@ -525,14 +596,17 @@ foreach ($arResult as $key => $property) {
         "CODE" => $property["CODE"],
     );
 }
-if (!empty($arPropertyPopupIB1))
+if (!empty($arPropertyPopupIB1)) {
     __showPopup("IB_SEG_ADD_PROP_IN_TITLE", $arPropertyPopupIB1);
+}
 
-$arPropertyPopupIB2 = array("NAME" => array(
-    "TEXT" => GetMessage("IB_SEG_TITLE"),
-    "ONCLICK" => "obPropertyTable.addPropertyInTitle('{=this.property.CML2_LINK.NAME}')",
-    "CODE" => 'NAME',
-));
+$arPropertyPopupIB2 = array(
+    "NAME" => array(
+        "TEXT" => GetMessage("IB_SEG_TITLE"),
+        "ONCLICK" => "obPropertyTable.addPropertyInTitle('{=this.property.CML2_LINK.NAME}')",
+        "CODE" => 'NAME',
+    )
+);
 foreach ($arAllParentProperties as $key => $property) {
     $arPropertyPopupIB2[$property["CODE"]] = array(
         "TEXT" => $property["NAME"],
@@ -540,8 +614,9 @@ foreach ($arAllParentProperties as $key => $property) {
         "CODE" => $property["CODE"],
     );
 }
-if (!empty($arPropertyPopupIB2))
+if (!empty($arPropertyPopupIB2)) {
     __showPopup("IB_SEG_ADD_PROP_IN_TITLE2", $arPropertyPopupIB2);
+}
 
 if ($errorMessage) {
     CAdminMessage::ShowMessage($errorMessage);
@@ -703,7 +778,9 @@ if ($errorMessage) {
                                 </td>
                             </tr>
                             <tr>
-                                <td class="adm-detail-content-cell-l"><?= GetMessage((!$useStoreControl ? 'IB_SEG_QUANTITY' : 'IB_SEG_MEASURE')); ?></td>
+                                <td class="adm-detail-content-cell-l"><?= GetMessage(
+                                        (!$useStoreControl ? 'IB_SEG_QUANTITY' : 'IB_SEG_MEASURE')
+                                    ); ?></td>
                                 <td class="adm-detail-content-cell-r"><?
                                     if (!$useStoreControl) {
                                         ?><input type="text" style="width: 120px; margin-right: 10px" class="adm-input"
@@ -713,7 +790,11 @@ if ($errorMessage) {
                                     ?> <span class="adm-select-wrap" style="vertical-align: middle !important;"><select
                                                 name="IB_SEG_MEASURE" class="adm-select" style="width: 169px;"><?
                                             $measureIterator = CCatalogMeasure::getList(
-                                                array(), array(), false, false, array("ID", "CODE", "MEASURE_TITLE", "SYMBOL_INTL", "IS_DEFAULT")
+                                                array(),
+                                                array(),
+                                                false,
+                                                false,
+                                                array("ID", "CODE", "MEASURE_TITLE", "SYMBOL_INTL", "IS_DEFAULT")
                                             );
                                             while ($measure = $measureIterator->Fetch()) {
                                                 ?>
@@ -729,7 +810,13 @@ if ($errorMessage) {
 				<span class="adm-select-wrap" style="vertical-align: middle !important;">
 				<?
                 $arVATRef = CatalogGetVATArray(array(), true);
-                echo SelectBoxFromArray('IB_SEG_VAT_ID', $arVATRef, '', "", ($bReadOnly ? "disabled readonly" : '') . 'class="adm-select" style="width: 169px;"');
+                echo SelectBoxFromArray(
+                    'IB_SEG_VAT_ID',
+                    $arVATRef,
+                    '',
+                    "",
+                    ($bReadOnly ? "disabled readonly" : '') . 'class="adm-select" style="width: 169px;"'
+                );
                 ?>
 				</span>
                                 </td>
@@ -739,7 +826,10 @@ if ($errorMessage) {
                                 <td class="adm-detail-content-cell-r">
                                     <input type="hidden" name="IB_SEG_VAT_INCLUDED" id="IB_SEG_VAT_INCLUDED_N"
                                            value="N"><?
-                                    $vatInclude = ((string)Main\Config\Option::get('catalog', 'default_product_vat_included') == 'Y');
+                                    $vatInclude = ((string)Main\Config\Option::get(
+                                            'catalog',
+                                            'default_product_vat_included'
+                                        ) == 'Y');
                                     ?><input class="adm-designed-checkbox" type="checkbox" name="IB_SEG_VAT_INCLUDED"
                                              id="IB_SEG_VAT_INCLUDED" value="Y"<?= ($vatInclude ? ' checked' : ''); ?>>
                                     <label class="adm-designed-checkbox-label" for="IB_SEG_VAT_INCLUDED"></label>
@@ -750,7 +840,9 @@ if ($errorMessage) {
                                 $baseCurrency = Currency\CurrencyManager::getBaseCurrency();
                                 ?>
                                 <tr>
-                                    <td class="adm-detail-content-cell-l"><? echo GetMessage("IB_SEG_PURCHASING_PRICE") ?></td>
+                                    <td class="adm-detail-content-cell-l"><? echo GetMessage(
+                                            "IB_SEG_PURCHASING_PRICE"
+                                        ) ?></td>
                                     <td class="adm-detail-content-cell-r">
                                         <input type="text" name="IB_SEG_PURCHASING_PRICE" value="">
                                         <span class="adm-select-wrap" style="vertical-align: middle !important;"><select
@@ -760,7 +852,9 @@ if ($errorMessage) {
 				<?
                 foreach (Currency\CurrencyManager::getCurrencyList() as $id => $title) {
                     ?>
-                    <option value="<?= $id; ?>"<?= ($id == $baseCurrency ? ' selected' : ''); ?>><?= htmlspecialcharsbx($title); ?></option><?
+                    <option value="<?= $id; ?>"<?= ($id == $baseCurrency ? ' selected' : ''); ?>><?= htmlspecialcharsbx(
+                        $title
+                    ); ?></option><?
                 }
                 unset($id, $title);
                 ?>
@@ -787,7 +881,9 @@ if ($errorMessage) {
                                         </tbody>
                                     </table>
                                     <span class="adm-btn adm-btn-add" style="margin-top: 12px;"
-                                          onclick="obPricesTable.addRow();"><?= GetMessage("IB_SEG_PRICE_ROW_ADD") ?></span>
+                                          onclick="obPricesTable.addRow();"><?= GetMessage(
+                                            "IB_SEG_PRICE_ROW_ADD"
+                                        ) ?></span>
                                     <input type="hidden" value="1" id="generator_price_table_max_id">
                                 </td>
                             </tr>
@@ -799,12 +895,14 @@ if ($errorMessage) {
         <tr>
             <td colspan="2" class="adm-detail-content-cell" style="padding-bottom: 0;">
                 <div class="adm-shop-toolbar">
-                    <span class="adm-btn adm-btn-add"
-                          id="mnu_ADD_PROPERTY"><?= GetMessage("IB_SEG_PROPERTY_ADD") ?></span><span
-                            class="adm-btn adm-btn-download" id="mnu_ADD_ALL_PROPERTY"
-                            onclick="obPropertyTable.loadAllProperties()"><?= GetMessage("IB_SEG_PROPERTY_ADD_ALL") ?></span><a
-                            class="adm-input-help-icon"
-                            onmouseover="BX.hint(this, '<?= GetMessage('IB_SEG_TOOLTIP_PROPERTIES') ?>')" href="#"></a>
+                    <span class="adm-btn adm-btn-add" id="mnu_ADD_PROPERTY"><?= GetMessage(
+                            "IB_SEG_PROPERTY_ADD"
+                        ) ?></span><span class="adm-btn adm-btn-download" id="mnu_ADD_ALL_PROPERTY"
+                                         onclick="obPropertyTable.loadAllProperties()"><?= GetMessage(
+                            "IB_SEG_PROPERTY_ADD_ALL"
+                        ) ?></span><a class="adm-input-help-icon"
+                                      onmouseover="BX.hint(this, '<?= GetMessage('IB_SEG_TOOLTIP_PROPERTIES') ?>')"
+                                      href="#"></a>
                 </div>
             </td>
         </tr>
@@ -835,8 +933,15 @@ if ($errorMessage) {
                         <div class="adm-shop-select-bar" id="ib_seg_select_prop_bar">
                             <input type="hidden" value="0" id="ib_seg_max_property_id">
                             <input type="hidden" value="0" id="ib_seg_max_image_row_id">
-                            <? $arFileProperties[] = array("ID" => "DETAIL", "NAME" => GetMessage("IB_SEG_DETAIL"), "SELECTED" => 'Y'); ?>
-                            <? $arFileProperties[] = array("ID" => "ANNOUNCE", "NAME" => GetMessage("IB_SEG_ANNOUNCE")); ?>
+                            <? $arFileProperties[] = array(
+                                "ID" => "DETAIL",
+                                "NAME" => GetMessage("IB_SEG_DETAIL"),
+                                "SELECTED" => 'Y'
+                            ); ?>
+                            <? $arFileProperties[] = array(
+                                "ID" => "ANNOUNCE",
+                                "NAME" => GetMessage("IB_SEG_ANNOUNCE")
+                            ); ?>
                             <span class="adm-btn" onclick="obPropertyTable.addPropertyImages();"
                                   id="ib_seg_add_images_button"><?= GetMessage("IB_SEG_ADD_PICTURES") ?></span>
                             <span class="adm-shop-bar-btn-wrap" id="ib_seg_property_span">

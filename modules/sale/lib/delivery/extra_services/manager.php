@@ -43,26 +43,35 @@ class Manager
         if (!is_array($initParam)) // deliveryId
         {
             if (intval($initParam) <= 0) //new delivery service
+            {
                 return;
+            }
 
             $itemsParams = self::getExtraServicesList($initParam);
-
         } else // params array.
         {
             $itemsParams = $initParam;
         }
 
-        if (empty($itemsParams))
+        if (empty($itemsParams)) {
             return;
+        }
 
-        if (!empty($this->items))
+        if (!empty($this->items)) {
             sortByColumn($itemsParams, array("SORT" => SORT_ASC, "NAME" => SORT_ASC), '', null, true);
+        }
 
         foreach ($itemsParams as $params) {
-            if ($currency === "" && !empty($params["CURRENCY"]))
+            if ($currency === "" && !empty($params["CURRENCY"])) {
                 $currency = $params["CURRENCY"];
+            }
 
-            $this->addItem($params, $currency, isset($values[$params["ID"]]) ? $values[$params["ID"]] : null, $additionalParams);
+            $this->addItem(
+                $params,
+                $currency,
+                isset($values[$params["ID"]]) ? $values[$params["ID"]] : null,
+                $additionalParams
+            );
         }
     }
 
@@ -71,8 +80,9 @@ class Manager
      */
     public static function getClassesList()
     {
-        if (static::$classes === null)
+        if (static::$classes === null) {
             self::initClassesList();
+        }
 
         return static::$classes;
     }
@@ -84,8 +94,9 @@ class Manager
      */
     public static function initClassesList()
     {
-        if (static::$classes !== null)
+        if (static::$classes !== null) {
             return true;
+        }
 
         $classes = array(
             '\Bitrix\Sale\Delivery\ExtraServices\Enum' => 'lib/delivery/extra_services/enum.php',
@@ -106,13 +117,15 @@ class Manager
 
             foreach ($resultList as $eventResult) {
                 /** @var  EventResult $eventResult */
-                if ($eventResult->getType() != EventResult::SUCCESS)
+                if ($eventResult->getType() != EventResult::SUCCESS) {
                     continue;
+                }
 
                 $params = $eventResult->getParameters();
 
-                if (!empty($params) && is_array($params))
+                if (!empty($params) && is_array($params)) {
                     $customClasses = array_merge($customClasses, $params);
+                }
             }
 
             if (!empty($customClasses)) {
@@ -149,9 +162,11 @@ class Manager
      */
     public function getItemByCode($code)
     {
-        foreach ($this->items as $item)
-            if ($item->getCode() == $code)
+        foreach ($this->items as $item) {
+            if ($item->getCode() == $code) {
                 return $item;
+            }
+        }
 
         return null;
     }
@@ -164,8 +179,9 @@ class Manager
     {
         $result = 0;
 
-        foreach ($this->items as $itemId => $item)
+        foreach ($this->items as $itemId => $item) {
             $result += $item->getCostShipment($shipment);
+        }
 
         return $result;
     }
@@ -184,17 +200,21 @@ class Manager
                 (isset($params["RIGHTS"][self::RIGHTS_CLIENT_IDX]) ? $params["RIGHTS"][self::RIGHTS_CLIENT_IDX] : "Y");
         }
 
-        if (!isset($params["CLASS_NAME"]) || strlen($params["CLASS_NAME"]) <= 0 || !class_exists($params["CLASS_NAME"]))
+        if (!isset($params["CLASS_NAME"]) || $params["CLASS_NAME"] == '' || !class_exists($params["CLASS_NAME"])) {
             return $params;
+        }
 
-        if (!isset($params["ACTIVE"]))
+        if (!isset($params["ACTIVE"])) {
             $params["ACTIVE"] = "Y";
+        }
 
-        if (isset($params["CLASS_NAME_DISABLED"]))
+        if (isset($params["CLASS_NAME_DISABLED"])) {
             unset($params["CLASS_NAME_DISABLED"]);
+        }
 
-        if (is_callable($params["CLASS_NAME"] . "::prepareParamsToSave"))
+        if (is_callable($params["CLASS_NAME"] . "::prepareParamsToSave")) {
             $params = $params["CLASS_NAME"]::prepareParamsToSave($params);
+        }
 
         return $params;
     }
@@ -209,11 +229,13 @@ class Manager
      */
     public static function getAdminParamsControl($className, $name, array $params)
     {
-        if (strlen($className) <= 0)
+        if ($className == '') {
             throw new ArgumentNullException("className");
+        }
 
-        if (!is_callable($className . '::getAdminParamsControl'))
+        if (!is_callable($className . '::getAdminParamsControl')) {
             throw new SystemException('"' . $className . '::getAdminParamsControl" does not exist!');
+        }
 
         return $className::getAdminParamsControl($name, $params);
     }
@@ -229,22 +251,26 @@ class Manager
      */
     public function addItem($params, $currency, $value = null, array $additionalParams = array())
     {
-        if (strlen($params["CLASS_NAME"]) <= 0)
+        if ($params["CLASS_NAME"] === '') {
             return false;
+        }
 
-        if (!isset($params["CLASS_NAME"]))
+        if (!isset($params["CLASS_NAME"])) {
             throw new ArgumentNullException("params[\"CLASS_NAME\"]");
+        }
 
-        if (!class_exists($params["CLASS_NAME"]))
+        if (!class_exists($params["CLASS_NAME"])) {
             return false;
+        }
+
+        if (!is_subclass_of($params["CLASS_NAME"], Base::class)) {
+            throw new \Bitrix\Main\SystemException(
+                'Class "' . $params["CLASS_NAME"] . '" is not a subclass of the \Bitrix\Sale\Delivery\ExtraServices\Base'
+            );
+        }
 
         $item = new $params["CLASS_NAME"]($params["ID"], $params, $currency, $value, $additionalParams);
-
-        if (!($item instanceof Base))
-            throw new SystemException("Class " . $params["CLASS_NAME"] . ' must extends \Bitrix\Sale\Delivery\ExtraServices\Base');
-
         $this->items[$params["ID"]] = $item;
-
         return $params["ID"];
     }
 
@@ -256,8 +282,9 @@ class Manager
         foreach ($values as $eSrvId => $value) {
             $item = $this->getItem($eSrvId);
 
-            if ($item)
+            if ($item) {
                 $item->setValue($value);
+            }
         }
     }
 
@@ -267,8 +294,9 @@ class Manager
 
     public function setOperationCurrency($currency)
     {
-        foreach ($this->items as $itemId => $item)
+        foreach ($this->items as $itemId => $item) {
             $item->setOperatingCurrency($currency);
+        }
     }
 
     /**
@@ -281,15 +309,18 @@ class Manager
         $result = array();
 
         if (intval($shipmentId) > 0 && intval($deliveryId) > 0) {
-            $dbRes = ShipmentExtraServiceTable::getList(array(
-                'filter' => array(
-                    '=SHIPMENT_ID' => $shipmentId,
-                    '!=ID' => self::getStoresValueId($deliveryId)
+            $dbRes = ShipmentExtraServiceTable::getList(
+                array(
+                    'filter' => array(
+                        '=SHIPMENT_ID' => $shipmentId,
+                        '!=ID' => self::getStoresValueId($deliveryId)
+                    )
                 )
-            ));
+            );
 
-            while ($row = $dbRes->fetch())
+            while ($row = $dbRes->fetch()) {
                 $result[$row["EXTRA_SERVICE_ID"]] = $row["VALUE"];
+            }
         }
 
         return $result;
@@ -307,47 +338,111 @@ class Manager
     {
         $result = new Result();
 
-        if (intval($shipmentId) <= 0)
+        if (intval($shipmentId) <= 0) {
             throw new ArgumentNullException("shipmentId");
+        }
 
         $exist = array();
 
-        $dbRes = ShipmentExtraServiceTable::getList(array(
-            'filter' => array(
-                '=SHIPMENT_ID' => $shipmentId
+        $dbRes = ShipmentExtraServiceTable::getList(
+            array(
+                'filter' => array(
+                    '=SHIPMENT_ID' => $shipmentId
+                )
             )
-        ));
+        );
 
-        while ($row = $dbRes->fetch())
+        while ($row = $dbRes->fetch()) {
             $exist[$row["EXTRA_SERVICE_ID"]] = $row["ID"];
+        }
 
         if (is_array($extraServices)) {
             foreach ($extraServices as $extraServiceId => $value) {
                 if (array_key_exists($extraServiceId, $exist)) {
                     $res = ShipmentExtraServiceTable::update($exist[$extraServiceId], array("VALUE" => $value));
                 } else {
-                    $res = ShipmentExtraServiceTable::add(array(
-                        "EXTRA_SERVICE_ID" => $extraServiceId,
-                        "SHIPMENT_ID" => $shipmentId,
-                        "VALUE" => $value
-                    ));
+                    $res = ShipmentExtraServiceTable::add(
+                        array(
+                            "EXTRA_SERVICE_ID" => $extraServiceId,
+                            "SHIPMENT_ID" => $shipmentId,
+                            "VALUE" => $value
+                        )
+                    );
                 }
 
-                if ($res->isSuccess())
+                if ($res->isSuccess()) {
                     unset($exist[$extraServiceId]);
-                else
-                    foreach ($res->getErrors() as $error)
+                } else {
+                    foreach ($res->getErrors() as $error) {
                         $result->addError($error);
-
+                    }
+                }
             }
         }
 
         foreach ($exist as $extraServiceId => $value) {
             $res = ShipmentExtraServiceTable::delete($extraServiceId);
 
-            if (!$res->isSuccess())
-                foreach ($res->getErrors() as $error)
+            if (!$res->isSuccess()) {
+                foreach ($res->getErrors() as $error) {
                     $result->addError($error);
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param int $shipmentId
+     * @param int $deliveryId
+     * @param string $currency
+     * @return Base[]
+     * @throws SystemException
+     */
+    public static function getObjectsForShipment(int $shipmentId, int $deliveryId, string $currency): array
+    {
+        $result = [];
+
+        $extraServiceValuesList = ShipmentExtraServiceTable::getList(
+            [
+                'filter' => [
+                    '=SHIPMENT_ID' => $shipmentId,
+                    '!=ID' => self::getStoresValueId($deliveryId)
+                ],
+                'select' => [
+                    '*',
+                    'EXTRA_SERVICE',
+                ]
+            ]
+        );
+
+        while ($extraServiceValue = $extraServiceValuesList->fetchObject()) {
+            $extraService = $extraServiceValue->getExtraService();
+
+            $className = $extraService->getClassName();
+
+            /** @var Base $extraServiceValue */
+            $extraServiceInstance = new $className(
+                $extraService->getId(),
+                [
+                    'NAME' => $extraService->getName(),
+                    'PARAMS' => $extraService->getParams()
+                ],
+                $currency,
+                $extraServiceValue->getValue()
+            );
+
+            if (!$extraServiceInstance instanceof Base) {
+                throw new SystemException(
+                    sprintf(
+                        'Object is not of expected type: %s',
+                        Base::class
+                    )
+                );
+            }
+
+            $result[$extraServiceValue['EXTRA_SERVICE_ID']] = $extraServiceInstance;
         }
 
         return $result;
@@ -366,15 +461,18 @@ class Manager
             $storeFields = self::getStoresFields($deliveryId);
 
             if (!empty($storeFields)) {
-                $dbRes = ShipmentExtraServiceTable::getList(array(
-                    'filter' => array(
-                        '=SHIPMENT_ID' => $shipmentId,
-                        '=EXTRA_SERVICE_ID' => $storeFields['ID']
+                $dbRes = ShipmentExtraServiceTable::getList(
+                    array(
+                        'filter' => array(
+                            '=SHIPMENT_ID' => $shipmentId,
+                            '=EXTRA_SERVICE_ID' => $storeFields['ID']
+                        )
                     )
-                ));
+                );
 
-                if ($row = $dbRes->fetch())
+                if ($row = $dbRes->fetch()) {
                     $result = $row["VALUE"];
+                }
             }
         }
 
@@ -392,42 +490,51 @@ class Manager
      */
     public static function saveStoreIdForShipment($shipmentId, $deliveryId, $storeId)
     {
-        if (intval($shipmentId) <= 0)
+        if (intval($shipmentId) <= 0) {
             throw new ArgumentNullException("shipmentId");
+        }
 
         $result = new Result();
 
-        if (intval($deliveryId) <= 0)
+        if (intval($deliveryId) <= 0) {
             return $result;
+        }
 
         $storeFields = self::getStoresFields($deliveryId, false);
 
         if (isset($storeFields['ID'])) {
-            $dbRes = ShipmentExtraServiceTable::getList(array(
-                'filter' => array(
-                    '=SHIPMENT_ID' => $shipmentId,
-                    '=EXTRA_SERVICE_ID' => $storeFields['ID']
+            $dbRes = ShipmentExtraServiceTable::getList(
+                array(
+                    'filter' => array(
+                        '=SHIPMENT_ID' => $shipmentId,
+                        '=EXTRA_SERVICE_ID' => $storeFields['ID']
+                    )
                 )
-            ));
+            );
 
             $storeRowId = 0;
 
-            if ($row = $dbRes->fetch())
+            if ($row = $dbRes->fetch()) {
                 $storeRowId = $row["ID"];
+            }
 
             if ($storeRowId > 0) {
                 $res = ShipmentExtraServiceTable::update($storeRowId, array("VALUE" => $storeId));
             } else {
-                $res = ShipmentExtraServiceTable::add(array(
-                    "EXTRA_SERVICE_ID" => $storeFields['ID'],
-                    "SHIPMENT_ID" => $shipmentId,
-                    "VALUE" => $storeId
-                ));
+                $res = ShipmentExtraServiceTable::add(
+                    array(
+                        "EXTRA_SERVICE_ID" => $storeFields['ID'],
+                        "SHIPMENT_ID" => $shipmentId,
+                        "VALUE" => $storeId
+                    )
+                );
             }
 
-            if (!$res->isSuccess())
-                foreach ($res->getErrors() as $error)
+            if (!$res->isSuccess()) {
+                foreach ($res->getErrors() as $error) {
                     $result->addError($error);
+                }
+            }
         }
 
         return $result;
@@ -441,10 +548,11 @@ class Manager
     {
         $fields = self::getStoresFields($deliveryId);
 
-        if (isset($fields["ID"]))
+        if (isset($fields["ID"])) {
             $result = $fields["ID"];
-        else
+        } else {
             $result = 0;
+        }
 
         return $result;
     }
@@ -456,13 +564,15 @@ class Manager
      */
     public static function getStoresFields($deliveryId, $onlyActive = true)
     {
-        if (intval($deliveryId) <= 0)
+        if (intval($deliveryId) <= 0) {
             return array();
+        }
 
         $result = self::getExtraServicesList($deliveryId, true);
 
-        if ($onlyActive && $result['ACTIVE'] != 'Y')
+        if ($onlyActive && $result['ACTIVE'] != 'Y') {
             return array();
+        }
 
         return $result;
     }
@@ -486,13 +596,15 @@ class Manager
     {
         $storesFields = self::getStoresFields($deliveryId, false);
 
-        if (empty($storesFields['ID']))
+        if (empty($storesFields['ID'])) {
             return new Result();
+        }
 
         $result = Table::delete($storesFields['ID']);
 
-        if ($result->isSuccess())
+        if ($result->isSuccess()) {
             unset(static::$cachedFields[$deliveryId][$storesFields['ID']]);
+        }
 
         return $result;
     }
@@ -504,13 +616,15 @@ class Manager
      */
     public static function setStoresUnActive($deliveryId)
     {
-        if (intval($deliveryId) <= 0)
+        if (intval($deliveryId) <= 0) {
             return new Result();
+        }
 
         $storesFields = self::getStoresFields($deliveryId);
 
-        if (empty($storesFields['ID']))
+        if (empty($storesFields['ID'])) {
             return new Result();
+        }
 
         $result = Table::update(
             $storesFields['ID'],
@@ -519,8 +633,9 @@ class Manager
             )
         );
 
-        if ($result->isSuccess())
+        if ($result->isSuccess()) {
             static::$cachedFields[$deliveryId][$storesFields['ID']]["ACTIVE"] = "N";
+        }
 
         return $result;
     }
@@ -563,8 +678,9 @@ class Manager
             );
         }
 
-        if (!$res->isSuccess())
+        if (!$res->isSuccess()) {
             $result->addErrors($res->getErrors());
+        }
 
         return $result;
     }
@@ -577,8 +693,9 @@ class Manager
      */
     public static function getExtraServicesList($deliveryId, $stores = false)
     {
-        if (intval($deliveryId) <= 0)
+        if (intval($deliveryId) <= 0) {
             return array();
+        }
 
         if (!isset(static::$cachedFields[$deliveryId])) {
             $srv = Services\Manager::getById($deliveryId);
@@ -595,14 +712,16 @@ class Manager
 
         foreach (static::$cachedFields[$deliveryId] as $id => $es) {
             if ($es['CLASS_NAME'] == self::STORE_PICKUP_CLASS) {
-                if ($stores)
+                if ($stores) {
                     return $es;
+                }
 
                 continue;
             }
 
-            if (!$stores)
+            if (!$stores) {
                 $result[$id] = $es;
+            }
         }
 
         return $result;
@@ -616,44 +735,51 @@ class Manager
      */
     public static function prepareData(array $servicesIds)
     {
-        if (empty($servicesIds))
+        if (empty($servicesIds)) {
             return;
+        }
 
         foreach ($servicesIds as $id) {
             $srv = Services\Manager::getById($id);
 
-            if (!empty($srv['PARENT_ID']) && !in_array($id, $servicesIds))
+            if (!empty($srv['PARENT_ID']) && !in_array($id, $servicesIds)) {
                 $servicesIds[] = $id;
+            }
         }
 
         $ids = array_diff($servicesIds, array_keys(static::$cachedFields));
 
-        $dbRes = Table::getList(array(
-            'filter' => array(
-                '=DELIVERY_ID' => $ids,
-                array(
-                    "LOGIC" => "OR",
-                    "=ACTIVE" => "Y",
-                    "=CLASS_NAME" => self::STORE_PICKUP_CLASS
-                )
-            ),
-            "order" => array(
-                "SORT" => "ASC",
-                "NAME" => "ASC"
-            ),
-            "select" => array("*", "CURRENCY" => "DELIVERY_SERVICE.CURRENCY")
-        ));
+        $dbRes = Table::getList(
+            array(
+                'filter' => array(
+                    '=DELIVERY_ID' => $ids,
+                    array(
+                        "LOGIC" => "OR",
+                        "=ACTIVE" => "Y",
+                        "=CLASS_NAME" => self::STORE_PICKUP_CLASS
+                    )
+                ),
+                "order" => array(
+                    "SORT" => "ASC",
+                    "NAME" => "ASC"
+                ),
+                "select" => array("*", "CURRENCY" => "DELIVERY_SERVICE.CURRENCY")
+            )
+        );
 
         while ($es = $dbRes->fetch()) {
-            if (!isset(static::$cachedFields[$es['DELIVERY_ID']]))
+            if (!isset(static::$cachedFields[$es['DELIVERY_ID']])) {
                 static::$cachedFields[$es['DELIVERY_ID']] = array();
+            }
 
             static::$cachedFields[$es['DELIVERY_ID']][$es["ID"]] = $es;
         }
 
-        foreach ($ids as $deliveryId)
-            if (!isset(static::$cachedFields[$deliveryId]))
+        foreach ($ids as $deliveryId) {
+            if (!isset(static::$cachedFields[$deliveryId])) {
                 static::$cachedFields[$deliveryId] = array();
+            }
+        }
     }
 
     /**
@@ -695,8 +821,9 @@ class Manager
     {
         $result = 0;
 
-        foreach ($this->items as $itemId => $item)
+        foreach ($this->items as $itemId => $item) {
             $result += $item->getCost();
+        }
 
         return $result;
     }

@@ -21,6 +21,7 @@ class Type
     const SELECT = "SELECT";
     const MULTI_SELECT = "MULTI_SELECT";
     const DEST_SELECTOR = "DEST_SELECTOR";
+    const ENTITY_SELECTOR = "ENTITY_SELECTOR";
     const ENTITY = "ENTITY";
     const CUSTOM = "CUSTOM";
     const CUSTOM_ENTITY = "CUSTOM_ENTITY";
@@ -34,9 +35,9 @@ class Type
         $constants = (new \ReflectionClass(__CLASS__))->getConstants();
         foreach ($constants as $key) {
             $list[$key] = null;
-            $filename = str_replace("_", "", strtolower($key)) . "type.php";
+            $filename = str_replace("_", "", mb_strtolower($key)) . "type.php";
             if (file_exists(__DIR__ . "/" . $filename)) {
-                $className = str_replace('_', ' ', strtolower($key));
+                $className = str_replace('_', ' ', mb_strtolower($key));
                 $className = str_replace(' ', '', ucwords($className));
                 $list[$key] = __NAMESPACE__ . "\\" . $className . "Type";
             }
@@ -110,10 +111,13 @@ class Type
                 class_exists($types[$filter["TYPE"]]) &&
                 is_callable(array($types[$filter["TYPE"]], "getLogicFilter"))) {
                 $res = call_user_func_array(array($types[$filter["TYPE"]], "getLogicFilter"), array($data, $filter));
-                if (!empty($res))
+                if (!empty($res)) {
                     $result += $res;
-            } else if (array_key_exists($filter["NAME"], $data) && strlen($data[$filter["NAME"]]) > 0) {
-                $result[$filter["NAME"]] = $data[$filter["NAME"]];
+                }
+            } else {
+                if (array_key_exists($filter["NAME"], $data) && $data[$filter["NAME"]] <> '') {
+                    $result[$filter["NAME"]] = $data[$filter["NAME"]];
+                }
             }
         }
         return $result;

@@ -291,14 +291,17 @@ class MethodDescriptorProto extends \Protobuf\AbstractMessage
     public static function fromArray(array $values)
     {
         $message = new self();
-        $values = array_merge([
-            'name' => null,
-            'input_type' => null,
-            'output_type' => null,
-            'options' => null,
-            'client_streaming' => false,
-            'server_streaming' => false
-        ], $values);
+        $values = array_merge(
+            [
+                'name' => null,
+                'input_type' => null,
+                'output_type' => null,
+                'options' => null,
+                'client_streaming' => false,
+                'server_streaming' => false
+            ],
+            $values
+        );
 
         $message->setName($values['name']);
         $message->setInputType($values['input_type']);
@@ -315,50 +318,64 @@ class MethodDescriptorProto extends \Protobuf\AbstractMessage
      */
     public static function descriptor()
     {
-        return \google\protobuf\DescriptorProto::fromArray([
-            'name' => 'MethodDescriptorProto',
-            'field' => [
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 1,
-                    'name' => 'name',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_STRING(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 2,
-                    'name' => 'input_type',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_STRING(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 3,
-                    'name' => 'output_type',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_STRING(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 4,
-                    'name' => 'options',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_MESSAGE(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
-                    'type_name' => '.google.protobuf.MethodOptions'
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 5,
-                    'name' => 'client_streaming',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_BOOL(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
-                    'default_value' => false
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 6,
-                    'name' => 'server_streaming',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_BOOL(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
-                    'default_value' => false
-                ]),
-            ],
-        ]);
+        return \google\protobuf\DescriptorProto::fromArray(
+            [
+                'name' => 'MethodDescriptorProto',
+                'field' => [
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 1,
+                            'name' => 'name',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_STRING(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 2,
+                            'name' => 'input_type',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_STRING(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 3,
+                            'name' => 'output_type',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_STRING(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 4,
+                            'name' => 'options',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_MESSAGE(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
+                            'type_name' => '.google.protobuf.MethodOptions'
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 5,
+                            'name' => 'client_streaming',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_BOOL(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
+                            'default_value' => false
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 6,
+                            'name' => 'server_streaming',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_BOOL(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
+                            'default_value' => false
+                        ]
+                    ),
+                ],
+            ]
+        );
     }
 
     /**
@@ -437,7 +454,6 @@ class MethodDescriptorProto extends \Protobuf\AbstractMessage
             : null;
 
         while ($limit === null || $stream->tell() < $limit) {
-
             if ($stream->eof()) {
                 break;
             }
@@ -522,7 +538,6 @@ class MethodDescriptorProto extends \Protobuf\AbstractMessage
             $unknown = new \Protobuf\Unknown($tag, $wire, $data);
 
             $this->unknownFieldSet->add($unknown);
-
         }
     }
 
@@ -593,7 +608,9 @@ class MethodDescriptorProto extends \Protobuf\AbstractMessage
     public function merge(\Protobuf\Message $message)
     {
         if (!$message instanceof \google\protobuf\MethodDescriptorProto) {
-            throw new \InvalidArgumentException(sprintf('Argument 1 passed to %s must be a %s, %s given', __METHOD__, __CLASS__, get_class($message)));
+            throw new \InvalidArgumentException(
+                sprintf('Argument 1 passed to %s must be a %s, %s given', __METHOD__, __CLASS__, get_class($message))
+            );
         }
 
         $this->name = ($message->name !== null) ? $message->name : $this->name;

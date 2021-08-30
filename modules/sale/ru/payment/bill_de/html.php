@@ -1,7 +1,10 @@
-<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die(); ?><?
+<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+} ?><?
 $ORDER_ID = IntVal($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["ID"]);
-if (!is_array($arOrder))
+if (!is_array($arOrder)) {
     $arOrder = CSaleOrder::GetByID($ORDER_ID);
+}
 ?>
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
 <html>
@@ -29,13 +32,15 @@ $background = '#ffffff';
 if (CSalePaySystemAction::GetParamValue('BACKGROUND')) {
     $path = CSalePaySystemAction::GetParamValue('BACKGROUND');
     if (intval($path) > 0) {
-        if ($arFile = CFile::GetFileArray($path))
+        if ($arFile = CFile::GetFileArray($path)) {
             $path = $arFile['SRC'];
+        }
     }
 
     $backgroundStyle = CSalePaySystemAction::GetParamValue('BACKGROUND_STYLE');
-    if (!in_array($backgroundStyle, array('none', 'tile', 'stretch')))
+    if (!in_array($backgroundStyle, array('none', 'tile', 'stretch'))) {
         $backgroundStyle = 'none';
+    }
 
     if ($path) {
         switch ($backgroundStyle) {
@@ -48,7 +53,9 @@ if (CSalePaySystemAction::GetParamValue('BACKGROUND')) {
             case 'stretch':
                 $background = sprintf(
                     "url('%s') 0 0 repeat-y; background-size: %.02fpt %.02fpt",
-                    $path, $pageWidth, $pageHeight
+                    $path,
+                    $pageWidth,
+                    $pageHeight
                 );
                 break;
         }
@@ -67,7 +74,10 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
 ?>
 
 <body
-        style="margin: 0pt; padding: <?= join('pt ', $margin); ?>pt; width: <?= $width; ?>pt; background: <?= $background; ?>"
+        style="margin: 0pt; padding: <?= join(
+            'pt ',
+            $margin
+        ); ?>pt; width: <?= $width; ?>pt; background: <?= $background; ?>"
     <? if ($_REQUEST['PRINT'] == 'Y') { ?>
         onload="setTimeout(window.print, 0);"
     <? } ?>
@@ -75,7 +85,8 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
 
 <?= CFile::ShowImage(
     CSalePaySystemAction::GetParamValue("PATH_TO_LOGO"),
-    0, 0,
+    0,
+    0,
     'style="float: left; padding-right: 5pt; "'
 ); ?>
 
@@ -169,8 +180,9 @@ if ($arBasket = $dbBasket->Fetch()) {
             array("ID", "BASKET_ID", "NAME", "VALUE", "CODE", "SORT")
         );
         while ($arBasketProps = $dbBasketProps->GetNext()) {
-            if (!empty($arBasketProps) && $arBasketProps["VALUE"] != "")
+            if (!empty($arBasketProps) && $arBasketProps["VALUE"] != "") {
                 $arProdProps[] = $arBasketProps;
+            }
         }
         $arBasket["PROPS"] = $arProdProps;
 
@@ -192,14 +204,16 @@ if ($arBasket = $dbBasket->Fetch()) {
         );
 
         $arProps[$n] = array();
-        foreach ($arBasket["PROPS"] as $vv)
+        foreach ($arBasket["PROPS"] as $vv) {
             $arProps[$n][] = htmlspecialcharsbx(sprintf("%s: %s", $vv["NAME"], $vv["VALUE"]));
+        }
 
         $sum += doubleval($arBasket["VATLESS_PRICE"] * $arBasket["QUANTITY"]);
         $vat = max($vat, $arBasket["VAT_RATE"]);
         if ($arBasket["VAT_RATE"] > 0) {
-            if (!isset($vats[$arBasket["VAT_RATE"]]))
+            if (!isset($vats[$arBasket["VAT_RATE"]])) {
                 $vats[$arBasket["VAT_RATE"]] = 0;
+            }
             $vats[$arBasket["VAT_RATE"]] += ($arBasket["PRICE"] - $arBasket["VATLESS_PRICE"]) * $arBasket["QUANTITY"];
         }
     } while ($arBasket = $dbBasket->Fetch());
@@ -208,8 +222,9 @@ if ($arBasket = $dbBasket->Fetch()) {
         $arDelivery_tmp = CSaleDelivery::GetByID($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["DELIVERY_ID"]);
 
         $sDeliveryItem = "Schifffahrt";
-        if (strlen($arDelivery_tmp["NAME"]) > 0)
+        if (strlen($arDelivery_tmp["NAME"]) > 0) {
             $sDeliveryItem .= sprintf(" (%s)", $arDelivery_tmp["NAME"]);
+        }
         $arCells[++$n] = array(
             1 => $n,
             htmlspecialcharsbx($sDeliveryItem),
@@ -233,11 +248,12 @@ if ($arBasket = $dbBasket->Fetch()) {
             SALE_VALUE_PRECISION
         );
 
-        if ($vat > 0)
+        if ($vat > 0) {
             $vats[$vat] += roundEx(
                 $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["PRICE_DELIVERY"] * $vat / (1 + $vat),
                 SALE_VALUE_PRECISION
             );
+        }
     }
 
     $items = $n;
@@ -256,10 +272,12 @@ if ($arBasket = $dbBasket->Fetch()) {
 
     if (!empty($vats)) {
         // @TODO: remove on real vatless price implemented
-        $delta = intval(roundEx(
+        $delta = intval(
+            roundEx(
                 $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["PRICE"] - $sum - array_sum($vats),
                 SALE_VALUE_PRECISION
-            ) * pow(10, SALE_VALUE_PRECISION));
+            ) * pow(10, SALE_VALUE_PRECISION)
+        );
         if ($delta) {
             $vatRates = array_keys($vats);
             rsort($vatRates);
@@ -269,8 +287,9 @@ if ($arBasket = $dbBasket->Fetch()) {
                     $vats[$vatRate] += abs($delta) / $delta / pow(10, SALE_VALUE_PRECISION);
                     $delta -= abs($delta) / $delta;
 
-                    if ($delta == 0)
+                    if ($delta == 0) {
                         break 2;
+                    }
                 }
             }
         }
@@ -306,12 +325,14 @@ if ($arBasket = $dbBasket->Fetch()) {
                 null,
                 null,
                 null,
-                htmlspecialcharsbx(sprintf(
-                    "%s%s%s:",
-                    ($arTaxList["IS_IN_PRICE"] == "Y") ? "inkl." : "zzgl.",
-                    sprintf(' %s%% ', roundEx($arTaxList["VALUE"], SALE_VALUE_PRECISION)),
-                    $arTaxList["TAX_NAME"]
-                )),
+                htmlspecialcharsbx(
+                    sprintf(
+                        "%s%s%s:",
+                        ($arTaxList["IS_IN_PRICE"] == "Y") ? "inkl." : "zzgl.",
+                        sprintf(' %s%% ', roundEx($arTaxList["VALUE"], SALE_VALUE_PRECISION)),
+                        $arTaxList["TAX_NAME"]
+                    )
+                ),
                 SaleFormatCurrency(
                     $arTaxList["VALUE_MONEY"],
                     $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"],
@@ -442,7 +463,6 @@ if ($arBasket = $dbBasket->Fetch()) {
             } ?>
         </tr>
         <?
-
     }
 
     ?>
@@ -453,18 +473,34 @@ if ($arBasket = $dbBasket->Fetch()) {
 
 <? if (CSalePaySystemAction::GetParamValue("COMMENT1") || CSalePaySystemAction::GetParamValue("COMMENT2")) { ?>
     <? if (CSalePaySystemAction::GetParamValue("COMMENT1")) { ?>
-        <?= nl2br(HTMLToTxt(preg_replace(
-            array('#</div>\s*<div[^>]*>#i', '#</?div>#i'), array('<br>', '<br>'),
-            htmlspecialcharsback(CSalePaySystemAction::GetParamValue("COMMENT1"))
-        ), '', array(), 0)); ?>
+        <?= nl2br(
+            HTMLToTxt(
+                preg_replace(
+                    array('#</div>\s*<div[^>]*>#i', '#</?div>#i'),
+                    array('<br>', '<br>'),
+                    htmlspecialcharsback(CSalePaySystemAction::GetParamValue("COMMENT1"))
+                ),
+                '',
+                array(),
+                0
+            )
+        ); ?>
         <br>
         <br>
     <? } ?>
     <? if (CSalePaySystemAction::GetParamValue("COMMENT2")) { ?>
-        <?= nl2br(HTMLToTxt(preg_replace(
-            array('#</div>\s*<div[^>]*>#i', '#</?div>#i'), array('<br>', '<br>'),
-            htmlspecialcharsback(CSalePaySystemAction::GetParamValue("COMMENT2"))
-        ), '', array(), 0)); ?>
+        <?= nl2br(
+            HTMLToTxt(
+                preg_replace(
+                    array('#</div>\s*<div[^>]*>#i', '#</?div>#i'),
+                    array('<br>', '<br>'),
+                    htmlspecialcharsback(CSalePaySystemAction::GetParamValue("COMMENT2"))
+                ),
+                '',
+                array(),
+                0
+            )
+        ); ?>
         <br>
         <br>
     <? } ?>
@@ -474,13 +510,16 @@ if ($arBasket = $dbBasket->Fetch()) {
 
 <div style="position: relative; "><?= CFile::ShowImage(
         CSalePaySystemAction::GetParamValue("PATH_TO_STAMP"),
-        0, 0,
+        0,
+        0,
         'style="position: absolute; left: 40pt; "'
     ); ?></div>
 
 <div style="position: relative">
     <table class="sign">
-        <? if (CSalePaySystemAction::GetParamValue("SELLER_DIR") || CSalePaySystemAction::GetParamValue("SELLER_DIR_SIGN")) { ?>
+        <? if (CSalePaySystemAction::GetParamValue("SELLER_DIR") || CSalePaySystemAction::GetParamValue(
+                "SELLER_DIR_SIGN"
+            )) { ?>
             <tr>
                 <td valign>Gesch�ftsf�hrer</td>
                 <td style="width: 160pt; border: 1pt solid #000000; border-width: 0pt 0pt 1pt 0pt; text-align: center; ">
@@ -496,7 +535,9 @@ if ($arBasket = $dbBasket->Fetch()) {
                 <td colspan="3">&nbsp;</td>
             </tr>
         <? } ?>
-        <? if (CSalePaySystemAction::GetParamValue("SELLER_ACC") || CSalePaySystemAction::GetParamValue("SELLER_ACC_SIGN")) { ?>
+        <? if (CSalePaySystemAction::GetParamValue("SELLER_ACC") || CSalePaySystemAction::GetParamValue(
+                "SELLER_ACC_SIGN"
+            )) { ?>
             <tr>
                 <td>Buchhalter</td>
                 <td style="width: 160pt; border: 1pt solid #000000; border-width: 0pt 0pt 1pt 0pt; text-align: center; ">
@@ -526,10 +567,12 @@ if ($arBasket = $dbBasket->Fetch()) {
 
     $sellerData = array();
 
-    if ($sellerName)
+    if ($sellerName) {
         $sellerData[] = $sellerName;
-    if ($sellerAddr)
+    }
+    if ($sellerAddr) {
         $sellerData[] = $sellerAddr;
+    }
 
     if (!empty($sellerData)) {
         ?><small><?= join(' � ', $sellerData); ?></small>
@@ -542,10 +585,12 @@ if ($arBasket = $dbBasket->Fetch()) {
 
     $sellerData = array();
 
-    if ($sellerPhone)
+    if ($sellerPhone) {
         $sellerData[] = sprintf('Telefon: %s', $sellerPhone);
-    if ($sellerEmail)
+    }
+    if ($sellerEmail) {
         $sellerData[] = sprintf('Mail: %s', $sellerEmail);
+    }
 
     if (!empty($sellerData)) {
         ?><small><?= join(' � ', $sellerData); ?></small>
@@ -561,16 +606,21 @@ if ($arBasket = $dbBasket->Fetch()) {
 
     $bankData = array();
 
-    if ($bankAccNo)
+    if ($bankAccNo) {
         $bankData[] = sprintf('Konto Nr.: %s', $bankAccNo);
-    if ($bankBlz)
+    }
+    if ($bankBlz) {
         $bankData[] = sprintf('BLZ: %s', $bankBlz);
-    if ($bankIban)
+    }
+    if ($bankIban) {
         $bankData[] = sprintf('IBAN: %s', $bankIban);
-    if ($bankSwift)
+    }
+    if ($bankSwift) {
         $bankData[] = sprintf('BIC/SWIFT: %s', $bankSwift);
-    if ($bank)
+    }
+    if ($bank) {
         $bankData[] = $bank;
+    }
 
     if (!empty($bankData)) {
         ?><small><?= join(' � ', $bankData); ?></small>
@@ -585,14 +635,18 @@ if ($arBasket = $dbBasket->Fetch()) {
 
     $sellerData = array();
 
-    if ($sellerEuInn)
+    if ($sellerEuInn) {
         $sellerData[] = sprintf('USt-IdNr.: %s', $sellerEuInn);
-    if ($sellerInn)
+    }
+    if ($sellerInn) {
         $sellerData[] = sprintf('Steuernummer: %s', $sellerInn);
-    if ($sellerReg)
+    }
+    if ($sellerReg) {
         $sellerData[] = $sellerReg;
-    if ($sellerDir)
+    }
+    if ($sellerDir) {
         $sellerData[] = $sellerDir;
+    }
 
     if (!empty($sellerData)) {
         ?><small><?= join(' � ', $sellerData); ?></small>

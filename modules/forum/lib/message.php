@@ -101,10 +101,21 @@ class MessageTable extends Main\Entity\DataManager
             (new BooleanField("USE_SMILES", ["values" => ["N", "Y"], "default_value" => "Y"])),
             (new BooleanField("NEW_TOPIC", ["values" => ["N", "Y"], "default_value" => "N"])),
             (new BooleanField("APPROVED", ["values" => ["N", "Y"], "default_value" => "Y"])),
-            (new BooleanField("SOURCE_ID", ["values" => [self::SOURCE_ID_EMAIL, self::SOURCE_ID_WEB], "default_value" => self::SOURCE_ID_WEB])),
-            (new DatetimeField("POST_DATE", ["required" => true, "default_value" => function () {
-                return new DateTime();
-            }])),
+            (new BooleanField(
+                "SOURCE_ID",
+                [
+                    "values" => [self::SOURCE_ID_EMAIL, self::SOURCE_ID_WEB],
+                    "default_value" => self::SOURCE_ID_WEB
+                ]
+            )),
+            (new DatetimeField(
+                "POST_DATE", [
+                "required" => true,
+                "default_value" => function () {
+                    return new DateTime();
+                }
+            ]
+            )),
             (new TextField("POST_MESSAGE", ["required" => true])),
             (new TextField("POST_MESSAGE_HTML")),
             (new TextField("POST_MESSAGE_FILTER")),
@@ -130,8 +141,13 @@ class MessageTable extends Main\Entity\DataManager
 
             (new TextField("HTML")),
             (new TextField("MAIL_HEADER")),
+            (new IntegerField("SERVICE_TYPE")),
+            (new TextField("SERVICE_DATA")),
 
-            (new Reference("TOPIC", TopicTable::class, Join::on("this.TOPIC_ID", "ref.ID")))
+            (new Reference("TOPIC", TopicTable::class, Join::on("this.TOPIC_ID", "ref.ID"))),
+            (new Reference("FORUM_USER", UserTable::class, Join::on("this.AUTHOR_ID", "ref.USER_ID"))),
+            (new Reference("FORUM_USER_TOPIC", UserTopicTable::class, Join::on("this.TOPIC_ID", "ref.TOPIC_ID"))),
+            (new Reference("USER", \Bitrix\Main\UserTable::class, Join::on("this.AUTHOR_ID", "ref.ID")))
         );
     }
 
@@ -205,7 +221,9 @@ class MessageTable extends Main\Entity\DataManager
         }
         //endregion
 
-        $data["POST_MESSAGE_CHECK"] = md5($data["POST_MESSAGE"] . (array_key_exists("FILES", $data) ? serialize($data["FILES"]) : ""));
+        $data["POST_MESSAGE_CHECK"] = md5(
+            $data["POST_MESSAGE"] . (array_key_exists("FILES", $data) ? serialize($data["FILES"]) : "")
+        );
 
         //region Deduplication
         $forum = \Bitrix\Forum\Forum::getById($data["FORUM_ID"]);
@@ -225,7 +243,9 @@ class MessageTable extends Main\Entity\DataManager
         }
         if ($deduplication && $data["NEW_TOPIC"] !== "Y") {
             if (self::$post_message_hash[$data["TOPIC_ID"]] === $data["POST_MESSAGE_CHECK"]) {
-                $result->addError(new EntityError(Loc::getmessage("F_ERR_MESSAGE_ALREADY_EXISTS"), "onBeforeMessageAdd"));
+                $result->addError(
+                    new EntityError(Loc::getmessage("F_ERR_MESSAGE_ALREADY_EXISTS"), "onBeforeMessageAdd")
+                );
                 return $result;
             }
         }
@@ -243,7 +263,7 @@ class MessageTable extends Main\Entity\DataManager
                 $res[$key] = array_key_exists($key, $data) ? $data[$key] : "";
                 if (!empty($res[$key])) {
                     $res[$key] = \CFilterUnquotableWords::Filter($res[$key]);
-                    if (strlen($res[$key]) <= 0) {
+                    if ($res[$key] == '') {
                         $res[$key] = "*";
                     }
                 }
@@ -257,8 +277,10 @@ class MessageTable extends Main\Entity\DataManager
             foreach ($fields as $key => $val) {
                 if (!array_key_exists($key, $data)) {
                     $result->unsetField($key);
-                } else if ($data[$key] == $val) {
-                    unset($data[$key]);
+                } else {
+                    if ($data[$key] == $val) {
+                        unset($data[$key]);
+                    }
                 }
             }
             $result->modifyFields($data);
@@ -286,16 +308,24 @@ class MessageTable extends Main\Entity\DataManager
                         "MESSAGE_ID" => 0,
                         "USER_ID" => $fields["AUTHOR_ID"],
                     ],
-                    ($object->sysGetRuntime("UPLOAD_DIR") ?: "forum/upload"));
+                    ($object->sysGetRuntime("UPLOAD_DIR") ?: "forum/upload")
+                );
                 $object->sysSetRuntime("FILES", $files);
             }
 
             $parser = new \forumTextParser(LANGUAGE_ID);
             $allow = \forumTextParser::GetFeatures(\Bitrix\Forum\Forum::getById($fields["FORUM_ID"]));
             $allow["SMILES"] = ($fields["USE_SMILES"] != "Y" ? "N" : $allow["SMILES"]);
-            $result->modifyFields([
-                "POST_MESSAGE_HTML" => $parser->convert($fields["POST_MESSAGE_FILTER"] ?: $fields["POST_MESSAGE"], $allow, "html", $files)
-            ]);
+            $result->modifyFields(
+                [
+                    "POST_MESSAGE_HTML" => $parser->convert(
+                        $fields["POST_MESSAGE_FILTER"] ?: $fields["POST_MESSAGE"],
+                        $allow,
+                        "html",
+                        $files
+                    )
+                ]
+            );
         }
         return $result;
     }
@@ -321,20 +351,23 @@ class MessageTable extends Main\Entity\DataManager
                     "MESSAGE_ID" => $id,
                     "USER_ID" => $fields["AUTHOR_ID"],
                 ],
-                ($object->sysGetRuntime("UPLOAD_DIR") ?: "forum/upload"));
+                ($object->sysGetRuntime("UPLOAD_DIR") ?: "forum/upload")
+            );
         }
     }
 
     public static function getDataById($id, $ttl = 84600)
     {
         if (!array_key_exists($id, self::$messageById)) {
-            self::$messageById[$id] = self::getList([
-                "select" => ["*"],
-                "filter" => ["ID" => $id],
-                "cache" => [
-                    "ttl" => $ttl
+            self::$messageById[$id] = self::getList(
+                [
+                    "select" => ["*"],
+                    "filter" => ["ID" => $id],
+                    "cache" => [
+                        "ttl" => $ttl
+                    ]
                 ]
-            ])->fetch();
+            )->fetch();
         }
         return self::$messageById[$id];
     }
@@ -367,7 +400,7 @@ class MessageTable extends Main\Entity\DataManager
                 $res[$key] = array_key_exists($key, $forFilter) ? $forFilter[$key] : "";
                 if (!empty($res[$key])) {
                     $res[$key] = \CFilterUnquotableWords::Filter($res[$key]);
-                    if (strlen($res[$key]) <= 0) {
+                    if ($res[$key] == '') {
                         $res[$key] = "*";
                     }
                 }
@@ -424,8 +457,10 @@ class MessageTable extends Main\Entity\DataManager
             foreach ($fields as $key => $val) {
                 if (!array_key_exists($key, $data)) {
                     $result->unsetField($key);
-                } else if ($data[$key] == $val) {
-                    unset($data[$key]);
+                } else {
+                    if ($data[$key] == $val) {
+                        unset($data[$key]);
+                    }
                 }
             }
             $result->modifyFields($data);
@@ -455,16 +490,24 @@ class MessageTable extends Main\Entity\DataManager
                     "MESSAGE_ID" => $id,
                     "USER_ID" => $fields["AUTHOR_ID"],
                 ],
-                ($object->sysGetRuntime("UPLOAD_DIR") ?: "forum/upload"));
+                ($object->sysGetRuntime("UPLOAD_DIR") ?: "forum/upload")
+            );
         }
         if (\Bitrix\Main\Config\Option::get("forum", "MESSAGE_HTML", "N") == "Y") {
             $result = new \Bitrix\Main\ORM\EventResult();
             $parser = new \forumTextParser(LANGUAGE_ID);
             $allow = \forumTextParser::GetFeatures(\Bitrix\Forum\Forum::getById($fields["FORUM_ID"]));
             $allow["SMILES"] = ($fields["USE_SMILES"] != "Y" ? "N" : $allow["SMILES"]);
-            $result->modifyFields([
-                "POST_MESSAGE_HTML" => $parser->convert($fields["POST_MESSAGE_FILTER"] ?: $fields["POST_MESSAGE"], $allow, "html", $files)
-            ]);
+            $result->modifyFields(
+                [
+                    "POST_MESSAGE_HTML" => $parser->convert(
+                        $fields["POST_MESSAGE_FILTER"] ?: $fields["POST_MESSAGE"],
+                        $allow,
+                        "html",
+                        $files
+                    )
+                ]
+            );
             return $result;
         }
     }
@@ -504,9 +547,11 @@ class MessageTable extends Main\Entity\DataManager
                     }
                 }
             } catch (\Exception $e) {
-                $result->addError(new Error(
-                    $e->getMessage()
-                ));
+                $result->addError(
+                    new Error(
+                        $e->getMessage()
+                    )
+                );
             }
         }
     }
@@ -534,7 +579,11 @@ class Message extends Internals\Entity
         if ($result->isSuccess()) {
             $this->data = MessageTable::getById($result->getId())->fetch();
 
-            \Bitrix\Forum\Integration\Search\Message::index(Forum::getById($this->getForumId()), Topic::getById($this->data["TOPIC_ID"]), $this->data);
+            \Bitrix\Forum\Integration\Search\Message::index(
+                Forum::getById($this->getForumId()),
+                Topic::getById($this->data["TOPIC_ID"]),
+                $this->data
+            );
         }
 
         return $result;
@@ -570,19 +619,21 @@ class Message extends Internals\Entity
         $result->setPrimary(["ID" => $id]);
         $data = [];
 
-        foreach ([
-                     "USE_SMILES",
-                     "POST_MESSAGE",
-                     "ATTACH_IMG",
-                     "FILES",
-                     "AUTHOR_NAME",
-                     "AUTHOR_EMAIL",
-                     "EDITOR_ID",
-                     "EDITOR_NAME",
-                     "EDITOR_EMAIL",
-                     "EDIT_REASON",
-                     "EDIT_DATE"
-                 ] as $field) {
+        foreach (
+            [
+                "USE_SMILES",
+                "POST_MESSAGE",
+                "ATTACH_IMG",
+                "FILES",
+                "AUTHOR_NAME",
+                "AUTHOR_EMAIL",
+                "EDITOR_ID",
+                "EDITOR_NAME",
+                "EDITOR_EMAIL",
+                "EDIT_REASON",
+                "EDIT_DATE"
+            ] as $field
+        ) {
             if (array_key_exists($field, $fields)) {
                 $data[$field] = $fields[$field];
             }
@@ -635,7 +686,7 @@ class Message extends Internals\Entity
 
             "USE_SMILES" => $fields["USE_SMILES"],
             "NEW_TOPIC" => ($fields["NEW_TOPIC"] === "Y" ? "Y" : "N"),
-            "APPROVED" => $topic["APPROVED"] === Topic::APPROVED_DISAPPROVED ? Message::APPROVED_DISAPPROVED : Message::APPROVED_APPROVED,
+            "APPROVED" => $topic["APPROVED"] === Topic::APPROVED_DISAPPROVED || $fields["APPROVED"] === Message::APPROVED_DISAPPROVED ? Message::APPROVED_DISAPPROVED : Message::APPROVED_APPROVED,
 
             "POST_DATE" => $fields["POST_DATE"] ?: new \Bitrix\Main\Type\DateTime(),
             "POST_MESSAGE" => $fields["POST_MESSAGE"],
@@ -650,6 +701,13 @@ class Message extends Internals\Entity
             "GUEST_ID" => $_SESSION["SESS_GUEST_ID"]
         ];
 
+        if (isset($fields['SERVICE_TYPE'])) {
+            $data['SERVICE_TYPE'] = $fields['SERVICE_TYPE'];
+        }
+        if (isset($fields['SERVICE_DATA'])) {
+            $data['SERVICE_DATA'] = $fields['SERVICE_DATA'];
+        }
+
         if ($realIp = \Bitrix\Main\Service\GeoIp\Manager::getRealIp()) {
             $data["AUTHOR_IP"] = $realIp;
             $data["AUTHOR_REAL_IP"] = $realIp;
@@ -662,7 +720,8 @@ class Message extends Internals\Entity
             $data += array_intersect_key($fields, $USER_FIELD_MANAGER->getUserFields(MessageTable::getUfId()));
         }
 
-        $additionalFields = ["SOURCE_ID", "PARAM1", "PARAM2", "XML_ID"];
+        $temporaryFields = ["AUX", "AUX_DATA"];
+        $additionalFields = array_merge(["SOURCE_ID", "PARAM1", "PARAM2", "XML_ID"], $temporaryFields);
         foreach ($additionalFields as $key) {
             if (array_key_exists($key, $fields)) {
                 $data[$key] = $fields[$key];
@@ -690,7 +749,19 @@ class Message extends Internals\Entity
             $data["UPLOAD_DIR"] = $strUploadDir;
         }
 
-        $dbResult = MessageTable::add($data);
+        foreach ($temporaryFields as $field) {
+            unset($data[$field]);
+        }
+
+        $authContext = new \Bitrix\Main\Authentication\Context();
+        $authContext->setUserId($fields['AUTHOR_ID']);
+
+        $dbResult = MessageTable::add(
+            [
+                "fields" => $data,
+                "auth_context" => $authContext
+            ]
+        );
 
         if (!$dbResult->isSuccess()) {
             $result->addErrors($dbResult->getErrors());

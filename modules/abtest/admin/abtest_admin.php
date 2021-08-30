@@ -8,8 +8,9 @@ Bitrix\Main\Loader::includeModule('abtest');
 $arLang = $APPLICATION->getLang();
 
 $MOD_RIGHT = $APPLICATION->getGroupRight('abtest');
-if ($MOD_RIGHT < 'R')
+if ($MOD_RIGHT < 'R') {
     $APPLICATION->authForm(getMessage('ACCESS_DENIED'));
+}
 
 $sTableID = "t_abtest_admin";
 $oSort = new CAdminSorting($sTableID, 'id', 'asc');
@@ -31,13 +32,16 @@ $lAdmin->addAdminContextMenu($aContext);
 if ($MOD_RIGHT >= 'W' && $arID = $lAdmin->groupAction()) {
     if ($_REQUEST['action'] == 'start') {
         $arActiveTests = array();
-        $result = Bitrix\ABTest\ABTestTable::getList(array(
-            'filter' => array('ACTIVE' => 'Y'),
-            'select' => array('ID', 'SITE_ID')
-        ));
+        $result = Bitrix\ABTest\ABTestTable::getList(
+            array(
+                'filter' => array('ACTIVE' => 'Y'),
+                'select' => array('ID', 'SITE_ID')
+            )
+        );
         while ($abtest = $result->fetch()) {
-            if (!isset($arActiveTests[$abtest['SITE_ID']]))
+            if (!isset($arActiveTests[$abtest['SITE_ID']])) {
                 $arActiveTests[$abtest['SITE_ID']] = array();
+            }
 
             $arActiveTests[$abtest['SITE_ID']][] = $abtest['ID'];
         }
@@ -46,35 +50,44 @@ if ($MOD_RIGHT >= 'W' && $arID = $lAdmin->groupAction()) {
     foreach ($arID as $ID) {
         $ID = intval($ID);
 
-        if ($ID <= 0)
+        if ($ID <= 0) {
             continue;
+        }
 
         $abtest = Bitrix\ABTest\ABTestTable::getById($ID)->fetch();
-        if (empty($abtest))
+        if (empty($abtest)) {
             continue;
+        }
 
         switch ($_REQUEST['action']) {
             case 'delete':
-                if (!Bitrix\ABTest\Helper::deleteTest($ID))
+                if (!Bitrix\ABTest\Helper::deleteTest($ID)) {
                     $lAdmin->addGroupError(getMessage('ABTEST_DELETE_ERROR'));
+                }
                 break;
             case 'start':
                 if (!empty($arActiveTests[$abtest['SITE_ID']])) {
-                    if (in_array($ID, $arActiveTests[$abtest['SITE_ID']]))
+                    if (in_array($ID, $arActiveTests[$abtest['SITE_ID']])) {
                         $lAdmin->addGroupError(getMessage('ABTEST_START_ERROR'));
-                    else
+                    } else {
                         $lAdmin->addGroupError(getMessage('ABTEST_ONLYONE_WARNING'));
-                } else if ($abtest['ENABLED'] != 'Y') {
-                    $lAdmin->addGroupError(getMessage('ABTEST_START_ERROR'));
-                } else if (!Bitrix\ABTest\Helper::startTest($ID)) {
-                    $lAdmin->addGroupError(getMessage('ABTEST_START_ERROR'));
+                    }
                 } else {
-                    $arActiveTests[$abtest['SITE_ID']] = $abtest;
+                    if ($abtest['ENABLED'] != 'Y') {
+                        $lAdmin->addGroupError(getMessage('ABTEST_START_ERROR'));
+                    } else {
+                        if (!Bitrix\ABTest\Helper::startTest($ID)) {
+                            $lAdmin->addGroupError(getMessage('ABTEST_START_ERROR'));
+                        } else {
+                            $arActiveTests[$abtest['SITE_ID']] = $abtest;
+                        }
+                    }
                 }
                 break;
             case 'stop':
-                if (!Bitrix\ABTest\Helper::stopTest($ID))
+                if (!Bitrix\ABTest\Helper::stopTest($ID)) {
                     $lAdmin->addGroupError(getMessage('ABTEST_STOP_ERROR'));
+                }
                 break;
         }
     }
@@ -88,10 +101,19 @@ $arHeaders = array(
 $lAdmin->addHeaders($arHeaders);
 
 
-$result = Bitrix\ABTest\ABTestTable::getList(array(
-    'order' => array(strtoupper($by) => $order),
-    'select' => array('*', 'USER_NAME' => 'USER.NAME', 'USER_LAST_NAME' => 'USER.LAST_NAME', 'USER_SECOND_NAME' => 'USER.SECOND_NAME', 'USER_TITLE' => 'USER.TITLE', 'USER_LOGIN' => 'USER.LOGIN')
-));
+$result = Bitrix\ABTest\ABTestTable::getList(
+    array(
+        'order' => array(mb_strtoupper($by) => $order),
+        'select' => array(
+            '*',
+            'USER_NAME' => 'USER.NAME',
+            'USER_LAST_NAME' => 'USER.LAST_NAME',
+            'USER_SECOND_NAME' => 'USER.SECOND_NAME',
+            'USER_TITLE' => 'USER.TITLE',
+            'USER_LOGIN' => 'USER.LOGIN'
+        )
+    )
+);
 $result = new CAdminResult($result, $sTableID);
 
 $arRows = array();
@@ -100,8 +122,9 @@ while ($abtest = $result->fetch()) {
     $arRows[] = $abtest;
 
     if ($abtest['ACTIVE'] == 'Y') {
-        if (!isset($arActiveTests[$abtest['SITE_ID']]))
+        if (!isset($arActiveTests[$abtest['SITE_ID']])) {
             $arActiveTests[$abtest['SITE_ID']] = array();
+        }
 
         $arActiveTests[$abtest['SITE_ID']][] = $abtest['ID'];
     }
@@ -109,16 +132,21 @@ while ($abtest = $result->fetch()) {
 
 foreach ($arRows as &$abtest) {
     $row =& $lAdmin->addRow($abtest['ID'], $abtest);
-    $row->addViewField('TITLE', sprintf(
-        '<div%s><b>%s</b><br>%s</div>',
-        in_array($abtest['ENABLED'], array('T', 'Y')) ? '' : ' style="color: #808080; "',
-        htmlspecialcharsbx($abtest['NAME']) ?: str_replace('#ID#', $abtest['ID'], getMessage('ABTEST_TEST_TITLE')),
-        htmlspecialcharsbx($abtest['DESCR'])
-    ));
+    $row->addViewField(
+        'TITLE',
+        sprintf(
+            '<div%s><b>%s</b><br>%s</div>',
+            in_array($abtest['ENABLED'], array('T', 'Y')) ? '' : ' style="color: #808080; "',
+            htmlspecialcharsbx($abtest['NAME']) ?: str_replace('#ID#', $abtest['ID'], getMessage('ABTEST_TEST_TITLE')),
+            htmlspecialcharsbx($abtest['DESCR'])
+        )
+    );
 
     if (in_array($abtest['ENABLED'], array('T', 'Y'))) {
         if ($abtest['ACTIVE'] == 'Y') {
-            $start_date = $abtest['START_DATE']->format(Bitrix\Main\Type\Date::convertFormatToPhp($arLang['FORMAT_DATE']));
+            $start_date = $abtest['START_DATE']->format(
+                Bitrix\Main\Type\Date::convertFormatToPhp($arLang['FORMAT_DATE'])
+            );
             $end_date = null;
 
             if ($abtest['DURATION'] != 0) {
@@ -154,7 +182,8 @@ foreach ($arRows as &$abtest) {
                     'LAST_NAME' => $abtest['USER_LAST_NAME'],
                     'LOGIN' => $abtest['USER_LOGIN'],
                 ),
-                true, true
+                true,
+                true
             );
 
             $status = '<table style="width: 100%; border-spacing: 0px; "><tr>';
@@ -162,19 +191,35 @@ foreach ($arRows as &$abtest) {
             $status .= '<td style="width: 1px; padding: 0px; vertical-align: top; "><img src="/bitrix/images/abtest/ab-test-on.gif"></td>';
 
             $status .= '<td style="padding: 0px 10px; vertical-align: top; ">';
-            $status .= '<span style="white-space: nowrap; color: #729e00; font-weight: bold; ">' . getMessage('ABTEST_STATE_STARTED') . '</span><br>';
-            $status .= '<span style="white-space: nowrap; ">' . getMessage('ABTEST_START_DATE') . ': ' . $start_date . '</span><br>';
-            if ($end_date)
-                $status .= '<span style="white-space: nowrap; ">' . getMessage('ABTEST_STOP_DATE2') . ': ' . $end_date . '</span><br>';
-            $status .= '<span style="white-space: nowrap; ">' . getMessage('ABTEST_STARTED_BY') . ': <a href="/bitrix/admin/user_edit.php?ID=' . $abtest['USER_ID'] . '&lang=' . LANG . '">' . $user_name . '</a></span>';
+            $status .= '<span style="white-space: nowrap; color: #729e00; font-weight: bold; ">' . getMessage(
+                    'ABTEST_STATE_STARTED'
+                ) . '</span><br>';
+            $status .= '<span style="white-space: nowrap; ">' . getMessage(
+                    'ABTEST_START_DATE'
+                ) . ': ' . $start_date . '</span><br>';
+            if ($end_date) {
+                $status .= '<span style="white-space: nowrap; ">' . getMessage(
+                        'ABTEST_STOP_DATE2'
+                    ) . ': ' . $end_date . '</span><br>';
+            }
+            $status .= '<span style="white-space: nowrap; ">' . getMessage(
+                    'ABTEST_STARTED_BY'
+                ) . ': <a href="/bitrix/admin/user_edit.php?ID=' . $abtest['USER_ID'] . '&lang=' . LANG . '">' . $user_name . '</a></span>';
             $status .= '</td>';
 
-            if ($MOD_RIGHT >= 'W')
-                $status .= '<td style="width: 1px; padding: 0px; vertical-align: top; "><span class="adm-btn" onclick="if (confirm(\'' . CUtil::JSEscape(getMessage('ABTEST_STOP_CONFIRM')) . '\')) ' . $lAdmin->actionDoGroup($abtest['ID'], 'stop') . '">' . getMessage('ABTEST_BTN_STOP') . '</span></td>';
+            if ($MOD_RIGHT >= 'W') {
+                $status .= '<td style="width: 1px; padding: 0px; vertical-align: top; "><span class="adm-btn" onclick="if (confirm(\'' . CUtil::JSEscape(
+                        getMessage('ABTEST_STOP_CONFIRM')
+                    ) . '\')) ' . $lAdmin->actionDoGroup($abtest['ID'], 'stop') . '">' . getMessage(
+                        'ABTEST_BTN_STOP'
+                    ) . '</span></td>';
+            }
 
             $status .= '</tr></table>';
         } else {
-            $stop_date = $abtest['STOP_DATE'] ? $abtest['STOP_DATE']->format(Bitrix\Main\Type\Date::convertFormatToPhp($arLang['FORMAT_DATE'])) : false;
+            $stop_date = $abtest['STOP_DATE'] ? $abtest['STOP_DATE']->format(
+                Bitrix\Main\Type\Date::convertFormatToPhp($arLang['FORMAT_DATE'])
+            ) : false;
 
             $user_name = $abtest['USER_ID'] ? CUser::formatName(
                 CSite::getNameFormat(),
@@ -185,7 +230,8 @@ foreach ($arRows as &$abtest) {
                     'LAST_NAME' => $abtest['USER_LAST_NAME'],
                     'LOGIN' => $abtest['USER_LOGIN'],
                 ),
-                true, true
+                true,
+                true
             ) : false;
 
             $status = '<table style="width: 100%; border-spacing: 0px; "><tr>';
@@ -193,25 +239,43 @@ foreach ($arRows as &$abtest) {
             $status .= '<td style="width: 1px; padding: 0px; vertical-align: top; "><img src="/bitrix/images/abtest/ab-test-off.gif"></td>';
 
             $status .= '<td style="padding: 0px 10px; vertical-align: top; ">';
-            $status .= '<span style="white-space: nowrap; font-weight: bold; ">' . getMessage('ABTEST_STATE_STOPPED') . '</span><br>';
-            if ($stop_date)
-                $status .= '<span style="white-space: nowrap; ">' . getMessage('ABTEST_STOP_DATE') . ': ' . $stop_date . '</span><br>';
-            if ($user_name)
-                $status .= '<span style="white-space: nowrap; ">' . getMessage('ABTEST_STOPPED_BY') . ': <a href="/bitrix/admin/user_edit.php?ID=' . $abtest['USER_ID'] . '&lang=' . LANG . '">' . $user_name . '</a></span>';
+            $status .= '<span style="white-space: nowrap; font-weight: bold; ">' . getMessage(
+                    'ABTEST_STATE_STOPPED'
+                ) . '</span><br>';
+            if ($stop_date) {
+                $status .= '<span style="white-space: nowrap; ">' . getMessage(
+                        'ABTEST_STOP_DATE'
+                    ) . ': ' . $stop_date . '</span><br>';
+            }
+            if ($user_name) {
+                $status .= '<span style="white-space: nowrap; ">' . getMessage(
+                        'ABTEST_STOPPED_BY'
+                    ) . ': <a href="/bitrix/admin/user_edit.php?ID=' . $abtest['USER_ID'] . '&lang=' . LANG . '">' . $user_name . '</a></span>';
+            }
             $status .= '</td>';
 
             if ($MOD_RIGHT >= 'W') {
-                if ($abtest['ENABLED'] == 'T')
+                if ($abtest['ENABLED'] == 'T') {
                     $action = $lAdmin->actionRedirect('abtest_edit.php?ID=' . $abtest['ID'] . '&lang=' . LANG);
-                else if (empty($arActiveTests[$abtest['SITE_ID']]))
-                    $action = 'if (confirm(\'' . CUtil::JSEscape(getMessage('ABTEST_START_CONFIRM')) . '\')) ' . $lAdmin->actionDoGroup($abtest['ID'], 'start');
-                else
-                    $action = 'alert(\'' . CUtil::JSEscape(getMessage('ABTEST_ONLYONE_WARNING')) . '\')';
+                } else {
+                    if (empty($arActiveTests[$abtest['SITE_ID']])) {
+                        $action = 'if (confirm(\'' . CUtil::JSEscape(
+                                getMessage('ABTEST_START_CONFIRM')
+                            ) . '\')) ' . $lAdmin->actionDoGroup($abtest['ID'], 'start');
+                    } else {
+                        $action = 'alert(\'' . CUtil::JSEscape(getMessage('ABTEST_ONLYONE_WARNING')) . '\')';
+                    }
+                }
 
-                if (empty($arActiveTests[$abtest['SITE_ID']]))
-                    $status .= '<td style="width: 1px; padding: 0px; vertical-align: top; "><span class="adm-btn adm-btn-green" onclick="' . $action . '">' . getMessage('ABTEST_BTN_START') . '</span></td>';
-                else
-                    $status .= '<td style="width: 1px; padding: 0px; vertical-align: top; "><span class="adm-btn adm-btn-disabled" style="margin-right: 0px; " onclick="' . $action . '">' . getMessage('ABTEST_BTN_START') . '</span></td>';
+                if (empty($arActiveTests[$abtest['SITE_ID']])) {
+                    $status .= '<td style="width: 1px; padding: 0px; vertical-align: top; "><span class="adm-btn adm-btn-green" onclick="' . $action . '">' . getMessage(
+                            'ABTEST_BTN_START'
+                        ) . '</span></td>';
+                } else {
+                    $status .= '<td style="width: 1px; padding: 0px; vertical-align: top; "><span class="adm-btn adm-btn-disabled" style="margin-right: 0px; " onclick="' . $action . '">' . getMessage(
+                            'ABTEST_BTN_START'
+                        ) . '</span></td>';
+                }
             }
 
             $status .= '</tr></table>';
@@ -239,7 +303,9 @@ foreach ($arRows as &$abtest) {
                 'TEXT' => getMessage($abtest['ACTIVE'] == 'Y' ? 'ABTEST_BTN_STOP' : 'ABTEST_BTN_START'),
                 'ACTION' => $abtest['ENABLED'] == 'T'
                     ? $lAdmin->actionRedirect('abtest_edit.php?ID=' . $abtest['ID'] . '&lang=' . LANG)
-                    : "if (confirm('" . CUtil::JSEscape(getMessage($abtest['ACTIVE'] == 'Y' ? 'ABTEST_STOP_CONFIRM' : 'ABTEST_START_CONFIRM')) . "')) " . $lAdmin->actionDoGroup($abtest['ID'], $abtest['ACTIVE'] == 'Y' ? 'stop' : 'start')
+                    : "if (confirm('" . CUtil::JSEscape(
+                        getMessage($abtest['ACTIVE'] == 'Y' ? 'ABTEST_STOP_CONFIRM' : 'ABTEST_START_CONFIRM')
+                    ) . "')) " . $lAdmin->actionDoGroup($abtest['ID'], $abtest['ACTIVE'] == 'Y' ? 'stop' : 'start')
             );
         }
 
@@ -264,11 +330,14 @@ foreach ($arRows as &$abtest) {
     $arActions[] = array(
         'ICON' => 'delete',
         'TEXT' => getMessage('ABTEST_BTN_DELETE'),
-        'ACTION' => "if (confirm('" . CUtil::JSEscape(getMessage('ABTEST_DELETE_CONFIRM')) . "')) " . $lAdmin->actionDoGroup($abtest['ID'], 'delete'),
+        'ACTION' => "if (confirm('" . CUtil::JSEscape(
+                getMessage('ABTEST_DELETE_CONFIRM')
+            ) . "')) " . $lAdmin->actionDoGroup($abtest['ID'], 'delete'),
     );
 
-    if ($MOD_RIGHT >= 'W')
+    if ($MOD_RIGHT >= 'W') {
         $row->addActions($arActions);
+    }
 }
 
 $lAdmin->checkListMode();

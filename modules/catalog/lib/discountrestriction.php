@@ -20,7 +20,20 @@ Loc::loadMessages(__FILE__);
  * </ul>
  *
  * @package Bitrix\Catalog
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_DiscountRestriction_Query query()
+ * @method static EO_DiscountRestriction_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_DiscountRestriction_Result getById($id)
+ * @method static EO_DiscountRestriction_Result getList(array $parameters = array())
+ * @method static EO_DiscountRestriction_Entity getEntity()
+ * @method static \Bitrix\Catalog\EO_DiscountRestriction createObject($setDefaultValues = true)
+ * @method static \Bitrix\Catalog\EO_DiscountRestriction_Collection createCollection()
+ * @method static \Bitrix\Catalog\EO_DiscountRestriction wakeUpObject($row)
+ * @method static \Bitrix\Catalog\EO_DiscountRestriction_Collection wakeUpCollection($rows)
+ */
 class DiscountRestrictionTable extends Main\Entity\DataManager
 {
     /**
@@ -41,27 +54,37 @@ class DiscountRestrictionTable extends Main\Entity\DataManager
     public static function getMap()
     {
         return array(
-            'ID' => new Main\Entity\IntegerField('ID', array(
+            'ID' => new Main\Entity\IntegerField(
+                'ID', array(
                 'primary' => true,
                 'autocomplete' => true,
                 'title' => Loc::getMessage('DISCOUNT_RESTRICTIONS_ENTITY_ID_FIELD')
-            )),
-            'DISCOUNT_ID' => new Main\Entity\IntegerField('DISCOUNT_ID', array(
+            )
+            ),
+            'DISCOUNT_ID' => new Main\Entity\IntegerField(
+                'DISCOUNT_ID', array(
                 'required' => true,
                 'title' => Loc::getMessage('DISCOUNT_RESTRICTIONS_ENTITY_DISCOUNT_ID_FIELD')
-            )),
-            'ACTIVE' => new Main\Entity\BooleanField('ACTIVE', array(
+            )
+            ),
+            'ACTIVE' => new Main\Entity\BooleanField(
+                'ACTIVE', array(
                 'values' => array('N', 'Y'),
                 'title' => Loc::getMessage('DISCOUNT_RESTRICTIONS_ENTITY_ACTIVE_FIELD')
-            )),
-            'USER_GROUP_ID' => new Main\Entity\IntegerField('USER_GROUP_ID', array(
+            )
+            ),
+            'USER_GROUP_ID' => new Main\Entity\IntegerField(
+                'USER_GROUP_ID', array(
                 'required' => true,
                 'title' => Loc::getMessage('DISCOUNT_RESTRICTIONS_ENTITY_USER_GROUP_ID_FIELD')
-            )),
-            'PRICE_TYPE_ID' => new Main\Entity\IntegerField('PRICE_TYPE_ID', array(
+            )
+            ),
+            'PRICE_TYPE_ID' => new Main\Entity\IntegerField(
+                'PRICE_TYPE_ID', array(
                 'required' => true,
                 'title' => Loc::getMessage('DISCOUNT_RESTRICTIONS_ENTITY_PRICE_TYPE_ID_FIELD')
-            )),
+            )
+            ),
             'DISCOUNT' => new Main\Entity\ReferenceField(
                 'DISCOUNT',
                 '\Bitrix\Catalog\Discount',
@@ -81,8 +104,9 @@ class DiscountRestrictionTable extends Main\Entity\DataManager
     {
         $discount = (int)$discount;
         $active = (string)$active;
-        if ($discount <= 0 || ($active != 'Y' && $active != 'N'))
+        if ($discount <= 0 || ($active != 'Y' && $active != 'N')) {
             return;
+        }
         $conn = Main\Application::getConnection();
         $helper = $conn->getSqlHelper();
         $conn->queryExecute(
@@ -102,12 +126,15 @@ class DiscountRestrictionTable extends Main\Entity\DataManager
     public static function deleteByDiscount($discount)
     {
         $discount = (int)$discount;
-        if ($discount <= 0)
+        if ($discount <= 0) {
             return;
+        }
         $conn = Main\Application::getConnection();
         $helper = $conn->getSqlHelper();
         $conn->queryExecute(
-            'delete from ' . $helper->quote(self::getTableName()) . ' where ' . $helper->quote('DISCOUNT_ID') . ' = ' . $discount
+            'delete from ' . $helper->quote(self::getTableName()) . ' where ' . $helper->quote(
+                'DISCOUNT_ID'
+            ) . ' = ' . $discount
         );
         unset($helper, $conn);
     }

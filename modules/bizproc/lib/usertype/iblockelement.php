@@ -28,7 +28,13 @@ class IblockElement extends UserFieldBase
         $iblockId = 0;
         if ($valueTmp > 0) {
             $idKey = ($fieldType->getType() === 'UF:iblock_section') ? 'SECTION_ID' : 'ID';
-            $elementIterator = \CIBlockElement::getList([], [$idKey => $valueTmp], false, false, array('ID', 'IBLOCK_ID'));
+            $elementIterator = \CIBlockElement::getList(
+                [],
+                [$idKey => $valueTmp],
+                false,
+                false,
+                array('ID', 'IBLOCK_ID')
+            );
             if ($element = $elementIterator->fetch()) {
                 $iblockId = $element['IBLOCK_ID'];
             }
@@ -51,8 +57,9 @@ class IblockElement extends UserFieldBase
             while ($iblock = $iblockIterator->fetch()) {
                 $result .= '<option value="' . $iblock['ID'] . '"' . (($iblock['ID'] == $iblockId) ? ' selected' : '') . '>'
                     . Main\Text\HtmlFilter::encode($iblock['NAME']) . '</option>';
-                if (($defaultIBlockId <= 0) || ($iblock['ID'] == $iblockId))
+                if (($defaultIBlockId <= 0) || ($iblock['ID'] == $iblockId)) {
                     $defaultIBlockId = $iblock['ID'];
+                }
             }
 
             $result .= '</optgroup>';

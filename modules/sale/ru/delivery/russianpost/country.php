@@ -1,4 +1,5 @@
 <?
+
 $arRUSSIANPOSTCountryList = array(
     "36" => "���������",
     "40" => "�������",

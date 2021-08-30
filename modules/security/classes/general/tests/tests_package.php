@@ -65,8 +65,9 @@ class CSecurityTestsPackage
      */
     protected static function getPackage($pType = "")
     {
-        if (!is_string($pType) || $pType == "")
+        if (!is_string($pType) || $pType == "") {
             return array();
+        }
 
         if ($pType === self::FAST_LOCAL_TESTS) {
             return self::$fastLocalTests;

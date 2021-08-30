@@ -12,7 +12,7 @@ class Category
 {
     private $key;
     private $label;
-    private $parentKey = NULL;
+    private $parentKey = null;
     private $relations = array();
 
     /**

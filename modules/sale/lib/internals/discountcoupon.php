@@ -69,78 +69,110 @@ class DiscountCouponTable extends Main\Entity\DataManager
     public static function getMap()
     {
         return array(
-            'ID' => new Main\Entity\IntegerField('ID', array(
+            'ID' => new Main\Entity\IntegerField(
+                'ID', array(
                 'primary' => true,
                 'autocomplete' => true,
                 'title' => Loc::getMessage('DISCOUNT_COUPON_ENTITY_ID_FIELD')
-            )),
-            'DISCOUNT_ID' => new Main\Entity\IntegerField('DISCOUNT_ID', array(
+            )
+            ),
+            'DISCOUNT_ID' => new Main\Entity\IntegerField(
+                'DISCOUNT_ID', array(
                 'required' => true,
                 'validation' => array(__CLASS__, 'validateDiscountId'),
                 'title' => Loc::getMessage('DISCOUNT_COUPON_ENTITY_DISCOUNT_ID_FIELD')
-            )),
-            'ACTIVE' => new Main\Entity\BooleanField('ACTIVE', array(
+            )
+            ),
+            'ACTIVE' => new Main\Entity\BooleanField(
+                'ACTIVE', array(
                 'values' => array('N', 'Y'),
                 'default_value' => 'Y',
                 'title' => Loc::getMessage('DISCOUNT_COUPON_ENTITY_ACTIVE_FIELD')
-            )),
-            'ACTIVE_FROM' => new Main\Entity\DatetimeField('ACTIVE_FROM', array(
+            )
+            ),
+            'ACTIVE_FROM' => new Main\Entity\DatetimeField(
+                'ACTIVE_FROM', array(
                 'default_value' => null,
                 'title' => Loc::getMessage('DISCOUNT_COUPON_ENTITY_ACTIVE_FROM_FIELD')
-            )),
-            'ACTIVE_TO' => new Main\Entity\DatetimeField('ACTIVE_TO', array(
+            )
+            ),
+            'ACTIVE_TO' => new Main\Entity\DatetimeField(
+                'ACTIVE_TO', array(
                 'default_value' => null,
                 'title' => Loc::getMessage('DISCOUNT_COUPON_ENTITY_ACTIVE_TO_FIELD')
-            )),
-            'COUPON' => new Main\Entity\StringField('COUPON', array(
+            )
+            ),
+            'COUPON' => new Main\Entity\StringField(
+                'COUPON', array(
                 'required' => true,
                 'validation' => array(__CLASS__, 'validateCoupon'),
                 'title' => Loc::getMessage('DISCOUNT_COUPON_ENTITY_COUPON_FIELD')
-            )),
-            'TYPE' => new Main\Entity\IntegerField('TYPE', array(
+            )
+            ),
+            'TYPE' => new Main\Entity\IntegerField(
+                'TYPE', array(
                 'validation' => array(__CLASS__, 'validateType'),
                 'title' => Loc::getMessage('DISCOUNT_COUPON_ENTITY_TYPE_FIELD')
-            )),
-            'MAX_USE' => new Main\Entity\IntegerField('MAX_USE', array(
+            )
+            ),
+            'MAX_USE' => new Main\Entity\IntegerField(
+                'MAX_USE', array(
                 'default_value' => 0,
                 'title' => Loc::getMessage('DISCOUNT_COUPON_ENTITY_MAX_USE_FIELD')
-            )),
-            'USE_COUNT' => new Main\Entity\IntegerField('USE_COUNT', array(
+            )
+            ),
+            'USE_COUNT' => new Main\Entity\IntegerField(
+                'USE_COUNT', array(
                 'default_value' => 0,
                 'title' => Loc::getMessage('DISCOUNT_COUPON_ENTITY_USE_COUNT_FIELD')
-            )),
-            'USER_ID' => new Main\Entity\IntegerField('USER_ID', array(
+            )
+            ),
+            'USER_ID' => new Main\Entity\IntegerField(
+                'USER_ID', array(
                 'default_value' => 0,
                 'title' => Loc::getMessage('DISCOUNT_COUPON_ENTITY_USER_ID_FIELD')
-            )),
-            'DATE_APPLY' => new Main\Entity\DatetimeField('DATE_APPLY', array(
+            )
+            ),
+            'DATE_APPLY' => new Main\Entity\DatetimeField(
+                'DATE_APPLY', array(
                 'default_value' => null,
                 'title' => Loc::getMessage('DISCOUNT_COUPON_ENTITY_DATE_APPLY_FIELD')
-            )),
-            'TIMESTAMP_X' => new Main\Entity\DatetimeField('TIMESTAMP_X', array(
+            )
+            ),
+            'TIMESTAMP_X' => new Main\Entity\DatetimeField(
+                'TIMESTAMP_X', array(
                 'default_value' => function () {
                     return new Main\Type\DateTime();
                 },
                 'title' => Loc::getMessage('DISCOUNT_COUPON_ENTITY_TIMESTAMP_X_FIELD')
-            )),
-            'MODIFIED_BY' => new Main\Entity\IntegerField('MODIFIED_BY', array(
+            )
+            ),
+            'MODIFIED_BY' => new Main\Entity\IntegerField(
+                'MODIFIED_BY', array(
                 'default_value' => null,
                 'title' => Loc::getMessage('DISCOUNT_COUPON_ENTITY_MODIFIED_BY_FIELD')
-            )),
-            'DATE_CREATE' => new Main\Entity\DatetimeField('DATE_CREATE', array(
+            )
+            ),
+            'DATE_CREATE' => new Main\Entity\DatetimeField(
+                'DATE_CREATE', array(
                 'default_value' => function () {
                     return new Main\Type\DateTime();
                 },
                 'title' => Loc::getMessage('DISCOUNT_COUPON_ENTITY_DATE_CREATE_FIELD')
-            )),
-            'CREATED_BY' => new Main\Entity\IntegerField('CREATED_BY', array(
+            )
+            ),
+            'CREATED_BY' => new Main\Entity\IntegerField(
+                'CREATED_BY', array(
                 'default_value' => null,
                 'title' => Loc::getMessage('DISCOUNT_COUPON_ENTITY_CREATED_BY_FIELD')
-            )),
-            'DESCRIPTION' => new Main\Entity\TextField('DESCRIPTION', array(
+            )
+            ),
+            'DESCRIPTION' => new Main\Entity\TextField(
+                'DESCRIPTION', array(
                 'default_value' => null,
                 'title' => Loc::getMessage('DISCOUNT_COUPON_ENTITY_DESCRIPTION_FIELD')
-            )),
+            )
+            ),
             'CREATED_BY_USER' => new Main\Entity\ReferenceField(
                 'CREATED_BY_USER',
                 'Bitrix\Main\User',
@@ -210,8 +242,9 @@ class DiscountCouponTable extends Main\Entity\DataManager
      */
     public static function checkDiscountId($value, $primary, array $row, Main\Entity\Field $field)
     {
-        if ((int)$value <= 0)
+        if ((int)$value <= 0) {
             return Loc::getMessage('DISCOUNT_COUPON_VALIDATOR_DISCOUNT_ID');
+        }
 
         return true;
     }
@@ -231,8 +264,9 @@ class DiscountCouponTable extends Main\Entity\DataManager
             $value == self::TYPE_BASKET_ROW
             || $value == self::TYPE_ONE_ORDER
             || $value == self::TYPE_MULTI_ORDER
-        )
+        ) {
             return true;
+        }
 
         return Loc::getMessage('DISCOUNT_COUPON_VALIDATOR_TYPE');
     }
@@ -249,14 +283,16 @@ class DiscountCouponTable extends Main\Entity\DataManager
     public static function checkCoupon($value, $primary, array $row, Main\Entity\Field $field)
     {
         $value = trim((string)$value);
-        if ($value == '')
+        if ($value == '') {
             return Loc::getMessage('DISCOUNT_COUPON_VALIDATOR_COUPON_EMPTY');
+        }
 
         $existCoupon = Sale\DiscountCouponsManager::isExist($value);
         if (!empty($existCoupon)) {
             $currentId = (int)(is_array($primary) ? $primary['ID'] : $primary);
-            if ($existCoupon['MODULE'] != 'sale' || $currentId != $existCoupon['ID'])
+            if ($existCoupon['MODULE'] != 'sale' || $currentId != $existCoupon['ID']) {
                 return Loc::getMessage('DISCOUNT_COUPON_VALIDATOR_COUPON_EXIST');
+            }
         }
         return true;
     }
@@ -276,8 +312,9 @@ class DiscountCouponTable extends Main\Entity\DataManager
         self::setUserID($modifyFieldList, $data, array('CREATED_BY', 'MODIFIED_BY'));
         self::setTimestamp($modifyFieldList, $data, array('DATE_CREATE', 'TIMESTAMP_X'));
 
-        if (!empty($modifyFieldList))
+        if (!empty($modifyFieldList)) {
             $result->modifyFields($modifyFieldList);
+        }
         unset($modifyFieldList, $data);
 
         return $result;
@@ -291,8 +328,9 @@ class DiscountCouponTable extends Main\Entity\DataManager
      */
     public static function onAfterAdd(Main\Entity\Event $event)
     {
-        if (!self::isCheckedCouponsUse())
+        if (!self::isCheckedCouponsUse()) {
             return;
+        }
         $data = $event->getParameter('fields');
         $id = (int)$data['DISCOUNT_ID'];
         self::$discountCheckList[$id] = $id;
@@ -315,8 +353,9 @@ class DiscountCouponTable extends Main\Entity\DataManager
         self::setUserID($modifyFieldList, $data, array('MODIFIED_BY'));
         self::setTimestamp($modifyFieldList, $data, array('TIMESTAMP_X'));
 
-        if (!empty($modifyFieldList))
+        if (!empty($modifyFieldList)) {
             $result->modifyFields($modifyFieldList);
+        }
         unset($modifyFieldList, $data);
 
         return $result;
@@ -330,15 +369,18 @@ class DiscountCouponTable extends Main\Entity\DataManager
      */
     public static function onUpdate(Main\Entity\Event $event)
     {
-        if (!self::isCheckedCouponsUse())
+        if (!self::isCheckedCouponsUse()) {
             return;
+        }
         $data = $event->getParameter('fields');
         if (isset($data['DISCOUNT_ID'])) {
             $data['DISCOUNT_ID'] = (int)$data['DISCOUNT_ID'];
-            $coupon = static::getList(array(
-                'select' => array('ID', 'DISCOUNT_ID'),
-                'filter' => array('=ID' => $event->getParameter('id'))
-            ))->fetch();
+            $coupon = static::getList(
+                array(
+                    'select' => array('ID', 'DISCOUNT_ID'),
+                    'filter' => array('=ID' => $event->getParameter('id'))
+                )
+            )->fetch();
             if (!empty($coupon)) {
                 $coupon['DISCOUNT_ID'] = (int)$coupon['DISCOUNT_ID'];
                 if ($coupon['DISCOUNT_ID'] !== $data['DISCOUNT_ID']) {
@@ -370,12 +412,15 @@ class DiscountCouponTable extends Main\Entity\DataManager
      */
     public static function onDelete(Main\Entity\Event $event)
     {
-        if (!self::isCheckedCouponsUse())
+        if (!self::isCheckedCouponsUse()) {
             return;
-        $coupon = self::getList(array(
-            'select' => array('ID', 'DISCOUNT_ID'),
-            'filter' => array('=ID' => $event->getParameter('id'))
-        ))->fetch();
+        }
+        $coupon = self::getList(
+            array(
+                'select' => array('ID', 'DISCOUNT_ID'),
+                'filter' => array('=ID' => $event->getParameter('id'))
+            )
+        )->fetch();
         if (!empty($coupon)) {
             $coupon['DISCOUNT_ID'] = (int)$coupon['DISCOUNT_ID'];
             self::$discountCheckList[$coupon['DISCOUNT_ID']] = $coupon['DISCOUNT_ID'];
@@ -461,10 +506,15 @@ class DiscountCouponTable extends Main\Entity\DataManager
      */
     public static function setDiscountCheckList($discountList)
     {
-        if (!is_array($discountList))
+        if (!is_array($discountList)) {
             $discountList = array($discountList => $discountList);
-        if (!empty($discountList))
-            self::$discountCheckList = (empty(self::$discountCheckList) ? $discountList : array_merge(self::$discountCheckList, $discountList));
+        }
+        if (!empty($discountList)) {
+            self::$discountCheckList = (empty(self::$discountCheckList) ? $discountList : array_merge(
+                self::$discountCheckList,
+                $discountList
+            ));
+        }
     }
 
     /**
@@ -474,20 +524,24 @@ class DiscountCouponTable extends Main\Entity\DataManager
      */
     public static function updateUseCoupons()
     {
-        if (!self::isCheckedCouponsUse() || empty(self::$discountCheckList))
+        if (!self::isCheckedCouponsUse() || empty(self::$discountCheckList)) {
             return;
+        }
 
         Main\Type\Collection::normalizeArrayValuesByInt(self::$discountCheckList);
-        if (empty(self::$discountCheckList))
+        if (empty(self::$discountCheckList)) {
             return;
+        }
 
         $withoutCoupons = array_fill_keys(self::$discountCheckList, true);
         $withCoupons = array();
-        $couponIterator = DiscountCouponTable::getList(array(
-            'select' => array('DISCOUNT_ID', new Main\Entity\ExpressionField('CNT', 'COUNT(*)')),
-            'filter' => array('@DISCOUNT_ID' => self::$discountCheckList),
-            'group' => array('DISCOUNT_ID')
-        ));
+        $couponIterator = DiscountCouponTable::getList(
+            array(
+                'select' => array('DISCOUNT_ID', new Main\Entity\ExpressionField('CNT', 'COUNT(*)')),
+                'filter' => array('@DISCOUNT_ID' => self::$discountCheckList),
+                'group' => array('DISCOUNT_ID')
+            )
+        );
         while ($coupon = $couponIterator->fetch()) {
             $coupon['CNT'] = (int)$coupon['CNT'];
             if ($coupon['CNT'] > 0) {
@@ -519,22 +573,28 @@ class DiscountCouponTable extends Main\Entity\DataManager
     public static function deleteByDiscount($discount)
     {
         $discount = (int)$discount;
-        if ($discount <= 0)
+        if ($discount <= 0) {
             return;
+        }
 
         $couponsList = array();
-        $couponIterator = self::getList(array(
-            'select' => array('ID'),
-            'filter' => array('=DISCOUNT_ID' => $discount)
-        ));
-        while ($coupon = $couponIterator->fetch())
+        $couponIterator = self::getList(
+            array(
+                'select' => array('ID'),
+                'filter' => array('=DISCOUNT_ID' => $discount)
+            )
+        );
+        while ($coupon = $couponIterator->fetch()) {
             $couponsList[] = $coupon['ID'];
+        }
         unset($coupon, $couponIterator);
         if (!empty($couponsList)) {
             $conn = Application::getConnection();
             $helper = $conn->getSqlHelper();
             $conn->queryExecute(
-                'delete from ' . $helper->quote(self::getTableName()) . ' where ' . $helper->quote('DISCOUNT_ID') . ' = ' . $discount
+                'delete from ' . $helper->quote(self::getTableName()) . ' where ' . $helper->quote(
+                    'DISCOUNT_ID'
+                ) . ' = ' . $discount
             );
             $event = new Main\Event('sale', self::EVENT_ON_AFTER_DELETE_DISCOUNT, array($discount, $couponsList));
             $event->send();
@@ -552,99 +612,168 @@ class DiscountCouponTable extends Main\Entity\DataManager
     public static function saveApplied($coupons, $userId, Main\Type\DateTime $currentTime)
     {
         $currentTimestamp = $currentTime->getTimestamp();
-        if ($userId === null || (int)$userId == 0)
+        if ($userId === null || (int)$userId == 0) {
             return false;
+        }
         $userId = (int)$userId;
-        if (!is_array($coupons))
+        if (!is_array($coupons)) {
             $coupons = array($coupons);
-        if (empty($coupons))
+        }
+        if (empty($coupons)) {
             return false;
+        }
         Main\Type\Collection::normalizeArrayValuesByInt($coupons);
-        if (empty($coupons))
+        if (empty($coupons)) {
             return false;
+        }
 
+        $errorList = [];
         $deactivateCoupons = array();
         $incrementalCoupons = array();
         $limitedCoupons = array();
-        $couponIterator = self::getList(array(
-            'select' => array(
-                'ID', 'COUPON', 'DISCOUNT_ID', 'TYPE', 'ACTIVE', 'MAX_USE', 'USE_COUNT', 'USER_ID', 'ACTIVE_TO', 'ACTIVE_FROM',
-                'DISCOUNT_ACTIVE' => 'DISCOUNT.ACTIVE',
-                'DISCOUNT_ACTIVE_FROM' => 'DISCOUNT.ACTIVE_FROM', 'DISCOUNT_ACTIVE_TO' => 'DISCOUNT.ACTIVE_TO'
-            ),
-            'filter' => array('@ID' => $coupons, '=ACTIVE' => 'Y'),
-            'order' => array('ID' => 'ASC')
-        ));
-        while ($existCoupon = $couponIterator->fetch()) {
-            if ($existCoupon['DISCOUNT_ACTIVE'] != 'Y')
-                continue;
-            if (
-                ($existCoupon['DISCOUNT_ACTIVE_FROM'] instanceof Main\Type\DateTime && $existCoupon['DISCOUNT_ACTIVE_FROM']->getTimestamp() > $currentTimestamp)
-                ||
-                ($existCoupon['DISCOUNT_ACTIVE_TO'] instanceof Main\Type\DateTime && $existCoupon['DISCOUNT_ACTIVE_TO']->getTimestamp() < $currentTimestamp)
+        $couponIterator = self::getList(
+            array(
+                'select' => array(
+                    'ID',
+                    'COUPON',
+                    'DISCOUNT_ID',
+                    'TYPE',
+                    'ACTIVE',
+                    'MAX_USE',
+                    'USE_COUNT',
+                    'USER_ID',
+                    'ACTIVE_TO',
+                    'ACTIVE_FROM',
+                    'DISCOUNT_ACTIVE' => 'DISCOUNT.ACTIVE',
+                    'DISCOUNT_ACTIVE_FROM' => 'DISCOUNT.ACTIVE_FROM',
+                    'DISCOUNT_ACTIVE_TO' => 'DISCOUNT.ACTIVE_TO'
+                ),
+                'filter' => array('@ID' => $coupons),
+                'order' => array('ID' => 'ASC')
             )
+        );
+        while ($existCoupon = $couponIterator->fetch()) {
+            $couponCode = $existCoupon['COUPON'];
+            if ($existCoupon['DISCOUNT_ACTIVE'] != 'Y') {
+                $errorList[$couponCode] = Loc::getMessage('DISCOUNT_COUPON_SAVE_ERROR_DISCOUNT_INACTIVE');
                 continue;
+            }
+            if (
+                ($existCoupon['DISCOUNT_ACTIVE_FROM'] instanceof Main\Type\DateTime && $existCoupon['DISCOUNT_ACTIVE_FROM']->getTimestamp(
+                    ) > $currentTimestamp)
+                ||
+                ($existCoupon['DISCOUNT_ACTIVE_TO'] instanceof Main\Type\DateTime && $existCoupon['DISCOUNT_ACTIVE_TO']->getTimestamp(
+                    ) < $currentTimestamp)
+            ) {
+                $errorList[$couponCode] = Loc::getMessage('DISCOUNT_COUPON_SAVE_ERROR_DISCOUNT_WRONG_ACTIVE_PERIOD');
+                continue;
+            }
 
             $existCoupon['USER_ID'] = (int)$existCoupon['USER_ID'];
-            if ($existCoupon['USER_ID'] > 0 && $existCoupon['USER_ID'] != $userId)
+            if ($existCoupon['USER_ID'] > 0 && $existCoupon['USER_ID'] != $userId) {
+                $errorList[$couponCode] = Loc::getMessage('DISCOUNT_COUPON_SAVE_ERROR_WRONG_USER_COUPON');
                 continue;
+            }
             if (
-                ($existCoupon['ACTIVE_FROM'] instanceof Main\Type\DateTime && $existCoupon['ACTIVE_FROM']->getTimestamp() > $currentTimestamp)
+                ($existCoupon['ACTIVE_FROM'] instanceof Main\Type\DateTime && $existCoupon['ACTIVE_FROM']->getTimestamp(
+                    ) > $currentTimestamp)
                 ||
-                ($existCoupon['ACTIVE_TO'] instanceof Main\Type\DateTime && $existCoupon['ACTIVE_TO']->getTimestamp() < $currentTimestamp)
-            )
+                ($existCoupon['ACTIVE_TO'] instanceof Main\Type\DateTime && $existCoupon['ACTIVE_TO']->getTimestamp(
+                    ) < $currentTimestamp)
+            ) {
+                $errorList[$couponCode] = Loc::getMessage('DISCOUNT_COUPON_SAVE_ERROR_COUPON_WRONG_ACTIVE_PERIOD');
                 continue;
+            }
+            if ($existCoupon['ACTIVE'] != 'Y') {
+                switch ($existCoupon['TYPE']) {
+                    case self::TYPE_BASKET_ROW:
+                        $errorList[$couponCode] = Loc::getMessage(
+                            'DISCOUNT_COUPON_SAVE_ERROR_COUPON_BASKET_ROW_INACTIVE'
+                        );
+                        break;
+                    case self::TYPE_ONE_ORDER:
+                        $errorList[$couponCode] = Loc::getMessage(
+                            'DISCOUNT_COUPON_SAVE_ERROR_COUPON_ONE_ORDER_INACTIVE'
+                        );
+                        break;
+                    default:
+                        $errorList[$couponCode] = Loc::getMessage('DISCOUNT_COUPON_SAVE_ERROR_COUPON_INACTIVE');
+                        break;
+                }
+                continue;
+            }
+
             if (
                 $existCoupon['TYPE'] == self::TYPE_BASKET_ROW
                 || $existCoupon['TYPE'] == self::TYPE_ONE_ORDER
             ) {
-                $deactivateCoupons[$existCoupon['COUPON']] = $existCoupon['ID'];
+                $deactivateCoupons[$couponCode] = $existCoupon['ID'];
             } elseif ($existCoupon['TYPE'] == self::TYPE_MULTI_ORDER) {
                 $existCoupon['MAX_USE'] = (int)$existCoupon['MAX_USE'];
                 $existCoupon['USE_COUNT'] = (int)$existCoupon['USE_COUNT'];
 
-                if ($existCoupon['MAX_USE'] > 0 && $existCoupon['USE_COUNT'] >= $existCoupon['MAX_USE'])
+                if ($existCoupon['MAX_USE'] > 0 && $existCoupon['USE_COUNT'] >= $existCoupon['MAX_USE']) {
+                    $errorList[$couponCode] = Loc::getMessage('DISCOUNT_COUPON_SAVE_ERROR_COUPON_MAX_USE_LIMIT');
                     continue;
+                }
                 if ($existCoupon['MAX_USE'] > 0 && $existCoupon['USE_COUNT'] >= ($existCoupon['MAX_USE'] - 1)) {
                     $limitedCoupons[$existCoupon['COUPON']] = $existCoupon['ID'];
                 } else {
                     $incrementalCoupons[$existCoupon['COUPON']] = $existCoupon['ID'];
                 }
             }
-
         }
-        unset($existCoupon, $couponIterator, $coupons);
+        unset($existCoupon, $couponIterator);
+        if (!empty($errorList)) {
+            return [
+                'STATUS' => false,
+                'ERROR' => $errorList,
+                'DEACTIVATE' => 0,
+                'LIMITED' => 0,
+                'INCREMENT' => 0
+            ];
+        }
         if (!empty($deactivateCoupons) || !empty($limitedCoupons) || !empty($incrementalCoupons)) {
             $conn = Application::getConnection();
             $helper = $conn->getSqlHelper();
             $tableName = $helper->quote(self::getTableName());
             if (!empty($deactivateCoupons)) {
                 $conn->queryExecute(
-                    'update ' . $tableName . ' set ' . $helper->quote('ACTIVE') . ' = \'N\', ' . $helper->quote('DATE_APPLY') . ' = ' . $helper->getCurrentDateTimeFunction() .
+                    'update ' . $tableName . ' set ' . $helper->quote('ACTIVE') . ' = \'N\', ' . $helper->quote(
+                        'DATE_APPLY'
+                    ) . ' = ' . $helper->getCurrentDateTimeFunction() .
                     ' where ' . $helper->quote('ID') . ' in (' . implode(',', $deactivateCoupons) . ')'
                 );
             }
             if (!empty($incrementalCoupons)) {
                 $conn->queryExecute(
-                    'update ' . $tableName . ' set ' . $helper->quote('DATE_APPLY') . ' = ' . $helper->getCurrentDateTimeFunction() . ', ' .
+                    'update ' . $tableName . ' set ' . $helper->quote(
+                        'DATE_APPLY'
+                    ) . ' = ' . $helper->getCurrentDateTimeFunction() . ', ' .
                     $helper->quote('USE_COUNT') . ' = ' . $helper->quote('USE_COUNT') . ' + 1' .
                     ' where ' . $helper->quote('ID') . ' in (' . implode(',', $incrementalCoupons) . ')'
                 );
             }
             if (!empty($limitedCoupons)) {
                 $conn->queryExecute(
-                    'update ' . $tableName . ' set ' . $helper->quote('DATE_APPLY') . ' = ' . $helper->getCurrentDateTimeFunction() . ', ' .
-                    $helper->quote('ACTIVE') . ' = \'N\', ' . $helper->quote('USE_COUNT') . ' = ' . $helper->quote('USE_COUNT') . ' + 1' .
+                    'update ' . $tableName . ' set ' . $helper->quote(
+                        'DATE_APPLY'
+                    ) . ' = ' . $helper->getCurrentDateTimeFunction() . ', ' .
+                    $helper->quote('ACTIVE') . ' = \'N\', ' . $helper->quote('USE_COUNT') . ' = ' . $helper->quote(
+                        'USE_COUNT'
+                    ) . ' + 1' .
                     ' where ' . $helper->quote('ID') . ' in (' . implode(',', $limitedCoupons) . ')'
                 );
             }
             unset($tableName, $helper);
         }
-        return array(
+        return [
+            'STATUS' => true,
+            'ERROR_LIST' => [],
             'DEACTIVATE' => $deactivateCoupons,
             'LIMITED' => $limitedCoupons,
             'INCREMENT' => $incrementalCoupons
-        );
+        ];
     }
 
     /**
@@ -665,31 +794,36 @@ class DiscountCouponTable extends Main\Entity\DataManager
             if (!empty($resultList) && is_array($resultList)) {
                 /** @var Main\EventResult $eventResult */
                 foreach ($resultList as &$eventResult) {
-                    if ($eventResult->getType() != Main\EventResult::SUCCESS)
+                    if ($eventResult->getType() != Main\EventResult::SUCCESS) {
                         continue;
+                    }
                     $eventExists = true;
                     $result = $eventResult->getParameters();
-                    if (!empty($result) && is_string($result))
+                    if (!empty($result) && is_string($result)) {
                         return $result;
+                    }
                 }
                 unset($eventResult);
             }
-            if ($eventExists === null)
+            if ($eventExists === null) {
                 $eventExists = false;
+            }
         }
 
         $allchars = 'ABCDEFGHIJKLNMOPQRSTUVWXYZ0123456789';
-        $charsLen = strlen($allchars) - 1;
+        $charsLen = mb_strlen($allchars) - 1;
 
         do {
             $resultCorrect = true;
             $partOne = '';
             $partTwo = '';
-            for ($i = 0; $i < 5; $i++)
-                $partOne .= substr($allchars, rand(0, $charsLen), 1);
+            for ($i = 0; $i < 5; $i++) {
+                $partOne .= mb_substr($allchars, rand(0, $charsLen), 1);
+            }
 
-            for ($i = 0; $i < 7; $i++)
-                $partTwo .= substr($allchars, rand(0, $charsLen), 1);
+            for ($i = 0; $i < 7; $i++) {
+                $partTwo .= mb_substr($allchars, rand(0, $charsLen), 1);
+            }
 
             $result = 'SL-' . $partOne . '-' . $partTwo;
             if ($check) {
@@ -711,25 +845,30 @@ class DiscountCouponTable extends Main\Entity\DataManager
     public static function addPacket(array $data, $count, $limit = 0)
     {
         $result = new Main\Entity\Result();
-        $result->setData(array(
-            'result' => 0,
-            'count' => $count,
-            'limit' => $limit,
-            'all' => 0
-        ));
+        $result->setData(
+            array(
+                'result' => 0,
+                'count' => $count,
+                'limit' => $limit,
+                'all' => 0
+            )
+        );
         $count = (int)$count;
         if ($count <= 0) {
-            $result->addError(new Main\Entity\EntityError(
-                Loc::getMessage('DISCOUNT_COUPON_PACKET_COUNT_ERR'),
-                'COUPON_PACKET'
-            ));
+            $result->addError(
+                new Main\Entity\EntityError(
+                    Loc::getMessage('DISCOUNT_COUPON_PACKET_COUNT_ERR'),
+                    'COUPON_PACKET'
+                )
+            );
         }
         foreach (static::getEntity()->getFields() as $field) {
             if ($field instanceof Main\Entity\ScalarField && !array_key_exists($field->getName(), $data)) {
                 $defaultValue = $field->getDefaultValue();
 
-                if ($defaultValue !== null)
+                if ($defaultValue !== null) {
                     $data[$field->getName()] = $field->getDefaultValue();
+                }
             }
         }
         $checkResult = static::checkPacket($data, false);
@@ -741,62 +880,75 @@ class DiscountCouponTable extends Main\Entity\DataManager
         }
         unset($checkResult);
         $useCoupons = false;
-        $discountIterator = DiscountTable::getList(array(
-            'select' => array('ID', 'USE_COUPONS'),
-            'filter' => array('=ID' => $data['DISCOUNT_ID'])
-        ));
+        $discountIterator = DiscountTable::getList(
+            array(
+                'select' => array('ID', 'USE_COUPONS'),
+                'filter' => array('=ID' => $data['DISCOUNT_ID'])
+            )
+        );
         if ($discount = $discountIterator->fetch()) {
             $useCoupons = ($discount['USE_COUPONS'] == 'Y');
         } else {
-            $result->addError(new Main\Entity\EntityError(
-                Loc::getMessage('DISCOUNT_COUPON_PACKET_DISCOUNT_ERR'),
-                'COUPON_PACKET'
-            ));
+            $result->addError(
+                new Main\Entity\EntityError(
+                    Loc::getMessage('DISCOUNT_COUPON_PACKET_DISCOUNT_ERR'),
+                    'COUPON_PACKET'
+                )
+            );
         }
-        if (!$result->isSuccess(true))
+        if (!$result->isSuccess(true)) {
             return $result;
+        }
 
         self::setDiscountCheckList($data['DISCOUNT_ID']);
         self::disableCheckCouponsUse();
         $limit = (int)$limit;
-        if ($limit < $count)
+        if ($limit < $count) {
             $limit = $count * 2;
+        }
         $resultCount = 0;
         $all = 0;
         do {
             $data['COUPON'] = self::generateCoupon(true);
             $couponResult = self::add($data);
-            if ($couponResult->isSuccess())
+            if ($couponResult->isSuccess()) {
                 $resultCount++;
+            }
             $all++;
         } while ($resultCount < $count && $all < $limit);
-        $result->setData(array(
-            'result' => $resultCount,
-            'count' => $count,
-            'limit' => $limit,
-            'all' => $all
-        ));
+        $result->setData(
+            array(
+                'result' => $resultCount,
+                'count' => $count,
+                'limit' => $limit,
+                'all' => $all
+            )
+        );
         if ($resultCount == 0) {
-            $result->addError(new Main\Entity\EntityError(
-                ($useCoupons
-                    ? Loc::getMessage('DISCOUNT_COUPON_PACKET_GENERATE_COUPON_ZERO_ERR')
-                    : Loc::getMessage('DISCOUNT_COUPON_PACKET_NEW_GENERATE_COUPON_ZERO_ERR')
-                ),
-                'COUPON_PACKET'
-            ));
+            $result->addError(
+                new Main\Entity\EntityError(
+                    ($useCoupons
+                        ? Loc::getMessage('DISCOUNT_COUPON_PACKET_GENERATE_COUPON_ZERO_ERR')
+                        : Loc::getMessage('DISCOUNT_COUPON_PACKET_NEW_GENERATE_COUPON_ZERO_ERR')
+                    ),
+                    'COUPON_PACKET'
+                )
+            );
             self::clearDiscountCheckList();
         } elseif ($resultCount < $count) {
-            $result->addError(new Main\Entity\EntityError(
-                Loc::getMessage(
-                    'DISCOUNT_COUPON_PACKET_GENERATE_COUPON_COUNT_ERR',
-                    array(
-                        '#RESULT#' => $resultCount,
-                        '#COUNT#' => $count,
-                        '#ALL#' => $all
-                    )
-                ),
-                'COUPON_PACKET'
-            ));
+            $result->addError(
+                new Main\Entity\EntityError(
+                    Loc::getMessage(
+                        'DISCOUNT_COUPON_PACKET_GENERATE_COUPON_COUNT_ERR',
+                        array(
+                            '#RESULT#' => $resultCount,
+                            '#COUNT#' => $count,
+                            '#ALL#' => $all
+                        )
+                    ),
+                    'COUPON_PACKET'
+                )
+            );
         }
         self::enableCheckCouponsUse();
         self::updateUseCoupons();
@@ -817,32 +969,40 @@ class DiscountCouponTable extends Main\Entity\DataManager
 
         $newDiscount = ($newDiscount === true);
         if (empty($data) || !is_array($data)) {
-            $result->addError(new Main\Entity\EntityError(
-                Loc::getMessage('DISCOUNT_COUPON_PACKET_EMPTY'),
-                'COUPON_PACKET'
-            ));
+            $result->addError(
+                new Main\Entity\EntityError(
+                    Loc::getMessage('DISCOUNT_COUPON_PACKET_EMPTY'),
+                    'COUPON_PACKET'
+                )
+            );
         } else {
             if (empty($data['TYPE']) || !in_array((int)$data['TYPE'], self::getCouponTypes(false))) {
-                $result->addError(new Main\Entity\EntityError(
-                    Loc::getMessage('DISCOUNT_COUPON_VALIDATOR_TYPE'),
-                    'COUPON_PACKET'
-                ));
+                $result->addError(
+                    new Main\Entity\EntityError(
+                        Loc::getMessage('DISCOUNT_COUPON_VALIDATOR_TYPE'),
+                        'COUPON_PACKET'
+                    )
+                );
             }
             if (!$newDiscount && empty($data['DISCOUNT_ID'])) {
-                $result->addError(new Main\Entity\EntityError(
-                    Loc::getMessage('DISCOUNT_COUPON_VALIDATOR_DISCOUNT_ID'),
-                    'COUPON_PACKET'
-                ));
+                $result->addError(
+                    new Main\Entity\EntityError(
+                        Loc::getMessage('DISCOUNT_COUPON_VALIDATOR_DISCOUNT_ID'),
+                        'COUPON_PACKET'
+                    )
+                );
             }
             if (
                 (isset($data['ACTIVE_FROM']) && !($data['ACTIVE_FROM'] instanceof Main\Type\DateTime))
                 ||
                 (isset($data['ACTIVE_TO']) && !($data['ACTIVE_TO'] instanceof Main\Type\DateTime))
             ) {
-                $result->addError(new Main\Entity\EntityError(
-                    Loc::getMessage('DISCOUNT_COUPON_VALIDATOR_PERIOD'),
-                    'COUPON_PACKET'
-                ));
+                $result->addError(
+                    new Main\Entity\EntityError(
+                        Loc::getMessage('DISCOUNT_COUPON_VALIDATOR_PERIOD'),
+                        'COUPON_PACKET'
+                    )
+                );
             }
         }
         return $result;
@@ -860,11 +1020,15 @@ class DiscountCouponTable extends Main\Entity\DataManager
         if (!empty($fields) && is_array($fields)) {
             if (isset($fields['ACTIVE_FROM']) && is_string($fields['ACTIVE_FROM'])) {
                 $fields['ACTIVE_FROM'] = trim($fields['ACTIVE_FROM']);
-                $fields['ACTIVE_FROM'] = ($fields['ACTIVE_FROM'] !== '' ? Main\Type\DateTime::createFromUserTime($fields['ACTIVE_FROM']) : null);
+                $fields['ACTIVE_FROM'] = ($fields['ACTIVE_FROM'] !== '' ? Main\Type\DateTime::createFromUserTime(
+                    $fields['ACTIVE_FROM']
+                ) : null);
             }
             if (isset($fields['ACTIVE_TO']) && is_string($fields['ACTIVE_TO'])) {
                 $fields['ACTIVE_TO'] = trim($fields['ACTIVE_TO']);
-                $fields['ACTIVE_TO'] = ($fields['ACTIVE_TO'] !== '' ? Main\Type\DateTime::createFromUserTime($fields['ACTIVE_TO']) : null);
+                $fields['ACTIVE_TO'] = ($fields['ACTIVE_TO'] !== '' ? Main\Type\DateTime::createFromUserTime(
+                    $fields['ACTIVE_TO']
+                ) : null);
             }
         }
         return $result;
@@ -904,11 +1068,13 @@ class DiscountCouponTable extends Main\Entity\DataManager
         }
         foreach ($keys as $oneKey) {
             $setField = true;
-            if (array_key_exists($oneKey, $data))
+            if (array_key_exists($oneKey, $data)) {
                 $setField = ($data[$oneKey] !== null && (int)$data[$oneKey] <= 0);
+            }
 
-            if ($setField)
+            if ($setField) {
                 $result[$oneKey] = $currentUserID;
+            }
         }
         unset($oneKey);
     }
@@ -925,11 +1091,13 @@ class DiscountCouponTable extends Main\Entity\DataManager
     {
         foreach ($keys as $oneKey) {
             $setField = true;
-            if (array_key_exists($oneKey, $data))
+            if (array_key_exists($oneKey, $data)) {
                 $setField = ($data[$oneKey] !== null && !is_object($data[$oneKey]));
+            }
 
-            if ($setField)
+            if ($setField) {
                 $result[$oneKey] = new Main\Type\DateTime();
+            }
         }
         unset($oneKey);
     }

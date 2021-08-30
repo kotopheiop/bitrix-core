@@ -116,10 +116,12 @@ abstract class Controller
      */
     protected function triggerOnBeforeAction($action)
     {
-        $event = new Event('report', static::EVENT_ON_BEFORE_ACTION . $action, array(
+        $event = new Event(
+            'report', static::EVENT_ON_BEFORE_ACTION . $action, array(
             'action' => $action,
             'controller' => $this,
-        ));
+        )
+        );
         $event->send($this);
 
         if ($event->getResults()) {
@@ -190,10 +192,12 @@ abstract class Controller
             );
         }
         unset($error);
-        $this->sendJsonResponse(array(
-            'status' => self::STATUS_ERROR,
-            'errors' => $errors,
-        ));
+        $this->sendJsonResponse(
+            array(
+                'status' => self::STATUS_ERROR,
+                'errors' => $errors,
+            )
+        );
     }
 
     /**
@@ -203,10 +207,12 @@ abstract class Controller
      */
     protected function sendJsonAccessDeniedResponse($message = '')
     {
-        $this->sendJsonResponse(array(
-            'status' => self::STATUS_DENIED,
-            'message' => $message,
-        ));
+        $this->sendJsonResponse(
+            array(
+                'status' => self::STATUS_DENIED,
+                'message' => $message,
+            )
+        );
     }
 
     /**
@@ -216,10 +222,12 @@ abstract class Controller
      */
     protected function sendJsonInvalidSignResponse($message = '')
     {
-        $this->sendJsonResponse(array(
-            'status' => self::STATUS_INVALID_SIGN,
-            'message' => $message,
-        ));
+        $this->sendJsonResponse(
+            array(
+                'status' => self::STATUS_INVALID_SIGN,
+                'message' => $message,
+            )
+        );
     }
 
     /**
@@ -276,11 +284,19 @@ abstract class Controller
     protected function resolveAction()
     {
         $listOfActions = $this->normalizeListOfAction($this->listActions());
-        $action = strtolower($this->action);
+        $action = mb_strtolower($this->action);
 
         if (!isset($listOfActions[$action])) {
-            $this->errorCollection->add(array(new Error(Loc::getMessage('REPORT_CONTROLLER_ERROR_UNKNOWN_ACTION',
-                array('#ACTION#' => $action)), self::ERROR_UNKNOWN_ACTION)));
+            $this->errorCollection->add(
+                array(
+                    new Error(
+                        Loc::getMessage(
+                            'REPORT_CONTROLLER_ERROR_UNKNOWN_ACTION',
+                            array('#ACTION#' => $action)
+                        ), self::ERROR_UNKNOWN_ACTION
+                    )
+                )
+            );
             return $this;
         }
 
@@ -367,8 +383,10 @@ abstract class Controller
 
         if (!$this->getUser() || !$this->getUser()->getId()) {
             if ($description['redirect_on_auth']) {
-                LocalRedirect(SITE_DIR . 'auth/?backurl=' .
-                    urlencode(Application::getInstance()->getContext()->getRequest()->getRequestUri()));
+                LocalRedirect(
+                    SITE_DIR . 'auth/?backurl=' .
+                    urlencode(Application::getInstance()->getContext()->getRequest()->getRequestUri())
+                );
             } else {
                 $this->runProcessingIfUserNotAuthorized();
             }
@@ -559,10 +577,17 @@ abstract class Controller
     {
         foreach ($required as $item) {
             if (!isset($inputParams[$item]) || (!$inputParams[$item] &&
-                    !(is_string($inputParams[$item]) && strlen($inputParams[$item])))) {
-                $this->errorCollection->add(array(new Error(
-                    Loc::getMessage('REPORT_CONTROLLER_ERROR_REQUIRED_PARAMETER',
-                        array('#PARAM#' => $item)), self::ERROR_REQUIRED_PARAMETER)));
+                    !(is_string($inputParams[$item]) && mb_strlen($inputParams[$item])))) {
+                $this->errorCollection->add(
+                    array(
+                        new Error(
+                            Loc::getMessage(
+                                'REPORT_CONTROLLER_ERROR_REQUIRED_PARAMETER',
+                                array('#PARAM#' => $item)
+                            ), self::ERROR_REQUIRED_PARAMETER
+                        )
+                    )
+                );
                 return false;
             }
         }

@@ -38,9 +38,11 @@ class CDataXMLNode
     function getAttribute($attribute)
     {
         if (is_array($this->attributes)) {
-            foreach ($this->attributes as $anode)
-                if ($anode->name == $attribute)
+            foreach ($this->attributes as $anode) {
+                if ($anode->name == $attribute) {
                     return $anode->content;
+                }
+            }
         }
         return "";
     }
@@ -63,15 +65,17 @@ class CDataXMLNode
     {
         $result = array();
 
-        if ($this->name == $tagname)
+        if ($this->name == $tagname) {
             array_push($result, $this);
+        }
 
         if (is_array($this->children)) {
             foreach ($this->children as $node) {
                 $more = $node->elementsByName($tagname);
                 if (is_array($more)) {
-                    foreach ($more as $mnode)
+                    foreach ($more as $mnode) {
                         array_push($result, $mnode);
+                    }
                 }
             }
         }
@@ -82,8 +86,9 @@ class CDataXMLNode
     {
         if (isset($result[$name])) {
             $i = 1;
-            while (isset($result[$i . ":" . $name]))
+            while (isset($result[$i . ":" . $name])) {
                 $i++;
+            }
             $result[$i . ":" . $name] = $value;
             return "indexed";
         } else {
@@ -105,8 +110,9 @@ class CDataXMLNode
                     $this->_SaveDataType_OnDecode($result, $child->name(), $child->textContent());
                 } else {
                     $cheresult = $child->decodeDataTypes();
-                    if (is_array($cheresult))
+                    if (is_array($cheresult)) {
                         $this->_SaveDataType_OnDecode($result, $child->name(), $cheresult);
+                    }
                 }
             }
         }
@@ -132,8 +138,9 @@ class CDataXMLNode
             default:
                 $isOneLiner = false;
 
-                if (count($this->children) == 0 && $this->content == '')
+                if (count($this->children) == 0 && $this->content == '') {
                     $isOneLiner = true;
+                }
 
                 $attrStr = "";
 
@@ -143,10 +150,11 @@ class CDataXMLNode
                     }
                 }
 
-                if ($isOneLiner)
+                if ($isOneLiner) {
                     $oneLinerEnd = " /";
-                else
+                } else {
                     $oneLinerEnd = "";
+                }
 
                 $ret = "<" . $this->name . $attrStr . $oneLinerEnd . ">";
 
@@ -157,8 +165,9 @@ class CDataXMLNode
                 }
 
                 if (!$isOneLiner) {
-                    if ($this->content <> '')
+                    if ($this->content <> '') {
                         $ret .= CDataXML::xmlspecialchars($this->content);
+                    }
 
                     $ret .= "</" . $this->name . ">";
                 }
@@ -176,16 +185,18 @@ class CDataXMLNode
         );
 
         if (is_array($this->attributes)) {
-            foreach ($this->attributes as $attr)
+            foreach ($this->attributes as $attr) {
                 $retHash["@"][$attr->name] = $attr->content;
+            }
         }
 
         if ($this->content != "") {
             $retHash["#"] = $this->content;
         } elseif (!empty($this->children)) {
             $ar = array();
-            foreach ($this->children as $child)
+            foreach ($this->children as $child) {
                 $ar[$child->name][] = $child->__toArray();
+            }
             $retHash["#"] = $ar;
         } else {
             $retHash["#"] = "";
@@ -215,8 +226,9 @@ class CDataXMLDocument
             foreach ($this->children as $node) {
                 $more = $node->elementsByName($tagname);
                 if (is_array($more)) {
-                    foreach ($more as $mnode)
+                    foreach ($more as $mnode) {
                         array_push($result, $mnode);
+                    }
                 }
             }
         }
@@ -226,10 +238,19 @@ class CDataXMLDocument
     function encodeDataTypes($name, $value)
     {
         static $Xsd = array(
-            "string" => "string", "bool" => "boolean", "boolean" => "boolean",
-            "int" => "integer", "integer" => "integer", "double" => "double", "float" => "float", "number" => "float",
-            "array" => "anyType", "resource" => "anyType",
-            "mixed" => "anyType", "unknown_type" => "anyType", "anyType" => "anyType"
+            "string" => "string",
+            "bool" => "boolean",
+            "boolean" => "boolean",
+            "int" => "integer",
+            "integer" => "integer",
+            "double" => "double",
+            "float" => "float",
+            "number" => "float",
+            "array" => "anyType",
+            "resource" => "anyType",
+            "mixed" => "anyType",
+            "unknown_type" => "anyType",
+            "anyType" => "anyType"
         );
 
         $node = new CDataXMLNode();
@@ -239,18 +260,22 @@ class CDataXMLDocument
             $ovars = get_object_vars($value);
             foreach ($ovars as $pn => $pv) {
                 $decode = CDataXMLDocument::encodeDataTypes($pn, $pv);
-                if ($decode)
+                if ($decode) {
                     array_push($node->children, $decode);
-            }
-        } else if (is_array($value)) {
-            foreach ($value as $pn => $pv) {
-                $decode = CDataXMLDocument::encodeDataTypes($pn, $pv);
-                if ($decode)
-                    array_push($node->children, $decode);
+                }
             }
         } else {
-            if (isset($Xsd[gettype($value)])) {
-                $node->content = $value;
+            if (is_array($value)) {
+                foreach ($value as $pn => $pv) {
+                    $decode = CDataXMLDocument::encodeDataTypes($pn, $pv);
+                    if ($decode) {
+                        array_push($node->children, $decode);
+                    }
+                }
+            } else {
+                if (isset($Xsd[gettype($value)])) {
+                    $node->content = $value;
+                }
             }
         }
         return $node;
@@ -260,10 +285,12 @@ class CDataXMLDocument
     function &__toString()
     {
         $ret = "<" . "?xml";
-        if ($this->version <> '')
+        if ($this->version <> '') {
             $ret .= " version=\"" . $this->version . "\"";
-        if ($this->encoding <> '')
+        }
+        if ($this->encoding <> '') {
             $ret .= " encoding=\"" . $this->encoding . "\"";
+        }
         $ret .= "?" . ">";
 
         if (is_array($this->children)) {
@@ -298,27 +325,28 @@ class CDataXML
 
     var $delete_ns = true;
 
-    public function __construct($TrimWhiteSpace = True)
+    public function __construct($TrimWhiteSpace = true)
     {
-        $this->TrimWhiteSpace = ($TrimWhiteSpace ? True : False);
-        $this->tree = False;
+        $this->TrimWhiteSpace = ($TrimWhiteSpace ? true : false);
+        $this->tree = false;
     }
 
     function Load($file)
     {
-        /** @global CMain $APPLICATION */
-        global $APPLICATION;
-
         unset($this->tree);
-        $this->tree = False;
+        $this->tree = false;
 
         if (file_exists($file)) {
             $content = file_get_contents($file);
             $charset = (defined("BX_DEFAULT_CHARSET") ? BX_DEFAULT_CHARSET : "windows-1251");
-            if (preg_match("/<" . "\\?XML[^>]{1,}encoding=[\"']([^>\"']{1,})[\"'][^>]{0,}\\?" . ">/i", $content, $matches)) {
+            if (preg_match(
+                "/<" . "\\?XML[^>]{1,}encoding=[\"']([^>\"']{1,})[\"'][^>]{0,}\\?" . ">/i",
+                $content,
+                $matches
+            )) {
                 $charset = trim($matches[1]);
             }
-            $content = $APPLICATION->ConvertCharset($content, $charset, SITE_CHARSET);
+            $content = \Bitrix\Main\Text\Encoding::convertEncoding($content, $charset, SITE_CHARSET);
             $this->tree = &$this->__parse($content);
             return $this->tree !== false;
         }
@@ -346,24 +374,27 @@ class CDataXML
 
     function &GetArray()
     {
-        if (!is_object($this->tree))
+        if (!is_object($this->tree)) {
             return false;
-        else
+        } else {
             return $this->tree->__toArray();
+        }
     }
 
     function &GetString()
     {
-        if (!is_object($this->tree))
+        if (!is_object($this->tree)) {
             return false;
-        else
+        } else {
             return $this->tree->__toString();
+        }
     }
 
     function &SelectNodes($strNode)
     {
-        if (!is_object($this->tree))
+        if (!is_object($this->tree)) {
             return false;
+        }
 
         $result = &$this->tree;
 
@@ -371,8 +402,9 @@ class CDataXML
         $tmpCount = count($tmp);
         for ($i = 1; $i < $tmpCount; $i++) {
             if ($tmp[$i] != "") {
-                if (!is_array($result->children))
+                if (!is_array($result->children)) {
                     return false;
+                }
 
                 $bFound = false;
                 for ($j = 0, $c = count($result->children); $j < $c; $j++) {
@@ -383,8 +415,9 @@ class CDataXML
                     }
                 }
 
-                if (!$bFound)
+                if (!$bFound) {
                     return false;
+                }
             }
         }
 
@@ -425,8 +458,9 @@ class CDataXML
         // The DOCTYPE declaration can consists of an internal DTD in square brackets
         $cnt = 0;
         $strXMLText = preg_replace("%<\\!DOCTYPE[^\\[>]*\\[.*?\\]>%is", "", $strXMLText, -1, $cnt);
-        if ($cnt == 0)
+        if ($cnt == 0) {
             $strXMLText = preg_replace("%<\\!DOCTYPE[^>]*>%is", "", $strXMLText);
+        }
 
         // get document version and encoding from header
         preg_match_all("#<\\?(.*?)\\?>#i", $strXMLText, $arXMLHeader_tmp);
@@ -435,10 +469,19 @@ class CDataXML
             foreach ($arXMLParam_tmp[0] as $strXMLParam_tmp) {
                 if ($strXMLParam_tmp <> '') {
                     $arXMLAttribute_tmp = explode("=\"", $strXMLParam_tmp);
-                    if ($arXMLAttribute_tmp[0] == "version")
-                        $oXMLDocument->version = substr($arXMLAttribute_tmp[1], 0, strlen($arXMLAttribute_tmp[1]) - 1);
-                    elseif ($arXMLAttribute_tmp[0] == "encoding")
-                        $oXMLDocument->encoding = substr($arXMLAttribute_tmp[1], 0, strlen($arXMLAttribute_tmp[1]) - 1);
+                    if ($arXMLAttribute_tmp[0] == "version") {
+                        $oXMLDocument->version = mb_substr(
+                            $arXMLAttribute_tmp[1],
+                            0,
+                            mb_strlen($arXMLAttribute_tmp[1]) - 1
+                        );
+                    } elseif ($arXMLAttribute_tmp[0] == "encoding") {
+                        $oXMLDocument->encoding = mb_substr(
+                            $arXMLAttribute_tmp[1],
+                            0,
+                            mb_strlen($arXMLAttribute_tmp[1]) - 1
+                        );
+                    }
                 }
             }
         }
@@ -470,13 +513,14 @@ class CDataXML
             // find tag name with attributes
             // check if it's an endtag </tagname>
             if ($tagName[0] == "/") {
-                $tagName = substr($tagName, 1);
+                $tagName = mb_substr($tagName, 1);
                 // strip out namespace; nameSpace:Name
                 if ($this->delete_ns) {
-                    $colonPos = strpos($tagName, ":");
+                    $colonPos = mb_strpos($tagName, ":");
 
-                    if ($colonPos > 0)
-                        $tagName = substr($tagName, $colonPos + 1);
+                    if ($colonPos > 0) {
+                        $tagName = mb_substr($tagName, $colonPos + 1);
+                    }
                 }
 
                 if ($currentNode->name != $tagName) {
@@ -487,31 +531,32 @@ class CDataXML
                 $currentNode = $currentNode->_parent;
 
                 // convert special chars
-                if ((!$this->TrimWhiteSpace) || (trim($tagContent) != ""))
+                if ((!$this->TrimWhiteSpace) || (trim($tagContent) != "")) {
                     $currentNode->content = str_replace($search, $replace, $tagContent);
+                }
             } elseif (strncmp($tagName, "![CDATA[", 8) === 0) {
                 //because cdata may contain > and < chars
                 //it is special processing needed
                 $cdata = "";
                 for ($i = 0, $c = count($arTag); $i < $c; $i++) {
                     $cdata .= $arTag[$i] . ">";
-                    if (substr($cdata, -3) == "]]>") {
+                    if (mb_substr($cdata, -3) == "]]>") {
                         $tagContent = $arTag[$i + 1];
                         break;
                     }
                 }
 
-                if (substr($cdata, -3) != "]]>") {
-                    $cdata = substr($cdata, 0, -1) . "<";
+                if (mb_substr($cdata, -3) != "]]>") {
+                    $cdata = mb_substr($cdata, 0, -1) . "<";
                     do {
                         $tok = strtok(">");//unfortunatly strtok eats > followed by >
                         $cdata .= $tok . ">";
                         //util end of string or end of cdata found
-                    } while ($tok !== false && substr($tok, -2) != "]]");
+                    } while ($tok !== false && mb_substr($tok, -2) != "]]");
                     //$tagName = substr($tagName, 0, -1);
                 }
 
-                $cdataSection = substr($cdata, 8, -3);
+                $cdataSection = mb_substr($cdata, 8, -3);
 
                 // new CDATA node
                 $subNode = new CDataXMLNode();
@@ -522,12 +567,13 @@ class CDataXML
                 $currentNode->content .= $subNode->content;
 
                 // convert special chars
-                if ((!$this->TrimWhiteSpace) || (trim($tagContent) != ""))
+                if ((!$this->TrimWhiteSpace) || (trim($tagContent) != "")) {
                     $currentNode->content = str_replace($search, $replace, $tagContent);
+                }
             } else {
                 // normal start tag
-                $firstSpaceEnd = strpos($tagName, " ");
-                $firstNewlineEnd = strpos($tagName, "\n");
+                $firstSpaceEnd = mb_strpos($tagName, " ");
+                $firstNewlineEnd = mb_strpos($tagName, "\n");
 
                 if ($firstNewlineEnd != false) {
                     if ($firstSpaceEnd != false) {
@@ -543,17 +589,19 @@ class CDataXML
                     }
                 }
 
-                if ($tagNameEnd > 0)
-                    $justName = substr($tagName, 0, $tagNameEnd);
-                else
+                if ($tagNameEnd > 0) {
+                    $justName = mb_substr($tagName, 0, $tagNameEnd);
+                } else {
                     $justName = $tagName;
+                }
 
                 // strip out namespace; nameSpace:Name
                 if ($this->delete_ns) {
-                    $colonPos = strpos($justName, ":");
+                    $colonPos = mb_strpos($justName, ":");
 
-                    if ($colonPos > 0)
-                        $justName = substr($justName, $colonPos + 1);
+                    if ($colonPos > 0) {
+                        $justName = mb_substr($justName, $colonPos + 1);
+                    }
                 }
 
                 // remove trailing / from the name if exists
@@ -565,24 +613,27 @@ class CDataXML
 
                 // find attributes
                 if ($tagNameEnd > 0) {
-                    $attributePart = substr($tagName, $tagNameEnd);
+                    $attributePart = mb_substr($tagName, $tagNameEnd);
 
                     // attributes
                     unset($attr);
                     $attr = CDataXML::__parseAttributes($attributePart);
 
-                    if ($attr != false)
+                    if ($attr != false) {
                         $subNode->attributes = $attr;
+                    }
                 }
 
                 // convert special chars
-                if ((!$this->TrimWhiteSpace) || (trim($tagContent) != ""))
+                if ((!$this->TrimWhiteSpace) || (trim($tagContent) != "")) {
                     $subNode->content = str_replace($search, $replace, $tagContent);
+                }
 
                 $currentNode->children[] = $subNode;
 
-                if (substr($tagName, -1) != "/")
+                if (mb_substr($tagName, -1) != "/") {
                     $currentNode = $subNode;
+                }
             }
 
             //Next iteration
@@ -593,8 +644,9 @@ class CDataXML
                 $currentNode->content .= $arTag[0];
 
                 // convert special chars
-                if ((!$this->TrimWhiteSpace) || (trim($tagContent) != ""))
+                if ((!$this->TrimWhiteSpace) || (trim($tagContent) != "")) {
                     $currentNode->content = str_replace($search, $replace, $tagContent);
+                }
 
                 $tok = strtok("<");
                 $arTag = explode(">", $tok);
@@ -623,14 +675,15 @@ class CDataXML
 
                 // strip out namespace; nameSpace:Name
                 if ($this->delete_ns) {
-                    $colonPos = strpos($attributeName, ":");
+                    $colonPos = mb_strpos($attributeName, ":");
 
                     if ($colonPos > 0) {
                         // exclusion: xmlns attribute is xmlns:nameSpace
-                        if ($colonPos == 5 && (substr($attributeName, 0, $colonPos) == 'xmlns'))
+                        if ($colonPos == 5 && (mb_substr($attributeName, 0, $colonPos) == 'xmlns')) {
                             $attributeName = 'xmlns';
-                        else
-                            $attributeName = substr($attributeName, $colonPos + 1);
+                        } else {
+                            $attributeName = mb_substr($attributeName, $colonPos + 1);
+                        }
                     }
                 }
                 $attributeValue = $attributeArray[3][$i];
@@ -724,8 +777,9 @@ class CXMLFileStream
     public function registerNodeHandler($nodePath, $callableHandler)
     {
         if (is_callable($callableHandler)) {
-            if (!isset($this->nodeHandlers[$nodePath]))
+            if (!isset($this->nodeHandlers[$nodePath])) {
                 $this->nodeHandlers[$nodePath] = array();
+            }
             $this->nodeHandlers[$nodePath][] = $callableHandler;
 
             $pathComponents = explode("/", $nodePath);
@@ -744,8 +798,9 @@ class CXMLFileStream
     public function registerElementHandler($nodePath, $callableHandler)
     {
         if (is_callable($callableHandler)) {
-            if (!isset($this->elementHandlers[$nodePath]))
+            if (!isset($this->elementHandlers[$nodePath])) {
                 $this->elementHandlers[$nodePath] = array();
+            }
             $this->elementHandlers[$nodePath][] = $callableHandler;
 
             $pathComponents = explode("/", $nodePath);
@@ -768,8 +823,9 @@ class CXMLFileStream
         $file = $io->getFile($filePath);
         $this->fileHandler = $file->open("rb");
         if (is_resource($this->fileHandler)) {
-            if ($this->filePosition > 0)
+            if ($this->filePosition > 0) {
                 fseek($this->fileHandler, $this->filePosition);
+            }
 
             $this->elementStack = array();
             $this->positionStack = array();
@@ -793,10 +849,11 @@ class CXMLFileStream
      */
     public function endOfFile()
     {
-        if ($this->fileHandler === null)
+        if ($this->fileHandler === null) {
             return true;
-        else
+        } else {
             return $this->eof;
+        }
     }
 
     /**
@@ -808,8 +865,9 @@ class CXMLFileStream
     public function getPosition()
     {
         $this->xmlPosition = array();
-        foreach ($this->elementStack as $i => $elementName)
+        foreach ($this->elementStack as $i => $elementName) {
             $this->xmlPosition[] = $this->positionStack[$i] . "@" . $elementName;
+        }
         $this->xmlPosition = implode("/", $this->xmlPosition);
 
         return array(
@@ -829,12 +887,15 @@ class CXMLFileStream
     public function setPosition($position)
     {
         if (is_array($position)) {
-            if (isset($position[0]))
+            if (isset($position[0])) {
                 $this->fileCharset = $position[0];
-            if (isset($position[1]))
+            }
+            if (isset($position[1])) {
                 $this->filePosition = $position[1];
-            if (isset($position[2]))
+            }
+            if (isset($position[2])) {
                 $this->xmlPosition = $position[2];
+            }
         }
     }
 
@@ -849,8 +910,9 @@ class CXMLFileStream
         $bMB = defined("BX_UTF");
         $cs = $this->fileCharset;
 
-        if ($this->fileHandler === null)
+        if ($this->fileHandler === null) {
             return false;
+        }
 
         $this->eof = false;
         while (($xmlChunk = $this->getXmlChunk($bMB)) !== false) {
@@ -864,19 +926,20 @@ class CXMLFileStream
                 $this->endElement($xmlChunk);
                 return true;
             } elseif ($xmlChunk[0] == "!" || $xmlChunk[0] == "?") {
-                if (substr($xmlChunk, 0, 4) === "?xml") {
+                if (mb_substr($xmlChunk, 0, 4) === "?xml") {
                     if (preg_match('#encoding[\s]*=[\s]*"(.*?)"#i', $xmlChunk, $arMatch)) {
                         $this->fileCharset = $arMatch[1];
-                        if (strtoupper($this->fileCharset) === strtoupper(LANG_CHARSET))
+                        if (mb_strtoupper($this->fileCharset) === mb_strtoupper(LANG_CHARSET)) {
                             $this->fileCharset = false;
+                        }
                         $cs = $this->fileCharset;
                     }
                 }
             } else {
                 $this->startElement($bMB, $xmlChunk, $origChunk);
                 //check for self-closing tag
-                $p = strpos($xmlChunk, ">");
-                if (($p !== false) && (substr($xmlChunk, $p - 1, 1) == "/")) {
+                $p = mb_strpos($xmlChunk, ">");
+                if (($p !== false) && (mb_substr($xmlChunk, $p - 1, 1) == "/")) {
                     $this->endElement($xmlChunk);
                     return true;
                 }
@@ -900,14 +963,18 @@ class CXMLFileStream
             if (!feof($this->fileHandler)) {
                 $this->buf = fread($this->fileHandler, $this->readSize);
                 $this->bufPosition = 0;
-                $this->bufLen = $bMB ? mb_strlen($this->buf, 'latin1') : strlen($this->buf);
+                $this->bufLen = $bMB ? mb_strlen($this->buf, 'latin1') : mb_strlen($this->buf);
             } else {
                 return false;
             }
         }
 
         //Skip line delimiters (ltrim)
-        $xml_position = $bMB ? mb_strpos($this->buf, "<", $this->bufPosition, 'latin1') : strpos($this->buf, "<", $this->bufPosition);
+        $xml_position = $bMB ? mb_strpos($this->buf, "<", $this->bufPosition, 'latin1') : mb_strpos(
+            $this->buf,
+            "<",
+            $this->bufPosition
+        );
         while ($xml_position === $this->bufPosition) {
             $this->bufPosition++;
             $this->filePosition++;
@@ -916,11 +983,16 @@ class CXMLFileStream
                 if (!feof($this->fileHandler)) {
                     $this->buf = fread($this->fileHandler, $this->readSize);
                     $this->bufPosition = 0;
-                    $this->bufLen = $bMB ? mb_strlen($this->buf, 'latin1') : strlen($this->buf);
-                } else
+                    $this->bufLen = $bMB ? mb_strlen($this->buf, 'latin1') : mb_strlen($this->buf);
+                } else {
                     return false;
+                }
             }
-            $xml_position = $bMB ? mb_strpos($this->buf, "<", $this->bufPosition, 'latin1') : strpos($this->buf, "<", $this->bufPosition);
+            $xml_position = $bMB ? mb_strpos($this->buf, "<", $this->bufPosition, 'latin1') : mb_strpos(
+                $this->buf,
+                "<",
+                $this->bufPosition
+            );
         }
 
         //Let's find next line delimiter
@@ -929,19 +1001,29 @@ class CXMLFileStream
             //Delimiter not in buffer so try to add more data to it
             if (!feof($this->fileHandler)) {
                 $this->buf .= fread($this->fileHandler, $this->readSize);
-                $this->bufLen = $bMB ? mb_strlen($this->buf, 'latin1') : strlen($this->buf);
-            } else
+                $this->bufLen = $bMB ? mb_strlen($this->buf, 'latin1') : mb_strlen($this->buf);
+            } else {
                 break;
+            }
 
             //Let's find xml tag start
-            $xml_position = $bMB ? mb_strpos($this->buf, "<", $next_search, 'latin1') : strpos($this->buf, "<", $next_search);
+            $xml_position = $bMB ? mb_strpos($this->buf, "<", $next_search, 'latin1') : mb_strpos(
+                $this->buf,
+                "<",
+                $next_search
+            );
         }
-        if ($xml_position === false)
+        if ($xml_position === false) {
             $xml_position = $this->bufLen + 1;
+        }
 
         $len = $xml_position - $this->bufPosition;
         $this->filePosition += $len;
-        $result = $bMB ? mb_substr($this->buf, $this->bufPosition, $len, 'latin1') : substr($this->buf, $this->bufPosition, $len);
+        $result = $bMB ? mb_substr($this->buf, $this->bufPosition, $len, 'latin1') : mb_substr(
+            $this->buf,
+            $this->bufPosition,
+            $len
+        );
         $this->bufPosition = $xml_position;
 
         return $result;
@@ -972,22 +1054,25 @@ class CXMLFileStream
             "&",
         );
 
-        $p = strpos($xmlChunk, ">");
+        $p = mb_strpos($xmlChunk, ">");
         if ($p !== false) {
-            if (substr($xmlChunk, $p - 1, 1) == "/")
-                $elementName = substr($xmlChunk, 0, $p - 1);
-            else
-                $elementName = substr($xmlChunk, 0, $p);
+            if (mb_substr($xmlChunk, $p - 1, 1) == "/") {
+                $elementName = mb_substr($xmlChunk, 0, $p - 1);
+            } else {
+                $elementName = mb_substr($xmlChunk, 0, $p);
+            }
 
-            if (($ps = strpos($elementName, " ")) !== false) {
-                $elementAttrs = substr($elementName, $ps + 1);
-                $elementName = substr($elementName, 0, $ps);
+            if (($ps = mb_strpos($elementName, " ")) !== false) {
+                $elementAttrs = mb_substr($elementName, $ps + 1);
+                $elementName = mb_substr($elementName, 0, $ps);
             } else {
                 $elementAttrs = "";
             }
 
             $this->elementStack[] = $elementName;
-            $this->positionStack[] = $this->filePosition - ($bMB ? mb_strlen($origChunk, 'latin1') : strlen($origChunk)) - 1;
+            $this->positionStack[] = $this->filePosition - ($bMB ? mb_strlen($origChunk, 'latin1') : mb_strlen(
+                    $origChunk
+                )) - 1;
 
             if (isset($this->endNodes[$elementName])) {
                 $xmlPath = implode("/", $this->elementStack);
@@ -995,20 +1080,25 @@ class CXMLFileStream
                     $attributes = array();
                     if ($elementAttrs !== "") {
                         preg_match_all("/(\\S+)\\s*=\\s*[\"](.*?)[\"]/s", $elementAttrs, $attrs_tmp);
-                        if (strpos($elementAttrs, "&") === false) {
-                            foreach ($attrs_tmp[1] as $i => $attrs_tmp_1)
+                        if (mb_strpos($elementAttrs, "&") === false) {
+                            foreach ($attrs_tmp[1] as $i => $attrs_tmp_1) {
                                 $attributes[$attrs_tmp_1] = $attrs_tmp[2][$i];
+                            }
                         } else {
-                            foreach ($attrs_tmp[1] as $i => $attrs_tmp_1)
+                            foreach ($attrs_tmp[1] as $i => $attrs_tmp_1) {
                                 $attributes[$attrs_tmp_1] = preg_replace($search, $replace, $attrs_tmp[2][$i]);
+                            }
                         }
                     }
 
                     foreach ($this->elementHandlers[$xmlPath] as $callableHandler) {
-                        call_user_func_array($callableHandler, array(
-                            $xmlPath,
-                            $attributes,
-                        ));
+                        call_user_func_array(
+                            $callableHandler,
+                            array(
+                                $xmlPath,
+                                $attributes,
+                            )
+                        );
                     }
                 }
             }
@@ -1033,9 +1123,12 @@ class CXMLFileStream
                 $xmlObject = $this->readXml($elementPosition, $this->filePosition);
                 if (is_object($xmlObject)) {
                     foreach ($this->nodeHandlers[$xmlPath] as $callableHandler) {
-                        call_user_func_array($callableHandler, array(
-                            $xmlObject,
-                        ));
+                        call_user_func_array(
+                            $callableHandler,
+                            array(
+                                $xmlObject,
+                            )
+                        );
                     }
                 }
             }
@@ -1054,14 +1147,20 @@ class CXMLFileStream
         $xmlChunk = $this->readFilePart($startPosition, $endPosition);
         if ($xmlChunk && $this->fileCharset) {
             $error = "";
-            $xmlChunk = \Bitrix\Main\Text\Encoding::convertEncoding($xmlChunk, $this->fileCharset, LANG_CHARSET, $error);
+            $xmlChunk = \Bitrix\Main\Text\Encoding::convertEncoding(
+                $xmlChunk,
+                $this->fileCharset,
+                LANG_CHARSET,
+                $error
+            );
         }
 
         $xmlObject = new CDataXML;
-        if ($xmlObject->loadString($xmlChunk))
+        if ($xmlObject->loadString($xmlChunk)) {
             return $xmlObject;
-        else
+        } else {
             return false;
+        }
     }
 
     /**

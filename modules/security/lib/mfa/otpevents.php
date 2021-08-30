@@ -24,10 +24,14 @@ class OtpEvents
             ->fetchAll();
 
         foreach ($users as $user) {
-            if ($user['SKIP_MANDATORY'] === 'Y' && !$user['SECRET'])
+            if ($user['SKIP_MANDATORY'] === 'Y' && !$user['SECRET']) {
                 UserTable::update($user['USER_ID'], array('SKIP_MANDATORY' => 'N', 'DEACTIVATE_UNTIL' => null));
-            else
-                UserTable::update($user['USER_ID'], array('ACTIVE' => 'Y', 'SKIP_MANDATORY' => 'N', 'DEACTIVATE_UNTIL' => null));
+            } else {
+                UserTable::update(
+                    $user['USER_ID'],
+                    array('ACTIVE' => 'Y', 'SKIP_MANDATORY' => 'N', 'DEACTIVATE_UNTIL' => null)
+                );
+            }
         }
 
         return sprintf('%s();', __METHOD__);

@@ -29,12 +29,16 @@ class Role
                 Loc::getMessage('LANDING_IS_NOT_ADMIN_ERROR')
             );
             $result->setError($error);
-        } else if (!Manager::checkFeature(Manager::FEATURE_PERMISSIONS_AVAILABLE)) {
-            $error->addError(
-                'FEATURE_NOT_AVAIL',
-                Loc::getMessage('LANDING_FEATURE_NOT_AVAIL_ERROR')
-            );
-            $result->setError($error);
+        } else {
+            if (!Manager::checkFeature(Manager::FEATURE_PERMISSIONS_AVAILABLE)) {
+                $error->addError(
+                    'FEATURE_NOT_AVAIL',
+                    \Bitrix\Landing\Restriction\Manager::getSystemErrorMessage(
+                        'limit_sites_access_permissions'
+                    )
+                );
+                $result->setError($error);
+            }
         }
 
         return $result;

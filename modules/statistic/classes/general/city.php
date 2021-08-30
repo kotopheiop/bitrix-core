@@ -1,4 +1,5 @@
 <?
+
 /*.
 	require_module 'standard';
 	require_module 'bitrix_main';
@@ -25,14 +26,30 @@ class CCityLookup
     function __construct($arDBRecord = /*.(array[string]string).*/ array())
     {
         if (is_array($arDBRecord)) {
-            if (array_key_exists("IPA", $arDBRecord)) $this->ip_addr = $arDBRecord["IPA"];
-            if (array_key_exists("IPN", $arDBRecord)) $this->ip_number = $arDBRecord["IPN"];
-            if (array_key_exists("COC", $arDBRecord)) $this->country_code = $arDBRecord["COC"];
-            if (array_key_exists("COS", $arDBRecord)) $this->country_short_name = $arDBRecord["COS"];
-            if (array_key_exists("COF", $arDBRecord)) $this->country_full_name = $arDBRecord["COF"];
-            if (array_key_exists("REN", $arDBRecord)) $this->region_name = $arDBRecord["REN"];
-            if (array_key_exists("CIN", $arDBRecord)) $this->city_name = $arDBRecord["CIN"];
-            if (array_key_exists("CID", $arDBRecord)) $this->city_id = $arDBRecord["CID"];
+            if (array_key_exists("IPA", $arDBRecord)) {
+                $this->ip_addr = $arDBRecord["IPA"];
+            }
+            if (array_key_exists("IPN", $arDBRecord)) {
+                $this->ip_number = $arDBRecord["IPN"];
+            }
+            if (array_key_exists("COC", $arDBRecord)) {
+                $this->country_code = $arDBRecord["COC"];
+            }
+            if (array_key_exists("COS", $arDBRecord)) {
+                $this->country_short_name = $arDBRecord["COS"];
+            }
+            if (array_key_exists("COF", $arDBRecord)) {
+                $this->country_full_name = $arDBRecord["COF"];
+            }
+            if (array_key_exists("REN", $arDBRecord)) {
+                $this->region_name = $arDBRecord["REN"];
+            }
+            if (array_key_exists("CIN", $arDBRecord)) {
+                $this->city_name = $arDBRecord["CIN"];
+            }
+            if (array_key_exists("CID", $arDBRecord)) {
+                $this->city_id = $arDBRecord["CID"];
+            }
         } else {
             $ip = $this->ip_addr = $_SERVER["REMOTE_ADDR"];
             $this->ip_number = ip2number($ip);
@@ -55,14 +72,30 @@ class CCityLookup
     {
         $ar = /*.(array[string]string).*/
             array();
-        if (strlen($this->ip_addr) > 0) $ar["IPA"] = $this->ip_addr;
-        if (strlen($this->ip_number) > 0) $ar["IPN"] = $this->ip_number;
-        if (strlen($this->country_code) > 0) $ar["COC"] = $this->country_code;
-        if (strlen($this->country_short_name) > 0) $ar["COS"] = $this->country_short_name;
-        if (strlen($this->country_full_name) > 0) $ar["COF"] = $this->country_full_name;
-        if (strlen($this->region_name) > 0) $ar["REN"] = $this->region_name;
-        if (strlen($this->city_name) > 0) $ar["CIN"] = $this->city_name;
-        if (strlen($this->city_id) > 0) $ar["CID"] = $this->city_id;
+        if ($this->ip_addr <> '') {
+            $ar["IPA"] = $this->ip_addr;
+        }
+        if ($this->ip_number <> '') {
+            $ar["IPN"] = $this->ip_number;
+        }
+        if ($this->country_code <> '') {
+            $ar["COC"] = $this->country_code;
+        }
+        if ($this->country_short_name <> '') {
+            $ar["COS"] = $this->country_short_name;
+        }
+        if ($this->country_full_name <> '') {
+            $ar["COF"] = $this->country_full_name;
+        }
+        if ($this->region_name <> '') {
+            $ar["REN"] = $this->region_name;
+        }
+        if ($this->city_name <> '') {
+            $ar["CIN"] = $this->city_name;
+        }
+        if ($this->city_id <> '') {
+            $ar["CID"] = $this->city_id;
+        }
         return $ar;
     }
 
@@ -148,8 +181,8 @@ class CStatRegion
         $arQueryOrder = array();
         if (is_array($arOrder)) {
             foreach ($arOrder as $strColumn => $strDirection) {
-                $strColumn = strtoupper($strColumn);
-                $strDirection = strtoupper($strDirection) === "ASC" ? "ASC" : "DESC";
+                $strColumn = mb_strtoupper($strColumn);
+                $strDirection = mb_strtoupper($strDirection) === "ASC" ? "ASC" : "DESC";
                 switch ($strColumn) {
                     case "COUNTRY_ID":
                     case "COUNTRY_SHORT_NAME":
@@ -168,32 +201,34 @@ class CStatRegion
         }
 
         $obQueryWhere = new CSQLWhere;
-        $obQueryWhere->SetFields(array(
-            "COUNTRY_ID" => array(
-                "TABLE_ALIAS" => "R",
-                "FIELD_NAME" => "R.COUNTRY_ID",
-                "FIELD_TYPE" => "string",
-                "JOIN" => "",
-            ),
-            "COUNTRY_SHORT_NAME" => array(
-                "TABLE_ALIAS" => "C",
-                "FIELD_NAME" => "C.SHORT_NAME",
-                "FIELD_TYPE" => "string",
-                "JOIN" => "",
-            ),
-            "COUNTRY_NAME" => array(
-                "TABLE_ALIAS" => "C",
-                "FIELD_NAME" => "C.NAME",
-                "FIELD_TYPE" => "string",
-                "JOIN" => "",
-            ),
-            "REGION_NAME" => array(
-                "TABLE_ALIAS" => "R",
-                "FIELD_NAME" => "R.REGION",
-                "FIELD_TYPE" => "string",
-                "JOIN" => "",
-            ),
-        ));
+        $obQueryWhere->SetFields(
+            array(
+                "COUNTRY_ID" => array(
+                    "TABLE_ALIAS" => "R",
+                    "FIELD_NAME" => "R.COUNTRY_ID",
+                    "FIELD_TYPE" => "string",
+                    "JOIN" => "",
+                ),
+                "COUNTRY_SHORT_NAME" => array(
+                    "TABLE_ALIAS" => "C",
+                    "FIELD_NAME" => "C.SHORT_NAME",
+                    "FIELD_TYPE" => "string",
+                    "JOIN" => "",
+                ),
+                "COUNTRY_NAME" => array(
+                    "TABLE_ALIAS" => "C",
+                    "FIELD_NAME" => "C.NAME",
+                    "FIELD_TYPE" => "string",
+                    "JOIN" => "",
+                ),
+                "REGION_NAME" => array(
+                    "TABLE_ALIAS" => "R",
+                    "FIELD_NAME" => "R.REGION",
+                    "FIELD_TYPE" => "string",
+                    "JOIN" => "",
+                ),
+            )
+        );
 
         $strSql = "
 			SELECT
@@ -208,7 +243,7 @@ class CStatRegion
 
         $strQueryWhere = $obQueryWhere->GetQuery($arFilter);
 
-        if (strlen($strQueryWhere) > 0) {
+        if ($strQueryWhere <> '') {
             $strSql .= "
 				WHERE
 				" . $strQueryWhere . "
@@ -243,15 +278,17 @@ class CCity
      */
     function __construct($dbRecord = "")
     {
-        if (strlen($dbRecord) > 0)
-            $arDBRecord = unserialize($dbRecord);
-        else
+        if ($dbRecord <> '') {
+            $arDBRecord = unserialize($dbRecord, ['allowed_classes' => false]);
+        } else {
             $arDBRecord = false;
+        }
 
         if (is_array($arDBRecord)) {
             $this->lookup_class = $arDBRecord["LC"];
-            if (!$this->lookup_class || !class_exists(strtolower($this->lookup_class)))
+            if (!$this->lookup_class || !class_exists(mb_strtolower($this->lookup_class))) {
                 $this->lookup_class = "CCityLookup";
+            }
 
             $this->lookup = call_user_func_array(array($this->lookup_class, "OnCityLookup"), array($arDBRecord["LD"]));
 
@@ -259,8 +296,9 @@ class CCity
             $this->city_id = $arDBRecord["CI"];
         } else {
             $this->lookup_class = $this->GetHandler();
-            if (!$this->lookup_class || !class_exists(strtolower($this->lookup_class)))
+            if (!$this->lookup_class || !class_exists(mb_strtolower($this->lookup_class))) {
                 $this->lookup_class = "CCityLookup";
+            }
 
             $ob = call_user_func_array(array($this->lookup_class, "OnCityLookup"), array());
 
@@ -278,17 +316,20 @@ class CCity
      * @param array[string]string $arFilter
      * @return CDBResult
      */
-    public static function GetList($arOrder = /*.(array[string]string).*/ array(), $arFilter = /*.(array[string]string).*/ array())
-    {
+    public static function GetList(
+        $arOrder = /*.(array[string]string).*/ array(),
+        $arFilter = /*.(array[string]string).*/ array()
+    ) {
         $DB = CDatabase::GetModuleConnection('statistic');
 
-        if (!is_array($arOrder))
+        if (!is_array($arOrder)) {
             $arOrder = array();
+        }
 
         $arQueryOrder = array();
         foreach ($arOrder as $strColumn => $strDirection) {
-            $strColumn = strtoupper($strColumn);
-            $strDirection = strtoupper($strDirection) === "ASC" ? "ASC" : "DESC";
+            $strColumn = mb_strtoupper($strColumn);
+            $strDirection = mb_strtoupper($strDirection) === "ASC" ? "ASC" : "DESC";
             switch ($strColumn) {
                 case "COUNTRY_ID":
                 case "COUNTRY_SHORT_NAME":
@@ -308,44 +349,46 @@ class CCity
         }
 
         $obQueryWhere = new CSQLWhere;
-        $obQueryWhere->SetFields(array(
-            "CITY_ID" => array(
-                "TABLE_ALIAS" => "CITY",
-                "FIELD_NAME" => "CITY.ID",
-                "FIELD_TYPE" => "int",
-                "JOIN" => "",
-            ),
-            "COUNTRY_ID" => array(
-                "TABLE_ALIAS" => "CITY",
-                "FIELD_NAME" => "CITY.COUNTRY_ID",
-                "FIELD_TYPE" => "string",
-                "JOIN" => "",
-            ),
-            "COUNTRY_SHORT_NAME" => array(
-                "TABLE_ALIAS" => "C",
-                "FIELD_NAME" => "C.SHORT_NAME",
-                "FIELD_TYPE" => "string",
-                "JOIN" => "",
-            ),
-            "COUNTRY_NAME" => array(
-                "TABLE_ALIAS" => "C",
-                "FIELD_NAME" => "C.NAME",
-                "FIELD_TYPE" => "string",
-                "JOIN" => "",
-            ),
-            "REGION_NAME" => array(
-                "TABLE_ALIAS" => "CITY",
-                "FIELD_NAME" => "CITY.REGION",
-                "FIELD_TYPE" => "string",
-                "JOIN" => "",
-            ),
-            "CITY_NAME" => array(
-                "TABLE_ALIAS" => "CITY",
-                "FIELD_NAME" => "CITY.NAME",
-                "FIELD_TYPE" => "string",
-                "JOIN" => "",
-            ),
-        ));
+        $obQueryWhere->SetFields(
+            array(
+                "CITY_ID" => array(
+                    "TABLE_ALIAS" => "CITY",
+                    "FIELD_NAME" => "CITY.ID",
+                    "FIELD_TYPE" => "int",
+                    "JOIN" => "",
+                ),
+                "COUNTRY_ID" => array(
+                    "TABLE_ALIAS" => "CITY",
+                    "FIELD_NAME" => "CITY.COUNTRY_ID",
+                    "FIELD_TYPE" => "string",
+                    "JOIN" => "",
+                ),
+                "COUNTRY_SHORT_NAME" => array(
+                    "TABLE_ALIAS" => "C",
+                    "FIELD_NAME" => "C.SHORT_NAME",
+                    "FIELD_TYPE" => "string",
+                    "JOIN" => "",
+                ),
+                "COUNTRY_NAME" => array(
+                    "TABLE_ALIAS" => "C",
+                    "FIELD_NAME" => "C.NAME",
+                    "FIELD_TYPE" => "string",
+                    "JOIN" => "",
+                ),
+                "REGION_NAME" => array(
+                    "TABLE_ALIAS" => "CITY",
+                    "FIELD_NAME" => "CITY.REGION",
+                    "FIELD_TYPE" => "string",
+                    "JOIN" => "",
+                ),
+                "CITY_NAME" => array(
+                    "TABLE_ALIAS" => "CITY",
+                    "FIELD_NAME" => "CITY.NAME",
+                    "FIELD_TYPE" => "string",
+                    "JOIN" => "",
+                ),
+            )
+        );
 
         $strSql = "
 			SELECT
@@ -361,7 +404,7 @@ class CCity
 		";
         $strQueryWhere = $obQueryWhere->GetQuery($arFilter);
 
-        if (strlen($strQueryWhere) > 0) {
+        if ($strQueryWhere <> '') {
             $strSql .= "
 				WHERE
 				" . $strQueryWhere . "
@@ -385,12 +428,16 @@ class CCity
     function ForSQL()
     {
         $DB = CDatabase::GetModuleConnection('statistic');
-        return $DB->ForSQL(serialize(array(
-            "LC" => $this->lookup_class,
-            "LD" => $this->lookup->ArrayForDB(),
-            "CC" => $this->country_code,
-            "CI" => $this->city_id,
-        )));
+        return $DB->ForSQL(
+            serialize(
+                array(
+                    "LC" => $this->lookup_class,
+                    "LD" => $this->lookup->ArrayForDB(),
+                    "CC" => $this->country_code,
+                    "CI" => $this->city_id,
+                )
+            )
+        );
     }
 
     function GetFullInfo()
@@ -445,46 +492,56 @@ class CCity
         $DB = CDatabase::GetModuleConnection('statistic');
         $country_code = $this->GetCountryCode();
 
-        if (!$this->city_id)
+        if (!$this->city_id) {
             $this->city_id = $this->lookup->city_id;
+        }
 
         if (!$this->city_id) {
             $city_name = $this->Recode($this->lookup->city_name);
             $region_name = $this->Recode($this->lookup->region_name);
 
-            $rs = $DB->Query("
+            $rs = $DB->Query(
+                "
 				SELECT ID
 				FROM b_stat_city
 				WHERE COUNTRY_ID = '" . $DB->ForSQL($country_code, 2) . "'
 				AND " . ($region_name ? "REGION = '" . $DB->ForSQL($region_name, 255) . "'" : "REGION IS NULL") . "
 				AND " . ($city_name ? "NAME = '" . $DB->ForSQL($city_name, 255) . "'" : "NAME IS NULL") . "
-			");
+			"
+            );
             $ar = $rs->Fetch();
             if ($ar) {
                 $this->city_id = $ar["ID"];
             } else {
-                $rs = $DB->Query("
+                $rs = $DB->Query(
+                    "
 					SELECT ID
 					FROM b_stat_country
 					WHERE ID = '" . $DB->ForSQL($country_code, 2) . "'
-				");
+				"
+                );
                 $ar = $rs->Fetch();
                 if (!$ar) {
                     $country_short_name = $this->Recode($this->lookup->country_short_name);
                     $country_full_name = $this->Recode($this->lookup->country_full_name);
-                    $DB->Query("
+                    $DB->Query(
+                        "
 						INSERT INTO b_stat_country (ID, SHORT_NAME, NAME) VALUES (
 							'" . $DB->ForSql($country_code, 2) . "',
 							" . ($country_short_name ? "'" . $DB->ForSql($country_short_name, 3) . "'" : "'N00'") . ",
 							" . ($country_full_name ? "'" . $DB->ForSql($country_full_name, 50) . "'" : "'NA'") . "
 						)
-					");
+					"
+                    );
                 }
-                $this->city_id = $DB->Add("b_stat_city", array(
-                    "COUNTRY_ID" => $country_code,
-                    "REGION" => $region_name ? $region_name : false,
-                    "NAME" => $city_name ? $city_name : false,
-                ));
+                $this->city_id = $DB->Add(
+                    "b_stat_city",
+                    array(
+                        "COUNTRY_ID" => $country_code,
+                        "REGION" => $region_name ? $region_name : false,
+                        "NAME" => $city_name ? $city_name : false,
+                    )
+                );
             }
         }
         return $this->city_id > 0 ? intval($this->city_id) : "";
@@ -499,26 +556,31 @@ class CCity
         if (is_array($arFilter)) {
             foreach ($arFilter as $key => $val) {
                 if (is_array($val)) {
-                    if (count($val) <= 0)
+                    if (count($val) <= 0) {
                         continue;
+                    }
                 } else {
-                    if ((strlen($val) <= 0) || ($val === "NOT_REF"))
+                    if (((string)$val == '') || ($val === "NOT_REF")) {
                         continue;
+                    }
                 }
                 $match_value_set = array_key_exists($key . "_EXACT_MATCH", $arFilter);
                 $key = strtoupper($key);
                 switch ($key) {
                     case "COUNTRY_ID":
-                        if ($val != "NOT_REF")
+                        if ($val != "NOT_REF") {
                             $arSqlSearch[] = GetFilterQuery("C.COUNTRY_ID", $val, "N");
+                        }
                         break;
                     case "DATE1":
-                        if (CheckDateTime($val))
+                        if (CheckDateTime($val)) {
                             $arSqlSearch[] = "D.DATE_STAT>=" . $DB->CharToDateFunction($val, "SHORT");
+                        }
                         break;
                     case "DATE2":
-                        if (CheckDateTime($val))
+                        if (CheckDateTime($val)) {
                             $arSqlSearch[] = "D.DATE_STAT<=" . $DB->CharToDateFunction($val . " 23:59:59", "FULL");
+                        }
                         break;
                 }
             }
@@ -604,8 +666,9 @@ class CCity
                 $totals["TOTAL_HITS"] += $tail["TOTAL_HITS"];
                 $totals["TOTAL_C_EVENTS"] += $tail["TOTAL_C_EVENTS"];
             }
-            if ($i)
+            if ($i) {
                 $arLegend[0] = $totals;
+            }
 
             foreach ($arrDays as $DATE_STAT => $arDate) {
                 foreach ($arDate as $CITY_ID => $arCity) {
@@ -627,7 +690,7 @@ class CCity
         $color_getnext = '';
         $total = count($arLegend);
         foreach ($arLegend as $key => $arr) {
-            if (strlen($arCityColor[$key]) > 0) {
+            if ($arCityColor[$key] <> '') {
                 $color = $arCityColor[$key];
             } else {
                 $color = GetNextRGB($color_getnext, $total);
@@ -647,7 +710,7 @@ class CCity
         if ($handle) {
             while (false !== ($fname = readdir($handle))) {
                 if (is_file($_SERVER["DOCUMENT_ROOT"] . $path . "/" . $fname) && $fname != "." && $fname != "..") {
-                    $ext = substr(strtolower($fname), -4);
+                    $ext = mb_substr(mb_strtolower($fname), -4);
                     if ($ext === ".csv" || $ext === ".txt") {
                         $arFiles[] = $fname;
                     }
@@ -662,60 +725,67 @@ class CCity
             if ($fp) {
                 switch (CCity::GetCSVFormatType($fp)) {
                     case "MAXMIND-IP-COUNTRY":
-                        if ($type == 'country')
+                        if ($type == 'country') {
                             $arResult[] = array(
                                 "FILE" => $file,
                                 "SIZE" => filesize($_SERVER["DOCUMENT_ROOT"] . $path . "/" . $file),
                                 "SOURCE" => "MAXMIND-IP-COUNTRY",
                             );
+                        }
                         break;
                     case "IP-TO-COUNTRY":
-                        if ($type == 'country')
+                        if ($type == 'country') {
                             $arResult[] = array(
                                 "FILE" => $file,
                                 "SIZE" => filesize($_SERVER["DOCUMENT_ROOT"] . $path . "/" . $file),
                                 "SOURCE" => "IP-TO-COUNTRY",
                             );
+                        }
                         break;
                     case "MAXMIND-IP-LOCATION":
-                        if ($type == 'city')
+                        if ($type == 'city') {
                             $arResult[] = array(
                                 "FILE" => $file,
                                 "SIZE" => filesize($_SERVER["DOCUMENT_ROOT"] . $path . "/" . $file),
                                 "SOURCE" => "MAXMIND-IP-LOCATION",
                             );
+                        }
                         break;
                     case "MAXMIND-CITY-LOCATION":
-                        if ($type == 'city')
+                        if ($type == 'city') {
                             $arResult[] = array(
                                 "FILE" => $file,
                                 "SIZE" => filesize($_SERVER["DOCUMENT_ROOT"] . $path . "/" . $file),
                                 "SOURCE" => "MAXMIND-CITY-LOCATION",
                             );
+                        }
                         break;
                     case "IPGEOBASE":
-                        if ($type == 'city')
+                        if ($type == 'city') {
                             $arResult[] = array(
                                 "FILE" => $file,
                                 "SIZE" => filesize($_SERVER["DOCUMENT_ROOT"] . $path . "/" . $file),
                                 "SOURCE" => "IPGEOBASE",
                             );
+                        }
                         break;
                     case "IPGEOBASE2":
-                        if ($type == 'city')
+                        if ($type == 'city') {
                             $arResult[] = array(
                                 "FILE" => $file,
                                 "SIZE" => filesize($_SERVER["DOCUMENT_ROOT"] . $path . "/" . $file),
                                 "SOURCE" => "IPGEOBASE2",
                             );
+                        }
                         break;
                     case "IPGEOBASE2-CITY":
-                        if ($type == 'city')
+                        if ($type == 'city') {
                             $arResult[] = array(
                                 "FILE" => $file,
                                 "SIZE" => filesize($_SERVER["DOCUMENT_ROOT"] . $path . "/" . $file),
                                 "SOURCE" => "IPGEOBASE2-CITY",
                             );
+                        }
                         break;
                 }
                 fclose($fp);
@@ -727,11 +797,16 @@ class CCity
     public static function GetCSVFormatType($fp)
     {
         $line = trim(fgets($fp, 1024), " \t\n\r");
-        if (preg_match('/maxmind/i', $line))
+        if (preg_match('/maxmind/i', $line)) {
             $line = trim(fgets($fp, 1024), " \t\n\r");
+        }
 
         if (
-            preg_match('/^"(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})","(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})","(\d+)","(\d+)","..",".*?"$/', $line, $match)
+            preg_match(
+                '/^"(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})","(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})","(\d+)","(\d+)","..",".*?"$/',
+                $line,
+                $match
+            )
             && (ip2number($match[1]) == $match[3])
             && (ip2number($match[2]) == $match[4])
         ) {
@@ -749,13 +824,21 @@ class CCity
         ) {
             return "MAXMIND-CITY-LOCATION";
         } elseif (
-            preg_match('/^(\d+)\t(\d+)\t(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) - (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\t(..)\t(.+?)\t(.+?)\t(.+?)\t(.+?)\t(.+)$/', $line, $match)
+            preg_match(
+                '/^(\d+)\t(\d+)\t(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) - (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\t(..)\t(.+?)\t(.+?)\t(.+?)\t(.+?)\t(.+)$/',
+                $line,
+                $match
+            )
             && (ip2number($match[3]) == $match[1])
             && (ip2number($match[4]) == $match[2])
         ) {
             return "IPGEOBASE";
         } elseif (
-            preg_match('/^(\d+)\t(\d+)\t(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) - (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\t(..)/', $line, $match)
+            preg_match(
+                '/^(\d+)\t(\d+)\t(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) - (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\t(..)/',
+                $line,
+                $match
+            )
             && (ip2number($match[3]) == $match[1])
             && (ip2number($match[4]) == $match[2])
         ) {
@@ -773,7 +856,8 @@ class CCity
     {
         global $DB;
 
-        $rsConflictIP = $DB->Query("
+        $rsConflictIP = $DB->Query(
+            "
 			select * from b_stat_city_ip
 			where start_ip between " . $newStartIP . " and " . $newEndIP . "
 			union
@@ -787,7 +871,8 @@ class CCity
 				WHERE START_IP <= " . $newStartIP . "
 			)
 			AND END_IP >= " . $newStartIP . "
-		");
+		"
+        );
 
         $arToUpdate = false;
         while ($arConflictIP = $rsConflictIP->Fetch()) {
@@ -803,61 +888,79 @@ class CCity
                 && $newEndIP < $arConflictIP["END_IP"]
             ) {
                 //Move conflict to the right
-                $rs = $DB->Query("
+                $rs = $DB->Query(
+                    "
 					UPDATE b_stat_city_ip
 					SET START_IP = '" . ($newEndIP + 1) . "'
 					WHERE START_IP  = '" . $arConflictIP["START_IP"] . "'
-				", true);
+				",
+                    true
+                );
                 //Delete if there is new conflict raises
-                if (!$rs)
-                    $rs = $DB->Query("
+                if (!$rs) {
+                    $rs = $DB->Query(
+                        "
 						DELETE FROM b_stat_city_ip
 						WHERE START_IP  = '" . $arConflictIP["START_IP"] . "'
-					");
+					"
+                    );
+                }
             } //Full overlap
             elseif (
                 $newStartIP <= $arConflictIP["START_IP"]
                 && $arConflictIP["END_IP"] < $newEndIP
             ) {
                 //Delete
-                $rs = $DB->Query("
+                $rs = $DB->Query(
+                    "
 					DELETE FROM b_stat_city_ip
 					WHERE START_IP  = '" . $arConflictIP["START_IP"] . "'
-				");
+				"
+                );
             } //Right overlap
             elseif (
                 $arConflictIP["START_IP"] < $newStartIP
                 && $arConflictIP["END_IP"] <= $newEndIP
             ) {
                 //Move conflict to the left
-                $rs = $DB->Query("
+                $rs = $DB->Query(
+                    "
 					UPDATE b_stat_city_ip
 					SET END_IP = '" . ($newStartIP - 1) . "'
 					WHERE START_IP  = '" . $arConflictIP["START_IP"] . "'
-				");
+				"
+                );
             } //Inside
             else/*if(
 				$arConflictIP["START_IP"] < $newStartIP
 				&& $newEndIP < $arConflictIP["END_IP"]
 			)*/ {
                 //Split
-                $rs = $DB->Query("
+                $rs = $DB->Query(
+                    "
 					UPDATE b_stat_city_ip
 					SET END_IP = '" . ($newStartIP - 1) . "'
 					WHERE START_IP  = '" . $arConflictIP["START_IP"] . "'
-				");
-                $rs = $DB->Query("
+				"
+                );
+                $rs = $DB->Query(
+                    "
 					INSERT INTO b_stat_city_ip
 					(START_IP, END_IP, COUNTRY_ID, CITY_ID)
 					VALUES
 					('" . ($newEndIP + 1) . "', '" . $arConflictIP["END_IP"] . "', '" . $arConflictIP["COUNTRY_ID"] . "', '" . $arConflictIP["CITY_ID"] . "')
-				", true);
+				",
+                    true
+                );
                 //Delete if there is new conflict raises
-                if (!$rs)
-                    $rs = $DB->Query("
+                if (!$rs) {
+                    $rs = $DB->Query(
+                        "
 						DELETE FROM b_stat_city_ip
 						WHERE START_IP  = '" . $arConflictIP["START_IP"] . "'
-					");
+					"
+                    );
+                }
             }
         }
 
@@ -874,17 +977,19 @@ class CCity
         $arCountryCache = array();
 
         $fp = fopen($_SERVER["DOCUMENT_ROOT"] . $file_name, "rb");
-        if (!$fp)
+        if (!$fp) {
             return "Y";
+        }
 
         $file_format = CCity::GetCSVFormatType($fp);
         $file_position = intval($file_position);
         fseek($fp, $file_position);
 
-        if ($step > 0)
+        if ($step > 0) {
             $end_time = getmicrotime() + $step;
-        else
+        } else {
             $end_time = 0;
+        }
 
         switch ($file_format) {
             case "MAXMIND-IP-COUNTRY":
@@ -947,7 +1052,10 @@ class CCity
                     "START_IP" => array("key" => true, "index" => 0, "type" => "ipnum"),
                     "END_IP" => array("index" => 1, "type" => "ipnum"),
                     "COUNTRY_ID" => array("index" => 3, "type" => "varchar", "len" => 2, "default" => "NA"),
-                    "XML_ID" => array("index" => array(3, 4, 5), "type" => "upsert", "enc" => true,
+                    "XML_ID" => array(
+                        "index" => array(3, 4, 5),
+                        "type" => "upsert",
+                        "enc" => true,
                         "master" => array(
                             "COUNTRY_ID" => array("index" => 3, "type" => "varchar", "len" => 2, "default" => "NA"),
                             "REGION" => array("index" => 5, "type" => "varchar", "len" => 255, "enc" => true),
@@ -964,7 +1072,13 @@ class CCity
                 $arFieldsMap = array(
                     "START_IP" => array("key" => true, "index" => 0, "type" => "ipnum"),
                     "END_IP" => array("index" => 1, "type" => "ipnum"),
-                    "COUNTRY_ID" => array("index" => 3, "type" => "varchar", "len" => 2, "default" => "NA", "update_city" => 4),
+                    "COUNTRY_ID" => array(
+                        "index" => 3,
+                        "type" => "varchar",
+                        "len" => 2,
+                        "default" => "NA",
+                        "update_city" => 4
+                    ),
                     "XML_ID" => array("index" => 4, "type" => "lookup"),
                     "CITY_ID" => array("index" => -1, "type" => "number"),
                 );
@@ -974,7 +1088,13 @@ class CCity
                 $char_set = "Windows-1251";
                 $table_name = "b_stat_city";
                 $arFieldsMap = array(
-                    "COUNTRY_ID" => array("skip_update" => true, "index" => 100, "type" => "varchar", "len" => 2, "default" => "NA"),
+                    "COUNTRY_ID" => array(
+                        "skip_update" => true,
+                        "index" => 100,
+                        "type" => "varchar",
+                        "len" => 2,
+                        "default" => "NA"
+                    ),
                     "REGION" => array("index" => 2, "type" => "varchar", "len" => 255, "enc" => true),
                     "NAME" => array("index" => 1, "type" => "varchar", "len" => 255, "enc" => true),
                     "XML_ID" => array("key" => true, "index" => 0, "type" => "varchar", "len" => 255),
@@ -989,8 +1109,9 @@ class CCity
         while (!feof($fp)) {
             //$arr = fgetcsv($fp, 4096, $delimiter);
             $arr = fgets($fp, 4096);
-            if ($bConv && preg_match("/[^a-zA-Z0-9 \t\n\r]/", $arr))
+            if ($bConv && preg_match("/[^a-zA-Z0-9 \t\n\r]/", $arr)) {
                 $arr = $APPLICATION->ConvertCharset($arr, $char_set, LANG_CHARSET);
+            }
             $arr = preg_split("/" . $delimiter . "/" . BX_UTF_PCRE_MODIFIER, $arr);
 
             $arAllSQLFields = array();
@@ -1003,20 +1124,24 @@ class CCity
             foreach ($arFieldsMap as $FIELD_ID => $arField) {
                 if (is_array($arField["index"])) {
                     $value = "";
-                    foreach ($arField["index"] as $index)
+                    foreach ($arField["index"] as $index) {
                         $value .= trim($arr[$index], "\" \n\r\t");
+                    }
                     $value = md5($value);
                 } else {
                     $value = trim($arr[$arField["index"]], "\" \n\r\t");
                 }
                 //if($bConv && $arField["enc"] && preg_match("/[^a-zA-Z0-9 \t\n\r]/", $value))
                 //	$value = $APPLICATION->ConvertCharset($value, $char_set, LANG_CHARSET);
-                if (!$value && $arField["default"])
+                if (!$value && $arField["default"]) {
                     $value = $arField["default"];
+                }
 
                 if ($arField["type"] == "upsert") {
                     if (!array_key_exists($value, $arLookupCache)) {
-                        $rs = $DB->Query("SELECT ID as CITY_ID FROM b_stat_city WHERE XML_ID = '" . $DB->ForSQL($value) . "'");
+                        $rs = $DB->Query(
+                            "SELECT ID as CITY_ID FROM b_stat_city WHERE XML_ID = '" . $DB->ForSQL($value) . "'"
+                        );
                         $ar = $rs->Fetch();
                         if (!$ar) {
                             $arNewMaster = array(
@@ -1026,52 +1151,63 @@ class CCity
                                 $m_value = trim($arr[$arMasterField["index"]], "\"");
                                 //if($bConv && $arMasterField["enc"] && preg_match("/[^a-zA-Z0-9 \t\n\r]/", $m_value))
                                 //	$m_value = $APPLICATION->ConvertCharset($m_value, $char_set, LANG_CHARSET);
-                                if (!$m_value && $arMasterField["default"])
+                                if (!$m_value && $arMasterField["default"]) {
                                     $m_value = $arMasterField["default"];
+                                }
                                 $arNewMaster[$MASTER_FIELD_ID] = $m_value;
                             }
                             $ar = array("CITY_ID" => $DB->Add("b_stat_city", $arNewMaster));
                         }
                         $arLookupCache[$value] = $ar;
                     }
-                    foreach ($arLookupCache[$value] as $key => $val)
+                    foreach ($arLookupCache[$value] as $key => $val) {
                         $arr[$arFieldsMap[$key]["index"]] = $val;
+                    }
                     continue;
                 }
 
                 if ($arField["type"] == "lookup") {
                     if (!array_key_exists($value, $arLookupCache)) {
-                        $rs = $DB->Query("SELECT COUNTRY_ID, ID as CITY_ID FROM b_stat_city WHERE XML_ID = '" . $DB->ForSQL($value) . "'");
+                        $rs = $DB->Query(
+                            "SELECT COUNTRY_ID, ID as CITY_ID FROM b_stat_city WHERE XML_ID = '" . $DB->ForSQL(
+                                $value
+                            ) . "'"
+                        );
                         $ar = $rs->Fetch();
-                        if (!$ar)
+                        if (!$ar) {
                             $ar = array("COUNTRY_ID" => "NA", "CITY_ID" => 0);
+                        }
                         $arLookupCache[$value] = $ar;
                     }
-                    foreach ($arLookupCache[$value] as $key => $val)
+                    foreach ($arLookupCache[$value] as $key => $val) {
                         $arr[$arFieldsMap[$key]["index"]] = $val;
+                    }
                     continue;
                 }
 
                 if (
                     $FIELD_ID === "COUNTRY_ID"
                     && !array_key_exists($value, $arCountryCache)
-                    && strlen($value) > 0
+                    && $value <> ''
                 ) {
                     $cid = $DB->ForSQL($value, 2);
                     $rs = $DB->Query("SELECT ID FROM b_stat_country WHERE ID = '" . $cid . "'");
-                    if (!$rs->Fetch())
+                    if (!$rs->Fetch()) {
                         $DB->Query("insert into b_stat_country (ID) values ('" . $cid . "')");
+                    }
                     $arCountryCache[$value] = true;
                 }
 
                 if (
                     $FIELD_ID === "COUNTRY_ID"
                     && isset($arField["update_city"])
-                    && strlen($value) > 0
+                    && $value <> ''
                 ) {
                     $city_id = $DB->ForSQL(trim($arr[$arField["update_city"]], "\" \n\r\t"));
                     $cid = $DB->ForSQL($value, 2);
-                    $rs = $DB->Query("UPDATE b_stat_city SET COUNTRY_ID = '" . $cid . "' WHERE XML_ID = '" . $city_id . "'");
+                    $rs = $DB->Query(
+                        "UPDATE b_stat_city SET COUNTRY_ID = '" . $cid . "' WHERE XML_ID = '" . $city_id . "'"
+                    );
                 }
 
                 switch ($arField["type"]) {
@@ -1091,25 +1227,29 @@ class CCity
 
                 if ($arField["key"]) {
                     if ($value) {
-                        if ($strWhere)
+                        if ($strWhere) {
                             $strWhere .= " AND ";
+                        }
                         $strWhere .= $FIELD_ID . " = " . $sql_value;
                     } else {
                         $bEmptyKey = true;
                     }
                 } else {
                     $arFields[$FIELD_ID] = $value;
-                    if ($strUpdate)
+                    if ($strUpdate) {
                         $strUpdate .= ", ";
+                    }
                     $strUpdate .= $FIELD_ID . " = " . $sql_value;
                 }
 
-                if ($strInsert1)
+                if ($strInsert1) {
                     $strInsert1 .= ", ";
+                }
                 $strInsert1 .= $FIELD_ID;
 
-                if ($strInsert2)
+                if ($strInsert2) {
                     $strInsert2 .= ", ";
+                }
                 $strInsert2 .= $sql_value;
             }
 
@@ -1130,8 +1270,9 @@ class CCity
                             }
                         }
                     }
-                    if ($bNeedUpdate)
+                    if ($bNeedUpdate) {
                         $DB->Query("UPDATE $table_name SET $strUpdate WHERE $strWhere");
+                    }
                 } else {
                     $DB->Query("INSERT INTO $table_name ($strInsert1) VALUES ($strInsert2)");
                 }

@@ -1,15 +1,16 @@
-<?
+<?php
+
 IncludeModuleLangFile(__FILE__);
 
 class CEventIBlock
 {
-    function MakeIBlockObject()
+    public static function MakeIBlockObject()
     {
         $obj = new CEventIBlock;
         return $obj;
     }
 
-    function GetFilter()
+    public static function GetFilter()
     {
         $arFilter = array();
         $res = CIBlock::GetList(
@@ -33,43 +34,59 @@ class CEventIBlock
             }
         }
 
-        if (COption::GetOptionString("iblock", "event_log_iblock", "N") === "Y")
+        if (COption::GetOptionString("iblock", "event_log_iblock", "N") === "Y") {
             $arFilter["IBLOCK"] = GetMessage("LOG_IBLOCK_FILTER");
+        }
 
         return $arFilter;
     }
 
-    function GetAuditTypes()
+    public static function GetAuditTypes()
     {
-        AddEventHandler("main", "GetAuditTypesIblock", array("CAllIBlock", "GetAuditTypes"));
-        $db_events = GetModuleEvents("main", "GetAuditTypesIblock");
-        while ($arEvent = $db_events->Fetch()) {
+        $AuditTypes = [];
+        AddEventHandler('main', 'GetAuditTypesIblock', ['CIBlock', 'GetAuditTypes']);
+        foreach (GetModuleEvents('main', 'GetAuditTypesIblock', true) as $arEvent) {
             $AuditTypes = ExecuteModuleEventEx($arEvent);
         }
+
         return $AuditTypes;
     }
 
-    function GetEventInfo($row, $arParams, $arUser, $arResult)
+    public static function GetEventInfo($row, $arParams, $arUser, $arResult)
     {
-        $DESCRIPTION = unserialize($row['DESCRIPTION']);
+        $DESCRIPTION = unserialize($row['DESCRIPTION'], ['allowed_classes' => false]);
 
         $IblockURL = "";
-        if (strpos($row['AUDIT_TYPE_ID'], "SECTION") !== false) {
+        if (mb_strpos($row['AUDIT_TYPE_ID'], "SECTION") !== false) {
             if (isset($DESCRIPTION["ID"])) {
-                $rsSection = CIBlockSection::GetList(array(), array("=ID" => $DESCRIPTION["ID"]), false, array("SECTION_PAGE_URL"));
-                if ($arSection = $rsSection->GetNext())
+                $rsSection = CIBlockSection::GetList(
+                    array(),
+                    array("=ID" => $DESCRIPTION["ID"]),
+                    false,
+                    array("SECTION_PAGE_URL")
+                );
+                if ($arSection = $rsSection->GetNext()) {
                     $IblockURL = $arSection["SECTION_PAGE_URL"];
+                }
             }
-        } elseif (strpos($row['AUDIT_TYPE_ID'], "ELEMENT") !== false) {
+        } elseif (mb_strpos($row['AUDIT_TYPE_ID'], "ELEMENT") !== false) {
             if (isset($DESCRIPTION["ID"])) {
-                $rsElement = CIBlockElement::GetList(array(), array("=ID" => $DESCRIPTION["ID"]), false, false, array("DETAIL_PAGE_URL"));
-                if ($arElement = $rsElement->GetNext())
+                $rsElement = CIBlockElement::GetList(
+                    array(),
+                    array("=ID" => $DESCRIPTION["ID"]),
+                    false,
+                    false,
+                    array("DETAIL_PAGE_URL")
+                );
+                if ($arElement = $rsElement->GetNext()) {
                     $IblockURL = $arElement["DETAIL_PAGE_URL"];
+                }
             }
         } else {
             $rsElement = CIBlock::GetList(array(), array("=ID" => $row["ITEM_ID"]), false);
-            if ($arElement = $rsElement->GetNext())
+            if ($arElement = $rsElement->GetNext()) {
                 $IblockURL = SITE_DIR . "bitrix/admin/iblock_edit.php?ID=" . $row["ITEM_ID"] . "&type=" . $arElement["IBLOCK_TYPE_ID"];
+            }
         }
 
         if ($IblockURL) {
@@ -133,18 +150,19 @@ class CEventIBlock
         );
     }
 
-    function GetFilterSQL($var)
+    public static function GetFilterSQL($var)
     {
-        if (is_array($var))
-            foreach ($var as $key => $val)
+        if (is_array($var)) {
+            foreach ($var as $key => $val) {
                 if ($val == "IBLOCK") {
                     $ar[] = array("AUDIT_TYPE_ID" => "IBLOCK_ADD");
                     $ar[] = array("AUDIT_TYPE_ID" => "IBLOCK_EDIT");
                     $ar[] = array("AUDIT_TYPE_ID" => "IBLOCK_DELETE");
-                } else
+                } else {
                     $ar[] = array("MODULE_ID" => "iblock", "ITEM_ID" => $val);
+                }
+            }
+        }
         return $ar;
     }
 }
-
-?>

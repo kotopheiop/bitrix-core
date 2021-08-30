@@ -1,4 +1,6 @@
-<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+}
 IncludeModuleLangFile(__FILE__);
 
 class CBPTemplates_Vacation
@@ -96,7 +98,11 @@ class CBPTemplates_Vacation
                 'Name' => 'Template',
                 'Properties' => array(
                     'Title' => GetMessage("BPT1_BT_SWA"),
-                    'Permission' => array("read" => array('Variable', 'ParameterOpRead'), "create" => array('Variable', 'ParameterOpCreate'), "admin" => array('Variable', 'ParameterOpAdmin'))
+                    'Permission' => array(
+                        "read" => array('Variable', 'ParameterOpRead'),
+                        "create" => array('Variable', 'ParameterOpCreate'),
+                        "admin" => array('Variable', 'ParameterOpAdmin')
+                    )
                 ),
                 'Children' => array(
                     array(
@@ -195,13 +201,23 @@ class CBPTemplates_Vacation
                                                                 'Name' => 'A43136_44567_10680_30159',
                                                                 'Properties' => array(
                                                                     'Title' => GetMessage("BPT1_BT_IEBA1_V1"),
-                                                                    'propertyvariablecondition' => array(array('need_additional_approve', '=', 'Y'))
+                                                                    'propertyvariablecondition' => array(
+                                                                        array(
+                                                                            'need_additional_approve',
+                                                                            '=',
+                                                                            'Y'
+                                                                        )
+                                                                    )
                                                                 )
                                                             ),
                                                             array(
                                                                 'Type' => 'IfElseBranchActivity',
                                                                 'Name' => 'A65726_71247_68427_60591',
-                                                                'Properties' => array('Title' => GetMessage("BPT1_BT_IEBA2_V2")),
+                                                                'Properties' => array(
+                                                                    'Title' => GetMessage(
+                                                                        "BPT1_BT_IEBA2_V2"
+                                                                    )
+                                                                ),
                                                                 'Children' => array(
                                                                     array(
                                                                         'Type' => 'SetFieldActivity',
@@ -217,7 +233,9 @@ class CBPTemplates_Vacation
                                                                         'Type' => 'SetStateTitleActivity',
                                                                         'Name' => 'A2560_50199_5564_95292',
                                                                         'Properties' => array(
-                                                                            'TargetStateTitle' => GetMessage("BPT1_BT_SFTA12_ST"),
+                                                                            'TargetStateTitle' => GetMessage(
+                                                                                "BPT1_BT_SFTA12_ST"
+                                                                            ),
                                                                             'Title' => GetMessage("BPT1_BT_SFTA12_T")
                                                                         )
                                                                     )

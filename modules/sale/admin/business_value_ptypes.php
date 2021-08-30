@@ -1,10 +1,12 @@
 <?
+
 require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_before.php');
 
 $readOnly = $APPLICATION->GetGroupRight('sale') < 'W';
 
-if ($readOnly)
+if ($readOnly) {
     $APPLICATION->AuthForm(GetMessage('ACCESS_DENIED'));
+}
 
 require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/sale/prolog.php');
 
@@ -22,11 +24,14 @@ $domainErrors = array();
 
 $allPersonTypes = BusinessValue::getPersonTypes(true);
 
-$personDomainInput = array('TYPE' => 'ENUM', 'OPTIONS' => array(
-    '' => Loc::getMessage('BIZVAL_DOMAIN_NONE'),
-    BusinessValue::INDIVIDUAL_DOMAIN => Loc::getMessage('BIZVAL_DOMAIN_INDIVIDUAL'),
-    BusinessValue::ENTITY_DOMAIN => Loc::getMessage('BIZVAL_DOMAIN_ENTITY'),
-));
+$personDomainInput = array(
+    'TYPE' => 'ENUM',
+    'OPTIONS' => array(
+        '' => Loc::getMessage('BIZVAL_DOMAIN_NONE'),
+        BusinessValue::INDIVIDUAL_DOMAIN => Loc::getMessage('BIZVAL_DOMAIN_INDIVIDUAL'),
+        BusinessValue::ENTITY_DOMAIN => Loc::getMessage('BIZVAL_DOMAIN_ENTITY'),
+    )
+);
 
 // 1. post persons domains
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['PERSONS_DOMAINS']) && is_array($_POST['PERSONS_DOMAINS'])) {
@@ -35,8 +40,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['PERSONS_DOMAINS']) && 
         function () use (&$domainErrors, $allPersonTypes, $personDomainInput) {
             foreach ($_POST['PERSONS_DOMAINS'] as $personTypeId => $personTypeDomain) {
                 if ($allPersonTypes[$personTypeId]) {
-                    if ($error = Input\Manager::getError($personDomainInput, $personTypeDomain))
+                    if ($error = Input\Manager::getError($personDomainInput, $personTypeDomain)) {
                         $domainErrors[$personTypeId]['DOMAIN'] = $error;
+                    }
                 } else {
                     unset ($_POST['PERSONS_DOMAINS'][$personTypeId]);
                 }
@@ -53,21 +59,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['PERSONS_DOMAINS']) && 
 
                     if ($postedPersonDomain != $savedPersonDomain) {
                         if ($savedPersonDomain) {
-                            $deletePersonDomainResult = BusinessValuePersonDomainTable::delete(array(
-                                'PERSON_TYPE_ID' => $personTypeId,
-                                'DOMAIN' => $savedPersonDomain,
-                            ));
+                            $deletePersonDomainResult = BusinessValuePersonDomainTable::delete(
+                                array(
+                                    'PERSON_TYPE_ID' => $personTypeId,
+                                    'DOMAIN' => $savedPersonDomain,
+                                )
+                            );
 
                             if ($deletePersonDomainResult->isSuccess()) {
-                                $result = BusinessValueTable::getList(array(
-                                    'select' => array('CODE_KEY', 'CONSUMER_KEY', 'PERSON_TYPE_ID'),
-                                    'filter' => array('=PERSON_TYPE_ID' => $personTypeId),
-                                ));
+                                $result = BusinessValueTable::getList(
+                                    array(
+                                        'select' => array('CODE_KEY', 'CONSUMER_KEY', 'PERSON_TYPE_ID'),
+                                        'filter' => array('=PERSON_TYPE_ID' => $personTypeId),
+                                    )
+                                );
 
                                 while ($row = $result->fetch()) {
                                     // TODO remove save_data_modification hack
-                                    if (!$row['CONSUMER_KEY'])
+                                    if (!$row['CONSUMER_KEY']) {
                                         $row['CONSUMER_KEY'] = BusinessValueTable::COMMON_CONSUMER_KEY;
+                                    }
 
                                     BusinessValueTable::delete($row); // TODO errors
                                 }
@@ -79,10 +90,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['PERSONS_DOMAINS']) && 
                         }
 
                         if ($postedPersonDomain) {
-                            $addPersonDomainResult = BusinessValuePersonDomainTable::add(array(
-                                'PERSON_TYPE_ID' => $personTypeId,
-                                'DOMAIN' => $postedPersonDomain,
-                            ));
+                            $addPersonDomainResult = BusinessValuePersonDomainTable::add(
+                                array(
+                                    'PERSON_TYPE_ID' => $personTypeId,
+                                    'DOMAIN' => $postedPersonDomain,
+                                )
+                            );
 
                             if ($addPersonDomainResult->isSuccess()) {
                                 $allPersonTypes[$personTypeId]['DOMAIN'] = $postedPersonDomain;
@@ -104,10 +117,12 @@ $APPLICATION->SetTitle(Loc::getMessage('BIZVAL_PAGE_TITLE'));
 require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php');
 
 if ($domainErrors) {
-    call_user_func(function () {
-        $m = new CAdminMessage(Loc::getMessage('BIZVAL_PAGE_ERRORS'));
-        echo $m->Show();
-    });
+    call_user_func(
+        function () {
+            $m = new CAdminMessage(Loc::getMessage('BIZVAL_PAGE_ERRORS'));
+            echo $m->Show();
+        }
+    );
 }
 
 $actionParams = '?lang=' . LANGUAGE_ID;
@@ -141,21 +156,34 @@ if ($adminSidePanelHelper->isSidePanel()) {
 
                                 echo htmlspecialcharsbx($personType['TITLE']);
 
-                                if ($error['ADD'])
-                                    echo '<div style="color:#ff5454">' . htmlspecialcharsbx(implode('<br>', $error['ADD'])) . '</div>';
+                                if ($error['ADD']) {
+                                    echo '<div style="color:#ff5454">' . htmlspecialcharsbx(
+                                            implode('<br>', $error['ADD'])
+                                        ) . '</div>';
+                                }
 
-                                if ($error['DELETE'])
-                                    echo '<div style="color:#ff5454">' . htmlspecialcharsbx(implode('<br>', $error['DELETE'])) . '</div>';
+                                if ($error['DELETE']) {
+                                    echo '<div style="color:#ff5454">' . htmlspecialcharsbx(
+                                            implode('<br>', $error['DELETE'])
+                                        ) . '</div>';
+                                }
 
                                 ?>
                             </td>
                             <td class="adm-detail-content-cell-r">
                                 <?
 
-                                echo Input\Manager::getEditHtml("PERSONS_DOMAINS[$personTypeId]", $personDomainInput, $allPersonTypes[$personTypeId]['DOMAIN']);
+                                echo Input\Manager::getEditHtml(
+                                    "PERSONS_DOMAINS[$personTypeId]",
+                                    $personDomainInput,
+                                    $allPersonTypes[$personTypeId]['DOMAIN']
+                                );
 
-                                if ($error['DOMAIN'])
-                                    echo '<div style="color:#ff5454">' . htmlspecialcharsbx(implode('<br>', $error['DOMAIN'])) . '</div>';
+                                if ($error['DOMAIN']) {
+                                    echo '<div style="color:#ff5454">' . htmlspecialcharsbx(
+                                            implode('<br>', $error['DOMAIN'])
+                                        ) . '</div>';
+                                }
 
                                 ?>
                             </td>

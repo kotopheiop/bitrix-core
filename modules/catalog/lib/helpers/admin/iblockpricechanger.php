@@ -83,14 +83,15 @@ class IblockPriceChanger
             array(
                 "SECTION_ID" => $productsIdList['SECTIONS'],
                 "IBLOCK_ID" => $this->iblockId,
-                "WF_PARENT_ELEMENT_ID" => NULL,
+                "WF_PARENT_ELEMENT_ID" => null,
                 "INCLUDE_SUBSECTIONS" => "Y",
                 "CHECK_PERMISSIONS" => "Y",
                 "MIN_PERMISSION" => "W"
             ),
             false,
             false,
-            array('ID'));
+            array('ID')
+        );
         while ($subSectionsResult = $resultAllElementsList->Fetch()) {
             $productsIdList['ELEMENTS'][] = $subSectionsResult['ID'];
         }
@@ -138,14 +139,16 @@ class IblockPriceChanger
         $catalogGroups = array();
         if (isset($this->userDialogParams['INITIAL_PRICE_TYPE'])) {
             $id = (int)$this->userDialogParams['INITIAL_PRICE_TYPE'];
-            if ($id > 0)
+            if ($id > 0) {
                 $catalogGroups[$id] = $id;
+            }
             unset($id);
         }
         if (isset($this->userDialogParams['PRICE_TYPE'])) {
             $id = (int)$this->userDialogParams['PRICE_TYPE'];
-            if ($id > 0)
+            if ($id > 0) {
                 $catalogGroups[$id] = $id;
+            }
             unset($id);
         }
 
@@ -163,7 +166,7 @@ class IblockPriceChanger
     private function calculateResultPrice($price)
     {
         $userDialogParams = $this->userDialogParams;
-        $valueChangingPrice = $this->userDialogParams['VALUE_CHANGING'];
+        $valueChangingPrice = $userDialogParams['VALUE_CHANGING'];
 
         if ($userDialogParams['UNITS'] === "percent") {
             $price = ($price * (100 + $valueChangingPrice) / 100);
@@ -179,15 +182,23 @@ class IblockPriceChanger
 
         switch ($userDialogParams['FORMAT_RESULTS']) {
             case "floor":
-                $price = floor($price * $userDialogParams['RESULT_MASK']) / $userDialogParams['RESULT_MASK'] - $userDialogParams['DIFFERENCE_VALUE'];
+                $price = floor(
+                        $price * $userDialogParams['RESULT_MASK']
+                    ) / $userDialogParams['RESULT_MASK'] - $userDialogParams['DIFFERENCE_VALUE'];
                 break;
             case "ceil":
-                $price = ceil($price * $userDialogParams['RESULT_MASK']) / $userDialogParams['RESULT_MASK'] - $userDialogParams['DIFFERENCE_VALUE'];
+                $price = ceil(
+                        $price * $userDialogParams['RESULT_MASK']
+                    ) / $userDialogParams['RESULT_MASK'] - $userDialogParams['DIFFERENCE_VALUE'];
                 break;
             default:
-                $price = round($price * $userDialogParams['RESULT_MASK']) / $userDialogParams['RESULT_MASK'] - $userDialogParams['DIFFERENCE_VALUE'];
+                $price = round(
+                        $price * $userDialogParams['RESULT_MASK']
+                    ) / $userDialogParams['RESULT_MASK'] - $userDialogParams['DIFFERENCE_VALUE'];
                 break;
         }
+
+        unset($userDialogParams);
 
         return $price;
     }
@@ -242,34 +253,40 @@ class IblockPriceChanger
             'order' => array('PRODUCT_ID' => 'ASC', 'CATALOG_GROUP_ID' => 'ASC')
         );
 
-        $group = Catalog\GroupTable::getList(array(
-            'select' => array('ID'),
-            'filter' => array('=BASE' => 'Y')
-        ))->fetch();
+        $group = Catalog\GroupTable::getList(
+            array(
+                'select' => array('ID'),
+                'filter' => array('=BASE' => 'Y')
+            )
+        )->fetch();
         $basePriceId = (!empty($group) ? (int)$group['ID'] : 0);
         unset($group);
 
         $initialType = 0;
         if (isset($this->userDialogParams['INITIAL_PRICE_TYPE'])) {
             $id = (int)$this->userDialogParams['INITIAL_PRICE_TYPE'];
-            if ($id > 0)
+            if ($id > 0) {
                 $initialType = $id;
+            }
             unset($id);
         }
 
         $targetType = 0;
         if (isset($this->userDialogParams['PRICE_TYPE'])) {
             $id = (int)$this->userDialogParams['PRICE_TYPE'];
-            if ($id > 0)
+            if ($id > 0) {
                 $targetType = $id;
+            }
             unset($id);
         }
 
-        if ($targetType == 0)
+        if ($targetType == 0) {
             return $result;
+        }
 
-        if ($initialType > 0 && $targetType == $initialType)
+        if ($initialType > 0 && $targetType == $initialType) {
             return $result;
+        }
 
         Catalog\Product\Sku::enableDeferredCalculation();
         foreach ($priceElementsListSplitedByType as $typeElements => $priceElementsIdList) {
@@ -284,17 +301,19 @@ class IblockPriceChanger
                 while ($row = $cpriceResult->fetch()) {
                     $row['PRODUCT_TYPE_CODE'] = $typeElements;
                     $productId = (int)$row['PRODUCT_ID'];
-                    if (!isset($elementsCPriceList[$productId]))
+                    if (!isset($elementsCPriceList[$productId])) {
                         $elementsCPriceList[$productId] = array(
                             'QUANTITY' => array(),
                             'SIMPLE' => array()
                         );
+                    }
                     $priceType = (int)$row['CATALOG_GROUP_ID'];
                     if ($row['QUANTITY_FROM'] !== null || $row['QUANTITY_TO'] !== null) {
                         $hash = ($row['QUANTITY_FROM'] === null ? 'ZERO' : $row['QUANTITY_FROM']) .
                             '-' . ($row['QUANTITY_TO'] === null ? 'INF' : $row['QUANTITY_TO']);
-                        if (!isset($elementsCPriceList[$productId]['QUANTITY'][$hash]))
+                        if (!isset($elementsCPriceList[$productId]['QUANTITY'][$hash])) {
                             $elementsCPriceList[$productId]['QUANTITY'][$hash] = array();
+                        }
                         $elementsCPriceList[$productId]['QUANTITY'][$hash][$priceType] = $row;
                         unset($hash);
                     } else {
@@ -305,18 +324,21 @@ class IblockPriceChanger
                 if (!empty($elementsCPriceList)) {
                     foreach ($elementsCPriceList as $productId => $prices) {
                         foreach ($prices as $key => $data) {
-                            if (empty($data))
+                            if (empty($data)) {
                                 unset($prices[$key]);
+                            }
                         }
                         unset($key, $data);
 
-                        if (count($prices) !== 1)
+                        if (count($prices) !== 1) {
                             continue;
+                        }
 
                         if (!empty($prices['QUANTITY'])) {
                             foreach ($prices['QUANTITY'] as $hash => $rangePrices) {
-                                if (!empty($rangePrices))
+                                if (!empty($rangePrices)) {
                                     $this->updatePriceBlock($productId, $rangePrices, $basePriceId);
+                                }
                             }
                             unset($hash, $rangePrices);
                         }
@@ -344,16 +366,18 @@ class IblockPriceChanger
         $initialType = 0;
         if (isset($this->userDialogParams['INITIAL_PRICE_TYPE'])) {
             $id = (int)$this->userDialogParams['INITIAL_PRICE_TYPE'];
-            if ($id > 0)
+            if ($id > 0) {
                 $initialType = $id;
+            }
             unset($id);
         }
 
         $targetType = 0;
         if (isset($this->userDialogParams['PRICE_TYPE'])) {
             $id = (int)$this->userDialogParams['PRICE_TYPE'];
-            if ($id > 0)
+            if ($id > 0) {
                 $targetType = $id;
+            }
             unset($id);
         }
 
@@ -366,18 +390,20 @@ class IblockPriceChanger
                     unset($destinationPrice['ID']);
                     $destinationPrice['EXTRA_ID'] = false;
                     $destinationPrice['CATALOG_GROUP_ID'] = $targetType;
-                    if (isset($prices[$targetType]))
+                    if (isset($prices[$targetType])) {
                         $destinationPrice = $prices[$targetType];
+                    }
                     if (
                         $this->userDialogParams['UNITS'] != 'currency'
                         || (
                             $sourcePrice['CURRENCY'] == $this->userDialogParams['CURRENCY']
                             && $destinationPrice['CURRENCY'] == $this->userDialogParams['CURRENCY']
                         )
-                    )
+                    ) {
                         $destinationPrice['PRICE'] = $this->calculateResultPrice($sourcePrice['PRICE']);
-                    else
+                    } else {
                         $destinationPrice = null;
+                    }
                     unset($sourcePrice);
                 }
             } else {
@@ -386,16 +412,18 @@ class IblockPriceChanger
                     if (
                         $this->userDialogParams['UNITS'] != 'currency'
                         || $destinationPrice['CURRENCY'] == $this->userDialogParams['CURRENCY']
-                    )
+                    ) {
                         $destinationPrice['PRICE'] = $this->calculateResultPrice($destinationPrice['PRICE']);
-                    else
+                    } else {
                         $destinationPrice = null;
+                    }
                 }
             }
             if (!empty($destinationPrice)) {
-                if ($destinationPrice['PRICE'] <= 0) {
+                if ($destinationPrice['PRICE'] < 0) {
                     $result->addError(
-                        new Main\Error("IBLIST_CHPRICE_ERROR_WRONG_VALUE_" . $destinationPrice['PRODUCT_TYPE_CODE'],
+                        new Main\Error(
+                            "IBLIST_CHPRICE_ERROR_WRONG_VALUE_" . $destinationPrice['PRODUCT_TYPE_CODE'],
                             array(
                                 '#ID#' => $destinationPrice['PRODUCT_ID'],
                                 '#NAME#' => $destinationPrice['ELEMENT_NAME'],
@@ -404,7 +432,8 @@ class IblockPriceChanger
                     );
                 } elseif ($destinationPrice['EXTRA_ID'] > 0) {
                     $result->addError(
-                        new Main\Error("IBLIST_CHPRICE_ERROR_PRICE_WITH_EXTRA_" . $destinationPrice['PRODUCT_TYPE_CODE'],
+                        new Main\Error(
+                            "IBLIST_CHPRICE_ERROR_PRICE_WITH_EXTRA_" . $destinationPrice['PRODUCT_TYPE_CODE'],
                             array(
                                 '#ID#' => $destinationPrice['PRODUCT_ID'],
                                 '#NAME#' => $destinationPrice['ELEMENT_NAME'],
@@ -423,25 +452,31 @@ class IblockPriceChanger
                             ]
                         ];
                         if ($basePriceId == $targetType) {
-                            $data['actions']['PARENT_PRICE'] = true;
+                            $data['actions']['RECOUNT_PRICES'] = true;
                         }
                         $priceResult = Catalog\Model\Price::update($destinationPrice['ID'], $data);
                         unset($data);
                     } else {
-                        $priceResult = Catalog\Model\Price::add([
-                            'PRODUCT_ID' => $productId,
-                            'CATALOG_GROUP_ID' => $targetType,
-                            'PRICE' => $destinationPrice['PRICE'],
-                            'CURRENCY' => $destinationPrice['CURRENCY'],
-                            'EXTRA_ID' => $destinationPrice['EXTRA_ID'],
-                            'QUANTITY_FROM' => $destinationPrice['QUANTITY_FROM'],
-                            'QUANTITY_TO' => $destinationPrice['QUANTITY_TO']
-                        ]);
-
+                        $priceResult = Catalog\Model\Price::add(
+                            [
+                                'PRODUCT_ID' => $productId,
+                                'CATALOG_GROUP_ID' => $targetType,
+                                'PRICE' => $destinationPrice['PRICE'],
+                                'CURRENCY' => $destinationPrice['CURRENCY'],
+                                'EXTRA_ID' => $destinationPrice['EXTRA_ID'],
+                                'QUANTITY_FROM' => $destinationPrice['QUANTITY_FROM'],
+                                'QUANTITY_TO' => $destinationPrice['QUANTITY_TO']
+                            ]
+                        );
                     }
                     if ($priceResult->isSuccess()) {
-                        Iblock\PropertyIndex\Manager::updateElementIndex($destinationPrice['ELEMENT_IBLOCK_ID'], $destinationPrice['PRODUCT_ID']);
-                        $ipropValues = new Iblock\InheritedProperty\ElementValues($destinationPrice['ELEMENT_IBLOCK_ID'], $destinationPrice['PRODUCT_ID']);
+                        Iblock\PropertyIndex\Manager::updateElementIndex(
+                            $destinationPrice['ELEMENT_IBLOCK_ID'],
+                            $destinationPrice['PRODUCT_ID']
+                        );
+                        $ipropValues = new Iblock\InheritedProperty\ElementValues(
+                            $destinationPrice['ELEMENT_IBLOCK_ID'], $destinationPrice['PRODUCT_ID']
+                        );
                         $ipropValues->clearValues();
                         unset($ipropValues);
                     }

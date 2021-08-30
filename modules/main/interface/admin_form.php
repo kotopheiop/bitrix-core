@@ -35,8 +35,9 @@ class CAdminForm extends CAdminTabControl
     {
         parent::__construct($name, $tabs, $bCanExpand, $bDenyAutosave);
         $this->tabIndex = 0;
-        foreach ($this->tabs as $i => $arTab)
+        foreach ($this->tabs as $i => $arTab) {
             $this->tabs[$i]["FIELDS"] = array();
+        }
 
         //Parse customized labels
         $this->arCustomLabels = array();
@@ -50,12 +51,6 @@ class CAdminForm extends CAdminTabControl
             }
         }
         ob_start();
-    }
-
-    /** @deprecated */
-    public function CAdminForm($name, $tabs, $bCanExpand = true, $bDenyAutosave = false)
-    {
-        self::__construct($name, $tabs, $bCanExpand, $bDenyAutosave);
     }
 
     function SetSelectedTab()
@@ -100,22 +95,25 @@ class CAdminForm extends CAdminTabControl
 
     function SetFieldsValues($bVarsFromForm, $db_record, $default_values)
     {
-        foreach ($default_values as $key => $value)
+        foreach ($default_values as $key => $value) {
             $this->SetFieldValue($key, $bVarsFromForm, $db_record, $value);
+        }
     }
 
     function SetFieldValue($field_name, $bVarsFromForm, $db_record, $default_value = false)
     {
         if ($bVarsFromForm) {
-            if (array_key_exists($field_name, $_REQUEST))
+            if (array_key_exists($field_name, $_REQUEST)) {
                 $this->arFieldValues[$field_name] = $_REQUEST[$field_name];
-            else
+            } else {
                 $this->arFieldValues[$field_name] = $default_value;
+            }
         } else {
-            if (is_array($db_record) && array_key_exists($field_name, $db_record) && isset($db_record[$field_name]))
+            if (is_array($db_record) && array_key_exists($field_name, $db_record) && isset($db_record[$field_name])) {
                 $this->arFieldValues[$field_name] = $db_record[$field_name];
-            else
+            } else {
                 $this->arFieldValues[$field_name] = $default_value;
+            }
         }
     }
 
@@ -160,7 +158,12 @@ class CAdminForm extends CAdminTabControl
                 );
 
                 if ($this->bCustomFields) {
-                    if (is_array($_SESSION["ADMIN_CUSTOM_FIELDS"]) && array_key_exists($this->name, $_SESSION["ADMIN_CUSTOM_FIELDS"])) {
+                    if (is_array(
+                            \Bitrix\Main\Application::getInstance()->getSession()["ADMIN_CUSTOM_FIELDS"]
+                        ) && array_key_exists(
+                            $this->name,
+                            \Bitrix\Main\Application::getInstance()->getSession()["ADMIN_CUSTOM_FIELDS"]
+                        )) {
                         $aAdditionalMenu[] = array(
                             "TEXT" => GetMessage("admin_lib_sett_sett_enable_text"),
                             "TITLE" => GetMessage("admin_lib_sett_sett_enable"),
@@ -174,13 +177,19 @@ class CAdminForm extends CAdminTabControl
                             "ONCLICK" => $this->name . '.DisableSettings();',
                             "ICON" => 'custom-fields-off'
                         );
-
                     }
                 }
 
                 if (count($aAdditionalMenu) > 1) {
-                    $sMenuUrl = "BX.adminShowMenu(this, " . htmlspecialcharsbx(CAdminPopup::PhpToJavaScript($aAdditionalMenu)) . ", {active_class: 'bx-settings-btn-active'});";
-                    $bCustomFieldsOff = is_array($_SESSION["ADMIN_CUSTOM_FIELDS"]) && array_key_exists($this->name, $_SESSION["ADMIN_CUSTOM_FIELDS"]);
+                    $sMenuUrl = "BX.adminShowMenu(this, " . htmlspecialcharsbx(
+                            CAdminPopup::PhpToJavaScript($aAdditionalMenu)
+                        ) . ", {active_class: 'bx-settings-btn-active'});";
+                    $bCustomFieldsOff = is_array(
+                            \Bitrix\Main\Application::getInstance()->getSession()["ADMIN_CUSTOM_FIELDS"]
+                        ) && array_key_exists(
+                            $this->name,
+                            \Bitrix\Main\Application::getInstance()->getSession()["ADMIN_CUSTOM_FIELDS"]
+                        );
 
                     $s .= '<span id="' . $this->name . '_settings_btn" class="adm-detail-settings adm-detail-settings-arrow' . ($bCustomFieldsOff ? '' : ' adm-detail-settings-active') . '" onclick="' . $sMenuUrl . '"></span>';
                 } else {
@@ -195,16 +204,18 @@ class CAdminForm extends CAdminTabControl
     function Begin($arParams = array())
     {
         $this->tabIndex = -1;
-        if (is_array($arParams))
+        if (is_array($arParams)) {
             $this->arParams = $arParams;
-        else
+        } else {
             $this->arParams = array();
+        }
     }
 
     function BeginNextFormTab()
     {
-        if ($this->tabIndex >= count($this->tabs))
+        if ($this->tabIndex >= count($this->tabs)) {
             return;
+        }
 
         $this->tabIndex++;
         while (
@@ -235,8 +246,9 @@ class CAdminForm extends CAdminTabControl
             $this->arSystemTabs[$arTab["DIV"]] = $arTab;
 
             if (is_array($arTab["FIELDS"])) {
-                foreach ($arTab["FIELDS"] as $arField)
+                foreach ($arTab["FIELDS"] as $arField) {
                     $this->arFields[$arField["id"]] = $arField;
+                }
             }
 
             if (
@@ -279,7 +291,7 @@ class CAdminForm extends CAdminTabControl
                         $bHasFields = true;
                     } elseif (array_key_exists($field_id, $this->arForbiddenFields)) {
                         $arNewField = false;
-                    } elseif (strlen($content) > 0) {
+                    } elseif ($content <> '') {
                         $arNewField = array(
                             "id" => $field_id,
                             "content" => $content,
@@ -296,16 +308,18 @@ class CAdminForm extends CAdminTabControl
                         foreach ($this->arReqiredTabs as $tab_id => $arReqTab) {
                             if (is_array($arReqTab["FIELDS"])) {
                                 foreach ($arReqTab["FIELDS"] as $i => $arReqTabField) {
-                                    if ($arReqTabField["id"] == $field_id)
+                                    if ($arReqTabField["id"] == $field_id) {
                                         unset($this->arReqiredTabs[$tab_id]["FIELDS"][$i]);
+                                    }
                                 }
                             }
                         }
                     }
                 }
 
-                if ($bHasFields)
+                if ($bHasFields) {
                     $this->tabs[] = $arNewTab;
+                }
             }
 
             foreach ($this->arReqiredTabs as $arReqTab) {
@@ -328,29 +342,32 @@ class CAdminForm extends CAdminTabControl
             ob_end_flush();
         }
 
-        if (!is_array($_SESSION["ADMIN_CUSTOM_FIELDS"]))
-            $_SESSION["ADMIN_CUSTOM_FIELDS"] = array();
+        if (!is_array(\Bitrix\Main\Application::getInstance()->getSession()["ADMIN_CUSTOM_FIELDS"])) {
+            \Bitrix\Main\Application::getInstance()->getSession()["ADMIN_CUSTOM_FIELDS"] = array();
+        }
         $arDisabled = CUserOptions::GetOption("form", $this->name . "_disabled", "N");
         if (is_array($arDisabled) && $arDisabled["disabled"] === "Y") {
-            $_SESSION["ADMIN_CUSTOM_FIELDS"][$this->name] = true;
+            \Bitrix\Main\Application::getInstance()->getSession()["ADMIN_CUSTOM_FIELDS"][$this->name] = true;
             $this->tabs = $this->arSavedTabs;
             $this->arFields = $this->arSystemFields;
         } else {
-            unset($_SESSION["ADMIN_CUSTOM_FIELDS"][$this->name]);
+            unset(\Bitrix\Main\Application::getInstance()->getSession()["ADMIN_CUSTOM_FIELDS"][$this->name]);
         }
 
-        if (isset($_REQUEST[$this->name . "_active_tab"]))
+        if (isset($_REQUEST[$this->name . "_active_tab"])) {
             $this->selectedTab = $_REQUEST[$this->name . "_active_tab"];
-        else
+        } else {
             $this->selectedTab = $this->tabs[0]["DIV"];
+        }
 
         //To show
         $arHiddens = $this->arFields;
         echo $this->sPrologContent;
-        if (array_key_exists("FORM_ACTION", $this->arParams))
+        if (array_key_exists("FORM_ACTION", $this->arParams)) {
             $action = htmlspecialcharsbx($this->arParams["FORM_ACTION"]);
-        else
+        } else {
             $action = htmlspecialcharsbx($APPLICATION->GetCurPage());
+        }
         echo '<form method="POST" action="' . $action . '"  enctype="multipart/form-data" id="' . $this->name . '_form" name="' . $this->name . '_form"' . ($this->arParams["FORM_ATTRIBUTES"] <> '' ? ' ' . $this->arParams["FORM_ATTRIBUTES"] : '') . '>';
 
         $htmlGroup = "";
@@ -360,12 +377,13 @@ class CAdminForm extends CAdminTabControl
                     if (is_array($arTab["FIELDS"])) {
                         foreach ($arTab["FIELDS"] as $arField) {
                             if (
-                                (strlen($this->arFields[$arField["id"]]["custom_html"]) > 0)
-                                || (strlen($this->arFields[$arField["id"]]["html"]) > 0)
+                                ($this->arFields[$arField["id"]]["custom_html"] <> '')
+                                || ($this->arFields[$arField["id"]]["html"] <> '')
                             ) {
                                 $p = array_search($arField["id"], $this->arFields[$this->group]["group"]);
-                                if ($p !== false)
+                                if ($p !== false) {
                                     unset($this->arFields[$this->group]["group"][$p]);
+                                }
                             }
                         }
                     }
@@ -390,30 +408,41 @@ class CAdminForm extends CAdminTabControl
                         if (!empty($this->arFields[$arField["id"]]["group"])) {
                             echo $htmlGroup;
                             foreach ($this->arFields[$arField["id"]]["group"] as $p) {
-                                if ($this->arFields[$p]["custom_html"])
-                                    echo preg_replace("/^\\s*<tr/is", "<tr class=\"bx-in-group\"", $this->arFields[$p]["custom_html"]);
-                                elseif ($this->arFields[$p]["html"] && !$this->arFields[$p]["delimiter"])
+                                if ($this->arFields[$p]["custom_html"]) {
+                                    echo preg_replace(
+                                        "/^\\s*<tr/is",
+                                        "<tr class=\"bx-in-group\"",
+                                        $this->arFields[$p]["custom_html"]
+                                    );
+                                } elseif ($this->arFields[$p]["html"] && !$this->arFields[$p]["delimiter"]) {
                                     echo '<tr class="bx-in-group" ' . ($this->arFields[$p]["valign"] <> '' ? ' valign="' . $this->arFields[$p]["valign"] . '"' : '') . ' id="tr_' . $p . '">', $this->arFields[$p]["html"], "</tr>\n";
+                                }
                                 unset($arHiddens[$this->arFields[$p]["id"]]);
                                 $this->arFields[$p] = array();
                             }
                         }
-                    } elseif (strlen($this->arFields[$arField["id"]]["custom_html"]) > 0) {
-                        if ($this->group_ajax)
-                            echo preg_replace("#<script[^>]*>.*?</script>#im" . BX_UTF_PCRE_MODIFIER, "", $this->arFields[$arField["id"]]["custom_html"]);
-                        else
+                    } elseif ($this->arFields[$arField["id"]]["custom_html"] <> '') {
+                        if ($this->group_ajax) {
+                            echo preg_replace(
+                                "#<script[^>]*>.*?</script>#im" . BX_UTF_PCRE_MODIFIER,
+                                "",
+                                $this->arFields[$arField["id"]]["custom_html"]
+                            );
+                        } else {
                             echo $this->arFields[$arField["id"]]["custom_html"];
-                    } elseif (strlen($this->arFields[$arField["id"]]["html"]) > 0) {
+                        }
+                    } elseif ($this->arFields[$arField["id"]]["html"] <> '') {
                         $rowClass = (
                         array_key_exists("rowClass", $this->arFields[$arField["id"]])
                             ? ' class="' . $this->arFields[$arField["id"]]["rowClass"] . '"'
                             : ''
                         );
 
-                        if ($this->arFields[$arField["id"]]["delimiter"])
+                        if ($this->arFields[$arField["id"]]["delimiter"]) {
                             echo '<tr class="heading" id="tr_' . $arField["id"] . '"' . $rowClass . '>';
-                        else
+                        } else {
                             echo '<tr' . ($this->arFields[$arField["id"]]["valign"] <> '' ? ' valign="' . $this->arFields[$arField["id"]]["valign"] . '"' : '') . ' id="tr_' . $arField["id"] . '"' . $rowClass . '>';
+                        }
                         echo $this->arFields[$arField["id"]]["html"] . '</tr>' . "\n";
                     }
                     unset($arHiddens[$arField["id"]]);
@@ -427,7 +456,6 @@ class CAdminForm extends CAdminTabControl
             if ($tabContent == "") {
                 array_splice($this->tabs, $this->tabIndex, 1); // forget about tab
             } else {
-
                 $this->tabs[$this->tabIndex]["CONTENT"] = $tabContent;
                 $this->tabIndex++;
             }
@@ -437,13 +465,14 @@ class CAdminForm extends CAdminTabControl
         $requiredFields = '';
         foreach ($arHiddens as $arField) {
             if ($arField["required"]) {
-                if (strlen($this->arFields[$arField["id"]]["custom_html"]) > 0) {
+                if ($this->arFields[$arField["id"]]["custom_html"] <> '') {
                     $requiredFields .= $this->arFields[$arField["id"]]["custom_html"];
-                } elseif (strlen($this->arFields[$arField["id"]]["html"]) > 0) {
-                    if ($this->arFields[$arField["id"]]["delimiter"])
+                } elseif ($this->arFields[$arField["id"]]["html"] <> '') {
+                    if ($this->arFields[$arField["id"]]["delimiter"]) {
                         $requiredFields .= '<tr class="heading">';
-                    else
+                    } else {
                         $requiredFields .= '<tr>';
+                    }
                     $requiredFields .= $this->arFields[$arField["id"]]["html"] . '</tr>';
                 }
                 unset($arHiddens[$arField["id"]]);
@@ -492,26 +521,36 @@ class CAdminForm extends CAdminTabControl
 
     function GetCustomLabel($id, $content)
     {
-        $bColumnNeeded = substr($content, -1) == ":";
+        $bColumnNeeded = mb_substr($content, -1) == ":";
 
-        if ($id === false)
+        if ($id === false) {
             return $this->sCurrentLabel;
-        elseif (array_key_exists($id, $this->arCustomLabels))
+        } elseif (array_key_exists($id, $this->arCustomLabels)) {
             return $this->arCustomLabels[$id] . ($bColumnNeeded ? ":" : "");
-        else
+        } else {
             return $content;
+        }
     }
 
     function GetCustomLabelHTML($id = false, $content = "")
     {
-        $bColumnNeeded = substr($content, -1) == ":";
+        $bColumnNeeded = mb_substr($content, -1) == ":";
 
-        if ($id === false)
-            return ($this->bCurrentReq ? '<span class="adm-required-field">' . htmlspecialcharsex($this->sCurrentLabel) . '</span>' : htmlspecialcharsex($this->sCurrentLabel));
-        elseif (array_key_exists($id, $this->arCustomLabels))
-            return ($this->arFields[$id]["required"] ? '<span class="adm-required-field">' . htmlspecialcharsex($this->arCustomLabels[$id]) . ($bColumnNeeded ? ":" : "") . '</span>' : htmlspecialcharsex($this->arCustomLabels[$id]) . ($bColumnNeeded ? ":" : ""));
-        else
-            return ($this->tabs[$this->tabIndex]["FIELDS"][$id]["required"] ? '<span class="adm-required-field">' . htmlspecialcharsex($content) . '</span>' : htmlspecialcharsex($content));
+        if ($id === false) {
+            return ($this->bCurrentReq ? '<span class="adm-required-field">' . htmlspecialcharsex(
+                    $this->sCurrentLabel
+                ) . '</span>' : htmlspecialcharsex($this->sCurrentLabel));
+        } elseif (array_key_exists($id, $this->arCustomLabels)) {
+            return ($this->arFields[$id]["required"] ? '<span class="adm-required-field">' . htmlspecialcharsex(
+                    $this->arCustomLabels[$id]
+                ) . ($bColumnNeeded ? ":" : "") . '</span>' : htmlspecialcharsex(
+                    $this->arCustomLabels[$id]
+                ) . ($bColumnNeeded ? ":" : ""));
+        } else {
+            return ($this->tabs[$this->tabIndex]["FIELDS"][$id]["required"] ? '<span class="adm-required-field">' . htmlspecialcharsex(
+                    $content
+                ) . '</span>' : htmlspecialcharsex($content));
+        }
     }
 
     function ShowWarnings($form, $messages, $aFields = false)
@@ -565,7 +604,10 @@ class CAdminForm extends CAdminTabControl
             "required" => $required,
             "delimiter" => true,
             "content" => $content,
-            "html" => '<td colspan="2">' . ($required ? '<span class="adm-required-field">' . $this->GetCustomLabelHTML($id, $content) . '</span>' : $this->GetCustomLabelHTML($id, $content)) . '</td>',
+            "html" => '<td colspan="2">' . ($required ? '<span class="adm-required-field">' . $this->GetCustomLabelHTML(
+                        $id,
+                        $content
+                    ) . '</span>' : $this->GetCustomLabelHTML($id, $content)) . '</td>',
         );
     }
 
@@ -575,54 +617,72 @@ class CAdminForm extends CAdminTabControl
             "id" => $id,
             "required" => $required,
             "content" => $content,
-            "html" => ($html <> '' ? '<td width="40%">' . $this->GetCustomLabelHTML($id, $content) . '</td><td>' . $html . '</td>' : ''),
+            "html" => ($html <> '' ? '<td width="40%">' . $this->GetCustomLabelHTML(
+                    $id,
+                    $content
+                ) . '</td><td>' . $html . '</td>' : ''),
         );
     }
 
     function AddDropDownField($id, $content, $required, $arSelect, $value = false, $arParams = array())
     {
-        if ($value === false)
+        if ($value === false) {
             $value = $this->arFieldValues[$id];
+        }
 
         $html = '<select name="' . $id . '"';
-        foreach ($arParams as $param)
+        foreach ($arParams as $param) {
             $html .= ' ' . $param;
+        }
         $html .= '>';
 
-        foreach ($arSelect as $key => $val)
-            $html .= '<option value="' . htmlspecialcharsbx($key) . '"' . ($value == $key ? ' selected' : '') . '>' . htmlspecialcharsex($val) . '</option>';
+        foreach ($arSelect as $key => $val) {
+            $html .= '<option value="' . htmlspecialcharsbx(
+                    $key
+                ) . '"' . ($value == $key ? ' selected' : '') . '>' . htmlspecialcharsex($val) . '</option>';
+        }
         $html .= '</select>';
 
         $this->tabs[$this->tabIndex]["FIELDS"][$id] = array(
             "id" => $id,
             "required" => $required,
             "content" => $content,
-            "html" => '<td width="40%">' . ($required ? '<span class="adm-required-field">' . $this->GetCustomLabelHTML($id, $content) . '</span>' : $this->GetCustomLabelHTML($id, $content)) . '</td><td>' . $html . '</td>',
+            "html" => '<td width="40%">' . ($required ? '<span class="adm-required-field">' . $this->GetCustomLabelHTML(
+                        $id,
+                        $content
+                    ) . '</span>' : $this->GetCustomLabelHTML($id, $content)) . '</td><td>' . $html . '</td>',
             "hidden" => '<input type="hidden" name="' . $id . '" value="' . htmlspecialcharsbx($value) . '">',
         );
     }
 
     function AddEditField($id, $content, $required, $arParams = array(), $value = false)
     {
-        if ($value === false)
+        if ($value === false) {
             $value = htmlspecialcharsbx($this->arFieldValues[$id]);
-        else
+        } else {
             $value = htmlspecialcharsbx(htmlspecialcharsback($value));
+        }
 
         $html = '<input type="text" name="' . $id . '" value="' . $value . '"';
-        if (intval($arParams["size"]) > 0)
+        if (intval($arParams["size"]) > 0) {
             $html .= ' size="' . intval($arParams["size"]) . '"';
-        if (intval($arParams["maxlength"]) > 0)
+        }
+        if (intval($arParams["maxlength"]) > 0) {
             $html .= ' maxlength="' . intval($arParams["maxlength"]) . '"';
-        if ($arParams["id"])
+        }
+        if ($arParams["id"]) {
             $html .= ' id="' . htmlspecialcharsbx($arParams["id"]) . '"';
+        }
         $html .= '>';
 
         $this->tabs[$this->tabIndex]["FIELDS"][$id] = array(
             "id" => $id,
             "required" => $required,
             "content" => $content,
-            "html" => '<td width="40%">' . ($required ? '<span class="adm-required-field">' . $this->GetCustomLabelHTML($id, $content) . '</span>' : $this->GetCustomLabelHTML($id, $content)) . '</td><td>' . $html . '</td>',
+            "html" => '<td width="40%">' . ($required ? '<span class="adm-required-field">' . $this->GetCustomLabelHTML(
+                        $id,
+                        $content
+                    ) . '</span>' : $this->GetCustomLabelHTML($id, $content)) . '</td><td>' . $html . '</td>',
             "hidden" => '<input type="hidden" name="' . $id . '" value="' . $value . '">',
         );
     }
@@ -632,17 +692,22 @@ class CAdminForm extends CAdminTabControl
         $value = htmlspecialcharsbx(htmlspecialcharsback($value));
 
         $html = '<textarea name="' . $id . '"';
-        if (intval($arParams["cols"]) > 0)
+        if (intval($arParams["cols"]) > 0) {
             $html .= ' cols="' . intval($arParams["cols"]) . '"';
-        if (intval($arParams["rows"]) > 0)
+        }
+        if (intval($arParams["rows"]) > 0) {
             $html .= ' rows="' . intval($arParams["rows"]) . '"';
+        }
         $html .= '>' . $value . '</textarea>';
 
         $this->tabs[$this->tabIndex]["FIELDS"][$id] = array(
             "id" => $id,
             "required" => $required,
             "content" => $label,
-            "html" => '<td width="40%">' . ($required ? '<span class="adm-required-field">' . $this->GetCustomLabelHTML($id, $label) . '</span>' : $this->GetCustomLabelHTML($id, $label)) . '</td><td>' . $html . '</td>',
+            "html" => '<td width="40%">' . ($required ? '<span class="adm-required-field">' . $this->GetCustomLabelHTML(
+                        $id,
+                        $label
+                    ) . '</span>' : $this->GetCustomLabelHTML($id, $label)) . '</td><td>' . $html . '</td>',
             "hidden" => '<input type="hidden" name="' . $id . '" value="' . $value . '">',
             "valign" => "top",
         );
@@ -658,7 +723,10 @@ class CAdminForm extends CAdminTabControl
             "id" => $id,
             "required" => $required,
             "content" => $label,
-            "html" => '<td width="40%">' . ($required ? '<span class="adm-required-field">' . $this->GetCustomLabelHTML($id, $label) . '</span>' : $this->GetCustomLabelHTML($id, $label)) . '</td><td>' . $html . '</td>',
+            "html" => '<td width="40%">' . ($required ? '<span class="adm-required-field">' . $this->GetCustomLabelHTML(
+                        $id,
+                        $label
+                    ) . '</span>' : $this->GetCustomLabelHTML($id, $label)) . '</td><td>' . $html . '</td>',
             "hidden" => '<input type="hidden" name="' . $id . '" value="' . $value . '">',
         );
     }
@@ -667,15 +735,22 @@ class CAdminForm extends CAdminTabControl
     {
         if (is_array($value)) {
             $html = '<input type="hidden" name="' . $id . '" value="' . htmlspecialcharsbx($value[1]) . '">
-				<input type="checkbox" name="' . $id . '" value="' . htmlspecialcharsbx($value[0]) . '"' . ($checked ? ' checked' : '');
-            $hidden = '<input type="hidden" name="' . $id . '" value="' . htmlspecialcharsbx($checked ? $value[0] : $value[1]) . '">';
+				<input type="checkbox" name="' . $id . '" value="' . htmlspecialcharsbx(
+                    $value[0]
+                ) . '"' . ($checked ? ' checked' : '');
+            $hidden = '<input type="hidden" name="' . $id . '" value="' . htmlspecialcharsbx(
+                    $checked ? $value[0] : $value[1]
+                ) . '">';
         } else {
-            $html = '<input type="checkbox" name="' . $id . '" value="' . htmlspecialcharsbx($value) . '"' . ($checked ? ' checked' : '');
+            $html = '<input type="checkbox" name="' . $id . '" value="' . htmlspecialcharsbx(
+                    $value
+                ) . '"' . ($checked ? ' checked' : '');
             $hidden = '<input type="hidden" name="' . $id . '" value="' . htmlspecialcharsbx($value) . '">';
         }
 
-        foreach ($arParams as $param)
+        foreach ($arParams as $param) {
             $html .= ' ' . $param;
+        }
         $html .= '>';
 
         $label = $this->GetCustomLabelHTML($id, $content);
@@ -694,20 +769,41 @@ class CAdminForm extends CAdminTabControl
 
     function AddFileField($id, $label, $value, $arParams = array(), $required = false)
     {
-        $arDefParams = array("iMaxW" => 150, "iMaxH" => 150, "sParams" => "border=0", "strImageUrl" => "", "bPopup" => true, "sPopupTitle" => false);
-        foreach ($arDefParams as $key => $val)
-            if (!array_key_exists($key, $arParams))
+        $arDefParams = array(
+            "iMaxW" => 150,
+            "iMaxH" => 150,
+            "sParams" => "border=0",
+            "strImageUrl" => "",
+            "bPopup" => true,
+            "sPopupTitle" => false
+        );
+        foreach ($arDefParams as $key => $val) {
+            if (!array_key_exists($key, $arParams)) {
                 $arParams[$key] = $val;
+            }
+        }
 
         $html = CFile::InputFile($id, 20, $value);
-        if ($value <> '')
-            $html .= '<div class="adm-detail-file-image">' . CFile::ShowImage($value, $arParams["iMaxW"], $arParams["iMaxH"], $arParams["sParams"], $arParams["strImageUrl"], $arParams["bPopup"], $arParams["sPopupTitle"]) . "</div>";
+        if ($value <> '') {
+            $html .= '<div class="adm-detail-file-image">' . CFile::ShowImage(
+                    $value,
+                    $arParams["iMaxW"],
+                    $arParams["iMaxH"],
+                    $arParams["sParams"],
+                    $arParams["strImageUrl"],
+                    $arParams["bPopup"],
+                    $arParams["sPopupTitle"]
+                ) . "</div>";
+        }
 
         $this->tabs[$this->tabIndex]["FIELDS"][$id] = array(
             "id" => $id,
             "required" => $required,
             "content" => $label,
-            "html" => '<td width="40%">' . ($required ? '<span class="adm-required-field">' . $this->GetCustomLabelHTML($id, $label) . '</span>' : $this->GetCustomLabelHTML($id, $label)) . '</td><td>' . $html . '</td>',
+            "html" => '<td width="40%">' . ($required ? '<span class="adm-required-field">' . $this->GetCustomLabelHTML(
+                        $id,
+                        $label
+                    ) . '</span>' : $this->GetCustomLabelHTML($id, $label)) . '</td><td>' . $html . '</td>',
             "valign" => "top",
             "rowClass" => "adm-detail-file-row"
         );
@@ -748,7 +844,14 @@ class CAdminForm extends CAdminTabControl
             ?>
             <tr>
                 <td colspan="2" align="left">
-                    <a href="/bitrix/admin/userfield_edit.php?lang=<? echo LANGUAGE_ID ?>&amp;ENTITY_ID=<? echo urlencode($PROPERTY_ID) ?>&amp;back_url=<? echo urlencode($APPLICATION->GetCurPageParam($this->name . '_active_tab=user_fields_tab', array($this->name . '_active_tab'))) ?>"><? echo $this->GetCustomLabelHTML() ?></a>
+                    <a href="/bitrix/admin/userfield_edit.php?lang=<? echo LANGUAGE_ID ?>&amp;ENTITY_ID=<? echo urlencode(
+                        $PROPERTY_ID
+                    ) ?>&amp;back_url=<? echo urlencode(
+                        $APPLICATION->GetCurPageParam(
+                            $this->name . '_active_tab=user_fields_tab',
+                            array($this->name . '_active_tab')
+                        )
+                    ) ?>"><? echo $this->GetCustomLabelHTML() ?></a>
                 </td>
             </tr>
             <?
@@ -758,31 +861,39 @@ class CAdminForm extends CAdminTabControl
         $arUserFields = $USER_FIELD_MANAGER->GetUserFields($PROPERTY_ID, $ID, LANGUAGE_ID);
         foreach ($arUserFields as $FIELD_NAME => $arUserField) {
             $arUserField["VALUE_ID"] = intval($ID);
-            if (array_key_exists($FIELD_NAME, $this->arCustomLabels))
+            if (array_key_exists($FIELD_NAME, $this->arCustomLabels)) {
                 $strLabel = $this->arCustomLabels[$FIELD_NAME];
-            else
+            } else {
                 $strLabel = $arUserField["EDIT_FORM_LABEL"] ? $arUserField["EDIT_FORM_LABEL"] : $arUserField["FIELD_NAME"];
+            }
             $arUserField["EDIT_FORM_LABEL"] = $strLabel;
 
             $this->BeginCustomField($FIELD_NAME, $strLabel, $arUserField["MANDATORY"] == "Y");
 
-            if (isset($_REQUEST['def_' . $FIELD_NAME]))
+            if (isset($_REQUEST['def_' . $FIELD_NAME])) {
                 $arUserField['SETTINGS']['DEFAULT_VALUE'] = $_REQUEST['def_' . $FIELD_NAME];
+            }
 
             echo $USER_FIELD_MANAGER->GetEditFormHTML($bVarsFromForm, $GLOBALS[$FIELD_NAME], $arUserField);
 
             $form_value = $GLOBALS[$FIELD_NAME];
-            if (!$bVarsFromForm)
+            if (!$bVarsFromForm) {
                 $form_value = $arUserField["VALUE"];
-            elseif ($arUserField["USER_TYPE"]["BASE_TYPE"] == "file")
+            } elseif ($arUserField["USER_TYPE"]["BASE_TYPE"] == "file") {
                 $form_value = $GLOBALS[$arUserField["FIELD_NAME"] . "_old_id"];
+            }
 
             $hidden = "";
             if (is_array($form_value)) {
-                foreach ($form_value as $value)
-                    $hidden .= '<input type="hidden" name="' . $FIELD_NAME . '[]" value="' . htmlspecialcharsbx($value) . '">';
+                foreach ($form_value as $value) {
+                    $hidden .= '<input type="hidden" name="' . $FIELD_NAME . '[]" value="' . htmlspecialcharsbx(
+                            $value
+                        ) . '">';
+                }
             } else {
-                $hidden .= '<input type="hidden" name="' . $FIELD_NAME . '" value="' . htmlspecialcharsbx($form_value) . '">';
+                $hidden .= '<input type="hidden" name="' . $FIELD_NAME . '" value="' . htmlspecialcharsbx(
+                        $form_value
+                    ) . '">';
             }
             $this->EndCustomField($FIELD_NAME, $hidden);
         }
@@ -801,42 +912,63 @@ class CAdminForm extends CAdminTabControl
             ?>
             <tr>
                 <td colspan="2" align="left">
-                    <a href="/bitrix/admin/userfield_edit.php?lang=<? echo LANGUAGE_ID ?>&amp;ENTITY_ID=<? echo urlencode($PROPERTY_ID) ?>&amp;back_url=<? echo urlencode($APPLICATION->GetCurPageParam($this->name . '_active_tab=user_fields_tab', array($this->name . '_active_tab'))) ?>"><? echo $this->GetCustomLabelHTML() ?></a>
+                    <a href="/bitrix/admin/userfield_edit.php?lang=<? echo LANGUAGE_ID ?>&amp;ENTITY_ID=<? echo urlencode(
+                        $PROPERTY_ID
+                    ) ?>&amp;back_url=<? echo urlencode(
+                        $APPLICATION->GetCurPageParam(
+                            $this->name . '_active_tab=user_fields_tab',
+                            array($this->name . '_active_tab')
+                        )
+                    ) ?>"><? echo $this->GetCustomLabelHTML() ?></a>
                 </td>
             </tr>
             <?
             $this->EndCustomField("USER_FIELDS_ADD", '');
         }
 
-        $arUserFields = $USER_FIELD_MANAGER->getUserFieldsWithReadyData($PROPERTY_ID, $readyData, LANGUAGE_ID, false, $primaryIdName);
+        $arUserFields = $USER_FIELD_MANAGER->getUserFieldsWithReadyData(
+            $PROPERTY_ID,
+            $readyData,
+            LANGUAGE_ID,
+            false,
+            $primaryIdName
+        );
 
         foreach ($arUserFields as $FIELD_NAME => $arUserField) {
             $arUserField["VALUE_ID"] = intval($readyData[$primaryIdName]);
-            if (array_key_exists($FIELD_NAME, $this->arCustomLabels))
+            if (array_key_exists($FIELD_NAME, $this->arCustomLabels)) {
                 $strLabel = $this->arCustomLabels[$FIELD_NAME];
-            else
+            } else {
                 $strLabel = $arUserField["EDIT_FORM_LABEL"] ? $arUserField["EDIT_FORM_LABEL"] : $arUserField["FIELD_NAME"];
+            }
             $arUserField["EDIT_FORM_LABEL"] = $strLabel;
 
             $this->BeginCustomField($FIELD_NAME, $strLabel, $arUserField["MANDATORY"] == "Y");
 
-            if (isset($_REQUEST['def_' . $FIELD_NAME]))
+            if (isset($_REQUEST['def_' . $FIELD_NAME])) {
                 $arUserField['SETTINGS']['DEFAULT_VALUE'] = $_REQUEST['def_' . $FIELD_NAME];
+            }
 
             echo $USER_FIELD_MANAGER->GetEditFormHTML($bVarsFromForm, $GLOBALS[$FIELD_NAME], $arUserField);
 
             $form_value = $GLOBALS[$FIELD_NAME];
-            if (!$bVarsFromForm)
+            if (!$bVarsFromForm) {
                 $form_value = $arUserField["VALUE"];
-            elseif ($arUserField["USER_TYPE"]["BASE_TYPE"] == "file")
+            } elseif ($arUserField["USER_TYPE"]["BASE_TYPE"] == "file") {
                 $form_value = $GLOBALS[$arUserField["FIELD_NAME"] . "_old_id"];
+            }
 
             $hidden = "";
             if (is_array($form_value)) {
-                foreach ($form_value as $value)
-                    $hidden .= '<input type="hidden" name="' . $FIELD_NAME . '[]" value="' . htmlspecialcharsbx($value) . '">';
+                foreach ($form_value as $value) {
+                    $hidden .= '<input type="hidden" name="' . $FIELD_NAME . '[]" value="' . htmlspecialcharsbx(
+                            $value
+                        ) . '">';
+                }
             } else {
-                $hidden .= '<input type="hidden" name="' . $FIELD_NAME . '" value="' . htmlspecialcharsbx($form_value) . '">';
+                $hidden .= '<input type="hidden" name="' . $FIELD_NAME . '" value="' . htmlspecialcharsbx(
+                        $form_value
+                    ) . '">';
             }
             $this->EndCustomField($FIELD_NAME, $hidden);
         }
@@ -844,14 +976,16 @@ class CAdminForm extends CAdminTabControl
 
     function Buttons($aParams = false, $additional_html = "")
     {
-        if ($aParams === false)
+        if ($aParams === false) {
             $this->arButtonsParams = false;
-        else
+        } else {
             $this->arButtonsParams = $aParams;
+        }
         $this->sButtonsContent = $additional_html;
 
-        while ($this->tabIndex < count($this->tabs))
+        while ($this->tabIndex < count($this->tabs)) {
             $this->BeginNextFormTab();
+        }
     }
 
     /**
@@ -861,8 +995,11 @@ class CAdminForm extends CAdminTabControl
     function ButtonsPublic($arJSButtons = false)
     {
         if ($this->bPublicMode) {
-            if (strlen($_REQUEST['from_module']))
-                $this->sButtonsContent .= '<input type="hidden" name="from_module" value="' . htmlspecialcharsbx($_REQUEST['from_module']) . '" />';
+            if ($_REQUEST['from_module'] <> '') {
+                $this->sButtonsContent .= '<input type="hidden" name="from_module" value="' . htmlspecialcharsbx(
+                        $_REQUEST['from_module']
+                    ) . '" />';
+            }
 
             ob_start();
             if ($arJSButtons === false) {
@@ -877,8 +1014,9 @@ class CAdminForm extends CAdminTabControl
 <script type="text/javascript">' . $this->publicObject . '.SetButtons([
 ';
                 foreach ($arJSButtons as $key => $btn) {
-                    if (substr($btn, 0, 1) == '.')
+                    if (mb_substr($btn, 0, 1) == '.') {
                         $btn = $this->publicObject . $btn;
+                    }
                     echo $key ? ',' : '', $btn, "\r\n"; // NO JSESCAPE HERE! string must contain valid js object
                 }
                 echo '
@@ -899,8 +1037,9 @@ class CAdminFormSettings
         if ($customTabs && $customTabs["tabs"]) {
             $arTabs = explode("--;--", $customTabs["tabs"]);
             foreach ($arTabs as $customFields) {
-                if ($customFields == "")
+                if ($customFields == "") {
                     continue;
+                }
 
                 $arCustomFields = explode("--,--", $customFields);
                 $arCustomTabID = "";

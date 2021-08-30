@@ -74,12 +74,14 @@ class WireFormat
         $expected = WireFormat::getWireType($type, $wire);
 
         if ($wire !== $expected) {
-            throw new RuntimeException(sprintf(
-                "Expected wire type %s but got %s for type %s.",
-                $expected,
-                $wire,
-                $type
-            ));
+            throw new RuntimeException(
+                sprintf(
+                    "Expected wire type %s but got %s for type %s.",
+                    $expected,
+                    $wire,
+                    $type
+                )
+            );
         }
     }
 

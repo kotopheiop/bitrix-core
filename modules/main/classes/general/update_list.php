@@ -1,12 +1,15 @@
 <?
 /**********************************************************************/
+
 /**    DO NOT MODIFY THIS FILE                                       **/
 /**    MODIFICATION OF THIS FILE WILL ENTAIL SITE FAILURE            **/
 /**********************************************************************/
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 $FM_RIGHT = $APPLICATION->GetGroupRight("main");
-if ($FM_RIGHT == "D") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($FM_RIGHT == "D") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 ?>
     <html>
     <head>
@@ -15,7 +18,7 @@ if ($FM_RIGHT == "D") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
             <?
             require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/interface/admin_styles.css");
 
-            if (strlen($APPLICATION->GetAdditionalCSS())>0)
+            if ($APPLICATION->GetAdditionalCSS() <> '')
             {
                 require($_SERVER["DOCUMENT_ROOT"].$APPLICATION->GetAdditionalCSS());
             }

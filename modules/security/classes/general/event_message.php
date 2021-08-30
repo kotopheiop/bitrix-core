@@ -51,21 +51,24 @@ final class CSecurityEventMessageFormatter
      */
     public function __construct($messageFormat = "", $userInfoFormat = "")
     {
-        if ($messageFormat)
+        if ($messageFormat) {
             $this->messageFormat = $messageFormat;
-        else
+        } else {
             $this->messageFormat = self::getDefaultMessageFormat();
+        }
 
-        if ($userInfoFormat)
+        if ($userInfoFormat) {
             $this->userInfoFormat = $userInfoFormat;
-        else
+        } else {
             $this->userInfoFormat = self::getDefaultUserInfoFormat();
+        }
 
-        $this->isUserInfoNeeded = strpos($messageFormat, self::USER_INFO) !== false;
-        $this->isB64MessageNeeded = strpos($messageFormat, self::VARIABLE_VALUE_BASE64) !== false;
+        $this->isUserInfoNeeded = mb_strpos($messageFormat, self::USER_INFO) !== false;
+        $this->isB64MessageNeeded = mb_strpos($messageFormat, self::VARIABLE_VALUE_BASE64) !== false;
 
-        if (!defined("ADMIN_SECTION") || ADMIN_SECTION != true)
+        if (!defined("ADMIN_SECTION") || ADMIN_SECTION != true) {
             $this->siteId = SITE_ID;
+        }
 
         $this->userInfo = $this->getUserInfo();
         $this->url = preg_replace("/(&?sessid=[0-9a-z]+)/", "", $_SERVER["REQUEST_URI"]);
@@ -78,7 +81,14 @@ final class CSecurityEventMessageFormatter
     {
         return implode(
             ' | ',
-            array(self::AUDIT_TYPE, self::SITE_ID, self::USER_INFO, self::URL, self::VARIABLE_NAME, self::VARIABLE_VALUE_BASE64)
+            array(
+                self::AUDIT_TYPE,
+                self::SITE_ID,
+                self::USER_INFO,
+                self::URL,
+                self::VARIABLE_NAME,
+                self::VARIABLE_VALUE_BASE64
+            )
         );
     }
 
@@ -117,7 +127,7 @@ final class CSecurityEventMessageFormatter
      */
     public function format($auditType, $itemName, $itemDescription)
     {
-        $description = substr($itemDescription, 0, 2000);
+        $description = mb_substr($itemDescription, 0, 2000);
 
         $replacement = array(
             self::AUDIT_TYPE => $auditType,
@@ -128,11 +138,13 @@ final class CSecurityEventMessageFormatter
             self::VARIABLE_VALUE => $description
         );
 
-        if ($this->isB64MessageNeeded)
+        if ($this->isB64MessageNeeded) {
             $replacement[self::VARIABLE_VALUE_BASE64] = base64_encode($description);
+        }
 
-        if (defined("BX24_HOST_NAME"))
+        if (defined("BX24_HOST_NAME")) {
             $replacement[self::BX24_HOST] = BX24_HOST_NAME;
+        }
 
         return str_replace(
             array_keys($replacement),
@@ -146,15 +158,17 @@ final class CSecurityEventMessageFormatter
      */
     private function getUserInfo()
     {
-        if (!$this->isUserInfoNeeded)
+        if (!$this->isUserInfoNeeded) {
             return "";
+        }
 
         global $USER;
 
-        if (is_object($USER))
+        if (is_object($USER)) {
             $userId = $USER->GetID();
-        else
+        } else {
             $userId = 0;
+        }
 
         $replacement = array(
             self::REMOTE_ADDR => $_SERVER["REMOTE_ADDR"],

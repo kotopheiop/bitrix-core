@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 use Bitrix\Main\Mail;
@@ -85,13 +86,32 @@ class CPostingGeneral
 
         CPosting::DeleteFile($ID);
 
-        $res = $DB->Query("DELETE FROM b_posting_rubric WHERE POSTING_ID='" . $ID . "'", false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-        if ($res)
-            $res = $DB->Query("DELETE FROM b_posting_group WHERE POSTING_ID='" . $ID . "' ", false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-        if ($res)
-            $res = $DB->Query("DELETE FROM b_posting_email WHERE POSTING_ID='" . $ID . "' ", false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-        if ($res)
-            $res = $DB->Query("DELETE FROM b_posting WHERE ID='" . $ID . "' ", false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+        $res = $DB->Query(
+            "DELETE FROM b_posting_rubric WHERE POSTING_ID='" . $ID . "'",
+            false,
+            "File: " . __FILE__ . "<br>Line: " . __LINE__
+        );
+        if ($res) {
+            $res = $DB->Query(
+                "DELETE FROM b_posting_group WHERE POSTING_ID='" . $ID . "' ",
+                false,
+                "File: " . __FILE__ . "<br>Line: " . __LINE__
+            );
+        }
+        if ($res) {
+            $res = $DB->Query(
+                "DELETE FROM b_posting_email WHERE POSTING_ID='" . $ID . "' ",
+                false,
+                "File: " . __FILE__ . "<br>Line: " . __LINE__
+            );
+        }
+        if ($res) {
+            $res = $DB->Query(
+                "DELETE FROM b_posting WHERE ID='" . $ID . "' ",
+                false,
+                "File: " . __FILE__ . "<br>Line: " . __LINE__
+            );
+        }
 
         return $res;
     }
@@ -110,7 +130,11 @@ class CPostingGeneral
 
         $rsFile = CPosting::GetFileList($ID, $file_id);
         while ($arFile = $rsFile->Fetch()) {
-            $DB->Query("DELETE FROM b_posting_file where POSTING_ID=" . intval($ID) . " AND FILE_ID=" . intval($arFile["ID"]), false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+            $DB->Query(
+                "DELETE FROM b_posting_file where POSTING_ID=" . intval($ID) . " AND FILE_ID=" . intval($arFile["ID"]),
+                false,
+                "File: " . __FILE__ . "<br>Line: " . __LINE__
+            );
             CFile::Delete(intval($arFile["ID"]));
         }
     }
@@ -155,17 +179,21 @@ class CPostingGeneral
         while ($arFile = $rsFile->Fetch()) {
             $filesSize += $arFile["FILE_SIZE"];
             $arSavedName = CPosting::SplitFileName($arFile["ORIGINAL_NAME"]);
-            if ($arFileName[0] == $arSavedName[0] && $arFileName[1] == $arSavedName[1])
+            if ($arFileName[0] == $arSavedName[0] && $arFileName[1] == $arSavedName[1]) {
                 $arSameNames[$arSavedName[2]] = true;
+            }
         }
 
         $max_files_size = COption::GetOptionString("subscribe", "max_files_size") * 1024 * 1024;
         if ($max_files_size > 0) {
             $filesSize += $file["size"];
             if ($filesSize > $max_files_size) {
-                $this->LAST_ERROR = GetMessage("class_post_err_files_size", array(
-                    "#MAX_FILES_SIZE#" => CFile::FormatSize($max_files_size),
-                ));
+                $this->LAST_ERROR = GetMessage(
+                    "class_post_err_files_size",
+                    array(
+                        "#MAX_FILES_SIZE#" => CFile::FormatSize($max_files_size),
+                    )
+                );
                 $APPLICATION->ThrowException($this->LAST_ERROR);
                 return false;
             }
@@ -182,7 +210,11 @@ class CPostingGeneral
         //save file
         $file["MODULE_ID"] = "subscribe";
         $fid = intval(CFile::SaveFile($file, "subscribe", true, true));
-        if (($fid > 0) && $DB->Query("INSERT INTO b_posting_file (POSTING_ID, FILE_ID) VALUES (" . $ID . " ," . $fid . ")", false, "File: " . __FILE__ . "<br>Line: " . __LINE__)) {
+        if (($fid > 0) && $DB->Query(
+                "INSERT INTO b_posting_file (POSTING_ID, FILE_ID) VALUES (" . $ID . " ," . $fid . ")",
+                false,
+                "File: " . __FILE__ . "<br>Line: " . __LINE__
+            )) {
             return true;
         } else {
             $this->LAST_ERROR = GetMessage("class_post_err_att");
@@ -231,28 +263,33 @@ class CPostingGeneral
         $aMsg = array();
 
         if (array_key_exists("FROM_FIELD", $arFields)) {
-            if (strlen($arFields["FROM_FIELD"]) < 3 || !check_email($arFields["FROM_FIELD"]))
+            if (mb_strlen($arFields["FROM_FIELD"]) < 3 || !check_email($arFields["FROM_FIELD"])) {
                 $aMsg[] = array("id" => "FROM_FIELD", "text" => GetMessage("class_post_err_email"));
+            }
         }
 
         if (!array_key_exists("DIRECT_SEND", $arFields) || $arFields["DIRECT_SEND"] == "N") {
-            if (array_key_exists("TO_FIELD", $arFields) && strlen($arFields["TO_FIELD"]) <= 0)
+            if (array_key_exists("TO_FIELD", $arFields) && $arFields["TO_FIELD"] == '') {
                 $aMsg[] = array("id" => "TO_FIELD", "text" => GetMessage("class_post_err_to"));
+            }
         }
 
         if (array_key_exists("SUBJECT", $arFields)) {
-            if (strlen($arFields["SUBJECT"]) <= 0)
+            if ($arFields["SUBJECT"] == '') {
                 $aMsg[] = array("id" => "SUBJECT", "text" => GetMessage("class_post_err_subj"));
+            }
         }
 
         if (array_key_exists("BODY", $arFields)) {
-            if (strlen($arFields["BODY"]) <= 0)
+            if ($arFields["BODY"] == '') {
                 $aMsg[] = array("id" => "BODY", "text" => GetMessage("class_post_err_text"));
+            }
         }
 
         if (array_key_exists("AUTO_SEND_TIME", $arFields) && $arFields["AUTO_SEND_TIME"] !== false) {
-            if ($DB->IsDate($arFields["AUTO_SEND_TIME"], false, false, "FULL") !== true)
+            if ($DB->IsDate($arFields["AUTO_SEND_TIME"], false, false, "FULL") !== true) {
                 $aMsg[] = array("id" => "AUTO_SEND_TIME", "text" => GetMessage("class_post_err_auto_time"));
+            }
         }
 
         if (array_key_exists("CHARSET", $arFields)) {
@@ -279,19 +316,29 @@ class CPostingGeneral
         global $DB;
         $ID = intval($ID);
 
-        $DB->Query("DELETE FROM b_posting_rubric WHERE POSTING_ID=" . $ID, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+        $DB->Query(
+            "DELETE FROM b_posting_rubric WHERE POSTING_ID=" . $ID,
+            false,
+            "File: " . __FILE__ . "<br>Line: " . __LINE__
+        );
         $arID = array();
-        if (is_array($aRubric))
-            foreach ($aRubric as $i)
+        if (is_array($aRubric)) {
+            foreach ($aRubric as $i) {
                 $arID[] = intval($i);
-        if (count($arID) > 0)
-            $DB->Query("
+            }
+        }
+        if (count($arID) > 0) {
+            $DB->Query(
+                "
 				INSERT INTO b_posting_rubric (POSTING_ID, LIST_RUBRIC_ID)
 				SELECT " . $ID . ", ID
 				FROM b_list_rubric
 				WHERE ID IN (" . implode(", ", $arID) . ")
-				", false, "File: " . __FILE__ . "<br>Line: " . __LINE__
+				",
+                false,
+                "File: " . __FILE__ . "<br>Line: " . __LINE__
             );
+        }
     }
 
     //relation with user groups
@@ -300,19 +347,29 @@ class CPostingGeneral
         global $DB;
         $ID = intval($ID);
 
-        $DB->Query("DELETE FROM b_posting_group WHERE POSTING_ID='" . $ID . "'", false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+        $DB->Query(
+            "DELETE FROM b_posting_group WHERE POSTING_ID='" . $ID . "'",
+            false,
+            "File: " . __FILE__ . "<br>Line: " . __LINE__
+        );
         $arID = array();
-        if (is_array($aGroup))
-            foreach ($aGroup as $i)
+        if (is_array($aGroup)) {
+            foreach ($aGroup as $i) {
                 $arID[] = intval($i);
-        if (count($arID) > 0)
-            $DB->Query("
+            }
+        }
+        if (count($arID) > 0) {
+            $DB->Query(
+                "
 				INSERT INTO b_posting_group (POSTING_ID, GROUP_ID)
 				SELECT " . $ID . ", ID
 				FROM b_group
 				WHERE ID IN (" . implode(", ", $arID) . ")
-				", false, "File: " . __FILE__ . "<br>Line: " . __LINE__
+				",
+                false,
+                "File: " . __FILE__ . "<br>Line: " . __LINE__
             );
+        }
     }
 
     //Addition
@@ -320,11 +377,13 @@ class CPostingGeneral
     {
         global $DB;
 
-        if (!$this->CheckFields($arFields, 0))
+        if (!$this->CheckFields($arFields, 0)) {
             return false;
+        }
 
-        if (!array_key_exists("MSG_CHARSET", $arFields))
+        if (!array_key_exists("MSG_CHARSET", $arFields)) {
             $arFields["MSG_CHARSET"] = LANG_CHARSET;
+        }
         $arFields["VERSION"] = '2';
 
         $ID = $DB->Add("b_posting", $arFields, Array("BCC_FIELD", "BODY"));
@@ -341,8 +400,9 @@ class CPostingGeneral
         global $DB;
         $ID = intval($ID);
 
-        if (!$this->CheckFields($arFields, $ID))
+        if (!$this->CheckFields($arFields, $ID)) {
             return false;
+        }
 
         $strUpdate = $DB->PrepareUpdate("b_posting", $arFields);
         if ($strUpdate != "") {
@@ -354,13 +414,16 @@ class CPostingGeneral
                 //"ERROR_EMAIL" => $arFields["ERROR_EMAIL"],
                 //"BCC_TO_SEND" => $arFields["BCC_TO_SEND"],
             );
-            if (!$DB->QueryBind($strSql, $arBinds))
+            if (!$DB->QueryBind($strSql, $arBinds)) {
                 return false;
+            }
         }
-        if (is_set($arFields, "RUB_ID"))
+        if (is_set($arFields, "RUB_ID")) {
             $this->UpdateRubrics($ID, $arFields["RUB_ID"]);
-        if (is_set($arFields, "GROUP_ID"))
+        }
+        if (is_set($arFields, "GROUP_ID")) {
             $this->UpdateGroups($ID, $arFields["GROUP_ID"]);
+        }
 
         return true;
     }
@@ -372,44 +435,56 @@ class CPostingGeneral
         //send to categories
         $aPostRub = array();
         $post_rub = CPostingGeneral::GetRubricList($post_arr["ID"]);
-        while ($post_rub_arr = $post_rub->Fetch())
+        while ($post_rub_arr = $post_rub->Fetch()) {
             $aPostRub[] = $post_rub_arr["ID"];
+        }
 
         $subscr = CSubscription::GetList(
             array("ID" => "ASC"),
-            array("RUBRIC_MULTI" => $aPostRub, "CONFIRMED" => "Y", "ACTIVE" => "Y",
-                "FORMAT" => $post_arr["SUBSCR_FORMAT"], "EMAIL" => $post_arr["EMAIL_FILTER"])
+            array(
+                "RUBRIC_MULTI" => $aPostRub,
+                "CONFIRMED" => "Y",
+                "ACTIVE" => "Y",
+                "FORMAT" => $post_arr["SUBSCR_FORMAT"],
+                "EMAIL" => $post_arr["EMAIL_FILTER"]
+            )
         );
-        while (($subscr_arr = $subscr->Fetch()))
+        while (($subscr_arr = $subscr->Fetch())) {
             $aEmail[] = $subscr_arr["EMAIL"];
+        }
 
         //send to user groups
         $aPostGrp = array();
         $post_grp = CPostingGeneral::GetGroupList($post_arr["ID"]);
-        while ($post_grp_arr = $post_grp->Fetch())
+        while ($post_grp_arr = $post_grp->Fetch()) {
             $aPostGrp[] = $post_grp_arr["ID"];
+        }
 
         if (count($aPostGrp) > 0) {
             $user = CUser::GetList(
-                ($b = "id"), ($o = "asc"),
+                "id",
+                "asc",
                 array("GROUP_MULTI" => $aPostGrp, "ACTIVE" => "Y", "EMAIL" => $post_arr["EMAIL_FILTER"])
             );
-            while (($user_arr = $user->Fetch()))
+            while (($user_arr = $user->Fetch())) {
                 $aEmail[] = $user_arr["EMAIL"];
+            }
         }
 
         //from additional emails
         $BCC = $post_arr["BCC_FIELD"];
-        if ($post_arr["DIRECT_SEND"] == "Y")
+        if ($post_arr["DIRECT_SEND"] == "Y") {
             $BCC .= ($BCC <> "" ? "," : "") . $post_arr["TO_FIELD"];
+        }
         if ($BCC <> "") {
             $BCC = str_replace("\r\n", "\n", $BCC);
             $BCC = str_replace("\n", ",", $BCC);
             $aBcc = explode(",", $BCC);
             foreach ($aBcc as $bccEmail) {
                 $bccEmail = trim($bccEmail);
-                if ($bccEmail <> "")
+                if ($bccEmail <> "") {
                     $aEmail[] = $bccEmail;
+                }
             }
         }
 
@@ -429,9 +504,13 @@ class CPostingGeneral
             );
             while ($arPosts = $rsPosts->Fetch()) {
                 if ($limit === true) {
-                    $maxcount = COption::GetOptionInt("subscribe", "subscribe_max_emails_per_hit") - self::$current_emails_per_hit;
-                    if ($maxcount <= 0)
+                    $maxcount = COption::GetOptionInt(
+                            "subscribe",
+                            "subscribe_max_emails_per_hit"
+                        ) - self::$current_emails_per_hit;
+                    if ($maxcount <= 0) {
                         break;
+                    }
                 } else {
                     $maxcount = 0;
                 }
@@ -444,17 +523,27 @@ class CPostingGeneral
 
             //Here is agent entry
             if ($limit === true) {
-                $maxcount = COption::GetOptionInt("subscribe", "subscribe_max_emails_per_hit") - self::$current_emails_per_hit;
-                if ($maxcount <= 0)
+                $maxcount = COption::GetOptionInt(
+                        "subscribe",
+                        "subscribe_max_emails_per_hit"
+                    ) - self::$current_emails_per_hit;
+                if ($maxcount <= 0) {
                     return "CPosting::AutoSend(" . $ID . ",true" . ($site_id ? ",\"" . $site_id . "\"" : "") . ");";
+                }
             } else {
                 $maxcount = 0;
             }
 
             $cPosting = new CPosting;
-            $res = $cPosting->SendMessage($ID, COption::GetOptionString("subscribe", "posting_interval"), $maxcount, true);
-            if ($res == "CONTINUE")
+            $res = $cPosting->SendMessage(
+                $ID,
+                COption::GetOptionString("subscribe", "posting_interval"),
+                $maxcount,
+                true
+            );
+            if ($res == "CONTINUE") {
                 return "CPosting::AutoSend(" . $ID . ($limit ? ",true" : ",false") . ($site_id ? ",\"" . $site_id . "\"" : "") . ");";
+            }
         }
         return "";
     }
@@ -485,8 +574,8 @@ class CPostingGeneral
 
         if (
             $check_charset
-            && (strlen($post_arr["MSG_CHARSET"]) > 0)
-            && (strtoupper($post_arr["MSG_CHARSET"]) != strtoupper(LANG_CHARSET))
+            && ($post_arr["MSG_CHARSET"] <> '')
+            && (mb_strtoupper($post_arr["MSG_CHARSET"]) != mb_strtoupper(LANG_CHARSET))
         ) {
             return "CONTINUE";
         }
@@ -494,8 +583,12 @@ class CPostingGeneral
         if (CPosting::Lock($ID) === false) {
             if ($e = $APPLICATION->GetException()) {
                 $this->LAST_ERROR .= GetMessage("class_post_err_lock") . "<br>" . $e->GetString();
-                if (strpos($this->LAST_ERROR, "PLS-00201") !== false && strpos($this->LAST_ERROR, "'DBMS_LOCK'") !== false)
+                if (mb_strpos($this->LAST_ERROR, "PLS-00201") !== false && mb_strpos(
+                        $this->LAST_ERROR,
+                        "'DBMS_LOCK'"
+                    ) !== false) {
                     $this->LAST_ERROR .= "<br>" . GetMessage("class_post_err_lock_advice");
+                }
                 $APPLICATION->ResetException();
                 return false;
             } else {
@@ -504,25 +597,42 @@ class CPostingGeneral
         }
 
         if ($post_arr["VERSION"] <> '2') {
-            if (is_string($post_arr["BCC_TO_SEND"]) && strlen($post_arr["BCC_TO_SEND"]) > 0) {
+            if (is_string($post_arr["BCC_TO_SEND"]) && $post_arr["BCC_TO_SEND"] <> '') {
                 $a = explode(",", $post_arr["BCC_TO_SEND"]);
-                foreach ($a as $e)
-                    $DB->Query("INSERT INTO b_posting_email (POSTING_ID, STATUS, EMAIL) VALUES (" . $ID . ", 'Y', '" . $DB->ForSQL($e) . "')");
+                foreach ($a as $e) {
+                    $DB->Query(
+                        "INSERT INTO b_posting_email (POSTING_ID, STATUS, EMAIL) VALUES (" . $ID . ", 'Y', '" . $DB->ForSQL(
+                            $e
+                        ) . "')"
+                    );
+                }
             }
 
-            if (is_string($post_arr["ERROR_EMAIL"]) && strlen($post_arr["ERROR_EMAIL"]) > 0) {
+            if (is_string($post_arr["ERROR_EMAIL"]) && $post_arr["ERROR_EMAIL"] <> '') {
                 $a = explode(",", $post_arr["ERROR_EMAIL"]);
-                foreach ($a as $e)
-                    $DB->Query("INSERT INTO b_posting_email (POSTING_ID, STATUS, EMAIL) VALUES (" . $ID . ", 'E', '" . $DB->ForSQL($e) . "')");
+                foreach ($a as $e) {
+                    $DB->Query(
+                        "INSERT INTO b_posting_email (POSTING_ID, STATUS, EMAIL) VALUES (" . $ID . ", 'E', '" . $DB->ForSQL(
+                            $e
+                        ) . "')"
+                    );
+                }
             }
 
-            if (is_string($post_arr["SENT_BCC"]) && strlen($post_arr["SENT_BCC"]) > 0) {
+            if (is_string($post_arr["SENT_BCC"]) && $post_arr["SENT_BCC"] <> '') {
                 $a = explode(",", $post_arr["SENT_BCC"]);
-                foreach ($a as $e)
-                    $DB->Query("INSERT INTO b_posting_email (POSTING_ID, STATUS, EMAIL) VALUES (" . $ID . ", 'N', '" . $DB->ForSQL($e) . "')");
+                foreach ($a as $e) {
+                    $DB->Query(
+                        "INSERT INTO b_posting_email (POSTING_ID, STATUS, EMAIL) VALUES (" . $ID . ", 'N', '" . $DB->ForSQL(
+                            $e
+                        ) . "')"
+                    );
+                }
             }
 
-            $DB->Query("UPDATE b_posting SET VERSION='2', BCC_TO_SEND=null, ERROR_EMAIL=null, SENT_BCC=null WHERE ID=" . $ID);
+            $DB->Query(
+                "UPDATE b_posting SET VERSION='2', BCC_TO_SEND=null, ERROR_EMAIL=null, SENT_BCC=null WHERE ID=" . $ID
+            );
         }
 
         $tools = new CMailTools;
@@ -531,11 +641,19 @@ class CPostingGeneral
             $post_arr["BODY"] = $tools->ReplaceImages($post_arr["BODY"]);
         }
 
-        if (strlen($post_arr["CHARSET"]) > 0) {
+        if ($post_arr["CHARSET"] <> '') {
             $from_charset = $post_arr["MSG_CHARSET"] ? $post_arr["MSG_CHARSET"] : SITE_CHARSET;
             $post_arr["BODY"] = $APPLICATION->ConvertCharset($post_arr["BODY"], $from_charset, $post_arr["CHARSET"]);
-            $post_arr["SUBJECT"] = $APPLICATION->ConvertCharset($post_arr["SUBJECT"], $from_charset, $post_arr["CHARSET"]);
-            $post_arr["FROM_FIELD"] = $APPLICATION->ConvertCharset($post_arr["FROM_FIELD"], $from_charset, $post_arr["CHARSET"]);
+            $post_arr["SUBJECT"] = $APPLICATION->ConvertCharset(
+                $post_arr["SUBJECT"],
+                $from_charset,
+                $post_arr["CHARSET"]
+            );
+            $post_arr["FROM_FIELD"] = $APPLICATION->ConvertCharset(
+                $post_arr["FROM_FIELD"],
+                $from_charset,
+                $post_arr["CHARSET"]
+            );
         }
 
         //Preparing message header, text, subject
@@ -546,8 +664,9 @@ class CPostingGeneral
                 preg_split("/(.{512}[^ ]*[ ])/", $sBody . " ", -1, PREG_SPLIT_DELIM_CAPTURE)
             )
         ); //Some MTA has 4K limit for fgets function. So we have to split the message body.
-        if (COption::GetOptionString("main", "CONVERT_UNIX_NEWLINE_2_WINDOWS", "N") == "Y")
+        if (COption::GetOptionString("main", "CONVERT_UNIX_NEWLINE_2_WINDOWS", "N") == "Y") {
             $sBody = str_replace("\n", "\r\n", $sBody);
+        }
 
         if (COption::GetOptionString("subscribe", "allow_8bit_chars") <> "Y") {
             $sSubject = CMailTools::EncodeSubject($post_arr["SUBJECT"], $post_arr["CHARSET"]);
@@ -585,15 +704,20 @@ class CPostingGeneral
                 $sBody . $eol;
 
             foreach ($tools->aMatches as $attachment) {
-                if (strlen($post_arr["CHARSET"]) > 0) {
+                if ($post_arr["CHARSET"] <> '') {
                     $from_charset = $post_arr["MSG_CHARSET"] ? $post_arr["MSG_CHARSET"] : SITE_CHARSET;
-                    $attachment["DEST"] = $APPLICATION->ConvertCharset($attachment["DEST"], $from_charset, $post_arr["CHARSET"]);
+                    $attachment["DEST"] = $APPLICATION->ConvertCharset(
+                        $attachment["DEST"],
+                        $from_charset,
+                        $post_arr["CHARSET"]
+                    );
                 }
 
-                if (COption::GetOptionString("subscribe", "allow_8bit_chars") <> "Y")
+                if (COption::GetOptionString("subscribe", "allow_8bit_chars") <> "Y") {
                     $name = CMailTools::EncodeSubject($attachment["DEST"], $post_arr["CHARSET"]);
-                else
+                } else {
                     $name = $attachment["DEST"];
+                }
 
                 $sBody .=
                     $eol . "--" . $sBoundary . $eol .
@@ -603,7 +727,9 @@ class CPostingGeneral
                     chunk_split(
                         base64_encode(
                             file_get_contents($attachment["PATH"])
-                        ), 72, $eol
+                        ),
+                        72,
+                        $eol
                     );
             }
         }
@@ -615,8 +741,9 @@ class CPostingGeneral
             if (
                 $maxFileSize == 0
                 || $arFile["FILE_SIZE"] <= $maxFileSize
-            )
+            ) {
                 $arFiles[] = $arFile;
+            }
         }
 
         if (!empty($arFiles)) {
@@ -638,9 +765,13 @@ class CPostingGeneral
             }
 
             foreach ($arFiles as $arFile) {
-                if (strlen($post_arr["CHARSET"]) > 0) {
+                if ($post_arr["CHARSET"] <> '') {
                     $from_charset = $post_arr["MSG_CHARSET"] ? $post_arr["MSG_CHARSET"] : SITE_CHARSET;
-                    $file_name = $APPLICATION->ConvertCharset($arFile["ORIGINAL_NAME"], $from_charset, $post_arr["CHARSET"]);
+                    $file_name = $APPLICATION->ConvertCharset(
+                        $arFile["ORIGINAL_NAME"],
+                        $from_charset,
+                        $post_arr["CHARSET"]
+                    );
                 } else {
                     $file_name = $arFile["ORIGINAL_NAME"];
                 }
@@ -649,7 +780,10 @@ class CPostingGeneral
                     $eol . "--" . $sBoundary . $eol .
                     "Content-Type: " . $arFile["CONTENT_TYPE"] . "; name=\"" . $file_name . "\"" . $eol .
                     "Content-Transfer-Encoding: base64" . $eol .
-                    "Content-Disposition: attachment; filename=\"" . CMailTools::EncodeHeaderFrom($file_name, $post_arr["CHARSET"]) . "\"" . $eol . $eol;
+                    "Content-Disposition: attachment; filename=\"" . CMailTools::EncodeHeaderFrom(
+                        $file_name,
+                        $post_arr["CHARSET"]
+                    ) . "\"" . $eol . $eol;
 
                 $arTempFile = CFile::MakeFileArray($arFile["ID"]);
                 $sBody .= chunk_split(
@@ -684,11 +818,16 @@ class CPostingGeneral
             //personal delivery
             $arEvents = GetModuleEvents("subscribe", "BeforePostingSendMail", true);
 
-            $rsEmails = $DB->Query($DB->TopSql("
+            $rsEmails = $DB->Query(
+                $DB->TopSql(
+                    "
 				SELECT *
 				FROM b_posting_email
 				WHERE POSTING_ID = " . $ID . " AND STATUS='Y'
-			", $maxcount));
+			",
+                    $maxcount
+                )
+            );
 
             while ($arEmail = $rsEmails->Fetch()) {
                 //Event part
@@ -700,48 +839,75 @@ class CPostingGeneral
                     "HEADER" => $sHeader,
                     "EMAIL_EX" => $arEmail,
                 );
-                foreach ($arEvents as $arEvent)
+                foreach ($arEvents as $arEvent) {
                     $arFields = ExecuteModuleEventEx($arEvent, array($arFields));
+                }
                 //Sending
 
                 if (is_array($arFields)) {
                     $to = CMailTools::EncodeHeaderFrom($arFields["EMAIL"], $post_arr["CHARSET"]);
-                    $result = bxmail($to, $arFields["SUBJECT"], $arFields["BODY"], $arFields["HEADER"], $mail_additional_parameters, $context);
+                    $result = bxmail(
+                        $to,
+                        $arFields["SUBJECT"],
+                        $arFields["BODY"],
+                        $arFields["HEADER"],
+                        $mail_additional_parameters,
+                        $context
+                    );
                 } else {
                     $result = $arFields !== false;
                 }
 
                 //Result check and iteration
-                if ($result)
+                if ($result) {
                     $DB->Query("UPDATE b_posting_email SET STATUS='N' WHERE ID = " . $arEmail["ID"]);
-                else
+                } else {
                     $DB->Query("UPDATE b_posting_email SET STATUS='E' WHERE ID = " . $arEmail["ID"]);
+                }
 
-                if ($timeout > 0 && getmicrotime() - $start_time >= $timeout)
+                if ($timeout > 0 && getmicrotime() - $start_time >= $timeout) {
                     break;
+                }
 
                 self::$current_emails_per_hit++;
             }
         } else {
             //BCC delivery
-            $rsEmails = $DB->Query($DB->TopSql("
+            $rsEmails = $DB->Query(
+                $DB->TopSql(
+                    "
 				SELECT *
 				FROM b_posting_email
 				WHERE POSTING_ID = " . $ID . " AND STATUS='Y'
-			", COption::GetOptionString("subscribe", "max_bcc_count")));
+			",
+                    COption::GetOptionString("subscribe", "max_bcc_count")
+                )
+            );
 
             $aStep = array();
-            while ($arEmail = $rsEmails->Fetch())
+            while ($arEmail = $rsEmails->Fetch()) {
                 $aStep[$arEmail["ID"]] = $arEmail["EMAIL"];
+            }
 
             if (count($aStep) > 0) {
                 $BCC = implode(",", $aStep);
                 $sHeaderStep = $sHeader . $eol . "Bcc: " . $BCC;
-                $result = bxmail($post_arr["TO_FIELD"], $sSubject, $sBody, $sHeaderStep, $mail_additional_parameters, $context);
+                $result = bxmail(
+                    $post_arr["TO_FIELD"],
+                    $sSubject,
+                    $sBody,
+                    $sHeaderStep,
+                    $mail_additional_parameters,
+                    $context
+                );
                 if ($result) {
-                    $DB->Query("UPDATE b_posting_email SET STATUS='N' WHERE ID in (" . implode(", ", array_keys($aStep)) . ")");
+                    $DB->Query(
+                        "UPDATE b_posting_email SET STATUS='N' WHERE ID in (" . implode(", ", array_keys($aStep)) . ")"
+                    );
                 } else {
-                    $DB->Query("UPDATE b_posting_email SET STATUS='E' WHERE ID in (" . implode(", ", array_keys($aStep)) . ")");
+                    $DB->Query(
+                        "UPDATE b_posting_email SET STATUS='E' WHERE ID in (" . implode(", ", array_keys($aStep)) . ")"
+                    );
                     $this->LAST_ERROR .= GetMessage("class_post_err_mail") . "<br>";
                 }
             }
@@ -768,14 +934,17 @@ class CPostingGeneral
     {
         global $DB;
         $arStatuses = array();
-        $rs = $DB->Query("
+        $rs = $DB->Query(
+            "
 			SELECT STATUS, COUNT(*) CNT
 			FROM b_posting_email
 			WHERE POSTING_ID = " . intval($ID) . "
 			GROUP BY STATUS
-		");
-        while ($ar = $rs->Fetch())
+		"
+        );
+        while ($ar = $rs->Fetch()) {
             $arStatuses[$ar["STATUS"]] = $ar["CNT"];
+        }
         return $arStatuses;
     }
 
@@ -783,13 +952,15 @@ class CPostingGeneral
     {
         global $DB;
 
-        return $DB->Query("
+        return $DB->Query(
+            "
 			SELECT *
 			FROM b_posting_email
 			WHERE POSTING_ID = " . intval($ID) . "
 			AND STATUS = '" . $DB->ForSQL($STATUS) . "'
 			ORDER BY EMAIL
-		");
+		"
+        );
     }
 
     function ChangeStatus($ID, $status)
@@ -807,8 +978,9 @@ class CPostingGeneral
             return false;
         }
 
-        if ($arResult["STATUS"] == $status)
+        if ($arResult["STATUS"] == $status) {
             return true;
+        }
 
         switch ($arResult["STATUS"] . $status) {
             case "DP":
@@ -821,7 +993,8 @@ class CPostingGeneral
 
                 $DB->Query("DELETE from b_posting_email WHERE POSTING_ID = " . $ID);
 
-                $DB->Query("
+                $DB->Query(
+                    "
 					INSERT INTO b_posting_email (POSTING_ID, STATUS, EMAIL, SUBSCRIPTION_ID, USER_ID)
 					SELECT DISTINCT
 						PR.POSTING_ID, 'Y', S.EMAIL, S.ID, S.USER_ID
@@ -835,10 +1008,17 @@ class CPostingGeneral
 						AND S.CONFIRMED = 'Y'
 						AND S.ACTIVE = 'Y'
 						AND (U.ID IS NULL OR U.ACTIVE = 'Y')
-						" . (strlen($post_arr["SUBSCR_FORMAT"]) <= 0 || $post_arr["SUBSCR_FORMAT"] === "NOT_REF" ? "" : "AND S.FORMAT='" . ($post_arr["SUBSCR_FORMAT"] == "text" ? "text" : "html") . "'") . "
-						" . (strlen($post_arr["EMAIL_FILTER"]) <= 0 || $post_arr["EMAIL_FILTER"] === "NOT_REF" ? "" : "AND " . GetFilterQuery("S.EMAIL", $post_arr["EMAIL_FILTER"], "Y", array("@", ".", "_"))) . "
-				");
-                $DB->Query("
+						" . ($post_arr["SUBSCR_FORMAT"] == '' || $post_arr["SUBSCR_FORMAT"] === "NOT_REF" ? "" : "AND S.FORMAT='" . ($post_arr["SUBSCR_FORMAT"] == "text" ? "text" : "html") . "'") . "
+						" . ($post_arr["EMAIL_FILTER"] == '' || $post_arr["EMAIL_FILTER"] === "NOT_REF" ? "" : "AND " . GetFilterQuery(
+                            "S.EMAIL",
+                            $post_arr["EMAIL_FILTER"],
+                            "Y",
+                            array("@", ".", "_")
+                        )) . "
+				"
+                );
+                $DB->Query(
+                    "
 					DELETE pe
 					from b_posting_email pe
 					left join b_posting_email pe0 on
@@ -846,12 +1026,14 @@ class CPostingGeneral
 						and pe0.EMAIL = pe.EMAIL
 					WHERE pe.POSTING_ID = " . $ID . "
 					AND pe0.ID < pe.ID
-				");
+				"
+                );
 
                 //send to user groups
                 $res = $DB->Query("SELECT * FROM b_posting_group WHERE POSTING_ID = " . $ID . " AND GROUP_ID = 2");
                 if ($res->Fetch()) {
-                    $DB->Query("
+                    $DB->Query(
+                        "
 						INSERT INTO b_posting_email (POSTING_ID, STATUS, EMAIL, SUBSCRIPTION_ID, USER_ID)
 						SELECT
 							" . $ID . ", 'Y', U.EMAIL, NULL, MIN(U.ID)
@@ -859,12 +1041,19 @@ class CPostingGeneral
 							b_user U
 						WHERE
 							U.ACTIVE = 'Y'
-							" . (strlen($post_arr["EMAIL_FILTER"]) <= 0 || $post_arr["EMAIL_FILTER"] === "NOT_REF" ? "" : "AND " . GetFilterQuery("U.EMAIL", $post_arr["EMAIL_FILTER"], "Y", array("@", ".", "_"))) . "
+							" . ($post_arr["EMAIL_FILTER"] == '' || $post_arr["EMAIL_FILTER"] === "NOT_REF" ? "" : "AND " . GetFilterQuery(
+                                "U.EMAIL",
+                                $post_arr["EMAIL_FILTER"],
+                                "Y",
+                                array("@", ".", "_")
+                            )) . "
 							and U.EMAIL not in (SELECT EMAIL FROM b_posting_email WHERE POSTING_ID = " . $ID . ")
 						GROUP BY U.EMAIL
-					");
+					"
+                    );
                 } else {
-                    $DB->Query("
+                    $DB->Query(
+                        "
 						INSERT INTO b_posting_email (POSTING_ID, STATUS, EMAIL, SUBSCRIPTION_ID, USER_ID)
 						SELECT
 							PG.POSTING_ID, 'Y', U.EMAIL, NULL, MIN(U.ID)
@@ -877,23 +1066,31 @@ class CPostingGeneral
 							and (UG.DATE_ACTIVE_FROM is null or UG.DATE_ACTIVE_FROM <= " . $DB->CurrentTimeFunction() . ")
 							and (UG.DATE_ACTIVE_TO is null or UG.DATE_ACTIVE_TO >= " . $DB->CurrentTimeFunction() . ")
 							and U.ACTIVE = 'Y'
-							" . (strlen($post_arr["EMAIL_FILTER"]) <= 0 || $post_arr["EMAIL_FILTER"] === "NOT_REF" ? "" : "AND " . GetFilterQuery("U.EMAIL", $post_arr["EMAIL_FILTER"], "Y", array("@", ".", "_"))) . "
+							" . ($post_arr["EMAIL_FILTER"] == '' || $post_arr["EMAIL_FILTER"] === "NOT_REF" ? "" : "AND " . GetFilterQuery(
+                                "U.EMAIL",
+                                $post_arr["EMAIL_FILTER"],
+                                "Y",
+                                array("@", ".", "_")
+                            )) . "
 							and U.EMAIL not in (SELECT EMAIL FROM b_posting_email WHERE POSTING_ID = " . $ID . ")
 						GROUP BY PG.POSTING_ID, U.EMAIL
-					");
+					"
+                    );
                 }
 
                 //from additional emails
                 $BCC = $post_arr["BCC_FIELD"];
-                if ($post_arr["DIRECT_SEND"] == "Y")
+                if ($post_arr["DIRECT_SEND"] == "Y") {
                     $BCC .= ($BCC <> "" ? "," : "") . $post_arr["TO_FIELD"];
+                }
                 $BCC = str_replace("\r\n", "\n", $BCC);
                 $BCC = str_replace("\n", ",", $BCC);
                 $aBcc = explode(",", $BCC);
                 foreach ($aBcc as $email) {
                     $email = trim($email);
                     if ($email <> "") {
-                        $DB->Query("
+                        $DB->Query(
+                            "
 							INSERT INTO b_posting_email (POSTING_ID, STATUS, EMAIL, SUBSCRIPTION_ID, USER_ID)
 							SELECT
 								P.ID, 'Y', '" . ($DB->ForSQL($email)) . "', NULL, NULL
@@ -901,8 +1098,11 @@ class CPostingGeneral
 								b_posting P
 							WHERE
 								P.ID = " . $ID . "
-								and '" . ($DB->ForSQL($email)) . "' not in (SELECT EMAIL FROM b_posting_email WHERE POSTING_ID = " . $ID . ")
-						");
+								and '" . ($DB->ForSQL(
+                                $email
+                            )) . "' not in (SELECT EMAIL FROM b_posting_email WHERE POSTING_ID = " . $ID . ")
+						"
+                        );
                     }
                 }
 
@@ -910,7 +1110,9 @@ class CPostingGeneral
                 $ar = $res->Fetch();
 
                 if ($ar["CNT"] > 0) {
-                    $DB->Query("UPDATE b_posting SET STATUS='" . $status . "', VERSION='2', BCC_TO_SEND=null, ERROR_EMAIL=null, SENT_BCC=null WHERE ID=" . $ID);
+                    $DB->Query(
+                        "UPDATE b_posting SET STATUS='" . $status . "', VERSION='2', BCC_TO_SEND=null, ERROR_EMAIL=null, SENT_BCC=null WHERE ID=" . $ID
+                    );
                 } else {
                     $this->LAST_ERROR .= GetMessage("class_post_err_status4");
                     return false;
@@ -929,13 +1131,17 @@ class CPostingGeneral
                     $DB->Query("UPDATE b_posting SET STATUS='" . $status . "' WHERE ID=" . $ID);
                 } else {
                     //Send it in old fashion way
-                    $DB->Query("UPDATE b_posting SET STATUS='" . $status . "', BCC_TO_SEND=ERROR_EMAIL, ERROR_EMAIL=null WHERE ID=" . $ID);
+                    $DB->Query(
+                        "UPDATE b_posting SET STATUS='" . $status . "', BCC_TO_SEND=ERROR_EMAIL, ERROR_EMAIL=null WHERE ID=" . $ID
+                    );
                 }
                 break;
             case "ED":
             case "SD":
             case "WD":
-                $DB->Query("UPDATE b_posting SET STATUS='" . $status . "', VERSION='2', SENT_BCC=null, ERROR_EMAIL=null, BCC_TO_SEND=null, DATE_SENT=null WHERE ID=" . $ID);
+                $DB->Query(
+                    "UPDATE b_posting SET STATUS='" . $status . "', VERSION='2', SENT_BCC=null, ERROR_EMAIL=null, BCC_TO_SEND=null, DATE_SENT=null WHERE ID=" . $ID
+                );
                 break;
             default:
                 $this->LAST_ERROR = GetMessage("class_post_err_status2");
@@ -955,27 +1161,31 @@ class CMailTools
 
     public static function IsEightBit($str)
     {
-        $len = strlen($str);
-        for ($i = 0; $i < $len; $i++)
-            if (ord(substr($str, $i, 1)) >> 7)
+        $len = mb_strlen($str);
+        for ($i = 0; $i < $len; $i++) {
+            if (ord(mb_substr($str, $i, 1)) >> 7) {
                 return true;
+            }
+        }
         return false;
     }
 
     public static function EncodeMimeString($text, $charset)
     {
-        if (!CMailTools::IsEightBit($text))
+        if (!CMailTools::IsEightBit($text)) {
             return $text;
+        }
 
-        $maxl = intval((76 - strlen($charset) + 7) * 0.4);
+        $maxl = intval((76 - mb_strlen($charset) + 7) * 0.4);
 
         $res = "";
         $eol = \Bitrix\Main\Mail\Mail::getMailEol();
-        $len = strlen($text);
+        $len = mb_strlen($text);
         for ($i = 0; $i < $len; $i = $i + $maxl) {
-            if ($i > 0)
+            if ($i > 0) {
                 $res .= $eol . "\t";
-            $res .= "=?" . $charset . "?B?" . base64_encode(substr($text, $i, $maxl)) . "?=";
+            }
+            $res .= "=?" . $charset . "?B?" . base64_encode(mb_substr($text, $i, $maxl)) . "?=";
         }
         return $res;
     }
@@ -989,14 +1199,19 @@ class CMailTools
     {
         $i = CUtil::BinStrlen($text);
         while ($i > 0) {
-            if (ord(CUtil::BinSubstr($text, $i - 1, 1)) >> 7)
+            if (ord(CUtil::BinSubstr($text, $i - 1, 1)) >> 7) {
                 break;
+            }
             $i--;
         }
-        if ($i == 0)
+        if ($i == 0) {
             return $text;
-        else
-            return "=?" . $charset . "?B?" . base64_encode(CUtil::BinSubstr($text, 0, $i)) . "?=" . CUtil::BinSubstr($text, $i);
+        } else {
+            return "=?" . $charset . "?B?" . base64_encode(CUtil::BinSubstr($text, 0, $i)) . "?=" . CUtil::BinSubstr(
+                    $text,
+                    $i
+                );
+        }
     }
 
     function __replace_img($matches)
@@ -1004,8 +1219,9 @@ class CMailTools
         $io = CBXVirtualIo::GetInstance();
         $src = $matches[3];
 
-        if ($src == "")
+        if ($src == "") {
             return $matches[0];
+        }
 
         if (array_key_exists($src, $this->aMatches)) {
             $uid = $this->aMatches[$src]["ID"];
@@ -1013,23 +1229,27 @@ class CMailTools
         }
 
         $filePath = $io->GetPhysicalName($_SERVER["DOCUMENT_ROOT"] . $src);
-        if (!file_exists($filePath))
+        if (!file_exists($filePath)) {
             return $matches[0];
+        }
 
         if (
             $this->maxFileSize > 0
             && filesize($filePath) > $this->maxFileSize
-        )
+        ) {
             return $matches[0];
+        }
 
         $aImage = CFile::GetImageSize($filePath, true);
-        if (!is_array($aImage))
+        if (!is_array($aImage)) {
             return $matches[0];
+        }
 
-        if (function_exists("image_type_to_mime_type"))
+        if (function_exists("image_type_to_mime_type")) {
             $contentType = image_type_to_mime_type($aImage[2]);
-        else
+        } else {
             $contentType = CMailTools::ImageTypeToMimeType($aImage[2]);
+        }
 
         $uid = uniqid(md5($src));
 
@@ -1046,33 +1266,37 @@ class CMailTools
 
     function ReplaceHrefs($text)
     {
-        if ($this->pcre_backtrack_limit === false)
+        if ($this->pcre_backtrack_limit === false) {
             $this->pcre_backtrack_limit = intval(ini_get("pcre.backtrack_limit"));
-        $text_len = defined("BX_UTF") ? mb_strlen($text, 'latin1') : strlen($text);
+        }
+        $text_len = defined("BX_UTF") ? mb_strlen($text, 'latin1') : mb_strlen($text);
         $text_len++;
         if ($this->pcre_backtrack_limit < $text_len) {
             @ini_set("pcre.backtrack_limit", $text_len);
             $this->pcre_backtrack_limit = intval(ini_get("pcre.backtrack_limit"));
         }
 
-        if (!isset($this->server_name))
+        if (!isset($this->server_name)) {
             $this->server_name = COption::GetOptionString("main", "server_name", "");
+        }
 
-        if ($this->server_name != '')
+        if ($this->server_name != '') {
             $text = preg_replace(
                 "/(<a\\s[^>]*?(?<=\\s)href\\s*=\\s*)([\"'])(\\/.*?)(\\2)(\\s.+?>|\\s*>)/is",
                 "\\1\\2http://" . $this->server_name . "\\3\\4\\5",
                 $text
             );
+        }
 
         return $text;
     }
 
     function ReplaceImages($text)
     {
-        if ($this->pcre_backtrack_limit === false)
+        if ($this->pcre_backtrack_limit === false) {
             $this->pcre_backtrack_limit = intval(ini_get("pcre.backtrack_limit"));
-        $text_len = defined("BX_UTF") ? mb_strlen($text, 'latin1') : strlen($text);
+        }
+        $text_len = defined("BX_UTF") ? mb_strlen($text, 'latin1') : mb_strlen($text);
         $text_len++;
         if ($this->pcre_backtrack_limit < $text_len) {
             @ini_set("pcre.backtrack_limit", $text_len);
@@ -1123,10 +1347,11 @@ class CMailTools
             15 => "image/vnd.wap.wbmp",
             16 => "image/xbm",
         );
-        if (isset($aTypes[$type]))
+        if (isset($aTypes[$type])) {
             return $aTypes[$type];
-        else
+        } else {
             return "application/octet-stream";
+        }
     }
 }
 

@@ -91,16 +91,29 @@ class ExportTreeTable extends Entity\DataManager
     {
         $this->create();
 
-        $this->inserter = new Location\DBBlockInserter(array(
-            'entityName' => get_called_class(),
-            'exactFields' => array(
-                'ID', 'CODE', 'PARENT_CODE', 'SYS_CODE', 'TYPE_CODE', 'FIAS_TYPE', 'NAME', 'LANGNAMES', 'EXTERNALS', 'LATITUDE', 'LONGITUDE', 'SOURCE'
-            ),
-            'parameters' => array(
-                'mtu' => 999999,
-                'autoIncrementFld' => 'ID'
+        $this->inserter = new Location\DBBlockInserter(
+            array(
+                'entityName' => get_called_class(),
+                'exactFields' => array(
+                    'ID',
+                    'CODE',
+                    'PARENT_CODE',
+                    'SYS_CODE',
+                    'TYPE_CODE',
+                    'FIAS_TYPE',
+                    'NAME',
+                    'LANGNAMES',
+                    'EXTERNALS',
+                    'LATITUDE',
+                    'LONGITUDE',
+                    'SOURCE'
+                ),
+                'parameters' => array(
+                    'mtu' => 999999,
+                    'autoIncrementFld' => 'ID'
+                )
             )
-        ));
+        );
     }
 
     public function restoreExportOffset()
@@ -121,7 +134,9 @@ class ExportTreeTable extends Entity\DataManager
     public function insert($data)
     {
         if (isset($this->codeIndex[$data['SYS_CODE']])) // already in there
+        {
             return;
+        }
 
         $this->codeIndex[$data['SYS_CODE']] = $this->formatCode($this->exportOffset);
 
@@ -130,11 +145,13 @@ class ExportTreeTable extends Entity\DataManager
 
         unset($data['PARENT_SYS_CODE']);
 
-        if (is_array($data['LANGNAMES']))
+        if (is_array($data['LANGNAMES'])) {
             $data['LANGNAMES'] = serialize($data['LANGNAMES']);
+        }
 
-        if (is_array($data['EXTERNALS']))
+        if (is_array($data['EXTERNALS'])) {
             $data['EXTERNALS'] = serialize($data['EXTERNALS']);
+        }
 
         $this->exportOffset++;
 
@@ -153,7 +170,8 @@ class ExportTreeTable extends Entity\DataManager
 
     public function getLastOccupiedCode()
     {
-        $res = static::getList(array('order' => array('ID' => 'desc'), 'limit' => 1, 'select' => array('CODE')))->fetch();
+        $res = static::getList(array('order' => array('ID' => 'desc'), 'limit' => 1, 'select' => array('CODE')))->fetch(
+        );
 
         return $res['CODE'];
     }
@@ -165,22 +183,28 @@ class ExportTreeTable extends Entity\DataManager
 
     public static function formatCode($value, $length = self::CODE_LENGTH)
     {
-        if (strlen($value) >= $length)
+        if (strlen($value) >= $length) {
             return $value;
+        }
 
         $diff = abs($length - strlen($value));
 
-        for ($i = 0; $i < $diff; $i++)
+        for ($i = 0; $i < $diff; $i++) {
             $value = '0' . $value;
+        }
 
         return $value;
     }
 
     public function getByCode($code)
     {
-        return static::getList(array('filter' => array(
-            '=CODE' => $code
-        )));
+        return static::getList(
+            array(
+                'filter' => array(
+                    '=CODE' => $code
+                )
+            )
+        );
     }
 
     public function getPathTo($code)
@@ -214,8 +238,9 @@ class ExportTreeTable extends Entity\DataManager
 
     public function walkInDeep($callbacks, $ignoreThisAndDeeper = array(), $startFrom = '')
     {
-        if (!is_callable($callbacks['ITEM']))
+        if (!is_callable($callbacks['ITEM'])) {
             throw new Main\SystemException('Invalid callback passed');
+        }
 
         $this->exportPath = array();
         $this->waklInDeepBundle($callbacks, $ignoreThisAndDeeper, $startFrom);
@@ -223,22 +248,26 @@ class ExportTreeTable extends Entity\DataManager
 
     private function waklInDeepBundle($callbacks, $ignoreThisAndDeeper = array(), $parentCode = '', $depth = 1)
     {
-        if ($depth > static::RECURSION_MAX_DEPTH)
+        if ($depth > static::RECURSION_MAX_DEPTH) {
             throw new Main\SystemException('Too deep recursion');
+        }
 
         $res = $this->getList(array('filter' => array('PARENT_CODE' => $parentCode)));
         while ($item = $res->fetch()) {
             array_push($this->exportPath, $item);
 
             $goDeeper = true;
-            if (call_user_func($callbacks['ITEM'], $item, $this) === false)
+            if (call_user_func($callbacks['ITEM'], $item, $this) === false) {
                 $goDeeper = false;
+            }
 
-            if (isset($ignoreThisAndDeeper[$item['TYPE_CODE']]))
+            if (isset($ignoreThisAndDeeper[$item['TYPE_CODE']])) {
                 $goDeeper = false;
+            }
 
-            if ($goDeeper)
+            if ($goDeeper) {
                 $this->waklInDeepBundle($callbacks, $ignoreThisAndDeeper, $item['CODE'], $depth + 1);
+            }
 
             array_pop($this->exportPath);
         }
@@ -253,7 +282,8 @@ class ExportTreeTable extends Entity\DataManager
         global $DB;
 
         if (!$DB->query('select * from ' . $table . ' where 1=0', true)) {
-            $dbConnection->query('create table ' . $table . ' (
+            $dbConnection->query(
+                'create table ' . $table . ' (
 
 				ID int auto_increment not null primary key,
 
@@ -276,7 +306,8 @@ class ExportTreeTable extends Entity\DataManager
 				BOUNDED_WITH varchar(100),
 
 				SOURCE varchar(2)
-			)');
+			)'
+            );
 
             $this->restoreIndexes();
         }
@@ -314,7 +345,9 @@ class ExportTreeTable extends Entity\DataManager
         }
 
         try {
-            $dbConnection->query('CREATE INDEX IX_SALE_LOCATION_EXPORT_TREE_PARENT_CODE ON ' . $table . ' (PARENT_CODE)');
+            $dbConnection->query(
+                'CREATE INDEX IX_SALE_LOCATION_EXPORT_TREE_PARENT_CODE ON ' . $table . ' (PARENT_CODE)'
+            );
         } catch (\Exception $e) {
         }
 
@@ -331,13 +364,16 @@ class ExportTreeTable extends Entity\DataManager
 
     public static function switchIndexes($way = true)
     {
-        Main\HttpApplication::getConnection()->query('alter table ' . static::getTableName() . ' ' . ($way ? 'enable' : 'disable') . ' keys');
+        Main\HttpApplication::getConnection()->query(
+            'alter table ' . static::getTableName() . ' ' . ($way ? 'enable' : 'disable') . ' keys'
+        );
     }
 
     public function output($data, $important = true)
     {
-        if (!$important)
+        if (!$important) {
             return false;
+        }
 
         ob_start();
         print_r($data);

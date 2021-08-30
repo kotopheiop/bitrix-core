@@ -8,18 +8,17 @@
 
 namespace Bitrix\Sender;
 
+use Bitrix\Main\Application;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Type;
-use Bitrix\Main\Config\Option;
-use Bitrix\Main\Application;
 use Bitrix\Main\SiteTable;
-
+use Bitrix\Main\Type;
 use Bitrix\Sender\Entity\Letter;
-use Bitrix\Sender\Message;
-use Bitrix\Sender\Trigger;
-use Bitrix\Sender\Runtime;
 use Bitrix\Sender\Internals\Model;
+use Bitrix\Sender\Message;
+use Bitrix\Sender\Runtime;
+use Bitrix\Sender\Trigger;
 
 Loc::loadMessages(__FILE__);
 
@@ -186,6 +185,11 @@ class MailingChainTable extends Entity\DataManager
                 'data_type' => 'Bitrix\Main\UserTable',
                 'reference' => array('=this.CREATED_BY' => 'ref.ID'),
             ),
+            'WAITING_RECIPIENT' => array(
+                'data_type' => 'boolean',
+                'default_value' => 'N',
+                'values' => array('N', 'Y')
+            ),
         );
     }
 
@@ -208,10 +212,11 @@ class MailingChainTable extends Entity\DataManager
      */
     public static function checkEmail($value)
     {
-        if (empty($value) || check_email($value))
+        if (empty($value) || check_email($value)) {
             return true;
-        else
+        } else {
             return Loc::getMessage('SENDER_ENTITY_MAILING_CHAIN_VALID_EMAIL_FROM');
+        }
     }
 
     /**
@@ -227,36 +232,42 @@ class MailingChainTable extends Entity\DataManager
             return null;
         }
 
-        $copiedDb = static::add(array(
-            'MAILING_ID' => $data['MAILING_ID'],
-            'EMAIL_FROM' => $data['EMAIL_FROM'],
-            'TITLE' => $data['TITLE'],
-            'SUBJECT' => $data['SUBJECT'],
-            'MESSAGE' => $data['MESSAGE'],
-            'TEMPLATE_TYPE' => $data['TEMPLATE_TYPE'],
-            'TEMPLATE_ID' => $data['TEMPLATE_ID'],
-            'PRIORITY' => $data['PRIORITY'],
-            'LINK_PARAMS' => $data['LINK_PARAMS'],
-        ));
+        $copiedDb = static::add(
+            array(
+                'MAILING_ID' => $data['MAILING_ID'],
+                'EMAIL_FROM' => $data['EMAIL_FROM'],
+                'TITLE' => $data['TITLE'],
+                'SUBJECT' => $data['SUBJECT'],
+                'MESSAGE' => $data['MESSAGE'],
+                'TEMPLATE_TYPE' => $data['TEMPLATE_TYPE'],
+                'TEMPLATE_ID' => $data['TEMPLATE_ID'],
+                'PRIORITY' => $data['PRIORITY'],
+                'LINK_PARAMS' => $data['LINK_PARAMS'],
+            )
+        );
 
         if (!$copiedDb->isSuccess()) {
             return null;
         }
         $copiedId = $copiedDb->getId();
 
-        $attachmentDb = MailingAttachmentTable::getList(array(
-            'filter' => array('=CHAIN_ID' => $id)
-        ));
+        $attachmentDb = MailingAttachmentTable::getList(
+            array(
+                'filter' => array('=CHAIN_ID' => $id)
+            )
+        );
         while ($attachment = $attachmentDb->fetch()) {
             $copiedFileId = \CFile::copyFile($attachment['FILE_ID']);
             if (!$copiedFileId) {
                 continue;
             }
 
-            MailingAttachmentTable::add(array(
-                'CHAIN_ID' => $copiedId,
-                'FILE_ID' => $copiedFileId
-            ));
+            MailingAttachmentTable::add(
+                array(
+                    'CHAIN_ID' => $copiedId,
+                    'FILE_ID' => $copiedFileId
+                )
+            );
         }
 
         return $copiedId;
@@ -264,7 +275,12 @@ class MailingChainTable extends Entity\DataManager
 
     /**
      * @param integer $mailingChainId
+     * @param bool $prepareFields
+     *
      * @return int|null
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      */
     public static function initPosting($mailingChainId)
     {
@@ -294,10 +310,12 @@ class MailingChainTable extends Entity\DataManager
         }
 
         if ($needAddPosting) {
-            $postingAddDb = PostingTable::add(array(
-                'MAILING_ID' => $mailingChain['MAILING_ID'],
-                'MAILING_CHAIN_ID' => $mailingChain['ID'],
-            ));
+            $postingAddDb = PostingTable::add(
+                array(
+                    'MAILING_ID' => $mailingChain['MAILING_ID'],
+                    'MAILING_CHAIN_ID' => $mailingChain['ID'],
+                )
+            );
             if ($postingAddDb->isSuccess()) {
                 $postingId = $postingAddDb->getId();
                 Model\LetterTable::update($mailingChainId, ['POSTING_ID' => $postingId]);
@@ -305,7 +323,9 @@ class MailingChainTable extends Entity\DataManager
         }
 
         if ($postingId && $mailingChain['IS_TRIGGER'] != 'Y') {
-            PostingTable::initGroupRecipients($postingId);
+            if (!PostingTable::initGroupRecipients($postingId, true)) {
+                Model\LetterTable::update($mailingChainId, ['WAITING_RECIPIENT' => 'Y']);
+            }
         }
 
         return $postingId;
@@ -391,10 +411,12 @@ class MailingChainTable extends Entity\DataManager
 
         $deleteIdList = array();
         if (!empty($data['primary'])) {
-            $itemDb = static::getList(array(
-                'select' => array('ID'),
-                'filter' => $data['primary']
-            ));
+            $itemDb = static::getList(
+                array(
+                    'select' => array('ID'),
+                    'filter' => $data['primary']
+                )
+            );
             while ($item = $itemDb->fetch()) {
                 $deleteIdList[] = $item['ID'];
             }
@@ -425,14 +447,16 @@ class MailingChainTable extends Entity\DataManager
      */
     public static function isReadyToSend($id)
     {
-        $mailingChainDb = static::getList(array(
-            'select' => array('ID'),
-            'filter' => array(
-                '=ID' => $id,
-                '=MAILING.ACTIVE' => 'Y',
-                '=STATUS' => array(static::STATUS_NEW, static::STATUS_PAUSE),
-            ),
-        ));
+        $mailingChainDb = static::getList(
+            array(
+                'select' => array('ID'),
+                'filter' => array(
+                    '=ID' => $id,
+                    '=MAILING.ACTIVE' => 'Y',
+                    '=STATUS' => array(static::STATUS_NEW, static::STATUS_PAUSE),
+                ),
+            )
+        );
         $mailingChain = $mailingChainDb->fetch();
 
         return !empty($mailingChain);
@@ -445,16 +469,18 @@ class MailingChainTable extends Entity\DataManager
      */
     public static function isManualSentPartly($id)
     {
-        $mailingChainDb = static::getList(array(
-            'select' => array('ID'),
-            'filter' => array(
-                '=ID' => $id,
-                '=MAILING.ACTIVE' => 'Y',
-                '=AUTO_SEND_TIME' => null,
-                '!REITERATE' => 'Y',
-                '=STATUS' => array(static::STATUS_SEND),
-            ),
-        ));
+        $mailingChainDb = static::getList(
+            array(
+                'select' => array('ID'),
+                'filter' => array(
+                    '=ID' => $id,
+                    '=MAILING.ACTIVE' => 'Y',
+                    '=AUTO_SEND_TIME' => null,
+                    '!REITERATE' => 'Y',
+                    '=STATUS' => array(static::STATUS_SEND),
+                ),
+            )
+        );
         $mailingChain = $mailingChainDb->fetch();
 
         return !empty($mailingChain);
@@ -469,14 +495,16 @@ class MailingChainTable extends Entity\DataManager
      */
     public static function isAutoSend($id)
     {
-        $mailingChainDb = static::getList(array(
-            'select' => array('ID'),
-            'filter' => array(
-                '=ID' => $id,
-                '!AUTO_SEND_TIME' => null,
-                '!REITERATE' => 'Y',
-            ),
-        ));
+        $mailingChainDb = static::getList(
+            array(
+                'select' => array('ID'),
+                'filter' => array(
+                    '=ID' => $id,
+                    '!AUTO_SEND_TIME' => null,
+                    '!REITERATE' => 'Y',
+                ),
+            )
+        );
         $mailingChain = $mailingChainDb->fetch();
 
         return !empty($mailingChain);
@@ -490,24 +518,28 @@ class MailingChainTable extends Entity\DataManager
      */
     public static function canReSendErrorRecipients($id)
     {
-        $mailingChainDb = static::getList(array(
-            'select' => array('POSTING_ID'),
-            'filter' => array(
-                '=ID' => $id,
-                '!REITERATE' => 'Y',
-                '!POSTING_ID' => null,
-                '=STATUS' => static::STATUS_END,
-            ),
-        ));
-        if ($mailingChain = $mailingChainDb->fetch()) {
-            $errorRecipientDb = PostingRecipientTable::getList(array(
-                'select' => array('ID'),
+        $mailingChainDb = static::getList(
+            array(
+                'select' => array('POSTING_ID'),
                 'filter' => array(
-                    '=POSTING_ID' => $mailingChain['POSTING_ID'],
-                    '=STATUS' => PostingRecipientTable::SEND_RESULT_ERROR
+                    '=ID' => $id,
+                    '!REITERATE' => 'Y',
+                    '!POSTING_ID' => null,
+                    '=STATUS' => static::STATUS_END,
                 ),
-                'limit' => 1
-            ));
+            )
+        );
+        if ($mailingChain = $mailingChainDb->fetch()) {
+            $errorRecipientDb = PostingRecipientTable::getList(
+                array(
+                    'select' => array('ID'),
+                    'filter' => array(
+                        '=POSTING_ID' => $mailingChain['POSTING_ID'],
+                        '=STATUS' => PostingRecipientTable::SEND_RESULT_ERROR
+                    ),
+                    'limit' => 1
+                )
+            );
             if ($errorRecipientDb->fetch()) {
                 return true;
             }
@@ -574,18 +606,18 @@ class MailingChainTable extends Entity\DataManager
 
         try {
             $mainEmail = Option::get('main', 'email_from');
-            if (!empty($mainEmail))
+            if (!empty($mainEmail)) {
                 $addressFromList[] = $mainEmail;
+            }
 
             $saleEmail = Option::get('sale', 'order_email');
-            if (!empty($saleEmail))
+            if (!empty($saleEmail)) {
                 $addressFromList[] = $saleEmail;
+            }
 
             $addressFromList = array_unique($addressFromList);
             trimArr($addressFromList, true);
-
         } catch (\Exception $e) {
-
         }
 
         return $addressFromList;
@@ -672,12 +704,14 @@ class MailingChainTable extends Entity\DataManager
         if ($templateId) {
             $filter['ID'] = $templateId;
         }
-        $templateDb = static::getList(array(
-            'select' => array('ID', 'SUBJECT', 'MESSAGE'),
-            'filter' => $filter,
-            'order' => array('DATE_INSERT' => 'DESC'),
-            'limit' => 15
-        ));
+        $templateDb = static::getList(
+            array(
+                'select' => array('ID', 'SUBJECT', 'MESSAGE'),
+                'filter' => $filter,
+                'order' => array('DATE_INSERT' => 'DESC'),
+                'limit' => 15
+            )
+        );
         while ($template = $templateDb->fetch()) {
             $resultList[] = array(
                 'TYPE' => 'MAILING',

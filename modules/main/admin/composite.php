@@ -91,7 +91,7 @@ $tabControl = new CAdminTabControl("tabControl", $tabs, false, true);
 if ($_SERVER["REQUEST_METHOD"] == "POST" &&
     check_bitrix_sessid() &&
     $isAdmin &&
-    ((isset($_REQUEST["composite_save_opt"]) && strlen($_REQUEST["composite_save_opt"]) > 0) ||
+    ((isset($_REQUEST["composite_save_opt"]) && $_REQUEST["composite_save_opt"] <> '') ||
         isset($_REQUEST["autocomposite_mode_button"]) ||
         isset($_REQUEST["composite_mode_button"]))
 ) {
@@ -123,9 +123,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" &&
 
     if (isset($_REQUEST["group"]) && is_array($_REQUEST["group"])) {
         $compositeOptions["GROUPS"] = array();
-        $b = "";
-        $o = "";
-        $rsGroups = CGroup::GetList($b, $o, array());
+        $rsGroups = CGroup::GetList();
         while ($arGroup = $rsGroups->Fetch()) {
             if ($arGroup["ID"] > 2) {
                 if (in_array($arGroup["ID"], $_REQUEST["group"])) {
@@ -135,7 +133,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" &&
         }
     }
 
-    if (isset($_REQUEST["composite_domains"]) && strlen($_REQUEST["composite_domains"]) > 0) {
+    if (isset($_REQUEST["composite_domains"]) && $_REQUEST["composite_domains"] <> '') {
         $compositeOptions["DOMAINS"] = array();
         foreach (explode("\n", $_REQUEST["composite_domains"]) as $domain) {
             $domain = trim($domain, " \t\n\r");
@@ -144,16 +142,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" &&
             }
         }
 
-        $isSaveOptions = (isset($_REQUEST["composite_save_opt"]) && strlen($_REQUEST["composite_save_opt"]) > 0);
+        $isSaveOptions = (isset($_REQUEST["composite_save_opt"]) && $_REQUEST["composite_save_opt"] <> '');
         $isTurnOnComposite = (
             (isset($_REQUEST["composite_mode_button"]) && isset($_REQUEST["composite"]) && $_REQUEST["composite"] === "Y")
             || (isset($_REQUEST["autocomposite_mode_button"]) && isset($_REQUEST["auto_composite"]) && $_REQUEST["auto_composite"] === "Y")
         );
 
         if ($isSaveOptions || $isTurnOnComposite) {
-            $siteList = \Bitrix\Main\SiteTable::getList([
-                "select" => ["LID", "SERVER_NAME", "DEF"],
-            ])->fetchAll();
+            $siteList = \Bitrix\Main\SiteTable::getList(
+                [
+                    "select" => ["LID", "SERVER_NAME", "DEF"],
+                ]
+            )->fetchAll();
             $portalSiteData = [];
             foreach ($siteList as $site) {
                 if (Option::get("main", "wizard_firstportal_" . $site["LID"], false, $site["LID"]) !== false) {
@@ -210,11 +210,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" &&
                 $compositeOptions["FRAME_TYPE"] = "DYNAMIC_WITH_STUB";
                 $compositeOptions["AUTO_UPDATE"] = "Y";
                 $compositeOptions["AUTO_UPDATE_TTL"] = isset($_REQUEST["composite_standard_ttl"]) ? $_REQUEST["composite_standard_ttl"] : 120;
-            } else if ($_REQUEST["auto_composite"] === "N") {
-                Helper::setEnabled(false);
-                $compositeOptions["AUTO_COMPOSITE"] = "N";
-                $compositeOptions["FRAME_MODE"] = "N";
-                $compositeOptions["AUTO_UPDATE_TTL"] = "0";
+            } else {
+                if ($_REQUEST["auto_composite"] === "N") {
+                    Helper::setEnabled(false);
+                    $compositeOptions["AUTO_COMPOSITE"] = "N";
+                    $compositeOptions["FRAME_MODE"] = "N";
+                    $compositeOptions["AUTO_UPDATE_TTL"] = "0";
+                }
             }
         } elseif (isset($_REQUEST["composite_mode_button"]) && isset($_REQUEST["composite"])) {
             $compositeOptions["AUTO_COMPOSITE"] = "N";
@@ -225,7 +227,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" &&
             }
         }
 
-        if (isset($_REQUEST["composite_show_banner"]) && in_array($_REQUEST["composite_show_banner"], array("Y", "N"))) {
+        if (isset($_REQUEST["composite_show_banner"]) && in_array(
+                $_REQUEST["composite_show_banner"],
+                array("Y", "N")
+            )) {
             Option::set("main", "~show_composite_banner", $_REQUEST["composite_show_banner"]);
         }
 
@@ -250,7 +255,7 @@ if (
     if (!extension_loaded("memcache")) {
         $text = GetMessage("MAIN_COMPOSITE_CHECK_CONNECTION_ERR1");
         $status = "error";
-    } elseif (strlen($host) > 0 && strlen($port) > 0 && ($memcached = new \Memcache()) && @$memcached->connect($host, $port)) {
+    } elseif ($host <> '' && $port <> '' && ($memcached = new \Memcache()) && @$memcached->connect($host, $port)) {
         $text = GetMessage("MAIN_COMPOSITE_CHECK_CONNECTION_OK");
         $status = "success";
     } else {
@@ -307,10 +312,12 @@ endif;
 
         <?
         $tabControl->Begin();
-        $tabControl->BeginNextTab(array(
-            "showTitle" => false,
-            "className" => "adm-detail-content-without-bg"
-        ));
+        $tabControl->BeginNextTab(
+            array(
+                "showTitle" => false,
+                "className" => "adm-detail-content-without-bg"
+            )
+        );
         ?>
         <tr>
             <td>
@@ -318,8 +325,12 @@ endif;
 
                     <div class="adm-composite-content adm-composite-first-block">
                         <h2 class="adm-composite-title-container">
-                            <span class="adm-composite-subtitle"><?= GetMessage("MAIN_COMPOSITE_AUTO_COMPOSITE_SUBTITLE") ?></span>
-                            <span class="adm-composite-title"><?= GetMessage("MAIN_COMPOSITE_AUTO_COMPOSITE_TITLE") ?></span>
+                            <span class="adm-composite-subtitle"><?= GetMessage(
+                                    "MAIN_COMPOSITE_AUTO_COMPOSITE_SUBTITLE"
+                                ) ?></span>
+                            <span class="adm-composite-title"><?= GetMessage(
+                                    "MAIN_COMPOSITE_AUTO_COMPOSITE_TITLE"
+                                ) ?></span>
                         </h2>
                         <? if (LANGUAGE_ID === "ru" || LANGUAGE_ID === "ua"): ?>
                             <div class="adm-composite-video-container">
@@ -329,33 +340,49 @@ endif;
                                 </div>
                             </div>
                         <? endif ?>
-                        <div class="adm-composite-title-description"><?= GetMessage("MAIN_COMPOSITE_AUTO_COMPOSITE_TITLE_DESC") ?></div>
+                        <div class="adm-composite-title-description"><?= GetMessage(
+                                "MAIN_COMPOSITE_AUTO_COMPOSITE_TITLE_DESC"
+                            ) ?></div>
                         <div class="adm-composite-blocks-content">
-                            <div class="adm-composite-blocks-content-part1"><?= GetMessage("MAIN_COMPOSITE_AUTO_COMPOSITE_FEATURE1") ?></div>
-                            <div class="adm-composite-blocks-content-part2"><?= GetMessage("MAIN_COMPOSITE_AUTO_COMPOSITE_FEATURE2") ?></div>
-                            <div class="adm-composite-blocks-content-part3"><?= GetMessage("MAIN_COMPOSITE_AUTO_COMPOSITE_FEATURE3") ?></div>
+                            <div class="adm-composite-blocks-content-part1"><?= GetMessage(
+                                    "MAIN_COMPOSITE_AUTO_COMPOSITE_FEATURE1"
+                                ) ?></div>
+                            <div class="adm-composite-blocks-content-part2"><?= GetMessage(
+                                    "MAIN_COMPOSITE_AUTO_COMPOSITE_FEATURE2"
+                                ) ?></div>
+                            <div class="adm-composite-blocks-content-part3"><?= GetMessage(
+                                    "MAIN_COMPOSITE_AUTO_COMPOSITE_FEATURE3"
+                                ) ?></div>
                             <div class="clb"></div>
                         </div>
                     </div>
 
                     <div class="adm-composite-content adm-composite-description-block">
-                        <h2 class="adm-composite-description-block-title"><?= GetMessage("MAIN_COMPOSITE_AUTO_COMPOSITE_SIMPLE_TECH") ?></h2>
+                        <h2 class="adm-composite-description-block-title"><?= GetMessage(
+                                "MAIN_COMPOSITE_AUTO_COMPOSITE_SIMPLE_TECH"
+                            ) ?></h2>
                         <p><?= GetMessage("MAIN_COMPOSITE_AUTO_COMPOSITE_UNIQUE_TECH") ?></p>
                         <table class="adm-composite-description-block-list">
                             <tr>
                                 <td class="adm-composite-description-block-list-item-icon"><span
                                             class="adm-composite-description-block-list-item-setting"></span></td>
-                                <td class="adm-composite-description-block-list-item"><?= GetMessage("MAIN_COMPOSITE_AUTO_COMPOSITE_AUTOMATION") ?></td>
+                                <td class="adm-composite-description-block-list-item"><?= GetMessage(
+                                        "MAIN_COMPOSITE_AUTO_COMPOSITE_AUTOMATION"
+                                    ) ?></td>
                             </tr>
                             <tr>
                                 <td class="adm-composite-description-block-list-item-icon"><span
                                             class="adm-composite-description-block-list-item-speed"></span></td>
-                                <td class="adm-composite-description-block-list-item"><?= GetMessage("MAIN_COMPOSITE_AUTO_COMPOSITE_AUTOMATION2") ?></td>
+                                <td class="adm-composite-description-block-list-item"><?= GetMessage(
+                                        "MAIN_COMPOSITE_AUTO_COMPOSITE_AUTOMATION2"
+                                    ) ?></td>
                             </tr>
                             <tr>
                                 <td class="adm-composite-description-block-list-item-icon"><span
                                             class="adm-composite-description-block-list-item-page"></span></td>
-                                <td class="adm-composite-description-block-list-item"><?= GetMessage("MAIN_COMPOSITE_AUTO_COMPOSITE_FAST_PING") ?></td>
+                                <td class="adm-composite-description-block-list-item"><?= GetMessage(
+                                        "MAIN_COMPOSITE_AUTO_COMPOSITE_FAST_PING"
+                                    ) ?></td>
                             </tr>
                         </table>
                     </div>
@@ -371,7 +398,9 @@ endif;
                             <input type="submit" class="adm-btn" name="autocomposite_mode_button"
                                    title="<?= GetMessage("MAIN_COMPOSITE_AUTO_BUTTON_OFF") ?>"
                                    value="<?= GetMessage("MAIN_COMPOSITE_AUTO_BUTTON_OFF") ?>"
-                                <? if (!$isAdmin || (defined("FIRST_EDITION") && FIRST_EDITION == "Y")) echo " disabled" ?>
+                                <? if (!$isAdmin || (defined(
+                                            "FIRST_EDITION"
+                                        ) && FIRST_EDITION == "Y")) echo " disabled" ?>
                             >
                             <input type="hidden" name="auto_composite" value="N">
                         </div>
@@ -387,13 +416,21 @@ endif;
                     <? endif ?>
 
                     <div class="adm-composite-content adm-composite-activate adm-composite-toparrow">
-                        <div class="adm-composite-activate-title"><?= GetMessage("MAIN_COMPOSITE_AUTO_COMPOSITE_CHECKLIST_TITLE") ?></div>
+                        <div class="adm-composite-activate-title"><?= GetMessage(
+                                "MAIN_COMPOSITE_AUTO_COMPOSITE_CHECKLIST_TITLE"
+                            ) ?></div>
                         <div class="adm-composite-activate-content">
                             <p><?= GetMessage("MAIN_COMPOSITE_AUTO_COMPOSITE_CHECKLIST_SUBTITLE") ?></p>
                             <ul class="adm-composite-activate-content-task-list">
-                                <li class="adm-composite-activate-content-task-list-item"><?= GetMessage("MAIN_COMPOSITE_AUTO_COMPOSITE_CHECKLIST_TASK1") ?></li>
-                                <li class="adm-composite-activate-content-task-list-item"><?= GetMessage("MAIN_COMPOSITE_AUTO_COMPOSITE_CHECKLIST_TASK2") ?></li>
-                                <li class="adm-composite-activate-content-task-list-item"><?= GetMessage("MAIN_COMPOSITE_AUTO_COMPOSITE_CHECKLIST_TASK3") ?></li>
+                                <li class="adm-composite-activate-content-task-list-item"><?= GetMessage(
+                                        "MAIN_COMPOSITE_AUTO_COMPOSITE_CHECKLIST_TASK1"
+                                    ) ?></li>
+                                <li class="adm-composite-activate-content-task-list-item"><?= GetMessage(
+                                        "MAIN_COMPOSITE_AUTO_COMPOSITE_CHECKLIST_TASK2"
+                                    ) ?></li>
+                                <li class="adm-composite-activate-content-task-list-item"><?= GetMessage(
+                                        "MAIN_COMPOSITE_AUTO_COMPOSITE_CHECKLIST_TASK3"
+                                    ) ?></li>
                             </ul>
                         </div>
                     </div>
@@ -401,10 +438,12 @@ endif;
             </td>
         </tr>
         <?
-        $tabControl->BeginNextTab(array(
-            "showTitle" => false,
-            "className" => "adm-detail-content-without-bg"
-        ));
+        $tabControl->BeginNextTab(
+            array(
+                "showTitle" => false,
+                "className" => "adm-detail-content-without-bg"
+            )
+        );
         ?>
 
         <tr>
@@ -413,29 +452,49 @@ endif;
 
                     <div class="adm-composite-content adm-composite-first-block">
                         <h2 class="adm-composite-title-container">
-                            <span class="adm-composite-subtitle"><?= GetMessage("MAIN_COMPOSITE_AUTO_COMPOSITE_SUBTITLE") ?></span>
+                            <span class="adm-composite-subtitle"><?= GetMessage(
+                                    "MAIN_COMPOSITE_AUTO_COMPOSITE_SUBTITLE"
+                                ) ?></span>
                             <span class="adm-composite-title"><?= GetMessage("MAIN_COMPOSITE_TITLE") ?></span>
                         </h2>
-                        <div class="adm-composite-title-description"><?= GetMessage("MAIN_COMPOSITE_COMPOSITE_TITLE_DESC") ?></div>
+                        <div class="adm-composite-title-description"><?= GetMessage(
+                                "MAIN_COMPOSITE_COMPOSITE_TITLE_DESC"
+                            ) ?></div>
                         <div class="adm-composite-blocks-content">
-                            <div class="adm-composite-blocks-content-part1"><?= GetMessage("MAIN_COMPOSITE_AUTO_COMPOSITE_FEATURE1") ?></div>
-                            <div class="adm-composite-blocks-content-part2"><?= GetMessage("MAIN_COMPOSITE_AUTO_COMPOSITE_FEATURE2") ?></div>
-                            <div class="adm-composite-blocks-content-part3"><?= GetMessage("MAIN_COMPOSITE_AUTO_COMPOSITE_FEATURE3") ?></div>
+                            <div class="adm-composite-blocks-content-part1"><?= GetMessage(
+                                    "MAIN_COMPOSITE_AUTO_COMPOSITE_FEATURE1"
+                                ) ?></div>
+                            <div class="adm-composite-blocks-content-part2"><?= GetMessage(
+                                    "MAIN_COMPOSITE_AUTO_COMPOSITE_FEATURE2"
+                                ) ?></div>
+                            <div class="adm-composite-blocks-content-part3"><?= GetMessage(
+                                    "MAIN_COMPOSITE_AUTO_COMPOSITE_FEATURE3"
+                                ) ?></div>
                             <div class="clb"></div>
                         </div>
                     </div>
 
                     <div class="adm-composite-content adm-composite-activate">
-                        <div class="adm-composite-activate-title"><?= GetMessage("MAIN_COMPOSITE_COMPOSITE_SWITCH_ON") ?></div>
+                        <div class="adm-composite-activate-title"><?= GetMessage(
+                                "MAIN_COMPOSITE_COMPOSITE_SWITCH_ON"
+                            ) ?></div>
                         <div class="adm-composite-activate-content">
                             <p><?= GetMessage("MAIN_COMPOSITE_COMPOSITE_SWITCH_DESC1") ?></p>
                             <p><?= GetMessage("MAIN_COMPOSITE_COMPOSITE_SWITCH_DESC2") ?></p>
                             <p><?= GetMessage("MAIN_COMPOSITE_COMPOSITE_SWITCH_DESC3") ?></p>
                             <ul class="adm-composite-activate-content-task-list">
-                                <li class="adm-composite-activate-content-task-list-item"><?= GetMessage("MAIN_COMPOSITE_COMPOSITE_SWITCH_TASK1") ?></li>
-                                <li class="adm-composite-activate-content-task-list-item"><?= GetMessage("MAIN_COMPOSITE_COMPOSITE_SWITCH_TASK2") ?></li>
-                                <li class="adm-composite-activate-content-task-list-item"><?= GetMessage("MAIN_COMPOSITE_COMPOSITE_SWITCH_TASK3") ?></li>
-                                <li class="adm-composite-activate-content-task-list-item"><?= GetMessage("MAIN_COMPOSITE_COMPOSITE_SWITCH_TASK4") ?></li>
+                                <li class="adm-composite-activate-content-task-list-item"><?= GetMessage(
+                                        "MAIN_COMPOSITE_COMPOSITE_SWITCH_TASK1"
+                                    ) ?></li>
+                                <li class="adm-composite-activate-content-task-list-item"><?= GetMessage(
+                                        "MAIN_COMPOSITE_COMPOSITE_SWITCH_TASK2"
+                                    ) ?></li>
+                                <li class="adm-composite-activate-content-task-list-item"><?= GetMessage(
+                                        "MAIN_COMPOSITE_COMPOSITE_SWITCH_TASK3"
+                                    ) ?></li>
+                                <li class="adm-composite-activate-content-task-list-item"><?= GetMessage(
+                                        "MAIN_COMPOSITE_COMPOSITE_SWITCH_TASK4"
+                                    ) ?></li>
                             </ul>
                         </div>
                     </div>
@@ -451,7 +510,9 @@ endif;
                             <input type="submit" class="adm-btn" name="composite_mode_button"
                                    title="<?= GetMessage("MAIN_COMPOSITE_BUTTON_OFF") ?>"
                                    value="<?= GetMessage("MAIN_COMPOSITE_BUTTON_OFF") ?>"
-                                <? if (!$isAdmin || (defined("FIRST_EDITION") && FIRST_EDITION == "Y")) echo " disabled" ?>
+                                <? if (!$isAdmin || (defined(
+                                            "FIRST_EDITION"
+                                        ) && FIRST_EDITION == "Y")) echo " disabled" ?>
                             >
                             <input type="hidden" name="composite" value="N">
                         </div>
@@ -499,7 +560,9 @@ endif;
 
                         </div>
                         <div class="adm-list-label">
-                            <label for="composite_frame_mode_pro"><?= GetMessage("MAIN_COMPOSITE_FRAME_MODE_PRO") ?></label>
+                            <label for="composite_frame_mode_pro"><?= GetMessage(
+                                    "MAIN_COMPOSITE_FRAME_MODE_PRO"
+                                ) ?></label>
                         </div>
                     </div>
                     <div class="adm-list-item">
@@ -516,7 +579,9 @@ endif;
                             >
                         </div>
                         <div class="adm-list-label">
-                            <label for="composite_frame_mode_contra"><?= GetMessage("MAIN_COMPOSITE_FRAME_MODE_CONTRA") ?></label>
+                            <label for="composite_frame_mode_contra"><?= GetMessage(
+                                    "MAIN_COMPOSITE_FRAME_MODE_CONTRA"
+                                ) ?></label>
                         </div>
                     </div>
                     <script>
@@ -530,7 +595,10 @@ endif;
         </tr>
         <?
         $frameType = "STATIC";
-        if (isset($compositeOptions["FRAME_TYPE"]) && in_array($compositeOptions["FRAME_TYPE"], AutomaticArea::getFrameTypes())) {
+        if (isset($compositeOptions["FRAME_TYPE"]) && in_array(
+                $compositeOptions["FRAME_TYPE"],
+                AutomaticArea::getFrameTypes()
+            )) {
             $frameType = $compositeOptions["FRAME_TYPE"];
         }
         ?>
@@ -570,7 +638,9 @@ endif;
                             >
                         </div>
                         <div class="adm-list-label">
-                            <label for="composite_frame_type_static"><?= GetMessage("MAIN_COMPOSITE_FRAME_TYPE_STATIC") ?></label>
+                            <label for="composite_frame_type_static"><?= GetMessage(
+                                    "MAIN_COMPOSITE_FRAME_TYPE_STATIC"
+                                ) ?></label>
                         </div>
                     </div>
                 </div>
@@ -594,7 +664,9 @@ endif;
         <?
         $autoUpdate = isset($compositeOptions["AUTO_UPDATE"]) && $compositeOptions["AUTO_UPDATE"] === "N" ? false : true;
         $defaultAutoUpdateTTL = $autoUpdate ? 0 : 600;
-        $autoUpdateTTL = isset($compositeOptions["AUTO_UPDATE_TTL"]) ? intval($compositeOptions["AUTO_UPDATE_TTL"]) : $defaultAutoUpdateTTL;
+        $autoUpdateTTL = isset($compositeOptions["AUTO_UPDATE_TTL"]) ? intval(
+            $compositeOptions["AUTO_UPDATE_TTL"]
+        ) : $defaultAutoUpdateTTL;
         ?>
         <tr class="adm-detail-valign-top">
             <td width="40%"><?= GetMessage("MAIN_COMPOSITE_CACHE_REWRITING") ?>:</td>
@@ -738,30 +810,34 @@ endif;
         <tr class="adm-detail-valign-top">
             <td width="40%" class="adm-required-field"><?= GetMessage("MAIN_COMPOSITE_DOMAINS") ?>:</td>
             <td width="60%">
-                <textarea name="composite_domains" rows="5"
-                          style="width:100%"><? echo htmlspecialcharsEx(implode("\n", $compositeOptions["DOMAINS"])) ?></textarea><br>
+                <textarea name="composite_domains" rows="5" style="width:100%"><? echo htmlspecialcharsEx(
+                        implode("\n", $compositeOptions["DOMAINS"])
+                    ) ?></textarea><br>
             </td>
         </tr>
         <tr class="adm-detail-valign-top">
             <td width="40%"><?= GetMessage("MAIN_COMPOSITE_INC_MASK") ?>:</td>
             <td width="60%">
-                <textarea name="composite_include_mask" rows="5"
-                          style="width:100%"><? echo htmlspecialcharsEx($compositeOptions["INCLUDE_MASK"]) ?></textarea>
+                <textarea name="composite_include_mask" rows="5" style="width:100%"><? echo htmlspecialcharsEx(
+                        $compositeOptions["INCLUDE_MASK"]
+                    ) ?></textarea>
             </td>
         </tr>
         <tr class="adm-detail-valign-top">
             <td><? echo GetMessage("MAIN_COMPOSITE_EXC_MASK"); ?>:</td>
             <td>
-                <textarea name="composite_exclude_mask" rows="5"
-                          style="width:100%"><? echo htmlspecialcharsEx($compositeOptions["EXCLUDE_MASK"]) ?></textarea>
+                <textarea name="composite_exclude_mask" rows="5" style="width:100%"><? echo htmlspecialcharsEx(
+                        $compositeOptions["EXCLUDE_MASK"]
+                    ) ?></textarea>
             </td>
         </tr>
 
         <tr class="adm-detail-valign-top">
             <td><?= GetMessage("MAIN_COMPOSITE_IGNORED_PARAMETERS") ?>:</td>
             <td>
-                <textarea name="composite_ignored_parameters" rows="5"
-                          style="width:100%"><? echo htmlspecialcharsEx($compositeOptions["IGNORED_PARAMETERS"]) ?></textarea>
+                <textarea name="composite_ignored_parameters" rows="5" style="width:100%"><? echo htmlspecialcharsEx(
+                        $compositeOptions["IGNORED_PARAMETERS"]
+                    ) ?></textarea>
             </td>
         </tr>
 
@@ -873,16 +949,30 @@ endif;
                         $disabled = "";
                         $nameDesc = "";
                         $selected = $currentStorage == $storageId ? " selected" : "";
-                        if (isset($storage["module"]) && !\Bitrix\Main\ModuleManager::isModuleInstalled($storage["module"])) {
+                        if (isset($storage["module"]) && !\Bitrix\Main\ModuleManager::isModuleInstalled(
+                                $storage["module"]
+                            )) {
                             $disabled = " disabled";
-                            $nameDesc = " (" . GetMessage("MAIN_COMPOSITE_MODULE_ERROR", array("#MODULE#" => $storage["module"])) . ")";
-                        } elseif (isset($storage["extension"]) && strlen($storage["extension"]) > 0 && !extension_loaded($storage["extension"])) {
+                            $nameDesc = " (" . GetMessage(
+                                    "MAIN_COMPOSITE_MODULE_ERROR",
+                                    array("#MODULE#" => $storage["module"])
+                                ) . ")";
+                        } elseif (isset($storage["extension"]) && $storage["extension"] <> '' && !extension_loaded(
+                                $storage["extension"]
+                            )) {
                             $disabled = " disabled";
-                            $nameDesc = " (" . GetMessage("MAIN_COMPOSITE_EXT_ERROR", array("#EXTENSION#" => $storage["extension"])) . ")";
+                            $nameDesc = " (" . GetMessage(
+                                    "MAIN_COMPOSITE_EXT_ERROR",
+                                    array("#EXTENSION#" => $storage["extension"])
+                                ) . ")";
                         }
 
                         ?>
-                        <option value="<?= htmlspecialcharsbx($storageId) ?>"<?= $selected ?><?= $disabled ?>><?= htmlspecialcharsbx($storage["name"]) ?><?= $nameDesc ?></option>
+                        <option value="<?= htmlspecialcharsbx(
+                            $storageId
+                        ) ?>"<?= $selected ?><?= $disabled ?>><?= htmlspecialcharsbx(
+                                $storage["name"]
+                            ) ?><?= $nameDesc ?></option>
                     <? endforeach ?>
                 </select>
             </td>
@@ -940,10 +1030,15 @@ endif;
         </tr>
         <tr id="composite_cluster_hint_row" <? if ($compositeOptions["STORAGE"] !== "memcached_cluster") echo 'style="display:none"' ?>>
             <td class="adm-required-field"></td>
-            <td><?= GetMessage("MAIN_COMPOSITE_CLUSTER_HINT", array(
-                    "#A_START#" => "<a href=\"/bitrix/admin/cluster_memcache_list.php?lang=" . LANGUAGE_ID . "&group_id=" . (defined("BX_CLUSTER_GROUP") ? BX_CLUSTER_GROUP : 1) . "\">",
-                    "#A_END#" => "</a>"
-                )); ?></td>
+            <td><?= GetMessage(
+                    "MAIN_COMPOSITE_CLUSTER_HINT",
+                    array(
+                        "#A_START#" => "<a href=\"/bitrix/admin/cluster_memcache_list.php?lang=" . LANGUAGE_ID . "&group_id=" . (defined(
+                                "BX_CLUSTER_GROUP"
+                            ) ? BX_CLUSTER_GROUP : 1) . "\">",
+                        "#A_END#" => "</a>"
+                    )
+                ); ?></td>
         </tr>
 
         <tr id="composite_quota_row" <? if ($compositeOptions["STORAGE"] !== "files") echo 'style="display:none"' ?>>
@@ -966,7 +1061,9 @@ endif;
         <tr>
             <td></td>
             <td>
-                <a href="/bitrix/admin/cache.php?lang=<?= LANGUAGE_ID ?>&cachetype=html&tabControl_active_tab=fedit2"><?= GetMessage("MAIN_COMPOSITE_CLEAR_CACHE") ?></a>
+                <a href="/bitrix/admin/cache.php?lang=<?= LANGUAGE_ID ?>&cachetype=html&tabControl_active_tab=fedit2"><?= GetMessage(
+                        "MAIN_COMPOSITE_CLEAR_CACHE"
+                    ) ?></a>
             </td>
         </tr>
         <?
@@ -974,9 +1071,7 @@ endif;
         $arUsedGroups = array();
         $groups = $compositeOptions["GROUPS"];
         $arGROUPS = array();
-        $b = "";
-        $o = "";
-        $rsGroups = CGroup::GetList($b, $o, array("ACTIVE" => "Y", "ADMIN" => "N", "ANONYMOUS" => "N"));
+        $rsGroups = CGroup::GetList('', '', array("ACTIVE" => "Y", "ADMIN" => "N", "ANONYMOUS" => "N"));
         while ($arGroup = $rsGroups->Fetch()) {
             $arGROUPS[] = $arGroup;
         }
@@ -1061,7 +1156,9 @@ endif;
                             >
                         </div>
                         <div class="adm-list-label">
-                            <label for="composite_show_banner_checkbox"><?= GetMessage("MAIN_COMPOSITE_SHOW_BANNER") ?></label>
+                            <label for="composite_show_banner_checkbox"><?= GetMessage(
+                                    "MAIN_COMPOSITE_SHOW_BANNER"
+                                ) ?></label>
                         </div>
                     </div>
                 </div>
@@ -1087,14 +1184,17 @@ endif;
                 <div class="adm-composite-btn-wrap">
                     <div class="adm-composite-btn-select-wrap">
 			<span class="adm-composite-btn-select" onclick="showPopup(this)">
-				<span id="composite-banner"
-                      class="bx-composite-btn bx-btn-white"><?= GetMessage("COMPOSITE_BANNER_TEXT") ?></span>
+				<span id="composite-banner" class="bx-composite-btn bx-btn-white"><?= GetMessage(
+                        "COMPOSITE_BANNER_TEXT"
+                    ) ?></span>
 				<span class="adm-composite-btn-select-icon"></span>
 			</span>
                         <span class="adm-composite-btn-checkbox-wrap">
 				<input type="checkbox" id="composite_white_bgcolor" class="adm-composite-btn-checkbox"
                        onclick="setWhiteBgColor(this.checked)"/><label class="adm-composite-btn-label-bg"
-                                                                       for="composite_white_bgcolor"><?= GetMessage("MAIN_COMPOSITE_BANNER_STYLE_WHITE") ?></label>
+                                                                       for="composite_white_bgcolor"><?= GetMessage(
+                                    "MAIN_COMPOSITE_BANNER_STYLE_WHITE"
+                                ) ?></label>
 			</span>
 
                     </div>
@@ -1319,12 +1419,14 @@ endif;
         <? endif ?>
 
         <?
-        $tabControl->Buttons(array(
-            "disabled" => !$isAdmin,
-            "btnSave" => false,
-            "btnApply" => false,
-            "btnCancel" => false,
-        ));
+        $tabControl->Buttons(
+            array(
+                "disabled" => !$isAdmin,
+                "btnSave" => false,
+                "btnApply" => false,
+                "btnCancel" => false,
+            )
+        );
 
 
         $hideButton = in_array($tabControl->GetSelectedTab(), array("autocomposite", "composite"));

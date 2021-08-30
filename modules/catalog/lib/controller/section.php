@@ -7,6 +7,7 @@ namespace Bitrix\Catalog\Controller;
 use Bitrix\Main\Engine\Response\DataType\Page;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
+use Bitrix\Main\UI\PageNavigation;
 
 final class Section extends Controller
 {
@@ -16,12 +17,14 @@ final class Section extends Controller
         $view = $this->getViewManager()
             ->getView($this);
 
-        return ['SECTION' => $view->prepareFieldInfos(
-            $view->getFields()
-        )];
+        return [
+            'SECTION' => $view->prepareFieldInfos(
+                $view->getFields()
+            )
+        ];
     }
 
-    public function listAction($select = [], $filter = [], $order = [], $start = 0)
+    public function listAction($select = [], $filter = [], $order = [], PageNavigation $pageNavigation)
     {
         $r = $this->checkPermissionIBlockSectionList($filter['IBLOCK_ID']);
         if ($r->isSuccess()) {
@@ -30,23 +33,32 @@ final class Section extends Controller
             $select = empty($select) ? ['*'] : $select;
             $order = empty($order) ? ['ID' => 'ASC'] : $order;
 
-            $r = \CIBlockSection::GetList($order, $filter, false, $select, self::getNavData($start));
-            while ($l = $r->fetch())
+            $r = \CIBlockSection::GetList(
+                $order,
+                $filter,
+                false,
+                $select,
+                self::getNavData($pageNavigation->getOffset())
+            );
+            while ($l = $r->fetch()) {
                 $result[] = $l;
+            }
 
-            return new Page('SECTIONS', $result, function () use ($filter) {
+            return new Page(
+                'SECTIONS', $result, function () use ($filter) {
                 $list = [];
                 $r = \CIBlockSection::GetList([], $filter);
-                while ($l = $r->fetch())
+                while ($l = $r->fetch()) {
                     $list[] = $l;
+                }
 
                 return count($list);
-            });
+            }
+            );
         } else {
             $this->addErrors($r->getErrors());
             return null;
         }
-
     }
 
     public function getAction($id)
@@ -135,10 +147,11 @@ final class Section extends Controller
             $r = $this->exists($id);
             if ($r->isSuccess()) {
                 if (!\CIBlockSection::Delete($id)) {
-                    if ($ex = self::getApplication()->GetException())
+                    if ($ex = self::getApplication()->GetException()) {
                         $r->addError(new Error($ex->GetString(), $ex->GetId()));
-                    else
+                    } else {
                         $r->addError(new Error('delete section error'));
+                    }
                 }
             }
         }
@@ -156,8 +169,9 @@ final class Section extends Controller
     protected function exists($id)
     {
         $r = new Result();
-        if (isset($this->get($id)['ID']) == false)
+        if (isset($this->get($id)['ID']) == false) {
             $r->addError(new Error('Section is not exists'));
+        }
 
         return $r;
     }
@@ -187,7 +201,9 @@ final class Section extends Controller
     {
         $r = new Result();
 
-        if (!static::getGlobalUser()->CanDoOperation('catalog_read') && !static::getGlobalUser()->CanDoOperation('catalog_view')) {
+        if (!static::getGlobalUser()->CanDoOperation('catalog_read') && !static::getGlobalUser()->CanDoOperation(
+                'catalog_view'
+            )) {
             $r->addError(new Error('Access Denied', 200040300010));
         }
         return $r;
@@ -211,10 +227,11 @@ final class Section extends Controller
         $r = new Result();
 
         $arIBlock = \CIBlock::GetArrayByID($iblockId);
-        if ($arIBlock)
+        if ($arIBlock) {
             $bBadBlock = !\CIBlockSectionRights::UserHasRightTo($iblockId, $sectionId, self::IBLOCK_EDIT);
-        else
+        } else {
             $bBadBlock = true;
+        }
 
         if ($bBadBlock) {
             $r->addError(new Error('Access Denied', 200040300040));
@@ -227,10 +244,16 @@ final class Section extends Controller
         $r = new Result();
 
         $arIBlock = \CIBlock::GetArrayByID($iblockId);
-        if ($arIBlock)
-            $bBadBlock = !\CIBlockSectionRights::UserHasRightTo($iblockId, $iblockSectionId, self::IBLOCK_SECTION_SECTION_BIND); //access update
-        else
+        if ($arIBlock) {
+            $bBadBlock = !\CIBlockSectionRights::UserHasRightTo(
+                $iblockId,
+                $iblockSectionId,
+                self::IBLOCK_SECTION_SECTION_BIND
+            );
+        } //access update
+        else {
             $bBadBlock = true;
+        }
 
         if ($bBadBlock) {
             $r->addError(new Error('Access Denied', 200040300050));
@@ -248,7 +271,11 @@ final class Section extends Controller
     {
         $r = new Result();
         $iblockId = \CIBlockElement::GetIBlockByID($sectionId);
-        $bBadBlock = !\CIBlockElementRights::UserHasRightTo($iblockId, $sectionId, self::IBLOCK_SECTION_DELETE); //access delete
+        $bBadBlock = !\CIBlockElementRights::UserHasRightTo(
+            $iblockId,
+            $sectionId,
+            self::IBLOCK_SECTION_DELETE
+        ); //access delete
 
         if ($bBadBlock) {
             $r->addError(new Error('Access Denied', 200040300050));
@@ -264,10 +291,11 @@ final class Section extends Controller
         $iblockId = $this->getIBlockBySectionId($sectionId);
         $arIBlock = \CIBlock::GetArrayByID($iblockId);
 
-        if ($arIBlock)
+        if ($arIBlock) {
             $bBadBlock = !\CIBlockSectionRights::UserHasRightTo($iblockId, $sectionId, self::IBLOCK_SECTION_READ);
-        else
+        } else {
             $bBadBlock = true;
+        }
 
         if ($bBadBlock) {
             $r->addError(new Error('Access Denied', 200040300040));
@@ -280,10 +308,11 @@ final class Section extends Controller
         $r = new Result();
 
         $arIBlock = \CIBlock::GetArrayByID($iblockId);
-        if ($arIBlock)
+        if ($arIBlock) {
             $bBadBlock = !\CIBlockRights::UserHasRightTo($iblockId, $iblockId, self::IBLOCK_READ);
-        else
+        } else {
             $bBadBlock = true;
+        }
 
         if ($bBadBlock) {
             $r->addError(new Error('Access Denied', 200040300030));

@@ -1,4 +1,5 @@
 <?
+
 define('STOP_STATISTICS', true);
 define('NO_AGENT_CHECK', true);
 define('DisableEventsCheck', true);
@@ -25,24 +26,45 @@ if (check_bitrix_sessid()) {
     CUtil::JSPostUnescape();
     if ($_REQUEST['action'] == "getuserdata" || $_REQUEST['action'] == 'getsettings') {
         $serializedSocservUser = CUserOptions::GetOption("socialservices", "user_socserv_array", '', $userId);
-        if (CheckSerializedData($serializedSocservUser))
+        if (CheckSerializedData($serializedSocservUser)) {
             $arResult['SOCSERVARRAY'] = unserialize($serializedSocservUser);
-        if (!isset($arResult['SOCSERVARRAY']) || !is_array($arResult['SOCSERVARRAY']))
+        }
+        if (!isset($arResult['SOCSERVARRAY']) || !is_array($arResult['SOCSERVARRAY'])) {
             $arResult['SOCSERVARRAY'] = '';
-        if ($_REQUEST['checkEnabled'] == 'true')
+        }
+        if ($_REQUEST['checkEnabled'] == 'true') {
             $arResult['ENABLED'] = CUserOptions::GetOption("socialservices", "user_socserv_enable", "N", $userId);
+        }
         $arResult['STARTSEND'] = CUserOptions::GetOption("socialservices", "user_socserv_start_day", "N", $userId);
         $arResult['ENDSEND'] = CUserOptions::GetOption("socialservices", "user_socserv_end_day", "N", $userId);
-        $arResult['STARTTEXT'] = CUserOptions::GetOption("socialservices", "user_socserv_start_text", GetMessage("JS_CORE_SS_WORKDAY_START"), $userId);
-        $arResult['ENDTEXT'] = CUserOptions::GetOption("socialservices", "user_socserv_end_text", GetMessage("JS_CORE_SS_WORKDAY_END"), $userId);
+        $arResult['STARTTEXT'] = CUserOptions::GetOption(
+            "socialservices",
+            "user_socserv_start_text",
+            GetMessage("JS_CORE_SS_WORKDAY_START"),
+            $userId
+        );
+        $arResult['ENDTEXT'] = CUserOptions::GetOption(
+            "socialservices",
+            "user_socserv_end_text",
+            GetMessage("JS_CORE_SS_WORKDAY_END"),
+            $userId
+        );
         $arResult['SOCSERVARRAYALL'] = CSocServAuthManager::GetUserArrayForSendMessages($userId);
         $arResult['USER_ID'] = $userId;
         $tooltipPathToUser = COption::GetOptionString("main", "TOOLTIP_PATH_TO_USER", false, SITE_ID);
-        if ($tooltipPathToUser)
-            $pathToUser = str_replace("#user_id#", $userId, $tooltipPathToUser) . "edit/?current_fieldset=SOCSERV#soc-serv-title-id";
-        else
+        if ($tooltipPathToUser) {
+            $pathToUser = str_replace(
+                    "#user_id#",
+                    $userId,
+                    $tooltipPathToUser
+                ) . "edit/?current_fieldset=SOCSERV#soc-serv-title-id";
+        } else {
             $pathToUser = "/company/personal/user/$userId/edit/?current_fieldset=SOCSERV#soc-serv-title-id";
-        $arResult["SETUP_MESSAGE"] = GetMessage(("JS_CORE_SS_SETUP_ACCOUNT"), array("#class#" => "class=\"bx-ss-soc-serv-setup-link\"", "#link#" => $pathToUser));
+        }
+        $arResult["SETUP_MESSAGE"] = GetMessage(
+            ("JS_CORE_SS_SETUP_ACCOUNT"),
+            array("#class#" => "class=\"bx-ss-soc-serv-setup-link\"", "#link#" => $pathToUser)
+        );
 
         if ($_REQUEST['action'] == "getuserdata") {
             echo CUtil::PhpToJSObject($arResult);
@@ -71,16 +93,21 @@ if (check_bitrix_sessid()) {
             $userSocServSendEnable = $userSocServSendStart = $userSocServSendEnd = 'N';
             $userSocServEndText = GetMessage("JS_CORE_SS_WORKDAY_END");
             $userSocServStartText = GetMessage("JS_CORE_SS_WORKDAY_START");
-            if (isset($_POST["SOCSERVARRAY"]) && !empty($_POST["SOCSERVARRAY"]))
+            if (isset($_POST["SOCSERVARRAY"]) && !empty($_POST["SOCSERVARRAY"])) {
                 $arUserSocServ = serialize($_POST["SOCSERVARRAY"]);
-            if (isset($_POST["STARTSEND"]))
+            }
+            if (isset($_POST["STARTSEND"])) {
                 $userSocServSendStart = $_POST["STARTSEND"];
-            if (isset($_POST["ENDSEND"]))
+            }
+            if (isset($_POST["ENDSEND"])) {
                 $userSocServSendEnd = $_POST["ENDSEND"];
-            if (isset($_POST["STARTTEXT"]))
+            }
+            if (isset($_POST["STARTTEXT"])) {
                 $userSocServStartText = $_POST["STARTTEXT"];
-            if (isset($_POST["ENDTEXT"]))
+            }
+            if (isset($_POST["ENDTEXT"])) {
                 $userSocServEndText = $_POST["ENDTEXT"];
+            }
 
             if ($userSocServSendStart === 'Y' || $userSocServSendEnd === 'Y') {
                 CUserOptions::SetOption("socialservices", "user_socserv_enable", 'Y', false, $userId);

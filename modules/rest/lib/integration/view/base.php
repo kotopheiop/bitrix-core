@@ -10,6 +10,7 @@ use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\Result;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Rest\Integration\Externalizer;
 
 abstract class Base
 {
@@ -76,7 +77,9 @@ abstract class Base
 
     final public function convertKeysToSnakeCaseSelect($fields)
     {
-        $converter = new Converter(Converter::VALUES | Converter::TO_SNAKE | Converter::TO_SNAKE_DIGIT | Converter::TO_UPPER);
+        $converter = new Converter(
+            Converter::VALUES | Converter::TO_SNAKE | Converter::TO_SNAKE_DIGIT | Converter::TO_UPPER
+        );
         return $converter->process($fields);
     }
 
@@ -90,7 +93,9 @@ abstract class Base
         $result = [];
 
         $converter = new Converter(Converter::VALUES | Converter::TO_UPPER);
-        $converterForKey = new Converter(Converter::KEYS | Converter::TO_SNAKE | Converter::TO_SNAKE_DIGIT | Converter::TO_UPPER);
+        $converterForKey = new Converter(
+            Converter::KEYS | Converter::TO_SNAKE | Converter::TO_SNAKE_DIGIT | Converter::TO_UPPER
+        );
 
         foreach ($converter->process($fields) as $key => $value) {
             $result[$converterForKey->process($key)] = $value;
@@ -106,7 +111,9 @@ abstract class Base
 
     final protected function convertKeysToSnakeCase($data)
     {
-        $converter = new Converter(Converter::KEYS | Converter::RECURSIVE | Converter::TO_SNAKE | Converter::TO_SNAKE_DIGIT | Converter::TO_UPPER);
+        $converter = new Converter(
+            Converter::KEYS | Converter::RECURSIVE | Converter::TO_SNAKE | Converter::TO_SNAKE_DIGIT | Converter::TO_UPPER
+        );
         return $converter->process($data);
     }
     //endregion
@@ -299,7 +306,7 @@ abstract class Base
     {
         $result = [];
 
-        $remove = isset($value['REMOVE']) && is_string($value['REMOVE']) && strtoupper($value['REMOVE']) === 'Y';
+        $remove = isset($value['REMOVE']) && is_string($value['REMOVE']) && mb_strtoupper($value['REMOVE']) === 'Y';
         $data = isset($value['FILE_DATA']) ? $value['FILE_DATA'] : [];
 
         $data = $this->parserFileValue($data);
@@ -355,7 +362,10 @@ abstract class Base
         $fieldsInfo = empty($fieldsInfo) ? $this->getFields() : $fieldsInfo;
 
         if (is_array($fields) && count($fields) > 0) {
-            $listFieldsInfo = $this->getListFieldInfo($fieldsInfo, ['filter' => ['ignoredAttributes' => [Attributes::HIDDEN]]]);
+            $listFieldsInfo = $this->getListFieldInfo(
+                $fieldsInfo,
+                ['filter' => ['ignoredAttributes' => [Attributes::HIDDEN]]]
+            );
 
             foreach ($fields as $rawName => $value) {
                 $field = \CSqlUtil::GetFilterOperation($rawName);
@@ -371,7 +381,7 @@ abstract class Base
                     continue;
                 }
 
-                $operation = substr($rawName, 0, strlen($rawName) - strlen($field['FIELD']));
+                $operation = mb_substr($rawName, 0, mb_strlen($rawName) - mb_strlen($field['FIELD']));
                 if (isset($info['FORBIDDEN_FILTERS'])
                     && is_array($info['FORBIDDEN_FILTERS'])
                     && in_array($operation, $info['FORBIDDEN_FILTERS'], true)) {
@@ -391,7 +401,10 @@ abstract class Base
 
         $fieldsInfo = empty($fieldsInfo) ? $this->getFields() : $fieldsInfo;
 
-        $listFieldsInfo = $this->getListFieldInfo($fieldsInfo, ['filter' => ['ignoredAttributes' => [Attributes::HIDDEN]]]);
+        $listFieldsInfo = $this->getListFieldInfo(
+            $fieldsInfo,
+            ['filter' => ['ignoredAttributes' => [Attributes::HIDDEN]]]
+        );
 
         if (empty($fields) || in_array('*', $fields, true)) {
             $result = array_keys($listFieldsInfo);
@@ -417,7 +430,10 @@ abstract class Base
 
         if (is_array($fields)
             && count($fields) > 0) {
-            $listFieldsInfo = $this->getListFieldInfo($fieldsInfo, ['filter' => ['ignoredAttributes' => [Attributes::HIDDEN]]]);
+            $listFieldsInfo = $this->getListFieldInfo(
+                $fieldsInfo,
+                ['filter' => ['ignoredAttributes' => [Attributes::HIDDEN]]]
+            );
 
             foreach ($fields as $field => $order) {
                 $info = isset($listFieldsInfo[$field]) ? $listFieldsInfo[$field] : null;
@@ -438,7 +454,10 @@ abstract class Base
 
         $fieldsInfo = empty($fieldsInfo) ? $this->getFields() : $fieldsInfo;
 
-        $listFieldsInfo = $this->getListFieldInfo($fieldsInfo, ['filter' => ['ignoredAttributes' => [Attributes::HIDDEN]]]);
+        $listFieldsInfo = $this->getListFieldInfo(
+            $fieldsInfo,
+            ['filter' => ['ignoredAttributes' => [Attributes::HIDDEN]]]
+        );
 
         if (is_array($list) && count($list) > 0) {
             foreach ($list as $k => $item) {
@@ -580,11 +599,15 @@ abstract class Base
 
         $fieldsInfo = empty($fieldsInfo) ? $this->getFields() : $fieldsInfo;
 
-        $listFieldInfo = $this->getListFieldInfo($fieldsInfo, ['filter' => ['ignoredAttributes' => [Attributes::HIDDEN]]]);
+        $listFieldInfo = $this->getListFieldInfo(
+            $fieldsInfo,
+            ['filter' => ['ignoredAttributes' => [Attributes::HIDDEN]]]
+        );
 
         if (is_array($list) && count($list) > 0) {
-            foreach ($list as $k => $fields)
+            foreach ($list as $k => $fields) {
                 $result[$k] = $this->externalizeFields($fields, $listFieldInfo);
+            }
         }
         return $result;
     }
@@ -614,22 +637,15 @@ abstract class Base
     }
     // endregion
 
-    //region convert keys to camel case
-    final public function convertKeysToCamelCase($fields)
-    {
-        return Converter::toJson()
-            ->process($fields);
-    }
-    // endregion
-
     //region check fields
     final public function checkFieldsAdd($fields)
     {
         $r = new Result();
 
         $required = $this->checkRequiredFieldsAdd($fields);
-        if (!$required->isSuccess())
+        if (!$required->isSuccess()) {
             $r->addError(new Error('Required fields: ' . implode(', ', $required->getErrorMessages())));
+        }
 
         return $r;
     }
@@ -639,8 +655,9 @@ abstract class Base
         $r = new Result();
 
         $required = $this->checkRequiredFieldsUpdate($fields);
-        if (!$required->isSuccess())
+        if (!$required->isSuccess()) {
             $r->addError(new Error('Required fields: ' . implode(', ', $required->getErrorMessages())));
+        }
 
         return $r;
     }
@@ -657,18 +674,24 @@ abstract class Base
 
     final protected function checkRequiredFieldsAdd($fields)
     {
-        return $this->checkRequiredFields($fields, $this->getListFieldInfo(
-            $this->getFields(),
-            ['filter' => ['ignoredAttributes' => [Attributes::HIDDEN, Attributes::READONLY]]]
-        ));
+        return $this->checkRequiredFields(
+            $fields,
+            $this->getListFieldInfo(
+                $this->getFields(),
+                ['filter' => ['ignoredAttributes' => [Attributes::HIDDEN, Attributes::READONLY]]]
+            )
+        );
     }
 
     final protected function checkRequiredFieldsUpdate($fields)
     {
-        return $this->checkRequiredFields($fields, $this->getListFieldInfo(
-            $this->getFields(),
-            ['filter' => ['ignoredAttributes' => [Attributes::HIDDEN, Attributes::READONLY, Attributes::IMMUTABLE]]]
-        ));
+        return $this->checkRequiredFields(
+            $fields,
+            $this->getListFieldInfo(
+                $this->getFields(),
+                ['filter' => ['ignoredAttributes' => [Attributes::HIDDEN, Attributes::READONLY, Attributes::IMMUTABLE]]]
+            )
+        );
     }
 
     final protected function checkRequiredFields($fields, array $fieldsInfo, $params = [])
@@ -682,8 +705,9 @@ abstract class Base
             if (in_array($name, $delRequiredFields)) {
                 continue;
             } elseif ($info['IS_REQUIRED'] == 'Y' || in_array($name, $addRequiredFields)) {
-                if (!isset($fields[$name]))
-                    $r->addError(new Error($this->convertKeysToCamelCase($name)));
+                if (!isset($fields[$name])) {
+                    $r->addError(new Error(Externalizer::convertKeysToCamelCase($name)));
+                }
             }
         }
 

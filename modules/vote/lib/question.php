@@ -150,15 +150,21 @@ class QuestionTable extends Entity\DataManager
     public static function setCounter(array $id, $increment = true)
     {
         $id = implode(", ", $id);
-        if (empty($id))
+        if (empty($id)) {
             return;
+        }
         $connection = \Bitrix\Main\Application::getInstance()->getConnection();
         $sql = intval($increment);
-        if ($increment === true)
+        if ($increment === true) {
             $sql = "COUNTER+1";
-        else if ($increment === false)
-            $sql = "COUNTER-1";
-        $connection->queryExecute("UPDATE " . self::getTableName() . " SET COUNTER=" . $sql . " WHERE ID IN (" . $id . ")");
+        } else {
+            if ($increment === false) {
+                $sql = "COUNTER-1";
+            }
+        }
+        $connection->queryExecute(
+            "UPDATE " . self::getTableName() . " SET COUNTER=" . $sql . " WHERE ID IN (" . $id . ")"
+        );
     }
 }
 

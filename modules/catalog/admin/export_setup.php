@@ -6,7 +6,9 @@ use Bitrix\Main\Loader;
 define('NO_AGENT_CHECK', true);
 
 $executeExport = (isset($_REQUEST['ACTION']) && is_string($_REQUEST['ACTION']) && $_REQUEST['ACTION'] == 'EXPORT');
-$existActionFile = (isset($_REQUEST['ACT_FILE']) && is_string($_REQUEST['ACT_FILE']) && trim($_REQUEST['ACT_FILE']) !== '');
+$existActionFile = (isset($_REQUEST['ACT_FILE']) && is_string($_REQUEST['ACT_FILE']) && trim(
+        $_REQUEST['ACT_FILE']
+    ) !== '');
 $existExportSession = false;
 if (isset($_REQUEST['CUR_EXPORT_SESS_ID']) && is_string($_REQUEST['CUR_EXPORT_SESS_ID'])) {
     $exportSessionId = trim($_REQUEST['CUR_EXPORT_SESS_ID']);
@@ -14,8 +16,9 @@ if (isset($_REQUEST['CUR_EXPORT_SESS_ID']) && is_string($_REQUEST['CUR_EXPORT_SE
     unset($exportSessionId);
 }
 $listPosition = 0;
-if (isset($_REQUEST['CUR_ELEMENT_ID']) && is_string($_REQUEST['CUR_ELEMENT_ID']))
+if (isset($_REQUEST['CUR_ELEMENT_ID']) && is_string($_REQUEST['CUR_ELEMENT_ID'])) {
     $listPosition = (int)$_REQUEST['CUR_ELEMENT_ID'];
+}
 
 if ($executeExport && $existActionFile && $existExportSession && $listPosition > 0) {
     define('NO_KEEP_STATISTIC', true);
@@ -25,8 +28,11 @@ unset($listPosition, $existExportSession, $existActionFile, $executeExport);
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/catalog/prolog.php");
-if (!($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_export_edit') || $USER->CanDoOperation('catalog_export_exec')))
+if (!($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_export_edit') || $USER->CanDoOperation(
+        'catalog_export_exec'
+    ))) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 Loader::includeModule('catalog');
 $bCanEdit = $USER->CanDoOperation('catalog_export_edit');
 $bCanExec = $USER->CanDoOperation('catalog_export_exec');
@@ -78,9 +84,14 @@ function GetReportsList($strPath2Export)
     CheckDirPath($_SERVER["DOCUMENT_ROOT"] . $strPath2Export);
     if ($handle = opendir($_SERVER["DOCUMENT_ROOT"] . $strPath2Export)) {
         while (($file = readdir($handle)) !== false) {
-            if ($file == "." || $file == "..") continue;
-            if (is_file($_SERVER["DOCUMENT_ROOT"] . $strPath2Export . $file) && substr($file, strlen($file) - 8) == "_run.php") {
-                $export_name = substr($file, 0, strlen($file) - 8);
+            if ($file == "." || $file == "..") {
+                continue;
+            }
+            if (is_file($_SERVER["DOCUMENT_ROOT"] . $strPath2Export . $file) && mb_substr(
+                    $file,
+                    mb_strlen($file) - 8
+                ) == "_run.php") {
+                $export_name = mb_substr($file, 0, mb_strlen($file) - 8);
 
                 $rep_title = $export_name;
                 $file_handle = fopen($_SERVER["DOCUMENT_ROOT"] . $strPath2Export . $file, "rb");
@@ -90,7 +101,9 @@ function GetReportsList($strPath2Export)
                 $arMatches = array();
                 if (preg_match("#<title[\s]*>([^<]*)</title[\s]*>#i", $file_contents, $arMatches)) {
                     $arMatches[1] = Trim($arMatches[1]);
-                    if (strlen($arMatches[1]) > 0) $rep_title = $arMatches[1];
+                    if ($arMatches[1] <> '') {
+                        $rep_title = $arMatches[1];
+                    }
                 }
 
                 $arReports[$export_name] = array(
@@ -124,22 +137,25 @@ $arReportsList = GetReportsList(CATALOG_PATH2EXPORTS);
 if (($bCanEdit || $bCanExec) && check_bitrix_sessid())
 {
 $strActFileName = trim(strval($_REQUEST["ACT_FILE"]));
-if (strlen($_REQUEST["ACTION"]) > 0 && strlen($strActFileName) <= 0) {
+if ($_REQUEST["ACTION"] <> '' && $strActFileName == '') {
     $strErrorMessage .= GetMessage("CES_ERROR_NO_FILE") . "\n";
-} elseif (strlen($_REQUEST["ACTION"]) <= 0 && strlen($strActFileName) > 0) {
+} elseif ($_REQUEST["ACTION"] == '' && $strActFileName <> '') {
     $strErrorMessage .= GetMessage("CES_ERROR_NO_ACTION") . "\n";
 } elseif (preg_match(BX_CATALOG_FILENAME_REG, $strActFileName)) {
     $strErrorMessage .= GetMessage("CES_ERROR_BAD_FILENAME2") . "\n";
 }
 
-if (strlen($strErrorMessage) <= 0 && strlen($_REQUEST["ACTION"]) > 0)
+if ($strErrorMessage == '' && $_REQUEST["ACTION"] <> '')
 {
 if (!file_exists($_SERVER["DOCUMENT_ROOT"] . $arReportsList[$strActFileName]["FILE_RUN"])
     || !is_file($_SERVER["DOCUMENT_ROOT"] . $arReportsList[$strActFileName]["FILE_RUN"])
-)
-    $strErrorMessage .= GetMessage("CES_ERROR_FILE_NOT_EXIST") . " (" . $arReportsList[$strActFileName]["FILE_RUN"] . ").\n";
+) {
+    $strErrorMessage .= GetMessage(
+            "CES_ERROR_FILE_NOT_EXIST"
+        ) . " (" . $arReportsList[$strActFileName]["FILE_RUN"] . ").\n";
+}
 
-if (strlen($strErrorMessage) <= 0)
+if ($strErrorMessage == '')
 {
 $PROFILE_ID = intval($_REQUEST["PROFILE_ID"]);
 
@@ -169,7 +185,9 @@ if ($CUR_ELEMENT_ID < 0) {
     $CUR_ELEMENT_ID = 0;
 }
 
-if ($CUR_ELEMENT_ID > 0 && '' != $CUR_EXPORT_SESS_ID && isset($_SESSION[$CUR_EXPORT_SESS_ID]) && is_array($_SESSION[$CUR_EXPORT_SESS_ID])) {
+if ($CUR_ELEMENT_ID > 0 && '' != $CUR_EXPORT_SESS_ID && isset($_SESSION[$CUR_EXPORT_SESS_ID]) && is_array(
+        $_SESSION[$CUR_EXPORT_SESS_ID]
+    )) {
     $firstStep = false;
 
     $arSetupVars = array();
@@ -197,10 +215,12 @@ if ($CUR_ELEMENT_ID > 0 && '' != $CUR_EXPORT_SESS_ID && isset($_SESSION[$CUR_EXP
     if ($PROFILE_ID > 0) {
         $ar_profile = CCatalogExport::GetByID($PROFILE_ID);
         if ($ar_profile) {
-            if ($ar_profile["DEFAULT_PROFILE"] != "Y")
+            if ($ar_profile["DEFAULT_PROFILE"] != "Y") {
                 $bDefaultProfile = false;
-            if ('Y' == $ar_profile["NEED_EDIT"])
+            }
+            if ('Y' == $ar_profile["NEED_EDIT"]) {
                 $boolNeedEdit = true;
+            }
         } else {
             $PROFILE_ID = 0;
         }
@@ -214,16 +234,21 @@ if ($CUR_ELEMENT_ID > 0 && '' != $CUR_EXPORT_SESS_ID && isset($_SESSION[$CUR_EXP
         );
         if ($ar_profile = $db_profile->Fetch()) {
             $PROFILE_ID = (int)$ar_profile['ID'];
-            if ($ar_profile['NEED_EDIT'] == 'Y')
+            if ($ar_profile['NEED_EDIT'] == 'Y') {
                 $boolNeedEdit = true;
+            }
         }
     }
 
     if ($bDefaultProfile || $boolNeedEdit) {
-        if (strlen($arReportsList[$strActFileName]["FILE_SETUP"]) > 0) {
+        if ($arReportsList[$strActFileName]["FILE_SETUP"] <> '') {
             $STEP = intval($_REQUEST["STEP"]);
-            if (isset($_POST['backButton']) && !empty($_POST['backButton'])) $STEP -= 2;
-            if ($STEP <= 0) $STEP = 1;
+            if (isset($_POST['backButton']) && !empty($_POST['backButton'])) {
+                $STEP -= 2;
+            }
+            if ($STEP <= 0) {
+                $STEP = 1;
+            }
             $FINITE = false;
 
             ob_start();
@@ -267,8 +292,9 @@ CCatalogDiscountSave::Enable();
 
 if (!$finalExport)
 {
-if (empty($CUR_EXPORT_SESS_ID))
+if (empty($CUR_EXPORT_SESS_ID)) {
     $CUR_EXPORT_SESS_ID = "CE" . time();
+}
 
 $arInternalVars = array();
 $arInternalVarsList = array();
@@ -299,8 +325,9 @@ if (!empty($arSetupVarsList) && is_array($arSetupVarsList)) {
         }
     }
     unset($strSetupVarName);
-    if (!empty($arSetupVars))
+    if (!empty($arSetupVars)) {
         $setupVars = http_build_query($arSetupVars);
+    }
 }
 
 $_SESSION[$CUR_EXPORT_SESS_ID]["CUR_ELEMENT_ID"] = $CUR_ELEMENT_ID;
@@ -309,7 +336,9 @@ $_SESSION[$CUR_EXPORT_SESS_ID]["SETUP_VARS"] = $setupVars;
 $_SESSION[$CUR_EXPORT_SESS_ID]["ERROR_MESSAGE"] .= $strExportErrorMessage;
 //$_SESSION[$CUR_EXPORT_SESS_ID]["OK_MESSAGE"] .= $strImportOKMessage;
 
-$urlParams = "CUR_ELEMENT_ID=" . $CUR_ELEMENT_ID . "&CUR_EXPORT_SESS_ID=" . urlencode($CUR_EXPORT_SESS_ID) . "&ACT_FILE=" . urlencode($strActFileName) . "&ACTION=EXPORT&PROFILE_ID=" . $PROFILE_ID;
+$urlParams = "CUR_ELEMENT_ID=" . $CUR_ELEMENT_ID . "&CUR_EXPORT_SESS_ID=" . urlencode(
+        $CUR_EXPORT_SESS_ID
+    ) . "&ACT_FILE=" . urlencode($strActFileName) . "&ACTION=EXPORT&PROFILE_ID=" . $PROFILE_ID;
 $fullUrl = $APPLICATION->GetCurPage() . '?lang=' . LANGUAGE_ID . '&' . $urlParams . '&' . bitrix_sessid_get();
 ?><!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
 <html>
@@ -333,7 +362,7 @@ include($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_admin_a
 die();
 }
 else {
-    if (isset($CUR_EXPORT_SESS_ID) && strlen($CUR_EXPORT_SESS_ID) > 0 && is_set($_SESSION, $CUR_EXPORT_SESS_ID)) {
+    if (isset($CUR_EXPORT_SESS_ID) && $CUR_EXPORT_SESS_ID <> '' && is_set($_SESSION, $CUR_EXPORT_SESS_ID)) {
         $strExportErrorMessage = $_SESSION[$CUR_EXPORT_SESS_ID]["ERROR_MESSAGE"] . $strExportErrorMessage;
         //$strImportOKMessage = $_SESSION[$CUR_EXPORT_SESS_ID]["OK_MESSAGE"].$strImportOKMessage;
 
@@ -342,14 +371,15 @@ else {
     }
 }
 
-if (isset($CUR_EXPORT_SESS_ID) && strlen($CUR_EXPORT_SESS_ID) > 0 && is_set($_SESSION, $CUR_EXPORT_SESS_ID)) {
+if (isset($CUR_EXPORT_SESS_ID) && $CUR_EXPORT_SESS_ID <> '' && is_set($_SESSION, $CUR_EXPORT_SESS_ID)) {
     $strExportErrorMessage = $_SESSION[$CUR_EXPORT_SESS_ID]["ERROR_MESSAGE"] . $strExportErrorMessage;
     //$strImportOKMessage = $_SESSION[$CUR_EXPORT_SESS_ID]["OK_MESSAGE"].$strImportOKMessage;
 }
 
 
-if (strlen($strExportErrorMessage) > 0)
+if ($strExportErrorMessage <> '') {
     $strErrorMessage .= $strExportErrorMessage;
+}
 
 if ($PROFILE_ID > 0) {
     CCatalogExport::Update(
@@ -375,7 +405,7 @@ if ($PROFILE_ID > 0) {
     );
 }
 
-if (strlen($strErrorMessage) <= 0) {
+if ($strErrorMessage == '') {
     $strSetupFileName = '';
     $strRedirect = '/bitrix/admin/cat_export_setup.php?lang=' . urlencode(LANGUAGE_ID) . '&success_export=Y';
     if (isset($SETUP_FILE_NAME) && !empty($SETUP_FILE_NAME)) {
@@ -384,13 +414,20 @@ if (strlen($strErrorMessage) <= 0) {
         } else {
             $strSetupFileName = Rel2Abs('/', $SETUP_FILE_NAME);
             if (false !== $strSetupFileName) {
-                if (substr($strSetupFileName, 0, strlen($_SERVER["DOCUMENT_ROOT"])) == $_SERVER["DOCUMENT_ROOT"]) {
-                    $strSetupFileName = substr($strSetupFileName, strlen($_SERVER["DOCUMENT_ROOT"]));
+                if (mb_substr(
+                        $strSetupFileName,
+                        0,
+                        mb_strlen($_SERVER["DOCUMENT_ROOT"])
+                    ) == $_SERVER["DOCUMENT_ROOT"]) {
+                    $strSetupFileName = mb_substr($strSetupFileName, mb_strlen($_SERVER["DOCUMENT_ROOT"]));
                 }
-                if (file_exists($_SERVER['DOCUMENT_ROOT'] . $strSetupFileName) && is_file($_SERVER['DOCUMENT_ROOT'] . $strSetupFileName)) {
+                if (file_exists($_SERVER['DOCUMENT_ROOT'] . $strSetupFileName) && is_file(
+                        $_SERVER['DOCUMENT_ROOT'] . $strSetupFileName
+                    )) {
                     if ($APPLICATION->GetFileAccessPermission($strSetupFileName) >= "R") {
-                        if (!isset($_SESSION['BX_EXP_TMP_ID']) || !is_array($_SESSION['BX_EXP_TMP_ID']))
+                        if (!isset($_SESSION['BX_EXP_TMP_ID']) || !is_array($_SESSION['BX_EXP_TMP_ID'])) {
                             $_SESSION['BX_EXP_TMP_ID'] = array();
+                        }
                         do {
                             $strTempID = md5(str_replace('.', '', uniqid('bxexp', true)));
                         } while (in_array($strTempID, $_SESSION['BX_EXP_TMP_ID']));
@@ -402,7 +439,7 @@ if (strlen($strErrorMessage) <= 0) {
             }
         }
     }
-    if (strlen($strErrorMessage) <= 0) {
+    if ($strErrorMessage == '') {
         $adminSidePanelHelper->reloadPage($strRedirect, "save");
         LocalRedirect($strRedirect);
     }
@@ -414,15 +451,17 @@ if (strlen($strErrorMessage) <= 0) {
 elseif ($_REQUEST["ACTION"] == "MENU" && $bCanEdit) {
     if ($PROFILE_ID > 0) {
         $ar_profile = CCatalogExport::GetByID($PROFILE_ID);
-        if (!$ar_profile)
+        if (!$ar_profile) {
             $PROFILE_ID = 0;
+        }
     }
 
     // if profile absent, search default profile
     if ($PROFILE_ID <= 0) {
         $db_profile = CCatalogExport::GetList(array(), array("DEFAULT_PROFILE" => "Y", "FILE_NAME" => $strActFileName));
-        if ($ar_profile = $db_profile->Fetch())
+        if ($ar_profile = $db_profile->Fetch()) {
             $PROFILE_ID = (int)$ar_profile['ID'];
+        }
     }
 
     if ($PROFILE_ID > 0) {
@@ -431,20 +470,22 @@ elseif ($_REQUEST["ACTION"] == "MENU" && $bCanEdit) {
             array("IN_MENU" => ($ar_profile["IN_MENU"] == "Y" ? "N" : "Y"))
         );
     } else {
-        $PROFILE_ID = CCatalogExport::Add(array(
-            "LAST_USE" => false,
-            "FILE_NAME" => $strActFileName,
-            "NAME" => $arReportsList[$strActFileName]["TITLE"],
-            "DEFAULT_PROFILE" => "Y",
-            "IN_MENU" => "Y",
-            "IN_AGENT" => "N",
-            "IN_CRON" => "N",
-            "NEED_EDIT" => "N",
-            "SETUP_VARS" => false
-        ));
+        $PROFILE_ID = CCatalogExport::Add(
+            array(
+                "LAST_USE" => false,
+                "FILE_NAME" => $strActFileName,
+                "NAME" => $arReportsList[$strActFileName]["TITLE"],
+                "DEFAULT_PROFILE" => "Y",
+                "IN_MENU" => "Y",
+                "IN_AGENT" => "N",
+                "IN_CRON" => "N",
+                "NEED_EDIT" => "N",
+                "SETUP_VARS" => false
+            )
+        );
     }
 
-    if (strlen($strErrorMessage) <= 0) {
+    if ($strErrorMessage == '') {
         $redirectUrl = "/bitrix/admin/cat_export_setup.php?lang=" . urlencode(LANGUAGE_ID) . "&success_export=Y";
         $adminSidePanelHelper->reloadPage($redirectUrl, "save");
         LocalRedirect($redirectUrl);
@@ -459,10 +500,12 @@ elseif ($_REQUEST["ACTION"] == "AGENT" && $USER->CanDoOperation('edit_php')) {
     if ($PROFILE_ID > 0) {
         $ar_profile = CCatalogExport::GetByID($PROFILE_ID);
         if ($ar_profile) {
-            if ($ar_profile["DEFAULT_PROFILE"] != "Y")
+            if ($ar_profile["DEFAULT_PROFILE"] != "Y") {
                 $bDefaultProfile = false;
-            if ($ar_profile['NEED_EDIT'] == 'Y')
+            }
+            if ($ar_profile['NEED_EDIT'] == 'Y') {
                 $boolNeedEdit = true;
+            }
         } else {
             $PROFILE_ID = 0;
         }
@@ -473,49 +516,72 @@ elseif ($_REQUEST["ACTION"] == "AGENT" && $USER->CanDoOperation('edit_php')) {
         $db_profile = CCatalogExport::GetList(array(), array("DEFAULT_PROFILE" => "Y", "FILE_NAME" => $strActFileName));
         if ($ar_profile = $db_profile->Fetch()) {
             $PROFILE_ID = (int)$ar_profile['ID'];
-            if ($ar_profile['NEED_EDIT'] == 'Y')
+            if ($ar_profile['NEED_EDIT'] == 'Y') {
                 $boolNeedEdit = true;
+            }
         }
     }
 
-    if (($bDefaultProfile && strlen($arReportsList[$strActFileName]["FILE_SETUP"]) > 0) || $boolNeedEdit) {
+    if (($bDefaultProfile && $arReportsList[$strActFileName]["FILE_SETUP"] <> '') || $boolNeedEdit) {
         $strErrorMessage .= GetMessage("CES_ERROR_NOT_AGENT") . "\n";
     }
 
-    if (strlen($strErrorMessage) <= 0) {
+    if ($strErrorMessage == '') {
         $agent_period = intval($_REQUEST["agent_period"]);
-        if ($agent_period <= 0) $agent_period = 24;
+        if ($agent_period <= 0) {
+            $agent_period = 24;
+        }
 
         if ($PROFILE_ID > 0) {
-            if ($ar_profile["IN_AGENT"] == "Y")
+            if ($ar_profile["IN_AGENT"] == "Y") {
                 CAgent::RemoveAgent("CCatalogExport::PreGenerateExport(" . $PROFILE_ID . ");", "catalog");
-            else
-                CAgent::AddAgent("CCatalogExport::PreGenerateExport(" . $PROFILE_ID . ");", "catalog", "N", $agent_period * 60 * 60, "", "Y");
+            } else {
+                CAgent::AddAgent(
+                    "CCatalogExport::PreGenerateExport(" . $PROFILE_ID . ");",
+                    "catalog",
+                    "N",
+                    $agent_period * 60 * 60,
+                    "",
+                    "Y"
+                );
+            }
 
-            CCatalogExport::Update($PROFILE_ID, array(
-                "IN_AGENT" => ($ar_profile["IN_AGENT"] == "Y" ? "N" : "Y")
-            ));
+            CCatalogExport::Update(
+                $PROFILE_ID,
+                array(
+                    "IN_AGENT" => ($ar_profile["IN_AGENT"] == "Y" ? "N" : "Y")
+                )
+            );
         } else {
-            $PROFILE_ID = CCatalogExport::Add(array(
-                "LAST_USE" => false,
-                "FILE_NAME" => $strActFileName,
-                "NAME" => $arReportsList[$strActFileName]["TITLE"],
-                "DEFAULT_PROFILE" => "Y",
-                "IN_MENU" => "N",
-                "IN_AGENT" => "Y",
-                "IN_CRON" => "N",
-                "NEED_EDIT" => "N",
-                "SETUP_VARS" => false
-            ));
+            $PROFILE_ID = CCatalogExport::Add(
+                array(
+                    "LAST_USE" => false,
+                    "FILE_NAME" => $strActFileName,
+                    "NAME" => $arReportsList[$strActFileName]["TITLE"],
+                    "DEFAULT_PROFILE" => "Y",
+                    "IN_MENU" => "N",
+                    "IN_AGENT" => "Y",
+                    "IN_CRON" => "N",
+                    "NEED_EDIT" => "N",
+                    "SETUP_VARS" => false
+                )
+            );
             if ((int)$PROFILE_ID > 0) {
-                CAgent::AddAgent("CCatalogExport::PreGenerateExport(" . $PROFILE_ID . ");", "catalog", "N", $agent_period * 60 * 60, "", "Y");
+                CAgent::AddAgent(
+                    "CCatalogExport::PreGenerateExport(" . $PROFILE_ID . ");",
+                    "catalog",
+                    "N",
+                    $agent_period * 60 * 60,
+                    "",
+                    "Y"
+                );
             } else {
                 $strErrorMessage .= GetMessage("CES_ERROR_ADD_PROFILE") . "\n";
             }
         }
     }
 
-    if (strlen($strErrorMessage) <= 0) {
+    if ($strErrorMessage == '') {
         $redirectUrl = "/bitrix/admin/cat_export_setup.php?lang=" . urlencode(LANGUAGE_ID) . "&success_export=Y";
         $adminSidePanelHelper->reloadPage($redirectUrl, "save");
         LocalRedirect($redirectUrl);
@@ -530,10 +596,12 @@ elseif ($_REQUEST["ACTION"] == "CRON" && $USER->CanDoOperation('edit_php')) {
     if ($PROFILE_ID > 0) {
         $ar_profile = CCatalogExport::GetByID($PROFILE_ID);
         if ($ar_profile) {
-            if ($ar_profile["DEFAULT_PROFILE"] != "Y")
+            if ($ar_profile["DEFAULT_PROFILE"] != "Y") {
                 $bDefaultProfile = false;
-            if ($ar_profile['NEED_EDIT'] == 'Y')
+            }
+            if ($ar_profile['NEED_EDIT'] == 'Y') {
                 $boolNeedEdit = true;
+            }
         } else {
             $PROFILE_ID = 0;
         }
@@ -544,30 +612,33 @@ elseif ($_REQUEST["ACTION"] == "CRON" && $USER->CanDoOperation('edit_php')) {
         $db_profile = CCatalogExport::GetList(array(), array("DEFAULT_PROFILE" => "Y", "FILE_NAME" => $strActFileName));
         if ($ar_profile = $db_profile->Fetch()) {
             $PROFILE_ID = (int)$ar_profile['ID'];
-            if ($ar_profile['NEED_EDIT'] == 'Y')
+            if ($ar_profile['NEED_EDIT'] == 'Y') {
                 $boolNeedEdit = true;
+            }
         }
     }
 
-    if (($bDefaultProfile && strlen($arReportsList[$strActFileName]["FILE_SETUP"]) > 0) || $boolNeedEdit) {
+    if (($bDefaultProfile && $arReportsList[$strActFileName]["FILE_SETUP"] <> '') || $boolNeedEdit) {
         $strErrorMessage .= GetMessage("CES_ERROR_NOT_CRON") . "\n";
     }
 
-    if (strlen($strErrorMessage) <= 0) {
+    if ($strErrorMessage == '') {
         $agent_period = intval($_REQUEST["agent_period"]);
         $agent_hour = trim($_REQUEST["agent_hour"]);
         $agent_minute = trim($_REQUEST["agent_minute"]);
 
-        if ($agent_period <= 0 && (strlen($agent_hour) <= 0 || strlen($agent_minute) <= 0)) {
+        if ($agent_period <= 0 && ($agent_hour == '' || $agent_minute == '')) {
             $agent_period = 24;
             $agent_hour = "";
             $agent_minute = "";
-        } elseif ($agent_period > 0 && strlen($agent_hour) > 0 && strlen($agent_minute) > 0) {
+        } elseif ($agent_period > 0 && $agent_hour <> '' && $agent_minute <> '') {
             $agent_period = 0;
         }
 
         $agent_php_path = trim($_REQUEST["agent_php_path"]);
-        if (strlen($agent_php_path) <= 0) $agent_php_path = "/usr/local/php/bin/php";
+        if ($agent_php_path == '') {
+            $agent_php_path = "/usr/local/php/bin/php";
+        }
 
         if (!file_exists($_SERVER["DOCUMENT_ROOT"] . CATALOG_PATH2EXPORTS . "cron_frame.php")) {
             CheckDirPath($_SERVER["DOCUMENT_ROOT"] . CATALOG_PATH2EXPORTS);
@@ -596,7 +667,11 @@ elseif ($_REQUEST["ACTION"] == "CRON" && $USER->CanDoOperation('edit_php')) {
         if ($PROFILE_ID > 0) {
             if ($ar_profile["IN_CRON"] == "Y") {
                 // remove
-                $cfg_data = preg_replace("#^.*?" . preg_quote(CATALOG_PATH2EXPORTS) . "cron_frame.php +" . $PROFILE_ID . " *>.*?$#im", "", $cfg_data);
+                $cfg_data = preg_replace(
+                    "#^.*?" . preg_quote(CATALOG_PATH2EXPORTS) . "cron_frame.php +" . $PROFILE_ID . " *>.*?$#im",
+                    "",
+                    $cfg_data
+                );
             } else {
                 if ($agent_period > 0) {
                     //$strTime = "* */".$agent_period." * * * ";
@@ -606,25 +681,32 @@ elseif ($_REQUEST["ACTION"] == "CRON" && $USER->CanDoOperation('edit_php')) {
                 }
 
                 // add
-                if (strlen($cfg_data) > 0) $cfg_data .= "\n";
+                if ($cfg_data <> '') {
+                    $cfg_data .= "\n";
+                }
                 $cfg_data .= $strTime . $agent_php_path . " -f " . $_SERVER["DOCUMENT_ROOT"] . CATALOG_PATH2EXPORTS . "cron_frame.php " . $PROFILE_ID . " >" . $_SERVER["DOCUMENT_ROOT"] . CATALOG_PATH2EXPORTS . "logs/" . $PROFILE_ID . ".txt\n";
             }
 
-            CCatalogExport::Update($PROFILE_ID, array(
-                "IN_CRON" => ($ar_profile["IN_CRON"] == "Y" ? "N" : "Y")
-            ));
+            CCatalogExport::Update(
+                $PROFILE_ID,
+                array(
+                    "IN_CRON" => ($ar_profile["IN_CRON"] == "Y" ? "N" : "Y")
+                )
+            );
         } else {
-            $PROFILE_ID = CCatalogExport::Add(array(
-                "LAST_USE" => false,
-                "FILE_NAME" => $strActFileName,
-                "NAME" => $arReportsList[$strActFileName]["TITLE"],
-                "DEFAULT_PROFILE" => "Y",
-                "IN_MENU" => "N",
-                "IN_AGENT" => "N",
-                "IN_CRON" => "Y",
-                "NEED_EDIT" => 'N',
-                "SETUP_VARS" => false
-            ));
+            $PROFILE_ID = CCatalogExport::Add(
+                array(
+                    "LAST_USE" => false,
+                    "FILE_NAME" => $strActFileName,
+                    "NAME" => $arReportsList[$strActFileName]["TITLE"],
+                    "DEFAULT_PROFILE" => "Y",
+                    "IN_MENU" => "N",
+                    "IN_AGENT" => "N",
+                    "IN_CRON" => "Y",
+                    "NEED_EDIT" => 'N',
+                    "SETUP_VARS" => false
+                )
+            );
             if ((int)$PROFILE_ID > 0) {
                 // add
                 if ($agent_period > 0) {
@@ -634,13 +716,15 @@ elseif ($_REQUEST["ACTION"] == "CRON" && $USER->CanDoOperation('edit_php')) {
                     $strTime = intval($agent_minute) . " " . intval($agent_hour) . " * * * ";
                 }
 
-                if (strlen($cfg_data) > 0) $cfg_data .= "\n";
+                if ($cfg_data <> '') {
+                    $cfg_data .= "\n";
+                }
                 $cfg_data .= $strTime . $agent_php_path . " -f " . $_SERVER["DOCUMENT_ROOT"] . CATALOG_PATH2EXPORTS . "cron_frame.php " . $PROFILE_ID . " >" . $_SERVER["DOCUMENT_ROOT"] . CATALOG_PATH2EXPORTS . "logs/" . $PROFILE_ID . ".txt\n";
             } else {
                 $strErrorMessage .= GetMessage("CES_ERROR_ADD_PROFILE") . "\n";
             }
         }
-        if (strlen($strErrorMessage) <= 0) {
+        if ($strErrorMessage == '') {
             CheckDirPath($_SERVER["DOCUMENT_ROOT"] . "/bitrix/crontab/");
             $cfg_data = preg_replace("#[\r\n]{2,}#im", "\n", $cfg_data);
             $fp = fopen($_SERVER["DOCUMENT_ROOT"] . "/bitrix/crontab/crontab.cfg", "wb");
@@ -662,7 +746,7 @@ elseif ($_REQUEST["ACTION"] == "CRON" && $USER->CanDoOperation('edit_php')) {
         }
     }
 
-    if (strlen($strErrorMessage) <= 0) {
+    if ($strErrorMessage == '') {
         $redirectUrl = "/bitrix/admin/cat_export_setup.php?lang=" . urlencode(LANGUAGE_ID) . "&success_export=Y";
         $adminSidePanelHelper->reloadPage($redirectUrl, "save");
         LocalRedirect($redirectUrl);
@@ -673,10 +757,13 @@ elseif ($_REQUEST["ACTION"] == "CRON" && $USER->CanDoOperation('edit_php')) {
 //////////////////////////////////////////////
 elseif ($_REQUEST["ACTION"] == "DEL_PROFILE" && $bCanEdit) {
     $ar_profile = CCatalogExport::GetByID($PROFILE_ID);
-    if (!$ar_profile)
-        $strErrorMessage .= GetMessage("CES_ERROR_NO_PROFILE1") . $PROFILE_ID . " " . GetMessage("CES_ERROR_NO_PROFILE2") . "\n";
+    if (!$ar_profile) {
+        $strErrorMessage .= GetMessage("CES_ERROR_NO_PROFILE1") . $PROFILE_ID . " " . GetMessage(
+                "CES_ERROR_NO_PROFILE2"
+            ) . "\n";
+    }
 
-    if (strlen($strErrorMessage) <= 0) {
+    if ($strErrorMessage == '') {
         if ($ar_profile["IN_AGENT"] == "Y") {
             CAgent::RemoveAgent("CCatalogExport::PreGenerateExport(" . $PROFILE_ID . ");", "catalog");
         }
@@ -688,7 +775,11 @@ elseif ($_REQUEST["ACTION"] == "DEL_PROFILE" && $bCanEdit) {
                 $cfg_data = fread($fp, $cfg_file_size);
                 fclose($fp);
 
-                $cfg_data = preg_replace("#^.*?" . preg_quote(CATALOG_PATH2EXPORTS) . "cron_frame.php +" . $PROFILE_ID . " *>.*?$#im", "", $cfg_data);
+                $cfg_data = preg_replace(
+                    "#^.*?" . preg_quote(CATALOG_PATH2EXPORTS) . "cron_frame.php +" . $PROFILE_ID . " *>.*?$#im",
+                    "",
+                    $cfg_data
+                );
 
                 $cfg_data = preg_replace("#[\r\n]{2,}#im", "\n", $cfg_data);
                 $fp = fopen($_SERVER["DOCUMENT_ROOT"] . "/bitrix/crontab/crontab.cfg", "wb");
@@ -714,10 +805,14 @@ elseif ($_REQUEST["ACTION"] == "DEL_PROFILE" && $bCanEdit) {
 // EXPORT_SETUP
 //////////////////////////////////////////////
 elseif ($_REQUEST["ACTION"] == "EXPORT_SETUP" && $bCanEdit) {
-    if (strlen($arReportsList[$strActFileName]["FILE_SETUP"]) > 0) {
+    if ($arReportsList[$strActFileName]["FILE_SETUP"] <> '') {
         $STEP = intval($_REQUEST["STEP"]);
-        if (isset($_POST['backButton']) && !empty($_POST['backButton'])) $STEP -= 2;
-        if ($STEP <= 0) $STEP = 1;
+        if (isset($_POST['backButton']) && !empty($_POST['backButton'])) {
+            $STEP -= 2;
+        }
+        if ($STEP <= 0) {
+            $STEP = 1;
+        }
         $FINITE = false;
 
         ob_start();
@@ -735,40 +830,56 @@ elseif ($_REQUEST["ACTION"] == "EXPORT_SETUP" && $bCanEdit) {
         ob_end_clean();
 
         // Save profile
-        if (strlen($SETUP_FIELDS_LIST) <= 0) $SETUP_FIELDS_LIST = $_REQUEST["SETUP_FIELDS_LIST"];
+        if ($SETUP_FIELDS_LIST == '') {
+            $SETUP_FIELDS_LIST = $_REQUEST["SETUP_FIELDS_LIST"];
+        }
         $arProfileFields = explode(",", $SETUP_FIELDS_LIST);
         $strSETUP_VARS = "";
         for ($i = 0, $intCount = count($arProfileFields); $i < $intCount; $i++) {
             $arProfileFields[$i] = Trim($arProfileFields[$i]);
 
             $vValue = ${$arProfileFields[$i]};
-            if (!is_array($vValue) && strlen($vValue) <= 0) $vValue = $_REQUEST[$arProfileFields[$i]];
+            if (!is_array($vValue) && $vValue == '') {
+                $vValue = $_REQUEST[$arProfileFields[$i]];
+            }
 
             if (is_array($vValue)) {
                 foreach ($vValue as $key1 => $value1) {
-                    if (strlen($strSETUP_VARS) > 0) $strSETUP_VARS .= "&";
-                    $strSETUP_VARS .= $arProfileFields[$i] . "[" . (is_numeric($key1) ? "" : "\"") . $key1 . (is_numeric($key1) ? "" : "\"") . "]=" . urlencode($value1);
+                    if ($strSETUP_VARS <> '') {
+                        $strSETUP_VARS .= "&";
+                    }
+                    $strSETUP_VARS .= $arProfileFields[$i] . "[" . (is_numeric(
+                            $key1
+                        ) ? "" : "\"") . $key1 . (is_numeric($key1) ? "" : "\"") . "]=" . urlencode($value1);
                 }
             } else {
-                if (strlen($strSETUP_VARS) > 0) $strSETUP_VARS .= "&";
+                if ($strSETUP_VARS <> '') {
+                    $strSETUP_VARS .= "&";
+                }
                 $strSETUP_VARS .= $arProfileFields[$i] . "=" . urlencode($vValue);
             }
         }
 
-        if (strlen($SETUP_PROFILE_NAME) <= 0) $SETUP_PROFILE_NAME = $_REQUEST["SETUP_PROFILE_NAME"];
-        if (strlen($SETUP_PROFILE_NAME) <= 0) $SETUP_PROFILE_NAME = $arReportsList[$strActFileName]["TITLE"];
+        if ($SETUP_PROFILE_NAME == '') {
+            $SETUP_PROFILE_NAME = $_REQUEST["SETUP_PROFILE_NAME"];
+        }
+        if ($SETUP_PROFILE_NAME == '') {
+            $SETUP_PROFILE_NAME = $arReportsList[$strActFileName]["TITLE"];
+        }
 
-        $PROFILE_ID = CCatalogExport::Add(array(
-            "LAST_USE" => false,
-            "FILE_NAME" => $strActFileName,
-            "NAME" => $SETUP_PROFILE_NAME,
-            "DEFAULT_PROFILE" => "N",
-            "IN_MENU" => "N",
-            "IN_AGENT" => "N",
-            "IN_CRON" => "N",
-            "NEED_EDIT" => "N",
-            "SETUP_VARS" => $strSETUP_VARS
-        ));
+        $PROFILE_ID = CCatalogExport::Add(
+            array(
+                "LAST_USE" => false,
+                "FILE_NAME" => $strActFileName,
+                "NAME" => $SETUP_PROFILE_NAME,
+                "DEFAULT_PROFILE" => "N",
+                "IN_MENU" => "N",
+                "IN_AGENT" => "N",
+                "IN_CRON" => "N",
+                "NEED_EDIT" => "N",
+                "SETUP_VARS" => $strSETUP_VARS
+            )
+        );
 
         if ((int)$PROFILE_ID <= 0) {
             $strErrorMessage .= GetMessage("CES_ERROR_SAVE_PROFILE") . "\n";
@@ -776,7 +887,7 @@ elseif ($_REQUEST["ACTION"] == "EXPORT_SETUP" && $bCanEdit) {
     } else {
         $strErrorMessage .= GetMessage("CES_ERROR_NO_SETUP_FILE") . "\n";
     }
-    if (strlen($strErrorMessage) <= 0) {
+    if ($strErrorMessage == '') {
         $redirectUrl = "/bitrix/admin/cat_export_setup.php?lang=" . urlencode(LANGUAGE_ID) . "&success_export=Y";
         $adminSidePanelHelper->reloadPage($redirectUrl, "save");
         LocalRedirect($redirectUrl);
@@ -801,25 +912,34 @@ elseif (($_REQUEST["ACTION"] == "EXPORT_EDIT" || $_REQUEST['ACTION'] == 'EXPORT_
         $arProfile = CCatalogExport::GetByID($PROFILE_ID);
         if ($arProfile) {
             if ($arProfile["DEFAULT_PROFILE"] == "Y") {
-                $strErrorMessage .= ($_REQUEST["ACTION"] == "EXPORT_EDIT" ? GetMessage('CES_EDIT_PROFILE_ERR_DEFAULT') : GetMessage('CES_COPY_PROFILE_ERR_DEFAULT')) . "\n";
+                $strErrorMessage .= ($_REQUEST["ACTION"] == "EXPORT_EDIT" ? GetMessage(
+                        'CES_EDIT_PROFILE_ERR_DEFAULT'
+                    ) : GetMessage('CES_COPY_PROFILE_ERR_DEFAULT')) . "\n";
                 $boolFlag = false;
             }
         } else {
-            $strErrorMessage .= ($_REQUEST["ACTION"] == "EXPORT_EDIT" ? GetMessage('CES_EDIT_PROFILE_ERR_DEFAULT') : GetMessage('CES_COPY_PROFILE_ERR_DEFAULT')) . "\n";
+            $strErrorMessage .= ($_REQUEST["ACTION"] == "EXPORT_EDIT" ? GetMessage(
+                    'CES_EDIT_PROFILE_ERR_DEFAULT'
+                ) : GetMessage('CES_COPY_PROFILE_ERR_DEFAULT')) . "\n";
             $boolFlag = false;
         }
     }
 
     if ($boolFlag) {
-        if (strlen($arReportsList[$arProfile['FILE_NAME']]["FILE_SETUP"]) > 0) {
+        if ($arReportsList[$arProfile['FILE_NAME']]["FILE_SETUP"] <> '') {
             $STEP = intval($_REQUEST["STEP"]);
-            if (isset($_POST['backButton']) && !empty($_POST['backButton'])) $STEP -= 2;
-            if ($STEP <= 0) $STEP = 1;
+            if (isset($_POST['backButton']) && !empty($_POST['backButton'])) {
+                $STEP -= 2;
+            }
+            if ($STEP <= 0) {
+                $STEP = 1;
+            }
             $FINITE = false;
 
             $arOldSetupVars = array();
-            if ($arProfile['SETUP_VARS'])
+            if ($arProfile['SETUP_VARS']) {
                 parse_str($arProfile['SETUP_VARS'], $arOldSetupVars);
+            }
             $arOldSetupVars['SETUP_PROFILE_NAME'] = $arProfile['NAME'];
             $_REQUEST['OLD_SETUP_VARS'] = $arOldSetupVars;
 
@@ -840,50 +960,69 @@ elseif (($_REQUEST["ACTION"] == "EXPORT_EDIT" || $_REQUEST['ACTION'] == 'EXPORT_
             ob_end_clean();
 
             // Save profile
-            if (strlen($SETUP_FIELDS_LIST) <= 0) $SETUP_FIELDS_LIST = $_REQUEST["SETUP_FIELDS_LIST"];
+            if ($SETUP_FIELDS_LIST == '') {
+                $SETUP_FIELDS_LIST = $_REQUEST["SETUP_FIELDS_LIST"];
+            }
             $arProfileFields = explode(",", $SETUP_FIELDS_LIST);
             $strSETUP_VARS = "";
             for ($i = 0, $intCount = count($arProfileFields); $i < $intCount; $i++) {
                 $arProfileFields[$i] = Trim($arProfileFields[$i]);
 
                 $vValue = ${$arProfileFields[$i]};
-                if (!is_array($vValue) && strlen($vValue) <= 0) $vValue = $_REQUEST[$arProfileFields[$i]];
+                if (!is_array($vValue) && $vValue == '') {
+                    $vValue = $_REQUEST[$arProfileFields[$i]];
+                }
 
                 if (is_array($vValue)) {
                     foreach ($vValue as $key1 => $value1) {
-                        if (strlen($strSETUP_VARS) > 0) $strSETUP_VARS .= "&";
-                        $strSETUP_VARS .= $arProfileFields[$i] . "[" . (is_numeric($key1) ? "" : "\"") . $key1 . (is_numeric($key1) ? "" : "\"") . "]=" . urlencode($value1);
+                        if ($strSETUP_VARS <> '') {
+                            $strSETUP_VARS .= "&";
+                        }
+                        $strSETUP_VARS .= $arProfileFields[$i] . "[" . (is_numeric(
+                                $key1
+                            ) ? "" : "\"") . $key1 . (is_numeric($key1) ? "" : "\"") . "]=" . urlencode($value1);
                     }
                 } else {
-                    if (strlen($strSETUP_VARS) > 0) $strSETUP_VARS .= "&";
+                    if ($strSETUP_VARS <> '') {
+                        $strSETUP_VARS .= "&";
+                    }
                     $strSETUP_VARS .= $arProfileFields[$i] . "=" . urlencode($vValue);
                 }
             }
 
-            if (strlen($SETUP_PROFILE_NAME) <= 0) $SETUP_PROFILE_NAME = $_REQUEST["SETUP_PROFILE_NAME"];
-            if (strlen($SETUP_PROFILE_NAME) <= 0) $SETUP_PROFILE_NAME = $arReportsList[$strActFileName]["TITLE"];
+            if ($SETUP_PROFILE_NAME == '') {
+                $SETUP_PROFILE_NAME = $_REQUEST["SETUP_PROFILE_NAME"];
+            }
+            if ($SETUP_PROFILE_NAME == '') {
+                $SETUP_PROFILE_NAME = $arReportsList[$strActFileName]["TITLE"];
+            }
 
             if ($_REQUEST["ACTION"] == "EXPORT_EDIT") {
-                $NEW_PROFILE_ID = CCatalogExport::Update($PROFILE_ID, array(
-                    "NAME" => $SETUP_PROFILE_NAME,
-                    "SETUP_VARS" => $strSETUP_VARS,
-                    "NEED_EDIT" => "N",
-                ));
+                $NEW_PROFILE_ID = CCatalogExport::Update(
+                    $PROFILE_ID,
+                    array(
+                        "NAME" => $SETUP_PROFILE_NAME,
+                        "SETUP_VARS" => $strSETUP_VARS,
+                        "NEED_EDIT" => "N",
+                    )
+                );
                 if ($NEW_PROFILE_ID != $PROFILE_ID) {
                     $strErrorMessage .= GetMessage("CES_ERROR_PROFILE_UPDATE") . "\n";
                 }
             } elseif ($_REQUEST["ACTION"] == "EXPORT_COPY") {
-                $NEW_PROFILE_ID = CCatalogExport::Add(array(
-                    "LAST_USE" => false,
-                    "FILE_NAME" => $strActFileName,
-                    "NAME" => $SETUP_PROFILE_NAME,
-                    "DEFAULT_PROFILE" => "N",
-                    "IN_MENU" => "N",
-                    "IN_AGENT" => "N",
-                    "IN_CRON" => "N",
-                    "NEED_EDIT" => "N",
-                    "SETUP_VARS" => $strSETUP_VARS
-                ));
+                $NEW_PROFILE_ID = CCatalogExport::Add(
+                    array(
+                        "LAST_USE" => false,
+                        "FILE_NAME" => $strActFileName,
+                        "NAME" => $SETUP_PROFILE_NAME,
+                        "DEFAULT_PROFILE" => "N",
+                        "IN_MENU" => "N",
+                        "IN_AGENT" => "N",
+                        "IN_CRON" => "N",
+                        "NEED_EDIT" => "N",
+                        "SETUP_VARS" => $strSETUP_VARS
+                    )
+                );
                 if ((int)$PROFILE_ID <= 0) {
                     $strErrorMessage .= GetMessage("CES_ERROR_COPY_PROFILE") . "\n";
                 }
@@ -892,7 +1031,7 @@ elseif (($_REQUEST["ACTION"] == "EXPORT_EDIT" || $_REQUEST['ACTION'] == 'EXPORT_
             $strErrorMessage .= GetMessage("CES_ERROR_NO_SETUP_FILE") . "\n";
         }
     }
-    if (strlen($strErrorMessage) <= 0) {
+    if ($strErrorMessage == '') {
         $redirectUrl = "/bitrix/admin/cat_export_setup.php?lang=" . urlencode(LANGUAGE_ID) . "&success_export=Y";
         $adminSidePanelHelper->reloadPage($redirectUrl, "save");
         LocalRedirect($redirectUrl);
@@ -906,15 +1045,17 @@ elseif (($_REQUEST["ACTION"] == "EXPORT_EDIT" || $_REQUEST['ACTION'] == 'EXPORT_
 // Set NEW_OS in GET string to test other operational systems!!!
 $bWindowsHosting = false;
 if (isset($_GET["NEW_OS"])) {
-    if (strlen(trim($_GET["NEW_OS"])) <= 0)
+    if (trim($_GET["NEW_OS"]) == '') {
         unset($_SESSION["TMP_MY_NEW_OS"]);
-    else
+    } else {
         $_SESSION["TMP_MY_NEW_OS"] = $_GET["NEW_OS"];
+    }
 }
 $strCurrentOS = PHP_OS;
-if (isset($_SESSION["TMP_MY_NEW_OS"]) && strlen($_SESSION["TMP_MY_NEW_OS"]) > 0)
+if (isset($_SESSION["TMP_MY_NEW_OS"]) && $_SESSION["TMP_MY_NEW_OS"] <> '') {
     $strCurrentOS = $_SESSION["TMP_MY_NEW_OS"];
-if (strtoupper(substr($strCurrentOS, 0, 3)) === "WIN") {
+}
+if (mb_strtoupper(mb_substr($strCurrentOS, 0, 3)) === "WIN") {
     $bWindowsHosting = true;
 }
 
@@ -922,20 +1063,22 @@ $sTableID = "export_setup";
 
 $lAdmin = new CAdminUiList($sTableID);
 
-$lAdmin->AddHeaders(array(
-    array("id" => "ID", "content" => "ID", "align" => "right", "default" => true),
-    array("id" => "NAME", "content" => GetMessage("export_setup_name"), "default" => true),
-    array("id" => "FILE", "content" => GetMessage("export_setup_file"), "default" => true),
-    array("id" => "PROFILE", "content" => GetMessage("CES_PROFILE"), "default" => true),
-    array("id" => "IN_MENU", "content" => GetMessage("CES_IN_MENU"), "default" => true),
-    array("id" => "IN_AGENT", "content" => GetMessage("CES_IN_AGENT"), "default" => true),
-    array("id" => "IN_CRON", "content" => GetMessage("CES_IN_CRON"), "default" => true),
-    array("id" => "USED", "content" => GetMessage("CES_USED"), "default" => true),
-    array('id' => 'CREATED_BY', 'content' => GetMessage('CES_CREATED_BY'), 'default' => false),
-    array('id' => 'DATE_CREATE', 'content' => GetMessage('CES_DATE_CREATE'), 'default' => false),
-    array('id' => 'MODIFIED_BY', 'content' => GetMessage('CES_MODIFIED_BY'), 'default' => true),
-    array('id' => 'TIMESTAMP_X', 'content' => GetMessage('CES_TIMESTAMP_X'), 'default' => true),
-));
+$lAdmin->AddHeaders(
+    array(
+        array("id" => "ID", "content" => "ID", "align" => "right", "default" => true),
+        array("id" => "NAME", "content" => GetMessage("export_setup_name"), "default" => true),
+        array("id" => "FILE", "content" => GetMessage("export_setup_file"), "default" => true),
+        array("id" => "PROFILE", "content" => GetMessage("CES_PROFILE"), "default" => true),
+        array("id" => "IN_MENU", "content" => GetMessage("CES_IN_MENU"), "default" => true),
+        array("id" => "IN_AGENT", "content" => GetMessage("CES_IN_AGENT"), "default" => true),
+        array("id" => "IN_CRON", "content" => GetMessage("CES_IN_CRON"), "default" => true),
+        array("id" => "USED", "content" => GetMessage("CES_USED"), "default" => true),
+        array('id' => 'CREATED_BY', 'content' => GetMessage('CES_CREATED_BY'), 'default' => false),
+        array('id' => 'DATE_CREATE', 'content' => GetMessage('CES_DATE_CREATE'), 'default' => false),
+        array('id' => 'MODIFIED_BY', 'content' => GetMessage('CES_MODIFIED_BY'), 'default' => true),
+        array('id' => 'TIMESTAMP_X', 'content' => GetMessage('CES_TIMESTAMP_X'), 'default' => true),
+    )
+);
 
 $arUserList = array();
 $strNameFormat = CSite::GetNameFormat(true);
@@ -948,7 +1091,9 @@ foreach ($arReportsList as $strReportFile => $arReportParams) {
         $arContextMenu[] = array(
             "TEXT" => htmlspecialcharsbx($arReportParams["TITLE"]),
             "TITLE" => GetMessage("export_setup_script") . ' "' . $strReportFile . '"',
-            "LINK" => "/bitrix/admin/cat_export_setup.php?lang=" . LANGUAGE_ID . "&ACT_FILE=" . urlencode($strReportFile) . "&ACTION=EXPORT_SETUP" . "&" . bitrix_sessid_get()
+            "LINK" => "/bitrix/admin/cat_export_setup.php?lang=" . LANGUAGE_ID . "&ACT_FILE=" . urlencode(
+                    $strReportFile
+                ) . "&ACTION=EXPORT_SETUP" . "&" . bitrix_sessid_get()
         );
     }
 
@@ -959,8 +1104,9 @@ foreach ($arReportsList as $strReportFile => $arReportParams) {
     );
 
     while ($arProfile = $rsProfiles->Fetch()) {
-        if ($arProfile['IN_AGENT'] == 'Y' && $arProfile['IN_CRON'] == 'Y')
+        if ($arProfile['IN_AGENT'] == 'Y' && $arProfile['IN_CRON'] == 'Y') {
             $cronErrors[] = '[' . $arProfile['ID'] . '] ' . $arReportParams['TITLE'];
+        }
 
         $arProfile['USED'] = $arProfile['LAST_USE_FORMAT'];
         $boolExist = true;
@@ -975,11 +1121,21 @@ foreach ($arReportsList as $strReportFile => $arReportParams) {
         $strProfileLink = '';
         if ($bCanEdit) {
             if ($boolNeedEdit) {
-                $url = "/bitrix/admin/cat_export_setup.php?lang=" . LANGUAGE_ID . "&ACT_FILE=" . urlencode($strReportFile) . "&ACTION=EXPORT_EDIT&PROFILE_ID=" . $arProfile["ID"] . "&" . bitrix_sessid_get();
-                $strProfileLink = '<a href="' . CHTTP::URN2URI($url) . '" title="' . GetMessage("CES_EDIT_PROPFILE_DESCR") . '"><i>' . GetMessage("CES_DEFAULT") . '</i></a><br /><i>(' . GetMessage('CES_NEED_EDIT') . ')</i>';
+                $url = "/bitrix/admin/cat_export_setup.php?lang=" . LANGUAGE_ID . "&ACT_FILE=" . urlencode(
+                        $strReportFile
+                    ) . "&ACTION=EXPORT_EDIT&PROFILE_ID=" . $arProfile["ID"] . "&" . bitrix_sessid_get();
+                $strProfileLink = '<a href="' . CHTTP::URN2URI($url) . '" title="' . GetMessage(
+                        "CES_EDIT_PROPFILE_DESCR"
+                    ) . '"><i>' . GetMessage("CES_DEFAULT") . '</i></a><br /><i>(' . GetMessage(
+                        'CES_NEED_EDIT'
+                    ) . ')</i>';
             } else {
-                $url = ('Y' == $arProfile["IN_MENU"] ? '/bitrix/admin/cat_exec_exp.php' : "/bitrix/admin/cat_export_setup.php") . '?lang=' . LANGUAGE_ID . "&ACT_FILE=" . urlencode($strReportFile) . "&ACTION=EXPORT&PROFILE_ID=" . $arProfile["ID"] . "&" . bitrix_sessid_get();
-                $strProfileLink = '<a href="' . CHTTP::URN2URI($url) . '" title="' . GetMessage("export_setup_begin") . '"><i>' . GetMessage("CES_DEFAULT") . '</i></a>';
+                $url = ('Y' == $arProfile["IN_MENU"] ? '/bitrix/admin/cat_exec_exp.php' : "/bitrix/admin/cat_export_setup.php") . '?lang=' . LANGUAGE_ID . "&ACT_FILE=" . urlencode(
+                        $strReportFile
+                    ) . "&ACTION=EXPORT&PROFILE_ID=" . $arProfile["ID"] . "&" . bitrix_sessid_get();
+                $strProfileLink = '<a href="' . CHTTP::URN2URI($url) . '" title="' . GetMessage(
+                        "export_setup_begin"
+                    ) . '"><i>' . GetMessage("CES_DEFAULT") . '</i></a>';
             }
         } else {
             $strProfileLink = '<i>' . GetMessage("CES_DEFAULT") . '</i>';
@@ -996,11 +1152,9 @@ foreach ($arReportsList as $strReportFile => $arReportParams) {
         $arProfile['MODIFIED_BY'] = (int)$arProfile['MODIFIED_BY'];
         if (0 < $arProfile['MODIFIED_BY']) {
             if (!isset($arUserList[$arProfile['MODIFIED_BY']])) {
-                $byUser = 'ID';
-                $byOrder = 'ASC';
                 $rsUsers = CUser::GetList(
-                    $byUser,
-                    $byOrder,
+                    'ID',
+                    'ASC',
                     array('ID_EQUAL_EXACT' => $arProfile['MODIFIED_BY']),
                     array('FIELDS' => array('ID', 'LOGIN', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'EMAIL'))
                 );
@@ -1009,12 +1163,16 @@ foreach ($arReportsList as $strReportFile => $arReportParams) {
                     if ($publicMode) {
                         $arUserList[$arOneUser['ID']] = CUser::FormatName($strNameFormat, $arOneUser);
                     } else {
-                        $arUserList[$arOneUser['ID']] = '<a href="/bitrix/admin/user_edit.php?lang=' . LANGUAGE_ID . '&ID=' . $arProfile['MODIFIED_BY'] . '">' . CUser::FormatName($strNameFormat, $arOneUser) . '</a>';
+                        $arUserList[$arOneUser['ID']] = '<a href="/bitrix/admin/user_edit.php?lang=' . LANGUAGE_ID . '&ID=' . $arProfile['MODIFIED_BY'] . '">' . CUser::FormatName(
+                                $strNameFormat,
+                                $arOneUser
+                            ) . '</a>';
                     }
                 }
             }
-            if (isset($arUserList[$arProfile['MODIFIED_BY']]))
+            if (isset($arUserList[$arProfile['MODIFIED_BY']])) {
                 $strModifiedBy = $arUserList[$arProfile['MODIFIED_BY']];
+            }
         }
 
         $row->AddViewField("CREATED_BY", '');
@@ -1029,45 +1187,70 @@ foreach ($arReportsList as $strReportFile => $arReportParams) {
                 "DEFAULT" => true,
                 "TEXT" => GetMessage("CES_RUN_EXPORT"),
                 "TITLE" => GetMessage("CES_RUN_EXPORT_DESCR"),
-                "ACTION" => $lAdmin->ActionRedirect("/bitrix/admin/cat_export_setup.php?lang=" . LANGUAGE_ID . "&ACT_FILE=" . urlencode($strReportFile) . "&" . bitrix_sessid_get() . "&ACTION=EXPORT&PROFILE_ID=" . $arProfile['ID']),
+                "ACTION" => $lAdmin->ActionRedirect(
+                    "/bitrix/admin/cat_export_setup.php?lang=" . LANGUAGE_ID . "&ACT_FILE=" . urlencode(
+                        $strReportFile
+                    ) . "&" . bitrix_sessid_get() . "&ACTION=EXPORT&PROFILE_ID=" . $arProfile['ID']
+                ),
             );
             $arActions[] = array(
                 "TEXT" => GetMessage('CES_ADD_PROFILE'),
                 "TITLE" => GetMessage('CES_ADD_PROFILE_DESCR'),
-                "ACTION" => $lAdmin->ActionRedirect("/bitrix/admin/cat_export_setup.php?lang=" . LANGUAGE_ID . "&ACT_FILE=" . urlencode($strReportFile) . "&ACTION=EXPORT_SETUP" . "&" . bitrix_sessid_get()),
+                "ACTION" => $lAdmin->ActionRedirect(
+                    "/bitrix/admin/cat_export_setup.php?lang=" . LANGUAGE_ID . "&ACT_FILE=" . urlencode(
+                        $strReportFile
+                    ) . "&ACTION=EXPORT_SETUP" . "&" . bitrix_sessid_get()
+                ),
             );
         }
-        if ($bCanEdit || $bCanExec)
+        if ($bCanEdit || $bCanExec) {
             $arActions[] = array("SEPARATOR" => true);
+        }
 
         if ($bCanEdit && !$publicMode) {
             if ('Y' == $arProfile["IN_MENU"]) {
                 $arActions[] = array(
                     "TEXT" => GetMessage("CES_TO_LEFT_MENU_DEL"),
                     "TITLE" => GetMessage("CES_TO_LEFT_MENU_DESCR_DEL"),
-                    "ACTION" => $lAdmin->ActionRedirect($APPLICATION->GetCurPage() . "?lang=" . LANGUAGE_ID . "&ACT_FILE=" . urlencode($strReportFile) . "&" . bitrix_sessid_get() . "&ACTION=MENU&PROFILE_ID=" . $arProfile['ID']),
+                    "ACTION" => $lAdmin->ActionRedirect(
+                        $APPLICATION->GetCurPage() . "?lang=" . LANGUAGE_ID . "&ACT_FILE=" . urlencode(
+                            $strReportFile
+                        ) . "&" . bitrix_sessid_get() . "&ACTION=MENU&PROFILE_ID=" . $arProfile['ID']
+                    ),
                 );
             } else {
                 $arActions[] = array(
                     "TEXT" => GetMessage("CES_TO_LEFT_MENU"),
                     "TITLE" => GetMessage("CES_TO_LEFT_MENU_DESCR"),
-                    "ACTION" => $lAdmin->ActionRedirect($APPLICATION->GetCurPage() . "?lang=" . LANGUAGE_ID . "&ACT_FILE=" . urlencode($strReportFile) . "&" . bitrix_sessid_get() . "&ACTION=MENU&PROFILE_ID=" . $arProfile['ID']),
+                    "ACTION" => $lAdmin->ActionRedirect(
+                        $APPLICATION->GetCurPage() . "?lang=" . LANGUAGE_ID . "&ACT_FILE=" . urlencode(
+                            $strReportFile
+                        ) . "&" . bitrix_sessid_get() . "&ACTION=MENU&PROFILE_ID=" . $arProfile['ID']
+                    ),
                 );
             }
         }
 
-        if (empty($arReportParams["FILE_SETUP"]) && 'Y' != $arProfile["NEED_EDIT"] && $USER->CanDoOperation('edit_php')) {
+        if (empty($arReportParams["FILE_SETUP"]) && 'Y' != $arProfile["NEED_EDIT"] && $USER->CanDoOperation(
+                'edit_php'
+            )) {
             if ('Y' == $arProfile["IN_AGENT"]) {
                 $arActions[] = array(
                     "TEXT" => GetMessage("CES_TO_AGENT_DEL"),
                     "TITLE" => GetMessage("CES_TO_AGENT_DESCR_DEL"),
-                    "ACTION" => $lAdmin->ActionRedirect("/bitrix/admin/cat_export_setup.php?lang=" . LANGUAGE_ID . "&ACT_FILE=" . urlencode($ReportFile) . "&" . bitrix_sessid_get() . "&ACTION=AGENT&PROFILE_ID=" . $ar_prof_res["ID"]),
+                    "ACTION" => $lAdmin->ActionRedirect(
+                        "/bitrix/admin/cat_export_setup.php?lang=" . LANGUAGE_ID . "&ACT_FILE=" . urlencode(
+                            $ReportFile
+                        ) . "&" . bitrix_sessid_get() . "&ACTION=AGENT&PROFILE_ID=" . $ar_prof_res["ID"]
+                    ),
                 );
             } else {
                 $arActions[] = array(
                     "TEXT" => GetMessage("CES_TO_AGENT"),
                     "TITLE" => GetMessage("CES_TO_AGENT_DESCR"),
-                    "ACTION" => "ShowAgentForm('" . $APPLICATION->GetCurPage() . "?lang=" . LANGUAGE_ID . "&ACT_FILE=" . $strReportFile . "&" . bitrix_sessid_get() . "&ACTION=AGENT&PROFILE_ID=" . $arProfile["ID"] . "');",
+                    "ACTION" => "ShowAgentForm('" . $APPLICATION->GetCurPage(
+                        ) . "?lang=" . LANGUAGE_ID . "&ACT_FILE=" . $strReportFile . "&" . bitrix_sessid_get(
+                        ) . "&ACTION=AGENT&PROFILE_ID=" . $arProfile["ID"] . "');",
                 );
             }
 
@@ -1076,14 +1259,18 @@ foreach ($arReportsList as $strReportFile => $arReportParams) {
                     "DISABLED" => $bWindowsHosting,
                     "TEXT" => GetMessage("CES_TO_CRON_DEL"),
                     "TITLE" => GetMessage("CES_TO_CRON_DESCR_DEL"),
-                    "ACTION" => ($bWindowsHosting ? '' : "ShowCronForm('" . $APPLICATION->GetCurPage() . "?lang=" . LANGUAGE_ID . "&ACT_FILE=" . $strReportFile . "&" . bitrix_sessid_get() . "&ACTION=CRON&PROFILE_ID=" . $arProfile["ID"] . "', false);"),
+                    "ACTION" => ($bWindowsHosting ? '' : "ShowCronForm('" . $APPLICATION->GetCurPage(
+                        ) . "?lang=" . LANGUAGE_ID . "&ACT_FILE=" . $strReportFile . "&" . bitrix_sessid_get(
+                        ) . "&ACTION=CRON&PROFILE_ID=" . $arProfile["ID"] . "', false);"),
                 );
             } else {
                 $arActions[] = array(
                     "DISABLED" => $bWindowsHosting,
                     "TEXT" => GetMessage("CES_TO_CRON"),
                     "TITLE" => GetMessage("CES_TO_CRON_DESCR"),
-                    "ACTION" => ($bWindowsHosting ? '' : "ShowCronForm('" . $APPLICATION->GetCurPage() . "?lang=" . LANGUAGE_ID . "&ACT_FILE=" . $strReportFile . "&" . bitrix_sessid_get() . "&ACTION=CRON&PROFILE_ID=" . $arProfile["ID"] . "', true);"),
+                    "ACTION" => ($bWindowsHosting ? '' : "ShowCronForm('" . $APPLICATION->GetCurPage(
+                        ) . "?lang=" . LANGUAGE_ID . "&ACT_FILE=" . $strReportFile . "&" . bitrix_sessid_get(
+                        ) . "&ACTION=CRON&PROFILE_ID=" . $arProfile["ID"] . "', true);"),
                 );
             }
         }
@@ -1100,8 +1287,12 @@ foreach ($arReportsList as $strReportFile => $arReportParams) {
 
         $strProfileLink = '<i>' . GetMessage("CES_DEFAULT") . '</i>';
         if ($bCanEdit) {
-            $url = "/bitrix/admin/cat_export_setup.php?lang=" . LANGUAGE_ID . "&ACT_FILE=" . urlencode($strReportFile) . "&" . bitrix_sessid_get() . "&ACTION=EXPORT&PROFILE_ID=0";
-            $strProfileLink = '<a href="' . CHTTP::URN2URI($url) . '" title="' . GetMessage("export_setup_begin") . '"><i>' . GetMessage("CES_DEFAULT") . '</i></a>';
+            $url = "/bitrix/admin/cat_export_setup.php?lang=" . LANGUAGE_ID . "&ACT_FILE=" . urlencode(
+                    $strReportFile
+                ) . "&" . bitrix_sessid_get() . "&ACTION=EXPORT&PROFILE_ID=0";
+            $strProfileLink = '<a href="' . CHTTP::URN2URI($url) . '" title="' . GetMessage(
+                    "export_setup_begin"
+                ) . '"><i>' . GetMessage("CES_DEFAULT") . '</i></a>';
         }
         $row->AddViewField('PROFILE', $strProfileLink);
 
@@ -1123,12 +1314,20 @@ foreach ($arReportsList as $strReportFile => $arReportParams) {
                 "DEFAULT" => true,
                 "TEXT" => GetMessage("CES_RUN_EXPORT"),
                 "TITLE" => GetMessage("CES_RUN_EXPORT_DESCR"),
-                "ACTION" => $lAdmin->ActionRedirect("/bitrix/admin/cat_export_setup.php?lang=" . LANGUAGE_ID . "&ACT_FILE=" . urlencode($strReportFile) . "&" . bitrix_sessid_get() . "&ACTION=EXPORT&PROFILE_ID=0"),
+                "ACTION" => $lAdmin->ActionRedirect(
+                    "/bitrix/admin/cat_export_setup.php?lang=" . LANGUAGE_ID . "&ACT_FILE=" . urlencode(
+                        $strReportFile
+                    ) . "&" . bitrix_sessid_get() . "&ACTION=EXPORT&PROFILE_ID=0"
+                ),
             );
             $arActions[] = array(
                 "TEXT" => GetMessage('CES_ADD_PROFILE'),
                 "TITLE" => GetMessage('CES_ADD_PROFILE_DESCR'),
-                "ACTION" => $lAdmin->ActionRedirect("/bitrix/admin/cat_export_setup.php?lang=" . LANGUAGE_ID . "&ACT_FILE=" . urlencode($strReportFile) . "&ACTION=EXPORT_SETUP" . "&" . bitrix_sessid_get()),
+                "ACTION" => $lAdmin->ActionRedirect(
+                    "/bitrix/admin/cat_export_setup.php?lang=" . LANGUAGE_ID . "&ACT_FILE=" . urlencode(
+                        $strReportFile
+                    ) . "&ACTION=EXPORT_SETUP" . "&" . bitrix_sessid_get()
+                ),
             );
         }
 
@@ -1136,7 +1335,11 @@ foreach ($arReportsList as $strReportFile => $arReportParams) {
             $arActions[] = array(
                 "TEXT" => GetMessage("CES_TO_LEFT_MENU"),
                 "TITLE" => GetMessage("CES_TO_LEFT_MENU_DESCR"),
-                "ACTION" => $lAdmin->ActionRedirect($APPLICATION->GetCurPage() . "?lang=" . LANGUAGE_ID . "&ACT_FILE=" . urlencode($strReportFile) . "&" . bitrix_sessid_get() . "&ACTION=MENU&PROFILE_ID=0"),
+                "ACTION" => $lAdmin->ActionRedirect(
+                    $APPLICATION->GetCurPage() . "?lang=" . LANGUAGE_ID . "&ACT_FILE=" . urlencode(
+                        $strReportFile
+                    ) . "&" . bitrix_sessid_get() . "&ACTION=MENU&PROFILE_ID=0"
+                ),
             );
         }
 
@@ -1144,13 +1347,17 @@ foreach ($arReportsList as $strReportFile => $arReportParams) {
             $arActions[] = array(
                 "TEXT" => GetMessage("CES_TO_AGENT"),
                 "TITLE" => GetMessage("CES_TO_AGENT_DESCR"),
-                "ACTION" => "ShowAgentForm('" . $APPLICATION->GetCurPage() . "?lang=" . LANGUAGE_ID . "&ACT_FILE=" . $strReportFile . "&" . bitrix_sessid_get() . "&ACTION=AGENT&PROFILE_ID=0');",
+                "ACTION" => "ShowAgentForm('" . $APPLICATION->GetCurPage(
+                    ) . "?lang=" . LANGUAGE_ID . "&ACT_FILE=" . $strReportFile . "&" . bitrix_sessid_get(
+                    ) . "&ACTION=AGENT&PROFILE_ID=0');",
             );
             $arActions[] = array(
                 "DISABLED" => $bWindowsHosting,
                 "TEXT" => GetMessage("CES_TO_CRON"),
                 "TITLE" => GetMessage("CES_TO_CRON_DESCR"),
-                "ACTION" => ($bWindowsHosting ? '' : "ShowCronForm('" . $APPLICATION->GetCurPage() . "?lang=" . LANGUAGE_ID . "&ACT_FILE=" . $strReportFile . "&" . bitrix_sessid_get() . "&ACTION=CRON&PROFILE_ID=0', true);"),
+                "ACTION" => ($bWindowsHosting ? '' : "ShowCronForm('" . $APPLICATION->GetCurPage(
+                    ) . "?lang=" . LANGUAGE_ID . "&ACT_FILE=" . $strReportFile . "&" . bitrix_sessid_get(
+                    ) . "&ACTION=CRON&PROFILE_ID=0', true);"),
             );
         }
 
@@ -1163,8 +1370,9 @@ foreach ($arReportsList as $strReportFile => $arReportParams) {
     );
 
     while ($arProfile = $rsProfiles->Fetch()) {
-        if ($arProfile['IN_AGENT'] == 'Y' && $arProfile['IN_CRON'] == 'Y')
+        if ($arProfile['IN_AGENT'] == 'Y' && $arProfile['IN_CRON'] == 'Y') {
             $cronErrors[] = '[' . $arProfile['ID'] . '] ' . $arReportParams['TITLE'];
+        }
 
         $arProfile['USED'] = $arProfile['LAST_USE_FORMAT'];
         $boolNeedEdit = (isset($arProfile['NEED_EDIT']) && 'Y' == $arProfile['NEED_EDIT']);
@@ -1178,12 +1386,20 @@ foreach ($arReportsList as $strReportFile => $arReportParams) {
         $strProfileLink = '';
         if ($bCanExec) {
             if ($boolNeedEdit) {
-                $url = "/bitrix/admin/cat_export_setup.php?lang=" . LANGUAGE_ID . "&ACT_FILE=" . urlencode($strReportFile) . "&ACTION=EXPORT_EDIT&PROFILE_ID=" . $arProfile["ID"] . "&" . bitrix_sessid_get();
-                $strProfileLink = '<a href="' . CHTTP::URN2URI($url) . '" title="' . GetMessage("CES_EDIT_PROPFILE_DESCR") . '">' . htmlspecialcharsbx($arProfile["NAME"]) . '</a>' .
+                $url = "/bitrix/admin/cat_export_setup.php?lang=" . LANGUAGE_ID . "&ACT_FILE=" . urlencode(
+                        $strReportFile
+                    ) . "&ACTION=EXPORT_EDIT&PROFILE_ID=" . $arProfile["ID"] . "&" . bitrix_sessid_get();
+                $strProfileLink = '<a href="' . CHTTP::URN2URI($url) . '" title="' . GetMessage(
+                        "CES_EDIT_PROPFILE_DESCR"
+                    ) . '">' . htmlspecialcharsbx($arProfile["NAME"]) . '</a>' .
                     '<br /><i>(' . GetMessage('CES_NEED_EDIT') . ')</i>';
             } else {
-                $url = ('Y' == $arProfile["IN_MENU"] ? "/bitrix/admin/cat_exec_exp.php" : "/bitrix/admin/cat_export_setup.php") . "?lang=" . LANGUAGE_ID . "&ACT_FILE=" . urlencode($strReportFile) . "&ACTION=EXPORT&PROFILE_ID=" . $arProfile["ID"] . "&" . bitrix_sessid_get();
-                $strProfileLink = '<a href="' . CHTTP::URN2URI($url) . '" title="' . GetMessage("export_setup_begin") . '">' . htmlspecialcharsbx($arProfile["NAME"]) . '</a>';
+                $url = ('Y' == $arProfile["IN_MENU"] ? "/bitrix/admin/cat_exec_exp.php" : "/bitrix/admin/cat_export_setup.php") . "?lang=" . LANGUAGE_ID . "&ACT_FILE=" . urlencode(
+                        $strReportFile
+                    ) . "&ACTION=EXPORT&PROFILE_ID=" . $arProfile["ID"] . "&" . bitrix_sessid_get();
+                $strProfileLink = '<a href="' . CHTTP::URN2URI($url) . '" title="' . GetMessage(
+                        "export_setup_begin"
+                    ) . '">' . htmlspecialcharsbx($arProfile["NAME"]) . '</a>';
             }
         } else {
             $strProfileLink = htmlspecialcharsbx($arProfile["NAME"]);
@@ -1203,11 +1419,9 @@ foreach ($arReportsList as $strReportFile => $arReportParams) {
         $arProfile['CREATED_BY'] = (int)$arProfile['CREATED_BY'];
         if (0 < $arProfile['CREATED_BY']) {
             if (!isset($arUserList[$arProfile['CREATED_BY']])) {
-                $byUser = 'ID';
-                $byOrder = 'ASC';
                 $rsUsers = CUser::GetList(
-                    $byUser,
-                    $byOrder,
+                    'ID',
+                    'ASC',
                     array('ID_EQUAL_EXACT' => $arProfile['CREATED_BY']),
                     array('FIELDS' => array('ID', 'LOGIN', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'EMAIL'))
                 );
@@ -1216,21 +1430,23 @@ foreach ($arReportsList as $strReportFile => $arReportParams) {
                     if ($publicMode) {
                         $arUserList[$arOneUser['ID']] = CUser::FormatName($strNameFormat, $arOneUser);
                     } else {
-                        $arUserList[$arOneUser['ID']] = '<a href="/bitrix/admin/user_edit.php?lang=' . LANGUAGE_ID . '&ID=' . $arProfile['MODIFIED_BY'] . '">' . CUser::FormatName($strNameFormat, $arOneUser) . '</a>';
+                        $arUserList[$arOneUser['ID']] = '<a href="/bitrix/admin/user_edit.php?lang=' . LANGUAGE_ID . '&ID=' . $arProfile['MODIFIED_BY'] . '">' . CUser::FormatName(
+                                $strNameFormat,
+                                $arOneUser
+                            ) . '</a>';
                     }
                 }
             }
-            if (isset($arUserList[$arProfile['CREATED_BY']]))
+            if (isset($arUserList[$arProfile['CREATED_BY']])) {
                 $strCreatedBy = $arUserList[$arProfile['CREATED_BY']];
+            }
         }
         $arProfile['MODIFIED_BY'] = (int)$arProfile['MODIFIED_BY'];
         if (0 < $arProfile['MODIFIED_BY']) {
             if (!isset($arUserList[$arProfile['MODIFIED_BY']])) {
-                $byUser = 'ID';
-                $byOrder = 'ASC';
                 $rsUsers = CUser::GetList(
-                    $byUser,
-                    $byOrder,
+                    'ID',
+                    'ASC',
                     array('ID_EQUAL_EXACT' => $arProfile['MODIFIED_BY']),
                     array('FIELDS' => array('ID', 'LOGIN', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'EMAIL'))
                 );
@@ -1239,12 +1455,16 @@ foreach ($arReportsList as $strReportFile => $arReportParams) {
                     if ($publicMode) {
                         $arUserList[$arOneUser['ID']] = CUser::FormatName($strNameFormat, $arOneUser);
                     } else {
-                        $arUserList[$arOneUser['ID']] = '<a href="/bitrix/admin/user_edit.php?lang=' . LANGUAGE_ID . '&ID=' . $arProfile['MODIFIED_BY'] . '">' . CUser::FormatName($strNameFormat, $arOneUser) . '</a>';
+                        $arUserList[$arOneUser['ID']] = '<a href="/bitrix/admin/user_edit.php?lang=' . LANGUAGE_ID . '&ID=' . $arProfile['MODIFIED_BY'] . '">' . CUser::FormatName(
+                                $strNameFormat,
+                                $arOneUser
+                            ) . '</a>';
                     }
                 }
             }
-            if (isset($arUserList[$arProfile['MODIFIED_BY']]))
+            if (isset($arUserList[$arProfile['MODIFIED_BY']])) {
                 $strModifiedBy = $arUserList[$arProfile['MODIFIED_BY']];
+            }
         }
 
         $row->AddViewField("CREATED_BY", $strCreatedBy);
@@ -1253,21 +1473,27 @@ foreach ($arReportsList as $strReportFile => $arReportParams) {
         $row->AddCalendarField("TIMESTAMP_X", false);
 
         $arActions = array();
-        if ($bCanExec)
+        if ($bCanExec) {
             $arActions[] = array(
                 "DEFAULT" => false,
                 "TEXT" => GetMessage("CES_RUN_EXPORT"),
                 "TITLE" => GetMessage("CES_RUN_EXPORT_DESCR"),
-                "ACTION" => $lAdmin->ActionRedirect(('Y' == $arProfile["IN_MENU"] ? "/bitrix/admin/cat_exec_exp.php" : "/bitrix/admin/cat_export_setup.php") . "?lang=" . LANGUAGE_ID . "&ACT_FILE=" . urlencode($strReportFile) . "&" . bitrix_sessid_get() . "&ACTION=EXPORT&PROFILE_ID=" . $arProfile["ID"]),
+                "ACTION" => $lAdmin->ActionRedirect(
+                    ('Y' == $arProfile["IN_MENU"] ? "/bitrix/admin/cat_exec_exp.php" : "/bitrix/admin/cat_export_setup.php") . "?lang=" . LANGUAGE_ID . "&ACT_FILE=" . urlencode(
+                        $strReportFile
+                    ) . "&" . bitrix_sessid_get() . "&ACTION=EXPORT&PROFILE_ID=" . $arProfile["ID"]
+                ),
             );
+        }
 
         if ($bCanEdit) {
             $arVars = explode('&', preg_replace("/[\n\r]+/i", "", $arProfile["SETUP_VARS"]));
             foreach ($arVars as &$value) {
                 $value = htmlspecialcharsbx(urldecode($value));
             }
-            if (isset($value))
+            if (isset($value)) {
                 unset($value);
+            }
             $arActions[] = array(
                 "TEXT" => GetMessage("CES_SHOW_VARS_LIST"),
                 "TITLE" => GetMessage("CES_SHOW_VARS_LIST_DESCR"),
@@ -1277,12 +1503,20 @@ foreach ($arReportsList as $strReportFile => $arReportParams) {
                 "DEFAULT" => true,
                 "TEXT" => GetMessage("CES_EDIT_PROFILE"),
                 "TITLE" => GetMessage("CES_EDIT_PROPFILE_DESCR"),
-                "ACTION" => $lAdmin->ActionRedirect("/bitrix/admin/cat_export_setup.php?lang=" . urlencode(LANGUAGE_ID) . "&ACT_FILE=" . urlencode($strReportFile) . "&ACTION=EXPORT_EDIT&PROFILE_ID=" . $arProfile['ID'] . "&" . bitrix_sessid_get()),
+                "ACTION" => $lAdmin->ActionRedirect(
+                    "/bitrix/admin/cat_export_setup.php?lang=" . urlencode(LANGUAGE_ID) . "&ACT_FILE=" . urlencode(
+                        $strReportFile
+                    ) . "&ACTION=EXPORT_EDIT&PROFILE_ID=" . $arProfile['ID'] . "&" . bitrix_sessid_get()
+                ),
             );
             $arActions[] = array(
                 "TEXT" => GetMessage("CES_COPY_PROFILE"),
                 "TITLE" => GetMessage("CES_COPY_PROPFILE_DESCR"),
-                "ACTION" => $lAdmin->ActionRedirect("/bitrix/admin/cat_export_setup.php?lang=" . urlencode(LANGUAGE_ID) . "&ACT_FILE=" . urlencode($strReportFile) . "&ACTION=EXPORT_COPY&PROFILE_ID=" . $arProfile['ID'] . "&" . bitrix_sessid_get()),
+                "ACTION" => $lAdmin->ActionRedirect(
+                    "/bitrix/admin/cat_export_setup.php?lang=" . urlencode(LANGUAGE_ID) . "&ACT_FILE=" . urlencode(
+                        $strReportFile
+                    ) . "&ACTION=EXPORT_COPY&PROFILE_ID=" . $arProfile['ID'] . "&" . bitrix_sessid_get()
+                ),
             );
         }
 
@@ -1291,13 +1525,21 @@ foreach ($arReportsList as $strReportFile => $arReportParams) {
                 $arActions[] = array(
                     "TEXT" => GetMessage("CES_TO_LEFT_MENU_DEL"),
                     "TITLE" => GetMessage("CES_TO_LEFT_MENU_DESCR_DEL"),
-                    "ACTION" => $lAdmin->ActionRedirect($APPLICATION->GetCurPage() . "?lang=" . LANGUAGE_ID . "&ACT_FILE=" . urlencode($strReportFile) . "&" . bitrix_sessid_get() . "&ACTION=MENU&PROFILE_ID=" . $arProfile["ID"]),
+                    "ACTION" => $lAdmin->ActionRedirect(
+                        $APPLICATION->GetCurPage() . "?lang=" . LANGUAGE_ID . "&ACT_FILE=" . urlencode(
+                            $strReportFile
+                        ) . "&" . bitrix_sessid_get() . "&ACTION=MENU&PROFILE_ID=" . $arProfile["ID"]
+                    ),
                 );
             } else {
                 $arActions[] = array(
                     "TEXT" => GetMessage("CES_TO_LEFT_MENU"),
                     "TITLE" => GetMessage("CES_TO_LEFT_MENU_DESCR"),
-                    "ACTION" => $lAdmin->ActionRedirect($APPLICATION->GetCurPage() . "?lang=" . LANGUAGE_ID . "&ACT_FILE=" . urlencode($strReportFile) . "&" . bitrix_sessid_get() . "&ACTION=MENU&PROFILE_ID=" . $arProfile["ID"]),
+                    "ACTION" => $lAdmin->ActionRedirect(
+                        $APPLICATION->GetCurPage() . "?lang=" . LANGUAGE_ID . "&ACT_FILE=" . urlencode(
+                            $strReportFile
+                        ) . "&" . bitrix_sessid_get() . "&ACTION=MENU&PROFILE_ID=" . $arProfile["ID"]
+                    ),
                 );
             }
         }
@@ -1307,13 +1549,19 @@ foreach ($arReportsList as $strReportFile => $arReportParams) {
                 $arActions[] = array(
                     "TEXT" => GetMessage("CES_TO_AGENT_DEL"),
                     "TITLE" => GetMessage("CES_TO_AGENT_DESCR_DEL"),
-                    "ACTION" => $lAdmin->ActionRedirect("/bitrix/admin/cat_export_setup.php?lang=" . LANGUAGE_ID . "&ACT_FILE=" . urlencode($strReportFile) . "&" . bitrix_sessid_get() . "&ACTION=AGENT&PROFILE_ID=" . $arProfile["ID"]),
+                    "ACTION" => $lAdmin->ActionRedirect(
+                        "/bitrix/admin/cat_export_setup.php?lang=" . LANGUAGE_ID . "&ACT_FILE=" . urlencode(
+                            $strReportFile
+                        ) . "&" . bitrix_sessid_get() . "&ACTION=AGENT&PROFILE_ID=" . $arProfile["ID"]
+                    ),
                 );
             } else {
                 $arActions[] = array(
                     "TEXT" => GetMessage("CES_TO_AGENT"),
                     "TITLE" => GetMessage("CES_TO_AGENT_DESCR"),
-                    "ACTION" => "ShowAgentForm('" . $APPLICATION->GetCurPage() . "?lang=" . LANGUAGE_ID . "&ACT_FILE=" . $strReportFile . "&" . bitrix_sessid_get() . "&ACTION=AGENT&PROFILE_ID=" . $arProfile["ID"] . "');",
+                    "ACTION" => "ShowAgentForm('" . $APPLICATION->GetCurPage(
+                        ) . "?lang=" . LANGUAGE_ID . "&ACT_FILE=" . $strReportFile . "&" . bitrix_sessid_get(
+                        ) . "&ACTION=AGENT&PROFILE_ID=" . $arProfile["ID"] . "');",
                 );
             }
 
@@ -1322,14 +1570,18 @@ foreach ($arReportsList as $strReportFile => $arReportParams) {
                     "DISABLED" => $bWindowsHosting,
                     "TEXT" => GetMessage("CES_TO_CRON_DEL"),
                     "TITLE" => GetMessage("CES_TO_CRON_DESCR_DEL"),
-                    "ACTION" => ($bWindowsHosting ? '' : "ShowCronForm('" . $APPLICATION->GetCurPage() . "?lang=" . LANGUAGE_ID . "&ACT_FILE=" . $strReportFile . "&" . bitrix_sessid_get() . "&ACTION=CRON&PROFILE_ID=" . $arProfile["ID"] . "', false);"),
+                    "ACTION" => ($bWindowsHosting ? '' : "ShowCronForm('" . $APPLICATION->GetCurPage(
+                        ) . "?lang=" . LANGUAGE_ID . "&ACT_FILE=" . $strReportFile . "&" . bitrix_sessid_get(
+                        ) . "&ACTION=CRON&PROFILE_ID=" . $arProfile["ID"] . "', false);"),
                 );
             } else {
                 $arActions[] = array(
                     "DISABLED" => $bWindowsHosting,
                     "TEXT" => GetMessage("CES_TO_CRON"),
                     "TITLE" => GetMessage("CES_TO_CRON_DESCR"),
-                    "ACTION" => ($bWindowsHosting ? '' : "ShowCronForm('" . $APPLICATION->GetCurPage() . "?lang=" . LANGUAGE_ID . "&ACT_FILE=" . $strReportFile . "&" . bitrix_sessid_get() . "&ACTION=CRON&PROFILE_ID=" . $arProfile["ID"] . "', true);"),
+                    "ACTION" => ($bWindowsHosting ? '' : "ShowCronForm('" . $APPLICATION->GetCurPage(
+                        ) . "?lang=" . LANGUAGE_ID . "&ACT_FILE=" . $strReportFile . "&" . bitrix_sessid_get(
+                        ) . "&ACTION=CRON&PROFILE_ID=" . $arProfile["ID"] . "', true);"),
                 );
             }
         }
@@ -1338,7 +1590,11 @@ foreach ($arReportsList as $strReportFile => $arReportParams) {
             $arActions[] = array(
                 "TEXT" => GetMessage("CES_DELETE_PROFILE"),
                 "TITLE" => GetMessage("CES_DELETE_PROFILE_DESCR"),
-                "ACTION" => "if(confirm('" . GetMessage("CES_DELETE_PROFILE_CONF") . "')) window.location='" . $APPLICATION->GetCurPage() . "?lang=" . LANGUAGE_ID . "&ACT_FILE=" . urlencode($strReportFile) . "&" . bitrix_sessid_get() . "&ACTION=DEL_PROFILE&PROFILE_ID=" . $arProfile["ID"] . "';",
+                "ACTION" => "if(confirm('" . GetMessage(
+                        "CES_DELETE_PROFILE_CONF"
+                    ) . "')) window.location='" . $APPLICATION->GetCurPage(
+                    ) . "?lang=" . LANGUAGE_ID . "&ACT_FILE=" . urlencode($strReportFile) . "&" . bitrix_sessid_get(
+                    ) . "&ACTION=DEL_PROFILE&PROFILE_ID=" . $arProfile["ID"] . "';",
             );
         }
         $row->AddActions($arActions);
@@ -1376,7 +1632,9 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
             <tr>
                 <td colspan="2" style="text-align: center;">
                     <input type="submit" value="<? echo GetMessage("CES_SET"); ?>">&nbsp;&nbsp;<input type="button"
-                                                                                                      value="<? echo GetMessage("CES_CLOSE"); ?>"
+                                                                                                      value="<? echo GetMessage(
+                                                                                                          "CES_CLOSE"
+                                                                                                      ); ?>"
                                                                                                       onclick="HideAgentForm();">
                 </td>
             </tr>
@@ -1393,8 +1651,9 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
                 <td><input type="text" name="agent_period" value="" size="10"></td>
             </tr>
             <tr>
-                <td colspan="2"
-                    style="text-align: center; font-weight: bold; font-size: 12px;"><? echo GetMessage("CES_OR"); ?></td>
+                <td colspan="2" style="text-align: center; font-weight: bold; font-size: 12px;"><? echo GetMessage(
+                        "CES_OR"
+                    ); ?></td>
             </tr>
             <tr>
                 <td style="font-size: 12px;"><? echo GetMessage("CES_RUN_TIME"); ?></td>
@@ -1413,7 +1672,9 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
             <tr>
                 <td colspan="2" style="text-align: center;">
                     <input type="submit" value="<? echo GetMessage("CES_SET"); ?>">&nbsp;&nbsp;<input type="button"
-                                                                                                      value="<? echo GetMessage("CES_CLOSE"); ?>"
+                                                                                                      value="<? echo GetMessage(
+                                                                                                          "CES_CLOSE"
+                                                                                                      ); ?>"
                                                                                                       onclick="HideCronForm(true);">
                 </td>
             </tr>
@@ -1432,7 +1693,9 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
             <tr>
                 <td colspan="2" style="text-align: center;">
                     <input type="submit" value="<? echo GetMessage("CES_DELETE"); ?>">&nbsp;&nbsp;<input type="button"
-                                                                                                         value="<? echo GetMessage("CES_CLOSE"); ?>"
+                                                                                                         value="<? echo GetMessage(
+                                                                                                             "CES_CLOSE"
+                                                                                                         ); ?>"
                                                                                                          onclick="HideCronForm(false);">
                 </td>
             </tr>
@@ -1448,27 +1711,36 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
     </div>
 </div>
 <?
-if (strlen($strErrorMessage) > 0)
+if ($strErrorMessage <> '') {
     CAdminMessage::ShowMessage(array("MESSAGE" => GetMessage("CES_ERRORS"), "DETAILS" => $strErrorMessage));
+}
 
 if ($_GET["success_export"] == "Y") {
     CAdminMessage::ShowNote(GetMessage("CES_SUCCESS"));
 
     if (isset($_GET['export_id']) && !empty($_GET['export_id'])) {
         if (isset($_SESSION['BX_EXP_TMP_ID']) && is_array($_SESSION['BX_EXP_TMP_ID'])) {
-            $strTempID = substr(strval($_GET['export_id']), 0, 32);
+            $strTempID = mb_substr(strval($_GET['export_id']), 0, 32);
             $strKey = array_search($strTempID, $_SESSION['BX_EXP_TMP_ID']);
             if (false !== $strKey && isset($_SESSION[$_SESSION['BX_EXP_TMP_ID'][$strKey]])) {
                 if (0 == preg_match(BX_CATALOG_FILENAME_REG, $SETUP_FILE_NAME)) {
                     $strSetupFileName = Rel2Abs('/', $_SESSION[$_SESSION['BX_EXP_TMP_ID'][$strKey]]);
                     if (false !== $strSetupFileName) {
-                        if (substr($strSetupFileName, 0, strlen($_SERVER["DOCUMENT_ROOT"])) == $_SERVER["DOCUMENT_ROOT"]) {
-                            $strSetupFileName = substr($strSetupFileName, strlen($_SERVER["DOCUMENT_ROOT"]));
+                        if (mb_substr(
+                                $strSetupFileName,
+                                0,
+                                mb_strlen($_SERVER["DOCUMENT_ROOT"])
+                            ) == $_SERVER["DOCUMENT_ROOT"]) {
+                            $strSetupFileName = mb_substr($strSetupFileName, mb_strlen($_SERVER["DOCUMENT_ROOT"]));
                         }
 
-                        if (file_exists($_SERVER['DOCUMENT_ROOT'] . $strSetupFileName) && is_file($_SERVER['DOCUMENT_ROOT'] . $strSetupFileName)) {
+                        if (file_exists($_SERVER['DOCUMENT_ROOT'] . $strSetupFileName) && is_file(
+                                $_SERVER['DOCUMENT_ROOT'] . $strSetupFileName
+                            )) {
                             if ($APPLICATION->GetFileAccessPermission($strSetupFileName) >= "R") {
-                                echo "<p>" . GetMessage("CES_EXPORT_FILE") . " <a href=\"" . htmlspecialcharsbx($strSetupFileName) . "\">" . htmlspecialcharsbx($strSetupFileName) . "</a></p>";
+                                echo "<p>" . GetMessage("CES_EXPORT_FILE") . " <a href=\"" . htmlspecialcharsbx(
+                                        $strSetupFileName
+                                    ) . "\">" . htmlspecialcharsbx($strSetupFileName) . "</a></p>";
                             }
                         }
                     }
@@ -1481,12 +1753,14 @@ if ($_GET["success_export"] == "Y") {
 }
 
 if (!empty($cronErrors)) {
-    $cronMessage = new CAdminMessage(array(
-        'MESSAGE' => GetMessage('CES_CRON_AGENT_ERRORS'),
-        'DETAILS' => implode('<br>', $cronErrors),
-        'TYPE' => 'OK',
-        'HTML' => true
-    ));
+    $cronMessage = new CAdminMessage(
+        array(
+            'MESSAGE' => GetMessage('CES_CRON_AGENT_ERRORS'),
+            'DETAILS' => implode('<br>', $cronErrors),
+            'TYPE' => 'OK',
+            'HTML' => true
+        )
+    );
     echo $cronMessage->Show();
     unset($cronMessage);
 }
@@ -1521,8 +1795,10 @@ echo GetMessage("export_setup_cat") ?> <? echo CATALOG_PATH2EXPORTS ?><br><br>
         <?
     }
     echo GetMessage("CES_NOTES10"); ?><br><br>
-    <?= GetMessage("CES_NOTES11_EXT", array('#FILE#' => '/bitrix/php_interface/include/catalog_export/cron_frame.php')); ?>
-    <br>
+    <?= GetMessage(
+        "CES_NOTES11_EXT",
+        array('#FILE#' => '/bitrix/php_interface/include/catalog_export/cron_frame.php')
+    ); ?><br>
     <?= GetMessage("CES_NOTES12_EXT"); ?><br>
     <?= GetMessage('CES_NOTES13_EXT', array('#FOLDER#' => '/bitrix/modules/catalog/load/'));
 endif;

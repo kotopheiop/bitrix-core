@@ -1,6 +1,7 @@
 <?php
 
 namespace Bitrix\Sale\Exchange\OneC;
+
 /**
  * Class DocumentImport
  * @package Bitrix\Sale\Exchange\OneC

@@ -7,7 +7,9 @@ use Bitrix\Main\Loader,
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/currency/prolog.php");
 $CURRENCY_RIGHT = $APPLICATION->GetGroupRight("currency");
-if ($CURRENCY_RIGHT == "D") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($CURRENCY_RIGHT == "D") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 Loader::includeModule('currency');
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/currency/currencies_rates.php");
 
@@ -15,17 +17,25 @@ $errorMessage = array();
 $arFields = array();
 
 $ID = 0;
-if (isset($_REQUEST['ID']))
+if (isset($_REQUEST['ID'])) {
     $ID = (int)$_REQUEST['ID'];
-if ($ID < 0)
+}
+if ($ID < 0) {
     $ID = 0;
+}
 
 $aTabs = array(
-    array("DIV" => "edit1", "TAB" => GetMessage("curr_rates_rate"), "ICON" => "currency", "TITLE" => GetMessage("curr_rates_rate_ex")),
+    array(
+        "DIV" => "edit1",
+        "TAB" => GetMessage("curr_rates_rate"),
+        "ICON" => "currency",
+        "TITLE" => GetMessage("curr_rates_rate_ex")
+    ),
 );
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && !empty($_POST['Update']) && $CURRENCY_RIGHT == "W" && check_bitrix_sessid()) {
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && !empty($_POST['Update']) && $CURRENCY_RIGHT == "W" && check_bitrix_sessid(
+    )) {
     $arFields = array(
         'DATE_RATE' => (isset($_POST['DATE_RATE']) ? $_POST['DATE_RATE'] : ''),
         'RATE' => (isset($_POST['RATE']) ? $_POST['RATE'] : ''),
@@ -42,22 +52,31 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !empty($_POST['Update']) && $CURRENC
     }
 
     if (!$res) {
-        if ($ex = $APPLICATION->GetException())
+        if ($ex = $APPLICATION->GetException()) {
             $errorMessage[] = $ex->GetString();
-        else
+        } else {
             $errorMessage[] = (
             $ID > 0
                 ? GetMessage('BX_CURRENCY_RATE_EDIT_ERR_UPDATE', array('#ID#' => $ID))
                 : GetMessage('BX_CURRENCY_RATE_EDIT_ERR_ADD')
             );
+        }
     } else {
         if (empty($_POST['apply'])) {
-            if (!empty($return_url))
+            if (!empty($return_url)) {
                 LocalRedirect($return_url);
-            else
-                LocalRedirect("/bitrix/admin/currencies_rates.php?lang=" . LANGUAGE_ID . GetFilterParams("filter_", false));
+            } else {
+                LocalRedirect(
+                    "/bitrix/admin/currencies_rates.php?lang=" . LANGUAGE_ID . GetFilterParams("filter_", false)
+                );
+            }
         }
-        LocalRedirect("/bitrix/admin/currency_rate_edit.php?lang=" . LANGUAGE_ID . "&ID=" . $ID . "&" . GetFilterParams("filter_", false));
+        LocalRedirect(
+            "/bitrix/admin/currency_rate_edit.php?lang=" . LANGUAGE_ID . "&ID=" . $ID . "&" . GetFilterParams(
+                "filter_",
+                false
+            )
+        );
     }
 }
 
@@ -69,10 +88,11 @@ $defaultValues = array(
     'BASE_CURRENCY' => Currency\CurrencyManager::getBaseCurrency()
 );
 
-if ($ID > 0)
+if ($ID > 0) {
     $APPLICATION->SetTitle(GetMessage("CURRENCY_EDIT_TITLE"));
-else
+} else {
     $APPLICATION->SetTitle(GetMessage("CURRENCY_NEW_TITLE"));
+}
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
@@ -89,8 +109,9 @@ if ($ID > 0) {
 }
 
 if (!empty($errorMessage)) {
-    if (!isset($arFields['BASE_CURRENCY']))
+    if (!isset($arFields['BASE_CURRENCY'])) {
         $arFields['BASE_CURRENCY'] = $currencyRate['BASE_CURRENCY'];
+    }
     $currencyRate = $arFields;
 }
 
@@ -115,7 +136,10 @@ if ($ID > 0) {
         $aContext[] = array(
             "ICON" => "btn_delete",
             "TEXT" => GetMessage("MAIN_ADMIN_MENU_DELETE"),
-            "LINK" => "javascript:if(confirm('" . GetMessage("CONFIRM_DEL_MESSAGE") . "'))window.location='/bitrix/admin/currencies_rates.php?action=delete&ID=" . $ID . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get() . "';",
+            "LINK" => "javascript:if(confirm('" . GetMessage(
+                    "CONFIRM_DEL_MESSAGE"
+                ) . "'))window.location='/bitrix/admin/currencies_rates.php?action=delete&ID=" . $ID . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get(
+                ) . "';",
         );
     }
 }
@@ -123,18 +147,21 @@ if ($ID > 0) {
 $context = new CAdminContextMenu($aContext);
 $context->Show();
 
-if (!empty($errorMessage))
+if (!empty($errorMessage)) {
     CAdminMessage::ShowMessage(implode('<br>', $errorMessage));
+}
 
 $baseCurrency = $currencyRate['BASE_CURRENCY'];
 $currencyList = Currency\CurrencyManager::getCurrencyList();
 $baseCurrencyList = $currencyList;
 if ($baseCurrency != '' && isset($currencyList[$baseCurrency])) {
-    if ($ID == 0 || $currencyRate['CURRENCY'] != $baseCurrency)
+    if ($ID == 0 || $currencyRate['CURRENCY'] != $baseCurrency) {
         unset($currencyList[$baseCurrency]);
+    }
 }
-if (empty($currencyList))
+if (empty($currencyList)) {
     LocalRedirect("/bitrix/admin/currency_edit.php?lang=" . LANGUAGE_ID);
+}
 
 $showGetRate = ($baseCurrency != '' && in_array($baseCurrency, array('RUB', 'BYR', 'BYN', 'UAH')));
 ?>
@@ -156,14 +183,24 @@ $showGetRate = ($baseCurrency != '' && in_array($baseCurrency, array('RUB', 'BYR
         ?>
         <tr class="adm-detail-required-field">
             <td width="40%"><? echo GetMessage("curr_rates_date1") ?>:</td>
-            <td width="60%"><?= CalendarDate("DATE_RATE", $currencyRate['DATE_RATE'], "rate_edit", "10", 'class="typeinput"'); ?></td>
+            <td width="60%"><?= CalendarDate(
+                    "DATE_RATE",
+                    $currencyRate['DATE_RATE'],
+                    "rate_edit",
+                    "10",
+                    'class="typeinput"'
+                ); ?></td>
         </tr>
         <tr class="adm-detail-required-field">
             <td><? echo GetMessage("curr_rates_curr1") ?>:</td>
             <td><select name="CURRENCY"><?
                     foreach ($currencyList as $currency => $title) {
                         ?>
-                        <option value="<?= htmlspecialcharsbx($currency); ?>"<?= ($currency == $currencyRate['CURRENCY'] ? ' selected' : ''); ?>><?= htmlspecialcharsbx($title); ?></option><?
+                        <option value="<?= htmlspecialcharsbx(
+                            $currency
+                        ); ?>"<?= ($currency == $currencyRate['CURRENCY'] ? ' selected' : ''); ?>><?= htmlspecialcharsbx(
+                            $title
+                        ); ?></option><?
                     }
                     unset($currency, $title);
                     ?></select></td>
@@ -172,12 +209,13 @@ $showGetRate = ($baseCurrency != '' && in_array($baseCurrency, array('RUB', 'BYR
             <td><? echo GetMessage("BX_CURRENCY_RATE_BASE_CURRENCY") ?>:</td>
             <td><input type="hidden" name="BASE_CURRENCY"
                        value="<?= htmlspecialcharsbx($currencyRate['BASE_CURRENCY']); ?>"><?
-                if ($currencyRate['BASE_CURRENCY'] == '')
+                if ($currencyRate['BASE_CURRENCY'] == '') {
                     echo GetMessage('BX_CURRENCY_RATE_BASE_BASE_CURRENCY_FIELD_ABSENT');
-                elseif (!isset($baseCurrencyList[$currencyRate['BASE_CURRENCY']]))
+                } elseif (!isset($baseCurrencyList[$currencyRate['BASE_CURRENCY']])) {
                     echo htmlspecialcharsbx($currencyRate['BASE_CURRENCY']);
-                else
+                } else {
                     echo htmlspecialcharsbx($baseCurrencyList[$currencyRate['BASE_CURRENCY']]);
+                }
                 ?></td>
         </tr>
         <tr class="adm-detail-required-field">
@@ -263,7 +301,9 @@ echo EndNote();
         function resultCurrencyRate(result) {
             BX.closeWait();
             if (!BX.type.isPlainObject(result) || !BX.type.isNotEmptyString(result.STATUS)) {
-                BX('currency_query_error_div').innerHTML = '<? echo GetMessageJS('BX_CURRENCY_GET_RATE_ERR_UNKNOWN'); ?>';
+                BX('currency_query_error_div').innerHTML = '<? echo GetMessageJS(
+                    'BX_CURRENCY_GET_RATE_ERR_UNKNOWN'
+                ); ?>';
             } else {
                 if (result.STATUS === 'ERROR') {
                     BX('currency_query_error_div').innerHTML = result.MESSAGE;

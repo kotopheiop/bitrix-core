@@ -9,7 +9,7 @@ class CCourse
         $arFields = array_merge(array('>LINKED_LESSON_ID' => 0), $arFields);
 
         foreach ($arOrder as $key => $value) {
-            if (strtoupper($key) === 'ID') {
+            if (mb_strtoupper($key) === 'ID') {
                 $arOrder['COURSE_ID'] = $arOrder[$key];
                 unset ($arOrder[$key]);
             }
@@ -18,12 +18,13 @@ class CCourse
         // We must replace '...ID' => '...COURSE_ID', where '...' is some operation (such as '!', '<=', etc.)
         foreach ($arFields as $key => $value) {
             // If key ends with 'ID'
-            if ((strlen($key) >= 2) && (strtoupper(substr($key, -2)) === 'ID')) {
+            if ((mb_strlen($key) >= 2) && (mb_strtoupper(mb_substr($key, -2)) === 'ID')) {
                 // And prefix before 'ID' doesn't contains letters
-                if (!preg_match("/[a-zA-Z_]+/", substr($key, 0, -2))) {
+                if (!preg_match("/[a-zA-Z_]+/", mb_substr($key, 0, -2))) {
                     $prefix = '';
-                    if (strlen($key) > 2)
-                        $prefix = substr($key, 0, -2);
+                    if (mb_strlen($key) > 2) {
+                        $prefix = mb_substr($key, 0, -2);
+                    }
 
                     $arFields[$prefix . 'COURSE_ID'] = $arFields[$key];
                     unset ($arFields[$key]);
@@ -66,21 +67,31 @@ class CCourse
         global $DB;
         $arMsg = array();
 
-        if ((is_set($arFields, "NAME") || $ID === false) && strlen(trim($arFields["NAME"])) <= 0) {
+        if ((is_set($arFields, "NAME") || $ID === false) && trim($arFields["NAME"]) == '') {
             $arMsg[] = array("id" => "NAME", "text" => GetMessage("LEARNING_BAD_NAME"));
         }
 
-        if (is_set($arFields, "ACTIVE_FROM") && strlen($arFields["ACTIVE_FROM"]) > 0 && (!$DB->IsDate($arFields["ACTIVE_FROM"], false, LANG, "FULL"))) {
+        if (is_set($arFields, "ACTIVE_FROM") && $arFields["ACTIVE_FROM"] <> '' && (!$DB->IsDate(
+                $arFields["ACTIVE_FROM"],
+                false,
+                LANG,
+                "FULL"
+            ))) {
             $arMsg[] = array("id" => "ACTIVE_FROM", "text" => GetMessage("LEARNING_BAD_ACTIVE_FROM"));
         }
 
-        if (is_set($arFields, "ACTIVE_TO") && strlen($arFields["ACTIVE_TO"]) > 0 && (!$DB->IsDate($arFields["ACTIVE_TO"], false, LANG, "FULL"))) {
+        if (is_set($arFields, "ACTIVE_TO") && $arFields["ACTIVE_TO"] <> '' && (!$DB->IsDate(
+                $arFields["ACTIVE_TO"],
+                false,
+                LANG,
+                "FULL"
+            ))) {
             $arMsg[] = array("id" => "ACTIVE_TO", "text" => GetMessage("LEARNING_BAD_ACTIVE_TO"));
         }
 
         if (is_set($arFields, "PREVIEW_PICTURE") && is_array($arFields["PREVIEW_PICTURE"])) {
             $error = CFile::CheckImageFile($arFields["PREVIEW_PICTURE"]);
-            if (strlen($error) > 0) {
+            if ($error <> '') {
                 $arMsg[] = array("id" => "PREVIEW_PICTURE", "text" => $error);
             }
         }
@@ -102,7 +113,9 @@ class CCourse
                     $tmp .= "'" . $lang . "' - " . GetMessage("LEARNING_BAD_SITE_ID_EX") . "<br>";
                 }
             }
-            if ($tmp != "") $arMsg[] = array("id" => "SITE_ID[]", "text" => $tmp);
+            if ($tmp != "") {
+                $arMsg[] = array("id" => "SITE_ID[]", "text" => $tmp);
+            }
         }
 
         if (!empty($arMsg)) {
@@ -120,23 +133,35 @@ class CCourse
     {
         global $DB;
 
-        if (is_set($arFields, "ACTIVE") && $arFields["ACTIVE"] != "Y")
+        if (is_set($arFields, "ACTIVE") && $arFields["ACTIVE"] != "Y") {
             $arFields["ACTIVE"] = "N";
+        }
 
-        if (is_set($arFields, "DETAIL_TEXT_TYPE") && $arFields["DETAIL_TEXT_TYPE"] != "html")
+        if (is_set($arFields, "DETAIL_TEXT_TYPE") && $arFields["DETAIL_TEXT_TYPE"] != "html") {
             $arFields["DETAIL_TEXT_TYPE"] = "text";
+        }
 
-        if (is_set($arFields, "PREVIEW_TEXT_TYPE") && $arFields["PREVIEW_TEXT_TYPE"] != "html")
+        if (is_set($arFields, "PREVIEW_TEXT_TYPE") && $arFields["PREVIEW_TEXT_TYPE"] != "html") {
             $arFields["PREVIEW_TEXT_TYPE"] = "text";
+        }
 
-        if (is_set($arFields, "PREVIEW_PICTURE") && strlen($arFields["PREVIEW_PICTURE"]["name"]) <= 0 && strlen($arFields["PREVIEW_PICTURE"]["del"]) <= 0)
+        if (is_set(
+                $arFields,
+                "PREVIEW_PICTURE"
+            ) && $arFields["PREVIEW_PICTURE"]["name"] == '' && $arFields["PREVIEW_PICTURE"]["del"] == '') {
             unset($arFields["PREVIEW_PICTURE"]);
+        }
 
-        if (is_set($arFields, "RATING") && !in_array($arFields["RATING"], Array("Y", "N")))
+        if (is_set($arFields, "RATING") && !in_array($arFields["RATING"], Array("Y", "N"))) {
             $arFields["RATING"] = "N";
+        }
 
-        if (is_set($arFields, "RATING_TYPE") && !in_array($arFields["RATING_TYPE"], Array("like", "standart_text", "like_graphic", "standart")))
-            $arFields["RATING_TYPE"] = NULL;
+        if (is_set($arFields, "RATING_TYPE") && !in_array(
+                $arFields["RATING_TYPE"],
+                Array("like", "standart_text", "like_graphic", "standart")
+            )) {
+            $arFields["RATING_TYPE"] = null;
+        }
 
         if ($this->CheckFields($arFields)) {
             unset($arFields["ID"]);
@@ -145,19 +170,23 @@ class CCourse
             $arFieldsToUnset = array('GROUP_ID', 'SITE_ID');
 
             // Some fields mustn't be in unilesson
-            foreach ($arFieldsToUnset as $key => $value)
-                if (array_key_exists($value, $arFieldsLesson))
+            foreach ($arFieldsToUnset as $key => $value) {
+                if (array_key_exists($value, $arFieldsLesson)) {
                     unset ($arFieldsLesson[$value]);
+                }
+            }
 
             $lessonId = CLearnLesson::Add($arFieldsLesson, $isCourse = true);
             $ID = CLearnLesson::GetLinkedCourse($lessonId);
-            if ($ID === false)
+            if ($ID === false) {
                 return (false);
+            }
 
             //Sites
             $str_LID = "''";
-            foreach ($arFields["SITE_ID"] as $lang)
+            foreach ($arFields["SITE_ID"] as $lang) {
                 $str_LID .= ", '" . $DB->ForSql($lang) . "'";
+            }
             $strSql = "DELETE FROM b_learn_course_site WHERE COURSE_ID=" . $ID;
             $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 
@@ -185,43 +214,58 @@ class CCourse
         global $DB;
 
         $ID = intval($ID);
-        if ($ID < 1) return false;
+        if ($ID < 1) {
+            return false;
+        }
 
-        if (is_set($arFields, "ACTIVE") && $arFields["ACTIVE"] != "Y")
+        if (is_set($arFields, "ACTIVE") && $arFields["ACTIVE"] != "Y") {
             $arFields["ACTIVE"] = "N";
+        }
 
-        if (is_set($arFields, "DESCRIPTION_TYPE") && $arFields["DESCRIPTION_TYPE"] != "html")
+        if (is_set($arFields, "DESCRIPTION_TYPE") && $arFields["DESCRIPTION_TYPE"] != "html") {
             $arFields["DESCRIPTION_TYPE"] = "text";
+        }
 
-        if (is_set($arFields, "DETAIL_TEXT_TYPE") && $arFields["DETAIL_TEXT_TYPE"] != "html")
+        if (is_set($arFields, "DETAIL_TEXT_TYPE") && $arFields["DETAIL_TEXT_TYPE"] != "html") {
             $arFields["DETAIL_TEXT_TYPE"] = "text";
+        }
 
-        if (is_set($arFields, "PREVIEW_TEXT_TYPE") && $arFields["PREVIEW_TEXT_TYPE"] != "html")
+        if (is_set($arFields, "PREVIEW_TEXT_TYPE") && $arFields["PREVIEW_TEXT_TYPE"] != "html") {
             $arFields["PREVIEW_TEXT_TYPE"] = "text";
+        }
 
-        if (is_set($arFields, "RATING") && !in_array($arFields["RATING"], Array("Y", "N")))
-            $arFields["RATING"] = NULL;
+        if (is_set($arFields, "RATING") && !in_array($arFields["RATING"], Array("Y", "N"))) {
+            $arFields["RATING"] = null;
+        }
 
-        if (is_set($arFields, "RATING_TYPE") && !in_array($arFields["RATING_TYPE"], Array("like", "standart_text", "like_graphic", "standart")))
-            $arFields["RATING_TYPE"] = NULL;
+        if (is_set($arFields, "RATING_TYPE") && !in_array(
+                $arFields["RATING_TYPE"],
+                Array("like", "standart_text", "like_graphic", "standart")
+            )) {
+            $arFields["RATING_TYPE"] = null;
+        }
 
         $lessonId = self::CourseGetLinkedLesson($ID);
         if ($this->CheckFields($arFields, $ID) && $lessonId !== false) {
-            if (array_key_exists('ID', $arFields))
+            if (array_key_exists('ID', $arFields)) {
                 unset($arFields["ID"]);
+            }
 
             $arFieldsLesson = $arFields;
             $arFieldsToUnset = array('GROUP_ID', 'SITE_ID');
 
-            foreach ($arFieldsToUnset as $key => $value)
-                if (array_key_exists($value, $arFieldsLesson))
+            foreach ($arFieldsToUnset as $key => $value) {
+                if (array_key_exists($value, $arFieldsLesson)) {
                     unset ($arFieldsLesson[$value]);
+                }
+            }
 
             //Sites
             if (is_set($arFields, "SITE_ID")) {
                 $str_LID = "''";
-                foreach ($arFields["SITE_ID"] as $lang)
+                foreach ($arFields["SITE_ID"] as $lang) {
                     $str_LID .= ", '" . $DB->ForSql($lang) . "'";
+                }
 
                 $strSql = "DELETE FROM b_learn_course_site WHERE COURSE_ID=" . $ID;
                 $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
@@ -233,7 +277,6 @@ class CCourse
                     "WHERE LID IN (" . $str_LID . ") ";
 
                 $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-
             }
 
             CLearnLesson::Update($lessonId, $arFieldsLesson);
@@ -258,8 +301,9 @@ class CCourse
         global $DB;
 
         $ID = intval($ID);
-        if ($ID < 1)
+        if ($ID < 1) {
             return false;
+        }
 
         $lessonId = CCourse::CourseGetLinkedLesson($ID);
         if ($lessonId === false) {
@@ -272,19 +316,20 @@ class CCourse
     }
 
 
-    public function IsCertificatesExists($courseId)
+    public static function IsCertificatesExists($courseId)
     {
         // Check certificates (if exists => forbid removing course)
         $certificate = CCertification::GetList(Array(), Array("COURSE_ID" => $courseId, 'CHECK_PERMISSIONS' => 'N'));
-        if (($certificate === false) || ($certificate->GetNext()))
+        if (($certificate === false) || ($certificate->GetNext())) {
             return true;
-        else
+        } else {
             return false;
+        }
     }
 
 
     // 2012-04-17 Checked/modified for compatibility with new data model
-    function GetByID($ID)
+    public static function GetByID($ID)
     {
         return CCourse::GetList(Array(), Array("ID" => $ID));
     }
@@ -300,27 +345,31 @@ class CCourse
 
 
     // 2012-04-17 Checked/modified for compatibility with new data model
-    function GetSite($COURSE_ID)
+    public static function GetSite($COURSE_ID)
     {
         global $DB;
-        $strSql = "SELECT L.*, CS.* FROM b_learn_course_site CS, b_lang L WHERE L.LID=CS.SITE_ID AND CS.COURSE_ID=" . intval($COURSE_ID);
+        $strSql = "SELECT L.*, CS.* FROM b_learn_course_site CS, b_lang L WHERE L.LID=CS.SITE_ID AND CS.COURSE_ID=" . intval(
+                $COURSE_ID
+            );
 
         return $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
     }
 
 
-    function GetSiteId($COURSE_ID)
+    public static function GetSiteId($COURSE_ID)
     {
         global $DB;
         $strSql = "SELECT SITE_ID FROM b_learn_course_site WHERE COURSE_ID=" . ((int)$COURSE_ID);
 
         $rc = $DB->Query($strSql, true);
-        if ($rc === false)
+        if ($rc === false) {
             throw new LearnException ('EA_SQLERROR', LearnException::EXC_ERR_ALL_GIVEUP);
+        }
 
         $row = $rc->Fetch();
-        if (!isset($row['SITE_ID']))
+        if (!isset($row['SITE_ID'])) {
             throw new LearnException ('EA_NOT_EXISTS', LearnException::EXC_ERR_ALL_NOT_EXISTS);
+        }
 
         return ($row['SITE_ID']);
     }
@@ -330,7 +379,7 @@ class CCourse
     {
         global $DB;
 
-        $in_type = strtoupper($in_type);
+        $in_type = mb_strtoupper($in_type);
         switch ($in_type) {
             case 'L':
             case 'C':
@@ -350,12 +399,14 @@ class CCourse
 		WHERE TSP.SITE_ID='" . $DB->ForSql($siteId) . "' AND TSP.TYPE = '" . $type . "'";
 
         $rc = $DB->Query($strSql, true);
-        if ($rc === false)
+        if ($rc === false) {
             throw new LearnException ('EA_SQLERROR', LearnException::EXC_ERR_ALL_GIVEUP);
+        }
 
         $arPathes = array();
-        while ($row = $rc->Fetch())
+        while ($row = $rc->Fetch()) {
             $arPathes[] = $row['PATH'];
+        }
 
         return ($arPathes);
     }
@@ -378,12 +429,11 @@ class CCourse
 
 
     // 2012-04-18 Checked/modified for compatibility with new data model
-    function GetCourseContent(
+    public static function GetCourseContent(
         $COURSE_ID,
         $arAddSelectFileds = array("DETAIL_TEXT", "DETAIL_TEXT_TYPE", "DETAIL_PICTURE"),
         $arSelectFields = array()
-    )
-    {
+    ) {
         global $DB;
 
         $COURSE_ID = intval($COURSE_ID);
@@ -422,7 +472,7 @@ class CCourse
     // Handlers:
 
     // 2012-04-17 Checked/modified for compatibility with new data model
-    function OnGroupDelete($GROUP_ID)
+    public static function OnGroupDelete($GROUP_ID)
     {
         global $DB;
 
@@ -436,7 +486,7 @@ class CCourse
 
 
     // 2012-04-17 Checked/modified for compatibility with new data model
-    function OnBeforeLangDelete($lang)
+    public static function OnBeforeLangDelete($lang)
     {
         global $APPLICATION;
         $r = CCourse::GetList(array(), array("SITE_ID" => $lang));
@@ -444,31 +494,34 @@ class CCourse
         $bAllowDelete = true;
 
         // Is any data exists for this site?
-        if ($r->Fetch())
+        if ($r->Fetch()) {
             $bAllowDelete = false;
+        }
 
-        if (!$bAllowDelete)
+        if (!$bAllowDelete) {
             $APPLICATION->ThrowException(GetMessage('LEARNING_PREVENT_LANG_REMOVE'));
+        }
 
         return ($bAllowDelete);
     }
 
 
     // 2012-04-17 Checked/modified for compatibility with new data model
-    function OnUserDelete($user_id)
+    public static function OnUserDelete($user_id)
     {
         return CStudent::Delete($user_id);
     }
 
 
     // 2012-04-17 Checked/modified for compatibility with new data model
-    function TimeToStr($seconds)
+    public static function TimeToStr($seconds)
     {
         $str = "";
 
         $seconds = intval($seconds);
-        if ($seconds <= 0)
+        if ($seconds <= 0) {
             return $str;
+        }
 
         $days = intval($seconds / 86400);
         if ($days > 0) {
@@ -495,13 +548,13 @@ class CCourse
 
 
     // provided compatibility to new data model at 04.05.2012
-    function OnSearchReindex($nextStep = [], $callbackObject = null, $callbackMethod = "")
+    public static function OnSearchReindex($nextStep = [], $callbackObject = null, $callbackMethod = "")
     {
         return Bitrix\Learning\Integration\Search::handleReindex($nextStep, $callbackObject, $callbackMethod);
     }
 
 
-    function _Upper($str)
+    public static function _Upper($str)
     {
         return $str;
     }
@@ -533,13 +586,15 @@ class CCourse
 
         $courseId = (int)$courseId;
 
-        if (!($courseId > 0))
-            return ('D');        // access denied
+        if (!($courseId > 0)) {
+            return ('D');
+        }        // access denied
 
         $linkedLessonId = CCourse::CourseGetLinkedLesson($courseId);
 
-        if (!($linkedLessonId > 0))
-            return ('D');        // some troubles, access denied
+        if (!($linkedLessonId > 0)) {
+            return ('D');
+        }        // some troubles, access denied
 
         $oAccess = CLearnAccess::GetInstance($USER->GetID());
 

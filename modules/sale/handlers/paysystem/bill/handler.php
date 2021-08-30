@@ -34,8 +34,9 @@ class BillHandler
     {
         $template = 'template';
 
-        if (array_key_exists('pdf', $_REQUEST))
+        if (array_key_exists('pdf', $_REQUEST)) {
             $template .= '_pdf';
+        }
 
         $extraParams = $this->getPreparedParams($payment, $request);
         $this->setExtraParams($extraParams);
@@ -74,7 +75,9 @@ class BillHandler
         $order = $paymentCollection->getOrder();
 
         $extraParams = array(
-            'ACCOUNT_NUMBER' => (IsModuleInstalled('intranet')) ? $order->getField('ACCOUNT_NUMBER') : $payment->getField('ACCOUNT_NUMBER'),
+            'ACCOUNT_NUMBER' => (IsModuleInstalled('intranet')) ? $order->getField(
+                'ACCOUNT_NUMBER'
+            ) : $payment->getField('ACCOUNT_NUMBER'),
             'CURRENCY' => $payment->getField('CURRENCY'),
             'DATE_BILL' => $payment->getField('DATE_BILL'),
             'SUM' => Sale\PriceMaths::roundPrecision($order->getPrice()),
@@ -106,7 +109,7 @@ class BillHandler
         $ids = array();
         if ($userColumns !== null) {
             $extraParams['USER_COLUMNS'] = array();
-            $userColumns = unserialize($userColumns);
+            $userColumns = unserialize($userColumns, ['allowed_classes' => false]);
             if ($userColumns) {
                 foreach ($userColumns as $id => $columns) {
                     $extraParams['USER_COLUMNS']['PROPERTY_' . $id] = array(
@@ -150,7 +153,9 @@ class BillHandler
             $productIdsByCatalogMap = [];
             $dbRes = \CCrmProduct::GetList([], ['ID' => array_keys($productProps)], ['ID', 'CATALOG_ID']);
             while ($data = $dbRes->Fetch()) {
-                $catalogId = isset($data['CATALOG_ID']) ? intval($data['CATALOG_ID']) : \CCrmCatalog::EnsureDefaultExists();
+                $catalogId = isset($data['CATALOG_ID']) ? intval(
+                    $data['CATALOG_ID']
+                ) : \CCrmCatalog::EnsureDefaultExists();
                 if (!isset($productIdsByCatalogMap[$catalogId])) {
                     $productIdsByCatalogMap[$catalogId] = [];
                 }
@@ -256,8 +261,9 @@ class BillHandler
             );
 
             $dbRes = \CIBlockProperty::GetList(array(), $arFilter);
-            while ($arRow = $dbRes->Fetch())
+            while ($arRow = $dbRes->Fetch()) {
                 $data['BASKET_ITEMS'][0]['PROPERTY_' . $arRow['ID']] = 'test';
+            }
         }
 
         return $data;
@@ -309,7 +315,11 @@ class BillHandler
         $order = $payment->getOrder();
 
         $today = new Type\Date();
-        $fileName = 'invoice_' . $order->getField('ACCOUNT_NUMBER') . '_' . str_replace(array('.', '\\', '/'), '-', $today->toString()) . '.pdf';
+        $fileName = 'invoice_' . $order->getField('ACCOUNT_NUMBER') . '_' . str_replace(
+                array('.', '\\', '/'),
+                '-',
+                $today->toString()
+            ) . '.pdf';
         $fileData = array(
             'name' => $fileName,
             'type' => 'application/pdf',

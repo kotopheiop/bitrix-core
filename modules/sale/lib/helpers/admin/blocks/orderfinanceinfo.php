@@ -33,24 +33,45 @@ class OrderFinanceInfo
 							</thead>
 							<tbody>
 								<tr>
-									<td id="sale-order-financeinfo-price-view">' . SaleFormatCurrency(floatval($data['PRICE']), $data['CURRENCY']) . '</td>
+									<td id="sale-order-financeinfo-price-view">' . SaleFormatCurrency(
+                floatval($data['PRICE']),
+                $data['CURRENCY']
+            ) . '</td>
 									<td class="separator"></td>
-									<td id="sale-order-financeinfo-sum-paid-view">' . SaleFormatCurrency(floatval($data['SUM_PAID']), $data['CURRENCY']) . '</td>
+									<td id="sale-order-financeinfo-sum-paid-view">' . SaleFormatCurrency(
+                floatval($data['SUM_PAID']),
+                $data['CURRENCY']
+            ) . '</td>
 									<td class="separator"></td>
-									<td id="sale-order-financeinfo-payable-view">' . SaleFormatCurrency(floatval($data['PAYABLE']), $data['CURRENCY']) . '</td>
+									<td id="sale-order-financeinfo-payable-view">' . SaleFormatCurrency(
+                floatval($data['PAYABLE']),
+                $data['CURRENCY']
+            ) . '</td>
 								</tr>
 							</tbody>
 						</table>
 					</div>
 				</div>
-					<div class="adm-bus-pay-section"' . (floatval($data['BUYER_BUDGET']) <= 0 ? ' style="display:none;"' : '') . '>
-						<input id="sale-order-financeinfo-user-budget-input" type="hidden" value="' . floatval($data['BUYER_BUDGET']) . '">
+					<div class="adm-bus-pay-section"' . (floatval(
+                $data['BUYER_BUDGET']
+            ) <= 0 ? ' style="display:none;"' : '') . '>
+						<input id="sale-order-financeinfo-user-budget-input" type="hidden" value="' . floatval(
+                $data['BUYER_BUDGET']
+            ) . '">
 						<div class="adm-bus-pay-section-content posr">
 							<div class="adm-bus-pay-wallet">
-								' . Loc::getMessage('SALE_ORDER_FINANCEINFO_BALANCE_INNER_BUDGET') . ': <strong id="sale-order-financeinfo-user-budget">' . SaleFormatCurrency($data['BUYER_BUDGET'], $data['CURRENCY']) . '</strong>';
+								' . Loc::getMessage(
+                'SALE_ORDER_FINANCEINFO_BALANCE_INNER_BUDGET'
+            ) . ': <strong id="sale-order-financeinfo-user-budget">' . SaleFormatCurrency(
+                $data['BUYER_BUDGET'],
+                $data['CURRENCY']
+            ) . '</strong>';
 
-        if ($useCurrentBudget)
-            $result .= '<span class="adm-bus-pay-use-current-budget" onclick="BX.Sale.Admin.GeneralPayment.useCurrentBudget(this);">' . Loc::getMessage('SALE_ORDER_FINANCEINFO_USE_INNER_BUDGET') . '</span>';
+        if ($useCurrentBudget) {
+            $result .= '<span class="adm-bus-pay-use-current-budget" onclick="BX.Sale.Admin.GeneralPayment.useCurrentBudget(this);">' . Loc::getMessage(
+                    'SALE_ORDER_FINANCEINFO_USE_INNER_BUDGET'
+                ) . '</span>';
+        }
 
         $result .= '</div>
 					</div>

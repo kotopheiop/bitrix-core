@@ -1,9 +1,11 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions == "D")
+if ($saleModulePermissions == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 
@@ -23,11 +25,12 @@ ClearVars();
 $errorMessage = "";
 $bVarsFromForm = false;
 
-$ID = IntVal($ID);
+$ID = intval($ID);
 
-if ($REQUEST_METHOD == "POST" && strlen($Update) > 0 && $saleModulePermissions >= "W" && check_bitrix_sessid()) {
-    if (StrLen($SITE_ID) <= 0)
+if ($REQUEST_METHOD == "POST" && $Update <> '' && $saleModulePermissions >= "W" && check_bitrix_sessid()) {
+    if ($SITE_ID == '') {
         $errorMessage .= GetMessage("SATE1_NO_SITE") . ".<br>";
+    }
 
     $RATE1 = str_replace(",", ".", $RATE1);
     $RATE1 = DoubleVal($RATE1);
@@ -44,13 +47,14 @@ if ($REQUEST_METHOD == "POST" && strlen($Update) > 0 && $saleModulePermissions >
     $RATE5 = str_replace(",", ".", $RATE5);
     $RATE5 = DoubleVal($RATE5);
 
-    if (StrLen($errorMessage) <= 0) {
+    if ($errorMessage == '') {
         $dbAffiliateTier = CSaleAffiliateTier::GetList(array(), array("SITE_ID" => $SITE_ID, "!ID" => $ID));
-        if ($dbAffiliateTier->Fetch())
+        if ($dbAffiliateTier->Fetch()) {
             $errorMessage .= str_replace("#SITE_ID#", $SITE_ID, GetMessage("SATE1_EXISTS")) . ".<br>";
+        }
     }
 
-    if (StrLen($errorMessage) <= 0) {
+    if ($errorMessage == '') {
         $arFields = array(
             "SITE_ID" => $SITE_ID,
             "RATE1" => $RATE1,
@@ -62,26 +66,29 @@ if ($REQUEST_METHOD == "POST" && strlen($Update) > 0 && $saleModulePermissions >
 
         if ($ID > 0) {
             if (!CSaleAffiliateTier::Update($ID, $arFields)) {
-                if ($ex = $APPLICATION->GetException())
+                if ($ex = $APPLICATION->GetException()) {
                     $errorMessage .= $ex->GetString() . ".<br>";
-                else
+                } else {
                     $errorMessage .= GetMessage("SATE1_ERROR_SAVE") . ".<br>";
+                }
             }
         } else {
             $ID = CSaleAffiliateTier::Add($arFields);
-            $ID = IntVal($ID);
+            $ID = intval($ID);
             if ($ID <= 0) {
-                if ($ex = $APPLICATION->GetException())
+                if ($ex = $APPLICATION->GetException()) {
                     $errorMessage .= $ex->GetString() . ".<br>";
-                else
+                } else {
                     $errorMessage .= GetMessage("SATE1_ERROR_SAVE") . ".<br>";
+                }
             }
         }
     }
 
-    if (strlen($errorMessage) <= 0) {
-        if (strlen($apply) <= 0)
+    if ($errorMessage == '') {
+        if ($apply == '') {
             LocalRedirect("/bitrix/admin/sale_affiliate_tier.php?lang=" . LANG . GetFilterParams("filter_", false));
+        }
     } else {
         $bVarsFromForm = true;
     }
@@ -89,19 +96,22 @@ if ($REQUEST_METHOD == "POST" && strlen($Update) > 0 && $saleModulePermissions >
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/prolog.php");
 
-if ($ID > 0)
+if ($ID > 0) {
     $APPLICATION->SetTitle(str_replace("#ID#", $ID, GetMessage("SATE1_TITLE_UPDATE")));
-else
+} else {
     $APPLICATION->SetTitle(GetMessage("SATE1_TITLE_ADD"));
+}
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
 $dbAffiliateTier = CSaleAffiliateTier::GetList(array(), array("ID" => $ID));
-if (!$dbAffiliateTier->ExtractFields("str_"))
+if (!$dbAffiliateTier->ExtractFields("str_")) {
     $ID = 0;
+}
 
-if ($bVarsFromForm)
+if ($bVarsFromForm) {
     $DB->InitTableVarsForEdit("b_sale_affiliate_tier", "", "str_");
+}
 ?>
 
 <?
@@ -125,7 +135,10 @@ if ($ID > 0) {
     if ($saleModulePermissions >= "W") {
         $aMenu[] = array(
             "TEXT" => GetMessage("SATE1_DELETE"),
-            "LINK" => "javascript:if(confirm('" . GetMessage("SATE1_DELETE_CONF") . "')) window.location='/bitrix/admin/sale_affiliate_tier.php?ID=" . $ID . "&action=delete&lang=" . LANG . "&" . bitrix_sessid_get() . "#tb';",
+            "LINK" => "javascript:if(confirm('" . GetMessage(
+                    "SATE1_DELETE_CONF"
+                ) . "')) window.location='/bitrix/admin/sale_affiliate_tier.php?ID=" . $ID . "&action=delete&lang=" . LANG . "&" . bitrix_sessid_get(
+                ) . "#tb';",
             "WARNING" => "Y",
             "ICON" => "btn_delete"
         );
@@ -135,8 +148,16 @@ $context = new CAdminContextMenu($aMenu);
 $context->Show();
 ?>
 
-<? if (strlen($errorMessage) > 0)
-    echo CAdminMessage::ShowMessage(Array("DETAILS" => $errorMessage, "TYPE" => "ERROR", "MESSAGE" => GetMessage("SATE1_ERROR_SAVE"), "HTML" => true)); ?>
+<? if ($errorMessage <> '') {
+    echo CAdminMessage::ShowMessage(
+        Array(
+            "DETAILS" => $errorMessage,
+            "TYPE" => "ERROR",
+            "MESSAGE" => GetMessage("SATE1_ERROR_SAVE"),
+            "HTML" => true
+        )
+    );
+} ?>
 
     <form method="POST" action="<? echo $APPLICATION->GetCurPage() ?>?" name="form1">
         <? echo GetFilterHiddens("filter_"); ?>
@@ -147,7 +168,12 @@ $context->Show();
 
         <?
         $aTabs = array(
-            array("DIV" => "edit1", "TAB" => GetMessage("SATE1_TIER"), "ICON" => "sale", "TITLE" => GetMessage("SATE1_TIER_ALT")),
+            array(
+                "DIV" => "edit1",
+                "TAB" => GetMessage("SATE1_TIER"),
+                "ICON" => "sale",
+                "TITLE" => GetMessage("SATE1_TIER_ALT")
+            ),
         );
 
         $tabControl = new CAdminTabControl("tabControl", $aTabs);

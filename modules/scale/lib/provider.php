@@ -29,19 +29,24 @@ class Provider
         if ($execRes) {
             $arData = json_decode($jsonData, true);
 
-            if (isset($arData["params"]) && isset($arData["params"]["providers"]) && is_array($arData["params"]["providers"]))
+            if (isset($arData["params"]) && isset($arData["params"]["providers"]) && is_array(
+                    $arData["params"]["providers"]
+                )) {
                 $result = $arData["params"]["providers"];
+            }
 
             if (isset($params["filter"]) && is_array($params["filter"])) {
                 foreach ($params["filter"] as $filterKey => $filterValue) {
                     foreach ($result as $providerId => $providerParams) {
-                        if (!array_key_exists($filterKey, $providerParams) || $providerParams[$filterKey] != $filterValue) {
+                        if (!array_key_exists(
+                                $filterKey,
+                                $providerParams
+                            ) || $providerParams[$filterKey] != $filterValue) {
                             unset($result[$providerId]);
                         }
                     }
                 }
             }
-
         }
 
         return $result;
@@ -54,20 +59,26 @@ class Provider
      */
     public static function getStatus($providerId)
     {
-        if (strlen($providerId) <= 0)
+        if ($providerId == '') {
             throw new ArgumentNullException("providerId");
+        }
 
         $result = array();
 
         $shellAdapter = new ShellAdapter();
-        $execRes = $shellAdapter->syncExec("sudo -u root /opt/webdir/bin/bx-provider -a status --provider " . $providerId . " -o json");
+        $execRes = $shellAdapter->syncExec(
+            "sudo -u root /opt/webdir/bin/bx-provider -a status --provider " . $providerId . " -o json"
+        );
         $jsonData = $shellAdapter->getLastOutput();
 
         if ($execRes) {
             $arData = json_decode($jsonData, true);
 
-            if (isset($arData["params"]["provider_options"][$providerId]) && is_array($arData["params"]["provider_options"][$providerId]))
+            if (isset($arData["params"]["provider_options"][$providerId]) && is_array(
+                    $arData["params"]["provider_options"][$providerId]
+                )) {
                 $result = $arData["params"]["provider_options"][$providerId];
+            }
         }
 
         return $result;
@@ -80,19 +91,25 @@ class Provider
      */
     public static function getConfigs($providerId)
     {
-        if (strlen($providerId) <= 0)
+        if ($providerId == '') {
             throw new ArgumentNullException("providerId");
+        }
 
         $result = array();
         $shellAdapter = new ShellAdapter();
-        $execRes = $shellAdapter->syncExec("sudo -u root /opt/webdir/bin/bx-provider -a configs --provider " . $providerId . " -o json");
+        $execRes = $shellAdapter->syncExec(
+            "sudo -u root /opt/webdir/bin/bx-provider -a configs --provider " . $providerId . " -o json"
+        );
         $jsonData = $shellAdapter->getLastOutput();
 
         if ($execRes) {
             $arData = json_decode($jsonData, true);
 
-            if (isset($arData["params"]["provider_configs"][$providerId]["configurations"]) && is_array($arData["params"]["provider_configs"][$providerId]["configurations"]))
+            if (isset($arData["params"]["provider_configs"][$providerId]["configurations"]) && is_array(
+                    $arData["params"]["provider_configs"][$providerId]["configurations"]
+                )) {
                 $result = $arData["params"]["provider_configs"][$providerId]["configurations"];
+            }
         }
 
         return $result;
@@ -106,25 +123,30 @@ class Provider
      */
     public static function sendOrder($providerId, $configId)
     {
-        if (strlen($providerId) <= 0)
+        if ($providerId == '') {
             throw new ArgumentNullException("providerId");
+        }
 
-        if (strlen($configId) <= 0)
+        if ($configId == '') {
             throw new ArgumentNullException("configId");
+        }
 
         $result = "";
         $shellAdapter = new ShellAdapter();
-        $execRes = $shellAdapter->syncExec("sudo -u root /opt/webdir/bin/bx-provider -a order --provider " . $providerId . " --config_id " . $configId . " -o json");
+        $execRes = $shellAdapter->syncExec(
+            "sudo -u root /opt/webdir/bin/bx-provider -a order --provider " . $providerId . " --config_id " . $configId . " -o json"
+        );
         $jsonData = $shellAdapter->getLastOutput();
 
         if ($execRes) {
             $arData = json_decode($jsonData, true);
 
-            if (isset($arData["params"]["provider_order"][$providerId]["task_id"]))
+            if (isset($arData["params"]["provider_order"][$providerId]["task_id"])) {
                 $result = $arData["params"]["provider_order"][$providerId]["task_id"];
+            }
         }
 
-        if (strlen($result) > 0) {
+        if ($result <> '') {
             $logLevel = Logger::LOG_LEVEL_INFO;
             $description = Loc::getMessage("SCALE_PROVIDER_SEND_ORDER_SUCCESS");
         } else {
@@ -142,7 +164,8 @@ class Provider
             $logLevel,
             "SCALE_PROVIDER_SEND_ORDER",
             $providerId . "::" . $configId,
-            $description);
+            $description
+        );
 
         return $result;
     }
@@ -156,22 +179,27 @@ class Provider
      */
     public static function getOrderStatus($providerId, $taskId)
     {
-        if (strlen($providerId) <= 0)
+        if ($providerId == '') {
             throw new ArgumentNullException("providerId");
+        }
 
-        if (strlen($taskId) <= 0)
+        if ($taskId == '') {
             throw new ArgumentNullException("taskId");
+        }
 
         $result = array();
         $shellAdapter = new ShellAdapter();
-        $execRes = $shellAdapter->syncExec("sudo -u root /opt/webdir/bin/bx-provider -a order_status --provider " . $providerId . " --task_id " . $taskId . " -o json");
+        $execRes = $shellAdapter->syncExec(
+            "sudo -u root /opt/webdir/bin/bx-provider -a order_status --provider " . $providerId . " --task_id " . $taskId . " -o json"
+        );
         $jsonData = $shellAdapter->getLastOutput();
 
         if ($execRes) {
             $arData = json_decode($jsonData, true);
 
-            if (isset($arData["params"]["provider_order"][$providerId]))
+            if (isset($arData["params"]["provider_order"][$providerId])) {
                 $result = $arData["params"]["provider_order"][$providerId];
+            }
         }
 
         return $result;
@@ -186,14 +214,17 @@ class Provider
     {
         $result = array();
         $shellAdapter = new ShellAdapter();
-        $execRes = $shellAdapter->syncExec("sudo -u root /opt/webdir/bin/bx-provider -a orders_list" . (strlen($providerId) > 0 ? " --provider " . $providerId : "") . " -o json");
+        $execRes = $shellAdapter->syncExec(
+            "sudo -u root /opt/webdir/bin/bx-provider -a orders_list" . ($providerId <> '' ? " --provider " . $providerId : "") . " -o json"
+        );
         $jsonData = $shellAdapter->getLastOutput();
 
         if ($execRes) {
             $arData = json_decode($jsonData, true);
 
-            if (isset($arData["params"]["provider_order_list"]))
+            if (isset($arData["params"]["provider_order_list"])) {
                 $result = $arData["params"]["provider_order_list"];
+            }
         }
 
         return $result;
@@ -208,15 +239,19 @@ class Provider
      */
     public static function addToPullFromOrder($providerId, $taskId)
     {
-        if (strlen($providerId) <= 0)
+        if ($providerId == '') {
             throw new ArgumentNullException("providerId");
+        }
 
-        if (strlen($taskId) <= 0)
+        if ($taskId == '') {
             throw new ArgumentNullException("taskId");
+        }
 
         $result = false;
         $shellAdapter = new ShellAdapter();
-        $execRes = $shellAdapter->syncExec("sudo -u root /opt/webdir/bin/bx-provider -a order_to_host --provider " . $providerId . "  --task_id " . $taskId . " -o json");
+        $execRes = $shellAdapter->syncExec(
+            "sudo -u root /opt/webdir/bin/bx-provider -a order_to_host --provider " . $providerId . "  --task_id " . $taskId . " -o json"
+        );
         $jsonData = $shellAdapter->getLastOutput();
 
         if ($execRes) {

@@ -22,8 +22,9 @@ Class CIdeaManagmentIdeaComment
 
     public function Get()
     {
-        if (!$this->IsAvailable())
+        if (!$this->IsAvailable()) {
             return false;
+        }
 
         return CBlogComment::GetList(
             array(),
@@ -33,13 +34,15 @@ Class CIdeaManagmentIdeaComment
 
     public function Bind()
     {
-        if (!$this->IsAvailable())
+        if (!$this->IsAvailable()) {
             return false;
+        }
 
         //Comment doesn't exists
         $arComment = $this->Get();
-        if (!$arComment)
+        if (!$arComment) {
             return false;
+        }
 
         $arIdea = CBlogPost::GetList(
             array(),
@@ -51,7 +54,10 @@ Class CIdeaManagmentIdeaComment
         //Post doesn't exists
         if ($arIdea) {
             //Already binded
-            if (is_array($arIdea[CIdeaManagment::UFAnswerIdField]) && in_array($arComment["ID"], $arIdea[CIdeaManagment::UFAnswerIdField])) {
+            if (is_array($arIdea[CIdeaManagment::UFAnswerIdField]) && in_array(
+                    $arComment["ID"],
+                    $arIdea[CIdeaManagment::UFAnswerIdField]
+                )) {
                 return false;
             } elseif (!is_array($arIdea[CIdeaManagment::UFAnswerIdField])) {
                 $arIdea[CIdeaManagment::UFAnswerIdField] = array();
@@ -68,18 +74,27 @@ Class CIdeaManagmentIdeaComment
 
     public function UnBind()
     {
-        if (!$this->IsAvailable())
+        if (!$this->IsAvailable()) {
             return false;
+        }
 
         //Comment doesn't exists
         $arComment = $this->Get();
-        if (!$arComment)
+        if (!$arComment) {
             return false;
+        }
 
-        $arIdea = CBlogPost::GetList(array(), array("ID" => $arComment["POST_ID"]), false, false, array("ID", CIdeaManagment::UFAnswerIdField))->Fetch();
+        $arIdea = CBlogPost::GetList(
+            array(),
+            array("ID" => $arComment["POST_ID"]),
+            false,
+            false,
+            array("ID", CIdeaManagment::UFAnswerIdField)
+        )->Fetch();
         if ($arIdea) {
-            if (!is_array($arIdea[CIdeaManagment::UFAnswerIdField]))
+            if (!is_array($arIdea[CIdeaManagment::UFAnswerIdField])) {
                 $arIdea[CIdeaManagment::UFAnswerIdField] = array();
+            }
             $arIdea[CIdeaManagment::UFAnswerIdField] = array_unique($arIdea[CIdeaManagment::UFAnswerIdField]);
 
             $key = array_search($arComment["ID"], $arIdea[CIdeaManagment::UFAnswerIdField]);

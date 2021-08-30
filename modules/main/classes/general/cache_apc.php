@@ -7,17 +7,13 @@ class CPHPCacheAPC implements ICacheBackend
     var $written = false;
     var $read = false;
 
-    function __construct()
+    public function __construct()
     {
-        $this->CPHPCacheAPC();
-    }
-
-    function CPHPCacheAPC()
-    {
-        if (defined("BX_CACHE_SID"))
+        if (defined("BX_CACHE_SID")) {
             $this->sid = BX_CACHE_SID;
-        else
+        } else {
             $this->sid = "BX";
+        }
     }
 
     function IsAvailable()
@@ -27,25 +23,28 @@ class CPHPCacheAPC implements ICacheBackend
 
     function clean($basedir, $initdir = false, $filename = false)
     {
-        if (strlen($filename)) {
+        if ($filename <> '') {
             $basedir_version = apc_fetch($this->sid . $basedir);
-            if ($basedir_version === false)
+            if ($basedir_version === false) {
                 return true;
+            }
 
             if ($initdir !== false) {
                 $initdir_version = apc_fetch($basedir_version . "|" . $initdir);
-                if ($initdir_version === false)
+                if ($initdir_version === false) {
                     return true;
+                }
             } else {
                 $initdir_version = "";
             }
 
             apc_delete($basedir_version . "|" . $initdir_version . "|" . $filename);
         } else {
-            if (strlen($initdir)) {
+            if ($initdir <> '') {
                 $basedir_version = apc_fetch($this->sid . $basedir);
-                if ($basedir_version === false)
+                if ($basedir_version === false) {
                     return true;
+                }
 
                 apc_delete($basedir_version . "|" . $initdir);
             } else {
@@ -58,13 +57,15 @@ class CPHPCacheAPC implements ICacheBackend
     function read(&$arAllVars, $basedir, $initdir, $filename, $TTL)
     {
         $basedir_version = apc_fetch($this->sid . $basedir);
-        if ($basedir_version === false)
+        if ($basedir_version === false) {
             return false;
+        }
 
         if ($initdir !== false) {
             $initdir_version = apc_fetch($basedir_version . "|" . $initdir);
-            if ($initdir_version === false)
+            if ($initdir_version === false) {
                 return false;
+            }
         } else {
             $initdir_version = "";
         }
@@ -74,7 +75,7 @@ class CPHPCacheAPC implements ICacheBackend
         if ($arAllVars === false) {
             return false;
         } else {
-            $this->read = strlen($arAllVars);
+            $this->read = mb_strlen($arAllVars);
             $arAllVars = unserialize($arAllVars);
         }
 
@@ -86,23 +87,25 @@ class CPHPCacheAPC implements ICacheBackend
         $basedir_version = apc_fetch($this->sid . $basedir);
         if ($basedir_version === false) {
             $basedir_version = md5(mt_rand());
-            if (!apc_store($this->sid . $basedir, $basedir_version))
+            if (!apc_store($this->sid . $basedir, $basedir_version)) {
                 return;
+            }
         }
 
         if ($initdir !== false) {
             $initdir_version = apc_fetch($basedir_version . "|" . $initdir);
             if ($initdir_version === false) {
                 $initdir_version = md5(mt_rand());
-                if (!apc_store($basedir_version . "|" . $initdir, $initdir_version))
+                if (!apc_store($basedir_version . "|" . $initdir, $initdir_version)) {
                     return;
+                }
             }
         } else {
             $initdir_version = "";
         }
 
         $arAllVars = serialize($arAllVars);
-        $this->written = strlen($arAllVars);
+        $this->written = mb_strlen($arAllVars);
 
         apc_store($basedir_version . "|" . $initdir_version . "|" . $filename, $arAllVars, intval($TTL));
     }

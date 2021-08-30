@@ -27,10 +27,11 @@ class CSecurityFilePermissionsTest
     {
         IncludeModuleLangFile(__FILE__);
         $this->savedMaxExecutionTime = ini_get("max_execution_time");
-        if ($this->savedMaxExecutionTime <= 0)
+        if ($this->savedMaxExecutionTime <= 0) {
             $phpMaxExecutionTime = 30;
-        else
+        } else {
             $phpMaxExecutionTime = $this->savedMaxExecutionTime - 2;
+        }
         $this->maximumExecutionTime = time() + $phpMaxExecutionTime;
         set_time_limit(0);
     }
@@ -49,8 +50,9 @@ class CSecurityFilePermissionsTest
      */
     public function checkRequirements($params = array())
     {
-        if ($this->maximumExecutionTime - time() <= 5)
+        if ($this->maximumExecutionTime - time() <= 5) {
             throw new CSecurityRequirementsException(GetMessage('SECURITY_SITE_CHECKER_FILE_PERM_SMALL_MAX_EXEC'));
+        }
         return true;
     }
 
@@ -75,12 +77,16 @@ class CSecurityFilePermissionsTest
             }
         }
 
-        if ($this->filesCount <= self::MAX_OUTPUT_FILES)
+        if ($this->filesCount <= self::MAX_OUTPUT_FILES) {
             $recommendationFilesCount = $this->filesCount;
-        else
+        } else {
             $recommendationFilesCount = self::MAX_OUTPUT_FILES;
+        }
 
-        $additionalInfo = GetMessage("SECURITY_SITE_CHECKER_FILE_PERM_ADDITIONAL", array("#COUNT#" => $recommendationFilesCount));
+        $additionalInfo = GetMessage(
+            "SECURITY_SITE_CHECKER_FILE_PERM_ADDITIONAL",
+            array("#COUNT#" => $recommendationFilesCount)
+        );
         $additionalInfo .= "<br>";
         $additionalInfo .= $this->getFilesPathInString();
 
@@ -89,7 +95,10 @@ class CSecurityFilePermissionsTest
             "problem_count" => 1,
             "errors" => array(
                 array(
-                    "title" => GetMessage("SECURITY_SITE_CHECKER_FILE_PERM_TITLE", array("#COUNT#" => $this->filesCount)),
+                    "title" => GetMessage(
+                        "SECURITY_SITE_CHECKER_FILE_PERM_TITLE",
+                        array("#COUNT#" => $this->filesCount)
+                    ),
                     "critical" => CSecurityCriticalLevel::HIGHT,
                     "detail" => GetMessage("SECURITY_SITE_CHECKER_FILE_PERM_DETAIL"),
                     "recommendation" => GetMessage("SECURITY_SITE_CHECKER_FILE_PERM_RECOMMENDATION"),
@@ -116,7 +125,7 @@ class CSecurityFilePermissionsTest
      */
     protected static function isInterestingFile($pFileName)
     {
-        return is_file($pFileName) && in_array(substr($pFileName, -4), self::$interestingFileExtentions, true);
+        return is_file($pFileName) && in_array(mb_substr($pFileName, -4), self::$interestingFileExtentions, true);
     }
 
     /**
@@ -129,14 +138,17 @@ class CSecurityFilePermissionsTest
         $result = false;
         if ($handle = opendir($pDir)) {
             while (false !== ($item = readdir($handle))) {
-                if ($item == "." || $item == ".." || in_array($item, self::$skipDirs))
+                if ($item == "." || $item == ".." || in_array($item, self::$skipDirs)) {
                     continue;
+                }
 
-                if ($this->filesCount > self::MAX_OUTPUT_FILES)
+                if ($this->filesCount > self::MAX_OUTPUT_FILES) {
                     return $result;
+                }
 
-                if (time() >= $this->maximumExecutionTime)
+                if (time() >= $this->maximumExecutionTime) {
                     throw new Exception('SECURITY_SITE_CHECKER_FILE_PERM_TIMEOUT');
+                }
 
                 $curFile = $pDir . "/" . $item;
                 $isInteresting = self::isInterestingFile($curFile) || self::isInterestingDir($curFile);
@@ -144,7 +156,6 @@ class CSecurityFilePermissionsTest
                     $result = true;
                     $this->filesCount++;
                     $this->addFilePath($curFile);
-
                 }
                 if (is_dir($curFile)) {
                     if ($this->checkWorldWritableDirRecursive($curFile)) {

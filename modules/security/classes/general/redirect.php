@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 class CSecurityRedirect
@@ -8,29 +9,34 @@ class CSecurityRedirect
         // ToDo: refactoring candidate
 
         //This define will be used on buffer end handler
-        if (!defined("BX_SECURITY_LOCAL_REDIRECT"))
+        if (!defined("BX_SECURITY_LOCAL_REDIRECT")) {
             define("BX_SECURITY_LOCAL_REDIRECT", true);
-
-        if (array_key_exists("LOCAL_REDIRECTS", $_SESSION)) {
-            if ($_SESSION["LOCAL_REDIRECTS"]["C"] == 0 && strlen($_SESSION["LOCAL_REDIRECTS"]["R"]) == 0)
-                $_SESSION["LOCAL_REDIRECTS"]["R"] = $_SERVER["HTTP_REFERER"];
-
-            $_SESSION["LOCAL_REDIRECTS"]["C"]++;
-        } else {
-            $_SESSION["LOCAL_REDIRECTS"] = array("C" => 1, "R" => $_SERVER["HTTP_REFERER"]);
         }
 
-        if ($skip_security_check)
+        $kernelSession = \Bitrix\Main\Application::getInstance()->getKernelSession();
+        if ($kernelSession->isStarted() && $kernelSession->has("LOCAL_REDIRECTS")) {
+            if ($kernelSession["LOCAL_REDIRECTS"]["C"] == 0 && $kernelSession["LOCAL_REDIRECTS"]["R"] == '') {
+                $kernelSession["LOCAL_REDIRECTS"]["R"] = $_SERVER["HTTP_REFERER"];
+            }
+
+            $kernelSession["LOCAL_REDIRECTS"]["C"]++;
+        } else {
+            $kernelSession["LOCAL_REDIRECTS"] = array("C" => 1, "R" => $_SERVER["HTTP_REFERER"]);
+        }
+
+        if ($skip_security_check) {
             return;
+        }
 
         /** global CMain $APPLICATION */
         global $APPLICATION;
 
+        $good = true;
         $url_l = str_replace(array("\r", "\n"), "", $url);
 
         //In case of absolute url will check if server to be redirected is our
         $bSkipCheck = false;
-        if (preg_match('~^(?:http|https)://(.*?)(?:\\\\|/|\?|#|$|%252f|%2f)~iD', $url_l, $arMatch)) {
+        if (preg_match('~^(?:http|https)://(.*?)(\\\\|/|\?|#|$|%252f|%2f)~iD', $url_l, $arMatch)) {
             if (defined("BX24_HOST_NAME")) {
                 $arSite = array(
                     "SERVER_NAME" => BX24_HOST_NAME,
@@ -51,8 +57,8 @@ class CSecurityRedirect
                 $arDomains = explode("\n", str_replace("\r", "\n", $arSite["DOMAINS"]));
                 foreach ($arDomains as $domain) {
                     $domain = trim($domain, " \t\n\r");
-                    if (strlen($domain) > 0) {
-                        if ($domain === substr($arMatch[1], -strlen($domain))) {
+                    if ($domain <> '') {
+                        if ($domain === mb_substr($arMatch[1], -mb_strlen($domain))) {
                             $bSkipCheck = true;
                             break;
                         }
@@ -64,56 +70,70 @@ class CSecurityRedirect
                 $host = COption::GetOptionString("main", "server_name", "");
                 $bSkipCheck = $host && $arMatch[1] === $host;
             }
+
+            if (strpos(strtolower($arMatch[2]), '%2f') === 0) {
+                $good = false;
+                $bSkipCheck = false;
+            }
         }
 
         if (!$bSkipCheck && preg_match("/^(http|https|ftp):\\/\\//i", $url_l)) {
-            $good = true;
-
-            if ($_SESSION["LOCAL_REDIRECTS"]["C"] > 1)
-                $REFERER_TO_CHECK = $_SESSION["LOCAL_REDIRECTS"]["R"];
-            else
+            if ($kernelSession["LOCAL_REDIRECTS"]["C"] > 1) {
+                $REFERER_TO_CHECK = $kernelSession["LOCAL_REDIRECTS"]["R"];
+            } else {
                 $REFERER_TO_CHECK = $_SERVER["HTTP_REFERER"];
-
-            if ($good && COption::GetOptionString("security", "redirect_referer_check") == "Y") {
-                $good &= strlen($REFERER_TO_CHECK) > 0;
             }
 
-            if ($good && strlen($REFERER_TO_CHECK) > 0 && COption::GetOptionString("security", "redirect_referer_site_check") == "Y") {
+            if ($good && COption::GetOptionString("security", "redirect_referer_check") == "Y") {
+                $good &= $REFERER_TO_CHECK <> '';
+            }
+
+            if ($good && $REFERER_TO_CHECK <> '' && COption::GetOptionString(
+                    "security",
+                    "redirect_referer_site_check"
+                ) == "Y") {
                 $valid_site = ($APPLICATION->IsHTTPS() ? "https://" : "http://") . $_SERVER['HTTP_HOST'] . "/";
-                $good &= strpos($REFERER_TO_CHECK, $valid_site) === 0;
+                $good &= mb_strpos($REFERER_TO_CHECK, $valid_site) === 0;
             }
 
             if ($good && COption::GetOptionString("security", "redirect_href_sign") == "Y") {
-                $sid = COption::GetOptionString("security", "redirect_sid") . $_SERVER["REMOTE_ADDR"];
-                $good &= md5($sid . ":" . $url) === $_GET["af"];
+                $sid = static::GetSeed();
+                $good &= static::Sign($sid, $url) === $_GET["af"];
             }
 
             if (!$good) {
                 global $APPLICATION;
 
-                if (COption::GetOptionString("security", "redirect_log") == "Y")
+                if (COption::GetOptionString("security", "redirect_log") == "Y") {
                     CSecurityEvent::getInstance()->doLog(
                         "SECURITY",
                         "SECURITY_REDIRECT",
                         $APPLICATION->GetCurPage(),
                         $url
                     );
+                }
 
                 if (
                     COption::GetOptionString("security", "redirect_action") == "show_message"
                     || COption::GetOptionString("security", "redirect_action") == "show_message_and_stay"
                 ) {
-                    if (COption::GetOptionString("security", "redirect_action") == "show_message")
-                        $timeout = intval(COption::GetOptionString("security",
-                            "redirect_message_timeout"));
-                    else
+                    if (COption::GetOptionString("security", "redirect_action") == "show_message") {
+                        $timeout = intval(
+                            COption::GetOptionString(
+                                "security",
+                                "redirect_message_timeout"
+                            )
+                        );
+                    } else {
                         $timeout = 0;
+                    }
 
                     $mess = COption::GetOptionString("security", "redirect_message_warning_" . LANGUAGE_ID);
-                    if (strlen($mess) <= 0)
+                    if ($mess == '') {
                         $mess = COption::GetOptionString("security", "redirect_message_warning");
+                    }
                     $charset = COption::GetOptionString("security", "redirect_message_charset");
-                    if (strlen($mess) <= 0) {
+                    if ($mess == '') {
                         $mess = CSecurityRedirect::GetDefaultMessage();
                         $charset = LANG_CHARSET;
                     }
@@ -128,14 +148,22 @@ class CSecurityRedirect
 
                     if (preg_match('~^(http|https)(://)(.*?)(?:\\\\|/|\?|#|$)~iD', $url_c, $arMatch)) {
                         $converter = CBXPunycode::GetConverter();
-                        $url_e = $arMatch[1] . $arMatch[2] . $converter->Encode($arMatch[3]) . substr($url_c, strlen($arMatch[1] . $arMatch[2] . $arMatch[3]));
+                        $url_e = $arMatch[1] . $arMatch[2] . $converter->Encode($arMatch[3]) . mb_substr(
+                                $url_c,
+                                mb_strlen(
+                                    $arMatch[1] . $arMatch[2] . $arMatch[3]
+                                )
+                            );
                     } else {
                         $url_e = $url;
                     }
 
                     $url = htmlspecialcharsbx($url);
-                    $html_url = '<nobr><a href="' . htmlspecialcharsbx($url_e) . '">' . htmlspecialcharsEx($url_c) . '</a></nobr>';
+                    $html_url = '<nobr><a href="' . htmlspecialcharsbx($url_e) . '">' . htmlspecialcharsEx(
+                            $url_c
+                        ) . '</a></nobr>';
                     $html_mess = str_replace("#URL#", $html_url, $html_mess);
+                    CHTTP::SetStatus("404 Not Found");
                     header('X-Frame-Options: DENY');
                     header('X-Robots-Tag: noindex, nofollow');
                     ?>
@@ -218,10 +246,11 @@ class CSecurityRedirect
             return GetMessage("SEC_REDIRECT_DEFAULT_MESSAGE");
         } else {
             $mess = IncludeModuleLangFile(__FILE__, $language_id, true);
-            if (strlen($mess["SEC_REDIRECT_DEFAULT_MESSAGE"]))
+            if ($mess["SEC_REDIRECT_DEFAULT_MESSAGE"] <> '') {
                 return $mess["SEC_REDIRECT_DEFAULT_MESSAGE"];
-            else
+            } else {
                 return GetMessage("SEC_REDIRECT_DEFAULT_MESSAGE");
+            }
         }
     }
 
@@ -229,11 +258,20 @@ class CSecurityRedirect
     {
         //There was no looped local redirects
         //so it's only true referer
-        if (!defined("BX_SECURITY_LOCAL_REDIRECT"))
-            $_SESSION["LOCAL_REDIRECTS"] = array("C" => 0, "R" => $_SERVER["HTTP_REFERER"]);
+        if (!defined("BX_SECURITY_LOCAL_REDIRECT")) {
+            \Bitrix\Main\Application::getInstance()->getKernelSession()["LOCAL_REDIRECTS"] = array(
+                "C" => 0,
+                "R" => $_SERVER["HTTP_REFERER"]
+            );
+        }
 
-        if (COption::GetOptionString("security", "redirect_href_sign") == "Y")
-            $content = preg_replace_callback("#(<a\\s[^>/]*?href\\s*=\\s*)(['\"])(.+?)(\\2)#i", array("self", "ReplaceHREF"), $content);
+        if (COption::GetOptionString("security", "redirect_href_sign") == "Y") {
+            $content = preg_replace_callback(
+                "#(<a\\s[^>/]*?href\\s*=\\s*)(['\"])(.+?)(\\2)#i",
+                array("self", "ReplaceHREF"),
+                $content
+            );
+        }
     }
 
     protected static function ReplaceHREF($matches)
@@ -244,23 +282,38 @@ class CSecurityRedirect
 
         if (!$arUrls) {
             $arUrls = self::GetUrls();
-            $sid = COption::GetOptionString("security", "redirect_sid") . $_SERVER["REMOTE_ADDR"];
+            $sid = static::GetSeed();
             $arDomains = self::GetDomains();
-            foreach ($arDomains as $i => $domain)
+            foreach ($arDomains as $i => $domain) {
                 $arDomains[$i] = preg_quote($domain, "/");
+            }
             $strDomains = "/.*(" . implode("|", $arDomains) . ")$/";
         }
 
         foreach ($arUrls as $arUrl) {
-            if (preg_match("/^(http(?:s){0,1}\\:\\/\\/(?:[a-zA-Z0-9\\.-])+){0,1}" . preg_quote($arUrl["URL"], "/") . "?.*?" . preg_quote($arUrl["PARAMETER_NAME"], "/") . "=(http|https|ftp)(:|%3A|&#37;3A)(\\/\\/|%2F%2F|&#37;2F&#37;2F)([^&]+)/im", $matches[3], $match)) {
-                if (strlen($match[1]) <= 0 || preg_match($strDomains, $match[1])) {
+            if (preg_match(
+                "/^(http(?:s){0,1}\\:\\/\\/(?:[a-zA-Z0-9\\.-])+){0,1}" . preg_quote(
+                    $arUrl["URL"],
+                    "/"
+                ) . "?.*?" . preg_quote(
+                    $arUrl["PARAMETER_NAME"],
+                    "/"
+                ) . "=(http|https|ftp)(:|%3A|&#37;3A)(\\/\\/|%2F%2F|&#37;2F&#37;2F)([^&]+)/im",
+                $matches[3],
+                $match
+            )) {
+                if ($match[1] == '' || preg_match($strDomains, $match[1])) {
                     $goto = $match[2] . $match[3] . $match[4] . $match[5];
                     $goto = str_replace(
                         array("&#37;", "%3A", "%2F"),
                         array("%", ":", "/"),
-                        $goto);
+                        $goto
+                    );
 
-                    return $matches[1] . $matches[2] . $matches[3] . "&amp;af=" . urlencode(md5($sid . ":" . urldecode($goto))) . $matches[4];
+                    return $matches[1] . $matches[2] . $matches[3] . "&amp;af=" . static::Sign(
+                            $sid,
+                            urldecode($goto)
+                        ) . $matches[4];
                 }
             }
         }
@@ -280,17 +333,23 @@ class CSecurityRedirect
                 $arUrls = $CACHE_MANAGER->Get($cache_id);
             } else {
                 $arUrls = array();
-                $rs = $DB->Query("SELECT URL, PARAMETER_NAME, IS_SYSTEM from b_sec_redirect_url ORDER BY IS_SYSTEM DESC, SORT ASC");
-                while ($ar = $rs->Fetch())
+                $rs = $DB->Query(
+                    "SELECT URL, PARAMETER_NAME, IS_SYSTEM from b_sec_redirect_url ORDER BY IS_SYSTEM DESC, SORT ASC"
+                );
+                while ($ar = $rs->Fetch()) {
                     $arUrls[] = $ar;
+                }
 
                 $CACHE_MANAGER->Set($cache_id, $arUrls);
             }
         } else {
             $arUrls = array();
-            $rs = $DB->Query("SELECT URL, PARAMETER_NAME, IS_SYSTEM from b_sec_redirect_url ORDER BY IS_SYSTEM DESC, SORT ASC");
-            while ($ar = $rs->Fetch())
+            $rs = $DB->Query(
+                "SELECT URL, PARAMETER_NAME, IS_SYSTEM from b_sec_redirect_url ORDER BY IS_SYSTEM DESC, SORT ASC"
+            );
+            while ($ar = $rs->Fetch()) {
                 $arUrls[] = $ar;
+            }
         }
         return $arUrls;
     }
@@ -308,18 +367,41 @@ class CSecurityRedirect
             } else {
                 $arDomains = array();
                 $rs = $DB->Query("SELECT DOMAIN from b_lang_domain");
-                while ($ar = $rs->Fetch())
+                while ($ar = $rs->Fetch()) {
                     $arDomains[] = $ar["DOMAIN"];
+                }
 
                 $CACHE_MANAGER->Set("b_sec_domains", $arDomains);
             }
         } else {
             $arDomains = array();
             $rs = $DB->Query("SELECT DOMAIN from b_lang_domain");
-            while ($ar = $rs->Fetch())
+            while ($ar = $rs->Fetch()) {
                 $arDomains[] = $ar["DOMAIN"];
+            }
         }
         return $arDomains;
+    }
+
+    public static function ReSeed()
+    {
+        COption::SetOptionString("security", "redirect_sid", Bitrix\Main\Security\Random::getString(32));
+    }
+
+    public static function GetSeed()
+    {
+        $seed = COption::GetOptionString("security", "redirect_sid");
+        if (!$seed) {
+            static::ReSeed();
+            $seed = COption::GetOptionString("security", "redirect_sid");
+        }
+        return $seed;
+    }
+
+    public static function Sign($seed, $data)
+    {
+        $seed .= $_SERVER["REMOTE_ADDR"];
+        return md5($seed . md5($seed . ":" . $data));
     }
 
     public static function IsActive()
@@ -341,14 +423,40 @@ class CSecurityRedirect
     {
         if ($bActive) {
             if (!CSecurityRedirect::IsActive()) {
-                COption::SetOptionString("security", "redirect_sid", Bitrix\Main\Security\Random::getString(32));
-                RegisterModuleDependences("main", "OnBeforeLocalRedirect", "security", "CSecurityRedirect", "BeforeLocalRedirect", "1");
-                RegisterModuleDependences("main", "OnEndBufferContent", "security", "CSecurityRedirect", "EndBufferContent", "1");
+                static::ReSeed();
+                RegisterModuleDependences(
+                    "main",
+                    "OnBeforeLocalRedirect",
+                    "security",
+                    "CSecurityRedirect",
+                    "BeforeLocalRedirect",
+                    "1"
+                );
+                RegisterModuleDependences(
+                    "main",
+                    "OnEndBufferContent",
+                    "security",
+                    "CSecurityRedirect",
+                    "EndBufferContent",
+                    "1"
+                );
             }
         } else {
             if (CSecurityRedirect::IsActive()) {
-                UnRegisterModuleDependences("main", "OnBeforeLocalRedirect", "security", "CSecurityRedirect", "BeforeLocalRedirect");
-                UnRegisterModuleDependences("main", "OnEndBufferContent", "security", "CSecurityRedirect", "EndBufferContent");
+                UnRegisterModuleDependences(
+                    "main",
+                    "OnBeforeLocalRedirect",
+                    "security",
+                    "CSecurityRedirect",
+                    "BeforeLocalRedirect"
+                );
+                UnRegisterModuleDependences(
+                    "main",
+                    "OnEndBufferContent",
+                    "security",
+                    "CSecurityRedirect",
+                    "EndBufferContent"
+                );
             }
         }
     }
@@ -362,7 +470,11 @@ class CSecurityRedirect
         global $DB, $CACHE_MANAGER;
 
         if (is_array($arUrls)) {
-            $res = $DB->Query("DELETE FROM b_sec_redirect_url WHERE IS_SYSTEM <> 'Y'", false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+            $res = $DB->Query(
+                "DELETE FROM b_sec_redirect_url WHERE IS_SYSTEM <> 'Y'",
+                false,
+                "File: " . __FILE__ . "<br>Line: " . __LINE__
+            );
             if ($res) {
                 $added = array();
                 $i = 10;
@@ -371,7 +483,7 @@ class CSecurityRedirect
                     $param = trim($arUrl["PARAMETER_NAME"]);
                     $key = $url . ":" . $param;
 
-                    if (strlen($url) && strlen($param) && !array_key_exists($key, $added)) {
+                    if (mb_strlen($url) && mb_strlen($param) && !array_key_exists($key, $added)) {
                         $arUrl = array(
                             "ID" => 1,
                             "IS_SYSTEM" => "N",
@@ -386,9 +498,9 @@ class CSecurityRedirect
                     }
                 }
 
-                if (CACHED_b_sec_redirect_url !== false)
+                if (CACHED_b_sec_redirect_url !== false) {
                     $CACHE_MANAGER->CleanDir("b_sec_redirect_url");
-
+                }
             }
         }
 
@@ -399,7 +511,9 @@ class CSecurityRedirect
     {
         /** global CDatabase $DB */
         global $DB;
-        $res = $DB->Query("SELECT URL, PARAMETER_NAME, IS_SYSTEM from b_sec_redirect_url ORDER BY IS_SYSTEM DESC, SORT ASC");
+        $res = $DB->Query(
+            "SELECT URL, PARAMETER_NAME, IS_SYSTEM from b_sec_redirect_url ORDER BY IS_SYSTEM DESC, SORT ASC"
+        );
         return $res;
     }
 

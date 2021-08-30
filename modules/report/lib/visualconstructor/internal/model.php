@@ -101,7 +101,6 @@ abstract class Model implements IErrorable
      */
     public function save()
     {
-
         $referenceMapAttributes = static::getMapReferenceAttributes();
 
         foreach ($referenceMapAttributes as $referenceAttributeName => $assoc) {
@@ -163,7 +162,6 @@ abstract class Model implements IErrorable
                 $reference->{$mapReferenceAttributes[$assoc['mappedBy']]['join']['field'][0]} = $ownerEntityId;
                 $reference->save();
             }
-
         }
     }
 
@@ -242,7 +240,6 @@ abstract class Model implements IErrorable
      */
     private function getChangedOrmAttributes($newEntityAttributes)
     {
-
         /**
          * DONE
          * Optimise here: maybe add some property where will located state of values of entity when it select from DB
@@ -298,12 +295,14 @@ abstract class Model implements IErrorable
      */
     public static function load($filter, array $with = array(), $order = array())
     {
-        $models = static::getModelList(array(
-            'select' => array('*'),
-            'filter' => $filter,
-            'with' => $with,
-            'order' => $order
-        ));
+        $models = static::getModelList(
+            array(
+                'select' => array('*'),
+                'filter' => $filter,
+                'with' => $with,
+                'order' => $order
+            )
+        );
         return array_shift($models);
     }
 
@@ -426,13 +425,15 @@ abstract class Model implements IErrorable
                         }
                         $parentEntity->{$key}[$subEntity->id] = $subEntity;
                     } else {
-                        $targetEntityClass::buildFromArray($validAttributes, $parentEntity->{$key}[$validAttributes['ID']]);
+                        $targetEntityClass::buildFromArray(
+                            $validAttributes,
+                            $parentEntity->{$key}[$validAttributes['ID']]
+                        );
                     }
                 } else {
                     $subEntity = $targetEntityClass::buildFromArray($validAttributes);
                     $parentEntity->{$key} = $subEntity;
                 }
-
             }
         }
 
@@ -456,7 +457,10 @@ abstract class Model implements IErrorable
             } elseif (!in_array('*', $parameters['select']) && !in_array('ID', $parameters['select'])) {
                 $parameters['select'][] = 'ID';
             }
-            $parameters['select'] = array_merge($parameters['select'], static::buildOrmSelectForReference($parameters['with']));
+            $parameters['select'] = array_merge(
+                $parameters['select'],
+                static::buildOrmSelectForReference($parameters['with'])
+            );
         }
 
         unset($parameters['with']);
@@ -486,8 +490,11 @@ abstract class Model implements IErrorable
                             $targetEntity = $nestedReferenceAttributes[$reference]['targetEntity'];
                             $targetOrmTable = $targetEntity::getTableClassName();
                             $fromKeyNamePrefix = !empty($fromKeyNamePrefix) ? $fromKeyNamePrefix . '.' : '';
-                            $select[$prefix] = $fromKeyNamePrefix . $targetOrmTable::getClassName() . ':' . strtoupper($nestedReferenceAttributes[$reference]['mappedBy']);
-                            $fromKeyNamePrefix .= $targetOrmTable::getClassName() . ':' . strtoupper($nestedReferenceAttributes[$reference]['mappedBy']);
+                            $select[$prefix] = $fromKeyNamePrefix . $targetOrmTable::getClassName(
+                                ) . ':' . mb_strtoupper($nestedReferenceAttributes[$reference]['mappedBy']);
+                            $fromKeyNamePrefix .= $targetOrmTable::getClassName() . ':' . mb_strtoupper(
+                                    $nestedReferenceAttributes[$reference]['mappedBy']
+                                );
                             $nestedReferenceAttributes = $targetEntity::getMapReferenceAttributes();
                             break;
                         case Common::MANY_TO_MANY:
@@ -506,10 +513,9 @@ abstract class Model implements IErrorable
                             break;
                         case Common::MANY_TO_ONE:
                             $fromKeyNamePrefix = !empty($fromKeyNamePrefix) ? $fromKeyNamePrefix . '.' : '';
-                            $select[$prefix] = $fromKeyNamePrefix . strtoupper($reference);
-                            $fromKeyNamePrefix .= strtoupper($reference);
+                            $select[$prefix] = $fromKeyNamePrefix . mb_strtoupper($reference);
+                            $fromKeyNamePrefix .= mb_strtoupper($reference);
                             break;
-
                     }
                 } else {
                     throw new ArgumentException("Reference with name:" . $reference . ' not define in reference map');
@@ -553,7 +559,6 @@ abstract class Model implements IErrorable
                         break;
                 }
             }
-
         }
         $entityTableClass = static::getTableClassName();
         $deleteEntity = $entityTableClass::delete($ownerId);
@@ -694,7 +699,7 @@ abstract class Model implements IErrorable
         $isDeleteReferenceCall = preg_match_all('/^delete(\w+)/', $name, $deleteCallNameParts);
         if ($isDeleteReferenceCall) {
             $referenceName = $deleteCallNameParts[1][0];
-            $referenceName = strtolower($referenceName);
+            $referenceName = mb_strtolower($referenceName);
             $referenceMapAttributes = $this::getMapReferenceAttributes();
             if (!empty($referenceMapAttributes[$referenceName])) {
                 /** @var static[] $entities */
@@ -715,7 +720,7 @@ abstract class Model implements IErrorable
         $isAddReferenceCall = preg_match_all('/^add(\w+)/', $name, $addCallNameParts);
         if ($isAddReferenceCall) {
             $referenceName = $addCallNameParts[1][0];
-            $referenceName = strtolower($referenceName);
+            $referenceName = mb_strtolower($referenceName);
             $referenceMapAttributes = $this::getMapReferenceAttributes();
             if (!empty($referenceMapAttributes[$referenceName])) {
                 /** @var static[] $entities */
@@ -731,7 +736,6 @@ abstract class Model implements IErrorable
                 }
             }
         }
-
     }
 
     /**
@@ -769,8 +773,6 @@ abstract class Model implements IErrorable
                     break;
             }
         }
-
-
     }
 
     /**

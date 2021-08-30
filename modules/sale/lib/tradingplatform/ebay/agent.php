@@ -29,17 +29,28 @@ class Agent
 
     public static function start($feedType, $siteId, $startPosition = "", $once = false)
     {
-        if (empty($siteId))
+        if (empty($siteId)) {
             throw new ArgumentNullException('siteId');
+        }
 
         $siteId = \EscapePHPString($siteId);
 
-        if (!in_array($feedType, array("ORDER", "PRODUCT", "INVENTORY", "IMAGE", "PROCESS_RESULT", "RESULTS", "ORDER_ACK")))
+        if (!in_array(
+            $feedType,
+            array("ORDER", "PRODUCT", "INVENTORY", "IMAGE", "PROCESS_RESULT", "RESULTS", "ORDER_ACK")
+        )) {
             throw new ArgumentOutOfRangeException('feedType');
+        }
 
         $result = "";
         $timeLimit = 300;
-        Ebay::log(Logger::LOG_LEVEL_DEBUG, "EBAY_AGENT_FEED_STARTED", $feedType, "Feed: " . $feedType . ", site: " . $siteId . ", start position: " . $startPosition, $siteId);
+        Ebay::log(
+            Logger::LOG_LEVEL_DEBUG,
+            "EBAY_AGENT_FEED_STARTED",
+            $feedType,
+            "Feed: " . $feedType . ", site: " . $siteId . ", start position: " . $startPosition,
+            $siteId
+        );
 
         try {
             if (in_array($feedType, array("ORDER", "PROCESS_RESULT", "RESULTS"))) {
@@ -51,13 +62,15 @@ class Agent
                 $queue->sendData();
             }
         } catch (TimeIsOverException $e) {
-            $result = 'Bitrix\Sale\TradingPlatform\Ebay\Agent::start("' . $feedType . '","' . $siteId . '","' . $e->getEndPosition() . '",, ' . ($once ? 'true' : 'false') . ');';
+            $result = 'Bitrix\Sale\TradingPlatform\Ebay\Agent::start("' . $feedType . '","' . $siteId . '","' . $e->getEndPosition(
+                ) . '",, ' . ($once ? 'true' : 'false') . ');';
         } catch (\Exception $e) {
             Ebay::log(Logger::LOG_LEVEL_ERROR, "EBAY_FEED_ERROR", $feedType, $e->getMessage(), $siteId);
         }
 
-        if (strlen($result) <= 0 && !$once)
+        if ($result == '' && !$once) {
             $result = 'Bitrix\Sale\TradingPlatform\Ebay\Agent::start("' . $feedType . '","' . $siteId . '");';
+        }
 
         return $result;
     }
@@ -73,22 +86,25 @@ class Agent
      */
     public static function add($feedType, $siteId, $interval, $once = false)
     {
-        if ($interval <= 0)
+        if ($interval <= 0) {
             return 0;
+        }
 
-        if (empty($siteId))
+        if (empty($siteId)) {
             throw new ArgumentNullException('siteId');
+        }
 
         $siteId = \EscapePHPString($siteId);
 
-        if ($feedType == "ORDER")
+        if ($feedType == "ORDER") {
             $sort = 50;
-        elseif ($feedType == "PRODUCT" || $feedType == "PROCESS_RESULT" || $feedType == "RESULTS")
+        } elseif ($feedType == "PRODUCT" || $feedType == "PROCESS_RESULT" || $feedType == "RESULTS") {
             $sort = 100;
-        elseif ($feedType == "INVENTORY" || $feedType == "IMAGE" || $feedType == "ORDER_ACK")
+        } elseif ($feedType == "INVENTORY" || $feedType == "IMAGE" || $feedType == "ORDER_ACK") {
             $sort = 150;
-        else
+        } else {
             throw new ArgumentOutOfRangeException('feedType');
+        }
 
         $intervalSeconds = $interval * 60;
         $timeToStart = ConvertTimeStamp(strtotime(date('Y-m-d H:i:s', time() + $intervalSeconds)), 'FULL');
@@ -101,9 +117,16 @@ class Agent
             $timeToStart,
             "Y",
             $timeToStart,
-            $sort);
+            $sort
+        );
 
-        Ebay::log(Logger::LOG_LEVEL_DEBUG, "EBAY_AGENT_ADDING_RESULT", $feedType, "Feed: " . $feedType . ", site: " . $siteId . ", interval: " . $interval . " once: " . ($once ? 'true' : 'false') . " agentId: '" . $result . "'", $siteId);
+        Ebay::log(
+            Logger::LOG_LEVEL_DEBUG,
+            "EBAY_AGENT_ADDING_RESULT",
+            $feedType,
+            "Feed: " . $feedType . ", site: " . $siteId . ", interval: " . $interval . " once: " . ($once ? 'true' : 'false') . " agentId: '" . $result . "'",
+            $siteId
+        );
 
         return $result;
     }

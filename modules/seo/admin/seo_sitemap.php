@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 define('ADMIN_MODULE_NAME', 'seo');
@@ -30,9 +31,11 @@ $adminList = new CAdminList($tableID, $oSort);
 if (($arID = $adminList->GroupAction())) {
     if ($_REQUEST['action_target'] == 'selected') {
         $arID = array();
-        $rsData = SitemapTable::getList(array(
-            "select" => array("ID"),
-        ));
+        $rsData = SitemapTable::getList(
+            array(
+                "select" => array("ID"),
+            )
+        );
 
         while ($arRes = $rsData->fetch()) {
             $arID[] = $arRes['ID'];
@@ -41,8 +44,9 @@ if (($arID = $adminList->GroupAction())) {
 
     foreach ($arID as $ID) {
         $ID = intval($ID);
-        if ($ID <= 0)
+        if ($ID <= 0) {
             continue;
+        }
 
         switch ($_REQUEST['action']) {
             case "delete":
@@ -68,20 +72,32 @@ while ($arRes = $dbSites->fetch(Converter::getHtmlConverter())) {
 $map = SitemapTable::getMap();
 unset($map['SETTINGS']);
 
-$sitemapList = SitemapTable::getList(array(
-    'order' => array($by => $order),
-    "select" => array_keys($map),
-));
+$sitemapList = SitemapTable::getList(
+    array(
+        'order' => array($by => $order),
+        "select" => array_keys($map),
+    )
+);
 $data = new CAdminResult($sitemapList, $tableID);
 $data->NavStart();
 
 $arHeaders = array(
     array("id" => "ID", "content" => Loc::getMessage("SITEMAP_ID"), "sort" => "ID", "default" => true),
-    array("id" => "TIMESTAMP_X", "content" => Loc::getMessage('SITEMAP_TIMESTAMP_X'), "sort" => "TIMESTAMP_X", "default" => true),
+    array(
+        "id" => "TIMESTAMP_X",
+        "content" => Loc::getMessage('SITEMAP_TIMESTAMP_X'),
+        "sort" => "TIMESTAMP_X",
+        "default" => true
+    ),
     array("id" => "NAME", "content" => Loc::getMessage('SITEMAP_NAME'), "sort" => "NAME", "default" => true),
 //	array("id"=>"ACTIVE", "content"=>Loc::getMessage('SITEMAP_ACTIVE'), "sort"=>"ACTIVE", "default"=>true, "align" => "center"),
     array("id" => "SITE_ID", "content" => Loc::getMessage('SITEMAP_SITE_ID'), "sort" => "SITE_ID", "default" => true),
-    array("id" => "DATE_RUN", "content" => Loc::getMessage('SITEMAP_DATE_RUN'), "sort" => "DATE_RUN", "default" => true),
+    array(
+        "id" => "DATE_RUN",
+        "content" => Loc::getMessage('SITEMAP_DATE_RUN'),
+        "sort" => "DATE_RUN",
+        "default" => true
+    ),
     array("id" => "RUN", "content" => "", "default" => true),
 );
 
@@ -90,37 +106,64 @@ $adminList->NavText($data->GetNavPrint(Loc::getMessage("PAGES")));
 while ($sitemap = $data->NavNext()) {
     $id = intval($sitemap['ID']);
 
-    $row = &$adminList->AddRow($sitemap["ID"], $sitemap, "seo_sitemap_edit.php?ID=" . $sitemap["ID"] . "&lang=" . LANGUAGE_ID, Loc::getMessage("SITEMAP_EDIT_TITLE"));
+    $row = &$adminList->AddRow(
+        $sitemap["ID"],
+        $sitemap,
+        "seo_sitemap_edit.php?ID=" . $sitemap["ID"] . "&lang=" . LANGUAGE_ID,
+        Loc::getMessage("SITEMAP_EDIT_TITLE")
+    );
 
     $row->AddViewField("ID", $sitemap['ID']);
     $row->AddViewField('TIMESTAMP_X', $sitemap['TIMESTAMP_X']);
-    $row->AddViewField('DATE_RUN', $sitemap['DATE_RUN'] ? $sitemap['DATE_RUN'] : Loc::getMessage('SITEMAP_DATE_RUN_NEVER'));
-    $row->AddViewField('SITE_ID', '<a href="site_edit.php?lang=' . LANGUAGE_ID . '&amp;LID=' . $sitemap['SITE_ID'] . '">[' . $sitemap['SITE_ID'] . '] ' . $arSites[$sitemap['SITE_ID']]['NAME'] . '</a>');
+    $row->AddViewField(
+        'DATE_RUN',
+        $sitemap['DATE_RUN'] ? $sitemap['DATE_RUN'] : Loc::getMessage('SITEMAP_DATE_RUN_NEVER')
+    );
+    $row->AddViewField(
+        'SITE_ID',
+        '<a href="site_edit.php?lang=' . LANGUAGE_ID . '&amp;LID=' . $sitemap['SITE_ID'] . '">[' . $sitemap['SITE_ID'] . '] ' . $arSites[$sitemap['SITE_ID']]['NAME'] . '</a>'
+    );
 
-    $row->AddField("NAME", '<a href="seo_sitemap_edit.php?ID=' . $sitemap["ID"] . '&amp;lang=' . LANGUAGE_ID . '" title="' . Loc::getMessage("SITEMAP_EDIT_TITLE") . '">' . Converter::getHtmlConverter()->encode($sitemap['NAME']) . '</a>');
-    $row->AddField("RUN", '<input type="button" class="adm-btn-save" value="' . Converter::getHtmlConverter()->encode(Loc::getMessage('SITEMAP_RUN')) . '" onclick="generateSitemap(' . $sitemap['ID'] . ')" name="save" id="sitemap_run_button_' . $sitemap['ID'] . '" />');
+    $row->AddField(
+        "NAME",
+        '<a href="seo_sitemap_edit.php?ID=' . $sitemap["ID"] . '&amp;lang=' . LANGUAGE_ID . '" title="' . Loc::getMessage(
+            "SITEMAP_EDIT_TITLE"
+        ) . '">' . Converter::getHtmlConverter()->encode($sitemap['NAME']) . '</a>'
+    );
+    $row->AddField(
+        "RUN",
+        '<input type="button" class="adm-btn-save" value="' . Converter::getHtmlConverter()->encode(
+            Loc::getMessage('SITEMAP_RUN')
+        ) . '" onclick="generateSitemap(' . $sitemap['ID'] . ')" name="save" id="sitemap_run_button_' . $sitemap['ID'] . '" />'
+    );
 
     //$row->AddInputField("NAME");
     //$row->AddCheckField("ACTIVE");
 
-    $row->AddActions(array(
+    $row->AddActions(
         array(
-            "ICON" => "edit",
-            "TEXT" => Loc::getMessage("SITEMAP_EDIT"),
-            "ACTION" => $adminList->ActionRedirect("seo_sitemap_edit.php?ID=" . $sitemap["ID"] . "&lang=" . LANGUAGE_ID),
-            "DEFAULT" => true,
-        ),
-        array(
-            "ICON" => "move",
-            "TEXT" => Loc::getMessage("SITEMAP_RUN"),
-            "ACTION" => 'generateSitemap(' . $sitemap['ID'] . ');',
-        ),
-        array(
-            "ICON" => "delete",
-            "TEXT" => Loc::getMessage("SITEMAP_DELETE"),
-            "ACTION" => "if(confirm('" . \CUtil::JSEscape(Loc::getMessage('SITEMAP_DELETE_CONFIRM')) . "')) " . $adminList->ActionDoGroup($id, "delete")
-        ),
-    ));
+            array(
+                "ICON" => "edit",
+                "TEXT" => Loc::getMessage("SITEMAP_EDIT"),
+                "ACTION" => $adminList->ActionRedirect(
+                    "seo_sitemap_edit.php?ID=" . $sitemap["ID"] . "&lang=" . LANGUAGE_ID
+                ),
+                "DEFAULT" => true,
+            ),
+            array(
+                "ICON" => "move",
+                "TEXT" => Loc::getMessage("SITEMAP_RUN"),
+                "ACTION" => 'generateSitemap(' . $sitemap['ID'] . ');',
+            ),
+            array(
+                "ICON" => "delete",
+                "TEXT" => Loc::getMessage("SITEMAP_DELETE"),
+                "ACTION" => "if(confirm('" . \CUtil::JSEscape(
+                        Loc::getMessage('SITEMAP_DELETE_CONFIRM')
+                    ) . "')) " . $adminList->ActionDoGroup($id, "delete")
+            ),
+        )
+    );
 }
 
 $arDDMenu = array();
@@ -195,7 +238,11 @@ $adminList->DisplayList();
     </script>
 
     <div id="sitemap_run" style="display: none;">
-        <div id="sitemap_progress"><?= SitemapRuntime::showProgress(Loc::getMessage('SEO_SITEMAP_RUN_INIT'), Loc::getMessage('SEO_SITEMAP_RUN_TITLE'), 0) ?></div>
+        <div id="sitemap_progress"><?= SitemapRuntime::showProgress(
+                Loc::getMessage('SEO_SITEMAP_RUN_INIT'),
+                Loc::getMessage('SEO_SITEMAP_RUN_TITLE'),
+                0
+            ) ?></div>
     </div>
 <?
 if (isset($_REQUEST['run']) && check_bitrix_sessid()) {

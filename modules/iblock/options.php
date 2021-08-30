@@ -1,5 +1,6 @@
 <?
 /** @global CUser $USER */
+
 /** @global CMain $APPLICATION */
 
 /** @global string $mid */
@@ -8,11 +9,13 @@ use Bitrix\Main,
     Bitrix\Main\Loader,
     Bitrix\Iblock;
 
-if (!$USER->IsAdmin())
+if (!$USER->IsAdmin()) {
     return;
+}
 
-if (!Loader::includeModule('iblock'))
+if (!Loader::includeModule('iblock')) {
     return;
+}
 
 $defaultValues = Main\Config\Option::getDefaults('iblock');
 
@@ -33,32 +36,55 @@ $arAllOptions = array(
     array("list_full_date_edit", GetMessage("IBLOCK_LIST_FULL_DATE_EDIT"), "N", array("checkbox", "Y")),
     array("combined_list_mode", GetMessage("IBLOCK_COMBINED_LIST_MODE"), "N", array("checkbox", "Y")),
     array("iblock_menu_max_sections", GetMessage("IBLOCK_MENU_MAX_SECTIONS"), "50", array("text", 5)),
+    array(
+        "change_user_by_group_active_modify",
+        GetMessage("IBLOCK_OPTION_CHANGE_USER_BY_GROUP_ACTIVE_MODIFY"),
+        "N",
+        array("checkbox", "N")
+    ),
     GetMessage('IBLOCK_OPTION_SECTION_CUSTOM_FORM'),
-    array("custom_edit_form_use_property_id", GetMessage("IBLOCK_CUSTOM_FORM_USE_PROPERTY_ID"), "Y", array("checkbox", "Y")),
+    array(
+        "custom_edit_form_use_property_id",
+        GetMessage("IBLOCK_CUSTOM_FORM_USE_PROPERTY_ID"),
+        "Y",
+        array("checkbox", "Y")
+    ),
     GetMessage('IBLOCK_OPTION_SECTION_IMPORT_EXPORT'),
     array("num_catalog_levels", GetMessage("IBLOCK_NUM_CATALOG_LEVELS"), "3", array("text", 5)),
 );
 $aTabs = array(
-    array("DIV" => "edit1", "TAB" => GetMessage("MAIN_TAB_SET"), "ICON" => "ib_settings", "TITLE" => GetMessage("MAIN_TAB_TITLE_SET")),
-    array("DIV" => "iblock_cache", "TAB" => GetMessage("IBLOCK_OPTION_TAB_CACHE"), "TITLE" => GetMessage("IBLOCK_OPTION_TAB_CACHE_TITLE"))
+    array(
+        "DIV" => "edit1",
+        "TAB" => GetMessage("MAIN_TAB_SET"),
+        "ICON" => "ib_settings",
+        "TITLE" => GetMessage("MAIN_TAB_TITLE_SET")
+    ),
+    array(
+        "DIV" => "iblock_cache",
+        "TAB" => GetMessage("IBLOCK_OPTION_TAB_CACHE"),
+        "TITLE" => GetMessage("IBLOCK_OPTION_TAB_CACHE_TITLE")
+    )
 );
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
 $request = Main\Context::getCurrent()->getRequest();
 
-if ($request->isPost() && strlen($Update . $Apply . $RestoreDefaults) > 0 && check_bitrix_sessid()) {
-    if (strlen($RestoreDefaults) > 0) {
+if ($request->isPost() && $Update . $Apply . $RestoreDefaults <> '' && check_bitrix_sessid()) {
+    if ($RestoreDefaults <> '') {
         COption::RemoveOption("iblock");
     } else {
         foreach ($arAllOptions as $arOption) {
-            if (!is_array($arOption))
+            if (!is_array($arOption)) {
                 continue;
+            }
             $name = $arOption[0];
-            if (!isset($_REQUEST[$name]))
+            if (!isset($_REQUEST[$name])) {
                 continue;
+            }
             $val = $_REQUEST[$name];
-            if ($arOption[3][0] == "checkbox" && $val != "Y")
+            if ($arOption[3][0] == "checkbox" && $val != "Y") {
                 $val = "N";
+            }
             COption::SetOptionString("iblock", $name, $val);
         }
         unset($arOption);
@@ -97,7 +123,13 @@ if ($request->isPost() && strlen($Update . $Apply . $RestoreDefaults) > 0 && che
 
             if (!empty($removeAgents)) {
                 foreach ($removeAgents as $iblockId) {
-                    $iterator = CAgent::GetList(array(), array('MODULE_ID' => 'iblock', 'NAME' => '\CIBlock::checkActivityDatesAgent(' . $iblockId . ',%'));
+                    $iterator = CAgent::GetList(
+                        array(),
+                        array(
+                            'MODULE_ID' => 'iblock',
+                            'NAME' => '\CIBlock::checkActivityDatesAgent(' . $iblockId . ',%'
+                        )
+                    );
                     while ($row = $iterator->Fetch()) {
                         CAgent::Delete($row['ID']);
                     }
@@ -129,24 +161,33 @@ if ($request->isPost() && strlen($Update . $Apply . $RestoreDefaults) > 0 && che
             Main\Config\Option::set('iblock', 'iblock_activity_dates_period', $period, '');
         }
     }
-    if (strlen($Update) > 0 && strlen($_REQUEST["back_url_settings"]) > 0)
+    if ($Update <> '' && $_REQUEST["back_url_settings"] <> '') {
         LocalRedirect($_REQUEST["back_url_settings"]);
-    else
-        LocalRedirect($APPLICATION->GetCurPage() . "?mid=" . urlencode($mid) . "&lang=" . LANGUAGE_ID . "&back_url_settings=" . urlencode($_REQUEST["back_url_settings"]) . "&" . $tabControl->ActiveTabParam());
+    } else {
+        LocalRedirect(
+            $APPLICATION->GetCurPage() . "?mid=" . urlencode(
+                $mid
+            ) . "&lang=" . LANGUAGE_ID . "&back_url_settings=" . urlencode(
+                $_REQUEST["back_url_settings"]
+            ) . "&" . $tabControl->ActiveTabParam()
+        );
+    }
 }
 
 $currentValues = [];
 foreach ($arAllOptions as $option) {
-    if (!is_array($option))
+    if (!is_array($option)) {
         continue;
+    }
     $id = $option[0];
     $currentValues[$id] = (string)Main\Config\Option::get('iblock', $id);
 }
 unset($id, $option);
 
 $needFeatureConfirm = false;
-if ($currentValues['property_features_enabled'] == 'N')
+if ($currentValues['property_features_enabled'] == 'N') {
     $needFeatureConfirm = !Iblock\Model\PropertyFeature::isPropertyFeaturesExist();
+}
 
 $activity = (string)Main\Config\Option::get('iblock', 'iblock_activity_dates');
 if ($activity !== '') {
@@ -175,6 +216,14 @@ if (!isset($periodList[$currentValues['iblock_activity_dates_period']])) {
     $currentValues['iblock_activity_dates_period'] = -1;
 }
 
+$optionHints = array(
+    'property_features_enabled' => GetMessage(
+        'IBLOCK_PROPERTY_FEATURES_HINT',
+        ['#LINK#' => 'https://dev.1c-bitrix.ru/learning/course/index.php?COURSE_ID=42&LESSON_ID=1986']
+    ),
+    'change_user_by_group_active_modify' => GetMessage('IBLOCK_OPTION_CHANGE_USER_BY_GROUP_ACTIVE_MODIFY_HINT')
+);
+
 $tabControl->Begin();
 ?>
 <form method="post"
@@ -192,19 +241,16 @@ $tabControl->Begin();
             $controlId = htmlspecialcharsbx($id);
             ?>
             <tr>
-                <td width="40%" nowrap <? if ($type[0] == "textarea") echo 'class="adm-detail-valign-top"' ?>>
+                <td style="width: 40%; white-space: nowrap;" <? if ($type[0] == "textarea") echo 'class="adm-detail-valign-top"' ?>>
                     <?
-                    if ($id == 'property_features_enabled') {
-                        $message = GetMessage(
-                            'IBLOCK_PROPERTY_FEATURES_HINT',
-                            ['#LINK#' => 'https://dev.1c-bitrix.ru/learning/course/index.php?COURSE_ID=42&LESSON_ID=1986']
-                        );
+                    if (isset($optionHints[$id])) {
                         ?><span id="hint_<?= $controlId; ?>"></span>
-                        <script type="text/javascript">BX.hint_replace(BX('hint_<?=$controlId;?>'), '<?=\CUtil::JSEscape($message); ?>');</script>&nbsp;<?
-                        unset($message);
+                        <script type="text/javascript">BX.hint_replace(BX('hint_<?=$controlId;?>'), '<?=\CUtil::JSEscape(
+                                $optionHints[$id]
+                            ); ?>');</script>&nbsp;<?
                     }
                     ?><label for="<?= $controlId; ?>"><?= htmlspecialcharsbx($arOption[1]); ?></label>
-                <td width="60%">
+                <td>
                     <?
                     switch ($type[0]) {
                         case "checkbox":
@@ -289,7 +335,9 @@ $tabControl->Begin();
 
                             oCell = oRow.insertCell(i++);
                             oCell.innerHTML =
-                                '<input type="button" value="<?=htmlspecialcharsbx(GetMessage("IBLOCK_MESS_DELETE_ENTITY")); ?>" OnClick="deleteRow(this)">' +
+                                '<input type="button" value="<?=htmlspecialcharsbx(
+                                    GetMessage("IBLOCK_MESS_DELETE_ENTITY")
+                                ); ?>" OnClick="deleteRow(this)">' +
                                 '<input type="hidden" name="IBLOCK_ACTIVITY_DATES[]" value="' + iblockId + '">';
                         }
                     }
@@ -306,7 +354,9 @@ $tabControl->Begin();
             <select id="iblock_activity_dates_period" name="iblock_activity_dates_period"><?
                 foreach ($periodList as $index => $value) {
                     ?>
-                    <option value="<?= $index; ?>"<?= ($index == $currentValues['iblock_activity_dates_period'] ? ' selected' : ''); ?>><?= htmlspecialcharsbx($value); ?></option><?
+                    <option value="<?= $index; ?>"<?= ($index == $currentValues['iblock_activity_dates_period'] ? ' selected' : ''); ?>><?= htmlspecialcharsbx(
+                        $value
+                    ); ?></option><?
                 }
                 ?></select>
         </td>
@@ -316,7 +366,9 @@ $tabControl->Begin();
         <td style="width: 40%;">&nbsp;</td>
         <td style="width: 60%;">
             <input type="text" name="iblock_activity_dates_period_custom"
-                   value="<?= $currentValues['iblock_activity_dates_period_custom']; ?>"><?= GetMessage('IBLOCK_OPTION_CHECK_ACTIVITY_PERIOD_CUSTOM_UNIT'); ?>
+                   value="<?= $currentValues['iblock_activity_dates_period_custom']; ?>"><?= GetMessage(
+                'IBLOCK_OPTION_CHECK_ACTIVITY_PERIOD_CUSTOM_UNIT'
+            ); ?>
         </td>
     </tr>
     <?
@@ -325,10 +377,11 @@ $tabControl->Begin();
            title="<?= GetMessage("MAIN_OPT_SAVE_TITLE") ?>" class="adm-btn-save">
     <input type="submit" name="Apply" value="<?= GetMessage("MAIN_OPT_APPLY") ?>"
            title="<?= GetMessage("MAIN_OPT_APPLY_TITLE") ?>">
-    <? if (strlen($_REQUEST["back_url_settings"]) > 0): ?>
+    <? if ($_REQUEST["back_url_settings"] <> ''): ?>
         <input type="button" name="Cancel" value="<?= GetMessage("MAIN_OPT_CANCEL") ?>"
-               title="<?= GetMessage("MAIN_OPT_CANCEL_TITLE") ?>"
-               onclick="window.location='<? echo htmlspecialcharsbx(CUtil::addslashes($_REQUEST["back_url_settings"])) ?>'">
+               title="<?= GetMessage("MAIN_OPT_CANCEL_TITLE") ?>" onclick="window.location='<? echo htmlspecialcharsbx(
+            CUtil::addslashes($_REQUEST["back_url_settings"])
+        ) ?>'">
         <input type="hidden" name="back_url_settings" value="<?= htmlspecialcharsbx($_REQUEST["back_url_settings"]) ?>">
     <? endif ?>
     <input type="submit" name="RestoreDefaults" title="<? echo GetMessage("MAIN_HINT_RESTORE_DEFAULTS") ?>"

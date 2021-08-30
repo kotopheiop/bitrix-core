@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 /** @global CMain $APPLICATION */
 /** @global CDatabase $DB */
@@ -123,10 +124,11 @@ if ($APPLICATION->GetGroupRight("perfmon") != "D") {
         $rs = $DB->Query("SELECT count(*) C from b_perf_error");
         $ar = $rs->Fetch();
         $c = intval($ar["C"]);
-        if ($c > 0)
+        if ($c > 0) {
             $text = GetMessage("PERFMON_MNU_ERROR_LIST") . " (" . $c . ")";
-        else
+        } else {
             $text = GetMessage("PERFMON_MNU_ERROR_LIST");
+        }
         $aMenu["items"][] = array(
             "text" => $text,
             "url" => "perfmon_error_list.php?lang=" . LANGUAGE_ID,

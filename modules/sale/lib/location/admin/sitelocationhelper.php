@@ -27,7 +27,7 @@ class SiteLocationHelper extends Helper
      * Function returns class name for an attached entity
      * @return string Entity class name
      */
-    public function getEntityRoadMap()
+    public static function getEntityRoadMap()
     {
         return array(
             'main' => array(
@@ -105,10 +105,11 @@ class SiteLocationHelper extends Helper
 
             $request['group'] = array('SITE_ID');
         } elseif ($page == 'detail') {
-            $id = strlen($_REQUEST['id']) ? self::tryParseSiteId($_REQUEST['id']) : false;
+            $id = $_REQUEST['id'] <> '' ? self::tryParseSiteId($_REQUEST['id']) : false;
 
-            if ($id)
+            if ($id) {
                 $request['filter']['=LID'] = $id;
+            }
         }
 
         return $request;
@@ -117,7 +118,9 @@ class SiteLocationHelper extends Helper
     // block add handle, nothing to add
     public static function add($data)
     {
-        throw new Main\NotSupportedException(Loc::getMessage('SALE_LOCATION_ADMIN_SITE_LOCATION_HELPER_ADD_OP_UNSUPPORTED'));
+        throw new Main\NotSupportedException(
+            Loc::getMessage('SALE_LOCATION_ADMIN_SITE_LOCATION_HELPER_ADD_OP_UNSUPPORTED')
+        );
     }
 
     // specific updater
@@ -140,7 +143,9 @@ class SiteLocationHelper extends Helper
     // block delete handle, nothing to delete
     public static function delete($primary)
     {
-        throw new Main\NotSupportedException(Loc::getMessage('SALE_LOCATION_ADMIN_SITE_LOCATION_HELPER_DELETE_OP_UNSUPPORTED'));
+        throw new Main\NotSupportedException(
+            Loc::getMessage('SALE_LOCATION_ADMIN_SITE_LOCATION_HELPER_DELETE_OP_UNSUPPORTED')
+        );
     }
 
     // avoid paging here, kz its based on ID which is absent for this table
@@ -178,6 +183,6 @@ class SiteLocationHelper extends Helper
 
     public static function tryParseSiteId($sid)
     {
-        return htmlspecialcharsbx(substr($sid, 0, 2));
+        return htmlspecialcharsbx(mb_substr($sid, 0, 2));
     }
 }

@@ -24,8 +24,9 @@ class BasketTable extends Main\Entity\DataManager
     public static function deleteBundle($id)
     {
         $id = intval($id);
-        if ($id <= 0)
+        if ($id <= 0) {
             throw new Main\ArgumentNullException("id");
+        }
 
         $itemsFromDbList = BasketTable::getList(
             array(
@@ -35,8 +36,9 @@ class BasketTable extends Main\Entity\DataManager
                 "select" => array("ID")
             )
         );
-        while ($itemsFromDbItem = $itemsFromDbList->fetch())
+        while ($itemsFromDbItem = $itemsFromDbList->fetch()) {
             BasketTable::deleteWithItems($itemsFromDbItem['ID']);
+        }
 
         return BasketTable::deleteWithItems($id);
     }
@@ -50,8 +52,9 @@ class BasketTable extends Main\Entity\DataManager
     public static function deleteWithItems($id)
     {
         $id = intval($id);
-        if ($id <= 0)
+        if ($id <= 0) {
             throw new Main\ArgumentNullException("id");
+        }
 
         $itemsList = BasketPropertyTable::getList(
             array(
@@ -59,8 +62,9 @@ class BasketTable extends Main\Entity\DataManager
                 "filter" => array("BASKET_ID" => $id),
             )
         );
-        while ($item = $itemsList->fetch())
+        while ($item = $itemsList->fetch()) {
             BasketPropertyTable::delete($item["ID"]);
+        }
 
         return BasketTable::delete($id);
     }
@@ -216,7 +220,9 @@ class BasketTable extends Main\Entity\DataManager
             'SUMMARY_PRICE' => array(
                 'data_type' => 'float',
                 'expression' => array(
-                    '(%s * %s)', 'QUANTITY', 'PRICE'
+                    '(%s * %s)',
+                    'QUANTITY',
+                    'PRICE'
                 )
             ),
 
@@ -292,7 +298,8 @@ class BasketTable extends Main\Entity\DataManager
             'N_SUBSCRIBE' => array(
                 'data_type' => 'integer',
                 'expression' => array(
-                    'CASE WHEN %s = \'Y\' THEN 1 ELSE 0 END', 'SUBSCRIBE'
+                    'CASE WHEN %s = \'Y\' THEN 1 ELSE 0 END',
+                    'SUBSCRIBE'
                 )
             ),
 
@@ -358,27 +365,36 @@ class BasketTable extends Main\Entity\DataManager
             'ALL_PRICE' => array(
                 'data_type' => 'float',
                 'expression' => array(
-                    '(%s + %s)', 'PRICE', 'DISCOUNT_PRICE'
+                    '(%s + %s)',
+                    'PRICE',
+                    'DISCOUNT_PRICE'
                 )
             ),
 
             'SUMMARY_PURCHASING_PRICE' => array(
                 'data_type' => 'float',
                 'expression' => array(
-                    '(%s) * %s', 'PRODUCT.PURCHASING_PRICE_IN_SITE_CURRENCY', 'QUANTITY'
+                    '(%s) * %s',
+                    'PRODUCT.PURCHASING_PRICE_IN_SITE_CURRENCY',
+                    'QUANTITY'
                 )
             ),
             'GROSS_PROFIT' => array(
                 'data_type' => 'float',
                 'expression' => array(
-                    '(%s) - (%s)', 'SUMMARY_PRICE', 'SUMMARY_PURCHASING_PRICE'
+                    '(%s) - (%s)',
+                    'SUMMARY_PRICE',
+                    'SUMMARY_PURCHASING_PRICE'
                 )
             ),
             'PROFITABILITY' => array(
                 'data_type' => 'float',
                 'expression' => array(
                     'CASE WHEN %s is NULL OR %s=0 THEN NULL ELSE (%s) * 100 / (%s) END',
-                    'SUMMARY_PURCHASING_PRICE', 'SUMMARY_PURCHASING_PRICE', 'GROSS_PROFIT', 'SUMMARY_PURCHASING_PRICE'
+                    'SUMMARY_PURCHASING_PRICE',
+                    'SUMMARY_PURCHASING_PRICE',
+                    'GROSS_PROFIT',
+                    'SUMMARY_PURCHASING_PRICE'
                 )
             ),
 

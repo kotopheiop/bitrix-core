@@ -31,52 +31,77 @@ class AutomaticProfile extends Base
 
     public function __construct(array $initParams)
     {
-        if (!isset($initParams["PARENT_ID"]))
+        if (!isset($initParams["PARENT_ID"])) {
             throw new ArgumentNullException('initParams["PARENT_ID"]');
+        }
 
         $this->parentAutomatic = Manager::getObjectById($initParams["PARENT_ID"]);
 
-        if (!$this->parentAutomatic || !($this->parentAutomatic instanceof Automatic))
-            throw new SystemException("Can't initialize AutomaticProfile's id: " . $initParams["ID"] . " parent Automatic parent_id: " . $initParams["PARENT_ID"]);
+        if (!$this->parentAutomatic || !($this->parentAutomatic instanceof Automatic)) {
+            throw new SystemException(
+                "Can't initialize AutomaticProfile's id: " . $initParams["ID"] . " parent Automatic parent_id: " . $initParams["PARENT_ID"]
+            );
+        }
 
         $this->parentSid = $this->parentAutomatic->getSid();
 
-        if (strlen($this->parentSid) <= 0)
-            throw new SystemException("Can't determine AutomaticProfile's SID. profile id: " . $initParams["ID"] . " parent Automatic id: " . $initParams["PARENT_ID"]);
+        if ($this->parentSid == '') {
+            throw new SystemException(
+                "Can't determine AutomaticProfile's SID. profile id: " . $initParams["ID"] . " parent Automatic id: " . $initParams["PARENT_ID"]
+            );
+        }
 
         $this->parentHandlerInitParams = $this->parentAutomatic->getHandlerInitParams($this->parentSid);
 
-        if ($this->parentHandlerInitParams === false)
-            throw new SystemException("Can't get init services params of Automatic delivery service with sid: " . $this->parentSid);
+        if ($this->parentHandlerInitParams === false) {
+            throw new SystemException(
+                "Can't get init services params of Automatic delivery service with sid: " . $this->parentSid
+            );
+        }
 
         parent::__construct($initParams);
 
-        if (isset($initParams['PROFILE_ID']) && strlen($initParams['PROFILE_ID']) > 0)
+        if (isset($initParams['PROFILE_ID']) && $initParams['PROFILE_ID'] <> '') {
             $this->profileId = $initParams['PROFILE_ID'];
-        elseif (isset($this->config["MAIN"]["PROFILE_ID"]))
+        } elseif (isset($this->config["MAIN"]["PROFILE_ID"])) {
             $this->profileId = $this->config["MAIN"]["PROFILE_ID"];
+        }
 
-        if (strlen($this->profileId) > 0 && !array_key_exists($this->profileId, $this->parentHandlerInitParams["PROFILES"]))
-            throw new SystemException("Profile \"" . $this->profileId . "\" is not part of Automatic delivery service with sid: " . $this->parentSid);
+        if ($this->profileId <> '' && !array_key_exists($this->profileId, $this->parentHandlerInitParams["PROFILES"])) {
+            throw new SystemException(
+                "Profile \"" . $this->profileId . "\" is not part of Automatic delivery service with sid: " . $this->parentSid
+            );
+        }
 
-        if (strlen($this->name) <= 0 && isset($this->parentHandlerInitParams['PROFILES'][$this->profileId]['TITLE']))
+        if ($this->name == '' && isset($this->parentHandlerInitParams['PROFILES'][$this->profileId]['TITLE'])) {
             $this->name = $this->parentHandlerInitParams['PROFILES'][$this->profileId]['TITLE'];
+        }
 
-        if (strlen($this->description) <= 0 && isset($this->parentHandlerInitParams['PROFILES'][$this->profileId]['DESCRIPTION']))
+        if ($this->description == '' && isset($this->parentHandlerInitParams['PROFILES'][$this->profileId]['DESCRIPTION'])) {
             $this->description = $this->parentHandlerInitParams['PROFILES'][$this->profileId]['DESCRIPTION'];
+        }
 
-        if (!empty($this->parentHandlerInitParams["PROFILES"][$this->profileId]["TRACKING_CLASS_NAME"]))
+        if (!empty($this->parentHandlerInitParams["PROFILES"][$this->profileId]["TRACKING_CLASS_NAME"])) {
             $this->trackingClass = $this->parentHandlerInitParams["PROFILES"][$this->profileId]["TRACKING_CLASS_NAME"];
+        }
 
         $this->inheritParams();
     }
 
     protected function inheritParams()
     {
-        if (strlen($this->name) <= 0) $this->name = $this->parentAutomatic->getName();
-        if (intval($this->logotip) <= 0) $this->logotip = $this->parentAutomatic->getLogotip();
-        if (strlen($this->description) <= 0) $this->description = $this->parentAutomatic->getDescription();
-        if (strlen($this->trackingClass) <= 0) $this->trackingClass = $this->parentAutomatic->getTrackingClass();
+        if ($this->name == '') {
+            $this->name = $this->parentAutomatic->getName();
+        }
+        if (intval($this->logotip) <= 0) {
+            $this->logotip = $this->parentAutomatic->getLogotip();
+        }
+        if ($this->description == '') {
+            $this->description = $this->parentAutomatic->getDescription();
+        }
+        if ($this->trackingClass == '') {
+            $this->trackingClass = $this->parentAutomatic->getTrackingClass();
+        }
 
         $parentTP = $this->parentAutomatic->getTrackingParams();
 
@@ -84,9 +109,11 @@ class AutomaticProfile extends Base
             if (empty($this->trackingParams) || !is_array($this->trackingParams)) {
                 $this->trackingParams = $parentTP;
             } else {
-                foreach ($this->trackingParams as $k => $v)
-                    if (empty($v) && !empty($parentTP[$k]))
+                foreach ($this->trackingParams as $k => $v) {
+                    if (empty($v) && !empty($parentTP[$k])) {
                         $this->trackingParams[$k] = $parentTP[$k];
+                    }
+                }
             }
         }
     }
@@ -112,10 +139,13 @@ class AutomaticProfile extends Base
                     isset($parent["CONFIG_GROUPS"]) && is_array($parent["CONFIG"]) ? $parent["CONFIG_GROUPS"] : array()
             );
 
-            if (isset($own["CONFIG"]) && is_array($own["CONFIG"]))
-                foreach ($own["CONFIG"] as $k => $v)
-                    if (empty($v["GROUP"]) || $v["GROUP"] != $this->profileId)
+            if (isset($own["CONFIG"]) && is_array($own["CONFIG"])) {
+                foreach ($own["CONFIG"] as $k => $v) {
+                    if (empty($v["GROUP"]) || $v["GROUP"] != $this->profileId) {
                         $profileOldConfig["CONFIG"][$k] = $parent["CONFIG"][$k];
+                    }
+                }
+            }
 
             $this->profileOldConfig = $profileOldConfig;
         }
@@ -138,15 +168,18 @@ class AutomaticProfile extends Base
         $actualizedCodes = array();
 
         foreach ($profiles as $id => $fields) {
-            if ($id == $this->id)
+            if ($id == $this->id) {
                 continue;
+            }
 
-            if (strlen($fields['CODE']) > 0) {
-                if ($fields['CODE'] == $this->code)
+            if ($fields['CODE'] <> '') {
+                if ($fields['CODE'] == $this->code) {
                     continue;
+                }
 
-                if (in_array($fields['CODE'], $actualizedCodes))
+                if (in_array($fields['CODE'], $actualizedCodes)) {
                     continue;
+                }
             }
 
             /** @var \Bitrix\Sale\Delivery\Services\AutomaticProfile $service */
@@ -156,14 +189,17 @@ class AutomaticProfile extends Base
                 $config = $service->getConfig();
                 $serviceProfileId = $config['MAIN']['ITEMS']['PROFILE_ID']['VALUE'];
 
-                if ($serviceProfileId == $this->profileId)
+                if ($serviceProfileId == $this->profileId) {
                     continue;
+                }
 
                 $profileOldConfig = $service->getOldConfig();
 
-                foreach ($profileOldConfig['CONFIG'] as $k => $v)
-                    if (isset($v['GROUP']) && $v['GROUP'] == $serviceProfileId)
+                foreach ($profileOldConfig['CONFIG'] as $k => $v) {
+                    if (isset($v['GROUP']) && $v['GROUP'] == $serviceProfileId) {
                         $oldConfig['CONFIG'][$k] = $v;
+                    }
+                }
 
                 $actualizedCodes[] = $fields['CODE'];
             }
@@ -178,16 +214,25 @@ class AutomaticProfile extends Base
             $configStructure = $this->getConfigStructure();
             $profileConfig = array();
 
-            foreach ($configStructure as $key => $configSection)
-                $profileConfig[$key] = $this->glueValuesToConfig($configSection, isset($this->config[$key]) ? $this->config[$key] : array());
+            foreach ($configStructure as $key => $configSection) {
+                $profileConfig[$key] = $this->glueValuesToConfig(
+                    $configSection,
+                    isset($this->config[$key]) ? $this->config[$key] : array()
+                );
+            }
 
-            if (strlen($this->profileId) > 0) {
-                $oldConfig = Automatic::createConfig($this->parentHandlerInitParams, $this->config["MAIN"]["OLD_SETTINGS"]);
+            if ($this->profileId <> '') {
+                $oldConfig = Automatic::createConfig(
+                    $this->parentHandlerInitParams,
+                    $this->config["MAIN"]["OLD_SETTINGS"]
+                );
                 $newConfig = Automatic::convertOldConfigToNew($oldConfig);
 
-                foreach ($newConfig as $groupId => $groupParams)
-                    if ($groupId != $this->profileId)
+                foreach ($newConfig as $groupId => $groupParams) {
+                    if ($groupId != $this->profileId) {
                         unset($newConfig[$groupId]);
+                    }
+                }
 
                 $profileConfig = array_merge($this->config, $profileConfig, $newConfig);
             }
@@ -221,10 +266,11 @@ class AutomaticProfile extends Base
 
     protected function getMarginPrice($price)
     {
-        if ($this->config["MAIN"]["MARGIN_TYPE"] == "%")
+        if ($this->config["MAIN"]["MARGIN_TYPE"] == "%") {
             $marginPrice = $price * floatval($this->config["MAIN"]["MARGIN_VALUE"]) / 100;
-        else
+        } else {
             $marginPrice = floatval($this->config["MAIN"]["MARGIN_VALUE"]);
+        }
 
         return $marginPrice;
     }
@@ -236,9 +282,11 @@ class AutomaticProfile extends Base
         if ($profiles === null) {
             $profiles = array("" => "");
 
-            foreach ($this->parentHandlerInitParams["PROFILES"] as $profileId => $profileParams)
-                if (strlen($profileParams["TITLE"]) > 0)
+            foreach ($this->parentHandlerInitParams["PROFILES"] as $profileId => $profileParams) {
+                if ($profileParams["TITLE"] <> '') {
                     $profiles[$profileId] = $profileParams["TITLE"] . " [" . $profileId . "]";
+                }
+            }
         }
 
         $result = array(
@@ -267,8 +315,9 @@ class AutomaticProfile extends Base
         if (\Bitrix\Main\Loader::includeModule('currency')) {
             $currencyList = CurrencyManager::getCurrencyList();
 
-            if (isset($currencyList[$this->currency]))
+            if (isset($currencyList[$this->currency])) {
                 $serviceCurrency = $currencyList[$this->currency];
+            }
 
             unset($currencyList);
         }
@@ -293,17 +342,21 @@ class AutomaticProfile extends Base
 
         $configProfileIds = array_keys($this->parentHandlerInitParams["PROFILES"]);
 
-        if (strlen($this->profileId) > 0 && in_array($this->profileId, $configProfileIds)) {
+        if ($this->profileId <> '' && in_array($this->profileId, $configProfileIds)) {
             $oldAutoConfig = $this->parentAutomatic->getOldConfig();
 
             if ($oldAutoConfig && isset($oldAutoConfig["CONFIG_GROUPS"]) && is_array($oldAutoConfig["CONFIG_GROUPS"])) {
-                foreach ($oldAutoConfig["CONFIG_GROUPS"] as $key => $groupId)
-                    if ($this->profileId != $groupId)
+                foreach ($oldAutoConfig["CONFIG_GROUPS"] as $key => $groupId) {
+                    if ($this->profileId != $groupId) {
                         unset($oldAutoConfig["CONFIG_GROUPS"][$key]);
+                    }
+                }
 
-                foreach ($oldAutoConfig["CONFIG"] as $key => $params)
-                    if ($this->profileId != $params["CONFIG"])
+                foreach ($oldAutoConfig["CONFIG"] as $key => $params) {
+                    if ($this->profileId != $params["CONFIG"]) {
                         unset($oldAutoConfig["CONFIG"][$key]);
+                    }
+                }
             }
 
             $oldConfig = Automatic::convertOldConfigToNew($oldAutoConfig);
@@ -325,8 +378,9 @@ class AutomaticProfile extends Base
     {
         $parentAutoConfig = $this->parentAutomatic->getConfigValues();
 
-        if (isset($fields["CONFIG"]) && is_array($fields["CONFIG"]))
+        if (isset($fields["CONFIG"]) && is_array($fields["CONFIG"])) {
             $fields["CONFIG"] = array_merge($parentAutoConfig, $fields["CONFIG"]);
+        }
 
         $configMain = $fields["CONFIG"]["MAIN"];
         $handler = $this->parentHandlerInitParams;
@@ -335,11 +389,13 @@ class AutomaticProfile extends Base
             $oldSettings = $fields["CONFIG"];
             unset($oldSettings["MAIN"]);
 
-            if (is_array($oldSettings))
+            if (is_array($oldSettings)) {
                 $oldSettings = Automatic::convertNewSettingsToOld($oldSettings);
+            }
 
-            if (!$strOldSettings = call_user_func($handler["DBSETSETTINGS"], $oldSettings))
+            if (!$strOldSettings = call_user_func($handler["DBSETSETTINGS"], $oldSettings)) {
                 throw new SystemException("Can't save delivery services's old settings");
+            }
         } else {
             $strOldSettings = "";
         }
@@ -357,9 +413,11 @@ class AutomaticProfile extends Base
         if (!empty($fields['TRACKING_PARAMS']) && is_array($fields['TRACKING_PARAMS'])) {
             $parentTP = $this->parentAutomatic->getTrackingParams();
 
-            foreach ($fields['TRACKING_PARAMS'] as $k => $v)
-                if (!empty($parentTP[$k]) && $v == $parentTP[$k])
+            foreach ($fields['TRACKING_PARAMS'] as $k => $v) {
+                if (!empty($parentTP[$k]) && $v == $parentTP[$k]) {
                     $fields['TRACKING_PARAMS'][$k] = '';
+                }
+            }
         }
 
         return $fields;

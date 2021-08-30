@@ -54,10 +54,12 @@ class BaseButton implements Contract\Renderable
 
     protected function init(array $params = [])
     {
-        $this->buildFromArray(array_merge(
-            $this->getDefaultParameters(),
-            $params
-        ));
+        $this->buildFromArray(
+            array_merge(
+                $this->getDefaultParameters(),
+                $params
+            )
+        );
     }
 
     final public static function create(array $params = [])
@@ -203,17 +205,23 @@ class BaseButton implements Contract\Renderable
 
     public function isInputType()
     {
-        return in_array($this->tag, [
-            Tag::INPUT,
-            Tag::SUBMIT,
-        ], true);
+        return in_array(
+            $this->tag,
+            [
+                Tag::INPUT,
+                Tag::SUBMIT,
+            ],
+            true
+        );
     }
 
     protected function renderInner()
     {
         $counter = $this->getCounter();
         return (
-            (!empty($this->getText()) ? '<span class="ui-btn-text">' . htmlspecialcharsbx($this->getText()) . '</span>' : '') .
+            (!empty($this->getText()) ? '<span class="ui-btn-text">' . htmlspecialcharsbx(
+                    $this->getText()
+                ) . '</span>' : '') .
             ($counter !== null ? '<span class="ui-btn-counter">' . htmlspecialcharsbx($counter) . '</span>' : '')
         );
     }
@@ -292,8 +300,10 @@ class BaseButton implements Contract\Renderable
     {
         if (in_array($counter, [0, '0', '', null, false], true)) {
             $this->counter = null;
-        } else if ((is_int($counter) && $counter > 0) || (is_string($counter) && strlen($counter))) {
-            $this->counter = $counter;
+        } else {
+            if ((is_int($counter) && $counter > 0) || (is_string($counter) && mb_strlen($counter))) {
+                $this->counter = $counter;
+            }
         }
 
         return $this;
@@ -330,7 +340,7 @@ class BaseButton implements Contract\Renderable
 
     public function addAttribute($name, $value = null)
     {
-        if (strtolower($name) === 'class') {
+        if (mb_strtolower($name) === 'class') {
             throw new ArgumentException('Could not add "class" attribute. You should use ::addClass()', 'class');
         }
 

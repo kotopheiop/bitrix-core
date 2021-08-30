@@ -65,23 +65,28 @@ final class OrderBuilderExist implements IOrderBuilderDelegate
         $currentUserId = $this->builder->getOrder()->getUserId();
 
         $formDataUserId = (int)$this->builder->getFormData()['USER_ID'];
-        $isChanged = ((int)$currentUserId !== $formDataUserId);
+        $isChanged = ($formDataUserId > 0) && ((int)$currentUserId !== $formDataUserId);
         if ($currentUserId && $isChanged) {
             $paymentCollection = $this->builder->getOrder()->getPaymentCollection();
             /** @var \Bitrix\Sale\Payment $payment */
             foreach ($paymentCollection as $payment) {
                 if ($payment->isPaid()) {
-                    $this->builder->getErrorsContainer()->addError(new Error(
-                        Loc::getMessage("SALE_HLP_OBE_CHANGE_USER_ERROR")
-                        , 'SALE_ORDEREDIT_ERROR_CHANGE_USER_WITH_PAID_PAYMENTS'));
+                    $this->builder->getErrorsContainer()->addError(
+                        new Error(
+                            Loc::getMessage("SALE_HLP_OBE_CHANGE_USER_ERROR")
+                            , 'SALE_ORDEREDIT_ERROR_CHANGE_USER_WITH_PAID_PAYMENTS'
+                        )
+                    );
                 }
             }
         }
 
-        $this->builder->getOrder()->setFieldNoDemand(
-            "USER_ID",
-            $this->builder->getUserId()
-        );
+        if ($formDataUserId > 0) {
+            $this->builder->getOrder()->setFieldNoDemand(
+                "USER_ID",
+                $this->builder->getUserId()
+            );
+        }
 
         if ($isChanged) {
             $personTypeId = (int)$this->builder->getOrder()->getPersonTypeId();
@@ -100,7 +105,8 @@ final class OrderBuilderExist implements IOrderBuilderDelegate
             $values = $currentProfile['VALUES'];
             $propertyCollection = $this->builder->getOrder()->getPropertyCollection();
             $propertyCollection->setValuesFromPost(
-                ['PROPERTIES' => $values], []
+                ['PROPERTIES' => $values],
+                []
             );
         }
     }
@@ -121,9 +127,13 @@ final class OrderBuilderExist implements IOrderBuilderDelegate
 
     public function setShipmentPriceFields(Shipment $shipment, array $fields)
     {
-        $priceDelivery = $fields['PRICE_DELIVERY'];
+        if ($fields['CUSTOM_PRICE_DELIVERY'] !== 'Y' && $shipment->getId() <= 0) {
+            $priceDelivery = $shipment->calculateDelivery()->getPrice();
+        } else {
+            $priceDelivery = $fields['PRICE_DELIVERY'];
+        }
 
-        if ($fields['CUSTOM_PRICE_DELIVERY'] == 'Y' || !isset($fields['BASE_PRICE_DELIVERY'])) {
+        if ($fields['CUSTOM_PRICE_DELIVERY'] === 'Y' || !isset($fields['BASE_PRICE_DELIVERY'])) {
             $basePriceDelivery = $priceDelivery;
         } else {
             $basePriceDelivery = $fields['BASE_PRICE_DELIVERY'];

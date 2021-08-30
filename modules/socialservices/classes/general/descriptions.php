@@ -1,9 +1,10 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 class CSocServDescription
 {
-    public function GetDescription()
+    public static function GetDescription()
     {
         $tw_disabled = !function_exists("hash_hmac");
 
@@ -95,12 +96,12 @@ class CSocServDescription
                 "NAME" => "Google",
                 "ICON" => "google",
             ),
-            array(
-                "ID" => "GooglePlusOAuth",
-                "CLASS" => "CSocServGooglePlusOAuth",
-                "NAME" => "Google+",
-                "ICON" => "google-plus",
-            ),
+            /*			array(
+                            "ID" => "GooglePlusOAuth",
+                            "CLASS" => "CSocServGooglePlusOAuth",
+                            "NAME" => "Google+",
+                            "ICON" => "google-plus",
+                        ), */
             array(
                 "ID" => "LiveIDOAuth",
                 "CLASS" => "CSocServLiveIDOAuth",
@@ -131,9 +132,20 @@ class CSocServDescription
                 "NAME" => "Box.com",
                 "ICON" => "box",
             ),
+            array(
+                "ID" => "apple",
+                "CLASS" => "CSocServApple",
+                "NAME" => "Apple Sign In",
+                "ICON" => "apple",
+            ),
+            array(
+                "ID" => "zoom",
+                "CLASS" => "CSocServZoom",
+                "NAME" => "Zoom",
+                "ICON" => "zoom",
+            ),
         );
     }
 }
 
 AddEventHandler("socialservices", "OnAuthServicesBuildList", array("CSocServDescription", "GetDescription"));
-?>

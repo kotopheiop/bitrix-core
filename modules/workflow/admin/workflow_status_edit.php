@@ -1,10 +1,12 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/workflow/prolog.php");
 
 $WORKFLOW_RIGHT = $APPLICATION->GetGroupRight("workflow");
-if ($WORKFLOW_RIGHT == "D")
+if ($WORKFLOW_RIGHT == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/workflow/include.php");
 IncludeModuleLangFile(__FILE__);
@@ -23,7 +25,7 @@ $aTabs = array(
 );
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
-if ((strlen($save) > 0 || strlen($apply) > 0) && $REQUEST_METHOD == "POST" && $WORKFLOW_RIGHT == "W" && check_bitrix_sessid()) {
+if (($save <> '' || $apply <> '') && $REQUEST_METHOD == "POST" && $WORKFLOW_RIGHT == "W" && check_bitrix_sessid()) {
     $obWorkflowStatus = new CWorkflowStatus;
 
     $arFields = array(
@@ -42,17 +44,21 @@ if ((strlen($save) > 0 || strlen($apply) > 0) && $REQUEST_METHOD == "POST" && $W
     }
 
     if ($res) {
-
         $obWorkflowStatus->SetPermissions($ID, $arPERMISSION_M, 1);
         $obWorkflowStatus->SetPermissions($ID, $arPERMISSION_E, 2);
 
-        if ($apply != "")
-            LocalRedirect("/bitrix/admin/workflow_status_edit.php?ID=" . $ID . "&lang=" . LANG . "&" . $tabControl->ActiveTabParam());
-        else
+        if ($apply != "") {
+            LocalRedirect(
+                "/bitrix/admin/workflow_status_edit.php?ID=" . $ID . "&lang=" . LANG . "&" . $tabControl->ActiveTabParam(
+                )
+            );
+        } else {
             LocalRedirect("/bitrix/admin/workflow_status_list.php?lang=" . LANG);
+        }
     } else {
-        if ($e = $APPLICATION->GetException())
+        if ($e = $APPLICATION->GetException()) {
             $message = new CAdminMessage(GetMessage("FLOW_ERROR"), $e);
+        }
     }
 }
 
@@ -74,13 +80,17 @@ if (!($status->ExtractFields())) {
 		";
     $z = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
     while ($zr = $z->Fetch()) {
-        if ($zr["PERMISSION_TYPE"] == "1") $arPERMISSION_M[] = $zr["GROUP_ID"];
-        elseif ($zr["PERMISSION_TYPE"] == "2") $arPERMISSION_E[] = $zr["GROUP_ID"];
+        if ($zr["PERMISSION_TYPE"] == "1") {
+            $arPERMISSION_M[] = $zr["GROUP_ID"];
+        } elseif ($zr["PERMISSION_TYPE"] == "2") {
+            $arPERMISSION_E[] = $zr["GROUP_ID"];
+        }
     }
 }
 
-if ($message !== false)
+if ($message !== false) {
     $DB->InitTableVarsForEdit("b_workflow_status", "", "str_");
+}
 
 $sDocTitle = ($ID > 0) ? GetMessage("FLOW_EDIT_RECORD", array("#ID#" => $ID)) : GetMessage("FLOW_NEW_RECORD");
 $APPLICATION->SetTitle($sDocTitle);
@@ -106,7 +116,10 @@ if (intval($ID) > 0) {
         $aMenu[] = array(
             "ICON" => "btn_delete",
             "TEXT" => GetMessage("FLOW_DELETE_STATUS"),
-            "LINK" => "javascript:if(confirm('" . GetMessage("FLOW_DELETE_STATUS_CONFIRM") . "')) window.location='workflow_status_list.php?action=delete&ID=" . $ID . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get() . "';",
+            "LINK" => "javascript:if(confirm('" . GetMessage(
+                    "FLOW_DELETE_STATUS_CONFIRM"
+                ) . "')) window.location='workflow_status_list.php?action=delete&ID=" . $ID . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get(
+                ) . "';",
         );
     }
 }
@@ -114,8 +127,9 @@ if (intval($ID) > 0) {
 $context = new CAdminContextMenu($aMenu);
 $context->Show();
 
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 ?>
 <form method="POST" name="form1" action="<? echo $APPLICATION->GetCurPage() ?>?" enctype="multipart/form-data">
     <?= bitrix_sessid_post() ?>
@@ -126,7 +140,7 @@ if ($message)
     $tabControl->Begin();
     $tabControl->BeginNextTab();
     ?>
-    <? if (strlen($str_TIMESTAMP_X) > 0 && $str_TIMESTAMP_X != "00.00.0000 00:00:00") : ?>
+    <? if ($str_TIMESTAMP_X <> '' && $str_TIMESTAMP_X != "00.00.0000 00:00:00") : ?>
         <tr>
             <td><?= GetMessage("FLOW_TIMESTAMP") ?></td>
             <td><?= $str_TIMESTAMP_X ?></td>
@@ -172,10 +186,12 @@ if ($message)
         <td><?= InputType("checkbox", "NOTIFY", "Y", $str_NOTIFY, false, "", 'id="notify"') ?></td>
     </tr>
     <?
-    $tabControl->Buttons(array(
-        "disabled" => $WORKFLOW_RIGHT < "W",
-        "back_url" => "workflow_status_list.php?lang=" . LANGUAGE_ID,
-    ));
+    $tabControl->Buttons(
+        array(
+            "disabled" => $WORKFLOW_RIGHT < "W",
+            "back_url" => "workflow_status_list.php?lang=" . LANGUAGE_ID,
+        )
+    );
     $tabControl->End();
     ?>
 </form>

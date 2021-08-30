@@ -31,8 +31,17 @@ class Iblock implements Controllable, Errorable
         $this->params = $param->getParams();
 
         $this->fieldList = ["NAME", "ACTIVE", "DESCRIPTION", "SORT", "BIZPROC", "PICTURE"];
-        $this->messageList = ["ELEMENTS_NAME", "ELEMENT_NAME", "ELEMENT_ADD", "ELEMENT_EDIT", "ELEMENT_DELETE",
-            "SECTIONS_NAME", "SECTION_ADD", "SECTION_EDIT", "SECTION_DELETE"];
+        $this->messageList = [
+            "ELEMENTS_NAME",
+            "ELEMENT_NAME",
+            "ELEMENT_ADD",
+            "ELEMENT_EDIT",
+            "ELEMENT_DELETE",
+            "SECTIONS_NAME",
+            "SECTION_ADD",
+            "SECTION_EDIT",
+            "SECTION_DELETE"
+        ];
 
         $this->iblockId = Utils::getIblockId($this->params);
 

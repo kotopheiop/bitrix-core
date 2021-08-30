@@ -67,10 +67,12 @@ class MessageFieldTable extends Entity\DataManager
      */
     public static function deleteByMessageId($messageId)
     {
-        $items = static::getList([
-            'select' => ['MESSAGE_ID', 'CODE'],
-            'filter' => ['=MESSAGE_ID' => $messageId]
-        ]);
+        $items = static::getList(
+            [
+                'select' => ['MESSAGE_ID', 'CODE'],
+                'filter' => ['=MESSAGE_ID' => $messageId]
+            ]
+        );
         foreach ($items as $primary) {
             $result = static::delete($primary);
             if (!$result->isSuccess()) {

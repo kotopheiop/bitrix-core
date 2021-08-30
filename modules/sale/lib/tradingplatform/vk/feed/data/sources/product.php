@@ -32,19 +32,22 @@ class Product extends DataSource implements \Iterator
     {
         $this->vk = Vk\Vk::getInstance();
 
-        if (!$this->vk->isActive())
+        if (!$this->vk->isActive()) {
             throw new SystemException("Vk is not active!" . __METHOD__);
+        }
 
 //		check and set EXPORT ID
-        if (!isset($exportId) || strlen($exportId) <= 0)
+        if (!isset($exportId) || $exportId == '') {
             throw new ArgumentNullException("EXPORT_ID");
+        }
         $this->exportId = $exportId;
 
 //		check and set START POSITION
         $this->setStartPosition($startPosition);
 
-        if (!Loader::includeModule('catalog'))
+        if (!Loader::includeModule('catalog')) {
             throw new SystemException("Can't include module \"Catalog\"! " . __METHOD__);
+        }
 
 //		get items only from sections, that was checked to export. And get them iblocksIds
         $sectionsList = new Vk\SectionsList($this->exportId);
@@ -74,8 +77,9 @@ class Product extends DataSource implements \Iterator
             }
 
             $feed = ExportOfferCreator::getOfferObject($exportOfferParams);
-            if ($this->vk->getAvailableFlag($this->exportId))
+            if ($this->vk->getAvailableFlag($this->exportId)) {
                 $feed->setOnlyAvailableFlag(true);
+            }
 
             $this->feeds[] = $feed;
             unset($feed);
@@ -85,13 +89,20 @@ class Product extends DataSource implements \Iterator
 
     protected function setStartPosition($startPosition)
     {
-        if (strlen($startPosition) > 0) {
+        if ($startPosition <> '') {
 //			todo: maybe can use cache from sectionslist
 //			find IblockId for this product ID
             if (Loader::includeModule("catalog") && Loader::includeModule("iblock")) {
-                $resIblockId = \CIBlockElement::GetList(array(), array("ID" => $startPosition), false, false, array("IBLOCK_ID"));
-                if ($iblockId = $resIblockId->Fetch())
+                $resIblockId = \CIBlockElement::GetList(
+                    array(),
+                    array("ID" => $startPosition),
+                    false,
+                    false,
+                    array("IBLOCK_ID")
+                );
+                if ($iblockId = $resIblockId->Fetch()) {
                     $this->startPosition[$iblockId["IBLOCK_ID"]] = $startPosition;
+                }
             }
         }
     }
@@ -136,8 +147,9 @@ class Product extends DataSource implements \Iterator
     {
         $this->currentFeed = $this->startFeed;
 
-        foreach ($this->feeds as $feed)
+        foreach ($this->feeds as $feed) {
             $feed->rewind();
+        }
     }
 
     /**

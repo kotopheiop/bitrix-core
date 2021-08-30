@@ -11,7 +11,6 @@ use \Bitrix\Main\Application;
 global
 $arrViewedBanners,        // ������� ���������� �� ������ ��������
 $arrADV_KEYWORDS,        // ������ �������� ���� ��� ��������
-$strClickURL,
 $strAdvCurUri,
 $nRandom1,
 $nRandom2,
@@ -33,7 +32,6 @@ $CACHE_ADVERTISING = array(
 $arrADV_VIEWED_BANNERS = false;
 $weightCalculated = false;
 
-$strClickURL = COption::GetOptionString("advertising", "REDIRECT_FILENAME");
 $nRandom1 = 4689 * mt_rand(999, 31999);
 $nRandom2 = 4689 * mt_rand(999, 31999);
 $nRandom3 = 4689 * mt_rand(999, 31999);
@@ -57,7 +55,7 @@ class CAdvContract_all
 
     public static function GetNextSort()
     {
-        $rsContracts = CAdvContract::GetList($by = "s_sort", $order = "desc", array("ID" => "~1", "ID_EXACT_MATCH" => "Y"), $is_filtered = false);
+        $rsContracts = CAdvContract::GetList("s_sort", "desc", array("ID" => "~1", "ID_EXACT_MATCH" => "Y"));
         $arContract = $rsContracts->Fetch();
         return intval($arContract["SORT"]) + 10;
     }
@@ -104,19 +102,22 @@ class CAdvContract_all
     {
         global $USER, $APPLICATION;
 
-        if ($USER_ID === false && is_object($USER))
+        if ($USER_ID === false && is_object($USER)) {
             $USER_ID = $USER->GetID();
+        }
         $USER_ID = intval($USER_ID);
 
         if ($USER_ID > 0) {
-            if (is_object($USER) && $USER_ID == $USER->GetID())
+            if (is_object($USER) && $USER_ID == $USER->GetID()) {
                 $arrGroups = $USER->GetUserGroupArray();
-            else
+            } else {
                 $arrGroups = CUser::GetUserGroup($USER_ID);
+            }
 
             $arRoles = $APPLICATION->GetUserRoles("advertising", $arrGroups);
-            if (in_array($role, $arRoles))
+            if (in_array($role, $arRoles)) {
                 return true;
+            }
         }
         return false;
     }
@@ -134,7 +135,9 @@ class CAdvContract_all
     {
         global $USER;
         if ($USER_ID === false && is_object($USER)) {
-            if ($USER->IsAdmin()) return true;
+            if ($USER->IsAdmin()) {
+                return true;
+            }
         }
         return CAdvContract::HaveRole(CAdvContract::GetAdminRoleID(), $USER_ID);
     }
@@ -158,12 +161,16 @@ class CAdvContract_all
     public static function GetGroupsByRole($role)
     {
         global $APPLICATION, $USER;
-        if (!is_object($USER)) $USER = new CUser;
+        if (!is_object($USER)) {
+            $USER = new CUser;
+        }
         $arGroups = array();
-        $z = CGroup::GetList($v1 = "dropdown", $v2 = "asc", array("ACTIVE" => "Y"));
+        $z = CGroup::GetList("dropdown", "asc", array("ACTIVE" => "Y"));
         while ($zr = $z->Fetch()) {
             $arRoles = $APPLICATION->GetUserRoles("advertising", array(intval($zr["ID"])), "Y", "N");
-            if (in_array($role, $arRoles)) $arGroups[] = intval($zr["ID"]);
+            if (in_array($role, $arRoles)) {
+                $arGroups[] = intval($zr["ID"]);
+            }
         }
         return array_unique($arGroups);
     }
@@ -174,8 +181,10 @@ class CAdvContract_all
         $arrRes = array();
         $arGroups = CAdvContract::GetGroupsByRole(CAdvContract::GetAdvertiserRoleID());
         if (is_array($arGroups) && count($arGroups) > 0) {
-            $rsUser = CUser::GetList($v1 = "id", $v2 = "desc", array("ACTIVE" => "Y", "GROUPS_ID" => $arGroups));
-            while ($arUser = $rsUser->Fetch()) $arrRes[] = $arUser;
+            $rsUser = CUser::GetList("id", "desc", array("ACTIVE" => "Y", "GROUPS_ID" => $arGroups));
+            while ($arUser = $rsUser->Fetch()) {
+                $arrRes[] = $arUser;
+            }
         }
         return $arrRes;
     }
@@ -184,11 +193,13 @@ class CAdvContract_all
     public static function GetEmailArrayByRole($role)
     {
         global $USER;
-        if (!is_object($USER)) $USER = new CUser;
+        if (!is_object($USER)) {
+            $USER = new CUser;
+        }
         $arrEMail = array();
         $arGroups = CAdvContract::GetGroupsByRole($role);
         if (is_array($arGroups) && count($arGroups) > 0) {
-            $rsUser = CUser::GetList($v1 = "id", $v2 = "desc", array("ACTIVE" => "Y", "GROUPS_ID" => $arGroups));
+            $rsUser = CUser::GetList("id", "desc", array("ACTIVE" => "Y", "GROUPS_ID" => $arGroups));
             while ($arUser = $rsUser->Fetch()) {
                 $arrEMail[] = $arUser["EMAIL"];
             }
@@ -233,13 +244,19 @@ class CAdvContract_all
         $ADD_EMAIL = array();
         $EDIT_EMAIL = array();
         $arrPERM = CAdvContract::GetContractPermissions($CONTRACT_ID);
-        while (list($perm, $arr) = each($arrPERM)) {
+        foreach ($arrPERM as $perm => $arr) {
             if (is_array($arr) && count($arr) > 0) {
                 foreach ($arr as $ar) {
                     $OWNER_EMAIL[] = $ar["USER_EMAIL"];
-                    if ($perm == "VIEW") $VIEW_EMAIL[] = $ar["USER_EMAIL"];
-                    if ($perm == "ADD") $ADD_EMAIL[] = $ar["USER_EMAIL"];
-                    if ($perm == "EDIT") $EDIT_EMAIL[] = $ar["USER_EMAIL"];
+                    if ($perm == "VIEW") {
+                        $VIEW_EMAIL[] = $ar["USER_EMAIL"];
+                    }
+                    if ($perm == "ADD") {
+                        $ADD_EMAIL[] = $ar["USER_EMAIL"];
+                    }
+                    if ($perm == "EDIT") {
+                        $EDIT_EMAIL[] = $ar["USER_EMAIL"];
+                    }
                 }
             }
         }
@@ -256,7 +273,9 @@ class CAdvContract_all
         global $DB, $USER;
         static $CONTRACT_RIGHTS = array();
         $USER_ID = ($USER_ID === false) ? intval($USER->GetID()) : intval($USER_ID);
-        if (intval($USER_ID) <= 0) return false;
+        if (intval($USER_ID) <= 0) {
+            return false;
+        }
         $CONTRACT_ID = intval($CONTRACT_ID);
         $arrRes = array();
 
@@ -266,13 +285,18 @@ class CAdvContract_all
             $isManager = CAdvContract::IsManager($USER_ID);
             $isAdmin = CAdvContract::IsAdmin($USER_ID);
 
-            if ($isAdmin) $arrRes[0] = CAdvContract::GetMaxPermissionsArray();
-            elseif ($isManager) $arrRes[0] = array("VIEW", "ADD");
-            else $arrRes[0] = array();
+            if ($isAdmin) {
+                $arrRes[0] = CAdvContract::GetMaxPermissionsArray();
+            } elseif ($isManager) {
+                $arrRes[0] = array("VIEW", "ADD");
+            } else {
+                $arrRes[0] = array();
+            }
 
             $strSqlSearch = "";
-            if ($CONTRACT_ID > 0)
+            if ($CONTRACT_ID > 0) {
                 $strSqlSearch = " and C.ID= $CONTRACT_ID ";
+            }
             $strSql = "
 				SELECT
 					C.ID,
@@ -285,12 +309,14 @@ class CAdvContract_all
 				$strSqlSearch
 				";
             $rs = $DB->Query($strSql, false, $err_mess . __LINE__);
-            while ($ar = $rs->Fetch()) $arrRes[$ar["ID"]][] = $ar["PERMISSION"];
+            while ($ar = $rs->Fetch()) {
+                $arrRes[$ar["ID"]][] = $ar["PERMISSION"];
+            }
             if ($isAdmin || $isManager) {
-                reset($arrRes);
-                while (list($cid, $arrPerm) = each($arrRes)) {
-                    if ($isAdmin) $arrPerm = CAdvContract::GetMaxPermissionsArray();
-                    elseif ($isManager) {
+                foreach ($arrRes as $cid => $arrPerm) {
+                    if ($isAdmin) {
+                        $arrPerm = CAdvContract::GetMaxPermissionsArray();
+                    } elseif ($isManager) {
                         $arrPerm[] = "VIEW";
                         $arrPerm[] = "ADD";
                         $arrPerm = array_unique($arrPerm);
@@ -298,8 +324,8 @@ class CAdvContract_all
                     $arrRes[$cid] = $arrPerm;
                 }
             }
-            reset($arrRes);
-            while (list($cid, $arrPerm) = each($arrRes)) {
+
+            foreach ($arrRes as $cid => $arrPerm) {
                 TrimArr($arrPerm);
                 $CONTRACT_RIGHTS[$USER_ID][$cid] = $arrPerm;
                 $arrRes[$cid] = $arrPerm;
@@ -314,11 +340,16 @@ class CAdvContract_all
     public static function IsOwner($CONTRACT_ID, $USER_ID = false)
     {
         $CONTRACT_ID = intval($CONTRACT_ID);
-        if ($CONTRACT_ID <= 0) return false;
+        if ($CONTRACT_ID <= 0) {
+            return false;
+        }
         $arrPERM = CAdvContract::GetUserPermissions($CONTRACT_ID, $USER_ID);
         $arrPERM = $arrPERM[$CONTRACT_ID];
-        if (is_array($arrPERM) && count($arrPERM) > 0) return true;
-        else return false;
+        if (is_array($arrPERM) && count($arrPERM) > 0) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     // ��������� ������� ���� ���� ������� �� ��������� ���������
@@ -328,7 +359,9 @@ class CAdvContract_all
         global $DB;
         $arrPerm = array();
         $CONTRACT_ID = intval($CONTRACT_ID);
-        if ($CONTRACT_ID <= 0) return false;
+        if ($CONTRACT_ID <= 0) {
+            return false;
+        }
         $strSql = "
 			SELECT
 				CU.USER_ID,
@@ -381,7 +414,9 @@ class CAdvContract_all
         $EMAIL_TO = $OWNER_EMAIL;
         if (count($EMAIL_TO) <= 0) {
             $EMAIL_TO = $ADMIN_EMAIL;
-        } else $BCC = $ADMIN_EMAIL;
+        } else {
+            $BCC = $ADMIN_EMAIL;
+        }
 
         $CREATED_BY = $MODIFIED_BY = "";
         if (intval($arContract["CREATED_BY"]) > 0) {
@@ -390,7 +425,9 @@ class CAdvContract_all
                 $CREATED_BY = "[" . $arUser["ID"] . "] (" . $arUser["LOGIN"] . ") " . $arUser["NAME"] . " " . $arUser["LAST_NAME"];
             }
         }
-        if (intval($arContract["MODIFIED_BY"]) == intval($arContract["CREATED_BY"]) && intval($arContract["CREATED_BY"]) > 0) {
+        if (intval($arContract["MODIFIED_BY"]) == intval($arContract["CREATED_BY"]) && intval(
+                $arContract["CREATED_BY"]
+            ) > 0) {
             $MODIFIED_BY = $CREATED_BY;
         } elseif (intval($arContract["MODIFIED_BY"]) > 0) {
             $rsUser = CUser::GetByID($arContract["MODIFIED_BY"]);
@@ -398,11 +435,13 @@ class CAdvContract_all
                 $MODIFIED_BY = "[" . $arUser["ID"] . "] (" . $arUser["LOGIN"] . ") " . $arUser["NAME"] . " " . $arUser["LAST_NAME"];
             }
         }
-        if (strlen($mess) > 0)
+        if ($mess <> '') {
             $mess = "\n" . $mess . "\n";
+        }
         $description = "";
-        if (strlen($arContract["DESCRIPTION"]) > 0)
+        if ($arContract["DESCRIPTION"] <> '') {
             $description = "\n" . $arContract["DESCRIPTION"] . "\n";
+        }
         $arEventFields = array(
             "ID" => $CONTRACT_ID,
             "MESSAGE" => $mess,
@@ -413,7 +452,7 @@ class CAdvContract_all
             "EDIT_EMAIL" => implode(",", $EDIT_EMAIL),
             "OWNER_EMAIL" => implode(",", $OWNER_EMAIL),
             "BCC" => implode(",", $BCC),
-            "INDICATOR" => GetMessage("AD_" . strtoupper($arContract["LAMP"] . "_CONTRACT_STATUS")),
+            "INDICATOR" => GetMessage("AD_" . mb_strtoupper($arContract["LAMP"] . "_CONTRACT_STATUS")),
             "ACTIVE" => $arContract["ACTIVE"],
             "NAME" => $arContract["NAME"],
             "DESCRIPTION" => $description,
@@ -437,7 +476,7 @@ class CAdvContract_all
     {
         $err_mess = (CAdvContract_all::err_mess()) . "<br>Function: SendInfo<br>Line: ";
         global $DB;
-        $rsContracts = CAdvContract::GetList($v1 = "", $v2 = "", array("LAMP" => "red", "EMAIL_COUNT_2" => "0"), $v3 = false, "N");
+        $rsContracts = CAdvContract::GetList("", "", array("LAMP" => "red", "EMAIL_COUNT_2" => "0"), null, "N");
         while ($arContract = $rsContracts->Fetch()) {
             CAdvContract::SendEMail($arContract, "< " . GetMessage("AD_CONTRACT_NOT_ACTIVE") . " >");
             $arFields = array("EMAIL_COUNT" => "EMAIL_COUNT + 1");
@@ -456,23 +495,27 @@ class CAdvContract_all
         $str = "";
         $find_date_modify_1 = $arFilter["DATE_MODIFY_1"];
         $find_date_modify_2 = $arFilter["DATE_MODIFY_2"];
-        if (strlen(trim($find_date_modify_1)) > 0 || strlen(trim($find_date_modify_2)) > 0) {
+        if (trim($find_date_modify_1) <> '' || trim($find_date_modify_2) <> '') {
             $date_1_ok = false;
             $date1_stm = MkDateTime(ConvertDateTime($find_date_modify_1, "D.M.Y"), "d.m.Y");
             $date2_stm = MkDateTime(ConvertDateTime($find_date_modify_2, "D.M.Y") . " 23:59", "d.m.Y H:i");
-            if (!$date1_stm && strlen(trim($find_date_modify_1)) > 0)
+            if (!$date1_stm && trim($find_date_modify_1) <> '') {
                 $str .= GetMessage("AD_ERROR_WRONG_DATE_MODIFY_FROM") . "<br>";
-            else $date_1_ok = true;
-            if (!$date2_stm && strlen(trim($find_date_modify_2)) > 0)
+            } else {
+                $date_1_ok = true;
+            }
+            if (!$date2_stm && trim($find_date_modify_2) <> '') {
                 $str .= GetMessage("AD_ERROR_WRONG_DATE_MODIFY_TILL") . "<br>";
-            elseif ($date_1_ok && $date2_stm <= $date1_stm && strlen($date2_stm) > 0)
+            } elseif ($date_1_ok && $date2_stm <= $date1_stm && $date2_stm <> '') {
                 $str .= GetMessage("AD_ERROR_FROM_TILL_DATE_MODIFY") . "<br>";
+            }
         }
         $strError .= $str;
-        if (strlen($str) > 0)
+        if ($str <> '') {
             return false;
-        else
+        } else {
             return true;
+        }
     }
 
     // �������� ������ ������� � ���� ������ ��������� � ����������
@@ -481,7 +524,9 @@ class CAdvContract_all
         $err_mess = (CAdvContract_all::err_mess()) . "<br>Function: GetWeekdayArray<br>Line: ";
         global $DB;
         $CONTRACT_ID = intval($CONTRACT_ID);
-        if ($CONTRACT_ID <= 0) return false;
+        if ($CONTRACT_ID <= 0) {
+            return false;
+        }
         $arrRes = array();
         $strSql = "
 			SELECT DISTINCT
@@ -506,8 +551,9 @@ class CAdvContract_all
         global $DB;
 
         $CONTRACT_ID = intval($CONTRACT_ID);
-        if ($CONTRACT_ID <= 0)
+        if ($CONTRACT_ID <= 0) {
             return array();
+        }
 
         $strSql = "
 			SELECT T.SID,
@@ -526,8 +572,9 @@ class CAdvContract_all
         $rs = $DB->Query($strSql, false, $err_mess . __LINE__);
         while ($ar = $rs->Fetch()) {
             $arrRes[$ar["SID"]] = $ar["NAME"];
-            if ($ar["TYPE_SID"] == 'ALL')
+            if ($ar["TYPE_SID"] == 'ALL') {
                 $arrRes["ALL"] = true;
+            }
         }
         return $arrRes;
     }
@@ -538,7 +585,9 @@ class CAdvContract_all
         $err_mess = (CAdvContract_all::err_mess()) . "<br>Function: GetSiteArray<br>Line: ";
         global $DB;
         $CONTRACT_ID = intval($CONTRACT_ID);
-        if ($CONTRACT_ID <= 0) return false;
+        if ($CONTRACT_ID <= 0) {
+            return false;
+        }
         $arrRes = array();
         $strSql = "
 			SELECT
@@ -550,7 +599,9 @@ class CAdvContract_all
 			";
 
         $rs = $DB->Query($strSql, false, $err_mess . __LINE__);
-        while ($ar = $rs->Fetch()) $arrRes[] = $ar["SITE_ID"];
+        while ($ar = $rs->Fetch()) {
+            $arrRes[] = $ar["SITE_ID"];
+        }
         return $arrRes;
     }
 
@@ -560,7 +611,9 @@ class CAdvContract_all
         $err_mess = (CAdvContract_all::err_mess()) . "<br>Function: GetPageArray<br>Line: ";
         global $DB;
         $CONTRACT_ID = intval($CONTRACT_ID);
-        if ($CONTRACT_ID <= 0) return false;
+        if ($CONTRACT_ID <= 0) {
+            return false;
+        }
         $arrRes = array();
         $SHOW_ON_PAGE = ($SHOW == "NOT_SHOW") ? "'N'" : "'Y'";
         $strSql = "
@@ -573,7 +626,9 @@ class CAdvContract_all
 			and	SHOW_ON_PAGE = $SHOW_ON_PAGE
 			";
         $rs = $DB->Query($strSql, false, $err_mess . __LINE__);
-        while ($ar = $rs->Fetch()) $arrRes[] = $ar["PAGE"];
+        while ($ar = $rs->Fetch()) {
+            $arrRes[] = $ar["PAGE"];
+        }
         return $arrRes;
     }
 
@@ -581,12 +636,14 @@ class CAdvContract_all
     public static function GetByID($CONTRACT_ID, $CHECK_RIGHTS = "Y")
     {
         $CONTRACT_ID = intval($CONTRACT_ID);
-        if ($CONTRACT_ID <= 0) return false;
+        if ($CONTRACT_ID <= 0) {
+            return false;
+        }
         $arFilter = array(
             "ID" => $CONTRACT_ID,
             "ID_EXACT_MATCH" => "Y"
         );
-        $rs = CAdvContract::GetList($v1 = "", $v2 = "", $arFilter, $v3 = false, $CHECK_RIGHTS);
+        $rs = CAdvContract::GetList('', '', $arFilter, null, $CHECK_RIGHTS);
         return $rs;
     }
 
@@ -601,26 +658,30 @@ class CAdvContract_all
             $arrPERM = $arrPERM[$CONTRACT_ID];
         }
         if ($CHECK_RIGHTS != "Y" || (is_array($arrPERM) && in_array("EDIT", $arrPERM))) {
-            if (strlen($arFields["DATE_SHOW_FROM"]) > 0) {
-                if (!CheckDateTime($arFields["DATE_SHOW_FROM"]))
+            if ($arFields["DATE_SHOW_FROM"] <> '') {
+                if (!CheckDateTime($arFields["DATE_SHOW_FROM"])) {
                     $str .= GetMessage("AD_ERROR_WRONG_DATE_SHOW_FROM_CONTRACT") . "<br>";
+                }
             }
-            if (strlen($arFields["DATE_SHOW_TO"]) > 0) {
-                if (!CheckDateTime($arFields["DATE_SHOW_TO"]))
+            if ($arFields["DATE_SHOW_TO"] <> '') {
+                if (!CheckDateTime($arFields["DATE_SHOW_TO"])) {
                     $str .= GetMessage("AD_ERROR_WRONG_DATE_SHOW_TO_CONTRACT") . "<br>";
+                }
             }
         } else {
-            if ($CONTRACT_ID > 0)
+            if ($CONTRACT_ID > 0) {
                 $str .= GetMessage("AD_ERROR_NOT_ENOUGH_PERMISSIONS_CONTRACT") . "<br>";
-            else
+            } else {
                 $str .= GetMessage("AD_ERROR_NOT_ENOUGH_PERMISSIONS_FOR_NEW_CONTRACT") . "<br>";
+            }
         }
 
         $strError .= $str;
-        if (strlen($str) > 0)
+        if ($str <> '') {
             return false;
-        else
+        } else {
             return true;
+        }
     }
 
     // ��������� ����� �������� ��� ������������ ������������
@@ -633,7 +694,11 @@ class CAdvContract_all
                 $USER_ID = intval($USER->GetID());
                 $isAdmin = CAdvContract::IsAdmin();
             } else {
-                if (is_object($USER)) $USER_ID = intval($USER->GetID()); else $USER_ID = 0;
+                if (is_object($USER)) {
+                    $USER_ID = intval($USER->GetID());
+                } else {
+                    $USER_ID = 0;
+                }
                 $isAdmin = true;
             }
 
@@ -661,51 +726,59 @@ class CAdvContract_all
                     $arFields_i["ACTIVE"] = "'" . $arFields["ACTIVE"] . "'";
                 }
 
-                if (in_array("WEIGHT", $arrKeys))
+                if (in_array("WEIGHT", $arrKeys)) {
                     $arFields_i["WEIGHT"] = intval($arFields["WEIGHT"]);
+                }
 
-                if (in_array("ADMIN_COMMENTS", $arrKeys))
+                if (in_array("ADMIN_COMMENTS", $arrKeys)) {
                     $arFields_i["ADMIN_COMMENTS"] = "'" . $DB->ForSql($arFields["ADMIN_COMMENTS"], 2000) . "'";
+                }
 
-                if (in_array("KEYWORDS", $arrKeys))
-                    $arFields_i["KEYWORDS"] = "'" . $DB->ForSql($arFields["KEYWORDS"], 2000) . "'";;
+                if (in_array("KEYWORDS", $arrKeys)) {
+                    $arFields_i["KEYWORDS"] = "'" . $DB->ForSql($arFields["KEYWORDS"], 2000) . "'";
+                };
 
                 if (in_array("MAX_SHOW_COUNT", $arrKeys)) {
                     $check_activity = "Y";
-                    if (strlen($arFields["MAX_SHOW_COUNT"]) > 0)
+                    if ($arFields["MAX_SHOW_COUNT"] <> '') {
                         $arFields_i["MAX_SHOW_COUNT"] = intval($arFields["MAX_SHOW_COUNT"]);
-                    else
+                    } else {
                         $arFields_i["MAX_SHOW_COUNT"] = "null";
+                    }
                 }
 
                 if (in_array("MAX_VISITOR_COUNT", $arrKeys)) {
                     $check_activity = "Y";
-                    if (strlen($arFields["MAX_VISITOR_COUNT"]) > 0)
+                    if ($arFields["MAX_VISITOR_COUNT"] <> '') {
                         $arFields_i["MAX_VISITOR_COUNT"] = intval($arFields["MAX_VISITOR_COUNT"]);
-                    else
+                    } else {
                         $arFields_i["MAX_VISITOR_COUNT"] = "null";
+                    }
                 }
 
                 if (in_array("MAX_CLICK_COUNT", $arrKeys)) {
                     $check_activity = "Y";
-                    if (strlen($arFields["MAX_CLICK_COUNT"]) > 0)
+                    if ($arFields["MAX_CLICK_COUNT"] <> '') {
                         $arFields_i["MAX_CLICK_COUNT"] = intval($arFields["MAX_CLICK_COUNT"]);
-                    else
+                    } else {
                         $arFields_i["MAX_CLICK_COUNT"] = "null";
+                    }
                 }
 
                 if (in_array("DATE_SHOW_FROM", $arrKeys)) {
                     $check_activity = "Y";
-                    if (strlen($arFields["DATE_SHOW_FROM"]) > 0) {
+                    if ($arFields["DATE_SHOW_FROM"] <> '') {
                         $arFields_i["DATE_SHOW_FROM"] = $DB->CharToDateFunction($arFields["DATE_SHOW_FROM"]);
-                    } else $arFields_i["DATE_SHOW_FROM"] = "null";
+                    } else {
+                        $arFields_i["DATE_SHOW_FROM"] = "null";
+                    }
                 }
 
                 if (in_array("DATE_SHOW_TO", $arrKeys)) {
                     $check_activity = "Y";
-                    if (strlen($arFields["DATE_SHOW_TO"]) > 0) {
+                    if ($arFields["DATE_SHOW_TO"] <> '') {
                         $time = "";
-                        if (defined("FORMAT_DATE") && strlen($arFields["DATE_SHOW_TO"]) <= strlen(FORMAT_DATE)) {
+                        if (defined("FORMAT_DATE") && mb_strlen($arFields["DATE_SHOW_TO"]) <= mb_strlen(FORMAT_DATE)) {
                             $time = " 23:59:59";
                         }
                         $arFields_i["DATE_SHOW_TO"] = $DB->CharToDateFunction($arFields["DATE_SHOW_TO"] . $time);
@@ -718,18 +791,23 @@ class CAdvContract_all
                     $arrStatus = CAdvBanner::GetStatusList("N");
                     $arrV = array_values($arrStatus["reference_id"]);
                     if (in_array($arFields["DEFAULT_STATUS_SID"], $arrV)) {
-                        $arFields_i["DEFAULT_STATUS_SID"] = "'" . $DB->ForSql($arFields["DEFAULT_STATUS_SID"], 255) . "'";
+                        $arFields_i["DEFAULT_STATUS_SID"] = "'" . $DB->ForSql(
+                                $arFields["DEFAULT_STATUS_SID"],
+                                255
+                            ) . "'";
                     }
                 }
 
-                if (in_array("SORT", $arrKeys))
+                if (in_array("SORT", $arrKeys)) {
                     $arFields_i["SORT"] = intval($arFields["SORT"]);
+                }
 
-                if (in_array("NAME", $arrKeys))
+                if (in_array("NAME", $arrKeys)) {
                     $arFields_i["NAME"] = "'" . $DB->ForSql($arFields["NAME"], 255) . "'";
-                if (in_array("DESCRIPTION", $arrKeys))
+                }
+                if (in_array("DESCRIPTION", $arrKeys)) {
                     $arFields_i["DESCRIPTION"] = "'" . $DB->ForSql($arFields["DESCRIPTION"], 2000) . "'";
-
+                }
             }
 
             $arFields_i["EMAIL_COUNT"] = 0;
@@ -740,39 +818,50 @@ class CAdvContract_all
                 $arContract = $rsContract->Fetch();
                 $str_PREV_LAMP = $arContract["LAMP"];
 
-                if (in_array("DATE_MODIFY", $arrKeys) && CheckDateTime($arFields["DATE_MODIFY"]))
+                if (in_array("DATE_MODIFY", $arrKeys) && CheckDateTime($arFields["DATE_MODIFY"])) {
                     $arFields_i["DATE_MODIFY"] = $DB->CharToDateFunction($arFields["DATE_MODIFY"]);
-                else
+                } else {
                     $arFields_i["DATE_MODIFY"] = $DB->GetNowFunction();
+                }
 
-                if (in_array("MODIFIED_BY", $arrKeys))
+                if (in_array("MODIFIED_BY", $arrKeys)) {
                     $arFields_i["MODIFIED_BY"] = intval($arFields["MODIFIED_BY"]);
-                else
+                } else {
                     $arFields_i["MODIFIED_BY"] = $USER_ID;
+                }
 
-                $DB->Update("b_adv_contract", $arFields_i, "WHERE ID='" . intval($CONTRACT_ID) . "'", $err_mess . __LINE__);
+                $DB->Update(
+                    "b_adv_contract",
+                    $arFields_i,
+                    "WHERE ID='" . intval($CONTRACT_ID) . "'",
+                    $err_mess . __LINE__
+                );
             } elseif ($isAdmin) {
                 $check_activity = "Y";
 
-                if (in_array("DATE_CREATE", $arrKeys) && CheckDateTime($arFields["DATE_CREATE"]))
+                if (in_array("DATE_CREATE", $arrKeys) && CheckDateTime($arFields["DATE_CREATE"])) {
                     $arFields_i["DATE_CREATE"] = $DB->CharToDateFunction($arFields["DATE_CREATE"]);
-                else
+                } else {
                     $arFields_i["DATE_CREATE"] = $DB->GetNowFunction();
+                }
 
-                if (in_array("CREATED_BY", $arrKeys))
+                if (in_array("CREATED_BY", $arrKeys)) {
                     $arFields_i["CREATED_BY"] = intval($arFields["CREATED_BY"]);
-                else
+                } else {
                     $arFields_i["CREATED_BY"] = $USER_ID;
+                }
 
-                if (in_array("DATE_MODIFY", $arrKeys) && CheckDateTime($arFields["DATE_MODIFY"]))
+                if (in_array("DATE_MODIFY", $arrKeys) && CheckDateTime($arFields["DATE_MODIFY"])) {
                     $arFields_i["DATE_MODIFY"] = $DB->CharToDateFunction($arFields["DATE_MODIFY"]);
-                else
+                } else {
                     $arFields_i["DATE_MODIFY"] = $DB->GetNowFunction();
+                }
 
-                if (in_array("MODIFIED_BY", $arrKeys))
+                if (in_array("MODIFIED_BY", $arrKeys)) {
                     $arFields_i["MODIFIED_BY"] = intval($arFields["MODIFIED_BY"]);
-                else
+                } else {
                     $arFields_i["MODIFIED_BY"] = $USER_ID;
+                }
 
                 $CONTRACT_ID = $DB->Insert("b_adv_contract", $arFields_i, $err_mess . __LINE__);
             }
@@ -786,8 +875,11 @@ class CAdvContract_all
                         if (is_array($arFields["arrSITE"])) {
                             $arrSite = array_unique($arFields["arrSITE"]);
                             foreach ($arrSite as $sid) {
-                                if (strlen(trim($sid)) > 0) {
-                                    $strSql = "INSERT INTO b_adv_contract_2_site(CONTRACT_ID, SITE_ID) VALUES ($CONTRACT_ID, '" . $DB->ForSql($sid, 2) . "')";
+                                if (trim($sid) <> '') {
+                                    $strSql = "INSERT INTO b_adv_contract_2_site(CONTRACT_ID, SITE_ID) VALUES ($CONTRACT_ID, '" . $DB->ForSql(
+                                            $sid,
+                                            2
+                                        ) . "')";
                                     $DB->Query($strSql, false, $err_mess . __LINE__);
                                 }
                             }
@@ -800,7 +892,7 @@ class CAdvContract_all
                             $arrPage = array_unique($arFields["arrSHOW_PAGE"]);
                             foreach ($arrPage as $page) {
                                 $page = trim($page);
-                                if (strlen($page) > 0) {
+                                if ($page <> '') {
                                     $arFields_i = array(
                                         "CONTRACT_ID" => $CONTRACT_ID,
                                         "PAGE" => "'" . $DB->ForSql($page, 255) . "'",
@@ -818,7 +910,7 @@ class CAdvContract_all
                             $arrPage = array_unique($arFields["arrNOT_SHOW_PAGE"]);
                             foreach ($arrPage as $page) {
                                 $page = trim($page);
-                                if (strlen($page) > 0) {
+                                if ($page <> '') {
                                     $arFields_i = array(
                                         "CONTRACT_ID" => $CONTRACT_ID,
                                         "PAGE" => "'" . $DB->ForSql($page, 255) . "'",
@@ -835,8 +927,11 @@ class CAdvContract_all
                         if (is_array($arFields["arrTYPE"])) {
                             $arrType = array_unique($arFields["arrTYPE"]);
                             foreach ($arrType as $type) {
-                                if (strlen(trim($type)) > 0) {
-                                    $strSql = "INSERT INTO b_adv_contract_2_type(CONTRACT_ID, TYPE_SID) VALUES ($CONTRACT_ID, '" . $DB->ForSql($type, 255) . "')";
+                                if (trim($type) <> '') {
+                                    $strSql = "INSERT INTO b_adv_contract_2_type(CONTRACT_ID, TYPE_SID) VALUES ($CONTRACT_ID, '" . $DB->ForSql(
+                                            $type,
+                                            255
+                                        ) . "')";
                                     $DB->Query($strSql, false, $err_mess . __LINE__);
                                 }
                             }
@@ -850,13 +945,23 @@ class CAdvContract_all
                             $arrWeekday = array_unique($arrWeekday);
                             if (is_array($arrWeekday) && count($arrWeekday) > 0) {
                                 foreach ($arrWeekday as $weekday) {
-                                    if (is_array($arFields["arrWEEKDAY"][$weekday]) && count($arFields["arrWEEKDAY"][$weekday]) > 0) {
+                                    if (is_array($arFields["arrWEEKDAY"][$weekday]) && count(
+                                            $arFields["arrWEEKDAY"][$weekday]
+                                        ) > 0) {
                                         $arrHour = $arFields["arrWEEKDAY"][$weekday];
-                                        array_walk($arrHour, create_function("&\$item", "\$item=intval(\$item);"));
+                                        array_walk(
+                                            $arrHour,
+                                            function (&$item) {
+                                                $item = (int)$item;
+                                            }
+                                        );
                                         $arrHour = array_unique($arrHour);
                                         foreach ($arrHour as $hour) {
                                             if ($hour >= 0 && $hour <= 23) {
-                                                $strSql = "INSERT INTO b_adv_contract_2_weekday (CONTRACT_ID, C_WEEKDAY, C_HOUR) VALUES (" . $CONTRACT_ID . ", '" . $DB->ForSql($weekday, 10) . "', " . $hour . ")";
+                                                $strSql = "INSERT INTO b_adv_contract_2_weekday (CONTRACT_ID, C_WEEKDAY, C_HOUR) VALUES (" . $CONTRACT_ID . ", '" . $DB->ForSql(
+                                                        $weekday,
+                                                        10
+                                                    ) . "', " . $hour . ")";
                                                 $DB->Query($strSql, false, $err_mess . __LINE__);
                                             }
                                         }
@@ -928,15 +1033,21 @@ class CAdvContract_all
                     $arContract = $rsContract->Fetch();
                     $str_CURRENT_LAMP = $arContract["LAMP"];
                     if ($str_PREV_LAMP != $str_CURRENT_LAMP) {
-                        $mess = ($str_CURRENT_LAMP == "red") ? "< " . GetMessage("AD_CONTRACT_NOT_ACTIVE") . " >" : "< " . GetMessage("AD_CONTRACT_ACTIVE") . " >";
+                        $mess = ($str_CURRENT_LAMP == "red") ? "< " . GetMessage(
+                                "AD_CONTRACT_NOT_ACTIVE"
+                            ) . " >" : "< " . GetMessage("AD_CONTRACT_ACTIVE") . " >";
                         CAdvContract::SendEMail($arContract, $mess);
                     }
                     if ($str_CURRENT_LAMP == "red") {
                         $arFields = array("EMAIL_COUNT" => "EMAIL_COUNT + 1");
-                        $DB->Update("b_adv_contract", $arFields, "WHERE ID='" . $CONTRACT_ID . "'", $err_mess . __LINE__);
+                        $DB->Update(
+                            "b_adv_contract",
+                            $arFields,
+                            "WHERE ID='" . $CONTRACT_ID . "'",
+                            $err_mess . __LINE__
+                        );
                     }
                 }
-
             }
         }
         return $CONTRACT_ID;
@@ -948,13 +1059,16 @@ class CAdvContract_all
         $err_mess = (CAdvContract_all::err_mess()) . "<br>Function: Delete<br>Line: ";
         global $DB, $strError;
         $CONTRACT_ID = intval($CONTRACT_ID);
-        if ($CONTRACT_ID <= 1)
+        if ($CONTRACT_ID <= 1) {
             return false;
+        }
         $isAdmin = ($CHECK_RIGHTS == "N" ? true : CAdvContract::IsAdmin());
         if ($isAdmin) {
             $strSql = "SELECT ID FROM b_adv_banner WHERE CONTRACT_ID = $CONTRACT_ID";
             $rs = $DB->Query($strSql, false, $err_mess . __LINE__);
-            while ($ar = $rs->Fetch()) CAdvBanner::Delete($ar["ID"], "N");
+            while ($ar = $rs->Fetch()) {
+                CAdvBanner::Delete($ar["ID"], "N");
+            }
 
             CAdvContract::DeletePageLink($CONTRACT_ID);
             CAdvContract::DeleteSiteLink($CONTRACT_ID);
@@ -977,8 +1091,9 @@ class CAdvContract_all
         $err_mess = (CAdvContract_all::err_mess()) . "<br>Function: DeletePageLink<br>Line: ";
         global $DB;
         $CONTRACT_ID = intval($CONTRACT_ID);
-        if ($CONTRACT_ID <= 0)
+        if ($CONTRACT_ID <= 0) {
             return false;
+        }
         $strSql = "DELETE FROM b_adv_contract_2_page WHERE CONTRACT_ID = $CONTRACT_ID " . $where;
         $DB->Query($strSql, false, $err_mess . __LINE__);
         return true;
@@ -990,8 +1105,9 @@ class CAdvContract_all
         $err_mess = (CAdvContract_all::err_mess()) . "<br>Function: DeleteSiteLink<br>Line: ";
         global $DB;
         $CONTRACT_ID = intval($CONTRACT_ID);
-        if ($CONTRACT_ID <= 0)
+        if ($CONTRACT_ID <= 0) {
             return false;
+        }
         $strSql = "DELETE FROM b_adv_contract_2_site WHERE CONTRACT_ID = $CONTRACT_ID";
         $DB->Query($strSql, false, $err_mess . __LINE__);
         return true;
@@ -1003,8 +1119,9 @@ class CAdvContract_all
         $err_mess = (CAdvContract_all::err_mess()) . "<br>Function: DeleteTypeLink<br>Line: ";
         global $DB;
         $CONTRACT_ID = intval($CONTRACT_ID);
-        if ($CONTRACT_ID <= 0)
+        if ($CONTRACT_ID <= 0) {
             return false;
+        }
         $strSql = "DELETE FROM b_adv_contract_2_type WHERE CONTRACT_ID = $CONTRACT_ID";
         $DB->Query($strSql, false, $err_mess . __LINE__);
         return true;
@@ -1016,8 +1133,9 @@ class CAdvContract_all
         $err_mess = (CAdvContract_all::err_mess()) . "<br>Function: DeleteUserLink<br>Line: ";
         global $DB;
         $CONTRACT_ID = intval($CONTRACT_ID);
-        if ($CONTRACT_ID <= 0)
+        if ($CONTRACT_ID <= 0) {
             return false;
+        }
         $strSql = "DELETE FROM b_adv_contract_2_user WHERE CONTRACT_ID = $CONTRACT_ID " . $where;
         $DB->Query($strSql, false, $err_mess . __LINE__);
         return true;
@@ -1029,8 +1147,9 @@ class CAdvContract_all
         $err_mess = (CAdvContract_all::err_mess()) . "<br>Function: DeleteWeekdayLink<br>Line: ";
         global $DB;
         $CONTRACT_ID = intval($CONTRACT_ID);
-        if ($CONTRACT_ID <= 0)
+        if ($CONTRACT_ID <= 0) {
             return false;
+        }
         $strSql = "DELETE FROM b_adv_contract_2_weekday WHERE CONTRACT_ID = $CONTRACT_ID";
         $DB->Query($strSql, false, $err_mess . __LINE__);
         return true;
@@ -1049,9 +1168,13 @@ class CAdvContract_all
                     $key = $filter_keys[$i];
                     $val = $arFilter[$filter_keys[$i]];
                     if (is_array($val)) {
-                        if (count($val) <= 0) continue;
+                        if (count($val) <= 0) {
+                            continue;
+                        }
                     } else {
-                        if ((strlen($val) <= 0) || ("$val" == "NOT_REF")) continue;
+                        if (((string)$val == '') || ("$val" == "NOT_REF")) {
+                            continue;
+                        }
                     }
                     $key = strtoupper($key);
                     switch ($key) {
@@ -1067,7 +1190,8 @@ class CAdvContract_all
                 \Bitrix\Main\Type\Collection::normalizeArrayValuesByInt($arFilter['CONTRACT_ID']);
 
                 if (is_array($arFilter['CONTRACT_ID']) && !empty($arFilter['CONTRACT_ID'])) {
-                    $arSqlSearch[] = CSQLWhere::_NumberIN("C.ID", $arFilter['CONTRACT_ID']);
+                    $where = new CSQLWhere();
+                    $arSqlSearch[] = $where->_NumberIN("C.ID", $arFilter['CONTRACT_ID']);
                 }
             }
         }
@@ -1156,30 +1280,33 @@ class CAdvBanner_all
     public static function GetCurUri()
     {
         global $strAdvCurUri, $APPLICATION;
-        if ($strAdvCurUri !== false)
+        if ($strAdvCurUri !== false) {
             return $strAdvCurUri;
-        else
+        } else {
             return $APPLICATION->GetCurUri("", true);
+        }
     }
 
     public static function SetCurUri($uri = false)
     {
         global $strAdvCurUri;
-        if ($uri !== false)
+        if ($uri !== false) {
             $strAdvCurUri = $uri;
+        }
     }
 
     // ������� ������ �� ID
     public static function GetByID($BANNER_ID, $CHECK_RIGHTS = "Y")
     {
         $BANNER_ID = intval($BANNER_ID);
-        if ($BANNER_ID <= 0)
+        if ($BANNER_ID <= 0) {
             return false;
+        }
         $arFilter = array(
             "ID" => $BANNER_ID,
             "ID_EXACT_MATCH" => "Y"
         );
-        $rs = CAdvBanner::GetList($v1 = "", $v2 = "", $arFilter, $v3 = false, $CHECK_RIGHTS);
+        $rs = CAdvBanner::GetList("", "", $arFilter, false, $CHECK_RIGHTS);
         return $rs;
     }
 
@@ -1203,7 +1330,6 @@ class CAdvBanner_all
                 "SHOWS_FOR_VISITOR" => $arBanner["SHOWS_FOR_VISITOR"],
                 "MAX_SHOW_COUNT" => $arBanner["MAX_SHOW_COUNT"],
                 "RESET_SHOW_COUNT" => "Y",
-                "FIX_CLICK" => $arBanner["FIX_CLICK"],
                 "MAX_CLICK_COUNT" => $arBanner["MAX_CLICK_COUNT"],
                 "RESET_CLICK_COUNT" => $arBanner["RESET_CLICK_COUNT"],
                 "DATE_SHOW_FROM" => $arBanner["DATE_SHOW_FROM"],
@@ -1214,9 +1340,6 @@ class CAdvBanner_all
                 "NO_URL_IN_FLASH" => $arBanner["NO_URL_IN_FLASH"],
                 "CODE" => $arBanner["CODE"],
                 "CODE_TYPE" => $arBanner["CODE_TYPE"],
-                "STAT_EVENT_1" => $arBanner["STAT_EVENT_1"],
-                "STAT_EVENT_2" => $arBanner["STAT_EVENT_2"],
-                "STAT_EVENT_3" => $arBanner["STAT_EVENT_3"],
                 "FOR_NEW_GUEST" => $arBanner["FOR_NEW_GUEST"],
                 "COMMENTS" => $arBanner["COMMENTS"],
                 "SHOW_USER_GROUP" => $arBanner["SHOW_USER_GROUP"],
@@ -1242,10 +1365,14 @@ class CAdvBanner_all
                 $arrIMAGE["MODULE_ID"] = "advertising";
                 $arFields["arrIMAGE_ID"] = $arrIMAGE;
             }
-            if ($arBanner["TEMPLATE_FILES"] && CheckSerializedData($arBanner["TEMPLATE_FILES"]))
-                $arBanner["TEMPLATE_FILES"] = unserialize(htmlspecialchars_decode($arBanner["TEMPLATE_FILES"]));
-            else
+            if ($arBanner["TEMPLATE_FILES"] && CheckSerializedData($arBanner["TEMPLATE_FILES"])) {
+                $arBanner["TEMPLATE_FILES"] = unserialize(
+                    htmlspecialchars_decode($arBanner["TEMPLATE_FILES"]),
+                    ['allowed_classes' => false]
+                );
+            } else {
                 $arBanner["TEMPLATE_FILES"] = array();
+            }
             $arrTEMPLATE_FILES = array();
             foreach ($arBanner["TEMPLATE_FILES"] as $k1 => $v1) {
                 foreach ($v1 as $k2 => $v2) {
@@ -1266,8 +1393,9 @@ class CAdvBanner_all
         $err_mess = (CAdvBanner_all::err_mess()) . "<br>Function: Delete<br>Line: ";
         global $DB, $strError;
         $BANNER_ID = intval($BANNER_ID);
-        if ($BANNER_ID <= 0)
+        if ($BANNER_ID <= 0) {
             return false;
+        }
 
         $strSql = "SELECT CONTRACT_ID, IMAGE_ID, TYPE_SID FROM b_adv_banner WHERE ID = '$BANNER_ID'";
         $rsBanner = $DB->Query($strSql, false, $err_mess . __LINE__);
@@ -1276,8 +1404,9 @@ class CAdvBanner_all
             if ($CHECK_RIGHTS == "Y") {
                 $arrPERM = CAdvContract::GetUserPermissions($arBanner["CONTRACT_ID"]);
                 $arrPERM = $arrPERM[$arBanner["CONTRACT_ID"]];
-                if (in_array("ADD", $arrPERM))
+                if (in_array("ADD", $arrPERM)) {
                     $ok = true;
+                }
             } else {
                 $ok = true;
             }
@@ -1315,8 +1444,9 @@ class CAdvBanner_all
         $err_mess = (CAdvBanner_all::err_mess()) . "<br>Function: DeleteWeekdayLink<br>Line: ";
         global $DB;
         $BANNER_ID = intval($BANNER_ID);
-        if ($BANNER_ID <= 0)
+        if ($BANNER_ID <= 0) {
             return false;
+        }
         $strSql = "DELETE FROM b_adv_banner_2_weekday WHERE BANNER_ID = $BANNER_ID";
         $DB->Query($strSql, false, $err_mess . __LINE__);
         return true;
@@ -1328,8 +1458,9 @@ class CAdvBanner_all
         $err_mess = (CAdvBanner_all::err_mess()) . "<br>Function: DeleteSiteLink<br>Line: ";
         global $DB;
         $BANNER_ID = intval($BANNER_ID);
-        if ($BANNER_ID <= 0)
+        if ($BANNER_ID <= 0) {
             return false;
+        }
         $strSql = "DELETE FROM b_adv_banner_2_site WHERE BANNER_ID = $BANNER_ID";
         $DB->Query($strSql, false, $err_mess . __LINE__);
         return true;
@@ -1341,8 +1472,9 @@ class CAdvBanner_all
         $err_mess = (CAdvBanner_all::err_mess()) . "<br>Function: DeleteCountryLink<br>Line: ";
         global $DB;
         $BANNER_ID = intval($BANNER_ID);
-        if ($BANNER_ID <= 0)
+        if ($BANNER_ID <= 0) {
             return false;
+        }
         $strSql = "DELETE FROM b_adv_banner_2_country WHERE BANNER_ID = $BANNER_ID";
         $DB->Query($strSql, false, $err_mess . __LINE__);
         return true;
@@ -1354,8 +1486,9 @@ class CAdvBanner_all
         $err_mess = (CAdvBanner_all::err_mess()) . "<br>Function: DeleteStatAdvLink<br>Line: ";
         global $DB;
         $BANNER_ID = intval($BANNER_ID);
-        if ($BANNER_ID <= 0)
+        if ($BANNER_ID <= 0) {
             return false;
+        }
         $strSql = "DELETE FROM b_adv_banner_2_stat_adv WHERE BANNER_ID = $BANNER_ID";
         $DB->Query($strSql, false, $err_mess . __LINE__);
         return true;
@@ -1367,8 +1500,9 @@ class CAdvBanner_all
         $err_mess = (CAdvBanner_all::err_mess()) . "<br>Function: DeletePageLink<br>Line: ";
         global $DB;
         $BANNER_ID = intval($BANNER_ID);
-        if ($BANNER_ID <= 0)
+        if ($BANNER_ID <= 0) {
             return false;
+        }
         $strSql = "DELETE FROM b_adv_banner_2_page WHERE BANNER_ID = $BANNER_ID " . $where;
         $DB->Query($strSql, false, $err_mess . __LINE__);
         return true;
@@ -1379,8 +1513,9 @@ class CAdvBanner_all
         $err_mess = (CAdvBanner_all::err_mess()) . "<br>Function: DeleteGroupLink<br>Line: ";
         global $DB;
         $BANNER_ID = intval($BANNER_ID);
-        if ($BANNER_ID <= 0)
+        if ($BANNER_ID <= 0) {
             return false;
+        }
         $strSql = "DELETE FROM b_adv_banner_2_group WHERE BANNER_ID = $BANNER_ID";
         $DB->Query($strSql, false, $err_mess . __LINE__);
         return true;
@@ -1408,8 +1543,9 @@ class CAdvBanner_all
         $err_mess = (CAdvBanner_all::err_mess()) . "<br>Function: GetPageArray<br>Line: ";
         global $DB;
         $BANNER_ID = intval($BANNER_ID);
-        if ($BANNER_ID <= 0)
+        if ($BANNER_ID <= 0) {
             return false;
+        }
         $arrRes = array();
         $SHOW_ON_PAGE = ($SHOW == "NOT_SHOW") ? "'N'" : "'Y'";
         $strSql = "
@@ -1422,8 +1558,9 @@ class CAdvBanner_all
 			and	SHOW_ON_PAGE = $SHOW_ON_PAGE
 			";
         $rs = $DB->Query($strSql, false, $err_mess . __LINE__);
-        while ($ar = $rs->Fetch())
+        while ($ar = $rs->Fetch()) {
             $arrRes[] = $ar["PAGE"];
+        }
         return $arrRes;
     }
 
@@ -1433,8 +1570,9 @@ class CAdvBanner_all
         $err_mess = (CAdvBanner_all::err_mess()) . "<br>Function: GetGroupArray<br>Line: ";
         global $DB;
         $BANNER_ID = intval($BANNER_ID);
-        if ($BANNER_ID <= 0)
+        if ($BANNER_ID <= 0) {
             return false;
+        }
         $arrRes = array();
 
         $strSql = "
@@ -1446,8 +1584,9 @@ class CAdvBanner_all
 				BANNER_ID = $BANNER_ID
 			";
         $rs = $DB->Query($strSql, false, $err_mess . __LINE__);
-        while ($ar = $rs->Fetch())
+        while ($ar = $rs->Fetch()) {
             $arrRes[] = $ar["GROUP_ID"];
+        }
         return $arrRes;
     }
 
@@ -1457,8 +1596,9 @@ class CAdvBanner_all
         $err_mess = (CAdvBanner_all::err_mess()) . "<br>Function: GetSiteArray<br>Line: ";
         global $DB;
         $BANNER_ID = intval($BANNER_ID);
-        if ($BANNER_ID <= 0)
+        if ($BANNER_ID <= 0) {
             return false;
+        }
         $arrRes = array();
         $strSql = "
 			SELECT
@@ -1469,8 +1609,9 @@ class CAdvBanner_all
 				BANNER_ID = $BANNER_ID
 			";
         $rs = $DB->Query($strSql, false, $err_mess . __LINE__);
-        while ($ar = $rs->Fetch())
+        while ($ar = $rs->Fetch()) {
             $arrRes[] = $ar["SITE_ID"];
+        }
         return $arrRes;
     }
 
@@ -1480,28 +1621,32 @@ class CAdvBanner_all
         $err_mess = (CAdvBanner_all::err_mess()) . "<br>Function: GetCountryArray<br>Line: ";
         global $DB;
         $BANNER_ID = intval($BANNER_ID);
-        if ($BANNER_ID <= 0)
+        if ($BANNER_ID <= 0) {
             return false;
+        }
         $arrRes = array();
         if (!is_array($WHAT)) {
-            if ($WHAT === "CITY")
+            if ($WHAT === "CITY") {
                 $arSelect = array("COUNTRY_ID", "REGION", "CITY_ID");
-            elseif ($WHAT === "REGION")
+            } elseif ($WHAT === "REGION") {
                 $arSelect = array("COUNTRY_ID", "REGION");
-            else
+            } else {
                 $arSelect = array("COUNTRY_ID");
+            }
         } else {
             $arSelect = array();
             foreach ($WHAT as $FIELD) {
-                if ($FIELD === "CITY_ID")
+                if ($FIELD === "CITY_ID") {
                     $arSelect[$FIELD] = $FIELD;
-                elseif ($FIELD === "REGION")
+                } elseif ($FIELD === "REGION") {
                     $arSelect[$FIELD] = $FIELD;
-                elseif ($FIELD === "COUNTRY_ID")
+                } elseif ($FIELD === "COUNTRY_ID") {
                     $arSelect[$FIELD] = $FIELD;
+                }
             }
-            if (count($arSelect) <= 0)
+            if (count($arSelect) <= 0) {
                 $arSelect = array("COUNTRY_ID");
+            }
         }
 
         $strSql = "
@@ -1516,10 +1661,11 @@ class CAdvBanner_all
 			";
         $rs = $DB->Query($strSql, false, $err_mess . __LINE__);
         while ($ar = $rs->Fetch()) {
-            if ($WHAT === "COUNTRY")
+            if ($WHAT === "COUNTRY") {
                 $arrRes[] = $ar["COUNTRY_ID"];
-            else
+            } else {
                 $arrRes[] = $ar;
+            }
         }
         return $arrRes;
     }
@@ -1530,8 +1676,9 @@ class CAdvBanner_all
         $err_mess = (CAdvBanner_all::err_mess()) . "<br>Function: GetWeekdayArray<br>Line: ";
         global $DB;
         $BANNER_ID = intval($BANNER_ID);
-        if ($BANNER_ID <= 0)
+        if ($BANNER_ID <= 0) {
             return false;
+        }
         $arrRes = array();
         $strSql = "
 			SELECT DISTINCT
@@ -1543,8 +1690,9 @@ class CAdvBanner_all
 				BANNER_ID = $BANNER_ID
 			";
         $rs = $DB->Query($strSql, false, $err_mess . __LINE__);
-        while ($ar = $rs->Fetch())
+        while ($ar = $rs->Fetch()) {
             $arrRes[$ar["C_WEEKDAY"]][] = $ar["C_HOUR"];
+        }
         return $arrRes;
     }
 
@@ -1554,8 +1702,9 @@ class CAdvBanner_all
         $err_mess = (CAdvBanner_all::err_mess()) . "<br>Function: GetStatAdvArray<br>Line: ";
         global $DB;
         $BANNER_ID = intval($BANNER_ID);
-        if ($BANNER_ID <= 0)
+        if ($BANNER_ID <= 0) {
             return false;
+        }
         $arrRes = array();
         $strSql = "
 			SELECT DISTINCT
@@ -1566,8 +1715,9 @@ class CAdvBanner_all
 				BANNER_ID = $BANNER_ID
 			";
         $rs = $DB->Query($strSql, false, $err_mess . __LINE__);
-        while ($ar = $rs->Fetch())
+        while ($ar = $rs->Fetch()) {
             $arrRes[] = $ar["STAT_ADV_ID"];
+        }
         return $arrRes;
     }
 
@@ -1595,7 +1745,7 @@ class CAdvBanner_all
         }
 
         if (in_array("TEMPLATE", $arrKeys)) {
-            if (strlen($arFields['TEMPLATE']) > $maxLongString) {
+            if (mb_strlen($arFields['TEMPLATE']) > $maxLongString) {
                 $str .= GetMessage("AD_ERROR_LONG_STRING") . "<br>";
             }
         }
@@ -1607,34 +1757,39 @@ class CAdvBanner_all
             } else {
                 $arrPERM = CAdvContract::GetUserPermissions($CONTRACT_ID);
                 $arrPERM = $arrPERM[$CONTRACT_ID];
-                if (in_array("ADD", $arrPERM))
+                if (in_array("ADD", $arrPERM)) {
                     $access = true;
+                }
             }
 
             if ($access) {
-                if (strlen($arFields["DATE_SHOW_FROM"]) > 0) {
-                    if (!CheckDateTime($arFields["DATE_SHOW_FROM"]))
+                if ($arFields["DATE_SHOW_FROM"] <> '') {
+                    if (!CheckDateTime($arFields["DATE_SHOW_FROM"])) {
                         $str .= GetMessage("AD_ERROR_WRONG_DATE_SHOW_FROM_BANNER") . "<br>";
+                    }
                 }
-                if (strlen($arFields["DATE_SHOW_TO"]) > 0) {
-                    if (!CheckDateTime($arFields["DATE_SHOW_TO"]))
+                if ($arFields["DATE_SHOW_TO"] <> '') {
+                    if (!CheckDateTime($arFields["DATE_SHOW_TO"])) {
                         $str .= GetMessage("AD_ERROR_WRONG_DATE_SHOW_TO_BANNER") . "<br>";
+                    }
                 }
 
                 if (in_array("arrIMAGE_ID", $arrKeys)) {
                     $arIMAGE = $arFields["arrIMAGE_ID"];
                     $arIMAGE["MODULE_ID"] = "advertising";
                     $strRes = CFile::CheckImageFile($arIMAGE, 0, 0, 0, array("FLASH", "IMAGE"));
-                    if (strlen($strRes) > 0)
+                    if ($strRes <> '') {
                         $str .= $strRes . "<br>";
+                    }
                 }
 
                 if (in_array("arrFlashIMAGE_ID", $arrKeys)) {
                     $arIMAGE = $arFields["arrFlashIMAGE_ID"];
                     $arIMAGE["MODULE_ID"] = "advertising";
                     $strRes = CFile::CheckImageFile($arIMAGE, 0, 0, 0, array("IMAGE"));
-                    if (strlen($strRes) > 0)
+                    if ($strRes <> '') {
                         $str .= $strRes . "<br>";
+                    }
                 }
 
                 if (in_array("TEMPLATE_FILES", $arrKeys) && is_array($arFields["TEMPLATE_FILES"])) {
@@ -1643,43 +1798,56 @@ class CAdvBanner_all
                             foreach ($unit as $file) {
                                 $file["MODULE_ID"] = "advertising";
                                 $strRes = CAdvBanner_all::CheckFile($file, 0, 0, 0, array("IMAGE", "VIDEO"));
-                                if (strlen($strRes) > 0)
+                                if ($strRes <> '') {
                                     $str .= $strRes . "<br>";
+                                }
                             }
                         }
                     }
                 }
 
                 if ($arFields["FLYUNIFORM"] == "Y") {
-                    if (strlen($arFields["DATE_SHOW_FROM"]) <= 0 or
-                        strlen($arFields["DATE_SHOW_TO"]) <= 0)
+                    if ($arFields["DATE_SHOW_FROM"] == '' or
+                        $arFields["DATE_SHOW_TO"] == '') {
                         $str .= GetMessage("AD_ERROR_FROMTO_DATE_HAVETOBE_SET") . "<br>";
+                    }
 
-                    if ($arFields["FIX_SHOW"] != "Y")
+                    if ($arFields["FIX_SHOW"] != "Y") {
                         $str .= GetMessage("AD_ERROR_FIXSHOW_HAVETOBE_SET") . "<br>";
+                    }
 
-                    if (intval($arFields["MAX_SHOW_COUNT"]) <= 0)
+                    if (intval($arFields["MAX_SHOW_COUNT"]) <= 0) {
                         $str .= GetMessage("AD_ERROR_MAX_SHOW_COUNT_HAVETOBE_SET") . "<br>";
+                    }
                 }
             } else {
-                if ($BANNER_ID > 0)
+                if ($BANNER_ID > 0) {
                     $str .= GetMessage("AD_ERROR_NOT_ENOUGH_PERMISSIONS_BANNER") . "<br>";
-                else
+                } else {
                     $str .= GetMessage("AD_ERROR_NOT_ENOUGH_PERMISSIONS_CONTRACT") . "<br>";
+                }
             }
         } else {
             $str .= GetMessage("AD_ERROR_INCORRECT_CONTRACT_ID") . "<br>";
         }
 
         $strError .= $str;
-        if (strlen($str) > 0)
+        if ($str <> '') {
             return false;
-        else
+        } else {
             return true;
+        }
     }
 
-    public static function CheckFile($arFile, $iMaxSize = 0, $iMaxWidth = 0, $iMaxHeight = 0, $access_typies = array(), $bForceMD5 = false, $bSkipExt = false)
-    {
+    public static function CheckFile(
+        $arFile,
+        $iMaxSize = 0,
+        $iMaxWidth = 0,
+        $iMaxHeight = 0,
+        $access_typies = array(),
+        $bForceMD5 = false,
+        $bSkipExt = false
+    ) {
         if ($arFile["name"] == "") {
             return "";
         }
@@ -1688,7 +1856,7 @@ class CAdvBanner_all
             return GetMessage("FILE_BAD_FILE_TYPE") . ".<br>";
         }
 
-        $extension = GetFileExtension(strtolower($arFile["name"]));
+        $extension = GetFileExtension(mb_strtolower($arFile["name"]));
         switch ($extension) {
             case "jpg":
             case "jpeg":
@@ -1719,10 +1887,19 @@ class CAdvBanner_all
             $flashEnabled = true;
             static $flashMime = array("application/x-shockwave-flash", "application/vnd.adobe.flash.movie");
             $res = CFile::CheckFile($arFile, $iMaxSize, $flashMime, CFile::GetFlashExtensions(), $bForceMD5, $bSkipExt);
-        } else if ($file_type == "VIDEO") {
-            $res = CFile::CheckFile($arFile, $iMaxSize, "video/", "mp4,webm,ogg", $bForceMD5, $bSkipExt);
         } else {
-            $res = CFile::CheckFile($arFile, $iMaxSize, "image/", CFile::GetImageExtensions(), $bForceMD5, $bSkipExt);
+            if ($file_type == "VIDEO") {
+                $res = CFile::CheckFile($arFile, $iMaxSize, "video/", "mp4,webm,ogg", $bForceMD5, $bSkipExt);
+            } else {
+                $res = CFile::CheckFile(
+                    $arFile,
+                    $iMaxSize,
+                    "image/",
+                    CFile::GetImageExtensions(),
+                    $bForceMD5,
+                    $bSkipExt
+                );
+            }
         }
 
         if ($res <> '') {
@@ -1739,7 +1916,9 @@ class CAdvBanner_all
             }
             //check for dimensions
             if ($iMaxWidth > 0 && ($intWIDTH > $iMaxWidth || $intWIDTH == 0) || $iMaxHeight > 0 && ($intHEIGHT > $iMaxHeight || $intHEIGHT == 0)) {
-                return GetMessage("FILE_BAD_MAX_RESOLUTION") . " (" . $iMaxWidth . " * " . $iMaxHeight . " " . GetMessage("main_include_dots") . ").<br>";
+                return GetMessage(
+                        "FILE_BAD_MAX_RESOLUTION"
+                    ) . " (" . $iMaxWidth . " * " . $iMaxHeight . " " . GetMessage("main_include_dots") . ").<br>";
             }
         }
 
@@ -1763,16 +1942,19 @@ class CAdvBanner_all
             $result = $emptyFile;
         } elseif (is_numeric($data)) {
             $result = self::makeFileArrayFromId($data, $description, $options);
-            if ($result === false)
+            if ($result === false) {
                 $result = $emptyFile;
+            }
         } elseif (is_string($data)) {
             $result = self::makeFileArrayFromPath($data, $description, $options);
-            if ($result === false)
+            if ($result === false) {
                 $result = $emptyFile;
+            }
         } elseif (is_array($data)) {
             $result = self::makeFileArrayFromArray($data, $description, $options);
-            if ($result === false)
+            if ($result === false) {
                 $result = $emptyFile;
+            }
         } else {
             $result = $emptyFile;
         }
@@ -1786,8 +1968,9 @@ class CAdvBanner_all
 
         $result = CFile::MakeFileArray($file_id);
         if (is_array($result)) {
-            if (!is_null($description))
+            if (!is_null($description)) {
                 $result["description"] = $description;
+            }
         }
 
         return $result;
@@ -1807,14 +1990,16 @@ class CAdvBanner_all
             $absPath = $io->CombinePath($_SERVER["DOCUMENT_ROOT"], $normPath);
             if ($io->ValidatePathString($absPath) && $io->FileExists($absPath)) {
                 $perm = $APPLICATION->GetFileAccessPermission($normPath);
-                if ($perm >= "W")
+                if ($perm >= "W") {
                     $result = CFile::MakeFileArray($io->GetPhysicalName($absPath));
+                }
             }
         }
 
         if (is_array($result)) {
-            if (!is_null($description))
+            if (!is_null($description)) {
                 $result["description"] = $description;
+            }
         }
 
         return $result;
@@ -1826,34 +2011,43 @@ class CAdvBanner_all
 
         if (is_uploaded_file($file_array["tmp_name"])) {
             $result = $file_array;
-            if (!is_null($description))
+            if (!is_null($description)) {
                 $result["description"] = $description;
+            }
         } elseif (
-            strlen($file_array["tmp_name"]) > 0
-            && strpos($file_array["tmp_name"], CTempFile::GetAbsoluteRoot()) === 0
+            $file_array["tmp_name"] <> ''
+            && mb_strpos($file_array["tmp_name"], CTempFile::GetAbsoluteRoot()) === 0
         ) {
             $io = CBXVirtualIo::GetInstance();
             $absPath = $io->CombinePath("/", $file_array["tmp_name"]);
             $tmpPath = CTempFile::GetAbsoluteRoot() . "/";
-            if (strpos($absPath, $tmpPath) === 0 || (($absPath = ltrim($absPath, "/")) && strpos($absPath, $tmpPath) === 0)) {
+            if (mb_strpos($absPath, $tmpPath) === 0 || (($absPath = ltrim($absPath, "/")) && mb_strpos(
+                        $absPath,
+                        $tmpPath
+                    ) === 0)) {
                 $result = $file_array;
                 $result["tmp_name"] = $absPath;
                 $result["error"] = intval($result["error"]);
-                if (!is_null($description))
+                if (!is_null($description)) {
                     $result["description"] = $description;
+                }
             }
-        } elseif (strlen($file_array["tmp_name"]) > 0) {
+        } elseif ($file_array["tmp_name"] <> '') {
             $io = CBXVirtualIo::GetInstance();
             $normPath = $io->CombinePath("/", $file_array["tmp_name"]);
             $absPath = $io->CombinePath(CTempFile::GetAbsoluteRoot(), $normPath);
             $tmpPath = CTempFile::GetAbsoluteRoot() . "/";
-            if (strpos($absPath, $tmpPath) === 0 && $io->FileExists($absPath) ||
-                ($absPath = $io->CombinePath($_SERVER["DOCUMENT_ROOT"], $normPath)) && strpos($absPath, $tmpPath) === 0) {
+            if (mb_strpos($absPath, $tmpPath) === 0 && $io->FileExists($absPath) ||
+                ($absPath = $io->CombinePath($_SERVER["DOCUMENT_ROOT"], $normPath)) && mb_strpos(
+                    $absPath,
+                    $tmpPath
+                ) === 0) {
                 $result = $file_array;
                 $result["tmp_name"] = $absPath;
                 $result["error"] = intval($result["error"]);
-                if (!is_null($description))
+                if (!is_null($description)) {
                     $result["description"] = $description;
+                }
             }
         } else {
             $emptyFile = array(
@@ -1865,8 +2059,9 @@ class CAdvBanner_all
             );
             if ($file_array == $emptyFile) {
                 $result = $emptyFile;
-                if (!is_null($description))
+                if (!is_null($description)) {
                     $result["description"] = $description;
+                }
             }
         }
 
@@ -1885,25 +2080,31 @@ class CAdvBanner_all
                 $isAdmin = CAdvContract::IsAdmin();
                 $isManager = CAdvContract::IsManager();
                 $CHECK_CONTRACT_RIGHTS = "Y";
-                if ($isManager)
+                if ($isManager) {
                     $CHECK_CONTRACT_RIGHTS = "N";
+                }
             } else {
                 $USER_ID = 0;
                 $isAdmin = $isManager = true;
                 $CHECK_CONTRACT_RIGHTS = "N";
             }
 
-            if ($BANNER_ID <= 0)
+            if ($BANNER_ID <= 0) {
                 $events = GetModuleEvents("advertising", "OnBeforeBannerAdd", true);
-            else
+            } else {
                 $events = GetModuleEvents("advertising", "OnBeforeBannerUpdate", true);
+            }
 
             foreach ($events as $arEvent) {
                 if (ExecuteModuleEventEx($arEvent, array(&$arFields)) === false) {
-                    if ($err = $APPLICATION->GetException())
+                    if ($err = $APPLICATION->GetException()) {
                         $strError .= $err->GetString() . "<br />";
-                    else
-                        $strError .= GetMessage("AD_ERROR_ON_HANDLER", array("#HANDLER#" => $arEvent['MESSAGE_ID'])) . "<br />";
+                    } else {
+                        $strError .= GetMessage(
+                                "AD_ERROR_ON_HANDLER",
+                                array("#HANDLER#" => $arEvent['MESSAGE_ID'])
+                            ) . "<br />";
+                    }
 
                     return false;
                 }
@@ -1916,10 +2117,11 @@ class CAdvBanner_all
             if ($BANNER_ID > 0) {
                 $rsBanner = CAdvBanner::GetByID($BANNER_ID, $CHECK_RIGHTS);
                 $arBanner = $rsBanner->Fetch();
-                if (!in_array("CONTRACT_ID", $arrKeys))
+                if (!in_array("CONTRACT_ID", $arrKeys)) {
                     $CONTRACT_ID = intval($arBanner["CONTRACT_ID"]);
-                else
+                } else {
                     $CONTRACT_ID = intval($arFields["CONTRACT_ID"]);
+                }
             } else {
                 $CONTRACT_ID = intval($arFields["CONTRACT_ID"]);
             }
@@ -1927,13 +2129,17 @@ class CAdvBanner_all
             $modify_status = "N";
 
             if ($CONTRACT_ID > 0) {
-                if ($BANNER_ID <= 0 && (!$isAdmin || !$isManager || in_array("STATUS_SID", $arrKeys)))
+                if ($BANNER_ID <= 0 && (!$isAdmin || !$isManager || in_array("STATUS_SID", $arrKeys))) {
                     $modify_status = "Y";
+                }
 
                 $rsContract = CAdvContract::GetByID($CONTRACT_ID, $CHECK_CONTRACT_RIGHTS);
                 $arContract = $rsContract->Fetch();
 
-                if (($isAdmin || $isManager) && in_array("RESET_VISITOR_COUNT", $arrKeys) && $arFields["RESET_VISITOR_COUNT"]) {
+                if (($isAdmin || $isManager) && in_array(
+                        "RESET_VISITOR_COUNT",
+                        $arrKeys
+                    ) && $arFields["RESET_VISITOR_COUNT"]) {
                     $arFields_i["VISITOR_COUNT"] = 0;
                     // ���� ������ ��� ����������� ��
                     if (intval($arBanner["VISITOR_COUNT"]) > 0) {
@@ -1944,7 +2150,10 @@ class CAdvBanner_all
                     }
                 }
 
-                if (($isAdmin || $isManager) && in_array("RESET_SHOW_COUNT", $arrKeys) && $arFields["RESET_SHOW_COUNT"]) {
+                if (($isAdmin || $isManager) && in_array(
+                        "RESET_SHOW_COUNT",
+                        $arrKeys
+                    ) && $arFields["RESET_SHOW_COUNT"]) {
                     $arFields_i["SHOW_COUNT"] = 0;
                     // ���� ������ ��� ����������� ��
                     if (intval($arBanner["SHOW_COUNT"]) > 0) {
@@ -1955,16 +2164,24 @@ class CAdvBanner_all
                     }
                 }
 
-                if (($isAdmin || $isManager) && in_array("FIX_CLICK", $arrKeys) && ($arFields["FIX_CLICK"] == "Y" || $arFields["FIX_CLICK"] == "N"))
-                    $arFields_i["FIX_CLICK"] = "'" . $arFields["FIX_CLICK"] . "'";
-
-                if (($isAdmin || $isManager) && in_array("FIX_SHOW", $arrKeys) && ($arFields["FIX_SHOW"] == "Y" || $arFields["FIX_SHOW"] == "N"))
+                if (($isAdmin || $isManager) && in_array(
+                        "FIX_SHOW",
+                        $arrKeys
+                    ) && ($arFields["FIX_SHOW"] == "Y" || $arFields["FIX_SHOW"] == "N")) {
                     $arFields_i["FIX_SHOW"] = "'" . $arFields["FIX_SHOW"] . "'";
+                }
 
-                if (($isAdmin || $isManager) && in_array("FLYUNIFORM", $arrKeys) && ($arFields["FLYUNIFORM"] == "Y" || $arFields["FLYUNIFORM"] == "N"))
+                if (($isAdmin || $isManager) && in_array(
+                        "FLYUNIFORM",
+                        $arrKeys
+                    ) && ($arFields["FLYUNIFORM"] == "Y" || $arFields["FLYUNIFORM"] == "N")) {
                     $arFields_i["FLYUNIFORM"] = "'" . $arFields["FLYUNIFORM"] . "'";
+                }
 
-                if (($isAdmin || $isManager) && in_array("RESET_CLICK_COUNT", $arrKeys) && $arFields["RESET_CLICK_COUNT"]) {
+                if (($isAdmin || $isManager) && in_array(
+                        "RESET_CLICK_COUNT",
+                        $arrKeys
+                    ) && $arFields["RESET_CLICK_COUNT"]) {
                     $arFields_i["CLICK_COUNT"] = 0;
                     // ���� �� ������ ��� ������� ��
                     if (intval($arBanner["CLICK_COUNT"]) > 0) {
@@ -1975,69 +2192,81 @@ class CAdvBanner_all
                     }
                 }
 
-                if (($isAdmin || $isManager) && in_array("KEYWORDS", $arrKeys))
-                    $arFields_i["KEYWORDS"] = "'" . $DB->ForSql($arFields["KEYWORDS"], 2000) . "'";;
+                if (($isAdmin || $isManager) && in_array("KEYWORDS", $arrKeys)) {
+                    $arFields_i["KEYWORDS"] = "'" . $DB->ForSql($arFields["KEYWORDS"], 2000) . "'";
+                };
 
-                if (in_array("CONTRACT_ID", $arrKeys) && intval($arFields["CONTRACT_ID"]) > 0)
+                if (in_array("CONTRACT_ID", $arrKeys) && intval($arFields["CONTRACT_ID"]) > 0) {
                     $arFields_i["CONTRACT_ID"] = intval($arFields["CONTRACT_ID"]);
-
-                if (in_array("TYPE_SID", $arrKeys) && strlen($arFields["TYPE_SID"]) > 0) {
-                    $arFields_i["TYPE_SID"] = "'" . $DB->ForSql($arFields["TYPE_SID"], 255) . "'";
-                    if ("'" . $DB->ForSql($arBanner["TYPE_SID"], 255) . "'" != $arFields_i["TYPE_SID"])
-                        $modify_status = "Y";
                 }
 
-                if (in_array("NAME", $arrKeys))
+                if (in_array("TYPE_SID", $arrKeys) && $arFields["TYPE_SID"] <> '') {
+                    $arFields_i["TYPE_SID"] = "'" . $DB->ForSql($arFields["TYPE_SID"], 255) . "'";
+                    if ("'" . $DB->ForSql($arBanner["TYPE_SID"], 255) . "'" != $arFields_i["TYPE_SID"]) {
+                        $modify_status = "Y";
+                    }
+                }
+
+                if (in_array("NAME", $arrKeys)) {
                     $arFields_i["NAME"] = "'" . $DB->ForSql($arFields["NAME"], 255) . "'";
+                }
 
-                if (in_array("GROUP_SID", $arrKeys))
+                if (in_array("GROUP_SID", $arrKeys)) {
                     $arFields_i["GROUP_SID"] = "'" . $DB->ForSql($arFields["GROUP_SID"], 255) . "'";
+                }
 
-                if (in_array("ACTIVE", $arrKeys) && ($arFields["ACTIVE"] == "Y" || $arFields["ACTIVE"] == "N"))
+                if (in_array("ACTIVE", $arrKeys) && ($arFields["ACTIVE"] == "Y" || $arFields["ACTIVE"] == "N")) {
                     $arFields_i["ACTIVE"] = "'" . $arFields["ACTIVE"] . "'";
+                }
 
-                if (in_array("WEIGHT", $arrKeys))
+                if (in_array("WEIGHT", $arrKeys)) {
                     $arFields_i["WEIGHT"] = intval($arFields["WEIGHT"]);
+                }
 
                 if (in_array("MAX_VISITOR_COUNT", $arrKeys)) {
-                    if (strlen($arFields["MAX_VISITOR_COUNT"]) > 0)
+                    if ($arFields["MAX_VISITOR_COUNT"] <> '') {
                         $arFields_i["MAX_VISITOR_COUNT"] = intval($arFields["MAX_VISITOR_COUNT"]);
-                    else
+                    } else {
                         $arFields_i["MAX_VISITOR_COUNT"] = "null";
+                    }
                 }
 
                 if (in_array("SHOWS_FOR_VISITOR", $arrKeys)) {
-                    if (strlen($arFields["SHOWS_FOR_VISITOR"]) > 0)
+                    if ($arFields["SHOWS_FOR_VISITOR"] <> '') {
                         $arFields_i["SHOWS_FOR_VISITOR"] = intval($arFields["SHOWS_FOR_VISITOR"]);
-                    else
+                    } else {
                         $arFields_i["SHOWS_FOR_VISITOR"] = "null";
+                    }
                 }
 
                 if (in_array("MAX_SHOW_COUNT", $arrKeys)) {
-                    if (strlen($arFields["MAX_SHOW_COUNT"]) > 0)
+                    if ($arFields["MAX_SHOW_COUNT"] <> '') {
                         $arFields_i["MAX_SHOW_COUNT"] = intval($arFields["MAX_SHOW_COUNT"]);
-                    else
+                    } else {
                         $arFields_i["MAX_SHOW_COUNT"] = "null";
+                    }
                 }
 
                 if (in_array("MAX_CLICK_COUNT", $arrKeys)) {
-                    if (strlen($arFields["MAX_CLICK_COUNT"]) > 0)
+                    if ($arFields["MAX_CLICK_COUNT"] <> '') {
                         $arFields_i["MAX_CLICK_COUNT"] = intval($arFields["MAX_CLICK_COUNT"]);
-                    else
+                    } else {
                         $arFields_i["MAX_CLICK_COUNT"] = "null";
+                    }
                 }
 
                 if (in_array("DATE_SHOW_FROM", $arrKeys)) {
-                    if (strlen($arFields["DATE_SHOW_FROM"]) > 0)
+                    if ($arFields["DATE_SHOW_FROM"] <> '') {
                         $arFields_i["DATE_SHOW_FROM"] = $DB->CharToDateFunction($arFields["DATE_SHOW_FROM"]);
-                    else
+                    } else {
                         $arFields_i["DATE_SHOW_FROM"] = "null";
+                    }
                 }
 
                 if (in_array("DATE_SHOW_TO", $arrKeys)) {
-                    if (strlen($arFields["DATE_SHOW_TO"]) > 0) {
+                    if ($arFields["DATE_SHOW_TO"] <> '') {
                         $time = "";
-                        if (defined("FORMAT_DATE") && strlen($arFields["DATE_SHOW_TO"]) <= strlen(FORMAT_DATE)) {
+                        if (defined("FORMAT_DATE") && mb_strlen($arFields["DATE_SHOW_TO"]) <= mb_strlen(FORMAT_DATE)) {
                             $time = " 23:59:59";
                         }
                         $arFields_i["DATE_SHOW_TO"] = $DB->CharToDateFunction($arFields["DATE_SHOW_TO"] . $time);
@@ -2046,18 +2275,23 @@ class CAdvBanner_all
                     }
                 }
 
-                if (in_array("DATE_SHOW_FIRST", $arrKeys))
+                if (in_array("DATE_SHOW_FIRST", $arrKeys)) {
                     $arFields_i["DATE_SHOW_FIRST"] = "null";
+                }
 
                 if (in_array("arrIMAGE_ID", $arrKeys) && is_array($arFields["arrIMAGE_ID"])) {
                     $arIMAGE = $arFields["arrIMAGE_ID"];
                     $arIMAGE["MODULE_ID"] = "advertising";
                     if ($BANNER_ID > 0) {
-                        $z = $DB->Query("SELECT IMAGE_ID FROM b_adv_banner WHERE ID='$BANNER_ID'", false, $err_mess . __LINE__);
+                        $z = $DB->Query(
+                            "SELECT IMAGE_ID FROM b_adv_banner WHERE ID='$BANNER_ID'",
+                            false,
+                            $err_mess . __LINE__
+                        );
                         $zr = $z->Fetch();
                         $arIMAGE["old_file"] = $zr["IMAGE_ID"];
                     }
-                    if (strlen($arIMAGE["name"]) > 0 || strlen($arIMAGE["del"]) > 0) {
+                    if ($arIMAGE["name"] <> '' || $arIMAGE["del"] <> '') {
                         $subdir = COption::GetOptionString("advertising", "UPLOAD_SUBDIR");
                         $fid = CFile::SaveFile($arIMAGE, $subdir);
                         if (intval($fid) > 0) {
@@ -2073,12 +2307,17 @@ class CAdvBanner_all
 
                 if (in_array("TEMPLATE_FILES", $arrKeys) && is_array($arFields["TEMPLATE_FILES"])) {
                     if ($BANNER_ID > 0) {
-                        $z = $DB->Query("SELECT TEMPLATE_FILES FROM b_adv_banner WHERE ID='$BANNER_ID'", false, $err_mess . __LINE__);
+                        $z = $DB->Query(
+                            "SELECT TEMPLATE_FILES FROM b_adv_banner WHERE ID='$BANNER_ID'",
+                            false,
+                            $err_mess . __LINE__
+                        );
                         $zr = $z->Fetch();
-                        if (CheckSerializedData($zr['TEMPLATE_FILES']))
-                            $zr = unserialize($zr['TEMPLATE_FILES']);
-                        else
+                        if (CheckSerializedData($zr['TEMPLATE_FILES'])) {
+                            $zr = unserialize($zr['TEMPLATE_FILES'], ['allowed_classes' => false]);
+                        } else {
                             $zr = array();
+                        }
                     }
                     $subdir = COption::GetOptionString("advertising", "UPLOAD_SUBDIR");
                     $arTemplateFiles = array();
@@ -2087,13 +2326,14 @@ class CAdvBanner_all
                         if (is_array($tfv)) {
                             foreach ($tfv as $k => $arFile) {
                                 $arFile["MODULE_ID"] = "advertising";
-                                if (isset($zr[$arFile['lastKey']][$k]))
+                                if (isset($zr[$arFile['lastKey']][$k])) {
                                     $arFile["old_file"] = $zr[$arFile['lastKey']][$k];
+                                }
 
-                                if (strlen($arFile["name"]) > 0 || strlen($arFile["description"]) > 0 || isset($arFile["del"]) && strlen($arFile["del"]) > 0) {
+                                if ($arFile["name"] <> '' || $arFile["description"] <> '' || isset($arFile["del"]) && $arFile["del"] <> '') {
                                     $fid = CFile::SaveFile($arFile, $subdir);
 
-                                    if ($fid === false && strlen($arFile["description"]) > 0 && strlen($arFile["old_file"]) > 0) {
+                                    if ($fid === false && $arFile["description"] <> '' && $arFile["old_file"] <> '') {
                                         $arTemplateFiles[$cnt][$k] = intval($arFile["old_file"]);
                                         continue;
                                     }
@@ -2137,7 +2377,10 @@ class CAdvBanner_all
                     }
                 }
 
-                if (in_array("NO_URL_IN_FLASH", $arrKeys) && ($arFields["NO_URL_IN_FLASH"] == "Y" || $arFields["NO_URL_IN_FLASH"] == "N")) {
+                if (in_array(
+                        "NO_URL_IN_FLASH",
+                        $arrKeys
+                    ) && ($arFields["NO_URL_IN_FLASH"] == "Y" || $arFields["NO_URL_IN_FLASH"] == "N")) {
                     $arFields_i["NO_URL_IN_FLASH"] = "'" . $arFields["NO_URL_IN_FLASH"] . "'";
                     if ($arBanner["NO_URL_IN_FLASH"] != $arFields_i["NO_URL_IN_FLASH"]) {
                         $modify_status = "Y";
@@ -2169,16 +2412,23 @@ class CAdvBanner_all
                     $arrFlashIMAGE = $arFields["arrFlashIMAGE_ID"];
                     $arrFlashIMAGE["MODULE_ID"] = "advertising";
                     if ($BANNER_ID > 0) {
-                        $z = $DB->Query("SELECT FLASH_IMAGE FROM b_adv_banner WHERE ID='$BANNER_ID'", false, $err_mess . __LINE__);
+                        $z = $DB->Query(
+                            "SELECT FLASH_IMAGE FROM b_adv_banner WHERE ID='$BANNER_ID'",
+                            false,
+                            $err_mess . __LINE__
+                        );
                         if ($zr = $z->Fetch()) {
                             $arrFlashIMAGE["old_file"] = $zr["FLASH_IMAGE"];
                         }
                     }
-                    if (strlen($arrFlashIMAGE["name"]) > 0 || strlen($arrFlashIMAGE["del"]) > 0) {
+                    if ($arrFlashIMAGE["name"] <> '' || $arrFlashIMAGE["del"] <> '') {
                         $subdir = COption::GetOptionString("advertising", "UPLOAD_SUBDIR");
                         $fid = CFile::SaveFile($arrFlashIMAGE, $subdir);
-                        if (intval($fid) > 0) $arFields_i["FLASH_IMAGE"] = intval($fid);
-                        else $arFields_i["FLASH_IMAGE"] = "null";
+                        if (intval($fid) > 0) {
+                            $arFields_i["FLASH_IMAGE"] = intval($fid);
+                        } else {
+                            $arFields_i["FLASH_IMAGE"] = "null";
+                        }
                         if (intval($arBanner["FLASH_IMAGE"]) != intval($arFields_i["FLASH_IMAGE"])) {
                             $modify_status = "Y";
                         }
@@ -2193,12 +2443,19 @@ class CAdvBanner_all
                 }
 
                 if (in_array("TEMPLATE", $arrKeys)) {
-                    $arFields_i["TEMPLATE"] = CAdvBanner::addBindField($arFields["TEMPLATE"], $arBanner["TEMPLATE"], $modify_status);
+                    $arFields_i["TEMPLATE"] = CAdvBanner::addBindField(
+                        $arFields["TEMPLATE"],
+                        $arBanner["TEMPLATE"],
+                        $modify_status
+                    );
                 }
 
                 if (in_array("FLASH_TRANSPARENT", $arrKeys)) {
                     $arFields_i["FLASH_TRANSPARENT"] = "'" . $DB->ForSql($arFields["FLASH_TRANSPARENT"], 11) . "'";
-                    if ("'" . $DB->ForSql($arBanner["FLASH_TRANSPARENT"], 11) . "'" != $arFields_i["FLASH_TRANSPARENT"]) {
+                    if ("'" . $DB->ForSql(
+                            $arBanner["FLASH_TRANSPARENT"],
+                            11
+                        ) . "'" != $arFields_i["FLASH_TRANSPARENT"]) {
                         $modify_status = "Y";
                     }
                 }
@@ -2211,25 +2468,17 @@ class CAdvBanner_all
                     }
                 }
 
-                if (in_array("STAT_EVENT_1", $arrKeys))
-                    $arFields_i["STAT_EVENT_1"] = "'" . $DB->ForSql($arFields["STAT_EVENT_1"], 255) . "'";
-
-                if (in_array("STAT_EVENT_2", $arrKeys))
-                    $arFields_i["STAT_EVENT_2"] = "'" . $DB->ForSql($arFields["STAT_EVENT_2"], 255) . "'";
-
-                if (in_array("STAT_EVENT_3", $arrKeys))
-                    $arFields_i["STAT_EVENT_3"] = "'" . $DB->ForSql($arFields["STAT_EVENT_3"], 255) . "'";
-
                 if (in_array("FOR_NEW_GUEST", $arrKeys)) {
                     if ($arFields["FOR_NEW_GUEST"] == "Y" || $arFields["FOR_NEW_GUEST"] == "N") {
                         $arFields_i["FOR_NEW_GUEST"] = "'" . $arFields["FOR_NEW_GUEST"] . "'";
-                    } elseif ($arFields["FOR_NEW_GUEST"] == "NOT_REF" || $arFields["FOR_NEW_GUEST"] == "ALL" || strlen($arFields["FOR_NEW_GUEST"]) <= 0) {
+                    } elseif ($arFields["FOR_NEW_GUEST"] == "NOT_REF" || $arFields["FOR_NEW_GUEST"] == "ALL" || $arFields["FOR_NEW_GUEST"] == '') {
                         $arFields_i["FOR_NEW_GUEST"] = "null";
                     }
                 }
 
-                if (in_array("COMMENTS", $arrKeys))
+                if (in_array("COMMENTS", $arrKeys)) {
                     $arFields_i["COMMENTS"] = "'" . $DB->ForSql($arFields["COMMENTS"], 2000) . "'";
+                }
 
                 if (($isAdmin || $isManager) && in_array("STATUS_COMMENTS", $arrKeys)) {
                     $arFields_i["STATUS_COMMENTS"] = "'" . $DB->ForSql($arFields["STATUS_COMMENTS"], 2000) . "'";
@@ -2252,58 +2501,70 @@ class CAdvBanner_all
                     if (is_array($arFields["arrSITE"])) {
                         $arrSITE = array_unique($arFields["arrSITE"]);
                         reset($arrSITE);
-                        list(, $site_id) = each($arrSITE);
+                        $site_id = current($arrSITE);
                         $arFields_i["FIRST_SITE_ID"] = "'" . $DB->ForSql($site_id, 2) . "'";
                     }
                 }
 
                 if (in_array("SHOW_USER_GROUP", $arrKeys)) {
-                    if ($arFields["SHOW_USER_GROUP"] == "Y" && (in_array("arrUSERGROUP", $arrKeys) && count($arFields["arrUSERGROUP"]) > 0))
+                    if ($arFields["SHOW_USER_GROUP"] == "Y" && (in_array("arrUSERGROUP", $arrKeys) && count(
+                                $arFields["arrUSERGROUP"]
+                            ) > 0)) {
                         $SHOW_USER_GROUP = "Y";
-                    else
+                    } else {
                         $SHOW_USER_GROUP = "N";
+                    }
                     $arFields_i["SHOW_USER_GROUP"] = "'" . $DB->ForSql($SHOW_USER_GROUP, 1) . "'";
                 }
 
                 if (in_array("STAT_TYPE", $arrKeys)) {
-                    if ($arFields["STAT_TYPE"] === "CITY")
+                    if ($arFields["STAT_TYPE"] === "CITY") {
                         $arFields_i["STAT_TYPE"] = "'CITY'";
-                    elseif ($arFields["STAT_TYPE"] === "REGION")
+                    } elseif ($arFields["STAT_TYPE"] === "REGION") {
                         $arFields_i["STAT_TYPE"] = "'REGION'";
-                    else
+                    } else {
                         $arFields_i["STAT_TYPE"] = "'COUNTRY'";
+                    }
                 }
 
                 if (intval($BANNER_ID) > 0) {
-                    if (in_array("DATE_MODIFY", $arrKeys) && CheckDateTime($arFields["DATE_MODIFY"]))
+                    if (in_array("DATE_MODIFY", $arrKeys) && CheckDateTime($arFields["DATE_MODIFY"])) {
                         $arFields_i["DATE_MODIFY"] = $DB->CharToDateFunction($arFields["DATE_MODIFY"]);
-                    else
+                    } else {
                         $arFields_i["DATE_MODIFY"] = $DB->GetNowFunction();
+                    }
 
-                    if (in_array("MODIFIED_BY", $arrKeys))
+                    if (in_array("MODIFIED_BY", $arrKeys)) {
                         $arFields_i["MODIFIED_BY"] = intval($arFields["MODIFIED_BY"]);
-                    else
+                    } else {
                         $arFields_i["MODIFIED_BY"] = $USER_ID;
+                    }
 
                     CAdvBanner::Update($arFields_i, $BANNER_ID);
                 } else {
-                    if (in_array("DATE_CREATE", $arrKeys) && CheckDateTime($arFields["DATE_CREATE"]))
+                    if (in_array("DATE_CREATE", $arrKeys) && CheckDateTime($arFields["DATE_CREATE"])) {
                         $arFields_i["DATE_CREATE"] = $DB->CharToDateFunction($arFields["DATE_CREATE"]);
-                    else
+                    } else {
                         $arFields_i["DATE_CREATE"] = $DB->GetNowFunction();
+                    }
 
-                    if (in_array("CREATED_BY", $arrKeys)) $arFields_i["CREATED_BY"] = intval($arFields["CREATED_BY"]);
-                    else $arFields_i["CREATED_BY"] = $USER_ID;
+                    if (in_array("CREATED_BY", $arrKeys)) {
+                        $arFields_i["CREATED_BY"] = intval($arFields["CREATED_BY"]);
+                    } else {
+                        $arFields_i["CREATED_BY"] = $USER_ID;
+                    }
 
-                    if (in_array("DATE_MODIFY", $arrKeys) && CheckDateTime($arFields["DATE_MODIFY"]))
+                    if (in_array("DATE_MODIFY", $arrKeys) && CheckDateTime($arFields["DATE_MODIFY"])) {
                         $arFields_i["DATE_MODIFY"] = $DB->CharToDateFunction($arFields["DATE_MODIFY"]);
-                    else
+                    } else {
                         $arFields_i["DATE_MODIFY"] = $DB->GetNowFunction();
+                    }
 
-                    if (in_array("MODIFIED_BY", $arrKeys))
+                    if (in_array("MODIFIED_BY", $arrKeys)) {
                         $arFields_i["MODIFIED_BY"] = intval($arFields["MODIFIED_BY"]);
-                    else
+                    } else {
                         $arFields_i["MODIFIED_BY"] = $USER_ID;
+                    }
 
                     $BANNER_ID = CAdvBanner::Add($arFields_i);
                 }
@@ -2322,8 +2583,11 @@ class CAdvBanner_all
                             $arrSITE = array_unique($arFields["arrSITE"]);
                             reset($arrSITE);
                             foreach ($arrSITE as $sid) {
-                                if (strlen(trim($sid)) > 0) {
-                                    $strSql = "INSERT INTO b_adv_banner_2_site (BANNER_ID, SITE_ID) VALUES ($BANNER_ID, '" . $DB->ForSql($sid, 2) . "')";
+                                if (trim($sid) <> '') {
+                                    $strSql = "INSERT INTO b_adv_banner_2_site (BANNER_ID, SITE_ID) VALUES ($BANNER_ID, '" . $DB->ForSql(
+                                            $sid,
+                                            2
+                                        ) . "')";
                                     $DB->Query($strSql, false, $err_mess . __LINE__);
                                 }
                             }
@@ -2336,7 +2600,7 @@ class CAdvBanner_all
                             $arrPage = array_unique($arFields["arrSHOW_PAGE"]);
                             foreach ($arrPage as $page) {
                                 $page = trim($page);
-                                if (strlen($page) > 0) {
+                                if ($page <> '') {
                                     $arFields_i = array(
                                         "BANNER_ID" => $BANNER_ID,
                                         "PAGE" => "'" . $DB->ForSql($page, 255) . "'",
@@ -2354,7 +2618,7 @@ class CAdvBanner_all
                             $arrPage = array_unique($arFields["arrNOT_SHOW_PAGE"]);
                             foreach ($arrPage as $page) {
                                 $page = trim($page);
-                                if (strlen($page) > 0) {
+                                if ($page <> '') {
                                     $arFields_i = array(
                                         "BANNER_ID" => $BANNER_ID,
                                         "PAGE" => "'" . $DB->ForSql($page, 255) . "'",
@@ -2374,14 +2638,24 @@ class CAdvBanner_all
                             foreach ($arFields["arrCOUNTRY"] as $COUNTRY) {
                                 if (is_array($COUNTRY)) {
                                     $COUNTRY["COUNTRY_ID"] = trim($COUNTRY["COUNTRY_ID"]);
-                                    if (strlen($COUNTRY["COUNTRY_ID"]) <= 0)
+                                    if ($COUNTRY["COUNTRY_ID"] == '') {
                                         continue;
+                                    }
                                     $key = $COUNTRY["COUNTRY_ID"] . "|" . $COUNTRY["REGION"] . "|" . $COUNTRY["CITY_ID"];
-                                    $strInsert = "'" . $DB->ForSQL($COUNTRY["COUNTRY_ID"], 2) . "', " . (strlen($COUNTRY["REGION"]) <= 0 ? "null" : "'" . $DB->ForSQL($COUNTRY["REGION"], 200) . "'") . ", " . (intval($COUNTRY["CITY_ID"]) <= 0 ? "null" : intval($COUNTRY["CITY_ID"])) . "";
+                                    $strInsert = "'" . $DB->ForSQL(
+                                            $COUNTRY["COUNTRY_ID"],
+                                            2
+                                        ) . "', " . ($COUNTRY["REGION"] == '' ? "null" : "'" . $DB->ForSQL(
+                                                $COUNTRY["REGION"],
+                                                200
+                                            ) . "'") . ", " . (intval($COUNTRY["CITY_ID"]) <= 0 ? "null" : intval(
+                                            $COUNTRY["CITY_ID"]
+                                        )) . "";
                                 } else {
                                     $COUNTRY = trim($COUNTRY);
-                                    if (strlen($COUNTRY) <= 0)
+                                    if ($COUNTRY == '') {
                                         continue;
+                                    }
                                     $key = $COUNTRY . "||";
                                     $strInsert = "'" . $DB->ForSQL($COUNTRY, 2) . "', null, null";
                                 }
@@ -2402,7 +2676,9 @@ class CAdvBanner_all
                             $arrSTAT_ADV = array_unique($arFields["arrSTAT_ADV"]);
                             foreach ($arrSTAT_ADV as $aid) {
                                 if (intval($aid) > 0) {
-                                    $strSql = "INSERT INTO b_adv_banner_2_stat_adv (BANNER_ID, STAT_ADV_ID) VALUES ($BANNER_ID, '" . intval($aid) . "')";
+                                    $strSql = "INSERT INTO b_adv_banner_2_stat_adv (BANNER_ID, STAT_ADV_ID) VALUES ($BANNER_ID, '" . intval(
+                                            $aid
+                                        ) . "')";
                                     $DB->Query($strSql, false, $err_mess . __LINE__);
                                 }
                             }
@@ -2416,13 +2692,23 @@ class CAdvBanner_all
                             $arrWeekday = array_unique($arrWeekday);
                             if (is_array($arrWeekday) && count($arrWeekday) > 0) {
                                 foreach ($arrWeekday as $weekday) {
-                                    if (is_array($arFields["arrWEEKDAY"][$weekday]) && count($arFields["arrWEEKDAY"][$weekday]) > 0) {
+                                    if (is_array($arFields["arrWEEKDAY"][$weekday]) && count(
+                                            $arFields["arrWEEKDAY"][$weekday]
+                                        ) > 0) {
                                         $arrHour = $arFields["arrWEEKDAY"][$weekday];
-                                        array_walk($arrHour, create_function("&\$item", "\$item=intval(\$item);"));
+                                        array_walk(
+                                            $arrHour,
+                                            function (&$item) {
+                                                $item = (int)$item;
+                                            }
+                                        );
                                         $arrHour = array_unique($arrHour);
                                         foreach ($arrHour as $hour) {
                                             if ($hour >= 0 && $hour <= 23) {
-                                                $strSql = "INSERT INTO b_adv_banner_2_weekday (BANNER_ID, C_WEEKDAY, C_HOUR) VALUES ($BANNER_ID, '" . $DB->ForSql($weekday, 10) . "', $hour)";
+                                                $strSql = "INSERT INTO b_adv_banner_2_weekday (BANNER_ID, C_WEEKDAY, C_HOUR) VALUES ($BANNER_ID, '" . $DB->ForSql(
+                                                        $weekday,
+                                                        10
+                                                    ) . "', $hour)";
                                                 $DB->Query($strSql, false, $err_mess . __LINE__);
                                             }
                                         }
@@ -2438,7 +2724,9 @@ class CAdvBanner_all
                             $arrGROUPS = array_unique($arFields["arrUSERGROUP"]);
                             foreach ($arrGROUPS as $uid) {
                                 if (intval($uid) > 0) {
-                                    $strSql = "INSERT INTO b_adv_banner_2_group (BANNER_ID, GROUP_ID) VALUES ($BANNER_ID, " . IntVal($uid) . ")";
+                                    $strSql = "INSERT INTO b_adv_banner_2_group (BANNER_ID, GROUP_ID) VALUES ($BANNER_ID, " . intval(
+                                            $uid
+                                        ) . ")";
                                     $DB->Query($strSql, false, $err_mess . __LINE__);
                                 }
                             }
@@ -2464,7 +2752,13 @@ class CAdvBanner_all
                             $ADMIN_EMAIL = CAdvContract::GetAdminEmails();
                             $ADMIN_EMAIL = array_merge($MANAGER_EMAIL, $ADMIN_EMAIL);
                             $ADMIN_EMAIL = array_unique($ADMIN_EMAIL);
-                            CAdvContract::GetOwnerEmails($CONTRACT_ID, $OWNER_EMAIL, $ADD_EMAIL, $STAT_EMAIL, $EDIT_EMAIL);
+                            CAdvContract::GetOwnerEmails(
+                                $CONTRACT_ID,
+                                $OWNER_EMAIL,
+                                $ADD_EMAIL,
+                                $STAT_EMAIL,
+                                $EDIT_EMAIL
+                            );
 
                             $CREATED_BY = $MODIFIED_BY = 0;
                             if (intval($arBanner["CREATED_BY"]) > 0) {
@@ -2473,7 +2767,9 @@ class CAdvBanner_all
                                     $CREATED_BY = "[" . $arUser["ID"] . "] (" . $arUser["LOGIN"] . ") " . $arUser["NAME"] . " " . $arUser["LAST_NAME"];
                                 }
                             }
-                            if (intval($arBanner["MODIFIED_BY"]) == intval($arBanner["CREATED_BY"]) && intval($arBanner["CREATED_BY"]) > 0) {
+                            if (intval($arBanner["MODIFIED_BY"]) == intval($arBanner["CREATED_BY"]) && intval(
+                                    $arBanner["CREATED_BY"]
+                                ) > 0) {
                                 $MODIFIED_BY = $CREATED_BY;
                             } elseif (intval($arBanner["MODIFIED_BY"]) > 0) {
                                 $rsUser = CUser::GetByID($arBanner["MODIFIED_BY"]);
@@ -2483,21 +2779,25 @@ class CAdvBanner_all
                             }
 
                             $arImage = CFile::GetFileArray($arBanner["IMAGE_ID"]);
-                            if ($arImage)
+                            if ($arImage) {
                                 $IMAGE_LINK = CHTTP::URN2URI($arImage["SRC"]);
-                            else
+                            } else {
                                 $IMAGE_LINK = "";
+                            }
 
                             $arImage = CFile::GetFileArray($arBanner["FLASH_IMAGE"]);
-                            if ($arImage)
+                            if ($arImage) {
                                 $FLASHIMAGE_LINK = CHTTP::URN2URI($arImage["SRC"]);
-                            else
+                            } else {
                                 $FLASHIMAGE_LINK = "";
+                            }
 
                             $EMAIL_TO = $OWNER_EMAIL;
                             if (count($EMAIL_TO) <= 0) {
                                 $EMAIL_TO = $ADMIN_EMAIL;
-                            } else $BCC = $ADMIN_EMAIL;
+                            } else {
+                                $BCC = $ADMIN_EMAIL;
+                            }
 
                             $arEventFields = array(
                                 "ID" => $arBanner["ID"],
@@ -2512,11 +2812,13 @@ class CAdvBanner_all
                                 "CONTRACT_NAME" => $arContract["NAME"],
                                 "TYPE_SID" => $arBanner["TYPE_SID"],
                                 "TYPE_NAME" => $arBanner["TYPE_NAME"],
-                                "STATUS" => ((strlen($arBanner["STATUS_SID"]) > 0) ? GetMessage("AD_STATUS_" . $arBanner["STATUS_SID"]) : ""),
+                                "STATUS" => (($arBanner["STATUS_SID"] <> '') ? GetMessage(
+                                    "AD_STATUS_" . $arBanner["STATUS_SID"]
+                                ) : ""),
                                 "STATUS_COMMENTS" => $arBanner["STATUS_COMMENTS"],
                                 "NAME" => $arBanner["NAME"],
                                 "GROUP_SID" => $arBanner["GROUP_SID"],
-                                "INDICATOR" => GetMessage("AD_" . strtoupper($arBanner["LAMP"]) . "_BANNER_STATUS"),
+                                "INDICATOR" => GetMessage("AD_" . mb_strtoupper($arBanner["LAMP"]) . "_BANNER_STATUS"),
                                 "ACTIVE" => $arBanner["ACTIVE"],
                                 "MAX_SHOW_COUNT" => $arBanner["MAX_SHOW_COUNT"],
                                 "SHOW_COUNT" => $arBanner["SHOW_COUNT"],
@@ -2539,7 +2841,7 @@ class CAdvBanner_all
                                 "DATE_MODIFY" => $arBanner["DATE_MODIFY"],
                                 "MODIFIED_BY" => $MODIFIED_BY,
                                 "AD_TYPE" => $arBanner["AD_TYPE"],
-                                "TEMPLATE" => unserialize($arBanner["TEMPLATE"]),
+                                "TEMPLATE" => unserialize($arBanner["TEMPLATE"], ['allowed_classes' => false]),
                                 "FLASH_TRANSPARENT" => $arBanner["FLASH_TRANSPARENT"],
                                 "FLASH_IMAGE_LINK" => $FLASHIMAGE_LINK,
                                 "FLASH_JS" => $arBanner["FLASH_JS"],
@@ -2558,8 +2860,12 @@ class CAdvBanner_all
     public static function SetKeywords($keywords, $TYPE_SID = "", $LOGIC = "DESIRED")
     {
         global $arrADV_KEYWORDS;
-        if (strlen($LOGIC) <= 0) return;
-        if (strlen($TYPE_SID) <= 0) $TYPE_SID = "";
+        if ($LOGIC == '') {
+            return;
+        }
+        if ($TYPE_SID == '') {
+            $TYPE_SID = "";
+        }
         $arrKeywords = array();
         if (is_array($keywords) && count($keywords) > 0) {
             foreach ($keywords as $word) {
@@ -2576,12 +2882,15 @@ class CAdvBanner_all
             $arrWords = explode(",", $keywords);
             if (is_array($arrWords) && count($arrWords) > 0) {
                 foreach ($arrWords as $word) {
-                    if (strlen(trim($word)) > 0)
+                    if (trim($word) <> '') {
                         $arrKeywords["N"][] = trim($word);
+                    }
                 }
             }
         }
-        if (!is_set($arrADV_KEYWORDS, $TYPE_SID)) $arrADV_KEYWORDS[$TYPE_SID] = array();
+        if (!is_set($arrADV_KEYWORDS, $TYPE_SID)) {
+            $arrADV_KEYWORDS[$TYPE_SID] = array();
+        }
         $arr = array("Y", "N");
         foreach ($arr as $exact_match) {
             $arrWords = is_array($arrKeywords[$exact_match]) ? array_unique($arrKeywords[$exact_match]) : array();
@@ -2591,7 +2900,9 @@ class CAdvBanner_all
                     $arrTemp = array_merge($arrWords, $arrTemp);
                     $arrTemp = array_unique($arrTemp);
                     $arrADV_KEYWORDS[$TYPE_SID][$LOGIC][$exact_match] = $arrTemp;
-                } else $arrADV_KEYWORDS[$TYPE_SID][$LOGIC][$exact_match] = $arrWords;
+                } else {
+                    $arrADV_KEYWORDS[$TYPE_SID][$LOGIC][$exact_match] = $arrWords;
+                }
             }
         }
     }
@@ -2609,27 +2920,31 @@ class CAdvBanner_all
             )
         ) {
             $keywords = $APPLICATION->GetProperty("adv_desired_target_keywords");
-            if ($keywords === false)
+            if ($keywords === false) {
                 $keywords = $APPLICATION->GetProperty("keywords");
+            }
             $arrWords = explode(",", $keywords);
 
             $arrKeywords = array();
             foreach ($arrWords as $word) {
                 $word = trim($word);
-                if (strlen($word) > 0)
+                if ($word <> '') {
                     $arrKeywords[] = $word;
+                }
             }
 
-            if (count($arrKeywords) > 0)
+            if (count($arrKeywords) > 0) {
                 $arrReturn[$TYPE_SID]["DESIRED"]["N"] = $arrKeywords;
+            }
         }
 
-        if (strlen($TYPE_SID) > 0) {
-            if (strlen($LOGIC) > 0) {
-                if (strlen($EXACT_MATCH) > 0)
+        if ($TYPE_SID <> '') {
+            if ($LOGIC <> '') {
+                if ($EXACT_MATCH <> '') {
                     return $arrReturn[$TYPE_SID][$LOGIC][$EXACT_MATCH];
-                else
+                } else {
                     return $arrReturn[$TYPE_SID][$LOGIC];
+                }
             } else {
                 return $arrReturn[$TYPE_SID];
             }
@@ -2641,12 +2956,19 @@ class CAdvBanner_all
     public static function ResetKeywords($TYPE_SID = "", $LOGIC = "", $EXACT_MATCH = "")
     {
         global $arrADV_KEYWORDS;
-        if (strlen($TYPE_SID) > 0) {
-            if (strlen($LOGIC) > 0) {
-                if (strlen($EXACT_MATCH) > 0) $arrADV_KEYWORDS[$TYPE_SID][$LOGIC][$EXACT_MATCH] = array();
-                else $arrADV_KEYWORDS[$TYPE_SID][$LOGIC] = array();
-            } else $arrADV_KEYWORDS[$TYPE_SID] = array();
-        } else $arrADV_KEYWORDS = array();
+        if ($TYPE_SID <> '') {
+            if ($LOGIC <> '') {
+                if ($EXACT_MATCH <> '') {
+                    $arrADV_KEYWORDS[$TYPE_SID][$LOGIC][$EXACT_MATCH] = array();
+                } else {
+                    $arrADV_KEYWORDS[$TYPE_SID][$LOGIC] = array();
+                }
+            } else {
+                $arrADV_KEYWORDS[$TYPE_SID] = array();
+            }
+        } else {
+            $arrADV_KEYWORDS = array();
+        }
     }
 
     public static function SetRequiredKeywords($keywords, $TYPE_SID = "")
@@ -2671,12 +2993,13 @@ class CAdvBanner_all
 
     public static function arr_comp_uniform($a, $b)
     {
-        if ($a["val"] < $b["val"])
+        if ($a["val"] < $b["val"]) {
             return -1;
-        elseif ($a["val"] > $b["val"])
+        } elseif ($a["val"] > $b["val"]) {
             return 1;
-        else
+        } else {
             return 0;
+        }
     }
 
     // ���������� ������ ����������� ������������ ������
@@ -2688,7 +3011,7 @@ class CAdvBanner_all
         static $arrWeightSum = false;
 
         $TYPE_SID = trim($TYPE_SID);
-        if (strlen($TYPE_SID) <= 0) {
+        if ($TYPE_SID == '') {
             return false;
         }
 
@@ -2701,7 +3024,7 @@ class CAdvBanner_all
             $arrCookie_counter = array();
             // ���� �� ��� �������� �� �������� �������� cookie ��
             if (is_array($arrADV_VIEWED_BANNERS)) {
-                while (list($banner_id, $arr) = each($arrADV_VIEWED_BANNERS)) {
+                foreach ($arrADV_VIEWED_BANNERS as $banner_id => $arr) {
                     $arrCookie_counter[$banner_id] = $arr["COUNTER"];
                 }
             } else // ���� �� ������ ��� ���������� � �������� ��������� � cookie
@@ -2729,21 +3052,28 @@ class CAdvBanner_all
             $arrEmptyKeywordsBanners = array(); // ������ �������� � ������� ���� "�������� �����" �� ���������
             $arrPAGE_KEYWORDS = CAdvBanner::GetKeywords(); // ������ �������� ���� �������� ��� ������ ��������
 
-            $arrDesiredPageKeywords_all = is_array($arrPAGE_KEYWORDS[""]["DESIRED"]) ? $arrPAGE_KEYWORDS[""]["DESIRED"] : array();
-            $arrRequiredPageKeywords_all = is_array($arrPAGE_KEYWORDS[""]["REQUIRED"]) ? $arrPAGE_KEYWORDS[""]["REQUIRED"] : array();
+            $arrDesiredPageKeywords_all = is_array(
+                $arrPAGE_KEYWORDS[""]["DESIRED"]
+            ) ? $arrPAGE_KEYWORDS[""]["DESIRED"] : array();
+            $arrRequiredPageKeywords_all = is_array(
+                $arrPAGE_KEYWORDS[""]["REQUIRED"]
+            ) ? $arrPAGE_KEYWORDS[""]["REQUIRED"] : array();
 
             $rs = CAdvBanner::GetPageWeights_RS();
             while ($ar = $rs->Fetch()) {
                 // Check for blocked uniformed banners
                 if (isset($ar["FLYUNIFORM"]) and $ar["FLYUNIFORM"] == "Y") {
                     $unitest = CAdvBanner_all::GetUniformityCoef($ar);
-                    if ($unitest >= 1.0 + BANNER_UNIFORMITY_DIVERGENCE_COEF)
+                    if ($unitest >= 1.0 + BANNER_UNIFORMITY_DIVERGENCE_COEF) {
                         continue;
+                    }
                 }
 
                 $arKeywordsSet[$ar["TYPE_SID"]] = "N";
 
-                if ((intval($ar["SHOWS_FOR_VISITOR"]) > 0 && intval($arrCookie_counter[$ar["BANNER_ID"]]) < intval($ar["SHOWS_FOR_VISITOR"])) || intval($ar["SHOWS_FOR_VISITOR"]) <= 0) {
+                if ((intval($ar["SHOWS_FOR_VISITOR"]) > 0 && intval($arrCookie_counter[$ar["BANNER_ID"]]) < intval(
+                            $ar["SHOWS_FOR_VISITOR"]
+                        )) || intval($ar["SHOWS_FOR_VISITOR"]) <= 0) {
                     $arr = $arrPAGE_KEYWORDS[$ar["TYPE_SID"]]["DESIRED"];
                     $arrDesiredPageKeywords = is_array($arr) ? $arr : array();
 
@@ -2771,25 +3101,30 @@ class CAdvBanner_all
                         $arrBannerKeywords = array_unique(array_merge($arrBannerKeywords, $arrContractKeywords));
                     }
 
-                    if ($DONT_USE_CONTRACT == "Y" || !array_key_exists("CONTRACT_ID", $ar))
+                    if ($DONT_USE_CONTRACT == "Y" || !array_key_exists("CONTRACT_ID", $ar)) {
                         $ar["CONTRACT_ID"] = 0;
+                    }
 
                     if (count($arrBannerKeywords) > 0) {
                         $found_required = true;
                         if (count($arrRequiredPageKeywords) > 0 || count($arrRequiredPageKeywords_all) > 0) {
                             $arr = array("Y", "N"); // ���������� | ���������
                             foreach ($arr as $exact_match) {
-                                $arr1 = is_array($arrRequiredPageKeywords[$exact_match]) ? $arrRequiredPageKeywords[$exact_match] : array();
-                                $arr2 = is_array($arrRequiredPageKeywords_all[$exact_match]) ? $arrRequiredPageKeywords_all[$exact_match] : array();
+                                $arr1 = is_array(
+                                    $arrRequiredPageKeywords[$exact_match]
+                                ) ? $arrRequiredPageKeywords[$exact_match] : array();
+                                $arr2 = is_array(
+                                    $arrRequiredPageKeywords_all[$exact_match]
+                                ) ? $arrRequiredPageKeywords_all[$exact_match] : array();
                                 $arrRequiredKeywords = array_unique(array_merge($arr1, $arr2));
                                 if (count($arrRequiredKeywords) > 0) {
                                     reset($arrRequiredKeywords);
                                     foreach ($arrRequiredKeywords as $page_word) {
-                                        $page_word = strtoupper($page_word);
+                                        $page_word = mb_strtoupper($page_word);
                                         reset($arrBannerKeywords);
                                         $found = false;
                                         foreach ($arrBannerKeywords as $banner_word) {
-                                            $banner_word = strtoupper($banner_word);
+                                            $banner_word = mb_strtoupper($banner_word);
                                             // ����������
                                             if ($exact_match == "Y") {
                                                 if ($banner_word == $page_word) {
@@ -2797,7 +3132,10 @@ class CAdvBanner_all
                                                     break;
                                                 }
                                             } elseif ($exact_match == "N") {
-                                                if (strpos($page_word, $banner_word) !== false || strpos($banner_word, $page_word) !== false) {
+                                                if (mb_strpos($page_word, $banner_word) !== false || mb_strpos(
+                                                        $banner_word,
+                                                        $page_word
+                                                    ) !== false) {
                                                     $found = true;
                                                     break;
                                                 }
@@ -2818,22 +3156,32 @@ class CAdvBanner_all
                         }
 
                         // ���� �� ������������ ������ ������ �������� �� �������� �� ����������� ������
-                        if ($found_required && (count($arrDesiredPageKeywords) > 0 || count($arrDesiredPageKeywords_all) > 0)) {
+                        if ($found_required && (count($arrDesiredPageKeywords) > 0 || count(
+                                    $arrDesiredPageKeywords_all
+                                ) > 0)) {
                             $found_desired = false;
                             $arr = array("Y", "N"); // ���������� | ���������
                             foreach ($arr as $exact_match) {
-                                $arr1 = is_array($arrDesiredPageKeywords) ? $arrDesiredPageKeywords[$exact_match] : array();
-                                $arr2 = is_array($arrDesiredPageKeywords_all) ? $arrDesiredPageKeywords_all[$exact_match] : array();
-                                if (!is_array($arr1)) $arr1 = array();
-                                if (!is_array($arr2)) $arr2 = array();
+                                $arr1 = is_array(
+                                    $arrDesiredPageKeywords
+                                ) ? $arrDesiredPageKeywords[$exact_match] : array();
+                                $arr2 = is_array(
+                                    $arrDesiredPageKeywords_all
+                                ) ? $arrDesiredPageKeywords_all[$exact_match] : array();
+                                if (!is_array($arr1)) {
+                                    $arr1 = array();
+                                }
+                                if (!is_array($arr2)) {
+                                    $arr2 = array();
+                                }
                                 $arrDesiredKeywords = array_unique(array_merge($arr1, $arr2));
                                 if (is_array($arrDesiredKeywords) && count($arrDesiredKeywords) > 0) {
                                     reset($arrDesiredKeywords);
                                     foreach ($arrDesiredKeywords as $page_word) {
-                                        $page_word = strtoupper($page_word);
+                                        $page_word = mb_strtoupper($page_word);
                                         reset($arrBannerKeywords);
                                         foreach ($arrBannerKeywords as $banner_word) {
-                                            $banner_word = strtoupper($banner_word);
+                                            $banner_word = mb_strtoupper($banner_word);
                                             // ����������
                                             if ($exact_match == "Y") {
                                                 if ($banner_word == $page_word) {
@@ -2841,7 +3189,10 @@ class CAdvBanner_all
                                                     break 3;
                                                 }
                                             } elseif ($exact_match == "N") {
-                                                if (strpos($page_word, $banner_word) !== false || strpos($banner_word, $page_word) !== false) {
+                                                if (mb_strpos($page_word, $banner_word) !== false || mb_strpos(
+                                                        $banner_word,
+                                                        $page_word
+                                                    ) !== false) {
                                                     $found_desired = true;
                                                     break 3;
                                                 }
@@ -2862,19 +3213,33 @@ class CAdvBanner_all
                     }
 
                     if (in_array($ar["BANNER_ID"], $arrRequiredKeywordsBanners)) {
-                        $arrWeightSum_RequiredKeywords[$ar["TYPE_SID"]][$ar["CONTRACT_ID"]]["WEIGHT"] = intval($ar["CONTRACT_WEIGHT"]);
-                        $arrWeightSum_RequiredKeywords[$ar["TYPE_SID"]][$ar["CONTRACT_ID"]]["BANNERS"][$ar["BANNER_ID"]] = intval($ar["BANNER_WEIGHT"]);
+                        $arrWeightSum_RequiredKeywords[$ar["TYPE_SID"]][$ar["CONTRACT_ID"]]["WEIGHT"] = intval(
+                            $ar["CONTRACT_WEIGHT"]
+                        );
+                        $arrWeightSum_RequiredKeywords[$ar["TYPE_SID"]][$ar["CONTRACT_ID"]]["BANNERS"][$ar["BANNER_ID"]] = intval(
+                            $ar["BANNER_WEIGHT"]
+                        );
                     }
                     if (in_array($ar["BANNER_ID"], $arrDesiredKeywordsBanners)) {
-                        $arrWeightSum_DesiredKeywords[$ar["TYPE_SID"]][$ar["CONTRACT_ID"]]["WEIGHT"] = intval($ar["CONTRACT_WEIGHT"]);
-                        $arrWeightSum_DesiredKeywords[$ar["TYPE_SID"]][$ar["CONTRACT_ID"]]["BANNERS"][$ar["BANNER_ID"]] = intval($ar["BANNER_WEIGHT"]);
+                        $arrWeightSum_DesiredKeywords[$ar["TYPE_SID"]][$ar["CONTRACT_ID"]]["WEIGHT"] = intval(
+                            $ar["CONTRACT_WEIGHT"]
+                        );
+                        $arrWeightSum_DesiredKeywords[$ar["TYPE_SID"]][$ar["CONTRACT_ID"]]["BANNERS"][$ar["BANNER_ID"]] = intval(
+                            $ar["BANNER_WEIGHT"]
+                        );
                     }
                     if (in_array($ar["BANNER_ID"], $arrEmptyKeywordsBanners)) {
-                        $arrWeightSum_EmptyKeywords[$ar["TYPE_SID"]][$ar["CONTRACT_ID"]]["WEIGHT"] = intval($ar["CONTRACT_WEIGHT"]);
-                        $arrWeightSum_EmptyKeywords[$ar["TYPE_SID"]][$ar["CONTRACT_ID"]]["BANNERS"][$ar["BANNER_ID"]] = intval($ar["BANNER_WEIGHT"]);
+                        $arrWeightSum_EmptyKeywords[$ar["TYPE_SID"]][$ar["CONTRACT_ID"]]["WEIGHT"] = intval(
+                            $ar["CONTRACT_WEIGHT"]
+                        );
+                        $arrWeightSum_EmptyKeywords[$ar["TYPE_SID"]][$ar["CONTRACT_ID"]]["BANNERS"][$ar["BANNER_ID"]] = intval(
+                            $ar["BANNER_WEIGHT"]
+                        );
                     }
                     $arrWeightSum_all[$ar["TYPE_SID"]][$ar["CONTRACT_ID"]]["WEIGHT"] = intval($ar["CONTRACT_WEIGHT"]);
-                    $arrWeightSum_all[$ar["TYPE_SID"]][$ar["CONTRACT_ID"]]["BANNERS"][$ar["BANNER_ID"]] = intval($ar["BANNER_WEIGHT"]);
+                    $arrWeightSum_all[$ar["TYPE_SID"]][$ar["CONTRACT_ID"]]["BANNERS"][$ar["BANNER_ID"]] = intval(
+                        $ar["BANNER_WEIGHT"]
+                    );
                 }
             }
 
@@ -2884,10 +3249,14 @@ class CAdvBanner_all
                     // ���� ��� ������� ���� �������� ����� ������ ��
                     if ($arKeywordsSet[$tsid] == "Y") {
                         // ����������� �����
-                        if (is_array($arrWeightSum_DesiredKeywords[$tsid]) && count($arrWeightSum_DesiredKeywords[$tsid]) > 0) {
+                        if (is_array($arrWeightSum_DesiredKeywords[$tsid]) && count(
+                                $arrWeightSum_DesiredKeywords[$tsid]
+                            ) > 0) {
                             $arrWeightSum[$tsid] = $arrWeightSum_DesiredKeywords[$tsid];
                         } // ������������ �����
-                        elseif (is_array($arrWeightSum_RequiredKeywords[$tsid]) && count($arrWeightSum_RequiredKeywords[$tsid]) > 0) {
+                        elseif (is_array($arrWeightSum_RequiredKeywords[$tsid]) && count(
+                                $arrWeightSum_RequiredKeywords[$tsid]
+                            ) > 0) {
                             $arrWeightSum[$tsid] = $arrWeightSum_RequiredKeywords[$tsid];
                         } // � ������� �������
                         elseif ($arKeywordsSet[$tsid] == "Y" && is_array($arrWeightSum_EmptyKeywords[$tsid])) {
@@ -2909,9 +3278,8 @@ class CAdvBanner_all
             if ($DONT_USE_CONTRACT == "N" || !array_key_exists("0", $arrWSum)) {
                 // ������� ����� ����� ����������
                 $intSum = 0;
-                reset($arrWSum);
 
-                while (list($cid, $arr) = each($arrWSum)) {
+                foreach ($arrWSum as $cid => $arr) {
                     $CONTRACT_ID = $cid;
                     $intSum += intval($arr["WEIGHT"]);
                 }
@@ -2919,8 +3287,8 @@ class CAdvBanner_all
                 // ������� �������� �� ����
                 $intStep = 0;
                 $rndWeight = $intSum * (mt_rand() / mt_getrandmax());
-                reset($arrWSum);
-                while (list($cid, $arr) = each($arrWSum)) {
+
+                foreach ($arrWSum as $cid => $arr) {
                     if ($rndWeight >= $intStep && $rndWeight <= $intStep + $arr["WEIGHT"]) {
                         $CONTRACT_ID = $cid;
                         break;
@@ -2937,10 +3305,11 @@ class CAdvBanner_all
                 // ������� ����� ����� �������� ���������
                 $intSum = 0;
                 $strBanners = "0";
-                reset($arrWeightBanners);
-                while (list($bid, $weight) = each($arrWeightBanners)) {
-                    if (in_array($bid, $arrViewedBanners))
+
+                foreach ($arrWeightBanners as $bid => $weight) {
+                    if (in_array($bid, $arrViewedBanners)) {
                         continue;
+                    }
                     $intSum += intval($weight);
                     $strBanners .= "," . intval($bid);
                 }
@@ -2979,7 +3348,6 @@ class CAdvBanner_all
 						ORDER BY
 							FLYUNIFORM DESC
 						";
-
                 }
 
                 $intSum = 0;
@@ -3016,8 +3384,9 @@ class CAdvBanner_all
                         if ($rndWeight < $intStep or $rndWeight > $intStep + $infUniform["WEIGHT"]) {
                             $intStep += $infUniform["WEIGHT"];
                             while ($infUniform = next($stubs)) {
-                                if ($rndWeight >= $intStep && $rndWeight <= $intStep + $infUniform["WEIGHT"])
+                                if ($rndWeight >= $intStep && $rndWeight <= $intStep + $infUniform["WEIGHT"]) {
                                     break;
+                                }
                                 $intStep += $infUniform["WEIGHT"];
                             }
                         }
@@ -3029,8 +3398,9 @@ class CAdvBanner_all
                 $BANNER_ID = intval($arBanner["ID"]);
                 if ($BANNER_ID > 0) {
                     unset($arrWeightSum[$TYPE_SID][$CONTRACT_ID]["BANNERS"][$arBanner["ID"]]);
-                    if (count($arrWeightSum[$TYPE_SID][$CONTRACT_ID]["BANNERS"]) <= 0)
+                    if (count($arrWeightSum[$TYPE_SID][$CONTRACT_ID]["BANNERS"]) <= 0) {
                         unset($arrWeightSum[$TYPE_SID][$CONTRACT_ID]);
+                    }
                     $arrViewedBanners[] = $arBanner["ID"];
                 }
                 return $arBanner;
@@ -3048,7 +3418,7 @@ class CAdvBanner_all
         static $arrWeightSum = false;
 
         $TYPE_SID = trim($TYPE_SID);
-        if (strlen($TYPE_SID) <= 0) {
+        if ($TYPE_SID == '') {
             return false;
         }
 
@@ -3061,7 +3431,7 @@ class CAdvBanner_all
             $arrCookie_counter = array();
             // ���� �� ��� �������� �� �������� �������� cookie ��
             if (is_array($arrADV_VIEWED_BANNERS)) {
-                while (list($banner_id, $arr) = each($arrADV_VIEWED_BANNERS)) {
+                foreach ($arrADV_VIEWED_BANNERS as $banner_id => $arr) {
                     $arrCookie_counter[$banner_id] = $arr["COUNTER"];
                 }
             } else // ���� �� ������ ��� ���������� � �������� ��������� � cookie
@@ -3089,21 +3459,28 @@ class CAdvBanner_all
             $arrEmptyKeywordsBanners = array(); // ������ �������� � ������� ���� "�������� �����" �� ���������
             $arrPAGE_KEYWORDS = CAdvBanner::GetKeywords(); // ������ �������� ���� �������� ��� ������ ��������
 
-            $arrDesiredPageKeywords_all = is_array($arrPAGE_KEYWORDS[""]["DESIRED"]) ? $arrPAGE_KEYWORDS[""]["DESIRED"] : array();
-            $arrRequiredPageKeywords_all = is_array($arrPAGE_KEYWORDS[""]["REQUIRED"]) ? $arrPAGE_KEYWORDS[""]["REQUIRED"] : array();
+            $arrDesiredPageKeywords_all = is_array(
+                $arrPAGE_KEYWORDS[""]["DESIRED"]
+            ) ? $arrPAGE_KEYWORDS[""]["DESIRED"] : array();
+            $arrRequiredPageKeywords_all = is_array(
+                $arrPAGE_KEYWORDS[""]["REQUIRED"]
+            ) ? $arrPAGE_KEYWORDS[""]["REQUIRED"] : array();
 
             $rs = CAdvBanner::GetPageWeights_RS();
             while ($ar = $rs->Fetch()) {
                 // Check for blocked uniformed banners
                 if (isset($ar["FLYUNIFORM"]) and $ar["FLYUNIFORM"] == "Y") {
                     $unitest = CAdvBanner_all::GetUniformityCoef($ar);
-                    if ($unitest >= 1.0 + BANNER_UNIFORMITY_DIVERGENCE_COEF)
+                    if ($unitest >= 1.0 + BANNER_UNIFORMITY_DIVERGENCE_COEF) {
                         continue;
+                    }
                 }
 
                 $arKeywordsSet[$ar["TYPE_SID"]] = "N";
 
-                if ((intval($ar["SHOWS_FOR_VISITOR"]) > 0 && intval($arrCookie_counter[$ar["BANNER_ID"]]) < intval($ar["SHOWS_FOR_VISITOR"])) || intval($ar["SHOWS_FOR_VISITOR"]) <= 0) {
+                if ((intval($ar["SHOWS_FOR_VISITOR"]) > 0 && intval($arrCookie_counter[$ar["BANNER_ID"]]) < intval(
+                            $ar["SHOWS_FOR_VISITOR"]
+                        )) || intval($ar["SHOWS_FOR_VISITOR"]) <= 0) {
                     $arr = $arrPAGE_KEYWORDS[$ar["TYPE_SID"]]["DESIRED"];
                     $arrDesiredPageKeywords = is_array($arr) ? $arr : array();
 
@@ -3131,25 +3508,30 @@ class CAdvBanner_all
                         $arrBannerKeywords = array_unique(array_merge($arrBannerKeywords, $arrContractKeywords));
                     }
 
-                    if ($DONT_USE_CONTRACT == "Y" || !array_key_exists("CONTRACT_ID", $ar))
+                    if ($DONT_USE_CONTRACT == "Y" || !array_key_exists("CONTRACT_ID", $ar)) {
                         $ar["CONTRACT_ID"] = 0;
+                    }
 
                     if (count($arrBannerKeywords) > 0) {
                         $found_required = true;
                         if (count($arrRequiredPageKeywords) > 0 || count($arrRequiredPageKeywords_all) > 0) {
                             $arr = array("Y", "N"); // ���������� | ���������
                             foreach ($arr as $exact_match) {
-                                $arr1 = is_array($arrRequiredPageKeywords[$exact_match]) ? $arrRequiredPageKeywords[$exact_match] : array();
-                                $arr2 = is_array($arrRequiredPageKeywords_all[$exact_match]) ? $arrRequiredPageKeywords_all[$exact_match] : array();
+                                $arr1 = is_array(
+                                    $arrRequiredPageKeywords[$exact_match]
+                                ) ? $arrRequiredPageKeywords[$exact_match] : array();
+                                $arr2 = is_array(
+                                    $arrRequiredPageKeywords_all[$exact_match]
+                                ) ? $arrRequiredPageKeywords_all[$exact_match] : array();
                                 $arrRequiredKeywords = array_unique(array_merge($arr1, $arr2));
                                 if (count($arrRequiredKeywords) > 0) {
                                     reset($arrRequiredKeywords);
                                     foreach ($arrRequiredKeywords as $page_word) {
-                                        $page_word = strtoupper($page_word);
+                                        $page_word = mb_strtoupper($page_word);
                                         reset($arrBannerKeywords);
                                         $found = false;
                                         foreach ($arrBannerKeywords as $banner_word) {
-                                            $banner_word = strtoupper($banner_word);
+                                            $banner_word = mb_strtoupper($banner_word);
                                             // ����������
                                             if ($exact_match == "Y") {
                                                 if ($banner_word == $page_word) {
@@ -3157,7 +3539,10 @@ class CAdvBanner_all
                                                     break;
                                                 }
                                             } elseif ($exact_match == "N") {
-                                                if (strpos($page_word, $banner_word) !== false || strpos($banner_word, $page_word) !== false) {
+                                                if (mb_strpos($page_word, $banner_word) !== false || mb_strpos(
+                                                        $banner_word,
+                                                        $page_word
+                                                    ) !== false) {
                                                     $found = true;
                                                     break;
                                                 }
@@ -3178,22 +3563,32 @@ class CAdvBanner_all
                         }
 
                         // ���� �� ������������ ������ ������ �������� �� �������� �� ����������� ������
-                        if ($found_required && (count($arrDesiredPageKeywords) > 0 || count($arrDesiredPageKeywords_all) > 0)) {
+                        if ($found_required && (count($arrDesiredPageKeywords) > 0 || count(
+                                    $arrDesiredPageKeywords_all
+                                ) > 0)) {
                             $found_desired = false;
                             $arr = array("Y", "N"); // ���������� | ���������
                             foreach ($arr as $exact_match) {
-                                $arr1 = is_array($arrDesiredPageKeywords) ? $arrDesiredPageKeywords[$exact_match] : array();
-                                $arr2 = is_array($arrDesiredPageKeywords_all) ? $arrDesiredPageKeywords_all[$exact_match] : array();
-                                if (!is_array($arr1)) $arr1 = array();
-                                if (!is_array($arr2)) $arr2 = array();
+                                $arr1 = is_array(
+                                    $arrDesiredPageKeywords
+                                ) ? $arrDesiredPageKeywords[$exact_match] : array();
+                                $arr2 = is_array(
+                                    $arrDesiredPageKeywords_all
+                                ) ? $arrDesiredPageKeywords_all[$exact_match] : array();
+                                if (!is_array($arr1)) {
+                                    $arr1 = array();
+                                }
+                                if (!is_array($arr2)) {
+                                    $arr2 = array();
+                                }
                                 $arrDesiredKeywords = array_unique(array_merge($arr1, $arr2));
                                 if (is_array($arrDesiredKeywords) && count($arrDesiredKeywords) > 0) {
                                     reset($arrDesiredKeywords);
                                     foreach ($arrDesiredKeywords as $page_word) {
-                                        $page_word = strtoupper($page_word);
+                                        $page_word = mb_strtoupper($page_word);
                                         reset($arrBannerKeywords);
                                         foreach ($arrBannerKeywords as $banner_word) {
-                                            $banner_word = strtoupper($banner_word);
+                                            $banner_word = mb_strtoupper($banner_word);
                                             // ����������
                                             if ($exact_match == "Y") {
                                                 if ($banner_word == $page_word) {
@@ -3201,7 +3596,10 @@ class CAdvBanner_all
                                                     break 3;
                                                 }
                                             } elseif ($exact_match == "N") {
-                                                if (strpos($page_word, $banner_word) !== false || strpos($banner_word, $page_word) !== false) {
+                                                if (mb_strpos($page_word, $banner_word) !== false || mb_strpos(
+                                                        $banner_word,
+                                                        $page_word
+                                                    ) !== false) {
                                                     $found_desired = true;
                                                     break 3;
                                                 }
@@ -3222,19 +3620,33 @@ class CAdvBanner_all
                     }
 
                     if (in_array($ar["BANNER_ID"], $arrRequiredKeywordsBanners)) {
-                        $arrWeightSum_RequiredKeywords[$ar["TYPE_SID"]][$ar["CONTRACT_ID"]]["WEIGHT"] = intval($ar["CONTRACT_WEIGHT"]);
-                        $arrWeightSum_RequiredKeywords[$ar["TYPE_SID"]][$ar["CONTRACT_ID"]]["BANNERS"][$ar["BANNER_ID"]] = intval($ar["BANNER_WEIGHT"]);
+                        $arrWeightSum_RequiredKeywords[$ar["TYPE_SID"]][$ar["CONTRACT_ID"]]["WEIGHT"] = intval(
+                            $ar["CONTRACT_WEIGHT"]
+                        );
+                        $arrWeightSum_RequiredKeywords[$ar["TYPE_SID"]][$ar["CONTRACT_ID"]]["BANNERS"][$ar["BANNER_ID"]] = intval(
+                            $ar["BANNER_WEIGHT"]
+                        );
                     }
                     if (in_array($ar["BANNER_ID"], $arrDesiredKeywordsBanners)) {
-                        $arrWeightSum_DesiredKeywords[$ar["TYPE_SID"]][$ar["CONTRACT_ID"]]["WEIGHT"] = intval($ar["CONTRACT_WEIGHT"]);
-                        $arrWeightSum_DesiredKeywords[$ar["TYPE_SID"]][$ar["CONTRACT_ID"]]["BANNERS"][$ar["BANNER_ID"]] = intval($ar["BANNER_WEIGHT"]);
+                        $arrWeightSum_DesiredKeywords[$ar["TYPE_SID"]][$ar["CONTRACT_ID"]]["WEIGHT"] = intval(
+                            $ar["CONTRACT_WEIGHT"]
+                        );
+                        $arrWeightSum_DesiredKeywords[$ar["TYPE_SID"]][$ar["CONTRACT_ID"]]["BANNERS"][$ar["BANNER_ID"]] = intval(
+                            $ar["BANNER_WEIGHT"]
+                        );
                     }
                     if (in_array($ar["BANNER_ID"], $arrEmptyKeywordsBanners)) {
-                        $arrWeightSum_EmptyKeywords[$ar["TYPE_SID"]][$ar["CONTRACT_ID"]]["WEIGHT"] = intval($ar["CONTRACT_WEIGHT"]);
-                        $arrWeightSum_EmptyKeywords[$ar["TYPE_SID"]][$ar["CONTRACT_ID"]]["BANNERS"][$ar["BANNER_ID"]] = intval($ar["BANNER_WEIGHT"]);
+                        $arrWeightSum_EmptyKeywords[$ar["TYPE_SID"]][$ar["CONTRACT_ID"]]["WEIGHT"] = intval(
+                            $ar["CONTRACT_WEIGHT"]
+                        );
+                        $arrWeightSum_EmptyKeywords[$ar["TYPE_SID"]][$ar["CONTRACT_ID"]]["BANNERS"][$ar["BANNER_ID"]] = intval(
+                            $ar["BANNER_WEIGHT"]
+                        );
                     }
                     $arrWeightSum_all[$ar["TYPE_SID"]][$ar["CONTRACT_ID"]]["WEIGHT"] = intval($ar["CONTRACT_WEIGHT"]);
-                    $arrWeightSum_all[$ar["TYPE_SID"]][$ar["CONTRACT_ID"]]["BANNERS"][$ar["BANNER_ID"]] = intval($ar["BANNER_WEIGHT"]);
+                    $arrWeightSum_all[$ar["TYPE_SID"]][$ar["CONTRACT_ID"]]["BANNERS"][$ar["BANNER_ID"]] = intval(
+                        $ar["BANNER_WEIGHT"]
+                    );
                 }
             }
 
@@ -3244,10 +3656,14 @@ class CAdvBanner_all
                     // ���� ��� ������� ���� �������� ����� ������ ��
                     if ($arKeywordsSet[$tsid] == "Y") {
                         // ����������� �����
-                        if (is_array($arrWeightSum_DesiredKeywords[$tsid]) && count($arrWeightSum_DesiredKeywords[$tsid]) > 0) {
+                        if (is_array($arrWeightSum_DesiredKeywords[$tsid]) && count(
+                                $arrWeightSum_DesiredKeywords[$tsid]
+                            ) > 0) {
                             $arrWeightSum[$tsid] = $arrWeightSum_DesiredKeywords[$tsid];
                         } // ������������ �����
-                        elseif (is_array($arrWeightSum_RequiredKeywords[$tsid]) && count($arrWeightSum_RequiredKeywords[$tsid]) > 0) {
+                        elseif (is_array($arrWeightSum_RequiredKeywords[$tsid]) && count(
+                                $arrWeightSum_RequiredKeywords[$tsid]
+                            ) > 0) {
                             $arrWeightSum[$tsid] = $arrWeightSum_RequiredKeywords[$tsid];
                         } // � ������� �������
                         elseif ($arKeywordsSet[$tsid] == "Y" && is_array($arrWeightSum_EmptyKeywords[$tsid])) {
@@ -3269,9 +3685,8 @@ class CAdvBanner_all
             if ($DONT_USE_CONTRACT == "N" || !array_key_exists("0", $arrWSum)) {
                 // ������� ����� ����� ����������
                 $intSum = 0;
-                reset($arrWSum);
 
-                while (list($cid, $arr) = each($arrWSum)) {
+                foreach ($arrWSum as $cid => $arr) {
                     $CONTRACT_ID = $cid;
                     $intSum += intval($arr["WEIGHT"]);
                 }
@@ -3279,8 +3694,8 @@ class CAdvBanner_all
                 // ������� �������� �� ����
                 $intStep = 0;
                 $rndWeight = $intSum * (mt_rand() / mt_getrandmax());
-                reset($arrWSum);
-                while (list($cid, $arr) = each($arrWSum)) {
+
+                foreach ($arrWSum as $cid => $arr) {
                     if ($rndWeight >= $intStep && $rndWeight <= $intStep + $arr["WEIGHT"]) {
                         $CONTRACT_ID = $cid;
                         break;
@@ -3297,10 +3712,11 @@ class CAdvBanner_all
                 // ������� ����� ����� �������� ���������
                 $intSum = 0;
                 $strBanners = "0";
-                reset($arrWeightBanners);
-                while (list($bid, $weight) = each($arrWeightBanners)) {
-                    if (in_array($bid, $arrViewedBanners))
+
+                foreach ($arrWeightBanners as $bid => $weight) {
+                    if (in_array($bid, $arrViewedBanners)) {
                         continue;
+                    }
                     $intSum += intval($weight);
                     $strBanners .= "," . intval($bid);
                 }
@@ -3339,7 +3755,6 @@ class CAdvBanner_all
 						ORDER BY
 							FLYUNIFORM DESC
 						";
-
                 }
 
                 $intSum = 0;
@@ -3350,8 +3765,9 @@ class CAdvBanner_all
                 while ($arBanner = $rsBanners->Fetch()) {
                     if (isset($arBanner["FLYUNIFORM"]) and $arBanner["FLYUNIFORM"] == "Y") {
                         $unitest = CAdvBanner_all::GetUniformityCoef($arBanner);
-                        if ($unitest < 1.0 + BANNER_UNIFORMITY_DIVERGENCE_COEF)
+                        if ($unitest < 1.0 + BANNER_UNIFORMITY_DIVERGENCE_COEF) {
                             $inf[$arBanner['ID']] = $arBanner;
+                        }
                     } else {
                         $intSum += intval($arBanner["WEIGHT"]);
                         $stubs[$arBanner['ID']] = $arBanner; // Save stubs
@@ -3373,8 +3789,9 @@ class CAdvBanner_all
                         $intStep += $infCurr["WEIGHT"];
                         while (next($stubs)) {
                             $infCurr = current($stubs);
-                            if ($rndWeight >= $intStep && $rndWeight <= $intStep + $infCurr["WEIGHT"])
+                            if ($rndWeight >= $intStep && $rndWeight <= $intStep + $infCurr["WEIGHT"]) {
                                 break;
+                            }
                             $intStep += $infCurr["WEIGHT"];
                         }
                     }
@@ -3388,8 +3805,9 @@ class CAdvBanner_all
                     $BANNER_ID = intval($arB["ID"]);
                     if ($BANNER_ID > 0) {
                         unset($arrWeightSum[$TYPE_SID][$CONTRACT_ID]["BANNERS"][$arB["ID"]]);
-                        if (count($arrWeightSum[$TYPE_SID][$CONTRACT_ID]["BANNERS"]) <= 0)
+                        if (count($arrWeightSum[$TYPE_SID][$CONTRACT_ID]["BANNERS"]) <= 0) {
                             unset($arrWeightSum[$TYPE_SID][$CONTRACT_ID]);
+                        }
                         $arrViewedBanners[] = $arB["ID"];
                     }
                 }
@@ -3405,7 +3823,9 @@ class CAdvBanner_all
         $arProgress = 0;
         $rot = CAdvBanner_all::CalculateRotationProgress($arBanner);
         $tim = CAdvBanner_all::CalculateTimeProgress($arBanner);
-        if ($rot and $tim) $arProgress = $rot / $tim;
+        if ($rot and $tim) {
+            $arProgress = $rot / $tim;
+        }
 
         return $arProgress;
     }
@@ -3413,12 +3833,24 @@ class CAdvBanner_all
     public static function __innerExtractBitrixDates($arBanner)
     {
         $fs = array("to" => 0, "first" => 0, "from" => 0);
-        if (isset($arBanner["DATE_SHOW_TO"])) $fs["to"] = $arBanner["DATE_SHOW_TO"];
-        if (isset($arBanner["DATE_SHOW_FIRST"])) $fs["first"] = $arBanner["DATE_SHOW_FIRST"];
-        if (isset($arBanner["DATE_SHOW_FROM"])) $fs["from"] = $arBanner["DATE_SHOW_FROM"];
-        if ($fs["to"] and strstr(trim($fs["to"]), " ") == false) $fs["to"] .= " 23:59:59";
-        if ($fs["first"] and strstr(trim($fs["first"]), " ") == false) $fs["first"] .= " 00:00:00";
-        if ($fs["from"] and strstr(trim($fs["from"]), " ") == false) $fs["from"] .= " 00:00:00";
+        if (isset($arBanner["DATE_SHOW_TO"])) {
+            $fs["to"] = $arBanner["DATE_SHOW_TO"];
+        }
+        if (isset($arBanner["DATE_SHOW_FIRST"])) {
+            $fs["first"] = $arBanner["DATE_SHOW_FIRST"];
+        }
+        if (isset($arBanner["DATE_SHOW_FROM"])) {
+            $fs["from"] = $arBanner["DATE_SHOW_FROM"];
+        }
+        if ($fs["to"] and mb_strstr(trim($fs["to"]), " ") == false) {
+            $fs["to"] .= " 23:59:59";
+        }
+        if ($fs["first"] and mb_strstr(trim($fs["first"]), " ") == false) {
+            $fs["first"] .= " 00:00:00";
+        }
+        if ($fs["from"] and mb_strstr(trim($fs["from"]), " ") == false) {
+            $fs["from"] .= " 00:00:00";
+        }
 
         return $fs;
     }
@@ -3427,7 +3859,9 @@ class CAdvBanner_all
     public static function CalculateTimeDiff($arBanner)
     {
         $dt = CAdvBanner_all::__innerExtractBitrixDates($arBanner);
-        if (!$dt["to"]) return 0;
+        if (!$dt["to"]) {
+            return 0;
+        }
 
         // 05.04.2007 19:26:26
 
@@ -3441,7 +3875,9 @@ class CAdvBanner_all
             $stmpfrom = $stmpfirst;
         }
 
-        if ($stmpfrom >= $stmpto) return 0;
+        if ($stmpfrom >= $stmpto) {
+            return 0;
+        }
         $rStmp = $stmpto - $stmpfrom;
         return $rStmp;
     }
@@ -3464,7 +3900,9 @@ class CAdvBanner_all
 
         $stmpnow -= $stmpfrom;
         $diff = CAdvBanner_all::CalculateTimeDiff($arBanner);
-        if ($stmpnow <= 0 or !$diff) return 0;
+        if ($stmpnow <= 0 or !$diff) {
+            return 0;
+        }
 
         return $stmpnow / $diff;
     }
@@ -3472,7 +3910,9 @@ class CAdvBanner_all
     public static function CalculateRotationProgress($arBanner)
     {
         if (!isset($arBanner["MAX_SHOW_COUNT"]) or !isset($arBanner["SHOW_COUNT"]) or
-            intval($arBanner["MAX_SHOW_COUNT"]) == 0) return 0;
+            intval($arBanner["MAX_SHOW_COUNT"]) == 0) {
+            return 0;
+        }
         return intval($arBanner["SHOW_COUNT"]) / intval($arBanner["MAX_SHOW_COUNT"]);
     }
 
@@ -3483,10 +3923,34 @@ class CAdvBanner_all
     public static function PrepareHTML($text, $arBanner)
     {
         global $nRandom1, $nRandom2, $nRandom3, $nRandom4, $nRandom5;
-        static $search = array("#RANDOM1#", "#RANDOM2#", "#RANDOM3#", "#RANDOM4#", "#RANDOM5#", "#BANNER_NAME#", "#BANNER_ID#", "#CONTRACT_ID#", "#TYPE_SID#");
-        if (strlen(trim($text)) > 0) {
-            $text = str_replace($search, array($nRandom1, $nRandom2, $nRandom3, $nRandom4, $nRandom5, $arBanner["NAME"], $arBanner["ID"], $arBanner["CONTRACT_ID"], $arBanner["TYPE_SID"]), $text);
-            if (strpos($text, "#EVENT_GID#") !== false) {
+        static $search = array(
+            "#RANDOM1#",
+            "#RANDOM2#",
+            "#RANDOM3#",
+            "#RANDOM4#",
+            "#RANDOM5#",
+            "#BANNER_NAME#",
+            "#BANNER_ID#",
+            "#CONTRACT_ID#",
+            "#TYPE_SID#"
+        );
+        if (trim($text) <> '') {
+            $text = str_replace(
+                $search,
+                array(
+                    $nRandom1,
+                    $nRandom2,
+                    $nRandom3,
+                    $nRandom4,
+                    $nRandom5,
+                    $arBanner["NAME"],
+                    $arBanner["ID"],
+                    $arBanner["CONTRACT_ID"],
+                    $arBanner["TYPE_SID"]
+                ),
+                $text
+            );
+            if (mb_strpos($text, "#EVENT_GID#") !== false) {
                 if (CModule::IncludeModule("statistic")) {
                     $text = str_replace("#EVENT_GID#", CStatEvent::GetGID(), $text);
                 }
@@ -3497,43 +3961,11 @@ class CAdvBanner_all
 
     public static function GetRedirectURL($url, $arBanner)
     {
-        global $strClickURL;
-
-        if ($arBanner["FIX_CLICK"] == "Y") {
-            $arUrlParams = array(
-                "id=" . $arBanner["ID"]
-            );
-
-            if (defined('SITE_ID'))
-                $arUrlParams[] = 'site_id=' . SITE_ID;
-
-            $event1 = CAdvBanner::PrepareHTML($arBanner["STAT_EVENT_1"], $arBanner);
-            $event2 = CAdvBanner::PrepareHTML($arBanner["STAT_EVENT_2"], $arBanner);
-            $event3 = CAdvBanner::PrepareHTML($arBanner["STAT_EVENT_3"], $arBanner);
-
-            if (strlen($event1) > 0) $arUrlParams[] = "event1=" . urlencode($event1);
-            if (strlen($event2) > 0) $arUrlParams[] = "event2=" . urlencode($event2);
-            if (strlen($event3) > 0) $arUrlParams[] = "event3=" . urlencode($event3);
-
-            $arUrlParams[] = "goto=" . urlencode($url);
-
-            $url = $strClickURL . "?" . implode("&amp;", $arUrlParams);
-        }
         return $url;
     }
 
     public static function ReplaceURL($text, $arBanner)
     {
-        if ($arBanner["FIX_CLICK"] == "Y") {
-            $BegPos = 0;
-            while (preg_match("'(<A[^>]+?HREF[\t ]*=[\t ]*(\"|\\'))(.*?)((\"|\\'))'i", substr($text, $BegPos), $regs)) {
-                $BegPos = strpos($text, $regs[1] . $regs[3] . $regs[5], $BegPos);
-                if ($BegPos === false) return '';
-                $strUrl = CAdvBanner::GetRedirectURL($regs[3], $arBanner);
-                $text = substr($text, 0, $BegPos + strlen($regs[1])) . $strUrl . substr($text, $BegPos + strlen($regs[1] . $regs[3] . $regs[5]) - 1);
-                $BegPos += strlen($strUrl) + strlen($regs[1]) + strlen($regs[5]) - strlen($regs[3]);
-            }
-        }
         return $text;
     }
 
@@ -3553,32 +3985,36 @@ class CAdvBanner_all
                         $arParams = array();
                         $url = $param = "";
                         $alt = $a_title = $a_target = "";
-                        if (strlen(trim($arBanner["URL"])) > 0) {
+                        if (trim($arBanner["URL"]) <> '') {
                             $param = CAdvBanner::PrepareHTML($arBanner["URL"], $arBanner);
                             $param = CAdvBanner::GetRedirectURL($param, $arBanner);
                             $url = $param;
                             $arParams[] = "flash_link=" . urlencode($param);
-                            if (strlen(trim($arBanner["URL_TARGET"])) > 0) {
+                            if (trim($arBanner["URL_TARGET"]) <> '') {
                                 $arParams[] = "flash_target=" . urlencode($arBanner["URL_TARGET"]);
                                 $a_target = ' target="' . htmlspecialcharsbx($arBanner["URL_TARGET"]) . '" ';
                             }
                         }
-                        if (strlen(trim($arBanner["IMAGE_ALT"])) > 0) {
+                        if (trim($arBanner["IMAGE_ALT"]) <> '') {
                             $alt = CAdvBanner::PrepareHTML($arBanner["IMAGE_ALT"], $arBanner);
                             $arParams[] = "flash_alt=" . urlencode($alt);
                             $a_title = " title=\"" . htmlspecialcharsbx($alt) . "\" ";
                         }
 
-                        if (count($arParams) > 0)
+                        if (count($arParams) > 0) {
                             $param = "?" . implode("&amp;", $arParams);
+                        }
 
-                        if ($arBanner["FLASH_TRANSPARENT"] == '')
+                        if ($arBanner["FLASH_TRANSPARENT"] == '') {
                             $arBanner["FLASH_TRANSPARENT"] = 'transparent';
+                        }
 
                         if ($arBanner["FLASH_JS"] != 'Y') {
                             $strReturn = '<div style="width: ' . $arImage["WIDTH"] . 'px; height: ' . $arImage["HEIGHT"] . 'px; padding:0; margin:0">';
-                            if (strlen(trim($arBanner["URL"])) > 0 && $arBanner["NO_URL_IN_FLASH"] == "Y") {
-                                $strReturn .= ($bNoIndex ? '<noindex>' : '') . '<div style="position:absolute; z-index:100;"><a href="' . $url . '"' . $a_target . $a_title . ($bNoIndex ? ' rel="nofollow"' : '') . '><img src="/bitrix/images/1.gif" width="' . $arImage["WIDTH"] . '" height="' . $arImage["HEIGHT"] . '" style="border:0;" alt="' . htmlspecialcharsEx($alt) . '" /></a></div>' . ($bNoIndex ? '</noindex>' : '');
+                            if (trim($arBanner["URL"]) <> '' && $arBanner["NO_URL_IN_FLASH"] == "Y") {
+                                $strReturn .= ($bNoIndex ? '<noindex>' : '') . '<div style="position:absolute; z-index:100;"><a href="' . $url . '"' . $a_target . $a_title . ($bNoIndex ? ' rel="nofollow"' : '') . '><img src="/bitrix/images/1.gif" width="' . $arImage["WIDTH"] . '" height="' . $arImage["HEIGHT"] . '" style="border:0;" alt="' . htmlspecialcharsEx(
+                                        $alt
+                                    ) . '" /></a></div>' . ($bNoIndex ? '</noindex>' : '');
                             }
                             $strReturn .=
                                 '<OBJECT
@@ -3609,7 +4045,9 @@ class CAdvBanner_all
                             static $bScript = null;
                             if ($bScript === null) {
                                 $bScript = true;
-                                $strReturn .= '<script type="text/javascript" src="' . CUtil::GetAdditionalFileURL('/bitrix/js/advertising/flash.js') . '"></script>';
+                                $strReturn .= '<script type="text/javascript" src="' . CUtil::GetAdditionalFileURL(
+                                        '/bitrix/js/advertising/flash.js'
+                                    ) . '"></script>';
                             }
 
                             $altImgPath = '';
@@ -3622,10 +4060,13 @@ class CAdvBanner_all
                             $strReturn .= '<div id="' . $test_id . '" style="width: ' . $arImage["WIDTH"] . 'px; height: ' . $arImage["HEIGHT"] . 'px; padding:0; margin:0;">';
                             $altHref = '';
                             if (trim($arBanner["URL"]) <> '') {
-                                if ($arBanner["NO_URL_IN_FLASH"] == "Y")
-                                    $strReturn .= ($bNoIndex ? '<noindex>' : '') . '<div style="position:absolute; z-index:100;"><a href="' . $url . '"' . $a_target . $a_title . ($bNoIndex ? ' rel="nofollow"' : '') . '><img src="/bitrix/images/1.gif" width="' . $arImage["WIDTH"] . '" height="' . $arImage["HEIGHT"] . '" style="border:0;" alt="' . htmlspecialcharsEx($alt) . '" /></a></div>' . ($bNoIndex ? '</noindex>' : '');
-                                else
+                                if ($arBanner["NO_URL_IN_FLASH"] == "Y") {
+                                    $strReturn .= ($bNoIndex ? '<noindex>' : '') . '<div style="position:absolute; z-index:100;"><a href="' . $url . '"' . $a_target . $a_title . ($bNoIndex ? ' rel="nofollow"' : '') . '><img src="/bitrix/images/1.gif" width="' . $arImage["WIDTH"] . '" height="' . $arImage["HEIGHT"] . '" style="border:0;" alt="' . htmlspecialcharsEx(
+                                            $alt
+                                        ) . '" /></a></div>' . ($bNoIndex ? '</noindex>' : '');
+                                } else {
                                     $altHref = $url;
+                                }
                             }
                             $strReturn .= '</div>';
                             $strReturn .= '<script type="text/javascript">bx_adv_includeFlash("' . $test_id . '", "' .
@@ -3633,7 +4074,9 @@ class CAdvBanner_all
                                 $arImage["WIDTH"] . '", "' . $arImage["HEIGHT"] . '", "' .
                                 $arBanner["FLASH_TRANSPARENT"] . '", "' .
                                 CUtil::JSEscape($altImgPath) . '", ' .
-                                (intval($arBanner["FLASH_VER"]) <= 0 ? 'null' : intval($arBanner["FLASH_VER"])) . ', "' .
+                                (intval($arBanner["FLASH_VER"]) <= 0 ? 'null' : intval(
+                                    $arBanner["FLASH_VER"]
+                                )) . ', "' .
                                 CUtil::JSEscape($altHref) . '", "' .
                                 CUtil::JSEscape(htmlspecialcharsbx($arBanner["URL_TARGET"])) . '", "' .
                                 CUtil::JSEscape(htmlspecialcharsbx($alt)) . '");</script>';
@@ -3642,12 +4085,16 @@ class CAdvBanner_all
 
                     default:
                         $alt = CAdvBanner::PrepareHTML(trim($arBanner["IMAGE_ALT"]), $arBanner);
-                        $strImage = "<img alt=\"" . htmlspecialcharsEx($alt) . "\" title=\"" . htmlspecialcharsEx($alt) . "\" src=\"" . $path . "\" width=\"" . $arImage["WIDTH"] . "\" height=\"" . $arImage["HEIGHT"] . "\" style=\"border:0;\" />";
-                        if (strlen(trim($arBanner["URL"])) > 0) {
+                        $strImage = "<img alt=\"" . htmlspecialcharsEx($alt) . "\" title=\"" . htmlspecialcharsEx(
+                                $alt
+                            ) . "\" src=\"" . $path . "\" width=\"" . $arImage["WIDTH"] . "\" height=\"" . $arImage["HEIGHT"] . "\" style=\"border:0;\" />";
+                        if (trim($arBanner["URL"]) <> '') {
                             $url = $arBanner["URL"];
                             $url = CAdvBanner::PrepareHTML($url, $arBanner);
                             $url = CAdvBanner::GetRedirectURL($url, $arBanner);
-                            $target = (strlen(trim($arBanner["URL_TARGET"])) > 0) ? " target=\"" . $arBanner["URL_TARGET"] . "\" " : "";
+                            $target = (trim(
+                                    $arBanner["URL_TARGET"]
+                                ) <> '') ? " target=\"" . $arBanner["URL_TARGET"] . "\" " : "";
                             $strReturn = ($bNoIndex ? '<noindex>' : '') . "<a href=\"" . $url . "\"" . $target . ($bNoIndex ? ' rel="nofollow"' : '') . ">" . $strImage . "</a>" . ($bNoIndex ? '</noindex>' : '');
                         } else {
                             $strReturn .= $strImage;
@@ -3680,10 +4127,16 @@ class CAdvBanner_all
             !empty($CACHE_ADVERTISING["BANNERS_ALL"]) &&
             array_key_exists("BANNERS_CNT", $CACHE_ADVERTISING) &&
             is_array($CACHE_ADVERTISING["BANNERS_CNT"])) {
-
-            if (array_key_exists("ALL_DATE_SHOW_FIRST", $CACHE_ADVERTISING) && is_array($CACHE_ADVERTISING["ALL_DATE_SHOW_FIRST"])) {
+            if (array_key_exists("ALL_DATE_SHOW_FIRST", $CACHE_ADVERTISING) && is_array(
+                    $CACHE_ADVERTISING["ALL_DATE_SHOW_FIRST"]
+                )) {
                 foreach ($CACHE_ADVERTISING["ALL_DATE_SHOW_FIRST"] as $key => $value) {
-                    $DB->Update("b_adv_banner", Array("DATE_SHOW_FIRST" => $value), "WHERE ID='" . $key . "'", $err_mess . __LINE__);
+                    $DB->Update(
+                        "b_adv_banner",
+                        Array("DATE_SHOW_FIRST" => $value),
+                        "WHERE ID='" . $key . "'",
+                        $err_mess . __LINE__
+                    );
                 }
             }
 
@@ -3694,34 +4147,40 @@ class CAdvBanner_all
                 "SHOW_COUNT" => "SHOW_COUNT + 1",
                 "DATE_LAST_SHOW" => $DB->GetNowFunction(),
             );
-            if ($bEqualBanID)
+            if ($bEqualBanID) {
                 $arFields["VISITOR_COUNT"] = "VISITOR_COUNT + 1";
+            }
 
             $group_all = '';
-            foreach ($CACHE_ADVERTISING["BANNERS_ALL"] as $b)
+            foreach ($CACHE_ADVERTISING["BANNERS_ALL"] as $b) {
                 $group_all .= ($group_all <> '' ? ',' : '') . intval($b);
+            }
 
             $DB->Update("b_adv_banner", $arFields, "WHERE ID IN(" . $group_all . ")", $err_mess . __LINE__);
 
             if (!$bEqualBanID && !empty($CACHE_ADVERTISING["BANNERS_CNT"])) {
                 $arFields = Array("VISITOR_COUNT" => "VISITOR_COUNT + 1");
                 $group_inc = "";
-                foreach ($CACHE_ADVERTISING["BANNERS_CNT"] as $BANNERS_CNT)
+                foreach ($CACHE_ADVERTISING["BANNERS_CNT"] as $BANNERS_CNT) {
                     $group_inc .= ($group_inc <> "" ? "," : "") . intval($BANNERS_CNT);
+                }
                 $DB->Update("b_adv_banner", $arFields, "WHERE ID IN(" . $group_inc . ")", $err_mess . __LINE__);
             }
 
             //������� �� ����
-            $strSql = "SELECT BANNER_ID FROM b_adv_banner_2_day WHERE BANNER_ID IN (" . $group_all . ") and DATE_STAT = " . $DB->GetNowDate();
+            $strSql = "SELECT BANNER_ID FROM b_adv_banner_2_day WHERE BANNER_ID IN (" . $group_all . ") and DATE_STAT = " . $DB->GetNowDate(
+                );
             $res = $DB->Query($strSql, false, $err_mess . __LINE__);
             $arExist = $arInsert = Array();
-            while ($ar = $res->Fetch())
+            while ($ar = $res->Fetch()) {
                 $arExist[] = $ar["BANNER_ID"];
+            }
 
             $arInsert = array_diff($CACHE_ADVERTISING["BANNERS_ALL"], $arExist);
 
             foreach ($arInsert as $BANNER_ID) {
-                $strSql = "INSERT INTO b_adv_banner_2_day (DATE_STAT, BANNER_ID, SHOW_COUNT, VISITOR_COUNT) VALUES (" . $DB->GetNowDate() . ", $BANNER_ID,1,1)";
+                $strSql = "INSERT INTO b_adv_banner_2_day (DATE_STAT, BANNER_ID, SHOW_COUNT, VISITOR_COUNT) VALUES (" . $DB->GetNowDate(
+                    ) . ", $BANNER_ID,1,1)";
                 $DB->Query($strSql, true, $err_mess . __LINE__);
             }
 
@@ -3729,22 +4188,34 @@ class CAdvBanner_all
                 $arExistInc = array_intersect($arExist, $CACHE_ADVERTISING["BANNERS_CNT"]);
                 if (!empty($arExistInc)) {
                     $sExistInc = '';
-                    foreach ($arExistInc as $b)
+                    foreach ($arExistInc as $b) {
                         $sExistInc .= ($sExistInc <> '' ? ',' : '') . intval($b);
+                    }
 
                     $arFields = Array("SHOW_COUNT" => "SHOW_COUNT + 1", "VISITOR_COUNT" => "VISITOR_COUNT + 1");
-                    $DB->Update("b_adv_banner_2_day", $arFields, "WHERE BANNER_ID IN(" . $sExistInc . ") and DATE_STAT = " . $DB->GetNowDate(), $err_mess . __LINE__);
+                    $DB->Update(
+                        "b_adv_banner_2_day",
+                        $arFields,
+                        "WHERE BANNER_ID IN(" . $sExistInc . ") and DATE_STAT = " . $DB->GetNowDate(),
+                        $err_mess . __LINE__
+                    );
                 }
 
                 $arExistInc = array_diff($arExist, $arExistInc);
 
                 if (!empty($arExistInc)) {
                     $sExistInc = '';
-                    foreach ($arExistInc as $b)
+                    foreach ($arExistInc as $b) {
                         $sExistInc .= ($sExistInc <> '' ? ',' : '') . intval($b);
+                    }
 
                     $arFields = Array("SHOW_COUNT" => "SHOW_COUNT + 1");
-                    $DB->Update("b_adv_banner_2_day", $arFields, "WHERE BANNER_ID IN(" . $sExistInc . ") and DATE_STAT = " . $DB->GetNowDate(), $err_mess . __LINE__);
+                    $DB->Update(
+                        "b_adv_banner_2_day",
+                        $arFields,
+                        "WHERE BANNER_ID IN(" . $sExistInc . ") and DATE_STAT = " . $DB->GetNowDate(),
+                        $err_mess . __LINE__
+                    );
                 }
             }
 
@@ -3756,30 +4227,35 @@ class CAdvBanner_all
                 !empty($CACHE_ADVERTISING["CONTRACTS_ALL"]) &&
                 array_key_exists("CONTRACTS_CNT", $CACHE_ADVERTISING) &&
                 is_array($CACHE_ADVERTISING["CONTRACTS_CNT"])) {
-
                 $arCount = array_count_values($CACHE_ADVERTISING["CONTRACTS_ALL"]);
 
                 $arUpdate = Array();
-                foreach ($arCount as $CONTRACT_ID => $value)
+                foreach ($arCount as $CONTRACT_ID => $value) {
                     $arUpdate[$value][] = $CONTRACT_ID;
+                }
 
                 foreach ($arUpdate as $count => $arContact) {
                     $arFields = Array("SHOW_COUNT" => "SHOW_COUNT + " . $count);
                     if ($arContact == (array_intersect($arContact, $CACHE_ADVERTISING["CONTRACTS_CNT"]))) {
                         $arFields["VISITOR_COUNT"] = "VISITOR_COUNT + 1";
-                        $CACHE_ADVERTISING["CONTRACTS_CNT"] = array_diff($CACHE_ADVERTISING["CONTRACTS_CNT"], $arContact);
+                        $CACHE_ADVERTISING["CONTRACTS_CNT"] = array_diff(
+                            $CACHE_ADVERTISING["CONTRACTS_CNT"],
+                            $arContact
+                        );
                     }
                     $sContact = '';
-                    foreach ($arContact as $c)
+                    foreach ($arContact as $c) {
                         $sContact .= ($sContact <> '' ? ',' : '') . intval($c);
+                    }
 
                     $DB->Update("b_adv_contract", $arFields, "WHERE ID IN(" . $sContact . ")", $err_mess . __LINE__);
                 }
 
                 if (!empty($CACHE_ADVERTISING["CONTRACTS_CNT"])) {
                     $sContrCnt = '';
-                    foreach ($CACHE_ADVERTISING["CONTRACTS_CNT"] as $c)
+                    foreach ($CACHE_ADVERTISING["CONTRACTS_CNT"] as $c) {
                         $sContrCnt .= ($sContrCnt <> '' ? ',' : '') . intval($c);
+                    }
 
                     $arFields = Array("VISITOR_COUNT" => "VISITOR_COUNT + 1");
                     $DB->Update("b_adv_banner", $arFields, "WHERE ID IN(" . $sContrCnt . ")", $err_mess . __LINE__);
@@ -3789,31 +4265,44 @@ class CAdvBanner_all
             if (is_array($arrADV_VIEWED_BANNERS) && count($arrADV_VIEWED_BANNERS) > 0) {
                 $cookie_value = "";
                 $arrCookie = $arrADV_VIEWED_BANNERS;
-                foreach ($arrCookie as $key => $arr)
-                    if (intval($key) > 0)
-                        $cookie_value .= intval($arr["CONTRACT_ID"]) . "_" . $key . "_" . intval($arr["COUNTER"]) . "_" . trim($arr["EXPIRATION_DATE"]) . ",";
+                foreach ($arrCookie as $key => $arr) {
+                    if (intval($key) > 0) {
+                        $cookie_value .= intval($arr["CONTRACT_ID"]) . "_" . $key . "_" . intval(
+                                $arr["COUNTER"]
+                            ) . "_" . trim($arr["EXPIRATION_DATE"]) . ",";
+                    }
+                }
 
                 // ����� cookie �� ����� ��������� 4��
                 $max_length = 4 * 1024;
                 $j = 0;
-                while (strlen($cookie_value) > $max_length && $j < 200) {
+                while (mb_strlen($cookie_value) > $max_length && $j < 200) {
                     $j++;
                     $arrCookie_temp = $arrCookie;
                     $arrCookie = array();
                     $i = 0;
                     foreach ($arrCookie_temp as $key => $arrValue) {
                         $i++;
-                        if ($i > 1)
+                        if ($i > 1) {
                             $arrCookie[$key] = $arrValue;
+                        }
                     }
                     $cookie_value = "";
-                    foreach ($arrCookie as $key => $arr)
-                        if (intval($key) > 0)
-                            $cookie_value .= intval($arr["CONTRACT_ID"]) . "_" . $key . "_" . intval($arr["COUNTER"]) . "_" . trim($arr["EXPIRATION_DATE"]) . ",";
+                    foreach ($arrCookie as $key => $arr) {
+                        if (intval($key) > 0) {
+                            $cookie_value .= intval($arr["CONTRACT_ID"]) . "_" . $key . "_" . intval(
+                                    $arr["COUNTER"]
+                                ) . "_" . trim($arr["EXPIRATION_DATE"]) . ",";
+                        }
+                    }
                 }
                 $cookie_value = trim($cookie_value, ",");
                 $cookie_name = "BANNERS";
-                $secure = (COption::GetOptionString("main", "use_secure_password_cookies", "N") == "Y" && CMain::IsHTTPS());
+                $secure = (COption::GetOptionString(
+                        "main",
+                        "use_secure_password_cookies",
+                        "N"
+                    ) == "Y" && CMain::IsHTTPS());
                 $APPLICATION->set_cookie($cookie_name, $cookie_value, false, "/", false, $secure);
             }
 
@@ -3826,14 +4315,17 @@ class CAdvBanner_all
     {
         global $DB, $CACHE_ADVERTISING;
 
-        if (intval($_SESSION["SESS_SEARCHER_ID"]) <= 0 && $arBanner["FIX_SHOW"] == "Y" && COption::GetOptionString('advertising', 'DONT_FIX_BANNER_SHOWS') <> "Y") {
+        if (intval($_SESSION["SESS_SEARCHER_ID"]) <= 0 && $arBanner["FIX_SHOW"] == "Y" && COption::GetOptionString(
+                'advertising',
+                'DONT_FIX_BANNER_SHOWS'
+            ) <> "Y") {
             $BANNER_ID = intval($arBanner["ID"]);
             $CONTRACT_ID = intval($arBanner["CONTRACT_ID"]);
 
             if ($BANNER_ID > 0) {
                 CAdvBanner::SetCookie($arBanner, $inc_banner_counter, $inc_contract_counter);
 
-                if (strlen($arBanner["DATE_SHOW_FIRST"]) <= 0) {
+                if ($arBanner["DATE_SHOW_FIRST"] == '') {
                     $CACHE_ADVERTISING["ALL_DATE_SHOW_FIRST"][$BANNER_ID] = $DB->CurrentTimeFunction();
                 }
 
@@ -3876,7 +4368,6 @@ class CAdvBanner_all
             "CONTRACTS_CNT" => array(),
         );
         $arrADV_VIEWED_BANNERS = false;
-
         //return true;
     }
 
@@ -3899,8 +4390,7 @@ class CAdvBanner_all
                 $arrCookie = $arrADV_VIEWED_BANNERS;
 
                 // ������� ������ ����������
-                reset($arrCookie);
-                while (list(, $arr) = each($arrCookie)) {
+                foreach ($arrCookie as $arr) {
                     $arrContracts[] = $arr["CONTRACT_ID"];
                 }
 
@@ -3930,9 +4420,9 @@ class CAdvBanner_all
                             );
                         } else {
                             $strDate = trim($ar[3]);
-                            $month = intval(substr($strDate, 2, 2));
-                            $day = intval(substr($strDate, 0, 2));
-                            $year = intval(substr($strDate, 4, 4));
+                            $month = intval(mb_substr($strDate, 2, 2));
+                            $day = intval(mb_substr($strDate, 0, 2));
+                            $year = intval(mb_substr($strDate, 4, 4));
                             $stmp = false;
 
                             if ($month && $day && $year) {
@@ -3955,8 +4445,9 @@ class CAdvBanner_all
             }
 
             // ���� ������ ���������� �� ��������� ��� �� ������������ ��
-            if (!in_array($arBanner["CONTRACT_ID"], $arrContracts))
+            if (!in_array($arBanner["CONTRACT_ID"], $arrContracts)) {
                 $inc_contract_counter = "Y";
+            }
 
             // ���� ���������� ��� �� ������������ �� �������� ������� ��
             if (!in_array($arBanner["ID"], array_keys($arrCookie))) {
@@ -3980,29 +4471,33 @@ class CAdvBanner_all
         global $APPLICATION, $USER;
 
         $debug = null;
-        if ($_SESSION["SESS_SHOW_INCLUDE_TIME_EXEC"] == "Y" && $USER->IsAdmin()) {
+        if (\Bitrix\Main\Application::getInstance()->getKernelSession(
+            )["SESS_SHOW_INCLUDE_TIME_EXEC"] == "Y" && $USER->IsAdmin()) {
             $debug = new CDebugInfo();
             $debug->Start();
         }
 
         $arBanner = CAdvBanner::GetRandom($TYPE_SID);
         $strReturn = CAdvBanner::GetHTML($arBanner);
-        if (strlen($strReturn) > 0) {
+        if ($strReturn <> '') {
             CAdvBanner::FixShow($arBanner);
 
-            if (($arIcons = CAdvBanner::GetEditIcons($arBanner, $TYPE_SID)) !== false)
+            if (($arIcons = CAdvBanner::GetEditIcons($arBanner, $TYPE_SID)) !== false) {
                 $strReturn = $APPLICATION->IncludeString($strReturn, $arIcons);
+            }
 
             $strReturn = $HTML_BEFORE . $strReturn . $HTML_AFTER;
 
-            if ($debug)
+            if ($debug) {
                 $strReturn .= $debug->Output();
+            }
 
             return $strReturn;
         }
 
-        if ($debug)
+        if ($debug) {
             echo $debug->Output();
+        }
 
         return false;
     }
@@ -4065,13 +4560,13 @@ class CAdvBanner_all
 
                         $TYPE_SID = $arBanner["TYPE_SID"];
                     }
-                    if (strlen($TYPE_SID) > 0) {
+                    if ($TYPE_SID <> '') {
                         $arSubMenu = array();
 
                         if ($arContracts === false) {
                             $arContracts = array();
                             $arContractTypes = array();
-                            $contracts = CAdvContract::GetList($sort = "s_sort", $order = "desc", array("SITE" => SITE_ID), $is_filtered = false);
+                            $contracts = CAdvContract::GetList("s_sort", "desc", array("SITE" => SITE_ID));
                             while ($arContract = $contracts->Fetch()) {
                                 $arContracts[] = $arContract;
                                 $arContractTypes[$arContract["ID"]] = CAdvContract::GetTypeArray($arContract["ID"]);
@@ -4079,7 +4574,10 @@ class CAdvBanner_all
                         }
 
                         foreach ($arContracts as $arContract) {
-                            if (array_key_exists("ALL", $arContractTypes[$arContract["ID"]]) || array_key_exists($TYPE_SID, $arContractTypes[$arContract["ID"]])) {
+                            if (array_key_exists("ALL", $arContractTypes[$arContract["ID"]]) || array_key_exists(
+                                    $TYPE_SID,
+                                    $arContractTypes[$arContract["ID"]]
+                                )) {
                                 $arSubMenu[] = array(
                                     "URL" => 'javascript:' . $APPLICATION->GetPopupLink(
                                             array(
@@ -4131,20 +4629,27 @@ class CAdvBanner_all
         $str = "";
         $find_date_1 = $arFilter["DATE_1"];
         $find_date_2 = $arFilter["DATE_2"];
-        if (strlen(trim($find_date_1)) > 0 || strlen(trim($find_date_2)) > 0) {
+        if (trim($find_date_1) <> '' || trim($find_date_2) <> '') {
             $date_1_ok = false;
             $date1_stm = MkDateTime(ConvertDateTime($find_date_1, "D.M.Y"), "d.m.Y");
             $date2_stm = MkDateTime(ConvertDateTime($find_date_2, "D.M.Y") . " 23:59", "d.m.Y H:i");
-            if (!$date1_stm && strlen(trim($find_date_1)) > 0)
+            if (!$date1_stm && trim($find_date_1) <> '') {
                 $str .= GetMessage("AD_ERROR_WRONG_PERIOD_FROM") . "<br>";
-            else $date_1_ok = true;
-            if (!$date2_stm && strlen(trim($find_date_2)) > 0)
+            } else {
+                $date_1_ok = true;
+            }
+            if (!$date2_stm && trim($find_date_2) <> '') {
                 $str .= GetMessage("AD_ERROR_WRONG_PERIOD_TILL") . "<br>";
-            elseif ($date_1_ok && $date2_stm <= $date1_stm && strlen($date2_stm) > 0)
+            } elseif ($date_1_ok && $date2_stm <= $date1_stm && $date2_stm <> '') {
                 $str .= GetMessage("AD_ERROR_FROM_TILL_PERIOD") . "<br>";
+            }
         }
         $strError .= $str;
-        if (strlen($str) > 0) return false; else return true;
+        if ($str <> '') {
+            return false;
+        } else {
+            return true;
+        }
     }
 
     // ���������� ������ ����������� �������� ��������
@@ -4160,9 +4665,13 @@ class CAdvBanner_all
                     $key = $filter_keys[$i];
                     $val = $arFilter[$filter_keys[$i]];
                     if (is_array($val)) {
-                        if (count($val) <= 0) continue;
+                        if (count($val) <= 0) {
+                            continue;
+                        }
                     } else {
-                        if ((strlen($val) <= 0) || ("$val" == "NOT_REF")) continue;
+                        if (((string)$val == '') || ("$val" == "NOT_REF")) {
+                            continue;
+                        }
                     }
                     $key = strtoupper($key);
                     switch ($key) {
@@ -4201,8 +4710,10 @@ class CAdvBanner_all
             $arrDays[$arD["DATE_STAT"]]["Y"] = $arD["YEAR"];
 
             foreach ($arShow as $ctype) {
-                if ($ctype == "CTR") continue;
-                $ctype_u = strtoupper($ctype);
+                if ($ctype == "CTR") {
+                    continue;
+                }
+                $ctype_u = mb_strtoupper($ctype);
                 if (intval($arD[$ctype_u . "_COUNT"]) > 0) {
                     if (in_array($arD["CONTRACT_ID"], $arContract)) {
                         if ($contract_total == "N") {
@@ -4257,22 +4768,26 @@ class CAdvBanner_all
 
         if (in_array("ctr", $arShow)) {
             // ���������� CTR
-            reset($arrDays);
-            while (list($keyD, $arD) = each($arrDays)) {
-                reset($arrLegend);
-                while (list(, $arrS) = each($arrLegend)) {
+            foreach ($arrDays as $keyD => $arD) {
+                foreach ($arrLegend as $arrS) {
                     if ($arrS["COUNTER_TYPE"] == "DETAIL") {
                         $show_value = intval($arD[$arrS["TYPE"]][$arrS["COUNTER_TYPE"] . "_SHOW"][$arrS["ID"]]);
                         $click_value = intval($arD[$arrS["TYPE"]][$arrS["COUNTER_TYPE"] . "_CLICK"][$arrS["ID"]]);
-                        if ($show_value <= 0) $ctr_value = 0;
-                        else $ctr_value = round(($click_value * 100) / $show_value, 2);
+                        if ($show_value <= 0) {
+                            $ctr_value = 0;
+                        } else {
+                            $ctr_value = round(($click_value * 100) / $show_value, 2);
+                        }
                         $arD[$arrS["TYPE"]]["DETAIL_CTR"][$arrS["ID"]] = $ctr_value;
                         $arrDays[$keyD] = $arD;
                     } else {
                         $show_value = intval($arD[$arrS["TYPE"]][$arrS["COUNTER_TYPE"] . "_SHOW"]);
                         $click_value = intval($arD[$arrS["TYPE"]][$arrS["COUNTER_TYPE"] . "_CLICK"]);
-                        if ($show_value <= 0) $ctr_value = 0;
-                        else $ctr_value = round(($click_value * 100) / $show_value, 2);
+                        if ($show_value <= 0) {
+                            $ctr_value = 0;
+                        } else {
+                            $ctr_value = round(($click_value * 100) / $show_value, 2);
+                        }
                         $arD[$arrS["TYPE"]]["TOTAL_CTR"] = $ctr_value;
                         $arrDays[$keyD] = $arD;
                     }
@@ -4281,20 +4796,30 @@ class CAdvBanner_all
         }
 
         // ��������� ����� � ��������� CTR
-        reset($arrLegend);
         $s = 0;
-        if (in_array("ctr", $arShow)) $s++;
-        if ($arFilter["WHAT_SHOW"] != array("ctr") && in_array("show", $arShow)) $s++;
-        if ($arFilter["WHAT_SHOW"] != array("ctr") && in_array("click", $arShow)) $s++;
-        if ($arFilter["WHAT_SHOW"] != array("ctr") && in_array("visitor", $arShow)) $s++;
+        if (in_array("ctr", $arShow)) {
+            $s++;
+        }
+        if ($arFilter["WHAT_SHOW"] != array("ctr") && in_array("show", $arShow)) {
+            $s++;
+        }
+        if ($arFilter["WHAT_SHOW"] != array("ctr") && in_array("click", $arShow)) {
+            $s++;
+        }
+        if ($arFilter["WHAT_SHOW"] != array("ctr") && in_array("visitor", $arShow)) {
+            $s++;
+        }
         $total = sizeof($arrLegend) * $s;
         $color = "";
-        while (list($key, $arr) = each($arrLegend)) {
+        foreach ($arrLegend as $key => $arr) {
             if (in_array("ctr", $arShow)) {
                 $color = GetNextRGB($color, $total);
                 $arr["COLOR_CTR"] = $color;
-                if ($arr["SHOW"] <= 0) $ctr = 0;
-                else $ctr = round(($arr["CLICK"] * 100) / $arr["SHOW"], 2);
+                if ($arr["SHOW"] <= 0) {
+                    $ctr = 0;
+                } else {
+                    $ctr = round(($arr["CLICK"] * 100) / $arr["SHOW"], 2);
+                }
                 $arr["CTR"] = $ctr;
             }
             if ($arFilter["WHAT_SHOW"] != array("ctr")) {
@@ -4334,9 +4859,13 @@ class CAdvBanner_all
                     $key = $filter_keys[$i];
                     $val = $arFilter[$filter_keys[$i]];
                     if (is_array($val)) {
-                        if (count($val) <= 0) continue;
+                        if (count($val) <= 0) {
+                            continue;
+                        }
                     } else {
-                        if ((strlen($val) <= 0) || ("$val" == "NOT_REF")) continue;
+                        if (((string)$val == '') || ("$val" == "NOT_REF")) {
+                            continue;
+                        }
                     }
                     $key = strtoupper($key);
                     switch ($key) {
@@ -4352,7 +4881,8 @@ class CAdvBanner_all
                 \Bitrix\Main\Type\Collection::normalizeArrayValuesByInt($arFilter['BANNER_ID']);
 
                 if (!empty($arFilter['BANNER_ID'])) {
-                    $arSqlSearch[] = CSQLWhere::_NumberIN("D.BANNER_ID", $arFilter['BANNER_ID']);
+                    $where = new CSQLWhere();
+                    $arSqlSearch[] = $where->_NumberIN("D.BANNER_ID", $arFilter['BANNER_ID']);
                 }
             }
         }
@@ -4443,20 +4973,27 @@ class CAdvType_all
         $str = "";
         $find_date_modify_1 = $arFilter["DATE_MODIFY_1"];
         $find_date_modify_2 = $arFilter["DATE_MODIFY_2"];
-        if (strlen(trim($find_date_modify_1)) > 0 || strlen(trim($find_date_modify_2)) > 0) {
+        if (trim($find_date_modify_1) <> '' || trim($find_date_modify_2) <> '') {
             $date_1_ok = false;
             $date1_stm = MkDateTime(ConvertDateTime($find_date_modify_1, "D.M.Y"), "d.m.Y");
             $date2_stm = MkDateTime(ConvertDateTime($find_date_modify_2, "D.M.Y") . " 23:59", "d.m.Y H:i");
-            if (!$date1_stm && strlen(trim($find_date_modify_1)) > 0)
+            if (!$date1_stm && trim($find_date_modify_1) <> '') {
                 $str .= GetMessage("AD_ERROR_WRONG_DATE_MODIFY_FROM") . "<br>";
-            else $date_1_ok = true;
-            if (!$date2_stm && strlen(trim($find_date_modify_2)) > 0)
+            } else {
+                $date_1_ok = true;
+            }
+            if (!$date2_stm && trim($find_date_modify_2) <> '') {
                 $str .= GetMessage("AD_ERROR_WRONG_DATE_MODIFY_TILL") . "<br>";
-            elseif ($date_1_ok && $date2_stm <= $date1_stm && strlen($date2_stm) > 0)
+            } elseif ($date_1_ok && $date2_stm <= $date1_stm && $date2_stm <> '') {
                 $str .= GetMessage("AD_ERROR_FROM_TILL_DATE_MODIFY") . "<br>";
+            }
         }
         $strError .= $str;
-        if (strlen($str) > 0) return false; else return true;
+        if ($str <> '') {
+            return false;
+        } else {
+            return true;
+        }
     }
 
     // �������� ��������� ������� ����������
@@ -4483,7 +5020,7 @@ class CAdvType_all
         if ($isAdmin) {
             $arrKeys = array_keys($arFields);
             if (in_array("SID", $arrKeys)) {
-                if (strlen(trim($SID)) <= 0) {
+                if (trim($SID) == '') {
                     $str .= GetMessage("AD_ERROR_FORGOT_SID") . "<br>";
                 } else {
                     if (preg_match("/[^A-Za-z_0-9]/", $SID)) {
@@ -4491,7 +5028,7 @@ class CAdvType_all
                     } else {
                         if ($OLD_SID != $SID) {
                             $arFilter = array("SID" => $SID . " & ~" . $OLD_SID, "SID_EXACT_MATCH" => "Y");
-                            $rs = CAdvType::GetList($v1, $v2, $arFilter, $v3);
+                            $rs = CAdvType::GetList('', '', $arFilter);
                             $rows = 0;
                             if (is_object($rs)) {
                                 $rs->NavStart();
@@ -4499,19 +5036,30 @@ class CAdvType_all
                             }
 
                             if ($rows >= 1 || $SID == "ALL" || $OLD_SID == "ALL") {
-                                $str .= str_replace("#SID#", ($OLD_SID == "ALL" ? $OLD_SID : $SID), GetMessage("AD_ERROR_SID_EXISTS"));
+                                $str .= str_replace(
+                                    "#SID#",
+                                    ($OLD_SID == "ALL" ? $OLD_SID : $SID),
+                                    GetMessage("AD_ERROR_SID_EXISTS")
+                                );
                             }
                         }
                     }
                 }
             }
         } else {
-            if (strlen($OLD_SID) > 0) $str .= GetMessage("AD_ERROR_NOT_ENOUGH_PERMISSIONS_TYPE") . "<br>";
-            else $str .= GetMessage("AD_ERROR_NOT_ENOUGH_PERMISSIONS_FOR_CREATE_TYPE") . "<br>";
+            if ($OLD_SID <> '') {
+                $str .= GetMessage("AD_ERROR_NOT_ENOUGH_PERMISSIONS_TYPE") . "<br>";
+            } else {
+                $str .= GetMessage("AD_ERROR_NOT_ENOUGH_PERMISSIONS_FOR_CREATE_TYPE") . "<br>";
+            }
         }
 
         $strError .= $str;
-        if (strlen($str) > 0) return false; else return true;
+        if ($str <> '') {
+            return false;
+        } else {
+            return true;
+        }
     }
 
     // ��������� ����� ��� ��� ������������ ������������
@@ -4524,31 +5072,42 @@ class CAdvType_all
         if (CAdvType::CheckFields($arFields, $OLD_SID, $CHECK_RIGHTS)) {
             $arFields_i = array();
             $arrKeys = array_keys($arFields);
-            if (in_array("SID", $arrKeys))
+            if (in_array("SID", $arrKeys)) {
                 $arFields_i["SID"] = "'" . $DB->ForSql($arFields["SID"], 255) . "'";
-            if (in_array("ACTIVE", $arrKeys) && ($arFields["ACTIVE"] == "Y" || $arFields["ACTIVE"] == "N"))
+            }
+            if (in_array("ACTIVE", $arrKeys) && ($arFields["ACTIVE"] == "Y" || $arFields["ACTIVE"] == "N")) {
                 $arFields_i["ACTIVE"] = "'" . $arFields["ACTIVE"] . "'";
-            if (in_array("SORT", $arrKeys))
+            }
+            if (in_array("SORT", $arrKeys)) {
                 $arFields_i["SORT"] = "'" . intval($arFields["SORT"]) . "'";
-            if (in_array("NAME", $arrKeys))
+            }
+            if (in_array("NAME", $arrKeys)) {
                 $arFields_i["NAME"] = "'" . $DB->ForSql($arFields["NAME"], 255) . "'";
-            if (in_array("DESCRIPTION", $arrKeys))
+            }
+            if (in_array("DESCRIPTION", $arrKeys)) {
                 $arFields_i["DESCRIPTION"] = "'" . $DB->ForSql($arFields["DESCRIPTION"], 2000) . "'";
+            }
             if (count($arFields_i) > 0) {
-                if (strlen($OLD_SID) > 0) {
-                    if (in_array("DATE_MODIFY", $arrKeys) && CheckDateTime($arFields["DATE_MODIFY"]))
+                if ($OLD_SID <> '') {
+                    if (in_array("DATE_MODIFY", $arrKeys) && CheckDateTime($arFields["DATE_MODIFY"])) {
                         $arFields_i["DATE_MODIFY"] = $DB->CharToDateFunction($arFields["DATE_MODIFY"]);
-                    else
+                    } else {
                         $arFields_i["DATE_MODIFY"] = $DB->GetNowFunction();
+                    }
 
-                    if (in_array("MODIFIED_BY", $arrKeys))
+                    if (in_array("MODIFIED_BY", $arrKeys)) {
                         $arFields_i["MODIFIED_BY"] = intval($arFields["MODIFIED_BY"]);
-                    else
+                    } else {
                         $arFields_i["MODIFIED_BY"] = $USER->GetID();
+                    }
 
                     $str = "";
-                    while (list($field, $value) = each($arFields_i)) {
-                        if (strlen($value) <= 0) $str .= "$field = '', "; else $str .= "$field = $value, ";
+                    foreach ($arFields_i as $field => $value) {
+                        if ($value == '') {
+                            $str .= "$field = '', ";
+                        } else {
+                            $str .= "$field = $value, ";
+                        }
                     }
                     $str = TrimEx($str, ",");
                     $strSql = "UPDATE b_adv_type SET " . $str . " WHERE SID='" . $DB->ForSql($OLD_SID, 255) . "'";
@@ -4560,38 +5119,58 @@ class CAdvType_all
                         if ($arFields["SID"] != $OLD_SID) {
                             // ������� ��� � ��������
                             $arF = array("TYPE_SID" => "'" . $DB->ForSql($arFields["SID"], 255) . "'");
-                            $DB->Update("b_adv_banner", $arF, "WHERE TYPE_SID='" . $DB->ForSql($OLD_SID, 255) . "'", $err_mess . __LINE__);
+                            $DB->Update(
+                                "b_adv_banner",
+                                $arF,
+                                "WHERE TYPE_SID='" . $DB->ForSql($OLD_SID, 255) . "'",
+                                $err_mess . __LINE__
+                            );
 
                             // ������� ��� � ��������
                             $arF = array("TYPE_SID" => "'" . $DB->ForSql($arFields["SID"], 255) . "'");
-                            $DB->Update("b_adv_contract_2_type", $arF, "WHERE TYPE_SID='" . $DB->ForSql($OLD_SID, 255) . "'", $err_mess . __LINE__);
+                            $DB->Update(
+                                "b_adv_contract_2_type",
+                                $arF,
+                                "WHERE TYPE_SID='" . $DB->ForSql($OLD_SID, 255) . "'",
+                                $err_mess . __LINE__
+                            );
                         }
-                    } else $SID = $OLD_SID;
-                } elseif (strlen($arFields_i["SID"]) > 0) {
-                    if (in_array("DATE_CREATE", $arrKeys) && CheckDateTime($arFields["DATE_CREATE"]))
+                    } else {
+                        $SID = $OLD_SID;
+                    }
+                } elseif ($arFields_i["SID"] <> '') {
+                    if (in_array("DATE_CREATE", $arrKeys) && CheckDateTime($arFields["DATE_CREATE"])) {
                         $arFields_i["DATE_CREATE"] = $DB->CharToDateFunction($arFields["DATE_CREATE"]);
-                    else
+                    } else {
                         $arFields_i["DATE_CREATE"] = $DB->GetNowFunction();
+                    }
 
-                    if (in_array("CREATED_BY", $arrKeys))
+                    if (in_array("CREATED_BY", $arrKeys)) {
                         $arFields_i["CREATED_BY"] = intval($arFields["CREATED_BY"]);
-                    else
+                    } else {
                         $arFields_i["CREATED_BY"] = $USER->GetID();
+                    }
 
-                    if (in_array("DATE_MODIFY", $arrKeys) && CheckDateTime($arFields["DATE_MODIFY"]))
+                    if (in_array("DATE_MODIFY", $arrKeys) && CheckDateTime($arFields["DATE_MODIFY"])) {
                         $arFields_i["DATE_MODIFY"] = $DB->CharToDateFunction($arFields["DATE_MODIFY"]);
-                    else
+                    } else {
                         $arFields_i["DATE_MODIFY"] = $DB->GetNowFunction();
+                    }
 
-                    if (in_array("MODIFIED_BY", $arrKeys))
+                    if (in_array("MODIFIED_BY", $arrKeys)) {
                         $arFields_i["MODIFIED_BY"] = intval($arFields["MODIFIED_BY"]);
-                    else
+                    } else {
                         $arFields_i["MODIFIED_BY"] = $USER->GetID();
+                    }
 
                     $str1 = $str2 = "";
-                    while (list($field, $value) = each($arFields_i)) {
+                    foreach ($arFields_i as $field => $value) {
                         $str1 .= $field . ", ";
-                        if (strlen($value) <= 0) $str2 .= "'', "; else $str2 .= "$value, ";
+                        if ($value == '') {
+                            $str2 .= "'', ";
+                        } else {
+                            $str2 .= "$value, ";
+                        }
                     }
                     $str1 = TrimEx($str1, ",");
                     $str2 = TrimEx($str2, ",");
@@ -4610,12 +5189,14 @@ class CAdvType_all
     // �������� ��� ������� �� ID
     public static function GetByID($TYPE_SID)
     {
-        if (strlen(trim($TYPE_SID)) <= 0) return false;
+        if (trim($TYPE_SID) == '') {
+            return false;
+        }
         $arFilter = array(
             "SID" => $TYPE_SID,
             "SID_EXACT_MATCH" => "Y"
         );
-        $rs = CAdvType::GetList($v1, $v2, $arFilter, $v3);
+        $rs = CAdvType::GetList('', '', $arFilter);
         return $rs;
     }
 
@@ -4624,7 +5205,9 @@ class CAdvType_all
     {
         $err_mess = (CAdvType_all::err_mess()) . "<br>Function: Delete<br>Line: ";
         global $DB, $strError;
-        if (strlen($TYPE_SID) <= 0) return false;
+        if ($TYPE_SID == '') {
+            return false;
+        }
         if ($CHECK_RIGHTS == "Y") {
             $isAdmin = CAdvContract::IsAdmin();
         } else {
@@ -4633,17 +5216,19 @@ class CAdvType_all
         if ($isAdmin) {
             $strSql = "SELECT ID FROM b_adv_banner WHERE TYPE_SID = '" . $DB->ForSql($TYPE_SID, 255) . "'";
             $rs = $DB->Query($strSql, false, $err_mess . __LINE__);
-            while ($ar = $rs->Fetch()) CAdvBanner::Delete($ar["ID"], "N");
+            while ($ar = $rs->Fetch()) {
+                CAdvBanner::Delete($ar["ID"], "N");
+            }
 
             CAdvType::DeleteContractLink($TYPE_SID);
 
             $strSql = "DELETE FROM b_adv_type WHERE SID = '" . $DB->ForSql($TYPE_SID, 255) . "'";
             $DB->Query($strSql, false, $err_mess . __LINE__);
             return true;
-        } else
+        } else {
             $strError .= GetMessage("AD_ERROR_NOT_ENOUGH_PERMISSIONS_TYPE") . "<br>";
+        }
         return false;
-
     }
 
     // ������� ����� ���� � ����������
@@ -4651,7 +5236,7 @@ class CAdvType_all
     {
         $err_mess = (CAdvType_all::err_mess()) . "<br>Function: DeleteContractLink<br>Line: ";
         global $DB;
-        if (strlen($TYPE_SID) <= 0) {
+        if ($TYPE_SID == '') {
             return false;
         }
 
@@ -4661,8 +5246,13 @@ class CAdvType_all
     }
 
     // �������� ������ ����� ��������
-    public static function GetList(&$by, &$order, $arFilter = Array(), &$is_filtered, $CHECK_RIGHTS = "Y")
-    {
+    public static function GetList(
+        $by = "s_sort",
+        $order = "asc",
+        $arFilter = [],
+        $is_filtered = null,
+        $CHECK_RIGHTS = "Y"
+    ) {
         $err_mess = (CAdvType_all::err_mess()) . "<br>Function: GetList<br>Line: ";
         global $DB;
         $arSqlSearch = Array();
@@ -4685,11 +5275,13 @@ class CAdvType_all
                         $key = $filter_keys[$i];
                         $val = $arFilter[$filter_keys[$i]];
                         if (is_array($val)) {
-                            if (count($val) <= 0)
+                            if (count($val) <= 0) {
                                 continue;
+                            }
                         } else {
-                            if ((strlen($val) <= 0) || ($val === "NOT_REF"))
+                            if (((string)$val == '') || ($val === "NOT_REF")) {
                                 continue;
+                            }
                         }
                         $match_value_set = (in_array($key . "_EXACT_MATCH", $filter_keys)) ? true : false;
                         $key = strtoupper($key);
@@ -4702,7 +5294,10 @@ class CAdvType_all
                                 $arSqlSearch[] = "T.DATE_MODIFY>=" . $DB->CharToDateFunction($val, "SHORT");
                                 break;
                             case "DATE_MODIFY_2":
-                                $arSqlSearch[] = "T.DATE_MODIFY<=" . $DB->CharToDateFunction($val . " 23:59:59", "FULL");
+                                $arSqlSearch[] = "T.DATE_MODIFY<=" . $DB->CharToDateFunction(
+                                        $val . " 23:59:59",
+                                        "FULL"
+                                    );
                                 break;
                             case "ACTIVE":
                                 $arSqlSearch[] = ($val == "Y") ? "T.ACTIVE='Y'" : "T.ACTIVE='N'";
@@ -4716,36 +5311,44 @@ class CAdvType_all
                     }
                 }
             }
-            if ($by == "s_sid") $strSqlOrder = " ORDER BY T.SID ";
-            elseif ($by == "s_date_modify") $strSqlOrder = " ORDER BY T.DATE_MODIFY ";
-            elseif ($by == "s_modified_by") $strSqlOrder = " ORDER BY T.MODIFIED_BY ";
-            elseif ($by == "s_date_create") $strSqlOrder = " ORDER BY T.DATE_CREATE ";
-            elseif ($by == "s_created_by") $strSqlOrder = " ORDER BY T.CREATED_BY ";
-            elseif ($by == "s_active") $strSqlOrder = " ORDER BY T.ACTIVE ";
-            elseif ($by == "s_name") $strSqlOrder = " ORDER BY T.NAME ";
-            elseif ($by == "s_banners") $strSqlOrder = " ORDER BY BANNER_COUNT ";
-            elseif ($by == "s_description") $strSqlOrder = " ORDER BY T.DESCRIPTION ";
-            else {
-                $strSqlOrder = " ORDER BY T.SORT ";
-                $by = "s_sort";
-            }
-            if ($order != "desc") {
-                $strSqlOrder .= " asc ";
-                $order = "asc";
+            if ($by == "s_sid") {
+                $strSqlOrder = " ORDER BY T.SID ";
+            } elseif ($by == "s_date_modify") {
+                $strSqlOrder = " ORDER BY T.DATE_MODIFY ";
+            } elseif ($by == "s_modified_by") {
+                $strSqlOrder = " ORDER BY T.MODIFIED_BY ";
+            } elseif ($by == "s_date_create") {
+                $strSqlOrder = " ORDER BY T.DATE_CREATE ";
+            } elseif ($by == "s_created_by") {
+                $strSqlOrder = " ORDER BY T.CREATED_BY ";
+            } elseif ($by == "s_active") {
+                $strSqlOrder = " ORDER BY T.ACTIVE ";
+            } elseif ($by == "s_name") {
+                $strSqlOrder = " ORDER BY T.NAME ";
+            } elseif ($by == "s_banners") {
+                $strSqlOrder = " ORDER BY BANNER_COUNT ";
+            } elseif ($by == "s_description") {
+                $strSqlOrder = " ORDER BY T.DESCRIPTION ";
             } else {
-                $strSqlOrder .= " desc ";
-                $order = "desc";
+                $strSqlOrder = " ORDER BY T.SORT ";
             }
-            $strSqlSearch = GetFilterSqlSearch($arSqlSearch);
 
+            if ($order == "desc") {
+                $strSqlOrder .= " desc ";
+            } else {
+                $strSqlOrder .= " asc ";
+            }
+
+            $strSqlSearch = GetFilterSqlSearch($arSqlSearch);
 
             $strContracts = "";
             if (!$isAdmin && !$isDemo && !$isManager) {
                 $strContracts = "0";
                 $arPermissions = CAdvContract::GetUserPermissions();
                 foreach ($arPermissions as $contract_id => $arContractPerms) {
-                    if (is_array($arContractPerms) && !empty($arContractPerms))
+                    if (is_array($arContractPerms) && !empty($arContractPerms)) {
                         $strContracts .= "," . $contract_id;
+                    }
                 }
             }
 
@@ -4776,7 +5379,7 @@ class CAdvType_all
 				";
 
             $res = $DB->Query($strSql, false, $err_mess . __LINE__);
-            $is_filtered = (IsFiltered($strSqlSearch));
+
             return $res;
         }
         return null;

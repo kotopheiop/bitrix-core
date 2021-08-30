@@ -21,16 +21,18 @@ global $adminSidePanelHelper;
 $publicMode = $adminPage->publicMode;
 $selfFolderUrl = $adminPage->getSelfFolderUrl();
 
-if (!($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_store')))
+if (!($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_store'))) {
     $APPLICATION->AuthForm('');
+}
 Loader::includeModule('catalog');
 $bReadOnly = !$USER->CanDoOperation('catalog_store');
 
 Loc::loadMessages(__FILE__);
 
 $bExport = false;
-if ($_REQUEST["mode"] == "excel")
+if ($_REQUEST["mode"] == "excel") {
     $bExport = true;
+}
 
 if ($ex = $APPLICATION->GetException()) {
     require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
@@ -54,9 +56,10 @@ function getSiteTitle($siteId)
     $siteTitle = $siteId;
 
     if ($rsSites === '') {
-        $rsSites = CSite::GetList($b = "id", $o = "asc", Array("ACTIVE" => "Y"));
-        while ($arSite = $rsSites->GetNext())
+        $rsSites = CSite::GetList("id", "asc", Array("ACTIVE" => "Y"));
+        while ($arSite = $rsSites->GetNext()) {
             $arSitesShop[] = array("ID" => $arSite["ID"], "NAME" => $arSite["NAME"]);
+        }
     }
 
     foreach ($arSitesShop as $arSite) {
@@ -74,7 +77,7 @@ $oSort = new CAdminUiSorting($sTableID, "SORT", "ASC");
 $lAdmin = new CAdminUiList($sTableID, $oSort);
 
 $listSite = array();
-$sitesQueryObject = CSite::getList($bySite = "sort", $orderSite = "asc", array("ACTIVE" => "Y"));
+$sitesQueryObject = CSite::getList("sort", "asc", array("ACTIVE" => "Y"));
 while ($site = $sitesQueryObject->fetch()) {
     $listSite[$site["LID"]] = $site["NAME"] . " [" . $site["LID"] . "]";
 }
@@ -167,22 +170,32 @@ if ($lAdmin->EditAction() && !$bReadOnly) {
     foreach ($_POST['FIELDS'] as $ID => $arFields) {
         $ID = (int)$ID;
 
-        if ($ID <= 0 || !$lAdmin->IsUpdated($ID))
+        if ($ID <= 0 || !$lAdmin->IsUpdated($ID)) {
             continue;
-        if (isset($arFields["IMAGE_ID"]))
+        }
+        if (isset($arFields["IMAGE_ID"])) {
             unset($arFields["IMAGE_ID"]);
-        if (isset($arFields['GPS_N']))
+        }
+        if (isset($arFields['GPS_N'])) {
             $arFields['GPS_N'] = str_replace(',', '.', $arFields['GPS_N']);
-        if (isset($arFields['GPS_S']))
+        }
+        if (isset($arFields['GPS_S'])) {
             $arFields['GPS_S'] = str_replace(',', '.', $arFields['GPS_S']);
+        }
         $USER_FIELD_MANAGER->AdminListPrepareFields($entityId, $arFields);
 
         $DB->StartTransaction();
         if (!CCatalogStore::Update($ID, $arFields)) {
-            if ($ex = $APPLICATION->GetException())
+            if ($ex = $APPLICATION->GetException()) {
                 $lAdmin->AddUpdateError($ex->GetString(), $ID);
-            else
-                $lAdmin->AddUpdateError(Loc::getMessage("ERROR_UPDATING_REC") . " (" . $arFields["ID"] . ", " . $arFields["TITLE"] . ", " . $arFields["SORT"] . ")", $ID);
+            } else {
+                $lAdmin->AddUpdateError(
+                    Loc::getMessage(
+                        "ERROR_UPDATING_REC"
+                    ) . " (" . $arFields["ID"] . ", " . $arFields["TITLE"] . ", " . $arFields["SORT"] . ")",
+                    $ID
+                );
+            }
 
             $DB->Rollback();
         } else {
@@ -196,13 +209,15 @@ if (($arID = $lAdmin->GroupAction()) && !$bReadOnly) {
     if ($_REQUEST['action_target'] == 'selected') {
         $arID = array();
         $dbResultList = CCatalogStore::GetList(array(), $filter, false, false, array('ID'));
-        while ($arResult = $dbResultList->Fetch())
+        while ($arResult = $dbResultList->Fetch()) {
             $arID[] = $arResult['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
 
         switch ($_REQUEST['action']) {
             case "delete":
@@ -213,10 +228,11 @@ if (($arID = $lAdmin->GroupAction()) && !$bReadOnly) {
                 if (!CCatalogStore::Delete($ID)) {
                     $DB->Rollback();
 
-                    if ($ex = $APPLICATION->GetException())
+                    if ($ex = $APPLICATION->GetException()) {
                         $lAdmin->AddGroupError($ex->GetString(), $ID);
-                    else
+                    } else {
                         $lAdmin->AddGroupError(Loc::getMessage("ERROR_DELETING_TYPE"), $ID);
+                    }
                 }
                 $DB->Commit();
                 break;
@@ -232,10 +248,12 @@ if (($arID = $lAdmin->GroupAction()) && !$bReadOnly) {
 
 $filterSiteList = array();
 $siteList = array();
-$siteIterator = Main\SiteTable::getList(array(
-    'select' => array('LID', 'NAME', 'ACTIVE', 'SORT'),
-    'order' => array('SORT' => 'ASC')
-));
+$siteIterator = Main\SiteTable::getList(
+    array(
+        'select' => array('LID', 'NAME', 'ACTIVE', 'SORT'),
+        'order' => array('SORT' => 'ASC')
+    )
+);
 while ($site = $siteIterator->fetch()) {
     $filterSiteList[] = $site;
     $siteList[$site['LID']] = $site['LID'];
@@ -268,10 +286,12 @@ $arSelect = array(
 );
 
 global $by, $order;
-if (!isset($by))
+if (!isset($by)) {
     $by = 'ID';
-if (!isset($order))
+}
+if (!isset($order)) {
     $order = 'ASC';
+}
 
 $dbResultList = CCatalogStore::GetList(array($by => $order), $filter, false, false, $arSelect);
 
@@ -436,8 +456,9 @@ $arSelectFieldsMap = array(
 $lAdmin->AddHeaders($headers);
 
 $arSelectFields = $lAdmin->GetVisibleHeaderColumns();
-if (!in_array('ID', $arSelectFields))
+if (!in_array('ID', $arSelectFields)) {
     $arSelectFields[] = 'ID';
+}
 
 $arSelectFieldsMap = array_merge($arSelectFieldsMap, array_fill_keys($arSelectFields, true));
 
@@ -452,13 +473,15 @@ while ($arRes = $dbResultList->Fetch()) {
     $arRes['SORT'] = (int)$arRes['SORT'];
     if ($arSelectFieldsMap['USER_ID']) {
         $arRes['USER_ID'] = (int)$arRes['USER_ID'];
-        if (0 < $arRes['USER_ID'])
+        if (0 < $arRes['USER_ID']) {
             $arUserID[$arRes['USER_ID']] = true;
+        }
     }
     if ($arSelectFieldsMap['MODIFIED_BY']) {
         $arRes['MODIFIED_BY'] = (int)$arRes['MODIFIED_BY'];
-        if (0 < $arRes['MODIFIED_BY'])
+        if (0 < $arRes['MODIFIED_BY']) {
             $arUserID[$arRes['MODIFIED_BY']] = true;
+        }
     }
 
     $editUrl = $selfFolderUrl . "cat_store_edit.php?ID=" . $arRes['ID'] . "&lang=" . LANGUAGE_ID;
@@ -468,72 +491,103 @@ while ($arRes = $dbResultList->Fetch()) {
     $row->AddField("ID", "<a href=\"" . $editUrl . "\">" . $arRes['ID'] . "</a>");
     if ($bReadOnly) {
         $row->AddViewField("SORT", $arRes['SORT']);
-        if ($arSelectFieldsMap['CODE'])
+        if ($arSelectFieldsMap['CODE']) {
             $row->AddInputField("CODE", false);
-        if ($arSelectFieldsMap['TITLE'])
+        }
+        if ($arSelectFieldsMap['TITLE']) {
             $row->AddInputField("TITLE", false);
-        if ($arSelectFieldsMap['ADDRESS'])
+        }
+        if ($arSelectFieldsMap['ADDRESS']) {
             $row->AddInputField("ADDRESS", false);
-        if ($arSelectFieldsMap['DESCRIPTION'])
+        }
+        if ($arSelectFieldsMap['DESCRIPTION']) {
             $row->AddInputField("DESCRIPTION", false);
-        if ($arSelectFieldsMap['ACTIVE'])
+        }
+        if ($arSelectFieldsMap['ACTIVE']) {
             $row->AddCheckField("ACTIVE", false);
-        if ($arSelectFieldsMap['ISSUING_CENTER'])
+        }
+        if ($arSelectFieldsMap['ISSUING_CENTER']) {
             $row->AddCheckField("ISSUING_CENTER", false);
-        if ($arSelectFieldsMap['SHIPPING_CENTER'])
+        }
+        if ($arSelectFieldsMap['SHIPPING_CENTER']) {
             $row->AddCheckField("SHIPPING_CENTER", false);
-        if ($arSelectFieldsMap['PHONE'])
+        }
+        if ($arSelectFieldsMap['PHONE']) {
             $row->AddInputField("PHONE", false);
-        if ($arSelectFieldsMap['SCHEDULE'])
+        }
+        if ($arSelectFieldsMap['SCHEDULE']) {
             $row->AddInputField("SCHEDULE", false);
-        if ($arSelectFieldsMap['EMAIL'])
+        }
+        if ($arSelectFieldsMap['EMAIL']) {
             $row->AddInputField("EMAIL", false);
-        if ($arSelectFieldsMap['IMAGE_ID'] && !$bExport)
+        }
+        if ($arSelectFieldsMap['IMAGE_ID'] && !$bExport) {
             $row->AddField("IMAGE_ID", CFile::ShowImage($arRes['IMAGE_ID'], 100, 100, "border=0", "", true));
-        if ($arSelectFieldsMap['GPS_N'])
+        }
+        if ($arSelectFieldsMap['GPS_N']) {
             $row->AddInputField('GPS_N', false);
-        if ($arSelectFieldsMap['GPS_S'])
+        }
+        if ($arSelectFieldsMap['GPS_S']) {
             $row->AddInputField('GPS_S', false);
-        if ($arSelectFieldsMap['XML_ID'])
+        }
+        if ($arSelectFieldsMap['XML_ID']) {
             $row->AddInputField("XML_ID", false);
+        }
     } else {
         $row->AddInputField("SORT", array("size" => "3"));
-        if ($arSelectFieldsMap['CODE'])
+        if ($arSelectFieldsMap['CODE']) {
             $row->AddInputField("CODE");
-        if ($arSelectFieldsMap['TITLE'])
+        }
+        if ($arSelectFieldsMap['TITLE']) {
             $row->AddInputField("TITLE");
-        if ($arSelectFieldsMap['ACTIVE'])
+        }
+        if ($arSelectFieldsMap['ACTIVE']) {
             $row->AddCheckField("ACTIVE");
-        if ($arSelectFieldsMap['ISSUING_CENTER'])
+        }
+        if ($arSelectFieldsMap['ISSUING_CENTER']) {
             $row->AddCheckField("ISSUING_CENTER");
-        if ($arSelectFieldsMap['SHIPPING_CENTER'])
+        }
+        if ($arSelectFieldsMap['SHIPPING_CENTER']) {
             $row->AddCheckField("SHIPPING_CENTER");
-        if ($arSelectFieldsMap['ADDRESS'])
+        }
+        if ($arSelectFieldsMap['ADDRESS']) {
             $row->AddInputField("ADDRESS", array("size" => 30));
-        if ($arSelectFieldsMap['DESCRIPTION'])
+        }
+        if ($arSelectFieldsMap['DESCRIPTION']) {
             $row->AddInputField("DESCRIPTION", array("size" => 50));
-        if ($arSelectFieldsMap['PHONE'])
+        }
+        if ($arSelectFieldsMap['PHONE']) {
             $row->AddInputField("PHONE", array("size" => 25));
-        if ($arSelectFieldsMap['SCHEDULE'])
+        }
+        if ($arSelectFieldsMap['SCHEDULE']) {
             $row->AddInputField("SCHEDULE", array("size" => 35));
-        if ($arSelectFieldsMap['EMAIL'])
+        }
+        if ($arSelectFieldsMap['EMAIL']) {
             $row->AddInputField("EMAIL", array("size" => 35));
-        if ($arSelectFieldsMap['IMAGE_ID'] && !$bExport)
+        }
+        if ($arSelectFieldsMap['IMAGE_ID'] && !$bExport) {
             $row->AddField("IMAGE_ID", CFile::ShowImage($arRes['IMAGE_ID'], 100, 100, "border=0", "", true));
-        if ($arSelectFieldsMap['GPS_N'])
+        }
+        if ($arSelectFieldsMap['GPS_N']) {
             $row->AddInputField('GPS_N', array('size' => 35));
-        if ($arSelectFieldsMap['GPS_S'])
+        }
+        if ($arSelectFieldsMap['GPS_S']) {
             $row->AddInputField('GPS_S', array('size' => 35));
-        if ($arSelectFieldsMap['XML_ID'])
+        }
+        if ($arSelectFieldsMap['XML_ID']) {
             $row->AddInputField("XML_ID");
+        }
     }
 
-    if ($arSelectFieldsMap['SITE_ID'])
+    if ($arSelectFieldsMap['SITE_ID']) {
         $row->AddViewField("SITE_ID", htmlspecialcharsbx(getSiteTitle($arRes['SITE_ID'])));
-    if ($arSelectFieldsMap['DATE_CREATE'])
+    }
+    if ($arSelectFieldsMap['DATE_CREATE']) {
         $row->AddCalendarField("DATE_CREATE", false);
-    if ($arSelectFieldsMap['DATE_MODIFY'])
+    }
+    if ($arSelectFieldsMap['DATE_MODIFY']) {
         $row->AddCalendarField("DATE_MODIFY", false);
+    }
 
     $arActions = array();
     $arActions[] = array(
@@ -548,21 +602,21 @@ while ($arRes = $dbResultList->Fetch()) {
             "ICON" => "delete",
             "TEXT" => Loc::getMessage("DELETE_STORE_ALT"),
             "ACTION" => "if(confirm('" . CUtil::JSEscape(Loc::getMessage('DELETE_STORE_CONFIRM')) . "')) " .
-                $lAdmin->ActionDoGroup($arRes['ID'], "delete"));
+                $lAdmin->ActionDoGroup($arRes['ID'], "delete")
+        );
     }
 
     $row->AddActions($arActions);
 }
-if (isset($row))
+if (isset($row)) {
     unset($row);
+}
 
 if ($arSelectFieldsMap['USER_ID'] || $arSelectFieldsMap['MODIFIED_BY']) {
     if (!empty($arUserID)) {
-        $byUser = 'ID';
-        $byOrder = 'ASC';
         $rsUsers = CUser::GetList(
-            $byUser,
-            $byOrder,
+            'ID',
+            'ASC',
             array('ID' => implode(' | ', array_keys($arUserID))),
             array('FIELDS' => array('ID', 'LOGIN', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'EMAIL'))
         );
@@ -573,7 +627,10 @@ if ($arSelectFieldsMap['USER_ID'] || $arSelectFieldsMap['MODIFIED_BY']) {
                 $urlToUser = $selfFolderUrl . "sale_buyers_profile.php?USER_ID=" . $arOneUser["ID"] . "&lang=" . LANGUAGE_ID;
                 $urlToUser = $adminSidePanelHelper->editUrlToPublicPage($urlToUser);
             }
-            $arUserList[$arOneUser['ID']] = '<a href="' . $urlToUser . '">' . CUser::FormatName($strNameFormat, $arOneUser) . '</a>';
+            $arUserList[$arOneUser['ID']] = '<a href="' . $urlToUser . '">' . CUser::FormatName(
+                    $strNameFormat,
+                    $arOneUser
+                ) . '</a>';
         }
     }
 
@@ -593,31 +650,48 @@ if ($arSelectFieldsMap['USER_ID'] || $arSelectFieldsMap['MODIFIED_BY']) {
             $row->AddViewField("MODIFIED_BY", $strModifiedBy);
         }
     }
-    if (isset($row))
+    if (isset($row)) {
         unset($row);
+    }
 }
 
 if (!$bReadOnly) {
-    $lAdmin->AddGroupActionTable([
-        'edit' => true,
-        'delete' => true
-    ]);
+    $actions = [];
+    if (!Catalog\Config\State::isExceededStoreLimit()) {
+        $actions['edit'] = true;
+    }
+    $actions['delete'] = true;
+    $lAdmin->AddGroupActionTable($actions);
+    unset($actions);
 }
 
-if (!$bReadOnly && Catalog\Config\State::isAllowedNewStore()) {
-    $addUrl = $selfFolderUrl . "cat_store_edit.php?lang=" . LANGUAGE_ID;
-    $addUrl = $adminSidePanelHelper->editUrlToPublicPage($addUrl);
-    $aContext = array(
-        array(
+$aContext = [];
+if (!$bReadOnly) {
+    if (Catalog\Config\State::isAllowedNewStore()) {
+        $addUrl = $selfFolderUrl . "cat_store_edit.php?lang=" . LANGUAGE_ID;
+        $addUrl = $adminSidePanelHelper->editUrlToPublicPage($addUrl);
+        $aContext[] = [
             "TEXT" => Loc::getMessage("STORE_ADD_NEW"),
             "ICON" => "btn_new",
             "LINK" => $addUrl,
             "TITLE" => Loc::getMessage("STORE_ADD_NEW_ALT")
-        ),
-    );
-    $lAdmin->setContextSettings(array("pagePath" => $selfFolderUrl . "cat_store_list.php"));
-    $lAdmin->AddAdminContextMenu($aContext);
+        ];
+    } else {
+        $helpLink = Catalog\Config\Feature::getMultiStoresHelpLink();
+        if (!empty($helpLink)) {
+            $aContext[] = [
+                'TEXT' => Loc::getMessage('STORE_ADD_NEW'),
+                'ICON' => 'btn_lock',
+                $helpLink['TYPE'] => $helpLink['LINK'],
+                'TITLE' => Loc::getMessage('STORE_ADD_NEW_ALT')
+            ];
+        }
+        unset($helpLink);
+    }
 }
+$lAdmin->setContextSettings(array("pagePath" => $selfFolderUrl . "cat_store_list.php"));
+$lAdmin->AddAdminContextMenu($aContext);
+unset($aContext);
 
 $lAdmin->CheckListMode();
 

@@ -16,12 +16,20 @@ class CIMStatus
 
     public static function Set($userId, $params)
     {
-        $userId = intval($userId);
-        if ($userId <= 0)
-            return false;
+        global $CACHE_MANAGER;
 
-        if (isset($params['STATUS']))
+        $userId = intval($userId);
+        if ($userId <= 0) {
+            return false;
+        }
+
+        if (isset($params['STATUS'])) {
             $params['IDLE'] = null;
+        }
+
+        if (isset($params['STATUS']) || isset($params['COLOR'])) {
+            $CACHE_MANAGER->ClearByTag("USER_NAME_" . $userId);
+        }
 
         $previousStatus = Array(
             'USER_ID' => $userId,
@@ -71,29 +79,43 @@ class CIMStatus
         $cache->cleanDir(self::CACHE_PATH . $userId . '/');
 
         if ($needToUpdate && self::Enable()) {
-            CPullStack::AddShared(Array(
-                'module_id' => 'online',
-                'command' => 'userStatus',
-                'expiry' => 1,
-                'params' => Array(
-                    'users' => Array(
-                        $userId => Array(
-                            'id' => $userId,
-                            'status' => $status['STATUS'],
-                            'color' => $status['COLOR'] ? \Bitrix\Im\Color::getColor($status['COLOR']) : \Bitrix\Im\Color::getColorByNumber($userId),
-                            'idle' => $status['IDLE'] instanceof \Bitrix\Main\Type\DateTime ? date('c', $status['IDLE']->getTimestamp()) : false,
-                            'mobile_last_date' => $status['MOBILE_LAST_DATE'] instanceof \Bitrix\Main\Type\DateTime ? date('c', $status['MOBILE_LAST_DATE']->getTimestamp()) : false,
-                            'desktop_last_date' => $status['DESKTOP_LAST_DATE'] instanceof \Bitrix\Main\Type\DateTime ? date('c', $status['DESKTOP_LAST_DATE']->getTimestamp()) : false,
-                            'last_activity_date' => date('c', time())
+            CPullStack::AddShared(
+                Array(
+                    'module_id' => 'online',
+                    'command' => 'userStatus',
+                    'expiry' => 1,
+                    'params' => Array(
+                        'users' => Array(
+                            $userId => Array(
+                                'id' => $userId,
+                                'status' => $status['STATUS'],
+                                'color' => $status['COLOR'] ? \Bitrix\Im\Color::getColor(
+                                    $status['COLOR']
+                                ) : \Bitrix\Im\Color::getColorByNumber($userId),
+                                'idle' => $status['IDLE'] instanceof \Bitrix\Main\Type\DateTime ? date(
+                                    'c',
+                                    $status['IDLE']->getTimestamp()
+                                ) : false,
+                                'mobile_last_date' => $status['MOBILE_LAST_DATE'] instanceof \Bitrix\Main\Type\DateTime ? date(
+                                    'c',
+                                    $status['MOBILE_LAST_DATE']->getTimestamp()
+                                ) : false,
+                                'desktop_last_date' => $status['DESKTOP_LAST_DATE'] instanceof \Bitrix\Main\Type\DateTime ? date(
+                                    'c',
+                                    $status['DESKTOP_LAST_DATE']->getTimestamp()
+                                ) : false,
+                                'last_activity_date' => date('c', time())
+                            )
                         )
                     )
                 )
-            ));
+            );
         }
 
         $cache->CleanDir(self::CACHE_ONLINE_PATH);
 
-        $event = new \Bitrix\Main\Event("im", "onStatusSet", array(
+        $event = new \Bitrix\Main\Event(
+            "im", "onStatusSet", array(
             'USER_ID' => $userId,
             'STATUS' => $status['STATUS'],
             'COLOR' => $status['COLOR'] ? $status['COLOR'] : '',
@@ -101,7 +123,8 @@ class CIMStatus
             'MOBILE_LAST_DATE' => $status['MOBILE_LAST_DATE'] instanceof \Bitrix\Main\Type\DateTime ? $status['MOBILE_LAST_DATE'] : false,
             'DESKTOP_LAST_DATE' => $status['DESKTOP_LAST_DATE'] instanceof \Bitrix\Main\Type\DateTime ? $status['DESKTOP_LAST_DATE'] : false,
             'PREVIOUS_VALUES' => $previousStatus
-        ));
+        )
+        );
         $event->send();
 
         return true;
@@ -144,15 +167,19 @@ class CIMStatus
         foreach ($params as $key => $value) {
             if ($key == 'STATUS') {
                 $params[$key] = in_array($value, self::$AVAILABLE_STATUSES) ? $value : 'online';
-            } else if (in_array($key, Array('IDLE', 'DESKTOP_LAST_DATE', 'MOBILE_LAST_DATE', 'EVENT_UNTIL_DATE'))) {
-                $params[$key] = is_object($value) ? $value->getTimestamp() : 0;
-            } else if ($key == 'COLOR') {
-                $params[$key] = IM\Color::getColor($value);
-                if (!$params[$key]) {
-                    unset($params[$key]);
-                }
             } else {
-                $params[$key] = $value;
+                if (in_array($key, Array('IDLE', 'DESKTOP_LAST_DATE', 'MOBILE_LAST_DATE', 'EVENT_UNTIL_DATE'))) {
+                    $params[$key] = is_object($value) ? $value->getTimestamp() : 0;
+                } else {
+                    if ($key == 'COLOR') {
+                        $params[$key] = IM\Color::getColor($value);
+                        if (!$params[$key]) {
+                            unset($params[$key]);
+                        }
+                    } else {
+                        $params[$key] = $value;
+                    }
+                }
             }
         }
 
@@ -165,18 +192,21 @@ class CIMStatus
 
         $arFields = IM\Model\StatusTable::getMap();
         foreach ($params as $key => $value) {
-            if (!isset($arFields[$key]))
+            if (!isset($arFields[$key])) {
                 continue;
+            }
 
             if ($key == 'STATUS') {
                 $arValues[$key] = in_array($value, self::$AVAILABLE_STATUSES) ? $value : 'online';
-            } else if ($key == 'COLOR') {
-                $colors = IM\Color::getSafeColors();
-                if (isset($colors[$value])) {
+            } else {
+                if ($key == 'COLOR') {
+                    $colors = IM\Color::getSafeColors();
+                    if (isset($colors[$value])) {
+                        $arValues[$key] = $value;
+                    }
+                } else {
                     $arValues[$key] = $value;
                 }
-            } else {
-                $arValues[$key] = $value;
             }
         }
 
@@ -185,16 +215,19 @@ class CIMStatus
 
     public static function GetList($params = Array())
     {
-        if (!is_array($params))
+        if (!is_array($params)) {
             $params = Array();
+        }
 
         $userIds = Array();
         if (isset($params['ID']) && is_array($params['ID']) && !empty($params['ID'])) {
             foreach ($params['ID'] as $key => $value) {
                 $userIds[] = intval($value);
             }
-        } else if (isset($params['ID']) && intval($params['ID']) > 0) {
-            $userIds[] = intval($params['ID']);
+        } else {
+            if (isset($params['ID']) && intval($params['ID']) > 0) {
+                $userIds[] = intval($params['ID']);
+            }
         }
 
         if (isset($params['CLEAR_CACHE']) && $params['CLEAR_CACHE'] == 'Y') {
@@ -214,83 +247,89 @@ class CIMStatus
                 $loadFromDb = false;
                 $users = self::$CACHE_RECENT;
             }
-        } else if (!empty($userIds)) {
-            foreach ($userIds as $id => $uid) {
-                if (isset(self::$CACHE_USERS[$uid])) {
-                    unset($userIds[$id]);
-                    $users[$uid] = self::$CACHE_USERS[$uid];
+        } else {
+            if (!empty($userIds)) {
+                foreach ($userIds as $id => $uid) {
+                    if (isset(self::$CACHE_USERS[$uid])) {
+                        unset($userIds[$id]);
+                        $users[$uid] = self::$CACHE_USERS[$uid];
+                    }
                 }
-            }
-            if (empty($userIds)) {
-                $loadFromDb = false;
+                if (empty($userIds)) {
+                    $loadFromDb = false;
+                }
             }
         }
 
         if ($loadFromDb) {
             if ($loadRecent) {
-                $orm = \Bitrix\Im\Model\RecentTable::getList(array(
-                    'select' => Array(
-                        'ID' => 'U.ID',
-                        'EXTERNAL_AUTH_ID' => 'U.EXTERNAL_AUTH_ID',
-                        'LAST_ACTIVITY_DATE' => 'U.LAST_ACTIVITY_DATE',
-                        'PERSONAL_GENDER' => 'U.PERSONAL_GENDER',
-                        'COLOR' => 'ST.COLOR',
-                        'STATUS' => 'ST.STATUS',
-                        'IDLE' => 'ST.IDLE',
-                        'MOBILE_LAST_DATE' => 'ST.MOBILE_LAST_DATE',
-                        'DESKTOP_LAST_DATE' => 'ST.DESKTOP_LAST_DATE',
-                    ),
-                    'runtime' => Array(
-                        new \Bitrix\Main\Entity\ReferenceField(
-                            'ST',
-                            '\Bitrix\Im\Model\StatusTable',
-                            array("=ref.USER_ID" => "this.ITEM_ID",),
-                            array("join_type" => "LEFT")
+                $orm = \Bitrix\Im\Model\RecentTable::getList(
+                    array(
+                        'select' => Array(
+                            'ID' => 'U.ID',
+                            'EXTERNAL_AUTH_ID' => 'U.EXTERNAL_AUTH_ID',
+                            'LAST_ACTIVITY_DATE' => 'U.LAST_ACTIVITY_DATE',
+                            'PERSONAL_GENDER' => 'U.PERSONAL_GENDER',
+                            'COLOR' => 'ST.COLOR',
+                            'STATUS' => 'ST.STATUS',
+                            'IDLE' => 'ST.IDLE',
+                            'MOBILE_LAST_DATE' => 'ST.MOBILE_LAST_DATE',
+                            'DESKTOP_LAST_DATE' => 'ST.DESKTOP_LAST_DATE',
                         ),
-                        new \Bitrix\Main\Entity\ReferenceField(
-                            'U',
-                            '\Bitrix\Main\UserTable',
-                            array("=ref.ID" => "this.ITEM_ID",),
-                            array("join_type" => "LEFT")
-                        )
-                    ),
-                    'filter' => Array(
-                        '=USER_ID' => $userId,
-                        "=ITEM_TYPE" => IM_MESSAGE_PRIVATE,
-                    )
-                ));
-            } else {
-                $orm = \Bitrix\Main\UserTable::getList(array(
-                    'select' => Array(
-                        'ID',
-                        'EXTERNAL_AUTH_ID',
-                        'LAST_ACTIVITY_DATE',
-                        'PERSONAL_GENDER',
-                        'COLOR' => 'ST.COLOR',
-                        'STATUS' => 'ST.STATUS',
-                        'IDLE' => 'ST.IDLE',
-                        'MOBILE_LAST_DATE' => 'ST.MOBILE_LAST_DATE',
-                        'DESKTOP_LAST_DATE' => 'ST.DESKTOP_LAST_DATE',
-                    ),
-                    'runtime' => Array(
-                        new \Bitrix\Main\Entity\ReferenceField(
-                            'ST',
-                            '\Bitrix\Im\Model\StatusTable',
-                            array(
-                                "=ref.USER_ID" => "this.ID",
+                        'runtime' => Array(
+                            new \Bitrix\Main\Entity\ReferenceField(
+                                'ST',
+                                '\Bitrix\Im\Model\StatusTable',
+                                array("=ref.USER_ID" => "this.ITEM_ID",),
+                                array("join_type" => "LEFT")
                             ),
-                            array("join_type" => "LEFT")
+                            new \Bitrix\Main\Entity\ReferenceField(
+                                'U',
+                                '\Bitrix\Main\UserTable',
+                                array("=ref.ID" => "this.ITEM_ID",),
+                                array("join_type" => "LEFT")
+                            )
+                        ),
+                        'filter' => Array(
+                            '=USER_ID' => $userId,
+                            "=ITEM_TYPE" => IM_MESSAGE_PRIVATE,
                         )
-                    ),
-                    'filter' => Array(
-                        '=ID' => $userIds,
                     )
-                ));
+                );
+            } else {
+                $orm = \Bitrix\Main\UserTable::getList(
+                    array(
+                        'select' => Array(
+                            'ID',
+                            'EXTERNAL_AUTH_ID',
+                            'LAST_ACTIVITY_DATE',
+                            'PERSONAL_GENDER',
+                            'COLOR' => 'ST.COLOR',
+                            'STATUS' => 'ST.STATUS',
+                            'IDLE' => 'ST.IDLE',
+                            'MOBILE_LAST_DATE' => 'ST.MOBILE_LAST_DATE',
+                            'DESKTOP_LAST_DATE' => 'ST.DESKTOP_LAST_DATE',
+                        ),
+                        'runtime' => Array(
+                            new \Bitrix\Main\Entity\ReferenceField(
+                                'ST',
+                                '\Bitrix\Im\Model\StatusTable',
+                                array(
+                                    "=ref.USER_ID" => "this.ID",
+                                ),
+                                array("join_type" => "LEFT")
+                            )
+                        ),
+                        'filter' => Array(
+                            '=ID' => $userIds,
+                        )
+                    )
+                );
             }
 
             while ($user = $orm->fetch()) {
                 $color = null;
-                if (isset($user['COLOR']) && strlen($user['COLOR']) > 0) {
+                if (isset($user['COLOR']) && $user['COLOR'] <> '') {
                     $color = IM\Color::getColor($user['COLOR']);
                 }
                 if (!$color) {
@@ -304,9 +343,10 @@ class CIMStatus
                     'id' => $user["ID"],
                     'status' => in_array($user['STATUS'], self::$AVAILABLE_STATUSES) ? $user['STATUS'] : 'online',
                     'color' => $color,
-                    'idle' => $user['IDLE'],
-                    'last_activity_date' => $user['LAST_ACTIVITY_DATE'],
-                    'mobile_last_date' => $user['MOBILE_LAST_DATE'],
+                    'idle' => $user['IDLE'] ?: false,
+                    'last_activity_date' => $user['LAST_ACTIVITY_DATE'] ?: false,
+                    'mobile_last_date' => $user['MOBILE_LAST_DATE'] ?: false,
+                    'absent' => \CIMContactList::formatAbsentResult($user["ID"]),
                 );
 
                 self::$CACHE_USERS[$user["ID"]] = $users[$user["ID"]];
@@ -353,24 +393,26 @@ class CIMStatus
         if ($cache->initCache(self::CACHE_TTL, 'list_v2', self::CACHE_PATH . $userId . '/')) {
             $userStatus = $cache->getVars();
         } else {
-            $res = IM\Model\StatusTable::getList(Array(
-                'select' => Array(
-                    'STATUS',
-                    'MOBILE_LAST_DATE',
-                    'DESKTOP_LAST_DATE',
-                    'IDLE',
-                    'EXTERNAL_AUTH_ID' => 'USER.EXTERNAL_AUTH_ID'
-                ),
-                'runtime' => Array(
-                    new \Bitrix\Main\Entity\ReferenceField(
-                        'USER',
-                        '\Bitrix\Main\UserTable',
-                        array("=ref.ID" => "this.USER_ID",),
-                        array("join_type" => "LEFT")
-                    )
-                ),
-                'filter' => Array('=USER_ID' => $userId),
-            ));
+            $res = IM\Model\StatusTable::getList(
+                Array(
+                    'select' => Array(
+                        'STATUS',
+                        'MOBILE_LAST_DATE',
+                        'DESKTOP_LAST_DATE',
+                        'IDLE',
+                        'EXTERNAL_AUTH_ID' => 'USER.EXTERNAL_AUTH_ID'
+                    ),
+                    'runtime' => Array(
+                        new \Bitrix\Main\Entity\ReferenceField(
+                            'USER',
+                            '\Bitrix\Main\UserTable',
+                            array("=ref.ID" => "this.USER_ID",),
+                            array("join_type" => "LEFT")
+                        )
+                    ),
+                    'filter' => Array('=USER_ID' => $userId),
+                )
+            );
             if ($status = $res->fetch()) {
                 $userStatus = $status;
                 $cache->startDataCache();
@@ -398,7 +440,7 @@ class CIMStatus
 
         if (in_array($status['EXTERNAL_AUTH_ID'], $externalUser)) {
             $result['STATUS'] = 'online';
-            $result['STATUS_TEXT'] = GetMessage('IM_STATUS_EAID_' . strtoupper($status['EXTERNAL_AUTH_ID']));
+            $result['STATUS_TEXT'] = GetMessage('IM_STATUS_EAID_' . mb_strtoupper($status['EXTERNAL_AUTH_ID']));
             $result['LAST_SEEN_TEXT'] = '';
 
             return $result;
@@ -423,9 +465,11 @@ class CIMStatus
         }
 
         if ($result && $result['STATUS'] === 'mobile') {
-        } else if (in_array($status['STATUS'], Array('dnd', 'away'))) {
-            $result['STATUS'] = $status['STATUS'];
-            $result['STATUS_TEXT'] = GetMessage('IM_STATUS_' . strtoupper($status['STATUS']));
+        } else {
+            if (in_array($status['STATUS'], Array('dnd', 'away'))) {
+                $result['STATUS'] = $status['STATUS'];
+                $result['STATUS_TEXT'] = GetMessage('IM_STATUS_' . mb_strtoupper($status['STATUS']));
+            }
         }
 
         /** @var \Bitrix\Main\Type\DateTime $idleDate */

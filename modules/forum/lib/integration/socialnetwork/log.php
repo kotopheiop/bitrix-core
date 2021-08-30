@@ -52,7 +52,6 @@ class Log
         $message = false;
 
         if (intval($sourceId) > 0) {
-
             $select = array('*', 'TOPIC.TITLE', 'UF_FORUM_MES_URL_PRV');
 
             if (
@@ -62,12 +61,14 @@ class Log
                 $select[] = 'UF_FORUM_MESSAGE_DOC';
             }
 
-            $res = MessageTable::getList(array(
-                'filter' => array(
-                    '=ID' => $sourceId
-                ),
-                'select' => $select
-            ));
+            $res = MessageTable::getList(
+                array(
+                    'filter' => array(
+                        '=ID' => $sourceId
+                    ),
+                    'select' => $select
+                )
+            );
             $message = $res->fetch();
         }
 

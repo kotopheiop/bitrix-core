@@ -23,11 +23,16 @@ class CharsetConverter
     /**
      * @deprecated
      */
-    public static function ConvertCharset($string, $charset_in, $charset_out, &$errorMessage = "", $ignoreErrors = false)
-    {
+    public static function ConvertCharset(
+        $string,
+        $charset_in,
+        $charset_out,
+        &$errorMessage = "",
+        $ignoreErrors = false
+    ) {
         $string = strval($string);
 
-        return \Bitrix\Main\Text\Encoding::convertEncoding($string, $charset_in, $charset_out, $errorMessage);
+        return \Bitrix\Main\Text\Encoding::convertEncoding($string, $charset_in, $charset_out);
     }
 
     /**

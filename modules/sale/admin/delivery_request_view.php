@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 use Bitrix\Main\Localization\Loc,
@@ -14,8 +15,9 @@ Bitrix\Main\Loader::includeModule('sale');
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
 
-if ($saleModulePermissions < "U")
+if ($saleModulePermissions < "U") {
     $APPLICATION->AuthForm(Loc::getMessage("SALE_DSE_ACCESS_DENIED"));
+}
 
 $ID = isset($_REQUEST["ID"]) ? intval($_REQUEST["ID"]) : 0;
 
@@ -78,11 +80,13 @@ if ($ID > 0) {
     $deliveryRequest = null;
     $aMenu[] = array("SEPARATOR" => "Y");
 
-    if ($deliveryId > 0)
+    if ($deliveryId > 0) {
         $delivery = Services\Manager::getObjectById($deliveryId);
+    }
 
-    if ($delivery)
+    if ($delivery) {
         $deliveryRequest = $delivery->getDeliveryRequestHandler();
+    }
 
     if ($deliveryRequest) {
         $rTypesMenu = array();
@@ -90,16 +94,22 @@ if ($ID > 0) {
         foreach (Requests\Manager::getDeliveryRequestActions($fields['ID']) as $rCode => $rName) {
             $rTypesMenu[] = array(
                 "TEXT" => $rName,
-                "LINK" => "javascript:BX.Sale.Delivery.Request.processRequest({action: 'actionExecute', deliveryId: " . $deliveryId . ", requestAction: '" . CUtil::JSEscape($rCode) . "', requestId: " . $fields['ID'] . ", lang: '" . LANGUAGE_ID . "'})"
+                "LINK" => "javascript:BX.Sale.Delivery.Request.processRequest({action: 'actionExecute', deliveryId: " . $deliveryId . ", requestAction: '" . CUtil::JSEscape(
+                        $rCode
+                    ) . "', requestId: " . $fields['ID'] . ", lang: '" . LANGUAGE_ID . "'})"
             );
         }
 
-        if (!empty($rTypesMenu))
+        if (!empty($rTypesMenu)) {
             $rTypesMenu[] = array("SEPARATOR" => true);
+        }
 
         $rTypesMenu[] = array(
             "TEXT" => Loc::getMessage('SALE_DELIVERY_REQ_VIEW_DELETE'),
-            "LINK" => "javascript:if(confirm('" . Loc::getMessage('SALE_DELIVERY_REQ_VIEW_DEL_CONFIRM') . "')){ window.location=\"/bitrix/admin/sale_delivery_request_list.php?lang=" . LANGUAGE_ID . "&action=delete&ID=" . $ID . "&" . bitrix_sessid_get() . "\"};"
+            "LINK" => "javascript:if(confirm('" . Loc::getMessage(
+                    'SALE_DELIVERY_REQ_VIEW_DEL_CONFIRM'
+                ) . "')){ window.location=\"/bitrix/admin/sale_delivery_request_list.php?lang=" . LANGUAGE_ID . "&action=delete&ID=" . $ID . "&" . bitrix_sessid_get(
+                ) . "\"};"
         );
 
         $aMenu[] = array(
@@ -110,19 +120,22 @@ if ($ID > 0) {
     }
 }
 
-$deliveryName = !!$delivery ? $delivery->getNameWithParent() . ' [' . $fields["DELIVERY_ID"] . ']' : $fields["DELIVERY_ID"];
+$deliveryName = !!$delivery ? $delivery->getNameWithParent(
+    ) . ' [' . $fields["DELIVERY_ID"] . ']' : $fields["DELIVERY_ID"];
 $contentRes = Requests\Manager::getDeliveryRequestContent($fields['ID']);
 
 $context = new CAdminContextMenu($aMenu);
 $context->Show();
 
 if (!empty($adminErrorMessages)) {
-    $adminMessage = new CAdminMessage(Array(
-        "DETAILS" => implode("<br>\n", $adminErrorMessages),
-        "TYPE" => "ERROR",
-        "MESSAGE" => Loc::getMessage('SALE_DELIVERY_REQ_VIEW_ERROR'),
-        "HTML" => true
-    ));
+    $adminMessage = new CAdminMessage(
+        Array(
+            "DETAILS" => implode("<br>\n", $adminErrorMessages),
+            "TYPE" => "ERROR",
+            "MESSAGE" => Loc::getMessage('SALE_DELIVERY_REQ_VIEW_ERROR'),
+            "HTML" => true
+        )
+    );
     echo $adminMessage->Show();
 }
 
@@ -148,7 +161,9 @@ if (!empty($adminErrorMessages)) {
         <tr>
             <td><?= Loc::getMessage('SALE_DELIVERY_REQ_VIEW_F_DELIVERY_IDT') ?>:</td>
             <td>
-                <a href="/bitrix/admin/sale_delivery_service_edit.php?lang=ru&ID=<?= $fields["DELIVERY_ID"] ?>"><?= htmlspecialcharsbx($deliveryName) ?></a>
+                <a href="/bitrix/admin/sale_delivery_service_edit.php?lang=ru&ID=<?= $fields["DELIVERY_ID"] ?>"><?= htmlspecialcharsbx(
+                        $deliveryName
+                    ) ?></a>
             </td>
         </tr>
         <!--
@@ -156,9 +171,15 @@ if (!empty($adminErrorMessages)) {
 		<td><?= Loc::getMessage('SALE_DELIVERY_REQ_VIEW_F_STATUS') ?>:</td>
 		<td>
 			<select name="STATUS" disabled>
-				<option value="0"<?= $fields["STATUS"] == "0" ? ' selected' : '' ?>><?= Loc::getMessage('SALE_DELIVERY_REQ_VIEW_F_STATUS_R') ?></option>
-				<option value="10"<?= $fields["STATUS"] == "10" ? ' selected' : '' ?>><?= Loc::getMessage('SALE_DELIVERY_REQ_VIEW_F_STATUS_S') ?></option>
-				<option value="20"<?= $fields["STATUS"] == "20" ? ' selected' : '' ?>><?= Loc::getMessage('SALE_DELIVERY_REQ_VIEW_F_STATUS_P') ?></option>
+				<option value="0"<?= $fields["STATUS"] == "0" ? ' selected' : '' ?>><?= Loc::getMessage(
+            'SALE_DELIVERY_REQ_VIEW_F_STATUS_R'
+        ) ?></option>
+				<option value="10"<?= $fields["STATUS"] == "10" ? ' selected' : '' ?>><?= Loc::getMessage(
+            'SALE_DELIVERY_REQ_VIEW_F_STATUS_S'
+        ) ?></option>
+				<option value="20"<?= $fields["STATUS"] == "20" ? ' selected' : '' ?>><?= Loc::getMessage(
+            'SALE_DELIVERY_REQ_VIEW_F_STATUS_P'
+        ) ?></option>
 			</select>
 		</td>
 	</tr>

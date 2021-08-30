@@ -1,4 +1,5 @@
 <?
+
 define("ADMIN_MODULE_NAME", "clouds");
 
 /*.require_module 'standard';.*/
@@ -6,12 +7,14 @@ define("ADMIN_MODULE_NAME", "clouds");
 /*.require_module 'bitrix_main_include_prolog_admin_before';.*/
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
-if (!$USER->CanDoOperation("clouds_config"))
+if (!$USER->CanDoOperation("clouds_config")) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 /*.require_module 'bitrix_clouds_include';.*/
-if (!CModule::IncludeModule('clouds'))
+if (!CModule::IncludeModule('clouds')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 
@@ -47,14 +50,15 @@ $message = /*.(CAdminMessage).*/
 
 $FAILOVER_DELETE_DELAY = intval($_REQUEST['FAILOVER_DELETE_DELAY']);
 if (isset($_POST['FAILOVER_DELETE_DELAY_TYPE'])) {
-    if ($_POST['FAILOVER_DELETE_DELAY_TYPE'] == 'H')
+    if ($_POST['FAILOVER_DELETE_DELAY_TYPE'] == 'H') {
         $FAILOVER_DELETE_DELAY *= 60;
-    elseif ($_POST['FAILOVER_DELETE_DELAY_TYPE'] == 'D')
+    } elseif ($_POST['FAILOVER_DELETE_DELAY_TYPE'] == 'D') {
         $FAILOVER_DELETE_DELAY *= 60 * 24;
-    elseif ($_POST['FAILOVER_DELETE_DELAY_TYPE'] == 'W')
+    } elseif ($_POST['FAILOVER_DELETE_DELAY_TYPE'] == 'W') {
         $FAILOVER_DELETE_DELAY *= 60 * 24 * 7;
-    elseif ($_POST['FAILOVER_DELETE_DELAY_TYPE'] == 'N')
+    } elseif ($_POST['FAILOVER_DELETE_DELAY_TYPE'] == 'N') {
         $FAILOVER_DELETE_DELAY *= 60 * 24 * 30;
+    }
 }
 
 if ($_SERVER["REQUEST_METHOD"] === "POST" && check_bitrix_sessid()) {
@@ -79,10 +83,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && check_bitrix_sessid()) {
             $arFields["FAILOVER_DELETE_DELAY"] = $FAILOVER_DELETE_DELAY;
         }
 
-        if ($ID > 0)
+        if ($ID > 0) {
             $res = $ob->Update($arFields);
-        else
+        } else {
             $res = $ob->Add($arFields);
+        }
 
         if (
             $res > 0
@@ -92,38 +97,49 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && check_bitrix_sessid()) {
         ) {
             CAgent::AddAgent(
                 "CCloudFailover::syncAgent($res, " . $arFields["FAILOVER_BUCKET_ID"] . ", 100);",
-                "clouds", "N", 1, "", "Y", ""
+                "clouds",
+                "N",
+                1,
+                "",
+                "Y",
+                ""
             );
         }
 
         if ($res > 0) {
-            if (isset($_REQUEST["apply"]))
-                LocalRedirect("/bitrix/admin/clouds_storage_edit.php?ID=" . $res . "&lang=" . LANGUAGE_ID . "&" . $tabControl->ActiveTabParam());
-            else
+            if (isset($_REQUEST["apply"])) {
+                LocalRedirect(
+                    "/bitrix/admin/clouds_storage_edit.php?ID=" . $res . "&lang=" . LANGUAGE_ID . "&" . $tabControl->ActiveTabParam(
+                    )
+                );
+            } else {
                 LocalRedirect("/bitrix/admin/clouds_storage_list.php?lang=" . LANGUAGE_ID);
+            }
         } else {
             $e = $APPLICATION->GetException();
-            if (is_object($e))
+            if (is_object($e)) {
                 $message = new CAdminMessage(GetMessage("CLO_STORAGE_EDIT_SAVE_ERROR"), $e);
+            }
             $bVarsFromForm = true;
         }
     } elseif (isset($_REQUEST["delete"]) && $ID > 1) {
         $ob = new CCloudStorageBucket($ID);
-        if ($ob->Delete())
+        if ($ob->Delete()) {
             LocalRedirect("/bitrix/admin/clouds_storage_list.php?lang=" . LANGUAGE_ID);
-        else
+        } else {
             $bVarsFromForm = true;
+        }
     }
 }
 
 if ($bVarsFromForm) {
     $arRes = array(
         "ACTIVE" => (string)$_REQUEST["ACTIVE"],
-        "SORT" => "500",
+        "SORT" => (int)$_POST["SORT"],
         "READ_ONLY" => (string)$_REQUEST["READ_ONLY"],
         "SERVICE_ID" => (string)$_REQUEST["SERVICE_ID"],
         "BUCKET" => (string)$_REQUEST["BUCKET"],
-        "LOCATION" => (string)$_REQUEST["LOCATION"],
+        "LOCATION" => (string)$_POST["LOCATION"][$_POST["SERVICE_ID"]],
         "CNAME" => (string)$_REQUEST["CNAME"],
         "SETTINGS" => "",
         "FAILOVER_ACTIVE" => (string)$_REQUEST["FAILOVER_ACTIVE"],
@@ -133,8 +149,9 @@ if ($bVarsFromForm) {
         "FAILOVER_DELETE_DELAY" => (int)$FAILOVER_DELETE_DELAY,
     );
 
-    if (isset($_REQUEST["SETTINGS"]) && is_array($_REQUEST["SETTINGS"]))
+    if (isset($_REQUEST["SETTINGS"]) && is_array($_REQUEST["SETTINGS"])) {
         $arRes["SETTINGS"] = $_REQUEST["SETTINGS"];
+    }
 } else {
     $arRes = null;
     if ($ID > 0) {
@@ -162,7 +179,9 @@ if ($bVarsFromForm) {
     }
 }
 
-$APPLICATION->SetTitle(($ID > 0 ? GetMessage("CLO_STORAGE_EDIT_EDIT_TITLE") : GetMessage("CLO_STORAGE_EDIT_ADD_TITLE")));
+$APPLICATION->SetTitle(
+    ($ID > 0 ? GetMessage("CLO_STORAGE_EDIT_EDIT_TITLE") : GetMessage("CLO_STORAGE_EDIT_ADD_TITLE"))
+);
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
@@ -177,8 +196,9 @@ $aMenu = array(
 $context = new CAdminContextMenu($aMenu);
 $context->Show();
 
-if (is_object($message))
+if (is_object($message)) {
     echo $message->Show();
+}
 ?>
     <script>
         function ChangeLocation(select) {
@@ -281,16 +301,22 @@ if (is_object($message))
                 <td><? echo GetMessage("CLO_STORAGE_EDIT_LOCATION") ?>:</td>
                 <td>
                     <?
-                    foreach (CCloudStorage::GetServiceLocationList($arRes["SERVICE_ID"]) as $LOCATION_ID => $LOCATION_NAME) {
-                        if ($arRes["LOCATION"] == $LOCATION_ID)
-                            echo htmlspecialcharsex($LOCATION_NAME);
+                    $locationList = CCloudStorage::GetServiceLocationList($arRes["SERVICE_ID"]);
+                    if (is_array($locationList)) {
+                        foreach ($locationList as $LOCATION_ID => $LOCATION_NAME) {
+                            if ($arRes["LOCATION"] == $LOCATION_ID) {
+                                echo htmlspecialcharsex($LOCATION_NAME);
+                            }
+                        }
                     }
                     ?>
                     <input type="hidden" name="LOCATION[<? echo htmlspecialcharsbx($arRes["SERVICE_ID"]); ?>]"
                            value="<? echo htmlspecialcharsbx($arRes["LOCATION"]); ?>">
                 </td>
             </tr>
-            <? if (is_object($obService)) echo $obService->GetSettingsHTML($arRes, true, $arRes["SERVICE_ID"], $bVarsFromForm); ?>
+            <? if (is_object($obService)) {
+                echo $obService->GetSettingsHTML($arRes, true, $arRes["SERVICE_ID"], $bVarsFromForm);
+            } ?>
         <?
         } else {
             ?>
@@ -302,9 +328,14 @@ if (is_object($message))
                         $bServiceSet = false;
                         foreach (CCloudStorage::GetServiceList() as $SERVICE_ID => $obService) {
                             ?>
-                            <option value="<? echo htmlspecialcharsbx($SERVICE_ID) ?>"<? if ($arRes["SERVICE_ID"] === $SERVICE_ID) echo " selected" ?>><? echo htmlspecialcharsex($obService->GetName()) ?></option><?
-                            if ($arRes["SERVICE_ID"] === $SERVICE_ID)
+                            <option value="<? echo htmlspecialcharsbx(
+                                $SERVICE_ID
+                            ) ?>"<? if ($arRes["SERVICE_ID"] === $SERVICE_ID) echo " selected" ?>><? echo htmlspecialcharsex(
+                                $obService->GetName()
+                            ) ?></option><?
+                            if ($arRes["SERVICE_ID"] === $SERVICE_ID) {
                                 $bServiceSet = true;
+                            }
                         }
                         ?>
                     </select>
@@ -317,14 +348,29 @@ if (is_object($message))
                     class="location-tr">
                     <td><? echo GetMessage("CLO_STORAGE_EDIT_LOCATION") ?>:</td>
                     <td>
-                        <select name="LOCATION[<? echo htmlspecialcharsbx($SERVICE_ID) ?>]">
-                            <?
-                            foreach (CCloudStorage::GetServiceLocationList($SERVICE_ID) as $LOCATION_ID => $LOCATION_NAME) {
+                        <?
+                        $locationList = CCloudStorage::GetServiceLocationList($SERVICE_ID);
+                        if (is_array($locationList)):?>
+                            <select name="LOCATION[<? echo htmlspecialcharsbx($SERVICE_ID) ?>]">
+                                <?
+                                foreach (
+                                    CCloudStorage::GetServiceLocationList(
+                                        $SERVICE_ID
+                                    ) as $LOCATION_ID => $LOCATION_NAME
+                                ) {
+                                    ?>
+                                    <option value="<? echo htmlspecialcharsbx(
+                                        $LOCATION_ID
+                                    ) ?>"<? if ($arRes["LOCATION"] === $LOCATION_ID) echo " selected" ?>><? echo htmlspecialcharsex(
+                                        $LOCATION_NAME
+                                    ) ?></option><?
+                                }
                                 ?>
-                                <option value="<? echo htmlspecialcharsbx($LOCATION_ID) ?>"<? if ($arRes["SERVICE_ID"] === $LOCATION_ID) echo " selected" ?>><? echo htmlspecialcharsex($LOCATION_NAME) ?></option><?
-                            }
-                            ?>
-                        </select>
+                            </select>
+                        <? else:?>
+                            <input type="text" name="LOCATION[<? echo htmlspecialcharsbx($SERVICE_ID) ?>]"
+                                   value="<? echo htmlspecialcharsbx($arRes["LOCATION"]) ?>">
+                        <? endif; ?>
                     </td>
                 </tr>
                 <? echo $obService->GetSettingsHTML($arRes, $bServiceSet, $arRes["SERVICE_ID"], $bVarsFromForm) ?>
@@ -336,8 +382,9 @@ if (is_object($message))
             <tr class="adm-detail-required-field">
                 <td><? echo GetMessage("CLO_STORAGE_EDIT_BUCKET") ?>:</td>
                 <td><input type="hidden" name="BUCKET"
-                           value="<? echo htmlspecialcharsbx($arRes["BUCKET"]) ?>"><? echo htmlspecialcharsex($arRes["BUCKET"]) ?>
-                </td>
+                           value="<? echo htmlspecialcharsbx($arRes["BUCKET"]) ?>"><? echo htmlspecialcharsex(
+                        $arRes["BUCKET"]
+                    ) ?></td>
             </tr>
             <?
         } else {
@@ -364,15 +411,17 @@ if (is_object($message))
         <tr>
             <td align="center">
                 <?
-                if ($bVarsFromForm)
+                if ($bVarsFromForm) {
                     $arRules = CCloudStorageBucket::ConvertPOST($_POST);
-                elseif (isset($arRes["FILE_RULES"]))
-                    $arRules = unserialize($arRes["FILE_RULES"]);
-                else
+                } elseif (isset($arRes["FILE_RULES"])) {
+                    $arRules = unserialize($arRes["FILE_RULES"], ['allowed_classes' => false]);
+                } else {
                     $arRules = array();
+                }
 
-                if (!is_array($arRules))
+                if (!is_array($arRules)) {
                     $arRules = array();
+                }
                 ?>
                 <table border="0" cellspacing="0" cellpadding="0" class="internal" align="center" id="tblRULES">
                     <tr class="heading">
@@ -462,10 +511,15 @@ if (is_object($message))
                         <?
                         $rsBucketList = CCloudStorageBucket::GetList(array("SORT" => "DESC", "ID" => "ASC"));
                         while ($arBucket = $rsBucketList->Fetch()) {
-                            if ($ID == $arBucket["ID"])
+                            if ($ID == $arBucket["ID"]) {
                                 continue;
+                            }
                             ?>
-                            <option value="<? echo htmlspecialcharsbx($arBucket["ID"]) ?>"<? if ($arRes["FAILOVER_BUCKET_ID"] === $arBucket["ID"]) echo " selected" ?>><? echo htmlspecialcharsex($arBucket["BUCKET"]) ?></option><?
+                            <option value="<? echo htmlspecialcharsbx(
+                                $arBucket["ID"]
+                            ) ?>"<? if ($arRes["FAILOVER_BUCKET_ID"] === $arBucket["ID"]) echo " selected" ?>><? echo htmlspecialcharsex(
+                                $arBucket["BUCKET"]
+                            ) ?></option><?
                         }
                         ?>
                     </select>
@@ -516,11 +570,21 @@ if (is_object($message))
                     <input type="text" name="FAILOVER_DELETE_DELAY" id="FAILOVER_DELETE_DELAY" size="5"
                            value="<? echo $FAILOVER_DELETE_DELAY ?>">
                     <select name="FAILOVER_DELETE_DELAY_TYPE" title="">
-                        <option value="M"<? if ($FAILOVER_DELETE_DELAY_TYPE == "M") echo ' selected' ?>><? echo GetMessage("CLO_STORAGE_EDIT_FAILOVER_DELETE_DELAY_MI") ?></option>
-                        <option value="H"<? if ($FAILOVER_DELETE_DELAY_TYPE == "H") echo ' selected' ?>><? echo GetMessage("CLO_STORAGE_EDIT_FAILOVER_DELETE_DELAY_HO") ?></option>
-                        <option value="D"<? if ($FAILOVER_DELETE_DELAY_TYPE == "D") echo ' selected' ?>><? echo GetMessage("CLO_STORAGE_EDIT_FAILOVER_DELETE_DELAY_DA") ?></option>
-                        <option value="W"<? if ($FAILOVER_DELETE_DELAY_TYPE == "W") echo ' selected' ?>><? echo GetMessage("CLO_STORAGE_EDIT_FAILOVER_DELETE_DELAY_WE") ?></option>
-                        <option value="N"<? if ($FAILOVER_DELETE_DELAY_TYPE == "N") echo ' selected' ?>><? echo GetMessage("CLO_STORAGE_EDIT_FAILOVER_DELETE_DELAY_MO") ?></option>
+                        <option value="M"<? if ($FAILOVER_DELETE_DELAY_TYPE == "M") echo ' selected' ?>><? echo GetMessage(
+                                "CLO_STORAGE_EDIT_FAILOVER_DELETE_DELAY_MI"
+                            ) ?></option>
+                        <option value="H"<? if ($FAILOVER_DELETE_DELAY_TYPE == "H") echo ' selected' ?>><? echo GetMessage(
+                                "CLO_STORAGE_EDIT_FAILOVER_DELETE_DELAY_HO"
+                            ) ?></option>
+                        <option value="D"<? if ($FAILOVER_DELETE_DELAY_TYPE == "D") echo ' selected' ?>><? echo GetMessage(
+                                "CLO_STORAGE_EDIT_FAILOVER_DELETE_DELAY_DA"
+                            ) ?></option>
+                        <option value="W"<? if ($FAILOVER_DELETE_DELAY_TYPE == "W") echo ' selected' ?>><? echo GetMessage(
+                                "CLO_STORAGE_EDIT_FAILOVER_DELETE_DELAY_WE"
+                            ) ?></option>
+                        <option value="N"<? if ($FAILOVER_DELETE_DELAY_TYPE == "N") echo ' selected' ?>><? echo GetMessage(
+                                "CLO_STORAGE_EDIT_FAILOVER_DELETE_DELAY_MO"
+                            ) ?></option>
                     </select>
                 </td>
             </tr>
@@ -528,20 +592,25 @@ if (is_object($message))
                 <td width="40%"><? echo GetMessage("CLO_STORAGE_EDIT_FAILOVER_SYNC") ?>:</td>
                 <td width="60%">
                     <?
-                    $rsAgents = CAgent::GetList(array("ID" => "DESC"), array(
-                        "MODULE_ID" => "clouds",
-                        "NAME" => "CCloudFailover::syncAgent($ID, %",
-                    ));
+                    $rsAgents = CAgent::GetList(
+                        array("ID" => "DESC"),
+                        array(
+                            "MODULE_ID" => "clouds",
+                            "NAME" => "CCloudFailover::syncAgent($ID, %",
+                        )
+                    );
                     $arAgent = $rsAgents->Fetch();
                     if (!$arAgent) {
-                        $task = \Bitrix\Clouds\CopyQueueTable::getList(array(
-                            'filter' => array(
-                                "=STATUS" => "Y",
-                                "=OP" => \Bitrix\Clouds\CopyQueueTable::OP_SYNC,
-                            ),
-                            'limit' => 1,
-                            'order' => Array('ID' => 'ASC')
-                        ))->fetch();
+                        $task = \Bitrix\Clouds\CopyQueueTable::getList(
+                            array(
+                                'filter' => array(
+                                    "=STATUS" => "Y",
+                                    "=OP" => \Bitrix\Clouds\CopyQueueTable::OP_SYNC,
+                                ),
+                                'limit' => 1,
+                                'order' => Array('ID' => 'ASC')
+                            )
+                        )->fetch();
                     }
                     if ($arAgent || $task) {
                         echo GetMessage("CLO_STORAGE_EDIT_FAILOVER_SYNC_IN_PROGRESS");

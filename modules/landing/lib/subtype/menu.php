@@ -2,8 +2,9 @@
 
 namespace Bitrix\Landing\Subtype;
 
-use \Bitrix\Main\Localization\Loc;
+use \Bitrix\Landing\Landing;
 use \Bitrix\Landing\Hook\Page\Settings;
+use \Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
@@ -16,8 +17,11 @@ class Menu
      * @param array $params Additional params.
      * @return array
      */
-    public static function prepareManifest(array $manifest, \Bitrix\Landing\Block $block = NULL, array $params = array())
-    {
+    public static function prepareManifest(
+        array $manifest,
+        \Bitrix\Landing\Block $block = null,
+        array $params = []
+    ): array {
         // add attrs to work TWO MENUS together
         if (!isset($manifest['attrs']) || !is_array($manifest['attrs'])) {
             $manifest['attrs'] = array();
@@ -72,16 +76,34 @@ class Menu
                                 $count
                             );
                         }
-                    } else if ($source == 'personal') {
-                        $menuItems = self::getPersonalMenu();
+                    } else {
+                        if ($source == 'personal') {
+                            $menuItems = self::getPersonalMenu();
+                        }
                     }
 
                     // save new items
                     if (!empty($menuItems)) {
-                        $block->updateNodes(array(
-                            $selector => $menuItems
-                        ));
+                        $block->updateNodes(
+                            array(
+                                $selector => $menuItems
+                            )
+                        );
                         $needSave = true;
+                    }
+                } else {
+                    if ($source == 'structure') {
+                        // after add immediately
+                        \Bitrix\Landing\Subtype\Menu::redrawStructureMenu($block);
+                        // after site creating if it is processing now
+                        $eventManager = \Bitrix\Main\EventManager::getInstance();
+                        $eventManager->addEventHandler(
+                            'landing',
+                            'onAfterDemoCreate',
+                            function (\Bitrix\Main\Event $event) use ($block) {
+                                \Bitrix\Landing\Subtype\Menu::redrawStructureMenu($block);
+                            }
+                        );
                     }
                 }
 
@@ -94,14 +116,16 @@ class Menu
                     isset($manifest['attrs'][$navbarCollapseSection])
                     && isset($manifest['attrs'][$navbarTogglerButton])
                 ) {
-                    $newId = "navBar" . $block->getId();
-                    $block->setAttributes(array(
-                        $navbarCollapseSection => array('id' => $newId),
-                        $navbarTogglerButton => array(
-                            'aria-controls' => $newId,
-                            'data-target' => "#" . $newId,
-                        ),
-                    ));
+                    $newId = 'navBar' . $block->getId();
+                    $block->setAttributes(
+                        array(
+                            $navbarCollapseSection => array('id' => $newId),
+                            $navbarTogglerButton => array(
+                                'aria-controls' => $newId,
+                                'data-target' => '#' . $newId,
+                            ),
+                        )
+                    );
                     $needSave = true;
                 }
 
@@ -113,6 +137,77 @@ class Menu
         );
 
         return $manifest;
+    }
+
+    /**
+     * Redraws current block - add pages structure in this menu.
+     * @param \Bitrix\Landing\Block $block Block instance.
+     * @return void
+     */
+    public static function redrawStructureMenu(\Bitrix\Landing\Block $block): void
+    {
+        $manifest = $block->getManifest();
+
+        return;
+
+        if (empty($manifest['menu'])) {
+            return;
+        }
+
+        // collect all pages top level
+        $menu = [];
+        $inFolders = [];
+        $res = Landing::getList(
+            [
+                'select' => [
+                    'ID',
+                    'TITLE',
+                    'FOLDER_ID'
+                ],
+                'filter' => [
+                    'SITE_ID' => $block->getSiteId(),
+                    '==AREAS.ID' => null
+                ]
+            ]
+        );
+        while ($row = $res->fetch()) {
+            if ($row['FOLDER_ID']) {
+                $inFolders[] = $row;
+                continue;
+            }
+            $menu[$row['ID']] = [
+                'text' => $row['TITLE'],
+                'href' => '#landing' . $row['ID'],
+                'target' => '_self',
+                'children' => []
+            ];
+        }
+
+        // collect pages on folder
+        if ($inFolders) {
+            foreach ($inFolders as $row) {
+                if (isset($menu[$row['FOLDER_ID']])) {
+                    $menu[$row['FOLDER_ID']]['children'][] = [
+                        'text' => $row['TITLE'],
+                        'href' => '#landing' . $row['ID'],
+                        'target' => '_self',
+                        'children' => []
+                    ];
+                }
+            }
+        }
+
+        // save new menu
+        foreach ($manifest['menu'] as $selector => $foo) {
+            $block->updateNodes(
+                [
+                    $selector => [
+                        array_values($menu)
+                    ]
+                ]
+            );
+        }
+        $block->save();
     }
 
     /**
@@ -129,6 +224,7 @@ class Menu
             return $menuItems;
         }
 
+        \Bitrix\Landing\Hook::setEditMode(true);
         $settings = Settings::getDataForSite($siteId);
         if ($settings['IBLOCK_ID']) {
             $res = \CIBlockSection::getList(
@@ -141,7 +237,8 @@ class Menu
                 ),
                 false,
                 array(
-                    'ID', 'NAME'
+                    'ID',
+                    'NAME'
                 ),
                 array(
                     'nTopCount' => $count

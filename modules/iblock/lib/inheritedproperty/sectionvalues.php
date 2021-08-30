@@ -73,15 +73,18 @@ class SectionValues extends BaseValues
     public function getParents()
     {
         $parents = array();
-        $sectionList = \Bitrix\Iblock\SectionTable::getList(array(
-            "select" => array("IBLOCK_SECTION_ID"),
-            "filter" => array("=ID" => $this->sectionId),
-        ));
+        $sectionList = \Bitrix\Iblock\SectionTable::getList(
+            array(
+                "select" => array("IBLOCK_SECTION_ID"),
+                "filter" => array("=ID" => $this->sectionId),
+            )
+        );
         $section = $sectionList->fetch();
-        if ($section && $section["IBLOCK_SECTION_ID"] > 0)
+        if ($section && $section["IBLOCK_SECTION_ID"] > 0) {
             $parents[] = new SectionValues($this->iblockId, $section["IBLOCK_SECTION_ID"]);
-        else
+        } else {
             $parents[] = new IblockValues($this->iblockId);
+        }
         return $parents;
     }
 
@@ -98,7 +101,8 @@ class SectionValues extends BaseValues
         if ($this->hasTemplates()) {
             if ($this->queue->getElement($this->iblockId, $this->sectionId) === false) {
                 $ids = $this->queue->get($this->iblockId);
-                $query = $connection->query("
+                $query = $connection->query(
+                    "
 				SELECT
 					P.ID
 					,P.CODE
@@ -113,7 +117,8 @@ class SectionValues extends BaseValues
 				WHERE
 					IP.IBLOCK_ID = " . $this->iblockId . "
 					AND IP.SECTION_ID in (" . implode(", ", $ids) . ")
-				");
+				"
+                );
                 $result = array();
                 while ($row = $query->fetch()) {
                     $result[$row["SECTION_ID"]][$row["CODE"]] = $row;
@@ -154,13 +159,16 @@ class SectionValues extends BaseValues
     function clearValues()
     {
         $connection = \Bitrix\Main\Application::getConnection();
-        $sectionList = \Bitrix\Iblock\SectionTable::getList(array(
-            "select" => array("LEFT_MARGIN", "RIGHT_MARGIN"),
-            "filter" => array("=ID" => $this->sectionId),
-        ));
+        $sectionList = \Bitrix\Iblock\SectionTable::getList(
+            array(
+                "select" => array("LEFT_MARGIN", "RIGHT_MARGIN"),
+                "filter" => array("=ID" => $this->sectionId),
+            )
+        );
         $section = $sectionList->fetch();
         if ($section) {
-            $connection->query("
+            $connection->query(
+                "
 				DELETE FROM b_iblock_element_iprop
 				WHERE IBLOCK_ID = " . $this->iblockId . "
 				AND ELEMENT_ID in (
@@ -171,8 +179,10 @@ class SectionValues extends BaseValues
 					AND BS.LEFT_MARGIN <= " . $section["RIGHT_MARGIN"] . "
 					AND BS.RIGHT_MARGIN >= " . $section["LEFT_MARGIN"] . "
 				)
-			");
-            $connection->query("
+			"
+            );
+            $connection->query(
+                "
 				DELETE FROM b_iblock_section_iprop
 				WHERE IBLOCK_ID = " . $this->iblockId . "
 				AND SECTION_ID in (
@@ -182,7 +192,8 @@ class SectionValues extends BaseValues
 					AND BS.LEFT_MARGIN <= " . $section["RIGHT_MARGIN"] . "
 					AND BS.RIGHT_MARGIN >= " . $section["LEFT_MARGIN"] . "
 				)
-			");
+			"
+            );
         }
         ValuesQueue::deleteAll();
     }

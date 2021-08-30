@@ -76,8 +76,9 @@ class ShipmentTable extends Main\Entity\DataManager
     public static function deleteWithItems($id)
     {
         $id = intval($id);
-        if ($id <= 0)
+        if ($id <= 0) {
             throw new Main\ArgumentNullException("id");
+        }
 
         $itemsList = ShipmentItemTable::getList(
             array(
@@ -85,8 +86,9 @@ class ShipmentTable extends Main\Entity\DataManager
                 "select" => array("ID")
             )
         );
-        while ($item = $itemsList->fetch())
+        while ($item = $itemsList->fetch()) {
             ShipmentItemTable::deleteWithItems($item["ID"]);
+        }
 
         return ShipmentTable::delete($id);
     }

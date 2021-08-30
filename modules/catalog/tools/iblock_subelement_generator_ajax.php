@@ -1,4 +1,5 @@
 <?
+
 define('STOP_STATISTICS', true);
 define('NO_AGENT_CHECK', true);
 define('DisableEventsCheck', true);
@@ -11,8 +12,9 @@ use Bitrix\Main,
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_before.php");
 
-if (!Loader::includeModule('catalog') || !Loader::includeModule('fileman'))
+if (!Loader::includeModule('catalog') || !Loader::includeModule('fileman')) {
     die();
+}
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/iblock/admin_tools.php");
 header('Content-Type: application/x-javascript; charset=' . LANG_CHARSET);
@@ -28,17 +30,19 @@ if (check_bitrix_sessid()) {
             /** @global CMain $APPLICATION */
             $APPLICATION->RestartBuffer();
             if ($fieldId == "DETAIL" || $fieldId == "ANNOUNCE") {
-                echo \Bitrix\Main\UI\FileInput::createInstance(array(
-                    "name" => 'PROP[' . $fieldId . '][' . $_POST['ROW_ID'] . ']',
-                    "description" => false,
-                    "upload" => true,
-                    "allowUpload" => "I",
-                    "medialib" => true,
-                    "fileDialog" => true,
-                    "cloud" => true,
-                    "delete" => true,
-                    "maxCount" => 1
-                ))->show([]);
+                echo \Bitrix\Main\UI\FileInput::createInstance(
+                    array(
+                        "name" => 'PROP[' . $fieldId . '][' . $_POST['ROW_ID'] . ']',
+                        "description" => false,
+                        "upload" => true,
+                        "allowUpload" => "I",
+                        "medialib" => true,
+                        "fileDialog" => true,
+                        "cloud" => true,
+                        "delete" => true,
+                        "maxCount" => 1
+                    )
+                )->show([]);
             } else {
                 $fieldId = (int)$fieldId;
                 if ($fieldId > 0) {

@@ -18,26 +18,34 @@ class MetaMain extends \Bitrix\Landing\Hook\Page
     protected function getMap()
     {
         return array(
-            'USE' => new Field\Checkbox('USE', array(
+            'USE' => new Field\Checkbox(
+                'USE', array(
                 'title' => Loc::getMessage('LANDING_HOOK_METAMAIN_USE')
-            )),
-            'TITLE' => new Field\Text('TITLE', array(
+            )
+            ),
+            'TITLE' => new Field\Text(
+                'TITLE', array(
                 'title' => Loc::getMessage('LANDING_HOOK_METAMAIN_TITLE'),
                 'placeholder' => Loc::getMessage('LANDING_HOOK_METAMAIN_TITLE_PLACEHOLDER'),
                 'maxlength' => 140,
                 'searchable' => true
-            )),
-            'DESCRIPTION' => new Field\Textarea('DESCRIPTION', array(
+            )
+            ),
+            'DESCRIPTION' => new Field\Textarea(
+                'DESCRIPTION', array(
                 'title' => Loc::getMessage('LANDING_HOOK_METAMAIN_DESCRIPTION_TITLE'),
                 'placeholder' => Loc::getMessage('LANDING_HOOK_METAMAIN_DESCRIPTION_PLACEHOLDER'),
                 'maxlength' => 300,
                 'searchable' => true
-            )),
-            'KEYWORDS' => new Field\Text('KEYWORDS', array(
+            )
+            ),
+            'KEYWORDS' => new Field\Text(
+                'KEYWORDS', array(
                 'title' => Loc::getMessage('LANDING_HOOK_METAMAIN_KEYWORDS_TITLE'),
                 'maxlength' => 250,
                 'searchable' => true
-            ))
+            )
+            )
         );
     }
 

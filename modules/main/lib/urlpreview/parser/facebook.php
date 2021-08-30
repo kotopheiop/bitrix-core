@@ -15,6 +15,7 @@ class Facebook extends Oembed
             $embedHtml = $document->getEmdbed();
 
             preg_match('/<div(?:.+?)fb-post(.+?)>/i', $embedHtml, $divTags);
+
             if ($divTags[0]) {
                 $div = str_replace('>', ' data-show-text="false">', $divTags[0]);
                 $embedHtml = str_replace($divTags[0], $div, $embedHtml);

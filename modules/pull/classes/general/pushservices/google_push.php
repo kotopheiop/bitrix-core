@@ -19,7 +19,7 @@ class CGoogleMessage extends CPushMessage
     {
         $data = $this->getPayload();
         $batch = "Content-type: application/json\r\n";
-        $batch .= "Content-length: " . CUtil::BinStrlen($data) . "\r\n";
+        $batch .= "Content-length: " . \Bitrix\Main\Text\BinaryString::getLength($data) . "\r\n";
         $batch .= "\r\n";
         $batch .= $data;
 
@@ -41,9 +41,12 @@ class CGoogleMessage extends CPushMessage
             "priority" => "high",
             "registration_ids" => $this->deviceTokens
         ];
-        $jsonPayload = json_encode($data, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE);
+        $jsonPayload = json_encode(
+            $data,
+            JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE
+        );
 
-        $payloadLength = CUtil::BinStrlen($jsonPayload);
+        $payloadLength = \Bitrix\Main\Text\BinaryString::getLength($jsonPayload);
         if ($payloadLength > self::DEFAULT_PAYLOAD_MAXIMUM_SIZE) {
             $text = $this->text;
             $useSenderText = false;
@@ -51,20 +54,25 @@ class CGoogleMessage extends CPushMessage
                 $useSenderText = true;
                 $text = $this->customProperties["senderMessage"];
             }
-            $maxTextLength = $nTextLen = CUtil::BinStrlen($text) - ($payloadLength - self::DEFAULT_PAYLOAD_MAXIMUM_SIZE);
-            if ($maxTextLength > 0) {
-                while (CUtil::BinStrlen($text = substr($text, 0, --$nTextLen)) > $maxTextLength) ;
-                if ($useSenderText) {
-                    $this->setCustomProperty("senderMessage", $text);
-                } else {
-                    $this->setText($text);
-                }
-
-
-                return $this->getPayload();
-            } else {
+            $maxTextLength = $nTextLen = \Bitrix\Main\Text\BinaryString::getLength(
+                    $text
+                ) - ($payloadLength - self::DEFAULT_PAYLOAD_MAXIMUM_SIZE);
+            if ($maxTextLength <= 0) {
                 return false;
             }
+            while (\Bitrix\Main\Text\BinaryString::getLength(
+                    $text = mb_substr($text, 0, --$nTextLen)
+                ) > $maxTextLength) {
+                ;
+            }
+            if ($useSenderText) {
+                $this->setCustomProperty("senderMessage", $text);
+            } else {
+                $this->setText($text);
+            }
+
+
+            return $this->getPayload();
         }
 
         return $jsonPayload;
@@ -96,7 +104,7 @@ class CGooglePush extends CPushService
 
         $batch = $this->getBatchWithModifier($arGroupedMessages, ";3;");
 
-        if (strlen($batch) == 0) {
+        if ($batch == '') {
             return $batch;
         }
 

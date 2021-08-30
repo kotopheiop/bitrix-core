@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 $arFields = Array(
@@ -69,7 +70,8 @@ $arFields = Array(
                                 Array(
                                     'Title' => GetMessage("BP_EXPR_ST")
                                 )
-                        ))
+                        )
+                    )
                 ),
                 Array(
                     'Type' => 'MailActivity',
@@ -123,7 +125,11 @@ $arFields = Array(
                                             'MailUserFrom' => '',
                                             'MailUserFromArray' => Array('user_1'),
                                             'MailUserTo' => '',
-                                            'MailUserToArray' => Array('author', Array('Template', 'Reviewers'), Array('Template', 'Approvers')),
+                                            'MailUserToArray' => Array(
+                                                'author',
+                                                Array('Template', 'Reviewers'),
+                                                Array('Template', 'Approvers')
+                                            ),
                                             'Title' => GetMessage("BP_EXPR_M")
                                         )
                                 ),
@@ -143,7 +149,8 @@ $arFields = Array(
                                         Array(
                                             'Title' => GetMessage("BP_EXPR_PUB")
                                         )
-                                ))
+                                )
+                            )
                         ),
                         Array(
                             'Type' => 'SequenceActivity',
@@ -165,7 +172,11 @@ $arFields = Array(
                                             'MailUserFrom' => '',
                                             'MailUserFromArray' => Array('user_1'),
                                             'MailUserTo' => '',
-                                            'MailUserToArray' => Array('author', Array('Template', 'Reviewers'), Array('Template', 'Approvers')),
+                                            'MailUserToArray' => Array(
+                                                'author',
+                                                Array('Template', 'Reviewers'),
+                                                Array('Template', 'Approvers')
+                                            ),
                                             'Title' => GetMessage("BP_EXPR_M")
                                         )
                                 ),
@@ -177,10 +188,14 @@ $arFields = Array(
                                             'TargetStateTitle' => GetMessage("BP_EXPR_NA"),
                                             'Title' => GetMessage("BP_EXPR_NA_ST")
                                         )
-                                ))
-                        ))
-                ))
-        )),
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        )
+    ),
     'PARAMETERS' =>
         Array(
             'Reviewers' =>

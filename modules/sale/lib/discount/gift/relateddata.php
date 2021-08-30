@@ -115,7 +115,11 @@ final class RelatedDataTable extends DataManager
         }
         $connection = Application::getConnection();
         $helper = $connection->getSqlHelper();
-        $connection->queryExecute('delete from ' . $helper->quote(self::getTableName()) . ' where ' . $helper->quote('DISCOUNT_ID') . ' = ' . $discountId);
+        $connection->queryExecute(
+            'delete from ' . $helper->quote(self::getTableName()) . ' where ' . $helper->quote(
+                'DISCOUNT_ID'
+            ) . ' = ' . $discountId
+        );
     }
 
     /**
@@ -170,7 +174,7 @@ final class RelatedDataTable extends DataManager
         if (
             (empty($discount['ACTIONS_LIST']) || !is_array($discount['ACTIONS_LIST']))
             && checkSerializedData($discount['ACTIONS'])) {
-            $discount['ACTIONS_LIST'] = unserialize($discount['ACTIONS']);
+            $discount['ACTIONS_LIST'] = unserialize($discount['ACTIONS'], ['allowed_classes' => false]);
         }
 
         if (!isset($discount['ACTIONS_LIST']['CHILDREN']) && is_array($discount['ACTIONS_LIST']['CHILDREN'])) {
@@ -178,7 +182,8 @@ final class RelatedDataTable extends DataManager
         }
 
         foreach ($discount['ACTIONS_LIST']['CHILDREN'] as $child) {
-            if (!isset($child['CLASS_ID']) || !isset($child['DATA']) || $child['CLASS_ID'] !== \CSaleActionGiftCtrlGroup::getControlID()) {
+            if (!isset($child['CLASS_ID']) || !isset($child['DATA']) || $child['CLASS_ID'] !== \CSaleActionGiftCtrlGroup::getControlID(
+                )) {
                 continue;
             }
             foreach ($child['CHILDREN'] as $gifterChild) {
@@ -211,7 +216,7 @@ final class RelatedDataTable extends DataManager
         if (
             (empty($discount['CONDITIONS_LIST']) || !is_array($discount['CONDITIONS_LIST']))
             && checkSerializedData($discount['CONDITIONS'])) {
-            $discount['CONDITIONS_LIST'] = unserialize($discount['CONDITIONS']);
+            $discount['CONDITIONS_LIST'] = unserialize($discount['CONDITIONS'], ['allowed_classes' => false]);
         }
 
         if (!isset($discount['CONDITIONS_LIST']['CLASS_ID']) || $discount['CONDITIONS_LIST']['CLASS_ID'] !== 'CondGroup') {
@@ -270,7 +275,7 @@ final class RelatedDataTable extends DataManager
                 list($prefix, $values) = $sqlHelper->prepareInsert($tableName, $item);
 
                 $query .= ($query ? ', ' : ' ') . '(' . $values . ')';
-                if (strlen($query) > self::MAX_LENGTH_BATCH_MYSQL_QUERY) {
+                if (mb_strlen($query) > self::MAX_LENGTH_BATCH_MYSQL_QUERY) {
                     $connection->queryExecute("INSERT INTO {$tableName} ({$prefix}) VALUES {$query}");
                     $query = '';
                 }

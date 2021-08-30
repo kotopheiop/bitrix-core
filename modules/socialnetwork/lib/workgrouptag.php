@@ -45,7 +45,9 @@ class WorkgroupTagTable extends Entity\DataManager
             return false;
         }
 
-        \Bitrix\Main\Application::getConnection()->queryExecute('DELETE FROM ' . self::getTableName() . ' WHERE GROUP_ID = ' . intval($params['groupId']));
+        \Bitrix\Main\Application::getConnection()->queryExecute(
+            'DELETE FROM ' . self::getTableName() . ' WHERE GROUP_ID = ' . intval($params['groupId'])
+        );
         return true;
     }
 
@@ -61,15 +63,19 @@ class WorkgroupTagTable extends Entity\DataManager
             return false;
         }
 
-        self::deleteByGroupId(array(
-            'groupId' => intval($params['groupId'])
-        ));
+        self::deleteByGroupId(
+            array(
+                'groupId' => intval($params['groupId'])
+            )
+        );
 
         foreach ($params['tags'] as $tag) {
-            self::processAdd(array(
-                'GROUP_ID' => intval($params['groupId']),
-                'NAME' => toLower($tag)
-            ));
+            self::processAdd(
+                array(
+                    'GROUP_ID' => intval($params['groupId']),
+                    'NAME' => toLower($tag)
+                )
+            );
         }
 
         return true;
@@ -88,6 +94,6 @@ class WorkgroupTagTable extends Entity\DataManager
 
     protected static function isDuplicateKeyError(SqlQueryException $exception)
     {
-        return strpos($exception->getDatabaseMessage(), '(1062)') !== false;
+        return mb_strpos($exception->getDatabaseMessage(), '(1062)') !== false;
     }
 }

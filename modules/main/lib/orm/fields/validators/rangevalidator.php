@@ -41,8 +41,12 @@ class RangeValidator extends Validator
      *
      * @throws ArgumentTypeException
      */
-    public function __construct($min = 0, $max = null, $equality = false, $errorPhrase = array('MIN' => null, 'MAX' => null))
-    {
+    public function __construct(
+        $min = 0,
+        $max = null,
+        $equality = false,
+        $errorPhrase = array('MIN' => null, 'MAX' => null)
+    ) {
         if ($min !== null) {
             if (!is_numeric($min)) {
                 throw new ArgumentTypeException('min', 'numeric');
@@ -77,14 +81,18 @@ class RangeValidator extends Validator
     {
         if ($this->min !== null) {
             if ((!$this->equality && $value < $this->min) || ($this->equality && $value <= $this->min)) {
-                $mess = ($this->errorPhraseMin !== null ? $this->errorPhraseMin : Loc::getMessage($this->errorPhraseMinCode));
+                $mess = ($this->errorPhraseMin !== null ? $this->errorPhraseMin : Loc::getMessage(
+                    $this->errorPhraseMinCode
+                ));
                 return $this->getErrorMessage($value, $field, $mess, array("#MIN#" => $this->min));
             }
         }
 
         if ($this->max !== null) {
             if ((!$this->equality && $value > $this->max) || ($this->equality && $value >= $this->max)) {
-                $mess = ($this->errorPhraseMax !== null ? $this->errorPhraseMax : Loc::getMessage($this->errorPhraseMaxCode));
+                $mess = ($this->errorPhraseMax !== null ? $this->errorPhraseMax : Loc::getMessage(
+                    $this->errorPhraseMaxCode
+                ));
                 return $this->getErrorMessage($value, $field, $mess, array("#MAX#" => $this->max));
             }
         }

@@ -31,8 +31,9 @@ class CIBlockParameters
     {
         if (!isset(self::$catalogStoreCache)) {
             self::$catalogStoreCache = array();
-            if (self::$catalogIncluded === null)
+            if (self::$catalogIncluded === null) {
                 self::$catalogIncluded = Loader::includeModule('catalog');
+            }
             if (self::$catalogIncluded) {
                 $storeCount = 0;
                 $maxStores = (int)Main\Config\Option::get('iblock', 'seo_max_stores');
@@ -40,8 +41,9 @@ class CIBlockParameters
                     'select' => array('ID', 'TITLE', 'ADDRESS', 'SORT'),
                     'order' => array('SORT' => 'ASC')
                 );
-                if ($maxStores > 0)
+                if ($maxStores > 0) {
                     $getListParams['limit'] = $maxStores;
+                }
                 $storeIterator = Catalog\StoreTable::getList($getListParams);
                 while ($store = $storeIterator->fetch()) {
                     self::$catalogStoreCache[$storeCount] = $store;
@@ -58,10 +60,12 @@ class CIBlockParameters
     {
         if (!isset(self::$catalogPriceCache)) {
             self::$catalogPriceCache = array();
-            if (self::$catalogIncluded === null)
+            if (self::$catalogIncluded === null) {
                 self::$catalogIncluded = Loader::includeModule('catalog');
-            if (self::$catalogIncluded)
+            }
+            if (self::$catalogIncluded) {
                 self::$catalogPriceCache = CCatalogGroup::GetListArray();
+            }
         }
         return self::$catalogPriceCache;
     }
@@ -108,14 +112,19 @@ class CIBlockParameters
         );
 
         //Check for any additional fields
-        if (isset($options["SECTION_ID"]) && $options["SECTION_ID"])
+        if (isset($options["SECTION_ID"]) && $options["SECTION_ID"]) {
             $result["VALUES"]["SECTION_ID"] = Loc::getMessage("IBLOCK_FIELD_SECTION_ID");
+        }
 
         return $result;
     }
 
-    public static function GetSectionFieldCode($name, $parent, /** @noinspection PhpUnusedParameterInspection */ $options = array())
-    {
+    public static function GetSectionFieldCode(
+        $name,
+        $parent,
+        /** @noinspection PhpUnusedParameterInspection */
+        $options = array()
+    ) {
         //Common use in components
         $result = array(
             "PARENT" => $parent,
@@ -157,21 +166,36 @@ class CIBlockParameters
             "TYPE" => "LIST",
             "SIZE" => 8,
             "VALUES" => array(
-                "d-m-Y" => CIBlockFormatProperties::DateFormat("d-m-Y", $timestamp),//"22-02-2007",
-                "m-d-Y" => CIBlockFormatProperties::DateFormat("m-d-Y", $timestamp),//"02-22-2007",
-                "Y-m-d" => CIBlockFormatProperties::DateFormat("Y-m-d", $timestamp),//"2007-02-22",
-                "d.m.Y" => CIBlockFormatProperties::DateFormat("d.m.Y", $timestamp),//"22.02.2007",
-                "d.M.Y" => CIBlockFormatProperties::DateFormat("d.M.Y", $timestamp),//"22.Feb.2007",
-                "m.d.Y" => CIBlockFormatProperties::DateFormat("m.d.Y", $timestamp),//"02.22.2007",
-                "j M Y" => CIBlockFormatProperties::DateFormat("j M Y", $timestamp),//"22 Feb 2007",
-                "M j, Y" => CIBlockFormatProperties::DateFormat("M j, Y", $timestamp),//"Feb 22, 2007",
-                "j F Y" => CIBlockFormatProperties::DateFormat("j F Y", $timestamp),//"22 February 2007",
-                "f j, Y" => CIBlockFormatProperties::DateFormat("f j, Y", $timestamp),//"February 22, 2007",
-                "d.m.y g:i A" => CIBlockFormatProperties::DateFormat("d.m.y g:i A", $timestamp),//"22.02.07 1:30 PM",
-                "d.M.y g:i A" => CIBlockFormatProperties::DateFormat("d.M.y g:i A", $timestamp),//"22.Feb.07 1:30 PM",
-                "d.M.Y g:i A" => CIBlockFormatProperties::DateFormat("d.M.Y g:i A", $timestamp),//"22.Febkate.2007 1:30 PM",
-                "d.m.y G:i" => CIBlockFormatProperties::DateFormat("d.m.y G:i", $timestamp),//"22.02.07 7:30",
-                "d.m.Y H:i" => CIBlockFormatProperties::DateFormat("d.m.Y H:i", $timestamp),//"22.02.2007 07:30",
+                "d-m-Y" => CIBlockFormatProperties::DateFormat("d-m-Y", $timestamp),
+                //"22-02-2007",
+                "m-d-Y" => CIBlockFormatProperties::DateFormat("m-d-Y", $timestamp),
+                //"02-22-2007",
+                "Y-m-d" => CIBlockFormatProperties::DateFormat("Y-m-d", $timestamp),
+                //"2007-02-22",
+                "d.m.Y" => CIBlockFormatProperties::DateFormat("d.m.Y", $timestamp),
+                //"22.02.2007",
+                "d.M.Y" => CIBlockFormatProperties::DateFormat("d.M.Y", $timestamp),
+                //"22.Feb.2007",
+                "m.d.Y" => CIBlockFormatProperties::DateFormat("m.d.Y", $timestamp),
+                //"02.22.2007",
+                "j M Y" => CIBlockFormatProperties::DateFormat("j M Y", $timestamp),
+                //"22 Feb 2007",
+                "M j, Y" => CIBlockFormatProperties::DateFormat("M j, Y", $timestamp),
+                //"Feb 22, 2007",
+                "j F Y" => CIBlockFormatProperties::DateFormat("j F Y", $timestamp),
+                //"22 February 2007",
+                "f j, Y" => CIBlockFormatProperties::DateFormat("f j, Y", $timestamp),
+                //"February 22, 2007",
+                "d.m.y g:i A" => CIBlockFormatProperties::DateFormat("d.m.y g:i A", $timestamp),
+                //"22.02.07 1:30 PM",
+                "d.M.y g:i A" => CIBlockFormatProperties::DateFormat("d.M.y g:i A", $timestamp),
+                //"22.Feb.07 1:30 PM",
+                "d.M.Y g:i A" => CIBlockFormatProperties::DateFormat("d.M.Y g:i A", $timestamp),
+                //"22.Febkate.2007 1:30 PM",
+                "d.m.y G:i" => CIBlockFormatProperties::DateFormat("d.m.y G:i", $timestamp),
+                //"22.02.07 7:30",
+                "d.m.Y H:i" => CIBlockFormatProperties::DateFormat("d.m.Y H:i", $timestamp),
+                //"22.02.2007 07:30",
                 "SHORT" => Loc::getMessage('COMP_PARAM_DATE_FORMAT_SITE'),
                 "FULL" => Loc::getMessage('COMP_PARAM_DATETIME_FORMAT_SITE')
             ),
@@ -361,8 +385,12 @@ class CIBlockParameters
         }
     }
 
-    public static function GetInheritedPropertyTemplateSectionMenuItems($iblock_id, $action_function, $menuID, $inputID = "")
-    {
+    public static function GetInheritedPropertyTemplateSectionMenuItems(
+        $iblock_id,
+        $action_function,
+        $menuID,
+        $inputID = ""
+    ) {
         global $USER_FIELD_MANAGER;
         $result = array();
         $result["this"] = array(
@@ -396,7 +424,9 @@ class CIBlockParameters
                 if ($property["PROPERTY_TYPE"] != "F") {
                     $result["properties"]["MENU"][] = array(
                         "TEXT" => $property["FIELD_NAME"],
-                        "ONCLICK" => "$action_function('{=this.property." . strtolower(substr($property["FIELD_NAME"], 3)) . "}', '$menuID', '$inputID')",
+                        "ONCLICK" => "$action_function('{=this.property." . mb_strtolower(
+                                mb_substr($property["FIELD_NAME"], 3)
+                            ) . "}', '$menuID', '$inputID')",
                     );
                 }
             }
@@ -437,11 +467,13 @@ class CIBlockParameters
         );
         $catalog = false;
         $showCatalogSeo = false;
-        if (self::$catalogIncluded === null)
+        if (self::$catalogIncluded === null) {
             self::$catalogIncluded = Loader::includeModule('catalog');
+        }
         if (self::$catalogIncluded) {
-            if ($iblock_id > 0)
+            if ($iblock_id > 0) {
                 $catalog = CCatalogSku::GetInfoByIBlock($iblock_id);
+            }
             $showCatalogSeo = (is_array($catalog) && $catalog['CATALOG_TYPE'] != CCatalogSku::TYPE_PRODUCT);
             if ($showCatalogSeo) {
                 $result["store"] = array(
@@ -481,8 +513,12 @@ class CIBlockParameters
         return $r;
     }
 
-    public static function GetInheritedPropertyTemplateElementMenuItems($iblock_id, $action_function, $menuID, $inputID = "")
-    {
+    public static function GetInheritedPropertyTemplateElementMenuItems(
+        $iblock_id,
+        $action_function,
+        $menuID,
+        $inputID = ""
+    ) {
         $result = array();
         $result["this"] = array(
             "TEXT" => Loc::getMessage("IB_COMPLIB_POPUP_ELEMENT"),
@@ -559,11 +595,13 @@ class CIBlockParameters
         );
         $arCatalog = false;
         $showCatalogSeo = false;
-        if (self::$catalogIncluded === null)
+        if (self::$catalogIncluded === null) {
             self::$catalogIncluded = Loader::includeModule('catalog');
+        }
         if (self::$catalogIncluded) {
-            if ($iblock_id > 0)
+            if ($iblock_id > 0) {
                 $arCatalog = CCatalogSku::GetInfoByIBlock($iblock_id);
+            }
             if (is_array($arCatalog)) {
                 $showCatalogSeo = ($arCatalog['CATALOG_TYPE'] != CCatalogSku::TYPE_PRODUCT);
                 if ($arCatalog['CATALOG_TYPE'] == CCatalogSku::TYPE_PRODUCT || $arCatalog['CATALOG_TYPE'] == CCatalogSku::TYPE_FULL) {
@@ -626,16 +664,17 @@ class CIBlockParameters
                         "MENU" => array(),
                     );
                     foreach (self::getCatalogPrices() as $price) {
-                        if (preg_match("/^[a-zA-Z0-9]+\$/", $price["NAME"]))
+                        if (preg_match("/^[a-zA-Z0-9]+\$/", $price["NAME"])) {
                             $result["price"]["MENU"][] = array(
                                 "TEXT" => $price["NAME"],
                                 "ONCLICK" => "$action_function('{=this.catalog.price." . $price["NAME"] . "}', '$menuID', '$inputID')",
                             );
-                        else
+                        } else {
                             $result["price"]["MENU"][] = array(
                                 "TEXT" => $price["NAME"],
                                 "ONCLICK" => "$action_function('{=this.catalog.price." . $price["ID"] . "}', '$menuID', '$inputID')",
                             );
+                        }
                     }
                     $result["store"] = array(
                         "TEXT" => Loc::getMessage("IB_COMPLIB_POPUP_STORE"),
@@ -675,8 +714,13 @@ class CIBlockParameters
         return $r;
     }
 
-    public static function GetPathTemplateParam($menuType, $ID, $parameterName, $defaultValue = "", $parentID = "URL_TEMPLATES")
-    {
+    public static function GetPathTemplateParam(
+        $menuType,
+        $ID,
+        $parameterName,
+        $defaultValue = "",
+        $parentID = "URL_TEMPLATES"
+    ) {
         return array(
             "PARENT" => $parentID,
             "NAME" => $parameterName,
@@ -684,21 +728,38 @@ class CIBlockParameters
             "DEFAULT" => $defaultValue,
             "JS_FILE" => BX_ROOT . "/js/iblock/path_templates.js",
             "JS_EVENT" => "IBlockComponentProperties",
-            "JS_DATA" => str_replace("\n", "", CUtil::PhpToJSObject(array(
-                "mnu_" . $ID, //menu div ID
-                5000, //zIndex
-                CIBlockParameters::GetPathTemplateMenuItems($menuType, "window.IBlockComponentPropertiesObj.Action", "mnu_" . $ID), //Menu items
-            ))),
+            "JS_DATA" => str_replace(
+                "\n",
+                "",
+                CUtil::PhpToJSObject(
+                    array(
+                        "mnu_" . $ID, //menu div ID
+                        5000, //zIndex
+                        CIBlockParameters::GetPathTemplateMenuItems(
+                            $menuType,
+                            "window.IBlockComponentPropertiesObj.Action",
+                            "mnu_" . $ID
+                        ), //Menu items
+                    )
+                )
+            ),
         );
     }
 
-    public static function AddPagerSettings(&$arComponentParameters, $pager_title, $bDescNumbering = true, $bShowAllParam = false, $bBaseLink = false, $bBaseLinkEnabled = false)
-    {
+    public static function AddPagerSettings(
+        &$arComponentParameters,
+        $pager_title,
+        $bDescNumbering = true,
+        $bShowAllParam = false,
+        $bBaseLink = false,
+        $bBaseLinkEnabled = false
+    ) {
         $arHiddenTemplates = array(
             'js' => true
         );
-        if (!isset($arComponentParameters['GROUPS']))
+        if (!isset($arComponentParameters['GROUPS'])) {
             $arComponentParameters['GROUPS'] = array();
+        }
         $arComponentParameters["GROUPS"]["PAGER_SETTINGS"] = array(
             "NAME" => Loc::getMessage("T_IBLOCK_DESC_PAGER_SETTINGS"),
         );
@@ -719,10 +780,12 @@ class CIBlockParameters
             );
             $arTemplateID = array();
             foreach ($arTemplateInfo as &$template) {
-                if ('' != $template["TEMPLATE"] && '.default' != $template["TEMPLATE"])
+                if ('' != $template["TEMPLATE"] && '.default' != $template["TEMPLATE"]) {
                     $arTemplateID[] = $template["TEMPLATE"];
-                if (!isset($template['TITLE']))
+                }
+                if (!isset($template['TITLE'])) {
                     $template['TITLE'] = $template['NAME'];
+                }
             }
             unset($template);
 
@@ -738,9 +801,12 @@ class CIBlockParameters
             }
 
             foreach ($arTemplateInfo as &$template) {
-                if (isset($arHiddenTemplates[$template['NAME']]))
+                if (isset($arHiddenTemplates[$template['NAME']])) {
                     continue;
-                $strDescr = $template["TITLE"] . ' (' . ('' != $template["TEMPLATE"] && '' != $arSiteTemplateList[$template["TEMPLATE"]] ? $arSiteTemplateList[$template["TEMPLATE"]] : Loc::getMessage("T_IBLOCK_DESC_PAGER_TEMPLATE_SYSTEM")) . ')';
+                }
+                $strDescr = $template["TITLE"] . ' (' . ('' != $template["TEMPLATE"] && '' != $arSiteTemplateList[$template["TEMPLATE"]] ? $arSiteTemplateList[$template["TEMPLATE"]] : Loc::getMessage(
+                        "T_IBLOCK_DESC_PAGER_TEMPLATE_SYSTEM"
+                    )) . ')';
                 $arTemplateList[$template['NAME']] = $strDescr;
             }
             unset($template);
@@ -830,8 +896,9 @@ class CIBlockParameters
 
     public static function Add404Settings(&$arComponentParameters, $arCurrentValues, $bStatus = true, $bPage = true)
     {
-        if (!isset($arComponentParameters['GROUPS']))
+        if (!isset($arComponentParameters['GROUPS'])) {
             $arComponentParameters['GROUPS'] = array();
+        }
         $arComponentParameters["GROUPS"]["404_SETTINGS"] = array(
             "NAME" => Loc::getMessage("IB_COMPLIB_PARAMETER_GROUP_404_SETTINGS"),
         );
@@ -880,10 +947,11 @@ class CIBlockParameters
      */
     public static function GetIBlockTypes($arTop = false)
     {
-        if (is_array($arTop))
+        if (is_array($arTop)) {
             $arIBlockType = $arTop;
-        else
+        } else {
             $arIBlockType = array();
+        }
         $rsIBlockType = CIBlockType::GetList(array("sort" => "asc"), array("ACTIVE" => "Y"));
         while ($arr = $rsIBlockType->Fetch()) {
             if ($ar = CIBlockType::GetByIDLang($arr["ID"], LANGUAGE_ID)) {
@@ -896,10 +964,12 @@ class CIBlockParameters
     public static function GetElementSortFields($arFields = array(), $arOptions = array())
     {
         $arResult = array();
-        if (!is_array($arFields))
+        if (!is_array($arFields)) {
             $arFields = array($arFields);
-        if (!is_array($arOptions))
+        }
+        if (!is_array($arOptions)) {
             $arOptions = array();
+        }
         $boolLowerCase = (isset($arOptions['KEY_LOWERCASE']) && $arOptions['KEY_LOWERCASE'] == 'Y');
         $arSortFields = array(
             "SHOWS" => Loc::getMessage("IBLOCK_SORT_FIELD_SHOWS"),
@@ -912,25 +982,29 @@ class CIBlockParameters
         );
         if (!empty($arFields)) {
             foreach ($arFields as $strFieldName) {
-                if (isset($arSortFields[$strFieldName]))
+                if (isset($arSortFields[$strFieldName])) {
                     $arResult[$strFieldName] = $arSortFields[$strFieldName];
+                }
             }
             unset($strFieldName);
         } else {
             $arResult = $arSortFields;
         }
-        if ($boolLowerCase)
+        if ($boolLowerCase) {
             $arResult = array_change_key_case($arResult, CASE_LOWER);
+        }
         return $arResult;
     }
 
     public static function GetSectionSortFields($arFields = array(), $arOptions = array())
     {
         $arResult = array();
-        if (!is_array($arFields))
+        if (!is_array($arFields)) {
             $arFields = array($arFields);
-        if (!is_array($arOptions))
+        }
+        if (!is_array($arOptions)) {
             $arOptions = array();
+        }
         $boolLowerCase = (isset($arOptions['KEY_LOWERCASE']) && $arOptions['KEY_LOWERCASE'] == 'Y');
         $arSortFields = array(
             "SORT" => Loc::getMessage("IBLOCK_SORT_FIELD_SORT"),
@@ -941,15 +1015,17 @@ class CIBlockParameters
         );
         if (!empty($arFields)) {
             foreach ($arFields as $strFieldName) {
-                if (isset($arSortFields[$strFieldName]))
+                if (isset($arSortFields[$strFieldName])) {
                     $arResult[$strFieldName] = $arSortFields[$strFieldName];
+                }
             }
             unset($strFieldName);
         } else {
             $arResult = $arSortFields;
         }
-        if ($boolLowerCase)
+        if ($boolLowerCase) {
             $arResult = array_change_key_case($arResult, CASE_LOWER);
+        }
         return $arResult;
     }
 

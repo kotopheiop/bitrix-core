@@ -12,14 +12,18 @@ class CMailRegru
     // https://api.reg.ru/api/regru2/domain/check
     public static function checkDomain($user, $password, $domain, &$error)
     {
-        $result = self::post('https://api.reg.ru/api/regru2/domain/check', array(
-            'username' => $user,
-            'password' => $password,
-            'domain_name' => $domain
-        ));
+        $result = self::post(
+            'https://api.reg.ru/api/regru2/domain/check',
+            array(
+                'username' => $user,
+                'password' => $password,
+                'domain_name' => $domain
+            )
+        );
 
-        if (isset($result['result']) && $result['result'] == 'success')
+        if (isset($result['result']) && $result['result'] == 'success') {
             return $result['answer'];
+        }
 
         self::setError($result, $error);
         return false;
@@ -28,19 +32,25 @@ class CMailRegru
     // https://api.reg.ru/api/regru2/domain/get_suggest
     public static function suggestDomain($user, $password, $word1, $word2, $tlds, &$error)
     {
-        $result = self::post('https://api.reg.ru/api/regru2/domain/get_suggest', array(
-            'username' => $user,
-            'password' => $password,
-            'input_format' => 'json',
-            'input_data' => json_encode(array(
-                'word' => $word1,
-                'additional_word' => $word2,
-                'tlds' => $tlds
-            ))
-        ));
+        $result = self::post(
+            'https://api.reg.ru/api/regru2/domain/get_suggest',
+            array(
+                'username' => $user,
+                'password' => $password,
+                'input_format' => 'json',
+                'input_data' => json_encode(
+                    array(
+                        'word' => $word1,
+                        'additional_word' => $word2,
+                        'tlds' => $tlds
+                    )
+                )
+            )
+        );
 
-        if (isset($result['result']) && $result['result'] == 'success')
+        if (isset($result['result']) && $result['result'] == 'success') {
             return $result['answer'];
+        }
 
         self::setError($result, $error);
         return false;
@@ -49,16 +59,20 @@ class CMailRegru
     // https://api.reg.ru/api/regru2/domain/create
     public static function createDomain($user, $password, $domain, $params, &$error)
     {
-        $result = self::post('https://api.reg.ru/api/regru2/domain/create', array(
-            'username' => $user,
-            'password' => $password,
-            'domain_name' => $domain,
-            'input_format' => 'json',
-            'input_data' => json_encode($params)
-        ));
+        $result = self::post(
+            'https://api.reg.ru/api/regru2/domain/create',
+            array(
+                'username' => $user,
+                'password' => $password,
+                'domain_name' => $domain,
+                'input_format' => 'json',
+                'input_data' => json_encode($params)
+            )
+        );
 
-        if (isset($result['result']) && $result['result'] == 'success')
+        if (isset($result['result']) && $result['result'] == 'success') {
             return $result['answer'];
+        }
 
         self::setError($result, $error);
         return false;
@@ -67,16 +81,20 @@ class CMailRegru
     // https://api.reg.ru/api/regru2/service/get_info
     public static function checkDomainInfo($user, $password, $domain, &$error)
     {
-        $result = self::post('https://api.reg.ru/api/regru2/service/get_info', array(
-            'username' => $user,
-            'password' => $password,
-            'domain_name' => $domain,
-            'input_format' => 'json',
-            'input_data' => json_encode(array('servtype' => 'domain'))
-        ));
+        $result = self::post(
+            'https://api.reg.ru/api/regru2/service/get_info',
+            array(
+                'username' => $user,
+                'password' => $password,
+                'domain_name' => $domain,
+                'input_format' => 'json',
+                'input_data' => json_encode(array('servtype' => 'domain'))
+            )
+        );
 
-        if (isset($result['result']) && $result['result'] == 'success')
+        if (isset($result['result']) && $result['result'] == 'success') {
             return $result['answer']['services'][0];
+        }
 
         self::setError($result, $error);
         return false;
@@ -85,19 +103,25 @@ class CMailRegru
     // https://api.reg.ru/api/regru2/service/renew
     public static function renewDomain($user, $password, $domain, $params, &$error)
     {
-        $result = self::post('https://api.reg.ru/api/regru2/service/renew', array(
-            'username' => $user,
-            'password' => $password,
-            'domain_name' => $domain,
-            'input_format' => 'json',
-            'input_data' => json_encode(array_merge(
-                $params,
-                array('servtype' => 'domain')
-            ))
-        ));
+        $result = self::post(
+            'https://api.reg.ru/api/regru2/service/renew',
+            array(
+                'username' => $user,
+                'password' => $password,
+                'domain_name' => $domain,
+                'input_format' => 'json',
+                'input_data' => json_encode(
+                    array_merge(
+                        $params,
+                        array('servtype' => 'domain')
+                    )
+                )
+            )
+        );
 
-        if (isset($result['result']) && $result['result'] == 'success')
+        if (isset($result['result']) && $result['result'] == 'success') {
             return $result['answer'];
+        }
 
         self::setError($result, $error);
         return false;
@@ -105,18 +129,24 @@ class CMailRegru
 
     public static function updateDns($user, $password, $domain, $params, &$error)
     {
-        $result = self::post('https://api.reg.ru/api/regru2/zone/update_records', array(
-            'username' => $user,
-            'password' => $password,
-            'domain_name' => $domain,
-            'input_format' => 'json',
-            'input_data' => json_encode(array(
-                'action_list' => $params
-            ))
-        ));
+        $result = self::post(
+            'https://api.reg.ru/api/regru2/zone/update_records',
+            array(
+                'username' => $user,
+                'password' => $password,
+                'domain_name' => $domain,
+                'input_format' => 'json',
+                'input_data' => json_encode(
+                    array(
+                        'action_list' => $params
+                    )
+                )
+            )
+        );
 
-        if (isset($result['result']) && $result['result'] == 'success')
+        if (isset($result['result']) && $result['result'] == 'success') {
             return $result['answer']['domains'][0];
+        }
 
         self::setError($result, $error);
         return false;
@@ -125,17 +155,23 @@ class CMailRegru
     // https://api.reg.ru/api/regru2/service/get_list
     public static function getDomainsList($user, $password, &$error)
     {
-        $result = self::post('https://api.reg.ru/api/regru2/service/get_list', array(
-            'username' => $user,
-            'password' => $password,
-            'input_format' => 'json',
-            'input_data' => json_encode(array(
-                'servtype' => 'domain'
-            ))
-        ));
+        $result = self::post(
+            'https://api.reg.ru/api/regru2/service/get_list',
+            array(
+                'username' => $user,
+                'password' => $password,
+                'input_format' => 'json',
+                'input_data' => json_encode(
+                    array(
+                        'servtype' => 'domain'
+                    )
+                )
+            )
+        );
 
-        if (isset($result['result']) && $result['result'] == 'success')
+        if (isset($result['result']) && $result['result'] == 'success') {
             return $result['answer']['services'];
+        }
 
         self::setError($result, $error);
         return false;

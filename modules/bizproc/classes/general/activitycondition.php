@@ -6,8 +6,9 @@ abstract class CBPActivityCondition
 
     public static function CreateInstance($code, $data)
     {
-        if (preg_match("#[^a-zA-Z0-9_]#", $code))
+        if (preg_match("#[^a-zA-Z0-9_]#", $code)) {
             throw new Exception("Activity '" . $code . "' is not valid");
+        }
 
         $classname = 'CBP' . $code;
         return new $classname($data);
@@ -28,8 +29,9 @@ abstract class CBPActivityCondition
         $runtime = CBPRuntime::GetRuntime();
         $runtime->IncludeActivityFile($code);
 
-        if (preg_match("#[^a-zA-Z0-9_]#", $code))
+        if (preg_match("#[^a-zA-Z0-9_]#", $code)) {
             throw new Exception("Activity '" . $code . "' is not valid");
+        }
 
         $classname = 'CBP' . $code;
 

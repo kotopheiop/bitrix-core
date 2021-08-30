@@ -43,7 +43,9 @@ class NosqlPrimarySelector
         }
 
         // if empty joinmap, group, order and simple filter
-        if (!count($query->getJoinMap()) && !count($query->getGroupChains()) && !count($query->getOrderChains()) && !count($query->getHavingChains())) {
+        if (!count($query->getJoinMap()) && !count($query->getGroupChains()) && !count(
+                $query->getOrderChains()
+            ) && !count($query->getHavingChains())) {
             $entityPrimary = $query->getEntity()->getPrimary();
 
             // check for primary singularity
@@ -53,32 +55,42 @@ class NosqlPrimarySelector
                     $passFilter = true;
 
                     // check if only equality operations & 1-level filter
-                    foreach ($query->getFilter() as $filterElement => $filterValue) {
-                        if (is_numeric($filterElement) && is_array($filterValue)) {
-                            // filter has subfilters. not ok
-                            $passFilter = false;
-                            break;
+                    if ($query->getFilter()) {
+                        foreach ($query->getFilter() as $filterElement => $filterValue) {
+                            if (is_numeric($filterElement) && is_array($filterValue)) {
+                                // filter has subfilters. not ok
+                                $passFilter = false;
+                                break;
+                            }
+
+                            // no multiple values for HSPHP
+                            if (is_array($filterValue)) {
+                                $passFilter = false;
+                                break;
+                            }
+
+                            // skip system keys
+                            if ($filterElement === 'LOGIC') {
+                                continue;
+                            }
+
+                            $operation = substr($filterElement, 0, 1);
+
+                            if ($operation !== '=') {
+                                // only equal operation allowed. not ok
+                                $passFilter = false;
+                                break;
+                            }
                         }
-
-                        // no multiple values for HSPHP
-                        if (is_array($filterValue)) {
-                            $passFilter = false;
-                            break;
-                        }
-
-                        // skip system keys
-                        if ($filterElement === 'LOGIC') {
-                            continue;
-                        }
-
-                        $operation = substr($filterElement, 0, 1);
-
-                        if ($operation !== '=') {
-                            // only equal operation allowed. not ok
-                            $passFilter = false;
-                            break;
+                    } elseif ($query->getFilterHandler()->hasConditions()) {
+                        foreach ($query->getFilterHandler()->getConditions() as $condition) {
+                            if ($condition->getOperator() !== '=' || !is_scalar($condition->getValue())) {
+                                $passFilter = false;
+                                break;
+                            }
                         }
                     }
+
 
                     // fine!
                     if ($passFilter) {
@@ -103,11 +115,17 @@ class NosqlPrimarySelector
         // prepare filter
         $filter = array();
 
-        foreach ($query->getFilter() as $filterElem) {
-            if (is_array($filterElem)) {
-                $filter = array_merge($filter, $filterElem);
-            } else {
-                $filter[] = $filterElem;
+        if ($query->getFilter()) {
+            foreach ($query->getFilter() as $filterElem) {
+                if (is_array($filterElem)) {
+                    $filter = array_merge($filter, $filterElem);
+                } else {
+                    $filter[] = $filterElem;
+                }
+            }
+        } elseif ($query->getFilterHandler()->hasConditions()) {
+            foreach ($query->getFilterHandler()->getConditions() as $condition) {
+                $filter[] = $condition->getValue();
             }
         }
 

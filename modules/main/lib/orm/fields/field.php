@@ -99,7 +99,7 @@ abstract class Field
      */
     public function __construct($name, $parameters = array())
     {
-        if (!strlen($name)) {
+        if ($name == '') {
             throw new SystemException('Field name required');
         }
 
@@ -219,10 +219,13 @@ abstract class Field
                 $validators = call_user_func($this->validation);
 
                 if (!is_array($validators)) {
-                    throw new SystemException(sprintf(
-                        'Validation for %s field of %s entity should return array of validators',
-                        $this->name, $this->entity->getDataClass()
-                    ));
+                    throw new SystemException(
+                        sprintf(
+                            'Validation for %s field of %s entity should return array of validators',
+                            $this->name,
+                            $this->entity->getDataClass()
+                        )
+                    );
                 }
 
                 foreach ($validators as $validator) {
@@ -264,10 +267,13 @@ abstract class Field
     protected function appendValidator($validator)
     {
         if (!($validator instanceof Validators\Validator) && !is_callable($validator)) {
-            throw new SystemException(sprintf(
-                'Validators of "%s" field of "%s" entity should be a Validator\Base or callback',
-                $this->name, $this->entity->getDataClass()
-            ));
+            throw new SystemException(
+                sprintf(
+                    'Validators of "%s" field of "%s" entity should be a Validator\Base or callback',
+                    $this->name,
+                    $this->entity->getDataClass()
+                )
+            );
         }
 
         $this->validators[] = $validator;
@@ -286,10 +292,13 @@ abstract class Field
                 $modifiers = call_user_func($this->fetchDataModification);
 
                 if (!is_array($modifiers)) {
-                    throw new SystemException(sprintf(
-                        'Fetch Data Modification for %s field of %s entity should return array of modifiers (callbacks)',
-                        $this->name, $this->entity->getDataClass()
-                    ));
+                    throw new SystemException(
+                        sprintf(
+                            'Fetch Data Modification for %s field of %s entity should return array of modifiers (callbacks)',
+                            $this->name,
+                            $this->entity->getDataClass()
+                        )
+                    );
                 }
 
                 foreach ($modifiers as $modifier) {
@@ -331,10 +340,13 @@ abstract class Field
     protected function appendFetchDataModifier($modifier)
     {
         if (!is_callable($modifier)) {
-            throw new SystemException(sprintf(
-                'Modifier of "%s" field of "%s" entity should be a callback',
-                $this->name, $this->entity->getDataClass()
-            ));
+            throw new SystemException(
+                sprintf(
+                    'Modifier of "%s" field of "%s" entity should be a callback',
+                    $this->name,
+                    $this->entity->getDataClass()
+                )
+            );
         }
 
         $this->fetchDataModifiers[] = $modifier;
@@ -353,10 +365,13 @@ abstract class Field
                 $modifiers = call_user_func($this->saveDataModification);
 
                 if (!is_array($modifiers)) {
-                    throw new SystemException(sprintf(
-                        'Save Data Modification for %s field of %s entity should return array of modifiers (callbacks)',
-                        $this->name, $this->entity->getDataClass()
-                    ));
+                    throw new SystemException(
+                        sprintf(
+                            'Save Data Modification for %s field of %s entity should return array of modifiers (callbacks)',
+                            $this->name,
+                            $this->entity->getDataClass()
+                        )
+                    );
                 }
 
                 foreach ($modifiers as $modifier) {
@@ -398,10 +413,13 @@ abstract class Field
     protected function appendSaveDataModifier($modifier)
     {
         if (!is_callable($modifier)) {
-            throw new SystemException(sprintf(
-                'Save modifier of "%s" field of "%s" entity should be a callback',
-                $this->name, $this->entity->getDataClass()
-            ));
+            throw new SystemException(
+                sprintf(
+                    'Save modifier of "%s" field of "%s" entity should be a callback',
+                    $this->name,
+                    $this->entity->getDataClass()
+                )
+            );
         }
 
         $this->saveDataModifiers[] = $modifier;

@@ -23,7 +23,7 @@ abstract class NameEntity extends Entity\DataManager
         return 'LANGUAGE_ID';
     }
 
-    abstract public function getReferenceFieldName();
+    abstract public static function getReferenceFieldName();
 
     /**
      * Add translations for $primaryOwner
@@ -37,8 +37,9 @@ abstract class NameEntity extends Entity\DataManager
         $primaryOwner = Assert::expectIntegerPositive($primaryOwner, '$primaryOwner');
 
         // nothing to connect to, simply exit
-        if (!is_array($names) || empty($names))
+        if (!is_array($names) || empty($names)) {
             return;
+        }
 
         $langField = static::getLanguageFieldName();
         $refField = static::getReferenceFieldName();
@@ -48,20 +49,22 @@ abstract class NameEntity extends Entity\DataManager
 
             $empty = true;
             foreach ($name as $arg) {
-                if (strlen($arg) > 0) {
+                if ($arg <> '') {
                     $empty = false;
                     break;
                 }
             }
 
             if (!$empty) {
-                $res = static::add(array_merge(
-                    array(
-                        $langField => $lid,
-                        $refField => $primaryOwner
-                    ),
-                    $name
-                ));
+                $res = static::add(
+                    array_merge(
+                        array(
+                            $langField => $lid,
+                            $refField => $primaryOwner
+                        ),
+                        $name
+                    )
+                );
 
                 if (!$res->isSuccess()) {
                     throw new Main\SystemException(
@@ -69,7 +72,8 @@ abstract class NameEntity extends Entity\DataManager
                         ' (' .
                         implode(
                             ',',
-                            $res->getErrorMessages()) .
+                            $res->getErrorMessages()
+                        ) .
                         ')'
                     );
                 }
@@ -90,27 +94,31 @@ abstract class NameEntity extends Entity\DataManager
     {
         $primaryOwner = Assert::expectIntegerPositive($primaryOwner, '$primaryOwner');
 
-        if (!is_array($names))
+        if (!is_array($names)) {
             $names = array();
+        }
 
         $langField = static::getLanguageFieldName();
         $refField = static::getReferenceFieldName();
 
         // get already existed name records
-        $res = static::getList(array(
-            'filter' => array($refField => $primaryOwner),
-            'select' => array('ID', $langField)
-        ));
+        $res = static::getList(
+            array(
+                'filter' => array($refField => $primaryOwner),
+                'select' => array('ID', $langField)
+            )
+        );
         $existed = array();
-        while ($item = $res->Fetch())
+        while ($item = $res->Fetch()) {
             $existed[$item[$langField]] = $item['ID'];
+        }
 
         foreach ($names as $lid => $name) {
             $lid = Assert::castTrimLC($lid);
 
             $empty = true;
             foreach ($name as $arg) {
-                if (strlen($arg) > 0) {
+                if ($arg <> '') {
                     $empty = false;
                     break;
                 }
@@ -118,25 +126,36 @@ abstract class NameEntity extends Entity\DataManager
 
             if (!isset($existed[$lid])) {
                 if (!$empty) {
-                    $res = static::add(array_merge(
-                        array(
-                            $langField => $lid,
-                            $refField => $primaryOwner
-                        ),
-                        $name
-                    ));
-                    if (!$res->isSuccess())
-                        throw new Main\SystemException(Loc::getMessage('SALE_LOCATION_NAME_NAME_ENTITY_CANNOT_ADD_NAMES_EXCEPTION'));
+                    $res = static::add(
+                        array_merge(
+                            array(
+                                $langField => $lid,
+                                $refField => $primaryOwner
+                            ),
+                            $name
+                        )
+                    );
+                    if (!$res->isSuccess()) {
+                        throw new Main\SystemException(
+                            Loc::getMessage('SALE_LOCATION_NAME_NAME_ENTITY_CANNOT_ADD_NAMES_EXCEPTION')
+                        );
+                    }
                 }
             } else {
                 if ($empty) {
                     $res = static::delete($existed[$lid]);
-                    if (!$res->isSuccess())
-                        throw new Main\SystemException(Loc::getMessage('SALE_LOCATION_NAME_NAME_ENTITY_CANNOT_DELETE_NAMES_EXCEPTION'));
+                    if (!$res->isSuccess()) {
+                        throw new Main\SystemException(
+                            Loc::getMessage('SALE_LOCATION_NAME_NAME_ENTITY_CANNOT_DELETE_NAMES_EXCEPTION')
+                        );
+                    }
                 } else {
                     $res = static::update($existed[$lid], $name);
-                    if (!$res->isSuccess())
-                        throw new Main\SystemException(Loc::getMessage('SALE_LOCATION_NAME_NAME_ENTITY_CANNOT_UPDATE_NAMES_EXCEPTION'));
+                    if (!$res->isSuccess()) {
+                        throw new Main\SystemException(
+                            Loc::getMessage('SALE_LOCATION_NAME_NAME_ENTITY_CANNOT_UPDATE_NAMES_EXCEPTION')
+                        );
+                    }
                 }
             }
         }
@@ -153,16 +172,21 @@ abstract class NameEntity extends Entity\DataManager
         $primaryOwner = Assert::expectIntegerPositive($primaryOwner, '$primaryOwner');
 
         // hunt existed
-        $listRes = static::getList(array(
-            'filter' => array(static::getReferenceFieldName() => $primaryOwner),
-            'select' => array('ID')
-        ));
+        $listRes = static::getList(
+            array(
+                'filter' => array(static::getReferenceFieldName() => $primaryOwner),
+                'select' => array('ID')
+            )
+        );
 
         // kill existed
         while ($item = $listRes->fetch()) {
             $res = static::delete($item['ID']);
-            if (!$res->isSuccess())
-                throw new Main\SystemException(Loc::getMessage('SALE_LOCATION_NAME_NAME_ENTITY_CANNOT_DELETE_NAMES_EXCEPTION'));
+            if (!$res->isSuccess()) {
+                throw new Main\SystemException(
+                    Loc::getMessage('SALE_LOCATION_NAME_NAME_ENTITY_CANNOT_DELETE_NAMES_EXCEPTION')
+                );
+            }
         }
     }
 
@@ -177,16 +201,20 @@ abstract class NameEntity extends Entity\DataManager
     {
         $primaryOwner = Assert::expectIntegerPositive($primaryOwner, '$primaryOwner');
 
-        if (!is_array($names))
+        if (!is_array($names)) {
             $names = array();
+        }
 
-        if (!is_array($behaviour))
+        if (!is_array($behaviour)) {
             $behaviour = array();
-        if (!isset($behaviour['TREAT_EMPTY_AS_ABSENT']))
+        }
+        if (!isset($behaviour['TREAT_EMPTY_AS_ABSENT'])) {
             $behaviour['TREAT_EMPTY_AS_ABSENT'] = true;
+        }
 
-        if (empty($names))
+        if (empty($names)) {
             return;
+        }
 
         $namesLC = array();
         foreach ($names as $lid => $data) {
@@ -228,12 +256,15 @@ abstract class NameEntity extends Entity\DataManager
      */
     public static function deleteMultipleByParentRangeSql($sql)
     {
-        if (!strlen($sql))
+        if ($sql == '') {
             throw new Main\SystemException('Range sql is empty');
+        }
 
         $dbConnection = Main\HttpApplication::getConnection();
 
-        $dbConnection->query('delete from ' . static::getTableName() . ' where ' . static::getReferenceFieldName() . ' in (' . $sql . ')');
+        $dbConnection->query(
+            'delete from ' . static::getTableName() . ' where ' . static::getReferenceFieldName() . ' in (' . $sql . ')'
+        );
     }
 
     protected static function checkEmpty($item)

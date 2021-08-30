@@ -466,7 +466,10 @@ class RestService extends \IRestService
         if (is_array($params["FILTER"])) {
             list($availableFields, $listCustomFields) = $element->getAvailableFields();
             $element->resultSanitizeFilter = self::getSanitizeFilter(
-                $params["FILTER"], $availableFields, $listCustomFields);
+                $params["FILTER"],
+                $availableFields,
+                $listCustomFields
+            );
         }
         list ($elements, $queryObject) = $element->get(self::getNavData($n));
         if ($elements) {

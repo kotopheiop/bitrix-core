@@ -1,4 +1,5 @@
-<?
+<?php
+
 /*
 ��� ���������� ��������� � ����� �� ������ ��������� ���� ����������� ������������� ������� ������ ��������� ���������� �������:
 Reply-To: email@�������.������
@@ -24,23 +25,26 @@ Subject: [RE:] ����� ���������
 	- ��������� ��������� � ����, ������ �� from, ���� ������������ ����� �� ����
 	- ������: ������������� � XML_ID, (?)������ �� �������� ���������, (?)�� ����� ��������� �����
 */
+
 IncludeModuleLangFile(__FILE__);
 
 class CForumEMail
 {
-    function GetForumFilters($FID, $SOCNET_GROUP_ID = false)
+    public static function GetForumFilters($FID, $SOCNET_GROUP_ID = false)
     {
         global $DB;
         $strSql = 'SELECT *
 			FROM b_forum_email
-			WHERE FORUM_ID = ' . intval($FID) . ($SOCNET_GROUP_ID > 0 ? ' AND SOCNET_GROUP_ID = ' . intval($SOCNET_GROUP_ID) : '') . '
-			ORDER BY EMAIL_GROUP ' . (strtoupper($DB->type) == 'ORACLE' ? ' NULLS LAST' : '');
+			WHERE FORUM_ID = ' . intval($FID) . ($SOCNET_GROUP_ID > 0 ? ' AND SOCNET_GROUP_ID = ' . intval(
+                    $SOCNET_GROUP_ID
+                ) : '') . '
+			ORDER BY EMAIL_GROUP ' . ($DB->type == 'ORACLE' ? ' NULLS LAST' : '');
 
         $dbr = $DB->Query($strSql);
         return $dbr->Fetch();
     }
 
-    function GetMailFilters($MAIL_FILTER_ID)
+    public static function GetMailFilters($MAIL_FILTER_ID)
     {
         global $DB;
         $strSql = 'SELECT fe.*, f.MODERATION
@@ -50,18 +54,21 @@ class CForumEMail
         return $dbr;
     }
 
-    function Set($arFields)
+    public static function Set($arFields)
     {
         global $DB;
 
-        if (is_set($arFields, "USE_EMAIL") && $arFields["USE_EMAIL"] != "Y")
+        if (is_set($arFields, "USE_EMAIL") && $arFields["USE_EMAIL"] != "Y") {
             $arFields["USE_EMAIL"] = "N";
+        }
 
-        if (is_set($arFields, "USE_SUBJECT") && $arFields["USE_SUBJECT"] != "Y")
+        if (is_set($arFields, "USE_SUBJECT") && $arFields["USE_SUBJECT"] != "Y") {
             $arFields["USE_SUBJECT"] = "N";
+        }
 
-        if (is_set($arFields, "NOT_MEMBER_POST") && $arFields["NOT_MEMBER_POST"] != "Y")
+        if (is_set($arFields, "NOT_MEMBER_POST") && $arFields["NOT_MEMBER_POST"] != "Y") {
             $arFields["NOT_MEMBER_POST"] = "N";
+        }
 
         $filter = CForumEMail::GetForumFilters($arFields["FORUM_ID"], $arFields["SOCNET_GROUP_ID"]);
         if ($filter) {
@@ -106,7 +113,7 @@ class CForumEMail
         return $ID;
     }
 
-    function OnGetSocNetFilterList()
+    public static function OnGetSocNetFilterList()
     {
         return Array(
             "ID" => "forumsocnet",
@@ -118,7 +125,7 @@ class CForumEMail
         );
     }
 
-    function SocnetPrepareVars()
+    public static function SocnetPrepareVars()
     {
         return '';
     }
@@ -126,8 +133,9 @@ class CForumEMail
     public static function SocnetLogMessageAdd($arParams, $arMessageFields, $action = "")
     {
         static $parser = null;
-        if ($parser == null)
+        if ($parser == null) {
             $parser = new forumTextParser();
+        }
         $arAllow = array(
             "HTML" => "N",
             "ANCHOR" => "N",
@@ -149,16 +157,19 @@ class CForumEMail
             "ENTITY_TYPE" => SONET_ENTITY_GROUP,
             "ENTITY_ID" => $arParams["ENTITY_ID"],
             "EVENT_ID" => "forum",
-            "=LOG_DATE" => (!!$arMessageFields["DATE_CREATE"] ? $arMessageFields["DATE_CREATE"] : $GLOBALS["DB"]->CurrentTimeFunction()),
+            "=LOG_DATE" => (!!$arMessageFields["DATE_CREATE"] ? $arMessageFields["DATE_CREATE"] : $GLOBALS["DB"]->CurrentTimeFunction(
+            )),
             "LOG_UPDATE" => (!!$arMessageFields["POST_DATE"] ? $arMessageFields["POST_DATE"] : null),
             "TITLE_TEMPLATE" => str_replace(
                 "#AUTHOR_NAME#",
                 $arMessageFields["AUTHOR_NAME"],
-                CForumEmail::GetLangMessage("FORUM_MAIL_SOCNET_TITLE_TOPIC", $arParams["LANG"])),
+                CForumEmail::GetLangMessage("FORUM_MAIL_SOCNET_TITLE_TOPIC", $arParams["LANG"])
+            ),
             "TITLE" => $arMessageFields["TITLE"],
             "MESSAGE" => $parser->convert($arMessageFields["POST_MESSAGE"], $arAllow),
             "TEXT_MESSAGE" => $parser->convert4mail($arMessageFields["POST_MESSAGE"]),
-            "URL" => CComponentEngine::MakePathFromTemplate($arParams["URL_TEMPLATES_MESSAGE"],
+            "URL" => CComponentEngine::MakePathFromTemplate(
+                $arParams["URL_TEMPLATES_MESSAGE"],
                 array(
                     "UID" => $arMessageFields["AUTHOR_ID"],
                     "FID" => $arMessageFields["FORUM_ID"],
@@ -170,7 +181,11 @@ class CForumEMail
             "PARAMS" => serialize(
                 array(
                     "PATH_TO_MESSAGE" => CComponentEngine::MakePathFromTemplate(
-                        $arParams["URL_TEMPLATES_MESSAGE"], array("TID" => $arMessageFields["TOPIC_ID"])))),
+                        $arParams["URL_TEMPLATES_MESSAGE"],
+                        array("TID" => $arMessageFields["TOPIC_ID"])
+                    )
+                )
+            ),
             "MODULE_ID" => false,
             "CALLBACK_FUNC" => false,
             "SOURCE_ID" => $arMessageFields["ID"],
@@ -178,36 +193,55 @@ class CForumEMail
             "RATING_ENTITY_ID" => $arMessageFields["TOPIC_ID"]
         );
 
-        if ($arMessageFields["AUTHOR_ID"] > 0)
+        if ($arMessageFields["AUTHOR_ID"] > 0) {
             $arFieldsForSocnet["USER_ID"] = $arMessageFields["AUTHOR_ID"];
+        }
 
         $db_res = CForumFiles::GetList(array("ID" => "ASC"), array("MESSAGE_ID" => $arMessageFields["ID"]));
         $ufFileID = array();
-        while ($res = $db_res->Fetch())
+        while ($res = $db_res->Fetch()) {
             $ufFileID[] = $res["FILE_ID"];
-        $ufDocID = $GLOBALS["USER_FIELD_MANAGER"]->GetUserFieldValue("FORUM_MESSAGE", "UF_FORUM_MESSAGE_DOC", $arMessageFields["ID"], LANGUAGE_ID);
+        }
+        $ufDocID = $GLOBALS["USER_FIELD_MANAGER"]->GetUserFieldValue(
+            "FORUM_MESSAGE",
+            "UF_FORUM_MESSAGE_DOC",
+            $arMessageFields["ID"],
+            LANGUAGE_ID
+        );
 
         $logID = $arParams["LOG_ID"];
         if ($logID <= 0) {
-            if (!empty($ufFileID))
+            if (!empty($ufFileID)) {
                 $arFieldsForSocnet["UF_SONET_LOG_FILE"] = $ufFileID;
-            if ($ufDocID)
+            }
+            if ($ufDocID) {
                 $arFieldsForSocnet["UF_SONET_LOG_DOC"] = $ufDocID;
+            }
 
             $logID = CSocNetLog::Add($arFieldsForSocnet, false);
 
             if (intval($logID) > 0) {
                 CSocNetLog::Update($logID, array("TMP_ID" => $logID));
-                CSocNetLogRights::SetForSonet($logID, $arFieldsForSocnet["ENTITY_TYPE"], $arFieldsForSocnet["ENTITY_ID"], "forum", "view", true);
-                if ($action == "SEND_EVENT")
+                CSocNetLogRights::SetForSonet(
+                    $logID,
+                    $arFieldsForSocnet["ENTITY_TYPE"],
+                    $arFieldsForSocnet["ENTITY_ID"],
+                    "forum",
+                    "view",
+                    true
+                );
+                if ($action == "SEND_EVENT") {
                     CSocNetLog::SendEvent($logID, "SONET_NEW_EVENT", $logID);
+                }
             }
         }
         if ($logID > 0 && $action == "ADD_COMMENT") {
-            if (!empty($ufFileID))
+            if (!empty($ufFileID)) {
                 $arFieldsForSocnet["UF_SONET_COM_FILE"] = $ufFileID;
-            if ($ufDocID)
+            }
+            if ($ufDocID) {
                 $arFieldsForSocnet["UF_SONET_COM_DOC"] = $ufDocID;
+            }
 
             $arFieldsForSocnet["LOG_ID"] = $logID;
             $arFieldsForSocnet["RATING_TYPE_ID"] = "FORUM_POST";
@@ -220,22 +254,36 @@ class CForumEMail
         return $logID;
     }
 
-    function SocnetEMailMessageCheck(&$arMessageFields, $ACTION_VARS)
+    public static function SocnetEMailMessageCheck(&$arMessageFields, $ACTION_VARS)
     {
-        $arEmails = CMailUtil::ExtractAllMailAddresses($arMessageFields["FIELD_TO"] . "," . $arMessageFields["FIELD_CC"] . "," . $arMessageFields["FIELD_BCC"]);
+        $arEmails = CMailUtil::ExtractAllMailAddresses(
+            $arMessageFields["FIELD_TO"] . "," . $arMessageFields["FIELD_CC"] . "," . $arMessageFields["FIELD_BCC"]
+        );
         $dbMbx = CMailBox::GetById($arMessageFields["MAIL_FILTER"]["MAILBOX_ID"]);
         $arMbx = $dbMbx->Fetch();
         $dbRes = CForumEMail::GetMailFilters($arMessageFields["MAIL_FILTER"]["ID"]);
         while ($arRes = $dbRes->Fetch()) {
             if ($arRes["EMAIL_FORUM_ACTIVE"] == "Y") {
-                if ($arMbx["SERVER_TYPE"] == "smtp" && !in_array(CMailUtil::ExtractMailAddress($arRes["EMAIL"]), $arEmails))
+                if ($arMbx["SERVER_TYPE"] == "smtp" && !in_array(
+                        CMailUtil::ExtractMailAddress($arRes["EMAIL"]),
+                        $arEmails
+                    )) {
                     continue;
+                }
 
-                if ($arRes["EMAIL_GROUP"] != '' && !in_array(CMailUtil::ExtractMailAddress($arRes["EMAIL_GROUP"]), $arEmails))
+                if ($arRes["EMAIL_GROUP"] != '' && !in_array(
+                        CMailUtil::ExtractMailAddress($arRes["EMAIL_GROUP"]),
+                        $arEmails
+                    )) {
                     continue;
+                }
 
-                if ($arRes["SUBJECT_SUF"] != '' && strpos($arMessageFields["SUBJECT"], $arRes["SUBJECT_SUF"]) === false)
+                if ($arRes["SUBJECT_SUF"] != '' && mb_strpos(
+                        $arMessageFields["SUBJECT"],
+                        $arRes["SUBJECT_SUF"]
+                    ) === false) {
                     continue;
+                }
 
                 $arMessageFields["FORUM_EMAIL_FILTER"] = $arRes;
                 return true;
@@ -245,32 +293,36 @@ class CForumEMail
         return false;
     }
 
-    function SocnetEMailMessageAdd($arMessageFields, $ACTION_VARS)
+    public static function SocnetEMailMessageAdd($arMessageFields, $ACTION_VARS)
     {
-        if (!is_array($arMessageFields["FORUM_EMAIL_FILTER"]))
+        if (!is_array($arMessageFields["FORUM_EMAIL_FILTER"])) {
             return false;
+        }
 
-        if (!CModule::IncludeModule("socialnetwork"))
+        if (!CModule::IncludeModule("socialnetwork")) {
             return false;
+        }
 
         $arParams = $arMessageFields["FORUM_EMAIL_FILTER"];
 
-        if (!CSocNetGroup::GetByID($arParams["SOCNET_GROUP_ID"]))
+        if (!CSocNetGroup::GetByID($arParams["SOCNET_GROUP_ID"])) {
             return false;
+        }
 
-        if (!CSocNetFeatures::IsActiveFeature(SONET_ENTITY_GROUP, $arParams["SOCNET_GROUP_ID"], "forum"))
+        if (!CSocNetFeatures::IsActiveFeature(SONET_ENTITY_GROUP, $arParams["SOCNET_GROUP_ID"], "forum")) {
             return false;
+        }
 
         // ������ ��� �����������
-        $message_email = (strlen($arMessageFields["FIELD_REPLY_TO"]) > 0) ? $arMessageFields["FIELD_REPLY_TO"] : $arMessageFields["FIELD_FROM"];
-        $message_email_addr = strtolower(CMailUtil::ExtractMailAddress($message_email));
+        $message_email = ($arMessageFields["FIELD_REPLY_TO"] <> '') ? $arMessageFields["FIELD_REPLY_TO"] : $arMessageFields["FIELD_FROM"];
+        $message_email_addr = mb_strtolower(CMailUtil::ExtractMailAddress($message_email));
 
-        $o = "LAST_LOGIN";
-        $b = "DESC";
-        $res = CUser::GetList($o, $b, Array("ACTIVE" => "Y", "EMAIL" => $message_email_addr));
-        if (($arUser = $res->Fetch()) && strtolower(CMailUtil::ExtractMailAddress($arUser["EMAIL"])) == $message_email_addr)
+        $res = CUser::GetList("LAST_LOGIN", "DESC", Array("ACTIVE" => "Y", "EMAIL" => $message_email_addr));
+        if (($arUser = $res->Fetch()) && mb_strtolower(
+                CMailUtil::ExtractMailAddress($arUser["EMAIL"])
+            ) == $message_email_addr) {
             $AUTHOR_USER_ID = $arUser["ID"];
-        elseif ($arParams["NOT_MEMBER_POST"] == "Y") {
+        } elseif ($arParams["NOT_MEMBER_POST"] == "Y") {
             $AUTHOR_USER_ID = false;
         } else {
             CMailLog::AddMessage(
@@ -288,20 +340,40 @@ class CForumEMail
 
         if ($arParams["NOT_MEMBER_POST"] != "Y") {
             // �������� ����� �������
-            if (CSocNetFeaturesPerms::CanPerformOperation($AUTHOR_USER_ID, SONET_ENTITY_GROUP, $arParams["SOCNET_GROUP_ID"], "forum", "full"))
+            if (CSocNetFeaturesPerms::CanPerformOperation(
+                $AUTHOR_USER_ID,
+                SONET_ENTITY_GROUP,
+                $arParams["SOCNET_GROUP_ID"],
+                "forum",
+                "full"
+            )) {
                 $PERMISSION = "Y";
-            elseif (CSocNetFeaturesPerms::CanPerformOperation($AUTHOR_USER_ID, SONET_ENTITY_GROUP, $arParams["SOCNET_GROUP_ID"], "forum", "newtopic"))
+            } elseif (CSocNetFeaturesPerms::CanPerformOperation(
+                $AUTHOR_USER_ID,
+                SONET_ENTITY_GROUP,
+                $arParams["SOCNET_GROUP_ID"],
+                "forum",
+                "newtopic"
+            )) {
                 $PERMISSION = "M";
-            elseif (CSocNetFeaturesPerms::CanPerformOperation($AUTHOR_USER_ID, SONET_ENTITY_GROUP, $arParams["SOCNET_GROUP_ID"], "forum", "answer"))
+            } elseif (CSocNetFeaturesPerms::CanPerformOperation(
+                $AUTHOR_USER_ID,
+                SONET_ENTITY_GROUP,
+                $arParams["SOCNET_GROUP_ID"],
+                "forum",
+                "answer"
+            )) {
                 $PERMISSION = "I";
-            else {
+            } else {
                 CMailLog::AddMessage(
                     Array(
                         "MAILBOX_ID" => $arMessageFields["MAILBOX_ID"],
                         "MESSAGE_ID" => $arMessageFields["ID"],
                         "FILTER_ID" => $arParams["MAIL_FILTER_ID"],
                         "LOG_TYPE" => "FILTER_ERROR",
-                        "MESSAGE" => GetMessage("FORUM_MAIL_ERROR2") . " " . $arUser["LOGIN"] . " [" . $AUTHOR_USER_ID . "] (" . $message_email_addr . ")"
+                        "MESSAGE" => GetMessage(
+                                "FORUM_MAIL_ERROR2"
+                            ) . " " . $arUser["LOGIN"] . " [" . $AUTHOR_USER_ID . "] (" . $message_email_addr . ")"
                     )
                 );
 
@@ -311,34 +383,47 @@ class CForumEMail
 
         $body = $arMessageFields["BODY"];
         //$body = preg_replace("/(\r\n)+/", "\r\n", $body);
-        $p = strpos($body, "\r\nFrom:");
+        $p = mb_strpos($body, "\r\nFrom:");
         if ($p > 0) {
-            $body = substr($body, 0, $p) . "\r\n[CUT]" . substr($body, $p) . "[/CUT]";
+            $body = mb_substr($body, 0, $p) . "\r\n[CUT]" . mb_substr($body, $p) . "[/CUT]";
         }
 
 
         $subject = $arMessageFields["SUBJECT"];
         // ������� ��� RE � FW
         $subject = trim(preg_replace('#^\s*((RE[0-9\[\]]*:\s*)|(FW:\s*))+(.*)$#i', '\4', $subject));
-        if ($subject == '')
+        if ($subject == '') {
             $subject = GetMessage("FORUM_MAIL_EMPTY_TOPIC_TITLE") . " " . rand();
+        }
 
         // ������ ����� ����
         $arFields = Array();
-        $FORUM_ID = IntVal($arParams["FORUM_ID"]);
-        $SOCNET_GROUP_ID = IntVal($arParams["SOCNET_GROUP_ID"]);
+        $FORUM_ID = intval($arParams["FORUM_ID"]);
+        $SOCNET_GROUP_ID = intval($arParams["SOCNET_GROUP_ID"]);
         $TOPIC_ID = 0;
         global $DB;
         if ($arMessageFields["IN_REPLY_TO"] != '') {
-            $dbTopic = $DB->Query("SELECT FT.ID FROM b_forum_topic FT INNER JOIN b_forum_message FM ON FM.TOPIC_ID=FT.ID WHERE FM.XML_ID='" . $DB->ForSQL($arMessageFields["IN_REPLY_TO"], 255) . "' AND FT.FORUM_ID=" . $FORUM_ID . " AND FT.SOCNET_GROUP_ID=" . $SOCNET_GROUP_ID);
-            if ($arTopic = $dbTopic->Fetch())
+            $dbTopic = $DB->Query(
+                "SELECT FT.ID FROM b_forum_topic FT INNER JOIN b_forum_message FM ON FM.TOPIC_ID=FT.ID WHERE FM.XML_ID='" . $DB->ForSQL(
+                    $arMessageFields["IN_REPLY_TO"],
+                    255
+                ) . "' AND FT.FORUM_ID=" . $FORUM_ID . " AND FT.SOCNET_GROUP_ID=" . $SOCNET_GROUP_ID
+            );
+            if ($arTopic = $dbTopic->Fetch()) {
                 $TOPIC_ID = $arTopic["ID"];
+            }
         }
 
         if ($arParams["USE_SUBJECT"] == "Y" && $TOPIC_ID <= 0) {
-            $dbTopic = $DB->Query("SELECT ID FROM b_forum_topic WHERE TITLE='" . $DB->ForSQL($subject, 255) . "' AND FORUM_ID=" . $FORUM_ID . " AND SOCNET_GROUP_ID=" . $SOCNET_GROUP_ID);// ���������� �� ��������?
-            if ($arTopic = $dbTopic->Fetch())
+            $dbTopic = $DB->Query(
+                "SELECT ID FROM b_forum_topic WHERE TITLE='" . $DB->ForSQL(
+                    $subject,
+                    255
+                ) . "' AND FORUM_ID=" . $FORUM_ID . " AND SOCNET_GROUP_ID=" . $SOCNET_GROUP_ID
+            );// ���������� �� ��������?
+            if ($arTopic = $dbTopic->Fetch()) {
                 $TOPIC_ID = $arTopic["ID"];
+            }
         }
 
         if ($AUTHOR_USER_ID > 0) {
@@ -349,7 +434,9 @@ class CForumEMail
                         "MESSAGE_ID" => $arMessageFields["ID"],
                         "FILTER_ID" => $arParams["MAIL_FILTER_ID"],
                         "LOG_TYPE" => "FILTER_ERROR",
-                        "MESSAGE" => GetMessage("FORUM_MAIL_ERROR3") . " " . $arUser["LOGIN"] . " [" . $AUTHOR_USER_ID . "] (" . $message_email_addr . ")"
+                        "MESSAGE" => GetMessage(
+                                "FORUM_MAIL_ERROR3"
+                            ) . " " . $arUser["LOGIN"] . " [" . $AUTHOR_USER_ID . "] (" . $message_email_addr . ")"
                     )
                 );
                 return false;
@@ -357,14 +444,17 @@ class CForumEMail
 
             $bSHOW_NAME = true;
             $res = CForumUser::GetByUSER_ID($AUTHOR_USER_ID);
-            if ($res)
+            if ($res) {
                 $bSHOW_NAME = ($res["SHOW_NAME"] == "Y");
+            }
 
-            if ($bSHOW_NAME)
-                $AUTHOR_NAME = $arUser["NAME"] . (strlen($arUser["NAME"]) <= 0 || strlen($arUser["LAST_NAME"]) <= 0 ? "" : " ") . $arUser["LAST_NAME"];
+            if ($bSHOW_NAME) {
+                $AUTHOR_NAME = $arUser["NAME"] . ($arUser["NAME"] == '' || $arUser["LAST_NAME"] == '' ? "" : " ") . $arUser["LAST_NAME"];
+            }
 
-            if (strlen(Trim($AUTHOR_NAME)) <= 0)
+            if (Trim($AUTHOR_NAME) == '') {
                 $AUTHOR_NAME = $arUser["LOGIN"];
+            }
         } else {
             $AUTHOR_NAME = $arMessageFields["FIELD_FROM"];
             $arFields["AUTHOR_EMAIL"] = $arMessageFields["FIELD_FROM"];
@@ -372,10 +462,11 @@ class CForumEMail
 
         $arFields["NEW_TOPIC"] = "N";
 
-        if ($PERMISSION >= "Q")
+        if ($PERMISSION >= "Q") {
             $arFields["APPROVED"] = "Y";
-        else
+        } else {
             $arFields["APPROVED"] = ($arParams["MODERATION"] == "Y") ? "N" : "Y";
+        }
 
         // ������� ����� ����
         if ($TOPIC_ID <= 0) {
@@ -394,7 +485,7 @@ class CForumEMail
             $arTopicFields["LAST_POSTER_NAME"] = $AUTHOR_NAME;
 
             $TOPIC_ID = CForumTopic::Add($arTopicFields);
-            if (IntVal($TOPIC_ID) <= 0) {
+            if (intval($TOPIC_ID) <= 0) {
                 CMailLog::AddMessage(
                     Array(
                         "MAILBOX_ID" => $arMessageFields["MAILBOX_ID"],
@@ -417,8 +508,9 @@ class CForumEMail
         $arFILES = array();
         $rsAttach = CMailAttachment::GetList(Array(), Array("MESSAGE_ID" => $arMessageFields["ID"]));
         while ($arAttach = $rsAttach->Fetch()) {
-            if ($arAttach['FILE_ID'])
+            if ($arAttach['FILE_ID']) {
                 $arAttach['FILE_DATA'] = CMailAttachment::getContents($arAttach);
+            }
             $filename = CTempFile::GetFileName(md5(uniqid("")) . ".tmp");
             CheckDirPath($filename);
             if (file_put_contents($filename, $arAttach["FILE_DATA"]) !== false) {
@@ -436,19 +528,25 @@ class CForumEMail
                     $arFILES[] = $arFiles[0];
                 } else {
                     $oError = $GLOBALS["APPLICATION"]->GetException();
-                    CMailLog::AddMessage(array(
-                        "MAILBOX_ID" => $arMessageFields["MAILBOX_ID"],
-                        "MESSAGE_ID" => $arMessageFields["ID"],
-                        "FILTER_ID" => $arParams["MAIL_FILTER_ID"],
-                        "LOG_TYPE" => "FILTER_ERROR",
-                        "MESSAGE" => GetMessage("FORUM_MAIL_ERROR6") . " (" . $arAttach["FILE_NAME"] . "): " . ($oError && $oError->GetString() ? $oError->GetString() : ""),
-                    ));
+                    CMailLog::AddMessage(
+                        array(
+                            "MAILBOX_ID" => $arMessageFields["MAILBOX_ID"],
+                            "MESSAGE_ID" => $arMessageFields["ID"],
+                            "FILTER_ID" => $arParams["MAIL_FILTER_ID"],
+                            "LOG_TYPE" => "FILTER_ERROR",
+                            "MESSAGE" => GetMessage(
+                                    "FORUM_MAIL_ERROR6"
+                                ) . " (" . $arAttach["FILE_NAME"] . "): " . ($oError && $oError->GetString(
+                                ) ? $oError->GetString() : ""),
+                        )
+                    );
                 }
             }
         }
 
-        if (count($arFILES) > 0)
+        if (count($arFILES) > 0) {
             $arFields["FILES"] = $arFILES;
+        }
 
         $arFields["AUTHOR_NAME"] = $AUTHOR_NAME;
         $arFields["AUTHOR_ID"] = $AUTHOR_USER_ID;
@@ -457,24 +555,29 @@ class CForumEMail
         $arFields["XML_ID"] = $arMessageFields["MSG_ID"];
         $arFields["SOURCE_ID"] = "EMAIL";
         $arRes = array();
-        if (!empty($arMessageFields["FIELD_FROM"]))
+        if (!empty($arMessageFields["FIELD_FROM"])) {
             $arRes[] = "From: " . $arMessageFields["FIELD_FROM"];
-        if (!empty($arMessageFields["FIELD_TO"]))
+        }
+        if (!empty($arMessageFields["FIELD_TO"])) {
             $arRes[] = "To: " . $arMessageFields["FIELD_TO"];
-        if (!empty($arMessageFields["FIELD_CC"]))
+        }
+        if (!empty($arMessageFields["FIELD_CC"])) {
             $arRes[] = "Cc: " . $arMessageFields["FIELD_CC"];
-        if (!empty($arMessageFields["FIELD_BCC"]))
+        }
+        if (!empty($arMessageFields["FIELD_BCC"])) {
             $arRes[] = "Bcc: " . $arMessageFields["FIELD_BCC"];
+        }
         $arRes[] = "Subject: " . $arMessageFields["SUBJECT"];
         $arRes[] = "Date: " . $arMessageFields["FIELD_DATE"];
 
         $arFields["MAIL_HEADER"] = implode("\r\n", $arRes);
 
         preg_match_all('#Received:\s+from\s+(.*)by.*#i', $arMessageFields["HEADER"], $regs);
-        if (is_array($regs) && is_array($regs[1]))
+        if (is_array($regs) && is_array($regs[1])) {
             $arFields["AUTHOR_IP"] = $arFields["AUTHOR_REAL_IP"] = '<email: ' . $regs[1][count($regs[1]) - 1] . '>';
-        else
+        } else {
             $arFields["AUTHOR_IP"] = $arFields["AUTHOR_REAL_IP"] = '<email: no address>';
+        }
         /*
 
         $AUTHOR_IP = ForumGetRealIP();
@@ -496,13 +599,15 @@ class CForumEMail
 
         $strErrorMessage = '';
         $MESSAGE_ID = CForumMessage::Add($arFields, false);
-        if (intVal($MESSAGE_ID) <= 0) {
+        if (intval($MESSAGE_ID) <= 0) {
             $str = $GLOBALS['APPLICATION']->GetException();
-            if ($str && $str->GetString())
+            if ($str && $str->GetString()) {
                 $strErrorMessage .= "[" . $str->GetString() . "]";
+            }
 
-            if ($arFields["NEW_TOPIC"] == 'Y')
+            if ($arFields["NEW_TOPIC"] == 'Y') {
                 CForumTopic::Delete($TOPIC_ID);
+            }
 
             CMailLog::AddMessage(
                 Array(
@@ -529,10 +634,11 @@ class CForumEMail
             CForumMessage::SendMailMessage($MESSAGE_ID, array(), false, "NEW_FORUM_MESSAGE");
 
             $dbSite = CSite::GetById($arMessageFields["LID"]);
-            if ($arSite = $dbSite->Fetch())
+            if ($arSite = $dbSite->Fetch()) {
                 $lang = $arSite['LANGUAGE_ID'];
-            else
+            } else {
                 $lang = $LANGUAGE_ID;
+            }
             $params = array(
                 "LOG_ID" => 0,
                 "ENTITY_ID" => $SOCNET_GROUP_ID,
@@ -571,9 +677,9 @@ class CForumEMail
                         false,
                         array("ID", "TMP_ID")
                     );
-                    if ($arRes = $dbRes->Fetch())
+                    if ($arRes = $dbRes->Fetch()) {
                         $log_id = $arRes["TMP_ID"];
-                    else {
+                    } else {
                         $dbFirstMessage = CForumMessage::GetList(
                             array("ID" => "ASC"),
                             array("TOPIC_ID" => $arForumMessage["TOPIC_ID"]),
@@ -582,7 +688,11 @@ class CForumEMail
                         );
                         if ($arFirstMessage = $dbFirstMessage->Fetch()) {
                             $arTopic = CForumTopic::GetByID($arFirstMessage["TOPIC_ID"]);
-                            $arFirstMessage["POST_MESSAGE"] = (COption::GetOptionString("forum", "FILTER", "Y") == "Y" ? $arFirstMessage["POST_MESSAGE_FILTER"] : $arFirstMessage["POST_MESSAGE"]);
+                            $arFirstMessage["POST_MESSAGE"] = (COption::GetOptionString(
+                                "forum",
+                                "FILTER",
+                                "Y"
+                            ) == "Y" ? $arFirstMessage["POST_MESSAGE_FILTER"] : $arFirstMessage["POST_MESSAGE"]);
                             $arFirstMessage["TITLE"] = $arTopic["TITLE"];
                             $log_id = self::SocnetLogMessageAdd(
                                 $params,
@@ -603,16 +713,16 @@ class CForumEMail
         }
     }
 
-    function GetLangMessage($ID, $lang)
+    public static function GetLangMessage($ID, $lang)
     {
         $MESS = Array();
-        if (file_exists($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/forum/lang/' . $lang . '/mail/mail.php'))
+        if (file_exists($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/forum/lang/' . $lang . '/mail/mail.php')) {
             include($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/forum/lang/' . $lang . '/mail/mail.php');
-        if ($MESS[$ID])
+        }
+        if ($MESS[$ID]) {
             return $MESS[$ID];
+        }
         include($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/forum/lang/en/mail/mail.php');
         return $MESS[$ID];
     }
 }
-
-?>

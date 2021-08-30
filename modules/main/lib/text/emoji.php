@@ -1,6 +1,7 @@
 <?php
 
 namespace Bitrix\Main\Text;
+
 /**
  * Bitrix Framework
  * @package bitrix
@@ -17,9 +18,12 @@ class Emoji
 
     public static function encode($text)
     {
-        return self::replace($text, function ($m) {
-            return ":" . bin2hex($m[0]) . ":";
-        });
+        return self::replace(
+            $text,
+            function ($m) {
+                return ":" . bin2hex($m[0]) . ":";
+            }
+        );
     }
 
     public static function decode($text)
@@ -28,15 +32,19 @@ class Emoji
             return $text;
         }
 
-        return preg_replace_callback("/:([A-F0-9]{8}):/is" . BX_UTF_PCRE_MODIFIER, function ($m) {
-            $result = hex2bin($m[1]);
+        return preg_replace_callback(
+            "/:([A-F0-9]{8}):/is" . BX_UTF_PCRE_MODIFIER,
+            function ($m) {
+                $result = hex2bin($m[1]);
 
-            if (preg_match(self::$emojiPattern, $result)) {
-                return $result;
-            }
+                if (preg_match(self::$emojiPattern, $result)) {
+                    return $result;
+                }
 
-            return $m[0];
-        }, $text);
+                return $m[0];
+            },
+            $text
+        );
     }
 
     /**

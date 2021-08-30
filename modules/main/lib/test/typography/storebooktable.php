@@ -36,15 +36,19 @@ class StoreBookTable extends DataManager
             (new IntegerField('STORE_ID'))
                 ->configurePrimary(),
 
-            (new Reference('STORE', StoreTable::class,
-                Join::on('this.STORE_ID', 'ref.ID')))
+            (new Reference(
+                'STORE', StoreTable::class,
+                Join::on('this.STORE_ID', 'ref.ID')
+            ))
                 ->configureJoinType('inner'),
 
             (new IntegerField('BOOK_ID'))
                 ->configurePrimary(),
 
-            (new Reference('BOOK', BookTable::class,
-                Join::on('this.BOOK_ID', 'ref.ID')))
+            (new Reference(
+                'BOOK', BookTable::class,
+                Join::on('this.BOOK_ID', 'ref.ID')
+            ))
                 ->configureJoinType('inner'),
 
             (new IntegerField('QUANTITY'))

@@ -22,21 +22,24 @@ final class ChatIndex extends Stepper
      */
     public function execute(array &$result)
     {
-        if (!Loader::includeModule(self::$moduleId))
+        if (!Loader::includeModule(self::$moduleId)) {
             return false;
+        }
 
         $return = false;
 
         $params = Option::get(self::$moduleId, self::OPTION_NAME, "");
-        $params = ($params !== "" ? @unserialize($params) : array());
+        $params = ($params !== "" ? @unserialize($params, ['allowed_classes' => false]) : array());
         $params = (is_array($params) ? $params : array());
         if (empty($params)) {
             $params = array(
                 "lastId" => 0,
                 "number" => 0,
-                "count" => ChatTable::getCount(array(
-                    '=TYPE' => Array(Chat::TYPE_OPEN, Chat::TYPE_GROUP),
-                )),
+                "count" => ChatTable::getCount(
+                    array(
+                        '=TYPE' => Array(Chat::TYPE_OPEN, Chat::TYPE_GROUP),
+                    )
+                ),
             );
         }
 
@@ -46,16 +49,18 @@ final class ChatIndex extends Stepper
             $result["steps"] = "";
             $result["count"] = $params["count"];
 
-            $cursor = ChatTable::getList(array(
-                'order' => array('ID' => 'ASC'),
-                'filter' => array(
-                    '>ID' => $params["lastId"],
-                    '=TYPE' => Array(Chat::TYPE_OPEN, Chat::TYPE_GROUP),
-                ),
-                'select' => array('ID', 'ENTITY_TYPE'),
-                'offset' => 0,
-                'limit' => 500
-            ));
+            $cursor = ChatTable::getList(
+                array(
+                    'order' => array('ID' => 'ASC'),
+                    'filter' => array(
+                        '>ID' => $params["lastId"],
+                        '=TYPE' => Array(Chat::TYPE_OPEN, Chat::TYPE_GROUP),
+                    ),
+                    'select' => array('ID', 'ENTITY_TYPE'),
+                    'offset' => 0,
+                    'limit' => 500
+                )
+            );
 
             $found = false;
             while ($row = $cursor->fetch()) {

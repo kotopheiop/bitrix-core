@@ -52,67 +52,93 @@ class CurrencyLangTable extends Main\Entity\DataManager
     public static function getMap()
     {
         return array(
-            'CURRENCY' => new Main\Entity\StringField('CURRENCY', array(
+            'CURRENCY' => new Main\Entity\StringField(
+                'CURRENCY', array(
                 'primary' => true,
                 'validation' => array(__CLASS__, 'validateCurrency'),
                 'title' => Loc::getMessage('CURRENCY_LANG_ENTITY_CURRENCY_FIELD')
-            )),
-            'LID' => new Main\Entity\StringField('LID', array(
+            )
+            ),
+            'LID' => new Main\Entity\StringField(
+                'LID', array(
                 'primary' => true,
                 'validation' => array(__CLASS__, 'validateLid'),
                 'title' => Loc::getMessage('CURRENCY_LANG_ENTITY_LID_FIELD'),
-            )),
-            'FORMAT_STRING' => new Main\Entity\StringField('FORMAT_STRING', array(
+            )
+            ),
+            'FORMAT_STRING' => new Main\Entity\StringField(
+                'FORMAT_STRING', array(
                 'required' => true,
                 'validation' => array(__CLASS__, 'validateFormatString'),
                 'title' => Loc::getMessage('CURRENCY_LANG_ENTITY_FORMAT_STRING_FIELD')
-            )),
-            'FULL_NAME' => new Main\Entity\StringField('FULL_NAME', array(
+            )
+            ),
+            'FULL_NAME' => new Main\Entity\StringField(
+                'FULL_NAME', array(
                 'validation' => array(__CLASS__, 'validateFullName'),
                 'title' => Loc::getMessage('CURRENCY_LANG_ENTITY_FULL_NAME_FIELD')
-            )),
-            'DEC_POINT' => new Main\Entity\StringField('DEC_POINT', array(
+            )
+            ),
+            'DEC_POINT' => new Main\Entity\StringField(
+                'DEC_POINT', array(
                 'default_value' => '.',
                 'validation' => array(__CLASS__, 'validateDecPoint'),
                 'title' => Loc::getMessage('CURRENCY_LANG_ENTITY_DEC_POINT_FIELD')
-            )),
-            'THOUSANDS_SEP' => new Main\Entity\StringField('THOUSANDS_SEP', array(
+            )
+            ),
+            'THOUSANDS_SEP' => new Main\Entity\StringField(
+                'THOUSANDS_SEP', array(
                 'default_value' => ' ',
                 'validation' => array(__CLASS__, 'validateThousandsSep'),
                 'title' => Loc::getMessage('CURRENCY_LANG_ENTITY_THOUSANDS_SEP_FIELD')
-            )),
-            'DECIMALS' => new Main\Entity\IntegerField('DECIMALS', array(
+            )
+            ),
+            'DECIMALS' => new Main\Entity\IntegerField(
+                'DECIMALS', array(
                 'default_value' => 2,
                 'title' => Loc::getMessage('CURRENCY_LANG_ENTITY_DECIMALS_FIELD')
-            )),
-            'THOUSANDS_VARIANT' => new Main\Entity\StringField('THOUSANDS_VARIANT', array(
+            )
+            ),
+            'THOUSANDS_VARIANT' => new Main\Entity\StringField(
+                'THOUSANDS_VARIANT', array(
                 'validation' => array(__CLASS__, 'validateThousandsVariant'),
                 'title' => Loc::getMessage('CURRENCY_LANG_ENTITY_THOUSANDS_VARIANT_FIELD')
-            )),
-            'HIDE_ZERO' => new Main\Entity\BooleanField('HIDE_ZERO', array(
+            )
+            ),
+            'HIDE_ZERO' => new Main\Entity\BooleanField(
+                'HIDE_ZERO', array(
                 'values' => array('N', 'Y'),
                 'default_value' => 'N',
                 'title' => Loc::getMessage('CURRENCY_LANG_ENTITY_HIDE_ZERO_FIELD')
-            )),
-            'CREATED_BY' => new Main\Entity\IntegerField('CREATED_BY', array(
+            )
+            ),
+            'CREATED_BY' => new Main\Entity\IntegerField(
+                'CREATED_BY', array(
                 'title' => Loc::getMessage('CURRENCY_LANG_ENTITY_CREATED_BY_FIELD')
-            )),
-            'DATE_CREATE' => new Main\Entity\DatetimeField('DATE_CREATE', array(
+            )
+            ),
+            'DATE_CREATE' => new Main\Entity\DatetimeField(
+                'DATE_CREATE', array(
                 'default_value' => function () {
                     return new Main\Type\DateTime();
                 },
                 'title' => Loc::getMessage('CURRENCY_LANG_ENTITY_DATE_CREATE_FIELD')
-            )),
-            'MODIFIED_BY' => new Main\Entity\IntegerField('MODIFIED_BY', array(
+            )
+            ),
+            'MODIFIED_BY' => new Main\Entity\IntegerField(
+                'MODIFIED_BY', array(
                 'title' => Loc::getMessage('CURRENCY_LANG_ENTITY_MODIFIED_BY_FIELD')
-            )),
-            'TIMESTAMP_X' => new Main\Entity\DatetimeField('TIMESTAMP_X', array(
+            )
+            ),
+            'TIMESTAMP_X' => new Main\Entity\DatetimeField(
+                'TIMESTAMP_X', array(
                 'required' => true,
                 'default_value' => function () {
                     return new Main\Type\DateTime();
                 },
                 'title' => Loc::getMessage('CURRENCY_LANG_ENTITY_TIMESTAMP_X_FIELD')
-            )),
+            )
+            ),
             'CREATED_BY_USER' => array(
                 'data_type' => 'Bitrix\Main\User',
                 'reference' => array('=this.CREATED_BY' => 'ref.ID'),

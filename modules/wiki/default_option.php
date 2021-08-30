@@ -1,4 +1,5 @@
 <?
+
 $wiki_default_option = array(
     'allow_html' => 'Y',
     'image_max_width' => 600,

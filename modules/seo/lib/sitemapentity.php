@@ -33,11 +33,13 @@ class SitemapEntityTable extends Entity\DataManager
     {
         $sitemapId = $data['SITEMAP_ID'];
         $entityId = $data['ENTITY_ID'];
-        return parent::add(array(
-            'ENTITY_TYPE' => static::ENTITY_TYPE,
-            'ENTITY_ID' => $entityId,
-            'SITEMAP_ID' => $sitemapId,
-        ));
+        return parent::add(
+            array(
+                'ENTITY_TYPE' => static::ENTITY_TYPE,
+                'ENTITY_ID' => $entityId,
+                'SITEMAP_ID' => $sitemapId,
+            )
+        );
     }
 
     public static function getMap()
@@ -74,20 +76,22 @@ class SitemapEntityTable extends Entity\DataManager
         if (!isset(self::$entityCache[$entityId . 'Sitemaps'])) {
             self::$entityCache[$entityId] = array();
 
-            $dbRes = self::getList(array(
-                'filter' => array(
-                    'ENTITY_TYPE' => static::ENTITY_TYPE,
-                    'ENTITY_ID' => $entityId
-                ),
-                'select' => array(
-                    'SITEMAP_ID',
-                    'SITE_ID' => 'SITEMAP.SITE_ID',
-                    'SITEMAP_SETTINGS' => 'SITEMAP.SETTINGS'
+            $dbRes = self::getList(
+                array(
+                    'filter' => array(
+                        'ENTITY_TYPE' => static::ENTITY_TYPE,
+                        'ENTITY_ID' => $entityId
+                    ),
+                    'select' => array(
+                        'SITEMAP_ID',
+                        'SITE_ID' => 'SITEMAP.SITE_ID',
+                        'SITEMAP_SETTINGS' => 'SITEMAP.SETTINGS'
+                    )
                 )
-            ));
+            );
             $arSitemaps = array();
             while ($arRes = $dbRes->fetch()) {
-                $arRes["SITEMAP_SETTINGS"] = unserialize($arRes['SITEMAP_SETTINGS']);
+                $arRes["SITEMAP_SETTINGS"] = unserialize($arRes['SITEMAP_SETTINGS'], ['allowed_classes' => false]);
                 self::$entityCache[$entityId][] = $arRes;
                 if ($arRes["SITEMAP_SETTINGS"][static::ENTITY_TYPE . "_ACTIVE"] &&
                     $arRes["SITEMAP_SETTINGS"][static::ENTITY_TYPE . "_ACTIVE"][$entityId] == "Y") {
@@ -113,10 +117,12 @@ class SitemapEntityTable extends Entity\DataManager
     public static function clearBySitemap($sitemapId)
     {
         $connection = \Bitrix\Main\Application::getConnection();
-        $connection->query("
+        $connection->query(
+            "
 DELETE
 FROM " . self::getTableName() . "
 WHERE SITEMAP_ID=" . intval($sitemapId) . " AND ENTITY_TYPE='" . static::ENTITY_TYPE . "'
-");
+"
+        );
     }
 }

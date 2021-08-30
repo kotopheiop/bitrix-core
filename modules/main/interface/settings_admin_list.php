@@ -1,12 +1,17 @@
 <?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+}
 IncludeModuleLangFile(__FILE__);
 
 if ($this->sort) {
-    if (empty($aOptions["by"]))
+    if (empty($aOptions["by"])) {
         $aOptions["by"] = $this->sort->by_initial;
-    if (empty($aOptions["order"]))
+    }
+    if (empty($aOptions["order"])) {
         $aOptions["order"] = $this->sort->order_initial;
+    }
 }
 if (intval($aOptions["page_size"]) <= 0) {
     $aOptions["page_size"] = 20;
@@ -81,18 +86,24 @@ echo '</form>';
                         <td>
                             <select name="order_field">
                                 <?
-                                $by = strtoupper($aOptions["by"]);
-                                $order = strtoupper($aOptions["order"]);
+                                $by = mb_strtoupper($aOptions["by"]);
+                                $order = mb_strtoupper($aOptions["order"]);
                                 foreach ($aAllCols as $header) {
                                     if ($header["sort"] <> "") {
-                                        echo '<option value="' . $header["sort"] . '"' . ($by == strtoupper($header["sort"]) ? ' selected' : '') . '>' . ($header["name"] <> "" ? $header["name"] : $header["content"]) . '</option>';
+                                        echo '<option value="' . $header["sort"] . '"' . ($by == mb_strtoupper(
+                                                $header["sort"]
+                                            ) ? ' selected' : '') . '>' . ($header["name"] <> "" ? $header["name"] : $header["content"]) . '</option>';
                                     }
                                 }
                                 ?>
                             </select>
                             <select name="order_direction">
-                                <option value="desc"<?= ($order == "DESC" ? ' selected' : '') ?>><?= GetMessage("admin_lib_sett_desc") ?></option>
-                                <option value="asc"<?= ($order == "ASC" ? ' selected' : '') ?>><?= GetMessage("admin_lib_sett_asc") ?></option>
+                                <option value="desc"<?= ($order == "DESC" ? ' selected' : '') ?>><?= GetMessage(
+                                        "admin_lib_sett_desc"
+                                    ) ?></option>
+                                <option value="asc"<?= ($order == "ASC" ? ' selected' : '') ?>><?= GetMessage(
+                                        "admin_lib_sett_asc"
+                                    ) ?></option>
                             </select>
                         </td>
                     </tr>
@@ -122,8 +133,9 @@ echo '</form>';
                         <td><input type="checkbox" name="set_default" id="set_default" value="Y"></td>
                         <td><label for="set_default"><?= GetMessage("admin_lib_sett_common_set") ?></label></td>
                         <td><a class="delete-icon" title="<?= GetMessage("admin_lib_sett_common_del") ?>"
-                               href="javascript:if(confirm('<?= CUtil::JSEscape(GetMessage("admin_lib_sett_common_del_conf")) ?>'))<?= $this->table_id ?>.DeleteSettings(true)"></a>
-                        </td>
+                               href="javascript:if(confirm('<?= CUtil::JSEscape(
+                                   GetMessage("admin_lib_sett_common_del_conf")
+                               ) ?>'))<?= $this->table_id ?>.DeleteSettings(true)"></a></td>
                     </tr>
                 </table>
                 <?
@@ -141,9 +153,9 @@ $obJSPopup->StartButtons();
            onclick="<?= $this->table_id ?>.SaveSettings(this)" title="<?= GetMessage("admin_lib_sett_save_title") ?>"/>
     <input type="button" value="<?= GetMessage("admin_lib_sett_cancel") ?>" onclick="BX.WindowManager.Get().Close()"
            title="<?= GetMessage("admin_lib_sett_cancel_title") ?>"/>
-    <input type="button" value="<?= GetMessage("admin_lib_sett_reset") ?>"
-           onclick="if(confirm('<?= CUtil::JSEscape(GetMessage("admin_lib_sett_reset_ask")) ?>'))<?= $this->table_id ?>.DeleteSettings()"
-           title="<?= GetMessage("admin_lib_sett_reset_title") ?>"/>
+    <input type="button" value="<?= GetMessage("admin_lib_sett_reset") ?>" onclick="if(confirm('<?= CUtil::JSEscape(
+        GetMessage("admin_lib_sett_reset_ask")
+    ) ?>'))<?= $this->table_id ?>.DeleteSettings()" title="<?= GetMessage("admin_lib_sett_reset_title") ?>"/>
 <?
 $obJSPopup->EndButtons();
 ?>

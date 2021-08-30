@@ -1,3 +1,4 @@
 <?php
-$MESS["SALE_HANDLERS_DISCOUNTPRESET_FREEDELIVERY_NAME"] = "Бесплатная доставка";
+
+$MESS["SALE_HANDLERS_DISCOUNTPRESET_FREEDELIVERY_NAME"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
 ?>

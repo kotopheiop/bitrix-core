@@ -2,13 +2,13 @@
 
 namespace Bitrix\Landing\PublicAction;
 
+use \Bitrix\Landing\Hook;
 use \Bitrix\Landing\Manager;
 use \Bitrix\Landing\File;
 use \Bitrix\Landing\Site;
 use \Bitrix\Landing\Block as BlockCore;
 use \Bitrix\Landing\TemplateRef;
 use \Bitrix\Landing\Landing as LandingCore;
-use \Bitrix\Landing\PublicAction;
 use \Bitrix\Landing\PublicActionResult;
 use \Bitrix\Landing\Internals\HookDataTable;
 use \Bitrix\Main\Localization\Loc;
@@ -45,9 +45,12 @@ class Landing
     public static function getPreview($lid)
     {
         $result = new PublicActionResult();
-        $landing = LandingCore::createInstance($lid, [
-            'skip_blocks' => true
-        ]);
+        $landing = LandingCore::createInstance(
+            $lid,
+            [
+                'skip_blocks' => true
+            ]
+        );
 
         if ($landing->exist()) {
             $result->setResult($landing->getPreview());
@@ -65,9 +68,12 @@ class Landing
     public static function getPublicUrl($lid)
     {
         $result = new PublicActionResult();
-        $landing = LandingCore::createInstance($lid, [
-            'skip_blocks' => true
-        ]);
+        $landing = LandingCore::createInstance(
+            $lid,
+            [
+                'skip_blocks' => true
+            ]
+        );
 
         if ($landing->exist()) {
             $result->setResult(
@@ -87,9 +93,12 @@ class Landing
     public static function getAdditionalFields($lid)
     {
         $result = new PublicActionResult();
-        $landing = LandingCore::createInstance($lid, [
-            'skip_blocks' => true
-        ]);
+        $landing = LandingCore::createInstance(
+            $lid,
+            [
+                'skip_blocks' => true
+            ]
+        );
 
         if ($landing->exist()) {
             $fields = $landing->getAdditionalFields($landing->getId());
@@ -116,9 +125,12 @@ class Landing
     public static function publication($lid)
     {
         $result = new PublicActionResult();
-        $landing = LandingCore::createInstance($lid, [
-            'skip_blocks' => true
-        ]);
+        $landing = LandingCore::createInstance(
+            $lid,
+            [
+                'skip_blocks' => true
+            ]
+        );
 
         if ($landing->exist()) {
             if ($landing->publication()) {
@@ -139,9 +151,12 @@ class Landing
     public static function unpublic($lid)
     {
         $result = new PublicActionResult();
-        $landing = LandingCore::createInstance($lid, [
-            'skip_blocks' => true
-        ]);
+        $landing = LandingCore::createInstance(
+            $lid,
+            [
+                'skip_blocks' => true
+            ]
+        );
 
         if ($landing->exist()) {
             $result->setResult(
@@ -163,6 +178,7 @@ class Landing
     public static function addBlock($lid, array $fields)
     {
         LandingCore::setEditMode();
+        Hook::setEditMode(true);
 
         $result = new PublicActionResult();
         $landing = LandingCore::createInstance($lid);
@@ -199,7 +215,7 @@ class Landing
                 isset($fields['RETURN_CONTENT']) &&
                 $fields['RETURN_CONTENT'] == 'Y'
             ) {
-                $return = BlockCore::getBlockContent($newBlockId, true);
+                $return = BlockCore::getBlockContent($newBlockId, false);
             } else {
                 $return = $newBlockId;
             }
@@ -280,7 +296,9 @@ class Landing
             } else {
                 $result->setResult($landing->downBlock($block));
             }
-            $landing->resortBlocks();
+            if ($landing->getError()->isEmpty()) {
+                $landing->resortBlocks();
+            }
         }
         $result->setError($landing->getError());
         return $result;
@@ -379,10 +397,12 @@ class Landing
                 isset($params['RETURN_CONTENT']) &&
                 $params['RETURN_CONTENT'] == 'Y'
             ) {
-                $result->setResult(array(
-                    'result' => $res > 0,
-                    'content' => BlockCore::getBlockContent($res, true)
-                ));
+                $result->setResult(
+                    array(
+                        'result' => $res > 0,
+                        'content' => BlockCore::getBlockContent($res, false)
+                    )
+                );
             } else {
                 $result->setResult($res);
             }
@@ -497,9 +517,15 @@ class Landing
                 $row['DATE_MODIFY'] = (string)$row['DATE_MODIFY'];
             }
             if ($preview && isset($row['ID'])) {
-                $landing = LandingCore::createInstance($row['ID'], [
-                    'skip_blocks' => true
-                ]);
+                $landing = LandingCore::createInstance(
+                    $row['ID'],
+                    [
+                        'skip_blocks' => true
+                    ]
+                );
+                if ($landing->getDomainId() == 0) {
+                    \Bitrix\Landing\Hook::setEditMode(true);
+                }
                 $row['PREVIEW'] = $landing->getPreview(
                     null,
                     $landing->getDomainId() == 0
@@ -531,9 +557,10 @@ class Landing
     /**
      * Checks that page also adding in some menu.
      * @param array $fields Landing data array.
+     * @param bool $willAdded Flag that menu item will be added.
      * @return array
      */
-    protected static function checkAddingInMenu(array $fields)
+    protected static function checkAddingInMenu(array $fields, ?bool &$willAdded = null): array
     {
         $blockId = null;
         $menuCode = null;
@@ -551,7 +578,10 @@ class Landing
             return $fields;
         }
 
-        LandingCore::callback('OnAfterAdd',
+        $willAdded = true;
+
+        LandingCore::callback(
+            'OnAfterAdd',
             function (\Bitrix\Main\Event $event) use ($blockId, $menuCode) {
                 $primary = $event->getParameter('primary');
                 $fields = $event->getParameter('fields');
@@ -613,54 +643,40 @@ class Landing
      * Create a page by template.
      * @param int $siteId Site id.
      * @param string $code Code of template.
+     * @param array $fields Landing fields.
      * @return PublicActionResult
      */
-    public static function addByTemplate($siteId, $code)
+    public static function addByTemplate($siteId, $code, array $fields = [])
     {
         $result = new PublicActionResult();
         $error = new \Bitrix\Landing\Error;
 
+        $willAdded = false;
         $siteId = intval($siteId);
+        $fields = self::checkAddingInMenu($fields, $willAdded);
 
-        // get type by siteId
-        $res = Site::getList([
-            'select' => [
-                'TYPE'
-            ],
-            'filter' => [
-                'ID' => $siteId
-            ]
-        ]);
-        if (!($site = $res->fetch())) {
-            $error->addError(
-                'SITE_ERROR',
-                Loc::getMessage('LANDING_SITE_ERROR')
-            );
+        $res = LandingCore::addByTemplate($siteId, $code, $fields);
+
+        if ($res->isSuccess()) {
+            $result->setResult($res->getId());
+            if (
+                !$willAdded &&
+                isset($fields['ADD_IN_MENU']) &&
+                isset($fields['TITLE']) &&
+                $fields['ADD_IN_MENU'] == 'Y'
+            ) {
+                Site::addLandingToMenu(
+                    $siteId,
+                    [
+                        'ID' => $res->getId(),
+                        'TITLE' => $fields['TITLE']
+                    ]
+                );
+            }
+        } else {
+            $error->addFromResult($res);
             $result->setError($error);
-            return $result;
         }
-
-        // include the component
-        $componentName = 'bitrix:landing.demo';
-        $className = \CBitrixComponent::includeComponentClass($componentName);
-        $demoCmp = new $className;
-        $demoCmp->initComponent($componentName);
-        $demoCmp->arParams = [
-            'TYPE' => 'PAGE',//$site['TYPE'],
-            'SITE_ID' => $siteId,
-            'SITE_WORK_MODE' => 'N',
-            'DISABLE_REDIRECT' => 'Y'
-        ];
-
-        // ... and create the page by component's method
-        $landingId = $demoCmp->createPage($siteId, $code);
-        $result->setResult($landingId);
-
-        // if error occurred
-        foreach ($demoCmp->getErrors() as $code => $title) {
-            $error->addError($code, $title);
-        }
-        $result->setError($error);
 
         return $result;
     }
@@ -789,18 +805,23 @@ class Landing
         $error = new \Bitrix\Landing\Error;
         $lid = intval($lid);
 
-        $landing = LandingCore::createInstance($lid, [
-            'skip_blocks' => true
-        ]);
+        $landing = LandingCore::createInstance(
+            $lid,
+            [
+                'skip_blocks' => true
+            ]
+        );
 
         if ($landing->exist()) {
             $file = Manager::savePicture($picture, $ext, $params);
             if ($file) {
                 File::addToLanding($lid, $file['ID']);
-                $result->setResult(array(
-                    'id' => $file['ID'],
-                    'src' => $file['SRC']
-                ));
+                $result->setResult(
+                    array(
+                        'id' => $file['ID'],
+                        'src' => $file['SRC']
+                    )
+                );
             } else {
                 $error->addError(
                     'FILE_ERROR',
@@ -827,9 +848,12 @@ class Landing
 
         $lid = intval($lid);
         $result = new PublicActionResult();
-        $landing = LandingCore::createInstance($lid, [
-            'skip_blocks' => true
-        ]);
+        $landing = LandingCore::createInstance(
+            $lid,
+            [
+                'skip_blocks' => true
+            ]
+        );
         $result->setResult(false);
 
         if ($landing->exist()) {
@@ -841,21 +865,41 @@ class Landing
                 'ENTITY_ID' => $lid,
                 'ENTITY_TYPE' => \Bitrix\Landing\Hook::ENTITY_TYPE_LANDING,
                 'HOOK' => 'FONTS',
-                'CODE' => 'CODE'
+                'CODE' => 'CODE',
+                'PUBLIC' => 'N'
             );
-            $res = HookDataTable::getList(array(
-                'select' => array(
-                    'ID'
-                ),
-                'filter' => $fields
-            ));
+            $res = HookDataTable::getList(
+                array(
+                    'select' => array(
+                        'ID',
+                        'VALUE'
+                    ),
+                    'filter' => $fields
+                )
+            );
             if ($row = $res->fetch()) {
-                HookDataTable::update(
-                    $row['ID'],
-                    array(
-                        'VALUE' => $content
-                    )
+                $existsContent = $row['VALUE'];
+
+                // concat new fonts to the exists
+                $found = preg_match_all(
+                    '#(<noscript>.*?<style.*?data-id="([^"]+)"[^>]*>[^<]+</style>)#is',
+                    $content,
+                    $newFonts
                 );
+                if ($found) {
+                    foreach ($newFonts[1] as $i => $newFont) {
+                        if (mb_strpos($existsContent, '"' . $newFonts[2][$i] . '"') === false) {
+                            $existsContent .= $newFont;
+                        }
+                    }
+                }
+
+                if ($existsContent != $row['VALUE']) {
+                    HookDataTable::update(
+                        $row['ID'],
+                        ['VALUE' => $existsContent]
+                    );
+                }
             } else {
                 $fields['VALUE'] = $content;
                 HookDataTable::add($fields);

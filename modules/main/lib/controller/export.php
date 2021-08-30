@@ -77,6 +77,9 @@ class Export extends Main\Engine\Controller
     /** Default limitation query result per page. */
     const ROWS_PER_PAGE = 100;
 
+    /** @var int */
+    protected $lastExportedId = -1;
+
     /** @var \CCloudStorageBucket */
     protected $bucket;
 
@@ -108,6 +111,7 @@ class Export extends Main\Engine\Controller
         'pageSize',
         'processedItems',
         'totalItems',
+        'lastExportedId',
         'cloudChunkSize',
         'bucketId',
         'isExportCompleted',
@@ -267,10 +271,14 @@ class Export extends Main\Engine\Controller
                 if ($this->isExportCompleted) {
                     $predictedFileSize = $this->getSizeTempFile();
                 } else {
-                    $predictedFileSize = round($this->getSizeTempFile() * ceil($this->totalItems / $this->processedItems) * 1.5);
+                    $predictedFileSize = round(
+                        $this->getSizeTempFile() * ceil($this->totalItems / $this->processedItems) * 1.5
+                    );
                 }
                 // check cloud bucket rules
-                if ($this->findInitBucket(array('fileSize' => $predictedFileSize, 'fileName' => $this->fileName)) === true) {
+                if ($this->findInitBucket(
+                        array('fileSize' => $predictedFileSize, 'fileName' => $this->fileName)
+                    ) === true) {
                     // allow
                     $this->useCloud = true;
                 } else {
@@ -350,7 +358,6 @@ class Export extends Main\Engine\Controller
         ) {
             $path = new Main\IO\File($this->filePath);
             if ($path->isExists()) {
-
                 $response = new Main\Engine\Response\File(
                     $path->getPath(),
                     $this->fileName,
@@ -396,6 +403,7 @@ class Export extends Main\Engine\Controller
                     'EXPORT_TYPE' => $this->exportType,
                     'STEXPORT_PAGE_SIZE' => $this->pageSize,
                     'STEXPORT_TOTAL_ITEMS' => $this->totalItems,
+                    'STEXPORT_LAST_EXPORTED_ID' => $this->lastExportedId,
                     'PAGE_NUMBER' => $nextPage,
                 )
             );
@@ -423,6 +431,10 @@ class Export extends Main\Engine\Controller
                     // Get total items quantity on 1st step.
                     if ($nextPage === 1 && isset($componentResult['TOTAL_ITEMS'])) {
                         $this->totalItems = (int)$componentResult['TOTAL_ITEMS'];
+                    }
+
+                    if (isset($componentResult['LAST_EXPORTED_ID'])) {
+                        $this->lastExportedId = (int)$componentResult['LAST_EXPORTED_ID'];
                     }
                 }
             }
@@ -498,10 +510,12 @@ class Export extends Main\Engine\Controller
 
             $this->uploadPath = $this->generateUploadDir() . $this->fileName;
 
-            $this->findInitBucket(array(
-                'fileSize' => $reservedSize,
-                'fileName' => $this->uploadPath,
-            ));
+            $this->findInitBucket(
+                array(
+                    'fileSize' => $reservedSize,
+                    'fileName' => $this->uploadPath,
+                )
+            );
 
             if ($this->checkCloudErrors()) {
                 $this->saveProgressParameters();
@@ -608,7 +622,6 @@ class Export extends Main\Engine\Controller
         $result['STATUS'] = self::STATUS_COMPLETED;
 
         return $result;
-
     }
 
 
@@ -762,6 +775,7 @@ class Export extends Main\Engine\Controller
             }
             if ($downloadLink !== '') {
                 $result['DOWNLOAD_LINK'] = $downloadLink;
+                $result['FILE_NAME'] = $this->fileName;
                 $result['DOWNLOAD_LINK_NAME'] = htmlspecialcharsbx(Loc::getMessage('MAIN_EXPORT_DOWNLOAD'));
                 $result['CLEAR_LINK_NAME'] = htmlspecialcharsbx(Loc::getMessage('MAIN_EXPORT_CLEAR'));
             }
@@ -804,20 +818,28 @@ class Export extends Main\Engine\Controller
         if ($predictedTimeDuration > 0) {
             $predictedTimeDurationHours = floor($predictedTimeDuration / 3600);
             if ($predictedTimeDurationHours > 0) {
-                $predictedTimeDurationMinutes = ceil(($predictedTimeDuration - $predictedTimeDurationHours * 3600) / 60);
+                $predictedTimeDurationMinutes = ceil(
+                    ($predictedTimeDuration - $predictedTimeDurationHours * 3600) / 60
+                );
                 $message =
                     Loc::getMessage('MAIN_EXPORT_EXPECTED_DURATION') . ' ' .
-                    Loc::getMessage('MAIN_EXPORT_EXPECTED_DURATION_HOURS', array(
-                        '#HOURS#' => $predictedTimeDurationHours,
-                        '#MINUTES#' => $predictedTimeDurationMinutes,
-                    ));
+                    Loc::getMessage(
+                        'MAIN_EXPORT_EXPECTED_DURATION_HOURS',
+                        array(
+                            '#HOURS#' => $predictedTimeDurationHours,
+                            '#MINUTES#' => $predictedTimeDurationMinutes,
+                        )
+                    );
             } else {
                 $predictedTimeDurationMinutes = round($predictedTimeDuration / 60);
                 $message =
                     Loc::getMessage('MAIN_EXPORT_EXPECTED_DURATION') . ' ' .
-                    Loc::getMessage('MAIN_EXPORT_EXPECTED_DURATION_MINUTES', array(
-                        '#MINUTES#' => ($predictedTimeDurationMinutes < 1 ? "&lt;&nbsp;1" : $predictedTimeDurationMinutes),
-                    ));
+                    Loc::getMessage(
+                        'MAIN_EXPORT_EXPECTED_DURATION_MINUTES',
+                        array(
+                            '#MINUTES#' => ($predictedTimeDurationMinutes < 1 ? "&lt;&nbsp;1" : $predictedTimeDurationMinutes),
+                        )
+                    );
             }
         }
 

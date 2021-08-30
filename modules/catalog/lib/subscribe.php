@@ -36,7 +36,20 @@ Loc::loadMessages(__FILE__);
  *
  * @package Bitrix\Catalog
  *
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Subscribe_Query query()
+ * @method static EO_Subscribe_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Subscribe_Result getById($id)
+ * @method static EO_Subscribe_Result getList(array $parameters = array())
+ * @method static EO_Subscribe_Entity getEntity()
+ * @method static \Bitrix\Catalog\EO_Subscribe createObject($setDefaultValues = true)
+ * @method static \Bitrix\Catalog\EO_Subscribe_Collection createCollection()
+ * @method static \Bitrix\Catalog\EO_Subscribe wakeUpObject($row)
+ * @method static \Bitrix\Catalog\EO_Subscribe_Collection wakeUpCollection($rows)
+ */
 class SubscribeTable extends Entity\DataManager
 {
     const EVENT_ADD_CONTACT_TYPE = 'onAddContactType';
@@ -157,12 +170,14 @@ class SubscribeTable extends Entity\DataManager
     public static function onUserDelete($userId)
     {
         $userId = (int)$userId;
-        if ($userId <= 0)
+        if ($userId <= 0) {
             return false;
+        }
 
         $connection = Application::getConnection();
         $helper = $connection->getSqlHelper();
-        $connection->queryExecute('update ' . $helper->quote(static::getTableName()) . ' set '
+        $connection->queryExecute(
+            'update ' . $helper->quote(static::getTableName()) . ' set '
             . $helper->quote('DATE_TO') . ' = ' . $helper->getCurrentDateTimeFunction() . ', '
             . $helper->quote('USER_ID') . ' = \'NULL\' where ' . $helper->quote('USER_ID') . ' = ' . $userId
         );
@@ -179,12 +194,14 @@ class SubscribeTable extends Entity\DataManager
     public static function onIblockElementDelete($productId)
     {
         $productId = (int)$productId;
-        if ($productId <= 0)
+        if ($productId <= 0) {
             return true;
+        }
 
         $connection = Application::getConnection();
         $helper = $connection->getSqlHelper();
-        $connection->queryExecute('delete from ' . $helper->quote(static::getTableName()) . ' where '
+        $connection->queryExecute(
+            'delete from ' . $helper->quote(static::getTableName()) . ' where '
             . $helper->quote('ITEM_ID') . ' = ' . $productId
         );
 
@@ -200,8 +217,9 @@ class SubscribeTable extends Entity\DataManager
      */
     public static function onSaleOrderSaved(Event $event)
     {
-        if (!$event->getParameter('IS_NEW'))
+        if (!$event->getParameter('IS_NEW')) {
             return;
+        }
 
         $order = $event->getParameter('ENTITY');
 
@@ -211,27 +229,35 @@ class SubscribeTable extends Entity\DataManager
             $basketObject = $order->getBasket();
             $listProductId = array();
             /** @var \Bitrix\Sale\BasketItem $item */
-            foreach ($basketObject->getBasketItems() as $item)
+            foreach ($basketObject->getBasketItems() as $item) {
                 $listProductId[] = $item->getProductId();
+            }
 
-            if (!$userId || empty($listProductId))
+            if (!$userId || empty($listProductId)) {
                 return;
+            }
 
-            $user = \CUser::getList($by = 'ID', $order = 'ASC',
-                array('ID' => $userId), array('FIELDS' => array('EMAIL'))
+            $user = \CUser::getList(
+                'ID',
+                'ASC',
+                array('ID' => $userId),
+                array('FIELDS' => array('EMAIL'))
             )->fetch();
             if ($user['EMAIL']) {
-                $listSubscribe = static::getList(array(
-                    'select' => array('ID'),
-                    'filter' => array(
-                        '=USER_CONTACT' => $user['EMAIL'],
-                        '=SITE_ID' => $siteId,
-                        'ITEM_ID' => $listProductId,
-                    ),
-                ))->fetchAll();
+                $listSubscribe = static::getList(
+                    array(
+                        'select' => array('ID'),
+                        'filter' => array(
+                            '=USER_CONTACT' => $user['EMAIL'],
+                            '=SITE_ID' => $siteId,
+                            'ITEM_ID' => $listProductId,
+                        ),
+                    )
+                )->fetchAll();
                 $listSubscribeId = array();
-                foreach ($listSubscribe as $subscribe)
+                foreach ($listSubscribe as $subscribe) {
                     $listSubscribeId[] = $subscribe['ID'];
+                }
 
                 static::unSubscribe($listSubscribeId);
             }
@@ -252,8 +278,9 @@ class SubscribeTable extends Entity\DataManager
         $event = new Event('catalog', static::EVENT_ADD_CONTACT_TYPE, array(&$contactTypes));
         $event->send();
 
-        if (!is_array($contactTypes))
+        if (!is_array($contactTypes)) {
             return array();
+        }
 
         $availableFields = array('ID', 'NAME', 'RULE', 'HANDLER');
         foreach ($contactTypes as $typeId => $typeData) {
@@ -330,12 +357,14 @@ class SubscribeTable extends Entity\DataManager
     public static function runAgentToSendNotice($productId)
     {
         $productId = (int)$productId;
-        if ($productId <= 0)
+        if ($productId <= 0) {
             return false;
+        }
 
         $connection = Application::getConnection();
         $helper = $connection->getSqlHelper();
-        $connection->queryExecute('update ' . $helper->quote(static::getTableName()) . ' set '
+        $connection->queryExecute(
+            'update ' . $helper->quote(static::getTableName()) . ' set '
             . $helper->quote('NEED_SENDING') . ' = \'Y\' where ' . $helper->quote('ITEM_ID') . ' = ' . $productId
             . ' and (' . $helper->quote('DATE_TO') . ' is null or ' . $helper->quote('DATE_TO') . ' > '
             . $helper->getCurrentDateTimeFunction() . ')'
@@ -370,12 +399,14 @@ class SubscribeTable extends Entity\DataManager
     public static function runAgentToSendRepeatedNotice($productId)
     {
         $productId = (int)$productId;
-        if ($productId <= 0 || (string)Option::get('catalog', 'subscribe_repeated_notify') != 'Y')
+        if ($productId <= 0 || (string)Option::get('catalog', 'subscribe_repeated_notify') != 'Y') {
             return false;
+        }
 
         $connection = Application::getConnection();
         $helper = $connection->getSqlHelper();
-        $connection->queryExecute('update ' . $helper->quote(static::getTableName()) . ' set '
+        $connection->queryExecute(
+            'update ' . $helper->quote(static::getTableName()) . ' set '
             . $helper->quote('NEED_SENDING') . ' = \'Y\' where ' . $helper->quote('ITEM_ID') . ' = ' . $productId
             . ' and (' . $helper->quote('DATE_TO') . ' is null or ' . $helper->quote('DATE_TO') . ' > '
             . $helper->getCurrentDateTimeFunction() . ')'
@@ -438,8 +469,9 @@ class SubscribeTable extends Entity\DataManager
      */
     public static function sendNotice()
     {
-        if (static::checkLastUpdate())
+        if (static::checkLastUpdate()) {
             return '\Bitrix\Catalog\SubscribeTable::sendNotice();';
+        }
 
         list($listSubscribe, $totalCount) = static::getSubscriptionsData();
 
@@ -450,13 +482,16 @@ class SubscribeTable extends Entity\DataManager
 
         $anotherStep = (int)$totalCount['CNT'] > static::LIMIT_SEND;
 
-        list($dataSendToNotice, $listNotifiedSubscribeId) =
+        list(
+            $dataSendToNotice, $listNotifiedSubscribeId
+            ) =
             static::prepareDataForNotice($listSubscribe, 'CATALOG_PRODUCT_SUBSCRIBE_NOTIFY');
 
         static::startEventNotification($dataSendToNotice);
 
-        if ($listNotifiedSubscribeId)
+        if ($listNotifiedSubscribeId) {
             static::setNeedSending($listNotifiedSubscribeId);
+        }
 
         if ($anotherStep) {
             return '\Bitrix\Catalog\SubscribeTable::sendNotice();';
@@ -473,8 +508,9 @@ class SubscribeTable extends Entity\DataManager
      */
     public static function sendRepeatedNotice()
     {
-        if (static::checkLastUpdate())
+        if (static::checkLastUpdate()) {
             return 'Bitrix\Catalog\SubscribeTable::sendRepeatedNotice();';
+        }
 
         list($listSubscribe, $totalCount) = static::getSubscriptionsData();
 
@@ -485,13 +521,16 @@ class SubscribeTable extends Entity\DataManager
 
         $anotherStep = (int)$totalCount['CNT'] > static::LIMIT_SEND;
 
-        list($dataSendToNotice, $listNotifiedSubscribeId) =
+        list(
+            $dataSendToNotice, $listNotifiedSubscribeId
+            ) =
             static::prepareDataForNotice($listSubscribe, 'CATALOG_PRODUCT_SUBSCRIBE_NOTIFY_REPEATED');
 
         static::startEventNotification($dataSendToNotice);
 
-        if ($listNotifiedSubscribeId)
+        if ($listNotifiedSubscribeId) {
             static::setNeedSending($listNotifiedSubscribeId);
+        }
 
         if ($anotherStep) {
             return 'Bitrix\Catalog\SubscribeTable::sendRepeatedNotice();';
@@ -543,8 +582,9 @@ class SubscribeTable extends Entity\DataManager
                 'limit' => 1
             )
         )->fetch();
-        if (empty($lastUpdate) || !($lastUpdate['TIMESTAMP_X'] instanceof DateTime))
+        if (empty($lastUpdate) || !($lastUpdate['TIMESTAMP_X'] instanceof DateTime)) {
             return true;
+        }
 
         return (time() - $lastUpdate['TIMESTAMP_X']->getTimestamp() < static::AGENT_TIME_OUT);
     }
@@ -566,43 +606,50 @@ class SubscribeTable extends Entity\DataManager
         /* Compatibility with the sale subscribe option */
         $notifyOption = Option::get('sale', 'subscribe_prod');
         $notify = array();
-        if (strlen($notifyOption) > 0)
-            $notify = unserialize($notifyOption);
+        if ($notifyOption <> '') {
+            $notify = unserialize($notifyOption, ['allowed_classes' => false]);
+        }
         if (is_array($notify)) {
             $listSiteId = array();
             foreach ($notify as $siteId => $data) {
-                if ($data['use'] != 'Y')
+                if ($data['use'] != 'Y') {
                     $listSiteId[] = $siteId;
+                }
             }
-            if ($listSiteId)
+            if ($listSiteId) {
                 $filter['!=SITE_ID'] = $listSiteId;
+            }
         }
 
-        $listSubscribe = static::getList(array(
-            'select' => array(
-                'ID',
-                'USER_CONTACT',
-                'CONTACT_TYPE',
-                'DATE_TO',
-                'PRODUCT_NAME' => 'IBLOCK_ELEMENT.NAME',
-                'DETAIL_PAGE_URL' => 'IBLOCK_ELEMENT.IBLOCK.DETAIL_PAGE_URL',
-                'IBLOCK_ID' => 'IBLOCK_ELEMENT.IBLOCK_ID',
-                'TYPE' => 'PRODUCT.TYPE',
-                'ITEM_ID',
-                'SITE_ID',
-                'LANDING_SITE_ID',
-                'USER_NAME' => 'USER.NAME',
-                'USER_LAST_NAME' => 'USER.LAST_NAME',
-            ),
-            'filter' => $filter,
-            'limit' => static::LIMIT_SEND,
-        ))->fetchAll();
+        $listSubscribe = static::getList(
+            array(
+                'select' => array(
+                    'ID',
+                    'USER_CONTACT',
+                    'CONTACT_TYPE',
+                    'DATE_TO',
+                    'PRODUCT_NAME' => 'IBLOCK_ELEMENT.NAME',
+                    'DETAIL_PAGE_URL' => 'IBLOCK_ELEMENT.IBLOCK.DETAIL_PAGE_URL',
+                    'IBLOCK_ID' => 'IBLOCK_ELEMENT.IBLOCK_ID',
+                    'TYPE' => 'PRODUCT.TYPE',
+                    'ITEM_ID',
+                    'SITE_ID',
+                    'LANDING_SITE_ID',
+                    'USER_NAME' => 'USER.NAME',
+                    'USER_LAST_NAME' => 'USER.LAST_NAME',
+                ),
+                'filter' => $filter,
+                'limit' => static::LIMIT_SEND,
+            )
+        )->fetchAll();
 
-        $totalCount = static::getList(array(
-            'select' => array('CNT'),
-            'filter' => $filter,
-            'runtime' => array(new Entity\ExpressionField('CNT', 'COUNT(*)'))
-        ))->fetch();
+        $totalCount = static::getList(
+            array(
+                'select' => array('CNT'),
+                'filter' => $filter,
+                'runtime' => array(new Entity\ExpressionField('CNT', 'COUNT(*)'))
+            )
+        )->fetch();
 
         return array($listSubscribe, $totalCount);
     }
@@ -611,16 +658,23 @@ class SubscribeTable extends Entity\DataManager
     {
         /* Preparation of data for the mail template */
         $itemIdGroupByIblock = array();
-        foreach ($listSubscribe as $key => $subscribeData)
+        foreach ($listSubscribe as $key => $subscribeData) {
             $itemIdGroupByIblock[$subscribeData['IBLOCK_ID']][$subscribeData['ITEM_ID']] = $subscribeData['ITEM_ID'];
+        }
 
         $detailPageUrlGroupByItemId = array();
         if (!empty($itemIdGroupByIblock)) {
             foreach ($itemIdGroupByIblock as $iblockId => $listItemId) {
-                $queryObject = \CIBlockElement::getList(array('ID' => 'ASC'),
-                    array('IBLOCK_ID' => $iblockId, 'ID' => $listItemId), false, false, array('DETAIL_PAGE_URL'));
-                while ($result = $queryObject->getNext())
+                $queryObject = \CIBlockElement::getList(
+                    array('ID' => 'ASC'),
+                    array('IBLOCK_ID' => $iblockId, 'ID' => $listItemId),
+                    false,
+                    false,
+                    array('DETAIL_PAGE_URL')
+                );
+                while ($result = $queryObject->getNext()) {
                     $detailPageUrlGroupByItemId[$result['ID']] = $result['DETAIL_PAGE_URL'];
+                }
             }
         }
 
@@ -628,7 +682,7 @@ class SubscribeTable extends Entity\DataManager
         $listNotifiedSubscribeId = array();
         foreach ($listSubscribe as $key => $subscribeData) {
             $pageUrl = self::getPageUrl($subscribeData, $detailPageUrlGroupByItemId);
-            if (!strlen($pageUrl)) {
+            if ($pageUrl == '') {
                 continue;
             }
 
@@ -641,17 +695,38 @@ class SubscribeTable extends Entity\DataManager
             $subscribeData['NAME'] = $subscribeData['PRODUCT_NAME'];
             $subscribeData['PAGE_URL'] = $pageUrl;
             $subscribeData['PRODUCT_ID'] = $subscribeData['ITEM_ID'];
-            $subscribeData['CHECKOUT_URL'] = \CHTTP::urlAddParams($pageUrl, array(
-                'action' => 'BUY', 'id' => $subscribeData['PRODUCT_ID']));
-            $subscribeData['CHECKOUT_URL_PARAMETERS'] = \CHTTP::urlAddParams('', array(
-                'action' => 'BUY', 'id' => $subscribeData['PRODUCT_ID']));
+            $subscribeData['CHECKOUT_URL'] = \CHTTP::urlAddParams(
+                $pageUrl,
+                array(
+                    'action' => 'BUY',
+                    'id' => $subscribeData['PRODUCT_ID']
+                )
+            );
+            $subscribeData['CHECKOUT_URL_PARAMETERS'] = \CHTTP::urlAddParams(
+                '',
+                array(
+                    'action' => 'BUY',
+                    'id' => $subscribeData['PRODUCT_ID']
+                )
+            );
             $subscribeData['UNSUBSCRIBE_URL'] = \CHTTP::urlAddParams(
                 self::getUnsubscribeUrl($subscribeData),
-                array('unSubscribe' => 'Y', 'subscribeId' => $subscribeData['ID'],
-                    'userContact' => $subscribeData['USER_CONTACT'], 'productId' => $subscribeData['PRODUCT_ID']));
-            $subscribeData['UNSUBSCRIBE_URL_PARAMETERS'] = \CHTTP::urlAddParams('',
-                array('unSubscribe' => 'Y', 'subscribeId' => $subscribeData['ID'],
-                    'userContact' => $subscribeData['USER_CONTACT'], 'productId' => $subscribeData['PRODUCT_ID']));
+                array(
+                    'unSubscribe' => 'Y',
+                    'subscribeId' => $subscribeData['ID'],
+                    'userContact' => $subscribeData['USER_CONTACT'],
+                    'productId' => $subscribeData['PRODUCT_ID']
+                )
+            );
+            $subscribeData['UNSUBSCRIBE_URL_PARAMETERS'] = \CHTTP::urlAddParams(
+                '',
+                array(
+                    'unSubscribe' => 'Y',
+                    'subscribeId' => $subscribeData['ID'],
+                    'userContact' => $subscribeData['USER_CONTACT'],
+                    'productId' => $subscribeData['PRODUCT_ID']
+                )
+            );
 
             $dataSendToNotice[$subscribeData['CONTACT_TYPE']][$subscribeData['USER_CONTACT']][$key] = $subscribeData;
         }
@@ -687,7 +762,8 @@ class SubscribeTable extends Entity\DataManager
             }
         } else {
             $unsubscribeUrl = self::getProtocol() . self::getServerName(
-                    $subscribeData['SITE_ID']) . '/personal/subscribe/';
+                    $subscribeData['SITE_ID']
+                ) . '/personal/subscribe/';
         }
 
         return $unsubscribeUrl;
@@ -699,8 +775,9 @@ class SubscribeTable extends Entity\DataManager
         $context = $currentApplication->getContext();
 
         if ($protocol = Option::get('main', 'mail_link_protocol')) {
-            if (strrpos($protocol, '://') === false)
+            if (mb_strrpos($protocol, '://') === false) {
                 $protocol .= '://';
+            }
         } else {
             if ($context->getServer()->getServerName()) {
                 $protocol = ($context->getRequest()->isHttps() ? 'https://' : 'http://');
@@ -721,8 +798,9 @@ class SubscribeTable extends Entity\DataManager
         $iterator = \CSite::GetByID($siteId);
         $site = $iterator->fetch();
         unset($iterator);
-        if (!empty($site))
+        if (!empty($site)) {
             $serverName = (string)$site['SERVER_NAME'];
+        }
         unset($site);
         if ($serverName == '') {
             $serverName = (defined('SITE_SERVER_NAME') && SITE_SERVER_NAME != '' ?
@@ -760,12 +838,14 @@ class SubscribeTable extends Entity\DataManager
 
     private static function setNeedSending(array $listSubscribeId, $needSending = 'N')
     {
-        if (empty($listSubscribeId))
+        if (empty($listSubscribeId)) {
             return;
+        }
 
         $connection = Application::getConnection();
         $helper = $connection->getSqlHelper();
-        $connection->queryExecute('update ' . $helper->quote(static::getTableName()) . ' set '
+        $connection->queryExecute(
+            'update ' . $helper->quote(static::getTableName()) . ' set '
             . $helper->quote('NEED_SENDING') . ' = \'' . $needSending . '\' where '
             . $helper->quote('ID') . ' in (' . implode(',', $listSubscribeId) . ')'
         );
@@ -773,12 +853,14 @@ class SubscribeTable extends Entity\DataManager
 
     private static function unSubscribe(array $listSubscribeId)
     {
-        if (empty($listSubscribeId))
+        if (empty($listSubscribeId)) {
             return;
+        }
 
         $connection = Application::getConnection();
         $helper = $connection->getSqlHelper();
-        $connection->queryExecute('update ' . $helper->quote(static::getTableName()) . ' set '
+        $connection->queryExecute(
+            'update ' . $helper->quote(static::getTableName()) . ' set '
             . $helper->quote('NEED_SENDING') . ' = \'N\', ' . $helper->quote('DATE_TO') . ' ='
             . $helper->getCurrentDateTimeFunction() . ' where '
             . $helper->quote('ID') . ' in (' . implode(',', $listSubscribeId) . ')'

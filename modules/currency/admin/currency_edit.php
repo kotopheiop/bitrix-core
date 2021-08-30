@@ -1,24 +1,37 @@
 <?
+
 /** @global CMain $APPLICATION
  * @global CDatabase $DB
  */
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/currency/prolog.php");
 $CURRENCY_RIGHT = $APPLICATION->GetGroupRight("currency");
-if ($CURRENCY_RIGHT == "D")
+if ($CURRENCY_RIGHT == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 CModule::IncludeModule('currency');
 IncludeModuleLangFile(__FILE__);
 
 $errorMessage = array();
 
 $ID = '';
-if (isset($_REQUEST['ID']))
+if (isset($_REQUEST['ID'])) {
     $ID = trim((string)$_REQUEST['ID']);
+}
 
 $aTabs = array(
-    array("DIV" => "edit1", "TAB" => GetMessage("currency_curr"), "ICON" => "", "TITLE" => GetMessage("currency_curr_settings")),
-    array("DIV" => "edit2", "TAB" => GetMessage("BT_CURRENCY_EDIT_TAB_NAME_LANGUAGE"), "ICON" => "", "TITLE" => GetMessage("BT_CURRENCY_EDIT_TAB_TITLE_LANGUAGE")),
+    array(
+        "DIV" => "edit1",
+        "TAB" => GetMessage("currency_curr"),
+        "ICON" => "",
+        "TITLE" => GetMessage("currency_curr_settings")
+    ),
+    array(
+        "DIV" => "edit2",
+        "TAB" => GetMessage("BT_CURRENCY_EDIT_TAB_NAME_LANGUAGE"),
+        "ICON" => "",
+        "TITLE" => GetMessage("BT_CURRENCY_EDIT_TAB_TITLE_LANGUAGE")
+    ),
 );
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
@@ -27,9 +40,7 @@ $separatorList = CCurrencyLang::GetSeparatorTypes(true);
 
 $langList = array();
 $langID = array();
-$by = "sort";
-$order = "asc";
-$langIterator = CLangAdmin::GetList($by, $order);
+$langIterator = CLangAdmin::GetList();
 while ($oneLang = $langIterator->Fetch()) {
     $langID[] = $oneLang['LID'];
     $langList[$oneLang['LID']] = $oneLang['NAME'];
@@ -38,7 +49,8 @@ unset($oneLang, $langIterator, $order, $by);
 
 $arFields = array();
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && $CURRENCY_RIGHT == "W" && !empty($_POST['Update']) && check_bitrix_sessid()) {
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && $CURRENCY_RIGHT == "W" && !empty($_POST['Update']) && check_bitrix_sessid(
+    )) {
     if (!isset($_POST['BASE']) || $_POST['BASE'] != 'Y') {
         $arFields = array(
             'AMOUNT' => (isset($_POST['AMOUNT']) ? $_POST['AMOUNT'] : ''),
@@ -60,8 +72,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $CURRENCY_RIGHT == "W" && !empty($_P
     $strAction = ($ID ? 'UPDATE' : 'ADD');
     $langSettings = array();
     foreach ($langID as $oneLang) {
-        if (isset($_POST['LANG_' . $oneLang]))
+        if (isset($_POST['LANG_' . $oneLang])) {
             $langSettings[$oneLang] = $_POST['LANG_' . $oneLang];
+        }
     }
     unset($oneLang);
     $arFields['LANG'] = $langSettings;
@@ -76,16 +89,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $CURRENCY_RIGHT == "W" && !empty($_P
     }
     if (!$res) {
         $DB->Rollback();
-        if ($ex = $APPLICATION->GetException())
+        if ($ex = $APPLICATION->GetException()) {
             $errorMessage[] = $ex->GetString();
-        else
-            $errorMessage[] = ($ID ? str_replace('#ID#', $ID, GetMessage('BT_CURRENCY_EDIT_ERR_UPDATE')) : GetMessage('BT_CURRENCY_EDIT_ERR_ADD')) . "<br>";
+        } else {
+            $errorMessage[] = ($ID ? str_replace('#ID#', $ID, GetMessage('BT_CURRENCY_EDIT_ERR_UPDATE')) : GetMessage(
+                    'BT_CURRENCY_EDIT_ERR_ADD'
+                )) . "<br>";
+        }
     } else {
         $DB->Commit();
-        if (empty($_POST['apply']))
+        if (empty($_POST['apply'])) {
             LocalRedirect('/bitrix/admin/currencies.php?lang=' . LANGUAGE_ID);
+        }
 
-        LocalRedirect('/bitrix/admin/currency_edit.php?ID=' . $ID . '&lang=' . LANGUAGE_ID . '&' . $tabControl->ActiveTabParam());
+        LocalRedirect(
+            '/bitrix/admin/currency_edit.php?ID=' . $ID . '&lang=' . LANGUAGE_ID . '&' . $tabControl->ActiveTabParam()
+        );
     }
 }
 
@@ -107,10 +126,11 @@ $defaultLangValues = array(
     'HIDE_ZERO' => 'Y'
 );
 
-if ($ID != '')
+if ($ID != '') {
     $APPLICATION->SetTitle(GetMessage("CURRENCY_EDIT_TITLE"));
-else
+} else {
     $APPLICATION->SetTitle(GetMessage("CURRENCY_NEW_TITLE"));
+}
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
@@ -123,15 +143,14 @@ if ($ID != '') {
         $ID = '';
         $currency = $defaultValues;
     } else {
-        $by = 'currency';
-        $order = 'asc';
-        $langIterator = CCurrencyLang::GetList($by, $order, $ID);
+        $langIterator = CCurrencyLang::GetList('currency', 'asc', $ID);
         while ($language = $langIterator->Fetch()) {
             $language['THOUSANDS_SEP'] = (string)$language['THOUSANDS_SEP'];
             $language['THOUSANDS_VARIANT'] = (string)$language['THOUSANDS_VARIANT'];
             $language['FULL_NAME'] = (string)$language['FULL_NAME'];
-            if ($language['FULL_NAME'] === '')
+            if ($language['FULL_NAME'] === '') {
                 $language['FULL_NAME'] = $ID;
+            }
             $currencyLangs[$language['LID']] = $language;
         }
         unset($language, $langIterator, $order, $by);
@@ -140,8 +159,9 @@ if ($ID != '') {
 
 if (!empty($errorMessage)) {
     $currency = $arFields;
-    if (!isset($currency['CURRENCY']))
+    if (!isset($currency['CURRENCY'])) {
         $currency['CURRENCY'] = '';
+    }
     $currencyLangs = $arFields['LANG'];
 }
 
@@ -166,15 +186,20 @@ if ($ID != '') {
         $aContext[] = array(
             "ICON" => "btn_delete",
             "TEXT" => GetMessage("MAIN_ADMIN_MENU_DELETE"),
-            "ONCLICK" => "javascript:if(confirm('" . GetMessageJS("CONFIRM_DEL_MESSAGE") . "'))window.location='currencies.php?action=delete&ID[]=" . CUtil::JSEscape($ID) . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get() . "';",
+            "ONCLICK" => "javascript:if(confirm('" . GetMessageJS(
+                    "CONFIRM_DEL_MESSAGE"
+                ) . "'))window.location='currencies.php?action=delete&ID[]=" . CUtil::JSEscape(
+                    $ID
+                ) . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get() . "';",
         );
     }
 }
 $context = new CAdminContextMenu($aContext);
 $context->Show();
 
-if (!empty($errorMessage))
+if (!empty($errorMessage)) {
     CAdminMessage::ShowMessage(implode('<br>', $errorMessage));
+}
 
 ?>
     <script type="text/javascript">
@@ -236,7 +261,9 @@ if (!empty($errorMessage))
         </tr>
         <tr class="adm-detail-required-field">
             <td width="40%"><? echo GetMessage("currency_base"); ?>:</td>
-            <td width="60%"><? echo($currency['BASE'] == 'Y' ? GetMessage('BASE_CURRENCY_YES') : GetMessage('BASE_CURRENCY_NO')); ?></td>
+            <td width="60%"><? echo($currency['BASE'] == 'Y' ? GetMessage('BASE_CURRENCY_YES') : GetMessage(
+                    'BASE_CURRENCY_NO'
+                )); ?></td>
         </tr>
         <tr class="adm-detail-required-field">
             <td width="40%"><? echo GetMessage("currency_rate_cnt") ?>: <span class="required"
@@ -289,7 +316,9 @@ if (!empty($errorMessage))
                             onchange="setTemplate('<?= $scriptLanguageId; ?>')">
                         <option value="">-<?= htmlspecialcharsbx(GetMessage("CURRENCY_SELECT_TEMPLATE")); ?>-</option>
                         <? foreach ($arTemplates as $key => $ar):?>
-                            <option value="<?= htmlspecialcharsbx($key); ?>"><?= htmlspecialcharsbx($ar["TEXT"]); ?></option>
+                            <option value="<?= htmlspecialcharsbx($key); ?>"><?= htmlspecialcharsbx(
+                                    $ar["TEXT"]
+                                ); ?></option>
                         <?endforeach ?>
                     </select>
                 </td>
@@ -320,7 +349,9 @@ if (!empty($errorMessage))
                         }
                         unset($separatorID, $separatorTitle);
                         ?>
-                        <option value=""<? echo($settings['THOUSANDS_VARIANT'] == '' && $settings['THOUSANDS_SEP'] != '' ? ' selected' : ''); ?>><?= htmlspecialcharsbx(GetMessage("CURRENCY_THOUSANDS_VARIANT_O")); ?></option>
+                        <option value=""<? echo($settings['THOUSANDS_VARIANT'] == '' && $settings['THOUSANDS_SEP'] != '' ? ' selected' : ''); ?>><?= htmlspecialcharsbx(
+                                GetMessage("CURRENCY_THOUSANDS_VARIANT_O")
+                            ); ?></option>
                     </select>
                     <input title="<?= htmlspecialcharsbx(GetMessage("THOU_SEP_DESC")); ?>" type="text" maxlength="16"
                            size="10" name="<?= $fieldPrefix; ?>[THOUSANDS_SEP]"
@@ -349,7 +380,9 @@ if (!empty($errorMessage))
             unset($scriptLanguageId, $fieldPrefix);
         }
         $tabControl->EndTab();
-        $tabControl->Buttons(array("disabled" => $CURRENCY_RIGHT < "W", "back_url" => "/bitrix/admin/currencies.php?lang=" . LANGUAGE_ID));
+        $tabControl->Buttons(
+            array("disabled" => $CURRENCY_RIGHT < "W", "back_url" => "/bitrix/admin/currencies.php?lang=" . LANGUAGE_ID)
+        );
         $tabControl->End(); ?>
     </form>
 <?

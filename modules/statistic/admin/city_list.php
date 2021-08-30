@@ -1,4 +1,5 @@
 <?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/prolog.php");
 /** @var CMain $APPLICATION */
@@ -6,8 +7,9 @@ include($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/colors.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/img.php");
 
 $STAT_RIGHT = $APPLICATION->GetGroupRight("statistic");
-if ($STAT_RIGHT == "D")
+if ($STAT_RIGHT == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 IncludeModuleLangFile(__FILE__);
 
 $err_mess = "File: " . __FILE__ . "<br>Line: ";
@@ -16,16 +18,18 @@ $err_mess = "File: " . __FILE__ . "<br>Line: ";
  * GET | POST handlers
  ****************************************************************************/
 $arrCOUNTRY = array();
-$rs = CCountry::GetList($v1 = "s_name", $v2 = "asc", array(), $v);
-while ($ar = $rs->Fetch())
+$rs = CCountry::GetList();
+while ($ar = $rs->Fetch()) {
     $arrCOUNTRY[$ar["ID"]] = $ar["NAME"] . " [" . $ar["ID"] . "]";
+}
 
 $sTableID = "t_city_list";
 $oSort = new CAdminSorting($sTableID);
 $lAdmin = new CAdminList($sTableID, $oSort);
 
-if (!isset($find_data_type) || !in_array($find_data_type, Array("NEW_GUESTS", "HITS", "C_EVENTS", "SESSIONS")))
+if (!isset($find_data_type) || !in_array($find_data_type, Array("NEW_GUESTS", "HITS", "C_EVENTS", "SESSIONS"))) {
     $find_data_type = false;
+}
 
 if ($lAdmin->IsDefaultFilter()) {
     //$find_data_type = "SESSIONS";
@@ -47,12 +51,15 @@ InitFilterEx($arSettings, $sTableID . "_settings", "get");
 
 if ($find_data_type === false)//Restore saved setting
 {
-    if (strlen($saved_group_by) > 0)
+    if ($saved_group_by <> '') {
         $find_data_type = $saved_group_by;
-    else
+    } else {
         $find_data_type = "SESSIONS";
+    }
 } elseif ($saved_group_by != $find_data_type)//Set if changed
+{
     $saved_group_by = $find_data_type;
+}
 
 InitFilterEx($arSettings, $sTableID . "_settings", "set");
 
@@ -66,7 +73,7 @@ $arFilter = Array(
     "DATE1" => $find_date1,
     "DATE2" => $find_date2
 );
-if (strlen($arFilter["COUNTRY_ID"]) == 2) {
+if (mb_strlen($arFilter["COUNTRY_ID"]) == 2) {
     $arrDays = CCity::GetGraphArray($arFilter, $arrLegend, $find_data_type, 20);
     $arrTotalDays = CCity::GetGraphArray($arFilter, $arrTotalLegend, "TOTAL_" . $find_data_type, 20);
 } else {
@@ -99,8 +106,10 @@ else:
             <table border="0" cellspacing="1" cellpadding="0" align="center">
                 <tr>
                     <td valign="center">
-                        <img src="/bitrix/admin/city_graph.php?find_data_type=<?= $find_data_type ?><?= GetFilterParams($FilterArr) ?>&width=<?= $width ?>&height=<?= $height ?>&lang=<? echo LANG ?>"
-                             width="<?= $width ?>" height="<?= $height ?>">
+                        <img src="/bitrix/admin/city_graph.php?find_data_type=<?= $find_data_type ?><?= GetFilterParams(
+                            $FilterArr
+                        ) ?>&width=<?= $width ?>&height=<?= $height ?>&lang=<? echo LANG ?>" width="<?= $width ?>"
+                             height="<?= $height ?>">
                     </td>
                 </tr>
             </table>
@@ -110,15 +119,17 @@ else:
         <? echo GetMessage("STAT_DYNAMIC_GRAPH2") ?>
         <table cellspacing=0 cellpadding=10 align="center">
             <tr>
-                <td valign="center"><img
-                            src="/bitrix/admin/city_diagram.php?<?= GetFilterParams($FilterArr) ?>&lang=<?= LANG ?>&find_data_type=<?= $find_data_type ?>"
-                            width="<?= $diameter ?>" height="<?= $diameter ?>"></td>
+                <td valign="center"><img src="/bitrix/admin/city_diagram.php?<?= GetFilterParams(
+                        $FilterArr
+                    ) ?>&lang=<?= LANG ?>&find_data_type=<?= $find_data_type ?>" width="<?= $diameter ?>"
+                                         height="<?= $diameter ?>"></td>
                 <td valign="center">
                     <table cellpadding=2 cellspacing=0 border=0 class="legend">
                         <?
                         $sum = 0;
-                        foreach ($arrLegend as $keyL => $arrL)
+                        foreach ($arrLegend as $keyL => $arrL) {
                             $sum += $arrL[$find_data_type];
+                        }
 
                         $i = 0;
                         foreach ($arrLegend as $keyL => $arrL) :
@@ -139,13 +150,31 @@ else:
                                 <td nowrap>(<?
                                     if ($find_data_type == "SESSIONS") :
                                         ?><a
-                                        href="/bitrix/admin/session_list.php?lang=<?= LANGUAGE_ID ?>&amp;find_city_id=<? echo urlencode($id) ?>&amp;find_city_exact_match=Y&amp;find_date1=<? echo urlencode($arFilter["DATE1"]) ?>&amp;find_date2=<? echo urlencode($arFilter["DATE2"]) ?>&amp;set_filter=Y"><?= $counter ?></a><?
+                                        href="/bitrix/admin/session_list.php?lang=<?= LANGUAGE_ID ?>&amp;find_city_id=<? echo urlencode(
+                                            $id
+                                        ) ?>&amp;find_city_exact_match=Y&amp;find_date1=<? echo urlencode(
+                                            $arFilter["DATE1"]
+                                        ) ?>&amp;find_date2=<? echo urlencode(
+                                            $arFilter["DATE2"]
+                                        ) ?>&amp;set_filter=Y"><?= $counter ?></a><?
                                     elseif ($find_data_type == "NEW_GUESTS") :
                                         ?><a
-                                        href="/bitrix/admin/guest_list.php?lang=<?= LANGUAGE_ID ?>&amp;find_city_id=<? echo urlencode($id) ?>&amp;find_city_exact_match=Y&amp;find_sess2=1&amp;find_period_date1=<? echo urlencode($arFilter["DATE1"]) ?>&amp;find_period_date2=<? echo urlencode($arFilter["DATE2"]) ?>&amp;set_filter=Y"><?= $counter ?></a><?
+                                        href="/bitrix/admin/guest_list.php?lang=<?= LANGUAGE_ID ?>&amp;find_city_id=<? echo urlencode(
+                                            $id
+                                        ) ?>&amp;find_city_exact_match=Y&amp;find_sess2=1&amp;find_period_date1=<? echo urlencode(
+                                            $arFilter["DATE1"]
+                                        ) ?>&amp;find_period_date2=<? echo urlencode(
+                                            $arFilter["DATE2"]
+                                        ) ?>&amp;set_filter=Y"><?= $counter ?></a><?
                                     elseif ($find_data_type == "HITS") :
                                         ?><a
-                                        href="/bitrix/admin/hit_list.php?lang=<?= LANGUAGE_ID ?>&amp;find_city_id=<? echo urlencode($id) ?>&amp;find_city_exact_match=Y&amp;find_date1=<? echo urlencode($arFilter["DATE1"]) ?>&amp;find_date2=<? echo urlencode($arFilter["DATE2"]) ?>&amp;set_filter=Y"><?= $counter ?></a><?
+                                        href="/bitrix/admin/hit_list.php?lang=<?= LANGUAGE_ID ?>&amp;find_city_id=<? echo urlencode(
+                                            $id
+                                        ) ?>&amp;find_city_exact_match=Y&amp;find_date1=<? echo urlencode(
+                                            $arFilter["DATE1"]
+                                        ) ?>&amp;find_date2=<? echo urlencode(
+                                            $arFilter["DATE2"]
+                                        ) ?>&amp;set_filter=Y"><?= $counter ?></a><?
                                     elseif ($find_data_type == "C_EVENTS") :
                                         ?><?= $counter ?><?
                                     endif;
@@ -178,15 +207,17 @@ endif ?>
             <? echo GetMessage("STAT_STATIC_GRAPH") ?>
             <table cellspacing=0 cellpadding=10 class="graph" align="center">
                 <tr>
-                    <td valign="center"><img
-                                src="/bitrix/admin/city_diagram.php?<?= GetFilterParams($FilterArr) ?>&lang=<?= LANGUAGE_ID ?>&find_data_type=<?= $find_data_type ?>&diagram_type=TOTAL"
-                                width="<?= $diameter ?>" height="<?= $diameter ?>"></td>
+                    <td valign="center"><img src="/bitrix/admin/city_diagram.php?<?= GetFilterParams(
+                            $FilterArr
+                        ) ?>&lang=<?= LANGUAGE_ID ?>&find_data_type=<?= $find_data_type ?>&diagram_type=TOTAL"
+                                             width="<?= $diameter ?>" height="<?= $diameter ?>"></td>
                     <td valign="center">
                         <table cellpadding=2 cellspacing=0 border=0 class="legend">
                             <?
                             $sum = 0;
-                            foreach ($arrTotalLegend as $keyL => $arrL)
+                            foreach ($arrTotalLegend as $keyL => $arrL) {
                                 $sum += $arrL["TOTAL_" . $find_data_type];
+                            }
 
                             $i = 0;
                             foreach ($arrTotalLegend as $keyL => $arrL) :
@@ -206,13 +237,19 @@ endif ?>
                                     <td nowrap>(<?
                                         if ($find_data_type == "SESSIONS") :
                                             ?><a
-                                            href="/bitrix/admin/session_list.php?lang=<?= LANGUAGE_ID ?>&amp;find_city_id=<? echo urlencode($id) ?>&amp;find_city_exact_match=Y&amp;set_filter=Y"><?= $counter ?></a><?
+                                            href="/bitrix/admin/session_list.php?lang=<?= LANGUAGE_ID ?>&amp;find_city_id=<? echo urlencode(
+                                                $id
+                                            ) ?>&amp;find_city_exact_match=Y&amp;set_filter=Y"><?= $counter ?></a><?
                                         elseif ($find_data_type == "NEW_GUESTS") :
                                             ?><a
-                                            href="/bitrix/admin/guest_list.php?lang=<?= LANGUAGE_ID ?>&amp;find_city_id=<? echo urlencode($id) ?>&amp;find_city_exact_match=Y&amp;find_sess2=1&amp;set_filter=Y"><?= $counter ?></a><?
+                                            href="/bitrix/admin/guest_list.php?lang=<?= LANGUAGE_ID ?>&amp;find_city_id=<? echo urlencode(
+                                                $id
+                                            ) ?>&amp;find_city_exact_match=Y&amp;find_sess2=1&amp;set_filter=Y"><?= $counter ?></a><?
                                         elseif ($find_data_type == "HITS") :
                                             ?><a
-                                            href="/bitrix/admin/hit_list.php?lang=<?= LANGUAGE_ID ?>&amp;find_city_id=<? echo urlencode($id) ?>&amp;find_city_exact_match=Y&amp;set_filter=Y"><?= $counter ?></a><?
+                                            href="/bitrix/admin/hit_list.php?lang=<?= LANGUAGE_ID ?>&amp;find_city_id=<? echo urlencode(
+                                                $id
+                                            ) ?>&amp;find_city_exact_match=Y&amp;set_filter=Y"><?= $counter ?></a><?
                                         elseif ($find_data_type == "C_EVENTS") :
                                             ?><?= $counter ?><?
                                         endif;
@@ -300,8 +337,14 @@ $filter = new CAdminFilter($sTableID . "_filter_id", array(GetMessage("STAT_F_CO
         <? $filter->Begin(); ?>
         <tr valign="top">
             <td width="0%" nowrap><? echo GetMessage("STAT_F_PERIOD") . ":" ?></td>
-            <td width="0%"
-                nowrap><? echo CalendarPeriod("find_date1", $find_date1, "find_date2", $find_date2, "form1", "Y") ?></td>
+            <td width="0%" nowrap><? echo CalendarPeriod(
+                    "find_date1",
+                    $find_date1,
+                    "find_date2",
+                    $find_date2,
+                    "form1",
+                    "Y"
+                ) ?></td>
         </tr>
         </tr>
         <?

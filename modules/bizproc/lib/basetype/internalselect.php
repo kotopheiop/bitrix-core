@@ -34,19 +34,26 @@ class InternalSelect extends Select
 
         $fields = self::getDocumentSelectFields($fieldType, true);
         if (!empty($fields)) {
-            $result .= '<select onchange="' . htmlspecialcharsbx($callbackFunctionName) . '(this.options[this.selectedIndex].value)">';
+            $result .= '<select onchange="' . htmlspecialcharsbx(
+                    $callbackFunctionName
+                ) . '(this.options[this.selectedIndex].value)">';
 
             $fieldsNames = array_keys($fields);
-            if (!in_array($selectedField, $fieldsNames))
+            if (!in_array($selectedField, $fieldsNames)) {
                 $selectedField = isset($fieldsNames[0]) ? $fieldsNames[0] : '';
+            }
 
             foreach ($fields as $name => $field) {
-                $result .= '<option value="' . htmlspecialcharsbx($name) . '"' . (($selectedField == $name) ? " selected" : "") . '>'
+                $result .= '<option value="' . htmlspecialcharsbx(
+                        $name
+                    ) . '"' . (($selectedField == $name) ? " selected" : "") . '>'
                     . htmlspecialcharsbx($field["Name"]) . '</option>';
             }
             $result .= '</select>';
         }
-        $result .= '<!--__defaultOptionsValue:' . $selectedField . '--><!--__modifyOptionsPromt:' . Loc::getMessage('BPDT_INTERNALSELECT_OPT_LABEL') . '-->';
+        $result .= '<!--__defaultOptionsValue:' . $selectedField . '--><!--__modifyOptionsPromt:' . Loc::getMessage(
+                'BPDT_INTERNALSELECT_OPT_LABEL'
+            ) . '-->';
         $fieldType->setOptions($selectedField);
 
         return $result;
@@ -84,10 +91,11 @@ class InternalSelect extends Select
         $result = array();
         $fields = $documentService->getDocumentFields($fieldType->getDocumentType());
         foreach ($fields as $key => $field) {
-            if ($field['Type'] == 'select' && substr($key, -10) != '_PRINTABLE') {
+            if ($field['Type'] == 'select' && mb_substr($key, -10) != '_PRINTABLE') {
                 $result[$key] = $field;
-                if (isset($field['Alias']) && !$ignoreAliases)
+                if (isset($field['Alias']) && !$ignoreAliases) {
                     $result[$field['Alias']] = $field;
+                }
             }
         }
         return $result;

@@ -1,4 +1,5 @@
 <?
+
 global $MESS;
 $MESS["MM_TITLE"] = '������@mail.ru';
 $MESS["MM_KEY"] = '��� �������';

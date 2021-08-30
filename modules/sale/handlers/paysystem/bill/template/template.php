@@ -1,6 +1,8 @@
 <?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
     die();
+}
 
 use Bitrix\Main\Localization\Loc;
 
@@ -41,8 +43,9 @@ Loc::loadMessages(__FILE__);
 
 <?
 
-if ($_REQUEST['BLANK'] == 'Y')
+if ($_REQUEST['BLANK'] == 'Y') {
     $blank = true;
+}
 
 $pageWidth = 595.28;
 $pageHeight = 841.89;
@@ -51,13 +54,15 @@ $background = '#ffffff';
 if ($params['BILL_BACKGROUND']) {
     $path = $params['BILL_BACKGROUND'];
     if (intval($path) > 0) {
-        if ($arFile = CFile::GetFileArray($path))
+        if ($arFile = CFile::GetFileArray($path)) {
             $path = $arFile['SRC'];
+        }
     }
 
     $backgroundStyle = $params['BILL_BACKGROUND_STYLE'];
-    if (!in_array($backgroundStyle, array('none', 'tile', 'stretch')))
+    if (!in_array($backgroundStyle, array('none', 'tile', 'stretch'))) {
         $backgroundStyle = 'none';
+    }
 
     if ($path) {
         switch ($backgroundStyle) {
@@ -70,7 +75,9 @@ if ($params['BILL_BACKGROUND']) {
             case 'stretch':
                 $background = sprintf(
                     "url('%s') 0 0 repeat-y; background-size: %.02fpt %.02fpt",
-                    $path, $pageWidth, $pageHeight
+                    $path,
+                    $pageWidth,
+                    $pageHeight
                 );
                 break;
         }
@@ -90,7 +97,10 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
 
 <body style="margin: 0pt; padding: 0pt; background: <?= $background; ?>"<? if ($_REQUEST['PRINT'] == 'Y') { ?> onload="setTimeout(window.print, 0);"<? } ?>>
 
-<div style="margin: 0pt; padding: <?= join('pt ', $margin); ?>pt; width: <?= $width; ?>pt; background: <?= $background; ?>">
+<div style="margin: 0pt; padding: <?= join(
+    'pt ',
+    $margin
+); ?>pt; width: <?= $width; ?>pt; background: <?= $background; ?>">
 
     <? if ($params['BILL_HEADER_SHOW'] == 'Y'): ?>
         <table class="header">
@@ -100,8 +110,9 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
                         <? $imgParams = CFile::_GetImgParams($params['BILL_PATH_TO_LOGO']);
                         $dpi = intval($params['BILL_LOGO_DPI']) ?: 96;
                         $imgWidth = $imgParams['WIDTH'] * 96 / $dpi;
-                        if ($imgWidth > $pageWidth)
+                        if ($imgWidth > $pageWidth) {
                             $imgWidth = $pageWidth * 0.6;
+                        }
                         ?>
                         <img src="<?= $imgParams['SRC']; ?>" width="<?= $imgWidth; ?>"/>
                     </td>
@@ -110,15 +121,18 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
                     <b><?= htmlspecialcharsbx($params["SELLER_COMPANY_NAME"]); ?></b><br><?
                     if ($params["SELLER_COMPANY_ADDRESS"]) {
                         $sellerAddr = $params["SELLER_COMPANY_ADDRESS"];
-                        if (is_array($sellerAddr))
+                        if (is_array($sellerAddr)) {
                             $sellerAddr = implode(', ', $sellerAddr);
-                        else
+                        } else {
                             $sellerAddr = str_replace(array("\r\n", "\n", "\r"), ', ', strval($sellerAddr));
+                        }
                         ?><b><?= htmlspecialcharsbx($sellerAddr); ?></b><br><?
                     } ?>
                     <? if ($params["SELLER_COMPANY_PHONE"]) { ?>
-                        <b><?= Loc::getMessage('SALE_HPS_BILL_SELLER_COMPANY_PHONE', array('#PHONE#' => htmlspecialcharsbx($params["SELLER_COMPANY_PHONE"]))); ?></b>
-                        <br>
+                        <b><?= Loc::getMessage(
+                                'SALE_HPS_BILL_SELLER_COMPANY_PHONE',
+                                array('#PHONE#' => htmlspecialcharsbx($params["SELLER_COMPANY_PHONE"]))
+                            ); ?></b><br>
                     <? } ?>
                 </td>
             </tr>
@@ -129,10 +143,11 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
             $sellerBankCity = '';
             if ($params["SELLER_COMPANY_BANK_CITY"]) {
                 $sellerBankCity = $params["SELLER_COMPANY_BANK_CITY"];
-                if (is_array($sellerBankCity))
+                if (is_array($sellerBankCity)) {
                     $sellerBankCity = implode(', ', $sellerBankCity);
-                else
+                } else {
                     $sellerBankCity = str_replace(array("\r\n", "\n", "\r"), ', ', strval($sellerBankCity));
+                }
             }
             $sellerBank = sprintf(
                 "%s %s",
@@ -160,14 +175,20 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
             <tr>
                 <td>
                     <? if ($params["SELLER_COMPANY_INN"]) { ?>
-                        <?= Loc::getMessage('SALE_HPS_BILL_INN', array('#INN#' => htmlspecialcharsbx($params["SELLER_COMPANY_INN"]))); ?>
+                        <?= Loc::getMessage(
+                            'SALE_HPS_BILL_INN',
+                            array('#INN#' => htmlspecialcharsbx($params["SELLER_COMPANY_INN"]))
+                        ); ?>
                     <? } else { ?>
                         &nbsp;
                     <? } ?>
                 </td>
                 <td>
                     <? if ($params["SELLER_COMPANY_KPP"]) { ?>
-                        <?= Loc::getMessage('SALE_HPS_BILL_KPP', array('#KPP#' => htmlspecialcharsbx($params["SELLER_COMPANY_KPP"]))); ?>
+                        <?= Loc::getMessage(
+                            'SALE_HPS_BILL_KPP',
+                            array('#KPP#' => htmlspecialcharsbx($params["SELLER_COMPANY_KPP"]))
+                        ); ?>
                     <? } else { ?>
                         &nbsp;
                     <? } ?>
@@ -219,7 +240,13 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
                 <td></td>
                 <td style="font-size: 2em; font-weight: bold; text-align: center">
                     <nobr>
-                        <?= htmlspecialcharsbx($params['BILL_HEADER']); ?> <?= Loc::getMessage('SALE_HPS_BILL_SELLER_TITLE', array('#PAYMENT_NUM#' => htmlspecialcharsbx($params["ACCOUNT_NUMBER"]), '#PAYMENT_DATE#' => htmlspecialcharsbx($params["PAYMENT_DATE_INSERT"]))); ?>
+                        <?= htmlspecialcharsbx($params['BILL_HEADER']); ?> <?= Loc::getMessage(
+                            'SALE_HPS_BILL_SELLER_TITLE',
+                            array(
+                                '#PAYMENT_NUM#' => htmlspecialcharsbx($params["ACCOUNT_NUMBER"]),
+                                '#PAYMENT_DATE#' => htmlspecialcharsbx($params["PAYMENT_DATE_INSERT"])
+                            )
+                        ); ?>
                     </nobr>
                 </td>
                 <td></td>
@@ -236,7 +263,15 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
             <tr>
                 <td></td>
                 <td>
-                    <?= Loc::getMessage('SALE_HPS_BILL_SELLER_DATE_END', array('#PAYMENT_DATE_END#' => ConvertDateTime($params["PAYMENT_DATE_PAY_BEFORE"], FORMAT_DATE) ?: htmlspecialcharsbx($params["PAYMENT_DATE_PAY_BEFORE"]))); ?>
+                    <?= Loc::getMessage(
+                        'SALE_HPS_BILL_SELLER_DATE_END',
+                        array(
+                            '#PAYMENT_DATE_END#' => ConvertDateTime(
+                                $params["PAYMENT_DATE_PAY_BEFORE"],
+                                FORMAT_DATE
+                            ) ?: htmlspecialcharsbx($params["PAYMENT_DATE_PAY_BEFORE"])
+                        )
+                    ); ?>
                 </td>
                 <td></td>
             </tr>
@@ -248,23 +283,34 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
 
     if ($params['BILL_PAYER_SHOW'] == 'Y'):
         if ($params["BUYER_PERSON_COMPANY_NAME"]) {
-            echo Loc::getMessage('SALE_HPS_BILL_BUYER_NAME', array('#BUYER_NAME#' => htmlspecialcharsbx($params["BUYER_PERSON_COMPANY_NAME"])));
-            if ($params["BUYER_PERSON_COMPANY_INN"])
-                echo Loc::getMessage('SALE_HPS_BILL_BUYER_INN', array('#INN#' => htmlspecialcharsbx($params["BUYER_PERSON_COMPANY_INN"])));
+            echo Loc::getMessage(
+                'SALE_HPS_BILL_BUYER_NAME',
+                array('#BUYER_NAME#' => htmlspecialcharsbx($params["BUYER_PERSON_COMPANY_NAME"]))
+            );
+            if ($params["BUYER_PERSON_COMPANY_INN"]) {
+                echo Loc::getMessage(
+                    'SALE_HPS_BILL_BUYER_INN',
+                    array('#INN#' => htmlspecialcharsbx($params["BUYER_PERSON_COMPANY_INN"]))
+                );
+            }
             if ($params["BUYER_PERSON_COMPANY_ADDRESS"]) {
                 $buyerAddr = $params["BUYER_PERSON_COMPANY_ADDRESS"];
-                if (is_array($buyerAddr))
+                if (is_array($buyerAddr)) {
                     $buyerAddr = implode(', ', $buyerAddr);
-                else
+                } else {
                     $buyerAddr = str_replace(array("\r\n", "\n", "\r"), ', ', strval($buyerAddr));
+                }
                 echo sprintf(", %s", htmlspecialcharsbx($buyerAddr));
             }
-            if ($params["BUYER_PERSON_COMPANY_PHONE"])
+            if ($params["BUYER_PERSON_COMPANY_PHONE"]) {
                 echo sprintf(", %s", htmlspecialcharsbx($params["BUYER_PERSON_COMPANY_PHONE"]));
-            if ($params["BUYER_PERSON_COMPANY_FAX"])
+            }
+            if ($params["BUYER_PERSON_COMPANY_FAX"]) {
                 echo sprintf(", %s", htmlspecialcharsbx($params["BUYER_PERSON_COMPANY_FAX"]));
-            if ($params["BUYER_PERSON_COMPANY_NAME_CONTACT"])
+            }
+            if ($params["BUYER_PERSON_COMPANY_NAME_CONTACT"]) {
                 echo sprintf(", %s", htmlspecialcharsbx($params["BUYER_PERSON_COMPANY_NAME_CONTACT"]));
+            }
         }
     endif;
     ?>
@@ -290,11 +336,12 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
     foreach ($columnList as $column) {
         if ($params['BILL_COLUMN_' . $column . '_SHOW'] == 'Y') {
             $caption = $params['BILL_COLUMN_' . $column . '_TITLE'];
-            if (in_array($column, array('PRICE', 'SUM')))
+            if (in_array($column, array('PRICE', 'SUM'))) {
                 $caption .= ', ' . $currency;
+            }
 
             $arCols[$column] = array(
-                'NAME' => $caption,
+                'NAME' => htmlspecialcharsbx($caption, ENT_COMPAT, false),
                 'SORT' => $params['BILL_COLUMN_' . $column . '_SORT']
             );
         }
@@ -303,15 +350,18 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
         $columnList = array_merge($columnList, array_keys($params['USER_COLUMNS']));
         foreach ($params['USER_COLUMNS'] as $id => $val) {
             $arCols[$id] = array(
-                'NAME' => $val['NAME'],
+                'NAME' => htmlspecialcharsbx($val['NAME'], ENT_COMPAT, false),
                 'SORT' => $val['SORT']
             );
         }
     }
 
-    uasort($arCols, function ($a, $b) {
-        return ($a['SORT'] < $b['SORT']) ? -1 : 1;
-    });
+    uasort(
+        $arCols,
+        function ($a, $b) {
+            return ($a['SORT'] < $b['SORT']) ? -1 : 1;
+        }
+    );
 
     $arColumnKeys = array_keys($arCols);
     $columnCount = count($arColumnKeys);
@@ -319,15 +369,19 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
     if ($params['BASKET_ITEMS']) {
         foreach ($params['BASKET_ITEMS'] as $basketItem) {
             $productName = $basketItem["NAME"];
-            if ($productName == "OrderDelivery")
+            if ($productName == "OrderDelivery") {
                 $productName = Loc::getMessage('SALE_HPS_BILL_DELIVERY');
-            else if ($productName == "OrderDiscount")
-                $productName = Loc::getMessage('SALE_HPS_BILL_DISCOUNT');
+            } else {
+                if ($productName == "OrderDiscount") {
+                    $productName = Loc::getMessage('SALE_HPS_BILL_DISCOUNT');
+                }
+            }
 
-            if ($basketItem['IS_VAT_IN_PRICE'])
+            if ($basketItem['IS_VAT_IN_PRICE']) {
                 $basketItemPrice = $basketItem['PRICE'];
-            else
+            } else {
                 $basketItemPrice = $basketItem['PRICE'] * (1 + $basketItem['VAT_RATE']);
+            }
 
             $cells[++$n] = array();
             foreach ($arCols as $columnId => $caption) {
@@ -344,7 +398,9 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
                         $data = roundEx($basketItem['QUANTITY'], SALE_VALUE_PRECISION);
                         break;
                     case 'MEASURE':
-                        $data = $basketItem["MEASURE_NAME"] ? htmlspecialcharsbx($basketItem["MEASURE_NAME"]) : Loc::getMessage('SALE_HPS_BILL_BASKET_MEASURE_DEFAULT');
+                        $data = $basketItem["MEASURE_NAME"] ? htmlspecialcharsbx(
+                            $basketItem["MEASURE_NAME"]
+                        ) : Loc::getMessage('SALE_HPS_BILL_BASKET_MEASURE_DEFAULT');
                         break;
                     case 'PRICE':
                         $data = SaleFormatCurrency($basketItem['PRICE'], $basketItem['CURRENCY'], true);
@@ -353,21 +409,29 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
                         $data = roundEx($basketItem['VAT_RATE'] * 100, SALE_VALUE_PRECISION) . "%";
                         break;
                     case 'SUM':
-                        $data = SaleFormatCurrency($basketItemPrice * $basketItem['QUANTITY'], $basketItem['CURRENCY'], true);
+                        $data = SaleFormatCurrency(
+                            $basketItemPrice * $basketItem['QUANTITY'],
+                            $basketItem['CURRENCY'],
+                            true
+                        );
                         break;
                     default :
                         $data = ($basketItem[$columnId]) ?: '';
                 }
-                if ($data !== null)
+                if ($data !== null) {
                     $cells[$n][$columnId] = $data;
+                }
             }
             $props[$n] = array();
             /** @var \Bitrix\Sale\BasketPropertyItem $basketPropertyItem */
             if ($basketItem['PROPS']) {
                 foreach ($basketItem['PROPS'] as $basketPropertyItem) {
-                    if ($basketPropertyItem['CODE'] == 'CATALOG.XML_ID' || $basketPropertyItem['CODE'] == 'PRODUCT.XML_ID')
+                    if ($basketPropertyItem['CODE'] == 'CATALOG.XML_ID' || $basketPropertyItem['CODE'] == 'PRODUCT.XML_ID') {
                         continue;
-                    $props[$n][] = htmlspecialcharsbx(sprintf("%s: %s", $basketPropertyItem["NAME"], $basketPropertyItem["VALUE"]));
+                    }
+                    $props[$n][] = htmlspecialcharsbx(
+                        sprintf("%s: %s", $basketPropertyItem["NAME"], $basketPropertyItem["VALUE"])
+                    );
                 }
             }
             $sum += doubleval($basketItem['PRICE'] * $basketItem['QUANTITY']);
@@ -379,15 +443,17 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
         unset($arCols['VAT_RATE']);
         $columnCount = count($arCols);
         $arColumnKeys = array_keys($arCols);
-        foreach ($cells as $i => $cell)
+        foreach ($cells as $i => $cell) {
             unset($cells[$i]['VAT_RATE']);
+        }
     }
 
     if ($params['DELIVERY_PRICE'] > 0) {
         $deliveryItem = Loc::getMessage('SALE_HPS_BILL_DELIVERY');
 
-        if ($params['DELIVERY_NAME'])
+        if ($params['DELIVERY_NAME']) {
             $deliveryItem .= sprintf(" (%s)", htmlspecialcharsbx($params['DELIVERY_NAME']));
+        }
         $cells[++$n] = array();
         foreach ($arCols as $columnId => $caption) {
             $data = null;
@@ -415,8 +481,9 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
                     $data = SaleFormatCurrency($params['DELIVERY_PRICE'], $params['CURRENCY'], true);
                     break;
             }
-            if ($data !== null)
+            if ($data !== null) {
                 $cells[$n][$columnId] = $data;
+            }
         }
         $sum += doubleval($params['DELIVERY_PRICE']);
     }
@@ -426,8 +493,9 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
         $eps = 0.0001;
         if ($params['SUM'] - $sum > $eps) {
             $cells[++$n] = array();
-            for ($i = 0; $i < $columnCount; $i++)
+            for ($i = 0; $i < $columnCount; $i++) {
                 $cells[$n][$arColumnKeys[$i]] = null;
+            }
 
             $cells[$n][$arColumnKeys[$columnCount - 2]] = Loc::getMessage('SALE_HPS_BILL_SUBTOTAL');
             $cells[$n][$arColumnKeys[$columnCount - 1]] = SaleFormatCurrency($sum, $params['CURRENCY'], true);
@@ -436,25 +504,33 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
         if ($params['TAXES']) {
             foreach ($params['TAXES'] as $tax) {
                 $cells[++$n] = array();
-                for ($i = 0; $i < $columnCount; $i++)
+                for ($i = 0; $i < $columnCount; $i++) {
                     $cells[$n][$arColumnKeys[$i]] = null;
+                }
 
-                $cells[$n][$arColumnKeys[$columnCount - 2]] = htmlspecialcharsbx(sprintf(
-                    "%s%s%s:",
-                    ($tax["IS_IN_PRICE"] == "Y") ? Loc::getMessage('SALE_HPS_BILL_INCLUDING') : "",
-                    $tax["TAX_NAME"],
-                    ($vat <= 0 && $tax["IS_PERCENT"] == "Y")
-                        ? sprintf(' (%s%%)', roundEx($tax["VALUE"], SALE_VALUE_PRECISION))
-                        : ""
-                ));
-                $cells[$n][$arColumnKeys[$columnCount - 1]] = SaleFormatCurrency($tax["VALUE_MONEY"], $params['CURRENCY'], true);
+                $cells[$n][$arColumnKeys[$columnCount - 2]] = htmlspecialcharsbx(
+                    sprintf(
+                        "%s%s%s:",
+                        ($tax["IS_IN_PRICE"] == "Y") ? Loc::getMessage('SALE_HPS_BILL_INCLUDING') : "",
+                        $tax["TAX_NAME"],
+                        ($vat <= 0 && $tax["IS_PERCENT"] == "Y")
+                            ? sprintf(' (%s%%)', roundEx($tax["VALUE"], SALE_VALUE_PRECISION))
+                            : ""
+                    )
+                );
+                $cells[$n][$arColumnKeys[$columnCount - 1]] = SaleFormatCurrency(
+                    $tax["VALUE_MONEY"],
+                    $params['CURRENCY'],
+                    true
+                );
             }
         }
 
         if (!$params['TAXES']) {
             $cells[++$n] = array();
-            for ($i = 0; $i < $columnCount; $i++)
+            for ($i = 0; $i < $columnCount; $i++) {
                 $cells[$n][$i] = null;
+            }
 
             $cells[$n][$arColumnKeys[$columnCount - 2]] = Loc::getMessage('SALE_HPS_BILL_TOTAL_VAT_RATE');
             $cells[$n][$arColumnKeys[$columnCount - 1]] = Loc::getMessage('SALE_HPS_BILL_TOTAL_VAT_RATE_NO');
@@ -462,24 +538,35 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
 
         if ($params['SUM_PAID'] > 0) {
             $cells[++$n] = array();
-            for ($i = 0; $i < $columnCount; $i++)
+            for ($i = 0; $i < $columnCount; $i++) {
                 $cells[$n][$arColumnKeys[$i]] = null;
+            }
 
             $cells[$n][$arColumnKeys[$columnCount - 2]] = Loc::getMessage('SALE_HPS_BILL_TOTAL_PAID');
-            $cells[$n][$arColumnKeys[$columnCount - 1]] = SaleFormatCurrency($params['SUM_PAID'], $params['CURRENCY'], true);
+            $cells[$n][$arColumnKeys[$columnCount - 1]] = SaleFormatCurrency(
+                $params['SUM_PAID'],
+                $params['CURRENCY'],
+                true
+            );
         }
         if ($params['DISCOUNT_PRICE'] > 0) {
             $cells[++$n] = array();
-            for ($i = 0; $i < $columnCount; $i++)
+            for ($i = 0; $i < $columnCount; $i++) {
                 $cells[$n][$arColumnKeys[$i]] = null;
+            }
 
             $cells[$n][$arColumnKeys[$columnCount - 2]] = Loc::getMessage('SALE_HPS_BILL_TOTAL_DISCOUNT');
-            $cells[$n][$arColumnKeys[$columnCount - 1]] = SaleFormatCurrency($params['DISCOUNT_PRICE'], $params['CURRENCY'], true);
+            $cells[$n][$arColumnKeys[$columnCount - 1]] = SaleFormatCurrency(
+                $params['DISCOUNT_PRICE'],
+                $params['CURRENCY'],
+                true
+            );
         }
 
         $cells[++$n] = array();
-        for ($i = 0; $i < $columnCount; $i++)
+        for ($i = 0; $i < $columnCount; $i++) {
             $cells[$n][$arColumnKeys[$i]] = null;
+        }
 
         $cells[$n][$arColumnKeys[$columnCount - 2]] = Loc::getMessage('SALE_HPS_BILL_TOTAL_SUM');
         $cells[$n][$arColumnKeys[$columnCount - 1]] = SaleFormatCurrency($params['SUM'], $params['CURRENCY'], true);
@@ -523,7 +610,9 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
                         <?
                         } else {
                             if (!is_null($cells[$n][$columnId])) {
-                                if ($columnId != 'VAT_RATE' || $vat > 0 || is_null($cells[$n][$columnId]) || $n > $cntBasketItem) { ?>
+                                if ($columnId != 'VAT_RATE' || $vat > 0 || is_null(
+                                        $cells[$n][$columnId]
+                                    ) || $n > $cntBasketItem) { ?>
                                     <td align="right"
                                         <? if ($accumulated) { ?>
                                             style="border-width: 0pt 1pt 0pt 0pt"
@@ -557,7 +646,11 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
             'SALE_HPS_BILL_BASKET_TOTAL',
             array(
                 '#BASKET_COUNT#' => $cntBasketItem,
-                '#BASKET_PRICE#' => SaleFormatCurrency($params['SUM'], $params['CURRENCY'], false)
+                '#BASKET_PRICE#' => htmlspecialcharsbx(
+                    SaleFormatCurrency($params['SUM'], $params['CURRENCY'], false),
+                    ENT_COMPAT,
+                    false
+                )
             )
         ); ?>
         <br>
@@ -585,18 +678,34 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
         <b><?= Loc::getMessage('SALE_HPS_BILL_COND_COMM') ?></b>
         <br>
         <? if ($params["BILL_COMMENT1"]) { ?>
-            <?= nl2br(HTMLToTxt(preg_replace(
-                array('#</div>\s*<div[^>]*>#i', '#</?div>#i'), array('<br>', '<br>'),
-                htmlspecialcharsback($params["BILL_COMMENT1"])
-            ), '', array(), 0)); ?>
+            <?= nl2br(
+                HTMLToTxt(
+                    preg_replace(
+                        array('#</div>\s*<div[^>]*>#i', '#</?div>#i'),
+                        array('<br>', '<br>'),
+                        htmlspecialcharsback($params["BILL_COMMENT1"])
+                    ),
+                    '',
+                    array(),
+                    0
+                )
+            ); ?>
             <br>
             <br>
         <? } ?>
         <? if ($params["BILL_COMMENT2"]) { ?>
-            <?= nl2br(HTMLToTxt(preg_replace(
-                array('#</div>\s*<div[^>]*>#i', '#</?div>#i'), array('<br>', '<br>'),
-                htmlspecialcharsback($params["BILL_COMMENT2"])
-            ), '', array(), 0)); ?>
+            <?= nl2br(
+                HTMLToTxt(
+                    preg_replace(
+                        array('#</div>\s*<div[^>]*>#i', '#</?div>#i'),
+                        array('<br>', '<br>'),
+                        htmlspecialcharsback($params["BILL_COMMENT2"])
+                    ),
+                    '',
+                    array(),
+                    0
+                )
+            ); ?>
             <br>
             <br>
         <? } ?>
@@ -609,7 +718,8 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
         <? if (!$blank) { ?>
             <div style="position: relative; "><?= CFile::ShowImage(
                     $params["BILL_PATH_TO_STAMP"],
-                    160, 160,
+                    160,
+                    160,
                     'style="position: absolute; left: 40pt; "'
                 ); ?></div>
         <? } ?>
@@ -618,7 +728,9 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
             <table class="sign">
                 <? if ($params["SELLER_COMPANY_DIRECTOR_POSITION"]) { ?>
                     <tr>
-                        <td style="width: 150pt; "><?= htmlspecialcharsbx($params["SELLER_COMPANY_DIRECTOR_POSITION"]); ?></td>
+                        <td style="width: 150pt; "><?= htmlspecialcharsbx(
+                                $params["SELLER_COMPANY_DIRECTOR_POSITION"]
+                            ); ?></td>
                         <td style="width: 160pt; border: 1pt solid #000000; border-width: 0pt 0pt 1pt 0pt; text-align: center; ">
                             <? if (!$blank) { ?>
                                 <?= CFile::ShowImage($params["SELLER_COMPANY_DIR_SIGN"], 200, 50); ?>
@@ -636,7 +748,9 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
                 <? } ?>
                 <? if ($params["SELLER_COMPANY_ACCOUNTANT_POSITION"]) { ?>
                     <tr>
-                        <td style="width: 150pt; "><?= htmlspecialcharsbx($params["SELLER_COMPANY_ACCOUNTANT_POSITION"]); ?></td>
+                        <td style="width: 150pt; "><?= htmlspecialcharsbx(
+                                $params["SELLER_COMPANY_ACCOUNTANT_POSITION"]
+                            ); ?></td>
                         <td style="width: 160pt; border: 1pt solid #000000; border-width: 0pt 0pt 1pt 0pt; text-align: center; ">
                             <? if (!$blank) { ?>
                                 <?= CFile::ShowImage($params["SELLER_COMPANY_ACC_SIGN"], 200, 50); ?>

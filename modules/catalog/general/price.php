@@ -35,13 +35,16 @@ class CAllPrice
                 $APPLICATION->ThrowException(Loc::getMessage("KGP_EMPTY_CURRENCY"), "EMPTY_CURRENCY");
                 return false;
             }
-            if (!isset($arFields['PRICE']))
+            if (!isset($arFields['PRICE'])) {
                 $arFields['PRICE'] = 0;
+            }
 
-            if (!isset($arFields['QUANTITY_FROM']))
+            if (!isset($arFields['QUANTITY_FROM'])) {
                 $arFields['QUANTITY_FROM'] = false;
-            if (!isset($arFields['QUANTITY_TO']))
+            }
+            if (!isset($arFields['QUANTITY_TO'])) {
                 $arFields['QUANTITY_TO'] = false;
+            }
         }
 
         $priceExist = isset($arFields['PRICE']);
@@ -61,12 +64,16 @@ class CAllPrice
                 return false;
             }
         }
-        if ($priceExist)
+        if ($priceExist) {
             $arFields['PRICE'] = (float)$arFields['PRICE'];
+        }
         if ($currencyExist) {
             $currency = CCurrency::GetByID($arFields['CURRENCY']);
             if (empty($currency)) {
-                $APPLICATION->ThrowException(Loc::getMessage("KGP_NO_CURRENCY", array('#ID#' => $arFields["CURRENCY"])), "CURRENCY");
+                $APPLICATION->ThrowException(
+                    Loc::getMessage("KGP_NO_CURRENCY", array('#ID#' => $arFields["CURRENCY"])),
+                    "CURRENCY"
+                );
                 return false;
             }
         }
@@ -74,17 +81,20 @@ class CAllPrice
             $arFields['PRICE_SCALE'] = (float)$arFields['PRICE_SCALE'];
         } else {
             if ($priceExist != $currencyExist) {
-                $iterator = Catalog\PriceTable::getList(array(
-                    'select' => array('PRICE', 'CURRENCY'),
-                    'filter' => array('=ID' => $ID)
-                ));
+                $iterator = Catalog\PriceTable::getList(
+                    array(
+                        'select' => array('PRICE', 'CURRENCY'),
+                        'filter' => array('=ID' => $ID)
+                    )
+                );
                 $currentValues = $iterator->fetch();
                 if (!empty($currentValues)) {
                     $currentPrice = ($priceExist ? $arFields['PRICE'] : (float)$currentValues['PRICE']);
                     $currentCurrency = ($currencyExist ? $arFields['CURRENCY'] : $currentValues['CURRENCY']);
                     $currency = CCurrency::GetByID($currentCurrency);
-                    if (!empty($currency))
+                    if (!empty($currency)) {
                         $arFields['PRICE_SCALE'] = $currentPrice * $currency['CURRENT_BASE_RATE'];
+                    }
                     unset($currentCurrency, $currentPrice);
                 }
                 unset($currentValues, $iterator);
@@ -96,13 +106,15 @@ class CAllPrice
 
         if (isset($arFields['QUANTITY_FROM']) && $arFields['QUANTITY_FROM'] !== false) {
             $arFields['QUANTITY_FROM'] = (int)$arFields['QUANTITY_FROM'];
-            if ($arFields['QUANTITY_FROM'] <= 0)
+            if ($arFields['QUANTITY_FROM'] <= 0) {
                 $arFields['QUANTITY_FROM'] = false;
+            }
         }
         if (isset($arFields['QUANTITY_TO']) && $arFields['QUANTITY_TO'] !== false) {
             $arFields['QUANTITY_TO'] = (int)$arFields['QUANTITY_TO'];
-            if ($arFields['QUANTITY_TO'] <= 0)
+            if ($arFields['QUANTITY_TO'] <= 0) {
                 $arFields['QUANTITY_TO'] = false;
+            }
         }
 
         return true;
@@ -117,15 +129,18 @@ class CAllPrice
         global $USER;
 
         $id = (int)$id;
-        if ($id <= 0)
+        if ($id <= 0) {
             return false;
+        }
 
         $price = Catalog\PriceTable::getById($id)->fetch();
-        if (empty($price))
+        if (empty($price)) {
             return false;
+        }
 
-        if ($price['TIMESTAMP_X'] instanceof Main\Type\DateTime)
+        if ($price['TIMESTAMP_X'] instanceof Main\Type\DateTime) {
             $price['TIMESTAMP_X'] = $price['TIMESTAMP_X']->toString();
+        }
 
         $priceTypes = CCatalogGroup::GetListArray();
         $price['CATALOG_GROUP_NAME'] = null;
@@ -139,18 +154,21 @@ class CAllPrice
 
         $price['CAN_ACCESS'] = 'N';
         $price['CAN_BUY'] = 'N';
-        $iterator = Catalog\GroupAccessTable::getList(array(
-            'select' => array('ACCESS'),
-            'filter' => array(
-                '=CATALOG_GROUP_ID' => $price['CATALOG_GROUP_ID'],
-                '@GROUP_ID' => (CCatalog::IsUserExists() ? $USER->GetUserGroupArray() : array(2))
+        $iterator = Catalog\GroupAccessTable::getList(
+            array(
+                'select' => array('ACCESS'),
+                'filter' => array(
+                    '=CATALOG_GROUP_ID' => $price['CATALOG_GROUP_ID'],
+                    '@GROUP_ID' => (CCatalog::IsUserExists() ? $USER->GetUserGroupArray() : array(2))
+                )
             )
-        ));
+        );
         while ($row = $iterator->fetch()) {
-            if ($row['ACCESS'] == Catalog\GroupAccessTable::ACCESS_BUY)
+            if ($row['ACCESS'] == Catalog\GroupAccessTable::ACCESS_BUY) {
                 $price['CAN_ACCESS'] = 'Y';
-            elseif ($row['ACCESS'] == Catalog\GroupAccessTable::ACCESS_VIEW)
+            } elseif ($row['ACCESS'] == Catalog\GroupAccessTable::ACCESS_VIEW) {
                 $price['CAN_BUY'] = 'Y';
+            }
         }
         unset($row, $iterator);
 
@@ -167,28 +185,32 @@ class CAllPrice
      */
     public static function Add($fields, $recount = false)
     {
-        if (!is_array($fields))
+        if (!is_array($fields)) {
             return false;
+        }
 
-        if (!isset($fields['PRICE']))
+        if (!isset($fields['PRICE'])) {
             $fields['PRICE'] = 0;
+        }
         self::normalizeFields($fields);
 
         $data = array(
             'fields' => $fields
         );
         $recount = ($recount === true);
-        if ($recount)
+        if ($recount) {
             $data['actions'] = array('OLD_RECOUNT' => true);
+        }
 
         $result = Catalog\Model\Price::add($data);
         unset($data);
 
         $id = false;
-        if (!$result->isSuccess())
+        if (!$result->isSuccess()) {
             self::convertErrors($result);
-        else
+        } else {
             $id = (int)$result->getId();
+        }
         unset($result);
 
         return $id;
@@ -206,8 +228,9 @@ class CAllPrice
     public static function Update($id, $fields, $recount = false)
     {
         $id = (int)$id;
-        if ($id <= 0 || !is_array($fields))
+        if ($id <= 0 || !is_array($fields)) {
             return false;
+        }
 
         self::normalizeFields($fields);
 
@@ -215,8 +238,9 @@ class CAllPrice
             'fields' => $fields
         );
         $recount = ($recount === true);
-        if ($recount)
+        if ($recount) {
             $data['actions'] = array('OLD_RECOUNT' => true);
+        }
 
         $result = Catalog\Model\Price::update($id, $data);
         unset($data);
@@ -239,13 +263,15 @@ class CAllPrice
     public static function Delete($id)
     {
         $id = (int)$id;
-        if ($id <= 0)
+        if ($id <= 0) {
             return false;
+        }
 
         $result = Catalog\Model\Price::delete($id);
         $success = $result->isSuccess();
-        if (!$success)
+        if (!$success) {
             self::convertErrors($result);
+        }
         unset($result);
 
         return $success;
@@ -264,32 +290,58 @@ class CAllPrice
     public static function GetBasePrice($productID, $quantityFrom = false, $quantityTo = false, $boolExt = true)
     {
         $productID = (int)$productID;
-        if ($productID <= 0)
+        if ($productID <= 0) {
             return false;
+        }
 
         $arBaseType = CCatalogGroup::GetBaseGroup();
-        if (empty($arBaseType))
+        if (empty($arBaseType)) {
             return false;
+        }
 
         $arFilter = array(
             'PRODUCT_ID' => $productID,
             'CATALOG_GROUP_ID' => $arBaseType['ID']
         );
 
-        if ($quantityFrom !== false)
+        if ($quantityFrom !== false) {
             $arFilter['QUANTITY_FROM'] = (int)$quantityFrom;
-        if ($quantityTo !== false)
+        }
+        if ($quantityTo !== false) {
             $arFilter['QUANTITY_TO'] = (int)$quantityTo;
+        }
 
         if ($boolExt === false) {
-            $arSelect = array('ID', 'PRODUCT_ID', 'EXTRA_ID', 'CATALOG_GROUP_ID', 'PRICE', 'CURRENCY', 'TIMESTAMP_X',
-                'QUANTITY_FROM', 'QUANTITY_TO', 'TMP_ID'
+            $arSelect = array(
+                'ID',
+                'PRODUCT_ID',
+                'EXTRA_ID',
+                'CATALOG_GROUP_ID',
+                'PRICE',
+                'CURRENCY',
+                'TIMESTAMP_X',
+                'QUANTITY_FROM',
+                'QUANTITY_TO',
+                'TMP_ID'
             );
         } else {
-            $arSelect = array('ID', 'PRODUCT_ID', 'EXTRA_ID', 'CATALOG_GROUP_ID', 'PRICE', 'CURRENCY', 'TIMESTAMP_X',
-                'QUANTITY_FROM', 'QUANTITY_TO', 'TMP_ID',
-                'PRODUCT_QUANTITY', 'PRODUCT_QUANTITY_TRACE', 'PRODUCT_CAN_BUY_ZERO',
-                'PRODUCT_NEGATIVE_AMOUNT_TRACE', 'PRODUCT_WEIGHT', 'ELEMENT_IBLOCK_ID'
+            $arSelect = array(
+                'ID',
+                'PRODUCT_ID',
+                'EXTRA_ID',
+                'CATALOG_GROUP_ID',
+                'PRICE',
+                'CURRENCY',
+                'TIMESTAMP_X',
+                'QUANTITY_FROM',
+                'QUANTITY_TO',
+                'TMP_ID',
+                'PRODUCT_QUANTITY',
+                'PRODUCT_QUANTITY_TRACE',
+                'PRODUCT_CAN_BUY_ZERO',
+                'PRODUCT_NEGATIVE_AMOUNT_TRACE',
+                'PRODUCT_WEIGHT',
+                'ELEMENT_IBLOCK_ID'
             );
         }
 
@@ -321,8 +373,14 @@ class CAllPrice
      *
      * @deprecated deprecated since catalog 17.6.0
      */
-    public static function SetBasePrice($ProductID, $Price, $Currency, $quantityFrom = false, $quantityTo = false, $bGetID = false)
-    {
+    public static function SetBasePrice(
+        $ProductID,
+        $Price,
+        $Currency,
+        $quantityFrom = false,
+        $quantityTo = false,
+        $bGetID = false
+    ) {
         $bGetID = ($bGetID == true);
 
         $arFields = array();
@@ -341,8 +399,9 @@ class CAllPrice
 
             $ID = CPrice::Add($arFields);
         }
-        if (!$ID)
+        if (!$ID) {
             return false;
+        }
 
         return ($bGetID ? $ID : true);
     }
@@ -350,15 +409,17 @@ class CAllPrice
     public static function ReCalculate($TYPE, $ID, $VAL)
     {
         $ID = (int)$ID;
-        if ($ID <= 0)
+        if ($ID <= 0) {
             return;
+        }
 
         $iblockList = array();
 
         if ($TYPE == 'EXTRA') {
             $baseType = CCatalogGroup::GetBaseGroup();
-            if (empty($baseType))
+            if (empty($baseType)) {
                 return;
+            }
 
             $db_res = CPrice::GetListEx(
                 array(),
@@ -419,8 +480,9 @@ class CAllPrice
         }
 
         if (!empty($iblockList) && Main\Loader::includeModule('iblock')) {
-            foreach ($iblockList as &$iblock)
+            foreach ($iblockList as &$iblock) {
                 CIblock::clearIblockTagCache($iblock);
+            }
             unset($iblock);
         }
         unset($iblockList);
@@ -429,8 +491,9 @@ class CAllPrice
     public static function OnCurrencyDelete($Currency)
     {
         global $DB;
-        if ($Currency == '')
+        if ($Currency == '') {
             return false;
+        }
 
         $strSql = "DELETE FROM b_catalog_price WHERE CURRENCY = '" . $DB->ForSql($Currency) . "'";
         return $DB->Query($strSql, true);
@@ -453,26 +516,33 @@ class CAllPrice
         global $DB;
 
         $ProductID = (int)$ProductID;
-        if ($ProductID <= 0)
+        if ($ProductID <= 0) {
             return false;
+        }
         foreach (GetModuleEvents("catalog", "OnBeforeProductPriceDelete", true) as $arEvent) {
-            if (ExecuteModuleEventEx($arEvent, array($ProductID, &$arExceptionIDs)) === false)
+            if (ExecuteModuleEventEx($arEvent, array($ProductID, &$arExceptionIDs)) === false) {
                 return false;
+            }
         }
 
-        if (!empty($arExceptionIDs))
+        if (!empty($arExceptionIDs)) {
             Main\Type\Collection::normalizeArrayValuesByInt($arExceptionIDs);
+        }
 
         if (!empty($arExceptionIDs)) {
-            $strSql = "DELETE FROM b_catalog_price WHERE PRODUCT_ID = " . $ProductID . " AND ID NOT IN (" . implode(',', $arExceptionIDs) . ")";
+            $strSql = "DELETE FROM b_catalog_price WHERE PRODUCT_ID = " . $ProductID . " AND ID NOT IN (" . implode(
+                    ',',
+                    $arExceptionIDs
+                ) . ")";
         } else {
             $strSql = "DELETE FROM b_catalog_price WHERE PRODUCT_ID = " . $ProductID;
         }
 
         $mxRes = $DB->Query($strSql, true);
 
-        foreach (GetModuleEvents("catalog", "OnProductPriceDelete", true) as $arEvent)
+        foreach (GetModuleEvents("catalog", "OnProductPriceDelete", true) as $arEvent) {
             ExecuteModuleEventEx($arEvent, array($ProductID, $arExceptionIDs));
+        }
 
         Catalog\Product\Sku::calculatePrice($ProductID, null, null, array());
 
@@ -490,11 +560,16 @@ class CAllPrice
     {
         static $arExtraList = array();
 
-        $arFilter = array('PRODUCT_ID' => $arFields['PRODUCT_ID'], '!CATALOG_GROUP_ID' => $arFields['CATALOG_GROUP_ID']);
-        if (isset($arFields['QUANTITY_FROM']))
+        $arFilter = array(
+            'PRODUCT_ID' => $arFields['PRODUCT_ID'],
+            '!CATALOG_GROUP_ID' => $arFields['CATALOG_GROUP_ID']
+        );
+        if (isset($arFields['QUANTITY_FROM'])) {
             $arFilter['QUANTITY_FROM'] = $arFields['QUANTITY_FROM'];
-        if (isset($arFields['QUANTITY_TO']))
+        }
+        if (isset($arFields['QUANTITY_TO'])) {
             $arFilter['QUANTITY_TO'] = $arFields['QUANTITY_TO'];
+        }
 
         $rsPrices = CPrice::GetListEx(
             array('CATALOG_GROUP_ID' => 'ASC', "QUANTITY_FROM" => "ASC", "QUANTITY_TO" => "ASC"),
@@ -517,7 +592,10 @@ class CAllPrice
                 if ($boolSearch) {
                     $arNewPrice = array(
                         'CURRENCY' => $arFields['CURRENCY'],
-                        'PRICE' => roundEx($arFields["PRICE"] * (1 + $arExtraList[$arPrice['EXTRA_ID']] / 100), CATALOG_VALUE_PRECISION),
+                        'PRICE' => roundEx(
+                            $arFields["PRICE"] * (1 + $arExtraList[$arPrice['EXTRA_ID']] / 100),
+                            CATALOG_VALUE_PRECISION
+                        ),
                     );
                     CPrice::Update($arPrice['ID'], $arNewPrice, false);
                 }
@@ -545,11 +623,16 @@ class CAllPrice
                     $arExtra = CExtra::GetByID($arFields['EXTRA_ID']);
                     if (!empty($arExtra)) {
                         $arExtra["PERCENTAGE"] = (float)$arExtra["PERCENTAGE"];
-                        $arFilter = array('PRODUCT_ID' => $arFields['PRODUCT_ID'], 'CATALOG_GROUP_ID' => $arBaseGroup['ID']);
-                        if (isset($arFields['QUANTITY_FROM']))
+                        $arFilter = array(
+                            'PRODUCT_ID' => $arFields['PRODUCT_ID'],
+                            'CATALOG_GROUP_ID' => $arBaseGroup['ID']
+                        );
+                        if (isset($arFields['QUANTITY_FROM'])) {
                             $arFilter['QUANTITY_FROM'] = $arFields['QUANTITY_FROM'];
-                        if (isset($arFields['QUANTITY_TO']))
+                        }
+                        if (isset($arFields['QUANTITY_TO'])) {
                             $arFilter['QUANTITY_TO'] = $arFields['QUANTITY_TO'];
+                        }
                         $rsBasePrices = CPrice::GetListEx(
                             array("QUANTITY_FROM" => "ASC", "QUANTITY_TO" => "ASC"),
                             $arFilter,
@@ -559,10 +642,14 @@ class CAllPrice
                         );
                         if ($arBasePrice = $rsBasePrices->Fetch()) {
                             $arFields['CURRENCY'] = $arBasePrice['CURRENCY'];
-                            $arFields['PRICE'] = roundEx($arBasePrice["PRICE"] * (1 + $arExtra["PERCENTAGE"] / 100), CATALOG_VALUE_PRECISION);
+                            $arFields['PRICE'] = roundEx(
+                                $arBasePrice["PRICE"] * (1 + $arExtra["PERCENTAGE"] / 100),
+                                CATALOG_VALUE_PRECISION
+                            );
                             $currency = CCurrency::GetByID($arBasePrice['CURRENCY']);
-                            if (!empty($currency))
+                            if (!empty($currency)) {
                                 $arFields['PRICE_SCALE'] = $arFields['PRICE'] * $currency['CURRENT_BASE_RATE'];
+                            }
                         } else {
                             $arFields['EXTRA_ID'] = 0;
                         }
@@ -579,8 +666,9 @@ class CAllPrice
         global $APPLICATION;
 
         $oldMessages = array();
-        foreach ($result->getErrorMessages() as $errorText)
+        foreach ($result->getErrorMessages() as $errorText) {
             $oldMessages[] = array('text' => $errorText);
+        }
         unset($errorText);
 
         if (!empty($oldMessages)) {
@@ -594,22 +682,25 @@ class CAllPrice
     private static function normalizeFields(array &$fields)
     {
         if (isset($fields['QUANTITY_FROM'])) {
-            if (is_string($fields['QUANTITY_FROM']) && $fields['QUANTITY_FROM'] === '')
+            if (is_string($fields['QUANTITY_FROM']) && $fields['QUANTITY_FROM'] === '') {
                 $fields['QUANTITY_FROM'] = null;
-            elseif ($fields['QUANTITY_FROM'] === false || $fields['QUANTITY_FROM'] === 0)
+            } elseif ($fields['QUANTITY_FROM'] === false || $fields['QUANTITY_FROM'] === 0) {
                 $fields['QUANTITY_FROM'] = null;
+            }
         }
         if (isset($fields['QUANTITY_TO'])) {
-            if (is_string($fields['QUANTITY_TO']) && $fields['QUANTITY_TO'] === '')
+            if (is_string($fields['QUANTITY_TO']) && $fields['QUANTITY_TO'] === '') {
                 $fields['QUANTITY_TO'] = null;
-            elseif ($fields['QUANTITY_TO'] === false || $fields['QUANTITY_TO'] === 0)
+            } elseif ($fields['QUANTITY_TO'] === false || $fields['QUANTITY_TO'] === 0) {
                 $fields['QUANTITY_TO'] = null;
+            }
         }
         if (isset($fields['EXTRA_ID'])) {
-            if (is_string($fields['EXTRA_ID']) && $fields['EXTRA_ID'] === '')
+            if (is_string($fields['EXTRA_ID']) && $fields['EXTRA_ID'] === '') {
                 $fields['EXTRA_ID'] = null;
-            elseif ($fields['EXTRA_ID'] === false)
+            } elseif ($fields['EXTRA_ID'] === false) {
                 $fields['EXTRA_ID'] = null;
+            }
         }
     }
 }

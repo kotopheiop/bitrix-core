@@ -30,8 +30,9 @@ class CSecurityCloudMonitorTest
 
     public function checkRequirements($params = array())
     {
-        if (!function_exists('json_decode'))
+        if (!function_exists('json_decode')) {
             throw new CSecurityRequirementsException(GetMessage('SECURITY_SITE_CHECKER_CLOUD_JSON_UNAVAILABLE'));
+        }
         return true;
     }
 
@@ -61,14 +62,18 @@ class CSecurityCloudMonitorTest
      */
     protected function getResult()
     {
-        if (!is_array($this->checkingResults))
+        if (!is_array($this->checkingResults)) {
             $this->checkingResults = array();
-        if (!isset($this->checkingResults['name']))
+        }
+        if (!isset($this->checkingResults['name'])) {
             $this->checkingResults['name'] = $this->getName();
-        if (!isset($this->checkingResults['timeout']))
+        }
+        if (!isset($this->checkingResults['timeout'])) {
             $this->checkingResults['timeout'] = $this->getTimeout();
-        if (!isset($this->checkingResults['status']))
+        }
+        if (!isset($this->checkingResults['status'])) {
             $this->checkingResults['in_progress'] = true;
+        }
         return $this->checkingResults;
     }
 
@@ -77,8 +82,9 @@ class CSecurityCloudMonitorTest
      */
     protected function receiveResults()
     {
-        if ($this->sessionData->getInt('results_repeat_count') > self::MAX_RESULTS_REQUEST_REPEAT_COUNT)
+        if ($this->sessionData->getInt('results_repeat_count') > self::MAX_RESULTS_REQUEST_REPEAT_COUNT) {
             $this->stopChecking(GetMessage('SECURITY_SITE_CHECKER_CLOUD_UNAVAILABLE'));
+        }
 
         $response = new CSecurityCloudMonitorRequest('get_results', $this->protocolVersion, $this->getCheckingToken());
         if ($response->isOk()) {
@@ -93,12 +99,13 @@ class CSecurityCloudMonitorTest
                 $problemCount = 0;
                 $errors = array();
             }
-            $this->setCheckingResult(array(
-                'problem_count' => $problemCount,
-                'errors' => $errors,
-                'status' => !$isSomethingFound
-            ));
-
+            $this->setCheckingResult(
+                array(
+                    'problem_count' => $problemCount,
+                    'errors' => $errors,
+                    'status' => !$isSomethingFound
+                )
+            );
         } elseif ($response->isFatalError()) {
             $this->stopChecking($response->getValue('error_text'));
         } else {

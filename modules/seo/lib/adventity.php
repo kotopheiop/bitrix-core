@@ -46,42 +46,62 @@ class AdvEntity extends Entity\DataManager
     public static function getMap()
     {
         return array(
-            new IntegerField('ID', array(
+            new IntegerField(
+                'ID', array(
                 'primary' => true,
                 'autocomplete' => true,
                 'title' => Loc::getMessage('ADV_CAMPAIGN_ENTITY_ID_FIELD'),
-            )),
-            new IntegerField('ENGINE_ID', array(
+            )
+            ),
+            new IntegerField(
+                'ENGINE_ID', array(
                 'required' => true,
                 'title' => Loc::getMessage('ADV_CAMPAIGN_ENTITY_ENGINE_ID_FIELD'),
-            )),
-            new BooleanField('ACTIVE', array(
+            )
+            ),
+            new BooleanField(
+                'ACTIVE', array(
                 'values' => array(static::INACTIVE, static::ACTIVE),
-            )),
-            new StringField('OWNER_ID', array(
+            )
+            ),
+            new StringField(
+                'OWNER_ID', array(
                 'required' => true,
                 'title' => Loc::getMessage('ADV_CAMPAIGN_ENTITY_OWNER_ID_FIELD'),
-            )),
-            new StringField('OWNER_NAME', array(
+            )
+            ),
+            new StringField(
+                'OWNER_NAME', array(
                 'required' => true,
                 'title' => Loc::getMessage('ADV_CAMPAIGN_ENTITY_OWNER_NAME_FIELD'),
-            )),
-            new StringField('XML_ID', array(
+            )
+            ),
+            new StringField(
+                'XML_ID', array(
                 'required' => true,
                 'title' => Loc::getMessage('ADV_CAMPAIGN_ENTITY_XML_ID_FIELD'),
-            )),
-            new StringField('NAME', array(
+            )
+            ),
+            new StringField(
+                'NAME', array(
                 'title' => Loc::getMessage('ADV_CAMPAIGN_ENTITY_NAME_FIELD'),
-            )),
-            new DatetimeField('LAST_UPDATE', array(
+            )
+            ),
+            new DatetimeField(
+                'LAST_UPDATE', array(
                 'title' => Loc::getMessage('ADV_CAMPAIGN_ENTITY_LAST_UPDATE_FIELD'),
-            )),
-            new ArrayField('SETTINGS', array(
+            )
+            ),
+            new ArrayField(
+                'SETTINGS', array(
                 'title' => Loc::getMessage('ADV_CAMPAIGN_ENTITY_SETTINGS_FIELD'),
-            )),
-            new Reference("ENGINE", SearchEngineTable::class, Join::on("this.ENGINE_ID", "ref.ID"), [
+            )
+            ),
+            new Reference(
+                "ENGINE", SearchEngineTable::class, Join::on("this.ENGINE_ID", "ref.ID"), [
                 "join_type" => "left",
-            ]),
+            ]
+            ),
         );
     }
 
@@ -93,10 +113,12 @@ class AdvEntity extends Entity\DataManager
     public static function onBeforeAdd(Entity\Event $event)
     {
         $result = new Entity\EventResult();
-        $result->modifyFields([
-            'LAST_UPDATE' => new DateTime(),
-            'ACTIVE' => static::ACTIVE,
-        ]);
+        $result->modifyFields(
+            [
+                'LAST_UPDATE' => new DateTime(),
+                'ACTIVE' => static::ACTIVE,
+            ]
+        );
 
         return $result;
     }

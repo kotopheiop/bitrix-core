@@ -1,4 +1,5 @@
 <?php
+
 // admin initialization
 define('ADMIN_MODULE_NAME', 'highloadblock');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_before.php');
@@ -22,8 +23,10 @@ if (isset($_REQUEST['ENTITY_ID'])) {
 
     if (!empty($hlblock)) {
         //localization
-        $lang = HL\HighloadBlockLangTable::getList(array(
-                'filter' => array('ID' => $hlblock['ID'], '=LID' => LANG))
+        $lang = HL\HighloadBlockLangTable::getList(
+            array(
+                'filter' => array('ID' => $hlblock['ID'], '=LID' => LANG)
+            )
         )->fetch();
         if ($lang) {
             $hlblock['NAME_LANG'] = $lang['NAME'];
@@ -99,16 +102,26 @@ if (isset($_REQUEST['ID']) && $_REQUEST['ID'] > 0) {
 }
 
 if ($is_create_form) {
-    $APPLICATION->SetTitle(GetMessage('HLBLOCK_ADMIN_ENTITY_ROW_EDIT_PAGE_TITLE_NEW', array('#NAME#' => $hlblock['NAME_LANG'])));
+    $APPLICATION->SetTitle(
+        GetMessage('HLBLOCK_ADMIN_ENTITY_ROW_EDIT_PAGE_TITLE_NEW', array('#NAME#' => $hlblock['NAME_LANG']))
+    );
 } else {
-    $APPLICATION->SetTitle(GetMessage('HLBLOCK_ADMIN_ENTITY_ROW_EDIT_PAGE_TITLE_EDIT',
-            array('#NAME#' => $hlblock['NAME_LANG'], '#NUM#' => $row['ID']))
+    $APPLICATION->SetTitle(
+        GetMessage(
+            'HLBLOCK_ADMIN_ENTITY_ROW_EDIT_PAGE_TITLE_EDIT',
+            array('#NAME#' => $hlblock['NAME_LANG'], '#NUM#' => $row['ID'])
+        )
     );
 }
 
 // form
 $aTabs = array(
-    array('DIV' => 'edit1', 'TAB' => $hlblock['NAME_LANG'], 'ICON' => 'ad_contract_edit', 'TITLE' => htmlspecialcharsbx($hlblock['NAME_LANG']))
+    array(
+        'DIV' => 'edit1',
+        'TAB' => $hlblock['NAME_LANG'],
+        'ICON' => 'ad_contract_edit',
+        'TITLE' => htmlspecialcharsbx($hlblock['NAME_LANG'])
+    )
 );
 
 $tabControl = new CAdminForm('hlrow_edit_' . $hlblock['ID'], $aTabs);
@@ -120,7 +133,7 @@ if ($is_update_form && $action === 'delete' && $canDelete && check_bitrix_sessid
 }
 
 // save action
-if ((strlen($save) > 0 || strlen($apply) > 0) && $_SERVER['REQUEST_METHOD'] == 'POST' && $canEdit && check_bitrix_sessid()) {
+if (($save <> '' || $apply <> '') && $_SERVER['REQUEST_METHOD'] == 'POST' && $canEdit && check_bitrix_sessid()) {
     $data = array();
 
     $USER_FIELD_MANAGER->EditFormAddFields('HLBLOCK_' . $hlblock['ID'], $data);
@@ -135,10 +148,14 @@ if ((strlen($save) > 0 || strlen($apply) > 0) && $_SERVER['REQUEST_METHOD'] == '
     }
 
     if ($result->isSuccess()) {
-        if (strlen($save) > 0) {
+        if ($save <> '') {
             LocalRedirect('highloadblock_rows_list.php?ENTITY_ID=' . $hlblock['ID'] . '&lang=' . LANGUAGE_ID);
         } else {
-            LocalRedirect('highloadblock_row_edit.php?ENTITY_ID=' . $hlblock['ID'] . '&ID=' . intval($ID) . '&lang=' . LANGUAGE_ID . '&' . $tabControl->ActiveTabParam());
+            LocalRedirect(
+                'highloadblock_row_edit.php?ENTITY_ID=' . $hlblock['ID'] . '&ID=' . intval(
+                    $ID
+                ) . '&lang=' . LANGUAGE_ID . '&' . $tabControl->ActiveTabParam()
+            );
         }
     } else {
         $errors = $result->getErrorMessages();
@@ -184,7 +201,9 @@ if ($is_update_form && ($canEdit || $canDelete)) {
             'TEXT' => GetMessage('HLBLOCK_ADMIN_ROWS_DEL'),
             'TITLE' => GetMessage('HLBLOCK_ADMIN_ROWS_DEL'),
             'ACTION' => 'if(confirm(\'' . GetMessageJS('HLBLOCK_ADMIN_ROWS_DEL_CONF') . '\'))window.location=\'' .
-                CUtil::JSEscape($APPLICATION->getCurPageParam('action=delete&' . bitrix_sessid_get(), array('action'))) . '\';',
+                CUtil::JSEscape(
+                    $APPLICATION->getCurPageParam('action=delete&' . bitrix_sessid_get(), array('action'))
+                ) . '\';',
             'ICON' => 'delete',
         );
     }
@@ -233,9 +252,13 @@ $tabControl->BeginEpilogContent();
 
 <? $tabControl->EndEpilogContent(); ?>
 
-<? $tabControl->Begin(array(
-    'FORM_ACTION' => $APPLICATION->GetCurPage() . '?ENTITY_ID=' . $hlblock['ID'] . '&ID=' . IntVal($ID) . '&lang=' . LANG
-)); ?>
+<? $tabControl->Begin(
+    array(
+        'FORM_ACTION' => $APPLICATION->GetCurPage() . '?ENTITY_ID=' . $hlblock['ID'] . '&ID=' . intval(
+                $ID
+            ) . '&lang=' . LANG
+    )
+); ?>
 
 <? $tabControl->BeginNextFormTab(); ?>
 
@@ -265,11 +288,17 @@ echo $tabControl->ShowUserFieldsWithReadyData('HLBLOCK_' . $hlblock['ID'], $row,
 
 <?
 $disable = true;
-if ($isEditMode)
+if ($isEditMode) {
     $disable = false;
+}
 
 if ($hasSomeFields) {
-    $tabControl->Buttons(array('disabled' => $disable, 'back_url' => 'highloadblock_rows_list.php?ENTITY_ID=' . intval($hlblock['ID']) . '&lang=' . LANGUAGE_ID));
+    $tabControl->Buttons(
+        array(
+            'disabled' => $disable,
+            'back_url' => 'highloadblock_rows_list.php?ENTITY_ID=' . intval($hlblock['ID']) . '&lang=' . LANGUAGE_ID
+        )
+    );
 } else {
     $tabControl->Buttons(false);
 }
@@ -282,7 +311,8 @@ $tabControl->Show();
 
 <?
 
-if ($_REQUEST['mode'] == 'list')
+if ($_REQUEST['mode'] == 'list') {
     require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin_js.php');
-else
+} else {
     require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin.php');
+}

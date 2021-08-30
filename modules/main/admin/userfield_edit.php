@@ -29,8 +29,9 @@ if ($adminSidePanelHelper->isPublicFrame()) {
 }
 
 $RIGHTS = $USER_FIELD_MANAGER->GetRights(false, $ID);
-if ($RIGHTS < "W")
+if ($RIGHTS < "W") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $aTabs = array(
     array(
@@ -64,7 +65,8 @@ $tabControl = new CAdminTabControl("tabControl", $aTabs);
 $message = null;
 $bVarsFromForm = false;
 
-if ($_SERVER["REQUEST_METHOD"] == "POST" && ($_POST["save"] != "" || $_POST["apply"] != "") && ($RIGHTS >= "W") && check_bitrix_sessid()) {
+if ($_SERVER["REQUEST_METHOD"] == "POST" && ($_POST["save"] != "" || $_POST["apply"] != "") && ($RIGHTS >= "W") && check_bitrix_sessid(
+    )) {
     $adminSidePanelHelper->decodeUriComponent();
 
     $arFields = array(
@@ -98,14 +100,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($_POST["save"] != "" || $_POST["app
     if (is_object($obEnum)) {
         $LIST = $_REQUEST["LIST"];
         if (is_array($LIST)) {
-            foreach ($LIST as $id => $value)
-                if (is_array($value))
+            foreach ($LIST as $id => $value) {
+                if (is_array($value)) {
                     $LIST[$id]["DEF"] = "N";
+                }
+            }
         }
         if (is_array($LIST["DEF"])) {
-            foreach ($LIST["DEF"] as $value)
-                if (is_array($LIST[$value]))
+            foreach ($LIST["DEF"] as $value) {
+                if (is_array($LIST[$value])) {
                     $LIST[$value]["DEF"] = "Y";
+                }
+            }
             unset($LIST["DEF"]);
         }
         $res = $obEnum->SetEnumValues($ID, $LIST);
@@ -138,13 +144,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($_POST["save"] != "" || $_POST["app
         }
         $bVarsFromForm = true;
     }
-
 }
 
 if ($ID > 0) {
     $arUserField = CUserTypeEntity::GetByID($ID);
-    if (!$arUserField)
+    if (!$arUserField) {
         $ID = 0;
+    }
 } else {
     $arUserField = array(
         "ENTITY_ID" => isset($_GET["ENTITY_ID"]) ? $_GET["ENTITY_ID"] : "",
@@ -188,12 +194,14 @@ if ($bVarsFromForm) {
     $IS_SEARCHABLE = htmlspecialcharsbx($arUserField["IS_SEARCHABLE"]);
 }
 
-$APPLICATION->SetTitle(($ID > 0 ? GetMessage("USER_TYPE_EDIT_TITLE", array("#ID#" => $ID)) : GetMessage("USER_TYPE_ADD_TITLE")));
+$APPLICATION->SetTitle(
+    ($ID > 0 ? GetMessage("USER_TYPE_EDIT_TITLE", array("#ID#" => $ID)) : GetMessage("USER_TYPE_ADD_TITLE"))
+);
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
 // validate list_url
 if (!empty($list_url)) {
-    $list_url = substr($list_url, 0, 1) === '/' ? $list_url : '/' . $list_url;
+    $list_url = mb_substr($list_url, 0, 1) === '/' ? $list_url : '/' . $list_url;
 }
 
 $aMenu = array();
@@ -216,7 +224,10 @@ if ($ID > 0) {
     $aMenu[] = array(
         "TEXT" => GetMessage("MAIN_DELETE"),
         "TITLE" => GetMessage("USER_TYPE_DELETE"),
-        "LINK" => "javascript:if(confirm('" . GetMessage("USER_TYPE_DELETE_CONF") . "'))window.location='userfield_admin.php?ID=" . $ID . "&action=delete&lang=" . LANG . "&" . bitrix_sessid_get() . "';",
+        "LINK" => "javascript:if(confirm('" . GetMessage(
+                "USER_TYPE_DELETE_CONF"
+            ) . "'))window.location='userfield_admin.php?ID=" . $ID . "&action=delete&lang=" . LANG . "&" . bitrix_sessid_get(
+            ) . "';",
         "ICON" => "btn_delete",
     );
 }
@@ -225,8 +236,9 @@ $context->Show();
 ?>
 
 <?
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 ?>
     <script language="JavaScript">
         <!--
@@ -318,7 +330,22 @@ $formAction = $adminSidePanelHelper->setDefaultQueryParams($formAction);
                         $arr["reference"][] = $arUserType["DESCRIPTION"];
                         $arr["reference_id"][] = $arUserType["USER_TYPE_ID"];
                     }
-                    echo SelectBoxFromArray("USER_TYPE_ID", $arr, $USER_TYPE_ID, "", 'OnChange="' . htmlspecialcharsbx('window.location=\'' . CUtil::JSEscape($APPLICATION->GetCurPageParam("", array("USER_TYPE_ID")) . '&back_url=' . urlencode($back_url) . '&list_url=' . urlencode($list_url) . '&ENTITY_ID=' . $ENTITY_ID . '&USER_TYPE_ID=') . '\' + this.value') . '"');
+                    echo SelectBoxFromArray(
+                        "USER_TYPE_ID",
+                        $arr,
+                        $USER_TYPE_ID,
+                        "",
+                        'OnChange="' . htmlspecialcharsbx(
+                            'window.location=\'' . CUtil::JSEscape(
+                                $APPLICATION->GetCurPageParam(
+                                    "",
+                                    array("USER_TYPE_ID")
+                                ) . '&back_url=' . urlencode($back_url) . '&list_url=' . urlencode(
+                                    $list_url
+                                ) . '&ENTITY_ID=' . $ENTITY_ID . '&USER_TYPE_ID='
+                            ) . '\' + this.value'
+                        ) . '"'
+                    );
                 }
                 ?>
             </td>
@@ -408,8 +435,9 @@ $formAction = $adminSidePanelHelper->setDefaultQueryParams($formAction);
             echo $USER_FIELD_MANAGER->GetSettingsHTML($arUserField, $bVarsFromForm);
         else:
             $arUserType = $USER_FIELD_MANAGER->GetUserType($USER_TYPE_ID);
-            if (!$arUserType)
+            if (!$arUserType) {
                 $arUserType = array_shift($arUserTypes);
+            }
             echo $USER_FIELD_MANAGER->GetSettingsHTML($arUserType["USER_TYPE_ID"], $bVarsFromForm);
         endif; ?>
         <tr class="heading">
@@ -427,32 +455,32 @@ $formAction = $adminSidePanelHelper->setDefaultQueryParams($formAction);
                         <td align="center" width="200"><? echo GetMessage("USER_TYPE_HELP_MESSAGE"); ?></td>
                     </tr>
                     <?
-                    $rsLanguage = CLanguage::GetList($by, $order, array());
+                    $rsLanguage = CLanguage::GetList();
                     while ($arLanguage = $rsLanguage->Fetch()):
                         $htmlLID = htmlspecialcharsbx($arLanguage["LID"]);
                         ?>
                         <tr>
                             <td align="right"><? echo htmlspecialcharsbx($arLanguage["NAME"]) ?>:</td>
                             <td align="center"><input type="text" name="EDIT_FORM_LABEL[<? echo $htmlLID ?>]" size="20"
-                                                      maxlength="255"
-                                                      value="<? echo htmlspecialcharsbx($bVarsFromForm ? $_REQUEST["EDIT_FORM_LABEL"][$arLanguage["LID"]] : $arUserField["EDIT_FORM_LABEL"][$arLanguage["LID"]]) ?>">
-                            </td>
+                                                      maxlength="255" value="<? echo htmlspecialcharsbx(
+                                    $bVarsFromForm ? $_REQUEST["EDIT_FORM_LABEL"][$arLanguage["LID"]] : $arUserField["EDIT_FORM_LABEL"][$arLanguage["LID"]]
+                                ) ?>"></td>
                             <td align="center"><input type="text" name="LIST_COLUMN_LABEL[<? echo $htmlLID ?>]"
-                                                      size="20" maxlength="255"
-                                                      value="<? echo htmlspecialcharsbx($bVarsFromForm ? $_REQUEST["LIST_COLUMN_LABEL"][$arLanguage["LID"]] : $arUserField["LIST_COLUMN_LABEL"][$arLanguage["LID"]]) ?>">
-                            </td>
+                                                      size="20" maxlength="255" value="<? echo htmlspecialcharsbx(
+                                    $bVarsFromForm ? $_REQUEST["LIST_COLUMN_LABEL"][$arLanguage["LID"]] : $arUserField["LIST_COLUMN_LABEL"][$arLanguage["LID"]]
+                                ) ?>"></td>
                             <td align="center"><input type="text" name="LIST_FILTER_LABEL[<? echo $htmlLID ?>]"
-                                                      size="20" maxlength="255"
-                                                      value="<? echo htmlspecialcharsbx($bVarsFromForm ? $_REQUEST["LIST_FILTER_LABEL"][$arLanguage["LID"]] : $arUserField["LIST_FILTER_LABEL"][$arLanguage["LID"]]) ?>">
-                            </td>
+                                                      size="20" maxlength="255" value="<? echo htmlspecialcharsbx(
+                                    $bVarsFromForm ? $_REQUEST["LIST_FILTER_LABEL"][$arLanguage["LID"]] : $arUserField["LIST_FILTER_LABEL"][$arLanguage["LID"]]
+                                ) ?>"></td>
                             <td align="center"><input type="text" name="ERROR_MESSAGE[<? echo $htmlLID ?>]" size="20"
-                                                      maxlength="255"
-                                                      value="<? echo htmlspecialcharsbx($bVarsFromForm ? $_REQUEST["ERROR_MESSAGE"][$arLanguage["LID"]] : $arUserField["ERROR_MESSAGE"][$arLanguage["LID"]]) ?>">
-                            </td>
+                                                      maxlength="255" value="<? echo htmlspecialcharsbx(
+                                    $bVarsFromForm ? $_REQUEST["ERROR_MESSAGE"][$arLanguage["LID"]] : $arUserField["ERROR_MESSAGE"][$arLanguage["LID"]]
+                                ) ?>"></td>
                             <td align="center"><input type="text" name="HELP_MESSAGE[<? echo $htmlLID ?>]" size="20"
-                                                      maxlength="255"
-                                                      value="<? echo htmlspecialcharsbx($bVarsFromForm ? $_REQUEST["HELP_MESSAGE"][$arLanguage["LID"]] : $arUserField["HELP_MESSAGE"][$arLanguage["LID"]]) ?>">
-                            </td>
+                                                      maxlength="255" value="<? echo htmlspecialcharsbx(
+                                    $bVarsFromForm ? $_REQUEST["HELP_MESSAGE"][$arLanguage["LID"]] : $arUserField["HELP_MESSAGE"][$arLanguage["LID"]]
+                                ) ?>"></td>
                         </tr>
                     <? endwhile ?>
                 </table>
@@ -487,9 +515,11 @@ $formAction = $adminSidePanelHelper->setDefaultQueryParams($formAction);
                         $rsEnum = $obEnum->GetList(array(), array("USER_FIELD_ID" => $ID));
                         while ($arEnum = $rsEnum->GetNext()):
 
-                            if ($bVarsFromForm && is_array($_REQUEST['LIST'][$arEnum["ID"]]))
-                                foreach ($_REQUEST['LIST'][$arEnum["ID"]] as $key => $val)
+                            if ($bVarsFromForm && is_array($_REQUEST['LIST'][$arEnum["ID"]])) {
+                                foreach ($_REQUEST['LIST'][$arEnum["ID"]] as $key => $val) {
                                     $arEnum[$key] = htmlspecialcharsbx($val);
+                                }
+                            }
                             ?>
                             <tr>
                                 <td><?= $arEnum["ID"] ?></td>

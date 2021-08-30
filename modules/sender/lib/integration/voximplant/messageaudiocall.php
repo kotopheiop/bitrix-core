@@ -75,44 +75,47 @@ class MessageAudioCall implements Message\iBase, Message\iMailable, Message\iAud
             return;
         }
 
-        $this->configuration->setArrayOptions(array(
+        $this->configuration->setArrayOptions(
             array(
-                'type' => 'list',
-                'code' => 'OUTPUT_NUMBER',
-                'name' => Loc::getMessage('SENDER_INTEGRATION_AUDIOCALL_MESSAGE_CONFIG_OUTPUT_NUMBER'),
-                'items' => \CVoxImplantConfig::GetPortalNumbers(false),
-                'view' => function () {
-                    /** @var \CAllMain {$GLOBALS['APPLICATION']} */
-                    ob_start();
-                    $GLOBALS['APPLICATION']->includeComponent(
-                        "bitrix:sender.call.number", "",
-                        array(
-                            "INPUT_NAME" => "%INPUT_NAME%",
-                            "VALUE" => "%INPUT_VALUE%",
-                            "MESSAGE_TYPE" => $this->getCode()
-                        )
-                    );
-                    return ob_get_clean();
-                },
-                'readonly_view' => function ($value) {
-                    return Service::getFormattedOutputNumber($value);
-                },
-                'required' => true,
-                'show_in_list' => true,
-            ),
-            array(
-                'type' => 'audio',
-                'code' => 'AUDIO_FILE',
-                'name' => Loc::getMessage('SENDER_INTEGRATION_AUDIOCALL_MESSAGE_CONFIG_MESSAGE_FILE'),
-                'required' => true,
-                'params' => [
-                    'allowUpload' => 'F',
-                    'allowUploadExt' => 'mp3',
-                    'maxCount' => 1,
-                ]
-            ),
+                array(
+                    'type' => 'list',
+                    'code' => 'OUTPUT_NUMBER',
+                    'name' => Loc::getMessage('SENDER_INTEGRATION_AUDIOCALL_MESSAGE_CONFIG_OUTPUT_NUMBER'),
+                    'items' => \CVoxImplantConfig::GetPortalNumbers(false),
+                    'view' => function () {
+                        /** @var \CAllMain {$GLOBALS['APPLICATION']} */
+                        ob_start();
+                        $GLOBALS['APPLICATION']->includeComponent(
+                            "bitrix:sender.call.number",
+                            "",
+                            array(
+                                "INPUT_NAME" => "%INPUT_NAME%",
+                                "VALUE" => "%INPUT_VALUE%",
+                                "MESSAGE_TYPE" => $this->getCode()
+                            )
+                        );
+                        return ob_get_clean();
+                    },
+                    'readonly_view' => function ($value) {
+                        return Service::getFormattedOutputNumber($value);
+                    },
+                    'required' => true,
+                    'show_in_list' => true,
+                ),
+                array(
+                    'type' => 'audio',
+                    'code' => 'AUDIO_FILE',
+                    'name' => Loc::getMessage('SENDER_INTEGRATION_AUDIOCALL_MESSAGE_CONFIG_MESSAGE_FILE'),
+                    'required' => true,
+                    'params' => [
+                        'allowUpload' => 'F',
+                        'allowUploadExt' => 'mp3',
+                        'maxCount' => 1,
+                    ]
+                ),
 
-        ));
+            )
+        );
     }
 
     /**
@@ -184,14 +187,16 @@ class MessageAudioCall implements Message\iBase, Message\iMailable, Message\iAud
     {
         $valueIsCorrect = false;
 
-        if (strlen($newValue)) {
+        if ($newValue <> '') {
             $audio = (new Audio())
                 ->withValue($newValue)
                 ->withMessageCode($this->getCode());
 
             if ($audio->createdFromPreset()) {
                 if ($audio->getFileUrl()) // preset $newValue is really exists
+                {
                     $valueIsCorrect = true;
+                }
             } else {
                 $oldValue = $this->configuration->getOption($optionCode);
                 $oldAudio = (new Audio())
@@ -205,7 +210,10 @@ class MessageAudioCall implements Message\iBase, Message\iMailable, Message\iAud
                 } else {
                     if (
                         $audio->getDuration() && // check if new file is really mp3
-                        FileInputUtility::instance()->checkFiles($optionCode, [$newValue]) // check if file was uploaded by current user
+                        FileInputUtility::instance()->checkFiles(
+                            $optionCode,
+                            [$newValue]
+                        ) // check if file was uploaded by current user
                     ) {
                         $valueIsCorrect = true;
                     }

@@ -75,13 +75,15 @@ class UserAuthActionTable extends Entity\DataManager
      */
     public static function addLogoutAction($userId, $applicationId = null)
     {
-        return static::add(array(
-            'USER_ID' => $userId,
-            'PRIORITY' => self::PRIORITY_HIGH,
-            'ACTION' => self::ACTION_LOGOUT,
-            'ACTION_DATE' => new Type\DateTime(),
-            'APPLICATION_ID' => $applicationId,
-        ));
+        return static::add(
+            array(
+                'USER_ID' => $userId,
+                'PRIORITY' => self::PRIORITY_HIGH,
+                'ACTION' => self::ACTION_LOGOUT,
+                'ACTION_DATE' => new Type\DateTime(),
+                'APPLICATION_ID' => $applicationId,
+            )
+        );
     }
 
     /**
@@ -95,11 +97,13 @@ class UserAuthActionTable extends Entity\DataManager
             $date = new Type\DateTime();
         }
 
-        return static::add(array(
-            'USER_ID' => $userId,
-            'PRIORITY' => self::PRIORITY_LOW,
-            'ACTION' => self::ACTION_UPDATE,
-            'ACTION_DATE' => $date,
-        ));
+        return static::add(
+            array(
+                'USER_ID' => $userId,
+                'PRIORITY' => self::PRIORITY_LOW,
+                'ACTION' => self::ACTION_UPDATE,
+                'ACTION_DATE' => $date,
+            )
+        );
     }
 }

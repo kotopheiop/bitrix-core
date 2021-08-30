@@ -77,6 +77,7 @@ class InnerHandler extends PaySystem\BaseServiceHandler implements PaySystem\IRe
         }
 
         UserBudgetPool::addPoolItem($order, $refundableSum, UserBudgetPool::BUDGET_TYPE_ORDER_UNPAY, $payment);
+        $result->setOperationType(PaySystem\ServiceResult::MONEY_LEAVING);
 
         return $result;
     }
@@ -103,10 +104,11 @@ class InnerHandler extends PaySystem\BaseServiceHandler implements PaySystem\IRe
         $paymentSum = PriceMaths::roundPrecision($payment->getSum());
         $userBudget = PriceMaths::roundPrecision(UserBudgetPool::getUserBudgetByOrder($order));
 
-        if ($userBudget >= $paymentSum)
+        if ($userBudget >= $paymentSum) {
             UserBudgetPool::addPoolItem($order, ($paymentSum * -1), UserBudgetPool::BUDGET_TYPE_ORDER_PAY, $payment);
-        else
+        } else {
             $result->addError(new EntityError(Loc::getMessage('ORDER_PSH_INNER_ERROR_INSUFFICIENT_MONEY')));
+        }
 
         return $result;
     }
@@ -126,8 +128,9 @@ class InnerHandler extends PaySystem\BaseServiceHandler implements PaySystem\IRe
      */
     private function isUserBudgetLock(Order $order)
     {
-        if ($userAccount = \CSaleUserAccount::GetByUserId($order->getUserId(), $order->getCurrency()))
+        if ($userAccount = \CSaleUserAccount::GetByUserId($order->getUserId(), $order->getCurrency())) {
             return $userAccount['LOCKED'] == 'Y';
+        }
 
         return false;
     }

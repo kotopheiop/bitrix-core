@@ -45,8 +45,12 @@ abstract class BasketItemCollection extends Internals\EntityCollection
      * @throws NotImplementedException
      * @throws \Bitrix\Main\ArgumentException
      */
-    protected static function createItemInternal(BasketItemCollection $basket, $moduleId, $productId, $basketCode = null)
-    {
+    protected static function createItemInternal(
+        BasketItemCollection $basket,
+        $moduleId,
+        $productId,
+        $basketCode = null
+    ) {
         /** @var BasketItem $basketItemClassName */
         $basketItemClassName = static::getItemCollectionClassName();
         return $basketItemClassName::create($basket, $moduleId, $productId, $basketCode);
@@ -58,8 +62,9 @@ abstract class BasketItemCollection extends Internals\EntityCollection
     public function getOrder()
     {
         $basket = $this->getBasket();
-        if ($basket)
+        if ($basket) {
             return $basket->getOrder();
+        }
 
         return null;
     }
@@ -84,6 +89,9 @@ abstract class BasketItemCollection extends Internals\EntityCollection
             $basketItem = $itemClassName::load($this, $item);
             $this->addItem($basketItem);
         }
+
+        $controller = Internals\CustomFieldsController::getInstance();
+        $controller->initializeCollection($this);
     }
 
     /**
@@ -116,20 +124,41 @@ abstract class BasketItemCollection extends Internals\EntityCollection
     }
 
     /**
+     * @param $xmlId
+     * @return BasketItemBase|null
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     */
+    public function getItemByXmlId($xmlId)
+    {
+        /** @var BasketItemBase $basketItem */
+        foreach ($this->collection as $basketItem) {
+            $basketItem = $basketItem->findItemByXmlId($xmlId);
+            if ($basketItem != null) {
+                return $basketItem;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * @param $id
      * @return BasketItemBase|null
      * @throws \Bitrix\Main\ArgumentNullException
      */
     public function getItemById($id)
     {
-        if ($id <= 0)
+        if ($id <= 0) {
             return null;
+        }
 
         /** @var BasketItemBase $basketItem */
         foreach ($this->collection as $basketItem) {
             $item = $basketItem->findItemById($id);
-            if ($item !== null)
+            if ($item !== null) {
                 return $item;
+            }
         }
 
         return null;
@@ -178,8 +207,9 @@ abstract class BasketItemCollection extends Internals\EntityCollection
     public function getOrderId()
     {
         $order = $this->getOrder();
-        if ($order)
+        if ($order) {
             return $order->getId();
+        }
 
         return 0;
     }

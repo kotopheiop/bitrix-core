@@ -26,8 +26,9 @@ class Text
             "IMG" => "N",
             "QUOTE" => "N",
             "CODE" => "N",
-            "FONT" => "N",
+            "FONT" => $params["FONT"] === "Y" ? "Y" : "N",
             "LIST" => "N",
+            "SPOILER" => "N",
             "SMILES" => $params['SMILES'] == 'N' ? 'N' : 'Y',
             "EMOJI" => "Y",
             "NL2BR" => "Y",
@@ -47,14 +48,30 @@ class Text
             $parser->maxAnchorLength = intval($params['LINK_LIMIT']) ? $params['LINK_LIMIT'] : 55;
             $parser->maxStringLen = intval($params['TEXT_LIMIT']);
             $parser->allow = $allowTags;
+            if ($params['LINK_TARGET_SELF'] === 'Y') {
+                $parser->link_target = "_self";
+            }
 
             self::$parsers[$parseId] = $parser;
         }
 
 
-        $text = preg_replace_callback("/\[PUT(?:=(.+?))?\](.+?)?\[\/PUT\]/i", Array('\Bitrix\Im\Text', 'setReplacement'), $text);
-        $text = preg_replace_callback("/\[SEND(?:=(.+?))?\](.+?)?\[\/SEND\]/i", Array('\Bitrix\Im\Text', 'setReplacement'), $text);
+        $text = preg_replace_callback(
+            "/\[PUT(?:=(.+?))?\](.+?)?\[\/PUT\]/i",
+            Array('\Bitrix\Im\Text', 'setReplacement'),
+            $text
+        );
+        $text = preg_replace_callback(
+            "/\[SEND(?:=(.+?))?\](.+?)?\[\/SEND\]/i",
+            Array('\Bitrix\Im\Text', 'setReplacement'),
+            $text
+        );
         $text = preg_replace_callback("/\[CODE\](.*?)\[\/CODE\]/si", Array('\Bitrix\Im\Text', 'setReplacement'), $text);
+        $text = preg_replace_callback(
+            "/\[USER=([0-9]{1,})\]\[\/USER\]/i",
+            Array('\Bitrix\Im\Text', 'modifyShortUserTag'),
+            $text
+        );
 
         if (isset($params['CUT_STRIKE']) && $params['CUT_STRIKE'] == 'Y') {
             $text = preg_replace("/\[s\].*?\[\/s\]/i", "", $text);
@@ -75,13 +92,30 @@ class Text
      */
     public static function getDateConverterParams($text)
     {
-        if (strlen($text) <= 0)
+        if ($text == '') {
             return Array();
+        }
 
-        $text = preg_replace_callback("/\[PUT(?:=(.+?))?\](.+?)?\[\/PUT\]/i", Array('\Bitrix\Im\Text', 'setReplacement'), $text);
-        $text = preg_replace_callback("/\[SEND(?:=(.+?))?\](.+?)?\[\/SEND\]/i", Array('\Bitrix\Im\Text', 'setReplacement'), $text);
-        $text = preg_replace_callback('/\[URL\=([^\]]*)\]([^\]]*)\[\/URL\]/i', Array('\Bitrix\Im\Text', 'setReplacement'), $text);
-        $text = preg_replace_callback('/(https?):\/\/(([a-z0-9$_\.\+!\*\'\(\),;\?&=-]|%[0-9a-f]{2})+(:([a-z0-9$_\.\+!\*\'\(\),;\?&=-]|%[0-9a-f]{2})+)?@)?(?#)((([a-z0-9]\.|[a-z0-9][a-z0-9-]*[a-z0-9]\.)*[a-z][a-z0-9-]*[a-z0-9]|((\d|[1-9]\d|1\d{2}|2[0-4][0-9]|25[0-5])\.){3}(\d|[1-9]\d|1\d{2}|2[0-4][0-9]|25[0-5]))(:\d+)?)(((\/+([a-z0-9$_\.\+!\*\'\(\),;:@&=-]|%[0-9a-f]{2})*)*(\?([a-z0-9$_\.\+!\*\'\(\),;:@&=-]|%[0-9a-f]{2})*)?)?)?(#([a-z0-9$_\.\+!\*\'\(\),;:@&=-]|%[0-9a-f]{2})*)?/im', Array('\Bitrix\Im\Text', 'setReplacement'), $text);
+        $text = preg_replace_callback(
+            "/\[PUT(?:=(.+?))?\](.+?)?\[\/PUT\]/i",
+            Array('\Bitrix\Im\Text', 'setReplacement'),
+            $text
+        );
+        $text = preg_replace_callback(
+            "/\[SEND(?:=(.+?))?\](.+?)?\[\/SEND\]/i",
+            Array('\Bitrix\Im\Text', 'setReplacement'),
+            $text
+        );
+        $text = preg_replace_callback(
+            '/\[URL\=([^\]]*)\]([^\]]*)\[\/URL\]/i',
+            Array('\Bitrix\Im\Text', 'setReplacement'),
+            $text
+        );
+        $text = preg_replace_callback(
+            '/(https?):\/\/(([a-z0-9$_\.\+!\*\'\(\),;\?&=-]|%[0-9a-f]{2})+(:([a-z0-9$_\.\+!\*\'\(\),;\?&=-]|%[0-9a-f]{2})+)?@)?(?#)((([a-z0-9]\.|[a-z0-9][a-z0-9-]*[a-z0-9]\.)*[a-z][a-z0-9-]*[a-z0-9]|((\d|[1-9]\d|1\d{2}|2[0-4][0-9]|25[0-5])\.){3}(\d|[1-9]\d|1\d{2}|2[0-4][0-9]|25[0-5]))(:\d+)?)(((\/+([a-z0-9$_\.\+!\*\'\(\),;:@&=-]|%[0-9a-f]{2})*)*(\?([a-z0-9$_\.\+!\*\'\(\),;:@&=-]|%[0-9a-f]{2})*)?)?)?(#([a-z0-9$_\.\+!\*\'\(\),;:@&=-]|%[0-9a-f]{2})*)?/im',
+            Array('\Bitrix\Im\Text', 'setReplacement'),
+            $text
+        );
         $text = preg_replace_callback('#\-{54}(.+?)\-{54}#s', Array('\Bitrix\Im\Text', 'setReplacement'), $text);
 
         return \Bitrix\Main\Text\DateConverter::decode($text, 1000);
@@ -97,9 +131,15 @@ class Text
 				| [\xF1-\xF3][\x80-\xBF]{3} # planes 4-15
 				| \xF4[\x80-\x8F][\x80-\xBF]{2} # plane 16
 			)%xs';
-        $text = preg_replace_callback($pattern, function () {
-            return "";
-        }, $text, 4 - $total, $count);
+        $text = preg_replace_callback(
+            $pattern,
+            function () {
+                return "";
+            },
+            $text,
+            4 - $total,
+            $count
+        );
         $total += $count;
 
         if ($total > 3) {
@@ -134,21 +174,45 @@ class Text
         return $text;
     }
 
+    public static function modifyShortUserTag($matches)
+    {
+        $userId = $matches[1];
+        $userName = \Bitrix\Im\User::getInstance($userId)->getFullName(false);
+        return '[USER=' . $userId . ']' . $userName . '[/USER]';
+    }
+
     public static function removeBbCodes($text, $withFile = false, $withAttach = false)
     {
         $text = preg_replace("/\[[buis]\](.*?)\[\/[buis]\]/i", "$1", $text);
         $text = preg_replace("/\[url\](.*?)\[\/url\]/i" . BX_UTF_PCRE_MODIFIER, "$1", $text);
-        $text = preg_replace("/\[url\\s*=\\s*((?:[^\\[\\]]++|\\[ (?: (?>[^\\[\\]]+) | (?:\\1) )* \\])+)\\s*\\](.*?)\\[\\/url\\]/ixs" . BX_UTF_PCRE_MODIFIER, "$2", $text);
+        $text = preg_replace(
+            "/\[url\\s*=\\s*((?:[^\\[\\]]++|\\[ (?: (?>[^\\[\\]]+) | (?:\\1) )* \\])+)\\s*\\](.*?)\\[\\/url\\]/ixs" . BX_UTF_PCRE_MODIFIER,
+            "$2",
+            $text
+        );
         $text = preg_replace("/\[RATING=([1-5]{1})\]/i", " [" . Loc::getMessage('IM_MESSAGE_RATING') . "] ", $text);
         $text = preg_replace("/\[ATTACH=([0-9]{1,})\]/i", " [" . Loc::getMessage('IM_MESSAGE_ATTACH') . "] ", $text);
+        $text = preg_replace_callback(
+            "/\[USER=([0-9]{1,})\]\[\/USER\]/i",
+            Array('\Bitrix\Im\Text', 'modifyShortUserTag'),
+            $text
+        );
         $text = preg_replace("/\[USER=([0-9]{1,})\](.*?)\[\/USER\]/i", "$2", $text);
         $text = preg_replace("/\[CHAT=([0-9]{1,})\](.*?)\[\/CHAT\]/i", "$2", $text);
         $text = preg_replace("/\[SEND(?:=(.+?))?\](.+?)?\[\/SEND\]/i", "$2", $text);
         $text = preg_replace("/\[PUT(?:=(.+?))?\](.+?)?\[\/PUT\]/i", "$2", $text);
         $text = preg_replace("/\[CALL(?:=(.+?))?\](.+?)?\[\/CALL\]/i", "$2", $text);
         $text = preg_replace("/\[PCH=([0-9]{1,})\](.*?)\[\/PCH\]/i", "$2", $text);
-        $text = preg_replace_callback("/\[ICON\=([^\]]*)\]/i", Array("CIMMessenger", "PrepareMessageForPushIconCallBack"), $text);
-        $text = preg_replace('#\-{54}.+?\-{54}#s', " [" . Loc::getMessage('IM_QUOTE') . "] ", str_replace(array("#BR#"), Array(" "), $text));
+        $text = preg_replace_callback(
+            "/\[ICON\=([^\]]*)\]/i",
+            Array("CIMMessenger", "PrepareMessageForPushIconCallBack"),
+            $text
+        );
+        $text = preg_replace(
+            '#\-{54}.+?\-{54}#s',
+            " [" . Loc::getMessage('IM_QUOTE') . "] ",
+            str_replace(array("#BR#"), Array(" "), $text)
+        );
         $text = trim($text);
 
         if ($withFile) {
@@ -162,7 +226,7 @@ class Text
             $text = trim($text);
         }
 
-        if (strlen($text) <= 0) {
+        if ($text == '') {
             $text = Loc::getMessage('IM_MESSAGE_DELETE');
         }
 

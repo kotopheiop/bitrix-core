@@ -9,6 +9,7 @@
 namespace Bitrix\Sender\Integration\Crm\ReturnCustomer;
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Sender\Integration\Crm\Connectors\Helper;
 use Bitrix\Sender\Internals\PrettyDate;
 use Bitrix\Sender\Message;
 use Bitrix\Sender\PostingRecipientTable;
@@ -46,54 +47,72 @@ class MessageLead extends MessageBase implements Message\iHideable
             return;
         }
 
-        $this->configuration->setArrayOptions([
+        $this->configuration->setArrayOptions(
             [
-                'type' => 'string',
-                'code' => 'TITLE',
-                'name' => Loc::getMessage('SENDER_INTEGRATION_CRM_RC_MESSAGE_CONFIG_TITLE_LEAD'),
-                'required' => true,
-                'value' => Loc::getMessage('SENDER_INTEGRATION_CRM_RC_MESSAGE_CONFIG_TITLE_LEAD_DEF', ['%date%' => PrettyDate::formatDate()]),
-                'hint' => [
-                    'menu' => array_map(
-                        function ($item) {
-                            return [
-                                'id' => '#' . $item['CODE'] . '#',
-                                'text' => $item['NAME'],
-                                'title' => $item['DESC'],
-                            ];
-                        },
-                        PostingRecipientTable::getPersonalizeList()
+                [
+                    'type' => 'string',
+                    'code' => 'TITLE',
+                    'name' => Loc::getMessage('SENDER_INTEGRATION_CRM_RC_MESSAGE_CONFIG_TITLE_LEAD'),
+                    'required' => true,
+                    'value' => Loc::getMessage(
+                        'SENDER_INTEGRATION_CRM_RC_MESSAGE_CONFIG_TITLE_LEAD_DEF',
+                        ['%date%' => PrettyDate::formatDate()]
                     ),
+                    'hint' => [
+                        'menu' => array_map(
+                            function ($item) {
+                                return array(
+                                    'id' => '#' . $item['CODE'] . '#',
+                                    'text' => $item['NAME'],
+                                    'title' => $item['DESC'],
+                                    'items' => $item['ITEMS'] ? array_map(
+                                        function ($item) {
+                                            return array(
+                                                'id' => '#' . $item['CODE'] . '#',
+                                                'text' => $item['NAME'],
+                                                'title' => $item['DESC']
+                                            );
+                                        },
+                                        $item['ITEMS']
+                                    ) : []
+                                );
+                            },
+                            array_merge(
+                                Helper::getPersonalizeFieldsFromConnectors(),
+                                PostingRecipientTable::getPersonalizeList()
+                            )
+                        ),
+                    ],
                 ],
-            ],
-            [
-                'type' => Message\ConfigurationOption::TYPE_USER_LIST,
-                'code' => 'ASSIGNED_BY',
-                'name' => Loc::getMessage('SENDER_INTEGRATION_CRM_RC_MESSAGE_CONFIG_ASSIGNED_BY'),
-                'required' => true,
-                'hint' => Loc::getMessage('SENDER_INTEGRATION_CRM_RC_MESSAGE_CONFIG_ASSIGNED_BY_HINT'),
-            ],
-            [
-                'type' => Message\ConfigurationOption::TYPE_CHECKBOX,
-                'code' => 'CHECK_WORK_TIME',
-                'name' => Loc::getMessage('SENDER_INTEGRATION_CRM_RC_MESSAGE_CONFIG_CHECK_WORK_TIME'),
-                'hint' => Loc::getMessage('SENDER_INTEGRATION_CRM_RC_MESSAGE_CONFIG_CHECK_WORK_TIME_HINT'),
-                'required' => false,
-            ],
-            [
-                'type' => Message\ConfigurationOption::TYPE_CHECKBOX,
-                'code' => 'ALWAYS_ADD',
-                'name' => Loc::getMessage('SENDER_INTEGRATION_CRM_RC_MESSAGE_CONFIG_ALWAYS_ADD_LEAD'),
-                'required' => false,
-                'hint' => Loc::getMessage('SENDER_INTEGRATION_CRM_RC_MESSAGE_CONFIG_ALWAYS_ADD_HINT'),
-            ],
-            [
-                'type' => 'text',
-                'code' => 'COMMENT',
-                'name' => Loc::getMessage('SENDER_INTEGRATION_CRM_RC_MESSAGE_CONFIG_COMMENT'),
-                'required' => true,
-                'hint' => Loc::getMessage('SENDER_INTEGRATION_CRM_RC_MESSAGE_CONFIG_COMMENT_HINT'),
-            ],
-        ]);
+                [
+                    'type' => Message\ConfigurationOption::TYPE_USER_LIST,
+                    'code' => 'ASSIGNED_BY',
+                    'name' => Loc::getMessage('SENDER_INTEGRATION_CRM_RC_MESSAGE_CONFIG_ASSIGNED_BY'),
+                    'required' => true,
+                    'hint' => Loc::getMessage('SENDER_INTEGRATION_CRM_RC_MESSAGE_CONFIG_ASSIGNED_BY_HINT'),
+                ],
+                [
+                    'type' => Message\ConfigurationOption::TYPE_CHECKBOX,
+                    'code' => 'CHECK_WORK_TIME',
+                    'name' => Loc::getMessage('SENDER_INTEGRATION_CRM_RC_MESSAGE_CONFIG_CHECK_WORK_TIME'),
+                    'hint' => Loc::getMessage('SENDER_INTEGRATION_CRM_RC_MESSAGE_CONFIG_CHECK_WORK_TIME_HINT'),
+                    'required' => false,
+                ],
+                [
+                    'type' => Message\ConfigurationOption::TYPE_CHECKBOX,
+                    'code' => 'ALWAYS_ADD',
+                    'name' => Loc::getMessage('SENDER_INTEGRATION_CRM_RC_MESSAGE_CONFIG_ALWAYS_ADD_LEAD'),
+                    'required' => false,
+                    'hint' => Loc::getMessage('SENDER_INTEGRATION_CRM_RC_MESSAGE_CONFIG_ALWAYS_ADD_HINT'),
+                ],
+                [
+                    'type' => 'text',
+                    'code' => 'COMMENT',
+                    'name' => Loc::getMessage('SENDER_INTEGRATION_CRM_RC_MESSAGE_CONFIG_COMMENT'),
+                    'required' => true,
+                    'hint' => Loc::getMessage('SENDER_INTEGRATION_CRM_RC_MESSAGE_CONFIG_COMMENT_HINT'),
+                ],
+            ]
+        );
     }
 }

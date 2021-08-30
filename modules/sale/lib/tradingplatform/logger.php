@@ -44,21 +44,25 @@ class Logger
      */
     public function addRecord($level, $type, $itemId, $description)
     {
-        if ($this->logLevel < $level || $level == static::LOG_LEVEL_DISABLE)
+        if ($this->logLevel < $level || $level == static::LOG_LEVEL_DISABLE) {
             return false;
+        }
 
-        if (!array_key_exists($level, $this->severities))
+        if (!array_key_exists($level, $this->severities)) {
             throw new SystemException("Unknown type of severity: " . $level . ". " . __METHOD__);
+        }
 
         $eventLog = new \CEventLog;
 
-        return $eventLog->Add(array(
-            "SEVERITY" => $this->severities[$level],
-            "AUDIT_TYPE_ID" => $type,
-            "MODULE_ID" => "sale",
-            "ITEM_ID" => $itemId,
-            "DESCRIPTION" => $description,
-        ));
+        return $eventLog->Add(
+            array(
+                "SEVERITY" => $this->severities[$level],
+                "AUDIT_TYPE_ID" => $type,
+                "MODULE_ID" => "sale",
+                "ITEM_ID" => $itemId,
+                "DESCRIPTION" => $description,
+            )
+        );
     }
 
     /**

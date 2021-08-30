@@ -91,6 +91,7 @@ abstract class OAuth
      * Returns packed metadata for instance
      *
      * @return string
+     * @throws Main\ObjectException
      */
     public function buildMeta()
     {
@@ -177,8 +178,10 @@ abstract class OAuth
                 if ($oauthHelper = self::getInstance($meta['service'])) {
                     return $oauthHelper->getStoredToken($meta['key']) ?: false;
                 }
-            } else if ('oauth' == $meta['type']) {
-                return self::getSocservToken($meta['service'], $meta['key']);
+            } else {
+                if ('oauth' == $meta['type']) {
+                    return self::getSocservToken($meta['service'], $meta['key']);
+                }
             }
         }
     }
@@ -196,9 +199,11 @@ abstract class OAuth
             if ($oauthHelper = self::getInstance($meta['service'])) {
                 if ('oauthb' == $meta['type']) {
                     $oauthHelper->getStoredToken($meta['key']);
-                } else if ('oauth' == $meta['type']) {
-                    if ($token = self::getSocservToken($meta['service'], $meta['key'])) {
-                        $oauthHelper->getOAuthEntity()->setToken($token);
+                } else {
+                    if ('oauth' == $meta['type']) {
+                        if ($token = self::getSocservToken($meta['service'], $meta['key'])) {
+                            $oauthHelper->getOAuthEntity()->setToken($token);
+                        }
                     }
                 }
 
@@ -246,12 +251,14 @@ abstract class OAuth
     {
         $request = Main\Context::getCurrent()->getRequest();
 
-        $uri = new Main\Web\Uri(sprintf(
-            '%s://%s:%u',
-            $request->isHttps() ? 'https' : 'http',
-            $request->getHttpHost(),
-            Main\Context::getCurrent()->getServer()->getServerPort() // $request->getServerPort()
-        ));
+        $uri = new Main\Web\Uri(
+            sprintf(
+                '%s://%s:%u',
+                $request->isHttps() ? 'https' : 'http',
+                $request->getHttpHost(),
+                Main\Context::getCurrent()->getServer()->getServerPort() // $request->getServerPort()
+            )
+        );
 
         return rtrim($uri->getLocator(), '/');
     }
@@ -271,21 +278,29 @@ abstract class OAuth
             $state = sprintf(
                 '%s?%s',
                 $this->getRedirect(),
-                http_build_query(array(
-                    'check_key' => $_SESSION['UNIQUE_KEY'],
-                    'dummy' => 'https://dummy.bitrix24.com/',
-                    'state' => rawurlencode(http_build_query(array(
-                        'service' => $this->service,
-                        'uid' => $this->storedUid,
-                    ))),
-                ))
+                http_build_query(
+                    array(
+                        'check_key' => $_SESSION['UNIQUE_KEY'],
+                        'dummy' => 'https://dummy.bitrix24.com/',
+                        'state' => rawurlencode(
+                            http_build_query(
+                                array(
+                                    'service' => $this->service,
+                                    'uid' => $this->storedUid,
+                                )
+                            )
+                        ),
+                    )
+                )
             );
         } else {
-            $state = http_build_query(array(
-                'check_key' => $_SESSION['UNIQUE_KEY'],
-                'service' => $this->service,
-                'uid' => $this->storedUid,
-            ));
+            $state = http_build_query(
+                array(
+                    'check_key' => $_SESSION['UNIQUE_KEY'],
+                    'service' => $this->service,
+                    'uid' => $this->storedUid,
+                )
+            );
         }
 
         return $this->oauthEntity->getAuthUrl($this->getRedirect(false), $state);
@@ -298,14 +313,16 @@ abstract class OAuth
      */
     protected function fetchStoredToken()
     {
-        return Mail\Internals\OAuthTable::getList(array(
-            'filter' => array(
-                '=UID' => $this->storedUid,
-            ),
-            'order' => array(
-                'ID' => 'DESC',
-            ),
-        ))->fetch();
+        return Mail\Internals\OAuthTable::getList(
+            array(
+                'filter' => array(
+                    '=UID' => $this->storedUid,
+                ),
+                'order' => array(
+                    'ID' => 'DESC',
+                ),
+            )
+        )->fetch();
     }
 
     /**
@@ -406,7 +423,7 @@ abstract class OAuth
     /**
      * Returns service name
      *
-     * @return void
+     * @return string
      * @throws \Bitrix\Main\ObjectException
      */
     public static function getServiceName()
@@ -417,7 +434,7 @@ abstract class OAuth
     /**
      * Handles service response
      *
-     * @param string $state Response data.
+     * @param array $state Response data.
      * @return void
      */
     public function handleResponse($state)
@@ -459,8 +476,7 @@ abstract class OAuth
                             '<?=\CUtil::jsEscape($this->getStoredUid()) ?>',
                             '<?=\CUtil::jsEscape($this->getUrl()) ?>',
                             <?=Main\Web\Json::encode($userData) ?>
-                        ],
-                        true
+                        ]
                     );
 
                     if (targetWindow !== window) {

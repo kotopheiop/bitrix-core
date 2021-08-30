@@ -8,41 +8,56 @@ use Bitrix\Main\Localization\Loc;
 class Counter
 {
     const CACHE_TTL = 2678400; // 1 month
-    const CACHE_NAME = 'counter_v2'; // 1 month
+    const CACHE_NAME = 'counter_v3'; // 1 month
     const CACHE_PATH = '/bx/im/counter/';
 
     const TYPE_MESSENGER = 'messenger';
     const MODULE_ID = 'im';
 
-    public static function get($userId)
+    public static function get($userId = null, $options = [])
     {
-        $result = Array(
-            'TYPE' => Array(
+        $result = [
+            'TYPE' => [
                 'ALL' => 0,
                 'NOTIFY' => 0,
                 'DIALOG' => 0,
                 'CHAT' => 0,
                 'LINES' => 0,
-            ),
-            'DIALOG' => Array(),
-            'CHAT' => Array(),
-            'LINES' => Array(),
-        );
+            ],
+            'DIALOG' => [],
+            'DIALOG_UNREAD' => [],
+            'CHAT' => [],
+            'CHAT_MUTED' => [],
+            'CHAT_UNREAD' => [],
+            'LINES' => [],
+        ];
+
+        $userId = Common::getUserId($userId);
         if ($userId <= 0) {
             return $result;
         }
 
         $cache = \Bitrix\Main\Data\Cache::createInstance();
         if ($cache->initCache(self::CACHE_TTL, self::CACHE_NAME . '_' . $userId, self::CACHE_PATH)) {
-            return $cache->getVars();
+            $result = $cache->getVars();
+            if (isset($options['JSON'])) {
+                $result = \Bitrix\Im\Common::toJson($result);
+            }
+            return $result;
         }
 
         $query = "
-			SELECT R1.CHAT_ID, R1.MESSAGE_TYPE, IF(R2.USER_ID > 0, R2.USER_ID, 0) PRIVATE_USER_ID, R1.COUNTER, IF(RC.USER_ID > 0, 'Y', 'N') IN_RECENT
+			SELECT
+				R1.CHAT_ID,
+				R1.MESSAGE_TYPE, 
+				IF(RC.ITEM_TYPE = '" . IM_MESSAGE_PRIVATE . "', RC.ITEM_ID, 0) PRIVATE_USER_ID,
+				R1.COUNTER,
+				R1.NOTIFY_BLOCK MUTED,
+				IF(RC.USER_ID > 0, 'Y', 'N') IN_RECENT,
+				RC.UNREAD
 			FROM b_im_relation R1 
-			LEFT JOIN b_im_relation R2 ON R1.MESSAGE_TYPE = '" . IM_MESSAGE_PRIVATE . "' AND R2.CHAT_ID = R1.CHAT_ID AND R2.USER_ID <> R1.USER_ID
-			LEFT JOIN b_im_recent RC ON RC.USER_ID = R1.USER_ID AND RC.ITEM_TYPE = R1.MESSAGE_TYPE AND RC.ITEM_ID = IF(R1.MESSAGE_TYPE = '" . IM_MESSAGE_PRIVATE . "', R2.USER_ID, R1.CHAT_ID)
-			WHERE R1.USER_ID = " . intval($userId) . " AND R1.STATUS <> " . IM_STATUS_READ . "
+			LEFT JOIN b_im_recent RC ON RC.ITEM_RID = R1.ID
+			WHERE R1.USER_ID = " . intval($userId) . " AND (R1.STATUS <> " . IM_STATUS_READ . " OR RC.UNREAD = 'Y')
 		";
         $counters = \Bitrix\Main\Application::getInstance()->getConnection()->query($query)->fetchAll();
 
@@ -55,23 +70,51 @@ class Counter
                     continue;
                 }
                 if ($entity['MESSAGE_TYPE'] == IM_MESSAGE_PRIVATE) {
-                    $result['TYPE']['ALL'] += (int)$entity['COUNTER'];
-                    $result['TYPE']['DIALOG'] += (int)$entity['COUNTER'];
-                    $result['DIALOG'][$entity['PRIVATE_USER_ID']] = (int)$entity['COUNTER'];
-                } else if ($entity['MESSAGE_TYPE'] == IM_MESSAGE_OPEN_LINE) {
-                    $result['TYPE']['ALL'] += (int)$entity['COUNTER'];
-                    $result['TYPE']['LINES'] += (int)$entity['COUNTER'];
-                    $result['LINES'][$entity['CHAT_ID']] = (int)$entity['COUNTER'];
+                    if ($entity['COUNTER'] > 0) {
+                        $result['TYPE']['ALL'] += (int)$entity['COUNTER'];
+                        $result['TYPE']['DIALOG'] += (int)$entity['COUNTER'];
+                        $result['DIALOG'][$entity['PRIVATE_USER_ID']] = (int)$entity['COUNTER'];
+                    } else {
+                        if ($entity['UNREAD'] === 'Y') {
+                            $result['TYPE']['ALL']++;
+                            $result['TYPE']['DIALOG']++;
+                            $result['DIALOG_UNREAD'][] = (int)$entity['PRIVATE_USER_ID'];
+                        }
+                    }
                 } else {
-                    $result['TYPE']['ALL'] += (int)$entity['COUNTER'];
-                    $result['TYPE']['CHAT'] += (int)$entity['COUNTER'];
-                    $result['CHAT'][$entity['CHAT_ID']] = (int)$entity['COUNTER'];
+                    if ($entity['MESSAGE_TYPE'] == IM_MESSAGE_OPEN_LINE) {
+                        $result['TYPE']['ALL'] += (int)$entity['COUNTER'];
+                        $result['TYPE']['LINES'] += (int)$entity['COUNTER'];
+                        $result['LINES'][$entity['CHAT_ID']] = (int)$entity['COUNTER'];
+                    } else {
+                        if ($entity['COUNTER'] > 0) {
+                            if ($entity['MUTED'] === 'N') {
+                                $result['TYPE']['ALL'] += (int)$entity['COUNTER'];
+                                $result['TYPE']['CHAT'] += (int)$entity['COUNTER'];
+                                $result['CHAT'][$entity['CHAT_ID']] = (int)$entity['COUNTER'];
+                            } else {
+                                $result['CHAT_MUTED'][$entity['CHAT_ID']] = (int)$entity['COUNTER'];
+                            }
+                        } else {
+                            if ($entity['UNREAD'] === 'Y') {
+                                if ($entity['MUTED'] === 'N') {
+                                    $result['TYPE']['ALL']++;
+                                    $result['TYPE']['CHAT']++;
+                                }
+                                $result['CHAT_UNREAD'][] = (int)$entity['CHAT_ID'];
+                            }
+                        }
+                    }
                 }
             }
         }
 
         $cache->startDataCache();
         $cache->endDataCache($result);
+
+        if (isset($options['JSON'])) {
+            $result = \Bitrix\Im\Common::toJson($result);
+        }
 
         return $result;
     }
@@ -81,19 +124,18 @@ class Counter
         $cache = \Bitrix\Main\Data\Cache::createInstance();
         if ($userId) {
             $cache->clean(self::CACHE_NAME . '_' . $userId, self::CACHE_PATH);
-            \CIMContactList::ClearRecentCache($userId);
         } else {
             $cache->cleanDir(self::CACHE_PATH);
-            \CIMContactList::ClearRecentCache();
         }
 
         return true;
     }
 
-    public static function getChatCounter($chatId, $userId)
+    public static function getChatCounter($chatId, $userId = null)
     {
         $chatId = intval($chatId);
-        $userId = intval($userId);
+        $userId = Common::getUserId($userId);
+
         if ($chatId <= 0 || $userId <= 0) {
             return false;
         }
@@ -103,9 +145,9 @@ class Counter
         return intval($counters['CHAT'][$chatId]);
     }
 
-    public static function getDialogCounter($userId, $opponentUserId)
+    public static function getDialogCounter($opponentUserId, $userId = null)
     {
-        $userId = intval($userId);
+        $userId = Common::getUserId($userId);
         $opponentUserId = intval($opponentUserId);
         if ($userId <= 0 || $opponentUserId <= 0) {
             return false;
@@ -116,9 +158,9 @@ class Counter
         return intval($counters['DIALOG'][$opponentUserId]);
     }
 
-    public static function getNotifyCounter($userId)
+    public static function getNotifyCounter($userId = null)
     {
-        $userId = intval($userId);
+        $userId = Common::getUserId($userId);
         if ($userId <= 0) {
             return false;
         }
@@ -151,11 +193,14 @@ class Counter
                 $notifyRelationId = $row['ID'];
                 $foundNotify = true;
 
-                \Bitrix\Im\Model\RelationTable::update($row['ID'], Array(
-                    'STATUS' => IM_STATUS_UNREAD,
-                    "MESSAGE_STATUS" => IM_MESSAGE_STATUS_RECEIVED,
-                    'COUNTER' => $row['CNT'],
-                ));
+                \Bitrix\Im\Model\RelationTable::update(
+                    $row['ID'],
+                    Array(
+                        'STATUS' => IM_STATUS_UNREAD,
+                        "MESSAGE_STATUS" => IM_MESSAGE_STATUS_RECEIVED,
+                        'COUNTER' => $row['CNT'],
+                    )
+                );
 
                 $count++;
                 if ($count > 100) {
@@ -187,12 +232,14 @@ class Counter
                         'STATUS' => IM_STATUS_READ,
                         "MESSAGE_STATUS" => IM_MESSAGE_STATUS_RECEIVED,
                     );
-                } else if ($row['PREVIOUS_COUNTER'] == $row['COUNTER']) {
-                    continue;
                 } else {
-                    $update = Array(
-                        'COUNTER' => $row['COUNTER']
-                    );
+                    if ($row['PREVIOUS_COUNTER'] == $row['COUNTER']) {
+                        continue;
+                    } else {
+                        $update = Array(
+                            'COUNTER' => $row['COUNTER']
+                        );
+                    }
                 }
                 \Bitrix\Im\Model\RelationTable::update($row['ID'], $update);
             }
@@ -207,12 +254,14 @@ class Counter
 
     public static function onGetMobileCounterTypes(\Bitrix\Main\Event $event)
     {
-        return new EventResult(EventResult::SUCCESS, Array(
+        return new EventResult(
+            EventResult::SUCCESS, Array(
             self::TYPE_MESSENGER => Array(
                 'NAME' => Loc::getMessage('IM_COUNTER_TYPE_MESSENGER_2'),
                 'DEFAULT' => true
             ),
-        ), self::MODULE_ID);
+        ), self::MODULE_ID
+        );
     }
 
     public static function onGetMobileCounter(\Bitrix\Main\Event $event)
@@ -221,9 +270,11 @@ class Counter
 
         $counters = self::get($params['USER_ID']);
 
-        return new EventResult(EventResult::SUCCESS, Array(
+        return new EventResult(
+            EventResult::SUCCESS, Array(
             'TYPE' => self::TYPE_MESSENGER,
             'COUNTER' => $counters['TYPE']['ALL']
-        ), self::MODULE_ID);
+        ), self::MODULE_ID
+        );
     }
 }

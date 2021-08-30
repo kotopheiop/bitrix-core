@@ -47,7 +47,16 @@ class Site24
      */
     public static function addDomain($domain, $url, $active = 'Y', $type = 'site', $lang = '')
     {
-        return self::Execute('add', array('domain' => $domain, 'url' => $url, 'active' => $active, 'type' => $type, 'lang' => $lang));
+        return self::Execute(
+            'add',
+            array(
+                'domain' => $domain,
+                'url' => $url,
+                'active' => $active,
+                'type' => $type,
+                'lang' => $lang
+            )
+        );
     }
 
     /**
@@ -130,8 +139,8 @@ class Site24
         $params['host'] = trim($params['host']);
 
         if (
-            strpos($params['host'], 'http://') === 0 ||
-            strpos($params['host'], 'https://') === 0
+            mb_strpos($params['host'], 'http://') === 0 ||
+            mb_strpos($params['host'], 'https://') === 0
         ) {
             $parseHost = parse_url($params['host']);
             if (isset($parseHost['host'])) {
@@ -146,10 +155,12 @@ class Site24
             unset($params['lang']);
         }
 
-        $httpClient = new \Bitrix\Main\Web\HttpClient(array(
-            'socketTimeout' => 5,
-            'streamTimeout' => 30
-        ));
+        $httpClient = new \Bitrix\Main\Web\HttpClient(
+            array(
+                'socketTimeout' => 5,
+                'streamTimeout' => 30
+            )
+        );
 
         $httpClient->setHeader('User-Agent', 'Bitrix24 Sites');
         $answer = $httpClient->post('https://pub.bitrix24.site/pub.php', $params);
@@ -159,7 +170,7 @@ class Site24
             $result = $httpClient->getResult();
         }
 
-        if (strlen($result) > 0) {
+        if ($result <> '') {
             try {
                 $result = \Bitrix\Main\Web\Json::decode($result);
             } catch (\Bitrix\Main\ArgumentException $e) {

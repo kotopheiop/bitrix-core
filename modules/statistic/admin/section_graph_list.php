@@ -1,28 +1,34 @@
 <?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 /** @var CMain $APPLICATION */
 $STAT_RIGHT = $APPLICATION->GetGroupRight("statistic");
-if ($STAT_RIGHT == "D")
+if ($STAT_RIGHT == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 include($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/colors.php");
 IncludeModuleLangFile(__FILE__);
 
 $is_dir = $_REQUEST["is_dir"] == "Y" ? "Y" : "N";
-$section = is_string($_REQUEST["section"]) && preg_match('#^(http://|https://|/)#', $_REQUEST["section"]) ? $_REQUEST["section"] : "";
+$section = is_string($_REQUEST["section"]) && preg_match(
+    '#^(http://|https://|/)#',
+    $_REQUEST["section"]
+) ? $_REQUEST["section"] : "";
 
 if (isset($set_default) && $set_default == "Y" &&
-    strlen($find_hits) <= 0 &&
-    strlen($find_enter_points) <= 0 &&
-    strlen($find_exit_points) <= 0) {
+    $find_hits == '' &&
+    $find_enter_points == '' &&
+    $find_exit_points == '') {
     $find_hits = "Y";
     $find_enter_points = "Y";
     $find_exit_points = "Y";
 }
 
-if (isset($find_adv) && is_array($find_adv) && count($find_adv) > 0)
+if (isset($find_adv) && is_array($find_adv) && count($find_adv) > 0) {
     $find_adv_str = implode(" | ", $find_adv);
-else
+} else {
     $find_adv_str = "";
+}
 
 $arFilter = array(
     "DATE1" => $date1,
@@ -45,13 +51,15 @@ $APPLICATION->SetTitle($strTitle);
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_popup_admin.php");
 
-if (strlen($find_adv_str) > 0) :
+if ($find_adv_str <> '') :
     echo "<h2>" . GetMessage("STAT_ADV_LIST") . "</h2><p>";
-    $rsAdv = CAdv::GetList($v1 = "s_dropdown", $v2 = "asc", Array("ID" => $str), $v3, "", $v4, $v5);
+    $rsAdv = CAdv::GetList("s_dropdown", "asc", Array("ID" => $str));
     while ($arAdv = $rsAdv->GetNext()) :
         echo "[" . $arAdv["ID"] . "]&nbsp;" . $arAdv["REFERER1"] . "&nbsp;/&nbsp;" . $arAdv["REFERER2"] . "<br>";
     endwhile;
-    if ($find_adv_data_type != "B" && $find_adv_data_type != "S") $find_adv_data_type = "P";
+    if ($find_adv_data_type != "B" && $find_adv_data_type != "S") {
+        $find_adv_data_type = "P";
+    }
     $arr = array(
         "P" => GetMessage("STAT_ADV_NO_BACK"),
         "B" => GetMessage("STAT_ADV_BACK"),
@@ -65,14 +73,18 @@ $height = COption::GetOptionString("statistic", "GRAPH_HEIGHT");
 
 
 if (isset($find_adv) && is_array($find_adv) && count($find_adv) > 0) {
-    foreach ($find_adv as $adv_id)
+    foreach ($find_adv as $adv_id) {
         $s .= "&amp;adv[]=" . urlencode($adv_id);
+    }
 }
 
-if (strlen($site_id) > 0)
-    $show_site_id = "[<a target=\"_blank\" href=\"" . htmlspecialcharsbx("/bitrix/admin/site_edit.php?LID=" . urlencode($site_id) . "&lang=" . LANGUAGE_ID) . "\">" . htmlspecialcharsbx($site_id) . "</a>]&nbsp;";
-else
+if ($site_id <> '') {
+    $show_site_id = "[<a target=\"_blank\" href=\"" . htmlspecialcharsbx(
+            "/bitrix/admin/site_edit.php?LID=" . urlencode($site_id) . "&lang=" . LANGUAGE_ID
+        ) . "\">" . htmlspecialcharsbx($site_id) . "</a>]&nbsp;";
+} else {
     $show_site_id = "";
+}
 ?>
 
     <p><?= $show_site_id ?><?
@@ -90,9 +102,19 @@ else
         <table border="0" cellspacing="0" cellpadding="0" class="graph" align="center">
             <tr>
                 <td valign="center">
-                    <img width=<?= $width ?> height=<?= $height ?>
-                         src="<? echo htmlspecialcharsbx("/bitrix/admin/section_graph.php?lang=" . urlencode(LANGUAGE_ID) . "&date1=" . urlencode($date1) . "&date2=" . urlencode($date2) . $s . "&is_dir=" . urlencode($is_dir) . "&adv_data_type=" . urlencode($find_adv_data_type) . "&width=" . intval($width) . "&height=" . intval($height) . "&section=" . urlencode($section) . "&find_hits=" . urlencode($find_hits) . "&find_enter_points=" . urlencode($find_enter_points) . "&find_exit_points=" . urlencode($find_exit_points)) ?>">
-                </td>
+                    <img width=<?= $width ?> height=<?= $height ?>src="<? echo htmlspecialcharsbx(
+                        "/bitrix/admin/section_graph.php?lang=" . urlencode(LANGUAGE_ID) . "&date1=" . urlencode(
+                            $date1
+                        ) . "&date2=" . urlencode($date2) . $s . "&is_dir=" . urlencode(
+                            $is_dir
+                        ) . "&adv_data_type=" . urlencode($find_adv_data_type) . "&width=" . intval(
+                            $width
+                        ) . "&height=" . intval($height) . "&section=" . urlencode(
+                            $section
+                        ) . "&find_hits=" . urlencode($find_hits) . "&find_enter_points=" . urlencode(
+                            $find_enter_points
+                        ) . "&find_exit_points=" . urlencode($find_exit_points)
+                    ) ?>"></td>
                 </td>
                 <td valign="center">
                     <table border="0" cellspacing="1" cellpadding="2" width="0%" class="legend">
@@ -141,12 +163,15 @@ else
         <input type="hidden" name="date2" value="<?= htmlspecialcharsbx($date2) ?>">
         <input type="hidden" name="width" value="<?= $width ?>">
         <input type="hidden" name="height" value="<?= $height ?>">
-        <p><? echo InputType("checkbox", "find_enter_points", "Y", $find_enter_points, false); ?>
-            &nbsp;<?= GetMessage("STAT_ENTER_POINTS"); ?></p>
-        <p><? echo InputType("checkbox", "find_exit_points", "Y", $find_exit_points, false); ?>
-            &nbsp;<?= GetMessage("STAT_EXIT_POINTS"); ?></p>
-        <p><? echo InputType("checkbox", "find_hits", "Y", $find_hits, false); ?>
-            &nbsp;<?= GetMessage("STAT_HITS") ?></p>
+        <p><? echo InputType("checkbox", "find_enter_points", "Y", $find_enter_points, false); ?>&nbsp;<?= GetMessage(
+                "STAT_ENTER_POINTS"
+            ); ?></p>
+        <p><? echo InputType("checkbox", "find_exit_points", "Y", $find_exit_points, false); ?>&nbsp;<?= GetMessage(
+                "STAT_EXIT_POINTS"
+            ); ?></p>
+        <p><? echo InputType("checkbox", "find_hits", "Y", $find_hits, false); ?>&nbsp;<?= GetMessage(
+                "STAT_HITS"
+            ) ?></p>
         <input type="submit" name="set_filter" value="<? echo GetMessage("STAT_CREATE_GRAPH") ?>">
         <input type="hidden" name="set_filter" value="Y">
         <input type="button" onClick="window.close()" value="<? echo GetMessage("STAT_CLOSE") ?>">

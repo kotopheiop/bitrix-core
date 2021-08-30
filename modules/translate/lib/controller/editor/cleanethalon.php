@@ -67,11 +67,13 @@ class CleanEthalon
             }
 
             foreach ($pathList as $testPath) {
-                if (substr($testPath, -4) === '.php') {
+                if (mb_substr($testPath, -4) === '.php') {
                     if (Translate\IO\Path::isLangDir($testPath)) {
                         $this->pathList[] = $testPath;
                     } else {
-                        $this->addError(new Main\Error(Loc::getMessage('TR_CLEAN_FILE_NOT_LANG', array('#FILE#' => $testPath))));
+                        $this->addError(
+                            new Main\Error(Loc::getMessage('TR_CLEAN_FILE_NOT_LANG', array('#FILE#' => $testPath)))
+                        );
                     }
                 } else {
                     if (Translate\IO\Path::isLangDir($testPath)) {
@@ -84,11 +86,13 @@ class CleanEthalon
                             '=PATH' => rtrim($testPath, '/'),
                             '=%PATH' => rtrim($testPath, '/') . '/%'
                         );
-                        $pathLangRes = Index\Internals\PathLangTable::getList(array(
-                            'filter' => $pathFilter,
-                            'order' => array('ID' => 'ASC'),
-                            'select' => ['PATH'],
-                        ));
+                        $pathLangRes = Index\Internals\PathLangTable::getList(
+                            array(
+                                'filter' => $pathFilter,
+                                'order' => array('ID' => 'ASC'),
+                                'select' => ['PATH'],
+                            )
+                        );
                         while ($pathLang = $pathLangRes->fetch()) {
                             $this->pathList[] = $pathLang['PATH'];
                         }
@@ -122,15 +126,19 @@ class CleanEthalon
     private function runClearing()
     {
         $processedItemCount = 0;
-        for ($pos = ((int)$this->seekOffset > 0 ? (int)$this->seekOffset : 0), $total = count($this->pathList); $pos < $total; $pos++) {
+        for (
+            $pos = ((int)$this->seekOffset > 0 ? (int)$this->seekOffset : 0), $total = count(
+            $this->pathList
+        ); $pos < $total; $pos++
+        ) {
             $testPath = $this->pathList[$pos];
 
             // file
-            if (substr($testPath, -4) === '.php') {
+            if (mb_substr($testPath, -4) === '.php') {
                 $this->cleanLangFile($testPath);
             } // folder
             else {
-                if (substr($testPath, -5) === '/lang') {
+                if (mb_substr($testPath, -5) === '/lang') {
                     $testPath .= '/#LANG_ID#';
                 } else {
                     $testPath = Translate\IO\Path::replaceLangId($testPath, '#LANG_ID#');
@@ -211,7 +219,10 @@ class CleanEthalon
                 ->setLangId($currentLang)
                 ->setOperatingEncoding(Main\Localization\Translation::getSourceEncoding($currentLang));
 
-            $isEthalonExists = ($ethalonFile->isExists() && $ethalonFile->load());
+            $isEthalonExists = false;
+            if ($ethalonFile->isExists()) {
+                $isEthalonExists = $ethalonFile->loadTokens() || $ethalonFile->load();
+            }
             if (!$isEthalonExists) {
                 $this->deletePhraseIndex($ethalonFile);
             }
@@ -236,7 +247,7 @@ class CleanEthalon
                         ->setOperatingEncoding(Main\Localization\Translation::getSourceEncoding($langId));
 
                     if ($langFile->isExists()) {
-                        if ($isEthalonExists && $langFile->load()) {
+                        if ($isEthalonExists && ($langFile->loadTokens() || $langFile->load())) {
                             $affected = false;
                             foreach ($langFile as $code => $phrase) {
                                 if (!isset($ethalonFile[$code])) {

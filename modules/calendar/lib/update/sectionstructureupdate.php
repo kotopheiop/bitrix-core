@@ -41,16 +41,22 @@ final class SectionStructureUpdate extends Stepper
         );
 
         if (!$status['finished']) {
-            $r = $DB->Query('select ID from b_calendar_event where SECTION_ID is null order by id asc limit 1;', false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+            $r = $DB->Query(
+                'select ID from b_calendar_event where SECTION_ID is null order by id asc limit 1;',
+                false,
+                "File: " . __FILE__ . "<br>Line: " . __LINE__
+            );
 
             if ($entry = $r->Fetch()) {
                 $newStatus['lastEventId'] = $entry['ID'];
-                $DB->Query('UPDATE b_calendar_event CE
+                $DB->Query(
+                    'UPDATE b_calendar_event CE
 					INNER JOIN b_calendar_event_sect CES ON CE.ID = CES.EVENT_ID
 					SET CE.SECTION_ID = CES.SECT_ID
 					WHERE CE.SECTION_ID is null and CE.ID < ' . (intval($entry['ID']) + $BATCH_SIZE),
                     false,
-                    "File: " . __FILE__ . "<br>Line: " . __LINE__);
+                    "File: " . __FILE__ . "<br>Line: " . __LINE__
+                );
 
                 $newStatus['steps'] = $newStatus['count'] - self::getTotalCount();
 
@@ -75,7 +81,7 @@ final class SectionStructureUpdate extends Stepper
     private function loadCurrentStatus()
     {
         $status = Option::get('calendar', 'sectionStructureUpdaterStatus', 'default');
-        $status = ($status !== 'default' ? @unserialize($status) : []);
+        $status = ($status !== 'default' ? @unserialize($status, ['allowed_classes' => false]) : []);
         $status = (is_array($status) ? $status : []);
 
         if (empty($status)) {
@@ -94,7 +100,11 @@ final class SectionStructureUpdate extends Stepper
     {
         global $DB;
         $count = 0;
-        $res = $DB->Query('select count(*) as c  from b_calendar_event where SECTION_ID is null', false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+        $res = $DB->Query(
+            'select count(*) as c  from b_calendar_event where SECTION_ID is null',
+            false,
+            "File: " . __FILE__ . "<br>Line: " . __LINE__
+        );
         if ($res = $res->Fetch()) {
             $count = intval($res['c']);
         }

@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 if (CModule::IncludeModule("socialnetwork")):
     ?>

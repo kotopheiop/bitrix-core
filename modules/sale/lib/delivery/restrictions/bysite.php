@@ -29,13 +29,15 @@ class BySite extends Base
 
     public static function check($siteId, array $restrictionParams, $deliveryId = 0)
     {
-        if (empty($restrictionParams))
+        if (empty($restrictionParams)) {
             return true;
+        }
 
         $result = true;
 
-        if (strlen($siteId) > 0 && isset($restrictionParams["SITE_ID"]) && is_array($restrictionParams["SITE_ID"]))
+        if ($siteId <> '' && isset($restrictionParams["SITE_ID"]) && is_array($restrictionParams["SITE_ID"])) {
             $result = in_array($siteId, $restrictionParams["SITE_ID"]);
+        }
 
         return $result;
     }
@@ -53,8 +55,9 @@ class BySite extends Base
             $order = $entity;
         }
 
-        if (!$order)
+        if (!$order) {
             return false;
+        }
 
         return $order->getSiteId();
     }
@@ -65,8 +68,9 @@ class BySite extends Base
 
         $rsSite = \Bitrix\Main\SiteTable::getList();
 
-        while ($site = $rsSite->fetch())
+        while ($site = $rsSite->fetch()) {
             $siteList[$site["LID"]] = $site["NAME"] . " (" . $site["LID"] . ")";
+        }
 
         return array(
             "SITE_ID" => array(
@@ -81,8 +85,9 @@ class BySite extends Base
 
     public static function getSeverity($mode)
     {
-        if ($mode == Manager::MODE_MANAGER)
+        if ($mode == Manager::MODE_MANAGER) {
             return Manager::SEVERITY_STRICT;
+        }
 
         return parent::getSeverity($mode);
     }
@@ -92,7 +97,6 @@ class BySite extends Base
      */
     public static function isAvailable()
     {
-        return IsModuleInstalled('crm') ? false : true;
+        return IsModuleInstalled('bitrix24') ? false : true;
     }
-
-} 
+}

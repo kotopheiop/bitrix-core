@@ -64,11 +64,13 @@ class ExtensionFieldMap extends SplObjectStorage implements Collection
         $extendee = trim($extension->getExtendee(), '\\');
 
         if ($extendee !== $this->extendee) {
-            throw new InvalidArgumentException(sprintf(
-                'Invalid extendee, %s is expected but %s given',
-                $this->extendee,
-                $extendee
-            ));
+            throw new InvalidArgumentException(
+                sprintf(
+                    'Invalid extendee, %s is expected but %s given',
+                    $this->extendee,
+                    $extendee
+                )
+            );
         }
 
         $this->attach($extension, $value);

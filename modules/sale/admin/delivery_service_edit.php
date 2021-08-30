@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 use Bitrix\Sale\Delivery;
@@ -7,6 +8,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale\Delivery\Services;
 use Bitrix\Sale\Delivery\ExtraServices;
 use Bitrix\Currency;
+use Bitrix\Catalog\VatTable;
 
 use \Bitrix\Sale\Helpers\Admin\BusinessValueControl;
 
@@ -20,8 +22,9 @@ $listUrl = $adminSidePanelHelper->editUrlToPublicPage($listUrl);
 /** @var  CMain $APPLICATION */
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
 
-if ($saleModulePermissions < "W")
+if ($saleModulePermissions < "W") {
     $APPLICATION->AuthForm(Loc::getMessage("SALE_DSE_ACCESS_DENIED"));
+}
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/prolog.php");
 require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/sale/lib/helpers/admin/businessvalue.php');
@@ -30,7 +33,7 @@ $ID = isset($_REQUEST["ID"]) ? intval($_REQUEST["ID"]) : 0;
 $srvStrError = "";
 $fields = array();
 $tabControlName = "tabControl";
-$isItSavingProcess = ($_SERVER['REQUEST_METHOD'] == "POST" && (strlen($_POST["save"]) > 0 || strlen($_POST["apply"]) > 0)) ? true : false;
+$isItSavingProcess = ($_SERVER['REQUEST_METHOD'] == "POST" && ($_POST["save"] <> '' || $_POST["apply"] <> '')) ? true : false;
 $isItReloadingProcess = ($_SERVER['REQUEST_METHOD'] == "POST" && (!isset($_POST["save"]) && !isset($_POST["apply"]))) ? true : false;
 $isItViewProcess = $_SERVER['REQUEST_METHOD'] != "POST";
 $classNamesList = Services\Manager::getHandlersList();
@@ -46,41 +49,74 @@ $backUrl = urlencode(CHTTP::urlDeleteParams($backUrl, array("IFRAME", "IFRAME_TY
 if (($isItReloadingProcess || $isItSavingProcess) && $saleModulePermissions == "W" && check_bitrix_sessid()) {
     $adminSidePanelHelper->decodeUriComponent();
 
-    if (isset($_POST["ID"])) $fields["ID"] = intval($_POST["ID"]);
-    if (isset($_POST["CODE"])) $fields["CODE"] = trim($_POST["CODE"]);
-    if (isset($_POST["SORT"])) $fields["SORT"] = intval($_POST["SORT"]);
-    if (isset($_POST["NAME"])) $fields["NAME"] = trim($_POST["NAME"]);
-    if (isset($_POST["VAT_ID"])) $fields["VAT_ID"] = intval($_POST["VAT_ID"]);
-    if (isset($_POST["CONFIG"])) $fields["CONFIG"] = $_POST["CONFIG"];
-    if (isset($_POST["CURRENCY"])) $fields["CURRENCY"] = trim($_POST["CURRENCY"]);
-    if (isset($_POST["PARENT_ID"])) $fields["PARENT_ID"] = intval($_POST["PARENT_ID"]);
-    if (isset($_POST["CLASS_NAME"])) $fields["CLASS_NAME"] = trim($_POST["CLASS_NAME"]);
-    if (isset($_POST["DESCRIPTION"])) $fields["DESCRIPTION"] = htmlspecialcharsback(trim($_POST["DESCRIPTION"]));
+    if (isset($_POST["ID"])) {
+        $fields["ID"] = intval($_POST["ID"]);
+    }
+    if (isset($_POST["CODE"])) {
+        $fields["CODE"] = trim($_POST["CODE"]);
+    }
+    if (isset($_POST["SORT"])) {
+        $fields["SORT"] = intval($_POST["SORT"]);
+    }
+    if (isset($_POST["NAME"])) {
+        $fields["NAME"] = trim($_POST["NAME"]);
+    }
+    if (isset($_POST["VAT_ID"])) {
+        $fields["VAT_ID"] = intval($_POST["VAT_ID"]);
+    }
+    if (isset($_POST["CONFIG"])) {
+        $fields["CONFIG"] = $_POST["CONFIG"];
+    }
+    if (isset($_POST["CURRENCY"])) {
+        $fields["CURRENCY"] = trim($_POST["CURRENCY"]);
+    }
+    if (isset($_POST["PARENT_ID"])) {
+        $fields["PARENT_ID"] = intval($_POST["PARENT_ID"]);
+    }
+    if (isset($_POST["CLASS_NAME"])) {
+        $fields["CLASS_NAME"] = trim($_POST["CLASS_NAME"]);
+    }
+    if (isset($_POST["DESCRIPTION"])) {
+        $fields["DESCRIPTION"] = htmlspecialcharsback(trim($_POST["DESCRIPTION"]));
+    }
 
-    if (isset($_POST["TRACKING_PARAMS"]) && is_array($_POST["TRACKING_PARAMS"]))
+    if (!empty($fields["CLASS_NAME"])) {
+        if (!is_subclass_of($fields["CLASS_NAME"], 'Bitrix\Sale\Delivery\Services\Base')) {
+            throw new \Bitrix\Main\SystemException(
+                'Class "' . $fields["CLASS_NAME"] . '" is not a subclass of the Bitrix\Sale\Delivery\Services\Base'
+            );
+        }
+    }
+
+    if (isset($_POST["TRACKING_PARAMS"]) && is_array($_POST["TRACKING_PARAMS"])) {
         $fields["TRACKING_PARAMS"] = $_POST["TRACKING_PARAMS"];
-    else
+    } else {
         $fields["TRACKING_PARAMS"] = array();
+    }
 
-    if (isset($_POST["CHANGED_FIELDS"]) && is_array($_POST["CHANGED_FIELDS"]))
+    if (isset($_POST["CHANGED_FIELDS"]) && is_array($_POST["CHANGED_FIELDS"])) {
         $changedFields = $_POST["CHANGED_FIELDS"];
-    else
+    } else {
         $changedFields = array();
+    }
 
-    if (isset($_POST["ACTIVE"]) && $_POST["ACTIVE"] == "Y")
+    if (isset($_POST["ACTIVE"]) && $_POST["ACTIVE"] == "Y") {
         $fields["ACTIVE"] = "Y";
-    else
+    } else {
         $fields["ACTIVE"] = "N";
+    }
 
-    if (isset($_POST["XML_ID"]) && $_POST["XML_ID"])
+    if (isset($_POST["XML_ID"]) && $_POST["XML_ID"]) {
         $fields["XML_ID"] = trim($_POST["XML_ID"]);
-    else
+    } else {
         $fields["XML_ID"] = Services\Manager::generateXmlId();
+    }
 
-    if (isset($_POST["ALLOW_EDIT_SHIPMENT"]) && $_POST["ALLOW_EDIT_SHIPMENT"] == "Y")
+    if (isset($_POST["ALLOW_EDIT_SHIPMENT"]) && $_POST["ALLOW_EDIT_SHIPMENT"] == "Y") {
         $fields["ALLOW_EDIT_SHIPMENT"] = "Y";
-    else
+    } else {
         $fields["ALLOW_EDIT_SHIPMENT"] = "N";
+    }
 
     $needSaveLogo = false;
 
@@ -111,37 +147,41 @@ if (($isItReloadingProcess || $isItSavingProcess) && $saleModulePermissions == "
         $res = CFile::GetByID($logoFileId);
 
         if ($file = $res->Fetch()) {
-            if (substr($file['SUBDIR'], 0, 21) === 'sale/delivery/logotip') {
+            if (mb_substr($file['SUBDIR'], 0, 21) === 'sale/delivery/logotip') {
                 $fields["LOGOTIP"] = $logoFileId;
             }
         }
     }
 
     if ($isItSavingProcess) {
-        if (strlen($fields["NAME"]) <= 0)
+        if ($fields["NAME"] == '') {
             $srvStrError .= Loc::getMessage("SALE_DSE_ERROR_NO_NAME") . $delimiter;
+        }
 
-        if (strlen($fields["CLASS_NAME"]) <= 0)
+        if ($fields["CLASS_NAME"] == '') {
             $srvStrError .= Loc::getMessage("SALE_DSE_ERROR_NO_CLASS_NAME") . $delimiter;
+        }
 
         if ($srvStrError == '') {
             try {
                 $service = Services\Manager::createObject($fields);
 
-                if ($service)
+                if ($service) {
                     $fields = $service->prepareFieldsForSaving($fields);
-                else
+                } else {
                     $srvStrError = Loc::getMessage('SALE_DSE_DELIVERY_SERVICE_CREATE_ERROR');
+                }
             } catch (\Bitrix\Main\SystemException $e) {
                 $srvStrError = $e->getMessage();
             }
 
             if ($srvStrError == '') {
-                if (isset($fields["PARENT_ID"]) && $fields["PARENT_ID"] == "new" && strlen($_POST["GROUP_NAME"]) > 0) {
+                if (isset($fields["PARENT_ID"]) && $fields["PARENT_ID"] == "new" && $_POST["GROUP_NAME"] <> '') {
                     $fields["PARENT_ID"] = Services\Manager::getGroupId($_POST["GROUP_NAME"]);
 
-                    if ($fields["PARENT_ID"] <= 0)
+                    if ($fields["PARENT_ID"] <= 0) {
                         $srvStrError .= Loc::getMessage("SALE_DSE_ERROR_GROUP_SAVE") . $delimiter;
+                    }
                 }
 
                 unset($fields["ID"]);
@@ -155,10 +195,11 @@ if (($isItReloadingProcess || $isItSavingProcess) && $saleModulePermissions == "
                             $fieldsList = array();
 
                             if (in_array('ACTIVE', $changedFields)) {
-                                if ($fields['ACTIVE'] == 'Y')
+                                if ($fields['ACTIVE'] == 'Y') {
                                     $fieldsList['ACTIVE'] = 'Y';
-                                else
+                                } else {
                                     $fieldsList['ACTIVE'] = 'N';
+                                }
                             }
 
                             if (!empty($fieldsList)) {
@@ -169,7 +210,10 @@ if (($isItReloadingProcess || $isItSavingProcess) && $saleModulePermissions == "
                             }
                         }
                     } else {
-                        $srvStrError .= Loc::getMessage("SALE_DSE_ERROR_EDIT_DELIVERY") . $delimiter . implode($delimiter, $res->getErrorMessages());
+                        $srvStrError .= Loc::getMessage("SALE_DSE_ERROR_EDIT_DELIVERY") . $delimiter . implode(
+                                $delimiter,
+                                $res->getErrorMessages()
+                            );
                     }
                 } else {
                     $res = Services\Manager::add($fields);
@@ -177,10 +221,14 @@ if (($isItReloadingProcess || $isItSavingProcess) && $saleModulePermissions == "
                     if ($res->isSuccess()) {
                         $ID = $res->getId();
 
-                        if (!$fields["CLASS_NAME"]::isInstalled())
+                        if (!$fields["CLASS_NAME"]::isInstalled()) {
                             $fields["CLASS_NAME"]::install();
+                        }
                     } else {
-                        $srvStrError .= Loc::getMessage("SALE_DSE_ERROR_ADD_DELIVERY") . $delimiter . implode($delimiter, $res->getErrorMessages());
+                        $srvStrError .= Loc::getMessage("SALE_DSE_ERROR_ADD_DELIVERY") . $delimiter . implode(
+                                $delimiter,
+                                $res->getErrorMessages()
+                            );
                     }
                 }
 
@@ -189,8 +237,9 @@ if (($isItReloadingProcess || $isItSavingProcess) && $saleModulePermissions == "
                         $businessValueControl = new BusinessValueControl('DELIVERY_' . $service->getId());
 
                         if ($businessValueControl->setMapFromPost()) {
-                            if (!$businessValueControl->saveMap())
+                            if (!$businessValueControl->saveMap()) {
                                 $srvStrError .= 'Can\'t save business values';
+                            }
                         }
                     }
                 }
@@ -209,33 +258,44 @@ if (($isItReloadingProcess || $isItSavingProcess) && $saleModulePermissions == "
                         $res = ExtraServices\Manager::setStoresUnActive($ID);
                     }
 
-                    if (!$res->isSuccess())
+                    if (!$res->isSuccess()) {
                         $srvStrError .= implode($delimiter, $res->getErrorMessages());
+                    }
                 }
             }
         }
 
-        if (strlen($srvStrError) <= 0) {
-            if (strlen($_POST["apply"]) > 0) {
+        if ($srvStrError == '') {
+            if ($_POST["apply"] <> '') {
                 $paramsToKill = array();
-                if (!empty($_REQUEST["RESET_TARIF_SETTINGS"]))
+                if (!empty($_REQUEST["RESET_TARIF_SETTINGS"])) {
                     $paramsToKill[] = "RESET_TARIF_SETTINGS";
+                }
 
                 $redirectUrl = $APPLICATION->GetCurPageParam("ID=" . $ID, $paramsToKill);
 
-                if (isset($_REQUEST[$tabControlName . "_active_tab"]))
+                if (isset($_REQUEST[$tabControlName . "_active_tab"])) {
                     $redirectUrl .= "&" . $tabControlName . "_active_tab=" . $_REQUEST[$tabControlName . "_active_tab"];
+                }
 
-                $adminSidePanelHelper->sendSuccessResponse("apply", array("reloadUrl" => $redirectUrl,
-                    "ID" => $ID, $tabControlName . "_active_tab" => $_REQUEST[$tabControlName . "_active_tab"]));
+                $adminSidePanelHelper->sendSuccessResponse(
+                    "apply",
+                    array(
+                        "reloadUrl" => $redirectUrl,
+                        "ID" => $ID,
+                        $tabControlName . "_active_tab" => $_REQUEST[$tabControlName . "_active_tab"]
+                    )
+                );
 
                 $redirectUrl = $adminSidePanelHelper->setDefaultQueryParams($redirectUrl);
                 LocalRedirect($redirectUrl);
-            } elseif (strlen($_POST["save"]) > 0) {
+            } elseif ($_POST["save"] <> '') {
                 $adminSidePanelHelper->sendSuccessResponse("base", array("ID" => $ID));
                 $adminSidePanelHelper->localRedirect((!empty($backUrlReq) ? $backUrlReq : $listUrl));
-                LocalRedirect((!empty($backUrlReq) ? $backUrlReq : "sale_delivery_service_list.php?lang=" . LANGUAGE_ID
-                    . "&filter_group=" . $fields["PARENT_ID"]));
+                LocalRedirect(
+                    (!empty($backUrlReq) ? $backUrlReq : "sale_delivery_service_list.php?lang=" . LANGUAGE_ID
+                        . "&filter_group=" . $fields["PARENT_ID"])
+                );
             }
         } else {
             $adminSidePanelHelper->sendJsonErrorResponse($srvStrError);
@@ -251,13 +311,17 @@ if (empty($fields) && $ID <= 0) {
     $fields["PARENT_ID"] = $_REQUEST["PARENT_ID"] ? intval($_REQUEST["PARENT_ID"]) : 0;
     $fields["PROFILE_ID"] = $_REQUEST["PROFILE_ID"] ? htmlspecialcharsbx($_REQUEST["PROFILE_ID"]) : "";
     $fields["SERVICE_TYPE"] = $_REQUEST["SERVICE_TYPE"] ? htmlspecialcharsbx($_REQUEST["SERVICE_TYPE"]) : "";
+    $fields["REST_CODE"] = $_REQUEST["REST_CODE"] ? htmlspecialcharsbx($_REQUEST["REST_CODE"]) : "";
     $fields["CURRENCY"] = COption::GetOptionString("sale", "default_currency", "RUB");
     $fields["RIGHTS"] = "YYY"; //Admin Manager Client
     $fields["ACTIVE"] = "Y";
 
     if (!empty($_REQUEST["CLASS_NAME"])) {
-        if (!is_subclass_of($_REQUEST["CLASS_NAME"], 'Bitrix\Sale\Delivery\Services\Base'))
-            throw new \Bitrix\Main\SystemException('Class"' . $_REQUEST["CLASS_NAME"] . '" is not a child of Bitrix\Sale\Delivery\Services\Base');
+        if (!is_subclass_of($_REQUEST["CLASS_NAME"], 'Bitrix\Sale\Delivery\Services\Base')) {
+            throw new \Bitrix\Main\SystemException(
+                'Class"' . $_REQUEST["CLASS_NAME"] . '" is not a child of Bitrix\Sale\Delivery\Services\Base'
+            );
+        }
 
         $fields["CLASS_NAME"] = $_REQUEST["CLASS_NAME"];
     }
@@ -294,8 +358,9 @@ if ($_REQUEST["action"] == "copy") {
     if ($idProf > 0) {
         $res = Services\Manager::delete($idProf);
 
-        if (!$res->isSuccess())
+        if (!$res->isSuccess()) {
             $srvStrError .= implode("<br>\n", $res->getErrorMessages()) . "<br>";
+        }
     } else {
         $srvStrError .= Loc::getMessage("SALE_DSE_PROFILE_DEL_ERROR", array("#ID#" => $idProf)) . "<br>";
     }
@@ -305,8 +370,9 @@ if ($_REQUEST["action"] == "copy") {
 if (intval($fields["PARENT_ID"]) > 0) {
     $parentService = Services\Manager::getObjectById($fields["PARENT_ID"]);
 
-    if ($parentService)
+    if ($parentService) {
         $classNamesList = $parentService->getChildrenClassNames();
+    }
 } else /* get all available */ {
     $classesToExclude = array(
         '\Bitrix\Sale\Delivery\Services\AutomaticProfile',
@@ -316,27 +382,31 @@ if (intval($fields["PARENT_ID"]) > 0) {
     foreach ($classesToExclude as $class) {
         $key = array_search($class, $classNamesList);
 
-        if ($key !== false)
+        if ($key !== false) {
             unset($classNamesList[$key]);
+        }
     }
 }
 
 /* if we have only one class - let's fix it */
-if (empty($fields["CLASS_NAME"]) && count($classNamesList) == 1)
+if (empty($fields["CLASS_NAME"]) && count($classNamesList) == 1) {
     $fields["CLASS_NAME"] = current($classNamesList);
+}
 
 $isGroup = $fields["CLASS_NAME"] == '\Bitrix\Sale\Delivery\Services\Group';
 
+/** @var Services\Base|null $service */
 $service = null;
 
-if ((isset($fields["CLASS_NAME"]) && strlen($fields["CLASS_NAME"]) > 0) || $parentService) {
+if ((isset($fields["CLASS_NAME"]) && $fields["CLASS_NAME"] <> '') || $parentService) {
     /* We must convert handler config from post as it was taken from database */
-    if ($isItSavingProcess && strlen($srvStrError) > 0) {
+    if ($isItSavingProcess && $srvStrError <> '') {
         try {
             $service = Services\Manager::createObject($fields);
 
-            if ($service)
+            if ($service) {
                 $fields = $service->prepareFieldsForSaving($fields);
+            }
         } catch (\Bitrix\Main\SystemException $e) {
         }
     }
@@ -351,8 +421,9 @@ if ((isset($fields["CLASS_NAME"]) && strlen($fields["CLASS_NAME"]) > 0) || $pare
     if ($service) {
         $res = $service->execAdminAction();
 
-        if (!$res->isSuccess())
+        if (!$res->isSuccess()) {
             $srvStrError = implode("<br>\n", $res->getErrorMessages()) . "<br>";
+        }
 
         $fields = $service->prepareFieldsForUsing($fields);
 
@@ -370,22 +441,33 @@ if ((isset($fields["CLASS_NAME"]) && strlen($fields["CLASS_NAME"]) > 0) || $pare
         $canHasProfiles = $service->canHasProfiles() && ($ID > 0);
 
         if ($ID <= 0) {
-            if (strlen($fields["PROFILE_ID"]) > 0 || strlen($fields["SERVICE_TYPE"]) > 0) {
+            if ($fields["PROFILE_ID"] <> '' || $fields["SERVICE_TYPE"] <> '' || $fields["REST_CODE"] <> '') {
                 $fields["NAME"] = $service->getName();
                 $fields["DESCRIPTION"] = $service->getDescription();
                 $fields["LOGOTIP"] = $service->getLogotip();
             }
 
-            if (strlen($fields["NAME"]) <= 0)
+            if ($fields["NAME"] == '') {
                 $fields["NAME"] = $service->getClassTitle();
+            }
 
-            if (strlen($fields["DESCRIPTION"]) <= 0)
+            if ($fields["DESCRIPTION"] == '') {
                 $fields["DESCRIPTION"] = $service->getClassDescription();
+            }
+
+            $serviceDefaultVatRate = $service->getDefaultVatRate();
+            if (
+                !is_null($serviceDefaultVatRate)
+                && !isset($fields['VAT_ID'])
+                && \Bitrix\Main\Loader::includeModule('catalog')
+            ) {
+                $fields['VAT_ID'] = VatTable::getActiveVatIdByRate($serviceDefaultVatRate, true);
+            }
         }
     }
 }
 
-if (strlen($fields["DESCRIPTION"]) > 0) {
+if ($fields["DESCRIPTION"] <> '') {
     $CBXSanitizer = new \CBXSanitizer;
     $CBXSanitizer->SetLevel(\CBXSanitizer::SECURE_LEVEL_LOW);
     $fields["DESCRIPTION"] = $CBXSanitizer->SanitizeHtml($fields["DESCRIPTION"]);
@@ -394,8 +476,9 @@ if (strlen($fields["DESCRIPTION"]) > 0) {
 $serviceCurrency = $fields["CURRENCY"];
 if (\Bitrix\Main\Loader::includeModule('currency')) {
     $currencyList = Currency\CurrencyManager::getCurrencyList();
-    if (isset($currencyList[$fields["CURRENCY"]]))
+    if (isset($currencyList[$fields["CURRENCY"]])) {
         $serviceCurrency = $currencyList[$fields["CURRENCY"]];
+    }
     unset($currencyList);
 }
 
@@ -404,7 +487,9 @@ $aTabs = array(
         "DIV" => "edit_main",
         "TAB" => Loc::getMessage("SALE_DSE_TAB_GENERAL"),
         "ICON" => "sale",
-        "TITLE" => $isGroup ? Loc::getMessage("SALE_DSE_TAB_GROUP_GENERAL") : Loc::getMessage("SALE_DSE_TAB_DELIVERY_GENERAL")
+        "TITLE" => $isGroup ? Loc::getMessage("SALE_DSE_TAB_GROUP_GENERAL") : Loc::getMessage(
+            "SALE_DSE_TAB_DELIVERY_GENERAL"
+        )
     )
 );
 
@@ -445,7 +530,7 @@ if ($showExtraServices && $ID > 0) {
     );
 }
 
-$isTrackingTabShow = $service && $ID > 0 && strlen($service->getTrackingClass()) > 0 && !$service->isTrackingInherited();
+$isTrackingTabShow = $service && $ID > 0 && $service->getTrackingClass() <> '' && !$service->isTrackingInherited();
 
 if ($isTrackingTabShow) {
     $aTabs[] = array(
@@ -456,10 +541,11 @@ if ($isTrackingTabShow) {
     );
 }
 
-if ($service && $ID > 0)
+if ($service && $ID > 0) {
     $businessValueConsumers = $service->onGetBusinessValueConsumers();
-else
+} else {
     $businessValueConsumers = array();
+}
 
 if ($service && $ID > 0 && !empty($businessValueConsumers)) {
     $aTabs[] = array(
@@ -474,8 +560,9 @@ if ($service && is_array($additionalTabs) && !empty($additionalTabs) && $ID > 0)
     $i = 0;
 
     foreach ($additionalTabs as $tab) {
-        if (!isset($tab["TAB"]))
+        if (!isset($tab["TAB"])) {
             throw new \Bitrix\Main\ArgumentNullException('additionalTabs["TAB"]');
+        }
 
         $aTabs[] = array(
             "DIV" => "edit_additional_tab_" . $i++,
@@ -493,15 +580,21 @@ if ($canHasProfiles) {
     $oSortSubService = new CAdminSorting($sTableIDSubService);
     $lAdminSubServices = new CAdminList($sTableIDSubService, $oSortSubService);
 
-    $dbSubServicesRes = \Bitrix\Sale\Delivery\Services\Table::getList(array(
-        "filter" => array(
-            "PARENT_ID" => $ID
-        ),
-        "select" => array(
-            "ID", "NAME", "ACTIVE", "LOGOTIP", "PARENT_ID"
-        ),
-        "order" => isset($_REQUEST["by"]) && isset($_REQUEST["order"]) ? array($_REQUEST["by"] => $_REQUEST["order"]) : array("NAME" => "ASC")
-    ));
+    $dbSubServicesRes = \Bitrix\Sale\Delivery\Services\Table::getList(
+        array(
+            "filter" => array(
+                "PARENT_ID" => $ID
+            ),
+            "select" => array(
+                "ID",
+                "NAME",
+                "ACTIVE",
+                "LOGOTIP",
+                "PARENT_ID"
+            ),
+            "order" => isset($_REQUEST["by"]) && isset($_REQUEST["order"]) ? array($_REQUEST["by"] => $_REQUEST["order"]) : array("NAME" => "ASC")
+        )
+    );
 
     $profilesList = new CAdminResult($dbSubServicesRes, $sTableIDSubService);
     $profilesList->NavStart();
@@ -509,30 +602,59 @@ if ($canHasProfiles) {
 
     $profileHeader = array(
         array("id" => "ID", "content" => "ID", "sort" => "ID", "default" => true),
-        array("id" => "NAME", "content" => Loc::getMessage("SALE_DSE_PROF_HEAD_NAME"), "sort" => "NAME", "default" => true),
-        array("id" => "ACTIVE", "content" => Loc::getMessage("SALE_DSE_PROF_HEAD_ACTIVE"), "sort" => "ACTIVE", "default" => true),
-        array("id" => "LOGOTIP", "content" => Loc::getMessage("SALE_DSE_PROF_HEAD_LOGOTIP"), "sort" => "LOGOTIP", "default" => true)
+        array(
+            "id" => "NAME",
+            "content" => Loc::getMessage("SALE_DSE_PROF_HEAD_NAME"),
+            "sort" => "NAME",
+            "default" => true
+        ),
+        array(
+            "id" => "ACTIVE",
+            "content" => Loc::getMessage("SALE_DSE_PROF_HEAD_ACTIVE"),
+            "sort" => "ACTIVE",
+            "default" => true
+        ),
+        array(
+            "id" => "LOGOTIP",
+            "content" => Loc::getMessage("SALE_DSE_PROF_HEAD_LOGOTIP"),
+            "sort" => "LOGOTIP",
+            "default" => true
+        )
     );
 
     $lAdminSubServices->AddHeaders($profileHeader);
 
     while ($profileParams = $profilesList->NavNext(true, "f_")) {
-        $actUrl = $selfFolderUrl . "sale_delivery_service_edit.php?lang=" . LANG . "&PARENT_ID=" . $f_PARENT_ID . "&ID=" . $f_ID . '&' . $tabControl->ActiveTabParam();
+        $actUrl = $selfFolderUrl . "sale_delivery_service_edit.php?lang=" . LANG . "&PARENT_ID=" . $f_PARENT_ID . "&ID=" . $f_ID . '&' . $tabControl->ActiveTabParam(
+            );
         $actUrl = $adminSidePanelHelper->editUrlToPublicPage($actUrl) . "&back_url=" . $backUrl;
         $row =& $lAdminSubServices->AddRow($f_ID, $profileParams, $actUrl, Loc::getMessage("SALE_DSE_EDIT_DESCR"));
 
         $atrTarget = $adminSidePanelHelper->isPublicFrame() ? 'target="_top"' : '';
-        $row->AddField("NAME", '<a ' . $atrTarget . ' href="' . $actUrl . '" class="adm-list-table-icon-link">' .
+        $row->AddField(
+            "NAME",
+            '<a ' . $atrTarget . ' href="' . $actUrl . '" class="adm-list-table-icon-link">' .
             '<span class="adm-list-table-link">' .
             $f_NAME .
             '</span>' .
-            '</a>');
+            '</a>'
+        );
 
         $row->AddField("ID", $f_ID);
 
-        $logoHtml = intval($f_LOGOTIP) > 0 ? CFile::ShowImage(CFile::GetFileArray($f_LOGOTIP), 150, 150, "border=0", "", false) : "";
+        $logoHtml = intval($f_LOGOTIP) > 0 ? CFile::ShowImage(
+            CFile::GetFileArray($f_LOGOTIP),
+            150,
+            150,
+            "border=0",
+            "",
+            false
+        ) : "";
         $row->AddField("LOGOTIP", $logoHtml);
-        $row->AddField("ACTIVE", (($f_ACTIVE == "Y") ? Loc::getMessage("SALE_DSE_YES") : Loc::getMessage("SALE_DSE_NO")));
+        $row->AddField(
+            "ACTIVE",
+            (($f_ACTIVE == "Y") ? Loc::getMessage("SALE_DSE_YES") : Loc::getMessage("SALE_DSE_NO"))
+        );
         $row->AddField("CLASS_NAME", $f_CLASS_NAME);
 
         $arActions = Array();
@@ -561,7 +683,9 @@ if ($canHasProfiles) {
             $arActions[] = array(
                 "ICON" => "delete",
                 "TEXT" => Loc::getMessage("SALE_DSE_DELETE"),
-                "ACTION" => "if(confirm('" . Loc::getMessage('SALE_DSE_CONFIRM_DEL_PROFILE_MESSAGE') . "')) " . $lAdminSubServices->ActionRedirect($deleteUrl)
+                "ACTION" => "if(confirm('" . Loc::getMessage(
+                        'SALE_DSE_CONFIRM_DEL_PROFILE_MESSAGE'
+                    ) . "')) " . $lAdminSubServices->ActionRedirect($deleteUrl)
             );
         }
 
@@ -592,11 +716,11 @@ if ($canHasProfiles) {
 
             $lAdminSubServices->AddAdminContextMenu($aContext, false);
         }
-
     }
 
-    if ($_REQUEST["table_id"] == $sTableIDSubService)
+    if ($_REQUEST["table_id"] == $sTableIDSubService) {
         $lAdminSubServices->CheckListMode();
+    }
 }
 /* profiles end */
 
@@ -621,15 +745,17 @@ if ($parentService && get_class($parentService) != 'Bitrix\Sale\Delivery\Service
     }
 } else {
     if ($isGroup) {
-        if ($ID > 0)
+        if ($ID > 0) {
             $sDocTitle = str_replace("#NAME#", $fields["NAME"], Loc::getMessage("SALE_DSE_EDIT_GROUP"));
-        else
+        } else {
             $sDocTitle = Loc::getMessage("SALE_DSE_NEW_GROUP");
+        }
     } else {
-        if ($ID > 0)
+        if ($ID > 0) {
             $sDocTitle = str_replace("#NAME#", $fields["NAME"], Loc::getMessage("SALE_DSE_EDIT_RECORD"));
-        else
+        } else {
             $sDocTitle = Loc::getMessage("SALE_DSE_NEW_RECORD");
+        }
     }
 }
 
@@ -658,13 +784,16 @@ $vatList = array(
 );
 
 if (\Bitrix\Main\Loader::includeModule('catalog')) {
-    $dbRes = \Bitrix\Catalog\VatTable::getList(array(
-        'filter' => array('ACTIVE' => 'Y'),
-        'order' => array('SORT' => 'ASC')
-    ));
+    $dbRes = \Bitrix\Catalog\VatTable::getList(
+        array(
+            'filter' => array('ACTIVE' => 'Y'),
+            'order' => array('SORT' => 'ASC')
+        )
+    );
 
-    while ($vat = $dbRes->fetch())
+    while ($vat = $dbRes->fetch()) {
         $vatList[$vat['ID']] = $vat['NAME'];
+    }
 }
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
@@ -698,24 +827,26 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
 
     </script>
 <?
-if (!empty($backUrlReq))
+if (!empty($backUrlReq)) {
     $link = $backUrlReq;
-elseif ($isGroup) {
+} elseif ($isGroup) {
     $link = $selfFolderUrl . "sale_delivery_service_edit.php?lang=" . LANGUAGE_ID . "&filter_class_name=" .
         urlencode('\Bitrix\Sale\Delivery\Services\Group');
     $link = $adminSidePanelHelper->editUrlToPublicPage($link);
 } else {
     $link = $selfFolderUrl . "sale_delivery_service_list.php?lang=" . LANGUAGE_ID . "&filter_group=" . $fields["PARENT_ID"];
-    if ($adminSidePanelHelper->isPublicSidePanel())
+    if ($adminSidePanelHelper->isPublicSidePanel()) {
         $link = $listUrl;
+    }
 }
 
-if ($isGroup)
+if ($isGroup) {
     $linkText = Loc::getMessage("SALE_DSE_2GLIST");
-elseif ($service && $service->isProfile())
+} elseif ($service && $service->isProfile()) {
     $linkText = Loc::getMessage("SALE_DSE_2DS_EDIT");
-else
+} else {
     $linkText = Loc::getMessage("SALE_DSE_2DLIST");
+}
 
 $aMenu = array(
     array(
@@ -728,10 +859,13 @@ $aMenu = array(
 if ($ID > 0 && $saleModulePermissions >= "W") {
     $aMenu[] = array("SEPARATOR" => "Y");
 
-    if ($isGroup)
-        $link = $selfFolderUrl . "sale_delivery_service_edit.php?lang=" . LANGUAGE_ID . "&CLASS_NAME=" . urlencode('\Bitrix\Sale\Delivery\Services\Group');
-    else
+    if ($isGroup) {
+        $link = $selfFolderUrl . "sale_delivery_service_edit.php?lang=" . LANGUAGE_ID . "&CLASS_NAME=" . urlencode(
+                '\Bitrix\Sale\Delivery\Services\Group'
+            );
+    } else {
         $link = $selfFolderUrl . "sale_delivery_service_edit.php?lang=" . LANGUAGE_ID . "&PARENT_ID=" . $fields["PARENT_ID"];
+    }
     $link = $adminSidePanelHelper->editUrlToPublicPage($link);
 
     $aMenu[] = array(
@@ -739,16 +873,20 @@ if ($ID > 0 && $saleModulePermissions >= "W") {
         "LINK" => $link,
         "ICON" => "btn_new"
     );
-    $deleteUrl = "" . $selfFolderUrl . "sale_delivery_service_list.php?lang=" . LANGUAGE_ID . "&filter_group=" . $fields["PARENT_ID"] . "&ID=" . $ID . "&action=delete&" . bitrix_sessid_get() . "#tb";
+    $deleteUrl = "" . $selfFolderUrl . "sale_delivery_service_list.php?lang=" . LANGUAGE_ID . "&filter_group=" . $fields["PARENT_ID"] . "&ID=" . $ID . "&action=delete&" . bitrix_sessid_get(
+        ) . "#tb";
     $buttonAction = "LINK";
     if ($adminSidePanelHelper->isPublicFrame()) {
-        $deleteUrl = $listUrl . "&filter_group=" . $fields["PARENT_ID"] . "&ID=" . $ID . "&action=delete&" . bitrix_sessid_get() . "#tb";
+        $deleteUrl = $listUrl . "&filter_group=" . $fields["PARENT_ID"] . "&ID=" . $ID . "&action=delete&" . bitrix_sessid_get(
+            ) . "#tb";
         $buttonAction = "ONCLICK";
     }
     $aMenu[] = array(
         "TEXT" => $isGroup ? Loc::getMessage("SALE_DSE_DELETE_GROUP") : Loc::getMessage("SALE_DSE_DELETE_DELIVERY"),
         $buttonAction => "javascript:if(confirm('" .
-            ($isGroup ? Loc::getMessage("SALE_DSE_DELETE_GROUP_CONFIRM") : Loc::getMessage("SALE_DSE_DELETE_DELIVERY_CONFIRM")) .
+            ($isGroup ? Loc::getMessage("SALE_DSE_DELETE_GROUP_CONFIRM") : Loc::getMessage(
+                "SALE_DSE_DELETE_DELIVERY_CONFIRM"
+            )) .
             "')) top.window.location.href='" . $deleteUrl . "';",
         "ICON" => "btn_delete"
     );
@@ -757,18 +895,20 @@ if ($ID > 0 && $saleModulePermissions >= "W") {
 $context = new CAdminContextMenu($aMenu);
 $context->Show();
 
-if (strlen($srvStrError) > 0) {
+if ($srvStrError <> '') {
     $m = Array("DETAILS" => $srvStrError, "TYPE" => "ERROR", "HTML" => true);
 
-    if ($isItSavingProcess)
+    if ($isItSavingProcess) {
         $m["MESSAGE"] = Loc::getMessage("SALE_DSE_ERROR");
+    }
 
     $adminMessage = new CAdminMessage($m);
     echo $adminMessage->Show();
 }
 
-if ($service)
+if ($service) {
     $serviceMessage = $service->getAdminMessage();
+}
 
 if (!empty($serviceMessage)) {
     $adminMessage = new CAdminMessage($serviceMessage);
@@ -788,7 +928,10 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
 
         <? if (is_array($fields)): ?>
             <? foreach ($fields as $fieldName => $fieldValue): /* if fields don't show let's make them hidden */ ?>
-                <? if (!is_array($fieldValue) && strlen($fieldValue) > 0 && !array_key_exists($fieldName, $showFieldsList)): ?>
+                <? if (!is_array($fieldValue) && $fieldValue <> '' && !array_key_exists(
+                        $fieldName,
+                        $showFieldsList
+                    )): ?>
                     <input type="hidden" name="<?= $fieldName ?>" value="<?= $fieldValue ?>">
                 <? endif; ?>
             <? endforeach; ?>
@@ -809,8 +952,9 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
             <tr class="adm-detail-required-field">
                 <td width="40%"><?= Loc::getMessage("SALE_DSE_FORM_NAME") ?>:</td>
                 <td width="60%"><input id='adm-sale-delivery-name' type="text" name="NAME"
-                                       value="<?= (isset($fields["NAME"]) ? htmlspecialcharsbx($fields["NAME"]) : "") ?>"
-                                       size="40"></td>
+                                       value="<?= (isset($fields["NAME"]) ? htmlspecialcharsbx(
+                                           $fields["NAME"]
+                                       ) : "") ?>" size="40"></td>
             </tr>
         <? endif; ?>
 
@@ -818,16 +962,18 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
             <tr class="adm-detail-required-field">
                 <td width="40%"><?= Loc::getMessage("SALE_DSE_FORM_CLASS_NAME") ?>:</td>
                 <td width="60%">
-                    <? if (count($classNamesList) > 1 && (strlen($fields["CLASS_NAME"]) <= 0)): ?>
+                    <? if (count($classNamesList) > 1 && ($fields["CLASS_NAME"] == '')): ?>
                         <select name="CLASS_NAME"
                                 onchange="if(this.value == '') return; top.BX.showWait(); this.form.submit(); /*elements.apply.click();*/">
                             <option value=""></option>
                             <? foreach ($classNamesList as $className): ?>
-                                <option value="<?= $className ?>" <?= (isset($fields["CLASS_NAME"]) && $className == $fields["CLASS_NAME"] ? " selected" : "") ?>><?= $className::getClassTitle() . " [" . $className . "]" ?></option>
+                                <option value="<?= $className ?>" <?= (isset($fields["CLASS_NAME"]) && $className == $fields["CLASS_NAME"] ? " selected" : "") ?>><?= $className::getClassTitle(
+                                    ) . " [" . $className . "]" ?></option>
                             <? endforeach; ?>
                         </select>
                     <? else: ?>
-                        <?= class_exists($fields["CLASS_NAME"]) ? $fields["CLASS_NAME"]::getClassTitle() : $fields["CLASS_NAME"] ?>
+                        <?= class_exists($fields["CLASS_NAME"]) ? $fields["CLASS_NAME"]::getClassTitle(
+                        ) : $fields["CLASS_NAME"] ?>
                         <input type="hidden" name="CLASS_NAME" value="<?= $fields["CLASS_NAME"] ?>">
                     <? endif; ?>
                 </td>
@@ -837,9 +983,9 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
         <? if (array_key_exists("ACTIVE", $showFieldsList)): ?>
             <tr>
                 <td width="40%"><?= Loc::getMessage("SALE_DSE_FORM_ACTIVE") ?>:</td>
-                <td width="60%"><input type="checkbox" name="ACTIVE"
-                                       value="Y" <? if ($fields["ACTIVE"] == "Y") echo "checked"; ?>
-                                       onclick="BX.Sale.Delivery.createFlagFieldChanged('ACTIVE', this);"></td>
+                <td width="60%"><input type="checkbox" name="ACTIVE" value="Y" <? if ($fields["ACTIVE"] == "Y") {
+                        echo "checked";
+                    } ?> onclick="BX.Sale.Delivery.createFlagFieldChanged('ACTIVE', this);"></td>
             </tr>
         <? endif; ?>
 
@@ -858,7 +1004,8 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
                     <?= wrapDescrLHE(
                         'DESCRIPTION',
                         isset($fields["DESCRIPTION"]) ? $fields["DESCRIPTION"] : '',
-                        'hndl_dscr'); ?>
+                        'hndl_dscr'
+                    ); ?>
                     <script language="JavaScript">BX.Sale.Delivery.setLHEClass('bxlhe_frame_hndl_dscr'); </script>
                 </td>
             </tr>
@@ -872,7 +1019,8 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
                         :
                     </td>
                     <td width="60%">
-                        <a href="?LANG=<?= LANGUAGE_ID ?>&PARENT_ID=<?= $parentService->getParentId() ?>&ID=<?= $parentService->getId() ?>"><?= htmlspecialcharsbx($parentService->getName()) ?></a>
+                        <a href="?LANG=<?= LANGUAGE_ID ?>&PARENT_ID=<?= $parentService->getParentId(
+                        ) ?>&ID=<?= $parentService->getId() ?>"><?= htmlspecialcharsbx($parentService->getName()) ?></a>
                     </td>
                 </tr>
             <? else: ?>
@@ -964,7 +1112,9 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
                 <td width="60%">
                     <select name="VAT_ID">
                         <? foreach ($vatList as $vatId => $vatName): ?>
-                            <option value="<?= $vatId ?>" <?= (isset($fields["VAT_ID"]) && $vatId == $fields["VAT_ID"] ? " selected" : "") ?>><?= htmlspecialcharsbx($vatName) ?></option>
+                            <option value="<?= $vatId ?>" <?= (isset($fields["VAT_ID"]) && $vatId == $fields["VAT_ID"] ? " selected" : "") ?>><?= htmlspecialcharsbx(
+                                    $vatName
+                                ) ?></option>
                         <? endforeach; ?>
                     </select>
                 </td>
@@ -974,9 +1124,9 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
             <tr>
                 <td width="40%"><?= Loc::getMessage('SALE_DSE_XML_ID') ?>:</td>
                 <td width="60%">
-                    <input type="text" name="XML_ID"
-                           value="<?= (isset($fields["XML_ID"]) ? htmlspecialcharsbx($fields["XML_ID"]) : Services\Manager::generateXmlId()) ?>"
-                           size="40">
+                    <input type="text" name="XML_ID" value="<?= (isset($fields["XML_ID"]) ? htmlspecialcharsbx(
+                        $fields["XML_ID"]
+                    ) : Services\Manager::generateXmlId()) ?>" size="40">
                 </td>
             </tr>
         <? endif; ?>
@@ -984,21 +1134,29 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
         <? if (is_array($serviceConfig) && !empty($serviceConfig)): ?>
             <? foreach ($serviceConfig as $sectionKey => $configSection): ?>
                 <? $tabControl->BeginNextTab(); ?>
-                <? if (isset($configSection["ITEMS"]) && is_array($configSection["ITEMS"]) && !empty($configSection["ITEMS"])): ?>
+                <? if (isset($configSection["ITEMS"]) && is_array(
+                        $configSection["ITEMS"]
+                    ) && !empty($configSection["ITEMS"])): ?>
                     <? foreach ($configSection["ITEMS"] as $name => $params): ?>
                         <? if ($params["TYPE"] == "DELIVERY_SECTION"): ?>
                             <tr class="heading">
                                 <td colspan="2"><?= $params["NAME"] ?></td>
                             </tr>
                         <? elseif (isset($params['HIDDEN']) && $params['HIDDEN'] == true): ?>
-                            <? $hiddensConfigHtml .= \Bitrix\Sale\Internals\Input\Manager::getEditHtml("CONFIG[" . $sectionKey . "][" . $name . "]", $params) ?>
+                            <? $hiddensConfigHtml .= \Bitrix\Sale\Internals\Input\Manager::getEditHtml(
+                                "CONFIG[" . $sectionKey . "][" . $name . "]",
+                                $params
+                            ) ?>
                         <? else: ?>
                             <tr<?= (!empty($params['REQUIRED']) && $params['REQUIRED'] == true ? ' class= "adm-detail-required-field"' : '') ?>>
                                 <td width="40%" class="adm-detail-valign-top"><?= htmlspecialcharsbx($params["NAME"]) ?>
                                     :
                                 </td>
                                 <td width="60%" class="adm-detail-valign-top">
-                                    <?= \Bitrix\Sale\Internals\Input\Manager::getEditHtml("CONFIG[" . $sectionKey . "][" . $name . "]", $params) ?>
+                                    <?= \Bitrix\Sale\Internals\Input\Manager::getEditHtml(
+                                        "CONFIG[" . $sectionKey . "][" . $name . "]",
+                                        $params
+                                    ) ?>
                                 </td>
                             </tr>
                         <? endif; ?>
@@ -1016,7 +1174,7 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
             </tr>
         <? endif; ?>
 
-        <? if (strlen($restrictionsHtml) > 0): ?>
+        <? if ($restrictionsHtml <> ''): ?>
             <? $tabControl->BeginNextTab(); ?>
             <tr>
                 <td id="sale-delivery-restriction-container"><?= $restrictionsHtml ?></td>
@@ -1040,7 +1198,9 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
             <td width="40%" class="adm-detail-valign-top"><?= Loc::getMessage("SALE_DSE_FORM_DESCRIPTION") ?>:</td>
             <td width="60%">
                 <?= $tracking->getClassDescription() ?>
-                <?= (empty($trackingParamsStructure) ? '<br>' . Loc::getMessage('SALE_DSE_TAB_TRACKING_PARAMS_EMPTY') : '') ?>
+                <?= (empty($trackingParamsStructure) ? '<br>' . Loc::getMessage(
+                        'SALE_DSE_TAB_TRACKING_PARAMS_EMPTY'
+                    ) : '') ?>
             </td></tr>
             <? if (!empty($trackingParamsStructure)): ?>
                 <tr class="heading">
@@ -1078,13 +1238,19 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
         <? if (is_array($additionalTabs) && !empty($additionalTabs) && $ID > 0): ?>
             <? foreach ($additionalTabs as $addTab): ?>
                 <? $tabControl->BeginNextTab(); ?>
-                <? if (!isset($addTab["CONTENT"])) throw new \Bitrix\Main\ArgumentNullException('additionalTabs["CONTENT"]'); ?>
+                <? if (!isset($addTab["CONTENT"])) {
+                    throw new \Bitrix\Main\ArgumentNullException('additionalTabs["CONTENT"]');
+                } ?>
                 <?= $addTab["CONTENT"] ?>
             <?endforeach; ?>
         <?endif;
 
-        $tabControl->Buttons(array("disabled" => ($disableButtonsFlag || $saleModulePermissions < "W"),
-            "back_url" => !empty($backUrlReq) ? $backUrlReq : ($listUrl)));
+        $tabControl->Buttons(
+            array(
+                "disabled" => ($disableButtonsFlag || $saleModulePermissions < "W"),
+                "back_url" => !empty($backUrlReq) ? $backUrlReq : ($listUrl)
+            )
+        );
 
         $tabControl->End();
         ?>
@@ -1109,14 +1275,21 @@ function wrapDescrLHE($inputName, $content = '', $divId = false)
         'bAutoResize' => true,
         'bSaveOnBlur' => true,
         'toolbarConfig' => array(
-            'Bold', 'Italic', 'Underline', 'Strike',
-            'CreateLink', 'DeleteLink',
-            'Source', 'BackColor', 'ForeColor'
+            'Bold',
+            'Italic',
+            'Underline',
+            'Strike',
+            'CreateLink',
+            'DeleteLink',
+            'Source',
+            'BackColor',
+            'ForeColor'
         )
     );
 
-    if ($divId)
+    if ($divId) {
         $ar['id'] = $divId;
+    }
 
     \Bitrix\Main\Loader::includeModule('fileman');
 

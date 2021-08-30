@@ -23,12 +23,14 @@ class PossibleLengthField extends XmlField
         foreach ($tokens as $token) {
             if (preg_match('/^\d+$/', $token)) {
                 $result[] = (int)$token;
-            } else if (preg_match('/^\[(\d+)-(\d+)\]$/', $token, $matches)) {
-                $start = $matches[1];
-                $end = $matches[2];
-                $result = array_merge($result, range($start, $end));
             } else {
-                throw new SystemException("Unrecognized token: ", $token);
+                if (preg_match('/^\[(\d+)-(\d+)\]$/', $token, $matches)) {
+                    $start = $matches[1];
+                    $end = $matches[2];
+                    $result = array_merge($result, range($start, $end));
+                } else {
+                    throw new SystemException("Unrecognized token: ", $token);
+                }
             }
         }
         return $result;

@@ -15,7 +15,6 @@ class MapBuilder
      */
     public function __construct()
     {
-
     }
 
     /**
@@ -35,8 +34,9 @@ class MapBuilder
     public function addText($token)
     {
         $token = (string)$token;
-        if ($token == '')
+        if ($token == '') {
             return $this;
+        }
 
         $value = Content::prepareStringToken($token);
         $this->tokens[$value] = true;
@@ -50,8 +50,9 @@ class MapBuilder
      */
     public function addInteger($token)
     {
-        if (!Content::isIntegerToken($token))
+        if (!Content::isIntegerToken($token)) {
             return $this;
+        }
 
         $token = Content::prepareIntegerToken($token);
 
@@ -68,8 +69,9 @@ class MapBuilder
     {
         $phone = (string)$phone;
         $value = preg_replace("/[^0-9\#\*]/i", "", $phone);
-        if ($value == '')
+        if ($value == '') {
             return $this;
+        }
 
         $altPhone = str_replace(' ', '', $phone);
         $this->tokens[$altPhone] = true;
@@ -81,9 +83,9 @@ class MapBuilder
             $this->tokens[$convertedPhone] = true;
         }
 
-        $length = strlen($value);
-        if ($length >= 10 && substr($value, 0, 1) === '7') {
-            $altPhone = '8' . substr($value, 1);
+        $length = mb_strlen($value);
+        if ($length >= 10 && mb_substr($value, 0, 1) === '7') {
+            $altPhone = '8' . mb_substr($value, 1);
             $this->tokens[$altPhone] = true;
         }
 
@@ -91,7 +93,7 @@ class MapBuilder
         $bound = $length - 2;
         if ($bound > 0) {
             for ($i = 0; $i < $bound; $i++) {
-                $key = substr($value, $i);
+                $key = mb_substr($value, $i);
                 $this->tokens[$key] = true;
             }
         }
@@ -135,10 +137,21 @@ class MapBuilder
             return $this;
         }
 
-        $orm = \Bitrix\Main\UserTable::getList(Array(
-            'select' => array('ID', 'LOGIN', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'TITLE', 'EMAIL', 'PERSONAL_MOBILE'),
-            'filter' => array('=ID' => $userId)
-        ));
+        $orm = \Bitrix\Main\UserTable::getList(
+            Array(
+                'select' => array(
+                    'ID',
+                    'LOGIN',
+                    'NAME',
+                    'LAST_NAME',
+                    'SECOND_NAME',
+                    'TITLE',
+                    'EMAIL',
+                    'PERSONAL_MOBILE'
+                ),
+                'filter' => array('=ID' => $userId)
+            )
+        );
 
         while ($user = $orm->fetch()) {
             $value = \CUser::FormatName(
@@ -171,7 +184,7 @@ class MapBuilder
         $minTokenSize = Filter\Helper::getMinTokenSize();
 
         foreach ($this->tokens as $token => $result) {
-            if (strlen($token) >= $minTokenSize) {
+            if (mb_strlen($token) >= $minTokenSize) {
                 $tokens[$token] = $result;
             }
         }

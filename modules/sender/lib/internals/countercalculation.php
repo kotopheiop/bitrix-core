@@ -202,25 +202,27 @@ class CounterCalculation
         $lastPostingId = null;
         $statusList = array();
 
-        $resultDb = \Bitrix\Sender\PostingRecipientTable::getList(array(
-            'select' => array('POSTING_ID', 'STATUS', 'CALC_COUNT'),
-            'filter' => array(
-                '!UPDATE_POSTING.ID' => null,
-                '!STATUS' => null,
-                '=UPDATE_POSTING.COUNT_SEND_ALL' => 0, // run only for postings with empty count field
-                '>CALC_COUNT' => 0 // run only if posting have recipients
-            ),
-            'runtime' => array(
-                new \Bitrix\Main\Entity\ExpressionField('CALC_COUNT', 'COUNT(%s)', 'ID'),
-                new \Bitrix\Main\Entity\ReferenceField(
-                    'UPDATE_POSTING',
-                    'Bitrix\Sender\PostingTable',
-                    array('=this.POSTING_ID' => 'ref.ID'),
-                    array('join_type' => 'INNER')
+        $resultDb = \Bitrix\Sender\PostingRecipientTable::getList(
+            array(
+                'select' => array('POSTING_ID', 'STATUS', 'CALC_COUNT'),
+                'filter' => array(
+                    '!UPDATE_POSTING.ID' => null,
+                    '!STATUS' => null,
+                    '=UPDATE_POSTING.COUNT_SEND_ALL' => 0, // run only for postings with empty count field
+                    '>CALC_COUNT' => 0 // run only if posting have recipients
                 ),
-            ),
-            'order' => array('CALC_COUNT' => 'DESC', 'POSTING_ID' => 'ASC'),
-        ));
+                'runtime' => array(
+                    new \Bitrix\Main\Entity\ExpressionField('CALC_COUNT', 'COUNT(%s)', 'ID'),
+                    new \Bitrix\Main\Entity\ReferenceField(
+                        'UPDATE_POSTING',
+                        'Bitrix\Sender\PostingTable',
+                        array('=this.POSTING_ID' => 'ref.ID'),
+                        array('join_type' => 'INNER')
+                    ),
+                ),
+                'order' => array('CALC_COUNT' => 'DESC', 'POSTING_ID' => 'ASC'),
+            )
+        );
         $stopRun = false;
         while (!$stopRun) {
             if (self::isTimeUp()) {
@@ -249,8 +251,6 @@ class CounterCalculation
             if (!$data) {
                 $stopRun = true;
             }
-
-
         }
 
 
@@ -259,27 +259,29 @@ class CounterCalculation
 
     public static function updatePostingReadCounters($type)
     {
-        $dataDb = \Bitrix\Sender\PostingRecipientTable::getList(array(
-            'select' => array(
-                'POSTING_ID',
-                'CNT'
-            ),
-            'filter' => array(
-                '=UPDATE_POSTING.COUNT_' . $type => 0,
-                '>CNT' => 0,
-                '=IS_' . $type => 'Y'
-            ),
-            'runtime' => array(
-                new \Bitrix\Main\Entity\ReferenceField(
-                    'UPDATE_POSTING',
-                    'Bitrix\Sender\PostingTable',
-                    array('=this.POSTING_ID' => 'ref.ID'),
-                    array('join_type' => 'INNER')
+        $dataDb = \Bitrix\Sender\PostingRecipientTable::getList(
+            array(
+                'select' => array(
+                    'POSTING_ID',
+                    'CNT'
                 ),
-                new \Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(%s)', 'ID')
-            ),
-            'order' => array('CNT' => 'DESC', 'POSTING_ID' => 'ASC'),
-        ));
+                'filter' => array(
+                    '=UPDATE_POSTING.COUNT_' . $type => 0,
+                    '>CNT' => 0,
+                    '=IS_' . $type => 'Y'
+                ),
+                'runtime' => array(
+                    new \Bitrix\Main\Entity\ReferenceField(
+                        'UPDATE_POSTING',
+                        'Bitrix\Sender\PostingTable',
+                        array('=this.POSTING_ID' => 'ref.ID'),
+                        array('join_type' => 'INNER')
+                    ),
+                    new \Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(%s)', 'ID')
+                ),
+                'order' => array('CNT' => 'DESC', 'POSTING_ID' => 'ASC'),
+            )
+        );
 
         while ($item = $dataDb->fetch()) {
             if (self::isTimeUp()) {
@@ -294,14 +296,16 @@ class CounterCalculation
 
     public static function updateMailingSubscription()
     {
-        $dataDb = \Bitrix\Sender\PostingUnsubTable::getList(array(
-            'select' => array(
-                'CONTACT_ID' => 'POSTING_RECIPIENT.CONTACT_ID',
-                'MAILING_ID' => 'POSTING.MAILING_ID',
-            ),
-            'filter' => array(),
-            'order' => array('ID' => 'ASC'),
-        ));
+        $dataDb = \Bitrix\Sender\PostingUnsubTable::getList(
+            array(
+                'select' => array(
+                    'CONTACT_ID' => 'POSTING_RECIPIENT.CONTACT_ID',
+                    'MAILING_ID' => 'POSTING.MAILING_ID',
+                ),
+                'filter' => array(),
+                'order' => array('ID' => 'ASC'),
+            )
+        );
         while ($data = $dataDb->fetch()) {
             if (self::isTimeUp()) {
                 return true;
@@ -323,7 +327,7 @@ class CounterCalculation
     {
         $query = null;
         $connection = \Bitrix\Main\Application::getConnection();
-        switch (strtoupper($connection->getType())) {
+        switch (mb_strtoupper($connection->getType())) {
             case 'MSSQL':
                 $query = "SELECT ID FROM b_sender_contact WHERE TYPE_ID=1 AND CODE LIKE '%[A-Z]%' COLLATE Latin1_General_BIN";
                 break;
@@ -342,7 +346,11 @@ class CounterCalculation
                     return true;
                 }
 
-                $connection->Query("UPDATE b_sender_contact SET CODE = LOWER(CODE) WHERE TYPE_ID=1 AND ID = " . intval($senderContact['ID']));
+                $connection->Query(
+                    "UPDATE b_sender_contact SET CODE = LOWER(CODE) WHERE TYPE_ID=1 AND ID = " . intval(
+                        $senderContact['ID']
+                    )
+                );
             }
         }
 

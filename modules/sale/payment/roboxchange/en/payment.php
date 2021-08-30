@@ -1,4 +1,5 @@
 <?
+
 global $MESS;
 $MESS["SPCP_DTITLE"] = "www.roboxchange.net";
 $MESS["SPCP_DDESCR"] = "Payment via <a href=\"http:\\www.roboxchange.net\">www.roboxchange.net</a><br>";

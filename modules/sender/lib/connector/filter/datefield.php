@@ -92,12 +92,14 @@ class DateField extends AbstractField
                     '=' . $filterKey,
                     $this->getDays()
                 )
-                ->addRuntime([
-                    'name' => $filterKey,
-                    'expression' => "DAY(%s)",
-                    'buildFrom' => [$fieldId],
-                    'parameters' => []
-                ]);
+                ->addRuntime(
+                    [
+                        'name' => $filterKey,
+                        'expression' => "DAY(%s)",
+                        'buildFrom' => [$fieldId],
+                        'parameters' => []
+                    ]
+                );
         }
         if ($this->getMonths()) {
             $fieldId = $this->getId();
@@ -107,12 +109,14 @@ class DateField extends AbstractField
                     '=' . $filterKey,
                     $this->getMonths()
                 )
-                ->addRuntime([
-                    'name' => $filterKey,
-                    'expression' => "MONTH(%s)",
-                    'buildFrom' => [$fieldId],
-                    'parameters' => []
-                ]);
+                ->addRuntime(
+                    [
+                        'name' => $filterKey,
+                        'expression' => "MONTH(%s)",
+                        'buildFrom' => [$fieldId],
+                        'parameters' => []
+                    ]
+                );
         }
         if ($this->getYears()) {
             $fieldId = $this->getId();
@@ -122,12 +126,14 @@ class DateField extends AbstractField
                     '=' . $filterKey,
                     $this->getYears()
                 )
-                ->addRuntime([
-                    'name' => $filterKey,
-                    'expression' => "YEAR(%s)",
-                    'buildFrom' => [$fieldId],
-                    'parameters' => []
-                ]);
+                ->addRuntime(
+                    [
+                        'name' => $filterKey,
+                        'expression' => "YEAR(%s)",
+                        'buildFrom' => [$fieldId],
+                        'parameters' => []
+                    ]
+                );
         }
     }
 
@@ -278,14 +284,16 @@ class DateField extends AbstractField
         // hack for multiple user field of `date` type.
         $uf = explode('.', $filterKey);
         foreach ($uf as $item) {
-            if (strpos($item, 'UF_') !== 0) {
+            if (mb_strpos($item, 'UF_') !== 0) {
                 continue;
             }
 
-            $userField = UserFieldTable::getRow([
-                'select' => ['USER_TYPE_ID', 'MULTIPLE'],
-                'filter' => ['=FIELD_NAME' => $item]
-            ]);
+            $userField = UserFieldTable::getRow(
+                [
+                    'select' => ['USER_TYPE_ID', 'MULTIPLE'],
+                    'filter' => ['=FIELD_NAME' => $item]
+                ]
+            );
             if (!$userField || $userField['USER_TYPE_ID'] != 'date') {
                 continue;
             }
@@ -302,17 +310,19 @@ class DateField extends AbstractField
                 "=$expressionFieldName",
                 1
             )
-            ->addRuntime([
-                'name' => $expressionFieldName,
-                'expression' => "
+            ->addRuntime(
+                [
+                    'name' => $expressionFieldName,
+                    'expression' => "
 					case when %s $operation concat(YEAR(%s) $addOneYear, '-{$date->format('m')}-{$date->format('d')}')
 					then 1 else 0 end
 				",
-                'buildFrom' => [
-                    $filterKey,
-                    $filterKey
-                ],
-                'parameters' => []
-            ]);
+                    'buildFrom' => [
+                        $filterKey,
+                        $filterKey
+                    ],
+                    'parameters' => []
+                ]
+            );
     }
 }

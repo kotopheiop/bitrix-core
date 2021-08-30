@@ -26,20 +26,24 @@ class Adapter
         $phone = "";
         $address = "";
 
-        if (isset($extraParams["location"]))
+        if (isset($extraParams["location"])) {
             $city = $extraParams["location"];
+        }
 
         $dbOrderProps = \CSaleOrderPropsValue::GetOrderProps($arOrder["ID"]);
 
         while ($arOrderProps = $dbOrderProps->Fetch()) {
-            if ($arOrderProps["CODE"] == "COMPANY" || $arOrderProps["CODE"] == "FIO")
+            if ($arOrderProps["CODE"] == "COMPANY" || $arOrderProps["CODE"] == "FIO") {
                 $title = $arOrderProps["VALUE"];
+            }
 
-            if ($arOrderProps["CODE"] == "INN")
+            if ($arOrderProps["CODE"] == "INN") {
                 $inn = $arOrderProps["VALUE"];
+            }
 
-            if ($arOrderProps["CODE"] == "PHONE")
+            if ($arOrderProps["CODE"] == "PHONE") {
                 $phone = $arOrderProps["VALUE"];
+            }
 
             if ($arOrderProps["CODE"] == "LOCATION") {
                 $location = $arOrderProps["VALUE"];
@@ -47,8 +51,9 @@ class Adapter
                 $city = static::getFilialAndCity(key($locDelivery));
             }
 
-            if ($arOrderProps["CODE"] == "ADDRESS")
+            if ($arOrderProps["CODE"] == "ADDRESS") {
                 $address = $arOrderProps["VALUE"];
+            }
         }
 
         $arPacks = \CSaleDeliveryHelper::getBoxesFromConfig($profileId, $arConfig);
@@ -56,7 +61,8 @@ class Adapter
         $arPackagesParams = \CSaleDeliveryHelper::getRequiredPacks(
             $arOrder["ITEMS"],
             $arPacks,
-            0);
+            0
+        );
 
         $result["cargos"] = array(
             array(
@@ -91,7 +97,10 @@ class Adapter
 
                     //!hardPacking or palletTransporting - not both
                     "palletTransporting" => array(
-                        "enabled" => !\CDeliveryPecom::isConfCheckedVal($arConfig, 'SERVICE_OTHER_RIGID_PACKING') && \CDeliveryPecom::isConfCheckedVal($arConfig, 'SERVICE_OTHER_PALLETE'),
+                        "enabled" => !\CDeliveryPecom::isConfCheckedVal(
+                                $arConfig,
+                                'SERVICE_OTHER_RIGID_PACKING'
+                            ) && \CDeliveryPecom::isConfCheckedVal($arConfig, 'SERVICE_OTHER_PALLETE'),
                         "payer" => array(
                             "type" => \CDeliveryPecom::getConfValue($arConfig, 'SERVICE_OTHER_PALLETE_PAYER')
                         )
@@ -135,34 +144,40 @@ class Adapter
 
     protected static function getUpperCityId($locationId)
     {
-        if (strlen($locationId) <= 0)
+        if ($locationId == '') {
             return 0;
+        }
 
-        $res = LocationTable::getList(array(
-            'filter' => array(
-                array(
-                    'LOGIC' => 'OR',
-                    '=CODE' => $locationId,
-                    '=ID' => $locationId
+        $res = LocationTable::getList(
+            array(
+                'filter' => array(
+                    array(
+                        'LOGIC' => 'OR',
+                        '=CODE' => $locationId,
+                        '=ID' => $locationId
+                    ),
+                    '=PARENTS.TYPE.CODE' => 'CITY',
                 ),
-                '=PARENTS.TYPE.CODE' => 'CITY',
-            ),
-            'select' => array(
-                'ID', 'CODE',
-                'PID' => 'PARENTS.ID',
+                'select' => array(
+                    'ID',
+                    'CODE',
+                    'PID' => 'PARENTS.ID',
+                )
             )
-        ));
+        );
 
-        if ($loc = $res->fetch())
+        if ($loc = $res->fetch()) {
             return $loc['PID'];
+        }
 
         return 0;
     }
 
     protected static function mapLocation2($internalLocationId)
     {
-        if (intval($internalLocationId) <= 0)
+        if (intval($internalLocationId) <= 0) {
             return array();
+        }
 
         static $result = array();
 
@@ -173,12 +188,12 @@ class Adapter
             $externalId = Location::getExternalId($internalLocationId);
 
             //Let's try to find upper city
-            if (strlen($externalId) <= 0) {
+            if ($externalId == '') {
                 $cityId = self::getUpperCityId($internalLocationId);
                 $externalId = Location::getExternalId($cityId);
             }
 
-            if (strlen($externalId) > 0) {
+            if ($externalId <> '') {
                 $result[$internalLocationId] = array(
                     $externalId => !empty($internalLocation["CITY_NAME_LANG"]) ? $internalLocation["CITY_NAME_LANG"] : ""
                 );
@@ -196,13 +211,15 @@ class Adapter
      */
     public static function mapLocation($locationId, $cleanCache = false)
     {
-        if (Location::isInstalled())
+        if (Location::isInstalled()) {
             return self::mapLocation2($locationId);
+        }
 
         $cityName = static::getCityNameFromLocationId($locationId);
 
-        if (!$cityName)
+        if (!$cityName) {
             return array();
+        }
 
         $ttl = 2592000;
         $cacheId = "SaleDeliveryPecomMapLocations" . $locationId;
@@ -224,15 +241,15 @@ class Adapter
 
             foreach ($pecCities as $key => $cities) {
                 foreach ($cities as $smallCityKey => $smallCityName) {
-                    $pos = strpos($smallCityName, $cityName);
+                    $pos = mb_strpos($smallCityName, $cityName);
                     if ($pos !== false
                         && (
-                            strlen($cityName) == strlen($smallCityName)
+                            mb_strlen($cityName) == mb_strlen($smallCityName)
                             || (
-                                substr($smallCityName, $pos + strlen($cityName), 1) == " "
+                                mb_substr($smallCityName, $pos + mb_strlen($cityName), 1) == " "
                                 && (
                                     $pos == 0
-                                    || substr($smallCityName, $pos - 1, 1) == " "
+                                    || mb_substr($smallCityName, $pos - 1, 1) == " "
                                 )
                             )
                         )
@@ -266,14 +283,16 @@ class Adapter
         }
 
         if (empty($data)) {
-            $http = new \Bitrix\Main\Web\HttpClient(array(
-                "version" => "1.1",
-                "socketTimeout" => 30,
-                "streamTimeout" => 30,
-                "redirect" => true,
-                "redirectMax" => 5,
-                "disableSslVerification" => true
-            ));
+            $http = new \Bitrix\Main\Web\HttpClient(
+                array(
+                    "version" => "1.1",
+                    "socketTimeout" => 30,
+                    "streamTimeout" => 30,
+                    "redirect" => true,
+                    "redirectMax" => 5,
+                    "disableSslVerification" => true
+                )
+            );
 
             $jsnData = $http->get("https://www.pecom.ru/ru/calc/towns.php");
             $errors = $http->getError();
@@ -281,21 +300,24 @@ class Adapter
             if (!$jsnData && !empty($errors)) {
                 $strError = "";
 
-                foreach ($errors as $errorCode => $errMes)
+                foreach ($errors as $errorCode => $errMes) {
                     $strError .= $errorCode . ": " . $errMes;
+                }
 
-                \CEventLog::Add(array(
-                    "SEVERITY" => "ERROR",
-                    "AUDIT_TYPE_ID" => "SALE_DELIVERY",
-                    "MODULE_ID" => "sale",
-                    "ITEM_ID" => "PECOM_GET_TOWNS",
-                    "DESCRIPTION" => $strError,
-                ));
+                \CEventLog::Add(
+                    array(
+                        "SEVERITY" => "ERROR",
+                        "AUDIT_TYPE_ID" => "SALE_DELIVERY",
+                        "MODULE_ID" => "sale",
+                        "ITEM_ID" => "PECOM_GET_TOWNS",
+                        "DESCRIPTION" => $strError,
+                    )
+                );
             }
 
             $data = json_decode($jsnData, true);
 
-            if (strtolower(SITE_CHARSET) != 'utf-8') {
+            if (mb_strtolower(SITE_CHARSET) != 'utf-8') {
                 $data = $APPLICATION->ConvertCharsetArray($data, 'utf-8', SITE_CHARSET);
                 if (is_array($data)) {
                     foreach ($data as $key => $value) {
@@ -306,8 +328,9 @@ class Adapter
                 }
             }
 
-            if (!is_array($data))
+            if (!is_array($data)) {
                 $data = array();
+            }
 
             $cacheManager->set($cacheId, $data);
         }
@@ -328,7 +351,7 @@ class Adapter
         $cacheId = "SaleDeliveryPecomFilialAndCity" . $cityId;
         $cacheManager = \Bitrix\Main\Application::getInstance()->getManagedCache();
 
-        if (strlen($cityId) > 0) {
+        if ($cityId <> '') {
             if ($cacheManager->read($ttl, $cacheId)) {
                 $result = $cacheManager->get($cacheId);
             } else {
@@ -359,14 +382,16 @@ class Adapter
     {
         $arData = array();
 
-        if (is_array($arCargoCodes) && !empty($arCargoCodes) && (strlen($email) > 0 || strlen($phone) > 0)) {
+        if (is_array($arCargoCodes) && !empty($arCargoCodes) && ($email <> '' || $phone <> '')) {
             $arData["cargoCodes"] = $arCargoCodes;
 
-            if (strlen($email) > 0)
+            if ($email <> '') {
                 $arData["email"] = $email;
+            }
 
-            if (strlen($phone) > 0)
+            if ($phone <> '') {
                 $arData["phone"] = $phone;
+            }
         }
 
         return $arData;

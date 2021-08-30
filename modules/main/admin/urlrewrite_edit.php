@@ -6,8 +6,9 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
 require_once($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/prolog.php");
 define("HELP_FILE", "settings/urlrewrite_edit.php");
 
-if (!$USER->CanDoOperation('edit_php') && !$USER->CanDoOperation('view_other_settings'))
+if (!$USER->CanDoOperation('edit_php') && !$USER->CanDoOperation('view_other_settings')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $isAdmin = $USER->CanDoOperation('edit_php');
 
@@ -17,23 +18,33 @@ $aMsg = array();
 $message = null;
 $bVarsFromForm = false;
 
-if (StrLen($site_id) <= 0)
+if ($site_id == '') {
     LocalRedirect("/bitrix/admin/urlrewrite_list.php?lang=" . LANG);
+}
 
-if ($REQUEST_METHOD == "POST" && strlen($Update) > 0 && $isAdmin && check_bitrix_sessid()) {
-    if (StrLen($CONDITION) <= 0)
+if ($REQUEST_METHOD == "POST" && $Update <> '' && $isAdmin && check_bitrix_sessid()) {
+    if ($CONDITION == '') {
         $aMsg[] = array("id" => "CONDITION", "text" => GetMessage("MURL_NO_USL"));
+    }
 
     if (empty($aMsg)) {
         if ($CONDITION_OLD != $CONDITION) {
             $arResult = UrlRewriter::getList($site_id, array("CONDITION" => $CONDITION));
-            if (count($arResult) > 0)
-                $aMsg[] = array("id" => "CONDITION", "text" => str_replace("#CONDITION#", htmlspecialcharsbx($CONDITION), GetMessage("MURL_DUPL_CONDITION")));
+            if (count($arResult) > 0) {
+                $aMsg[] = array(
+                    "id" => "CONDITION",
+                    "text" => str_replace(
+                        "#CONDITION#",
+                        htmlspecialcharsbx($CONDITION),
+                        GetMessage("MURL_DUPL_CONDITION")
+                    )
+                );
+            }
         }
     }
 
     if (empty($aMsg)) {
-        if (StrLen($CONDITION_OLD) > 0) {
+        if ($CONDITION_OLD <> '') {
             UrlRewriter::update(
                 $site_id,
                 array("CONDITION" => $CONDITION_OLD),
@@ -58,18 +69,24 @@ if ($REQUEST_METHOD == "POST" && strlen($Update) > 0 && $isAdmin && check_bitrix
     }
 
     if (empty($aMsg)) {
-        if (strlen($apply) <= 0)
-            LocalRedirect("/bitrix/admin/urlrewrite_list.php?lang=" . LANG . "&filter_site_id=" . UrlEncode($site_id) . "&" . GetFilterParams("filter_", false));
+        if ($apply == '') {
+            LocalRedirect(
+                "/bitrix/admin/urlrewrite_list.php?lang=" . LANG . "&filter_site_id=" . UrlEncode(
+                    $site_id
+                ) . "&" . GetFilterParams("filter_", false)
+            );
+        }
     } else {
         $message = new CAdminMessage(GetMessage("SAE_ERROR"), new CAdminException($aMsg));
         $bVarsFromForm = true;
     }
 }
 
-if (StrLen($CONDITION) > 0)
+if ($CONDITION <> '') {
     $APPLICATION->SetTitle(GetMessage("MURL_EDIT"));
-else
+} else {
     $APPLICATION->SetTitle(GetMessage("MURL_ADD"));
+}
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
@@ -105,25 +122,35 @@ if ($bVarsFromForm) {
 $aMenu = array(
     array(
         "TEXT" => GetMessage("MURL_2_LIST"),
-        "LINK" => "/bitrix/admin/urlrewrite_list.php?lang=" . LANG . "&filter_site_id=" . UrlEncode($site_id) . "&" . GetFilterParams("filter_", false),
+        "LINK" => "/bitrix/admin/urlrewrite_list.php?lang=" . LANG . "&filter_site_id=" . UrlEncode(
+                $site_id
+            ) . "&" . GetFilterParams("filter_", false),
         "ICON" => "btn_list",
         "TITLE" => GetMessage("MURL_2_LIST_ALT"),
     )
 );
 
-if (StrLen($CONDITION) > 0) {
+if ($CONDITION <> '') {
     $aMenu[] = array("SEPARATOR" => "Y");
 
     $aMenu[] = array(
         "TEXT" => GetMessage("MURL_ACT_ADD"),
-        "LINK" => "/bitrix/admin/urlrewrite_edit.php?lang=" . LANG . "&site_id=" . UrlEncode($site_id) . "&" . GetFilterParams("filter_", false),
+        "LINK" => "/bitrix/admin/urlrewrite_edit.php?lang=" . LANG . "&site_id=" . UrlEncode(
+                $site_id
+            ) . "&" . GetFilterParams("filter_", false),
         "ICON" => "btn_new",
         "TITLE" => GetMessage("MURL_ACT_ADD_ALT"),
     );
 
     $aMenu[] = array(
         "TEXT" => GetMessage("MURL_ACT_DEL"),
-        "LINK" => "javascript:if(confirm('" . GetMessage("MURL_ACT_DEL_CONF") . "')) window.location='/bitrix/admin/urlrewrite_list.php?ID=" . urlencode(urlencode($CONDITION)) . "&filter_site_id=" . urlencode(urlencode($site_id)) . "&action=delete&lang=" . LANG . "&" . bitrix_sessid_get() . "';",
+        "LINK" => "javascript:if(confirm('" . GetMessage(
+                "MURL_ACT_DEL_CONF"
+            ) . "')) window.location='/bitrix/admin/urlrewrite_list.php?ID=" . urlencode(
+                urlencode($CONDITION)
+            ) . "&filter_site_id=" . urlencode(
+                urlencode($site_id)
+            ) . "&action=delete&lang=" . LANG . "&" . bitrix_sessid_get() . "';",
         "WARNING" => "Y",
         "ICON" => "btn_delete"
     );
@@ -131,8 +158,9 @@ if (StrLen($CONDITION) > 0) {
 $context = new CAdminContextMenu($aMenu);
 $context->Show();
 
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 ?>
 
 
@@ -190,7 +218,9 @@ if ($message)
         $tabControl->Buttons(
             array(
                 "disabled" => !$isAdmin,
-                "back_url" => "/bitrix/admin/urlrewrite_list.php?lang=" . LANG . "&filter_site_id=" . UrlEncode($site_id) . "&" . GetFilterParams("filter_", false)
+                "back_url" => "/bitrix/admin/urlrewrite_list.php?lang=" . LANG . "&filter_site_id=" . UrlEncode(
+                        $site_id
+                    ) . "&" . GetFilterParams("filter_", false)
             )
         );
         ?>

@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 \Bitrix\Main\Loader::includeModule('bizproc');
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/bizproc/prolog.php");
@@ -8,28 +9,34 @@ IncludeModuleLangFile(__FILE__);
 $fatalErrorMessage = "";
 
 $moduleId = "";
-if (defined("MODULE_ID"))
+if (defined("MODULE_ID")) {
     $moduleId = MODULE_ID;
+}
 
 $entity = "";
-if (defined("ENTITY"))
+if (defined("ENTITY")) {
     $entity = ENTITY;
+}
 
 $editPage = "";
-if (defined("EDIT_PAGE"))
+if (defined("EDIT_PAGE")) {
     $editPage = EDIT_PAGE;
+}
 
 $documentType = trim($_REQUEST["document_type"]);
 $backUrl = "/" . ltrim(trim($_REQUEST["back_url_list"]), "\\/");
 
-if (strlen($entity) <= 0)
+if ($entity == '') {
     $fatalErrorMessage .= GetMessage("BPATT_NO_ENTITY") . ". ";
-if (strlen($documentType) <= 0)
+}
+if ($documentType == '') {
     $fatalErrorMessage .= GetMessage("BPATT_NO_DOC_TYPE") . ". ";
-if (strlen($editPage) <= 0)
+}
+if ($editPage == '') {
     $fatalErrorMessage .= GetMessage("BPATT_NO_EDIT_PAGE") . ". ";
+}
 
-if (strlen($fatalErrorMessage) <= 0) {
+if ($fatalErrorMessage == '') {
     $documentType = array($moduleId, $entity, $documentType);
 
     $bCanUserWrite = CBPDocument::CanUserOperateDocumentType(
@@ -38,11 +45,12 @@ if (strlen($fatalErrorMessage) <= 0) {
         $documentType,
         array("UserGroups" => $GLOBALS["USER"]->GetUserGroupArray())
     );
-    if (!$bCanUserWrite)
+    if (!$bCanUserWrite) {
         $fatalErrorMessage .= GetMessage("BPATT_NO_PERMS") . ". ";
+    }
 }
 
-if (strlen($fatalErrorMessage) > 0) {
+if ($fatalErrorMessage <> '') {
     $APPLICATION->SetTitle(GetMessage("BPATT_ERROR"));
     require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
     echo ShowError($fatalErrorMessage);
@@ -64,22 +72,28 @@ $arFilterFields = array(
 $lAdmin->InitFilter($arFilterFields);
 
 $arFilter = array("DOCUMENT_TYPE" => $documentType);
-if (strlen($filter_name) > 0)
+if ($filter_name <> '') {
     $arFilter["~NAME"] = "%" . $filter_name . "%";
-if (intval($filter_autoexecute) > 0)
+}
+if (intval($filter_autoexecute) > 0) {
     $arFilter["AUTO_EXECUTE"] = intval($filter_autoexecute);
+}
 
 if ($lAdmin->EditAction()) {
     foreach ($FIELDS as $ID => $arFields) {
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
-        if (!$lAdmin->IsUpdated($ID))
+        if (!$lAdmin->IsUpdated($ID)) {
             continue;
+        }
 
         try {
             CBPWorkflowTemplateLoader::Update($ID, $arFields);
         } catch (Exception $e) {
-            $lAdmin->AddUpdateError(GetMessage("BPWFADM_ERR", array("#ID#" => $ID, "#ERROR_TEXT#" => $e->getMessage())), $ID);
+            $lAdmin->AddUpdateError(
+                GetMessage("BPWFADM_ERR", array("#ID#" => $ID, "#ERROR_TEXT#" => $e->getMessage())),
+                $ID
+            );
         }
     }
 }
@@ -94,21 +108,24 @@ if ($arID = $lAdmin->GroupAction()) {
             false,
             array("ID")
         );
-        while ($arResult = $dbResultList->Fetch())
+        while ($arResult = $dbResultList->Fetch()) {
             $arID[] = $arResult['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
 
         switch ($_REQUEST['action']) {
             case "delete":
                 $arErrorsTmp = array();
                 CBPDocument::DeleteWorkflowTemplate($ID, $documentType, $arErrorsTmp);
                 if (count($arErrorsTmp) > 0) {
-                    foreach ($arErrorsTmp as $e)
+                    foreach ($arErrorsTmp as $e) {
                         $lAdmin->AddGroupError($e["message"], $ID);
+                    }
                 }
                 break;
         }
@@ -124,7 +141,18 @@ $dbResultList = CBPWorkflowTemplateLoader::GetList(
     $arFilter,
     false,
     false,
-    array("ID", "NAME", "DESCRIPTION", "MODIFIED", "USER_ID", "AUTO_EXECUTE", "USER_NAME", "USER_LAST_NAME", "USER_LOGIN", "ACTIVE")
+    array(
+        "ID",
+        "NAME",
+        "DESCRIPTION",
+        "MODIFIED",
+        "USER_ID",
+        "AUTO_EXECUTE",
+        "USER_NAME",
+        "USER_LAST_NAME",
+        "USER_LOGIN",
+        "ACTIVE"
+    )
 );
 
 $dbResultList = new CAdminResult($dbResultList, $sTableID);
@@ -132,14 +160,16 @@ $dbResultList->NavStart();
 
 $lAdmin->NavText($dbResultList->GetNavPrint(GetMessage("BPATT_NAV")));
 
-$lAdmin->AddHeaders(array(
-    array("id" => "ID", "content" => "ID", "sort" => "ID", "default" => true),
-    array("id" => "NAME", "content" => GetMessage("BPATT_NAME"), "sort" => "NAME", "default" => true),
-    array("id" => "MODIFIED", "content" => GetMessage("BPATT_MODIFIED"), "sort" => "MODIFIED", "default" => true),
-    array("id" => "USER", "content" => GetMessage("BPATT_USER"), "sort" => "USER_ID", "default" => true),
-    array("id" => "ACTIVE", "content" => GetMessage("BPWFADM_ACT"), "sort" => "ACTIVE", "default" => true),
-    array("id" => "AUTO_EXECUTE", "content" => GetMessage("BPATT_AUTO_EXECUTE"), "default" => true),
-));
+$lAdmin->AddHeaders(
+    array(
+        array("id" => "ID", "content" => "ID", "sort" => "ID", "default" => true),
+        array("id" => "NAME", "content" => GetMessage("BPATT_NAME"), "sort" => "NAME", "default" => true),
+        array("id" => "MODIFIED", "content" => GetMessage("BPATT_MODIFIED"), "sort" => "MODIFIED", "default" => true),
+        array("id" => "USER", "content" => GetMessage("BPATT_USER"), "sort" => "USER_ID", "default" => true),
+        array("id" => "ACTIVE", "content" => GetMessage("BPWFADM_ACT"), "sort" => "ACTIVE", "default" => true),
+        array("id" => "AUTO_EXECUTE", "content" => GetMessage("BPATT_AUTO_EXECUTE"), "default" => true),
+    )
+);
 
 $arVisibleColumns = $lAdmin->GetVisibleHeaderColumns();
 
@@ -148,29 +178,44 @@ while ($arResultItem = $dbResultList->NavNext(true, "f_")) {
 
     $row->AddField(
         "ID",
-        '<a href="' . $editPage . '?ID=' . $f_ID . '&document_type=' . urlencode($documentType[2]) . '&lang=' . LANGUAGE_ID . '&back_url_list=' . urlencode($backUrl) . '" title="' . GetMessage("BPATT_DO_EDIT") . '">' . $f_ID . '</a>'
+        '<a href="' . $editPage . '?ID=' . $f_ID . '&document_type=' . urlencode(
+            $documentType[2]
+        ) . '&lang=' . LANGUAGE_ID . '&back_url_list=' . urlencode($backUrl) . '" title="' . GetMessage(
+            "BPATT_DO_EDIT"
+        ) . '">' . $f_ID . '</a>'
     );
     $row->AddInputField("NAME", Array("SIZE" => "35"));
     $row->AddField("MODIFIED", $f_MODIFIED);
     $row->AddCheckField("ACTIVE");
-    $row->AddField("USER", '[<a href="/bitrix/admin/user_edit.php?ID=' . $f_USER_ID . '&document_type=' . urlencode($documentType[2]) . '&lang=' . LANGUAGE_ID . '" title="' . GetMessage("BPATT_USER_PROFILE") . '">' . $f_USER_ID . '</a>] (' . $f_USER_LOGIN . ') ' . $f_USER_NAME . " " . $f_USER_LAST_NAME);
+    $row->AddField(
+        "USER",
+        '[<a href="/bitrix/admin/user_edit.php?ID=' . $f_USER_ID . '&document_type=' . urlencode(
+            $documentType[2]
+        ) . '&lang=' . LANGUAGE_ID . '" title="' . GetMessage(
+            "BPATT_USER_PROFILE"
+        ) . '">' . $f_USER_ID . '</a>] (' . $f_USER_LOGIN . ') ' . $f_USER_NAME . " " . $f_USER_LAST_NAME
+    );
 
     $autoExecuteText = "";
-    if ($f_AUTO_EXECUTE == CBPDocumentEventType::None)
+    if ($f_AUTO_EXECUTE == CBPDocumentEventType::None) {
         $autoExecuteText .= GetMessage("BPATT_AE_NONE");
+    }
     if (($f_AUTO_EXECUTE & CBPDocumentEventType::Create) != 0) {
-        if (strlen($autoExecuteText) > 0)
+        if ($autoExecuteText <> '') {
             $autoExecuteText .= ", ";
+        }
         $autoExecuteText .= GetMessage("BPATT_AE_CREATE");
     }
     if (($f_AUTO_EXECUTE & CBPDocumentEventType::Edit) != 0) {
-        if (strlen($autoExecuteText) > 0)
+        if ($autoExecuteText <> '') {
             $autoExecuteText .= ", ";
+        }
         $autoExecuteText .= GetMessage("BPATT_AE_EDIT");
     }
     if (($f_AUTO_EXECUTE & CBPDocumentEventType::Delete) != 0) {
-        if (strlen($autoExecuteText) > 0)
+        if ($autoExecuteText <> '') {
             $autoExecuteText .= ", ";
+        }
         $autoExecuteText .= GetMessage("BPATT_AE_DELETE");
     }
 
@@ -180,14 +225,26 @@ while ($arResultItem = $dbResultList->NavNext(true, "f_")) {
     $arActions[] = array(
         "ICON" => "edit",
         "TEXT" => GetMessage("BPATT_DO_EDIT1"),
-        "ACTION" => $lAdmin->ActionRedirect($editPage . '?ID=' . $f_ID . '&document_type=' . urlencode($documentType[2]) . '&lang=' . LANGUAGE_ID . '&back_url_list=' . urlencode($backUrl)),
+        "ACTION" => $lAdmin->ActionRedirect(
+            $editPage . '?ID=' . $f_ID . '&document_type=' . urlencode(
+                $documentType[2]
+            ) . '&lang=' . LANGUAGE_ID . '&back_url_list=' . urlencode($backUrl)
+        ),
         "DEFAULT" => true
     );
     $arActions[] = array("SEPARATOR" => true);
     $arActions[] = array(
         "ICON" => "delete",
         "TEXT" => GetMessage("BPATT_DO_DELETE1"),
-        "ACTION" => "if(confirm('" . GetMessage("BPATT_DO_DELETE1_CONFIRM") . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete", "document_type=" . urlencode($documentType[2]) . "&lang=" . LANGUAGE_ID . "&back_url_list=" . urlencode($backUrl))
+        "ACTION" => "if(confirm('" . GetMessage("BPATT_DO_DELETE1_CONFIRM") . "')) " . $lAdmin->ActionDoGroup(
+                $f_ID,
+                "delete",
+                "document_type=" . urlencode(
+                    $documentType[2]
+                ) . "&lang=" . LANGUAGE_ID . "&back_url_list=" . urlencode(
+                    $backUrl
+                )
+            )
     );
 
     $row->AddActions($arActions);
@@ -214,7 +271,7 @@ $lAdmin->AddGroupActionTable(
 );
 
 $aContext = array();
-if (strlen($backUrl) > 0) {
+if ($backUrl <> '') {
     $aContext[] = array(
         "TEXT" => GetMessage("BPATT_BACK"),
         "ICON" => "",
@@ -228,13 +285,17 @@ $arSubMenu = Array();
 $arSubMenu[] = array(
     "TEXT" => GetMessage("BPATT_SUBMENU1_TEXT"),
     "TITLE" => GetMessage("BPATT_SUBMENU1_TEXT_TITLE"),
-    "ACTION" => "window.location='/bitrix/admin/" . MODULE_ID . "_bizproc_workflow_edit.php?lang=" . LANGUAGE_ID . "&init=statemachine&entity=" . urlencode(ENTITY) . "&document_type=" . urlencode($documentType[2]) . '&back_url_list=' . urlencode($backUrl) . "';"
+    "ACTION" => "window.location='/bitrix/admin/" . MODULE_ID . "_bizproc_workflow_edit.php?lang=" . LANGUAGE_ID . "&init=statemachine&entity=" . urlencode(
+            ENTITY
+        ) . "&document_type=" . urlencode($documentType[2]) . '&back_url_list=' . urlencode($backUrl) . "';"
 );
 
 $arSubMenu[] = array(
     "TEXT" => GetMessage("BPATT_SUBMENU2_TEXT"),
     "TITLE" => GetMessage("BPATT_SUBMENU2_TEXT_TITLE"),
-    "ACTION" => "window.location='/bitrix/admin/" . MODULE_ID . "_bizproc_workflow_edit.php?lang=" . LANGUAGE_ID . "&entity=" . urlencode(ENTITY) . "&document_type=" . urlencode($documentType[2]) . '&back_url_list=' . urlencode($backUrl) . "';"
+    "ACTION" => "window.location='/bitrix/admin/" . MODULE_ID . "_bizproc_workflow_edit.php?lang=" . LANGUAGE_ID . "&entity=" . urlencode(
+            ENTITY
+        ) . "&document_type=" . urlencode($documentType[2]) . '&back_url_list=' . urlencode($backUrl) . "';"
 );
 
 $aContext[] = array(
@@ -278,8 +339,12 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
         <td><?= GetMessage("BPATT_F_AUTOEXECUTE") ?>:</td>
         <td><select name="filter_autoexecute">
                 <option value="">(<?= GetMessage("BPATT_ANY") ?>)</option>
-                <option value="<?= CBPDocumentEventType::Create ?>"<?= ($filter_autoexecute == CBPDocumentEventType::Create ? " selected" : "") ?>><?= GetMessage("BPATT_F_CREATE") ?></option>
-                <option value="<?= CBPDocumentEventType::Edit ?>"<?= ($filter_autoexecute == CBPDocumentEventType::Edit ? " selected" : "") ?>><?= GetMessage("BPATT_F_EDIT") ?></option>
+                <option value="<?= CBPDocumentEventType::Create ?>"<?= ($filter_autoexecute == CBPDocumentEventType::Create ? " selected" : "") ?>><?= GetMessage(
+                        "BPATT_F_CREATE"
+                    ) ?></option>
+                <option value="<?= CBPDocumentEventType::Edit ?>"<?= ($filter_autoexecute == CBPDocumentEventType::Edit ? " selected" : "") ?>><?= GetMessage(
+                        "BPATT_F_EDIT"
+                    ) ?></option>
             </select>
         </td>
     </tr>

@@ -1,5 +1,6 @@
 <?
 /*.require_module 'standard';.*/
+
 /*.require_module 'pcre';.*/
 /*.require_module 'bitrix_main_include_prolog_admin_before';.*/
 
@@ -8,18 +9,22 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
 IncludeModuleLangFile(__FILE__);
 /** @global CMain $APPLICATION */
 /** @global CUser $USER */
-if (!$USER->CanDoOperation("bitrixcloud_cdn"))
+if (!$USER->CanDoOperation("bitrixcloud_cdn")) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $strError = "";
-if (!CModule::IncludeModule("bitrixcloud"))
+if (!CModule::IncludeModule("bitrixcloud")) {
     $strError = GetMessage("MODULE_INCLUDE_ERROR");
+}
 
 if ($strError != "") {
     require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
-    echo CAdminMessage::ShowMessage(array(
-        "DETAILS" => $strError,
-    ));
+    echo CAdminMessage::ShowMessage(
+        array(
+            "DETAILS" => $strError,
+        )
+    );
     require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_admin.php");
     die();
 }
@@ -83,7 +88,7 @@ if (
                 CBitrixCloudCDN::domainChanged();
             }
 
-            $cdn_config->setSites(array_keys($_POST["site"]));
+            $cdn_config->setSites(is_array($_POST["site"]) ? array_keys($_POST["site"]) : array());
             $cdn_config->setDomain($server_name);
             $cdn_config->setHttps($https);
             $cdn_config->setOptimization($optimize);
@@ -96,10 +101,11 @@ if (
             if (!CBitrixCloudCDN::SetActive($_POST["cdn_active"] === "Y", true)) {
                 $e = $APPLICATION->GetException();
                 if (is_object($e)) {
-                    if ($_POST["cdn_active"] === "Y")
+                    if ($_POST["cdn_active"] === "Y") {
                         $message = new CAdminMessage(GetMessage("BCL_ENABLE_ERROR"), $e);
-                    else
+                    } else {
                         $message = new CAdminMessage(GetMessage("BCL_DISABLE_ERROR"), $e);
+                    }
                 }
             }
         }
@@ -107,29 +113,36 @@ if (
     if (is_object($message)) {
         $bVarsFromForm = true;
     } else {
-        if (isset($_POST["save"]) && $_GET["return_url"] != "")
+        if (isset($_POST["save"]) && $_GET["return_url"] != "") {
             LocalRedirect($_GET["return_url"]);
+        }
 
-        LocalRedirect("/bitrix/admin/bitrixcloud_cdn.php?lang=" . LANGUAGE_ID . ($_GET["return_url"] ? "&return_url=" . urlencode($_GET["return_url"]) : "") . "&" . $tabControl->ActiveTabParam());
+        LocalRedirect(
+            "/bitrix/admin/bitrixcloud_cdn.php?lang=" . LANGUAGE_ID . ($_GET["return_url"] ? "&return_url=" . urlencode(
+                    $_GET["return_url"]
+                ) : "") . "&" . $tabControl->ActiveTabParam()
+        );
     }
 }
 $cdn_config = CBitrixCloudCDNConfig::getInstance()->loadFromOptions();
 $APPLICATION->SetTitle(GetMessage("BCL_TITLE"));
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
-if (is_object($message))
+if (is_object($message)) {
     echo $message->Show();
+}
 
 if ($bVarsFromForm) {
     $active = $_POST["cdn_active"] === "Y";
     $optimize = $_POST["optimize"] === "y";
     $kernel_folder = $_POST["bitrix_folder"] !== "n";
     $content_folders = $_POST["content_folders"] === "y";
-    if (is_array($_POST["site"]))
+    if (is_array($_POST["site"])) {
         $sites = $_POST["site"];
-    else
+    } else {
         $sites = array(
             1,
         );
+    }
     $server_name = $_POST["server_name"];
     $https = $_POST["https"] === "y";
     $savedOnce = true;
@@ -152,8 +165,9 @@ if ($bVarsFromForm) {
 }
 ?>
     <form method="POST"
-          action="bitrixcloud_cdn.php?lang=<? echo LANGUAGE_ID ?><? echo $_GET["return_url"] ? "&amp;return_url=" . urlencode($_GET["return_url"]) : "" ?>"
-          enctype="multipart/form-data" name="editform">
+          action="bitrixcloud_cdn.php?lang=<? echo LANGUAGE_ID ?><? echo $_GET["return_url"] ? "&amp;return_url=" . urlencode(
+                  $_GET["return_url"]
+              ) : "" ?>" enctype="multipart/form-data" name="editform">
         <?
         $tabControl->Begin();
         $tabControl->BeginNextTab();
@@ -216,15 +230,14 @@ if ($bVarsFromForm) {
             </td>
         </tr>
         <?
-        $by = 'sort';
-        $order = 'asc';
-        $rsSites = CSite::GetList($by, $order);
+        $rsSites = CSite::GetList();
         while ($arSite = $rsSites->Fetch()) {
             ?>
             <tr>
                 <td>
-                    <label for="site_<? echo htmlspecialcharsbx($arSite["LID"]); ?>"><? echo htmlspecialcharsEx($arSite["NAME"] . " [" . $arSite["LID"] . "]"); ?>
-                        :</label>
+                    <label for="site_<? echo htmlspecialcharsbx($arSite["LID"]); ?>"><? echo htmlspecialcharsEx(
+                            $arSite["NAME"] . " [" . $arSite["LID"] . "]"
+                        ); ?>:</label>
                 </td>
                 <td>
                     <input type="checkbox" id="site_<? echo htmlspecialcharsbx($arSite["LID"]); ?>"
@@ -255,9 +268,11 @@ if ($bVarsFromForm) {
             </td>
         </tr>
         <?
-        $tabControl->Buttons(array(
-            "back_url" => $_GET["return_url"] ? $_GET["return_url"] : "bitrixcloud_cdn.php?lang=" . LANGUAGE_ID,
-        ));
+        $tabControl->Buttons(
+            array(
+                "back_url" => $_GET["return_url"] ? $_GET["return_url"] : "bitrixcloud_cdn.php?lang=" . LANGUAGE_ID,
+            )
+        );
         ?>
         <? echo bitrix_sessid_post(); ?>
         <input type="hidden" name="debug" value="<? echo htmlspecialcharsbx($_REQUEST["debug"]) ?>">

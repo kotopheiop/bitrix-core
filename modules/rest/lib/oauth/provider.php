@@ -6,6 +6,7 @@ namespace Bitrix\Rest\OAuth;
 use Bitrix\Rest\AuthProviderInterface;
 use Bitrix\Rest\Event\Session;
 use Bitrix\Rest\OAuthService;
+use Bitrix\Main\Type\DateTime;
 
 class Provider implements AuthProviderInterface
 {
@@ -55,6 +56,11 @@ class Provider implements AuthProviderInterface
                     $authResult['result']['client_id'] = $clientId;
 
                     Auth::storeRegisteredAuth($authResult['result']);
+                }
+
+                if (!empty($authResult['result']['date_finish_format'])) {
+                    $dateFinish = new DateTime($authResult['result']['date_finish_format'], DATE_ATOM);
+                    $authResult['result']['date_finish'] = $dateFinish->getTimestamp();
                 }
 
                 return $authResult['result'];

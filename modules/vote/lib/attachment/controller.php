@@ -52,16 +52,22 @@ class Controller extends \Bitrix\Vote\Base\Controller
 
     protected function init()
     {
-        if ($this->request->getQuery("attachId"))
+        if ($this->request->getQuery("attachId")) {
             $this->attach = Manager::loadFromAttachId($this->request->getQuery("attachId"));
-        else if ($this->request->getQuery("voteId"))
-            $this->attach = Manager::loadFromVoteId(array(
-                "MODULE_ID" => "vote",
-                "ENTITY_TYPE" => "VOTE",
-                "ENTITY_ID" => $this->request->getQuery("voteId")
-            ), $this->request->getQuery("voteId"));
-        else
-            throw new ArgumentNullException("attach ID");
+        } else {
+            if ($this->request->getQuery("voteId")) {
+                $this->attach = Manager::loadFromVoteId(
+                    array(
+                        "MODULE_ID" => "vote",
+                        "ENTITY_TYPE" => "VOTE",
+                        "ENTITY_ID" => $this->request->getQuery("voteId")
+                    ),
+                    $this->request->getQuery("voteId")
+                );
+            } else {
+                throw new ArgumentNullException("attach ID");
+            }
+        }
 
         AddEventHandler("vote", "onVoteReset", array(&$this, "clearCache"));
         AddEventHandler("vote", "onAfterVoting", array(&$this, "clearCache"));
@@ -71,12 +77,14 @@ class Controller extends \Bitrix\Vote\Base\Controller
     protected function processActionVote()
     {
         if ($this->checkRequiredGetParams(array("attachId"))) {
-            if (!$this->attach->canRead($this->getUser()->getId()))
+            if (!$this->attach->canRead($this->getUser()->getId())) {
                 throw new AccessDeniedException();
+            }
 
             $request = $this->request->getPostList()->toArray();
-            if ($this->isAjaxRequest())
+            if ($this->isAjaxRequest()) {
                 \CUtil::decodeURIComponent($request);
+            }
 
             //TODO decide what should we do with captcha in attaches
             if ($this->attach->voteFor($request)) {
@@ -94,7 +102,8 @@ class Controller extends \Bitrix\Vote\Base\Controller
                             );
                         }
                     }
-                    \CPullWatch::AddToStack("VOTE_" . $this->attach["VOTE_ID"],
+                    \CPullWatch::AddToStack(
+                        "VOTE_" . $this->attach["VOTE_ID"],
                         Array(
                             "module_id" => "vote",
                             "command" => "voting",
@@ -108,21 +117,24 @@ class Controller extends \Bitrix\Vote\Base\Controller
                     );
                 }
 
-                $this->sendJsonSuccessResponse(array(
-                    "action" => $this->getAction(),
-                    "data" => array(
-                        "attach" => array(
-                            "ID" => $this->attach["ID"],
-                            "VOTE_ID" => $this->attach["VOTE_ID"],
-                            "COUNTER" => $this->attach["COUNTER"],
-                            "QUESTIONS" => $this->attach["QUESTIONS"]
+                $this->sendJsonSuccessResponse(
+                    array(
+                        "action" => $this->getAction(),
+                        "data" => array(
+                            "attach" => array(
+                                "ID" => $this->attach["ID"],
+                                "VOTE_ID" => $this->attach["VOTE_ID"],
+                                "COUNTER" => $this->attach["COUNTER"],
+                                "QUESTIONS" => $this->attach["QUESTIONS"]
+                            )
                         )
                     )
-                ));
-            } elseif (($errors = $this->attach->getErrors()) && !empty($errors))
+                );
+            } elseif (($errors = $this->attach->getErrors()) && !empty($errors)) {
                 $this->errorCollection->add($errors);
-            else
+            } else {
                 throw new ArgumentException(GetMessage("V_ERROR_4501"));
+            }
         }
     }
 
@@ -131,9 +143,9 @@ class Controller extends \Bitrix\Vote\Base\Controller
         $attach = $this->attach;
         $eventId = 0;
         $userId = 0;
-        if ($this->getUser()->isAdmin() && $this->request->getQuery("eventId") > 0)
+        if ($this->getUser()->isAdmin() && $this->request->getQuery("eventId") > 0) {
             $eventId = $this->request->getQuery("eventId");
-        else {
+        } else {
             $userId = $this->getUser()->getId();
             if ($attach->canRead($userId) && ($result = $attach->canRevote($userId)) && $result->isSuccess()) {
                 $event = reset($result->getData());
@@ -143,18 +155,20 @@ class Controller extends \Bitrix\Vote\Base\Controller
         $stat = array();
         $extras = array();
         if ($eventId > 0) {
-            $dbRes = EventTable::getList(array(
-                "select" => array(
-                    "V_" => "*",
-                    "Q_" => "QUESTION.*",
-                    "A_" => "QUESTION.ANSWER.*",
-                    "U_" => "USER.USER.*",
-                ),
-                "filter" => array(
-                    "ID" => $eventId,
-                    "VOTE_ID" => $attach["VOTE_ID"]
+            $dbRes = EventTable::getList(
+                array(
+                    "select" => array(
+                        "V_" => "*",
+                        "Q_" => "QUESTION.*",
+                        "A_" => "QUESTION.ANSWER.*",
+                        "U_" => "USER.USER.*",
+                    ),
+                    "filter" => array(
+                        "ID" => $eventId,
+                        "VOTE_ID" => $attach["VOTE_ID"]
+                    )
                 )
-            ));
+            );
             $questions = $attach["QUESTIONS"];
             if ($dbRes && ($res = $dbRes->fetch())) {
                 $userId = $res["U_ID"];
@@ -164,10 +178,12 @@ class Controller extends \Bitrix\Vote\Base\Controller
                 );
                 do {
                     if (!array_key_exists($res["Q_QUESTION_ID"], $questions) ||
-                        !array_key_exists($res["A_ANSWER_ID"], $questions[$res["Q_QUESTION_ID"]]["ANSWERS"]))
+                        !array_key_exists($res["A_ANSWER_ID"], $questions[$res["Q_QUESTION_ID"]]["ANSWERS"])) {
                         continue;
-                    if (!array_key_exists($res["Q_QUESTION_ID"], $stat))
+                    }
+                    if (!array_key_exists($res["Q_QUESTION_ID"], $stat)) {
                         $stat[$res["Q_QUESTION_ID"]] = array();
+                    }
 
                     $stat[$res["Q_QUESTION_ID"]][$res["A_ANSWER_ID"]] = array(
                         "EVENT_ID" => $res["A_ID"],
@@ -179,63 +195,71 @@ class Controller extends \Bitrix\Vote\Base\Controller
                 } while ($res = $dbRes->fetch());
             }
         }
-        $this->sendJsonSuccessResponse(array(
-            "action" => $this->getAction(),
-            "data" => array(
-                "attach" => array(
-                    "ID" => $attach["ID"],
-                    "VOTE_ID" => $attach["VOTE_ID"],
-                    "FIELD_NAME" => $attach["FIELD_NAME"],
-                    "QUESTIONS" => $attach["QUESTIONS"]
-                ),
-                "event" => array(
-                    "id" => $eventId,
-                    "userId" => $userId,
-                    "ballot" => $stat,
-                    "extras" => $extras
+        $this->sendJsonSuccessResponse(
+            array(
+                "action" => $this->getAction(),
+                "data" => array(
+                    "attach" => array(
+                        "ID" => $attach["ID"],
+                        "VOTE_ID" => $attach["VOTE_ID"],
+                        "FIELD_NAME" => $attach["FIELD_NAME"],
+                        "QUESTIONS" => $attach["QUESTIONS"]
+                    ),
+                    "event" => array(
+                        "id" => $eventId,
+                        "userId" => $userId,
+                        "ballot" => $stat,
+                        "extras" => $extras
+                    )
                 )
             )
-        ));
+        );
     }
 
     protected function processActionStop()
     {
         $attach = $this->attach;
         $userId = $this->getUser()->getId();
-        if (!$attach->canEdit($userId))
+        if (!$attach->canEdit($userId)) {
             throw new AccessDeniedException();
+        }
         $attach->stop();
-        $this->sendJsonSuccessResponse(array(
-            "action" => $this->getAction(),
-            "data" => array(
-                "attach" => array(
-                    "ID" => $this->attach["ID"],
-                    "VOTE_ID" => $this->attach["VOTE_ID"],
-                    "COUNTER" => $this->attach["COUNTER"],
-                    "QUESTIONS" => $this->attach["QUESTIONS"]
+        $this->sendJsonSuccessResponse(
+            array(
+                "action" => $this->getAction(),
+                "data" => array(
+                    "attach" => array(
+                        "ID" => $this->attach["ID"],
+                        "VOTE_ID" => $this->attach["VOTE_ID"],
+                        "COUNTER" => $this->attach["COUNTER"],
+                        "QUESTIONS" => $this->attach["QUESTIONS"]
+                    )
                 )
             )
-        ));
+        );
     }
 
     protected function processActionResume()
     {
         $attach = $this->attach;
         $userId = $this->getUser()->getId();
-        if (!$attach->canEdit($userId))
+        if (!$attach->canEdit($userId)) {
             throw new AccessDeniedException();
+        }
         $attach->resume();
-        $this->sendJsonSuccessResponse(array(
-            "action" => $this->getAction(),
-            "data" => array(
-                "attach" => array(
-                    "ID" => $this->attach["ID"],
-                    "VOTE_ID" => $this->attach["VOTE_ID"],
-                    "COUNTER" => $this->attach["COUNTER"],
-                    "QUESTIONS" => $this->attach["QUESTIONS"]
+        $this->sendJsonSuccessResponse(
+            array(
+                "action" => $this->getAction(),
+                "data" => array(
+                    "attach" => array(
+                        "ID" => $this->attach["ID"],
+                        "VOTE_ID" => $this->attach["VOTE_ID"],
+                        "COUNTER" => $this->attach["COUNTER"],
+                        "QUESTIONS" => $this->attach["QUESTIONS"]
+                    )
                 )
             )
-        ));
+        );
     }
 
     /**
@@ -261,28 +285,35 @@ class Controller extends \Bitrix\Vote\Base\Controller
         $cacheId = "voted_" . serialize(array($cacheParams["answerId"], $nPageSize, $iNumPage));
         $cacheDir = "/vote/" . $cacheParams["voteId"] . "/voted/";
 
-        if (\Bitrix\Main\Config\Option::get("main", "component_cache_on", "Y") == "Y" && $cache->initCache($cacheTtl, $cacheId, $cacheDir)) {
+        if (\Bitrix\Main\Config\Option::get("main", "component_cache_on", "Y") == "Y" && $cache->initCache(
+                $cacheTtl,
+                $cacheId,
+                $cacheDir
+            )) {
             $result = $cache->getVars();
         } else {
             if ($iNumPage <= 1) {
-                $res = EventTable::getList(array(
-                    "select" => array(
-                        "CNT" => "CNT"
-                    ),
-                    "runtime" => array(
-                        new ExpressionField("CNT", "COUNT(*)")
-                    ),
-                    "filter" => array(
-                        "VOTE_ID" => $cacheParams["voteId"],
-                        "!=VISIBLE" => "Y",
-                        "VALID" => "Y",
-                        "QUESTION.ANSWER.ANSWER_ID" => $cacheParams["answerId"],
+                $res = EventTable::getList(
+                    array(
+                        "select" => array(
+                            "CNT" => "CNT"
+                        ),
+                        "runtime" => array(
+                            new ExpressionField("CNT", "COUNT(*)")
+                        ),
+                        "filter" => array(
+                            "VOTE_ID" => $cacheParams["voteId"],
+                            "!=VISIBLE" => "Y",
+                            "VALID" => "Y",
+                            "QUESTION.ANSWER.ANSWER_ID" => $cacheParams["answerId"],
+                        )
                     )
-                ))->fetch();
+                )->fetch();
                 $result["hiddenItems"] = $res["CNT"];
             }
 
-            $dbRes = \CVoteEvent::getUserAnswerStat(array(),
+            $dbRes = \CVoteEvent::getUserAnswerStat(
+                array(),
                 array(
                     "ANSWER_ID" => $cacheParams["answerId"],
                     "VALID" => "Y",
@@ -298,12 +329,13 @@ class Controller extends \Bitrix\Vote\Base\Controller
             );
             $userIds = array();
             $result["statusPage"] = (($dbRes->NavPageNomer >= $dbRes->NavPageCount || $nPageSize > $dbRes->NavRecordCount) ? "done" : "continue");
-            while ($res = $dbRes->fetch())
+            while ($res = $dbRes->fetch()) {
                 $userIds[] = $res["AUTH_USER_ID"];
+            }
 
-            if (empty($userIds))
+            if (empty($userIds)) {
                 $result["statusPage"] = "done";
-            else {
+            } else {
                 $departments = array();
                 if (IsModuleInstalled("extranet") &&
                     ($iblockId = \COption::GetOptionInt("intranet", "iblock_structure", 0)) &&
@@ -315,13 +347,14 @@ class Controller extends \Bitrix\Vote\Base\Controller
                         array("ID", "NAME")
                     );
 
-                    while ($res = $dbRes->fetch())
+                    while ($res = $dbRes->fetch()) {
                         $departments[$res["ID"]] = $res["NAME"];
+                    }
                 }
 
                 $dbRes = \CUser::getList(
-                    ($by = "ID"),
-                    ($order = "ASC"),
+                    "ID",
+                    "ASC",
                     array("ID" => implode("|", $userIds)),
                     array(
                         "FIELDS" => array("ID", "NAME", "LAST_NAME", "SECOND_NAME", "LOGIN", "PERSONAL_PHOTO") +
@@ -345,16 +378,17 @@ class Controller extends \Bitrix\Vote\Base\Controller
                         }
                     }
                     $res["TYPE"] = "";
-                    if (array_key_exists("EXTERNAL_AUTH_ID", $res) && $res["EXTERNAL_AUTH_ID"] == "email")
+                    if (array_key_exists("EXTERNAL_AUTH_ID", $res) && $res["EXTERNAL_AUTH_ID"] == "email") {
                         $res["TYPE"] = "mail";
-                    elseif (array_key_exists("UF_DEPARTMENT", $res)) {
-                        if (empty($res["UF_DEPARTMENT"]) || intval($res["UF_DEPARTMENT"][0]) <= 0)
+                    } elseif (array_key_exists("UF_DEPARTMENT", $res)) {
+                        if (empty($res["UF_DEPARTMENT"]) || intval($res["UF_DEPARTMENT"][0]) <= 0) {
                             $res["TYPE"] = "extranet";
-                        else {
+                        } else {
                             $ds = array();
                             foreach ($res["UF_DEPARTMENT"] as $departmentId) {
-                                if (array_key_exists($departmentId, $departments))
+                                if (array_key_exists($departmentId, $departments)) {
                                     $ds[] = $departments[$departmentId];
+                                }
                             }
                             $res["TAGS"] = empty($res["WORK_POSITION"]) ? array() : array($res["WORK_POSITION"]);
                             $res["TAGS"] = implode(",", array_merge($res["TAGS"], $ds));
@@ -376,15 +410,18 @@ class Controller extends \Bitrix\Vote\Base\Controller
 
     protected function processActionGetVoted()
     {
-        if (!$this->checkRequiredGetParams(array("answerId")))
+        if (!$this->checkRequiredGetParams(array("answerId"))) {
             return;
+        }
         $answerId = intval($this->request->getQuery("answerId"));
-        if ($answerId <= 0)
+        if ($answerId <= 0) {
             throw new ArgumentNullException("Answer ID is required.");
+        }
         $attach = $this->attach;
         $userId = $this->getUser()->getId();
-        if (!$attach->canRead($userId))
+        if (!$attach->canRead($userId)) {
             throw new AccessDeniedException();
+        }
 
         $belong = false;
         foreach ($attach["QUESTIONS"] as $qID => $question) {
@@ -393,10 +430,16 @@ class Controller extends \Bitrix\Vote\Base\Controller
                 break;
             }
         }
-        if (!$belong)
+        if (!$belong) {
             throw new AccessDeniedException();
+        }
 
-        $nameTemplate = $this->request->getPost("nameTemplate") ?: \CSite::getNameFormat(null, $this->request->getPost("SITE_ID"));
+        $nameTemplate = $this->request->getPost("nameTemplate") ?: \CSite::getNameFormat(
+            null,
+            $this->request->getPost(
+                "SITE_ID"
+            )
+        );
         $iNumPage = $this->request->getPost("iNumPage");
         $nPageSize = 50;
         $items = array();
@@ -404,11 +447,13 @@ class Controller extends \Bitrix\Vote\Base\Controller
         $result = self::getVoted(
             array(
                 "voteId" => $attach->getVoteId(),
-                "answerId" => $answerId),
+                "answerId" => $answerId
+            ),
             array(
                 "iNumPage" => $iNumPage,
                 "nPageSize" => $nPageSize,
-                "bShowAll" => false)
+                "bShowAll" => false
+            )
         );
 
         if ($result["hiddenItems"] > 0) {
@@ -430,23 +475,28 @@ class Controller extends \Bitrix\Vote\Base\Controller
         $result["items"] = $items;
         $result["pageSize"] = $nPageSize;
         $result["iNumPage"] = $iNumPage;
-        $this->sendJsonSuccessResponse(array(
-            "action" => $this->getAction(),
-            "data" => $result
-        ));
+        $this->sendJsonSuccessResponse(
+            array(
+                "action" => $this->getAction(),
+                "data" => $result
+            )
+        );
     }
 
     protected function processActionGetMobileVoted()
     {
-        if (!$this->checkRequiredGetParams(array("answerId")))
+        if (!$this->checkRequiredGetParams(array("answerId"))) {
             return;
+        }
         $answerId = intval($this->request->getQuery("answerId"));
-        if ($answerId <= 0)
+        if ($answerId <= 0) {
             throw new ArgumentNullException("Answer ID is required.");
+        }
         $attach = $this->attach;
         $userId = $this->getUser()->getId();
-        if (!$attach->canRead($userId))
+        if (!$attach->canRead($userId)) {
             throw new AccessDeniedException();
+        }
 
         $belong = false;
         foreach ($attach["QUESTIONS"] as $qID => $question) {
@@ -455,19 +505,27 @@ class Controller extends \Bitrix\Vote\Base\Controller
                 break;
             }
         }
-        if (!$belong)
+        if (!$belong) {
             throw new AccessDeniedException();
+        }
 
-        $nameTemplate = $this->request->getPost("nameTemplate") ?: \CSite::getNameFormat(null, $this->request->getPost("SITE_ID"));
+        $nameTemplate = $this->request->getPost("nameTemplate") ?: \CSite::getNameFormat(
+            null,
+            $this->request->getPost(
+                "SITE_ID"
+            )
+        );
 
         $result = self::getVoted(
             array(
                 "voteId" => $attach->getVoteId(),
-                "answerId" => $answerId),
+                "answerId" => $answerId
+            ),
             array(
                 "iNumPage" => 1,
                 "nPageSize" => 50,
-                "bShowAll" => true)
+                "bShowAll" => true
+            )
         );
 
         $items = array();
@@ -481,21 +539,26 @@ class Controller extends \Bitrix\Vote\Base\Controller
                 "WORK_DEPARTMENTS" => $res["WORK_DEPARTMENTS"],
                 "URL" => \CComponentEngine::MakePathFromTemplate(
                     "/mobile/users/?user_id=#user_id#",
-                    array("UID" => $res["ID"], "user_id" => $res["ID"],
-                        "USER_ID" => $res["ID"])
+                    array(
+                        "UID" => $res["ID"],
+                        "user_id" => $res["ID"],
+                        "USER_ID" => $res["ID"]
+                    )
                 )
             );
         }
         $result["items"] = $items;
-        $this->sendJsonSuccessResponse(array(
-            "action" => $this->getAction(),
-            "data" => array(
-                "voted" => $items
-            ),
-            "names" => array(
-                "voted" => "Voted users"
+        $this->sendJsonSuccessResponse(
+            array(
+                "action" => $this->getAction(),
+                "data" => array(
+                    "voted" => $items
+                ),
+                "names" => array(
+                    "voted" => "Voted users"
+                )
             )
-        ));
+        );
     }
 
     /**
@@ -507,8 +570,9 @@ class Controller extends \Bitrix\Vote\Base\Controller
     {
         $attach = $this->attach;
         $userId = $this->getUser()->getId();
-        if (!$attach->canRead($userId))
+        if (!$attach->canRead($userId)) {
             throw new AccessDeniedException();
+        }
         $attach->exportExcel();
     }
 

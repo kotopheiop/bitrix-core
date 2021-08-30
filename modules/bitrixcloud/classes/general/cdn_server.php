@@ -39,8 +39,9 @@ class CBitrixCloudCDNServerGroup
         if (is_array($servers)) {
             foreach ($servers as $server) {
                 $server = trim($server, " \t\n\r");
-                if ($server != "")
+                if ($server != "") {
                     $this->servers[] = $server;
+                }
             }
         }
         return $this;

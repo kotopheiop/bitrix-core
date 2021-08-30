@@ -4,9 +4,8 @@ namespace Bitrix\Sender\Security\Role;
 
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Sender\Security\User;
-
 use Bitrix\Sender\Internals\Model;
+use Bitrix\Sender\Security\User;
 
 Loc::loadMessages(__FILE__);
 
@@ -26,7 +25,9 @@ class Permission
     const PERMISSION_SELF = 'A';
     const PERMISSION_DEPARTMENT = 'D';
     const PERMISSION_ANY = 'X';
-    const PERMISSION_ALLOW = 'X';
+
+    private static $cache = [];
+
 
     /**
      * Returns permission code according to the user's Permission.
@@ -91,33 +92,39 @@ class Permission
      */
     public static function getByUserId($userId)
     {
-        $user = User::get($userId);
-        if ($user->isPortalAdmin() || $user->isAdmin()) {
-            return self::getAdminPermissions();
-        }
-
-        //everybody else's permissions are defined by their role
-        $result = [];
-        $userAccessCodes = \CAccess::getUserCodesArray($user->getId());
-
-        if (!is_array($userAccessCodes) || count($userAccessCodes) === 0) {
-            return [];
-        }
-
-        $list = Model\Role\PermissionTable::getList(array(
-            'filter' => array(
-                '=ROLE_ACCESS.ACCESS_CODE' => $userAccessCodes
-            )
-        ));
-
-        foreach ($list as $row) {
-            if (!isset($result[$row['ENTITY']][$row['ACTION']])
-                || $result[$row['ENTITY']][$row['ACTION']] < $row['PERMISSION']) {
-                $result[$row['ENTITY']][$row['ACTION']] = $row['PERMISSION'];
+        if (!isset(static::$cache[$userId])) {
+            $user = User::get($userId);
+            if ($user->isPortalAdmin() || $user->isAdmin()) {
+                return self::getAdminPermissions();
             }
+
+            //everybody else's permissions are defined by their role
+            $result = [];
+            $userAccessCodes = \CAccess::getUserCodesArray($user->getId());
+
+            if (!is_array($userAccessCodes) || count($userAccessCodes) === 0) {
+                return [];
+            }
+
+            $list = Model\Role\PermissionTable::getList(
+                array(
+                    'filter' => array(
+                        '=ROLE_ACCESS.ACCESS_CODE' => $userAccessCodes
+                    )
+                )
+            );
+
+            foreach ($list as $row) {
+                if (!isset($result[$row['ENTITY']][$row['ACTION']])
+                    || $result[$row['ENTITY']][$row['ACTION']] < $row['PERMISSION']) {
+                    $result[$row['ENTITY']][$row['ACTION']] = $row['PERMISSION'];
+                }
+            }
+
+            static::$cache[$userId] = $result;
         }
 
-        return $result;
+        return static::$cache[$userId];
     }
 
     /**

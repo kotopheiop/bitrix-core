@@ -1,8 +1,10 @@
-<?
+<?php
 /** @global CUser $USER */
-/** @global CMain $APPLICATION */
 
+/** @global CMain $APPLICATION */
 /** @global array $FIELDS */
+
+/** @global CDatabase $DB */
 
 use Bitrix\Main;
 use Bitrix\Main\Loader;
@@ -14,6 +16,8 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_ad
 
 /** @global CAdminPage $adminPage */
 global $adminPage;
+/** @global CAdminSidePanelHelper $adminSidePanelHelper */
+global $adminSidePanelHelper;
 
 Loader::includeModule('catalog');
 Loc::loadMessages(__FILE__);
@@ -30,18 +34,56 @@ if (!$USER->canDoOperation('catalog_read') && !$USER->canDoOperation('catalog_vi
     die();
 }
 
-if (isset($_REQUEST['mode']) && ($_REQUEST['mode'] == 'list' || $_REQUEST['mode'] == 'frame'))
+if (isset($_REQUEST['mode']) && ($_REQUEST['mode'] == 'list' || $_REQUEST['mode'] == 'frame')) {
     CFile::disableJSFunction(true);
+}
+
+$request = Main\Context::getCurrent()->getRequest();
+$adminSection = $request->isAdminSection();
+if ($adminSection) {
+    $urlParams = [
+        'find_section_section' => -1,
+        'WF' => 'Y',
+    ];
+} else {
+    $urlParams = [
+        'find_section_section' => -1,
+        'WF' => 'Y',
+        'return_url' => $APPLICATION->GetCurPageParam(
+            '',
+            [
+                'mode',
+                'table_id',
+                'internal',
+                'grid_id',
+                'grid_action',
+                'bxajaxid',
+                'sessid',
+            ]
+        ),
+    ];
+}
+/** @var \Bitrix\Catalog\Url\AdminPage\CatalogBuilder $urlBuilder */
+$urlBuilder = Iblock\Url\AdminPage\BuilderManager::getInstance()->getBuilder();
+if ($urlBuilder === null) {
+    $APPLICATION->SetTitle(Loc::getMessage('PSL_PAGE_TITLE'));
+    require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
+    ShowError(GetMessage("PSL_ERR_BUILDER_ADSENT"));
+    require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_admin.php");
+    die();
+}
 
 $tableId = 'tbl_product_subscription_list';
 $sortObject = new CAdminUiSorting($tableId, 'DATE_FROM', 'DESC');
 $listObject = new CAdminUiList($tableId, $sortObject);
 
 global $by, $order;
-if (!isset($by))
+if (!isset($by)) {
     $by = 'DATE_FROM';
-if (!isset($order))
+}
+if (!isset($order)) {
     $order = 'DESC';
+}
 
 $listContactTypes = array();
 $contactType = Catalog\SubscribeTable::getContactTypes();
@@ -138,8 +180,9 @@ if (($listRowId = $listObject->groupAction())) {
     switch ($_REQUEST['action']) {
         case 'delete':
             $itemId = 0;
-            if (isset($_REQUEST['itemId']))
+            if (isset($_REQUEST['itemId'])) {
                 $itemId = $_REQUEST['itemId'];
+            }
             $subscribeManager->deleteManySubscriptions($listRowId, $itemId);
             break;
         case 'activate':
@@ -164,24 +207,63 @@ if (($listRowId = $listObject->groupAction())) {
 
 $headers = array();
 $headers['ID'] = array('id' => 'ID', 'content' => 'ID', 'sort' => 'ID', 'default' => true, 'align' => 'center');
-$headers['DATE_FROM'] = array('id' => 'DATE_FROM', 'content' => Loc::getMessage('PSL_DATE_FROM'),
-    'sort' => 'DATE_FROM', 'default' => true);
-$headers['USER_CONTACT'] = array('id' => 'USER_CONTACT', 'content' => Loc::getMessage('PSL_USER_CONTACT'),
-    'sort' => 'USER_CONTACT', 'default' => true);
-$headers['USER_ID'] = array('id' => 'USER_ID', 'content' => Loc::getMessage('PSL_USER'),
-    'sort' => 'USER_ID', 'default' => true);
-$headers['CONTACT_TYPE'] = array('id' => 'CONTACT_TYPE', 'content' => Loc::getMessage('PSL_CONTACT_TYPE'),
-    'sort' => 'CONTACT_TYPE', 'default' => true, 'align' => 'center');
-$headers['ACTIVE'] = array('id' => 'ACTIVE', 'content' => Loc::getMessage('PSL_ACTIVE'),
-    'default' => true, 'align' => 'center');
-$headers['DATE_TO'] = array('id' => 'DATE_TO', 'content' => Loc::getMessage('PSL_DATE_TO'),
-    'sort' => 'DATE_TO', 'default' => true);
-$headers['ITEM_ID'] = array('id' => 'ITEM_ID', 'content' => Loc::getMessage('PSL_ITEM_ID'),
-    'sort' => 'ITEM_ID', 'default' => false, 'align' => 'right');
-$headers['PRODUCT_NAME'] = array('id' => 'PRODUCT_NAME', 'content' => Loc::getMessage('PSL_PRODUCT_NAME'),
-    'sort' => 'PRODUCT_NAME', 'default' => true);
-$headers['SITE_ID'] = array('id' => 'SITE_ID', 'content' => Loc::getMessage('PSL_SITE_ID'),
-    'sort' => 'SITE_ID', 'default' => true, 'align' => 'center');
+$headers['DATE_FROM'] = array(
+    'id' => 'DATE_FROM',
+    'content' => Loc::getMessage('PSL_DATE_FROM'),
+    'sort' => 'DATE_FROM',
+    'default' => true
+);
+$headers['USER_CONTACT'] = array(
+    'id' => 'USER_CONTACT',
+    'content' => Loc::getMessage('PSL_USER_CONTACT'),
+    'sort' => 'USER_CONTACT',
+    'default' => true
+);
+$headers['USER_ID'] = array(
+    'id' => 'USER_ID',
+    'content' => Loc::getMessage('PSL_USER'),
+    'sort' => 'USER_ID',
+    'default' => true
+);
+$headers['CONTACT_TYPE'] = array(
+    'id' => 'CONTACT_TYPE',
+    'content' => Loc::getMessage('PSL_CONTACT_TYPE'),
+    'sort' => 'CONTACT_TYPE',
+    'default' => true,
+    'align' => 'center'
+);
+$headers['ACTIVE'] = array(
+    'id' => 'ACTIVE',
+    'content' => Loc::getMessage('PSL_ACTIVE'),
+    'default' => true,
+    'align' => 'center'
+);
+$headers['DATE_TO'] = array(
+    'id' => 'DATE_TO',
+    'content' => Loc::getMessage('PSL_DATE_TO'),
+    'sort' => 'DATE_TO',
+    'default' => true
+);
+$headers['ITEM_ID'] = array(
+    'id' => 'ITEM_ID',
+    'content' => Loc::getMessage('PSL_ITEM_ID'),
+    'sort' => 'ITEM_ID',
+    'default' => false,
+    'align' => 'right'
+);
+$headers['PRODUCT_NAME'] = array(
+    'id' => 'PRODUCT_NAME',
+    'content' => Loc::getMessage('PSL_PRODUCT_NAME'),
+    'sort' => 'PRODUCT_NAME',
+    'default' => true
+);
+$headers['SITE_ID'] = array(
+    'id' => 'SITE_ID',
+    'content' => Loc::getMessage('PSL_SITE_ID'),
+    'sort' => 'SITE_ID',
+    'default' => true,
+    'align' => 'center'
+);
 
 $listObject->addHeaders($headers);
 
@@ -195,11 +277,13 @@ foreach ($selectFields as $fieldName) {
 $select['PRODUCT_NAME'] = 'IBLOCK_ELEMENT.NAME';
 $select['IBLOCK_ID'] = 'IBLOCK_ELEMENT.IBLOCK_ID';
 
-$queryObject = Catalog\SubscribeTable::getList(array(
-    'select' => $select,
-    'filter' => $filter,
-    'order' => array($by => $order),
-));
+$queryObject = Catalog\SubscribeTable::getList(
+    array(
+        'select' => $select,
+        'filter' => $filter,
+        'order' => array($by => $order),
+    )
+);
 
 $queryObject = new CAdminUiResult($queryObject, $tableId);
 $queryObject->NavStart();
@@ -222,16 +306,23 @@ while ($subscribe = $queryObject->fetch()) {
         $row->addField('ACTIVE', Loc::getMessage('PSL_FILTER_NO'));
     }
 
-    if (defined('CATALOG_PRODUCT')) {
-        $editUrl = $selfFolderUrl . CIBlock::getAdminElementEditLink($subscribe['IBLOCK_ID'], $subscribe['ITEM_ID'], array(
-                'find_section_section' => -1, 'WF' => 'Y', 'replace_script_name' => true,
-                'return_url' => $APPLICATION->getCurPageParam('', array('mode', 'table_id', "internal", "grid_id", "grid_action", "bxajaxid", "sessid")))); //todo replace to $listObject->getCurPageParam()
+    $urlBuilder->setIblockId((int)$subscribe['IBLOCK_ID']);
+    if ($adminPage) {
+        $editUrl = $urlBuilder->getElementDetailUrl(
+            (int)$subscribe['ITEM_ID'],
+            $urlParams
+        );
     } else {
-        $editUrl = $selfFolderUrl . CIBlock::getAdminElementEditLink($subscribe['IBLOCK_ID'], $subscribe['ITEM_ID'], array(
-                'find_section_section' => -1, 'WF' => 'Y', 'replace_script_name' => true));
+        $editUrl = $urlBuilder->getProductDetailUrl(
+            (int)$subscribe['ITEM_ID'],
+            $urlParams
+        );
     }
-    $row->addField('PRODUCT_NAME',
-        '<a href="' . $editUrl . '">' . htmlspecialcharsbx($subscribe['PRODUCT_NAME']) . '</a>');
+
+    $row->addField(
+        'PRODUCT_NAME',
+        '<a href="' . $editUrl . '">' . htmlspecialcharsbx($subscribe['PRODUCT_NAME']) . '</a>'
+    );
 
     $actions = array();
     $actionUrl .= '&itemId=' . $subscribe['ITEM_ID'];
@@ -255,9 +346,12 @@ while ($subscribe = $queryObject->fetch()) {
 
 $listUserId = array_keys($listUserData);
 $listUsers = implode(' | ', $listUserId);
-$userQuery = CUser::getList($byUser = 'ID', $orderUser = 'ASC',
+$userQuery = CUser::getList(
+    'ID',
+    'ASC',
     array('ID' => $listUsers),
-    array('FIELDS' => array('ID', 'LOGIN', 'NAME', 'LAST_NAME')));
+    array('FIELDS' => array('ID', 'LOGIN', 'NAME', 'LAST_NAME'))
+);
 while ($user = $userQuery->fetch()) {
     if (is_array($listUserData[$user['ID']])) {
         $urlToUser = $selfFolderUrl . "user_edit.php?ID=" . $user["ID"] . "&lang=" . LANGUAGE_ID;
@@ -273,11 +367,13 @@ while ($user = $userQuery->fetch()) {
     }
 }
 
-$listObject->addGroupActionTable(array(
-    'delete' => Loc::getMessage('PSL_ACTION_DELETE'),
-    'activate' => Loc::getMessage('PSL_ACTION_ACTIVATE'),
-    'deactivate' => Loc::getMessage('PSL_ACTION_DEACTIVATE'),
-));
+$listObject->addGroupActionTable(
+    array(
+        'delete' => Loc::getMessage('PSL_ACTION_DELETE'),
+        'activate' => Loc::getMessage('PSL_ACTION_ACTIVATE'),
+        'deactivate' => Loc::getMessage('PSL_ACTION_DEACTIVATE'),
+    )
+);
 
 $contextListMenu = array();
 $listObject->setContextSettings(array("pagePath" => $selfFolderUrl . "cat_subscription_list.php"));

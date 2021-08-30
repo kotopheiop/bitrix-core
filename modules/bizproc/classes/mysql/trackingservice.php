@@ -1,23 +1,35 @@
 <?
+
 include_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/bizproc/classes/general/trackingservice.php");
 
 class CBPTrackingService
     extends CBPAllTrackingService
 {
-    public function Write($workflowId, $type, $actionName, $executionStatus, $executionResult, $actionTitle = "", $actionNote = "", $modifiedBy = 0)
-    {
+    public function Write(
+        $workflowId,
+        $type,
+        $actionName,
+        $executionStatus,
+        $executionResult,
+        $actionTitle = "",
+        $actionNote = "",
+        $modifiedBy = 0
+    ) {
         global $DB;
 
-        if (!$this->canWrite($type, $workflowId))
+        if (!$this->canWrite($type, $workflowId)) {
             return;
+        }
 
         $workflowId = trim($workflowId);
-        if (strlen($workflowId) <= 0)
+        if (strlen($workflowId) <= 0) {
             throw new Exception("workflowId");
+        }
 
         $actionName = trim($actionName);
-        if (strlen($actionName) <= 0)
+        if (strlen($actionName) <= 0) {
             throw new Exception("actionName");
+        }
 
         $type = intval($type);
         $executionStatus = intval($executionStatus);
@@ -28,16 +40,38 @@ class CBPTrackingService
 
         $DB->Query(
             "INSERT INTO b_bp_tracking(WORKFLOW_ID, TYPE, MODIFIED, ACTION_NAME, ACTION_TITLE, EXECUTION_STATUS, EXECUTION_RESULT, ACTION_NOTE, MODIFIED_BY) " .
-            "VALUES('" . $DB->ForSql($workflowId, 32) . "', " . intval($type) . ", " . $DB->CurrentTimeFunction() . ", '" . $DB->ForSql($actionName, 128) . "', '" . $DB->ForSql($actionTitle, 255) . "', " . intval($executionStatus) . ", " . intval($executionResult) . ", " . (strlen($actionNote) > 0 ? "'" . $DB->ForSql($actionNote) . "'" : "NULL") . ", " . ($modifiedBy > 0 ? $modifiedBy : "NULL") . ")"
+            "VALUES('" . $DB->ForSql($workflowId, 32) . "', " . intval($type) . ", " . $DB->CurrentTimeFunction(
+            ) . ", '" . $DB->ForSql($actionName, 128) . "', '" . $DB->ForSql($actionTitle, 255) . "', " . intval(
+                $executionStatus
+            ) . ", " . intval($executionResult) . ", " . (strlen($actionNote) > 0 ? "'" . $DB->ForSql(
+                    $actionNote
+                ) . "'" : "NULL") . ", " . ($modifiedBy > 0 ? $modifiedBy : "NULL") . ")"
         );
     }
 
-    public static function GetList($arOrder = array("ID" => "DESC"), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
-    {
+    public static function GetList(
+        $arOrder = array("ID" => "DESC"),
+        $arFilter = array(),
+        $arGroupBy = false,
+        $arNavStartParams = false,
+        $arSelectFields = array()
+    ) {
         global $DB;
 
-        if (count($arSelectFields) <= 0)
-            $arSelectFields = array("ID", "WORKFLOW_ID", "TYPE", "MODIFIED", "ACTION_NAME", "ACTION_TITLE", "EXECUTION_STATUS", "EXECUTION_RESULT", "ACTION_NOTE", "MODIFIED_BY");
+        if (count($arSelectFields) <= 0) {
+            $arSelectFields = array(
+                "ID",
+                "WORKFLOW_ID",
+                "TYPE",
+                "MODIFIED",
+                "ACTION_NAME",
+                "ACTION_TITLE",
+                "EXECUTION_STATUS",
+                "EXECUTION_RESULT",
+                "ACTION_NOTE",
+                "MODIFIED_BY"
+            );
+        }
 
         static $arFields = array(
             "ID" => Array("FIELD" => "T.ID", "TYPE" => "int"),
@@ -61,44 +95,53 @@ class CBPTrackingService
                 "SELECT " . $arSqls["SELECT"] . " " .
                 "FROM b_bp_tracking T " .
                 "	" . $arSqls["FROM"] . " ";
-            if (strlen($arSqls["WHERE"]) > 0)
+            if (strlen($arSqls["WHERE"]) > 0) {
                 $strSql .= "WHERE " . $arSqls["WHERE"] . " ";
-            if (strlen($arSqls["GROUPBY"]) > 0)
+            }
+            if (strlen($arSqls["GROUPBY"]) > 0) {
                 $strSql .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
+            }
 
             $dbRes = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-            if ($arRes = $dbRes->Fetch())
+            if ($arRes = $dbRes->Fetch()) {
                 return $arRes["CNT"];
-            else
-                return False;
+            } else {
+                return false;
+            }
         }
 
         $strSql =
             "SELECT " . $arSqls["SELECT"] . " " .
             "FROM b_bp_tracking T " .
             "	" . $arSqls["FROM"] . " ";
-        if (strlen($arSqls["WHERE"]) > 0)
+        if (strlen($arSqls["WHERE"]) > 0) {
             $strSql .= "WHERE " . $arSqls["WHERE"] . " ";
-        if (strlen($arSqls["GROUPBY"]) > 0)
+        }
+        if (strlen($arSqls["GROUPBY"]) > 0) {
             $strSql .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
-        if (strlen($arSqls["ORDERBY"]) > 0)
+        }
+        if (strlen($arSqls["ORDERBY"]) > 0) {
             $strSql .= "ORDER BY " . $arSqls["ORDERBY"] . " ";
+        }
 
         if (is_array($arNavStartParams) && IntVal($arNavStartParams["nTopCount"]) <= 0) {
             $strSql_tmp =
                 "SELECT COUNT('x') as CNT " .
                 "FROM b_bp_tracking T " .
                 "	" . $arSqls["FROM"] . " ";
-            if (strlen($arSqls["WHERE"]) > 0)
+            if (strlen($arSqls["WHERE"]) > 0) {
                 $strSql_tmp .= "WHERE " . $arSqls["WHERE"] . " ";
-            if (strlen($arSqls["GROUPBY"]) > 0)
+            }
+            if (strlen($arSqls["GROUPBY"]) > 0) {
                 $strSql_tmp .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
+            }
 
             $dbRes = $DB->Query($strSql_tmp, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             $cnt = 0;
             if (strlen($arSqls["GROUPBY"]) <= 0) {
-                if ($arRes = $dbRes->Fetch())
+                if ($arRes = $dbRes->Fetch()) {
                     $cnt = $arRes["CNT"];
+                }
             } else {
                 // only for MySQL
                 $cnt = $dbRes->SelectedRowsCount();
@@ -107,8 +150,9 @@ class CBPTrackingService
             $dbRes = new CDBResult();
             $dbRes->NavQuery($strSql, $cnt, $arNavStartParams);
         } else {
-            if (is_array($arNavStartParams) && IntVal($arNavStartParams["nTopCount"]) > 0)
+            if (is_array($arNavStartParams) && IntVal($arNavStartParams["nTopCount"]) > 0) {
                 $strSql .= "LIMIT " . intval($arNavStartParams["nTopCount"]);
+            }
 
             $dbRes = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
         }
@@ -121,8 +165,9 @@ class CBPTrackingService
         global $DB;
 
         $days = intval($days);
-        if ($days <= 0)
+        if ($days <= 0) {
             $days = 90;
+        }
 
         $strSql = "DELETE t " .
             "FROM b_bp_tracking t " .

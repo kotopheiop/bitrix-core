@@ -1,4 +1,7 @@
 <?
+
+use Bitrix\Main\Loader;
+
 define("ADMIN_MODULE_NAME", "perfmon");
 define("PERFMON_STOP", true);
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
@@ -6,13 +9,14 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
 /** @global CDatabase $DB */
 /** @global CUser $USER */
 /** @global string $DBType */
-require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/perfmon/include.php");
+Loader::includeModule('perfmon');
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/perfmon/prolog.php");
 IncludeModuleLangFile(__FILE__);
 
 $RIGHT = $APPLICATION->GetGroupRight("perfmon");
-if ($RIGHT == "D")
+if ($RIGHT == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $APPLICATION->SetTitle(GetMessage("PERFMON_EXPLAIN_TITLE"));
 
@@ -164,10 +168,12 @@ if ($rsData) {
     $rsData = new CDBResult;
     $rsData->InitFromArray(array());
     $lAdmin->BeginPrologContent();
-    $message = new CAdminMessage(array(
-        "MESSAGE" => GetMessage("PERFMON_EXPLAIN_SQL_ERROR"),
-        "TYPE" => "ERROR",
-    ));
+    $message = new CAdminMessage(
+        array(
+            "MESSAGE" => GetMessage("PERFMON_EXPLAIN_SQL_ERROR"),
+            "TYPE" => "ERROR",
+        )
+    );
     echo $message->Show();
     $lAdmin->EndPrologContent();
 }
@@ -176,21 +182,26 @@ $Comment = "";
 $rsData = new CAdminResult($rsData, $sTableID);
 $rsData->NavStart();
 while ($arRes = $rsData->GetNext(true, "f_")) {
-    if (array_key_exists("DEPTH", $arRes))
+    if (array_key_exists("DEPTH", $arRes)) {
         $arRes["OPERATION"] = str_repeat("&nbsp;&nbsp;", $arRes["DEPTH"]) . $arRes["OPERATION"];
-    if (array_key_exists("select_type", $arRes))
+    }
+    if (array_key_exists("select_type", $arRes)) {
         $arRes["select_type"] = $arRes["id"] . " " . $arRes["select_type"];
+    }
     $row = $lAdmin->AddRow($arRes["ID"], $arRes);
-    if (array_key_exists("Comment", $arRes))
+    if (array_key_exists("Comment", $arRes)) {
         $Comment .= $arRes["Comment"] . "\n";
+    }
 }
 
 if ($Comment) {
     $lAdmin->BeginEpilogContent();
-    $message = new CAdminMessage(array(
-        "MESSAGE" => $Comment,
-        "TYPE" => "OK",
-    ));
+    $message = new CAdminMessage(
+        array(
+            "MESSAGE" => $Comment,
+            "TYPE" => "OK",
+        )
+    );
     echo $message->Show();
     $lAdmin->EndEpilogContent();
 }

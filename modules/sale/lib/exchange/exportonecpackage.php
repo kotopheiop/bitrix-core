@@ -116,7 +116,8 @@ abstract class ExportOneCPackage extends ExportOneCBase
 
             $list = array_merge(
                 $this->loadItemsByCollection($order->getPaymentCollection(), $order),
-                $this->loadItemsByCollection($order->getShipmentCollection(), $order));
+                $this->loadItemsByCollection($order->getShipmentCollection(), $order)
+            );
 
             $list[] = $orderImport;
             $list[] = $profileImport;
@@ -125,7 +126,9 @@ abstract class ExportOneCPackage extends ExportOneCBase
 
             $result->setData($list);
         } else {
-            $result->addError(new Error(str_replace('#ID#', $orderId, DocumentBase::getLangByCodeField("ORDER_NOT_FOUND"))));
+            $result->addError(
+                new Error(str_replace('#ID#', $orderId, DocumentBase::getLangByCodeField("ORDER_NOT_FOUND")))
+            );
         }
 
         return $result;
@@ -143,8 +146,9 @@ abstract class ExportOneCPackage extends ExportOneCBase
         if (count($collection) > 0) {
             foreach ($collection as $entity) {
                 if ($entity instanceof Shipment) {
-                    if ($entity->isSystem())
+                    if ($entity->isSystem()) {
                         continue;
+                    }
                 }
 
                 $typeId = $this->resolveEntityTypeId($entity);
@@ -169,12 +173,13 @@ abstract class ExportOneCPackage extends ExportOneCBase
     {
         $typeId = EntityType::UNDEFINED;
 
-        if ($entity instanceof Order)
+        if ($entity instanceof Order) {
             $typeId = OrderImport::resolveEntityTypeId($entity);
-        elseif ($entity instanceof Payment)
+        } elseif ($entity instanceof Payment) {
             $typeId = PaymentImport::resolveEntityTypeId($entity);
-        elseif ($entity instanceof Shipment)
+        } elseif ($entity instanceof Shipment) {
             $typeId = ShipmentImport::resolveEntityTypeId($entity);
+        }
 
         return $typeId;
     }
@@ -286,7 +291,6 @@ abstract class ExportOneCPackage extends ExportOneCBase
                 /** @var Shipment $shipmemt */
                 $shipmemt = $item->getEntity();
                 if ($shipmemt->getPrice() > 0) {
-
                     $shipmentFields['ITEMS'][] = array_merge(
                         array(
                             'PRODUCT_XML_ID' => ImportOneCBase::DELIVERY_SERVICE_XMLID,
@@ -383,8 +387,10 @@ abstract class ExportOneCPackage extends ExportOneCBase
      * @param DocumentBase $document
      * @param UserProfileDocument $documentProfile
      */
-    protected function prepareDocumentFieldsDeliveryAddress(DocumentBase $document, UserProfileDocument $documentProfile)
-    {
+    protected function prepareDocumentFieldsDeliveryAddress(
+        DocumentBase $document,
+        UserProfileDocument $documentProfile
+    ) {
         $fields = $document->getFieldValues();
         $profileFields = $documentProfile->getFieldValues();
 
@@ -403,8 +409,11 @@ abstract class ExportOneCPackage extends ExportOneCBase
      */
     protected function prepareEntityFieldsBusinessValue(ImportBase $item, OrderImport $orderImport = null)
     {
-        if (!($item instanceof OrderImport || $item instanceof ShipmentImport || $item instanceof PaymentImport || $item instanceof UserImportBase))
-            throw new ArgumentException("Entity must be instanceof OrderImport or ShipmentImport or PaymentImport or ProfileImport");
+        if (!($item instanceof OrderImport || $item instanceof ShipmentImport || $item instanceof PaymentImport || $item instanceof UserImportBase)) {
+            throw new ArgumentException(
+                "Entity must be instanceof OrderImport or ShipmentImport or PaymentImport or ProfileImport"
+            );
+        }
 
         $fields = $item->getFieldValues();
 
@@ -454,8 +463,9 @@ abstract class ExportOneCPackage extends ExportOneCBase
     {
         $result = array();
         foreach ($list as $document) {
-            if (!($document instanceof UserProfileDocument))
+            if (!($document instanceof UserProfileDocument)) {
                 $result[] = $document;
+            }
         }
         return $result;
     }

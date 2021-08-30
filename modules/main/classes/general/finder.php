@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 class CFinder
@@ -12,9 +13,11 @@ class CFinder
         $arResult['PROVIDER'] = CUtil::AddSlashes($arParams['PROVIDER']);
 
         $bselectFirstFilledPanel = true;
-        foreach ($arPanels as $panel)
-            if (isset($panel['SELECTED']) && ($panel['SELECTED'] == 'Y' || $panel['SELECTED'] == true))
+        foreach ($arPanels as $panel) {
+            if (isset($panel['SELECTED']) && ($panel['SELECTED'] == 'Y' || $panel['SELECTED'] == true)) {
                 $bselectFirstFilledPanel = false;
+            }
+        }
 
         $tabs = '';
         $elements = '';
@@ -28,12 +31,14 @@ class CFinder
             }
 
             $bsearch = false;
-            if (isset($panel['SEARCH']) && ($panel['SEARCH'] == 'Y' || $panel['SEARCH'] == true))
+            if (isset($panel['SEARCH']) && ($panel['SEARCH'] == 'Y' || $panel['SEARCH'] == true)) {
                 $bsearch = $bsearchable = true;
+            }
 
             $bselect = false;
-            if (isset($panel['SELECTED']) && ($panel['SELECTED'] == 'Y' || $panel['SELECTED'] == true))
+            if (isset($panel['SELECTED']) && ($panel['SELECTED'] == 'Y' || $panel['SELECTED'] == true)) {
                 $bselect = true;
+            }
 
             $panel['NAME'] = htmlspecialcharsEx($panel['NAME']);
             if ($tabCount == 1) {
@@ -137,12 +142,12 @@ class CFinder
         }
 
         $html = '<a href="#' . $arResult['ID'] . '" class="bx-finder-box-item-t3 bx-finder-element" rel="' . $arResult['ID'] . '" onclick="return BX.Finder.onAddItem(\'' . $arResult['PROVIDER'] . '\', 3, this, \'' . $arResult['ID'] . '\')" hidefocus="true">
-						<div style="' . (strlen($arResult['AVATAR']) > 0 ? 'background:url(\'' . $arResult['AVATAR'] . '\') no-repeat center center' : '') . '" class="bx-finder-box-item-t3-avatar"></div>
+						<div style="' . ($arResult['AVATAR'] <> '' ? 'background:url(\'' . $arResult['AVATAR'] . '\') no-repeat center center' : '') . '" class="bx-finder-box-item-t3-avatar"></div>
 						<div class="bx-finder-box-item-t3-info">
 							<div class="bx-finder-box-item-t3-name">' . $arResult['NAME'] . '</div>
 							<div class="bx-finder-box-item-t3-desc">' . $arResult['DESC'] . '</div>
 						</div>
-						<div class="bx-clear"></div>
+						<div style="clear: both"></div>
 					</a>';
 
         return $html;
@@ -161,12 +166,12 @@ class CFinder
 
         $html = '<div class="bx-finder-box-item-t4">
 					<a href="#' . $arResult['ID'] . '" ' . ($bopened ? 'id="bx-finder-box-item-t3-' . $arResult['ID'] . '"' : '') . ' class="bx-finder-box-item-t3 bx-finder-element" rel="' . $arResult['ID'] . '" onclick="return BX.Finder.OpenItemFolder(this)" hidefocus="true">
-						<div style="' . (strlen($arResult['AVATAR']) > 0 ? 'background:url(\'' . $arResult['AVATAR'] . '\') no-repeat center center' : '') . '" class="bx-finder-box-item-t3-avatar"></div>
+						<div style="' . ($arResult['AVATAR'] <> '' ? 'background:url(\'' . $arResult['AVATAR'] . '\') no-repeat center center' : '') . '" class="bx-finder-box-item-t3-avatar"></div>
 						<div class="bx-finder-box-item-t3-info">
 							<div class="bx-finder-box-item-t3-name">' . $arResult['NAME'] . '</div>
 							<div class="bx-finder-box-item-t3-desc">' . $arResult['DESC'] . '</div>
 						</div>
-						<div class="bx-clear"></div>
+						<div style="clear: both"></div>
 					</a>
 					<div class="bx-finder-company-department-children">';
         foreach ($arItem['CHECKBOX'] as $template => $name) {
@@ -180,8 +185,9 @@ class CFinder
         $html .= '	</div>
 					</div>';
 
-        if ($bopened)
+        if ($bopened) {
             $html .= '<script type="text/javascript">BX.ready(function(){setTimeout(function(){BX.Finder.OpenItemFolder(BX(\'bx-finder-box-item-t3-' . $arResult['ID'] . '\'))}, 100)});</script>';
+        }
 
 
         return $html;
@@ -197,12 +203,12 @@ class CFinder
         $arResult['DESC'] = htmlspecialcharsEx($arItem['DESC']);
 
         $html = '<a href="#' . $arResult['ID'] . '" class="bx-finder-box-item-t5 bx-finder-element" rel="' . $arResult['ID'] . '" onclick="return BX.Finder.onAddItem(\'' . $arResult['PROVIDER'] . '\', 5, this, \'' . $arResult['ID'] . '\')" hidefocus="true">
-						<div style="' . (strlen($arResult['AVATAR']) > 0 ? 'background:url(\'' . $arResult['AVATAR'] . '\') no-repeat center center' : '') . '" class="bx-finder-box-item-t5-avatar"></div>
+						<div style="' . ($arResult['AVATAR'] <> '' ? 'background:url(\'' . $arResult['AVATAR'] . '\') no-repeat center center' : '') . '" class="bx-finder-box-item-t5-avatar"></div>
 						<div class="bx-finder-box-item-t5-info">
 							<div class="bx-finder-box-item-t5-name">' . $arResult['NAME'] . '</div>
 							<div class="bx-finder-box-item-t5-desc">' . $arResult['DESC'] . '</div>
 						</div>
-						<div class="bx-clear"></div>
+						<div style="clear: both"></div>
 					</a>';
         return $html;
     }
@@ -244,8 +250,11 @@ class CFinder
                     $bEmptyItem = false;
                 }
             }
-            if ($bEmptyItem)
-                $html .= '<div class="bx-finder-company-department-employees-loading">' . GetMessage('FINDER_PLEASE_WAIT') . '</div>';
+            if ($bEmptyItem) {
+                $html .= '<div class="bx-finder-company-department-employees-loading">' . GetMessage(
+                        'FINDER_PLEASE_WAIT'
+                    ) . '</div>';
+            }
             $html .= '</div>';
         }
         return $html;
@@ -261,8 +270,9 @@ class CFinder
         $bopened = isset($arItem['OPEN']) && ($arItem['OPEN'] == 'Y' || $arItem['OPEN'] == true) ? true : false;
 
         $html = '<div class="bx-finder-company-department" ' . ($bopened ? 'id="bx-finder-company-department-' . $arResult['ID'] . '"' : '') . '><a href="#' . $arResult['ID'] . '" class="bx-finder-company-department-inner" onclick="return BX.Finder.OpenCompanyDepartment(\'' . $arResult['PROVIDER'] . '\', \'' . $arResult['ID'] . '\', this.parentNode)" hidefocus="true"><div class="bx-finder-company-department-arrow"></div><div class="bx-finder-company-department-text">' . $arResult['NAME'] . '</div></a></div>';
-        if ($bopened)
+        if ($bopened) {
             $html .= '<script type="text/javascript">BX.ready(function(){setTimeout(function(){BX.Finder.OpenCompanyDepartment(\'' . $arResult['PROVIDER'] . '\', \'' . $arResult['ID'] . '\', BX(\'bx-finder-company-department-' . $arResult['ID'] . '\'))}, 100)});</script>';
+        }
 
         return $html;
     }
@@ -296,7 +306,7 @@ class CFinder
 							<div class="bx-finder-company-department-employee-name">' . $arResult['NAME'] . '</div>
 							<div class="bx-finder-company-department-employee-position">' . $arResult['DESC'] . '</div>
 						</div>
-						<div style="' . (strlen($arResult['AVATAR']) > 0 ? 'background:url(\'' . $arResult['AVATAR'] . '\') no-repeat center center' : '') . '" class="bx-finder-company-department-employee-avatar"></div>
+						<div style="' . ($arResult['AVATAR'] <> '' ? 'background:url(\'' . $arResult['AVATAR'] . '\') no-repeat center center' : '') . '" class="bx-finder-company-department-employee-avatar"></div>
 					</a>';
 
         return $html;

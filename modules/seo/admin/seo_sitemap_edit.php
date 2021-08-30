@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 define('ADMIN_MODULE_NAME', 'seo');
@@ -50,34 +51,40 @@ if ($mapId > 0) {
             LocalRedirect(BX_ROOT . "/admin/seo_sitemap.php?lang=" . LANGUAGE_ID);
         }
 
-        $arSitemap['SETTINGS'] = unserialize($arSitemap['SETTINGS']);
+        $arSitemap['SETTINGS'] = unserialize($arSitemap['SETTINGS'], ['allowed_classes' => false]);
 
         $arSitemap['SETTINGS']['IBLOCK_AUTO'] = array();
-        $dbRes = SitemapIblockTable::getList(array(
-            "filter" => array("SITEMAP_ID" => $mapId),
-            "select" => array("IBLOCK_ID"),
-        ));
+        $dbRes = SitemapIblockTable::getList(
+            array(
+                "filter" => array("SITEMAP_ID" => $mapId),
+                "select" => array("IBLOCK_ID"),
+            )
+        );
 
         while ($arRes = $dbRes->fetch()) {
             $arSitemap['SETTINGS']['IBLOCK_AUTO'][$arRes['IBLOCK_ID']] = 'Y';
         }
 
-        $dbRes = SitemapEntityTable::getList(array(
-            "filter" => array("SITEMAP_ID" => $mapId),
-        ));
+        $dbRes = SitemapEntityTable::getList(
+            array(
+                "filter" => array("SITEMAP_ID" => $mapId),
+            )
+        );
         while ($arRes = $dbRes->fetch()) {
-            if (!is_array($arSitemap['SETTINGS'][$arRes["ENTITY_TYPE"] . '_AUTO']))
+            if (!is_array($arSitemap['SETTINGS'][$arRes["ENTITY_TYPE"] . '_AUTO'])) {
                 $arSitemap['SETTINGS'][$arRes["ENTITY_TYPE"] . '_AUTO'] = array();
+            }
             $arSitemap['SETTINGS'][$arRes["ENTITY_TYPE"] . '_AUTO'][$arRes['ENTITY_ID']] = 'Y';
         }
-        if (empty($arSitemap['SETTINGS']['FILENAME_FORUM']))
+        if (empty($arSitemap['SETTINGS']['FILENAME_FORUM'])) {
             $arSitemap['SETTINGS']['FILENAME_FORUM'] = "sitemap_forum_#FORUM_ID#.xml";
+        }
 
         $siteId = $arSitemap['SITE_ID'];
     }
 }
 
-if (strlen($siteId) > 0) {
+if ($siteId <> '') {
     $dbSite = Main\SiteTable::getByPrimary($siteId);
     $arSite = $dbSite->fetch();
     if (!is_array($arSite)) {
@@ -92,15 +99,16 @@ if (strlen($siteId) > 0) {
             foreach ($arHostsList as $rule) {
                 $host = $rule[1];
                 if (strncmp($host, 'https://', 8) === 0) {
-                    $host = substr($host, 8);
+                    $host = mb_substr($host, 8);
                     $bDefaultHttps = true;
                 }
                 $arSite['DOMAINS'][] = $host;
             }
         }
 
-        if ($arSite['SERVER_NAME'] != '')
+        if ($arSite['SERVER_NAME'] != '') {
             $arSite['DOMAINS'][] = $arSite['SERVER_NAME'];
+        }
 
         $dbDomains = Bitrix\Main\SiteDomainTable::getList(
             array(
@@ -116,68 +124,103 @@ if (strlen($siteId) > 0) {
     }
 }
 
-if (strlen($siteId) <= 0) {
+if ($siteId == '') {
     require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
     ShowError(Loc::getMessage("SEO_ERROR_SITEMAP_NO_SITE"));
     require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_admin.php");
 }
 
 $aTabs = array(
-    array("DIV" => "seo_sitemap_common", "TAB" => Loc::getMessage('SEO_SITEMAP_COMMON'), "ICON" => "main_settings", "TITLE" => Loc::getMessage('SEO_SITEMAP_COMMON_TITLE')),
-    array("DIV" => "seo_sitemap_files", "TAB" => Loc::getMessage('SEO_SITEMAP_FILES'), "ICON" => "main_settings", "TITLE" => Loc::getMessage('SEO_SITEMAP_FILES_TITLE')),
+    array(
+        "DIV" => "seo_sitemap_common",
+        "TAB" => Loc::getMessage('SEO_SITEMAP_COMMON'),
+        "ICON" => "main_settings",
+        "TITLE" => Loc::getMessage('SEO_SITEMAP_COMMON_TITLE')
+    ),
+    array(
+        "DIV" => "seo_sitemap_files",
+        "TAB" => Loc::getMessage('SEO_SITEMAP_FILES'),
+        "ICON" => "main_settings",
+        "TITLE" => Loc::getMessage('SEO_SITEMAP_FILES_TITLE')
+    ),
 );
 if ($bIBlock) {
-    $aTabs[] = array("DIV" => "seo_sitemap_iblock", "TAB" => Loc::getMessage('SEO_SITEMAP_IBLOCK'), "ICON" => "main_settings", "TITLE" => Loc::getMessage('SEO_SITEMAP_IBLOCK_TITLE'));
+    $aTabs[] = array(
+        "DIV" => "seo_sitemap_iblock",
+        "TAB" => Loc::getMessage('SEO_SITEMAP_IBLOCK'),
+        "ICON" => "main_settings",
+        "TITLE" => Loc::getMessage('SEO_SITEMAP_IBLOCK_TITLE')
+    );
 }
 if ($bForum) {
-    $aTabs[] = array("DIV" => "seo_sitemap_forum", "TAB" => Loc::getMessage('SEO_SITEMAP_FORUM'), "ICON" => "main_settings", "TITLE" => Loc::getMessage('SEO_SITEMAP_FORUM_TITLE'));
+    $aTabs[] = array(
+        "DIV" => "seo_sitemap_forum",
+        "TAB" => Loc::getMessage('SEO_SITEMAP_FORUM'),
+        "ICON" => "main_settings",
+        "TITLE" => Loc::getMessage('SEO_SITEMAP_FORUM_TITLE')
+    );
 }
 
 $tabControl = new \CAdminTabControl("seoSitemapTabControl", $aTabs, true, true);
 
 $errors = array();
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid() && (strlen($_POST["save"]) > 0 || strlen($_POST['apply']) > 0 || strlen($_POST['save_and_add']) > 0)) {
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid(
+    ) && ($_POST["save"] <> '' || $_POST['apply'] <> '' || $_POST['save_and_add'] <> '')) {
     $fileNameIndex = trim($_REQUEST['FILENAME_INDEX']);
     $fileNameFiles = trim($_REQUEST['FILENAME_FILES']);
     $fileNameForum = trim($_REQUEST['FILENAME_FORUM']);
     $fileNameIblock = trim($_REQUEST['FILENAME_IBLOCK']);
 
     if ($fileNameIndex == '') {
-        $errors[] = Loc::getMessage('SEO_ERROR_SITEMAP_NO_VALUE', array('#FIELD#' => Loc::getMessage('SITEMAP_FILENAME_ADDRESS')));
+        $errors[] = Loc::getMessage(
+            'SEO_ERROR_SITEMAP_NO_VALUE',
+            array('#FIELD#' => Loc::getMessage('SITEMAP_FILENAME_ADDRESS'))
+        );
     }
     if ($fileNameFiles == '') {
-        $errors[] = Loc::getMessage('SEO_ERROR_SITEMAP_NO_VALUE', array('#FIELD#' => Loc::getMessage('SITEMAP_FILENAME_FILE')));
+        $errors[] = Loc::getMessage(
+            'SEO_ERROR_SITEMAP_NO_VALUE',
+            array('#FIELD#' => Loc::getMessage('SITEMAP_FILENAME_FILE'))
+        );
     }
     if ($bIBlock && $fileNameIblock == '') {
-        $errors[] = Loc::getMessage('SEO_ERROR_SITEMAP_NO_VALUE', array('#FIELD#' => Loc::getMessage('SITEMAP_FILENAME_IBLOCK')));
+        $errors[] = Loc::getMessage(
+            'SEO_ERROR_SITEMAP_NO_VALUE',
+            array('#FIELD#' => Loc::getMessage('SITEMAP_FILENAME_IBLOCK'))
+        );
     }
     if ($bForum && $fileNameForum == '') {
-        $errors[] = Loc::getMessage('SEO_ERROR_SITEMAP_NO_VALUE', array('#FIELD#' => Loc::getMessage('SITEMAP_FILENAME_FORUM')));
+        $errors[] = Loc::getMessage(
+            'SEO_ERROR_SITEMAP_NO_VALUE',
+            array('#FIELD#' => Loc::getMessage('SITEMAP_FILENAME_FORUM'))
+        );
     }
 
     if (empty($errors)) {
-        $arSitemapSettings = SitemapTable::prepareSettings(array(
-            'FILE_MASK' => trim($_REQUEST['FILE_MASK']),
-            'ROBOTS' => $_REQUEST['ROBOTS'] == 'N' ? 'N' : 'Y',
-            'logical' => $_REQUEST['log'] == 'N' ? 'N' : 'Y',
-            'DIR' => $_REQUEST['DIR'],
-            'FILE' => $_REQUEST['FILE'],
-            'PROTO' => $_REQUEST['PROTO'],
-            'DOMAIN' => $_REQUEST['DOMAIN'],
-            'FILENAME_INDEX' => $fileNameIndex,
-            'FILENAME_FILES' => $fileNameFiles,
-            'FILENAME_IBLOCK' => $fileNameIblock,
-            'FILENAME_FORUM' => $fileNameForum,
-            'IBLOCK_ACTIVE' => $_REQUEST['IBLOCK_ACTIVE'],
-            'IBLOCK_LIST' => $_REQUEST['IBLOCK_LIST'],
-            'IBLOCK_SECTION' => $_REQUEST['IBLOCK_SECTION'],
-            'IBLOCK_ELEMENT' => $_REQUEST['IBLOCK_ELEMENT'],
-            'IBLOCK_SECTION_SECTION' => $_REQUEST['IBLOCK_SECTION_SECTION'],
-            'IBLOCK_SECTION_ELEMENT' => $_REQUEST['IBLOCK_SECTION_ELEMENT'],
-            'FORUM_ACTIVE' => $_REQUEST['FORUM_ACTIVE'],
-            'FORUM_TOPIC' => $_REQUEST['FORUM_TOPIC'],
-        ));
+        $arSitemapSettings = SitemapTable::prepareSettings(
+            array(
+                'FILE_MASK' => trim($_REQUEST['FILE_MASK']),
+                'ROBOTS' => $_REQUEST['ROBOTS'] == 'N' ? 'N' : 'Y',
+                'logical' => $_REQUEST['log'] == 'N' ? 'N' : 'Y',
+                'DIR' => $_REQUEST['DIR'],
+                'FILE' => $_REQUEST['FILE'],
+                'PROTO' => $_REQUEST['PROTO'],
+                'DOMAIN' => $_REQUEST['DOMAIN'],
+                'FILENAME_INDEX' => $fileNameIndex,
+                'FILENAME_FILES' => $fileNameFiles,
+                'FILENAME_IBLOCK' => $fileNameIblock,
+                'FILENAME_FORUM' => $fileNameForum,
+                'IBLOCK_ACTIVE' => $_REQUEST['IBLOCK_ACTIVE'],
+                'IBLOCK_LIST' => $_REQUEST['IBLOCK_LIST'],
+                'IBLOCK_SECTION' => $_REQUEST['IBLOCK_SECTION'],
+                'IBLOCK_ELEMENT' => $_REQUEST['IBLOCK_ELEMENT'],
+                'IBLOCK_SECTION_SECTION' => $_REQUEST['IBLOCK_SECTION_SECTION'],
+                'IBLOCK_SECTION_ELEMENT' => $_REQUEST['IBLOCK_SECTION_ELEMENT'],
+                'FORUM_ACTIVE' => $_REQUEST['FORUM_ACTIVE'],
+                'FORUM_TOPIC' => $_REQUEST['FORUM_TOPIC'],
+            )
+        );
 
         $arSiteMapFields = array(
             'NAME' => trim($_REQUEST['NAME']),
@@ -201,10 +244,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid() && (strlen($_P
             if (is_array($_REQUEST['IBLOCK_AUTO'])) {
                 foreach ($_REQUEST['IBLOCK_AUTO'] as $iblockId => $auto) {
                     if ($auto === 'Y') {
-                        $result = SitemapIblockTable::add(array(
-                            'SITEMAP_ID' => $mapId,
-                            'IBLOCK_ID' => intval($iblockId),
-                        ));
+                        $result = SitemapIblockTable::add(
+                            array(
+                                'SITEMAP_ID' => $mapId,
+                                'IBLOCK_ID' => intval($iblockId),
+                            )
+                        );
                     }
                 }
             }
@@ -222,9 +267,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid() && (strlen($_P
             if ($_REQUEST["save"] <> '') {
                 LocalRedirect(BX_ROOT . "/admin/seo_sitemap.php?lang=" . LANGUAGE_ID);
             } elseif ($_REQUEST["save_and_add"] <> '') {
-                LocalRedirect(BX_ROOT . "/admin/seo_sitemap.php?lang=" . LANGUAGE_ID . "&run=" . $mapId . "&" . bitrix_sessid_get());
+                LocalRedirect(
+                    BX_ROOT . "/admin/seo_sitemap.php?lang=" . LANGUAGE_ID . "&run=" . $mapId . "&" . bitrix_sessid_get(
+                    )
+                );
             } else {
-                LocalRedirect(BX_ROOT . "/admin/seo_sitemap_edit.php?lang=" . LANGUAGE_ID . "&ID=" . $mapId . "&" . $tabControl->ActiveTabParam());
+                LocalRedirect(
+                    BX_ROOT . "/admin/seo_sitemap_edit.php?lang=" . LANGUAGE_ID . "&ID=" . $mapId . "&" . $tabControl->ActiveTabParam(
+                    )
+                );
             }
         } else {
             $errors = $result->getErrorMessages();
@@ -234,8 +285,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid() && (strlen($_P
 
 function seo_getDir($bLogical, $site_id, $dir, $depth, $checked, $arChecked = array())
 {
-    if (!is_array($arChecked))
+    if (!is_array($arChecked)) {
         $arChecked = array();
+    }
 
     $arDirs = \CSeoUtils::getDirStructure($bLogical, $site_id, $dir);
     if (count($arDirs) > 0) {
@@ -253,7 +305,9 @@ function seo_getDir($bLogical, $site_id, $dir, $depth, $checked, $arChecked = ar
                 <?
                 if ($arDir['TYPE'] == 'D'):
                     ?>
-                <span onclick="loadDir(<?= $bLogical ? 'true' : 'false' ?>, this, '<?= CUtil::JSEscape($d) ?>', '<?= $r ?>', '<?= $depth + 1 ?>', BX('DIR_<?= $d ?>').checked)"
+                <span onclick="loadDir(<?= $bLogical ? 'true' : 'false' ?>, this, '<?= CUtil::JSEscape(
+                    $d
+                ) ?>', '<?= $r ?>', '<?= $depth + 1 ?>', BX('DIR_<?= $d ?>').checked)"
                       class="sitemap-tree-icon"></span><?
                 endif;
                 ?><span class="sitemap-dir-item-text">
@@ -261,7 +315,9 @@ function seo_getDir($bLogical, $site_id, $dir, $depth, $checked, $arChecked = ar
 		<input type="checkbox" name="<?= $varName ?>[<?= $d ?>]"
                id="DIR_<?= $d ?>"<?= $bChecked ? ' checked="checked"' : '' ?> value="Y"
                onclick="checkAll('<?= $r ?>', this.checked);"/>
-		<label for="DIR_<?= $d ?>"><?= Converter::getHtmlConverter()->encode($arDir['NAME'] . ($bLogical ? (' (' . $arDir['FILE'] . ')') : '')) ?></label>
+		<label for="DIR_<?= $d ?>"><?= Converter::getHtmlConverter()->encode(
+                $arDir['NAME'] . ($bLogical ? (' (' . $arDir['FILE'] . ')') : '')
+            ) ?></label>
 	</span>
                 <div id="subdirs_<?= $r ?>" class="sitemap-dir-item-children"></div>
             </div>
@@ -272,13 +328,19 @@ function seo_getDir($bLogical, $site_id, $dir, $depth, $checked, $arChecked = ar
     }
 }
 
-function seo_getIblock($iblockId, $sectionId, $sectionChecked, $elementChecked, $arSectionChecked = array(), $arElementChecked = array())
-{
+function seo_getIblock(
+    $iblockId,
+    $sectionId,
+    $sectionChecked,
+    $elementChecked,
+    $arSectionChecked = array(),
+    $arElementChecked = array()
+) {
     $dbIblock = \CIBlock::GetByID($iblockId);
     $arIBlock = $dbIblock->Fetch();
     if (is_array($arIBlock)) {
-        $bSection = strlen($arIBlock['SECTION_PAGE_URL']) > 0;
-        $bElement = strlen($arIBlock['DETAIL_PAGE_URL']) > 0;
+        $bSection = $arIBlock['SECTION_PAGE_URL'] <> '';
+        $bElement = $arIBlock['DETAIL_PAGE_URL'] <> '';
 
         $dbRes = \CIBlockSection::GetList(
             array('SORT' => 'ASC', 'NAME' => 'ASC'),
@@ -315,8 +377,8 @@ function seo_getIblock($iblockId, $sectionId, $sectionChecked, $elementChecked, 
                             onclick="loadIblock(this, '<?= $arRes['IBLOCK_ID'] ?>', '<?= $d ?>', '<?= $r ?>', BX('IBLOCK_SECTION_SECTION_<?= $d ?>').checked, BX('IBLOCK_SECTION_ELEMENT_<?= $d ?>').checked);"
                             class="sitemap-tree-icon-iblock"></span></td>
                 <td>
-                    <a href="iblock_list_admin.php?lang=<?= LANGUAGE_ID ?>&amp;IBLOCK_ID=<?= $arRes['IBLOCK_ID'] ?>&amp;find_section_section=<?= $d ?>"><?= Converter::getHtmlConverter()->encode($arRes['NAME']) ?></a>
-                </td>
+                    <a href="iblock_list_admin.php?lang=<?= LANGUAGE_ID ?>&amp;IBLOCK_ID=<?= $arRes['IBLOCK_ID'] ?>&amp;find_section_section=<?= $d ?>"><?= Converter::getHtmlConverter(
+                        )->encode($arRes['NAME']) ?></a></td>
                 <td align="center"><input type="hidden" name="IBLOCK_SECTION_SECTION[<?= $iblockId ?>][<?= $d ?>]"
                                           value="N"/><input type="checkbox"
                                                             name="IBLOCK_SECTION_SECTION[<?= $iblockId ?>][<?= $d ?>]"
@@ -355,10 +417,12 @@ if (isset($_REQUEST['dir']) && check_bitrix_sessid()) {
 
     $APPLICATION->RestartBuffer();
 
-    if (!is_array($arSitemap['SETTINGS']['DIR']))
+    if (!is_array($arSitemap['SETTINGS']['DIR'])) {
         $arSitemap['SETTINGS']['DIR'] = array();
-    if (!is_array($arSitemap['SETTINGS']['FILE']))
+    }
+    if (!is_array($arSitemap['SETTINGS']['FILE'])) {
         $arSitemap['SETTINGS']['FILE'] = array();
+    }
 
     $arChecked = array_merge($arSitemap['SETTINGS']['DIR'], $arSitemap['SETTINGS']['FILE']);
 
@@ -375,8 +439,17 @@ if ($bIBlock && isset($_REQUEST['iblock']) && check_bitrix_sessid()) {
 
     $APPLICATION->RestartBuffer();
 
-    if (is_array($arSitemap['SETTINGS']['IBLOCK_SECTION_SECTION'][$iblock]) || is_array($arSitemap['SETTINGS']['IBLOCK_SECTION_ELEMENT'][$iblock])) {
-        echo seo_getIblock($iblock, $section, $sectionChecked, $elementChecked, $arSitemap['SETTINGS']['IBLOCK_SECTION_SECTION'][$iblock], $arSitemap['SETTINGS']['IBLOCK_SECTION_ELEMENT'][$iblock]);
+    if (is_array($arSitemap['SETTINGS']['IBLOCK_SECTION_SECTION'][$iblock]) || is_array(
+            $arSitemap['SETTINGS']['IBLOCK_SECTION_ELEMENT'][$iblock]
+        )) {
+        echo seo_getIblock(
+            $iblock,
+            $section,
+            $sectionChecked,
+            $elementChecked,
+            $arSitemap['SETTINGS']['IBLOCK_SECTION_SECTION'][$iblock],
+            $arSitemap['SETTINGS']['IBLOCK_SECTION_ELEMENT'][$iblock]
+        );
     } else {
         echo seo_getIblock($iblock, $section, $sectionChecked, $elementChecked);
     }
@@ -428,7 +501,9 @@ $bLogical = $arSitemap['SETTINGS']['logical'] != 'N';
 
 $APPLICATION->SetAdditionalCSS("/bitrix/panel/seo/sitemap.css");
 
-$APPLICATION->SetTitle($mapId > 0 ? Loc::getMessage("SEO_SITEMAP_EDIT_TITLE") : Loc::getMessage("SEO_SITEMAP_ADD_TITLE"));
+$APPLICATION->SetTitle(
+    $mapId > 0 ? Loc::getMessage("SEO_SITEMAP_EDIT_TITLE") : Loc::getMessage("SEO_SITEMAP_ADD_TITLE")
+);
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
 $aMenu = array();
@@ -442,7 +517,10 @@ $aMenu[] = array(
 if ($mapId > 0) {
     $aMenu[] = array(
         "TEXT" => Loc::getMessage("SITEMAP_DELETE"),
-        "LINK" => "javascript:if(confirm('" . Loc::getMessage("SITEMAP_DELETE_CONFIRM") . "')) window.location='/bitrix/admin/seo_sitemap_edit.php?action=delete&ID=" . $mapId . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get() . "';",
+        "LINK" => "javascript:if(confirm('" . Loc::getMessage(
+                "SITEMAP_DELETE_CONFIRM"
+            ) . "')) window.location='/bitrix/admin/seo_sitemap_edit.php?action=delete&ID=" . $mapId . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get(
+            ) . "';",
         "ICON" => "btn_delete",
         "TITLE" => Loc::getMessage("SITEMAP_DELETE_TITLE"),
     );
@@ -479,7 +557,8 @@ $tabControl->BeginNextTab();
                 <?
                 foreach ($arSite['DOMAINS'] as $domain):
                     $hd = Converter::getHtmlConverter()->encode($domain);
-                    $hdc = Converter::getHtmlConverter()->encode(CBXPunycode::ToUnicode($domain, $e = null));
+                    $e = [];
+                    $hdc = Converter::getHtmlConverter()->encode(CBXPunycode::ToUnicode($domain, $e));
                     ?>
                     <option value="<?= $hd ?>"<?= $domain == $arSitemap['SETTINGS']['DOMAIN'] ? ' selected="selected"' : '' ?>><?= $hdc ?></option>
                 <?
@@ -487,8 +566,10 @@ $tabControl->BeginNextTab();
                 ?>
             </select> <b><?= Converter::getHtmlConverter()->encode($arSite['DIR']); ?></b> <input type="text"
                                                                                                   name="FILENAME_INDEX"
-                                                                                                  value="<?= Converter::getHtmlConverter()->encode($arSitemap['SETTINGS']["FILENAME_INDEX"]) ?>"/>
-        </td>
+                                                                                                  value="<?= Converter::getHtmlConverter(
+                                                                                                  )->encode(
+                                                                                                      $arSitemap['SETTINGS']["FILENAME_INDEX"]
+                                                                                                  ) ?>"/></td>
     </tr>
     <tr>
         <td></td>
@@ -508,7 +589,9 @@ $tabControl->BeginNextTab();
     </tr>
     <tr>
         <td width="40%"><?= Loc::getMessage('SITEMAP_DATE_RUN') ?>:</td>
-        <td width="60%"><?= $arSitemap['DATE_RUN'] ? $arSitemap['DATE_RUN'] : Loc::getMessage('SITEMAP_DATE_RUN_NEVER') ?></td>
+        <td width="60%"><?= $arSitemap['DATE_RUN'] ? $arSitemap['DATE_RUN'] : Loc::getMessage(
+                'SITEMAP_DATE_RUN_NEVER'
+            ) ?></td>
     </tr>
 <?
 $tabControl->BeginNextTab();
@@ -577,19 +660,21 @@ $bChecked = isset($arSitemap['SETTINGS']['DIR'])
     </script>
     <tr class="adm-detail-required-field">
         <td width="40%"><?= Loc::getMessage("SITEMAP_FILENAME_FILE") ?>:</td>
-        <td width="60%"><input type="text" name="FILENAME_FILES"
-                               value="<?= Converter::getHtmlConverter()->encode($arSitemap['SETTINGS']["FILENAME_FILES"]) ?>"
-                               style="width:70%"></td>
+        <td width="60%"><input type="text" name="FILENAME_FILES" value="<?= Converter::getHtmlConverter()->encode(
+                $arSitemap['SETTINGS']["FILENAME_FILES"]
+            ) ?>" style="width:70%"></td>
     </tr>
     <tr>
         <td width="40%" valign="top"><?= Loc::getMessage('SEO_SITEMAP_STRUCTURE_TYPE') ?>:</td>
         <td width="60%">
             <input type="radio" name="log" id="log_Y" value="Y"<?= $bLogical ? ' checked="checked"' : '' ?>
-                   onclick="switchLogic(true)"/><label
-                    for="log_Y"><?= Loc::getMessage('SEO_SITEMAP_STRUCTURE_TYPE_Y') ?></label><br/>
+                   onclick="switchLogic(true)"/><label for="log_Y"><?= Loc::getMessage(
+                    'SEO_SITEMAP_STRUCTURE_TYPE_Y'
+                ) ?></label><br/>
             <input type="radio" name="log" id="log_N" value="N"<?= $bLogical ? '' : ' checked="checked"' ?>
-                   onclick="switchLogic(false)"/><label
-                    for="log_N"><?= Loc::getMessage('SEO_SITEMAP_STRUCTURE_TYPE_N') ?></label>
+                   onclick="switchLogic(false)"/><label for="log_N"><?= Loc::getMessage(
+                    'SEO_SITEMAP_STRUCTURE_TYPE_N'
+                ) ?></label>
         </td>
     </tr>
     <tr>
@@ -623,7 +708,6 @@ $bChecked = isset($arSitemap['SETTINGS']['DIR'])
                             <?
                         }
                     }
-
                 } else {
                     $arSitemap['SETTINGS']['DIR'] = array();
                 }
@@ -636,8 +720,9 @@ $bChecked = isset($arSitemap['SETTINGS']['DIR'])
     </tr>
     <tr>
         <td width="40%" valign="top"><?= Loc::getMessage('SEO_SITEMAP_STRUCTURE_FILE_MASK') ?>:</td>
-        <td width="60%"><input type="text" name="FILE_MASK"
-                               value="<?= Converter::getHtmlConverter()->encode($arSitemap['SETTINGS']['FILE_MASK']) ?>"/>
+        <td width="60%"><input type="text" name="FILE_MASK" value="<?= Converter::getHtmlConverter()->encode(
+                $arSitemap['SETTINGS']['FILE_MASK']
+            ) ?>"/>
             <?
             echo BeginNote();
             echo Loc::getMessage('SEO_FILE_MASK_HELP');
@@ -651,17 +736,20 @@ if ($bIBlock) {
     ?>
     <tr class="adm-detail-required-field">
         <td width="40%"><?= Loc::getMessage("SITEMAP_FILENAME_IBLOCK") ?>:</td>
-        <td width="60%"><input type="text" name="FILENAME_IBLOCK"
-                               value="<?= Converter::getHtmlConverter()->encode($arSitemap['SETTINGS']["FILENAME_IBLOCK"]) ?>"
-                               style="width:70%"></td>
+        <td width="60%"><input type="text" name="FILENAME_IBLOCK" value="<?= Converter::getHtmlConverter()->encode(
+                $arSitemap['SETTINGS']["FILENAME_IBLOCK"]
+            ) ?>" style="width:70%"></td>
     </tr>
 
     <tr>
         <td colspan="2" align="center">
             <?
-            $dbRes = CIBlock::GetList(array("ID" => "ASC"), array(
-                'SITE_ID' => $siteId
-            ));
+            $dbRes = CIBlock::GetList(
+                array("ID" => "ASC"),
+                array(
+                    'SITE_ID' => $siteId
+                )
+            );
             $bFound = false;
             while ($arRes = $dbRes->Fetch())
             {
@@ -689,7 +777,10 @@ if ($bIBlock) {
                         BX(row).style.display = '';
                     } else {
                         BX(div).innerHTML = BX.message('JS_CORE_LOADING');
-                        BX.ajax.get('<?=$APPLICATION->GetCurPageParam('', array('dir', 'iblock', 'section', 'depth'))?>', {
+                        BX.ajax.get('<?=$APPLICATION->GetCurPageParam(
+                            '',
+                            array('dir', 'iblock', 'section', 'depth')
+                        )?>', {
                             iblock: iblock,
                             section: section,
                             section_checked: section_checked ? 'Y' : 'N',
@@ -752,12 +843,18 @@ if ($bIBlock) {
                 $r = RandString(8);
                 $d = $arRes['ID'];
 
-                $bList = strlen($arRes['LIST_PAGE_URL']) > 0;
-                $bListChecked = $bList && (!is_array($arSitemap['SETTINGS']['IBLOCK_LIST']) || $arSitemap['SETTINGS']['IBLOCK_LIST'][$d] == 'Y');
-                $bSection = strlen($arRes['SECTION_PAGE_URL']) > 0;
-                $bSectionChecked = $bSection && (!is_array($arSitemap['SETTINGS']['IBLOCK_SECTION']) || $arSitemap['SETTINGS']['IBLOCK_SECTION'][$d] == 'Y');
-                $bElement = strlen($arRes['DETAIL_PAGE_URL']) > 0;
-                $bElementChecked = $bElement && (!is_array($arSitemap['SETTINGS']['IBLOCK_ELEMENT']) || $arSitemap['SETTINGS']['IBLOCK_ELEMENT'][$d] == 'Y');
+                $bList = $arRes['LIST_PAGE_URL'] <> '';
+                $bListChecked = $bList && (!is_array(
+                            $arSitemap['SETTINGS']['IBLOCK_LIST']
+                        ) || $arSitemap['SETTINGS']['IBLOCK_LIST'][$d] == 'Y');
+                $bSection = $arRes['SECTION_PAGE_URL'] <> '';
+                $bSectionChecked = $bSection && (!is_array(
+                            $arSitemap['SETTINGS']['IBLOCK_SECTION']
+                        ) || $arSitemap['SETTINGS']['IBLOCK_SECTION'][$d] == 'Y');
+                $bElement = $arRes['DETAIL_PAGE_URL'] <> '';
+                $bElementChecked = $bElement && (!is_array(
+                            $arSitemap['SETTINGS']['IBLOCK_ELEMENT']
+                        ) || $arSitemap['SETTINGS']['IBLOCK_ELEMENT'][$d] == 'Y');
 
                 $bAuto = ($bElementChecked || $bSectionChecked) && $arSitemap['SETTINGS']['IBLOCK_AUTO'][$d] == 'Y';
 
@@ -773,7 +870,9 @@ if ($bIBlock) {
                                onclick="setIblockActive(this, '<?= $r ?>')"<?= $bActive ? ' checked="checked"' : '' ?>
                                value="Y"/>
                         <a href="iblock_edit.php?lang=<?= LANGUAGE_ID ?>&amp;ID=<?= $d ?>&amp;type=<?= $arRes['IBLOCK_TYPE_ID'] ?>&amp;admin=Y">[<?= $arRes['ID'] ?>
-                            ] <?= Converter::getHtmlConverter()->encode($arRes['NAME'] . ' (' . $arRes['CODE'] . ')') ?></a>
+                            ] <?= Converter::getHtmlConverter()->encode(
+                                $arRes['NAME'] . ' (' . $arRes['CODE'] . ')'
+                            ) ?></a>
                     </td>
                     <td align="center"><input type="hidden" name="IBLOCK_AUTO[<?= $d ?>]" value="N"/><input
                                 type="checkbox" name="IBLOCK_AUTO[<?= $d ?>]" id="IBLOCK_AUTO_<?= $d ?>"
@@ -801,8 +900,8 @@ if ($bIBlock) {
                         foreach ($arSitemap['SETTINGS']['IBLOCK_SECTION_SECTION'][$arRes['ID']] as $dir => $value) {
                             ?>
                             <input type="hidden"
-                                   name="IBLOCK_SECTION_SECTION[<?= $arRes['ID'] ?>][<?= Converter::getHtmlConverter()->encode($dir); ?>]"
-                                   value="<?= $value == 'N' ? 'N' : 'Y' ?>"/>
+                                   name="IBLOCK_SECTION_SECTION[<?= $arRes['ID'] ?>][<?= Converter::getHtmlConverter(
+                                   )->encode($dir); ?>]" value="<?= $value == 'N' ? 'N' : 'Y' ?>"/>
                             <?
                         }
                     }
@@ -811,8 +910,8 @@ if ($bIBlock) {
                         foreach ($arSitemap['SETTINGS']['IBLOCK_SECTION_ELEMENT'][$arRes['ID']] as $dir => $value) {
                             ?>
                             <input type="hidden"
-                                   name="IBLOCK_SECTION_ELEMENT[<?= $arRes['ID'] ?>][<?= Converter::getHtmlConverter()->encode($dir); ?>]"
-                                   value="<?= $value == 'N' ? 'N' : 'Y' ?>"/>
+                                   name="IBLOCK_SECTION_ELEMENT[<?= $arRes['ID'] ?>][<?= Converter::getHtmlConverter(
+                                   )->encode($dir); ?>]" value="<?= $value == 'N' ? 'N' : 'Y' ?>"/>
                             <?
                         }
                     }
@@ -841,19 +940,21 @@ if ($bForum) {
     ?>
     <tr class="adm-detail-required-field">
         <td width="40%"><?= Loc::getMessage("SITEMAP_FILENAME_FORUM") ?>:</td>
-        <td width="60%"><input type="text" name="FILENAME_FORUM"
-                               value="<?= Converter::getHtmlConverter()->encode($arSitemap['SETTINGS']["FILENAME_FORUM"]) ?>"
-                               style="width:70%"></td>
+        <td width="60%"><input type="text" name="FILENAME_FORUM" value="<?= Converter::getHtmlConverter()->encode(
+                $arSitemap['SETTINGS']["FILENAME_FORUM"]
+            ) ?>" style="width:70%"></td>
     </tr>
 
     <tr>
         <td colspan="2" align="center">
             <?
-            $dbRes = CForumNew::GetListEx(array("ID" => "ASC"), array('PERMS' => array(2, 'A'), 'ACTIVE' => 'Y', 'SITE_ID' => $siteId));
+            $dbRes = CForumNew::GetListEx(
+                array("ID" => "ASC"),
+                array('PERMS' => array(2, 'A'), 'ACTIVE' => 'Y', 'SITE_ID' => $siteId)
+            );
             $bFound = false;
             while (!!$dbRes && ($arRes = $dbRes->Fetch()))
             {
-
             if (!$bFound)
             {
             ?>
@@ -880,8 +981,10 @@ if ($bForum) {
 
                 $r = RandString(8);
                 $d = $arRes['ID'];
-                $bTopic = strlen($arRes['PATH2FORUM_MESSAGE']) > 0;
-                $bTopicChecked = $bTopic && (!is_array($arSitemap['SETTINGS']['FORUM_TOPIC']) || $arSitemap['SETTINGS']['FORUM_TOPIC'][$d] == 'Y');
+                $bTopic = $arRes['PATH2FORUM_MESSAGE'] <> '';
+                $bTopicChecked = $bTopic && (!is_array(
+                            $arSitemap['SETTINGS']['FORUM_TOPIC']
+                        ) || $arSitemap['SETTINGS']['FORUM_TOPIC'][$d] == 'Y');
 
                 $bAuto = $bTopicChecked && $arSitemap['SETTINGS']['FORUM_AUTO'][$d] == 'Y';
                 $bActive = !isset($arSitemap['SETTINGS']['FORUM_ACTIVE']) || $arSitemap['SETTINGS']['FORUM_ACTIVE'][$d] == 'Y';

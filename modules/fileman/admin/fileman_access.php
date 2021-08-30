@@ -1,9 +1,11 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/fileman/prolog.php");
 
-if (!($USER->CanDoOperation('fileman_edit_existent_folders') || $USER->CanDoOperation('fileman_admin_folders')))
+if (!($USER->CanDoOperation('fileman_edit_existent_folders') || $USER->CanDoOperation('fileman_admin_folders'))) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/fileman/include.php");
 IncludeModuleLangFile(__FILE__);
@@ -30,10 +32,12 @@ $arPermTypes = Array();
 $res = CTask::GetList(Array('LETTER' => 'asc'), Array('MODULE_ID' => 'main', 'BINDING' => 'file'));
 while ($arRes = $res->Fetch()) {
     $name = '';
-    if ($arRes['SYS'])
-        $name = GetMessage(strtoupper($arRes['NAME']));
-    if (strlen($name) == 0)
+    if ($arRes['SYS']) {
+        $name = GetMessage(mb_strtoupper($arRes['NAME']));
+    }
+    if ($name == '') {
         $name = $arRes['NAME'];
+    }
 
     $arPermTypes[$arRes['ID']] = Array(
         'title' => $name,
@@ -50,10 +54,11 @@ $arFiles = Array();
 if (count($files) > 0) {
     CUtil::decodeURIComponent($files);
     for ($i = 0; $i < count($files); $i++) {
-        if (!$USER->CanDoFileOperation('fm_edit_permission', Array($site, $path . "/" . $files[$i])))
+        if (!$USER->CanDoFileOperation('fm_edit_permission', Array($site, $path . "/" . $files[$i]))) {
             $strWarning .= GetMessage("FILEMAN_ACCESS_TO_DENIED") . " \"" . $files[$i] . "\".\n";
-        elseif ($files[$i] != '.')
+        } elseif ($files[$i] != '.') {
             $arFiles[] = $files[$i];
+        }
     }
 } else {
     $arPDirs = array();
@@ -61,12 +66,14 @@ if (count($files) > 0) {
     CFileMan::GetDirList(Array($site, $path), $arPDirs, $arPFiles, array("MIN_PERMISSION" => "X"), array(), "DF");
 
     foreach ($arPDirs as $dir) {
-        if ($USER->CanDoFileOperation('fm_edit_permission', Array($site, $dir['ABS_PATH'])))
+        if ($USER->CanDoFileOperation('fm_edit_permission', Array($site, $dir['ABS_PATH']))) {
             $arFiles[] = $dir["NAME"];
+        }
     }
     foreach ($arPFiles as $file) {
-        if ($USER->CanDoFileOperation('fm_edit_permission', Array($site, $file['ABS_PATH'])))
+        if ($USER->CanDoFileOperation('fm_edit_permission', Array($site, $file['ABS_PATH']))) {
             $arFiles[] = $file["NAME"];
+        }
     }
 }
 $filesCount = count($arFiles);
@@ -86,17 +93,19 @@ function GetAccessArrTmp($path)
 if ($USER->CanDoOperation('edit_subordinate_users') && !$USER->CanDoOperation('edit_all_users')) {
     $arSubordGroups = Array();
     $arGroups = explode(',', $USER->GetGroups());
-    for ($i = 0, $l = count($arGroups); $i < $l; $i++)
+    for ($i = 0, $l = count($arGroups); $i < $l; $i++) {
         $arSubordGroups = array_merge($arSubordGroups, CGroup::GetSubordinateGroups($arGroups[$i]));
+    }
     $arSubordGroups = array_values(array_unique($arSubordGroups));
 }
 
-if ($REQUEST_METHOD == "POST" && is_array($files) && count($files) > 0 && strlen($saveperm) > 0 && check_bitrix_sessid() && $USER->CanDoOperation('fileman_admin_folders')) {
+if ($REQUEST_METHOD == "POST" && is_array($files) && count($files) > 0 && $saveperm <> '' && check_bitrix_sessid(
+    ) && $USER->CanDoOperation('fileman_admin_folders')) {
     $CUR_PERM = GetAccessArrTmp($path);
     $arPermissions = Array();
     $arNotSetPerm = Array();
 
-    $db_groups = CGroup::GetList($order = "sort", $by = "asc", array("ACTIVE" => "Y", "ADMIN" => "N"));
+    $db_groups = CGroup::GetList("sort", "asc", array("ACTIVE" => "Y", "ADMIN" => "N"));
     while ($arGroup = $db_groups->Fetch()) {
         if (isset($arSubordGroups) && !in_array($arGroup['ID'], $arSubordGroups)) {
             $arNotSetPerm[] = $arGroup["ID"];
@@ -109,56 +118,62 @@ if ($REQUEST_METHOD == "POST" && is_array($files) && count($files) > 0 && strlen
                 continue;
             }
 
-            if ($gperm == 'NOT_REF')
+            if ($gperm == 'NOT_REF') {
                 $gperm = '';
+            }
             if (intval($gperm) > 0) {
                 $z = CTask::GetById($gperm);
                 $r = $z->Fetch();
-                if ($r && $r['LETTER'] && $r['SYS'] == 'Y')
+                if ($r && $r['LETTER'] && $r['SYS'] == 'Y') {
                     $gperm = $r['LETTER'];
-                else
+                } else {
                     $gperm = 'T_' . $gperm;
+                }
             }
             $arPermissions[$arGroup["ID"]] = $gperm;
         }
     }
     $gperm = $_POST['g_ALL'];
 
-    if ($gperm == '')
+    if ($gperm == '') {
         $arNotSetPerm[] = "*";
-    else {
-        if ($gperm == 'NOT_REF')
+    } else {
+        if ($gperm == 'NOT_REF') {
             $gperm = '';
+        }
         if (intval($gperm) > 0) {
             $z = CTask::GetById($gperm);
             $r = $z->Fetch();
-            if ($r && $r['LETTER'] && $r['SYS'] == 'Y')
+            if ($r && $r['LETTER'] && $r['SYS'] == 'Y') {
                 $gperm = $r['LETTER'];
-            else
+            } else {
                 $gperm = 'T_' . $gperm;
+            }
         }
         $arPermissions["*"] = $gperm;
     }
 
     for ($i = 0; $i < $filesCount; $i++) {
         $arPermissionsTmp = $arPermissions;
-        for ($j = 0; $j < count($arNotSetPerm); $j++)
+        for ($j = 0; $j < count($arNotSetPerm); $j++) {
             $arPermissionsTmp[$arNotSetPerm[$j]] = $CUR_PERM[$arFiles[$i]][$arNotSetPerm[$j]];
+        }
 
         $APPLICATION->SetFileAccessPermission(Array($site, $path . "/" . $arFiles[$i]), $arPermissionsTmp);
     }
 
-    if ($e = $APPLICATION->GetException())
+    if ($e = $APPLICATION->GetException()) {
         $strNotice = $e->msg;
-    elseif (strlen($strWarning) <= 0 && strlen($apply) <= 0)
+    } elseif ($strWarning == '' && $apply == '') {
         LocalRedirect("/bitrix/admin/fileman_admin.php?" . $addUrl . "&site=" . $site . "&path=" . UrlEncode($path));
+    }
 }
 
 foreach ($arParsedPath["AR_PATH"] as $chainLevel) {
     $adminChain->AddItem(
         array(
             "TEXT" => htmlspecialcharsex($chainLevel["TITLE"]),
-            "LINK" => ((strlen($chainLevel["LINK"]) > 0) ? $chainLevel["LINK"] : ""),
+            "LINK" => (($chainLevel["LINK"] <> '') ? $chainLevel["LINK"] : ""),
         )
     );
 }
@@ -180,7 +195,7 @@ $context->Show();
 ?>
 <? CAdminMessage::ShowMessage($strNotice); ?>
 <? CAdminMessage::ShowMessage($strWarning); ?>
-<? if (strlen($strWarning) <= 0): ?>
+<? if ($strWarning == ''): ?>
     <script>
         function Conf(ob) {
             if (ob.selectedIndex != 0 && !confirm("<?= GetMessage("FILEMAN_ACCESS_DIFFERENT")?>"))
@@ -197,13 +212,20 @@ $context->Show();
         <?= bitrix_sessid_post() ?>
         <? for ($i = 0; $i < $filesCount; $i++): ?>
             <? $ii = $arFiles[$i];
-            if (strtoupper(LANG_CHARSET) != "UTF-8") $ii = $GLOBALS["APPLICATION"]->ConvertCharset($ii, LANG_CHARSET, "UTF-8"); ?>
+            if (mb_strtoupper(LANG_CHARSET) != "UTF-8") {
+                $ii = $GLOBALS["APPLICATION"]->ConvertCharset($ii, LANG_CHARSET, "UTF-8");
+            } ?>
             <input type="hidden" name="files[]" value="<?= htmlspecialcharsbx($ii) ?>">
         <? endfor ?>
 
         <?
         $aTabs = array(
-            array("DIV" => "edit1", "TAB" => GetMessage("FILEMAN_TAB"), "ICON" => "fileman", "TITLE" => GetMessage("FILEMAN_TAB_ALT"))
+            array(
+                "DIV" => "edit1",
+                "TAB" => GetMessage("FILEMAN_TAB"),
+                "ICON" => "fileman",
+                "TITLE" => GetMessage("FILEMAN_TAB_ALT")
+            )
         );
 
         $tabControl = new CAdminTabControl("tabControl", $aTabs);
@@ -217,10 +239,13 @@ $context->Show();
                 echo GetMessage("FILEMAN_ACCESS_CHANGE_TO");
                 if ($filesCount > 0) {
                     echo GetMessage("FILEMAN_ACCESS_FOLDERS_FILES") . '<br>';
-                    for ($i = 0; $i < $filesCount; $i++)
+                    for ($i = 0; $i < $filesCount; $i++) {
                         echo '&quot;' . htmlspecialcharsbx($APPLICATION->UnJSEscape($arFiles[$i])) . '&quot;<br>';
+                    }
                 } else {
-                    echo GetMessage("FILEMAN_ACCESS_FILE") . " &quot;" . htmlspecialcharsbx($APPLICATION->UnJSEscape($arFiles[0])) . "&quot;";
+                    echo GetMessage("FILEMAN_ACCESS_FILE") . " &quot;" . htmlspecialcharsbx(
+                            $APPLICATION->UnJSEscape($arFiles[0])
+                        ) . "&quot;";
                 }
                 ?>
             </td>
@@ -247,79 +272,101 @@ $context->Show();
 
                     $arTaskGroupInh = Array();
                     for ($i = 0; $i < $filesCount; $i++) {
-                        if ($path == '' && $arFiles[$i] == '')
+                        if ($path == '' && $arFiles[$i] == '') {
                             $perm = $CUR_PERM['/']['*'];
-                        else
+                        } else {
                             $perm = $CUR_PERM[$arFiles[$i]]['*'];
+                        }
 
-                        if (substr($perm, 0, 2) == 'T_')
-                            $taskIdGroupInh = intval(substr($perm, 2));
-                        elseif (strlen($perm) == 1)
+                        if (mb_substr($perm, 0, 2) == 'T_') {
+                            $taskIdGroupInh = intval(mb_substr($perm, 2));
+                        } elseif (mb_strlen($perm) == 1) {
                             $taskIdGroupInh = CTask::GetIdByLetter($perm, 'main', 'file');
-                        else
+                        } else {
                             $taskIdGroupInh = 'NOT_REF';
+                        }
 
                         if ($taskIdGroupInh != 'NOT_REF') {
                             $z = CTask::GetById($taskIdGroupInh);
-                            if (!($r = $z->Fetch()))
+                            if (!($r = $z->Fetch())) {
                                 $taskIdGroupInh = 'NOT_REF';
+                            }
                         }
                         $arTaskGroupInh[$taskIdGroupInh][] = $arFiles[$i];
                     }
 
                     //for each groups
-                    $db_groups = CGroup::GetList($order = "sort", $by = "asc", array("ACTIVE" => "Y", "ADMIN" => "N"));
+                    $db_groups = CGroup::GetList("sort", "asc", array("ACTIVE" => "Y", "ADMIN" => "N"));
                     while ($db_groups->ExtractFields("g_")):
-                        if ($g_ANONYMOUS == "Y")
+                        if ($g_ANONYMOUS == "Y") {
                             $anonym = $g_NAME;
+                        }
 
-                        if (isset($arSubordGroups) && !in_array($g_ID, $arSubordGroups))
+                        if (isset($arSubordGroups) && !in_array($g_ID, $arSubordGroups)) {
                             continue;
+                        }
 
                         //**** Inherit access level *******
                         if (!$bDiff) {
-                            $pAr = $APPLICATION->GetFileAccessPermission(Array($site, $path . "/" . $arFiles[0]), Array($g_ID), true);
-                            if (count($pAr) > 0)
+                            $pAr = $APPLICATION->GetFileAccessPermission(
+                                Array($site, $path . "/" . $arFiles[0]),
+                                Array($g_ID),
+                                true
+                            );
+                            if (count($pAr) > 0) {
                                 $pr_taskId = $pAr[0];
-                            else
+                            } else {
                                 $pr_taskId = 'NOT_REF';
+                            }
 
                             $pArInh = $APPLICATION->GetFileAccessPermission(Array($site, $path), Array($g_ID), true);
-                            if (count($pArInh) > 0)
+                            if (count($pArInh) > 0) {
                                 $pr_taskIdInh = $pArInh[0];
-                            else
+                            } else {
                                 $pr_taskIdInh = 'NOT_REF';
+                            }
                         }
                         // *****************************
 
                         $arTask = Array();
                         for ($i = 0; $i < $filesCount; $i++) {
-                            if ($path == "" && $arFiles[$i] == "")
-                                $perm = $CUR_PERM["/"][$g_ID];
-                            else
-                                $perm = $CUR_PERM[$arFiles[$i]][$g_ID];
+                            $perm = '';
+                            $permPath = ($path === "" && $arFiles[$i] === "") ? "/" : $arFiles[$i];
+
+                            if (isset($CUR_PERM[$permPath][$g_ID])) {
+                                $perm = $CUR_PERM[$permPath][$g_ID];
+                            } else {
+                                $groupId = 'G' . $g_ID;
+
+                                if (isset($CUR_PERM[$permPath][$groupId])) {
+                                    $perm = $CUR_PERM[$permPath][$groupId];
+                                }
+                            }
 
                             //echo "!".$perm."!";
 
-                            if (substr($perm, 0, 2) == 'T_')
-                                $taskId = intval(substr($perm, 2));
-                            elseif (strlen($perm) == 1)
+                            if (mb_substr($perm, 0, 2) == 'T_') {
+                                $taskId = intval(mb_substr($perm, 2));
+                            } elseif (mb_strlen($perm) == 1) {
                                 $taskId = CTask::GetIdByLetter($perm, 'main', 'file');
-                            else
+                            } else {
                                 $taskId = 'NOT_REF';
+                            }
 
                             if ($taskId != 'NOT_REF') {
                                 $z = CTask::GetById($taskId);
-                                if (!($r = $z->Fetch()))
+                                if (!($r = $z->Fetch())) {
                                     $taskId = 'NOT_REF';
+                                }
                             }
                             $arTask[$taskId][] = $arFiles[$i];
                         }
 
-                        if (count($arTask) > 1)
+                        if (count($arTask) > 1) {
                             $bDiff = true;
-                        else
+                        } else {
                             $bDiff = false;
+                        }
                         ?>
                         <tr>
                             <td>
@@ -330,13 +377,16 @@ $context->Show();
                                         <? if ($bDiff): ?>onChange="Conf(this)"<? endif ?>>
                                     <option value=""><?= GetMessage("FILEMAN_ACCESS_LEVEL_NOTCH") ?></option>
                                     <? foreach ($arPermTypes as $id => $ar):?>
-                                        <option value="<?= $id ?>"<? if (($id == $taskId) && !$bDiff) echo " selected"; ?>>
+                                        <option value="<?= $id ?>"<? if (($id == $taskId) && !$bDiff) {
+                                            echo " selected";
+                                        } ?>>
                                             <? echo htmlspecialcharsbx($ar['title']);
                                             if ($id == "NOT_REF" && !$bDiff) {
-                                                if ($taskIdGroupInh == "NOT_REF")
+                                                if ($taskIdGroupInh == "NOT_REF") {
                                                     echo "[" . $arPermTypes[$pr_taskIdInh]['title'] . "]";
-                                                else
+                                                } else {
                                                     echo "[" . $arPermTypes[$taskIdGroupInh]['title'] . "]";
+                                                }
                                             } ?>
                                         </option>
                                     <? endforeach; ?>
@@ -362,8 +412,11 @@ $context->Show();
                                                     <?= $arPermTypes[$tid]['title'] ?>
                                                 </td>
                                                 <td valign="top" align="left">
-                                                    <? for ($i = 0; $i < count($tmpAr); $i++)
-                                                        echo ($i > 0 ? ', ' : '') . "&quot;/" . $APPLICATION->UnJSEscape($tmpAr[$i]) . "&quot;"; ?>
+                                                    <? for ($i = 0; $i < count($tmpAr); $i++) {
+                                                        echo ($i > 0 ? ', ' : '') . "&quot;/" . $APPLICATION->UnJSEscape(
+                                                                $tmpAr[$i]
+                                                            ) . "&quot;";
+                                                    } ?>
                                                 </td>
                                             </tr>
                                         <? endforeach; ?>
@@ -375,10 +428,11 @@ $context->Show();
                         </tr>
                     <? endwhile; ?>
                     <?
-                    if (count($arTaskGroupInh) > 1)
+                    if (count($arTaskGroupInh) > 1) {
                         $bDiff = true;
-                    else
+                    } else {
                         $bDiff = false;
+                    }
                     ?>
                     <tr valign="top">
                         <td align="left">
@@ -388,7 +442,9 @@ $context->Show();
                             <select name="g_ALL" class="typeselect" <? if ($bDiff): ?>onChange="Conf(this)"<? endif ?>>
                                 <option value=""><?= GetMessage("FILEMAN_ACCESS_LEVEL_NOTCH") ?></option>
                                 <? foreach ($arPermTypes as $id => $ar): ?>
-                                    <option value="<?= $id ?>"<? if (($id == $taskIdGroupInh) && !$bDiff) echo " selected"; ?>>
+                                    <option value="<?= $id ?>"<? if (($id == $taskIdGroupInh) && !$bDiff) {
+                                        echo " selected";
+                                    } ?>>
                                         <? echo htmlspecialcharsbx($ar['title']) ?>
                                     </option>
                                 <? endforeach; ?>
@@ -415,8 +471,11 @@ $context->Show();
                                                 <?= $arPermTypes[$tid]['title'] ?>:
                                             </td>
                                             <td valign="top" align="left">
-                                                <? for ($i = 0; $i < count($tmpAr); $i++)
-                                                    echo ($i > 0 ? ', ' : '') . "&quot;/" . $APPLICATION->UnJSEscape($tmpAr[$i]) . "&quot;"; ?>
+                                                <? for ($i = 0; $i < count($tmpAr); $i++) {
+                                                    echo ($i > 0 ? ', ' : '') . "&quot;/" . $APPLICATION->UnJSEscape(
+                                                            $tmpAr[$i]
+                                                        ) . "&quot;";
+                                                } ?>
                                             </td>
                                         </tr>
                                     <? endforeach; ?>
@@ -445,7 +504,9 @@ $context->Show();
         <script>
             function ChF() {
                 if (document.faform.g_2.selectedIndex == 3 || document.faform.g_2.selectedIndex == 4)
-                    if (!confirm("<?= GetMessage("FILEMAN_ACCESS_FOR_GROUP") . ' ' . CUtil::JSEscape($anonym) . ' ' . GetMessage("FILEMAN_ACCESS_FOR_GROUP2")?>"))
+                    if (!confirm("<?= GetMessage("FILEMAN_ACCESS_FOR_GROUP") . ' ' . CUtil::JSEscape(
+                        $anonym
+                    ) . ' ' . GetMessage("FILEMAN_ACCESS_FOR_GROUP2")?>"))
                         return false;
                 return true;
             }

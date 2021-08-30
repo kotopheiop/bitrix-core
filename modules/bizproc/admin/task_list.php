@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 \Bitrix\Main\Loader::includeModule('bizproc');
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/bizproc/prolog.php");
@@ -23,29 +24,41 @@ $arFilterFields = array(
     'filter_status',
     'filter_workflow_template_id'
 );
-if ($allowAdminAccess)
+if ($allowAdminAccess) {
     $arFilterFields[] = "filter_user_id";
+}
 
 $lAdmin->InitFilter($arFilterFields);
 
 $arFilter = array('USER_STATUS' => CBPTaskUserStatus::Waiting);
-if (!$allowAdminAccess)
+if (!$allowAdminAccess) {
     $arFilter["USER_ID"] = $USER->GetID();
-elseif (strlen($filter_user_id) > 0)
+} elseif ($filter_user_id <> '') {
     $arFilter["USER_ID"] = $filter_user_id;
-if (strlen($filter_modified_1) > 0)
+}
+if ($filter_modified_1 <> '') {
     $arFilter[">=MODIFIED"] = $filter_modified_1;
-if (strlen($filter_modified_2) > 0)
+}
+if ($filter_modified_2 <> '') {
     $arFilter["<=MODIFIED"] = $filter_modified_2;
-if (strlen($filter_name) > 0)
+}
+if ($filter_name <> '') {
     $arFilter["~NAME"] = "%" . $filter_name . "%";
-if (strlen($filter_descr) > 0)
+}
+if ($filter_descr <> '') {
     $arFilter["~DESCRIPTION"] = "%" . $filter_descr . "%";
+}
 if (!empty($filter_status)) {
-    if ($filter_status == 2)
+    if ($filter_status == 2) {
         unset($arFilter['USER_STATUS']);
-    else
-        $arFilter['USER_STATUS'] = array(CBPTaskUserStatus::Ok, CBPTaskUserStatus::Yes, CBPTaskUserStatus::No, CBPTaskUserStatus::Cancel);
+    } else {
+        $arFilter['USER_STATUS'] = array(
+            CBPTaskUserStatus::Ok,
+            CBPTaskUserStatus::Yes,
+            CBPTaskUserStatus::No,
+            CBPTaskUserStatus::Cancel
+        );
+    }
 }
 if (!empty($filter_workflow_template_id)) {
     $arFilter['WORKFLOW_TEMPLATE_ID'] = (int)$filter_workflow_template_id;
@@ -57,24 +70,26 @@ if ($allowAdminAccess && !empty($_REQUEST['action']) && check_bitrix_sessid()) {
         $errors = array();
         $action = $_REQUEST['action'];
         $status = 0;
-        if (strpos($action, 'set_status_') === 0) {
-            $status = substr($action, strlen('set_status_'));
+        if (mb_strpos($action, 'set_status_') === 0) {
+            $status = mb_substr($action, mb_strlen('set_status_'));
             $action = 'set_status';
         }
 
         foreach ($ids as $id) {
             list($taskId, $userId) = explode('_', $id);
 
-            if ($action == 'set_status' && $status > 0)
+            if ($action == 'set_status' && $status > 0) {
                 CBPDocument::setTasksUserStatus($userId, $status, $taskId, $errors);
-            elseif ($action == 'delegate' && !empty($_REQUEST['delegate_to']))
+            } elseif ($action == 'delegate' && !empty($_REQUEST['delegate_to'])) {
                 CBPDocument::delegateTasks($userId, $_REQUEST['delegate_to'], $taskId, $errors);
+            }
         }
 
-        if ($errors)
+        if ($errors) {
             foreach ($errors as $error) {
                 $actionErrorMessage .= $error . PHP_EOL;
             }
+        }
 
         unset($ids, $errors, $action, $status, $taskId, $userId);
     }
@@ -89,27 +104,85 @@ if ($actionErrorMessage) {
 
 $arAddHeaders = array(
     array("id" => "ID", "content" => "ID", "sort" => "ID", "default" => true),
-    array("id" => "DOCUMENT_NAME", "content" => GetMessage("BPATL_DOCUMENT_NAME"), "default" => false, "sort" => "DOCUMENT_NAME"),
+    array(
+        "id" => "DOCUMENT_NAME",
+        "content" => GetMessage("BPATL_DOCUMENT_NAME"),
+        "default" => false,
+        "sort" => "DOCUMENT_NAME"
+    ),
     array("id" => "NAME", "content" => GetMessage("BPATL_NAME"), "sort" => "NAME", "default" => true),
     array("id" => "DESCRIPTION", "content" => GetMessage("BPATL_DESCR"), "default" => true, "sort" => "DESCRIPTION"),
-    array("id" => "DESCRIPTION_FULL", "content" => GetMessage("BPATL_DESCR_FULL"), "default" => false, "sort" => "DESCRIPTION"),
+    array(
+        "id" => "DESCRIPTION_FULL",
+        "content" => GetMessage("BPATL_DESCR_FULL"),
+        "default" => false,
+        "sort" => "DESCRIPTION"
+    ),
     array("id" => "MODIFIED", "content" => GetMessage("BPATL_MODIFIED"), "sort" => "MODIFIED", "default" => true),
-    array("id" => "OVERDUE_DATE", "content" => GetMessage("BPATL_OVERDUE_DATE"), "default" => false, "sort" => "OVERDUE_DATE"),
-    array("id" => "WORKFLOW_STARTED", "content" => GetMessage("BPATL_STARTED"), "default" => false, "sort" => "WORKFLOW_STARTED"),
-    array("id" => "WORKFLOW_STARTED_BY", "content" => GetMessage("BPATL_STARTED_BY"), "default" => false, "sort" => "WORKFLOW_STARTED_BY"),
-    array("id" => "WORKFLOW_NAME", "content" => GetMessage("BPATL_WORKFLOW_NAME"), "default" => true, "sort" => "WORKFLOW_TEMPLATE_NAME"),
-    array("id" => "WORKFLOW_STATE", "content" => GetMessage("BPATL_WORKFLOW_STATE"), "default" => true, "sort" => "WORKFLOW_STATE"),
+    array(
+        "id" => "OVERDUE_DATE",
+        "content" => GetMessage("BPATL_OVERDUE_DATE"),
+        "default" => false,
+        "sort" => "OVERDUE_DATE"
+    ),
+    array(
+        "id" => "WORKFLOW_STARTED",
+        "content" => GetMessage("BPATL_STARTED"),
+        "default" => false,
+        "sort" => "WORKFLOW_STARTED"
+    ),
+    array(
+        "id" => "WORKFLOW_STARTED_BY",
+        "content" => GetMessage("BPATL_STARTED_BY"),
+        "default" => false,
+        "sort" => "WORKFLOW_STARTED_BY"
+    ),
+    array(
+        "id" => "WORKFLOW_NAME",
+        "content" => GetMessage("BPATL_WORKFLOW_NAME"),
+        "default" => true,
+        "sort" => "WORKFLOW_TEMPLATE_NAME"
+    ),
+    array(
+        "id" => "WORKFLOW_STATE",
+        "content" => GetMessage("BPATL_WORKFLOW_STATE"),
+        "default" => true,
+        "sort" => "WORKFLOW_STATE"
+    ),
 );
-if ($allowAdminAccess)
-    $arAddHeaders[] = array("id" => "USER", "content" => GetMessage("BPATL_USER"), "default" => true, "sort" => "USER_ID");
+if ($allowAdminAccess) {
+    $arAddHeaders[] = array(
+        "id" => "USER",
+        "content" => GetMessage("BPATL_USER"),
+        "default" => true,
+        "sort" => "USER_ID"
+    );
+}
 
 $lAdmin->AddHeaders($arAddHeaders);
 
 $arVisibleColumns = $lAdmin->GetVisibleHeaderColumns();
 
-$arSelectFields = array("ID", "WORKFLOW_ID", "ACTIVITY", "ACTIVITY_NAME", "MODIFIED", "OVERDUE_DATE", "NAME", "DESCRIPTION", "PARAMETERS", 'DOCUMENT_NAME', 'WORKFLOW_STARTED', 'WORKFLOW_STARTED_BY', 'OVERDUE_DATE', 'WORKFLOW_TEMPLATE_NAME', 'WORKFLOW_STATE');
-if (in_array("USER", $arVisibleColumns) && $allowAdminAccess)
+$arSelectFields = array(
+    "ID",
+    "WORKFLOW_ID",
+    "ACTIVITY",
+    "ACTIVITY_NAME",
+    "MODIFIED",
+    "OVERDUE_DATE",
+    "NAME",
+    "DESCRIPTION",
+    "PARAMETERS",
+    'DOCUMENT_NAME',
+    'WORKFLOW_STARTED',
+    'WORKFLOW_STARTED_BY',
+    'OVERDUE_DATE',
+    'WORKFLOW_TEMPLATE_NAME',
+    'WORKFLOW_STATE'
+);
+if (in_array("USER", $arVisibleColumns) && $allowAdminAccess) {
     $arSelectFields[] = "USER_ID";
+}
 
 $dbResultList = CBPTaskService::GetList(
     array($by => $order),
@@ -130,13 +203,16 @@ while ($arResultItem = $dbResultList->NavNext(true, "f_")) {
     $s = $allowAdminAccess ? "&uid=" . intval($arResultItem["USER_ID"]) : "";
     $row->AddField(
         "ID",
-        '<a href="bizproc_task.php?id=' . $f_ID . $s . '&back_url=' . urlencode($APPLICATION->GetCurPageParam("lang=" . LANGUAGE_ID, array("lang"))) . '" title="' . GetMessage("BPATL_VIEW") . '">' . $f_ID . '</a>'
+        '<a href="bizproc_task.php?id=' . $f_ID . $s . '&back_url=' . urlencode(
+            $APPLICATION->GetCurPageParam("lang=" . LANGUAGE_ID, array("lang"))
+        ) . '" title="' . GetMessage("BPATL_VIEW") . '">' . $f_ID . '</a>'
     );
     $row->AddField("NAME", $f_NAME);
 
     $description = $f_DESCRIPTION;
-    if (strlen($description) > 100)
-        $description = substr($description, 0, 97) . "...";
+    if (mb_strlen($description) > 100) {
+        $description = mb_substr($description, 0, 97) . "...";
+    }
 
     $row->AddField("DESCRIPTION", $description);
     $row->AddField("DESCRIPTION_FULL", $f_DESCRIPTION);
@@ -148,8 +224,13 @@ while ($arResultItem = $dbResultList->NavNext(true, "f_")) {
     if (intval($f_STARTED_BY) > 0) {
         $dbUserTmp = CUser::GetByID($f_STARTED_BY);
         $arUserTmp = $dbUserTmp->fetch();
-        $row->AddField("WORKFLOW_STARTED_BY",
-            CUser::FormatName(COption::GetOptionString("bizproc", "name_template", CSite::GetNameFormat(false), SITE_ID), $arUserTmp, true)
+        $row->AddField(
+            "WORKFLOW_STARTED_BY",
+            CUser::FormatName(
+                COption::GetOptionString("bizproc", "name_template", CSite::GetNameFormat(false), SITE_ID),
+                $arUserTmp,
+                true
+            )
             . " [" . $f_STARTED_BY . "]"
         );
     }
@@ -157,10 +238,15 @@ while ($arResultItem = $dbResultList->NavNext(true, "f_")) {
     if (in_array("USER", $arVisibleColumns)) {
         $dbUserTmp = CUser::GetByID($arResultItem["USER_ID"]);
         if ($arUserTmp = $dbUserTmp->GetNext()) {
-            $str = CUser::FormatName(COption::GetOptionString("bizproc", "name_template", CSite::GetNameFormat(false), SITE_ID), $arUserTmp, true);
+            $str = CUser::FormatName(
+                COption::GetOptionString("bizproc", "name_template", CSite::GetNameFormat(false), SITE_ID),
+                $arUserTmp,
+                true
+            );
             $str .= " [" . $arResultItem["USER_ID"] . "]";
-        } else
+        } else {
             $str = str_replace("#USER_ID#", $arResultItem["USER_ID"], GetMessage("BPATL_USER_NOT_FOUND"));
+        }
         $row->AddField("USER", $str);
     }
 
@@ -168,7 +254,11 @@ while ($arResultItem = $dbResultList->NavNext(true, "f_")) {
     $arActions[] = array(
         "ICON" => "edit",
         "TEXT" => GetMessage("BPATL_VIEW"),
-        "ACTION" => $lAdmin->ActionRedirect('bizproc_task.php?id=' . $f_ID . $s . '&back_url=' . urlencode($APPLICATION->GetCurPageParam("lang=" . LANGUAGE_ID, array("lang"))) . ''),
+        "ACTION" => $lAdmin->ActionRedirect(
+            'bizproc_task.php?id=' . $f_ID . $s . '&back_url=' . urlencode(
+                $APPLICATION->GetCurPageParam("lang=" . LANGUAGE_ID, array("lang"))
+            ) . ''
+        ),
         "DEFAULT" => true
     );
 
@@ -245,8 +335,9 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
         GetMessage("BPATL_FILTER_STATUS"),
         GetMessage("BPATL_WORKFLOW_NAME"),
     );
-    if ($allowAdminAccess)
+    if ($allowAdminAccess) {
         $ar[] = GetMessage("BPATL_USER_ID");
+    }
 
     $oFilter = new CAdminFilter(
         $sTableID . "_filter",
@@ -254,27 +345,40 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
     );
 
     $oFilter->SetDefaultRows(Array("filter_modified_1", 'filter_name'));
-    $oFilter->AddPreset(array(
-        "ID" => "filter_running",
-        "NAME" => GetMessage("BPATL_FILTER_STATUS_RUNNING"),
-        "FIELDS" => array("filter_status" => 0),
-    ));
-    $oFilter->AddPreset(array(
-        "ID" => "filter_complete",
-        "NAME" => GetMessage("BPATL_FILTER_STATUS_COMPLETE"),
-        "FIELDS" => array("filter_status" => 1),
-    ));
-    $oFilter->AddPreset(array(
-        "ID" => "filter_all",
-        "NAME" => GetMessage("BPATL_FILTER_STATUS_ALL"),
-        "FIELDS" => array("filter_status" => 2),
-    ));
+    $oFilter->AddPreset(
+        array(
+            "ID" => "filter_running",
+            "NAME" => GetMessage("BPATL_FILTER_STATUS_RUNNING"),
+            "FIELDS" => array("filter_status" => 0),
+        )
+    );
+    $oFilter->AddPreset(
+        array(
+            "ID" => "filter_complete",
+            "NAME" => GetMessage("BPATL_FILTER_STATUS_COMPLETE"),
+            "FIELDS" => array("filter_status" => 1),
+        )
+    );
+    $oFilter->AddPreset(
+        array(
+            "ID" => "filter_all",
+            "NAME" => GetMessage("BPATL_FILTER_STATUS_ALL"),
+            "FIELDS" => array("filter_status" => 2),
+        )
+    );
 
     $oFilter->Begin();
     ?>
     <tr>
         <td><?= GetMessage("BPATL_F_MODIFIED") ?>:</td>
-        <td><? echo CalendarPeriod("filter_modified_1", htmlspecialcharsbx($filter_modified_1), "filter_modified_2", htmlspecialcharsbx($filter_modified_2), "find_form", "Y") ?></td>
+        <td><? echo CalendarPeriod(
+                "filter_modified_1",
+                htmlspecialcharsbx($filter_modified_1),
+                "filter_modified_2",
+                htmlspecialcharsbx($filter_modified_2),
+                "find_form",
+                "Y"
+            ) ?></td>
     </tr>
     <tr>
         <td><?= GetMessage("BPATL_F_NAME") ?>:</td>
@@ -290,9 +394,15 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
         <td><?= GetMessage("BPATL_FILTER_STATUS") ?>:</td>
         <td>
             <select name="filter_status">
-                <option value="0"<? if ($filter_status == "0") echo " selected" ?>><? echo GetMessage("BPATL_FILTER_STATUS_RUNNING") ?></option>
-                <option value="1"<? if ($filter_status == "1") echo " selected" ?>><? echo GetMessage("BPATL_FILTER_STATUS_COMPLETE") ?></option>
-                <option value="2"<? if ($filter_status == "2") echo " selected" ?>><? echo GetMessage("BPATL_FILTER_STATUS_ALL") ?></option>
+                <option value="0"<? if ($filter_status == "0") echo " selected" ?>><? echo GetMessage(
+                        "BPATL_FILTER_STATUS_RUNNING"
+                    ) ?></option>
+                <option value="1"<? if ($filter_status == "1") echo " selected" ?>><? echo GetMessage(
+                        "BPATL_FILTER_STATUS_COMPLETE"
+                    ) ?></option>
+                <option value="2"<? if ($filter_status == "2") echo " selected" ?>><? echo GetMessage(
+                        "BPATL_FILTER_STATUS_ALL"
+                    ) ?></option>
             </select>
         </td>
     </tr>

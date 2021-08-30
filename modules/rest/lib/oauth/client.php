@@ -37,10 +37,11 @@ class Client
     const METHOD_APPLICATION_UPDATE = 'application.update';
     const METHOD_APPLICATION_DELETE = 'application.delete';
     const METHOD_APPLICATION_INSTALL = 'application.install';
+    const METHOD_APPLICATION_INSTALL_SUBSCRIPTION = 'application.install.subscription';
     const METHOD_APPLICATION_UNINSTALL = 'application.uninstall';
     const METHOD_APPLICATION_STAT = 'application.stat';
     const METHOD_APPLICATION_LIST = 'application.list';
-    const METHOD_APPLICATION_USAGE = 'application.usage';
+    const METHOD_APPLICATION_USAGE = 'application.usage.add';
 
     const METHOD_APPLICATION_VERSION_UPDATE = 'application.version.update';
     const METHOD_APPLICATION_VERSION_DELETE = 'application.version.delete';
@@ -102,10 +103,12 @@ class Client
 
     protected function getHttpClient()
     {
-        return new HttpClient(array(
-            'socketTimeout' => static::HTTP_SOCKET_TIMEOUT,
-            'streamTimeout' => static::HTTP_STREAM_TIMEOUT,
-        ));
+        return new HttpClient(
+            array(
+                'socketTimeout' => static::HTTP_SOCKET_TIMEOUT,
+                'streamTimeout' => static::HTTP_STREAM_TIMEOUT,
+            )
+        );
     }
 
     protected function getRequestUrl($methodName)
@@ -138,11 +141,16 @@ class Client
             $response = $this->prepareResponse($httpResult);
 
             if ($response) {
-                if (!$licenseCheck && is_array($response) && isset($response['error']) && $response['error'] === 'verification_needed') {
+                if (!$licenseCheck && is_array(
+                        $response
+                    ) && isset($response['error']) && $response['error'] === 'verification_needed') {
                     return $this->call($methodName, $additionalParams, true);
                 }
             } else {
-                addMessage2Log('Strange answer from Bitrix Service! ' . static::SERVICE_URL . static::SERVICE_PATH . $methodName . ": " . $httpClient->getStatus() . ' ' . $httpResult);
+                addMessage2Log(
+                    'Strange answer from Bitrix Service! ' . static::SERVICE_URL . static::SERVICE_PATH . $methodName . ": " . $httpClient->getStatus(
+                    ) . ' ' . $httpResult
+                );
             }
 
             return $response;
@@ -158,7 +166,9 @@ class Client
         if (is_array($actions)) {
             foreach ($actions as $queryKey => $cmdData) {
                 list($cmd, $cmdParams) = array_values($cmdData);
-                $batch['cmd'][$queryKey] = $cmd . (is_array($cmdParams) ? '?' . http_build_query($this->prepareRequestData($cmdParams)) : '');
+                $batch['cmd'][$queryKey] = $cmd . (is_array($cmdParams) ? '?' . http_build_query(
+                            $this->prepareRequestData($cmdParams)
+                        ) : '');
             }
         }
 
@@ -167,28 +177,37 @@ class Client
 
     public function addApplication(array $applicationSettings)
     {
-        return $this->call(static::METHOD_APPLICATION_ADD, array(
-            "TITLE" => $applicationSettings["TITLE"],
-            "REDIRECT_URI" => $applicationSettings["REDIRECT_URI"],
-            "SCOPE" => $applicationSettings["SCOPE"],
-        ));
+        return $this->call(
+            static::METHOD_APPLICATION_ADD,
+            array(
+                "TITLE" => $applicationSettings["TITLE"],
+                "REDIRECT_URI" => $applicationSettings["REDIRECT_URI"],
+                "SCOPE" => $applicationSettings["SCOPE"],
+            )
+        );
     }
 
     public function updateApplication(array $applicationSettings)
     {
-        return $this->call(static::METHOD_APPLICATION_UPDATE, array(
-            "CLIENT_ID" => $applicationSettings["CLIENT_ID"],
-            "TITLE" => $applicationSettings["TITLE"],
-            "REDIRECT_URI" => $applicationSettings["REDIRECT_URI"],
-            "SCOPE" => $applicationSettings["SCOPE"],
-        ));
+        return $this->call(
+            static::METHOD_APPLICATION_UPDATE,
+            array(
+                "CLIENT_ID" => $applicationSettings["CLIENT_ID"],
+                "TITLE" => $applicationSettings["TITLE"],
+                "REDIRECT_URI" => $applicationSettings["REDIRECT_URI"],
+                "SCOPE" => $applicationSettings["SCOPE"],
+            )
+        );
     }
 
     public function deleteApplication(array $applicationSettings)
     {
-        return $this->call(static::METHOD_APPLICATION_DELETE, array(
-            "CLIENT_ID" => $applicationSettings["CLIENT_ID"],
-        ));
+        return $this->call(
+            static::METHOD_APPLICATION_DELETE,
+            array(
+                "CLIENT_ID" => $applicationSettings["CLIENT_ID"],
+            )
+        );
     }
 
     public function installApplication(array $applicationSettings)
@@ -203,39 +222,57 @@ class Client
             $queryFields['INSTALL_HASH'] = $applicationSettings["INSTALL_HASH"];
         }
 
-        return $this->call(static::METHOD_APPLICATION_INSTALL, $queryFields);
+        if ($applicationSettings['BY_SUBSCRIPTION'] === 'Y') {
+            $method = static::METHOD_APPLICATION_INSTALL_SUBSCRIPTION;
+        } else {
+            $method = static::METHOD_APPLICATION_INSTALL;
+        }
+
+        return $this->call($method, $queryFields);
     }
 
     public function unInstallApplication(array $applicationSettings)
     {
-        return $this->call(static::METHOD_APPLICATION_UNINSTALL, array(
-            "CLIENT_ID" => $applicationSettings["CLIENT_ID"],
-        ));
+        return $this->call(
+            static::METHOD_APPLICATION_UNINSTALL,
+            array(
+                "CLIENT_ID" => $applicationSettings["CLIENT_ID"],
+            )
+        );
     }
 
     public function getAuth($clientId, $scope, array $additionalParams = array())
     {
-        return $this->call(static::METHOD_REST_AUTHORIZE, array(
-            "CLIENT_ID" => $clientId,
-            "SCOPE" => $scope,
-            "PARAMS" => $additionalParams,
-        ));
+        return $this->call(
+            static::METHOD_REST_AUTHORIZE,
+            array(
+                "CLIENT_ID" => $clientId,
+                "SCOPE" => $scope,
+                "PARAMS" => $additionalParams,
+            )
+        );
     }
 
     public function checkAuth($accessToken)
     {
-        return $this->call(static::METHOD_REST_CHECK, array(
-            "TOKEN" => $accessToken,
-        ));
+        return $this->call(
+            static::METHOD_REST_CHECK,
+            array(
+                "TOKEN" => $accessToken,
+            )
+        );
     }
 
     public function getCode($clientId, $state, $additionalParams)
     {
-        return $this->call(static::METHOD_REST_CODE, array(
-            "CLIENT_ID" => $clientId,
-            "STATE" => $state,
-            "PARAMS" => $additionalParams,
-        ));
+        return $this->call(
+            static::METHOD_REST_CODE,
+            array(
+                "CLIENT_ID" => $clientId,
+                "STATE" => $state,
+                "PARAMS" => $additionalParams,
+            )
+        );
     }
 
     public function getApplicationList()
@@ -243,18 +280,23 @@ class Client
         return $this->call(static::METHOD_APPLICATION_LIST);
     }
 
-    public function sendApplicationUsage($clientId, array $usage)
+    public function sendApplicationUsage(array $usage)
     {
-        return $this->call(static::METHOD_APPLICATION_USAGE, array(
-            "CLIENT_ID" => $clientId,
-            "USAGE" => $usage,
-        ));
+        return $this->call(
+            static::METHOD_APPLICATION_USAGE,
+            array(
+                "USAGE" => $usage,
+            )
+        );
     }
 
     public function sendEvent(array $eventItems)
     {
-        return $this->call(static::METHOD_REST_EVENT_CALL, array(
-            "QUERY" => $eventItems,
-        ));
+        return $this->call(
+            static::METHOD_REST_EVENT_CALL,
+            array(
+                "QUERY" => $eventItems,
+            )
+        );
     }
 }

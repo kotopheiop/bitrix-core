@@ -61,12 +61,13 @@ class Date extends Base
             case FieldType::TEXT:
                 $value = (string)$value;
                 if ($value) {
-                    if ($type == FieldType::DATE)
+                    if ($type == FieldType::DATE) {
                         $format = \FORMAT_DATE;
-                    elseif ($type == FieldType::DATETIME)
+                    } elseif ($type == FieldType::DATETIME) {
                         $format = \FORMAT_DATETIME;
-                    else
+                    } else {
                         $format = static::getType() == FieldType::DATE ? \FORMAT_DATE : \FORMAT_DATETIME;
+                    }
 
                     if (\CheckDateTime($value, $format)) {
                         $value = date(Type\Date::convertFormatToPhp($format), \MakeTimeStamp($value, $format));
@@ -116,15 +117,23 @@ class Date extends Base
 
         $className = static::generateControlClassName($fieldType, $field);
         $renderResult = '';
+        $isPublicControl = $renderMode & FieldType::RENDER_MODE_PUBLIC;
 
-        if ($renderMode & FieldType::RENDER_MODE_PUBLIC && $allowSelection) {
-            $renderResult = '<input name="' . htmlspecialcharsbx($name) . '" type="text" '
-                . 'class="' . htmlspecialcharsbx($className) . '"
-					value="' . htmlspecialcharsbx($value) . '"
-					placeholder="' . htmlspecialcharsbx($fieldType->getDescription()) . '"
-					data-role="inline-selector-target"
-					data-selector-type="' . htmlspecialcharsbx($fieldType->getType()) . '"
-				>';
+        if ($isPublicControl && $allowSelection) {
+            $selectorAttributes = sprintf(
+                'data-role="inline-selector-target" data-selector-type="%s" data-property="%s" ',
+                htmlspecialcharsbx($fieldType->getType()),
+                htmlspecialcharsbx(Main\Web\Json::encode($fieldType->getProperty()))
+            );
+
+            $renderResult = sprintf(
+                '<input name="%s" type="text" class="%s" value="%s" placeholder="%s" %s/>',
+                htmlspecialcharsbx($name),
+                htmlspecialcharsbx($className),
+                htmlspecialcharsbx($value),
+                htmlspecialcharsbx($fieldType->getDescription()),
+                $selectorAttributes
+            );
         } elseif ($renderMode & FieldType::RENDER_MODE_MOBILE) {
             $renderResult = '<div><input type="hidden" value="'
                 . htmlspecialcharsbx($value) . '" data-type="'
@@ -133,14 +142,18 @@ class Date extends Base
                 . ($value ? htmlspecialcharsbx($value) : Loc::getMessage('BPDT_DATE_MOBILE_SELECT')) . '</a></div>';
         } else {
             \CJSCore::Init(['popup', 'date']);
-            $renderResult = '<input type="text" name="' . htmlspecialcharsbx($name)
-                . '" value="' . htmlspecialcharsbx($value) . '" class="' . htmlspecialcharsbx($className) . '"/>'
+            $renderResult = sprintf(
+                '<input type="text" name="%s" value="%s" class="%s"/>'
                 . '<img src="/bitrix/js/main/core/images/calendar-icon.gif" alt="calendar" class="calendar-icon" '
-                . 'onclick="BX.calendar({node:this, field: this.previousSibling, bTime: '
-                . (static::getType() == FieldType::DATETIME ? 'true' : 'false')
-                . ', bHideTime: ' . (static::getType() == FieldType::DATETIME ? 'false' : 'true') . '});" '
+                . 'onclick="BX.calendar({node:this, field: this.previousSibling, bTime: %s, bHideTime: %s});" '
                 . 'onmouseover="BX.addClass(this, \'calendar-icon-hover\');" '
-                . 'onmouseout="BX.removeClass(this, \'calendar-icon-hover\');" border="0"/>';
+                . 'onmouseout="BX.removeClass(this, \'calendar-icon-hover\');" border="0"/>',
+                htmlspecialcharsbx($name),
+                htmlspecialcharsbx($value),
+                $isPublicControl ? htmlspecialcharsbx($className) : '',
+                static::getType() == FieldType::DATETIME ? 'true' : 'false',
+                static::getType() == FieldType::DATETIME ? 'false' : 'true'
+            );
 
             $tzName = 'tz_' . $name;
             $zones = self::getZones();
@@ -152,6 +165,9 @@ class Date extends Base
             $tzClassName = 'bizproc-type-control-date-lc';
             if ($fieldType->isMultiple()) {
                 $tzClassName .= ' bizproc-type-control-date-lc-multiple';
+            }
+            if (!$isPublicControl) {
+                $tzClassName = '';
             }
 
             $renderResult .= '<select name="' . htmlspecialcharsbx($tzName) . '" class="' . $tzClassName . '">';
@@ -204,8 +220,13 @@ class Date extends Base
         return $renderResult;
     }
 
-    public static function renderControlMultiple(FieldType $fieldType, array $field, $value, $allowSelection, $renderMode)
-    {
+    public static function renderControlMultiple(
+        FieldType $fieldType,
+        array $field,
+        $value,
+        $allowSelection,
+        $renderMode
+    ) {
         $allowSelectionOrig = $allowSelection;
         if ($renderMode & FieldType::RENDER_MODE_PUBLIC) {
             $allowSelection = false;
@@ -277,18 +298,21 @@ class Date extends Base
     {
         $value = parent::extractValue($fieldType, $field, $request);
 
-        if ($value !== null && is_string($value) && strlen($value) > 0) {
-            if (\CBPActivity::isExpression($value))
+        if ($value !== null && is_string($value) && $value <> '') {
+            if (\CBPActivity::isExpression($value)) {
                 return $value;
+            }
 
             $format = static::getType() == FieldType::DATETIME ? \FORMAT_DATETIME : \FORMAT_DATE;
             if (!\CheckDateTime($value, $format)) {
                 $value = null;
-                static::addError(array(
-                    'code' => 'ErrorValue',
-                    'message' => Loc::getMessage('BPDT_DATE_INVALID'),
-                    'parameter' => static::generateControlName($field),
-                ));
+                static::addError(
+                    array(
+                        'code' => 'ErrorValue',
+                        'message' => Loc::getMessage('BPDT_DATE_INVALID'),
+                        'parameter' => static::generateControlName($field),
+                    )
+                );
             } else {
                 $tzOffset = self::extractOffset($field, $request);
                 $value = (static::getType() == FieldType::DATETIME) ?
@@ -372,7 +396,7 @@ class Date extends Base
             $documentId = $fieldType->getDocumentId();
 
             if ($documentId) {
-                $userId = \CBPHelper::ExtractUsers('author', $documentId, true);
+                $userId = \CBPHelper::ExtractUsers(['author', 'responsible'], $documentId, true);
                 $offset = $userId ? \CTimeZone::GetOffset($userId, true) : 0;
 
                 $value = new Value\DateTime($value->getTimestamp(), $offset);
@@ -384,16 +408,16 @@ class Date extends Base
         return $value;
     }
 
-    public static function internalizeValue(FieldType $fieldType, $objectName, $value)
+    public static function internalizeValue(FieldType $fieldType, $context, $value)
     {
         if ($value && is_string($value)) {
-            $offset = \CTimeZone::GetOffset();//($objectName === 'Document') ? \CTimeZone::GetOffset() : 0;
+            $offset = \CTimeZone::GetOffset();
             try {
                 $obj = (static::getType() === FieldType::DATE)
                     ? new Value\Date($value, $offset)
                     : new Value\DateTime($value, $offset);
                 //set value if everything is ok
-                if ($obj->getTimestamp() > 0) {
+                if ($obj->getTimestamp() !== null) {
                     $value = $obj;
                 }
             } catch (Main\ObjectException $e) {
@@ -402,16 +426,21 @@ class Date extends Base
         return $value;
     }
 
-    public static function externalizeValue(FieldType $fieldType, $objectName, $value)
+    public static function externalizeValue(FieldType $fieldType, $context, $value)
     {
         //serialized date string
         if (is_string($value) && preg_match('#(.+)\s\[([0-9\-]+)\]#', $value)) {
-            $value = static::internalizeValue($fieldType, $objectName, $value);
+            $value = static::internalizeValue($fieldType, $context, $value);
         }
 
         if ($value instanceof Value\Date) {
-            return (string)$value->toSystemObject();
+            return $context === 'rest' ? $value->toSystemObject()->format('c') : (string)$value->toSystemObject();
         }
+
+        if (is_string($value) && $context === 'rest') {
+            return date('c', strtotime($value));
+        }
+
         return $value;
     }
 
@@ -420,24 +449,51 @@ class Date extends Base
         $serverOffset = (new \DateTime())->getOffset();
 
         $timezones = [];
-        $exclude = ["Etc/", "GMT", "UTC", "UCT", "HST", "PST", "MST", "CST", "EST", "CET", "MET", "WET", "EET", "PRC", "ROC", "ROK", "W-SU"];
+        $exclude = [
+            "Etc/",
+            "GMT",
+            "UTC",
+            "UCT",
+            "HST",
+            "PST",
+            "MST",
+            "CST",
+            "EST",
+            "CET",
+            "MET",
+            "WET",
+            "EET",
+            "PRC",
+            "ROC",
+            "ROK",
+            "W-SU"
+        ];
         foreach (\DateTimeZone::listIdentifiers() as $tz) {
-            foreach ($exclude as $ex)
-                if (strpos($tz, $ex) === 0)
+            foreach ($exclude as $ex) {
+                if (mb_strpos($tz, $ex) === 0) {
                     continue 2;
+                }
+            }
             try {
-                $oTz = new \DateTimeZone($tz);
-                $timezones[$tz] = ['timezone_id' => $tz, 'offset' => $oTz->getOffset(new \DateTime("now", $oTz))];
+                $dateTimeZone = new \DateTimeZone($tz);
+                $timezones[$tz] = [
+                    'timezone_id' => $tz,
+                    'offset' => $dateTimeZone->getOffset(new \DateTime("now", $dateTimeZone))
+                ];
             } catch (\Exception $e) {
             }
         }
 
-        uasort($timezones, function ($a, $b) {
-            if ($a['offset'] == $b['offset'])
-                return strcmp($a['timezone_id'], $b['timezone_id']);
+        uasort(
+            $timezones,
+            function ($a, $b) {
+                if ($a['offset'] == $b['offset']) {
+                    return strcmp($a['timezone_id'], $b['timezone_id']);
+                }
 
-            return ($a['offset'] < $b['offset'] ? -1 : 1);
-        });
+                return ($a['offset'] < $b['offset'] ? -1 : 1);
+            }
+        );
 
         $result = [
             ['value' => '', 'text' => Loc::getMessage('BPDT_DATE_SERVER_TZ'), 'offset' => 0],
@@ -446,7 +502,10 @@ class Date extends Base
         foreach ($timezones as $z) {
             $result[] = [
                 'value' => $z['timezone_id'],
-                'text' => '(UTC' . ($z['offset'] <> 0 ? ' ' . ($z['offset'] < 0 ? '-' : '+') . sprintf("%02d", ($h = floor(abs($z['offset']) / 3600))) . ':' . sprintf("%02d", abs($z['offset']) / 60 - $h * 60) : '') . ') ' . $z['timezone_id'],
+                'text' => '(UTC' . ($z['offset'] <> 0 ? ' ' . ($z['offset'] < 0 ? '-' : '+') . sprintf(
+                            "%02d",
+                            ($h = floor(abs($z['offset']) / 3600))
+                        ) . ':' . sprintf("%02d", abs($z['offset']) / 60 - $h * 60) : '') . ') ' . $z['timezone_id'],
                 'offset' => $z['offset'] - $serverOffset
             ];
         }

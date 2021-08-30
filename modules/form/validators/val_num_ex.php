@@ -1,22 +1,30 @@
-<?
+<?php
+
 IncludeModuleLangFile(__FILE__);
 
 class CFormValidatorNumberEx
 {
-    function GetDescription()
+    public static function GetDescription()
     {
         return array(
-            "NAME" => "number_ext", // unique validator string ID
-            "DESCRIPTION" => GetMessage('FORM_VALIDATOR_VAL_NUM_EX_DESCRIPTION'), // validator description
-            "TYPES" => array("text", "textarea"), //  list of types validator can be applied.
-            "SETTINGS" => array("CFormValidatorNumberEx", "GetSettings"), // method returning array of validator settings, optional
-            "CONVERT_TO_DB" => array("CFormValidatorNumberEx", "ToDB"), // method, processing validator settings to string to put to db, optional
-            "CONVERT_FROM_DB" => array("CFormValidatorNumberEx", "FromDB"), // method, processing validator settings from string from db, optional
-            "HANDLER" => array("CFormValidatorNumberEx", "DoValidate") // main validation method
+            "NAME" => "number_ext",
+            // unique validator string ID
+            "DESCRIPTION" => GetMessage('FORM_VALIDATOR_VAL_NUM_EX_DESCRIPTION'),
+            // validator description
+            "TYPES" => array("text", "textarea"),
+            //  list of types validator can be applied.
+            "SETTINGS" => array("CFormValidatorNumberEx", "GetSettings"),
+            // method returning array of validator settings, optional
+            "CONVERT_TO_DB" => array("CFormValidatorNumberEx", "ToDB"),
+            // method, processing validator settings to string to put to db, optional
+            "CONVERT_FROM_DB" => array("CFormValidatorNumberEx", "FromDB"),
+            // method, processing validator settings from string from db, optional
+            "HANDLER" => array("CFormValidatorNumberEx", "DoValidate")
+            // main validation method
         );
     }
 
-    function GetSettings()
+    public static function GetSettings()
     {
         return array(
             "NUMBER_FROM" => array(
@@ -39,11 +47,15 @@ class CFormValidatorNumberEx
         );
     }
 
-    function ToDB($arParams)
+    public static function ToDB($arParams)
     {
         $arParams["NUMBER_FLOAT"] = $arParams["NUMBER_FLOAT"] == "Y" ? "Y" : "N";
-        $arParams["NUMBER_FROM"] = $arParams["NUMBER_FLOAT"] == "Y" ? floatval($arParams["NUMBER_FROM"]) : intval($arParams["NUMBER_FROM"]);
-        $arParams["NUMBER_TO"] = $arParams["NUMBER_FLOAT"] == "Y" ? floatval($arParams["NUMBER_TO"]) : intval($arParams["NUMBER_TO"]);
+        $arParams["NUMBER_FROM"] = $arParams["NUMBER_FLOAT"] == "Y" ? floatval($arParams["NUMBER_FROM"]) : intval(
+            $arParams["NUMBER_FROM"]
+        );
+        $arParams["NUMBER_TO"] = $arParams["NUMBER_FLOAT"] == "Y" ? floatval($arParams["NUMBER_TO"]) : intval(
+            $arParams["NUMBER_TO"]
+        );
 
         if ($arParams["NUMBER_FROM"] > $arParams["NUMBER_TO"]) {
             $tmp = $arParams["NUMBER_FROM"];
@@ -54,17 +66,19 @@ class CFormValidatorNumberEx
         return serialize($arParams);
     }
 
-    function FromDB($strParams)
+    public static function FromDB($strParams)
     {
-        return unserialize($strParams);
+        return unserialize($strParams, ['allowed_classes' => false]);
     }
 
-    function DoValidate($arParams, $arQuestion, $arAnswers, $arValues)
+    public static function DoValidate($arParams, $arQuestion, $arAnswers, $arValues)
     {
         global $APPLICATION;
 
         foreach ($arValues as $value) {
-            if (strlen($value) <= 0) continue;
+            if ($value == '') {
+                continue;
+            }
 
             // do not return error if NaN, but set it to number -
 
@@ -81,13 +95,13 @@ class CFormValidatorNumberEx
             }
 
             // check minimum number
-            if (strlen($arParams["NUMBER_FROM"]) > 0 && $value < $arParams["NUMBER_FROM"]) {
+            if ($arParams["NUMBER_FROM"] <> '' && $value < $arParams["NUMBER_FROM"]) {
                 $APPLICATION->ThrowException(GetMessage("FORM_VALIDATOR_VAL_NUM_EX_ERROR_LESS"));
                 return false;
             }
 
             // check maximum number
-            if (strlen($arParams["NUMBER_TO"]) > 0 && $value > $arParams["NUMBER_TO"]) {
+            if ($arParams["NUMBER_TO"] <> '' && $value > $arParams["NUMBER_TO"]) {
                 $APPLICATION->ThrowException(GetMessage("FORM_VALIDATOR_VAL_NUM_EX_ERROR_MORE"));
                 return false;
             }
@@ -98,4 +112,3 @@ class CFormValidatorNumberEx
 }
 
 AddEventHandler("form", "onFormValidatorBuildList", array("CFormValidatorNumberEx", "GetDescription"));
-?>

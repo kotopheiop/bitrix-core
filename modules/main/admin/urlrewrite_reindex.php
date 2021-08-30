@@ -1,60 +1,72 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/prolog.php");
 define("HELP_FILE", "settings/urlrewrite_reindex.php");
 
 IncludeModuleLangFile(__FILE__);
 
-if (!$USER->CanDoOperation('edit_php'))
+if (!$USER->CanDoOperation('edit_php')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $res = false;
-if (strlen($Reindex) > 0 && check_bitrix_sessid()) {
+if ($Reindex <> '' && check_bitrix_sessid()) {
     require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_js.php");
 
-    if (strlen($Next) <= 0 || !CheckSerializedData($_REQUEST['NS'])) {
+    if ($Next == '' || !CheckSerializedData($_REQUEST['NS'])) {
         $NS = array(
             "max_execution_time" => $max_execution_time,
             "stepped" => $stepped,
             "max_file_size" => $max_file_size
         );
-        if ($site_id != "")
+        if ($site_id != "") {
             $NS["SITE_ID"] = $site_id;
-    } else
-        $NS = unserialize($_REQUEST['NS']);
+        }
+    } else {
+        $NS = unserialize($_REQUEST['NS'], ['allowed_classes' => false]);
+    }
 
     $res = \Bitrix\Main\UrlRewriter::reindexAll(($NS["stepped"] == "Y" ? $NS["max_execution_time"] : 0), $NS);
 
     if (is_array($res)):
         //$res["STAT"]=$NS["STAT"];
         //$res["STAT"][]=$res["CNT"]-$NS["CNT"];
-        //$perfomance = "<br>",implode($res["STAT"],", ");
-        CAdminMessage::ShowMessage(array(
-            "MESSAGE" => GetMessage("url_rewrite_mess_title"),
-            "DETAILS" => GetMessage("MURL_REINDEX_TOTAL") . " <b>" . $res["CNT"] . "</b>",
-            "HTML" => true,
-            "TYPE" => "OK",
-        ));
+        //$perfomance = "<br>",implode(", ", $res["STAT"]);
+        CAdminMessage::ShowMessage(
+            array(
+                "MESSAGE" => GetMessage("url_rewrite_mess_title"),
+                "DETAILS" => GetMessage("MURL_REINDEX_TOTAL") . " <b>" . $res["CNT"] . "</b>",
+                "HTML" => true,
+                "TYPE" => "OK",
+            )
+        );
         ?>
         <input type="hidden" id="NS" name="NS" value="<?= htmlspecialcharsbx(serialize($res)) ?>">
     <?
     else:
-        CAdminMessage::ShowMessage(array(
-            "MESSAGE" => GetMessage("MURL_REINDEX_COMPLETE"),
-            "DETAILS" => GetMessage("MURL_REINDEX_TOTAL") . " <b>" . $res . "</b>",
-            "HTML" => true,
-            "TYPE" => "OK",
-        ));
+        CAdminMessage::ShowMessage(
+            array(
+                "MESSAGE" => GetMessage("MURL_REINDEX_COMPLETE"),
+                "DETAILS" => GetMessage("MURL_REINDEX_TOTAL") . " <b>" . $res . "</b>",
+                "HTML" => true,
+                "TYPE" => "OK",
+            )
+        );
         ?>
         <input type="hidden" id="NSTOP" name="NSTOP" value="Y">
     <?endif;
     require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/epilog_admin_js.php");
 } else {
-
     $APPLICATION->SetTitle(GetMessage("MURL_REINDEX_TITLE"));
 
     $aTabs = array(
-        array("DIV" => "edit1", "TAB" => GetMessage("MURL_REINDEX_TAB"), "ICON" => "main_user_edit", "TITLE" => GetMessage("MURL_REINDEX_TAB_TITLE")),
+        array(
+            "DIV" => "edit1",
+            "TAB" => GetMessage("MURL_REINDEX_TAB"),
+            "ICON" => "main_user_edit",
+            "TITLE" => GetMessage("MURL_REINDEX_TAB_TITLE")
+        ),
     );
     $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
@@ -150,8 +162,10 @@ if (strlen($Reindex) > 0 && check_bitrix_sessid()) {
         <tr>
             <td><? echo GetMessage("MURL_REINDEX_MAX_SIZE") ?></td>
             <td><input type="text" name="max_file_size" id="max_file_size" size="10"
-                       value="<? echo COption::GetOptionString("main", "urlrewrite_max_file_size"); ?>"><? echo GetMessage("MURL_REINDEX_MAX_SIZE_kb") ?>
-            </td>
+                       value="<? echo COption::GetOptionString(
+                           "main",
+                           "urlrewrite_max_file_size"
+                       ); ?>"><? echo GetMessage("MURL_REINDEX_MAX_SIZE_kb") ?></td>
         </tr>
         <tr>
             <td><? echo GetMessage("MURL_REINDEX_STEPPED") ?></td>
@@ -162,8 +176,11 @@ if (strlen($Reindex) > 0 && check_bitrix_sessid()) {
         <tr id="trs" <? if ($stepped != "Y") echo " disabled" ?>>
             <td><? echo GetMessage("MURL_REINDEX_STEP") ?></td>
             <td><input type="text" name="max_execution_time" id="max_execution_time" size="3"
-                       value="<? echo htmlspecialcharsbx($max_execution_time); ?>" <? if ($stepped != "Y") echo " disabled" ?>> <? echo GetMessage("MURL_REINDEX_STEP_sec") ?>
-            </td>
+                       value="<? echo htmlspecialcharsbx(
+                           $max_execution_time
+                       ); ?>" <? if ($stepped != "Y") echo " disabled" ?>> <? echo GetMessage(
+                    "MURL_REINDEX_STEP_sec"
+                ) ?></td>
         </tr>
 
         <?

@@ -26,7 +26,11 @@ class Version1 extends Base
      */
     protected function loadOrder($archivedOrder)
     {
-        $this->order = Archive\Order::create($archivedOrder['ORDER']['LID'], $archivedOrder['ORDER']['USER_ID'], $archivedOrder['ORDER']['CURRENCY']);
+        $this->order = Archive\Order::create(
+            $archivedOrder['ORDER']['LID'],
+            $archivedOrder['ORDER']['USER_ID'],
+            $archivedOrder['ORDER']['CURRENCY']
+        );
         $this->order->setPersonTypeId($archivedOrder['ORDER']['PERSON_TYPE_ID']);
 
         $registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
@@ -90,8 +94,9 @@ class Version1 extends Base
                 if ($type == Sale\BasketItem::TYPE_SET) {
                     $bundleCollection = $item->getBundleCollection();
                     foreach ($archivedOrder['BASKET_ITEMS'] as &$bundle) {
-                        if ($item->getId() !== (int)$bundle['SET_PARENT_ID'])
+                        if ($item->getId() !== (int)$bundle['SET_PARENT_ID']) {
                             continue;
+                        }
 
                         $itemBundle = $bundleCollection->createItem($bundle['MODULE'], $bundle['PRODUCT_ID']);
                         $this->riseBasketItem($itemBundle, $bundle);
@@ -142,8 +147,9 @@ class Version1 extends Base
         $paymentCollection = $this->order->getPaymentCollection();
         $paymentCollectionArchived = $archivedOrder['PAYMENT'];
 
-        if (empty($paymentCollectionArchived))
+        if (empty($paymentCollectionArchived)) {
             return;
+        }
 
         foreach ($paymentCollectionArchived as $oldPayment) {
             /** @var Sale\Payment $newPaymentItem */
@@ -167,8 +173,9 @@ class Version1 extends Base
         $shipmentCollection = $this->order->getShipmentCollection();
         $shipmentCollectionArchived = $archivedOrder['SHIPMENT'];
 
-        if (empty($shipmentCollectionArchived))
+        if (empty($shipmentCollectionArchived)) {
             return;
+        }
 
         foreach ($shipmentCollectionArchived as $oldShipment) {
             $oldShipmentCollections = $oldShipment['SHIPMENT_ITEM'];
@@ -180,8 +187,9 @@ class Version1 extends Base
                 foreach ($oldShipmentCollections as $oldItemStore) {
                     $basketItemId = $oldItemStore['BASKET_ID'];
 
-                    if (empty($basketItemsMap[$basketItemId]))
+                    if (empty($basketItemsMap[$basketItemId])) {
                         continue;
+                    }
 
                     /** @var Sale\ShipmentItem $shipmentItem */
                     $shipmentItem = $newShipmentItemCollection->createItem($basketItemsMap[$basketItemId]);
@@ -236,8 +244,9 @@ class Version1 extends Base
         foreach ($discountDataRow['RULES_DATA'] as $rule) {
             $discountList[] = $rule["DISCOUNT_DATA"];
 
-            if ($rule['APPLY_BLOCK_COUNTER'] < 0)
+            if ($rule['APPLY_BLOCK_COUNTER'] < 0) {
                 continue;
+            }
 
             if ($rule['APPLY'] === 'Y' && (int)$rule['COUPON_ID'] > 0) {
                 $couponAppliedList[] = (int)$rule['COUPON_ID'];
@@ -245,8 +254,9 @@ class Version1 extends Base
 
             $blockCounter = $rule['APPLY_BLOCK_COUNTER'];
 
-            if (!isset($orderDiscountIndex[$blockCounter]))
+            if (!isset($orderDiscountIndex[$blockCounter])) {
                 $orderDiscountIndex[$blockCounter] = 0;
+            }
 
             if (!isset($appliedBlocks[$blockCounter])) {
                 $appliedBlocks[$blockCounter] = array(
@@ -277,7 +287,9 @@ class Version1 extends Base
                     'RULE_ID' => $rule['ID'],
                     'APPLY' => $rule['APPLY'],
                     'RULE_DESCR_ID' => $rule['RULE_DESCR_ID'],
-                    'ACTION_BLOCK_LIST' => (!empty($rule['ACTION_BLOCK_LIST']) && is_array($rule['ACTION_BLOCK_LIST']) ? $rule['ACTION_BLOCK_LIST'] : null)
+                    'ACTION_BLOCK_LIST' => (!empty($rule['ACTION_BLOCK_LIST']) && is_array(
+                        $rule['ACTION_BLOCK_LIST']
+                    ) ? $rule['ACTION_BLOCK_LIST'] : null)
                 );
 
                 if (!empty($rule['RULE_DESCR']) && is_array($rule['RULE_DESCR'])) {
@@ -290,12 +302,14 @@ class Version1 extends Base
                     case Internals\OrderRulesTable::ENTITY_TYPE_BASKET_ITEM:
                         $ruleItem['BASKET_ID'] = $rule['ENTITY_ID'];
                         $index = $rule['ENTITY_ID'];
-                        if (!isset($orderDiscountItem['RESULT']['BASKET']))
+                        if (!isset($orderDiscountItem['RESULT']['BASKET'])) {
                             $orderDiscountItem['RESULT']['BASKET'] = array();
+                        }
 
                         $orderDiscountItem['RESULT']['BASKET'][$index] = $ruleItem;
-                        if ($ruleItem['ACTION_BLOCK_LIST'] === null)
+                        if ($ruleItem['ACTION_BLOCK_LIST'] === null) {
                             $orderDiscountItem['ACTION_BLOCK_LIST'] = false;
+                        }
 
                         $discountResultList['BASKET'][$ruleItem['BASKET_ID']][] = array(
                             'DISCOUNT_ID' => $orderDiscountItem['DISCOUNT_ID'],
@@ -306,8 +320,9 @@ class Version1 extends Base
                         break;
 
                     case Internals\OrderRulesTable::ENTITY_TYPE_DELIVERY:
-                        if (!isset($orderDiscountItem['RESULT']['DELIVERY']))
+                        if (!isset($orderDiscountItem['RESULT']['DELIVERY'])) {
                             $orderDiscountItem['RESULT']['DELIVERY'] = array();
+                        }
 
                         $ruleItem['DELIVERY_ID'] = ($rule['ENTITY_ID'] > 0 ? $rule['ENTITY_ID'] : (string)$rule['ENTITY_VALUE']);
                         $orderDiscountItem['RESULT']['DELIVERY'] = $ruleItem;
@@ -321,8 +336,9 @@ class Version1 extends Base
                         );
 
                         foreach ($orderDiscountData as $data) {
-                            if ((int)$data['DELIVERY_ID'] == (int)$orderDiscountItem['RESULT']['DELIVERY']['DELIVERY_ID'])
+                            if ((int)$data['DELIVERY_ID'] == (int)$orderDiscountItem['RESULT']['DELIVERY']['DELIVERY_ID']) {
                                 $resultData['SHIPMENTS_ID'][] = (int)$data['SHIPMENT_ID'];
+                            }
                         }
                         break;
                 }
@@ -330,8 +346,9 @@ class Version1 extends Base
                 $orderDiscountLink[$orderDiscountId] = $orderDiscountItem;
                 unset($ruleItem, $orderDiscountId);
             } else {
-                if ($rule['ENTITY_ID'] <= 0 || $rule['ENTITY_TYPE'] != Internals\OrderRulesTable::ENTITY_TYPE_BASKET_ITEM)
+                if ($rule['ENTITY_ID'] <= 0 || $rule['ENTITY_TYPE'] != Internals\OrderRulesTable::ENTITY_TYPE_BASKET_ITEM) {
                     continue;
+                }
 
                 $index = $rule['ENTITY_ID'];
 
@@ -351,12 +368,15 @@ class Version1 extends Base
 
                 if (!empty($rule['RULE_DESCR']) && is_array($rule['RULE_DESCR'])) {
                     $ruleResult['RESULT']['DESCR_DATA'] = $rule['RULE_DESCR'];
-                    $ruleResult['RESULT']['DESCR'] = Sale\OrderDiscountManager::formatArrayDescription($rule['RULE_DESCR']);
+                    $ruleResult['RESULT']['DESCR'] = Sale\OrderDiscountManager::formatArrayDescription(
+                        $rule['RULE_DESCR']
+                    );
                     $ruleResult['DESCR_ID'] = $rule['RULE_DESCR_ID'];
                 }
 
-                if (!isset($appliedBlocks[$blockCounter]['BASKET'][$index]))
+                if (!isset($appliedBlocks[$blockCounter]['BASKET'][$index])) {
                     $appliedBlocks[$blockCounter]['BASKET'][$index] = array();
+                }
                 $appliedBlocks[$blockCounter]['BASKET'][$index][] = $ruleResult;
 
                 $discountResultList['BASKET'][$index][] = array(
@@ -415,8 +435,9 @@ class Version1 extends Base
 
         /** @var Sale\Shipment $shipment */
         foreach ($shipmentCollection as $shipment) {
-            if ($shipment->isSystem())
+            if ($shipment->isSystem()) {
                 continue;
+            }
 
             $resultData['DELIVERY'][$shipment->getId()] = array(
                 'BASE_PRICE' => $shipment->getField("BASE_PRICE_DELIVERY"),
@@ -473,8 +494,9 @@ class Version1 extends Base
             }
 
             if ($data['ENTITY_TYPE'] == Internals\OrderDiscountDataTable::ENTITY_TYPE_BASKET_ITEM) {
-                if (!isset($resultData['DATA']['BASKET']))
+                if (!isset($resultData['DATA']['BASKET'])) {
                     $resultData['BASKET'] = array();
+                }
                 $data['ENTITY_ID'] = (int)$data['ENTITY_ID'];
                 $resultData['BASKET'][$data['ENTITY_ID']] = $data['ENTITY_DATA'];
             }
@@ -507,7 +529,9 @@ class Version1 extends Base
             }
 
             if ($discount['MODULE_ID'] == 'sale') {
-                $discount['EDIT_PAGE_URL'] = Sale\OrderDiscountManager::getEditUrl(array('ID' => $discount['DISCOUNT_ID']));
+                $discount['EDIT_PAGE_URL'] = Sale\OrderDiscountManager::getEditUrl(
+                    array('ID' => $discount['DISCOUNT_ID'])
+                );
             }
             $discount['DISCOUNT_ID'] = $discount['ID'];
             $resultData[$discount['ID']] = $discount;
@@ -528,8 +552,9 @@ class Version1 extends Base
             foreach ($discountResult['BASKET'] as $discountList) {
                 if (is_array($discountList)) {
                     foreach ($discountList as $discount) {
-                        if ($discount['APPLY'] === 'Y')
+                        if ($discount['APPLY'] === 'Y') {
                             $idList[] = $discount['DISCOUNT_ID'];
+                        }
                     }
                 }
             }
@@ -537,8 +562,9 @@ class Version1 extends Base
 
         if (is_array($discountResult['DELIVERY'])) {
             foreach ($discountResult['DELIVERY'] as $discount) {
-                if ($discount['APPLY'] === 'Y')
+                if ($discount['APPLY'] === 'Y') {
                     $idList[] = $discount['DISCOUNT_ID'];
+                }
             }
         }
 

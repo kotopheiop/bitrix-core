@@ -139,7 +139,7 @@ class Document extends Node
     {
         static $classByTag = array();
 
-        $tagName = strtoupper($tagName);
+        $tagName = mb_strtoupper($tagName);
         $elementClass = "Bitrix\\Main\\Web\\DOM\\Element\\" . $tagName;
 
         if (!isset($classByTag[$tagName])) {
@@ -239,7 +239,7 @@ class Document extends Node
      */
     public function getElementsByAttr($attrName, $attrValue = null, $limit = 0)
     {
-        $attrName = strtolower($attrName);
+        $attrName = mb_strtolower($attrName);
         $nodeList = $this->getQueryEngine()->walk(
             array(
                 array(
@@ -252,7 +252,9 @@ class Document extends Node
                     )
                 )
             ),
-            null, $this, $limit
+            null,
+            $this,
+            $limit
         );
 
         if (Node::$isNodeListAsArray) {
@@ -267,12 +269,13 @@ class Document extends Node
      */
     public function getElementsByTagName($tagName)
     {
-        $tagName = strtoupper($tagName);
+        $tagName = mb_strtoupper($tagName);
         $nodeList = $this->getQueryEngine()->walk(
             array(
                 array(QueryEngine::FILTER_NODE_NAME => $tagName)
             ),
-            null, $this
+            null,
+            $this
         );
 
         if (Node::$isNodeListAsArray) {
@@ -291,7 +294,9 @@ class Document extends Node
             array(
                 array(QueryEngine::FILTER_ATTR_CLASS_NAME => $className)
             ),
-            null, $this, $limit
+            null,
+            $this,
+            $limit
         );
 
         if (Node::$isNodeListAsArray) {

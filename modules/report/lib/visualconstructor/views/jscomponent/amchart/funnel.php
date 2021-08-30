@@ -35,7 +35,6 @@ class Funnel extends PieDiagram
         $viewTypes = parent::getCompatibleViewTypes();
         $viewTypes[] = 'pieDiagram';
         return $viewTypes;
-
     }
 
 

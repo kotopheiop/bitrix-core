@@ -92,21 +92,31 @@ class Comment extends CopyImplementer
     {
         list($field, $text) = $this->getText($id);
 
-        $detailText = call_user_func_array($auxiliaryCallback, [
-            $text,
-            $this->ufEntityObject,
-            $id,
-            $this->ufDiskFileField,
-            $attachedIds
-        ]);
+        $detailText = call_user_func_array(
+            $auxiliaryCallback,
+            [
+                $text,
+                $this->ufEntityObject,
+                $id,
+                $this->ufDiskFileField,
+                $attachedIds
+            ]
+        );
 
         $this->update($id, [$field => $detailText]);
     }
 
     protected function getText($commentId)
     {
-        $queryObject = \CForumMessage::getlist([], [
-            "ID" => $commentId], false, 0, ["SELECT" => ["POST_MESSAGE"]]);
+        $queryObject = \CForumMessage::getlist(
+            [],
+            [
+                "ID" => $commentId
+            ],
+            false,
+            0,
+            ["SELECT" => ["POST_MESSAGE"]]
+        );
 
         if ($fields = $queryObject->fetch()) {
             return ["POST_MESSAGE", $fields["POST_MESSAGE"]];

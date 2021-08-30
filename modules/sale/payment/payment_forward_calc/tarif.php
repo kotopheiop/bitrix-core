@@ -1,4 +1,6 @@
-<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+}
 //http://www.russianpost.ru/rp/servise/ru/home/finuslug/cybermoney_russia
 
 include(GetLangFileName(dirname(__FILE__) . "/", "/tarif.php"));
@@ -8,8 +10,9 @@ class CSalePaySystemTarifPFC extends CSalePaySystemTarif
     /* required inhereted methods */
     public static function getPrice(&$arPaySystem, $orderPrice, $deliveryPrice, $buyerLocationId)
     {
-        if (!isset($arPaySystem["PSA_TARIF"]) || strlen($arPaySystem["PSA_TARIF"]) <= 0)
+        if (!isset($arPaySystem["PSA_TARIF"]) || $arPaySystem["PSA_TARIF"] == '') {
             return 0;
+        }
 
         $result = 0;
         $arLoc = CSaleLocation::GetByID($buyerLocationId);
@@ -18,19 +21,21 @@ class CSalePaySystemTarifPFC extends CSalePaySystemTarif
         $arTarif = isset($arTarifs[$regId]) ? $arTarifs[$regId] : $arTarifs[0];
         $fullPrice = $orderPrice + $deliveryPrice;
 
-        if ($fullPrice <= 1000)
+        if ($fullPrice <= 1000) {
             $tarifNum = "0";
-        elseif ($fullPrice <= 5000)
+        } elseif ($fullPrice <= 5000) {
             $tarifNum = "1";
-        elseif ($fullPrice <= 20000)
+        } elseif ($fullPrice <= 20000) {
             $tarifNum = "2";
-        elseif ($fullPrice <= 500000)
+        } elseif ($fullPrice <= 500000) {
             $tarifNum = "3";
+        }
 
         if (isset($tarifNum)) {
             $percent = 0;
-            if ($arTarif["TARIFS"][$tarifNum]["UPPER_SUMM"] < $orderPrice)
+            if ($arTarif["TARIFS"][$tarifNum]["UPPER_SUMM"] < $orderPrice) {
                 $percent = floatval($arTarif["TARIFS"][$tarifNum]["PERCENT"]) * floatval($orderPrice) / 100;
+            }
             $result = floatval($arTarif["TARIFS"][$tarifNum]["FIX"]) + $percent;
         }
 
@@ -58,7 +63,6 @@ class CSalePaySystemTarifPFC extends CSalePaySystemTarif
                 'ps_payment_forward_calc_tarifs',
                 array('CSalePaySystemTarifPFC', 'getAllCMTarifsFromCsv')
             );
-
         }
 
         return $arResult;
@@ -93,16 +97,18 @@ class CSalePaySystemTarifPFC extends CSalePaySystemTarif
         if (is_array($arTarif)) {
             foreach ($arTarif as $tarifId => $value) {
                 if ($tarifId == "REG_NEW" && $value > 0) {
-                    for ($i = 0; $i <= 11; $i++)
+                    for ($i = 0; $i <= 11; $i++) {
                         $arResult[$value][] = 0;
+                    }
 
                     continue;
                 }
 
                 $arTarifId = explode('_', $tarifId);
 
-                if (isset($arTarifId[2]))
+                if (isset($arTarifId[2])) {
                     $regionId = $arTarifId[2];
+                }
 
                 $arResult[$regionId][] = $value;
             }
@@ -119,7 +125,6 @@ class CSalePaySystemTarifPFC extends CSalePaySystemTarif
         $arCmTarifs = self::getValues($psId, $persId);
 
         foreach ($arCmTarifs as $regionId => $arRegInfo) {
-
             $arResult[$regionId . 'REG_ID'] = array(
                 'TYPE' => 'TEXT_CENTERED',
                 'TITLE' => $arRegInfo["REG_NAME"],
@@ -127,32 +132,37 @@ class CSalePaySystemTarifPFC extends CSalePaySystemTarif
                 'BLOCK_LENGTH' => 4,
             );
 
-            if ($regionId != 0)
+            if ($regionId != 0) {
                 $arResult[$regionId . 'REG_ID']['BLOCK_DELETABLE'] = 'Y';
+            }
 
             self::setTarifConfig(
                 'TARIF_1_' . $regionId,
                 GetMessage('SPFPCT_LESS_1K'),
                 $arRegInfo["TARIFS"][0],
-                $arResult);
+                $arResult
+            );
 
             self::setTarifConfig(
                 'TARIF_2_' . $regionId,
                 GetMessage('SPFPCT_LESS_5K'),
                 $arRegInfo["TARIFS"][1],
-                $arResult);
+                $arResult
+            );
 
             self::setTarifConfig(
                 'TARIF_3_' . $regionId,
                 GetMessage('SPFPCT_LESS_20K'),
                 $arRegInfo["TARIFS"][2],
-                $arResult);
+                $arResult
+            );
 
             self::setTarifConfig(
                 'TARIF_4_' . $regionId,
                 GetMessage('SPFPCT_LESS_500K'),
                 $arRegInfo["TARIFS"][3],
-                $arResult);
+                $arResult
+            );
         }
 
         $arRegions = self::getRegionsList();
@@ -171,8 +181,9 @@ class CSalePaySystemTarifPFC extends CSalePaySystemTarif
         $arResult = array(0 => GetMessage('SPFPCT_CHOOSE_REGION'));
 
         $dbReg = CSaleLocation::GetRegionList();
-        while ($arReg = $dbReg->Fetch())
+        while ($arReg = $dbReg->Fetch()) {
             $arResult[$arReg["ID"]] = $arReg["NAME"];
+        }
 
         return $arResult;
     }
@@ -239,8 +250,9 @@ class CSalePaySystemTarifPFC extends CSalePaySystemTarif
 
     public static function getCMTarifsByRegionFromCsv($regionNameLang)
     {
-        if (strlen(trim($regionNameLang)) <= 0)
+        if (trim($regionNameLang) == '') {
             return false;
+        }
 
         $csvFile = CSaleHelper::getCsvObject(__DIR__ . '/ru/cm_tarif.csv');
 
@@ -249,7 +261,7 @@ class CSalePaySystemTarifPFC extends CSalePaySystemTarif
         $arTarifs = $csvFile->Fetch();
 
         while ($arRes = $csvFile->Fetch()) {
-            if (strtoupper(trim($regionNameLang)) === $arRes[$COL_REG_NAME]) {
+            if (mb_strtoupper(trim($regionNameLang)) === $arRes[$COL_REG_NAME]) {
                 $arTarifs = $arRes;
                 break;
             }
@@ -271,8 +283,9 @@ class CSalePaySystemTarifPFC extends CSalePaySystemTarif
             $arRegName = array_shift($arRes);
             $arTarifs[$arRegName] = $arRes;
 
-            if ($arRegName != 'default')
+            if ($arRegName != 'default') {
                 $regNames[] = $arRegName;
+            }
         }
 
         if (isset($arTarifs['default'])) {

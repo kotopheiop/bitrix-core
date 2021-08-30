@@ -21,8 +21,9 @@ class Filters
     public static function getFilteredOffersId(array $filter)
     {
         $result = array();
-        if (empty($filter) || !is_array($filter))
+        if (empty($filter) || !is_array($filter)) {
             return $result;
+        }
 
         $itemsIterator = \CIBlockElement::getList(array(), $filter, false, false, array('ID'));
         while ($item = $itemsIterator->fetch()) {
@@ -47,17 +48,20 @@ class Filters
         $result = array();
         $iblockId = (int)$iblockId;
         $propertyId = (int)$propertyId;
-        if ($iblockId <= 0 || $propertyId <= 0)
+        if ($iblockId <= 0 || $propertyId <= 0) {
             return $result;
-        if (empty($filter) || !is_array($filter))
+        }
+        if (empty($filter) || !is_array($filter)) {
             return $result;
+        }
 
         $valuesIterator = \CIBlockElement::getPropertyValues($iblockId, $filter, false, array('ID' => $propertyId));
         while ($value = $valuesIterator->fetch()) {
             $productId = (int)$value[$propertyId];
             $offerId = (int)$value['IBLOCK_ELEMENT_ID'];
-            if (!isset($result[$productId]))
+            if (!isset($result[$productId])) {
                 $result[$productId] = array();
+            }
             $result[$productId][$offerId] = $offerId;
         }
         unset($value, $valuesIterator);

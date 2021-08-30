@@ -26,6 +26,7 @@ class UrlPreview
         'vimeo.com' => 'vimeo.com',
         'rutube.ru' => 'rutube.ru',
         'facebook.com' => 'facebook.com',
+        'fb.watch' => 'fb.watch',
         'vk.com' => 'vk.com',
         'instagram.com' => 'instagram.com',
     ];
@@ -40,12 +41,14 @@ class UrlPreview
      */
     public static function getMetadataByUrl($url, $addIfNew = true, $reuseExistingMetadata = true)
     {
-        if (!static::isEnabled())
+        if (!static::isEnabled()) {
             return false;
+        }
 
         $url = static::normalizeUrl($url);
-        if ($url == '')
+        if ($url == '') {
             return false;
+        }
 
         if ($reuseExistingMetadata) {
             if ($metadata = UrlMetadataTable::getByUrl($url)) {
@@ -56,8 +59,9 @@ class UrlPreview
             }
         }
 
-        if (!$addIfNew)
+        if (!$addIfNew) {
             return false;
+        }
 
         $metadataId = static::reserveIdForUrl($url);
         $metadata = static::fetchUrlMetadata($url);
@@ -85,42 +89,54 @@ class UrlPreview
         $edit = !!$edit;
         $cacheTag = '';
 
-        if (!static::isEnabled())
+        if (!static::isEnabled()) {
             return null;
+        }
 
         $metadataId = (int)$userField['VALUE'][0];
         $metadata = false;
         if ($metadataId > 0) {
             $metadata = UrlMetadataTable::getById($metadataId)->fetch();
-            if (isset($metadata['TYPE']) && $metadata['TYPE'] == UrlMetadataTable::TYPE_TEMPORARY)
+            if (isset($metadata['TYPE']) && $metadata['TYPE'] == UrlMetadataTable::TYPE_TEMPORARY) {
                 $metadata = static::resolveTemporaryMetadata($metadata['ID']);
+            }
         }
 
         if (is_array($metadata)) {
+            $fullUrl = static::unfoldShortLink($metadata['URL']);
             if ($metadata['TYPE'] == UrlMetadataTable::TYPE_DYNAMIC) {
-                $routeRecord = Router::dispatch(new Uri(static::unfoldShortLink($metadata['URL'])));
+                $routeRecord = Router::dispatch(new Uri($fullUrl));
 
                 if (isset($routeRecord['MODULE']) && Loader::includeModule($routeRecord['MODULE'])) {
                     $className = $routeRecord['CLASS'];
                     $routeRecord['PARAMETERS']['URL'] = $metadata['URL'];
                     $parameters = $routeRecord['PARAMETERS'];
 
-                    if ($edit && (!method_exists($className, 'checkUserReadAccess') || !$className::checkUserReadAccess($parameters, static::getCurrentUserId())))
+                    if ($edit && (!method_exists($className, 'checkUserReadAccess') || !$className::checkUserReadAccess(
+                                $parameters,
+                                static::getCurrentUserId()
+                            ))) {
                         return null;
+                    }
 
                     if (method_exists($className, 'buildPreview')) {
                         $metadata['HANDLER'] = $routeRecord;
                         $metadata['HANDLER']['BUILD_METHOD'] = 'buildPreview';
                     }
 
-                    if (method_exists($className, 'getCacheTag'))
+                    if (method_exists($className, 'getCacheTag')) {
                         $cacheTag = $className::getCacheTag();
-                } else if (!$edit) {
-                    return null;
+                    }
+                } else {
+                    if (!$edit) {
+                        return null;
+                    }
                 }
             }
-        } else if (!$edit) {
-            return null;
+        } else {
+            if (!$edit) {
+                return null;
+            }
         }
 
         ob_start();
@@ -159,8 +175,9 @@ class UrlPreview
     public static function isUrlCached($url)
     {
         $url = static::normalizeUrl($url);
-        if ($url == '')
+        if ($url == '') {
             return false;
+        }
 
         return (static::isUrlLocal(new Uri($url)) || !!UrlMetadataTable::getByUrl($url));
     }
@@ -177,17 +194,19 @@ class UrlPreview
     public static function getMetadataAndHtmlByUrl($url, $addIfNew = true, $reuseExistingMetadata = true)
     {
         $metadata = static::getMetadataByUrl($url, $addIfNew, $reuseExistingMetadata);
-        if ($metadata === false)
+        if ($metadata === false) {
             return false;
+        }
 
         if ($metadata['TYPE'] == UrlMetadataTable::TYPE_STATIC || $metadata['TYPE'] == UrlMetadataTable::TYPE_FILE) {
             return $metadata;
-        } else if ($metadata['TYPE'] == UrlMetadataTable::TYPE_DYNAMIC) {
-            if ($preview = static::getDynamicPreview($url)) {
-                $metadata['HTML'] = $preview;
-                return $metadata;
+        } else {
+            if ($metadata['TYPE'] == UrlMetadataTable::TYPE_DYNAMIC) {
+                if ($preview = static::getDynamicPreview($url)) {
+                    $metadata['HTML'] = $preview;
+                    return $metadata;
+                }
             }
-
         }
 
         return false;
@@ -203,23 +222,27 @@ class UrlPreview
      */
     public static function getMetadataAndHtmlByIds(array $ids, $checkAccess = true, $userId = 0)
     {
-        if (!static::isEnabled())
+        if (!static::isEnabled()) {
             return false;
+        }
 
         $result = array();
 
-        $queryResult = UrlMetadataTable::getList(array(
-            'filter' => array(
-                'ID' => $ids,
-                '!=TYPE' => UrlMetadataTable::TYPE_TEMPORARY
+        $queryResult = UrlMetadataTable::getList(
+            array(
+                'filter' => array(
+                    'ID' => $ids,
+                    '!=TYPE' => UrlMetadataTable::TYPE_TEMPORARY
+                )
             )
-        ));
+        );
 
         while ($metadata = $queryResult->fetch()) {
             if ($metadata['TYPE'] == UrlMetadataTable::TYPE_DYNAMIC) {
                 $metadata['HTML'] = static::getDynamicPreview($metadata['URL'], $checkAccess, $userId);
-                if ($metadata['HTML'] === false)
+                if ($metadata['HTML'] === false) {
                     continue;
+                }
             }
             $result[$metadata['ID']] = $metadata;
         }
@@ -238,10 +261,12 @@ class UrlPreview
         if ($metadata = UrlMetadataTable::getByUrl($url)) {
             $id = $metadata['ID'];
         } else {
-            $result = UrlMetadataTable::add(array(
-                'URL' => $url,
-                'TYPE' => UrlMetadataTable::TYPE_TEMPORARY
-            ));
+            $result = UrlMetadataTable::add(
+                array(
+                    'URL' => $url,
+                    'TYPE' => UrlMetadataTable::TYPE_TEMPORARY
+                )
+            );
             $id = $result->getId();
         }
 
@@ -259,8 +284,9 @@ class UrlPreview
     public static function resolveTemporaryMetadata($id, $checkAccess = true, $userId = 0)
     {
         $metadata = UrlMetadataTable::getById($id)->fetch();
-        if (!is_array($metadata))
+        if (!is_array($metadata)) {
             return false;
+        }
 
         if ($metadata['TYPE'] == UrlMetadataTable::TYPE_TEMPORARY) {
             $metadata['URL'] = static::normalizeUrl($metadata['URL']);
@@ -272,12 +298,16 @@ class UrlPreview
 
             UrlMetadataTable::update($id, $metadata);
             return $metadata;
-        } else if ($metadata['TYPE'] == UrlMetadataTable::TYPE_STATIC || $metadata['TYPE'] == UrlMetadataTable::TYPE_FILE) {
-            return $metadata;
-        } else if ($metadata['TYPE'] == UrlMetadataTable::TYPE_DYNAMIC) {
-            if ($preview = static::getDynamicPreview($metadata['URL'], $checkAccess, $userId)) {
-                $metadata['HTML'] = $preview;
+        } else {
+            if ($metadata['TYPE'] == UrlMetadataTable::TYPE_STATIC || $metadata['TYPE'] == UrlMetadataTable::TYPE_FILE) {
                 return $metadata;
+            } else {
+                if ($metadata['TYPE'] == UrlMetadataTable::TYPE_DYNAMIC) {
+                    if ($preview = static::getDynamicPreview($metadata['URL'], $checkAccess, $userId)) {
+                        $metadata['HTML'] = $preview;
+                        return $metadata;
+                    }
+                }
             }
         }
 
@@ -294,23 +324,29 @@ class UrlPreview
     public static function getDynamicPreview($url, $checkAccess = true, $userId = 0)
     {
         $routeRecord = Router::dispatch(new Uri(static::unfoldShortLink($url)));
-        if ($routeRecord === false)
+        if ($routeRecord === false) {
             return false;
+        }
 
         if (isset($routeRecord['MODULE']) && Loader::includeModule($routeRecord['MODULE'])) {
             $className = $routeRecord['CLASS'];
             $parameters = $routeRecord['PARAMETERS'];
             $parameters['URL'] = $url;
 
-            if ($userId == 0)
+            if ($userId == 0) {
                 $userId = static::getCurrentUserId();
+            }
 
-            if ($checkAccess && (!method_exists($className, 'checkUserReadAccess') || $userId == 0 || !$className::checkUserReadAccess($parameters, $userId)))
+            if ($checkAccess && (!method_exists(
+                        $className,
+                        'checkUserReadAccess'
+                    ) || $userId == 0 || !$className::checkUserReadAccess($parameters, $userId))) {
                 return false;
+            }
 
             if (method_exists($className, 'buildPreview')) {
                 $preview = $className::buildPreview($parameters);
-                return (strlen($preview) > 0 ? $preview : false);
+                return ($preview <> '' ? $preview : false);
             }
         }
         return false;
@@ -327,19 +363,25 @@ class UrlPreview
     {
         //todo: caching
         $routeRecord = Router::dispatch(new Uri(static::unfoldShortLink($url)));
-        if ($routeRecord === false)
+        if ($routeRecord === false) {
             return false;
+        }
 
-        if ($userId == 0)
+        if ($userId == 0) {
             $userId = static::getCurrentUserId();
+        }
 
         if (isset($routeRecord['MODULE']) && Loader::includeModule($routeRecord['MODULE'])) {
             $className = $routeRecord['CLASS'];
             $parameters = $routeRecord['PARAMETERS'];
             $parameters['URL'] = $url;
 
-            if ($checkAccess && (!method_exists($className, 'checkUserReadAccess') || $userId == 0 || !$className::checkUserReadAccess($parameters, $userId)))
+            if ($checkAccess && (!method_exists(
+                        $className,
+                        'checkUserReadAccess'
+                    ) || $userId == 0 || !$className::checkUserReadAccess($parameters, $userId))) {
                 return false;
+            }
 
             if (method_exists($className, 'getImAttach')) {
                 return $className::getImAttach($parameters);
@@ -357,17 +399,22 @@ class UrlPreview
     public static function checkDynamicPreviewAccess($url, $userId = 0)
     {
         $routeRecord = Router::dispatch(new Uri(static::unfoldShortLink($url)));
-        if ($routeRecord === false)
+        if ($routeRecord === false) {
             return false;
+        }
 
         if (isset($routeRecord['MODULE']) && Loader::includeModule($routeRecord['MODULE'])) {
             $className = $routeRecord['CLASS'];
             $parameters = $routeRecord['PARAMETERS'];
 
-            if ($userId == 0)
+            if ($userId == 0) {
                 $userId = static::getCurrentUserId();
+            }
 
-            return (method_exists($className, 'checkUserReadAccess') && $userId > 0 && $className::checkUserReadAccess($parameters, $userId));
+            return (method_exists($className, 'checkUserReadAccess') && $userId > 0 && $className::checkUserReadAccess(
+                    $parameters,
+                    $userId
+                ));
         }
         return false;
     }
@@ -381,22 +428,27 @@ class UrlPreview
      */
     public static function setMetadataImage($id, $imageUrl)
     {
-        if (!is_int($id))
+        if (!is_int($id)) {
             throw new ArgumentException("Id of the metadata must be an integer", "id");
-        if (!is_string($imageUrl) && !is_null($imageUrl))
+        }
+        if (!is_string($imageUrl) && !is_null($imageUrl)) {
             throw new ArgumentException("Url of the image must be a string", "imageUrl");
+        }
 
-        $metadata = UrlMetadataTable::getList(array(
-            'select' => array('IMAGE', 'IMAGE_ID', 'EXTRA'),
-            'filter' => array('=ID' => $id)
-        ))->fetch();
+        $metadata = UrlMetadataTable::getList(
+            array(
+                'select' => array('IMAGE', 'IMAGE_ID', 'EXTRA'),
+                'filter' => array('=ID' => $id)
+            )
+        )->fetch();
 
         if (isset($metadata['EXTRA']['IMAGES'])) {
             $imageIndex = array_search($imageUrl, $metadata['EXTRA']['IMAGES']);
-            if ($imageIndex === false)
+            if ($imageIndex === false) {
                 unset($metadata['EXTRA']['SELECTED_IMAGE']);
-            else
+            } else {
                 $metadata['EXTRA']['SELECTED_IMAGE'] = $imageIndex;
+            }
         }
 
         if (static::getOptionSaveImages()) {
@@ -441,9 +493,10 @@ class UrlPreview
      */
     protected static function fetchUrlMetadata($url)
     {
-        $uriParser = new Uri($url);
+        $fullUrl = static::unfoldShortLink($url);
+        $uriParser = new Uri($fullUrl);
         if (static::isUrlLocal($uriParser)) {
-            if ($routeRecord = Router::dispatch(new Uri(static::unfoldShortLink($url)))) {
+            if ($routeRecord = Router::dispatch($uriParser)) {
                 $metadata = array(
                     'URL' => $url,
                     'TYPE' => UrlMetadataTable::TYPE_DYNAMIC,
@@ -479,8 +532,9 @@ class UrlPreview
      */
     protected static function isUrlLocal(Uri $uri)
     {
-        if ($uri->getHost() == '')
+        if ($uri->getHost() == '') {
             return true;
+        }
 
         $host = \Bitrix\Main\Context::getCurrent()->getRequest()->getHttpHost();
         return $uri->getHost() === $host;
@@ -498,13 +552,15 @@ class UrlPreview
         $httpClient->setTimeout(5);
         $httpClient->setStreamTimeout(5);
         $httpClient->setHeader('User-Agent', self::USER_AGENT, true);
-        if (!$httpClient->query('GET', $uri->getUri()))
+        if (!$httpClient->query('GET', $uri->getUri())) {
             return false;
+        }
 
-        if ($httpClient->getStatus() !== 200)
+        if ($httpClient->getStatus() !== 200) {
             return false;
+        }
 
-        $htmlContentType = strtolower($httpClient->getHeaders()->getContentType());
+        $htmlContentType = mb_strtolower($httpClient->getHeaders()->getContentType());
         $xFrameOptions = $httpClient->getHeaders()->get('X-Frame-Options', true);
         $effectiveUrl = $httpClient->getEffectiveUrl();
         $peerIpAddress = $httpClient->getPeerAddress();
@@ -527,23 +583,22 @@ class UrlPreview
                 unset($metadata['IMAGE']);
             }
 
-            if (isset($metadata['DESCRIPTION']) && strlen($metadata['DESCRIPTION']) > static::MAX_DESCRIPTION) {
-                $metadata['DESCRIPTION'] = substr(
-                    $metadata['DESCRIPTION'],
-                    0,
-                    static::MAX_DESCRIPTION
-                );
+            if (isset($metadata['DESCRIPTION']) && mb_strlen($metadata['DESCRIPTION']) > static::MAX_DESCRIPTION) {
+                $metadata['DESCRIPTION'] = mb_substr($metadata['DESCRIPTION'], 0, static::MAX_DESCRIPTION);
             }
 
             if (!is_array($metadata['EXTRA'])) {
                 $metadata['EXTRA'] = array();
             }
-            $metadata['EXTRA'] = array_merge($metadata['EXTRA'], array(
-                'PEER_IP_ADDRESS' => $peerIpAddress,
-                'PEER_IP_PRIVATE' => static::isIpAddressPrivate($peerIpAddress),
-                'X_FRAME_OPTIONS' => $xFrameOptions,
-                'EFFECTIVE_URL' => $effectiveUrl,
-            ));
+            $metadata['EXTRA'] = array_merge(
+                $metadata['EXTRA'],
+                array(
+                    'PEER_IP_ADDRESS' => $peerIpAddress,
+                    'PEER_IP_PRIVATE' => static::isIpAddressPrivate($peerIpAddress),
+                    'X_FRAME_OPTIONS' => $xFrameOptions,
+                    'EFFECTIVE_URL' => $effectiveUrl,
+                )
+            );
 
             return $metadata;
         }
@@ -564,10 +619,11 @@ class UrlPreview
         $httpClient->setStreamTimeout(5);
 
         $urlComponents = parse_url($url);
-        if ($urlComponents && strlen($urlComponents["path"]) > 0)
+        if ($urlComponents && $urlComponents["path"] <> '') {
             $tempPath = $file->GetTempName('', bx_basename($urlComponents["path"]));
-        else
+        } else {
             $tempPath = $file->GetTempName('', bx_basename($url));
+        }
 
         $httpClient->download($url, $tempPath);
         $fileName = $httpClient->getHeaders()->getFilename();
@@ -575,7 +631,7 @@ class UrlPreview
         $localFile['MODULE_ID'] = 'main';
 
         if (is_array($localFile)) {
-            if (strlen($fileName) > 0) {
+            if ($fileName <> '') {
                 $localFile['name'] = $fileName;
             }
             if (\CFile::CheckImageFile($localFile, 0, 0, 0, array("IMAGE")) === null) {
@@ -594,14 +650,18 @@ class UrlPreview
      */
     protected static function normalizeUrl($url)
     {
-        if (strpos($url, 'https://') === 0 || strpos($url, 'http://') === 0) {
-            //nop
-        } else if (strpos($url, '//') === 0) {
-            $url = 'http:' . $url;
-        } else if (strpos($url, '/') === 0) {
+        if (mb_strpos($url, 'https://') === 0 || mb_strpos($url, 'http://') === 0) {
             //nop
         } else {
-            $url = 'http://' . $url;
+            if (mb_strpos($url, '//') === 0) {
+                $url = 'http:' . $url;
+            } else {
+                if (mb_strpos($url, '/') === 0) {
+                    //nop
+                } else {
+                    $url = 'http://' . $url;
+                }
+            }
         }
 
         $parsedUrl = new Uri($url);
@@ -650,10 +710,15 @@ class UrlPreview
      */
     protected static function unfoldShortLink($shortUrl)
     {
+        static $cache = [];
+        if ($cache[$shortUrl]) {
+            return $cache[$shortUrl];
+        }
         $result = $shortUrl;
         if ($shortUri = \CBXShortUri::GetUri($shortUrl)) {
             $result = $shortUri['URI'];
         }
+        $cache[$shortUrl] = $result;
         return $result;
     }
 
@@ -672,7 +737,7 @@ class UrlPreview
             $result = array(
                 'TYPE' => UrlMetadataTable::TYPE_FILE,
                 'EXTRA' => array(
-                    'ATTACHMENT' => strtolower($httpHeaders->getContentDisposition()) === 'attachment' ? 'Y' : 'N',
+                    'ATTACHMENT' => mb_strtolower($httpHeaders->getContentDisposition()) === 'attachment' ? 'Y' : 'N',
                     'MIME_TYPE' => $mimeType,
                     'FILENAME' => $filename,
                     'SIZE' => $httpHeaders->get('Content-Length')
@@ -688,7 +753,11 @@ class UrlPreview
      */
     public static function isIpAddressPrivate($ipAddress)
     {
-        return filter_var($ipAddress, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 | FILTER_FLAG_IPV6 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false;
+        return filter_var(
+                $ipAddress,
+                FILTER_VALIDATE_IP,
+                FILTER_FLAG_IPV4 | FILTER_FLAG_IPV6 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
+            ) === false;
     }
 
     /**
@@ -716,6 +785,7 @@ class UrlPreview
      */
     public static function fetchVideoMetaData($url)
     {
+        $url = static::unfoldShortLink($url);
         $uri = new Uri($url);
         if (static::isHostTrusted($uri) || static::isEnabled()) {
             $url = static::normalizeUrl($url);
@@ -727,7 +797,10 @@ class UrlPreview
             } else {
                 return false;
             }
-            if (isset($metadata['EMBED']) && !empty($metadata['EMBED']) && strpos($metadata['EMBED'], '<iframe') === false) {
+            if (isset($metadata['EMBED']) && !empty($metadata['EMBED']) && mb_strpos(
+                    $metadata['EMBED'],
+                    '<iframe'
+                ) === false) {
                 $url = static::getInnerFrameUrl($metadata['ID'], $metadata['EXTRA']['PROVIDER_NAME']);
                 if (intval($metadata['EXTRA']['VIDEO_WIDTH']) <= 0) {
                     $metadata['EXTRA']['VIDEO_WIDTH'] = self::IFRAME_MAX_WIDTH;

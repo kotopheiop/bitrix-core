@@ -1,4 +1,5 @@
 <?
+
 define("NOT_CHECK_PERMISSIONS", true);
 define("EXTRANET_NO_REDIRECT", true);
 define("STOP_STATISTICS", true);
@@ -21,16 +22,19 @@ if (
 $messageId = $_POST['SmsSid'];
 $messageStatus = \Bitrix\MessageService\Sender\Sms\Twilio::resolveStatus($_POST['SmsStatus']);
 
-if ($messageStatus === null)
+if ($messageStatus === null) {
     die();
+}
 
-$message = \Bitrix\MessageService\Internal\Entity\MessageTable::getList(array(
-    'select' => array('ID'),
-    'filter' => array(
-        '=SENDER_ID' => 'twilio',
-        '=EXTERNAL_ID' => $messageId
+$message = \Bitrix\MessageService\Internal\Entity\MessageTable::getList(
+    array(
+        'select' => array('ID'),
+        'filter' => array(
+            '=SENDER_ID' => 'twilio',
+            '=EXTERNAL_ID' => $messageId
+        )
     )
-))->fetch();
+)->fetch();
 
 if ($message) {
     \Bitrix\MessageService\Internal\Entity\MessageTable::update($message['ID'], array('STATUS_ID' => $messageStatus));

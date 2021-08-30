@@ -25,8 +25,9 @@ class Cache
      */
     public function __construct($type, $ttl)
     {
-        if (static::$cacheManager === null)
+        if (static::$cacheManager === null) {
             static::$cacheManager = Application::getInstance()->getManagedCache();
+        }
 
         $this->cacheIdBase = self::createCacheId($type);
         $this->ttl = $ttl;
@@ -44,8 +45,9 @@ class Cache
         if (static::$cacheManager->read($this->ttl, $this->cacheIdBase)) {
             $res = static::$cacheManager->get($this->cacheIdBase);
 
-            if (!empty($res[$cacheId]))
+            if (!empty($res[$cacheId])) {
                 $result = $res[$cacheId];
+            }
         }
 
         return $result;
@@ -55,8 +57,9 @@ class Cache
     {
         $result = array();
 
-        if (static::$cacheManager->read($this->ttl, $this->cacheIdBase))
+        if (static::$cacheManager->read($this->ttl, $this->cacheIdBase)) {
             $result = static::$cacheManager->get($this->cacheIdBase);
+        }
 
         return $result;
     }
@@ -69,11 +72,13 @@ class Cache
     {
         $cached = false;
 
-        if (static::$cacheManager->read($this->ttl, $this->cacheIdBase))
+        if (static::$cacheManager->read($this->ttl, $this->cacheIdBase)) {
             $cached = static::$cacheManager->get($this->cacheIdBase);
+        }
 
-        if (!is_array($cached))
+        if (!is_array($cached)) {
             $cached = array();
+        }
 
         $cacheId = $this->getCacheId($ids);
         $cached[$cacheId] = $value;
@@ -97,8 +102,9 @@ class Cache
     {
         $result = "cachePrefixIdx";
 
-        if (!empty($ids))
+        if (!empty($ids)) {
             $result .= implode('_', $ids);
+        }
 
         return $result;
     }
@@ -135,8 +141,9 @@ class CacheSession extends Cache
     {
         $cacheId = $this->getCacheId($ids);
 
-        if (!is_array($_SESSION[$this->cacheIdBase]))
+        if (!is_array($_SESSION[$this->cacheIdBase])) {
             $_SESSION[$this->cacheIdBase] = array();
+        }
 
         $_SESSION[$this->cacheIdBase][$cacheId] = $value;
     }
@@ -150,8 +157,9 @@ class CacheSession extends Cache
         $result = false;
         $cacheId = $this->getCacheId($ids);
 
-        if (isset($_SESSION[$this->cacheIdBase][$cacheId]))
+        if (isset($_SESSION[$this->cacheIdBase][$cacheId])) {
             $result = $_SESSION[$this->cacheIdBase][$cacheId];
+        }
 
         return $result;
     }
@@ -205,20 +213,24 @@ class CacheManager
      */
     public static function getItem($type)
     {
-        if ($type == self::TYPE_NONE)
+        if ($type == self::TYPE_NONE) {
             return null;
+        }
 
-        if (empty(self::$types[$type]))
+        if (empty(self::$types[$type])) {
             return null;
+        }
 
-        if (defined('SALE_HNDL_DLV_ADD_CACHE_DISABLE'))
+        if (defined('SALE_HNDL_DLV_ADD_CACHE_DISABLE')) {
             return null;
+        }
 
         if (empty(self::$items[$type])) {
-            if (self::$types[$type]['LOC'] == self::LOC_CACHE)
+            if (self::$types[$type]['LOC'] == self::LOC_CACHE) {
                 self::$items[$type] = new Cache($type, self::$types[$type]['TTL']);
-            elseif (self::$types[$type]['LOC'] == self::LOC_SESSION)
+            } elseif (self::$types[$type]['LOC'] == self::LOC_SESSION) {
                 self::$items[$type] = new CacheSession($type, self::$types[$type]['TTL']);
+            }
         }
 
         return self::$items[$type];

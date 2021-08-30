@@ -18,7 +18,7 @@ class Type extends TypeBase
 {
     const USER_TYPE_ID = 'rest';
 
-    function getDBColumnType()
+    public static function getDBColumnType()
     {
         return "text";
     }
@@ -39,9 +39,13 @@ class Type extends TypeBase
 
         $arUserField['VALUE'] = $value;
 
-        return static::getApplication($arUserField, array(
-            'NAME' => $fieldName
-        ), 'edit');
+        return static::getApplication(
+            $arUserField,
+            array(
+                'NAME' => $fieldName
+            ),
+            'edit'
+        );
     }
 
     function getEditFormHTML($arUserField, $arHtmlControl)
@@ -155,7 +159,6 @@ class Type extends TypeBase
         \CJSCore::init(array('rest_userfield'));
 
         return static::getHelper()->wrapDisplayResult($html);
-
     }
 
     function prepareSettings($arUserField)

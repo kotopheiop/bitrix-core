@@ -49,9 +49,11 @@ class CUserOptions
         }
 
         $strSqlSearch = "";
-        foreach ($arSqlSearch as $condition)
-            if (strlen($condition) > 0)
+        foreach ($arSqlSearch as $condition) {
+            if ($condition <> '') {
                 $strSqlSearch .= " AND  (" . $condition . ") ";
+            }
+        }
 
         $strSql = "
 			SELECT UO.ID, UO.USER_ID, UO.CATEGORY, UO.NAME, UO.COMMON, UO.VALUE
@@ -65,26 +67,29 @@ class CUserOptions
             foreach ($arOrder as $by => $order) {
                 $by = strtoupper($by);
                 $order = strtoupper($order);
-                if ($order != "ASC")
+                if ($order != "ASC") {
                     $order = "DESC";
+                }
 
-                if ($by == "ID")
+                if ($by == "ID") {
                     $arSqlOrder[$by] = " UO.ID " . $order . " ";
-                elseif ($by == "USER_ID")
+                } elseif ($by == "USER_ID") {
                     $arSqlOrder[$by] = " UO.USER_ID " . $order . " ";
-                elseif ($by == "CATEGORY")
+                } elseif ($by == "CATEGORY") {
                     $arSqlOrder[$by] = " UO.CATEGORY " . $order . " ";
-                elseif ($by == "NAME")
+                } elseif ($by == "NAME") {
                     $arSqlOrder[$by] = " UO.NAME " . $order . " ";
-                elseif ($by == "COMMON")
+                } elseif ($by == "COMMON") {
                     $arSqlOrder[$by] = " UO.COMMON " . $order . " ";
+                }
             }
         }
 
-        if (!empty($arSqlOrder))
+        if (!empty($arSqlOrder)) {
             $strSqlOrder = "ORDER BY " . implode(", ", $arSqlOrder);
-        else
+        } else {
             $strSqlOrder = "";
+        }
 
         $res = $DB->Query($strSql . $strSqlOrder, false, "FILE: " . __FILE__ . "<br> LINE: " . __LINE__);
         return $res;
@@ -94,65 +99,57 @@ class CUserOptions
     {
         global $DB, $USER, $CACHE_MANAGER;
 
-        if ($user_id === false && is_object($USER) && ((get_class($USER) === 'CUser') || ($USER instanceof CUser)))
+        if ($user_id === false && is_object($USER) && $USER instanceof CUser) {
             $user_id = $USER->GetID();
+        }
 
         $user_id = intval($user_id);
         $category = strtolower($category);
 
-        if (!is_array(self::$cache[$user_id][$category]) || !array_key_exists($name, self::$cache[$user_id][$category])) {
-            if ($user_id > 0) {
+        if (!isset(self::$cache[$user_id][$category])) {
+            $mcache_id = "user_option:{$user_id}:{$category}";
+
+            // options for user '0' are always from DB (there are much more options for user '0' than for specific one)
+            if ($user_id > 0 && $CACHE_MANAGER->read(3600, $mcache_id, "user_option")) {
                 // options for specified user from managed cache
-                if (!isset(self::$cache[$user_id][$category])) {
-                    $mcache_id = "user_option:" . $user_id . ":" . $category;
-                    if ($CACHE_MANAGER->read(3600, $mcache_id, "user_option")) {
-                        self::$cache[$user_id][$category] = $CACHE_MANAGER->get($mcache_id);
-                    } else {
-                        $strSql = "
-							SELECT CATEGORY, NAME, VALUE, COMMON
-							FROM b_user_option
-							WHERE (USER_ID=" . $user_id . " OR USER_ID=0 AND COMMON='Y')
-								AND CATEGORY='" . $DB->ForSql($category) . "'
-						";
-                        $res = $DB->Query($strSql);
-                        while ($res_array = $res->Fetch()) {
-                            if (!isset(self::$cache[$user_id][$category][$res_array["NAME"]]) || $res_array["COMMON"] <> 'Y')
-                                self::$cache[$user_id][$category][$res_array["NAME"]] = unserialize($res_array["VALUE"]);
-                        }
-
-                        $CACHE_MANAGER->Set($mcache_id, self::$cache[$user_id][$category]);
-                    }
-                }
-
-                if (!isset(self::$cache[$user_id][$category][$name])) {
-                    self::$cache[$user_id][$category][$name] = null;
-                }
+                self::$cache[$user_id][$category] = $CACHE_MANAGER->get($mcache_id);
             } else {
-                // options for user '0' from DB (there are much more options for user '0' than for specific one)
-                if (!isset(self::$cache[$user_id][$category])) {
-                    $strSql = "
-						SELECT CATEGORY, NAME, VALUE, COMMON
-						FROM b_user_option
-						WHERE (USER_ID=" . $user_id . " OR USER_ID=0 AND COMMON='Y')
-							AND CATEGORY='" . $DB->ForSql($category) . "'
-					";
+                //read from DB
+                $sql = "
+					SELECT NAME, VALUE, COMMON
+					FROM b_user_option
+					WHERE (USER_ID = {$user_id} OR (USER_ID = 0 AND COMMON = 'Y'))
+						AND CATEGORY = '{$DB->ForSql($category)}'
+				";
 
-                    $res = $DB->Query($strSql);
-                    while ($res_array = $res->Fetch()) {
-                        if (!isset(self::$cache[$user_id][$category][$res_array["NAME"]]) || $res_array["COMMON"] <> 'Y')
-                            self::$cache[$user_id][$category][$res_array["NAME"]] = unserialize($res_array["VALUE"]);
+                $res = $DB->Query($sql);
+                while ($option = $res->Fetch()) {
+                    if (!isset(self::$cache[$user_id][$category][$option["NAME"]]) || $option["COMMON"] <> 'Y') {
+                        self::$cache[$user_id][$category][$option["NAME"]] = unserialize(
+                            $option["VALUE"],
+                            ['allowed_classes' => false]
+                        );
                     }
                 }
 
-                if (!isset(self::$cache[$user_id][$category][$name])) {
-                    self::$cache[$user_id][$category][$name] = null;
+                if (!isset(self::$cache[$user_id][$category])) {
+                    self::$cache[$user_id][$category] = [];
                 }
+
+                if ($user_id > 0) {
+                    $CACHE_MANAGER->Set($mcache_id, self::$cache[$user_id][$category]);
+                }
+            }
+
+            if (!isset(self::$cache[$user_id][$category][$name])) {
+                self::$cache[$user_id][$category][$name] = null;
             }
         }
 
         if (!isset(self::$cache[$user_id][$category][$name])) {
             return $default_value;
         }
+
         return self::$cache[$user_id][$category][$name];
     }
 
@@ -211,15 +208,17 @@ class CUserOptions
                 if (is_array($opt["v"])) {
                     $val = CUserOptions::GetOption($opt["c"], $opt["n"], array());
                     if (is_array($val)) {
-                        foreach ($opt["v"] as $k => $v)
+                        foreach ($opt["v"] as $k => $v) {
                             $val[$k] = $v;
+                        }
                     } else {
                         $val = $opt["v"];
                     }
                 }
                 CUserOptions::SetOption($opt["c"], $opt["n"], $val);
-                if ($opt["d"] == "Y" && $USER->CanDoOperation('edit_other_settings'))
+                if ($opt["d"] == "Y" && $USER->CanDoOperation('edit_other_settings')) {
                     CUserOptions::SetOption($opt["c"], $opt["n"], $val, true);
+                }
             }
         }
     }
@@ -228,8 +227,9 @@ class CUserOptions
     {
         global $DB, $USER, $CACHE_MANAGER;
 
-        if ($user_id === false)
+        if ($user_id === false) {
             $user_id = $USER->GetID();
+        }
 
         $user_id = intval($user_id);
         $strSql = "
@@ -255,7 +255,11 @@ class CUserOptions
     {
         global $DB, $CACHE_MANAGER;
 
-        if ($DB->Query("DELETE FROM b_user_option WHERE COMMON='Y' AND NAME NOT LIKE '~%'", false, "File: " . __FILE__ . "<br>Line: " . __LINE__)) {
+        if ($DB->Query(
+            "DELETE FROM b_user_option WHERE COMMON='Y' AND NAME NOT LIKE '~%'",
+            false,
+            "File: " . __FILE__ . "<br>Line: " . __LINE__
+        )) {
             $CACHE_MANAGER->cleanDir("user_option");
             self::$cache = array();
             return true;
@@ -267,7 +271,13 @@ class CUserOptions
     {
         global $DB, $CACHE_MANAGER;
 
-        if ($DB->Query("DELETE FROM b_user_option WHERE USER_ID<>0 AND NAME NOT LIKE '~%'  " . ($user_id <> false ? " AND USER_ID=" . intval($user_id) : ""), false, "File: " . __FILE__ . "<br>Line: " . __LINE__)) {
+        if ($DB->Query(
+            "DELETE FROM b_user_option WHERE USER_ID<>0 AND NAME NOT LIKE '~%'  " . ($user_id <> false ? " AND USER_ID=" . intval(
+                    $user_id
+                ) : ""),
+            false,
+            "File: " . __FILE__ . "<br>Line: " . __LINE__
+        )) {
             $CACHE_MANAGER->cleanDir("user_option");
             self::$cache = array();
             return true;
@@ -279,7 +289,10 @@ class CUserOptions
     {
         global $DB, $CACHE_MANAGER;
 
-        $strSql = "DELETE FROM b_user_option WHERE CATEGORY='" . $DB->ForSql($category, 50) . "' AND NAME='" . $DB->ForSql($name, 255) . "'";
+        $strSql = "DELETE FROM b_user_option WHERE CATEGORY='" . $DB->ForSql(
+                $category,
+                50
+            ) . "' AND NAME='" . $DB->ForSql($name, 255) . "'";
         if ($DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__)) {
             $CACHE_MANAGER->cleanDir("user_option");
             self::$cache = array();
@@ -313,7 +326,11 @@ class CUserOptions
 
         $user_id = intval($user_id);
 
-        if ($DB->Query("DELETE FROM b_user_option WHERE USER_ID=" . $user_id, false, "File: " . __FILE__ . "<br>Line: " . __LINE__)) {
+        if ($DB->Query(
+            "DELETE FROM b_user_option WHERE USER_ID=" . $user_id,
+            false,
+            "File: " . __FILE__ . "<br>Line: " . __LINE__
+        )) {
             $CACHE_MANAGER->cleanDir("user_option");
             self::$cache = array();
             return true;

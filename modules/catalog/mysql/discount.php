@@ -1,18 +1,19 @@
-<?
+<?php
 
-use Bitrix\Main,
-    Bitrix\Catalog;
+use Bitrix\Main;
+use    Bitrix\Catalog;
 
 require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/catalog/general/discount.php');
 
 class CCatalogDiscount extends CAllCatalogDiscount
 {
-    public function _Add(&$arFields)
+    public static function _Add(&$arFields)
     {
         global $DB;
 
-        if (!CCatalogDiscount::CheckFields("ADD", $arFields, 0))
+        if (!CCatalogDiscount::CheckFields("ADD", $arFields, 0)) {
             return false;
+        }
 
         $arInsert = $DB->PrepareInsert("b_catalog_discount", $arFields);
 
@@ -21,37 +22,51 @@ class CCatalogDiscount extends CAllCatalogDiscount
 
         $ID = (int)$DB->LastID();
 
-        if (isset($arFields['HANDLERS']))
+        if (isset($arFields['HANDLERS'])) {
             self::updateDiscountHandlers($ID, $arFields['HANDLERS'], false);
+        }
 
         return $ID;
     }
 
-    public function _Update($ID, &$arFields)
+    public static function _Update($ID, &$arFields)
     {
         global $DB;
         global $APPLICATION;
 
         $ID = (int)$ID;
-        if ($ID <= 0)
+        if ($ID <= 0) {
             return false;
+        }
 
-        if (!CCatalogDiscount::CheckFields("UPDATE", $arFields, $ID))
+        if (!CCatalogDiscount::CheckFields("UPDATE", $arFields, $ID)) {
             return false;
+        }
 
         if (isset($arFields['VALUE']) != isset($arFields['VALUE_TYPE'])) {
-            $rsDiscounts = CCatalogDiscount::GetList(array(), array('ID' => $ID), false, array('nTopCount' => 1), array('ID', 'VALUE', 'VALUE_TYPE'));
+            $rsDiscounts = CCatalogDiscount::GetList(
+                array(),
+                array('ID' => $ID),
+                false,
+                array('nTopCount' => 1),
+                array('ID', 'VALUE', 'VALUE_TYPE')
+            );
             if ($arDiscount = $rsDiscounts->Fetch()) {
-                if (!isset($arFields['VALUE']))
+                if (!isset($arFields['VALUE'])) {
                     $arFields['VALUE'] = doubleval($arDiscount['VALUE']);
-                if (!isset($arFields['VALUE_TYPE']))
+                }
+                if (!isset($arFields['VALUE_TYPE'])) {
                     $arFields['VALUE_TYPE'] = $arDiscount['VALUE_TYPE'];
+                }
                 if (self::TYPE_PERCENT == $arFields['VALUE_TYPE'] && 100 < $arFields['VALUE']) {
                     $APPLICATION->ThrowException(GetMessage("BT_MOD_CATALOG_DISC_ERR_BAD_VALUE"), "VALUE");
                     return false;
                 }
             } else {
-                $APPLICATION->ThrowException(str_replace('#ID#', $ID, GetMessage("BT_MOD_CATALOG_DISC_ERR_BAD_ID")), "ID");
+                $APPLICATION->ThrowException(
+                    str_replace('#ID#', $ID, GetMessage("BT_MOD_CATALOG_DISC_ERR_BAD_ID")),
+                    "ID"
+                );
                 return false;
             }
         }
@@ -61,24 +76,27 @@ class CCatalogDiscount extends CAllCatalogDiscount
             $strSql = "UPDATE b_catalog_discount SET " . $strUpdate . " WHERE ID = " . $ID . " AND TYPE = " . self::ENTITY_ID;
             $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 
-            if (isset($arFields['HANDLERS']))
+            if (isset($arFields['HANDLERS'])) {
                 self::updateDiscountHandlers($ID, $arFields['HANDLERS'], true);
+            }
         }
 
         return $ID;
     }
 
-    public function Delete($ID)
+    public static function Delete($ID)
     {
         global $DB;
 
         $ID = (int)$ID;
-        if ($ID <= 0)
+        if ($ID <= 0) {
             return false;
+        }
 
         foreach (GetModuleEvents("catalog", "OnBeforeDiscountDelete", true) as $arEvent) {
-            if (false === ExecuteModuleEventEx($arEvent, array($ID)))
+            if (false === ExecuteModuleEventEx($arEvent, array($ID))) {
                 return false;
+            }
         }
 
         $DB->Query("delete from b_catalog_discount2iblock where DISCOUNT_ID = " . $ID);
@@ -86,6 +104,7 @@ class CCatalogDiscount extends CAllCatalogDiscount
         $DB->Query("delete from b_catalog_discount2product where DISCOUNT_ID = " . $ID);
         Catalog\DiscountRestrictionTable::deleteByDiscount($ID);
         Catalog\DiscountModuleTable::deleteByDiscount($ID);
+        Catalog\DiscountEntityTable::deleteByDiscount($ID);
         Catalog\DiscountCouponTable::deleteByDiscount($ID);
 
         $DB->Query("delete from b_catalog_discount where ID = " . $ID . " and TYPE = " . self::ENTITY_ID);
@@ -106,8 +125,9 @@ class CCatalogDiscount extends CAllCatalogDiscount
         global $DB;
 
         $ID = (int)$ID;
-        if ($ID <= 0)
+        if ($ID <= 0) {
             return false;
+        }
 
         $strSql =
             "SELECT CD.ID, CD.SITE_ID, CD.ACTIVE, CD.NAME, CD.MAX_USES, " .
@@ -116,13 +136,17 @@ class CCatalogDiscount extends CAllCatalogDiscount
             $DB->DateToCharFunction("CD.TIMESTAMP_X", "FULL") . " as TIMESTAMP_X, " .
             $DB->DateToCharFunction("CD.ACTIVE_FROM", "FULL") . " as ACTIVE_FROM, " .
             $DB->DateToCharFunction("CD.ACTIVE_TO", "FULL") . " as ACTIVE_TO, " .
-            "CD.CREATED_BY, CD.MODIFIED_BY, " . $DB->DateToCharFunction('CD.DATE_CREATE', 'FULL') . ' as DATE_CREATE, ' .
+            "CD.CREATED_BY, CD.MODIFIED_BY, " . $DB->DateToCharFunction(
+                'CD.DATE_CREATE',
+                'FULL'
+            ) . ' as DATE_CREATE, ' .
             "CD.PRIORITY, CD.LAST_DISCOUNT, CD.VERSION, CD.CONDITIONS, CD.UNPACK, CD.SALE_ID " .
             "FROM b_catalog_discount CD WHERE CD.ID = " . $ID . " AND CD.TYPE = " . self::ENTITY_ID;
 
         $db_res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-        if ($res = $db_res->Fetch())
+        if ($res = $db_res->Fetch()) {
             return $res;
+        }
 
         return false;
     }
@@ -136,12 +160,14 @@ class CCatalogDiscount extends CAllCatalogDiscount
      * @param array $arField
      * @param array $arFilter
      * @return bool|string
+     * @noinspection PhpUnusedParameterInspection
      */
     public static function PrepareSection4Where($val, $key, $operation, $negative, $field, $arField, $arFilter)
     {
         $val = (int)$val;
-        if ($val <= 0)
+        if ($val <= 0) {
             return false;
+        }
 
         $dbSection = CIBlockSection::GetByID($val);
         if ($arSection = $dbSection->Fetch()) {
@@ -175,8 +201,13 @@ class CCatalogDiscount extends CAllCatalogDiscount
      * @param array $arSelectFields
      * @return bool|CDBResult
      */
-    public function GetList($arOrder = array(), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
-    {
+    public static function GetList(
+        $arOrder = array(),
+        $arFilter = array(),
+        $arGroupBy = false,
+        $arNavStartParams = false,
+        $arSelectFields = array()
+    ) {
         global $DB;
 
         $arFields = array(
@@ -210,22 +241,68 @@ class CCatalogDiscount extends CAllCatalogDiscount
             "SALE_ID" => array("FIELD" => "CD.SALE_ID", "TYPE" => "int"),
             "USE_COUPONS" => array("FIELD" => "CD.USE_COUPONS", "TYPE" => "char"),
 
-            "PRODUCT_ID" => array("FIELD" => "CDP.PRODUCT_ID", "TYPE" => "int", "FROM" => "LEFT JOIN b_catalog_discount2product CDP ON (CD.ID = CDP.DISCOUNT_ID)"),
-            "SECTION_ID" => array("FIELD" => "CDS.SECTION_ID", "TYPE" => "int", "FROM" => "LEFT JOIN b_catalog_discount2section CDS ON (CD.ID = CDS.DISCOUNT_ID)", "WHERE" => array("CCatalogDiscount", "PrepareSection4Where")),
-            "SECTION_LIST" => array("FIELD" => "CDSL.SECTION_ID", "TYPE" => "int", "FROM" => "LEFT JOIN b_catalog_discount2section CDSL ON (CD.ID = CDSL.DISCOUNT_ID)"),
-            "IBLOCK_ID" => array("FIELD" => "CDI.IBLOCK_ID", "TYPE" => "int", "FROM" => "LEFT JOIN b_catalog_discount2iblock CDI ON (CD.ID = CDI.DISCOUNT_ID)"),
-            "GROUP_ID" => array("FIELD" => "CDC.USER_GROUP_ID", "TYPE" => "int", "FROM" => "LEFT JOIN b_catalog_discount_cond CDC ON (CD.ID = CDC.DISCOUNT_ID)"),
-            "USER_GROUP_ID" => array("FIELD" => "CDC.USER_GROUP_ID", "TYPE" => "int", "FROM" => "LEFT JOIN b_catalog_discount_cond CDC ON (CD.ID = CDC.DISCOUNT_ID)"),
-            "CATALOG_GROUP_ID" => array("FIELD" => "CDC.PRICE_TYPE_ID", "TYPE" => "int", "FROM" => "LEFT JOIN b_catalog_discount_cond CDC ON (CD.ID = CDC.DISCOUNT_ID)"),
-            "PRICE_TYPE_ID" => array("FIELD" => "CDC.PRICE_TYPE_ID", "TYPE" => "int", "FROM" => "LEFT JOIN b_catalog_discount_cond CDC ON (CD.ID = CDC.DISCOUNT_ID)"),
+            "PRODUCT_ID" => array(
+                "FIELD" => "CDP.PRODUCT_ID",
+                "TYPE" => "int",
+                "FROM" => "LEFT JOIN b_catalog_discount2product CDP ON (CD.ID = CDP.DISCOUNT_ID)"
+            ),
+            "SECTION_ID" => array(
+                "FIELD" => "CDS.SECTION_ID",
+                "TYPE" => "int",
+                "FROM" => "LEFT JOIN b_catalog_discount2section CDS ON (CD.ID = CDS.DISCOUNT_ID)",
+                "WHERE" => array("CCatalogDiscount", "PrepareSection4Where")
+            ),
+            "SECTION_LIST" => array(
+                "FIELD" => "CDSL.SECTION_ID",
+                "TYPE" => "int",
+                "FROM" => "LEFT JOIN b_catalog_discount2section CDSL ON (CD.ID = CDSL.DISCOUNT_ID)"
+            ),
+            "IBLOCK_ID" => array(
+                "FIELD" => "CDI.IBLOCK_ID",
+                "TYPE" => "int",
+                "FROM" => "LEFT JOIN b_catalog_discount2iblock CDI ON (CD.ID = CDI.DISCOUNT_ID)"
+            ),
+            "GROUP_ID" => array(
+                "FIELD" => "CDC.USER_GROUP_ID",
+                "TYPE" => "int",
+                "FROM" => "LEFT JOIN b_catalog_discount_cond CDC ON (CD.ID = CDC.DISCOUNT_ID)"
+            ),
+            "USER_GROUP_ID" => array(
+                "FIELD" => "CDC.USER_GROUP_ID",
+                "TYPE" => "int",
+                "FROM" => "LEFT JOIN b_catalog_discount_cond CDC ON (CD.ID = CDC.DISCOUNT_ID)"
+            ),
+            "CATALOG_GROUP_ID" => array(
+                "FIELD" => "CDC.PRICE_TYPE_ID",
+                "TYPE" => "int",
+                "FROM" => "LEFT JOIN b_catalog_discount_cond CDC ON (CD.ID = CDC.DISCOUNT_ID)"
+            ),
+            "PRICE_TYPE_ID" => array(
+                "FIELD" => "CDC.PRICE_TYPE_ID",
+                "TYPE" => "int",
+                "FROM" => "LEFT JOIN b_catalog_discount_cond CDC ON (CD.ID = CDC.DISCOUNT_ID)"
+            ),
 
-            "COUPON" => array("FIELD" => "CDCP.COUPON", "TYPE" => "string", "FROM" => "LEFT JOIN b_catalog_discount_coupon CDCP ON (CD.ID = CDCP.DISCOUNT_ID)"),
-            "COUPON_ACTIVE" => array("FIELD" => "CDCP.ACTIVE", "TYPE" => "char", "FROM" => "LEFT JOIN b_catalog_discount_coupon CDCP ON (CD.ID = CDCP.DISCOUNT_ID)"),
-            "COUPON_ONE_TIME" => array("FIELD" => "CDCP.ONE_TIME", "TYPE" => "char", "FROM" => "LEFT JOIN b_catalog_discount_coupon CDCP ON (CD.ID = CDCP.DISCOUNT_ID)"),
+            "COUPON" => array(
+                "FIELD" => "CDCP.COUPON",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_catalog_discount_coupon CDCP ON (CD.ID = CDCP.DISCOUNT_ID)"
+            ),
+            "COUPON_ACTIVE" => array(
+                "FIELD" => "CDCP.ACTIVE",
+                "TYPE" => "char",
+                "FROM" => "LEFT JOIN b_catalog_discount_coupon CDCP ON (CD.ID = CDCP.DISCOUNT_ID)"
+            ),
+            "COUPON_ONE_TIME" => array(
+                "FIELD" => "CDCP.ONE_TIME",
+                "TYPE" => "char",
+                "FROM" => "LEFT JOIN b_catalog_discount_coupon CDCP ON (CD.ID = CDCP.DISCOUNT_ID)"
+            ),
         );
 
-        if (!is_array($arFilter))
+        if (!is_array($arFilter)) {
             $arFilter = array();
+        }
         if (!empty($arFilter)) {
             $filterKeys = array_keys($arFilter);
             foreach ($filterKeys as &$oneKey) {
@@ -249,25 +326,31 @@ class CCatalogDiscount extends CAllCatalogDiscount
 
         if (empty($arGroupBy) && is_array($arGroupBy)) {
             $strSql = "SELECT " . $arSqls["SELECT"] . " FROM b_catalog_discount CD " . $arSqls["FROM"];
-            if (!empty($arSqls["WHERE"]))
+            if (!empty($arSqls["WHERE"])) {
                 $strSql .= " WHERE " . $arSqls["WHERE"];
-            if (!empty($arSqls["GROUPBY"]))
+            }
+            if (!empty($arSqls["GROUPBY"])) {
                 $strSql .= " GROUP BY " . $arSqls["GROUPBY"];
+            }
 
             $dbRes = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-            if ($arRes = $dbRes->Fetch())
+            if ($arRes = $dbRes->Fetch()) {
                 return $arRes["CNT"];
-            else
+            } else {
                 return false;
+            }
         }
 
         $strSql = "SELECT " . $arSqls["SELECT"] . " FROM b_catalog_discount CD " . $arSqls["FROM"];
-        if (!empty($arSqls["WHERE"]))
+        if (!empty($arSqls["WHERE"])) {
             $strSql .= " WHERE " . $arSqls["WHERE"];
-        if (!empty($arSqls["GROUPBY"]))
+        }
+        if (!empty($arSqls["GROUPBY"])) {
             $strSql .= " GROUP BY " . $arSqls["GROUPBY"];
-        if (!empty($arSqls["ORDERBY"]))
+        }
+        if (!empty($arSqls["ORDERBY"])) {
             $strSql .= " ORDER BY " . $arSqls["ORDERBY"];
+        }
 
         $intTopCount = 0;
         $boolNavStartParams = (!empty($arNavStartParams) && is_array($arNavStartParams));
@@ -276,16 +359,19 @@ class CCatalogDiscount extends CAllCatalogDiscount
         }
         if ($boolNavStartParams && 0 >= $intTopCount) {
             $strSql_tmp = "SELECT COUNT('x') as CNT FROM b_catalog_discount CD " . $arSqls["FROM"];
-            if (!empty($arSqls["WHERE"]))
+            if (!empty($arSqls["WHERE"])) {
                 $strSql_tmp .= " WHERE " . $arSqls["WHERE"];
-            if (!empty($arSqls["GROUPBY"]))
+            }
+            if (!empty($arSqls["GROUPBY"])) {
                 $strSql_tmp .= " GROUP BY " . $arSqls["GROUPBY"];
+            }
 
             $dbRes = $DB->Query($strSql_tmp, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             $cnt = 0;
             if (empty($arSqls["GROUPBY"])) {
-                if ($arRes = $dbRes->Fetch())
+                if ($arRes = $dbRes->Fetch()) {
                     $cnt = $arRes["CNT"];
+                }
             } else {
                 $cnt = $dbRes->SelectedRowsCount();
             }
@@ -311,8 +397,13 @@ class CCatalogDiscount extends CAllCatalogDiscount
      * @param array $arSelectFields
      * @return bool|CDBResult
      */
-    public function GetDiscountGroupsList($arOrder = array(), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
-    {
+    public static function GetDiscountGroupsList(
+        $arOrder = array(),
+        $arFilter = array(),
+        $arGroupBy = false,
+        $arNavStartParams = false,
+        $arSelectFields = array()
+    ) {
         return self::__GetDiscountEntityList($arOrder, $arFilter, $arGroupBy, $arNavStartParams, $arSelectFields);
     }
 
@@ -324,8 +415,13 @@ class CCatalogDiscount extends CAllCatalogDiscount
      * @param array $arSelectFields
      * @return bool|CDBResult
      */
-    public function GetDiscountCatsList($arOrder = array(), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
-    {
+    public static function GetDiscountCatsList(
+        $arOrder = array(),
+        $arFilter = array(),
+        $arGroupBy = false,
+        $arNavStartParams = false,
+        $arSelectFields = array()
+    ) {
         return self::__GetDiscountEntityList($arOrder, $arFilter, $arGroupBy, $arNavStartParams, $arSelectFields);
     }
 
@@ -339,8 +435,13 @@ class CCatalogDiscount extends CAllCatalogDiscount
      * @deprecated deprecated since catalog 12.0.0
      *
      */
-    public function GetDiscountProductsList($arOrder = array(), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
-    {
+    public static function GetDiscountProductsList(
+        $arOrder = array(),
+        $arFilter = array(),
+        $arGroupBy = false,
+        $arNavStartParams = false,
+        $arSelectFields = array()
+    ) {
         global $DB;
 
         $arFields = array(
@@ -355,25 +456,31 @@ class CCatalogDiscount extends CAllCatalogDiscount
 
         if (empty($arGroupBy) && is_array($arGroupBy)) {
             $strSql = "SELECT " . $arSqls["SELECT"] . " FROM b_catalog_discount2product DG " . $arSqls["FROM"];
-            if (!empty($arSqls["WHERE"]))
+            if (!empty($arSqls["WHERE"])) {
                 $strSql .= " WHERE " . $arSqls["WHERE"];
-            if (!empty($arSqls["GROUPBY"]))
+            }
+            if (!empty($arSqls["GROUPBY"])) {
                 $strSql .= " GROUP BY " . $arSqls["GROUPBY"];
+            }
 
             $dbRes = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-            if ($arRes = $dbRes->Fetch())
+            if ($arRes = $dbRes->Fetch()) {
                 return $arRes["CNT"];
-            else
+            } else {
                 return false;
+            }
         }
 
         $strSql = "SELECT " . $arSqls["SELECT"] . " FROM b_catalog_discount2product DG " . $arSqls["FROM"];
-        if (!empty($arSqls["WHERE"]))
+        if (!empty($arSqls["WHERE"])) {
             $strSql .= " WHERE " . $arSqls["WHERE"];
-        if (!empty($arSqls["GROUPBY"]))
+        }
+        if (!empty($arSqls["GROUPBY"])) {
             $strSql .= " GROUP BY " . $arSqls["GROUPBY"];
-        if (!empty($arSqls["ORDERBY"]))
+        }
+        if (!empty($arSqls["ORDERBY"])) {
             $strSql .= " ORDER BY " . $arSqls["ORDERBY"];
+        }
 
         $intTopCount = 0;
         $boolNavStartParams = (!empty($arNavStartParams) && is_array($arNavStartParams));
@@ -382,16 +489,19 @@ class CCatalogDiscount extends CAllCatalogDiscount
         }
         if ($boolNavStartParams && 0 >= $intTopCount) {
             $strSql_tmp = "SELECT COUNT('x') as CNT FROM b_catalog_discount2product DG " . $arSqls["FROM"];
-            if (!empty($arSqls["WHERE"]))
+            if (!empty($arSqls["WHERE"])) {
                 $strSql_tmp .= " WHERE " . $arSqls["WHERE"];
-            if (!empty($arSqls["GROUPBY"]))
+            }
+            if (!empty($arSqls["GROUPBY"])) {
                 $strSql_tmp .= " GROUP BY " . $arSqls["GROUPBY"];
+            }
 
             $dbRes = $DB->Query($strSql_tmp, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             $cnt = 0;
             if (empty($arSqls["GROUPBY"])) {
-                if ($arRes = $dbRes->Fetch())
+                if ($arRes = $dbRes->Fetch()) {
                     $cnt = $arRes["CNT"];
+                }
             } else {
                 $cnt = $dbRes->SelectedRowsCount();
             }
@@ -419,8 +529,13 @@ class CCatalogDiscount extends CAllCatalogDiscount
      * @deprecated deprecated since catalog 12.0.0
      *
      */
-    public function GetDiscountSectionsList($arOrder = array(), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
-    {
+    public static function GetDiscountSectionsList(
+        $arOrder = array(),
+        $arFilter = array(),
+        $arGroupBy = false,
+        $arNavStartParams = false,
+        $arSelectFields = array()
+    ) {
         global $DB;
 
         $arFields = array(
@@ -435,25 +550,31 @@ class CCatalogDiscount extends CAllCatalogDiscount
 
         if (empty($arGroupBy) && is_array($arGroupBy)) {
             $strSql = "SELECT " . $arSqls["SELECT"] . " FROM b_catalog_discount2section DG " . $arSqls["FROM"];
-            if (!empty($arSqls["WHERE"]))
+            if (!empty($arSqls["WHERE"])) {
                 $strSql .= " WHERE " . $arSqls["WHERE"];
-            if (!empty($arSqls["GROUPBY"]))
+            }
+            if (!empty($arSqls["GROUPBY"])) {
                 $strSql .= " GROUP BY " . $arSqls["GROUPBY"];
+            }
 
             $dbRes = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-            if ($arRes = $dbRes->Fetch())
+            if ($arRes = $dbRes->Fetch()) {
                 return $arRes["CNT"];
-            else
+            } else {
                 return false;
+            }
         }
 
         $strSql = "SELECT " . $arSqls["SELECT"] . " FROM b_catalog_discount2section DG " . $arSqls["FROM"];
-        if (!empty($arSqls["WHERE"]))
+        if (!empty($arSqls["WHERE"])) {
             $strSql .= " WHERE " . $arSqls["WHERE"];
-        if (!empty($arSqls["GROUPBY"]))
+        }
+        if (!empty($arSqls["GROUPBY"])) {
             $strSql .= " GROUP BY " . $arSqls["GROUPBY"];
-        if (!empty($arSqls["ORDERBY"]))
+        }
+        if (!empty($arSqls["ORDERBY"])) {
             $strSql .= " ORDER BY " . $arSqls["ORDERBY"];
+        }
 
         $intTopCount = 0;
         $boolNavStartParams = (!empty($arNavStartParams) && is_array($arNavStartParams));
@@ -462,16 +583,19 @@ class CCatalogDiscount extends CAllCatalogDiscount
         }
         if ($boolNavStartParams && 0 >= $intTopCount) {
             $strSql_tmp = "SELECT COUNT('x') as CNT FROM b_catalog_discount2section DG " . $arSqls["FROM"];
-            if (!empty($arSqls["WHERE"]))
+            if (!empty($arSqls["WHERE"])) {
                 $strSql_tmp .= " WHERE " . $arSqls["WHERE"];
-            if (!empty($arSqls["GROUPBY"]))
+            }
+            if (!empty($arSqls["GROUPBY"])) {
                 $strSql_tmp .= " GROUP BY " . $arSqls["GROUPBY"];
+            }
 
             $dbRes = $DB->Query($strSql_tmp, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             $cnt = 0;
             if (empty($arSqls["GROUPBY"])) {
-                if ($arRes = $dbRes->Fetch())
+                if ($arRes = $dbRes->Fetch()) {
                     $cnt = $arRes["CNT"];
+                }
             } else {
                 $cnt = $dbRes->SelectedRowsCount();
             }
@@ -499,8 +623,13 @@ class CCatalogDiscount extends CAllCatalogDiscount
      * @deprecated deprecated since catalog 12.0.0
      *
      */
-    public function GetDiscountIBlocksList($arOrder = array(), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
-    {
+    public static function GetDiscountIBlocksList(
+        $arOrder = array(),
+        $arFilter = array(),
+        $arGroupBy = false,
+        $arNavStartParams = false,
+        $arSelectFields = array()
+    ) {
         global $DB;
 
         $arFields = array(
@@ -515,25 +644,31 @@ class CCatalogDiscount extends CAllCatalogDiscount
 
         if (empty($arGroupBy) && is_array($arGroupBy)) {
             $strSql = "SELECT " . $arSqls["SELECT"] . " FROM b_catalog_discount2iblock DG " . $arSqls["FROM"];
-            if (!empty($arSqls["WHERE"]))
+            if (!empty($arSqls["WHERE"])) {
                 $strSql .= " WHERE " . $arSqls["WHERE"];
-            if (!empty($arSqls["GROUPBY"]))
+            }
+            if (!empty($arSqls["GROUPBY"])) {
                 $strSql .= " GROUP BY " . $arSqls["GROUPBY"];
+            }
 
             $dbRes = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-            if ($arRes = $dbRes->Fetch())
+            if ($arRes = $dbRes->Fetch()) {
                 return $arRes["CNT"];
-            else
+            } else {
                 return false;
+            }
         }
 
         $strSql = "SELECT " . $arSqls["SELECT"] . " FROM b_catalog_discount2iblock DG " . $arSqls["FROM"];
-        if (!empty($arSqls["WHERE"]))
+        if (!empty($arSqls["WHERE"])) {
             $strSql .= " WHERE " . $arSqls["WHERE"];
-        if (!empty($arSqls["GROUPBY"]))
+        }
+        if (!empty($arSqls["GROUPBY"])) {
             $strSql .= " GROUP BY " . $arSqls["GROUPBY"];
-        if (!empty($arSqls["ORDERBY"]))
+        }
+        if (!empty($arSqls["ORDERBY"])) {
             $strSql .= " ORDER BY " . $arSqls["ORDERBY"];
+        }
 
         $intTopCount = 0;
         $boolNavStartParams = (!empty($arNavStartParams) && is_array($arNavStartParams));
@@ -542,16 +677,19 @@ class CCatalogDiscount extends CAllCatalogDiscount
         }
         if ($boolNavStartParams && 0 >= $intTopCount) {
             $strSql_tmp = "SELECT COUNT('x') as CNT FROM b_catalog_discount2iblock DG " . $arSqls["FROM"];
-            if (!empty($arSqls["WHERE"]))
+            if (!empty($arSqls["WHERE"])) {
                 $strSql_tmp .= " WHERE " . $arSqls["WHERE"];
-            if (!empty($arSqls["GROUPBY"]))
+            }
+            if (!empty($arSqls["GROUPBY"])) {
                 $strSql_tmp .= " GROUP BY " . $arSqls["GROUPBY"];
+            }
 
             $dbRes = $DB->Query($strSql_tmp, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             $cnt = 0;
             if (empty($arSqls["GROUPBY"])) {
-                if ($arRes = $dbRes->Fetch())
+                if ($arRes = $dbRes->Fetch()) {
                     $cnt = $arRes["CNT"];
+                }
             } else {
                 $cnt = $dbRes->SelectedRowsCount();
             }
@@ -577,8 +715,13 @@ class CCatalogDiscount extends CAllCatalogDiscount
      * @param array $arSelectFields
      * @return bool|CDBResult
      */
-    protected function __GetDiscountEntityList($arOrder = array(), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
-    {
+    protected static function __GetDiscountEntityList(
+        $arOrder = array(),
+        $arFilter = array(),
+        $arGroupBy = false,
+        $arNavStartParams = false,
+        $arSelectFields = array()
+    ) {
         global $DB;
 
         $arFields = array(
@@ -596,25 +739,31 @@ class CCatalogDiscount extends CAllCatalogDiscount
 
         if (empty($arGroupBy) && is_array($arGroupBy)) {
             $strSql = "SELECT " . $arSqls["SELECT"] . " FROM b_catalog_discount_cond DC " . $arSqls["FROM"];
-            if (!empty($arSqls["WHERE"]))
+            if (!empty($arSqls["WHERE"])) {
                 $strSql .= " WHERE " . $arSqls["WHERE"];
-            if (!empty($arSqls["GROUPBY"]))
+            }
+            if (!empty($arSqls["GROUPBY"])) {
                 $strSql .= " GROUP BY " . $arSqls["GROUPBY"];
+            }
 
             $dbRes = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-            if ($arRes = $dbRes->Fetch())
+            if ($arRes = $dbRes->Fetch()) {
                 return $arRes["CNT"];
-            else
+            } else {
                 return false;
+            }
         }
 
         $strSql = "SELECT " . $arSqls["SELECT"] . " FROM b_catalog_discount_cond DC " . $arSqls["FROM"];
-        if (!empty($arSqls["WHERE"]))
+        if (!empty($arSqls["WHERE"])) {
             $strSql .= " WHERE " . $arSqls["WHERE"];
-        if (!empty($arSqls["GROUPBY"]))
+        }
+        if (!empty($arSqls["GROUPBY"])) {
             $strSql .= " GROUP BY " . $arSqls["GROUPBY"];
-        if (!empty($arSqls["ORDERBY"]))
+        }
+        if (!empty($arSqls["ORDERBY"])) {
             $strSql .= " ORDER BY " . $arSqls["ORDERBY"];
+        }
 
         $intTopCount = 0;
         $boolNavStartParams = (!empty($arNavStartParams) && is_array($arNavStartParams));
@@ -623,16 +772,19 @@ class CCatalogDiscount extends CAllCatalogDiscount
         }
         if ($boolNavStartParams && 0 >= $intTopCount) {
             $strSql_tmp = "SELECT COUNT('x') as CNT FROM b_catalog_discount_cond DC " . $arSqls["FROM"];
-            if (!empty($arSqls["WHERE"]))
+            if (!empty($arSqls["WHERE"])) {
                 $strSql_tmp .= " WHERE " . $arSqls["WHERE"];
-            if (!empty($arSqls["GROUPBY"]))
+            }
+            if (!empty($arSqls["GROUPBY"])) {
                 $strSql_tmp .= " GROUP BY " . $arSqls["GROUPBY"];
+            }
 
             $dbRes = $DB->Query($strSql_tmp, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             $cnt = 0;
             if (empty($arSqls["GROUPBY"])) {
-                if ($arRes = $dbRes->Fetch())
+                if ($arRes = $dbRes->Fetch()) {
                     $cnt = $arRes["CNT"];
+                }
             } else {
                 $cnt = $dbRes->SelectedRowsCount();
             }
@@ -652,10 +804,12 @@ class CCatalogDiscount extends CAllCatalogDiscount
 
     /**
      * @return void
+     *
+     * @noinspection PhpDeprecationInspection
      * @deprecated deprecated since catalog 12.0.0
      *
      */
-    public function SaveFilterOptions()
+    public static function SaveFilterOptions()
     {
         COption::SetOptionString("catalog", "do_use_discount_product", 'Y');
 
@@ -673,30 +827,40 @@ class CCatalogDiscount extends CAllCatalogDiscount
      * @deprecated deprecated since catalog 14.5.6
      *
      */
-    protected function __SaveFilterForEntity($arParams)
+    protected static function __SaveFilterForEntity($arParams)
     {
         global $DB;
 
-        if (!is_array($arParams) || empty($arParams))
+        if (!is_array($arParams) || empty($arParams)) {
             return;
+        }
         $strFilter = 'N';
         $arDiscList = array();
-        $strQuery = str_replace('#ENTITY_ID#', $arParams['ENTITY_ID'], "SELECT DISCOUNT_ID FROM b_catalog_discount_cond WHERE #ENTITY_ID# != -1");
+        $strQuery = str_replace(
+            '#ENTITY_ID#',
+            $arParams['ENTITY_ID'],
+            "SELECT DISCOUNT_ID FROM b_catalog_discount_cond WHERE #ENTITY_ID# != -1"
+        );
         $rsDiscounts = $DB->Query($strQuery, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
         while ($arDiscount = $rsDiscounts->Fetch()) {
             $arDiscList[] = intval($arDiscount['DISCOUNT_ID']);
         }
         if (!empty($arDiscList)) {
             $arDiscList = array_unique($arDiscList);
-            $strQuery = "SELECT 'x' FROM b_catalog_discount D WHERE ID IN (" . implode(',', $arDiscList) . ") AND D.ACTIVE = 'Y' AND (D.ACTIVE_TO > " . $DB->CurrentTimeFunction() . " OR D.ACTIVE_TO IS NULL) LIMIT 0, 1";
+            $strQuery = "SELECT 'x' FROM b_catalog_discount D WHERE ID IN (" . implode(
+                    ',',
+                    $arDiscList
+                ) . ") AND D.ACTIVE = 'Y' AND (D.ACTIVE_TO > " . $DB->CurrentTimeFunction(
+                ) . " OR D.ACTIVE_TO IS NULL) LIMIT 0, 1";
             $rsDiscounts = $DB->Query($strQuery, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-            if ($arDiscount = $rsDiscounts->Fetch())
+            if ($arDiscount = $rsDiscounts->Fetch()) {
                 $strFilter = 'Y';
+            }
         }
         COption::SetOptionString("catalog", $arParams['OPTION_ID'], $strFilter);
     }
 
-    protected function __UpdateSubdiscount($intDiscountID, &$arConditions, $active = '')
+    protected static function __UpdateSubdiscount($intDiscountID, &$arConditions, $active = '')
     {
         global $DB;
 
@@ -709,7 +873,10 @@ class CCatalogDiscount extends CAllCatalogDiscount
             $boolResult = false;
         }
         if (empty($arConditions) || !is_array($arConditions)) {
-            $arMsg[] = array('id' => 'SUBDISCOUNT', "text" => GetMessage('BT_MOD_CATALOG_DISC_ERR_SUBDISCOUNT_ROWS_ABSENT'));
+            $arMsg[] = array(
+                'id' => 'SUBDISCOUNT',
+                "text" => GetMessage('BT_MOD_CATALOG_DISC_ERR_SUBDISCOUNT_ROWS_ABSENT')
+            );
             $boolResult = false;
         }
 
@@ -747,14 +914,15 @@ class CCatalogDiscount extends CAllCatalogDiscount
                 $strInserCond = "INSERT INTO b_catalog_discount_cond(" . $arInsert[0] . ") VALUES(" . $arInsert[1] . ")";
                 $DB->Query($strInserCond, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             }
-            if (isset($arOneCondition))
+            if (isset($arOneCondition)) {
                 unset($arOneCondition);
+            }
         }
 
         return $boolResult;
     }
 
-    protected function __GetDiscountID($arFilter)
+    protected static function __GetDiscountID($arFilter)
     {
         global $DB;
 
@@ -768,41 +936,48 @@ class CCatalogDiscount extends CAllCatalogDiscount
             "PRICE_TYPE_ID" => array("FIELD" => "DC.PRICE_TYPE_ID", "TYPE" => "int"),
         );
 
-        if (!isset($arFilter['USER_GROUP_ID']))
+        if (!isset($arFilter['USER_GROUP_ID'])) {
             $arFilter['USER_GROUP_ID'] = array();
-        elseif (!is_array($arFilter['USER_GROUP_ID']))
+        } elseif (!is_array($arFilter['USER_GROUP_ID'])) {
             $arFilter['USER_GROUP_ID'] = array($arFilter['USER_GROUP_ID']);
+        }
         if (!empty($arFilter['USER_GROUP_ID'])) {
-            if (!in_array(-1, $arFilter['USER_GROUP_ID']))
+            if (!in_array(-1, $arFilter['USER_GROUP_ID'])) {
                 $arFilter['USER_GROUP_ID'][] = -1;
+            }
         } else {
             unset($arFilter['USER_GROUP_ID']);
         }
 
-        if (!isset($arFilter['PRICE_TYPE_ID']))
+        if (!isset($arFilter['PRICE_TYPE_ID'])) {
             $arFilter['PRICE_TYPE_ID'] = array();
-        elseif (!is_array($arFilter['PRICE_TYPE_ID']))
+        } elseif (!is_array($arFilter['PRICE_TYPE_ID'])) {
             $arFilter['PRICE_TYPE_ID'] = array($arFilter['PRICE_TYPE_ID']);
+        }
         if (!empty($arFilter['PRICE_TYPE_ID'])) {
-            if (!in_array(-1, $arFilter['PRICE_TYPE_ID']))
+            if (!in_array(-1, $arFilter['PRICE_TYPE_ID'])) {
                 $arFilter['PRICE_TYPE_ID'][] = -1;
+            }
         } else {
             unset($arFilter['PRICE_TYPE_ID']);
         }
 
         $active = 'Y';
         if (array_key_exists('ACTIVE', $arFilter)) {
-            if ($arFilter['ACTIVE'] === null)
+            if ($arFilter['ACTIVE'] === null) {
                 $active = '';
-            elseif ($arFilter['ACTIVE'] == 'Y' || $arFilter['ACTIVE'] == 'N')
+            } elseif ($arFilter['ACTIVE'] == 'Y' || $arFilter['ACTIVE'] == 'N') {
                 $active = $arFilter['ACTIVE'];
+            }
             unset($arFilter['ACTIVE']);
         }
-        if ($active != '')
+        if ($active != '') {
             $arFilter['ACTIVE'] = $active;
+        }
 
-        if (array_key_exists('DISCOUNT_ID', $arFilter))
+        if (array_key_exists('DISCOUNT_ID', $arFilter)) {
             unset($arFilter['DISCOUNT_ID']);
+        }
 
         $arSelectFields = array('DISCOUNT_ID');
         if ($boolRest) {
@@ -814,8 +989,9 @@ class CCatalogDiscount extends CAllCatalogDiscount
         $arSqls = CCatalog::PrepareSql($arFields, array('DISCOUNT_ID' => 'ASC'), $arFilter, false, $arSelectFields);
 
         $arSqls["SELECT"] = str_replace("%%_DISTINCT_%%", "", $arSqls["SELECT"]);
-        if (empty($arSqls["WHERE"]))
+        if (empty($arSqls["WHERE"])) {
             $arSqls["WHERE"] = "1=1";
+        }
 
         $strQuery = "SELECT " . $arSqls["SELECT"] . " FROM b_catalog_discount_cond DC WHERE " . $arSqls["WHERE"];
 
@@ -840,10 +1016,12 @@ class CCatalogDiscount extends CAllCatalogDiscount
             if (!empty($arDiscountID)) {
                 $arDiscountID = array_keys($arDiscountID);
                 foreach ($arRestrictions as $intKey => $arOneRestrictions) {
-                    if (array_key_exists(-1, $arOneRestrictions['USER_GROUP']))
+                    if (array_key_exists(-1, $arOneRestrictions['USER_GROUP'])) {
                         $arOneRestrictions['USER_GROUP'] = array();
-                    if (array_key_exists(-1, $arOneRestrictions['PRICE_TYPE']))
+                    }
+                    if (array_key_exists(-1, $arOneRestrictions['PRICE_TYPE'])) {
                         $arOneRestrictions['PRICE_TYPE'] = array();
+                    }
                     $arRestrictions[$intKey] = $arOneRestrictions;
                 }
             }
@@ -856,18 +1034,22 @@ class CCatalogDiscount extends CAllCatalogDiscount
                 $arDiscount['DISCOUNT_ID'] = (int)$arDiscount['DISCOUNT_ID'];
                 $arDiscountID[$arDiscount['DISCOUNT_ID']] = true;
             }
-            if (!empty($arDiscountID))
+            if (!empty($arDiscountID)) {
                 $arResult = array_keys($arDiscountID);
+            }
         }
         return $arResult;
     }
 
-    protected function __UpdateOldEntities($ID, &$arFields, $boolUpdate)
+    protected static function __UpdateOldEntities($ID, &$arFields, $boolUpdate)
     {
         $ID = intval($ID);
-        if (0 >= $ID)
+        if (0 >= $ID) {
             return;
-        CCatalogDiscount::__UpdateOldOneEntity($ID, $arFields,
+        }
+        CCatalogDiscount::__UpdateOldOneEntity(
+            $ID,
+            $arFields,
             array(
                 'ENTITY_ID' => 'IBLOCK_IDS',
                 'TABLE_ID' => 'b_catalog_discount2iblock',
@@ -875,7 +1057,9 @@ class CCatalogDiscount extends CAllCatalogDiscount
             ),
             $boolUpdate
         );
-        CCatalogDiscount::__UpdateOldOneEntity($ID, $arFields,
+        CCatalogDiscount::__UpdateOldOneEntity(
+            $ID,
+            $arFields,
             array(
                 'ENTITY_ID' => 'SECTION_IDS',
                 'TABLE_ID' => 'b_catalog_discount2section',
@@ -883,7 +1067,9 @@ class CCatalogDiscount extends CAllCatalogDiscount
             ),
             $boolUpdate
         );
-        CCatalogDiscount::__UpdateOldOneEntity($ID, $arFields,
+        CCatalogDiscount::__UpdateOldOneEntity(
+            $ID,
+            $arFields,
             array(
                 'ENTITY_ID' => 'PRODUCT_IDS',
                 'TABLE_ID' => 'b_catalog_discount2product',
@@ -893,12 +1079,13 @@ class CCatalogDiscount extends CAllCatalogDiscount
         );
     }
 
-    protected function __FillArrays($intDiscountID, &$arFields, $strEntityID)
+    protected static function __FillArrays($intDiscountID, &$arFields, $strEntityID)
     {
         $boolResult = false;
         $intDiscountID = intval($intDiscountID);
-        if (0 >= $intDiscountID)
+        if (0 >= $intDiscountID) {
             return $boolResult;
+        }
         $strEntityID = trim(strval($strEntityID));
         if (!empty($strEntityID) && ('GROUP_IDS' == $strEntityID || 'CATALOG_GROUP_IDS' == $strEntityID)) {
             $boolCheck = false;
@@ -914,8 +1101,9 @@ class CCatalogDiscount extends CAllCatalogDiscount
             while ($arDiscount = $rsDiscounts->Fetch()) {
                 $boolCheck = true;
                 $intValue = intval($arDiscount[$strEntityResult]);
-                if (0 < $intValue)
+                if (0 < $intValue) {
                     $arValues[$intValue] = true;
+                }
             }
             if ($boolCheck) {
                 $arFields[$strEntityID] = (!empty($arValues) ? array_keys($arValues) : array());
@@ -925,7 +1113,7 @@ class CCatalogDiscount extends CAllCatalogDiscount
         return $boolResult;
     }
 
-    protected function updateDiscountHandlers($discountID, $handlers, $update)
+    protected static function updateDiscountHandlers($discountID, $handlers, $update)
     {
         global $DB;
 
@@ -953,7 +1141,7 @@ class CCatalogDiscount extends CAllCatalogDiscount
         }
     }
 
-    protected function getDiscountHandlers($discountList)
+    protected static function getDiscountHandlers($discountList)
     {
         global $DB;
 
@@ -967,14 +1155,18 @@ class CCatalogDiscount extends CAllCatalogDiscount
             $result = array_fill_keys($discountList, $defaultRes);
             $discountRows = array_chunk($discountList, 500);
             foreach ($discountRows as &$oneRow) {
-                $sqlQuery = 'select * from b_catalog_discount_module where DISCOUNT_ID IN (' . implode(', ', $oneRow) . ')';
+                $sqlQuery = 'select * from b_catalog_discount_module where DISCOUNT_ID IN (' . implode(
+                        ', ',
+                        $oneRow
+                    ) . ')';
                 $resQuery = $DB->Query($sqlQuery, false, 'File: ' . __FILE__ . '<br>Line: ' . __LINE__);
                 while ($row = $resQuery->Fetch()) {
                     $row['DISCOUNT_ID'] = (int)$row['DISCOUNT_ID'];
                     $result[$row['DISCOUNT_ID']]['MODULES'][] = $row['MODULE_ID'];
                 }
-                if (isset($row))
+                if (isset($row)) {
                     unset($row);
+                }
                 unset($resQuery, $sqlQuery);
             }
             unset($oneRow, $discountRows);

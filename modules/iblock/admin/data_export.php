@@ -1,4 +1,5 @@
 <?
+
 /** @global CMain $APPLICATION */
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 CModule::IncludeModule("iblock");
@@ -8,18 +9,22 @@ IncludeModuleLangFile(__FILE__);
 $bPublicMode = defined('BX_PUBLIC_MODE') && BX_PUBLIC_MODE == 1;
 
 set_time_limit(0);
-$IBLOCK_ID = IntVal($IBLOCK_ID);
-$STEP = IntVal($STEP);
-if ($STEP <= 0)
+$IBLOCK_ID = intval($IBLOCK_ID);
+$STEP = intval($STEP);
+if ($STEP <= 0) {
     $STEP = 1;
-if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($backButton) > 0)
+}
+if ($_SERVER["REQUEST_METHOD"] == "POST" && $backButton <> '') {
     $STEP = $STEP - 2;
-if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($backButton2) > 0)
+}
+if ($_SERVER["REQUEST_METHOD"] == "POST" && $backButton2 <> '') {
     $STEP = 1;
+}
 
 $NUM_CATALOG_LEVELS = intval(COption::GetOptionInt('iblock', 'num_catalog_levels', 3));
-if ($NUM_CATALOG_LEVELS <= 0)
+if ($NUM_CATALOG_LEVELS <= 0) {
     $NUM_CATALOG_LEVELS = 3;
+}
 $strError = "";
 $DATA_FILE_NAME = "";
 
@@ -29,8 +34,9 @@ function GetValueByCodeTmp($code)
 {
     global $NUM_FIELDS;
     for ($i = 0; $i < $NUM_FIELDS; $i++) {
-        if ($GLOBALS["field_" . $i] == $code)
+        if ($GLOBALS["field_" . $i] == $code) {
             return $i;
+        }
     }
     return -1;
 }
@@ -90,11 +96,13 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && $STEP > 1 && check_bitrix_sessid()) 
             )
         );
         $arIBlockRes = new CIBlockResult($arIBlockRes);
-        if ($IBLOCK_ID <= 0 || !($arIBlock = $arIBlockRes->GetNext()))
+        if ($IBLOCK_ID <= 0 || !($arIBlock = $arIBlockRes->GetNext())) {
             $strError .= GetMessage("IBLOCK_ADM_EXP_NO_IBLOCK") . "<br>";
+        }
 
-        if (strlen($strError) > 0)
+        if ($strError <> '') {
             $STEP = 1;
+        }
         //*****************************************************************//
     }
 
@@ -102,8 +110,9 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && $STEP > 1 && check_bitrix_sessid()) 
         //*****************************************************************//
         $csvFile = new CCSVData();
 
-        if ($fields_type != "F" && $fields_type != "R")
+        if ($fields_type != "F" && $fields_type != "R") {
             $strError .= GetMessage("IBLOCK_ADM_EXP_NO_FORMAT") . "<br>";
+        }
 
         $csvFile->SetFieldsType($fields_type);
 
@@ -119,20 +128,22 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && $STEP > 1 && check_bitrix_sessid()) 
                 $delimiter_r_char = " ";
                 break;
             case "OTR":
-                $delimiter_r_char = substr($delimiter_other_r, 0, 1);
+                $delimiter_r_char = mb_substr($delimiter_other_r, 0, 1);
                 break;
             case "TZP":
                 $delimiter_r_char = ";";
                 break;
         }
 
-        if (strlen($delimiter_r_char) != 1)
+        if (mb_strlen($delimiter_r_char) != 1) {
             $strError .= GetMessage("IBLOCK_ADM_EXP_NO_DELIMITER") . "<br>";
+        }
 
-        if (strlen($strError) <= 0)
+        if ($strError == '') {
             $csvFile->SetDelimiter($delimiter_r_char);
+        }
 
-        if (strlen($_REQUEST["DATA_FILE_NAME"]) <= 0) {
+        if ($_REQUEST["DATA_FILE_NAME"] == '') {
             $strError .= GetMessage("IBLOCK_ADM_EXP_NO_FILE_NAME") . "<br>";
         } elseif (
             preg_match('/[^a-zA-Z0-9\s!#\$%&\(\)\[\]\{\}+\.;=@\^_\~\/\\\\\-]/i', $_REQUEST["DATA_FILE_NAME"])
@@ -142,11 +153,12 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && $STEP > 1 && check_bitrix_sessid()) 
             $strError .= GetMessage("IBLOCK_ADM_EXP_FILE_NAME_ERROR") . "<br>";
         } else {
             $DATA_FILE_NAME = Rel2Abs("/", $_REQUEST["DATA_FILE_NAME"]);
-            if (strtolower(substr($DATA_FILE_NAME, strlen($DATA_FILE_NAME) - 4)) != ".csv")
+            if (mb_strtolower(mb_substr($DATA_FILE_NAME, mb_strlen($DATA_FILE_NAME) - 4)) != ".csv") {
                 $DATA_FILE_NAME .= ".csv";
+            }
         }
 
-        if (strlen($strError) <= 0) {
+        if ($strError == '') {
             $fp = fopen($_SERVER["DOCUMENT_ROOT"] . $DATA_FILE_NAME, "w");
             if (!is_resource($fp)) {
                 $strError .= GetMessage("IBLOCK_ADM_EXP_CANNOT_CREATE_FILE") . "<br>";
@@ -156,11 +168,12 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && $STEP > 1 && check_bitrix_sessid()) 
             }
         }
 
-        if (!is_array($field_needed) || !in_array("Y", $field_needed))
+        if (!is_array($field_needed) || !in_array("Y", $field_needed)) {
             $strError .= GetMessage("IBLOCK_ADM_EXP_NO_FIELDS") . "<br>";
+        }
 
         $num_rows_writed = 0;
-        if (strlen($strError) <= 0) {
+        if ($strError == '') {
             $selectArray = array(
                 "ID",
                 "IBLOCK_ID",
@@ -172,7 +185,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && $STEP > 1 && check_bitrix_sessid()) 
             foreach ($field_code as $i => $value) {
                 if ($field_needed[$i] == "Y") {
                     if (strncmp($value, "IE_", 3) == 0) {
-                        $selectArray[] = substr($value, 3);
+                        $selectArray[] = mb_substr($value, 3);
                     } elseif (strncmp($value, "IC_GROUP", 8) == 0) {
                         $bNeedGroups = true;
                     } elseif (!$bNeedProps && (strncmp($value, "IP_PROP", 7) == 0)) {
@@ -181,8 +194,9 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && $STEP > 1 && check_bitrix_sessid()) 
                     }
 
                     $j = $field_num[$i];
-                    while (array_key_exists($j, $arNeedFields))
+                    while (array_key_exists($j, $arNeedFields)) {
                         $j++;
+                    }
                     $arNeedFields[$j] = $value;
                 }
             }
@@ -190,8 +204,9 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && $STEP > 1 && check_bitrix_sessid()) 
 
             if ($first_line_names == "Y") {
                 $arResFields = array();
-                foreach ($arNeedFields as $field_name)
+                foreach ($arNeedFields as $field_name) {
                     $arResFields[] = $field_name;
+                }
                 $csvFile->SaveFile($_SERVER["DOCUMENT_ROOT"] . $DATA_FILE_NAME, $arResFields);
             }
 
@@ -209,28 +224,32 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && $STEP > 1 && check_bitrix_sessid()) 
                 $arElement = $obElement->GetFields();
                 if (array_key_exists("PREVIEW_PICTURE", $arElement)) {
                     $arElement["PREVIEW_PICTURE"] = CFile::GetFileArray($arElement["PREVIEW_PICTURE"]);
-                    if ($arElement["PREVIEW_PICTURE"])
+                    if ($arElement["PREVIEW_PICTURE"]) {
                         $arElement["~PREVIEW_PICTURE"] = $arElement["PREVIEW_PICTURE"]["SRC"];
+                    }
                 }
                 if (array_key_exists("DETAIL_PICTURE", $arElement)) {
                     $arElement["DETAIL_PICTURE"] = CFile::GetFileArray($arElement["DETAIL_PICTURE"]);
-                    if ($arElement["DETAIL_PICTURE"])
+                    if ($arElement["DETAIL_PICTURE"]) {
                         $arElement["~DETAIL_PICTURE"] = $arElement["DETAIL_PICTURE"]["SRC"];
+                    }
                 }
 
-                if ($bNeedProps)
+                if ($bNeedProps) {
                     $arProperties = $obElement->GetProperties();
-                else
+                } else {
                     $arProperties = array();
+                }
 
                 if ($arUserTypeFormat === false) {
                     $arUserTypeFormat = array();
                     foreach ($arProperties as $prop_id => $arProperty) {
                         $arUserTypeFormat[$arProperty["ID"]] = false;
-                        if (strlen($arProperty["USER_TYPE"])) {
+                        if ($arProperty["USER_TYPE"] <> '') {
                             $arUserType = CIBlockProperty::GetUserType($arProperty["USER_TYPE"]);
-                            if (isset($arUserType["GetPublicViewHTML"]))
+                            if (isset($arUserType["GetPublicViewHTML"])) {
                                 $arUserTypeFormat[$arProperty["ID"]] = $arUserType["GetPublicViewHTML"];
+                            }
                         }
                     }
                 }
@@ -240,35 +259,42 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && $STEP > 1 && check_bitrix_sessid()) 
                     if ($arUserTypeFormat[$arProperty["ID"]]) {
                         if ($arProperty['MULTIPLE'] == 'Y' && is_array($arProperty["~VALUE"])) {
                             $arValues = array();
-                            foreach ($arProperty["~VALUE"] as $value)
-                                $arValues[] = call_user_func_array($arUserTypeFormat[$arProperty["ID"]],
+                            foreach ($arProperty["~VALUE"] as $value) {
+                                $arValues[] = call_user_func_array(
+                                    $arUserTypeFormat[$arProperty["ID"]],
                                     array(
                                         $arProperty,
                                         array("VALUE" => $value),
                                         array("MODE" => "CSV_EXPORT"),
-                                    ));
+                                    )
+                                );
+                            }
                         } else {
-                            $arValues = call_user_func_array($arUserTypeFormat[$arProperty["ID"]],
+                            $arValues = call_user_func_array(
+                                $arUserTypeFormat[$arProperty["ID"]],
                                 array(
                                     $arProperty,
                                     array("VALUE" => $arProperty["~VALUE"]),
                                     array("MODE" => "CSV_EXPORT"),
-                                ));
+                                )
+                            );
                         }
                     } elseif ($arProperty["PROPERTY_TYPE"] == "F") {
                         if (is_array($arProperty["~VALUE"])) {
                             $arValues = array();
                             foreach ($arProperty["~VALUE"] as $file_id) {
                                 $file = CFile::GetFileArray($file_id);
-                                if ($file)
+                                if ($file) {
                                     $arValues[] = $file["SRC"];
+                                }
                             }
                         } elseif ($arProperty["~VALUE"] > 0) {
                             $file = CFile::GetFileArray($arProperty["~VALUE"]);
-                            if ($file)
+                            if ($file) {
                                 $arValues = $file["SRC"];
-                            else
+                            } else {
                                 $arValues = "";
+                            }
                         } else {
                             $arValues = "";
                         }
@@ -281,9 +307,12 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && $STEP > 1 && check_bitrix_sessid()) 
                 $arResSections = array();
                 if ($bNeedGroups) {
                     if ($arElement["IBLOCK_SECTION_ID"] > 0) {
-
                         $arPath = array();
-                        $rsPath = CIBlockSection::GetNavChain($IBLOCK_ID, $arElement["IBLOCK_SECTION_ID"], array("NAME"));
+                        $rsPath = CIBlockSection::GetNavChain(
+                            $IBLOCK_ID,
+                            $arElement["IBLOCK_SECTION_ID"],
+                            array("NAME")
+                        );
                         while ($arPathSection = $rsPath->Fetch()) {
                             $arPath[] = $arPathSection["NAME"];
                         }
@@ -308,19 +337,21 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && $STEP > 1 && check_bitrix_sessid()) 
                         }
                     }
                 }
-                if (empty($arResSections))
+                if (empty($arResSections)) {
                     $arResSections[] = [];
+                }
 
                 $arResFields = array();
                 foreach ($arResSections as $arPath) {
                     $arTuple = array();
                     foreach ($arNeedFields as $field_name) {
-                        if (strncmp($field_name, "IE_", 3) == 0)
-                            $arTuple[] = $arElement["~" . substr($field_name, 3)];
-                        elseif (strncmp($field_name, "IP_PROP", 7) == 0)
-                            $arTuple[] = $arPropsValues[IntVal(substr($field_name, 7))];
-                        elseif (strncmp($field_name, "IC_GROUP", 8) == 0)
-                            $arTuple[] = $arPath[IntVal(substr($field_name, 8))];
+                        if (strncmp($field_name, "IE_", 3) == 0) {
+                            $arTuple[] = $arElement["~" . mb_substr($field_name, 3)];
+                        } elseif (strncmp($field_name, "IP_PROP", 7) == 0) {
+                            $arTuple[] = $arPropsValues[intval(mb_substr($field_name, 7))];
+                        } elseif (strncmp($field_name, "IC_GROUP", 8) == 0) {
+                            $arTuple[] = $arPath[intval(mb_substr($field_name, 8))];
+                        }
                     }
 
                     ArrayMultiply($arResFields, $arTuple);
@@ -328,15 +359,24 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && $STEP > 1 && check_bitrix_sessid()) 
             }
         }
 
-        if (strlen($strError) > 0)
+        if ($strError <> '') {
             $STEP = 2;
-        elseif ($bPublicMode) {
+        } elseif ($bPublicMode) {
             ?>
             <div id="result">
                 <div style="text-align: center; margin: 20px;">
-                    <? echo GetMessage("IBLOCK_ADM_EXP_LINES_EXPORTED", array("#LINES#" => "<b>" . intval($num_rows_writed) . "</b>")) ?>
-                    <br/>
-                    <? echo GetMessage("IBLOCK_ADM_EXP_DOWNLOAD_RESULT", array("#HREF#" => "<a href=\"" . htmlspecialcharsbx($DATA_FILE_NAME) . "\">" . htmlspecialcharsbx($DATA_FILE_NAME) . "</a>")) ?>
+                    <? echo GetMessage(
+                        "IBLOCK_ADM_EXP_LINES_EXPORTED",
+                        array("#LINES#" => "<b>" . intval($num_rows_writed) . "</b>")
+                    ) ?><br/>
+                    <? echo GetMessage(
+                        "IBLOCK_ADM_EXP_DOWNLOAD_RESULT",
+                        array(
+                            "#HREF#" => "<a href=\"" . htmlspecialcharsbx(
+                                    $DATA_FILE_NAME
+                                ) . "\">" . htmlspecialcharsbx($DATA_FILE_NAME) . "</a>"
+                        )
+                    ) ?>
                 </div>
             </div>
 
@@ -354,7 +394,6 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && $STEP > 1 && check_bitrix_sessid()) 
         }
         //*****************************************************************//
     }
-
     //*****************************************************************//
 }
 /////////////////////////////////////////////////////////////////////
@@ -375,16 +414,37 @@ CAdminMessage::ShowMessage($strError);
         if ($STEP > 1) {
             ?><input type="hidden" name="IBLOCK_ID" value="<? echo $IBLOCK_ID ?>"><?
         }
-        if (!$bPublicMode)
+        if (!$bPublicMode) {
             $aTabs = array(
-                array("DIV" => "edit1", "TAB" => GetMessage("IBLOCK_ADM_EXP_TAB1"), "ICON" => "iblock", "TITLE" => GetMessage("IBLOCK_ADM_EXP_TAB1_ALT")),
-                array("DIV" => "edit2", "TAB" => GetMessage("IBLOCK_ADM_EXP_TAB2"), "ICON" => "iblock", "TITLE" => GetMessage("IBLOCK_ADM_EXP_TAB2_ALT")),
-                array("DIV" => "edit3", "TAB" => GetMessage("IBLOCK_ADM_EXP_TAB3"), "ICON" => "iblock", "TITLE" => GetMessage("IBLOCK_ADM_EXP_TAB3_ALT")),
+                array(
+                    "DIV" => "edit1",
+                    "TAB" => GetMessage("IBLOCK_ADM_EXP_TAB1"),
+                    "ICON" => "iblock",
+                    "TITLE" => GetMessage("IBLOCK_ADM_EXP_TAB1_ALT")
+                ),
+                array(
+                    "DIV" => "edit2",
+                    "TAB" => GetMessage("IBLOCK_ADM_EXP_TAB2"),
+                    "ICON" => "iblock",
+                    "TITLE" => GetMessage("IBLOCK_ADM_EXP_TAB2_ALT")
+                ),
+                array(
+                    "DIV" => "edit3",
+                    "TAB" => GetMessage("IBLOCK_ADM_EXP_TAB3"),
+                    "ICON" => "iblock",
+                    "TITLE" => GetMessage("IBLOCK_ADM_EXP_TAB3_ALT")
+                ),
             );
-        else
+        } else {
             $aTabs = array(
-                array("DIV" => "edit2", "TAB" => GetMessage("IBLOCK_ADM_EXP_TAB2"), "ICON" => "iblock", "TITLE" => GetMessage("IBLOCK_ADM_EXP_TAB2_ALT"))
+                array(
+                    "DIV" => "edit2",
+                    "TAB" => GetMessage("IBLOCK_ADM_EXP_TAB2"),
+                    "ICON" => "iblock",
+                    "TITLE" => GetMessage("IBLOCK_ADM_EXP_TAB2_ALT")
+                )
             );
+        }
 
         $tabControl = new CAdminTabControl("tabControl", $aTabs, false, true);
         $tabControl->Begin();
@@ -432,7 +492,7 @@ CAdminMessage::ShowMessage($strError);
                 <td width="40%" class="adm-detail-valign-top"><? echo GetMessage("IBLOCK_ADM_EXP_DELIMITER") ?>:</td>
                 <td width="60%">
                     <input type="radio" name="delimiter_r" id="delimiter_TZP"
-                           value="TZP" <? if ($delimiter_r == "TZP" || strlen($delimiter_r) <= 0) echo "checked" ?>><label
+                           value="TZP" <? if ($delimiter_r == "TZP" || $delimiter_r == '') echo "checked" ?>><label
                             for="delimiter_TZP"><? echo GetMessage("IBLOCK_ADM_EXP_DELIM_TZP") ?></label><br>
                     <input type="radio" name="delimiter_r" id="delimiter_ZPT"
                            value="ZPT" <? if ($delimiter_r == "ZPT") echo "checked" ?>><label
@@ -454,7 +514,7 @@ CAdminMessage::ShowMessage($strError);
                 <td><? echo GetMessage("IBLOCK_ADM_EXP_FIRST_LINE_NAMES") ?>:</td>
                 <td>
                     <input type="checkbox" name="first_line_names"
-                           value="Y" <? if ($first_line_names == "Y" || strlen($strError) <= 0) echo "checked" ?>>
+                           value="Y" <? if ($first_line_names == "Y" || $strError == '') echo "checked" ?>>
                 </td>
             </tr>
 
@@ -466,27 +526,79 @@ CAdminMessage::ShowMessage($strError);
                 <td colspan="2">
                     <?
                     $arAvailFields = array(
-                        array("value" => "IE_XML_ID", "name" => GetMessage("IBLOCK_FIELD_XML_ID") . " (B_IBLOCK_ELEMENT.XML_ID)"),
-                        array("value" => "IE_NAME", "name" => GetMessage("IBLOCK_FIELD_NAME") . " (B_IBLOCK_ELEMENT.NAME)"),
+                        array(
+                            "value" => "IE_XML_ID",
+                            "name" => GetMessage("IBLOCK_FIELD_XML_ID") . " (B_IBLOCK_ELEMENT.XML_ID)"
+                        ),
+                        array(
+                            "value" => "IE_NAME",
+                            "name" => GetMessage("IBLOCK_FIELD_NAME") . " (B_IBLOCK_ELEMENT.NAME)"
+                        ),
                         array("value" => "IE_ID", "name" => GetMessage("IBLOCK_FIELD_ID") . " (B_IBLOCK_ELEMENT.ID)"),
-                        array("value" => "IE_ACTIVE", "name" => GetMessage("IBLOCK_FIELD_ACTIVE") . " (B_IBLOCK_ELEMENT.ACTIVE)"),
-                        array("value" => "IE_ACTIVE_FROM", "name" => GetMessage("IBLOCK_FIELD_ACTIVE_FROM") . " (B_IBLOCK_ELEMENT.ACTIVE_FROM)"),
-                        array("value" => "IE_ACTIVE_TO", "name" => GetMessage("IBLOCK_FIELD_ACTIVE_TO") . " (B_IBLOCK_ELEMENT.ACTIVE_TO)"),
-                        array("value" => "IE_PREVIEW_PICTURE", "name" => GetMessage("IBLOCK_FIELD_PREVIEW_PICTURE") . " (B_IBLOCK_ELEMENT.PREVIEW_PICTURE)"),
-                        array("value" => "IE_PREVIEW_TEXT", "name" => GetMessage("IBLOCK_FIELD_PREVIEW_TEXT") . " (B_IBLOCK_ELEMENT.PREVIEW_TEXT)"),
-                        array("value" => "IE_PREVIEW_TEXT_TYPE", "name" => GetMessage("IBLOCK_FIELD_PREVIEW_TEXT_TYPE") . " (B_IBLOCK_ELEMENT.PREVIEW_TEXT_TYPE)"),
-                        array("value" => "IE_DETAIL_PICTURE", "name" => GetMessage("IBLOCK_FIELD_DETAIL_PICTURE") . " (B_IBLOCK_ELEMENT.DETAIL_PICTURE)"),
-                        array("value" => "IE_DETAIL_TEXT", "name" => GetMessage("IBLOCK_FIELD_DETAIL_TEXT") . " (B_IBLOCK_ELEMENT.DETAIL_TEXT)"),
-                        array("value" => "IE_DETAIL_TEXT_TYPE", "name" => GetMessage("IBLOCK_FIELD_DETAIL_TEXT_TYPE") . " (B_IBLOCK_ELEMENT.DETAIL_TEXT_TYPE)"),
-                        array("value" => "IE_CODE", "name" => GetMessage("IBLOCK_FIELD_CODE") . " (B_IBLOCK_ELEMENT.CODE)"),
-                        array("value" => "IE_SORT", "name" => GetMessage("IBLOCK_FIELD_SORT") . " (B_IBLOCK_ELEMENT.SORT)"),
-                        array("value" => "IE_TAGS", "name" => GetMessage("IBLOCK_FIELD_TAGS") . " (B_IBLOCK_ELEMENT.TAGS)"),
+                        array(
+                            "value" => "IE_ACTIVE",
+                            "name" => GetMessage("IBLOCK_FIELD_ACTIVE") . " (B_IBLOCK_ELEMENT.ACTIVE)"
+                        ),
+                        array(
+                            "value" => "IE_ACTIVE_FROM",
+                            "name" => GetMessage("IBLOCK_FIELD_ACTIVE_FROM") . " (B_IBLOCK_ELEMENT.ACTIVE_FROM)"
+                        ),
+                        array(
+                            "value" => "IE_ACTIVE_TO",
+                            "name" => GetMessage("IBLOCK_FIELD_ACTIVE_TO") . " (B_IBLOCK_ELEMENT.ACTIVE_TO)"
+                        ),
+                        array(
+                            "value" => "IE_PREVIEW_PICTURE",
+                            "name" => GetMessage("IBLOCK_FIELD_PREVIEW_PICTURE") . " (B_IBLOCK_ELEMENT.PREVIEW_PICTURE)"
+                        ),
+                        array(
+                            "value" => "IE_PREVIEW_TEXT",
+                            "name" => GetMessage("IBLOCK_FIELD_PREVIEW_TEXT") . " (B_IBLOCK_ELEMENT.PREVIEW_TEXT)"
+                        ),
+                        array(
+                            "value" => "IE_PREVIEW_TEXT_TYPE",
+                            "name" => GetMessage(
+                                    "IBLOCK_FIELD_PREVIEW_TEXT_TYPE"
+                                ) . " (B_IBLOCK_ELEMENT.PREVIEW_TEXT_TYPE)"
+                        ),
+                        array(
+                            "value" => "IE_DETAIL_PICTURE",
+                            "name" => GetMessage("IBLOCK_FIELD_DETAIL_PICTURE") . " (B_IBLOCK_ELEMENT.DETAIL_PICTURE)"
+                        ),
+                        array(
+                            "value" => "IE_DETAIL_TEXT",
+                            "name" => GetMessage("IBLOCK_FIELD_DETAIL_TEXT") . " (B_IBLOCK_ELEMENT.DETAIL_TEXT)"
+                        ),
+                        array(
+                            "value" => "IE_DETAIL_TEXT_TYPE",
+                            "name" => GetMessage(
+                                    "IBLOCK_FIELD_DETAIL_TEXT_TYPE"
+                                ) . " (B_IBLOCK_ELEMENT.DETAIL_TEXT_TYPE)"
+                        ),
+                        array(
+                            "value" => "IE_CODE",
+                            "name" => GetMessage("IBLOCK_FIELD_CODE") . " (B_IBLOCK_ELEMENT.CODE)"
+                        ),
+                        array(
+                            "value" => "IE_SORT",
+                            "name" => GetMessage("IBLOCK_FIELD_SORT") . " (B_IBLOCK_ELEMENT.SORT)"
+                        ),
+                        array(
+                            "value" => "IE_TAGS",
+                            "name" => GetMessage("IBLOCK_FIELD_TAGS") . " (B_IBLOCK_ELEMENT.TAGS)"
+                        ),
                     );
-                    $properties = CIBlockProperty::GetList(Array("sort" => "asc", "name" => "asc"), Array("ACTIVE" => "Y", "IBLOCK_ID" => $IBLOCK_ID));
+                    $properties = CIBlockProperty::GetList(
+                        Array("sort" => "asc", "name" => "asc"),
+                        Array("ACTIVE" => "Y", "IBLOCK_ID" => $IBLOCK_ID)
+                    );
                     while ($prop_fields = $properties->Fetch()) {
                         $arAvailFields[] = array(
                             "value" => "IP_PROP" . $prop_fields["ID"],
-                            "name" => GetMessage("IBLOCK_ADM_EXP_PROPERTY", array("#PROPERTY_NAME#" => htmlspecialcharsex($prop_fields["NAME"]))),
+                            "name" => GetMessage(
+                                "IBLOCK_ADM_EXP_PROPERTY",
+                                array("#PROPERTY_NAME#" => htmlspecialcharsex($prop_fields["NAME"]))
+                            ),
                         );
                     }
                     for ($i = 0; $i < $NUM_CATALOG_LEVELS; $i++) {
@@ -499,7 +611,7 @@ CAdminMessage::ShowMessage($strError);
                     $intCountChecked = 0;
                     $arCheckID = array();
                     for ($i = 0; $i < $intCountFields; $i++) {
-                        if ($field_needed[$i] == "Y" || (!isset($field_needed) && strlen($strCSVError) <= 0)) {
+                        if ($field_needed[$i] == "Y" || (!isset($field_needed) && $strCSVError == '')) {
                             $arCheckID[] = $i;
                             $intCountChecked++;
                         }
@@ -509,8 +621,9 @@ CAdminMessage::ShowMessage($strError);
                         <tr class="heading">
                             <td style="text-align: left !important;"><input type="checkbox" name="field_needed_all"
                                                                             id="field_needed_all" value="Y"
-                                                                            onclick="checkAll(this,<? echo $intCountFields; ?>);"<? echo($intCountChecked == $intCountFields ? ' checked' : ''); ?>>&nbsp;<? echo GetMessage("IBLOCK_ADM_EXP_IS_FIELD_NEEDED") ?>
-                            </td>
+                                                                            onclick="checkAll(this,<? echo $intCountFields; ?>);"<? echo($intCountChecked == $intCountFields ? ' checked' : ''); ?>>&nbsp;<? echo GetMessage(
+                                    "IBLOCK_ADM_EXP_IS_FIELD_NEEDED"
+                                ) ?></td>
                             <td><? echo GetMessage("IBLOCK_ADM_EXP_FIELD_NAME") ?></td>
                             <td><? echo GetMessage("IBLOCK_ADM_EXP_FIELD_SORT") ?></td>
                         </tr><?
@@ -520,22 +633,31 @@ CAdminMessage::ShowMessage($strError);
                                 <td style="text-align: left !important;">
                                     <input type="checkbox" name="field_needed[<? echo $i ?>]"
                                            id="field_needed_<? echo $i; ?>"<?/*if ($field_needed[$i]=="Y" || strlen($strError)<=0) echo "checked"; */
-                                    if (in_array($i, $arCheckID)) echo "checked"; ?> value="Y"
-                                           onclick="checkOne(this,<? echo $intCountFields; ?>);">
+                                    if (in_array($i, $arCheckID)) {
+                                        echo "checked";
+                                    } ?> value="Y" onclick="checkOne(this,<? echo $intCountFields; ?>);">
                                 </td>
                                 <td>
-                                    <? if ($i < 2) echo "<b>"; ?>
+                                    <? if ($i < 2) {
+                                        echo "<b>";
+                                    } ?>
                                     <? echo $arAvailFields[$i]["name"] ?>
-                                    <? if ($i < 2) echo "</b>"; ?>
+                                    <? if ($i < 2) {
+                                        echo "</b>";
+                                    } ?>
                                 </td>
                                 <td align="center">
-                                    <? if ($i < 2) echo "<b>"; ?>
+                                    <? if ($i < 2) {
+                                        echo "<b>";
+                                    } ?>
                                     <input type="text" name="field_num[<? echo $i ?>]"
                                            value="<? echo(is_array($field_num) ? $field_num[$i] : (10 * ($i + 1))) ?>"
                                            size="2">
                                     <input type="hidden" name="field_code[<? echo $i ?>]"
                                            value="<? echo $arAvailFields[$i]["value"] ?>">
-                                    <? if ($i < 2) echo "</b>"; ?>
+                                    <? if ($i < 2) {
+                                        echo "</b>";
+                                    } ?>
                                 </td>
                             </tr>
                             <?
@@ -570,10 +692,14 @@ CAdminMessage::ShowMessage($strError);
             <tr>
                 <td><? echo GetMessage("IBLOCK_ADM_EXP_ENTER_FILE_NAME") ?>:</td>
                 <td><?
-                    if (strlen($DATA_FILE_NAME) > 0) {
+                    if ($DATA_FILE_NAME <> '') {
                         $exportFileName = $DATA_FILE_NAME;
                     } else {
-                        $exportFileName = "/" . COption::GetOptionString("main", "upload_dir", "upload") . "/export_file_";
+                        $exportFileName = "/" . COption::GetOptionString(
+                                "main",
+                                "upload_dir",
+                                "upload"
+                            ) . "/export_file_";
                         $exportFileName .= randString(16);
                         $exportFileName .= '.csv';
                     }
@@ -595,12 +721,26 @@ CAdminMessage::ShowMessage($strError);
                 ?>
                 <tr>
                     <td>
-                        <? echo CAdminMessage::ShowMessage(array(
-                            "TYPE" => "PROGRESS",
-                            "MESSAGE" => GetMessage("IBLOCK_ADM_EXP_SUCCESS"),
-                            "DETAILS" => GetMessage("IBLOCK_ADM_EXP_LINES_EXPORTED", array("#LINES#" => "<b>" . intval($num_rows_writed) . "</b>")) . '<br>' . GetMessage("IBLOCK_ADM_EXP_DOWNLOAD_RESULT", array("#HREF#" => "<a href=\"" . htmlspecialcharsbx($DATA_FILE_NAME) . "\" target=\"_blank\">" . htmlspecialcharsex($DATA_FILE_NAME) . "</a>")),
-                            "HTML" => true,
-                        )) ?>
+                        <? echo CAdminMessage::ShowMessage(
+                            array(
+                                "TYPE" => "PROGRESS",
+                                "MESSAGE" => GetMessage("IBLOCK_ADM_EXP_SUCCESS"),
+                                "DETAILS" => GetMessage(
+                                        "IBLOCK_ADM_EXP_LINES_EXPORTED",
+                                        array("#LINES#" => "<b>" . intval($num_rows_writed) . "</b>")
+                                    ) . '<br>' . GetMessage(
+                                        "IBLOCK_ADM_EXP_DOWNLOAD_RESULT",
+                                        array(
+                                            "#HREF#" => "<a href=\"" . htmlspecialcharsbx(
+                                                    $DATA_FILE_NAME
+                                                ) . "\" target=\"_blank\">" . htmlspecialcharsex(
+                                                    $DATA_FILE_NAME
+                                                ) . "</a>"
+                                        )
+                                    ),
+                                "HTML" => true,
+                            )
+                        ) ?>
                     </td>
                 </tr>
                 <?
@@ -621,8 +761,9 @@ CAdminMessage::ShowMessage($strError);
                 endif;
                 ?>
                 <input type="submit"
-                       value="<? echo ($STEP == 2) ? GetMessage("IBLOCK_ADM_EXP_FINISH_BUTTON") : GetMessage("IBLOCK_ADM_EXP_NEXT_BUTTON") ?> &gt;&gt;"
-                       name="submit_btn" class="adm-btn-save">
+                       value="<? echo ($STEP == 2) ? GetMessage("IBLOCK_ADM_EXP_FINISH_BUTTON") : GetMessage(
+                           "IBLOCK_ADM_EXP_NEXT_BUTTON"
+                       ) ?> &gt;&gt;" name="submit_btn" class="adm-btn-save">
             <?
             else:
                 ?>

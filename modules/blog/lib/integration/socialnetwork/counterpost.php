@@ -60,24 +60,26 @@ class CounterPost
             }
         }
 
-        \CSocNetLog::counterIncrement(array(
-            "ENTITY_ID" => $logId,
-            "EVENT_ID" => $logEventId,
-            "TYPE" => "L",
-            "FOR_ALL_ACCESS" => $forAll,
-            "USERS_TO_PUSH" => (
-            $forAll
-            || empty($userIdList)
-            || count($userIdList) > 20
-                ? array()
-                : $userIdList
-            ),
-            "SEND_TO_AUTHOR" => (
-            $sendToAuthor
-                ? "Y"
-                : "N"
+        \CSocNetLog::counterIncrement(
+            array(
+                "ENTITY_ID" => $logId,
+                "EVENT_ID" => $logEventId,
+                "TYPE" => "L",
+                "FOR_ALL_ACCESS" => $forAll,
+                "USERS_TO_PUSH" => (
+                $forAll
+                || empty($userIdList)
+                || count($userIdList) > 20
+                    ? array()
+                    : $userIdList
+                ),
+                "SEND_TO_AUTHOR" => (
+                $sendToAuthor
+                    ? "Y"
+                    : "N"
+                )
             )
-        ));
+        );
 
         return true;
     }

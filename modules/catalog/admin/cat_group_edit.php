@@ -13,8 +13,9 @@ $selfFolderUrl = $adminPage->getSelfFolderUrl();
 $listUrl = $selfFolderUrl . "cat_group_admin.php?lang=" . LANGUAGE_ID;
 $listUrl = $adminSidePanelHelper->editUrlToPublicPage($listUrl);
 
-if (!($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_group')))
+if (!($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_group'))) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 Loader::includeModule('catalog');
 $bReadOnly = !$USER->CanDoOperation('catalog_group');
 
@@ -46,10 +47,12 @@ if (Catalog\Config\State::isExceededPriceTypeLimit()) {
 }
 
 $arLangList = array();
-$iterator = Localization\LanguageTable::getList([
-    'select' => ['LID', 'NAME', 'SORT'],
-    'order' => ['SORT' => 'ASC']
-]);
+$iterator = Localization\LanguageTable::getList(
+    [
+        'select' => ['LID', 'NAME', 'SORT'],
+        'order' => ['SORT' => 'ASC']
+    ]
+);
 while ($row = $iterator->fetch()) {
     $arLangList[] = [
         'LID' => $row['LID'],
@@ -65,10 +68,12 @@ if ($adminSidePanelHelper->isPublicSidePanel()) {
         $arUserGroupList = Order\BuyerGroup::getPublicList();
     }
 } else {
-    $iterator = Main\GroupTable::getList([
-        'select' => ['ID', 'NAME', 'C_SORT'],
-        'order' => ['C_SORT' => 'ASC']
-    ]);
+    $iterator = Main\GroupTable::getList(
+        [
+            'select' => ['ID', 'NAME', 'C_SORT'],
+            'order' => ['C_SORT' => 'ASC']
+        ]
+    );
     while ($row = $iterator->fetch()) {
         $arUserGroupList[] = array(
             'ID' => (int)$row['ID'],
@@ -78,7 +83,7 @@ if ($adminSidePanelHelper->isPublicSidePanel()) {
     unset($row, $iterator);
 }
 
-if (!$bReadOnly && 'POST' == $_SERVER['REQUEST_METHOD'] && (strlen($save) > 0 || strlen($apply) > 0) && check_bitrix_sessid()) {
+if (!$bReadOnly && 'POST' == $_SERVER['REQUEST_METHOD'] && ($save <> '' || $apply <> '') && check_bitrix_sessid()) {
     $adminSidePanelHelper->decodeUriComponent();
 
     $arGroupID = array();
@@ -107,9 +112,11 @@ if (!$bReadOnly && 'POST' == $_SERVER['REQUEST_METHOD'] && (strlen($save) > 0 ||
         $groupUserBuyList = [];
         $groupUserList = [];
 
-        $iterator = Catalog\GroupAccessTable::getList([
-            'select' => ['GROUP_ID', 'ACCESS']
-        ]);
+        $iterator = Catalog\GroupAccessTable::getList(
+            [
+                'select' => ['GROUP_ID', 'ACCESS']
+            ]
+        );
         while ($row = $iterator->fetch()) {
             $row['GROUP_ID'] = (int)$row['GROUP_ID'];
             if ($row['ACCESS'] === Catalog\GroupAccessTable::ACCESS_BUY) {
@@ -128,7 +135,9 @@ if (!$bReadOnly && 'POST' == $_SERVER['REQUEST_METHOD'] && (strlen($save) > 0 ||
 
     $arUserLang = array();
     foreach ($arLangList as $arOneLang) {
-        $arUserLang[$arOneLang['LID']] = trim(isset($_POST['NAME_LANG'][$arOneLang['LID']]) ? $_POST['NAME_LANG'][$arOneLang['LID']] : '');
+        $arUserLang[$arOneLang['LID']] = trim(
+            isset($_POST['NAME_LANG'][$arOneLang['LID']]) ? $_POST['NAME_LANG'][$arOneLang['LID']] : ''
+        );
     }
     unset($arOneLang);
 
@@ -155,20 +164,21 @@ if (!$bReadOnly && 'POST' == $_SERVER['REQUEST_METHOD'] && (strlen($save) > 0 ||
         if ($adminSidePanelHelper->isAjaxRequest()) {
             $adminSidePanelHelper->sendSuccessResponse("base", array("ID" => $ID));
         } else {
-            if (strlen($save) > 0) {
+            if ($save <> '') {
                 $adminSidePanelHelper->localRedirect($listUrl);
                 LocalRedirect($listUrl);
-            } elseif (strlen($apply) > 0) {
+            } elseif ($apply <> '') {
                 $applyUrl = $selfFolderUrl . "cat_group_edit.php?lang=" . $lang . "&ID=" . $ID;
                 $applyUrl = $adminSidePanelHelper->setDefaultQueryParams($applyUrl);
                 LocalRedirect($applyUrl);
             }
         }
     } else {
-        if ($ex = $APPLICATION->GetException())
+        if ($ex = $APPLICATION->GetException()) {
             $strError = $ex->GetString() . "<br>";
-        else
+        } else {
             $strError = (0 < $ID ? GetMessage("ERROR_UPDATING_TYPE") : GetMessage("ERROR_ADDING_TYPE")) . "<br>";
+        }
 
         $DB->Rollback();
 
@@ -200,10 +210,11 @@ if (!($arCatalogGroup = $rsCatalogGroups->Fetch())) {
     $rsGroups = CCatalogGroup::GetGroupsList(array("CATALOG_GROUP_ID" => $ID));
     while ($arGroup = $rsGroups->Fetch()) {
         $arGroup['GROUP_ID'] = intval($arGroup['GROUP_ID']);
-        if ('Y' == $arGroup['BUY'])
+        if ('Y' == $arGroup['BUY']) {
             $arGroupUserBuyList[] = $arGroup['GROUP_ID'];
-        else
+        } else {
             $arGroupUserList[] = $arGroup['GROUP_ID'];
+        }
     }
     $rsLangs = CCatalogGroup::GetLangList(array("CATALOG_GROUP_ID" => $ID));
     while ($arLang = $rsLangs->Fetch()) {
@@ -233,19 +244,30 @@ $aMenu = array(
 );
 
 if ($ID > 0 && !$bReadOnly) {
-    if (Catalog\Config\Feature::isMultiPriceTypesEnabled()) {
-        $aMenu[] = array("SEPARATOR" => "Y");
+    $aMenu[] = ["SEPARATOR" => "Y"];
+    if (Catalog\Config\State::isAllowedNewPriceType()) {
         $addUrl = $selfFolderUrl . "cat_group_edit.php?lang=" . LANGUAGE_ID;
         $addUrl = $adminSidePanelHelper->editUrlToPublicPage($addUrl);
-        $aMenu[] = array(
+        $aMenu[] = [
             "TEXT" => GetMessage("CGEN_NEW_GROUP"),
             "ICON" => "btn_new",
             "LINK" => $addUrl
-        );
+        ];
+    } else {
+        $helpLink = Catalog\Config\Feature::getMultiPriceTypesHelpLink();
+        if (!empty($helpLink)) {
+            $aMenu[] = [
+                "TEXT" => GetMessage("CGEN_NEW_GROUP"),
+                "ICON" => "btn_lock",
+                $helpLink['TYPE'] => $helpLink['LINK'],
+            ];
+        }
+        unset($helpLink);
     }
 
     if (Catalog\Config\Feature::isMultiPriceTypesEnabled() || !$boolRealBase) {
-        $deleteUrl = $selfFolderUrl . "cat_group_admin.php?action=delete&ID[]=" . $ID . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get() . "#tb";
+        $deleteUrl = $selfFolderUrl . "cat_group_admin.php?action=delete&ID[]=" . $ID . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get(
+            ) . "#tb";
         $buttonAction = "LINK";
         if ($adminSidePanelHelper->isPublicFrame()) {
             $deleteUrl = $adminSidePanelHelper->editUrlToPublicPage($deleteUrl);
@@ -254,7 +276,9 @@ if ($ID > 0 && !$bReadOnly) {
         $aMenu[] = array(
             "TEXT" => GetMessage("CGEN_DELETE_GROUP"),
             "ICON" => "btn_delete",
-            $buttonAction => "javascript:if(confirm('" . GetMessage("CGEN_DELETE_GROUP_CONFIRM") . "')) top.window.location.href='" . $deleteUrl . "';",
+            $buttonAction => "javascript:if(confirm('" . GetMessage(
+                    "CGEN_DELETE_GROUP_CONFIRM"
+                ) . "')) top.window.location.href='" . $deleteUrl . "';",
             "WARNING" => "Y"
         );
     }
@@ -262,8 +286,9 @@ if ($ID > 0 && !$bReadOnly) {
 $context = new CAdminContextMenu($aMenu);
 $context->Show();
 
-if (!empty($strError))
+if (!empty($strError)) {
     CAdminMessage::ShowMessage($strError);
+}
 
 ?>
 <?
@@ -279,7 +304,12 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
 
         <?
         $aTabs = array(
-            array("DIV" => "edit1", "TAB" => GetMessage("CGEN_TAB_GROUP"), "ICON" => "catalog", "TITLE" => GetMessage("CGEN_TAB_GROUP_DESCR"))
+            array(
+                "DIV" => "edit1",
+                "TAB" => GetMessage("CGEN_TAB_GROUP"),
+                "ICON" => "catalog",
+                "TITLE" => GetMessage("CGEN_TAB_GROUP_DESCR")
+            )
         );
 
         $tabControl = new CAdminTabControl("tabControl", $aTabs);
@@ -336,12 +366,14 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
             <tr>
             <td width="40%"><? echo GetMessage("NAME") ?> (<?= htmlspecialcharsbx($arOneLang['NAME']); ?>):</td>
             <td width="60%"><input type="text" name="NAME_LANG[<?= htmlspecialcharsbx($arOneLang['LID']); ?>]"
-                                   value="<?= htmlspecialcharsbx(isset($arGroupLangList[$arOneLang['LID']]) ? $arGroupLangList[$arOneLang['LID']] : ''); ?>">
-            </td>
+                                   value="<?= htmlspecialcharsbx(
+                                       isset($arGroupLangList[$arOneLang['LID']]) ? $arGroupLangList[$arOneLang['LID']] : ''
+                                   ); ?>"></td>
             </tr><?
         }
-        if (isset($arOneLang))
+        if (isset($arOneLang)) {
             unset($arOneLang);
+        }
         ?>
         <tr class="adm-detail-required-field">
             <td valign="top" width="40%">
@@ -352,10 +384,16 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
                     <?
                     foreach ($arUserGroupList as &$arOneGroup) {
                         ?>
-                        <option value="<? echo $arOneGroup["ID"]; ?>"<? if (in_array($arOneGroup["ID"], $arGroupUserList)) echo " selected" ?>><? echo "[" . $arOneGroup["ID"] . "] " . htmlspecialcharsbx($arOneGroup["NAME"]); ?></option><?
+                        <option value="<? echo $arOneGroup["ID"]; ?>"<? if (in_array(
+                            $arOneGroup["ID"],
+                            $arGroupUserList
+                        )) echo " selected" ?>><? echo "[" . $arOneGroup["ID"] . "] " . htmlspecialcharsbx(
+                                $arOneGroup["NAME"]
+                            ); ?></option><?
                     }
-                    if (isset($arOneGroup))
+                    if (isset($arOneGroup)) {
                         unset($arOneGroup);
+                    }
                     ?>
                 </select>
             </td>
@@ -369,10 +407,16 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
                     <?
                     foreach ($arUserGroupList as &$arOneGroup) {
                         ?>
-                        <option value="<? echo $arOneGroup["ID"]; ?>"<? if (in_array($arOneGroup["ID"], $arGroupUserBuyList)) echo " selected" ?>><? echo "[" . $arOneGroup["ID"] . "] " . htmlspecialcharsbx($arOneGroup["NAME"]); ?></option><?
+                        <option value="<? echo $arOneGroup["ID"]; ?>"<? if (in_array(
+                            $arOneGroup["ID"],
+                            $arGroupUserBuyList
+                        )) echo " selected" ?>><? echo "[" . $arOneGroup["ID"] . "] " . htmlspecialcharsbx(
+                                $arOneGroup["NAME"]
+                            ); ?></option><?
                     }
-                    if (isset($arOneGroup))
+                    if (isset($arOneGroup)) {
                         unset($arOneGroup);
+                    }
                     ?>
                 </select>
             </td>
@@ -383,4 +427,7 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
         $tabControl->End();
         ?>
     </form>
+<?
+Catalog\Config\Feature::initUiHelpScope();
+?>
 <? require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_admin.php"); ?>

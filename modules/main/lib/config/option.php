@@ -29,10 +29,12 @@ class Option
      */
     public static function get($moduleId, $name, $default = "", $siteId = false)
     {
-        if ($moduleId == '')
+        if ($moduleId == '') {
             throw new Main\ArgumentNullException("moduleId");
-        if ($name == '')
+        }
+        if ($name == '') {
             throw new Main\ArgumentNullException("name");
+        }
 
         if (!isset(self::$options[$moduleId])) {
             static::load($moduleId);
@@ -73,10 +75,12 @@ class Option
      */
     public static function getRealValue($moduleId, $name, $siteId = false)
     {
-        if ($moduleId == '')
+        if ($moduleId == '') {
             throw new Main\ArgumentNullException("moduleId");
-        if ($name == '')
+        }
+        if ($name == '') {
             throw new Main\ArgumentNullException("name");
+        }
 
         if (!isset(self::$options[$moduleId])) {
             static::load($moduleId);
@@ -105,21 +109,25 @@ class Option
     public static function getDefaults($moduleId)
     {
         static $defaultsCache = array();
-        if (isset($defaultsCache[$moduleId]))
+        if (isset($defaultsCache[$moduleId])) {
             return $defaultsCache[$moduleId];
+        }
 
-        if (preg_match("#[^a-zA-Z0-9._]#", $moduleId))
+        if (preg_match("#[^a-zA-Z0-9._]#", $moduleId)) {
             throw new Main\ArgumentOutOfRangeException("moduleId");
+        }
 
         $path = Main\Loader::getLocal("modules/" . $moduleId . "/default_option.php");
-        if ($path === false)
+        if ($path === false) {
             return $defaultsCache[$moduleId] = array();
+        }
 
         include($path);
 
         $varName = str_replace(".", "_", $moduleId) . "_default_option";
-        if (isset(${$varName}) && is_array(${$varName}))
+        if (isset(${$varName}) && is_array(${$varName})) {
             return $defaultsCache[$moduleId] = ${$varName};
+        }
 
         return $defaultsCache[$moduleId] = array();
     }
@@ -134,8 +142,9 @@ class Option
      */
     public static function getForModule($moduleId, $siteId = false)
     {
-        if ($moduleId == '')
+        if ($moduleId == '') {
             throw new Main\ArgumentNullException("moduleId");
+        }
 
         if (!isset(self::$options[$moduleId])) {
             static::load($moduleId);
@@ -205,8 +214,6 @@ class Option
                 $cache->set("b_option:{$moduleId}", self::$options[$moduleId]);
             }
         }
-
-
     }
 
     /**
@@ -220,10 +227,12 @@ class Option
      */
     public static function set($moduleId, $name, $value = "", $siteId = "")
     {
-        if ($moduleId == '')
+        if ($moduleId == '') {
             throw new Main\ArgumentNullException("moduleId");
-        if ($name == '')
+        }
+        if ($name == '') {
             throw new Main\ArgumentNullException("name");
+        }
 
         if ($siteId === false) {
             $siteId = static::getDefaultSite();
@@ -288,17 +297,20 @@ class Option
     protected static function loadTriggers($moduleId)
     {
         static $triggersCache = array();
-        if (isset($triggersCache[$moduleId]))
+        if (isset($triggersCache[$moduleId])) {
             return;
+        }
 
-        if (preg_match("#[^a-zA-Z0-9._]#", $moduleId))
+        if (preg_match("#[^a-zA-Z0-9._]#", $moduleId)) {
             throw new Main\ArgumentOutOfRangeException("moduleId");
+        }
 
         $triggersCache[$moduleId] = true;
 
         $path = Main\Loader::getLocal("modules/" . $moduleId . "/option_triggers.php");
-        if ($path === false)
+        if ($path === false) {
             return;
+        }
 
         include($path);
     }
@@ -329,8 +341,9 @@ class Option
      */
     public static function delete($moduleId, array $filter = array())
     {
-        if ($moduleId == '')
+        if ($moduleId == '') {
             throw new Main\ArgumentNullException("moduleId");
+        }
 
         $con = Main\Application::getConnection();
         $sqlHelper = $con->getSqlHelper();
@@ -361,20 +374,24 @@ class Option
         }
 
         if ($sqlWhereSite == '') {
-            $con->queryExecute("
+            $con->queryExecute(
+                "
 				DELETE FROM b_option 
 				WHERE MODULE_ID = '{$sqlHelper->forSql($moduleId)}' 
 					{$sqlWhere}
-			");
+			"
+            );
         }
 
         if ($deleteForSites) {
-            $con->queryExecute("
+            $con->queryExecute(
+                "
 				DELETE FROM b_option_site 
 				WHERE MODULE_ID = '{$sqlHelper->forSql($moduleId)}' 
 					{$sqlWhere}
 					{$sqlWhereSite}
-			");
+			"
+            );
         }
 
         static::clearCache($moduleId);

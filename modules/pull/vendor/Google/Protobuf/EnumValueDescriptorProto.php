@@ -169,11 +169,14 @@ class EnumValueDescriptorProto extends \Protobuf\AbstractMessage
     public static function fromArray(array $values)
     {
         $message = new self();
-        $values = array_merge([
-            'name' => null,
-            'number' => null,
-            'options' => null
-        ], $values);
+        $values = array_merge(
+            [
+                'name' => null,
+                'number' => null,
+                'options' => null
+            ],
+            $values
+        );
 
         $message->setName($values['name']);
         $message->setNumber($values['number']);
@@ -187,30 +190,38 @@ class EnumValueDescriptorProto extends \Protobuf\AbstractMessage
      */
     public static function descriptor()
     {
-        return \google\protobuf\DescriptorProto::fromArray([
-            'name' => 'EnumValueDescriptorProto',
-            'field' => [
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 1,
-                    'name' => 'name',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_STRING(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 2,
-                    'name' => 'number',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_INT32(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 3,
-                    'name' => 'options',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_MESSAGE(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
-                    'type_name' => '.google.protobuf.EnumValueOptions'
-                ]),
-            ],
-        ]);
+        return \google\protobuf\DescriptorProto::fromArray(
+            [
+                'name' => 'EnumValueDescriptorProto',
+                'field' => [
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 1,
+                            'name' => 'name',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_STRING(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 2,
+                            'name' => 'number',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_INT32(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 3,
+                            'name' => 'options',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_MESSAGE(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
+                            'type_name' => '.google.protobuf.EnumValueOptions'
+                        ]
+                    ),
+                ],
+            ]
+        );
     }
 
     /**
@@ -274,7 +285,6 @@ class EnumValueDescriptorProto extends \Protobuf\AbstractMessage
             : null;
 
         while ($limit === null || $stream->tell() < $limit) {
-
             if ($stream->eof()) {
                 break;
             }
@@ -335,7 +345,6 @@ class EnumValueDescriptorProto extends \Protobuf\AbstractMessage
             $unknown = new \Protobuf\Unknown($tag, $wire, $data);
 
             $this->unknownFieldSet->add($unknown);
-
         }
     }
 
@@ -388,7 +397,9 @@ class EnumValueDescriptorProto extends \Protobuf\AbstractMessage
     public function merge(\Protobuf\Message $message)
     {
         if (!$message instanceof \google\protobuf\EnumValueDescriptorProto) {
-            throw new \InvalidArgumentException(sprintf('Argument 1 passed to %s must be a %s, %s given', __METHOD__, __CLASS__, get_class($message)));
+            throw new \InvalidArgumentException(
+                sprintf('Argument 1 passed to %s must be a %s, %s given', __METHOD__, __CLASS__, get_class($message))
+            );
         }
 
         $this->name = ($message->name !== null) ? $message->name : $this->name;

@@ -38,16 +38,19 @@ class Delivery extends Base\Restriction
      */
     public static function check($params, array $restrictionParams, $serviceId = 0)
     {
-        if ((int)$serviceId <= 0)
+        if ((int)$serviceId <= 0) {
             return true;
+        }
 
-        if (!$params)
+        if (!$params) {
             return true;
+        }
 
         $deliveryIds = self::getDeliveryByCompanyId($serviceId);
 
-        if (empty($deliveryIds))
+        if (empty($deliveryIds)) {
             return true;
+        }
 
         $diff = array_diff($params, $deliveryIds);
 
@@ -74,8 +77,9 @@ class Delivery extends Base\Restriction
             if ($paymentCollection) {
                 /** @var \Bitrix\Sale\Order $order */
                 $order = $paymentCollection->getOrder();
-                if ($order)
+                if ($order) {
                     $shipmentCollection = $order->getShipmentCollection();
+                }
             }
         } elseif ($entity instanceOf Sale\Order) {
             $shipmentCollection = $entity->getShipmentCollection();
@@ -106,14 +110,16 @@ class Delivery extends Base\Restriction
 
         $serviceList = array();
         $dbRes = Sale\Delivery\Services\Table::getList(array('select' => array('ID', 'NAME', 'PARENT_ID')));
-        while ($service = $dbRes->fetch())
+        while ($service = $dbRes->fetch()) {
             $serviceList[$service['ID']] = $service;
+        }
 
         foreach ($serviceList as $service) {
-            if ((int)$service['PARENT_ID'] > 0)
+            if ((int)$service['PARENT_ID'] > 0) {
                 $name = $serviceList[$service['PARENT_ID']]['NAME'] . ': ' . $service['NAME'] . ' [' . $service['ID'] . ']';
-            else
+            } else {
                 $name = $service['NAME'] . ' [' . $service['ID'] . ']';
+            }
 
             $result[$service['ID']] = $name;
         }
@@ -147,20 +153,23 @@ class Delivery extends Base\Restriction
     protected static function getDeliveryByCompanyId($companyId = 0)
     {
         $result = array();
-        if ($companyId == 0)
+        if ($companyId == 0) {
             return $result;
+        }
 
         $dbRes = CompanyServiceTable::getList(
             array(
                 'select' => array('SERVICE_ID'),
                 'filter' => array(
                     'COMPANY_ID' => $companyId,
-                    'SERVICE_TYPE' => Sale\Services\Company\Restrictions\Manager::SERVICE_TYPE_SHIPMENT)
+                    'SERVICE_TYPE' => Sale\Services\Company\Restrictions\Manager::SERVICE_TYPE_SHIPMENT
+                )
             )
         );
 
-        while ($data = $dbRes->fetch())
+        while ($data = $dbRes->fetch()) {
             $result[] = $data['SERVICE_ID'];
+        }
 
         return $result;
     }
@@ -189,7 +198,13 @@ class Delivery extends Base\Restriction
             while ($data = $dbRes->fetch()) {
                 $key = array_search($data['SERVICE_ID'], $serviceIds['DELIVERY']);
                 if (!$key) {
-                    CompanyServiceTable::delete(array('COMPANY_ID' => $fields['SERVICE_ID'], 'SERVICE_ID' => $data['SERVICE_ID'], 'SERVICE_TYPE' => Sale\Services\Company\Restrictions\Manager::SERVICE_TYPE_SHIPMENT));
+                    CompanyServiceTable::delete(
+                        array(
+                            'COMPANY_ID' => $fields['SERVICE_ID'],
+                            'SERVICE_ID' => $data['SERVICE_ID'],
+                            'SERVICE_TYPE' => Sale\Services\Company\Restrictions\Manager::SERVICE_TYPE_SHIPMENT
+                        )
+                    );
                 } else {
                     unset($serviceIds['DELIVERY'][$key]);
                 }
@@ -198,7 +213,10 @@ class Delivery extends Base\Restriction
 
         $result = parent::save($fields, $restrictionId);
 
-        $addFields = array('COMPANY_ID' => $fields['SERVICE_ID'], 'SERVICE_TYPE' => Sale\Services\Company\Restrictions\Manager::SERVICE_TYPE_SHIPMENT);
+        $addFields = array(
+            'COMPANY_ID' => $fields['SERVICE_ID'],
+            'SERVICE_TYPE' => Sale\Services\Company\Restrictions\Manager::SERVICE_TYPE_SHIPMENT
+        );
         foreach ($serviceIds['DELIVERY'] as $id) {
             $addFields['SERVICE_ID'] = $id;
             CompanyServiceTable::add($addFields);
@@ -236,7 +254,13 @@ class Delivery extends Base\Restriction
         );
 
         while ($data = $dbRes->fetch()) {
-            CompanyServiceTable::delete(array('COMPANY_ID' => $entityId, 'SERVICE_ID' => $data['SERVICE_ID'], 'SERVICE_TYPE' => Sale\Services\Company\Restrictions\Manager::SERVICE_TYPE_SHIPMENT));
+            CompanyServiceTable::delete(
+                array(
+                    'COMPANY_ID' => $entityId,
+                    'SERVICE_ID' => $data['SERVICE_ID'],
+                    'SERVICE_TYPE' => Sale\Services\Company\Restrictions\Manager::SERVICE_TYPE_SHIPMENT
+                )
+            );
         }
 
         return parent::delete($restrictionId);

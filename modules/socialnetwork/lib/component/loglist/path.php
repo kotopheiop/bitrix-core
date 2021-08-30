@@ -120,13 +120,37 @@ class Path
         );
 
         Util::checkEmptyParamString($componentParams, 'PATH_TO_USER', $pathToUser);
-        Util::checkEmptyParamString($componentParams, 'PATH_TO_USER_MICROBLOG', $result['folderUsers'] . 'user/#user_id#/blog/');
+        Util::checkEmptyParamString(
+            $componentParams,
+            'PATH_TO_USER_MICROBLOG',
+            $result['folderUsers'] . 'user/#user_id#/blog/'
+        );
         Util::checkEmptyParamString($componentParams, 'PATH_TO_USER_BLOG_POST', $result['pathToUserBlogPost']);
-        Util::checkEmptyParamString($componentParams, 'PATH_TO_USER_BLOG_POST_EDIT', $result['folderUsers'] . 'user/#user_id#/blog/edit/#post_id#/');
-        Util::checkEmptyParamString($componentParams, 'PATH_TO_USER_BLOG_POST_IMPORTANT', $result['folderUsers'] . 'user/#user_id#/blog/important/');
-        Util::checkEmptyParamString($componentParams, 'PATH_TO_GROUP', $result['folderWorkgroups'] . 'group/#group_id#/');
-        Util::checkEmptyParamString($componentParams, 'PATH_TO_GROUP_MICROBLOG', $result['folderWorkgroups'] . 'group/#group_id#/blog/');
-        Util::checkEmptyParamString($componentParams, 'PATH_TO_GROUP_BLOG_POST', $result['folderWorkgroups'] . 'group/#group_id#/blog/#post_id#/');
+        Util::checkEmptyParamString(
+            $componentParams,
+            'PATH_TO_USER_BLOG_POST_EDIT',
+            $result['folderUsers'] . 'user/#user_id#/blog/edit/#post_id#/'
+        );
+        Util::checkEmptyParamString(
+            $componentParams,
+            'PATH_TO_USER_BLOG_POST_IMPORTANT',
+            $result['folderUsers'] . 'user/#user_id#/blog/important/'
+        );
+        Util::checkEmptyParamString(
+            $componentParams,
+            'PATH_TO_GROUP',
+            $result['folderWorkgroups'] . 'group/#group_id#/'
+        );
+        Util::checkEmptyParamString(
+            $componentParams,
+            'PATH_TO_GROUP_MICROBLOG',
+            $result['folderWorkgroups'] . 'group/#group_id#/blog/'
+        );
+        Util::checkEmptyParamString(
+            $componentParams,
+            'PATH_TO_GROUP_BLOG_POST',
+            $result['folderWorkgroups'] . 'group/#group_id#/blog/#post_id#/'
+        );
         Util::checkEmptyParamString($componentParams, 'PATH_TO_LOG_ENTRY', $result['pathToLogEntry']);
         Util::checkEmptyParamString($componentParams, 'PATH_TO_MESSAGES_CHAT', $result['pathToMessagesChat']);
         Util::checkEmptyParamString($componentParams, 'PATH_TO_VIDEO_CALL', $result['pathToVideoCall']);

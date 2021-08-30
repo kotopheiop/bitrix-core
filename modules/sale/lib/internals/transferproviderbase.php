@@ -18,7 +18,6 @@ abstract class TransferProviderBase
      */
     protected function __construct()
     {
-
     }
 
     /**
@@ -204,10 +203,12 @@ abstract class TransferProviderBase
                         $shipmentList[$shipmentIndex] = $shipment;
                     }
 
-                    if (!isset($productIndex[$shipmentIndex][$shipmentItemIndex]) || !in_array($productId, $productIndex[$shipmentIndex][$shipmentItemIndex])) {
+                    if (!isset($productIndex[$shipmentIndex][$shipmentItemIndex]) || !in_array(
+                            $productId,
+                            $productIndex[$shipmentIndex][$shipmentItemIndex]
+                        )) {
                         $productIndex[$shipmentIndex][$shipmentItemIndex] = $productId;
                     }
-
                 }
             }
         }

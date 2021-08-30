@@ -8,18 +8,21 @@
 require_once(dirname(__FILE__) . "/../include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/prolog.php");
 
-if (!($USER->CanDoOperation('view_subordinate_users') || $USER->CanDoOperation('view_all_users')))
+if (!($USER->CanDoOperation('view_subordinate_users') || $USER->CanDoOperation('view_all_users'))) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/admin/user_admin.php");
 IncludeModuleLangFile(__FILE__);
 
 $FN = preg_replace("/[^a-z0-9_\\[\\]:]/i", "", $_REQUEST["FN"]);
 $FC = preg_replace("/[^a-z0-9_\\[\\]:]/i", "", $_REQUEST["FC"]);
-if ($FN == "")
+if ($FN == "") {
     $FN = "find_form";
-if ($FC == "")
+}
+if ($FC == "") {
     $FC = "USER_ID";
+}
 
 if (isset($_REQUEST['JSFUNC'])) {
     $JSFUNC = preg_replace("/[^a-z0-9_\\[\\]:]/i", "", $_REQUEST['JSFUNC']);
@@ -57,39 +60,45 @@ $lAdmin->InitFilter($arFilterFields);
 function CheckFilter($FilterArr) // �������� ��������� �����
 {
     global $strError;
-    foreach ($FilterArr as $f)
+    foreach ($FilterArr as $f) {
         global $$f;
+    }
 
     $str = "";
-    if (strlen(trim($find_timestamp_1)) > 0 || strlen(trim($find_timestamp_2)) > 0) {
+    if (trim($find_timestamp_1) <> '' || trim($find_timestamp_2) <> '') {
         $date_1_ok = false;
         $date1_stm = MkDateTime(FmtDate($find_timestamp_1, "D.M.Y"), "d.m.Y");
         $date2_stm = MkDateTime(FmtDate($find_timestamp_2, "D.M.Y") . " 23:59", "d.m.Y H:i");
-        if (!$date1_stm && strlen(trim($find_timestamp_1)) > 0)
+        if (!$date1_stm && trim($find_timestamp_1) <> '') {
             $str .= GetMessage("MAIN_WRONG_TIMESTAMP_FROM") . "<br>";
-        else $date_1_ok = true;
-        if (!$date2_stm && strlen(trim($find_timestamp_2)) > 0)
+        } else {
+            $date_1_ok = true;
+        }
+        if (!$date2_stm && trim($find_timestamp_2) <> '') {
             $str .= GetMessage("MAIN_WRONG_TIMESTAMP_TILL") . "<br>";
-        elseif ($date_1_ok && $date2_stm <= $date1_stm && strlen($date2_stm) > 0)
+        } elseif ($date_1_ok && $date2_stm <= $date1_stm && $date2_stm <> '') {
             $str .= GetMessage("MAIN_FROM_TILL_TIMESTAMP") . "<br>";
+        }
     }
 
-    if (strlen(trim($find_last_login_1)) > 0 || strlen(trim($find_last_login_2)) > 0) {
+    if (trim($find_last_login_1) <> '' || trim($find_last_login_2) <> '') {
         $date_1_ok = false;
         $date1_stm = MkDateTime(FmtDate($find_last_login_1, "D.M.Y"), "d.m.Y");
         $date2_stm = MkDateTime(FmtDate($find_last_login_2, "D.M.Y") . " 23:59", "d.m.Y H:i");
-        if (!$date1_stm && strlen(trim($find_last_login_1)) > 0)
+        if (!$date1_stm && trim($find_last_login_1) <> '') {
             $str .= GetMessage("MAIN_WRONG_LAST_LOGIN_FROM") . "<br>";
-        else
+        } else {
             $date_1_ok = true;
-        if (!$date2_stm && strlen(trim($find_last_login_2)) > 0)
+        }
+        if (!$date2_stm && trim($find_last_login_2) <> '') {
             $str .= GetMessage("MAIN_WRONG_LAST_LOGIN_TILL") . "<br>";
-        elseif ($date_1_ok && $date2_stm <= $date1_stm && strlen($date2_stm) > 0)
+        } elseif ($date_1_ok && $date2_stm <= $date1_stm && $date2_stm <> '') {
             $str .= GetMessage("MAIN_FROM_TILL_LAST_LOGIN") . "<br>";
+        }
     }
 
     $strError .= $str;
-    if (strlen($str) > 0) {
+    if ($str <> '') {
         global $lAdmin;
         $lAdmin->AddFilterError($str);
         return false;
@@ -118,8 +127,9 @@ if (CheckFilter($arFilterFields)) {
 if (!$USER->CanDoOperation('view_all_users')) {
     $arUserSubordinateGroups = array();
     $arUserGroups = CUser::GetUserGroup($USER->GetID());
-    foreach ($arUserGroups as $grp)
+    foreach ($arUserGroups as $grp) {
         $arUserSubordinateGroups = array_merge($arUserSubordinateGroups, CGroup::GetSubordinateGroups($grp));
+    }
 
     $arFilter["CHECK_SUBORDINATE"] = array_unique($arUserSubordinateGroups);
     if ($USER->CanDoOperation('edit_own_profile')) {
@@ -128,9 +138,14 @@ if (!$USER->CanDoOperation('view_all_users')) {
 }
 
 // ������������� ������ - ������� ������
-$rsData = CUser::GetList($by, $order, $arFilter, array(
-    "NAV_PARAMS" => array("nPageSize" => CAdminResult::GetNavSize($sTableID)),
-));
+$rsData = CUser::GetList(
+    '',
+    '',
+    $arFilter,
+    array(
+        "NAV_PARAMS" => array("nPageSize" => CAdminResult::GetNavSize($sTableID)),
+    )
+);
 $rsData = new CAdminResult($rsData, $sTableID);
 $rsData->NavStart();
 
@@ -138,34 +153,40 @@ $rsData->NavStart();
 $lAdmin->NavText($rsData->GetNavPrint(GetMessage("PAGES")));
 
 // ��������� ������
-$lAdmin->AddHeaders(array(
-    array("id" => "ID", "content" => "ID", "sort" => "id", "default" => true),
-    array("id" => "TIMESTAMP_X", "content" => GetMessage('TIMESTAMP'), "sort" => "timestamp_x", "default" => true),
-    array("id" => "ACTIVE", "content" => GetMessage('ACTIVE'), "sort" => "active", "default" => true),
-    array("id" => "LOGIN", "content" => GetMessage("LOGIN"), "sort" => "login", "default" => true),
-    array("id" => "NAME", "content" => GetMessage("NAME"), "sort" => "name", "default" => true),
-    array("id" => "LAST_NAME", "content" => GetMessage("LAST_NAME"), "sort" => "last_name", "default" => true),
-    array("id" => "EMAIL", "content" => GetMessage('EMAIL'), "sort" => "email", "default" => true),
-    array("id" => "LAST_LOGIN", "content" => GetMessage("LAST_LOGIN"), "sort" => "last_login", "default" => true),
-    array("id" => "DATE_REGISTER", "content" => GetMessage("DATE_REGISTER"), "sort" => "date_register"),
-    array("id" => "PERSONAL_BIRTHDAY", "content" => GetMessage("PERSONAL_BIRTHDAY"), "sort" => "personal_birthday"),
-    array("id" => "PERSONAL_PROFESSION", "content" => GetMessage("PERSONAL_PROFESSION"), "sort" => "personal_profession"),
-    array("id" => "PERSONAL_WWW", "content" => GetMessage("PERSONAL_WWW"), "sort" => "personal_www"),
-    array("id" => "PERSONAL_ICQ", "content" => GetMessage("PERSONAL_ICQ"), "sort" => "personal_icq"),
-    array("id" => "PERSONAL_GENDER", "content" => GetMessage("PERSONAL_GENDER"), "sort" => "personal_gender"),
-    array("id" => "PERSONAL_PHONE", "content" => GetMessage("PERSONAL_PHONE"), "sort" => "personal_phone"),
-    array("id" => "PERSONAL_MOBILE", "content" => GetMessage("PERSONAL_MOBILE"), "sort" => "personal_mobile"),
-    array("id" => "PERSONAL_CITY", "content" => GetMessage("PERSONAL_CITY"), "sort" => "personal_city"),
-    array("id" => "PERSONAL_STREET", "content" => GetMessage("PERSONAL_STREET"), "sort" => "personal_street"),
-    array("id" => "WORK_COMPANY", "content" => GetMessage("WORK_COMPANY"), "sort" => "work_company"),
-    array("id" => "WORK_DEPARTMENT", "content" => GetMessage("WORK_DEPARTMENT"), "sort" => "work_department"),
-    array("id" => "WORK_POSITION", "content" => GetMessage("WORK_POSITION"), "sort" => "work_position"),
-    array("id" => "WORK_WWW", "content" => GetMessage("WORK_WWW"), "sort" => "work_www"),
-    array("id" => "WORK_PHONE", "content" => GetMessage("WORK_PHONE"), "sort" => "work_phone"),
-    array("id" => "WORK_CITY", "content" => GetMessage("WORK_CITY"), "sort" => "work_city"),
-    array("id" => "XML_ID", "content" => GetMessage("XML_ID"), "sort" => "external_id"),
-    array("id" => "EXTERNAL_AUTH_ID", "content" => GetMessage("EXTERNAL_AUTH_ID")),
-));
+$lAdmin->AddHeaders(
+    array(
+        array("id" => "ID", "content" => "ID", "sort" => "id", "default" => true),
+        array("id" => "TIMESTAMP_X", "content" => GetMessage('TIMESTAMP'), "sort" => "timestamp_x", "default" => true),
+        array("id" => "ACTIVE", "content" => GetMessage('ACTIVE'), "sort" => "active", "default" => true),
+        array("id" => "LOGIN", "content" => GetMessage("LOGIN"), "sort" => "login", "default" => true),
+        array("id" => "NAME", "content" => GetMessage("NAME"), "sort" => "name", "default" => true),
+        array("id" => "LAST_NAME", "content" => GetMessage("LAST_NAME"), "sort" => "last_name", "default" => true),
+        array("id" => "EMAIL", "content" => GetMessage('EMAIL'), "sort" => "email", "default" => true),
+        array("id" => "LAST_LOGIN", "content" => GetMessage("LAST_LOGIN"), "sort" => "last_login", "default" => true),
+        array("id" => "DATE_REGISTER", "content" => GetMessage("DATE_REGISTER"), "sort" => "date_register"),
+        array("id" => "PERSONAL_BIRTHDAY", "content" => GetMessage("PERSONAL_BIRTHDAY"), "sort" => "personal_birthday"),
+        array(
+            "id" => "PERSONAL_PROFESSION",
+            "content" => GetMessage("PERSONAL_PROFESSION"),
+            "sort" => "personal_profession"
+        ),
+        array("id" => "PERSONAL_WWW", "content" => GetMessage("PERSONAL_WWW"), "sort" => "personal_www"),
+        array("id" => "PERSONAL_ICQ", "content" => GetMessage("PERSONAL_ICQ"), "sort" => "personal_icq"),
+        array("id" => "PERSONAL_GENDER", "content" => GetMessage("PERSONAL_GENDER"), "sort" => "personal_gender"),
+        array("id" => "PERSONAL_PHONE", "content" => GetMessage("PERSONAL_PHONE"), "sort" => "personal_phone"),
+        array("id" => "PERSONAL_MOBILE", "content" => GetMessage("PERSONAL_MOBILE"), "sort" => "personal_mobile"),
+        array("id" => "PERSONAL_CITY", "content" => GetMessage("PERSONAL_CITY"), "sort" => "personal_city"),
+        array("id" => "PERSONAL_STREET", "content" => GetMessage("PERSONAL_STREET"), "sort" => "personal_street"),
+        array("id" => "WORK_COMPANY", "content" => GetMessage("WORK_COMPANY"), "sort" => "work_company"),
+        array("id" => "WORK_DEPARTMENT", "content" => GetMessage("WORK_DEPARTMENT"), "sort" => "work_department"),
+        array("id" => "WORK_POSITION", "content" => GetMessage("WORK_POSITION"), "sort" => "work_position"),
+        array("id" => "WORK_WWW", "content" => GetMessage("WORK_WWW"), "sort" => "work_www"),
+        array("id" => "WORK_PHONE", "content" => GetMessage("WORK_PHONE"), "sort" => "work_phone"),
+        array("id" => "WORK_CITY", "content" => GetMessage("WORK_CITY"), "sort" => "work_city"),
+        array("id" => "XML_ID", "content" => GetMessage("XML_ID"), "sort" => "external_id"),
+        array("id" => "EXTERNAL_AUTH_ID", "content" => GetMessage("EXTERNAL_AUTH_ID")),
+    )
+);
 
 // ���������� ������
 while ($arRes = $rsData->GetNext()) {
@@ -173,7 +194,12 @@ while ($arRes = $rsData->GetNext()) {
     $row =& $lAdmin->AddRow($f_ID, $arRes);
     $row->AddViewField("ID", $f_ID);
     $row->AddCheckField("ACTIVE", false);
-    $row->AddViewField("LOGIN", "<a href=\"javascript:SetValue('" . $f_ID . "');\" title=\"" . GetMessage("MAIN_CHANGE") . "\">" . $arRes["LOGIN"] . "</a>");
+    $row->AddViewField(
+        "LOGIN",
+        "<a href=\"javascript:SetValue('" . $f_ID . "');\" title=\"" . GetMessage(
+            "MAIN_CHANGE"
+        ) . "\">" . $arRes["LOGIN"] . "</a>"
+    );
     $row->AddViewField("NAME", $arRes["NAME"]);
     $row->AddViewField("LAST_NAME", $arRes["LAST_NAME"]);
     $row->AddViewField("EMAIL", TxtToHtml($arRes["EMAIL"]));
@@ -211,8 +237,7 @@ $lAdmin->CheckListMode();
 $APPLICATION->SetTitle(GetMessage("MAIN_PAGE_TITLE"));
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_popup_admin.php")
 ?>
-<script language="JavaScript">
-    <!--
+<script type="text/javascript">
     function SetValue(id) {
         <?if ($JSFUNC <> ''){?>
         window.opener.SUV<?=$JSFUNC?>(id);
@@ -223,8 +248,6 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_popup_a
         window.close();
         <?}?>
     }
-
-    //-->
 </script>
 <form name="find_form" method="GET" action="<? echo $APPLICATION->GetCurPage() ?>?">
     <?
@@ -251,9 +274,15 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_popup_a
             <input type="text" size="25" name="find" value="<? echo htmlspecialcharsbx($find) ?>"
                    title="<?= GetMessage("MAIN_FLT_SEARCH_TITLE") ?>">
             <select name="find_type">
-                <option value="login"<? if ($find_type == "login") echo " selected" ?>><?= GetMessage('MAIN_FLT_LOGIN') ?></option>
-                <option value="email"<? if ($find_type == "email") echo " selected" ?>><?= GetMessage('MAIN_FLT_EMAIL') ?></option>
-                <option value="name"<? if ($find_type == "name") echo " selected" ?>><?= GetMessage('MAIN_FLT_FIO') ?></option>
+                <option value="login"<? if ($find_type == "login") echo " selected" ?>><?= GetMessage(
+                        'MAIN_FLT_LOGIN'
+                    ) ?></option>
+                <option value="email"<? if ($find_type == "email") echo " selected" ?>><?= GetMessage(
+                        'MAIN_FLT_EMAIL'
+                    ) ?></option>
+                <option value="name"<? if ($find_type == "name") echo " selected" ?>><?= GetMessage(
+                        'MAIN_FLT_FIO'
+                    ) ?></option>
             </select>
         </td>
     </tr>
@@ -264,16 +293,33 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_popup_a
     </tr>
     <tr>
         <td><? echo GetMessage("MAIN_F_TIMESTAMP") . ":" ?></td>
-        <td><? echo CalendarPeriod("find_timestamp_1", htmlspecialcharsbx($find_timestamp_1), "find_timestamp_2", htmlspecialcharsbx($find_timestamp_2), "find_form", "Y") ?></td>
+        <td><? echo CalendarPeriod(
+                "find_timestamp_1",
+                htmlspecialcharsbx($find_timestamp_1),
+                "find_timestamp_2",
+                htmlspecialcharsbx($find_timestamp_2),
+                "find_form",
+                "Y"
+            ) ?></td>
     </tr>
     <tr>
         <td><? echo GetMessage("MAIN_F_LAST_LOGIN") . ":" ?></td>
-        <td><? echo CalendarPeriod("find_last_login_1", htmlspecialcharsbx($find_last_login_1), "find_last_login_2", htmlspecialcharsbx($find_last_login_2), "find_form", "Y") ?></td>
+        <td><? echo CalendarPeriod(
+                "find_last_login_1",
+                htmlspecialcharsbx($find_last_login_1),
+                "find_last_login_2",
+                htmlspecialcharsbx($find_last_login_2),
+                "find_form",
+                "Y"
+            ) ?></td>
     </tr>
     <tr>
         <td><? echo GetMessage("F_ACTIVE") ?></td>
         <td><?
-            $arr = array("reference" => array(GetMessage("MAIN_YES"), GetMessage("MAIN_NO")), "reference_id" => array("Y", "N"));
+            $arr = array(
+                "reference" => array(GetMessage("MAIN_YES"), GetMessage("MAIN_NO")),
+                "reference_id" => array("Y", "N")
+            );
             echo SelectBoxFromArray("find_active", $arr, htmlspecialcharsbx($find_active), GetMessage('MAIN_ALL'));
             ?>
         </td>

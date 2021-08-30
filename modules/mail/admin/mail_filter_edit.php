@@ -1,4 +1,5 @@
 <?
+
 /*
 ##############################################
 # Bitrix: SiteManager                        #
@@ -15,17 +16,34 @@ unset($ACTION_VARS);
 
 $message = null;
 $MOD_RIGHT = $APPLICATION->GetGroupRight("mail");
-if ($MOD_RIGHT < "R") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($MOD_RIGHT < "R") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 IncludeModuleLangFile(__FILE__);
 
 \Bitrix\Main\Loader::includeModule('mail');
 
 $aTabs = array();
-$aTabs[] = array("DIV" => "edit1", "TAB" => GetMessage("MAIL_FLT_EDT_PARAMS"), "ICON" => "mail_filter_edit", "TITLE" => GetMessage("MAIL_FLT_EDT_PARAMS"));
+$aTabs[] = array(
+    "DIV" => "edit1",
+    "TAB" => GetMessage("MAIL_FLT_EDT_PARAMS"),
+    "ICON" => "mail_filter_edit",
+    "TITLE" => GetMessage("MAIL_FLT_EDT_PARAMS")
+);
 
-$aTabs[] = array("DIV" => "edit2", "TAB" => GetMessage("MAIL_FLT_EDT_CONDITIONS"), "ICON" => "mail_filter_edit", "TITLE" => GetMessage("MAIL_FLT_EDT_CONDITIONS"));
+$aTabs[] = array(
+    "DIV" => "edit2",
+    "TAB" => GetMessage("MAIL_FLT_EDT_CONDITIONS"),
+    "ICON" => "mail_filter_edit",
+    "TITLE" => GetMessage("MAIL_FLT_EDT_CONDITIONS")
+);
 
-$aTabs[] = array("DIV" => "edit3", "TAB" => GetMessage("MAIL_FLT_EDT_ACTIONS"), "ICON" => "mail_filter_edit", "TITLE" => GetMessage("MAIL_FLT_EDT_ACTIONS"));
+$aTabs[] = array(
+    "DIV" => "edit3",
+    "TAB" => GetMessage("MAIL_FLT_EDT_ACTIONS"),
+    "ICON" => "mail_filter_edit",
+    "TITLE" => GetMessage("MAIL_FLT_EDT_ACTIONS")
+);
 
 
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
@@ -40,7 +58,7 @@ if ($filter_type != "") {
 }
 
 $ID = intval($ID);
-if ($REQUEST_METHOD == "POST" && (strlen($save) > 0 || strlen($apply) > 0) && $MOD_RIGHT >= "W" && check_bitrix_sessid()) {
+if ($REQUEST_METHOD == "POST" && ($save <> '' || $apply <> '') && $MOD_RIGHT >= "W" && check_bitrix_sessid()) {
     $arFields = Array(
         "ACTIVE" => $ACTIVE,
         "MAILBOX_ID" => $MAILBOX_ID,
@@ -74,51 +92,64 @@ if ($REQUEST_METHOD == "POST" && (strlen($save) > 0 || strlen($apply) > 0) && $M
         $arFields["ACTION_VARS"] = $ACTION_VARS;
     }
 
-    if ($ID > 0)
+    if ($ID > 0) {
         $res = CMailFilter::Update($ID, $arFields);
-    else {
+    } else {
         $ID = CMailFilter::Add($arFields);
         $res = ($ID > 0);
     }
 
 
     if (!$res) {
-        if ($e = $APPLICATION->GetException())
+        if ($e = $APPLICATION->GetException()) {
             $message = new CAdminMessage(GetMessage("MAIL_FLT_EDT_ERROR"), $e);
+        }
     } else {
         //$strError .= CMailError::GetErrorsText();
         //if(strlen($strError)<=0)
         //{
-        if (strlen($save) > 0)
+        if ($save <> '') {
             LocalRedirect("mail_filter_admin.php?lang=" . LANG);
-        else
-            LocalRedirect($APPLICATION->GetCurPage() . "?lang=" . LANG . "&ID=" . $ID . "&tabControl_active_tab=" . urlencode($tabControl_active_tab));
+        } else {
+            LocalRedirect(
+                $APPLICATION->GetCurPage() . "?lang=" . LANG . "&ID=" . $ID . "&tabControl_active_tab=" . urlencode(
+                    $tabControl_active_tab
+                )
+            );
+        }
         //}
     }
 }
 
-$mf = CMailFilter::GetByID($ID);
-if (!$ar_res = $mf->ExtractFields("str_"))
-    $ID = 0;
-else {
-    $filter_type = $ar_res["ACTION_TYPE"];
-    if (strlen($filter_type) > 0) {
-        $res = CMailFilter::GetFilterList($filter_type);
-        $arModFilter = $res->Fetch();
+if ($ID !== 0) {
+    $mf = CMailFilter::GetByID($ID);
+    if (!$ar_res = $mf->ExtractFields("str_")) {
+        $ID = 0;
+    } else {
+        $filter_type = $ar_res["ACTION_TYPE"];
+        if ($filter_type <> '') {
+            $res = CMailFilter::GetFilterList($filter_type);
+            $arModFilter = $res->Fetch();
+        }
     }
 }
 
 if (!$message) {
-    if (!isset($ACTIVE))
+    if (!isset($ACTIVE)) {
         $ACTIVE = "Y";
-    if (!isset($PORT))
+    }
+    if (!isset($PORT)) {
         $PORT = "110";
-    if (!isset($SORT))
+    }
+    if (!isset($SORT)) {
         $SORT = "500";
-    if (!isset($MAILBOX_ID))
+    }
+    if (!isset($MAILBOX_ID)) {
         $MAILBOX_ID = $find_mailbox_id;
-    if ($ID > 0)
+    }
+    if ($ID > 0) {
         $ACTION_VARS = $ar_res["ACTION_VARS"];
+    }
 }
 
 if ($message || $ID == 0) {
@@ -128,13 +159,15 @@ if ($message || $ID == 0) {
     $ar_CONDITIONS = Array();
     if ($ID > 0) {
         $res = CMailFilterCondition::GetList(Array("id" => "asc"), Array("FILTER_ID" => $ID));
-        while ($ar = $res->Fetch())
+        while ($ar = $res->Fetch()) {
             $ar_CONDITIONS[$ar["ID"]] = $ar;
+        }
     }
 }
 
-if (!is_array($ar_CONDITIONS))
+if (!is_array($ar_CONDITIONS)) {
     $ar_CONDITIONS = Array();
+}
 
 if (!$message) {
     $ar_CONDITIONS["n1"] = Array();
@@ -142,7 +175,9 @@ if (!$message) {
     $ar_CONDITIONS["n3"] = Array();
 }
 
-$sDocTitle = ($ID > 0) ? preg_replace("'#ID#'i", $ID, GetMessage("MAIL_FLT_EDT_TITILE_1")) : GetMessage("MAIL_FLT_EDT_TITILE_2");
+$sDocTitle = ($ID > 0) ? preg_replace("'#ID#'i", $ID, GetMessage("MAIL_FLT_EDT_TITILE_1")) : GetMessage(
+    "MAIL_FLT_EDT_TITILE_2"
+);
 
 $APPLICATION->SetTitle($sDocTitle);
 
@@ -168,7 +203,10 @@ if ($ID > 0) {
         $aMenu[] = array(
             "ICON" => "btn_delete",
             "TEXT" => GetMessage("MAIL_FLT_EDT_DEL"),
-            "LINK" => "javascript:if(confirm('" . GetMessage("MAIL_FLT_EDT_DEL_CONFIRM") . "'))window.location='mail_filter_admin.php?action=delete&ID=" . $ID . "&lang=" . LANG . "&" . bitrix_sessid_get() . "';",
+            "LINK" => "javascript:if(confirm('" . GetMessage(
+                    "MAIL_FLT_EDT_DEL_CONFIRM"
+                ) . "'))window.location='mail_filter_admin.php?action=delete&ID=" . $ID . "&lang=" . LANG . "&" . bitrix_sessid_get(
+                ) . "';",
         );
     }
 }
@@ -177,8 +215,9 @@ if ($ID > 0) {
 $context = new CAdminContextMenu($aMenu);
 $context->Show();
 
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 
 $tabControl->Begin();
 ?>
@@ -195,7 +234,7 @@ $tabControl->Begin();
                 <td><? echo $str_ID ?></td>
             </tr>
         <? endif ?>
-        <? if (strlen($str_TIMESTAMP_X) > 0): ?>
+        <? if ($str_TIMESTAMP_X <> ''): ?>
             <tr>
                 <td><? echo GetMessage("MAIL_FLT_EDT_DATECH") ?></td>
                 <td><? echo $str_TIMESTAMP_X ?></td>
@@ -217,7 +256,9 @@ $tabControl->Begin();
                 </select>
 
                 <a href="mail_mailbox_edit.php?lang=<?= LANG ?>"
-                   title="<? echo GetMessage("MAIL_FLT_EDT_MBOX_NEW") ?>"><? echo GetMessage("MAIL_FLT_EDT_MBOX_NEW_LINK") ?></a>
+                   title="<? echo GetMessage("MAIL_FLT_EDT_MBOX_NEW") ?>"><? echo GetMessage(
+                        "MAIL_FLT_EDT_MBOX_NEW_LINK"
+                    ) ?></a>
 
             </td>
         </tr>
@@ -247,17 +288,17 @@ $tabControl->Begin();
                         <div class="adm-list-control"><input type="checkbox" name="WHEN_MAIL_RECEIVED" value="Y"
                                                              id="WHEN_MAIL_RECEIVED"<? if ($str_WHEN_MAIL_RECEIVED == "Y") echo " checked" ?>>
                         </div>
-                        <div class="adm-list-label"><label
-                                    for="WHEN_MAIL_RECEIVED"><? echo GetMessage("MAIL_FLT_EDT_WHEN_RETR") ?></label>
-                        </div>
+                        <div class="adm-list-label"><label for="WHEN_MAIL_RECEIVED"><? echo GetMessage(
+                                    "MAIL_FLT_EDT_WHEN_RETR"
+                                ) ?></label></div>
                     </div>
                     <div class="adm-list-item">
                         <div class="adm-list-control"><input type="checkbox" name="WHEN_MANUALLY_RUN" value="Y"
                                                              id="WHEN_MANUALLY_RUN"<? if ($str_WHEN_MANUALLY_RUN == "Y") echo " checked" ?>>
                         </div>
-                        <div class="adm-list-label"><label
-                                    for="WHEN_MANUALLY_RUN"><? echo GetMessage("MAIL_FLT_EDT_WHEN_MANUAL") ?></label>
-                        </div>
+                        <div class="adm-list-label"><label for="WHEN_MANUALLY_RUN"><? echo GetMessage(
+                                    "MAIL_FLT_EDT_WHEN_MANUAL"
+                                ) ?></label></div>
                     </div>
                 </div>
             </td>
@@ -273,21 +314,45 @@ $tabControl->Begin();
                     <? //if(intval($key)>0)echo intval($key).".";else echo GetMessage("MAIL_FLT_EDT_NEW_COND"); ?>
                     <select name="CONDITIONS[<?= htmlspecialcharsbx($key) ?>][TYPE]" style="width:120px">
                         <option value=""><? echo GetMessage("MAIL_FLT_EDT_COND_TYPE") ?></option>
-                        <option value="SENDER"<? if ($COND["TYPE"] == "SENDER") echo " selected" ?>><? echo GetMessage("MAIL_FLT_EDT_COND_TYPE_SENDER") ?></option>
-                        <option value="RECIPIENT"<? if ($COND["TYPE"] == "RECIPIENT") echo " selected" ?>><? echo GetMessage("MAIL_FLT_EDT_COND_TYPE_RECIPIENT") ?></option>
-                        <option value="SUBJECT"<? if ($COND["TYPE"] == "SUBJECT") echo " selected" ?>><? echo GetMessage("MAIL_FLT_EDT_COND_TYPE_SUBJECT") ?></option>
-                        <option value="BODY"<? if ($COND["TYPE"] == "BODY") echo " selected" ?>><? echo GetMessage("MAIL_FLT_EDT_COND_TYPE_BODY") ?></option>
-                        <option value="HEADER"<? if ($COND["TYPE"] == "HEADER") echo " selected" ?>><? echo GetMessage("MAIL_FLT_EDT_COND_TYPE_HEADER") ?></option>
-                        <option value="ALL"<? if ($COND["TYPE"] == "ALL") echo " selected" ?>><? echo GetMessage("MAIL_FLT_EDT_COND_TYPE_ALL") ?></option>
-                        <option value="ATTACHMENT"<? if ($COND["TYPE"] == "ATTACHMENT") echo " selected" ?>><? echo GetMessage("MAIL_FLT_EDT_COND_TYPE_ATTACH") ?></option>
+                        <option value="SENDER"<? if ($COND["TYPE"] == "SENDER") echo " selected" ?>><? echo GetMessage(
+                                "MAIL_FLT_EDT_COND_TYPE_SENDER"
+                            ) ?></option>
+                        <option value="RECIPIENT"<? if ($COND["TYPE"] == "RECIPIENT") echo " selected" ?>><? echo GetMessage(
+                                "MAIL_FLT_EDT_COND_TYPE_RECIPIENT"
+                            ) ?></option>
+                        <option value="SUBJECT"<? if ($COND["TYPE"] == "SUBJECT") echo " selected" ?>><? echo GetMessage(
+                                "MAIL_FLT_EDT_COND_TYPE_SUBJECT"
+                            ) ?></option>
+                        <option value="BODY"<? if ($COND["TYPE"] == "BODY") echo " selected" ?>><? echo GetMessage(
+                                "MAIL_FLT_EDT_COND_TYPE_BODY"
+                            ) ?></option>
+                        <option value="HEADER"<? if ($COND["TYPE"] == "HEADER") echo " selected" ?>><? echo GetMessage(
+                                "MAIL_FLT_EDT_COND_TYPE_HEADER"
+                            ) ?></option>
+                        <option value="ALL"<? if ($COND["TYPE"] == "ALL") echo " selected" ?>><? echo GetMessage(
+                                "MAIL_FLT_EDT_COND_TYPE_ALL"
+                            ) ?></option>
+                        <option value="ATTACHMENT"<? if ($COND["TYPE"] == "ATTACHMENT") echo " selected" ?>><? echo GetMessage(
+                                "MAIL_FLT_EDT_COND_TYPE_ATTACH"
+                            ) ?></option>
                     </select>
 
                     <select name="CONDITIONS[<?= htmlspecialcharsbx($key) ?>][COMPARE_TYPE]" style="width:120px">
-                        <option value="CONTAIN"<? if ($COND["COMPARE_TYPE"] != "EQUAL" && $COND["COMPARE_TYPE"] != "NOT_CONTAIN" && $COND["COMPARE_TYPE"] != "NOT_EQUAL") echo " selected" ?>><? echo GetMessage("MAIL_FLT_EDT_COND_CONTAIN") ?></option>
-                        <option value="NOT_CONTAIN"<? if ($COND["COMPARE_TYPE"] == "NOT_CONTAIN") echo " selected" ?>><? echo GetMessage("MAIL_FLT_EDT_COND_NOTCONTAIN") ?></option>
-                        <option value="EQUAL"<? if ($COND["COMPARE_TYPE"] == "EQUAL") echo " selected" ?>><? echo GetMessage("MAIL_FLT_EDT_COND_EQUAL") ?></option>
-                        <option value="NOT_EQUAL"<? if ($COND["COMPARE_TYPE"] == "NOT_EQUAL") echo " selected" ?>><? echo GetMessage("MAIL_FLT_EDT_COND_NOTEQUAL") ?></option>
-                        <option value="REGEXP"<? if ($COND["COMPARE_TYPE"] == "REGEXP") echo " selected" ?>><? echo GetMessage("MAIL_FLT_EDT_COND_REGEXP") ?></option>
+                        <option value="CONTAIN"<? if ($COND["COMPARE_TYPE"] != "EQUAL" && $COND["COMPARE_TYPE"] != "NOT_CONTAIN" && $COND["COMPARE_TYPE"] != "NOT_EQUAL") echo " selected" ?>><? echo GetMessage(
+                                "MAIL_FLT_EDT_COND_CONTAIN"
+                            ) ?></option>
+                        <option value="NOT_CONTAIN"<? if ($COND["COMPARE_TYPE"] == "NOT_CONTAIN") echo " selected" ?>><? echo GetMessage(
+                                "MAIL_FLT_EDT_COND_NOTCONTAIN"
+                            ) ?></option>
+                        <option value="EQUAL"<? if ($COND["COMPARE_TYPE"] == "EQUAL") echo " selected" ?>><? echo GetMessage(
+                                "MAIL_FLT_EDT_COND_EQUAL"
+                            ) ?></option>
+                        <option value="NOT_EQUAL"<? if ($COND["COMPARE_TYPE"] == "NOT_EQUAL") echo " selected" ?>><? echo GetMessage(
+                                "MAIL_FLT_EDT_COND_NOTEQUAL"
+                            ) ?></option>
+                        <option value="REGEXP"<? if ($COND["COMPARE_TYPE"] == "REGEXP") echo " selected" ?>><? echo GetMessage(
+                                "MAIL_FLT_EDT_COND_REGEXP"
+                            ) ?></option>
                     </select>
                 </td>
                 <td class="adm-detail-valign-top">
@@ -301,7 +366,9 @@ $tabControl->Begin();
             <td width="60%">
                 <select name="SPAM_RATING_TYPE">
                     <option value="&lt;"><? echo GetMessage("MAIL_FLT_EDT_COND_LESS") ?></option>
-                    <option value="&gt;"<? if ($str_SPAM_RATING_TYPE == "&gt;") echo " selected" ?>><? echo GetMessage("MAIL_FLT_EDT_COND_GREATER") ?></option>
+                    <option value="&gt;"<? if ($str_SPAM_RATING_TYPE == "&gt;") echo " selected" ?>><? echo GetMessage(
+                            "MAIL_FLT_EDT_COND_GREATER"
+                        ) ?></option>
                 </select>
                 <input type="text" name="SPAM_RATING" size="4" maxlength="5" value="<?= $str_SPAM_RATING ?>">%
             </td>
@@ -312,13 +379,19 @@ $tabControl->Begin();
             <td>
                 <select name="MESSAGE_SIZE_TYPE">
                     <option value="&lt;"><? echo GetMessage("MAIL_FLT_EDT_COND_LESS") ?></option>
-                    <option value="&gt;"<? if ($str_MESSAGE_SIZE_TYPE == "&gt;") echo " selected" ?>><? echo GetMessage("MAIL_FLT_EDT_COND_GREATER") ?></option>
+                    <option value="&gt;"<? if ($str_MESSAGE_SIZE_TYPE == "&gt;") echo " selected" ?>><? echo GetMessage(
+                            "MAIL_FLT_EDT_COND_GREATER"
+                        ) ?></option>
                 </select>
                 <input type="text" name="MESSAGE_SIZE" size="10" maxlength="18" value="<?= $str_MESSAGE_SIZE ?>"><select
                         name="MESSAGE_SIZE_UNIT">
                     <option value="b"><? echo GetMessage("MAIL_FLT_EDT_COND_SIZE_B") ?></option>
-                    <option value="k"<? if ($str_MESSAGE_SIZE_UNIT == "k") echo " selected" ?>><? echo GetMessage("MAIL_FLT_EDT_COND_SIZE_KB") ?></option>
-                    <option value="m"<? if ($str_MESSAGE_SIZE_UNIT == "m") echo " selected" ?>><? echo GetMessage("MAIL_FLT_EDT_COND_SIZE_MB") ?></option>
+                    <option value="k"<? if ($str_MESSAGE_SIZE_UNIT == "k") echo " selected" ?>><? echo GetMessage(
+                            "MAIL_FLT_EDT_COND_SIZE_KB"
+                        ) ?></option>
+                    <option value="m"<? if ($str_MESSAGE_SIZE_UNIT == "m") echo " selected" ?>><? echo GetMessage(
+                            "MAIL_FLT_EDT_COND_SIZE_MB"
+                        ) ?></option>
                 </select>
             </td>
         </tr>
@@ -330,20 +403,22 @@ $tabControl->Begin();
             </tr>
         <? endif ?>
         <?
-        if ($arModFilter && strlen($arModFilter["ACTION_INTERFACE"]) > 0):
+        if ($arModFilter && $arModFilter["ACTION_INTERFACE"] <> ''):
 
             $arACTION_VARS = explode("&", $ACTION_VARS);
             for ($i = 0, $n = count($arACTION_VARS); $i < $n; $i++) {
                 $v = $arACTION_VARS[$i];
-                if ($pos = strpos($v, "="))
-                    ${substr($v, 0, $pos)} = urldecode(substr($v, $pos + 1));
+                if ($pos = mb_strpos($v, "=")) {
+                    ${mb_substr($v, 0, $pos)} = urldecode(mb_substr($v, $pos + 1));
+                }
             }
 
             $MAILBOX_LID = "";
             if ($str_MAILBOX_ID != "") {
                 $dbmb = CMailBox::GetByID($str_MAILBOX_ID);
-                if ($armb = $dbmb->Fetch())
+                if ($armb = $dbmb->Fetch()) {
                     $MAILBOX_LID = $armb["LID"];
+                }
             }
             ?>
 
@@ -364,8 +439,12 @@ $tabControl->Begin();
             <td width="60%">
                 <select name="ACTION_READ">
                     <option value=""><? echo GetMessage("MAIL_FLT_EDT_ACT_NC") ?></option>
-                    <option value="Y"<? if ($str_ACTION_READ == "Y") echo " selected" ?>><? echo GetMessage("MAIL_FLT_EDT_ACT_STATUS_READ") ?></option>
-                    <option value="N"<? if ($str_ACTION_READ == "N") echo " selected" ?>><? echo GetMessage("MAIL_FLT_EDT_ACT_STATUS_NOTREAD") ?></option>
+                    <option value="Y"<? if ($str_ACTION_READ == "Y") echo " selected" ?>><? echo GetMessage(
+                            "MAIL_FLT_EDT_ACT_STATUS_READ"
+                        ) ?></option>
+                    <option value="N"<? if ($str_ACTION_READ == "N") echo " selected" ?>><? echo GetMessage(
+                            "MAIL_FLT_EDT_ACT_STATUS_NOTREAD"
+                        ) ?></option>
                 </select>
             </td>
         </tr>
@@ -375,8 +454,12 @@ $tabControl->Begin();
             <td>
                 <select name="ACTION_SPAM">
                     <option value=""><? echo GetMessage("MAIL_FLT_EDT_ACT_NC") ?></option>
-                    <option value="Y"<? if ($str_ACTION_SPAM == "Y") echo " selected" ?>><? echo GetMessage("MAIL_FLT_EDT_ACT_MARK_SPAM") ?></option>
-                    <option value="N"<? if ($str_ACTION_SPAM == "N") echo " selected" ?>><? echo GetMessage("MAIL_FLT_EDT_ACT_MARK_NOTSPAM") ?></option>
+                    <option value="Y"<? if ($str_ACTION_SPAM == "Y") echo " selected" ?>><? echo GetMessage(
+                            "MAIL_FLT_EDT_ACT_MARK_SPAM"
+                        ) ?></option>
+                    <option value="N"<? if ($str_ACTION_SPAM == "N") echo " selected" ?>><? echo GetMessage(
+                            "MAIL_FLT_EDT_ACT_MARK_NOTSPAM"
+                        ) ?></option>
                 </select>
             </td>
         </tr>
@@ -399,7 +482,9 @@ $tabControl->Begin();
                        value="Y"<? if ($str_ACTION_STOP_EXEC == "Y") echo " checked" ?>></td>
         </tr>
         <?
-        $tabControl->Buttons(Array("disabled" => $MOD_RIGHT < "W", "back_url" => "/bitrix/admin/mail_filter_admin.php?lang=" . LANG));
+        $tabControl->Buttons(
+            Array("disabled" => $MOD_RIGHT < "W", "back_url" => "/bitrix/admin/mail_filter_admin.php?lang=" . LANG)
+        );
         $tabControl->End();
         ?>
 

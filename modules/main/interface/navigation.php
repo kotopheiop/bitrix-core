@@ -1,11 +1,15 @@
 <?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+}
 IncludeModuleLangFile(__FILE__);
 
-if ($this->bPostNavigation)
+if ($this->bPostNavigation) {
     $nav_func_name = 'PostAdminList';
-else
+} else {
     $nav_func_name = 'GetAdminList';
+}
 
 $sQueryString = CUtil::JSEscape($strNavQueryString);
 $sJSUrlPath = htmlspecialcharsbx(CUtil::JSEscape($sUrlPath));
@@ -69,7 +73,6 @@ if ($this->NavRecordCount > 0) {
                 } else {
                     $NavRecordGroup++;
                 }
-
             } // endwhile;//($NavRecordGroup <= $this->nEndPage):
 
             if ($this->NavPageNomer < $this->NavPageCount) {
@@ -90,10 +93,11 @@ if ($this->NavRecordCount > 0) {
             ?>
             <div class="adm-nav-pages-total-block"><?
                 echo $title . " " . (($this->NavPageNomer - 1) * $this->NavPageSize + 1) . " &ndash; ";
-                if ($this->NavPageNomer <> $this->NavPageCount)
+                if ($this->NavPageNomer <> $this->NavPageCount) {
                     echo($this->NavPageNomer * $this->NavPageSize);
-                else
+                } else {
                     echo($this->NavRecordCount);
+                }
                 echo " " . GetMessage("navigation_records_of") . " " . $this->NavRecordCount;
                 ?></div>
             <?
@@ -104,14 +108,20 @@ if ($this->NavRecordCount > 0) {
         {
         ?><span class="adm-nav-pages-number-text"><? echo GetMessage("navigation_records") ?></span><span
                         class="adm-select-wrap"><select name="" class="adm-select"
-                                                        onchange="if(this[selectedIndex].value=='0'){<? echo $this->table_id ?>.<?= $nav_func_name ?>('<? echo $sJSUrlPath . "?PAGEN_" . $this->NavNum . "=1&amp;SHOWALL_" . $this->NavNum . "=1" . CUtil::addslashes($strNavQueryString); ?>');}else{<? echo $this->table_id ?>.<?= $nav_func_name ?>('<? echo $sJSUrlPath . "?PAGEN_" . $this->NavNum . "=1&amp;SHOWALL_" . $this->NavNum . "=0" . "&amp;SIZEN_" . $this->NavNum . "=" ?>'+this[selectedIndex].value+'<? echo CUtil::addslashes($strNavQueryString); ?>');}">
+                                                        onchange="if(this[selectedIndex].value=='0'){<? echo $this->table_id ?>.<?= $nav_func_name ?>('<? echo $sJSUrlPath . "?PAGEN_" . $this->NavNum . "=1&amp;SHOWALL_" . $this->NavNum . "=1" . CUtil::addslashes(
+                                                                $strNavQueryString
+                                                            ); ?>');}else{<? echo $this->table_id ?>.<?= $nav_func_name ?>('<? echo $sJSUrlPath . "?PAGEN_" . $this->NavNum . "=1&amp;SHOWALL_" . $this->NavNum . "=0" . "&amp;SIZEN_" . $this->NavNum . "=" ?>'+this[selectedIndex].value+'<? echo CUtil::addslashes(
+                                                            $strNavQueryString
+                                                        ); ?>');}">
 <?
 $aSizes = array(10, 20, 50, 100, 200, 500);
-if ($this->nInitialSize > 0 && !in_array($this->nInitialSize, $aSizes))
+if ($this->nInitialSize > 0 && !in_array($this->nInitialSize, $aSizes)) {
     array_unshift($aSizes, $this->nInitialSize);
+}
 $reqSize = intval($_REQUEST["SIZEN_" . $this->NavNum]);
-if ($reqSize > 0 && !in_array($reqSize, $aSizes))
+if ($reqSize > 0 && !in_array($reqSize, $aSizes)) {
     array_unshift($aSizes, $reqSize);
+}
 foreach ($aSizes as $size) {
     ?>
     <option value="<? echo $size ?>"<? if ($this->NavPageSize == $size) echo ' selected="selected"' ?>><? echo $size ?></option>
@@ -120,7 +130,9 @@ foreach ($aSizes as $size) {
 
 if ($this->bShowAll) {
     ?>
-    <option value="0"<? if ($this->NavShowAll) echo ' selected="selected"' ?>><? echo GetMessage("navigation_records_all") ?></option>
+    <option value="0"<? if ($this->NavShowAll) echo ' selected="selected"' ?>><? echo GetMessage(
+            "navigation_records_all"
+        ) ?></option>
     <?
 } //endif;
 ?>
@@ -131,7 +143,12 @@ if ($this->bShowAll) {
 
 if (!isset($_REQUEST['admin_history'])) {
     ?>
-    <script type="text/javascript">top.BX.adminHistory.put('<?=CUtil::JSEscape($sUrlPath . '?PAGEN_' . $this->NavNum . '=' . $this->NavPageNomer . '&amp;SIZEN_' . $this->NavNum . '=' . $this->NavPageSize . $strNavQueryString)?>', top.BX.proxy((top.<?=$this->table_id?>) ? top.<?=$this->table_id?>.<?=$nav_func_name?>:<?=$this->table_id?>.<?=$nav_func_name?>, parent.<?=$this->table_id?>), ['mode', 'table_id']
+    <script type="text/javascript">
+        var topWindow = (window.BX || window.parent.BX).PageObject.getRootWindow();
+        var parentWindow = (window.BX || window.parent.BX).PageObject.getParentWindowOfCurrentHost(window);
+        topWindow.BX.adminHistory.put('<?=CUtil::JSEscape(
+            $sUrlPath . '?PAGEN_' . $this->NavNum . '=' . $this->NavPageNomer . '&amp;SIZEN_' . $this->NavNum . '=' . $this->NavPageSize . $strNavQueryString
+        )?>', topWindow.BX.proxy((topWindow.<?=$this->table_id?>) ? parentWindow.<?=$this->table_id?>.<?=$nav_func_name?>:<?=$this->table_id?>.<?=$nav_func_name?>, window.<?=$this->table_id?>), ['mode', 'table_id']
         )
         ;</script>
     <?

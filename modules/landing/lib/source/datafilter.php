@@ -245,10 +245,11 @@ class DataFilter extends Filter
         $check = false;
         $id = null;
         $multiple = isset($field['params']['multiple']) && $field['params']['multiple'] == 'Y';
-        if ($multiple)
+        if ($multiple) {
             $validRawValue = !empty($value);
-        else
+        } else {
             $validRawValue = isset($value['VALUE']);
+        }
         if ($validRawValue) {
             if ($multiple) {
                 $id = [];
@@ -309,10 +310,11 @@ class DataFilter extends Filter
     {
         if (isset($value['_value'])) {
             $multiple = isset($field['params']['multiple']) && $field['params']['multiple'] == 'Y';
-            if ($multiple)
+            if ($multiple) {
                 $validRawValue = !empty($value['_value']) && is_array($value['_value']);
-            else
+            } else {
                 $validRawValue = is_string($value['_value']) || is_int($value['_value']);
+            }
             if ($validRawValue) {
                 $operator = $this->getFilterOperator($field, ($multiple ? 'enum' : 'exact'));
                 if (is_string($operator)) {

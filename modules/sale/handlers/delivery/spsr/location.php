@@ -41,7 +41,7 @@ final class Location extends Mapper
         $requestData = '
 			<root xmlns="http://spsr.ru/webapi/Info/GetCities/1.0">
 				<p:Params Name="WAGetCities" Ver="1.0" xmlns:p="http://spsr.ru/webapi/WA/1.0" />
-				<GetCities CityName="' . strtolower($cityName) . '" CountryName="' . strtolower($countryName) . '" />
+				<GetCities CityName="' . mb_strtolower($cityName) . '" CountryName="' . mb_strtolower($countryName) . '" />
 			</root>';
 
         $request = new Request();
@@ -93,8 +93,9 @@ final class Location extends Mapper
             preg_match('/([^(]*)(\(([^\,\s]*)(\s*\,\s*\d*){0,1}\)){0,1}/i', $loc['CityName'], $matches);
 
             if (empty($matches[1])) {
-                if ($this->collectNotFound)
+                if ($this->collectNotFound) {
                     $result->addNotFound($loc['XML_ID'], $loc['CityName'] . ' : ' . $loc['RegionName']);
+                }
 
                 continue;
             }
@@ -103,19 +104,21 @@ final class Location extends Mapper
             $subRegionName = !empty($matches[3]) ? trim($matches[3]) : '';
             $locId = 0;
 
-            if (strlen($cityName) > 0) {
+            if ($cityName <> '') {
                 $locId = self::getLocationIdByNames($cityName, "", $subRegionName, $loc['RegionName'], "", true);
 
-                if (intval($locId) <= 0)
+                if (intval($locId) <= 0) {
                     $locId = self::getLocationIdByNames($cityName, "", $subRegionName, $loc['RegionName'], "", false);
+                }
             }
 
             if (intval($locId) > 0) {
                 $res = self::setExternalLocation2($this->serviceId, $locId, $loc['XML_ID'], false);
 
                 if ($res->isSuccess()) {
-                    if ($this->collectMapped)
+                    if ($this->collectMapped) {
                         $result->addMapped($loc['XML_ID'], $loc['CityName'] . ', ' . $loc['RegionName'], $locId);
+                    }
 
                     $this->tmpTable->markMapped($locId, $loc['XML_ID']);
                 } elseif ($this->collectDuplicated) {
@@ -127,14 +130,16 @@ final class Location extends Mapper
                     }
                 }
             } else {
-                if ($this->collectNotFound)
+                if ($this->collectNotFound) {
                     $result->addNotFound($loc['XML_ID'], $loc['CityName'] . ':' . $loc['RegionName']);
+                }
             }
 
             $result->setLastProcessedId($loc['ID']);
 
-            if ($timeout > 0 && (mktime(true) - $startTime) >= $timeout)
+            if ($timeout > 0 && (mktime(true) - $startTime) >= $timeout) {
                 return $result;
+            }
         }
 
         return $result;
@@ -152,14 +157,16 @@ final class Location extends Mapper
 
         $res = $this->getLocationsRequest('', Loc::getMessage('SALE_DLV_SRV_SPSR_RUSSIA'));
 
-        if (!$res->isSuccess())
+        if (!$res->isSuccess()) {
             return $res;
+        }
 
         $locationsData = $res->getData();
         $locationsCount = count($locationsData);
 
-        if ($this->tmpTable->isExist())
+        if ($this->tmpTable->isExist()) {
             $this->tmpTable->drop();
+        }
 
         $this->tmpTable->create($locationsData);
         $tmpImported = $this->tmpTable->saveData($locationsData);
@@ -190,13 +197,15 @@ final class Location extends Mapper
 
                 $res = self::getLocationsRequest('', Loc::getMessage('SALE_DLV_SRV_SPSR_RUSSIA'));
 
-                if (!$res->isSuccess())
+                if (!$res->isSuccess()) {
                     return $res;
+                }
 
                 $data = $res->getData();
 
-                if ($this->tmpTable->isExist())
+                if ($this->tmpTable->isExist()) {
                     $this->tmpTable->drop();
+                }
 
                 $this->tmpTable->create($data);
                 $tmpImported = $this->tmpTable->saveData($data);
@@ -208,21 +217,26 @@ final class Location extends Mapper
 
                 $_SESSION['SALE_HNDL_SPSR_DLV_TMP_MAX_ID'] = $this->tmpTable->getMaxId();
 
-                $res = \Bitrix\Sale\Location\LocationTable::getList(array(
-                    'runtime' => array(new \Bitrix\Main\Entity\ExpressionField('MAX', 'MAX(ID)')),
-                    'select' => array('MAX')
-                ));
+                $res = \Bitrix\Sale\Location\LocationTable::getList(
+                    array(
+                        'runtime' => array(new \Bitrix\Main\Entity\ExpressionField('MAX', 'MAX(ID)')),
+                        'select' => array('MAX')
+                    )
+                );
 
-                if ($loc = $res->fetch())
+                if ($loc = $res->fetch()) {
                     $_SESSION['SALE_HNDL_SPSR_DLV_LOC_MAX_ID'] = $loc['MAX'];
-                else
+                } else {
                     $_SESSION['SALE_HNDL_SPSR_DLV_LOC_MAX_ID'] = 0;
+                }
 
-                $result->setData(array(
-                    'STAGE' => 'import_from_csv',
-                    'MESSAGE' => Loc::getMessage('SALE_DLV_SRV_SPSR_LOC_CSV'),
-                    'PROGRESS' => $progress + 5
-                ));
+                $result->setData(
+                    array(
+                        'STAGE' => 'import_from_csv',
+                        'MESSAGE' => Loc::getMessage('SALE_DLV_SRV_SPSR_LOC_CSV'),
+                        'PROGRESS' => $progress + 5
+                    )
+                );
 
                 break;
 
@@ -230,45 +244,59 @@ final class Location extends Mapper
 
                 $this->importFromCsv($_SERVER["DOCUMENT_ROOT"] . self::CSV_FILE_PATH);
 
-                $result->setData(array(
-                    'STAGE' => 'fill_normalized_table',
-                    'MESSAGE' => Loc::getMessage('SALE_DLV_SRV_SPSR_LOC_NORM'),
-                    'PROGRESS' => $progress + 5
-                ));
+                $result->setData(
+                    array(
+                        'STAGE' => 'fill_normalized_table',
+                        'MESSAGE' => Loc::getMessage('SALE_DLV_SRV_SPSR_LOC_NORM'),
+                        'PROGRESS' => $progress + 5
+                    )
+                );
 
                 break;
 
             case 'fill_normalized_table':
 
                 $lastId = self::fillNormalizedTable($step, $timeout);
-                $progress = $this->calculateProgress($lastId, $_SESSION['SALE_HNDL_SPSR_DLV_LOC_MAX_ID'], $progress, 11, 30);
+                $progress = $this->calculateProgress(
+                    $lastId,
+                    $_SESSION['SALE_HNDL_SPSR_DLV_LOC_MAX_ID'],
+                    $progress,
+                    11,
+                    30
+                );
 
                 if ($lastId > 0 && $lastId < $_SESSION['SALE_HNDL_SPSR_DLV_LOC_MAX_ID']) {
-                    $result->setData(array(
-                        'STAGE' => 'fill_normalized_table',
-                        'STEP' => $lastId,
-                        'MESSAGE' => Loc::getMessage('SALE_DLV_SRV_SPSR_LOC_NORM'),
-                        'PROGRESS' => $progress
-                    ));
+                    $result->setData(
+                        array(
+                            'STAGE' => 'fill_normalized_table',
+                            'STEP' => $lastId,
+                            'MESSAGE' => Loc::getMessage('SALE_DLV_SRV_SPSR_LOC_NORM'),
+                            'PROGRESS' => $progress
+                        )
+                    );
                 } else {
                     unset($_SESSION['SALE_HNDL_SPSR_DLV_LOC_MAX_ID']);
 
-                    $result->setData(array(
-                        'STAGE' => 'mark_unmapped',
-                        'MESSAGE' => Loc::getMessage('SALE_DLV_SRV_SPSR_LOC_CHECK_MAPPED'),
-                        'PROGRESS' => 30
-                    ));
+                    $result->setData(
+                        array(
+                            'STAGE' => 'mark_unmapped',
+                            'MESSAGE' => Loc::getMessage('SALE_DLV_SRV_SPSR_LOC_CHECK_MAPPED'),
+                            'PROGRESS' => 30
+                        )
+                    );
                 }
                 break;
 
             case 'mark_unmapped':
 
                 $this->tmpTable->markAllMapped();
-                $result->setData(array(
-                    'STAGE' => 'map_by_names',
-                    'MESSAGE' => Loc::getMessage('SALE_DLV_SRV_SPSR_LOC_MAP_BY_NAME'),
-                    'PROGRESS' => $progress + 5
-                ));
+                $result->setData(
+                    array(
+                        'STAGE' => 'map_by_names',
+                        'MESSAGE' => Loc::getMessage('SALE_DLV_SRV_SPSR_LOC_MAP_BY_NAME'),
+                        'PROGRESS' => $progress + 5
+                    )
+                );
                 break;
 
             case 'map_by_names':
@@ -277,25 +305,35 @@ final class Location extends Mapper
                 $lastProcessedId = $mapResult->getLastProcessedId();
 
                 if ($lastProcessedId > 0 && $lastProcessedId < $_SESSION['SALE_HNDL_SPSR_DLV_TMP_MAX_ID']) {
-                    $progress = $this->calculateProgress($lastProcessedId, $_SESSION['SALE_HNDL_SPSR_DLV_TMP_MAX_ID'], $progress, 36, 100);
+                    $progress = $this->calculateProgress(
+                        $lastProcessedId,
+                        $_SESSION['SALE_HNDL_SPSR_DLV_TMP_MAX_ID'],
+                        $progress,
+                        36,
+                        100
+                    );
 
-                    $result->setData(array(
-                        'STAGE' => 'map_by_names',
-                        'STEP' => $lastProcessedId,
-                        'MESSAGE' => Loc::getMessage('SALE_DLV_SRV_SPSR_LOC_MAP_BY_NAME'),
-                        'PROGRESS' => $progress,
-                        'MAP_RESULT' => $mapResult
-                    ));
+                    $result->setData(
+                        array(
+                            'STAGE' => 'map_by_names',
+                            'STEP' => $lastProcessedId,
+                            'MESSAGE' => Loc::getMessage('SALE_DLV_SRV_SPSR_LOC_MAP_BY_NAME'),
+                            'PROGRESS' => $progress,
+                            'MAP_RESULT' => $mapResult
+                        )
+                    );
                 } else {
                     unset($_SESSION['SALE_HNDL_SPSR_DLV_TMP_MAX_ID']);
                     $this->tmpTable->drop();
 
-                    $result->setData(array(
-                        'STAGE' => 'finish',
-                        'MESSAGE' => Loc::getMessage('SALE_DLV_SRV_SPSR_LOC_MAP_FINISHED'),
-                        'PROGRESS' => 100,
-                        'MAP_RESULT' => $mapResult
-                    ));
+                    $result->setData(
+                        array(
+                            'STAGE' => 'finish',
+                            'MESSAGE' => Loc::getMessage('SALE_DLV_SRV_SPSR_LOC_MAP_FINISHED'),
+                            'PROGRESS' => 100,
+                            'MAP_RESULT' => $mapResult
+                        )
+                    );
                 }
 
                 break;
@@ -316,8 +354,9 @@ final class Location extends Mapper
         } else {
             $progress = $minProgress + round(($maxProgress - $minProgress) * $id / $maxId);
 
-            if ($progress >= $maxProgress && $id < $maxId)
+            if ($progress >= $maxProgress && $id < $maxId) {
                 $progress--;
+            }
         }
 
         return $progress;

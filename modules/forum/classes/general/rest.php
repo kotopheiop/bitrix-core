@@ -2,8 +2,9 @@
 
 use Bitrix\Main\Loader;
 
-if (!CModule::IncludeModule('rest'))
+if (!CModule::IncludeModule('rest')) {
     return;
+}
 
 class CForumRestService extends IRestService
 {
@@ -15,7 +16,10 @@ class CForumRestService extends IRestService
     {
         return array(
             "forum" => array(
-                "forum.message.user.get" => array('callback' => array(__CLASS__, 'getUserMessage'), 'options' => array('private' => true)),
+                "forum.message.user.get" => array(
+                    'callback' => array(__CLASS__, 'getUserMessage'),
+                    'options' => array('private' => true)
+                ),
                 "forum.message.delete" => array(__CLASS__, "deleteMessage")
             )
         );
@@ -43,16 +47,22 @@ class CForumRestService extends IRestService
         $otherUserMode = ($userId != $USER->getId());
 
         if ($userId <= 0) {
-            throw new Bitrix\Rest\RestException("User ID can't be empty", "ID_EMPTY", CRestServer::STATUS_WRONG_REQUEST);
+            throw new Bitrix\Rest\RestException(
+                "User ID can't be empty", "ID_EMPTY", CRestServer::STATUS_WRONG_REQUEST
+            );
         }
 
         if (isset($arParams['FIRST_ID'])) {
             $options['FIRST_ID'] = intval($arParams['FIRST_ID']);
         } else {
-            $options['LAST_ID'] = isset($arParams['LAST_ID']) && intval($arParams['LAST_ID']) > 0 ? intval($arParams['LAST_ID']) : 0;
+            $options['LAST_ID'] = isset($arParams['LAST_ID']) && intval($arParams['LAST_ID']) > 0 ? intval(
+                $arParams['LAST_ID']
+            ) : 0;
         }
 
-        $options['LIMIT'] = isset($arParams['LIMIT']) ? (intval($arParams['LIMIT']) > 1000 ? 1000 : intval($arParams['LIMIT'])) : 100;
+        $options['LIMIT'] = isset($arParams['LIMIT']) ? (intval($arParams['LIMIT']) > 1000 ? 1000 : intval(
+            $arParams['LIMIT']
+        )) : 100;
 
         $filter = Array(
             '=AUTHOR_ID' => $userId
@@ -72,14 +82,19 @@ class CForumRestService extends IRestService
             }
         }
 
-        $res = Bitrix\Forum\MessageTable::getList(array(
-            'filter' => $filter,
-            'select' => array(
-                'ID', 'POST_DATE', 'POST_MESSAGE', 'UF_FORUM_MESSAGE_DOC'
-            ),
-            'order' => $order,
-            'limit' => $options['LIMIT']
-        ));
+        $res = Bitrix\Forum\MessageTable::getList(
+            array(
+                'filter' => $filter,
+                'select' => array(
+                    'ID',
+                    'POST_DATE',
+                    'POST_MESSAGE',
+                    'UF_FORUM_MESSAGE_DOC'
+                ),
+                'order' => $order,
+                'limit' => $options['LIMIT']
+            )
+        );
 
         $attachedIdList = array();
         $messageAttachedList = array();
@@ -116,12 +131,14 @@ class CForumRestService extends IRestService
             !empty($attachedIdList)
             && Loader::includeModule('disk')
         ) {
-            $res = Bitrix\Disk\AttachedObject::getList(array(
-                'filter' => array(
-                    '@ID' => array_unique($attachedIdList)
-                ),
-                'select' => array('ID', 'OBJECT_ID')
-            ));
+            $res = Bitrix\Disk\AttachedObject::getList(
+                array(
+                    'filter' => array(
+                        '@ID' => array_unique($attachedIdList)
+                    ),
+                    'select' => array('ID', 'OBJECT_ID')
+                )
+            );
             while ($attachedObjectFields = $res->fetch()) {
                 $diskObjectId = $attachedObjectFields['OBJECT_ID'];
 
@@ -178,10 +195,12 @@ class CForumRestService extends IRestService
             throw new Exception('No message found');
         }
 
-        $currentUserPerm = self::getForumMessagePerm(array(
-            'USER_ID' => $currentUserId,
-            'MESSAGE_ID' => $messageId
-        ));
+        $currentUserPerm = self::getForumMessagePerm(
+            array(
+                'USER_ID' => $currentUserId,
+                'MESSAGE_ID' => $messageId
+            )
+        );
 
         if ($currentUserPerm < self::PERM_WRITE) {
             throw new Exception('No write perms');
@@ -193,13 +212,15 @@ class CForumRestService extends IRestService
         ) {
             $logIdList = array();
 
-            $res = Bitrix\Socialnetwork\LogTable::getList(array(
-                'filter' => array(
-                    '=SOURCE_ID' => $messageId,
-                    '@EVENT_ID' => array('forum') // replace with provider getEventId
-                ),
-                'select' => array('ID')
-            ));
+            $res = Bitrix\Socialnetwork\LogTable::getList(
+                array(
+                    'filter' => array(
+                        '=SOURCE_ID' => $messageId,
+                        '@EVENT_ID' => array('forum') // replace with provider getEventId
+                    ),
+                    'select' => array('ID')
+                )
+            );
             while ($logFields = $res->fetch()) {
                 if (CSocNetLog::delete($logFields['ID'])) {
                     $logIdList[] = intval($logFields['ID']);
@@ -207,13 +228,24 @@ class CForumRestService extends IRestService
             }
 
             if (empty($logIdList)) {
-                $res = Bitrix\Socialnetwork\LogCommentTable::getList(array(
-                    'filter' => array(
-                        '=SOURCE_ID' => $messageId,
-                        '@EVENT_ID' => array('forum', 'tasks_comment', 'calendar_comment', 'timeman_entry_comment', 'report_comment', 'photo_comment', 'wiki_comment', 'lists_new_element_comment') // replace with provider getEventId
-                    ),
-                    'select' => array('ID', 'LOG_ID')
-                ));
+                $res = Bitrix\Socialnetwork\LogCommentTable::getList(
+                    array(
+                        'filter' => array(
+                            '=SOURCE_ID' => $messageId,
+                            '@EVENT_ID' => array(
+                                'forum',
+                                'tasks_comment',
+                                'calendar_comment',
+                                'timeman_entry_comment',
+                                'report_comment',
+                                'photo_comment',
+                                'wiki_comment',
+                                'lists_new_element_comment'
+                            ) // replace with provider getEventId
+                        ),
+                        'select' => array('ID', 'LOG_ID')
+                    )
+                );
                 while ($logCommentFields = $res->fetch()) {
                     if (CSocNetLogComments::delete($logCommentFields['ID'])) {
                         $logIdList[] = intval($logFields['LOG_ID']);
@@ -272,12 +304,14 @@ class CForumRestService extends IRestService
     {
         $result = array();
 
-        $res = \Bitrix\Forum\MessageTable::getList(array(
-            'filter' => array(
-                '=ID' => $messageId
-            ),
-            'select' => array('*')
-        ));
+        $res = \Bitrix\Forum\MessageTable::getList(
+            array(
+                'filter' => array(
+                    '=ID' => $messageId
+                ),
+                'select' => array('*')
+            )
+        );
         if ($messageFields = $res->fetch()) {
             $result = $messageFields;
         }
@@ -316,13 +350,15 @@ class CForumRestService extends IRestService
                     'width' => (int)$params['WIDTH'],
                     'height' => (int)$params['HEIGHT'],
                 );
-            } else if (\Bitrix\Disk\TypeFile::isVideo($fileModel->getName())) {
-                $contentType = 'video';
-                $params = $fileModel->getView()->getPreviewData();
-                $imageParams = Array(
-                    'width' => (int)$params['WIDTH'],
-                    'height' => (int)$params['HEIGHT'],
-                );
+            } else {
+                if (\Bitrix\Disk\TypeFile::isVideo($fileModel->getName())) {
+                    $contentType = 'video';
+                    $params = $fileModel->getView()->getPreviewData();
+                    $imageParams = Array(
+                        'width' => (int)$params['WIDTH'],
+                        'height' => (int)$params['HEIGHT'],
+                    );
+                }
             }
 
             $isImage = \Bitrix\Disk\TypeFile::isImage($fileModel);
@@ -346,7 +382,9 @@ class CForumRestService extends IRestService
                     : null
                 )
                 ),
-                'urlShow' => ($isImage ? $urlManager->getUrlForShowFile($fileModel) : $urlManager->getUrlForDownloadFile($fileModel)),
+                'urlShow' => ($isImage ? $urlManager->getUrlForShowFile(
+                    $fileModel
+                ) : $urlManager->getUrlForDownloadFile($fileModel)),
                 'urlDownload' => $urlManager->getUrlForDownloadFile($fileModel)
             );
         }
@@ -367,7 +405,7 @@ class CForumRestService extends IRestService
 
             foreach (['urlPreview', 'urlShow', 'urlDownload'] as $field) {
                 $url = $fileData[$key][$field];
-                if (is_string($url) && $url && strpos($url, 'http') !== 0) {
+                if (is_string($url) && $url && mb_strpos($url, 'http') !== 0) {
                     $fileData[$key][$field] = self::getPublicDomain() . $url;
                 }
             }
@@ -380,7 +418,14 @@ class CForumRestService extends IRestService
     {
         static $result = null;
         if ($result === null) {
-            $result = (\Bitrix\Main\Context::getCurrent()->getRequest()->isHttps() ? "https" : "http") . "://" . ((defined("SITE_SERVER_NAME") && strlen(SITE_SERVER_NAME) > 0) ? SITE_SERVER_NAME : \Bitrix\Main\Config\Option::get("main", "server_name", $_SERVER['SERVER_NAME']));
+            $result = (\Bitrix\Main\Context::getCurrent()->getRequest()->isHttps(
+                ) ? "https" : "http") . "://" . ((defined(
+                        "SITE_SERVER_NAME"
+                    ) && SITE_SERVER_NAME <> '') ? SITE_SERVER_NAME : \Bitrix\Main\Config\Option::get(
+                    "main",
+                    "server_name",
+                    $_SERVER['SERVER_NAME']
+                ));
         }
 
         return $result;

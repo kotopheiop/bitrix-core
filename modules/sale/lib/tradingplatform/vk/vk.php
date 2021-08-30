@@ -77,11 +77,12 @@ class Vk extends Platform
      * @return mixed
      * @throws \Bitrix\Main\ArgumentException
      */
-    public function getSettings($exportId = NULL)
+    public function getSettings($exportId = null)
     {
         $filter = array();
-        if ($exportId)
+        if ($exportId) {
             $filter["=ID"] = $exportId;
+        }
 
         $settings = array();
         $profiles = ExportProfileTable::getList(array('filter' => $filter));
@@ -96,8 +97,9 @@ class Vk extends Platform
         }
 
 //		only one profile if required
-        if ($exportId)
+        if ($exportId) {
             $settings = $settings[$exportId];
+        }
 
         return $settings;
     }
@@ -112,24 +114,29 @@ class Vk extends Platform
      */
     public function saveSettings(array $settings)
     {
-        $exportId = isset($settings['EXPORT_ID']) ? $settings['EXPORT_ID'] : NULL;
+        $exportId = isset($settings['EXPORT_ID']) ? $settings['EXPORT_ID'] : null;
         $settings = $settings['SETTINGS'];
 
         $settingsToSave = array();
-        if (isset($settings["DESCRIPTION"]))
+        if (isset($settings["DESCRIPTION"])) {
             $settingsToSave["DESCRIPTION"] = $settings["DESCRIPTION"];
+        }
 
-        if (isset($settings["VK_SETTINGS"]))
+        if (isset($settings["VK_SETTINGS"])) {
             $settingsToSave["VK_SETTINGS"] = $settings["VK_SETTINGS"];
+        }
 
-        if (isset($settings["EXPORT_SETTINGS"]))
+        if (isset($settings["EXPORT_SETTINGS"])) {
             $settingsToSave["EXPORT_SETTINGS"] = $settings["EXPORT_SETTINGS"];
+        }
 
-        if (isset($settings["OAUTH"]))
+        if (isset($settings["OAUTH"])) {
             $settingsToSave["OAUTH"] = $settings["OAUTH"];
+        }
 
-        if (isset($settings["PROCESS"]))
+        if (isset($settings["PROCESS"])) {
             $settingsToSave["PROCESS"] = $settings["PROCESS"];
+        }
 
 //		check UPDATE or ADD
         $settingsExists = $this->getSettings();
@@ -140,13 +147,12 @@ class Vk extends Platform
         } else {
             $settingsToSave["PLATFORM_ID"] = $this->id;
             $resAdd = ExportProfileTable::add($settingsToSave);
-            if ($resAdd->isSuccess())
+            if ($resAdd->isSuccess()) {
                 return $resAdd->getId();
-            else
+            } else {
                 return false;
+            }
         }
-
-
     }
 
 
@@ -157,8 +163,9 @@ class Vk extends Platform
      */
     public function setActive()
     {
-        if ($this->isActive())
+        if ($this->isActive()) {
             return true;
+        }
 
         return parent::setActive();
     }
@@ -169,8 +176,9 @@ class Vk extends Platform
      */
     public function unsetActive()
     {
-        if (!$this->isActive())
+        if (!$this->isActive()) {
             return true;
+        }
 
         return parent::unsetActive();
     }
@@ -181,17 +189,25 @@ class Vk extends Platform
      */
     public function install()
     {
-        RegisterModuleDependences('main', 'OnEventLogGetAuditTypes', 'sale', '\Bitrix\Sale\TradingPlatform\Vk\Vk', 'OnEventLogGetAuditTypes');
+        RegisterModuleDependences(
+            'main',
+            'OnEventLogGetAuditTypes',
+            'sale',
+            '\Bitrix\Sale\TradingPlatform\Vk\Vk',
+            'OnEventLogGetAuditTypes'
+        );
 
 //		adding new PLATFORM
-        $tptAddRes = TradingPlatformTable::add(array(
-            "CODE" => $this->getCode(),
-            "ACTIVE" => "N",
-            "NAME" => Loc::getMessage("SALE_VK_NAME"),
-            "DESCRIPTION" => Loc::getMessage("SALE_VK_DESC"),
-            "CATALOG_SECTION_TAB_CLASS_NAME" => '\Bitrix\Sale\TradingPlatform\Vk\CatalogSectionTabHandler',
-            "CLASS" => '\Bitrix\Sale\TradingPlatform\Vk\Vk',
-        ));
+        $tptAddRes = TradingPlatformTable::add(
+            array(
+                "CODE" => $this->getCode(),
+                "ACTIVE" => "N",
+                "NAME" => Loc::getMessage("SALE_VK_NAME"),
+                "DESCRIPTION" => Loc::getMessage("SALE_VK_DESC"),
+                "CATALOG_SECTION_TAB_CLASS_NAME" => '\Bitrix\Sale\TradingPlatform\Vk\CatalogSectionTabHandler',
+                "CLASS" => '\Bitrix\Sale\TradingPlatform\Vk\Vk',
+            )
+        );
 
 //		force set flag install
         if ($tptAddRes->isSuccess()) {
@@ -305,10 +321,11 @@ class Vk extends Platform
             )
         );
 
-        if ($existPropId = $existingProps->Fetch())
+        if ($existPropId = $existingProps->Fetch()) {
             return $existPropId['ID'];
-        else
+        } else {
             return false;
+        }
     }
 
 
@@ -321,11 +338,14 @@ class Vk extends Platform
     private function deleteSectionFieldVkImage($iblockId)
     {
 //		delete property with values
-        if ($propertyId = self::checkExistingCatalogField($iblockId, self::createCodeForSectionFieldVkImage($iblockId)))
+        if ($propertyId = self::checkExistingCatalogField(
+            $iblockId,
+            self::createCodeForSectionFieldVkImage($iblockId)
+        )) {
             return \CIBlockProperty::Delete($propertyId);
-
-        else
+        } else {
             return false;
+        }
     }
 
 
@@ -378,7 +398,7 @@ class Vk extends Platform
 
         if (isset($settings["VK_SETTINGS"]["GROUP_ID"])) {
             $groupId = $settings["VK_SETTINGS"]["GROUP_ID"];
-            $groupId = substr($groupId, 0, 1) == '-' ? $groupId : '-' . $groupId;
+            $groupId = mb_substr($groupId, 0, 1) == '-' ? $groupId : '-' . $groupId;
         }
 
         return $groupId;
@@ -395,11 +415,11 @@ class Vk extends Platform
     {
         $settings = $this->getSettings($exportId);
 
-        if (isset($settings["EXPORT_SETTINGS"]["AGRESSIVE"]) && $settings["EXPORT_SETTINGS"]["AGRESSIVE"])
+        if (isset($settings["EXPORT_SETTINGS"]["AGRESSIVE"]) && $settings["EXPORT_SETTINGS"]["AGRESSIVE"]) {
             return true;
-        else
+        } else {
             return false;
-
+        }
     }
 
 
@@ -411,8 +431,9 @@ class Vk extends Platform
      */
     public function getApi($exportId)
     {
-        if (!isset($this->api[$exportId]))
+        if (!isset($this->api[$exportId])) {
             $this->api[$exportId] = new Api($this->getAccessToken($exportId), $exportId);
+        }
 
         return $this->api[$exportId];
     }
@@ -426,8 +447,9 @@ class Vk extends Platform
      */
     public function getExecuter($exportId)
     {
-        if (!isset($this->executer[$exportId]))
+        if (!isset($this->executer[$exportId])) {
             $this->executer[$exportId] = new Executer($this->getApi($exportId));
+        }
 
         return $this->executer[$exportId];
     }
@@ -444,10 +466,11 @@ class Vk extends Platform
         if (!isset($this->accessToken[$exportId])) {
             $settings = $this->getSettings();
 
-            if (isset($settings[$exportId]["OAUTH"]["ACCESS_TOKEN"]))
+            if (isset($settings[$exportId]["OAUTH"]["ACCESS_TOKEN"])) {
                 $this->accessToken[$exportId] = $settings[$exportId]["OAUTH"]["ACCESS_TOKEN"];
-            else
+            } else {
                 throw new ArgumentNullException('accessToken');
+            }
         }
 
         return $this->accessToken[$exportId];
@@ -509,11 +532,11 @@ class Vk extends Platform
             (isset($settings["VK_SETTINGS"]["SECRET"]) && !empty($settings["VK_SETTINGS"]["SECRET"])) &&
             (isset($settings["OAUTH"]["ACCESS_TOKEN"]) && $settings["OAUTH"]["ACCESS_TOKEN"]) &&
             (isset($settings["EXPORT_SETTINGS"]["CATEGORY_DEFAULT"]) && $settings["EXPORT_SETTINGS"]["CATEGORY_DEFAULT"] > 0)
-        )
+        ) {
             $this->setActiveById($exportId);
-        else
+        } else {
             $this->unsetActiveById($exportId);
-
+        }
     }
 
 
@@ -526,12 +549,14 @@ class Vk extends Platform
     private function setActiveById($exportId)
     {
         $settings = $this->getSettings($exportId);
-        if (isset($settings) && is_array($settings))
+        if (isset($settings) && is_array($settings)) {
             $settings["EXPORT_SETTINGS"]["ACTIVE"] = "Y";
+        }
 
 //		if we set active to one profile - all platform is active
-        if (!parent::isActive())
+        if (!parent::isActive()) {
             parent::setActive();
+        }
 
         return $this->saveSettings(array('SETTINGS' => $settings, 'EXPORT_ID' => $exportId));
     }
@@ -546,25 +571,28 @@ class Vk extends Platform
     public function unsetActiveById($exportId)
     {
         $settings = $this->getSettings();
-        if (isset($settings[$exportId]) && is_array($settings[$exportId]))
+        if (isset($settings[$exportId]) && is_array($settings[$exportId])) {
             $settings[$exportId]["EXPORT_SETTINGS"]["ACTIVE"] = "N";
+        }
 
 //		check all profiles for active
         $bActiveAll = false;
         foreach ($settings as $id => $exportSettings) {
-            if ($this->isActiveById($id))
+            if ($this->isActiveById($id)) {
                 $bActiveAll = true;
+            }
         }
 
 //		if no one profile is active - unactive all platform
-        if (!$bActiveAll)
+        if (!$bActiveAll) {
             $this->unsetActive();
+        }
 
-        if (isset($settings[$exportId]) && is_array($settings[$exportId]))
+        if (isset($settings[$exportId]) && is_array($settings[$exportId])) {
             return $this->saveSettings(array('SETTINGS' => $settings[$exportId], 'EXPORT_ID' => $exportId));
-
-        else
+        } else {
             return false;
+        }
     }
 
 
@@ -578,10 +606,11 @@ class Vk extends Platform
     {
         $settings = $this->getSettings($exportId);
 
-        if (isset($settings["EXPORT_SETTINGS"]["ACTIVE"]) && $settings["EXPORT_SETTINGS"]["ACTIVE"] == "Y")
+        if (isset($settings["EXPORT_SETTINGS"]["ACTIVE"]) && $settings["EXPORT_SETTINGS"]["ACTIVE"] == "Y") {
             return true;
-        else
+        } else {
             return false;
+        }
     }
 
 
@@ -597,13 +626,17 @@ class Vk extends Platform
         $settings = $this->getSettings();
         $urlParams = array();
 
-        if (isset($settings[$exportId]["VK_SETTINGS"]["APP_ID"]) && !empty($settings[$exportId]["VK_SETTINGS"]["APP_ID"]))
+        if (isset($settings[$exportId]["VK_SETTINGS"]["APP_ID"]) && !empty($settings[$exportId]["VK_SETTINGS"]["APP_ID"])) {
             $urlParams['client_id'] = $settings[$exportId]["VK_SETTINGS"]["APP_ID"];
-        else return false;
+        } else {
+            return false;
+        }
 
-        if (!empty($redirectUrl))
+        if (!empty($redirectUrl)) {
             $urlParams['redirect_uri'] = self::formatRedirectUrl($redirectUrl);
-        else return false;
+        } else {
+            return false;
+        }
 
         $urlParams["display"] = "page";
         $urlParams["scope"] = self::getScope(array("market", "photos", "offline", "wall", "docs", "groups"));
@@ -627,21 +660,29 @@ class Vk extends Platform
         $settings = $this->getSettings($exportId);
         $urlParams = array();
 
-        if (isset($settings["VK_SETTINGS"]["APP_ID"]) && !empty($settings["VK_SETTINGS"]["APP_ID"]))
+        if (isset($settings["VK_SETTINGS"]["APP_ID"]) && !empty($settings["VK_SETTINGS"]["APP_ID"])) {
             $urlParams['client_id'] = $settings["VK_SETTINGS"]["APP_ID"];
-        else return false;
+        } else {
+            return false;
+        }
 
-        if (isset($settings["VK_SETTINGS"]["SECRET"]) && !empty($settings["VK_SETTINGS"]["SECRET"]))
+        if (isset($settings["VK_SETTINGS"]["SECRET"]) && !empty($settings["VK_SETTINGS"]["SECRET"])) {
             $urlParams['client_secret'] = $settings["VK_SETTINGS"]["SECRET"];
-        else return false;
+        } else {
+            return false;
+        }
 
-        if (!empty($redirectUrl))
+        if (!empty($redirectUrl)) {
             $urlParams['redirect_uri'] = self::formatRedirectUrl($redirectUrl);
-        else return false;
+        } else {
+            return false;
+        }
 
-        if (!empty($code))
+        if (!empty($code)) {
             $urlParams['code'] = $code;
-        else return false;
+        } else {
+            return false;
+        }
 
         return self::TOKEN_URL . "?" . http_build_query($urlParams);
     }
@@ -695,8 +736,9 @@ class Vk extends Platform
         $scope = 0;
 
         foreach ($params as $param) {
-            if (isset($scopes[$param]))
+            if (isset($scopes[$param])) {
                 $scope += $scopes[$param];
+            }
         }
 
         return $scope;
@@ -711,10 +753,11 @@ class Vk extends Platform
     {
         $settings = $this->getSettings($exportId);
 
-        if (isset($settings["EXPORT_SETTINGS"]["TIMELIMIT"]))
+        if (isset($settings["EXPORT_SETTINGS"]["TIMELIMIT"])) {
             return $settings["EXPORT_SETTINGS"]["TIMELIMIT"];
-        else
+        } else {
             return false;
+        }
     }
 
     /**
@@ -727,10 +770,11 @@ class Vk extends Platform
         $settings = $this->getSettings();
         $settings = $settings[$exportId];
 
-        if (isset($settings["EXPORT_SETTINGS"]["COUNT_ITEMS"]))
+        if (isset($settings["EXPORT_SETTINGS"]["COUNT_ITEMS"])) {
             return $settings["EXPORT_SETTINGS"]["COUNT_ITEMS"];
-        else
+        } else {
             return false;
+        }
     }
 
     /**
@@ -744,10 +788,11 @@ class Vk extends Platform
     {
         $settings = $this->getSettings($exportId);
 
-        if (isset($settings["EXPORT_SETTINGS"]["RICH_LOG"]) && $settings["EXPORT_SETTINGS"]["RICH_LOG"])
+        if (isset($settings["EXPORT_SETTINGS"]["RICH_LOG"]) && $settings["EXPORT_SETTINGS"]["RICH_LOG"]) {
             return true;
-        else
+        } else {
             return false;
+        }
     }
 
 
@@ -755,10 +800,11 @@ class Vk extends Platform
     {
         $settings = $this->getSettings($exportId);
 
-        if (isset($settings["EXPORT_SETTINGS"]["ONLY_AVAILABLE_FLAG"]) && !$settings["EXPORT_SETTINGS"]["ONLY_AVAILABLE_FLAG"])
+        if (isset($settings["EXPORT_SETTINGS"]["ONLY_AVAILABLE_FLAG"]) && !$settings["EXPORT_SETTINGS"]["ONLY_AVAILABLE_FLAG"]) {
             return false;
-        else
+        } else {
             return true;
+        }
     }
 
 
@@ -772,20 +818,22 @@ class Vk extends Platform
     public function getExportProfilesList($onlyActive = true)
     {
         $exportIds = array();
-        $resExports = ExportProfileTable::getList(array(
+        $resExports = ExportProfileTable::getList(
+            array(
                 'filter' => array('PLATFORM_ID' => $this->getId()),
                 'select' => array('ID', 'DESCRIPTION', 'EXPORT_SETTINGS'),
             )
         );
 
         while ($export = $resExports->fetch()) {
-            if ($onlyActive && $export["EXPORT_SETTINGS"]["ACTIVE"] != "Y")
+            if ($onlyActive && $export["EXPORT_SETTINGS"]["ACTIVE"] != "Y") {
                 continue;
-            else
+            } else {
                 $exportIds[$export["ID"]] = array(
                     'ID' => $export["ID"],
                     'DESC' => $export['DESCRIPTION'],
                 );
+            }
         }
 
         return $exportIds;
@@ -814,9 +862,11 @@ class Vk extends Platform
             "VK_FEED__FEED_ALBUM_PART_FINISH" => Loc::getMessage("SALE_VK_FEED_ALBUM_PART_FINISH"),
         );
 
-        array_walk($result, function (&$value, $key, $prefix) {
-            $value = $prefix . $value;
-        },
+        array_walk(
+            $result,
+            function (&$value, $key, $prefix) {
+                $value = $prefix . $value;
+            },
             $prefix
         );
 

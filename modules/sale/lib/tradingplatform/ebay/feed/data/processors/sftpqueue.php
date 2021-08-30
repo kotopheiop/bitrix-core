@@ -26,29 +26,35 @@ class SftpQueue extends DataProcessor
 
     public function __construct(array $params)
     {
-        if (!isset($params["FEED_TYPE"]) || strlen($params["FEED_TYPE"]) <= 0)
+        if (!isset($params["FEED_TYPE"]) || $params["FEED_TYPE"] == '') {
             throw new ArgumentNullException("FEED_TYPE");
+        }
 
-        if ($this->feedType == "ORDER_ACK")
+        if ($this->feedType == "ORDER_ACK") {
             $this->feedType = "order-ack";
-        else
-            $this->feedType = strtolower($params["FEED_TYPE"]);
+        } else {
+            $this->feedType = mb_strtolower($params["FEED_TYPE"]);
+        }
 
-        if (!isset($params["SITE_ID"]) || strlen($params["SITE_ID"]) <= 0)
+        if (!isset($params["SITE_ID"]) || $params["SITE_ID"] == '') {
             throw new ArgumentNullException("SITE_ID");
+        }
 
         $this->siteId = $params["SITE_ID"];
 
-        if (isset($params["COVER_TAG"]) && strlen($params["COVER_TAG"]) > 0)
+        if (isset($params["COVER_TAG"]) && $params["COVER_TAG"] <> '') {
             $this->coverTag = $params["COVER_TAG"];
+        }
 
-        if (isset($params["SCHEMA_FILE_NAME"]))
+        if (isset($params["SCHEMA_FILE_NAME"])) {
             $this->schemeFileName = $params["SCHEMA_FILE_NAME"];
+        }
 
-        if (isset($params["TIMER"]))
+        if (isset($params["TIMER"])) {
             $this->timer = $params["TIMER"];
+        }
 
-        $this->fileNameSalt = mktime();
+        $this->fileNameSalt = time();
         $this->remotePath = "/store/" . $this->feedType;
         $this->path = \Bitrix\Sale\TradingPlatform\Ebay\Helper::getSftpPath() . "/" . $this->feedType;
     }
@@ -57,22 +63,26 @@ class SftpQueue extends DataProcessor
     {
         $res = file_put_contents($file, '<?xml version="1.0" encoding="UTF-8"?>' . "\n");
 
-        if (!$res)
+        if (!$res) {
             throw new SystemException("Can't flush data feed \"" . $this->feedType . "\" to file " . $file);
+        }
 
-        if ($this->coverTag !== null)
+        if ($this->coverTag !== null) {
             file_put_contents($file, "<" . $this->coverTag . ">\n", FILE_APPEND);
+        }
     }
 
     protected function flushData()
     {
         $fileXml = "";
 
-        $feedDataRes = QueueTable::getList(array(
-            "filter" => array(
-                "FEED_TYPE" => $this->feedType
+        $feedDataRes = QueueTable::getList(
+            array(
+                "filter" => array(
+                    "FEED_TYPE" => $this->feedType
+                )
             )
-        ));
+        );
 
         $filePrepared = false;
 
@@ -83,21 +93,34 @@ class SftpQueue extends DataProcessor
                 $filePrepared = true;
             }
 
-            Ebay::log(Logger::LOG_LEVEL_DEBUG, "EBAY_DATA_PROCESSOR_SFTPQUEUE_FLUSHING", $this->feedType, print_r($feedData["DATA"], true), $this->siteId);
+            Ebay::log(
+                Logger::LOG_LEVEL_DEBUG,
+                "EBAY_DATA_PROCESSOR_SFTPQUEUE_FLUSHING",
+                $this->feedType,
+                print_r($feedData["DATA"], true),
+                $this->siteId
+            );
 
-            if (strtolower(SITE_CHARSET) != 'utf-8')
-                $feedData["DATA"] = \Bitrix\Main\Text\Encoding::convertEncoding($feedData["DATA"], SITE_CHARSET, 'UTF-8');
+            if (mb_strtolower(SITE_CHARSET) != 'utf-8') {
+                $feedData["DATA"] = \Bitrix\Main\Text\Encoding::convertEncoding(
+                    $feedData["DATA"],
+                    SITE_CHARSET,
+                    'UTF-8'
+                );
+            }
 
             $res = file_put_contents($fileXml, $feedData["DATA"], FILE_APPEND);
 
-            if ($res !== false)
+            if ($res !== false) {
                 QueueTable::delete($feedData["ID"]);
-            else
+            } else {
                 throw new SystemException("Can't flush data feed \"" . $this->feedType . "\" to file " . $fileXml);
+            }
         }
 
-        if ($this->coverTag !== null && $filePrepared)
+        if ($this->coverTag !== null && $filePrepared) {
             file_put_contents($fileXml, "</" . $this->coverTag . ">\n", FILE_APPEND);
+        }
 
         return $fileXml;
     }
@@ -109,10 +132,12 @@ class SftpQueue extends DataProcessor
 
     public function addData($data)
     {
-        $result = QueueTable::add(array(
-            "FEED_TYPE" => $this->feedType,
-            "DATA" => $data
-        ));
+        $result = QueueTable::add(
+            array(
+                "FEED_TYPE" => $this->feedType,
+                "DATA" => $data
+            )
+        );
 
         return $result->isSuccess();
     }
@@ -121,8 +146,9 @@ class SftpQueue extends DataProcessor
     {
         $xmlFile = $this->flushData();
 
-        if (!$xmlFile)
+        if (!$xmlFile) {
             return false;
+        }
 
         $tmpFile = $this->packData($xmlFile);
         $zipFile = new \Bitrix\Main\IO\File($tmpFile);
@@ -140,13 +166,16 @@ class SftpQueue extends DataProcessor
         $tmpDir = $this->path . "/tmp";
         $archiveName = $tmpDir . "/" . $this->feedType . "_" . $this->fileNameSalt . ".zip";
         $oArchiver = \CBXArchive::GetArchive($archiveName, "ZIP");
-        $oArchiver->SetOptions(array(
-            "REMOVE_PATH" => $this->path . "/xml",
-            "ADD_PATH" => $this->feedType
-        ));
+        $oArchiver->SetOptions(
+            array(
+                "REMOVE_PATH" => $this->path . "/xml",
+                "ADD_PATH" => $this->feedType
+            )
+        );
 
-        if ($oArchiver->Pack($xmlFile))
+        if ($oArchiver->Pack($xmlFile)) {
             \Bitrix\Main\IO\File::deleteFile($xmlFile);
+        }
 
         return $archiveName;
     }
@@ -155,18 +184,21 @@ class SftpQueue extends DataProcessor
     {
         $directory = new \Bitrix\Main\IO\Directory($this->path . "/zip");
 
-        if (!$directory->isExists())
+        if (!$directory->isExists()) {
             throw new SystemException("Directory" . $this->path . "/zip does not exist! " . __METHOD__);
+        }
 
         $filesToSend = $directory->getChildren();
 
-        if (empty($filesToSend))
+        if (empty($filesToSend)) {
             return false;
+        }
 
         $sftp = \Bitrix\Sale\TradingPlatform\Ebay\Helper::getSftp($this->siteId);
 
-        if (!$sftp)
+        if (!$sftp) {
             return false;
+        }
 
         $sftp->connect();
 
@@ -174,26 +206,36 @@ class SftpQueue extends DataProcessor
             $directoryEntry = $filesToSend[$i];
             $localPath = $directoryEntry->getPath();
 
-            if ((!($directoryEntry instanceof \Bitrix\Main\IO\File)) || GetFileExtension($localPath) != "zip")
+            if ((!($directoryEntry instanceof \Bitrix\Main\IO\File)) || GetFileExtension($localPath) != "zip") {
                 continue;
+            }
 
             $remote = $this->remotePath . "/" . $directoryEntry->getName();
 
             while (!$this->checkOuterConditions($sftp)) {
-                if ($this->timer !== null && !$this->timer->check(15))
+                if ($this->timer !== null && !$this->timer->check(15)) {
                     return false;
+                }
 
                 sleep(10);
             }
 
             if ($sftp->uploadFile($localPath, $remote)) {
                 $directoryEntry->delete();
-                ResultsTable::add(array(
-                    "FILENAME" => $directoryEntry->getName(),
-                    "FEED_TYPE" => $this->feedType,
-                    "UPLOAD_TIME" => DateTime::createFromTimestamp(time())
-                ));
-                Ebay::log(Logger::LOG_LEVEL_INFO, "EBAY_DATA_PROCESSOR_SFTPQUEUE_SEND", $remote, "File sent successfully.", $this->siteId);
+                ResultsTable::add(
+                    array(
+                        "FILENAME" => $directoryEntry->getName(),
+                        "FEED_TYPE" => $this->feedType,
+                        "UPLOAD_TIME" => DateTime::createFromTimestamp(time())
+                    )
+                );
+                Ebay::log(
+                    Logger::LOG_LEVEL_INFO,
+                    "EBAY_DATA_PROCESSOR_SFTPQUEUE_SEND",
+                    $remote,
+                    "File sent successfully.",
+                    $this->siteId
+                );
             }
         }
 
@@ -204,15 +246,17 @@ class SftpQueue extends DataProcessor
     {
         $files = $sftp->getFilesList($this->remotePath);
 
-        if (!empty($files))
+        if (!empty($files)) {
             return false;
+        }
 
         if ($this->feedType == "inventory" || $this->feedType == "image") {
             $filesProd = $sftp->getFilesList("/store/product");
             $filesProdInProc = $sftp->getFilesList("/store/product/inprocess");
 
-            if (!empty($filesProd) || !empty($filesProdInProc))
+            if (!empty($filesProd) || !empty($filesProdInProc)) {
                 return false;
+            }
         }
 
         return true;

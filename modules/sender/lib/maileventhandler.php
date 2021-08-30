@@ -42,7 +42,13 @@ class MailEventHandler
     public static function prevent($eventName, array $filter)
     {
         if (empty(static::$list[$eventName])) {
-            EventManager::getInstance()->addEventHandler('main', 'OnBeforeMailEventAdd', array(__CLASS__, 'handleEvent'), false, 1);
+            EventManager::getInstance()->addEventHandler(
+                'main',
+                'OnBeforeMailEventAdd',
+                array(__CLASS__, 'handleEvent'),
+                false,
+                1
+            );
         }
 
         static::$list[$eventName][] = $filter;
@@ -50,8 +56,9 @@ class MailEventHandler
 
     public static function isPreventable($eventName, array $fields)
     {
-        if (empty(static::$list[$eventName]))
+        if (empty(static::$list[$eventName])) {
             return false;
+        }
 
         $prevent = false;
 
@@ -65,8 +72,9 @@ class MailEventHandler
                 }
             }
 
-            if ($prevent)
+            if ($prevent) {
                 break;
+            }
         }
 
         return $prevent;

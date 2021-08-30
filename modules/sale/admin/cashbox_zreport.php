@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 use Bitrix\Main\Localization\Loc;
@@ -9,8 +10,9 @@ use Bitrix\Main\Type\Date;
 $publicMode = $adminPage->publicMode;
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions < "W")
+if ($saleModulePermissions < "W") {
     $APPLICATION->AuthForm(Loc::getMessage("SALE_ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/prolog.php");
@@ -26,7 +28,7 @@ $instance = \Bitrix\Main\Application::getInstance();
 $context = $instance->getContext();
 $request = $context->getRequest();
 
-$oSort = new CAdminSorting($tableId, "ID", "asc");
+$oSort = new CAdminUiSorting($tableId, "ID", "asc");
 $lAdmin = new CAdminUiList($tableId, $oSort);
 
 $cashBoxList = array();
@@ -195,13 +197,15 @@ if (($ids = $lAdmin->GroupAction()) && $saleModulePermissions >= "W") {
             )
         );
 
-        while ($arResult = $dbRes->fetch())
+        while ($arResult = $dbRes->fetch()) {
             $ids[] = $arResult['ID'];
+        }
     }
 
     foreach ($ids as $id) {
-        if ((int)$id <= 0)
+        if ((int)$id <= 0) {
             continue;
+        }
 
         switch ($_REQUEST['action']) {
             case "delete":
@@ -245,13 +249,48 @@ $dbResultList->NavStart();
 
 $headers = array(
     array("id" => "ID", "content" => Loc::getMessage("SALE_CASHBOX_ZREPORT_ID"), "sort" => "ID", "default" => true),
-    array("id" => "CASHBOX_ID", "content" => Loc::getMessage("SALE_CASHBOX_ZREPORT_CASHBOX_ID"), "sort" => "CASHBOX_ID", "default" => true),
-    array("id" => "DATE_CREATE", "content" => Loc::getMessage("SALE_CASHBOX_ZREPORT_DATE_CREATE"), "sort" => "DATE_CREATE", "default" => true),
-    array("id" => "CASH_SUM", "content" => Loc::getMessage("SALE_CASHBOX_ZREPORT_CASH_SUM"), "sort" => "CASH_SUM", "default" => true),
-    array("id" => "CASHLESS_SUM", "content" => Loc::getMessage("SALE_CASHBOX_ZREPORT_CASHLESS_SUM"), "sort" => "CASHLESS_SUM", "default" => true),
-    array("id" => "RETURNED_SUM", "content" => Loc::getMessage("SALE_CASHBOX_RETURNED_SUM"), "sort" => "RETURNED_SUM", "default" => true),
-    array("id" => "CALCULATE_SUM", "content" => Loc::getMessage("SALE_CASHBOX_CALCULATE_SUM"), "sort" => "CALCULATE_SUM", "default" => true),
-    array("id" => "CUMULATIVE_SUM", "content" => Loc::getMessage("SALE_CASHBOX_CUMULATIVE_SUM"), "sort" => "CUMULATIVE_SUM", "default" => true),
+    array(
+        "id" => "CASHBOX_ID",
+        "content" => Loc::getMessage("SALE_CASHBOX_ZREPORT_CASHBOX_ID"),
+        "sort" => "CASHBOX_ID",
+        "default" => true
+    ),
+    array(
+        "id" => "DATE_CREATE",
+        "content" => Loc::getMessage("SALE_CASHBOX_ZREPORT_DATE_CREATE"),
+        "sort" => "DATE_CREATE",
+        "default" => true
+    ),
+    array(
+        "id" => "CASH_SUM",
+        "content" => Loc::getMessage("SALE_CASHBOX_ZREPORT_CASH_SUM"),
+        "sort" => "CASH_SUM",
+        "default" => true
+    ),
+    array(
+        "id" => "CASHLESS_SUM",
+        "content" => Loc::getMessage("SALE_CASHBOX_ZREPORT_CASHLESS_SUM"),
+        "sort" => "CASHLESS_SUM",
+        "default" => true
+    ),
+    array(
+        "id" => "RETURNED_SUM",
+        "content" => Loc::getMessage("SALE_CASHBOX_RETURNED_SUM"),
+        "sort" => "RETURNED_SUM",
+        "default" => true
+    ),
+    array(
+        "id" => "CALCULATE_SUM",
+        "content" => Loc::getMessage("SALE_CASHBOX_CALCULATE_SUM"),
+        "sort" => "CALCULATE_SUM",
+        "default" => true
+    ),
+    array(
+        "id" => "CUMULATIVE_SUM",
+        "content" => Loc::getMessage("SALE_CASHBOX_CUMULATIVE_SUM"),
+        "sort" => "CUMULATIVE_SUM",
+        "default" => true
+    ),
     array("id" => "STATUS", "content" => Loc::getMessage("SALE_CASHBOX_STATUS"), "default" => true),
 );
 
@@ -279,7 +318,10 @@ while ($report = $dbResultList->Fetch()) {
             array(
                 "ICON" => "delete",
                 "TEXT" => GetMessage("SALE_REPORT_DELETE"),
-                "ACTION" => "if(confirm('" . Loc::getMessage('SALE_REPORT_DELETE_CONFIRM', array('#REPORT_ID#' => $report['ID'])) . "')) " . $lAdmin->ActionDoGroup($report["ID"], "delete")
+                "ACTION" => "if(confirm('" . Loc::getMessage(
+                        'SALE_REPORT_DELETE_CONFIRM',
+                        array('#REPORT_ID#' => $report['ID'])
+                    ) . "')) " . $lAdmin->ActionDoGroup($report["ID"], "delete")
             )
         );
         $row->AddActions($arActions);
@@ -333,7 +375,9 @@ if (isset($blockData)) {
                     <table>
                         <thead>
                         <tr>
-                            <td class="adm-zreport-list-frames-title"><?= Loc::getMessage("SALE_ZREPORT_FRAME_TITLE_1") ?></td>
+                            <td class="adm-zreport-list-frames-title"><?= Loc::getMessage(
+                                    "SALE_ZREPORT_FRAME_TITLE_1"
+                                ) ?></td>
                         </tr>
                         </thead>
                         <tbody>
@@ -356,7 +400,9 @@ if (isset($blockData)) {
                     <table>
                         <thead>
                         <tr>
-                            <td class="adm-zreport-list-frames-title"><?= Loc::getMessage("SALE_ZREPORT_FRAME_TITLE_2") ?></td>
+                            <td class="adm-zreport-list-frames-title"><?= Loc::getMessage(
+                                    "SALE_ZREPORT_FRAME_TITLE_2"
+                                ) ?></td>
                         </tr>
                         </thead>
                         <tbody>
@@ -380,7 +426,9 @@ if (isset($blockData)) {
                     <table>
                         <thead>
                         <tr>
-                            <td class="adm-zreport-list-frames-title"><?= Loc::getMessage("SALE_ZREPORT_FRAME_TITLE_3") ?></td>
+                            <td class="adm-zreport-list-frames-title"><?= Loc::getMessage(
+                                    "SALE_ZREPORT_FRAME_TITLE_3"
+                                ) ?></td>
                         </tr>
                         </thead>
                         <tbody>

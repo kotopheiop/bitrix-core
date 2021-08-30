@@ -28,11 +28,32 @@ class Bind
 
         self::$messageHandler = new MessageHandler;
         \Bitrix\Replica\Client\HandlersManager::register(self::$messageHandler);
+        $eventManager->addEventHandler(
+            "forum",
+            "onBeforeMessageAdd",
+            array(self::$messageHandler, "onBeforeMessageAdd")
+        );
         $eventManager->addEventHandler("forum", "onAfterMessageAdd", array(self::$messageHandler, "onAfterMessageAdd"));
-        $eventManager->addEventHandler("forum", "onBeforeMessageUpdate", array(self::$messageHandler, "onBeforeMessageUpdate"));
-        $eventManager->addEventHandler("forum", "onAfterMessageUpdate", array(self::$messageHandler, "onAfterMessageUpdate"));
-        $eventManager->addEventHandler("forum", "onBeforeMessageDelete", array(self::$messageHandler, "onBeforeMessageDelete"));
-        $eventManager->addEventHandler("forum", "onAfterMessageDelete", array(self::$messageHandler, "onAfterMessageDelete"));
+        $eventManager->addEventHandler(
+            "forum",
+            "onBeforeMessageUpdate",
+            array(self::$messageHandler, "onBeforeMessageUpdate")
+        );
+        $eventManager->addEventHandler(
+            "forum",
+            "onAfterMessageUpdate",
+            array(self::$messageHandler, "onAfterMessageUpdate")
+        );
+        $eventManager->addEventHandler(
+            "forum",
+            "onBeforeMessageDelete",
+            array(self::$messageHandler, "onBeforeMessageDelete")
+        );
+        $eventManager->addEventHandler(
+            "forum",
+            "onAfterMessageDelete",
+            array(self::$messageHandler, "onAfterMessageDelete")
+        );
 
         \Bitrix\Replica\Client\HandlersManager::register(new MessageRatingVoteHandler);
     }

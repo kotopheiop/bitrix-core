@@ -31,8 +31,11 @@ class Assert
     public final static function expectInteger($arg, $argName = '', $customMsg = '')
     {
         $argInt = intval($arg);
-        if ($arg != $argInt)
-            throw new Main\ArgumentException(self::formMessage('SALE_LOCATION_ASSERT_INTEGER_EXPECTED', $argName, $customMsg));
+        if ($arg != $argInt) {
+            throw new Main\ArgumentException(
+                self::formMessage('SALE_LOCATION_ASSERT_INTEGER_EXPECTED', $argName, $customMsg)
+            );
+        }
 
         return $argInt;
     }
@@ -51,8 +54,11 @@ class Assert
     public final static function expectIntegerPositive($arg, $argName = '', $customMsg = '')
     {
         $argInt = intval($arg);
-        if ($arg != $argInt || $argInt <= 0)
-            throw new Main\ArgumentException(self::formMessage('SALE_LOCATION_ASSERT_INTEGER_NOTNULL_EXPECTED', $argName, $customMsg));
+        if ($arg != $argInt || $argInt <= 0) {
+            throw new Main\ArgumentException(
+                self::formMessage('SALE_LOCATION_ASSERT_INTEGER_NOTNULL_EXPECTED', $argName, $customMsg)
+            );
+        }
 
         return $argInt;
     }
@@ -71,8 +77,11 @@ class Assert
     public final static function expectIntegerNonNegative($arg, $argName = '', $customMsg = '')
     {
         $argInt = intval($arg);
-        if ($arg != $argInt || $argInt < 0)
-            throw new Main\ArgumentException(self::formMessage('SALE_LOCATION_ASSERT_INTEGER_NONNEGATIVE_EXPECTED', $argName, $customMsg));
+        if ($arg != $argInt || $argInt < 0) {
+            throw new Main\ArgumentException(
+                self::formMessage('SALE_LOCATION_ASSERT_INTEGER_NONNEGATIVE_EXPECTED', $argName, $customMsg)
+            );
+        }
 
         return $argInt;
     }
@@ -90,8 +99,11 @@ class Assert
      */
     public final static function expectStringNotNull($arg, $argName = '', $customMsg = '')
     {
-        if (!strlen($arg))
-            throw new Main\ArgumentException(self::formMessage('SALE_LOCATION_ASSERT_STRING_NOTNULL_EXPECTED', $argName, $customMsg));
+        if ($arg == '') {
+            throw new Main\ArgumentException(
+                self::formMessage('SALE_LOCATION_ASSERT_STRING_NOTNULL_EXPECTED', $argName, $customMsg)
+            );
+        }
 
         return (string)$arg;
     }
@@ -109,8 +121,11 @@ class Assert
      */
     public final static function expectArray($arg, $argName = '', $customMsg = '')
     {
-        if (!is_array($arg))
-            throw new Main\ArgumentException(self::formMessage('SALE_LOCATION_ASSERT_ARRAY_EXPECTED', $argName, $customMsg));
+        if (!is_array($arg)) {
+            throw new Main\ArgumentException(
+                self::formMessage('SALE_LOCATION_ASSERT_ARRAY_EXPECTED', $argName, $customMsg)
+            );
+        }
 
         return $arg;
     }
@@ -128,8 +143,11 @@ class Assert
      */
     public final static function expectNotEmptyArray($arg, $argName = '', $customMsg = '')
     {
-        if (!is_array($arg) || empty($arg))
-            throw new Main\ArgumentException(self::formMessage('SALE_LOCATION_ASSERT_ARRAY_NOT_EMPTY_EXPECTED', $argName, $customMsg));
+        if (!is_array($arg) || empty($arg)) {
+            throw new Main\ArgumentException(
+                self::formMessage('SALE_LOCATION_ASSERT_ARRAY_NOT_EMPTY_EXPECTED', $argName, $customMsg)
+            );
+        }
 
         return $arg;
     }
@@ -147,15 +165,21 @@ class Assert
      */
     public final static function expectArrayOfUniqueIntegerNotNull($arg, $argName = '', $customMsg = '')
     {
-        if (!is_array($arg))
-            throw new Main\ArgumentException(self::formMessage('SALE_LOCATION_ASSERT_ARRAY_EXPECTED', $argName, $customMsg));
+        if (!is_array($arg)) {
+            throw new Main\ArgumentException(
+                self::formMessage('SALE_LOCATION_ASSERT_ARRAY_EXPECTED', $argName, $customMsg)
+            );
+        }
 
         $arg = array_unique(array_values($arg));
 
         foreach ($arg as $k => $v) {
             $vInt = intval($v);
-            if ($v != $vInt || $vInt == 0)
-                throw new Main\ArgumentException(self::formMessage('SALE_LOCATION_ASSERT_ARRAY_OF_INTEGER_NOT_NULL_EXPECTED', $argName, $customMsg));
+            if ($v != $vInt || $vInt == 0) {
+                throw new Main\ArgumentException(
+                    self::formMessage('SALE_LOCATION_ASSERT_ARRAY_OF_INTEGER_NOT_NULL_EXPECTED', $argName, $customMsg)
+                );
+            }
 
             $arg[$k] = $vInt; // it can be casted to integer
         }
@@ -176,15 +200,21 @@ class Assert
      */
     public final static function expectArrayOfUniqueStringNotNull($arg, $argName = '', $customMsg = '')
     {
-        if (!is_array($arg))
-            throw new Main\ArgumentException(self::formMessage('SALE_LOCATION_ASSERT_ARRAY_EXPECTED', $argName, $customMsg));
+        if (!is_array($arg)) {
+            throw new Main\ArgumentException(
+                self::formMessage('SALE_LOCATION_ASSERT_ARRAY_EXPECTED', $argName, $customMsg)
+            );
+        }
 
         $arg = array_unique(array_values($arg));
 
         foreach ($arg as $k => $v) {
             $v = (string)$v;
-            if (!strlen($v))
-                throw new Main\ArgumentException(self::formMessage('SALE_LOCATION_ASSERT_ARRAY_OF_STRING_NOT_NULL_EXPECTED', $argName, $customMsg));
+            if ($v == '') {
+                throw new Main\ArgumentException(
+                    self::formMessage('SALE_LOCATION_ASSERT_ARRAY_OF_STRING_NOT_NULL_EXPECTED', $argName, $customMsg)
+                );
+            }
 
             $arg[$k] = $v;
         }
@@ -206,19 +236,24 @@ class Assert
      */
     public final static function expectEnumerationMember($arg, $enum = array(), $argName = '', $customMsg = '')
     {
-        if (!strlen($arg))
+        if ($arg == '') {
             throw new Main\ArgumentException(Loc::getMessage('SALE_LOCATION_ASSERT_EMPTY_ARGUMENT'));
+        }
 
-        if (!is_array($enum) || empty($enum))
+        if (!is_array($enum) || empty($enum)) {
             throw new Main\ArgumentException(Loc::getMessage('SALE_LOCATION_ASSERT_EMPTY_ENUMERATION'));
+        }
 
         // we cannot use in_array() here, kz we need for real data type
         foreach ($enum as $variant) {
-            if ($variant == $arg)
+            if ($variant == $arg) {
                 return $variant;
+            }
         }
 
-        throw new Main\ArgumentException(self::formMessage('SALE_LOCATION_ASSERT_ITEM_NOT_IN_ENUMERATION', $argName, $customMsg));
+        throw new Main\ArgumentException(
+            self::formMessage('SALE_LOCATION_ASSERT_ITEM_NOT_IN_ENUMERATION', $argName, $customMsg)
+        );
     }
 
     // casters
@@ -254,11 +289,12 @@ class Assert
         throw new Main\NotSupportedException($msg);
     }
 
-    private final static function formMessage($msgCode, $argName = '', $customMsg = '')
+    private static function formMessage($msgCode, $argName = '', $customMsg = '')
     {
-        if (strlen($customMsg))
+        if ($customMsg <> '') {
             return str_replace('#ARG_NAME#', $argName, $customMsg);
+        }
 
-        return Loc::getMessage($msgCode, array('#ARG_NAME#' => strlen($argName) ? ' "' . $argName . '" ' : ' '));
+        return Loc::getMessage($msgCode, array('#ARG_NAME#' => $argName <> '' ? ' "' . $argName . '" ' : ' '));
     }
 }

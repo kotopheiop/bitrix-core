@@ -9,6 +9,7 @@ use Bitrix\Main;
 class BaseTrigger
 {
     protected $target;
+    protected $returnValues;
 
     /**
      * @return string the fully qualified name of this class.
@@ -122,11 +123,32 @@ class BaseTrigger
         return true;
     }
 
+    public function getReturnValues(): ?array
+    {
+        return $this->returnValues;
+    }
+
+    /**
+     * @param array $values
+     * @return $this
+     */
+    public function setReturnValues(array $values)
+    {
+        $this->returnValues = $values;
+        return $this;
+    }
+
+    public static function getReturnProperties(): array
+    {
+        return [];
+    }
+
     public static function toArray()
     {
         return [
             'NAME' => static::getName(),
-            'CODE' => static::getCode()
+            'CODE' => static::getCode(),
+            'RETURN' => static::getReturnProperties(),
         ];
     }
 }

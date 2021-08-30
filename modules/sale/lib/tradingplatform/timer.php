@@ -20,10 +20,11 @@ class Timer
         $startTime = (int)time();
         $currentTimeLimit = ini_get('max_execution_time');
 
-        if ($newTimeLimit > $currentTimeLimit || $newTimeLimit == 0)
+        if ($newTimeLimit > $currentTimeLimit || $newTimeLimit == 0) {
             $timeLimit = $newTimeLimit;
-        else
+        } else {
             $timeLimit = $currentTimeLimit;
+        }
 
         $this->timeLimit = $timeLimit;
         if ($increaseTimeLimit) {
@@ -32,7 +33,6 @@ class Timer
         } else {
             $this->finishTime = $startTime + (int)($newTimeLimit);
         }
-
     }
 
     /**
@@ -42,11 +42,13 @@ class Timer
      */
     public function check($reserveTime = 0)
     {
-        if ($this->timeLimit == 0)
+        if ($this->timeLimit == 0) {
             return true;
+        }
 
-        if (time() < $this->finishTime - $reserveTime)
+        if (time() < $this->finishTime - $reserveTime) {
             return true;
+        }
 
         return false;
     }

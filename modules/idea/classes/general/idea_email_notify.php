@@ -10,7 +10,7 @@ Class CIdeaManagmentEmailNotify
     //const SUBSCRIBE_ALL_IDEA_COMMENT = 'AIC';
     const SUBSCRIBE_IDEA_COMMENT = 'I';
 
-    private $Notify = NULL;
+    private $Notify = null;
     private static $Enable = true;
 
     public function __construct($parent)
@@ -20,7 +20,7 @@ Class CIdeaManagmentEmailNotify
 
     public function IsAvailable()
     {
-        return CModule::IncludeModule('blog') && NULL != $this->Notify && self::$Enable;
+        return CModule::IncludeModule('blog') && null != $this->Notify && self::$Enable;
     }
 
     public static function Add($Entity)
@@ -33,17 +33,27 @@ Class CIdeaManagmentEmailNotify
     public static function Delete($Entity)
     {
         $notifyEmail = new \Bitrix\Idea\NotifyEmail();
-        if ($Entity == 'AI' || $Entity == 'A')
+        if ($Entity == 'AI' || $Entity == 'A') {
             $notifyEmail->deleteCategory('');
-        else if (substr($Entity, 0, strlen(self::SUBSCRIBE_IDEA_COMMENT)) == self::SUBSCRIBE_IDEA_COMMENT)
-            $notifyEmail->deleteIdea(substr($Entity, strlen(self::SUBSCRIBE_IDEA_COMMENT)));
-        else if (strlen(intval($Entity)) == strlen($Entity))
-            $notifyEmail->deleteIdea($Entity);
+        } else {
+            if (mb_substr($Entity, 0, mb_strlen(self::SUBSCRIBE_IDEA_COMMENT)) == self::SUBSCRIBE_IDEA_COMMENT) {
+                $notifyEmail->deleteIdea(mb_substr($Entity, mb_strlen(self::SUBSCRIBE_IDEA_COMMENT)));
+            } else {
+                if (mb_strlen(intval($Entity)) == mb_strlen($Entity)) {
+                    $notifyEmail->deleteIdea($Entity);
+                }
+            }
+        }
         return true;
     }
 
-    public static function GetList($order = Array(), $arFilter = Array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
-    {
+    public static function GetList(
+        $order = Array(),
+        $arFilter = Array(),
+        $arGroupBy = false,
+        $arNavStartParams = false,
+        $arSelectFields = array()
+    ) {
         $filter = array(
             "LOGIC" => "AND"
         );
@@ -57,24 +67,30 @@ Class CIdeaManagmentEmailNotify
                     foreach ($val as $v) {
                         if ($v == self::SUBSCRIBE_ALL) {
                             $res[] = array("=SUBSCRIBE_TYPE" => \Bitrix\Idea\NotifyEmailTable::SUBSCRIBE_TYPE_ALL);
-                        } else if (strpos($v, self::SUBSCRIBE_IDEA_COMMENT) === 0) {
-                            $res[] = array(
-                                "=ENTITY_TYPE" => \Bitrix\Idea\NotifyEmailTable::ENTITY_TYPE_IDEA,
-                                "=ENTITY_CODE" => str_replace(self::SUBSCRIBE_IDEA_COMMENT, "", $v)
-                            );
+                        } else {
+                            if (mb_strpos($v, self::SUBSCRIBE_IDEA_COMMENT) === 0) {
+                                $res[] = array(
+                                    "=ENTITY_TYPE" => \Bitrix\Idea\NotifyEmailTable::ENTITY_TYPE_IDEA,
+                                    "=ENTITY_CODE" => str_replace(self::SUBSCRIBE_IDEA_COMMENT, "", $v)
+                                );
+                            }
                         }
                     }
                     $filter[] = $res;
-                } else if ($key["FIELD"] == "USER_ID" || $key["FIELD"] == "USER_EMAIL")
-                    $filter[] = array($dkey => $val);
+                } else {
+                    if ($key["FIELD"] == "USER_ID" || $key["FIELD"] == "USER_EMAIL") {
+                        $filter[] = array($dkey => $val);
+                    }
+                }
             }
         }
         $select = array();
         $runtime = array();
         if (is_array($arSelectFields)) {
             $select = array_intersect($arSelectFields, array_keys(\Bitrix\Idea\NotifyEmailTable::getMap()));
-            if (in_array("USER_EMAIL", $arSelectFields))
+            if (in_array("USER_EMAIL", $arSelectFields)) {
                 $select["USER_EMAIL"] = "USER.EMAIL";
+            }
             if (in_array("ID", $arSelectFields)) {
                 $select["ID"] = 'RUNTIME_ID';
                 $runtime[] = new ExpressionField(
@@ -86,9 +102,17 @@ Class CIdeaManagmentEmailNotify
                         "WHEN %s='" . \Bitrix\Idea\NotifyEmailTable::ENTITY_TYPE_CATEGORY . "' AND %s='' THEN '" . self::SUBSCRIBE_ALL_IDEA . "' " .
                         "WHEN %s='" . \Bitrix\Idea\NotifyEmailTable::ENTITY_TYPE_CATEGORY . "' THEN '" . \Bitrix\Idea\NotifyEmailTable::ENTITY_TYPE_CATEGORY . "' " .
                         "ELSE 'UNK' END",
-                        "%s"),
+                        "%s"
+                    ),
                     array(
-                        "ENTITY_TYPE", "ENTITY_CODE", "ENTITY_TYPE", "ENTITY_TYPE", "ENTITY_CODE", "ENTITY_TYPE", "ENTITY_CODE")
+                        "ENTITY_TYPE",
+                        "ENTITY_CODE",
+                        "ENTITY_TYPE",
+                        "ENTITY_TYPE",
+                        "ENTITY_CODE",
+                        "ENTITY_TYPE",
+                        "ENTITY_CODE"
+                    )
                 );
             }
         }
@@ -105,22 +129,27 @@ Class CIdeaManagmentEmailNotify
 
     public function Send()
     {
-        if (!$this->IsAvailable())
+        if (!$this->IsAvailable()) {
             return false;
+        }
 
         $arNotification = $this->Notify->getNotification();
 
         //No need to send about updates;
-        if ($arNotification["ACTION"] == "UPDATE")
+        if ($arNotification["ACTION"] == "UPDATE") {
             return 0;
+        }
         $category = ToUpper($arNotification["CATEGORY"]);
         $arEmailSubscribe = array();
-        if (!array_key_exists("CATEGORIES", $arNotification))
+        if (!array_key_exists("CATEGORIES", $arNotification)) {
             $arNotification["CATEGORIES"] = \CIdeaManagment::getInstance()->Idea()->GetCategoryList();
-        if (array_key_exists($category, $arNotification["CATEGORIES"]) && \CIdeaManagment::getInstance()->Idea()->GetCategoryListID() > 0)
+        }
+        if (array_key_exists($category, $arNotification["CATEGORIES"]) && \CIdeaManagment::getInstance()->Idea(
+            )->GetCategoryListID() > 0) {
             $category = $arNotification["CATEGORIES"][$category];
-        else
+        } else {
             $category = null;
+        }
 
         if ($arNotification["TYPE"] == "IDEA") // (COMMENT, IDEA)
         {
@@ -172,14 +201,19 @@ Class CIdeaManagmentEmailNotify
             )
         );
 
-        if (!is_null($category))
+        if (!is_null($category)) {
             $arNotification["CATEGORY"] = $category["NAME"];
+        }
         unset($arNotification["CATEGORIES"]);
-        if (!array_key_exists("IDEA_TITLE", $arNotification))
+        if (!array_key_exists("IDEA_TITLE", $arNotification)) {
             $arNotification["IDEA_TITLE"] = $arNotification["TITLE"];
+        }
 
         while ($r = $db_res->Fetch()) {
-            if ($r["USER_ID"] != $arNotification["AUTHOR_ID"] && !array_key_exists($r["USER_ID"], $arEmailSubscribe) && check_email($r["USER_EMAIL"])) {
+            if ($r["USER_ID"] != $arNotification["AUTHOR_ID"] && !array_key_exists(
+                    $r["USER_ID"],
+                    $arEmailSubscribe
+                ) && check_email($r["USER_EMAIL"])) {
                 $arEmailSubscribe[$r["USER_ID"]] = $r["USER_EMAIL"];
 
                 $arNotification["EMIAL_TO"] = $r["USER_EMAIL"]; //This is for backward compatibility

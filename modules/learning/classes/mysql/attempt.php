@@ -1,14 +1,17 @@
-<?
+<?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/learning/classes/general/attempt.php");
 
 class CTestAttempt extends CAllTestAttempt
 {
-    function DoInsert($arInsert, $arFields)
+    public static function DoInsert($arInsert, $arFields)
     {
         global $DB;
 
-        if (strlen($arInsert[0]) <= 0 || strlen($arInsert[0]) <= 0)        // BUG ?
+        if ($arInsert[0] == '' || $arInsert[0] == '')        // BUG ?
+        {
             return false;
+        }
 
         if (!isset($arFields["DATE_START"])) {
             $arInsert[0] = "DATE_START, " . $arInsert[0];
@@ -19,15 +22,23 @@ class CTestAttempt extends CAllTestAttempt
             "INSERT INTO b_learn_attempt(" . $arInsert[0] . ") " .
             "VALUES(" . $arInsert[1] . ")";
 
-        if ($DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__))
+        if ($DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__)) {
             return $DB->LastID();
+        }
 
         return false;
     }
 
 
-    final protected static function _GetListSQLFormer($sSelect, $obUserFieldsSql, $bCheckPerm, $USER, $arFilter, $strSqlSearch, &$strSqlFrom)
-    {
+    final protected static function _GetListSQLFormer(
+        $sSelect,
+        $obUserFieldsSql,
+        $bCheckPerm,
+        $USER,
+        $arFilter,
+        $strSqlSearch,
+        &$strSqlFrom
+    ) {
         $oPermParser = new CLearnParsePermissionsFromFilter ($arFilter);
 
         $strSqlFrom = "FROM b_learn_attempt A " .
@@ -50,8 +61,9 @@ class CTestAttempt extends CAllTestAttempt
 				)
 			) ";
 
-        if ($oPermParser->IsNeedCheckPerm())
+        if ($oPermParser->IsNeedCheckPerm()) {
             $strSqlFrom .= " AND C.LINKED_LESSON_ID IN (" . $oPermParser->SQLForAccessibleLessons() . ") ";
+        }
 
         $strSqlFrom .= $strSqlSearch;
 

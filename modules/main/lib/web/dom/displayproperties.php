@@ -113,7 +113,9 @@ class DisplayProperties
     protected function isHiddenNode(Node $node)
     {
         static $hiddenNodeNames = [
-            '#comment' => true, 'STYLE' => true, 'SCRIPT' => true,
+            '#comment' => true,
+            'STYLE' => true,
+            'SCRIPT' => true,
         ];
 
         return isset($hiddenNodeNames[$node->getNodeName()]);
@@ -128,15 +130,42 @@ class DisplayProperties
     protected function isBlockTag($tagName)
     {
         $blockTagNames = [
-            'address' => true, 'article' => true, 'aside' => true, 'blockquote' => true, 'details' => true,
-            'dialog' => true, 'dd' => true, 'div' => true, 'dl' => true, 'dt' => true, 'fieldset' => true,
-            'figcaption' => true, 'figure' => true, 'footer' => true, 'form' => true, 'h1' => true, 'h2' => true,
-            'h3' => true, 'h4' => true, 'h5' => true, 'h6' => true, 'header' => true, 'hgroup' => true, 'hr' => true,
-            'li' => true, 'main' => true, 'nav' => true, 'ol' => true, 'p' => true, 'pre' => true, 'section' => true, 'table' => true,
+            'address' => true,
+            'article' => true,
+            'aside' => true,
+            'blockquote' => true,
+            'details' => true,
+            'dialog' => true,
+            'dd' => true,
+            'div' => true,
+            'dl' => true,
+            'dt' => true,
+            'fieldset' => true,
+            'figcaption' => true,
+            'figure' => true,
+            'footer' => true,
+            'form' => true,
+            'h1' => true,
+            'h2' => true,
+            'h3' => true,
+            'h4' => true,
+            'h5' => true,
+            'h6' => true,
+            'header' => true,
+            'hgroup' => true,
+            'hr' => true,
+            'li' => true,
+            'main' => true,
+            'nav' => true,
+            'ol' => true,
+            'p' => true,
+            'pre' => true,
+            'section' => true,
+            'table' => true,
             'ul' => true,
         ];
 
-        return isset($blockTagNames[strtolower($tagName)]);
+        return isset($blockTagNames[mb_strtolower($tagName)]);
     }
 
     /**
@@ -148,11 +177,19 @@ class DisplayProperties
     protected function isBoldTag($tagName)
     {
         $boldTagNames = [
-            'b' => true, 'mark' => true, 'em' => true, 'strong' => true, 'h1' => true, 'h2' => true, 'h3' => true,
-            'h4' => true, 'h5' => true, 'h6' => true,
+            'b' => true,
+            'mark' => true,
+            'em' => true,
+            'strong' => true,
+            'h1' => true,
+            'h2' => true,
+            'h3' => true,
+            'h4' => true,
+            'h5' => true,
+            'h6' => true,
         ];
 
-        return isset($boldTagNames[strtolower($tagName)]);
+        return isset($boldTagNames[mb_strtolower($tagName)]);
     }
 
     /**
@@ -164,10 +201,12 @@ class DisplayProperties
     protected function isItalicTag($tagName)
     {
         $italicTagNames = [
-            'i' => true, 'cite' => true, 'dfn' => true,
+            'i' => true,
+            'cite' => true,
+            'dfn' => true,
         ];
 
-        return isset($italicTagNames[strtolower($tagName)]);
+        return isset($italicTagNames[mb_strtolower($tagName)]);
     }
 
     /**
@@ -178,7 +217,7 @@ class DisplayProperties
      */
     protected function isUnderlinedTag($tagName)
     {
-        return strtolower($tagName) == 'u';
+        return mb_strtolower($tagName) == 'u';
     }
 
     /**
@@ -189,7 +228,7 @@ class DisplayProperties
      */
     protected function isDeletedTag($tagName)
     {
-        return strtolower($tagName) == 'del';
+        return mb_strtolower($tagName) == 'del';
     }
 
     /**
@@ -231,16 +270,16 @@ class DisplayProperties
                                 $font[static::FONT_BOLD] = false;
                             }
                         } elseif ($name == 'font-style') {
-                            if ($value == 'italic' || strpos($value, 'oblique') === 0) {
+                            if ($value == 'italic' || mb_strpos($value, 'oblique') === 0) {
                                 $font[static::FONT_ITALIC] = true;
                             } elseif ($value == 'normal') {
                                 $font[static::FONT_ITALIC] = false;
                             }
                         } elseif ($name == 'text-decoration') {
-                            if (strpos($value, 'underline') !== false) {
+                            if (mb_strpos($value, 'underline') !== false) {
                                 $font[static::FONT_UNDERLINED] = true;
                             }
-                            if (strpos($value, 'line-through') !== false) {
+                            if (mb_strpos($value, 'line-through') !== false) {
                                 $font[static::FONT_DELETED] = true;
                             }
                             if ($value == 'none') {

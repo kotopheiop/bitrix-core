@@ -1,8 +1,11 @@
 <?php
-if (!CModule::IncludeModule('report'))
+
+if (!CModule::IncludeModule('report')) {
     return;
-if (!CModule::IncludeModule('currency'))
+}
+if (!CModule::IncludeModule('currency')) {
     return;
+}
 
 use Bitrix\Main\Entity;
 
@@ -50,20 +53,20 @@ abstract class CBaseSaleReportHelper extends CReportHelper
         while ($row = $res->fetch()) {
             $id = (int)$row['ID'];
             $title = $row['TITLE'];
-            if (is_string($title) && strlen($title) > 0) {
+            if (is_string($title) && $title <> '') {
                 $titleMsg = GetMessage('SALE_REPORT_DEFAULT_MOST_EXPECTED_GOODS');
-                if ($title === $titleMsg && is_string($row['SETTINGS']) && strlen($row['SETTINGS']) > 0) {
-                    $settings = unserialize($row['SETTINGS']);
+                if ($title === $titleMsg && is_string($row['SETTINGS']) && $row['SETTINGS'] <> '') {
+                    $settings = unserialize($row['SETTINGS'], ['allowed_classes' => false]);
                     if (is_array($settings)) {
                         $needUpdate = false;
                         $aliasMap = array(0 => 0, 1 => 1, 2 => 5, 3 => 8);
                         foreach ($aliasMap as $aliasNum => $msgNum) {
                             if (isset($settings['select'][$aliasNum]['alias'])
                                 && is_string($settings['select'][$aliasNum]['alias'])
-                                && strlen($settings['select'][$aliasNum]['alias']) > 0) {
+                                && $settings['select'][$aliasNum]['alias'] <> '') {
                                 $alias = $settings['select'][$aliasNum]['alias'];
                                 $aliasMsg = GetMessage('SALE_REPORT_DEFAULT_MOST_EXPECTED_GOODS_ALIAS_' . $msgNum);
-                                if (is_string($aliasMsg) && strlen($aliasMsg) > 0 && $alias !== $aliasMsg) {
+                                if (is_string($aliasMsg) && $aliasMsg <> '' && $alias !== $aliasMsg) {
                                     $settings['select'][$aliasNum]['alias'] = $aliasMsg;
                                     $needUpdate = true;
                                 }
@@ -117,8 +120,13 @@ abstract class CBaseSaleReportHelper extends CReportHelper
             $i = 0;
             while ($row = $result->fetch()) {
                 self::$sitelist[$row['LID']] = $row['NAME'];
-                if (++$i === 1) self::$defaultSiteId = $row['LID'];
-                else if ($row['DEF'] === 'Y') self::$defaultSiteId = $row['LID'];
+                if (++$i === 1) {
+                    self::$defaultSiteId = $row['LID'];
+                } else {
+                    if ($row['DEF'] === 'Y') {
+                        self::$defaultSiteId = $row['LID'];
+                    }
+                }
                 self::$weightOptions[$row['LID']] = array(
                     'unit' => COption::GetOptionString('sale', 'weight_unit', null, $row['LID']),
                     'koef' => COption::GetOptionInt('sale', 'weight_koef', null, $row['LID'])
@@ -156,10 +164,12 @@ abstract class CBaseSaleReportHelper extends CReportHelper
             unset($shipmentEntity);
 
             // Initializing list of statuses of orders.
-            $result = Bitrix\Sale\Internals\StatusLangTable::getList(array(
-                'select' => array('STATUS_ID', 'NAME'),
-                'filter' => array('=LID' => LANGUAGE_ID)
-            ));
+            $result = Bitrix\Sale\Internals\StatusLangTable::getList(
+                array(
+                    'select' => array('STATUS_ID', 'NAME'),
+                    'filter' => array('=LID' => LANGUAGE_ID)
+                )
+            );
             while ($row = $result->fetch()) {
                 self::$statuslist[$row['STATUS_ID']] = $row['NAME'];
             }
@@ -168,30 +178,36 @@ abstract class CBaseSaleReportHelper extends CReportHelper
             self::$genders = array('M' => GetMessage('USER_MALE'), 'F' => GetMessage('USER_FEMALE'));
 
             // Initializing list of person types.
-            $result = Bitrix\Sale\Internals\PersonTypeTable::getList(array(
-                'select' => array('ID', 'LID', 'NAME')/*,
+            $result = Bitrix\Sale\Internals\PersonTypeTable::getList(
+                array(
+                    'select' => array('ID', 'LID', 'NAME')/*,
 				'filter' => array('=ACTIVE', 'Y')*/
-            ));
+                )
+            );
             while ($row = $result->fetch()) {
                 self::$personTypes[$row['ID']] = array('LID' => $row['LID'], 'NAME' => $row['NAME']);
             }
             unset($row, $result);
 
             // Initializing list of pay systems of orders.
-            $result = \Bitrix\Sale\PaySystem\Manager::getList(array(
-                'select' => array('ID', 'NAME')/*,
+            $result = \Bitrix\Sale\PaySystem\Manager::getList(
+                array(
+                    'select' => array('ID', 'NAME')/*,
 				'filter' => array('=ACTIVE', 'Y')*/
-            ));
+                )
+            );
             while ($row = $result->fetch()) {
                 self::$paySystemList[$row['ID']] = array('value' => $row['NAME'], 'site_id' => '');
             }
             unset($row, $result);
 
             // Initializing list of services and methods of delivery.
-            $result = \Bitrix\Sale\Delivery\Services\Table::getList(array(
-                'select' => array('ID', 'NAME')/*,
+            $result = \Bitrix\Sale\Delivery\Services\Table::getList(
+                array(
+                    'select' => array('ID', 'NAME')/*,
 				'filter' => array('=ACTIVE', 'Y')*/
-            ));
+                )
+            );
             while ($row = $result->fetch()) {
                 self::$deliveryList[$row['ID']] = array('value' => $row['NAME'], 'site_id' => '');
             }
@@ -199,7 +215,9 @@ abstract class CBaseSaleReportHelper extends CReportHelper
 
             // Obtaining table of correspondences of iblocks to sites.
             $result = Bitrix\Iblock\IblockSiteTable::getList();
-            while ($row = $result->fetch()) self::$iblockSite[$row['SITE_ID']][] = $row['IBLOCK_ID'];
+            while ($row = $result->fetch()) {
+                self::$iblockSite[$row['SITE_ID']][] = $row['IBLOCK_ID'];
+            }
             unset($row, $result);
 
             // Obtaining the list of iblocks which are directories and filling
@@ -211,12 +229,17 @@ abstract class CBaseSaleReportHelper extends CReportHelper
                 self::$catalogs[] = $ibRow;
                 $path = array();
                 $curLevel = $prevLevel = 0;
-                $sections = CIBlockSection::GetTreeList(array('=IBLOCK_ID' => $ibRow['IBLOCK_ID']));
+                $sections = CIBlockSection::GetTreeList(
+                    array('=IBLOCK_ID' => $ibRow['IBLOCK_ID']),
+                    array('ID', 'IBLOCK_ID', 'NAME', 'DEPTH_LEVEL', 'LEFT_MARGIN')
+                );
                 $row = null;
                 while ($row = $sections->GetNext()) {
                     // Formation of an array of identifiers of current and parent sections.
                     $curLevel = $row['DEPTH_LEVEL'];
-                    for ($i = 0; $i <= $prevLevel - $curLevel; $i++) array_pop($path);
+                    for ($i = 0; $i <= $prevLevel - $curLevel; $i++) {
+                        array_pop($path);
+                    }
                     array_push($path, $row['ID']);
                     $prevLevel = $curLevel;
 
@@ -241,15 +264,13 @@ abstract class CBaseSaleReportHelper extends CReportHelper
 
             // Getting currencies
             $obj = new CCurrency();
-            $by = '';
-            $order = '';
-            $result = $obj->GetList($by, $order, LANGUAGE_ID);
+            $result = $obj->GetList('', '', LANGUAGE_ID);
             while ($row = $result->Fetch()) {
                 self::$currencies[$row['CURRENCY']] = array(
                     'name' => $row['FULL_NAME']
                 );
             }
-            unset($row, $result, $obj, $by, $order);
+            unset($row, $result, $obj);
 
             // Getting types of prices
             $obj = new CCatalogGroup();
@@ -283,7 +304,6 @@ abstract class CBaseSaleReportHelper extends CReportHelper
             self::addOwner(CSaleReportSaleBasketHelper::getOwnerId());
             self::addOwner(CSaleReportSaleProductHelper::getOwnerId());
         }
-
     }
 
     public static function getSiteList()
@@ -307,13 +327,17 @@ abstract class CBaseSaleReportHelper extends CReportHelper
         reset(self::$priceTypes);
         $basePriceTypeKey = key(self::$priceTypes);
         foreach (self::$priceTypes as $priceTypeKey => $priceTypeInfo) {
-            if ($priceTypeInfo['base'] === true) $basePriceTypeKey = $priceTypeKey;
+            if ($priceTypeInfo['base'] === true) {
+                $basePriceTypeKey = $priceTypeKey;
+            }
             if (in_array($priceTypeKey, $arSelected, true)) {
                 self::$priceTypes[$priceTypeKey]['selected'] = true;
                 $bSelected = true;
             }
         }
-        if (!$bSelected) self::$priceTypes[$basePriceTypeKey]['selected'] = true;
+        if (!$bSelected) {
+            self::$priceTypes[$basePriceTypeKey]['selected'] = true;
+        }
     }
 
     public static function getCurrencies()
@@ -377,7 +401,9 @@ abstract class CBaseSaleReportHelper extends CReportHelper
     {
         $result = false;
         $siteId = self::getDefaultSiteId();
-        if (in_array($catalogId, self::$iblockSite[$siteId])) $result = true;
+        if (in_array($catalogId, self::$iblockSite[$siteId])) {
+            $result = true;
+        }
         return $result;
     }
 
@@ -408,7 +434,9 @@ abstract class CBaseSaleReportHelper extends CReportHelper
 
     protected static function addOwner($ownerName)
     {
-        if (!in_array($ownerName, self::$owners)) self::$owners[] = $ownerName;
+        if (!in_array($ownerName, self::$owners)) {
+            self::$owners[] = $ownerName;
+        }
     }
 
     public static function getOwners()
@@ -430,7 +458,7 @@ abstract class CBaseSaleReportHelper extends CReportHelper
 
     public static function getHelperByOwner($ownerId)
     {
-        return 'CSaleReport' . substr($ownerId, strlen(SALE_REPORT_OWNER_ID) + 1) . 'Helper';
+        return 'CSaleReport' . mb_substr($ownerId, mb_strlen(SALE_REPORT_OWNER_ID) + 1) . 'Helper';
     }
 
     public static function getDefaultReports()
@@ -444,7 +472,8 @@ abstract class CBaseSaleReportHelper extends CReportHelper
                     'title' => GetMessage('SALE_REPORT_DEFAULT_LEFT_BASKETS'),
                     'description' => GetMessage('SALE_REPORT_DEFAULT_LEFT_BASKETS_DESCR'),
                     'mark_default' => 1,
-                    'settings' => unserialize('a:7:{s:6:"entity";s:10:"SaleBasket";s:6:"period";a:2:{s:4:"type";' .
+                    'settings' => unserialize(
+                        'a:7:{s:6:"entity";s:10:"SaleBasket";s:6:"period";a:2:{s:4:"type";' .
                         's:5:"month";s:5:"value";N;}s:6:"select";a:7:{i:10;a:1:{s:4:"name";s:8:"FUSER_ID";}i:1;' .
                         'a:1:{s:4:"name";s:21:"FUSER.USER.SHORT_NAME";}i:2;a:1:{s:4:"name";s:16:"FUSER.USER.EMAIL";' .
                         '}i:6;a:3:{s:4:"name";s:8:"QUANTITY";s:5:"alias";s:14:"xxxxxxxxxxxxxx";s:4:"aggr";s:3:"SUM";' .
@@ -463,7 +492,8 @@ abstract class CBaseSaleReportHelper extends CReportHelper
                     'title' => GetMessage('SALE_REPORT_DEFAULT_GOODS_PROFIT'),
                     'description' => GetMessage('SALE_REPORT_DEFAULT_GOODS_PROFIT_DESCR'),
                     'mark_default' => 2,
-                    'settings' => unserialize('a:7:{s:6:"entity";s:10:"SaleBasket";s:6:"period";a:2:{s:4:"type";' .
+                    'settings' => unserialize(
+                        'a:7:{s:6:"entity";s:10:"SaleBasket";s:6:"period";a:2:{s:4:"type";' .
                         's:3:"all";s:5:"value";N;}s:6:"select";a:7:{i:1;a:1:{s:4:"name";s:10:"PRODUCT_ID";}i:2;' .
                         'a:1:{s:4:"name";s:4:"NAME";}i:14;a:2:{s:4:"name";s:16:"PRODUCT.QUANTITY";s:5:"alias";' .
                         's:14:"xxxxxxxxxxxxxx";}i:3;a:3:{s:4:"name";s:8:"ORDER_ID";s:5:"alias";' .
@@ -488,7 +518,8 @@ abstract class CBaseSaleReportHelper extends CReportHelper
                     'title' => GetMessage('SALE_REPORT_DEFAULT_GOODS_INVENTORIES'),
                     'description' => GetMessage('SALE_REPORT_DEFAULT_GOODS_INVENTORIES_DESCR'),
                     'mark_default' => 3,
-                    'settings' => unserialize('a:7:{s:6:"entity";s:11:"SaleProduct";s:6:"period";a:2:{s:4:"type";' .
+                    'settings' => unserialize(
+                        'a:7:{s:6:"entity";s:11:"SaleProduct";s:6:"period";a:2:{s:4:"type";' .
                         's:3:"all";s:5:"value";N;}s:6:"select";a:5:{i:0;a:1:{s:4:"name";s:2:"ID";}i:2;a:1:{s:4:"name";' .
                         's:4:"NAME";}i:1;a:2:{s:4:"name";s:8:"QUANTITY";s:5:"alias";s:7:"xxxxxxx";}i:3;' .
                         'a:2:{s:4:"name";s:22:"PRICE_IN_SITE_CURRENCY";s:5:"alias";s:4:"xxxx";}i:5;a:2:{s:4:"name";' .
@@ -540,7 +571,8 @@ abstract class CBaseSaleReportHelper extends CReportHelper
                     'title' => GetMessage('SALE_REPORT_DEFAULT_NEW_CLIENTS'),
                     'description' => GetMessage('SALE_REPORT_DEFAULT_NEW_CLIENTS_DESCR'),
                     'mark_default' => 5,
-                    'settings' => unserialize('a:7:{s:6:"entity";s:16:"Bitrix\Main\User";s:6:"period";a:2:{s:4:"type";s:5:"month";' .
+                    'settings' => unserialize(
+                        'a:7:{s:6:"entity";s:16:"Bitrix\Main\User";s:6:"period";a:2:{s:4:"type";s:5:"month";' .
                         's:5:"value";N;}s:6:"select";a:7:{i:11;a:1:{s:4:"name";s:14:"DATE_REG_SHORT";}i:0;' .
                         'a:3:{s:4:"name";s:2:"ID";s:5:"alias";s:18:"xxxxxxxxxxxxxxxxxx";s:4:"aggr";' .
                         's:14:"COUNT_DISTINCT";}i:3;a:3:{s:4:"name";s:35:"Bitrix\Sale\Internals\Order:USER.ID";s:5:"alias";' .
@@ -561,7 +593,8 @@ abstract class CBaseSaleReportHelper extends CReportHelper
                     'title' => GetMessage('SALE_REPORT_DEFAULT_SALES'),
                     'description' => GetMessage('SALE_REPORT_DEFAULT_SALES_DESCR'),
                     'mark_default' => 6,
-                    'settings' => unserialize('a:7:{s:6:"entity";s:9:"SaleOrder";s:6:"period";a:2:{s:4:"type";' .
+                    'settings' => unserialize(
+                        'a:7:{s:6:"entity";s:9:"SaleOrder";s:6:"period";a:2:{s:4:"type";' .
                         's:5:"month";s:5:"value";N;}s:6:"select";a:8:{i:1;a:2:{s:4:"name";s:17:"DATE_INSERT_SHORT";' .
                         's:5:"alias";s:4:"xxxx";}i:0;a:3:{s:4:"name";s:2:"ID";s:5:"alias";s:14:"xxxxxxxxxxxxxx";' .
                         's:4:"aggr";s:14:"COUNT_DISTINCT";}i:13;a:3:{s:4:"name";s:14:"PRODUCTS_QUANT";s:5:"alias";' .
@@ -582,7 +615,8 @@ abstract class CBaseSaleReportHelper extends CReportHelper
                     'title' => GetMessage('SALE_REPORT_DEFAULT_MOST_EXPECTED_GOODS'),
                     'description' => GetMessage('SALE_REPORT_DEFAULT_MOST_EXPECTED_GOODS_DESCR'),
                     'mark_default' => 7,
-                    'settings' => unserialize('a:10:{s:6:"entity";s:29:"Bitrix\\Sale\\Internals\\Product";' .
+                    'settings' => unserialize(
+                        'a:10:{s:6:"entity";s:29:"Bitrix\\Sale\\Internals\\Product";' .
                         's:6:"period";a:2:{s:4:"type";s:5:"month";s:5:"value";N;}s:6:"select";a:4:{i:0;a:2:{' .
                         's:4:"name";s:2:"ID";s:5:"alias";s:9:"xxxxxxxxx";}i:1;a:2:{s:4:"name";s:4:"NAME";s:5:"alias";' .
                         's:19:"xxxxxxxxxxxxxxxxxxx";}i:2;a:3:{s:4:"name";s:31:"SUBSCRIPTIONS_IN_PERIOD_BY_SHOP";' .
@@ -607,7 +641,8 @@ abstract class CBaseSaleReportHelper extends CReportHelper
                     'title' => GetMessage('SALE_REPORT_DEFAULT_MOST_VIEWED_GOODS'),
                     'description' => GetMessage('SALE_REPORT_DEFAULT_MOST_VIEWED_GOODS_DESCR'),
                     'mark_default' => 8,
-                    'settings' => unserialize('a:7:{s:6:"entity";s:11:"SaleProduct";s:6:"period";a:2:{s:4:"type";' .
+                    'settings' => unserialize(
+                        'a:7:{s:6:"entity";s:11:"SaleProduct";s:6:"period";a:2:{s:4:"type";' .
                         's:5:"month";s:5:"value";N;}s:6:"select";a:7:{i:0;a:1:{s:4:"name";s:2:"ID";}i:1;' .
                         'a:1:{s:4:"name";s:4:"NAME";}i:7;a:2:{s:4:"name";s:23:"VIEWS_IN_PERIOD_BY_SHOP";s:5:"alias";' .
                         's:10:"xxxxxxxxxx";}i:8;a:2:{s:4:"name";s:24:"ORDERS_IN_PERIOD_BY_SHOP";s:5:"alias";' .
@@ -635,7 +670,8 @@ abstract class CBaseSaleReportHelper extends CReportHelper
                     'title' => GetMessage('SALE_REPORT_DEFAULT_GOODS_INVENTORIES__12_5'),
                     'description' => '',
                     'mark_default' => 9,
-                    'settings' => unserialize('a:11:{s:6:"entity";s:29:"Bitrix\Sale\Internals\Product";s:6:"period";' .
+                    'settings' => unserialize(
+                        'a:11:{s:6:"entity";s:29:"Bitrix\Sale\Internals\Product";s:6:"period";' .
                         'a:2:{s:4:"type";s:5:"month";s:5:"value";N;}s:6:"select";a:6:{i:2;a:4:{s:4:"name";' .
                         's:56:"IBLOCK.SectionElement:IBLOCK_ELEMENT.IBLOCK_SECTION.NAME";' .
                         's:5:"alias";s:9:"xxxxxxxxx";s:4:"aggr";s:12:"GROUP_CONCAT";s:8:"grouping";' .
@@ -651,14 +687,16 @@ abstract class CBaseSaleReportHelper extends CReportHelper
                         's:7:"compare";s:5:"EQUAL";s:5:"value";a:1:{i:0;s:0:"";}s:10:"changeable";' .
                         's:1:"1";}s:5:"LOGIC";s:3:"AND";}}s:4:"sort";i:8;s:9:"sort_type";s:3:"ASC";' .
                         's:5:"limit";N;s:12:"red_neg_vals";b:1;s:13:"grouping_mode";b:1;s:5:"chart";' .
-                        'N;s:6:"mobile";a:1:{s:7:"enabled";b:1;}}')
+                        'N;s:6:"mobile";a:1:{s:7:"enabled";b:1;}}'
+                    )
                 ),
                 array(
                     'owner' => 'sale_SaleProduct',
                     'title' => GetMessage('SALE_REPORT_DEFAULT_PRICE_LIST__12_5'),
                     'description' => '',
                     'mark_default' => 10,
-                    'settings' => unserialize('a:12:{s:6:"entity";s:29:"Bitrix\Sale\Internals\Product";s:6:"period";' .
+                    'settings' => unserialize(
+                        'a:12:{s:6:"entity";s:29:"Bitrix\Sale\Internals\Product";s:6:"period";' .
                         'a:2:{s:4:"type";s:5:"month";s:5:"value";N;}s:6:"select";a:2:{i:4;a:4:{s:4:"name";' .
                         's:56:"IBLOCK.SectionElement:IBLOCK_ELEMENT.IBLOCK_SECTION.NAME";' .
                         's:5:"alias";s:9:"xxxxxxxxx";s:4:"aggr";s:12:"GROUP_CONCAT";s:8:"grouping";' .
@@ -669,14 +707,16 @@ abstract class CBaseSaleReportHelper extends CReportHelper
                         's:7:"compare";s:5:"EQUAL";s:5:"value";a:1:{i:0;s:0:"";}s:10:"changeable";' .
                         's:1:"1";}s:5:"LOGIC";s:3:"AND";}}s:4:"sort";i:12;s:9:"sort_type";s:3:"ASC";' .
                         's:5:"limit";N;s:12:"red_neg_vals";b:1;s:13:"grouping_mode";b:1;s:11:"helper_spec";' .
-                        'a:1:{s:5:"ucspt";b:1;}s:5:"chart";N;s:6:"mobile";a:1:{s:7:"enabled";b:1;}}')
+                        'a:1:{s:5:"ucspt";b:1;}s:5:"chart";N;s:6:"mobile";a:1:{s:7:"enabled";b:1;}}'
+                    )
                 ),
                 array(
                     'owner' => 'sale_SaleBasket',
                     'title' => GetMessage('SALE_REPORT_DEFAULT_GOODS_PROFIT__12_5'),
                     'description' => '',
                     'mark_default' => 11,
-                    'settings' => unserialize('a:11:{s:6:"entity";s:28:"Bitrix\Sale\Internals\Basket";s:6:"period";' .
+                    'settings' => unserialize(
+                        'a:11:{s:6:"entity";s:28:"Bitrix\Sale\Internals\Basket";s:6:"period";' .
                         'a:2:{s:4:"type";s:5:"month";s:5:"value";N;}s:6:"select";a:6:{i:6;a:2:{s:4:"name";' .
                         's:15:"NAME_WITH_IDENT";s:8:"grouping";b:1;}i:7;a:4:{s:4:"name";s:8:"QUANTITY";' .
                         's:5:"alias";s:10:"xxxxxxxxxx";s:4:"aggr";s:3:"SUM";s:17:"grouping_subtotal";' .
@@ -695,14 +735,16 @@ abstract class CBaseSaleReportHelper extends CReportHelper
                         's:1:"1";}s:5:"LOGIC";s:3:"AND";}}s:4:"sort";i:6;s:9:"sort_type";s:3:"ASC";' .
                         's:5:"limit";N;s:12:"red_neg_vals";b:1;s:13:"grouping_mode";b:1;s:5:"chart";' .
                         'a:4:{s:7:"display";b:1;s:4:"type";s:3:"pie";s:8:"x_column";i:6;s:9:"y_columns";' .
-                        'a:1:{i:0;i:10;}}s:6:"mobile";a:1:{s:7:"enabled";b:1;}}')
+                        'a:1:{i:0;i:10;}}s:6:"mobile";a:1:{s:7:"enabled";b:1;}}'
+                    )
                 ),
                 array(
                     'owner' => 'sale_SaleBasket',
                     'title' => GetMessage('SALE_REPORT_DEFAULT_CLIENTS_PROFIT__12_5'),
                     'description' => '',
                     'mark_default' => 12,
-                    'settings' => unserialize('a:11:{s:6:"entity";s:28:"Bitrix\Sale\Internals\Basket";s:6:"period";' .
+                    'settings' => unserialize(
+                        'a:11:{s:6:"entity";s:28:"Bitrix\Sale\Internals\Basket";s:6:"period";' .
                         'a:2:{s:4:"type";s:5:"month";s:5:"value";N;}s:6:"select";a:7:{i:9;a:2:{s:4:"name";' .
                         's:21:"FUSER.USER.SHORT_NAME";s:8:"grouping";b:1;}i:6;a:2:{s:4:"name";s:15:"NAME_WITH_IDENT";' .
                         's:8:"grouping";b:1;}i:7;a:4:{s:4:"name";s:8:"QUANTITY";s:5:"alias";s:10:"xxxxxxxxxx";' .
@@ -724,14 +766,16 @@ abstract class CBaseSaleReportHelper extends CReportHelper
                         's:5:"field";s:4:"name";s:31:"FUSER.USER.UserGroup:USER.GROUP";s:7:"compare";' .
                         's:5:"EQUAL";s:5:"value";s:0:"";s:10:"changeable";s:1:"1";}s:5:"LOGIC";s:3:"AND";' .
                         '}}s:4:"sort";i:6;s:9:"sort_type";s:3:"ASC";s:5:"limit";N;s:12:"red_neg_vals";' .
-                        'b:1;s:13:"grouping_mode";b:1;s:5:"chart";N;s:6:"mobile";a:1:{s:7:"enabled";b:1;}}')
+                        'b:1;s:13:"grouping_mode";b:1;s:5:"chart";N;s:6:"mobile";a:1:{s:7:"enabled";b:1;}}'
+                    )
                 ),
                 array(
                     'owner' => 'sale_SaleProduct',
                     'title' => GetMessage('SALE_REPORT_DEFAULT_GOODS_INVENTORIES_MOB__12_5'),
                     'description' => '',
                     'mark_default' => 13,
-                    'settings' => unserialize('a:11:{s:6:"entity";s:29:"Bitrix\Sale\Internals\Product";s:6:"period";' .
+                    'settings' => unserialize(
+                        'a:11:{s:6:"entity";s:29:"Bitrix\Sale\Internals\Product";s:6:"period";' .
                         'a:2:{s:4:"type";s:5:"month";s:5:"value";N;}s:6:"select";a:3:{i:2;a:4:{s:4:"name";' .
                         's:56:"IBLOCK.SectionElement:IBLOCK_ELEMENT.IBLOCK_SECTION.NAME";s:5:"alias";' .
                         's:9:"xxxxxxxxx";s:4:"aggr";s:12:"GROUP_CONCAT";s:8:"grouping";b:1;}i:8;a:2:{s:4:"name";' .
@@ -743,14 +787,16 @@ abstract class CBaseSaleReportHelper extends CReportHelper
                         's:7:"compare";s:5:"EQUAL";s:5:"value";a:1:{i:0;s:0:"";}s:10:"changeable";' .
                         's:1:"1";}s:5:"LOGIC";s:3:"AND";}}s:4:"sort";i:8;s:9:"sort_type";s:3:"ASC";' .
                         's:5:"limit";N;s:12:"red_neg_vals";b:1;s:13:"grouping_mode";b:1;s:5:"chart";' .
-                        'N;s:6:"mobile";a:1:{s:7:"enabled";b:1;}}')
+                        'N;s:6:"mobile";a:1:{s:7:"enabled";b:1;}}'
+                    )
                 ),
                 array(
                     'owner' => 'sale_SaleProduct',
                     'title' => GetMessage('SALE_REPORT_DEFAULT_PRICE_LIST_MOB__12_5'),
                     'description' => '',
                     'mark_default' => 14,
-                    'settings' => unserialize('a:11:{s:6:"entity";s:29:"Bitrix\Sale\Internals\Product";s:6:"period";' .
+                    'settings' => unserialize(
+                        'a:11:{s:6:"entity";s:29:"Bitrix\Sale\Internals\Product";s:6:"period";' .
                         'a:2:{s:4:"type";s:5:"month";s:5:"value";N;}s:6:"select";a:3:{i:4;a:4:{s:4:"name";' .
                         's:56:"IBLOCK.SectionElement:IBLOCK_ELEMENT.IBLOCK_SECTION.NAME";s:5:"alias";' .
                         's:9:"xxxxxxxxx";s:4:"aggr";s:12:"GROUP_CONCAT";s:8:"grouping";b:1;}i:12;' .
@@ -761,7 +807,8 @@ abstract class CBaseSaleReportHelper extends CReportHelper
                         's:51:"IBLOCK.SectionElement:IBLOCK_ELEMENT.IBLOCK_SECTION";s:7:"compare";' .
                         's:5:"EQUAL";s:5:"value";a:1:{i:0;s:0:"";}s:10:"changeable";s:1:"1";}s:5:"LOGIC";' .
                         's:3:"AND";}}s:4:"sort";i:12;s:9:"sort_type";s:3:"ASC";s:5:"limit";N;s:12:"red_neg_vals";' .
-                        'b:1;s:13:"grouping_mode";b:1;s:5:"chart";N;s:6:"mobile";a:1:{s:7:"enabled";b:1;}}')
+                        'b:1;s:13:"grouping_mode";b:1;s:5:"chart";N;s:6:"mobile";a:1:{s:7:"enabled";b:1;}}'
+                    )
                 )
             ),
             '12.5.1' => array(
@@ -770,7 +817,8 @@ abstract class CBaseSaleReportHelper extends CReportHelper
                     'title' => GetMessage('SALE_REPORT_DEFAULT_GOODS_INVENTORIES_BY_STORE__12_5_1'),
                     'description' => '',
                     'mark_default' => 15,
-                    'settings' => unserialize('a:11:{s:6:"entity";s:29:"Bitrix\Sale\Internals\Product";s:6:"period";' .
+                    'settings' => unserialize(
+                        'a:11:{s:6:"entity";s:29:"Bitrix\Sale\Internals\Product";s:6:"period";' .
                         'a:2:{s:4:"type";s:5:"month";s:5:"value";N;}s:6:"select";a:7:{i:16;a:2:{s:4:"name";' .
                         's:37:"StoreProduct:SALE_PRODUCT.STORE.TITLE";s:8:"grouping";b:1;}i:2;a:4:{s:4:"name";' .
                         's:56:"IBLOCK.SectionElement:IBLOCK_ELEMENT.IBLOCK_SECTION.NAME";s:5:"alias";' .
@@ -791,7 +839,8 @@ abstract class CBaseSaleReportHelper extends CReportHelper
                         's:7:"compare";s:5:"EQUAL";s:5:"value";a:1:{i:0;s:0:"";}s:10:"changeable";' .
                         's:1:"1";}s:5:"LOGIC";s:3:"AND";}}s:4:"sort";i:8;s:9:"sort_type";s:3:"ASC";' .
                         's:5:"limit";N;s:12:"red_neg_vals";b:1;s:13:"grouping_mode";b:1;s:5:"chart";' .
-                        'N;s:6:"mobile";a:1:{s:7:"enabled";b:1;}}')
+                        'N;s:6:"mobile";a:1:{s:7:"enabled";b:1;}}'
+                    )
                 )
             )
         );
@@ -809,19 +858,29 @@ abstract class CBaseSaleReportHelper extends CReportHelper
                     $report['settings']['select'][4]['alias'] = GetMessage('SALE_REPORT_DEFAULT_GOODS_PROFIT_ALIAS_4');
                     $report['settings']['select'][5]['alias'] = GetMessage('SALE_REPORT_DEFAULT_GOODS_PROFIT_ALIAS_5');
                     $report['settings']['select'][6]['alias'] = GetMessage('SALE_REPORT_DEFAULT_GOODS_PROFIT_ALIAS_6');
-                    $report['settings']['select'][14]['alias'] = GetMessage('SALE_REPORT_DEFAULT_GOODS_PROFIT_ALIAS_14');
+                    $report['settings']['select'][14]['alias'] = GetMessage(
+                        'SALE_REPORT_DEFAULT_GOODS_PROFIT_ALIAS_14'
+                    );
                 }
                 if ($version === '12.0.0' && $report['mark_default'] === 3) {
-                    $report['settings']['select'][1]['alias'] = GetMessage('SALE_REPORT_DEFAULT_GOODS_INVENTORIES_ALIAS_1');
-                    $report['settings']['select'][3]['alias'] = GetMessage('SALE_REPORT_DEFAULT_GOODS_INVENTORIES_ALIAS_3');
-                    $report['settings']['select'][5]['alias'] = GetMessage('SALE_REPORT_DEFAULT_GOODS_INVENTORIES_ALIAS_5');
+                    $report['settings']['select'][1]['alias'] = GetMessage(
+                        'SALE_REPORT_DEFAULT_GOODS_INVENTORIES_ALIAS_1'
+                    );
+                    $report['settings']['select'][3]['alias'] = GetMessage(
+                        'SALE_REPORT_DEFAULT_GOODS_INVENTORIES_ALIAS_3'
+                    );
+                    $report['settings']['select'][5]['alias'] = GetMessage(
+                        'SALE_REPORT_DEFAULT_GOODS_INVENTORIES_ALIAS_5'
+                    );
                 }
                 if ($version === '12.0.0' && $report['mark_default'] === 4) {
                     $report['settings']['select'][0]['alias'] = GetMessage('SALE_REPORT_DEFAULT_BEST_CLIENTS_ALIAS_0');
                     $report['settings']['select'][2]['alias'] = GetMessage('SALE_REPORT_DEFAULT_BEST_CLIENTS_ALIAS_2');
                     $report['settings']['select'][3]['alias'] = GetMessage('SALE_REPORT_DEFAULT_BEST_CLIENTS_ALIAS_3');
                     $report['settings']['select'][5]['alias'] = GetMessage('SALE_REPORT_DEFAULT_BEST_CLIENTS_ALIAS_5');
-                    $report['settings']['select'][14]['alias'] = GetMessage('SALE_REPORT_DEFAULT_BEST_CLIENTS_ALIAS_14');
+                    $report['settings']['select'][14]['alias'] = GetMessage(
+                        'SALE_REPORT_DEFAULT_BEST_CLIENTS_ALIAS_14'
+                    );
                 }
                 if ($version === '12.0.0' && $report['mark_default'] === 5) {
                     $report['settings']['select'][0]['alias'] = GetMessage('SALE_REPORT_DEFAULT_NEW_CLIENTS_ALIAS_0');
@@ -842,52 +901,112 @@ abstract class CBaseSaleReportHelper extends CReportHelper
                     $report['settings']['select'][13]['alias'] = GetMessage('SALE_REPORT_DEFAULT_SALES_ALIAS_13');
                 }
                 if ($version === '12.0.0' && $report['mark_default'] === 7) {
-                    $report['settings']['select'][0]['alias'] = GetMessage('SALE_REPORT_DEFAULT_MOST_EXPECTED_GOODS_ALIAS_0');
-                    $report['settings']['select'][1]['alias'] = GetMessage('SALE_REPORT_DEFAULT_MOST_EXPECTED_GOODS_ALIAS_1');
-                    $report['settings']['select'][2]['alias'] = GetMessage('SALE_REPORT_DEFAULT_MOST_EXPECTED_GOODS_ALIAS_5');
-                    $report['settings']['select'][3]['alias'] = GetMessage('SALE_REPORT_DEFAULT_MOST_EXPECTED_GOODS_ALIAS_8');
+                    $report['settings']['select'][0]['alias'] = GetMessage(
+                        'SALE_REPORT_DEFAULT_MOST_EXPECTED_GOODS_ALIAS_0'
+                    );
+                    $report['settings']['select'][1]['alias'] = GetMessage(
+                        'SALE_REPORT_DEFAULT_MOST_EXPECTED_GOODS_ALIAS_1'
+                    );
+                    $report['settings']['select'][2]['alias'] = GetMessage(
+                        'SALE_REPORT_DEFAULT_MOST_EXPECTED_GOODS_ALIAS_5'
+                    );
+                    $report['settings']['select'][3]['alias'] = GetMessage(
+                        'SALE_REPORT_DEFAULT_MOST_EXPECTED_GOODS_ALIAS_8'
+                    );
                 }
                 if ($version === '12.0.0' && $report['mark_default'] === 8) {
-                    $report['settings']['select'][5]['alias'] = GetMessage('SALE_REPORT_DEFAULT_MOST_VIEWED_GOODS_ALIAS_5');
-                    $report['settings']['select'][7]['alias'] = GetMessage('SALE_REPORT_DEFAULT_MOST_VIEWED_GOODS_ALIAS_7');
-                    $report['settings']['select'][8]['alias'] = GetMessage('SALE_REPORT_DEFAULT_MOST_VIEWED_GOODS_ALIAS_8');
-                    $report['settings']['select'][12]['alias'] = GetMessage('SALE_REPORT_DEFAULT_MOST_VIEWED_GOODS_ALIAS_12');
+                    $report['settings']['select'][5]['alias'] = GetMessage(
+                        'SALE_REPORT_DEFAULT_MOST_VIEWED_GOODS_ALIAS_5'
+                    );
+                    $report['settings']['select'][7]['alias'] = GetMessage(
+                        'SALE_REPORT_DEFAULT_MOST_VIEWED_GOODS_ALIAS_7'
+                    );
+                    $report['settings']['select'][8]['alias'] = GetMessage(
+                        'SALE_REPORT_DEFAULT_MOST_VIEWED_GOODS_ALIAS_8'
+                    );
+                    $report['settings']['select'][12]['alias'] = GetMessage(
+                        'SALE_REPORT_DEFAULT_MOST_VIEWED_GOODS_ALIAS_12'
+                    );
                 }
                 if ($version === '12.5.0' && $report['mark_default'] === 9) {
-                    $report['settings']['select'][2]['alias'] = GetMessage('SALE_REPORT_DEFAULT_GOODS_INVENTORIES__12_5_ALIAS_2');
-                    $report['settings']['select'][12]['alias'] = GetMessage('SALE_REPORT_DEFAULT_GOODS_INVENTORIES__12_5_ALIAS_12');
-                    $report['settings']['select'][6]['alias'] = GetMessage('SALE_REPORT_DEFAULT_GOODS_INVENTORIES__12_5_ALIAS_6');
-                    $report['settings']['select'][3]['alias'] = GetMessage('SALE_REPORT_DEFAULT_GOODS_INVENTORIES__12_5_ALIAS_3');
+                    $report['settings']['select'][2]['alias'] = GetMessage(
+                        'SALE_REPORT_DEFAULT_GOODS_INVENTORIES__12_5_ALIAS_2'
+                    );
+                    $report['settings']['select'][12]['alias'] = GetMessage(
+                        'SALE_REPORT_DEFAULT_GOODS_INVENTORIES__12_5_ALIAS_12'
+                    );
+                    $report['settings']['select'][6]['alias'] = GetMessage(
+                        'SALE_REPORT_DEFAULT_GOODS_INVENTORIES__12_5_ALIAS_6'
+                    );
+                    $report['settings']['select'][3]['alias'] = GetMessage(
+                        'SALE_REPORT_DEFAULT_GOODS_INVENTORIES__12_5_ALIAS_3'
+                    );
                 }
                 if ($version === '12.5.0' && $report['mark_default'] === 10) {
-                    $report['settings']['select'][4]['alias'] = GetMessage('SALE_REPORT_DEFAULT_PRICE_LIST__12_5_ALIAS_4');
+                    $report['settings']['select'][4]['alias'] = GetMessage(
+                        'SALE_REPORT_DEFAULT_PRICE_LIST__12_5_ALIAS_4'
+                    );
                 }
                 if ($version === '12.5.0' && $report['mark_default'] === 11) {
-                    $report['settings']['select'][7]['alias'] = GetMessage('SALE_REPORT_DEFAULT_GOODS_PROFIT__12_5_ALIAS_7');
-                    $report['settings']['select'][5]['alias'] = GetMessage('SALE_REPORT_DEFAULT_GOODS_PROFIT__12_5_ALIAS_5');
-                    $report['settings']['select'][9]['alias'] = GetMessage('SALE_REPORT_DEFAULT_GOODS_PROFIT__12_5_ALIAS_9');
-                    $report['settings']['select'][10]['alias'] = GetMessage('SALE_REPORT_DEFAULT_GOODS_PROFIT__12_5_ALIAS_10');
-                    $report['settings']['select'][11]['alias'] = GetMessage('SALE_REPORT_DEFAULT_GOODS_PROFIT__12_5_ALIAS_11');
+                    $report['settings']['select'][7]['alias'] = GetMessage(
+                        'SALE_REPORT_DEFAULT_GOODS_PROFIT__12_5_ALIAS_7'
+                    );
+                    $report['settings']['select'][5]['alias'] = GetMessage(
+                        'SALE_REPORT_DEFAULT_GOODS_PROFIT__12_5_ALIAS_5'
+                    );
+                    $report['settings']['select'][9]['alias'] = GetMessage(
+                        'SALE_REPORT_DEFAULT_GOODS_PROFIT__12_5_ALIAS_9'
+                    );
+                    $report['settings']['select'][10]['alias'] = GetMessage(
+                        'SALE_REPORT_DEFAULT_GOODS_PROFIT__12_5_ALIAS_10'
+                    );
+                    $report['settings']['select'][11]['alias'] = GetMessage(
+                        'SALE_REPORT_DEFAULT_GOODS_PROFIT__12_5_ALIAS_11'
+                    );
                 }
                 if ($version === '12.5.0' && $report['mark_default'] === 12) {
-                    $report['settings']['select'][7]['alias'] = GetMessage('SALE_REPORT_DEFAULT_CLIENTS_PROFIT__12_5_ALIAS_7');
-                    $report['settings']['select'][5]['alias'] = GetMessage('SALE_REPORT_DEFAULT_CLIENTS_PROFIT__12_5_ALIAS_5');
-                    $report['settings']['select'][15]['alias'] = GetMessage('SALE_REPORT_DEFAULT_CLIENTS_PROFIT__12_5_ALIAS_15');
-                    $report['settings']['select'][13]['alias'] = GetMessage('SALE_REPORT_DEFAULT_CLIENTS_PROFIT__12_5_ALIAS_13');
-                    $report['settings']['select'][14]['alias'] = GetMessage('SALE_REPORT_DEFAULT_CLIENTS_PROFIT__12_5_ALIAS_14');
+                    $report['settings']['select'][7]['alias'] = GetMessage(
+                        'SALE_REPORT_DEFAULT_CLIENTS_PROFIT__12_5_ALIAS_7'
+                    );
+                    $report['settings']['select'][5]['alias'] = GetMessage(
+                        'SALE_REPORT_DEFAULT_CLIENTS_PROFIT__12_5_ALIAS_5'
+                    );
+                    $report['settings']['select'][15]['alias'] = GetMessage(
+                        'SALE_REPORT_DEFAULT_CLIENTS_PROFIT__12_5_ALIAS_15'
+                    );
+                    $report['settings']['select'][13]['alias'] = GetMessage(
+                        'SALE_REPORT_DEFAULT_CLIENTS_PROFIT__12_5_ALIAS_13'
+                    );
+                    $report['settings']['select'][14]['alias'] = GetMessage(
+                        'SALE_REPORT_DEFAULT_CLIENTS_PROFIT__12_5_ALIAS_14'
+                    );
                 }
                 if ($version === '12.5.0' && $report['mark_default'] === 13) {
-                    $report['settings']['select'][2]['alias'] = GetMessage('SALE_REPORT_DEFAULT_GOODS_INVENTORIES_MOB__12_5_ALIAS_2');
-                    $report['settings']['select'][3]['alias'] = GetMessage('SALE_REPORT_DEFAULT_GOODS_INVENTORIES_MOB__12_5_ALIAS_3');
+                    $report['settings']['select'][2]['alias'] = GetMessage(
+                        'SALE_REPORT_DEFAULT_GOODS_INVENTORIES_MOB__12_5_ALIAS_2'
+                    );
+                    $report['settings']['select'][3]['alias'] = GetMessage(
+                        'SALE_REPORT_DEFAULT_GOODS_INVENTORIES_MOB__12_5_ALIAS_3'
+                    );
                 }
                 if ($version === '12.5.0' && $report['mark_default'] === 14) {
-                    $report['settings']['select'][4]['alias'] = GetMessage('SALE_REPORT_DEFAULT_PRICE_LIST__12_5_ALIAS_4');
+                    $report['settings']['select'][4]['alias'] = GetMessage(
+                        'SALE_REPORT_DEFAULT_PRICE_LIST__12_5_ALIAS_4'
+                    );
                 }
                 if ($version === '12.5.1' && $report['mark_default'] === 15) {
-                    $report['settings']['select'][2]['alias'] = GetMessage('SALE_REPORT_DEFAULT_GOODS_INVENTORIES_BY_STORE__12_5_1_ALIAS_2');
-                    $report['settings']['select'][23]['alias'] = GetMessage('SALE_REPORT_DEFAULT_GOODS_INVENTORIES_BY_STORE__12_5_1_ALIAS_23');
-                    $report['settings']['select'][25]['alias'] = GetMessage('SALE_REPORT_DEFAULT_GOODS_INVENTORIES_BY_STORE__12_5_1_ALIAS_25');
-                    $report['settings']['select'][26]['alias'] = GetMessage('SALE_REPORT_DEFAULT_GOODS_INVENTORIES_BY_STORE__12_5_1_ALIAS_26');
+                    $report['settings']['select'][2]['alias'] = GetMessage(
+                        'SALE_REPORT_DEFAULT_GOODS_INVENTORIES_BY_STORE__12_5_1_ALIAS_2'
+                    );
+                    $report['settings']['select'][23]['alias'] = GetMessage(
+                        'SALE_REPORT_DEFAULT_GOODS_INVENTORIES_BY_STORE__12_5_1_ALIAS_23'
+                    );
+                    $report['settings']['select'][25]['alias'] = GetMessage(
+                        'SALE_REPORT_DEFAULT_GOODS_INVENTORIES_BY_STORE__12_5_1_ALIAS_25'
+                    );
+                    $report['settings']['select'][26]['alias'] = GetMessage(
+                        'SALE_REPORT_DEFAULT_GOODS_INVENTORIES_BY_STORE__12_5_1_ALIAS_26'
+                    );
                 }
 
                 // remove reports, which not work in MSSQL
@@ -904,13 +1023,18 @@ abstract class CBaseSaleReportHelper extends CReportHelper
 
                 // remove old reports
                 if (
-                    (ToUpper($DBType) !== 'MSSQL' && $version === '12.0.0' && in_array($report['mark_default'], array(2, 3)))
+                    (ToUpper($DBType) !== 'MSSQL' && $version === '12.0.0' && in_array(
+                            $report['mark_default'],
+                            array(2, 3)
+                        ))
                     ||
-                    (ToUpper($DBType) === 'MSSQL' && $version === '12.0.0' && in_array($report['mark_default'], array(3)))
+                    (ToUpper($DBType) === 'MSSQL' && $version === '12.0.0' && in_array(
+                            $report['mark_default'],
+                            array(3)
+                        ))
                 ) {
                     unset($vreports[$num]);
                 }
-
             }
         }
 
@@ -987,7 +1111,10 @@ abstract class CBaseSaleReportHelper extends CReportHelper
                                     );
                                 }
                                 $prevCatalog = $vSection['catalog']['ID'];
-                                $arResponseData[$filterType][] = array('value' => $kSectionID, 'text' => '&nbsp;' . $vSection['name']);
+                                $arResponseData[$filterType][] = array(
+                                    'value' => $kSectionID,
+                                    'text' => '&nbsp;' . $vSection['name']
+                                );
                             }
                         }
                         break;
@@ -1007,11 +1134,15 @@ abstract class CBaseSaleReportHelper extends CReportHelper
             if (self::isCatalogCorrespondsDefSite($vSection['catalog']['ID'])) {
                 // Inserting catalogs headers in list of sections of goods.
                 if ($vSection['catalog']['ID'] != $prevCatalog) {
-                    $html .= '<option value="c' . htmlspecialcharsbx($vSection['catalog']['ID']) . '">- ' . GetMessage('SALE_REPORT_CONSTRUCT_CATALOG_NAME_LABEL') .
+                    $html .= '<option value="c' . htmlspecialcharsbx($vSection['catalog']['ID']) . '">- ' . GetMessage(
+                            'SALE_REPORT_CONSTRUCT_CATALOG_NAME_LABEL'
+                        ) .
                         ': ' . htmlspecialcharsbx($vSection['catalog']['NAME']) . '</option>';
                 }
                 $prevCatalog = $vSection['catalog']['ID'];
-                $html .= '<option value="' . htmlspecialcharsbx($kSectionID) . '">&nbsp;' . htmlspecialcharsbx($vSection['name']) . '</option>';
+                $html .= '<option value="' . htmlspecialcharsbx($kSectionID) . '">&nbsp;' . htmlspecialcharsbx(
+                        $vSection['name']
+                    ) . '</option>';
             }
         }
         return $html;
@@ -1198,57 +1329,63 @@ class CSaleReportSaleOrderHelper extends CBaseSaleReportHelper
 
     public static function getCalcVariations()
     {
-        return array_merge(parent::getCalcVariations(), array(
-            'date' => array(
-                'MIN',
-                'MAX',
-                'COUNT_DISTINCT'
-            ),
-            'USER.UserGroup:USER.GROUP.ID' => array(
-                'COUNT_DISTINCT',
-                'GROUP_CONCAT'
-            ),
-            'USER.UserGroup:USER.GROUP.NAME' => array(
-                'COUNT_DISTINCT',
-                'GROUP_CONCAT'
+        return array_merge(
+            parent::getCalcVariations(),
+            array(
+                'date' => array(
+                    'MIN',
+                    'MAX',
+                    'COUNT_DISTINCT'
+                ),
+                'USER.UserGroup:USER.GROUP.ID' => array(
+                    'COUNT_DISTINCT',
+                    'GROUP_CONCAT'
+                ),
+                'USER.UserGroup:USER.GROUP.NAME' => array(
+                    'COUNT_DISTINCT',
+                    'GROUP_CONCAT'
+                )
             )
-        ));
+        );
     }
 
     public static function getCompareVariations()
     {
-        return array_merge(parent::getCompareVariations(), array(
-            'date' => array(
-                'EQUAL',
-                'GREATER_OR_EQUAL',
-                'GREATER',
-                'LESS',
-                'LESS_OR_EQUAL',
-                'NOT_EQUAL'
-            ),
-            'LID' => array(
-                'EQUAL',
-                'NOT_EQUAL'
-            ),
-            'PERSON_TYPE_ID' => array(
-                'EQUAL',
-                'NOT_EQUAL'
-            ),
-            'STATUS' => array(
-                'EQUAL',
-                'NOT_EQUAL'
-            ),
-            'USER.UserGroup:USER.GROUP' => array(
-                'EQUAL',
-                'NOT_EQUAL'
-            ),
-            '\Bitrix\Main\User' => array(
-                'EQUAL'
-            ),
-            '\Bitrix\Main\Group' => array(
-                'EQUAL'
+        return array_merge(
+            parent::getCompareVariations(),
+            array(
+                'date' => array(
+                    'EQUAL',
+                    'GREATER_OR_EQUAL',
+                    'GREATER',
+                    'LESS',
+                    'LESS_OR_EQUAL',
+                    'NOT_EQUAL'
+                ),
+                'LID' => array(
+                    'EQUAL',
+                    'NOT_EQUAL'
+                ),
+                'PERSON_TYPE_ID' => array(
+                    'EQUAL',
+                    'NOT_EQUAL'
+                ),
+                'STATUS' => array(
+                    'EQUAL',
+                    'NOT_EQUAL'
+                ),
+                'USER.UserGroup:USER.GROUP' => array(
+                    'EQUAL',
+                    'NOT_EQUAL'
+                ),
+                '\Bitrix\Main\User' => array(
+                    'EQUAL'
+                ),
+                '\Bitrix\Main\Group' => array(
+                    'EQUAL'
+                )
             )
-        ));
+        );
     }
 
     public static function getPeriodFilter($date_from, $date_to)
@@ -1290,27 +1427,40 @@ class CSaleReportSaleOrderHelper extends CBaseSaleReportHelper
                 $user = $res->fetch();
 
                 if ($user) {
-                    $username = CUser::FormatName(CSite::GetNameFormat(null, self::getDefaultSiteId()), $user, true, false);
+                    $username = CUser::FormatName(
+                        CSite::GetNameFormat(null, self::getDefaultSiteId()),
+                        $user,
+                        true,
+                        false
+                    );
                     $filterElement['value'] = array('id' => $user['ID'], 'name' => $username);
                 } else {
-                    $filterElement['value'] = array('id' => $filterElement['value'], 'name' => GetMessage('REPORT_USER_NOT_FOUND'));
+                    $filterElement['value'] = array(
+                        'id' => $filterElement['value'],
+                        'name' => GetMessage('REPORT_USER_NOT_FOUND')
+                    );
                 }
             } else {
                 $filterElement['value'] = array('id' => '');
             }
-        } else if ($field->getRefEntityName() == '\Bitrix\Main\Group') {
-            // GROUP
-            if ($filterElement['value']) {
-                $res = CGroup::GetByID($filterElement['value']);
-                $group = $res->fetch();
+        } else {
+            if ($field->getRefEntityName() == '\Bitrix\Main\Group') {
+                // GROUP
+                if ($filterElement['value']) {
+                    $res = CGroup::GetByID($filterElement['value']);
+                    $group = $res->fetch();
 
-                if ($group) {
-                    $filterElement['value'] = array('id' => $group['ID'], 'name' => $group['NAME']);
+                    if ($group) {
+                        $filterElement['value'] = array('id' => $group['ID'], 'name' => $group['NAME']);
+                    } else {
+                        $filterElement['value'] = array(
+                            'id' => $filterElement['value'],
+                            'name' => GetMessage('SALE_REPORT_GROUP_NOT_FOUND')
+                        );
+                    }
                 } else {
-                    $filterElement['value'] = array('id' => $filterElement['value'], 'name' => GetMessage('SALE_REPORT_GROUP_NOT_FOUND'));
+                    $filterElement['value'] = array('id' => '');
                 }
-            } else {
-                $filterElement['value'] = array('id' => '');
             }
         }
     }
@@ -1353,11 +1503,17 @@ class CSaleReportSaleOrderHelper extends CBaseSaleReportHelper
 
         if ($k === 'PERSON_TYPE_ID') {
             $v = self::$personTypes[$v]['NAME'];
-        } else if ($k === 'LID') {
-            $v = self::$sitelist[$v];
-        } // Removing the link from the email field if is empty.
-        else if ($k === 'SALE_ORDER_USER_EMAIL') {
-            if (is_null($v) || empty($v) || $v == '&nbsp;') unset($row['__HREF_' . $k]);
+        } else {
+            if ($k === 'LID') {
+                $v = self::$sitelist[$v];
+            } // Removing the link from the email field if is empty.
+            else {
+                if ($k === 'SALE_ORDER_USER_EMAIL') {
+                    if (is_null($v) || empty($v) || $v == '&nbsp;') {
+                        unset($row['__HREF_' . $k]);
+                    }
+                }
+            }
         }
 
         // Inserting zero in numerical fields with null value.
@@ -1392,8 +1548,11 @@ class CSaleReportSaleOrderHelper extends CBaseSaleReportHelper
         foreach (self::$goodsQuantityFields as $qField) {
             if (preg_match('/' . $qField . '$/', $k)) {
                 if (!empty($v) && !is_null($v) && $v != '&nbsp;') {
-                    if (self::$fDecimalQuant) $v = sprintf('%.3f', round($v, 3));
-                    else $v = sprintf('%d', round($v, 0));
+                    if (self::$fDecimalQuant) {
+                        $v = sprintf('%.3f', round($v, 3));
+                    } else {
+                        $v = sprintf('%d', round($v, 0));
+                    }
                 }
                 break;
             }
@@ -1426,7 +1585,9 @@ class CSaleReportSaleOrderHelper extends CBaseSaleReportHelper
             // Formatting of monetary fields.
             foreach (self::$monetaryFields as $monField) {
                 if (preg_match('/' . $monField . '$/', $k)) {
-                    if (!$bFormatOnly) $v = self::calculateInReportCurrency($v);
+                    if (!$bFormatOnly) {
+                        $v = self::calculateInReportCurrency($v);
+                    }
                     $v = number_format(doubleval($v), 2, '.', ' ');
                     break;
                 }
@@ -1436,8 +1597,11 @@ class CSaleReportSaleOrderHelper extends CBaseSaleReportHelper
             foreach (self::$goodsQuantityFields as $qField) {
                 if (preg_match('/' . $qField . '$/', $k)) {
                     if (!empty($v) && !is_null($v) && $v != '&nbsp;') {
-                        if (self::$fDecimalQuant) $v = sprintf('%.3f', round($v, 3));
-                        else $v = sprintf('%d', round($v, 0));
+                        if (self::$fDecimalQuant) {
+                            $v = sprintf('%.3f', round($v, 3));
+                        } else {
+                            $v = sprintf('%d', round($v, 0));
+                        }
                     }
                     break;
                 }
@@ -1472,41 +1636,55 @@ class CSaleReportSaleOrderHelper extends CBaseSaleReportHelper
                         'Shipment:REPS_ORDER.EMP_DEDUCTED_BY.EMAIL',
                         'Shipment:REPS_ORDER.RESPONSIBLE_BY.EMAIL'
                     ),
-                    true)) {
+                    true
+                )) {
                     $href = array('pattern' => 'mailto:#' . $elem['name'] . '#');
-                } else if (in_array(
-                    $elem['name'],
-                    array(
-                        'USER.SHORT_NAME',
-                        'EMP_CANCELED_BY.SHORT_NAME',
-                        'EMP_STATUS_BY.SHORT_NAME',
-                        'Payment:ORDER.EMP_PAID_BY.SHORT_NAME',
-                        'Payment:ORDER.RESPONSIBLE_BY.SHORT_NAME',
-                        'Shipment:REPS_ORDER.EMP_ALLOW_DELIVERY_BY.SHORT_NAME',
-                        'Shipment:REPS_ORDER.EMP_DEDUCTED_BY.SHORT_NAME',
-                        'Shipment:REPS_ORDER.RESPONSIBLE_BY.SHORT_NAME'
-                    ),
-                    true)) {
-                    $userDef = substr($elem['name'], 0, -11);
-                    $href = array('pattern' => '/bitrix/admin/sale_buyers_profile.php?USER_ID=#' . $userDef . '.ID#&lang=' . LANG);
+                } else {
+                    if (in_array(
+                        $elem['name'],
+                        array(
+                            'USER.SHORT_NAME',
+                            'EMP_CANCELED_BY.SHORT_NAME',
+                            'EMP_STATUS_BY.SHORT_NAME',
+                            'Payment:ORDER.EMP_PAID_BY.SHORT_NAME',
+                            'Payment:ORDER.RESPONSIBLE_BY.SHORT_NAME',
+                            'Shipment:REPS_ORDER.EMP_ALLOW_DELIVERY_BY.SHORT_NAME',
+                            'Shipment:REPS_ORDER.EMP_DEDUCTED_BY.SHORT_NAME',
+                            'Shipment:REPS_ORDER.RESPONSIBLE_BY.SHORT_NAME'
+                        ),
+                        true
+                    )) {
+                        $userDef = mb_substr($elem['name'], 0, -11);
+                        $href = array('pattern' => '/bitrix/admin/sale_buyers_profile.php?USER_ID=#' . $userDef . '.ID#&lang=' . LANG);
+                    }
                 }
-            } else if ($field->getEntity()->getName() == 'Order') {
-                if ($elem['name'] === 'ID') {
-                    $href = array('pattern' => '/bitrix/admin/sale_order_view.php?ID=#ID#&lang=' . LANG);
-                }
-            } else if ($field->getEntity()->getName() === 'Payment') {
-                if ($elem['name'] === 'Payment:ORDER.ID') {
-                    $href = array('pattern' => '/bitrix/admin/sale_order_payment_edit.php?order_id=#Payment:ORDER.ORDER_ID#&payment_id=#Payment:ORDER.ID#&lang=' . LANG);
-                } else if ($elem['name'] === 'Payment:ORDER.PAY_SYSTEM_ID'
-                    || $elem['name'] === 'Payment:ORDER.PAY_SYSTEM_NAME') {
-                    $href = array('pattern' => '/bitrix/admin/sale_pay_system_edit.php?ID=#Payment:ORDER.PAY_SYSTEM_ID#&lang=' . LANG);
-                }
-            } else if ($field->getEntity()->getName() === 'Shipment') {
-                if ($elem['name'] === 'Shipment:REPS_ORDER.ID') {
-                    $href = array('pattern' => '/bitrix/admin/sale_order_shipment_edit.php?order_id=#Shipment:REPS_ORDER.ORDER_ID#&shipment_id=#Shipment:REPS_ORDER.ID#&lang=' . LANG);
-                } else if ($elem['name'] === 'Shipment:REPS_ORDER.DELIVERY_ID'
-                    || $elem['name'] === 'Shipment:REPS_ORDER.DELIVERY_NAME') {
-                    $href = array('pattern' => '/bitrix/admin/sale_delivery_service_edit.php?ID=#Shipment:REPS_ORDER.DELIVERY_ID#&lang=' . LANG);
+            } else {
+                if ($field->getEntity()->getName() == 'Order') {
+                    if ($elem['name'] === 'ID') {
+                        $href = array('pattern' => '/bitrix/admin/sale_order_view.php?ID=#ID#&lang=' . LANG);
+                    }
+                } else {
+                    if ($field->getEntity()->getName() === 'Payment') {
+                        if ($elem['name'] === 'Payment:ORDER.ID') {
+                            $href = array('pattern' => '/bitrix/admin/sale_order_payment_edit.php?order_id=#Payment:ORDER.ORDER_ID#&payment_id=#Payment:ORDER.ID#&lang=' . LANG);
+                        } else {
+                            if ($elem['name'] === 'Payment:ORDER.PAY_SYSTEM_ID'
+                                || $elem['name'] === 'Payment:ORDER.PAY_SYSTEM_NAME') {
+                                $href = array('pattern' => '/bitrix/admin/sale_pay_system_edit.php?ID=#Payment:ORDER.PAY_SYSTEM_ID#&lang=' . LANG);
+                            }
+                        }
+                    } else {
+                        if ($field->getEntity()->getName() === 'Shipment') {
+                            if ($elem['name'] === 'Shipment:REPS_ORDER.ID') {
+                                $href = array('pattern' => '/bitrix/admin/sale_order_shipment_edit.php?order_id=#Shipment:REPS_ORDER.ORDER_ID#&shipment_id=#Shipment:REPS_ORDER.ID#&lang=' . LANG);
+                            } else {
+                                if ($elem['name'] === 'Shipment:REPS_ORDER.DELIVERY_ID'
+                                    || $elem['name'] === 'Shipment:REPS_ORDER.DELIVERY_NAME') {
+                                    $href = array('pattern' => '/bitrix/admin/sale_delivery_service_edit.php?ID=#Shipment:REPS_ORDER.DELIVERY_ID#&lang=' . LANG);
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -1616,46 +1794,52 @@ class CSaleReportUserHelper extends CBaseSaleReportHelper
 
     public static function getCalcVariations()
     {
-        return array_merge(parent::getCalcVariations(), array(
-            'UserGroup:USER.GROUP.ID' => array(
-                'COUNT_DISTINCT',
-                'GROUP_CONCAT'
-            ),
-            'UserGroup:USER.GROUP.NAME' => array(
-                'COUNT_DISTINCT',
-                'GROUP_CONCAT'
+        return array_merge(
+            parent::getCalcVariations(),
+            array(
+                'UserGroup:USER.GROUP.ID' => array(
+                    'COUNT_DISTINCT',
+                    'GROUP_CONCAT'
+                ),
+                'UserGroup:USER.GROUP.NAME' => array(
+                    'COUNT_DISTINCT',
+                    'GROUP_CONCAT'
+                )
             )
-        ));
+        );
     }
 
     public static function getCompareVariations()
     {
-        return array_merge(parent::getCompareVariations(), array(
-            // Order
-            '\Bitrix\Sale\Internals\StatusLang' => array(
-                'EQUAL',
-                'NOT_EQUAL'
-            ),
-            'Bitrix\Sale\Internals\Order:USER.PERSON_TYPE_ID' => array(
-                'EQUAL',
-                'NOT_EQUAL'
-            ),
-            // User
-            'PERSONAL_GENDER' => array(
-                'EQUAL',
-                'NOT_EQUAL'
-            ),
-            'UserGroup:USER.GROUP' => array(
-                'EQUAL',
-                'NOT_EQUAL'
-            ),
-            '\Bitrix\Main\User' => array(
-                'EQUAL'
-            ),
-            '\Bitrix\Main\Group' => array(
-                'EQUAL'
+        return array_merge(
+            parent::getCompareVariations(),
+            array(
+                // Order
+                '\Bitrix\Sale\Internals\StatusLang' => array(
+                    'EQUAL',
+                    'NOT_EQUAL'
+                ),
+                'Bitrix\Sale\Internals\Order:USER.PERSON_TYPE_ID' => array(
+                    'EQUAL',
+                    'NOT_EQUAL'
+                ),
+                // User
+                'PERSONAL_GENDER' => array(
+                    'EQUAL',
+                    'NOT_EQUAL'
+                ),
+                'UserGroup:USER.GROUP' => array(
+                    'EQUAL',
+                    'NOT_EQUAL'
+                ),
+                '\Bitrix\Main\User' => array(
+                    'EQUAL'
+                ),
+                '\Bitrix\Main\Group' => array(
+                    'EQUAL'
+                )
             )
-        ));
+        );
     }
 
     public static function getDefaultColumns()
@@ -1701,27 +1885,40 @@ class CSaleReportUserHelper extends CBaseSaleReportHelper
                 $user = $res->fetch();
 
                 if ($user) {
-                    $username = CUser::FormatName(CSite::GetNameFormat(null, self::getDefaultSiteId()), $user, true, false);
+                    $username = CUser::FormatName(
+                        CSite::GetNameFormat(null, self::getDefaultSiteId()),
+                        $user,
+                        true,
+                        false
+                    );
                     $filterElement['value'] = array('id' => $user['ID'], 'name' => $username);
                 } else {
-                    $filterElement['value'] = array('id' => $filterElement['value'], 'name' => GetMessage('REPORT_USER_NOT_FOUND'));
+                    $filterElement['value'] = array(
+                        'id' => $filterElement['value'],
+                        'name' => GetMessage('REPORT_USER_NOT_FOUND')
+                    );
                 }
             } else {
                 $filterElement['value'] = array('id' => '');
             }
-        } else if ($field->getRefEntityName() == '\Bitrix\Main\Group') {
-            // GROUP
-            if ($filterElement['value']) {
-                $res = CGroup::GetByID($filterElement['value']);
-                $group = $res->fetch();
+        } else {
+            if ($field->getRefEntityName() == '\Bitrix\Main\Group') {
+                // GROUP
+                if ($filterElement['value']) {
+                    $res = CGroup::GetByID($filterElement['value']);
+                    $group = $res->fetch();
 
-                if ($group) {
-                    $filterElement['value'] = array('id' => $group['ID'], 'name' => $group['NAME']);
+                    if ($group) {
+                        $filterElement['value'] = array('id' => $group['ID'], 'name' => $group['NAME']);
+                    } else {
+                        $filterElement['value'] = array(
+                            'id' => $filterElement['value'],
+                            'name' => GetMessage('SALE_REPORT_GROUP_NOT_FOUND')
+                        );
+                    }
                 } else {
-                    $filterElement['value'] = array('id' => $filterElement['value'], 'name' => GetMessage('SALE_REPORT_GROUP_NOT_FOUND'));
+                    $filterElement['value'] = array('id' => '');
                 }
-            } else {
-                $filterElement['value'] = array('id' => '');
             }
         }
     }
@@ -1747,9 +1944,16 @@ class CSaleReportUserHelper extends CBaseSaleReportHelper
     private static function fieldInFilter(&$filter, $fieldPathStr)
     {
         foreach ($filter as $k => &$v) {
-            if ($k === 'LOGIC') continue;
-            if (is_array($v)) return (self::fieldInFilter($v, $fieldPathStr));
-            else if (strpos($k, $fieldPathStr) !== false) return true;
+            if ($k === 'LOGIC') {
+                continue;
+            }
+            if (is_array($v)) {
+                return (self::fieldInFilter($v, $fieldPathStr));
+            } else {
+                if (mb_strpos($k, $fieldPathStr) !== false) {
+                    return true;
+                }
+            }
         }
         return false;
     }
@@ -1759,20 +1963,29 @@ class CSaleReportUserHelper extends CBaseSaleReportHelper
         // The filter by site is necessary, if the field of "Order" entity in the filter or select is used.
         $bResult = false;
         foreach (array_keys($select) as $k) {
-            if (strpos($k, '_SALE_ORDER_USER_') !== false) {
+            if (mb_strpos($k, '_SALE_ORDER_USER_') !== false) {
                 $bResult = true;
                 break;
             }
         }
         if (!$bResult) {
-            if (self::fieldInFilter($filter, 'Bitrix\Sale\Internals\Order:USER.')) $bResult = true;
+            if (self::fieldInFilter($filter, 'Bitrix\Sale\Internals\Order:USER.')) {
+                $bResult = true;
+            }
         }
 
         return $bResult;
     }
 
-    public static function beforeViewDataQuery(&$select, &$filter, &$group, &$order, &$limit, &$options, &$runtime = null)
-    {
+    public static function beforeViewDataQuery(
+        &$select,
+        &$filter,
+        &$group,
+        &$order,
+        &$limit,
+        &$options,
+        &$runtime = null
+    ) {
         global $DB;
 
         // Rewrite filter by Site.
@@ -1838,13 +2051,21 @@ class CSaleReportUserHelper extends CBaseSaleReportHelper
 
         if ($k === 'LID') {
             $v = self::$sitelist[$v];
-        } else if ($k === 'PERSONAL_GENDER') {
-            $v = self::$genders[$v];
-        } // Removing the link from the email field if is empty.
-        else if ($k === 'EMAIL') {
-            if (is_null($v) || empty($v) || $v == '&nbsp;') unset($row['__HREF_' . $k]);
-        } else if ($k === 'MAIN_USER_SALE_ORDER_USER_PERSON_TYPE_ID') {
-            $v = self::$personTypes[$v]['NAME'];
+        } else {
+            if ($k === 'PERSONAL_GENDER') {
+                $v = self::$genders[$v];
+            } // Removing the link from the email field if is empty.
+            else {
+                if ($k === 'EMAIL') {
+                    if (is_null($v) || empty($v) || $v == '&nbsp;') {
+                        unset($row['__HREF_' . $k]);
+                    }
+                } else {
+                    if ($k === 'MAIN_USER_SALE_ORDER_USER_PERSON_TYPE_ID') {
+                        $v = self::$personTypes[$v]['NAME'];
+                    }
+                }
+            }
         }
 
         // Inserting zero in numerical fields with null value.
@@ -1869,8 +2090,11 @@ class CSaleReportUserHelper extends CBaseSaleReportHelper
         foreach (self::$goodsQuantityFields as $qField) {
             if (preg_match('/' . $qField . '$/', $k)) {
                 if (!empty($v) && !is_null($v) && $v != '&nbsp;') {
-                    if (self::$fDecimalQuant) $v = sprintf('%.3f', round($v, 3));
-                    else $v = sprintf('%d', round($v, 0));
+                    if (self::$fDecimalQuant) {
+                        $v = sprintf('%.3f', round($v, 3));
+                    } else {
+                        $v = sprintf('%d', round($v, 0));
+                    }
                 }
                 break;
             }
@@ -1903,7 +2127,9 @@ class CSaleReportUserHelper extends CBaseSaleReportHelper
             // Formatting of monetary fields.
             foreach (self::$monetaryFields as $monField) {
                 if (preg_match('/' . $monField . '$/', $k)) {
-                    if (!$bFormatOnly) $v = self::calculateInReportCurrency($v);
+                    if (!$bFormatOnly) {
+                        $v = self::calculateInReportCurrency($v);
+                    }
                     $v = number_format(doubleval($v), 2, '.', ' ');
                     break;
                 }
@@ -1913,8 +2139,11 @@ class CSaleReportUserHelper extends CBaseSaleReportHelper
             foreach (self::$goodsQuantityFields as $qField) {
                 if (preg_match('/' . $qField . '$/', $k)) {
                     if (!empty($v) && !is_null($v) && $v != '&nbsp;') {
-                        if (self::$fDecimalQuant) $v = sprintf('%.3f', round($v, 3));
-                        else $v = sprintf('%d', round($v, 0));
+                        if (self::$fDecimalQuant) {
+                            $v = sprintf('%.3f', round($v, 3));
+                        } else {
+                            $v = sprintf('%d', round($v, 0));
+                        }
                     }
                     break;
                 }
@@ -1939,16 +2168,26 @@ class CSaleReportUserHelper extends CBaseSaleReportHelper
             if ($field->getEntity()->getName() == 'User') {
                 if ($elem['name'] == 'SHORT_NAME') {
                     $href = array('pattern' => '/bitrix/admin/sale_buyers_profile.php?USER_ID=#ID#&lang=' . LANG);
-                } else if ($elem['name'] == 'EMAIL') {
-                    $href = array('pattern' => 'mailto:#EMAIL#');
-                } else if ($elem['name'] == 'Bitrix\Sale\Internals\Order:USER.EMP_STATUS_BY.SHORT_NAME') {
-                    $href = array('pattern' => '/bitrix/admin/sale_buyers_profile.php?USER_ID=#Bitrix\Sale\Internals\Order:USER.EMP_STATUS_BY.ID#&lang=' . LANG);
-                } else if ($elem['name'] == 'Bitrix\Sale\Internals\Order:USER.EMP_STATUS_BY.EMAIL') {
-                    $href = array('pattern' => 'mailto:#Bitrix\Sale\Internals\Order:USER.EMP_STATUS_BY.EMAIL#');
-                } else if ($elem['name'] == 'Bitrix\Sale\Internals\Order:USER.EMP_CANCELED_BY.SHORT_NAME') {
-                    $href = array('pattern' => '/bitrix/admin/sale_buyers_profile.php?USER_ID=#Bitrix\Sale\Internals\Order:USER.EMP_CANCELED_BY.ID#&lang=' . LANG);
-                } else if ($elem['name'] == 'Bitrix\Sale\Internals\Order:USER.EMP_CANCELED_BY.EMAIL') {
-                    $href = array('pattern' => 'mailto:#Bitrix\Sale\Internals\Order:USER.EMP_CANCELED_BY.EMAIL#');
+                } else {
+                    if ($elem['name'] == 'EMAIL') {
+                        $href = array('pattern' => 'mailto:#EMAIL#');
+                    } else {
+                        if ($elem['name'] == 'Bitrix\Sale\Internals\Order:USER.EMP_STATUS_BY.SHORT_NAME') {
+                            $href = array('pattern' => '/bitrix/admin/sale_buyers_profile.php?USER_ID=#Bitrix\Sale\Internals\Order:USER.EMP_STATUS_BY.ID#&lang=' . LANG);
+                        } else {
+                            if ($elem['name'] == 'Bitrix\Sale\Internals\Order:USER.EMP_STATUS_BY.EMAIL') {
+                                $href = array('pattern' => 'mailto:#Bitrix\Sale\Internals\Order:USER.EMP_STATUS_BY.EMAIL#');
+                            } else {
+                                if ($elem['name'] == 'Bitrix\Sale\Internals\Order:USER.EMP_CANCELED_BY.SHORT_NAME') {
+                                    $href = array('pattern' => '/bitrix/admin/sale_buyers_profile.php?USER_ID=#Bitrix\Sale\Internals\Order:USER.EMP_CANCELED_BY.ID#&lang=' . LANG);
+                                } else {
+                                    if ($elem['name'] == 'Bitrix\Sale\Internals\Order:USER.EMP_CANCELED_BY.EMAIL') {
+                                        $href = array('pattern' => 'mailto:#Bitrix\Sale\Internals\Order:USER.EMP_CANCELED_BY.EMAIL#');
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             } elseif ($field->getEntity()->getName() == 'Order') {
                 if ($elem['name'] == 'Bitrix\Sale\Internals\Order:USER.ID') {
@@ -2183,71 +2422,77 @@ class CSaleReportSaleBasketHelper extends CBaseSaleReportHelper
 
     public static function getCalcVariations()
     {
-        return array_merge(parent::getCalcVariations(), array(
-            'date' => array(
-                'MIN',
-                'MAX',
-                'COUNT_DISTINCT'
-            ),
-            'FUSER.USER.UserGroup:USER.GROUP.ID' => array(
-                'COUNT_DISTINCT',
-                'GROUP_CONCAT'
-            ),
-            'FUSER.USER.UserGroup:USER.GROUP.NAME' => array(
-                'COUNT_DISTINCT',
-                'GROUP_CONCAT'
-            ),
-            'PRODUCT.GoodsSection:PRODUCT.SECT.ID' => array(
-                'COUNT_DISTINCT',
-                'GROUP_CONCAT'
-            ),
-            'PRODUCT.GoodsSection:PRODUCT.SECT.NAME' => array(
-                'COUNT_DISTINCT',
-                'GROUP_CONCAT'
+        return array_merge(
+            parent::getCalcVariations(),
+            array(
+                'date' => array(
+                    'MIN',
+                    'MAX',
+                    'COUNT_DISTINCT'
+                ),
+                'FUSER.USER.UserGroup:USER.GROUP.ID' => array(
+                    'COUNT_DISTINCT',
+                    'GROUP_CONCAT'
+                ),
+                'FUSER.USER.UserGroup:USER.GROUP.NAME' => array(
+                    'COUNT_DISTINCT',
+                    'GROUP_CONCAT'
+                ),
+                'PRODUCT.GoodsSection:PRODUCT.SECT.ID' => array(
+                    'COUNT_DISTINCT',
+                    'GROUP_CONCAT'
+                ),
+                'PRODUCT.GoodsSection:PRODUCT.SECT.NAME' => array(
+                    'COUNT_DISTINCT',
+                    'GROUP_CONCAT'
+                )
             )
-        ));
+        );
     }
 
     public static function getCompareVariations()
     {
-        return array_merge(parent::getCompareVariations(), array(
-            'date' => array(
-                'EQUAL',
-                'GREATER_OR_EQUAL',
-                'GREATER',
-                'LESS',
-                'LESS_OR_EQUAL',
-                'NOT_EQUAL'
-            ),
-            // Order
-            'ORDER.LID' => array(
-                'EQUAL',
-                'NOT_EQUAL'
-            ),
-            'ORDER.PERSON_TYPE_ID' => array(
-                'EQUAL',
-                'NOT_EQUAL'
-            ),
-            'ORDER.STATUS' => array(
-                'EQUAL',
-                'NOT_EQUAL'
-            ),
-            // Basket
-            'PRODUCT.GoodsSection:PRODUCT.SECT' => array(
-                'EQUAL'/*,
+        return array_merge(
+            parent::getCompareVariations(),
+            array(
+                'date' => array(
+                    'EQUAL',
+                    'GREATER_OR_EQUAL',
+                    'GREATER',
+                    'LESS',
+                    'LESS_OR_EQUAL',
+                    'NOT_EQUAL'
+                ),
+                // Order
+                'ORDER.LID' => array(
+                    'EQUAL',
+                    'NOT_EQUAL'
+                ),
+                'ORDER.PERSON_TYPE_ID' => array(
+                    'EQUAL',
+                    'NOT_EQUAL'
+                ),
+                'ORDER.STATUS' => array(
+                    'EQUAL',
+                    'NOT_EQUAL'
+                ),
+                // Basket
+                'PRODUCT.GoodsSection:PRODUCT.SECT' => array(
+                    'EQUAL'/*,
 				'NOT_EQUAL'*/
-            ),
-            'FUSER.USER.UserGroup:USER.GROUP' => array(
-                'EQUAL',
-                'NOT_EQUAL'
-            ),
-            '\Bitrix\Main\User' => array(
-                'EQUAL'
-            ),
-            '\Bitrix\Main\Group' => array(
-                'EQUAL'
+                ),
+                'FUSER.USER.UserGroup:USER.GROUP' => array(
+                    'EQUAL',
+                    'NOT_EQUAL'
+                ),
+                '\Bitrix\Main\User' => array(
+                    'EQUAL'
+                ),
+                '\Bitrix\Main\Group' => array(
+                    'EQUAL'
+                )
             )
-        ));
+        );
     }
 
     public static function getPeriodFilter($date_from, $date_to)
@@ -2301,38 +2546,55 @@ class CSaleReportSaleBasketHelper extends CBaseSaleReportHelper
                         if ($iblockFilterCompare === 'EQUAL'/* || $iblockFilterCompare === 'NOT_EQUAL'*/) {
                             $iblockFilterValue = array();
                             $arFilterValues = array();
-                            if (is_array($fElem['value'])) $arFilterValues = $fElem['value'];
-                            else $arFilterValues[] = $fElem['value'];
+                            if (is_array($fElem['value'])) {
+                                $arFilterValues = $fElem['value'];
+                            } else {
+                                $arFilterValues[] = $fElem['value'];
+                            }
                             foreach ($arFilterValues as $l => $filterValue) {
                                 if (is_string($filterValue) && $filterValue[0] == 'c') {
-                                    $iblockFilterValue[] = intval(substr($filterValue, 1));
+                                    $iblockFilterValue[] = intval(mb_substr($filterValue, 1));
                                     // The filter on a section is deleted if the filter only according
                                     // to the catalog is necessary
                                     unset($arFilterValues[$l]);
                                 } else {
                                     $sections = array();
                                     foreach (parent::$catalogSections as $sectKey => $sect) {
-                                        if ($sectKey == $filterValue) $iblockFilterValue[] = intval($sect['catalog']['ID']);
-                                        if (in_array($filterValue, $sect['path'])) $sections[] = $sectKey;
+                                        if ($sectKey == $filterValue) {
+                                            $iblockFilterValue[] = intval($sect['catalog']['ID']);
+                                        }
+                                        if (in_array($filterValue, $sect['path'])) {
+                                            $sections[] = $sectKey;
+                                        }
                                     }
                                     $arFilterValues[$l] = $sections;
                                 }
                             }
                             $l = count($arFilterValues);
-                            if ($l === 0) unset($fInfo[$k]);
-                            else if ($l === 1) $fInfo[$k]['value'] = reset($arFilterValues);
-                            else {
-                                $newFilterValue = array();
-                                foreach ($arFilterValues as $filterValue) {
-                                    $newFilterValue = array_merge($newFilterValue, $filterValue);
+                            if ($l === 0) {
+                                unset($fInfo[$k]);
+                            } else {
+                                if ($l === 1) {
+                                    $fInfo[$k]['value'] = reset($arFilterValues);
+                                } else {
+                                    $newFilterValue = array();
+                                    foreach ($arFilterValues as $filterValue) {
+                                        $newFilterValue = array_merge($newFilterValue, $filterValue);
+                                    }
+                                    $newFilterValue = array_unique($newFilterValue);
+                                    $fInfo[$k]['value'] = $newFilterValue;
                                 }
-                                $newFilterValue = array_unique($newFilterValue);
-                                $fInfo[$k]['value'] = $newFilterValue;
                             }
                             $l = count($iblockFilterValue);
-                            if ($l === 0) $iblockFilterValue = null;
-                            else if ($l === 1) $iblockFilterValue = reset($iblockFilterValue);
-                            else $iblockFilterValue = array_unique($iblockFilterValue);
+                            if ($l === 0) {
+                                $iblockFilterValue = null;
+                            } else {
+                                if ($l === 1) {
+                                    $iblockFilterValue = reset($iblockFilterValue);
+                                } else {
+                                    $iblockFilterValue = array_unique($iblockFilterValue);
+                                }
+                            }
                             self::$currentIblockFilter['value'] = $iblockFilterValue;
                             self::$currentIblockFilter['compare'] = $iblockFilterCompare;
                         }
@@ -2343,8 +2605,15 @@ class CSaleReportSaleBasketHelper extends CBaseSaleReportHelper
         // </editor-fold>
     }
 
-    public static function beforeViewDataQuery(&$select, &$filter, &$group, &$order, &$limit, &$options, &$runtime = null)
-    {
+    public static function beforeViewDataQuery(
+        &$select,
+        &$filter,
+        &$group,
+        &$order,
+        &$limit,
+        &$options,
+        &$runtime = null
+    ) {
         if (self::$currentIblockFilter['value']) {
             $filter[] = array(
                 'LOGIC' => 'AND',
@@ -2364,27 +2633,40 @@ class CSaleReportSaleBasketHelper extends CBaseSaleReportHelper
                 $user = $res->fetch();
 
                 if ($user) {
-                    $username = CUser::FormatName(CSite::GetNameFormat(null, self::getDefaultSiteId()), $user, true, false);
+                    $username = CUser::FormatName(
+                        CSite::GetNameFormat(null, self::getDefaultSiteId()),
+                        $user,
+                        true,
+                        false
+                    );
                     $filterElement['value'] = array('id' => $user['ID'], 'name' => $username);
                 } else {
-                    $filterElement['value'] = array('id' => $filterElement['value'], 'name' => GetMessage('REPORT_USER_NOT_FOUND'));
+                    $filterElement['value'] = array(
+                        'id' => $filterElement['value'],
+                        'name' => GetMessage('REPORT_USER_NOT_FOUND')
+                    );
                 }
             } else {
                 $filterElement['value'] = array('id' => '');
             }
-        } else if ($field->getRefEntityName() == '\Bitrix\Main\Group') {
-            // GROUP
-            if ($filterElement['value']) {
-                $res = CGroup::GetByID($filterElement['value']);
-                $group = $res->fetch();
+        } else {
+            if ($field->getRefEntityName() == '\Bitrix\Main\Group') {
+                // GROUP
+                if ($filterElement['value']) {
+                    $res = CGroup::GetByID($filterElement['value']);
+                    $group = $res->fetch();
 
-                if ($group) {
-                    $filterElement['value'] = array('id' => $group['ID'], 'name' => $group['NAME']);
+                    if ($group) {
+                        $filterElement['value'] = array('id' => $group['ID'], 'name' => $group['NAME']);
+                    } else {
+                        $filterElement['value'] = array(
+                            'id' => $filterElement['value'],
+                            'name' => GetMessage('SALE_REPORT_GROUP_NOT_FOUND')
+                        );
+                    }
                 } else {
-                    $filterElement['value'] = array('id' => $filterElement['value'], 'name' => GetMessage('SALE_REPORT_GROUP_NOT_FOUND'));
+                    $filterElement['value'] = array('id' => '');
                 }
-            } else {
-                $filterElement['value'] = array('id' => '');
             }
         }
     }
@@ -2428,10 +2710,16 @@ class CSaleReportSaleBasketHelper extends CBaseSaleReportHelper
         if ($k === 'SALE_BASKET_ORDER_PERSON_TYPE_ID') {
             $v = self::$personTypes[$v]['NAME'];
         } // Removing the link from the email field if is empty.
-        else if ($k === 'SALE_BASKET_FUSER_USER_EMAIL') {
-            if (is_null($v) || empty($v) || $v == '&nbsp;') unset($row['__HREF_' . $k]);
-        } else if ($k === 'SALE_BASKET_ORDER_PERSON_TYPE_ID') {
-            $v = self::$personTypes[$v]['NAME'];
+        else {
+            if ($k === 'SALE_BASKET_FUSER_USER_EMAIL') {
+                if (is_null($v) || empty($v) || $v == '&nbsp;') {
+                    unset($row['__HREF_' . $k]);
+                }
+            } else {
+                if ($k === 'SALE_BASKET_ORDER_PERSON_TYPE_ID') {
+                    $v = self::$personTypes[$v]['NAME'];
+                }
+            }
         }
 
 
@@ -2467,8 +2755,11 @@ class CSaleReportSaleBasketHelper extends CBaseSaleReportHelper
         foreach (self::$goodsQuantityFields as $qField) {
             if (preg_match('/' . $qField . '$/', $k)) {
                 if (!empty($v) && !is_null($v) && $v != '&nbsp;') {
-                    if (self::$fDecimalQuant) $v = sprintf('%.3f', round($v, 3));
-                    else $v = sprintf('%d', round($v, 0));
+                    if (self::$fDecimalQuant) {
+                        $v = sprintf('%.3f', round($v, 3));
+                    } else {
+                        $v = sprintf('%d', round($v, 0));
+                    }
                 }
                 break;
             }
@@ -2511,7 +2802,9 @@ class CSaleReportSaleBasketHelper extends CBaseSaleReportHelper
             // Formatting of monetary fields.
             foreach (self::$monetaryFields as $monField) {
                 if (preg_match('/' . $monField . '$/', $k)) {
-                    if (!$bFormatOnly) $v = self::calculateInReportCurrency($v);
+                    if (!$bFormatOnly) {
+                        $v = self::calculateInReportCurrency($v);
+                    }
                     $v = number_format(doubleval($v), 2, '.', ' ');
                     break;
                 }
@@ -2521,8 +2814,11 @@ class CSaleReportSaleBasketHelper extends CBaseSaleReportHelper
             foreach (self::$goodsQuantityFields as $qField) {
                 if (preg_match('/' . $qField . '$/', $k)) {
                     if (!empty($v) && !is_null($v) && $v != '&nbsp;') {
-                        if (self::$fDecimalQuant) $v = sprintf('%.3f', round($v, 3));
-                        else $v = sprintf('%d', round($v, 0));
+                        if (self::$fDecimalQuant) {
+                            $v = sprintf('%.3f', round($v, 3));
+                        } else {
+                            $v = sprintf('%d', round($v, 0));
+                        }
                     }
                     break;
                 }
@@ -2557,49 +2853,65 @@ class CSaleReportSaleBasketHelper extends CBaseSaleReportHelper
                         'ORDER.Shipment:REPS_ORDER.EMP_DEDUCTED_BY.EMAIL',
                         'ORDER.Shipment:REPS_ORDER.RESPONSIBLE_BY.EMAIL'
                     ),
-                    true)) {
+                    true
+                )) {
                     $href = array('pattern' => 'mailto:#' . $elem['name'] . '#');
-                } else if (in_array(
-                    $elem['name'],
-                    array(
-                        'FUSER.USER.SHORT_NAME',
-                        'ORDER.EMP_CANCELED_BY.SHORT_NAME',
-                        'ORDER.EMP_STATUS_BY.SHORT_NAME',
-                        'ORDER.Payment:ORDER.EMP_PAID_BY.SHORT_NAME',
-                        'ORDER.Payment:ORDER.RESPONSIBLE_BY.SHORT_NAME',
-                        'ORDER.Shipment:REPS_ORDER.EMP_ALLOW_DELIVERY_BY.SHORT_NAME',
-                        'ORDER.Shipment:REPS_ORDER.EMP_DEDUCTED_BY.SHORT_NAME',
-                        'ORDER.Shipment:REPS_ORDER.RESPONSIBLE_BY.SHORT_NAME'
-                    ),
-                    true)) {
-                    $userDef = substr($elem['name'], 0, -11);
-                    $href = array('pattern' => '/bitrix/admin/sale_buyers_profile.php?USER_ID=#' . $userDef . '.ID#&lang=' . LANG);
+                } else {
+                    if (in_array(
+                        $elem['name'],
+                        array(
+                            'FUSER.USER.SHORT_NAME',
+                            'ORDER.EMP_CANCELED_BY.SHORT_NAME',
+                            'ORDER.EMP_STATUS_BY.SHORT_NAME',
+                            'ORDER.Payment:ORDER.EMP_PAID_BY.SHORT_NAME',
+                            'ORDER.Payment:ORDER.RESPONSIBLE_BY.SHORT_NAME',
+                            'ORDER.Shipment:REPS_ORDER.EMP_ALLOW_DELIVERY_BY.SHORT_NAME',
+                            'ORDER.Shipment:REPS_ORDER.EMP_DEDUCTED_BY.SHORT_NAME',
+                            'ORDER.Shipment:REPS_ORDER.RESPONSIBLE_BY.SHORT_NAME'
+                        ),
+                        true
+                    )) {
+                        $userDef = mb_substr($elem['name'], 0, -11);
+                        $href = array('pattern' => '/bitrix/admin/sale_buyers_profile.php?USER_ID=#' . $userDef . '.ID#&lang=' . LANG);
+                    }
                 }
             } elseif ($field->getEntity()->getName() == 'Basket') {
                 if ($elem['name'] == 'NAME' || $elem['name'] == 'NAME_WITH_IDENT') {
-                    $href = array('pattern' => '/bitrix/admin/cat_product_edit.php?IBLOCK_ID=' .
-                        '#PRODUCT.IBLOCK.IBLOCK.ID#&type=#PRODUCT.IBLOCK.IBLOCK.IBLOCK_TYPE_ID#&ID=' .
-                        '#PRODUCT_ID#&lang=' . LANG . '&WF=Y');
+                    $href = array(
+                        'pattern' => '/bitrix/admin/cat_product_edit.php?IBLOCK_ID=' .
+                            '#PRODUCT.IBLOCK.IBLOCK.ID#&type=#PRODUCT.IBLOCK.IBLOCK.IBLOCK_TYPE_ID#&ID=' .
+                            '#PRODUCT_ID#&lang=' . LANG . '&WF=Y'
+                    );
                 } elseif ($elem['name'] == 'ORDER_ID') {
                     $href = array('pattern' => '/bitrix/admin/sale_order_view.php?ID=#ORDER_ID#&lang=' . LANG);
                 }
-            } else if ($field->getEntity()->getName() == 'Order') {
-                if ($elem['name'] === 'ORDER.ID') {
-                    $href = array('pattern' => '/bitrix/admin/sale_order_view.php?ID=#ORDER.ID#&lang=' . LANG);
-                }
-            } else if ($field->getEntity()->getName() === 'Payment') {
-                if ($elem['name'] === 'ORDER.Payment:ORDER.ID') {
-                    $href = array('pattern' => '/bitrix/admin/sale_order_payment_edit.php?order_id=#ORDER.Payment:ORDER.ORDER_ID#&payment_id=#ORDER.Payment:ORDER.ID#&lang=' . LANG);
-                } else if ($elem['name'] === 'ORDER.Payment:ORDER.PAY_SYSTEM_ID'
-                    || $elem['name'] === 'ORDER.Payment:ORDER.PAY_SYSTEM_NAME') {
-                    $href = array('pattern' => '/bitrix/admin/sale_pay_system_edit.php?ID=#ORDER.Payment:ORDER.PAY_SYSTEM_ID#&lang=' . LANG);
-                }
-            } else if ($field->getEntity()->getName() === 'Shipment') {
-                if ($elem['name'] === 'ORDER.Shipment:REPS_ORDER.ID') {
-                    $href = array('pattern' => '/bitrix/admin/sale_order_shipment_edit.php?order_id=#ORDER.Shipment:REPS_ORDER.ORDER_ID#&shipment_id=#ORDER.Shipment:REPS_ORDER.ID#&lang=' . LANG);
-                } else if ($elem['name'] === 'ORDER.Shipment:REPS_ORDER.DELIVERY_ID'
-                    || $elem['name'] === 'ORDER.Shipment:REPS_ORDER.DELIVERY_NAME') {
-                    $href = array('pattern' => '/bitrix/admin/sale_delivery_service_edit.php?ID=#ORDER.Shipment:REPS_ORDER.DELIVERY_ID#&lang=' . LANG);
+            } else {
+                if ($field->getEntity()->getName() == 'Order') {
+                    if ($elem['name'] === 'ORDER.ID') {
+                        $href = array('pattern' => '/bitrix/admin/sale_order_view.php?ID=#ORDER.ID#&lang=' . LANG);
+                    }
+                } else {
+                    if ($field->getEntity()->getName() === 'Payment') {
+                        if ($elem['name'] === 'ORDER.Payment:ORDER.ID') {
+                            $href = array('pattern' => '/bitrix/admin/sale_order_payment_edit.php?order_id=#ORDER.Payment:ORDER.ORDER_ID#&payment_id=#ORDER.Payment:ORDER.ID#&lang=' . LANG);
+                        } else {
+                            if ($elem['name'] === 'ORDER.Payment:ORDER.PAY_SYSTEM_ID'
+                                || $elem['name'] === 'ORDER.Payment:ORDER.PAY_SYSTEM_NAME') {
+                                $href = array('pattern' => '/bitrix/admin/sale_pay_system_edit.php?ID=#ORDER.Payment:ORDER.PAY_SYSTEM_ID#&lang=' . LANG);
+                            }
+                        }
+                    } else {
+                        if ($field->getEntity()->getName() === 'Shipment') {
+                            if ($elem['name'] === 'ORDER.Shipment:REPS_ORDER.ID') {
+                                $href = array('pattern' => '/bitrix/admin/sale_order_shipment_edit.php?order_id=#ORDER.Shipment:REPS_ORDER.ORDER_ID#&shipment_id=#ORDER.Shipment:REPS_ORDER.ID#&lang=' . LANG);
+                            } else {
+                                if ($elem['name'] === 'ORDER.Shipment:REPS_ORDER.DELIVERY_ID'
+                                    || $elem['name'] === 'ORDER.Shipment:REPS_ORDER.DELIVERY_NAME') {
+                                    $href = array('pattern' => '/bitrix/admin/sale_delivery_service_edit.php?ID=#ORDER.Shipment:REPS_ORDER.DELIVERY_ID#&lang=' . LANG);
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -2706,28 +3018,39 @@ class CSaleReportSaleProductHelper extends CBaseSaleReportHelper
     {
         global $DB;
 
-        $entity->addField(array(
-            'data_type' => 'integer',
-            'expression' => array(
-                '(SELECT  SUM(b_catalog_viewed_product.VIEW_COUNT) FROM b_catalog_product, b_catalog_viewed_product WHERE %s = b_catalog_viewed_product.ELEMENT_ID
+        $entity->addField(
+            array(
+                'data_type' => 'integer',
+                'expression' => array(
+                    '(SELECT  SUM(b_catalog_viewed_product.VIEW_COUNT) FROM b_catalog_product, b_catalog_viewed_product WHERE %s = b_catalog_viewed_product.ELEMENT_ID
 				AND b_catalog_product.ID = b_catalog_viewed_product.ELEMENT_ID
-				AND b_catalog_viewed_product.DATE_VISIT ' . $sqlTimeInterval . ' AND b_catalog_viewed_product.SITE_ID = \'' . $DB->ForSql(self::getDefaultSiteId()) . '\')', 'ID'
-            )
-        ), 'VIEWS_IN_PERIOD_BY_SHOP');
+				AND b_catalog_viewed_product.DATE_VISIT ' . $sqlTimeInterval . ' AND b_catalog_viewed_product.SITE_ID = \'' . $DB->ForSql(
+                        self::getDefaultSiteId()
+                    ) . '\')',
+                    'ID'
+                )
+            ),
+            'VIEWS_IN_PERIOD_BY_SHOP'
+        );
 
-        $entity->addField(array(
-            'data_type' => 'integer',
-            'expression' => array(
-                '(SELECT  SUM(1) FROM b_catalog_subscribe WHERE b_catalog_subscribe.ITEM_ID = %s
+        $entity->addField(
+            array(
+                'data_type' => 'integer',
+                'expression' => array(
+                    '(SELECT  SUM(1) FROM b_catalog_subscribe WHERE b_catalog_subscribe.ITEM_ID = %s
 				AND b_catalog_subscribe.DATE_FROM ' . $sqlTimeInterval . '
-				AND b_catalog_subscribe.SITE_ID = \'' . $DB->ForSql(self::getDefaultSiteId()) . '\')', 'ID'
-            )
-        ), 'SUBSCRIPTIONS_IN_PERIOD_BY_SHOP');
+				AND b_catalog_subscribe.SITE_ID = \'' . $DB->ForSql(self::getDefaultSiteId()) . '\')',
+                    'ID'
+                )
+            ),
+            'SUBSCRIPTIONS_IN_PERIOD_BY_SHOP'
+        );
 
-        $entity->addField(array(
-            'data_type' => 'integer',
-            'expression' => array(
-                '(SELECT  COUNT(DISTINCT b_sale_order.ID)
+        $entity->addField(
+            array(
+                'data_type' => 'integer',
+                'expression' => array(
+                    '(SELECT  COUNT(DISTINCT b_sale_order.ID)
 				FROM b_catalog_product
 					INNER JOIN b_sale_basket ON b_catalog_product.ID = b_sale_basket.PRODUCT_ID
 					INNER JOIN b_sale_order ON b_sale_basket.ORDER_ID = b_sale_order.ID
@@ -2735,78 +3058,108 @@ class CSaleReportSaleProductHelper extends CBaseSaleReportHelper
 						b_catalog_product.ID = %s
 					AND b_sale_order.PAYED = \'Y\'
 					AND b_sale_order.DATE_INSERT ' . $sqlTimeInterval . '
-					AND b_sale_basket.LID = \'' . $DB->ForSql(self::getDefaultSiteId()) . '\')', 'ID'
-            )
-        ), 'ORDERS_IN_PERIOD_BY_SHOP');
+					AND b_sale_basket.LID = \'' . $DB->ForSql(self::getDefaultSiteId()) . '\')',
+                    'ID'
+                )
+            ),
+            'ORDERS_IN_PERIOD_BY_SHOP'
+        );
 
-        $entity->addField(array(
-            'data_type' => 'integer',
-            'expression' => array(
-                $DB->isNull('(SELECT  SUM(b_sale_basket.QUANTITY)
+        $entity->addField(
+            array(
+                'data_type' => 'integer',
+                'expression' => array(
+                    $DB->isNull(
+                        '(SELECT  SUM(b_sale_basket.QUANTITY)
 							FROM b_sale_basket
 								INNER JOIN b_sale_order ON b_sale_basket.ORDER_ID = b_sale_order.ID
 							WHERE b_sale_basket.PRODUCT_ID = %s
 								AND b_sale_order.PAYED = \'Y\'
 								AND b_sale_order.DEDUCTED = \'Y\'
 								AND b_sale_order.DATE_INSERT ' . $sqlTimeInterval . '
-								AND b_sale_basket.LID = \'' . $DB->ForSql(self::getDefaultSiteId()) . '\')', 0),
-                'ID'
-            )
-        ), 'SALED_PRODUCTS_IN_PERIOD_BY_SHOP');
+								AND b_sale_basket.LID = \'' . $DB->ForSql(self::getDefaultSiteId()) . '\')',
+                        0
+                    ),
+                    'ID'
+                )
+            ),
+            'SALED_PRODUCTS_IN_PERIOD_BY_SHOP'
+        );
 
-        $entity->addField(array(
-            'data_type' => 'integer',
-            'expression' => array(
-                $DB->isNull('(SELECT  SUM(b_sale_basket.QUANTITY)
+        $entity->addField(
+            array(
+                'data_type' => 'integer',
+                'expression' => array(
+                    $DB->isNull(
+                        '(SELECT  SUM(b_sale_basket.QUANTITY)
 							FROM b_sale_basket
 								INNER JOIN b_sale_order ON b_sale_basket.ORDER_ID = b_sale_order.ID
 							WHERE b_sale_basket.PRODUCT_ID = %s
 								AND b_sale_order.PAYED = \'Y\'
 								AND b_sale_order.DEDUCTED = \'Y\'
 								AND b_sale_order.DATE_INSERT ' . $sqlTimeInterval . '
-								AND b_sale_basket.LID = \'' . $DB->ForSql(self::getDefaultSiteId()) . '\')', 0) . '+' .
-                $DB->isNull('(SELECT  SUM(b_catalog_docs_element.AMOUNT)
+								AND b_sale_basket.LID = \'' . $DB->ForSql(self::getDefaultSiteId()) . '\')',
+                        0
+                    ) . '+' .
+                    $DB->isNull(
+                        '(SELECT  SUM(b_catalog_docs_element.AMOUNT)
 							FROM b_catalog_store_docs
 								INNER JOIN b_catalog_docs_element on b_catalog_store_docs.ID = b_catalog_docs_element.DOC_ID
 							WHERE b_catalog_store_docs.DOC_TYPE = \'D\'
 								AND b_catalog_store_docs.STATUS = \'Y\'
 								AND b_catalog_store_docs.DATE_DOCUMENT ' . $sqlTimeInterval . '
-								AND b_catalog_docs_element.ELEMENT_ID = %s)', 0),
-                'ID', 'ID'
-            )
-        ), 'CONSUMED_PRODUCTS_IN_PERIOD_BY_SHOP');
+								AND b_catalog_docs_element.ELEMENT_ID = %s)',
+                        0
+                    ),
+                    'ID',
+                    'ID'
+                )
+            ),
+            'CONSUMED_PRODUCTS_IN_PERIOD_BY_SHOP'
+        );
 
-        $entity->addField(array(
-            'data_type' => 'float',
-            'expression' => array(
-                '(SELECT  SUM(b_catalog_docs_element.AMOUNT)
+        $entity->addField(
+            array(
+                'data_type' => 'float',
+                'expression' => array(
+                    '(SELECT  SUM(b_catalog_docs_element.AMOUNT)
 					FROM b_catalog_store_docs
 					INNER JOIN b_catalog_docs_element on b_catalog_store_docs.ID = b_catalog_docs_element.DOC_ID
 					WHERE b_catalog_store_docs.DOC_TYPE in (\'A\', \'R\')
 						AND b_catalog_store_docs.STATUS = \'Y\'
 						AND b_catalog_store_docs.DATE_DOCUMENT ' . $sqlTimeInterval . '
-						AND b_catalog_docs_element.ELEMENT_ID = %s)', 'ID'
-            )
-        ), 'ARRIVED_PRODUCTS_IN_PERIOD_BY_SHOP');
+						AND b_catalog_docs_element.ELEMENT_ID = %s)',
+                    'ID'
+                )
+            ),
+            'ARRIVED_PRODUCTS_IN_PERIOD_BY_SHOP'
+        );
 
-        $entity->addField(array(
-            'data_type' => 'float',
-            'expression' => array(
-                '(SELECT  SUM(b_catalog_docs_element.AMOUNT)
+        $entity->addField(
+            array(
+                'data_type' => 'float',
+                'expression' => array(
+                    '(SELECT  SUM(b_catalog_docs_element.AMOUNT)
 					FROM b_catalog_store_docs
 					INNER JOIN b_catalog_docs_element on b_catalog_store_docs.ID = b_catalog_docs_element.DOC_ID
 					WHERE b_catalog_store_docs.DOC_TYPE in (\'A\', \'M\', \'R\')
 						AND b_catalog_store_docs.STATUS = \'Y\'
 						AND b_catalog_store_docs.DATE_DOCUMENT ' . $sqlTimeInterval . '
 						AND b_catalog_docs_element.STORE_TO = %s
-						AND b_catalog_docs_element.ELEMENT_ID = %s)', 'StoreProduct:SALE_PRODUCT.STORE_ID', 'ID'
-            )
-        ), 'ARRIVED_PRODUCTS_IN_PERIOD_BY_STORE');
+						AND b_catalog_docs_element.ELEMENT_ID = %s)',
+                    'StoreProduct:SALE_PRODUCT.STORE_ID',
+                    'ID'
+                )
+            ),
+            'ARRIVED_PRODUCTS_IN_PERIOD_BY_STORE'
+        );
 
-        $entity->addField(array(
-            'data_type' => 'integer',
-            'expression' => array(
-                $DB->isNull('(SELECT  SUM(b_sale_store_barcode.QUANTITY)
+        $entity->addField(
+            array(
+                'data_type' => 'integer',
+                'expression' => array(
+                    $DB->isNull(
+                        '(SELECT  SUM(b_sale_store_barcode.QUANTITY)
 							FROM b_sale_store_barcode
 								INNER JOIN b_sale_basket ON b_sale_store_barcode.BASKET_ID = b_sale_basket.ID
 								INNER JOIN b_sale_order ON b_sale_basket.ORDER_ID = b_sale_order.ID
@@ -2815,26 +3168,42 @@ class CSaleReportSaleProductHelper extends CBaseSaleReportHelper
 								AND b_sale_order.PAYED = \'Y\'
 								AND b_sale_order.DEDUCTED = \'Y\'
 								AND b_sale_order.DATE_INSERT ' . $sqlTimeInterval . '
-								AND b_sale_basket.LID = \'' . $DB->ForSql(self::getDefaultSiteId()) . '\')', 0) . '+' .
-                $DB->isNull('(SELECT  SUM(b_catalog_docs_element.AMOUNT)
+								AND b_sale_basket.LID = \'' . $DB->ForSql(self::getDefaultSiteId()) . '\')',
+                        0
+                    ) . '+' .
+                    $DB->isNull(
+                        '(SELECT  SUM(b_catalog_docs_element.AMOUNT)
 							FROM b_catalog_store_docs
 								INNER JOIN b_catalog_docs_element on b_catalog_store_docs.ID = b_catalog_docs_element.DOC_ID
 							WHERE b_catalog_store_docs.DOC_TYPE in (\'M\', \'D\')
 								AND b_catalog_store_docs.STATUS = \'Y\'
 								AND b_catalog_store_docs.DATE_DOCUMENT ' . $sqlTimeInterval . '
 								AND b_catalog_docs_element.STORE_FROM = %s
-								AND b_catalog_docs_element.ELEMENT_ID = %s)', 0),
-                'StoreProduct:SALE_PRODUCT.STORE_ID', 'ID', 'StoreProduct:SALE_PRODUCT.STORE_ID', 'ID'
-            )
-        ), 'EXPENSE_PRODUCTS_IN_PERIOD_BY_STORE');
+								AND b_catalog_docs_element.ELEMENT_ID = %s)',
+                        0
+                    ),
+                    'StoreProduct:SALE_PRODUCT.STORE_ID',
+                    'ID',
+                    'StoreProduct:SALE_PRODUCT.STORE_ID',
+                    'ID'
+                )
+            ),
+            'EXPENSE_PRODUCTS_IN_PERIOD_BY_STORE'
+        );
 
-        $entity->addField(array(
-            'data_type' => 'float',
-            'expression' => array(
-                '100 * CASE WHEN %s IS NULL OR %s = 0 THEN NULL ELSE %s / %s END',
-                'VIEWS_IN_PERIOD_BY_SHOP', 'VIEWS_IN_PERIOD_BY_SHOP', 'ORDERS_IN_PERIOD_BY_SHOP', 'VIEWS_IN_PERIOD_BY_SHOP'
-            )
-        ), 'CONVERSION');
+        $entity->addField(
+            array(
+                'data_type' => 'float',
+                'expression' => array(
+                    '100 * CASE WHEN %s IS NULL OR %s = 0 THEN NULL ELSE %s / %s END',
+                    'VIEWS_IN_PERIOD_BY_SHOP',
+                    'VIEWS_IN_PERIOD_BY_SHOP',
+                    'ORDERS_IN_PERIOD_BY_SHOP',
+                    'VIEWS_IN_PERIOD_BY_SHOP'
+                )
+            ),
+            'CONVERSION'
+        );
     }
 
     public static function getDefaultColumns()
@@ -2847,37 +3216,43 @@ class CSaleReportSaleProductHelper extends CBaseSaleReportHelper
 
     public static function getCompareVariations()
     {
-        return array_merge(parent::getCompareVariations(), array(
-            'IBLOCK.SectionElement:IBLOCK_ELEMENT.IBLOCK_SECTION' => array(
-                'EQUAL'/*,
+        return array_merge(
+            parent::getCompareVariations(),
+            array(
+                'IBLOCK.SectionElement:IBLOCK_ELEMENT.IBLOCK_SECTION' => array(
+                    'EQUAL'/*,
 				'NOT_EQUAL'*/
-            ),
-            'StoreProduct:SALE_PRODUCT' => array(
-                'EQUAL'
+                ),
+                'StoreProduct:SALE_PRODUCT' => array(
+                    'EQUAL'
+                )
             )
-        ));
+        );
     }
 
     public static function getCalcVariations()
     {
-        return array_merge(parent::getCalcVariations(), array(
-            'IBLOCK.SectionElement:IBLOCK_ELEMENT.IBLOCK_SECTION.ID' => array(
-                'COUNT_DISTINCT',
-                'GROUP_CONCAT'
-            ),
-            'IBLOCK.SectionElement:IBLOCK_ELEMENT.IBLOCK_SECTION.NAME' => array(
-                'COUNT_DISTINCT',
-                'GROUP_CONCAT'
-            ),
-            'StoreProduct:SALE_PRODUCT.STORE.ID' => array(
-                'COUNT_DISTINCT',
-                'GROUP_CONCAT'
-            ),
-            'StoreProduct:SALE_PRODUCT.STORE.TITLE' => array(
-                'COUNT_DISTINCT',
-                'GROUP_CONCAT'
+        return array_merge(
+            parent::getCalcVariations(),
+            array(
+                'IBLOCK.SectionElement:IBLOCK_ELEMENT.IBLOCK_SECTION.ID' => array(
+                    'COUNT_DISTINCT',
+                    'GROUP_CONCAT'
+                ),
+                'IBLOCK.SectionElement:IBLOCK_ELEMENT.IBLOCK_SECTION.NAME' => array(
+                    'COUNT_DISTINCT',
+                    'GROUP_CONCAT'
+                ),
+                'StoreProduct:SALE_PRODUCT.STORE.ID' => array(
+                    'COUNT_DISTINCT',
+                    'GROUP_CONCAT'
+                ),
+                'StoreProduct:SALE_PRODUCT.STORE.TITLE' => array(
+                    'COUNT_DISTINCT',
+                    'GROUP_CONCAT'
+                )
             )
-        ));
+        );
     }
 
     public static function getPeriodFilter($date_from, $date_to)
@@ -2894,10 +3269,18 @@ class CSaleReportSaleProductHelper extends CBaseSaleReportHelper
         // Custom Product filter
         $customProductFilter = self::getCustomProductFilter();
         if (!empty($customProductFilter)) {
-            if ($customProductFilter === 'avail') $strOperation = '>';
-            else if ($customProductFilter === 'not_avail') $strOperation = '<=';
-            else $strOperation = '';
-            if (!empty($strOperation)) $filter[] = array($strOperation . 'QUANTITY' => '0');
+            if ($customProductFilter === 'avail') {
+                $strOperation = '>';
+            } else {
+                if ($customProductFilter === 'not_avail') {
+                    $strOperation = '<=';
+                } else {
+                    $strOperation = '';
+                }
+            }
+            if (!empty($strOperation)) {
+                $filter[] = array($strOperation . 'QUANTITY' => '0');
+            }
         }
 
         return $filter;
@@ -2953,38 +3336,55 @@ class CSaleReportSaleProductHelper extends CBaseSaleReportHelper
                         if ($iblockFilterCompare === 'EQUAL'/* || $iblockFilterCompare === 'NOT_EQUAL'*/) {
                             $iblockFilterValue = array();
                             $arFilterValues = array();
-                            if (is_array($fElem['value'])) $arFilterValues = $fElem['value'];
-                            else $arFilterValues[] = $fElem['value'];
+                            if (is_array($fElem['value'])) {
+                                $arFilterValues = $fElem['value'];
+                            } else {
+                                $arFilterValues[] = $fElem['value'];
+                            }
                             foreach ($arFilterValues as $l => $filterValue) {
                                 if (is_string($filterValue) && $filterValue[0] == 'c') {
-                                    $iblockFilterValue[] = intval(substr($filterValue, 1));
+                                    $iblockFilterValue[] = intval(mb_substr($filterValue, 1));
                                     // The filter on a section is deleted if the filter only according
                                     // to the catalog is necessary
                                     unset($arFilterValues[$l]);
                                 } else {
                                     $sections = array();
                                     foreach (parent::$catalogSections as $sectKey => $sect) {
-                                        if ($sectKey == $filterValue) $iblockFilterValue[] = intval($sect['catalog']['ID']);
-                                        if (in_array($filterValue, $sect['path'])) $sections[] = $sectKey;
+                                        if ($sectKey == $filterValue) {
+                                            $iblockFilterValue[] = intval($sect['catalog']['ID']);
+                                        }
+                                        if (in_array($filterValue, $sect['path'])) {
+                                            $sections[] = $sectKey;
+                                        }
                                     }
                                     $arFilterValues[$l] = $sections;
                                 }
                             }
                             $l = count($arFilterValues);
-                            if ($l === 0) unset($fInfo[$k]);
-                            else if ($l === 1) $fInfo[$k]['value'] = reset($arFilterValues);
-                            else {
-                                $newFilterValue = array();
-                                foreach ($arFilterValues as $filterValue) {
-                                    $newFilterValue = array_merge($newFilterValue, $filterValue);
+                            if ($l === 0) {
+                                unset($fInfo[$k]);
+                            } else {
+                                if ($l === 1) {
+                                    $fInfo[$k]['value'] = reset($arFilterValues);
+                                } else {
+                                    $newFilterValue = array();
+                                    foreach ($arFilterValues as $filterValue) {
+                                        $newFilterValue = array_merge($newFilterValue, $filterValue);
+                                    }
+                                    $newFilterValue = array_unique($newFilterValue);
+                                    $fInfo[$k]['value'] = $newFilterValue;
                                 }
-                                $newFilterValue = array_unique($newFilterValue);
-                                $fInfo[$k]['value'] = $newFilterValue;
                             }
                             $l = count($iblockFilterValue);
-                            if ($l === 0) $iblockFilterValue = null;
-                            else if ($l === 1) $iblockFilterValue = reset($iblockFilterValue);
-                            else $iblockFilterValue = array_unique($iblockFilterValue);
+                            if ($l === 0) {
+                                $iblockFilterValue = null;
+                            } else {
+                                if ($l === 1) {
+                                    $iblockFilterValue = reset($iblockFilterValue);
+                                } else {
+                                    $iblockFilterValue = array_unique($iblockFilterValue);
+                                }
+                            }
                             self::$currentIblockFilter['value'] = $iblockFilterValue;
                             self::$currentIblockFilter['compare'] = $iblockFilterCompare;
                         }
@@ -3000,8 +3400,15 @@ class CSaleReportSaleProductHelper extends CBaseSaleReportHelper
         // </editor-fold>
     }
 
-    public static function beforeViewDataQuery(&$select, &$filter, &$group, &$order, &$limit, &$options, &$runtime = null)
-    {
+    public static function beforeViewDataQuery(
+        &$select,
+        &$filter,
+        &$group,
+        &$order,
+        &$limit,
+        &$options,
+        &$runtime = null
+    ) {
         global $DB, $DBType;
 
         if (function_exists('___dbCastIntToChar') !== true) {
@@ -3025,8 +3432,13 @@ class CSaleReportSaleProductHelper extends CBaseSaleReportHelper
                     $fieldName = 'PRICE_TYPE_' . $id;
                     $runtime[$fieldName] = array(
                         'data_type' => 'string',
-                        'expression' => array('
-				(SELECT ' . $DB->Concat(___dbCastIntToChar($DBType, 'b_catalog_price.PRICE'), '\' \'', 'b_catalog_price.CURRENCY') . '
+                        'expression' => array(
+                            '
+				(SELECT ' . $DB->Concat(
+                                ___dbCastIntToChar($DBType, 'b_catalog_price.PRICE'),
+                                '\' \'',
+                                'b_catalog_price.CURRENCY'
+                            ) . '
 				FROM b_catalog_price
 					LEFT JOIN b_catalog_group ON b_catalog_group.ID = b_catalog_price.CATALOG_GROUP_ID
 				WHERE   b_catalog_price.PRODUCT_ID = %s
@@ -3058,7 +3470,6 @@ class CSaleReportSaleProductHelper extends CBaseSaleReportHelper
     public static function formatResults(&$rows, &$columnInfo, $total)
     {
         foreach ($rows as &$row) {
-
             foreach ($row as $k => &$v) {
                 if (!array_key_exists($k, $columnInfo)) {
                     continue;
@@ -3121,8 +3532,11 @@ class CSaleReportSaleProductHelper extends CBaseSaleReportHelper
         foreach (self::$goodsQuantityFields as $qField) {
             if (preg_match('/' . $qField . '$/', $k)) {
                 if (!empty($v) && !is_null($v) && $v != '&nbsp;') {
-                    if (self::$fDecimalQuant) $v = sprintf('%.3f', round($v, 3));
-                    else $v = sprintf('%d', round($v, 0));
+                    if (self::$fDecimalQuant) {
+                        $v = sprintf('%.3f', round($v, 3));
+                    } else {
+                        $v = sprintf('%d', round($v, 0));
+                    }
                 }
                 break;
             }
@@ -3140,14 +3554,16 @@ class CSaleReportSaleProductHelper extends CBaseSaleReportHelper
 
         // runtime fields which align right
         if (self::$bUsePriceTypesColumns) {
-            if (strpos($k, 'PRICE_TYPE_') === 0 && is_numeric(substr($k, 11))) $cInfo['align'] = 'right';
+            if (mb_strpos($k, 'PRICE_TYPE_') === 0 && is_numeric(mb_substr($k, 11))) {
+                $cInfo['align'] = 'right';
+            }
         }
 
         // Formatting fields of price types
         if (preg_match('/[A-Za-z_]*PRICE_TYPE_[0-9]+$/', $k) && !empty($v) && $v !== '&nbsp;') {
             $v = trim($v);
-            $spacePos = strpos(trim($v), ' ');
-            $v = number_format(doubleval(substr($v, 0, $spacePos)), 2, '.', ' ') . substr($v, $spacePos);
+            $spacePos = mb_strpos(trim($v), ' ');
+            $v = number_format(doubleval(mb_substr($v, 0, $spacePos)), 2, '.', ' ') . mb_substr($v, $spacePos);
         }
     }
 
@@ -3167,7 +3583,9 @@ class CSaleReportSaleProductHelper extends CBaseSaleReportHelper
             // Formatting of monetary fields.
             foreach (self::$monetaryFields as $monField) {
                 if (preg_match('/' . $monField . '$/', $k)) {
-                    if (!$bFormatOnly) $v = self::calculateInReportCurrency($v);
+                    if (!$bFormatOnly) {
+                        $v = self::calculateInReportCurrency($v);
+                    }
                     $v = number_format(doubleval($v), 2, '.', ' ');
                     break;
                 }
@@ -3177,8 +3595,11 @@ class CSaleReportSaleProductHelper extends CBaseSaleReportHelper
             foreach (self::$goodsQuantityFields as $qField) {
                 if (preg_match('/' . $qField . '$/', $k)) {
                     if (!empty($v) && !is_null($v) && $v != '&nbsp;') {
-                        if (self::$fDecimalQuant) $v = sprintf('%.3f', round($v, 3));
-                        else $v = sprintf('%d', round($v, 0));
+                        if (self::$fDecimalQuant) {
+                            $v = sprintf('%.3f', round($v, 3));
+                        } else {
+                            $v = sprintf('%d', round($v, 0));
+                        }
                     }
                     break;
                 }
@@ -3196,8 +3617,8 @@ class CSaleReportSaleProductHelper extends CBaseSaleReportHelper
             if (!$bFormatOnly) {
                 if (preg_match('/[A-Za-z_]*PRICE_TYPE_[0-9]+$/', $k) && !empty($v) && $v !== '&nbsp;') {
                     $v = trim($v);
-                    $spacePos = strpos($v, ' ');
-                    $v = number_format(doubleval(substr($v, 0, $spacePos)), 2, '.', ' ') . substr($v, $spacePos);
+                    $spacePos = mb_strpos($v, ' ');
+                    $v = number_format(doubleval(mb_substr($v, 0, $spacePos)), 2, '.', ' ') . mb_substr($v, $spacePos);
                 }
             }
         }
@@ -3211,9 +3632,11 @@ class CSaleReportSaleProductHelper extends CBaseSaleReportHelper
 
             if ($field->getEntity()->getName() == 'Product') {
                 if ($elem['name'] == 'NAME') {
-                    $href = array('pattern' => '/bitrix/admin/cat_product_edit.php?IBLOCK_ID=' .
-                        '#IBLOCK.IBLOCK.ID#&type=#IBLOCK.IBLOCK.IBLOCK_TYPE_ID#&ID=' .
-                        '#ID#&lang=' . LANG . '&WF=Y');
+                    $href = array(
+                        'pattern' => '/bitrix/admin/cat_product_edit.php?IBLOCK_ID=' .
+                            '#IBLOCK.IBLOCK.ID#&type=#IBLOCK.IBLOCK.IBLOCK_TYPE_ID#&ID=' .
+                            '#ID#&lang=' . LANG . '&WF=Y'
+                    );
                 }
             }
         }

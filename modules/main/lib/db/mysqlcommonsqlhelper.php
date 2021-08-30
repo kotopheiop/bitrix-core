@@ -160,11 +160,11 @@ abstract class MysqlCommonSqlHelper extends SqlHelper
 
         $format = str_replace($search, $replace, $format);
 
-        if (strpos($format, '%H') === false) {
+        if (mb_strpos($format, '%H') === false) {
             $format = str_replace("H", "%h", $format);
         }
 
-        if (strpos($format, '%M') === false) {
+        if (mb_strpos($format, '%M') === false) {
             $format = str_replace("M", "%b", $format);
         }
 
@@ -188,10 +188,12 @@ abstract class MysqlCommonSqlHelper extends SqlHelper
     {
         $str = "";
         $ar = func_get_args();
-        if (is_array($ar))
+        if (is_array($ar)) {
             $str .= implode(", ", $ar);
-        if (strlen($str) > 0)
+        }
+        if ($str <> '') {
             $str = "CONCAT(" . $str . ")";
+        }
         return $str;
     }
 
@@ -374,6 +376,19 @@ abstract class MysqlCommonSqlHelper extends SqlHelper
     {
         if ($field instanceof ORM\Fields\IntegerField) {
             return 'int';
+        } elseif ($field instanceof ORM\Fields\DecimalField) {
+            $defaultPrecision = 18;
+            $defaultScale = 2;
+
+            $precision = $field->getPrecision() > 0 ? $field->getPrecision() : $defaultPrecision;
+            $scale = $field->getScale() > 0 ? $field->getScale() : $defaultScale;
+
+            if ($scale >= $precision) {
+                $precision = $defaultPrecision;
+                $scale = $defaultScale;
+            }
+
+            return "decimal($precision, $scale)";
         } elseif ($field instanceof ORM\Fields\FloatField) {
             return 'double';
         } elseif ($field instanceof ORM\Fields\DatetimeField) {
@@ -388,7 +403,7 @@ abstract class MysqlCommonSqlHelper extends SqlHelper
             if (preg_match('/^[0-9]+$/', $values[0]) && preg_match('/^[0-9]+$/', $values[1])) {
                 return 'int';
             } else {
-                return 'varchar(' . max(strlen($values[0]), strlen($values[1])) . ')';
+                return 'varchar(' . max(mb_strlen($values[0]), mb_strlen($values[1])) . ')';
             }
         } elseif ($field instanceof ORM\Fields\EnumField) {
             return 'varchar(' . max(array_map('strlen', $field->getValues())) . ')';
@@ -423,8 +438,9 @@ abstract class MysqlCommonSqlHelper extends SqlHelper
         $offset = intval($offset);
         $limit = intval($limit);
 
-        if ($offset > 0 && $limit <= 0)
+        if ($offset > 0 && $limit <= 0) {
             throw new \Bitrix\Main\ArgumentException("Limit must be set if offset is set");
+        }
 
         if ($limit > 0) {
             $sql .= "\nLIMIT " . $offset . ", " . $limit . "\n";

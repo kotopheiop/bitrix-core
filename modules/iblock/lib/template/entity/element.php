@@ -50,40 +50,49 @@ class Element extends Base
                 }
             }
 
-            if ($this->property)
+            if ($this->property) {
                 return $this->property;
+            }
         } elseif ($entity === "iblock") {
             if (!$this->iblock && $this->loadFromDatabase()) {
-                if ($this->fields["IBLOCK_ID"] > 0)
+                if ($this->fields["IBLOCK_ID"] > 0) {
                     $this->iblock = new Iblock($this->fields["IBLOCK_ID"]);
+                }
             }
 
-            if ($this->iblock)
+            if ($this->iblock) {
                 return $this->iblock;
+            }
         } elseif ($entity === "parent") {
             if (!$this->parent && $this->loadFromDatabase()) {
-                if ($this->fields["IBLOCK_SECTION_ID"] > 0)
+                if ($this->fields["IBLOCK_SECTION_ID"] > 0) {
                     $this->parent = new Section($this->fields["IBLOCK_SECTION_ID"]);
+                }
             }
 
-            if ($this->parent)
+            if ($this->parent) {
                 return $this->parent;
+            }
         } elseif ($entity === "sections") {
             if (!$this->sections && $this->loadFromDatabase()) {
-                if ($this->fields["IBLOCK_SECTION_ID"] > 0)
+                if ($this->fields["IBLOCK_SECTION_ID"] > 0) {
                     $this->sections = new SectionPath($this->fields["IBLOCK_SECTION_ID"]);
+                }
             }
 
-            if ($this->sections)
+            if ($this->sections) {
                 return $this->sections;
+            }
         } elseif ($entity === "catalog") {
             if (!$this->catalog && $this->loadFromDatabase()) {
-                if (\Bitrix\Main\Loader::includeModule('catalog'))
+                if (\Bitrix\Main\Loader::includeModule('catalog')) {
                     $this->catalog = new ElementCatalog($this->id);
+                }
             }
 
-            if ($this->catalog)
+            if ($this->catalog) {
                 return $this->catalog;
+            }
         }
         return parent::resolve($entity);
     }
@@ -126,8 +135,9 @@ class Element extends Base
                 $section = -1;
                 foreach ($fields["IBLOCK_SECTION"] as $sectionId) {
                     if ($sectionId > 0) {
-                        if ($section < 0 || $section > $sectionId)
+                        if ($section < 0 || $section > $sectionId) {
                             $section = $sectionId;
+                        }
                     }
                 }
 
@@ -137,8 +147,9 @@ class Element extends Base
                 }
             }
 
-            if (\Bitrix\Main\Loader::includeModule('catalog'))
+            if (\Bitrix\Main\Loader::includeModule('catalog')) {
                 $this->catalog = new ElementCatalog($this->id);
+            }
         }
     }
 
@@ -150,13 +161,19 @@ class Element extends Base
      */
     protected function loadFromDatabase()
     {
-        if (!isset($this->fields)) {
-            //Element fields
-            $elementList = \Bitrix\Iblock\ElementTable::getList(array(
-                "select" => array_values($this->fieldMap),
-                "filter" => array("=ID" => $this->id),
-            ));
-            $this->fields = $elementList->fetch();
+        static $cache = array();
+        if ($this->id > 0) {
+            if (!isset($cache[$this->id])) {
+                //Element fields
+                $elementList = \Bitrix\Iblock\ElementTable::getList(
+                    array(
+                        "select" => array_values($this->fieldMap),
+                        "filter" => array("=ID" => $this->id),
+                    )
+                );
+                $cache[$this->id] = $elementList->fetch();
+            }
+            $this->fields = $cache[$this->id];
         }
         return is_array($this->fields);
     }

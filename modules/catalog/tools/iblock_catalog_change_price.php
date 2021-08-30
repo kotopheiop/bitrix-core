@@ -23,9 +23,12 @@ $priceTypeList = array();
 foreach (CCatalogGroup::GetListArray() as $row) {
     $row['ID'] = (int)$row['ID'];
     $row['NAME_LANG'] = (string)$row['NAME_LANG'];
-    $priceTypeList[$row['ID']] = htmlspecialcharsbx('[' . $row['NAME'] . ']' . ($row['NAME_LANG'] != '' ? ' ' : '') . $row['NAME_LANG']);
-    if ($row['BASE'] == 'Y')
+    $priceTypeList[$row['ID']] = htmlspecialcharsbx(
+        '[' . $row['NAME'] . ']' . ($row['NAME_LANG'] != '' ? ' ' : '') . $row['NAME_LANG']
+    );
+    if ($row['BASE'] == 'Y') {
         $basePriceType = $row['ID'];
+    }
 }
 unset($row);
 
@@ -35,15 +38,17 @@ $sourcePriceType = (isset($_SESSION['CHANGE_PRICE_PARAMS']['INITIAL_PRICE_TYPE']
     ? (int)$_SESSION['CHANGE_PRICE_PARAMS']['INITIAL_PRICE_TYPE']
     : 0
 );
-if ($sourcePriceType < 0 || !isset($priceTypeList[$sourcePriceType]))
+if ($sourcePriceType < 0 || !isset($priceTypeList[$sourcePriceType])) {
     $sourcePriceType = 0;
+}
 
 $destinationPriceType = (isset($_SESSION['CHANGE_PRICE_PARAMS']['PRICE_TYPE'])
     ? (int)$_SESSION['CHANGE_PRICE_PARAMS']['PRICE_TYPE']
     : 0
 );
-if ($destinationPriceType < 0 || !isset($priceTypeList[$destinationPriceType]))
+if ($destinationPriceType < 0 || !isset($priceTypeList[$destinationPriceType])) {
     $destinationPriceType = 0;
+}
 
 
 ?>
@@ -130,10 +135,12 @@ if ($destinationPriceType < 0 || !isset($priceTypeList[$destinationPriceType]))
 					<span class="adm-select-wrap">
 						<select id="tableActionChangingSelect" class="adm-select"
                                 style="width: 169px; max-width: 300px;" name="tableActionChangingSelect">
-							<option id="radio_changing_add"
-                                    value="add"><?= Loc::getMessage("IBLIST_CHPRICE_TABLE_ACTION_TYPE_ADD") ?></option>
-							<option id="radio_changing_sub"
-                                    value="subtract"><?= Loc::getMessage("IBLIST_CHPRICE_TABLE_ACTION_TYPE_SUB") ?></option>
+							<option id="radio_changing_add" value="add"><?= Loc::getMessage(
+                                    "IBLIST_CHPRICE_TABLE_ACTION_TYPE_ADD"
+                                ) ?></option>
+							<option id="radio_changing_sub" value="subtract"><?= Loc::getMessage(
+                                    "IBLIST_CHPRICE_TABLE_ACTION_TYPE_SUB"
+                                ) ?></option>
 						</select>
 					</span>
                 </td>
@@ -145,7 +152,9 @@ if ($destinationPriceType < 0 || !isset($priceTypeList[$destinationPriceType]))
 					<span class="adm-select-wrap">
 						<select id="tableUnitsSelect" class="adm-select" style="width: 169px;">
 							<option selected value="percent">%</option>
-							<option value="multiple"><?= Loc::getMessage("IBLIST_CHPRICE_TABLE_UNIT_MULTYPLE") ?></option>
+							<option value="multiple"><?= Loc::getMessage(
+                                    "IBLIST_CHPRICE_TABLE_UNIT_MULTYPLE"
+                                ) ?></option>
 							<?
                             foreach ($currenciesList as $currencyCode => $currencyElement) {
                                 ?>
@@ -219,7 +228,9 @@ if ($destinationPriceType < 0 || !isset($priceTypeList[$destinationPriceType]))
                             <td style="width:50%; padding-left:10px">
                                 <input id="resultMaskCheckbox" type="checkbox">
                                 <label class="inactive-element" id="resultMaskLabel"
-                                       for="resultMaskSelect"><?= Loc::getMessage("IBLIST_CHPRICE_TABLE_RESULT_MASK_LABEL") ?></label>
+                                       for="resultMaskSelect"><?= Loc::getMessage(
+                                        "IBLIST_CHPRICE_TABLE_RESULT_MASK_LABEL"
+                                    ) ?></label>
                             </td>
                             <td style="padding-left: 20px">
 							<span class="adm-select-wrap">
@@ -244,7 +255,9 @@ if ($destinationPriceType < 0 || !isset($priceTypeList[$destinationPriceType]))
                             <td style="width:50%; padding-left:10px">
                                 <input id="differenceValueCheckbox" type="checkbox">
                                 <label class="inactive-element" id="differenceValueLabel"
-                                       for="differenceValueCheckbox"><?= Loc::getMessage("IBLIST_CHPRICE_TABLE_MINUS_COUNT_LABEL") ?></label>
+                                       for="differenceValueCheckbox"><?= Loc::getMessage(
+                                        "IBLIST_CHPRICE_TABLE_MINUS_COUNT_LABEL"
+                                    ) ?></label>
                             </td>
                             <td style="padding-left: 20px">
                                 <input type="text" id="differenceValueInput" style="width: 140px;" placeholder="0.00"
@@ -265,7 +278,10 @@ if ($destinationPriceType < 0 || !isset($priceTypeList[$destinationPriceType]))
                             $sourceInput = "<input type='text' style='width:70px;margin:0 5px' id='exampleSourceValueInput' value='11111.11'>";
                             ?>
                             <td style="text-align: center;">
-                                <?= Loc::getMessage("IBLIST_CHPRICE_EXAMPLE_VALUE", array("#VALUE_BEFORE#" => $sourceInput)) ?>
+                                <?= Loc::getMessage(
+                                    "IBLIST_CHPRICE_EXAMPLE_VALUE",
+                                    array("#VALUE_BEFORE#" => $sourceInput)
+                                ) ?>
 
                                 <span id='resultValueSpan' style="color:#01B10E;font-weight: bold;">11111.11<span>
                             </td>

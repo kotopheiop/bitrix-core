@@ -6,32 +6,36 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
 IncludeModuleLangFile(__FILE__);
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions < "W")
+if ($saleModulePermissions < "W") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 CModule::IncludeModule("sale");
 $bSaved = false;
 
-if (isset($_POST["YANDEX_MARKET_ON"]))
+if (isset($_POST["YANDEX_MARKET_ON"])) {
     CSaleYMHandler::setActivity(true);
-elseif (isset($_POST["YANDEX_MARKET_OFF"]))
+} elseif (isset($_POST["YANDEX_MARKET_OFF"])) {
     CSaleYMHandler::setActivity(false);
+}
 
 $siteList = array();
 $defaultSite = "";
-$rsSites = CSite::GetList($by = "sort", $order = "asc", Array());
+$rsSites = CSite::GetList();
 
 while ($arRes = $rsSites->Fetch()) {
     $siteList[$arRes['ID']] = $arRes['NAME'];
 
-    if ($arRes["DEF"] == "Y")
+    if ($arRes["DEF"] == "Y") {
         $defaultSite = $arRes['ID'];
+    }
 }
 
-if (isset($_REQUEST["SITE_ID"]) && array_key_exists($_REQUEST["SITE_ID"], $siteList))
+if (isset($_REQUEST["SITE_ID"]) && array_key_exists($_REQUEST["SITE_ID"], $siteList)) {
     $SITE_ID = $_REQUEST["SITE_ID"];
-else
+} else {
     $SITE_ID = $defaultSite;
+}
 
 if (isset($_REQUEST["https_check"]) && $_REQUEST["https_check"] == "Y" && check_bitrix_sessid()) {
     $ob = new CHTTP();
@@ -49,22 +53,26 @@ if (isset($_REQUEST["https_check"]) && $_REQUEST["https_check"] == "Y" && check_
     header("Content-Type: application/x-javascript; charset=" . LANG_CHARSET);
     echo CUtil::PhpToJSObject(array("status" => $res, "text" => $text));
     die();
-} else if ($REQUEST_METHOD == "POST" && check_bitrix_sessid()) {
-    $site = !empty($_POST["SITE_ID_INITIAL"]) && $SITE_ID == $_POST["SITE_ID_INITIAL"] ? $SITE_ID : $_POST["SITE_ID_INITIAL"];
+} else {
+    if ($REQUEST_METHOD == "POST" && check_bitrix_sessid()) {
+        $site = !empty($_POST["SITE_ID_INITIAL"]) && $SITE_ID == $_POST["SITE_ID_INITIAL"] ? $SITE_ID : $_POST["SITE_ID_INITIAL"];
 
-    if (isset($_POST["YMSETTINGS"]) && is_array($_POST["YMSETTINGS"]) && !empty($_POST["YMSETTINGS"])) {
-        $settings = CSaleYMHandler::getSettings(false);
+        if (isset($_POST["YMSETTINGS"]) && is_array($_POST["YMSETTINGS"]) && !empty($_POST["YMSETTINGS"])) {
+            $settings = CSaleYMHandler::getSettings(false);
 
-        if (!is_array($settings['SETTINGS']))
-            $settings['SETTINGS'] = array();
+            if (!is_array($settings['SETTINGS'])) {
+                $settings['SETTINGS'] = array();
+            }
 
-        if (!is_array($settings['SETTINGS'][$site]))
-            $settings['SETTINGS'][$site] = array();
+            if (!is_array($settings['SETTINGS'][$site])) {
+                $settings['SETTINGS'][$site] = array();
+            }
 
-        $settings['SETTINGS'][$site] = array_merge($settings['SETTINGS'][$site], $_POST["YMSETTINGS"]);
+            $settings['SETTINGS'][$site] = array_merge($settings['SETTINGS'][$site], $_POST["YMSETTINGS"]);
 
-        CSaleYMHandler::saveSettings($settings['SETTINGS']);
-        $bSaved = true;
+            CSaleYMHandler::saveSettings($settings['SETTINGS']);
+            $bSaved = true;
+        }
     }
 }
 
@@ -119,7 +127,13 @@ $statuses = array(
     "DEDUCTED" => GetMessage("SALE_YM_F_OUT"),
 );
 
-$saleStatusIterator = CSaleStatus::GetList(Array("SORT" => "ASC"), Array("LID" => LANGUAGE_ID), false, false, Array("ID", "NAME", "SORT"));
+$saleStatusIterator = CSaleStatus::GetList(
+    Array("SORT" => "ASC"),
+    Array("LID" => LANGUAGE_ID),
+    false,
+    false,
+    Array("ID", "NAME", "SORT")
+);
 
 while ($row = $saleStatusIterator->GetNext()) {
     $statuses[$row["ID"]] = "{$row["NAME"]} [{$row['ID']}]";
@@ -146,8 +160,9 @@ $requiredOrderProperties = array(
 
 require_once($DOCUMENT_ROOT . BX_ROOT . "/modules/main/include/prolog_admin_after.php");
 
-if ($bSaved)
+if ($bSaved) {
     CAdminMessage::ShowMessage(array("MESSAGE" => GetMessage("SALE_YM_SETTINGS_SAVED"), "TYPE" => "OK"));
+}
 
 ?>
     <form method="post" action="<?= $APPLICATION->GetCurPage() ?>?lang=<?= LANGUAGE_ID ?>" name="ymform">
@@ -159,8 +174,12 @@ if ($bSaved)
             <table width="100%">
                 <tr>
                     <td align="left">
-                        <?= GetMessage("SALE_YM_SITE") ?>
-                        : <?= CLang::SelectBox("SITE_ID", $SITE_ID, "", "this.form.submit();") ?>
+                        <?= GetMessage("SALE_YM_SITE") ?>: <?= CLang::SelectBox(
+                            "SITE_ID",
+                            $SITE_ID,
+                            "",
+                            "this.form.submit();"
+                        ) ?>
                     </td>
                     <td align="right">
                         <img alt="eBay logo" src="/bitrix/images/sale/yandex-market-logo.png"
@@ -173,10 +192,13 @@ if ($bSaved)
         $activeListNames = array();
 
         foreach (\Bitrix\Sale\Delivery\Services\Manager::getActiveList() as $id => $fields) {
-            if (!$fields["CLASS_NAME"]::canHasProfiles())
-                if (!$fields["CLASS_NAME"]::canHasChildren())
-                    if ($delivery = \Bitrix\Sale\Delivery\Services\Manager::createObject($fields))
+            if (!$fields["CLASS_NAME"]::canHasProfiles()) {
+                if (!$fields["CLASS_NAME"]::canHasChildren()) {
+                    if ($delivery = \Bitrix\Sale\Delivery\Services\Manager::createObject($fields)) {
                         $activeListNames[$id] = $delivery->getNameWithParent();
+                    }
+                }
+            }
         }
 
         $siteSetts = CSaleYMHandler::getSettingsBySiteId($SITE_ID, false);
@@ -187,8 +209,9 @@ if ($bSaved)
             '\Bitrix\Sale\Delivery\Restrictions\BySite'
         );
 
-        if (!is_array($dlvFilteredIds))
+        if (!is_array($dlvFilteredIds)) {
             $dlvFilteredIds = array();
+        }
 
         $arDeliveryList = array_intersect_key($activeListNames, array_flip($dlvFilteredIds));
 
@@ -202,8 +225,9 @@ if ($bSaved)
         );
 
         $arPersonTypes = array();
-        while ($arPT = $dbResultList->Fetch())
+        while ($arPT = $dbResultList->Fetch()) {
             $arPersonTypes[$arPT['ID']] = $arPT['NAME'];
+        }
 
         if (isset($siteSetts["PERSON_TYPE"]) && array_key_exists($siteSetts["PERSON_TYPE"], $arPersonTypes)) {
             $personTypeId = $siteSetts["PERSON_TYPE"];
@@ -222,26 +246,44 @@ if ($bSaved)
             $arPropFilter,
             false,
             false,
-            array("ID", "CODE", "NAME", "TYPE", "REQUIED", "IS_LOCATION", "IS_EMAIL", "IS_PROFILE_NAME", "IS_PAYER", "IS_LOCATION4TAX", "SORT", "IS_PHONE")
+            array(
+                "ID",
+                "CODE",
+                "NAME",
+                "TYPE",
+                "REQUIED",
+                "IS_LOCATION",
+                "IS_EMAIL",
+                "IS_PROFILE_NAME",
+                "IS_PAYER",
+                "IS_LOCATION4TAX",
+                "SORT",
+                "IS_PHONE"
+            )
         );
 
         $orderPropsList = array();
 
-        while ($arOrderProps = $dbOrderProps->Fetch())
-            if (strlen($arOrderProps["CODE"]) > 0)
+        while ($arOrderProps = $dbOrderProps->Fetch()) {
+            if ($arOrderProps["CODE"] <> '') {
                 $orderPropsList[$arOrderProps["CODE"]] = $arOrderProps["NAME"];
+            }
+        }
 
         $tabControl->Begin();
         $tabControl->BeginNextTab();
 
         ?>
             <tr>
-                <td width="40%" class="adm-detail-valign-top"><span
-                            class="adm-required-field"><?= GetMessage("SALE_YM_CAMPAIGN_ID") ?>:</span></td>
+                <td width="40%" class="adm-detail-valign-top"><span class="adm-required-field"><?= GetMessage(
+                            "SALE_YM_CAMPAIGN_ID"
+                        ) ?>:</span></td>
                 <td width="60%">
                     <input type="text" onkeypress="return correctCampaignId(event, this);"
                            name="YMSETTINGS[CAMPAIGN_ID]" size="45" maxlength="255"
-                           value="<?= isset($siteSetts["CAMPAIGN_ID"]) ? htmlspecialcharsbx($siteSetts["CAMPAIGN_ID"]) : "" ?>">
+                           value="<?= isset($siteSetts["CAMPAIGN_ID"]) ? htmlspecialcharsbx(
+                               $siteSetts["CAMPAIGN_ID"]
+                           ) : "" ?>">
                     <?= BeginNote(); ?>
                     <?= GetMessage("SALE_YM_CAMPAIGN_ID_HELP") ?>
                     <?= EndNote(); ?>
@@ -250,42 +292,55 @@ if ($bSaved)
             <tr>
                 <td><span class="adm-required-field"><?= GetMessage("SALE_YM_YANDEX_URL") ?>:</span></td>
                 <td><input type="text" name="YMSETTINGS[YANDEX_URL]" size="45" maxlength="255"
-                           value="<?= isset($siteSetts["YANDEX_URL"]) ? htmlspecialcharsbx($siteSetts["YANDEX_URL"]) : "https://api.partner.market.yandex.ru/v2/" ?>">
-                </td>
+                           value="<?= isset($siteSetts["YANDEX_URL"]) ? htmlspecialcharsbx(
+                               $siteSetts["YANDEX_URL"]
+                           ) : "https://api.partner.market.yandex.ru/v2/" ?>"></td>
             </tr>
             <tr>
-                <td class="adm-detail-valign-top"><span
-                            class="adm-required-field"><?= GetMessage("SALE_YM_YANDEX_TOKEN") ?>:</span></td>
+                <td class="adm-detail-valign-top"><span class="adm-required-field"><?= GetMessage(
+                            "SALE_YM_YANDEX_TOKEN"
+                        ) ?>:</span></td>
                 <td>
                     <input type="text" name="YMSETTINGS[YANDEX_TOKEN]" size="45" maxlength="255"
-                           value="<?= isset($siteSetts["YANDEX_TOKEN"]) ? htmlspecialcharsbx($siteSetts["YANDEX_TOKEN"]) : "" ?>">
+                           value="<?= isset($siteSetts["YANDEX_TOKEN"]) ? htmlspecialcharsbx(
+                               $siteSetts["YANDEX_TOKEN"]
+                           ) : "" ?>">
                     <br><small><?= GetMessage("SALE_YM_YANDEX_TOKEN_HELP") ?></small>
                 </td>
             </tr>
             <tr>
-                <td class="adm-detail-valign-top"><span
-                            class="adm-required-field"><?= GetMessage("SALE_YM_OAUTH_TOKEN") ?>:</span></td>
+                <td class="adm-detail-valign-top"><span class="adm-required-field"><?= GetMessage(
+                            "SALE_YM_OAUTH_TOKEN"
+                        ) ?>:</span></td>
                 <td>
                     <input type="text" name="YMSETTINGS[OAUTH_TOKEN]" size="45" maxlength="255"
-                           value="<?= isset($siteSetts["OAUTH_TOKEN"]) ? htmlspecialcharsbx($siteSetts["OAUTH_TOKEN"]) : "" ?>">
+                           value="<?= isset($siteSetts["OAUTH_TOKEN"]) ? htmlspecialcharsbx(
+                               $siteSetts["OAUTH_TOKEN"]
+                           ) : "" ?>">
                     <br><small><?= GetMessage("SALE_YM_OAUTH_TOKEN_HELP") ?></small>
                 </td>
             </tr>
             <tr>
-                <td class="adm-detail-valign-top"><span
-                            class="adm-required-field"><?= GetMessage("SALE_YM_OAUTH_CLIENT_ID") ?>:</span></td>
+                <td class="adm-detail-valign-top"><span class="adm-required-field"><?= GetMessage(
+                            "SALE_YM_OAUTH_CLIENT_ID"
+                        ) ?>:</span></td>
                 <td>
                     <input type="text" name="YMSETTINGS[OAUTH_CLIENT_ID]" size="45" maxlength="255"
-                           value="<?= isset($siteSetts["OAUTH_CLIENT_ID"]) ? htmlspecialcharsbx($siteSetts["OAUTH_CLIENT_ID"]) : "" ?>">
+                           value="<?= isset($siteSetts["OAUTH_CLIENT_ID"]) ? htmlspecialcharsbx(
+                               $siteSetts["OAUTH_CLIENT_ID"]
+                           ) : "" ?>">
                     <br><small><?= GetMessage("SALE_YM_OAUTH_CLIENT_ID_HELP") ?></small>
                 </td>
             </tr>
             <tr>
-                <td class="adm-detail-valign-top"><span
-                            class="adm-required-field"><?= GetMessage("SALE_YM_OAUTH_LOGIN") ?>:</span></td>
+                <td class="adm-detail-valign-top"><span class="adm-required-field"><?= GetMessage(
+                            "SALE_YM_OAUTH_LOGIN"
+                        ) ?>:</span></td>
                 <td>
                     <input type="text" name="YMSETTINGS[OAUTH_LOGIN]" size="45" maxlength="255"
-                           value="<?= isset($siteSetts["OAUTH_LOGIN"]) ? htmlspecialcharsbx($siteSetts["OAUTH_LOGIN"]) : "" ?>">
+                           value="<?= isset($siteSetts["OAUTH_LOGIN"]) ? htmlspecialcharsbx(
+                               $siteSetts["OAUTH_LOGIN"]
+                           ) : "" ?>">
                     <br><small><?= GetMessage("SALE_YM_OAUTH_LOGIN_HELP") ?></small>
                 </td>
             </tr>
@@ -294,7 +349,9 @@ if ($bSaved)
                 <td>
                     <select name="YMSETTINGS[PERSON_TYPE]" onchange="this.form.submit();">
                         <? foreach ($arPersonTypes as $ptId => $ptName):?>
-                            <option value="<?= $ptId ?>"<?= $personTypeId == $ptId ? " selected" : "" ?>><?= htmlspecialcharsbx($ptName) ?></option>
+                            <option value="<?= $ptId ?>"<?= $personTypeId == $ptId ? " selected" : "" ?>><?= htmlspecialcharsbx(
+                                    $ptName
+                                ) ?></option>
                         <?endforeach; ?>
                     </select>
                 </td>
@@ -328,10 +385,18 @@ if ($bSaved)
                 <td>
                     <select name="YMSETTINGS[LOG_LEVEL]">
                         <? $logLevel = isset($siteSetts["LOG_LEVEL"]) && $siteSetts["LOG_LEVEL"] ? $siteSetts["LOG_LEVEL"] : CSaleYMHandler::LOG_LEVEL_ERROR; ?>
-                        <option value="<?= CSaleYMHandler::LOG_LEVEL_ERROR ?>"<?= $logLevel == CSaleYMHandler::LOG_LEVEL_ERROR ? " selected" : "" ?>><?= GetMessage("SALE_YM_LOG_LEVEL_ERROR") ?></option>
-                        <option value="<?= CSaleYMHandler::LOG_LEVEL_INFO ?>"<?= $logLevel == CSaleYMHandler::LOG_LEVEL_INFO ? " selected" : "" ?>><?= GetMessage("SALE_YM_LOG_LEVEL_INFO") ?></option>
-                        <option value="<?= CSaleYMHandler::LOG_LEVEL_DEBUG ?>"<?= $logLevel == CSaleYMHandler::LOG_LEVEL_DEBUG ? " selected" : "" ?>><?= GetMessage("SALE_YM_LOG_LEVEL_DEBUG") ?></option>
-                        <option value="<?= CSaleYMHandler::LOG_LEVEL_DISABLE ?>"<?= $logLevel == CSaleYMHandler::LOG_LEVEL_DISABLE ? " selected" : "" ?>><?= GetMessage("SALE_YM_LOG_LEVEL_DISABLE") ?></option>
+                        <option value="<?= CSaleYMHandler::LOG_LEVEL_ERROR ?>"<?= $logLevel == CSaleYMHandler::LOG_LEVEL_ERROR ? " selected" : "" ?>><?= GetMessage(
+                                "SALE_YM_LOG_LEVEL_ERROR"
+                            ) ?></option>
+                        <option value="<?= CSaleYMHandler::LOG_LEVEL_INFO ?>"<?= $logLevel == CSaleYMHandler::LOG_LEVEL_INFO ? " selected" : "" ?>><?= GetMessage(
+                                "SALE_YM_LOG_LEVEL_INFO"
+                            ) ?></option>
+                        <option value="<?= CSaleYMHandler::LOG_LEVEL_DEBUG ?>"<?= $logLevel == CSaleYMHandler::LOG_LEVEL_DEBUG ? " selected" : "" ?>><?= GetMessage(
+                                "SALE_YM_LOG_LEVEL_DEBUG"
+                            ) ?></option>
+                        <option value="<?= CSaleYMHandler::LOG_LEVEL_DISABLE ?>"<?= $logLevel == CSaleYMHandler::LOG_LEVEL_DISABLE ? " selected" : "" ?>><?= GetMessage(
+                                "SALE_YM_LOG_LEVEL_DISABLE"
+                            ) ?></option>
                     </select>
                 </td>
             </tr>
@@ -346,18 +411,30 @@ if ($bSaved)
                             onclick="
                                     var checkHTTPS = function(){
                                     BX.showWait();
-                                    BX.ajax.post('<?= $APPLICATION->GetCurPage() ?>', '<?= CUtil::JSEscape(bitrix_sessid_get()) . "&https_check=Y" ?>', function (result){
+                                    BX.ajax.post('<?= $APPLICATION->GetCurPage() ?>', '<?= CUtil::JSEscape(
+                                bitrix_sessid_get()
+                            ) . "&https_check=Y" ?>', function (result){
                                     BX.closeWait();
                                     var res = eval( '('+result+')' );
-                                    BX('https_check_result_<?= CUtil::JSEscape($SITE_ID) ?>').innerHTML = '&nbsp;' + res['text'];
+                                    BX('https_check_result_<?= CUtil::JSEscape(
+                                $SITE_ID
+                            ) ?>').innerHTML = '&nbsp;' + res['text'];
 
-                                    BX.removeClass(BX('https_check_result_<?= CUtil::JSEscape($SITE_ID) ?>'), 'https_check_success');
-                                    BX.removeClass(BX('https_check_result_<?= CUtil::JSEscape($SITE_ID) ?>'), 'https_check_fail');
+                                    BX.removeClass(BX('https_check_result_<?= CUtil::JSEscape(
+                                $SITE_ID
+                            ) ?>'), 'https_check_success');
+                                    BX.removeClass(BX('https_check_result_<?= CUtil::JSEscape(
+                                $SITE_ID
+                            ) ?>'), 'https_check_fail');
 
                                     if (res['status'] == 'ok')
-                                    BX.addClass(BX('https_check_result_<?= CUtil::JSEscape($SITE_ID) ?>'), 'https_check_success');
+                                    BX.addClass(BX('https_check_result_<?= CUtil::JSEscape(
+                                $SITE_ID
+                            ) ?>'), 'https_check_success');
                                     else
-                                    BX.addClass(BX('https_check_result_<?= CUtil::JSEscape($SITE_ID) ?>'), 'https_check_fail');
+                                    BX.addClass(BX('https_check_result_<?= CUtil::JSEscape(
+                                $SITE_ID
+                            ) ?>'), 'https_check_fail');
                                     });
                                     };
                                     checkHTTPS();"
@@ -385,7 +462,9 @@ if ($bSaved)
                 <td>&nbsp;</td>
                 <td>
                     <input type="button" value="<?= GetMessage("SALE_YM_OUTLETS_ADD_BUT") ?>"
-                           onclick="addOutletIdField('YMSETTINGS[OUTLETS_IDS][]','<?= htmlspecialcharsbx($SITE_ID) ?>');">
+                           onclick="addOutletIdField('YMSETTINGS[OUTLETS_IDS][]','<?= htmlspecialcharsbx(
+                               $SITE_ID
+                           ) ?>');">
                     <br><small><?= GetMessage("SALE_YM_OUTLETS_HELP") ?></small>
                 </td>
             </tr>
@@ -394,8 +473,12 @@ if ($bSaved)
                 <td>
                     <select name="YMSETTINGS[IS_ACCEPT_OLD_PRICE]">
                         <? $isAcceptOldPrice = isset($siteSetts["IS_ACCEPT_OLD_PRICE"]) ? $siteSetts["IS_ACCEPT_OLD_PRICE"] : CSaleYMHandler::NOT_ACCEPT_OLD_PRICE; ?>
-                        <option value="<?= CSaleYMHandler::NOT_ACCEPT_OLD_PRICE ?>"<?= $isAcceptOldPrice == CSaleYMHandler::NOT_ACCEPT_OLD_PRICE ? " selected" : "" ?>><?= GetMessage("SALE_YM_ACCEPT_OLD_PRICE_N") ?></option>
-                        <option value="<?= CSaleYMHandler::ACCEPT_OLD_PRICE ?>"<?= $isAcceptOldPrice == CSaleYMHandler::ACCEPT_OLD_PRICE ? " selected" : "" ?>><?= GetMessage("SALE_YM_ACCEPT_OLD_PRICE_Y") ?></option>
+                        <option value="<?= CSaleYMHandler::NOT_ACCEPT_OLD_PRICE ?>"<?= $isAcceptOldPrice == CSaleYMHandler::NOT_ACCEPT_OLD_PRICE ? " selected" : "" ?>><?= GetMessage(
+                                "SALE_YM_ACCEPT_OLD_PRICE_N"
+                            ) ?></option>
+                        <option value="<?= CSaleYMHandler::ACCEPT_OLD_PRICE ?>"<?= $isAcceptOldPrice == CSaleYMHandler::ACCEPT_OLD_PRICE ? " selected" : "" ?>><?= GetMessage(
+                                "SALE_YM_ACCEPT_OLD_PRICE_Y"
+                            ) ?></option>
                 </td>
             </tr>
             <tr>
@@ -414,15 +497,30 @@ if ($bSaved)
 
             <tr>
                 <td width="40%"><?= GetMessage("SALE_YM_YANDEX") ?>:</td>
-                <td width="60%"><?= makeSelectorFromPaySystems("YMSETTINGS[PAY_SYSTEMS][YANDEX]", $siteSetts["PAY_SYSTEMS"]["YANDEX"], $personTypeId, $SITE_ID) ?></td>
+                <td width="60%"><?= makeSelectorFromPaySystems(
+                        "YMSETTINGS[PAY_SYSTEMS][YANDEX]",
+                        $siteSetts["PAY_SYSTEMS"]["YANDEX"],
+                        $personTypeId,
+                        $SITE_ID
+                    ) ?></td>
             </tr>
             <tr>
                 <td><?= GetMessage("SALE_YM_CASH_ON_DELIVERY") ?>:</td>
-                <td><?= makeSelectorFromPaySystems("YMSETTINGS[PAY_SYSTEMS][CASH_ON_DELIVERY]", $siteSetts["PAY_SYSTEMS"]["CASH_ON_DELIVERY"], $personTypeId, $SITE_ID) ?></td>
+                <td><?= makeSelectorFromPaySystems(
+                        "YMSETTINGS[PAY_SYSTEMS][CASH_ON_DELIVERY]",
+                        $siteSetts["PAY_SYSTEMS"]["CASH_ON_DELIVERY"],
+                        $personTypeId,
+                        $SITE_ID
+                    ) ?></td>
             </tr>
             <tr>
                 <td><?= GetMessage("SALE_YM_CARD_ON_DELIVERY") ?>:</td>
-                <td><?= makeSelectorFromPaySystems("YMSETTINGS[PAY_SYSTEMS][CARD_ON_DELIVERY]", $siteSetts["PAY_SYSTEMS"]["CARD_ON_DELIVERY"], $personTypeId, $SITE_ID) ?></td>
+                <td><?= makeSelectorFromPaySystems(
+                        "YMSETTINGS[PAY_SYSTEMS][CARD_ON_DELIVERY]",
+                        $siteSetts["PAY_SYSTEMS"]["CARD_ON_DELIVERY"],
+                        $personTypeId,
+                        $SITE_ID
+                    ) ?></td>
             </tr>
 
         <? $tabControl->BeginNextTab(); ?>
@@ -448,9 +546,15 @@ if ($bSaved)
                             <td>
                                 <select name="YMSETTINGS[DELIVERIES][<?= $deliveryId ?>]">
                                     <option value=""><?= GetMessage("SALE_YM_NOT_USE") ?></option>
-                                    <option value="DELIVERY"<?= $selected == "DELIVERY" ? " selected" : "" ?>><?= GetMessage("SALE_YM_DELIVERY_DELIVERY") ?></option>
-                                    <option value="PICKUP"<?= $selected == "PICKUP" ? " selected" : "" ?>><?= GetMessage("SALE_YM_DELIVERY_PICKUP") ?></option>
-                                    <option value="POST"<?= $selected == "POST" ? " selected" : "" ?>><?= GetMessage("SALE_YM_DELIVERY_POST") ?></option>
+                                    <option value="DELIVERY"<?= $selected == "DELIVERY" ? " selected" : "" ?>><?= GetMessage(
+                                            "SALE_YM_DELIVERY_DELIVERY"
+                                        ) ?></option>
+                                    <option value="PICKUP"<?= $selected == "PICKUP" ? " selected" : "" ?>><?= GetMessage(
+                                            "SALE_YM_DELIVERY_PICKUP"
+                                        ) ?></option>
+                                    <option value="POST"<?= $selected == "POST" ? " selected" : "" ?>><?= GetMessage(
+                                            "SALE_YM_DELIVERY_POST"
+                                        ) ?></option>
                                 </select>
                             </td>
                             <td>
@@ -489,15 +593,27 @@ if ($bSaved)
             </tr>
             <tr>
                 <td width="40%"><?= GetMessage("SALE_YM_Y_STATUS_UNPAID") . " [UNPAID]" ?></td>
-                <td width="60%"><?= getSelectHtml("YMSETTINGS[STATUS_IN][UNPAID]", $statuses, $siteSetts["STATUS_IN"]["UNPAID"]) ?></td>
+                <td width="60%"><?= getSelectHtml(
+                        "YMSETTINGS[STATUS_IN][UNPAID]",
+                        $statuses,
+                        $siteSetts["STATUS_IN"]["UNPAID"]
+                    ) ?></td>
             </tr>
             <tr>
                 <td><?= GetMessage("SALE_YM_Y_STATUS_PROCESSING") . " [PROCESSING]" ?></td>
-                <td><?= getSelectHtml("YMSETTINGS[STATUS_IN][PROCESSING]", $statuses, $siteSetts["STATUS_IN"]["PROCESSING"]) ?></td>
+                <td><?= getSelectHtml(
+                        "YMSETTINGS[STATUS_IN][PROCESSING]",
+                        $statuses,
+                        $siteSetts["STATUS_IN"]["PROCESSING"]
+                    ) ?></td>
             </tr>
             <tr>
                 <td><?= GetMessage("SALE_YM_Y_STATUS_CANCELLED") . " [CANCELLED]" ?></td>
-                <td><?= getSelectHtml("YMSETTINGS[STATUS_IN][CANCELLED]", $statuses, $siteSetts["STATUS_IN"]["CANCELLED"]) ?></td>
+                <td><?= getSelectHtml(
+                        "YMSETTINGS[STATUS_IN][CANCELLED]",
+                        $statuses,
+                        $siteSetts["STATUS_IN"]["CANCELLED"]
+                    ) ?></td>
             </tr>
 
         <?
@@ -517,7 +633,11 @@ if ($bSaved)
         as $statusId => $statusName): ?>
             <tr>
                 <td><?= $statusName ?></td>
-                <td><?= getSelectHtml("YMSETTINGS[STATUS_OUT][" . $statusId . "]", $outYandexStatuses, $siteSetts["STATUS_OUT"][$statusId]) ?></td>
+                <td><?= getSelectHtml(
+                        "YMSETTINGS[STATUS_OUT][" . $statusId . "]",
+                        $outYandexStatuses,
+                        $siteSetts["STATUS_OUT"][$statusId]
+                    ) ?></td>
             </tr>
         <?endforeach;
         ?>
@@ -543,11 +663,17 @@ if ($bSaved)
         ?>
         <?
 
-        $tabControl->Buttons(array(
-            "btnSave" => true,
-            "btnApply" => false
-        ));
-        echo '<input type="submit" name="YANDEX_MARKET_OFF" value="' . GetMessage("SALE_YM_OFF") . '" title="' . GetMessage("SALE_YM_OFF_TITLE") . '" onclick="return confirm(\'' . GetMessage("SALE_YM_OFF_CONFIRM") . '\')"/>';
+        $tabControl->Buttons(
+            array(
+                "btnSave" => true,
+                "btnApply" => false
+            )
+        );
+        echo '<input type="submit" name="YANDEX_MARKET_OFF" value="' . GetMessage(
+                "SALE_YM_OFF"
+            ) . '" title="' . GetMessage("SALE_YM_OFF_TITLE") . '" onclick="return confirm(\'' . GetMessage(
+                "SALE_YM_OFF_CONFIRM"
+            ) . '\')"/>';
         ?>
         <?= bitrix_sessid_post(); ?>
         <? $tabControl->End(); ?>
@@ -580,7 +706,11 @@ if ($bSaved)
             echo BeginNote();
             echo GetMessage("SALE_YM_OFF_TEXT");
             echo EndNote();
-            echo '<input type="submit" name="YANDEX_MARKET_ON" value="' . GetMessage("SALE_YM_ON") . '" title="' . GetMessage("SALE_YM_ON_TITLE") . '" onclick="return confirm(\'' . GetMessage("SALE_YM_ON_CONFIRM") . '\')"/>';
+            echo '<input type="submit" name="YANDEX_MARKET_ON" value="' . GetMessage(
+                    "SALE_YM_ON"
+                ) . '" title="' . GetMessage("SALE_YM_ON_TITLE") . '" onclick="return confirm(\'' . GetMessage(
+                    "SALE_YM_ON_CONFIRM"
+                ) . '\')"/>';
         }
         ?>
     </form>
@@ -596,45 +726,59 @@ function makeSelectorFromPaySystems($psTypeYandex, $psIdValue, $personTypeId, $s
     if ($allPaySystems === null) {
         $allPaySystems = array();
 
-        $dbRes = \Bitrix\Sale\PaySystem\Manager::getList(array(
-            'filter' => array('ACTIVE' => 'Y'),
-            'order' => array('SORT' => 'ASC', 'NAME' => 'ASC'),
-            'select' => array('ID', 'NAME')
-        ));
+        $dbRes = \Bitrix\Sale\PaySystem\Manager::getList(
+            array(
+                'filter' => array('ACTIVE' => 'Y'),
+                'order' => array('SORT' => 'ASC', 'NAME' => 'ASC'),
+                'select' => array('ID', 'NAME')
+            )
+        );
 
-        while ($ps = $dbRes->fetch())
+        while ($ps = $dbRes->fetch()) {
             $allPaySystems[$ps['ID']] = htmlspecialcharsbx($ps['NAME']);
+        }
     }
 
     if (!isset($paySystems[$siteId])) {
         $paySystems[$siteId] = array();
 
-        $dbRes = \Bitrix\Sale\Internals\ServiceRestrictionTable::getList(array(
-            'filter' => array(
-                '=SERVICE_ID' => array_keys($allPaySystems),
-                '=SERVICE_TYPE' => Restrictions\Manager::SERVICE_TYPE_PAYMENT,
-                '=CLASS_NAME' => array(
-                    '\\' . Restrictions\Site::class,
-                    '\\' . Restrictions\PersonType::class
+        $dbRes = \Bitrix\Sale\Internals\ServiceRestrictionTable::getList(
+            array(
+                'filter' => array(
+                    '=SERVICE_ID' => array_keys($allPaySystems),
+                    '=SERVICE_TYPE' => Restrictions\Manager::SERVICE_TYPE_PAYMENT,
+                    '=CLASS_NAME' => array(
+                        '\\' . Restrictions\Site::class,
+                        '\\' . Restrictions\PersonType::class
+                    )
                 )
             )
-        ));
+        );
 
         /** @var \Bitrix\Sale\Services\Base\Restriction $restriction */
         $rstParams = array();
 
-        while ($rstr = $dbRes->fetch())
-            if (!empty($rstr["PARAMS"]) && is_array($rstr["PARAMS"]))
+        while ($rstr = $dbRes->fetch()) {
+            if (!empty($rstr["PARAMS"]) && is_array($rstr["PARAMS"])) {
                 $rstParams[$rstr['SERVICE_ID']][$rstr['CLASS_NAME']] = $rstr["PARAMS"];
+            }
+        }
 
         foreach ($allPaySystems as $psId => $psName) {
-            if (!empty($rstParams[$psId]['\\' . Restrictions\Site::class]['SITE_ID']))
-                if (!in_array($siteId, $rstParams[$psId]['\\' . Restrictions\Site::class]['SITE_ID']))
+            if (!empty($rstParams[$psId]['\\' . Restrictions\Site::class]['SITE_ID'])) {
+                if (!in_array($siteId, $rstParams[$psId]['\\' . Restrictions\Site::class]['SITE_ID'])) {
                     continue;
+                }
+            }
 
-            if (!empty($rstParams[$psId]['\\' . Restrictions\PersonType::class]['PERSON_TYPE_ID']))
-                if (!in_array($personTypeId, $rstParams[$psId]['\\' . Restrictions\PersonType::class]['PERSON_TYPE_ID']))
+            if (!empty($rstParams[$psId]['\\' . Restrictions\PersonType::class]['PERSON_TYPE_ID'])) {
+                if (!in_array(
+                    $personTypeId,
+                    $rstParams[$psId]['\\' . Restrictions\PersonType::class]['PERSON_TYPE_ID']
+                )) {
                     continue;
+                }
+            }
 
             $paySystems[$siteId][] = $psId;
         }
@@ -652,16 +796,19 @@ function makeSelectorFromPaySystems($psTypeYandex, $psIdValue, $personTypeId, $s
 
 function getSelectHtml($name, array $data, $selected = "", $bShowNotUse = true)
 {
-    if (!is_array($data) || empty($data))
+    if (!is_array($data) || empty($data)) {
         return "";
+    }
 
     $result = '<select name="' . htmlspecialcharsbx($name) . '">';
 
-    if ($bShowNotUse)
+    if ($bShowNotUse) {
         $result .= '<option value="">' . GetMessage("SALE_YM_NOT_USE") . '</option>';
+    }
 
-    foreach ($data as $value => $title)
+    foreach ($data as $value => $title) {
         $result .= '<option value="' . $value . '"' . ($selected == $value ? " selected" : "") . '>' . $title . '</option>';
+    }
 
     $result .= '</select>';
 

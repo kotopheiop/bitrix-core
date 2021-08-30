@@ -2,10 +2,13 @@
 
 namespace Bitrix\Forum\Comments;
 
+use \Bitrix\Forum;
+
 class User
 {
     protected $id = 0;
-    protected $groups = array(2);
+    protected $groups = [2];
+    protected $forumUser = null;
 
     public function __construct($id)
     {
@@ -13,10 +16,13 @@ class User
         if (is_object($USER) && $id == $USER->getId()) {
             $this->id = $USER->getId();
             $this->groups = $USER->GetUserGroupArray();
-        } else if ($id > 0) {
-            $this->id = $id;
-            $this->groups = \Bitrix\Main\UserTable::getUserGroupIds($id);
+        } else {
+            if ($id > 0) {
+                $this->id = $id;
+                $this->groups = \Bitrix\Main\UserTable::getUserGroupIds($id);
+            }
         }
+        $this->forumUser = Forum\User::getById($this->id);
     }
 
     public function getId()
@@ -39,9 +45,12 @@ class User
         return true;
     }
 
-    public function getParam()
+    public function getParam(string $key)
     {
-        return '';
+        if ($this->forumUser instanceof Forum\User) {
+            return $this->forumUser[$key];
+        }
+        return null;
     }
 
     public function isAdmin()
@@ -77,5 +86,28 @@ class User
     public function getFullName()
     {
         return '';
+    }
+
+    public function getUnreadMessageId($topicId = 0)
+    {
+        if ($this->forumUser instanceof Forum\User) {
+            return $this->forumUser->getUnreadMessageId($topicId);
+        }
+        return null;
+    }
+
+    public function readTopic($topicId = 0)
+    {
+        if ($this->forumUser instanceof Forum\User) {
+            $this->forumUser->readTopic($topicId);
+            $this->forumUser->setLastVisit();
+        }
+    }
+
+    public function setLocation(int $forumId = 0, int $topicId = 0)
+    {
+        if ($this->forumUser instanceof Forum\User) {
+            $this->forumUser->setLocation($forumId, $topicId);
+        }
     }
 }

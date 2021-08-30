@@ -44,7 +44,10 @@ class ProductGroupAction extends Iblock\Grid\Panel\GroupAction
         $this->catalogIncluded = Loader::includeModule('catalog');
         if ($this->catalogIncluded) {
             $this->catalogConfig = \CCatalogSku::GetInfoByIBlock($this->iblockId);
-            $this->catalogOptions['SEPARATE_MODE'] = (string)Main\Config\Option::get('catalog', 'show_catalog_tab_with_offers') === 'Y';
+            $this->catalogOptions['SEPARATE_MODE'] = (string)Main\Config\Option::get(
+                    'catalog',
+                    'show_catalog_tab_with_offers'
+                ) === 'Y';
             $this->catalogOptions['STORE_MODE'] = Catalog\Config\State::isUsedInventoryManagement();
         }
     }
@@ -84,8 +87,9 @@ class ProductGroupAction extends Iblock\Grid\Panel\GroupAction
      */
     protected function actionProductFieldPanel(array $params = [])
     {
-        if (!$this->isAllowedProductActions())
+        if (!$this->isAllowedProductActions()) {
             return null;
+        }
 
         $result = [];
         $items = [];
@@ -93,8 +97,9 @@ class ProductGroupAction extends Iblock\Grid\Panel\GroupAction
             $handler = 'getProductField' . $handler . 'Row';
             if (is_callable([$this, $handler])) {
                 $row = call_user_func_array([$this, $handler], []);
-                if (!empty($row))
+                if (!empty($row)) {
                     $items[] = $row;
+                }
             }
         }
         unset($row, $handler);
@@ -119,9 +124,11 @@ class ProductGroupAction extends Iblock\Grid\Panel\GroupAction
                 'ITEMS' => $items
             ];
             if ($this->isUiGrid()) {
-                $data[] = $this->getApplyButtonWithConfirm([
-                    'APPLY_BUTTON_ID' => 'send_product'
-                ]);
+                $data[] = $this->getApplyButtonWithConfirm(
+                    [
+                        'APPLY_BUTTON_ID' => 'send_product'
+                    ]
+                );
             }
 
             $result = [
@@ -151,14 +158,17 @@ class ProductGroupAction extends Iblock\Grid\Panel\GroupAction
     protected function actionProductFieldRequest()
     {
         $fieldId = $this->request->get($this->getFormProductFieldName());
-        if (empty($fieldId))
+        if (empty($fieldId)) {
             return null;
+        }
 
-        if (strncmp($fieldId, 'UF_', 3) === 0)
+        if (strncmp($fieldId, 'UF_', 3) === 0) {
             return Catalog\Product\SystemField::getGroupActionRequest($fieldId);
+        }
 
-        if (!isset($this->productFieldHandlers[$fieldId]))
+        if (!isset($this->productFieldHandlers[$fieldId])) {
             return null;
+        }
 
         $handler = 'getProductField' . $this->productFieldHandlers[$fieldId] . 'Request';
         if (is_callable([$this, $handler])) {
@@ -174,8 +184,9 @@ class ProductGroupAction extends Iblock\Grid\Panel\GroupAction
      */
     protected function actionProductChangePricePanel(array $params = [])
     {
-        if (!$this->isAllowedProductActions())
+        if (!$this->isAllowedProductActions()) {
             return null;
+        }
 
         $name = (isset($params['NAME']) && $params['NAME'] != ''
             ? $params['NAME']
@@ -218,7 +229,7 @@ class ProductGroupAction extends Iblock\Grid\Panel\GroupAction
      */
     protected function getFormProductFieldId()
     {
-        return strtolower($this->getFormProductFieldName() . '_ID');
+        return mb_strtolower($this->getFormProductFieldName() . '_ID');
     }
 
     /**
@@ -227,7 +238,7 @@ class ProductGroupAction extends Iblock\Grid\Panel\GroupAction
      */
     protected function getFormRowFieldName(string $field)
     {
-        return self::FIELD_NAME_PREFIX . strtoupper($field);
+        return self::FIELD_NAME_PREFIX . mb_strtoupper($field);
     }
 
     /**
@@ -236,7 +247,7 @@ class ProductGroupAction extends Iblock\Grid\Panel\GroupAction
      */
     protected function getFormRowFieldId(string $field)
     {
-        return self::FIELD_ID_PREFIX . strtolower($field) . '_id';
+        return self::FIELD_ID_PREFIX . mb_strtolower($field) . '_id';
     }
 
     /**
@@ -250,9 +261,10 @@ class ProductGroupAction extends Iblock\Grid\Panel\GroupAction
         $result[] = [
             'NAME' => Loc::getMessage(
                 'IBLOCK_GRID_PANEL_ACTION_MESS_STATUS_DEFAULT',
-                ['#VALUE#' => $defaultState
-                    ? Loc::getMessage('IBLOCK_GRID_PANEL_ACTION_MESS_STATUS_YES')
-                    : Loc::getMessage('IBLOCK_GRID_PANEL_ACTION_MESS_STATUS_NO')
+                [
+                    '#VALUE#' => $defaultState
+                        ? Loc::getMessage('IBLOCK_GRID_PANEL_ACTION_MESS_STATUS_YES')
+                        : Loc::getMessage('IBLOCK_GRID_PANEL_ACTION_MESS_STATUS_NO')
                 ]
             ),
             'VALUE' => Catalog\ProductTable::STATUS_DEFAULT
@@ -293,12 +305,15 @@ class ProductGroupAction extends Iblock\Grid\Panel\GroupAction
      */
     protected function isAllowedProductActions()
     {
-        if (!$this->catalogIncluded)
+        if (!$this->catalogIncluded) {
             return false;
-        if (empty($this->catalogConfig))
+        }
+        if (empty($this->catalogConfig)) {
             return false;
-        if ($this->catalogConfig['CATALOG_TYPE'] == \CCatalogSku::TYPE_PRODUCT)
+        }
+        if ($this->catalogConfig['CATALOG_TYPE'] == \CCatalogSku::TYPE_PRODUCT) {
             return false;
+        }
 
         return true;
     }
@@ -384,8 +399,9 @@ class ProductGroupAction extends Iblock\Grid\Panel\GroupAction
      */
     protected function getProductFieldWeightRow()
     {
-        if (!$this->isAllowedProductActions())
+        if (!$this->isAllowedProductActions()) {
             return null;
+        }
 
         return $this->getInputField('WEIGHT');
     }
@@ -397,8 +413,9 @@ class ProductGroupAction extends Iblock\Grid\Panel\GroupAction
     {
         $result = $this->request->get($this->getFormRowFieldName('WEIGHT'));
         $result = $this->checkFloatValue($result);
-        if ($result === null)
+        if ($result === null) {
             return null;
+        }
         return ['WEIGHT' => $result];
     }
 
@@ -407,8 +424,9 @@ class ProductGroupAction extends Iblock\Grid\Panel\GroupAction
      */
     protected function getProductFieldQuantityTraceRow()
     {
-        if ($this->catalogOptions['STORE_MODE'])
+        if ($this->catalogOptions['STORE_MODE']) {
             return null;
+        }
 
         return $this->getDropdownField(
             'QUANTITY_TRACE',
@@ -424,8 +442,9 @@ class ProductGroupAction extends Iblock\Grid\Panel\GroupAction
     protected function getProductFieldQuantityTraceRequest()
     {
         $result = $this->request->get($this->getFormRowFieldName('QUANTITY_TRACE'));
-        if (!$this->checkStatusValue($result))
+        if (!$this->checkStatusValue($result)) {
             return null;
+        }
         return ['QUANTITY_TRACE' => $result];
     }
 
@@ -434,8 +453,9 @@ class ProductGroupAction extends Iblock\Grid\Panel\GroupAction
      */
     protected function getProductFieldCanBuyZeroRow()
     {
-        if ($this->catalogOptions['STORE_MODE'])
+        if ($this->catalogOptions['STORE_MODE']) {
             return null;
+        }
 
         return $this->getDropdownField(
             'CAN_BUY_ZERO',
@@ -451,10 +471,12 @@ class ProductGroupAction extends Iblock\Grid\Panel\GroupAction
     protected function getProductFieldCanBuyZeroRequest()
     {
         $result = $this->request->get($this->getFormRowFieldName('CAN_BUY_ZERO'));
-        if ($result === null || !is_string($result))
+        if ($result === null || !is_string($result)) {
             return null;
-        if (!$this->checkStatusValue($result))
+        }
+        if (!$this->checkStatusValue($result)) {
             return null;
+        }
         return ['CAN_BUY_ZERO' => $result];
     }
 
@@ -463,8 +485,9 @@ class ProductGroupAction extends Iblock\Grid\Panel\GroupAction
      */
     protected function getProductFieldQuantityRow()
     {
-        if ($this->catalogOptions['STORE_MODE'])
+        if ($this->catalogOptions['STORE_MODE']) {
             return null;
+        }
 
         return $this->getInputField('QUANTITY');
     }
@@ -476,8 +499,9 @@ class ProductGroupAction extends Iblock\Grid\Panel\GroupAction
     {
         $result = $this->request->get($this->getFormRowFieldName('QUANTITY'));
         $result = $this->checkFloatValue($result);
-        if ($result === null)
+        if ($result === null) {
             return null;
+        }
         return ['QUANTITY' => $result];
     }
 
@@ -487,10 +511,12 @@ class ProductGroupAction extends Iblock\Grid\Panel\GroupAction
     protected function getProductFieldPurchasingPriceRow()
     {
         global $USER;
-        if ($this->catalogOptions['STORE_MODE'])
+        if ($this->catalogOptions['STORE_MODE']) {
             return null;
-        if (!$USER->CanDoOperation('catalog_purchas_info'))
+        }
+        if (!$USER->CanDoOperation('catalog_purchas_info')) {
             return null;
+        }
 
         $list = [];
         foreach (Currency\CurrencyManager::getCurrencyList() as $currencyId => $currencyName) {
@@ -499,8 +525,9 @@ class ProductGroupAction extends Iblock\Grid\Panel\GroupAction
                 'NAME' => $currencyName
             ];
         }
-        if (empty($list))
+        if (empty($list)) {
             return null;
+        }
 
         $entity = Catalog\ProductTable::getEntity();
         $field = $entity->getField('PURCHASING_PRICE');
@@ -544,18 +571,21 @@ class ProductGroupAction extends Iblock\Grid\Panel\GroupAction
     protected function getProductFieldPurchasingPriceRequest()
     {
         $price = self::checkEmptyFloatValue($this->request->get($this->getFormRowFieldName('PURCHASING_PRICE')));
-        if ($price === null)
+        if ($price === null) {
             return null;
+        }
         if ($price === '') {
             $price = null;
             $currency = null;
         } else {
             $currency = $this->request->get($this->getFormRowFieldName('PURCHASING_CURRENCY'));
-            if ($currency === null || !is_string($currency))
+            if ($currency === null || !is_string($currency)) {
                 return null;
+            }
             $currency = trim($currency);
-            if ($currency === '')
+            if ($currency === '') {
                 return null;
+            }
         }
         return ['PURCHASING_PRICE' => $price, 'PURCHASING_CURRENCY' => $currency];
     }
@@ -577,8 +607,9 @@ class ProductGroupAction extends Iblock\Grid\Panel\GroupAction
     protected function getProductFieldVatIncludedRequest()
     {
         $result = $this->request->get($this->getFormRowFieldName('VAT_INCLUDED'));
-        if (!$this->checkBinaryValue($result))
+        if (!$this->checkBinaryValue($result)) {
             return null;
+        }
         return ['VAT_INCLUDED' => $result];
     }
 
@@ -593,11 +624,13 @@ class ProductGroupAction extends Iblock\Grid\Panel\GroupAction
             'NAME' => Loc::getMessage('IBLOCK_GRID_PANEL_ACTION_MESS_EMPTY_VALUE')
         ];
         $found = false;
-        $iterator = Catalog\VatTable::getList([
-            'select' => ['ID', 'NAME', 'SORT'],
-            'filter' => ['=ACTIVE' => 'Y'],
-            'order' => ['SORT' => 'ASC', 'ID' => 'ASC']
-        ]);
+        $iterator = Catalog\VatTable::getList(
+            [
+                'select' => ['ID', 'NAME', 'SORT'],
+                'filter' => ['=ACTIVE' => 'Y'],
+                'order' => ['SORT' => 'ASC', 'ID' => 'ASC']
+            ]
+        );
         while ($row = $iterator->fetch()) {
             $found = true;
             $list[] = [
@@ -606,8 +639,9 @@ class ProductGroupAction extends Iblock\Grid\Panel\GroupAction
             ];
         }
         unset($row, $iterator);
-        if (!$found)
+        if (!$found) {
             return null;
+        }
 
         return $this->getDropdownField(
             'VAT_ID',
@@ -621,8 +655,9 @@ class ProductGroupAction extends Iblock\Grid\Panel\GroupAction
     protected function getProductFieldVatIdRequest()
     {
         $result = $this->checkIntValue($this->request->get($this->getFormRowFieldName('VAT_ID')));
-        if ($result === null || $result < 0)
+        if ($result === null || $result < 0) {
             return null;
+        }
         return ['VAT_ID' => $result];
     }
 
@@ -645,10 +680,12 @@ class ProductGroupAction extends Iblock\Grid\Panel\GroupAction
     protected function getProductFieldSubscribeRequest()
     {
         $result = $this->request->get($this->getFormRowFieldName('SUBSCRIBE'));
-        if ($result === null || !is_string($result))
+        if ($result === null || !is_string($result)) {
             return null;
-        if (!$this->checkStatusValue($result))
+        }
+        if (!$this->checkStatusValue($result)) {
             return null;
+        }
         return ['SUBSCRIBE' => $result];
     }
 
@@ -672,8 +709,9 @@ class ProductGroupAction extends Iblock\Grid\Panel\GroupAction
             ];
         }
         unset($row, $iterator);
-        if (empty($list))
+        if (empty($list)) {
             return null;
+        }
 
         return $this->getDropdownField(
             'MEASURE',
@@ -687,8 +725,9 @@ class ProductGroupAction extends Iblock\Grid\Panel\GroupAction
     protected function getProductFieldMeasureRequest()
     {
         $result = $this->checkIntValue($this->request->get($this->getFormRowFieldName('MEASURE')));
-        if ($result === null || $result <= 0)
+        if ($result === null || $result <= 0) {
             return null;
+        }
         return ['MEASURE' => $result];
     }
 
@@ -701,11 +740,13 @@ class ProductGroupAction extends Iblock\Grid\Panel\GroupAction
      */
     protected static function checkFloatValue($value)
     {
-        if (is_array($value) || $value === null)
+        if (is_array($value) || $value === null) {
             return null;
+        }
         $value = (str_replace([',', ' '], ['.', ''], trim($value)));
-        if ($value === '')
+        if ($value === '') {
             return null;
+        }
         $value = (float)$value;
         return (is_finite($value) ? $value : null);
     }
@@ -719,11 +760,13 @@ class ProductGroupAction extends Iblock\Grid\Panel\GroupAction
      */
     protected static function checkEmptyFloatValue($value)
     {
-        if (is_array($value) || $value === null)
+        if (is_array($value) || $value === null) {
             return null;
+        }
         $value = trim($value);
-        if ($value === '')
+        if ($value === '') {
             return '';
+        }
         $value = (float)(str_replace(',', '.', $value));
         return (is_finite($value) ? $value : null);
     }
@@ -734,8 +777,9 @@ class ProductGroupAction extends Iblock\Grid\Panel\GroupAction
      */
     protected static function checkStatusValue($value)
     {
-        if ($value === null || !is_string($value))
+        if ($value === null || !is_string($value)) {
             return null;
+        }
         return (
             $value === Catalog\ProductTable::STATUS_DEFAULT
             || $value === Catalog\ProductTable::STATUS_YES
@@ -749,8 +793,9 @@ class ProductGroupAction extends Iblock\Grid\Panel\GroupAction
      */
     protected static function checkBinaryValue($value)
     {
-        if ($value === null || !is_string($value))
+        if ($value === null || !is_string($value)) {
             return null;
+        }
         return (
             $value === Catalog\ProductTable::STATUS_YES
             || $value === Catalog\ProductTable::STATUS_NO
@@ -766,10 +811,12 @@ class ProductGroupAction extends Iblock\Grid\Panel\GroupAction
      */
     protected static function checkIntValue($value)
     {
-        if (is_array($value) || $value === null)
+        if (is_array($value) || $value === null) {
             return null;
-        if (((int)$value) . '|' !== $value . '|')
+        }
+        if (((int)$value) . '|' !== $value . '|') {
             return null;
+        }
         return (int)$value;
     }
 }

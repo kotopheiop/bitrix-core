@@ -3,10 +3,13 @@
 namespace Bitrix\Seo\Retargeting;
 
 use Bitrix\Main\Loader;
-use Bitrix\Main\Web\Uri;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Web\Uri;
+use Bitrix\Seo\BusinessSuite\Utils\QueueRemoveEventHandler;
 use Bitrix\Seo\Service;
 use Bitrix\Seo\Service as SeoService;
+use Bitrix\Main\Event;
+use Bitrix\Main\EventManager;
 
 class AuthAdapter
 {
@@ -58,8 +61,10 @@ class AuthAdapter
         }
 
         $authorizeUrl = SeoService::getAuthorizeLink();
-        $authorizeData = SeoService::getAuthorizeData($this->getEngineCode(),
-            $this->canUseMultipleClients() ? Service::CLIENT_TYPE_MULTIPLE : Service::CLIENT_TYPE_SINGLE);
+        $authorizeData = SeoService::getAuthorizeData(
+            $this->getEngineCode(),
+            $this->canUseMultipleClients() ? Service::CLIENT_TYPE_MULTIPLE : Service::CLIENT_TYPE_SINGLE
+        );
         $uri = new Uri($authorizeUrl);
         if (!empty($this->parameters['URL_PARAMETERS'])) {
             $authorizeData['urlParameters'] = $this->parameters['URL_PARAMETERS'];
@@ -93,12 +98,12 @@ class AuthAdapter
         $this->data = array();
 
         if ($existedAuthData = $this->getAuthData(false)) {
+            QueueRemoveEventHandler::handleEvent($existedAuthData['proxy_client_id'], $existedAuthData['engine_code']);
             if ($this->canUseMultipleClients()) {
                 SeoService::clearAuthForClient($existedAuthData);
             } else {
                 SeoService::clearAuth($this->getEngineCode());
             }
-
         }
     }
 
@@ -124,12 +129,16 @@ class AuthAdapter
 
     public function hasAuth()
     {
-        return $this->canUseMultipleClients() ? count($this->getAuthorizedClientsList()) > 0 : strlen($this->getToken()) > 0;
+        $multiple = $this->canUseMultipleClients();
+        $authorized = count($this->getAuthorizedClientsList()) > 0;
+        $token = $this->getToken() <> '';
+        return $multiple ? $authorized : $token;
     }
 
     public function canUseMultipleClients()
     {
-        return ($this->service && ($this->service instanceof IMultiClientService) && $this->service::canUseMultipleClients())
+        return ($this->service && ($this->service instanceof IMultiClientService) && $this->service::canUseMultipleClients(
+                ))
             || (!$this->service && Service::canUseMultipleClients());
     }
 
@@ -151,9 +160,12 @@ class AuthAdapter
 
     public function getAuthorizedClientsList()
     {
-        return array_filter($this->getClientList(), function ($item) {
-            return strlen($item['access_token']) > 0;
-        });
+        return array_filter(
+            $this->getClientList(),
+            function ($item) {
+                return $item['access_token'] <> '';
+            }
+        );
     }
 
     public function getClientId()

@@ -16,9 +16,11 @@ class MetaRobots extends \Bitrix\Landing\Hook\Page
     protected function getMap()
     {
         return array(
-            'INDEX' => new Field\Checkbox('INDEX', array(
+            'INDEX' => new Field\Checkbox(
+                'INDEX', array(
                 'title' => Loc::getMessage('LANDING_HOOK_MRINDEX')
-            ))
+            )
+            )
         );
     }
 

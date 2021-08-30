@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 class CCodeEditor // CE
@@ -11,7 +12,11 @@ class CCodeEditor // CE
         $APPLICATION->AddHeadScript('/bitrix/js/fileman/code_editor/code-editor.js');
         $APPLICATION->SetAdditionalCSS('/bitrix/js/fileman/code_editor/code-editor.css');
 
-        $id = (isset($params['id']) && strlen($params['id']) > 0) ? $params['id'] : 'bxce-' . substr(uniqid(mt_rand(), true), 0, 4);
+        $id = (isset($params['id']) && $params['id'] <> '') ? $params['id'] : 'bxce-' . mb_substr(
+                uniqid(mt_rand(), true),
+                0,
+                4
+            );
         $theme = isset($params['defaultTheme']) ? $params['defaultTheme'] : 'light';
         $highlight = isset($params['defaultHighlight']) ? $params['defaultHighlight'] : true;
         $saveSettings = $params['saveSettings'] !== false && $USER && $USER->IsAuthorized();
@@ -22,8 +27,9 @@ class CCodeEditor // CE
             $highlight = !isset($Settings['highlight']) || $Settings['highlight'];
         }
 
-        if (!in_array($theme, array('dark', 'light')))
+        if (!in_array($theme, array('dark', 'light'))) {
             $theme = 'dark';
+        }
         $highlight = $highlight === false ? false : true;
 
         $JSConfig = array(
@@ -34,15 +40,18 @@ class CCodeEditor // CE
             'saveSettings' => $saveSettings
         );
 
-        if (isset($params['width']) && intVal($params['width']) > 0)
+        if (isset($params['width']) && intval($params['width']) > 0) {
             $JSConfig['width'] = $params['width'];
-        if (isset($params['height']) && intVal($params['height']) > 0)
+        }
+        if (isset($params['height']) && intval($params['height']) > 0) {
             $JSConfig['height'] = $params['height'];
+        }
 
-        if (isset($params['forceSyntax']) && in_array($params['forceSyntax'], array('php', 'js', 'sql', 'css')))
+        if (isset($params['forceSyntax']) && in_array($params['forceSyntax'], array('php', 'js', 'sql', 'css'))) {
             $JSConfig['forceSyntax'] = $params['forceSyntax'];
-        else
+        } else {
             $JSConfig['forceSyntax'] = false;
+        }
         ?>
         <script>
 
@@ -51,13 +60,16 @@ class CCodeEditor // CE
                     top.BXCodeEditors = window.BXCodeEditors = {};
 
                 function codeEditorLoaded() {
-                    var CE = new window.JCCodeEditor(<?= CUtil::PhpToJSObject($JSConfig)?>, <?= self::GetLangMessage()?>);
+                    var CE = new window.JCCodeEditor(<?= CUtil::PhpToJSObject($JSConfig)?>, <?= self::GetLangMessage(
+                    )?>);
                     top.BXCodeEditors['<?= $id?>'] = window.BXCodeEditors['<?= $id?>'] = CE;
                     BX.onCustomEvent(window, "OnCodeEditorReady", ['<?= $id?>']);
                 }
 
                 if (!window.JCCodeEditor) {
-                    BX.loadScript('/bitrix/js/fileman/code_editor/code-editor.js?<?= @filemtime($_SERVER['DOCUMENT_ROOT'] . '/bitrix/js/fileman/code_editor/code-editor.js')?>', codeEditorLoaded);
+                    BX.loadScript('/bitrix/js/fileman/code_editor/code-editor.js?<?= @filemtime(
+                        $_SERVER['DOCUMENT_ROOT'] . '/bitrix/js/fileman/code_editor/code-editor.js'
+                    )?>', codeEditorLoaded);
                     BX.loadCSS('/bitrix/js/fileman/code_editor/code-editor.css');
                 } else {
                     codeEditorLoaded();
@@ -78,7 +90,9 @@ class CCodeEditor // CE
         else
             $langPath = $_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/fileman/lang/en/classes/general/code_editor_js.php';
         */
-        $MESS = \Bitrix\Main\Localization\Loc::loadLanguageFile($_SERVER["DOCUMENT_ROOT"] . '/bitrix/modules/fileman/classes/general/code_editor_js.php');
+        $MESS = \Bitrix\Main\Localization\Loc::loadLanguageFile(
+            $_SERVER["DOCUMENT_ROOT"] . '/bitrix/modules/fileman/classes/general/code_editor_js.php'
+        );
 
         echo CUtil::PhpToJSObject($MESS);
     }

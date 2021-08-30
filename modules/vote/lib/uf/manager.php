@@ -113,10 +113,15 @@ final class Manager
         $id1 = VoteUserType::NEW_VOTE_PREFIX . $id;
         if (!isset($this->loadedAttachedObjects[$id1])) {
             list($entityType, $moduleId) = $this->getConnectorDataByEntityType($this->params["ENTITY_ID"]);
-            $attach = \Bitrix\Vote\Attachment\Manager::loadFromVoteId(array(
-                "ENTITY_ID" => ($this->params["ENTITY_VALUE_ID"] ?: $this->params["VALUE_ID"]), // http://hg.office.bitrix.ru/repos/modules/rev/b614a075ce64
-                "ENTITY_TYPE" => $entityType,
-                "MODULE_ID" => $moduleId), $id);
+            $attach = \Bitrix\Vote\Attachment\Manager::loadFromVoteId(
+                array(
+                    "ENTITY_ID" => ($this->params["ENTITY_VALUE_ID"] ?: $this->params["VALUE_ID"]),
+                    // http://hg.office.bitrix.ru/repos/modules/rev/b614a075ce64
+                    "ENTITY_TYPE" => $entityType,
+                    "MODULE_ID" => $moduleId
+                ),
+                $id
+            );
             $this->loadedAttachedObjects[$id1] = $attach;
         }
         return $this->loadedAttachedObjects[$id1];
@@ -128,12 +133,17 @@ final class Manager
     public function loadEmptyObject()
     {
         list($entityType, $moduleId) = $this->getConnectorDataByEntityType($this->params["ENTITY_ID"]);
-        return \Bitrix\Vote\Attachment\Manager::loadEmptyAttach(array(
-            "ENTITY_ID" => ($this->params["ENTITY_VALUE_ID"] ?: $this->params["VALUE_ID"]), // http://hg.office.bitrix.ru/repos/modules/rev/b614a075ce64,
-            "ENTITY_TYPE" => $entityType,
-            "MODULE_ID" => $moduleId), array(
-            "CHANNEL_ID" => $this->params["SETTINGS"]["CHANNEL_ID"]
-        ));
+        return \Bitrix\Vote\Attachment\Manager::loadEmptyAttach(
+            array(
+                "ENTITY_ID" => ($this->params["ENTITY_VALUE_ID"] ?: $this->params["VALUE_ID"]),
+                // http://hg.office.bitrix.ru/repos/modules/rev/b614a075ce64,
+                "ENTITY_TYPE" => $entityType,
+                "MODULE_ID" => $moduleId
+            ),
+            array(
+                "CHANNEL_ID" => $this->params["SETTINGS"]["CHANNEL_ID"]
+            )
+        );
     }
 
     /**
@@ -143,9 +153,11 @@ final class Manager
     {
         list($entityType, $moduleId) = $this->getConnectorDataByEntityType($this->params["ENTITY_ID"]);
         $res = array(
-            "ENTITY_ID" => ($this->params["ENTITY_VALUE_ID"] ?: $this->params["VALUE_ID"]), // http://hg.office.bitrix.ru/repos/modules/rev/b614a075ce64
+            "ENTITY_ID" => ($this->params["ENTITY_VALUE_ID"] ?: $this->params["VALUE_ID"]),
+            // http://hg.office.bitrix.ru/repos/modules/rev/b614a075ce64
             "=ENTITY_TYPE" => $entityType,
-            "=MODULE_ID" => $moduleId);
+            "=MODULE_ID" => $moduleId
+        );
         return \Bitrix\Vote\Attachment\Manager::loadFromEntity($res);
     }
 
@@ -174,12 +186,14 @@ final class Manager
     public function getConnectorDataByEntityType($entityType)
     {
         $defaultConnectors = $this->getDefaultConnectors();
-        $entityType = strtolower($entityType);
+        $entityType = mb_strtolower($entityType);
 
-        if (isset($defaultConnectors[$entityType]))
+        if (isset($defaultConnectors[$entityType])) {
             return $defaultConnectors[$entityType];
-        if (($connector = $this->getAdditionalConnector($entityType)) !== null)
+        }
+        if (($connector = $this->getAdditionalConnector($entityType)) !== null) {
             return $connector;
+        }
         return array(DefaultConnector::className(), 'vote');
     }
 
@@ -237,24 +251,32 @@ final class Manager
 
             foreach ($result as $connector) {
                 if (empty($connector['ENTITY_TYPE'])) {
-                    throw new SystemException('Wrong event result by building AdditionalConnectorList. Could not find ENTITY_TYPE.');
+                    throw new SystemException(
+                        'Wrong event result by building AdditionalConnectorList. Could not find ENTITY_TYPE.'
+                    );
                 }
 
                 if (empty($connector['MODULE_ID'])) {
-                    throw new SystemException('Wrong event result by building AdditionalConnectorList. Could not find MODULE_ID.');
+                    throw new SystemException(
+                        'Wrong event result by building AdditionalConnectorList. Could not find MODULE_ID.'
+                    );
                 }
 
                 if (empty($connector['CLASS'])) {
-                    throw new SystemException('Wrong event result by building AdditionalConnectorList. Could not find CLASS.');
+                    throw new SystemException(
+                        'Wrong event result by building AdditionalConnectorList. Could not find CLASS.'
+                    );
                 }
 
                 if (is_string($connector['CLASS']) && class_exists($connector['CLASS'])) {
-                    $this->additionalConnectorList[strtolower($connector['ENTITY_TYPE'])] = array(
+                    $this->additionalConnectorList[mb_strtolower($connector['ENTITY_TYPE'])] = array(
                         $connector['CLASS'],
                         $connector['MODULE_ID']
                     );
                 } else {
-                    throw new SystemException('Wrong event result by building AdditionalConnectorList. Could not find class by CLASS.');
+                    throw new SystemException(
+                        'Wrong event result by building AdditionalConnectorList. Could not find class by CLASS.'
+                    );
                 }
             }
         }

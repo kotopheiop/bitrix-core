@@ -323,7 +323,6 @@ abstract class ImportBase
             $exportProfiles = \CSaleExport::getSaleExport();
         }
         return $exportProfiles;
-
     }
 
     /**
@@ -363,7 +362,10 @@ abstract class ImportBase
         );
 
         $exportProfiles = static::getSaleExport();
-        $exportProfile = (array_key_exists($order->getPersonTypeId(), $exportProfiles) ? $exportProfiles[$order->getPersonTypeId()] : array());
+        $exportProfile = (array_key_exists(
+            $order->getPersonTypeId(),
+            $exportProfiles
+        ) ? $exportProfiles[$order->getPersonTypeId()] : array());
 
         $properties = \CSaleExport::prepareSalePropertyRekv(
             $entity,
@@ -385,7 +387,7 @@ abstract class ImportBase
     {
         $result = array();
         foreach ($rekv as $k => $v) {
-            if (isset($exportProfile[$k]) && strlen($exportProfile[$k]['NAME']) > 0 && strlen($v) > 0) {
+            if (isset($exportProfile[$k]) && $exportProfile[$k]['NAME'] <> '' && $v <> '') {
                 $result[$exportProfile[$k]['NAME']] = $v;
             }
         }

@@ -21,8 +21,9 @@ class CLearnAccessMacroses
 
         // Is it course?
         $linkedLessonId = CCourse::CourseGetLinkedLesson($options['COURSE_ID']);
-        if ($linkedLessonId === false)
-            return (false);        // Access denied
+        if ($linkedLessonId === false) {
+            return (false);
+        }        // Access denied
 
         $lessonId = $options['LESSON_ID'];
         $breakOnLessonId = $linkedLessonId;    // save resources
@@ -39,11 +40,15 @@ class CLearnAccessMacroses
             }
         }
 
-        if (!$isLessonChildOfCourse)
-            return (false);        // Access denied
+        if (!$isLessonChildOfCourse) {
+            return (false);
+        }        // Access denied
 
         // Check permissions for course
-        $isCourseAccessible = self::CanUserViewLessonContent(array('lesson_id' => $linkedLessonId), $allowAccessViaLearningGroups);
+        $isCourseAccessible = self::CanUserViewLessonContent(
+            array('lesson_id' => $linkedLessonId),
+            $allowAccessViaLearningGroups
+        );
 
         // Permissions for all lessons/chapters in public are equivalent to course permissions
         return ($isCourseAccessible);
@@ -164,8 +169,9 @@ class CLearnAccessMacroses
             if (!$isAccessGranted) {
                 $arPeriod = self::getActiveLearningGroupsPeriod($options['lesson_id'], $options['user_id']);
 
-                if ($arPeriod['IS_EXISTS'])
+                if ($arPeriod['IS_EXISTS']) {
                     $isAccessGranted = true;
+                }
             }
         }
 
@@ -212,7 +218,8 @@ class CLearnAccessMacroses
         foreach ($arPermissiveOperations as $operation) {
             if ($oAccess->IsLessonAccessible(
                 $options['lesson_id'],
-                $operation)
+                $operation
+            )
             ) {
                 return (true);    // Yeah, there is some rights for some actions with relations
             }
@@ -267,7 +274,8 @@ class CLearnAccessMacroses
                 'EA_LOGIC: $arParams and $arParserOptions must be arrays',
                 LearnException::EXC_ERR_ALL_GIVEUP
                 | LearnException::EXC_ERR_ALL_LOGIC
-                | LearnException::EXC_ERR_ALL_ACCESS_DENIED);
+                | LearnException::EXC_ERR_ALL_ACCESS_DENIED
+            );
         }
 
         if (array_key_exists('user_id', $arParserOptions)) {
@@ -275,7 +283,8 @@ class CLearnAccessMacroses
                 'EA_LOGIC: unexpected user_id in $arParams',
                 LearnException::EXC_ERR_ALL_GIVEUP
                 | LearnException::EXC_ERR_ALL_LOGIC
-                | LearnException::EXC_ERR_ALL_ACCESS_DENIED);
+                | LearnException::EXC_ERR_ALL_ACCESS_DENIED
+            );
         }
 
         $arParserOptions['user_id'] = array(
@@ -295,14 +304,17 @@ class CLearnAccessMacroses
                 'EA_OTHER: CLearnSharedArgManager::StaticParser() throws an exception with code: '
                 . $e->GetCode() . ' and message: ' . $e->GetMessage(),
                 LearnException::EXC_ERR_ALL_GIVEUP
-                | LearnException::EXC_ERR_ALL_ACCESS_DENIED);
+                | LearnException::EXC_ERR_ALL_ACCESS_DENIED
+            );
         }
 
-        if ($options['user_id'] === -1)
+        if ($options['user_id'] === -1) {
             $options['user_id'] = self::GetCurrentUserId();
+        }
 
-        if ($options['user_id'] < 1)
-            $options['user_id'] = 0;    // Not authorized user
+        if ($options['user_id'] < 1) {
+            $options['user_id'] = 0;
+        }    // Not authorized user
 
         return ($options);
     }
@@ -312,11 +324,13 @@ class CLearnAccessMacroses
     {
         global $USER;
 
-        if (!(is_object($USER) && method_exists($USER, 'GetID')))
+        if (!(is_object($USER) && method_exists($USER, 'GetID'))) {
             return (0);
+        }
 
-        if (!$USER->IsAuthorized())
+        if (!$USER->IsAuthorized()) {
             return (0);
+        }
 
         return ((int)$USER->GetID());
     }
@@ -386,8 +400,9 @@ class CLearnAccessMacroses
             );
 
             $arCache[$cacheKey] = $arPeriod;
-        } else
+        } else {
             $arPeriod = $arCache[$cacheKey];
+        }
 
         return ($arPeriod);
     }

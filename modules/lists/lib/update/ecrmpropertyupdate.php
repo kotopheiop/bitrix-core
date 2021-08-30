@@ -15,8 +15,9 @@ class EcrmPropertyUpdate extends Stepper
 
     public function execute(array &$result)
     {
-        if (!Loader::includeModule("lists"))
+        if (!Loader::includeModule("lists")) {
             return false;
+        }
 
         $className = get_class($this);
         $option = Option::get("lists", $className, 0);
@@ -25,10 +26,12 @@ class EcrmPropertyUpdate extends Stepper
         $limit = 20;
         $result["steps"] = isset($result["steps"]) ? $result["steps"] : 0;
 
-        $queryObject = PropertyTable::getList(array(
-            "select" => array("ID", "IBLOCK_ID", "USER_TYPE_SETTINGS"),
-            "filter" => array("=USER_TYPE" => "ECrm")
-        ));
+        $queryObject = PropertyTable::getList(
+            array(
+                "select" => array("ID", "IBLOCK_ID", "USER_TYPE_SETTINGS"),
+                "filter" => array("=USER_TYPE" => "ECrm")
+            )
+        );
         $listIblockId = array();
         $listPropertyId = array();
         while ($property = $queryObject->fetch()) {
@@ -36,11 +39,15 @@ class EcrmPropertyUpdate extends Stepper
                 $property["USER_TYPE_SETTINGS"] = unserialize($property["USER_TYPE_SETTINGS"]);
             }
             if (is_array($property["USER_TYPE_SETTINGS"])) {
-                if (array_key_exists("VISIBLE", $property["USER_TYPE_SETTINGS"]))
+                if (array_key_exists("VISIBLE", $property["USER_TYPE_SETTINGS"])) {
                     unset($property["USER_TYPE_SETTINGS"]["VISIBLE"]);
-                $tmpArray = array_filter($property["USER_TYPE_SETTINGS"], function ($mark) {
-                    return $mark == "Y";
-                });
+                }
+                $tmpArray = array_filter(
+                    $property["USER_TYPE_SETTINGS"],
+                    function ($mark) {
+                        return $mark == "Y";
+                    }
+                );
                 if (count($tmpArray) == 1) {
                     $listIblockId[] = intval($property["IBLOCK_ID"]);
                     $listPropertyId[$property["IBLOCK_ID"]][] = intval($property["ID"]);
@@ -66,12 +73,16 @@ class EcrmPropertyUpdate extends Stepper
 
         foreach ($listElementData as $iblockId => $listElementId) {
             $queryObject = \CIblockElement::getPropertyValues(
-                $iblockId, array("ID" => $listElementId), false, array("ID" => $listPropertyId[$iblockId]));
+                $iblockId,
+                array("ID" => $listElementId),
+                false,
+                array("ID" => $listPropertyId[$iblockId])
+            );
             while ($propertyValues = $queryObject->fetch()) {
-
                 foreach ($propertyValues as $propertyId => $propertyValue) {
-                    if ($propertyId == "IBLOCK_ELEMENT_ID" || empty($propertyValue))
+                    if ($propertyId == "IBLOCK_ELEMENT_ID" || empty($propertyValue)) {
                         continue;
+                    }
 
                     $isDamaged = false;
                     if (is_array($propertyValue)) {
@@ -93,7 +104,11 @@ class EcrmPropertyUpdate extends Stepper
                     }
                     if ($isDamaged && $propertyId) {
                         \CIBlockElement::setPropertyValues(
-                            $propertyValues["IBLOCK_ELEMENT_ID"], $iblockId, $propertyValue, $propertyId);
+                            $propertyValues["IBLOCK_ELEMENT_ID"],
+                            $iblockId,
+                            $propertyValue,
+                            $propertyId
+                        );
                     }
                 }
             }

@@ -11,7 +11,7 @@ use Bitrix\Sale\Delivery\Services\EmptyDeliveryService;
 use Bitrix\Sale\Internals\Input\File;
 use Bitrix\Sale;
 use Bitrix\Sale\PaySystem\Manager;
-use Bitrix\Sale\PropertyValueBase;
+use Bitrix\Sale\EntityPropertyValue;
 use Bitrix\Sale\Result;
 use Bitrix\Sale\Shipment;
 use Bitrix\Sale\ShipmentItem;
@@ -99,13 +99,15 @@ class OrderBuilderRest extends OrderBuilder
 
                 $shipmentItemIds = [];
                 foreach ($products as $items) {
-                    if (!isset($items['ORDER_DELIVERY_BASKET_ID']))
+                    if (!isset($items['ORDER_DELIVERY_BASKET_ID'])) {
                         continue;
+                    }
 
                     $shipmentItemProduct = $shipmentItemCollection->getItemById($items['ORDER_DELIVERY_BASKET_ID']);
 
-                    if ($shipmentItemProduct == null)
+                    if ($shipmentItemProduct == null) {
                         continue;
+                    }
 
                     $shipmentItemIds[] = $shipmentItemProduct->getId();
                 }
@@ -174,7 +176,11 @@ class OrderBuilderRest extends OrderBuilder
                     }
                 }
             } else {
-                $r->addError(new \Bitrix\Main\Error('Attempt to increase the quantity of goods in shipment to a quantity that exceeds not shipped in the order.'));
+                $r->addError(
+                    new \Bitrix\Main\Error(
+                        'Attempt to increase the quantity of goods in shipment to a quantity that exceeds not shipped in the order.'
+                    )
+                );
             }
         }
         return $r;
@@ -190,8 +196,9 @@ class OrderBuilderRest extends OrderBuilder
         $allQuantity = 0;
         /** @var Shipment $shipment */
         foreach ($order->getShipmentCollection() as $shipment) {
-            if ($shipment->isShipped())
+            if ($shipment->isShipped()) {
                 continue;
+            }
 
             $allQuantity += $shipment->getBasketItemQuantity($basketItem);
         }
@@ -230,15 +237,18 @@ class OrderBuilderRest extends OrderBuilder
 
         foreach ($parentEntity->getCollection() as $shipment) {
             /** @var Shipment $shipment */
-            if ($parentEntity->getId() == $shipment->getId())
+            if ($parentEntity->getId() == $shipment->getId()) {
                 continue;
+            }
 
-            if ($shipment->isShipped() || $shipment->isSystem())
+            if ($shipment->isShipped() || $shipment->isSystem()) {
                 continue;
+            }
 
             $basketQuantity = $shipment->getBasketItemQuantity($basketItem);
-            if (empty($basketQuantity))
+            if (empty($basketQuantity)) {
                 continue;
+            }
 
             $shipmentItem = $shipment->getShipmentItemCollection()->getItemByBasketCode($basketItem->getBasketCode());
 
@@ -250,12 +260,14 @@ class OrderBuilderRest extends OrderBuilder
                 $needQuantity -= $basketQuantity;
             }
 
-            if ($needQuantity == 0)
+            if ($needQuantity == 0) {
                 break;
+            }
         }
 
-        if ($needQuantity != 0)
+        if ($needQuantity != 0) {
             $result->addError(new Error('Not enough unallocated goods in shipments'));
+        }
 
         return $result;
     }
@@ -304,7 +316,7 @@ class OrderBuilderRest extends OrderBuilder
 
         if ($this->getSettingsContainer()->getItemValue('deletePropertyValuesIfNotExists')) {
             $propCollection = $this->order->getPropertyCollection();
-            /** @var PropertyValueBase $propertyValue */
+            /** @var EntityPropertyValue $propertyValue */
             foreach ($propCollection as $propertyValue) {
                 if (is_set($this->formData["PROPERTIES"], $propertyValue->getPropertyId()) == false) {
                     $r = $propertyValue->delete();

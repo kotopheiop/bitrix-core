@@ -5,18 +5,17 @@ use Bitrix\Main\Localization\Loc;
 
 class CCalendarLocation
 {
-    private static
-        $type = 'location';
+    const TYPE = 'location';
 
     public static function enabled()
     {
         return true;
     }
 
-    public static function getList($params = array())
+    public static function getList($params = [])
     {
         $arFilter = array(
-            'CAL_TYPE' => self::$type
+            'CAL_TYPE' => self::TYPE
         );
 
         $sectionList = CCalendarSect::GetList(array('arFilter' => $arFilter));
@@ -36,7 +35,7 @@ class CCalendarLocation
     public static function getById($id)
     {
         $arFilter = array(
-            'CAL_TYPE' => self::$type,
+            'CAL_TYPE' => self::TYPE,
             'ID' => intval($id)
         );
         $sectionList = CCalendarSect::GetList(array('arFilter' => $arFilter));
@@ -56,14 +55,16 @@ class CCalendarLocation
 
     public static function update($params = array())
     {
-        CCalendarSect::Edit(array(
-            'arFields' => array(
-                'CAL_TYPE' => self::$type,
-                'ID' => $params['id'],
-                'NAME' => $params['name'],
-                'ACCESS' => array()
+        CCalendarSect::Edit(
+            array(
+                'arFields' => array(
+                    'CAL_TYPE' => self::TYPE,
+                    'ID' => $params['id'],
+                    'NAME' => $params['name'],
+                    'ACCESS' => array()
+                )
             )
-        ));
+        );
     }
 
     public static function getRoomAccessibility($roomId, $from, $to, $params = array())
@@ -79,7 +80,7 @@ class CCalendarLocation
                 'arFilter' => array(
                     "FROM_LIMIT" => $from,
                     "TO_LIMIT" => $to,
-                    "CAL_TYPE" => self::$type,
+                    "CAL_TYPE" => self::TYPE,
                     "ACTIVE_SECTION" => "Y",
                     "SECTION" => $roomId
                 ),
@@ -122,32 +123,35 @@ class CCalendarLocation
 
     public static function releaseRoom($params = array())
     {
-        return CCalendar::DeleteEvent(intVal($params['room_event_id']), false);
+        return CCalendar::DeleteEvent(intval($params['room_event_id']), false, ['checkPermissions' => false]);
     }
 
     public static function reserveRoom($params = array())
     {
-        $roomEventId = CCalendarEvent::Edit(array(
-            'arFields' => array(
-                'ID' => $params['room_event_id'],
-                'CAL_TYPE' => self::$type,
-                'SECTIONS' => $params['room_id'],
-                'DATE_FROM' => $params['parentParams']['arFields']['DATE_FROM'],
-                'DATE_TO' => $params['parentParams']['arFields']['DATE_TO'],
-                'TZ_FROM' => $params['parentParams']['arFields']['TZ_FROM'],
-                'TZ_TO' => $params['parentParams']['arFields']['TZ_TO'],
-                'SKIP_TIME' => $params['parentParams']['arFields']['SKIP_TIME'],
-                'NAME' => Loc::getMessage('EC_EDEV_EVENT') . ': ' . $params['parentParams']['arFields']['NAME'],
-                'RRULE' => $params['parentParams']['arFields']['RRULE'],
-                'EXDATE' => $params['parentParams']['arFields']['EXDATE']
-            )
-        ));
+        $roomEventId = CCalendarEvent::Edit(
+            [
+                'arFields' => [
+                    'ID' => $params['room_event_id'],
+                    'CAL_TYPE' => self::TYPE,
+                    'SECTIONS' => $params['room_id'],
+                    'DATE_FROM' => $params['parentParams']['arFields']['DATE_FROM'],
+                    'DATE_TO' => $params['parentParams']['arFields']['DATE_TO'],
+                    'TZ_FROM' => $params['parentParams']['arFields']['TZ_FROM'],
+                    'TZ_TO' => $params['parentParams']['arFields']['TZ_TO'],
+                    'SKIP_TIME' => $params['parentParams']['arFields']['SKIP_TIME'],
+                    'NAME' => Loc::getMessage('EC_EDEV_EVENT') . ': ' . $params['parentParams']['arFields']['NAME'],
+                    'RRULE' => $params['parentParams']['arFields']['RRULE'],
+                    'EXDATE' => $params['parentParams']['arFields']['EXDATE']
+                ]
+            ]
+        );
         return $roomEventId;
     }
 
-    public static function checkAccessibility($location = '', $params = array())
+    public static function checkAccessibility($location = '', $params = [])
     {
         $location = CCalendar::ParseLocation($location);
+
         $res = true;
         if ($location['room_id'] || $location['mrid']) {
             $fromTs = CCalendar::Timestamp($params['fields']["DATE_FROM"]);
@@ -156,16 +160,20 @@ class CCalendarLocation
             $to = CCalendar::Date($fromTs, false);
 
             $curUserId = CCalendar::GetCurUserId();
-            $deltaOffset = isset($params['timezone']) ? (CCalendar::GetTimezoneOffset($params['timezone']) - CCalendar::GetCurrentOffsetUTC($curUserId)) : 0;
+            $deltaOffset = isset($params['timezone']) ? (CCalendar::GetTimezoneOffset(
+                    $params['timezone']
+                ) - CCalendar::GetCurrentOffsetUTC($curUserId)) : 0;
 
             if ($location['mrid']) {
-                $meetingRoomRes = CCalendar::GetAccessibilityForMeetingRoom(array(
-                    'allowReserveMeeting' => true,
-                    'id' => $location['mrid'],
-                    'from' => CCalendar::Date($fromTs - CCalendar::DAY_LENGTH, false),
-                    'to' => CCalendar::Date($toTs + CCalendar::DAY_LENGTH, false),
-                    'curEventId' => $location['mrevid']
-                ));
+                $meetingRoomRes = CCalendar::GetAccessibilityForMeetingRoom(
+                    array(
+                        'allowReserveMeeting' => true,
+                        'id' => $location['mrid'],
+                        'from' => CCalendar::Date($fromTs - CCalendar::DAY_LENGTH, false),
+                        'to' => CCalendar::Date($toTs + CCalendar::DAY_LENGTH, false),
+                        'curEventId' => $location['mrevid']
+                    )
+                );
 
                 foreach ($meetingRoomRes as $entry) {
                     if ($entry['ID'] != $location['mrevid']) {

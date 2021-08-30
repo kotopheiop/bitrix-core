@@ -32,8 +32,9 @@ class CatalogStore extends Base
     public function resolve($entity)
     {
         if (intval($entity) > 0) {
-            if (\Bitrix\Main\Loader::includeModule('catalog'))
+            if (\Bitrix\Main\Loader::includeModule('catalog')) {
                 return new CatalogStore(intval($entity));
+            }
         }
         return parent::resolve($entity);
     }
@@ -66,9 +67,15 @@ class CatalogStore extends Base
     protected function loadFromDatabase()
     {
         if (!isset($this->fields) && ($this->id > 0)) {
-            $storeList = \CCatalogStore::getList(array(), array(
-                "ID" => $this->id,
-            ), false, false, array("ID", "TITLE"));
+            $storeList = \CCatalogStore::getList(
+                array(),
+                array(
+                    "ID" => $this->id,
+                ),
+                false,
+                false,
+                array("ID", "TITLE")
+            );
             $this->fields = $storeList->fetch();
         }
         return is_array($this->fields);

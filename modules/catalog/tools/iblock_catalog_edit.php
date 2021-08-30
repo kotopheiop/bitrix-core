@@ -65,12 +65,15 @@ $iblockCatalogFormID .= '_form';
 unset($tabList);
 
 $vatList = array(0 => Loc::getMessage('BX_CAT_IBLOCK_CATALOG_MESS_NOT_SELECT'));
-$vatIterator = Catalog\VatTable::getList(array(
-    'select' => array('ID', 'NAME', 'SORT'),
-    'order' => array('SORT' => 'ASC', 'ID' => 'ASC')
-));
-while ($vat = $vatIterator->fetch())
+$vatIterator = Catalog\VatTable::getList(
+    array(
+        'select' => array('ID', 'NAME', 'SORT'),
+        'order' => array('SORT' => 'ASC', 'ID' => 'ASC')
+    )
+);
+while ($vat = $vatIterator->fetch()) {
     $vatList[$vat['ID']] = $vat['NAME'];
+}
 unset($vat, $vatIterator);
 
 $errors = array();
@@ -88,7 +91,6 @@ if ($request->isPost() && $request['save'] != '') {
         }
     }
     if (empty($errors)) {
-
     }
     if (!empty($errors)) {
         $errorMessage = new CAdminMessage(
@@ -125,63 +127,77 @@ $defaultValues = array(
 );
 
 $catalog = $catalogEdit->getCatalog();
-if (empty($catalog))
+if (empty($catalog)) {
     $catalog = $defaultValues;
+}
 
-if (!empty($errors))
+if (!empty($errors)) {
     $catalog = array_merge($catalog, $fields);
+}
 
 $offerList = array();
 $productIblock = array();
 if ($catalog['CATALOG_TYPE'] != CCatalogSKU::TYPE_OFFERS) {
     $iblockList = array();
     $productList = array();
-    $iblockIterator = Catalog\CatalogIblockTable::getList(array(
-        'select' => array('PRODUCT_IBLOCK_ID'),
-        'filter' => array('!=PRODUCT_IBLOCK_ID' => 0),
-    ));
+    $iblockIterator = Catalog\CatalogIblockTable::getList(
+        array(
+            'select' => array('PRODUCT_IBLOCK_ID'),
+            'filter' => array('!=PRODUCT_IBLOCK_ID' => 0),
+        )
+    );
     while ($product = $iblockIterator->fetch()) {
         $product['PRODUCT_IBLOCK_ID'] = (int)$product['PRODUCT_IBLOCK_ID'];
         $productList[$product['PRODUCT_IBLOCK_ID']] = $product['PRODUCT_IBLOCK_ID'];
     }
     unset($product, $iblockIterator);
-    $iblockIterator = Catalog\CatalogIblockTable::getList(array(
-        'select' => array('IBLOCK_ID'),
-        'filter' => array('!=IBLOCK_ID' => $iblockId, '=PRODUCT_IBLOCK_ID' => 0),
-        'order' => array('IBLOCK_ID' => 'ASC')
-    ));
+    $iblockIterator = Catalog\CatalogIblockTable::getList(
+        array(
+            'select' => array('IBLOCK_ID'),
+            'filter' => array('!=IBLOCK_ID' => $iblockId, '=PRODUCT_IBLOCK_ID' => 0),
+            'order' => array('IBLOCK_ID' => 'ASC')
+        )
+    );
     while ($offer = $iblockIterator->fetch()) {
         $offer['IBLOCK_ID'] = (int)$offer['IBLOCK_ID'];
-        if (!isset($productList[$offer['IBLOCK_ID']]) && $offer['IBLOCK_ID'] != $iblockId)
+        if (!isset($productList[$offer['IBLOCK_ID']]) && $offer['IBLOCK_ID'] != $iblockId) {
             $iblockList[$offer['IBLOCK_ID']] = $offer['IBLOCK_ID'];
+        }
     }
     unset($offer, $iblockIterator);
     unset($productList);
-    if ($catalog['CATALOG_TYPE'] == CCatalogSKU::TYPE_PRODUCT || $catalog['CATALOG_TYPE'] == CCatalogSKU::TYPE_FULL)
+    if ($catalog['CATALOG_TYPE'] == CCatalogSKU::TYPE_PRODUCT || $catalog['CATALOG_TYPE'] == CCatalogSKU::TYPE_FULL) {
         $iblockList[$catalog['IBLOCK_ID']] = $catalog['IBLOCK_ID'];
+    }
     if (!empty($iblockList)) {
         $siteList = array_fill_keys($iblockList, array());
-        $sitesIterator = Iblock\IblockSiteTable::getList(array(
-            'select' => array('IBLOCK_ID', 'SITE_ID'),
-            'filter' => array('@IBLOCK_ID' => $iblockList),
-            'order' => array('IBLOCK_ID' => 'ASC', 'SITE_ID' => 'ASC')
-        ));
-        while ($site = $sitesIterator->fetch())
+        $sitesIterator = Iblock\IblockSiteTable::getList(
+            array(
+                'select' => array('IBLOCK_ID', 'SITE_ID'),
+                'filter' => array('@IBLOCK_ID' => $iblockList),
+                'order' => array('IBLOCK_ID' => 'ASC', 'SITE_ID' => 'ASC')
+            )
+        );
+        while ($site = $sitesIterator->fetch()) {
             $siteList[$site['IBLOCK_ID']][] = $site['SITE_ID'];
+        }
         unset($site, $sitesIterator);
         foreach ($siteList as $siteIblock => $sites) {
-            if ($iblock['SITES'] == implode('|', $sites))
+            if ($iblock['SITES'] == implode('|', $sites)) {
                 $offerList[] = $siteIblock;
+            }
         }
         unset($siteIblock, $sites);
         unset($siteList);
     }
     unset($iblockList);
 } else {
-    $productIblock = Iblock\IblockTable::getList(array(
-        'select' => array('ID', 'NAME', 'IBLOCK_TYPE_ID', 'ACTIVE', 'PROPERTY_INDEX'),
-        'filter' => array('=ID' => $catalog['PRODUCT_IBLOCK_ID'])
-    ))->fetch();
+    $productIblock = Iblock\IblockTable::getList(
+        array(
+            'select' => array('ID', 'NAME', 'IBLOCK_TYPE_ID', 'ACTIVE', 'PROPERTY_INDEX'),
+            'filter' => array('=ID' => $catalog['PRODUCT_IBLOCK_ID'])
+        )
+    )->fetch();
 }
 $showSubscription = ($enableSaleRecurring || $catalog['SUBSCRIPTION'] == 'Y');
 $rowDisplay = ($catalog['CATALOG'] == 'Y' ? 'table-row' : 'none');
@@ -195,9 +211,11 @@ $control->BeginEpilogContent();
 <?
 echo bitrix_sessid_post();
 $control->EndEpilogContent();
-$control->Begin(array(
-    'FORM_ACTION' => 'cat_iblock_catalog_edit.php?lang=' . LANGUAGE_ID
-));
+$control->Begin(
+    array(
+        'FORM_ACTION' => 'cat_iblock_catalog_edit.php?lang=' . LANGUAGE_ID
+    )
+);
 $control->BeginNextFormTab();
 $control->AddViewField('IBLOCK_ID', Loc::getMessage('BX_CAT_IBLOCK_CATALOG_FIELD_IBLOCK_ID'), $iblockId);
 $control->AddViewField('IBLOCK_NAME', Loc::getMessage('BX_CAT_IBLOCK_CATALOG_FIELD_IBLOCK_NAME'), $iblock['NAME']);
@@ -206,7 +224,9 @@ $control->AddViewField('IBLOCK_SITE', Loc::getMessage('BX_CAT_IBLOCK_CATALOG_FIE
 $control->AddViewField(
     'IBLOCK_ACTIVE',
     Loc::getMessage('BX_CAT_IBLOCK_CATALOG_FIELD_IBLOCK_ACTIVE'),
-    ($iblock['ACTIVE'] == 'Y' ? Loc::getMessage('BX_CAT_IBLOCK_CATALOG_MESS_YES') : Loc::getMessage('BX_CAT_IBLOCK_CATALOG_MESS_NO'))
+    ($iblock['ACTIVE'] == 'Y' ? Loc::getMessage('BX_CAT_IBLOCK_CATALOG_MESS_YES') : Loc::getMessage(
+        'BX_CAT_IBLOCK_CATALOG_MESS_NO'
+    ))
 );
 $control->BeginCustomField('CATALOG', Loc::getMessage('BX_CAT_IBLOCK_CATALOG_FIELD_CATALOG'), true);
 ?>
@@ -231,7 +251,10 @@ $control->BeginCustomField('SKU', Loc::getMessage('BX_CAT_IBLOCK_CATALOG_FIELD_S
                 ?><input type="hidden" name="USE_SKU" value="N" id="USE_SKU_N"><?
                 $hiddenValue = '<input type="hidden" name="USE_SKU" value="N">';
                 if (empty($productIblock)) {
-                    echo Loc::getMessage('BX_CAT_IBLOCK_CATALOG_ERR_BAD_PRODUCT_IBLOCK', array('#ID#' => $catalog['PRODUCT_IBLOCK_ID']));
+                    echo Loc::getMessage(
+                        'BX_CAT_IBLOCK_CATALOG_ERR_BAD_PRODUCT_IBLOCK',
+                        array('#ID#' => $catalog['PRODUCT_IBLOCK_ID'])
+                    );
                 } else {
                     echo Loc::getMessage(
                         'BX_CAT_IBLOCK_CATALOG_MESS_PRODUCT_IBLOCK',
@@ -244,8 +267,9 @@ $control->BeginCustomField('SKU', Loc::getMessage('BX_CAT_IBLOCK_CATALOG_FIELD_S
                 $productIblockId = $catalog['PRODUCT_IBLOCK_ID'];
                 ?><input type="hidden" name="SKU" value="<? echo $productIblockId; ?>"><?
             } else {
-                if ($catalog['CATALOG_TYPE'] == CCatalogSKU::TYPE_PRODUCT || $catalog['CATALOG_TYPE'] == CCatalogSKU::TYPE_FULL)
+                if ($catalog['CATALOG_TYPE'] == CCatalogSKU::TYPE_PRODUCT || $catalog['CATALOG_TYPE'] == CCatalogSKU::TYPE_FULL) {
                     $productIblockId = $catalog['IBLOCK_ID'];
+                }
                 $showSku = ($productIblockId > 0);
                 $hiddenValue = '<input type="hidden" name="USE_SKU" value="' . ($showSku ? 'Y' : 'N') . '">';
                 ?><input type="hidden" name="USE_SKU" value="N" id="USE_SKU_N">
@@ -329,7 +353,9 @@ $hiddenValue = $catalog['VAT_ID'];
                 <?
                 foreach ($vatList as $vatId => $vatName) {
                     ?>
-                    <option value="<? echo $vatId; ?>"<? echo($catalog['VAT_ID'] == $vatId ? ' selected' : ''); ?>><? echo htmlspecialcharsEx($vatName); ?></option><?
+                    <option value="<? echo $vatId; ?>"<? echo($catalog['VAT_ID'] == $vatId ? ' selected' : ''); ?>><? echo htmlspecialcharsEx(
+                        $vatName
+                    ); ?></option><?
                 }
                 unset($vatId, $vatName);
                 ?>
@@ -354,10 +380,12 @@ $cancel = "{
 			top.ReloadSubList();
 	}
 }";
-$control->ButtonsPublic(array(
-    $save,
-    $cancel
-));
+$control->ButtonsPublic(
+    array(
+        $save,
+        $cancel
+    )
+);
 unset($cancel, $save);
 
 $control->Show();
@@ -367,12 +395,10 @@ unset($rowDisplay);
 echo BeginNote('id="' . $iblockCatalogFormID . '_process" style="display: none"');
 
 if ($enableSaleRecurring) {
-
 }
 echo EndNote();
 $ajaxSteps = array();
 if ($enableSaleRecurring) {
-
 }
 $jsParams = array(
     'containerId' => $iblockCatalogFormID,
@@ -387,7 +413,12 @@ $jsParams = array(
 );
 ?>
     <script type="text/javascript">
-        var iblockCatalogControl = new BX.Catalog.Admin.IblockCatalog(<? echo CUtil::PhpToJSObject($jsParams, false, false, true); ?>);
+        var iblockCatalogControl = new BX.Catalog.Admin.IblockCatalog(<? echo CUtil::PhpToJSObject(
+            $jsParams,
+            false,
+            false,
+            true
+        ); ?>);
         BX.ready(function () {
             top.BX.WindowManager.Get().adjustSizeEx();
         });

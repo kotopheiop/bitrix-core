@@ -25,23 +25,31 @@ class SyspageTable extends Entity\DataManager
     public static function getMap()
     {
         return array(
-            'ID' => new Entity\IntegerField('ID', array(
+            'ID' => new Entity\IntegerField(
+                'ID', array(
                 'primary' => true,
                 'autocomplete' => true,
                 'title' => 'ID'
-            )),
-            'SITE_ID' => new Entity\IntegerField('SITE_ID', array(
+            )
+            ),
+            'SITE_ID' => new Entity\IntegerField(
+                'SITE_ID', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_SITE_ID'),
                 'required' => true
-            )),
-            'TYPE' => new Entity\StringField('TYPE', array(
+            )
+            ),
+            'TYPE' => new Entity\StringField(
+                'TYPE', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_TYPE'),
                 'required' => true
-            )),
-            'LANDING_ID' => new Entity\IntegerField('LANDING_ID', array(
+            )
+            ),
+            'LANDING_ID' => new Entity\IntegerField(
+                'LANDING_ID', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_LANDING_ID'),
                 'required' => true
-            ))
+            )
+            )
         );
     }
 }

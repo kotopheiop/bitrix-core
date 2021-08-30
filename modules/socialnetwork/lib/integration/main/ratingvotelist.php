@@ -34,13 +34,17 @@ class RatingVoteList
             return $result;
         }
 
-        if ($liveFeedEntity = Provider::init(array(
-            'ENTITY_TYPE' => Provider::DATA_ENTITY_TYPE_RATING_LIST,
-            'ENTITY_ID' => $entityTypeId . '|' . $entityId
-        ))) {
-            $liveFeedEntity->setContentView(array(
-                "userId" => $userId
-            ));
+        if ($liveFeedEntity = Provider::init(
+            array(
+                'ENTITY_TYPE' => Provider::DATA_ENTITY_TYPE_RATING_LIST,
+                'ENTITY_ID' => $entityTypeId . '|' . $entityId
+            )
+        )) {
+            $liveFeedEntity->setContentView(
+                array(
+                    "user_id" => $userId
+                )
+            );
         }
 
         $result = new EventResult(

@@ -29,19 +29,22 @@ class SpsrProfile extends \Bitrix\Sale\Delivery\Services\Base
      */
     public function __construct(array $initParams)
     {
-        if (empty($initParams["PARENT_ID"]))
+        if (empty($initParams["PARENT_ID"])) {
             throw new ArgumentNullException('initParams[PARENT_ID]');
+        }
 
         parent::__construct($initParams);
         $this->spsrHandler = Manager::getObjectById($this->parentId);
 
-        if (!($this->spsrHandler instanceof SpsrHandler))
+        if (!($this->spsrHandler instanceof SpsrHandler)) {
             throw new ArgumentNullException('this->spsrHandler is not instance of SpsrHandler');
+        }
 
-        if (isset($initParams['PROFILE_ID']) && intval($initParams['PROFILE_ID']) > 0)
+        if (isset($initParams['PROFILE_ID']) && intval($initParams['PROFILE_ID']) > 0) {
             $this->serviceType = intval($initParams['PROFILE_ID']);
-        elseif (isset($this->config['MAIN']['SERVICE_TYPE']) && intval($this->config['MAIN']['SERVICE_TYPE']) > 0)
+        } elseif (isset($this->config['MAIN']['SERVICE_TYPE']) && intval($this->config['MAIN']['SERVICE_TYPE']) > 0) {
             $this->serviceType = $this->config['MAIN']['SERVICE_TYPE'];
+        }
 
         if ($this->id <= 0 && $this->serviceType > 0) {
             $srvRes = $this->spsrHandler->getServiceTypes();
@@ -79,11 +82,21 @@ class SpsrProfile extends \Bitrix\Sale\Delivery\Services\Base
      */
     protected function inheritParams()
     {
-        if (strlen($this->name) <= 0) $this->name = $this->spsrHandler->getName();
-        if (intval($this->logotip) <= 0) $this->logotip = $this->spsrHandler->getLogotip();
-        if (strlen($this->description) <= 0) $this->description = $this->spsrHandler->getDescription();
-        if (empty($this->trackingParams)) $this->trackingParams = $this->spsrHandler->getTrackingParams();
-        if (strlen($this->trackingClass) <= 0) $this->trackingClass = $this->spsrHandler->getTrackingClass();
+        if ($this->name == '') {
+            $this->name = $this->spsrHandler->getName();
+        }
+        if (intval($this->logotip) <= 0) {
+            $this->logotip = $this->spsrHandler->getLogotip();
+        }
+        if ($this->description == '') {
+            $this->description = $this->spsrHandler->getDescription();
+        }
+        if (empty($this->trackingParams)) {
+            $this->trackingParams = $this->spsrHandler->getTrackingParams();
+        }
+        if ($this->trackingClass == '') {
+            $this->trackingClass = $this->spsrHandler->getTrackingClass();
+        }
 
         $parentES = \Bitrix\Sale\Delivery\ExtraServices\Manager::getExtraServicesList($this->parentId);
         $allowEsCodes = self::getProfileES($this->serviceType);
@@ -91,7 +104,7 @@ class SpsrProfile extends \Bitrix\Sale\Delivery\Services\Base
         if (!empty($parentES)) {
             foreach ($parentES as $esFields) {
                 if (
-                    strlen($esFields['CODE']) > 0
+                    $esFields['CODE'] <> ''
                     && !$this->extraServices->getItemByCode($esFields['CODE'])
                     && in_array($esFields['CODE'], $allowEsCodes)
                 ) {
@@ -116,13 +129,15 @@ class SpsrProfile extends \Bitrix\Sale\Delivery\Services\Base
             $result->addError(new Error(Loc::getMessage('SALE_DLV_SRV_SPSR_ERROR_HTTP_PUBLIC')));
 
             $eventLog = new \CEventLog;
-            $eventLog->Add(array(
-                "SEVERITY" => $eventLog::SEVERITY_ERROR,
-                "AUDIT_TYPE_ID" => "SALE_DELIVERY_HANDLER_SPSR_PROFILE_CONF_TYPE_ERROR",
-                "MODULE_ID" => "sale",
-                "ITEM_ID" => $this->getId(),
-                "DESCRIPTION" => Loc::getMessage('SALE_DLV_SRV_SPSR_ERROR_CONFIG_SRV_TYPE'),
-            ));
+            $eventLog->Add(
+                array(
+                    "SEVERITY" => $eventLog::SEVERITY_ERROR,
+                    "AUDIT_TYPE_ID" => "SALE_DELIVERY_HANDLER_SPSR_PROFILE_CONF_TYPE_ERROR",
+                    "MODULE_ID" => "sale",
+                    "ITEM_ID" => $this->getId(),
+                    "DESCRIPTION" => Loc::getMessage('SALE_DLV_SRV_SPSR_ERROR_CONFIG_SRV_TYPE'),
+                )
+            );
 
             return $result;
         }
@@ -189,9 +204,11 @@ class SpsrProfile extends \Bitrix\Sale\Delivery\Services\Base
         $result = array();
         $allowEsCodes = self::getProfileES($this->serviceType);
 
-        foreach ($this->spsrHandler->getEmbeddedExtraServicesList() as $code => $params)
-            if (in_array($code, $allowEsCodes))
+        foreach ($this->spsrHandler->getEmbeddedExtraServicesList() as $code => $params) {
+            if (in_array($code, $allowEsCodes)) {
                 $result[$code] = $params;
+            }
+        }
 
         return $result;
     }
@@ -215,17 +232,28 @@ class SpsrProfile extends \Bitrix\Sale\Delivery\Services\Base
     public static function getProfileES($profileId)
     {
         $extraServices = array(
-            20 => array('SMS_RECV', 'SMS', 'TO_BE_CALLED_FOR'),                                        //colibri
-            21 => array('BY_HAND', 'SMS', 'SMS_RECV'),                                                    //gepard-express 13
-            22 => array('BY_HAND', 'SMS', 'SMS_RECV'),                                                    //gepard-express 18
-            23 => array('BY_HAND', 'SMS', 'SMS_RECV', 'TO_BE_CALLED_FOR'),                                //gepard-express
-            24 => array('BY_HAND', 'SMS', 'SMS_RECV', 'TO_BE_CALLED_FOR', 'PLAT_TYPE', 'ICD'),            //pelican-standart
-            25 => array('BY_HAND', 'SMS', 'SMS_RECV', 'TO_BE_CALLED_FOR', 'PLAT_TYPE', 'ICD'),            //pelican-econom
-            26 => array('SMS', 'SMS_RECV', 'TO_BE_CALLED_FOR', 'PLAT_TYPE', 'ICD'),                    //bizon-cargo
-            27 => array('TO_BE_CALLED_FOR'),                                                            //fraxt
-            28 => array('BY_HAND', 'SMS', 'SMS_RECV', 'TO_BE_CALLED_FOR', 'ICD', 'TO_BE_CALLED_FOR'),    //pelican-online
-            35 => array('BY_HAND', 'SMS', 'SMS_RECV', 'TO_BE_CALLED_FOR', 'ICD', 'TO_BE_CALLED_FOR'),    //gepard-online
-            36 => array('BY_HAND', 'SMS', 'SMS_RECV', 'TO_BE_CALLED_FOR', 'ICD', 'TO_BE_CALLED_FOR'),    //zebra-online
+            20 => array('SMS_RECV', 'SMS', 'TO_BE_CALLED_FOR'),
+            //colibri
+            21 => array('BY_HAND', 'SMS', 'SMS_RECV'),
+            //gepard-express 13
+            22 => array('BY_HAND', 'SMS', 'SMS_RECV'),
+            //gepard-express 18
+            23 => array('BY_HAND', 'SMS', 'SMS_RECV', 'TO_BE_CALLED_FOR'),
+            //gepard-express
+            24 => array('BY_HAND', 'SMS', 'SMS_RECV', 'TO_BE_CALLED_FOR', 'PLAT_TYPE', 'ICD'),
+            //pelican-standart
+            25 => array('BY_HAND', 'SMS', 'SMS_RECV', 'TO_BE_CALLED_FOR', 'PLAT_TYPE', 'ICD'),
+            //pelican-econom
+            26 => array('SMS', 'SMS_RECV', 'TO_BE_CALLED_FOR', 'PLAT_TYPE', 'ICD'),
+            //bizon-cargo
+            27 => array('TO_BE_CALLED_FOR'),
+            //fraxt
+            28 => array('BY_HAND', 'SMS', 'SMS_RECV', 'TO_BE_CALLED_FOR', 'ICD', 'TO_BE_CALLED_FOR'),
+            //pelican-online
+            35 => array('BY_HAND', 'SMS', 'SMS_RECV', 'TO_BE_CALLED_FOR', 'ICD', 'TO_BE_CALLED_FOR'),
+            //gepard-online
+            36 => array('BY_HAND', 'SMS', 'SMS_RECV', 'TO_BE_CALLED_FOR', 'ICD', 'TO_BE_CALLED_FOR'),
+            //zebra-online
         );
 
         return isset($extraServices[$profileId]) ? $extraServices[$profileId] : array();

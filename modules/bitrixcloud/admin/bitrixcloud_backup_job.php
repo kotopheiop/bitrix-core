@@ -1,11 +1,13 @@
 <?
+
 define("ADMIN_MODULE_NAME", "bitrixcloud");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 IncludeModuleLangFile(__FILE__);
 /* @global CMain $APPLICATION */
 /* @global CUser $USER */
-if (!$USER->CanDoOperation("bitrixcloud_backup") || !CModule::IncludeModule("bitrixcloud"))
+if (!$USER->CanDoOperation("bitrixcloud_backup") || !CModule::IncludeModule("bitrixcloud")) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 $strError = "";
 $APPLICATION->SetTitle(GetMessage("BCL_BACKUP_JOB_TITLE"));
 
@@ -15,8 +17,9 @@ try {
 
     if ($arID = $lAdmin->GroupAction()) {
         foreach ($arID as $ID) {
-            if (strlen($ID) <= 0)
+            if ($ID == '') {
                 continue;
+            }
             $ID = intval($ID);
             switch ($_REQUEST['action']) {
                 case "delete":
@@ -32,16 +35,23 @@ try {
     ) {
         require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/classes/general/backup.php");
         $backup_secret_key = CPasswordStorage::Get('backup_secret_key');
-        if (strlen($backup_secret_key) <= 0) {
+        if ($backup_secret_key == '') {
             $backup_secret_key = randString(10);
             CPasswordStorage::Set('backup_secret_key', $backup_secret_key);
         }
         $time = 0;
-        if (preg_match("/^(\\d{1,2}):(\\d{1,2})\$/", $_POST["TIME"], $match))
+        if (preg_match("/^(\\d{1,2}):(\\d{1,2})\$/", $_POST["TIME"], $match)) {
             $time = $match[1] * 3600 + $match[2] * 60;
-        $strError = CBitrixCloudBackup::getInstance()->addBackupJob($backup_secret_key, $_POST["URL"], $time, $_POST["WEEK_DAYS"]);
-        if ($strError == "")
+        }
+        $strError = CBitrixCloudBackup::getInstance()->addBackupJob(
+            $backup_secret_key,
+            $_POST["URL"],
+            $time,
+            $_POST["WEEK_DAYS"]
+        );
+        if ($strError == "") {
             LocalRedirect("/bitrix/admin/bitrixcloud_backup_job.php?lang=" . LANGUAGE_ID);
+        }
     }
 
     $arHeaders = array(
@@ -75,8 +85,9 @@ try {
     );
 
     $arJobs = CBitrixCloudBackup::getInstance()->getBackupJob();
-    if (is_string($arJobs))
+    if (is_string($arJobs)) {
         throw new CBitrixCloudException($arJobs);
+    }
 
     $lAdmin->AddHeaders($arHeaders);
     $rsData = new CDBResult;
@@ -85,16 +96,18 @@ try {
 
     while ($arRes = $rsData->GetNext()) {
         $row = $lAdmin->AddRow($arRes["URL"], $arRes);
-        if ($arRes["STATUS"] == "")
+        if ($arRes["STATUS"] == "") {
             $status = GetMessage("BCL_BACKUP_JOB_NEVER");
-        else
+        } else {
             $status = $arRes["STATUS"];
+        }
         $row->AddViewField("STATUS", $status);
 
         $week_days = array();
         foreach ($arRes["WEEK_DAYS"] as $dow) {
-            if (HasMessage("DOW_" . $dow))
+            if (HasMessage("DOW_" . $dow)) {
                 $week_days[] = GetMessage("DOW_" . $dow);
+            }
         }
         $row->AddViewField("WEEK_DAYS", implode(", ", $week_days));
 
@@ -103,7 +116,9 @@ try {
                 array(
                     "ICON" => "delete",
                     "TEXT" => GetMessage("BCL_BACKUP_JOB_DELETE"),
-                    "ACTION" => "if(confirm('" . GetMessage("BCL_BACKUP_JOB_DELETE_CONF") . "')) " . $lAdmin->ActionDoGroup($arRes["URL"], "delete"),
+                    "ACTION" => "if(confirm('" . GetMessage(
+                            "BCL_BACKUP_JOB_DELETE_CONF"
+                        ) . "')) " . $lAdmin->ActionDoGroup($arRes["URL"], "delete"),
                 ),
             );
             $row->AddActions($arActions);
@@ -123,8 +138,9 @@ try {
 
         $lAdmin->BeginPrologContent();
 
-        if ($strError)
+        if ($strError) {
             CAdminMessage::ShowMessage($strError);
+        }
 
         $aTabs = array(
             array(

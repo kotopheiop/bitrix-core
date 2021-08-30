@@ -1,5 +1,10 @@
 <?
 
+/**
+ * Class CSecuritySessionRedis
+ * @deprecated
+ * @see \Bitrix\Main\Session\Handlers\RedisSessionHandler
+ */
 class CSecuritySessionRedis
 {
     /** @var Redis $connection */
@@ -7,6 +12,7 @@ class CSecuritySessionRedis
     protected static $sessionId = null;
     protected static $isReadOnly = false;
     protected static $isSessionReady = false;
+    protected static $hasFailedRead = false;
 
     /**
      * @return bool
@@ -37,8 +43,9 @@ class CSecuritySessionRedis
      */
     public static function close()
     {
-        if (!self::isConnected() || !self::isValidId(self::$sessionId))
+        if (!self::isConnected() || !self::isValidId(self::$sessionId)) {
             return false;
+        }
 
         if (!self::$isReadOnly && self::$isSessionReady) {
             if (isSessionExpired()) {
@@ -83,15 +90,17 @@ class CSecuritySessionRedis
                     $errorText = 'Unable to get session lock within 60 seconds.';
                     if ($lock !== 1) {
                         $lockedUri = self::$connection->get($sid . $id . ".lock");
-                        if ($lockedUri && $lockedUri != 1)
+                        if ($lockedUri && $lockedUri != 1) {
                             $errorText .= sprintf(' Locked by "%s".', $lockedUri);
+                        }
                     }
 
                     CSecuritySession::triggerFatalError($errorText);
                 }
 
-                if ($waitStep < 1000000)
+                if ($waitStep < 1000000) {
                     $waitStep *= 2;
+                }
             }
             self::$connection->expire($sid . $id . ".lock", $lockTimeout);
         }
@@ -100,8 +109,13 @@ class CSecuritySessionRedis
         self::$isSessionReady = true;
         $res = self::$connection->get($sid . $id);
 
-        if ($res === false)
+        if ($res === false) {
+            if (!self::$hasFailedRead) {
+                AddEventHandler("main", "OnPageStart", array("CSecuritySession", "UpdateSessID"));
+                self::$hasFailedRead = true;
+            }
             $res = "";
+        }
 
         return $res;
     }
@@ -113,11 +127,13 @@ class CSecuritySessionRedis
      */
     public static function write($id, $sessionData)
     {
-        if (!self::isConnected() || !self::isValidId($id))
+        if (!self::isConnected() || !self::isValidId($id)) {
             return false;
+        }
 
-        if (!self::$isSessionReady)
+        if (!self::$isSessionReady) {
             return false;
+        }
 
         if (self::$isReadOnly) {
             if (!CSecuritySession::isOldSessionIdExist()) {
@@ -144,30 +160,37 @@ class CSecuritySessionRedis
      */
     public static function destroy($id)
     {
-        if (!self::isValidId($id))
+        if (!self::isValidId($id)) {
             return false;
+        }
 
-        if (!self::$isSessionReady)
+        if (!self::$isSessionReady) {
             return false;
+        }
 
-        if (self::$isReadOnly)
+        if (self::$isReadOnly) {
             return false;
+        }
 
         $isConnectionRestored = false;
-        if (!self::isConnected())
+        if (!self::isConnected()) {
             $isConnectionRestored = self::newConnection();
+        }
 
-        if (!self::isConnected())
+        if (!self::isConnected()) {
             return false;
+        }
 
         $sid = self::getPrefix();
         self::$connection->delete($sid . $id);
 
-        if (CSecuritySession::isOldSessionIdExist())
+        if (CSecuritySession::isOldSessionIdExist()) {
             self::$connection->delete($sid . CSecuritySession::getOldSessionId(true));
+        }
 
-        if ($isConnectionRestored)
+        if ($isConnectionRestored) {
             self::closeConnection();
+        }
 
         return true;
     }
@@ -235,7 +258,13 @@ class CSecuritySessionRedis
         if (!$exception) {
             if (!self::isStorageEnabled()) {
                 $result = false;
-                $exception = new \ErrorException("BX_SECURITY_SESSION_REDIS_HOST constant is not defined.", 0, E_USER_ERROR, __FILE__, __LINE__);
+                $exception = new \ErrorException(
+                    "BX_SECURITY_SESSION_REDIS_HOST constant is not defined.",
+                    0,
+                    E_USER_ERROR,
+                    __FILE__,
+                    __LINE__
+                );
             }
         }
 
@@ -249,7 +278,13 @@ class CSecuritySessionRedis
             } else {
                 $error = error_get_last();
                 if ($error && $error["type"] == E_WARNING) {
-                    $exception = new \ErrorException($error['message'], 0, $error['type'], $error['file'], $error['line']);
+                    $exception = new \ErrorException(
+                        $error['message'],
+                        0,
+                        $error['type'],
+                        $error['file'],
+                        $error['line']
+                    );
                 }
             }
         }

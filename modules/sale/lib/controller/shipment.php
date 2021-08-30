@@ -21,16 +21,17 @@ class Shipment extends Controller
             Sale\Shipment::class,
             'shipment',
             function ($className, $id) {
-
                 $registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
 
                 /** @var Sale\Shipment $shipmentClass */
                 $shipmentClass = $registry->getShipmentClassName();
 
-                $r = $shipmentClass::getList([
-                    'select' => ['ORDER_ID'],
-                    'filter' => ['ID' => $id]
-                ]);
+                $r = $shipmentClass::getList(
+                    [
+                        'select' => ['ORDER_ID'],
+                        'filter' => ['ID' => $id]
+                    ]
+                );
 
                 if ($row = $r->fetch()) {
                     /** @var Sale\Order $orderClass */
@@ -53,9 +54,11 @@ class Shipment extends Controller
     public function getFieldsAction()
     {
         $entity = new \Bitrix\Sale\Rest\Entity\Shipment();
-        return ['SHIPMENT' => $entity->prepareFieldInfos(
-            $entity->getFields()
-        )];
+        return [
+            'SHIPMENT' => $entity->prepareFieldInfos(
+                $entity->getFields()
+            )
+        ];
     }
 
     public function modifyAction($fields)
@@ -91,10 +94,12 @@ class Shipment extends Controller
         $data['ORDER']['SHIPMENTS'] = [$fields];
 
         $builder = $this->getBuilder(
-            new SettingsContainer([
-                'deleteShipmentIfNotExists' => false,
-                'deleteShipmentItemIfNotExists' => false
-            ])
+            new SettingsContainer(
+                [
+                    'deleteShipmentIfNotExists' => false,
+                    'deleteShipmentItemIfNotExists' => false
+                ]
+            )
         );
         $builder->buildEntityShipments($data);
 
@@ -140,10 +145,12 @@ class Shipment extends Controller
         $data['ORDER']['SHIPMENTS'] = [$fields];
 
         $builder = $this->getBuilder(
-            new SettingsContainer([
-                'deleteShipmentIfNotExists' => false,
-                'deleteShipmentItemIfNotExists' => false
-            ])
+            new SettingsContainer(
+                [
+                    'deleteShipmentIfNotExists' => false,
+                    'deleteShipmentItemIfNotExists' => false
+                ]
+            )
         );
         $builder->buildEntityShipments($data);
 
@@ -209,11 +216,15 @@ class Shipment extends Controller
             ]
         )->fetchAll();
 
-        return new Page('SHIPMENTS', $shipments, function () use ($select, $filter, $runtime) {
+        return new Page(
+            'SHIPMENTS', $shipments, function () use ($select, $filter, $runtime) {
             return count(
-                \Bitrix\Sale\Shipment::getList(['select' => $select, 'filter' => $filter, 'runtime' => $runtime])->fetchAll()
+                \Bitrix\Sale\Shipment::getList(
+                    ['select' => $select, 'filter' => $filter, 'runtime' => $runtime]
+                )->fetchAll()
             );
-        });
+        }
+        );
     }
 
     public function getAllowDeliveryDateAction(\Bitrix\Sale\Shipment $shipment)
@@ -337,6 +348,12 @@ class Shipment extends Controller
         return $this->save($shipment, $r);
     }
 
+    public function setShippedAction(\Bitrix\Sale\Shipment $shipment, $value)
+    {
+        $r = $shipment->setField('DEDUCTED', $value);
+        return $this->save($shipment, $r);
+    }
+
     //endregion
 
     private function save(\Bitrix\Sale\Shipment $shipment, Result $r)
@@ -385,12 +402,14 @@ class Shipment extends Controller
                         if (isset($item['ID']) && intval($item['ID']) > 0) {
                             $shipmentItem['ORDER_DELIVERY_BASKET_ID'] = intval($item['ID']);
                         } else {
-                            if (isset($item['BASKET_ID']))
+                            if (isset($item['BASKET_ID'])) {
                                 $shipmentItem['BASKET_CODE'] = $item['BASKET_ID'];
+                            }
                         }
 
-                        if (isset($item['XML_ID']))
+                        if (isset($item['XML_ID'])) {
                             $shipmentItem['XML_ID'] = $item['XML_ID'];
+                        }
 
                         $shipmentItem['AMOUNT'] = $item['QUANTITY'];
 
@@ -401,8 +420,9 @@ class Shipment extends Controller
                         $storesInfo = isset($item['BARCODE_INFO']) ? $item['BARCODE_INFO'] : [];
                         foreach ($storesInfo as &$storeInfo) {
                             if (isset($storeInfo['BARCODE'])) {
-                                foreach ($storeInfo['BARCODE'] as &$barCode)
+                                foreach ($storeInfo['BARCODE'] as &$barCode) {
                                     $barCode['ID'] = isset($barCode['ID']) ? $barCode['ID'] : 0;
+                                }
                             }
                         }
                         //endregion
@@ -453,7 +473,9 @@ class Shipment extends Controller
             || $name == 'isshipped'
         ) {
             $r = $this->checkReadPermissionEntity();
-        } elseif ($name == 'setbasepricedelivery') {
+        } elseif ($name == 'setbasepricedelivery'
+            || $name == 'setshipped'
+        ) {
             $r = $this->checkModifyPermissionEntity();
         } else {
             $r = parent::checkPermissionEntity($name);

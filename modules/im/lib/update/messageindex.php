@@ -42,7 +42,7 @@ final class MessageIndex extends Stepper
         $return = false;
 
         $params = Option::get(self::$moduleId, self::OPTION_NAME, "");
-        $params = ($params !== "" ? @unserialize($params) : []);
+        $params = ($params !== "" ? @unserialize($params, ["allowed_classes" => false]) : []);
         $params = (is_array($params) ? $params : []);
         if (empty($params)) {
             $params = [

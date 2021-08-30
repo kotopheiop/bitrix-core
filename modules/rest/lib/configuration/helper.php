@@ -2,28 +2,39 @@
 
 namespace Bitrix\Rest\Configuration;
 
-use Bitrix\Main\Event;
 use Bitrix\Main\Loader;
+use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Web\Json;
-use Bitrix\Main\EventManager;
 use Bitrix\Main\Config\Option;
 use Bitrix\Security\Filter\Auditor;
+use Bitrix\Rest\UsageStatTable;
 
 class Helper
 {
     const TYPE_SECTION_TOTAL = 'total';
+    const STRUCTURE_FILES_NAME = 'files';
+    const CONFIGURATION_FILE_EXTENSION = '.json';
+    const DEFAULT_ARCHIVE_NAME = 'configuration';
+    const DEFAULT_ARCHIVE_FILE_EXTENSIONS = 'zip';
 
-    public $prefixAppContext = 'app';
-    protected $optionRatio = '~import_configuration_app_ratio_data';
-    protected $optionUsesConfigurationApp = 'uses_configuration_app';
+    protected $prefixStatisticBasic = 'DEFAULT_';
+    protected $prefixAppContext = 'app';
+    protected $prefixUserContext = 'configuration';
+    protected $optionEnableZipMod = 'enable_mod_zip';
+    protected $optionMaxImportFileSize = 'import_max_size';
+    protected $optionBasicAppList = 'uses_basic_app_list';
+    protected $defaultMaxSizeImport = 100;
     protected $appConfigurationFolderBackup = 'appConfiguration';
+    protected $basicManifest = [
+        'vertical_crm'
+    ];
+
     /** @var Helper|null */
     private static $instance = null;
     private $sanitizer = null;
 
     private function __construct()
     {
-
     }
 
     /**
@@ -36,6 +47,70 @@ class Helper
         }
 
         return self::$instance;
+    }
+
+    /**
+     * Enable or not main option zip_mode nginx
+     * @return bool
+     */
+    public function enabledZipMod()
+    {
+        if (ModuleManager::isModuleInstalled('bitrix24')) {
+            return true;
+        } else {
+            return Option::get('rest', $this->optionEnableZipMod, 'N') == 'Y';
+        }
+    }
+
+    /**
+     * @return integer
+     */
+    public function getMaxFileSize()
+    {
+        $size = Option::get('rest', $this->optionMaxImportFileSize, '');
+        if ($size === '') {
+            $size = $this->defaultMaxSizeImport;
+        }
+
+        return $size;
+    }
+
+    /**
+     * @param $postfix string a-zA-Z0-9_
+     *
+     * @return string
+     */
+    public function getContextUser($postfix)
+    {
+        $result = $this->prefixUserContext;
+
+        $postfix = preg_replace('/[^a-zA-Z0-9_]/', '', $postfix);
+
+        global $USER;
+        if ($USER->IsAuthorized()) {
+            $user = $USER->GetID();
+        } else {
+            $user = 0;
+        }
+
+        $result .= $user . $postfix;
+        return $result;
+    }
+
+    /**
+     * Context uses action
+     * @param integer $appId
+     * @return string context
+     */
+    public function getContextAction($appId = 0)
+    {
+        $result = 'external';
+        $appId = intval($appId);
+        if ($appId > 0) {
+            $result = $this->prefixAppContext . $appId;
+        }
+
+        return $result;
     }
 
     /**
@@ -98,70 +173,121 @@ class Helper
     }
 
     //uses configuration app
-    public function getUsesConfigurationApp()
+
+    /**
+     * @param $code string
+     *
+     * @return boolean
+     */
+    public function isBasicManifest($code)
     {
-        return Option::get('rest', $this->optionUsesConfigurationApp, '');
+        return (in_array($code, $this->basicManifest)) ? true : false;
     }
 
-    public function setUsesConfigurationApp($code)
+    /**
+     * @param $manifestCode string
+     *
+     * @return boolean|string
+     */
+    public function getBasicApp($manifestCode)
     {
-        $result = true;
-        try {
-            Option::set('rest', $this->optionUsesConfigurationApp, $code);
-        } catch (\Exception $e) {
-            $result = false;
+        $result = false;
+        $appList = $this->getBasicAppList();
+        if (isset($appList[$manifestCode])) {
+            $result = $appList[$manifestCode];
         }
 
         return $result;
     }
 
-    public function deleteUsesConfigurationApp()
+    /**
+     * @return array [ manifestCode => appCode ]
+     */
+    public function getBasicAppList()
     {
-        Option::delete('rest', array('name' => $this->optionUsesConfigurationApp));
-        return true;
-    }
-
-    //ratio data import
-    public function getRatio()
-    {
-        $data = Option::get('rest', $this->optionRatio);
+        $data = Option::get('rest', $this->optionBasicAppList);
         if ($data) {
             $data = Json::decode($data);
         } else {
             $data = [];
         }
+
         return $data;
     }
 
-    public function addRatio($type, $ratioData = [])
+    /**
+     * @param $manifestCode string
+     * @param $appCode string
+     * @return boolean
+     */
+    public function setBasicApp($manifestCode, $appCode)
     {
-        $result = true;
-        if (is_array($ratioData)) {
-            $data = $this->getRatio();
-            if (!$data[$type]) {
-                $data[$type] = [];
-            }
-            foreach ($ratioData as $old => $new) {
-                $data[$type][$old] = $new;
-            }
-            Option::set('rest', $this->optionRatio, Json::encode($data));
+        $result = false;
+        if ($this->isBasicManifest($manifestCode)) {
+            $appList = $this->getBasicAppList();
+            $appList[$manifestCode] = $appCode;
+            Option::set('rest', $this->optionBasicAppList, Json::encode($appList));
+            $result = true;
         }
+
         return $result;
     }
 
-    public function clearRatio($type)
+    /**
+     * @param $manifestCode string
+     * @return boolean
+     */
+    public function deleteBasicApp($manifestCode)
     {
-        $data = $this->getRatio();
-        if (array_key_exists($type, $data)) {
-            unset($data[$type]);
-            Option::set('rest', $this->optionRatio, Json::encode($data));
+        $result = false;
+        if ($this->isBasicManifest($manifestCode)) {
+            $appList = $this->getBasicAppList();
+            if (isset($appList[$manifestCode])) {
+                unset($appList[$manifestCode]);
+                Option::set('rest', $this->optionBasicAppList, Json::encode($appList));
+            }
+            $result = true;
         }
+
+        return $result;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function sendStatistic()
+    {
+        $appList = $this->getBasicAppList();
+        foreach ($appList as $manifest => $appCode) {
+            UsageStatTable::logConfiguration($appCode, $this->prefixStatisticBasic . mb_strtoupper($manifest));
+        }
+        UsageStatTable::finalize();
+
         return true;
     }
 
-    public function deleteRatio()
+    /**
+     * Every day send statistic basic configuration app
+     * @return string
+     */
+    public static function sendStatisticAgent()
     {
-        Option::delete('rest', array('name' => $this->optionRatio));
-        return true;
+        self::getInstance()->sendStatistic();
+
+        return '\Bitrix\Rest\Configuration\Helper::sendStatisticAgent();';
+    }
+
+    /**
+     * @param array $params all event parameters
+     * @param array $uses all access uses in current entity
+     *
+     * @return bool
+     * @deprecated use Manifest::isEntityAvailable()
+     *
+     * check Event manifest[USES] intersect current entity[USES]
+     */
+    public static function checkAccessManifest($params, $uses = []): bool
+    {
+        return Manifest::isEntityAvailable('', $params, $uses);
     }
 }

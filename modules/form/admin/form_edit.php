@@ -12,7 +12,9 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/form/prolog.php");
 $FORM_RIGHT = $APPLICATION->GetGroupRight("form");
-if ($FORM_RIGHT <= "D") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($FORM_RIGHT <= "D") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 CModule::IncludeModule('form');
 
@@ -22,24 +24,66 @@ IncludeModuleLangFile(__FILE__);
 $err_mess = "File: " . __FILE__ . "<br>Line: ";
 define("HELP_FILE", "form_list.php");
 $old_module_version = CForm::IsOldVersion();
-$bSimple = (COption::GetOptionString("form", "SIMPLE", "Y") == "Y") ? true : false;
+$bSimple = (COption::GetOptionString("form", "SIMPLE") == "Y");
 
 $bEditTemplate = $USER->CanDoOperation('edit_php');
 
 $aTabs = array(
-    array("DIV" => "edit1", "TAB" => GetMessage("FORM_PROP"), "ICON" => "form_edit", "TITLE" => GetMessage("FORM_PROP_TITLE")),
-    array("DIV" => "edit2", "TAB" => GetMessage("FORM_DESC"), "ICON" => "form_edit", "TITLE" => GetMessage("FORM_DESC_TITLE")),
+    array(
+        "DIV" => "edit1",
+        "TAB" => GetMessage("FORM_PROP"),
+        "ICON" => "form_edit",
+        "TITLE" => GetMessage("FORM_PROP_TITLE")
+    ),
+    array(
+        "DIV" => "edit2",
+        "TAB" => GetMessage("FORM_DESC"),
+        "ICON" => "form_edit",
+        "TITLE" => GetMessage("FORM_DESC_TITLE")
+    ),
 );
 
-if ($bEditTemplate)
-    $aTabs[] = array("DIV" => "edit5", "TAB" => GetMessage("FORM_VISUAL"), "ICON" => "form_edit", "TITLE" => GetMessage("FORM_TPL_MAIN"));
+if ($bEditTemplate) {
+    $aTabs[] = array(
+        "DIV" => "edit5",
+        "TAB" => GetMessage("FORM_VISUAL"),
+        "ICON" => "form_edit",
+        "TITLE" => GetMessage("FORM_TPL_MAIN")
+    );
+}
 
-$aTabs[] = array("DIV" => "edit7", "TAB" => GetMessage("FORM_RESTRICTIONS"), "ICON" => "form_edit", "TITLE" => GetMessage("FORM_RESTRICTIONS_TITLE"));
-if (!$bSimple)
-    $aTabs[] = array("DIV" => "edit3", "TAB" => GetMessage("FORM_TPL"), "ICON" => "form_edit", "TITLE" => GetMessage("FORM_TPL_TITLE"));
-$aTabs[] = array("DIV" => "edit4", "TAB" => GetMessage("FORM_EVENTS"), "ICON" => "form_edit", "TITLE" => GetMessage("FORM_EVENTS_TITLE"));
-$aTabs[] = array("DIV" => "editcrm", "TAB" => GetMessage("FORM_CRM"), "ICON" => "form_edit", "TITLE" => GetMessage("FORM_CRM_TITLE"));
-$aTabs[] = array("DIV" => "edit6", "TAB" => GetMessage("FORM_ACCESS"), "ICON" => "form_edit", "TITLE" => GetMessage("FORM_RIGHTS"));
+$aTabs[] = array(
+    "DIV" => "edit7",
+    "TAB" => GetMessage("FORM_RESTRICTIONS"),
+    "ICON" => "form_edit",
+    "TITLE" => GetMessage("FORM_RESTRICTIONS_TITLE")
+);
+if (!$bSimple) {
+    $aTabs[] = array(
+        "DIV" => "edit3",
+        "TAB" => GetMessage("FORM_TPL"),
+        "ICON" => "form_edit",
+        "TITLE" => GetMessage("FORM_TPL_TITLE")
+    );
+}
+$aTabs[] = array(
+    "DIV" => "edit4",
+    "TAB" => GetMessage("FORM_EVENTS"),
+    "ICON" => "form_edit",
+    "TITLE" => GetMessage("FORM_EVENTS_TITLE")
+);
+$aTabs[] = array(
+    "DIV" => "editcrm",
+    "TAB" => GetMessage("FORM_CRM"),
+    "ICON" => "form_edit",
+    "TITLE" => GetMessage("FORM_CRM_TITLE")
+);
+$aTabs[] = array(
+    "DIV" => "edit6",
+    "TAB" => GetMessage("FORM_ACCESS"),
+    "ICON" => "form_edit",
+    "TITLE" => GetMessage("FORM_RIGHTS")
+);
 
 $tabControl = new CAdminTabControl("tabControl", $aTabs, true, true);
 $message = null;
@@ -55,13 +99,15 @@ $strError = '';
 
 if ($ID > 0) {
     $F_RIGHT = CForm::GetPermission($ID);
-    if ($F_RIGHT < 25) $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+    if ($F_RIGHT < 25) {
+        $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+    }
 }
 
 // copying
 if ($copy_id > 0 && check_bitrix_sessid() && $F_RIGHT >= 30) {
     $new_id = CForm::Copy($copy_id);
-    if (strlen($strError) <= 0 && intval($new_id) > 0) {
+    if ($strError == '' && intval($new_id) > 0) {
         LocalRedirect("/bitrix/admin/form_edit.php?ID=" . $new_id . "&lang=" . LANGUAGE_ID);
     }
 }
@@ -72,36 +118,43 @@ if ($reset_id > 0 && check_bitrix_sessid() && $F_RIGHT >= 30) {
     LocalRedirect("/bitrix/admin/form_edit.php?ID=" . $reset_id . "&lang=" . LANGUAGE_ID);
 }
 
-$w = CGroup::GetList($v1 = "dropdown", $v2 = "asc", array("ADMIN" => "N"));
+$w = CGroup::GetList("dropdown", "asc", array("ADMIN" => "N"));
 $arGroups = array();
 while ($wr = $w->Fetch()) {
     $arGroups[] = array(
         "ID" => $wr["ID"],
-        "NAME" => "[<a title=\"" . GetMessage("FORM_GROUP_EDIT") . "\" href=\"/bitrix/admin/group_edit.php?ID=" . intval($wr["ID"]) . "&lang=" . LANGUAGE_ID . "\">" . intval($wr["ID"]) . "</a>] " . htmlspecialcharsbx($wr["NAME"]),
+        "NAME" => "[<a title=\"" . GetMessage(
+                "FORM_GROUP_EDIT"
+            ) . "\" href=\"/bitrix/admin/group_edit.php?ID=" . intval(
+                $wr["ID"]
+            ) . "&lang=" . LANGUAGE_ID . "\">" . intval($wr["ID"]) . "</a>] " . htmlspecialcharsbx($wr["NAME"]),
     );
 }
 
-$z = CLanguage::GetList($v1, $v2, array("ACTIVE" => "Y"));
+$z = CLanguage::GetList('', '', array("ACTIVE" => "Y"));
 $arFormMenuLang = array();
 while ($zr = $z->Fetch()) {
     $arFormMenuLang[] = array("LID" => $zr["LID"], "NAME" => $zr["NAME"]);
 }
 
-$rs = CSite::GetList(($by = "sort"), ($order = "asc"));
+$rs = CSite::GetList();
 $arrSites = array();
 while ($ar = $rs->Fetch()) {
-    if ($ar["DEF"] == "Y") $def_site_id = $ar["ID"];
+    if ($ar["DEF"] == "Y") {
+        $def_site_id = $ar["ID"];
+    }
     $arrSites[$ar["ID"]] = $ar;
 }
 
-if ((strlen($_REQUEST['save']) > 0 || strlen($_REQUEST['apply']) > 0) && $_SERVER['REQUEST_METHOD'] == "POST" && ($F_RIGHT >= 30 || $ID <= 0) && check_bitrix_sessid()) {
+if (($_REQUEST['save'] <> '' || $_REQUEST['apply'] <> '') && $_SERVER['REQUEST_METHOD'] == "POST" && ($F_RIGHT >= 30 || $ID <= 0) && check_bitrix_sessid(
+    )) {
     $arIMAGE_ID = $_FILES["IMAGE_ID"];
     $arIMAGE_ID["MODULE_ID"] = "form";
     $arIMAGE_ID["del"] = $_REQUEST["IMAGE_ID_del"];
 
     $SID = $_REQUEST['SID'];
 
-    if ($bSimple && strlen($SID) <= 0) {
+    if ($bSimple && $SID == '') {
         $SID = "SIMPLE_FORM_" . randString(8);
     }
 
@@ -148,11 +201,13 @@ if ((strlen($_REQUEST['save']) > 0 || strlen($_REQUEST['apply']) > 0) && $_SERVE
         $arFields['TABLE_RESULT_TEMPLATE'] = $_REQUEST['TABLE_RESULT_TEMPLATE'];
 
         $FORM_TEMPLATE = $_REQUEST['FORM_TEMPLATE'];
-        $USE_DEFAULT_TEMPLATE = $_REQUEST['USE_DEFAULT_TEMPLATE'] == "N" && strlen($FORM_TEMPLATE) > 0 ? "N" : "Y";
+        $USE_DEFAULT_TEMPLATE = $_REQUEST['USE_DEFAULT_TEMPLATE'] == "N" && $FORM_TEMPLATE <> '' ? "N" : "Y";
 
         $arFields["FORM_TEMPLATE"] = $FORM_TEMPLATE;
         $arFields["USE_DEFAULT_TEMPLATE"] = $USE_DEFAULT_TEMPLATE;
-        $arFields['USE_CAPTCHA'] = $arFields['USE_CAPTCHA'] == "Y" && ($USE_DEFAULT_TEMPLATE == "Y" || $USE_DEFAULT_TEMPLATE == "N" && CForm::isCAPTCHAInTemplate($FORM_TEMPLATE)) ? "Y" : "N";
+        $arFields['USE_CAPTCHA'] = $arFields['USE_CAPTCHA'] == "Y" && ($USE_DEFAULT_TEMPLATE == "Y" || $USE_DEFAULT_TEMPLATE == "N" && CForm::isCAPTCHAInTemplate(
+                $FORM_TEMPLATE
+            )) ? "Y" : "N";
     }
 
     // menu
@@ -174,7 +229,10 @@ if ((strlen($_REQUEST['save']) > 0 || strlen($_REQUEST['apply']) > 0) && $_SERVE
             // structure
             $FORM_STRUCTURE = $_REQUEST["FORM_STRUCTURE"];
 
-            $arrFS = CheckSerializedData($FORM_STRUCTURE) ? unserialize($FORM_STRUCTURE) : array();
+            $arrFS =
+                CheckSerializedData($FORM_STRUCTURE)
+                    ? unserialize($FORM_STRUCTURE, ['allowed_classes' => false])
+                    : [];
 
             if (CFormOutput::CheckTemplate($FORM_TEMPLATE, $arrFS)) {
                 $GLOBALS['CACHE_MANAGER']->ClearByTag('form_' . $res);
@@ -197,11 +255,14 @@ if ((strlen($_REQUEST['save']) > 0 || strlen($_REQUEST['apply']) > 0) && $_SERVE
 
                     if ($QID) {
                         foreach ($arQuestion["structure"] as $arAnswer) {
-                            if (strlen($arAnswer["MESSAGE"]) <= 0) {
+                            if ($arAnswer["MESSAGE"] == '') {
                                 if (
                                     $arAnswer['ANS_NEW'] != 'Y'
                                     &&
-                                    in_array($arAnswer['FIELD_TYPE'], array('dropdown', 'multiselect', 'checkbox', 'radio'))
+                                    in_array(
+                                        $arAnswer['FIELD_TYPE'],
+                                        array('dropdown', 'multiselect', 'checkbox', 'radio')
+                                    )
                                 ) {
                                     CFormAnswer::Delete($arAnswer['ID'], $QID);
                                 }
@@ -211,17 +272,19 @@ if ((strlen($_REQUEST['save']) > 0 || strlen($_REQUEST['apply']) > 0) && $_SERVE
 
                             if (isset($arAnswer['DEFAULT'])) {
                                 if ($arAnswer["FIELD_TYPE"] == "dropdown" || $arAnswer['FIELD_TYPE'] == "multiselect") {
-                                    if ($arAnswer["DEFAULT"] == "Y")
+                                    if ($arAnswer["DEFAULT"] == "Y") {
                                         $arAnswer["FIELD_PARAM"] = "SELECTED";
-                                    else
+                                    } else {
                                         $arAnswer["FIELD_PARAM"] = "";
+                                    }
                                 }
 
                                 if ($arAnswer["FIELD_TYPE"] == "checkbox" || $arAnswer['FIELD_TYPE'] == "radio") {
-                                    if ($arAnswer["DEFAULT"] == "Y")
+                                    if ($arAnswer["DEFAULT"] == "Y") {
                                         $arAnswer["FIELD_PARAM"] = "CHECKED";
-                                    else
+                                    } else {
                                         $arAnswer["FIELD_PARAM"] = "";
+                                    }
                                 }
                             }
 
@@ -249,12 +312,13 @@ if ((strlen($_REQUEST['save']) > 0 || strlen($_REQUEST['apply']) > 0) && $_SERVE
         if ($bSimple) {
             // mail template
             $arr = CForm::GetTemplateList("MAIL", "xxx", $res);
-            if ($_REQUEST['USE_MAIL_TEMPLATE'] && count($arr['reference_id']) == 0)
+            if ($_REQUEST['USE_MAIL_TEMPLATE'] && count($arr['reference_id']) == 0) {
                 CForm::SetMailTemplate($res, "Y");
-            elseif (!$_REQUEST['USE_MAIL_TEMPLATE'] && count($arr['reference_id']) > 0) {
+            } elseif (!$_REQUEST['USE_MAIL_TEMPLATE'] && count($arr['reference_id']) > 0) {
                 reset($arr['reference_id']);
-                while (list($num, $tmp_id) = each($arr['reference_id']))
+                foreach ($arr['reference_id'] as $tmp_id) {
                     CEventMessage::Delete($tmp_id);
+                }
             }
             $arr = CForm::GetTemplateList("MAIL", "xxx", $res);
 
@@ -282,7 +346,7 @@ if ((strlen($_REQUEST['save']) > 0 || strlen($_REQUEST['apply']) > 0) && $_SERVE
             }
         }
 
-        if (strlen($strError) <= 0 && $ID > 0) {
+        if ($strError == '' && $ID > 0) {
             $arCrmParams = array(
                 'CRM_ID' => $_REQUEST['CRM_ID'],
                 'LINK_TYPE' => $_REQUEST['CRM_LINK_TYPE'],
@@ -295,12 +359,19 @@ if ((strlen($_REQUEST['save']) > 0 || strlen($_REQUEST['apply']) > 0) && $_SERVE
 
         $ID = $res;
 
-        if (strlen($strError) <= 0) {
-            if (strlen($_REQUEST['save']) > 0) {
-                if (!empty($_REQUEST["back_url"])) LocalRedirect("/" . ltrim($_REQUEST["back_url"], "/"));
-                else LocalRedirect("/bitrix/admin/form_list.php?lang=" . LANGUAGE_ID);
-
-            } else LocalRedirect("/bitrix/admin/form_edit.php?ID=" . $ID . "&lang=" . LANGUAGE_ID . "&" . $tabControl->ActiveTabParam() . (!empty($_REQUEST["back_url"]) ? "&back_url=" . urlencode($_REQUEST["back_url"]) : ""));
+        if ($strError == '') {
+            if ($_REQUEST['save'] <> '') {
+                if (!empty($_REQUEST["back_url"])) {
+                    LocalRedirect("/" . ltrim($_REQUEST["back_url"], "/"));
+                } else {
+                    LocalRedirect("/bitrix/admin/form_list.php?lang=" . LANGUAGE_ID);
+                }
+            } else {
+                LocalRedirect(
+                    "/bitrix/admin/form_edit.php?ID=" . $ID . "&lang=" . LANGUAGE_ID . "&" . $tabControl->ActiveTabParam(
+                    ) . (!empty($_REQUEST["back_url"]) ? "&back_url=" . urlencode($_REQUEST["back_url"]) : "")
+                );
+            }
 
             exit();
         }
@@ -328,24 +399,32 @@ if (!$arForm || !extract($arForm, EXTR_PREFIX_ALL, 'str')) {
     $str_RESTRICT_TIME = 0;
     $arRESTRICT_STATUS = array();
 } else {
-    if (strlen($strError) <= 0) {
+    if ($strError == '') {
         $z = CForm::GetMenuList(array("FORM_ID" => $ID), "N");
-        while ($zr = $z->Fetch()) ${"MENU_" . $zr["LID"]} = $zr["MENU"];
+        while ($zr = $z->Fetch()) {
+            ${"MENU_" . $zr["LID"]} = $zr["MENU"];
+        }
 
         $arSITE = CForm::GetSiteArray($ID);
         $arMAIL_TEMPLATE = CForm::GetMailTemplateArray($ID);
-        if (!is_set($str_FORM_TEMPLATE)) $str_FORM_TEMPLATE = CForm::GetFormTemplateByID($ID);
+        if (!is_set($str_FORM_TEMPLATE)) {
+            $str_FORM_TEMPLATE = CForm::GetFormTemplateByID($ID);
+        }
 
         $arRESTRICT_STATUS = explode(",", $str_RESTRICT_STATUS);
     }
 }
 
-if (strlen($strError) > 0) $DB->InitTableVarsForEdit("b_form", "", "str_");
+if ($strError <> '') {
+    $DB->InitTableVarsForEdit("b_form", "", "str_");
+}
 
 if ($ID > 0) {
     $sDocTitle = str_replace("#ID#", $ID, GetMessage("FORM_EDIT_RECORD"));
     $sDocTitle = str_replace("#NAME#", $str_NAME, $sDocTitle);
-} else $sDocTitle = GetMessage("FORM_NEW_RECORD");
+} else {
+    $sDocTitle = GetMessage("FORM_NEW_RECORD");
+}
 
 $APPLICATION->SetTitle($sDocTitle);
 
@@ -370,7 +449,9 @@ if (!defined('BX_PUBLIC_MODE') || BX_PUBLIC_MODE != 1):
         ?>
         <b><?= GetMessage("FORM_FORM_NAME") ?></b>
         [<a title='<?= GetMessage("FORM_EDIT_FORM") ?>'
-            href='form_edit.php?lang=<?= LANGUAGE_ID ?>&ID=<?= $ID ?>'><?= $ID ?></a>]&nbsp;(<?= htmlspecialcharsbx($arForm["SID"]) ?>)&nbsp;<?= htmlspecialcharsbx($arForm["NAME"]) ?>
+            href='form_edit.php?lang=<?= LANGUAGE_ID ?>&ID=<?= $ID ?>'><?= $ID ?></a>]&nbsp;(<?= htmlspecialcharsbx(
+        $arForm["SID"]
+    ) ?>)&nbsp;<?= htmlspecialcharsbx($arForm["NAME"]) ?>
         <?
         echo EndNote();
     endif;
@@ -386,8 +467,9 @@ if (!defined('BX_PUBLIC_MODE') || BX_PUBLIC_MODE != 1):
     );
 
     if ($ID > 0 && (CForm::IsAdmin() || $F_RIGHT >= 30)) {
-        if (count($aMenu) > 0)
+        if (count($aMenu) > 0) {
             $aMenu[] = array("SEPARATOR" => "Y");
+        }
 
         if (CForm::IsAdmin()) {
             $aMenu[] = array(
@@ -401,7 +483,8 @@ if (!defined('BX_PUBLIC_MODE') || BX_PUBLIC_MODE != 1):
                 "TEXT" => GetMessage("FORM_CP"),
                 "TITLE" => GetMessage("FORM_COPY"),
                 "ICON" => "btn_copy",
-                "LINK" => "form_edit.php?copy_id=" . $ID . "&ID=" . $ID . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get(),
+                "LINK" => "form_edit.php?copy_id=" . $ID . "&ID=" . $ID . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get(
+                    ),
             );
         }
 
@@ -410,7 +493,10 @@ if (!defined('BX_PUBLIC_MODE') || BX_PUBLIC_MODE != 1):
                 "TEXT" => GetMessage("FORM_DELETE_RESULTS"),
                 "TITLE" => GetMessage("FORM_DELETE_RESULTS_TITLE"),
                 "ICON" => "btn_delete",
-                "LINK" => "javascript:if(confirm('" . GetMessage("FORM_CONFIRM_DELETE_RESULTS") . "'))window.location='form_edit.php?ID=" . $ID . "&reset_id=" . $ID . "&" . bitrix_sessid_get() . "&lang=" . LANGUAGE_ID . "';",
+                "LINK" => "javascript:if(confirm('" . GetMessage(
+                        "FORM_CONFIRM_DELETE_RESULTS"
+                    ) . "'))window.location='form_edit.php?ID=" . $ID . "&reset_id=" . $ID . "&" . bitrix_sessid_get(
+                    ) . "&lang=" . LANGUAGE_ID . "';",
             );
         }
 
@@ -419,7 +505,10 @@ if (!defined('BX_PUBLIC_MODE') || BX_PUBLIC_MODE != 1):
                 "ICON" => "btn_delete",
                 "TEXT" => GetMessage("FORM_DELETE_TEXT"),
                 "TITLE" => GetMessage("FORM_DELETE_TITLE"),
-                "LINK" => "javascript:if(confirm('" . GetMessage("FORM_CONFIRM_DELETE") . "'))window.location='form_list.php?action=delete&ID=" . $ID . "&" . bitrix_sessid_get() . "&lang=" . LANGUAGE_ID . "';",
+                "LINK" => "javascript:if(confirm('" . GetMessage(
+                        "FORM_CONFIRM_DELETE"
+                    ) . "'))window.location='form_list.php?action=delete&ID=" . $ID . "&" . bitrix_sessid_get(
+                    ) . "&lang=" . LANGUAGE_ID . "';",
             );
         }
     }
@@ -438,7 +527,9 @@ if ($strError) {
     $aMsg = array();
     $arrErr = explode("<br>", $strError);
     reset($arrErr);
-    while (list(, $err) = each($arrErr)) $aMsg[]['text'] = $err;
+    foreach ($arrErr as $err) {
+        $aMsg[]['text'] = $err;
+    }
 
     $e = new CAdminException($aMsg);
     $GLOBALS["APPLICATION"]->ThrowException($e);
@@ -446,7 +537,7 @@ if ($strError) {
     $message = new CAdminMessage(GetMessage("FORM_ERROR_SAVE"), $e);
     echo $message->Show();
 }
-echo ShowNote($strNote);
+ShowNote($strNote);
 
 if ($bEditTemplate):
     ?>
@@ -473,6 +564,9 @@ endif;
         //********************
         $tabControl->BeginNextTab();
         ?>
+        <tr class="heading">
+            <td colspan="2"><?= GetMessage('FORM_MAIN_SETTINGS_SECTION'); ?></td>
+        </tr>
         <tr class="adm-detail-required-field">
             <td width="40%"><?= GetMessage("FORM_NAME") ?></td>
             <td width="60%"><input type="text" name="NAME" size="60" maxlength="255"
@@ -486,56 +580,69 @@ endif;
             </tr>
         <? endif; ?>
         <tr>
-            <td><?= GetMessage("FORM_C_SORT") ?></td>
-            <td><input type="text" name="C_SORT" size="5" maxlength="18" value="<? echo intval($str_C_SORT) ?>"></td>
-        </tr>
-        <tr>
-            <td><? echo GetMessage("FORM_MENU") ?></td>
-            <td>
-                <table border="0" cellspacing="1" cellpadding="2" style="width: 0%;"><?
-                    reset($arFormMenuLang);
-                    foreach ($arFormMenuLang as $arrL):
-                        ?>
-                        <tr>
-                            <td width="0%" nowrap><?= $arrL["NAME"] ?></td>
-                            <td><input type="text" name="MENU_<?= htmlspecialcharsbx($arrL["LID"], ENT_QUOTES) ?>"
-                                       size="30"
-                                       value="<?= htmlspecialcharsex(${"MENU_" . htmlspecialcharsbx($arrL["LID"], ENT_QUOTES)}) ?>">
-                            </td>
-                        </tr>
-                    <? endforeach; ?>
-                </table>
-            </td>
-        </tr>
-        <tr>
             <td valign=top><?= GetMessage("FORM_SITE_CAPTION") ?></td>
             <td>
                 <div class="adm-list">
-
-
                     <?
                     reset($arrSites);
-                    while (list($sid, $arrS) = each($arrSites)):
-                        $checked = ((is_array($arSITE) && in_array($sid, $arSITE)) || ($ID <= 0 && $def_site_id == $sid)) ? "checked" : "";
+                    foreach ($arrSites as $sid => $arrS) {
+                        $checked = ((is_array($arSITE) && in_array(
+                                    $sid,
+                                    $arSITE
+                                )) || ($ID <= 0 && $def_site_id == $sid)) ? "checked" : "";
                         ?>
                         <div class="adm-list-item">
                             <div class="adm-list-control"><input type="checkbox" name="arSITE[]"
                                                                  value="<?= htmlspecialcharsbx($sid) ?>"
                                                                  id="<?= htmlspecialcharsbx($sid) ?>" <?= $checked ?>>
                             </div>
-                            <div class="adm-list-label"><label
-                                        for="<?= htmlspecialcharsbx($sid) ?>"><? echo "[<a class=tablebodylink href='/bitrix/admin/site_edit.php?LID=" . htmlspecialcharsbx($sid) . "&lang=" . LANGUAGE_ID . "'>" . htmlspecialcharsbx($sid) . "</a>]&nbsp;" . htmlspecialcharsbx($arrS["NAME"]) ?></label>
-                            </div>
+                            <div class="adm-list-label"><label for="<?= htmlspecialcharsbx(
+                                    $sid
+                                ) ?>"><? echo "[<a class=tablebodylink href='/bitrix/admin/site_edit.php?LID=" . htmlspecialcharsbx(
+                                            $sid
+                                        ) . "&lang=" . LANGUAGE_ID . "'>" . htmlspecialcharsbx(
+                                            $sid
+                                        ) . "</a>]&nbsp;" . htmlspecialcharsbx($arrS["NAME"]) ?></label></div>
                         </div>
-                    <?
-                    endwhile;
+                        <?
+                    }
                     ?></div>
             </td>
+        </tr>
+        <tr>
+            <td><?= GetMessage("FORM_C_SORT") ?></td>
+            <td><input type="text" name="C_SORT" size="5" maxlength="18" value="<? echo intval($str_C_SORT) ?>"></td>
+        </tr>
+        <tr class="heading">
+            <td colspan="2"><?= GetMessage('FORM_RESULT_MENU_SETTINGS'); ?></td>
+        </tr>
+        <tr>
+            <td colspan="2"
+                style="white-space: nowrap; text-align: center; font-weight: bold; padding-bottom: 6px;"><? echo GetMessage(
+                    "FORM_MENU_LANGUAGE_TITLE"
+                ) ?></td>
+        </tr>
+        <?
+        reset($arFormMenuLang);
+        foreach ($arFormMenuLang as $arrL):
+            ?>
+            <tr>
+                <td style="white-space: nowrap;"><?= htmlspecialcharsbx($arrL["NAME"]); ?></td>
+                <td><input type="text" name="MENU_<?= htmlspecialcharsbx($arrL["LID"], ENT_QUOTES) ?>" size="30"
+                           value="<?= htmlspecialcharsex(${"MENU_" . htmlspecialcharsbx($arrL["LID"], ENT_QUOTES)}) ?>">
+                </td>
+            </tr>
+        <? endforeach; ?>
+        <tr>
+            <td colspan="2"><?= BeginNote() . GetMessage('FORM_RESULT_MENU_NOTE') . EndNote(); ?></td>
+        </tr>
+        <tr class="heading">
+            <td colspan="2"><?= GetMessage('FORM_ADDITIONAL_SETTINGS_SECTION'); ?></td>
         </tr>
         <?
         if ($bSimple) {
             $arr = CForm::GetTemplateList("MAIL", "xxx", $ID);
-        if (count($arr['reference_id']) > 0)
+        if (!empty($arr['reference_id']))
         {
             $str_USE_MAIL = 'checked OnClick="template_warn()"';
             ?>
@@ -547,14 +654,17 @@ endif;
             </script>
         <?
         }
-        else
+        else {
             $str_USE_MAIL = '';
+        }
         ?>
             <tr>
                 <td><?= GetMessage("FORM_SEND_RESULTS") ?></td>
                 <td>
                     <input type="checkbox" id="mail_check" name="USE_MAIL_TEMPLATE" <?= $str_USE_MAIL ?>>
-                    [<a href="/bitrix/admin/message_admin.php?find_type_id=FORM_FILLING_<?= $str_SID ?>&set_filter=Y"><? echo GetMessage("FORM_VIEW_TEMPLATE_LIST") ?></a>]
+                    [<a href="/bitrix/admin/message_admin.php?find_type_id=FORM_FILLING_<?= $str_SID ?>&set_filter=Y"><? echo GetMessage(
+                            "FORM_VIEW_TEMPLATE_LIST"
+                        ) ?></a>]
                 </td>
             </tr>
             <?
@@ -580,7 +690,9 @@ endif;
             <td width="40%"><?= GetMessage("FORM_IMAGE") ?></td>
             <td width="60%"><?
                 echo CFile::InputFile("IMAGE_ID", 20, $str_IMAGE_ID);
-                if (!is_array($str_IMAGE_ID) && strlen($str_IMAGE_ID) > 0 || is_array($str_IMAGE_ID) && count($str_IMAGE_ID) > 0):
+                if (!is_array($str_IMAGE_ID) && $str_IMAGE_ID <> '' || is_array($str_IMAGE_ID) && count(
+                        $str_IMAGE_ID
+                    ) > 0):
                     ?><br><?
                     echo CFile::ShowImage($str_IMAGE_ID, 200, 200, "border=0", "", true);
                 endif;
@@ -605,11 +717,19 @@ endif;
             </tr>
         <? else:?>
             <tr>
-                <td align="center"
-                    colspan="2"><? echo InputType("radio", "FORM_DESCRIPTION_TYPE", "text", $str_DESCRIPTION_TYPE, false) ?>
-                    &nbsp;<? echo GetMessage("FORM_TEXT") ?>
-                    /&nbsp;<? echo InputType("radio", "FORM_DESCRIPTION_TYPE", "html", $str_DESCRIPTION_TYPE, false) ?>
-                    HTML
+                <td align="center" colspan="2"><? echo InputType(
+                        "radio",
+                        "FORM_DESCRIPTION_TYPE",
+                        "text",
+                        $str_DESCRIPTION_TYPE,
+                        false
+                    ) ?>&nbsp;<? echo GetMessage("FORM_TEXT") ?>/&nbsp;<? echo InputType(
+                        "radio",
+                        "FORM_DESCRIPTION_TYPE",
+                        "html",
+                        $str_DESCRIPTION_TYPE,
+                        false
+                    ) ?>HTML
                 </td>
             </tr>
             <tr>
@@ -625,7 +745,9 @@ endif;
         if ($bEditTemplate):
             $tabControl->BeginNextTab();
 
-            if ($str_USE_DEFAULT_TEMPLATE != "N") $str_USE_DEFAULT_TEMPLATE = "Y";
+            if ($str_USE_DEFAULT_TEMPLATE != "N") {
+                $str_USE_DEFAULT_TEMPLATE = "Y";
+            }
             ?>
             <tr>
                 <td colspan="2">
@@ -647,7 +769,9 @@ endif;
                 var _global_newanswer_counter = 0;
                 var _global_BX_UTF = <?if (defined('BX_UTF') && BX_UTF === true):?>true<?else:?>false<?endif?>;
             </script>
-            <script src="/bitrix/js/form/form_info.js?<?= @filemtime($_SERVER['DOCUMENT_ROOT'] . '/bitrix/js/form/form_info.js') ?>"></script>
+            <script src="/bitrix/js/form/form_info.js?<?= @filemtime(
+                $_SERVER['DOCUMENT_ROOT'] . '/bitrix/js/form/form_info.js'
+            ) ?>"></script>
             <script>
                 var arrInputObjects = [];
 
@@ -661,12 +785,16 @@ endif;
                 $i = 0;
                 foreach ($FORM->arQuestions as $FIELD_SID => $arQuestion)
                 {
-                if ($arQuestion["ADDITIONAL"] == "Y") continue;
+                if ($arQuestion["ADDITIONAL"] == "Y") {
+                    continue;
+                }
 
                 ?>
                 arrInputObjects[<?=$i++?>] = new CFormAnswer(
                     '<?=$FIELD_SID?>',
-                    '<?=CUtil::JSEscape(htmlspecialcharsbx($FORM->__admin_ShowInputCaption($FIELD_SID, "tablebodytext", true)))?><?=($arQuestion['ACTIVE'] == 'N' ? ' (' . GetMessage('F_QUESTION_INACTIVE') . ')' : '')?>',
+                    '<?=CUtil::JSEscape(
+                        htmlspecialcharsbx($FORM->__admin_ShowInputCaption($FIELD_SID, "tablebodytext", true))
+                    )?><?=($arQuestion['ACTIVE'] == 'N' ? ' (' . GetMessage('F_QUESTION_INACTIVE') . ')' : '')?>',
                     '<?=($FORM->arQuestions[$FIELD_SID]["TITLE_TYPE"] == "html" ? "Y" : "N")?>',
                     '<?=CUtil::JSEscape($FORM->__admin_ShowInputCaption($FIELD_SID, "tablebodytext", true))?>',
                     '<?=($FORM->arQuestions[$FIELD_SID]["REQUIRED"] == "Y" ? "Y" : "N")?>',
@@ -684,7 +812,17 @@ endif;
                 ?>
 
                 var __arr_input_types = ['text', 'textarea', 'radio', 'checkbox', 'dropdown', 'multiselect', 'date', 'image', 'file', 'email', 'url', 'password'<?if (!$bSimple):?>, 'hidden'<?endif;?>];
-                var __arr_input_types_titles = ['<?=GetMessage('F_TYPES_TEXT')?>', '<?=GetMessage('F_TYPES_TEXTAREA')?>', '<?=GetMessage('F_TYPES_RADIO')?>', '<?=GetMessage('F_TYPES_CHECKBOX')?>', '<?=GetMessage('F_TYPES_DROPDOWN')?>', '<?=GetMessage('F_TYPES_MULTISELECT')?>', '<?=GetMessage('F_TYPES_DATE')?>', '<?=GetMessage('F_TYPES_IMAGE')?>', '<?=GetMessage('F_TYPES_FILE')?>', '<?=GetMessage('F_TYPES_EMAIL')?>', '<?=GetMessage('F_TYPES_URL')?>', '<?=GetMessage('F_TYPES_PASSWORD')?>'<?if (!$bSimple):?>, '<?=GetMessage('F_TYPES_HIDDEN')?>'<?endif;?>];
+                var __arr_input_types_titles = ['<?=GetMessage('F_TYPES_TEXT')?>', '<?=GetMessage(
+                    'F_TYPES_TEXTAREA'
+                )?>', '<?=GetMessage('F_TYPES_RADIO')?>', '<?=GetMessage('F_TYPES_CHECKBOX')?>', '<?=GetMessage(
+                    'F_TYPES_DROPDOWN'
+                )?>', '<?=GetMessage('F_TYPES_MULTISELECT')?>', '<?=GetMessage('F_TYPES_DATE')?>', '<?=GetMessage(
+                    'F_TYPES_IMAGE'
+                )?>', '<?=GetMessage('F_TYPES_FILE')?>', '<?=GetMessage('F_TYPES_EMAIL')?>', '<?=GetMessage(
+                    'F_TYPES_URL'
+                )?>', '<?=GetMessage('F_TYPES_PASSWORD')?>'<?if (!$bSimple):?>, '<?=GetMessage(
+                    'F_TYPES_HIDDEN'
+                )?>'<?endif;?>];
 
                 var __arr_api_methods = ['ShowFormTitle', 'ShowFormDescription', 'ShowFormErrors', 'ShowFormNote', 'ShowFormImage', 'ShowInputCaption', 'ShowRequired', 'ShowDateFormat', 'ShowInputCaptionImage', 'ShowCaptcha', 'ShowCaptchaField', 'ShowCaptchaImage', 'ShowSubmitButton', 'ShowApplyButton', 'ShowResetButton', 'ShowResultStatus', 'ShowResultStatusForm'];
 
@@ -723,7 +861,23 @@ endif;
                     NOT_SHOW_CSS: '<?=GetMessageJS('FORM_API_PARAMS_CAPTIONS_NOT_SHOW_CSS')?>'
                 }
 
-                var __arr_api_methods_title = ['<?=GetMessageJS('F_API_SHOWFORMTITLE')?>', '<?=GetMessageJS('F_API_SHOWFORMDESCRIPTION')?>', '<?=GetMessageJS('F_API_SHOWFORMERRORS')?>', '<?=GetMessageJS('F_API_SHOWFORMNOTE')?>', '<?=GetMessageJS('F_API_SHOWFORMIMAGE')?>', '<?=GetMessageJS('F_API_SHOWINPUTCAPTION')?>', '<?=GetMessageJS('F_API_SHOWREQUIRED')?>', '<?=GetMessageJS('F_API_SHOWDATEFORMAT')?>', '<?=GetMessageJS('F_API_SHOWINPUTCAPTIONIMAGE')?>', '<?=GetMessageJS('F_API_SHOWCAPTCHA')?>', '<?=GetMessageJS('F_API_SHOWCAPTCHAFIELD')?>', '<?=GetMessageJS('F_API_SHOWCAPTCHAIMAGE')?>', '<?=GetMessageJS('F_API_SHOWSUBMITBUTTON')?>', '<?=GetMessageJS('F_API_SHOWAPPLYBUTTON')?>', '<?=GetMessageJS('F_API_SHOWRESETBUTTON')?>', '<?=GetMessageJS('F_API_SHOWRESULTSTATUS')?>', '<?=GetMessageJS('F_API_SHOWRESULTSTATUSFORM')?>'];
+                var __arr_api_methods_title = ['<?=GetMessageJS('F_API_SHOWFORMTITLE')?>', '<?=GetMessageJS(
+                    'F_API_SHOWFORMDESCRIPTION'
+                )?>', '<?=GetMessageJS('F_API_SHOWFORMERRORS')?>', '<?=GetMessageJS(
+                    'F_API_SHOWFORMNOTE'
+                )?>', '<?=GetMessageJS('F_API_SHOWFORMIMAGE')?>', '<?=GetMessageJS(
+                    'F_API_SHOWINPUTCAPTION'
+                )?>', '<?=GetMessageJS('F_API_SHOWREQUIRED')?>', '<?=GetMessageJS(
+                    'F_API_SHOWDATEFORMAT'
+                )?>', '<?=GetMessageJS('F_API_SHOWINPUTCAPTIONIMAGE')?>', '<?=GetMessageJS(
+                    'F_API_SHOWCAPTCHA'
+                )?>', '<?=GetMessageJS('F_API_SHOWCAPTCHAFIELD')?>', '<?=GetMessageJS(
+                    'F_API_SHOWCAPTCHAIMAGE'
+                )?>', '<?=GetMessageJS('F_API_SHOWSUBMITBUTTON')?>', '<?=GetMessageJS(
+                    'F_API_SHOWAPPLYBUTTON'
+                )?>', '<?=GetMessageJS('F_API_SHOWRESETBUTTON')?>', '<?=GetMessageJS(
+                    'F_API_SHOWRESULTSTATUS'
+                )?>', '<?=GetMessageJS('F_API_SHOWRESULTSTATUSFORM')?>'];
 
                 var __arr_field_titles = {
                     FIELD_SID: '<?=GetMessageJS('FORM_TITLE_FIELD_SID');?>',
@@ -753,7 +907,9 @@ endif;
                     FORM_FIELD_MULTIPLE_WARNING: '<?=GetMessageJS("FORM_FIELD_MULTIPLE_WARNING")?>'
                 }
             </script>
-            <script src="/bitrix/js/form/form_taskbar.js?<?= @filemtime($_SERVER['DOCUMENT_ROOT'] . '/bitrix/js/form/form_taskbar.js') ?>"></script>
+            <script src="/bitrix/js/form/form_taskbar.js?<?= @filemtime(
+                $_SERVER['DOCUMENT_ROOT'] . '/bitrix/js/form/form_taskbar.js'
+            ) ?>"></script>
             <tr>
                 <td colspan="2">
                     <div id="form_tpl_editor"
@@ -763,8 +919,10 @@ endif;
                         $arTplList = CSite::GetTemplateList($site);
                         $tpl = "";
                         while ($ar = $arTplList->Fetch()) {
-                            if (strlen($tpl) == 0) $tpl = $ar["TEMPLATE"];
-                            if (strlen(trim($ar["CONDITION"])) == 0) {
+                            if ($tpl == '') {
+                                $tpl = $ar["TEMPLATE"];
+                            }
+                            if (trim($ar["CONDITION"]) == '') {
                                 $tpl = $ar["TEMPLATE"];
                                 break;
                             }
@@ -776,11 +934,17 @@ endif;
                             array(
                                 "site" => $arSITE[0],
                                 "templateID" => $tpl,
-                                "bUseOnlyDefinedStyles" => COption::GetOptionString("fileman", "show_untitled_styles", "N") != "Y",
+                                "bUseOnlyDefinedStyles" => COption::GetOptionString(
+                                        "fileman",
+                                        "show_untitled_styles",
+                                        "N"
+                                    ) != "Y",
                                 "bWithoutPHP" => false,
                                 "arToolbars" => Array("standart", "style", "formating", "source", "template", "table"),
                                 "arTaskbars" => Array("BXFormElementsTaskbar", "BXPropertiesTaskbar"),
-                                "toolbarConfig" => CFileman::GetEditorToolbarConfig("form_edit" . (defined('BX_PUBLIC_MODE') && BX_PUBLIC_MODE == 1 ? "_public" : "")),
+                                "toolbarConfig" => CFileman::GetEditorToolbarConfig(
+                                    "form_edit" . (defined('BX_PUBLIC_MODE') && BX_PUBLIC_MODE == 1 ? "_public" : "")
+                                ),
                                 "sBackUrl" => "",
                                 "fullscreen" => false,
                                 'width' => '100%',
@@ -792,7 +956,9 @@ endif;
                         ?>
                         <script>
                             oBXEditorUtils.addPHPParser(oForm.PHPParser);
-                            oBXEditorUtils.addTaskBar('BXFormElementsTaskbar', 2, "<?=GetMessageJS('FORM_TASKBARSET_TITLE')?>", []);
+                            oBXEditorUtils.addTaskBar('BXFormElementsTaskbar', 2, "<?=GetMessageJS(
+                                'FORM_TASKBARSET_TITLE'
+                            )?>", []);
                             if (window.arButtons['Optimize'])
                                 arButtons['Optimize'][1].hideCondition = function (pMainObj) {
                                     return pMainObj.name == "FORM_TEMPLATE";
@@ -821,13 +987,20 @@ endif;
 
         $RESTRICT_TIME_MULTIPLYER = 1;
 
-        $arRestrictTimeMultiplyerTitle = array(1 => GetMessage('FORM_RESTRICT_TIME_SEC'), 60 => GetMessage('FORM_RESTRICT_TIME_MIN'), 3600 => GetMessage('FORM_RESTRICT_TIME_HOUR'), 86400 => GetMessage('FORM_RESTRICT_TIME_DAY'));
+        $arRestrictTimeMultiplyerTitle = array(
+            1 => GetMessage('FORM_RESTRICT_TIME_SEC'),
+            60 => GetMessage('FORM_RESTRICT_TIME_MIN'),
+            3600 => GetMessage('FORM_RESTRICT_TIME_HOUR'),
+            86400 => GetMessage('FORM_RESTRICT_TIME_DAY')
+        );
         $arRestrictTimeMultiplyer = array_keys($arRestrictTimeMultiplyerTitle);
 
         if (intval($str_RESTRICT_TIME) > 0) {
             $str_RESTRICT_TIME = intval($str_RESTRICT_TIME);
             for ($i = count($arRestrictTimeMultiplyer) - 1; $i >= 0; $i--) {
-                if ($str_RESTRICT_TIME < $arRestrictTimeMultiplyer[$i]) continue;
+                if ($str_RESTRICT_TIME < $arRestrictTimeMultiplyer[$i]) {
+                    continue;
+                }
                 if ($str_RESTRICT_TIME % $arRestrictTimeMultiplyer[$i] == 0) {
                     $RESTRICT_TIME_MULTIPLYER = $arRestrictTimeMultiplyer[$i];
                     $str_RESTRICT_TIME /= $RESTRICT_TIME_MULTIPLYER;
@@ -891,7 +1064,7 @@ endif;
         </tr>
         <?
         if (!$bSimple && $ID > 0):
-            $rsStatusList = CFormStatus::GetList($ID, $by = "s_sort", $order = "asc", array("ACTIVE" => "Y"), $is_filtered);
+            $rsStatusList = CFormStatus::GetList($ID, "s_sort", "asc", array("ACTIVE" => "Y"));
             ?>
             <tr>
                 <td><?= GetMessage('FORM_RESTRICT_STATUS') ?>:</td>
@@ -900,8 +1073,11 @@ endif;
                         <?
                         while ($arStatus = $rsStatusList->GetNext()) {
                             ?>
-                        <option value="<?= $arStatus["ID"] ?>" <?= is_array($arRESTRICT_STATUS) && in_array($arStatus["ID"], $arRESTRICT_STATUS) ? "selected=\"selected\"" : "" ?>>
-                            [<?= $arStatus["ID"] ?>] <?= $arStatus["TITLE"] ?></option><?
+                        <option value="<?= $arStatus["ID"] ?>" <?= is_array($arRESTRICT_STATUS) && in_array(
+                            $arStatus["ID"],
+                            $arRESTRICT_STATUS
+                        ) ? "selected=\"selected\"" : "" ?>>[<?= $arStatus["ID"] ?>
+                            ] <?= $arStatus["TITLE"] ?></option><?
                         }
                         ?>
                     </select></td>
@@ -926,7 +1102,8 @@ endif;
             function GenerateMailTemplate() {
                 if (bInProcess) return;
 
-                var url = '/bitrix/admin/form_mail.php?lang=<?=LANGUAGE_ID?>&<?=bitrix_sessid_get()?>&WEB_FORM_ID=<?=intval($ID)?>';
+                var url = '/bitrix/admin/form_mail.php?lang=<?=LANGUAGE_ID?>&<?=bitrix_sessid_get(
+                )?>&WEB_FORM_ID=<?=intval($ID)?>';
                 CHttpRequest.Action = function () {
                     CloseWaitWindow();
                     bInProcess = false;
@@ -985,7 +1162,9 @@ endif;
                         obCell.setAttribute('nowrap', 'nowrap');
                         obCell.style.padding = '0px';
 
-                        obCell.innerHTML = '&nbsp;[&nbsp;<a href="javascript:void(0)" onclick="DeleteMailTemplate(\'' + arReturn.TEMPLATES[i].ID + '\')"><?=CUtil::JSEscape(GetMessage("FORM_DELETE_MAIL_TEMPLATE"))?></a>&nbsp;]';
+                        obCell.innerHTML = '&nbsp;[&nbsp;<a href="javascript:void(0)" onclick="DeleteMailTemplate(\'' + arReturn.TEMPLATES[i].ID + '\')"><?=CUtil::JSEscape(
+                            GetMessage("FORM_DELETE_MAIL_TEMPLATE")
+                        )?></a>&nbsp;]';
                     }
 
                     BX.adminPanel.modifyFormElements(obTable);
@@ -1003,8 +1182,10 @@ endif;
                         bInProcess = false;
                     }
 
-                    //var url = 'message_admin.php?action=delete&ID=' + template_id + '&lang=<?echo LANGUAGE_ID?>&<?=bitrix_sessid_get()?>';
-                    var url = '/bitrix/admin/form_mail.php?action=delete&ID=' + template_id + '&lang=<?echo LANGUAGE_ID?>&<?=bitrix_sessid_get()?>&WEB_FORM_ID=<?=intval($ID)?>';
+                    //var url = 'message_admin.php?action=delete&ID=' + template_id + '&lang=<?echo LANGUAGE_ID?>&<?=bitrix_sessid_get(
+                )?>';
+                    var url = '/bitrix/admin/form_mail.php?action=delete&ID=' + template_id + '&lang=<?echo LANGUAGE_ID?>&<?=bitrix_sessid_get(
+                    )?>&WEB_FORM_ID=<?=intval($ID)?>';
 
                     CHttpRequest.Action = __process;
                     ShowWaitWindow();
@@ -1038,8 +1219,9 @@ endif;
             <td width="40%"><?= GetMessage("FORM_SHOW_RESULT_TEMPLATE") ?></td>
             <td width="60%"><? echo SelectBoxFromArray("SHOW_RESULT_TEMPLATE", $arList, $str_SHOW_RESULT_TEMPLATE);
                 ?><? if ($RESULT_ID > 0) :?>&nbsp;[&nbsp;<a
-                        href="/bitrix/admin/form_result_view.php?lang=<?= LANGUAGE_ID ?>&WEB_FORM_ID=<?= $ID ?>&RESULT_ID=<?= $RESULT_ID ?>"><?= GetMessage("FORM_PREVIEW") ?></a>&nbsp;]<?endif; ?>
-            </td>
+                        href="/bitrix/admin/form_result_view.php?lang=<?= LANGUAGE_ID ?>&WEB_FORM_ID=<?= $ID ?>&RESULT_ID=<?= $RESULT_ID ?>"><?= GetMessage(
+                        "FORM_PREVIEW"
+                    ) ?></a>&nbsp;]<?endif; ?></td>
         </tr>
     <?
     $arList = CForm::GetTemplateList("PRINT_RESULT");
@@ -1057,8 +1239,9 @@ endif;
             <td><?= GetMessage("FORM_EDIT_RESULT_TEMPLATE") ?></td>
             <td><? echo SelectBoxFromArray("EDIT_RESULT_TEMPLATE", $arList, $str_EDIT_RESULT_TEMPLATE);
                 ?><? if ($RESULT_ID > 0) :?>&nbsp;[&nbsp;<a
-                        href="/bitrix/admin/form_result_edit.php?lang=<?= LANGUAGE_ID ?>&WEB_FORM_ID=<?= $ID ?>&RESULT_ID=<?= $RESULT_ID ?>"><?= GetMessage("FORM_PREVIEW") ?></a>&nbsp;]<?endif; ?>
-            </td>
+                        href="/bitrix/admin/form_result_edit.php?lang=<?= LANGUAGE_ID ?>&WEB_FORM_ID=<?= $ID ?>&RESULT_ID=<?= $RESULT_ID ?>"><?= GetMessage(
+                        "FORM_PREVIEW"
+                    ) ?></a>&nbsp;]<?endif; ?></td>
         </tr>
     <?endif;
     ?>
@@ -1072,8 +1255,9 @@ endif;
     $arrMAIL = array();
     reset($arr);
     if (is_array($arr["reference_id"])) {
-        foreach ($arr['reference_id'] as $key => $value)
+        foreach ($arr['reference_id'] as $key => $value) {
             $arrMAIL[$value] = $arr["reference"][$key];
+        }
     }
     ?>
     <?
@@ -1088,17 +1272,24 @@ endif;
         <tr id="ft_<?= htmlspecialcharsbx($mail_id) ?>">
             <td nowrap style="padding:0px"><input type="checkbox" name="arMAIL_TEMPLATE[]"
                                                   value="<?= htmlspecialcharsbx($mail_id) ?>"
-                                                  id="<?= htmlspecialcharsbx($mail_id) ?>" <?= $checked ?>><? echo "[<a class=tablebodylink href='/bitrix/admin/message_edit.php?ID=" . htmlspecialcharsbx($mail_id) . "&lang=" . LANGUAGE_ID . "'>" . htmlspecialcharsbx($mail_id) . "</a>]"; ?>
-                &nbsp;<label for="<?= htmlspecialcharsbx($mail_id) ?>"><?= htmlspecialcharsbx($mail_name) ?></label>
-            </td>
+                                                  id="<?= htmlspecialcharsbx(
+                                                      $mail_id
+                                                  ) ?>" <?= $checked ?>><? echo "[<a class=tablebodylink href='/bitrix/admin/message_edit.php?ID=" . htmlspecialcharsbx(
+                        $mail_id
+                    ) . "&lang=" . LANGUAGE_ID . "'>" . htmlspecialcharsbx($mail_id) . "</a>]"; ?>&nbsp;<label
+                        for="<?= htmlspecialcharsbx($mail_id) ?>"><?= htmlspecialcharsbx($mail_name) ?></label></td>
             <td nowrap style="padding:0px">&nbsp;[&nbsp;<a href="javascript:void(0)"
-                                                           onclick="DeleteMailTemplate('<?= htmlspecialcharsbx($mail_id) ?>')"><?= GetMessage("FORM_DELETE_MAIL_TEMPLATE") ?></a>&nbsp;]
+                                                           onclick="DeleteMailTemplate('<?= htmlspecialcharsbx(
+                                                               $mail_id
+                                                           ) ?>')"><?= GetMessage("FORM_DELETE_MAIL_TEMPLATE") ?></a>&nbsp;]
             </td>
         </tr>
     <?endforeach;
     ?>
     <?
-    if (count($arrMAIL) > 0) echo '</tbody></table>';
+    if (count($arrMAIL) > 0) {
+        echo '</tbody></table>';
+    }
     ?>
     <?
     endif;
@@ -1112,7 +1303,9 @@ endif;
                             href="javascript:void(0)"><? echo GetMessage("FORM_CREATE_S") ?></a>&nbsp;]<?
                     if (count($arrMAIL) > 0):
                         ?>&nbsp;&nbsp;&nbsp;[&nbsp;<a
-                            href="/bitrix/admin/message_admin.php?find_type_id=FORM_FILLING_<?= $str_SID ?>&set_filter=Y"><? echo GetMessage("FORM_VIEW_TEMPLATE_LIST") ?></a>&nbsp;]<?
+                            href="/bitrix/admin/message_admin.php?find_type_id=FORM_FILLING_<?= $str_SID ?>&set_filter=Y"><? echo GetMessage(
+                            "FORM_VIEW_TEMPLATE_LIST"
+                        ) ?></a>&nbsp;]<?
                     endif;
                     ?></td>
             </tr>
@@ -1127,25 +1320,29 @@ endif;
     <?
 
     if ($bEditTemplate):
-    CAdminFileDialog::ShowScript(Array(
-        "event" => "BtnClick1",
-        "arResultDest" => Array("FORM_NAME" => "form1", "FORM_ELEMENT_NAME" => "FILTER_RESULT_TEMPLATE"),
-        "arPath" => Array("PATH" => '/'),
-        "select" => 'F',
-        "operation" => 'O',
-        "showUploadTab" => true,
-        "saveConfig" => true
-    ));
+    CAdminFileDialog::ShowScript(
+        Array(
+            "event" => "BtnClick1",
+            "arResultDest" => Array("FORM_NAME" => "form1", "FORM_ELEMENT_NAME" => "FILTER_RESULT_TEMPLATE"),
+            "arPath" => Array("PATH" => '/'),
+            "select" => 'F',
+            "operation" => 'O',
+            "showUploadTab" => true,
+            "saveConfig" => true
+        )
+    );
 
-    CAdminFileDialog::ShowScript(Array(
-        "event" => "BtnClick2",
-        "arResultDest" => Array("FORM_NAME" => "form1", "FORM_ELEMENT_NAME" => "TABLE_RESULT_TEMPLATE"),
-        "arPath" => Array("PATH" => '/'),
-        "select" => 'F',
-        "operation" => 'O',
-        "showUploadTab" => true,
-        "saveConfig" => true
-    ));
+    CAdminFileDialog::ShowScript(
+        Array(
+            "event" => "BtnClick2",
+            "arResultDest" => Array("FORM_NAME" => "form1", "FORM_ELEMENT_NAME" => "TABLE_RESULT_TEMPLATE"),
+            "arPath" => Array("PATH" => '/'),
+            "select" => 'F',
+            "operation" => 'O',
+            "showUploadTab" => true,
+            "saveConfig" => true
+        )
+    );
     ?>
         <tr>
             <td><?= GetMessage("FORM_FILTER_RESULT_TEMPLATE") ?></td>
@@ -1225,7 +1422,7 @@ endif;
             }
         }
 
-        $dbRes = CFormField::GetList($ID, 'ALL', $by, $order, array(), $is_filtered);
+        $dbRes = CFormField::GetList($ID, 'ALL');
         $arFormFields = array();
         while ($arFld = $dbRes->Fetch()) {
             $arFormFields[] = $arFld;
@@ -1245,7 +1442,9 @@ endif;
                         if ($bLinkCreated):
                         foreach ($arFormCrmFields as $ar):
                         ?>
-                        addCrmField('<?=CUtil::JSEscape($ar['CRM_FIELD'])?>', '<?=$ar['FIELD_ID'] > 0 ? $ar['FIELD_ID'] : $ar['FIELD_ALT']?>', true);
+                        addCrmField('<?=CUtil::JSEscape(
+                            $ar['CRM_FIELD']
+                        )?>', '<?=$ar['FIELD_ID'] > 0 ? $ar['FIELD_ID'] : $ar['FIELD_ALT']?>', true);
                         <?
                         endforeach;
                         endif;
@@ -1313,10 +1512,30 @@ endif;
 
                     data = data || {ID: 'new_' + popup_id}
 
-                    var content = '<div class="form-crm-settings"><form name="form_' + popup_id + '"><table cellpadding="0" cellspacing="2" border="0"><tr><td align="right"><?=CUtil::JSEscape(GetMessage('FORM_TAB_CRM_ROW_TITLE'))?>:</td><td><input type="text" name="NAME" value="' + BX.util.htmlspecialchars(data.NAME || '') + '"></td></tr><tr><td align="right"><?=CUtil::JSEscape(GetMessage('FORM_TAB_CRM_FORM_URL_SERVER'))?>:</td><td><input type="text" name="URL_SERVER" value="' + BX.util.htmlspecialchars(data.URL_SERVER || '') + '"></td></tr><tr><td align="right"><?=CUtil::JSEscape(GetMessage('FORM_TAB_CRM_FORM_URL_PATH'))?>:</td><td><input type="text" name="URL_PATH" value="' + BX.util.htmlspecialchars(data.URL_PATH || '<?=FORM_CRM_DEFAULT_PATH?>') + '"></td></tr><tr><td colspan="2" align="center"><b><?=CUtil::JSEscape(GetMessage('FORM_TAB_CRM_ROW_AUTH'))?></b></td></tr><tr><td align="right"><?=CUtil::JSEscape(GetMessage('FORM_TAB_CRM_ROW_AUTH_LOGIN'))?>:</td><td><input type="text" name="LOGIN" value="' + BX.util.htmlspecialchars(data.LOGIN || '') + '"></td></tr><tr><td align="right"><?=CUtil::JSEscape(GetMessage('FORM_TAB_CRM_ROW_AUTH_PASSWORD'))?>:</td><td><input type="password" name="PASSWORD" value="' + BX.util.htmlspecialchars(data.PASSWORD || '') + '"></td></tr><tr><td></td><td><a href="javascript:void(0)" onclick="_showPass(document.forms[\'form_' + popup_id + '\'].PASSWORD); BX.hide(this.parentNode);"><?=CUtil::JSEscape(GetMessage('FORM_TAB_CRM_ROW_AUTH_PASSWORD_SHOW'))?></a></td></tr></table></form></div>';
+                    var content = '<div class="form-crm-settings"><form name="form_' + popup_id + '"><table cellpadding="0" cellspacing="2" border="0"><tr><td align="right"><?=CUtil::JSEscape(
+                        GetMessage('FORM_TAB_CRM_ROW_TITLE')
+                    )?>:</td><td><input type="text" name="NAME" value="' + BX.util.htmlspecialchars(data.NAME || '') + '"></td></tr><tr><td align="right"><?=CUtil::JSEscape(
+                        GetMessage('FORM_TAB_CRM_FORM_URL_SERVER')
+                    )?>:</td><td><input type="text" name="URL_SERVER" value="' + BX.util.htmlspecialchars(data.URL_SERVER || '') + '"></td></tr><tr><td align="right"><?=CUtil::JSEscape(
+                        GetMessage('FORM_TAB_CRM_FORM_URL_PATH')
+                    )?>:</td><td><input type="text" name="URL_PATH" value="' + BX.util.htmlspecialchars(data.URL_PATH || '<?=FORM_CRM_DEFAULT_PATH?>') + '"></td></tr><tr><td colspan="2" align="center"><b><?=CUtil::JSEscape(
+                        GetMessage('FORM_TAB_CRM_ROW_AUTH')
+                    )?></b></td></tr><tr><td align="right"><?=CUtil::JSEscape(
+                        GetMessage('FORM_TAB_CRM_ROW_AUTH_LOGIN')
+                    )?>:</td><td><input type="text" name="LOGIN" value="' + BX.util.htmlspecialchars(data.LOGIN || '') + '"></td></tr><tr><td align="right"><?=CUtil::JSEscape(
+                        GetMessage('FORM_TAB_CRM_ROW_AUTH_PASSWORD')
+                    )?>:</td><td><input type="password" name="PASSWORD" value="' + BX.util.htmlspecialchars(data.PASSWORD || '') + '"></td></tr><tr><td></td><td><a href="javascript:void(0)" onclick="_showPass(document.forms[\'form_' + popup_id + '\'].PASSWORD); BX.hide(this.parentNode);"><?=CUtil::JSEscape(
+                        GetMessage('FORM_TAB_CRM_ROW_AUTH_PASSWORD_SHOW')
+                    )?></a></td></tr></table></form></div>';
 
                     var wnd = new BX.PopupWindow('popup_' + popup_id, window, {
-                        titleBar: {content: BX.create('SPAN', {text: '<?=CUtil::JSEscape(GetMessage('FORM_CRM_TITLEBAR_NEW'))?>'})},
+                        titleBar: {
+                            content: BX.create('SPAN', {
+                                text: '<?=CUtil::JSEscape(
+                                    GetMessage('FORM_CRM_TITLEBAR_NEW')
+                                )?>'
+                            })
+                        },
                         draggable: true,
                         autoHide: false,
                         closeIcon: true,
@@ -1402,7 +1621,9 @@ endif;
                     }
 
                     for (i = 0; i < data.length; i++) {
-                        var o = s.add(new Option(data[i].NAME || '<?=CUtil::JSEscape(GetMessage('FORM_TAB_CRM_UNTITLED'))?>', data[i].ID));
+                        var o = s.add(new Option(data[i].NAME || '<?=CUtil::JSEscape(
+                            GetMessage('FORM_TAB_CRM_UNTITLED')
+                        )?>', data[i].ID));
 
                         if (data[i].NEW == 'Y') {
                             s.selectedIndex = i + 2;
@@ -1427,7 +1648,8 @@ endif;
                         BX('crm_settings_2').style.display = '';
                         BX('crm_settings_3').style.display = '';
 
-                        BX.ajax.loadJSON('/bitrix/admin/form_crm.php?action=check&ID=' + ID + '&<?=bitrix_sessid_get();?>', additional, function (res) {
+                        BX.ajax.loadJSON('/bitrix/admin/form_crm.php?action=check&ID=' + ID + '&<?=bitrix_sessid_get(
+                        );?>', additional, function (res) {
                             BX.cleanNode(s);
 
                             if (!!res) {
@@ -1586,28 +1808,37 @@ endif;
                         <option value="Y"><?= GetMessage('FORM_FIELD_CRM_NEW') ?></option>
                         <?
                         foreach ($arCRMServers as $arCrm):
-                            if (strlen($arCrm['NAME']) <= 0) {
+                            if ($arCrm['NAME'] == '') {
                                 $arCrm['NAME'] = GetMessage('FORM_TAB_CRM_UNTITLED');
                             }
 
                             ?>
-                            <option value="<?= intval($arCrm['ID']) ?>"<?= $bLinkCreated && $arFormCrmLink['CRM_ID'] == $arCrm['ID'] ? ' selected="selected"' : '' ?>><?= htmlspecialcharsbx($arCrm['NAME']) ?></option>
+                            <option value="<?= intval(
+                                $arCrm['ID']
+                            ) ?>"<?= $bLinkCreated && $arFormCrmLink['CRM_ID'] == $arCrm['ID'] ? ' selected="selected"' : '' ?>><?= htmlspecialcharsbx(
+                                    $arCrm['NAME']
+                                ) ?></option>
                         <?
                         endforeach;
                         ?>
                     </select>&nbsp;&nbsp;<a
-                            href="/bitrix/admin/settings.php?lang=<?= LANGUAGE_ID ?>&amp;mid=form&amp;tabControl_active_tab=edit_crm"><?= GetMessage('FORM_CRM_GOTOLIST') ?></a>
-                </td>
+                            href="/bitrix/admin/settings.php?lang=<?= LANGUAGE_ID ?>&amp;mid=form&amp;tabControl_active_tab=edit_crm"><?= GetMessage(
+                            'FORM_CRM_GOTOLIST'
+                        ) ?></a></td>
             </tr>
             <tr id="crm_settings_3"<?= !$bLinkCreated ? ' style="display:none;"' : '' ?>>
                 <td><?= GetMessage('FORM_FIELD_LINK_TYPE'); ?>:</td>
                 <td>
                     <input type="radio" name="CRM_LINK_TYPE" value="<?= CFormCrm::LINK_AUTO ?>"
                            id="CRM_LINK_TYPE_<?= CFormCrm::LINK_AUTO ?>"<?= !$bLinkCreated || $arFormCrmLink['LINK_TYPE'] == CFormCrm::LINK_AUTO ? ' checked="checked"' : '' ?> /><label
-                            for="CRM_LINK_TYPE_<?= CFormCrm::LINK_AUTO ?>"><?= GetMessage('FORM_FIELD_LINK_TYPE_AUTO') ?></label>
+                            for="CRM_LINK_TYPE_<?= CFormCrm::LINK_AUTO ?>"><?= GetMessage(
+                            'FORM_FIELD_LINK_TYPE_AUTO'
+                        ) ?></label>
                     <input type="radio" name="CRM_LINK_TYPE" value="<?= CFormCrm::LINK_MANUAL ?>"
                            id="CRM_LINK_TYPE_<?= CFormCrm::LINK_MANUAL ?>"<?= $bLinkCreated && $arFormCrmLink['LINK_TYPE'] == CFormCrm::LINK_MANUAL ? ' checked="checked"' : '' ?> /><label
-                            for="CRM_LINK_TYPE_<?= CFormCrm::LINK_MANUAL ?>"><?= GetMessage('FORM_FIELD_LINK_TYPE_MANUAL') ?></label>
+                            for="CRM_LINK_TYPE_<?= CFormCrm::LINK_MANUAL ?>"><?= GetMessage(
+                            'FORM_FIELD_LINK_TYPE_MANUAL'
+                        ) ?></label>
                 </td>
             </tr>
             <tr class="heading" id="crm_settings_heading"<?= !$bLinkCreated ? ' style="display:none;"' : '' ?>>
@@ -1615,11 +1846,13 @@ endif;
             </tr>
             <tr id="crm_settings_2"<?= !$bLinkCreated ? ' style="display:none;"' : '' ?>>
                 <td colspan="2">
-                    <div id="bx_crm_note" style="display: none;"
-                         align="center"><?= BeginNote(); ?><?= GetMessage('FORM_CRM_REQUIRED_NOTE') ?>
+                    <div id="bx_crm_note" style="display: none;" align="center"><?= BeginNote(); ?><?= GetMessage(
+                            'FORM_CRM_REQUIRED_NOTE'
+                        ) ?>
                         <blockquote id="bx_crm_note_content"></blockquote><?= EndNote(); ?></div>
-                    <div id="bx_crm_note_1" style="display: none;"
-                         align="center"><?= BeginNote(); ?><?= GetMessage('FORM_CRM_FILES_NOTE') ?>
+                    <div id="bx_crm_note_1" style="display: none;" align="center"><?= BeginNote(); ?><?= GetMessage(
+                            'FORM_CRM_FILES_NOTE'
+                        ) ?>
                         <blockquote id="bx_crm_note_content_1"></blockquote><?= EndNote(); ?></div>
                     <table class="internal" cellspacing="0" cellpadding="0" border="0" align="center" width="80%"
                            id="crm_table">
@@ -1637,18 +1870,30 @@ endif;
                             </td>
                             <td>
                                 <select name="CRM_FORM_FIELD[]" id="field_form" style="width: 270px;">
-                                    <option value="FORM_NAME"><?= GetMessage('FORM_FIELD_CRM_FIELDS_FORM_NAME') ?></option>
-                                    <option value="FORM_SID"><?= GetMessage('FORM_FIELD_CRM_FIELDS_FORM_SID') ?></option>
+                                    <option value="FORM_NAME"><?= GetMessage(
+                                            'FORM_FIELD_CRM_FIELDS_FORM_NAME'
+                                        ) ?></option>
+                                    <option value="FORM_SID"><?= GetMessage(
+                                            'FORM_FIELD_CRM_FIELDS_FORM_SID'
+                                        ) ?></option>
                                     <option value="SITE_ID"><?= GetMessage('FORM_FIELD_CRM_FIELDS_SITE_ID') ?></option>
-                                    <option value="RESULT_ID"><?= GetMessage('FORM_FIELD_CRM_FIELDS_RESULT_ID') ?></option>
-                                    <option value="FORM_ALL"><?= GetMessage('FORM_FIELD_CRM_FIELDS_FORM_ALL') ?></option>
-                                    <option value="FORM_ALL_HTML"><?= GetMessage('FORM_FIELD_CRM_FIELDS_FORM_ALL_HTML') ?></option>
+                                    <option value="RESULT_ID"><?= GetMessage(
+                                            'FORM_FIELD_CRM_FIELDS_RESULT_ID'
+                                        ) ?></option>
+                                    <option value="FORM_ALL"><?= GetMessage(
+                                            'FORM_FIELD_CRM_FIELDS_FORM_ALL'
+                                        ) ?></option>
+                                    <option value="FORM_ALL_HTML"><?= GetMessage(
+                                            'FORM_FIELD_CRM_FIELDS_FORM_ALL_HTML'
+                                        ) ?></option>
                                     <option value="NEW"><?= GetMessage('FORM_FIELD_CRM_FIELDS_NEW') ?></option>
                                     <?
                                     foreach ($arFormFields as $arFld):
                                         ?>
                                         <option value="<?= $arFld['ID'] ?>">[<?= htmlspecialcharsbx($arFld['SID']) ?>
-                                            ] <?= htmlspecialcharsbx($arFld['TITLE']) ?><?= $arFld['REQUIRED'] == 'Y' ? ' *' : '' ?></option>
+                                            ] <?= htmlspecialcharsbx(
+                                                $arFld['TITLE']
+                                            ) ?><?= $arFld['REQUIRED'] == 'Y' ? ' *' : '' ?></option>
                                     <?
                                     endforeach;
                                     ?>
@@ -1684,7 +1929,7 @@ endif;
             unset($arr['reference_id'][4]);
             $arrSelect = array();
             reset($arr['reference_id']);
-            while (list($num,) = each($arr['reference_id'])) {
+            foreach (array_keys($arr['reference_id']) as $num) {
                 $arrSelect['reference_id'][] = $arr['reference_id'][$num];
                 $arrSelect['reference'][] = $arr['reference'][$num];
             }
@@ -1693,7 +1938,7 @@ endif;
         }
 
         reset($arGroups);
-        while (list(, $group) = each($arGroups)) :
+        foreach ($arGroups as $group) {
             ?>
             <tr>
                 <td width="40%"><?= $group["NAME"] . ":" ?></td>
@@ -1709,14 +1954,18 @@ endif;
                     echo SelectBoxFromArray("PERMISSION_" . $group["ID"], $arrSelect, $perm, "", 'style="width: 80%;"');
                     ?></td>
             </tr>
-        <? endwhile; ?>
-        <?
+            <?
+        }
 
         $tabControl->EndTab();
-        $tabControl->Buttons(array("disabled" => (!(($ID > 0 && $F_RIGHT >= 30) || CForm::IsAdmin())), "back_url" => (strlen($back_url) > 0 ? $back_url : "form_list.php?lang=" . LANGUAGE_ID)));
+        $tabControl->Buttons(
+            array(
+                "disabled" => (!(($ID > 0 && $F_RIGHT >= 30) || CForm::IsAdmin())),
+                "back_url" => ($back_url <> '' ? $back_url : "form_list.php?lang=" . LANGUAGE_ID)
+            )
+        );
         $tabControl->End();
         ?>
     </form>
 <?
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_admin.php");
-?>

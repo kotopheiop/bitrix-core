@@ -126,8 +126,9 @@ class Request
         $this->onFilterStarted();
 
         foreach ($values as $key => &$val) {
-            if (!isset($this->filteringMap[$key]))
+            if (!isset($this->filteringMap[$key])) {
                 continue;
+            }
 
             $val = $this->filterArray(
                 $key,
@@ -140,10 +141,11 @@ class Request
 
         $this->onFilterFinished();
 
-        if ($isReturnChangedOnly)
+        if ($isReturnChangedOnly) {
             return array_intersect_key($values, $this->changedContext);
-        else
+        } else {
             return $values;
+        }
     }
 
 
@@ -165,7 +167,6 @@ class Request
 
     protected function onFilterFinished()
     {
-
     }
 
     /**
@@ -176,11 +177,12 @@ class Request
      */
     protected function filterVar($context, $value, $name)
     {
-        if (preg_match('#^[A-Za-z0-9_.,-]*$#D', $value))
+        if (preg_match('#^[A-Za-z0-9_.,-]*$#D', $value)) {
             return $value;
+        }
 
-        self::adjustPcreBacktrackLimit($value);
         $filteredValue = \CSecurityHtmlEntity::decodeString($value);
+        self::adjustPcreBacktrackLimit($filteredValue);
 
         $isValueChanged = false;
         foreach ($this->auditors as $auditName => $auditor) {
@@ -219,12 +221,14 @@ class Request
      */
     protected function filterArray($context, array $array, $name, $skipKeyPreg = '')
     {
-        if (!is_array($array))
+        if (!is_array($array)) {
             return $array;
+        }
 
         foreach ($array as $key => $value) {
-            if ($skipKeyPreg && preg_match($skipKeyPreg, $key))
+            if ($skipKeyPreg && preg_match($skipKeyPreg, $key)) {
                 continue;
+            }
 
             $filteredKey = $this->filterVar($context, $key, "{$name}['{$key}']");
             if ($filteredKey != $key) {
@@ -267,8 +271,9 @@ class Request
      */
     protected static function adjustPcreBacktrackLimit($string)
     {
-        if (!is_string($string))
+        if (!is_string($string)) {
             return false;
+        }
 
         $strlen = \CUtil::binStrlen($string) * 2;
         \CUtil::adjustPcreBacktrackLimit($strlen);
@@ -338,8 +343,9 @@ class Request
     protected function pushChangedVar($context, $value, $name)
     {
         $this->changedVars[$name] = $value;
-        if (!isset($this->changedContext[$context]))
+        if (!isset($this->changedContext[$context])) {
             $this->changedContext[$context] = 1;
+        }
         return $this;
     }
 }

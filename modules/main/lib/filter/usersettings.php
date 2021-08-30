@@ -1,6 +1,7 @@
 <?php
 
 namespace Bitrix\Main\Filter;
+
 class UserSettings extends EntitySettings
 {
     private $whiteList = [];

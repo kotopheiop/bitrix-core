@@ -40,13 +40,15 @@ class AuthorTable extends DataManager
             (new StringField('LAST_NAME')),
 
             (new ManyToMany('BOOKS', BookTable::class))
-                ->configureMediatorTableName('(
+                ->configureMediatorTableName(
+                    '(
 					(SELECT 1 AS BOOK_ID, 18 AS AUTHOR_ID)
 					UNION
 					(SELECT 2 AS BOOK_ID, 17 AS AUTHOR_ID)
 					UNION
 					(SELECT 2 AS BOOK_ID, 18 AS AUTHOR_ID)
-				)'),
+				)'
+                ),
         ];
     }
 }

@@ -17,19 +17,23 @@ class StatusLang extends Controller
     public function getFieldsAction()
     {
         $entity = new \Bitrix\Sale\Rest\Entity\StatusLang();
-        return ['STATUS' => $entity->prepareFieldInfos(
-            $entity->getFields()
-        )];
+        return [
+            'STATUS' => $entity->prepareFieldInfos(
+                $entity->getFields()
+            )
+        ];
     }
 
     public function addAction(array $fields)
     {
         $r = new Result();
 
-        $res = $this->existsByFilter([
-            'STATUS_ID' => $fields['STATUS_ID'],
-            'LID' => $fields['LID']
-        ]);
+        $res = $this->existsByFilter(
+            [
+                'STATUS_ID' => $fields['STATUS_ID'],
+                'LID' => $fields['LID']
+            ]
+        );
 
         if ($res->isSuccess() == false) {
             $r = $this->validate($fields);
@@ -46,12 +50,14 @@ class StatusLang extends Controller
         } else {
             return [
                 'STATUS_LANG' =>
-                    StatusLangTable::getList([
-                        'filter' => [
-                            'STATUS_ID' => $fields['STATUS_ID'],
-                            'LID' => $fields['LID']
+                    StatusLangTable::getList(
+                        [
+                            'filter' => [
+                                'STATUS_ID' => $fields['STATUS_ID'],
+                                'LID' => $fields['LID']
+                            ]
                         ]
-                    ])->fetchAll()[0]
+                    )->fetchAll()[0]
             ];
         }
     }
@@ -63,10 +69,12 @@ class StatusLang extends Controller
         if ($r->isSuccess()) {
             $r = $this->validate($fields);
             if ($r->isSuccess()) {
-                $r = $this->existsByFilter([
-                    'STATUS_ID' => $fields['STATUS_ID'],
-                    'LID' => $fields['LID']
-                ]);
+                $r = $this->existsByFilter(
+                    [
+                        'STATUS_ID' => $fields['STATUS_ID'],
+                        'LID' => $fields['LID']
+                    ]
+                );
                 if ($r->isSuccess()) {
                     $r = StatusLangTable::delete(['STATUS_ID' => $fields['STATUS_ID'], 'LID' => $fields['LID']]);
                 }
@@ -96,11 +104,13 @@ class StatusLang extends Controller
             ]
         )->fetchAll();
 
-        return new Page('STATUS_LANGS', $items, function () use ($filter) {
+        return new Page(
+            'STATUS_LANGS', $items, function () use ($filter) {
             return count(
                 StatusLangTable::getList(['filter' => $filter])->fetchAll()
             );
-        });
+        }
+        );
     }
 
     public function getListLangsAction()
@@ -113,11 +123,13 @@ class StatusLang extends Controller
             ]
         )->fetchAll();
 
-        return new Page('LANGS', $items, function () {
+        return new Page(
+            'LANGS', $items, function () {
             return count(
                 LanguageTable::getList()->fetchAll()
             );
-        });
+        }
+        );
     }
 
     //endregion
@@ -135,12 +147,15 @@ class StatusLang extends Controller
     protected function getListLangs()
     {
         $r = [];
-        $result = LanguageTable::getList([
-            'select' => ['LID', 'NAME'],
-            'filter' => ['=ACTIVE' => 'Y']
-        ]);
-        while ($row = $result->fetch())
+        $result = LanguageTable::getList(
+            [
+                'select' => ['LID', 'NAME'],
+                'filter' => ['=ACTIVE' => 'Y']
+            ]
+        );
+        while ($row = $result->fetch()) {
             $r[$row['LID']] = $row['NAME'];
+        }
         return $r;
     }
 
@@ -148,9 +163,12 @@ class StatusLang extends Controller
     {
         $r = new Result();
 
-        $row = StatusLangTable::getList(['filter' => ['STATUS_ID' => $filter['STATUS_ID'], 'LID' => $filter['LID']]])->fetchAll();
-        if (isset($row[0]['STATUS_ID']) == false)
+        $row = StatusLangTable::getList(
+            ['filter' => ['STATUS_ID' => $filter['STATUS_ID'], 'LID' => $filter['LID']]]
+        )->fetchAll();
+        if (isset($row[0]['STATUS_ID']) == false) {
             $r->addError(new Error('status lang is not exists', 201740400001));
+        }
 
         return $r;
     }
@@ -159,11 +177,13 @@ class StatusLang extends Controller
     {
         $r = new Result();
 
-        if (isset($fields['STATUS_ID']) == false && $fields['STATUS_ID'] <> '')
+        if (isset($fields['STATUS_ID']) == false && $fields['STATUS_ID'] <> '') {
             $r->addError(new Error('statusId - parametrs is empty', 201750000001));
+        }
 
-        if (isset($fields['LID']) == false && $fields['LID'] <> '')
+        if (isset($fields['LID']) == false && $fields['LID'] <> '') {
             $r->addError(new Error('lid - parametrs is empty', 201750000002));
+        }
 
         return $r;
     }

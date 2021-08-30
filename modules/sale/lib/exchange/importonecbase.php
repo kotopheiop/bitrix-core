@@ -69,8 +69,17 @@ abstract class ImportOneCBase extends ImportPattern
             $params = $item->getFieldValues();
             $fields = $params['TRAITS'];
 
-            if (strlen($fields[$item::getFieldExternalId()]) <= 0)
-                $result->addErrors(array(new Error(" " . EntityType::getDescription($item->getOwnerTypeId()) . ": " . GetMessage("SALE_EXCHANGE_EXTERNAL_ID_NOT_FOUND"), 'SALE_EXCHANGE_EXTERNAL_ID_NOT_FOUND')));
+            if ($fields[$item::getFieldExternalId()] == '') {
+                $result->addErrors(
+                    array(
+                        new Error(
+                            " " . EntityType::getDescription($item->getOwnerTypeId()) . ": " . GetMessage(
+                                "SALE_EXCHANGE_EXTERNAL_ID_NOT_FOUND"
+                            ), 'SALE_EXCHANGE_EXTERNAL_ID_NOT_FOUND'
+                        )
+                    )
+                );
+            }
         }
 
         return $result;
@@ -109,8 +118,9 @@ abstract class ImportOneCBase extends ImportPattern
     {
         $result = new Result();
 
-        if (!($item instanceof EntityImport) && !($item instanceof UserProfileImport))
+        if (!($item instanceof EntityImport) && !($item instanceof UserProfileImport)) {
             throw new ArgumentException("Item must be instanceof EntityImport or UserProfileImport");
+        }
 
         $params = $item->getFieldValues();
 
@@ -124,8 +134,9 @@ abstract class ImportOneCBase extends ImportPattern
         $criterion = $item->getCurrentCriterion($item->getEntity());
         $collision = $item->getCurrentCollision($item->getOwnerTypeId());
 
-        if ($item instanceof ShipmentImport)
+        if ($item instanceof ShipmentImport) {
             $fieldsCriterion['ITEMS'] = $params['ITEMS'];
+        }
 
         if ($criterion->equals($fieldsCriterion)) {
             $collision->resolve($item);
@@ -188,13 +199,15 @@ abstract class ImportOneCBase extends ImportPattern
         $loader = Entity\EntityImportLoaderFactory::create($entityTypeId);
         $loader->loadSettings($settings);
 
-        if (strlen($document->getId()) > 0)
+        if ($document->getId() <> '') {
             $fieldsEntity = $loader->getByNumber($document->getId());
-        else
+        } else {
             $fieldsEntity = $loader->getByExternalId($document->getExternalId());
+        }
 
-        if (!empty($fieldsEntity['ID']))
+        if (!empty($fieldsEntity['ID'])) {
             $fields['TRAITS']['ID'] = $fieldsEntity['ID'];
+        }
 
         $entityImport = $this->entityFactoryCreate($entityTypeId);
         ManagerImport::configure($entityImport);
@@ -220,7 +233,9 @@ abstract class ImportOneCBase extends ImportPattern
      */
     protected static function getMessage()
     {
-        return Loc::loadLanguageFile($_SERVER["DOCUMENT_ROOT"] . '/bitrix/components/bitrix/sale.export.1c/component.php');
+        return Loc::loadLanguageFile(
+            $_SERVER["DOCUMENT_ROOT"] . '/bitrix/components/bitrix/sale.export.1c/component.php'
+        );
     }
 
     /**

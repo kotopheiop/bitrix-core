@@ -1,5 +1,8 @@
 <?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+}
 ?>
 <!DOCTYPE html>
 <html id="bx-admin-prefix">
@@ -8,8 +11,9 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
     <title><? echo $APPLICATION->GetTitle() ?></title>
     <meta http-equiv="Content-Type" content="text/html; charset=<? echo LANG_CHARSET ?>">
     <?
-    if (!is_object($adminPage))
+    if (!is_object($adminPage)) {
         $adminPage = new CAdminPage();
+    }
 
     CJSCore::Init(array('admin_interface'));
 

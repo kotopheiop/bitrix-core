@@ -115,14 +115,19 @@ class Entity
     {
         if (empty(self::$instances[$className])) {
             /** @var Entity $entity */
-            $entity = new static;
-            $entity->initialize($className);
-            $entity->postInitialize();
+            $entityClass = $className::getEntityClass();
 
-            // call user-defined postInitialize
-            $className::postInitialize($entity);
+            // in case of calling Table class was not ended with entity initialization
+            if (empty(self::$instances[$className])) {
+                $entity = new $entityClass;
+                $entity->initialize($className);
+                $entity->postInitialize();
 
-            self::$instances[$className] = $entity;
+                // call user-defined postInitialize
+                $className::postInitialize($entity);
+
+                self::$instances[$className] = $entity;
+            }
         }
 
         return self::$instances[$className];
@@ -173,16 +178,23 @@ class Entity
                     $fieldClass = $fieldInfo['data_type'];
                     $field = new $fieldClass($fieldName, $fieldInfo);
                 } else {
-                    throw new Main\ArgumentException(sprintf(
-                        'Unknown data type "%s" found for `%s` field in %s Entity.',
-                        $fieldInfo['data_type'], $fieldName, $this->getName()
-                    ));
+                    throw new Main\ArgumentException(
+                        sprintf(
+                            'Unknown data type "%s" found for `%s` field in %s Entity.',
+                            $fieldInfo['data_type'],
+                            $fieldName,
+                            $this->getName()
+                        )
+                    );
                 }
             }
         } else {
-            throw new Main\ArgumentException(sprintf('Unknown field type `%s`',
-                is_object($fieldInfo) ? get_class($fieldInfo) : gettype($fieldInfo)
-            ));
+            throw new Main\ArgumentException(
+                sprintf(
+                    'Unknown field type `%s`',
+                    is_object($fieldInfo) ? get_class($fieldInfo) : gettype($fieldInfo)
+                )
+            );
         }
 
         $field->setEntity($this);
@@ -303,7 +315,7 @@ class Entity
     {
         $className = $entityName;
 
-        if (!strlen($className)) {
+        if ($className == '') {
             // entity without name
             $className = 'NNM_Object';
         }
@@ -398,9 +410,14 @@ class Entity
     protected function appendField(Field $field)
     {
         if (isset($this->fields[StringHelper::strtoupper($field->getName())]) && !$this->isClone) {
-            trigger_error(sprintf(
-                'Entity `%s` already has Field with name `%s`.', $this->getFullName(), $field->getName()
-            ), E_USER_WARNING);
+            trigger_error(
+                sprintf(
+                    'Entity `%s` already has Field with name `%s`.',
+                    $this->getFullName(),
+                    $field->getName()
+                ),
+                E_USER_WARNING
+            );
 
             return false;
         }
@@ -435,7 +452,12 @@ class Entity
                 'reference' => array($localFieldName, 'ID')
             );
 
-            $newRefField = new Reference($refFieldName, $newFieldInfo['data_type'], $newFieldInfo['reference'][0], $newFieldInfo['reference'][1]);
+            $newRefField = new Reference(
+                $refFieldName,
+                $newFieldInfo['data_type'],
+                $newFieldInfo['reference'][0],
+                $newFieldInfo['reference'][1]
+            );
             $newRefField->setEntity($this);
 
             $this->fields[StringHelper::strtoupper($refFieldName)] = $newRefField;
@@ -496,9 +518,13 @@ class Entity
             return $this->fields[StringHelper::strtoupper($name)];
         }
 
-        throw new Main\ArgumentException(sprintf(
-            '%s Entity has no `%s` field.', $this->getName(), $name
-        ));
+        throw new Main\ArgumentException(
+            sprintf(
+                '%s Entity has no `%s` field.',
+                $this->getName(),
+                $name
+            )
+        );
     }
 
     public function hasField($name)
@@ -537,9 +563,13 @@ class Entity
             return $this->u_fields[$name];
         }
 
-        throw new Main\ArgumentException(sprintf(
-            '%s Entity has no `%s` userfield.', $this->getName(), $name
-        ));
+        throw new Main\ArgumentException(
+            sprintf(
+                '%s Entity has no `%s` userfield.',
+                $this->getName(),
+                $name
+            )
+        );
     }
 
     /**
@@ -555,7 +585,7 @@ class Entity
         if (is_null($this->u_fields)) {
             $this->u_fields = array();
 
-            if (strlen($this->uf_id)) {
+            if ($this->uf_id <> '') {
                 /** @var \CUserTypeManager $USER_FIELD_MANAGER */
                 global $USER_FIELD_MANAGER;
 
@@ -598,12 +628,13 @@ class Entity
             // \Partner\Module\Thing -> "partner.module"
             // \Thing -> ""
             $parts = explode("\\", $this->className);
-            if ($parts[1] == "Bitrix")
+            if ($parts[1] == "Bitrix") {
                 $this->module = strtolower($parts[2]);
-            elseif (!empty($parts[1]) && isset($parts[2]))
+            } elseif (!empty($parts[1]) && isset($parts[2])) {
                 $this->module = strtolower($parts[1] . "." . $parts[2]);
-            else
+            } else {
                 $this->module = "";
+            }
         }
         return $this->module;
     }
@@ -724,7 +755,7 @@ class Entity
             $class_path = array_slice($class_path, 0, -1);
 
             // cut Bitrix namespace
-            if ($class_path[0] === 'BITRIX') {
+            if (count($class_path) && $class_path[0] === 'BITRIX') {
                 $class_path = array_slice($class_path, 1);
             }
 
@@ -810,11 +841,14 @@ class Entity
     public static function getInstanceByQuery(Query $query, &$entity_name = null)
     {
         if ($entity_name === null) {
-            $entity_name = 'Tmp' . randString();
+            $entity_name = 'Tmp' . randString() . 'x';
         } elseif (!preg_match('/^[a-z0-9_]+$/i', $entity_name)) {
-            throw new Main\ArgumentException(sprintf(
-                'Invalid entity name `%s`.', $entity_name
-            ));
+            throw new Main\ArgumentException(
+                sprintf(
+                    'Invalid entity name `%s`.',
+                    $entity_name
+                )
+            );
         }
 
         $query_string = '(' . $query->getQuery() . ')';
@@ -835,7 +869,9 @@ class Entity
                     $fieldDefinition = $v->getName();
 
                     // better to initialize fields as objects after entity is created
-                    $dataType = Field::getOldDataTypeByField($query_chains[$fieldDefinition]->getLastElement()->getValue());
+                    $dataType = Field::getOldDataTypeByField(
+                        $query_chains[$fieldDefinition]->getLastElement()->getValue()
+                    );
                     $fieldsMap[$fieldDefinition] = array('data_type' => $dataType);
                 } else {
                     $fieldDefinition = is_numeric($k) ? $v : $k;
@@ -844,7 +880,9 @@ class Entity
                     $field = $query_chains[$fieldDefinition]->getLastElement()->getValue();
 
                     if ($field instanceof ExpressionField) {
-                        $dataType = Field::getOldDataTypeByField($query_chains[$fieldDefinition]->getLastElement()->getValue());
+                        $dataType = Field::getOldDataTypeByField(
+                            $query_chains[$fieldDefinition]->getLastElement()->getValue()
+                        );
                         $fieldsMap[$fieldDefinition] = array('data_type' => $dataType);
                     } else {
                         /** @var ScalarField[] $fieldsMap */
@@ -869,7 +907,10 @@ class Entity
         // generate class content
         $eval = 'class ' . $entity_name . 'Table extends ' . DataManager::class . ' {' . PHP_EOL;
         $eval .= 'public static function getMap() {' . PHP_EOL;
-        $eval .= 'return ' . var_export(['TMP_ID' => ['data_type' => 'integer', 'primary' => true, 'auto_generated' => true]], true) . ';' . PHP_EOL;
+        $eval .= 'return ' . var_export(
+                ['TMP_ID' => ['data_type' => 'integer', 'primary' => true, 'auto_generated' => true]],
+                true
+            ) . ';' . PHP_EOL;
         $eval .= '}';
         $eval .= 'public static function getTableName() {' . PHP_EOL;
         $eval .= 'return ' . var_export($query_string, true) . ';' . PHP_EOL;
@@ -908,9 +949,12 @@ class Entity
 
         // validation
         if (!preg_match('/^[a-z0-9_]+$/i', $entityName)) {
-            throw new Main\ArgumentException(sprintf(
-                'Invalid entity className `%s`.', $entityName
-            ));
+            throw new Main\ArgumentException(
+                sprintf(
+                    'Invalid entity className `%s`.',
+                    $entityName
+                )
+            );
         }
 
         /** @var DataManager $fullEntityName */
@@ -920,10 +964,13 @@ class Entity
         if (!empty($parameters['namespace']) && $parameters['namespace'] !== '\\') {
             $namespace = $parameters['namespace'];
 
-            if (!preg_match('/^[a-z0-9\\\\]+$/i', $namespace)) {
-                throw new Main\ArgumentException(sprintf(
-                    'Invalid namespace name `%s`', $namespace
-                ));
+            if (!preg_match('/^[a-z0-9_\\\\]+$/i', $namespace)) {
+                throw new Main\ArgumentException(
+                    sprintf(
+                        'Invalid namespace name `%s`',
+                        $namespace
+                    )
+                );
             }
 
             $classCode = $classCode . "namespace {$namespace} " . "{";
@@ -939,7 +986,10 @@ class Entity
         $classCodeEnd = '}' . $classCodeEnd;
 
         if (!empty($parameters['table_name'])) {
-            $classCode .= 'public static function getTableName(){return ' . var_export($parameters['table_name'], true) . ';}';
+            $classCode .= 'public static function getTableName(){return ' . var_export(
+                    $parameters['table_name'],
+                    true
+                ) . ';}';
         }
 
         if (!empty($parameters['uf_id'])) {
@@ -955,7 +1005,10 @@ class Entity
         }
 
         if (isset($parameters['object_parent']) && is_a($parameters['object_parent'], EntityObject::class, true)) {
-            $classCode .= 'public static function getObjectParentClass(){return ' . var_export($parameters['object_parent'], true) . ';}';
+            $classCode .= 'public static function getObjectParentClass(){return ' . var_export(
+                    $parameters['object_parent'],
+                    true
+                ) . ';}';
         }
 
         // create entity
@@ -1005,8 +1058,13 @@ class Entity
 
         // create indexes
         foreach ($unique as $fieldName) {
-            $connection->createIndex($this->getDBTableName(), $fieldName, [$fieldName], null,
-                Main\DB\MysqlCommonConnection::INDEX_UNIQUE);
+            $connection->createIndex(
+                $this->getDBTableName(),
+                $fieldName,
+                [$fieldName],
+                null,
+                Main\DB\MysqlCommonConnection::INDEX_UNIQUE
+            );
         }
 
         // stop collecting queries
@@ -1207,13 +1265,14 @@ class Entity
 
     /**
      * Cleans all cache entries for the entity.
-     *
-     * @throws Main\SystemException
      */
     public function cleanCache()
     {
-        $cache = Main\Application::getInstance()->getManagedCache();
-        $cache->cleanDir($this->getCacheDir());
+        if ($this->getCacheTtl(100) > 0) {
+            //cache might be disabled in .settings.php via *_max_ttl = 0 option
+            $cache = Main\Application::getInstance()->getManagedCache();
+            $cache->cleanDir($this->getCacheDir());
+        }
     }
 
     /**
@@ -1221,42 +1280,21 @@ class Entity
      *
      * @param string $field
      * @param bool $mode
-     *
-     * @throws Main\ArgumentNullException
-     * @throws Main\ArgumentOutOfRangeException
+     * @deprecated Does nothing, mysql 5.6 has fulltext always enabled.
      */
     public function enableFullTextIndex($field, $mode = true)
     {
-        $table = $this->getDBTableName();
-        $options = array();
-        $optionString = Main\Config\Option::get("main", "~ft_" . $table);
-        if ($optionString <> '') {
-            $options = unserialize($optionString);
-        }
-        $options[StringHelper::strtoupper($field)] = $mode;
-        Main\Config\Option::set("main", "~ft_" . $table, serialize($options));
     }
 
     /**
      * Returns true if full text index is enabled for a field.
      *
      * @param string $field
-     *
      * @return bool
-     * @throws Main\ArgumentNullException
-     * @throws Main\ArgumentOutOfRangeException
+     * @deprecated Always returns true, mysql 5.6 has fulltext always enabled.
      */
     public function fullTextIndexEnabled($field)
     {
-        $table = $this->getDBTableName();
-        $optionString = Main\Config\Option::get("main", "~ft_" . $table);
-        if ($optionString <> '') {
-            $field = StringHelper::strtoupper($field);
-            $options = unserialize($optionString);
-            if (isset($options[$field]) && $options[$field] === true) {
-                return true;
-            }
-        }
-        return false;
+        return true;
     }
 }

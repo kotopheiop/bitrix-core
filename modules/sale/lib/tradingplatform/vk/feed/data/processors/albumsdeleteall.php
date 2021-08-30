@@ -19,7 +19,7 @@ class AlbumsDeleteAll extends DataProcessor
      *
      * @return bool - return true if OK or if errors it not critical. Expression if timer is over
      */
-    public function process($data = NULL, Timer $timer = NULL)
+    public function process($data = null, Timer $timer = null)
     {
         $apiHelper = new Vk\Api\ApiHelper($this->exportId);
         $albumsFromVk = $apiHelper->getALbumsFromVk($this->vkGroupId, false);
@@ -42,15 +42,18 @@ class AlbumsDeleteAll extends DataProcessor
         }
         $albumsFromVk = array_chunk($albumsFromVk, Vk\Vk::MAX_EXECUTION_ITEMS);    // max 25 items in execute()
         foreach ($albumsFromVk as $chunk) {
-            $this->executer->executeMarketAlbumDelete(array(
-                "owner_id" => $this->vkGroupId,
-                "data" => $chunk,
-                "count" => count($chunk),
-            ));
+            $this->executer->executeMarketAlbumDelete(
+                array(
+                    "owner_id" => $this->vkGroupId,
+                    "data" => $chunk,
+                    "count" => count($chunk),
+                )
+            );
 
 //			abstract start position - only for continue export, not for rewind to position
-            if ($timer !== NULL && !$timer->check())
+            if ($timer !== null && !$timer->check()) {
                 throw new TimeIsOverException("Timelimit for export is over", '1');
+            }
         }
 
 //		remove products from cache

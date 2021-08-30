@@ -2,6 +2,7 @@
 
 namespace Bitrix\Main\Composite;
 
+use Bitrix\Main\Application;
 use Bitrix\Main\Composite\Debug;
 use Bitrix\Main\Composite\Debug\Logger;
 use Bitrix\Main\Composite\Internals\Model\PageTable;
@@ -11,6 +12,7 @@ use Bitrix\Main\Config\Configuration;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Context;
 use Bitrix\Main\EventManager;
+use Bitrix\Main\Engine\Response;
 use Bitrix\Main\IO\File;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -45,7 +47,6 @@ final class Engine
      */
     private function __construct()
     {
-
     }
 
     /**
@@ -53,7 +54,6 @@ final class Engine
      */
     private function __clone()
     {
-
     }
 
     /**
@@ -284,7 +284,7 @@ final class Engine
             $stub = $dynamicArea->getStub();
             self::replaceSessid($stub);
 
-            $params["dynamicBlocks"][$dynamicArea->getId()] = substr(md5($stub), 0, 12);
+            $params["dynamicBlocks"][$dynamicArea->getId()] = mb_substr(md5($stub), 0, 12);
             if ($dynamicArea->getBrowserStorage()) {
                 $realId = $dynamicArea->getContainerId() !== null ? $dynamicArea->getContainerId() : "bxdynamic_" . $id;
                 $params["storageBlocks"][] = $realId;
@@ -293,6 +293,7 @@ final class Engine
 
         $params["AUTO_UPDATE"] = self::getAutoUpdate();
         $params["AUTO_UPDATE_TTL"] = self::getAutoUpdateTTL();
+        $params["version"] = 2;
 
         Asset::getInstance()->addString(
             self::getInjectedJs($params),
@@ -316,7 +317,7 @@ final class Engine
             return null;
         }
 
-        if (defined("BX_BUFFER_SHUTDOWN")) {
+        if (defined("BX_BUFFER_SHUTDOWN") || !defined("B_EPILOG_INCLUDED")) {
             Logger::log(
                 array(
                     "TYPE" => Logger::TYPE_PHP_SHUTDOWN,
@@ -345,7 +346,7 @@ final class Engine
                 );
                 if (self::$isCompositeInjected !== true && $method[1] === "GetHeadStrings") {
                     self::$isCompositeInjected =
-                        \CUtil::BinStrpos($newBuffer[$i * 2 + 1], "w.frameRequestStart") !== false;
+                        strpos($newBuffer[$i * 2 + 1], "w.frameRequestStart") !== false;
                 }
             }
         }
@@ -374,7 +375,9 @@ final class Engine
      */
     public static function endBuffering(&$originalContent, $compositeContent)
     {
-        if (!self::isEnabled() || $compositeContent === null || defined("BX_BUFFER_SHUTDOWN")) {
+        if (!self::isEnabled() || $compositeContent === null || defined("BX_BUFFER_SHUTDOWN") || !defined(
+                "B_EPILOG_INCLUDED"
+            )) {
             //this happens when die() invokes in self::onBeforeLocalRedirect
             if (self::isAjaxRequest() && self::$isRedirect === false) {
                 $originalContent = self::getAjaxError();
@@ -445,7 +448,7 @@ final class Engine
                         }
 
                         if ($page->getStorage() instanceof Data\FileStorage) {
-                            $freeSpace = BinaryString::getLength($dividedData["static"]) + strlen($dividedData["md5"]);
+                            $freeSpace = strlen($dividedData["static"]) + strlen($dividedData["md5"]);
                             self::ensureFileQuota($freeSpace);
                         }
 
@@ -551,9 +554,10 @@ final class Engine
                     continue;
                 }
 
-                $realId = $dynamicArea->getContainerId() !== null ? $dynamicArea->getContainerId() : "bxdynamic_" . $area->id;
+                $realId = $dynamicArea->getContainerId() !== null ? $dynamicArea->getContainerId(
+                ) : "bxdynamic_" . $area->id;
                 $assets = Asset::getInstance()->getAssetInfo($dynamicArea->getAssetId(), $dynamicArea->getAssetMode());
-                $areaContent = \CUtil::BinSubstr($content, $area->openTagEnd, $area->closingTagStart - $area->openTagEnd);
+                $areaContent = substr($content, $area->openTagEnd, $area->closingTagStart - $area->openTagEnd);
                 $areaContentMd5 = substr(md5($areaContent), 0, 12);
 
                 $blockId = $dynamicArea->getId();
@@ -579,7 +583,7 @@ final class Engine
                     );
                 }
 
-                $data["static"] .= \CUtil::BinSubstr($content, $offset, $area->openTagStart - $offset);
+                $data["static"] .= substr($content, $offset, $area->openTagStart - $offset);
 
                 if ($dynamicArea->getContainerId() === null) {
                     $data["static"] .=
@@ -593,7 +597,7 @@ final class Engine
                 $offset = $area->closingTagEnd;
             }
 
-            $data["static"] .= \CUtil::BinSubstr($content, $offset);
+            $data["static"] .= substr($content, $offset);
         } else {
             $data["static"] = $content;
         }
@@ -619,25 +623,25 @@ final class Engine
 
         $areas = array();
         $offset = 0;
-        while (($openTagStart = \CUtil::BinStrpos($content, $openTag, $offset)) !== false) {
-            $endingPos = \CUtil::BinStrpos($content, $ending, $openTagStart);
+        while (($openTagStart = strpos($content, $openTag, $offset)) !== false) {
+            $endingPos = strpos($content, $ending, $openTagStart);
             if ($endingPos === false) {
                 break;
             }
 
-            $idStart = $openTagStart + strlen($openTag);
+            $idStart = $openTagStart + mb_strlen($openTag);
             $idLength = $endingPos - $idStart;
-            $areaId = \CUtil::BinSubstr($content, $idStart, $idLength);
-            $openTagEnd = $endingPos + strlen($ending);
+            $areaId = substr($content, $idStart, $idLength);
+            $openTagEnd = $endingPos + mb_strlen($ending);
 
             $realClosingTag = $closingTag . $areaId . $ending;
-            $closingTagStart = \CUtil::BinStrpos($content, $realClosingTag, $openTagEnd);
+            $closingTagStart = strpos($content, $realClosingTag, $openTagEnd);
             if ($closingTagStart === false) {
                 $offset = $openTagEnd;
                 continue;
             }
 
-            $closingTagEnd = $closingTagStart + strlen($realClosingTag);
+            $closingTagEnd = $closingTagStart + mb_strlen($realClosingTag);
 
             $area = new \stdClass();
             $area->id = $areaId;
@@ -657,7 +661,7 @@ final class Engine
     {
         $blocks = array();
         $json = Context::getCurrent()->getServer()->get("HTTP_BX_CACHE_BLOCKS");
-        if ($json !== null && strlen($json) > 0) {
+        if ($json !== null && $json <> '') {
             $blocks = json_decode($json, true);
             if ($blocks === null) {
                 $blocks = array();
@@ -703,7 +707,6 @@ final class Engine
 
     public static function onBeforeLocalRedirect(&$url, $skip_security_check, $isExternal)
     {
-        global $APPLICATION;
         if (!self::isAjaxRequest() || ($isExternal && $skip_security_check !== true)) {
             return;
         }
@@ -726,18 +729,18 @@ final class Engine
             )
         );
 
-        if ($APPLICATION->buffered) {
-            $APPLICATION->RestartBuffer();
-        }
-
         self::$isRedirect = true;
         Page::getInstance()->delete();
 
-        header("X-Bitrix-Composite: Ajax (error:redirect)");
-        self::sendRandHeader();
-        echo \CUtil::PhpToJSObject($response);
+        $response = new Response\Json($response);
+        $response->addHeader('X-Bitrix-Composite', 'Ajax (error:redirect)');
 
-        die(); //it provokes register_shutdown_function callback which invokes startBuffering/endBuffering
+        $bxRandom = Helper::getAjaxRandom();
+        if ($bxRandom !== false) {
+            $response->addHeader('BX-RAND', $bxRandom);
+        }
+
+        Application::getInstance()->end(0, $response);
     }
 
     private static function ensureFileQuota($requiredFreeSpace = 0)
@@ -768,12 +771,14 @@ final class Engine
 
         Helper::updateCacheFileSize(-$deletedSize);
 
-        Logger::log(array(
-            "TYPE" => Logger::TYPE_CACHE_RESET,
-            "MESSAGE" =>
-                "Pages: " . count($ids) . "\n" .
-                "Size: " . \CFile::formatSize($deletedSize)
-        ));
+        Logger::log(
+            array(
+                "TYPE" => Logger::TYPE_CACHE_RESET,
+                "MESSAGE" =>
+                    "Pages: " . count($ids) . "\n" .
+                    "Size: " . \CFile::formatSize($deletedSize)
+            )
+        );
 
         if (!Helper::checkQuota($requiredFreeSpace)) {
             $tries--;
@@ -886,6 +891,7 @@ final class Engine
 
 			r.open("GET", u, true);
 			r.setRequestHeader("BX-ACTION-TYPE", "get_dynamic");
+			r.setRequestHeader("X-Bitrix-Composite", "get_dynamic");
 			r.setRequestHeader("BX-CACHE-MODE", m);
 			r.setRequestHeader("BX-CACHE-BLOCKS", v.dynamicBlocks ? JSON.stringify(v.dynamicBlocks) : "");
 			if (inv)
@@ -908,7 +914,7 @@ final class Engine
 				if (a != x || !((r.status >= 200 && r.status < 300) || r.status === 304 || r.status === 1223 || r.status === 0))
 				{
 					var f = {error:true, reason:a!=x?"bad_rand":"bad_status", url:u, xhr:r, status:r.status};
-					if (w.BX && w.BX.ready)
+					if (w.BX && w.BX.ready && b)
 					{
 						BX.ready(function() {
 							setTimeout(function(){
@@ -916,10 +922,9 @@ final class Engine
 							}, 0);
 						});
 					}
-					else
-					{
-						w.frameRequestFail = f;
-					}
+
+					w.frameRequestFail = f;
+
 					return;
 				}
 
@@ -940,12 +945,33 @@ final class Engine
 
 			r.send();
 
+			var p = w.performance;
+			if (p && p.addEventListener && p.getEntries && p.setResourceTimingBufferSize)
+			{
+				var e = 'resourcetimingbufferfull';
+				var h = function() {
+					if (w.BX && w.BX.frameCache && w.BX.frameCache.frameDataInserted)
+					{
+						p.removeEventListener(e, h);
+					}
+					else 
+					{
+						p.setResourceTimingBufferSize(p.getEntries().length + 50);
+					}
+				};
+				p.addEventListener(e, h);
+			}
+
 			})(window, document);
 JS;
 
         $html = "";
         if (self::isBannerEnabled()) {
-            $html .= '<style type="text/css">' . str_replace(array("\n", "\t"), "", self::getInjectedCSS()) . "</style>\n";
+            $html .= '<style type="text/css">' . str_replace(
+                    array("\n", "\t"),
+                    "",
+                    self::getInjectedCSS()
+                ) . "</style>\n";
         }
 
         $html .= '<script type="text/javascript" data-skip-moving="true">' .
@@ -1077,23 +1103,34 @@ CSS;
 
                 define("BX_SKIP_SESSION_EXPAND", true);
             }
-        } else if (Responder::getLastError() !== null && Logger::isOn()) {
-            $result = Logger::log(array(
-                "TYPE" => Responder::getLastError(),
-                "MESSAGE" => Responder::getLastErrorMessage()
-            ));
+        } else {
+            if (Responder::getLastError() !== null && Logger::isOn()) {
+                $result = Logger::log(
+                    array(
+                        "TYPE" => Responder::getLastError(),
+                        "MESSAGE" => Responder::getLastErrorMessage()
+                    )
+                );
 
-            //try to update page title on the end of a page execution
-            if ($result && $result->getId()) {
-                $recordId = $result->getId();
-                $eventManager = EventManager::getInstance();
-                $eventManager->addEventHandler("main", "OnEpilog", function () use ($recordId) {
-                    if (is_object($GLOBALS["APPLICATION"])) {
-                        Debug\Model\LogTable::update($recordId, array(
-                            "TITLE" => $GLOBALS["APPLICATION"]->getTitle()
-                        ));
-                    }
-                });
+                //try to update page title on the end of a page execution
+                if ($result && $result->getId()) {
+                    $recordId = $result->getId();
+                    $eventManager = EventManager::getInstance();
+                    $eventManager->addEventHandler(
+                        "main",
+                        "OnEpilog",
+                        function () use ($recordId) {
+                            if (is_object($GLOBALS["APPLICATION"])) {
+                                Debug\Model\LogTable::update(
+                                    $recordId,
+                                    array(
+                                        "TITLE" => $GLOBALS["APPLICATION"]->getTitle()
+                                    )
+                                );
+                            }
+                        }
+                    );
+                }
             }
         }
 
@@ -1103,8 +1140,6 @@ CSS;
         ) {
             \CJSCore::init(array("fc")); //to warm up localStorage
         }
-
-
     }
 
     /**
@@ -1399,10 +1434,14 @@ CSS;
      *
      */
     public function addDynamicData(
-        $id, $content, $stub = "", $containerId = null, $useBrowserStorage = false,
-        $autoUpdate = true, $useAnimation = false
-    )
-    {
+        $id,
+        $content,
+        $stub = "",
+        $containerId = null,
+        $useBrowserStorage = false,
+        $autoUpdate = true,
+        $useAnimation = false
+    ) {
         $area = new StaticArea($id);
         $area->setStub($stub);
         $area->setContainerId($containerId);
@@ -1444,9 +1483,13 @@ CSS;
      *
      */
     public function finishDynamicWithID(
-        $id, $stub = "", $containerId = null, $useBrowserStorage = false,
-        $autoUpdate = true, $useAnimation = false)
-    {
+        $id,
+        $stub = "",
+        $containerId = null,
+        $useBrowserStorage = false,
+        $autoUpdate = true,
+        $useAnimation = false
+    ) {
         $curDynamicArea = StaticArea::getCurrentDynamicArea();
         if ($curDynamicArea === null || $curDynamicArea->getId() !== $id) {
             return false;

@@ -14,6 +14,7 @@ abstract class ComponentBase
     implements Translate\IErrorable
 {
     use Translate\Error;
+    use Translate\Warning;
 
     const STATUS_SUCCESS = 'success';
     const STATUS_DENIED = 'denied';
@@ -85,9 +86,13 @@ abstract class ComponentBase
     {
         if (!$this->hasUserPermissionView($this->getUser())) {
             if ($this->isAjaxRequest()) {
-                $this->sendJsonResponse(new Error(Loc::getMessage('TRANSLATE_FILTER_ERROR_ACCESS_DENIED'), self::STATUS_DENIED));
+                $this->sendJsonResponse(
+                    new Error(Loc::getMessage('TRANSLATE_FILTER_ERROR_ACCESS_DENIED'), self::STATUS_DENIED)
+                );
             } else {
-                $this->addError(new Error(Loc::getMessage('TRANSLATE_FILTER_ERROR_ACCESS_DENIED'), self::STATUS_DENIED));
+                $this->addError(
+                    new Error(Loc::getMessage('TRANSLATE_FILTER_ERROR_ACCESS_DENIED'), self::STATUS_DENIED)
+                );
                 $this->includeComponentTemplate(self::TEMPLATE_ERROR);
             }
 
@@ -105,9 +110,13 @@ abstract class ComponentBase
     {
         if (!$this->hasUserPermissionEdit($this->getUser())) {
             if ($this->isAjaxRequest()) {
-                $this->sendJsonResponse(new Error(Loc::getMessage('TRANSLATE_FILTER_ERROR_WRITING_RIGHTS'), self::STATUS_DENIED));
+                $this->sendJsonResponse(
+                    new Error(Loc::getMessage('TRANSLATE_FILTER_ERROR_WRITING_RIGHTS'), self::STATUS_DENIED)
+                );
             } else {
-                $this->addError(new Error(Loc::getMessage('TRANSLATE_FILTER_ERROR_WRITING_RIGHTS'), self::STATUS_DENIED));
+                $this->addError(
+                    new Error(Loc::getMessage('TRANSLATE_FILTER_ERROR_WRITING_RIGHTS'), self::STATUS_DENIED)
+                );
                 $this->includeComponentTemplate(self::TEMPLATE_ERROR);
             }
 
@@ -125,13 +134,39 @@ abstract class ComponentBase
     {
         if (!$this->hasUserPermissionEditSource($this->getUser())) {
             if ($this->isAjaxRequest()) {
-                $this->sendJsonResponse(new Error(Loc::getMessage('TRANSLATE_FILTER_ERROR_PHP_EDIT_RIGHTS'), self::STATUS_DENIED));
+                $this->sendJsonResponse(
+                    new Error(Loc::getMessage('TRANSLATE_FILTER_ERROR_PHP_EDIT_RIGHTS'), self::STATUS_DENIED)
+                );
             } else {
-                $this->addError(new Error(Loc::getMessage('TRANSLATE_FILTER_ERROR_PHP_EDIT_RIGHTS'), self::STATUS_DENIED));
+                $this->addError(
+                    new Error(Loc::getMessage('TRANSLATE_FILTER_ERROR_PHP_EDIT_RIGHTS'), self::STATUS_DENIED)
+                );
                 $this->includeComponentTemplate(self::TEMPLATE_ERROR);
             }
 
             return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Checks some mysql config variables.
+     * @return boolean
+     */
+    protected function checkMysqlConfig()
+    {
+        $majorVersion = (int)mb_substr(\Bitrix\Main\Application::getConnection()->getVersion()[0], 0, 1);
+
+        if ($majorVersion >= 8) {
+            $conf = Main\Application::getConnection()->query("SHOW VARIABLES LIKE 'regexp_time_limit'")->fetch();
+            if ($conf['Variable_name'] == 'regexp_time_limit') {
+                if ((int)$conf['Value'] <= 0) {
+                    $this->addWarning(
+                        new Error(Loc::getMessage('TRANSLATE_MYSQL_CONFIG_ERROR_REGEXP_TIME_LIMIT'), self::STATUS_ERROR)
+                    );
+                }
+            }
         }
 
         return true;
@@ -168,6 +203,25 @@ abstract class ComponentBase
         $this->arResult['ALLOW_EDIT_SOURCE'] = $this->hasUserPermissionEditSource($this->getUser());
     }
 
+    /**
+     * Moves current language to the first position.
+     *
+     * @param string[] $languageList
+     * @param string $currentLangId
+     *
+     * @return string[]
+     */
+    protected function rearrangeLanguages($languageList, $currentLangId)
+    {
+        $inx = array_search($currentLangId, $languageList, true);
+        if ($inx !== false) {
+            unset($languageList[$inx]);
+        }
+
+        array_unshift($languageList, $currentLangId);
+
+        return $languageList;
+    }
 
     /**
      * @return string[]
@@ -253,19 +307,24 @@ abstract class ComponentBase
     /**
      * @return string
      */
-    protected function detectStartingPath()
+    protected function detectStartingPath(?string $path = ''): string
     {
-        static $path;
-        if (empty($path)) {
-            $initPaths = Translate\Config::getInitPath();
-            if (count($initPaths) > 0) {
-                $path = $initPaths[0];
-            } else {
-                $path = '/' . trim(Translate\Config::getDefaultPath(), '/');
+        $home = Translate\Config::getDefaultPath();
+
+        $initPaths = Translate\Config::getInitPath();
+        if (count($initPaths) > 0) {
+            $home = $initPaths[0];
+            if (!empty($path)) {
+                foreach ($initPaths as $initPath) {
+                    if (mb_strpos($path, $initPath) === 0) {
+                        $home = $initPath;
+                        break;
+                    }
+                }
             }
         }
 
-        return $path;
+        return $home;
     }
 
 
@@ -331,6 +390,8 @@ abstract class ComponentBase
     {
         $this->getApplication()->restartBuffer();
 
+        $answer = Main\Application::getInstance()->getContext()->getResponse();
+
         if ($response instanceof Main\Error) {
             $this->addError($response);
             $response = array();
@@ -338,6 +399,8 @@ abstract class ComponentBase
 
         $response['result'] = true;
         if ($this->hasErrors()) {
+            $answer->setStatus('500 Internal Server Error');
+
             $response['status'] = self::STATUS_ERROR;
             $errors = array();
             foreach ($this->getErrors() as $error) {
@@ -353,7 +416,7 @@ abstract class ComponentBase
             $response['status'] = self::STATUS_SUCCESS;
         }
 
-        header('Content-Type:application/x-javascript; charset=UTF-8');
+        $answer->addHeader('Content-Type', 'application/x-javascript; charset=UTF-8');
         echo Main\Web\Json::encode($response);
 
         \CMain::finalActions();
@@ -368,7 +431,14 @@ abstract class ComponentBase
      */
     protected function clearSavedOptions($category, $nameMask)
     {
-        $res = \CUserOptions::GetList(false, ['CATEGORY' => $category, 'USER_ID' => $this->getUser()->getId(), 'NAME_MASK' => $nameMask]);
+        $res = \CUserOptions::GetList(
+            false,
+            [
+                'CATEGORY' => $category,
+                'USER_ID' => $this->getUser()->getId(),
+                'NAME_MASK' => $nameMask
+            ]
+        );
         while ($opt = $res->fetch()) {
             \CUserOptions::DeleteOption($category, $opt['NAME']);
         }

@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 /** @global CMain $APPLICATION */
 /** @global CDatabase $DB */
@@ -10,8 +11,9 @@ use Bitrix\Main\Loader;
 Loader::includeModule('socialnetwork');
 
 $sonetModulePermissions = $APPLICATION->GetGroupRight("socialnetwork");
-if ($sonetModulePermissions < "R")
+if ($sonetModulePermissions < "R") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 
@@ -40,13 +42,15 @@ if (($arID = $lAdmin->GroupAction()) && $sonetModulePermissions >= "W") {
             array($by => $order),
             $arFilter
         );
-        while ($arResult = $dbResultList->Fetch())
+        while ($arResult = $dbResultList->Fetch()) {
             $arID[] = $arResult['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
 
         switch ($_REQUEST['action']) {
             case "delete":
@@ -60,17 +64,19 @@ if (($arID = $lAdmin->GroupAction()) && $sonetModulePermissions >= "W") {
                 if (!CSocNetSmile::Delete($ID)) {
                     $DB->Rollback();
 
-                    if ($ex = $APPLICATION->GetException())
+                    if ($ex = $APPLICATION->GetException()) {
                         $lAdmin->AddGroupError($ex->GetString(), $ID);
-                    else
+                    } else {
                         $lAdmin->AddGroupError(GetMessage("ERROR_DEL_SMILE"), $ID);
+                    }
                 } else {
                     if ($arOldSmile) {
                         $strDirNameOld = $_SERVER["DOCUMENT_ROOT"] . "/bitrix/images/socialnetwork/";
-                        if ($arOldSmile["SMILE_TYPE"] == "I")
+                        if ($arOldSmile["SMILE_TYPE"] == "I") {
                             $strDirNameOld .= "icon";
-                        else
+                        } else {
                             $strDirNameOld .= "smile";
+                        }
                         $strDirNameOld .= "/" . $arOldSmile["IMAGE"];
                         @unlink($strDirNameOld);
                     }
@@ -95,14 +101,16 @@ $dbResultList->NavStart();
 $lAdmin->NavText($dbResultList->GetNavPrint(GetMessage("PAGES")));
 
 // ��������� ������
-$lAdmin->AddHeaders(array(
-    array("id" => "ID", "content" => GetMessage("SMILE_ID"), "sort" => "ID", "default" => true),
-    array("id" => "SORT", "content" => GetMessage("SMILE_SORT"), "sort" => "SORT", "default" => true),
-    array("id" => "SMILE_TYPE", "content" => GetMessage('SMILE_TYPE'), "sort" => "SMILE_TYPE", "default" => true),
-    array("id" => "NAME", "content" => GetMessage("SONET_NAME"), "sort" => "", "default" => true),
-    array("id" => "TYPING", "content" => GetMessage("SONET_TYPING"), "sort" => "", "default" => true),
-    array("id" => "ICON", "content" => GetMessage("SONET_SMILE_ICON"), "sort" => "", "default" => true),
-));
+$lAdmin->AddHeaders(
+    array(
+        array("id" => "ID", "content" => GetMessage("SMILE_ID"), "sort" => "ID", "default" => true),
+        array("id" => "SORT", "content" => GetMessage("SMILE_SORT"), "sort" => "SORT", "default" => true),
+        array("id" => "SMILE_TYPE", "content" => GetMessage('SMILE_TYPE'), "sort" => "SMILE_TYPE", "default" => true),
+        array("id" => "NAME", "content" => GetMessage("SONET_NAME"), "sort" => "", "default" => true),
+        array("id" => "TYPING", "content" => GetMessage("SONET_TYPING"), "sort" => "", "default" => true),
+        array("id" => "ICON", "content" => GetMessage("SONET_SMILE_ICON"), "sort" => "", "default" => true),
+    )
+);
 
 $arVisibleColumns = $lAdmin->GetVisibleHeaderColumns();
 
@@ -110,9 +118,17 @@ $arVisibleColumns = $lAdmin->GetVisibleHeaderColumns();
 while ($arSocNet = $dbResultList->NavNext(true, "f_")) {
     $row =& $lAdmin->AddRow($f_ID, $arSocNet);
 
-    $row->AddField("ID", '<a href="/bitrix/admin/socnet_smile_edit.php?ID=' . $f_ID . '&lang=' . LANGUAGE_ID . '" title="' . GetMessage("SONET_EDIT_DESCR") . '">' . $f_ID . '</a>');
+    $row->AddField(
+        "ID",
+        '<a href="/bitrix/admin/socnet_smile_edit.php?ID=' . $f_ID . '&lang=' . LANGUAGE_ID . '" title="' . GetMessage(
+            "SONET_EDIT_DESCR"
+        ) . '">' . $f_ID . '</a>'
+    );
     $row->AddField("SORT", $f_SORT);
-    $row->AddField("SMILE_TYPE", (($f_SMILE_TYPE == "I") ? GetMessage("SMILE_TYPE_ICON") : GetMessage("SMILE_TYPE_SMILE")));
+    $row->AddField(
+        "SMILE_TYPE",
+        (($f_SMILE_TYPE == "I") ? GetMessage("SMILE_TYPE_ICON") : GetMessage("SMILE_TYPE_SMILE"))
+    );
 
     $fieldShow = "";
     if (in_array("NAME", $arVisibleColumns)) {
@@ -122,15 +138,33 @@ while ($arSocNet = $dbResultList->NavNext(true, "f_")) {
     $row->AddField("NAME", $fieldShow);
 
     $row->AddField("TYPING", $f_TYPING);
-    $row->AddField("ICON", "<img src=\"/bitrix/images/socialnetwork/" . (($f_SMILE_TYPE == "I") ? "icon" : "smile") . "/" . $f_IMAGE . "\" border=\"0\" " . ((IntVal($f_IMAGE_WIDTH) > 0) ? "width=\"" . $f_IMAGE_WIDTH . "\"" : "") . " " . ((IntVal($f_IMAGE_WIDTH) > 0) ? "height=\"" . $f_IMAGE_HEIGHT . "\"" : "") . ">");
+    $row->AddField(
+        "ICON",
+        "<img src=\"/bitrix/images/socialnetwork/" . (($f_SMILE_TYPE == "I") ? "icon" : "smile") . "/" . $f_IMAGE . "\" border=\"0\" " . ((intval(
+                $f_IMAGE_WIDTH
+            ) > 0) ? "width=\"" . $f_IMAGE_WIDTH . "\"" : "") . " " . ((intval(
+                $f_IMAGE_WIDTH
+            ) > 0) ? "height=\"" . $f_IMAGE_HEIGHT . "\"" : "") . ">"
+    );
 
     $arActions = Array();
     if ($sonetModulePermissions >= "R") {
-        $arActions[] = array("ICON" => "edit", "TEXT" => GetMessage("SONET_EDIT_DESCR"), "ACTION" => $lAdmin->ActionRedirect("socnet_smile_edit.php?ID=" . $f_ID . "&lang=" . LANG . "&" . GetFilterParams("filter_") . ""), "DEFAULT" => true);
+        $arActions[] = array(
+            "ICON" => "edit",
+            "TEXT" => GetMessage("SONET_EDIT_DESCR"),
+            "ACTION" => $lAdmin->ActionRedirect(
+                "socnet_smile_edit.php?ID=" . $f_ID . "&lang=" . LANG . "&" . GetFilterParams("filter_") . ""
+            ),
+            "DEFAULT" => true
+        );
     }
     if ($sonetModulePermissions >= "W") {
         $arActions[] = array("SEPARATOR" => true);
-        $arActions[] = array("ICON" => "delete", "TEXT" => GetMessage("SONET_DELETE_DESCR"), "ACTION" => "if(confirm('" . GetMessage('SMILE_DEL_CONF') . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete"));
+        $arActions[] = array(
+            "ICON" => "delete",
+            "TEXT" => GetMessage("SONET_DELETE_DESCR"),
+            "ACTION" => "if(confirm('" . GetMessage('SMILE_DEL_CONF') . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete")
+        );
     }
 
     $row->AddActions($arActions);

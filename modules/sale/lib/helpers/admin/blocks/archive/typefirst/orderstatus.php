@@ -25,7 +25,9 @@ class OrderStatus extends Template
 			<table border="0" cellspacing="0" cellpadding="0" width="100%" class="adm-detail-content-table edit-table">
 				<tbody>
 					<tr>
-						<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage("SALE_ORDER_STATUS_CREATED") . ':</td>
+						<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage(
+                "SALE_ORDER_STATUS_CREATED"
+            ) . ':</td>
 						<td class="adm-detail-content-cell-r">
 							<div>' .
             $data["DATE_INSERT"] .
@@ -71,15 +73,18 @@ class OrderStatus extends Template
      */
     protected static function getCancelBlockHtml(Sale\Order $order, array $data)
     {
-        if ($order->getField('CANCELED') !== "Y")
+        if ($order->getField('CANCELED') !== "Y") {
             return "";
+        }
 
         $text = '
 			<div class="adm-s-select-popup-element-selected" id="sale-adm-status-cancel-blocktext">
 				<div class="adm-s-select-popup-element-selected-bad">
 					<span>' . Loc::getMessage("SALE_ORDER_STATUS_CANCELED") . '</span>
 					' . $order->getField('DATE_CANCELED') . '
-					<a href="/bitrix/admin/user_edit.php?lang=' . LANGUAGE_ID . '&ID=' . $order->getField("EMP_CANCELED_ID") . '">'
+					<a href="/bitrix/admin/user_edit.php?lang=' . LANGUAGE_ID . '&ID=' . $order->getField(
+                "EMP_CANCELED_ID"
+            ) . '">'
             . htmlspecialcharsbx(OrderEdit::getUserName($order->getField("EMP_CANCELED_ID"), $order->getSiteId())) .
             '</a>
 				</div>
@@ -89,15 +94,16 @@ class OrderStatus extends Template
         if (!\CSaleYMHandler::isOrderFromYandex($order->getId())) {
             $reasonHtml = '
 				<div class="adm-s-select-popup-modal-title">' . Loc::getMessage("SALE_ORDER_STATUS_COMMENT") . '</div>
-				<textarea style="width:400px;min-height:100px;" name="FORM_REASON_CANCELED" id="FORM_REASON_CANCELED"  disabled>' . (strlen($reasonCanceled) > 0 ? $reasonCanceled : '') . '</textarea>
+				<textarea style="width:400px;min-height:100px;" name="FORM_REASON_CANCELED" id="FORM_REASON_CANCELED"  disabled>' . ($reasonCanceled <> '' ? $reasonCanceled : '') . '</textarea>
 			';
         } else {
             $reasonHtml = '
 				<div class="adm-s-select-popup-modal-title">' . Loc::getMessage("SALE_ORDER_STATUS_CANCELING_REASON") . '</div>
 				<select name="FORM_REASON_CANCELED" id="FORM_REASON_CANCELED" class="adm-bus-select" disabled>';
 
-            foreach (\CSaleYMHandler::getOrderSubstatuses() as $statusId => $statusName)
+            foreach (\CSaleYMHandler::getOrderSubstatuses() as $statusId => $statusName) {
                 $reasonHtml .= '<option value="' . $statusId . '"' . ($statusId == $reasonCanceled ? " selected" : "") . '>' . $statusName . '</option>';
+            }
 
             $reasonHtml .= '</select>';
         }
@@ -116,7 +122,9 @@ class OrderStatus extends Template
 								' . $reasonHtml . '
 								<div class="adm-s-select-popup-modal-desc"></div>
 								</span>
-								<span class="adm-s-select-popup-modal-close" onclick="BX.Sale.Admin.OrderEditPage.toggleCancelDialog();">' . Loc::getMessage("SALE_ORDER_STATUS_TOGGLE") . '</span>
+								<span class="adm-s-select-popup-modal-close" onclick="BX.Sale.Admin.OrderEditPage.toggleCancelDialog();">' . Loc::getMessage(
+                "SALE_ORDER_STATUS_TOGGLE"
+            ) . '</span>
 							</div>
 						</div>
 					</div>

@@ -34,8 +34,10 @@ class Formatter
 
         if ($formatType == Format::INTERNATIONAL) {
             return '+' . $number->getCountryCode() . ' ' . $formattedNationalNumber;
-        } else if ($formatType == Format::NATIONAL) {
-            return $formattedNationalNumber;
+        } else {
+            if ($formatType == Format::NATIONAL) {
+                return $formattedNationalNumber;
+            }
         }
 
         return $number->getRawNumber();
@@ -48,12 +50,14 @@ class Formatter
      */
     public static function formatOriginal(PhoneNumber $number)
     {
-        if (!$number->isValid())
+        if (!$number->isValid()) {
             return $number->getRawNumber();
+        }
 
         $format = static::selectOriginalFormatForNumber($number);
-        if (!$format)
+        if (!$format) {
             return $number->getRawNumber();
+        }
 
         $formattedNationalNumber = static::formatNationalNumberWithOriginalFormat(
             $number,
@@ -65,7 +69,8 @@ class Formatter
         }
 
         if ($number->isInternational()) {
-            $formattedNumber = ($number->hasPlus() ? '+' : '') . $number->getCountryCode() . ' ' . $formattedNationalNumber;
+            $formattedNumber = ($number->hasPlus() ? '+' : '') . $number->getCountryCode(
+                ) . ' ' . $formattedNationalNumber;
         } else {
             $formattedNumber = $formattedNationalNumber;
         }
@@ -87,10 +92,14 @@ class Formatter
         $availableFormats = static::getAvailableFormats($countryMetadata);
 
         foreach ($availableFormats as $format) {
-            if ($isInternational && isset($format['intlFormat']) && $format['intlFormat'] === 'NA')
+            if ($isInternational && isset($format['intlFormat']) && $format['intlFormat'] === 'NA') {
                 continue;
+            }
 
-            if (isset($format['leadingDigits']) && !static::matchLeadingDigits($nationalNumber, $format['leadingDigits'])) {
+            if (isset($format['leadingDigits']) && !static::matchLeadingDigits(
+                    $nationalNumber,
+                    $format['leadingDigits']
+                )) {
                 continue;
             }
 
@@ -121,7 +130,10 @@ class Formatter
                 }
             }
 
-            if (isset($format['leadingDigits']) && !static::matchLeadingDigits($nationalNumber, $format['leadingDigits'])) {
+            if (isset($format['leadingDigits']) && !static::matchLeadingDigits(
+                    $nationalNumber,
+                    $format['leadingDigits']
+                )) {
                 continue;
             }
 
@@ -165,8 +177,13 @@ class Formatter
      * @param bool $forceNationalPrefix
      * @return mixed
      */
-    protected static function formatNationalNumber($nationalNumber, $formatType, $countryMetadata, $format, $forceNationalPrefix)
-    {
+    protected static function formatNationalNumber(
+        $nationalNumber,
+        $formatType,
+        $countryMetadata,
+        $format,
+        $forceNationalPrefix
+    ) {
         $isInternational = ($formatType === Format::INTERNATIONAL);
         $replaceFormat = (isset($format['intlFormat']) && $isInternational) ? $format['intlFormat'] : $format['format'];
         $patternRegex = '/' . $format['pattern'] . '/';
@@ -174,7 +191,11 @@ class Formatter
         if (!$isInternational) {
             $nationalPrefixFormattingRule = static::getNationalPrefixFormattingRule($format, $countryMetadata);
             if ($nationalPrefixFormattingRule != '') {
-                $nationalPrefixFormattingRule = str_replace(array('$NP', '$FG'), array($countryMetadata['nationalPrefix'], '$1'), $nationalPrefixFormattingRule);
+                $nationalPrefixFormattingRule = str_replace(
+                    array('$NP', '$FG'),
+                    array($countryMetadata['nationalPrefix'], '$1'),
+                    $nationalPrefixFormattingRule
+                );
                 $replaceFormat = preg_replace('/(\\$\\d)/', $nationalPrefixFormattingRule, $replaceFormat, 1);
             } else {
                 $replaceFormat = $countryMetadata['nationalPrefix'] . ' ' . $replaceFormat;
@@ -192,12 +213,20 @@ class Formatter
         $nationalNumber = $number->getNationalNumber();
         $countryMetadata = MetadataProvider::getInstance()->getCountryMetadata($number->getCountry());
         $nationalPrefix = static::getNationalPrefix($countryMetadata, true);
-        $hasNationalPrefix = static::numberContainsNationalPrefix($number->getRawNumber(), $nationalPrefix, $countryMetadata);
+        $hasNationalPrefix = static::numberContainsNationalPrefix(
+            $number->getRawNumber(),
+            $nationalPrefix,
+            $countryMetadata
+        );
 
         if (!$isInternational && $hasNationalPrefix) {
             $nationalPrefixFormattingRule = static::getNationalPrefixFormattingRule($format, $countryMetadata);
             if ($nationalPrefixFormattingRule != '') {
-                $nationalPrefixFormattingRule = str_replace(array('$NP', '$FG'), array($nationalPrefix, '$1'), $nationalPrefixFormattingRule);
+                $nationalPrefixFormattingRule = str_replace(
+                    array('$NP', '$FG'),
+                    array($nationalPrefix, '$1'),
+                    $nationalPrefixFormattingRule
+                );
                 $replaceFormat = preg_replace('/(\\$\\d)/', $nationalPrefixFormattingRule, $replaceFormat, 1);
             } else {
                 $replaceFormat = $nationalPrefix . ' ' . $replaceFormat;
@@ -236,12 +265,15 @@ class Formatter
 
     protected static function getNationalPrefixOptional($countryMetadata, $format)
     {
-        if (is_array($format) && isset($format['nationalPrefixOptionalWhenFormatting']))
+        if (is_array($format) && isset($format['nationalPrefixOptionalWhenFormatting'])) {
             return $format['nationalPrefixOptionalWhenFormatting'];
-        else if (isset($countryMetadata['nationalPrefixOptionalWhenFormatting']))
-            return $countryMetadata['nationalPrefixOptionalWhenFormatting'];
-        else
-            return false;
+        } else {
+            if (isset($countryMetadata['nationalPrefixOptionalWhenFormatting'])) {
+                return $countryMetadata['nationalPrefixOptionalWhenFormatting'];
+            } else {
+                return false;
+            }
+        }
     }
 
     /**
@@ -258,12 +290,12 @@ class Formatter
             return false;
         }
 
-        if (strpos($phoneNumber, $nationalPrefix) === 0) {
+        if (mb_strpos($phoneNumber, $nationalPrefix) === 0) {
             // Some Japanese numbers (e.g. 00777123) might be mistaken to contain the national prefix
             // when written without it (e.g. 0777123) if we just do prefix matching. To tackle that, we
             // check the validity of the number if the assumed national prefix is removed (777123 won't
             // be valid in Japan).
-            $a = substr($phoneNumber, strlen($nationalPrefix));
+            $a = mb_substr($phoneNumber, mb_strlen($nationalPrefix));
 
             return Parser::getInstance()->parse($a, $countryMetadata['id'])->isValid();
         } else {
@@ -278,8 +310,9 @@ class Formatter
      */
     protected static function getAvailableFormats($countryMetadata)
     {
-        if (is_array($countryMetadata['availableFormats']))
+        if (is_array($countryMetadata['availableFormats'])) {
             return $countryMetadata['availableFormats'];
+        }
 
         $countryCode = $countryMetadata['countryCode'];
         $countriesForCode = MetadataProvider::getInstance()->getCountriesByCode($countryCode);

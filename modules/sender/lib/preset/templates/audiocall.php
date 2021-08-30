@@ -101,7 +101,7 @@ class AudioCall
     {
         $messageCode = Message\iBase::CODE_AUDIO_CALL;
         foreach (Texts::getListByType($messageCode) as $item) {
-            $code = strtolower($item['CODE']);
+            $code = mb_strtolower($item['CODE']);
             if (self::presetExists($code)) {
                 return $code;
             }
@@ -126,7 +126,7 @@ class AudioCall
      */
     private static function getLang()
     {
-        $lang = strtolower(LANGUAGE_ID);
+        $lang = mb_strtolower(LANGUAGE_ID);
         $supportedLangs = static::getSupportedLangs();
         $lang = in_array($lang, $supportedLangs) ? $lang : array_shift($supportedLangs);
         return $lang;
@@ -143,8 +143,8 @@ class AudioCall
         $messageCode = Message\iBase::CODE_AUDIO_CALL;
 
         foreach (Texts::getListByType($messageCode) as $item) {
-            $code = strtolower($item['CODE']);
-            $presetCode = strtolower($messageCode . "_" . $code);
+            $code = mb_strtolower($item['CODE']);
+            $presetCode = mb_strtolower($messageCode . "_" . $code);
             if (!self::presetExists($code)) {
                 continue;
             }
@@ -197,10 +197,12 @@ class AudioCall
 
             $cache->startDataCache();
 
-            $request = new HttpClient([
-                "socketTimeout" => 5,
-                "streamTimeout" => 5
-            ]);
+            $request = new HttpClient(
+                [
+                    "socketTimeout" => 5,
+                    "streamTimeout" => 5
+                ]
+            );
             $request->get(static::METADATA_FILE);
             if ($request->getStatus() == 200) {
                 try {

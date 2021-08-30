@@ -7,32 +7,41 @@ class CAllCatalogImport
         global $DB;
         global $USER;
 
-        $ACTION = strtoupper($ACTION);
-        if ('UPDATE' != $ACTION && 'ADD' != $ACTION)
+        $ACTION = mb_strtoupper($ACTION);
+        if ('UPDATE' != $ACTION && 'ADD' != $ACTION) {
             return false;
+        }
 
-        if ((is_set($arFields, "FILE_NAME") || $ACTION == "ADD") && strlen($arFields["FILE_NAME"]) <= 0)
+        if ((is_set($arFields, "FILE_NAME") || $ACTION == "ADD") && $arFields["FILE_NAME"] == '') {
             return false;
-        if ((is_set($arFields, "NAME") || $ACTION == "ADD") && strlen($arFields["NAME"]) <= 0)
+        }
+        if ((is_set($arFields, "NAME") || $ACTION == "ADD") && $arFields["NAME"] == '') {
             return false;
+        }
 
-        if ((is_set($arFields, "IN_MENU") || $ACTION == "ADD") && $arFields["IN_MENU"] != "Y")
+        if ((is_set($arFields, "IN_MENU") || $ACTION == "ADD") && $arFields["IN_MENU"] != "Y") {
             $arFields["IN_MENU"] = "N";
-        if ((is_set($arFields, "DEFAULT_PROFILE") || $ACTION == "ADD") && $arFields["DEFAULT_PROFILE"] != "Y")
+        }
+        if ((is_set($arFields, "DEFAULT_PROFILE") || $ACTION == "ADD") && $arFields["DEFAULT_PROFILE"] != "Y") {
             $arFields["DEFAULT_PROFILE"] = "N";
-        if ((is_set($arFields, "IN_AGENT") || $ACTION == "ADD") && $arFields["IN_AGENT"] != "Y")
+        }
+        if ((is_set($arFields, "IN_AGENT") || $ACTION == "ADD") && $arFields["IN_AGENT"] != "Y") {
             $arFields["IN_AGENT"] = "N";
-        if ((is_set($arFields, "IN_CRON") || $ACTION == "ADD") && $arFields["IN_CRON"] != "Y")
+        }
+        if ((is_set($arFields, "IN_CRON") || $ACTION == "ADD") && $arFields["IN_CRON"] != "Y") {
             $arFields["IN_CRON"] = "N";
-        if ((is_set($arFields, "NEED_EDIT") || $ACTION == "ADD") && $arFields["NEED_EDIT"] != "Y")
+        }
+        if ((is_set($arFields, "NEED_EDIT") || $ACTION == "ADD") && $arFields["NEED_EDIT"] != "Y") {
             $arFields["NEED_EDIT"] = "N";
+        }
 
         $arFields["IS_EXPORT"] = "N";
 
         $intUserID = 0;
         $boolUserExist = CCatalog::IsUserExists();
-        if ($boolUserExist)
+        if ($boolUserExist) {
             $intUserID = intval($USER->GetID());
+        }
         $strDateFunction = $DB->GetNowFunction();
         $boolNoUpdate = false;
         if (isset($arFields['=LAST_USE']) && $strDateFunction == $arFields['=LAST_USE']) {
@@ -40,35 +49,43 @@ class CAllCatalogImport
             $boolNoUpdate = ('UPDATE' == $ACTION);
         }
         foreach ($arFields as $key => $value) {
-            if (0 == strncmp($key, '=', 1))
+            if (0 == strncmp($key, '=', 1)) {
                 unset($arFields[$key]);
+            }
         }
 
-        if (array_key_exists('TIMESTAMP_X', $arFields))
+        if (array_key_exists('TIMESTAMP_X', $arFields)) {
             unset($arFields['TIMESTAMP_X']);
-        if (array_key_exists('DATE_CREATE', $arFields))
+        }
+        if (array_key_exists('DATE_CREATE', $arFields)) {
             unset($arFields['DATE_CREATE']);
+        }
 
         if ('ADD' == $ACTION) {
             $arFields['~TIMESTAMP_X'] = $strDateFunction;
             $arFields['~DATE_CREATE'] = $strDateFunction;
             if ($boolUserExist) {
-                if (!array_key_exists('CREATED_BY', $arFields) || intval($arFields["CREATED_BY"]) <= 0)
+                if (!array_key_exists('CREATED_BY', $arFields) || intval($arFields["CREATED_BY"]) <= 0) {
                     $arFields["CREATED_BY"] = $intUserID;
-                if (!array_key_exists('MODIFIED_BY', $arFields) || intval($arFields["MODIFIED_BY"]) <= 0)
+                }
+                if (!array_key_exists('MODIFIED_BY', $arFields) || intval($arFields["MODIFIED_BY"]) <= 0) {
                     $arFields["MODIFIED_BY"] = $intUserID;
+                }
             }
         }
         if ('UPDATE' == $ACTION) {
-            if (array_key_exists('CREATED_BY', $arFields))
+            if (array_key_exists('CREATED_BY', $arFields)) {
                 unset($arFields['CREATED_BY']);
+            }
             if ($boolNoUpdate) {
-                if (array_key_exists('MODIFIED_BY', $arFields))
+                if (array_key_exists('MODIFIED_BY', $arFields)) {
                     unset($arFields['MODIFIED_BY']);
+                }
             } else {
                 if ($boolUserExist) {
-                    if (!array_key_exists('MODIFIED_BY', $arFields) || intval($arFields["MODIFIED_BY"]) <= 0)
+                    if (!array_key_exists('MODIFIED_BY', $arFields) || intval($arFields["MODIFIED_BY"]) <= 0) {
                         $arFields["MODIFIED_BY"] = $intUserID;
+                    }
                 }
                 $arFields['~TIMESTAMP_X'] = $strDateFunction;
             }
@@ -82,9 +99,14 @@ class CAllCatalogImport
         global $DB;
 
         $ID = (int)$ID;
-        if ($ID <= 0)
+        if ($ID <= 0) {
             return false;
-        return $DB->Query("DELETE FROM b_catalog_export WHERE ID = " . $ID . " AND IS_EXPORT = 'N'", true, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+        }
+        return $DB->Query(
+            "DELETE FROM b_catalog_export WHERE ID = " . $ID . " AND IS_EXPORT = 'N'",
+            true,
+            "File: " . __FILE__ . "<br>Line: " . __LINE__
+        );
     }
 
     public static function GetList($arOrder = array("ID" => "ASC"), $arFilter = array(), $bCount = false)
@@ -92,24 +114,26 @@ class CAllCatalogImport
         global $DB;
         $arSqlSearch = array();
 
-        if (!is_array($arFilter))
+        if (!is_array($arFilter)) {
             $filter_keys = array();
-        else
+        } else {
             $filter_keys = array_keys($arFilter);
+        }
 
         for ($i = 0, $intCount = count($filter_keys); $i < $intCount; $i++) {
             $val = $DB->ForSql($arFilter[$filter_keys[$i]]);
-            if (strlen($val) <= 0)
+            if ($val == '') {
                 continue;
+            }
 
             $bInvert = false;
             $key = $filter_keys[$i];
-            if (substr($key, 0, 1) == "!") {
-                $key = substr($key, 1);
+            if (mb_substr($key, 0, 1) == "!") {
+                $key = mb_substr($key, 1);
                 $bInvert = true;
             }
 
-            switch (strtoupper($key)) {
+            switch (mb_strtoupper($key)) {
                 case "ID":
                     $arSqlSearch[] = "CE.ID " . ($bInvert ? "<>" : "=") . " " . (int)$val . "";
                     break;
@@ -152,7 +176,10 @@ class CAllCatalogImport
             "SELECT CE.ID, CE.FILE_NAME, CE.NAME, CE.IN_MENU, CE.IN_AGENT, " .
             "	CE.IN_CRON, CE.SETUP_VARS, CE.DEFAULT_PROFILE, CE.LAST_USE, CE.NEED_EDIT, " .
             "	" . $DB->DateToCharFunction("CE.LAST_USE", "FULL") . " as LAST_USE_FORMAT, " .
-            " CE.CREATED_BY, CE.MODIFIED_BY, " . $DB->DateToCharFunction('CE.TIMESTAMP_X', 'FULL') . ' as TIMESTAMP_X, ' . $DB->DateToCharFunction('CE.DATE_CREATE', 'FULL') . ' as DATE_CREATE ';
+            " CE.CREATED_BY, CE.MODIFIED_BY, " . $DB->DateToCharFunction(
+                'CE.TIMESTAMP_X',
+                'FULL'
+            ) . ' as TIMESTAMP_X, ' . $DB->DateToCharFunction('CE.DATE_CREATE', 'FULL') . ' as DATE_CREATE ';
 
         $strSqlFrom =
             "FROM b_catalog_export CE ";
@@ -180,22 +207,33 @@ class CAllCatalogImport
         $arSqlOrder = array();
         $arOrderKeys = array();
         foreach ($arOrder as $by => $order) {
-            $by = strtoupper($by);
-            $order = strtoupper($order);
-            if ($order != "ASC") $order = "DESC";
+            $by = mb_strtoupper($by);
+            $order = mb_strtoupper($order);
+            if ($order != "ASC") {
+                $order = "DESC";
+            }
             if (!in_array($by, $arOrderKeys)) {
-                if ($by == "NAME") $arSqlOrder[] = "CE.NAME " . $order;
-                elseif ($by == "FILE_NAME") $arSqlOrder[] = "CE.FILE_NAME " . $order;
-                elseif ($by == "DEFAULT_PROFILE") $arSqlOrder[] = "CE.DEFAULT_PROFILE " . $order;
-                elseif ($by == "IN_MENU") $arSqlOrder[] = "CE.IN_MENU " . $order;
-                elseif ($by == "LAST_USE") $arSqlOrder[] = "CE.LAST_USE " . $order;
-                elseif ($by == "IN_AGENT") $arSqlOrder[] = "CE.IN_AGENT " . $order;
-                elseif ($by == "IN_CRON") $arSqlOrder[] = "CE.IN_CRON " . $order;
-                elseif ($by == "NEED_EDIT") $arSqlOrder[] = "CE.NEED_EDIT " . $order;
-                else {
+                if ($by == "NAME") {
+                    $arSqlOrder[] = "CE.NAME " . $order;
+                } elseif ($by == "FILE_NAME") {
+                    $arSqlOrder[] = "CE.FILE_NAME " . $order;
+                } elseif ($by == "DEFAULT_PROFILE") {
+                    $arSqlOrder[] = "CE.DEFAULT_PROFILE " . $order;
+                } elseif ($by == "IN_MENU") {
+                    $arSqlOrder[] = "CE.IN_MENU " . $order;
+                } elseif ($by == "LAST_USE") {
+                    $arSqlOrder[] = "CE.LAST_USE " . $order;
+                } elseif ($by == "IN_AGENT") {
+                    $arSqlOrder[] = "CE.IN_AGENT " . $order;
+                } elseif ($by == "IN_CRON") {
+                    $arSqlOrder[] = "CE.IN_CRON " . $order;
+                } elseif ($by == "NEED_EDIT") {
+                    $arSqlOrder[] = "CE.NEED_EDIT " . $order;
+                } else {
                     $by = "ID";
-                    if (in_array($by, $arOrderKeys))
+                    if (in_array($by, $arOrderKeys)) {
                         continue;
+                    }
                     $arSqlOrder[] = "CE.ID " . $order;
                 }
                 $arOrderKeys[] = $by;
@@ -221,7 +259,10 @@ class CAllCatalogImport
             "SELECT CE.ID, CE.FILE_NAME, CE.NAME, CE.IN_MENU, CE.IN_AGENT, " .
             "	CE.IN_CRON, CE.SETUP_VARS, CE.DEFAULT_PROFILE, CE.LAST_USE, CE.NEED_EDIT, " .
             "	" . $DB->DateToCharFunction("CE.LAST_USE", "FULL") . " as LAST_USE_FORMAT, " .
-            " CE.CREATED_BY, CE.MODIFIED_BY, " . $DB->DateToCharFunction('CE.TIMESTAMP_X', 'FULL') . ' as TIMESTAMP_X, ' . $DB->DateToCharFunction('CE.DATE_CREATE', 'FULL') . ' as DATE_CREATE ' .
+            " CE.CREATED_BY, CE.MODIFIED_BY, " . $DB->DateToCharFunction(
+                'CE.TIMESTAMP_X',
+                'FULL'
+            ) . ' as TIMESTAMP_X, ' . $DB->DateToCharFunction('CE.DATE_CREATE', 'FULL') . ' as DATE_CREATE ' .
             "FROM b_catalog_export CE " .
             "WHERE CE.ID = " . intval($ID) . " " .
             "	AND CE.IS_EXPORT = 'N'";
@@ -238,12 +279,14 @@ class CAllCatalogImport
         global $DB;
 
         $profile_id = (int)$profile_id;
-        if ($profile_id <= 0)
+        if ($profile_id <= 0) {
             return false;
+        }
 
         $ar_profile = CCatalogImport::GetByID($profile_id);
-        if ((!$ar_profile) || ('Y' == $ar_profile['NEED_EDIT']))
+        if ((!$ar_profile) || ('Y' == $ar_profile['NEED_EDIT'])) {
             return false;
+        }
 
         $strFile = CATALOG_PATH2IMPORTS . $ar_profile["FILE_NAME"] . "_run.php";
         if (!file_exists($_SERVER["DOCUMENT_ROOT"] . $strFile)) {
@@ -256,8 +299,9 @@ class CAllCatalogImport
 
         $bFirstLoadStep = true;
 
-        if (!defined("CATALOG_LOAD_NO_STEP"))
+        if (!defined("CATALOG_LOAD_NO_STEP")) {
             define("CATALOG_LOAD_NO_STEP", true);
+        }
 
         $strImportErrorMessage = "";
         $strImportOKMessage = "";
@@ -268,8 +312,9 @@ class CAllCatalogImport
         $intSetupVarsCount = 0;
         if ('Y' != $ar_profile["DEFAULT_PROFILE"]) {
             parse_str($ar_profile["SETUP_VARS"], $arSetupVars);
-            if (!empty($arSetupVars) && is_array($arSetupVars))
+            if (!empty($arSetupVars) && is_array($arSetupVars)) {
                 $intSetupVarsCount = extract($arSetupVars, EXTR_SKIP);
+            }
         }
 
         global $arCatalogAvailProdFields;
@@ -300,7 +345,9 @@ class CAllCatalogImport
         include($_SERVER["DOCUMENT_ROOT"] . $strFile);
         CCatalogDiscountSave::Enable();
 
-        CCatalogImport::Update($profile_id, array(
+        CCatalogImport::Update(
+            $profile_id,
+            array(
                 "=LAST_USE" => $DB->GetNowFunction()
             )
         );

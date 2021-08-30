@@ -1,5 +1,6 @@
 <?
 /**********************************************************************/
+
 /**    DO NOT MODIFY THIS FILE                                       **/
 /**    MODIFICATION OF THIS FILE WILL ENTAIL SITE FAILURE            **/
 /**********************************************************************/
@@ -14,8 +15,9 @@ if (!function_exists('htmlspecialcharsbx')) {
     }
 }
 
-if (!$USER->CanDoOperation('view_other_settings') && !$USER->CanDoOperation('install_updates'))
+if (!$USER->CanDoOperation('view_other_settings') && !$USER->CanDoOperation('install_updates')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 
@@ -23,11 +25,18 @@ $sTableID = "tbl_update_log";
 $oSort = new CAdminSorting($sTableID, "date", "desc");
 $lAdmin = new CAdminList($sTableID, $oSort);
 
-$lAdmin->AddHeaders(array(
-    array("id" => "DESCRIPTION", "content" => GetMessage("SUP_HIST_DESCR"), "sort" => "description", "default" => true),
-    array("id" => "DATE", "content" => GetMessage("SUP_HIST_DATE"), "sort" => "date", "default" => true),
-    array("id" => "SUCCESS", "content" => GetMessage("SUP_HIST_STATUS"), "sort" => "success", "default" => true),
-));
+$lAdmin->AddHeaders(
+    array(
+        array(
+            "id" => "DESCRIPTION",
+            "content" => GetMessage("SUP_HIST_DESCR"),
+            "sort" => "description",
+            "default" => true
+        ),
+        array("id" => "DATE", "content" => GetMessage("SUP_HIST_DATE"), "sort" => "date", "default" => true),
+        array("id" => "SUCCESS", "content" => GetMessage("SUP_HIST_STATUS"), "sort" => "success", "default" => true),
+    )
+);
 
 $arLogRecs = array();
 if (file_exists($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/updater.log")
@@ -70,17 +79,25 @@ if (file_exists($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/updater.log")
     fclose($logf);
 
     $by = strtoupper($by);
-    if ($by == "SUCCESS")
+    if ($by == "SUCCESS") {
         $sort = 0;
-    elseif ($by == "DESCRIPTION")
+    } elseif ($by == "DESCRIPTION") {
         $sort = 2;
-    else
+    } else {
         $sort = 1;
-    if (strtoupper($order) == "ASC")
+    }
+    if (strtoupper($order) == "ASC") {
         $ord = 1;
-    else
+    } else {
         $ord = -1;
-    usort($arLogRecs, create_function('$a, $b', 'return strcmp($a[' . $sort . '], $b[' . $sort . '])*(' . $ord . ');'));
+    }
+
+    usort(
+        $arLogRecs,
+        function ($a, $b) use ($sort, $ord) {
+            return (strcmp($a[$sort], $b[$sort]) * $ord);
+        }
+    );
 }
 
 $rsData = new CAdminResult(null, $sTableID);
@@ -95,15 +112,23 @@ while ($rec = $rsData->Fetch()) {
     $aDate = explode(" ", htmlspecialcharsbx($rec[1]));
     $row->AddField("DATE", '<span style="white-space:nowrap">' . $aDate[0] . '</span> ' . $aDate[1]);
 
-    $row->AddField("DESCRIPTION", ($rec[3] <> "" ? '<a href="javascript:void(0)" onClick="jsUtils.ToggleDiv(\'descr_' . $n . '\')" title="' . GetMessage("HINT_WIND_EXEC_ALT") . '">' . htmlspecialcharsbx($rec[2]) . '</a>' : htmlspecialcharsbx($rec[2])) . '<div id="descr_' . $n . '" style="display:none;">' . $rec[3] . '</div>');
+    $row->AddField(
+        "DESCRIPTION",
+        ($rec[3] <> "" ? '<a href="javascript:void(0)" onClick="jsUtils.ToggleDiv(\'descr_' . $n . '\')" title="' . GetMessage(
+                "HINT_WIND_EXEC_ALT"
+            ) . '">' . htmlspecialcharsbx($rec[2]) . '</a>' : htmlspecialcharsbx(
+            $rec[2]
+        )) . '<div id="descr_' . $n . '" style="display:none;">' . $rec[3] . '</div>'
+    );
 
     $s = "";
-    if ($rec[0] == "S")
+    if ($rec[0] == "S") {
         $s = '<div class="lamp-green" style="float:left"></div>' . GetMessage("SUP_HIST_SUCCESS");
-    elseif ($rec[0] == "E")
+    } elseif ($rec[0] == "E") {
         $s = '<div class="lamp-red" style="float:left"></div>' . GetMessage("SUP_HIST_ERROR");
-    elseif ($rec[0] == "N")
+    } elseif ($rec[0] == "N") {
         $s = '<div class="lamp-yellow" style="float:left"></div>' . GetMessage("SUP_HIST_NOTES");
+    }
     $row->AddField("SUCCESS", $s);
 
     $n++;

@@ -1,4 +1,5 @@
 <? /** @global CMain $APPLICATION */
+
 /** @global CUser $USER */
 /** @global string $DBType */
 
@@ -19,8 +20,9 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/general/admin_too
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
 
-if ($saleModulePermissions == "D")
+if ($saleModulePermissions == "D") {
     $APPLICATION->AuthForm(Loc::getMessage("ACCESS_DENIED"));
+}
 
 $LOCAL_SITE_LIST_CACHE = array();
 $LOCAL_PERSON_TYPE_CACHE = array();
@@ -41,8 +43,9 @@ $dbAccessibleSites = CSaleGroupAccessToSite::GetList(
     array("SITE_ID")
 );
 while ($arAccessibleSite = $dbAccessibleSites->Fetch()) {
-    if (!in_array($arAccessibleSite["SITE_ID"], $arAccessibleSites))
+    if (!in_array($arAccessibleSite["SITE_ID"], $arAccessibleSites)) {
         $arAccessibleSites[] = $arAccessibleSite["SITE_ID"];
+    }
 }
 
 $exportMode = (isset($_REQUEST['mode']) && $_REQUEST['mode'] == 'excel');
@@ -81,18 +84,21 @@ $arFilterFields = array(
 $lAdmin->InitFilter($arFilterFields);
 
 $filter_lang = trim($filter_lang);
-if (strlen($filter_lang) > 0) {
-    if (!in_array($filter_lang, $arAccessibleSites) && $saleModulePermissions < "W")
+if ($filter_lang <> '') {
+    if (!in_array($filter_lang, $arAccessibleSites) && $saleModulePermissions < "W") {
         $filter_lang = "";
+    }
 }
 
 
-if (strlen($filter_lang) > 0 && $filter_lang != "NOT_REF")
+if ($filter_lang <> '' && $filter_lang != "NOT_REF") {
     $arFilter["=LID"] = trim($filter_lang);
+}
 
 if ($saleModulePermissions < "W") {
-    if (strlen($filter_lang) <= 0 && count($arAccessibleSites) > 0)
+    if ($filter_lang == '' && count($arAccessibleSites) > 0) {
         $arFilter["=LID"] = $arAccessibleSites;
+    }
 }
 
 $arFilter = array();
@@ -108,74 +114,105 @@ if ($saleModulePermissions == "P") {
 
     $arSelectFields[] = 'RESPONSIBLE_ID';
     $arSelectFields[] = 'COMPANY_ID';
-
 }
 
-if ((int)($filter_id_from) > 0)
+if ((int)($filter_id_from) > 0) {
     $arFilter[">=ID"] = (int)($filter_id_from);
-if ((int)($filter_id_to) > 0)
+}
+if ((int)($filter_id_to) > 0) {
     $arFilter["<=ID"] = (int)($filter_id_to);
-if ((int)($filter_order_id_from) > 0)
+}
+if ((int)($filter_order_id_from) > 0) {
     $arFilter[">=ORDER_ID"] = (int)($filter_order_id_from);
-if ((int)($filter_order_id_to) > 0)
+}
+if ((int)($filter_order_id_to) > 0) {
     $arFilter["<=ORDER_ID"] = (int)($filter_order_id_to);
-if (strlen($filter_date_from) > 0)
+}
+if ($filter_date_from <> '') {
     $arFilter[">=DATE_INSERT"] = trim($filter_date_from);
-if (strlen($filter_date_to) > 0) {
+}
+if ($filter_date_to <> '') {
     if ($arDate = ParseDateTime($filter_date_to, CSite::GetDateFormat("FULL", SITE_ID))) {
-        if (strlen($filter_date_to) < 11) {
+        if (mb_strlen($filter_date_to) < 11) {
             $arDate["HH"] = 23;
             $arDate["MI"] = 59;
             $arDate["SS"] = 59;
         }
 
-        $filter_date_to = date($DB->DateFormatToPHP(CSite::GetDateFormat("FULL", SITE_ID)), mktime($arDate["HH"], $arDate["MI"], $arDate["SS"], $arDate["MM"], $arDate["DD"], $arDate["YYYY"]));
+        $filter_date_to = date(
+            $DB->DateFormatToPHP(CSite::GetDateFormat("FULL", SITE_ID)),
+            mktime(
+                $arDate["HH"],
+                $arDate["MI"],
+                $arDate["SS"],
+                $arDate["MM"],
+                $arDate["DD"],
+                $arDate["YYYY"]
+            )
+        );
         $arFilter["<=DATE_INSERT"] = $filter_date_to;
     } else {
         $filter_date_to = "";
     }
 }
 
-if (strlen($filter_date_archived_from) > 0)
+if ($filter_date_archived_from <> '') {
     $arFilter[">=DATE_ARCHIVED"] = trim($filter_date_archived_from);
-if (strlen($filter_date_archived_to) > 0) {
+}
+if ($filter_date_archived_to <> '') {
     if ($arDate = ParseDateTime($filter_date_archived_to, CSite::GetDateFormat("FULL", SITE_ID))) {
-        if (strlen($filter_date_archived_to) < 11) {
+        if (mb_strlen($filter_date_archived_to) < 11) {
             $arDate["HH"] = 23;
             $arDate["MI"] = 59;
             $arDate["SS"] = 59;
         }
 
-        $filter_date_archived_to = date($DB->DateFormatToPHP(CSite::GetDateFormat("FULL", SITE_ID)), mktime($arDate["HH"], $arDate["MI"], $arDate["SS"], $arDate["MM"], $arDate["DD"], $arDate["YYYY"]));
+        $filter_date_archived_to = date(
+            $DB->DateFormatToPHP(CSite::GetDateFormat("FULL", SITE_ID)),
+            mktime(
+                $arDate["HH"],
+                $arDate["MI"],
+                $arDate["SS"],
+                $arDate["MM"],
+                $arDate["DD"],
+                $arDate["YYYY"]
+            )
+        );
         $arFilter["<=DATE_ARCHIVED"] = $filter_date_archived_to;
     } else {
         $filter_date_archived_to = "";
     }
 }
 
-if ((int)($filter_user_id) > 0)
+if ((int)($filter_user_id) > 0) {
     $arFilter["=USER_ID"] = (int)($filter_user_id);
+}
 if (is_array($filter_group_id) && count($filter_group_id) > 0) {
     foreach ($filter_group_id as $v) {
-        if ((int)($v) > 0)
+        if ((int)($v) > 0) {
             $arFilter["USER_GROUP.GROUP_ID"][] = $v;
+        }
     }
 }
 
 if (isset($filter_person_type) && is_array($filter_person_type) && count($filter_person_type) > 0) {
     $countFilterPerson = count($filter_person_type);
     for ($i = 0; $i < $countFilterPerson; $i++) {
-        if ((int)($filter_person_type[$i]) > 0)
+        if ((int)($filter_person_type[$i]) > 0) {
             $arFilter["=PERSON_TYPE_ID"][] = $filter_person_type[$i];
+        }
     }
 }
 
-if ((float)($filter_price_from) > 0)
+if ((float)($filter_price_from) > 0) {
     $arFilter[">=PRICE"] = (float)($filter_price_from);
-if ((float)($filter_price_to) > 0)
+}
+if ((float)($filter_price_to) > 0) {
     $arFilter["<PRICE"] = (float)($filter_price_to);
-if (strlen($filter_account_number) > 0)
+}
+if ($filter_account_number <> '') {
     $arFilter["ACCOUNT_NUMBER"] = trim($filter_account_number);
+}
 
 if (!empty($_REQUEST['OID']) && is_array($_REQUEST['OID'])) {
     foreach ($_REQUEST['OID'] as $orderId) {
@@ -199,22 +236,25 @@ if (!empty($filter_product_id)) {
     }
 }
 
-if (isset($filter_status) && !is_array($filter_status) && strlen($filter_status) > 0)
+if (isset($filter_status) && !is_array($filter_status) && $filter_status <> '') {
     $filter_status = array($filter_status);
+}
 if (isset($filter_status) && is_array($filter_status) && count($filter_status) > 0) {
     $countFilter = count($filter_status);
     for ($i = 0; $i < $countFilter; $i++) {
         $filter_status[$i] = trim($filter_status[$i]);
-        if (strlen($filter_status[$i]) > 0)
+        if ($filter_status[$i] <> '') {
             $arFilter["=STATUS_ID"][] = $filter_status[$i];
+        }
     }
 }
 
 $allowedStatusesView = \Bitrix\Sale\OrderStatus::getStatusesUserCanDoOperations($USER->GetID(), array('view'));
 
 if ($saleModulePermissions < "W") {
-    if (!$arFilter["=STATUS_ID"])
+    if (!$arFilter["=STATUS_ID"]) {
         $arFilter["=STATUS_ID"] = array();
+    }
 
     $intersected = array_intersect($arFilter["=STATUS_ID"], $allowedStatusesView);
 
@@ -231,19 +271,34 @@ if ($saleModulePermissions < "W") {
     }
 }
 
-if (strlen($filter_payed) > 0) $arFilter["=PAYED"] = trim($filter_payed);
-if (strlen($filter_canceled) > 0) $arFilter["=CANCELED"] = trim($filter_canceled);
-if (strlen($filter_deducted) > 0) $arFilter["=DEDUCTED"] = trim($filter_deducted);
-if ((int)($filter_user_id) > 0) $arFilter["=USER_ID"] = (int)($filter_user_id);
-if (strlen($filter_user_login) > 0) $arFilter["USER.LOGIN"] = trim($filter_user_login);
-if (strlen($filter_user_email) > 0) $arFilter["USER.EMAIL"] = trim($filter_user_email);
-if (strlen($filter_xml_id) > 0) $arFilter["%XML_ID"] = trim($filter_xml_id);
+if ($filter_payed <> '') {
+    $arFilter["=PAYED"] = trim($filter_payed);
+}
+if ($filter_canceled <> '') {
+    $arFilter["=CANCELED"] = trim($filter_canceled);
+}
+if ($filter_deducted <> '') {
+    $arFilter["=DEDUCTED"] = trim($filter_deducted);
+}
+if ((int)($filter_user_id) > 0) {
+    $arFilter["=USER_ID"] = (int)($filter_user_id);
+}
+if ($filter_user_login <> '') {
+    $arFilter["USER.LOGIN"] = trim($filter_user_login);
+}
+if ($filter_user_email <> '') {
+    $arFilter["USER.EMAIL"] = trim($filter_user_email);
+}
+if ($filter_xml_id <> '') {
+    $arFilter["%XML_ID"] = trim($filter_xml_id);
+}
 
 if (isset($filter_person_type) && is_array($filter_person_type) && count($filter_person_type) > 0) {
     $countFilterPerson = count($filter_person_type);
     for ($i = 0; $i < $countFilterPerson; $i++) {
-        if ((int)($filter_person_type[$i]) > 0)
+        if ((int)($filter_person_type[$i]) > 0) {
             $arFilter["=PERSON_TYPE_ID"][] = $filter_person_type[$i];
+        }
     }
 }
 
@@ -271,8 +326,9 @@ if ($idLists && $saleModulePermissions == "W") {
     switch ($_REQUEST['action_button']) {
         case "delete":
             foreach ($idLists as $id) {
-                if ((int)$id)
+                if ((int)$id) {
                     Sale\Archive\Manager::delete($id);
+                }
             }
             break;
     }
@@ -292,19 +348,51 @@ $arColumn2Field = array(
 $arHeaders = array(
 
     array("id" => "ORDER_ID", "content" => Loc::getMessage("SALE_F_ORDER_ID"), "sort" => "ORDER_ID", "default" => true),
-    array("id" => "ACCOUNT_NUMBER", "content" => Loc::getMessage("SOA_ACCOUNT_NUMBER"), "sort" => "ACCOUNT_NUMBER", "default" => true),
-    array("id" => "DATE_INSERT", "content" => Loc::getMessage("SI_DATE_INSERT_ORDER"), "sort" => "DATE_INSERT", "default" => true),
+    array(
+        "id" => "ACCOUNT_NUMBER",
+        "content" => Loc::getMessage("SOA_ACCOUNT_NUMBER"),
+        "sort" => "ACCOUNT_NUMBER",
+        "default" => true
+    ),
+    array(
+        "id" => "DATE_INSERT",
+        "content" => Loc::getMessage("SI_DATE_INSERT_ORDER"),
+        "sort" => "DATE_INSERT",
+        "default" => true
+    ),
     array("id" => "USER", "content" => Loc::getMessage("SI_BUYER"), "sort" => "USER_ID", "default" => true),
     array("id" => "PRICE", "content" => Loc::getMessage("SI_SUM"), "sort" => "PRICE", "default" => true),
-    array("id" => "STATUS_ID", "content" => Loc::getMessage("SI_STATUS"), "sort" => "STATUS_ID", "default" => true, "title" => Loc::getMessage("SO_S_DATE_STATUS")),
-    array("id" => "PAYED", "content" => Loc::getMessage("SI_PAID"), "sort" => "PAYED", "default" => true, "title" => Loc::getMessage("SO_S_DATE_PAYED")),
+    array(
+        "id" => "STATUS_ID",
+        "content" => Loc::getMessage("SI_STATUS"),
+        "sort" => "STATUS_ID",
+        "default" => true,
+        "title" => Loc::getMessage("SO_S_DATE_STATUS")
+    ),
+    array(
+        "id" => "PAYED",
+        "content" => Loc::getMessage("SI_PAID"),
+        "sort" => "PAYED",
+        "default" => true,
+        "title" => Loc::getMessage("SO_S_DATE_PAYED")
+    ),
     array("id" => "CANCELED", "content" => Loc::getMessage("SI_CANCELED"), "sort" => "CANCELED", "default" => true),
     array("id" => "DEDUCTED", "content" => Loc::getMessage("SI_DEDUCTED"), "sort" => "DEDUCTED", "default" => true),
     array("id" => "BASKET", "content" => Loc::getMessage("SI_ITEMS"), "sort" => "", "default" => true),
-    array("id" => "DATE_ARCHIVED", "content" => Loc::getMessage("SI_DATE_ARCHIVED"), "sort" => "DATE_ARCHIVED", "default" => true),
+    array(
+        "id" => "DATE_ARCHIVED",
+        "content" => Loc::getMessage("SI_DATE_ARCHIVED"),
+        "sort" => "DATE_ARCHIVED",
+        "default" => true
+    ),
     array("id" => "ID", "content" => "ID", "sort" => "ID"),
     array("id" => "LID", "content" => Loc::getMessage("SI_SITE"), "sort" => "LID"),
-    array("id" => "USER_EMAIL", "content" => Loc::getMessage("SALE_F_USER_EMAIL"), "sort" => "USER_EMAIL", "default" => false),
+    array(
+        "id" => "USER_EMAIL",
+        "content" => Loc::getMessage("SALE_F_USER_EMAIL"),
+        "sort" => "USER_EMAIL",
+        "default" => false
+    ),
     array("id" => "PERSON_TYPE", "content" => Loc::getMessage("SI_PAYER_TYPE"), "sort" => "PERSON_TYPE_ID"),
     array("id" => "BASKET_NAME", "content" => Loc::getMessage("SOA_BASKET_NAME"), "sort" => ""),
     array("id" => "BASKET_PRODUCT_ID", "content" => Loc::getMessage("SOA_BASKET_PRODUCT_ID"), "sort" => ""),
@@ -318,30 +406,47 @@ $arHeaders = array(
 $lAdmin->AddHeaders($arHeaders);
 
 $arSelectFields = array(
-    "ORDER_ID", "ACCOUNT_NUMBER", "USER_ID", "PRICE", "DATE_ARCHIVED", "DATE_INSERT", "STATUS_ID",
-    "PAYED", "DEDUCTED", "CANCELED", "PERSON_TYPE_ID", "XML_ID", "ID_1C", "ID", "LID", "USER_EMAIL"
+    "ORDER_ID",
+    "ACCOUNT_NUMBER",
+    "USER_ID",
+    "PRICE",
+    "DATE_ARCHIVED",
+    "DATE_INSERT",
+    "STATUS_ID",
+    "PAYED",
+    "DEDUCTED",
+    "CANCELED",
+    "PERSON_TYPE_ID",
+    "XML_ID",
+    "ID_1C",
+    "ID",
+    "LID",
+    "USER_EMAIL"
 );
 
 $arVisibleColumns = $lAdmin->GetVisibleHeaderColumns();
 $bNeedProps = false;
 $bNeedBasket = false;
 foreach ($arVisibleColumns as $visibleColumn) {
-    if (!$bNeedProps && substr($visibleColumn, 0, strlen("PROP_")) == "PROP_")
+    if (!$bNeedProps && mb_substr($visibleColumn, 0, mb_strlen("PROP_")) == "PROP_") {
         $bNeedProps = true;
+    }
     if (
         !$bNeedBasket
         && $visibleColumn != 'BASKET_DISCOUNT_COUPON'
         && $visibleColumn != 'BASKET_DISCOUNT_NAME'
-        && strpos($visibleColumn, "BASKET") !== false
-    )
+        && mb_strpos($visibleColumn, "BASKET") !== false
+    ) {
         $bNeedBasket = true;
+    }
 
     if (array_key_exists($visibleColumn, $arColumn2Field)) {
         if (is_array($arColumn2Field[$visibleColumn]) && count($arColumn2Field[$visibleColumn]) > 0) {
             $countArColumn = count($arColumn2Field[$visibleColumn]);
             for ($i = 0; $i < $countArColumn; $i++) {
-                if (!in_array($arColumn2Field[$visibleColumn][$i], $arSelectFields))
+                if (!in_array($arColumn2Field[$visibleColumn][$i], $arSelectFields)) {
                     $arSelectFields[] = $arColumn2Field[$visibleColumn][$i];
+                }
             }
         }
     }
@@ -350,16 +455,18 @@ foreach ($arVisibleColumns as $visibleColumn) {
 if (in_array('USER_EMAIL', $arSelectFields)) {
     $arSelectFields["USER_EMAIL"] = 'USER.EMAIL';
 
-    if ($searchIndex = array_search('USER_EMAIL', $arSelectFields))
+    if ($searchIndex = array_search('USER_EMAIL', $arSelectFields)) {
         unset($arSelectFields[$searchIndex]);
+    }
 }
 
 $filterOrderSelection = array();
 
 if (!empty($by) && in_array($by, $arSelectFields)) {
-    if (!isset($order))
+    if (!isset($order)) {
         $order = "DESC";
-    $filterOrderSelection[strtoupper($by)] = $order;
+    }
+    $filterOrderSelection[mb_strtoupper($by)] = $order;
 }
 
 $ordersIds = array();
@@ -382,15 +489,17 @@ $formattedUserNames = array();
 
 $nav = new \Bitrix\Main\UI\AdminPageNavigation("nav-archive");
 
-$orderIterator = \Bitrix\Sale\Internals\OrderArchiveTable::getList(array(
-    'filter' => $arFilterTmp,
-    'select' => $arSelectFields,
-    'runtime' => $runtimeFields,
-    'order' => $filterOrderSelection,
-    'count_total' => true,
-    'offset' => $nav->getOffset(),
-    'limit' => $nav->getLimit(),
-));
+$orderIterator = \Bitrix\Sale\Internals\OrderArchiveTable::getList(
+    array(
+        'filter' => $arFilterTmp,
+        'select' => $arSelectFields,
+        'runtime' => $runtimeFields,
+        'order' => $filterOrderSelection,
+        'count_total' => true,
+        'offset' => $nav->getOffset(),
+        'limit' => $nav->getLimit(),
+    )
+);
 
 $nav->setRecordCount($orderIterator->getCount());
 
@@ -402,10 +511,12 @@ while ($order = $orderIterator->fetch()) {
 
 if (!empty($orderList) && is_array($orderList)) {
     if (\Bitrix\Main\Analytics\Catalog::isOn() || $bNeedBasket) {
-        $dbItemsList = \Bitrix\Sale\Internals\BasketArchiveTable::getList(array(
-            'order' => array('ID' => 'ASC'),
-            'filter' => array('=ARCHIVE_ID' => array_keys($orderList))
-        ));
+        $dbItemsList = \Bitrix\Sale\Internals\BasketArchiveTable::getList(
+            array(
+                'order' => array('ID' => 'ASC'),
+                'filter' => array('=ARCHIVE_ID' => array_keys($orderList))
+            )
+        );
 
         while ($item = $dbItemsList->fetch()) {
             $basketList[$item['ARCHIVE_ID']][$item['ID']] = $item;
@@ -432,12 +543,21 @@ if (!empty($orderList) && is_array($orderList)) {
 							<td><b>##ID##</b></td>
 						</tr>
 					</table>';
-        $row->AddField("ORDER_ID", str_replace('##ID##', Loc::getMessage("SO_ORDER_ID_PREF") . $arOrder["ORDER_ID"], $rowTmp));
+        $row->AddField(
+            "ORDER_ID",
+            str_replace('##ID##', Loc::getMessage("SO_ORDER_ID_PREF") . $arOrder["ORDER_ID"], $rowTmp)
+        );
 
         //ACCOUNT_NUMBER
         $fieldValue = "";
         if (in_array("ACCOUNT_NUMBER", $arVisibleColumns)) {
-            $fieldValue = str_replace('##ID##', Loc::getMessage("SO_ORDER_ID_PREF") . $arOrder["ACCOUNT_NUMBER"], $rowTmp);
+            $fieldValue = str_replace(
+                '##ID##',
+                Loc::getMessage("SO_ORDER_ID_PREF") . htmlspecialcharsbx(
+                    $arOrder["ACCOUNT_NUMBER"]
+                ),
+                $rowTmp
+            );
         }
         $row->AddField("ACCOUNT_NUMBER", $fieldValue);
 
@@ -456,8 +576,9 @@ if (!empty($orderList) && is_array($orderList)) {
             if (!isset($LOCAL_SITE_LIST_CACHE[$arOrder["LID"]])
                 || empty($LOCAL_SITE_LIST_CACHE[$arOrder["LID"]])) {
                 $dbSite = CSite::GetByID($arOrder["LID"]);
-                if ($arSite = $dbSite->Fetch())
+                if ($arSite = $dbSite->Fetch()) {
                     $LOCAL_SITE_LIST_CACHE[$arOrder["LID"]] = htmlspecialcharsbx($arSite["NAME"]);
+                }
             }
             $fieldValue = "[" . $arOrder["LID"] . "] " . $LOCAL_SITE_LIST_CACHE[$arOrder["LID"]];
         }
@@ -470,15 +591,20 @@ if (!empty($orderList) && is_array($orderList)) {
                 || empty($LOCAL_PERSON_TYPE_CACHE[$arOrder["PERSON_TYPE_ID"]])) {
                 $personTypeList = Sale\PersonType::load($arOrder["LID"]);
 
-                if (count($personTypeList))
-                    $LOCAL_PERSON_TYPE_CACHE[$arOrder["PERSON_TYPE_ID"]] = htmlspecialcharsbx($personTypeList[$arOrder["PERSON_TYPE_ID"]]["NAME"]);
+                if (count($personTypeList)) {
+                    $LOCAL_PERSON_TYPE_CACHE[$arOrder["PERSON_TYPE_ID"]] = htmlspecialcharsbx(
+                        $personTypeList[$arOrder["PERSON_TYPE_ID"]]["NAME"]
+                    );
+                }
             }
             $fieldValue = "[";
-            if ($saleModulePermissions >= "W")
+            if ($saleModulePermissions >= "W") {
                 $fieldValue .= '<a href="/bitrix/admin/sale_person_type.php?lang=' . LANGUAGE_ID . '">';
+            }
             $fieldValue .= $arOrder["PERSON_TYPE_ID"];
-            if ($saleModulePermissions >= "W")
+            if ($saleModulePermissions >= "W") {
                 $fieldValue .= "</a>";
+            }
             $fieldValue .= "] " . $LOCAL_PERSON_TYPE_CACHE[$arOrder["PERSON_TYPE_ID"]];
         }
         $row->AddField("PERSON_TYPE", $fieldValue);
@@ -486,7 +612,9 @@ if (!empty($orderList) && is_array($orderList)) {
         //PAYED
         $fieldValue = "";
         if (in_array("PAYED", $arVisibleColumns)) {
-            $fieldValue .= '<span id="payed_' . $arOrder['ID'] . '">' . (($arOrder["PAYED"] == "Y") ? Loc::getMessage("SO_YES") : Loc::getMessage("SO_NO")) . "</span>";
+            $fieldValue .= '<span id="payed_' . $arOrder['ID'] . '">' . (($arOrder["PAYED"] == "Y") ? Loc::getMessage(
+                    "SO_YES"
+                ) : Loc::getMessage("SO_NO")) . "</span>";
         }
         $row->AddField("PAYED", $fieldValue);
 
@@ -495,7 +623,9 @@ if (!empty($orderList) && is_array($orderList)) {
             || $row->bEditMode == true && !CSaleOrder::CanUserCancelOrder($orderId, $arUserGroups, $intUserID)) {
             $fieldValue = "";
             if (in_array("CANCELED", $arVisibleColumns)) {
-                $fieldValue .= '<span id="cancel_' . $arOrder['ID'] . '">' . (($arOrder["CANCELED"] == "Y") ? Loc::getMessage("SO_YES") : Loc::getMessage("SO_NO")) . "</span>";
+                $fieldValue .= '<span id="cancel_' . $arOrder['ID'] . '">' . (($arOrder["CANCELED"] == "Y") ? Loc::getMessage(
+                        "SO_YES"
+                    ) : Loc::getMessage("SO_NO")) . "</span>";
             }
             $row->AddField("CANCELED", $fieldValue);
         } else {
@@ -505,7 +635,9 @@ if (!empty($orderList) && is_array($orderList)) {
         //DEDUCTED
         $fieldValue = "";
         if (in_array("PAYED", $arVisibleColumns)) {
-            $fieldValue .= '<span id="payed_' . $arOrder['ID'] . '">' . (($arOrder["DEDUCTED"] == "Y") ? Loc::getMessage("SO_YES") : Loc::getMessage("SO_NO")) . "</span>";
+            $fieldValue .= '<span id="payed_' . $arOrder['ID'] . '">' . (($arOrder["DEDUCTED"] == "Y") ? Loc::getMessage(
+                    "SO_YES"
+                ) : Loc::getMessage("SO_NO")) . "</span>";
         }
         $row->AddField("DEDUCTED", $fieldValue);
 
@@ -517,18 +649,20 @@ if (!empty($orderList) && is_array($orderList)) {
             if (in_array("STATUS_ID", $arVisibleColumns)) {
                 if (!isset($LOCAL_STATUS_CACHE[$arOrder["STATUS_ID"]])
                     || empty($LOCAL_STATUS_CACHE[$arOrder["STATUS_ID"]])) {
-                    $arStatus = StatusTable::getList(array(
-                        'select' => array(
-                            'NAME' => 'Bitrix\Sale\Internals\StatusLangTable:STATUS.NAME',
-                            'COLOR'
-                        ),
-                        'filter' => array(
-                            '=ID' => $arOrder["STATUS_ID"],
-                            '=Bitrix\Sale\Internals\StatusLangTable:STATUS.LID' => LANGUAGE_ID,
-                            '=TYPE' => 'O'
-                        ),
-                        'limit' => 1,
-                    ))->fetch();
+                    $arStatus = StatusTable::getList(
+                        array(
+                            'select' => array(
+                                'NAME' => 'Bitrix\Sale\Internals\StatusLangTable:STATUS.NAME',
+                                'COLOR'
+                            ),
+                            'filter' => array(
+                                '=ID' => $arOrder["STATUS_ID"],
+                                '=Bitrix\Sale\Internals\StatusLangTable:STATUS.LID' => LANGUAGE_ID,
+                                '=TYPE' => 'O'
+                            ),
+                            'limit' => 1,
+                        )
+                    )->fetch();
 
                     if ($arStatus) {
                         $LOCAL_STATUS_CACHE[$arOrder["STATUS_ID"]]['NAME'] = htmlspecialcharsEx($arStatus["NAME"]);
@@ -538,19 +672,21 @@ if (!empty($orderList) && is_array($orderList)) {
 
                 $fieldValueTmp .= "[";
 
-                if ($saleModulePermissions >= "W")
+                if ($saleModulePermissions >= "W") {
                     $fieldValueTmp .= '<a href="/bitrix/admin/sale_status_edit.php?ID=' . $arOrder["STATUS_ID"] . '&lang=' . LANGUAGE_ID . '">';
+                }
 
                 $fieldValueTmp .= $arOrder["STATUS_ID"];
 
-                if ($saleModulePermissions >= "W")
+                if ($saleModulePermissions >= "W") {
                     $fieldValueTmp .= "</a>";
+                }
 
                 $fieldValueTmp .= "] " . $LOCAL_STATUS_CACHE[$arOrder["STATUS_ID"]]['NAME'];
                 $fieldValue .= '<span id="status_order_' . $arOrder["ID"] . '">' . $LOCAL_STATUS_CACHE[$arOrder["STATUS_ID"]]['NAME'] . '</span>';
                 $colorRGB = array();
                 $colorRGB = sscanf($LOCAL_STATUS_CACHE[$arOrder["STATUS_ID"]]['COLOR'], "#%02x%02x%02x");
-                if (count($colorRGB)) {
+                if (is_array($colorRGB) && !empty($colorRGB)) {
                     $color = "background:rgba(" . $colorRGB[0] . "," . $colorRGB[1] . "," . $colorRGB[2] . ",0.6);";
                     $fieldValue = '<div style=	"' . $color . '
 									margin: 0 0 0 -16px;
@@ -560,8 +696,9 @@ if (!empty($orderList) && is_array($orderList)) {
                 }
                 $fieldValueTmp .= "<br />" . $arOrder["DATE_STATUS"];
 
-                if ((int)($arOrder["EMP_STATUS_ID"]) > 0)
+                if ((int)($arOrder["EMP_STATUS_ID"]) > 0) {
                     $fieldValueTmp .= '<br />' . $formattedUserNames[$arOrder["EMP_STATUS_ID"]];
+                }
 
                 $sScript .= "
 					new top.BX.CHint({
@@ -578,7 +715,12 @@ if (!empty($orderList) && is_array($orderList)) {
             $row->AddField("STATUS_ID", $fieldValue);
         }
 
-        $row->AddField("PRICE", '<span style="white-space:nowrap;">' . htmlspecialcharsbx(SaleFormatCurrency($arOrder["PRICE"], $arOrder["CURRENCY"])) . '</span>');
+        $row->AddField(
+            "PRICE",
+            '<span style="white-space:nowrap;">' . htmlspecialcharsbx(
+                SaleFormatCurrency($arOrder["PRICE"], $arOrder["CURRENCY"])
+            ) . '</span>'
+        );
 
         $fieldValue = "";
 
@@ -607,8 +749,9 @@ if (!empty($orderList) && is_array($orderList)) {
             foreach ($basketItems as $arItem) {
                 $arElementId[] = $arItem["PRODUCT_ID"];
 
-                if (CSaleBasketHelper::isSetParent($arItem) || CSaleBasketHelper::isSetItem($arItem))
+                if (CSaleBasketHelper::isSetParent($arItem) || CSaleBasketHelper::isSetItem($arItem)) {
                     $parentItemFound = true;
+                }
             }
 
             $basketItems = getMeasures($basketItems);
@@ -617,10 +760,11 @@ if (!empty($orderList) && is_array($orderList)) {
                 $measure = (isset($arItem["MEASURE_TEXT"])) ? $arItem["MEASURE_TEXT"] : Loc::getMessage("SO_SHT");
 
                 if ($bNeedLine) {
-                    if (!CSaleBasketHelper::isSetItem($arItem))
+                    if (!CSaleBasketHelper::isSetItem($arItem)) {
                         $separator = $basketSeparator;
-                    else
+                    } else {
                         $separator = $basketSetSeparator;
+                    }
                 }
 
                 $fieldName .= $separator;
@@ -648,68 +792,90 @@ if (!empty($orderList) && is_array($orderList)) {
 
                 $fieldValue .= "<div " . $hidden . " " . $setItemClass . ">";
 
-                if ($arItem['RECOMMENDATION'])
+                if ($arItem['RECOMMENDATION']) {
                     $fieldValue .= '<div class="bx-adm-bigdata-icon-medium-inner"></div>';
+                }
 
                 $fieldValue .= "[" . $arItem["PRODUCT_ID"] . "] ";
 
                 $fieldValue .= htmlspecialcharsbx($arItem["NAME"]);
-                if (strlen($arItem["DETAIL_PAGE_URL"]) > 0)
+                if ($arItem["DETAIL_PAGE_URL"] <> '') {
                     $fieldValue .= "</a>";
+                }
 
-                $fieldValue .= " <nobr>(" . Sale\BasketItem::formatQuantity($arItem["QUANTITY"]) . " " . $measure . ")</nobr>";
+                $fieldValue .= " <nobr>(" . Sale\BasketItem::formatQuantity(
+                        $arItem["QUANTITY"]
+                    ) . " " . $measure . ")</nobr>";
 
                 if (CSaleBasketHelper::isSetParent($arItem)) {
                     $setParentId = $arItem["ID"];
                     $fieldValue .= '<div class="set-link-block">';
-                    $fieldValue .= '<a class="dashed-link show-set-link" href="javascript:void(0);" id="set_toggle_link_' . $arItem["ID"] . '" onclick="fToggleSetItems(' . $arItem["ID"] . ')">' . Loc::getMessage("SOA_SHOW_SET") . "</a>";
+                    $fieldValue .= '<a class="dashed-link show-set-link" href="javascript:void(0);" id="set_toggle_link_' . $arItem["ID"] . '" onclick="fToggleSetItems(' . $arItem["ID"] . ')">' . Loc::getMessage(
+                            "SOA_SHOW_SET"
+                        ) . "</a>";
                     $fieldValue .= "</div>";
                 }
 
-                if ($bNeedLine)
+                if ($bNeedLine) {
                     $fieldValue .= $basketSeparator;
+                }
 
                 $fieldValue .= "</div>";
 
-                if (strlen($arItem["NAME"]) > 0) {
+                if ($arItem["NAME"] <> '') {
                     $fieldName .= "<nobr>";
-                    if (strlen($arItem["DETAIL_PAGE_URL"]) > 0)
+                    if ($arItem["DETAIL_PAGE_URL"] <> '') {
                         $fieldName .= '<a href="' . $url . '">';
+                    }
                     $fieldName .= htmlspecialcharsbx($arItem["NAME"]);
-                    if (strlen($arItem["DETAIL_PAGE_URL"]) > 0)
+                    if ($arItem["DETAIL_PAGE_URL"] <> '') {
                         $fieldName .= "</a>";
+                    }
                     $fieldName .= "</nobr>";
-                } else
+                } else {
                     $fieldName .= "<br />";
+                }
 
-                if (strlen($arItem["QUANTITY"]) > 0)
-                    $fieldQuantity .= htmlspecialcharsbx(Sale\BasketItem::formatQuantity($arItem["QUANTITY"])) . " " . $measure;
-                else
+                if ($arItem["QUANTITY"] <> '') {
+                    $fieldQuantity .= htmlspecialcharsbx(
+                            Sale\BasketItem::formatQuantity($arItem["QUANTITY"])
+                        ) . " " . $measure;
+                } else {
                     $fieldQuantity .= "<br />";
-                if (strlen($arItem["PRODUCT_ID"]) > 0)
+                }
+                if ($arItem["PRODUCT_ID"] <> '') {
                     $fieldProductID .= htmlspecialcharsbx($arItem["PRODUCT_ID"]);
-                else
+                } else {
                     $fieldProductID .= "<br />";
-                if (strlen($arItem["PRICE"]) > 0)
-                    $fieldPrice .= "<nobr>" . htmlspecialcharsbx(SaleFormatCurrency($arItem["PRICE"], $arItem["CURRENCY"])) . "</nobr>";
-                else
+                }
+                if ($arItem["PRICE"] <> '') {
+                    $fieldPrice .= "<nobr>" . htmlspecialcharsbx(
+                            SaleFormatCurrency($arItem["PRICE"], $arItem["CURRENCY"])
+                        ) . "</nobr>";
+                } else {
                     $fieldPrice .= "<br />";
-                if (strlen($arItem["WEIGHT"]) > 0) {
-                    if ((float)$WEIGHT_KOEF[$arOrder["LID"]] > 0)
+                }
+                if ($arItem["WEIGHT"] <> '') {
+                    if ((float)$WEIGHT_KOEF[$arOrder["LID"]] > 0) {
                         $fieldWeightCalc = (float)($arItem["WEIGHT"] / $WEIGHT_KOEF[$arOrder["LID"]]);
-                    else
+                    } else {
                         $fieldWeightCalc = (float)$arItem["WEIGHT"];
+                    }
                     if (!empty($arItem["QUANTITY"])) {
                         $fieldWeightCalc *= $arItem["QUANTITY"];
                     }
-                    $fieldWeight .= htmlspecialcharsbx(roundEx($fieldWeightCalc, SALE_WEIGHT_PRECISION) . ' ' . $WEIGHT_UNIT[$arOrder["LID"]]);
-                } else
+                    $fieldWeight .= htmlspecialcharsbx(
+                        roundEx($fieldWeightCalc, SALE_WEIGHT_PRECISION) . ' ' . $WEIGHT_UNIT[$arOrder["LID"]]
+                    );
+                } else {
                     $fieldWeight .= "<br />";
+                }
 
-                if (strlen($arItem["PRODUCT_XML_ID"]) > 0)
+                if ($arItem["PRODUCT_XML_ID"] <> '') {
                     $fieldProductXML .= $arItem["PRODUCT_XML_ID"];
-                else
+                } else {
                     $fieldProductXML .= "<br />";
+                }
             }
             unset($arItem);
         }
@@ -723,7 +889,9 @@ if (!empty($orderList) && is_array($orderList)) {
         $idTmp = '<table>
 						<tr>
 							<td valign="top"></td>
-							<td><a href="/bitrix/admin/sale_order_archive_view.php?ID=##ID##"><b>' . Loc::getMessage("SO_ORDER_ID_PREF") . '##ID##</b></a></td>
+							<td><a href="/bitrix/admin/sale_order_archive_view.php?ID=##ID##"><b>' . Loc::getMessage(
+                "SO_ORDER_ID_PREF"
+            ) . '##ID##</b></a></td>
 						</tr>
 					</table>';
         $row->AddField("ID", str_replace('##ID##', $arOrder["ID"], $idTmp));
@@ -731,20 +899,43 @@ if (!empty($orderList) && is_array($orderList)) {
         $row->AddField("BASKET_PRODUCT_XML_ID", $fieldProductXML);
 
 
-        if (in_array("USER", $arVisibleColumns))
+        if (in_array("USER", $arVisibleColumns)) {
             $fieldValue = GetFormatedUserName($arOrder["USER_ID"], false, false);
+        }
 
         $row->AddField("USER", $fieldValue);
 
-        $allowedStatusesUpdate = \Bitrix\Sale\OrderStatus::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
+        $allowedStatusesUpdate = \Bitrix\Sale\OrderStatus::getStatusesUserCanDoOperations(
+            $USER->GetID(),
+            array('update')
+        );
 
         if (in_array($arOrder["STATUS_ID"], $allowedStatusesUpdate)) {
-            $arActions[] = array("ICON" => "copy", "TEXT" => Loc::getMessage("SOA_RESTORE_ORDER"), "ACTION" => $lAdmin->ActionRedirect("sale_order_create.php?restoreID=" . $arOrder['ID'] . "&lang=" . LANGUAGE_ID . "&" . 'SITE_ID=' . $arOrder['LID'] . '&' . bitrix_sessid_get() . GetFilterParams("filter_")));
+            $arActions[] = array(
+                "ICON" => "copy",
+                "TEXT" => Loc::getMessage("SOA_RESTORE_ORDER"),
+                "ACTION" => $lAdmin->ActionRedirect(
+                    "sale_order_create.php?restoreID=" . $arOrder['ID'] . "&lang=" . LANGUAGE_ID . "&" . 'SITE_ID=' . $arOrder['LID'] . '&' . bitrix_sessid_get(
+                    ) . GetFilterParams("filter_")
+                )
+            );
         }
 
-        $arActions[] = array("ICON" => "view", "TEXT" => Loc::getMessage("SALE_DETAIL_DESCR"), "ACTION" => $lAdmin->ActionRedirect("sale_order_archive_view.php?ID=" . $arOrder['ID'] . "&lang=" . LANGUAGE_ID . "&" . 'SITE_ID=' . $arOrder['LID'] . '&' . bitrix_sessid_get()), "DEFAULT" => true);
+        $arActions[] = array(
+            "ICON" => "view",
+            "TEXT" => Loc::getMessage("SALE_DETAIL_DESCR"),
+            "ACTION" => $lAdmin->ActionRedirect(
+                "sale_order_archive_view.php?ID=" . $arOrder['ID'] . "&lang=" . LANGUAGE_ID . "&" . 'SITE_ID=' . $arOrder['LID'] . '&' . bitrix_sessid_get(
+                )
+            ),
+            "DEFAULT" => true
+        );
         if ($saleModulePermissions == "W") {
-            $arActions[] = array("ICON" => "delete", "TEXT" => Loc::getMessage("SALE_DELETE_DESCR"), "ACTION" => $lAdmin->ActionDoGroup($arOrder['ID'], 'delete'));
+            $arActions[] = array(
+                "ICON" => "delete",
+                "TEXT" => Loc::getMessage("SALE_DELETE_DESCR"),
+                "ACTION" => $lAdmin->ActionDoGroup($arOrder['ID'], 'delete')
+            );
         }
 
         $row->AddActions($arActions);
@@ -777,7 +968,9 @@ if ($saleModulePermissions >= "W" || !empty($allowedStatusesDelete)) {
 $lAdmin->AddAdminContextMenu($aContext);
 $lAdmin->CheckListMode();
 
-\Bitrix\Main\Page\Asset::getInstance()->addString('<style>.adm-filter-item-center, .adm-filter-content {overflow: visible !important;}</style>');
+\Bitrix\Main\Page\Asset::getInstance()->addString(
+    '<style>.adm-filter-item-center, .adm-filter-content {overflow: visible !important;}</style>'
+);
 
 /*********************************************************************/
 /********************  PAGE  *****************************************/
@@ -868,7 +1061,14 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
         <tr>
             <td><b><? echo Loc::getMessage("SALE_F_DATE"); ?>:</b></td>
             <td>
-                <? echo CalendarPeriod("filter_date_from", $filter_date_from, "filter_date_to", $filter_date_to, "find_form", "Y") ?>
+                <? echo CalendarPeriod(
+                    "filter_date_from",
+                    $filter_date_from,
+                    "filter_date_to",
+                    $filter_date_to,
+                    "find_form",
+                    "Y"
+                ) ?>
             </td>
         </tr>
         <tr>
@@ -889,18 +1089,24 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
                 <select name="filter_person_type[]" multiple size="3">
                     <option value=""><? echo Loc::getMessage("SALE_F_ALL") ?></option>
                     <?
-                    $ptRes = Sale\Internals\PersonTypeTable::getList(array(
-                        'order' => array("SORT" => "ASC", "NAME" => "ASC")
-                    ));
+                    $ptRes = Sale\Internals\PersonTypeTable::getList(
+                        array(
+                            'order' => array("SORT" => "ASC", "NAME" => "ASC")
+                        )
+                    );
 
                     $personTypes = array();
-                    while ($personType = $ptRes->fetch())
+                    while ($personType = $ptRes->fetch()) {
                         $personTypes[$personType['ID']] = $personType;
+                    }
                     foreach ($personTypes as $personType):
                         ?>
-                        <option value="<? echo htmlspecialcharsbx($personType["ID"]) ?>"<? if (is_array($filter_person_type) && in_array($personType["ID"], $filter_person_type)) echo " selected" ?>>
-                        [<? echo htmlspecialcharsbx($personType["ID"]) ?>
-                        ] <? echo htmlspecialcharsbx($personType["NAME"]) ?><? echo "(" . htmlspecialcharsbx($personType["LID"]) . ")"; ?></option><?
+                        <option value="<? echo htmlspecialcharsbx($personType["ID"]) ?>"<? if (is_array(
+                            $filter_person_type
+                        ) && in_array($personType["ID"], $filter_person_type)) echo " selected" ?>>
+                        [<? echo htmlspecialcharsbx($personType["ID"]) ?>] <? echo htmlspecialcharsbx(
+                        $personType["NAME"]
+                    ) ?><? echo "(" . htmlspecialcharsbx($personType["LID"]) . ")"; ?></option><?
                     endforeach;
                     ?>
                 </select>
@@ -929,7 +1135,14 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
         <tr>
             <td><b><? echo Loc::getMessage("SALE_F_DATE_ARCHIVED"); ?>:</b></td>
             <td>
-                <? echo CalendarPeriod("filter_date_archived_from", $filter_date_archived_from, "filter_date_archived_to", $filter_date_archived_to, "find_form", "Y") ?>
+                <? echo CalendarPeriod(
+                    "filter_date_archived_from",
+                    $filter_date_archived_from,
+                    "filter_date_archived_to",
+                    $filter_date_archived_to,
+                    "find_form",
+                    "Y"
+                ) ?>
             </td>
         </tr>
         <tr>
@@ -945,11 +1158,15 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
                     $allStatusNames = \Bitrix\Sale\OrderStatus::getAllStatusesNames();
 
                     foreach ($statusesList as $statusCode) {
-                        if (!$statusName = $allStatusNames[$statusCode])
+                        if (!$statusName = $allStatusNames[$statusCode]) {
                             continue;
+                        }
                         ?>
-                        <option value="<?= htmlspecialcharsbx($statusCode) ?>"<? if (is_array($filter_status) && in_array($statusCode, $filter_status)) echo " selected" ?>>
-                        [<?= htmlspecialcharsbx($statusCode) ?>] <?= htmlspecialcharsbx($statusName) ?></option><?
+                        <option value="<?= htmlspecialcharsbx($statusCode) ?>"<? if (is_array(
+                                $filter_status
+                            ) && in_array($statusCode, $filter_status)) echo " selected" ?>>[<?= htmlspecialcharsbx(
+                        $statusCode
+                    ) ?>] <?= htmlspecialcharsbx($statusName) ?></option><?
                     }
                     ?>
                 </select>
@@ -960,8 +1177,12 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
             <td>
                 <select name="filter_canceled">
                     <option value=""><? echo Loc::getMessage("SALE_F_ALL") ?></option>
-                    <option value="Y"<? if ($filter_canceled == "Y") echo " selected" ?>><? echo Loc::getMessage("SALE_YES") ?></option>
-                    <option value="N"<? if ($filter_canceled == "N") echo " selected" ?>><? echo Loc::getMessage("SALE_NO") ?></option>
+                    <option value="Y"<? if ($filter_canceled == "Y") echo " selected" ?>><? echo Loc::getMessage(
+                            "SALE_YES"
+                        ) ?></option>
+                    <option value="N"<? if ($filter_canceled == "N") echo " selected" ?>><? echo Loc::getMessage(
+                            "SALE_NO"
+                        ) ?></option>
                 </select>
             </td>
         </tr>
@@ -970,8 +1191,12 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
             <td>
                 <select name="filter_deducted">
                     <option value=""><? echo Loc::getMessage("SALE_F_ALL") ?></option>
-                    <option value="Y"<? if ($filter_deducted == "Y") echo " selected" ?>><? echo Loc::getMessage("SALE_YES") ?></option>
-                    <option value="N"<? if ($filter_deducted == "N") echo " selected" ?>><? echo Loc::getMessage("SALE_NO") ?></option>
+                    <option value="Y"<? if ($filter_deducted == "Y") echo " selected" ?>><? echo Loc::getMessage(
+                            "SALE_YES"
+                        ) ?></option>
+                    <option value="N"<? if ($filter_deducted == "N") echo " selected" ?>><? echo Loc::getMessage(
+                            "SALE_NO"
+                        ) ?></option>
                 </select>
             </td>
         </tr>
@@ -980,8 +1205,12 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
             <td>
                 <select name="filter_payed">
                     <option value=""><? echo Loc::getMessage("SALE_F_ALL") ?></option>
-                    <option value="Y"<? if ($filter_payed == "Y") echo " selected" ?>><? echo Loc::getMessage("SALE_YES") ?></option>
-                    <option value="N"<? if ($filter_payed == "N") echo " selected" ?>><? echo Loc::getMessage("SALE_NO") ?></option>
+                    <option value="Y"<? if ($filter_payed == "Y") echo " selected" ?>><? echo Loc::getMessage(
+                            "SALE_YES"
+                        ) ?></option>
+                    <option value="N"<? if ($filter_payed == "N") echo " selected" ?>><? echo Loc::getMessage(
+                            "SALE_NO"
+                        ) ?></option>
                 </select>
             </td>
         </tr>

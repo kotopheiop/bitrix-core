@@ -284,7 +284,11 @@ class ProviderCreator
      */
     public function createItemsResultAfterDeliver(Sale\Result $resultAfterDeliver)
     {
-        return $this->callBuilderMethod('createItemsResultAfterDeliver', 'RESULT_AFTER_DELIVER_LIST', $resultAfterDeliver);
+        return $this->callBuilderMethod(
+            'createItemsResultAfterDeliver',
+            'RESULT_AFTER_DELIVER_LIST',
+            $resultAfterDeliver
+        );
     }
 
 
@@ -376,7 +380,11 @@ class ProviderCreator
      */
     public function createItemsResultAfterRecurring(Sale\Result $resultAfterDeliver)
     {
-        return $this->callBuilderMethod('createItemsResultAfterDeliver', 'RESULT_AFTER_DELIVER_LIST', $resultAfterDeliver);
+        return $this->callBuilderMethod(
+            'createItemsResultAfterDeliver',
+            'RESULT_AFTER_DELIVER_LIST',
+            $resultAfterDeliver
+        );
     }
 
     /**

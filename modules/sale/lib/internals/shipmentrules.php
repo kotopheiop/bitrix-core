@@ -195,12 +195,14 @@ class ShipmentRules
         $shipProductsList = array();
 
         foreach ($rules as $ruleData) {
-            if (empty($ruleData['ACTION']))
+            if (empty($ruleData['ACTION'])) {
                 continue;
+            }
 
             foreach ($ruleData['ACTION'] as $action => $quantity) {
-                if ($quantity == 0)
+                if ($quantity == 0) {
                     continue;
+                }
 
                 $fields = $ruleData;
                 $fields['QUANTITY'] = $quantity;
@@ -230,7 +232,6 @@ class ShipmentRules
             } else {
                 $result->addErrors($r->getErrors());
             }
-
         }
 
         if (!empty($shipProductsList)) {

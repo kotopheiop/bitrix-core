@@ -32,8 +32,9 @@ class CLearningGroupLesson
     {
         global $DB;
 
-        if (!self::checkFields($arFields))
+        if (!self::checkFields($arFields)) {
             return false;
+        }
 
         $delay = (int)$arFields['DELAY'];
         $lessonId = (int)$arFields['LESSON_ID'];
@@ -52,8 +53,9 @@ class CLearningGroupLesson
     {
         global $DB;
 
-        if (!self::checkFields($arFields))
+        if (!self::checkFields($arFields)) {
             return false;
+        }
 
         $delay = (int)$arFields['DELAY'];
         $lessonId = (int)$arFields['LESSON_ID'];
@@ -90,19 +92,23 @@ class CLearningGroupLesson
             'DELAY' => 'LGL.DELAY'
         );
 
-        if (count($arSelect) <= 0 || in_array("*", $arSelect))
+        if (count($arSelect) <= 0 || in_array("*", $arSelect)) {
             $arSelect = array_keys($arFields);
+        }
 
-        if (!is_array($arOrder))
+        if (!is_array($arOrder)) {
             $arOrder = array();
+        }
 
+        $arSqlOrder = [];
         foreach ($arOrder as $by => $order) {
             $by = (string)$by;
             $needle = null;
-            $order = strtolower($order);
+            $order = mb_strtolower($order);
 
-            if ($order != "asc")
+            if ($order != "asc") {
                 $order = "desc";
+            }
 
             if (array_key_exists($by, $arFields)) {
                 $arSqlOrder[] = ' ' . $by . ' ' . $order . ' ';
@@ -119,13 +125,15 @@ class CLearningGroupLesson
 
         $arSqlSelect = array();
         foreach ($arSelect as $field) {
-            $field = strtoupper($field);
-            if (array_key_exists($field, $arFields))
+            $field = mb_strtoupper($field);
+            if (array_key_exists($field, $arFields)) {
                 $arSqlSelect[$field] = $arFields[$field] . ' AS ' . $field;
+            }
         }
 
-        if (!sizeof($arSqlSelect))
+        if (!sizeof($arSqlSelect)) {
             $arSqlSelect = 'LGL.LESSON_ID AS LESSON_ID';
+        }
 
         $arSqlSearch = self::getFilter($arFilter);
 
@@ -144,10 +152,11 @@ class CLearningGroupLesson
         $strSqlOrder = "";
         DelDuplicateSort($arSqlOrder);
         for ($i = 0, $arSqlOrderCnt = count($arSqlOrder); $i < $arSqlOrderCnt; $i++) {
-            if ($i == 0)
+            if ($i == 0) {
                 $strSqlOrder = " ORDER BY ";
-            else
+            } else {
                 $strSqlOrder .= ",";
+            }
 
             $strSqlOrder .= $arSqlOrder[$i];
         }
@@ -162,7 +171,13 @@ class CLearningGroupLesson
                 $res_cnt = $DB->Query("SELECT COUNT(LGL.ID) as C " . $strFrom);
                 $res_cnt = $res_cnt->Fetch();
                 $res = new CDBResult();
-                $rc = $res->NavQuery($strSql, $res_cnt["C"], $arNavParams, $bIgnoreErrors = false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+                $rc = $res->NavQuery(
+                    $strSql,
+                    $res_cnt["C"],
+                    $arNavParams,
+                    $bIgnoreErrors = false,
+                    "File: " . __FILE__ . "<br>Line: " . __LINE__
+                );
             }
         } else {
             $res = $DB->Query($strSql, $bIgnoreErrors = false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
@@ -237,18 +252,21 @@ class CLearningGroupLesson
 
     public static function getDelays($learningGroupId, $arLessonsIds)
     {
-        if (!is_array($arLessonsIds))
+        if (!is_array($arLessonsIds)) {
             return false;
+        }
 
         $arLessonsIds = array_filter($arLessonsIds);
 
-        if (empty($arLessonsIds))
+        if (empty($arLessonsIds)) {
             return (array());
+        }
 
         // fill default values
         $arDelays = array();
-        foreach ($arLessonsIds as $lessonId)
+        foreach ($arLessonsIds as $lessonId) {
             $arDelays[$lessonId] = 0;
+        }
 
         $rs = self::getList(
             array(),
@@ -262,8 +280,9 @@ class CLearningGroupLesson
         while ($ar = $rs->fetch()) {
             $lessonId = (int)$ar['LESSON_ID'];
 
-            if (isset($arDelays[$lessonId]))
+            if (isset($arDelays[$lessonId])) {
                 $arDelays[$lessonId] = (int)$ar['DELAY'];
+            }
         }
 
         return ($arDelays);
@@ -272,16 +291,18 @@ class CLearningGroupLesson
 
     public static function setDelays($learningGroupId, $arDelays)
     {
-        if (!is_array($arDelays))
+        if (!is_array($arDelays)) {
             return false;
+        }
 
         $learningGroupId = (int)$learningGroupId;
 
         $arLessonsIds = array();
 
         // first, collect lessons ids
-        foreach ($arDelays as $lessonId => $delay)
+        foreach ($arDelays as $lessonId => $delay) {
             $arLessonsIds[] = (int)$lessonId;
+        }
 
         $arLessonsIds = array_unique(array_filter($arLessonsIds));
 
@@ -297,8 +318,9 @@ class CLearningGroupLesson
                 array('LESSON_ID')
             );
 
-            while ($ar = $rs->fetch())
+            while ($ar = $rs->fetch()) {
                 $arRegistered[] = (int)$ar['LESSON_ID'];
+            }
         }
 
         $arRegistered = array_unique(array_filter($arRegistered));
@@ -311,10 +333,11 @@ class CLearningGroupLesson
                 'LEARNING_GROUP_ID' => $learningGroupId
             );
 
-            if (in_array((int)$lessonId, $arRegistered, true))
+            if (in_array((int)$lessonId, $arRegistered, true)) {
                 self::update($arFields);
-            else
+            } else {
                 self::add($arFields);
+            }
         }
     }
 
@@ -327,16 +350,18 @@ class CLearningGroupLesson
 
         $arMsg = array();
 
-        if (!array_key_exists('LEARNING_GROUP_ID', $arFields))
+        if (!array_key_exists('LEARNING_GROUP_ID', $arFields)) {
             $arMsg[] = array("id" => "LEARNING_GROUP_ID", "text" => GetMessage("LEARNING_BAD_LEARNING_GROUP_ID"));
-        else {
+        } else {
             $rs = CLearningGroup::getList(array(), array('ID' => (int)$arFields['LEARNING_GROUP_ID']), array('ID'));
-            if (!($rs && $rs->fetch()))
+            if (!($rs && $rs->fetch())) {
                 $arMsg[] = array("text" => GetMessage("LEARNING_BAD_LEARNING_GROUP_ID_EX"), "id" => "BAD_GROUP_ID");
+            }
         }
 
-        if (!array_key_exists('LESSON_ID', $arFields))
+        if (!array_key_exists('LESSON_ID', $arFields)) {
             $arMsg[] = array("id" => "LESSON_ID", "text" => GetMessage("LEARNING_BAD_LESSON_ID"));
+        }
 
         if (!empty($arMsg)) {
             $e = new CAdminException($arMsg);
@@ -350,8 +375,9 @@ class CLearningGroupLesson
 
     private static function getFilter($arFilter)
     {
-        if (!is_array($arFilter))
+        if (!is_array($arFilter)) {
             $arFilter = array();
+        }
 
         $arSqlSearch = array();
 
@@ -360,12 +386,18 @@ class CLearningGroupLesson
             $key = $res["FIELD"];
             $cOperationType = $res["OPERATION"];
 
-            $key = strtoupper($key);
+            $key = mb_strtoupper($key);
 
             switch ($key) {
                 case 'LESSON_ID':
                 case 'LEARNING_GROUP_ID':
-                    $arSqlSearch[] = CLearnHelper::FilterCreate('LGL.' . $key, $val, 'number', $bFullJoin, $cOperationType);
+                    $arSqlSearch[] = CLearnHelper::FilterCreate(
+                        'LGL.' . $key,
+                        $val,
+                        'number',
+                        $bFullJoin,
+                        $cOperationType
+                    );
                     break;
             }
         }

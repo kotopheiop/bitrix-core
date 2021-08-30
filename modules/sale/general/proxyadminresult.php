@@ -16,19 +16,22 @@ class CSaleProxyAdminResult extends CAdminResult
     {
         $nSize = self::GetNavSize($this->table_id, $nPageSize);
 
-        if (!is_array($nPageSize))
+        if (!is_array($nPageSize)) {
             $nPageSize = array();
+        }
 
         $nPageSize["nPageSize"] = $nSize;
-        if ($_REQUEST["mode"] == "excel")
+        if ($_REQUEST["mode"] == "excel") {
             $nPageSize["NavShowAll"] = true;
+        }
 
         $this->nInitialSize = $nPageSize["nPageSize"];
 
-        if (is_array($nPageSize))
+        if (is_array($nPageSize)) {
             $this->InitNavStartVars($nPageSize);
-        else
+        } else {
             $this->InitNavStartVars(intval($nPageSize), $bShowAll, $iNumPage);
+        }
 
         // force to db resource type, although we got empty array on input
         $en = $this->entityName;
@@ -40,28 +43,34 @@ class CSaleProxyAdminResult extends CAdminResult
         foreach ($runtime as $fld => $desc) {
             $found = false;
             foreach ($filter as $condition => $value) {
-                if (strpos($condition, $fld) !== false) {
+                if (mb_strpos($condition, $fld) !== false) {
                     $found = true;
                     break;
                 }
             }
 
-            if (!$found)
+            if (!$found) {
                 unset($runtime[$fld]);
+            }
         }
 
-        $count = $en::getList(array(
-            'filter' => $filter,
-            'select' => array('REC_CNT'),
-            'runtime' => array_merge($runtime, array(
-                'REC_CNT' => array(
-                    'data_type' => 'integer',
-                    'expression' => array(
-                        'count(*)'
+        $count = $en::getList(
+            array(
+                'filter' => $filter,
+                'select' => array('REC_CNT'),
+                'runtime' => array_merge(
+                    $runtime,
+                    array(
+                        'REC_CNT' => array(
+                            'data_type' => 'integer',
+                            'expression' => array(
+                                'count(*)'
+                            )
+                        )
                     )
                 )
-            ))
-        ))->fetch();
+            )
+        )->fetch();
         $this->NavRecordCount = $count['REC_CNT'];
 
         // the following code was taken from DBNavStart()
@@ -70,8 +79,9 @@ class CSaleProxyAdminResult extends CAdminResult
 
         //calculate total pages depend on rows count. start with 1
         $this->NavPageCount = floor($this->NavRecordCount / $this->NavPageSize);
-        if ($this->NavRecordCount % $this->NavPageSize > 0)
+        if ($this->NavRecordCount % $this->NavPageSize > 0) {
             $this->NavPageCount++;
+        }
 
         //page number to display. start with 1
         $this->NavPageNomer = ($this->PAGEN < 1 || $this->PAGEN > $this->NavPageCount ? ($_SESSION[$this->SESS_PAGEN] < 1 || $_SESSION[$this->SESS_PAGEN] > $this->NavPageCount ? 1 : $_SESSION[$this->SESS_PAGEN]) : $this->PAGEN);
@@ -82,8 +92,9 @@ class CSaleProxyAdminResult extends CAdminResult
 
         $res = $en::getList($parameters);
         $this->arResult = array();
-        while ($item = $res->Fetch())
+        while ($item = $res->Fetch()) {
             $this->arResult[] = $item;
+        }
     }
 }
 
@@ -103,19 +114,22 @@ class CSaleProxyAdminUiResult extends CAdminUiResult
     {
         $nSize = self::GetNavSize($this->table_id, $nPageSize);
 
-        if (!is_array($nPageSize))
+        if (!is_array($nPageSize)) {
             $nPageSize = array();
+        }
 
         $nPageSize["nPageSize"] = $nSize;
-        if ($_REQUEST["mode"] == "excel")
+        if ($_REQUEST["mode"] == "excel") {
             $nPageSize["NavShowAll"] = true;
+        }
 
         $this->nInitialSize = $nPageSize["nPageSize"];
 
-        if (is_array($nPageSize))
+        if (is_array($nPageSize)) {
             $this->InitNavStartVars($nPageSize);
-        else
+        } else {
             $this->InitNavStartVars(intval($nPageSize), $bShowAll, $iNumPage);
+        }
 
         // force to db resource type, although we got empty array on input
         $en = $this->entityName;
@@ -127,28 +141,34 @@ class CSaleProxyAdminUiResult extends CAdminUiResult
         foreach ($runtime as $fld => $desc) {
             $found = false;
             foreach ($filter as $condition => $value) {
-                if (strpos($condition, $fld) !== false) {
+                if (mb_strpos($condition, $fld) !== false) {
                     $found = true;
                     break;
                 }
             }
 
-            if (!$found)
+            if (!$found) {
                 unset($runtime[$fld]);
+            }
         }
 
-        $count = $en::getList(array(
-            'filter' => $filter,
-            'select' => array('REC_CNT'),
-            'runtime' => array_merge($runtime, array(
-                'REC_CNT' => array(
-                    'data_type' => 'integer',
-                    'expression' => array(
-                        'count(*)'
+        $count = $en::getList(
+            array(
+                'filter' => $filter,
+                'select' => array('REC_CNT'),
+                'runtime' => array_merge(
+                    $runtime,
+                    array(
+                        'REC_CNT' => array(
+                            'data_type' => 'integer',
+                            'expression' => array(
+                                'count(*)'
+                            )
+                        )
                     )
                 )
-            ))
-        ))->fetch();
+            )
+        )->fetch();
         $this->NavRecordCount = $count['REC_CNT'];
 
         // the following code was taken from DBNavStart()
@@ -157,8 +177,9 @@ class CSaleProxyAdminUiResult extends CAdminUiResult
 
         //calculate total pages depend on rows count. start with 1
         $this->NavPageCount = floor($this->NavRecordCount / $this->NavPageSize);
-        if ($this->NavRecordCount % $this->NavPageSize > 0)
+        if ($this->NavRecordCount % $this->NavPageSize > 0) {
             $this->NavPageCount++;
+        }
 
         //page number to display. start with 1
         $this->NavPageNomer = ($this->PAGEN < 1 || $this->PAGEN > $this->NavPageCount ? ($_SESSION[$this->SESS_PAGEN] < 1 || $_SESSION[$this->SESS_PAGEN] > $this->NavPageCount ? 1 : $_SESSION[$this->SESS_PAGEN]) : $this->PAGEN);
@@ -169,7 +190,8 @@ class CSaleProxyAdminUiResult extends CAdminUiResult
 
         $res = $en::getList($parameters);
         $this->arResult = array();
-        while ($item = $res->Fetch())
+        while ($item = $res->Fetch()) {
             $this->arResult[] = $item;
+        }
     }
 }

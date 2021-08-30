@@ -24,25 +24,30 @@ class View
     protected static function incViewsPage($lid)
     {
         $lid = (int)$lid;
-        $res = ViewTable::getList([
-            'select' => [
-                'SUM'
-            ],
-            'filter' => [
-                'LID' => $lid
-            ],
-            'runtime' => [
-                new Entity\ExpressionField(
-                    'SUM', 'SUM(%s)', ['VIEWS']
-                )
+        $res = ViewTable::getList(
+            [
+                'select' => [
+                    'SUM'
+                ],
+                'filter' => [
+                    'LID' => $lid
+                ],
+                'runtime' => [
+                    new Entity\ExpressionField(
+                        'SUM', 'SUM(%s)', ['VIEWS']
+                    )
+                ]
             ]
-        ]);
+        );
         if ($row = $res->fetch()) {
             Rights::setOff();
-            Landing::update($lid, [
-                'VIEWS' => $row['SUM'],
-                'DATE_MODIFY' => false
-            ]);
+            Landing::update(
+                $lid,
+                [
+                    'VIEWS' => $row['SUM'],
+                    'DATE_MODIFY' => false
+                ]
+            );
             Rights::setOn();
         }
     }
@@ -65,34 +70,41 @@ class View
         if ($uid <= 0) {
             return;
         }
-
         if (!isset($_SESSION[self::SESSION_VIEWS_KEY])) {
             $_SESSION[self::SESSION_VIEWS_KEY] = [];
         }
 
         if (!in_array($lid, $_SESSION[self::SESSION_VIEWS_KEY])) {
-            $res = ViewTable::getList([
-                'select' => [
-                    'ID', 'VIEWS'
-                ],
-                'filter' => [
-                    'LID' => $lid,
-                    'USER_ID' => $uid
+            $res = ViewTable::getList(
+                [
+                    'select' => [
+                        'ID',
+                        'VIEWS'
+                    ],
+                    'filter' => [
+                        'LID' => $lid,
+                        'USER_ID' => $uid
+                    ]
                 ]
-            ]);
+            );
             if ($row = $res->fetch()) {
-                $result = ViewTable::update($row['ID'], [
-                    'VIEWS' => $row['VIEWS'] + 1,
-                    'LAST_VIEW' => $date
-                ]);
+                $result = ViewTable::update(
+                    $row['ID'],
+                    [
+                        'VIEWS' => $row['VIEWS'] + 1,
+                        'LAST_VIEW' => $date
+                    ]
+                );
             } else {
-                $result = ViewTable::add([
-                    'VIEWS' => 1,
-                    'LID' => $lid,
-                    'USER_ID' => $uid,
-                    'FIRST_VIEW' => $date,
-                    'LAST_VIEW' => $date,
-                ]);
+                $result = ViewTable::add(
+                    [
+                        'VIEWS' => 1,
+                        'LID' => $lid,
+                        'USER_ID' => $uid,
+                        'FIRST_VIEW' => $date,
+                        'LAST_VIEW' => $date,
+                    ]
+                );
             }
             if ($result->isSuccess()) {
                 self::incViewsPage($lid);

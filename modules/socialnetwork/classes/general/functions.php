@@ -1,4 +1,4 @@
-<?
+<?php
 
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Loader;
@@ -12,7 +12,8 @@ class CSocNetTextParser
     var $image_params = array(
         "width" => 300,
         "height" => 300,
-        "template" => "popup_image");
+        "template" => "popup_image"
+    );
     var $LAST_ERROR = "";
     var $path_to_smile = false;
     var $quote_error = 0;
@@ -30,7 +31,8 @@ class CSocNetTextParser
         3 => 100, //"medium"
         4 => 120, //"large"
         5 => 140, //"x-large"
-        7 => 160); //"xx-large"
+        7 => 160
+    ); //"xx-large"
     var $word_separator = "\s.,;:!?\#\-\*\|\[\]\(\)\{\}";
 
     var $matchNum = 0;
@@ -42,26 +44,41 @@ class CSocNetTextParser
 
     function sonet_sortlen($a, $b)
     {
-        if (strlen($a["TYPING"]) == strlen($b["TYPING"])) {
+        if (mb_strlen($a["TYPING"]) == mb_strlen($b["TYPING"])) {
             return 0;
         }
-        return (strlen($a["TYPING"]) > strlen($b["TYPING"])) ? -1 : 1;
+        return (mb_strlen($a["TYPING"]) > mb_strlen($b["TYPING"])) ? -1 : 1;
     }
 
-    function CSocNetTextParser($strLang = False, $pathToSmile = false)
+    public function __construct($strLang = false, $pathToSmile = false)
     {
         global $DB, $CACHE_MANAGER;
         static $arSmiles = array();
 
         $this->smiles = array();
-        if ($strLang === False)
+        if ($strLang === false) {
             $strLang = LANGUAGE_ID;
+        }
         $this->path_to_smile = $pathToSmile;
 
         if ($CACHE_MANAGER->Read(604800, "b_sonet_smile")) {
             $arSmiles = $CACHE_MANAGER->Get("b_sonet_smile");
         } else {
-            $db_res = CSocNetSmile::GetList(array("SORT" => "ASC"), array("SMILE_TYPE" => "S"/*, "LANG_LID" => $strLang*/), false, false, Array("LANG_LID", "ID", "IMAGE", "DESCRIPTION", "TYPING", "SMILE_TYPE", "SORT"));
+            $db_res = CSocNetSmile::GetList(
+                array("SORT" => "ASC"),
+                array("SMILE_TYPE" => "S"/*, "LANG_LID" => $strLang*/),
+                false,
+                false,
+                Array(
+                    "LANG_LID",
+                    "ID",
+                    "IMAGE",
+                    "DESCRIPTION",
+                    "TYPING",
+                    "SMILE_TYPE",
+                    "SORT"
+                )
+            );
             while ($res = $db_res->Fetch()) {
                 $tok = strtok($res['TYPING'], " ");
                 while ($tok !== false) {
@@ -84,7 +101,25 @@ class CSocNetTextParser
         $this->smiles = $arSmiles[$strLang];
     }
 
-    function convert($text, $bPreview = True, $arImages = array(), $allow = array("HTML" => "N", "ANCHOR" => "Y", "BIU" => "Y", "IMG" => "Y", "QUOTE" => "Y", "CODE" => "Y", "FONT" => "Y", "LIST" => "Y", "SMILES" => "Y", "NL2BR" => "N", "VIDEO" => "Y"), $type = "html")    //, "KEEP_AMP" => "N"
+    function convert(
+        $text,
+        $bPreview = true,
+        $arImages = array(),
+        $allow = array(
+            "HTML" => "N",
+            "ANCHOR" => "Y",
+            "BIU" => "Y",
+            "IMG" => "Y",
+            "QUOTE" => "Y",
+            "CODE" => "Y",
+            "FONT" => "Y",
+            "LIST" => "Y",
+            "SMILES" => "Y",
+            "NL2BR" => "N",
+            "VIDEO" => "Y"
+        ),
+        $type = "html"
+    )    //, "KEEP_AMP" => "N"
     {
         global $DB;
 
@@ -99,12 +134,17 @@ class CSocNetTextParser
         $this->code_closed = 0;
         if ($allow["HTML"] != "Y") {
             if ($allow["CODE"] == "Y") {
-                $text = str_replace(array("\001", "\002", chr(5), chr(6), "'", "\""), array("", "", "", "", chr(5), chr(6)), $text);
+                $text = str_replace(
+                    array("\001", "\002", chr(5), chr(6), "'", "\""),
+                    array("", "", "", "", chr(5), chr(6)),
+                    $text
+                );
                 $text = preg_replace(
                     array(
                         "#<code(\s+[^>]*>|>)(.+?)</code(\s+[^>]*>|>)#is" . BX_UTF_PCRE_MODIFIER,
                         "/\[code([^\]])*\]/is" . BX_UTF_PCRE_MODIFIER,
-                        "/\[\/code([^\]])*\]/is" . BX_UTF_PCRE_MODIFIER),
+                        "/\[\/code([^\]])*\]/is" . BX_UTF_PCRE_MODIFIER
+                    ),
                     array(
                         "[code]\\2[/code]",
                         "\001",
@@ -121,11 +161,13 @@ class CSocNetTextParser
                 $text = preg_replace(
                     array(
                         "/\001/",
-                        "/\002/"),
+                        "/\002/"
+                    ),
                     array(
                         "[code]",
                         "[/code]"
-                    ), $text
+                    ),
+                    $text
                 );
                 $text = str_replace(array(chr(5), chr(6)), array("'", "\""), $text);
             }
@@ -134,8 +176,11 @@ class CSocNetTextParser
                     array(
                         "#<a[^>]+href\s*=\s*[\"]+(([^\"])+)[\"]+[^>]*>(.+?)</a[^>]*>#is" . BX_UTF_PCRE_MODIFIER,
                         "#<a[^>]+href\s*=\s*[\']+(([^\'])+)[\']+[^>]*>(.+?)</a[^>]*>#is" . BX_UTF_PCRE_MODIFIER,
-                        "#<a[^>]+href\s*=\s*(([^\'\"\>])+)>(.+?)</a[^>]*>#is" . BX_UTF_PCRE_MODIFIER),
-                    "[url=\\1]\\3[/url]", $text);
+                        "#<a[^>]+href\s*=\s*(([^\'\"\>])+)>(.+?)</a[^>]*>#is" . BX_UTF_PCRE_MODIFIER
+                    ),
+                    "[url=\\1]\\3[/url]",
+                    $text
+                );
             }
             if ($allow["BIU"] == "Y") {
                 $text = preg_replace(
@@ -143,18 +188,23 @@ class CSocNetTextParser
                         "/\<b([^>]*)\>(.+?)\<\/b([^>]*)>/is" . BX_UTF_PCRE_MODIFIER,
                         "/\<u([^>]*)\>(.+?)\<\/u([^>]*)>/is" . BX_UTF_PCRE_MODIFIER,
                         "/\<s([^>a-z]*)\>(.+?)\<\/s([^>a-z]*)>/is" . BX_UTF_PCRE_MODIFIER,
-                        "/\<i([^>]*)\>(.+?)\<\/i([^>]*)>/is" . BX_UTF_PCRE_MODIFIER),
+                        "/\<i([^>]*)\>(.+?)\<\/i([^>]*)>/is" . BX_UTF_PCRE_MODIFIER
+                    ),
                     array(
                         "[b]\\2[/b]",
                         "[u]\\2[/u]",
                         "[s]\\2[/s]",
-                        "[i]\\2[/i]"),
-                    $text);
+                        "[i]\\2[/i]"
+                    ),
+                    $text
+                );
             }
             if ($allow["IMG"] == "Y") {
                 $text = preg_replace(
                     "#<img[^>]+src\s*=[\s\"']*(((http|https|ftp)://[.-_:a-z0-9@]+)*(\/[-_/=:.a-z0-9@{}&?%]+)+)[\s\"']*[^>]*>#is" . BX_UTF_PCRE_MODIFIER,
-                    "[img]\\1[/img]", $text);
+                    "[img]\\1[/img]",
+                    $text
+                );
             }
             if ($allow["QUOTE"] == "Y") {
                 //$text = preg_replace("#(<quote(.*?)>(.*)</quote(.*?)>)#is", "[quote]\\3[/quote]", $text);
@@ -165,28 +215,35 @@ class CSocNetTextParser
                     array(
                         "/\<font[^>]+size\s*=[\s\"']*([0-9]+)[\s\"']*[^>]*\>(.+?)\<\/font[^>]*\>/is" . BX_UTF_PCRE_MODIFIER,
                         "/\<font[^>]+color\s*=[\s\"']*(\#[a-f0-9]{6})[^>]*\>(.+?)\<\/font[^>]*>/is" . BX_UTF_PCRE_MODIFIER,
-                        "/\<font[^>]+face\s*=[\s\"']*([a-z\s\-]+)[\s\"']*[^>]*>(.+?)\<\/font[^>]*>/is" . BX_UTF_PCRE_MODIFIER),
+                        "/\<font[^>]+face\s*=[\s\"']*([a-z\s\-]+)[\s\"']*[^>]*>(.+?)\<\/font[^>]*>/is" . BX_UTF_PCRE_MODIFIER
+                    ),
                     array(
                         "[size=\\1]\\2[/size]",
                         "[color=\\1]\\2[/color]",
-                        "[font=\\1]\\2[/font]"),
-                    $text);
+                        "[font=\\1]\\2[/font]"
+                    ),
+                    $text
+                );
             }
             if ($allow["LIST"] == "Y") {
                 $text = preg_replace(
                     array(
                         "/\<ul((\s[^>]*)|(\s*))\>(.+?)<\/ul([^>]*)\>/is" . BX_UTF_PCRE_MODIFIER,
-                        "/\<li((\s[^>]*)|(\s*))\>/is" . BX_UTF_PCRE_MODIFIER),
+                        "/\<li((\s[^>]*)|(\s*))\>/is" . BX_UTF_PCRE_MODIFIER
+                    ),
                     array(
                         "[list]\\4[/list]",
-                        "[*]"),
-                    $text);
+                        "[*]"
+                    ),
+                    $text
+                );
             }
-            if (strLen($text) > 0) {
+            if ($text <> '') {
                 $text = str_replace(
                     array("<", ">", "\""),
                     array("&lt;", "&gt;", "&quot;"),
-                    $text);
+                    $text
+                );
             }
         } elseif ($allow["NL2BR"] == "Y") {
             $text = str_replace("\n", "<br />", $text);
@@ -195,8 +252,11 @@ class CSocNetTextParser
 
         if ($allow["ANCHOR"] == "Y") {
             $word_separator = str_replace("\]", "", $this->word_separator);
-            $text = preg_replace("'(?<=^|[" . $word_separator . "]|\s)((http|https|news|ftp|aim|mailto)://[\.\-\_\:a-z0-9\@]([^\"\s\'\[\]\{\}\(\)])*)'is",
-                "[url]\\1[/url]", $text);
+            $text = preg_replace(
+                "'(?<=^|[" . $word_separator . "]|\s)((http|https|news|ftp|aim|mailto)://[\.\-\_\:a-z0-9\@]([^\"\s\'\[\]\{\}\(\)])*)'is",
+                "[url]\\1[/url]",
+                $text
+            );
         }
         if ($allow["CODE"] == "Y") {
             $text = preg_replace(
@@ -269,22 +329,29 @@ class CSocNetTextParser
                     "/\[b\](.+?)\[\/b\]/is" . BX_UTF_PCRE_MODIFIER,
                     "/\[i\](.+?)\[\/i\]/is" . BX_UTF_PCRE_MODIFIER,
                     "/\[s\](.+?)\[\/s\]/is" . BX_UTF_PCRE_MODIFIER,
-                    "/\[u\](.+?)\[\/u\]/is" . BX_UTF_PCRE_MODIFIER),
+                    "/\[u\](.+?)\[\/u\]/is" . BX_UTF_PCRE_MODIFIER
+                ),
                 array(
                     "<b>\\1</b>",
                     "<i>\\1</i>",
                     "<s>\\1</s>",
-                    "<u>\\1</u>"), $text);
+                    "<u>\\1</u>"
+                ),
+                $text
+            );
         }
         if ($allow["LIST"] == "Y") {
             $text = preg_replace(
                 array(
                     "/\[list\](.+?)\[\/list\]/is" . BX_UTF_PCRE_MODIFIER,
-                    "/\[\*\]/" . BX_UTF_PCRE_MODIFIER),
+                    "/\[\*\]/" . BX_UTF_PCRE_MODIFIER
+                ),
                 array(
                     "<ul>\\1</ul>",
-                    "<li>"),
-                $text);
+                    "<li>"
+                ),
+                $text
+            );
         }
         if ($allow["FONT"] == "Y") {
             while (preg_match("/\[size\s*=\s*([^\]]+)\](.+?)\[\/size\]/is" . BX_UTF_PCRE_MODIFIER, $text)) {
@@ -321,15 +388,25 @@ class CSocNetTextParser
 
         $text = str_replace(
             array(
-                "(c)", "(C)",
-                "(tm)", "(TM)", "(Tm)", "(tM)",
-                "(r)", "(R)",
+                "(c)",
+                "(C)",
+                "(tm)",
+                "(TM)",
+                "(Tm)",
+                "(tM)",
+                "(r)",
+                "(R)",
                 "\n"
             ),
             array(
-                "&copy;", "&copy;",
-                "&#153;", "&#153;", "&#153;", "&#153;",
-                "&reg;", "&reg;",
+                "&copy;",
+                "&copy;",
+                "&#153;",
+                "&#153;",
+                "&#153;",
+                "&#153;",
+                "&reg;",
+                "&reg;",
                 "<br />"
             ),
             $text
@@ -356,19 +433,28 @@ class CSocNetTextParser
                 $arSmiles = array();
                 $arQuoted = array();
                 foreach ($this->smiles as $a_id => $row) {
-                    if (strlen($row["TYPING"]) <= 0 || strlen($row["IMAGE"]) <= 0)
+                    if ($row["TYPING"] == '' || $row["IMAGE"] == '') {
                         continue;
+                    }
                     $typing = htmlspecialcharsbx($row["TYPING"]);
-                    $arSmiles[$typing] = '<img src="' . $path_to_smile . $row["IMAGE"] . '" border="0" alt="smile' . $typing . '" title="' . htmlspecialcharsbx($row["DESCRIPTION"]) . '" />';
+                    $arSmiles[$typing] = '<img src="' . $path_to_smile . $row["IMAGE"] . '" border="0" alt="smile' . $typing . '" title="' . htmlspecialcharsbx(
+                            $row["DESCRIPTION"]
+                        ) . '" />';
                     $arQuoted[] = preg_quote($typing, "/");
                 }
-                $ar = preg_split("/(?<=[\s>])(" . implode("|", $arQuoted) . ")/" . BX_UTF_PCRE_MODIFIER, " " . $text, -1, PREG_SPLIT_DELIM_CAPTURE);
+                $ar = preg_split(
+                    "/(?<=[\s>])(" . implode("|", $arQuoted) . ")/" . BX_UTF_PCRE_MODIFIER,
+                    " " . $text,
+                    -1,
+                    PREG_SPLIT_DELIM_CAPTURE
+                );
                 $text = "";
                 foreach ($ar as $piece) {
-                    if (array_key_exists($piece, $arSmiles))
+                    if (array_key_exists($piece, $arSmiles)) {
                         $text .= $arSmiles[$piece];
-                    else
+                    } else {
                         $text .= $piece;
+                    }
                 }
             }
         }
@@ -386,24 +472,29 @@ class CSocNetTextParser
         return trim($text);
     }
 
-    function killAllTags($text)
+    public static function killAllTags($text)
     {
-        if (method_exists("CTextParser", "clearAllTags"))
+        if (method_exists("CTextParser", "clearAllTags")) {
             return CTextParser::clearAllTags($text);
+        }
         $text = strip_tags($text);
         $text = preg_replace(
             array(
                 "/\<(\/?)(quote|code|font|color)([^\>]*)\>/is" . BX_UTF_PCRE_MODIFIER,
-                "/\[(\/?)(b|u|i|list|code|quote|font|color|url|img)([^\]]*)\]/is" . BX_UTF_PCRE_MODIFIER),
+                "/\[(\/?)(b|u|i|list|code|quote|font|color|url|img)([^\]]*)\]/is" . BX_UTF_PCRE_MODIFIER
+            ),
             "",
-            $text);
+            $text
+        );
         return $text;
     }
 
     function convert4mail($text)
     {
         $text = Trim($text);
-        if (strlen($text) <= 0) return "";
+        if ($text == '') {
+            return "";
+        }
         $arPattern = array();
         $arReplace = array();
 
@@ -455,8 +546,9 @@ class CSocNetTextParser
     {
         global $APPLICATION;
 
-        if (strLen($path) <= 0)
+        if ($path == '') {
             return "";
+        }
 
         preg_match("/width\=([0-9]+)/is", $params, $width);
         preg_match("/height\=([0-9]+)/is", $params, $height);
@@ -467,7 +559,8 @@ class CSocNetTextParser
 
         ob_start();
         $APPLICATION->IncludeComponent(
-            "bitrix:player", "",
+            "bitrix:player",
+            "",
             Array(
                 "PLAYER_TYPE" => "auto",
                 "USE_PLAYLIST" => "N",
@@ -498,7 +591,9 @@ class CSocNetTextParser
                 "ADVANCED_MODE_SETTINGS" => "N",
                 "BUFFER_LENGTH" => "10",
                 "DOWNLOAD_LINK" => "",
-                "DOWNLOAD_LINK_TARGET" => "_self"));
+                "DOWNLOAD_LINK_TARGET" => "_self"
+            )
+        );
         $video = ob_get_contents();
         ob_end_clean();
         return $video;
@@ -511,12 +606,15 @@ class CSocNetTextParser
 
     function convert_emoticon($code = "", $image = "", $description = "", $servername = "")
     {
-        if (strlen($code) <= 0 || strlen($image) <= 0) return;
+        if ($code == '' || $image == '') {
+            return;
+        }
         $code = stripslashes($code);
         $description = stripslashes($description);
         $image = stripslashes($image);
-        if ($this->path_to_smile !== false)
+        if ($this->path_to_smile !== false) {
             return '<img src="' . $servername . $this->path_to_smile . $image . '" border="0" alt="smile' . $code . '" title="' . $description . '" />';
+        }
         return '<img src="' . $servername . '/bitrix/images/socialnetwork/smile/' . $image . '" border="0" alt="smile' . $code . '" title="' . $description . '" />';
     }
 
@@ -527,7 +625,7 @@ class CSocNetTextParser
 
     function pre_convert_code_tag($text = "")
     {
-        if (strLen($text) <= 0) {
+        if ($text == '') {
             return;
         }
         $text = str_replace(
@@ -545,9 +643,15 @@ class CSocNetTextParser
 
     function convert_code_tag($text = "", $type = "html")
     {
-        if (strLen($text) <= 0) return;
+        if ($text == '') {
+            return;
+        }
         $type = ($type == "rss" ? "rss" : "html");
-        $text = str_replace(array("<", ">", "\\r", "\\n", "\\"), array("&lt;", "&gt;", "&#92;r", "&#92;n", "&#92;"), $text);
+        $text = str_replace(
+            array("<", ">", "\\r", "\\n", "\\"),
+            array("&lt;", "&gt;", "&#92;r", "&#92;n", "&#92;"),
+            $text
+        );
         $text = stripslashes($text);
         $text = str_replace(array("  ", "\t",), array("&nbsp;&nbsp;", "&nbsp;&nbsp;&nbsp;"), $text);
         $txt = $text;
@@ -582,7 +686,9 @@ class CSocNetTextParser
 
     function convert_quote_tag($text = "", $type = "html")
     {
-        if (strlen($text) <= 0) return;
+        if ($text == '') {
+            return;
+        }
         $txt = $text;
         $type = ($type == "rss" ? "rss" : "html");
 
@@ -616,13 +722,16 @@ class CSocNetTextParser
 
     function convert_open_tag($marker = "quote", $type = "html")
     {
-        $marker = (strToLower($marker) == "code" ? "code" : "quote");
+        $marker = (mb_strtolower($marker) == "code" ? "code" : "quote");
         $type = ($type == "rss" ? "rss" : "html");
 
         $this->{$marker . "_open"}++;
-        if ($type == "rss")
+        if ($type == "rss") {
             return "\n====" . $marker . "====\n";
-        return "<table class='sonet-" . $marker . "'><thead><tr><th>" . ($marker == "quote" ? GetMessage("SONET_QUOTE") : GetMessage("SONET_CODE")) . "</th></tr></thead><tbody><tr><td>";
+        }
+        return "<table class='sonet-" . $marker . "'><thead><tr><th>" . ($marker == "quote" ? GetMessage(
+                "SONET_QUOTE"
+            ) : GetMessage("SONET_CODE")) . "</th></tr></thead><tbody><tr><td>";
     }
 
     private function convert_open_tag_callback($m)
@@ -632,7 +741,7 @@ class CSocNetTextParser
 
     function convert_close_tag($marker = "quote")
     {
-        $marker = (strToLower($marker) == "code" ? "code" : "quote");
+        $marker = (mb_strtolower($marker) == "code" ? "code" : "quote");
         $type = ($type == "rss" ? "rss" : "html");
 
         if ($this->{$marker . "_open"} == 0) {
@@ -640,8 +749,9 @@ class CSocNetTextParser
             return;
         }
         $this->{$marker . "_closed"}++;
-        if ($type == "rss")
+        if ($type == "rss") {
             return "\n=============\n";
+        }
         return "</td></tr></tbody></table>";
     }
 
@@ -653,17 +763,25 @@ class CSocNetTextParser
     function convert_image_tag($url = "", $type = "html")
     {
         static $bShowedScript = false;
-        if (strlen($url) <= 0) return;
+        if ($url == '') {
+            return;
+        }
         $url = trim($url);
-        $type = (strToLower($type) == "rss" ? "rss" : "html");
+        $type = (mb_strtolower($type) == "rss" ? "rss" : "html");
         $extension = preg_replace("/^.*\.(\S+)$/" . BX_UTF_PCRE_MODIFIER, "\\1", $url);
-        $extension = strtolower($extension);
+        $extension = mb_strtolower($extension);
         $extension = preg_quote($extension, "/");
 
-        $bErrorIMG = False;
-        if (preg_match("/[?&;]/" . BX_UTF_PCRE_MODIFIER, $url)) $bErrorIMG = True;
-        if (!$bErrorIMG && !preg_match("/$extension(\||\$)/" . BX_UTF_PCRE_MODIFIER, $this->allow_img_ext)) $bErrorIMG = True;
-        if (!$bErrorIMG && !preg_match("/^(http|https|ftp|\/)/i" . BX_UTF_PCRE_MODIFIER, $url)) $bErrorIMG = True;
+        $bErrorIMG = false;
+        if (preg_match("/[?&;]/" . BX_UTF_PCRE_MODIFIER, $url)) {
+            $bErrorIMG = true;
+        }
+        if (!$bErrorIMG && !preg_match("/$extension(\||\$)/" . BX_UTF_PCRE_MODIFIER, $this->allow_img_ext)) {
+            $bErrorIMG = true;
+        }
+        if (!$bErrorIMG && !preg_match("/^(http|https|ftp|\/)/i" . BX_UTF_PCRE_MODIFIER, $url)) {
+            $bErrorIMG = true;
+        }
 
         if ($bErrorIMG) {
             return "[img]" . $url . "[/img]";
@@ -679,21 +797,30 @@ class CSocNetTextParser
 
     function convert_font_attr($attr, $value = "", $text = "")
     {
-        if (strlen($text) <= 0) return "";
-        if (strlen($value) <= 0) return $text;
+        if ($text == '') {
+            return "";
+        }
+        if ($value == '') {
+            return $text;
+        }
 
         if ($attr == "size") {
             $count = count($this->arFontSize);
-            if ($count <= 0)
+            if ($count <= 0) {
                 return $text;
-            $value = intVal($value >= $count ? ($count - 1) : $value);
+            }
+            $value = intval($value >= $count ? ($count - 1) : $value);
             return "<span style='font-size:" . $this->arFontSize[$value] . "%;'>" . $text . "</span>";
-        } else if ($attr == 'color') {
-            $value = preg_replace("/[^\w#]/", "", $value);
-            return "<font color='" . $value . "'>" . $text . "</font>";
-        } else if ($attr == 'font') {
-            $value = preg_replace("/[^\w]/", "", $value);
-            return "<font face='" . $value . "'>" . $text . "</font>";
+        } else {
+            if ($attr == 'color') {
+                $value = preg_replace("/[^\w#]/", "", $value);
+                return "<font color='" . $value . "'>" . $text . "</font>";
+            } else {
+                if ($attr == 'font') {
+                    $value = preg_replace("/[^\w]/", "", $value);
+                    return "<font face='" . $value . "'>" . $text . "</font>";
+                }
+            }
         }
     }
 
@@ -724,9 +851,24 @@ class CSocNetTextParser
     function part_long_words($str)
     {
         $word_separator = $this->word_separator;
-        if (($this->MaxStringLen > 0) && (strLen(trim($str)) > 0)) {
+        if (($this->MaxStringLen > 0) && (trim($str) <> '')) {
             $str = str_replace(
-                array(chr(1), chr(2), chr(3), chr(4), chr(5), chr(6), "&amp;", "&lt;", "&gt;", "&quot;", "&nbsp;", "&copy;", "&reg;", "&trade;"),
+                array(
+                    chr(1),
+                    chr(2),
+                    chr(3),
+                    chr(4),
+                    chr(5),
+                    chr(6),
+                    "&amp;",
+                    "&lt;",
+                    "&gt;",
+                    "&quot;",
+                    "&nbsp;",
+                    "&copy;",
+                    "&reg;",
+                    "&trade;"
+                ),
                 array("", "", "", "", "", "", chr(5), "<", ">", chr(6), chr(1), chr(2), chr(3), chr(4)),
                 $str
             );
@@ -737,8 +879,32 @@ class CSocNetTextParser
                 $str
             );
             $str = str_replace(
-                array(chr(5), "<", ">", chr(6), chr(1), chr(2), chr(3), chr(4), "&lt;WBR/&gt;", "&lt;WBR&gt;", "&amp;shy;"),
-                array("&amp;", "&lt;", "&gt;", "&quot;", "&nbsp;", "&copy;", "&reg;", "&trade;", "<WBR/>", "<WBR/>", "&shy;"),
+                array(
+                    chr(5),
+                    "<",
+                    ">",
+                    chr(6),
+                    chr(1),
+                    chr(2),
+                    chr(3),
+                    chr(4),
+                    "&lt;WBR/&gt;",
+                    "&lt;WBR&gt;",
+                    "&amp;shy;"
+                ),
+                array(
+                    "&amp;",
+                    "&lt;",
+                    "&gt;",
+                    "&quot;",
+                    "&nbsp;",
+                    "&copy;",
+                    "&reg;",
+                    "&trade;",
+                    "<WBR/>",
+                    "<WBR/>",
+                    "&shy;"
+                ),
                 $str
             );
         }
@@ -754,7 +920,7 @@ class CSocNetTextParser
     {
         if (
             ($this->MaxStringLen > 0)
-            && (strLen($str) > 0)
+            && ($str <> '')
         ) {
             $str = preg_replace(
                 "/([^ \n\r\t\x01]{" . $this->MaxStringLen . "})/is" . BX_UTF_PCRE_MODIFIER,
@@ -772,7 +938,7 @@ class CSocNetTextParser
 
     function convert_anchor_tag($url, $text, $pref = "")
     {
-        $bCutUrl = True;
+        $bCutUrl = true;
         $text = str_replace("\\\"", "\"", $text);
         $end = "";
         if (preg_match("/([\.,\?]|&#33;)$/" . BX_UTF_PCRE_MODIFIER, $url, $match)) {
@@ -780,30 +946,46 @@ class CSocNetTextParser
             $url = preg_replace("/([\.,\?]|&#33;)$/" . BX_UTF_PCRE_MODIFIER, "", $url);
             $text = preg_replace("/([\.,\?]|&#33;)$/" . BX_UTF_PCRE_MODIFIER, "", $text);
         }
-        if (preg_match("/\[\/(quote|code)/i", $url))
+        if (preg_match("/\[\/(quote|code)/i", $url)) {
             return $url;
+        }
         $url = preg_replace(
             array("/&amp;/" . BX_UTF_PCRE_MODIFIER, "/javascript:/i" . BX_UTF_PCRE_MODIFIER),
-            array("&", "java script&#58; "), $url);
-        if (substr($url, 0, 1) != "/" && !preg_match("/^(http|news|https|ftp|aim|mailto)\:\/\//i" . BX_UTF_PCRE_MODIFIER, $url))
+            array("&", "java script&#58; "),
+            $url
+        );
+        if (mb_substr($url, 0, 1) != "/" && !preg_match(
+                "/^(http|news|https|ftp|aim|mailto)\:\/\//i" . BX_UTF_PCRE_MODIFIER,
+                $url
+            )) {
             $url = 'http://' . $url;
-        if (!preg_match("/^((http|https|news|ftp|aim):\/\/[-_:.a-z0-9@]+)*([^\"\'])+$/i" . BX_UTF_PCRE_MODIFIER, $url))
+        }
+        if (!preg_match(
+            "/^((http|https|news|ftp|aim):\/\/[-_:.a-z0-9@]+)*([^\"\'])+$/i" . BX_UTF_PCRE_MODIFIER,
+            $url
+        )) {
             return $pref . $text . " (" . $url . ")" . $end;
+        }
 
-        if (preg_match("/^<img\s+src/i" . BX_UTF_PCRE_MODIFIER, $text))
-            $bCutUrl = False;
+        if (preg_match("/^<img\s+src/i" . BX_UTF_PCRE_MODIFIER, $text)) {
+            $bCutUrl = false;
+        }
         $text = preg_replace(
             array("/&amp;/i" . BX_UTF_PCRE_MODIFIER, "/javascript:/i" . BX_UTF_PCRE_MODIFIER),
-            array("&", "javascript&#58; "), $text);
-        if ($bCutUrl && strlen($text) < 55)
-            $bCutUrl = False;
-        if ($bCutUrl && !preg_match("/^(http|ftp|https|news):\/\//i" . BX_UTF_PCRE_MODIFIER, $text))
-            $bCutUrl = False;
+            array("&", "javascript&#58; "),
+            $text
+        );
+        if ($bCutUrl && mb_strlen($text) < 55) {
+            $bCutUrl = false;
+        }
+        if ($bCutUrl && !preg_match("/^(http|ftp|https|news):\/\//i" . BX_UTF_PCRE_MODIFIER, $text)) {
+            $bCutUrl = false;
+        }
 
         if ($bCutUrl) {
             $stripped = preg_replace("/^(http|ftp|https|news):\/\/(\S+)$/i" . BX_UTF_PCRE_MODIFIER, "\\2", $text);
             $uri_type = preg_replace("/^(http|ftp|https|news):\/\/(\S+)$/i" . BX_UTF_PCRE_MODIFIER, "\\1", $text);
-            $text = $uri_type . '://' . substr($stripped, 0, 30) . '...' . substr($stripped, -10);
+            $text = $uri_type . '://' . mb_substr($stripped, 0, 30) . '...' . mb_substr($stripped, -10);
         }
 
         return $pref . "<a href='" . $url . "' target='_blank'>" . $text . "</a>" . $end;
@@ -814,10 +996,25 @@ class CSocNetTextParser
         return $this->convert_anchor_tag($m[$this->matchNum], $m[$this->matchNum2], '');
     }
 
-    function convert_to_rss($text, $arImages = Array(), $arAllow = array("HTML" => "N", "ANCHOR" => "Y", "BIU" => "Y", "IMG" => "Y", "QUOTE" => "Y", "CODE" => "Y", "FONT" => "Y", "LIST" => "Y", "SMILES" => "Y", "NL2BR" => "N"), $arParams = array())
-    {
+    function convert_to_rss(
+        $text,
+        $arImages = Array(),
+        $arAllow = array(
+            "HTML" => "N",
+            "ANCHOR" => "Y",
+            "BIU" => "Y",
+            "IMG" => "Y",
+            "QUOTE" => "Y",
+            "CODE" => "Y",
+            "FONT" => "Y",
+            "LIST" => "Y",
+            "SMILES" => "Y",
+            "NL2BR" => "N"
+        ),
+        $arParams = array()
+    ) {
         global $DB;
-        if (empty($arAllow))
+        if (empty($arAllow)) {
             $arAllow = array(
                 "HTML" => "N",
                 "ANCHOR" => "Y",
@@ -828,7 +1025,9 @@ class CSocNetTextParser
                 "FONT" => "Y",
                 "LIST" => "Y",
                 "SMILES" => "Y",
-                "NL2BR" => "N");
+                "NL2BR" => "N"
+            );
+        }
 
         $this->quote_error = 0;
         $this->quote_open = 0;
@@ -841,24 +1040,29 @@ class CSocNetTextParser
             $text = preg_replace(
                 array(
                     "#^(.+?)<cut[\s]*(/>|>).*?$#is" . BX_UTF_PCRE_MODIFIER,
-                    "#^(.+?)\[cut[\s]*(/\]|\]).*?$#is" . BX_UTF_PCRE_MODIFIER),
-                "\\1", $text);
+                    "#^(.+?)\[cut[\s]*(/\]|\]).*?$#is" . BX_UTF_PCRE_MODIFIER
+                ),
+                "\\1",
+                $text
+            );
             $arAllow["SMILES"] = "N";
             $text = $this->convert($text, $arAllow, "rss");
         } else {
-            if ($arAllow["NL2BR"] == "Y")
+            if ($arAllow["NL2BR"] == "Y") {
                 $text = str_replace("\n", "<br />", $text);
+            }
         }
 
-        if (strLen($arParams["SERVER_NAME"]) <= 0) {
+        if ($arParams["SERVER_NAME"] == '') {
             $dbSite = CSite::GetByID(SITE_ID);
             $arSite = $dbSite->Fetch();
             $arParams["SERVER_NAME"] = htmlspecialcharsEx($arSite["SERVER_NAME"]);
-            if (strLen($arParams["SERVER_NAME"]) <= 0) {
-                if (defined("SITE_SERVER_NAME") && strlen(SITE_SERVER_NAME) > 0)
+            if ($arParams["SERVER_NAME"] == '') {
+                if (defined("SITE_SERVER_NAME") && SITE_SERVER_NAME <> '') {
                     $arParams["SERVER_NAME"] = SITE_SERVER_NAME;
-                else
+                } else {
                     $arParams["SERVER_NAME"] = COption::GetOptionString("main", "server_name", "www.bitrixsoft.com");
+                }
             }
         }
 
@@ -879,7 +1083,6 @@ class CSocNetTextParser
                         array($this, "convert_emoticon_callback"),
                         $text
                     );
-
                 }
             }
         }
@@ -891,31 +1094,34 @@ class CSocNetTextParser
         $result = "";
         $counter_plus = true;
         $counter = 0;
-        $string_len = strlen($string);
+        $string_len = mb_strlen($string);
         for ($i = 0; $i < $string_len; ++$i) {
-            $char = substr($string, $i, 1);
-            if ($char == '<')
+            $char = mb_substr($string, $i, 1);
+            if ($char == '<') {
                 $counter_plus = false;
-            if ($char == '>' && substr($string, $i + 1, 1) != '<') {
+            }
+            if ($char == '>' && mb_substr($string, $i + 1, 1) != '<') {
                 $counter_plus = true;
                 $counter--;
             }
             $result .= $char;
-            if ($counter_plus)
+            if ($counter_plus) {
                 $counter++;
+            }
             if ($counter >= $count) {
-                $pos_space = strpos($string, " ", $i);
-                $pos_tag = strpos($string, "<", $i);
+                $pos_space = mb_strpos($string, " ", $i);
+                $pos_tag = mb_strpos($string, "<", $i);
                 if ($pos_space == false) {
-                    $pos = strrpos($result, " ");
-                    $result = substr($result, 0, strlen($result) - ($i - $pos + 1));
+                    $pos = mb_strrpos($result, " ");
+                    $result = mb_substr($result, 0, mb_strlen($result) - ($i - $pos + 1));
                 } else {
                     $pos = min($pos_space, $pos_tag);
                     if ($pos != $i) {
-                        $dop_str = substr($string, $i + 1, $pos - $i - 1);
+                        $dop_str = mb_substr($string, $i + 1, $pos - $i - 1);
                         $result .= $dop_str;
-                    } else
-                        $result = substr($result, 0, strlen($result) - 1);
+                    } else {
+                        $result = mb_substr($result, 0, mb_strlen($result) - 1);
+                    }
                 }
                 break;
             }
@@ -925,7 +1131,21 @@ class CSocNetTextParser
 
     public static function closetags($html)
     {
-        $arNoClose = array('br', 'hr', 'img', 'area', 'base', 'basefont', 'col', 'frame', 'input', 'isindex', 'link', 'meta', 'param');
+        $arNoClose = array(
+            'br',
+            'hr',
+            'img',
+            'area',
+            'base',
+            'basefont',
+            'col',
+            'frame',
+            'input',
+            'isindex',
+            'link',
+            'meta',
+            'param'
+        );
 
         preg_match_all("#<([a-z0-9]+)([^>]*)(?<!/)>#i" . BX_UTF_PCRE_MODIFIER, $html, $result);
         $openedtags = $result[1];
@@ -934,17 +1154,20 @@ class CSocNetTextParser
         $closedtags = $result[1];
         $len_opened = count($openedtags);
 
-        if (count($closedtags) == $len_opened)
+        if (count($closedtags) == $len_opened) {
             return $html;
+        }
 
         $openedtags = array_reverse($openedtags);
 
         for ($i = 0; $i < $len_opened; $i++) {
             if (!in_array($openedtags[$i], $closedtags)) {
-                if (!in_array($openedtags[$i], $arNoClose))
+                if (!in_array($openedtags[$i], $arNoClose)) {
                     $html .= '</' . $openedtags[$i] . '>';
-            } else
+                }
+            } else {
                 unset($closedtags[array_search($openedtags[$i], $closedtags)]);
+            }
         }
 
         return $html;
@@ -953,17 +1176,19 @@ class CSocNetTextParser
     function html_cut($html, $size)
     {
         $symbols = strip_tags($html);
-        $symbols_len = strlen($symbols);
+        $symbols_len = mb_strlen($symbols);
 
-        if ($symbols_len < strlen($html)) {
+        if ($symbols_len < mb_strlen($html)) {
             $strip_text = $this->strip_words($html, $size);
 
-            if ($symbols_len > $size)
+            if ($symbols_len > $size) {
                 $strip_text = $strip_text . "...";
+            }
 
             $final_text = $this->closetags($strip_text);
-        } else
-            $final_text = substr($html, 0, $size);
+        } else {
+            $final_text = mb_substr($html, 0, $size);
+        }
 
         return $final_text;
     }
@@ -972,18 +1197,27 @@ class CSocNetTextParser
 
 class CSocNetTools
 {
-    function InitImage($imageID, $imageSize, $defaultImage, $defaultImageSize, $imageUrl, $showImageUrl, $urlParams = false)
-    {
+    public static function InitImage(
+        $imageID,
+        $imageSize,
+        $defaultImage,
+        $defaultImageSize,
+        $imageUrl,
+        $showImageUrl,
+        $urlParams = false
+    ) {
         $imageFile = false;
         $imageImg = "";
 
         $imageSize = intval($imageSize);
-        if ($imageSize <= 0)
+        if ($imageSize <= 0) {
             $imageSize = 100;
+        }
 
         $defaultImageSize = intval($defaultImageSize);
-        if ($defaultImageSize <= 0)
+        if ($defaultImageSize <= 0) {
             $defaultImageSize = 100;
+        }
 
         $imageUrl = trim($imageUrl);
         $imageID = intval($imageID);
@@ -997,19 +1231,28 @@ class CSocNetTools
                     BX_RESIZE_IMAGE_PROPORTIONAL,
                     false
                 );
-                $imageImg = CFile::ShowImage($arFileTmp["src"], $imageSize, $imageSize, "border=0", "", ($imageUrl == ''));
+                $imageImg = CFile::ShowImage(
+                    $arFileTmp["src"],
+                    $imageSize,
+                    $imageSize,
+                    "border=0",
+                    "",
+                    ($imageUrl == '')
+                );
             }
         }
-        if ($imageImg == '')
+        if ($imageImg == '') {
             $imageImg = "<img src=\"" . $defaultImage . "\" width=\"" . $defaultImageSize . "\" height=\"" . $defaultImageSize . "\" border=\"0\" alt=\"\" />";
+        }
 
-        if ($imageUrl <> '' && $showImageUrl)
+        if ($imageUrl <> '' && $showImageUrl) {
             $imageImg = "<a href=\"" . $imageUrl . "\"" . ($urlParams !== false ? ' ' . $urlParams : '') . ">" . $imageImg . "</a>";
+        }
 
         return array("FILE" => $imageFile, "IMG" => $imageImg);
     }
 
-    function htmlspecialcharsExArray($array)
+    public static function htmlspecialcharsExArray($array)
     {
         $res = Array();
         if (!empty($array) && is_array($array)) {
@@ -1028,16 +1271,17 @@ class CSocNetTools
         return $res;
     }
 
-    function ResizeImage($aFile, $sizeX, $sizeY)
+    public static function ResizeImage($aFile, $sizeX, $sizeY)
     {
         $result = CFile::ResizeImageGet($aFile, array("width" => $sizeX, "height" => $sizeY));
-        if (is_array($result))
+        if (is_array($result)) {
             return $result["src"];
-        else
+        } else {
             return false;
+        }
     }
 
-    function GetDateTimeFormat()
+    public static function GetDateTimeFormat()
     {
         $timestamp = mktime(7, 30, 45, 2, 22, 2007);
         return array(
@@ -1056,41 +1300,45 @@ class CSocNetTools
         );
     }
 
-    function Birthday($datetime, $gender, $showYear = "N")
+    public static function Birthday($datetime, $gender, $showYear = "N")
     {
-        if (StrLen($datetime) <= 0)
+        if ($datetime == '') {
             return false;
+        }
 
         $arDateTmp = ParseDateTime($datetime, CSite::GetDateFormat('SHORT'));
 
-        $day = IntVal($arDateTmp["DD"]);
+        $day = intval($arDateTmp["DD"]);
         if (isset($arDateTmp["M"])) {
             if (is_numeric($arDateTmp["M"])) {
-                $month = IntVal($arDateTmp["M"]);
+                $month = intval($arDateTmp["M"]);
             } else {
                 $month = GetNumMonth($arDateTmp["M"], true);
-                if (!$month)
+                if (!$month) {
                     $month = intval(date('m', strtotime($arDateTmp["M"])));
+                }
             }
         } elseif (isset($arDateTmp["MMMM"])) {
             if (is_numeric($arDateTmp["MMMM"])) {
                 $month = intval($arDateTmp["MMMM"]);
             } else {
                 $month = GetNumMonth($arDateTmp["MMMM"]);
-                if (!$month)
+                if (!$month) {
                     $month = intval(date('m', strtotime($arDateTmp["MMMM"])));
+                }
             }
         } else {
-            $month = IntVal($arDateTmp["MM"]);
+            $month = intval($arDateTmp["MM"]);
         }
         $arDateTmp["MM"] = $month;
 
-        $year = IntVal($arDateTmp["YYYY"]);
+        $year = intval($arDateTmp["YYYY"]);
 
-        if (($showYear == 'Y') || ($showYear == 'M' && $gender == 'M'))
+        if (($showYear == 'Y') || ($showYear == 'M' && $gender == 'M')) {
             $date_template = GetMessage("SONET_BIRTHDAY_DAY_TEMPLATE");
-        else
+        } else {
             $date_template = GetMessage("SONET_BIRTHDAY_DAY_TEMPLATE_WO_YEAR");
+        }
 
         $val = str_replace(
             array("#DAY#", "#MONTH#", "#MONTH_LOW#", "#YEAR#"),
@@ -1100,30 +1348,34 @@ class CSocNetTools
 
         return array(
             "DATE" => $val,
-            "MONTH" => Str_Pad(IntVal($arDateTmp["MM"]), 2, "0", STR_PAD_LEFT),
-            "DAY" => Str_Pad(IntVal($arDateTmp["DD"]), 2, "0", STR_PAD_LEFT)
+            "MONTH" => Str_Pad(intval($arDateTmp["MM"]), 2, "0", STR_PAD_LEFT),
+            "DAY" => Str_Pad(intval($arDateTmp["DD"]), 2, "0", STR_PAD_LEFT)
         );
     }
 
-    function GetDefaultNameTemplates()
+    public static function GetDefaultNameTemplates()
     {
         return array(
             '#NOBR##LAST_NAME# #NAME##/NOBR#' => GetMessage('SONET_NAME_TEMPLATE_SMITH_JOHN'),
             '#NOBR##LAST_NAME# #NAME##/NOBR# #SECOND_NAME#' => GetMessage('SONET_NAME_TEMPLATE_SMITH_JOHN_LLOYD'),
-            '#LAST_NAME#, #NOBR##NAME# #SECOND_NAME##/NOBR#' => GetMessage('SONET_NAME_TEMPLATE_SMITH_COMMA_JOHN_LLOYD'),
+            '#LAST_NAME#, #NOBR##NAME# #SECOND_NAME##/NOBR#' => GetMessage(
+                'SONET_NAME_TEMPLATE_SMITH_COMMA_JOHN_LLOYD'
+            ),
             '#NAME# #SECOND_NAME# #LAST_NAME#' => GetMessage('SONET_NAME_TEMPLATE_JOHN_LLOYD_SMITH'),
             '#NOBR##NAME_SHORT# #SECOND_NAME_SHORT# #LAST_NAME##/NOBR#' => GetMessage('SONET_NAME_TEMPLATE_J_L_SMITH'),
             '#NOBR##NAME_SHORT# #LAST_NAME##/NOBR#' => GetMessage('SONET_NAME_TEMPLATE_J_SMITH'),
             '#NOBR##LAST_NAME# #NAME_SHORT##/NOBR#' => GetMessage('SONET_NAME_TEMPLATE_SMITH_J'),
             '#NOBR##LAST_NAME# #NAME_SHORT# #SECOND_NAME_SHORT##/NOBR#' => GetMessage('SONET_NAME_TEMPLATE_SMITH_J_L'),
             '#NOBR##LAST_NAME#, #NAME_SHORT##/NOBR#' => GetMessage('SONET_NAME_TEMPLATE_SMITH_COMMA_J'),
-            '#NOBR##LAST_NAME#, #NAME_SHORT# #SECOND_NAME_SHORT##/NOBR#' => GetMessage('SONET_NAME_TEMPLATE_SMITH_COMMA_J_L'),
+            '#NOBR##LAST_NAME#, #NAME_SHORT# #SECOND_NAME_SHORT##/NOBR#' => GetMessage(
+                'SONET_NAME_TEMPLATE_SMITH_COMMA_J_L'
+            ),
             '#NOBR##NAME# #LAST_NAME##/NOBR#' => GetMessage('SONET_NAME_TEMPLATE_JOHN_SMITH'),
             '#NOBR##NAME# #SECOND_NAME_SHORT# #LAST_NAME##/NOBR#' => GetMessage('SONET_NAME_TEMPLATE_JOHN_L_SMITH'),
         );
     }
 
-    function GetMyGroups()
+    public static function GetMyGroups()
     {
         global $USER;
 
@@ -1146,10 +1398,11 @@ class CSocNetTools
         return $arGroupsMy;
     }
 
-    function GetGroupUsers($group_id)
+    public static function GetGroupUsers($group_id)
     {
-        if (intval($group_id) <= 0)
+        if (intval($group_id) <= 0) {
             return false;
+        }
 
         $arGroupUsers = array();
         $dbRequests = CSocNetUserToGroup::GetList(
@@ -1163,13 +1416,14 @@ class CSocNetTools
             false,
             array("USER_ID")
         );
-        while ($arRequests = $dbRequests->Fetch())
+        while ($arRequests = $dbRequests->Fetch()) {
             $arGroupUsers[] = $arRequests["USER_ID"];
+        }
 
         return $arGroupUsers;
     }
 
-    function IsMyGroup($entity_id)
+    public static function IsMyGroup($entity_id)
     {
         global $USER;
 
@@ -1182,13 +1436,14 @@ class CSocNetTools
                 "<=ROLE" => SONET_ROLES_USER,
             )
         );
-        if ($arRequests = $dbRequests->Fetch())
+        if ($arRequests = $dbRequests->Fetch()) {
             $is_my = true;
+        }
 
         return $is_my;
     }
 
-    function GetMyUsers($user_id = false)
+    public static function GetMyUsers($user_id = false)
     {
         global $USER;
 
@@ -1200,16 +1455,17 @@ class CSocNetTools
         if (CSocNetUser::IsFriendsAllowed()) {
             $arUsersMy = array();
             $dbFriends = CSocNetUserRelations::GetRelatedUsers($user_id, SONET_RELATIONS_FRIEND);
-            if ($dbFriends)
+            if ($dbFriends) {
                 while ($arFriends = $dbFriends->Fetch()) {
                     $pref = (($user_id == $arFriends["FIRST_USER_ID"]) ? "SECOND" : "FIRST");
                     $arUsersMy[] = $arFriends[$pref . "_USER_ID"];
                 }
+            }
         }
         return $arUsersMy;
     }
 
-    function IsMyUser($entity_id)
+    public static function IsMyUser($entity_id)
     {
         global $USER;
 
@@ -1217,13 +1473,14 @@ class CSocNetTools
         if (
             CSocNetUser::IsFriendsAllowed()
             && CSocNetUserRelations::IsFriends($USER->getId(), $entity_id)
-        )
+        ) {
             $is_my = true;
+        }
 
         return $is_my;
     }
 
-    function HasLogEventCreatedBy($event_id)
+    public static function HasLogEventCreatedBy($event_id)
     {
         return CSocNetLogTools:: HasLogEventCreatedBy($event_id);
     }
@@ -1321,7 +1578,7 @@ class CSocNetAllowed
 
         $entityType = trim($entityType);
         if (
-            strlen($entityType) <= 0
+            $entityType == ''
             || in_array($entityType, self::$arAllowedEntityTypes)
             || !preg_match('/^[a-zA-Z0-9]+$/', $entityType)
         ) {
@@ -1352,7 +1609,7 @@ class CSocNetAllowed
         $entityTypeDescCode = trim($entityTypeDescCode);
 
         if (
-            strlen($entityTypeDescCode) <= 0
+            $entityTypeDescCode == ''
             || array_key_exists($entityTypeDescCode, self::$arAllowedEntityTypesDesc)
             || !is_array($arEntityTypeDesc)
         ) {
@@ -1437,10 +1694,26 @@ class CSocNetAllowed
                 );
 
                 $arFeatureTmp["allowed"][] = SONET_ENTITY_USER;
-                $arFeatureTmp["operations"]["full"][SONET_ENTITY_USER] = COption::GetOptionString("socialnetwork", "default_forum_operation_full_user", SONET_RELATIONS_TYPE_NONE);
-                $arFeatureTmp["operations"]["newtopic"][SONET_ENTITY_USER] = COption::GetOptionString("socialnetwork", "default_forum_operation_newtopic_user", SONET_RELATIONS_TYPE_NONE);
-                $arFeatureTmp["operations"]["answer"][SONET_ENTITY_USER] = COption::GetOptionString("socialnetwork", "default_forum_operation_answer_user", (CSocNetUser::IsFriendsAllowed() ? SONET_RELATIONS_TYPE_FRIENDS : SONET_RELATIONS_TYPE_AUTHORIZED));
-                $arFeatureTmp["operations"]["view"][SONET_ENTITY_USER] = COption::GetOptionString("socialnetwork", "default_forum_operation_view_user", SONET_RELATIONS_TYPE_ALL);
+                $arFeatureTmp["operations"]["full"][SONET_ENTITY_USER] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_forum_operation_full_user",
+                    SONET_RELATIONS_TYPE_NONE
+                );
+                $arFeatureTmp["operations"]["newtopic"][SONET_ENTITY_USER] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_forum_operation_newtopic_user",
+                    SONET_RELATIONS_TYPE_NONE
+                );
+                $arFeatureTmp["operations"]["answer"][SONET_ENTITY_USER] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_forum_operation_answer_user",
+                    (CSocNetUser::IsFriendsAllowed() ? SONET_RELATIONS_TYPE_FRIENDS : SONET_RELATIONS_TYPE_AUTHORIZED)
+                );
+                $arFeatureTmp["operations"]["view"][SONET_ENTITY_USER] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_forum_operation_view_user",
+                    SONET_RELATIONS_TYPE_ALL
+                );
             }
 
             if (COption::GetOptionString("socialnetwork", "allow_forum_group", "Y") == "Y") {
@@ -1452,10 +1725,26 @@ class CSocNetAllowed
                 );
 
                 $arFeatureTmp["allowed"][] = SONET_ENTITY_GROUP;
-                $arFeatureTmp["operations"]["full"][SONET_ENTITY_GROUP] = COption::GetOptionString("socialnetwork", "default_forum_operation_full_group", SONET_ROLES_MODERATOR);
-                $arFeatureTmp["operations"]["newtopic"][SONET_ENTITY_GROUP] = COption::GetOptionString("socialnetwork", "default_forum_operation_newtopic_group", SONET_ROLES_USER);
-                $arFeatureTmp["operations"]["answer"][SONET_ENTITY_GROUP] = COption::GetOptionString("socialnetwork", "default_forum_operation_answer_group", SONET_ROLES_USER);
-                $arFeatureTmp["operations"]["view"][SONET_ENTITY_GROUP] = COption::GetOptionString("socialnetwork", "default_forum_operation_view_group", SONET_ROLES_USER);
+                $arFeatureTmp["operations"]["full"][SONET_ENTITY_GROUP] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_forum_operation_full_group",
+                    SONET_ROLES_MODERATOR
+                );
+                $arFeatureTmp["operations"]["newtopic"][SONET_ENTITY_GROUP] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_forum_operation_newtopic_group",
+                    SONET_ROLES_USER
+                );
+                $arFeatureTmp["operations"]["answer"][SONET_ENTITY_GROUP] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_forum_operation_answer_group",
+                    SONET_ROLES_USER
+                );
+                $arFeatureTmp["operations"]["view"][SONET_ENTITY_GROUP] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_forum_operation_view_group",
+                    SONET_ROLES_USER
+                );
             }
 
             \CSocNetAllowed::addAllowedFeature("forum", $arFeatureTmp);
@@ -1522,8 +1811,16 @@ class CSocNetAllowed
                 );
 
                 $arFeatureTmp["allowed"][] = SONET_ENTITY_USER;
-                $arFeatureTmp["operations"]["write"][SONET_ENTITY_USER] = COption::GetOptionString("socialnetwork", "default_photo_operation_write_user", SONET_RELATIONS_TYPE_NONE);
-                $arFeatureTmp["operations"]["view"][SONET_ENTITY_USER] = COption::GetOptionString("socialnetwork", "default_photo_operation_view_user", SONET_RELATIONS_TYPE_ALL);
+                $arFeatureTmp["operations"]["write"][SONET_ENTITY_USER] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_photo_operation_write_user",
+                    SONET_RELATIONS_TYPE_NONE
+                );
+                $arFeatureTmp["operations"]["view"][SONET_ENTITY_USER] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_photo_operation_view_user",
+                    SONET_RELATIONS_TYPE_ALL
+                );
             }
 
             if (COption::GetOptionString("socialnetwork", "allow_photo_group", "Y") == "Y") {
@@ -1535,8 +1832,16 @@ class CSocNetAllowed
                 );
 
                 $arFeatureTmp["allowed"][] = SONET_ENTITY_GROUP;
-                $arFeatureTmp["operations"]["write"][SONET_ENTITY_GROUP] = COption::GetOptionString("socialnetwork", "default_photo_operation_write_group", SONET_ROLES_MODERATOR);
-                $arFeatureTmp["operations"]["view"][SONET_ENTITY_GROUP] = COption::GetOptionString("socialnetwork", "default_photo_operation_view_group", SONET_ROLES_USER);
+                $arFeatureTmp["operations"]["write"][SONET_ENTITY_GROUP] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_photo_operation_write_group",
+                    SONET_ROLES_MODERATOR
+                );
+                $arFeatureTmp["operations"]["view"][SONET_ENTITY_GROUP] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_photo_operation_view_group",
+                    SONET_ROLES_USER
+                );
             }
 
             \CSocNetAllowed::addAllowedFeature("photo", $arFeatureTmp);
@@ -1561,14 +1866,30 @@ class CSocNetAllowed
 
             if (COption::GetOptionString("socialnetwork", "allow_calendar_user", "Y") == "Y") {
                 $arFeatureTmp["allowed"][] = SONET_ENTITY_USER;
-                $arFeatureTmp["operations"]["write"][SONET_ENTITY_USER] = COption::GetOptionString("socialnetwork", "default_calendar_operation_write_user", SONET_RELATIONS_TYPE_NONE);
-                $arFeatureTmp["operations"]["view"][SONET_ENTITY_USER] = COption::GetOptionString("socialnetwork", "default_calendar_operation_view_user", SONET_RELATIONS_TYPE_ALL);
+                $arFeatureTmp["operations"]["write"][SONET_ENTITY_USER] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_calendar_operation_write_user",
+                    SONET_RELATIONS_TYPE_NONE
+                );
+                $arFeatureTmp["operations"]["view"][SONET_ENTITY_USER] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_calendar_operation_view_user",
+                    SONET_RELATIONS_TYPE_ALL
+                );
             }
 
             if (COption::GetOptionString("socialnetwork", "allow_calendar_group", "Y") == "Y") {
                 $arFeatureTmp["allowed"][] = SONET_ENTITY_GROUP;
-                $arFeatureTmp["operations"]["write"][SONET_ENTITY_GROUP] = COption::GetOptionString("socialnetwork", "default_calendar_operation_write_group", SONET_ROLES_MODERATOR);
-                $arFeatureTmp["operations"]["view"][SONET_ENTITY_GROUP] = COption::GetOptionString("socialnetwork", "default_calendar_operation_view_group", SONET_ROLES_USER);
+                $arFeatureTmp["operations"]["write"][SONET_ENTITY_GROUP] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_calendar_operation_write_group",
+                    SONET_ROLES_MODERATOR
+                );
+                $arFeatureTmp["operations"]["view"][SONET_ENTITY_GROUP] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_calendar_operation_view_group",
+                    SONET_ROLES_USER
+                );
             }
 
             \CSocNetAllowed::addAllowedFeature("calendar", $arFeatureTmp);
@@ -1594,6 +1915,7 @@ class CSocNetAllowed
                 "subscribe_events" => array(
                     "tasks" => array(
                         "ENTITIES" => array(),
+                        'FORUM_COMMENT_ENTITY' => 'TK',
                         "OPERATION" => "view",
                         "CLASS_FORMAT" => "CSocNetLogTools",
                         "METHOD_FORMAT" => "FormatEvent_Task2",
@@ -1626,13 +1948,41 @@ class CSocNetAllowed
                 );
 
                 $arFeatureTmp["allowed"][] = SONET_ENTITY_USER;
-                $arFeatureTmp["operations"]["view"][SONET_ENTITY_USER] = COption::GetOptionString("socialnetwork", "default_tasks_operation_view_user", SONET_RELATIONS_TYPE_ALL);
-                $arFeatureTmp["operations"]["view_all"][SONET_ENTITY_USER] = COption::GetOptionString("socialnetwork", "default_tasks_operation_view_all_user", SONET_RELATIONS_TYPE_NONE);
-                $arFeatureTmp["operations"]["create_tasks"][SONET_ENTITY_USER] = COption::GetOptionString("socialnetwork", "default_tasks_operation_create_tasks_user", SONET_RELATIONS_TYPE_AUTHORIZED);
-                $arFeatureTmp["operations"]["edit_tasks"][SONET_ENTITY_USER] = COption::GetOptionString("socialnetwork", "default_tasks_operation_edit_tasks_user", SONET_RELATIONS_TYPE_NONE);
-                $arFeatureTmp["operations"]["delete_tasks"][SONET_ENTITY_USER] = COption::GetOptionString("socialnetwork", "default_tasks_operation_delete_tasks_user", SONET_RELATIONS_TYPE_NONE);
-                $arFeatureTmp["operations"]["modify_folders"][SONET_ENTITY_USER] = COption::GetOptionString("socialnetwork", "default_tasks_operation_modify_folders_user", SONET_RELATIONS_TYPE_NONE);
-                $arFeatureTmp["operations"]["modify_common_views"][SONET_ENTITY_USER] = COption::GetOptionString("socialnetwork", "default_tasks_operation_modify_common_views_user", SONET_RELATIONS_TYPE_NONE);
+                $arFeatureTmp["operations"]["view"][SONET_ENTITY_USER] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_tasks_operation_view_user",
+                    SONET_RELATIONS_TYPE_ALL
+                );
+                $arFeatureTmp["operations"]["view_all"][SONET_ENTITY_USER] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_tasks_operation_view_all_user",
+                    SONET_RELATIONS_TYPE_NONE
+                );
+                $arFeatureTmp["operations"]["create_tasks"][SONET_ENTITY_USER] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_tasks_operation_create_tasks_user",
+                    SONET_RELATIONS_TYPE_AUTHORIZED
+                );
+                $arFeatureTmp["operations"]["edit_tasks"][SONET_ENTITY_USER] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_tasks_operation_edit_tasks_user",
+                    SONET_RELATIONS_TYPE_NONE
+                );
+                $arFeatureTmp["operations"]["delete_tasks"][SONET_ENTITY_USER] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_tasks_operation_delete_tasks_user",
+                    SONET_RELATIONS_TYPE_NONE
+                );
+                $arFeatureTmp["operations"]["modify_folders"][SONET_ENTITY_USER] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_tasks_operation_modify_folders_user",
+                    SONET_RELATIONS_TYPE_NONE
+                );
+                $arFeatureTmp["operations"]["modify_common_views"][SONET_ENTITY_USER] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_tasks_operation_modify_common_views_user",
+                    SONET_RELATIONS_TYPE_NONE
+                );
             }
 
             if (COption::GetOptionString("socialnetwork", "allow_tasks_group", "Y") == "Y") {
@@ -1644,14 +1994,46 @@ class CSocNetAllowed
                 );
 
                 $arFeatureTmp["allowed"][] = SONET_ENTITY_GROUP;
-                $arFeatureTmp["operations"]["view"][SONET_ENTITY_GROUP] = COption::GetOptionString("socialnetwork", "default_tasks_operation_view_group", SONET_ROLES_USER);
-                $arFeatureTmp["operations"]["view_all"][SONET_ENTITY_GROUP] = COption::GetOptionString("socialnetwork", "default_tasks_operation_view_all_group", SONET_ROLES_USER);
-                $arFeatureTmp["operations"]["sort"][SONET_ENTITY_GROUP] = COption::GetOptionString("socialnetwork", "default_tasks_operation_sort_group", SONET_ROLES_USER);
-                $arFeatureTmp["operations"]["create_tasks"][SONET_ENTITY_GROUP] = COption::GetOptionString("socialnetwork", "default_tasks_operation_create_tasks_group", SONET_ROLES_USER);
-                $arFeatureTmp["operations"]["edit_tasks"][SONET_ENTITY_GROUP] = COption::GetOptionString("socialnetwork", "default_tasks_operation_edit_tasks_group", SONET_ROLES_MODERATOR);
-                $arFeatureTmp["operations"]["delete_tasks"][SONET_ENTITY_GROUP] = COption::GetOptionString("socialnetwork", "default_tasks_operation_delete_tasks_group", SONET_ROLES_MODERATOR);
-                $arFeatureTmp["operations"]["modify_folders"][SONET_ENTITY_GROUP] = COption::GetOptionString("socialnetwork", "default_tasks_operation_modify_folders_group", SONET_ROLES_MODERATOR);
-                $arFeatureTmp["operations"]["modify_common_views"][SONET_ENTITY_GROUP] = COption::GetOptionString("socialnetwork", "default_tasks_operation_modify_common_views_group", SONET_ROLES_MODERATOR);
+                $arFeatureTmp["operations"]["view"][SONET_ENTITY_GROUP] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_tasks_operation_view_group",
+                    SONET_ROLES_USER
+                );
+                $arFeatureTmp["operations"]["view_all"][SONET_ENTITY_GROUP] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_tasks_operation_view_all_group",
+                    SONET_ROLES_USER
+                );
+                $arFeatureTmp["operations"]["sort"][SONET_ENTITY_GROUP] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_tasks_operation_sort_group",
+                    SONET_ROLES_USER
+                );
+                $arFeatureTmp["operations"]["create_tasks"][SONET_ENTITY_GROUP] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_tasks_operation_create_tasks_group",
+                    SONET_ROLES_USER
+                );
+                $arFeatureTmp["operations"]["edit_tasks"][SONET_ENTITY_GROUP] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_tasks_operation_edit_tasks_group",
+                    SONET_ROLES_MODERATOR
+                );
+                $arFeatureTmp["operations"]["delete_tasks"][SONET_ENTITY_GROUP] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_tasks_operation_delete_tasks_group",
+                    SONET_ROLES_MODERATOR
+                );
+                $arFeatureTmp["operations"]["modify_folders"][SONET_ENTITY_GROUP] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_tasks_operation_modify_folders_group",
+                    SONET_ROLES_MODERATOR
+                );
+                $arFeatureTmp["operations"]["modify_common_views"][SONET_ENTITY_GROUP] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_tasks_operation_modify_common_views_group",
+                    SONET_ROLES_MODERATOR
+                );
             }
 
             \CSocNetAllowed::addAllowedFeature("tasks", $arFeatureTmp);
@@ -1711,9 +2093,21 @@ class CSocNetAllowed
                 );
 
                 $arFeatureTmp["allowed"][] = SONET_ENTITY_USER;
-                $arFeatureTmp["operations"]["view"][SONET_ENTITY_USER] = COption::GetOptionString("socialnetwork", "default_files_operation_view_user", (CSocNetUser::IsFriendsAllowed() ? SONET_RELATIONS_TYPE_FRIENDS : SONET_RELATIONS_TYPE_ALL));
-                $arFeatureTmp["operations"]["write_limited"][SONET_ENTITY_USER] = COption::GetOptionString("socialnetwork", "default_files_operation_write_limited_user", SONET_RELATIONS_TYPE_NONE);
-                $arFeatureTmp["operations"]["write"][SONET_ENTITY_USER] = COption::GetOptionString("socialnetwork", "default_files_operation_write_user", SONET_RELATIONS_TYPE_NONE);
+                $arFeatureTmp["operations"]["view"][SONET_ENTITY_USER] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_files_operation_view_user",
+                    (CSocNetUser::IsFriendsAllowed() ? SONET_RELATIONS_TYPE_FRIENDS : SONET_RELATIONS_TYPE_ALL)
+                );
+                $arFeatureTmp["operations"]["write_limited"][SONET_ENTITY_USER] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_files_operation_write_limited_user",
+                    SONET_RELATIONS_TYPE_NONE
+                );
+                $arFeatureTmp["operations"]["write"][SONET_ENTITY_USER] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_files_operation_write_user",
+                    SONET_RELATIONS_TYPE_NONE
+                );
             }
 
             if (COption::GetOptionString("socialnetwork", "allow_files_group", "Y") == "Y") {
@@ -1725,9 +2119,21 @@ class CSocNetAllowed
                 );
 
                 $arFeatureTmp["allowed"][] = SONET_ENTITY_GROUP;
-                $arFeatureTmp["operations"]["view"][SONET_ENTITY_GROUP] = COption::GetOptionString("socialnetwork", "default_files_operation_view_group", SONET_ROLES_USER);
-                $arFeatureTmp["operations"]["write_limited"][SONET_ENTITY_GROUP] = COption::GetOptionString("socialnetwork", "default_files_operation_write_limited_group", SONET_ROLES_MODERATOR);
-                $arFeatureTmp["operations"]["write"][SONET_ENTITY_GROUP] = COption::GetOptionString("socialnetwork", "default_files_operation_write_group", SONET_ROLES_MODERATOR);
+                $arFeatureTmp["operations"]["view"][SONET_ENTITY_GROUP] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_files_operation_view_group",
+                    SONET_ROLES_USER
+                );
+                $arFeatureTmp["operations"]["write_limited"][SONET_ENTITY_GROUP] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_files_operation_write_limited_group",
+                    SONET_ROLES_MODERATOR
+                );
+                $arFeatureTmp["operations"]["write"][SONET_ENTITY_GROUP] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_files_operation_write_group",
+                    SONET_ROLES_MODERATOR
+                );
             }
 
             \CSocNetAllowed::addAllowedFeature("files", $arFeatureTmp);
@@ -1763,7 +2169,9 @@ class CSocNetAllowed
                         "OPERATION" => "",
                         "NO_SET" => true,
                         "REAL_EVENT_ID" => "blog_post",
-                        "FULL_SET" => array_unique(array_merge($livefeedProvider->getEventId(), array("blog", "blog_comment")))
+                        "FULL_SET" => array_unique(
+                            array_merge($livefeedProvider->getEventId(), array("blog", "blog_comment"))
+                        )
                     ),
                     "blog_post" => array(
                         "ENTITIES" => array(),
@@ -1805,10 +2213,26 @@ class CSocNetAllowed
                 );
 
                 $arFeatureTmp["allowed"][] = SONET_ENTITY_USER;
-                $arFeatureTmp["operations"]["view_post"][SONET_ENTITY_USER] = COption::GetOptionString("socialnetwork", "default_blog_operation_view_post_user", SONET_RELATIONS_TYPE_ALL);
-                $arFeatureTmp["operations"]["view_comment"][SONET_ENTITY_USER] = COption::GetOptionString("socialnetwork", "default_blog_operation_view_comment_user", SONET_RELATIONS_TYPE_ALL);
-                $arFeatureTmp["operations"]["premoderate_comment"][SONET_ENTITY_USER] = COption::GetOptionString("socialnetwork", "default_blog_operation_premoderate_comment_user", SONET_RELATIONS_TYPE_AUTHORIZED);
-                $arFeatureTmp["operations"]["write_comment"][SONET_ENTITY_USER] = COption::GetOptionString("socialnetwork", "default_blog_operation_write_comment_user", SONET_RELATIONS_TYPE_AUTHORIZED);
+                $arFeatureTmp["operations"]["view_post"][SONET_ENTITY_USER] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_blog_operation_view_post_user",
+                    SONET_RELATIONS_TYPE_ALL
+                );
+                $arFeatureTmp["operations"]["view_comment"][SONET_ENTITY_USER] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_blog_operation_view_comment_user",
+                    SONET_RELATIONS_TYPE_ALL
+                );
+                $arFeatureTmp["operations"]["premoderate_comment"][SONET_ENTITY_USER] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_blog_operation_premoderate_comment_user",
+                    SONET_RELATIONS_TYPE_AUTHORIZED
+                );
+                $arFeatureTmp["operations"]["write_comment"][SONET_ENTITY_USER] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_blog_operation_write_comment_user",
+                    SONET_RELATIONS_TYPE_AUTHORIZED
+                );
             }
 
             if (COption::GetOptionString("socialnetwork", "allow_blog_group", "Y") == "Y") {
@@ -1824,16 +2248,56 @@ class CSocNetAllowed
                 );
 
                 $arFeatureTmp["allowed"][] = SONET_ENTITY_GROUP;
-                $arFeatureTmp["operations"]["view_post"][SONET_ENTITY_GROUP] = COption::GetOptionString("socialnetwork", "default_blog_operation_view_post_group", SONET_ROLES_USER);
-                $arFeatureTmp["operations"]["premoderate_post"][SONET_ENTITY_GROUP] = COption::GetOptionString("socialnetwork", "default_blog_operation_premoderate_post_group", SONET_ROLES_USER);
-                $arFeatureTmp["operations"]["write_post"][SONET_ENTITY_GROUP] = COption::GetOptionString("socialnetwork", "default_blog_operation_write_post_group", SONET_ROLES_USER);
-                $arFeatureTmp["operations"]["moderate_post"][SONET_ENTITY_GROUP] = COption::GetOptionString("socialnetwork", "default_blog_operation_moderate_post_group", SONET_ROLES_MODERATOR);
-                $arFeatureTmp["operations"]["full_post"][SONET_ENTITY_GROUP] = COption::GetOptionString("socialnetwork", "default_blog_operation_full_post_group", SONET_ROLES_OWNER);
-                $arFeatureTmp["operations"]["view_comment"][SONET_ENTITY_GROUP] = COption::GetOptionString("socialnetwork", "default_blog_operation_view_comment_group", SONET_ROLES_USER);
-                $arFeatureTmp["operations"]["premoderate_comment"][SONET_ENTITY_GROUP] = COption::GetOptionString("socialnetwork", "default_blog_operation_premoderate_comment_group", SONET_ROLES_USER);
-                $arFeatureTmp["operations"]["write_comment"][SONET_ENTITY_GROUP] = COption::GetOptionString("socialnetwork", "default_blog_operation_write_comment_group", SONET_ROLES_USER);
-                $arFeatureTmp["operations"]["moderate_comment"][SONET_ENTITY_GROUP] = COption::GetOptionString("socialnetwork", "default_blog_operation_moderate_comment_group", SONET_ROLES_MODERATOR);
-                $arFeatureTmp["operations"]["full_comment"][SONET_ENTITY_GROUP] = COption::GetOptionString("socialnetwork", "default_blog_operation_full_comment_group", SONET_ROLES_MODERATOR);
+                $arFeatureTmp["operations"]["view_post"][SONET_ENTITY_GROUP] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_blog_operation_view_post_group",
+                    SONET_ROLES_USER
+                );
+                $arFeatureTmp["operations"]["premoderate_post"][SONET_ENTITY_GROUP] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_blog_operation_premoderate_post_group",
+                    SONET_ROLES_USER
+                );
+                $arFeatureTmp["operations"]["write_post"][SONET_ENTITY_GROUP] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_blog_operation_write_post_group",
+                    SONET_ROLES_USER
+                );
+                $arFeatureTmp["operations"]["moderate_post"][SONET_ENTITY_GROUP] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_blog_operation_moderate_post_group",
+                    SONET_ROLES_MODERATOR
+                );
+                $arFeatureTmp["operations"]["full_post"][SONET_ENTITY_GROUP] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_blog_operation_full_post_group",
+                    SONET_ROLES_OWNER
+                );
+                $arFeatureTmp["operations"]["view_comment"][SONET_ENTITY_GROUP] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_blog_operation_view_comment_group",
+                    SONET_ROLES_USER
+                );
+                $arFeatureTmp["operations"]["premoderate_comment"][SONET_ENTITY_GROUP] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_blog_operation_premoderate_comment_group",
+                    SONET_ROLES_USER
+                );
+                $arFeatureTmp["operations"]["write_comment"][SONET_ENTITY_GROUP] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_blog_operation_write_comment_group",
+                    SONET_ROLES_USER
+                );
+                $arFeatureTmp["operations"]["moderate_comment"][SONET_ENTITY_GROUP] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_blog_operation_moderate_comment_group",
+                    SONET_ROLES_MODERATOR
+                );
+                $arFeatureTmp["operations"]["full_comment"][SONET_ENTITY_GROUP] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_blog_operation_full_comment_group",
+                    SONET_ROLES_MODERATOR
+                );
 
                 $arFeatureTmp["operations"]["write_post"]["restricted"][SONET_ENTITY_GROUP] = array(SONET_ROLES_ALL);
                 $arFeatureTmp["operations"]["premoderate_post"]["restricted"][SONET_ENTITY_GROUP] = array(SONET_ROLES_ALL);
@@ -1867,12 +2331,20 @@ class CSocNetAllowed
 
             if (COption::GetOptionString("socialnetwork", "allow_search_user", "N") == "Y") {
                 $arFeatureTmp["allowed"][] = SONET_ENTITY_USER;
-                $arFeatureTmp["operations"]["view"][SONET_ENTITY_USER] = COption::GetOptionString("socialnetwork", "default_search_operation_view_user", SONET_RELATIONS_TYPE_ALL);
+                $arFeatureTmp["operations"]["view"][SONET_ENTITY_USER] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_search_operation_view_user",
+                    SONET_RELATIONS_TYPE_ALL
+                );
             }
 
             if (COption::GetOptionString("socialnetwork", "allow_search_group", "Y") == "Y") {
                 $arFeatureTmp["allowed"][] = SONET_ENTITY_GROUP;
-                $arFeatureTmp["operations"]["view"][SONET_ENTITY_GROUP] = COption::GetOptionString("socialnetwork", "default_search_operation_view_group", SONET_ROLES_USER);
+                $arFeatureTmp["operations"]["view"][SONET_ENTITY_GROUP] = COption::GetOptionString(
+                    "socialnetwork",
+                    "default_search_operation_view_group",
+                    SONET_ROLES_USER
+                );
             }
 
             CSocNetAllowed::addAllowedFeature("search", $arFeatureTmp);
@@ -1904,11 +2376,14 @@ class CSocNetAllowed
         global $USER;
 
         if (Loader::includeModule('rest')) {
-            CSocNetAllowed::addAllowedFeature("marketplace", array(
-                "allowed" => array(SONET_ENTITY_GROUP),
-                "operations" => array(),
-                "minoperation" => array(),
-            ));
+            CSocNetAllowed::addAllowedFeature(
+                "marketplace",
+                array(
+                    "allowed" => array(SONET_ENTITY_GROUP),
+                    "operations" => array(),
+                    "minoperation" => array(),
+                )
+            );
 
             if (
                 !isset($USER)
@@ -1921,12 +2396,15 @@ class CSocNetAllowed
             $placementHandlerList = \Bitrix\Rest\PlacementTable::getHandlersList('SONET_GROUP_DETAIL_TAB');
             if (is_array($placementHandlerList)) {
                 foreach ($placementHandlerList as $placementHandler) {
-                    CSocNetAllowed::addAllowedFeature("placement_" . $placementHandler['ID'], array(
-                        "allowed" => array(SONET_ENTITY_GROUP),
-                        "operations" => array(),
-                        "minoperation" => array(),
-                        "title" => $placementHandler['TITLE']
-                    ));
+                    CSocNetAllowed::addAllowedFeature(
+                        "placement_" . $placementHandler['ID'],
+                        array(
+                            "allowed" => array(SONET_ENTITY_GROUP),
+                            "operations" => array(),
+                            "minoperation" => array(),
+                            "title" => $placementHandler['TITLE']
+                        )
+                    );
                 }
             }
         }
@@ -1937,7 +2415,7 @@ class CSocNetAllowed
         $strFeatureCode = trim($strFeatureCode);
 
         if (
-            strlen($strFeatureCode) <= 0
+            $strFeatureCode == ''
             || !is_array($arFeature)
         ) {
             return false;
@@ -2005,7 +2483,7 @@ class CSocNetAllowed
         $strFeatureCode = trim($strFeatureCode);
 
         if (
-            strlen($strFeatureCode) <= 0
+            $strFeatureCode == ''
             || !array_key_exists($strFeatureCode, self::$arAllowedFeatures)
             || !is_array($arFeature)
         ) {
@@ -2064,7 +2542,7 @@ class CSocNetAllowed
         $strEventCode = trim($strEventCode);
 
         if (
-            strlen($strEventCode) <= 0
+            $strEventCode == ''
             || array_key_exists($strEventCode, self::$arAllowedLogEvents)
             || !is_array($arLogEvent)
         ) {
@@ -2130,5 +2608,3 @@ class CSocNetAllowed
         }
     }
 }
-
-?>

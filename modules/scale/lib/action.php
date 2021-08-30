@@ -33,22 +33,32 @@ class Action
      * @throws \Bitrix\Main\ArgumentTypeException
      * @throws \Exception
      */
-    public function __construct($actionId, $actionParams, $serverHostname = "", $userParams = array(), $freeParams = array())
-    {
-        if (strlen($actionId) <= 0)
+    public function __construct(
+        $actionId,
+        $actionParams,
+        $serverHostname = "",
+        $userParams = array(),
+        $freeParams = array()
+    ) {
+        if ($actionId == '') {
             throw new \Bitrix\Main\ArgumentNullException("actionId");
+        }
 
-        if (!is_array($actionParams) || empty($actionParams))
+        if (!is_array($actionParams) || empty($actionParams)) {
             throw new \Exception("Params of action " . $actionId . " are not defined correctly!");
+        }
 
-        if (!isset($actionParams["START_COMMAND_TEMPLATE"]) || strlen($actionParams["START_COMMAND_TEMPLATE"]) <= 0)
+        if (!isset($actionParams["START_COMMAND_TEMPLATE"]) || $actionParams["START_COMMAND_TEMPLATE"] == '') {
             throw new \Exception("Required param START_COMMAND_TEMPLATE of action " . $actionId . " are not defined!");
+        }
 
-        if (!is_array($userParams))
+        if (!is_array($userParams)) {
             throw new \Bitrix\Main\ArgumentTypeException("userParams", "array");
+        }
 
-        if (!is_array($freeParams))
+        if (!is_array($freeParams)) {
             throw new \Bitrix\Main\ArgumentTypeException("freeParams", "array");
+        }
 
         $this->id = $actionId;
         $this->userParams = $userParams;
@@ -57,8 +67,9 @@ class Action
         $this->serverHostname = $serverHostname;
         $this->shellAdapter = new ShellAdapter;
 
-        if (isset($actionParams["LOG_LEVEL"]))
+        if (isset($actionParams["LOG_LEVEL"])) {
             $this->logLevel = $actionParams["LOG_LEVEL"];
+        }
     }
 
     protected function getServerParams()
@@ -74,20 +85,22 @@ class Action
      */
     protected function makeStartCommand($inputParams = array())
     {
-        if (!is_array($inputParams))
+        if (!is_array($inputParams)) {
             throw new \Bitrix\Main\ArgumentTypeException("inputParams", "array");
+        }
 
         $retStr = $this->actionParams["START_COMMAND_TEMPLATE"];
 
         foreach ($this->userParams as $key => $paramValue) {
             if ($this->actionParams['USER_PARAMS'][$key]['THROUGH_FILE'] == 'Y') {
-                if (strlen($paramValue) > 0) {
+                if ($paramValue <> '') {
                     $tmpDir = Helper::getTmpDir();
                     $tmpFile = $tmpDir . '/.' . randString();
                     $res = File::putFileContents($tmpFile, $paramValue);
 
-                    if ($res === false)
+                    if ($res === false) {
                         return '';
+                    }
 
                     $paramValue = $tmpFile;
                 }
@@ -96,32 +109,35 @@ class Action
             $retStr = str_replace('##USER_PARAMS:' . $key . '##', $paramValue, $retStr);
         }
 
-        if (strlen($this->serverHostname) > 0 && $this->serverHostname != "global") {
+        if ($this->serverHostname <> '' && $this->serverHostname != "global") {
             $serverParams = $this->getServerParams();
             $serverParams["hostname"] = $this->serverHostname;
 
-            if (is_array($serverParams))
-                foreach ($serverParams as $key => $paramValue)
-                    $retStr = str_replace('##SERVER_PARAMS:' . $key . '##', $paramValue, $retStr);
-        }
-
-        if (!empty($inputParams))
-            foreach ($inputParams as $key => $paramValue)
-                $retStr = str_replace('##INPUT_PARAMS:' . $key . '##', $paramValue, $retStr);
-
-        if (isset($this->actionParams["CODE_PARAMS"]) && is_array($this->actionParams["CODE_PARAMS"])) {
-            foreach ($this->actionParams["CODE_PARAMS"] as $paramId => $paramCode) {
-                $func = create_function("", $paramCode);
-
-                if (is_callable($func)) {
-                    $res = $func();
-                    $retStr = str_replace('##CODE_PARAMS:' . $paramId . '##', $res, $retStr);
+            if (is_array($serverParams)) {
+                foreach ($serverParams as $key => $paramValue) {
+                    if (is_string($paramValue)) {
+                        $retStr = str_replace('##SERVER_PARAMS:' . $key . '##', $paramValue, $retStr);
+                    }
                 }
             }
         }
 
-        foreach ($this->freeParams as $key => $paramValue)
+        if (!empty($inputParams)) {
+            foreach ($inputParams as $key => $paramValue) {
+                $retStr = str_replace('##INPUT_PARAMS:' . $key . '##', $paramValue, $retStr);
+            }
+        }
+
+        if (isset($this->actionParams["CODE_PARAMS"]) && is_array($this->actionParams["CODE_PARAMS"])) {
+            foreach ($this->actionParams["CODE_PARAMS"] as $paramId => $paramCode) {
+                $res = eval($paramCode);
+                $retStr = str_replace('##CODE_PARAMS:' . $paramId . '##', $res, $retStr);
+            }
+        }
+
+        foreach ($this->freeParams as $key => $paramValue) {
             $retStr = str_replace('##' . $key . '##', $paramValue, $retStr);
+        }
 
         return $retStr;
     }
@@ -135,8 +151,9 @@ class Action
      */
     public function start(array $inputParams = array())
     {
-        if (!is_array($inputParams))
+        if (!is_array($inputParams)) {
             throw new \Bitrix\Main\ArgumentTypeException("inputParams", "array");
+        }
 
         if (isset($this->actionParams["MODIFYERS"]) && is_array($this->actionParams["MODIFYERS"])) {
             $needMoreUserInfo = false;
@@ -144,7 +161,13 @@ class Action
             foreach ($this->actionParams["MODIFYERS"] as $modifyerFunction) {
                 if (is_callable($modifyerFunction)) {
                     try {
-                        $this->actionParams = call_user_func($modifyerFunction, $this->id, $this->actionParams, $this->serverHostname, $this->userParams);
+                        $this->actionParams = call_user_func(
+                            $modifyerFunction,
+                            $this->id,
+                            $this->actionParams,
+                            $this->serverHostname,
+                            $this->userParams
+                        );
                     } catch (NeedMoreUserInfoException $e) {
                         $this->actionParams = $e->getActionParams();
                         $needMoreUserInfo = true;
@@ -152,8 +175,9 @@ class Action
                 }
             }
 
-            if ($needMoreUserInfo)
+            if ($needMoreUserInfo) {
                 throw new NeedMoreUserInfoException("Need more user's info", $this->actionParams);
+            }
         }
 
         $result = null;
@@ -161,24 +185,28 @@ class Action
         $arOutput = array();
         $command = $this->makeStartCommand($inputParams);
 
-        if (strlen($command) > 0) {
+        if ($command <> '') {
             $result = $this->shellAdapter->syncExec($command);
             $output = $this->shellAdapter->getLastOutput();
             $arOutput = array();
 
-            if (strlen($output) > 0) {
+            if ($output <> '') {
                 $arOut = json_decode($output, true);
 
-                if (is_array($arOut) && !empty($arOut))
+                if (is_array($arOut) && !empty($arOut)) {
                     $arOutput = $arOut;
+                }
             }
 
             //error returned by shell
             $error = $this->shellAdapter->getLastError();
 
             //error returned by bitrix-env
-            if (isset($arOutput["error"]) && intval($arOutput["error"]) > 0 && isset($arOutput["message"]) && strlen($arOutput["message"]) > 0)
+            if (isset($arOutput["error"]) && intval(
+                    $arOutput["error"]
+                ) > 0 && isset($arOutput["message"]) && $arOutput["message"] <> '') {
                 $error .= " " . $arOutput["message"];
+            }
 
             $this->makeLogRecords($command, $result, $output, $error);
         } else //$command == ''
@@ -212,7 +240,7 @@ class Action
 
     protected function makeLogRecords($command = "", $result = null, $output = "", $error = "")
     {
-        if (strlen($command) > 0) {
+        if ($command <> '') {
             //cut password data from log records
             $preg = "/(-p.*\s+|--mysql_password=.*\s+|--cluster_password=.*\s+|--replica_password=.*\s+|--password=.*\s+)/is";
             $command = preg_replace($preg, ' PASS_PARAMS ', $command);
@@ -234,7 +262,7 @@ class Action
             );
         }
 
-        if (strlen($output) > 0) {
+        if ($output <> '') {
             $this->log(
                 Logger::LOG_LEVEL_DEBUG,
                 "SCALE_ACTION_OUTPUT",
@@ -243,7 +271,7 @@ class Action
             );
         }
 
-        if (strlen($error) > 0) {
+        if ($error <> '') {
             $this->log(
                 Logger::LOG_LEVEL_ERROR,
                 "SCALE_ACTION_ERROR",
@@ -255,8 +283,9 @@ class Action
 
     protected function log($level, $auditType, $actionId, $description)
     {
-        if ($this->logLevel < $level)
+        if ($this->logLevel < $level) {
             return false;
+        }
 
         return Logger::addRecord($level, $auditType, $actionId, $description);
     }

@@ -1,5 +1,7 @@
-<?
+<?php
+
 require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/classes/general/ratings.php");
+
 IncludeModuleLangFile(__FILE__);
 
 class CRatings extends CAllRatings
@@ -92,7 +94,10 @@ class CRatings extends CAllRatings
 				LEFT JOIN b_rating_user RU ON RU.RATING_ID = " . $ID . " and RU.ENTITY_ID = U.ID
 				WHERE 
 					U.ACTIVE = 'Y' 
-					AND (CASE WHEN U.EXTERNAL_AUTH_ID IN ('" . join("', '", \Bitrix\Main\UserTable::getExternalUserTypes()) . "') THEN 'Y' ELSE 'N' END) = 'N'
+					AND (CASE WHEN U.EXTERNAL_AUTH_ID IN ('" . join(
+                    "', '",
+                    \Bitrix\Main\UserTable::getExternalUserTypes()
+                ) . "') THEN 'Y' ELSE 'N' END) = 'N'
 					AND RU.ID IS NULL	";
             $res = $DB->Query($strSql, false, $err_mess . __LINE__);
             // authority calc
@@ -109,9 +114,17 @@ class CRatings extends CAllRatings
                     // auto assign for authority group
                     $assignAuthorityGroup = COption::GetOptionString("main", "rating_assign_authority_group", 0);
                     $assignAuthorityValueAdd = COption::GetOptionString("main", "rating_assign_authority_group_add", 2);
-                    $assignAuthorityValueDelete = COption::GetOptionString("main", "rating_assign_authority_group_delete", 2);
+                    $assignAuthorityValueDelete = COption::GetOptionString(
+                        "main",
+                        "rating_assign_authority_group_delete",
+                        2
+                    );
 
-                    CRatings::AutoAssignGroup($assignAuthorityGroup, $assignAuthorityValueAdd, $assignAuthorityValueDelete);
+                    CRatings::AutoAssignGroup(
+                        $assignAuthorityGroup,
+                        $assignAuthorityValueAdd,
+                        $assignAuthorityValueDelete
+                    );
                 }
 
                 $sRatingWeightType = COption::GetOptionString("main", "rating_weight_type", "auto");
@@ -121,21 +134,27 @@ class CRatings extends CAllRatings
                     $communityAuthority = $arCI['COMMUNITY_AUTHORITY'];
 
                     $sRatingNormalizationType = COption::GetOptionString("main", "rating_normalization_type", "auto");
-                    if ($sRatingNormalizationType == 'manual')
+                    if ($sRatingNormalizationType == 'manual') {
                         $ratingNormalization = COption::GetOptionString("main", "rating_normalization", 1000);
-                    else {
-                        if ($communitySize <= 10)
+                    } else {
+                        if ($communitySize <= 10) {
                             $ratingNormalization = 10;
-                        else if ($communitySize > 10 && $communitySize <= 1000)
-                            $ratingNormalization = 100;
-                        else if ($communitySize > 1000)
-                            $ratingNormalization = 1000;
+                        } else {
+                            if ($communitySize > 10 && $communitySize <= 1000) {
+                                $ratingNormalization = 100;
+                            } else {
+                                if ($communitySize > 1000) {
+                                    $ratingNormalization = 1000;
+                                }
+                            }
+                        }
                         COption::SetOptionString("main", "rating_normalization", $ratingNormalization);
                     }
 
                     $voteWeight = 1;
-                    if ($communitySize > 0)
+                    if ($communitySize > 0) {
                         $voteWeight = $ratingNormalization / $communitySize;
+                    }
 
                     COption::SetOptionString("main", "rating_community_size", $communitySize);
                     COption::SetOptionString("main", "rating_community_authority", $communityAuthority);
@@ -190,7 +209,12 @@ class CRatings extends CAllRatings
             global $CACHE_MANAGER;
             $CACHE_MANAGER->CleanDir("b_rating_user");
 
-            $DB->Query("UPDATE b_rating SET CALCULATED = 'Y', LAST_CALCULATED = " . $DB->GetNowFunction() . " WHERE id = " . $ID, false, $err_mess . __LINE__);
+            $DB->Query(
+                "UPDATE b_rating SET CALCULATED = 'Y', LAST_CALCULATED = " . $DB->GetNowFunction(
+                ) . " WHERE id = " . $ID,
+                false,
+                $err_mess . __LINE__
+            );
         }
         return true;
     }
@@ -273,14 +297,18 @@ class CRatings extends CAllRatings
         $strSqlValues = "";
 
         foreach ($arResults as $arResult) {
-            $strSqlValues .= ",\n(" . IntVal($arResult['RATING_ID']) . ", '" . $DB->ForSql($arResult['ENTITY_TYPE_ID']) . "', '" . $DB->ForSql($arResult['ENTITY_ID']) . "', '" . $DB->ForSql($arResult['CURRENT_VALUE']) . "', '" . $DB->ForSql($arResult['PREVIOUS_VALUE']) . "')";
-            if (strlen($strSqlValues) > $maxValuesLen) {
-                $DB->Query($strSqlPrefix . substr($strSqlValues, 2), false, $err_mess . __LINE__);
+            $strSqlValues .= ",\n(" . intval($arResult['RATING_ID']) . ", '" . $DB->ForSql(
+                    $arResult['ENTITY_TYPE_ID']
+                ) . "', '" . $DB->ForSql($arResult['ENTITY_ID']) . "', '" . $DB->ForSql(
+                    $arResult['CURRENT_VALUE']
+                ) . "', '" . $DB->ForSql($arResult['PREVIOUS_VALUE']) . "')";
+            if (mb_strlen($strSqlValues) > $maxValuesLen) {
+                $DB->Query($strSqlPrefix . mb_substr($strSqlValues, 2), false, $err_mess . __LINE__);
                 $strSqlValues = "";
             }
         }
-        if (strlen($strSqlValues) > 0) {
-            $DB->Query($strSqlPrefix . substr($strSqlValues, 2), false, $err_mess . __LINE__);
+        if ($strSqlValues <> '') {
+            $DB->Query($strSqlPrefix . mb_substr($strSqlValues, 2), false, $err_mess . __LINE__);
             $strSqlValues = "";
         }
 
@@ -293,14 +321,17 @@ class CRatings extends CAllRatings
         global $DB;
         $err_mess = (CRatings::err_mess()) . "<br>Function: AddComponentResults<br>Line: ";
 
-        if (!is_array($arComponentConfigs))
+        if (!is_array($arComponentConfigs)) {
             return false;
+        }
 
         $strSql = "
 			UPDATE b_rating_component
 			SET LAST_CALCULATED = " . $DB->GetNowFunction() . ",
 				NEXT_CALCULATION = '" . date('Y-m-d H:i:s', time() + $arComponentConfigs['REFRESH_INTERVAL']) . "'
-			WHERE RATING_ID = " . IntVal($arComponentConfigs['RATING_ID']) . " AND COMPLEX_NAME = '" . $DB->ForSql($arComponentConfigs['COMPLEX_NAME']) . "'";
+			WHERE RATING_ID = " . intval($arComponentConfigs['RATING_ID']) . " AND COMPLEX_NAME = '" . $DB->ForSql(
+                $arComponentConfigs['COMPLEX_NAME']
+            ) . "'";
         $DB->Query($strSql, false, $err_mess . __LINE__);
 
         return true;
@@ -399,7 +430,10 @@ class CRatings extends CAllRatings
 					b_user U
 				WHERE " . (!empty($strModulesSql) ? "U.ID = MS.ENTITY_ID AND" : "") . "
 				U.ACTIVE = 'Y'
-				AND (CASE WHEN U.EXTERNAL_AUTH_ID IN ('" . join("', '", \Bitrix\Main\UserTable::getExternalUserTypes()) . "') THEN 'Y' ELSE 'N' END) = 'N'	
+				AND (CASE WHEN U.EXTERNAL_AUTH_ID IN ('" . join(
+                    "', '",
+                    \Bitrix\Main\UserTable::getExternalUserTypes()
+                ) . "') THEN 'Y' ELSE 'N' END) = 'N'	
 				AND U.LAST_LOGIN > DATE_SUB(NOW(), INTERVAL " . intval($communityLastVisit) . " DAY)
 			";
         } else {
@@ -410,7 +444,10 @@ class CRatings extends CAllRatings
 					b_user U
 				WHERE " . (!empty($strModulesSql) ? "U.ID = MS.ENTITY_ID AND" : "") . "
 				U.ACTIVE = 'Y'
-				AND (CASE WHEN U.EXTERNAL_AUTH_ID IN ('" . join("', '", \Bitrix\Main\UserTable::getExternalUserTypes()) . "') THEN 'Y' ELSE 'N' END) = 'N'	
+				AND (CASE WHEN U.EXTERNAL_AUTH_ID IN ('" . join(
+                    "', '",
+                    \Bitrix\Main\UserTable::getExternalUserTypes()
+                ) . "') THEN 'Y' ELSE 'N' END) = 'N'	
 				AND U.LAST_LOGIN > DATE_SUB(NOW(), INTERVAL " . intval($communityLastVisit) . " DAY)
 			";
         }
@@ -439,102 +476,109 @@ class CRatings extends CAllRatings
         );
 
         $bSelfVote = COption::GetOptionString("main", "rating_self_vote", 'N');
-        if ($bSelfVote == 'N' && IntVal($arVoteParam['OWNER_ID']) == $userId) {
+        if ($bSelfVote == 'N' && intval($arVoteParam['OWNER_ID']) == $userId) {
             $arInfo = array(
                 'RESULT' => false,
                 'ERROR_TYPE' => 'SELF',
                 'ERROR_MSG' => GetMessage('RATING_ALLOW_VOTE_SELF'),
             );
-        } else if (!$bUserAuth) {
-            $arInfo = array(
-                'RESULT' => false,
-                'ERROR_TYPE' => 'GUEST',
-                'ERROR_MSG' => GetMessage('RATING_ALLOW_VOTE_GUEST'),
-            );
         } else {
-            static $cacheAllowVote = array();
-            static $cacheUserVote = array();
-            static $cacheVoteSize = 0;
-            if (!array_key_exists($userId, $cacheAllowVote)) {
-                global $DB;
-                $arGroups = array();
-                $sVoteType = $arVoteParam['ENTITY_TYPE_ID'] == 'USER' ? 'A' : 'R';
+            if (!$bUserAuth) {
+                $arInfo = array(
+                    'RESULT' => false,
+                    'ERROR_TYPE' => 'GUEST',
+                    'ERROR_MSG' => GetMessage('RATING_ALLOW_VOTE_GUEST'),
+                );
+            } else {
+                static $cacheAllowVote = array();
+                static $cacheUserVote = array();
+                static $cacheVoteSize = 0;
+                if (!array_key_exists($userId, $cacheAllowVote)) {
+                    global $DB;
+                    $arGroups = array();
+                    $sVoteType = $arVoteParam['ENTITY_TYPE_ID'] == 'USER' ? 'A' : 'R';
 
-                $userVoteGroup = Array();
-                $ar = CRatings::GetVoteGroupEx();
-                foreach ($ar as $group)
-                    if ($sVoteType == $group['TYPE'])
-                        $userVoteGroup[] = $group['GROUP_ID'];
+                    $userVoteGroup = Array();
+                    $ar = CRatings::GetVoteGroupEx();
+                    foreach ($ar as $group) {
+                        if ($sVoteType == $group['TYPE']) {
+                            $userVoteGroup[] = $group['GROUP_ID'];
+                        }
+                    }
 
-                $userGroup = $USER->GetUserGroupArray();
+                    $userGroup = $USER->GetUserGroupArray();
 
-                $result = array_intersect($userGroup, $userVoteGroup);
-                if (empty($result)) {
-                    $arInfo = $cacheAllowVote[$userId] = array(
-                        'RESULT' => false,
-                        'ERROR_TYPE' => 'ACCESS',
-                        'ERROR_MSG' => GetMessage('RATING_ALLOW_VOTE_ACCESS'),
-                    );
-                }
+                    $result = array_intersect($userGroup, $userVoteGroup);
+                    if (empty($result)) {
+                        $arInfo = $cacheAllowVote[$userId] = array(
+                            'RESULT' => false,
+                            'ERROR_TYPE' => 'ACCESS',
+                            'ERROR_MSG' => GetMessage('RATING_ALLOW_VOTE_ACCESS'),
+                        );
+                    }
 
-                $authorityRatingId = CRatings::GetAuthorityRating();
-                $arAuthorityUserProp = CRatings::GetRatingUserPropEx($authorityRatingId, $userId);
-                if (
-                    $arAuthorityUserProp['VOTE_WEIGHT'] < 0
-                    || (
-                        $arAuthorityUserProp['VOTE_WEIGHT'] == 0
-                        && !IsModuleInstalled('intranet')
-                    )
-                ) {
-                    $arInfo = $cacheAllowVote[$userId] = array(
-                        'RESULT' => false,
-                        'ERROR_TYPE' => 'ACCESS',
-                        'ERROR_MSG' => GetMessage('RATING_ALLOW_VOTE_LOW_WEIGHT'),
-                    );
-                }
+                    $authorityRatingId = CRatings::GetAuthorityRating();
+                    $arAuthorityUserProp = CRatings::GetRatingUserPropEx($authorityRatingId, $userId);
+                    if (
+                        $arAuthorityUserProp['VOTE_WEIGHT'] < 0
+                        || (
+                            $arAuthorityUserProp['VOTE_WEIGHT'] == 0
+                            && !IsModuleInstalled('intranet')
+                        )
+                    ) {
+                        $arInfo = $cacheAllowVote[$userId] = array(
+                            'RESULT' => false,
+                            'ERROR_TYPE' => 'ACCESS',
+                            'ERROR_MSG' => GetMessage('RATING_ALLOW_VOTE_LOW_WEIGHT'),
+                        );
+                    }
 
-                if ($arInfo['RESULT'] && $sVoteType == 'A') {
-                    $strSql = '
+                    if ($arInfo['RESULT'] && $sVoteType == 'A') {
+                        $strSql = '
 						SELECT COUNT(*) as VOTE
 						FROM b_rating_vote RV
 						WHERE RV.USER_ID = ' . $userId . '
 						AND RV.CREATED > DATE_SUB(NOW(), INTERVAL 1 DAY)';
-                    $res = $DB->Query($strSql, false, $err_mess . __LINE__);
-                    $countVote = $res->Fetch();
-                    $cacheVoteSize = $_SESSION['RATING_VOTE_COUNT'] = $countVote['VOTE'];
+                        $res = $DB->Query($strSql, false, $err_mess . __LINE__);
+                        $countVote = $res->Fetch();
+                        $cacheVoteSize = \Bitrix\Main\Application::getInstance()->getSession(
+                        )['RATING_VOTE_COUNT'] = $countVote['VOTE'];
 
-                    $cacheUserVote[$userId] = $_SESSION['RATING_USER_VOTE_COUNT'] = $arAuthorityUserProp['VOTE_COUNT'];
-                    if ($cacheVoteSize >= $cacheUserVote[$userId]) {
-                        $arInfo = $cacheAllowVote[$userId] = array(
-                            'RESULT' => false,
-                            'ERROR_TYPE' => 'COUNT_VOTE',
-                            'ERROR_MSG' => GetMessage('RATING_ALLOW_VOTE_COUNT_VOTE'),
-                        );
+                        $cacheUserVote[$userId] = \Bitrix\Main\Application::getInstance()->getSession(
+                        )['RATING_USER_VOTE_COUNT'] = $arAuthorityUserProp['VOTE_COUNT'];
+                        if ($cacheVoteSize >= $cacheUserVote[$userId]) {
+                            $arInfo = $cacheAllowVote[$userId] = array(
+                                'RESULT' => false,
+                                'ERROR_TYPE' => 'COUNT_VOTE',
+                                'ERROR_MSG' => GetMessage('RATING_ALLOW_VOTE_COUNT_VOTE'),
+                            );
+                        }
                     }
-                }
-            } else {
-                if ($cacheAllowVote[$userId]['RESULT']) {
-                    if ($cacheVoteSize >= $cacheUserVote[$userId]) {
-                        $arInfo = $cacheAllowVote[$userId] = array(
-                            'RESULT' => false,
-                            'ERROR_TYPE' => 'COUNT_VOTE',
-                            'ERROR_MSG' => GetMessage('RATING_ALLOW_VOTE_COUNT_VOTE'),
-                        );
+                } else {
+                    if ($cacheAllowVote[$userId]['RESULT']) {
+                        if ($cacheVoteSize >= $cacheUserVote[$userId]) {
+                            $arInfo = $cacheAllowVote[$userId] = array(
+                                'RESULT' => false,
+                                'ERROR_TYPE' => 'COUNT_VOTE',
+                                'ERROR_MSG' => GetMessage('RATING_ALLOW_VOTE_COUNT_VOTE'),
+                            );
+                        }
                     }
+                    $arInfo = $cacheAllowVote[$userId];
                 }
-                $arInfo = $cacheAllowVote[$userId];
             }
         }
 
         static $handlers;
-        if (!isset($handlers))
+        if (!isset($handlers)) {
             $handlers = GetModuleEvents("main", "OnAfterCheckAllowVote", true);
+        }
 
         foreach ($handlers as $arEvent) {
             $arEventResult = ExecuteModuleEventEx($arEvent, array($arVoteParam));
             if (is_array($arEventResult) && isset($arEventResult['RESULT']) && $arEventResult['RESULT'] === false
-                && isset($arEventResult['ERROR_TYPE']) && strlen($arEventResult['ERROR_MSG']) > 0
-                && isset($arEventResult['ERROR_MSG']) && strlen($arEventResult['ERROR_MSG']) > 0) {
+                && isset($arEventResult['ERROR_TYPE']) && $arEventResult['ERROR_MSG'] <> ''
+                && isset($arEventResult['ERROR_MSG']) && $arEventResult['ERROR_MSG'] <> '') {
                 $arInfo = array(
                     'RESULT' => false,
                     'ERROR_TYPE' => $arEventResult['ERROR_TYPE'],
@@ -550,15 +594,22 @@ class CRatings extends CAllRatings
         global $DB;
 
         $rsRatings = CRatings::GetList(array('ID' => 'ASC'), array('ENTITY_ID' => 'USER'));
-        while ($arRatingsTmp = $rsRatings->GetNext())
+        while ($arRatingsTmp = $rsRatings->GetNext()) {
             $arRatingList[] = $arRatingsTmp['ID'];
+        }
 
-        if (isset($arParams['DEFAULT_USER_ACTIVE']) && $arParams['DEFAULT_USER_ACTIVE'] == 'Y' && IsModuleInstalled("forum") && is_array($arRatingList) && !empty($arRatingList)) {
+        if (isset($arParams['DEFAULT_USER_ACTIVE']) && $arParams['DEFAULT_USER_ACTIVE'] == 'Y' && IsModuleInstalled(
+                "forum"
+            ) && is_array($arRatingList) && !empty($arRatingList)) {
             $ratingStartValue = 0;
-            if (isset($arParams['DEFAULT_CONFIG_NEW_USER']) && $arParams['DEFAULT_CONFIG_NEW_USER'] == 'Y')
+            if (isset($arParams['DEFAULT_CONFIG_NEW_USER']) && $arParams['DEFAULT_CONFIG_NEW_USER'] == 'Y') {
                 $ratingStartValue = COption::GetOptionString("main", "rating_start_authority", 3);
+            }
 
-            $strSql = "UPDATE b_rating_user SET BONUS = $ratingStartValue WHERE RATING_ID IN (" . implode(',', $arRatingList) . ")";
+            $strSql = "UPDATE b_rating_user SET BONUS = $ratingStartValue WHERE RATING_ID IN (" . implode(
+                    ',',
+                    $arRatingList
+                ) . ")";
             $res = $DB->Query($strSql, false, $err_mess . __LINE__);
             $strSql = "
 				UPDATE
@@ -576,10 +627,17 @@ class CRatings extends CAllRatings
 				and	RU.ENTITY_ID = RP.ENTITY_ID
 			";
             $res = $DB->Query($strSql, false, $err_mess . __LINE__);
-        } else if (isset($arParams['DEFAULT_CONFIG_NEW_USER']) && $arParams['DEFAULT_CONFIG_NEW_USER'] == 'Y' && is_array($arRatingList) && !empty($arRatingList)) {
-            $ratingStartValue = COption::GetOptionString("main", "rating_start_authority", 3);
-            $strSql = "UPDATE b_rating_user SET BONUS = " . $ratingStartValue . " WHERE RATING_ID IN (" . implode(',', $arRatingList) . ")";
-            $res = $DB->Query($strSql, false, $err_mess . __LINE__);
+        } else {
+            if (isset($arParams['DEFAULT_CONFIG_NEW_USER']) && $arParams['DEFAULT_CONFIG_NEW_USER'] == 'Y' && is_array(
+                    $arRatingList
+                ) && !empty($arRatingList)) {
+                $ratingStartValue = COption::GetOptionString("main", "rating_start_authority", 3);
+                $strSql = "UPDATE b_rating_user SET BONUS = " . $ratingStartValue . " WHERE RATING_ID IN (" . implode(
+                        ',',
+                        $arRatingList
+                    ) . ")";
+                $res = $DB->Query($strSql, false, $err_mess . __LINE__);
+            }
         }
 
         return true;
@@ -590,13 +648,14 @@ class CRatings extends CAllRatings
         global $DB;
         $err_mess = (CRatings::err_mess()) . "<br>Function: AutoAssignGroup<br>Line: ";
 
-        $groupId = IntVal($groupId);
-        if ($groupId == 0)
+        $groupId = intval($groupId);
+        if ($groupId == 0) {
             return false;
+        }
 
         $ratingId = CRatings::GetAuthorityRating();
-        $ratingValueAdd = IntVal($authorityValueAdd);
-        $ratingValueDelete = IntVal($authorityValueDelete);
+        $ratingValueAdd = intval($authorityValueAdd);
+        $ratingValueDelete = intval($authorityValueDelete);
         $sRatingWeightType = COption::GetOptionString("main", "rating_weight_type", "auto");
         if ($sRatingWeightType == 'auto') {
             $ratingValueAdd = $ratingValueAdd * COption::GetOptionString("main", "rating_vote_weight", 1);

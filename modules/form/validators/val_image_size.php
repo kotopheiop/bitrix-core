@@ -1,22 +1,30 @@
-<?
+<?php
+
 IncludeModuleLangFile(__FILE__);
 
 class CFormValidatorImageSize
 {
-    function GetDescription()
+    public static function GetDescription()
     {
         return array(
-            "NAME" => "image_size", // unique validator string ID
-            "DESCRIPTION" => GetMessage('FORM_VALIDATOR_IMAGE_SIZE_DESCRIPTION'), // validator description
-            "TYPES" => array("image"), //  list of types validator can be applied.
-            "SETTINGS" => array("CFormValidatorImageSize", "GetSettings"), // method returning array of validator settings, optional
-            "CONVERT_TO_DB" => array("CFormValidatorImageSize", "ToDB"), // method, processing validator settings to string to put to db, optional
-            "CONVERT_FROM_DB" => array("CFormValidatorImageSize", "FromDB"), // method, processing validator settings from string from db, optional
-            "HANDLER" => array("CFormValidatorImageSize", "DoValidate") // main validation method
+            "NAME" => "image_size",
+            // unique validator string ID
+            "DESCRIPTION" => GetMessage('FORM_VALIDATOR_IMAGE_SIZE_DESCRIPTION'),
+            // validator description
+            "TYPES" => array("image"),
+            //  list of types validator can be applied.
+            "SETTINGS" => array("CFormValidatorImageSize", "GetSettings"),
+            // method returning array of validator settings, optional
+            "CONVERT_TO_DB" => array("CFormValidatorImageSize", "ToDB"),
+            // method, processing validator settings to string to put to db, optional
+            "CONVERT_FROM_DB" => array("CFormValidatorImageSize", "FromDB"),
+            // method, processing validator settings from string from db, optional
+            "HANDLER" => array("CFormValidatorImageSize", "DoValidate")
+            // main validation method
         );
     }
 
-    function GetSettings()
+    public static function GetSettings()
     {
         return array(
             "WIDTH_FROM" => array(
@@ -45,7 +53,7 @@ class CFormValidatorImageSize
         );
     }
 
-    function ToDB($arParams)
+    public static function ToDB($arParams)
     {
         $arParams["WIDTH_FROM"] = intval($arParams["WIDTH_FROM"]);
         $arParams["WIDTH_TO"] = intval($arParams["WIDTH_TO"]);
@@ -68,12 +76,12 @@ class CFormValidatorImageSize
         return serialize($arParams);
     }
 
-    function FromDB($strParams)
+    public static function FromDB($strParams)
     {
-        return unserialize($strParams);
+        return unserialize($strParams, ['allowed_classes' => false]);
     }
 
-    function DoValidate($arParams, $arQuestion, $arAnswers, $arValues)
+    public static function DoValidate($arParams, $arQuestion, $arAnswers, $arValues)
     {
         global $APPLICATION;
 
@@ -81,7 +89,7 @@ class CFormValidatorImageSize
             foreach ($arValues as $arImage) {
                 // if image successfully uploaded
                 if (
-                    strlen($arImage["tmp_name"]) > 0
+                    $arImage["tmp_name"] <> ''
                     && ($arImageInfo = CFile::GetImageSize($arImage["tmp_name"]))
                 ) {
                     // check minimum image width
@@ -116,4 +124,3 @@ class CFormValidatorImageSize
 }
 
 AddEventHandler("form", "onFormValidatorBuildList", array("CFormValidatorImageSize", "GetDescription"));
-?>

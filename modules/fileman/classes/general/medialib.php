@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 class CMedialib
@@ -22,8 +23,9 @@ class CMedialib
         $key = $collectionId . '|' . implode('-', $userGroups);
 
         if (!is_array($arOp[$key])) {
-            if (!is_array($arOp))
+            if (!is_array($arOp)) {
                 $arOp = array();
+            }
 
             if (!is_array($oCollections)) {
                 $res = CMedialib::GetCollectionTree(array('menu' => $menu));
@@ -35,8 +37,9 @@ class CMedialib
 
             $arOp[$key] = array();
             foreach ($res as $group_id => $task_id) {
-                if (in_array($group_id, $userGroups))
+                if (in_array($group_id, $userGroups)) {
                     $arOp[$key] = array_merge($arOp[$key], CTask::GetOperations($task_id, true));
+                }
             }
         }
         return $arOp[$key];
@@ -44,8 +47,9 @@ class CMedialib
 
     public static function CanDoOperation($operation, $collectionId = 0, $userId = false, $menu = false)
     {
-        if ($GLOBALS["USER"]->IsAdmin())
+        if ($GLOBALS["USER"]->IsAdmin()) {
             return true;
+        }
 
         $arOp = CMedialib::GetOperations($collectionId, $menu);
         return in_array($operation, $arOp);
@@ -54,8 +58,9 @@ class CMedialib
     public static function GetAccessPermissionsArray($collectionId = 0, $oCollections = false)
     {
         static $arAllTasks;
-        if (is_array($arAllTasks[$collectionId]))
+        if (is_array($arAllTasks[$collectionId])) {
             return $arAllTasks[$collectionId];
+        }
 
         $col = $oCollections[$collectionId];
         $arCols = array();
@@ -63,9 +68,9 @@ class CMedialib
 
         if ($col || $collectionId == 0) {
             $arCols[] = $collectionId;
-            if (intVal($col['PARENT_ID']) > 0) {
+            if (intval($col['PARENT_ID']) > 0) {
                 $col_ = $col;
-                while ($col_ && intVal($col_['PARENT_ID']) > 0) {
+                while ($col_ && intval($col_['PARENT_ID']) > 0) {
                     $arCols[] = $col_['PARENT_ID'];
                     $col_ = $oCollections[$col_['PARENT_ID']];
                 }
@@ -76,14 +81,16 @@ class CMedialib
             for ($i = count($arCols); $i >= 0; $i--) {
                 $colId = $arCols[$i];
                 if (is_array($arPerm[$colId])) {
-                    for ($j = 0, $n = count($arPerm[$colId]); $j < $n; $j++)
+                    for ($j = 0, $n = count($arPerm[$colId]); $j < $n; $j++) {
                         $resTask[$arPerm[$colId][$j]['GROUP_ID']] = $arPerm[$colId][$j]['TASK_ID'];
+                    }
                 }
             }
         }
 
-        if (!is_array($arAllTasks))
+        if (!is_array($arAllTasks)) {
             $arAllTasks = array();
+        }
         $arAllTasks[$collectionId] = $resTask;
 
         return $resTask;
@@ -94,8 +101,9 @@ class CMedialib
         global $DB;
 
         $s = '0';
-        for ($i = 0, $l = count($arCols); $i < $l; $i++)
-            $s .= "," . IntVal($arCols[$i]);
+        for ($i = 0, $l = count($arCols); $i < $l; $i++) {
+            $s .= "," . intval($arCols[$i]);
+        }
 
         $strSql = 'SELECT *
 			FROM b_group_collection_task GCT
@@ -106,8 +114,9 @@ class CMedialib
         $arResult = array();
         while ($arRes = $res->Fetch()) {
             $colid = $arRes['COLLECTION_ID'];
-            if (!is_array($arResult[$colid]))
+            if (!is_array($arResult[$colid])) {
                 $arResult[$colid] = array();
+            }
 
             unset($arRes['COLLECTION_ID']);
             $arResult[$colid][] = $arRes;
@@ -132,35 +141,54 @@ class CMedialib
         $arConfig['lang'] = LANGUAGE_ID;
 
         $event = '';
-        if (isset($arConfig['event']))
+        if (isset($arConfig['event'])) {
             $event = preg_replace("/[^a-zA-Z0-9_]/i", "", $arConfig['event']);
-        if (strlen($event) <= 0)
+        }
+        if ($event == '') {
             $strWarn .= GetMessage('ML_BAD_EVENT') . '. ';
+        }
 
         $resultDest = "";
         $bDest = is_array($arConfig['arResultDest']);
         if ($bDest) {
             if (isset($arConfig['arResultDest']["FUNCTION_NAME"])) {
-                $arConfig['arResultDest']["FUNCTION_NAME"] = preg_replace("/[^a-zA-Z0-9_]/i", "", $arConfig['arResultDest']["FUNCTION_NAME"]);
-                $bDest = strlen($arConfig['arResultDest']["FUNCTION_NAME"]) > 0;
+                $arConfig['arResultDest']["FUNCTION_NAME"] = preg_replace(
+                    "/[^a-zA-Z0-9_]/i",
+                    "",
+                    $arConfig['arResultDest']["FUNCTION_NAME"]
+                );
+                $bDest = $arConfig['arResultDest']["FUNCTION_NAME"] <> '';
                 $resultDest = "FUNCTION";
             } elseif (isset($arConfig['arResultDest']["FORM_NAME"], $arConfig['arResultDest']["FORM_ELEMENT_NAME"])) {
-                $arConfig['arResultDest']["FORM_NAME"] = preg_replace("/[^a-zA-Z0-9_]/i", "", $arConfig['arResultDest']["FORM_NAME"]);
-                $arConfig['arResultDest']["FORM_ELEMENT_NAME"] = preg_replace("/[^a-zA-Z0-9_]/i", "", $arConfig['arResultDest']["FORM_ELEMENT_NAME"]);
-                $bDest = strlen($arConfig['arResultDest']["FORM_NAME"]) > 0 && strlen($arConfig['arResultDest']["FORM_ELEMENT_NAME"]) > 0;
+                $arConfig['arResultDest']["FORM_NAME"] = preg_replace(
+                    "/[^a-zA-Z0-9_]/i",
+                    "",
+                    $arConfig['arResultDest']["FORM_NAME"]
+                );
+                $arConfig['arResultDest']["FORM_ELEMENT_NAME"] = preg_replace(
+                    "/[^a-zA-Z0-9_]/i",
+                    "",
+                    $arConfig['arResultDest']["FORM_ELEMENT_NAME"]
+                );
+                $bDest = $arConfig['arResultDest']["FORM_NAME"] <> '' && $arConfig['arResultDest']["FORM_ELEMENT_NAME"] <> '';
                 $resultDest = "FORM";
             } elseif (isset($arConfig['arResultDest']["ELEMENT_ID"])) {
-                $arConfig['arResultDest']["ELEMENT_ID"] = preg_replace("/[^a-zA-Z0-9_]/i", "", $arConfig['arResultDest']["ELEMENT_ID"]);
-                $bDest = strlen($arConfig['arResultDest']["ELEMENT_ID"]) > 0;
+                $arConfig['arResultDest']["ELEMENT_ID"] = preg_replace(
+                    "/[^a-zA-Z0-9_]/i",
+                    "",
+                    $arConfig['arResultDest']["ELEMENT_ID"]
+                );
+                $bDest = $arConfig['arResultDest']["ELEMENT_ID"] <> '';
                 $resultDest = "ID";
             } else {
                 $bDest = false;
             }
         }
-        if (!$bDest)
+        if (!$bDest) {
             $strWarn .= GetMessage('ML_BAD_RETURN') . '. ';
+        }
 
-        if (strlen($strWarn) <= 0) {
+        if ($strWarn == '') {
             ?>
             <script>
                 if (!window.BX && top.BX)
@@ -182,14 +210,24 @@ class CMedialib
 
                             var arJS = [];
                             if (!window.jsAjaxUtil)
-                                arJS.push("/bitrix/js/main/ajax.js?v=<?= filemtime($_SERVER["DOCUMENT_ROOT"] . '/bitrix/js/main/ajax.js')?>");
+                                arJS.push("/bitrix/js/main/ajax.js?v=<?= filemtime(
+                                    $_SERVER["DOCUMENT_ROOT"] . '/bitrix/js/main/ajax.js'
+                                )?>");
                             if (!window.jsUtils)
-                                arJS.push("/bitrix/js/main/utils.js?v=<?= filemtime($_SERVER["DOCUMENT_ROOT"] . '/bitrix/js/main/utils.js')?>");
+                                arJS.push("/bitrix/js/main/utils.js?v=<?= filemtime(
+                                    $_SERVER["DOCUMENT_ROOT"] . '/bitrix/js/main/utils.js'
+                                )?>");
                             if (!window.CHttpRequest)
-                                arJS.push("/bitrix/js/main/admin_tools.js?v=<?= filemtime($_SERVER["DOCUMENT_ROOT"] . '/bitrix/js/main/admin_tools.js')?>");
+                                arJS.push("/bitrix/js/main/admin_tools.js?v=<?= filemtime(
+                                    $_SERVER["DOCUMENT_ROOT"] . '/bitrix/js/main/admin_tools.js'
+                                )?>");
 
-                            arJS.push("/bitrix/js/fileman/medialib/common.js?v=<?= filemtime($_SERVER["DOCUMENT_ROOT"] . '/bitrix/js/fileman/medialib/common.js')?>");
-                            arJS.push("/bitrix/js/fileman/medialib/core.js?v=<?= filemtime($_SERVER["DOCUMENT_ROOT"] . '/bitrix/js/fileman/medialib/core.js')?>");
+                            arJS.push("/bitrix/js/fileman/medialib/common.js?v=<?= filemtime(
+                                $_SERVER["DOCUMENT_ROOT"] . '/bitrix/js/fileman/medialib/common.js'
+                            )?>");
+                            arJS.push("/bitrix/js/fileman/medialib/core.js?v=<?= filemtime(
+                                $_SERVER["DOCUMENT_ROOT"] . '/bitrix/js/fileman/medialib/core.js'
+                            )?>");
                             BX.loadScript(arJS);
                         }
                         return setTimeout(function () {
@@ -200,9 +238,9 @@ class CMedialib
                     <?CMedialib::ShowJS()?>
                     <?
                     $arSet = explode(',', CUserOptions::GetOption("fileman", "medialib_user_set", '600,450,0'));
-                    $width = $arSet[0] ? intVal($arSet[0]) : 600;
-                    $height = $arSet[1] ? intVal($arSet[1]) : 450;
-                    $coll_id = $arSet[2] ? intVal($arSet[2]) : 0;
+                    $width = $arSet[0] ? intval($arSet[0]) : 600;
+                    $height = $arSet[1] ? intval($arSet[1]) : 450;
+                    $coll_id = $arSet[2] ? intval($arSet[2]) : 0;
                     ?>
                     window._mlUserSettings = window._mlUserSettings || {
                         width: <?=$width?>,
@@ -228,7 +266,9 @@ class CMedialib
                                 access: '<?= CMedialib::CanDoOperation('medialib_access', 0)?>'
                             },
                             bCanUpload: <?= $USER->CanDoOperation('fileman_upload_files') ? 'true' : 'false'?>,
-                            bCanViewStructure: <?= $USER->CanDoOperation('fileman_view_file_structure') ? 'true' : 'false'?>,
+                            bCanViewStructure: <?= $USER->CanDoOperation(
+                                'fileman_view_file_structure'
+                            ) ? 'true' : 'false'?>,
                             strExt: "<?= CUtil::JSEscape(CMedialib::GetMediaExtentions())?>",
                             lang: "<?= $arConfig['lang']?>",
                             description_id: '<?= CUtil::JSEscape($arConfig['description_id'])?>'
@@ -250,7 +290,9 @@ class CMedialib
         if (!defined("BX_B_MEDIALIB_SCRIPT_LOADED")) {
             define("BX_B_MEDIALIB_SCRIPT_LOADED", true);
             ?>
-            BX.loadScript("/bitrix/js/main/file_dialog.js?v=<?= @filemtime($_SERVER['DOCUMENT_ROOT'] . '/bitrix/js/main/file_dialog.js') ?>");
+            BX.loadScript("/bitrix/js/main/file_dialog.js?v=<?= @filemtime(
+                $_SERVER['DOCUMENT_ROOT'] . '/bitrix/js/main/file_dialog.js'
+            ) ?>");
             <?
         }
     }
@@ -429,9 +471,9 @@ class CMedialib
                                         <? if (!$Params['bReadOnly']):?>
                                             <a id="ml_add_collection" href="javascript:void(0)"
                                                title="<?= GetMessage('ML_ADD_COLLECTION_TITLE') ?>"
-                                               class="ml-add-el-link"><img
-                                                        src="/bitrix/images/1.gif"/><?= GetMessage('ML_ADD_COLLECTION') ?>
-                                            </a>
+                                               class="ml-add-el-link"><img src="/bitrix/images/1.gif"/><?= GetMessage(
+                                                    'ML_ADD_COLLECTION'
+                                                ) ?></a>
 
                                             <a id="ml_add_item" href="javascript:void(0)"
                                                title="<?= GetMessage('ML_ADD_ELEMENT_TITLE') ?>" class="ml-add-el-link"><img
@@ -571,15 +613,19 @@ class CMedialib
                                         <div style="text-align: right; padding-right: 20px;">
                                             <div style="float: left; text-align: left; margin-top: -2px;">
                                                 <a id="mlsd_fname_change" href="javascript:void(0)" class="mlsd-up-link"
-                                                   title="<?= GetMessage('ML_CHANGE_FILE_TITLE') ?>">(<?= GetMessage('ML_CHANGE') ?>
-                                                    )</a>
+                                                   title="<?= GetMessage('ML_CHANGE_FILE_TITLE') ?>">(<?= GetMessage(
+                                                        'ML_CHANGE'
+                                                    ) ?>)</a>
                                                 <a id="mlsd_fname_change_back" href="javascript:void(0)"
                                                    class="mlsd-up-link"
-                                                   title="<?= GetMessage('ML_CHANGE_UNDO_TITLE') ?>">(<?= GetMessage('ML_CHANGE_UNDO') ?>
-                                                    )</a>
+                                                   title="<?= GetMessage('ML_CHANGE_UNDO_TITLE') ?>">(<?= GetMessage(
+                                                        'ML_CHANGE_UNDO'
+                                                    ) ?>)</a>
                                             </div>
                                             <a id="mlsd_select_fd" href="javascript:void(0)" class="mlsd-up-link"
-                                               title="<?= GetMessage('ML_SELECT_FILE_TITLE') ?>"><?= GetMessage('ML_SELECT_FILE') ?></a>
+                                               title="<?= GetMessage('ML_SELECT_FILE_TITLE') ?>"><?= GetMessage(
+                                                    'ML_SELECT_FILE'
+                                                ) ?></a>
                                             <a id="mlsd_select_pc" href="javascript:void(0)" class="mlsd-up-link"
                                                title="<?= GetMessage('ML_LOAD_FILE_TITLE') ?>"
                                                style="display: none;"><?= GetMessage('ML_LOAD_FILE') ?></a>
@@ -591,16 +637,17 @@ class CMedialib
                                                 :</label></b><br/><input type="text" id="mlsd_item_name"
                                                                          name="item_name"/></td>
                                     <td rowSpan="3" style="padding-top: 10px;">
-                                        <div class="mlsd-prev-cont"><span
-                                                    id="mlsd_no_preview"><?= GetMessage('ML_NO_PREVIEW') ?></span><img
-                                                    id="mlsd_item_thumb" src="/bitrix/images/1.gif"/></div>
+                                        <div class="mlsd-prev-cont"><span id="mlsd_no_preview"><?= GetMessage(
+                                                    'ML_NO_PREVIEW'
+                                                ) ?></span><img id="mlsd_item_thumb" src="/bitrix/images/1.gif"/></div>
                                         <div class="mlsd-size-cont" id="mlsd_item_size"
                                              title="<?= GetMessage('ML_SIZE_IN_PX') ?>"></div>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td style="vertical-align: top;"><label
-                                                for="mlsd_item_desc"><?= GetMessage('ML_DESC') ?>:</label><br/>
+                                    <td style="vertical-align: top;"><label for="mlsd_item_desc"><?= GetMessage(
+                                                'ML_DESC'
+                                            ) ?>:</label><br/>
                                         <textarea id="mlsd_item_desc" rows="2" cols="26" name="item_desc"></textarea>
                                     </td>
                                 </tr>
@@ -612,9 +659,9 @@ class CMedialib
                                 <tr>
                                     <td colSpan="2">
                                         <div class="mlsd-col-cont">
-                                            <div class="mlsd-col-label"><label
-                                                        for="mlsd_coll_sel"><?= GetMessage('ML_COLLECTIONS') ?>:</label>
-                                            </div>
+                                            <div class="mlsd-col-label"><label for="mlsd_coll_sel"><?= GetMessage(
+                                                        'ML_COLLECTIONS'
+                                                    ) ?>:</label></div>
                                             <div class="mlsd-col-sel"><select
                                                         title="<?= GetMessage('ML_ADD_COL2ITEM') ?>" id="mlsd_coll_sel">
                                                     <option value="0"><?= GetMessage('ML_COL_SELECT') ?></option>
@@ -634,7 +681,8 @@ class CMedialib
             </table>
         </div>
         <?
-        CAdminFileDialog::ShowScript(Array
+        CAdminFileDialog::ShowScript(
+            Array
             (
                 "event" => "mlOpenFileDialog",
                 "arResultDest" => Array("FUNCTION_NAME" => "mlOnFileDialogSave"),
@@ -685,7 +733,8 @@ class CMedialib
             </table>
         </div>
         <?
-        CAdminFileDialog::ShowScript(Array
+        CAdminFileDialog::ShowScript(
+            Array
             (
                 "event" => "mlOpenFileDialog",
                 "arResultDest" => Array("FUNCTION_NAME" => "mlOnFileDialogSave"),
@@ -851,14 +900,16 @@ class CMedialib
                                    title="<?= GetMessage('ML_CHANGE_FILE_TITLE') ?>">(<?= GetMessage('ML_CHANGE') ?>
                                     )</a>
                                 <a id="mlsd_fname_change_back" href="javascript:void(0)" class="mlsd-up-link"
-                                   title="<?= GetMessage('ML_CHANGE_UNDO_TITLE') ?>">(<?= GetMessage('ML_CHANGE_UNDO') ?>
-                                    )</a>
+                                   title="<?= GetMessage('ML_CHANGE_UNDO_TITLE') ?>">(<?= GetMessage(
+                                        'ML_CHANGE_UNDO'
+                                    ) ?>)</a>
                             </div>
                             <a id="mlsd_select_fd" href="javascript:void(0)" class="mlsd-up-link"
                                title="<?= GetMessage('ML_SELECT_FILE_TITLE') ?>"><?= GetMessage('ML_SELECT_FILE') ?></a>
                             <a id="mlsd_select_pc" href="javascript:void(0)" class="mlsd-up-link"
-                               title="<?= GetMessage('ML_LOAD_FILE_TITLE') ?>"
-                               style="display: none;"><?= GetMessage('ML_LOAD_FILE') ?></a>
+                               title="<?= GetMessage('ML_LOAD_FILE_TITLE') ?>" style="display: none;"><?= GetMessage(
+                                    'ML_LOAD_FILE'
+                                ) ?></a>
                         </div>
                     </td>
                 </tr>
@@ -950,13 +1001,15 @@ class CMedialib
                                 </tr>
                                 <tr>
                                     <td><a id="mlvi_info_link" href="javascript: void(0);"
-                                           title="<?= GetMessage("ML_DOWNLOAD_LINK") ?>"><?= GetMessage('ML_DOWNLOAD_LINK') ?></a>
-                                    </td>
+                                           title="<?= GetMessage("ML_DOWNLOAD_LINK") ?>"><?= GetMessage(
+                                                'ML_DOWNLOAD_LINK'
+                                            ) ?></a></td>
                                 </tr>
                                 <tr>
                                     <td><a id="mlvi_info_copy_link" href="javascript: void(0);"
-                                           title="<?= GetMessage("ML_DOWNLOAD_LINK_TITLE") ?>"><?= GetMessage("ML_DOWNLOAD_LINK_TITLE") ?></a>
-                                    </td>
+                                           title="<?= GetMessage("ML_DOWNLOAD_LINK_TITLE") ?>"><?= GetMessage(
+                                                "ML_DOWNLOAD_LINK_TITLE"
+                                            ) ?></a></td>
                                 </tr>
                                 <tr>
                                     <td><input style="display:none;" id="mlvi_info_copy_input" value></td>
@@ -1053,38 +1106,56 @@ class CMedialib
         if (!window.jsUtils && top.jsUtils)
         window.jsUtils = top.jsUtils;
         if (!window.jsUtils)
-        BX.loadScript('/bitrix/js/main/utils.js?v=<?= @filemtime($_SERVER['DOCUMENT_ROOT'] . '/bitrix/js/main/utils.js') ?>');
+        BX.loadScript('/bitrix/js/main/utils.js?v=<?= @filemtime(
+        $_SERVER['DOCUMENT_ROOT'] . '/bitrix/js/main/utils.js'
+    ) ?>');
 
         if (!window.CHttpRequest && top.CHttpRequest)
         window.CHttpRequest = top.CHttpRequest;
         if (!window.CHttpRequest)
-        BX.loadScript('/bitrix/js/main/admin_tools.js?v=<?= @filemtime($_SERVER['DOCUMENT_ROOT'] . '/bitrix/js/main/admin_tools.js') ?>');
+        BX.loadScript('/bitrix/js/main/admin_tools.js?v=<?= @filemtime(
+        $_SERVER['DOCUMENT_ROOT'] . '/bitrix/js/main/admin_tools.js'
+    ) ?>');
 
         if (!window.jsAjaxUtil && top.jsAjaxUtil)
         window.jsAjaxUtil = top.jsAjaxUtil;
         if (!window.jsAjaxUtil)
-        BX.loadScript('/bitrix/js/main/ajax.js?v=<?= @filemtime($_SERVER['DOCUMENT_ROOT'] . '/bitrix/js/main/ajax.js') ?>');
+        BX.loadScript('/bitrix/js/main/ajax.js?v=<?= @filemtime(
+        $_SERVER['DOCUMENT_ROOT'] . '/bitrix/js/main/ajax.js'
+    ) ?>');
         <?
     }
 
     public static function GetCollections(&$exParams)
     {
         $bCountPermissions = isset($exParams['bCountPermissions']) && $exParams['bCountPermissions'] === true;
-        $exParams['arCountPerm'] = array('new_col' => 0, 'edit' => 0, 'del' => 0, 'new_item' => 0, 'edit_item' => 0, 'del_item' => 0, 'access' => 0);
+        $exParams['arCountPerm'] = array(
+            'new_col' => 0,
+            'edit' => 0,
+            'del' => 0,
+            'new_item' => 0,
+            'edit_item' => 0,
+            'del_item' => 0,
+            'access' => 0
+        );
 
         ?>window.MLCollections = [<?
-        $arCol = CMedialibCollection::GetList(array('arFilter' =>
+        $arCol = CMedialibCollection::GetList(
             array(
-                'ACTIVE' => 'Y',
-                'TYPES' => $exParams['types']
+                'arFilter' =>
+                    array(
+                        'ACTIVE' => 'Y',
+                        'TYPES' => $exParams['types']
+                    )
             )
-        ));
+        );
         $commonEdit = false;
         $commonItemEdit = false;
         $arResCol = array();
         for ($i = 0, $l = count($arCol); $i < $l; $i++) {
-            if (!CMedialibCollection::IsViewable($arCol[$i], $arCol))
+            if (!CMedialibCollection::IsViewable($arCol[$i], $arCol)) {
                 continue;
+            }
 
             $id = $arCol[$i]['ID'];
             $arCol[$i]['PERMISSIONS'] = array(
@@ -1099,8 +1170,9 @@ class CMedialib
 
             $accStr = '';
             foreach ($exParams['arCountPerm'] as $key => $el) {
-                if ($bCountPermissions)
-                    $exParams['arCountPerm'][$key] += intVal($arCol[$i]['PERMISSIONS'][$key]);
+                if ($bCountPermissions) {
+                    $exParams['arCountPerm'][$key] += intval($arCol[$i]['PERMISSIONS'][$key]);
+                }
                 $accStr .= $key . ": '" . $arCol[$i]['PERMISSIONS'][$key] . "', ";
             }
             $accStr = rtrim($accStr, ' ,');
@@ -1111,27 +1183,32 @@ class CMedialib
             desc: '<?= CMedialib::Escape($arCol[$i]['DESCRIPTION']) ?>',
             date: '<?= $arCol[$i]['DATE_UPDATE'] ?>',
             keywords: '<?= CMedialib::Escape($arCol[$i]['KEYWORDS']) ?>',
-            parent: <?= intVal($arCol[$i]['PARENT_ID']) > 0 ? intVal($arCol[$i]['PARENT_ID']) : '0' ?>,
+            parent: <?= intval($arCol[$i]['PARENT_ID']) > 0 ? intval($arCol[$i]['PARENT_ID']) : '0' ?>,
             access: {<?= $accStr ?>},
             type: '<?= $arCol[$i]['ML_TYPE'] ?>'
             }
             <?
-            if ($i != $l - 1)
+            if ($i != $l - 1) {
                 echo ',';
+            }
             $arResCol[] = $arCol[$i];
         }
         ?>];<?
         return $arResCol;
     }
 
-    public static function DelCollection($id, $arIds = array())
+    public static function DelCollection($id, $arIds = [])
     {
-        if (!CMedialib::CanDoOperation('medialib_del_collection', $id))
+        if (!CMedialib::CanDoOperation('medialib_del_collection', $id)) {
             return false;
+        }
 
-        for ($i = 0, $l = count($arIds); $i < $l; $i++) {
-            if (CMedialib::CanDoOperation('medialib_del_collection', $arIds[$i]))
-                CMedialibCollection::Delete($arIds[$i], false);
+        if (is_array($arIds)) {
+            for ($i = 0, $l = count($arIds); $i < $l; $i++) {
+                if (CMedialib::CanDoOperation('medialib_del_collection', $arIds[$i])) {
+                    CMedialibCollection::Delete($arIds[$i], false);
+                }
+            }
         }
 
         return CMedialibCollection::Delete($id);
@@ -1140,21 +1217,24 @@ class CMedialib
     public static function EditCollection($Params)
     {
         if ($Params['id'] && !CMedialib::CanDoOperation('medialib_edit_collection', $Params['id']) ||
-            !$Params['id'] && !CMedialib::CanDoOperation('medialib_new_collection', $Params['parent']))
+            !$Params['id'] && !CMedialib::CanDoOperation('medialib_new_collection', $Params['parent'])) {
             return;
+        }
 
-        return CMedialibCollection::Edit(array(
-            'arFields' => array(
-                'ID' => $Params['id'],
-                'NAME' => $Params['name'],
-                'DESCRIPTION' => $Params['desc'],
-                'OWNER_ID' => $GLOBALS['USER']->GetId(),
-                'PARENT_ID' => $Params['parent'],
-                'KEYWORDS' => $Params['keywords'],
-                'ACTIVE' => "Y",
-                'ML_TYPE' => $Params['type']
+        return CMedialibCollection::Edit(
+            array(
+                'arFields' => array(
+                    'ID' => $Params['id'],
+                    'NAME' => $Params['name'],
+                    'DESCRIPTION' => $Params['desc'],
+                    'OWNER_ID' => $GLOBALS['USER']->GetId(),
+                    'PARENT_ID' => $Params['parent'],
+                    'KEYWORDS' => $Params['keywords'],
+                    'ACTIVE' => "Y",
+                    'ML_TYPE' => $Params['type']
+                )
             )
-        ));
+        );
     }
 
     public static function EditItem($Params)
@@ -1163,43 +1243,59 @@ class CMedialib
         $arCols_ = explode(',', $Params['item_collections']);
         $arCols = array();
         for ($i = 0, $l = count($arCols_); $i < $l; $i++) {
-            if (intVal($arCols_[$i]) > 0 && CMedialib::CanDoOperation($bOpName, $arCols_[$i])) // Check access
-                $arCols[] = intVal($arCols_[$i]);
+            if (intval($arCols_[$i]) > 0 && CMedialib::CanDoOperation($bOpName, $arCols_[$i])) // Check access
+            {
+                $arCols[] = intval($arCols_[$i]);
+            }
         }
 
         if (count($arCols) > 0) {
-            if ($Params['source_type'] == 'PC')
+            if ($Params['source_type'] == 'PC') {
                 $Params['path'] = false;
-            else if ($Params['source_type'] == 'FD')
-                $Params['file'] = false;
+            } else {
+                if ($Params['source_type'] == 'FD') {
+                    $Params['file'] = false;
+                }
+            }
 
-            $res = CMedialibItem::Edit(array(
-                'file' => $Params['file'],
-                'path' => $Params['path'],
-                'arFields' => array(
-                    'ID' => $Params['id'],
-                    'NAME' => $Params['name'],
-                    'DESCRIPTION' => $Params['desc'],
-                    'KEYWORDS' => $Params['keywords']
-                ),
-                'arCollections' => $arCols
-            ));
+            $res = CMedialibItem::Edit(
+                array(
+                    'file' => $Params['file'],
+                    'path' => $Params['path'],
+                    'arFields' => array(
+                        'ID' => $Params['id'],
+                        'NAME' => $Params['name'],
+                        'DESCRIPTION' => $Params['desc'],
+                        'KEYWORDS' => $Params['keywords']
+                    ),
+                    'arCollections' => $arCols
+                )
+            );
 
             if ($res):
 
-                if (!isset($res['DATE_UPDATE']) && isset($res['TIMESTAMP_X']))
+                if (!isset($res['DATE_UPDATE']) && isset($res['TIMESTAMP_X'])) {
                     $res['DATE_UPDATE'] = $res['TIMESTAMP_X'];
+                }
                 ?>
                 <script>
                     top.bx_req_res = {
-                        id: <?=intVal($res['ID'])?>,
+                        id: <?=intval($res['ID'])?>,
                         name: '<?= CMedialib::Escape($res['NAME'])?>',
                         desc: '<?= CMedialib::Escape($res['DESCRIPTION'])?>',
                         keywords: '<?= CMedialib::Escape($res['KEYWORDS'])?>',
-                        <?if (isset($res['FILE_NAME'])):?>file_name: '<?= CMedialib::Escape($res['FILE_NAME'])?>',<?endif;?>
-                        <?if (isset($res['DATE_UPDATE'])):?>date_mod: '<?= CMedialib::GetUsableDate($res['DATE_UPDATE'])?>',<?endif;?>
-                        <?if (isset($res['FILE_SIZE'])):?>file_size: '<?= CMedialib::GetUsableSize($res['FILE_SIZE'])?>',<?endif;?>
-                        <?if (isset($res['THUMB_PATH'])):?>thumb_path: '<?= CMedialib::Escape($res['THUMB_PATH'])?>',<?endif;?>
+                        <?if (isset($res['FILE_NAME'])):?>file_name: '<?= CMedialib::Escape(
+                            $res['FILE_NAME']
+                        )?>',<?endif;?>
+                        <?if (isset($res['DATE_UPDATE'])):?>date_mod: '<?= CMedialib::GetUsableDate(
+                            $res['DATE_UPDATE']
+                        )?>',<?endif;?>
+                        <?if (isset($res['FILE_SIZE'])):?>file_size: '<?= CMedialib::GetUsableSize(
+                            $res['FILE_SIZE']
+                        )?>',<?endif;?>
+                        <?if (isset($res['THUMB_PATH'])):?>thumb_path: '<?= CMedialib::Escape(
+                            $res['THUMB_PATH']
+                        )?>',<?endif;?>
                         <?if (isset($res['PATH'])):?>path: '<?= CMedialib::Escape($res['PATH'])?>',<?endif;?>
                         <?if (isset($res['TYPE'])):?>type: '<?= $res['TYPE']?>',<?endif;?>
                         height: <?= ($res['HEIGHT'] ? $res['HEIGHT'] : '0')?>,
@@ -1207,8 +1303,9 @@ class CMedialib
                     };
 
                     top._ml_items_colls = [<?
-                        for ($i = 0, $l = count($arCols); $i < $l; $i++)
+                        for ($i = 0, $l = count($arCols); $i < $l; $i++) {
                             echo $arCols[$i] . ($i != $l - 1 ? ',' : '');
+                        }
                         ?>];
                 </script>
             <? else: ?>
@@ -1222,25 +1319,40 @@ class CMedialib
         $arColTree = array();
         $arColTemp = array();
         $Collections = array();
-        $arCol = $Params['menu'] ? CMedialibCollection::GetList(array('arFilter' => array('ACTIVE' => 'Y', 'PARENT_ID' => 0))) : CMedialibCollection::GetList(array('arFilter' => array('ACTIVE' => 'Y')));
+        $arCol = $Params['menu'] ? CMedialibCollection::GetList(
+            array('arFilter' => array('ACTIVE' => 'Y', 'PARENT_ID' => 0))
+        ) : CMedialibCollection::GetList(array('arFilter' => array('ACTIVE' => 'Y')));
         $iter = 0;
 
         for ($i = 0, $l = count($arCol); $i < $l; $i++) {
-            if (isset($Params['CheckAccessFunk']) && !call_user_func($Params['CheckAccessFunk'], $arCol[$i]['ID']))
+            if (isset($Params['CheckAccessFunk']) && !call_user_func($Params['CheckAccessFunk'], $arCol[$i]['ID'])) {
                 continue;
+            }
 
-            if (!CMedialib::_buildCollection($arCol[$i], $i, $arColTree, $Collections, $Params))
+            if (!CMedialib::_buildCollection($arCol[$i], $i, $arColTree, $Collections, $Params)) {
                 $arColTemp[] = array($arCol[$i], $i);
+            }
         }
 
         while (count($arColTemp) > 0 && $iter < 50) {
             $newAr = array();
             for ($i = 0, $l = count($arColTemp); $i < $l; $i++) {
-                if (isset($Params['CheckAccessFunk']) && !call_user_func($Params['CheckAccessFunk'], $arCol[$i]['ID']))
+                if (isset($Params['CheckAccessFunk']) && !call_user_func(
+                        $Params['CheckAccessFunk'],
+                        $arCol[$i]['ID']
+                    )) {
                     continue;
+                }
 
-                if (!CMedialib::_buildCollection($arColTemp[$i][0], $arColTemp[$i][1], $arColTree, $Collections, $Params))
+                if (!CMedialib::_buildCollection(
+                    $arColTemp[$i][0],
+                    $arColTemp[$i][1],
+                    $arColTree,
+                    $Collections,
+                    $Params
+                )) {
                     $newAr[] = $arColTemp[$i];
+                }
             }
             $arColTemp = $newAr;
             $iter++;
@@ -1251,8 +1363,9 @@ class CMedialib
             if ($arType) {
                 foreach ($Collections as $id => $col) {
                     // Del collection escription if it has another type
-                    if (!CMedialib::CompareTypesEx($Collections[$id]['ML_TYPE'], $arType))
+                    if (!CMedialib::CompareTypesEx($Collections[$id]['ML_TYPE'], $arType)) {
                         unset($Collections[$id]);
+                    }
                 }
             }
         }
@@ -1262,15 +1375,20 @@ class CMedialib
 
     public static function _buildCollection($Col, $ind, &$arColTree, &$Collections, $Params = array())
     {
-        if ($Params['CHECK_ACCESS'] === true && !CMedialib::CanDoOperation('medialib_view_collection', $Col['ID']))
+        if ($Params['CHECK_ACCESS'] === true && !CMedialib::CanDoOperation('medialib_view_collection', $Col['ID'])) {
             return true;
+        }
 
         if (!$Col['PARENT_ID']) // Root element
+        {
             $arColTree[] = array('id' => $Col['ID'], 'child' => array());
-        else if ($Collections[$Col['PARENT_ID']])
-            CMedialib::_findChildInColTree($arColTree, $Col['PARENT_ID'], $Col['ID']);
-        else
-            return false;
+        } else {
+            if ($Collections[$Col['PARENT_ID']]) {
+                CMedialib::_findChildInColTree($arColTree, $Col['PARENT_ID'], $Col['ID']);
+            } else {
+                return false;
+            }
+        }
 
         $Collections[$Col['ID']] = $Col;
         return true;
@@ -1282,16 +1400,23 @@ class CMedialib
             if ($arr[$i]['id'] == $id) {
                 $arr[$i]['child'][] = array('id' => $colId, 'child' => array());
                 return true;
-            } else if (count($arr[$i]['child']) > 0) {
-                if (CMedialib::_findChildInColTree($arr[$i]['child'], $id, $colId))
-                    return true;
+            } else {
+                if (count($arr[$i]['child']) > 0) {
+                    if (CMedialib::_findChildInColTree($arr[$i]['child'], $id, $colId)) {
+                        return true;
+                    }
+                }
             }
         }
         return false;
     }
 
-    public static function _BuildCollectionsSelectOptions($Collections = false, $arColTree = false, $level = 0, $selected = false)
-    {
+    public static function _BuildCollectionsSelectOptions(
+        $Collections = false,
+        $arColTree = false,
+        $level = 0,
+        $selected = false
+    ) {
         if ($Collections === false && $arColTree === false) {
             $res = CMedialib::GetCollectionTree();
             $Collections = $res['Collections'];
@@ -1302,14 +1427,23 @@ class CMedialib
         for ($i = 0, $l = count($arColTree); $i < $l; $i++) {
             //if ($type !== false && )
             $col = $Collections[$arColTree[$i]['id']];
-            if (!is_array($col))
+            if (!is_array($col)) {
                 continue;
+            }
             $html = str_repeat(" . ", $level);
             $s = ($selected !== false && $selected == $arColTree[$i]['id']) ? ' selected' : '';
-            $str .= '<option value="' . $arColTree[$i]['id'] . '"' . $s . '>' . $html . htmlspecialcharsex($col['NAME']) . '</option>';
+            $str .= '<option value="' . $arColTree[$i]['id'] . '"' . $s . '>' . $html . htmlspecialcharsex(
+                    $col['NAME']
+                ) . '</option>';
 
-            if (count($arColTree[$i]['child']))
-                $str .= CMedialib::_BuildCollectionsSelectOptions($Collections, $arColTree[$i]['child'], $level + 1, $selected);
+            if (count($arColTree[$i]['child'])) {
+                $str .= CMedialib::_BuildCollectionsSelectOptions(
+                    $Collections,
+                    $arColTree[$i]['child'],
+                    $level + 1,
+                    $selected
+                );
+            }
         }
         return $str;
     }
@@ -1317,15 +1451,19 @@ class CMedialib
     public static function GetItems($Params)
     {
         $arCollections = array();
-        if (!CMedialib::CanDoOperation('medialib_view_collection', $Params['collectionId']))
+        if (!CMedialib::CanDoOperation('medialib_view_collection', $Params['collectionId'])) {
             return false;
+        }
 
-        if (isset($Params['collectionId']) && $Params['collectionId'] > 0)
+        if (isset($Params['collectionId']) && $Params['collectionId'] > 0) {
             $arCollections[] = $Params['collectionId'];
+        }
 
-        $arItems = CMedialibItem::GetList(array(
-            'arCollections' => $arCollections
-        ));
+        $arItems = CMedialibItem::GetList(
+            array(
+                'arCollections' => $arCollections
+            )
+        );
 
         ?>
         <script>
@@ -1334,7 +1472,7 @@ class CMedialib
                 {
                 ?>
                 {
-                    id: <?=intVal($arItems[$i]['ID'])?>,
+                    id: <?=intval($arItems[$i]['ID'])?>,
                     name: '<?= CMedialib::Escape($arItems[$i]['NAME'])?>',
                     desc: '<?= CMedialib::Escape($arItems[$i]['DESCRIPTION'])?>',
                     keywords: '<?= CMedialib::Escape($arItems[$i]['KEYWORDS'])?>',
@@ -1349,8 +1487,9 @@ class CMedialib
                     type: '<?= $arItems[$i]['TYPE']?>'
                 }
                 <?
-                if ($i != $l - 1)
+                if ($i != $l - 1) {
                     echo ',';
+                }
                 }
                 ?>];
         </script>
@@ -1369,15 +1508,17 @@ class CMedialib
 
     public static function GetItemCollectionList($Params)
     {
-        if (!CMedialib::CanDoOperation('medialib_view_collection', 0))
+        if (!CMedialib::CanDoOperation('medialib_view_collection', 0)) {
             return false;
+        }
 
         $ar = CMedialibItem::GetItemCollections($Params);
         ?>
         <script>
             window._ml_items_colls = [<?
-                for ($i = 0, $l = count($ar); $i < $l; $i++)
+                for ($i = 0, $l = count($ar); $i < $l; $i++) {
                     echo $ar[$i] . ($i != $l - 1 ? ',' : '');
+                }
                 ?>];
         </script>
         <?
@@ -1385,17 +1526,35 @@ class CMedialib
 
     public static function SaveUserSettings($Params)
     {
-        if ($GLOBALS["USER"]->IsAuthorized())
-            CUserOptions::SetOption("fileman", "medialib_user_set", intVal($Params['width']) . ',' . intVal($Params['height']) . ',' . intVal($Params['coll_id']));
+        if ($GLOBALS["USER"]->IsAuthorized()) {
+            CUserOptions::SetOption(
+                "fileman",
+                "medialib_user_set",
+                intval($Params['width']) . ',' . intval($Params['height']) . ',' . intval(
+                    $Params['coll_id']
+                )
+            );
+        }
     }
 
     public static function SaveAccessPermissions($colId, $arTaskPerm)
     {
         global $DB;
-        $DB->Query("DELETE FROM b_group_collection_task WHERE COLLECTION_ID=" . intVal($colId), false, "FILE: " . __FILE__ . "<br> LINE: " . __LINE__);
+        $DB->Query(
+            "DELETE FROM b_group_collection_task WHERE COLLECTION_ID=" . intval($colId),
+            false,
+            "FILE: " . __FILE__ . "<br> LINE: " . __LINE__
+        );
 
         foreach ($arTaskPerm as $group_id => $task_id) {
-            $arInsert = $DB->PrepareInsert("b_group_collection_task", array("GROUP_ID" => $group_id, "TASK_ID" => $task_id, "COLLECTION_ID" => intVal($colId)));
+            $arInsert = $DB->PrepareInsert(
+                "b_group_collection_task",
+                array(
+                    "GROUP_ID" => $group_id,
+                    "TASK_ID" => $task_id,
+                    "COLLECTION_ID" => intval($colId)
+                )
+            );
             $strSql = "INSERT INTO b_group_collection_task(" . $arInsert[0] . ") VALUES(" . $arInsert[1] . ")";
             $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
         }
@@ -1405,13 +1564,15 @@ class CMedialib
     {
         global $DB;
 
-        if (count($Params['Cols']) > 0) // Del collections
+        if (is_array($Params['Cols']) && count($Params['Cols']) > 0) // Del collections
         {
             $strCols = "0";
             for ($i = 0, $l = count($Params['Cols']); $i < $l; $i++) {
                 $colId = $Params['Cols'][$i];
                 if (CMedialib::CanDoOperation('medialib_del_collection', $colId)) // Access
-                    $strCols .= "," . IntVal($colId);
+                {
+                    $strCols .= "," . intval($colId);
+                }
             }
 
             if ($strCols != "0") {
@@ -1423,17 +1584,22 @@ class CMedialib
             }
         }
 
-        if (count($Params['Items']) > 0) // Del items
+        if (is_array($Params['Items']) && count($Params['Items']) > 0) // Del items
         {
             foreach ($Params['Items'] as $colId => $arItems) {
                 if (!CMedialib::CanDoOperation('medialib_del_item', $colId)) // Access
+                {
                     return false;
+                }
 
                 $strItems = "0";
-                for ($i = 0, $l = count($arItems); $i < $l; $i++)
-                    $strItems .= "," . IntVal($arItems[$i]);
+                for ($i = 0, $l = count($arItems); $i < $l; $i++) {
+                    $strItems .= "," . intval($arItems[$i]);
+                }
 
-                $strSql = "DELETE FROM b_medialib_collection_item WHERE ITEM_ID IN (" . $strItems . ") AND COLLECTION_ID=" . $colId;
+                $strSql = "DELETE FROM b_medialib_collection_item WHERE ITEM_ID IN (" . $strItems . ") AND COLLECTION_ID=" . intval(
+                        $colId
+                    );
                 $z = $DB->Query($strSql, false, "FILE: " . __FILE__ . "<br> LINE: " . __LINE__);
             }
         }
@@ -1451,25 +1617,35 @@ class CMedialib
         $event = $Params['event'];
         $mode = isset($Params['mode']) ? $Params['mode'] : '';
 
-        if (!isset($Params['useMLDefault']))
+        if (!isset($Params['useMLDefault'])) {
             $useMLDefault = COption::GetOptionString('fileman', "ml_use_default", true);
-        else
+        } else {
             $useMLDefault = $Params['useMLDefault'];
+        }
 
-        if ($mode == 'file_dialog' || COption::GetOptionString('fileman', "use_medialib", "Y") == "N" || !CMedialib::CanDoOperation('medialib_view_collection', 0))
+        if ($mode == 'file_dialog' || COption::GetOptionString(
+                'fileman',
+                "use_medialib",
+                "Y"
+            ) == "N" || !CMedialib::CanDoOperation('medialib_view_collection', 0)) {
             $mode = 'file_dialog';
-        else if ($mode == 'medialib' || !$GLOBALS["USER"]->CanDoOperation('fileman_view_file_structure'))
-            $mode = 'medialib';
-        else
-            $mode = 'select';
+        } else {
+            if ($mode == 'medialib' || !$GLOBALS["USER"]->CanDoOperation('fileman_view_file_structure')) {
+                $mode = 'medialib';
+            } else {
+                $mode = 'select';
+            }
+        }
 
-        if ($Params['bReturnResult'])
+        if ($Params['bReturnResult']) {
             ob_start();
+        }
 
         if ($mode == 'medialib' || $mode == 'select') {
             $arMLConfig = $Params['MedialibConfig'];
-            if (!isset($arMLConfig['event']))
+            if (!isset($arMLConfig['event'])) {
                 $arMLConfig['event'] = 'BXOpenMLEvent';
+            }
             CMedialib::ShowDialogScript($arMLConfig);
         }
 
@@ -1538,17 +1714,20 @@ class CMedialib
 
     public static function GetUsableSize($size = 0)
     {
-        $size = intVal($size);
-        if ($size < 1024)
+        $size = intval($size);
+        if ($size < 1024) {
             return $size . " " . GetMessage('ML_BYTE');
+        }
 
         $size = round($size / 1024);
-        if ($size < 1024)
+        if ($size < 1024) {
             return $size . " K" . GetMessage('ML_BYTE');
+        }
 
         $size = round($size / 1024);
-        if ($size < 1024)
+        if ($size < 1024) {
             return $size . " M" . GetMessage('ML_BYTE');
+        }
 
         return $size;
     }
@@ -1565,18 +1744,21 @@ class CMedialib
         $arExt_ = explode(',', $strExt);
 
         $arTypes = CMedialib::GetTypes();
-        for ($i = 0, $l = count($arTypes); $i < $l; $i++)
+        for ($i = 0, $l = count($arTypes); $i < $l; $i++) {
             $arExt_ = array_merge($arExt_, explode(',', $arTypes[$i]["ext"]));
+        }
 
         $arExt = array();
         for ($i = 0, $l = count($arExt_); $i < $l; $i++) {
-            $ext = strtolower(trim($arExt_[$i], ' .'));
-            if (strlen($ext) > 0 && !in_array($ext, $arExt))
+            $ext = mb_strtolower(trim($arExt_[$i], ' .'));
+            if ($ext <> '' && !in_array($ext, $arExt)) {
                 $arExt[] = $ext;
+            }
         }
 
-        if ($bStr)
+        if ($bStr) {
             return implode(",", $arExt);
+        }
 
         return $arExt;
     }
@@ -1588,9 +1770,10 @@ class CMedialib
 
     public static function CheckFileExtention($strPath = '', $arExt = false)
     {
-        if (!$arExt)
+        if (!$arExt) {
             $arExt = CMedialib::GetMediaExtentions(false);
-        $ext = strtolower(CFileman::GetFileExtension($strPath));
+        }
+        $ext = mb_strtolower(CFileman::GetFileExtension($strPath));
         return in_array($ext, $arExt);
     }
 
@@ -1598,11 +1781,13 @@ class CMedialib
     {
         return CUtil::JSEscape($str);
 
-        if (strlen($str) <= 0)
+        if ($str == '') {
             return $str;
+        }
 
-        if ($bHtmlSpCh)
+        if ($bHtmlSpCh) {
             $str = htmlspecialcharsex($str);
+        }
 
         $str = str_replace("script>", "script_>", $str);
         $str = str_replace("\r", "", $str);
@@ -1615,8 +1800,9 @@ class CMedialib
 
     public static function SearchItems($Params)
     {
-        if (!CModule::IncludeModule("search"))
+        if (!CModule::IncludeModule("search")) {
             return;
+        }
 
         $arQuery = array_keys(stemming($Params['query'], LANGUAGE_ID));
         $arItems = CMedialibItem::Search($arQuery, $Params['types']);
@@ -1628,7 +1814,7 @@ class CMedialib
                 {
                 ?>
                 {
-                    id: <?=intVal($arItems[$i]['ID'])?>,
+                    id: <?=intval($arItems[$i]['ID'])?>,
                     name: '<?= CMedialib::Escape($arItems[$i]['NAME'])?>',
                     desc: '<?= CMedialib::Escape($arItems[$i]['DESCRIPTION'])?>',
                     keywords: '<?= CMedialib::Escape($arItems[$i]['KEYWORDS'])?>',
@@ -1643,11 +1829,16 @@ class CMedialib
                     perm: {
                         edit: <?= $arItems[$i]['perm']['edit'] ? 'true' : 'false'?>,
                         del: <?= $arItems[$i]['perm']['del'] ? 'true' : 'false'?>},
-                    collections: <?= count($arItems[$i]['collections']) == 1 ? "['" . $arItems[$i]['collections'][0] . "']" : CUtil::PhpToJSObject($arItems[$i]['collections'])?>
+                    collections: <?= count(
+                        $arItems[$i]['collections']
+                    ) == 1 ? "['" . $arItems[$i]['collections'][0] . "']" : CUtil::PhpToJSObject(
+                        $arItems[$i]['collections']
+                    )?>
 
                 }<?
-                if ($i != $l - 1)
+                if ($i != $l - 1) {
                     echo ",\n";
+                }
                 }
                 ?>
             ];
@@ -1714,9 +1905,9 @@ class CMedialib
         $delInput = false,
         $scaleIcon = false,
         $cloudInput = false
-    )
-    {
-        return CFileInput::Show($strInputName,
+    ) {
+        return CFileInput::Show(
+            $strInputName,
             $strImageID,
             $showInfo,
             array(
@@ -1732,12 +1923,15 @@ class CMedialib
 
     public static function GetTypeById($id, $arMLTypes = false)
     {
-        if ($arMLTypes === false)
+        if ($arMLTypes === false) {
             $arMLTypes = CMedialib::GetTypes();
+        }
 
-        for ($i = 0, $l = count($arMLTypes); $i < $l; $i++)
-            if ($arMLTypes[$i]['id'] == $id)
+        for ($i = 0, $l = count($arMLTypes); $i < $l; $i++) {
+            if ($arMLTypes[$i]['id'] == $id) {
                 return $arMLTypes[$i];
+            }
+        }
 
         return false;
     }
@@ -1758,10 +1952,11 @@ class CMedialib
         }
 
         if (!self::$bCache || !isset($arMLTypes)) {
-            if ($bGetEmpties)
+            if ($bGetEmpties) {
                 $q = "SELECT MT.*, MC.ML_TYPE FROM b_medialib_type MT LEFT JOIN b_medialib_collection MC ON (MT.ID=MC.ML_TYPE)";
-            else
+            } else {
                 $q = "SELECT * FROM b_medialib_type";
+            }
 
             $err_mess = CMedialibCollection::GetErrorMess() . "<br>Function: CMedialib::GetTypes<br>Line: ";
             $res = $DB->Query($q, false, $err_mess);
@@ -1769,16 +1964,18 @@ class CMedialib
             $arMLTypesInd = array();
 
             while ($arRes = $res->Fetch()) {
-                if ($arMLTypesInd[$arRes["ID"]])
+                if ($arMLTypesInd[$arRes["ID"]]) {
                     continue;
+                }
 
-                $typeIcon = "/bitrix/images/fileman/medialib/type_" . strtolower($arRes["CODE"]) . ".gif";
-                if (!file_exists($_SERVER['DOCUMENT_ROOT'] . $typeIcon))
+                $typeIcon = "/bitrix/images/fileman/medialib/type_" . mb_strtolower($arRes["CODE"]) . ".gif";
+                if (!file_exists($_SERVER['DOCUMENT_ROOT'] . $typeIcon)) {
                     $typeIcon = "/bitrix/images/fileman/medialib/type_default.gif";
+                }
 
                 if ($arRes["SYSTEM"] == "Y") {
-                    $arRes["NAME"] = GetMessage("ML_TYPE_" . strtoupper($arRes["NAME"]));
-                    $arRes["DESCRIPTION"] = GetMessage("ML_TYPE_" . strtoupper($arRes["DESCRIPTION"]));
+                    $arRes["NAME"] = GetMessage("ML_TYPE_" . mb_strtoupper($arRes["NAME"]));
+                    $arRes["DESCRIPTION"] = GetMessage("ML_TYPE_" . mb_strtoupper($arRes["DESCRIPTION"]));
                 }
 
                 $arMLTypesInd[$arRes["ID"]] = true;
@@ -1797,17 +1994,20 @@ class CMedialib
 
             if (self::$bCache) {
                 $cache->StartDataCache(self::$cacheTime, $cacheId, $cachePath);
-                $cache->EndDataCache(array(
-                    "arMLTypes" => $arMLTypes
-                ));
+                $cache->EndDataCache(
+                    array(
+                        "arMLTypes" => $arMLTypes
+                    )
+                );
             }
         }
 
         $result = array();
         if (is_array($arConfigTypes) && count($arConfigTypes) > 0) {
             foreach ($arMLTypes as $type) {
-                if (in_array(strtolower($type["code"]), $arConfigTypes))
+                if (in_array(mb_strtolower($type["code"]), $arConfigTypes)) {
                     $result[] = $type;
+                }
             }
         } else {
             $result = $arMLTypes;
@@ -1827,10 +2027,11 @@ class CMedialib
             $arFields["EXT"] = preg_replace("/[^a-zA-Z0-9_\,]/i", "", $arFields["EXT"]);
 
             //if ($arFields["CODE"] == '' || $arFields["EXT"] == '' || $arFields["NAME"] == '')
-            if ($arFields["CODE"] == '' || $arFields["EXT"] == '')
+            if ($arFields["CODE"] == '' || $arFields["EXT"] == '') {
                 continue;
+            }
 
-            $id = IntVal($arFields['ID']);
+            $id = intval($arFields['ID']);
             unset($arFields['ID']);
 
             if ($arFields['NEW']) // Add
@@ -1853,9 +2054,11 @@ class CMedialib
                     $DB->PrepareUpdate("b_medialib_type", $arFields) .
                     " WHERE ID=" . $id;
 
-                $DB->QueryBind($strSql,
+                $DB->QueryBind(
+                    $strSql,
                     array('DESCRIPTION' => $arFields['DESCRIPTION']),
-                    false, "File: " . __FILE__ . "<br>Line: " . __LINE__
+                    false,
+                    "File: " . __FILE__ . "<br>Line: " . __LINE__
                 );
             }
         }
@@ -1865,15 +2068,21 @@ class CMedialib
 
     public static function DelTypes($arIds = array())
     {
-        if (count($arIds) == 0)
+        if (count($arIds) == 0) {
             return;
+        }
 
         global $DB;
         $strItems = "0";
-        for ($i = 0, $l = count($arIds); $i < $l; $i++)
-            $strItems .= "," . IntVal($arIds[$i]);
+        for ($i = 0, $l = count($arIds); $i < $l; $i++) {
+            $strItems .= "," . intval($arIds[$i]);
+        }
 
-        $res = $DB->Query("DELETE FROM b_medialib_type WHERE ID in (" . $strItems . ")", false, "FILE: " . __FILE__ . "<br> LINE: " . __LINE__);
+        $res = $DB->Query(
+            "DELETE FROM b_medialib_type WHERE ID in (" . $strItems . ")",
+            false,
+            "FILE: " . __FILE__ . "<br> LINE: " . __LINE__
+        );
 
         self::ClearCache(array("types"));
 
@@ -1888,8 +2097,9 @@ class CMedialib
             $bHandled = false;
             while ($arEvent = $events->Fetch()) {
                 $arRes = ExecuteModuleEventEx($arEvent, array($arItem[0]));
-                if (!$arRes || !is_array($arRes))
+                if (!$arRes || !is_array($arRes)) {
                     continue;
+                }
                 $bHandled = true;
             }
         }
@@ -1898,12 +2108,12 @@ class CMedialib
             $item = $arItem[0];
 
             // Default view
-            $ext = strtolower(GetFileExtension($item['PATH']));
+            $ext = mb_strtolower(GetFileExtension($item['PATH']));
             $videoExt = array('flv', 'mp4', 'wmv', 'avi');
             $soundExt = array('aac', 'mp3', 'wma');
 
-            if ($item['TYPE'] == 'image' || strpos($item['CONTENT_TYPE'], 'image') !== false) {
-                if (substr($item['PATH'], 0, 1) !== '/' || $item['PATH'] !== $item['PATH_EXTERNAL']) {
+            if ($item['TYPE'] == 'image' || mb_strpos($item['CONTENT_TYPE'], 'image') !== false) {
+                if (mb_substr($item['PATH'], 0, 1) !== '/' || $item['PATH'] !== $item['PATH_EXTERNAL']) {
                     $src = $item['PATH_EXTERNAL'];
                 } else {
                     $src = $item['PATH'];
@@ -1911,86 +2121,94 @@ class CMedialib
 
                 // It's image
                 $arRes = array(
-                    "html" => "<img src=\"" . htmlspecialcharsex($src) . "\" width=\"" . intVal($item['WIDTH']) . "\" height=\"" . intVal($item['HEIGHT']) . "\" title=\"" . htmlspecialcharsex($item['NAME']) . "\" />",
-                    "width" => intVal($item['WIDTH']),
-                    "height" => intVal($item['HEIGHT'])
+                    "html" => "<img src=\"" . htmlspecialcharsex($src) . "\" width=\"" . intval(
+                            $item['WIDTH']
+                        ) . "\" height=\"" . intval($item['HEIGHT']) . "\" title=\"" . htmlspecialcharsex(
+                            $item['NAME']
+                        ) . "\" />",
+                    "width" => intval($item['WIDTH']),
+                    "height" => intval($item['HEIGHT'])
                 );
-            } else if (strpos($item['CONTENT_TYPE'], 'video') !== false || in_array($ext, $videoExt)) {
-                global $APPLICATION;
-                $item['WIDTH'] = 400;
-                $item['HEIGHT'] = 300;
+            } else {
+                if (mb_strpos($item['CONTENT_TYPE'], 'video') !== false || in_array($ext, $videoExt)) {
+                    global $APPLICATION;
+                    $item['WIDTH'] = 400;
+                    $item['HEIGHT'] = 300;
 
-                ob_start();
-                $APPLICATION->IncludeComponent(
-                    "bitrix:player",
-                    "",
-                    array(
-                        "PLAYER_TYPE" => "auto",
-                        "PATH" => $item['PATH'],
-                        "WIDTH" => $item['WIDTH'],
-                        "HEIGHT" => $item['HEIGHT'],
-                        "FILE_TITLE" => $item['NAME'],
-                        "FILE_DESCRIPTION" => "",
-                        //"SKIN_PATH" => "/bitrix/components/bitrix/player/mediaplayer/skins",
-                        //"SKIN" => "bitrix.swf",
-                        "WMODE" => "transparent",
-                        "WMODE_WMV" => "windowless",
-                        "SHOW_CONTROLS" => "Y",
-                        "BUFFER_LENGTH" => "3",
-                        "ALLOW_SWF" => "N"
-                    ),
-                    false,
-                    array('HIDE_ICONS' => 'Y')
-                );
-                $s = ob_get_contents();
-                ob_end_clean();
+                    ob_start();
+                    $APPLICATION->IncludeComponent(
+                        "bitrix:player",
+                        "",
+                        array(
+                            "PLAYER_TYPE" => "auto",
+                            "PATH" => $item['PATH'],
+                            "WIDTH" => $item['WIDTH'],
+                            "HEIGHT" => $item['HEIGHT'],
+                            "FILE_TITLE" => $item['NAME'],
+                            "FILE_DESCRIPTION" => "",
+                            //"SKIN_PATH" => "/bitrix/components/bitrix/player/mediaplayer/skins",
+                            //"SKIN" => "bitrix.swf",
+                            "WMODE" => "transparent",
+                            "WMODE_WMV" => "windowless",
+                            "SHOW_CONTROLS" => "Y",
+                            "BUFFER_LENGTH" => "3",
+                            "ALLOW_SWF" => "N"
+                        ),
+                        false,
+                        array('HIDE_ICONS' => 'Y')
+                    );
+                    $s = ob_get_contents();
+                    ob_end_clean();
 
-                $arRes = array(
-                    "html" => $s,
-                    "width" => $item['WIDTH'],
-                    "height" => $item['HEIGHT']
-                );
-            } else if (strpos($item['CONTENT_TYPE'], 'audio') !== false || in_array($ext, $soundExt)) {
-                global $APPLICATION;
-                $item['WIDTH'] = 300;
-                $item['HEIGHT'] = 24;
+                    $arRes = array(
+                        "html" => $s,
+                        "width" => $item['WIDTH'],
+                        "height" => $item['HEIGHT']
+                    );
+                } else {
+                    if (mb_strpos($item['CONTENT_TYPE'], 'audio') !== false || in_array($ext, $soundExt)) {
+                        global $APPLICATION;
+                        $item['WIDTH'] = 300;
+                        $item['HEIGHT'] = 24;
 
-                ob_start();
-                $APPLICATION->IncludeComponent(
-                    "bitrix:player",
-                    "",
-                    array(
-                        "PROVIDER" => "sound",
-                        "PLAYER_TYPE" => "auto",
-                        "PATH" => $item['PATH'],
-                        "WIDTH" => $item['WIDTH'],
-                        "HEIGHT" => $item['HEIGHT'],
-                        "FILE_TITLE" => $item['NAME'],
-                        "FILE_DESCRIPTION" => "",
-                        "WMODE" => "transparent",
-                        "WMODE_WMV" => "windowless",
-                        "SHOW_CONTROLS" => "Y",
-                        "BUFFER_LENGTH" => "3",
-                        "ALLOW_SWF" => "N"
-                    ),
-                    false,
-                    array('HIDE_ICONS' => 'Y')
-                );
-                $s = "<div style='margin-top: 10px;'>" . ob_get_contents() . "</div>";
-                ob_end_clean();
-                $arRes = array(
-                    "html" => $s,
-                    "width" => $item['WIDTH'],
-                    "height" => $item['HEIGHT']
-                );
+                        ob_start();
+                        $APPLICATION->IncludeComponent(
+                            "bitrix:player",
+                            "",
+                            array(
+                                "PROVIDER" => "sound",
+                                "PLAYER_TYPE" => "auto",
+                                "PATH" => $item['PATH'],
+                                "WIDTH" => $item['WIDTH'],
+                                "HEIGHT" => $item['HEIGHT'],
+                                "FILE_TITLE" => $item['NAME'],
+                                "FILE_DESCRIPTION" => "",
+                                "WMODE" => "transparent",
+                                "WMODE_WMV" => "windowless",
+                                "SHOW_CONTROLS" => "Y",
+                                "BUFFER_LENGTH" => "3",
+                                "ALLOW_SWF" => "N"
+                            ),
+                            false,
+                            array('HIDE_ICONS' => 'Y')
+                        );
+                        $s = "<div style='margin-top: 10px;'>" . ob_get_contents() . "</div>";
+                        ob_end_clean();
+                        $arRes = array(
+                            "html" => $s,
+                            "width" => $item['WIDTH'],
+                            "height" => $item['HEIGHT']
+                        );
+                    }
+                }
             }
         }
         ?>
         <script>
             window.bx_req_res = {
                 html: '<?= CUtil::JSEscape($arRes['html'])?>',
-                width: '<?= intVal($arRes['width'])?>',
-                height: '<?= intVal($arRes['height'])?>',
+                width: '<?= intval($arRes['width'])?>',
+                height: '<?= intval($arRes['height'])?>',
                 bReplaceAll: <?= $arRes['bReplaceAll'] === true ? 'true' : 'false'?>
             };
         </script>
@@ -2006,9 +2224,10 @@ class CMedialib
         ) {
             $arChild = array();
             for ($i = 0, $l = count($Params['childCols']); $i < $l; $i++) {
-                if (intVal($Params['childCols'][$i]) > 0 &&
-                    CMedialib::CanDoOperation('medialib_edit_collection', $Params['childCols'][$i]))
-                    $arChild[] = intVal($Params['childCols'][$i]);
+                if (intval($Params['childCols'][$i]) > 0 &&
+                    CMedialib::CanDoOperation('medialib_edit_collection', $Params['childCols'][$i])) {
+                    $arChild[] = intval($Params['childCols'][$i]);
+                }
             }
             $Params['childCols'] = $arChild;
 
@@ -2023,61 +2242,71 @@ class CMedialib
 
     public static function CompareTypesEx($typeMix, $arType)
     {
-        if ($typeMix == $arType['id'] || (!$typeMix && $arType['code'] == 'image' && $arType['system']))
+        if ($typeMix == $arType['id'] || (!$typeMix && $arType['code'] == 'image' && $arType['system'])) {
             return true;
+        }
 
         return false;
     }
 
     public static function ClearCache($arPath = false)
     {
-        if ($arPath === false)
+        if ($arPath === false) {
             $arPath = array('types');
-        elseif (!is_array($arPath))
+        } elseif (!is_array($arPath)) {
             $arPath = array($arPath);
+        }
 
         if (is_array($arPath) && count($arPath) > 0) {
             $cache = new CPHPCache;
-            foreach ($arPath as $path)
-                if ($path != '')
+            foreach ($arPath as $path) {
+                if ($path != '') {
                     $cache->CleanDir(self::$cachePath . $path);
+                }
+            }
         }
     }
 
     public static function AutosaveImage($file = false)
     {
-        $res = CMedialibCollection::GetList(array(
-            'arFilter' => array(
-                'ACTIVE' => 'Y',
-                'NAME' => GetMessage('ML_AUTOSAVE_DEFAULT_COL')
+        $res = CMedialibCollection::GetList(
+            array(
+                'arFilter' => array(
+                    'ACTIVE' => 'Y',
+                    'NAME' => GetMessage('ML_AUTOSAVE_DEFAULT_COL')
+                )
             )
-        ));
+        );
         $result = false;
 
         if (!$res || count($res) == 0) {
-            $colId = CMedialibCollection::Edit(array(
-                'arFields' => array(
-                    'NAME' => GetMessage('ML_AUTOSAVE_DEFAULT_COL'),
-                    'DESCRIPTION' => GetMessage('ML_AUTOSAVE_DEFAULT_COL_DEF'),
-                    'OWNER_ID' => $GLOBALS['USER']->GetId(),
-                    'KEYWORDS' => '',
-                    'ACTIVE' => "Y",
-                    'ML_TYPE' => 'image'
+            $colId = CMedialibCollection::Edit(
+                array(
+                    'arFields' => array(
+                        'NAME' => GetMessage('ML_AUTOSAVE_DEFAULT_COL'),
+                        'DESCRIPTION' => GetMessage('ML_AUTOSAVE_DEFAULT_COL_DEF'),
+                        'OWNER_ID' => $GLOBALS['USER']->GetId(),
+                        'KEYWORDS' => '',
+                        'ACTIVE' => "Y",
+                        'ML_TYPE' => 'image'
+                    )
                 )
-            ));
+            );
         } else {
             $colId = $res[0]['ID'];
         }
 
         if ($colId && $file) {
-            $res = CMedialibItem::Edit(array(
-                'file' => $file,
-                'path' => '',
-                'arFields' => array(
-                    'NAME' => $file['name']
-                ),
-                'arCollections' => array($colId)
-            ));
+            $res = CMedialibItem::Edit(
+                array(
+                    'file' => $file,
+                    'path' => '',
+                    'arFields' => array(
+                        'NAME' => $file['name']
+                    ),
+                    'arCollections' => array($colId)
+                )
+            );
 
             if ($res && $res['ID'] > 0) {
                 $item = CMedialibItem::GetList(array('id' => $res['ID']));
@@ -2117,30 +2346,38 @@ class CMedialibCollection
         if (is_array($arFilter)) {
             $filter_keys = array_keys($arFilter);
             for ($i = 0, $l = count($filter_keys); $i < $l; $i++) {
-                $n = strtoupper($filter_keys[$i]);
+                $n = mb_strtoupper($filter_keys[$i]);
                 $val = $arFilter[$filter_keys[$i]];
-                if (is_string($val) && strlen($val) <= 0 || strval($val) == "NOT_REF")
+                if (is_string($val) && $val == '' || strval($val) == "NOT_REF") {
                     continue;
-                if ($n == 'ID' || $n == 'PARENT_ID' || $n == 'OWNER_ID')
+                }
+                if ($n == 'ID' || $n == 'PARENT_ID' || $n == 'OWNER_ID') {
                     $arSqlSearch[] = GetFilterQuery($arFields[$n]["FIELD_NAME"], $val, 'N');
-                elseif (isset($arFields[$n]))
+                } elseif (isset($arFields[$n])) {
                     $arSqlSearch[] = GetFilterQuery($arFields[$n]["FIELD_NAME"], $val);
+                }
             }
         }
 
         $strOrderBy = '';
-        foreach ($arOrder as $by => $order)
-            if (isset($arFields[strtoupper($by)]))
-                $strOrderBy .= $arFields[strtoupper($by)]["FIELD_NAME"] . ' ' . (strtolower($order) == 'desc' ? 'desc' . (strtoupper($DB->type) == "ORACLE" ? " NULLS LAST" : "") : 'asc' . (strtoupper($DB->type) == "ORACLE" ? " NULLS FIRST" : "")) . ',';
+        foreach ($arOrder as $by => $order) {
+            if (isset($arFields[mb_strtoupper($by)])) {
+                $strOrderBy .= $arFields[mb_strtoupper($by)]["FIELD_NAME"] . ' ' . (mb_strtolower(
+                        $order
+                    ) == 'desc' ? 'desc' . ($DB->type == "ORACLE" ? " NULLS LAST" : "") : 'asc' . ($DB->type == "ORACLE" ? " NULLS FIRST" : "")) . ',';
+            }
+        }
 
-        if (strlen($strOrderBy) > 0)
+        if ($strOrderBy <> '') {
             $strOrderBy = "ORDER BY " . rtrim($strOrderBy, ",");
+        }
 
         $strSqlSearch = GetFilterSqlSearch($arSqlSearch);
         if (isset($arFilter['TYPES']) && is_array($arFilter['TYPES'])) {
             $strTypes = "";
-            for ($i = 0, $l = count($arFilter['TYPES']); $i < $l; $i++)
-                $strTypes .= "," . IntVal($arFilter['TYPES'][$i]);
+            for ($i = 0, $l = count($arFilter['TYPES']); $i < $l; $i++) {
+                $strTypes .= "," . intval($arFilter['TYPES'][$i]);
+            }
             $strSqlSearch .= "\n AND ML_TYPE in (" . trim($strTypes, ", ") . ")";
         }
 
@@ -2155,16 +2392,18 @@ class CMedialibCollection
 
         $res = $DB->Query($strSql, false, $err_mess . __LINE__);
         $arResult = Array();
-        while ($arRes = $res->Fetch())
+        while ($arRes = $res->Fetch()) {
             $arResult[] = $arRes;
+        }
 
         return $arResult;
     }
 
     public static function CheckFields($arFields)
     {
-        if (!isset($arFields['NAME']) || strlen($arFields['NAME']) <= 0)
+        if (!isset($arFields['NAME']) || $arFields['NAME'] == '') {
             return false;
+        }
 
         /*
 		ID int not null auto_increment,
@@ -2185,14 +2424,17 @@ class CMedialibCollection
         global $DB;
         $arFields = $Params['arFields'];
 
-        if (!isset($arFields['~DATE_UPDATE']))
+        if (!isset($arFields['~DATE_UPDATE'])) {
             $arFields['~DATE_UPDATE'] = $DB->CurrentTimeFunction();
+        }
 
-        if (!CMedialibCollection::CheckFields($arFields))
+        if (!CMedialibCollection::CheckFields($arFields)) {
             return false;
+        }
 
-        if (!isset($arFields['ML_TYPE']))
+        if (!isset($arFields['ML_TYPE'])) {
             $arFields['ML_TYPE'] = '';
+        }
 
         $bNew = !isset($arFields['ID']) || $arFields['ID'] <= 0;
         if ($bNew) // Add
@@ -2207,11 +2449,14 @@ class CMedialibCollection
             $strSql =
                 "UPDATE b_medialib_collection SET " .
                 $strUpdate .
-                " WHERE ID=" . IntVal($ID);
+                " WHERE ID=" . intval($ID);
 
-            $DB->QueryBind($strSql,
+            $DB->QueryBind(
+                $strSql,
                 array('DESCRIPTION' => $arFields['DESCRIPTION']),
-                false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+                false,
+                "File: " . __FILE__ . "<br>Line: " . __LINE__
+            );
         }
 
         return $ID;
@@ -2228,8 +2473,9 @@ class CMedialibCollection
         $strSql = "DELETE FROM b_medialib_collection_item WHERE COLLECTION_ID=" . $ID;
         $z = $DB->Query($strSql, false, "FILE: " . __FILE__ . "<br> LINE: " . __LINE__);
 
-        if ($bDelEmpty)
+        if ($bDelEmpty) {
             CMedialibItem::DeleteEmpty();
+        }
 
         return $z;
     }
@@ -2241,29 +2487,33 @@ class CMedialibCollection
 
     public static function IsViewable($oCol, $arCol = false)
     {
-        if (!$arCol)
+        if (!$arCol) {
             $arCol = CMedialibCollection::GetList(array('arFilter' => array('ACTIVE' => 'Y')));
+        }
 
-        if (!CMedialib::CanDoOperation('medialib_view_collection', $oCol['ID']))
+        if (!CMedialib::CanDoOperation('medialib_view_collection', $oCol['ID'])) {
             return false;
+        }
 
         $l = count($arCol);
         if ($oCol['PARENT_ID']) {
             $parId = $oCol['PARENT_ID'];
-            while (intVal($parId) > 0) {
+            while (intval($parId) > 0) {
                 $bFind = false;
                 for ($i = 0; $i < $l; $i++) // Find parent
                 {
                     if ($arCol[$i]['ID'] == $parId) {
-                        if (!CMedialib::CanDoOperation('medialib_view_collection', $arCol[$i]['ID']))
+                        if (!CMedialib::CanDoOperation('medialib_view_collection', $arCol[$i]['ID'])) {
                             return false;
+                        }
                         $parId = $arCol[$i]['PARENT_ID'];
                         $bFind = true;
                         break;
                     }
                 }
-                if (!$bFind)
+                if (!$bFind) {
                     return false;
+                }
             }
         }
         return true;
@@ -2281,14 +2531,15 @@ class CMedialibCollection
         $strSql =
             "UPDATE b_medialib_collection SET " .
             $strUpdate .
-            " WHERE ID=" . IntVal($Params['col']);
+            " WHERE ID=" . intval($Params['col']);
 
         $res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 
         if (count($Params['childCols']) > 0 && $res) {
             $strIds = "0";
-            for ($i = 0, $l = count($Params['childCols']); $i < $l; $i++)
-                $strIds .= "," . IntVal($Params['childCols'][$i]);
+            for ($i = 0, $l = count($Params['childCols']); $i < $l; $i++) {
+                $strIds .= "," . intval($Params['childCols'][$i]);
+            }
 
             $strUpdate = $DB->PrepareUpdate("b_medialib_collection", array('ML_TYPE' => $Params['type']));
             $strSql =
@@ -2307,8 +2558,9 @@ class CMedialibItem
 {
     public static function CheckFields($arFields)
     {
-        if (!isset($arFields['NAME']) || strlen($arFields['NAME']) <= 0)
+        if (!isset($arFields['NAME']) || $arFields['NAME'] == '') {
             return false;
+        }
 
         return true;
     }
@@ -2320,23 +2572,26 @@ class CMedialibItem
         $q = '';
         if (is_array($Params['arCollections'])) {
             if (count($Params['arCollections']) == 1) {
-                $q = 'WHERE MCI.COLLECTION_ID=' . intVal($Params['arCollections'][0]);
+                $q = 'WHERE MCI.COLLECTION_ID=' . intval($Params['arCollections'][0]);
             } elseif (count($Params['arCollections']) > 1) {
                 $strCollections = "0";
-                for ($i = 0, $l = count($Params['arCollections']); $i < $l; $i++)
-                    $strCollections .= "," . IntVal($Params['arCollections'][$i]);
+                for ($i = 0, $l = count($Params['arCollections']); $i < $l; $i++) {
+                    $strCollections .= "," . intval($Params['arCollections'][$i]);
+                }
                 $q = 'WHERE MCI.COLLECTION_ID in (' . $strCollections . ')';
             }
         }
 
-        if (isset($Params['id']) && $Params['id'] > 0)
-            $q = 'WHERE MI.ID=' . intVal($Params['id']);
+        if (isset($Params['id']) && $Params['id'] > 0) {
+            $q = 'WHERE MI.ID=' . intval($Params['id']);
+        }
 
         if (isset($Params['minId']) && $Params['minId'] > 0) {
-            if (strlen($q) > 0)
-                $q = trim($q) . " AND MI.ID>=" . intVal($Params['minId']);
-            else
-                $q .= "WHERE MI.ID>=" . intVal($Params['minId']);
+            if ($q <> '') {
+                $q = trim($q) . " AND MI.ID>=" . intval($Params['minId']);
+            } else {
+                $q .= "WHERE MI.ID>=" . intval($Params['minId']);
+            }
         }
 
         $err_mess = CMedialibCollection::GetErrorMess() . "<br>Function: CMedialibItem::GetList<br>Line: ";
@@ -2354,7 +2609,10 @@ class CMedialibItem
         $tmbH = COption::GetOptionInt('fileman', "ml_thumb_height", 105);
 
         while ($arRes = $res->Fetch()) {
-            CMedialibItem::GenerateThumbnail($arRes, array('rootPath' => $rootPath, 'width' => $tmbW, 'height' => $tmbH));
+            CMedialibItem::GenerateThumbnail(
+                $arRes,
+                array('rootPath' => $rootPath, 'width' => $tmbW, 'height' => $tmbH)
+            );
             $arRes['PATH'] = CFile::GetFileSRC($arRes, false, false);
             $arRes['PATH_EXTERNAL'] = CFile::GetFileSRC($arRes, false, true);
             $arResult[] = $arRes;
@@ -2370,8 +2628,8 @@ class CMedialibItem
         $source_id = false;
         $arFields = $Params['arFields'];
         $bNew = !isset($arFields['ID']) || $arFields['ID'] <= 0;
-        $bFile_FD = $Params['path'] && strlen($Params['path']) > 0;
-        $bFile_PC = $Params['file'] && strlen($Params['file']['name']) > 0 && $Params['file']['size'] > 0;
+        $bFile_FD = $Params['path'] && $Params['path'] <> '';
+        $bFile_PC = $Params['file'] && $Params['file']['name'] <> '' && $Params['file']['size'] > 0;
 
         $io = CBXVirtualIo::GetInstance();
 
@@ -2382,7 +2640,7 @@ class CMedialibItem
 
                 if ($io->FileExists($tmp_name)) {
                     $flTmp = $io->GetFile($tmp_name);
-                    $file_name = substr($Params['path'], strrpos($Params['path'], '/') + 1);
+                    $file_name = mb_substr($Params['path'], mb_strrpos($Params['path'], '/') + 1);
                     $arFile = array(
                         "name" => $file_name,
                         "size" => $flTmp->GetFileSize(),
@@ -2390,12 +2648,15 @@ class CMedialibItem
                         "type" => CFile::IsImage($file_name) ? 'image' : 'file'
                     );
                 }
-            } else if ($bFile_PC) {
-                $arFile = $Params['file'];
+            } else {
+                if ($bFile_PC) {
+                    $arFile = $Params['file'];
+                }
             }
 
-            if (!CMedialib::CheckFileExtention($arFile["name"]))
+            if (!CMedialib::CheckFileExtention($arFile["name"])) {
                 return false;
+            }
 
             if (!$bNew) // Del old file
             {
@@ -2419,8 +2680,23 @@ class CMedialibItem
             {
                 $r = CFile::GetByID($source_id);
                 if ($arFile = $r->Fetch()) {
-                    if (CFile::IsImage($arFile['FILE_NAME']))
-                        CMedialibItem::GenerateThumbnail($arFile, array('width' => COption::GetOptionInt('fileman', "ml_thumb_width", 140), 'height' => COption::GetOptionInt('fileman', "ml_thumb_height", 105)));
+                    if (CFile::IsImage($arFile['FILE_NAME'])) {
+                        CMedialibItem::GenerateThumbnail(
+                            $arFile,
+                            array(
+                                'width' => COption::GetOptionInt(
+                                    'fileman',
+                                    "ml_thumb_width",
+                                    140
+                                ),
+                                'height' => COption::GetOptionInt(
+                                    'fileman',
+                                    "ml_thumb_height",
+                                    105
+                                )
+                            )
+                        );
+                    }
 
                     $arFile['PATH'] = CMedialibItem::GetFullPath($arFile);
                 }
@@ -2428,22 +2704,29 @@ class CMedialibItem
         }
 
         // TODO: Add error handling
-        if ($bNew && !$source_id)
+        if ($bNew && !$source_id) {
             return false;
+        }
 
         // 2. Add to b_medialib_item
-        if (!isset($arFields['~DATE_UPDATE']))
+        if (!isset($arFields['~DATE_UPDATE'])) {
             $arFields['~DATE_UPDATE'] = $DB->CurrentTimeFunction();
+        }
 
-        if (!CMedialibItem::CheckFields($arFields))
+        if (!CMedialibItem::CheckFields($arFields)) {
             return false;
+        }
 
         if (CModule::IncludeModule("search")) {
-            $arStem = stemming($arFields['NAME'] . ' ' . $arFields['DESCRIPTION'] . ' ' . $arFields['KEYWORDS'], LANGUAGE_ID);
-            if (count($arStem) > 0)
+            $arStem = stemming(
+                $arFields['NAME'] . ' ' . $arFields['DESCRIPTION'] . ' ' . $arFields['KEYWORDS'],
+                LANGUAGE_ID
+            );
+            if (count($arStem) > 0) {
                 $arFields['SEARCHABLE_CONTENT'] = '{' . implode('}{', array_keys($arStem)) . '}';
-            else
+            } else {
                 $arFields['SEARCHABLE_CONTENT'] = '';
+            }
         }
 
         if ($bNew) // Add
@@ -2455,8 +2738,9 @@ class CMedialibItem
             $ID = $DB->Add("b_medialib_item", $arFields, array("DESCRIPTION", "SEARCHABLE_CONTENT"));
         } else // Update
         {
-            if ($source_id)
+            if ($source_id) {
                 $arFields['SOURCE_ID'] = $source_id;
+            }
             $ID = $arFields['ID'];
             unset($arFields['ID']);
 
@@ -2464,41 +2748,47 @@ class CMedialibItem
             $strSql =
                 "UPDATE b_medialib_item SET " .
                 $strUpdate .
-                " WHERE ID=" . IntVal($ID);
+                " WHERE ID=" . intval($ID);
 
-            $DB->QueryBind($strSql,
+            $DB->QueryBind(
+                $strSql,
                 array(
                     "DESCRIPTION" => $arFields["DESCRIPTION"],
                     "SEARCHABLE_CONTENT" => $arFields["SEARCHABLE_CONTENT"]
                 ),
-                false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+                false,
+                "File: " . __FILE__ . "<br>Line: " . __LINE__
+            );
         }
 
         // 3. Set fields to b_medialib_collection_item
         if (!$bNew) // Del all rows if
         {
-            $strSql = "DELETE FROM b_medialib_collection_item WHERE ITEM_ID=" . IntVal($ID);
+            $strSql = "DELETE FROM b_medialib_collection_item WHERE ITEM_ID=" . intval($ID);
             $DB->Query($strSql, false, "FILE: " . __FILE__ . "<br> LINE: " . __LINE__);
         }
 
         $strCollections = "0";
 
-        for ($i = 0, $l = count($Params['arCollections']); $i < $l; $i++)
-            $strCollections .= "," . IntVal($Params['arCollections'][$i]);
+        for ($i = 0, $l = count($Params['arCollections']); $i < $l; $i++) {
+            $strCollections .= "," . intval($Params['arCollections'][$i]);
+        }
 
         $strSql =
             "INSERT INTO b_medialib_collection_item(ITEM_ID, COLLECTION_ID) " .
-            "SELECT " . intVal($ID) . ", ID " .
+            "SELECT " . intval($ID) . ", ID " .
             "FROM b_medialib_collection " .
             "WHERE ID in (" . $strCollections . ")";
 
         $res = $DB->Query($strSql, false, "FILE: " . __FILE__ . "<br> LINE: " . __LINE__);
 
-        if (!$arFields['ID'])
+        if (!$arFields['ID']) {
             $arFields['ID'] = $ID;
+        }
 
-        if ($source_id)
+        if ($source_id) {
             $arFields = array_merge($arFile, $arFields);
+        }
 
         return $arFields;
     }
@@ -2507,12 +2797,17 @@ class CMedialibItem
     {
         $rootPath = isset($Params['rootPath']) ? $Params['rootPath'] : CSite::GetSiteDocRoot(false);
         if (CFile::IsImage($arFile['FILE_NAME'])) {
-            $arResized = CFile::ResizeImageGet($arFile, array('width' => $Params['width'], 'height' => $Params['height']));
-            if ($arResized)
+            $arResized = CFile::ResizeImageGet(
+                $arFile,
+                array('width' => $Params['width'], 'height' => $Params['height'])
+            );
+            if ($arResized) {
                 $arFile['THUMB_PATH'] = $arResized['src'];
+            }
             $arFile['TYPE'] = 'image';
-        } else
+        } else {
             $arFile['TYPE'] = 'file';
+        }
     }
 
     public static function GetItemCollections($Params)
@@ -2520,12 +2815,13 @@ class CMedialibItem
         global $DB;
         $strSql = 'SELECT MCI.COLLECTION_ID
 			FROM b_medialib_collection_item MCI
-			WHERE MCI.ITEM_ID=' . intVal($Params['ID']);
+			WHERE MCI.ITEM_ID=' . intval($Params['ID']);
         $res = $DB->Query($strSql, false, "FILE: " . __FILE__ . "<br> LINE: " . __LINE__);
 
         $arResult = array();
-        while ($arRes = $res->Fetch())
+        while ($arRes = $res->Fetch()) {
             $arResult[] = $arRes['COLLECTION_ID'];
+        }
         return $arResult;
     }
 
@@ -2534,18 +2830,23 @@ class CMedialibItem
         global $DB;
         if ($bCurrent) // Del from one collection
         {
-            if (!CMedialib::CanDoOperation('medialib_del_item', $colId))
+            if (!CMedialib::CanDoOperation('medialib_del_item', $colId)) {
                 return false;
-            $strSql = "DELETE FROM b_medialib_collection_item WHERE ITEM_ID=" . IntVal($ID) . " AND COLLECTION_ID=" . IntVal($colId);
+            }
+            $strSql = "DELETE FROM b_medialib_collection_item WHERE ITEM_ID=" . intval(
+                    $ID
+                ) . " AND COLLECTION_ID=" . intval($colId);
             $z = $DB->Query($strSql, false, "FILE: " . __FILE__ . "<br> LINE: " . __LINE__);
         } else // Del from all collections
         {
             $arCols = CMedialibItem::GetItemCollections(array('ID' => $ID));
             for ($i = 0, $l = count($arCols); $i < $l; $i++) {
                 if (!CMedialib::CanDoOperation('medialib_del_item', $arCols[$i])) // Check access
+                {
                     return false;
+                }
             }
-            $strSql = "DELETE FROM b_medialib_collection_item WHERE ITEM_ID=" . IntVal($ID);
+            $strSql = "DELETE FROM b_medialib_collection_item WHERE ITEM_ID=" . intval($ID);
             $z = $DB->Query($strSql, false, "FILE: " . __FILE__ . "<br> LINE: " . __LINE__);
         }
 
@@ -2566,15 +2867,22 @@ class CMedialibItem
 
         $strItems = "0";
         while ($arRes = $res->Fetch()) {
-            $strItems .= "," . IntVal($arRes['ID']);
+            $strItems .= "," . intval($arRes['ID']);
 
             if ($arRes['SOURCE_ID'] > 0) // Clean from 'b_file'
-                CFile::Delete(IntVal($arRes['SOURCE_ID']));
+            {
+                CFile::Delete(intval($arRes['SOURCE_ID']));
+            }
         }
 
         // Clean from 'b_medialib_item'
-        if ($strItems != "0")
-            $DB->Query("DELETE FROM b_medialib_item WHERE ID in (" . $strItems . ")", false, "FILE: " . __FILE__ . "<br> LINE: " . __LINE__);
+        if ($strItems != "0") {
+            $DB->Query(
+                "DELETE FROM b_medialib_item WHERE ID in (" . $strItems . ")",
+                false,
+                "FILE: " . __FILE__ . "<br> LINE: " . __LINE__
+            );
+        }
     }
 
     public static function GetThumbPath($arImage)
@@ -2592,10 +2900,11 @@ class CMedialibItem
         global $DB;
         $strSql = 'SELECT SOURCE_ID
 			FROM b_medialib_item
-			WHERE ID=' . intVal($id);
+			WHERE ID=' . intval($id);
         $r = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-        if ($res = $r->Fetch())
+        if ($res = $r->Fetch()) {
             return $res['SOURCE_ID'];
+        }
 
         return false;
     }
@@ -2614,11 +2923,13 @@ class CMedialibItem
 				WHERE 1=1";
 
         $l = count($arQuery);
-        if ($l == 0)
+        if ($l == 0) {
             return array();
+        }
 
-        for ($i = 0; $i < $l; $i++)
+        for ($i = 0; $i < $l; $i++) {
             $strSql .= " AND MI.SEARCHABLE_CONTENT LIKE '%" . $DB->ForSql($arQuery[$i]) . "%'";
+        }
 
         $strSql .= " ORDER BY MI.ID DESC";
 
@@ -2632,13 +2943,18 @@ class CMedialibItem
         $colId2Index = array();
         $arCol = CMedialibCollection::GetList(array('arFilter' => array('ACTIVE' => 'Y', "TYPES" => $arTypes)));
 
-        for ($i = 0, $l = count($arCol); $i < $l; $i++)
+        for ($i = 0, $l = count($arCol); $i < $l; $i++) {
             $colId2Index[$arCol[$i]['ID']] = $i;
+        }
 
         while ($arRes = $res->Fetch()) {
             $colId = $arRes['COLLECTION_ID'];
-            if (!isset($colId2Index[$colId]) || !CMedialibCollection::IsViewable($arCol[$colId2Index[$colId]], $arCol))
+            if (!isset($colId2Index[$colId]) || !CMedialibCollection::IsViewable(
+                    $arCol[$colId2Index[$colId]],
+                    $arCol
+                )) {
                 continue;
+            }
 
             if (isset($elId2Index[$arRes['ID']])) {
                 $arResult[$elId2Index[$arRes['ID']]]['collections'][] = $colId;
@@ -2651,7 +2967,10 @@ class CMedialibItem
                     'del' => true
                 );
 
-                CMedialibItem::GenerateThumbnail($arRes, array('rootPath' => $rootPath, 'width' => $tmbW, 'height' => $tmbH));
+                CMedialibItem::GenerateThumbnail(
+                    $arRes,
+                    array('rootPath' => $rootPath, 'width' => $tmbW, 'height' => $tmbH)
+                );
                 $arRes['PATH'] = CFile::GetFileSRC($arRes);
                 $arResult[] = $arRes;
             }

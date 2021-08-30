@@ -37,14 +37,17 @@ class Section extends DataSource implements \Iterator
     {
         $this->vk = Vk\Vk::getInstance();
 
-        if (!$this->vk->isActive())
+        if (!$this->vk->isActive()) {
             throw new SystemException("Vk is not active!" . __METHOD__);
+        }
 
-        if (!isset($exportId) || strlen($exportId) <= 0)
+        if (!isset($exportId) || $exportId == '') {
             throw new ArgumentNullException("EXPORT_ID");
+        }
 
-        if (!Loader::includeModule('iblock'))
+        if (!Loader::includeModule('iblock')) {
             throw new SystemException("Can't include module \"IBlock\"! " . __METHOD__);
+        }
 
         $this->exportId = $exportId;
 
@@ -76,7 +79,17 @@ class Section extends DataSource implements \Iterator
             array("ID" => "ASC"),
             array("ID" => $this->sectionsToExport, "ACTIVE" => "Y", "GLOBAL_ACTIVE" => "Y", "CHECK_PERMISSIONS" => "N"),
             true,
-            array("ID", "IBLOCK_ID", "IBLOCK_SECTION_ID", "NAME", "PICTURE", "DETAIL_PICTURE", "LEFT_MARGIN", "RIGHT_MARGIN", "DESCRIPTION"),
+            array(
+                "ID",
+                "IBLOCK_ID",
+                "IBLOCK_SECTION_ID",
+                "NAME",
+                "PICTURE",
+                "DETAIL_PICTURE",
+                "LEFT_MARGIN",
+                "RIGHT_MARGIN",
+                "DESCRIPTION"
+            ),
             false
         );
     }
@@ -94,8 +107,9 @@ class Section extends DataSource implements \Iterator
 //			we can use two condition in filter on ID: in array and >=startPostion.
 //			therefore prepare array of sections to export like a >=
             foreach ($this->sectionsToExport as $key => $section) {
-                if ($key < $startPosition)
+                if ($key < $startPosition) {
                     unset($this->sectionsToExport[$key]);
+                }
             }
         }
     }
@@ -134,14 +148,15 @@ class Section extends DataSource implements \Iterator
      */
     private function nextItem()
     {
-        $currItem = NULL;
+        $currItem = null;
 //		only if album exist and  not empty
         if ($obCurrItem = $this->resSections->GetNextElement(true, false)) {
             $currItem = $obCurrItem->GetFields();
-            if ($currItem["ELEMENT_CNT"] > 0)
-//				put album alias from map. Better do it here and not getting map (only for it value) in converter
+            if ($currItem["ELEMENT_CNT"] > 0) //				put album alias from map. Better do it here and not getting map (only for it value) in converter
+            {
                 $currItem["TO_ALBUM_ALIAS"] = isset($this->sectionsAliases[$currItem["ID"]]) ?
                     $this->sectionsAliases[$currItem["ID"]] : false;
+            }
         }
 
         return $currItem;

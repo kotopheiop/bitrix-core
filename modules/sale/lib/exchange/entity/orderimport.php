@@ -51,8 +51,9 @@ class OrderImport extends EntityImport
      */
     public function setEntity(Internals\Entity $entity)
     {
-        if (!($entity instanceof Order))
+        if (!($entity instanceof Order)) {
             throw new Main\ArgumentException("Entity must be instanceof Order");
+        }
 
         $this->entity = $entity;
     }
@@ -206,8 +207,9 @@ class OrderImport extends EntityImport
             }
 
             foreach ($fields as $k => $field) {
-                if (!in_array($k, $order::getAvailableFields()))
+                if (!in_array($k, $order::getAvailableFields())) {
                     unset($fields[$k]);
+                }
             }
 
             $result = $order->setFields($fields);
@@ -270,7 +272,12 @@ class OrderImport extends EntityImport
 
             /** @var Exchange\ICollision $collision */
             $result = new Sale\Result();
-            $result->addWarning(new Sale\ResultError(EntityCollisionType::getDescription($collision->getTypeId()) . ($collision->getMessage() != null ? " " . $collision->getMessage() : ''), $collision->getTypeName()));
+            $result->addWarning(
+                new Sale\ResultError(
+                    EntityCollisionType::getDescription($collision->getTypeId()) . ($collision->getMessage(
+                    ) != null ? " " . $collision->getMessage() : ''), $collision->getTypeName()
+                )
+            );
 
             $this->addMarker($entity, $entity, $result);
         }
@@ -300,15 +307,16 @@ class OrderImport extends EntityImport
         $code = $this->getCodeAfterDelimiter($productXML_ID);
         $product = $code <> '' ? static::getProduct($code) : array();
 
-        if (empty($product))
+        if (empty($product)) {
             $product = static::getProduct($productXML_ID);
+        }
 
         if (!empty($product)) {
             $result = array(
                 "PRODUCT_ID" => $product["ID"],
                 "NAME" => $product["NAME"],
                 "MODULE" => "catalog",
-                "PRODUCT_PROVIDER_CLASS" => "CCatalogProductProvider",
+                "PRODUCT_PROVIDER_CLASS" => '\Bitrix\Catalog\Product\CatalogProvider',
                 "CATALOG_XML_ID" => $product["IBLOCK_XML_ID"],
                 "DETAIL_PAGE_URL" => $product["DETAIL_PAGE_URL"],
                 "WEIGHT" => $product["WEIGHT"],
@@ -335,6 +343,7 @@ class OrderImport extends EntityImport
         $result["CAN_BUY"] = "Y";
         $result["IGNORE_CALLBACK_FUNC"] = "Y";
         $result["PRODUCT_XML_ID"] = $productXML_ID;
+        $result["MARKING_CODE_GROUP"] = $item['MARKING_GROUP'];
 
         return $result;
     }
@@ -363,7 +372,7 @@ class OrderImport extends EntityImport
     {
         $result = '';
 
-        if (strpos($code, '#') !== false) {
+        if (mb_strpos($code, '#') !== false) {
             $code = explode('#', $code);
             $result = $code[1];
         }
@@ -374,7 +383,8 @@ class OrderImport extends EntityImport
     {
         $result = array();
 
-        $r = \CIBlockElement::GetList(array(),
+        $r = \CIBlockElement::GetList(
+            array(),
             array("=XML_ID" => $code, "ACTIVE" => "Y", "CHECK_PERMISSIONS" => "Y"),
             false,
             false,
@@ -408,8 +418,9 @@ class OrderImport extends EntityImport
 
                 $propertyBasketItem = array();
                 /** @var Sale\BasketPropertiesCollection $basketPropertyCollection */
-                if ($basketPropertyCollection = $basketItem->getPropertyCollection())
+                if ($basketPropertyCollection = $basketItem->getPropertyCollection()) {
                     $propertyBasketItem = $basketPropertyCollection->getPropertyValues();
+                }
 
                 if (!empty($fieldsBasketProperty) && is_array($fieldsBasketProperty)) {
                     if ($basketPropertyCollection->isPropertyAlreadyExists($fieldsBasketProperty)) {
@@ -418,8 +429,9 @@ class OrderImport extends EntityImport
                 } elseif (count($propertyBasketItem) <= 0) {
                     return $basketItem;
                 }
-            } else
+            } else {
                 continue;
+            }
         }
         return false;
     }
@@ -435,8 +447,9 @@ class OrderImport extends EntityImport
         if (is_array($fields)) {
             foreach ($fields as $k => $items) {
                 foreach ($items as $productXML_ID => $item) {
-                    if ($productXML_ID == Exchange\ImportOneCBase::DELIVERY_SERVICE_XMLID)
+                    if ($productXML_ID == Exchange\ImportOneCBase::DELIVERY_SERVICE_XMLID) {
                         continue;
+                    }
 
                     if ($item['TYPE'] == Exchange\ImportBase::ITEM_ITEM) {
                         $result[$k][$productXML_ID] = $item;
@@ -477,11 +490,17 @@ class OrderImport extends EntityImport
                         $criterionBasketItems = $this->getCurrentCriterion($basket->getOrder());
 
                         if ($criterionBasketItems->equalsBasketItem($basketItem, $item)) {
-                            if ($item['PRICE'] != $basketItem->getPrice())
-                                $basketItem->setPrice($item['PRICE'], true);
+                            if ($item['MARKING_GROUP'] != $basketItem->getMarkingCodeGroup()) {
+                                $fieldsBasket['MARKING_CODE_GROUP'] = $item['MARKING_GROUP'];
+                            }
 
-                            if ($item['QUANTITY'] != $basketItem->getQuantity())
+                            if ($item['PRICE'] != $basketItem->getPrice()) {
+                                $basketItem->setPrice($item['PRICE'], true);
+                            }
+
+                            if ($item['QUANTITY'] != $basketItem->getQuantity()) {
                                 $fieldsBasket['QUANTITY'] = $item['QUANTITY'];
+                            }
 
                             /** @var Exchange\ICriterionOrder $criterionBasketItemsTax */
                             $criterionBasketItemsTax = $this->getCurrentCriterion($basket->getOrder());
@@ -498,10 +517,10 @@ class OrderImport extends EntityImport
                             }
                         }
 
-                        if (isset($basketItemsIndexList[$basketItem->getId()]))
+                        if (isset($basketItemsIndexList[$basketItem->getId()])) {
                             unset($basketItemsIndexList[$basketItem->getId()]);
+                        }
                     } else {
-
                         $fieldsBasket = $this->prepareFieldsBasketItem($productXML_ID, $item);
                         $fieldsCurrency = $this->convertCurrency($item);
 
@@ -573,7 +592,11 @@ class OrderImport extends EntityImport
         $order = $this->getEntity();
 
         if ($this->getEntityId() > 0 && $order->getCurrency() <> $this->settings->getCurrency()) {
-            $item['PRICE'] = \CCurrencyRates::ConvertCurrency($item['PRICE'], $this->settings->getCurrency(), $order->getCurrency());
+            $item['PRICE'] = \CCurrencyRates::ConvertCurrency(
+                $item['PRICE'],
+                $this->settings->getCurrency(),
+                $order->getCurrency()
+            );
             $this->setCollisions(EntityCollisionType::OrderBasketItemsCurrencyModify, $this->getEntity());
             $result['CURRENCY'] = $order->getCurrency();
         }
@@ -598,13 +621,15 @@ class OrderImport extends EntityImport
                 $vatRate = 0.0;
                 if ($vatFields[$basketItem->getProductId()] === null) {
                     $rsVAT = \CCatalogProduct::GetVATInfo($basketItem->getProductId());
-                    if ($arVAT = $rsVAT->Fetch())
+                    if ($arVAT = $rsVAT->Fetch()) {
                         $vatFields[$basketItem->getProductId()] = $arVAT['RATE'];
+                    }
                 }
 
 
-                if (isset($vatFields[$basketItem->getProductId()]))
+                if (isset($vatFields[$basketItem->getProductId()])) {
                     $vatRate = (float)$vatFields[$basketItem->getProductId()] * 0.01;
+                }
 
                 $result[$basketItem->getBasketCode()] = array('VAT_RATE' => $vatRate);
             } else {
@@ -643,7 +668,11 @@ class OrderImport extends EntityImport
                     $productVatFields = $productVatData[$basketItem->getBasketCode()];
                     if (!empty($productVatFields)) {
                         if ($productVatFields['VAT_RATE'] <> $modifyTaxList[$code]['VAT_RATE']) {
-                            $this->setCollisions(EntityCollisionType::OrderBasketItemTaxValueError, $order, $basketItem->getField('NAME'));
+                            $this->setCollisions(
+                                EntityCollisionType::OrderBasketItemTaxValueError,
+                                $order,
+                                $basketItem->getField('NAME')
+                            );
                         }
                     }
                     //}
@@ -689,8 +718,9 @@ class OrderImport extends EntityImport
      */
     public static function resolveEntityTypeId(Internals\Entity $order)
     {
-        if (!($order instanceof Order))
+        if (!($order instanceof Order)) {
             throw new Main\ArgumentException("Entity must be instanceof Order");
+        }
 
         return EntityType::ORDER;
     }
@@ -701,8 +731,9 @@ class OrderImport extends EntityImport
 
         if ($iblock_fields[$iblockId] == null) {
             $r = \CIBlock::GetList(array(), array("ID" => $iblockId));
-            if ($ar = $r->Fetch())
+            if ($ar = $r->Fetch()) {
                 $iblock_fields[$iblockId] = $ar;
+            }
         }
         return $iblock_fields;
     }
@@ -754,8 +785,9 @@ class OrderImport extends EntityImport
 
         /** @var Order $order */
         $order = $this->getEntity();
-        if (empty($order))
+        if (empty($order)) {
             return $result;
+        }
 
         $basket = $order->getBasket();
 
@@ -781,7 +813,11 @@ class OrderImport extends EntityImport
                         if ($r->isSuccess()) {
                             $this->setCollisions(EntityCollisionType::OrderSynchronizeBasketItemsModify, $order);
                         } else {
-                            $this->setCollisions(EntityCollisionType::OrderSynchronizeBasketItemsModifyError, $order, implode(',', $result->getErrorMessages()));
+                            $this->setCollisions(
+                                EntityCollisionType::OrderSynchronizeBasketItemsModifyError,
+                                $order,
+                                implode(',', $result->getErrorMessages())
+                            );
                             $result->addErrors($r->getErrors());
                         }
                     }
@@ -835,8 +871,9 @@ class OrderImport extends EntityImport
             foreach ($basketItems as $basket) {
                 $attributes = array();
                 $attributeFields = static::getAttributesItem($basket);
-                if (count($attributeFields) > 0)
+                if (count($attributeFields) > 0) {
                     $attributes['ATTRIBUTES'] = $attributeFields;
+                }
 
                 $result[] = array_merge($basket->getFieldValues(), $attributes);
             }
@@ -893,7 +930,10 @@ class OrderImport extends EntityImport
         $order = $this->getEntity();
         if ($order instanceof Order) {
             if ($cashBoxOneCId > 0) {
-                $result = \Bitrix\Sale\Cashbox\CheckManager::getPrintableChecks(array($cashBoxOneCId), array($order->getId()));
+                $result = \Bitrix\Sale\Cashbox\CheckManager::getPrintableChecks(
+                    array($cashBoxOneCId),
+                    array($order->getId())
+                );
             }
         }
         return $result;
@@ -905,8 +945,9 @@ class OrderImport extends EntityImport
      */
     static protected function getBusinessValueOrderProvider(Sale\IBusinessValueProvider $entity)
     {
-        if (!($entity instanceof Order))
+        if (!($entity instanceof Order)) {
             throw new Main\ArgumentException("entity must be instanceof Order");
+        }
 
         return $entity;
     }

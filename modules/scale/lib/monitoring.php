@@ -35,10 +35,12 @@ class Monitoring
         $command = "sudo -u root /opt/webdir/bin/bx-monitor -o json";
 
         try {
-            $action = new Action("is_monitoring_enabled", array(
+            $action = new Action(
+                "is_monitoring_enabled", array(
                 "START_COMMAND_TEMPLATE" => $command,
                 "LOG_LEVEL" => Logger::LOG_LEVEL_DISABLE
-            ), "", array());
+            ), "", array()
+            );
 
             if (!$action->start()) {
                 return false;
@@ -68,29 +70,35 @@ class Monitoring
      */
     public static function getLoadBarValue($hostname, $roleId)
     {
-        if (!extension_loaded('rrd'))
+        if (!extension_loaded('rrd')) {
             throw new \Exception("Extension rrd not loaded!");
+        }
 
-        if (strlen($hostname) <= 0)
+        if ($hostname == '') {
             throw new \Bitrix\Main\ArgumentNullException("hostname");
+        }
 
-        if (strlen($roleId) <= 0)
+        if ($roleId == '') {
             throw new \Bitrix\Main\ArgumentNullException("roleId");
+        }
 
         $role = RolesData::getRole($roleId);
 
-        if (empty($role))
+        if (empty($role)) {
             throw new \Exception("Role with id = " . $roleId . " was not defined.");
+        }
 
-        if (!isset($role["LOADBAR_INFO"]) || strlen($role["LOADBAR_INFO"]) <= 0)
+        if (!isset($role["LOADBAR_INFO"]) || $role["LOADBAR_INFO"] == '') {
             throw new \Exception("Role " . $roleId . " has no correctly defined LOADBAR_INFO param .");
+        }
 
         $rrdFile = str_replace('##HOSTNAME##', $hostname, $role["LOADBAR_INFO"]);
         $rrdPath = "/var/lib/munin/" . $hostname . "/" . $rrdFile;
         $file = new \Bitrix\Main\IO\File($rrdPath);
 
-        if (!$file->isExists())
+        if (!$file->isExists()) {
             throw new \Bitrix\Main\IO\FileNotFoundException($rrdPath);
+        }
 
         $data = \rrd_lastupdate($rrdPath);
 
@@ -101,17 +109,20 @@ class Monitoring
 
     public static function getInfoTableCategory($hostname, $categoryId)
     {
-        if (strlen($hostname) <= 0)
+        if ($hostname == '') {
             throw new \Bitrix\Main\ArgumentNullException("hostname");
+        }
 
-        if (strlen($categoryId) <= 0)
+        if ($categoryId == '') {
             throw new \Bitrix\Main\ArgumentNullException("paramId");
+        }
 
         $categories = self::getInfoTableCategoriesList($hostname);
         $result = array();
 
-        if (isset($categories[$categoryId]))
+        if (isset($categories[$categoryId])) {
             $result = $categories[$categoryId];
+        }
 
         return $result;
     }
@@ -185,28 +196,36 @@ class Monitoring
 
     public static function getValue($hostname, $categoryId, $param)
     {
-        if (strlen($hostname) <= 0)
+        if ($hostname == '') {
             throw new \Bitrix\Main\ArgumentNullException("hostname");
+        }
 
-        if (strlen($categoryId) <= 0)
+        if ($categoryId == '') {
             throw new \Bitrix\Main\ArgumentNullException("categoryId");
+        }
 
-        if (strlen($param) <= 0)
+        if ($param == '') {
             throw new \Bitrix\Main\ArgumentNullException("param");
+        }
 
         $arCat = static::getInfoTableCategory($hostname, $categoryId);
 
-        if (!$arCat)
+        if (!$arCat) {
             throw new \Exception("Monitoring category " . $categoryId . " not exist.");
+        }
 
-        if (!$arCat["PARAMS"][$param])
+        if (!$arCat["PARAMS"][$param]) {
             throw new \Exception("Monitoring param " . $param . " in category " . $categoryId . " not exist.");
+        }
 
         $monParam = $arCat["PARAMS"][$param];
 
         if (isset($monParam["TYPE"]) && $monParam["TYPE"] == "ARRAY") {
-            if (!isset($monParam["ITEMS"]) || !is_array($monParam["ITEMS"]))
-                throw new \Exception("Monitoring param " . $param . " in category " . $categoryId . " hasn't field ITEMS.");
+            if (!isset($monParam["ITEMS"]) || !is_array($monParam["ITEMS"])) {
+                throw new \Exception(
+                    "Monitoring param " . $param . " in category " . $categoryId . " hasn't field ITEMS."
+                );
+            }
 
             $result = array();
             foreach ($monParam["ITEMS"] as $item) {
@@ -221,23 +240,29 @@ class Monitoring
 
     protected static function getItemValue($hostname, $categoryId, $item, $param)
     {
-        if (isset($item["VALUE"]))
+        if (isset($item["VALUE"])) {
             return $item["VALUE"];
-
-        if (isset($item["VALUE_FUNC"])) {
-            return call_user_func_array($item["VALUE_FUNC"], (isset($item["FUNC_PARAMS"]) ? $item["FUNC_PARAMS"] : array()));
         }
 
-        if ((!$item["RRD"] || !$item["CF"]) && !$item["OPTIONS"])
+        if (isset($item["VALUE_FUNC"])) {
+            return call_user_func_array(
+                $item["VALUE_FUNC"],
+                (isset($item["FUNC_PARAMS"]) ? $item["FUNC_PARAMS"] : array())
+            );
+        }
+
+        if ((!$item["RRD"] || !$item["CF"]) && !$item["OPTIONS"]) {
             throw new \Exception("Monitoring param item in category " . $categoryId . " has no RRD or CF fields.");
+        }
 
         if (isset($item["RRD"])) {
             $rrdFile = str_replace('##HOSTNAME##', $hostname, $item["RRD"]);
             $rrdPath = static::$rrdPath . "/" . $hostname . "/" . $rrdFile;
             $file = new \Bitrix\Main\IO\File($rrdPath);
 
-            if (!$file->isExists())
+            if (!$file->isExists()) {
                 throw new \Bitrix\Main\IO\FileNotFoundException($rrdPath);
+            }
 
             $first = \rrd_first($rrdPath);
             $last = \rrd_last($rrdPath);
@@ -255,15 +280,17 @@ class Monitoring
                 $agr = $item["CF"];
             }
 
-            if ($item["CF"] == "LAST")
+            if ($item["CF"] == "LAST") {
                 $item["CF"] = "AVERAGE";
+            }
 
             $format = isset($item["FORMAT"]) ? $item["FORMAT"] : "%6.2lf";
 
             $arOpts = array(
                 "DEF:val=" . $rrdPath . ":42:" . $item["CF"],
                 "VDEF:vval=val," . $agr,
-                "PRINT:vval:" . $format);
+                "PRINT:vval:" . $format
+            );
         }
 
         if (isset($item["RRD"])) {
@@ -275,12 +302,8 @@ class Monitoring
 
         $data = \rrd_graph("/dev/null", $arOpts);
 
-        if (isset($item["DATA_FUNC"])) {
-            $func = create_function('$data', $item["DATA_FUNC"]);
-
-            if (is_callable($func)) {
-                $result = $func($data);
-            }
+        if (isset($item["DATA_FUNC"]) && is_callable($item["DATA_FUNC"])) {
+            $result = $item["DATA_FUNC"]($data);
         } else {
             if (isset($data["calcpr"])) {
                 $data["data"] = $data["calcpr"];
@@ -312,7 +335,7 @@ class Monitoring
             $shellAdapter = new ShellAdapter();
             $execRes = $shellAdapter->syncExec("sudo -u root /usr/bin/ansible " . $hostname . " -m setup");
             $serversData = $shellAdapter->getLastOutput();
-            $serversData = substr($serversData, strpos($serversData, "{"));
+            $serversData = mb_substr($serversData, mb_strpos($serversData, "{"));
 
             if ($execRes) {
                 $info[$hostname] = json_decode($serversData, true);
@@ -394,23 +417,25 @@ class Monitoring
     {
         $dir = new \Bitrix\Main\IO\Directory(static::$rrdPath . "/" . $hostname);
 
-        if (!$dir->isExists())
+        if (!$dir->isExists()) {
             return array();
+        }
 
         $arChildren = $dir->getChildren();
         $result = array();
 
         foreach ($arChildren as $child) {
-            if (!$child->isFile())
+            if (!$child->isFile()) {
                 continue;
+            }
 
             $name = $child->getName();
-            $pos1 = strpos($name, "-if_");
-            $pos2 = strpos($name, "-up-");
+            $pos1 = mb_strpos($name, "-if_");
+            $pos2 = mb_strpos($name, "-up-");
 
             if ($pos1 !== false && $pos2 !== false) {
                 $pos1 += 4;
-                $dev = substr($name, $pos1, $pos2 - $pos1);
+                $dev = mb_substr($name, $pos1, $pos2 - $pos1);
 
                 $result[$dev] = array(
                     "NAME" => $dev . " " . Loc::getMessage("SCALE_MONITORING_NET_PARAMS"),
@@ -423,17 +448,23 @@ class Monitoring
                         "PRINT:vin:%1.2lf",
                         "PRINT:vout:%1.2lf"
                     ),
-                    "DATA_FUNC" => '
-					$result = false;
-					if(isset($data["calcpr"][0]) && isset($data["calcpr"][1]))
-					{
-						$result = \Bitrix\Scale\Monitoring::formatSize($data["calcpr"][0]/600).
-							"&nbsp;/&nbsp;".
-							\Bitrix\Scale\Monitoring::formatSize($data["calcpr"][1]/600)."&nbsp;' . Helper::nbsp(Loc::getMessage("SCALE_MONITORING_NET_SEC")) . '";
-					}
-					return $result;'
+                    "DATA_FUNC" => '\Bitrix\Scale\Monitoring::formatNetParamsValue'
                 );
             }
+        }
+
+        return $result;
+    }
+
+    protected static function formatNetParamsValue(array $data)
+    {
+        $result = false;
+
+        if (isset($data['calcpr'][0], $data['calcpr'][1])) {
+            $result = static::formatSize((int)$data['calcpr'][0] / 600) .
+                '&nbsp;/&nbsp;' .
+                static::formatSize((int)$data['calcpr'][1] / 600) . '&nbsp;' .
+                Helper::nbsp(Loc::getMessage('SCALE_MONITORING_NET_SEC'));
         }
 
         return $result;
@@ -443,22 +474,24 @@ class Monitoring
     {
         $dir = new \Bitrix\Main\IO\Directory(static::$rrdPath . "/" . $hostname);
 
-        if (!$dir->isExists())
+        if (!$dir->isExists()) {
             return array();
+        }
 
         $arChildren = $dir->getChildren();
         $result = array();
 
         foreach ($arChildren as $child) {
-            if (!$child->isFile())
+            if (!$child->isFile()) {
                 continue;
+            }
 
             $name = $child->getName();
-            $pos1 = strpos($name, "-diskstats_utilization-");
-            $pos2 = strpos($name, "-util-");
+            $pos1 = mb_strpos($name, "-diskstats_utilization-");
+            $pos2 = mb_strpos($name, "-util-");
             if ($pos1 !== false && $pos2 !== false) {
                 $pos1 += 23; //strlen("-diskstats_utilization-")
-                $dev = substr($name, $pos1, $pos2 - $pos1);
+                $dev = mb_substr($name, $pos1, $pos2 - $pos1);
 
                 $result[$dev] = array(
                     "NAME" => $dev . " " . Loc::getMessage("SCALE_MONITORING_HDDACT_PARAMS"),
@@ -473,15 +506,7 @@ class Monitoring
                                 "PRINT:vr:%1.2lf",
                                 "PRINT:vw:%1.2lf"
                             ),
-                            "DATA_FUNC" => '
-								$result = false;
-								if(isset($data["calcpr"][0]) && isset($data["calcpr"][1]))
-								{
-									$result = \Bitrix\Scale\Monitoring::formatSize($data["calcpr"][0]/600).
-										"&nbsp;/&nbsp;".
-										\Bitrix\Scale\Monitoring::formatSize($data["calcpr"][1]/600)."&nbsp;' . Loc::getMessage("SCALE_MONITORING_NET_SEC") . '";
-								}
-								return $result;'
+                            "DATA_FUNC" => '\Bitrix\Scale\Monitoring::formatHddsUtilizationValue'
                         ),
                         array(
                             "RRD" => $hostname . "-diskstats_utilization-" . $dev . "-util-g.rrd",
@@ -492,6 +517,20 @@ class Monitoring
                     )
                 );
             }
+        }
+
+        return $result;
+    }
+
+    protected static function formatHddsUtilizationValue(array $data)
+    {
+        $result = false;
+
+        if (isset($data['calcpr'][0], $data['calcpr'][1])) {
+            $result = static::formatSize((int)$data['calcpr'][0] / 600) .
+                '&nbsp;/&nbsp;' .
+                static::formatSize((int)$data['calcpr'][1] / 600) .
+                '&nbsp;' . Loc::getMessage('SCALE_MONITORING_NET_SEC');
         }
 
         return $result;
@@ -518,8 +557,13 @@ class Monitoring
         $result = "0";
         $arData = static::getAnsibleSetup($hostname);
 
-        if (isset($arData["ansible_facts"]["ansible_memtotal_mb"]) && isset($arData["ansible_facts"]["ansible_memfree_mb"]))
-            $result = $arData["ansible_facts"]["ansible_memtotal_mb"] . " / " . (intval($arData["ansible_facts"]["ansible_memtotal_mb"]) - intval($arData["ansible_facts"]["ansible_memfree_mb"])) . " / " . $arData["ansible_facts"]["ansible_memfree_mb"] . " Mb";
+        if (isset($arData["ansible_facts"]["ansible_memtotal_mb"]) && isset($arData["ansible_facts"]["ansible_memfree_mb"])) {
+            $result = $arData["ansible_facts"]["ansible_memtotal_mb"] . " / " . (intval(
+                        $arData["ansible_facts"]["ansible_memtotal_mb"]
+                    ) - intval(
+                        $arData["ansible_facts"]["ansible_memfree_mb"]
+                    )) . " / " . $arData["ansible_facts"]["ansible_memfree_mb"] . " Mb";
+        }
 
         return $result;
     }
@@ -529,8 +573,13 @@ class Monitoring
         $result = "0";
         $arData = static::getAnsibleSetup($hostname);
 
-        if (isset($arData["ansible_facts"]["ansible_memtotal_mb"]) && isset($arData["ansible_facts"]["ansible_memfree_mb"]) && intval($arData["ansible_facts"]["ansible_memtotal_mb"]) != 0)
-            $result = (intval($arData["ansible_facts"]["ansible_memtotal_mb"]) - intval($arData["ansible_facts"]["ansible_memfree_mb"])) / intval($arData["ansible_facts"]["ansible_memtotal_mb"]) * 100;
+        if (isset($arData["ansible_facts"]["ansible_memtotal_mb"]) && isset($arData["ansible_facts"]["ansible_memfree_mb"]) && intval(
+                $arData["ansible_facts"]["ansible_memtotal_mb"]
+            ) != 0) {
+            $result = (intval($arData["ansible_facts"]["ansible_memtotal_mb"]) - intval(
+                        $arData["ansible_facts"]["ansible_memfree_mb"]
+                    )) / intval($arData["ansible_facts"]["ansible_memtotal_mb"]) * 100;
+        }
 
         return $result;
     }

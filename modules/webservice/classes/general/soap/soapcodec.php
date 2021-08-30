@@ -5,7 +5,7 @@ class CSOAPCodec
     var $outputVars = array();
     var $typensVars = array();
 
-    function CSOAPCodec()
+    public function __construct()
     {
     }
 
@@ -27,19 +27,21 @@ class CSOAPCodec
     function _validateSimpleType($dataType, $value)
     {
         global $xsd_simple_type;
-        if (!isset($xsd_simple_type[$dataType]))
+        if (!isset($xsd_simple_type[$dataType])) {
             CSOAPCodec::_errorTypeValidation("[Is not a simple type.{$dataType}]", $value);
+        }
 
         if ($dataType != gettype($value)) {
             // all numbers are same as string
             if (is_numeric($value) and (
                     $dataType == "integer" or
                     $dataType == "double" or
-                    $dataType == "float"))
+                    $dataType == "float")) {
                 return;
-            //elseif ($dataType == 'base64Binary' && preg_match('/^([A-Za-z0-9]|\+|\/|\-|\=)+$/', $value))
-            elseif ($dataType == 'base64Binary' || $dataType == 'any')
+            } //elseif ($dataType == 'base64Binary' && preg_match('/^([A-Za-z0-9]|\+|\/|\-|\=)+$/', $value))
+            elseif ($dataType == 'base64Binary' || $dataType == 'any') {
                 return;
+            }
 
             CSOAPCodec::_errorTypeValidation($dataType, $value);
         }
@@ -47,10 +49,12 @@ class CSOAPCodec
 
     function _validateClassType($classType, $value)
     {
-        $phpClassType = strtolower($classType);
-        $phpValue = strtolower(get_class($value));
+        $phpClassType = mb_strtolower($classType);
+        $phpValue = mb_strtolower(get_class($value));
         if ($phpClassType != $phpValue) {
-            CSOAPServer::ShowSOAPFault("_errorTypeValidation(): Type validation for func. failed: {$classType} != " . get_class($value));
+            CSOAPServer::ShowSOAPFault(
+                "_errorTypeValidation(): Type validation for func. failed: {$classType} != " . get_class($value)
+            );
             exit();
         }
     }
@@ -72,23 +76,27 @@ class CSOAPCodec
                 if (is_numeric($value) and (
                         $dataType == "integer" or
                         $dataType == "double" or
-                        $dataType == "float"))
+                        $dataType == "float")) {
                     return;
-                //elseif ($dataType == 'base64Binary' && preg_match('/^([A-Za-z0-9]|\+|\/|\-|\=)+$/', $value))
-                elseif ($dataType == 'base64Binary' || $dataType == 'any')
+                } //elseif ($dataType == 'base64Binary' && preg_match('/^([A-Za-z0-9]|\+|\/|\-|\=)+$/', $value))
+                elseif ($dataType == 'base64Binary' || $dataType == 'any') {
                     return;
+                }
 
                 CSOAPCodec::_errorTypeValidation($dataType, $value);
             }
         } else {
-            if (!is_object($value) and !is_array($value))
+            if (!is_object($value) and !is_array($value)) {
                 CSOAPCodec::_errorTypeValidation($dataType, $value);
+            }
         }
     }
 
     function _errorTypeValidation($dataType, $value)
     {
-        CSOAPServer::ShowSOAPFault("_errorTypeValidation(): Type validation for func. failed: {$dataType} != " . gettype($value));
+        CSOAPServer::ShowSOAPFault(
+            "_errorTypeValidation(): Type validation for func. failed: {$dataType} != " . gettype($value)
+        );
         exit();
     }
 
@@ -103,20 +111,28 @@ class CSOAPCodec
 
         $dataType = "";
         $typeDeclaration = "";
-        if (isset($this->outputVars[$name]))
+        if (isset($this->outputVars[$name])) {
             $typeDeclaration = $this->outputVars[$name];
-        else if (isset($this->typensVars[$name]))
-            $typeDeclaration = $this->typensVars[$name];
-        else if (isset($this->typensVars[$complexDataTypeName][$name]))
-            $typeDeclaration = $this->typensVars[$complexDataTypeName][$name];
+        } else {
+            if (isset($this->typensVars[$name])) {
+                $typeDeclaration = $this->typensVars[$name];
+            } else {
+                if (isset($this->typensVars[$complexDataTypeName][$name])) {
+                    $typeDeclaration = $this->typensVars[$complexDataTypeName][$name];
+                }
+            }
+        }
 
         if (isset($typeDeclaration["varType"])) // if not, name = complex data type
+        {
             $dataType = $typeDeclaration["varType"];
-        else
+        } else {
             $dataType = $name;
+        }
 
-        if (isset($xsd_simple_type[$dataType]))
+        if (isset($xsd_simple_type[$dataType])) {
             $dataType = $xsd_simple_type[$dataType];
+        }
 
         // Type validation
         $this->_validateType($dataType, $value);
@@ -135,10 +151,11 @@ class CSOAPCodec
                 {
                     $node = new CXMLCreator($name);
                     //$node->setAttribute( "type", BX_SOAP_XSD_PREFIX . ":boolean" );
-                    if ($value === true)
+                    if ($value === true) {
                         $node->setData("true");
-                    else
+                    } else {
                         $node->setData("false");
+                    }
                     return $node;
                 }
                 break;
@@ -182,18 +199,20 @@ class CSOAPCodec
 // fclose($fp);
 
 
-                    if (get_class($value) == 'CDataXML')
+                    if (get_class($value) == 'CDataXML') {
                         $node->addChild(CXMLCreator::CreateFromDOM($value->GetTree()));
-                    elseif (get_class($value) == 'CDataXMLDocument')
+                    } elseif (get_class($value) == 'CDataXMLDocument') {
                         $node->addChild(CXMLCreator::CreateFromDOM($value));
-                    elseif (get_class($value) == 'CXMLCreator')
+                    } elseif (get_class($value) == 'CXMLCreator') {
                         $node->addChild($value);
+                    }
                 } else {
                     $data = new CDataXML();
-                    if ($data->LoadString($value))
+                    if ($data->LoadString($value)) {
                         $node->addChild(CXMLCreator::CreateFromDOM($data->GetTree()));
-                    else
+                    } else {
                         $node->setData($value);
+                    }
                 }
 
                 return $node;
@@ -204,8 +223,9 @@ class CSOAPCodec
                     $node = new CXMLCreator($name);
 
                     if (isset($typeDeclaration["arrType"])) {
-                        if (!isset($typeDeclaration["varType"]))
+                        if (!isset($typeDeclaration["varType"])) {
                             $this->_errorTypeValidation("varType [undef]", $value);
+                        }
 
                         $varType = $typeDeclaration["varType"];
 
@@ -213,15 +233,17 @@ class CSOAPCodec
                         $maxOccurs = 0;
 
                         $arrayType = $typeDeclaration["arrType"];
-                        if (isset($typeDeclaration["maxOccursA"]))
+                        if (isset($typeDeclaration["maxOccursA"])) {
                             $maxOccurs = $typeDeclaration["maxOccursA"];
+                        }
 
                         if (isset($xsd_simple_type[$arrayType])) {
                             $i = 0;
                             $arrayType = $xsd_simple_type[$arrayType];
                             $arrayTypeEl = $varType . "El"; // TODO: non fixed. get El name from wsdl. or decl.
-                            if (!is_array($value))
+                            if (!is_array($value)) {
                                 CSOAPCodec::_errorTypeValidation("Array", $value);
+                            }
 
                             foreach ($value as $valnode) {
                                 $i++;
@@ -230,16 +252,18 @@ class CSOAPCodec
                                 $cndata->setData($valnode);
                                 $node->addChild($cndata);
 
-                                if (intval($maxOccurs) > 0 and $i > $maxOccurs)
+                                if (intval($maxOccurs) > 0 and $i > $maxOccurs) {
                                     break;
+                                }
                             }
                         } else {
                             // Complex data type arrays // $arrayType as is.
                             // TODO: non fixed. get $arrayTypeEl name from wsdl. or decl.
                             $i = 0;
                             $arrayTypeEl = $varType . "El";
-                            if (!is_array($value))
+                            if (!is_array($value)) {
                                 CSOAPCodec::_errorTypeValidation("Array", $value);
+                            }
 
                             foreach ($value as $valnode) {
                                 $decoded = null;
@@ -256,8 +280,9 @@ class CSOAPCodec
                                     $node->addChild($decoded);
                                 }
 
-                                if (intval($maxOccurs) > 0 and $i > $maxOccurs)
+                                if (intval($maxOccurs) > 0 and $i > $maxOccurs) {
                                     break;
+                                }
                             }
                         }
                     } else {
@@ -268,11 +293,15 @@ class CSOAPCodec
                         $returnValue = array();
                         $params = array();
 
-                        if (!isset($this->typensVars[$dataType])) break;
+                        if (!isset($this->typensVars[$dataType])) {
+                            break;
+                        }
                         $objectDecl = $this->typensVars[$dataType];
 
                         if (!$objectDecl) {
-                            CSOAPServer::ShowSOAPFault("encodeValue() cant find complex type declaration for {$dataType}.");
+                            CSOAPServer::ShowSOAPFault(
+                                "encodeValue() cant find complex type declaration for {$dataType}."
+                            );
                             exit();
                         }
 
@@ -285,32 +314,42 @@ class CSOAPCodec
                         }
 
                         // Validate hard complex data types
-                        if ($serialize == "assoc")
+                        if ($serialize == "assoc") {
                             $this->_validateType("array", $value);
-                        if ($serialize != "assoc")
+                        }
+                        if ($serialize != "assoc") {
                             $this->_validateClassType($dataType, $value);
+                        }
 
                         foreach ($objectDecl as $pname => $param) {
                             $decoded = null;
                             $strict = true;
-                            if (isset($param["strict"])) $strict = ($param["strict"] == "strict") ? true : false;
+                            if (isset($param["strict"])) {
+                                $strict = ($param["strict"] == "strict") ? true : false;
+                            }
 
                             if ($serialize == "assoc") {
                                 //var_dump($pname); var_dump($value[$pname]); die();
-                                if (isset($value[$pname]))
+                                if (isset($value[$pname])) {
                                     $decoded = $this->encodeValue($pname, $value[$pname], $dataType);
-                            } else
-                                if ($serialize != "assoc") {
-                                    if (isset($value->$pname))
-                                        $decoded = $this->encodeValue($pname, $value->$pname, $dataType);
                                 }
+                            } else {
+                                if ($serialize != "assoc") {
+                                    if (isset($value->$pname)) {
+                                        $decoded = $this->encodeValue($pname, $value->$pname, $dataType);
+                                    }
+                                }
+                            }
 
 
-                            if ($decoded)
+                            if ($decoded) {
                                 $this->_validateClassType("CXMLCreator", $decoded);
+                            }
 
                             if (!$decoded and $strict) {
-                                CSOAPServer::ShowSOAPFault("Request has not enough params of strict type to be decoded. ");
+                                CSOAPServer::ShowSOAPFault(
+                                    "Request has not enough params of strict type to be decoded. "
+                                );
                                 exit();
                             }
 

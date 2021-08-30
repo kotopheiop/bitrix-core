@@ -9,8 +9,9 @@
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions == "D")
+if ($saleModulePermissions == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 \Bitrix\Main\Loader::includeModule('sale');
 
@@ -41,24 +42,34 @@ $lAdmin->InitFilter($arFilterFields);
 
 $arFilter = array();
 
-if (IntVal($filter_user_id) > 0) $arFilter["USER_ID"] = IntVal($filter_user_id);
-if (strlen($filter_login) > 0) $arFilter["USER_LOGIN"] = $filter_login;
-if (strlen($filter_user) > 0) $arFilter["%USER_USER"] = $filter_user;
-if (strlen($filter_active) > 0) $arFilter["ACTIVE"] = $filter_active;
+if (intval($filter_user_id) > 0) {
+    $arFilter["USER_ID"] = intval($filter_user_id);
+}
+if ($filter_login <> '') {
+    $arFilter["USER_LOGIN"] = $filter_login;
+}
+if ($filter_user <> '') {
+    $arFilter["%USER_USER"] = $filter_user;
+}
+if ($filter_active <> '') {
+    $arFilter["ACTIVE"] = $filter_active;
+}
 
 if ($lAdmin->EditAction() && $saleModulePermissions >= "W") {
     foreach ($FIELDS as $ID => $arFields) {
         $DB->StartTransaction();
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
-        if (!$lAdmin->IsUpdated($ID))
+        if (!$lAdmin->IsUpdated($ID)) {
             continue;
+        }
 
         if (!CSaleUserCards::Update($ID, $arFields)) {
-            if ($ex = $APPLICATION->GetException())
+            if ($ex = $APPLICATION->GetException()) {
                 $lAdmin->AddUpdateError($ex->GetString(), $ID);
-            else
+            } else {
                 $lAdmin->AddUpdateError(str_replace("#ID#", $ID, GetMessage("SCA_ERROR_UPDATE")), $ID);
+            }
 
             $DB->Rollback();
         }
@@ -77,13 +88,15 @@ if (($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "W") {
             false,
             array("ID")
         );
-        while ($arResult = $dbResultList->Fetch())
+        while ($arResult = $dbResultList->Fetch()) {
             $arID[] = $arResult['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
 
         switch ($_REQUEST['action']) {
             case "delete":
@@ -94,10 +107,11 @@ if (($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "W") {
                 if (!CSaleUserCards::Delete($ID)) {
                     $DB->Rollback();
 
-                    if ($ex = $APPLICATION->GetException())
+                    if ($ex = $APPLICATION->GetException()) {
                         $lAdmin->AddGroupError($ex->GetString(), $ID);
-                    else
+                    } else {
                         $lAdmin->AddGroupError(str_replace("#ID#", $ID, GetMessage("SCA_ERROR_DELETE")), $ID);
+                    }
                 }
 
                 $DB->Commit();
@@ -112,10 +126,11 @@ if (($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "W") {
                 );
 
                 if (!CSaleUserCards::Update($ID, $arFields)) {
-                    if ($ex = $APPLICATION->GetException())
+                    if ($ex = $APPLICATION->GetException()) {
                         $lAdmin->AddGroupError($ex->GetString(), $ID);
-                    else
+                    } else {
                         $lAdmin->AddGroupError(str_replace("#ID#", $ID, GetMessage("SCA_ERROR_UPDATE")), $ID);
+                    }
                 }
 
                 break;
@@ -136,26 +151,37 @@ $dbResultList->NavStart();
 
 $lAdmin->NavText($dbResultList->GetNavPrint(GetMessage("SCA_NAV")));
 
-$lAdmin->AddHeaders(array(
-    array("id" => "ID", "content" => "ID", "sort" => "id", "default" => true),
-    array("id" => "USER_ID", "content" => GetMessage("SCA_USER"), "sort" => "user_id", "default" => true),
-    array("id" => "ACTIVE", "content" => GetMessage("SCA_ACT"), "sort" => "active", "default" => true),
-    array("id" => "SORT", "content" => GetMessage("SCA_SORT"), "sort" => "sort", "default" => true),
-    array("id" => "CURRENCY", "content" => GetMessage("SCA_CURRENCY"), "sort" => "currency", "default" => true),
-    array("id" => "CARD_TYPE", "content" => GetMessage("SCA_TYPE"), "sort" => "card_type", "default" => true),
-));
+$lAdmin->AddHeaders(
+    array(
+        array("id" => "ID", "content" => "ID", "sort" => "id", "default" => true),
+        array("id" => "USER_ID", "content" => GetMessage("SCA_USER"), "sort" => "user_id", "default" => true),
+        array("id" => "ACTIVE", "content" => GetMessage("SCA_ACT"), "sort" => "active", "default" => true),
+        array("id" => "SORT", "content" => GetMessage("SCA_SORT"), "sort" => "sort", "default" => true),
+        array("id" => "CURRENCY", "content" => GetMessage("SCA_CURRENCY"), "sort" => "currency", "default" => true),
+        array("id" => "CARD_TYPE", "content" => GetMessage("SCA_TYPE"), "sort" => "card_type", "default" => true),
+    )
+);
 
 $arVisibleColumns = $lAdmin->GetVisibleHeaderColumns();
 
 while ($arCCard = $dbResultList->NavNext(true, "f_")) {
-    $row =& $lAdmin->AddRow($f_ID, $arCCard, "sale_ccards_edit.php?ID=" . $f_ID . "&lang=" . LANG . GetFilterParams("filter_"), GetMessage("SCA_UPDATE_ALT"));
+    $row =& $lAdmin->AddRow(
+        $f_ID,
+        $arCCard,
+        "sale_ccards_edit.php?ID=" . $f_ID . "&lang=" . LANG . GetFilterParams("filter_"),
+        GetMessage("SCA_UPDATE_ALT")
+    );
 
     $row->AddField("ID", $f_ID);
 
     $fieldValue = "[<a href=\"/bitrix/admin/user_edit.php?ID=" . $f_USER_ID . "&lang=" . LANG . "\">" . $f_USER_ID . "</a>] ";
-    $fieldValue .= htmlspecialcharsEx($arCCard["USER_NAME"] . ((strlen($arCCard["USER_NAME"]) <= 0 || strlen($arCCard["USER_LAST_NAME"]) <= 0) ? "" : " ") . $arCCard["USER_LAST_NAME"]) . "<br>";
+    $fieldValue .= htmlspecialcharsEx(
+            $arCCard["USER_NAME"] . (($arCCard["USER_NAME"] == '' || $arCCard["USER_LAST_NAME"] == '') ? "" : " ") . $arCCard["USER_LAST_NAME"]
+        ) . "<br>";
     $fieldValue .= htmlspecialcharsEx($arCCard["USER_LOGIN"]) . "&nbsp;&nbsp;&nbsp; ";
-    $fieldValue .= "<a href=\"mailto:" . htmlspecialcharsbx($arCCard["USER_EMAIL"]) . "\">" . htmlspecialcharsEx($arCCard["USER_EMAIL"]) . "</a>";
+    $fieldValue .= "<a href=\"mailto:" . htmlspecialcharsbx($arCCard["USER_EMAIL"]) . "\">" . htmlspecialcharsEx(
+            $arCCard["USER_EMAIL"]
+        ) . "</a>";
     $row->AddField("USER_ID", $fieldValue);
 
     $row->AddCheckField("ACTIVE");
@@ -165,10 +191,24 @@ while ($arCCard = $dbResultList->NavNext(true, "f_")) {
     $row->AddField("CARD_TYPE", $f_CARD_TYPE);
 
     $arActions = Array();
-    $arActions[] = array("ICON" => "edit", "TEXT" => GetMessage("SCA_UPDATE_ALT"), "ACTION" => $lAdmin->ActionRedirect("sale_ccards_edit.php?ID=" . $f_ID . "&lang=" . LANG . GetFilterParams("filter_") . ""), "DEFAULT" => true);
+    $arActions[] = array(
+        "ICON" => "edit",
+        "TEXT" => GetMessage("SCA_UPDATE_ALT"),
+        "ACTION" => $lAdmin->ActionRedirect(
+            "sale_ccards_edit.php?ID=" . $f_ID . "&lang=" . LANG . GetFilterParams("filter_") . ""
+        ),
+        "DEFAULT" => true
+    );
     if ($saleModulePermissions >= "W") {
         $arActions[] = array("SEPARATOR" => true);
-        $arActions[] = array("ICON" => "delete", "TEXT" => GetMessage("SCA_DELETE_ALT1"), "ACTION" => "if(confirm('" . GetMessage('SCA_DELETE_CONF') . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete"));
+        $arActions[] = array(
+            "ICON" => "delete",
+            "TEXT" => GetMessage("SCA_DELETE_ALT1"),
+            "ACTION" => "if(confirm('" . GetMessage('SCA_DELETE_CONF') . "')) " . $lAdmin->ActionDoGroup(
+                    $f_ID,
+                    "delete"
+                )
+        );
     }
 
     $row->AddActions($arActions);
@@ -257,8 +297,12 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
             <td>
                 <select name="filter_active">
                     <option value=""><?= htmlspecialcharsex("(" . GetMessage("SCA_ALL") . ")"); ?></option>
-                    <option value="Y"<? if ($filter_active == "Y") echo " selected" ?>><?= htmlspecialcharsex(GetMessage("SCA_YES")) ?></option>
-                    <option value="N"<? if ($filter_active == "N") echo " selected" ?>><?= htmlspecialcharsex(GetMessage("SCA_NO")) ?></option>
+                    <option value="Y"<? if ($filter_active == "Y") echo " selected" ?>><?= htmlspecialcharsex(
+                            GetMessage("SCA_YES")
+                        ) ?></option>
+                    <option value="N"<? if ($filter_active == "N") echo " selected" ?>><?= htmlspecialcharsex(
+                            GetMessage("SCA_NO")
+                        ) ?></option>
                 </select>
             </td>
         </tr>
@@ -275,8 +319,15 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
     </form>
 
 <?
-if (!CSaleUserCards::CheckPassword())
-    CAdminMessage::ShowMessage(array("DETAILS" => GetMessage("SCA_NO_VALID_PASSWORD"), "TYPE" => "ERROR", "MESSAGE" => GetMessage("SCA_ATTENTION")));
+if (!CSaleUserCards::CheckPassword()) {
+    CAdminMessage::ShowMessage(
+        array(
+            "DETAILS" => GetMessage("SCA_NO_VALID_PASSWORD"),
+            "TYPE" => "ERROR",
+            "MESSAGE" => GetMessage("SCA_ATTENTION")
+        )
+    );
+}
 ?>
 
 <?

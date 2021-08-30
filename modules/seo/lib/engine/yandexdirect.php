@@ -97,7 +97,7 @@ class YandexDirect extends Engine\YandexBase implements IEngine
     public $allowedCurrency = array('RUB', 'CHF', 'EUR', 'KZT', 'TRY', 'UAH', 'USD');
 
     protected $engineId = 'yandex_direct';
-    protected $locale = NULL;
+    protected $locale = null;
 
     public function __construct()
     {
@@ -338,9 +338,12 @@ class YandexDirect extends Engine\YandexBase implements IEngine
             $bannerId = array($bannerId);
         }
 
-        $result = $this->getProxy()->getInterface()->getBannerList(static::ENGINE_ID, array(
-            'BannerIDS' => $bannerId,
-        ));
+        $result = $this->getProxy()->getInterface()->getBannerList(
+            static::ENGINE_ID,
+            array(
+                'BannerIDS' => $bannerId,
+            )
+        );
 
         if (!empty($result['error'])) {
             throw new YandexDirectException($result);
@@ -359,9 +362,12 @@ class YandexDirect extends Engine\YandexBase implements IEngine
             $campaignId = array($campaignId);
         }
 
-        $result = $this->getProxy()->getInterface()->getBannerList(static::ENGINE_ID, array(
-            'CampaignIDS' => $campaignId,
-        ));
+        $result = $this->getProxy()->getInterface()->getBannerList(
+            static::ENGINE_ID,
+            array(
+                'CampaignIDS' => $campaignId,
+            )
+        );
 
         if (!empty($result['error'])) {
             throw new YandexDirectException($result);
@@ -519,18 +525,20 @@ class YandexDirect extends Engine\YandexBase implements IEngine
             $result = $this->getProxy()->getInterface()->getClientsSettings(static::ENGINE_ID);
         }
 
-        if (!is_array($result) || empty($result))
+        if (!is_array($result) || empty($result)) {
             $result = array('error' => 'No authentication.');
+        }
 
-        if (!empty($result['error']))
+        if (!empty($result['error'])) {
             throw new YandexDirectException($result);
-        else
+        } else {
             $cacheManager->set(self::CACHE_ID, $result);
+        }
 
         return $result;
     }
 
-    public function createWordstatReport(array $phrase, $geo = NULL)
+    public function createWordstatReport(array $phrase, $geo = null)
     {
         $queryData = array(
             'Phrases' => $phrase,
@@ -582,7 +590,7 @@ class YandexDirect extends Engine\YandexBase implements IEngine
         return $result;
     }
 
-    public function createForecastReport(array $phrase, $geo = NULL)
+    public function createForecastReport(array $phrase, $geo = null)
     {
         $queryData = array(
             'Phrases' => $phrase,
@@ -667,9 +675,9 @@ class YandexDirect extends Engine\YandexBase implements IEngine
      * @throws SystemException
      * @throws \Exception
      */
-    protected function query($scope, $method = "GET", $param = NULL, $skipRefreshAuth = false)
+    protected function query($scope, $method = "GET", $param = null, $skipRefreshAuth = false)
     {
-        if ($param === NULL) {
+        if ($param === null) {
             $param = array();
         }
 
@@ -693,14 +701,16 @@ class YandexDirect extends Engine\YandexBase implements IEngine
             $ts = microtime(true);
             $http->post(static::API_URL, $postData);
 
-            LogTable::add(array(
-                'ENGINE_ID' => $this->getId(),
-                'REQUEST_URI' => static::API_URL,
-                'REQUEST_DATA' => Text\Encoding::convertEncoding($postData, 'UTF-8', SITE_CHARSET),
-                'RESPONSE_TIME' => microtime(true) - $ts,
-                'RESPONSE_STATUS' => $http->getStatus(),
-                'RESPONSE_DATA' => Text\Encoding::convertEncoding($http->getResult(), 'UTF-8', SITE_CHARSET),
-            ));
+            LogTable::add(
+                array(
+                    'ENGINE_ID' => $this->getId(),
+                    'REQUEST_URI' => static::API_URL,
+                    'REQUEST_DATA' => Text\Encoding::convertEncoding($postData, 'UTF-8', SITE_CHARSET),
+                    'RESPONSE_TIME' => microtime(true) - $ts,
+                    'RESPONSE_STATUS' => $http->getStatus(),
+                    'RESPONSE_DATA' => Text\Encoding::convertEncoding($http->getResult(), 'UTF-8', SITE_CHARSET),
+                )
+            );
 
             if ($http->getStatus() == 401 && !$skipRefreshAuth) {
                 if ($this->checkAuthExpired()) {
@@ -725,7 +735,8 @@ class YandexDirect extends Engine\YandexBase implements IEngine
 
             $financeToken = hash(
                 "sha256",
-                $masterToken . $operationNum . $method . $auth['login']);
+                $masterToken . $operationNum . $method . $auth['login']
+            );
 
             $postData = array(
                 "method" => $method,
@@ -755,7 +766,7 @@ class YandexDirect extends Engine\YandexBase implements IEngine
         }
     }
 
-    public function updateCampaignManual($campaignId = NULL)
+    public function updateCampaignManual($campaignId = null)
     {
         $newCampaigns = array();
 
@@ -774,20 +785,23 @@ class YandexDirect extends Engine\YandexBase implements IEngine
         $campaignList = array();
         if (is_array($campaignId) && count($campaignId) > 0) {
 //			get just current campaigns by ID
-            $dbRes = YandexCampaignTable::getList(array(
-                'filter' => array(
-                    '=ID' => $campaignId,
-                    '=ENGINE_ID' => $this->getId(),
-                ),
-                'select' => array('XML_ID'),
-            ));
+            $dbRes = YandexCampaignTable::getList(
+                array(
+                    'filter' => array(
+                        '=ID' => $campaignId,
+                        '=ENGINE_ID' => $this->getId(),
+                    ),
+                    'select' => array('XML_ID'),
+                )
+            );
 
             while ($campaign = $dbRes->fetch()) {
                 $keys[] = $campaign['XML_ID'];
             }
 
-            if (count($keys) > 0)
+            if (count($keys) > 0) {
                 $campaignList = $this->getCampaign($keys);
+            }
         } else {
 //			get ALL campaigns, if IDs not set
             $campaignList = $this->getCampaignList();
@@ -802,8 +816,9 @@ class YandexDirect extends Engine\YandexBase implements IEngine
 
         $filter = array('=ENGINE_ID' => $this->getId());
 //		get filtered items only if we update only selected campaigns. Else - get ALL from table
-        if (is_array($campaignId) && count($campaignId) > 0 && count($campaignListSorted) > 0)
+        if (is_array($campaignId) && count($campaignId) > 0 && count($campaignListSorted) > 0) {
             $filter['=XML_ID'] = array_keys($campaignListSorted);
+        }
         $dbCampaigns = YandexCampaignTable::getList(array('filter' => $filter));
 
         YandexCampaignTable::setSkipRemoteUpdate(true);
@@ -811,7 +826,8 @@ class YandexDirect extends Engine\YandexBase implements IEngine
         while ($campaign = $dbCampaigns->fetch()) {
             if (isset($campaignListSorted[$campaign['XML_ID']])) {
                 $result = YandexCampaignTable::update(
-                    $campaign['ID'], array(
+                    $campaign['ID'],
+                    array(
                         "SETTINGS" => $campaignListSorted[$campaign['XML_ID']],
                     )
                 );
@@ -840,9 +856,11 @@ class YandexDirect extends Engine\YandexBase implements IEngine
 
 //		ADD in table new campaignt from YD
         foreach ($campaignListSorted as $campaignId => $campaignInfo) {
-            $result = YandexCampaignTable::add(array(
-                "SETTINGS" => $campaignInfo,
-            ));
+            $result = YandexCampaignTable::add(
+                array(
+                    "SETTINGS" => $campaignInfo,
+                )
+            );
 
             if ($result->isSuccess()) {
                 $newCampaigns[] = $result->getId();
@@ -877,7 +895,7 @@ class YandexDirect extends Engine\YandexBase implements IEngine
         return $res;
     }
 
-    public function updateBannersManual($campaignId, $bannerId = NULL)
+    public function updateBannersManual($campaignId, $bannerId = null)
     {
         $res = array(
             'added' => 0,
@@ -892,36 +910,42 @@ class YandexDirect extends Engine\YandexBase implements IEngine
         $bannerList = array();
         if (is_array($bannerId) && count($bannerId) > 0) {
 //			get banners by ID
-            $dbRes = YandexBannerTable::getList(array(
-                'filter' => array(
-                    '=ID' => $bannerId,
-                    '=ENGINE_ID' => $this->getId(),
-                ),
-                'select' => array('XML_ID'),
-            ));
+            $dbRes = YandexBannerTable::getList(
+                array(
+                    'filter' => array(
+                        '=ID' => $bannerId,
+                        '=ENGINE_ID' => $this->getId(),
+                    ),
+                    'select' => array('XML_ID'),
+                )
+            );
 
             while ($banner = $dbRes->fetch()) {
                 $keys[] = $banner['XML_ID'];
             }
 
-            if (count($keys) > 0)
+            if (count($keys) > 0) {
                 $bannerList = $this->getBanners($keys);
+            }
         } else {
-            $dbCampaigns = YandexCampaignTable::getList(array(
-                'filter' => array(
-                    '=ID' => $campaignId,
-                    '=ENGINE_ID' => $this->getId(),
-                ),
-                'select' => array('ID', 'XML_ID'),
-            ));
+            $dbCampaigns = YandexCampaignTable::getList(
+                array(
+                    'filter' => array(
+                        '=ID' => $campaignId,
+                        '=ENGINE_ID' => $this->getId(),
+                    ),
+                    'select' => array('ID', 'XML_ID'),
+                )
+            );
 
             while ($campaign = $dbCampaigns->fetch()) {
                 $campaignIndex[$campaign['XML_ID']] = $campaign['ID'];
             }
 
 //			get ALL banners for current campaign
-            if (count($campaignIndex) > 0)
+            if (count($campaignIndex) > 0) {
                 $bannerList = $this->getCampaignBanners(array_keys($campaignIndex));
+            }
         }
 
         $bannerListSorted = array();
@@ -932,10 +956,12 @@ class YandexDirect extends Engine\YandexBase implements IEngine
 
         $filter = array('=ENGINE_ID' => $this->getId());
 //			get filtered items only if we update only selected banners. Else - get ALL from table
-        if (is_array($bannerId) && count($bannerId) > 0 && count($bannerListSorted) > 0)
+        if (is_array($bannerId) && count($bannerId) > 0 && count($bannerListSorted) > 0) {
             $filter['=XML_ID'] = array_keys($bannerListSorted);
-        if ($campaignId)
+        }
+        if ($campaignId) {
             $filter['=CAMPAIGN_ID'] = $campaignId;
+        }
         $dbBanners = YandexBannerTable::getList(array('filter' => $filter));
 
         YandexBannerTable::setSkipRemoteUpdate(true);
@@ -943,7 +969,8 @@ class YandexDirect extends Engine\YandexBase implements IEngine
         while ($banner = $dbBanners->fetch()) {
             if (isset($bannerListSorted[$banner['XML_ID']])) {
                 $result = YandexBannerTable::update(
-                    $banner['ID'], array(
+                    $banner['ID'],
+                    array(
                         "SETTINGS" => $bannerListSorted[$banner['XML_ID']],
                     )
                 );
@@ -971,10 +998,12 @@ class YandexDirect extends Engine\YandexBase implements IEngine
 
 //			ADD in table new campaignt from YD
         foreach ($bannerListSorted as $bannerId => $bannerInfo) {
-            $result = YandexBannerTable::add(array(
-                "CAMPAIGN_ID" => $campaignIndex[$bannerInfo['CampaignID']],
-                "SETTINGS" => $bannerInfo,
-            ));
+            $result = YandexBannerTable::add(
+                array(
+                    "CAMPAIGN_ID" => $campaignIndex[$bannerInfo['CampaignID']],
+                    "SETTINGS" => $bannerInfo,
+                )
+            );
 
             if ($result->isSuccess()) {
                 $res['added']++;
@@ -993,16 +1022,20 @@ class YandexDirect extends Engine\YandexBase implements IEngine
         $engine = new self();
         if ($engine->getAuthSettings()) {
             try {
-                $dbRes = YandexCampaignTable::getList(array(
-                    'filter' => array(
-                        '<LAST_UPDATE' => DateTime::createFromTimestamp(time() - YandexCampaignTable::CACHE_LIFETIME),
-                        '=ENGINE_ID' => $engine->getId(),
-                    ),
-                    'select' => array('CNT'),
-                    'runtime' => array(
-                        new ExpressionField('CNT', 'COUNT(*)'),
-                    ),
-                ));
+                $dbRes = YandexCampaignTable::getList(
+                    array(
+                        'filter' => array(
+                            '<LAST_UPDATE' => DateTime::createFromTimestamp(
+                                time() - YandexCampaignTable::CACHE_LIFETIME
+                            ),
+                            '=ENGINE_ID' => $engine->getId(),
+                        ),
+                        'select' => array('CNT'),
+                        'runtime' => array(
+                            new ExpressionField('CNT', 'COUNT(*)'),
+                        ),
+                    )
+                );
 
                 $res = $dbRes->fetch();
                 if ($res['CNT'] > 0) {
@@ -1016,15 +1049,19 @@ class YandexDirect extends Engine\YandexBase implements IEngine
                 }
 
                 if (count($availableCampaigns) > 0) {
-                    $dbRes = YandexBannerTable::getList(array(
-                        'group' => array('CAMPAIGN_ID'),
-                        'filter' => array(
-                            '<LAST_UPDATE' => DateTime::createFromTimestamp(time() - YandexBannerTable::CACHE_LIFETIME),
-                            '=ENGINE_ID' => $engine->getId(),
-                            '=CAMPAIGN.XML_ID' => $availableCampaigns,
-                        ),
-                        'select' => array('CAMPAIGN_ID'),
-                    ));
+                    $dbRes = YandexBannerTable::getList(
+                        array(
+                            'group' => array('CAMPAIGN_ID'),
+                            'filter' => array(
+                                '<LAST_UPDATE' => DateTime::createFromTimestamp(
+                                    time() - YandexBannerTable::CACHE_LIFETIME
+                                ),
+                                '=ENGINE_ID' => $engine->getId(),
+                                '=CAMPAIGN.XML_ID' => $availableCampaigns,
+                            ),
+                            'select' => array('CAMPAIGN_ID'),
+                        )
+                    );
 
                     $campaignId = array();
                     while ($res = $dbRes->fetch()) {

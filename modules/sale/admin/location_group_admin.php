@@ -9,16 +9,18 @@
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions < "W")
+if ($saleModulePermissions < "W") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 CModule::IncludeModule('sale');
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/prolog.php");
 
 /// redirect to newer version
-if (CSaleLocation::isLocationProEnabled())
+if (CSaleLocation::isLocationProEnabled()) {
     LocalRedirect('/bitrix/admin/sale_location_group_list.php');
+}
 
 $sTableID = "tbl_sale_location_group";
 
@@ -33,7 +35,9 @@ $lAdmin->InitFilter($arFilterFields);
 
 $arFilter = array();
 
-if (IntVal($filter_location) > 0) $arFilter["LOCATION"] = IntVal($filter_location);
+if (intval($filter_location) > 0) {
+    $arFilter["LOCATION"] = intval($filter_location);
+}
 
 if (($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "W") {
     if ($_REQUEST['action_target'] == 'selected') {
@@ -43,13 +47,15 @@ if (($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "W") {
             $arFilter,
             LANG
         );
-        while ($arResult = $dbResultList->Fetch())
+        while ($arResult = $dbResultList->Fetch()) {
             $arID[] = $arResult['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
 
         switch ($_REQUEST['action']) {
             case "delete":
@@ -60,10 +66,11 @@ if (($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "W") {
                 if (!CSaleLocationGroup::Delete($ID)) {
                     $DB->Rollback();
 
-                    if ($ex = $APPLICATION->GetException())
+                    if ($ex = $APPLICATION->GetException()) {
                         $lAdmin->AddGroupError($ex->GetString(), $ID);
-                    else
+                    } else {
                         $lAdmin->AddGroupError(GetMessage("ERROR_DELETE"), $ID);
+                    }
                 }
 
                 $DB->Commit();
@@ -84,11 +91,13 @@ $dbResultList->NavStart();
 
 $lAdmin->NavText($dbResultList->GetNavPrint(GetMessage("SALE_PRLIST")));
 
-$lAdmin->AddHeaders(array(
-    array("id" => "ID", "content" => "ID", "sort" => "id", "default" => true),
-    array("id" => "NAME", "content" => GetMessage("SALE_NAME"), "sort" => "NAME", "default" => true),
-    array("id" => "SORT", "content" => GetMessage("SALE_SORT"), "sort" => "SORT", "default" => true),
-));
+$lAdmin->AddHeaders(
+    array(
+        array("id" => "ID", "content" => "ID", "sort" => "id", "default" => true),
+        array("id" => "NAME", "content" => GetMessage("SALE_NAME"), "sort" => "NAME", "default" => true),
+        array("id" => "SORT", "content" => GetMessage("SALE_SORT"), "sort" => "SORT", "default" => true),
+    )
+);
 
 $arVisibleColumns = $lAdmin->GetVisibleHeaderColumns();
 
@@ -103,7 +112,9 @@ while ($arCCard = $dbResultList->NavNext(true, "f_")) {
     $arActions[] = array(
         "ICON" => "edit",
         "TEXT" => GetMessage("SALE_EDIT_DESCR"),
-        "ACTION" => $lAdmin->ActionRedirect("sale_location_group_edit.php?ID=" . $f_ID . "&lang=" . LANGUAGE_ID . GetFilterParams("filter_") . ""),
+        "ACTION" => $lAdmin->ActionRedirect(
+            "sale_location_group_edit.php?ID=" . $f_ID . "&lang=" . LANGUAGE_ID . GetFilterParams("filter_") . ""
+        ),
         "DEFAULT" => true
     );
     if ($saleModulePermissions >= "W") {
@@ -111,7 +122,10 @@ while ($arCCard = $dbResultList->NavNext(true, "f_")) {
         $arActions[] = array(
             "ICON" => "delete",
             "TEXT" => GetMessage("SALE_DELETE_TEXT"),
-            "ACTION" => "if(confirm('" . GetMessage('SALE_CONFIRM_DEL_MESSAGE') . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete")
+            "ACTION" => "if(confirm('" . GetMessage('SALE_CONFIRM_DEL_MESSAGE') . "')) " . $lAdmin->ActionDoGroup(
+                    $f_ID,
+                    "delete"
+                )
         );
     }
 
@@ -173,9 +187,17 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
             <td>
                 <select name="filter_location">
                     <option value=""><? echo GetMessage("SALE_ALL") ?></option>
-                    <? $db_vars = CSaleLocation::GetList(Array("SORT" => "ASC", "COUNTRY_NAME_LANG" => "ASC", "CITY_NAME_LANG" => "ASC"), array(), LANG) ?>
+                    <? $db_vars = CSaleLocation::GetList(
+                        Array("SORT" => "ASC", "COUNTRY_NAME_LANG" => "ASC", "CITY_NAME_LANG" => "ASC"),
+                        array(),
+                        LANG
+                    ) ?>
                     <? while ($vars = $db_vars->Fetch()): ?>
-                        <option value="<? echo $vars["ID"] ?>"<? if (IntVal($vars["ID"]) == IntVal($filter_location)) echo " selected" ?>><? echo htmlspecialcharsbx($vars["COUNTRY_NAME"] . " - " . $vars["CITY_NAME"]) ?></option>
+                        <option value="<? echo $vars["ID"] ?>"<? if (intval($vars["ID"]) == intval(
+                                $filter_location
+                            )) echo " selected" ?>><? echo htmlspecialcharsbx(
+                                $vars["COUNTRY_NAME"] . " - " . $vars["CITY_NAME"]
+                            ) ?></option>
                     <? endwhile; ?>
                 </select>
             </td>

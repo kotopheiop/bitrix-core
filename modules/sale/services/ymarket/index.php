@@ -1,4 +1,5 @@
 <?
+
 define("NO_AGENT_CHECK", true);
 define("NO_AGENT_STATISTIC", true);
 define("NOT_CHECK_PERMISSIONS", true);
@@ -21,12 +22,15 @@ $method = isset($matches[6]) ? $matches[6] : '';
 
 $postData = '';
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && count($_POST) <= 0)
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && count($_POST) <= 0) {
     $postData = file_get_contents("php://input");
+}
 
-$YMHandler = new CSaleYMHandler(array(
-    "SITE_ID" => $siteId
-));
+$YMHandler = new CSaleYMHandler(
+    array(
+        "SITE_ID" => $siteId
+    )
+);
 
 $result = $YMHandler->processRequest($requestObject, $method, $postData);
 $APPLICATION->RestartBuffer();

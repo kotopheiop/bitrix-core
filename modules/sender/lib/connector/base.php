@@ -10,7 +10,6 @@ namespace Bitrix\Sender\Connector;
 
 use Bitrix\Sender\Recipient;
 
-
 abstract class Base
 {
     protected $fieldPrefix;
@@ -152,8 +151,9 @@ abstract class Base
             return $fieldPrefix . '_' . $moduleId . '_' . $this->getCode() . '_%CONNECTOR_NUM%_' . $id;
         } elseif ($fieldPrefixExtended) {
             return str_replace(array('][', '[', ']'), array('_', '', ''), $fieldPrefixExtended) . '_' . $id;
-        } else
+        } else {
             return $id;
+        }
     }
 
     /**
@@ -166,10 +166,12 @@ abstract class Base
         $fieldPrefixExtended = $this->getFieldPrefixExtended();
         if ($fieldPrefix || $fieldPrefixExtended) {
             $arReturnName = array();
-            if ($fieldPrefix)
-                $arReturnName[] = $fieldPrefix . '[' . $this->getModuleId() . '][' . $this->getCode() . '][%CONNECTOR_NUM%]';
-            else
+            if ($fieldPrefix) {
+                $arReturnName[] = $fieldPrefix . '[' . $this->getModuleId() . '][' . $this->getCode(
+                    ) . '][%CONNECTOR_NUM%]';
+            } else {
                 $arReturnName[] = $fieldPrefixExtended;
+            }
 
             $arName = explode('[', $name);
             $arReturnName[] = '[' . $arName[0] . ']';
@@ -179,8 +181,9 @@ abstract class Base
             }
 
             return implode('', $arReturnName);
-        } else
+        } else {
             return $name;
+        }
     }
 
     /**
@@ -190,10 +193,11 @@ abstract class Base
      */
     public function getFieldValue($name, $defaultValue = null)
     {
-        if ($this->fieldValues && array_key_exists($name, $this->fieldValues))
+        if ($this->fieldValues && array_key_exists($name, $this->fieldValues)) {
             return $this->fieldValues[$name];
-        else
+        } else {
             return $defaultValue;
+        }
     }
 
     /**
@@ -234,8 +238,10 @@ abstract class Base
         $dataCounts = $this->getDataCountByType();
         if (is_object($dataCounts) && $dataCounts instanceof DataCounter) {
             return $dataCounts;
-        } else if (!is_array($dataCounts)) {
-            $dataCounts = array($this->getDataTypeId() => $this->getDataCount());
+        } else {
+            if (!is_array($dataCounts)) {
+                $dataCounts = array($this->getDataTypeId() => $this->getDataCount());
+            }
         }
 
         return new DataCounter($dataCounts);
@@ -251,6 +257,12 @@ abstract class Base
         $personalizeList = array();
         $personalizeListTmp = $this->getPersonalizeList();
         foreach ($personalizeListTmp as $tag) {
+            if (!empty($tag['ITEMS'])) {
+                foreach ($tag['ITEMS'] as $item) {
+                    $personalizeList[$item['CODE']] = $item['CODE'];
+                }
+                continue;
+            }
             if (strlen($tag['CODE']) > 0) {
                 $personalizeList[] = $tag['CODE'];
             }
@@ -302,7 +314,6 @@ abstract class Base
 
     protected function onInitResultView()
     {
-
     }
 
     /**
@@ -332,9 +343,17 @@ abstract class Base
     public abstract function getCode();
 
     /**
+     *
+     *
      * @return array|\Bitrix\Main\DB\Result|\CAllDBResult
      */
     public abstract function getData();
+
+
+    public function buildData()
+    {
+        return null;
+    }
 
     /**
      * @return string

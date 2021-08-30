@@ -9,8 +9,9 @@ Loc::loadMessages($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/options.php'
 Loc::loadMessages(__FILE__);
 
 $MOD_RIGHT = $APPLICATION->getGroupRight('conversion');
-if ($MOD_RIGHT < 'R')
+if ($MOD_RIGHT < 'R') {
     return;
+}
 
 $modules = Config::getModules();
 
@@ -24,8 +25,8 @@ if (!(Loader::includeModule('currency') && ($currencies = CurrencyManager::getCu
 }
 
 if ($MOD_RIGHT >= 'W' && check_bitrix_sessid()) {
-    if ($REQUEST_METHOD == 'POST' && strlen($Update . $Apply . $RestoreDefaults) > 0) {
-        if (strlen($RestoreDefaults) > 0) {
+    if ($REQUEST_METHOD == 'POST' && $Update . $Apply . $RestoreDefaults <> '') {
+        if ($RestoreDefaults <> '') {
             Config::setBaseCurrency(null);
             $currency = Config::getBaseCurrency();
 
@@ -52,10 +53,22 @@ if ($MOD_RIGHT >= 'W' && check_bitrix_sessid()) {
 
 // VIEW
 
-$tabControl = new CAdminTabControl('tabControl', array(
-    array('DIV' => 'edit1', 'TAB' => Loc::getMessage('MAIN_TAB_SET'), 'ICON' => 'ib_settings', 'TITLE' => Loc::getMessage('MAIN_TAB_TITLE_SET')),
-    array('DIV' => 'edit2', 'TAB' => Loc::getMessage('CONVERSION_TAB_MODULES_NAME'), 'ICON' => 'ib_settings', 'TITLE' => Loc::getMessage('CONVERSION_TAB_MODULES_DESC')),
-));
+$tabControl = new CAdminTabControl(
+    'tabControl', array(
+    array(
+        'DIV' => 'edit1',
+        'TAB' => Loc::getMessage('MAIN_TAB_SET'),
+        'ICON' => 'ib_settings',
+        'TITLE' => Loc::getMessage('MAIN_TAB_TITLE_SET')
+    ),
+    array(
+        'DIV' => 'edit2',
+        'TAB' => Loc::getMessage('CONVERSION_TAB_MODULES_NAME'),
+        'ICON' => 'ib_settings',
+        'TITLE' => Loc::getMessage('CONVERSION_TAB_MODULES_DESC')
+    ),
+)
+);
 
 $tabControl->Begin();
 
@@ -74,7 +87,9 @@ $tabControl->Begin();
 
                 foreach ($currencies as $key => $name) {
                     ?>
-                    <option value="<?= $key ?>"<?= $key == $currency ? ' selected' : '' ?>><?= htmlspecialcharsex($name) ?></option><?
+                    <option value="<?= $key ?>"<?= $key == $currency ? ' selected' : '' ?>><?= htmlspecialcharsex(
+                    $name
+                ) ?></option><?
                 }
 
                 ?>
@@ -98,8 +113,9 @@ $tabControl->Begin();
 
                 $title = $name;
                 if ($info = \CModule::createModuleObject($name)) {
-                    if (!empty($info->MODULE_NAME))
+                    if (!empty($info->MODULE_NAME)) {
                         $title = $info->MODULE_NAME;
+                    }
                 }
 
                 echo $title;
@@ -118,18 +134,22 @@ $tabControl->Begin();
 
     <? $tabControl->Buttons() ?>
 
-    <input type="submit" name="Update" <? if ($MOD_RIGHT < 'W') echo 'disabled'; ?>
-           value="<?= GetMessage("MAIN_SAVE") ?>" title="<?= GetMessage("MAIN_OPT_SAVE_TITLE") ?>" class="adm-btn-save">
-    <input type="submit" name="Apply" <? if ($MOD_RIGHT < 'W') echo 'disabled'; ?>
-           value="<?= GetMessage("MAIN_OPT_APPLY") ?>" title="<?= GetMessage("MAIN_OPT_APPLY_TITLE") ?>">
-    <? if (strlen($_REQUEST["back_url_settings"]) > 0): ?>
+    <input type="submit" name="Update" <? if ($MOD_RIGHT < 'W') {
+        echo 'disabled';
+    } ?> value="<?= GetMessage("MAIN_SAVE") ?>" title="<?= GetMessage("MAIN_OPT_SAVE_TITLE") ?>" class="adm-btn-save">
+    <input type="submit" name="Apply" <? if ($MOD_RIGHT < 'W') {
+        echo 'disabled';
+    } ?> value="<?= GetMessage("MAIN_OPT_APPLY") ?>" title="<?= GetMessage("MAIN_OPT_APPLY_TITLE") ?>">
+    <? if ($_REQUEST["back_url_settings"] <> ''): ?>
         <input type="button" name="Cancel" value="<?= GetMessage("MAIN_OPT_CANCEL") ?>"
-               title="<?= GetMessage("MAIN_OPT_CANCEL_TITLE") ?>"
-               onclick="window.location='<? echo htmlspecialcharsbx(CUtil::addslashes($_REQUEST["back_url_settings"])) ?>'">
+               title="<?= GetMessage("MAIN_OPT_CANCEL_TITLE") ?>" onclick="window.location='<? echo htmlspecialcharsbx(
+            CUtil::addslashes($_REQUEST["back_url_settings"])
+        ) ?>'">
         <input type="hidden" name="back_url_settings" value="<?= htmlspecialcharsbx($_REQUEST["back_url_settings"]) ?>">
     <? endif ?>
-    <input type="submit" name="RestoreDefaults" <? if ($MOD_RIGHT < 'W') echo 'disabled'; ?>
-           title="<? echo GetMessage("MAIN_HINT_RESTORE_DEFAULTS") ?>"
+    <input type="submit" name="RestoreDefaults" <? if ($MOD_RIGHT < 'W') {
+        echo 'disabled';
+    } ?> title="<? echo GetMessage("MAIN_HINT_RESTORE_DEFAULTS") ?>"
            OnClick="return confirm('<? echo AddSlashes(GetMessage("MAIN_HINT_RESTORE_DEFAULTS_WARNING")) ?>')"
            value="<? echo GetMessage("MAIN_RESTORE_DEFAULTS") ?>">
 

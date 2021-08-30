@@ -46,8 +46,9 @@ class CBitrixCloudCDNQuota
     public function setExpires($expires)
     {
         $this->expires = intval($expires);
-        if ($this->expires < 0)
+        if ($this->expires < 0) {
             $this->expires = 0;
+        }
 
         return $this;
     }
@@ -61,8 +62,9 @@ class CBitrixCloudCDNQuota
     public function setAllowedSize($allowed)
     {
         $this->allowed = doubleval($allowed);
-        if ($this->allowed < 0.0)
+        if ($this->allowed < 0.0) {
             $this->allowed = 0.0;
+        }
 
         return $this;
     }
@@ -76,8 +78,9 @@ class CBitrixCloudCDNQuota
     public function setTrafficSize($traffic)
     {
         $this->traffic = doubleval($traffic);
-        if ($this->traffic < 0.0)
+        if ($this->traffic < 0.0) {
             $this->traffic = 0.0;
+        }
 
         return $this;
     }
@@ -90,15 +93,16 @@ class CBitrixCloudCDNQuota
      */
     public static function parseSize($str)
     {
-        $str = strtolower($str);
+        $str = mb_strtolower($str);
         $res = doubleval($str);
-        $suffix = substr($str, -1);
-        if ($suffix === "k")
+        $suffix = mb_substr($str, -1);
+        if ($suffix === "k") {
             $res *= 1024;
-        elseif ($suffix === "m")
+        } elseif ($suffix === "m") {
             $res *= 1048576;
-        elseif ($suffix === "g")
+        } elseif ($suffix === "g") {
             $res *= 1048576 * 1024;
+        }
 
         return $res;
     }
@@ -114,12 +118,14 @@ class CBitrixCloudCDNQuota
         $quota = new CBitrixCloudCDNQuota();
         $quota->setExpires(strtotime($node->getAttribute("expires")));
         $allow_nodes = $node->elementsByName("allow");
-        foreach ($allow_nodes as $allow_node)
+        foreach ($allow_nodes as $allow_node) {
             $quota->setAllowedSize(self::parseSize($allow_node->textContent()));
+        }
 
         $traffic_nodes = $node->elementsByName("traffic");
-        foreach ($traffic_nodes as $traffic_node)
+        foreach ($traffic_nodes as $traffic_node) {
             $quota->setTrafficSize(self::parseSize($traffic_node->textContent()));
+        }
 
         return $quota;
     }

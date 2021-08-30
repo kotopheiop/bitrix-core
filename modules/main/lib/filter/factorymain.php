@@ -13,8 +13,11 @@ class FactoryMain
             EventResult::SUCCESS,
             [
                 'callbacks' => [
-                    \Bitrix\Main\UserTable::getUfId() => function ($entityTypeName, array $settingsParams, array $additionalParams = null) {
-
+                    \Bitrix\Main\UserTable::getUfId() => function (
+                        $entityTypeName,
+                        array $settingsParams,
+                        array $additionalParams = null
+                    ) {
                         if ($entityTypeName == \Bitrix\Main\UserTable::getUfId()) {
                             $settings = new \Bitrix\Main\Filter\UserSettings($settingsParams);
                             $filterID = $settings->getID();
@@ -24,7 +27,6 @@ class FactoryMain
                                 new \Bitrix\Main\Filter\UserDataProvider($settings),
                                 [new \Bitrix\Main\Filter\UserUFDataProvider($settings)]
                             );
-
                         }
                     }
                 ]

@@ -11,8 +11,9 @@ class CCatalogDiscountConvertTmp
     {
         global $DB;
 
-        if (self::$boolError)
+        if (self::$boolError) {
             return false;
+        }
 
         $strSql = "SHOW TABLES LIKE '" . $DB->ForSql(self::$strTableName) . "'";
         $dbResult = $DB->Query($strSql);
@@ -25,8 +26,9 @@ class CCatalogDiscountConvertTmp
 
             if (!$result) {
                 self::$boolError = true;
-                if (!is_array(self::$arErrors))
+                if (!is_array(self::$arErrors)) {
                     self::$arErrors = array();
+                }
                 self::$arErrors[] = $DB->db_Error;
                 return false;
             }
@@ -38,16 +40,18 @@ class CCatalogDiscountConvertTmp
     {
         global $DB;
 
-        if (self::$boolError)
+        if (self::$boolError) {
             return false;
+        }
 
         $strSql = "DROP TABLE IF EXISTS " . self::$strTableName;
         $result = $DB->Query($strSql, true);
 
         if (!$result) {
             self::$boolError = true;
-            if (!is_array(self::$arErrors))
+            if (!is_array(self::$arErrors)) {
                 self::$arErrors = array();
+            }
             self::$arErrors[] = $DB->db_Error;
             return false;
         }
@@ -56,12 +60,14 @@ class CCatalogDiscountConvertTmp
 
     public static function IsExistID($intID)
     {
-        if (self::$boolError)
+        if (self::$boolError) {
             return false;
+        }
 
         $intID = intval($intID);
-        if (0 >= $intID)
+        if (0 >= $intID) {
             return false;
+        }
 
         global $DB;
 
@@ -76,8 +82,9 @@ class CCatalogDiscountConvertTmp
 
     public static function GetLastID()
     {
-        if (self::$boolError)
+        if (self::$boolError) {
             return false;
+        }
 
         global $DB;
 
@@ -92,12 +99,14 @@ class CCatalogDiscountConvertTmp
 
     public static function SetID($intID)
     {
-        if (self::$boolError)
+        if (self::$boolError) {
             return false;
+        }
 
         $intID = intval($intID);
-        if (0 >= $intID)
+        if (0 >= $intID) {
             return false;
+        }
 
         global $DB;
 
@@ -108,14 +117,16 @@ class CCatalogDiscountConvertTmp
 
     public static function GetNeedConvert($intMinProduct)
     {
-        if (self::$boolError)
+        if (self::$boolError) {
             return false;
+        }
 
         global $DB;
 
         $intMinProduct = intval($intMinProduct);
-        if (0 >= $intMinProduct)
+        if (0 >= $intMinProduct) {
             $intMinProduct = 0;
+        }
 
         $strSql = "SELECT COUNT(CD.ID) as CNT FROM " . self::$strMainTableName . " CD WHERE
 			CD.TYPE = " . CCatalogDiscount::ENTITY_ID . " AND CD.VERSION = " . CCatalogDiscount::CURRENT_FORMAT . "

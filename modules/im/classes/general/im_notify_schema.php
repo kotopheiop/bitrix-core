@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 class CIMNotifySchema
@@ -20,8 +21,9 @@ class CIMNotifySchema
                         self::$arNotifySchema[$moduleId]['NAME'] = isset($arNotifyType['NOTIFY']) && isset($arNotifyType['NAME']) ? $arNotifyType['NAME'] : '';
 
                         $arNotify = $arNotifyType;
-                        if (isset($arNotifyType['NOTIFY']))
+                        if (isset($arNotifyType['NOTIFY'])) {
                             $arNotify = $arNotifyType['NOTIFY'];
+                        }
 
                         foreach ($arNotify as $notifyEvent => $arConfig) {
                             if (!isset($arConfig['PUSH']) || $arConfig['PUSH'] == 'NONE') {
@@ -33,10 +35,22 @@ class CIMNotifySchema
                             $arConfig['XMPP'] = !isset($arConfig['XMPP']) || $arConfig['XMPP'] == 'Y' ? true : false;
                             $arConfig['PUSH'] = isset($arConfig['PUSH']) && $arConfig['PUSH'] == 'Y' ? true : false;
 
-                            $arDisabled['SITE'] = isset($arConfig['DISABLED']) && in_array(IM_NOTIFY_FEATURE_SITE, $arConfig['DISABLED']) ? true : false;
-                            $arDisabled['MAIL'] = isset($arConfig['DISABLED']) && in_array(IM_NOTIFY_FEATURE_MAIL, $arConfig['DISABLED']) ? true : false;
-                            $arDisabled['XMPP'] = isset($arConfig['DISABLED']) && in_array(IM_NOTIFY_FEATURE_XMPP, $arConfig['DISABLED']) ? true : false;
-                            $arDisabled['PUSH'] = isset($arConfig['DISABLED']) && in_array(IM_NOTIFY_FEATURE_PUSH, $arConfig['DISABLED']) ? true : false;
+                            $arDisabled['SITE'] = isset($arConfig['DISABLED']) && in_array(
+                                IM_NOTIFY_FEATURE_SITE,
+                                $arConfig['DISABLED']
+                            ) ? true : false;
+                            $arDisabled['MAIL'] = isset($arConfig['DISABLED']) && in_array(
+                                IM_NOTIFY_FEATURE_MAIL,
+                                $arConfig['DISABLED']
+                            ) ? true : false;
+                            $arDisabled['XMPP'] = isset($arConfig['DISABLED']) && in_array(
+                                IM_NOTIFY_FEATURE_XMPP,
+                                $arConfig['DISABLED']
+                            ) ? true : false;
+                            $arDisabled['PUSH'] = isset($arConfig['DISABLED']) && in_array(
+                                IM_NOTIFY_FEATURE_PUSH,
+                                $arConfig['DISABLED']
+                            ) ? true : false;
                             $arConfig['DISABLED'] = $arDisabled;
 
                             $arConfig['LIFETIME'] = intval($arConfig['LIFETIME']);
@@ -54,14 +68,14 @@ class CIMNotifySchema
     {
         $arNotifySchema = self::GetNotifySchema();
 
-        return (bool)$arNotifySchema[$moduleId]['NOTIFY'][$notifyEvent]['DISABLED'][strtoupper($feature)];
+        return (bool)$arNotifySchema[$moduleId]['NOTIFY'][$notifyEvent]['DISABLED'][mb_strtoupper($feature)];
     }
 
     public static function GetDefaultFeature($moduleId, $notifyEvent, $feature)
     {
         $arNotifySchema = self::GetNotifySchema();
 
-        return (bool)$arNotifySchema[$moduleId]['NOTIFY'][$notifyEvent][strtoupper($feature)];
+        return (bool)$arNotifySchema[$moduleId]['NOTIFY'][$notifyEvent][mb_strtoupper($feature)];
     }
 
     public static function GetLifetime($moduleId, $notifyEvent)
@@ -78,18 +92,18 @@ class CIMNotifySchema
                 "NAME" => GetMessage('IM_NS_IM'),
                 "NOTIFY" => Array(
                     "message" => Array(
-                        "NAME" => GetMessage('IM_NS_MESSAGE_2'),
+                        "NAME" => GetMessage('IM_NS_MESSAGE_NEW'),
                         "PUSH" => 'Y',
                         "DISABLED" => Array(IM_NOTIFY_FEATURE_SITE, IM_NOTIFY_FEATURE_XMPP)
                     ),
                     "chat" => Array(
-                        "NAME" => GetMessage('IM_NS_CHAT_2'),
+                        "NAME" => GetMessage('IM_NS_CHAT_NEW'),
                         "MAIL" => 'N',
                         "PUSH" => 'Y',
                         "DISABLED" => Array(IM_NOTIFY_FEATURE_SITE, IM_NOTIFY_FEATURE_XMPP, IM_NOTIFY_FEATURE_MAIL)
                     ),
                     "openChat" => Array(
-                        "NAME" => GetMessage('IM_NS_OPEN'),
+                        "NAME" => GetMessage('IM_NS_OPEN_NEW'),
                         "MAIL" => 'N',
                         "PUSH" => 'Y',
                         "DISABLED" => Array(IM_NOTIFY_FEATURE_SITE, IM_NOTIFY_FEATURE_XMPP, IM_NOTIFY_FEATURE_MAIL)

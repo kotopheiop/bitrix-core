@@ -34,21 +34,23 @@ class CAllForumUser
 
     public static function GetUserTopicVisits($forumID, $arTopic, $userID = null)
     {
-        global $DB;
+        global $DB, $USER;
 
         $arResult = array();
 
         $forumID = intval($forumID);
-        if ($userID == null)
-            $userID = CUser::GetID();
-        else
+        if ($userID == null) {
+            $userID = $USER->GetID();
+        } else {
             $userID = intval($userID);
+        }
         if (($forumID <= 0) || ($userID <= 0)) {
             return $arResult;
         }
         $arSelectTopic = array();
-        foreach ($arTopic as $topicID)
+        foreach ($arTopic as $topicID) {
             $arSelectTopic[] = intval($topicID);
+        }
         $arSelectTopic = array_unique(array_filter($arSelectTopic));
         if (sizeof($arSelectTopic) < 1) {
             return $arResult;
@@ -72,9 +74,10 @@ class CAllForumUser
     public static function IsLocked($USER_ID)
     {
         global $DB, $CACHE_MANAGER;
-        $USER_ID = intVal($USER_ID);
-        if ($USER_ID <= 0)
+        $USER_ID = intval($USER_ID);
+        if ($USER_ID <= 0) {
             return false;
+        }
         $cache_id = "b_forum_user_locked";
 
         if (!array_key_exists("LOCKED_USERS", $GLOBALS["FORUM_CACHE"])) {
@@ -86,13 +89,14 @@ class CAllForumUser
                 $db_res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
                 if ($db_res && $res = $db_res->Fetch()) {
                     do {
-                        $arRes[intVal($res["USER_ID"])] = $res;
+                        $arRes[intval($res["USER_ID"])] = $res;
                     } while ($res = $db_res->Fetch());
                 }
 
                 $GLOBALS["FORUM_CACHE"]["LOCKED_USERS"] = $arRes;
-                if (CACHED_b_forum_user !== false)
+                if (CACHED_b_forum_user !== false) {
                     $CACHE_MANAGER->Set($cache_id, $GLOBALS["FORUM_CACHE"]["LOCKED_USERS"]);
+                }
             }
         }
         return array_key_exists($USER_ID, $GLOBALS["FORUM_CACHE"]["LOCKED_USERS"]);
@@ -100,73 +104,103 @@ class CAllForumUser
 
     public static function CanUserAddUser($arUserGroups)
     {
-        return True;
+        return true;
     }
 
     public static function CanUserUpdateUser($ID, $arUserGroups, $CurrentUserID = 0)
     {
-        $ID = intVal($ID);
-        $CurrentUserID = intVal($CurrentUserID);
-        if (in_array(1, $arUserGroups)) return True;
+        $ID = intval($ID);
+        $CurrentUserID = intval($CurrentUserID);
+        if (in_array(1, $arUserGroups)) {
+            return true;
+        }
         $arUser = CForumUser::GetByID($ID);
-        if ($arUser && intVal($arUser["USER_ID"]) == $CurrentUserID) return True;
-        return False;
+        if ($arUser && intval($arUser["USER_ID"]) == $CurrentUserID) {
+            return true;
+        }
+        return false;
     }
 
     public static function CanUserDeleteUser($ID, $arUserGroups)
     {
-        $ID = intVal($ID);
-        if (in_array(1, $arUserGroups)) return True;
-        return False;
+        $ID = intval($ID);
+        if (in_array(1, $arUserGroups)) {
+            return true;
+        }
+        return false;
     }
 
     public static function CheckFields($ACTION, &$arFields, $ID = false)
     {
-        if (is_set($arFields, "AVATAR") && strlen($arFields["AVATAR"]["name"]) <= 0 && strlen($arFields["AVATAR"]["del"]) <= 0) {
+        if (is_set($arFields, "AVATAR") && $arFields["AVATAR"]["name"] == '' && $arFields["AVATAR"]["del"] == '') {
             unset($arFields["AVATAR"]);
         }
 
         $aMsg = array();
         // Checking user for updating or adding
         // USER_ID as value
-        if ((is_set($arFields, "USER_ID") || $ACTION == "ADD") && intVal($arFields["USER_ID"]) <= 0) {
+        if ((is_set($arFields, "USER_ID") || $ACTION == "ADD") && intval($arFields["USER_ID"]) <= 0) {
             $aMsg[] = array(
                 "id" => 'EMPTY_USER_ID',
-                "text" => GetMessage("F_GL_ERR_EMPTY_USER_ID"));
+                "text" => GetMessage("F_GL_ERR_EMPTY_USER_ID")
+            );
         } elseif (is_set($arFields, "USER_ID")) {
             $user = CUser::GetByID($arFields["USER_ID"])->fetch();
             if (empty($user)) {
                 $aMsg[] = array(
                     "id" => 'USER_DOES_NOT_EXIST',
-                    "text" => GetMessage("F_GL_ERR_USER_NOT_EXIST", array("#UID#" => htmlspecialcharsbx($arFields["USER_ID"]))));
+                    "text" => GetMessage(
+                        "F_GL_ERR_USER_NOT_EXIST",
+                        array("#UID#" => htmlspecialcharsbx($arFields["USER_ID"]))
+                    )
+                );
             }
 
             $res = CForumUser::GetByUSER_ID($arFields["USER_ID"]);
 
             if ($ACTION == "UPDATE") {
                 unset($arFields["USER_ID"]);
-            } else if (!empty($res)) {
-                $aMsg[] = array(
-                    "id" => 'USER_EXISTS',
-                    "text" => GetMessage("F_GL_ERR_USER_IS_EXIST", array("#UID#" => htmlspecialcharsbx($arFields["USER_ID"]))));
-            } else if (!array_key_exists("AVATAR", $arFields) && $user["PERSONAL_PHOTO"] > 0) {
-                $arFields["AVATAR"] = CFile::MakeFileArray($user["PERSONAL_PHOTO"]);
-                if (!$arFields["AVATAR"] || CFile::ResizeImage($arFields["AVATAR"], array(
-                        "width" => COption::GetOptionInt("forum", "avatar_max_width", 100),
-                        "height" => COption::GetOptionInt("forum", "avatar_max_height", 100)))
-                ) {
-                    unset($arFields["AVATAR"]);
+            } else {
+                if (!empty($res)) {
+                    $aMsg[] = array(
+                        "id" => 'USER_EXISTS',
+                        "text" => GetMessage(
+                            "F_GL_ERR_USER_IS_EXIST",
+                            array("#UID#" => htmlspecialcharsbx($arFields["USER_ID"]))
+                        )
+                    );
+                } else {
+                    if (!array_key_exists("AVATAR", $arFields) && $user["PERSONAL_PHOTO"] > 0) {
+                        $arFields["AVATAR"] = CFile::MakeFileArray($user["PERSONAL_PHOTO"]);
+                        if (!$arFields["AVATAR"] || CFile::ResizeImage(
+                                $arFields["AVATAR"],
+                                array(
+                                    "width" => COption::GetOptionInt("forum", "avatar_max_width", 100),
+                                    "height" => COption::GetOptionInt("forum", "avatar_max_height", 100)
+                                )
+                            )
+                        ) {
+                            unset($arFields["AVATAR"]);
+                        }
+                    }
                 }
             }
         }
         // last visit
         if (is_set($arFields, "LAST_VISIT")) {
             $arFields["LAST_VISIT"] = trim($arFields["LAST_VISIT"]);
-            if (strLen($arFields["LAST_VISIT"]) > 0) {
-                if ($arFields["LAST_VISIT"] != $GLOBALS["DB"]->GetNowFunction() && !$GLOBALS["DB"]->IsDate($arFields["LAST_VISIT"], false, SITE_ID, "FULL"))
+            if ($arFields["LAST_VISIT"] <> '') {
+                if ($arFields["LAST_VISIT"] != $GLOBALS["DB"]->GetNowFunction() && !$GLOBALS["DB"]->IsDate(
+                        $arFields["LAST_VISIT"],
+                        false,
+                        SITE_ID,
+                        "FULL"
+                    )) {
                     $aMsg[] = array(
                         "id" => 'LAST_VISIT',
-                        "text" => GetMessage("F_GL_ERR_LAST_VISIT"));
+                        "text" => GetMessage("F_GL_ERR_LAST_VISIT")
+                    );
+                }
             } else {
                 unset($arFields["LAST_VISIT"]);
             }
@@ -174,11 +208,17 @@ class CAllForumUser
         // date registration
         if (is_set($arFields, "DATE_REG")) {
             $arFields["DATE_REG"] = trim($arFields["DATE_REG"]);
-            if (strLen($arFields["DATE_REG"]) > 0) {
-                if ($arFields["DATE_REG"] != $GLOBALS["DB"]->GetNowFunction() && !$GLOBALS["DB"]->IsDate($arFields["DATE_REG"], false, SITE_ID, "SHORT")) {
+            if ($arFields["DATE_REG"] <> '') {
+                if ($arFields["DATE_REG"] != $GLOBALS["DB"]->GetNowFunction() && !$GLOBALS["DB"]->IsDate(
+                        $arFields["DATE_REG"],
+                        false,
+                        SITE_ID,
+                        "SHORT"
+                    )) {
                     $aMsg[] = array(
                         "id" => 'DATE_REG',
-                        "text" => GetMessage("F_GL_ERR_DATE_REG"));
+                        "text" => GetMessage("F_GL_ERR_DATE_REG")
+                    );
                 }
             } else {
                 unset($arFields["DATE_REG"]);
@@ -189,17 +229,20 @@ class CAllForumUser
             $max_size = COption::GetOptionInt("forum", "file_max_size", 5242880);
             $size = array(
                 "width" => COption::GetOptionInt("forum", "avatar_max_width", 100),
-                "height" => COption::GetOptionInt("forum", "avatar_max_height", 100));
+                "height" => COption::GetOptionInt("forum", "avatar_max_height", 100)
+            );
             $res = CFile::CheckImageFile($arFields["AVATAR"], $max_size);
-            if (strlen($res) <= 0) {
+            if ($res == '') {
                 $res = CFile::CheckImageFile($arFields["AVATAR"], $max_size, $size["width"], $size["height"]);
-                if (strlen($res) > 0 && CFile::ResizeImage($arFields["AVATAR"], $size))
+                if ($res <> '' && CFile::ResizeImage($arFields["AVATAR"], $size)) {
                     $res = '';
+                }
             }
-            if (strlen($res) > 0) {
+            if ($res <> '') {
                 $aMsg[] = array(
                     "id" => 'AVATAR',
-                    "text" => $res);
+                    "text" => $res
+                );
             }
         }
 
@@ -211,15 +254,16 @@ class CAllForumUser
 
         // show name
         if (is_set($arFields, "SHOW_NAME") || $ACTION == "ADD") {
-            if (empty($arFields["SHOW_NAME"]))
+            if (empty($arFields["SHOW_NAME"])) {
                 $arFields["SHOW_NAME"] = COption::GetOptionString("forum", "USER_SHOW_NAME", "Y") == "Y" ? "Y" : "N";
+            }
             $arFields["SHOW_NAME"] = ($arFields["SHOW_NAME"] == "N" ? "N" : "Y");
         }
         // allow post
         if (is_set($arFields, "ALLOW_POST") || $ACTION == "ADD") {
             $arFields["ALLOW_POST"] = ($arFields["ALLOW_POST"] == "N" ? "N" : "Y");
         }
-        return True;
+        return true;
     }
 
     public static function Add($fields, $strUploadDir = false)
@@ -253,10 +297,12 @@ class CAllForumUser
         }
 
         if ($UpdateByUserId) {
-            if ($res = \Bitrix\Forum\UserTable::getList([
-                "select" => ["ID"],
-                "filter" => ["USER_ID" => $ID]
-            ])->fetch()) {
+            if ($res = \Bitrix\Forum\UserTable::getList(
+                [
+                    "select" => ["ID"],
+                    "filter" => ["USER_ID" => $ID]
+                ]
+            )->fetch()) {
                 $ID = intval($res["ID"]);
             }
         }
@@ -266,13 +312,34 @@ class CAllForumUser
 
         if (is_set($arFields, "ALLOW_POST")) {
             unset($GLOBALS["FORUM_CACHE"]["LOCKED_USERS"]);
-            if (CACHED_b_forum_user !== false)
+            if (CACHED_b_forum_user !== false) {
                 $GLOBALS["CACHE_MANAGER"]->CleanDir("b_forum_user");
+            }
         }
         unset($GLOBALS["FORUM_CACHE"]["USER"]);
         unset($GLOBALS["FORUM_CACHE"]["USER_ID"]);
 
-        $result = UserTable::update($ID, $arFields);
+        $entity = \Bitrix\Forum\UserTable::getEntity();
+        $data = [];
+        foreach ($arFields as $k => $v) {
+            $k = (mb_strpos($k, "=") === 0 ? mb_substr($k, 1) : $k);
+            if ($entity->hasField($k)) {
+                $field = $entity->getField($k);
+                $data[$k] = $v;
+                if ($field instanceof \Bitrix\Main\ORM\Fields\DateField) {
+                    $data[$k] = new \Bitrix\Main\Type\DateTime(\Bitrix\Main\Type\DateTime::isCorrect($v) ? $v : null);
+                } else {
+                    if (
+                        !is_array($v)
+                        && preg_match("/{$k}\s*(\+|\-)\s*(\d+)/", $v, $matches)
+                    ) {
+                        $data[$k] = new \Bitrix\Main\DB\SqlExpression("?# $matches[1] $matches[2]", $k);
+                    }
+                }
+            }
+        }
+
+        $result = \Bitrix\Forum\User::update($ID, $data);
         if (!$result->isSuccess()) {
             return false;
         }
@@ -287,37 +354,43 @@ class CAllForumUser
         return $result->isSuccess();
     }
 
-    public static function CountUsers($bActive = False, $arFilter = array())
+    public static function CountUsers($bActive = false, $arFilter = array())
     {
         global $DB;
         $arFilter = (is_array($arFilter) ? $arFilter : array());
         $arSqlSearch = array();
         $strSqlSearch = "";
-        if ($bActive)
+        if ($bActive) {
             $arSqlSearch[] = "NUM_POSTS > 0";
+        }
         foreach ($arFilter as $key => $val) {
             $key_res = CForumNew::GetFilterOperation($key);
-            $key = strtoupper($key_res["FIELD"]);
+            $key = mb_strtoupper($key_res["FIELD"]);
             $strNegative = $key_res["NEGATIVE"];
             $strOperation = $key_res["OPERATION"];
 
             switch ($key) {
                 case "ACTIVE":
-                    if (strlen($val) <= 0)
+                    if ($val == '') {
                         $arSqlSearch[] = ($strNegative == "Y" ? "NOT" : "") . "(U." . $key . " IS NULL OR " . ($DB->type == "MSSQL" ? "LEN" : "LENGTH") . "(U." . $key . ")<=0)";
-                    else
-                        $arSqlSearch[] = ($strNegative == "Y" ? " U." . $key . " IS NULL OR NOT (" : "") . "U." . $key . " " . $strOperation . " '" . $DB->ForSql($val) . "'" .
+                    } else {
+                        $arSqlSearch[] = ($strNegative == "Y" ? " U." . $key . " IS NULL OR NOT (" : "") . "U." . $key . " " . $strOperation . " '" . $DB->ForSql(
+                                $val
+                            ) . "'" .
                             ($strNegative == "Y" ? ")" : "");
+                    }
                     break;
             }
         }
-        if (count($arSqlSearch) > 0)
+        if (count($arSqlSearch) > 0) {
             $strSqlSearch = " WHERE (" . implode(") AND (", $arSqlSearch) . ") ";
+        }
 
         $strSql = "SELECT COUNT(FU.ID) AS CNT FROM b_forum_user FU INNER JOIN b_user U ON (U.ID = FU.USER_ID)" . $strSqlSearch;
         $db_res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-        if ($ar_res = $db_res->Fetch())
+        if ($ar_res = $db_res->Fetch()) {
             return $ar_res["CNT"];
+        }
 
         return 0;
     }
@@ -326,8 +399,11 @@ class CAllForumUser
     {
         global $DB;
 
-        $ID = intVal($ID);
-        if (isset($GLOBALS["FORUM_CACHE"]["USER"][$ID]) && is_array($GLOBALS["FORUM_CACHE"]["USER"][$ID]) && is_set($GLOBALS["FORUM_CACHE"]["USER"][$ID], "ID")) {
+        $ID = intval($ID);
+        if (isset($GLOBALS["FORUM_CACHE"]["USER"][$ID]) && is_array($GLOBALS["FORUM_CACHE"]["USER"][$ID]) && is_set(
+                $GLOBALS["FORUM_CACHE"]["USER"][$ID],
+                "ID"
+            )) {
             return $GLOBALS["FORUM_CACHE"]["USER"][$ID];
         } else {
             $strSql =
@@ -345,7 +421,7 @@ class CAllForumUser
                 return $res;
             }
         }
-        return False;
+        return false;
     }
 
     public static function GetByLogin($Name)
@@ -384,7 +460,7 @@ class CAllForumUser
             }
         }
 
-        return False;
+        return false;
     }
 
     public static function GetByIDEx($ID, $arAddParams = array())
@@ -392,7 +468,7 @@ class CAllForumUser
         global $DB;
         $arAddParams = (is_array($arAddParams) ? $arAddParams : array($arAddParams));
 
-        $ID = intVal($ID);
+        $ID = intval($ID);
         $strSql =
             "SELECT FU.ID, FU.USER_ID, FU.SHOW_NAME, FU.DESCRIPTION, FU.IP_ADDRESS,\n " .
             "	FU.REAL_IP_ADDRESS, FU.AVATAR, FU.NUM_POSTS, FU.POINTS as NUM_POINTS, FU.INTERESTS,\n " .
@@ -411,7 +487,8 @@ class CAllForumUser
                         array(
                             "sUserTablePrefix" => "U.",
                             "sForumUserTablePrefix" => "FU.",
-                            "sFieldName" => "SHOW_ABC"),
+                            "sFieldName" => "SHOW_ABC"
+                        ),
                         false
                     )
                 ) : "") . "\n" .
@@ -422,15 +499,17 @@ class CAllForumUser
         if ($res = $db_res->Fetch()) {
             return $res;
         }
-        return False;
+        return false;
     }
 
     public static function GetByUSER_ID($USER_ID)
     {
         global $DB;
 
-        $USER_ID = intVal($USER_ID);
-        if (isset($GLOBALS["FORUM_CACHE"]["USER_ID"][$USER_ID]) && is_array($GLOBALS["FORUM_CACHE"]["USER_ID"][$USER_ID]) && is_set($GLOBALS["FORUM_CACHE"]["USER_ID"][$USER_ID], "ID")) {
+        $USER_ID = intval($USER_ID);
+        if (isset($GLOBALS["FORUM_CACHE"]["USER_ID"][$USER_ID]) && is_array(
+                $GLOBALS["FORUM_CACHE"]["USER_ID"][$USER_ID]
+            ) && is_set($GLOBALS["FORUM_CACHE"]["USER_ID"][$USER_ID], "ID")) {
             return $GLOBALS["FORUM_CACHE"]["USER_ID"][$USER_ID];
         } else {
             $strSql =
@@ -449,7 +528,7 @@ class CAllForumUser
                 return $res;
             }
         }
-        return False;
+        return false;
     }
 
     public static function GetByUSER_IDEx($USER_ID, $arAddParams = array())
@@ -457,7 +536,7 @@ class CAllForumUser
         global $DB;
         $arAddParams = (is_array($arAddParams) ? $arAddParams : array($arAddParams));
 
-        $USER_ID = intVal($USER_ID);
+        $USER_ID = intval($USER_ID);
         $strSql =
             "SELECT F_USER.*, FU.ID, FU.USER_ID, FU.SHOW_NAME, FU.DESCRIPTION, FU.IP_ADDRESS,\n " .
             "	FU.REAL_IP_ADDRESS, FU.AVATAR, FU.NUM_POSTS, FU.POINTS as NUM_POINTS,\n " .
@@ -476,7 +555,8 @@ class CAllForumUser
                         array(
                             "sUserTablePrefix" => "U.",
                             "sForumUserTablePrefix" => "FU.",
-                            "sFieldName" => "SHOW_ABC"),
+                            "sFieldName" => "SHOW_ABC"
+                        ),
                         false
                     )
                 ) : "") . "\n" .
@@ -494,7 +574,7 @@ class CAllForumUser
         if ($db_res && $res = $db_res->Fetch()) {
             return $res;
         }
-        return False;
+        return false;
     }
 
 
@@ -502,24 +582,43 @@ class CAllForumUser
     {
         $USER_ID = intval($USER_ID);
         $arUser = false;
-        if ($USER_ID <= 0) return false;
+        if ($USER_ID <= 0) {
+            return false;
+        }
 
-        if (COption::GetOptionString("forum", "SHOW_VOTES", "Y") == "Y")
+        if (COption::GetOptionString("forum", "SHOW_VOTES", "Y") == "Y") {
             $arUser = CForumUser::GetByUSER_ID($USER_ID);
-        else {
+        } else {
             $authorityRatingId = CRatings::GetAuthorityRating();
             $arRatingResult = CRatings::GetRatingResult($authorityRatingId, $USER_ID);
-            if (isset($arRatingResult['CURRENT_VALUE']))
-                $arUser = array('POINTS' => round(floatval($arRatingResult['CURRENT_VALUE']) / COption::GetOptionString("main", "rating_vote_weight", 1)));
+            if (isset($arRatingResult['CURRENT_VALUE'])) {
+                $arUser = array(
+                    'POINTS' => round(
+                        floatval($arRatingResult['CURRENT_VALUE']) / COption::GetOptionString(
+                            "main",
+                            "rating_vote_weight",
+                            1
+                        )
+                    )
+                );
+            }
         }
         if ($arUser) {
-            if ($strLang === false || strLen($strLang) != 2)
-                $db_res = CForumPoints::GetList(array("MIN_POINTS" => "DESC"), array("<=MIN_POINTS" => $arUser["POINTS"]));
-            else
-                $db_res = CForumPoints::GetListEx(array("MIN_POINTS" => "DESC"), array("<=MIN_POINTS" => $arUser["POINTS"], "LID" => $strLang));
+            if ($strLang === false || mb_strlen($strLang) != 2) {
+                $db_res = CForumPoints::GetList(
+                    array("MIN_POINTS" => "DESC"),
+                    array("<=MIN_POINTS" => $arUser["POINTS"])
+                );
+            } else {
+                $db_res = CForumPoints::GetListEx(
+                    array("MIN_POINTS" => "DESC"),
+                    array("<=MIN_POINTS" => $arUser["POINTS"], "LID" => $strLang)
+                );
+            }
 
-            if ($db_res && ($ar_res = $db_res->Fetch()))
+            if ($db_res && ($ar_res = $db_res->Fetch())) {
                 return $ar_res;
+            }
         }
         return false;
     }
@@ -528,10 +627,13 @@ class CAllForumUser
     public static function SetUserForumLastVisit($USER_ID, $FORUM_ID = 0, $LAST_VISIT = false)
     {
         global $DB;
-        $USER_ID = intVal($USER_ID);
-        $FORUM_ID = intVal($FORUM_ID);
+        $USER_ID = intval($USER_ID);
+        $FORUM_ID = intval($FORUM_ID);
         if (is_int($LAST_VISIT)):
-            $LAST_VISIT = $DB->CharToDateFunction(date(CDatabase::DateFormatToPHP(CLang::GetDateFormat("FULL")), $LAST_VISIT), "FULL");
+            $LAST_VISIT = $DB->CharToDateFunction(
+                date(CDatabase::DateFormatToPHP(CLang::GetDateFormat("FULL")), $LAST_VISIT),
+                "FULL"
+            );
         elseif (is_string($LAST_VISIT)):
             $LAST_VISIT = $DB->CharToDateFunction(trim($LAST_VISIT), "FULL");
         else:
@@ -540,34 +642,64 @@ class CAllForumUser
 
         if (!$LAST_VISIT):
             $Fields = array("LAST_VISIT" => $DB->GetNowFunction());
-            $rows = $DB->Update("b_forum_user_forum", $Fields, "WHERE (FORUM_ID=" . $FORUM_ID . " AND USER_ID=" . $USER_ID . ")", "File: " . __FILE__ . "<br>Line: " . __LINE__);
+            $rows = $DB->Update(
+                "b_forum_user_forum",
+                $Fields,
+                "WHERE (FORUM_ID=" . $FORUM_ID . " AND USER_ID=" . $USER_ID . ")",
+                "File: " . __FILE__ . "<br>Line: " . __LINE__
+            );
 
-            if (intVal($rows) <= 0):
+            if (intval($rows) <= 0):
                 $Fields["USER_ID"] = $USER_ID;
                 $Fields["FORUM_ID"] = $FORUM_ID;
                 $DB->Insert("b_forum_user_forum", $Fields, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             elseif ($FORUM_ID <= 0):
-                $DB->Query("DELETE FROM b_forum_user_forum WHERE (FORUM_ID > 0 AND USER_ID=" . $USER_ID . ")", false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-                $DB->Query("DELETE FROM b_forum_user_topic WHERE (USER_ID=" . $USER_ID . ")", false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+                $DB->Query(
+                    "DELETE FROM b_forum_user_forum WHERE (FORUM_ID > 0 AND USER_ID=" . $USER_ID . ")",
+                    false,
+                    "File: " . __FILE__ . "<br>Line: " . __LINE__
+                );
+                $DB->Query(
+                    "DELETE FROM b_forum_user_topic WHERE (USER_ID=" . $USER_ID . ")",
+                    false,
+                    "File: " . __FILE__ . "<br>Line: " . __LINE__
+                );
             else:
-                $DB->Query("DELETE FROM b_forum_user_topic WHERE (FORUM_ID=" . $FORUM_ID . " AND USER_ID=" . $USER_ID . ")", false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+                $DB->Query(
+                    "DELETE FROM b_forum_user_topic WHERE (FORUM_ID=" . $FORUM_ID . " AND USER_ID=" . $USER_ID . ")",
+                    false,
+                    "File: " . __FILE__ . "<br>Line: " . __LINE__
+                );
             endif;
         else:
             $Fields = array("LAST_VISIT" => $LAST_VISIT);
-            $rows = $DB->Update("b_forum_user_forum", $Fields,
-                "WHERE (FORUM_ID=" . $FORUM_ID . " AND USER_ID=" . $USER_ID . ")", "File: " . __FILE__ . "<br>Line: " . __LINE__);
+            $rows = $DB->Update(
+                "b_forum_user_forum",
+                $Fields,
+                "WHERE (FORUM_ID=" . $FORUM_ID . " AND USER_ID=" . $USER_ID . ")",
+                "File: " . __FILE__ . "<br>Line: " . __LINE__
+            );
 
-            if (intVal($rows) <= 0):
+            if (intval($rows) <= 0):
                 $Fields = array("LAST_VISIT" => $LAST_VISIT, "FORUM_ID" => $FORUM_ID, "USER_ID" => $USER_ID);
                 $DB->Insert("b_forum_user_forum", $Fields, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             elseif ($FORUM_ID <= 0):
-                $DB->Query("DELETE FROM b_forum_user_forum WHERE (FORUM_ID > 0 AND USER_ID=" . $USER_ID . " AND LAST_VISIT <= " . $LAST_VISIT . ")",
-                    false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-                $DB->Query("DELETE FROM b_forum_user_topic WHERE (USER_ID=" . $USER_ID . " AND LAST_VISIT <= " . $LAST_VISIT . ")",
-                    false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+                $DB->Query(
+                    "DELETE FROM b_forum_user_forum WHERE (FORUM_ID > 0 AND USER_ID=" . $USER_ID . " AND LAST_VISIT <= " . $LAST_VISIT . ")",
+                    false,
+                    "File: " . __FILE__ . "<br>Line: " . __LINE__
+                );
+                $DB->Query(
+                    "DELETE FROM b_forum_user_topic WHERE (USER_ID=" . $USER_ID . " AND LAST_VISIT <= " . $LAST_VISIT . ")",
+                    false,
+                    "File: " . __FILE__ . "<br>Line: " . __LINE__
+                );
             else:
-                $DB->Query("DELETE FROM b_forum_user_topic WHERE (FORUM_ID=" . $FORUM_ID . " AND USER_ID=" . $USER_ID . " AND LAST_VISIT <= " . $LAST_VISIT . ")",
-                    false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+                $DB->Query(
+                    "DELETE FROM b_forum_user_topic WHERE (FORUM_ID=" . $FORUM_ID . " AND USER_ID=" . $USER_ID . " AND LAST_VISIT <= " . $LAST_VISIT . ")",
+                    false,
+                    "File: " . __FILE__ . "<br>Line: " . __LINE__
+                );
             endif;
         endif;
         return true;
@@ -584,7 +716,7 @@ class CAllForumUser
 
         foreach ($arFilter as $key => $val) {
             $key_res = CForumNew::GetFilterOperation($key);
-            $key = strToUpper($key_res["FIELD"]);
+            $key = mb_strtoupper($key_res["FIELD"]);
             $strNegative = $key_res["NEGATIVE"];
             $strOperation = $key_res["OPERATION"];
 
@@ -592,31 +724,41 @@ class CAllForumUser
                 case "ID":
                 case "USER_ID":
                 case "FORUM_ID":
-                    if (intVal($val) <= 0)
+                    if (intval($val) <= 0) {
                         $arSqlSearch[] = ($strNegative == "Y" ? "NOT" : "") . "(FUF." . $key . " IS NULL OR FUF." . $key . "<=0)";
-                    else
-                        $arSqlSearch[] = ($strNegative == "Y" ? " FUF." . $key . " IS NULL OR NOT " : "") . "(FUF." . $key . " " . $strOperation . " " . intVal($val) . " )";
+                    } else {
+                        $arSqlSearch[] = ($strNegative == "Y" ? " FUF." . $key . " IS NULL OR NOT " : "") . "(FUF." . $key . " " . $strOperation . " " . intval(
+                                $val
+                            ) . " )";
+                    }
                     break;
             }
         }
-        if (!empty($arSqlSearch))
+        if (!empty($arSqlSearch)) {
             $strSqlSearch = " AND (" . implode(") AND (", $arSqlSearch) . ")";
+        }
         foreach ($arOrder as $by => $order) {
-            $by = strtoupper($by);
-            $order = strtoupper($order);
-            if ($order != "ASC") $order = "DESC";
+            $by = mb_strtoupper($by);
+            $order = mb_strtoupper($order);
+            if ($order != "ASC") {
+                $order = "DESC";
+            }
 
-            if ($by == "USER_ID") $arSqlOrder[] = " FUF.USER_ID " . $order . " ";
-            elseif ($by == "FORUM_ID") $arSqlOrder[] = " FUF.FORUM_ID " . $order . " ";
-            elseif ($by == "LAST_VISIT") $arSqlOrder[] = " FUF.LAST_VISIT " . $order . " ";
-            else {
+            if ($by == "USER_ID") {
+                $arSqlOrder[] = " FUF.USER_ID " . $order . " ";
+            } elseif ($by == "FORUM_ID") {
+                $arSqlOrder[] = " FUF.FORUM_ID " . $order . " ";
+            } elseif ($by == "LAST_VISIT") {
+                $arSqlOrder[] = " FUF.LAST_VISIT " . $order . " ";
+            } else {
                 $arSqlOrder[] = " FU.ID " . $order . " ";
                 $by = "ID";
             }
         }
         DelDuplicateSort($arSqlOrder);
-        if (count($arSqlOrder) > 0)
+        if (count($arSqlOrder) > 0) {
             $strSqlOrder = " ORDER BY " . implode(", ", $arSqlOrder);
+        }
 
         $strSql = "
 			SELECT FUF.ID, FUF.FORUM_ID,  FUF.USER_ID, " . $DB->DateToCharFunction("FUF.LAST_VISIT", "FULL") . " as LAST_VISIT
@@ -640,8 +782,9 @@ class CAllForumUser
      */
     public static function GetFormattedNameByUserID($userID, $template = "", $arUser = array())
     {
-        if (empty($userID))
+        if (empty($userID)) {
             return false;
+        }
 
         static $arUsers = array();
 
@@ -653,8 +796,9 @@ class CAllForumUser
                 !array_key_exists("SECOND_NAME", $arUsers[$userID]) || !array_key_exists("LAST_NAME", $arUsers[$userID])
             ) {
                 $dbRes = CUser::GetByID($userID);
-                if (($arRes = $dbRes->Fetch()) && $arRes)
+                if (($arRes = $dbRes->Fetch()) && $arRes) {
                     $arUsers[$userID] = array_merge($arRes, $arUsers[$userID]);
+                }
             }
             $arUsers[$userID]["FORMATTED_NAME"] = ($arUsers[$userID]["SHOW_NAME"] == "Y" ?
                 CUser::FormatName($template, $arUsers[$userID], false, false) : "");
@@ -668,11 +812,13 @@ class CAllForumUser
     public static function GetUserPoints($USER_ID, $arAddParams = array())
     {
         global $DB;
-        $USER_ID = intVal($USER_ID);
-        if ($USER_ID <= 0) return 0;
+        $USER_ID = intval($USER_ID);
+        if ($USER_ID <= 0) {
+            return 0;
+        }
         $arAddParams = (is_array($arAddParams) ? $arAddParams : array($arAddParams));
-        $arAddParams["INCREMENT"] = intVal($arAddParams["INCREMENT"]);
-        $arAddParams["DECREMENT"] = intVal($arAddParams["DECREMENT"]);
+        $arAddParams["INCREMENT"] = intval($arAddParams["INCREMENT"]);
+        $arAddParams["DECREMENT"] = intval($arAddParams["DECREMENT"]);
         $arAddParams["NUM_POSTS"] = (is_set($arAddParams, "NUM_POSTS") ? $arAddParams["NUM_POSTS"] : false);
         $arAddParams["RETURN_FETCH"] = ($arAddParams["RETURN_FETCH"] == "Y" ? "Y" : "N");
         $strSql = "
@@ -699,7 +845,9 @@ class CAllForumUser
         if ($arAddParams["RETURN_FETCH"] == "Y"):
             return $db_res;
         elseif ($db_res && ($res = $db_res->Fetch())):
-            $result = floor(doubleVal($res["POINTS_PER_POST"]) * intVal($res["NUM_POSTS"]) + intVal($res["POINTS_FROM_USER"]));
+            $result = floor(
+                doubleVal($res["POINTS_PER_POST"]) * intval($res["NUM_POSTS"]) + intval($res["POINTS_FROM_USER"])
+            );
             return $result;
         endif;
         return false;
@@ -707,11 +855,13 @@ class CAllForumUser
 
     public static function CountUserPoints($USER_ID = 0, $iCnt = false)
     {
-        $USER_ID = intVal($USER_ID);
-        $iNumUserPosts = intVal($iCnt);
+        $USER_ID = intval($USER_ID);
+        $iNumUserPosts = intval($iCnt);
         $iNumUserPoints = 0;
         $fPointsPerPost = 0.0;
-        if ($USER_ID <= 0) return 0;
+        if ($USER_ID <= 0) {
+            return 0;
+        }
 
         if ($iCnt === false):
             $iNumUserPoints = CForumUser::GetUserPoints($USER_ID);
@@ -719,9 +869,13 @@ class CAllForumUser
 
         if ($iNumUserPoints === false || $iCnt != false):
             $iNumUserPosts = CForumMessage::GetList(array(), array("AUTHOR_ID" => $USER_ID, "APPROVED" => "Y"), true);
-            $db_res = CForumPoints2Post::GetList(array("MIN_NUM_POSTS" => "DESC"), array("<=MIN_NUM_POSTS" => $iNumUserPosts));
-            if ($ar_res = $db_res->Fetch())
+            $db_res = CForumPoints2Post::GetList(
+                array("MIN_NUM_POSTS" => "DESC"),
+                array("<=MIN_NUM_POSTS" => $iNumUserPosts)
+            );
+            if ($ar_res = $db_res->Fetch()) {
                 $fPointsPerPost = DoubleVal($ar_res["POINTS_PER_POST"]);
+            }
             $iNumUserPoints = floor($fPointsPerPost * $iNumUserPosts);
             $iCnt = CForumUserPoints::CountSumPoints($USER_ID);
             $iNumUserPoints += $iCnt;
@@ -731,9 +885,10 @@ class CAllForumUser
 
     public static function SetStat($USER_ID = 0, $arParams = array())
     {
-        $USER_ID = intVal($USER_ID);
-        if ($USER_ID <= 0)
+        $USER_ID = intval($USER_ID);
+        if ($USER_ID <= 0) {
             return 0;
+        }
 
         $bNeedCreateUser = false;
         $arUser = array();
@@ -751,7 +906,7 @@ class CAllForumUser
                 $arMessage["APPROVED"] = "Y";
             endif;
 
-            $arParams["POSTS"] = intVal($arParams["POSTS"] > 0 ? $arParams["POSTS"] : 1);
+            $arParams["POSTS"] = intval($arParams["POSTS"] > 0 ? $arParams["POSTS"] : 1);
             $arUser = CForumUser::GetByUSER_ID($USER_ID);
         }
 
@@ -767,37 +922,49 @@ class CAllForumUser
         elseif ($arParams["ACTION"] == "DECREMENT"):
             $arUserFields = array(
                 "=NUM_POSTS" => "NUM_POSTS-" . $arParams["POSTS"],
-                "POINTS" => intVal(CForumUser::GetUserPoints($USER_ID, array("DECREMENT" => $arParams["POSTS"]))));
+                "POINTS" => intval(CForumUser::GetUserPoints($USER_ID, array("DECREMENT" => $arParams["POSTS"])))
+            );
         elseif ($arParams["ACTION"] == "INCREMENT" && $arMessage["ID"] < $arUser["LAST_POST"]):
             $arUserFields = array(
                 "=NUM_POSTS" => "NUM_POSTS+" . $arParams["POSTS"],
-                "POINTS" => intVal(CForumUser::GetUserPoints($USER_ID, array("INCREMENT" => $arParams["POSTS"]))));
+                "POINTS" => intval(CForumUser::GetUserPoints($USER_ID, array("INCREMENT" => $arParams["POSTS"])))
+            );
         elseif ($arParams["ACTION"] == "INCREMENT"):
             $arUserFields["IP_ADDRESS"] = $arMessage["AUTHOR_IP"];
             $arUserFields["REAL_IP_ADDRESS"] = $arMessage["AUTHOR_REAL_IP"];
-            $arUserFields["LAST_POST"] = intVal($arMessage["ID"]);
+            $arUserFields["LAST_POST"] = intval($arMessage["ID"]);
             $arUserFields["=NUM_POSTS"] = "NUM_POSTS+" . $arParams["POSTS"];
-            $arUserFields["POINTS"] = intVal(CForumUser::GetUserPoints($USER_ID, array("INCREMENT" => $arParams["POSTS"])));
+            $arUserFields["POINTS"] = intval(
+                CForumUser::GetUserPoints($USER_ID, array("INCREMENT" => $arParams["POSTS"]))
+            );
         endif;
 
         if (empty($arUserFields)) {
             $arUserFields = Array(
-                "LAST_POST" => false);
-            if ($bNeedCreateUser == false)
+                "LAST_POST" => false
+            );
+            if ($bNeedCreateUser == false) {
                 $arUser = CForumUser::GetByUSER_IDEx($USER_ID);
+            }
             if (empty($arUser) || $bNeedCreateUser == true):
                 $bNeedCreateUser = true;
-                $arUser = CForumMessage::GetList(array(), array("AUTHOR_ID" => $USER_ID, "APPROVED" => "Y"), "cnt_and_last_mid");
+                $arUser = CForumMessage::GetList(
+                    array(),
+                    array("AUTHOR_ID" => $USER_ID, "APPROVED" => "Y"),
+                    "cnt_and_last_mid"
+                );
                 $arUser = (is_array($arUser) ? $arUser : array());
             endif;
             $arMessage = CForumMessage::GetByID($arUser["LAST_MESSAGE_ID"], array("FILTER" => "N"));
             if ($arMessage):
                 $arUserFields["IP_ADDRESS"] = $arMessage["AUTHOR_IP"];
                 $arUserFields["REAL_IP_ADDRESS"] = $arMessage["AUTHOR_REAL_IP"];
-                $arUserFields["LAST_POST"] = intVal($arMessage["ID"]);
+                $arUserFields["LAST_POST"] = intval($arMessage["ID"]);
             endif;
-            $arUserFields["NUM_POSTS"] = intVal($arUser["CNT"]);
-            $arUserFields["POINTS"] = intVal(CForumUser::GetUserPoints($USER_ID, array("NUM_POSTS" => $arUserFields["NUM_POSTS"])));
+            $arUserFields["NUM_POSTS"] = intval($arUser["CNT"]);
+            $arUserFields["POINTS"] = intval(
+                CForumUser::GetUserPoints($USER_ID, array("NUM_POSTS" => $arUserFields["NUM_POSTS"]))
+            );
         }
 
         if ($bNeedCreateUser):
@@ -814,7 +981,7 @@ class CAllForumUser
     public static function OnUserDelete($user_id)
     {
         global $DB;
-        $user_id = intVal($user_id);
+        $user_id = intval($user_id);
         if ($user_id > 0) {
             $DB->Query("UPDATE b_forum SET LAST_POSTER_ID = NULL WHERE LAST_POSTER_ID = " . $user_id . "");
             $DB->Query("UPDATE b_forum_topic SET LAST_POSTER_ID = NULL WHERE LAST_POSTER_ID = " . $user_id . "");
@@ -834,7 +1001,9 @@ class CAllForumUser
 				and FU.AVATAR = F.ID
 				";
             $z = $DB->Query($strSql, false, "FILE: " . __FILE__ . " LINE:" . __LINE__);
-            while ($zr = $z->Fetch()) CFile::Delete($zr["ID"]);
+            while ($zr = $z->Fetch()) {
+                CFile::Delete($zr["ID"]);
+            }
 
             $DB->Query("DELETE FROM b_forum_user WHERE USER_ID = " . $user_id . "");
 
@@ -844,7 +1013,6 @@ class CAllForumUser
                     $DB->Query("DELETE FROM b_forum_message WHERE TOPIC_ID = " . $arRes["ID"]);
                     $DB->Query("DELETE FROM b_forum_topic WHERE ID = " . $arRes["ID"]);
                 }
-
             }
         }
         return true;
@@ -864,8 +1032,14 @@ class CAllForumUser
         return $dbRes;
     }
 
-    public static function UserAddInfo($arOrder = array(), $arFilter = Array(), $mode = false, $iNum = 0, $check_permission = true, $arNavigation = array())
-    {
+    public static function UserAddInfo(
+        $arOrder = array(),
+        $arFilter = Array(),
+        $mode = false,
+        $iNum = 0,
+        $check_permission = true,
+        $arNavigation = array()
+    ) {
         global $DB, $USER;
 
         $arSqlFrom = array();
@@ -882,7 +1056,7 @@ class CAllForumUser
 
         foreach ($arFilter as $key => $val) {
             $key_res = CForumNew::GetFilterOperation($key);
-            $key = strtoupper($key_res["FIELD"]);
+            $key = mb_strtoupper($key_res["FIELD"]);
             $strNegative = $key_res["NEGATIVE"];
             $strOperation = $key_res["OPERATION"];
             switch ($key) {
@@ -893,53 +1067,74 @@ class CAllForumUser
                     if ($strOperation == 'IN'):
                         $res = (is_array($val) ? $val : explode(",", $val));
                         $val = array();
-                        foreach ($res as $v)
-                            $val[] = intVal($v);
+                        foreach ($res as $v) {
+                            $val[] = intval($v);
+                        }
                         $val = implode(",", $val);
                     else:
-                        $val = intVal($val);
+                        $val = intval($val);
                     endif;
-                    if ($val <= 0)
+                    if ($val <= 0) {
                         $arSqlSearch[] = ($strNegative == "Y" ? "NOT" : "") . "(FM." . $key . " IS NULL OR FM." . $key . "<=0)";
-                    else
-                        $arSqlSearch[] = ($strNegative == "Y" ? " FM." . $key . " IS NULL OR NOT " : "") . "FM." . $key . " " . $strOperation . " (" . $DB->ForSql($val) . ")";
+                    } else {
+                        $arSqlSearch[] = ($strNegative == "Y" ? " FM." . $key . " IS NULL OR NOT " : "") . "FM." . $key . " " . $strOperation . " (" . $DB->ForSql(
+                                $val
+                            ) . ")";
+                    }
                     break;
                 case "APPROVED":
-                    if (strLen($val) <= 0)
+                    if ($val == '') {
                         $arSqlSearch[] = ($strNegative == "Y" ? "NOT" : "") . "(FM." . $key . " IS NULL OR " . ($DB->type == "MSSQL" ? "LEN" : "LENGTH") . "(FM." . $key . ")<=0)";
-                    else
-                        $arSqlSearch[] = ($strNegative == "Y" ? " FM." . $key . " IS NULL OR NOT " : "") . "FM." . $key . " " . $strOperation . " '" . $DB->ForSql($val) . "'";
+                    } else {
+                        $arSqlSearch[] = ($strNegative == "Y" ? " FM." . $key . " IS NULL OR NOT " : "") . "FM." . $key . " " . $strOperation . " '" . $DB->ForSql(
+                                $val
+                            ) . "'";
+                    }
                     break;
                 case "DATE":
                 case "POST_DATE":
-                    if (strLen($val) <= 0)
+                    if ($val == '') {
                         $arSqlSearch[] = ($strNegative == "Y" ? "NOT" : "") . "FM." . $key . " IS NULL";
-                    else
-                        $arSqlSearch[] = ($strNegative == "Y" ? " FM." . $key . " IS NULL OR NOT " : "") . "FM." . $key . " " . $strOperation . " " . $DB->CharToDateFunction($DB->ForSql($val), "SHORT");
+                    } else {
+                        $arSqlSearch[] = ($strNegative == "Y" ? " FM." . $key . " IS NULL OR NOT " : "") . "FM." . $key . " " . $strOperation . " " . $DB->CharToDateFunction(
+                                $DB->ForSql($val),
+                                "SHORT"
+                            );
+                    }
                     break;
                 case "LID":
                     $arSqlFrom["FS2"] = "LEFT JOIN b_forum2site FS2 ON (FS2.FORUM_ID = FM.FORUM_ID)";
-                    $arSqlSearch[] = ($strNegative == "Y" ? " NOT " : "") . "(FS2.SITE_ID " . $strOperation . " '" . $DB->ForSql($val) . "')";
+                    $arSqlSearch[] = ($strNegative == "Y" ? " NOT " : "") . "(FS2.SITE_ID " . $strOperation . " '" . $DB->ForSql(
+                            $val
+                        ) . "')";
                     break;
                 case "ACTIVE":
                     $arSqlFrom["F"] = "INNER JOIN b_forum F ON (F.ID = FM.FORUM_ID)";
-                    if (strLen($val) <= 0)
+                    if ($val == '') {
                         $arSqlSearch[] = ($strNegative == "Y" ? "NOT" : "") . "(F." . $key . " IS NULL OR " . ($DB->type == "MSSQL" ? "LEN" : "LENGTH") . "(F." . $key . ")<=0)";
-                    else
-                        $arSqlSearch[] = ($strNegative == "Y" ? " F." . $key . " IS NULL OR NOT " : "") . "F." . $key . " " . $strOperation . " '" . $DB->ForSql($val) . "'";
+                    } else {
+                        $arSqlSearch[] = ($strNegative == "Y" ? " F." . $key . " IS NULL OR NOT " : "") . "F." . $key . " " . $strOperation . " '" . $DB->ForSql(
+                                $val
+                            ) . "'";
+                    }
                     break;
                 case "USER_START_ID":
-                    if (!is_array($val))
+                    if (!is_array($val)) {
                         $val = array($val);
+                    }
                     $tmp = array();
-                    foreach ($val as $k => $v)
-                        $tmp[] = intVal(trim($v));
+                    foreach ($val as $k => $v) {
+                        $tmp[] = intval(trim($v));
+                    }
                     $val = implode(",", $tmp);
                     $arSqlFrom["FT"] = "INNER JOIN b_forum_topic FT ON (FT.ID = FM.TOPIC_ID)";
-                    if (strLen($val) <= 0)
+                    if ($val == '') {
                         $arSqlSearch[] = ($strNegative == "Y" ? "NOT" : "") . "FT." . $key . " IS NULL OR FT." . $key . "<=0";
-                    else
-                        $arSqlSearch[] = ($strNegative == "Y" ? " FT." . $key . " IS NULL OR NOT " : "") . "FT." . $key . " " . $strOperation . " (" . $DB->ForSql($val) . ")";
+                    } else {
+                        $arSqlSearch[] = ($strNegative == "Y" ? " FT." . $key . " IS NULL OR NOT " : "") . "FT." . $key . " " . $strOperation . " (" . $DB->ForSql(
+                                $val
+                            ) . ")";
+                    }
                     break;
                 case "PERMISSION":
                     $arSqlFrom["FP"] = "
@@ -955,28 +1150,35 @@ class CAllForumUser
                     if ($key == "TOPIC_TITLE") {
                         $key = "FT.TITLE";
                         $arSqlFrom["FT"] = "INNER JOIN b_forum_topic FT ON (FT.ID = FM.TOPIC_ID)";
-                    } else
+                    } else {
                         $key = "FM.POST_MESSAGE";
-                    if ($strOperation == "LIKE")
+                    }
+                    if ($strOperation == "LIKE") {
                         $val = "%" . $val . "%";
+                    }
 
-                    if (strLen($val) <= 0)
+                    if ($val == '') {
                         $arSqlSearch[] = ($strNegative == "Y" ? "NOT" : "") . "(" . $key . " IS NULL OR " . ($DB->type == "MSSQL" ? "LEN" : "LENGTH") . "(" . $key . ")<=0)";
-                    else
-                        $arSqlSearch[] = ($strNegative == "Y" ? " " . $key . " IS NULL OR NOT " : "") . "(" . $key . " " . $strOperation . " '" . $DB->ForSQL($val) . "')";
+                    } else {
+                        $arSqlSearch[] = ($strNegative == "Y" ? " " . $key . " IS NULL OR NOT " : "") . "(" . $key . " " . $strOperation . " '" . $DB->ForSQL(
+                                $val
+                            ) . "')";
+                    }
                     break;
             }
         }
         ksort($arSqlFrom);
-        if (count($arSqlFrom) > 0)
+        if (count($arSqlFrom) > 0) {
             $strSqlFrom = " " . implode(" ", $arSqlFrom);
+        }
 
-        if (count($arSqlSearch) > 0)
+        if (count($arSqlSearch) > 0) {
             $strSqlSearch = " AND (" . implode(") AND (", $arSqlSearch) . ")";
+        }
 
         foreach ($arOrder as $key => $val) {
-            $key = strtoupper($key);
-            $val = (strtoupper($val) != "ASC" ? "DESC" : "ASC");
+            $key = mb_strtoupper($key);
+            $val = (mb_strtoupper($val) != "ASC" ? "DESC" : "ASC");
             switch ($key) {
                 case "FIRST_POST":
                 case "LAST_POST":
@@ -988,10 +1190,11 @@ class CAllForumUser
                     break;
             }
         }
-        if (count($arSqlOrder) > 0)
+        if (count($arSqlOrder) > 0) {
             $strSqlOrder = "ORDER BY " . implode(", ", $arSqlOrder);
-        else
+        } else {
             $strSqlOrder = "ORDER BY FMM.FIRST_POST DESC";
+        }
 
         // *****************************************************
         $strSql = "
@@ -1032,10 +1235,12 @@ class CAllForumUser
         if (empty($arNavigation) || !$cnt) {
             $db_res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
         } else {
-            if ($arNavigation["SIZEN"])
+            if ($arNavigation["SIZEN"]) {
                 $arNavigation["nPageSize"] = $arNavigation["SIZEN"];
-            if ($arNavigation["PAGEN"])
+            }
+            if ($arNavigation["PAGEN"]) {
                 $arNavigation["iNumPage"] = $arNavigation["PAGEN"];
+            }
             $db_res = new CDBResult();
             $db_res->NavQuery($strSql, $cnt, $arNavigation);
         }
@@ -1048,14 +1253,13 @@ class CAllForumUser
     public static function OnSocNetGroupDelete($group_id)
     {
         global $DB;
-        $group_id = intVal($group_id);
+        $group_id = intval($group_id);
         if ($group_id > 0) {
             if (CModule::IncludeModule("socialnetwork")) {
                 $dbRes = $DB->Query("select ID from b_forum_topic where SOCNET_GROUP_ID=" . $group_id);
                 while ($arRes = $dbRes->Fetch()) {
                     CForumTopic::Delete($arRes["ID"]);
                 }
-
             }
         }
         return true;
@@ -1083,75 +1287,105 @@ class CAllForumSubscribe
     //---------------> User insert, update, delete
     public static function CanUserAddSubscribe($FID, $arUserGroups)
     {
-        if (CForumNew::GetUserPermission($FID, $arUserGroups) >= "E") return True;
-        return False;
+        if (CForumNew::GetUserPermission($FID, $arUserGroups) >= "E") {
+            return true;
+        }
+        return false;
     }
 
     public static function CanUserUpdateSubscribe($ID, $arUserGroups, $CurrentUserID = 0)
     {
-        $ID = intVal($ID);
-        $CurrentUserID = intVal($CurrentUserID);
-        if (in_array(1, $arUserGroups)) return True;
+        $ID = intval($ID);
+        $CurrentUserID = intval($CurrentUserID);
+        if (in_array(1, $arUserGroups)) {
+            return true;
+        }
 
         $arSubscr = CForumSubscribe::GetByID($ID);
-        if ($arSubscr && intVal($arSubscr["USER_ID"]) == $CurrentUserID) return True;
-        return False;
+        if ($arSubscr && intval($arSubscr["USER_ID"]) == $CurrentUserID) {
+            return true;
+        }
+        return false;
     }
 
     public static function CanUserDeleteSubscribe($ID, $arUserGroups, $CurrentUserID = 0)
     {
-        $ID = intVal($ID);
-        $CurrentUserID = intVal($CurrentUserID);
-        if (in_array(1, $arUserGroups)) return True;
+        $ID = intval($ID);
+        $CurrentUserID = intval($CurrentUserID);
+        if (in_array(1, $arUserGroups)) {
+            return true;
+        }
 
         $arSubscr = CForumSubscribe::GetByID($ID);
-        if ($arSubscr && intVal($arSubscr["USER_ID"]) == $CurrentUserID) return True;
-        return False;
+        if ($arSubscr && intval($arSubscr["USER_ID"]) == $CurrentUserID) {
+            return true;
+        }
+        return false;
     }
 
     public static function CheckFields($ACTION, &$arFields)
     {
-        if ((is_set($arFields, "USER_ID") || $ACTION == "ADD") && intVal($arFields["USER_ID"]) <= 0) return false;
-        if ((is_set($arFields, "FORUM_ID") || $ACTION == "ADD") && intVal($arFields["FORUM_ID"]) <= 0) return false;
-        if ((is_set($arFields, "SITE_ID") || $ACTION == "ADD") && strLen($arFields["SITE_ID"]) <= 0) return false;
+        if ((is_set($arFields, "USER_ID") || $ACTION == "ADD") && intval($arFields["USER_ID"]) <= 0) {
+            return false;
+        }
+        if ((is_set($arFields, "FORUM_ID") || $ACTION == "ADD") && intval($arFields["FORUM_ID"]) <= 0) {
+            return false;
+        }
+        if ((is_set($arFields, "SITE_ID") || $ACTION == "ADD") && $arFields["SITE_ID"] == '') {
+            return false;
+        }
 
-        if ((is_set($arFields, "TOPIC_ID") || $ACTION == "ADD") && intVal($arFields["TOPIC_ID"]) <= 0) $arFields["TOPIC_ID"] = false;
-        if ((is_set($arFields, "NEW_TOPIC_ONLY") || $ACTION == "ADD") && ($arFields["NEW_TOPIC_ONLY"] != "Y")) $arFields["NEW_TOPIC_ONLY"] = "N";
+        if ((is_set($arFields, "TOPIC_ID") || $ACTION == "ADD") && intval($arFields["TOPIC_ID"]) <= 0) {
+            $arFields["TOPIC_ID"] = false;
+        }
+        if ((is_set($arFields, "NEW_TOPIC_ONLY") || $ACTION == "ADD") && ($arFields["NEW_TOPIC_ONLY"] != "Y")) {
+            $arFields["NEW_TOPIC_ONLY"] = "N";
+        }
 
-        if ($arFields["TOPIC_ID"] !== false) $arFields["NEW_TOPIC_ONLY"] = "N";
+        if ($arFields["TOPIC_ID"] !== false) {
+            $arFields["NEW_TOPIC_ONLY"] = "N";
+        }
         if ($ACTION == "ADD") {
-            $arFilter = array("USER_ID" => intVal($arFields["USER_ID"]), "FORUM_ID" => intVal($arFields["FORUM_ID"]), "TOPIC_ID" => intVal($arFields["TOPIC_ID"]));
-            if ($arFields["SOCNET_GROUP_ID"])
+            $arFilter = array(
+                "USER_ID" => intval($arFields["USER_ID"]),
+                "FORUM_ID" => intval($arFields["FORUM_ID"]),
+                "TOPIC_ID" => intval($arFields["TOPIC_ID"])
+            );
+            if ($arFields["SOCNET_GROUP_ID"]) {
                 $arFilter["SOCNET_GROUP_ID"] = $arFields["SOCNET_GROUP_ID"];
+            }
             $db_res = CForumSubscribe::GetList(array(), $arFilter);
             if ($res = $db_res->Fetch()) {
                 return false;
             }
         }
 
-        return True;
+        return true;
     }
 
     public static function Add($arFields)
     {
         global $DB;
 
-        if (!CForumSubscribe::CheckFields("ADD", $arFields))
+        if (!CForumSubscribe::CheckFields("ADD", $arFields)) {
             return false;
+        }
 
         $Fields = array(
-            "USER_ID" => intVal($arFields["USER_ID"]),
-            "FORUM_ID" => intVal($arFields["FORUM_ID"]),
+            "USER_ID" => intval($arFields["USER_ID"]),
+            "FORUM_ID" => intval($arFields["FORUM_ID"]),
             "START_DATE" => $DB->GetNowFunction(),
             "NEW_TOPIC_ONLY" => "'" . $DB->ForSQL($arFields["NEW_TOPIC_ONLY"], 1) . "'",
             "SITE_ID" => "'" . $DB->ForSQL($arFields["SITE_ID"], 2) . "'",
         );
 
-        if (intval($arFields["SOCNET_GROUP_ID"]) > 0)
+        if (intval($arFields["SOCNET_GROUP_ID"]) > 0) {
             $Fields["SOCNET_GROUP_ID"] = intval($arFields["SOCNET_GROUP_ID"]);
+        }
 
-        if (intVal($arFields["TOPIC_ID"]) > 0)
-            $Fields["TOPIC_ID"] = intVal($arFields["TOPIC_ID"]);
+        if (intval($arFields["TOPIC_ID"]) > 0) {
+            $Fields["TOPIC_ID"] = intval($arFields["TOPIC_ID"]);
+        }
 
         return $DB->Insert("b_forum_subscribe", $Fields, "File: " . __FILE__ . "<br>Line: " . __LINE__);
     }
@@ -1159,10 +1393,11 @@ class CAllForumSubscribe
     public static function Update($ID, $arFields)
     {
         global $DB;
-        $ID = intVal($ID);
+        $ID = intval($ID);
 
-        if (!CForumSubscribe::CheckFields("UPDATE", $arFields))
+        if (!CForumSubscribe::CheckFields("UPDATE", $arFields)) {
             return false;
+        }
 
         $strUpdate = $DB->PrepareUpdate("b_forum_subscribe", $arFields);
         $strSql = "UPDATE b_forum_subscribe SET " . $strUpdate . " WHERE ID = " . $ID;
@@ -1174,34 +1409,44 @@ class CAllForumSubscribe
     public static function Delete($ID)
     {
         global $DB;
-        $ID = intVal($ID);
-        return $DB->Query("DELETE FROM b_forum_subscribe WHERE ID = " . $ID, True);
+        $ID = intval($ID);
+        return $DB->Query("DELETE FROM b_forum_subscribe WHERE ID = " . $ID, true);
     }
 
     public static function DeleteUSERSubscribe($USER_ID)
     {
         global $DB;
-        $USER_ID = intVal($USER_ID);
-        return $DB->Query("DELETE FROM b_forum_subscribe WHERE USER_ID = " . $USER_ID, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+        $USER_ID = intval($USER_ID);
+        return $DB->Query(
+            "DELETE FROM b_forum_subscribe WHERE USER_ID = " . $USER_ID,
+            false,
+            "File: " . __FILE__ . "<br>Line: " . __LINE__
+        );
     }
 
     public static function UpdateLastSend($MID, $sIDs)
     {
         global $DB;
-        $MID = intVal($MID);
+        $MID = intval($MID);
         $arID = explode(",", $sIDs);
-        if ($MID <= 0 || empty($sIDs) || (count($arID) == 1 && intval($arID[0]) == 0))
+        if ($MID <= 0 || empty($sIDs) || (count($arID) == 1 && intval($arID[0]) == 0)) {
             return false;
+        }
 
         $arUpdateIDs = array();
         foreach ($arID as $sID) {
             $value = intval($sID);
-            if ($value > 0) $arUpdateIDs[] = $value;
+            if ($value > 0) {
+                $arUpdateIDs[] = $value;
+            }
         }
-        if (count($arUpdateIDs) < 1)
+        if (count($arUpdateIDs) < 1) {
             return false;
+        }
 
-        $DB->Query("UPDATE b_forum_subscribe SET LAST_SEND = " . $MID . " WHERE ID IN (" . implode(',', $arUpdateIDs) . ")");
+        $DB->Query(
+            "UPDATE b_forum_subscribe SET LAST_SEND = " . $MID . " WHERE ID IN (" . implode(',', $arUpdateIDs) . ")"
+        );
     }
 
     public static function GetList($arOrder = array("ID" => "ASC"), $arFilter = array(), $arAddParams = array())
@@ -1213,7 +1458,7 @@ class CAllForumSubscribe
 
         foreach ($arFilter as $key => $val) {
             $key_res = CForumNew::GetFilterOperation($key);
-            $key = strtoupper($key_res["FIELD"]);
+            $key = mb_strtoupper($key_res["FIELD"]);
             $strNegative = $key_res["NEGATIVE"];
             $strOperation = $key_res["OPERATION"];
 
@@ -1223,28 +1468,37 @@ class CAllForumSubscribe
                 case "FORUM_ID":
                 case "TOPIC_ID":
                 case "LAST_SEND":
-                    if (intVal($val) <= 0)
+                    if (intval($val) <= 0) {
                         $arSqlSearch[] = ($strNegative == "Y" ? "NOT" : "") . "(FP." . $key . " IS NULL OR FP." . $key . "<=0)";
-                    else
-                        $arSqlSearch[] = ($strNegative == "Y" ? " FP." . $key . " IS NULL OR NOT " : "") . "(FP." . $key . " " . $strOperation . " " . intVal($val) . " )";
+                    } else {
+                        $arSqlSearch[] = ($strNegative == "Y" ? " FP." . $key . " IS NULL OR NOT " : "") . "(FP." . $key . " " . $strOperation . " " . intval(
+                                $val
+                            ) . " )";
+                    }
                     break;
                 case "TOPIC_ID_OR_NULL":
-                    $arSqlSearch[] = "(FP.TOPIC_ID = " . intVal($val) . " OR FP.TOPIC_ID = 0 OR FP.TOPIC_ID IS NULL)";
+                    $arSqlSearch[] = "(FP.TOPIC_ID = " . intval($val) . " OR FP.TOPIC_ID = 0 OR FP.TOPIC_ID IS NULL)";
                     break;
                 case "NEW_TOPIC_ONLY":
-                    if (strLen($val) <= 0)
+                    if ($val == '') {
                         $arSqlSearch[] = ($strNegative == "Y" ? "NOT" : "") . "(FP.NEW_TOPIC_ONLY IS NULL)";
-                    else
-                        $arSqlSearch[] = ($strNegative == "Y" ? " FP.NEW_TOPIC_ONLY IS NULL OR NOT " : "") . "(FP.NEW_TOPIC_ONLY " . $strOperation . " '" . $DB->ForSql($val) . "' )";
+                    } else {
+                        $arSqlSearch[] = ($strNegative == "Y" ? " FP.NEW_TOPIC_ONLY IS NULL OR NOT " : "") . "(FP.NEW_TOPIC_ONLY " . $strOperation . " '" . $DB->ForSql(
+                                $val
+                            ) . "' )";
+                    }
                     break;
                 case "SOCNET_GROUP_ID":
-                    if ($val > 0)
+                    if ($val > 0) {
                         $arSqlSearch[] = "FP.SOCNET_GROUP_ID=" . intval($val);
-                    else
+                    } else {
                         $arSqlSearch[] = "FP.SOCNET_GROUP_ID IS NULL";
+                    }
                     break;
                 case "LAST_SEND_OR_NULL":
-                    $arSqlSearch[] = "(FP.LAST_SEND IS NULL OR FP.LAST_SEND = 0 OR FP.LAST_SEND < " . intVal($val) . ")";
+                    $arSqlSearch[] = "(FP.LAST_SEND IS NULL OR FP.LAST_SEND = 0 OR FP.LAST_SEND < " . intval(
+                            $val
+                        ) . ")";
                     break;
             }
         }
@@ -1255,10 +1509,12 @@ class CAllForumSubscribe
         if (is_set($arAddParams, "bDescPageNumbering") || is_set($arAddParams, "nCount")) {
             $strSql = "SELECT COUNT(FP.ID) AS CNT FROM b_forum_subscribe FP WHERE 1 = 1 " . $strSqlSearch;
             $db_res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-            if ($ar_res = $db_res->Fetch())
-                $iCnt = intVal($ar_res["CNT"]);
-            if (is_set($arAddParams, "nCount"))
+            if ($ar_res = $db_res->Fetch()) {
+                $iCnt = intval($ar_res["CNT"]);
+            }
+            if (is_set($arAddParams, "nCount")) {
                 return $iCnt;
+            }
         }
 
         $strSql =
@@ -1270,16 +1526,23 @@ class CAllForumSubscribe
 
         $arSqlOrder = Array();
         foreach ($arOrder as $by => $order) {
-            $by = strtoupper($by);
-            $order = strtoupper($order);
-            if ($order != "ASC") $order = "DESC";
+            $by = mb_strtoupper($by);
+            $order = mb_strtoupper($order);
+            if ($order != "ASC") {
+                $order = "DESC";
+            }
 
-            if ($by == "FORUM_ID") $arSqlOrder[] = " FP.FORUM_ID " . $order . " ";
-            elseif ($by == "USER_ID") $arSqlOrder[] = " FP.USER_ID " . $order . " ";
-            elseif ($by == "TOPIC_ID") $arSqlOrder[] = " FP.TOPIC_ID " . $order . " ";
-            elseif ($by == "NEW_TOPIC_ONLY") $arSqlOrder[] = " FP.NEW_TOPIC_ONLY " . $order . " ";
-            elseif ($by == "START_DATE") $arSqlOrder[] = " FP.START_DATE " . $order . " ";
-            else {
+            if ($by == "FORUM_ID") {
+                $arSqlOrder[] = " FP.FORUM_ID " . $order . " ";
+            } elseif ($by == "USER_ID") {
+                $arSqlOrder[] = " FP.USER_ID " . $order . " ";
+            } elseif ($by == "TOPIC_ID") {
+                $arSqlOrder[] = " FP.TOPIC_ID " . $order . " ";
+            } elseif ($by == "NEW_TOPIC_ONLY") {
+                $arSqlOrder[] = " FP.NEW_TOPIC_ONLY " . $order . " ";
+            } elseif ($by == "START_DATE") {
+                $arSqlOrder[] = " FP.START_DATE " . $order . " ";
+            } else {
                 $arSqlOrder[] = " FP.ID " . $order . " ";
                 $by = "ID";
             }
@@ -1288,7 +1551,9 @@ class CAllForumSubscribe
         DelDuplicateSort($arSqlOrder);
         $strSqlOrder = (empty($arSqlOrder) ? "" : " ORDER BY " . implode(", ", $arSqlOrder));
 
-        $strSql .= $strSqlOrder . ($arAddParams["nTopCount"] > 0 ? "\nLIMIT 0," . intval($arAddParams["nTopCount"]) : "");
+        $strSql .= $strSqlOrder . ($arAddParams["nTopCount"] > 0 ? "\nLIMIT 0," . intval(
+                    $arAddParams["nTopCount"]
+                ) : "");
 
         if ($arAddParams["nTopCount"] <= 0 && is_set($arAddParams, "bDescPageNumbering")) {
             $db_res = new CDBResult();
@@ -1334,7 +1599,7 @@ class CAllForumSubscribe
 
         foreach ($arFilter as $key => $val) {
             $key_res = CForumNew::GetFilterOperation($key);
-            $key = strtoupper($key_res["FIELD"]);
+            $key = mb_strtoupper($key_res["FIELD"]);
             $strNegative = $key_res["NEGATIVE"];
             $strOperation = $key_res["OPERATION"];
 
@@ -1344,34 +1609,49 @@ class CAllForumSubscribe
                 case "FORUM_ID":
                 case "TOPIC_ID":
                 case "LAST_SEND":
-                    if (intVal($val) <= 0)
+                    if (intval($val) <= 0) {
                         $arSqlSearch[] = ($strNegative == "Y" ? "NOT" : "") . "(FS." . $key . " IS NULL OR FS." . $key . "<=0)";
-                    else
-                        $arSqlSearch[] = ($strNegative == "Y" ? " FS." . $key . " IS NULL OR NOT " : "") . "(FS." . $key . " " . $strOperation . " " . intVal($val) . " )";
+                    } else {
+                        $arSqlSearch[] = ($strNegative == "Y" ? " FS." . $key . " IS NULL OR NOT " : "") . "(FS." . $key . " " . $strOperation . " " . intval(
+                                $val
+                            ) . " )";
+                    }
                     break;
                 case "TOPIC_ID_OR_NULL":
-                    $arSqlSearch[] = "(FS.TOPIC_ID = " . intVal($val) . " OR FS.TOPIC_ID = 0 OR FS.TOPIC_ID IS NULL)";
+                    $arSqlSearch[] = "(FS.TOPIC_ID = " . intval($val) . " OR FS.TOPIC_ID = 0 OR FS.TOPIC_ID IS NULL)";
                     break;
                 case "NEW_TOPIC_ONLY":
-                    if (strLen($val) <= 0)
+                    if ($val == '') {
                         $arSqlSearch[] = ($strNegative == "Y" ? "NOT" : "") . "(FS." . $key . " IS NULL)";
-                    else
-                        $arSqlSearch[] = ($strNegative == "Y" ? " FS." . $key . " IS NULL OR NOT " : "") . "(FS." . $key . " " . $strOperation . " '" . $DB->ForSql($val) . "' )";
+                    } else {
+                        $arSqlSearch[] = ($strNegative == "Y" ? " FS." . $key . " IS NULL OR NOT " : "") . "(FS." . $key . " " . $strOperation . " '" . $DB->ForSql(
+                                $val
+                            ) . "' )";
+                    }
                     break;
                 case "START_DATE":
-                    if (strLen($val) <= 0)
+                    if ($val == '') {
                         $arSqlSearch[] = ($strNegative == "Y" ? "NOT" : "") . "(FS." . $key . " IS NULL)";
-                    else
-                        $arSqlSearch[] = ($strNegative == "Y" ? " FS." . $key . " IS NULL OR NOT " : "") . "(FS." . $key . " " . $strOperation . " " . $DB->CharToDateFunction($DB->ForSql($val), "SHORT") . ")";
+                    } else {
+                        $arSqlSearch[] = ($strNegative == "Y" ? " FS." . $key . " IS NULL OR NOT " : "") . "(FS." . $key . " " . $strOperation . " " . $DB->CharToDateFunction(
+                                $DB->ForSql($val),
+                                "SHORT"
+                            ) . ")";
+                    }
                     break;
                 case "LAST_SEND_OR_NULL":
-                    $arSqlSearch[] = "(FS.LAST_SEND IS NULL OR FS.LAST_SEND = 0 OR FS.LAST_SEND < " . intVal($val) . ")";
+                    $arSqlSearch[] = "(FS.LAST_SEND IS NULL OR FS.LAST_SEND = 0 OR FS.LAST_SEND < " . intval(
+                            $val
+                        ) . ")";
                     break;
                 case "ACTIVE":
-                    if (strLen($val) <= 0)
+                    if ($val == '') {
                         $arSqlSearch[] = ($strNegative == "Y" ? "NOT" : "") . "(U." . $key . " IS NULL)";
-                    else
-                        $arSqlSearch[] = ($strNegative == "Y" ? " U." . $key . " IS NULL OR NOT " : "") . "(U." . $key . " " . $strOperation . " '" . $DB->ForSql($val) . "' )";
+                    } else {
+                        $arSqlSearch[] = ($strNegative == "Y" ? " U." . $key . " IS NULL OR NOT " : "") . "(U." . $key . " " . $strOperation . " '" . $DB->ForSql(
+                                $val
+                            ) . "' )";
+                    }
                     break;
                 case "FORUM":
                 case "TOPIC":
@@ -1379,10 +1659,11 @@ class CAllForumSubscribe
                     $arSqlSearch[] = GetFilterQuery($key, $val);
                     break;
                 case "SOCNET_GROUP_ID":
-                    if ($val > 0)
+                    if ($val > 0) {
                         $arSqlSearch[] = "FS.SOCNET_GROUP_ID=" . intval($val);
-                    else
+                    } else {
                         $arSqlSearch[] = "FS.SOCNET_GROUP_ID IS NULL";
+                    }
                     break;
                 case "PERMISSION":
                     if ($arFilter["SOCNET_GROUP_ID"] > 0) {
@@ -1392,9 +1673,12 @@ class CAllForumSubscribe
 							WHERE SF.ENTITY_TYPE = 'G'
 								AND SF.ENTITY_ID = FS.SOCNET_GROUP_ID
 								AND SF.FEATURE = 'forum'
-								AND SFP.ROLE = 'N' OR EXISTS(SELECT 'x' FROM b_sonet_user2group UG WHERE UG.USER_ID = FS.USER_ID AND " . $DB->IsNull("SFP.ROLE", "'K'") . " >= UG.ROLE AND UG.GROUP_ID = FS.SOCNET_GROUP_ID)
+								AND SFP.ROLE = 'N' OR EXISTS(SELECT 'x' FROM b_sonet_user2group UG WHERE UG.USER_ID = FS.USER_ID AND " . $DB->IsNull(
+                                "SFP.ROLE",
+                                "'K'"
+                            ) . " >= UG.ROLE AND UG.GROUP_ID = FS.SOCNET_GROUP_ID)
 						) ";
-                    } elseif (strLen($val) > 0) {
+                    } elseif ($val <> '') {
                         $arSqlSearch[] = "(
 							(FP.PERMISSION >= '" . $DB->ForSql($val) . "') OR
 							(FP1.PERMISSION >= '" . $DB->ForSql($val) . "') OR
@@ -1412,41 +1696,59 @@ class CAllForumSubscribe
             }
         }
 
-        if (count($arSqlSelect) > 0)
+        if (count($arSqlSelect) > 0) {
             $strSqlSelect .= ", " . implode(", ", $arSqlSelect);
+        }
 
-        if (count($arSqlSearch) > 0)
-            $strSqlSearch .= " AND (" . implode(")
+        if (count($arSqlSearch) > 0) {
+            $strSqlSearch .= " AND (" . implode(
+                    ")
 			AND
-			(", $arSqlSearch) . ") ";
+			(",
+                    $arSqlSearch
+                ) . ") ";
+        }
 
-        if (count($arSqlFrom) > 0)
+        if (count($arSqlFrom) > 0) {
             $strSqlFrom .= " " . implode(" ", $arSqlFrom) . " ";
+        }
 
-        if (count($arSqlGroup) > 0)
+        if (count($arSqlGroup) > 0) {
             $strSqlGroup .= " GROUP BY " . implode(", ", $arSqlGroup) . " ";
+        }
 
         foreach ($arOrder as $by => $order) {
-            $by = strtoupper($by);
-            $order = strtoupper($order);
-            if ($order != "ASC") $order = "DESC";
+            $by = mb_strtoupper($by);
+            $order = mb_strtoupper($order);
+            if ($order != "ASC") {
+                $order = "DESC";
+            }
 
-            if ($by == "FORUM_ID") $arSqlOrder[] = " FS.FORUM_ID " . $order . " ";
-            elseif ($by == "USER_ID") $arSqlOrder[] = " FS.USER_ID " . $order . " ";
-            elseif ($by == "FORUM_NAME") $arSqlOrder[] = " F.NAME " . $order . " ";
-            elseif ($by == "TOPIC_ID") $arSqlOrder[] = " FS.TOPIC_ID " . $order . " ";
-            elseif ($by == "TITLE") $arSqlOrder[] = " FT.TITLE " . $order . " ";
-            elseif ($by == "START_DATE") $arSqlOrder[] = " FS.START_DATE " . $order . " ";
-            elseif ($by == "NEW_TOPIC_ONLY") $arSqlOrder[] = " FS.NEW_TOPIC_ONLY " . $order . " ";
-            elseif ($by == "LAST_SEND") $arSqlOrder[] = " FS.LAST_SEND " . $order . " ";
-            else {
+            if ($by == "FORUM_ID") {
+                $arSqlOrder[] = " FS.FORUM_ID " . $order . " ";
+            } elseif ($by == "USER_ID") {
+                $arSqlOrder[] = " FS.USER_ID " . $order . " ";
+            } elseif ($by == "FORUM_NAME") {
+                $arSqlOrder[] = " F.NAME " . $order . " ";
+            } elseif ($by == "TOPIC_ID") {
+                $arSqlOrder[] = " FS.TOPIC_ID " . $order . " ";
+            } elseif ($by == "TITLE") {
+                $arSqlOrder[] = " FT.TITLE " . $order . " ";
+            } elseif ($by == "START_DATE") {
+                $arSqlOrder[] = " FS.START_DATE " . $order . " ";
+            } elseif ($by == "NEW_TOPIC_ONLY") {
+                $arSqlOrder[] = " FS.NEW_TOPIC_ONLY " . $order . " ";
+            } elseif ($by == "LAST_SEND") {
+                $arSqlOrder[] = " FS.LAST_SEND " . $order . " ";
+            } else {
                 $arSqlOrder[] = " FS.ID " . $order . " ";
                 $by = "ID";
             }
         }
         DelDuplicateSort($arSqlOrder);
-        if (count($arSqlOrder) > 0)
+        if (count($arSqlOrder) > 0) {
             $strSqlOrder = " ORDER BY " . implode(", ", $arSqlOrder);
+        }
 
         $strSql = "
 			SELECT FS.ID, FS.USER_ID, FS.FORUM_ID, FS.TOPIC_ID, FS.LAST_SEND, FS.NEW_TOPIC_ONLY, FS.SITE_ID,
@@ -1470,7 +1772,7 @@ class CAllForumSubscribe
     public static function GetByID($ID)
     {
         global $DB;
-        $ID = intVal($ID);
+        $ID = intval($ID);
 
         $strSql =
             "SELECT FP.ID, FP.USER_ID, FP.FORUM_ID, FP.TOPIC_ID, FP.LAST_SEND, FP.NEW_TOPIC_ONLY, FP.SITE_ID, " .
@@ -1482,7 +1784,7 @@ class CAllForumSubscribe
         if ($res = $db_res->Fetch()) {
             return $res;
         }
-        return False;
+        return false;
     }
 }
 
@@ -1495,61 +1797,78 @@ class CAllForumRank
     //---------------> User insert, update, delete
     public static function CanUserAddRank($arUserGroups)
     {
-        if (in_array(1, $arUserGroups)) return True;
-        return False;
+        if (in_array(1, $arUserGroups)) {
+            return true;
+        }
+        return false;
     }
 
     public static function CanUserUpdateRank($ID, $arUserGroups)
     {
-        if (in_array(1, $arUserGroups)) return True;
-        return False;
+        if (in_array(1, $arUserGroups)) {
+            return true;
+        }
+        return false;
     }
 
     public static function CanUserDeleteRank($ID, $arUserGroups)
     {
-        if (in_array(1, $arUserGroups)) return True;
-        return False;
+        if (in_array(1, $arUserGroups)) {
+            return true;
+        }
+        return false;
     }
 
     public static function CheckFields($ACTION, &$arFields)
     {
         if (is_set($arFields, "LANG") || $ACTION == "ADD") {
             foreach ($arFields["LANG"] as $val) {
-                if (!is_set($val, "LID") || empty($val["LID"])) return false;
-                if (!is_set($val, "NAME") || empty($val["NAME"])) return false;
+                if (!is_set($val, "LID") || empty($val["LID"])) {
+                    return false;
+                }
+                if (!is_set($val, "NAME") || empty($val["NAME"])) {
+                    return false;
+                }
             }
 
-            $db_lang = CLang::GetList(($b = "sort"), ($o = "asc"));
+            $db_lang = CLang::GetList();
             while ($arLang = $db_lang->Fetch()) {
                 $bFound = false;
                 foreach ($arFields["LANG"] as $val):
                     $bFound = ($bFound ? $bFound : ($val["LID"] == $arLang["LID"]));
                 endforeach;
-                if (!$bFound)
+                if (!$bFound) {
                     return false;
+                }
             }
         }
 
-        return True;
+        return true;
     }
 
     // Tekuwie statusy posetitelej srazu ne pereschityvayutsya. Tol'ko postepenno v processe raboty.
     public static function Update($ID, $arFields)
     {
         global $DB;
-        $ID = intVal($ID);
-        if ($ID <= 0)
-            return False;
-
-        if (!CForumRank::CheckFields("UPDATE", $arFields))
+        $ID = intval($ID);
+        if ($ID <= 0) {
             return false;
+        }
+
+        if (!CForumRank::CheckFields("UPDATE", $arFields)) {
+            return false;
+        }
 
         $strUpdate = $DB->PrepareUpdate("b_forum_rank", $arFields);
         $strSql = "UPDATE b_forum_rank SET " . $strUpdate . " WHERE ID = " . $ID;
         $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 
         if (is_set($arFields, "LANG")) {
-            $DB->Query("DELETE FROM b_forum_rank_lang WHERE RANK_ID = " . $ID, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+            $DB->Query(
+                "DELETE FROM b_forum_rank_lang WHERE RANK_ID = " . $ID,
+                false,
+                "File: " . __FILE__ . "<br>Line: " . __LINE__
+            );
 
             foreach ($arFields["LANG"] as $i => $val) {
                 $arInsert = $DB->PrepareInsert("b_forum_rank_lang", $arFields["LANG"][$i]);
@@ -1563,7 +1882,7 @@ class CAllForumRank
     public static function Delete($ID)
     {
         global $DB;
-        $ID = intVal($ID);
+        $ID = intval($ID);
 
         $arUsers = array();
         $db_res = CForumUser::GetList(array(), array("RANK_ID" => $ID));
@@ -1571,11 +1890,12 @@ class CAllForumRank
             $arUsers[] = $ar_res["USER_ID"];
         }
 
-        $DB->Query("DELETE FROM b_forum_rank_lang WHERE RANK_ID = " . $ID, True);
-        $DB->Query("DELETE FROM b_forum_rank WHERE ID = " . $ID, True);
+        $DB->Query("DELETE FROM b_forum_rank_lang WHERE RANK_ID = " . $ID, true);
+        $DB->Query("DELETE FROM b_forum_rank WHERE ID = " . $ID, true);
 
-        foreach ($arUsers as $userId)
+        foreach ($arUsers as $userId) {
             CForumUser::SetStat($userId);
+        }
 
         return true;
     }
@@ -1591,38 +1911,46 @@ class CAllForumRank
 
         foreach ($arFilter as $key => $val) {
             $key_res = CForumNew::GetFilterOperation($key);
-            $key = strtoupper($key_res["FIELD"]);
+            $key = mb_strtoupper($key_res["FIELD"]);
             $strNegative = $key_res["NEGATIVE"];
             $strOperation = $key_res["OPERATION"];
 
             switch ($key) {
                 case "ID":
                 case "MIN_NUM_POSTS":
-                    if (intVal($val) <= 0)
+                    if (intval($val) <= 0) {
                         $arSqlSearch[] = ($strNegative == "Y" ? "NOT" : "") . "(FR." . $key . " IS NULL OR FR." . $key . "<=0)";
-                    else
-                        $arSqlSearch[] = ($strNegative == "Y" ? " FR." . $key . " IS NULL OR NOT " : "") . "(FR." . $key . " " . $strOperation . " " . intVal($val) . " )";
+                    } else {
+                        $arSqlSearch[] = ($strNegative == "Y" ? " FR." . $key . " IS NULL OR NOT " : "") . "(FR." . $key . " " . $strOperation . " " . intval(
+                                $val
+                            ) . " )";
+                    }
                     break;
             }
         }
 
-        if (count($arSqlSearch) > 0)
+        if (count($arSqlSearch) > 0) {
             $strSqlSearch = " AND (" . implode(") AND (", $arSqlSearch) . ") ";
+        }
 
         foreach ($arOrder as $by => $order) {
-            $by = strtoupper($by);
-            $order = strtoupper($order);
-            if ($order != "ASC") $order = "DESC";
+            $by = mb_strtoupper($by);
+            $order = mb_strtoupper($order);
+            if ($order != "ASC") {
+                $order = "DESC";
+            }
 
-            if ($by == "ID") $arSqlOrder[] = " FR.ID " . $order . " ";
-            else {
+            if ($by == "ID") {
+                $arSqlOrder[] = " FR.ID " . $order . " ";
+            } else {
                 $arSqlOrder[] = " FR.MIN_NUM_POSTS " . $order . " ";
                 $by = "MIN_NUM_POSTS";
             }
         }
         DelDuplicateSort($arSqlOrder);
-        if (count($arSqlOrder) > 0)
+        if (count($arSqlOrder) > 0) {
             $strSqlOrder = " ORDER BY " . implode(", ", $arSqlOrder);
+        }
 
         $strSql =
             "SELECT FR.ID, FR.MIN_NUM_POSTS
@@ -1646,45 +1974,58 @@ class CAllForumRank
 
         foreach ($arFilter as $key => $val) {
             $key_res = CForumNew::GetFilterOperation($key);
-            $key = strtoupper($key_res["FIELD"]);
+            $key = mb_strtoupper($key_res["FIELD"]);
             $strNegative = $key_res["NEGATIVE"];
             $strOperation = $key_res["OPERATION"];
 
             switch ($key) {
                 case "ID":
                 case "MIN_NUM_POSTS":
-                    if (intVal($val) <= 0)
+                    if (intval($val) <= 0) {
                         $arSqlSearch[] = ($strNegative == "Y" ? "NOT" : "") . "(FR." . $key . " IS NULL OR FR." . $key . "<=0)";
-                    else
-                        $arSqlSearch[] = ($strNegative == "Y" ? " FR." . $key . " IS NULL OR NOT " : "") . "(FR." . $key . " " . $strOperation . " " . intVal($val) . " )";
+                    } else {
+                        $arSqlSearch[] = ($strNegative == "Y" ? " FR." . $key . " IS NULL OR NOT " : "") . "(FR." . $key . " " . $strOperation . " " . intval(
+                                $val
+                            ) . " )";
+                    }
                     break;
                 case "LID":
-                    if (strLen($val) <= 0)
+                    if ($val == '') {
                         $arSqlSearch[] = ($strNegative == "Y" ? "NOT" : "") . "(FRL.LID IS NULL OR " . ($DB->type == "MSSQL" ? "LEN" : "LENGTH") . "(FRL.LID)<=0)";
-                    else
-                        $arSqlSearch[] = ($strNegative == "Y" ? " FRL.LID IS NULL OR NOT " : "") . "(FRL.LID " . $strOperation . " '" . $DB->ForSql($val) . "' )";
+                    } else {
+                        $arSqlSearch[] = ($strNegative == "Y" ? " FRL.LID IS NULL OR NOT " : "") . "(FRL.LID " . $strOperation . " '" . $DB->ForSql(
+                                $val
+                            ) . "' )";
+                    }
                     break;
             }
         }
-        if (count($arSqlSearch) > 0)
+        if (count($arSqlSearch) > 0) {
             $strSqlSearch = " AND (" . imlode(" ) AND (", $arSqlSearch) . ") ";
+        }
 
         foreach ($arOrder as $by => $order) {
-            $by = strtoupper($by);
-            $order = strtoupper($order);
-            if ($order != "ASC") $order = "DESC";
+            $by = mb_strtoupper($by);
+            $order = mb_strtoupper($order);
+            if ($order != "ASC") {
+                $order = "DESC";
+            }
 
-            if ($by == "ID") $arSqlOrder[] = " FR.ID " . $order . " ";
-            elseif ($by == "LID") $arSqlOrder[] = " FRL.LID " . $order . " ";
-            elseif ($by == "NAME") $arSqlOrder[] = " FRL.NAME " . $order . " ";
-            else {
+            if ($by == "ID") {
+                $arSqlOrder[] = " FR.ID " . $order . " ";
+            } elseif ($by == "LID") {
+                $arSqlOrder[] = " FRL.LID " . $order . " ";
+            } elseif ($by == "NAME") {
+                $arSqlOrder[] = " FRL.NAME " . $order . " ";
+            } else {
                 $arSqlOrder[] = " FR.MIN_NUM_POSTS " . $order . " ";
                 $by = "MIN_NUM_POSTS";
             }
         }
         DelDuplicateSort($arSqlOrder);
-        if (count($arSqlOrder) > 0)
+        if (count($arSqlOrder) > 0) {
             $strSqlOrder = " ORDER BY " . implode(", ", $arSqlOrder);
+        }
 
         $strSql = "
 			SELECT FR.ID, FR.MIN_NUM_POSTS, FRL.LID, FRL.NAME
@@ -1702,7 +2043,7 @@ class CAllForumRank
     {
         global $DB;
 
-        $ID = intVal($ID);
+        $ID = intval($ID);
         $strSql =
             "SELECT FR.ID, FR.MIN_NUM_POSTS " .
             "FROM b_forum_rank FR " .
@@ -1712,32 +2053,34 @@ class CAllForumRank
         if ($res = $db_res->Fetch()) {
             return $res;
         }
-        return False;
+        return false;
     }
 
     public static function GetByIDEx($ID, $strLang)
     {
         global $DB;
 
-        $ID = intVal($ID);
+        $ID = intval($ID);
         $strSql =
             "SELECT FR.ID, FRL.LID, FRL.NAME, FR.MIN_NUM_POSTS " .
             "FROM b_forum_rank FR " .
-            "	LEFT JOIN b_forum_rank_lang FRL ON (FR.ID = FRL.RANK_ID AND FRL.LID = '" . $DB->ForSql($strLang) . "') " .
+            "	LEFT JOIN b_forum_rank_lang FRL ON (FR.ID = FRL.RANK_ID AND FRL.LID = '" . $DB->ForSql(
+                $strLang
+            ) . "') " .
             "WHERE FR.ID = " . $ID . "";
         $db_res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 
         if ($res = $db_res->Fetch()) {
             return $res;
         }
-        return False;
+        return false;
     }
 
     public static function GetLangByID($RANK_ID, $strLang)
     {
         global $DB;
 
-        $RANK_ID = intVal($RANK_ID);
+        $RANK_ID = intval($RANK_ID);
         $strSql =
             "SELECT FRL.ID, FRL.RANK_ID, FRL.LID, FRL.NAME " .
             "FROM b_forum_rank_lang FRL " .
@@ -1748,7 +2091,7 @@ class CAllForumRank
         if ($res = $db_res->Fetch()) {
             return $res;
         }
-        return False;
+        return false;
     }
 }
 
@@ -1765,20 +2108,22 @@ class CALLForumStat
     {
         global $DB, $USER;
         $tmp = "";
-        if ($_SESSION["FORUM"]["SHOW_NAME"] == "Y" && strLen(trim($USER->GetFormattedName(false))) > 0)
+        if ($_SESSION["FORUM"]["SHOW_NAME"] == "Y" && trim($USER->GetFormattedName(false)) <> '') {
             $tmp = $USER->GetFormattedName(false);
-        else
+        } else {
             $tmp = $USER->GetLogin();
+        }
 
 
-        $session_id = "'" . $DB->ForSQL(session_id(), 255) . "'";
+        $session_id = \Bitrix\Main\Application::getInstance()->getKernelSession()->getId();
+        $session_id = "'" . $DB->ForSQL($session_id, 255) . "'";
         $Fields = array(
-            "FS.USER_ID" => intVal($USER->GetID()),
+            "FS.USER_ID" => intval($USER->GetID()),
             "FS.IP_ADDRESS" => "'" . $DB->ForSql($_SERVER["REMOTE_ADDR"], 15) . "'",
             "FS.SHOW_NAME" => "'" . $DB->ForSQL($tmp, 255) . "'",
             "FS.LAST_VISIT" => $DB->GetNowFunction(),
-            "FS.FORUM_ID" => intVal($arFields["FORUM_ID"]),
-            "FS.TOPIC_ID" => intVal($arFields["TOPIC_ID"])
+            "FS.FORUM_ID" => intval($arFields["FORUM_ID"]),
+            "FS.TOPIC_ID" => intval($arFields["TOPIC_ID"])
         );
         $FieldsForInsert = array(
             "USER_ID" => $Fields["FS.USER_ID"],
@@ -1791,7 +2136,7 @@ class CALLForumStat
         );
 
 
-        if (intVal($USER->GetID()) > 0) {
+        if (intval($USER->GetID()) > 0) {
             $FieldsForUpdate = $Fields;
             $FieldsForUpdate["FU.LAST_VISIT"] = $DB->GetNowFunction();
             $rows = $DB->Update(
@@ -1799,17 +2144,19 @@ class CALLForumStat
                 $FieldsForUpdate,
                 "WHERE (FU.USER_ID=" . $Fields["FS.USER_ID"] . ") AND (FS.PHPSESSID=" . $session_id . ")",
                 "File: " . __FILE__ . "<br>Line: " . __LINE__,
-                false);
+                false
+            );
 
-            if (intVal($rows) < 2) {
-                if (intVal($rows) <= 0) {
+            if (intval($rows) < 2) {
+                if (intval($rows) <= 0) {
                     $rows = $DB->Update(
                         "b_forum_user",
                         array("USER_ID" => $Fields["FS.USER_ID"]),
                         "WHERE (USER_ID=" . $Fields["FS.USER_ID"] . ")",
                         "File: " . __FILE__ . "<br>Line: " . __LINE__,
-                        false);
-                    if (intVal($rows) <= 0) {
+                        false
+                    );
+                    if (intval($rows) <= 0) {
                         $ID = CForumUser::Add(array("USER_ID" => $Fields["FS.USER_ID"]));
                     }
 
@@ -1825,8 +2172,9 @@ class CALLForumStat
                         ),
                         "WHERE (PHPSESSID=" . $session_id . ")",
                         "File: " . __FILE__ . "<br>Line: " . __LINE__,
-                        false);
-                    if (intVal($rows) <= 0) {
+                        false
+                    );
+                    if (intval($rows) <= 0) {
                         $DB->Insert("b_forum_stat", $FieldsForInsert, "File: " . __FILE__ . "<br>Line: " . __LINE__);
                     }
                 }
@@ -1842,9 +2190,11 @@ class CALLForumStat
                     "FORUM_ID" => $Fields["FS.FORUM_ID"],
                     "TOPIC_ID" => $Fields["FS.TOPIC_ID"],
                 ),
-                "WHERE (PHPSESSID=" . $session_id . ")", "File: " . __FILE__ . "<br>Line: " . __LINE__);
+                "WHERE (PHPSESSID=" . $session_id . ")",
+                "File: " . __FILE__ . "<br>Line: " . __LINE__
+            );
 
-            if (intVal($rows) <= 0) {
+            if (intval($rows) <= 0) {
                 $DB->Insert("b_forum_stat", $FieldsForInsert, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             }
         }
@@ -1854,29 +2204,42 @@ class CALLForumStat
     public static function RegisterUSER($arFields = array())
     {
         global $DB, $USER;
-        $tmp = ($_SESSION["FORUM"]["SHOW_NAME"] == "Y" && strLen(trim($USER->GetFullName())) > 0 ?
+        $tmp = ($_SESSION["FORUM"]["SHOW_NAME"] == "Y" && trim($USER->GetFullName()) <> '' ?
             trim($USER->GetFullName()) : $USER->GetLogin());
-        $session_id = "'" . $DB->ForSQL(session_id(), 255) . "'";
+        if (method_exists(\Bitrix\Main\Application::getInstance(), "getKernelSession")) {
+            $session_id = \Bitrix\Main\Application::getInstance()->getKernelSession()->getId();
+        } else {
+            $session_id = bitrix_sessid();
+        }
+
+        $session_id = "'" . $DB->ForSQL($session_id, 255) . "'";
 
         $Fields = array(
-            "USER_ID" => intVal($USER->GetID()),
+            "USER_ID" => intval($USER->GetID()),
             "IP_ADDRESS" => "'" . $DB->ForSql($_SERVER["REMOTE_ADDR"], 15) . "'",
             "SHOW_NAME" => "'" . $DB->ForSQL($tmp, 255) . "'",
             "LAST_VISIT" => $DB->GetNowFunction(),
             "SITE_ID" => "'" . $DB->ForSQL($arFields["SITE_ID"], 2) . "'",
-            "FORUM_ID" => intVal($arFields["FORUM_ID"]),
-            "TOPIC_ID" => intVal($arFields["TOPIC_ID"]));
-        $rows = $DB->Update("b_forum_stat", $Fields, "WHERE PHPSESSID=" . $session_id . "", "File: " . __FILE__ . "<br>Line: " . __LINE__);
-        if (intVal($rows) <= 0) {
+            "FORUM_ID" => intval($arFields["FORUM_ID"]),
+            "TOPIC_ID" => intval($arFields["TOPIC_ID"])
+        );
+        $rows = $DB->Update(
+            "b_forum_stat",
+            $Fields,
+            "WHERE PHPSESSID=" . $session_id . "",
+            "File: " . __FILE__ . "<br>Line: " . __LINE__
+        );
+        if (intval($rows) <= 0) {
             $Fields = array(
-                "USER_ID" => intVal($USER->GetID()),
+                "USER_ID" => intval($USER->GetID()),
                 "IP_ADDRESS" => "'" . $DB->ForSql($_SERVER["REMOTE_ADDR"], 15) . "'",
                 "SHOW_NAME" => "'" . $DB->ForSQL($tmp, 255) . "'",
-                "PHPSESSID" => "'" . $DB->ForSQL(session_id(), 255) . "'",
+                "PHPSESSID" => $session_id,
                 "LAST_VISIT" => $DB->GetNowFunction(),
                 "SITE_ID" => "'" . $DB->ForSQL($arFields["SITE_ID"], 2) . "'",
-                "FORUM_ID" => intVal($arFields["FORUM_ID"]),
-                "TOPIC_ID" => intVal($arFields["TOPIC_ID"]));
+                "FORUM_ID" => intval($arFields["FORUM_ID"]),
+                "TOPIC_ID" => intval($arFields["TOPIC_ID"])
+            );
             return $DB->Insert("b_forum_stat", $Fields, "File: " . __FILE__ . "<br>Line: " . __LINE__);
         }
         return true;
@@ -1885,13 +2248,15 @@ class CALLForumStat
     public static function Add($arFields)
     {
         global $DB, $USER;
+        $session_id = \Bitrix\Main\Application::getInstance()->getKernelSession()->getId();
         $Fields = array(
             "USER_ID" => $USER->GetID(),
             "IP_ADDRESS" => "'" . $DB->ForSql($_SERVER["REMOTE_ADDR"], 15) . "'",
-            "PHPSESSID" => "'" . $DB->ForSQL(session_id(), 255) . "'",
+            "PHPSESSID" => "'" . $DB->ForSQL($session_id, 255) . "'",
             "LAST_VISIT" => "'" . $DB->GetNowFunction() . "'",
-            "FORUM_ID" => intVal($arFields["FORUM_ID"]),
-            "TOPIC_ID" => intVal($arFields["TOPIC_ID"]));
+            "FORUM_ID" => intval($arFields["FORUM_ID"]),
+            "TOPIC_ID" => intval($arFields["TOPIC_ID"])
+        );
 
         return $DB->Insert("b_forum_stat", $Fields, "File: " . __FILE__ . "<br>Line: " . __LINE__);
     }
@@ -1925,7 +2290,7 @@ class CALLForumStat
 
         foreach ($arFilter as $key => $val) {
             $key_res = CForumNew::GetFilterOperation($key);
-            $key = strtoupper($key_res["FIELD"]);
+            $key = mb_strtoupper($key_res["FIELD"]);
             $strNegative = $key_res["NEGATIVE"];
             $strOperation = $key_res["OPERATION"];
 
@@ -1933,23 +2298,33 @@ class CALLForumStat
                 case "TOPIC_ID":
                 case "FORUM_ID":
                 case "USER_ID":
-                    if (intVal($val) <= 0)
+                    if (intval($val) <= 0) {
                         $arSqlSearch[] = ($strNegative == "Y" ? "NOT" : "") . "(FSTAT." . $key . " IS NULL OR FSTAT." . $key . "<=0)";
-                    else
-                        $arSqlSearch[] = ($strNegative == "Y" ? " FSTAT." . $key . " IS NULL OR NOT " : "") . "(FSTAT." . $key . " " . $strOperation . " " . intVal($val) . " )";
+                    } else {
+                        $arSqlSearch[] = ($strNegative == "Y" ? " FSTAT." . $key . " IS NULL OR NOT " : "") . "(FSTAT." . $key . " " . $strOperation . " " . intval(
+                                $val
+                            ) . " )";
+                    }
                     break;
                 case "LAST_VISIT":
-                    if (strLen($val) <= 0)
+                    if ($val == '') {
                         $arSqlSearch[] = ($strNegative == "Y" ? "NOT" : "") . "(FSTAT." . $key . " IS NULL)";
-                    else
-                        $arSqlSearch[] = ($strNegative == "Y" ? " FSTAT." . $key . " IS NULL OR NOT " : "") . "(FSTAT." . $key . " " . $strOperation . " " . $DB->CharToDateFunction($DB->ForSql($val), "FULL") . ")";
+                    } else {
+                        $arSqlSearch[] = ($strNegative == "Y" ? " FSTAT." . $key . " IS NULL OR NOT " : "") . "(FSTAT." . $key . " " . $strOperation . " " . $DB->CharToDateFunction(
+                                $DB->ForSql($val),
+                                "FULL"
+                            ) . ")";
+                    }
                     break;
                 case "HIDE_FROM_ONLINE":
                     $arSqlFrom["FU"] = "LEFT JOIN b_forum_user FU ON FSTAT.USER_ID=FU.USER_ID";
-                    if (strLen($val) <= 0)
+                    if ($val == '') {
                         $arSqlSearch[] = ($strNegative == "Y" ? "NOT" : "") . "(FU." . $key . " IS NULL OR " . ($DB->type == "MSSQL" ? "LEN" : "LENGTH") . "(FU." . $key . ")<=0)";
-                    else
-                        $arSqlSearch[] = ($strNegative == "Y" ? " FU." . $key . " IS NULL OR NOT " : "") . "(FU." . $key . " " . $strOperation . " '" . $DB->ForSql($val) . "' )";
+                    } else {
+                        $arSqlSearch[] = ($strNegative == "Y" ? " FU." . $key . " IS NULL OR NOT " : "") . "(FU." . $key . " " . $strOperation . " '" . $DB->ForSql(
+                                $val
+                            ) . "' )";
+                    }
                     break;
                     break;
                 case "COUNT_GUEST":
@@ -1963,27 +2338,34 @@ class CALLForumStat
                     break;
             }
         }
-        if (count($arSqlSearch) > 0)
+        if (count($arSqlSearch) > 0) {
             $strSqlSearch = " AND (" . implode(") AND (", $arSqlSearch) . ") ";
-        if (count($arSqlSelect) > 0)
+        }
+        if (count($arSqlSelect) > 0) {
             $strSqlSelect = implode(", ", $arSqlSelect);
-        if (count($arSqlFrom) > 0)
+        }
+        if (count($arSqlFrom) > 0) {
             $strSqlFrom = implode("	", $arSqlFrom);
-        if (count($arSqlGroup) > 0)
+        }
+        if (count($arSqlGroup) > 0) {
             $strSqlGroup = " GROUP BY " . implode(", ", $arSqlGroup);
+        }
 
 
         foreach ($arOrder as $by => $order) {
-            $by = strtoupper($by);
-            $order = strtoupper($order);
+            $by = mb_strtoupper($by);
+            $order = mb_strtoupper($order);
             $order = $order != "ASC" ? $order = "DESC" : "ASC";
 
-            if ($by == "USER_ID") $arSqlOrder[] = " FSTAT.USER_ID " . $order . " ";
+            if ($by == "USER_ID") {
+                $arSqlOrder[] = " FSTAT.USER_ID " . $order . " ";
+            }
         }
 
         DelDuplicateSort($arSqlOrder);
-        if (count($arSqlOrder) > 0)
+        if (count($arSqlOrder) > 0) {
             $strSqlOrder = " ORDER BY " . implode(", ", $arSqlOrder);
+        }
 
         $strSql = " SELECT " . $strSqlSelect . "
 			FROM b_forum_stat FSTAT
@@ -1997,15 +2379,14 @@ class CALLForumStat
         return $db_res;
     }
 
-    public static function CleanUp($period = 48) // time in hours
+    public static function CleanUp()
     {
         global $DB;
-        $period = intVal($period) * 3600;
-        $date = $DB->CharToDateFunction($DB->ForSql(Date(CDatabase::DateFormatToPHP(CLang::GetDateFormat("FULL", LANGUAGE_ID)), time() - $period)), "FULL");
-        $strSQL = "DELETE FROM b_forum_stat
-					WHERE (LAST_VISIT
-					< " . $date . ")";
-        $DB->Query($strSQL, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+        $DB->Query(
+            "DELETE FROM b_forum_stat WHERE LAST_VISIT < DATE_SUB(NOW(), INTERVAL 1 DAY)",
+            false,
+            "File: " . __FILE__ . "<br>Line: " . __LINE__
+        );
         return "CForumStat::CleanUp();";
     }
 }

@@ -25,16 +25,34 @@ class Bind
         $eventManager = \Bitrix\Main\EventManager::getInstance();
 
         //$eventManager->addEventHandler("main", "OnUserSetLastActivityDate", array(self::$statusHandler, "OnUserSetLastActivityDate"));
-        \Bitrix\Replica\Server\Event::registerOperation("im_status_update", array(self::$statusHandler, "handleStatusUpdateOperation"));
+        \Bitrix\Replica\Server\Event::registerOperation(
+            "im_status_update",
+            array(self::$statusHandler, "handleStatusUpdateOperation")
+        );
 
-        $eventManager->addEventHandler("socialservices", "OnAfterRegisterUserByNetwork", array(self::$statusHandler, "OnStartUserReplication"), false, 200);
-        \Bitrix\Replica\Server\Event::registerOperation("im_status_bind", array(self::$statusHandler, "handleStatusBindOperation"));
+        $eventManager->addEventHandler(
+            "socialservices",
+            "OnAfterRegisterUserByNetwork",
+            array(self::$statusHandler, "OnStartUserReplication"),
+            false,
+            200
+        );
+        \Bitrix\Replica\Server\Event::registerOperation(
+            "im_status_bind",
+            array(self::$statusHandler, "handleStatusBindOperation")
+        );
 
         $eventManager->addEventHandler("im", "OnAfterRecentDelete", array(self::$statusHandler, "OnAfterRecentDelete"));
-        \Bitrix\Replica\Server\Event::registerOperation("im_status_unbind", array(self::$statusHandler, "handleStatusUnbindOperation"));
+        \Bitrix\Replica\Server\Event::registerOperation(
+            "im_status_unbind",
+            array(self::$statusHandler, "handleStatusUnbindOperation")
+        );
 
         $eventManager->addEventHandler("im", "OnAfterRecentAdd", array(self::$statusHandler, "OnAfterRecentAdd"));
-        \Bitrix\Replica\Server\Event::registerOperation("im_status_rebind", array(self::$statusHandler, "handleStatusRebindOperation"));
+        \Bitrix\Replica\Server\Event::registerOperation(
+            "im_status_rebind",
+            array(self::$statusHandler, "handleStatusRebindOperation")
+        );
     }
 
 }

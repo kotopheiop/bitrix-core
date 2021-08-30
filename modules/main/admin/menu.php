@@ -12,15 +12,18 @@
  * @global CMain $APPLICATION
  */
 
-if (!method_exists($USER, "CanDoOperation"))
+if (!method_exists($USER, "CanDoOperation")) {
     return false;
+}
 
 IncludeModuleLangFile(__FILE__);
 
-global $DBType, $adminMenu, $adminPage;
+global $adminMenu, $adminPage;
 
 $aMenu = array();
-if ($USER->CanDoOperation('view_all_users') || $USER->CanDoOperation('view_subordinate_users') || $USER->CanDoOperation('edit_own_profile') || $USER->CanDoOperation('view_groups') || $USER->CanDoOperation('view_other_settings')) {
+if ($USER->CanDoOperation('view_all_users') || $USER->CanDoOperation('view_subordinate_users') || $USER->CanDoOperation(
+        'edit_own_profile'
+    ) || $USER->CanDoOperation('view_groups') || $USER->CanDoOperation('view_other_settings')) {
     $aMenu[] = array(
         "parent_menu" => "global_menu_settings",
         "sort" => 50,
@@ -33,9 +36,15 @@ if ($USER->CanDoOperation('view_all_users') || $USER->CanDoOperation('view_subor
     );
 }
 
-if ($USER->CanDoOperation('edit_php') || $USER->CanDoOperation('view_all_users') || $USER->CanDoOperation('view_subordinate_users') || $USER->CanDoOperation('edit_subordinate_users') || $USER->CanDoOperation('edit_all_users') || $USER->CanDoOperation('view_groups') || $USER->CanDoOperation('view_tasks')) {
+if ($USER->CanDoOperation('edit_php') || $USER->CanDoOperation('view_all_users') || $USER->CanDoOperation(
+        'view_subordinate_users'
+    ) || $USER->CanDoOperation('edit_subordinate_users') || $USER->CanDoOperation(
+        'edit_all_users'
+    ) || $USER->CanDoOperation('view_groups') || $USER->CanDoOperation('view_tasks')) {
     $array_user_items = array();
-    if ($USER->CanDoOperation('view_all_users') || $USER->CanDoOperation('view_subordinate_users') || $USER->CanDoOperation('edit_subordinate_users') || $USER->CanDoOperation('edit_all_users')) {
+    if ($USER->CanDoOperation('view_all_users') || $USER->CanDoOperation(
+            'view_subordinate_users'
+        ) || $USER->CanDoOperation('edit_subordinate_users') || $USER->CanDoOperation('edit_all_users')) {
         $array_user_items[] = array(
             "text" => GetMessage("MAIN_MENU_USER_LIST"),
             "url" => "user_admin.php?lang=" . LANGUAGE_ID,
@@ -91,7 +100,9 @@ if ($USER->CanDoOperation('edit_php') || $USER->CanDoOperation('view_all_users')
     );
 }
 
-if ($USER->CanDoOperation('edit_own_profile') && !($USER->CanDoOperation('view_all_users') || $USER->CanDoOperation('view_subordinate_users'))) {
+if ($USER->CanDoOperation('edit_own_profile') && !($USER->CanDoOperation('view_all_users') || $USER->CanDoOperation(
+            'view_subordinate_users'
+        ))) {
     $aMenu[] = array(
         "parent_menu" => "global_menu_settings",
         "section" => "GENERAL",
@@ -106,7 +117,9 @@ if ($USER->CanDoOperation('edit_own_profile') && !($USER->CanDoOperation('view_a
 }
 
 //settings menu
-if ($USER->CanDoOperation('view_other_settings') || $USER->CanDoOperation('manage_short_uri') || $USER->CanDoOperation('lpa_template_edit') || $USER->CanDoOperation('edit_own_profile') || $USER->CanDoOperation('cache_control')) {
+if ($USER->CanDoOperation('view_other_settings') || $USER->CanDoOperation('manage_short_uri') || $USER->CanDoOperation(
+        'lpa_template_edit'
+    ) || $USER->CanDoOperation('edit_own_profile') || $USER->CanDoOperation('cache_control')) {
     $settingsItems = array();
     $urlItems = array();
 
@@ -199,15 +212,22 @@ if ($USER->CanDoOperation('view_other_settings') || $USER->CanDoOperation('manag
 
         $aModuleItems = array();
         if (method_exists($adminMenu, "IsSectionActive")) {
-            if ($adminMenu->IsSectionActive("menu_module_settings") || ($APPLICATION->GetCurPage() == "/bitrix/admin/settings.php" && $_REQUEST["mid_menu"] <> "") || defined('BX_SEARCH_ADMIN') && BX_SEARCH_ADMIN === true) {
+            if ($adminMenu->IsSectionActive("menu_module_settings") || ($APPLICATION->GetCurPage(
+                    ) == "/bitrix/admin/settings.php" && $_REQUEST["mid_menu"] <> "") || defined(
+                    'BX_SEARCH_ADMIN'
+                ) && BX_SEARCH_ADMIN === true) {
                 $adminPage->Init();
                 foreach ($adminPage->aModules as $module) {
                     if ($module <> "main") {
-                        if ($APPLICATION->GetGroupRight($module) < "R")
+                        if ($APPLICATION->GetGroupRight($module) < "R") {
                             continue;
+                        }
 
-                        if (getLocalPath("modules/" . $module . "/install/index.php") === false || getLocalPath("modules/" . $module . "/options.php") === false)
+                        if (getLocalPath("modules/" . $module . "/install/index.php") === false || getLocalPath(
+                                "modules/" . $module . "/options.php"
+                            ) === false) {
                             continue;
+                        }
 
                         $info = CModule::CreateModuleObject($module);
                         $name = $info->MODULE_NAME;
@@ -228,7 +248,10 @@ if ($USER->CanDoOperation('view_other_settings') || $USER->CanDoOperation('manag
                     if (defined('BX_SEARCH_ADMIN') && BX_SEARCH_ADMIN === true) {
                         $lfile = getLocalPath("modules/" . $module . "/lang/" . LANGUAGE_ID . "/options.php");
                         if ($lfile !== false) {
-                            $aModule["keywords"] = implode(' ', __IncludeLang($_SERVER["DOCUMENT_ROOT"] . $lfile, true));
+                            $aModule["keywords"] = implode(
+                                ' ',
+                                __IncludeLang($_SERVER["DOCUMENT_ROOT"] . $lfile, true)
+                            );
                         }
                     }
 
@@ -291,7 +314,6 @@ if ($USER->CanDoOperation('view_other_settings') || $USER->CanDoOperation('manag
     }
 
     if ($USER->CanDoOperation('view_other_settings')) {
-
         $urlItems[] = array(
             "text" => GetMessage("MAIN_MENU_RATING_RULE_LIST"),
             "url" => "urlrewrite_list.php?lang=" . LANGUAGE_ID,
@@ -395,7 +417,9 @@ if ($USER->CanDoOperation('view_other_settings') || $USER->CanDoOperation('manag
 }
 
 //tools menu
-if ($USER->CanDoOperation('view_other_settings') || $USER->CanDoOperation('view_event_log') || $USER->CanDoOperation('edit_php')) {
+if ($USER->CanDoOperation('view_other_settings') || $USER->CanDoOperation('view_event_log') || $USER->CanDoOperation(
+        'edit_php'
+    )) {
     $toolsItems = array();
 
     if ($USER->CanDoOperation('view_other_settings')) {
@@ -469,23 +493,17 @@ if ($USER->CanDoOperation('view_other_settings') || $USER->CanDoOperation('view_
                     "more_url" => array("phpinfo.php"),
                     "title" => GetMessage("MAIN_MENU_PHPINFO_ALT"),
                 ),
-                (strtoupper($DBType) == "MYSQL" ?
-                    Array(
-                        "text" => GetMessage("MAIN_MENU_OPTIMIZE_DB"),
-                        "url" => "repair_db.php?optimize_tables=Y&lang=" . LANGUAGE_ID,
-                        "more_url" => array(),
-                        "title" => GetMessage("MAIN_MENU_OPTIMIZE_DB_ALT"),
-                    )
-                    : null
+                Array(
+                    "text" => GetMessage("MAIN_MENU_OPTIMIZE_DB"),
+                    "url" => "repair_db.php?optimize_tables=Y&lang=" . LANGUAGE_ID,
+                    "more_url" => array(),
+                    "title" => GetMessage("MAIN_MENU_OPTIMIZE_DB_ALT"),
                 ),
-                (strtoupper($DBType) == "MYSQL" ?
-                    Array(
-                        "text" => GetMessage("MAIN_MENU_REPAIR_DB"),
-                        "url" => "repair_db.php?lang=" . LANGUAGE_ID,
-                        "more_url" => array(),
-                        "title" => GetMessage("MAIN_MENU_REPAIR_DB_ALT"),
-                    )
-                    : null
+                Array(
+                    "text" => GetMessage("MAIN_MENU_REPAIR_DB"),
+                    "url" => "repair_db.php?lang=" . LANGUAGE_ID,
+                    "more_url" => array(),
+                    "title" => GetMessage("MAIN_MENU_REPAIR_DB_ALT"),
                 ),
             ),
         );
@@ -514,7 +532,14 @@ if ($USER->CanDoOperation('view_other_settings') || $USER->CanDoOperation('view_
     );
 }
 
-if ($USER->CanDoOperation('install_updates') || (in_array(LANGUAGE_ID, array("ru", "ua", "bg")) && ($USER->CanDoOperation('view_all_users') || $USER->CanDoOperation('view_subordinate_users') || $USER->CanDoOperation('edit_own_profile') || $USER->CanDoOperation('view_groups') || $USER->CanDoOperation('view_other_settings')))) {
+if ($USER->CanDoOperation('install_updates') || (in_array(
+            LANGUAGE_ID,
+            array("ru", "ua", "bg")
+        ) && ($USER->CanDoOperation('view_all_users') || $USER->CanDoOperation(
+                'view_subordinate_users'
+            ) || $USER->CanDoOperation('edit_own_profile') || $USER->CanDoOperation(
+                'view_groups'
+            ) || $USER->CanDoOperation('view_other_settings')))) {
     $arMarket = array();
     if (method_exists($adminMenu, "IsSectionActive")) {
         if ($adminMenu->IsSectionActive("menu_marketplace")) {
@@ -538,7 +563,7 @@ if ($USER->CanDoOperation('install_updates') || (in_array(LANGUAGE_ID, array("ru
 
                 if ($res = $ht->get("http://marketplace.1c-bitrix.ru/data_export.php")) {
                     if ($ht->getStatus() == "200") {
-                        $res = $APPLICATION->ConvertCharset($res, "windows-1251", SITE_CHARSET);
+                        $res = \Bitrix\Main\Text\Encoding::convertEncoding($res, "windows-1251", SITE_CHARSET);
                         require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/classes/general/xml.php");
 
                         $objXML = new CDataXML();
@@ -557,7 +582,9 @@ if ($USER->CanDoOperation('install_updates') || (in_array(LANGUAGE_ID, array("ru
                                                     $url = "update_system_market.php?category=" . $catIn2["#"]["id"][0]["#"];
                                                     $arCategory2[] = Array(
                                                         "text" => $catIn2["#"]["name"][0]["#"] . " (" . $catIn2["#"]["count"][0]["#"] . ")",
-                                                        "title" => GetMessage("MAIN_MENU_MP_CATEGORY") . " " . $catIn2["#"]["name"][0]["#"],
+                                                        "title" => GetMessage(
+                                                                "MAIN_MENU_MP_CATEGORY"
+                                                            ) . " " . $catIn2["#"]["name"][0]["#"],
                                                         "url" => $url . "&lang=" . LANGUAGE_ID,
                                                     );
                                                     $arUrls[] = $url;
@@ -567,7 +594,9 @@ if ($USER->CanDoOperation('install_updates') || (in_array(LANGUAGE_ID, array("ru
                                             $url = "update_system_market.php?category=" . $catIn["#"]["id"][0]["#"];
                                             $arCategory[] = Array(
                                                 "text" => $catIn["#"]["name"][0]["#"] . " (" . $catIn["#"]["count"][0]["#"] . ")",
-                                                "title" => GetMessage("MAIN_MENU_MP_CATEGORY") . " " . $catIn["#"]["name"][0]["#"],
+                                                "title" => GetMessage(
+                                                        "MAIN_MENU_MP_CATEGORY"
+                                                    ) . " " . $catIn["#"]["name"][0]["#"],
                                                 "url" => $url . "&lang=" . LANGUAGE_ID,
                                                 "items" => $arCategory2,
                                                 "items_id" => "menu_update_section_sub_" . count($arCategory),
@@ -583,10 +612,14 @@ if ($USER->CanDoOperation('install_updates') || (in_array(LANGUAGE_ID, array("ru
                                     }
 
                                     $arMarket[] = array(
-                                        "text" => $category["#"]["name"][0]["#"] . (IntVal($category["#"]["count"][0]["#"]) > 0 ? " (" . $category["#"]["count"][0]["#"] . ")" : ""),
+                                        "text" => $category["#"]["name"][0]["#"] . (intval(
+                                                $category["#"]["count"][0]["#"]
+                                            ) > 0 ? " (" . $category["#"]["count"][0]["#"] . ")" : ""),
                                         "url" => $url . "&lang=" . LANGUAGE_ID,
                                         "more_url" => $arUrls,
-                                        "title" => GetMessage("MAIN_MENU_MP_CATEGORY") . " " . $category["#"]["name"][0]["#"],
+                                        "title" => GetMessage(
+                                                "MAIN_MENU_MP_CATEGORY"
+                                            ) . " " . $category["#"]["name"][0]["#"],
                                         "items_id" => "menu_update_section_" . count($arMarket),
                                         "items" => $arCategory,
                                     );
@@ -670,7 +703,13 @@ if ($USER->CanDoOperation('edit_other_settings')) {
                 "text" => GetMessage("MAIN_MENU_SMILE_GALLERY_LIST"),
                 "title" => GetMessage("MAIN_MENU_SMILE_GALLERY_LIST_ALT"),
                 "url" => "smile_gallery.php?lang=" . LANGUAGE_ID,
-                "more_url" => array("smile_gallery_edit.php", "smile_set.php", "smile_set_edit.php", "smile_edit.php", "smile.php"),
+                "more_url" => array(
+                    "smile_gallery_edit.php",
+                    "smile_set.php",
+                    "smile_set_edit.php",
+                    "smile_edit.php",
+                    "smile.php"
+                ),
             ),
             array(
                 "page_icon" => "smile_import_page_icon",
@@ -733,7 +772,7 @@ if ($USER->CanDoOperation('view_other_settings')) {
     );
 }
 
-if ($USER->CanDoOperation("view_other_settings") && \Bitrix\Main\Analytics\SiteSpeed::isRussianSiteManager()) {
+if ($USER->CanDoOperation("view_other_settings") && \Bitrix\Main\Analytics\SiteSpeed::isOn()) {
     AddEventHandler("main", "OnBuildGlobalMenu", array("\\Bitrix\\Main\\Analytics\\SiteSpeed", "onBuildGlobalMenu"));
 }
 

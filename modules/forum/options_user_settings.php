@@ -1,20 +1,24 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 ClearVars("str_forum_");
 if (CModule::IncludeModule("forum")):
-    $ID = IntVal($ID);
+    $ID = intval($ID);
     $db_res = CForumUser::GetList(array(), array("USER_ID" => $ID));
-    $db_res->ExtractFields("str_forum_", True);
-    if (!isset($str_forum_ALLOW_POST) || ($str_forum_ALLOW_POST != "Y" && $str_forum_ALLOW_POST != "N"))
+    $db_res->ExtractFields("str_forum_", true);
+    if (!isset($str_forum_ALLOW_POST) || ($str_forum_ALLOW_POST != "Y" && $str_forum_ALLOW_POST != "N")) {
         $str_forum_ALLOW_POST = "Y";
-    if (!isset($str_forum_SHOW_NAME) || ($str_forum_SHOW_NAME != "Y" && $str_forum_SHOW_NAME != "N"))
+    }
+    if (!isset($str_forum_SHOW_NAME) || ($str_forum_SHOW_NAME != "Y" && $str_forum_SHOW_NAME != "N")) {
         $str_forum_SHOW_NAME = "Y";
+    }
     $str_forum_SUBSC_GET_MY_MESSAGE = ($str_forum_SUBSC_GET_MY_MESSAGE == "Y" ? "Y" : "N");
 
-    if ($COPY_ID > 0)
+    if ($COPY_ID > 0) {
         $str_forum_AVATAR = "";
+    }
 
-    if (strlen($strError) > 0) {
+    if ($strError <> '') {
         $str_forum_ALLOW_POST = htmlspecialcharsbx($_POST["forum_ALLOW_POST"]);
         $str_forum_HIDE_FROM_ONLINE = htmlspecialcharsbx($_POST["forum_HIDE_FROM_ONLINE"]);
         $str_forum_SUBSC_GET_MY_MESSAGE = htmlspecialcharsbx($_POST["forum_SUBSC_GET_MY_MESSAGE"]);
@@ -28,24 +32,29 @@ if (CModule::IncludeModule("forum")):
     <? if ($USER->IsAdmin() || $GLOBALS["APPLICATION"]->GetGroupRight("forum") >= "W"):?>
     <tr>
         <td width="40%"><?= GetMessage("forum_ALLOW_POST") ?></td>
-        <td width="60%"><input type="checkbox" name="forum_ALLOW_POST"
-                               value="Y" <? if ($str_forum_ALLOW_POST == "Y") echo "checked"; ?>></td>
+        <td width="60%"><input type="checkbox" name="forum_ALLOW_POST" value="Y" <? if ($str_forum_ALLOW_POST == "Y") {
+                echo "checked";
+            } ?>></td>
     </tr>
 <?endif; ?>
     <tr>
         <td><?= GetMessage("forum_HIDE_FROM_ONLINE") ?></td>
-        <td><input type="checkbox" name="forum_HIDE_FROM_ONLINE"
-                   value="Y" <? if ($str_forum_HIDE_FROM_ONLINE == "Y") echo "checked"; ?>></td>
+        <td><input type="checkbox" name="forum_HIDE_FROM_ONLINE" value="Y" <? if ($str_forum_HIDE_FROM_ONLINE == "Y") {
+                echo "checked";
+            } ?>></td>
     </tr>
     <tr>
         <td><?= GetMessage("forum_SUBSC_GET_MY_MESSAGE") ?></td>
         <td><input type="checkbox" name="forum_SUBSC_GET_MY_MESSAGE"
-                   value="Y" <? if ($str_forum_SUBSC_GET_MY_MESSAGE == "Y") echo "checked"; ?>></td>
+                   value="Y" <? if ($str_forum_SUBSC_GET_MY_MESSAGE == "Y") {
+                echo "checked";
+            } ?>></td>
     </tr>
     <tr>
         <td><?= GetMessage("forum_SHOW_NAME") ?></td>
-        <td><input type="checkbox" name="forum_SHOW_NAME"
-                   value="Y" <? if ($str_forum_SHOW_NAME == "Y") echo "checked"; ?>></td>
+        <td><input type="checkbox" name="forum_SHOW_NAME" value="Y" <? if ($str_forum_SHOW_NAME == "Y") {
+                echo "checked";
+            } ?>></td>
     </tr>
     <tr>
         <td><?= GetMessage('forum_DESCRIPTION') ?></td>
@@ -66,7 +75,9 @@ if (CModule::IncludeModule("forum")):
         <td><?= GetMessage("forum_AVATAR") ?></td>
         <td><?
             echo CFile::InputFile("forum_AVATAR", 20, $str_forum_AVATAR);
-            if ((is_array($str_forum_AVATAR) && sizeof($str_forum_AVATAR) > 0) || (!is_array($str_forum_AVATAR) && strlen($str_forum_AVATAR) > 0)):
+            if ((is_array($str_forum_AVATAR) && sizeof($str_forum_AVATAR) > 0) || (!is_array(
+                        $str_forum_AVATAR
+                    ) && $str_forum_AVATAR <> '')):
                 ?>
                 <div class="adm-detail-file-image"><?
                 echo CFile::ShowImage($str_forum_AVATAR, 150, 150, "border=0", "", true); ?></div><?

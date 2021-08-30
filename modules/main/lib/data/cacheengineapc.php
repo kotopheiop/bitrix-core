@@ -2,8 +2,10 @@
 
 namespace Bitrix\Main\Data;
 
+use Bitrix\Main\Data\LocalStorage;
+
 class CacheEngineApc
-    implements ICacheEngine, ICacheEngineStat
+    implements ICacheEngine, ICacheEngineStat, LocalStorage\Storage\CacheEngineInterface
 {
     private $sid = "BX";
     //cache stats
@@ -171,7 +173,7 @@ class CacheEngineApc
     public function clean($baseDir, $initDir = false, $filename = false)
     {
         $key = false;
-        if (strlen($filename)) {
+        if ($filename <> '') {
             $baseDirVersion = apc_fetch($this->sid . $baseDir);
             if ($baseDirVersion === false) {
                 return;
@@ -189,7 +191,7 @@ class CacheEngineApc
             $key = $baseDirVersion . "|" . $initDirVersion . "|" . $filename;
             apc_delete($key);
         } else {
-            if (strlen($initDir)) {
+            if ($initDir <> '') {
                 $baseDirVersion = apc_fetch($this->sid . $baseDir);
                 if ($baseDirVersion === false) {
                     return;
@@ -243,7 +245,7 @@ class CacheEngineApc
                 }
             }
 
-            $this->read = strlen($allVars);
+            $this->read = mb_strlen($allVars);
             $allVars = unserialize($allVars);
         }
 
@@ -284,7 +286,7 @@ class CacheEngineApc
         }
 
         $allVars = serialize($allVars);
-        $this->written = strlen($allVars);
+        $this->written = mb_strlen($allVars);
 
         $key = $baseDirVersion . "|" . $initDirVersion . "|" . $filename;
         apc_store($key, $allVars, intval($TTL) * $this->ttlMultiplier);

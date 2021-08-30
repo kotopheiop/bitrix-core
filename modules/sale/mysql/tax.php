@@ -1,14 +1,16 @@
-<?
-require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/general/tax.php");
+<?php
+
+require_once __DIR__ . "/../general/tax.php";
 
 class CSaleTax extends CAllSaleTax
 {
-    function Add($arFields)
+    public static function Add($arFields)
     {
         global $DB;
 
-        if (!CSaleTax::CheckFields("ADD", $arFields))
+        if (!CSaleTax::CheckFields("ADD", $arFields)) {
             return false;
+        }
 
         $arInsert = $DB->PrepareInsert("b_sale_tax", $arFields);
         $strSql =
@@ -16,10 +18,8 @@ class CSaleTax extends CAllSaleTax
             "VALUES(" . $arInsert[1] . ", " . $DB->GetNowFunction() . ")";
         $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 
-        $ID = IntVal($DB->LastID());
+        $ID = intval($DB->LastID());
 
         return $ID;
     }
 }
-
-?>

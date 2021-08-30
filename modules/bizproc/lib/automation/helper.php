@@ -19,14 +19,15 @@ class Helper
         $result = [];
         $users = (array)$users;
         $documentUserFields = static::getDocumentFields($documentType, 'user');
-        $documentUserGroups = self::getDocumentUserGroups($documentType);
+        $documentUserGroups = self::getDocumentUserServiceGroups($documentType);
 
         foreach ($users as $user) {
-            if (!is_scalar($user))
+            if (!is_scalar($user)) {
                 continue;
+            }
 
-            if (substr($user, 0, 5) === "user_") {
-                $user = intval(substr($user, 5));
+            if (mb_substr($user, 0, 5) === "user_") {
+                $user = intval(mb_substr($user, 5));
                 if (($user > 0) && !in_array($user, $result)) {
                     $userInfo = self::getUserInfo($user);
                     $result[] = [
@@ -113,8 +114,9 @@ class Helper
     {
         $result = array();
 
-        if (!Loader::includeModule('disk'))
+        if (!Loader::includeModule('disk')) {
             return $result;
+        }
 
         foreach ((array)$attachments as $attachmentId) {
             $attachmentId = (int)$attachmentId;
@@ -149,13 +151,17 @@ class Helper
         $documentUserFields = static::getDocumentFields($documentType, 'file');
 
         foreach ($files as $file) {
-            if (!is_scalar($file))
+            if (!is_scalar($file)) {
                 continue;
+            }
 
+            $found = false;
             foreach ($documentUserFields as $id => $field) {
-                if ($file !== $field['Expression'])
+                if ($file !== $field['Expression']) {
                     continue;
+                }
 
+                $found = true;
                 $result[] = array(
                     'id' => $id,
                     'expression' => $field['Expression'],
@@ -163,16 +169,25 @@ class Helper
                     'type' => 'file'
                 );
             }
+
+            if (!$found && mb_strpos($file, '{') === 0) {
+                $result[] = [
+                    'id' => $file,
+                    'expression' => $file,
+                    'name' => $file,
+                    'type' => 'file'
+                ];
+            }
         }
         return $result;
     }
 
-    public static function convertExpressions($source, array $documentType)
+    public static function convertExpressions($source, array $documentType, $useTilda = true)
     {
         $source = (string)$source;
-        list($ids, $names) = static::getFieldsMap($documentType);
+        [$ids, $names] = static::getFieldsMap($documentType);
 
-        $converter = function ($matches) use ($ids, $names) {
+        $converter = function ($matches) use ($ids, $names, $useTilda) {
             $mods = [];
             if ($matches['mod1']) {
                 $mods[] = $matches['mod1'];
@@ -187,8 +202,15 @@ class Helper
                     $fieldName = $names[$key];
                     return '{{' . $fieldName . ($mods ? ' > ' . implode(',', $mods) : '') . '}}';
                 }
-            } elseif (preg_match('/^A[_0-9]+$/', $matches['object'])) {
-                return '{{~' . $matches['object'] . ':' . $matches['field'] . ($mods ? ' > ' . implode(',', $mods) : '') . '}}';
+            } elseif ($useTilda && $matches['object'] === 'Template') {
+                return '{{~*:' . $matches['field'] . ($mods ? ' > ' . implode(',', $mods) : '') . '}}';
+            } elseif ($useTilda && $matches['object'] === 'Constant') {
+                return '{{~&:' . $matches['field'] . ($mods ? ' > ' . implode(',', $mods) : '') . '}}';
+            } elseif ($useTilda && preg_match('/^A[_0-9]+$/', $matches['object'])) {
+                return '{{~' . $matches['object'] . ':' . $matches['field'] . ($mods ? ' > ' . implode(
+                            ',',
+                            $mods
+                        ) : '') . '}}';
             }
 
             return $matches[0];
@@ -206,16 +228,27 @@ class Helper
     public static function unConvertExpressions($source, array $documentType)
     {
         $source = (string)$source;
-        list($ids, $names) = static::getFieldsMap($documentType);
+        [$ids, $names] = static::getFieldsMap($documentType);
 
         $converter = function ($matches) use ($ids, $names) {
             $matches['mixed'] = htmlspecialcharsback($matches['mixed']);
 
-            if (strpos($matches['mixed'], '~') === 0) {
-                $len = strpos($matches['mixed'], '#');
+            if (mb_strpos($matches['mixed'], '~') === 0) {
+                $len = mb_strpos($matches['mixed'], '#');
                 $expression = ($len === false)
-                    ? substr($matches['mixed'], 1)
-                    : substr($matches['mixed'], 1, $len - 1);
+                    ? mb_substr($matches['mixed'], 1)
+                    : mb_substr($matches['mixed'], 1, $len - 1);
+
+                if (mb_strpos($expression, '*:') === 0) {
+                    $expression = ltrim($expression, '*');
+                    $expression = 'Template' . $expression;
+                }
+
+                if (mb_strpos($expression, '&:') === 0) {
+                    $expression = ltrim($expression, '&');
+                    $expression = 'Constant' . $expression;
+                }
+
                 return '{=' . trim($expression) . '}';
             }
 
@@ -229,6 +262,15 @@ class Helper
                 if ($key !== false) {
                     $fieldId = $ids[$key];
                     break;
+                }
+            }
+
+            if (!$fieldId && mb_substr($fieldName, -10) === '_printable') {
+                $fieldName = mb_substr($fieldName, 0, -10);
+                $key = array_search(trim($fieldName), $names);
+                if ($key !== false) {
+                    $fieldId = $ids[$key];
+                    $pairs[] = 'printable';
                 }
             }
 
@@ -247,6 +289,30 @@ class Helper
         );
 
         return $source;
+    }
+
+    public static function convertProperties(array $properties, array $documentType, $useTilda = true)
+    {
+        foreach ($properties as $code => $property) {
+            if (is_array($property)) {
+                $properties[$code] = self::convertProperties($property, $documentType, $useTilda);
+            } else {
+                $properties[$code] = static::convertExpressions($property, $documentType, $useTilda);
+            }
+        }
+        return $properties;
+    }
+
+    public static function unConvertProperties(array $properties, array $documentType)
+    {
+        foreach ($properties as $code => $property) {
+            if (is_array($property)) {
+                $properties[$code] = self::unConvertProperties($property, $documentType);
+            } else {
+                $properties[$code] = static::unConvertExpressions($property, $documentType);
+            }
+        }
+        return $properties;
     }
 
     /**
@@ -277,8 +343,9 @@ class Helper
                     $field['Type'] = $field['BaseType'] = 'date';
                 }
 
-                if ($typeFilter !== null && $field['Type'] !== $typeFilter)
+                if ($typeFilter !== null && $field['Type'] !== $typeFilter) {
                     continue;
+                }
 
                 $field['Name'] = trim($field['Name']);
 
@@ -286,20 +353,42 @@ class Helper
                     'Id' => $id,
                     'Name' => $field['Name'],
                     'Type' => $field['Type'],
-                    'BaseType' => $field['BaseType'],
+                    'BaseType' => $field['BaseType'] ?? $field['Type'],
                     'Expression' => '{{' . $field['Name'] . '}}',
                     'SystemExpression' => '{=Document:' . $id . '}',
-                    'Options' => $field['Options']
+                    'Options' => $field['Options'],
+                    'Multiple' => $field['Multiple'] ?? false,
                 );
             }
         }
         return $resultFields;
     }
 
-    private static function getDocumentUserGroups(array $documentType): array
+    private static function getDocumentUserServiceGroups(array $documentType)
     {
         $documentService = \CBPRuntime::GetRuntime(true)->getDocumentService();
         return $documentService->GetAllowableUserGroups($documentType);
+    }
+
+    public static function getDocumentUserGroups(array $documentType): array
+    {
+        $docGroups = self::getDocumentUserServiceGroups($documentType);
+        $groups = [];
+
+        if ($docGroups) {
+            foreach ($docGroups as $id => $groupName) {
+                if (!$groupName || mb_strpos($id, 'group_') === 0) {
+                    continue;
+                }
+
+                $groups[] = [
+                    'id' => preg_match('/^[0-9]+$/', $id) ? 'G' . $id : $id,
+                    'name' => $groupName
+                ];
+            }
+        }
+
+        return $groups;
     }
 
     protected static function getFieldsMap(array $documentType)
@@ -330,26 +419,30 @@ class Helper
             'workTime' => false
         );
 
-        if (strpos($interval, '=dateadd(') === 0 || strpos($interval, '=workdateadd(') === 0) {
-            if (strpos($interval, '=workdateadd(') === 0) {
-                $interval = substr($interval, 13, -1); // cut =workdateadd(...)
+        if (mb_strpos($interval, '=dateadd(') === 0 || mb_strpos($interval, '=workdateadd(') === 0) {
+            if (mb_strpos($interval, '=workdateadd(') === 0) {
+                $interval = mb_substr($interval, 13, -1); // cut =workdateadd(...)
                 $result['workTime'] = true;
             } else {
-                $interval = substr($interval, 9, -1); // cut =dateadd(...)
+                $interval = mb_substr($interval, 9, -1); // cut =dateadd(...)
             }
 
             $arguments = explode(',', $interval);
             $result['basis'] = trim($arguments[0]);
 
             $arguments[1] = trim($arguments[1], '"\'');
-            $result['type'] = strpos($arguments[1], '-') === 0 ? DelayInterval::TYPE_BEFORE : DelayInterval::TYPE_AFTER;
+            $result['type'] = mb_strpos(
+                $arguments[1],
+                '-'
+            ) === 0 ? DelayInterval::TYPE_BEFORE : DelayInterval::TYPE_AFTER;
 
             preg_match_all('/\s*([\d]+)\s*(i|h|d)\s*/i', $arguments[1], $matches);
             foreach ($matches[0] as $i => $match) {
                 $result[$matches[2][$i]] = (int)$matches[1][$i];
             }
-        } elseif (\CBPDocument::IsExpression($interval))
+        } elseif (\CBPDocument::IsExpression($interval)) {
             $result['basis'] = $interval;
+        }
 
         $minutes = $result['i'] + $result['h'] * 60 + $result['d'] * 60 * 24;
 
@@ -377,8 +470,9 @@ class Helper
 
     public static function getDateTimeIntervalString($interval)
     {
-        if (!$interval['basis'] || !\CBPDocument::IsExpression($interval['basis']))
+        if (!$interval['basis'] || !\CBPDocument::IsExpression($interval['basis'])) {
             $interval['basis'] = static::CURRENT_DATE_BASIS;
+        }
 
         $days = isset($interval['d']) ? (int)$interval['d'] : 0;
         $hours = isset($interval['h']) ? (int)$interval['h'] : 0;
@@ -399,15 +493,19 @@ class Helper
         }
 
         $add = '';
-        if (isset($interval['type']) && $interval['type'] == DelayInterval::TYPE_BEFORE)
+        if (isset($interval['type']) && $interval['type'] == DelayInterval::TYPE_BEFORE) {
             $add = '-';
+        }
 
-        if ($days > 0)
+        if ($days > 0) {
             $add .= $days . 'd';
-        if ($hours > 0)
+        }
+        if ($hours > 0) {
             $add .= $hours . 'h';
-        if ($minutes > 0)
+        }
+        if ($minutes > 0) {
             $add .= $minutes . 'i';
+        }
 
         $fn = !empty($interval['workTime']) ? 'workdateadd' : 'dateadd';
 
@@ -430,13 +528,28 @@ class Helper
         $pairs[1] = (int)$pairs[1];
 
         if (count($pairs) === 3) {
-            if ($pairs[2] == 'pm' && $pairs[0] < 12)
+            if ($pairs[2] == 'pm' && $pairs[0] < 12) {
                 $pairs[0] += 12;
-            if ($pairs[2] == 'am' && $pairs[0] == 12)
+            }
+            if ($pairs[2] == 'am' && $pairs[0] == 12) {
                 $pairs[0] = 0;
+            }
         }
 
         return array('h' => $pairs[0], 'i' => $pairs[1]);
+    }
+
+    public static function countAllRobots(array $documentType, array $statuses): int
+    {
+        $cnt = 0;
+        foreach ($statuses as $status) {
+            $template = new Engine\Template($documentType, $status);
+            if ($template->getId() > 0) {
+                $cnt += count($template->getRobots());
+            }
+        }
+
+        return $cnt;
     }
 
     private static function getUserInfo($userID, $format = '', $htmlEncode = false)
@@ -452,14 +565,18 @@ class Helper
         }
 
         $dbUser = \CUser::GetList(
-            ($by = 'id'),
-            ($order = 'asc'),
+            'id',
+            'asc',
             array('ID' => $userID),
             array(
                 'FIELDS' => array(
                     'ID',
-                    'NAME', 'SECOND_NAME', 'LAST_NAME',
-                    'LOGIN', 'TITLE', 'EMAIL',
+                    'NAME',
+                    'SECOND_NAME',
+                    'LAST_NAME',
+                    'LOGIN',
+                    'TITLE',
+                    'EMAIL',
                     'PERSONAL_PHOTO'
                 )
             )

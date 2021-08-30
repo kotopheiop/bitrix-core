@@ -80,19 +80,33 @@ class Dictionary
     {
         $connection = \Bitrix\Main\Application::getConnection();
 
-        $connection->createTable($this->getTableName(), array(
-            "ID" => new \Bitrix\Main\Entity\IntegerField("ID", array(
-                'primary' => true,
-                'unique' => true,
-                'required' => true,
-            )),
-            "VALUE" => new \Bitrix\Main\Entity\StringField("VALUE", array(
-                'required' => true,
-                'validation' => array(__CLASS__, 'validateValue'),
-            )),
-        ), array("ID"), array("ID"));
+        $connection->createTable(
+            $this->getTableName(),
+            array(
+                "ID" => new \Bitrix\Main\Entity\IntegerField(
+                    "ID", array(
+                    'primary' => true,
+                    'unique' => true,
+                    'required' => true,
+                )
+                ),
+                "VALUE" => new \Bitrix\Main\Entity\StringField(
+                    "VALUE", array(
+                    'required' => true,
+                    'validation' => array(__CLASS__, 'validateValue'),
+                )
+                ),
+            ),
+            array("ID"),
+            array("ID")
+        );
 
-        $connection->createIndex($this->getTableName(), 'IX_' . $this->getTableName() . '_0', array("VALUE"), array("VALUE" => 200));
+        $connection->createIndex(
+            $this->getTableName(),
+            'IX_' . $this->getTableName() . '_0',
+            array("VALUE"),
+            array("VALUE" => 200)
+        );
 
         $this->cache = array();
         self::$exists[$this->iblockId] = true;
@@ -128,12 +142,17 @@ class Dictionary
             $connection = \Bitrix\Main\Application::getConnection();
 
             $sqlHelper = $connection->getSqlHelper();
-            $valueId = $connection->queryScalar("SELECT ID FROM " . $this->getTableName() . " WHERE VALUE = '" . $sqlHelper->forSql($value) . "'");
+            $valueId = $connection->queryScalar(
+                "SELECT ID FROM " . $this->getTableName() . " WHERE VALUE = '" . $sqlHelper->forSql($value) . "'"
+            );
             if ($valueId === null) {
                 if ($addWhenNotFound) {
-                    $valueId = $connection->add($this->getTableName(), array(
-                        "VALUE" => $value,
-                    ));
+                    $valueId = $connection->add(
+                        $this->getTableName(),
+                        array(
+                            "VALUE" => $value,
+                        )
+                    );
                 } else {
                     $valueId = 0;
                 }
@@ -155,11 +174,14 @@ class Dictionary
     public function getStringById($valueId)
     {
         $valueId = (int)$valueId;
-        if ($valueId <= 0)
+        if ($valueId <= 0) {
             return "";
+        }
 
         $connection = \Bitrix\Main\Application::getConnection();
-        $stringValue = $connection->queryScalar("SELECT VALUE FROM " . $this->getTableName() . " WHERE ID = " . $valueId);
+        $stringValue = $connection->queryScalar(
+            "SELECT VALUE FROM " . $this->getTableName() . " WHERE ID = " . $valueId
+        );
         return ($stringValue === null ? "" : $stringValue);
     }
 
@@ -173,17 +195,21 @@ class Dictionary
     public function getStringByIds($valueIDs)
     {
         $result = [];
-        if (empty($valueIDs) || !is_array($valueIDs))
+        if (empty($valueIDs) || !is_array($valueIDs)) {
             return $result;
+        }
         \Bitrix\Main\Type\Collection::normalizeArrayValuesByInt($valueIDs, true);
-        if (empty($valueIDs))
+        if (empty($valueIDs)) {
             return $result;
+        }
 
         $connection = \Bitrix\Main\Application::getConnection();
 
         $result = array_fill_keys($valueIDs, '');
 
-        $rs = $connection->query("SELECT ID, VALUE FROM " . $this->getTableName() . " WHERE ID IN(" . implode(',', $valueIDs) . ")");
+        $rs = $connection->query(
+            "SELECT ID, VALUE FROM " . $this->getTableName() . " WHERE ID IN(" . implode(',', $valueIDs) . ")"
+        );
         while ($row = $rs->fetch()) {
             $result[$row['ID']] = $row['VALUE'];
         }

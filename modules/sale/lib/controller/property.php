@@ -40,9 +40,11 @@ class Property extends Controller
             return null;
         } else {
             $entity = new \Bitrix\Sale\Rest\Entity\Property();
-            return ['PROPERTY' => $entity->prepareFieldInfos(
-                $entity->getFieldsByType($type)
-            )];
+            return [
+                'PROPERTY' => $entity->prepareFieldInfos(
+                    $entity->getFieldsByType($type)
+                )
+            ];
         }
     }
 
@@ -104,10 +106,11 @@ class Property extends Controller
         $r = $this->exists($id);
         if ($r->isSuccess()) {
             if (!$orderProps->Delete($id)) {
-                if ($ex = self::getApplication()->GetException())
+                if ($ex = self::getApplication()->GetException()) {
                     $r->addError(new Error($ex->GetString(), $ex->GetId()));
-                else
+                } else {
                     $r->addError(new Error('delete property error', 200850000004));
+                }
             }
         }
 
@@ -134,11 +137,13 @@ class Property extends Controller
             ]
         )->fetchAll();
 
-        return new Page('PROPERTIES', $items, function () use ($filter) {
+        return new Page(
+            'PROPERTIES', $items, function () use ($filter) {
             return count(
                 \Bitrix\Sale\Property::getList(['filter' => $filter])->fetchAll()
             );
-        });
+        }
+        );
     }
 
     public function addAction($fields)
@@ -147,8 +152,9 @@ class Property extends Controller
 
         $r = $this->checkFileds($fields);
 
-        if (!isset($fields['PERSON_TYPE_ID']) || trim($fields['PERSON_TYPE_ID']) == '')
+        if (!isset($fields['PERSON_TYPE_ID']) || trim($fields['PERSON_TYPE_ID']) == '') {
             $r->addError(new Error('person type id is empty', 200850000005));
+        }
 
         if ($r->isSuccess()) {
             $this->personTypeId = $fields['PERSON_TYPE_ID'];
@@ -258,8 +264,9 @@ class Property extends Controller
     protected function exists($id)
     {
         $r = new Result();
-        if ($this->get($id)['ID'] <= 0)
+        if ($this->get($id)['ID'] <= 0) {
             $r->addError(new Error('property is not exists', 200840400001));
+        }
 
         return $r;
     }
@@ -372,6 +379,11 @@ class Property extends Controller
                 'REQUIRED' => 'Y',
                 'RLABEL' => $personType['NAME']
             ],
+            'ENTITY_TYPE' => [
+                'TYPE' => 'STRING',
+                'LABEL' => 'ENTITY_TYPE',
+                'HIDDEN' => 'Y',
+            ],
             'PROPS_GROUP_ID' => [
                 'TYPE' => 'ENUM',
                 'LABEL' => Loc::getMessage('F_PROPS_GROUP_ID'),
@@ -447,7 +459,7 @@ class Property extends Controller
 
         if (!empty($commonSettings['TYPE']['OPTIONS'])) {
             foreach ($commonSettings['TYPE']['OPTIONS'] as $key => $option) {
-                $commonSettings['TYPE']['OPTIONS'][$key] = substr($option, 0, strpos($option, '[') - 1);
+                $commonSettings['TYPE']['OPTIONS'][$key] = mb_substr($option, 0, mb_strpos($option, '[') - 1);
             }
         }
 
@@ -536,13 +548,16 @@ class Property extends Controller
 
         $locationOptions = ['' => Loc::getMessage('NULL_ANOTHER_LOCATION')];
 
-        $result = $orderProps->GetList([],
+        $result = $orderProps->GetList(
+            [],
             [
                 'PERSON_TYPE_ID' => $this->personTypeId,
                 'TYPE' => 'STRING',
                 'ACTIVE' => 'Y'
             ],
-            false, false, ['ID', 'NAME']
+            false,
+            false,
+            ['ID', 'NAME']
         );
         while ($row = $result->Fetch()) {
             $locationOptions[$row['ID']] = $row['NAME'];
@@ -575,22 +590,43 @@ class Property extends Controller
     {
         return [
             'VALUE' => [
-                'TYPE' => 'STRING', 'LABEL' => Loc::getMessage('SALE_VARIANTS_CODE'), 'SIZE' => '5', 'MAXLENGTH' => 255, 'REQUIRED' => 'Y'
+                'TYPE' => 'STRING',
+                'LABEL' => Loc::getMessage('SALE_VARIANTS_CODE'),
+                'SIZE' => '5',
+                'MAXLENGTH' => 255,
+                'REQUIRED' => 'Y'
             ],
             'NAME' => [
-                'TYPE' => 'STRING', 'LABEL' => Loc::getMessage('SALE_VARIANTS_NAME'), 'SIZE' => '20', 'MAXLENGTH' => 255, 'REQUIRED' => 'Y'
+                'TYPE' => 'STRING',
+                'LABEL' => Loc::getMessage('SALE_VARIANTS_NAME'),
+                'SIZE' => '20',
+                'MAXLENGTH' => 255,
+                'REQUIRED' => 'Y'
             ],
             'SORT' => [
-                'TYPE' => 'NUMBER', 'LABEL' => Loc::getMessage('SALE_VARIANTS_SORT'), 'MIN' => 0, 'STEP' => 1, 'VALUE' => 100
+                'TYPE' => 'NUMBER',
+                'LABEL' => Loc::getMessage('SALE_VARIANTS_SORT'),
+                'MIN' => 0,
+                'STEP' => 1,
+                'VALUE' => 100
             ],
             'DESCRIPTION' => [
-                'TYPE' => 'STRING', 'LABEL' => Loc::getMessage('SALE_VARIANTS_DESCR'), 'SIZE' => '30', 'MAXLENGTH' => 255
+                'TYPE' => 'STRING',
+                'LABEL' => Loc::getMessage('SALE_VARIANTS_DESCR'),
+                'SIZE' => '30',
+                'MAXLENGTH' => 255
             ],
             'ID' => [
-                'TYPE' => 'NUMBER', 'MIN' => 0, 'STEP' => 1, 'HIDDEN' => 'Y'
+                'TYPE' => 'NUMBER',
+                'MIN' => 0,
+                'STEP' => 1,
+                'HIDDEN' => 'Y'
             ],
             'XML_ID' => [
-                'TYPE' => 'STRING', 'LABEL' => 'XML_ID', 'SIZE' => '20', 'MAXLENGTH' => 255
+                'TYPE' => 'STRING',
+                'LABEL' => 'XML_ID',
+                'SIZE' => '20',
+                'MAXLENGTH' => 255
             ],
         ];
     }
@@ -605,8 +641,9 @@ class Property extends Controller
             false,
             array("ID", "NAME", "ACTIVE", "SORT", "LID")
         );
-        while ($row = $result->Fetch())
+        while ($row = $result->Fetch()) {
             $paymentOptions[$row['ID']] = $row['NAME'] . ($row['LID'] ? " ({$row['LID']}) " : ' ') . "[{$row['ID']}]";
+        }
 
         // delivery system options
         $deliveryOptions = array();
@@ -615,15 +652,28 @@ class Property extends Controller
             $name = $deliveryFields["NAME"] . " [" . $deliveryId . "]";
             $sites = \Bitrix\Sale\Delivery\Restrictions\Manager::getSitesByServiceId($deliveryId);
 
-            if (!empty($sites))
+            if (!empty($sites)) {
                 $name .= " (" . implode(", ", $sites) . ")";
+            }
 
             $deliveryOptions[$deliveryId] = $name;
         }
 
         return [
-            'P' => ['TYPE' => 'ENUM', 'LABEL' => Loc::getMessage('SALE_PROPERTY_PAYSYSTEM'), 'OPTIONS' => $paymentOptions, 'MULTIPLE' => 'Y', 'SIZE' => '5'],
-            'D' => ['TYPE' => 'ENUM', 'LABEL' => Loc::getMessage('SALE_PROPERTY_DELIVERY'), 'OPTIONS' => $deliveryOptions, 'MULTIPLE' => 'Y', 'SIZE' => '5'],
+            'P' => [
+                'TYPE' => 'ENUM',
+                'LABEL' => Loc::getMessage('SALE_PROPERTY_PAYSYSTEM'),
+                'OPTIONS' => $paymentOptions,
+                'MULTIPLE' => 'Y',
+                'SIZE' => '5'
+            ],
+            'D' => [
+                'TYPE' => 'ENUM',
+                'LABEL' => Loc::getMessage('SALE_PROPERTY_DELIVERY'),
+                'OPTIONS' => $deliveryOptions,
+                'MULTIPLE' => 'Y',
+                'SIZE' => '5'
+            ],
         ];
     }
 
@@ -694,7 +744,9 @@ class Property extends Controller
 
                     foreach ($variantSettings as $name => $input) {
                         if ($error = Manager::getError($input, $row[$name])) {
-                            $this->errors[] = Loc::getMessage('INPUT_ENUM') . " $index: " . $input['LABEL'] . ': ' . implode(', ', $error);
+                            $this->errors[] = Loc::getMessage(
+                                    'INPUT_ENUM'
+                                ) . " $index: " . $input['LABEL'] . ': ' . implode(', ', $error);
                             $hasError = true;
                         }
                     }
@@ -709,30 +761,15 @@ class Property extends Controller
 
     protected function validateRelations()
     {
-        $hasRelations = false;
         $relationsSettings = $this->getRelationSettings();
 
         foreach ($relationsSettings as $name => $input) {
             if (($value = $this->property['RELATIONS'][$name]) && $value != array('')) {
-                $hasRelations = true;
-                if ($error = Manager::getError($input, $value))
+                if ($error = Manager::getError($input, $value)) {
                     $errors [] = $input['LABEL'] . ': ' . implode(', ', $error);
+                }
             } else {
                 $relations[$name] = array();
-            }
-        }
-
-        if ($hasRelations) {
-            if ($this->property['IS_LOCATION4TAX'] === 'Y') {
-                $this->errors[] = Loc::getMessage('ERROR_LOCATION4TAX_RELATION_NOT_ALLOWED');
-            }
-
-            if ($this->property['IS_EMAIL'] === 'Y') {
-                $this->errors[] = Loc::getMessage('ERROR_EMAIL_RELATION_NOT_ALLOWED');
-            }
-
-            if ($this->property['IS_PROFILE_NAME'] === 'Y') {
-                $this->errors[] = Loc::getMessage('ERROR_PROFILE_NAME_RELATION_NOT_ALLOWED');
             }
         }
     }
@@ -817,7 +854,10 @@ class Property extends Controller
             } else {
                 if (
                     File::isUploadedSingle($file)
-                    && ($fileId = \CFile::SaveFile(array('MODULE_ID' => 'sale') + $file, 'sale/order/properties/default'))
+                    && ($fileId = \CFile::SaveFile(
+                        array('MODULE_ID' => 'sale') + $file,
+                        'sale/order/properties/default'
+                    ))
                     && is_numeric($fileId)
                 ) {
                     $file = $fileId;
@@ -846,11 +886,13 @@ class Property extends Controller
             return [];
         }
 
-        $property = \Bitrix\Sale\Internals\OrderPropsTable::getRow([
-            'filter' => [
-                '=ID' => $propertyId
+        $property = \Bitrix\Sale\Internals\OrderPropsTable::getRow(
+            [
+                'filter' => [
+                    '=ID' => $propertyId
+                ]
             ]
-        ]);
+        );
         if (!empty($property)) {
             $property += $property['SETTINGS'];
             $property = $this->modifyDataDependedByType($property);
@@ -868,9 +910,12 @@ class Property extends Controller
                 case 'ENUM':
                     $variants = [];
 
-                    $result = $propsVariant->GetList([], [
-                        'ORDER_PROPS_ID' => $property['ID']
-                    ]);
+                    $result = $propsVariant->GetList(
+                        [],
+                        [
+                            'ORDER_PROPS_ID' => $property['ID']
+                        ]
+                    );
                     while ($row = $result->Fetch()) {
                         $variants[] = $row;
                     }
@@ -908,10 +953,14 @@ class Property extends Controller
         if ($update->isSuccess()) {
             $propertyCode = $propertiesToSave['CODE'] ?: false;
 
-            $result = OrderPropsValueTable::getList(['filter' => [
-                'ORDER_PROPS_ID' => $this->property['ID'],
-                '!CODE' => $propertyCode,
-            ]]);
+            $result = OrderPropsValueTable::getList(
+                [
+                    'filter' => [
+                        'ORDER_PROPS_ID' => $this->property['ID'],
+                        '!CODE' => $propertyCode,
+                    ]
+                ]
+            );
             while ($row = $result->Fetch()) {
                 OrderPropsValueTable::update($row['ID'], ['CODE' => $propertyCode]);
             }
@@ -953,9 +1002,12 @@ class Property extends Controller
             }
         } else {
             if (!empty($this->dbProperty) && $this->dbProperty['TYPE'] === 'FILE') {
-                $filesToDelete = File::asMultiple(File::getValue(
-                    $this->dbProperty, $this->dbProperty['DEFAULT_VALUE']
-                ));
+                $filesToDelete = File::asMultiple(
+                    File::getValue(
+                        $this->dbProperty,
+                        $this->dbProperty['DEFAULT_VALUE']
+                    )
+                );
 
                 if (!empty($savedFiles)) {
                     $filesToDelete = array_diff(
@@ -1017,7 +1069,7 @@ class Property extends Controller
 
     static public function prepareFields(array $fields)
     {
-        $fields['TYPE'] = strtoupper($fields['TYPE']);
+        $fields['TYPE'] = mb_strtoupper($fields['TYPE']);
 
         return $fields;
     }

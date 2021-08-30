@@ -1,4 +1,5 @@
 <?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/classes/general/searcher.php");
 
 class CSearcher extends CAllSearcher
@@ -26,8 +27,13 @@ class CSearcher extends CAllSearcher
         return $strSql;
     }
 
-    public static function GetList(&$by, &$order, $arFilter = Array(), &$is_filtered, $LIMIT = false)
-    {
+    public static function GetList(
+        $by = 's_today_hits',
+        $order = 'desc',
+        $arFilter = [],
+        &$is_filtered = false,
+        $LIMIT = false
+    ) {
         $err_mess = "File: " . __FILE__ . "<br>Line: ";
         $DB = CDatabase::GetModuleConnection('statistic');
         $arSqlSearch = Array("S.ID <> 1");
@@ -42,16 +48,16 @@ class CSearcher extends CAllSearcher
             $date2 = $arFilter["DATE2_PERIOD"];
             $date_from = MkDateTime(ConvertDateTime($date1, "D.M.Y"), "d.m.Y");
             $date_to = MkDateTime(ConvertDateTime($date2, "D.M.Y") . " 23:59", "d.m.Y H:i");
-            if (CheckDateTime($date1) && strlen($date1) > 0) {
+            if (CheckDateTime($date1) && $date1 <> '') {
                 $filter_period = true;
-                if (strlen($date2) > 0) {
+                if ($date2 <> '') {
                     $strSqlPeriod = "sum(if(D.DATE_STAT<FROM_UNIXTIME('$date_from'),0, if(D.DATE_STAT>FROM_UNIXTIME('$date_to'),0,";
                     $strT = ")))";
                 } else {
                     $strSqlPeriod = "sum(if(D.DATE_STAT<FROM_UNIXTIME('$date_from'),0,";
                     $strT = "))";
                 }
-            } elseif (CheckDateTime($date2) && strlen($date2) > 0) {
+            } elseif (CheckDateTime($date2) && $date2 <> '') {
                 ResetFilterLogic();
                 $filter_period = true;
                 $strSqlPeriod = "sum(if(D.DATE_STAT>FROM_UNIXTIME('$date_to'),0,";
@@ -60,11 +66,13 @@ class CSearcher extends CAllSearcher
 
             foreach ($arFilter as $key => $val) {
                 if (is_array($val)) {
-                    if (count($val) <= 0)
+                    if (count($val) <= 0) {
                         continue;
+                    }
                 } else {
-                    if ((strlen($val) <= 0) || ($val === "NOT_REF"))
+                    if (((string)$val == '') || ($val === "NOT_REF")) {
                         continue;
+                    }
                 }
                 $match_value_set = array_key_exists($key . "_EXACT_MATCH", $arFilter);
                 $key = strtoupper($key);
@@ -79,18 +87,27 @@ class CSearcher extends CAllSearcher
                         $arSqlSearch[] = ($val == "Y") ? "S." . $key . "='Y'" : "S." . $key . "='N'";
                         break;
                     case "HITS1":
-                        $arSqlSearch_h[] = "(sum(ifnull(D.TOTAL_HITS,0))+ifnull(S.TOTAL_HITS,0))>='" . intval($val) . "'";
+                        $arSqlSearch_h[] = "(sum(ifnull(D.TOTAL_HITS,0))+ifnull(S.TOTAL_HITS,0))>='" . intval(
+                                $val
+                            ) . "'";
                         break;
                     case "HITS2":
-                        $arSqlSearch_h[] = "(sum(ifnull(D.TOTAL_HITS,0))+ifnull(S.TOTAL_HITS,0))<='" . intval($val) . "'";
+                        $arSqlSearch_h[] = "(sum(ifnull(D.TOTAL_HITS,0))+ifnull(S.TOTAL_HITS,0))<='" . intval(
+                                $val
+                            ) . "'";
                         break;
                     case "DATE1":
-                        if (CheckDateTime($val))
+                        if (CheckDateTime($val)) {
                             $arSqlSearch_h[] = "max(D.DATE_LAST)>=" . $DB->CharToDateFunction($val, "SHORT");
+                        }
                         break;
                     case "DATE2":
-                        if (CheckDateTime($val))
-                            $arSqlSearch_h[] = "max(D.DATE_LAST)<" . $DB->CharToDateFunction($val, "SHORT") . " + INTERVAL 1 DAY";
+                        if (CheckDateTime($val)) {
+                            $arSqlSearch_h[] = "max(D.DATE_LAST)<" . $DB->CharToDateFunction(
+                                    $val,
+                                    "SHORT"
+                                ) . " + INTERVAL 1 DAY";
+                        }
                         break;
                     case "NAME":
                     case "USER_AGENT":
@@ -101,44 +118,45 @@ class CSearcher extends CAllSearcher
             }
         }
 
-        if ($by == "s_id")
+        if ($by == "s_id") {
             $strSqlOrder = "ORDER BY S.ID";
-        elseif ($by == "s_date_last")
+        } elseif ($by == "s_date_last") {
             $strSqlOrder = "ORDER BY S_DATE_LAST";
-        elseif ($by == "s_today_hits")
+        } elseif ($by == "s_today_hits") {
             $strSqlOrder = "ORDER BY TODAY_HITS";
-        elseif ($by == "s_yesterday_hits")
+        } elseif ($by == "s_yesterday_hits") {
             $strSqlOrder = "ORDER BY YESTERDAY_HITS";
-        elseif ($by == "s_b_yesterday_hits")
+        } elseif ($by == "s_b_yesterday_hits") {
             $strSqlOrder = "ORDER BY B_YESTERDAY_HITS";
-        elseif ($by == "s_total_hits")
+        } elseif ($by == "s_total_hits") {
             $strSqlOrder = "ORDER BY TOTAL_HITS";
-        elseif ($by == "s_period_hits")
+        } elseif ($by == "s_period_hits") {
             $strSqlOrder = "ORDER BY PERIOD_HITS";
-        elseif ($by == "s_name")
+        } elseif ($by == "s_name") {
             $strSqlOrder = "ORDER BY S.NAME";
-        elseif ($by == "s_user_agent")
+        } elseif ($by == "s_user_agent") {
             $strSqlOrder = "ORDER BY S.USER_AGENT";
-        elseif ($by == "s_chart")
+        } elseif ($by == "s_chart") {
             $strSqlOrder = "ORDER BY S.DIAGRAM_DEFAULT desc, TOTAL_HITS ";
-        elseif ($by == "s_stat")
+        } elseif ($by == "s_stat") {
             $strSqlOrder = "ORDER BY TODAY_HITS desc, YESTERDAY_HITS desc, B_YESTERDAY_HITS desc, TOTAL_HITS desc, PERIOD_HITS";
-        else {
-            $by = "s_today_hits";
+        } else {
             $strSqlOrder = "ORDER BY TODAY_HITS desc, YESTERDAY_HITS desc, B_YESTERDAY_HITS desc, TOTAL_HITS desc, PERIOD_HITS";
         }
 
         if ($order != "asc") {
             $strSqlOrder .= " desc ";
-            $order = "desc";
         }
+
         $limit_sql = "LIMIT " . intval(COption::GetOptionString('statistic', 'RECORDS_LIMIT'));
-        if (intval($LIMIT) > 0)
+        if (intval($LIMIT) > 0) {
             $limit_sql = "LIMIT " . intval($LIMIT);
+        }
 
         $strSqlSearch = GetFilterSqlSearch($arSqlSearch);
-        foreach ($arSqlSearch_h as $sqlWhere)
+        foreach ($arSqlSearch_h as $sqlWhere) {
             $strSqlSearch_h .= " and (" . $sqlWhere . ") ";
+        }
 
         $strSql = "
 		SELECT
@@ -169,7 +187,7 @@ class CSearcher extends CAllSearcher
 		";
 
         $res = $DB->Query($strSql, false, $err_mess . __LINE__);
-        $is_filtered = (IsFiltered($strSqlSearch) || $filter_period || strlen($strSqlSearch_h) > 0);
+        $is_filtered = (IsFiltered($strSqlSearch) || $filter_period || $strSqlSearch_h <> '');
         return $res;
     }
 
@@ -191,8 +209,13 @@ class CSearcher extends CAllSearcher
         return $res;
     }
 
-    public static function GetDynamicList($SEARCHER_ID, &$by, &$order, &$arMaxMin, $arFilter = Array())
-    {
+    public static function GetDynamicList(
+        $SEARCHER_ID,
+        $by = 's_date',
+        $order = 'desc',
+        &$arMaxMin = [],
+        $arFilter = []
+    ) {
         $err_mess = "File: " . __FILE__ . "<br>Line: ";
         $DB = CDatabase::GetModuleConnection('statistic');
         $SEARCHER_ID = intval($SEARCHER_ID);
@@ -201,39 +224,48 @@ class CSearcher extends CAllSearcher
         if (is_array($arFilter)) {
             foreach ($arFilter as $key => $val) {
                 if (is_array($val)) {
-                    if (count($val) <= 0)
+                    if (count($val) <= 0) {
                         continue;
+                    }
                 } else {
-                    if ((strlen($val) <= 0) || ($val === "NOT_REF"))
+                    if (((string)$val == '') || ($val === "NOT_REF")) {
                         continue;
+                    }
                 }
 
                 $key = strtoupper($key);
                 switch ($key) {
                     case "DATE1":
-                        if (CheckDateTime($val))
+                        if (CheckDateTime($val)) {
                             $arSqlSearch[] = "D.DATE_STAT>=" . $DB->CharToDateFunction($val, "SHORT");
+                        }
                         break;
                     case "DATE2":
-                        if (CheckDateTime($val))
-                            $arSqlSearch[] = "D.DATE_STAT<" . $DB->CharToDateFunction($val, "SHORT") . " + INTERVAL 1 DAY";
+                        if (CheckDateTime($val)) {
+                            $arSqlSearch[] = "D.DATE_STAT<" . $DB->CharToDateFunction(
+                                    $val,
+                                    "SHORT"
+                                ) . " + INTERVAL 1 DAY";
+                        }
                         break;
                 }
             }
         }
 
-        foreach ($arSqlSearch as $sqlWhere)
+        foreach ($arSqlSearch as $sqlWhere) {
             $strSqlSearch .= " and (" . $sqlWhere . ") ";
+        }
 
-        if ($by == "s_date") $strSqlOrder = "ORDER BY D.DATE_STAT";
-        else {
-            $by = "s_date";
+        if ($by == "s_date") {
+            $strSqlOrder = "ORDER BY D.DATE_STAT";
+        } else {
             $strSqlOrder = "ORDER BY D.DATE_STAT";
         }
+
         if ($order != "asc") {
             $strSqlOrder .= " desc ";
-            $order = "desc";
         }
+
         $strSql = "
 			SELECT
 				" . $DB->DateToCharFunction("D.DATE_STAT", "SHORT") . "		DATE_STAT,

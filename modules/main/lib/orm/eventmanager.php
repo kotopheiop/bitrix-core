@@ -101,14 +101,31 @@ class EventManager
      * @throws ArgumentException
      * @throws \Bitrix\Main\SystemException
      */
-    public function registerEventHandler($entity, $eventType, $toModuleId, $toClass = "", $toMethod = "", $sort = 100, $toPath = "", $toMethodArg = [])
-    {
+    public function registerEventHandler(
+        $entity,
+        $eventType,
+        $toModuleId,
+        $toClass = "",
+        $toMethod = "",
+        $sort = 100,
+        $toPath = "",
+        $toMethodArg = []
+    ) {
         $entity = static::obtainEntity($entity);
         $eventType = static::obtainEventType($entity, $eventType);
 
         // subscribe
         \Bitrix\Main\EventManager::getInstance()
-            ->registerEventHandler($entity->getModule(), $eventType, $toModuleId, $toClass, $toMethod, $sort, $toPath, $toMethodArg);
+            ->registerEventHandler(
+                $entity->getModule(),
+                $eventType,
+                $toModuleId,
+                $toClass,
+                $toMethod,
+                $sort,
+                $toPath,
+                $toMethodArg
+            );
     }
 
     /**
@@ -123,14 +140,29 @@ class EventManager
      * @throws ArgumentException
      * @throws \Bitrix\Main\SystemException
      */
-    public function unRegisterEventHandler($entity, $eventType, $toModuleId, $toClass = "", $toMethod = "", $toPath = "", $toMethodArg = [])
-    {
+    public function unRegisterEventHandler(
+        $entity,
+        $eventType,
+        $toModuleId,
+        $toClass = "",
+        $toMethod = "",
+        $toPath = "",
+        $toMethodArg = []
+    ) {
         $entity = static::obtainEntity($entity);
         $eventType = static::obtainEventType($entity, $eventType);
 
         // unsubscribe
         \Bitrix\Main\EventManager::getInstance()
-            ->unRegisterEventHandler($entity->getModule(), $eventType, $toModuleId, $toClass, $toMethod, $toPath, $toMethodArg);
+            ->unRegisterEventHandler(
+                $entity->getModule(),
+                $eventType,
+                $toModuleId,
+                $toClass,
+                $toMethod,
+                $toPath,
+                $toMethodArg
+            );
     }
 
     /**
@@ -166,17 +198,21 @@ class EventManager
      */
     protected static function obtainEventType($entity, $eventType)
     {
-        if (!in_array($eventType, [
-            DataManager::EVENT_ON_BEFORE_ADD,
-            DataManager::EVENT_ON_ADD,
-            DataManager::EVENT_ON_AFTER_ADD,
-            DataManager::EVENT_ON_BEFORE_UPDATE,
-            DataManager::EVENT_ON_UPDATE,
-            DataManager::EVENT_ON_AFTER_UPDATE,
-            DataManager::EVENT_ON_BEFORE_DELETE,
-            DataManager::EVENT_ON_DELETE,
-            DataManager::EVENT_ON_AFTER_DELETE,
-        ], true)) {
+        if (!in_array(
+            $eventType,
+            [
+                DataManager::EVENT_ON_BEFORE_ADD,
+                DataManager::EVENT_ON_ADD,
+                DataManager::EVENT_ON_AFTER_ADD,
+                DataManager::EVENT_ON_BEFORE_UPDATE,
+                DataManager::EVENT_ON_UPDATE,
+                DataManager::EVENT_ON_AFTER_UPDATE,
+                DataManager::EVENT_ON_BEFORE_DELETE,
+                DataManager::EVENT_ON_DELETE,
+                DataManager::EVENT_ON_AFTER_DELETE,
+            ],
+            true
+        )) {
             throw new ArgumentException("Unknown event type `{$eventType}`");
         }
 

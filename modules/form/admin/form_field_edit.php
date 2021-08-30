@@ -12,7 +12,9 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/form/prolog.php");
 
 $FORM_RIGHT = $APPLICATION->GetGroupRight("form");
-if ($FORM_RIGHT <= "D") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($FORM_RIGHT <= "D") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 CModule::IncludeModule("form");
 
@@ -26,29 +28,62 @@ InitBVar($additional);
 
 $err_mess = "File: " . __FILE__ . "<br>Line: ";
 
-if ($additional != "Y") define("HELP_FILE", "form_question_list.php");
-else define("HELP_FILE", "form_field_list.php");
+if ($additional != "Y") {
+    define("HELP_FILE", "form_question_list.php");
+} else {
+    define("HELP_FILE", "form_field_list.php");
+}
 
 $old_module_version = CForm::IsOldVersion();
 
 $aTabs = array();
-$aTabs[] = array("DIV" => "edit1", "TAB" => GetMessage("FORM_PROP"), "ICON" => "form_edit", "TITLE" => GetMessage("FORM_PROP_TITLE"));
+$aTabs[] = array(
+    "DIV" => "edit1",
+    "TAB" => GetMessage("FORM_PROP"),
+    "ICON" => "form_edit",
+    "TITLE" => GetMessage("FORM_PROP_TITLE")
+);
 if ($additional != "Y") {
-    $aTabs[] = array("DIV" => "edit2", "TAB" => GetMessage("FORM_QUESTION"), "ICON" => "form_edit", "TITLE" => GetMessage("FORM_TITLE"));
-    $aTabs[] = array("DIV" => "edit3", "TAB" => GetMessage("FORM_ANSWER"), "ICON" => "form_edit", "TITLE" => GetMessage("FORM_ANSWER_LIST"));
-    $aTabs[] = array("DIV" => "edit7", "TAB" => GetMessage("FORM_VAL"), "ICON" => "form_edit", "TITLE" => GetMessage("FORM_VAL_TITLE"));
+    $aTabs[] = array(
+        "DIV" => "edit2",
+        "TAB" => GetMessage("FORM_QUESTION"),
+        "ICON" => "form_edit",
+        "TITLE" => GetMessage("FORM_TITLE")
+    );
+    $aTabs[] = array(
+        "DIV" => "edit3",
+        "TAB" => GetMessage("FORM_ANSWER"),
+        "ICON" => "form_edit",
+        "TITLE" => GetMessage("FORM_ANSWER_LIST")
+    );
+    $aTabs[] = array(
+        "DIV" => "edit7",
+        "TAB" => GetMessage("FORM_VAL"),
+        "ICON" => "form_edit",
+        "TITLE" => GetMessage("FORM_VAL_TITLE")
+    );
 }
-$aTabs[] = array("DIV" => "edit4", "TAB" => GetMessage("FORM_RESULTS"), "ICON" => "form_edit", "TITLE" => GetMessage("FORM_RESULTS_SHOW"));
-$aTabs[] = array("DIV" => "edit5", "TAB" => GetMessage("FORM_FILTER"), "ICON" => "form_edit", "TITLE" => GetMessage("FORM_FILTER_TYPE"));
-$aTabs[] = array("DIV" => "edit6", "TAB" => GetMessage("FORM_COMMENT_TOP"), "ICON" => "form_edit", "TITLE" => GetMessage("FORM_COMMENTS"));
-
+$aTabs[] = array(
+    "DIV" => "edit4",
+    "TAB" => GetMessage("FORM_RESULTS"),
+    "ICON" => "form_edit",
+    "TITLE" => GetMessage("FORM_RESULTS_SHOW")
+);
+$aTabs[] = array(
+    "DIV" => "edit5",
+    "TAB" => GetMessage("FORM_FILTER"),
+    "ICON" => "form_edit",
+    "TITLE" => GetMessage("FORM_FILTER_TYPE")
+);
+$aTabs[] = array(
+    "DIV" => "edit6",
+    "TAB" => GetMessage("FORM_COMMENT_TOP"),
+    "ICON" => "form_edit",
+    "TITLE" => GetMessage("FORM_COMMENTS")
+);
 
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 $message = null;
-
-/***************************************************************************
- * GET | POST processing
- ***************************************************************************/
 
 $WEB_FORM_ID = intval($_REQUEST['WEB_FORM_ID']);
 $ID = intval($_REQUEST['ID']);
@@ -69,16 +104,23 @@ $link = "form_edit.php?lang=" . LANGUAGE_ID . "&ID=" . $WEB_FORM_ID;
 $adminChain->AddItem(array("TEXT" => $txt, "LINK" => $link));
 
 $F_RIGHT = CForm::GetPermission($WEB_FORM_ID);
-if ($F_RIGHT < 25) $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($F_RIGHT < 25) {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 if ($copy_id > 0 && $F_RIGHT >= 30 && check_bitrix_sessid()) {
     $new_id = CFormField::Copy($copy_id);
-    if (strlen($strError) <= 0 && intval($new_id) > 0) {
-        LocalRedirect("form_field_edit.php?ID=" . $new_id . "&additional=" . $additional . "&WEB_FORM_ID=" . $WEB_FORM_ID . "&lang=" . LANGUAGE_ID . "&strError=" . urlencode($strError));
+    if ($strError == '' && intval($new_id) > 0) {
+        LocalRedirect(
+            "form_field_edit.php?ID=" . $new_id . "&additional=" . $additional . "&WEB_FORM_ID=" . $WEB_FORM_ID . "&lang=" . LANGUAGE_ID . "&strError=" . urlencode(
+                $strError
+            )
+        );
     }
 }
 
-if ((strlen($_REQUEST['save']) > 0 || strlen($_REQUEST['apply']) > 0) && $_SERVER['REQUEST_METHOD'] == "POST" && $F_RIGHT >= 30 && check_bitrix_sessid()) {
+if (($_REQUEST['save'] <> '' || $_REQUEST['apply'] <> '') && $_SERVER['REQUEST_METHOD'] == "POST" && $F_RIGHT >= 30 && check_bitrix_sessid(
+    )) {
     $arIMAGE = $_FILES["IMAGE_ID"];
     $arIMAGE["MODULE_ID"] = "form";
     $arIMAGE["del"] = $_REQUEST['IMAGE_ID_del'];
@@ -122,7 +164,9 @@ if ((strlen($_REQUEST['save']) > 0 || strlen($_REQUEST['apply']) > 0) && $_SERVE
         foreach ($ANSWER as $pid) {
             $pid = intval($pid);
 
-            if ($pid <= 0) continue;
+            if ($pid <= 0) {
+                continue;
+            }
 
             $arrA = array();
             $arrA["ID"] = $_REQUEST["ANSWER_ID_" . $pid];
@@ -136,8 +180,9 @@ if ((strlen($_REQUEST['save']) > 0 || strlen($_REQUEST['apply']) > 0) && $_SERVE
             $arrA["FIELD_HEIGHT"] = $_REQUEST["FIELD_HEIGHT_" . $pid];
             $arrA["FIELD_PARAM"] = $_REQUEST["FIELD_PARAM_" . $pid];
 
-            if ($arrA['MESSAGE'] != '' && $arrA['DELETE'] !== 'Y')
+            if ($arrA['MESSAGE'] != '' && $arrA['DELETE'] !== 'Y') {
                 $bHasAnswers = true;
+            }
 
             $arFields["arANSWER"][] = $arrA;
         }
@@ -155,18 +200,12 @@ if ((strlen($_REQUEST['save']) > 0 || strlen($_REQUEST['apply']) > 0) && $_SERVE
         $arFields["arFILTER_FIELD"] = $_REQUEST['arFILTER_FIELD'];
     }
 
-    /*
-    print "<pre>";
-    print_r($arFields);
-    print "</pre>";
-    die();
-    */
-
-    if (strlen($strError) <= 0) {
+    if ($strError == '') {
         $res = intval(CFormField::Set($arFields, $ID));
         if ($res > 0) {
-            if (intval($ID) > 0)
+            if (intval($ID) > 0) {
                 CFormValidator::Clear($ID);
+            }
 
             $ID = $res;
 
@@ -174,18 +213,24 @@ if ((strlen($_REQUEST['save']) > 0 || strlen($_REQUEST['apply']) > 0) && $_SERVE
             if ($additional != "Y") {
                 $sValStructSerialized = $_REQUEST["VAL_STRUCTURE"];
                 if (CheckSerializedData($sValStructSerialized)) {
-                    $arValStructure = unserialize($sValStructSerialized);
+                    $arValStructure = unserialize($sValStructSerialized, ['allowed_classes' => false]);
                     if (count($arValStructure) > 0) {
                         CFormValidator::SetBatch($WEB_FORM_ID, $ID, $arValStructure);
                     }
                 }
             }
 
-            if (strlen($strError) <= 0) {
-                if (strlen($_REQUEST['save']) > 0)
-                    LocalRedirect("form_field_list.php?WEB_FORM_ID=" . $WEB_FORM_ID . "&additional=" . $additional . "&lang=" . LANGUAGE_ID);
-                else
-                    LocalRedirect("form_field_edit.php?ID=" . $ID . "&WEB_FORM_ID=" . $WEB_FORM_ID . "&additional=" . $additional . "&lang=" . LANGUAGE_ID . "&" . $tabControl->ActiveTabParam());
+            if ($strError == '') {
+                if ($_REQUEST['save'] <> '') {
+                    LocalRedirect(
+                        "form_field_list.php?WEB_FORM_ID=" . $WEB_FORM_ID . "&additional=" . $additional . "&lang=" . LANGUAGE_ID
+                    );
+                } else {
+                    LocalRedirect(
+                        "form_field_edit.php?ID=" . $ID . "&WEB_FORM_ID=" . $WEB_FORM_ID . "&additional=" . $additional . "&lang=" . LANGUAGE_ID . "&" . $tabControl->ActiveTabParam(
+                        )
+                    );
+                }
             }
         }
 
@@ -206,7 +251,7 @@ if (!$rsField || !$rsField->ExtractFields()) {
     $arCurrentValidators = array();
     if ($additional != "Y") {
         if ($ID > 0) {
-            $rsCurrentValidators = CFormValidator::GetList($ID, array(), $by = "C_SORT", $order = "ASC");
+            $rsCurrentValidators = CFormValidator::GetList($ID);
             while ($arValidator = $rsCurrentValidators->Fetch()) {
                 $arCurrentValidators[] = $arValidator;
             }
@@ -215,29 +260,36 @@ if (!$rsField || !$rsField->ExtractFields()) {
 #############################
 }
 
-if (strlen($strError) > 0) $DB->InitTableVarsForEdit("b_form_field", "", "str_");
+if ($strError <> '') {
+    $DB->InitTableVarsForEdit("b_form_field", "", "str_");
+}
 
 if ($additional == "Y") {
-    if ($ID > 0) $sDocTitle = str_replace("#ID#", $ID, GetMessage("FORM_EDIT_ADDITIONAL_RECORD"));
-    else $sDocTitle = GetMessage("FORM_NEW_ADDITIONAL_RECORD");
+    if ($ID > 0) {
+        $sDocTitle = str_replace("#ID#", $ID, GetMessage("FORM_EDIT_ADDITIONAL_RECORD"));
+    } else {
+        $sDocTitle = GetMessage("FORM_NEW_ADDITIONAL_RECORD");
+    }
 } else {
-    if ($ID > 0) $sDocTitle = str_replace("#ID#", $ID, GetMessage("FORM_EDIT_RECORD"));
-    else $sDocTitle = GetMessage("FORM_NEW_RECORD");
+    if ($ID > 0) {
+        $sDocTitle = str_replace("#ID#", $ID, GetMessage("FORM_EDIT_RECORD"));
+    } else {
+        $sDocTitle = GetMessage("FORM_NEW_RECORD");
+    }
 }
 
 $APPLICATION->SetTitle($sDocTitle);
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
-/***************************************************************************
- * HTML form
- ****************************************************************************/
 
 $context = new CAdminContextMenuList($arForm['ADMIN_MENU']);
 $context->Show();
 
 echo BeginNote('width="100%"'); ?>
 <b><?= GetMessage("FORM_FORM_NAME") ?></b> [<a title='<?= GetMessage("FORM_EDIT_FORM") ?>'
-                                               href='form_edit.php?lang=<?= LANGUAGE_ID ?>&ID=<?= $WEB_FORM_ID ?>'><?= $WEB_FORM_ID ?></a>]&nbsp;(<?= htmlspecialcharsbx($arForm["SID"]) ?>)&nbsp;<?= htmlspecialcharsbx($arForm["NAME"]) ?>
+                                               href='form_edit.php?lang=<?= LANGUAGE_ID ?>&ID=<?= $WEB_FORM_ID ?>'><?= $WEB_FORM_ID ?></a>]&nbsp;(<?= htmlspecialcharsbx(
+    $arForm["SID"]
+) ?>)&nbsp;<?= htmlspecialcharsbx($arForm["NAME"]) ?>
 <? echo EndNote();
 
 $aMenu = array();
@@ -267,7 +319,6 @@ else
 */
 
 if ($F_RIGHT >= 30 && $ID > 0) {
-
     if ($additional == "Y") {
         $aMenu[] = array(
             "ICON" => "btn_new",
@@ -280,14 +331,18 @@ if ($F_RIGHT >= 30 && $ID > 0) {
             "ICON" => "btn_copy",
             "TEXT" => GetMessage("FORM_CP"),
             "TITLE" => GetMessage("FORM_COPY_FIELD"),
-            "LINK" => "form_field_edit.php?ID=" . $ID . "&amp;copy_id=" . $ID . "&lang=" . LANGUAGE_ID . "&WEB_FORM_ID=" . $WEB_FORM_ID . "&additional=Y&" . bitrix_sessid_get()
+            "LINK" => "form_field_edit.php?ID=" . $ID . "&amp;copy_id=" . $ID . "&lang=" . LANGUAGE_ID . "&WEB_FORM_ID=" . $WEB_FORM_ID . "&additional=Y&" . bitrix_sessid_get(
+                )
         );
 
         $aMenu[] = array(
             "ICON" => "btn_delete",
             "TEXT" => GetMessage("FORM_DELETE_FIELD"),
             "TITLE" => GetMessage("FORM_DELETE_FIELD"),
-            "LINK" => "javascript:if(confirm('" . GetMessage("FORM_CONFIRM_DELETE_FIELD") . "'))window.location='form_field_list.php?action=delete&ID=" . $ID . "&WEB_FORM_ID=" . $WEB_FORM_ID . "&" . bitrix_sessid_get() . "&lang=" . LANGUAGE_ID . "&additional=Y';",
+            "LINK" => "javascript:if(confirm('" . GetMessage(
+                    "FORM_CONFIRM_DELETE_FIELD"
+                ) . "'))window.location='form_field_list.php?action=delete&ID=" . $ID . "&WEB_FORM_ID=" . $WEB_FORM_ID . "&" . bitrix_sessid_get(
+                ) . "&lang=" . LANGUAGE_ID . "&additional=Y';",
         );
     } else {
         $aMenu[] = array(
@@ -301,14 +356,18 @@ if ($F_RIGHT >= 30 && $ID > 0) {
             "ICON" => "btn_copy",
             "TEXT" => GetMessage("FORM_CP"),
             "TITLE" => GetMessage("FORM_COPY_QUESTION"),
-            "LINK" => "form_field_edit.php?ID=" . $ID . "&amp;copy_id=" . $ID . "&lang=" . LANGUAGE_ID . "&WEB_FORM_ID=" . $WEB_FORM_ID . "&" . bitrix_sessid_get()
+            "LINK" => "form_field_edit.php?ID=" . $ID . "&amp;copy_id=" . $ID . "&lang=" . LANGUAGE_ID . "&WEB_FORM_ID=" . $WEB_FORM_ID . "&" . bitrix_sessid_get(
+                )
         );
 
         $aMenu[] = array(
             "ICON" => "btn_delete",
             "TEXT" => GetMessage("FORM_DELETE_QUESTION"),
             "TITLE" => GetMessage("FORM_DELETE_QUESTION"),
-            "LINK" => "javascript:if(confirm('" . GetMessage("FORM_CONFIRM_DELETE_QUESTION") . "'))window.location='form_field_list.php?action=delete&ID=" . $ID . "&WEB_FORM_ID=" . $WEB_FORM_ID . "&" . bitrix_sessid_get() . "&lang=" . LANGUAGE_ID . "';",
+            "LINK" => "javascript:if(confirm('" . GetMessage(
+                    "FORM_CONFIRM_DELETE_QUESTION"
+                ) . "'))window.location='form_field_list.php?action=delete&ID=" . $ID . "&WEB_FORM_ID=" . $WEB_FORM_ID . "&" . bitrix_sessid_get(
+                ) . "&lang=" . LANGUAGE_ID . "';",
             "WARNING" => "Y"
         );
     }
@@ -317,41 +376,12 @@ if ($F_RIGHT >= 30 && $ID > 0) {
     $context->Show();
 }
 
-/*
-echo '<pre>'; print_r($arForm); echo '</pre>';
-
-$aMenu[] = array("NEWBAR"=>"Y");
-
-$aMenu[] = array(
-	"TEXT"			=> GetMessage("FORM_STATUSES")." [".$arForm["STATUSES"]."]",
-	"LINK"			=> "/bitrix/admin/form_status_list.php?lang=".LANGUAGE_ID."&WEB_FORM_ID=".$WEB_FORM_ID,
-	"TEXT_PARAM"	=> " [<a title=".GetMessage("FORM_ADD_STATUS")."  href='/bitrix/admin/form_status_edit.php?lang=".LANGUAGE_ID."&WEB_FORM_ID=".$WEB_FORM_ID."'>+</a>]",
-	"TITLE"			=> GetMessage("FORM_STATUSES_ALT")
-	);
-if ($additional!="Y")
-{
-	$aMenu[] = array(
-		"TEXT"			=> GetMessage("FORM_FIELDS")." [".$arForm["C_FIELDS"]."]",
-		"LINK"			=> "/bitrix/admin/form_field_list.php?lang=".LANGUAGE_ID."&WEB_FORM_ID=".$WEB_FORM_ID."&additional=Y",
-		"TEXT_PARAM"	=> " [<a title=".GetMessage("FORM_ADD_FIELD")."  href='/bitrix/admin/form_field_edit.php?lang=".LANGUAGE_ID."&WEB_FORM_ID=".$WEB_FORM_ID."&additional=Y'>+</a>]",
-		"TITLE"			=> GetMessage("FORM_FIELDS_ALT")
-		);
-}
-else
-{
-	$aMenu[] = array(
-		"TEXT"			=> GetMessage("FORM_QUESTIONS")." [".$arForm["QUESTIONS"]."]",
-		"LINK"			=> "/bitrix/admin/form_field_list.php?lang=".LANGUAGE_ID."&WEB_FORM_ID=".$WEB_FORM_ID,
-		"TEXT_PARAM"	=> " [<a title=".GetMessage("FORM_ADD_QUESTION")."  href='/bitrix/admin/form_field_edit.php?lang=".LANGUAGE_ID."&WEB_FORM_ID=".$WEB_FORM_ID."'>+</a>]",
-		"TITLE"			=> GetMessage("FORM_QUESTIONS_ALT")
-		);
-}
-*/
-
 if ($strError) {
     $aMsg = array();
     $arrErr = explode("<br>", $strError);
-    while (list(, $err) = each($arrErr)) $aMsg[]['text'] = $err;
+    foreach ($arrErr as $err) {
+        $aMsg[]['text'] = $err;
+    }
 
     $e = new CAdminException($aMsg);
     $GLOBALS["APPLICATION"]->ThrowException($e);
@@ -401,7 +431,7 @@ endif;
     //********************
     $tabControl->BeginNextTab();
     ?>
-    <? if (strlen($str_TIMESTAMP_X) > 0) : ?>
+    <? if ($str_TIMESTAMP_X <> '') : ?>
         <tr>
             <td><?= GetMessage("FORM_TIMESTAMP") ?></td>
             <td><?= $str_TIMESTAMP_X ?></td>
@@ -444,8 +474,9 @@ endif;
 //********************
         $tabControl->BeginNextTab();
 
-        if (is_array($str_IMAGE_ID))
+        if (is_array($str_IMAGE_ID)) {
             $str_IMAGE_ID = 0;
+        }
 
         $str_IMAGE_ID = intval($str_IMAGE_ID);
         ?>
@@ -465,8 +496,13 @@ endif;
     <? else: ?>
         <tr>
             <td align="center" colspan="2"><? echo InputType("radio", "TITLE_TYPE", "text", $str_TITLE_TYPE, false) ?>
-                &nbsp;<? echo GetMessage("FORM_TEXT") ?>
-                /&nbsp;<? echo InputType("radio", "TITLE_TYPE", "html", $str_TITLE_TYPE, false) ?>HTML
+                &nbsp;<? echo GetMessage("FORM_TEXT") ?>/&nbsp;<? echo InputType(
+                    "radio",
+                    "TITLE_TYPE",
+                    "html",
+                    $str_TITLE_TYPE,
+                    false
+                ) ?>HTML
             </td>
         </tr>
         <tr>
@@ -588,7 +624,7 @@ endif;
                     </thead>
                     <tbody>
                     <?
-                    $z = CFormAnswer::GetList($ID, $by, $order, array(), $is_filtered);
+                    $z = CFormAnswer::GetList($ID);
                     $i = 1;
                     $arSort = array(0);
                     while ($zr = $z->ExtractFields("p_")) :
@@ -602,7 +638,13 @@ endif;
                                        onChange="jsFormValidatorSettings.UpdateAll();"/></td>
                             <td><input type="text" size="16" name="VALUE_<?= $i ?>" value="<?= $p_VALUE ?>"/></td>
                             <td nowrap="nowrap"><?
-                                echo SelectBoxFromArray("FIELD_TYPE_" . $i, CFormAnswer::GetTypeList(), $p_FIELD_TYPE, "", "onchange=\"FIELD_TYPE_CHANGE(" . $i . ");jsFormValidatorSettings.UpdateAll();\" ");
+                                echo SelectBoxFromArray(
+                                    "FIELD_TYPE_" . $i,
+                                    CFormAnswer::GetTypeList(),
+                                    $p_FIELD_TYPE,
+                                    "",
+                                    "onchange=\"FIELD_TYPE_CHANGE(" . $i . ");jsFormValidatorSettings.UpdateAll();\" "
+                                );
                                 ?></td>
                             <td nowrap="nowrap">
                                 <input <? if ($p_FIELD_TYPE != "text" && $p_FIELD_TYPE != "textarea" && $p_FIELD_TYPE != "image" && $p_FIELD_TYPE != "date" && $p_FIELD_TYPE != 'email') echo "disabled" ?>
@@ -629,7 +671,13 @@ endif;
                     $count = $i;
                     $s = intval(max($arSort)) + 100;
                     while ($i <= $count) :
-                        if (strlen($strError) > 0) {
+                        $message = '';
+                        $value = '';
+                        $ftype = '';
+                        $width = '';
+                        $height = '';
+                        $param = '';
+                        if ($strError <> '') {
                             $message = htmlspecialcharsbx(${"MESSAGE_" . $i});
                             $value = htmlspecialcharsbx(${"VALUE_" . $i});
                             $ftype = htmlspecialcharsbx(${"FIELD_TYPE_" . $i});
@@ -637,8 +685,12 @@ endif;
                             $height = htmlspecialcharsbx(${"FIELD_HEIGHT_" . $i});
                             $param = htmlspecialcharsbx(${"FIELD_PARAM_" . $i});
                         }
-                        if (strlen($ftype) <= 0) $ftype = $p_FIELD_TYPE;
-                        if (strlen($ftype) <= 0) $ftype = "text";
+                        if ($ftype == '') {
+                            $ftype = $p_FIELD_TYPE;
+                        }
+                        if ($ftype == '') {
+                            $ftype = "text";
+                        }
                         ?>
                         <input type="hidden" name="ANSWER[]" value="<?= $i ?>"/>
                         <input type="hidden" name="ANSWER_ID_<?= $i ?>" value="0"/>
@@ -648,7 +700,13 @@ endif;
                                        onchange="jsFormValidatorSettings.UpdateAll();"/></td>
                             <td><input type="text" name="VALUE_<?= $i ?>" value="<?= $value ?>" size="16"/></td>
                             <td nowrap="nowrap"><?
-                                echo SelectBoxFromArray("FIELD_TYPE_" . $i, CFormAnswer::GetTypeList(), $ftype, "", "onchange=\"FIELD_TYPE_CHANGE(" . $i . "); jsFormValidatorSettings.UpdateAll();\"");
+                                echo SelectBoxFromArray(
+                                    "FIELD_TYPE_" . $i,
+                                    CFormAnswer::GetTypeList(),
+                                    $ftype,
+                                    "",
+                                    "onchange=\"FIELD_TYPE_CHANGE(" . $i . "); jsFormValidatorSettings.UpdateAll();\""
+                                );
                                 ?></td>
                             <td nowrap="nowrap">
                                 <input <? if ($ftype != "text" && $ftype != "textarea" && $ftype != "image" && $ftype != "date" && $ftype != 'email') echo "disabled" ?>
@@ -661,8 +719,9 @@ endif;
                             <td nowrap="nowrap"><input type="text" name="FIELD_PARAM_<?= $i ?>" value="<?= $param ?>"
                                                        size="8"/></td>
                             <td nowrap="nowrap"><input type="text" name="C_SORT_<?= $i ?>"
-                                                       value="<? echo (strlen(${"C_SORT_" . $i}) > 0 && strlen($message) > 0) ? htmlspecialcharsbx(${"C_SORT_" . $i}) : $s ?>"
-                                                       size="3"/></td>
+                                                       value="<? echo (${"C_SORT_" . $i} <> '' && $message <> '') ? htmlspecialcharsbx(
+                                                           ${"C_SORT_" . $i}
+                                                       ) : $s ?>" size="3"/></td>
                             <td><?
                                 echo InputType("checkbox", "ACTIVE_" . $i, "Y", "Y", false); ?></td>
                             <td>&nbsp;</td>
@@ -704,14 +763,18 @@ endif;
             while ($arValidatorInfo = $rsValidators->Fetch())
             {
             if (!is_array($arValidatorInfo["TYPES"])) {
-                if ($arValidatorInfo["TYPES"] == 0) continue;
+                if ($arValidatorInfo["TYPES"] == 0) {
+                    continue;
+                }
                 $arValidatorInfo["TYPES"] = array($arValidatorInfo["TYPES"]);
             }
 
             ?>
 
             arValidators['<?=CUtil::JSEscape($arValidatorInfo["NAME"])?>'] = {
-                NAME: '<?=CUtil::JSEscape($arValidatorInfo["NAME"])?>',
+                NAME: '<?=CUtil::JSEscape(
+                    $arValidatorInfo["NAME"]
+                )?>',
                 DESCRIPTION: '<?=CUtil::JSEscape($arValidatorInfo["DESCRIPTION"])?>',
                 HAS_SETTINGS: '<?=is_callable($arValidatorInfo['SETTINGS']) > 0 ? "Y" : "N"?>'
             };
@@ -722,7 +785,9 @@ endif;
             $type = CUtil::JSEscape($type);
             ?>
             if (!arValidatorsType['<?=$type?>']) arValidatorsType['<?=$type?>'] = [];
-            arValidatorsType['<?=$type?>'][arValidatorsType['<?=$type?>'].length] = '<?=CUtil::JSEscape($arValidatorInfo["NAME"])?>';
+            arValidatorsType['<?=$type?>'][arValidatorsType['<?=$type?>'].length] = '<?=CUtil::JSEscape(
+                $arValidatorInfo["NAME"]
+            )?>';
             <?
             }
             }
@@ -772,7 +837,9 @@ endif;
         <script>
             var _global_BX_UTF = <?if (defined('BX_UTF') && BX_UTF === true):?>true<?else:?>false<?endif?>;
         </script>
-        <script src="/bitrix/js/form/form_validators.js?<?= @filemtime($_SERVER['DOCUMENT_ROOT'] . '/bitrix/js/form/form_validators.js') ?>"></script>
+        <script src="/bitrix/js/form/form_validators.js?<?= @filemtime(
+            $_SERVER['DOCUMENT_ROOT'] . '/bitrix/js/form/form_validators.js'
+        ) ?>"></script>
         <script language="JavaScript">
             BX.message({
                 WND_TITLE: '<?=CUtil::JSEscape(GetMessage('FORM_VAL_PROPS_TITLE'))?>',
@@ -845,8 +912,9 @@ endif;
     if ($ID > 0) {
         $arrFilter = array();
         $z = CFormField::GetFilterList($WEB_FORM_ID, Array("FIELD_ID" => $ID, "FIELD_ID_EXACT_MATCH" => "Y"));
-        while ($zr = $z->Fetch())
+        while ($zr = $z->Fetch()) {
             $arrFilter[$zr["PARAMETER_NAME"]][] = $zr["FILTER_TYPE"];
+        }
     }
     if ($additional != "Y"):
         ?>
@@ -854,21 +922,51 @@ endif;
             <td><? echo GetMessage("FORM_FILTER_FOR_USER") ?><br><img src="/bitrix/images/form/mouse.gif" width="44"
                                                                       height="21" border=0 alt=""/></td>
             <td><?
-                echo SelectBoxMFromArray("arFILTER_USER[]", array("REFERENCE" => $arrUSER["reference"], "REFERENCE_ID" => $arrUSER["reference_id"]), $arrFilter["USER"], "", false, "5"); ?></td>
+                echo SelectBoxMFromArray(
+                    "arFILTER_USER[]",
+                    array(
+                        "REFERENCE" => $arrUSER["reference"],
+                        "REFERENCE_ID" => $arrUSER["reference_id"]
+                    ),
+                    $arrFilter["USER"],
+                    "",
+                    false,
+                    "5"
+                ); ?></td>
         </tr>
         <tr>
             <td><? echo GetMessage("FORM_FILTER_FOR_ANSWER_TEXT") ?><br><img src="/bitrix/images/form/mouse.gif"
                                                                              width="44" height="21" border=0 alt="">
             </td>
             <td><?
-                echo SelectBoxMFromArray("arFILTER_ANSWER_TEXT[]", array("REFERENCE" => $arrANSWER_TEXT["reference"], "REFERENCE_ID" => $arrANSWER_TEXT["reference_id"]), $arrFilter["ANSWER_TEXT"], "", false, "5"); ?></td>
+                echo SelectBoxMFromArray(
+                    "arFILTER_ANSWER_TEXT[]",
+                    array(
+                        "REFERENCE" => $arrANSWER_TEXT["reference"],
+                        "REFERENCE_ID" => $arrANSWER_TEXT["reference_id"]
+                    ),
+                    $arrFilter["ANSWER_TEXT"],
+                    "",
+                    false,
+                    "5"
+                ); ?></td>
         </tr>
         <tr>
             <td><? echo GetMessage("FORM_FILTER_FOR_ANSWER_VALUE") ?><br><img src="/bitrix/images/form/mouse.gif"
                                                                               width="44" height="21" border=0 alt="">
             </td>
             <td><?
-                echo SelectBoxMFromArray("arFILTER_ANSWER_VALUE[]", array("REFERENCE" => $arrANSWER_VALUE["reference"], "REFERENCE_ID" => $arrANSWER_VALUE["reference_id"]), $arrFilter["ANSWER_VALUE"], "", false, "5"); ?></td>
+                echo SelectBoxMFromArray(
+                    "arFILTER_ANSWER_VALUE[]",
+                    array(
+                        "REFERENCE" => $arrANSWER_VALUE["reference"],
+                        "REFERENCE_ID" => $arrANSWER_VALUE["reference_id"]
+                    ),
+                    $arrFilter["ANSWER_VALUE"],
+                    "",
+                    false,
+                    "5"
+                ); ?></td>
         </tr>
     <?
     else:
@@ -877,7 +975,17 @@ endif;
             <td><? echo GetMessage("FORM_FILTER_TYPE") ?>:<br><img src="/bitrix/images/form/mouse.gif" width="44"
                                                                    height="21" border=0 alt=""/></td>
             <td><?
-                echo SelectBoxMFromArray("arFILTER_FIELD[]", array("REFERENCE" => $arrFIELD["reference"], "REFERENCE_ID" => $arrFIELD["reference_id"]), $arrFilter["USER"], "", false, "3"); ?></td>
+                echo SelectBoxMFromArray(
+                    "arFILTER_FIELD[]",
+                    array(
+                        "REFERENCE" => $arrFIELD["reference"],
+                        "REFERENCE_ID" => $arrFIELD["reference_id"]
+                    ),
+                    $arrFilter["USER"],
+                    "",
+                    false,
+                    "3"
+                ); ?></td>
         </tr>
     <? endif; ?>
     <tr>
@@ -895,7 +1003,12 @@ endif;
     </tr>
     <?
     $tabControl->EndTab();
-    $tabControl->Buttons(array("disabled" => (!($F_RIGHT >= 30 || CForm::IsAdmin())), "back_url" => "form_field_list.php?WEB_FORM_ID=" . $WEB_FORM_ID . "&additional=" . $additional . "&lang=" . LANGUAGE_ID));
+    $tabControl->Buttons(
+        array(
+            "disabled" => (!($F_RIGHT >= 30 || CForm::IsAdmin())),
+            "back_url" => "form_field_list.php?WEB_FORM_ID=" . $WEB_FORM_ID . "&additional=" . $additional . "&lang=" . LANGUAGE_ID
+        )
+    );
     $tabControl->End();
     ?>
 </form>

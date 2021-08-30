@@ -57,13 +57,15 @@ class RestrictionManager
 
             foreach ($resultList as $eventResult) {
                 /** @var  EventResult $eventResult */
-                if ($eventResult->getType() != EventResult::SUCCESS)
+                if ($eventResult->getType() != EventResult::SUCCESS) {
                     throw new SystemException("Can't add custom restriction class successfully");
+                }
 
                 $params = $eventResult->getParameters();
 
-                if (!empty($params) && is_array($params))
+                if (!empty($params) && is_array($params)) {
                     $customClasses = array_merge($customClasses, $params);
+                }
             }
 
             if (!empty($customClasses)) {
@@ -90,8 +92,9 @@ class RestrictionManager
      */
     public static function getClassesList()
     {
-        if (static::$classNames === null)
+        if (static::$classNames === null) {
             self::init();
+        }
 
         return static::$classNames;
     }
@@ -105,24 +108,28 @@ class RestrictionManager
      */
     public static function checkService($serviceId, Entity $entity, $mode = self::MODE_CLIENT)
     {
-        if (intval($serviceId) <= 0)
+        if (intval($serviceId) <= 0) {
             return self::SEVERITY_NONE;
+        }
 
         self::init();
         $result = self::SEVERITY_NONE;
         $restrictions = static::getRestrictionsList($serviceId);
 
         foreach ($restrictions as $rstrParams) {
-            if (!$rstrParams['PARAMS'])
+            if (!$rstrParams['PARAMS']) {
                 $rstrParams['PARAMS'] = array();
+            }
 
             $res = $rstrParams['CLASS_NAME']::checkByEntity($entity, $rstrParams['PARAMS'], $mode, $serviceId);
 
-            if ($res == self::SEVERITY_STRICT)
+            if ($res == self::SEVERITY_STRICT) {
                 return $res;
+            }
 
-            if ($res == self::SEVERITY_SOFT && $result != self::SEVERITY_SOFT)
+            if ($res == self::SEVERITY_SOFT && $result != self::SEVERITY_SOFT) {
                 $result = self::SEVERITY_SOFT;
+            }
         }
 
         return $result;
@@ -143,23 +150,27 @@ class RestrictionManager
      */
     public static function getRestrictionsList($serviceId)
     {
-        if ((int)$serviceId <= 0)
+        if ((int)$serviceId <= 0) {
             return array();
+        }
 
         $serviceType = static::getServiceType();
 
         if (!isset(static::$cachedFields[$serviceType])) {
             $result = array();
-            $dbRes = ServiceRestrictionTable::getList(array(
-                'filter' => array(
-                    '=SERVICE_TYPE' => $serviceType
-                ),
-                'order' => array('SORT' => 'ASC')
-            ));
+            $dbRes = ServiceRestrictionTable::getList(
+                array(
+                    'filter' => array(
+                        '=SERVICE_TYPE' => $serviceType
+                    ),
+                    'order' => array('SORT' => 'ASC')
+                )
+            );
 
             while ($restriction = $dbRes->fetch()) {
-                if (!isset($result[$restriction['SERVICE_ID']]))
+                if (!isset($result[$restriction['SERVICE_ID']])) {
                     $result[$restriction['SERVICE_ID']] = array();
+                }
 
                 $result[$restriction['SERVICE_ID']][$restriction["ID"]] = $restriction;
             }
@@ -167,8 +178,9 @@ class RestrictionManager
             static::$cachedFields[$serviceType] = $result;
         }
 
-        if (!isset(static::$cachedFields[$serviceType][$serviceId]))
+        if (!isset(static::$cachedFields[$serviceType][$serviceId])) {
             return array();
+        }
 
         return static::$cachedFields[$serviceType][$serviceId];
     }
@@ -179,18 +191,20 @@ class RestrictionManager
      */
     public static function getSitesByServiceId($id)
     {
-        if ($id <= 0)
+        if ($id <= 0) {
             return array();
+        }
 
         $result = array();
 
         foreach (static::getRestrictionsList($id) as $fields) {
             if ($fields['CLASS_NAME'] == '\Bitrix\Sale\Delivery\Restrictions\BySite') {
                 if (!empty($fields["PARAMS"]["SITE_ID"])) {
-                    if (is_array($fields["PARAMS"]["SITE_ID"]))
+                    if (is_array($fields["PARAMS"]["SITE_ID"])) {
                         $result = $fields["PARAMS"]["SITE_ID"];
-                    else
+                    } else {
                         $result = array($fields["PARAMS"]["SITE_ID"]);
+                    }
                 }
 
                 break;
@@ -208,40 +222,49 @@ class RestrictionManager
      */
     public static function prepareData(array $servicesIds, array $fields = array())
     {
-        if (empty($servicesIds))
+        if (empty($servicesIds)) {
             return;
+        }
 
         $serviceType = static::getServiceType();
-        $cachedServices = is_array(static::$cachedFields[$serviceType]) ? array_keys(static::$cachedFields[$serviceType]) : array();
+        $cachedServices = is_array(static::$cachedFields[$serviceType]) ? array_keys(
+            static::$cachedFields[$serviceType]
+        ) : array();
         $ids = array_diff($servicesIds, $cachedServices);
         $idsForDb = array_diff($ids, array_keys($fields));
 
         if (!empty($idsForDb)) {
-            $dbRes = ServiceRestrictionTable::getList(array(
-                'filter' => array(
-                    '=SERVICE_ID' => $idsForDb,
-                    '=SERVICE_TYPE' => $serviceType
-                ),
-                'order' => array('SORT' => 'ASC')
-            ));
+            $dbRes = ServiceRestrictionTable::getList(
+                array(
+                    'filter' => array(
+                        '=SERVICE_ID' => $idsForDb,
+                        '=SERVICE_TYPE' => $serviceType
+                    ),
+                    'order' => array('SORT' => 'ASC')
+                )
+            );
 
-            while ($restriction = $dbRes->fetch())
+            while ($restriction = $dbRes->fetch()) {
                 self::setCache($restriction["SERVICE_ID"], $serviceType, $restriction);
+            }
         }
 
         foreach ($fields as $serviceId => $serviceRestrictions) {
             if (is_array($serviceRestrictions)) {
-                foreach ($serviceRestrictions as $restrId => $restrFields)
+                foreach ($serviceRestrictions as $restrId => $restrFields) {
                     self::setCache($serviceId, $serviceType, $restrFields);
+                }
             }
         }
 
-        foreach ($ids as $serviceId)
+        foreach ($ids as $serviceId) {
             self::setCache($serviceId, $serviceType);
+        }
 
         /** @var \Bitrix\Sale\Services\Base\Restriction $className */
-        foreach (static::getClassesList() as $className)
+        foreach (static::getClassesList() as $className) {
             $className::prepareData($ids);
+        }
     }
 
     /**
@@ -252,17 +275,21 @@ class RestrictionManager
      */
     protected static function setCache($serviceId, $serviceType, array $fields = array())
     {
-        if (intval($serviceId) <= 0)
+        if (intval($serviceId) <= 0) {
             throw new  ArgumentNullException('serviceId');
+        }
 
-        if (!isset(static::$cachedFields[$serviceType]))
+        if (!isset(static::$cachedFields[$serviceType])) {
             static::$cachedFields[$serviceType] = array();
+        }
 
-        if (!isset(static::$cachedFields[$serviceType][$serviceId]))
+        if (!isset(static::$cachedFields[$serviceType][$serviceId])) {
             static::$cachedFields[$serviceType][$serviceId] = array();
+        }
 
-        if (!empty($fields))
+        if (!empty($fields)) {
             static::$cachedFields[$serviceType][$serviceId][$fields["ID"]] = $fields;
+        }
     }
 
     /**
@@ -276,11 +303,13 @@ class RestrictionManager
         $result = array();
 
         if (intval($serviceId) > 0) {
-            if (isset(static::$cachedFields[$serviceType][$serviceId]))
+            if (isset(static::$cachedFields[$serviceType][$serviceId])) {
                 $result = static::$cachedFields[$serviceType][$serviceId];
+            }
         } else {
-            if (isset(static::$cachedFields[$serviceType]))
+            if (isset(static::$cachedFields[$serviceType])) {
                 $result = static::$cachedFields[$serviceType];
+            }
         }
 
         return $result;
@@ -302,8 +331,9 @@ class RestrictionManager
      */
     public static function getList(array $params)
     {
-        if (!$params['filter'])
+        if (!$params['filter']) {
             $params['filter'] = array();
+        }
 
         $params['filter']['SERVICE_TYPE'] = static::getServiceType();
 

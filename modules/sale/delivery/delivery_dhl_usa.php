@@ -18,7 +18,10 @@ define('DELIVERY_DHL_USA_SERVER_PORT', 80); // server port
 define('DELIVERY_DHL_USA_SERVER_PAGE', '/ratecalculator/HandlerServlet'); // server page url
 define('DELIVERY_DHL_USA_SERVER_METHOD', 'POST'); // data send method
 
-define('DELIVERY_DHL_USA_VALUE_CHECK_STRING', 'Quote results'); // first check string - to determine whether delivery price is in response
+define(
+    'DELIVERY_DHL_USA_VALUE_CHECK_STRING',
+    'Quote results'
+); // first check string - to determine whether delivery price is in response
 define(
     'DELIVERY_DHL_USA_VALUE_CHECK_REGEXP',
     '/\$([0-9\.\s]+)<\/a>/i'
@@ -31,7 +34,7 @@ define(
 
 class CDeliveryDHLUSA
 {
-    function Init()
+    public static function Init()
     {
         $arReturn = array(
             /* Basic description */
@@ -67,7 +70,7 @@ class CDeliveryDHLUSA
         return $arReturn;
     }
 
-    function GetConfig()
+    public static function GetConfig()
     {
         $arConfig = array(
             "CONFIG_GROUPS" => array(
@@ -92,17 +95,17 @@ class CDeliveryDHLUSA
         return $arConfig;
     }
 
-    function GetSettings($strSettings)
+    public static function GetSettings($strSettings)
     {
-        return unserialize($strSettings);
+        return unserialize($strSettings, ['allowed_classes' => false]);
     }
 
-    function SetSettings($arSettings)
+    public static function SetSettings($arSettings)
     {
         return serialize($arSettings);
     }
 
-    function __GetLocation($location_id)
+    public static function __GetLocation($location_id)
     {
         static $arDHLUSACountryList;
 
@@ -110,8 +113,9 @@ class CDeliveryDHLUSA
 
         $dbZipList = CSaleLocation::GetLocationZIP($location_id);
 
-        while ($arZip = $dbZipList->Fetch())
+        while ($arZip = $dbZipList->Fetch()) {
             $arLocation['ZIP_LIST'][] = $arZip['ZIP'];
+        }
 
         if (!is_array($arDHLUSACountryList)) {
             require('dhl_usa/country.php');
@@ -122,18 +126,24 @@ class CDeliveryDHLUSA
         return $arLocation;
     }
 
-    function Calculate($profile, $arConfig, $arOrder, $STEP, $TEMP = false)
+    public static function Calculate($profile, $arConfig, $arOrder, $STEP, $TEMP = false)
     {
         $arLocationFrom = CDeliveryDHLUSA::__GetLocation($arOrder['LOCATION_FROM']);
         $arLocationTo = CDeliveryDHLUSA::__GetLocation($arOrder['LOCATION_TO']);
 
         $location_from_zip = COption::GetOptionString('sale', 'location_zip');
-        if ($location_from_zip) $arLocationFrom['ZIP_LIST'] = array($location_from_zip);
+        if ($location_from_zip) {
+            $arLocationFrom['ZIP_LIST'] = array($location_from_zip);
+        }
 
         $arOrder["WEIGHT"] = CSaleMeasure::Convert($arOrder["WEIGHT"], "G", "LBS");
-        if ($arOrder["WEIGHT"] <= 0) $arOrder["WEIGHT"] = 0.1; // weight must not be null - let it be 1 gramm
+        if ($arOrder["WEIGHT"] <= 0) {
+            $arOrder["WEIGHT"] = 0.1;
+        } // weight must not be null - let it be 1 gramm
 
-        $cache_id = "dhl_usa" . "|" . $arConfig["category"]['VALUE'] . "|" . $arOrder["LOCATION_FROM"] . "|" . $location_from_zip . "|" . $arOrder["LOCATION_TO"] . "|" . intval($arOrder['WEIGHT']);
+        $cache_id = "dhl_usa" . "|" . $arConfig["category"]['VALUE'] . "|" . $arOrder["LOCATION_FROM"] . "|" . $location_from_zip . "|" . $arOrder["LOCATION_TO"] . "|" . intval(
+                $arOrder['WEIGHT']
+            );
 
         $obCache = new CPHPCache();
 
@@ -185,8 +195,9 @@ class CDeliveryDHLUSA
             strtotime($y . '-12-25')
         );
 
-        while (date('N', $timestamp) > 5 || in_array($timestamp, $arHolidaysList))
+        while (date('N', $timestamp) > 5 || in_array($timestamp, $arHolidaysList)) {
             $timestamp += 86400;
+        }
 
         $arQuery['shipDate'] = date('d F, Y', $timestamp);
 
@@ -201,7 +212,9 @@ class CDeliveryDHLUSA
 
         $arQuery['dutiableFlag'] = 'N'; // !!!!!!
 
-        foreach ($arQuery as $key => $value) $arQuery[$key] = urlencode($key) . '=' . urlencode($value);
+        foreach ($arQuery as $key => $value) {
+            $arQuery[$key] = urlencode($key) . '=' . urlencode($value);
+        }
 
         CDeliveryDHLUSA::__Write2Log(print_r($arQuery, true));
         CDeliveryDHLUSA::__Write2Log(implode('&', $arQuery));
@@ -218,14 +231,14 @@ class CDeliveryDHLUSA
 
         CDeliveryDHLUSA::__Write2Log($data);
 
-        if (strlen($data) <= 0) {
+        if ($data == '') {
             return array(
                 "RESULT" => "ERROR",
                 "TEXT" => GetMessage('SALE_DH_DHL_USA_ERROR_CONNECT'),
             );
         }
 
-        if (strstr($data, DELIVERY_DHL_USA_VALUE_CHECK_STRING)) {
+        if (mb_strstr($data, DELIVERY_DHL_USA_VALUE_CHECK_STRING)) {
             // first check string found
 
             if (preg_match(
@@ -276,16 +289,18 @@ class CDeliveryDHLUSA
         );
     }
 
-    function Compability($arOrder)
+    public static function Compability($arOrder)
     {
         $arLocationFrom = CDeliveryDHLUSA::__GetLocation($arOrder['LOCATION_FROM']);
 
-        if ($arLocationFrom['COUNTRY_DHLUSA'] != 'US') return array();
+        if ($arLocationFrom['COUNTRY_DHLUSA'] != 'US') {
+            return array();
+        }
 
         return array('simple');
     }
 
-    function __Write2Log($data)
+    public static function __Write2Log($data)
     {
         if (defined('DELIVERY_DHL_USA_WRITE_LOG') && DELIVERY_DHL_USA_WRITE_LOG === 1) {
             $fp = fopen(dirname(__FILE__) . "/dhl_usa.log", "a");

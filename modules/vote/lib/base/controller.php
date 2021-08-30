@@ -95,7 +95,9 @@ abstract class Controller
             $this->collectDebugInfo();
             $this->resolveAction();
             $this->checkAction();
-            if ($this->prepareParams() && $this->errorCollection->isEmpty() && $this->processBeforeAction($this->getAction()) === true) {
+            if ($this->prepareParams() && $this->errorCollection->isEmpty() && $this->processBeforeAction(
+                    $this->getAction()
+                ) === true) {
                 $this->runAction();
             }
             $this->logDebugInfo();
@@ -188,10 +190,12 @@ abstract class Controller
             );
         }
         unset($error);
-        $this->sendJsonResponse(array(
-            'status' => self::STATUS_ERROR,
-            'errors' => $errors,
-        ));
+        $this->sendJsonResponse(
+            array(
+                'status' => self::STATUS_ERROR,
+                'errors' => $errors,
+            )
+        );
     }
 
     /**
@@ -201,10 +205,12 @@ abstract class Controller
      */
     protected function sendJsonAccessDeniedResponse($message = '')
     {
-        $this->sendJsonResponse(array(
-            'status' => self::STATUS_DENIED,
-            'message' => $message,
-        ));
+        $this->sendJsonResponse(
+            array(
+                'status' => self::STATUS_DENIED,
+                'message' => $message,
+            )
+        );
     }
 
     /**
@@ -264,13 +270,16 @@ abstract class Controller
     protected function resolveAction()
     {
         $listOfActions = array_change_key_case($this->listActions(), CASE_LOWER);
-        $action = strtolower($this->action);
+        $action = mb_strtolower($this->action);
 
-        if (!isset($listOfActions[$action]))
-            throw new NotSupportedException(Loc::getMessage(
-                'VOTE_CONTROLLER_ERROR_UNKNOWN_ACTION',
-                array('#ACTION#' => $this->sanitizeActionName($action))
-            ));
+        if (!isset($listOfActions[$action])) {
+            throw new NotSupportedException(
+                Loc::getMessage(
+                    'VOTE_CONTROLLER_ERROR_UNKNOWN_ACTION',
+                    array('#ACTION#' => $this->sanitizeActionName($action))
+                )
+            );
+        }
 
         $this->realActionName = $action;
         $description = $this->normalizeActionDescription($action, $listOfActions[$this->realActionName]);
@@ -309,14 +318,17 @@ abstract class Controller
         $description = array_merge(
             array(
                 'method' => array('GET'),
-                'name' => (is_string($description) && strlen($description) > 0 ? $description : $action),
+                'name' => (is_string($description) && $description <> '' ? $description : $action),
                 'need_auth' => true,
                 'check_sessid' => true,
                 'redirect_on_auth' => true
             ),
             (is_array($description) ? $description : array())
         );
-        $description["method"] = array_intersect(is_array($description["method"]) ? $description["method"] : array($description["method"]), array("GET", "POST"));
+        $description["method"] = array_intersect(
+            is_array($description["method"]) ? $description["method"] : array($description["method"]),
+            array("GET", "POST")
+        );
         return $description;
     }
 
@@ -331,17 +343,23 @@ abstract class Controller
 
         if ($description["need_auth"] && (!$this->getUser() || !$this->getUser()->getId())) {
             if ($description["redirect_on_auth"]) {
-                LocalRedirect(SITE_DIR . 'auth/?backurl=' . urlencode(Application::getInstance()->getContext()->getRequest()->getRequestUri()));
+                LocalRedirect(
+                    SITE_DIR . 'auth/?backurl=' . urlencode(
+                        Application::getInstance()->getContext()->getRequest()->getRequestUri()
+                    )
+                );
             } else {
                 throw new AccessDeniedException();
             }
         }
 
-        if (!in_array($this->request->getRequestMethod(), $description['method']))
+        if (!in_array($this->request->getRequestMethod(), $description['method'])) {
             throw new ArgumentException("Request method is not supported by " . $this->getAction() . " operation.");
+        }
 
-        if ($description['check_sessid'] && !check_bitrix_sessid())
+        if ($description['check_sessid'] && !check_bitrix_sessid()) {
             throw new ArgumentException("Bad sessid.");
+        }
 
         return true;
     }
@@ -433,8 +451,9 @@ abstract class Controller
      */
     protected function runAction()
     {
-        if (!method_exists($this, 'processAction' . $this->getAction()))
+        if (!method_exists($this, 'processAction' . $this->getAction())) {
             throw new InvalidOperationException('processAction' . $this->getAction());
+        }
         return call_user_func(array($this, 'processAction' . $this->getAction()));
     }
 
@@ -459,8 +478,17 @@ abstract class Controller
     protected function checkRequiredInputParams(array $inputParams, array $required)
     {
         foreach ($required as $item) {
-            if (!isset($inputParams[$item]) || (!$inputParams[$item] && !(is_string($inputParams[$item]) && strlen($inputParams[$item])))) {
-                $this->errorCollection->add(array(new Error(Loc::getMessage('VOTE_CONTROLLER_ERROR_REQUIRED_PARAMETER', array('#PARAM#' => $item)), self::ERROR_REQUIRED_PARAMETER)));
+            if (!isset($inputParams[$item]) || (!$inputParams[$item] && !(is_string($inputParams[$item]) && mb_strlen(
+                            $inputParams[$item]
+                        )))) {
+                $this->errorCollection->add(
+                    array(
+                        new Error(
+                            Loc::getMessage('VOTE_CONTROLLER_ERROR_REQUIRED_PARAMETER', array('#PARAM#' => $item)),
+                            self::ERROR_REQUIRED_PARAMETER
+                        )
+                    )
+                );
                 return false;
             }
         }

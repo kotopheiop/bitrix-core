@@ -1,4 +1,5 @@
-<?
+<?php
+
 /**
  * The entire class was marked as deprecated.
  * It will be removed from future releases. Do not rely on this code.
@@ -144,42 +145,53 @@ class CAllSaleLocation
 
     // for old admin pages the following function should be used
     // (for the new ones - direct call of sale.location.selector.*)
-    public static function proxySaleAjaxLocationsComponent($parameters = array(), $additionalParams = array(), $template = '', $hideIcons = true, $wrapNewComponentWith = false)
-    {
+    public static function proxySaleAjaxLocationsComponent(
+        $parameters = array(),
+        $additionalParams = array(),
+        $template = '',
+        $hideIcons = true,
+        $wrapNewComponentWith = false
+    ) {
         global $APPLICATION;
 
         if (self::isLocationProEnabled()) {
-            if (!is_array($additionalParams))
+            if (!is_array($additionalParams)) {
                 $additionalParams = array();
-
-            $parametersProxed = array_merge(array(
-                "ID" => $parameters["LOCATION_VALUE"],
-                "CODE" => '',
-                "INPUT_NAME" => $parameters["CITY_INPUT_NAME"],
-                "CACHE_TYPE" => "A",
-                "CACHE_TIME" => "36000000",
-                "PROVIDE_LINK_BY" => "id",
-                "SEARCH_BY_PRIMARY" => "N",
-                "SHOW_DEFAULT_LOCATIONS" => "N",
-                //"JS_CALLBACK" => "submitFormProxy",
-                //"JS_CONTROL_DEFERRED_INIT" => "soa_deferred"
-            ), $additionalParams);
-
-            if (strlen($parameters['SITE_ID']) || !defined('ADMIN_SECTION') || ADMIN_SECTION != 'Y') {
-                $parametersProxed["FILTER_BY_SITE"] = "Y";
-                $parametersProxed["FILTER_SITE_ID"] = strlen($parameters['SITE_ID']) ? $parameters['SITE_ID'] : SITE_ID;
             }
 
-            if (strlen($wrapNewComponentWith))
-                print('<div class="' . $wrapNewComponentWith . '">');
+            $parametersProxed = array_merge(
+                array(
+                    "ID" => $parameters["LOCATION_VALUE"],
+                    "CODE" => '',
+                    "INPUT_NAME" => $parameters["CITY_INPUT_NAME"],
+                    "CACHE_TYPE" => "A",
+                    "CACHE_TIME" => "36000000",
+                    "PROVIDE_LINK_BY" => "id",
+                    "SEARCH_BY_PRIMARY" => "N",
+                    "SHOW_DEFAULT_LOCATIONS" => "N",
+                    //"JS_CALLBACK" => "submitFormProxy",
+                    //"JS_CONTROL_DEFERRED_INIT" => "soa_deferred"
+                ),
+                $additionalParams
+            );
 
-            if (!strlen($template))
+            if (mb_strlen($parameters['SITE_ID']) || !defined('ADMIN_SECTION') || ADMIN_SECTION != 'Y') {
+                $parametersProxed["FILTER_BY_SITE"] = "Y";
+                $parametersProxed["FILTER_SITE_ID"] = $parameters['SITE_ID'] <> '' ? $parameters['SITE_ID'] : SITE_ID;
+            }
+
+            if ($wrapNewComponentWith <> '') {
+                print('<div class="' . $wrapNewComponentWith . '">');
+            }
+
+            if ($template == '') {
                 $appearance = \Bitrix\Sale\Location\Admin\Helper::getWidgetAppearance();
-            else {
+            } else {
                 $appearance = 'steps';
 
-                if ($template == 'popup' || $template == 'search')
+                if ($template == 'popup' || $template == 'search') {
                     $appearance = 'search';
+                }
             }
 
             $GLOBALS["APPLICATION"]->IncludeComponent(
@@ -190,8 +202,9 @@ class CAllSaleLocation
                 array('HIDE_ICONS' => $hideIcons ? 'Y' : 'N')
             );
 
-            if ($wrapNewComponentWith)
+            if ($wrapNewComponentWith) {
                 print('</div>');
+            }
         } else {
             $GLOBALS["APPLICATION"]->IncludeComponent(
                 'bitrix:sale.ajax.locations',
@@ -227,18 +240,21 @@ class CAllSaleLocation
 
     public static function getLocationIDbyCODE($code)
     {
-        if (CSaleLocation::isLocationProMigrated() && strlen($code)) {
-            $item = Location\LocationTable::getList(array(
-                'select' => array(
-                    'ID'
-                ),
-                'filter' => array(
-                    '=CODE' => $code
+        if (CSaleLocation::isLocationProMigrated() && mb_strlen($code)) {
+            $item = Location\LocationTable::getList(
+                array(
+                    'select' => array(
+                        'ID'
+                    ),
+                    'filter' => array(
+                        '=CODE' => $code
+                    )
                 )
-            ))->fetch();
+            )->fetch();
 
-            if (empty($item))
+            if (empty($item)) {
                 return 0;
+            }
 
             return $item['ID'];
         }
@@ -250,10 +266,13 @@ class CAllSaleLocation
     {
         if (CSaleLocation::isLocationProMigrated() && intval($id)) {
             // we must convert ID to CODE
-            $item = Location\LocationTable::getList(array('filter' => array('=ID' => $id), 'select' => array('ID', 'CODE')))->fetch();
+            $item = Location\LocationTable::getList(
+                array('filter' => array('=ID' => $id), 'select' => array('ID', 'CODE'))
+            )->fetch();
 
-            if (empty($item))
+            if (empty($item)) {
                 return '';
+            }
 
             return $item['CODE'];
         }
@@ -268,16 +287,20 @@ class CAllSaleLocation
 
     public static function tryTranslateIDToCode($id)
     {
-        if (!CSaleLocation::isLocationProMigrated())
+        if (!CSaleLocation::isLocationProMigrated()) {
             return $id;
+        }
 
         $id = (string)$id;
 
         if ($id != '' && $id === (string)intval($id)) {
             // ID came, need to translate to CODE and store
-            $location = \Bitrix\Sale\Location\LocationTable::getList(array('filter' => array('=ID' => $id), 'select' => array('ID', 'CODE')))->fetch();
-            if ((string)$location['CODE'] != '')
+            $location = \Bitrix\Sale\Location\LocationTable::getList(
+                array('filter' => array('=ID' => $id), 'select' => array('ID', 'CODE'))
+            )->fetch();
+            if ((string)$location['CODE'] != '') {
                 return $location['CODE'];
+            }
         }
 
         return $id;
@@ -285,17 +308,24 @@ class CAllSaleLocation
 
     public static function checkLocationIsAboveCity($locationId)
     {
-        if (strlen($locationId)) {
+        if ($locationId <> '') {
             $tail = CSaleLocation::getLocationCityTail();
             if (!empty($tail)) {
-                $location = Location\LocationTable::getList(array('select' => array('TYPE_ID'), 'filter' => array(
-                    'LOGIC' => 'OR',
-                    array('=ID' => intval($locationId)),
-                    array('=CODE' => $locationId)
-                )))->fetch();
+                $location = Location\LocationTable::getList(
+                    array(
+                        'select' => array('TYPE_ID'),
+                        'filter' => array(
+                            'LOGIC' => 'OR',
+                            array('=ID' => intval($locationId)),
+                            array('=CODE' => $locationId)
+                        )
+                    )
+                )->fetch();
 
                 if (!isset($tail[$location['TYPE_ID']])) // is not a city and not a descendant of it
+                {
                     return true;
+                }
             }
         }
 
@@ -310,15 +340,19 @@ class CAllSaleLocation
             $tail = array();
 
             // spike to emulate previous logic of "city" field
-            $res = Location\TypeTable::getList(array('select' => array('CODE', 'ID'), 'order' => array('SORT' => 'asc')));
+            $res = Location\TypeTable::getList(
+                array('select' => array('CODE', 'ID'), 'order' => array('SORT' => 'asc'))
+            );
             $types = array();
             $start = false;
             while ($item = $res->fetch()) {
-                if ($item['CODE'] == 'CITY')
+                if ($item['CODE'] == 'CITY') {
                     $start = true;
+                }
 
-                if ($start)
+                if ($start) {
                     $tail[$item['ID']] = true;
+                }
             }
         }
 
@@ -329,8 +363,9 @@ class CAllSaleLocation
     {
         $langs = array();
         $res = Localization\LanguageTable::getList();
-        while ($item = $res->fetch())
+        while ($item = $res->fetch()) {
             $langs[] = $item['LID'];
+        }
 
         return $langs;
     }
@@ -339,8 +374,9 @@ class CAllSaleLocation
     {
         $sites = array();
         $res = Main\SiteTable::getList();
-        while ($item = $res->fetch())
+        while ($item = $res->fetch()) {
             $sites[] = $item['LID'];
+        }
 
         return $sites;
     }
@@ -352,8 +388,9 @@ class CAllSaleLocation
         if ($types == null) {
             $types = array();
             $res = Location\TypeTable::getList();
-            while ($item = $res->fetch())
+            while ($item = $res->fetch()) {
                 $types[$item['CODE']] = $item['ID'];
+            }
         }
 
         return $types;
@@ -361,10 +398,13 @@ class CAllSaleLocation
 
     private static function getZipId()
     {
-        $res = Location\ExternalServiceTable::getList(array('filter' => array('=CODE' => self::ZIP_EXT_SERVICE_CODE), 'limit' => 1))->fetch();
+        $res = Location\ExternalServiceTable::getList(
+            array('filter' => array('=CODE' => self::ZIP_EXT_SERVICE_CODE), 'limit' => 1)
+        )->fetch();
 
-        if ($res)
+        if ($res) {
             return $res['ID'];
+        }
 
         return false;
     }
@@ -396,64 +436,76 @@ class CAllSaleLocation
 
     private static function getLocationIdByCountryId($legacyId)
     {
-        $res = $item = Location\LocationTable::getList(array(
-            'filter' => array(
-                '=TYPE.CODE' => 'COUNTRY',
-                '=COUNTRY_ID' => intval($legacyId),
-                '=REGION_ID' => false,
-                '=CITY_ID' => false
-            ),
-            'select' => array(
-                'ID'
+        $res = $item = Location\LocationTable::getList(
+            array(
+                'filter' => array(
+                    '=TYPE.CODE' => 'COUNTRY',
+                    '=COUNTRY_ID' => intval($legacyId),
+                    '=REGION_ID' => false,
+                    '=CITY_ID' => false
+                ),
+                'select' => array(
+                    'ID'
+                )
             )
-        ))->fetch();
+        )->fetch();
 
         return $res['ID'];
     }
 
     private static function getLocationIdByCityId($legacyId)
     {
-        $res = Location\LocationTable::getList(array(
-            'filter' => array(
-                '=TYPE.CODE' => 'CITY',
-                '=CITY_ID' => intval($legacyId),
-            ),
-            'select' => array(
-                'ID'
+        $res = Location\LocationTable::getList(
+            array(
+                'filter' => array(
+                    '=TYPE.CODE' => 'CITY',
+                    '=CITY_ID' => intval($legacyId),
+                ),
+                'select' => array(
+                    'ID'
+                )
             )
-        ))->fetch();
+        )->fetch();
 
         return $res['ID'];
     }
 
     private static function getLocationIdByRegionId($legacyId)
     {
-        $res = Location\LocationTable::getList(array(
-            'filter' => array(
-                '=TYPE.CODE' => 'REGION',
-                '=REGION_ID' => intval($legacyId),
-                '=CITY_ID' => false
-            ),
-            'select' => array(
-                'ID'
+        $res = Location\LocationTable::getList(
+            array(
+                'filter' => array(
+                    '=TYPE.CODE' => 'REGION',
+                    '=REGION_ID' => intval($legacyId),
+                    '=CITY_ID' => false
+                ),
+                'select' => array(
+                    'ID'
+                )
             )
-        ))->fetch();
+        )->fetch();
 
         return $res['ID'];
     }
 
     private static function checkLangPresenceInSelect($type, $fields)
     {
-        return in_array($type . '_NAME_', $fields, true) || in_array($type . '_SHORT_NAME', $fields, true) || in_array($type . '_NAME', $fields, true) || in_array($type . '_NAME_LANG', $fields, true) || in_array($type . '_LID', $fields, true);
+        return in_array($type . '_NAME_', $fields, true) || in_array($type . '_SHORT_NAME', $fields, true) || in_array(
+                $type . '_NAME',
+                $fields,
+                true
+            ) || in_array($type . '_NAME_LANG', $fields, true) || in_array($type . '_LID', $fields, true);
     }
 
     private static function getTypeValueToStore($type, $arFields)
     {
-        if (isset($arFields[$type]) && is_array($arFields[$type]) && !empty($arFields[$type]))
+        if (isset($arFields[$type]) && is_array($arFields[$type]) && !empty($arFields[$type])) {
             return $arFields[$type];
+        }
 
-        if (isset($arFields[$type . '_ID']) && intval($arFields[$type . '_ID']))
+        if (isset($arFields[$type . '_ID']) && intval($arFields[$type . '_ID'])) {
             return intval($arFields[$type . '_ID']);
+        }
 
         return false;
     }
@@ -463,8 +515,12 @@ class CAllSaleLocation
         return ((string)intval($val) === (string)$val);
     }
 
-    protected static function GetLocationTypeList($typeCode = '', $arOrder = Array("NAME_LANG" => "ASC"), $arFilter = Array(), $strLang = LANGUAGE_ID)
-    {
+    protected static function GetLocationTypeList(
+        $typeCode = '',
+        $arOrder = Array("NAME_LANG" => "ASC"),
+        $arFilter = Array(),
+        $strLang = LANGUAGE_ID
+    ) {
         global $DB;
         $arSqlSearch = Array();
 
@@ -483,10 +539,11 @@ class CAllSaleLocation
 
         $arSqlSearch[] = "L.TYPE_ID = '" . intval($types[$typeCode]) . "'";
 
-        if (!is_array($arFilter))
+        if (!is_array($arFilter)) {
             $filter_keys = Array();
-        else
+        } else {
             $filter_keys = array_keys($arFilter);
+        }
 
         $joinLCO = false;
         $joinLRE = false;
@@ -494,14 +551,17 @@ class CAllSaleLocation
         $countFilterKey = count($filter_keys);
         for ($i = 0; $i < $countFilterKey; $i++) {
             $val = $DB->ForSql($arFilter[$filter_keys[$i]]);
-            if (strlen($val) <= 0) continue;
+            if ($val == '') {
+                continue;
+            }
 
             $key = $filter_keys[$i];
             if ($key[0] == "!") {
-                $key = substr($key, 1);
+                $key = mb_substr($key, 1);
                 $bInvert = true;
-            } else
+            } else {
                 $bInvert = false;
+            }
 
             switch (ToUpper($key)) {
                 case "ID":
@@ -568,7 +628,10 @@ class CAllSaleLocation
             "	CASE WHEN LLN.LOCATION_ID IS NULL THEN LN.NAME ELSE LLN.NAME END as NAME_LANG " .
             "FROM b_sale_location L " .
             "	LEFT JOIN b_sale_loc_name LN ON (L.ID = LN.LOCATION_ID AND LN.LANGUAGE_ID = 'en') " .
-            "	LEFT JOIN b_sale_loc_name LLN ON (L.ID = LLN.LOCATION_ID AND LLN.LANGUAGE_ID = '" . $DB->ForSql($strLang, 2) . "') " .
+            "	LEFT JOIN b_sale_loc_name LLN ON (L.ID = LLN.LOCATION_ID AND LLN.LANGUAGE_ID = '" . $DB->ForSql(
+                $strLang,
+                2
+            ) . "') " .
 
             ($joinLCO ?
                 " INNER JOIN b_sale_location LCO ON (L.COUNTRY_ID = LCO.ID) " :
@@ -584,13 +647,19 @@ class CAllSaleLocation
         foreach ($arOrder as $by => $order) {
             $by = ToUpper($by);
             $order = ToUpper($order);
-            if ($order != "ASC") $order = "DESC";
+            if ($order != "ASC") {
+                $order = "DESC";
+            }
 
-            if ($by == "SORT") $arSqlOrder[] = " L.SORT " . $order;
-            elseif ($by == "ID") $arSqlOrder[] = " L.ID " . $order . " ";
-            elseif ($by == "NAME") $arSqlOrder[] = " LN.NAME " . $order . " ";
-            elseif ($by == "SHORT_NAME") $arSqlOrder[] = " LN.SHORT_NAME " . $order . " ";
-            else {
+            if ($by == "SORT") {
+                $arSqlOrder[] = " L.SORT " . $order;
+            } elseif ($by == "ID") {
+                $arSqlOrder[] = " L.ID " . $order . " ";
+            } elseif ($by == "NAME") {
+                $arSqlOrder[] = " LN.NAME " . $order . " ";
+            } elseif ($by == "SHORT_NAME") {
+                $arSqlOrder[] = " LN.SHORT_NAME " . $order . " ";
+            } else {
                 $arSqlOrder[] = " LLN.NAME " . $order . " ";
                 $by = "NAME_LANG";
             }
@@ -600,10 +669,11 @@ class CAllSaleLocation
         DelDuplicateSort($arSqlOrder);
         $countSqlOrder = count($arSqlOrder);
         for ($i = 0; $i < $countSqlOrder; $i++) {
-            if ($i == 0)
+            if ($i == 0) {
                 $strSqlOrder = " ORDER BY ";
-            else
+            } else {
                 $strSqlOrder .= ", ";
+            }
 
             $strSqlOrder .= $arSqlOrder[$i];
         }
@@ -631,7 +701,9 @@ class CAllSaleLocation
     public static function getFreeId($type)
     {
         $class = self::SELF_ENTITY_NAME . 'Table';
-        $item = $class::getList(array('select' => array($type . '_ID'), 'limit' => 1, 'order' => array($type . '_ID' => 'desc')))->fetch();
+        $item = $class::getList(
+            array('select' => array($type . '_ID'), 'limit' => 1, 'order' => array($type . '_ID' => 'desc'))
+        )->fetch();
 
         $fromLocTable = intval($item[$type . '_ID']);
 
@@ -680,15 +752,16 @@ class CAllSaleLocation
                 $found = array();
                 preg_match(self::KEY_PARSE_R, $k, $found);
 
-                if (strlen($found[3])) {
+                if ($found[3] <> '') {
                     $f = array(
                         'NOT' => $found[1] == '!',
-                        'OP' => !strlen($found[2]) ? '=' : $found[2],
+                        'OP' => !mb_strlen($found[2]) ? '=' : $found[2],
                         'VALUE' => $v
                     );
 
-                    if (in_array($f['OP'], static::$allowedOps))
+                    if (in_array($f['OP'], static::$allowedOps)) {
                         $result[$found[3]] = $f;
+                    }
                 }
             }
         }
@@ -715,14 +788,21 @@ class CAllSaleLocation
 
         $where = array();
 
-        if (intval($filter[$linkField]['VALUE']))
-            $where[] = 'DL.' . $linkField . ' ' . ($filter[$linkField]['NOT'] ? '!' : '') . $filter[$linkField]['OP'] . " '" . intval($filter[$linkField]['VALUE']) . "'";
+        if (intval($filter[$linkField]['VALUE'])) {
+            $where[] = 'DL.' . $linkField . ' ' . ($filter[$linkField]['NOT'] ? '!' : '') . $filter[$linkField]['OP'] . " '" . intval(
+                    $filter[$linkField]['VALUE']
+                ) . "'";
+        }
 
-        if (intval($filter['LOCATION_ID']['VALUE']))
-            $where[] = 'LINK.ID ' . ($filter['LOCATION_ID']['NOT'] ? '!' : '') . $filter['LOCATION_ID']['OP'] . " '" . intval($filter['LOCATION_ID']['VALUE']) . "'";
+        if (intval($filter['LOCATION_ID']['VALUE'])) {
+            $where[] = 'LINK.ID ' . ($filter['LOCATION_ID']['NOT'] ? '!' : '') . $filter['LOCATION_ID']['OP'] . " '" . intval(
+                    $filter['LOCATION_ID']['VALUE']
+                ) . "'";
+        }
 
-        if ($filter[$typeField]['VALUE'] == Location\Connector::DB_LOCATION_FLAG || $filter[$typeField]['VALUE'] == Location\Connector::DB_GROUP_FLAG)
+        if ($filter[$typeField]['VALUE'] == Location\Connector::DB_LOCATION_FLAG || $filter[$typeField]['VALUE'] == Location\Connector::DB_GROUP_FLAG) {
             $where[] = 'DL.' . $typeField . ' ' . ($filter[$typeField]['NOT'] ? '!' : '') . $filter[$typeField]['OP'] . " '" . $filter[$typeField]['VALUE'] . "'";
+        }
 
         $sql = "
 
@@ -767,8 +847,9 @@ class CAllSaleLocation
     {
         $locationString = '';
 
-        if (!\Bitrix\Sale\SalesZone::checkLocationId($locationId, $siteId))
+        if (!\Bitrix\Sale\SalesZone::checkLocationId($locationId, $siteId)) {
             $locationId = 0;
+        }
 
         $countryId = $regionId = $cityId = 0;
         if ($locationId > 0) {
@@ -782,43 +863,51 @@ class CAllSaleLocation
         //check in location city
         $bEmptyCity = "N";
         $arCityFilter = array("!CITY_ID" => "NULL", ">CITY_ID" => "0");
-        if ($countryId > 0)
+        if ($countryId > 0) {
             $arCityFilter["COUNTRY_ID"] = $countryId;
+        }
         $rsLocCount = CSaleLocation::GetList(array(), $arCityFilter, false, false, array("ID"));
-        if (!$rsLocCount->Fetch())
+        if (!$rsLocCount->Fetch()) {
             $bEmptyCity = "Y";
+        }
 
         //check in location region
         $bEmptyRegion = "N";
         $arRegionFilter = array("!REGION_ID" => "NULL", ">REGION_ID" => "0");
-        if ($countryId > 0 && $regionId > 0)
+        if ($countryId > 0 && $regionId > 0) {
             $arRegionFilter["COUNTRY_ID"] = $countryId;
-        if ($regionId > 0)
+        }
+        if ($regionId > 0) {
             $arRegionFilter["REGION_ID"] = $regionId;
+        }
         $rsLocCount = CSaleLocation::GetList(array(), $arRegionFilter, false, false, array("ID"));
-        if (!$rsLocCount->Fetch())
+        if (!$rsLocCount->Fetch()) {
             $bEmptyRegion = "Y";
+        }
 
         //check if exist another city
         if ($bEmptyCity == "Y" && $bEmptyRegion == "Y") {
             $arCityFilter = array("!CITY_ID" => "NULL", ">CITY_ID" => "0");
             $rsLocCount = CSaleLocation::GetList(array(), $arCityFilter, false, false, array("ID"));
-            if ($rsLocCount->Fetch())
+            if ($rsLocCount->Fetch()) {
                 $bEmptyCity = "N";
+            }
         }
 
         //location value
         if ($locationId > 0) {
             if ($arLocation = CSaleLocation::GetByID($locationId)) {
-                if ($bEmptyRegion == "Y" && $bEmptyCity == "Y")
+                if ($bEmptyRegion == "Y" && $bEmptyCity == "Y") {
                     $countryId = $locationId;
-                else
+                } else {
                     $countryId = $arLocation["COUNTRY_ID"];
+                }
 
-                if ($bEmptyCity == "Y")
+                if ($bEmptyCity == "Y") {
                     $regionId = $arLocation["ID"];
-                else
+                } else {
                     $regionId = $arLocation["REGION_ID"];
+                }
 
                 $cityId = $locationId;
             }
@@ -827,56 +916,82 @@ class CAllSaleLocation
         //select country
         $arCountryList = array();
 
-        if ($bEmptyRegion == "Y" && $bEmptyCity == "Y")
-            $rsCountryList = CSaleLocation::GetList(array("SORT" => "ASC", "NAME_LANG" => "ASC"), array("LID" => $langId), false, false, array("ID", "COUNTRY_ID", "COUNTRY_NAME_LANG"));
-        else
+        if ($bEmptyRegion == "Y" && $bEmptyCity == "Y") {
+            $rsCountryList = CSaleLocation::GetList(
+                array("SORT" => "ASC", "NAME_LANG" => "ASC"),
+                array("LID" => $langId),
+                false,
+                false,
+                array("ID", "COUNTRY_ID", "COUNTRY_NAME_LANG")
+            );
+        } else {
             $rsCountryList = CSaleLocation::GetCountryList(array("SORT" => "ASC", "NAME_LANG" => "ASC"));
-
-        while ($arCountry = $rsCountryList->GetNext()) {
-            if (!\Bitrix\Sale\SalesZone::checkCountryId($arCountry["ID"], $siteId))
-                continue;
-
-            if ($bEmptyRegion == "Y" && $bEmptyCity == "Y")
-                $arCountry["NAME_LANG"] = $arCountry["COUNTRY_NAME_LANG"];
-
-            $arCountryList[] = $arCountry;
-            if ($arCountry["ID"] == $countryId && strlen($arCountry["NAME_LANG"]) > 0)
-                $locationString .= $arCountry["NAME_LANG"];
         }
 
-        if (count($arCountryList) <= 0)
+        while ($arCountry = $rsCountryList->GetNext()) {
+            if (!\Bitrix\Sale\SalesZone::checkCountryId($arCountry["ID"], $siteId)) {
+                continue;
+            }
+
+            if ($bEmptyRegion == "Y" && $bEmptyCity == "Y") {
+                $arCountry["NAME_LANG"] = $arCountry["COUNTRY_NAME_LANG"];
+            }
+
+            $arCountryList[] = $arCountry;
+            if ($arCountry["ID"] == $countryId && $arCountry["NAME_LANG"] <> '') {
+                $locationString .= $arCountry["NAME_LANG"];
+            }
+        }
+
+        if (count($arCountryList) <= 0) {
             $arCountryList = array();
-        elseif (count($arCountryList) == 1)
+        } elseif (count($arCountryList) == 1) {
             $countryId = $arCountryList[0]["ID"];
+        }
 
         //select region
         $arRegionList = array();
         if ($countryId > 0 || count($arCountryList) <= 0) {
             $arRegionFilter = array("LID" => $langId, "!REGION_ID" => "NULL", "!REGION_ID" => "0");
-            if ($countryId > 0)
-                $arRegionFilter["COUNTRY_ID"] = IntVal($countryId);
+            if ($countryId > 0) {
+                $arRegionFilter["COUNTRY_ID"] = intval($countryId);
+            }
 
-            if ($bEmptyCity == "Y")
-                $rsRegionList = CSaleLocation::GetList(array("SORT" => "ASC", "NAME_LANG" => "ASC"), $arRegionFilter, false, false, array("ID", "REGION_ID", "REGION_NAME_LANG"));
-            else
-                $rsRegionList = CSaleLocation::GetRegionList(array("SORT" => "ASC", "NAME_LANG" => "ASC"), $arRegionFilter);
+            if ($bEmptyCity == "Y") {
+                $rsRegionList = CSaleLocation::GetList(
+                    array("SORT" => "ASC", "NAME_LANG" => "ASC"),
+                    $arRegionFilter,
+                    false,
+                    false,
+                    array("ID", "REGION_ID", "REGION_NAME_LANG")
+                );
+            } else {
+                $rsRegionList = CSaleLocation::GetRegionList(
+                    array("SORT" => "ASC", "NAME_LANG" => "ASC"),
+                    $arRegionFilter
+                );
+            }
 
             while ($arRegion = $rsRegionList->GetNext()) {
-                if (!\Bitrix\Sale\SalesZone::checkRegionId($arRegion["ID"], $siteId))
+                if (!\Bitrix\Sale\SalesZone::checkRegionId($arRegion["ID"], $siteId)) {
                     continue;
+                }
 
-                if ($bEmptyCity == "Y")
+                if ($bEmptyCity == "Y") {
                     $arRegion["NAME_LANG"] = $arRegion["REGION_NAME_LANG"];
+                }
 
                 $arRegionList[] = $arRegion;
-                if ($arRegion["ID"] == $regionId && strlen($arRegion["NAME_LANG"]) > 0)
+                if ($arRegion["ID"] == $regionId && $arRegion["NAME_LANG"] <> '') {
                     $locationString = $arRegion["NAME_LANG"] . ", " . $locationString;
+                }
             }
         }
-        if (count($arRegionList) <= 0)
+        if (count($arRegionList) <= 0) {
             $arRegionList = array();
-        elseif (count($arRegionList) == 1)
+        } elseif (count($arRegionList) == 1) {
             $regionId = $arRegionList[0]["ID"];
+        }
 
         //select city
         $arCityList = array();
@@ -888,10 +1003,12 @@ class CAllSaleLocation
                 || (count($arCountryList) <= 0 && count($arRegionList) <= 0))
         ) {
             $arCityFilter = array("LID" => $langId);
-            if ($countryId > 0)
+            if ($countryId > 0) {
                 $arCityFilter["COUNTRY_ID"] = $countryId;
-            if ($regionId > 0)
+            }
+            if ($regionId > 0) {
                 $arCityFilter["REGION_ID"] = $regionId;
+            }
 
             $rsLocationsList = CSaleLocation::GetList(
                 array(
@@ -903,21 +1020,25 @@ class CAllSaleLocation
                 false,
                 false,
                 array(
-                    "ID", "CITY_ID", "CITY_NAME"
+                    "ID",
+                    "CITY_ID",
+                    "CITY_NAME"
                 )
             );
 
             while ($arCity = $rsLocationsList->GetNext()) {
-                if (!\Bitrix\Sale\SalesZone::checkCityId($arCity["CITY_ID"], $siteId))
+                if (!\Bitrix\Sale\SalesZone::checkCityId($arCity["CITY_ID"], $siteId)) {
                     continue;
+                }
 
                 $arCityList[] = array(
                     "ID" => $arCity["ID"],
                     "CITY_ID" => $arCity['CITY_ID'],
                     "CITY_NAME" => $arCity["CITY_NAME"],
                 );
-                if ($arCity["ID"] == $cityId)
-                    $locationString = (strlen($arCity["CITY_NAME"]) > 0 ? $arCity["CITY_NAME"] . ", " : "") . $locationString;
+                if ($arCity["ID"] == $cityId) {
+                    $locationString = ($arCity["CITY_NAME"] <> '' ? $arCity["CITY_NAME"] . ", " : "") . $locationString;
+                }
             }//end while
         }
 
@@ -930,7 +1051,9 @@ class CAllSaleLocation
     {
         global $DB;
 
-        if ((is_set($arFields, "NAME") || $ACTION == "ADD") && strlen($arFields["NAME"]) <= 0) return false;
+        if ((is_set($arFields, "NAME") || $ACTION == "ADD") && $arFields["NAME"] == '') {
+            return false;
+        }
 
         /*
 		$db_lang = CLangAdmin::GetList(($b="sort"), ($o="asc"), array("ACTIVE" => "Y"));
@@ -940,21 +1063,24 @@ class CAllSaleLocation
 		}
 		*/
 
-        return True;
+        return true;
     }
 
-    function UpdateCountry($ID, $arFields)
+    public static function UpdateCountry($ID, $arFields)
     {
         global $DB;
 
         $ID = intval($ID);
 
-        if ($ID <= 0 || !CSaleLocation::CountryCheckFields("UPDATE", $arFields))
+        if ($ID <= 0 || !CSaleLocation::CountryCheckFields("UPDATE", $arFields)) {
             return false;
+        }
 
-        foreach (GetModuleEvents("sale", "OnBeforeCountryUpdate", true) as $arEvent)
-            if (ExecuteModuleEventEx($arEvent, array($ID, &$arFields)) === false)
+        foreach (GetModuleEvents("sale", "OnBeforeCountryUpdate", true) as $arEvent) {
+            if (ExecuteModuleEventEx($arEvent, array($ID, &$arFields)) === false) {
                 return false;
+            }
+        }
 
         //////////////////////////////////////
 
@@ -963,8 +1089,9 @@ class CAllSaleLocation
                 // get location id by country id
                 $locId = self::getLocationIdByCountryId($ID);
 
-                if (!$locId)
+                if (!$locId) {
                     return false;
+                }
 
                 $res = Location\LocationTable::updateExtended(
                     $locId,
@@ -972,8 +1099,9 @@ class CAllSaleLocation
                     array('REBALANCE' => false)
                 );
 
-                if ($res->isSuccess())
+                if ($res->isSuccess()) {
                     return $ID;
+                }
 
                 return false;
             } catch (Exception $e) {
@@ -984,7 +1112,7 @@ class CAllSaleLocation
             $strSql = "UPDATE b_sale_location_country SET " . $strUpdate . " WHERE ID = " . $ID . "";
             $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 
-            $db_lang = CLangAdmin::GetList(($b = "sort"), ($o = "asc"), array("ACTIVE" => "Y"));
+            $db_lang = CLangAdmin::GetList("sort", "asc", array("ACTIVE" => "Y"));
             while ($arLang = $db_lang->Fetch()) {
                 if ($arCntLang = CSaleLocation::GetCountryLangByID($ID, $arLang["LID"])) {
                     $strUpdate = $DB->PrepareUpdate("b_sale_location_country_lang", $arFields[$arLang["LID"]]);
@@ -1001,8 +1129,9 @@ class CAllSaleLocation
 
         //////////////////////////////////////
 
-        foreach (GetModuleEvents("sale", "OnCountryUpdate", true) as $arEvent)
+        foreach (GetModuleEvents("sale", "OnCountryUpdate", true) as $arEvent) {
             ExecuteModuleEventEx($arEvent, array($ID, $arFields));
+        }
 
         return $ID;
     }
@@ -1010,11 +1139,13 @@ class CAllSaleLocation
     public static function DeleteCountry($ID)
     {
         global $DB;
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
-        foreach (GetModuleEvents("sale", "OnBeforeCountryDelete", true) as $arEvent)
-            if (ExecuteModuleEventEx($arEvent, array($ID)) === false)
+        foreach (GetModuleEvents("sale", "OnBeforeCountryDelete", true) as $arEvent) {
+            if (ExecuteModuleEventEx($arEvent, array($ID)) === false) {
                 return false;
+            }
+        }
 
         if (self::isLocationProMigrated()) {
             try {
@@ -1041,8 +1172,9 @@ class CAllSaleLocation
         $DB->Query("DELETE FROM b_sale_location_country_lang WHERE COUNTRY_ID = " . $ID . "", true);
         $bDelete = $DB->Query("DELETE FROM b_sale_location_country WHERE ID = " . $ID . "", true);
 
-        foreach (GetModuleEvents("sale", "OnCountryDelete", true) as $arEvent)
+        foreach (GetModuleEvents("sale", "OnCountryDelete", true) as $arEvent) {
             ExecuteModuleEventEx($arEvent, array($ID));
+        }
 
         return $bDelete;
     }
@@ -1051,24 +1183,27 @@ class CAllSaleLocation
     {
         if (self::isLocationProMigrated()) {
             try {
-                $res = Location\LocationTable::getList(array(
-                    'filter' => array(
-                        '=TYPE.CODE' => 'COUNTRY',
-                        '=ID' => intval($ID),
-                        '=NAME.LANGUAGE_ID' => self::ORIGIN_NAME_LANGUAGE_ID
-                    ),
-                    'select' => array(
-                        'ID',
-                        'LNAME' => 'NAME.NAME',
-                        'SHORT_NAME' => 'NAME.SHORT_NAME'
+                $res = Location\LocationTable::getList(
+                    array(
+                        'filter' => array(
+                            '=TYPE.CODE' => 'COUNTRY',
+                            '=ID' => intval($ID),
+                            '=NAME.LANGUAGE_ID' => self::ORIGIN_NAME_LANGUAGE_ID
+                        ),
+                        'select' => array(
+                            'ID',
+                            'LNAME' => 'NAME.NAME',
+                            'SHORT_NAME' => 'NAME.SHORT_NAME'
+                        )
                     )
-                ));
+                );
                 $res->addReplacedAliases(array('LNAME' => 'NAME'));
 
                 $item = $res->fetch();
 
-                if ($item)
+                if ($item) {
                     return $item;
+                }
 
                 return false;
             } catch (Exception $e) {
@@ -1077,7 +1212,7 @@ class CAllSaleLocation
         } else {
             global $DB;
 
-            $ID = IntVal($ID);
+            $ID = intval($ID);
             $strSql =
                 "SELECT * " .
                 "FROM b_sale_location_country " .
@@ -1087,8 +1222,7 @@ class CAllSaleLocation
             if ($res = $db_res->Fetch()) {
                 return $res;
             }
-            return False;
-
+            return false;
         }
     }
 
@@ -1096,20 +1230,22 @@ class CAllSaleLocation
     {
         if (self::isLocationProMigrated()) {
             try {
-                $res = Location\LocationTable::getList(array(
-                    'filter' => array(
-                        '=TYPE.CODE' => 'COUNTRY',
-                        '=ID' => intval($ID),
-                        '=NAME.LANGUAGE_ID' => trim($strLang)
-                    ),
-                    'select' => array(
-                        'ID',
-                        'ID_' => 'NAME.ID',
-                        'LID' => 'NAME.LANGUAGE_ID',
-                        'LNAME' => 'NAME.NAME',
-                        'SHORT_NAME' => 'NAME.SHORT_NAME',
+                $res = Location\LocationTable::getList(
+                    array(
+                        'filter' => array(
+                            '=TYPE.CODE' => 'COUNTRY',
+                            '=ID' => intval($ID),
+                            '=NAME.LANGUAGE_ID' => trim($strLang)
+                        ),
+                        'select' => array(
+                            'ID',
+                            'ID_' => 'NAME.ID',
+                            'LID' => 'NAME.LANGUAGE_ID',
+                            'LNAME' => 'NAME.NAME',
+                            'SHORT_NAME' => 'NAME.SHORT_NAME',
+                        )
                     )
-                ));
+                );
 
                 $item = $res->fetch();
 
@@ -1128,10 +1264,9 @@ class CAllSaleLocation
                 return false;
             }
         } else {
-
             global $DB;
 
-            $ID = IntVal($ID);
+            $ID = intval($ID);
             $strLang = Trim($strLang);
 
             $strSql =
@@ -1144,8 +1279,7 @@ class CAllSaleLocation
             if ($res = $db_res->Fetch()) {
                 return $res;
             }
-            return False;
-
+            return false;
         }
     }
 
@@ -1153,9 +1287,11 @@ class CAllSaleLocation
 
     public static function RegionCheckFields($ACTION, &$arFields)
     {
-        if ((is_set($arFields, "NAME") || $ACTION == "ADD") && strlen($arFields["NAME"]) <= 0) return false;
+        if ((is_set($arFields, "NAME") || $ACTION == "ADD") && $arFields["NAME"] == '') {
+            return false;
+        }
 
-        return True;
+        return true;
     }
 
     public static function UpdateRegion($ID, $arFields)
@@ -1164,19 +1300,23 @@ class CAllSaleLocation
 
         $ID = intval($ID);
 
-        if ($ID <= 0 || !CSaleLocation::RegionCheckFields("UPDATE", $arFields))
+        if ($ID <= 0 || !CSaleLocation::RegionCheckFields("UPDATE", $arFields)) {
             return false;
+        }
 
-        foreach (GetModuleEvents("sale", "OnBeforeRegionUpdate", true) as $arEvent)
-            if (ExecuteModuleEventEx($arEvent, array($ID, &$arFields)) === false)
+        foreach (GetModuleEvents("sale", "OnBeforeRegionUpdate", true) as $arEvent) {
+            if (ExecuteModuleEventEx($arEvent, array($ID, &$arFields)) === false) {
                 return false;
+            }
+        }
 
         if (self::isLocationProMigrated()) {
             try {
                 $locId = self::getLocationIdByRegionId($ID);
 
-                if (!$locId)
+                if (!$locId) {
                     return false;
+                }
 
                 $res = Location\LocationTable::updateExtended(
                     $locId,
@@ -1184,8 +1324,9 @@ class CAllSaleLocation
                     array('REBALANCE' => false)
                 );
 
-                if ($res->isSuccess())
+                if ($res->isSuccess()) {
                     return $ID;
+                }
 
                 return false;
             } catch (Exception $e) {
@@ -1196,7 +1337,7 @@ class CAllSaleLocation
             $strSql = "UPDATE b_sale_location_region SET " . $strUpdate . " WHERE ID = " . $ID . "";
             $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 
-            $db_lang = CLangAdmin::GetList(($b = "sort"), ($o = "asc"), array("ACTIVE" => "Y"));
+            $db_lang = CLangAdmin::GetList("sort", "asc", array("ACTIVE" => "Y"));
             while ($arLang = $db_lang->Fetch()) {
                 if ($arCntLang = CSaleLocation::GetRegionLangByID($ID, $arLang["LID"])) {
                     $strUpdate = $DB->PrepareUpdate("b_sale_location_region_lang", $arFields[$arLang["LID"]]);
@@ -1212,8 +1353,9 @@ class CAllSaleLocation
             }
         }
 
-        foreach (GetModuleEvents("sale", "OnRegionUpdate", true) as $arEvent)
+        foreach (GetModuleEvents("sale", "OnRegionUpdate", true) as $arEvent) {
             ExecuteModuleEventEx($arEvent, array($ID, $arFields));
+        }
 
         return $ID;
     }
@@ -1223,11 +1365,13 @@ class CAllSaleLocation
         // there is no such entity in terms of location 2.0, so... just delete old entity
 
         global $DB;
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
-        foreach (GetModuleEvents("sale", "OnBeforeRegionDelete", true) as $arEvent)
-            if (ExecuteModuleEventEx($arEvent, array($ID)) === false)
+        foreach (GetModuleEvents("sale", "OnBeforeRegionDelete", true) as $arEvent) {
+            if (ExecuteModuleEventEx($arEvent, array($ID)) === false) {
                 return false;
+            }
+        }
 
         if (self::isLocationProMigrated()) {
             try {
@@ -1254,8 +1398,9 @@ class CAllSaleLocation
         $DB->Query("DELETE FROM b_sale_location_region_lang WHERE REGION_ID = " . $ID . "", true);
         $bDelete = $DB->Query("DELETE FROM b_sale_location_region WHERE ID = " . $ID . "", true);
 
-        foreach (GetModuleEvents("sale", "OnRegionDelete", true) as $arEvent)
+        foreach (GetModuleEvents("sale", "OnRegionDelete", true) as $arEvent) {
             ExecuteModuleEventEx($arEvent, array($ID));
+        }
 
         return $bDelete;
     }
@@ -1264,24 +1409,27 @@ class CAllSaleLocation
     {
         if (self::isLocationProMigrated()) {
             try {
-                $res = Location\LocationTable::getList(array(
-                    'filter' => array(
-                        '=TYPE.CODE' => 'REGION',
-                        '=ID' => intval($ID),
-                        'NAME.LANGUAGE_ID' => self::ORIGIN_NAME_LANGUAGE_ID
-                    ),
-                    'select' => array(
-                        'ID',
-                        'LNAME' => 'NAME.NAME',
-                        'SHORT_NAME' => 'NAME.SHORT_NAME',
+                $res = Location\LocationTable::getList(
+                    array(
+                        'filter' => array(
+                            '=TYPE.CODE' => 'REGION',
+                            '=ID' => intval($ID),
+                            'NAME.LANGUAGE_ID' => self::ORIGIN_NAME_LANGUAGE_ID
+                        ),
+                        'select' => array(
+                            'ID',
+                            'LNAME' => 'NAME.NAME',
+                            'SHORT_NAME' => 'NAME.SHORT_NAME',
+                        )
                     )
-                ));
+                );
                 $res->addReplacedAliases(array('LNAME' => 'NAME'));
 
                 $item = $res->fetch();
 
-                if ($item)
+                if ($item) {
                     return $item;
+                }
 
                 return false;
             } catch (Exception $e) {
@@ -1290,7 +1438,7 @@ class CAllSaleLocation
         } else {
             global $DB;
 
-            $ID = IntVal($ID);
+            $ID = intval($ID);
             $strSql =
                 "SELECT * " .
                 "FROM b_sale_location_region " .
@@ -1300,7 +1448,7 @@ class CAllSaleLocation
             if ($res = $db_res->Fetch()) {
                 return $res;
             }
-            return False;
+            return false;
         }
     }
 
@@ -1308,20 +1456,22 @@ class CAllSaleLocation
     {
         if (self::isLocationProMigrated()) {
             try {
-                $res = Location\LocationTable::getList(array(
-                    'filter' => array(
-                        '=TYPE.CODE' => 'REGION',
-                        '=ID' => intval($ID),
-                        'NAME.LANGUAGE_ID' => trim($strLang)
-                    ),
-                    'select' => array(
-                        'ID',
-                        'ID_' => 'NAME.ID',
-                        'LID' => 'NAME.LANGUAGE_ID',
-                        'LNAME' => 'NAME.NAME',
-                        'SHORT_NAME' => 'NAME.SHORT_NAME',
+                $res = Location\LocationTable::getList(
+                    array(
+                        'filter' => array(
+                            '=TYPE.CODE' => 'REGION',
+                            '=ID' => intval($ID),
+                            'NAME.LANGUAGE_ID' => trim($strLang)
+                        ),
+                        'select' => array(
+                            'ID',
+                            'ID_' => 'NAME.ID',
+                            'LID' => 'NAME.LANGUAGE_ID',
+                            'LNAME' => 'NAME.NAME',
+                            'SHORT_NAME' => 'NAME.SHORT_NAME',
+                        )
                     )
-                ));
+                );
                 $res->addReplacedAliases(array('LNAME' => 'NAME'));
 
                 $item = $res->fetch();
@@ -1343,7 +1493,7 @@ class CAllSaleLocation
         } else {
             global $DB;
 
-            $ID = IntVal($ID);
+            $ID = intval($ID);
             $strLang = Trim($strLang);
 
             $strSql =
@@ -1356,7 +1506,7 @@ class CAllSaleLocation
             if ($res = $db_res->Fetch()) {
                 return $res;
             }
-            return False;
+            return false;
         }
     }
 
@@ -1366,7 +1516,9 @@ class CAllSaleLocation
     {
         global $DB;
 
-        if ((is_set($arFields, "NAME") || $ACTION == "ADD") && strlen($arFields["NAME"]) <= 0) return false;
+        if ((is_set($arFields, "NAME") || $ACTION == "ADD") && $arFields["NAME"] == '') {
+            return false;
+        }
 
         /*
 		$db_lang = CLangAdmin::GetList(($b="sort"), ($o="asc"), array("ACTIVE" => "Y"));
@@ -1376,7 +1528,7 @@ class CAllSaleLocation
 		}
 		*/
 
-        return True;
+        return true;
     }
 
     public static function UpdateCity($ID, $arFields)
@@ -1385,19 +1537,23 @@ class CAllSaleLocation
 
         $ID = intval($ID);
 
-        if ($ID <= 0 || !CSaleLocation::CityCheckFields("UPDATE", $arFields))
+        if ($ID <= 0 || !CSaleLocation::CityCheckFields("UPDATE", $arFields)) {
             return false;
+        }
 
-        foreach (GetModuleEvents("sale", "OnBeforeCityUpdate", true) as $arEvent)
-            if (ExecuteModuleEventEx($arEvent, array($ID, &$arFields)) === false)
+        foreach (GetModuleEvents("sale", "OnBeforeCityUpdate", true) as $arEvent) {
+            if (ExecuteModuleEventEx($arEvent, array($ID, &$arFields)) === false) {
                 return false;
+            }
+        }
 
         if (self::isLocationProMigrated()) {
             try {
                 $locId = self::getLocationIdByCityId($ID);
 
-                if (!$locId)
+                if (!$locId) {
                     return false;
+                }
 
                 $res = Location\LocationTable::updateExtended(
                     $locId,
@@ -1405,8 +1561,9 @@ class CAllSaleLocation
                     array('REBALANCE' => false)
                 );
 
-                if ($res->isSuccess())
+                if ($res->isSuccess()) {
                     return $ID;
+                }
 
                 return false;
             } catch (Exception $e) {
@@ -1417,7 +1574,7 @@ class CAllSaleLocation
             $strSql = "UPDATE b_sale_location_city SET " . $strUpdate . " WHERE ID = " . $ID . "";
             $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 
-            $db_lang = CLangAdmin::GetList(($b = "sort"), ($o = "asc"), array("ACTIVE" => "Y"));
+            $db_lang = CLangAdmin::GetList("sort", "asc", array("ACTIVE" => "Y"));
             while ($arLang = $db_lang->Fetch()) {
                 if ($arCntLang = CSaleLocation::GetCityLangByID($ID, $arLang["LID"])) {
                     $strUpdate = $DB->PrepareUpdate("b_sale_location_city_lang", $arFields[$arLang["LID"]]);
@@ -1432,8 +1589,9 @@ class CAllSaleLocation
             }
         }
 
-        foreach (GetModuleEvents("sale", "OnCityUpdate", true) as $arEvent)
+        foreach (GetModuleEvents("sale", "OnCityUpdate", true) as $arEvent) {
             ExecuteModuleEventEx($arEvent, array($ID, $arFields));
+        }
 
         return $ID;
     }
@@ -1443,11 +1601,13 @@ class CAllSaleLocation
         // there is no such entity in terms of location 2.0, so... just delete old entity
 
         global $DB;
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
-        foreach (GetModuleEvents("sale", "OnBeforeCityDelete", true) as $arEvent)
-            if (ExecuteModuleEventEx($arEvent, array($ID)) === false)
+        foreach (GetModuleEvents("sale", "OnBeforeCityDelete", true) as $arEvent) {
+            if (ExecuteModuleEventEx($arEvent, array($ID)) === false) {
                 return false;
+            }
+        }
 
         if (self::isLocationProMigrated()) {
             try {
@@ -1475,8 +1635,9 @@ class CAllSaleLocation
         $DB->Query("DELETE FROM b_sale_location_city_lang WHERE CITY_ID = " . $ID . "", true);
         $bDelete = $DB->Query("DELETE FROM b_sale_location_city WHERE ID = " . $ID . "", true);
 
-        foreach (GetModuleEvents("sale", "OnCityDelete", true) as $arEvent)
+        foreach (GetModuleEvents("sale", "OnCityDelete", true) as $arEvent) {
             ExecuteModuleEventEx($arEvent, array($ID));
+        }
 
         return $bDelete;
     }
@@ -1489,7 +1650,9 @@ class CAllSaleLocation
             try {
                 if (!$regionId) {
                     $params = array('select' => array());
-                    $res = \Bitrix\Sale\Location\TypeTable::getList(array('filter' => array('=CODE' => 'REGION'), 'select' => array('ID')))->fetch();
+                    $res = \Bitrix\Sale\Location\TypeTable::getList(
+                        array('filter' => array('=CODE' => 'REGION'), 'select' => array('ID'))
+                    )->fetch();
 
                     if ($res['ID']) {
                         $regionId = $res['ID'];
@@ -1518,11 +1681,14 @@ class CAllSaleLocation
                     '=NAME.LANGUAGE_ID' => 'en',
                 );
 
-                $params['select'] = array_merge($params['select'], array(
-                    'ID',
-                    'LNAME' => 'NAME.NAME',
-                    'SHORT_NAME' => 'NAME.SHORT_NAME',
-                ));
+                $params['select'] = array_merge(
+                    $params['select'],
+                    array(
+                        'ID',
+                        'LNAME' => 'NAME.NAME',
+                        'SHORT_NAME' => 'NAME.SHORT_NAME',
+                    )
+                );
 
                 $res = \Bitrix\Sale\Location\LocationTable::getList($params);
                 $res->addReplacedAliases(array('LNAME' => 'NAME', 'PREGION_ID' => 'REGION_ID'));
@@ -1540,7 +1706,7 @@ class CAllSaleLocation
         } else {
             global $DB;
 
-            $ID = IntVal($ID);
+            $ID = intval($ID);
             $strSql =
                 "SELECT * " .
                 "FROM b_sale_location_city " .
@@ -1550,7 +1716,7 @@ class CAllSaleLocation
             if ($res = $db_res->Fetch()) {
                 return $res;
             }
-            return False;
+            return false;
         }
     }
 
@@ -1558,20 +1724,22 @@ class CAllSaleLocation
     {
         if (self::isLocationProMigrated()) {
             try {
-                $res = Location\LocationTable::getList(array(
-                    'filter' => array(
-                        '=TYPE.CODE' => 'CITY',
-                        '=ID' => intval($ID),
-                        'NAME.LANGUAGE_ID' => trim($strLang)
-                    ),
-                    'select' => array(
-                        'ID',
-                        'ID_' => 'NAME.ID',
-                        'LID' => 'NAME.LANGUAGE_ID',
-                        'LNAME' => 'NAME.NAME',
-                        'SHORT_NAME' => 'NAME.SHORT_NAME',
+                $res = Location\LocationTable::getList(
+                    array(
+                        'filter' => array(
+                            '=TYPE.CODE' => 'CITY',
+                            '=ID' => intval($ID),
+                            'NAME.LANGUAGE_ID' => trim($strLang)
+                        ),
+                        'select' => array(
+                            'ID',
+                            'ID_' => 'NAME.ID',
+                            'LID' => 'NAME.LANGUAGE_ID',
+                            'LNAME' => 'NAME.NAME',
+                            'SHORT_NAME' => 'NAME.SHORT_NAME',
+                        )
                     )
-                ));
+                );
                 $res->addReplacedAliases(array('LNAME' => 'NAME'));
 
                 $item = $res->fetch();
@@ -1593,7 +1761,7 @@ class CAllSaleLocation
         } else {
             global $DB;
 
-            $ID = IntVal($ID);
+            $ID = intval($ID);
             $strLang = Trim($strLang);
 
             $strSql =
@@ -1606,7 +1774,7 @@ class CAllSaleLocation
             if ($res = $db_res->Fetch()) {
                 return $res;
             }
-            return False;
+            return false;
         }
     }
 
@@ -1623,14 +1791,17 @@ class CAllSaleLocation
             foreach ($arOrder as $fld => $direction) {
                 $direction = ToUpper($direction);
 
-                if ($direction != 'ASC' && $direction != 'DESC')
+                if ($direction != 'ASC' && $direction != 'DESC') {
                     continue;
+                }
 
-                if (isset($fieldProxy[$fld]))
+                if (isset($fieldProxy[$fld])) {
                     $fld = $fieldProxy[$fld];
+                }
 
-                if (!isset($fieldMap[$fld]))
+                if (!isset($fieldMap[$fld])) {
                     continue;
+                }
 
                 $fld = $fieldMap[$fld];
 
@@ -1638,8 +1809,9 @@ class CAllSaleLocation
             }
 
             return $arOrderParsed;
-        } else
+        } else {
             return false;
+        }
     }
 
     public static function processFilterForGetList($arFilter, $fieldMap = array(), $fieldProxy = array(), $query = null)
@@ -1662,14 +1834,16 @@ class CAllSaleLocation
                 $found = array();
                 preg_match(self::MODIFIER_SEARCH_R, $fld, $found);
 
-                $modifier = strlen($found[1]) ? $found[1] : '';
+                $modifier = $found[1] <> '' ? $found[1] : '';
                 $fldClean = preg_replace(self::MODIFIER_SEARCH_R, '', $fld);
 
-                if (isset($fieldProxy[$fldClean]))
+                if (isset($fieldProxy[$fldClean])) {
                     $fldClean = $fieldProxy[$fldClean];
+                }
 
-                if (!isset($fieldMap[$fldClean]))
+                if (!isset($fieldMap[$fldClean])) {
                     continue;
+                }
 
                 $fldClean = $fieldMap[$fldClean];
 
@@ -1683,18 +1857,22 @@ class CAllSaleLocation
                                 $value[$i] = "'" . $dbHelper->forSql($v) . "'";
                             }
                             $value = 'in (' . implode(', ', $value) . ')';
-                        } else
+                        } else {
                             $value = '= ' . $dbHelper->forSql($value);
+                        }
 
-                        $query->registerRuntimeField('PLUS_' . $fldClean, array(
-                            'data_type' => 'integer',
-                            'expression' => array(
-                                "case when ((%s " . $value . ") or (%s is null) or (%s = 0)) then 1 else 0 end",
-                                $fldClean,
-                                $fldClean,
-                                $fldClean
+                        $query->registerRuntimeField(
+                            'PLUS_' . $fldClean,
+                            array(
+                                'data_type' => 'integer',
+                                'expression' => array(
+                                    "case when ((%s " . $value . ") or (%s is null) or (%s = 0)) then 1 else 0 end",
+                                    $fldClean,
+                                    $fldClean,
+                                    $fldClean
+                                )
                             )
-                        ));
+                        );
                         $arFilterParsed['=PLUS_' . $fldClean] = 1;
                     }
 
@@ -1706,8 +1884,9 @@ class CAllSaleLocation
             }
 
             return array($arFilterParsed, $filterFieldsClean, $pseudoFields);
-        } else
+        } else {
             return array(false, array(), array());
+        }
     }
 
     public static function processSelectForGetList($arSelectFields, $fieldMap)
@@ -1717,17 +1896,21 @@ class CAllSaleLocation
             $arSelectFields = array_map("strtoupper", $arSelectFields);
             foreach ($arSelectFields as $fld) {
                 if (isset($fieldMap[$fld])) // legal one
+                {
                     $selectFields[$fld] = $fieldMap[$fld];
+                }
             }
-        } else
+        } else {
             $selectFields = $fieldMap;
+        }
 
         $select = array();
         foreach ($selectFields as $fldFrom => $fldTo) {
-            if ($fldFrom == $fldTo)
+            if ($fldFrom == $fldTo) {
                 $select[] = $fldTo;
-            else
+            } else {
                 $select[$fldFrom] = $fldTo;
+            }
         }
 
         return $select;
@@ -1735,17 +1918,19 @@ class CAllSaleLocation
 
     private static function proxyFieldsInResult($res, $fieldProxy = array())
     {
-        if (!is_array($fieldProxy) || empty($fieldProxy))
+        if (!is_array($fieldProxy) || empty($fieldProxy)) {
             return $res;
+        }
 
         $result = array();
         while ($item = $res->fetch()) {
             $pItem = array();
             foreach ($item as $k => $v) {
-                if (isset($fieldProxy[$k]))
+                if (isset($fieldProxy[$k])) {
                     $pItem[$fieldProxy[$k]] = $v;
-                else
+                } else {
                     $pItem[$k] = $v;
+                }
             }
 
             $result[] = $pItem;
@@ -1778,14 +1963,17 @@ class CAllSaleLocation
 
             $arFilter['TYPE_ID'] = array();
 
-            if (intval($types['COUNTRY']))
+            if (intval($types['COUNTRY'])) {
                 $arFilter['TYPE_ID'][] = intval($types['COUNTRY']);
+            }
 
-            if (intval($types['REGION']))
+            if (intval($types['REGION'])) {
                 $arFilter['TYPE_ID'][] = intval($types['REGION']);
+            }
 
-            if (intval($types['CITY']))
+            if (intval($types['CITY'])) {
                 $arFilter['TYPE_ID'][] = intval($types['CITY']);
+            }
         }
 
         return $arFilter;
@@ -1796,8 +1984,7 @@ class CAllSaleLocation
         global $DB;
 
         $additionalFilter = "";
-        if (isset($arFilter["LID"]) || strlen($arFilter["LID"]) > 0) {
-
+        if (isset($arFilter["LID"]) || $arFilter["LID"] <> '') {
             if (self::isLocationProMigrated()) {
                 $additionalFilterLCL = " AND COL.LANGUAGE_ID = '" . $DB->ForSql($arFilter["LID"], 2) . "'";
                 $additionalFilterLRL = " AND REL.LANGUAGE_ID = '" . $DB->ForSql($arFilter["LID"], 2) . "'";
@@ -1814,7 +2001,11 @@ class CAllSaleLocation
             // FIELDS -->
             $arFields = array(
 
-                "LOC_DEFAULT" => array("FIELD" => "CASE WHEN DEF.LOCATION_CODE IS NULL THEN 'N' ELSE 'Y' END", "TYPE" => "string", "FROM" => "LEFT JOIN " . $tableDefault . " DEF ON (DEF.LOCATION_CODE = L.CODE)"),
+                "LOC_DEFAULT" => array(
+                    "FIELD" => "CASE WHEN DEF.LOCATION_CODE IS NULL THEN 'N' ELSE 'Y' END",
+                    "TYPE" => "string",
+                    "FROM" => "LEFT JOIN " . $tableDefault . " DEF ON (DEF.LOCATION_CODE = L.CODE)"
+                ),
 
                 /*
 					COO = COuntry Original
@@ -1826,89 +2017,258 @@ class CAllSaleLocation
 					*/
 
                 // lang-independent
-                "COUNTRY_NAME_ORIG" => array("FIELD" => "COO.NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_loc_name COO ON (L.COUNTRY_ID = COO.LOCATION_ID and COO.LANGUAGE_ID = 'en')"),
-                "COUNTRY_SHORT_NAME" => array("FIELD" => "COO.SHORT_NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_loc_name COO ON (L.COUNTRY_ID = COO.LOCATION_ID and COO.LANGUAGE_ID = 'en')"),
+                "COUNTRY_NAME_ORIG" => array(
+                    "FIELD" => "COO.NAME",
+                    "TYPE" => "string",
+                    "FROM" => "LEFT JOIN b_sale_loc_name COO ON (L.COUNTRY_ID = COO.LOCATION_ID and COO.LANGUAGE_ID = 'en')"
+                ),
+                "COUNTRY_SHORT_NAME" => array(
+                    "FIELD" => "COO.SHORT_NAME",
+                    "TYPE" => "string",
+                    "FROM" => "LEFT JOIN b_sale_loc_name COO ON (L.COUNTRY_ID = COO.LOCATION_ID and COO.LANGUAGE_ID = 'en')"
+                ),
 
                 // lang-dependent
-                "COUNTRY_NAME" => array("FIELD" => "COL.NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_loc_name COL ON (L.COUNTRY_ID = COL.LOCATION_ID" . $additionalFilterLCL . ")"),
-                "COUNTRY_LID" => array("FIELD" => "COL.LANGUAGE_ID", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_loc_name COL ON (L.COUNTRY_ID = COL.LOCATION_ID" . $additionalFilterLCL . ")"),
-                "COUNTRY_NAME_LANG" => array("FIELD" => "COL.NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_loc_name COL ON (L.COUNTRY_ID = COL.LOCATION_ID" . $additionalFilterLCL . ")"),
-                "COUNTRY_SHORT_NAME_LANG" => array("FIELD" => "COL.SHORT_NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_loc_name COL ON (L.COUNTRY_ID = COL.LOCATION_ID" . $additionalFilterLCL . ")"),
+                "COUNTRY_NAME" => array(
+                    "FIELD" => "COL.NAME",
+                    "TYPE" => "string",
+                    "FROM" => "LEFT JOIN b_sale_loc_name COL ON (L.COUNTRY_ID = COL.LOCATION_ID" . $additionalFilterLCL . ")"
+                ),
+                "COUNTRY_LID" => array(
+                    "FIELD" => "COL.LANGUAGE_ID",
+                    "TYPE" => "string",
+                    "FROM" => "LEFT JOIN b_sale_loc_name COL ON (L.COUNTRY_ID = COL.LOCATION_ID" . $additionalFilterLCL . ")"
+                ),
+                "COUNTRY_NAME_LANG" => array(
+                    "FIELD" => "COL.NAME",
+                    "TYPE" => "string",
+                    "FROM" => "LEFT JOIN b_sale_loc_name COL ON (L.COUNTRY_ID = COL.LOCATION_ID" . $additionalFilterLCL . ")"
+                ),
+                "COUNTRY_SHORT_NAME_LANG" => array(
+                    "FIELD" => "COL.SHORT_NAME",
+                    "TYPE" => "string",
+                    "FROM" => "LEFT JOIN b_sale_loc_name COL ON (L.COUNTRY_ID = COL.LOCATION_ID" . $additionalFilterLCL . ")"
+                ),
 
 
                 // lang-independent
-                "CITY_NAME_ORIG" => array("FIELD" => "CIO.NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_loc_name CIO ON (L.CITY_ID = CIO.LOCATION_ID and CIO.LANGUAGE_ID = 'en')"),
-                "CITY_SHORT_NAME" => array("FIELD" => "CIO.SHORT_NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_loc_name CIO ON (L.CITY_ID = CIO.LOCATION_ID and CIO.LANGUAGE_ID = 'en')"),
+                "CITY_NAME_ORIG" => array(
+                    "FIELD" => "CIO.NAME",
+                    "TYPE" => "string",
+                    "FROM" => "LEFT JOIN b_sale_loc_name CIO ON (L.CITY_ID = CIO.LOCATION_ID and CIO.LANGUAGE_ID = 'en')"
+                ),
+                "CITY_SHORT_NAME" => array(
+                    "FIELD" => "CIO.SHORT_NAME",
+                    "TYPE" => "string",
+                    "FROM" => "LEFT JOIN b_sale_loc_name CIO ON (L.CITY_ID = CIO.LOCATION_ID and CIO.LANGUAGE_ID = 'en')"
+                ),
 
                 // lang-dependent
-                "CITY_NAME" => array("FIELD" => "CIL.NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_loc_name CIL ON (L.CITY_ID = CIL.LOCATION_ID" . $additionalFilterLGL . ")"),
-                "CITY_LID" => array("FIELD" => "CIL.LANGUAGE_ID", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_loc_name CIL ON (L.CITY_ID = CIL.LOCATION_ID" . $additionalFilterLGL . ")"),
-                "CITY_NAME_LANG" => array("FIELD" => "CIL.NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_loc_name CIL ON (L.CITY_ID = CIL.LOCATION_ID" . $additionalFilterLGL . ")"),
-                "CITY_SHORT_NAME_LANG" => array("FIELD" => "CIL.SHORT_NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_loc_name CIL ON (L.CITY_ID = CIL.LOCATION_ID" . $additionalFilterLGL . ")"),
+                "CITY_NAME" => array(
+                    "FIELD" => "CIL.NAME",
+                    "TYPE" => "string",
+                    "FROM" => "LEFT JOIN b_sale_loc_name CIL ON (L.CITY_ID = CIL.LOCATION_ID" . $additionalFilterLGL . ")"
+                ),
+                "CITY_LID" => array(
+                    "FIELD" => "CIL.LANGUAGE_ID",
+                    "TYPE" => "string",
+                    "FROM" => "LEFT JOIN b_sale_loc_name CIL ON (L.CITY_ID = CIL.LOCATION_ID" . $additionalFilterLGL . ")"
+                ),
+                "CITY_NAME_LANG" => array(
+                    "FIELD" => "CIL.NAME",
+                    "TYPE" => "string",
+                    "FROM" => "LEFT JOIN b_sale_loc_name CIL ON (L.CITY_ID = CIL.LOCATION_ID" . $additionalFilterLGL . ")"
+                ),
+                "CITY_SHORT_NAME_LANG" => array(
+                    "FIELD" => "CIL.SHORT_NAME",
+                    "TYPE" => "string",
+                    "FROM" => "LEFT JOIN b_sale_loc_name CIL ON (L.CITY_ID = CIL.LOCATION_ID" . $additionalFilterLGL . ")"
+                ),
 
 
                 // lang-independent
-                "REGION_NAME_ORIG" => array("FIELD" => "REO.NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_loc_name REO ON (L.REGION_ID = REO.LOCATION_ID and REO.LANGUAGE_ID = 'en')"),
-                "REGION_SHORT_NAME" => array("FIELD" => "REO.SHORT_NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_loc_name REO ON (L.REGION_ID = REO.LOCATION_ID and REO.LANGUAGE_ID = 'en')"),
+                "REGION_NAME_ORIG" => array(
+                    "FIELD" => "REO.NAME",
+                    "TYPE" => "string",
+                    "FROM" => "LEFT JOIN b_sale_loc_name REO ON (L.REGION_ID = REO.LOCATION_ID and REO.LANGUAGE_ID = 'en')"
+                ),
+                "REGION_SHORT_NAME" => array(
+                    "FIELD" => "REO.SHORT_NAME",
+                    "TYPE" => "string",
+                    "FROM" => "LEFT JOIN b_sale_loc_name REO ON (L.REGION_ID = REO.LOCATION_ID and REO.LANGUAGE_ID = 'en')"
+                ),
 
                 // lang-dependent
-                "REGION_NAME" => array("FIELD" => "REL.NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_loc_name REL ON (L.REGION_ID = REL.LOCATION_ID" . $additionalFilterLRL . ")"),
-                "REGION_LID" => array("FIELD" => "REL.LANGUAGE_ID", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_loc_name REL ON (L.REGION_ID = REL.LOCATION_ID" . $additionalFilterLRL . ")"),
-                "REGION_NAME_LANG" => array("FIELD" => "REL.NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_loc_name REL ON (L.REGION_ID = REL.LOCATION_ID" . $additionalFilterLRL . ")"),
-                "REGION_SHORT_NAME_LANG" => array("FIELD" => "REL.SHORT_NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_loc_name REL ON (L.REGION_ID = REL.LOCATION_ID" . $additionalFilterLRL . ")"),
+                "REGION_NAME" => array(
+                    "FIELD" => "REL.NAME",
+                    "TYPE" => "string",
+                    "FROM" => "LEFT JOIN b_sale_loc_name REL ON (L.REGION_ID = REL.LOCATION_ID" . $additionalFilterLRL . ")"
+                ),
+                "REGION_LID" => array(
+                    "FIELD" => "REL.LANGUAGE_ID",
+                    "TYPE" => "string",
+                    "FROM" => "LEFT JOIN b_sale_loc_name REL ON (L.REGION_ID = REL.LOCATION_ID" . $additionalFilterLRL . ")"
+                ),
+                "REGION_NAME_LANG" => array(
+                    "FIELD" => "REL.NAME",
+                    "TYPE" => "string",
+                    "FROM" => "LEFT JOIN b_sale_loc_name REL ON (L.REGION_ID = REL.LOCATION_ID" . $additionalFilterLRL . ")"
+                ),
+                "REGION_SHORT_NAME_LANG" => array(
+                    "FIELD" => "REL.SHORT_NAME",
+                    "TYPE" => "string",
+                    "FROM" => "LEFT JOIN b_sale_loc_name REL ON (L.REGION_ID = REL.LOCATION_ID" . $additionalFilterLRL . ")"
+                ),
 
-                "COUNTRY" => array("FIELD" => "COL.NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_loc_name COL ON (L.COUNTRY_ID = COL.LOCATION_ID" . $additionalFilterLCL . ")"),
-                "CITY" => array("FIELD" => "CIL.NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_loc_name CIL ON (L.CITY_ID = CIL.LOCATION_ID" . $additionalFilterLGL . ")"),
-                "REGION" => array("FIELD" => "REL.NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_loc_name REL ON (L.REGION_ID = REL.LOCATION_ID" . $additionalFilterLRL . ")"),
+                "COUNTRY" => array(
+                    "FIELD" => "COL.NAME",
+                    "TYPE" => "string",
+                    "FROM" => "LEFT JOIN b_sale_loc_name COL ON (L.COUNTRY_ID = COL.LOCATION_ID" . $additionalFilterLCL . ")"
+                ),
+                "CITY" => array(
+                    "FIELD" => "CIL.NAME",
+                    "TYPE" => "string",
+                    "FROM" => "LEFT JOIN b_sale_loc_name CIL ON (L.CITY_ID = CIL.LOCATION_ID" . $additionalFilterLGL . ")"
+                ),
+                "REGION" => array(
+                    "FIELD" => "REL.NAME",
+                    "TYPE" => "string",
+                    "FROM" => "LEFT JOIN b_sale_loc_name REL ON (L.REGION_ID = REL.LOCATION_ID" . $additionalFilterLRL . ")"
+                ),
 
                 "TYPE_ID" => array("FIELD" => "L.TYPE_ID", "TYPE" => "int")
             );
         } else {
-
             // FIELDS -->
             $arFields = array(
 
                 "LOC_DEFAULT" => array("FIELD" => "L.LOC_DEFAULT", "TYPE" => "string"),
 
-                "COUNTRY_NAME_ORIG" => array("FIELD" => "LC.NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_location_country LC ON (L.COUNTRY_ID = LC.ID)"),
-                "COUNTRY_SHORT_NAME" => array("FIELD" => "LC.SHORT_NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_location_country LC ON (L.COUNTRY_ID = LC.ID)"),
+                "COUNTRY_NAME_ORIG" => array(
+                    "FIELD" => "LC.NAME",
+                    "TYPE" => "string",
+                    "FROM" => "LEFT JOIN b_sale_location_country LC ON (L.COUNTRY_ID = LC.ID)"
+                ),
+                "COUNTRY_SHORT_NAME" => array(
+                    "FIELD" => "LC.SHORT_NAME",
+                    "TYPE" => "string",
+                    "FROM" => "LEFT JOIN b_sale_location_country LC ON (L.COUNTRY_ID = LC.ID)"
+                ),
 
-                "CITY_NAME_ORIG" => array("FIELD" => "LG.NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_location_city LG ON (L.CITY_ID = LG.ID)"),
-                "CITY_SHORT_NAME" => array("FIELD" => "LG.SHORT_NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_location_city LG ON (L.CITY_ID = LG.ID)"),
+                "CITY_NAME_ORIG" => array(
+                    "FIELD" => "LG.NAME",
+                    "TYPE" => "string",
+                    "FROM" => "LEFT JOIN b_sale_location_city LG ON (L.CITY_ID = LG.ID)"
+                ),
+                "CITY_SHORT_NAME" => array(
+                    "FIELD" => "LG.SHORT_NAME",
+                    "TYPE" => "string",
+                    "FROM" => "LEFT JOIN b_sale_location_city LG ON (L.CITY_ID = LG.ID)"
+                ),
 
-                "REGION_NAME_ORIG" => array("FIELD" => "LR.NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_location_region LR ON (L.REGION_ID = LR.ID)"),
-                "REGION_SHORT_NAME" => array("FIELD" => "LR.SHORT_NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_location_region LR ON (L.REGION_ID = LR.ID)"),
+                "REGION_NAME_ORIG" => array(
+                    "FIELD" => "LR.NAME",
+                    "TYPE" => "string",
+                    "FROM" => "LEFT JOIN b_sale_location_region LR ON (L.REGION_ID = LR.ID)"
+                ),
+                "REGION_SHORT_NAME" => array(
+                    "FIELD" => "LR.SHORT_NAME",
+                    "TYPE" => "string",
+                    "FROM" => "LEFT JOIN b_sale_location_region LR ON (L.REGION_ID = LR.ID)"
+                ),
 
-                "COUNTRY_LID" => array("FIELD" => "LCL.LID", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_location_country_lang LCL ON (L.COUNTRY_ID = LCL.COUNTRY_ID" . $additionalFilterLCL . ")"),
-                "COUNTRY_NAME" => array("FIELD" => "LCL.NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_location_country_lang LCL ON (L.COUNTRY_ID = LCL.COUNTRY_ID" . $additionalFilterLCL . ")"),
-                "COUNTRY_NAME_LANG" => array("FIELD" => "LCL.NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_location_country_lang LCL ON (L.COUNTRY_ID = LCL.COUNTRY_ID" . $additionalFilterLCL . ")"),
-                "COUNTRY_SHORT_NAME_LANG" => array("FIELD" => "LCL.SHORT_NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_location_country_lang LCL ON (L.COUNTRY_ID = LCL.COUNTRY_ID" . $additionalFilterLCL . ")"),
+                "COUNTRY_LID" => array(
+                    "FIELD" => "LCL.LID",
+                    "TYPE" => "string",
+                    "FROM" => "LEFT JOIN b_sale_location_country_lang LCL ON (L.COUNTRY_ID = LCL.COUNTRY_ID" . $additionalFilterLCL . ")"
+                ),
+                "COUNTRY_NAME" => array(
+                    "FIELD" => "LCL.NAME",
+                    "TYPE" => "string",
+                    "FROM" => "LEFT JOIN b_sale_location_country_lang LCL ON (L.COUNTRY_ID = LCL.COUNTRY_ID" . $additionalFilterLCL . ")"
+                ),
+                "COUNTRY_NAME_LANG" => array(
+                    "FIELD" => "LCL.NAME",
+                    "TYPE" => "string",
+                    "FROM" => "LEFT JOIN b_sale_location_country_lang LCL ON (L.COUNTRY_ID = LCL.COUNTRY_ID" . $additionalFilterLCL . ")"
+                ),
+                "COUNTRY_SHORT_NAME_LANG" => array(
+                    "FIELD" => "LCL.SHORT_NAME",
+                    "TYPE" => "string",
+                    "FROM" => "LEFT JOIN b_sale_location_country_lang LCL ON (L.COUNTRY_ID = LCL.COUNTRY_ID" . $additionalFilterLCL . ")"
+                ),
 
-                "REGION_LID" => array("FIELD" => "LRL.LID", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_location_region_lang LRL ON (L.REGION_ID = LRL.REGION_ID" . $additionalFilterLRL . ")"),
-                "REGION_NAME" => array("FIELD" => "LRL.NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_location_region_lang LRL ON (L.REGION_ID = LRL.REGION_ID" . $additionalFilterLRL . ")"),
-                "REGION_NAME_LANG" => array("FIELD" => "LRL.NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_location_region_lang LRL ON (L.REGION_ID = LRL.REGION_ID" . $additionalFilterLRL . ")"),
-                "REGION_SHORT_NAME_LANG" => array("FIELD" => "LRL.SHORT_NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_location_region_lang LRL ON (L.REGION_ID = LRL.REGION_ID" . $additionalFilterLRL . ")"),
+                "REGION_LID" => array(
+                    "FIELD" => "LRL.LID",
+                    "TYPE" => "string",
+                    "FROM" => "LEFT JOIN b_sale_location_region_lang LRL ON (L.REGION_ID = LRL.REGION_ID" . $additionalFilterLRL . ")"
+                ),
+                "REGION_NAME" => array(
+                    "FIELD" => "LRL.NAME",
+                    "TYPE" => "string",
+                    "FROM" => "LEFT JOIN b_sale_location_region_lang LRL ON (L.REGION_ID = LRL.REGION_ID" . $additionalFilterLRL . ")"
+                ),
+                "REGION_NAME_LANG" => array(
+                    "FIELD" => "LRL.NAME",
+                    "TYPE" => "string",
+                    "FROM" => "LEFT JOIN b_sale_location_region_lang LRL ON (L.REGION_ID = LRL.REGION_ID" . $additionalFilterLRL . ")"
+                ),
+                "REGION_SHORT_NAME_LANG" => array(
+                    "FIELD" => "LRL.SHORT_NAME",
+                    "TYPE" => "string",
+                    "FROM" => "LEFT JOIN b_sale_location_region_lang LRL ON (L.REGION_ID = LRL.REGION_ID" . $additionalFilterLRL . ")"
+                ),
 
-                "CITY_LID" => array("FIELD" => "LGL.LID", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_location_city_lang LGL ON (L.CITY_ID = LGL.CITY_ID" . $additionalFilterLGL . ")"),
-                "CITY_NAME" => array("FIELD" => "LGL.NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_location_city_lang LGL ON (L.CITY_ID = LGL.CITY_ID" . $additionalFilterLGL . ")"),
-                "CITY_NAME_LANG" => array("FIELD" => "LGL.NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_location_city_lang LGL ON (L.CITY_ID = LGL.CITY_ID" . $additionalFilterLGL . ")"),
-                "CITY_SHORT_NAME_LANG" => array("FIELD" => "LGL.SHORT_NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_location_city_lang LGL ON (L.CITY_ID = LGL.CITY_ID" . $additionalFilterLGL . ")"),
+                "CITY_LID" => array(
+                    "FIELD" => "LGL.LID",
+                    "TYPE" => "string",
+                    "FROM" => "LEFT JOIN b_sale_location_city_lang LGL ON (L.CITY_ID = LGL.CITY_ID" . $additionalFilterLGL . ")"
+                ),
+                "CITY_NAME" => array(
+                    "FIELD" => "LGL.NAME",
+                    "TYPE" => "string",
+                    "FROM" => "LEFT JOIN b_sale_location_city_lang LGL ON (L.CITY_ID = LGL.CITY_ID" . $additionalFilterLGL . ")"
+                ),
+                "CITY_NAME_LANG" => array(
+                    "FIELD" => "LGL.NAME",
+                    "TYPE" => "string",
+                    "FROM" => "LEFT JOIN b_sale_location_city_lang LGL ON (L.CITY_ID = LGL.CITY_ID" . $additionalFilterLGL . ")"
+                ),
+                "CITY_SHORT_NAME_LANG" => array(
+                    "FIELD" => "LGL.SHORT_NAME",
+                    "TYPE" => "string",
+                    "FROM" => "LEFT JOIN b_sale_location_city_lang LGL ON (L.CITY_ID = LGL.CITY_ID" . $additionalFilterLGL . ")"
+                ),
 
-                "COUNTRY" => array("FIELD" => "LCL.NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_location_country_lang LCL ON (L.COUNTRY_ID = LCL.COUNTRY_ID" . $additionalFilterLCL . ")"),
-                "CITY" => array("FIELD" => "LGL.NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_location_city_lang LGL ON (L.CITY_ID = LGL.CITY_ID" . $additionalFilterLGL . ")"),
-                "REGION" => array("FIELD" => "LRL.NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_location_region_lang LRL ON (L.REGION_ID = LRL.REGION_ID" . $additionalFilterLRL . ")")
+                "COUNTRY" => array(
+                    "FIELD" => "LCL.NAME",
+                    "TYPE" => "string",
+                    "FROM" => "LEFT JOIN b_sale_location_country_lang LCL ON (L.COUNTRY_ID = LCL.COUNTRY_ID" . $additionalFilterLCL . ")"
+                ),
+                "CITY" => array(
+                    "FIELD" => "LGL.NAME",
+                    "TYPE" => "string",
+                    "FROM" => "LEFT JOIN b_sale_location_city_lang LGL ON (L.CITY_ID = LGL.CITY_ID" . $additionalFilterLGL . ")"
+                ),
+                "REGION" => array(
+                    "FIELD" => "LRL.NAME",
+                    "TYPE" => "string",
+                    "FROM" => "LEFT JOIN b_sale_location_region_lang LRL ON (L.REGION_ID = LRL.REGION_ID" . $additionalFilterLRL . ")"
+                )
             );
-
         }
 
-        return array_merge(array(
-            "ID" => array("FIELD" => "L.ID", "TYPE" => "int"),
-            "CODE" => array("FIELD" => "L.CODE", "TYPE" => "string"),
-            "COUNTRY_ID" => array("FIELD" => "L.COUNTRY_ID", "TYPE" => "int"),
-            "CITY_ID" => array("FIELD" => "L.CITY_ID", "TYPE" => "int"),
-            "REGION_ID" => array("FIELD" => "L.REGION_ID", "TYPE" => "int"),
-            "SORT" => array("FIELD" => "L.SORT", "TYPE" => "int")
-        ), $arFields);
+        return array_merge(
+            array(
+                "ID" => array("FIELD" => "L.ID", "TYPE" => "int"),
+                "CODE" => array("FIELD" => "L.CODE", "TYPE" => "string"),
+                "COUNTRY_ID" => array("FIELD" => "L.COUNTRY_ID", "TYPE" => "int"),
+                "CITY_ID" => array("FIELD" => "L.CITY_ID", "TYPE" => "int"),
+                "REGION_ID" => array("FIELD" => "L.REGION_ID", "TYPE" => "int"),
+                "SORT" => array("FIELD" => "L.SORT", "TYPE" => "int")
+            ),
+            $arFields
+        );
     }
 
     protected static function getNameOfParentOfType($item, $typeCode, $strLang = LANGUAGE_ID)
@@ -1934,7 +2294,7 @@ class CAllSaleLocation
 
         $types = self::getTypes();
         $typeCode = ToUpper($dbHelper->forSql($typeCode));
-        $strLang = substr($dbHelper->forSql($strLang), 0, 2);
+        $strLang = mb_substr($dbHelper->forSql($strLang), 0, 2);
 
         $mappedTypes = array("'" . intval($types[$typeCode]) . "'");
 
@@ -1967,8 +2327,9 @@ class CAllSaleLocation
         $item[$typeCode . '_NAME_ORIG'] = $item[$typeCode . '_NAME'];
         $item[$typeCode . '_NAME_LANG'] = $item[$typeCode . '_NAME'];
 
-        if (!is_array($item))
+        if (!is_array($item)) {
             return array();
+        }
 
         return $item;
     }
@@ -2000,8 +2361,9 @@ class CAllSaleLocation
                 $regionName = false;
 
                 foreach (self::$specialCities as $city) {
-                    if ($name == ToUpper(GetMessage('CITY_' . $city)))
+                    if ($name == ToUpper(GetMessage('CITY_' . $city))) {
                         $regionName = GetMessage('REGION_' . $city);
+                    }
                 }
 
                 if ($regionName !== false) {
@@ -2031,31 +2393,41 @@ class CAllSaleLocation
 
     public static function GetByID($primary, $strLang = LANGUAGE_ID)
     {
-        if (!strlen($primary))
+        if ($primary == '') {
             return false;
+        }
 
         try {
             // try code
-            $item = Location\LocationTable::getList(array('filter' => array(
-                array('=CODE' => $primary)
-            ), 'select' =>
-                array('ID', 'SORT', 'LEFT_MARGIN', 'RIGHT_MARGIN', 'CODE')
-            ))->fetch();
+            $item = Location\LocationTable::getList(
+                array(
+                    'filter' => array(
+                        array('=CODE' => $primary)
+                    ),
+                    'select' =>
+                        array('ID', 'SORT', 'LEFT_MARGIN', 'RIGHT_MARGIN', 'CODE')
+                )
+            )->fetch();
 
             if (!is_array($item)) {
                 // try id
-                $item = Location\LocationTable::getList(array('filter' => array(
-                    array('=ID' => $primary)
-                ), 'select' =>
-                    array('ID', 'SORT', 'LEFT_MARGIN', 'RIGHT_MARGIN', 'CODE')
-                ))->fetch();
+                $item = Location\LocationTable::getList(
+                    array(
+                        'filter' => array(
+                            array('=ID' => $primary)
+                        ),
+                        'select' =>
+                            array('ID', 'SORT', 'LEFT_MARGIN', 'RIGHT_MARGIN', 'CODE')
+                    )
+                )->fetch();
             }
         } catch (\Exception $e) {
             return false;
         }
 
-        if (!is_array($item) || !intval($item['ID']))
+        if (!is_array($item) || !intval($item['ID'])) {
             return false;
+        }
 
         $country = self::getNameOfParentOfType($item, 'COUNTRY', $strLang);
         $region = self::getNameOfParentOfType($item, 'REGION', $strLang);
@@ -2073,11 +2445,17 @@ class CAllSaleLocation
     {
         global $DB;
 
-        if ((is_set($arFields, "SORT") || $ACTION == "ADD") && IntVal($arFields["SORT"]) <= 0) $arFields["SORT"] = 100;
-        if (is_set($arFields, "COUNTRY_ID")) $arFields["COUNTRY_ID"] = IntVal($arFields["COUNTRY_ID"]);
-        if (is_set($arFields, "CITY_ID")) $arFields["CITY_ID"] = IntVal($arFields["CITY_ID"]);
+        if ((is_set($arFields, "SORT") || $ACTION == "ADD") && intval($arFields["SORT"]) <= 0) {
+            $arFields["SORT"] = 100;
+        }
+        if (is_set($arFields, "COUNTRY_ID")) {
+            $arFields["COUNTRY_ID"] = intval($arFields["COUNTRY_ID"]);
+        }
+        if (is_set($arFields, "CITY_ID")) {
+            $arFields["CITY_ID"] = intval($arFields["CITY_ID"]);
+        }
 
-        return True;
+        return true;
     }
 
     public static function UpdateLocation($ID, $arFields)
@@ -2088,19 +2466,23 @@ class CAllSaleLocation
 
         $ID = intval($ID);
 
-        if ($ID <= 0 || !CSaleLocation::LocationCheckFields("UPDATE", $arFields))
+        if ($ID <= 0 || !CSaleLocation::LocationCheckFields("UPDATE", $arFields)) {
             return false;
+        }
 
-        foreach (GetModuleEvents("sale", "OnBeforeLocationUpdate", true) as $arEvent)
-            if (ExecuteModuleEventEx($arEvent, array($ID, &$arFields)) === false)
+        foreach (GetModuleEvents("sale", "OnBeforeLocationUpdate", true) as $arEvent) {
+            if (ExecuteModuleEventEx($arEvent, array($ID, &$arFields)) === false) {
                 return false;
+            }
+        }
 
         $strUpdate = $DB->PrepareUpdate("b_sale_location", $arFields);
         $strSql = "UPDATE b_sale_location SET " . $strUpdate . " WHERE ID = " . $ID . "";
         $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 
-        foreach (GetModuleEvents("sale", "OnLocationUpdate", true) as $arEvent)
+        foreach (GetModuleEvents("sale", "OnLocationUpdate", true) as $arEvent) {
             ExecuteModuleEventEx($arEvent, array($ID, $arFields));
+        }
 
         return $ID;
     }
@@ -2109,20 +2491,24 @@ class CAllSaleLocation
     {
         global $DB;
 
-        if (is_set($arFields, "CHANGE_COUNTRY") && $arFields["CHANGE_COUNTRY"] != "Y")
+        if (is_set($arFields, "CHANGE_COUNTRY") && $arFields["CHANGE_COUNTRY"] != "Y") {
             $arFields["CHANGE_COUNTRY"] = "N";
-        if (is_set($arFields, "WITHOUT_CITY") && $arFields["WITHOUT_CITY"] != "Y")
+        }
+        if (is_set($arFields, "WITHOUT_CITY") && $arFields["WITHOUT_CITY"] != "Y") {
             $arFields["WITHOUT_CITY"] = "N";
+        }
 
-        if (is_set($arFields, "COUNTRY_ID"))
+        if (is_set($arFields, "COUNTRY_ID")) {
             $arFields["COUNTRY_ID"] = trim($arFields["COUNTRY_ID"]);
+        }
         //	$arFields["COUNTRY_ID"] = IntVal($arFields["COUNTRY_ID"]);
 
         if (is_set($arFields, "CHANGE_COUNTRY") && $arFields["CHANGE_COUNTRY"] == "Y"
-            && (!is_set($arFields, "COUNTRY_ID") || $arFields["COUNTRY_ID"] <= 0))
+            && (!is_set($arFields, "COUNTRY_ID") || $arFields["COUNTRY_ID"] <= 0)) {
             return false;
+        }
 
-        return True;
+        return true;
     }
 
     private static function AddLocationPart($creat, $type, $parent, $sort)
@@ -2132,33 +2518,46 @@ class CAllSaleLocation
 
         $creatFlds = array();
         if (is_numeric($creat)) {
-
             // check whether location exists...
-            $res = Location\LocationTable::getList(array('filter' => array('=' . $type . '_ID' => $creat, 'TYPE_ID' => $types[$type]), 'select' => array('ID'), 'limit' => 1))->fetch();
+            $res = Location\LocationTable::getList(
+                array(
+                    'filter' => array('=' . $type . '_ID' => $creat, 'TYPE_ID' => $types[$type]),
+                    'select' => array('ID'),
+                    'limit' => 1
+                )
+            )->fetch();
             if ($res['ID']) {
                 $parent = intval($res['ID']);
             } else {
-                if ($type == 'COUNTRY')
-                    $res = self::GetCountryByID($creat); //!!!
-                elseif ($type == 'REGION')
-                    $res = self::GetRegionByID($creat); //!!!
-                elseif ($type == 'CITY')
-                    $res = self::GetCityByID($creat); //!!!
+                if ($type == 'COUNTRY') {
+                    $res = self::GetCountryByID($creat);
+                } //!!!
+                elseif ($type == 'REGION') {
+                    $res = self::GetRegionByID($creat);
+                } //!!!
+                elseif ($type == 'CITY') {
+                    $res = self::GetCityByID($creat);
+                } //!!!
 
                 if (!$res) // no such type exists, smth strange
+                {
                     throw new Exception('No such ' . $type);
+                }
 
                 // create location using type found
                 $creatFlds[$type . '_ID'] = $res['ID'];
 
                 $creatFlds['NAME'] = array();
                 foreach ($langs as $lid) {
-                    if ($type == 'COUNTRY')
-                        $name = self::GetCountryLangByID($res['ID'], $lid); //!!!
-                    elseif ($type == 'REGION')
-                        $name = self::GetRegionLangByID($res['ID'], $lid); //!!!
-                    elseif ($type == 'CITY')
-                        $name = self::GetCityLangByID($res['ID'], $lid); //!!!
+                    if ($type == 'COUNTRY') {
+                        $name = self::GetCountryLangByID($res['ID'], $lid);
+                    } //!!!
+                    elseif ($type == 'REGION') {
+                        $name = self::GetRegionLangByID($res['ID'], $lid);
+                    } //!!!
+                    elseif ($type == 'CITY') {
+                        $name = self::GetCityLangByID($res['ID'], $lid);
+                    } //!!!
 
                     $creatFlds['NAME'][$lid] = array(
                         'NAME' => $name['NAME'],
@@ -2185,12 +2584,14 @@ class CAllSaleLocation
 
             $creatFlds['CODE'] = rand(999, 99999999);
 
-            if ($sort !== false)
+            if ($sort !== false) {
                 $creatFlds['SORT'] = $sort;
+            }
 
             $res = Location\LocationTable::add($creatFlds);
-            if (!$res->isSuccess())
+            if (!$res->isSuccess()) {
                 throw new Exception('Cannot add location');
+            }
 
             $parent = $res->getId();
             Location\LocationTable::update($parent, array('CODE' => $parent));
@@ -2203,8 +2604,9 @@ class CAllSaleLocation
     {
         global $DB;
 
-        if (!CSaleLocation::CheckFields("ADD", $arFields))
+        if (!CSaleLocation::CheckFields("ADD", $arFields)) {
             return false;
+        }
 
         if (self::isLocationProMigrated()) {
             try {
@@ -2217,16 +2619,19 @@ class CAllSaleLocation
                 // Then parse out some meaningless situations to preserve tree integrity:
 
                 // you cann not add existing region to a non-existing country
-                if ($region && is_numeric($region) && $country && is_array($country))
+                if ($region && is_numeric($region) && $country && is_array($country)) {
                     throw new Exception;
+                }
 
                 // you cann not add existing city to a non-existing country
-                if ($city && is_numeric($city) && $country && is_array($country))
+                if ($city && is_numeric($city) && $country && is_array($country)) {
                     throw new Exception;
+                }
 
                 // you cann not add existing city to a non-existing region
-                if ($city && is_numeric($city) && $region && is_array($region))
+                if ($city && is_numeric($city) && $region && is_array($region)) {
                     throw new Exception;
+                }
 
                 $parent = 0;
                 $sort = isset($arFields['SORT']) ? intval($arFields['SORT']) : false;
@@ -2248,12 +2653,15 @@ class CAllSaleLocation
                 return false;
             }
         } else {
-
-            if ((!is_set($arFields, "COUNTRY_ID") || IntVal($arFields["COUNTRY_ID"]) <= 0) && strlen($arFields["COUNTRY_ID"]) > 0) {
+            if ((!is_set($arFields, "COUNTRY_ID") || intval(
+                        $arFields["COUNTRY_ID"]
+                    ) <= 0) && $arFields["COUNTRY_ID"] <> '') {
                 $arFields["COUNTRY_ID"] = CSaleLocation::AddCountry($arFields["COUNTRY"]);
-                if (IntVal($arFields["COUNTRY_ID"]) <= 0) return false;
+                if (intval($arFields["COUNTRY_ID"]) <= 0) {
+                    return false;
+                }
 
-                if ($arFields["WITHOUT_CITY"] != "Y" && strlen($arFields["REGION_ID"]) <= 0) {
+                if ($arFields["WITHOUT_CITY"] != "Y" && $arFields["REGION_ID"] == '') {
                     UnSet($arFields["CITY_ID"]);
                     CSaleLocation::AddLocation($arFields);
                 }
@@ -2261,7 +2669,9 @@ class CAllSaleLocation
 
             if ($arFields["REGION_ID"] <= 0 && $arFields["REGION_ID"] != "") {
                 $arFields["REGION_ID"] = CSaleLocation::AddRegion($arFields["REGION"]);
-                if (IntVal($arFields["REGION_ID"]) <= 0) return false;
+                if (intval($arFields["REGION_ID"]) <= 0) {
+                    return false;
+                }
 
                 if ($arFields["WITHOUT_CITY"] != "Y") {
                     //$arFieldsTmp = $arFields;
@@ -2273,10 +2683,13 @@ class CAllSaleLocation
             }
 
             if ($arFields["WITHOUT_CITY"] != "Y") {
-                if (IntVal($arFields["REGION_ID"]) > 0)
+                if (intval($arFields["REGION_ID"]) > 0) {
                     $arFields["CITY"]["REGION_ID"] = $arFields["REGION_ID"];
+                }
                 $arFields["CITY_ID"] = CSaleLocation::AddCity($arFields["CITY"]);
-                if (IntVal($arFields["CITY_ID"]) <= 0) return false;
+                if (intval($arFields["CITY_ID"]) <= 0) {
+                    return false;
+                }
             } else {
                 UnSet($arFields["CITY_ID"]);
             }
@@ -2284,7 +2697,6 @@ class CAllSaleLocation
             $ID = CSaleLocation::AddLocation($arFields);
 
             return $ID;
-
         }
     }
 
@@ -2292,29 +2704,42 @@ class CAllSaleLocation
     {
         global $DB;
 
-        if (!CSaleLocation::CheckFields("UPDATE", $arFields)) return false;
+        if (!CSaleLocation::CheckFields("UPDATE", $arFields)) {
+            return false;
+        }
 
-        if (!($arLocRes = CSaleLocation::GetByID($ID, LANGUAGE_ID))) return false;
+        if (!($arLocRes = CSaleLocation::GetByID($ID, LANGUAGE_ID))) {
+            return false;
+        }
 
         if (self::isLocationProMigrated()) {
             try {
                 // only partial support: name update functionality
 
-                if (($arFields["CHANGE_COUNTRY"] == "Y" || intval($arFields["COUNTRY_ID"])) && is_array($arFields["COUNTRY"]))
+                if (($arFields["CHANGE_COUNTRY"] == "Y" || intval($arFields["COUNTRY_ID"])) && is_array(
+                        $arFields["COUNTRY"]
+                    )) {
                     CSaleLocation::UpdateCountry($arFields["COUNTRY_ID"], $arFields["COUNTRY"]);
+                }
 
-                if (intval($arFields["REGION_ID"]) && is_array($arFields["REGION"]))
+                if (intval($arFields["REGION_ID"]) && is_array($arFields["REGION"])) {
                     CSaleLocation::UpdateRegion($arFields["REGION_ID"], $arFields["REGION"]);
+                }
 
-                if (intval($arFields["CITY_ID"]) && is_array($arFields["CITY"]))
+                if (intval($arFields["CITY_ID"]) && is_array($arFields["CITY"])) {
                     CSaleLocation::UpdateCity($arFields["CITY_ID"], $arFields["CITY"]);
+                }
             } catch (Exception $e) {
                 return false;
             }
         } else {
-            if ((!is_set($arFields, "COUNTRY_ID") || IntVal($arFields["COUNTRY_ID"]) <= 0) && $arFields["COUNTRY_ID"] != "") {
+            if ((!is_set($arFields, "COUNTRY_ID") || intval(
+                        $arFields["COUNTRY_ID"]
+                    ) <= 0) && $arFields["COUNTRY_ID"] != "") {
                 $arFields["COUNTRY_ID"] = CSaleLocation::AddCountry($arFields["COUNTRY"]);
-                if (IntVal($arFields["COUNTRY_ID"]) <= 0) return false;
+                if (intval($arFields["COUNTRY_ID"]) <= 0) {
+                    return false;
+                }
 
                 UnSet($arFields["CITY_ID"]);
                 UnSet($arFields["REGION_ID"]);
@@ -2325,11 +2750,13 @@ class CAllSaleLocation
 
             //city
             if ($arFields["WITHOUT_CITY"] != "Y") {
-                if (IntVal($arLocRes["CITY_ID"]) > 0) {
-                    CSaleLocation::UpdateCity(IntVal($arLocRes["CITY_ID"]), $arFields["CITY"]);
+                if (intval($arLocRes["CITY_ID"]) > 0) {
+                    CSaleLocation::UpdateCity(intval($arLocRes["CITY_ID"]), $arFields["CITY"]);
                 } else {
                     $arFields["CITY_ID"] = CSaleLocation::AddCity($arFields["CITY"]);
-                    if (IntVal($arFields["CITY_ID"]) <= 0) return false;
+                    if (intval($arFields["CITY_ID"]) <= 0) {
+                        return false;
+                    }
                 }
             } else {
                 CSaleLocation::DeleteCity($arLocRes["CITY_ID"]);
@@ -2337,18 +2764,22 @@ class CAllSaleLocation
             }
 
             //region
-            if (IntVal($arFields["REGION_ID"]) > 0) {
-                CSaleLocation::UpdateRegion(IntVal($arLocRes["REGION_ID"]), $arFields["REGION"]);
+            if (intval($arFields["REGION_ID"]) > 0) {
+                CSaleLocation::UpdateRegion(intval($arLocRes["REGION_ID"]), $arFields["REGION"]);
             } elseif ($arFields["REGION_ID"] == 0 && $arFields["REGION_ID"] != '') {
-                $db_res = CSaleLocation::GetRegionList(array("ID" => "DESC"), array("NAME" => $arFields["REGION"][LANGUAGE_ID]["NAME"]));
+                $db_res = CSaleLocation::GetRegionList(
+                    array("ID" => "DESC"),
+                    array("NAME" => $arFields["REGION"][LANGUAGE_ID]["NAME"])
+                );
                 $arRegion = $db_res->Fetch();
 
-                if (count($arRegion) > 1)
+                if (count($arRegion) > 1) {
                     $arFields["REGION_ID"] = $arRegion["ID"];
-                else {
+                } else {
                     $arFields["REGION_ID"] = CSaleLocation::AddRegion($arFields["REGION"]);
-                    if (IntVal($arFields["REGION_ID"]) <= 0)
+                    if (intval($arFields["REGION_ID"]) <= 0) {
                         return false;
+                    }
 
                     $arFieldsTmp = $arFields;
                     UnSet($arFieldsTmp["CITY_ID"]);
@@ -2371,51 +2802,63 @@ class CAllSaleLocation
     public static function Delete($ID)
     {
         global $DB;
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
-        if (!($arLocRes = CSaleLocation::GetByID($ID, LANGUAGE_ID)))
+        if (!($arLocRes = CSaleLocation::GetByID($ID, LANGUAGE_ID))) {
             return false;
+        }
 
-        foreach (GetModuleEvents("sale", "OnBeforeLocationDelete", true) as $arEvent)
-            if (ExecuteModuleEventEx($arEvent, array($ID)) === false)
+        foreach (GetModuleEvents("sale", "OnBeforeLocationDelete", true) as $arEvent) {
+            if (ExecuteModuleEventEx($arEvent, array($ID)) === false) {
                 return false;
+            }
+        }
 
-        if (IntVal($arLocRes["CITY_ID"]) > 0)
+        if (intval($arLocRes["CITY_ID"]) > 0) {
             CSaleLocation::DeleteCity($arLocRes["CITY_ID"]);
+        }
 
-        $bDelCountry = True;
+        $bDelCountry = true;
         $db_res = CSaleLocation::GetList(
             array("SORT" => "ASC"),
             array("COUNTRY_ID" => $arLocRes["COUNTRY_ID"], "!ID" => $ID),
             LANGUAGE_ID
         );
-        if ($db_res->Fetch())
+        if ($db_res->Fetch()) {
             $bDelCountry = false;
+        }
 
-        if ($bDelCountry && IntVal($arLocRes["COUNTRY_ID"]) > 0)
+        if ($bDelCountry && intval($arLocRes["COUNTRY_ID"]) > 0) {
             CSaleLocation::DeleteCountry($arLocRes["COUNTRY_ID"]);
+        }
 
-        $bDelRegion = True;
+        $bDelRegion = true;
         $db_res = CSaleLocation::GetList(
             array("SORT" => "ASC"),
             array("REGION_ID" => $arLocRes["REGION_ID"], "!ID" => $ID),
             LANGUAGE_ID
         );
-        if ($db_res->Fetch())
+        if ($db_res->Fetch()) {
             $bDelRegion = false;
+        }
 
-        if ($bDelRegion && IntVal($arLocRes["REGION_ID"]) > 0)
+        if ($bDelRegion && intval($arLocRes["REGION_ID"]) > 0) {
             CSaleLocation::DeleteRegion($arLocRes["REGION_ID"]);
+        }
 
         $DB->Query("DELETE FROM b_sale_location2location_group WHERE LOCATION_ID = " . $ID . "", true);
-        $DB->Query("DELETE FROM b_sale_delivery2location WHERE LOCATION_ID = " . $ID . " AND LOCATION_TYPE = 'L'", true);
+        $DB->Query(
+            "DELETE FROM b_sale_delivery2location WHERE LOCATION_ID = " . $ID . " AND LOCATION_TYPE = 'L'",
+            true
+        );
         $DB->Query("DELETE FROM b_sale_location_zip WHERE LOCATION_ID = " . $ID . "", true);
 
         if (self::isLocationProMigrated()) {
             try {
                 $res = Location\LocationTable::delete($ID); // the whole subtree will be deleted
-                if (!$res->isSuccess())
+                if (!$res->isSuccess()) {
                     return false;
+                }
 
                 $bDelete = true;
             } catch (Exception $e) {
@@ -2425,8 +2868,9 @@ class CAllSaleLocation
             $bDelete = $DB->Query("DELETE FROM b_sale_location WHERE ID = " . $ID . "", true);
         }
 
-        foreach (GetModuleEvents("sale", "OnLocationDelete", true) as $arEvent)
+        foreach (GetModuleEvents("sale", "OnLocationDelete", true) as $arEvent) {
             ExecuteModuleEventEx($arEvent, array($ID));
+        }
 
         return $bDelete;
     }
@@ -2436,9 +2880,24 @@ class CAllSaleLocation
         global $DB;
 
         if (self::isLocationProMigrated()) {
-            $DB->Query("DELETE FROM " . Location\Name\LocationTable::getTableName() . " WHERE LANGUAGE_ID = '" . $DB->ForSql($strLang) . "'", true);
-            $DB->Query("DELETE FROM " . Location\Name\TypeTable::getTableName() . " WHERE LANGUAGE_ID = '" . $DB->ForSql($strLang) . "'", true);
-            $DB->Query("DELETE FROM " . Location\Name\GroupTable::getTableName() . " WHERE LANGUAGE_ID = '" . $DB->ForSql($strLang) . "'", true);
+            $DB->Query(
+                "DELETE FROM " . Location\Name\LocationTable::getTableName() . " WHERE LANGUAGE_ID = '" . $DB->ForSql(
+                    $strLang
+                ) . "'",
+                true
+            );
+            $DB->Query(
+                "DELETE FROM " . Location\Name\TypeTable::getTableName() . " WHERE LANGUAGE_ID = '" . $DB->ForSql(
+                    $strLang
+                ) . "'",
+                true
+            );
+            $DB->Query(
+                "DELETE FROM " . Location\Name\GroupTable::getTableName() . " WHERE LANGUAGE_ID = '" . $DB->ForSql(
+                    $strLang
+                ) . "'",
+                true
+            );
         }
 
         $DB->Query("DELETE FROM b_sale_location_city_lang WHERE LID = '" . $DB->ForSql($strLang) . "'", true);
@@ -2451,9 +2910,11 @@ class CAllSaleLocation
     {
         global $DB;
 
-        foreach (GetModuleEvents("sale", "OnBeforeLocationDeleteAll", true) as $arEvent)
-            if (ExecuteModuleEventEx($arEvent) === false)
+        foreach (GetModuleEvents("sale", "OnBeforeLocationDeleteAll", true) as $arEvent) {
+            if (ExecuteModuleEventEx($arEvent) === false) {
                 return false;
+            }
+        }
 
         if (self::isLocationProMigrated()) {
             //main
@@ -2495,28 +2956,31 @@ class CAllSaleLocation
 
         $DB->Query("DELETE FROM b_sale_location_zip");
 
-        foreach (GetModuleEvents("sale", "OnLocationDeleteAll", true) as $arEvent)
+        foreach (GetModuleEvents("sale", "OnLocationDeleteAll", true) as $arEvent) {
             ExecuteModuleEventEx($arEvent);
-
+        }
     }
 
     public static function GetLocationZIP($location)
     {
         if (self::isLocationProMigrated()) {
             try {
-                if (!intval($location))
+                if (!intval($location)) {
                     throw new Exception();
+                }
 
-                return Location\ExternalTable::getList(array(
-                    'filter' => array(
-                        '=SERVICE.CODE' => self::ZIP_EXT_SERVICE_CODE,
-                        '=LOCATION_ID' => $location
-                    ),
-                    'select' => array(
-                        'ID',
-                        'ZIP' => 'XML_ID'
+                return Location\ExternalTable::getList(
+                    array(
+                        'filter' => array(
+                            '=SERVICE.CODE' => self::ZIP_EXT_SERVICE_CODE,
+                            '=LOCATION_ID' => $location
+                        ),
+                        'select' => array(
+                            'ID',
+                            'ZIP' => 'XML_ID'
+                        )
                     )
-                ));
+                );
             } catch (Exception $e) {
                 return new DB\ArrayResult(array());
             }
@@ -2531,24 +2995,28 @@ class CAllSaleLocation
     {
         if (self::isLocationProMigrated()) {
             try {
-                if (!strlen($zip))
+                if ($zip == '') {
                     throw new Exception();
+                }
 
-                $res = Location\ExternalTable::getList(array(
-                    'filter' => array(
-                        '=SERVICE.CODE' => self::ZIP_EXT_SERVICE_CODE,
-                        '=XML_ID' => $zip
-                    ),
-                    'select' => array(
-                        'LOCATION_ID',
-                    ),
-                    'limit' => 1
-                ));
+                $res = Location\ExternalTable::getList(
+                    array(
+                        'filter' => array(
+                            '=SERVICE.CODE' => self::ZIP_EXT_SERVICE_CODE,
+                            '=XML_ID' => $zip
+                        ),
+                        'select' => array(
+                            'LOCATION_ID',
+                        ),
+                        'limit' => 1
+                    )
+                );
 
-                if ($item = $res->fetch())
+                if ($item = $res->fetch()) {
                     return self::GetByID($item['LOCATION_ID']);
-                else
+                } else {
                     return false;
+                }
             } catch (Exception $e) {
                 return false;
             }
@@ -2556,10 +3024,11 @@ class CAllSaleLocation
             global $DB;
 
             $dbRes = $DB->Query('SELECT LOCATION_ID FROM b_sale_location_zip WHERE ZIP=\'' . $DB->ForSql($zip) . '\'');
-            if ($arRes = $dbRes->Fetch())
+            if ($arRes = $dbRes->Fetch()) {
                 return CSaleLocation::GetByID($arRes['LOCATION_ID']);
-            else
+            } else {
                 return false;
+            }
         }
     }
 
@@ -2568,7 +3037,11 @@ class CAllSaleLocation
         global $DB;
 
         if (self::isLocationProMigrated()) {
-            $DB->Query("DELETE FROM " . Location\ExternalTable::getTableName() . " WHERE LOCATION_ID='" . $DB->ForSql($location) . "'");
+            $DB->Query(
+                "DELETE FROM " . Location\ExternalTable::getTableName() . " WHERE LOCATION_ID='" . $DB->ForSql(
+                    $location
+                ) . "'"
+            );
         } else {
             $query = "DELETE FROM b_sale_location_zip WHERE LOCATION_ID='" . $DB->ForSql($location) . "'";
             $DB->Query($query);
@@ -2593,23 +3066,28 @@ class CAllSaleLocation
         if (self::isLocationProMigrated()) {
             try {
                 if ($bSync) {
-                    $res = Location\ExternalTable::getList(array(
-                        'filter' => array(
-                            '=SERVICE.CODE' => self::ZIP_EXT_SERVICE_CODE,
-                            '=XML_ID' => $ZIP,
-                            '=LOCATION_ID' => $location
-                        ),
-                        'select' => array(
-                            'ID',
-                        ),
-                        'limit' => 1
-                    ))->fetch();
+                    $res = Location\ExternalTable::getList(
+                        array(
+                            'filter' => array(
+                                '=SERVICE.CODE' => self::ZIP_EXT_SERVICE_CODE,
+                                '=XML_ID' => $ZIP,
+                                '=LOCATION_ID' => $location
+                            ),
+                            'select' => array(
+                                'ID',
+                            ),
+                            'limit' => 1
+                        )
+                    )->fetch();
 
                     if ($res) {
-                        if (!Location\ExternalTable::update($res['ID'], array(
-                            'LOCATION_ID' => $location,
-                            'XML_ID' => $ZIP
-                        ))->isSuccess()) {
+                        if (!Location\ExternalTable::update(
+                            $res['ID'],
+                            array(
+                                'LOCATION_ID' => $location,
+                                'XML_ID' => $ZIP
+                            )
+                        )->isSuccess()) {
                             $bSync = false;
                         }
                     }
@@ -2618,11 +3096,13 @@ class CAllSaleLocation
                 if (!$bSync) {
                     $zipId = self::getZipId();
                     if ($zipId) {
-                        Location\ExternalTable::add(array(
-                            'LOCATION_ID' => $location,
-                            'XML_ID' => $ZIP,
-                            'SERVICE_ID' => $zipId
-                        ));
+                        Location\ExternalTable::add(
+                            array(
+                                'LOCATION_ID' => $location,
+                                'XML_ID' => $ZIP,
+                                'SERVICE_ID' => $zipId
+                            )
+                        );
                     }
                 }
             } catch (Exception $e) {
@@ -2669,8 +3149,9 @@ class CAllSaleLocation
             );
 
             foreach ($arZipList as $ZIP) {
-                if (strlen($ZIP) > 0)
+                if ($ZIP <> '') {
                     self::AddLocationZIP($location, $ZIP);
+                }
             }
         }
 
@@ -2703,8 +3184,9 @@ class CAllSaleLocation
                     '!=REGION_ID' => '0'
                 );
 
-                if ($countryId = intval($countryId))
+                if ($countryId = intval($countryId)) {
                     $filterFields['=COUNTRY_ID'] = $countryId;
+                }
 
                 // order
                 $orderFields = array(
@@ -2720,8 +3202,9 @@ class CAllSaleLocation
                 $nameJoinCondition = array(
                     '=this.ID' => 'ref.LOCATION_ID',
                 );
-                if (strlen($strLang))
+                if ($strLang <> '') {
                     $nameJoinCondition['=ref.LANGUAGE_ID'] = array('?', $strLang);
+                }
 
                 $query->registerRuntimeField(
                     'NAME',
@@ -2741,7 +3224,7 @@ class CAllSaleLocation
 
                 $res = $query->exec();
                 while ($item = $res->fetch()) {
-                    $result[strlen($item['RNAME']) ? $item['RNAME'] : $item['RSHORT_NAME']] = $item['RID'];
+                    $result[$item['RNAME'] <> '' ? $item['RNAME'] : $item['RSHORT_NAME']] = $item['RID'];
                 }
 
                 return $result;
@@ -2757,8 +3240,9 @@ class CAllSaleLocation
             if (is_array($arRegNames)) {
                 foreach ($arRegNames as $regName) {
                     $regName = $DB->ForSql($regName);
-                    foreach ($arQueryFields as $field)
+                    foreach ($arQueryFields as $field) {
                         $arWhere[] = $field . " LIKE '" . $regName . "'";
+                    }
                 }
 
                 if (count($arWhere) > 0) {
@@ -2781,10 +3265,11 @@ class CAllSaleLocation
                     $arRegionsLang = array();
 
                     while ($arRegion = $dbList->Fetch()) {
-                        if (strlen($arRegion["NAME"]) > 0)
+                        if ($arRegion["NAME"] <> '') {
                             $idx = $arRegion["NAME"];
-                        else
+                        } else {
                             $idx = $arRegion["SHORT_NAME"];
+                        }
 
                         $arResult[$idx] = $arRegion["REGION_ID"];
                     }
@@ -2792,7 +3277,6 @@ class CAllSaleLocation
             }
 
             return $arResult;
-
         }
     }
 
@@ -2800,18 +3284,21 @@ class CAllSaleLocation
     {
         if (self::isLocationProMigrated()) {
             try {
-                if (!is_array($arIds) || empty($arIds))
+                if (!is_array($arIds) || empty($arIds)) {
                     throw new Exception();
+                }
 
                 $arIds = array_unique($arIds);
                 $parsedList = array();
                 foreach ($arIds as $id) {
-                    if (intval($id))
+                    if (intval($id)) {
                         $parsedList[] = intval($id);
+                    }
                 }
 
-                if (!strlen($lang))
+                if ($lang == '') {
                     $lang = LANGUAGE_ID;
+                }
 
                 $arResult = array();
                 if (!empty($parsedList)) {
@@ -2823,7 +3310,7 @@ class CAllSaleLocation
                     );
 
                     while ($arRegion = $res->fetch()) {
-                        $arResult[$arRegion["ID"]] = strlen($arRegion["NAME"]) > 0 ? $arRegion["NAME"] : $arRegion["SHORT_NAME"];
+                        $arResult[$arRegion["ID"]] = $arRegion["NAME"] <> '' ? $arRegion["NAME"] : $arRegion["SHORT_NAME"];
                     }
                 }
 
@@ -2836,24 +3323,30 @@ class CAllSaleLocation
             $arResult = array();
             $arWhere = array();
 
-            if ('' == $lang)
+            if ('' == $lang) {
                 $lang = LANGUAGE_ID;
+            }
 
             if (!empty($arIds) && is_array($arIds)) {
                 foreach ($arIds as $id) {
-                    if (intval($id) > 0)
+                    if (intval($id) > 0) {
                         $arWhere[] = intval($id);
+                    }
                 }
 
                 if (!empty($arWhere)) {
                     $query = "select RL.REGION_ID, RL.NAME, RL.SHORT_NAME from b_sale_location_region_lang RL";
-                    $query .= " where REGION_ID IN(" . implode(',', $arWhere) . ") and RL.LID='" . $DB->ForSql($lang, 2) . "'";
+                    $query .= " where REGION_ID IN(" . implode(',', $arWhere) . ") and RL.LID='" . $DB->ForSql(
+                            $lang,
+                            2
+                        ) . "'";
                     $query .= " order by RL.NAME, RL.SHORT_NAME";
 
                     $dbList = $DB->Query($query);
 
-                    while ($arRegion = $dbList->Fetch())
-                        $arResult[$arRegion["REGION_ID"]] = strlen($arRegion["NAME"]) > 0 ? $arRegion["NAME"] : $arRegion["SHORT_NAME"];
+                    while ($arRegion = $dbList->Fetch()) {
+                        $arResult[$arRegion["REGION_ID"]] = $arRegion["NAME"] <> '' ? $arRegion["NAME"] : $arRegion["SHORT_NAME"];
+                    }
                 }
             }
 
@@ -2884,12 +3377,15 @@ class CAllSaleLocation
         foreach ($arCityName as $city_name) {
             $city_name = $DB->ForSql($city_name);
             foreach ($arQueryFields as $field) {
-                if (strlen($field) > 0)
+                if ($field <> '') {
                     $arWhere[] = $field . "='" . $city_name . "'";
+                }
             }
         }
 
-        if (count($arWhere) <= 0) return false;
+        if (count($arWhere) <= 0) {
+            return false;
+        }
         $strWhere = implode(' OR ', $arWhere);
 
         if ($country_id) {
@@ -2904,10 +3400,11 @@ WHERE " . $strWhere;
 
         $dbList = $DB->Query($query);
 
-        if ($arCity = $dbList->Fetch())
+        if ($arCity = $dbList->Fetch()) {
             return $arCity;
-        else
+        } else {
             return false;
+        }
     }
 
     protected static function AddLocationUnattached($typeCode, $names = array())
@@ -3012,5 +3509,3 @@ WHERE " . $strWhere;
         return $loc2Update;
     }
 }
-
-?>

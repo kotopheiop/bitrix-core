@@ -50,7 +50,7 @@ class XmlWriter
     private function prepareTag($tag)
     {
         if ($this->lowercaseTag) {
-            $tag = strtolower($tag);
+            $tag = mb_strtolower($tag);
         }
         return $tag;
     }
@@ -112,7 +112,8 @@ class XmlWriter
     {
         if ($this->f) {
             $code = $this->prepareTag($code);
-            fwrite($this->f,
+            fwrite(
+                $this->f,
                 str_repeat("\t", $this->tab) .
                 (
                 trim($value) == ''

@@ -1,4 +1,5 @@
 <?php
+
 IncludeModuleLangFile(__FILE__);
 
 /**
@@ -60,10 +61,11 @@ class CIBlockType
         $strSqlSearch = "1=1\n";
 
         foreach ($arFilter as $key => $val) {
-            if (!is_array($val) && strlen($val) <= 0)
+            if (!is_array($val) && $val == '') {
                 continue;
+            }
 
-            switch (strtoupper($key)) {
+            switch (mb_strtoupper($key)) {
                 case "ID":
                     $strSqlSearch .= "AND UPPER(T.ID) LIKE UPPER('" . $DB->ForSql($val) . "')\n";
                     break;
@@ -92,24 +94,27 @@ class CIBlockType
 
         $strSqlOrder = '';
         foreach ($arOrder as $by => $order) {
-            $by = strtoupper($by);
-            if ($by == "ID")
+            $by = mb_strtoupper($by);
+            if ($by == "ID") {
                 $by = "T.ID";
-            elseif ($by == "NAME") {
+            } elseif ($by == "NAME") {
                 $by = "TL.NAME";
                 $bLang = true;
                 $bNameSort = true;
-            } else
+            } else {
                 $by = "T.SORT";
+            }
 
-            $order = strtolower($order);
-            if ($order != "desc")
+            $order = mb_strtolower($order);
+            if ($order != "desc") {
                 $order = "asc";
+            }
 
-            if ($strSqlOrder == '')
+            if ($strSqlOrder == '') {
                 $strSqlOrder = " ORDER BY ";
-            else
+            } else {
                 $strSqlOrder .= ', ';
+            }
 
             $strSqlOrder .= $by . " " . $order;
         }
@@ -123,13 +128,18 @@ class CIBlockType
         if (CACHED_b_iblock_type === false) {
             $res = $DB->Query($strSql, false, "FILE: " . __FILE__ . "<br> LINE: " . __LINE__);
         } else {
-            if ($CACHE_MANAGER->Read(CACHED_b_iblock_type, $cache_id = "b_iblock_type" . md5($strSql), "b_iblock_type")) {
+            if ($CACHE_MANAGER->Read(
+                CACHED_b_iblock_type,
+                $cache_id = "b_iblock_type" . md5($strSql),
+                "b_iblock_type"
+            )) {
                 $arResult = $CACHE_MANAGER->Get($cache_id);
             } else {
                 $arResult = array();
                 $res = $DB->Query($strSql, false, "FILE: " . __FILE__ . "<br> LINE: " . __LINE__);
-                while ($ar = $res->Fetch())
+                while ($ar = $res->Fetch()) {
                     $arResult[] = $ar;
+                }
 
                 $CACHE_MANAGER->Set($cache_id, $arResult);
             }
@@ -170,10 +180,11 @@ class CIBlockType
             }
             $CACHE_MANAGER->Set("b_iblock_type", $arIBlocks);
         }
-        if (array_key_exists($ID, $arIBlocks))
+        if (array_key_exists($ID, $arIBlocks)) {
             return $arIBlocks[$ID];
-        else
+        } else {
             return false;
+        }
     }
 
     /**
@@ -196,9 +207,12 @@ class CIBlockType
     public static function GetByID($ID)
     {
         if (CACHED_b_iblock_type === false) {
-            return CIBlockType::GetList(array(), array(
-                "=ID" => $ID,
-            ));
+            return CIBlockType::GetList(
+                array(),
+                array(
+                    "=ID" => $ID,
+                )
+            );
         } else {
             $arResult = CIBlockType::_GetCache($ID);
             $res = new CDBResult;
@@ -253,8 +267,9 @@ class CIBlockType
 				AND BT.ID=BTL.IBLOCK_TYPE_ID
 			";
             $res = $DB->Query($strSql);
-            if ($r = $res->GetNext())
+            if ($r = $res->GetNext()) {
                 return $r;
+            }
         } else {
             $arResult = CIBlockType::_GetCache($ID);
             if ($arResult !== false && array_key_exists($LID, $arResult["_lang"])) {
@@ -264,8 +279,9 @@ class CIBlockType
             }
         }
 
-        if (!$bFindAny)
+        if (!$bFindAny) {
             return false;
+        }
 
         $strSql = "
 			SELECT BTL.*, BT.*
@@ -276,8 +292,9 @@ class CIBlockType
 			ORDER BY L.DEF DESC, L.SORT
 		";
         $res = $DB->Query($strSql);
-        if ($r = $res->GetNext())
+        if ($r = $res->GetNext()) {
             return $r;
+        }
 
         return false;
     }
@@ -301,9 +318,12 @@ class CIBlockType
             $CACHE_MANAGER->CleanDir("b_iblock_type");
         }
 
-        $iblocks = CIBlock::GetList(array(), array(
-            "=TYPE" => $ID,
-        ));
+        $iblocks = CIBlock::GetList(
+            array(),
+            array(
+                "=TYPE" => $ID,
+            )
+        );
         while ($iblock = $iblocks->Fetch()) {
             if (!CIBlock::Delete($iblock["ID"])) {
                 return false;
@@ -332,7 +352,7 @@ class CIBlockType
         $this->LAST_ERROR = "";
 
         if ($ID === false) {
-            if (!isset($arFields["ID"]) || strlen($arFields["ID"]) <= 0) {
+            if (!isset($arFields["ID"]) || $arFields["ID"] == '') {
                 $this->LAST_ERROR .= GetMessage("IBLOCK_TYPE_BAD_ID") . "<br>";
             } elseif (preg_match("/[^A-Za-z0-9_]/", $arFields["ID"])) {
                 $this->LAST_ERROR .= GetMessage("IBLOCK_TYPE_ID_HAS_WRONG_CHARS") . "<br>";
@@ -351,14 +371,15 @@ class CIBlockType
 
         if (is_set($arFields, "LANG") && is_array($arFields["LANG"])) {
             foreach ($arFields["LANG"] as $lid => $arFieldsLang) {
-                if (strlen($arFieldsLang["NAME"]) <= 0) {
+                if ($arFieldsLang["NAME"] == '') {
                     $this->LAST_ERROR .= GetMessage("IBLOCK_TYPE_BAD_NAME") . " " . $lid . ".<br>";
                 }
             }
         }
 
-        if ($this->LAST_ERROR != "")
+        if ($this->LAST_ERROR != "") {
             return false;
+        }
 
         return true;
     }
@@ -394,8 +415,9 @@ class CIBlockType
         $arFields["SECTIONS"] = isset($arFields["SECTIONS"]) && $arFields["SECTIONS"] === "Y" ? "Y" : "N";
         $arFields["IN_RSS"] = isset($arFields["IN_RSS"]) && $arFields["IN_RSS"] === "Y" ? "Y" : "N";
 
-        if (!$this->CheckFields($arFields))
+        if (!$this->CheckFields($arFields)) {
             return false;
+        }
 
         $arInsert = $DB->PrepareInsert("b_iblock_type", $arFields);
         $DB->Query("INSERT INTO b_iblock_type(" . $arInsert[0] . ") VALUES(" . $arInsert[1] . ")");
@@ -431,8 +453,9 @@ class CIBlockType
         $arFields["SECTIONS"] = $arFields["SECTIONS"] == "Y" ? "Y" : "N";
         $arFields["IN_RSS"] = $arFields["IN_RSS"] == "Y" ? "Y" : "N";
 
-        if (!$this->CheckFields($arFields, $ID))
+        if (!$this->CheckFields($arFields, $ID)) {
             return false;
+        }
 
         $str_update = $DB->PrepareUpdate("b_iblock_type", $arFields);
         $DB->Query("UPDATE b_iblock_type SET " . $str_update . " WHERE ID='" . $DB->ForSQL($ID) . "'");
@@ -461,8 +484,9 @@ class CIBlockType
         if (is_array($arLang)) {
             $DB->Query("DELETE FROM b_iblock_type_lang WHERE IBLOCK_TYPE_ID='" . $DB->ForSQL($ID) . "'");
             foreach ($arLang as $lid => $arFieldsLang) {
-                if (strlen($arFieldsLang["NAME"]) > 0 || strlen($arFieldsLang["ELEMENT_NAME"]) > 0) {
-                    $DB->Query("
+                if ($arFieldsLang["NAME"] <> '' || $arFieldsLang["ELEMENT_NAME"] <> '') {
+                    $DB->Query(
+                        "
 						INSERT INTO b_iblock_type_lang(IBLOCK_TYPE_ID, LID, NAME, SECTION_NAME, ELEMENT_NAME)
 						SELECT
 							BT.ID,
@@ -476,7 +500,8 @@ class CIBlockType
 						WHERE
 							BT.ID = '" . $DB->ForSQL($ID) . "'
 							AND L.LID = '" . $DB->ForSQL($lid) . "'
-					");
+					"
+                    );
                 }
             }
         }

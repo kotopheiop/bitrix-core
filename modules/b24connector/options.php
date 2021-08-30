@@ -21,29 +21,46 @@ if ($moduleAccess >= "W"):
     IncludeModuleLangFile(__FILE__);
 
     $aTabs = array(
-        array("DIV" => "edit1", "TAB" => Loc::getMessage("B24C_OPTIONS"), "ICON" => "", "TITLE" => Loc::getMessage("B24C_OPTIONS")),
-        array("DIV" => "edit2", "TAB" => Loc::getMessage("MAIN_TAB_RIGHTS"), "ICON" => "", "TITLE" => Loc::getMessage("MAIN_TAB_TITLE_RIGHTS"))
+        array(
+            "DIV" => "edit1",
+            "TAB" => Loc::getMessage("B24C_OPTIONS"),
+            "ICON" => "",
+            "TITLE" => Loc::getMessage("B24C_OPTIONS")
+        ),
+        array(
+            "DIV" => "edit2",
+            "TAB" => Loc::getMessage("MAIN_TAB_RIGHTS"),
+            "ICON" => "",
+            "TITLE" => Loc::getMessage("MAIN_TAB_TITLE_RIGHTS")
+        )
     );
 
     $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
     if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Update"] != "" && check_bitrix_sessid()) {
-        if (isset($_REQUEST["disconnect"]) && $_REQUEST["disconnect"] == 'Y')
+        if (isset($_REQUEST["disconnect"]) && $_REQUEST["disconnect"] == 'Y') {
             Connection::delete();
+        }
 
         ob_start();
         require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/admin/group_rights.php");
         ob_end_clean();
 
-        if (strlen($_REQUEST["back_url_settings"]) > 0)
+        if ($_REQUEST["back_url_settings"] <> '') {
             LocalRedirect($_REQUEST["back_url_settings"]);
+        }
 
-        LocalRedirect($APPLICATION->GetCurPage() . "?mid=" . urlencode($module_id) . "&lang=" . urlencode(LANGUAGE_ID) . "&" . $tabControl->ActiveTabParam());
+        LocalRedirect(
+            $APPLICATION->GetCurPage() . "?mid=" . urlencode($module_id) . "&lang=" . urlencode(
+                LANGUAGE_ID
+            ) . "&" . $tabControl->ActiveTabParam()
+        );
     }
 
-    Asset::getInstance()->addString('<link rel="stylesheet" type="text/css" href="/bitrix/css/b24connector/style.css">');
-
-    Asset::getInstance()->addJs("/bitrix/js/main/core/core.js");
+    \Bitrix\Main\UI\Extension::load("main.core");
+    Asset::getInstance()->addString(
+        '<link rel="stylesheet" type="text/css" href="/bitrix/css/b24connector/style.css">'
+    );
     Asset::getInstance()->addJs("/bitrix/js/b24connector/connector.js");
 
     $tabControl->Begin();
@@ -81,9 +98,11 @@ if ($moduleAccess >= "W"):
         <input type="submit" name="Update" value="<?= GetMessage("MAIN_SAVE") ?>"
                title="<?= GetMessage("MAIN_OPT_SAVE_TITLE") ?>" class="adm-btn-save">
         <?= bitrix_sessid_post(); ?>
-        <? if (strlen($_REQUEST["back_url_settings"]) > 0):?>
+        <? if ($_REQUEST["back_url_settings"] <> ''):?>
             <input type="button" name="Cancel" value="<?= GetMessage("MAIN_OPT_CANCEL") ?>"
-                   onclick="window.location='<? echo htmlspecialcharsbx(CUtil::addslashes($_REQUEST["back_url_settings"])) ?>'">
+                   onclick="window.location='<? echo htmlspecialcharsbx(
+                       CUtil::addslashes($_REQUEST["back_url_settings"])
+                   ) ?>'">
             <input type="hidden" name="back_url_settings"
                    value="<?= htmlspecialcharsbx($_REQUEST["back_url_settings"]) ?>">
         <? endif; ?>

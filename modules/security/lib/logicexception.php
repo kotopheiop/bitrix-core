@@ -32,8 +32,14 @@ class LogicException
      * @param int $line The line number where the exception is thrown.
      * @param \Exception $previous The previous exception used for the exception chaining.
      */
-    public function __construct($message = '', $locMessageKey = '', $code = 0, $file = '', $line = 0, \Exception $previous = null)
-    {
+    public function __construct(
+        $message = '',
+        $locMessageKey = '',
+        $code = 0,
+        $file = '',
+        $line = 0,
+        \Exception $previous = null
+    ) {
         $this->locMessage = $locMessageKey;
         parent::__construct($message, $code, $file, $line, $previous);
     }
@@ -45,8 +51,9 @@ class LogicException
      */
     public function getLocMessage()
     {
-        if (!$this->locMessage)
+        if (!$this->locMessage) {
             return '';
+        }
 
         return Loc::getMessage($this->locMessage);
     }

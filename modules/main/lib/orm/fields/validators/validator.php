@@ -45,8 +45,12 @@ abstract class Validator implements ORM\Fields\Validators\IValidator
      *
      * @return string
      */
-    protected function getErrorMessage($value, ORM\Fields\Field $field, $errorPhrase = null, $additionalTemplates = null)
-    {
+    protected function getErrorMessage(
+        $value,
+        ORM\Fields\Field $field,
+        $errorPhrase = null,
+        $additionalTemplates = null
+    ) {
         if ($errorPhrase === null) {
             $errorPhrase = ($this->errorPhrase !== null ? $this->errorPhrase : Loc::getMessage($this->errorPhraseCode));
         }

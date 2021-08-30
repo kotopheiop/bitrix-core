@@ -38,8 +38,9 @@ class Element
             $getCatalogs = $selector->checkSiteMode([Landing\Source\Selector::SITE_MODE_STORE]);
             if (!empty($restrictions['IBLOCK_ID']) && is_array($restrictions['IBLOCK_ID'])) {
                 $catalogs = static::getCatalogs($restrictions['IBLOCK_ID']);
-                if (!empty($catalogs))
+                if (!empty($catalogs)) {
                     $catalogs = array_fill_keys($catalogs, true);
+                }
 
                 $filter = ['ID' => $restrictions['IBLOCK_ID']];
                 if (!empty($restrictions['SITE_ID'])) {
@@ -85,8 +86,9 @@ class Element
                     $resultActionType = '';
                     break;
             }
-            if ($resultActionType === '')
+            if ($resultActionType === '') {
                 continue;
+            }
 
             $actionList = $selector->getDefaultLinkActions();
             $fields = $elementFields;
@@ -96,8 +98,9 @@ class Element
             }
 
             $properties = static::getIblockProperties($iblock['ID']);
-            if (!empty($properties))
+            if (!empty($properties)) {
                 $fields = array_merge($fields, $properties);
+            }
             unset($properties);
 
             $fields = array_merge($fields, static::getLinkDefinition($actionList));
@@ -162,19 +165,24 @@ class Element
     protected static function getCatalogs(array $iblocks = [])
     {
         $result = [];
-        if (self::$catalogIncluded === null)
+        if (self::$catalogIncluded === null) {
             self::$catalogIncluded = Loader::includeModule('catalog');
+        }
         if (self::$catalogIncluded) {
             $filter = [];
-            if (!empty($iblocks))
+            if (!empty($iblocks)) {
                 $filter['@IBLOCK_ID'] = $iblocks;
+            }
 
-            $iterator = Catalog\CatalogIblockTable::getList([
-                'select' => ['IBLOCK_ID'],
-                'filter' => $filter
-            ]);
-            while ($row = $iterator->fetch())
+            $iterator = Catalog\CatalogIblockTable::getList(
+                [
+                    'select' => ['IBLOCK_ID'],
+                    'filter' => $filter
+                ]
+            );
+            while ($row = $iterator->fetch()) {
                 $result[] = (int)$row['IBLOCK_ID'];
+            }
             unset($row, $iterator, $filter);
         }
         return $result;
@@ -276,32 +284,41 @@ class Element
      * @param int $iblockId
      * @return array
      */
-    protected function getIblockProperties($iblockId)
+    protected static function getIblockProperties($iblockId)
     {
         $result = [];
 
         $listCodes = Iblock\Model\PropertyFeature::getListPageShowPropertyCodes($iblockId);
         $detailCodes = Iblock\Model\PropertyFeature::getDetailPageShowPropertyCodes($iblockId);
-        if (empty($listCodes) && empty($detailCodes))
+        if (empty($listCodes) && empty($detailCodes)) {
             return $result;
+        }
 
         $allCodes = array_unique(array_merge($listCodes, $detailCodes));
         $listCodes = array_fill_keys($listCodes, true);
         $detailCodes = array_fill_keys($detailCodes, true);
 
-        $iterator = Iblock\PropertyTable::getList([
-            'select' => [
-                'ID', 'IBLOCK_ID', 'NAME', 'SORT', 'PROPERTY_TYPE',
-                'MULTIPLE', 'FILE_TYPE',
-                'USER_TYPE', 'USER_TYPE_SETTINGS_LIST'
-            ],
-            'filter' => [
-                '=IBLOCK_ID' => $iblockId,
-                '@ID' => $allCodes,
-                '=ACTIVE' => 'Y'
-            ],
-            'order' => ['SORT' => 'ASC', 'NAME' => 'ASC']
-        ]);
+        $iterator = Iblock\PropertyTable::getList(
+            [
+                'select' => [
+                    'ID',
+                    'IBLOCK_ID',
+                    'NAME',
+                    'SORT',
+                    'PROPERTY_TYPE',
+                    'MULTIPLE',
+                    'FILE_TYPE',
+                    'USER_TYPE',
+                    'USER_TYPE_SETTINGS_LIST'
+                ],
+                'filter' => [
+                    '=IBLOCK_ID' => $iblockId,
+                    '@ID' => $allCodes,
+                    '=ACTIVE' => 'Y'
+                ],
+                'order' => ['SORT' => 'ASC', 'NAME' => 'ASC']
+            ]
+        );
         while ($row = $iterator->fetch()) {
             $id = (int)$row['ID'];
             $index = 'PROPERTY_' . $row['ID'];
@@ -385,8 +402,9 @@ class Element
         $result = [];
 
         foreach ($fields as $row) {
-            if (($row['ALLOWED'] & self::FIELD_ALLOWED_ORDER) == 0)
+            if (($row['ALLOWED'] & self::FIELD_ALLOWED_ORDER) == 0) {
                 continue;
+            }
             $result[] = [
                 'ID' => $row['ID'],
                 'NAME' => $row['NAME']
@@ -406,8 +424,9 @@ class Element
         $result = [];
 
         foreach ($fields as $row) {
-            if (($row['ALLOWED'] & self::FIELD_ALLOWED_SELECT) == 0)
+            if (($row['ALLOWED'] & self::FIELD_ALLOWED_SELECT) == 0) {
                 continue;
+            }
             $item = $row;
             unset($item['ALLOWED']);
             $result[] = $item;
@@ -423,22 +442,26 @@ class Element
      */
     protected static function checkImageProperty(array $property)
     {
-        if (empty($property['FILE_TYPE']))
+        if (empty($property['FILE_TYPE'])) {
             return false;
-        $property['FILE_TYPE'] = strtolower(str_replace(' ', '', trim($property['FILE_TYPE'])));
-        if (empty($property['FILE_TYPE']))
+        }
+        $property['FILE_TYPE'] = mb_strtolower(str_replace(' ', '', trim($property['FILE_TYPE'])));
+        if (empty($property['FILE_TYPE'])) {
             return false;
+        }
         $rawFileTypes = explode(',', $property['FILE_TYPE']);
-        if (empty($rawFileTypes))
+        if (empty($rawFileTypes)) {
             return false;
+        }
         $rawFileTypes = array_fill_keys($rawFileTypes, true);
         if (
             !isset($rawFileTypes['jpg'])
             && !isset($rawFileTypes['gif'])
             && !isset($rawFileTypes['png'])
             && !isset($rawFileTypes['jpeg'])
-        )
+        ) {
             return false;
+        }
         return true;
     }
 }

@@ -1,4 +1,4 @@
-<?
+<?php
 
 namespace Bitrix\Main\UI\Selector;
 
@@ -198,7 +198,7 @@ class Entities
         $selectedItemsByEntityType = array();
         if (!empty($selectedItems)) {
             foreach ($selectedItems as $key => $entityType) {
-                $entityType = strtoupper($entityType);
+                $entityType = mb_strtoupper($entityType);
                 if (!isset($selectedItemsByEntityType[$entityType])) {
                     $selectedItemsByEntityType[$entityType] = array();
                 }
@@ -209,15 +209,19 @@ class Entities
         foreach ($entityTypes as $entityType => $description) {
             $provider = self::getProviderByEntityType($entityType);
             if ($provider !== false) {
-                $result['ENTITIES'][$entityType] = $provider->getData(array(
-                    'options' => (!empty($description['options']) ? $description['options'] : array()),
-                    'lastItems' => $lastItems,
-                    'selectedItems' => $selectedItemsByEntityType
-                ));
+                $result['ENTITIES'][$entityType] = $provider->getData(
+                    array(
+                        'options' => (!empty($description['options']) ? $description['options'] : array()),
+                        'lastItems' => $lastItems,
+                        'selectedItems' => $selectedItemsByEntityType
+                    )
+                );
 
-                $tabList = $provider->getTabList(array(
-                    'options' => (!empty($description['options']) ? $description['options'] : array())
-                ));
+                $tabList = $provider->getTabList(
+                    array(
+                        'options' => (!empty($description['options']) ? $description['options'] : array())
+                    )
+                );
                 if (!empty($tabList)) {
                     foreach ($tabList as $tab) {
                         $result['TABS'][$tab['id']] = $tab;
@@ -231,11 +235,16 @@ class Entities
 
     public static function getProviderByEntityType($entityType)
     {
-        $result = false;
+        $result = Handler::getProviderByEntityType($entityType);
+        if ($result) {
+            return $result;
+        }
 
-        $event = new Event("main", "OnUISelectorGetProviderByEntityType", array(
+        $event = new Event(
+            "main", "OnUISelectorGetProviderByEntityType", array(
             'entityType' => $entityType
-        ));
+        )
+        );
         $event->send();
         $eventResultList = $event->getResults();
         if (is_array($eventResultList) && !empty($eventResultList)) {
@@ -296,7 +305,11 @@ class Entities
 
         $cacheTtl = defined("BX_COMP_MANAGED_CACHE") ? 3153600 : 3600 * 4;
         $cacheId = 'dest_sort_2' . $userId . serialize($params);
-        $cacheDir = '/ui_selector/dest_sort/' . intval($userId / 100);
+        $cacheDir = self::getCacheDir(
+            [
+                'userId' => $userId,
+            ]
+        );
 
         $cache = new \CPHPCache;
         if ($cache->initCache($cacheTtl, $cacheId, $cacheDir)) {
@@ -308,7 +321,7 @@ class Entities
 
             $cache->startDataCache();
             $filter = array(
-                "USER_ID" => $USER->getId()
+                "USER_ID" => $userId
             );
 
             if (
@@ -323,7 +336,7 @@ class Entities
             }
 
             if (!empty($params["CODE_TYPE"])) {
-                $filter["=CODE_TYPE"] = strtoupper($params["CODE_TYPE"]);
+                $filter["=CODE_TYPE"] = mb_strtoupper($params["CODE_TYPE"]);
             } elseif (
                 empty($params["CRM"])
                 || $params["CRM"] != 'Y'
@@ -353,7 +366,12 @@ class Entities
                 $helper = $conn->getSqlHelper();
 
                 $runtime = array(
-                    new \Bitrix\Main\Entity\ExpressionField('CONTEXT_SORT', "CASE WHEN CONTEXT = '" . $helper->forSql($params["DEST_CONTEXT"]) . "' THEN 1 ELSE 0 END")
+                    new \Bitrix\Main\Entity\ExpressionField(
+                        'CONTEXT_SORT',
+                        "CASE WHEN CONTEXT = '" . $helper->forSql(
+                            mb_strtoupper($params["DEST_CONTEXT"])
+                        ) . "' THEN 1 ELSE 0 END"
+                    )
                 );
 
                 $order = array(
@@ -371,17 +389,19 @@ class Entities
                 && isset($params["ALLOW_EMAIL_INVITATION"])
                 && $params["ALLOW_EMAIL_INVITATION"]
             ) {
-                $res = FinderDestTable::getList(array(
-                    'order' => $order,
-                    'filter' => array(
-                        "USER_ID" => $USER->getId(),
-                        "=CODE_USER.EXTERNAL_AUTH_ID" => 'email',
-                        "=CODE_TYPE" => 'U'
-                    ),
-                    'select' => array('CODE'),
-                    'runtime' => $runtime,
-                    'limit' => self::LIST_USER_LIMIT
-                ));
+                $res = FinderDestTable::getList(
+                    array(
+                        'order' => $order,
+                        'filter' => array(
+                            "USER_ID" => $USER->getId(),
+                            "=CODE_USER.EXTERNAL_AUTH_ID" => 'email',
+                            "=CODE_TYPE" => 'U'
+                        ),
+                        'select' => array('CODE'),
+                        'runtime' => $runtime,
+                        'limit' => self::LIST_USER_LIMIT
+                    )
+                );
                 while ($dest = $res->fetch()) {
                     $emailUserCodeList[] = $dest['CODE'];
                 }
@@ -392,33 +412,37 @@ class Entities
                 !empty($params["DEST_CONTEXT"])
                 && $params["DEST_CONTEXT"] == "CRM_POST"
             ) {
-                $res = FinderDestTable::getList(array(
-                    'order' => $order,
-                    'filter' => array(
-                        "USER_ID" => $USER->getId(),
-                        "!=CODE_USER.UF_USER_CRM_ENTITY" => false,
-                        "=CODE_TYPE" => 'U'
-                    ),
-                    'select' => array('CODE'),
-                    'runtime' => $runtime,
-                    'limit' => self::LIST_USER_LIMIT
-                ));
+                $res = FinderDestTable::getList(
+                    array(
+                        'order' => $order,
+                        'filter' => array(
+                            "USER_ID" => $USER->getId(),
+                            "!=CODE_USER.UF_USER_CRM_ENTITY" => false,
+                            "=CODE_TYPE" => 'U'
+                        ),
+                        'select' => array('CODE'),
+                        'runtime' => $runtime,
+                        'limit' => self::LIST_USER_LIMIT
+                    )
+                );
                 while ($dest = $res->fetch()) {
                     $emailCrmUserCodeList[] = $dest['CODE'];
                 }
                 $dataAdditionalUsers['UCRM'] = $emailCrmUserCodeList;
             }
 
-            $res = FinderDestTable::getList(array(
-                'order' => $order,
-                'filter' => $filter,
-                'select' => array(
-                    'CONTEXT',
-                    'CODE',
-                    'LAST_USE_DATE'
-                ),
-                'runtime' => $runtime
-            ));
+            $res = FinderDestTable::getList(
+                array(
+                    'order' => $order,
+                    'filter' => $filter,
+                    'select' => array(
+                        'CONTEXT',
+                        'CODE',
+                        'LAST_USE_DATE'
+                    ),
+                    'runtime' => $runtime
+                )
+            );
 
             $destAll = array();
 
@@ -427,10 +451,12 @@ class Entities
                 $destAll[] = $dest;
             }
 
-            $cache->endDataCache(array(
-                "DEST_ALL" => $destAll,
-                "DATA_ADDITIONAL_USERS" => $dataAdditionalUsers
-            ));
+            $cache->endDataCache(
+                array(
+                    "DEST_ALL" => $destAll,
+                    "DATA_ADDITIONAL_USERS" => $dataAdditionalUsers
+                )
+            );
         }
 
         $resultData = array();
@@ -442,7 +468,7 @@ class Entities
 
             $contextType = (
             isset($params["DEST_CONTEXT"])
-            && strtoupper($params["DEST_CONTEXT"]) == strtoupper($dest["CONTEXT"])
+            && mb_strtoupper($params["DEST_CONTEXT"]) == mb_strtoupper($dest["CONTEXT"])
                 ? "Y"
                 : "N"
             );
@@ -571,10 +597,12 @@ class Entities
             }
 
 
-            $event = new Event("main", "OnUISelectorFillLastDestination", [
+            $event = new Event(
+                "main", "OnUISelectorFillLastDestination", [
                 'params' => $params,
                 'destSortData' => $destSortData
-            ]);
+            ]
+            );
             $event->send();
             $eventResultList = $event->getResults();
 
@@ -663,7 +691,11 @@ class Entities
                 {
                     $cacheTtl = defined("BX_COMP_MANAGED_CACHE") ? 3153600 : 3600 * 4;
                     $cacheId = 'dest_sort_users' . $userId . serialize($params) . intval($bAllowCrmEmail);
-                    $cacheDir = '/ui_selector/dest_sort/' . intval($userId / 100);
+                    $cacheDir = self::getCacheDir(
+                        [
+                            'userId' => $userId,
+                        ]
+                    );;
                     $cache = new \CPHPCache;
 
                     if ($cache->initCache($cacheTtl, $cacheId, $cacheDir)) {
@@ -678,17 +710,23 @@ class Entities
                         if ($bAllowCrmEmail) {
                             $selectList[] = 'UF_USER_CRM_ENTITY';
                         }
-                        $selectList[] = new \Bitrix\Main\Entity\ExpressionField('MAX_LAST_USE_DATE', 'MAX(%s)', array('\Bitrix\Main\FinderDest:CODE_USER_CURRENT.LAST_USE_DATE'));
+                        $selectList[] = new \Bitrix\Main\Entity\ExpressionField(
+                            'MAX_LAST_USE_DATE',
+                            'MAX(%s)',
+                            array('\Bitrix\Main\FinderDest:CODE_USER_CURRENT.LAST_USE_DATE')
+                        );
 
-                        $res = \Bitrix\Main\UserTable::getList(array(
-                            'order' => array(
-                                "MAX_LAST_USE_DATE" => 'DESC',
-                            ),
-                            'filter' => array(
-                                '@ID' => $userIdList
-                            ),
-                            'select' => $selectList
-                        ));
+                        $res = \Bitrix\Main\UserTable::getList(
+                            array(
+                                'order' => array(
+                                    "MAX_LAST_USE_DATE" => 'DESC',
+                                ),
+                                'filter' => array(
+                                    '@ID' => $userIdList
+                                ),
+                                'select' => $selectList
+                            )
+                        );
 
                         while ($destUser = $res->fetch()) {
                             if (
@@ -725,13 +763,16 @@ class Entities
                             }
                         }
 
-                        $cache->endDataCache(array(
-                            'U' => $destUList,
-                            'UE' => $destUEList,
-                            'UCRM' => $destUCRMList
-                        ));
+                        $cache->endDataCache(
+                            array(
+                                'U' => $destUList,
+                                'UE' => $destUEList,
+                                'UCRM' => $destUCRMList
+                            )
+                        );
                     }
                 }
+                $destUList = array_slice($destUList, 0, self::LIST_USER_LIMIT, true);
 
                 $lastDestinationList['USERS'] = array_merge($destUList, $destUEList, $destUCRMList);
                 $tmp = array('USERS' => $lastDestinationList['USERS']);
@@ -751,7 +792,11 @@ class Entities
 
                 $cacheTtl = defined("BX_COMP_MANAGED_CACHE") ? 3153600 : 3600 * 4;
                 $cacheId = 'dest_sort_sonetgroups' . $userId . serialize($params);
-                $cacheDir = '/ui_selector/dest_sort/' . intval($userId / 100);
+                $cacheDir = self::getCacheDir(
+                    [
+                        'userId' => $userId,
+                    ]
+                );
                 $cache = new \CPHPCache;
 
                 if ($cache->initCache($cacheTtl, $cacheId, $cacheDir)) {
@@ -761,12 +806,14 @@ class Entities
                 } else {
                     $cache->startDataCache();
 
-                    $res = \Bitrix\Socialnetwork\WorkgroupTable::getList(array(
-                        'filter' => array(
-                            '@ID' => $sonetGroupIdList
-                        ),
-                        'select' => array('ID', 'PROJECT')
-                    ));
+                    $res = \Bitrix\Socialnetwork\WorkgroupTable::getList(
+                        array(
+                            'filter' => array(
+                                '@ID' => $sonetGroupIdList
+                            ),
+                            'select' => array('ID', 'PROJECT')
+                        )
+                    );
 
                     while ($destSonetGroup = $res->fetch()) {
                         if (
@@ -793,10 +840,12 @@ class Entities
                         }
                     }
 
-                    $cache->endDataCache(array(
-                        'SG' => $destSGList,
-                        'SGP' => $destSGPList
-                    ));
+                    $cache->endDataCache(
+                        array(
+                            'SG' => $destSGList,
+                            'SGP' => $destSGPList
+                        )
+                    );
                 }
 
                 $tmp = array(
@@ -906,10 +955,12 @@ class Entities
                     $options['additionalData'] = $requestFields['additionalData'][$entityType];
                 }
 
-                $result['ENTITIES'][$entityType] = $provider->search(array(
-                    'options' => $options,
-                    'requestFields' => $requestFields
-                ));
+                $result['ENTITIES'][$entityType] = $provider->search(
+                    array(
+                        'options' => $options,
+                        'requestFields' => $requestFields
+                    )
+                );
             }
         }
 
@@ -959,10 +1010,28 @@ class Entities
             }
         }
 
-        \Bitrix\Main\FinderDestTable::merge(array(
-            "CONTEXT" => $context,
-            "CODE" => $code
-        ));
+        \Bitrix\Main\FinderDestTable::merge(
+            array(
+                "CONTEXT" => $context,
+                "CODE" => $code
+            )
+        );
+    }
+
+    public static function getCacheDir(array $params = [])
+    {
+        global $USER;
+
+        $userId = (int)($params['userId'] ?? 0);
+
+        if (
+            $userId <= 0
+            && $USER->isAuthorized()
+        ) {
+            $userId = $USER->getId();
+        }
+
+        return '/ui_selector/dest_sort/' . substr(md5($userId), 2, 2) . '/' . $userId;
     }
 
 }

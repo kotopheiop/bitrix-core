@@ -82,7 +82,7 @@ class SenderTable extends Entity\DataManager
                 'fetch_data_modification' => function () {
                     return array(
                         function ($value) {
-                            $value = unserialize($value);
+                            $value = unserialize($value, ['allowed_classes' => false]);
 
                             if (!empty($value['smtp']['password'])) {
                                 $value['smtp']['password'] = base64_decode($value['smtp']['password']);
@@ -108,8 +108,10 @@ class SenderTable extends Entity\DataManager
                                 if (empty($value['smtp']['protocol'])) {
                                     if (465 == $value['smtp']['port']) {
                                         $value['smtp']['protocol'] = 'smtps';
-                                    } else if (587 == $value['smtp']['port']) {
-                                        $value['smtp']['protocol'] = 'smtp';
+                                    } else {
+                                        if (587 == $value['smtp']['port']) {
+                                            $value['smtp']['protocol'] = 'smtp';
+                                        }
                                     }
                                 }
                             }

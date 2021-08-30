@@ -26,8 +26,9 @@ if (Loader::requireModule('bizproc')) {
         protected static function formatValuePrintable(FieldType $fieldType, $value)
         {
             $userType = static::getUserType($fieldType);
-            if (is_array($value) && isset($value['VALUE']))
+            if (is_array($value) && isset($value['VALUE'])) {
                 $value = $value['VALUE'];
+            }
 
             if (!empty($userType['GetPublicViewHTML'])) {
                 $result = call_user_func_array(
@@ -54,13 +55,15 @@ if (Loader::requireModule('bizproc')) {
          */
         public static function convertTo(FieldType $fieldType, $value, $toTypeClass)
         {
-            if (is_array($value) && isset($value['VALUE']))
+            if (is_array($value) && isset($value['VALUE'])) {
                 $value = $value['VALUE'];
+            }
 
             $value = (string)$value;
             //BaseType\String was removed for PHP7 compatibility
-            if (class_exists('\Bitrix\Bizproc\BaseType\StringType'))
+            if (class_exists('\Bitrix\Bizproc\BaseType\StringType')) {
                 return BaseType\StringType::convertTo($fieldType, $value, $toTypeClass);
+            }
             return BaseType\String::convertTo($fieldType, $value, $toTypeClass);
         }
 
@@ -81,8 +84,13 @@ if (Loader::requireModule('bizproc')) {
          * @param int $renderMode Control render mode.
          * @return string
          */
-        public static function renderControlSingle(FieldType $fieldType, array $field, $value, $allowSelection, $renderMode)
-        {
+        public static function renderControlSingle(
+            FieldType $fieldType,
+            array $field,
+            $value,
+            $allowSelection,
+            $renderMode
+        ) {
             $selectorValue = null;
             if (\CBPActivity::isExpression($value)) {
                 $selectorValue = $value;
@@ -92,8 +100,9 @@ if (Loader::requireModule('bizproc')) {
             $userType = static::getUserType($fieldType);
 
             if (!empty($userType['GetPublicEditHTML'])) {
-                if (is_array($value) && isset($value['VALUE']))
+                if (is_array($value) && isset($value['VALUE'])) {
                     $value = $value['VALUE'];
+                }
 
                 $renderResult = call_user_func_array(
                     $userType['GetPublicEditHTML'],
@@ -107,8 +116,9 @@ if (Loader::requireModule('bizproc')) {
                         true
                     )
                 );
-            } else
+            } else {
                 $renderResult = static::renderControl($fieldType, $field, $value, $allowSelection, $renderMode);
+            }
 
             if ($allowSelection) {
                 $renderResult .= static::renderControlSelector($field, $selectorValue, true, '', $fieldType);
@@ -125,28 +135,37 @@ if (Loader::requireModule('bizproc')) {
          * @param int $renderMode Control render mode.
          * @return string
          */
-        public static function renderControlMultiple(FieldType $fieldType, array $field, $value, $allowSelection, $renderMode)
-        {
+        public static function renderControlMultiple(
+            FieldType $fieldType,
+            array $field,
+            $value,
+            $allowSelection,
+            $renderMode
+        ) {
             $selectorValue = null;
             $typeValue = array();
-            if (!is_array($value) || is_array($value) && \CBPHelper::isAssociativeArray($value))
+            if (!is_array($value) || is_array($value) && \CBPHelper::isAssociativeArray($value)) {
                 $value = array($value);
+            }
 
             foreach ($value as $v) {
-                if (\CBPActivity::isExpression($v))
+                if (\CBPActivity::isExpression($v)) {
                     $selectorValue = $v;
-                else
+                } else {
                     $typeValue[] = $v;
+                }
             }
 
             $userType = static::getUserType($fieldType);
 
             if (!empty($userType['GetPublicEditHTMLMulty'])) {
                 foreach ($typeValue as $k => &$fld) {
-                    if (!is_array($fld) || !isset($fld['VALUE']))
+                    if (!is_array($fld) || !isset($fld['VALUE'])) {
                         $fld = array('VALUE' => $fld);
-                    if ($fld['VALUE'] === null)
+                    }
+                    if ($fld['VALUE'] === null) {
                         unset($typeValue[$k]);
+                    }
                 }
                 $typeValue = array_values($typeValue);
 
@@ -165,8 +184,9 @@ if (Loader::requireModule('bizproc')) {
             } else {
                 $controls = array();
                 // need to show at least one control
-                if (empty($typeValue))
+                if (empty($typeValue)) {
                     $typeValue[] = null;
+                }
 
                 foreach ($typeValue as $k => $v) {
                     $singleField = $field;
@@ -199,8 +219,9 @@ if (Loader::requireModule('bizproc')) {
         protected static function extractValue(FieldType $fieldType, array $field, array $request)
         {
             $value = parent::extractValue($fieldType, $field, $request);
-            if (is_array($value) && isset($value['VALUE']))
+            if (is_array($value) && isset($value['VALUE'])) {
                 $value = $value['VALUE'];
+            }
 
             $userType = static::getUserType($fieldType);
 
@@ -226,22 +247,26 @@ if (Loader::requireModule('bizproc')) {
                 );
                 if (sizeof($errors) > 0) {
                     $value = null;
-                    foreach ($errors as $e)
-                        static::addError(array(
-                            'code' => 'ErrorValue',
-                            'message' => $e,
-                            'parameter' => static::generateControlName($field),
-                        ));
+                    foreach ($errors as $e) {
+                        static::addError(
+                            array(
+                                'code' => 'ErrorValue',
+                                'message' => $e,
+                                'parameter' => static::generateControlName($field),
+                            )
+                        );
+                    }
                 }
-            } elseif ($value === '' && !array_key_exists('GetLength', $userType))
+            } elseif ($value === '' && !array_key_exists('GetLength', $userType)) {
                 $value = null;
+            }
 
             return $value;
         }
 
         protected static function getUserType(FieldType $fieldType)
         {
-            return \CIBlockProperty::getUserType(substr($fieldType->getType(), 2));
+            return \CIBlockProperty::getUserType(mb_substr($fieldType->getType(), 2));
         }
 
     }

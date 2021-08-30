@@ -64,10 +64,13 @@ class Video extends Renderer
 
         $altSrc = $this->getOption('alt.sourceUri');
         if ($altSrc) {
-            array_unshift($sources, [
-                'src' => $altSrc,
-                'type' => $this->getOption('alt.contentType'),
-            ]);
+            array_unshift(
+                $sources,
+                [
+                    'src' => $altSrc,
+                    'type' => $this->getOption('alt.contentType'),
+                ]
+            );
         }
         $data['sources'] = $sources;
 

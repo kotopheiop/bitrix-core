@@ -1,35 +1,45 @@
-<?
+<?php
 
 class CAllIBlockRSS
 {
-    function GetRSSNodes()
+    public static function GetRSSNodes()
     {
-        return array("title", "link", "description", "enclosure", "enclosure_length", "enclosure_type", "category", "pubDate");
+        return array(
+            "title",
+            "link",
+            "description",
+            "enclosure",
+            "enclosure_length",
+            "enclosure_type",
+            "category",
+            "pubDate"
+        );
     }
 
-    function Delete($IBLOCK_ID)
+    public static function Delete($IBLOCK_ID)
     {
         global $DB;
-        $IBLOCK_ID = IntVal($IBLOCK_ID);
-        $DB->Query("DELETE FROM b_iblock_rss WHERE IBLOCK_ID = " . $IBLOCK_ID);
+
+        $DB->Query("DELETE FROM b_iblock_rss WHERE IBLOCK_ID = " . (int)$IBLOCK_ID);
     }
 
     public static function GetNodeList($IBLOCK_ID)
     {
         global $DB;
-        $IBLOCK_ID = IntVal($IBLOCK_ID);
+        $IBLOCK_ID = intval($IBLOCK_ID);
         $arCurNodesRSS = array();
         $db_res = $DB->Query(
             "SELECT NODE, NODE_VALUE " .
             "FROM b_iblock_rss " .
-            "WHERE IBLOCK_ID = " . $IBLOCK_ID);
+            "WHERE IBLOCK_ID = " . $IBLOCK_ID
+        );
         while ($db_res_arr = $db_res->Fetch()) {
             $arCurNodesRSS[$db_res_arr["NODE"]] = $db_res_arr["NODE_VALUE"];
         }
         return $arCurNodesRSS;
     }
 
-    function GetNewsEx($SITE, $PORT, $PATH, $QUERY_STR, $bOutChannel = False)
+    public static function GetNewsEx($SITE, $PORT, $PATH, $QUERY_STR, $bOutChannel = false)
     {
         global $APPLICATION;
 
@@ -37,34 +47,41 @@ class CAllIBlockRSS
 
         $cacheKey = md5($SITE . $PORT . $PATH . $QUERY_STR);
 
-        $bValid = False;
-        $bUpdate = False;
+        $bValid = false;
+        $bUpdate = false;
         if ($db_res_arr = CIBlockRSS::GetCache($cacheKey)) {
-            $bUpdate = True;
-            if (strlen($db_res_arr["CACHE"]) > 0) {
+            $bUpdate = true;
+            if ($db_res_arr["CACHE"] <> '') {
                 if ($db_res_arr["VALID"] == "Y") {
-                    $bValid = True;
+                    $bValid = true;
                     $text = $db_res_arr["CACHE"];
                 }
             }
         }
 
         if (!$bValid) {
-            $http = new \Bitrix\Main\Web\HttpClient(array(
-                "socketTimeout" => 120,
-            ));
+            $http = new \Bitrix\Main\Web\HttpClient(
+                array(
+                    "socketTimeout" => 120,
+                )
+            );
             $http->setHeader("User-Agent", "BitrixSMRSS");
-            $text = $http->get($SITE . ":" . $PORT . $PATH . (strlen($QUERY_STR) > 0 ? "?" . $QUERY_STR : ""));
+            $text = $http->get($SITE . ":" . $PORT . $PATH . ($QUERY_STR <> '' ? "?" . $QUERY_STR : ""));
 
             if ($text) {
                 $rss_charset = "windows-1251";
-                if (preg_match("/<" . "\?XML[^>]{1,}encoding=[\"']([^>\"']{1,})[\"'][^>]{0,}\?" . ">/i", $text, $matches)) {
+                if (preg_match(
+                    "/<" . "\?XML[^>]{1,}encoding=[\"']([^>\"']{1,})[\"'][^>]{0,}\?" . ">/i",
+                    $text,
+                    $matches
+                )) {
                     $rss_charset = Trim($matches[1]);
                 } else {
                     $headers = $http->getHeaders();
                     $ct = $headers->get("Content-Type");
-                    if (preg_match("#charset=([a-zA-Z0-9-]+)#m", $ct, $match))
+                    if (preg_match("#charset=([a-zA-Z0-9-]+)#m", $ct, $match)) {
                         $rss_charset = $match[1];
+                    }
                 }
 
                 $text = preg_replace("/<!DOCTYPE.*?>/i", "", $text);
@@ -86,24 +103,26 @@ class CAllIBlockRSS
                         && is_array($ar["rss"]["#"]) && isset($ar["rss"]["#"]["channel"])
                         && is_array($ar["rss"]["#"]["channel"]) && isset($ar["rss"]["#"]["channel"][0])
                         && is_array($ar["rss"]["#"]["channel"][0]) && isset($ar["rss"]["#"]["channel"][0]["#"])
-                    )
+                    ) {
                         $arRes = $ar["rss"]["#"]["channel"][0]["#"];
-                    else
+                    } else {
                         $arRes = array();
+                    }
                 } else {
                     if (
                         is_array($ar) && isset($ar["rss"])
                         && is_array($ar["rss"]) && isset($ar["rss"]["#"])
-                    )
+                    ) {
                         $arRes = $ar["rss"]["#"];
-                    else
+                    } else {
                         $arRes = array();
+                    }
                 }
 
-                $arRes["rss_charset"] = strtolower(SITE_CHARSET);
+                $arRes["rss_charset"] = mb_strtolower(SITE_CHARSET);
 
                 if (!$bValid) {
-                    $ttl = (strlen($arRes["ttl"][0]["#"]) > 0) ? IntVal($arRes["ttl"][0]["#"]) : 60;
+                    $ttl = ($arRes["ttl"][0]["#"] <> '') ? intval($arRes["ttl"][0]["#"]) : 60;
                     CIBlockRSS::UpdateCache($cacheKey, $text, array("minutes" => $ttl), $bUpdate);
                 }
             }
@@ -113,29 +132,37 @@ class CAllIBlockRSS
         }
     }
 
-    function GetNews($ID, $LANG, $TYPE, $SITE, $PORT, $PATH, $LIMIT = 0)
+    public static function GetNews($ID, $LANG, $TYPE, $SITE, $PORT, $PATH, $LIMIT = 0)
     {
-        if (IntVal($ID) > 0) {
-            $ID = IntVal($ID);
+        if (intval($ID) > 0) {
+            $ID = intval($ID);
         } else {
             $ID = Trim($ID);
         }
         $LANG = Trim($LANG);
         $TYPE = Trim($TYPE);
-        $LIMIT = IntVal($LIMIT);
+        $LIMIT = intval($LIMIT);
 
-        return CIBlockRSS::GetNewsEx($SITE, $PORT, $PATH, "ID=" . $ID . "&LANG=" . $LANG . "&TYPE=" . $TYPE . "&LIMIT=" . $LIMIT);
+        return CIBlockRSS::GetNewsEx(
+            $SITE,
+            $PORT,
+            $PATH,
+            "ID=" . $ID . "&LANG=" . $LANG . "&TYPE=" . $TYPE . "&LIMIT=" . $LIMIT
+        );
     }
 
-    function FormatArray(&$arRes, $bOutChannel = false)
+    public static function FormatArray(&$arRes, $bOutChannel = false)
     {
         if (!$bOutChannel) {
-            if (is_array($arRes["title"][0]["#"]))
+            if (is_array($arRes["title"][0]["#"])) {
                 $arRes["title"][0]["#"] = $arRes["title"][0]["#"]["cdata-section"][0]["#"];
-            if (is_array($arRes["link"][0]["#"]))
+            }
+            if (is_array($arRes["link"][0]["#"])) {
                 $arRes["link"][0]["#"] = $arRes["link"][0]["#"]["cdata-section"][0]["#"];
-            if (is_array($arRes["description"][0]["#"]))
+            }
+            if (is_array($arRes["description"][0]["#"])) {
                 $arRes["description"][0]["#"] = $arRes["description"][0]["#"]["cdata-section"][0]["#"];
+            }
 
             $arResult = array(
                 "title" => $arRes["title"][0]["#"],
@@ -163,24 +190,29 @@ class CAllIBlockRSS
 
             if (!empty($arRes["item"]) && is_array($arRes["item"])) {
                 foreach ($arRes["item"] as $i => $arItem) {
-                    if (!is_array($arItem) || !is_array($arItem["#"]))
+                    if (!is_array($arItem) || !is_array($arItem["#"])) {
                         continue;
+                    }
 
-                    if (is_array($arItem["#"]["title"][0]["#"]))
+                    if (is_array($arItem["#"]["title"][0]["#"])) {
                         $arItem["#"]["title"][0]["#"] = $arItem["#"]["title"][0]["#"]["cdata-section"][0]["#"];
+                    }
 
-                    if (is_array($arItem["#"]["description"][0]["#"]))
+                    if (is_array($arItem["#"]["description"][0]["#"])) {
                         $arItem["#"]["description"][0]["#"] = $arItem["#"]["description"][0]["#"]["cdata-section"][0]["#"];
-                    elseif (is_array($arItem["#"]["encoded"][0]["#"]))
+                    } elseif (is_array($arItem["#"]["encoded"][0]["#"])) {
                         $arItem["#"]["description"][0]["#"] = $arItem["#"]["encoded"][0]["#"]["cdata-section"][0]["#"];
+                    }
                     $arResult["item"][$i]["description"] = $arItem["#"]["description"][0]["#"];
 
-                    if (is_array($arItem["#"]["title"][0]["#"]))
+                    if (is_array($arItem["#"]["title"][0]["#"])) {
                         $arItem["#"]["title"][0]["#"] = $arItem["#"]["title"][0]["#"]["cdata-section"][0]["#"];
+                    }
                     $arResult["item"][$i]["title"] = $arItem["#"]["title"][0]["#"];
 
-                    if (is_array($arItem["#"]["link"][0]["#"]))
+                    if (is_array($arItem["#"]["link"][0]["#"])) {
                         $arItem["#"]["link"][0]["#"] = $arItem["#"]["link"][0]["#"]["cdata-section"][0]["#"];
+                    }
                     $arResult["item"][$i]["link"] = $arItem["#"]["link"][0]["#"];
 
                     if ($arItem["#"]["enclosure"]) {
@@ -219,16 +251,19 @@ class CAllIBlockRSS
 
             if (!empty($arRes["item"]) && is_array($arRes["item"])) {
                 foreach ($arRes["item"] as $i => $arItem) {
-                    if (!is_array($arItem) || !is_array($arItem["#"]))
+                    if (!is_array($arItem) || !is_array($arItem["#"])) {
                         continue;
+                    }
 
-                    if (is_array($arItem["#"]["title"][0]["#"]))
+                    if (is_array($arItem["#"]["title"][0]["#"])) {
                         $arItem["#"]["title"][0]["#"] = $arItem["#"]["title"][0]["#"]["cdata-section"][0]["#"];
+                    }
 
-                    if (is_array($arItem["#"]["description"][0]["#"]))
+                    if (is_array($arItem["#"]["description"][0]["#"])) {
                         $arItem["#"]["description"][0]["#"] = $arItem["#"]["description"][0]["#"]["cdata-section"][0]["#"];
-                    elseif (is_array($arItem["#"]["encoded"][0]["#"]))
+                    } elseif (is_array($arItem["#"]["encoded"][0]["#"])) {
                         $arItem["#"]["description"][0]["#"] = $arItem["#"]["encoded"][0]["#"]["cdata-section"][0]["#"];
+                    }
                     $arResult["item"][$i]["description"] = $arItem["#"]["description"][0]["#"];
 
                     $arResult["item"][$i]["title"] = $arItem["#"]["title"][0]["#"];
@@ -254,46 +289,69 @@ class CAllIBlockRSS
         return $arResult;
     }
 
-    function XMLDate2Dec($date_XML, $dateFormat = "DD.MM.YYYY")
+    public static function XMLDate2Dec($date_XML, $dateFormat = "DD.MM.YYYY")
     {
-        static $MonthChar2Num = Array("", "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec");
+        static $MonthChar2Num = Array(
+            "",
+            "jan",
+            "feb",
+            "mar",
+            "apr",
+            "may",
+            "jun",
+            "jul",
+            "aug",
+            "sep",
+            "oct",
+            "nov",
+            "dec"
+        );
 
-        if (preg_match("/(\\d+)\\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\\s+(\\d+)/i", $date_XML, $match))
-            $timestamp = mktime(0, 0, 0, array_search(strtolower($match[2]), $MonthChar2Num), $match[1], $match[3]);
-        else
+        if (preg_match("/(\\d+)\\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\\s+(\\d+)/i", $date_XML, $match)) {
+            $timestamp = mktime(0, 0, 0, array_search(mb_strtolower($match[2]), $MonthChar2Num), $match[1], $match[3]);
+        } else {
             $timestamp = time();
+        }
 
         return date(CDatabase::DateFormatToPHP($dateFormat), $timestamp);
     }
 
-    function ExtractProperties($str, &$arProps, &$arItem)
+    public static function ExtractProperties($str, &$arProps, &$arItem)
     {
         reset($arProps);
-        foreach ($arProps as $key => $val)
+        foreach ($arProps as $key => $val) {
             $str = str_replace("#" . $key . "#", $val["VALUE"], $str);
+        }
         reset($arItem);
-        foreach ($arItem as $key => $val)
+        foreach ($arItem as $key => $val) {
             $str = str_replace("#" . $key . "#", $val, $str);
+        }
         return $str;
     }
 
-    function GetRSS($ID, $LANG, $TYPE, $LIMIT_NUM = false, $LIMIT_DAY = false, $yandex = false)
+    public static function GetRSS($ID, $LANG, $TYPE, $LIMIT_NUM = false, $LIMIT_DAY = false, $yandex = false)
     {
         echo "<" . "?xml version=\"1.0\" encoding=\"" . LANG_CHARSET . "\"?" . ">\n";
         echo "<rss version=\"2.0\"";
         echo ">\n";
 
-        $dbr = CIBlockType::GetList(array(), array(
-            "=ID" => $TYPE,
-        ));
+        $dbr = CIBlockType::GetList(
+            array(),
+            array(
+                "=ID" => $TYPE,
+            )
+        );
         $arType = $dbr->Fetch();
         if ($arType && ($arType["IN_RSS"] == "Y")) {
-            $dbr = CIBlock::GetList(array(), array(
-                "type" => $TYPE,
-                "LID" => $LANG,
-                "ACTIVE" => "Y",
-                "ID" => $ID,
-            ));
+            $dbr = CIBlock::GetList(
+                array(),
+                array(
+                    "type" => $TYPE,
+                    "LID" => $LANG,
+                    "ACTIVE" => "Y",
+                    "ID" => $ID,
+                )
+            );
             $arIBlock = $dbr->Fetch();
             if ($arIBlock && ($arIBlock["RSS_ACTIVE"] == "Y")) {
                 echo CIBlockRSS::GetRSSText($arIBlock, $LIMIT_NUM, $LIMIT_DAY, $yandex);

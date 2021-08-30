@@ -48,8 +48,9 @@ class CBPRestActivity
 
         if (!empty($activityData['PROPERTIES'])) {
             foreach ($activityData['PROPERTIES'] as $name => $property) {
-                if (isset($this->arProperties[$name]))
+                if (isset($this->arProperties[$name])) {
                     continue;
+                }
                 $this->arProperties[$name] = isset($property['DEFAULT']) ? $property['DEFAULT'] : null;
             }
         }
@@ -57,14 +58,16 @@ class CBPRestActivity
         $types = array();
         if (!empty($activityData['RETURN_PROPERTIES'])) {
             foreach ($activityData['RETURN_PROPERTIES'] as $name => $property) {
-                if (isset($this->arProperties[$name]))
+                if (isset($this->arProperties[$name])) {
                     continue;
+                }
                 $this->arProperties[$name] = isset($property['DEFAULT']) ? $property['DEFAULT'] : null;
-                if (isset($property['TYPE']))
+                if (isset($property['TYPE'])) {
                     $types[$name] = array(
                         'Type' => $property['TYPE'],
                         'Multiple' => CBPHelper::getBool($property['MULTIPLE']),
                     );
+                }
             }
         }
         $types['IsTimeout'] = array(
@@ -90,10 +93,12 @@ class CBPRestActivity
     public function Execute()
     {
         $activityData = $this->getRestActivityData();
-        if (!$activityData)
+        if (!$activityData) {
             throw new Exception(Loc::getMessage('BPRA_NOT_FOUND_ERROR'));
-        if (!Loader::includeModule('rest') || !\Bitrix\Rest\OAuthService::getEngine()->isRegistered())
+        }
+        if (!Loader::includeModule('rest') || !\Bitrix\Rest\OAuthService::getEngine()->isRegistered()) {
             return CBPActivityExecutionStatus::Closed;
+        }
 
         $propertiesData = [];
         if (!empty($activityData['PROPERTIES'])) {
@@ -107,7 +112,10 @@ class CBPRestActivity
                     $fieldTypeObject = $documentService->getFieldTypeObject($this->GetDocumentType(), $property);
                     if ($fieldTypeObject) {
                         $fieldTypeObject->setDocumentId($this->GetDocumentId());
-                        $propertiesData[$name] = $fieldTypeObject->externalizeValue($this->GetName(), $propertiesData[$name]);
+                        $propertiesData[$name] = $fieldTypeObject->externalizeValue(
+                            $this->GetName(),
+                            $propertiesData[$name]
+                        );
                     }
                 }
 
@@ -117,11 +125,13 @@ class CBPRestActivity
             }
         }
 
-        $dbRes = \Bitrix\Rest\AppTable::getList(array(
-            'filter' => array(
-                '=CLIENT_ID' => $activityData['APP_ID'],
+        $dbRes = \Bitrix\Rest\AppTable::getList(
+            array(
+                'filter' => array(
+                    '=CLIENT_ID' => $activityData['APP_ID'],
+                )
             )
-        ));
+        );
         $application = $dbRes->fetch();
 
         if (!$application) {
@@ -134,6 +144,9 @@ class CBPRestActivity
         }
 
         $userId = CBPHelper::ExtractUsers($this->AuthUserId, $this->GetDocumentId(), true);
+        if (empty($userId) && !empty($activityData['AUTH_USER_ID'])) {
+            $userId = $activityData['AUTH_USER_ID'];
+        }
 
         $auth = array(
             'WORKFLOW_ID' => $this->getWorkflowInstanceId(),
@@ -183,39 +196,45 @@ class CBPRestActivity
 
         if ($this->SetStatusMessage == 'Y') {
             $message = $this->StatusMessage;
-            if (empty($message))
+            if (empty($message)) {
                 $message = Loc::getMessage('BPRA_DEFAULT_STATUS_MESSAGE');
+            }
             $this->SetStatusTitle($message);
         }
 
-        if ($this->UseSubscription != 'Y')
+        if ($this->UseSubscription != 'Y') {
             return CBPActivityExecutionStatus::Closed;
+        }
 
         $this->Subscribe($this);
 
         return CBPActivityExecutionStatus::Executing;
     }
 
-
     public function Subscribe(IBPActivityExternalEventListener $eventHandler)
     {
-        if ($eventHandler == null)
+        if ($eventHandler == null) {
             throw new Exception('eventHandler');
+        }
 
         $timeoutDuration = $this->CalculateTimeoutDuration();
         if ($timeoutDuration > 0) {
             $schedulerService = $this->workflow->GetService('SchedulerService');
-            $this->subscriptionId = $schedulerService->SubscribeOnTime($this->workflow->GetInstanceId(), $this->name, time() + $timeoutDuration);
+            $this->subscriptionId = $schedulerService->SubscribeOnTime(
+                $this->workflow->GetInstanceId(),
+                $this->name,
+                time() + $timeoutDuration
+            );
         }
 
         $this->workflow->AddEventHandler($this->name, $eventHandler);
     }
 
-
     public function Unsubscribe(IBPActivityExternalEventListener $eventHandler)
     {
-        if ($eventHandler == null)
+        if ($eventHandler == null) {
             throw new Exception('eventHandler');
+        }
 
         $timeoutDuration = $this->CalculateTimeoutDuration();
         if ($timeoutDuration > 0) {
@@ -228,13 +247,16 @@ class CBPRestActivity
         $this->workflow->RemoveEventHandler($this->name, $eventHandler);
     }
 
-
     public function OnExternalEvent($eventParameters = array())
     {
-        if ($this->executionStatus == CBPActivityExecutionStatus::Closed)
+        if ($this->executionStatus == CBPActivityExecutionStatus::Closed) {
             return;
+        }
 
-        $onAgent = (array_key_exists('SchedulerService', $eventParameters) && $eventParameters['SchedulerService'] == 'OnAgent');
+        $onAgent = (array_key_exists(
+                'SchedulerService',
+                $eventParameters
+            ) && $eventParameters['SchedulerService'] == 'OnAgent');
         if ($onAgent) {
             $this->IsTimeout = 1;
             $this->Unsubscribe($this);
@@ -242,24 +264,29 @@ class CBPRestActivity
             return;
         }
 
-        if ($this->eventId !== (string)$eventParameters['EVENT_ID'])
+        if ($this->eventId !== (string)$eventParameters['EVENT_ID']) {
             return;
+        }
 
         if (!empty($eventParameters['RETURN_VALUES'])) {
             $activityData = self::getRestActivityData();
             $whiteList = array();
             if (!empty($activityData['RETURN_PROPERTIES'])) {
                 foreach ($activityData['RETURN_PROPERTIES'] as $name => $property) {
-                    $whiteList[strtoupper($name)] = $name;
+                    $whiteList[mb_strtoupper($name)] = $name;
                 }
             }
 
             /** @var CBPDocumentService $documentService */
             $documentService = $this->workflow->GetService('DocumentService');
-            $eventParameters['RETURN_VALUES'] = array_change_key_case((array)$eventParameters['RETURN_VALUES'], CASE_UPPER);
+            $eventParameters['RETURN_VALUES'] = array_change_key_case(
+                (array)$eventParameters['RETURN_VALUES'],
+                CASE_UPPER
+            );
             foreach ($eventParameters['RETURN_VALUES'] as $name => $value) {
-                if (!isset($whiteList[$name]))
+                if (!isset($whiteList[$name])) {
                     continue;
+                }
 
                 $property = $activityData['RETURN_PROPERTIES'][$whiteList[$name]];
                 if ($property && $value) {
@@ -277,7 +304,8 @@ class CBPRestActivity
 
         $this->WriteToTrackingService(
             !empty($eventParameters['LOG_MESSAGE']) ? $eventParameters['LOG_MESSAGE']
-                : Loc::getMessage('BPRA_DEFAULT_LOG_MESSAGE'));
+                : Loc::getMessage('BPRA_DEFAULT_LOG_MESSAGE')
+        );
 
         if (empty($eventParameters['LOG_ACTION'])) {
             $this->Unsubscribe($this);
@@ -287,56 +315,71 @@ class CBPRestActivity
 
     public function Cancel()
     {
-        if ($this->UseSubscription == 'Y')
+        if ($this->UseSubscription == 'Y') {
             $this->Unsubscribe($this);
+        }
 
         return CBPActivityExecutionStatus::Closed;
     }
 
     public function HandleFault(Exception $exception)
     {
-        if ($exception == null)
+        if ($exception == null) {
             throw new Exception("exception");
+        }
 
         $status = $this->Cancel();
-        if ($status == CBPActivityExecutionStatus::Canceling)
+        if ($status == CBPActivityExecutionStatus::Canceling) {
             return CBPActivityExecutionStatus::Faulting;
+        }
 
         return $status;
     }
 
-    public static function GetPropertiesDialog($documentType, $activityName, $workflowTemplate, $workflowParameters, $workflowVariables, $currentValues = null, $formName = "")
-    {
+    public static function GetPropertiesDialog(
+        $documentType,
+        $activityName,
+        $workflowTemplate,
+        $workflowParameters,
+        $workflowVariables,
+        $currentValues = null,
+        $formName = ""
+    ) {
         if (!Loader::includeModule('rest')) {
             return false;
         }
 
         $activityData = self::getRestActivityData();
 
-        $dbRes = \Bitrix\Rest\AppTable::getList([
-            'select' => ['ID'],
-            'filter' => [
-                '=CLIENT_ID' => $activityData['APP_ID'],
+        $dbRes = \Bitrix\Rest\AppTable::getList(
+            [
+                'select' => ['ID'],
+                'filter' => [
+                    '=CLIENT_ID' => $activityData['APP_ID'],
+                ]
             ]
-        ]);
+        );
         $application = $dbRes->fetch();
 
         if ($application) {
             $activityData['APP_ID_INT'] = $application['ID'];
         }
 
-        $dialog = new \Bitrix\Bizproc\Activity\PropertiesDialog(__FILE__, array(
+        $dialog = new \Bitrix\Bizproc\Activity\PropertiesDialog(
+            __FILE__, array(
             'documentType' => $documentType,
             'activityName' => $activityName,
             'workflowTemplate' => $workflowTemplate,
             'workflowParameters' => $workflowParameters,
             'workflowVariables' => $workflowVariables,
-            'currentValues' => $currentValues
-        ));
+            'currentValues' => $currentValues,
+            'formName' => $formName
+        )
+        );
 
         $map = array(
             'AuthUserId' => array(
-                'Name' => 'AuthUserId',
+                'Name' => Loc::getMessage("BPRA_PD_USER_ID"),
                 'FieldName' => 'authuserid',
                 'Type' => 'user',
                 'Default' => 'user_' . $activityData['AUTH_USER_ID']
@@ -371,26 +414,55 @@ class CBPRestActivity
             ),
         );
 
-        $properties = isset($activityData['PROPERTIES']) && is_array($activityData['PROPERTIES']) ? $activityData['PROPERTIES'] : array();
+        $properties = isset($activityData['PROPERTIES']) && is_array(
+            $activityData['PROPERTIES']
+        ) ? $activityData['PROPERTIES'] : array();
         foreach ($properties as $name => $property) {
-            if (!array_key_exists($name, $map))
+            if (!array_key_exists($name, $map)) {
                 $map[$name] = array(
                     'Name' => RestActivityTable::getLocalization($property['NAME'], LANGUAGE_ID),
                     'Description' => RestActivityTable::getLocalization($property['DESCRIPTION'], LANGUAGE_ID),
-                    'FieldName' => static::PROPERTY_NAME_PREFIX . strtolower($name),
+                    'FieldName' => static::PROPERTY_NAME_PREFIX . mb_strtolower($name),
                     'Type' => $property['TYPE'],
                     'Required' => $property['REQUIRED'],
                     'Multiple' => $property['MULTIPLE'],
                     'Default' => $property['DEFAULT'],
                     'Options' => isset($property['OPTIONS']) ? $property['OPTIONS'] : null
                 );
+            }
+        }
+
+        $appPlacement = null;
+        if (!empty($activityData['APP_ID_INT'])) {
+            $appPlacement = self::getAppPlacement($activityData['APP_ID_INT'], $activityData['CODE']);
         }
 
         $dialog->setMap($map)
-            ->setRuntimeData(array('ACTIVITY_DATA' => $activityData))
+            ->setRuntimeData(
+                [
+                    'ACTIVITY_DATA' => $activityData,
+                    'IS_ADMIN' => static::checkAdminPermissions(),
+                    'APP_PLACEMENT' => $appPlacement,
+                ]
+            )
             ->setRenderer(array(__CLASS__, 'renderPropertiesDialog'));
 
         return $dialog;
+    }
+
+    private static function getAppPlacement(int $appId, string $code): ?array
+    {
+        $result = \Bitrix\Rest\PlacementTable::getList(
+            [
+                'filter' => [
+                    '=APP_ID' => $appId,
+                    '=ADDITIONAL' => $code,
+                    '=PLACEMENT' => \Bitrix\Bizproc\RestService::PLACEMENT_ACTIVITY_PROPERTIES_DIALOG,
+                ]
+            ]
+        )->fetch();
+
+        return $result ?: null;
     }
 
     public static function renderPropertiesDialog(\Bitrix\Bizproc\Activity\PropertiesDialog $dialog)
@@ -401,51 +473,102 @@ class CBPRestActivity
 
         /** @var CBPDocumentService $documentService */
         $documentService = $runtime->GetService("DocumentService");
-        $activityDocumentType = is_array($activityData['DOCUMENT_TYPE']) ? $activityData['DOCUMENT_TYPE'] : $dialog->getDocumentType();
-        $properties = isset($activityData['PROPERTIES']) && is_array($activityData['PROPERTIES']) ? $activityData['PROPERTIES'] : array();
+        $activityDocumentType = is_array(
+            $activityData['DOCUMENT_TYPE']
+        ) ? $activityData['DOCUMENT_TYPE'] : $dialog->getDocumentType();
+        $properties = isset($activityData['PROPERTIES']) && is_array(
+            $activityData['PROPERTIES']
+        ) ? $activityData['PROPERTIES'] : array();
 
         $currentValues = $dialog->getCurrentValues();
 
-        ob_start();
-        foreach ($properties as $name => $property):
-            $required = CBPHelper::getBool($property['REQUIRED']);
-            $name = strtolower($name);
-            $value = !CBPHelper::isEmptyValue($currentValues[static::PROPERTY_NAME_PREFIX . $name]) ? $currentValues[static::PROPERTY_NAME_PREFIX . $name] : $property['DEFAULT'];
+        $appPlacement = $data['APP_PLACEMENT'];
+        $placementSid = null;
+        $appCurrentValues = [];
 
-            $property['NAME'] = RestActivityTable::getLocalization($property['NAME'], LANGUAGE_ID);
-            if (isset($property['DESCRIPTION'])) {
-                $property['DESCRIPTION'] = RestActivityTable::getLocalization($property['DESCRIPTION'], LANGUAGE_ID);
+        ob_start();
+
+        if ($appPlacement):
+
+            foreach ($properties as $key => $property) {
+                $appCurrentValues[$key] = $dialog->getCurrentValue('property_' . mb_strtolower($key));
             }
 
-            ?>
-            <tr>
-                <td align="right" width="40%" valign="top">
+            global $APPLICATION;
+            echo '<tr><td align="right" colspan="2">';
+            $placementSid = $APPLICATION->includeComponent(
+                'bitrix:app.layout',
+                '',
+                array(
+                    'ID' => $appPlacement['APP_ID'],
+                    'PLACEMENT' => \Bitrix\Bizproc\RestService::PLACEMENT_ACTIVITY_PROPERTIES_DIALOG,
+                    'PLACEMENT_ID' => $appPlacement['ID'],
+                    "PLACEMENT_OPTIONS" => [
+                        'code' => $activityData['CODE'],
+                        'activity_name' => $dialog->getActivityName(),
+                        'properties' => $properties,
+                        'current_values' => $appCurrentValues,
+                        'document_type' => $dialog->getDocumentType(),
+                        'document_fields' => $documentService->GetDocumentFields($dialog->getDocumentType())
+                    ],
+                    'PARAM' => array(
+                        'FRAME_WIDTH' => '100%',
+                        'FRAME_HEIGHT' => '350px'
+                    ),
+                ),
+                null,
+                array('HIDE_ICONS' => 'Y')
+            );
+            echo '</td></tr>';
+        else:
+
+            foreach ($properties as $name => $property):
+                $required = CBPHelper::getBool($property['REQUIRED']);
+                $name = mb_strtolower($name);
+                $value = !CBPHelper::isEmptyValue(
+                    $currentValues[static::PROPERTY_NAME_PREFIX . $name]
+                ) ? $currentValues[static::PROPERTY_NAME_PREFIX . $name] : $property['DEFAULT'];
+
+                $property['NAME'] = RestActivityTable::getLocalization($property['NAME'], LANGUAGE_ID);
+                if (isset($property['DESCRIPTION'])) {
+                    $property['DESCRIPTION'] = RestActivityTable::getLocalization(
+                        $property['DESCRIPTION'],
+                        LANGUAGE_ID
+                    );
+                }
+
+                ?>
+                <tr>
+                    <td align="right" width="40%" valign="top">
 					<span class="<?= $required ? 'adm-required-field' : '' ?>">
 						<?= htmlspecialcharsbx($property['NAME']) ?>:
 					</span>
-                    <? if (!empty($property['DESCRIPTION'])):?>
-                        <br/><?= htmlspecialcharsbx($property['DESCRIPTION']) ?>
-                    <?endif; ?>
-                </td>
-                <td width="60%">
-                    <?= $documentService->getFieldInputControl(
-                        $activityDocumentType,
-                        $property,
-                        array('Field' => static::PROPERTY_NAME_PREFIX . $name, 'Form' => $dialog->getFormName()),
-                        $value,
-                        true,
-                        false
-                    ) ?>
-                </td>
-            </tr>
+                        <? if (!empty($property['DESCRIPTION'])):?>
+                            <br/><?= htmlspecialcharsbx($property['DESCRIPTION']) ?>
+                        <?endif; ?>
+                    </td>
+                    <td width="60%">
+                        <?= $documentService->getFieldInputControl(
+                            $activityDocumentType,
+                            $property,
+                            array('Field' => static::PROPERTY_NAME_PREFIX . $name, 'Form' => $dialog->getFormName()),
+                            $value,
+                            true,
+                            false
+                        ) ?>
+                    </td>
+                </tr>
 
-        <?
-        endforeach;
+            <?
+            endforeach;
+
+        endif;
 
         if (static::checkAdminPermissions()):?>
             <tr>
-                <td align="right" width="40%" valign="top"><span
-                            class=""><?= Loc::getMessage("BPRA_PD_USER_ID") ?>:</span></td>
+                <td align="right" width="40%" valign="top"><span class=""><?= Loc::getMessage(
+                            "BPRA_PD_USER_ID"
+                        ) ?>:</span></td>
                 <td width="60%">
                     <?= $dialog->renderFieldControl('AuthUserId', $currentValues['authuserid'], true, 0) ?>
                 </td>
@@ -455,35 +578,62 @@ class CBPRestActivity
             <td align="right"><?= Loc::getMessage("BPRA_PD_SET_STATUS_MESSAGE") ?>:</td>
             <td>
                 <select name="setstatusmessage">
-                    <option value="Y"<?= $currentValues["setstatusmessage"] == "Y" ? " selected" : "" ?>><?= Loc::getMessage("BPRA_PD_YES") ?></option>
-                    <option value="N"<?= $currentValues["setstatusmessage"] == "N" ? " selected" : "" ?>><?= Loc::getMessage("BPRA_PD_NO") ?></option>
+                    <option value="Y"<?= $currentValues["setstatusmessage"] == "Y" ? " selected" : "" ?>><?= Loc::getMessage(
+                            "BPRA_PD_YES"
+                        ) ?></option>
+                    <option value="N"<?= $currentValues["setstatusmessage"] == "N" ? " selected" : "" ?>><?= Loc::getMessage(
+                            "BPRA_PD_NO"
+                        ) ?></option>
                 </select>
             </td>
         </tr>
         <tr>
             <td align="right"><?= Loc::getMessage("BPRA_PD_STATUS_MESSAGE") ?>:</td>
-            <td valign="top"><?= CBPDocument::ShowParameterField("string", 'statusmessage', $currentValues['statusmessage'], Array('size' => '45')) ?></td>
+            <td valign="top"><?= CBPDocument::ShowParameterField(
+                    "string",
+                    'statusmessage',
+                    $currentValues['statusmessage'],
+                    Array('size' => '45')
+                ) ?></td>
         </tr>
         <tr>
             <td align="right"><?= Loc::getMessage("BPRA_PD_USE_SUBSCRIPTION") ?>:</td>
             <td>
                 <select name="usesubscription" <?= !empty($activityData['USE_SUBSCRIPTION']) ? 'disabled' : '' ?>>
-                    <option value="Y"<?= $currentValues["usesubscription"] == 'Y' ? " selected" : "" ?>><?= Loc::getMessage("BPRA_PD_YES") ?></option>
-                    <option value="N"<?= $currentValues["usesubscription"] == 'N' ? " selected" : "" ?>><?= Loc::getMessage("BPRA_PD_NO") ?></option>
+                    <option value="Y"<?= $currentValues["usesubscription"] == 'Y' ? " selected" : "" ?>><?= Loc::getMessage(
+                            "BPRA_PD_YES"
+                        ) ?></option>
+                    <option value="N"<?= $currentValues["usesubscription"] == 'N' ? " selected" : "" ?>><?= Loc::getMessage(
+                            "BPRA_PD_NO"
+                        ) ?></option>
                 </select>
             </td>
         </tr>
         <? if ($activityData['USE_SUBSCRIPTION'] != 'N'): ?>
         <tr>
-            <td align="right"><?= Loc::getMessage("BPRA_PD_TIMEOUT_DURATION") ?>
-                :<br/><?= Loc::getMessage("BPRA_PD_TIMEOUT_DURATION_HINT") ?></td>
+            <td align="right"><?= Loc::getMessage("BPRA_PD_TIMEOUT_DURATION") ?>:<br/><?= Loc::getMessage(
+                    "BPRA_PD_TIMEOUT_DURATION_HINT"
+                ) ?></td>
             <td valign="top">
-                <?= CBPDocument::ShowParameterField('int', 'timeoutduration', $currentValues["timeoutduration"], array('size' => 20)) ?>
+                <?= CBPDocument::ShowParameterField(
+                    'int',
+                    'timeoutduration',
+                    $currentValues["timeoutduration"],
+                    array('size' => 20)
+                ) ?>
                 <select name="timeoutdurationtype">
-                    <option value="s"<?= ($currentValues["timeoutdurationtype"] == "s") ? " selected" : "" ?>><?= Loc::getMessage("BPRA_PD_TIME_S") ?></option>
-                    <option value="m"<?= ($currentValues["timeoutdurationtype"] == "m") ? " selected" : "" ?>><?= Loc::getMessage("BPRA_PD_TIME_M") ?></option>
-                    <option value="h"<?= ($currentValues["timeoutdurationtype"] == "h") ? " selected" : "" ?>><?= Loc::getMessage("BPRA_PD_TIME_H") ?></option>
-                    <option value="d"<?= ($currentValues["timeoutdurationtype"] == "d") ? " selected" : "" ?>><?= Loc::getMessage("BPRA_PD_TIME_D") ?></option>
+                    <option value="s"<?= ($currentValues["timeoutdurationtype"] == "s") ? " selected" : "" ?>><?= Loc::getMessage(
+                            "BPRA_PD_TIME_S"
+                        ) ?></option>
+                    <option value="m"<?= ($currentValues["timeoutdurationtype"] == "m") ? " selected" : "" ?>><?= Loc::getMessage(
+                            "BPRA_PD_TIME_M"
+                        ) ?></option>
+                    <option value="h"<?= ($currentValues["timeoutdurationtype"] == "h") ? " selected" : "" ?>><?= Loc::getMessage(
+                            "BPRA_PD_TIME_H"
+                        ) ?></option>
+                    <option value="d"<?= ($currentValues["timeoutdurationtype"] == "d") ? " selected" : "" ?>><?= Loc::getMessage(
+                            "BPRA_PD_TIME_D"
+                        ) ?></option>
                 </select>
                 <?
                 $delayMinLimit = CBPSchedulerService::getDelayMinLimit();
@@ -498,32 +648,65 @@ class CBPRestActivity
         </tr>
     <?endif;
 
-        if ($activityData['USE_PLACEMENT'] === 'Y' && !empty($activityData['APP_ID_INT'])):
-            CJSCore::Init(['applayout']);
+        if ($placementSid):?>
+            <script>
+                BX.ready(function () {
+                    var appLayout = BX.rest.AppLayout.get('<?=CUtil::JSEscape($placementSid)?>');
+                    var properties = <?=\Bitrix\Main\Web\Json::encode($properties)?>;
+                    var values = <?=\Bitrix\Main\Web\Json::encode($appCurrentValues)?>;
+                    var form = document.forms['<?=CUtil::JSEscape($dialog->getFormName())?>'];
 
-            $appJs = $appJs = (int)$activityData['APP_ID_INT'];
-            $codeJs = htmlspecialcharsbx(CUtil::JSEscape($activityData['CODE']));
-            $actNameJs = htmlspecialcharsbx(CUtil::JSEscape($dialog->getActivityName()));
-            ?>
-            <tr>
-                <td align="right"></td>
-                <td align="right">
-                    <button onclick="if (BX.rest) {BX.rest.AppLayout.openApplication(<?= $appJs ?>, {
-                            action: 'bp_activity_settings',
-                            code: '<?= $codeJs ?>',
-                            activity_name: '<?= $actNameJs ?>'
-                            });} return false;">
-                        <?= GetMessage('BPRA_PD_CONFIGURE') ?>
-                    </button>
-                </td>
-            </tr>
-        <?endif;
+                    function setValueToForm(name, value) {
+                        name = 'property_' + name.toLowerCase();
+                        if (BX.type.isArray(value)) {
+                            name += '[]';
+                        } else {
+                            value = [value];
+                        }
+
+                        Array.from(form.querySelectorAll('[name="' + name + '"]')).forEach(function (element) {
+                            BX.remove(element);
+                        });
+
+                        value.forEach(function (val) {
+                            form.appendChild(BX.create('input', {
+                                props: {
+                                    type: 'hidden',
+                                    name: name,
+                                    value: val
+                                }
+                            }));
+                        });
+                    }
+
+                    var placementInterface = appLayout.messageInterface;
+                    placementInterface.setPropertyValue = function (param, callback) {
+                        for (var key in param) {
+                            if (properties[key]) {
+                                setValueToForm(key, param[key]);
+                            }
+                        }
+                    }
+
+                    for (var k in values) {
+                        setValueToForm(k, values[k]);
+                    }
+                });
+            </script>
+        <?php endif;
 
         return ob_get_clean();
     }
 
-    public static function GetPropertiesDialogValues($documentType, $activityName, &$workflowTemplate, &$workflowParameters, &$workflowVariables, $currentValues, &$errors)
-    {
+    public static function GetPropertiesDialogValues(
+        $documentType,
+        $activityName,
+        &$workflowTemplate,
+        &$workflowParameters,
+        &$workflowVariables,
+        $currentValues,
+        &$errors
+    ) {
         $runtime = CBPRuntime::GetRuntime();
         $errors = array();
 
@@ -541,16 +724,21 @@ class CBPRestActivity
         }
 
         $activityData = self::getRestActivityData();
-        $activityProperties = isset($activityData['PROPERTIES']) && is_array($activityData['PROPERTIES']) ? $activityData['PROPERTIES'] : array();
+        $activityProperties = isset($activityData['PROPERTIES']) && is_array(
+            $activityData['PROPERTIES']
+        ) ? $activityData['PROPERTIES'] : array();
         /** @var CBPDocumentService $documentService */
         $documentService = $runtime->GetService('DocumentService');
-        $activityDocumentType = is_array($activityData['DOCUMENT_TYPE']) ? $activityData['DOCUMENT_TYPE'] : $documentType;
+        $activityDocumentType = is_array(
+            $activityData['DOCUMENT_TYPE']
+        ) ? $activityData['DOCUMENT_TYPE'] : $documentType;
 
         foreach ($activityProperties as $name => $property) {
-            $requestName = static::PROPERTY_NAME_PREFIX . strtolower($name);
+            $requestName = static::PROPERTY_NAME_PREFIX . mb_strtolower($name);
 
-            if (isset($properties[$requestName]))
+            if (isset($properties[$requestName])) {
                 continue;
+            }
 
             $errors = array();
 
@@ -562,24 +750,35 @@ class CBPRestActivity
                 $errors
             );
 
-            if (count($errors) > 0)
+            if (count($errors) > 0) {
                 return false;
+            }
         }
 
-        if (static::checkAdminPermissions()) {
-            $properties['AuthUserId'] = CBPHelper::usersStringToArray($currentValues['authuserid'], $documentType, $errors);
-            if (count($errors) > 0)
+        if (static::checkAdminPermissions() && isset($currentValues['authuserid'])) {
+            $properties['AuthUserId'] = CBPHelper::usersStringToArray(
+                $currentValues['authuserid'],
+                $documentType,
+                $errors
+            );
+            if (count($errors) > 0) {
                 return false;
+            }
         } else {
             unset($properties['AuthUserId']);
         }
 
-        if (!empty($activityData['USE_SUBSCRIPTION']))
+        if (!empty($activityData['USE_SUBSCRIPTION'])) {
             $properties['UseSubscription'] = $activityData['USE_SUBSCRIPTION'];
+        }
 
-        $errors = self::ValidateProperties($properties, new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser));
-        if (count($errors) > 0)
+        $errors = self::ValidateProperties(
+            $properties,
+            new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser)
+        );
+        if (count($errors) > 0) {
             return false;
+        }
 
         $currentActivity = &CBPWorkflowTemplateLoader::FindActivityByName($workflowTemplate, $activityName);
         $currentActivity["Properties"] = $properties;
@@ -597,23 +796,26 @@ class CBPRestActivity
             return $errors;
         }
 
-        $properties = isset($activityData['PROPERTIES']) && is_array($activityData['PROPERTIES']) ? $activityData['PROPERTIES'] : array();
+        $properties = isset($activityData['PROPERTIES']) && is_array(
+            $activityData['PROPERTIES']
+        ) ? $activityData['PROPERTIES'] : array();
         foreach ($properties as $name => $property) {
             $value = isset($property['DEFAULT']) ? $property['DEFAULT'] : null;
-            if (isset($testProperties[$name]))
+            if (isset($testProperties[$name])) {
                 $value = $testProperties[$name];
+            }
             if (CBPHelper::getBool($property['REQUIRED']) && CBPHelper::isEmptyValue($value)) {
                 $errors[] = array(
                     'code' => 'NotExist',
                     'parameter' => $name,
-                    'message' => Loc::getMessage('BPRA_PD_ERROR_EMPTY_PROPERTY',
+                    'message' => Loc::getMessage(
+                        'BPRA_PD_ERROR_EMPTY_PROPERTY',
                         array(
                             '#NAME#' => RestActivityTable::getLocalization($property['NAME'], LANGUAGE_ID)
                         )
                     )
                 );
             }
-
         }
 
         if (
@@ -625,7 +827,8 @@ class CBPRestActivity
             $errors[] = array(
                 'code' => 'NotExist',
                 'parameter' => 'AuthUserId',
-                'message' => Loc::getMessage('BPRA_PD_ERROR_EMPTY_PROPERTY',
+                'message' => Loc::getMessage(
+                    'BPRA_PD_ERROR_EMPTY_PROPERTY',
                     array(
                         '#NAME#' => Loc::getMessage('BPRA_PD_USER_ID')
                     )
@@ -641,9 +844,10 @@ class CBPRestActivity
         $timeoutDuration = ($this->IsPropertyExists('TimeoutDuration') ? $this->TimeoutDuration : 0);
 
         $timeoutDurationType = ($this->IsPropertyExists('TimeoutDurationType') ? $this->TimeoutDurationType : "s");
-        $timeoutDurationType = strtolower($timeoutDurationType);
-        if (!in_array($timeoutDurationType, array('s', 'd', 'h', 'm')))
+        $timeoutDurationType = mb_strtolower($timeoutDurationType);
+        if (!in_array($timeoutDurationType, array('s', 'd', 'h', 'm'))) {
             $timeoutDurationType = 's';
+        }
 
         $timeoutDuration = intval($timeoutDuration);
         switch ($timeoutDurationType) {

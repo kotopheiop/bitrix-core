@@ -80,10 +80,17 @@ class ApplyPublic
      */
     public function __construct($name, Main\Engine\Controller $controller, $config = array())
     {
-        $this->keepField([
-            'languageId', 'tmpFolderPath', 'totalFileCount', 'sourceFolderPath',
-            'seekPath', 'seekModule', 'seekType'
-        ]);
+        $this->keepField(
+            [
+                'languageId',
+                'tmpFolderPath',
+                'totalFileCount',
+                'sourceFolderPath',
+                'seekPath',
+                'seekModule',
+                'seekType'
+            ]
+        );
 
         parent::__construct($name, $controller, $config);
 
@@ -141,7 +148,9 @@ class ApplyPublic
             $sourceDirectory = new Translate\IO\Directory($this->sourceFolderPath);
             if (!$sourceDirectory->isExists()) {
                 $this->addError(
-                    new Error(Loc::getMessage('TR_ERROR_CREATE_TARGET_FOLDER', array('#PATH#' => $this->sourceFolderPath)))
+                    new Error(
+                        Loc::getMessage('TR_ERROR_CREATE_TARGET_FOLDER', array('#PATH#' => $this->sourceFolderPath))
+                    )
                 );
             }
 
@@ -206,11 +215,16 @@ class ApplyPublic
 
                 $sourceFolder = new Main\IO\Directory($entry->getPhysicalPath() . $typeSourcePath);
                 if ($sourceFolder->isExists()) {
-                    $targetFolderPath = str_replace('#BX_ROOT#', self::$documentRoot . '/' . BX_ROOT, self::TARGET_FOLDERS[$type]);
+                    $targetFolderPath = str_replace(
+                        '#BX_ROOT#',
+                        self::$documentRoot . '' . BX_ROOT,
+                        self::TARGET_FOLDERS[$type]
+                    );
 
                     foreach ($this->lookThroughTmpFolder($sourceFolder->getPhysicalPath()) as $filePaths) {
                         foreach ($filePaths as $langFilePath => $sourceFullPath) {
-                            $targetPath = $targetFolderPath . '/' .
+                            $targetPath =
+                                $targetFolderPath . '/' .
                                 str_replace($moduleName . $typeSourcePath . '/', '', dirname($langFilePath));
 
                             $targetFolder = new Main\IO\Directory($targetPath);
@@ -218,16 +232,25 @@ class ApplyPublic
                                 $targetFolder->create();
                             }
 
-                            $source = new Main\IO\File($sourceFullPath);
+                            $moduleSourcePath = self::$documentRoot . '' . BX_ROOT . '/modules/' . $langFilePath;
+                            $source = new Main\IO\File($moduleSourcePath);
+                            if (!$source->isExists()) {
+                                continue;
+                            }
 
-                            $target = new Main\IO\File($targetFolder->getPhysicalPath() . '/' . basename($langFilePath));
+                            $target = new Main\IO\File(
+                                $targetFolder->getPhysicalPath() . '/' . basename($langFilePath)
+                            );
                             if ($target->isExists()) {
                                 $target->markWritable();
                             }
 
                             try {
-                                if (!@copy($source->getPhysicalPath(), $target->getPhysicalPath())) {
-                                    $error = error_get_last();
+                                if (function_exists('error_clear_last')) {
+                                    \error_clear_last();
+                                }
+                                if (\copy($source->getPhysicalPath(), $target->getPhysicalPath()) !== true) {
+                                    $error = \error_get_last();
                                     $this->addError(new Main\Error($error['message'], $error['type']));
                                     continue;
                                 }
@@ -304,7 +327,7 @@ class ApplyPublic
                     continue;
                 }
 
-                if ((substr($name, -4) === '.php') && is_file($fullPath)) {
+                if ((mb_substr($name, -4) === '.php') && is_file($fullPath)) {
                     $files[$langFolderRelPath . '/' . $name] = $fullPath;
                 }
             }

@@ -7,8 +7,10 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Cashbox\Internals\CashboxConnectTable;
 use Bitrix\Sale\Cashbox\Internals\CashboxTable;
+use Bitrix\Sale\Internals\CashboxRestHandlerTable;
 use Bitrix\Sale\Internals\CollectableEntity;
 use Bitrix\Sale\Result;
+use Bitrix\Sale;
 
 Loc::loadMessages(__FILE__);
 
@@ -38,15 +40,110 @@ final class Manager
     {
         $result = array();
 
-        $dbRes = CashboxTable::getList(array(
-            'select' => array('*'),
-            'filter' => array('ACTIVE' => 'Y'),
-            'order' => array('SORT' => 'ASC', 'NAME' => 'ASC')
-        ));
+        $dbRes = CashboxTable::getList(
+            array(
+                'select' => array('*'),
+                'filter' => array('ACTIVE' => 'Y'),
+                'order' => array('SORT' => 'ASC', 'NAME' => 'ASC')
+            )
+        );
 
         while ($cashbox = $dbRes->fetch()) {
-            if (Restrictions\Manager::checkService($cashbox['ID'], $entity) === Restrictions\Manager::SEVERITY_NONE)
+            if (Restrictions\Manager::checkService($cashbox['ID'], $entity) === Restrictions\Manager::SEVERITY_NONE) {
                 $result[$cashbox['ID']] = $cashbox;
+            }
+        }
+
+        return $result;
+    }
+
+    private static function getCashboxByPayment(Sale\Payment $payment): array
+    {
+        $service = $payment->getPaySystem();
+        if ($service && $service->isSupportPrintCheck()) {
+            /** @var CashboxPaySystem $cashboxClass */
+            $cashboxClass = $service->getCashboxClass();
+            $paySystemParams = $service->getParamsBusValue($payment);
+            $paySystemCodeForKkm = $cashboxClass::getPaySystemCodeForKkm();
+
+            return self::getList(
+                [
+                    'filter' => [
+                        '=ACTIVE' => 'Y',
+                        '=HANDLER' => $cashboxClass,
+                        '=KKM_ID' => $paySystemParams[$paySystemCodeForKkm],
+                    ],
+                ]
+            )->fetch();
+        }
+
+        return [];
+    }
+
+    /**
+     * @param Check $check
+     * @return array
+     */
+    public static function getAvailableCashboxList(Check $check): array
+    {
+        $cashboxList = [];
+        $firstIteration = true;
+
+        $payment = CheckManager::getPaymentByCheck($check);
+        if ($payment && self::canPaySystemPrint($payment)) {
+            $cashbox = self::getCashboxByPayment($payment);
+            if ($cashbox) {
+                $cashboxList[] = $cashbox;
+            }
+        } else {
+            $entities = $check->getEntities();
+            foreach ($entities as $entity) {
+                $items = self::getListWithRestrictions($entity);
+                if ($firstIteration) {
+                    $cashboxList = $items;
+                    $firstIteration = false;
+                } else {
+                    $cashboxList = array_intersect_assoc($items, $cashboxList);
+                }
+            }
+
+            foreach ($cashboxList as $key => $cashbox) {
+                if (self::isPaySystemCashbox($cashbox['HANDLER'])) {
+                    unset($cashboxList[$key]);
+                }
+            }
+        }
+
+        return $cashboxList;
+    }
+
+    /**
+     * @param array $parameters
+     * @return Main\ORM\Query\Result
+     * @throws Main\ArgumentException
+     * @throws Main\ObjectPropertyException
+     * @throws Main\SystemException
+     */
+    public static function getList(array $parameters = [])
+    {
+        return CashboxTable::getList($parameters);
+    }
+
+    /**
+     * Returns a list of all the registered rest cashbox handlers
+     * Structure: handler code => handler data
+     * @return array
+     * @throws Main\ArgumentException
+     * @throws Main\ObjectPropertyException
+     * @throws Main\SystemException
+     */
+    public static function getRestHandlersList()
+    {
+        $result = [];
+
+        $handlerList = CashboxRestHandlerTable::getList()->fetchAll();
+        foreach ($handlerList as $handler) {
+            $result[$handler['CODE']] = $handler;
         }
 
         return $result;
@@ -60,15 +157,17 @@ final class Manager
     {
         static $cashboxObjects = array();
 
-        if ((int)$id <= 0)
+        if ((int)$id <= 0) {
             return null;
+        }
 
         if (!isset($cashboxObjects[$id])) {
             $data = static::getCashboxFromCache($id);
             if ($data) {
                 $cashbox = Cashbox::create($data);
-                if ($cashbox === null)
+                if ($cashbox === null) {
                     return null;
+                }
 
                 $cashboxObjects[$id] = $cashbox;
             }
@@ -79,7 +178,9 @@ final class Manager
 
     /**
      * @param $cashboxList
+     * @param Check|null $check
      * @return mixed
+     * @throws Main\SystemException
      */
     public static function chooseCashbox($cashboxList)
     {
@@ -106,7 +207,13 @@ final class Manager
         }
         $port = in_array($port, array(80, 443)) ? '' : ':' . $port;
 
-        return sprintf('%s://%s%s/bitrix/tools/sale_check_print.php?hash=%s', $scheme, $domain, $port, static::generateHash());
+        return sprintf(
+            '%s://%s%s/bitrix/tools/sale_check_print.php?hash=%s',
+            $scheme,
+            $domain,
+            $port,
+            static::generateHash()
+        );
     }
 
     /**
@@ -127,15 +234,17 @@ final class Manager
     {
         $cacheManager = Main\Application::getInstance()->getManagedCache();
 
-        if ($cacheManager->read(self::TTL, self::CACHE_ID))
+        if ($cacheManager->read(self::TTL, self::CACHE_ID)) {
             $cashboxList = $cacheManager->get(self::CACHE_ID);
+        }
 
         if (empty($cashboxList)) {
             $cashboxList = array();
 
             $dbRes = CashboxTable::getList();
-            while ($data = $dbRes->fetch())
+            while ($data = $dbRes->fetch()) {
                 $cashboxList[$data['ID']] = $data;
+            }
 
             $cacheManager->set(self::CACHE_ID, $cashboxList);
         }
@@ -150,8 +259,9 @@ final class Manager
     public static function getCashboxFromCache($cashboxId)
     {
         $cashboxList = static::getListFromCache();
-        if (isset($cashboxList[$cashboxId]))
+        if (isset($cashboxList[$cashboxId])) {
             return $cashboxList[$cashboxId];
+        }
 
         return array();
     }
@@ -164,8 +274,9 @@ final class Manager
     public static function buildZReportQuery($cashboxId, $id)
     {
         $cashbox = Manager::getObjectById($cashboxId);
-        if ($cashbox->getField('USE_OFFLINE') === 'Y')
+        if ($cashbox->getField('USE_OFFLINE') === 'Y') {
             return array();
+        }
 
         return $cashbox->buildZReportQuery($id);
     }
@@ -182,8 +293,9 @@ final class Manager
             $check = CheckManager::create($item);
             if ($check !== null) {
                 $printResult = static::buildConcreteCheckQuery($check->getField('CASHBOX_ID'), $check);
-                if ($printResult)
+                if ($printResult) {
                     $result[] = $printResult;
+                }
             }
         }
 
@@ -193,17 +305,16 @@ final class Manager
     /**
      * @param $cashboxId
      * @param Check $check
-     * @return Result
+     * @return array
      */
     public static function buildConcreteCheckQuery($cashboxId, Check $check)
     {
-        $result = new Result();
-
         $cashbox = static::getObjectById($cashboxId);
-        if ($cashbox)
+        if ($cashbox) {
             return $cashbox->buildCheckQuery($check);
+        }
 
-        return $result;
+        return [];
     }
 
     /**
@@ -217,7 +328,10 @@ final class Manager
         $cacheManager = Main\Application::getInstance()->getManagedCache();
         $cacheManager->clean(Manager::CACHE_ID);
 
-        if (is_subclass_of($data['HANDLER'], '\Bitrix\Sale\Cashbox\ICheckable')) {
+        if (
+            is_subclass_of($data['HANDLER'], ICheckable::class)
+            || is_subclass_of($data['HANDLER'], ICorrection::class)
+        ) {
             static::addCheckStatusAgent();
         }
 
@@ -242,6 +356,16 @@ final class Manager
         $updateResult = CashboxTable::update($primary, $data);
 
         $cacheManager = Main\Application::getInstance()->getManagedCache();
+
+        $service = self::getObjectById($primary);
+        if ($service && self::isPaySystemCashbox($service->getField('HANDLER'))) {
+            /** @var CashboxPaySystem $cashboxClass */
+            $cashboxClass = $service->getField('HANDLER');
+            if ($cashboxClass::CACHE_ID) {
+                $cacheManager->clean($cashboxClass::CACHE_ID);
+            }
+        }
+
         $cacheManager->clean(Manager::CACHE_ID);
 
         if (is_subclass_of($data['HANDLER'], '\Bitrix\Sale\Cashbox\ICheckable')) {
@@ -257,48 +381,25 @@ final class Manager
      */
     public static function delete($primary)
     {
+        $service = self::getObjectById($primary);
         $deleteResult = CashboxTable::delete($primary);
+        $cacheManager = Main\Application::getInstance()->getManagedCache();
 
         if ($primary == Cashbox1C::getId()) {
-            $cacheManager = Main\Application::getInstance()->getManagedCache();
             $cacheManager->clean(Cashbox1C::CACHE_ID);
         }
 
-        $cacheManager = Main\Application::getInstance()->getManagedCache();
+        if ($service && self::isPaySystemCashbox($service->getField('HANDLER'))) {
+            /** @var CashboxPaySystem $cashboxClass */
+            $cashboxClass = $service->getField('HANDLER');
+            if ($cashboxClass::CACHE_ID) {
+                $cacheManager->clean($cashboxClass::CACHE_ID);
+            }
+        }
+
         $cacheManager->clean(Manager::CACHE_ID);
 
         return $deleteResult;
-    }
-
-    /**
-     * @param $cashboxId
-     * @param Main\Error $error
-     * @return void
-     */
-    public static function writeToLog($cashboxId, Main\Error $error)
-    {
-        if (static::getTraceErrorLevel() === static::LEVEL_TRACE_E_IGNORED)
-            return;
-
-        if ($error instanceof Errors\Error || $error instanceof Errors\Warning) {
-            if (static::DEBUG_MODE === true || $error::LEVEL_TRACE <= static::getTraceErrorLevel()) {
-                $data = array(
-                    'CASHBOX_ID' => $cashboxId,
-                    'MESSAGE' => $error->getMessage(),
-                    'DATE_INSERT' => new DateTime()
-                );
-
-                Internals\CashboxErrLogTable::add($data);
-            }
-        }
-    }
-
-    /**
-     * @return int
-     */
-    private static function getTraceErrorLevel()
-    {
-        return static::LEVEL_TRACE_E_ERROR;
     }
 
     /**
@@ -310,11 +411,20 @@ final class Manager
 
         $cashboxList = static::getListFromCache();
         foreach ($cashboxList as $cashbox) {
-            if ($cashbox['ACTIVE'] === 'N')
+            if ($cashbox['ACTIVE'] === 'N') {
                 continue;
+            }
             /** @var Cashbox $handler */
             $handler = $cashbox['HANDLER'];
-            if (
+            $isRestHandler = $handler === '\Bitrix\Sale\Cashbox\CashboxRest';
+            if ($isRestHandler) {
+                $handlerCode = $cashbox['SETTINGS']['REST']['REST_CODE'];
+                $restHandlers = self::getRestHandlersList();
+                $currentHandler = $restHandlers[$handlerCode];
+                if ($currentHandler['SETTINGS']['SUPPORTS_FFD105'] !== 'Y') {
+                    return false;
+                }
+            } elseif (
                 !is_callable(array($handler, 'isSupportedFFD105')) ||
                 !$handler::isSupportedFFD105()
             ) {
@@ -325,6 +435,38 @@ final class Manager
         return true;
     }
 
+    public static function isEnabledPaySystemPrint(): bool
+    {
+        Cashbox::init();
+
+        $cashboxList = self::getListFromCache();
+        foreach ($cashboxList as $cashbox) {
+            if ($cashbox['ACTIVE'] === 'N') {
+                continue;
+            }
+
+            if (self::isPaySystemCashbox($cashbox['HANDLER'])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param Sale\Payment $payment
+     * @return bool
+     */
+    public static function canPaySystemPrint(Sale\Payment $payment): bool
+    {
+        $service = $payment->getPaySystem();
+
+        return $service
+            && $service->isSupportPrintCheck()
+            && $service->canPrintCheck()
+            && $service->canPrintCheckSelf($payment);
+    }
+
     /**
      * @return string
      * @throws Main\ArgumentException
@@ -332,43 +474,55 @@ final class Manager
     public static function updateChecksStatus()
     {
         $cashboxList = static::getListFromCache();
-        if (!$cashboxList)
+        if (!$cashboxList) {
             return '';
+        }
 
-        $availableCashboxList = array();
+        $availableCashboxList = [];
         foreach ($cashboxList as $item) {
             $cashbox = Cashbox::create($item);
-            if ($cashbox instanceof ICheckable) {
+            if (
+                $cashbox instanceof ICheckable
+                || $cashbox instanceof ICorrection
+            ) {
                 $availableCashboxList[$item['ID']] = $cashbox;
             }
         }
 
-        if (!$availableCashboxList)
+        if (!$availableCashboxList) {
             return '';
+        }
 
-        $parameters = array(
-            'filter' => array(
+        $parameters = [
+            'filter' => [
                 '=STATUS' => 'P',
-                'CASHBOX_ID' => array_keys($availableCashboxList),
+                '@CASHBOX_ID' => array_keys($availableCashboxList),
                 '=CASHBOX.ACTIVE' => 'Y'
-            ),
+            ],
             'limit' => 5
-        );
+        ];
         $dbRes = CheckManager::getList($parameters);
         while ($checkInfo = $dbRes->fetch()) {
-            /** @var Cashbox|ICheckable $cashbox */
+            /** @var Cashbox|ICheckable|ICorrection $cashbox */
             $cashbox = $availableCashboxList[$checkInfo['CASHBOX_ID']];
             if ($cashbox) {
-                $checkTypeMap = CheckManager::getCheckTypeMap();
-                $check = Check::create($checkTypeMap[$checkInfo['TYPE']]);
-                if (!$check)
-                    continue;
+                $check = CheckManager::getObjectById($checkInfo['ID']);
 
-                $check->init($checkInfo);
-                $result = $cashbox->check($check);
+                if ($check instanceof CorrectionCheck) {
+                    $result = $cashbox->checkCorrection($check);
+                } elseif ($check instanceof Check) {
+                    $result = $cashbox->check($check);
+                } else {
+                    continue;
+                }
+
                 if (!$result->isSuccess()) {
                     foreach ($result->getErrors() as $error) {
-                        static::writeToLog($cashbox->getField('ID'), $error);
+                        if ($error instanceof Errors\Warning) {
+                            Logger::addWarning($error->getMessage(), $cashbox->getField('ID'));
+                        } else {
+                            Logger::addError($error->getMessage(), $cashbox->getField('ID'));
+                        }
                     }
                 }
             }
@@ -377,4 +531,31 @@ final class Manager
         return static::CHECK_STATUS_AGENT;
     }
 
+    /**
+     * @param $cashboxId
+     * @param Main\Error $error
+     * @throws Main\ArgumentNullException
+     * @throws Main\ArgumentOutOfRangeException
+     * @throws Main\ArgumentTypeException
+     * @throws Main\ObjectException
+     *
+     * @deprecated Use \Bitrix\Sale\Cashbox\Logger instead
+     */
+    public static function writeToLog($cashboxId, Main\Error $error)
+    {
+        if ($error instanceof Errors\Warning) {
+            Logger::addWarning($error->getMessage(), $cashboxId);
+        } else {
+            Logger::addError($error->getMessage(), $cashboxId);
+        }
+    }
+
+    /**
+     * @param string $cashboxClassName
+     * @return bool
+     */
+    public static function isPaySystemCashbox(string $cashboxClassName): bool
+    {
+        return is_subclass_of($cashboxClassName, CashboxPaySystem::class);
+    }
 }

@@ -87,10 +87,11 @@ abstract class BaseValues
     public function getParent()
     {
         $parents = $this->getParents();
-        if (isset($parents[0]))
+        if (isset($parents[0])) {
             return $parents[0];
-        else
+        } else {
             return null;
+        }
     }
 
     /**
@@ -101,8 +102,9 @@ abstract class BaseValues
      */
     public function getValues()
     {
-        if ($this->values === false)
+        if ($this->values === false) {
             $this->values = $this->queryValues();
+        }
 
         $result = array();
         foreach ($this->values as $CODE => $row) {
@@ -120,13 +122,15 @@ abstract class BaseValues
      */
     public function getValue($propertyCode)
     {
-        if ($this->values === false)
+        if ($this->values === false) {
             $this->values = $this->queryValues();
+        }
 
-        if (isset($this->values[$propertyCode]))
+        if (isset($this->values[$propertyCode])) {
             return htmlspecialcharsEx($this->values[$propertyCode]["VALUE"]);
-        else
+        } else {
             return "";
+        }
     }
 
     /**
@@ -141,7 +145,10 @@ abstract class BaseValues
         $templateInstance = new BaseTemplate($this);
         $templates = $templateInstance->findTemplates();
         foreach ($templates as $CODE => $row) {
-            $templates[$CODE]["VALUE"] = \Bitrix\Iblock\Template\Engine::process($this->createTemplateEntity(), $row["TEMPLATE"]);
+            $templates[$CODE]["VALUE"] = \Bitrix\Iblock\Template\Engine::process(
+                $this->createTemplateEntity(),
+                $row["TEMPLATE"]
+            );
         }
         return $templates;
     }
@@ -175,18 +182,24 @@ abstract class BaseValues
     {
         $ipropertyId = (int)$ipropertyId;
         $connection = \Bitrix\Main\Application::getConnection();
-        $connection->query("
+        $connection->query(
+            "
 			DELETE FROM b_iblock_iblock_iprop
 			WHERE IPROP_ID = " . $ipropertyId . "
-		");
-        $connection->query("
+		"
+        );
+        $connection->query(
+            "
 			DELETE FROM b_iblock_section_iprop
 			WHERE IPROP_ID = " . $ipropertyId . "
-		");
-        $connection->query("
+		"
+        );
+        $connection->query(
+            "
 			DELETE FROM b_iblock_element_iprop
 			WHERE IPROP_ID = " . $ipropertyId . "
-		");
+		"
+        );
         ValuesQueue::deleteAll();
     }
 
@@ -208,7 +221,7 @@ abstract class BaseValues
         $bodySize = 0;
         foreach ($rows as $row) {
             $values = "('" . implode("', '", $row) . "')";
-            $bodySize += strlen($values);
+            $bodySize += mb_strlen($values);
             $body[] = $values;
             if ($bodySize > $maxBodySize) {
                 $connection->query($head . implode(", ", $body));

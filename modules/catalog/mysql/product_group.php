@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/catalog/general/product_group.php");
 
 class CCatalogProductGroups extends CAllCatalogProductGroups
@@ -7,8 +8,9 @@ class CCatalogProductGroups extends CAllCatalogProductGroups
     {
         global $DB;
 
-        if (!self::CheckFields("ADD", $arFields, 0))
+        if (!self::CheckFields("ADD", $arFields, 0)) {
             return false;
+        }
 
         $arInsert = $DB->PrepareInsert("b_catalog_product2group", $arFields);
 
@@ -26,8 +28,13 @@ class CCatalogProductGroups extends CAllCatalogProductGroups
      * @param array $arSelectFields
      * @return bool|CDBResult
      */
-    public static function GetList($arOrder = array(), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
-    {
+    public static function GetList(
+        $arOrder = array(),
+        $arFilter = array(),
+        $arGroupBy = false,
+        $arNavStartParams = false,
+        $arSelectFields = array()
+    ) {
         global $DB;
 
         $arFields = array(
@@ -36,8 +43,16 @@ class CCatalogProductGroups extends CAllCatalogProductGroups
             "GROUP_ID" => array("FIELD" => "CPG.GROUP_ID", "TYPE" => "int"),
             "ACCESS_LENGTH" => array("FIELD" => "CPG.ACCESS_LENGTH", "TYPE" => "int"),
             "ACCESS_LENGTH_TYPE" => array("FIELD" => "CPG.ACCESS_LENGTH_TYPE", "TYPE" => "char"),
-            "GROUP_ACTIVE" => array("FIELD" => "G.ACTIVE", "TYPE" => "char", "FROM" => "INNER JOIN b_group G ON (CPG.GROUP_ID = G.ID)"),
-            "GROUP_NAME" => array("FIELD" => "G.NAME", "TYPE" => "string", "FROM" => "INNER JOIN b_group G ON (CPG.GROUP_ID = G.ID)")
+            "GROUP_ACTIVE" => array(
+                "FIELD" => "G.ACTIVE",
+                "TYPE" => "char",
+                "FROM" => "INNER JOIN b_group G ON (CPG.GROUP_ID = G.ID)"
+            ),
+            "GROUP_NAME" => array(
+                "FIELD" => "G.NAME",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_group G ON (CPG.GROUP_ID = G.ID)"
+            )
         );
 
         $arSqls = CCatalog::PrepareSql($arFields, $arOrder, $arFilter, $arGroupBy, $arSelectFields);
@@ -46,25 +61,31 @@ class CCatalogProductGroups extends CAllCatalogProductGroups
 
         if (empty($arGroupBy) && is_array($arGroupBy)) {
             $strSql = "SELECT " . $arSqls["SELECT"] . " FROM b_catalog_product2group CPG " . $arSqls["FROM"];
-            if (!empty($arSqls["WHERE"]))
+            if (!empty($arSqls["WHERE"])) {
                 $strSql .= " WHERE " . $arSqls["WHERE"];
-            if (!empty($arSqls["GROUPBY"]))
+            }
+            if (!empty($arSqls["GROUPBY"])) {
                 $strSql .= " GROUP BY " . $arSqls["GROUPBY"];
+            }
 
             $dbRes = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-            if ($arRes = $dbRes->Fetch())
+            if ($arRes = $dbRes->Fetch()) {
                 return $arRes["CNT"];
-            else
+            } else {
                 return false;
+            }
         }
 
         $strSql = "SELECT " . $arSqls["SELECT"] . " FROM b_catalog_product2group CPG " . $arSqls["FROM"];
-        if (!empty($arSqls["WHERE"]))
+        if (!empty($arSqls["WHERE"])) {
             $strSql .= " WHERE " . $arSqls["WHERE"];
-        if (!empty($arSqls["GROUPBY"]))
+        }
+        if (!empty($arSqls["GROUPBY"])) {
             $strSql .= " GROUP BY " . $arSqls["GROUPBY"];
-        if (!empty($arSqls["ORDERBY"]))
+        }
+        if (!empty($arSqls["ORDERBY"])) {
             $strSql .= " ORDER BY " . $arSqls["ORDERBY"];
+        }
 
         $intTopCount = 0;
         $boolNavStartParams = (!empty($arNavStartParams) && is_array($arNavStartParams));
@@ -73,16 +94,19 @@ class CCatalogProductGroups extends CAllCatalogProductGroups
         }
         if ($boolNavStartParams && 0 >= $intTopCount) {
             $strSql_tmp = "SELECT COUNT('x') as CNT FROM b_catalog_product2group CPG " . $arSqls["FROM"];
-            if (!empty($arSqls["WHERE"]))
+            if (!empty($arSqls["WHERE"])) {
                 $strSql_tmp .= " WHERE " . $arSqls["WHERE"];
-            if (!empty($arSqls["GROUPBY"]))
+            }
+            if (!empty($arSqls["GROUPBY"])) {
                 $strSql_tmp .= " GROUP BY " . $arSqls["GROUPBY"];
+            }
 
             $dbRes = $DB->Query($strSql_tmp, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             $cnt = 0;
             if (empty($arSqls["GROUPBY"])) {
-                if ($arRes = $dbRes->Fetch())
+                if ($arRes = $dbRes->Fetch()) {
                     $cnt = $arRes["CNT"];
+                }
             } else {
                 $cnt = $dbRes->SelectedRowsCount();
             }

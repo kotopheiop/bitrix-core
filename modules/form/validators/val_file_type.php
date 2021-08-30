@@ -1,22 +1,30 @@
-<?
+<?php
+
 IncludeModuleLangFile(__FILE__);
 
 class CFormValidatorFileType
 {
-    function GetDescription()
+    public static function GetDescription()
     {
         return array(
-            "NAME" => "file_type", // unique validator string ID
-            "DESCRIPTION" => GetMessage('FORM_VALIDATOR_FILE_TYPE_DESCRIPTION'), // validator description
-            "TYPES" => array("file"), //  list of types validator can be applied.
-            "SETTINGS" => array("CFormValidatorFileType", "GetSettings"), // method returning array of validator settings, optional
-            "CONVERT_TO_DB" => array("CFormValidatorFileType", "ToDB"), // method, processing validator settings to string to put to db, optional
-            "CONVERT_FROM_DB" => array("CFormValidatorFileType", "FromDB"), // method, processing validator settings from string from db, optional
-            "HANDLER" => array("CFormValidatorFileType", "DoValidate") // main validation method
+            "NAME" => "file_type",
+            // unique validator string ID
+            "DESCRIPTION" => GetMessage('FORM_VALIDATOR_FILE_TYPE_DESCRIPTION'),
+            // validator description
+            "TYPES" => array("file"),
+            //  list of types validator can be applied.
+            "SETTINGS" => array("CFormValidatorFileType", "GetSettings"),
+            // method returning array of validator settings, optional
+            "CONVERT_TO_DB" => array("CFormValidatorFileType", "ToDB"),
+            // method, processing validator settings to string to put to db, optional
+            "CONVERT_FROM_DB" => array("CFormValidatorFileType", "FromDB"),
+            // method, processing validator settings from string from db, optional
+            "HANDLER" => array("CFormValidatorFileType", "DoValidate")
+            // main validation method
         );
     }
 
-    function GetSettings()
+    public static function GetSettings()
     {
         return array(
             "EXT" => array(
@@ -39,43 +47,50 @@ class CFormValidatorFileType
         );
     }
 
-    function ToDB($arParams)
+    public static function ToDB($arParams)
     {
         return serialize($arParams);
     }
 
-    function FromDB($strParams)
+    public static function FromDB($strParams)
     {
-        return unserialize($strParams);
+        return unserialize($strParams, ['allowed_classes' => false]);
     }
 
-    function DoValidate($arParams, $arQuestion, $arAnswers, $arValues)
+    public static function DoValidate($arParams, $arQuestion, $arAnswers, $arValues)
     {
         global $APPLICATION;
 
         if (!empty($arValues)) {
             $arExt = array();
-            if (strlen($arParams["EXT"]) > 0)
-                $arExt = array_merge($arExt, explode(",", strtolower($arParams["EXT"])));
+            if ($arParams["EXT"] <> '') {
+                $arExt = array_merge($arExt, explode(",", mb_strtolower($arParams["EXT"])));
+            }
 
-            if (strlen($arParams["EXT_CUSTOM"]) > 0)
-                $arExt = array_merge($arExt, explode(",", strtolower($arParams["EXT_CUSTOM"])));
+            if ($arParams["EXT_CUSTOM"] <> '') {
+                $arExt = array_merge($arExt, explode(",", mb_strtolower($arParams["EXT_CUSTOM"])));
+            }
 
             if (!empty($arExt)) {
-                foreach ($arExt as $key => $value) $arExt[$key] = trim($value);
+                foreach ($arExt as $key => $value) {
+                    $arExt[$key] = trim($value);
+                }
                 $arExt = array_unique($arExt);
                 $arExtKeys = array_fill_keys($arExt, true);
                 $res = true;
 
                 foreach ($arValues as $arFile) {
-                    if (strlen($arFile["tmp_name"]) > 0 && $arFile["error"] == "0") {
-                        $point_pos = strrpos($arFile["name"], ".");
+                    if (empty($arFile) || !is_array($arFile)) {
+                        continue;
+                    }
+                    if ($arFile["tmp_name"] <> '' && $arFile["error"] == "0") {
+                        $point_pos = mb_strrpos($arFile["name"], ".");
                         if ($point_pos === false) {
                             $res = false;
                             break;
                         }
 
-                        $ext = strtolower(substr($arFile["name"], $point_pos + 1));
+                        $ext = mb_strtolower(mb_substr($arFile["name"], $point_pos + 1));
                         if (!isset($arExtKeys[$ext])) {
                             $res = false;
                             break;
@@ -91,9 +106,7 @@ class CFormValidatorFileType
         }
 
         return true;
-
     }
 }
 
 AddEventHandler("form", "onFormValidatorBuildList", array("CFormValidatorFileType", "GetDescription"));
-?>

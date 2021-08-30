@@ -1,4 +1,5 @@
 <?
+
 function stemming_init($sLang = "ru")
 {
     static $arStemFunc = false;
@@ -6,9 +7,10 @@ function stemming_init($sLang = "ru")
     //Init all languages
     if ($arStemFunc === false) {
         $arStemFunc = array();
-        $rsLanguages = CLanguage::GetList(($b = ""), ($o = ""));
-        while ($arLanguage = $rsLanguages->Fetch())
+        $rsLanguages = CLanguage::GetList();
+        while ($arLanguage = $rsLanguages->Fetch()) {
             stemming_init($arLanguage["LID"]);
+        }
     }
 
     //Check if language was not used
@@ -17,12 +19,14 @@ function stemming_init($sLang = "ru")
 
         if (!function_exists("stemming_" . $sLang)) {
             $strFileName = $_SERVER["DOCUMENT_ROOT"] . BX_PERSONAL_ROOT . "/php_interface/" . $sLang . "/search/stemming.php";
-            if (file_exists($strFileName))
+            if (file_exists($strFileName)) {
                 @include($strFileName);
+            }
             if (!function_exists("stemming_" . $sLang)) {
                 $strFileName = $_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/search/tools/" . $sLang . "/stemming.php";
-                if (file_exists($strFileName))
+                if (file_exists($strFileName)) {
                     @include($strFileName);
+                }
                 if (!function_exists("stemming_" . $sLang)) {
                     $stemming_function_suf = "default";
                 }
@@ -30,26 +34,31 @@ function stemming_init($sLang = "ru")
         }
 
         $stemming_stop_function = "stemming_stop_" . $sLang;
-        if (!function_exists($stemming_stop_function))
+        if (!function_exists($stemming_stop_function)) {
             $stemming_stop_function = "stemming_stop_default";
+        }
 
         $stemming_upper_function = "stemming_upper_" . $sLang;
-        if (!function_exists($stemming_upper_function))
+        if (!function_exists($stemming_upper_function)) {
             $stemming_upper_function = "stemming_upper_default";
+        }
 
         $letters = stemming_letter_default();
         $stemming_letter_function = "stemming_letter_" . $sLang;
-        if (function_exists($stemming_letter_function))
+        if (function_exists($stemming_letter_function)) {
             $letters .= $stemming_letter_function();
+        }
         $letters .= COption::GetOptionString("search", "letters");
 
-        if (function_exists($stemming_letter_function))
+        if (function_exists($stemming_letter_function)) {
             $abc = $stemming_letter_function();
-        else
+        } else {
             $abc = "";
+        }
 
-        if (strlen($abc) <= 0)
+        if ($abc == '') {
             $abc = stemming_letter_default();
+        }
 
         $arStemFunc[$sLang] = array(
             "stem" => "stemming_" . $stemming_function_suf,
@@ -70,10 +79,11 @@ function stemming_init($sLang = "ru")
         );
     }
 
-    if ($sLang === false)
+    if ($sLang === false) {
         return $arStemFunc;
-    else
+    } else {
         return $arStemFunc[$sLang];
+    }
 }
 
 function stemming_upper($sText, $sLang = "ru")
@@ -90,14 +100,16 @@ function stemming_split($sText, $sLang = "ru")
     $words = array();
 
     $tok = " ";
-    $sText = preg_replace("/[^" . $arStemFunc["pcre_letters"] . "]/" . BX_UTF_PCRE_MODIFIER, $tok, ToUpper($sText));
+    $sText = stemming_upper($sText, $sLang);
+    $sText = preg_replace("/[^" . $arStemFunc["pcre_letters"] . "]/" . BX_UTF_PCRE_MODIFIER, $tok, $sText);
 
     $word = strtok($sText, $tok);
     while ($word !== false) {
-        $word = substr($word, 0, 100);
+        $word = mb_substr($word, 0, 100);
 
-        if (!isset($words[$word]))
-            $words[$word] = strpos($sText, $word);
+        if (!isset($words[$word])) {
+            $words[$word] = mb_strpos($sText, $word);
+        }
 
         $word = strtok($tok);
     }
@@ -108,8 +120,9 @@ function stemming_split($sText, $sLang = "ru")
 function stemming($sText, $sLang = "ru", $bIgnoreStopWords = false, $bReturnPositions = false)
 {
     static $STOP_CACHE = array();
-    if (!isset($STOP_CACHE[$sLang]))
+    if (!isset($STOP_CACHE[$sLang])) {
         $STOP_CACHE[$sLang] = array();
+    }
     $stop_cache = &$STOP_CACHE[$sLang];
 
     //Result
@@ -118,39 +131,47 @@ function stemming($sText, $sLang = "ru", $bIgnoreStopWords = false, $bReturnPosi
     //Get info about all languages
     $arStemInfo = stemming_init(false);
     //Add default functions if language was not defined
-    if (!isset($arStemInfo[$sLang]))
+    if (!isset($arStemInfo[$sLang])) {
         $arStemInfo[$sLang] = stemming_init($sLang);
+    }
 
     $stem_func = $arStemInfo[$sLang]["stem"];
     $pcre_abc = "/[^" . $arStemInfo[$sLang]["pcre_abc"] . "]+/" . BX_UTF_PCRE_MODIFIER;
 
     //Delimiter of the words
     $tok = " ";
-
+    $sText = stemming_upper($sText, $sLang);
     if ($bReturnPositions) {
-        $sText = preg_replace("/[^" . $arStemInfo[$sLang]["pcre_letters"] . ".!?]+/" . BX_UTF_PCRE_MODIFIER, $tok, ToUpper($sText));
+        $sText = preg_replace(
+            "/[^" . $arStemInfo[$sLang]["pcre_letters"] . ".!?]+/" . BX_UTF_PCRE_MODIFIER,
+            $tok,
+            $sText
+        );
         $sText = preg_replace("/[!?]+/" . BX_UTF_PCRE_MODIFIER, ".", $sText);
     } else {
-        $sText = preg_replace("/[^" . $arStemInfo[$sLang]["pcre_letters"] . "]+/" . BX_UTF_PCRE_MODIFIER, $tok, ToUpper($sText));
+        $sText = preg_replace("/[^" . $arStemInfo[$sLang]["pcre_letters"] . "]+/" . BX_UTF_PCRE_MODIFIER, $tok, $sText);
     }
 
     //Parse text
     $words = strtok($sText, $tok);
     $pos = 1;
     while ($words !== false) {
-        if ($bReturnPositions)
+        if ($bReturnPositions) {
             $words = explode(".", $words);
-        else
+        } else {
             $words = array($words);
+        }
 
         foreach ($words as $i => $word) {
-            $word = substr($word, 0, 50);
+            $word = mb_substr($word, 0, 50);
 
             if ($bReturnPositions) {
-                if ($i > 0)
-                    $pos += 5; //Sentence distance
-                if (!strlen($word))
+                if ($i > 0) {
+                    $pos += 5;
+                } //Sentence distance
+                if ($word == '') {
                     continue;
+                }
             }
 
             //Try to stem starting with desired language
@@ -167,7 +188,7 @@ function stemming($sText, $sLang = "ru", $bIgnoreStopWords = false, $bReturnPosi
             ) {
                 //Do the best to detect correct one
                 $guess = stemming_detect($word, $arStemInfo, $sLang);
-                if (strlen($guess[0])) {
+                if ($guess[0] <> '') {
                     $stem = $guess[0];
                     $stop_lang = $guess[1];
                 }
@@ -175,8 +196,9 @@ function stemming($sText, $sLang = "ru", $bIgnoreStopWords = false, $bReturnPosi
 
             if ($bIgnoreStopWords) {
                 if (is_array($stem)) {
-                    foreach ($stem as $st)
+                    foreach ($stem as $st) {
                         $stems[$st] = isset($stems[$st]) ? $stems[$st] + $pos : $pos;
+                    }
                 } else {
                     $stems[$stem] = isset($stems[$stem]) ? $stems[$stem] + $pos : $pos;
                 }
@@ -184,23 +206,28 @@ function stemming($sText, $sLang = "ru", $bIgnoreStopWords = false, $bReturnPosi
                 $stop_func = $arStemInfo[$stop_lang]["stop"];
                 if (is_array($stem)) {
                     foreach ($stem as $st) {
-                        if (!isset($stop_cache[$st]))
+                        if (!isset($stop_cache[$st])) {
                             $stop_cache[$st] = $stop_func($st);
+                        }
 
-                        if ($stop_cache[$st])
+                        if ($stop_cache[$st]) {
                             $stems[$st] = isset($stems[$st]) ? $stems[$st] + $pos : $pos;
+                        }
                     }
                 } else {
-                    if (!isset($stop_cache[$stem]))
+                    if (!isset($stop_cache[$stem])) {
                         $stop_cache[$stem] = $stop_func($stem);
+                    }
 
-                    if ($stop_cache[$stem])
+                    if ($stop_cache[$stem]) {
                         $stems[$stem] = isset($stems[$stem]) ? $stems[$stem] + $pos : $pos;
+                    }
                 }
             }
 
-            if ($bReturnPositions)
+            if ($bReturnPositions) {
                 $pos++;
+            }
         }
         //Next word
         $words = strtok($tok);
@@ -215,24 +242,28 @@ function stemming_detect($word, $arStemInfo, $skipLang)
     $lang = "";
 
     foreach ($arStemInfo as $sGuessLang => $arInfo) {
-        if ($sGuessLang === $skipLang)
+        if ($sGuessLang === $skipLang) {
             continue;
+        }
 
         //Word has letters not from ABC, so skip to next language
-        if (preg_match("/[^" . $arInfo["pcre_abc"] . "]+/" . BX_UTF_PCRE_MODIFIER, $word))
+        if (preg_match("/[^" . $arInfo["pcre_abc"] . "]+/" . BX_UTF_PCRE_MODIFIER, $word)) {
             continue;
+        }
 
         $stem = $arInfo["stem"]($word);
         $lang = $sGuessLang;
 
         //It looks like stemming succseeded
-        if ($stem !== $word)
+        if ($stem !== $word) {
             break;
+        }
 
         //Check if stop function flag word as stop
         $stop_func = $arInfo["stop"];
-        if (!$stop_func($stem))
+        if (!$stop_func($stem)) {
             break;
+        }
     }
 
     //It' s the best we can do
@@ -252,10 +283,11 @@ function stemming_default($sText)
 
 function stemming_stop_default($sWord)
 {
-    if (strlen($sWord) < 2)
+    if (mb_strlen($sWord) < 2) {
         return false;
-    else
+    } else {
         return true;
+    }
 }
 
 function stemming_letter_default()

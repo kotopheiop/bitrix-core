@@ -35,9 +35,12 @@ class Helper
 
         if (\CModule::IncludeModule('catalog')) {
             //TODO: change to new provider
-            if ($productProvider = \CSaleBasket::GetProductProvider(array(
-                "MODULE" => "catalog",
-                "PRODUCT_PROVIDER_CLASS" => "CCatalogProductProvider"))
+            if ($productProvider = \CSaleBasket::GetProductProvider(
+                array(
+                    "MODULE" => "catalog",
+                    "PRODUCT_PROVIDER_CLASS" => "CCatalogProductProvider"
+                )
+            )
             ) {
                 global $USER;
                 $bTmpUserCreated = false;
@@ -51,23 +54,33 @@ class Helper
                     $USER = new \CUser();
                 }
 
-                $result = $productProvider::GetProductData(array(
-                    "PRODUCT_ID" => $productId,
-                    "RENEWAL" => "N",
-                    "QUANTITY" => $quantity,
-                    "SITE_ID" => $siteId
-                ));
+                $result = $productProvider::GetProductData(
+                    array(
+                        "PRODUCT_ID" => $productId,
+                        "RENEWAL" => "N",
+                        "QUANTITY" => $quantity,
+                        "SITE_ID" => $siteId
+                    )
+                );
 
                 $result["MODULE"] = "catalog";
                 $result["PRODUCT_PROVIDER_CLASS"] = "CCatalogProductProvider";
-                $dbIblockElement = \CIBlockElement::GetList(array(), array("ID" => $productId), false, false, array('XML_ID', 'IBLOCK_EXTERNAL_ID'));
+                $dbIblockElement = \CIBlockElement::GetList(
+                    array(),
+                    array("ID" => $productId),
+                    false,
+                    false,
+                    array('XML_ID', 'IBLOCK_EXTERNAL_ID')
+                );
 
                 if ($IblockElement = $dbIblockElement->Fetch()) {
-                    if (strlen($IblockElement["XML_ID"]) > 0)
+                    if ($IblockElement["XML_ID"] <> '') {
                         $result["PRODUCT_XML_ID"] = $IblockElement["XML_ID"];
+                    }
 
-                    if (strlen($IblockElement["IBLOCK_EXTERNAL_ID"]) > 0)
+                    if ($IblockElement["IBLOCK_EXTERNAL_ID"] <> '') {
                         $result["CATALOG_XML_ID"] = $IblockElement["IBLOCK_EXTERNAL_ID"];
+                    }
                 }
 
                 if ($bTmpUserCreated) {
@@ -101,8 +114,9 @@ class Helper
         );
 
         $arPersonTypes = array();
-        while ($arPT = $dbResultList->Fetch())
+        while ($arPT = $dbResultList->Fetch()) {
             $arPersonTypes[$arPT['ID']] = $arPT['NAME'];
+        }
 
         return $arPersonTypes;
     }
@@ -127,8 +141,9 @@ class Helper
         );
 
         $arDeliveryList = array();
-        while ($arDelivery = $dbDeliveryList->Fetch())
+        while ($arDelivery = $dbDeliveryList->Fetch()) {
             $arDeliveryList[$arDelivery["ID"]] = $arDelivery["NAME"];
+        }
 
         return $arDeliveryList;
     }
@@ -139,14 +154,17 @@ class Helper
      */
     public static function getOrderPropsList($personTypeId)
     {
-        if (intval($personTypeId) <= 0)
+        if (intval($personTypeId) <= 0) {
             throw new ArgumentNullException('personTypeId');
+        }
 
-        $res = OrderPropsTable::getList(array(
-            'filter' => array('=PERSON_TYPE_ID' => $personTypeId),
-            'order' => array('SORT' => 'ASC', 'NAME' => 'ASC'),
-            'select' => array('ID', 'CODE', 'NAME')
-        ));
+        $res = OrderPropsTable::getList(
+            array(
+                'filter' => array('=PERSON_TYPE_ID' => $personTypeId),
+                'order' => array('SORT' => 'ASC', 'NAME' => 'ASC'),
+                'select' => array('ID', 'CODE', 'NAME')
+            )
+        );
 
         return $res->fetchAll();
     }
@@ -190,8 +208,9 @@ class Helper
                 array("ID", "NAME")
             );
 
-            while ($arPS = $dbResultList->Fetch())
+            while ($arPS = $dbResultList->Fetch()) {
                 $arPaySystems[$personTypeId][$arPS['ID']] = $arPS['NAME'];
+            }
         }
 
         $result = '<select name="' . $selectName . '">' .
@@ -219,16 +238,21 @@ class Helper
      */
     public static function getSelectHtml($name, array $data, $selected = "", $bShowNotUse = true)
     {
-        if (!is_array($data) || empty($data))
+        if (!is_array($data) || empty($data)) {
             return "";
+        }
 
         $result = '<select name="' . htmlspecialcharsbx($name) . '">';
 
-        if ($bShowNotUse)
+        if ($bShowNotUse) {
             $result .= '<option value="">' . GetMessage("SALE_YM_NOT_USE") . '</option>';
+        }
 
-        foreach ($data as $value => $title)
-            $result .= '<option value="' . htmlspecialcharsbx($value) . '"' . ($selected == $value ? " selected" : "") . '>' . htmlspecialcharsbx($title) . '</option>';
+        foreach ($data as $value => $title) {
+            $result .= '<option value="' . htmlspecialcharsbx(
+                    $value
+                ) . '"' . ($selected == $value ? " selected" : "") . '>' . htmlspecialcharsbx($title) . '</option>';
+        }
 
         $result .= '</select>';
 
@@ -255,7 +279,7 @@ class Helper
             $arPropFilter["RELATED"]["TYPE"] = "WITH_NOT_RELATED";
         }
 
-        if (strlen($params["DELIVERY"]) > 0) {
+        if ($params["DELIVERY"] <> '') {
             $arPropFilter["RELATED"]["DELIVERY_ID"] = $params["DELIVERY"];
             $arPropFilter["RELATED"]["TYPE"] = "WITH_NOT_RELATED";
         }
@@ -270,8 +294,9 @@ class Helper
 
         while ($arOrderProps = $dbOrderProps->Fetch()) {
             foreach (self::getOrderProps() as $prop) {
-                if ($arOrderProps["CODE"] == $params["ORDER_PROPS_MAP"][$prop] && isset($params[$prop]))
+                if ($arOrderProps["CODE"] == $params["ORDER_PROPS_MAP"][$prop] && isset($params[$prop])) {
                     $result[$arOrderProps["ID"]] = $params[$prop];
+                }
             }
         }
 
@@ -290,37 +315,47 @@ class Helper
             "DEDUCTED" => Loc::getMessage("SALE_EBAY_HLP_FLAG_DEDUCTED"),
         );
 
-        if (strlen($siteId) <= 0)
+        if ($siteId == '') {
             throw new ArgumentNullException("siteId");
+        }
 
-        $dbRes = SiteTable::getList(array(
-            'filter' => array(
-                'LID' => $siteId,
-            ),
-            'select' => array("LANGUAGE_ID"),
-        ));
+        $dbRes = SiteTable::getList(
+            array(
+                'filter' => array(
+                    'LID' => $siteId,
+                ),
+                'select' => array("LANGUAGE_ID"),
+            )
+        );
 
-        if ($site = $dbRes->fetch())
+        if ($site = $dbRes->fetch()) {
             $langId = $site["LANGUAGE_ID"];
-        else
+        } else {
             throw new SystemException("Site with id: \"" . $siteId . "\" not found!");
+        }
 
-        $dbRes = StatusLangTable::getList(array(
-            'filter' => array(
-                'LID' => $langId,
-                'STATUS.TYPE' => 'O',
-            ),
-            'order' => array(
-                "STATUS.SORT" => "ASC",
-                "NAME" => "ASC",
-            ),
-            'select' => array(
-                "ID" => "STATUS.ID", "NAME",
-            ),
-        ));
+        $dbRes = StatusLangTable::getList(
+            array(
+                'filter' => array(
+                    'LID' => $langId,
+                    'STATUS.TYPE' => 'O',
+                ),
+                'order' => array(
+                    "STATUS.SORT" => "ASC",
+                    "NAME" => "ASC",
+                ),
+                'select' => array(
+                    "ID" => "STATUS.ID",
+                    "NAME",
+                ),
+            )
+        );
 
-        while ($row = $dbRes->fetch())
-            $result[$row['ID']] = Loc::getMessage("SALE_EBAY_HLP_STATUS") . " " . $row['NAME'] . ' [' . $row['ID'] . ']';
+        while ($row = $dbRes->fetch()) {
+            $result[$row['ID']] = Loc::getMessage(
+                    "SALE_EBAY_HLP_STATUS"
+                ) . " " . $row['NAME'] . ' [' . $row['ID'] . ']';
+        }
 
         return $result;
     }
@@ -343,8 +378,11 @@ class Helper
 			<option value="">' . Loc::getMessage("SALE_EBAY_HLP_CATEGORY_PROPS") . '</option>
 			<option value="">------------------</option>';
 
-        foreach ($catProps as $propId => $prop)
-            $resultHtml .= '<option value="' . $propId . '"' . ($value == $propId ? ' selected' : '') . '>' . htmlspecialcharsbx($prop["NAME"]) . '</option>';
+        foreach ($catProps as $propId => $prop) {
+            $resultHtml .= '<option value="' . $propId . '"' . ($value == $propId ? ' selected' : '') . '>' . htmlspecialcharsbx(
+                    $prop["NAME"]
+                ) . '</option>';
+        }
 
         $arOffers = \CCatalogSKU::GetInfoByProductIBlock($iblockId);
         if ($arOffers) {
@@ -356,8 +394,11 @@ class Helper
 				<option value="">------------------</option>
 			';
 
-            foreach ($catProps2 as $propId => $prop)
-                $resultHtml .= '<option value="' . $propId . '"' . ($value == $propId ? ' selected' : '') . '>' . htmlspecialcharsbx($prop["NAME"]) . '</option>';
+            foreach ($catProps2 as $propId => $prop) {
+                $resultHtml .= '<option value="' . $propId . '"' . ($value == $propId ? ' selected' : '') . '>' . htmlspecialcharsbx(
+                        $prop["NAME"]
+                    ) . '</option>';
+            }
         }
 
         $resultHtml .= '	</select>';
@@ -374,18 +415,23 @@ class Helper
     {
         $result = \CIBlockSectionPropertyLink::GetArray($iblockId, $sectionId);
 
-        $rsProps = \CIBlockProperty::GetList(array(
-            "SORT" => "ASC",
-            'ID' => 'ASC',
-        ), array(
-            "IBLOCK_ID" => $iblockId,
-            "CHECK_PERMISSIONS" => "N",
-            "ACTIVE" => "Y",
-        ));
+        $rsProps = \CIBlockProperty::GetList(
+            array(
+                "SORT" => "ASC",
+                'ID' => 'ASC',
+            ),
+            array(
+                "IBLOCK_ID" => $iblockId,
+                "CHECK_PERMISSIONS" => "N",
+                "ACTIVE" => "Y",
+            )
+        );
 
-        while ($arProp = $rsProps->Fetch())
-            if (isset($result[$arProp["ID"]]))
+        while ($arProp = $rsProps->Fetch()) {
+            if (isset($result[$arProp["ID"]])) {
                 $result[$arProp["ID"]]["NAME"] = $arProp["NAME"];
+            }
+        }
 
         return $result;
     }
@@ -393,11 +439,13 @@ class Helper
 
     public function notifyNewOrder($newOrderId, $siteId, $buyerEmail = "", $buyerFio = "")
     {
-        if (strlen($newOrderId) <= 0)
+        if ($newOrderId == '') {
             throw new ArgumentNullException("newOrderId");
+        }
 
-        if (strlen($siteId) <= 0)
+        if ($siteId == '') {
             throw new ArgumentNullException("siteId");
+        }
 
         global $DB;
 
@@ -412,21 +460,29 @@ class Helper
             false,
             false,
             array(
-                "ID", "PRICE", "QUANTITY", "NAME",
+                "ID",
+                "PRICE",
+                "QUANTITY",
+                "NAME",
             )
         );
 
-        while ($arBasketTmp = $dbBasketTmp->GetNext())
+        while ($arBasketTmp = $dbBasketTmp->GetNext()) {
             $orderNew["BASKET_ITEMS"][] = $arBasketTmp;
+        }
 
         $orderNew["BASKET_ITEMS"] = getMeasures($orderNew["BASKET_ITEMS"]);
 
         foreach ($orderNew["BASKET_ITEMS"] as $val) {
-            if (\CSaleBasketHelper::isSetItem($val))
+            if (\CSaleBasketHelper::isSetItem($val)) {
                 continue;
+            }
 
             $measure = (isset($val["MEASURE_TEXT"])) ? $val["MEASURE_TEXT"] : GetMessage("SALE_YMH_SHT");
-            $strOrderList .= $val["NAME"] . " - " . $val["QUANTITY"] . " " . $measure . " x " . SaleFormatCurrency($val["PRICE"], $baseLangCurrency);
+            $strOrderList .= $val["NAME"] . " - " . $val["QUANTITY"] . " " . $measure . " x " . SaleFormatCurrency(
+                    $val["PRICE"],
+                    $baseLangCurrency
+                );
             $strOrderList .= "</br>";
         }
 
@@ -447,9 +503,11 @@ class Helper
 
         $bSend = true;
 
-        foreach (GetModuleEvents("sale", "OnOrderNewSendEmail", true) as $arEvent)
-            if (ExecuteModuleEventEx($arEvent, array($newOrderId, &$eventName, &$arFields)) === false)
+        foreach (GetModuleEvents("sale", "OnOrderNewSendEmail", true) as $arEvent) {
+            if (ExecuteModuleEventEx($arEvent, array($newOrderId, &$eventName, &$arFields)) === false) {
                 $bSend = false;
+            }
+        }
 
         $emailSendRes = false;
 
@@ -468,36 +526,42 @@ class Helper
         $result = new EventResult();
         $data = $event->getParameter('fields');
 
-        if (!isset($data["TRACKING_NUMBER"]) && !isset($data["DELIVERY_NAME"]))
+        if (!isset($data["TRACKING_NUMBER"]) && !isset($data["DELIVERY_NAME"])) {
             return $result;
+        }
 
         $primary = $event->getParameter('id');
 
-        $dbRes = OrderTable::getList(array(
-            'select' => array(
-                '*',
-                'SITE_ID' => 'ORDER.LID',
-                'TRADING_PLATFORM_CODE' => 'TRADING_PLATFORM.CODE',
-                'TRADING_PLATFORM_CLASS' => 'TRADING_PLATFORM.CLASS',
-                'DELIVERY_NAME' => 'SHIPMENT.DELIVERY.NAME',
-                'DELIVERY_ID' => 'SHIPMENT.DELIVERY_ID',
-                'TRACKING_NUMBER' => 'SHIPMENT.TRACKING_NUMBER',
-            ),
-            'filter' => array(
-                '=SHIPMENT.ID' => $primary['ID'],
-            ),
-            'runtime' => array(
-                'SHIPMENT' => array(
-                    'data_type' => 'Bitrix\Sale\Internals\ShipmentTable',
-                    'reference' => array(
-                        '=this.ORDER_ID' => 'ref.ORDER_ID',
+        $dbRes = OrderTable::getList(
+            array(
+                'select' => array(
+                    '*',
+                    'SITE_ID' => 'ORDER.LID',
+                    'TRADING_PLATFORM_CODE' => 'TRADING_PLATFORM.CODE',
+                    'TRADING_PLATFORM_CLASS' => 'TRADING_PLATFORM.CLASS',
+                    'DELIVERY_NAME' => 'SHIPMENT.DELIVERY.NAME',
+                    'DELIVERY_ID' => 'SHIPMENT.DELIVERY_ID',
+                    'TRACKING_NUMBER' => 'SHIPMENT.TRACKING_NUMBER',
+                ),
+                'filter' => array(
+                    '=SHIPMENT.ID' => $primary['ID'],
+                ),
+                'runtime' => array(
+                    'SHIPMENT' => array(
+                        'data_type' => 'Bitrix\Sale\Internals\ShipmentTable',
+                        'reference' => array(
+                            '=this.ORDER_ID' => 'ref.ORDER_ID',
+                        ),
                     ),
                 ),
-            ),
-        ));
+            )
+        );
 
         if ($platformOrder = $dbRes->fetch()) {
-            if (class_exists($platformOrder['TRADING_PLATFORM_CLASS']) && is_subclass_of($platformOrder['TRADING_PLATFORM_CLASS'], '\Bitrix\Sale\TradingPlatform\Platform')) {
+            if (class_exists($platformOrder['TRADING_PLATFORM_CLASS']) && is_subclass_of(
+                    $platformOrder['TRADING_PLATFORM_CLASS'],
+                    '\Bitrix\Sale\TradingPlatform\Platform'
+                )) {
                 if ($platform = call_user_func($platformOrder['TRADING_PLATFORM_CLASS'] . '::getInstance')) {
                     $result = $platform->onAfterUpdateShipment(
                         $event,
@@ -519,8 +583,9 @@ class Helper
 
     public static function getIblocksIds($withSku = false)
     {
-        if (!\Bitrix\Main\Loader::includeModule('catalog'))
+        if (!\Bitrix\Main\Loader::includeModule('catalog')) {
             throw new SystemException('Module catalog is not installed');
+        }
 
 //		save result in STATIC - for multiple used
         if (!isset(self::$arIBlockIDs)) {
@@ -536,20 +601,22 @@ class Helper
             );
             while ($arCatalog = $rsCatalogs->Fetch()) {
                 $arCatalog['PRODUCT_IBLOCK_ID'] = intval($arCatalog['PRODUCT_IBLOCK_ID']);
-                if (0 < $arCatalog['PRODUCT_IBLOCK_ID'])
+                if (0 < $arCatalog['PRODUCT_IBLOCK_ID']) {
                     self::$arIBlockIDs[$arCatalog['PRODUCT_IBLOCK_ID']] = array(
                         "IBLOCK_ID" => $arCatalog['PRODUCT_IBLOCK_ID'],
                         "NAME" => '',
                     );
+                }
 
 //				get SKU IBLOCKS if needed
                 if ($withSku) {
                     $arCatalog['IBLOCK_ID'] = intval($arCatalog['IBLOCK_ID']);
-                    if (0 < $arCatalog['IBLOCK_ID'])
+                    if (0 < $arCatalog['IBLOCK_ID']) {
                         self::$arIBlockIDs[$arCatalog['IBLOCK_ID']] = array(
                             "IBLOCK_ID" => $arCatalog['IBLOCK_ID'],
                             "NAME" => $arCatalog['NAME'],
                         );
+                    }
                 }
             }
 
@@ -563,15 +630,17 @@ class Helper
             );
             while ($arCatalog = $rsCatalogs->Fetch()) {
                 $arCatalog['IBLOCK_ID'] = intval($arCatalog['IBLOCK_ID']);
-                if (0 < $arCatalog['IBLOCK_ID'])
+                if (0 < $arCatalog['IBLOCK_ID']) {
                     self::$arIBlockIDs[$arCatalog['IBLOCK_ID']] = array(
                         "IBLOCK_ID" => $arCatalog['IBLOCK_ID'],
                         "NAME" => $arCatalog['NAME'],
                     );
+                }
             }
 
-            if (empty(self::$arIBlockIDs))
+            if (empty(self::$arIBlockIDs)) {
                 self::$arIBlockIDs[-1] = true;
+            }
         }
 
         return self::$arIBlockIDs;
@@ -579,7 +648,6 @@ class Helper
 
     public static function getDefaultFeedIntervals()
     {
-
         return array(
             "PRODUCT" => 30,    //in MINUTES
             "INVENTORY" => 30,    //in MINUTES

@@ -119,6 +119,10 @@ class Builder
     private function convertExtensionsToModules()
     {
         foreach ($this->modules as $index => $module) {
+            if ($module === 'main.core') {
+                $module .= '.minimal';
+            }
+
             if ($module === Converter::CORE_EXTENSION && !$this->hasCoreExtension()) {
                 continue;
             }
@@ -187,9 +191,7 @@ class Builder
         $properties = self::getValueByKey($webPacker, Resource\Profile::PROPERTIES);
         if (is_array($properties)) {
             foreach ($properties as $propertyName => $propertyValue) {
-                if ($propertyValue) {
-                    $profile->setProperty($propertyName, $propertyValue);
-                }
+                $profile->setProperty($propertyName, $propertyValue);
             }
         }
         $profile->useAllLangs(!!self::getValueByKey($webPacker, Resource\Profile::USE_ALL_LANGS));
@@ -279,12 +281,22 @@ class Builder
             if ($url) {
                 $isRestored = true;
             } else {
-                $url = $server->getServerName();
+                $url = Option::get('main', 'server_name', null);
+                $url = $url ?: $server->getServerName();
+                if (!$url) {
+                    $defaultSites = \CAllSite::getDefList();
+                    while ($defaultSite = $defaultSites->fetch()) {
+                        $url = $defaultSite['SERVER_NAME'];
+                        if ($url) {
+                            break;
+                        }
+                    }
+                }
             }
         }
 
         if (!$isRestored) {
-            if (strpos($url, ':') === false && $server->getServerPort()) {
+            if (mb_strpos($url, ':') === false && $server->getServerPort()) {
                 if (!in_array($server->getServerPort(), array('80', '443'))) {
                     $url .= ':' . $server->getServerPort();
                 }
@@ -296,8 +308,8 @@ class Builder
 
         $uri = new Uri($url);
         $url = $uri->getLocator();
-        if (substr($url, -1) == '/') {
-            $url = substr($url, 0, -1);
+        if (mb_substr($url, -1) == '/') {
+            $url = mb_substr($url, 0, -1);
         }
 
         if ($canSave) {

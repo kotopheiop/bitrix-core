@@ -57,10 +57,18 @@ class Pack
      */
     public function __construct($name, Main\Engine\Controller $controller, $config = array())
     {
-        $this->keepField([
-            'packFile', 'languageId', 'tmpFolderPath', 'archiveFilePath',
-            'archiveFileName', 'seekPath', 'totalFileCount', 'downloadParams',
-        ]);
+        $this->keepField(
+            [
+                'packFile',
+                'languageId',
+                'tmpFolderPath',
+                'archiveFilePath',
+                'archiveFileName',
+                'seekPath',
+                'totalFileCount',
+                'downloadParams',
+            ]
+        );
 
         parent::__construct($name, $controller, $config);
 
@@ -70,10 +78,15 @@ class Pack
     /**
      * Runs controller action.
      *
+     * @param boolean $runBefore Flag to run onBeforeRun event handler.
      * @return array
      */
-    public function run()
+    public function run($runBefore = false)
     {
+        if ($runBefore) {
+            $this->onBeforeRun();
+        }
+
         // continue previous process
         $progressParams = $this->getProgressParameters();
         $this->packFile = (bool)$progressParams['packFile'];
@@ -87,11 +100,19 @@ class Pack
             $this->processedItems = 0;
             $this->archiveFileName = $this->generateExportFileName();
 
-            $tempDir = Translate\IO\Directory::generateTemporalDirectory('translate');
+            $exportFolder = Translate\Config::getExportFolder();
+            if (!empty($exportFolder)) {
+                $tempDir = new Translate\IO\Directory($exportFolder);
+            } else {
+                $tempDir = Translate\IO\Directory::generateTemporalDirectory('translate');
+            }
+
             if (!$tempDir->isExists() || !$tempDir->isDirectory()) {
-                $this->addError(new Error(
-                    Loc::getMessage('TR_ERROR_CREATE_TEMP_FOLDER', array('#PATH#' => $tempDir->getPhysicalPath()))
-                ));
+                $this->addError(
+                    new Error(
+                        Loc::getMessage('TR_ERROR_CREATE_TEMP_FOLDER', array('#PATH#' => $tempDir->getPhysicalPath()))
+                    )
+                );
             } else {
                 $this->archiveFilePath = $tempDir->getPhysicalPath() . '/' . $this->archiveFileName;
             }
@@ -130,9 +151,11 @@ class Pack
             );
         }
 
-        $this->archiveFile->setOptions(array(
-            'COMPRESS' => $this->packFile,
-        ));
+        $this->archiveFile->setOptions(
+            array(
+                'COMPRESS' => $this->packFile,
+            )
+        );
 
         return $this->performStep('runPacking');
     }
@@ -161,12 +184,13 @@ class Pack
                 $this->declareAccomplishment();
 
                 $this->downloadParams = $this->getDownloadingParameters();
+                $result['FILE_NAME'] = $this->downloadParams['fileName'];
                 $result['DOWNLOAD_LINK'] = $this->generateDownloadLink();
 
                 $messagePlaceholders = array(
                     '#TOTAL_FILES#' => $this->processedItems,
                     '#FILE_SIZE_FORMAT#' => \CFile::FormatSize($this->downloadParams['fileSize']),
-                    '#LANG#' => strtoupper($this->languageId),
+                    '#LANG#' => mb_strtoupper($this->languageId),
                     '#FILE_PATH#' => $this->archiveFileName,
                     '#LINK#' => $result['DOWNLOAD_LINK'],
                 );
@@ -196,7 +220,6 @@ class Pack
         $result['TOTAL_ITEMS'] = $this->totalItems;
 
         return $result;
-
     }
 
 

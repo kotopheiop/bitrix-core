@@ -1,13 +1,15 @@
 <?
+
 $MESS["SALE_HPS_LIQPAY_MERCHANT_ID"] = "Merchant ID";
-$MESS["SALE_HPS_LIQPAY_SIGN"] = "Подпись";
-$MESS["SALE_HPS_LIQPAY_PATH_TO_SERVER_URL"] = "Путь к файлу-обработчику результата";
-$MESS["SALE_HPS_LIQPAY_PATH_TO_RESULT_URL"] = "Путь к файлу для возврата покупателя на сайт";
-$MESS["SALE_HPS_LIQPAY_ORDER_ID"] = "Номер оплаты";
-$MESS["SALE_HPS_LIQPAY_CURRENCY"] = "Валюта счета";
-$MESS["SALE_HPS_LIQPAY_SHOULD_PAY"] = "К оплате";
-$MESS["SALE_HPS_LIQPAY_PAYMENT_PM"] = "Способ оплаты";
-$MESS["SALE_HPS_LIQPAY_PHONE"] = "Телефон клиента";
-$MESS["SALE_HPS_LIQPAY_PAYMENT_DESCRIPTION"] = "Назначение платежа";
-$MESS["SALE_HPS_LIQPAY_PAYMENT_DESCRIPTION_DESC"] = "Текст может содержать метки: #PAYMENT_ID# - ID оплаты, #ORDER_ID# - ID заказа, #PAYMENT_NUMBER# - номер оплаты, #ORDER_NUMBER# - номер заказа, #USER_EMAIL# - Email покупателя";
-$MESS["SALE_HPS_LIQPAY_PAYMENT_DESCRIPTION_TEMPLATE"] = "Оплата №#PAYMENT_NUMBER# заказа №#ORDER_NUMBER# для #USER_EMAIL#";
+$MESS["SALE_HPS_LIQPAY_SIGN"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_LIQPAY_PATH_TO_SERVER_URL"] = "пїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_LIQPAY_PATH_TO_RESULT_URL"] = "пїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_LIQPAY_PATH_TO_RESULT_URL_DESC"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_LIQPAY_ORDER_ID"] = "пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_LIQPAY_CURRENCY"] = "пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_LIQPAY_SHOULD_PAY"] = "пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_LIQPAY_PAYMENT_PM"] = "пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_LIQPAY_PHONE"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_LIQPAY_PAYMENT_DESCRIPTION"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_LIQPAY_PAYMENT_DESCRIPTION_DESC"] = "пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ: #PAYMENT_ID# - ID пїЅпїЅпїЅпїЅпїЅпїЅ, #ORDER_ID# - ID пїЅпїЅпїЅпїЅпїЅпїЅ, #PAYMENT_NUMBER# - пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ, #ORDER_NUMBER# - пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ, #USER_EMAIL# - Email пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_LIQPAY_PAYMENT_DESCRIPTION_TEMPLATE"] = "пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ#PAYMENT_NUMBER# пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ#ORDER_NUMBER# пїЅпїЅпїЅ #USER_EMAIL#";

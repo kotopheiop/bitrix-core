@@ -1,27 +1,32 @@
-<?
+<?php
+
 IncludeModuleLangFile(__FILE__);
 
 class CFilemanUtils
 {
-    function InitScript($Params)
+    public static function InitScript($Params)
     {
         CUtil::InitJSCore(array('ajax', 'window'));
 
         $arLangArray = array();
-        if ($Params['initSearch'])
+        if ($Params['initSearch']) {
             $arLangArray[] = 'search';
+        }
 
-        if ($Params['initServerAccess'])
+        if ($Params['initServerAccess']) {
             $arLangArray[] = 'server_access';
+        }
 
-        if ($Params['initCopy'])
+        if ($Params['initCopy']) {
             $arLangArray[] = 'copy';
+        }
 
-        if ($Params['initPack'])
+        if ($Params['initPack']) {
             $arLangArray[] = 'pack';
+        }
 
         $arSites = Array();
-        $dbSitesList = CSite::GetList($b = "SORT", $o = "asc");
+        $dbSitesList = CSite::GetList();
         while ($arSite = $dbSitesList->GetNext()) {
             $arSites[] = array(
                 "id" => $arSite["ID"],
@@ -42,8 +47,9 @@ class CFilemanUtils
         }
 
         ?>
-        <script type="text/javascript"
-                src="/bitrix/js/fileman/fileman_utils.js?v=<?= @filemtime($_SERVER['DOCUMENT_ROOT'] . '/bitrix/js/fileman/fileman_utils.js') ?>"></script>
+        <script type="text/javascript" src="/bitrix/js/fileman/fileman_utils.js?v=<?= @filemtime(
+            $_SERVER['DOCUMENT_ROOT'] . '/bitrix/js/fileman/fileman_utils.js'
+        ) ?>"></script>
 
         <script>
             <?CFilemanUtils::AppendLangMessages($arLangArray);?>
@@ -236,94 +242,106 @@ class CFilemanUtils
         <?
     }
 
-    function AppendLangMessages($Config)
+    public static function AppendLangMessages($Config)
     {
         $arLangMess = array();
         if (in_array('search', $Config)) {
-            $arLangMess = array_merge($arLangMess, array(
-                'Count' => 'FM_UTIL_COUNT',
-                'Counted' => 'FM_UTIL_COUNTED',
-                'CountedFiles' => 'FM_UTIL_COUNTED_FILES',
-                'SearchProgress' => 'FM_UTIL_SEARCH_PROGRESS',
-                'ShowRes' => 'FM_UTIL_SHOW_RES',
-                'Stop' => 'FM_UTIL_STOP_SEARCH',
-                'SearchEnded' => 'FM_UTIL_SEARCH_ENDED',
-                'Path' => 'FM_UTIL_SEARCH_PATH',
-                'Size' => 'FM_UTIL_SEARCH_SIZE',
-                'Date' => 'FM_UTIL_SEARCH_DATE',
-                'CountProgress' => 'FM_UTIL_COUNT_PROGRESS',
-                'CountEnded' => 'FM_UTIL_COUNT_ENDED',
-                'Find' => 'FM_UTIL_FIND',
-                'Replace' => 'FM_UTIL_REPLACE',
-                'ReplProgress' => 'FM_UTIL_REPLACE_PROGRESS',
-                'ReplEnded' => 'FM_UTIL_REPLACE_ENDED',
-                'ReplCounted' => 'FM_UTIL_REPLACE_COUNTED',
-                'ReplCountInFiles' => 'FM_UTIL_REPLACE_COUNT_IN_FILES',
-                'ReplShowRes' => 'FM_UTIL_REPLACE_SHOW_RES',
-                'ReplInFileTitle' => 'FM_UTIL_REPLACE_IN_FILE_TITLE',
-                'ReplaceConfirm' => 'FM_UTIL_REPLACE_CONFIRM',
-                'ReplacePhraseWarn' => 'FM_UTIL_REPLACE_WARN',
-                'SearchInFileTitle' => 'FM_UTIL_SEARCH_IN_FILE_TITLE',
-                'CountLimitWarn' => 'FM_UTIL_RES_COUNT_LIMIT_WARN',
-            ));
+            $arLangMess = array_merge(
+                $arLangMess,
+                array(
+                    'Count' => 'FM_UTIL_COUNT',
+                    'Counted' => 'FM_UTIL_COUNTED',
+                    'CountedFiles' => 'FM_UTIL_COUNTED_FILES',
+                    'SearchProgress' => 'FM_UTIL_SEARCH_PROGRESS',
+                    'ShowRes' => 'FM_UTIL_SHOW_RES',
+                    'Stop' => 'FM_UTIL_STOP_SEARCH',
+                    'SearchEnded' => 'FM_UTIL_SEARCH_ENDED',
+                    'Path' => 'FM_UTIL_SEARCH_PATH',
+                    'Size' => 'FM_UTIL_SEARCH_SIZE',
+                    'Date' => 'FM_UTIL_SEARCH_DATE',
+                    'CountProgress' => 'FM_UTIL_COUNT_PROGRESS',
+                    'CountEnded' => 'FM_UTIL_COUNT_ENDED',
+                    'Find' => 'FM_UTIL_FIND',
+                    'Replace' => 'FM_UTIL_REPLACE',
+                    'ReplProgress' => 'FM_UTIL_REPLACE_PROGRESS',
+                    'ReplEnded' => 'FM_UTIL_REPLACE_ENDED',
+                    'ReplCounted' => 'FM_UTIL_REPLACE_COUNTED',
+                    'ReplCountInFiles' => 'FM_UTIL_REPLACE_COUNT_IN_FILES',
+                    'ReplShowRes' => 'FM_UTIL_REPLACE_SHOW_RES',
+                    'ReplInFileTitle' => 'FM_UTIL_REPLACE_IN_FILE_TITLE',
+                    'ReplaceConfirm' => 'FM_UTIL_REPLACE_CONFIRM',
+                    'ReplacePhraseWarn' => 'FM_UTIL_REPLACE_WARN',
+                    'SearchInFileTitle' => 'FM_UTIL_SEARCH_IN_FILE_TITLE',
+                    'CountLimitWarn' => 'FM_UTIL_RES_COUNT_LIMIT_WARN',
+                )
+            );
         }
 
         if (in_array('server_access', $Config)) {
-            $arLangMess = array_merge($arLangMess, array(
-                'Ok' => 'FM_SA_OK',
-                'InProcess' => 'FM_SA_IN_PROC',
-                'Stop' => 'FM_UTIL_STOP_SEARCH',
-                'StopTitle' => 'FM_SA_STOP_TITLE',
-                'Return' => 'FM_SA_RETURN',
-                'ReturnTitle' => 'FM_SA_RETURN_TITLE',
-                'Stoped' => 'FM_SA_STOPED',
-                'Error' => 'FM_SA_ERROR',
-            ));
+            $arLangMess = array_merge(
+                $arLangMess,
+                array(
+                    'Ok' => 'FM_SA_OK',
+                    'InProcess' => 'FM_SA_IN_PROC',
+                    'Stop' => 'FM_UTIL_STOP_SEARCH',
+                    'StopTitle' => 'FM_SA_STOP_TITLE',
+                    'Return' => 'FM_SA_RETURN',
+                    'ReturnTitle' => 'FM_SA_RETURN_TITLE',
+                    'Stoped' => 'FM_SA_STOPED',
+                    'Error' => 'FM_SA_ERROR',
+                )
+            );
         }
 
         if (in_array('copy', $Config)) {
-            $arLangMess = array_merge($arLangMess, array(
-                'Copy' => 'FM_UTIL_COPY',
-                'Move' => 'FM_UTIL_MOVE',
-                'CopyTitle' => 'FM_UTIL_COPY_TITLE',
-                'MoveTitle' => 'FM_UTIL_MOVE_TITLE',
-                'More' => 'FM_UTIL_MORE',
-                'NoFolder' => 'FM_UTIL_NO_FOLDER',
-                'NoFolderNoAccess' => 'FM_UTIL_NO_FOLDER_NO_ACCESS',
-                'FileExist' => 'FM_UTIL_FILE_EXIST',
-                'Replace' => 'FM_COPY_REPLACE',
-                'Rename' => 'FM_COPY_RENAME',
-                'Skip' => 'FM_COPY_SKIP',
-                'ToAll' => 'FM_COPY_TO_ALL',
-                'FileExistTitle' => 'FM_UTIL_FILE_EXIST_1',
-                'FolderExistTitle' => 'FM_UTIL_FILE_EXIST_2',
-                'RenameTitle' => 'FM_COPY_RENAME_TITLE'
-            ));
+            $arLangMess = array_merge(
+                $arLangMess,
+                array(
+                    'Copy' => 'FM_UTIL_COPY',
+                    'Move' => 'FM_UTIL_MOVE',
+                    'CopyTitle' => 'FM_UTIL_COPY_TITLE',
+                    'MoveTitle' => 'FM_UTIL_MOVE_TITLE',
+                    'More' => 'FM_UTIL_MORE',
+                    'NoFolder' => 'FM_UTIL_NO_FOLDER',
+                    'NoFolderNoAccess' => 'FM_UTIL_NO_FOLDER_NO_ACCESS',
+                    'FileExist' => 'FM_UTIL_FILE_EXIST',
+                    'Replace' => 'FM_COPY_REPLACE',
+                    'Rename' => 'FM_COPY_RENAME',
+                    'Skip' => 'FM_COPY_SKIP',
+                    'ToAll' => 'FM_COPY_TO_ALL',
+                    'FileExistTitle' => 'FM_UTIL_FILE_EXIST_1',
+                    'FolderExistTitle' => 'FM_UTIL_FILE_EXIST_2',
+                    'RenameTitle' => 'FM_COPY_RENAME_TITLE'
+                )
+            );
         }
 
         if (in_array('pack', $Config)) {
-            $arLangMess = array_merge($arLangMess, array(
-                'Pack' => 'FM_UTIL_PACK',
-                'Unpack' => 'FM_UTIL_UNPACK',
-                'PackTitle' => 'FM_UTIL_PACK_TITLE',
-                'UnpackTitle' => 'FM_UTIL_UNPACK_TITLE',
-                'UnpackError' => 'FM_UTIL_UNPACK_ERROR',
-                'PackError' => 'FM_UTIL_PACK_ERROR',
-                'More' => 'FM_UTIL_MORE',
-                'NoFolder' => 'FM_UTIL_NO_FOLDER',
-                'NoFolderNoAccess' => 'FM_UTIL_NO_FOLDER_NO_ACCESS',
-                'FileExist' => 'FM_UTIL_FILE_EXIST',
-                'Replace' => 'FM_PACK_REPLACE',
-                'Rename' => 'FM_PACK_RENAME',
-                'Skip' => 'FM_PACK_SKIP',
-                'FileExistTitle' => 'FM_UTIL_FILE_EXIST_1',
-                'FolderExistTitle' => 'FM_UTIL_FILE_EXIST_2',
-                'AskNewName' => 'FM_PACK_ASK_NEW_NAME',
-                'PackPermsError' => 'FM_UTIL_PACK_PERMS_ERROR',
-                'PackFinishing' => 'FM_UTIL_PACK_FINISH',
-                'PackCancel' => 'FM_UTIL_PACK_CANCEL',
-                'PackFNameError' => 'FM_UTIL_PACK_FNAME_ERROR'
-            ));
+            $arLangMess = array_merge(
+                $arLangMess,
+                array(
+                    'Pack' => 'FM_UTIL_PACK',
+                    'Unpack' => 'FM_UTIL_UNPACK',
+                    'PackTitle' => 'FM_UTIL_PACK_TITLE',
+                    'UnpackTitle' => 'FM_UTIL_UNPACK_TITLE',
+                    'UnpackError' => 'FM_UTIL_UNPACK_ERROR',
+                    'PackError' => 'FM_UTIL_PACK_ERROR',
+                    'More' => 'FM_UTIL_MORE',
+                    'NoFolder' => 'FM_UTIL_NO_FOLDER',
+                    'NoFolderNoAccess' => 'FM_UTIL_NO_FOLDER_NO_ACCESS',
+                    'FileExist' => 'FM_UTIL_FILE_EXIST',
+                    'Replace' => 'FM_PACK_REPLACE',
+                    'Rename' => 'FM_PACK_RENAME',
+                    'Skip' => 'FM_PACK_SKIP',
+                    'FileExistTitle' => 'FM_UTIL_FILE_EXIST_1',
+                    'FolderExistTitle' => 'FM_UTIL_FILE_EXIST_2',
+                    'AskNewName' => 'FM_PACK_ASK_NEW_NAME',
+                    'PackPermsError' => 'FM_UTIL_PACK_PERMS_ERROR',
+                    'PackFinishing' => 'FM_UTIL_PACK_FINISH',
+                    'PackCancel' => 'FM_UTIL_PACK_CANCEL',
+                    'PackFNameError' => 'FM_UTIL_PACK_FNAME_ERROR'
+                )
+            );
         }
 
         if (count($arLangMess) > 0):
@@ -335,19 +353,32 @@ class CFilemanUtils
         endif;
     }
 
-    function BuildDialogContent($site)
+    public static function BuildDialogContent($site)
     {
         global $APPLICATION;
         $actUri = $APPLICATION->GetCurPage() . "?search=Y&ssess=" . CFilemanSearch::GetSearchSess();
 
         $s = DeleteParam(array('search', 'ssess'));
-        if ($s != '')
+        if ($s != '') {
             $actUri .= '&' . $s;
+        }
 
         $defMask = COption::GetOptionString("fileman", "search_mask", "*.php");
         // Search dialog
-        $aTabs[] = array("DIV" => "bx_fm_tab_search", "TAB" => GetMessage("FM_UTIL_FIND"), "ICON" => "", "TITLE" => GetMessage("FM_UTIL_FIND_TITLE"), "ONSELECT" => "window.oFMSearch.SetTab('search');");
-        $aTabs[] = array("DIV" => "bx_fm_tab_replace", "TAB" => GetMessage("FM_UTIL_REPLACE"), "ICON" => "", "TITLE" => GetMessage("FM_UTIL_REPLACE_TITLE"), "ONSELECT" => "window.oFMSearch.SetTab('replace');");
+        $aTabs[] = array(
+            "DIV" => "bx_fm_tab_search",
+            "TAB" => GetMessage("FM_UTIL_FIND"),
+            "ICON" => "",
+            "TITLE" => GetMessage("FM_UTIL_FIND_TITLE"),
+            "ONSELECT" => "window.oFMSearch.SetTab('search');"
+        );
+        $aTabs[] = array(
+            "DIV" => "bx_fm_tab_replace",
+            "TAB" => GetMessage("FM_UTIL_REPLACE"),
+            "ICON" => "",
+            "TITLE" => GetMessage("FM_UTIL_REPLACE_TITLE"),
+            "ONSELECT" => "window.oFMSearch.SetTab('replace');"
+        );
 
         $searchTabControl = new CAdmintabControl("searchTabControl", $aTabs, false, true);
         $searchTabControl->SetPublicMode('oSearchDialog');
@@ -363,26 +394,29 @@ class CFilemanUtils
                                 <td class="bxfm-d-label"><input id="bx_search_in_res" type="checkbox" value="Y"
                                                                 checked="checked"/></td>
                                 <td class="bxfm-d-value"><label for="bx_search_in_res"
-                                                                style="font-weight: bold;"><?= GetMessage("FM_UTIL_IN_SEARCH_RESULT") ?></label>
-                                </td>
+                                                                style="font-weight: bold;"><?= GetMessage(
+                                            "FM_UTIL_IN_SEARCH_RESULT"
+                                        ) ?></label></td>
                             </tr>
                             <tr title='<?= GetMessage("FM_UTIL_FILE_NAME_TITLE") ?>'>
-                                <td class="bxfm-d-label"><label
-                                            for="bx_search_file"><?= GetMessage("FM_UTIL_FILE_NAME") ?>:</label></td>
+                                <td class="bxfm-d-label"><label for="bx_search_file"><?= GetMessage(
+                                            "FM_UTIL_FILE_NAME"
+                                        ) ?>:</label></td>
                                 <td class="bxfm-d-value"><input id="bx_search_file" name="bx_search_file"
                                                                 value="<?= htmlspecialcharsbx($defMask) ?>"
                                                                 style="width: 220px;" type="text"/></td>
                             </tr>
                             <tr title="<?= GetMessage("FM_UTIL_PHRASE_TITLE") ?>">
-                                <td class="bxfm-d-label"><label
-                                            for="bx_search_phrase"><?= GetMessage("FM_UTIL_PHRASE") ?>:</label></td>
+                                <td class="bxfm-d-label"><label for="bx_search_phrase"><?= GetMessage(
+                                            "FM_UTIL_PHRASE"
+                                        ) ?>:</label></td>
                                 <td class="bxfm-d-value"><input id="bx_search_phrase" name="bx_search_phrase" value=""
                                                                 style="width: 220px;" type="text"/></td>
                             </tr>
                             <tr class="bxfm-d-only-replace" title="<?= GetMessage("FM_UTIL_REPLACE_INP_TITLE") ?>">
-                                <td class="bxfm-d-label"><label
-                                            for="bx_replace_phrase"><?= GetMessage("FM_UTIL_REPLACE_INP") ?>:</label>
-                                </td>
+                                <td class="bxfm-d-label"><label for="bx_replace_phrase"><?= GetMessage(
+                                            "FM_UTIL_REPLACE_INP"
+                                        ) ?>:</label></td>
                                 <td class="bxfm-d-value"><input id="bx_replace_phrase" name="bx_replace_phrase" value=""
                                                                 style="width: 220px;" type="text"/></td>
                             </tr>
@@ -398,9 +432,9 @@ class CFilemanUtils
                                             class="bxfm-site-sel" id="bx_search_site_sel"></span></td>
                             </tr>
                             <tr>
-                                <td class="bxfm-d-label"><label
-                                            for="bx_search_subdir"><?= GetMessage("FM_UTIL_INCLUDE_SUBFOLDER") ?></label>
-                                </td>
+                                <td class="bxfm-d-label"><label for="bx_search_subdir"><?= GetMessage(
+                                            "FM_UTIL_INCLUDE_SUBFOLDER"
+                                        ) ?></label></td>
                                 <td class="bxfm-d-value"><input id="bx_search_subdir" name="bx_search_subdir"
                                                                 type="checkbox" value="Y" checked="checked"/></td>
                             </tr>
@@ -412,8 +446,9 @@ class CFilemanUtils
                                 </td>
                             </tr>
                             <tr class="bxfm-add-hide" title="<?= GetMessage("FM_UTIL_DATE_TITLE") ?>">
-                                <td class="bxfm-d-label"><label
-                                            for="bx_search_date_sel"><?= GetMessage("FM_UTIL_DATE") ?>:</label></td>
+                                <td class="bxfm-d-label"><label for="bx_search_date_sel"><?= GetMessage(
+                                            "FM_UTIL_DATE"
+                                        ) ?>:</label></td>
                                 <td class="bxfm-d-value">
                                     <select id="bx_search_date_sel" name="bx_search_date_sel">
                                         <option value=""> - <?= GetMessage("FM_UTIL_NO_VAL") ?> -</option>
@@ -427,17 +462,24 @@ class CFilemanUtils
                                         <?= GetMessage("FM_UTIL_FROM") ?>: <input name="bx_search_date_from"
                                                                                   id="bx_search_date_from" value=""
                                                                                   style="width: 90px;"
-                                                                                  type="text"/><?= CAdminCalendar::Calendar("bx_search_date_from", "bx_search_form"); ?>
+                                                                                  type="text"/><?= CAdminCalendar::Calendar(
+                                            "bx_search_date_from",
+                                            "bx_search_form"
+                                        ); ?>
                                         <?= GetMessage("FM_UTIL_TO") ?>: <input name="bx_search_date_to"
                                                                                 id="bx_search_date_to" value=""
                                                                                 style="width: 90px;"
-                                                                                type="text"/><?= CAdminCalendar::Calendar("bx_search_date_to", "bx_search_form"); ?>
+                                                                                type="text"/><?= CAdminCalendar::Calendar(
+                                            "bx_search_date_to",
+                                            "bx_search_form"
+                                        ); ?>
                                     </div>
                                 </td>
                             </tr>
                             <tr class="bxfm-add-hide" title="<?= GetMessage("FM_UTIL_SIZE_TITLE") ?>">
-                                <td class="bxfm-d-label"><label
-                                            for="bx_search_size_sel"><?= GetMessage("FM_UTIL_SIZE") ?>:</label></td>
+                                <td class="bxfm-d-label"><label for="bx_search_size_sel"><?= GetMessage(
+                                            "FM_UTIL_SIZE"
+                                        ) ?>:</label></td>
                                 <td class="bxfm-d-value">
                                     <select id="bx_search_size_sel" name="bx_search_size_sel">
                                         <option value=""> - <?= GetMessage("FM_UTIL_NO_VAL") ?> -</option>
@@ -450,30 +492,35 @@ class CFilemanUtils
                                         <?= GetMessage("FM_UTIL_SIZE_FROM") ?>: <input id="bx_search_size_from"
                                                                                        name="bx_search_size_from"
                                                                                        value="" style="width: 70px;"
-                                                                                       type="text"/><?= GetMessage("FM_UTIL_KB") ?>
-                                        &nbsp;
+                                                                                       type="text"/><?= GetMessage(
+                                            "FM_UTIL_KB"
+                                        ) ?> &nbsp;
                                         <?= GetMessage("FM_UTIL_SIZE_TO") ?>: <input id="bx_search_size_to"
                                                                                      name="bx_search_size_to" value=""
                                                                                      style="width: 70px;"
-                                                                                     type="text"/><?= GetMessage("FM_UTIL_KB") ?>
+                                                                                     type="text"/><?= GetMessage(
+                                            "FM_UTIL_KB"
+                                        ) ?>
                                     </div>
                                 </td>
                             </tr>
                             <tr class="bxfm-add-hide bxfm-d-only-search">
-                                <td class="bxfm-d-label"><label
-                                            for="bx_search_dirs_too"><?= GetMessage("FM_UTIL_SEARCH_DIRS") ?></label>
-                                </td>
+                                <td class="bxfm-d-label"><label for="bx_search_dirs_too"><?= GetMessage(
+                                            "FM_UTIL_SEARCH_DIRS"
+                                        ) ?></label></td>
                                 <td class="bxfm-d-value"><input id="bx_search_dirs_too" name="bx_search_dirs_too"
                                                                 type="checkbox" value="Y" checked="checked"/></td>
                             </tr>
                             <tr class="bxfm-add-hide-TEMP" style="display: none;">
-                                <td class="bxfm-d-label"><label
-                                            for="bx_search_entire"><?= GetMessage("FM_UTIL_ENTIRE") ?></label></td>
+                                <td class="bxfm-d-label"><label for="bx_search_entire"><?= GetMessage(
+                                            "FM_UTIL_ENTIRE"
+                                        ) ?></label></td>
                                 <td class="bxfm-d-value"><input id="bx_search_entire" type="checkbox" value="Y"/></td>
                             </tr>
                             <tr class="bxfm-add-hide">
-                                <td class="bxfm-d-label"><label
-                                            for="bx_search_case"><?= GetMessage("FM_UTIL_CASE_SENS") ?></td>
+                                <td class="bxfm-d-label"><label for="bx_search_case"><?= GetMessage(
+                                        "FM_UTIL_CASE_SENS"
+                                    ) ?></td>
                                 <td class="bxfm-d-value"><input id="bx_search_case" name="bx_search_case"
                                                                 type="checkbox" value="Y"/></label></td>
                             </tr>
@@ -481,7 +528,8 @@ class CFilemanUtils
                         <input type="hidden" name="search" value="Y"/>
                         <div id="bx_search_res_cont"></div>
                         <?
-                        CAdminFileDialog::ShowScript(Array
+                        CAdminFileDialog::ShowScript(
+                            Array
                             (
                                 "event" => "FMFD_SearchDirOpen",
                                 "arResultDest" => Array("ELEMENT_ID" => "bx_search_dir"),
@@ -526,7 +574,9 @@ class CFilemanUtils
                         <div style="width: 340px;">
                             <input id="bx_copy_to" style="width: 255px;" value="/" type="text"/><input type="button"
                                                                                                        value="..."
-                                                                                                       title="<?= GetMessage('FD_OPEN_DIR') ?>"
+                                                                                                       title="<?= GetMessage(
+                                                                                                           'FD_OPEN_DIR'
+                                                                                                       ) ?>"
                                                                                                        onclick="FMFD_CopyMoveOpen(true, {site: window.oBXFMCopy.oSiteSel.value, path: window.oBXFMCopy.oCopyTo.pInput.value});"/>
                             <span class="bxfm-site-sel" id="bx_copy_site_sel"></span>
                         </div>
@@ -535,9 +585,9 @@ class CFilemanUtils
 
                 <tr class="bx-copy-d-title">
                     <td colSpan="2">
-                        <a class="bx-copy-add-link" id="bx_copy_add_lnk"
-                           href="javascript: void(0);"><?= GetMessage("FM_UTIL_ADDITIONAL") ?> <span
-                                    class="bx-copy-d-span-hide">(<?= GetMessage("FM_UTIL_HIDE") ?>)</span></a>
+                        <a class="bx-copy-add-link" id="bx_copy_add_lnk" href="javascript: void(0);"><?= GetMessage(
+                                "FM_UTIL_ADDITIONAL"
+                            ) ?> <span class="bx-copy-d-span-hide">(<?= GetMessage("FM_UTIL_HIDE") ?>)</span></a>
                     </td>
                 </tr>
                 <tr class="bxfm-add-hide">
@@ -579,7 +629,8 @@ class CFilemanUtils
                 </tr>
             </table>
             <?
-            CAdminFileDialog::ShowScript(Array
+            CAdminFileDialog::ShowScript(
+                Array
                 (
                     "event" => "FMFD_CopyMoveOpen",
                     "arResultDest" => Array("ELEMENT_ID" => "bx_copy_to"),
@@ -596,8 +647,13 @@ class CFilemanUtils
         </div>
         <div id="bx_copy_ask_dialog" class="bx-copy-cont">
             <div style="margin: 0 70px 0 70px; width: 460px; padding: 10px 0 5px;">
-                <?= GetMessage("FM_UTIL_FILE_EXIST", array("#NAME#" => "<span id='bx_copy_ask_file_name'>#NAME#</span>", "#FOLDER#" => "<span id='bx_copy_ask_folder'>#FOLDER#</span>")) ?>
-                :
+                <?= GetMessage(
+                    "FM_UTIL_FILE_EXIST",
+                    array(
+                        "#NAME#" => "<span id='bx_copy_ask_file_name'>#NAME#</span>",
+                        "#FOLDER#" => "<span id='bx_copy_ask_folder'>#FOLDER#</span>"
+                    )
+                ) ?>:
             </div>
             <div style="margin: 0 50px;">
                 <table class="bx-copy-compare-tbl">
@@ -702,7 +758,8 @@ class CFilemanUtils
                 </tr>
             </table>
             <?
-            CAdminFileDialog::ShowScript(Array
+            CAdminFileDialog::ShowScript(
+                Array
                 (
                     "event" => "FMFD_PackUnpackOpen",
                     "arResultDest" => Array("FUNCTION_NAME" => "MakeArchivePathFromFolderPath"),
@@ -739,8 +796,13 @@ class CFilemanUtils
         </script>
         <div id="bx_pack_ask_dialog" class="bx-pack-cont">
             <div style="margin: 0 20px 0 20px; width: 450px; padding: 10px 0 5px;">
-                <?= GetMessage("FM_UTIL_FILE_EXIST", array("#NAME#" => "<span id='bx_pack_ask_file_name'>#NAME#</span>", "#FOLDER#" => "<span id='bx_pack_ask_folder'>#FOLDER#</span>")) ?>
-                :
+                <?= GetMessage(
+                    "FM_UTIL_FILE_EXIST",
+                    array(
+                        "#NAME#" => "<span id='bx_pack_ask_file_name'>#NAME#</span>",
+                        "#FOLDER#" => "<span id='bx_pack_ask_folder'>#FOLDER#</span>"
+                    )
+                ) ?>:
             </div>
             <table style="margin: 0 20px 0 20px">
                 <tr>
@@ -762,11 +824,12 @@ class CFilemanUtils
         </div><?
     }
 
-    function Request($action, $site)
+    public static function Request($action, $site)
     {
         global $USER;
-        if (!$USER->CanDoOperation('fileman_view_file_structure'))
+        if (!$USER->CanDoOperation('fileman_view_file_structure')) {
             return;
+        }
 
         $io = CBXVirtualIo::GetInstance();
 
@@ -777,27 +840,29 @@ class CFilemanUtils
             case "replace":
 
                 $oSearch = new CFilemanSearch;
-                $oSearch->Init(array(
-                    'lastPath' => isset($_POST['last_path']) ? $_POST['last_path'] : false,
-                    'bCount' => $action == "count",
-                    'bReplace' => $action == "replace",
-                    "fileName" => trim($_POST['file']),
-                    "phrase" => trim($_POST['phrase']),
-                    "replacePhrase" => trim($_POST['replace_phrase']),
-                    "dir" => CFilemanUtils::NormalizePath($_POST['dir']),
-                    "bSubdir" => $_POST['subdir'],
-                    "dateFrom" => $_POST['date_from'],
-                    "dateTo" => $_POST['date_to'],
-                    "sizeFrom" => intVal($_POST['size_from']),
-                    "sizeTo" => intVal($_POST['size_to']),
-                    "entire" => $_POST['entire'],
-                    "bCaseSens" => $_POST['case_sens'],
-                    "bDirsToo" => $_POST['dirs_too'],
-                    "ssess" => $_POST['ssess'],
-                    "bInResult" => $_POST['in_result'],
-                    "site" => CFileMan::__CheckSite($_GET['fu_site'])
-                    //"site" => $site
-                ));
+                $oSearch->Init(
+                    array(
+                        'lastPath' => isset($_POST['last_path']) ? $_POST['last_path'] : false,
+                        'bCount' => $action == "count",
+                        'bReplace' => $action == "replace",
+                        "fileName" => trim($_POST['file']),
+                        "phrase" => trim($_POST['phrase']),
+                        "replacePhrase" => trim($_POST['replace_phrase']),
+                        "dir" => CFilemanUtils::NormalizePath($_POST['dir']),
+                        "bSubdir" => $_POST['subdir'],
+                        "dateFrom" => $_POST['date_from'],
+                        "dateTo" => $_POST['date_to'],
+                        "sizeFrom" => intval($_POST['size_from']),
+                        "sizeTo" => intval($_POST['size_to']),
+                        "entire" => $_POST['entire'],
+                        "bCaseSens" => $_POST['case_sens'],
+                        "bDirsToo" => $_POST['dirs_too'],
+                        "ssess" => $_POST['ssess'],
+                        "bInResult" => $_POST['in_result'],
+                        "site" => CFileMan::__CheckSite($_GET['fu_site'])
+                        //"site" => $site
+                    )
+                );
 
                 CFileMan::SaveLastPath(CFilemanUtils::NormalizePath($_POST['dir']));
                 break;
@@ -807,40 +872,46 @@ class CFilemanUtils
                 break;
 
             case "search_save_config":
-                CFilemanSearch::SaveConfig(array(
-                    "advMode" => (boolean)$_POST['adv_mode'],
-                    "bSubdir" => (boolean)$_POST['subdir'],
-                    "entire" => (boolean)$_POST['entire'],
-                    "bCaseSens" => (boolean)$_POST['case_sens'],
-                    "bDirsToo" => (boolean)$_POST['dirs_too']
-                ));
+                CFilemanSearch::SaveConfig(
+                    array(
+                        "advMode" => (boolean)$_POST['adv_mode'],
+                        "bSubdir" => (boolean)$_POST['subdir'],
+                        "entire" => (boolean)$_POST['entire'],
+                        "bCaseSens" => (boolean)$_POST['case_sens'],
+                        "bDirsToo" => (boolean)$_POST['dirs_too']
+                    )
+                );
                 break;
 
             case "copy_save_config":
-                CFilemanCopy::SaveConfig(array(
-                    "advMode" => (boolean)$_POST['adv_mode'],
-                    "caseOption" => $_POST['case_option']
-                ));
+                CFilemanCopy::SaveConfig(
+                    array(
+                        "advMode" => (boolean)$_POST['adv_mode'],
+                        "caseOption" => $_POST['case_option']
+                    )
+                );
                 break;
 
             case "copy":
             case "move":
                 $oCopy = new CFilemanCopy;
-                $oCopy->Init(array(
-                    "bCopy" => $action == "copy",
-                    "caseOption" => $_POST['case_option'],
-                    "arFiles" => $_POST['files'],
-                    "copyTo" => $_POST['copy_to'],
-                    "createCopyTo" => $_POST['create_copy_to'] == "Y",
+                $oCopy->Init(
+                    array(
+                        "bCopy" => $action == "copy",
+                        "caseOption" => $_POST['case_option'],
+                        "arFiles" => $_POST['files'],
+                        "copyTo" => $_POST['copy_to'],
+                        "createCopyTo" => $_POST['create_copy_to'] == "Y",
 
-                    "userCaseAnswer" => isset($_POST['uc_answer']) ? $_POST['uc_answer'] : false,
-                    "userCaseToAll" => isset($_POST['uc_to_all']) ? $_POST['uc_to_all'] : false,
-                    "userCaseLastPath" => isset($_POST['uc_last_path']) ? $_POST['uc_last_path'] : false,
+                        "userCaseAnswer" => isset($_POST['uc_answer']) ? $_POST['uc_answer'] : false,
+                        "userCaseToAll" => isset($_POST['uc_to_all']) ? $_POST['uc_to_all'] : false,
+                        "userCaseLastPath" => isset($_POST['uc_last_path']) ? $_POST['uc_last_path'] : false,
 
-                    "bSearch" => $_POST['search'] == "Y",
-                    "ssess" => $_POST['ssess'],
-                    "siteTo" => CFileMan::__CheckSite($_GET['fu_site'])
-                ));
+                        "bSearch" => $_POST['search'] == "Y",
+                        "ssess" => $_POST['ssess'],
+                        "siteTo" => CFileMan::__CheckSite($_GET['fu_site'])
+                    )
+                );
 
                 CFileMan::SaveLastPath($_POST['copy_to']);
                 break;
@@ -852,17 +923,20 @@ class CFilemanUtils
                 break;
             case "pack":
 
-                if (isset($_POST["startFile"]))
+                if (isset($_POST["startFile"])) {
                     $startFile = trim($_POST["startFile"]);
+                }
 
-                if (isset($_POST["quickPath"]))
+                if (isset($_POST["quickPath"])) {
                     $quickPath = trim($_POST["quickPath"]);
+                }
 
                 if (isset($_POST["packTo"])) {
-                    if (substr($_POST["packTo"], 0, 1) == "/")
+                    if (mb_substr($_POST["packTo"], 0, 1) == "/") {
                         $pack_to = $_POST["packTo"];
-                    else
+                    } else {
                         $pack_to = "/" . $_POST["packTo"];
+                    }
                 }
 
                 $siteTo = CFileMan::__CheckSite($_POST['siteTo']);
@@ -870,8 +944,9 @@ class CFilemanUtils
                 $siteFrom = CFileMan::__CheckSite($site);
                 $docRootFrom = CSite::GetSiteDocRoot($siteFrom);
 
-                if (!$USER->IsAdmin())
+                if (!$USER->IsAdmin()) {
                     $pack_to = RemoveScriptExtension($pack_to);
+                }
 
                 //check writing permissions
                 if (!$USER->CanDoFileOperation('fm_create_new_file', array($siteTo, $pack_to))) {
@@ -904,8 +979,15 @@ class CFilemanUtils
                                             name: "<?= CUtil::JSEscape(basename($pack_to))?>",
                                             path: "<?= CUtil::JSEscape($pack_to)?>",
                                             site: "<?= CUtil::JSEscape($siteTo)?>",
-                                            size: "<?= CFile::FormatSize(filesize($io->GetPhysicalName($docRootTo . $pack_to)))?>",
-                                            date: "<?= date(CDatabase::DateFormatToPHP(CLang::GetDateFormat('FULL')), filemtime($io->GetPhysicalName($docRootTo . $pack_to)) + CTimeZone::GetOffset())?>"
+                                            size: "<?= CFile::FormatSize(
+                                                filesize($io->GetPhysicalName($docRootTo . $pack_to))
+                                            )?>",
+                                            date: "<?= date(
+                                                CDatabase::DateFormatToPHP(CLang::GetDateFormat('FULL')),
+                                                filemtime(
+                                                    $io->GetPhysicalName($docRootTo . $pack_to)
+                                                ) + CTimeZone::GetOffset()
+                                            )?>"
                                         }
                                 };
                             </script>
@@ -981,10 +1063,11 @@ class CFilemanUtils
                 global $USER;
 
                 if (isset($_POST["packTo"])) {
-                    if (substr($_POST["packTo"], 0, 1) == "/")
+                    if (mb_substr($_POST["packTo"], 0, 1) == "/") {
                         $pack_to = $_POST["packTo"];
-                    else
+                    } else {
                         $pack_to = "/" . $_POST["packTo"];
+                    }
                 }
 
                 $siteFrom = CFileMan::__CheckSite($_GET['site']);
@@ -1047,39 +1130,41 @@ class CFilemanUtils
         }
     }
 
-    function GetTimeout()
+    public static function GetTimeout()
     {
         return COption::GetOptionString("fileman", "search_time_step", 5);
     }
 
-    function NormalizePath($path)
+    public static function NormalizePath($path)
     {
         $path = CFileMan::SecurePathVar(Rel2Abs("/", $path));
         $path = rtrim($path, '/');
         return $path;
     }
 
-    function TrimPath($path, $docRoot = false)
+    public static function TrimPath($path, $docRoot = false)
     {
-        if ($docRoot === false)
+        if ($docRoot === false) {
             $docRoot = $_SERVER["DOCUMENT_ROOT"];
-        $l = strlen($docRoot);
-        return strlen($path) > $l ? substr($path, $l) : '/';
+        }
+        $l = mb_strlen($docRoot);
+        return mb_strlen($path) > $l ? mb_substr($path, $l) : '/';
     }
 
-    function GetLastPathes()
+    public static function GetLastPathes()
     {
         $arPathes = CFileMan::GetLastPathes();
         $arRes = array(
             array("name" => "/", "desc" => GetMessage("FM_UTIL_ROOT_DIR"))
         );
-        for ($i = 0, $l = count($arPathes); $i < $l; $i++)
+        for ($i = 0, $l = count($arPathes); $i < $l; $i++) {
             $arRes[] = array("name" => $arPathes[$i]);
+        }
 
         return $arRes;
     }
 
-    function GetModifyTime($path)
+    public static function GetModifyTime($path)
     {
         $path = CBXVirtualIoFileSystem::ConvertCharset($path);
 
@@ -1095,7 +1180,7 @@ class CFilemanUtils
 //
 class CFilemanSearch
 {
-    function Init($Params)
+    public function Init($Params)
     {
         $this->maxFileOpenSize = 1024 * COption::GetOptionString("fileman", "search_max_open_file_size", 1024);
         $this->maxResultCount = COption::GetOptionString("fileman", "search_max_res_count", false);
@@ -1112,7 +1197,7 @@ class CFilemanSearch
         }
 
         $this->sSess = $this->Params['ssess'] ? $this->Params['ssess'] : false;
-        $this->bReplace = $this->Params['bReplace'] && strlen($this->Params['phrase']) > 0;
+        $this->bReplace = $this->Params['bReplace'] && $this->Params['phrase'] <> '';
 
         if ($this->bReplace) {
             $this->Params['bDirsToo'] = false;
@@ -1140,21 +1225,24 @@ class CFilemanSearch
         } else {
             $path = Rel2Abs("/", $this->Params["dir"]);
             $path = $this->docRoot . $path;
-            $oDir = new CFilemanUtilDir($path, array(
+            $oDir = new CFilemanUtilDir(
+                $path, array(
                 'obj' => $this,
                 'site' => $Params['site'],
                 'callBack' => "Search",
                 'checkBreak' => "CheckBreak",
                 'checkSubdirs' => $this->Params["bSubdir"]
-            ));
+            )
+            );
             $bSuccess = $oDir->Start();
 
             $bBreak = $oDir->bBreak;
             $nextPath = $oDir->nextPath;
             $bStoped = $oDir->bStoped;
 
-            if ($bStoped)
+            if ($bStoped) {
                 $bBreak = false;
+            }
         }
 
         if ($bSuccess) {
@@ -1193,26 +1281,30 @@ class CFilemanSearch
         }
     }
 
-    function Search($file)
+    public function Search($file)
     {
         global $APPLICATION, $USER;
 
-        if ($this->maxResultCount && count($this->Result) >= $this->maxResultCount)
+        if ($this->maxResultCount && count($this->Result) >= $this->maxResultCount) {
             return "stop";
+        }
 
         if ($this->bSkip) {
-            if ($file == $this->Params['lastPath'])
-                $this->bSkip = false; // continue handle files from last path
-            else
-                return; // Files was handled earlier
+            if ($file == $this->Params['lastPath']) {
+                $this->bSkip = false;
+            } // continue handle files from last path
+            else {
+                return;
+            } // Files was handled earlier
         }
 
         $io = CBXVirtualIo::GetInstance();
 
         $bIsDir = $io->DirectoryExists($file);
         $replFileCount = 0;
-        if ($bIsDir && !$this->Params['bDirsToo'])
+        if ($bIsDir && !$this->Params['bDirsToo']) {
             return;
+        }
 
         $entity = $bIsDir ? $io->GetDirectory($file) : $io->GetFile($file);
 
@@ -1220,29 +1312,32 @@ class CFilemanSearch
         $arPath = array($this->Params['site'], $path);
 
         // Check access
-        if (!$USER->CanDoFileOperation('fm_view_file', $arPath))
+        if (!$USER->CanDoFileOperation('fm_view_file', $arPath)) {
             return;
+        }
 
         $name = CFileman::GetFileName($file); // Name of file or dir
 
         // Check filename
         if ($this->Params['fileName'] != "") {
             if (!$this->Params['bCaseSens']) {
-                $name = strtolower($name);
-                $this->Params['fileName'] = strtolower($this->Params['fileName']);
+                $name = mb_strtolower($name);
+                $this->Params['fileName'] = mb_strtolower($this->Params['fileName']);
             }
 
             // Simple find in file name
-            if (strpos($this->Params['fileName'], "*") === false) {
-                if (strpos($name, $this->Params['fileName']) === false)
+            if (mb_strpos($this->Params['fileName'], "*") === false) {
+                if (mb_strpos($name, $this->Params['fileName']) === false) {
                     return;
+                }
             } else // name pattern with "*"
             {
                 $pattern = str_replace('.', '\.', $this->Params['fileName']);
                 $pattern = str_replace('/', '', $pattern);
                 $pattern = str_replace('*', '.*', $pattern);
-                if (!preg_match('/^' . $pattern . '$/i', $io->ExtractNameFromPath($file)))
+                if (!preg_match('/^' . $pattern . '$/i', $io->ExtractNameFromPath($file))) {
                     return;
+                }
             }
         }
 
@@ -1254,8 +1349,9 @@ class CFilemanSearch
                 ($this->Params['sizeFrom'] > 0 && $size < $this->Params['sizeFrom'] * 1024)
                 ||
                 ($this->Params['sizeTo'] > 0 && $size > $this->Params['sizeTo'] * 1024)
-            )
+            ) {
                 return;
+            }
         } else {
             $size = 0;
         }
@@ -1263,27 +1359,35 @@ class CFilemanSearch
         // Check filetime
         $time = $entity->GetModificationTime() + CTimeZone::GetOffset();
         if (
-            ($this->Params['dateFrom'] && $time < MakeTimeStamp($this->Params['dateFrom'], CLang::GetDateFormat("FULL")))
+            ($this->Params['dateFrom'] && $time < MakeTimeStamp(
+                    $this->Params['dateFrom'],
+                    CLang::GetDateFormat("FULL")
+                ))
             ||
             ($this->Params['dateTo'] && $time > MakeTimeStamp($this->Params['dateTo'], CLang::GetDateFormat("FULL")))
-        )
+        ) {
             return;
+        }
 
         if ($this->Params['phrase'] != "") {
             // File size limits or it's dir or access denied
-            if ($size > $this->maxFileOpenSize || $bIsDir || ($this->bReplace && !$USER->CanDoFileOperation('fm_edit_existent_file', $arPath)))
+            if ($size > $this->maxFileOpenSize || $bIsDir || ($this->bReplace && !$USER->CanDoFileOperation(
+                        'fm_edit_existent_file',
+                        $arPath
+                    ))) {
                 return;
+            }
 
             $fTmp = $io->GetFile($file);
 
             $phrase = $this->Params['phrase'];
             $fileContent = str_replace("\r\n", "\n", $fTmp->GetContents());
             $origFileContent = $fileContent;
-            $isPHP = CFileman::IsPHP($fileContent) || HasScriptExtension($path) || substr($name, 0, 1) == ".";
+            $isPHP = CFileman::IsPHP($fileContent) || HasScriptExtension($path) || mb_substr($name, 0, 1) == ".";
 
             if (!$this->Params['bCaseSens']) {
-                $phrase = strtolower($phrase);
-                $fileContent = strtolower($fileContent);
+                $phrase = mb_strtolower($phrase);
+                $fileContent = mb_strtolower($fileContent);
             }
 
             $I_PCRE_MODIFIER = $this->Params['bCaseSens'] ? '' : 'i';
@@ -1291,15 +1395,20 @@ class CFilemanSearch
             // TODO: Add check Entire word
             //$this->Params['entire']
 
-            if (strpos($fileContent, $phrase) === false)
+            if (mb_strpos($fileContent, $phrase) === false) {
                 return;
+            }
 
             if ($this->bReplace) // Replace
             {
-                if ($isPHP && !$USER->CanDoOperation('edit_php'))
-                    return; // User can't write PHP files
+                if ($isPHP && !$USER->CanDoOperation('edit_php')) {
+                    return;
+                } // User can't write PHP files
 
-                $pattern = '/' . preg_quote($this->Params['phrase'], '/') . '/' . $I_PCRE_MODIFIER . BX_UTF_PCRE_MODIFIER;
+                $pattern = '/' . preg_quote(
+                        $this->Params['phrase'],
+                        '/'
+                    ) . '/' . $I_PCRE_MODIFIER . BX_UTF_PCRE_MODIFIER;
 
                 $res = array();
                 preg_match_all($pattern, $origFileContent, $res);
@@ -1308,14 +1417,19 @@ class CFilemanSearch
 
                 $APPLICATION->SaveFileContent($file, $origFileContent);
             } else {
-                if ($isPHP && !($USER->CanDoOperation('edit_php') || $USER->CanDoFileOperation('fm_lpa', $arPath)))
-                    return; // User can't read PHP files
+                if ($isPHP && !($USER->CanDoOperation('edit_php') || $USER->CanDoFileOperation('fm_lpa', $arPath))) {
+                    return;
+                } // User can't read PHP files
 
-                $pattern = '/' . preg_quote($this->Params['phrase'], '/') . '/' . $I_PCRE_MODIFIER . BX_UTF_PCRE_MODIFIER;
+                $pattern = '/' . preg_quote(
+                        $this->Params['phrase'],
+                        '/'
+                    ) . '/' . $I_PCRE_MODIFIER . BX_UTF_PCRE_MODIFIER;
 
                 // Only for LPA. All php fragments will be cutted off
-                if ($USER->CanDoFileOperation('fm_lpa', $arPath) && !$USER->CanDoOperation('edit_php'))
+                if ($USER->CanDoFileOperation('fm_lpa', $arPath) && !$USER->CanDoOperation('edit_php')) {
                     $origFileContent = CMain::ProcessLPA($origFileContent, '');
+                }
 
                 $res = array();
                 preg_match_all($pattern, $origFileContent, $res);
@@ -1330,44 +1444,56 @@ class CFilemanSearch
             'time' => $time,
             'str_date' => date(CDatabase::DateFormatToPHP(CLang::GetDateFormat("FULL")), $time),
             'str_size' => $bIsDir ? "" : CFile::FormatSize($size),
-            'type_src' => "/bitrix/images/fileman/types/" . ($bIsDir ? "folder" : CFileMan::GetFileTypeEx($file)) . ".gif",
+            'type_src' => "/bitrix/images/fileman/types/" . ($bIsDir ? "folder" : CFileMan::GetFileTypeEx(
+                    $file
+                )) . ".gif",
             'repl_count' => $replFileCount // used only in replace-mode to count matches
         );
     }
 
-    function CheckBreak()
+    public function CheckBreak()
     {
         return time() - $this->startTime > CFilemanUtils::GetTimeout();
     }
 
-    function trimPath($path, $docRoot = false)
+    public static function trimPath($path, $docRoot = false)
     {
-        if ($docRoot === false)
+        if ($docRoot === false) {
             $docRoot = $_SERVER["DOCUMENT_ROOT"];
-        $l = strlen($docRoot);
-        return strlen($path) > $l ? substr($path, $l) : '/';
+        }
+        $l = mb_strlen($docRoot);
+        return mb_strlen($path) > $l ? mb_substr($path, $l) : '/';
     }
 
-    function CheckSearchSess($searchSess)
+    public static function CheckSearchSess($searchSess)
     {
         global $DB;
 
-        switch (strtoupper($DB->type)) {
+        switch ($DB->type) {
             case "MYSQL":
-                $res = $DB->Query("SELECT * FROM b_file_search WHERE SESS_ID='" . $DB->ForSql($searchSess) . "' LIMIT 1", false);
+                $res = $DB->Query(
+                    "SELECT * FROM b_file_search WHERE SESS_ID='" . $DB->ForSql($searchSess) . "' LIMIT 1",
+                    false
+                );
                 break;
             case "MSSQL":
-                $res = $DB->Query("SELECT TOP 1 * FROM b_file_search WHERE SESS_ID='" . $DB->ForSql($searchSess) . "'", false);
+                $res = $DB->Query(
+                    "SELECT TOP 1 * FROM b_file_search WHERE SESS_ID='" . $DB->ForSql($searchSess) . "'",
+                    false
+                );
                 break;
             case "ORACLE":
-                $res = $DB->Query("SELECT * FROM b_file_search WHERE SESS_ID='" . $DB->ForSql($searchSess) . "' AND ROWNUM <= 1", false);
+                $res = $DB->Query(
+                    "SELECT * FROM b_file_search WHERE SESS_ID='" . $DB->ForSql($searchSess) . "' AND ROWNUM <= 1",
+                    false
+                );
                 break;
         }
 
         return !$res->Fetch();
     }
 
-    function GetSearchResult($searchSess = '', $arOrder = array('date', 'desc'))
+    public static function GetSearchResult($searchSess = '', $arOrder = array('date', 'desc'))
     {
         global $DB;
 
@@ -1382,24 +1508,32 @@ class CFilemanSearch
         $q = "SELECT * FROM b_file_search WHERE SESS_ID='" . $DB->ForSql($searchSess) . "'";
 
         $strOrderBy = '';
-        if ($arOrder[0] == 'timestamp')
+        if ($arOrder[0] == 'timestamp') {
             $by = 'F_TIME';
-        else if ($arOrder[0] == 'size')
-            $by = 'F_SIZE';
-        else if ($arOrder[0] == 'name')
-            $by = 'F_PATH';
-        else if ($arOrder[0] == 'id')
-            $by = 'ID';
-        else
-            $by = false;
-
-        $order = strtolower($arOrder[1]);
-        if ($by) {
-            $strOrderBy = $by . ' ' . ($order == 'desc' ? 'desc' . (strtoupper($DB->type) == "ORACLE" ? " NULLS LAST" : "") : 'asc' . (strtoupper($DB->type) == "ORACLE" ? " NULLS FIRST" : ""));
+        } else {
+            if ($arOrder[0] == 'size') {
+                $by = 'F_SIZE';
+            } else {
+                if ($arOrder[0] == 'name') {
+                    $by = 'F_PATH';
+                } else {
+                    if ($arOrder[0] == 'id') {
+                        $by = 'ID';
+                    } else {
+                        $by = false;
+                    }
+                }
+            }
         }
 
-        if ($strOrderBy != "")
+        $order = mb_strtolower($arOrder[1]);
+        if ($by) {
+            $strOrderBy = $by . ' ' . ($order == 'desc' ? 'desc' . ($DB->type == "ORACLE" ? " NULLS LAST" : "") : 'asc' . ($DB->type == "ORACLE" ? " NULLS FIRST" : ""));
+        }
+
+        if ($strOrderBy != "") {
             $q .= " ORDER BY " . $strOrderBy;
+        }
 
         $res = $DB->Query($q, false);
 
@@ -1416,7 +1550,7 @@ class CFilemanSearch
         return $searchRes;
     }
 
-    function SetSearchResult($searchRes, $searchSess, $bClean = true)
+    public static function SetSearchResult($searchRes, $searchSess, $bClean = true)
     {
         global $DB;
         $DB->Query("DELETE FROM b_file_search WHERE SESS_ID='" . $DB->ForSql($searchSess) . "'", false);
@@ -1436,13 +1570,18 @@ class CFilemanSearch
         return $searchRes;
     }
 
-    function DelFromSearchResult($searchSess, $path)
+    public static function DelFromSearchResult($searchSess, $path)
     {
         global $DB;
-        return $DB->Query("DELETE FROM b_file_search WHERE SESS_ID='" . $DB->ForSql($searchSess) . "' AND F_PATH='" . $DB->ForSql($path) . "'", false);
+        return $DB->Query(
+            "DELETE FROM b_file_search WHERE SESS_ID='" . $DB->ForSql($searchSess) . "' AND F_PATH='" . $DB->ForSql(
+                $path
+            ) . "'",
+            false
+        );
     }
 
-    function RenameInSearchResult($searchSess, $pathFrom, $pathTo)
+    public static function RenameInSearchResult($searchSess, $pathFrom, $pathTo)
     {
         global $DB;
 
@@ -1459,31 +1598,35 @@ class CFilemanSearch
         return preg_replace("/[^a-z0-9]/i", "", $ssess);
     }
 
-    function GetSearchSess()
+    public static function GetSearchSess()
     {
         return md5($GLOBALS["USER"]->GetID() . "+" . uniqid(rand(), true));
     }
 
     // Delete all results older than 2 days
-    function CleanOldSearchResult()
+    public static function CleanOldSearchResult()
     {
         global $DB;
-        $d = date(CDatabase::DateFormatToPHP(CLang::GetDateFormat("FULL")), mktime(0, 0, 0, date("m"), date("d") - 2, date("Y")));
+        $d = date(
+            CDatabase::DateFormatToPHP(CLang::GetDateFormat("FULL")),
+            mktime(0, 0, 0, date("m"), date("d") - 2, date("Y"))
+        );
         $q = "DELETE FROM b_file_search WHERE TIMESTAMP_X<=" . $DB->CharToDateFunction($d, "SHORT") . "";
         $DB->Query($q, false);
     }
 
-    function SaveConfig($arConfig)
+    public static function SaveConfig($arConfig)
     {
         CUserOptions::SetOption("fileman", "file_search_config", serialize($arConfig));
     }
 
-    function GetConfig()
+    public static function GetConfig()
     {
         $arConfig = array();
         $strAr = CUserOptions::GetOption("fileman", "file_search_config", false);
-        if ($strAr && CheckSerializedData($strAr))
-            $arConfig = unserialize($strAr);
+        if ($strAr && CheckSerializedData($strAr)) {
+            $arConfig = unserialize($strAr, ['allowed_classes' => false]);
+        }
         return $arConfig;
     }
 }
@@ -1505,7 +1648,7 @@ class CFilemanUtilDir
     var $cntDir = 0;
     var $cntFile = 0;
 
-    function CFilemanUtilDir($dir, $Params)
+    public function __construct($dir, $Params)
     {
         $this->dir = str_replace('\\', '/', $dir);
         $this->obj = $Params['obj'];
@@ -1517,10 +1660,11 @@ class CFilemanUtilDir
         $this->processDir = isset($Params['processDir']) ? $Params['processDir'] : false;
     }
 
-    function Start($dir = false)
+    public function Start($dir = false)
     {
-        if ($dir)
+        if ($dir) {
             $this->dir = str_replace('\\', '/', $dir);
+        }
 
         $io = CBXVirtualIo::GetInstance();
 
@@ -1536,31 +1680,34 @@ class CFilemanUtilDir
         }
 
         $r = $this->CallMethod($this->callBack, $this->dir);
-        if ($r === false)
+        if ($r === false) {
             $this->err[] = 'Error on entry: ' . $this->dir;
+        }
 
         return $r;
     }
 
-    function Recursion($dir)
+    public function Recursion($dir)
     {
         //error_reporting(0);
         global $USER;
 
         $io = CBXVirtualIo::GetInstance();
 
-        if ($this->bDirFirst && $this->processDir && (!$this->startPath || $this->bFound))
+        if ($this->bDirFirst && $this->processDir && (!$this->startPath || $this->bFound)) {
             if (!$this->CallMethod($this->processDir, $dir)) {
                 $this->err[] = 'Error on dir: ' . $dir;
                 return false;
             }
+        }
 
         $dTmp = $io->GetDirectory($dir);
         $arChildren = $dTmp->GetChildren();
 
         $arItems = array();
-        foreach ($arChildren as $child)
+        foreach ($arChildren as $child) {
             $arItems[] = $child->GetName();
+        }
 
         sort($arItems);
         $s_dir = CFilemanUtils::TrimPath($dir, $this->docRoot);
@@ -1568,10 +1715,11 @@ class CFilemanUtilDir
         foreach ($arItems as $item) {
             $f = $dir . "/" . $item;
             if ($this->startPath && !$this->bFound) {
-                if ($this->startPath == $f)
+                if ($this->startPath == $f) {
                     $this->bFound = true;
-                elseif (substr($this->startPath, 0, strlen($f) + 1) != $f . '/')
+                } elseif (mb_substr($this->startPath, 0, mb_strlen($f) + 1) != $f . '/') {
                     continue;
+                }
             }
 
             $arPath = array($this->site, $s_dir . "/" . $item);
@@ -1582,12 +1730,15 @@ class CFilemanUtilDir
                 return true;
             }
 
-            if ($this->bSkipSymLinks && is_link($f))
+            if ($this->bSkipSymLinks && is_link($f)) {
                 continue;
+            }
 
             if ($io->DirectoryExists($f)) {
                 if (!$USER->CanDoFileOperation('fm_view_listing', $arPath)) // access
+                {
                     continue;
+                }
 
                 $r = $this->CallMethod($this->callBack, $f);
                 if ($r == 'stop') {
@@ -1598,10 +1749,12 @@ class CFilemanUtilDir
 
                 if ($this->checkSubdirs) {
                     $r = $this->Recursion($f);
-                    if ($this->bBreak)
+                    if ($this->bBreak) {
                         return $r;
-                    if ($r === false)
+                    }
+                    if ($r === false) {
                         return false;
+                    }
                 }
             } elseif ($this->callBack) {
                 $r = $this->CallMethod($this->callBack, $f);
@@ -1628,11 +1781,12 @@ class CFilemanUtilDir
         return true;
     }
 
-    function CallMethod($method = '', $param = false)
+    public function CallMethod($method = '', $param = false)
     {
         $obj = $this->obj;
-        if ($param)
+        if ($param) {
             return $obj->$method($param);
+        }
 
         return $obj->$method();
     }
@@ -1640,7 +1794,7 @@ class CFilemanUtilDir
 
 class CFilemanChmod
 {
-    function Init($Params)
+    public function Init($Params)
     {
         $this->value = $Params['value'];
         $this->startTime = time();
@@ -1654,18 +1808,20 @@ class CFilemanChmod
         }
     }
 
-    function CheckBreak()
+    public function CheckBreak()
     {
         return time() - $this->startTime > CFilemanUtils::GetTimeout();
     }
 
-    function Chmod($file)
+    public function Chmod($file)
     {
         if ($this->bSkip) {
-            if ($file == $this->Params['lastPath'])
-                $this->bSkip = false; // continue handle files from last path
-            else
-                return; // Files was handled earlier
+            if ($file == $this->Params['lastPath']) {
+                $this->bSkip = false;
+            } // continue handle files from last path
+            else {
+                return;
+            } // Files was handled earlier
         }
 
         $this->Result[] = array(CFilemanUtils::TrimPath($file), false);
@@ -1674,13 +1830,14 @@ class CFilemanChmod
 
 class CFilemanCopy
 {
-    function Init($Params)
+    public function Init($Params)
     {
         global $USER;
         $arWarnings = array();
 
-        if (!$USER->CanDoOperation('fileman_admin_files') && !$USER->CanDoOperation('fileman_admin_folders'))
+        if (!$USER->CanDoOperation('fileman_admin_files') && !$USER->CanDoOperation('fileman_admin_folders')) {
             $arWarnings[] = GetMessage('FM_UTIL_ACCESS_DENIED');
+        }
 
         $io = CBXVirtualIo::GetInstance();
 
@@ -1695,11 +1852,15 @@ class CFilemanCopy
 
             if (!$io->DirectoryExists($absPathTo)) {
                 // Create destination directory
-                $bAccess = $USER->CanDoOperation('fileman_admin_folders') && $USER->CanDoFileOperation('fm_create_new_folder', $pathTo);
+                $bAccess = $USER->CanDoOperation('fileman_admin_folders') && $USER->CanDoFileOperation(
+                        'fm_create_new_folder',
+                        $pathTo
+                    );
 
                 if ($Params['createCopyTo']) {
-                    if ($bAccess)
+                    if ($bAccess) {
                         CFileMan::CreateDir(Array($siteTo, $pathTo));
+                    }
                 } else // Ask to user - create destination folder or no?
                 {
                     ?>
@@ -1713,12 +1874,14 @@ class CFilemanCopy
                 $caseOption = $Params['caseOption'];
 
                 if ($Params["userCaseLastPath"]) {
-                    if ($Params["userCaseLastPath"] != $filePath)
+                    if ($Params["userCaseLastPath"] != $filePath) {
                         continue;
+                    }
 
                     $caseOption = $Params['userCaseAnswer'];
-                    if ($Params["userCaseToAll"])
+                    if ($Params["userCaseToAll"]) {
                         $Params['caseOption'] = $caseOption;
+                    }
 
                     $Params["userCaseLastPath"] = false;
                 }
@@ -1730,7 +1893,9 @@ class CFilemanCopy
                 $strWarn = "";
 
                 // Check if file already exists in destination folder
-                if ($io->FileExists($absPathTo . $name_i) || ($bDir_i == $io->DirectoryExists($absPathTo . $name_i) && $bDir_i)) {
+                if ($io->FileExists($absPathTo . $name_i) || ($bDir_i == $io->DirectoryExists(
+                            $absPathTo . $name_i
+                        ) && $bDir_i)) {
                     $fTmp = $io->GetFile($absPathTo . $name_i);
                     $fTmp1 = $io->GetFile($absPath_i);
                     $altName = CFilemanCopy::GetAltFileName($absPathTo, $name_i, $bDir_i);
@@ -1745,7 +1910,12 @@ class CFilemanCopy
                                     site: "<?= CUtil::JSEscape($siteTo)?>",
                                     bDir: <?= $bDir_i ? "true" : "false"?>,
                                     size: "<?= $bDir_i ? '-' : CFile::FormatSize($fTmp->GetFileSize())?>",
-                                    date: "<?= date(CDatabase::DateFormatToPHP(CLang::GetDateFormat("FULL")), CFilemanUtils::GetModifyTime($absPathTo . $name_i) + CTimeZone::GetOffset())?>"
+                                    date: "<?= date(
+                                        CDatabase::DateFormatToPHP(CLang::GetDateFormat("FULL")),
+                                        CFilemanUtils::GetModifyTime(
+                                            $absPathTo . $name_i
+                                        ) + CTimeZone::GetOffset()
+                                    )?>"
                                 },
                                 fileNew: {
                                     alt_name: "<?= CUtil::JSEscape($altName)?>",
@@ -1754,51 +1924,71 @@ class CFilemanCopy
                                     site: "<?= CUtil::JSEscape($site)?>",
                                     bDir: <?= $bDir_i ? "true" : "false"?>,
                                     size: "<?= $bDir_i ? '-' : CFile::FormatSize($fTmp1->GetFileSize())?>",
-                                    date: "<?= date(CDatabase::DateFormatToPHP(CLang::GetDateFormat("FULL")), CFilemanUtils::GetModifyTime($absPath_i) + CTimeZone::GetOffset())?>"
+                                    date: "<?= date(
+                                        CDatabase::DateFormatToPHP(CLang::GetDateFormat("FULL")),
+                                        CFilemanUtils::GetModifyTime($absPath_i) + CTimeZone::GetOffset()
+                                    )?>"
                                 }
                             };
                         </script><?
                         return;
                     } elseif ($caseOption == 'replace') {
                         // We don't need to replace, couse it's one file
-                        if (CFileMan::NormalizePath($pathTo . "/" . $name_i) == $filePath)
+                        if (CFileMan::NormalizePath($pathTo . "/" . $name_i) == $filePath) {
                             continue;
+                        }
 
-                        $strWarn = CFileMan::CopyEx($arPath_i, Array($siteTo, CFileMan::NormalizePath($pathTo . "/" . $name_i)), !$Params['bCopy'], true);
+                        $strWarn = CFileMan::CopyEx(
+                            $arPath_i,
+                            Array($siteTo, CFileMan::NormalizePath($pathTo . "/" . $name_i)),
+                            !$Params['bCopy'],
+                            true
+                        );
 
                         if ($strWarn != "") {
                             $arWarnings[] = $strWarn;
                             $log = false;
-                        } elseif ($Params['bSearch'] && $Params['ssess'] && !$Params['bCopy'])
+                        } elseif ($Params['bSearch'] && $Params['ssess'] && !$Params['bCopy']) {
                             CFilemanSearch::DelFromSearchResult($Params['ssess'], $filePath);
+                        }
                     } elseif ($caseOption == 'auto_rename') {
-                        $strWarn = CFileMan::CopyEx($arPath_i, Array($siteTo, CFileMan::NormalizePath($pathTo . "/" . $altName)), !$Params['bCopy']);
+                        $strWarn = CFileMan::CopyEx(
+                            $arPath_i,
+                            Array($siteTo, CFileMan::NormalizePath($pathTo . "/" . $altName)),
+                            !$Params['bCopy']
+                        );
 
                         if ($strWarn != "") {
                             $arWarnings[] = $strWarn;
                             $log = false;
-                        } elseif ($Params['bSearch'] && $Params['ssess'] && !$Params['bCopy'])
+                        } elseif ($Params['bSearch'] && $Params['ssess'] && !$Params['bCopy']) {
                             CFilemanSearch::DelFromSearchResult($Params['ssess'], $filePath);
+                        }
                     } elseif ($caseOption == 'skip') {
                         continue;
                     }
                 } else // File not exist
                 {
-                    $strWarn = CFileMan::CopyEx($arPath_i, Array($siteTo, CFileMan::NormalizePath($pathTo . "/" . $name_i)), !$Params['bCopy']);
+                    $strWarn = CFileMan::CopyEx(
+                        $arPath_i,
+                        Array($siteTo, CFileMan::NormalizePath($pathTo . "/" . $name_i)),
+                        !$Params['bCopy']
+                    );
 
                     if ($strWarn != "") {
                         $arWarnings[] = $strWarn;
                         $log = false;
-                    } elseif ($Params['bSearch'] && $Params['ssess'] && !$Params['bCopy'])
+                    } elseif ($Params['bSearch'] && $Params['ssess'] && !$Params['bCopy']) {
                         CFilemanSearch::DelFromSearchResult($Params['ssess'], $filePath);
+                    }
                 }
 
                 $module_id = "fileman";
                 if (COption::GetOptionString($module_id, "log_page", "Y") == "Y" && $log) {
-                    $res_log['copy_to'] = substr($pathTo, 1);
-                    $res_log['path'] = substr($filePath, 1);
+                    $res_log['copy_to'] = mb_substr($pathTo, 1);
+                    $res_log['path'] = mb_substr($filePath, 1);
                     if ($Params['bCopy'] == "copy") {
-                        if (!$bDir_i)
+                        if (!$bDir_i) {
                             CEventLog::Log(
                                 "content",
                                 "FILE_COPY",
@@ -1806,7 +1996,7 @@ class CFilemanCopy
                                 "",
                                 serialize($res_log)
                             );
-                        else
+                        } else {
                             CEventLog::Log(
                                 "content",
                                 "SECTION_COPY",
@@ -1814,8 +2004,9 @@ class CFilemanCopy
                                 "",
                                 serialize($res_log)
                             );
+                        }
                     } else {
-                        if (!$bDir_i)
+                        if (!$bDir_i) {
                             CEventLog::Log(
                                 "content",
                                 "FILE_MOVE",
@@ -1823,7 +2014,7 @@ class CFilemanCopy
                                 "",
                                 serialize($res_log)
                             );
-                        else
+                        } else {
                             CEventLog::Log(
                                 "content",
                                 "SECTION_MOVE",
@@ -1831,6 +2022,7 @@ class CFilemanCopy
                                 "",
                                 serialize($res_log)
                             );
+                        }
                     }
                 }
             }
@@ -1846,33 +2038,36 @@ class CFilemanCopy
         </script><?
     }
 
-    function SaveConfig($arConfig)
+    public static function SaveConfig($arConfig)
     {
         CUserOptions::SetOption("fileman", "file_copy_move_config", serialize($arConfig));
     }
 
-    function GetConfig()
+    public static function GetConfig()
     {
         $arConfig = array();
         $strAr = CUserOptions::GetOption("fileman", "file_copy_move_config", false);
-        if ($strAr && CheckSerializedData($strAr))
-            $arConfig = unserialize($strAr);
+        if ($strAr && CheckSerializedData($strAr)) {
+            $arConfig = unserialize($strAr, ['allowed_classes' => false]);
+        }
 
         return $arConfig;
     }
 
-    function GetAltFileName($absPath, $name, $bDir = false)
+    public static function GetAltFileName($absPath, $name, $bDir = false)
     {
         $io = CBXVirtualIo::GetInstance();
         for ($i = 1; $i <= 9999; $i++) {
-            $dotPos = strpos($name, ".");
-            if ($bDir || $dotPos === false)
+            $dotPos = mb_strpos($name, ".");
+            if ($bDir || $dotPos === false) {
                 $new_name = $name . "(" . $i . ")";
-            else
-                $new_name = substr($name, 0, $dotPos) . "(" . $i . ")" . substr($name, $dotPos);
+            } else {
+                $new_name = mb_substr($name, 0, $dotPos) . "(" . $i . ")" . mb_substr($name, $dotPos);
+            }
 
-            if (!$io->FileExists($absPath . $new_name) && !$io->DirectoryExists($absPath . $new_name))
+            if (!$io->FileExists($absPath . $new_name) && !$io->DirectoryExists($absPath . $new_name)) {
                 break;
+            }
         }
         return $new_name;
     }
@@ -1992,5 +2187,3 @@ class CFilemanTransliterate
         <?
     }
 }
-
-?>

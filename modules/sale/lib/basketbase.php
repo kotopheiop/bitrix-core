@@ -114,11 +114,11 @@ abstract class BasketBase extends BasketItemCollection
 
         /** @var BasketBase $collection */
         return $basket->loadFromDb(
-            array(
+            [
                 "FUSER_ID" => $fUserId,
                 "=LID" => $siteId,
                 "ORDER_ID" => null
-            )
+            ]
         );
     }
 
@@ -131,29 +131,67 @@ abstract class BasketBase extends BasketItemCollection
      */
     protected function loadFromDb(array $filter)
     {
-        $select = array(
-            "ID", "LID", "MODULE", "PRODUCT_ID", "QUANTITY", "WEIGHT",
-            "DELAY", "CAN_BUY", "PRICE", "CUSTOM_PRICE", "BASE_PRICE",
-            'PRODUCT_PRICE_ID', 'PRICE_TYPE_ID', "CURRENCY", 'BARCODE_MULTI',
-            "RESERVED", "RESERVE_QUANTITY", "NAME", "CATALOG_XML_ID",
-            "VAT_RATE", "NOTES", "DISCOUNT_PRICE", "PRODUCT_PROVIDER_CLASS",
-            "CALLBACK_FUNC", "ORDER_CALLBACK_FUNC", "PAY_CALLBACK_FUNC",
-            "CANCEL_CALLBACK_FUNC", "DIMENSIONS", "TYPE", "SET_PARENT_ID",
-            "DETAIL_PAGE_URL", "FUSER_ID", 'MEASURE_CODE', 'MEASURE_NAME',
-            'ORDER_ID', 'DATE_INSERT', 'DATE_UPDATE', 'PRODUCT_XML_ID',
-            'SUBSCRIBE', 'RECOMMENDATION', 'VAT_INCLUDED', 'SORT',
-            'DATE_REFRESH', 'DISCOUNT_NAME', 'DISCOUNT_VALUE', 'DISCOUNT_COUPON',
-            'XML_ID', 'MARKING_CODE_GROUP'
-        );
+        $select = [
+            "ID",
+            "LID",
+            "MODULE",
+            "PRODUCT_ID",
+            "QUANTITY",
+            "WEIGHT",
+            "DELAY",
+            "CAN_BUY",
+            "PRICE",
+            "CUSTOM_PRICE",
+            "BASE_PRICE",
+            'PRODUCT_PRICE_ID',
+            'PRICE_TYPE_ID',
+            "CURRENCY",
+            'BARCODE_MULTI',
+            "RESERVED",
+            "RESERVE_QUANTITY",
+            "NAME",
+            "CATALOG_XML_ID",
+            "VAT_RATE",
+            "NOTES",
+            "DISCOUNT_PRICE",
+            "PRODUCT_PROVIDER_CLASS",
+            "CALLBACK_FUNC",
+            "ORDER_CALLBACK_FUNC",
+            "PAY_CALLBACK_FUNC",
+            "CANCEL_CALLBACK_FUNC",
+            "DIMENSIONS",
+            "TYPE",
+            "SET_PARENT_ID",
+            "DETAIL_PAGE_URL",
+            "FUSER_ID",
+            'MEASURE_CODE',
+            'MEASURE_NAME',
+            'ORDER_ID',
+            'DATE_INSERT',
+            'DATE_UPDATE',
+            'PRODUCT_XML_ID',
+            'SUBSCRIBE',
+            'RECOMMENDATION',
+            'VAT_INCLUDED',
+            'SORT',
+            'DATE_REFRESH',
+            'DISCOUNT_NAME',
+            'DISCOUNT_VALUE',
+            'DISCOUNT_COUPON',
+            'XML_ID',
+            'MARKING_CODE_GROUP'
+        ];
 
-        $itemList = array();
+        $itemList = [];
         $first = true;
 
-        $res = static::getList(array(
-            "select" => $select,
-            "filter" => $filter,
-            "order" => array('SORT' => 'ASC', 'ID' => 'ASC'),
-        ));
+        $res = static::getList(
+            [
+                "select" => $select,
+                "filter" => $filter,
+                "order" => ['SORT' => 'ASC', 'ID' => 'ASC'],
+            ]
+        );
         while ($item = $res->fetch()) {
             if ($first) {
                 $this->setSiteId($item['LID']);
@@ -170,10 +208,11 @@ abstract class BasketBase extends BasketItemCollection
             }
         }
 
-        $result = array();
+        $result = [];
         foreach ($itemList as $id => $item) {
-            if ($item['SET_PARENT_ID'] == 0)
+            if ($item['SET_PARENT_ID'] == 0) {
                 $result[$id] = $item;
+            }
         }
 
         $this->loadFromArray($result);
@@ -249,8 +288,9 @@ abstract class BasketBase extends BasketItemCollection
         $orderPrice = 0;
 
         /** @var BasketItemBase $basketItem */
-        foreach ($this->collection as $basketItem)
+        foreach ($this->collection as $basketItem) {
             $orderPrice += $basketItem->getFinalPrice();
+        }
 
         return $orderPrice;
     }
@@ -267,10 +307,8 @@ abstract class BasketBase extends BasketItemCollection
 
         /** @var BasketItemBase $basketItem */
         foreach ($this->collection as $basketItem) {
-            $orderPrice += PriceMaths::roundPrecision($basketItem->getBasePrice() * $basketItem->getQuantity());
+            $orderPrice += PriceMaths::roundPrecision($basketItem->getBasePriceWithVat() * $basketItem->getQuantity());
         }
-
-        $orderPrice = PriceMaths::roundPrecision($orderPrice);
 
         return $orderPrice;
     }
@@ -400,8 +438,9 @@ abstract class BasketBase extends BasketItemCollection
                     $userId = $order->getUserId();
                     if (intval($userId) > 0) {
                         $fUserId = Fuser::getIdByUserId($userId);
-                        if ($fUserId > 0)
+                        if ($fUserId > 0) {
                             $this->setFUserId($fUserId);
+                        }
                     }
                 }
             }
@@ -410,7 +449,16 @@ abstract class BasketBase extends BasketItemCollection
         if ($filter) {
             $dbRes = static::getList(
                 array(
-                    "select" => array("ID", 'TYPE', 'SET_PARENT_ID', 'PRODUCT_ID', 'NAME', 'QUANTITY', 'FUSER_ID', 'ORDER_ID'),
+                    "select" => array(
+                        "ID",
+                        'TYPE',
+                        'SET_PARENT_ID',
+                        'PRODUCT_ID',
+                        'NAME',
+                        'QUANTITY',
+                        'FUSER_ID',
+                        'ORDER_ID'
+                    ),
                     "filter" => $filter,
                 )
             );
@@ -511,7 +559,7 @@ abstract class BasketBase extends BasketItemCollection
         $itemValues['ENTITY_REGISTRY_TYPE'] = static::getRegistryType();
 
         /** @var Main\Event $event */
-        $event = new Main\Event('sale', "OnBeforeSaleBasketDeleted", array('VALUES' => $itemValues));
+        $event = new Main\Event('sale', "OnBeforeSaleBasketItemDeleted", array('VALUES' => $itemValues));
         $event->send();
     }
 
@@ -524,7 +572,7 @@ abstract class BasketBase extends BasketItemCollection
         $itemValues['ENTITY_REGISTRY_TYPE'] = static::getRegistryType();
 
         /** @var Main\Event $event */
-        $event = new Main\Event('sale', "OnSaleBasketDeleted", array('VALUES' => $itemValues));
+        $event = new Main\Event('sale', "OnSaleBasketItemDeleted", array('VALUES' => $itemValues));
         $event->send();
     }
 
@@ -574,9 +622,11 @@ abstract class BasketBase extends BasketItemCollection
         $result = new Result();
 
         /** @var Main\Entity\Event $event */
-        $event = new Main\Event('sale', EventActions::EVENT_ON_BASKET_SAVED, array(
+        $event = new Main\Event(
+            'sale', EventActions::EVENT_ON_BASKET_SAVED, array(
             'ENTITY' => $this
-        ));
+        )
+        );
         $event->send();
 
         if ($event->getResults()) {
@@ -666,8 +716,9 @@ abstract class BasketBase extends BasketItemCollection
      */
     public function onItemModify(Internals\CollectableEntity $item, $name = null, $oldValue = null, $value = null)
     {
-        if (!($item instanceof BasketItemBase))
+        if (!($item instanceof BasketItemBase)) {
             throw new Main\ArgumentTypeException($item);
+        }
 
         $result = new Result();
 
@@ -757,14 +808,18 @@ abstract class BasketBase extends BasketItemCollection
         }
 
         $sortedCollection = $this->collection;
-        usort($sortedCollection, function (BasketItemBase $a, BasketItemBase $b) {
-            return (int)$a->getField('SORT') - (int)$b->getField('SORT');
-        });
+        usort(
+            $sortedCollection,
+            function (BasketItemBase $a, BasketItemBase $b) {
+                return (int)$a->getField('SORT') - (int)$b->getField('SORT');
+            }
+        );
 
         /** @var BasketItemBase $item */
         foreach ($sortedCollection as $item) {
-            if (!$item->canBuy() || $item->isDelay())
+            if (!$item->canBuy() || $item->isDelay()) {
                 continue;
+            }
 
             $item->setCollection($basket);
             $basket->addItem($item);
@@ -879,16 +934,19 @@ abstract class BasketBase extends BasketItemCollection
     {
         $result = new Result();
 
-        if ($this->count() == 0 || empty($basketRows))
+        if ($this->count() == 0 || empty($basketRows)) {
             return $result;
+        }
 
         /** @var BasketItemBase $basketItem */
         foreach ($this->collection as $basketItem) {
-            if ($basketItem->isCustomPrice())
+            if ($basketItem->isCustomPrice()) {
                 continue;
+            }
             $basketCode = $basketItem->getBasketCode();
-            if (!isset($basketRows[$basketCode]))
+            if (!isset($basketRows[$basketCode])) {
                 continue;
+            }
 
             $fields = $basketRows[$basketCode];
 
@@ -907,8 +965,9 @@ abstract class BasketBase extends BasketItemCollection
                     $basketItem->setFieldNoDemand('DISCOUNT_PRICE', $fields['DISCOUNT_PRICE']);
                 }
 
-                if (isset($fields['DISCOUNT_VALUE']))
+                if (isset($fields['DISCOUNT_VALUE'])) {
                     $basketItem->setFieldNoDemand('DISCOUNT_VALUE', $fields['DISCOUNT_VALUE']);
+                }
             }
         }
         unset($fields, $basketCode, $basketItem);

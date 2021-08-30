@@ -8,10 +8,10 @@
 
 namespace Bitrix\Sender\Message;
 
-use Bitrix\Main\Error;
-use Bitrix\Main\Result;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Result;
 
 Loc::getMessage(__FILE__);
 
@@ -89,6 +89,7 @@ class Configuration
      *
      * @param $key
      * @param $value
+     * @return mixed
      */
     public function set($key, $value)
     {
@@ -97,6 +98,8 @@ class Configuration
         if ($option) {
             $option->setValue($value);
         }
+
+        return $value;
     }
 
     /**
@@ -135,8 +138,21 @@ class Configuration
     {
         $value = $this->get($key, $defaultValue);
         $option = $this->getOption($key);
-        if ($option)
+
+        /**
+         * this decision was made after analysing ConfigurationOption class
+         */
+        if (!empty($option->getItems())) {
+            foreach ($option->getItems() as $item) {
+                if (!empty($value) && isset($item['code']) && $item['code'] == $value) {
+                    return $item['value'];
+                }
+            }
+        }
+
+        if ($option) {
             return $option->getReadonlyView($value);
+        }
 
         return $value;
     }
@@ -237,7 +253,6 @@ class Configuration
                 array($option),
                 array_slice($this->options, $index)
             );
-
         } else {
             $this->options[] = $option;
         }
@@ -374,12 +389,14 @@ class Configuration
                 continue;
             }
 
-            $result->addError(new Error(
-                Loc::getMessage(
-                    'SENDER_MESSAGE_CONFIG_ERROR_EMPTY_REQUIRED_FIELD',
-                    array('%name%' => $option->getName())
+            $result->addError(
+                new Error(
+                    Loc::getMessage(
+                        'SENDER_MESSAGE_CONFIG_ERROR_EMPTY_REQUIRED_FIELD',
+                        array('%name%' => $option->getName())
+                    )
                 )
-            ));
+            );
         }
 
         return $result;

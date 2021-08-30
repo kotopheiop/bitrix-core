@@ -8,7 +8,14 @@
 
 namespace Bitrix\Socialnetwork\Item;
 
+use Bitrix\Main\Config\Option;
+use Bitrix\Main\Error;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ModuleManager;
+use Bitrix\Socialnetwork\ComponentHelper;
 use Bitrix\Socialnetwork\LogTable;
+use Bitrix\Socialnetwork\Controller\Livefeed;
 
 class Log
 {
@@ -30,10 +37,12 @@ class Log
             } else {
                 $select = array('*');
 
-                $res = LogTable::getList(array(
-                    'filter' => array('=ID' => $logId),
-                    'select' => $select
-                ));
+                $res = LogTable::getList(
+                    array(
+                        'filter' => array('=ID' => $logId),
+                        'select' => $select
+                    )
+                );
                 if ($fields = $res->fetch()) {
                     $logFields = $fields;
 
@@ -68,5 +77,4 @@ class Log
     {
         return false;
     }
-
 }

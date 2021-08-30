@@ -15,21 +15,24 @@ class Converter
 
     public static function convertBizprocProviders()
     {
-        if (!Main\Loader::includeModule('bizproc'))
+        if (!Main\Loader::includeModule('bizproc')) {
             return false;
+        }
 
         $providerList = Bizproc\RestProviderTable::getList();
 
         while ($row = $providerList->fetch()) {
-            static::addRestSender(array(
-                'APP_ID' => $row['APP_ID'],
-                'APP_NAME' => $row['APP_NAME'],
-                'CODE' => $row['CODE'],
-                'TYPE' => $row['TYPE'],
-                'HANDLER' => $row['HANDLER'],
-                'NAME' => $row['NAME'],
-                'DESCRIPTION' => $row['DESCRIPTION']
-            ));
+            static::addRestSender(
+                array(
+                    'APP_ID' => $row['APP_ID'],
+                    'APP_NAME' => $row['APP_NAME'],
+                    'CODE' => $row['CODE'],
+                    'TYPE' => $row['TYPE'],
+                    'HANDLER' => $row['HANDLER'],
+                    'NAME' => $row['NAME'],
+                    'DESCRIPTION' => $row['DESCRIPTION']
+                )
+            );
         }
         return true;
     }
@@ -40,12 +43,14 @@ class Converter
 
         foreach ($checkList as $senderId) {
             $optionString = Main\Config\Option::get('crm', 'integration.sms.' . $senderId);
-            if (!$optionString)
+            if (!$optionString) {
                 continue;
+            }
 
-            $options = unserialize($optionString);
-            if (!is_array($options))
+            $options = unserialize($optionString, ['allowed_classes' => false]);
+            if (!is_array($options)) {
                 continue;
+            }
 
             if (isset($options['default_sender'])) {
                 $options['default_from'] = $options['default_sender'];
@@ -58,13 +63,15 @@ class Converter
 
     private static function addRestSender($params)
     {
-        $iterator = Internal\Entity\RestAppTable::getList(array(
-            'select' => array('ID'),
-            'filter' => array(
-                '=APP_ID' => $params['APP_ID'],
-                '=CODE' => $params['CODE']
+        $iterator = Internal\Entity\RestAppTable::getList(
+            array(
+                'select' => array('ID'),
+                'filter' => array(
+                    '=APP_ID' => $params['APP_ID'],
+                    '=CODE' => $params['CODE']
+                )
             )
-        ));
+        );
         $result = $iterator->fetch();
         if ($result) {
             return true;
@@ -95,9 +102,10 @@ class Converter
         $langData = array();
 
         foreach ($langFields['NAME'] as $langId => $langName) {
-            $langCode = strtolower($langId);
-            if ($langCode === '*')
+            $langCode = mb_strtolower($langId);
+            if ($langCode === '*') {
                 $langCode = '**';
+            }
 
             $langData[$langCode] = array(
                 'APP_ID' => $langFields['APP_ID'],

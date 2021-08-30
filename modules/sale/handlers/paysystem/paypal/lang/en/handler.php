@@ -1,4 +1,5 @@
 <?
+
 $MESS["SALE_HPS_PAYPAL_T1"] = "Thank you for your purchase!";
 $MESS["SALE_HPS_PAYPAL_T2"] = "Payment Details";
 $MESS["SALE_HPS_PAYPAL_T3"] = "Name";

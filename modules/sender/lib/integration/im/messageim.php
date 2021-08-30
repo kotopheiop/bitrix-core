@@ -55,14 +55,16 @@ class MessageIm implements Message\iBase, Message\iMailable
 
     protected function setConfigurationOptions()
     {
-        $this->configuration->setArrayOptions(array(
+        $this->configuration->setArrayOptions(
             array(
-                'type' => 'text',
-                'code' => 'MESSAGE_TEXT',
-                'name' => Loc::getMessage('SENDER_INTEGRATION_IM_MESSAGE_CONFIG_MESSAGE_TEXT'),
-                'required' => true,
-            ),
-        ));
+                array(
+                    'type' => 'text',
+                    'code' => 'MESSAGE_TEXT',
+                    'name' => Loc::getMessage('SENDER_INTEGRATION_IM_MESSAGE_CONFIG_MESSAGE_TEXT'),
+                    'required' => true,
+                ),
+            )
+        );
     }
 
     /**

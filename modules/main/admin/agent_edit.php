@@ -12,8 +12,9 @@ define("HELP_FILE", "utilities/agent_edit.php");
 
 ClearVars("a_");
 
-if (!$USER->CanDoOperation('view_other_settings'))
+if (!$USER->CanDoOperation('view_other_settings')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $isAdmin = $USER->CanDoOperation('edit_php');
 
@@ -25,14 +26,27 @@ if ($ID > 0) {
     $arr = $res->ExtractFields("a_");
 }
 
-$APPLICATION->SetTitle(($ID <= 0) ? GetMessage("MAIN_AGENT_NEW_PAGE_TITLE") : str_replace("#ID#", " $ID", GetMessage("MAIN_AGENT_EDIT_PAGE_TITLE")));
+$APPLICATION->SetTitle(
+    ($ID <= 0) ? GetMessage("MAIN_AGENT_NEW_PAGE_TITLE") : str_replace(
+        "#ID#",
+        " $ID",
+        GetMessage("MAIN_AGENT_EDIT_PAGE_TITLE")
+    )
+);
 $sTableID = "tbl_agent_edit";
 
-$aTabs = array(array("DIV" => "tab1", "TAB" => GetMessage("MAIN_AGENT_TAB"), "ICON" => "main_user_edit", "TITLE" => GetMessage("MAIN_AGENT_TAB_TITLE")));
+$aTabs = array(
+    array(
+        "DIV" => "tab1",
+        "TAB" => GetMessage("MAIN_AGENT_TAB"),
+        "ICON" => "main_user_edit",
+        "TITLE" => GetMessage("MAIN_AGENT_TAB_TITLE")
+    )
+);
 $editTab = new CAdminTabControl("editTab", $aTabs);
 
 $APPLICATION->ResetException();
-if ($REQUEST_METHOD == "POST" && (strlen($save) > 0 || strlen($apply) > 0) && $isAdmin && check_bitrix_sessid()) {
+if ($REQUEST_METHOD == "POST" && ($save <> '' || $apply <> '') && $isAdmin && check_bitrix_sessid()) {
     $arFields = Array(
         "NAME" => $NAME,
         "MODULE_ID" => $MODULE_ID,
@@ -44,21 +58,27 @@ if ($REQUEST_METHOD == "POST" && (strlen($save) > 0 || strlen($apply) > 0) && $i
         "USER_ID" => false
     );
 
-    if (intval($USER_ID) > 0)
+    if (intval($USER_ID) > 0) {
         $arFields["USER_ID"] = $USER_ID;
+    }
 
-    if ($ID > 0)
+    if ($arFields["ACTIVE"] == "Y") {
+        $arFields["RETRY_COUNT"] = 0;
+    }
+
+    if ($ID > 0) {
         $res = CAgent::Update($ID, $arFields);
-    else {
+    } else {
         $ID = CAgent::Add($arFields);
         $res = ($ID > 0);
     }
 
     if ($res) {
-        if (strlen($save) > 0)
+        if ($save <> '') {
             LocalRedirect("/bitrix/admin/agent_list.php");
-        elseif (strlen($apply) > 0)
+        } elseif ($apply <> '') {
             LocalRedirect("/bitrix/admin/agent_edit.php?&ID=" . $ID . "&" . $editTab->ActiveTabParam());
+        }
     }
 }
 
@@ -82,7 +102,10 @@ if ($ID > 0) {
     );
     $aMenu[] = array(
         "TEXT" => GetMessage("MAIN_AGENT_DEL_RECORD_TITLE"),
-        "LINK" => "javascript:if(confirm('" . GetMessage("MAIN_AGENT_DELETE_RECORD_CONF") . "')) window.location='/bitrix/admin/agent_list.php?action=delete&ID=" . $ID . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get() . "';",
+        "LINK" => "javascript:if(confirm('" . GetMessage(
+                "MAIN_AGENT_DELETE_RECORD_CONF"
+            ) . "')) window.location='/bitrix/admin/agent_list.php?action=delete&ID=" . $ID . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get(
+            ) . "';",
         "ICON" => "btn_delete",
         "TITLE" => GetMessage("MAIN_AGENT_DEL_RECORD_TITLE"),
     );
@@ -96,8 +119,9 @@ if ($e = $APPLICATION->GetException()) {
     $DB->InitTableVarsForEdit("b_agent", "", "a_");
 }
 
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 ?>
     <form name="f_agent" action="<? echo $APPLICATION->GetCurPage() ?>?lang=<?= LANG ?>" method="POST">
         <?= bitrix_sessid_post() ?>
@@ -144,11 +168,13 @@ if ($message)
             <td class="adm-detail-valign-top"><? echo GetMessage("MAIN_AGENT_PERIODICAL1") ?></td>
             <td>
                 <label><input type="radio" name="IS_PERIOD"
-                              value="N"<? if ($a_IS_PERIOD <> "Y") echo " checked" ?>><? echo GetMessage("MAIN_AGENT_PERIODICAL_INTERVAL") ?>
-                </label><br>
+                              value="N"<? if ($a_IS_PERIOD <> "Y") echo " checked" ?>><? echo GetMessage(
+                        "MAIN_AGENT_PERIODICAL_INTERVAL"
+                    ) ?></label><br>
                 <label><input type="radio" name="IS_PERIOD"
-                              value="Y"<? if ($a_IS_PERIOD == "Y") echo " checked" ?>><? echo GetMessage("MAIN_AGENT_PERIODICAL_TIME") ?>
-                </label>
+                              value="Y"<? if ($a_IS_PERIOD == "Y") echo " checked" ?>><? echo GetMessage(
+                        "MAIN_AGENT_PERIODICAL_TIME"
+                    ) ?></label>
             </td>
         </tr>
         <tr>

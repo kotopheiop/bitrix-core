@@ -20,33 +20,37 @@ class Auto
             return;
         }
 
-        $productIterator = ProductTable::getList(array(
-            'filter' => array('=ID' => $ID),
-            'select' => array('QUANTITY', 'QUANTITY_TRACE', 'CAN_BUY_ZERO'),
-        ));
+        $productIterator = ProductTable::getList(
+            array(
+                'filter' => array('=ID' => $ID),
+                'select' => array('QUANTITY', 'QUANTITY_TRACE', 'CAN_BUY_ZERO'),
+            )
+        );
         $product = $productIterator->fetch();
         if ($product) {
             if ($product["QUANTITY_TRACE"] == "Y" && $product['CAN_BUY_ZERO'] == 'N') {
-                $linkIterator = LinkTable::getList(array(
-                    "filter" => array(
-                        "=LINK_TYPE" => LinkTable::TYPE_IBLOCK_ELEMENT,
-                        "=LINK_ID" => $ID,
-                        array(
+                $linkIterator = LinkTable::getList(
+                    array(
+                        "filter" => array(
+                            "=LINK_TYPE" => LinkTable::TYPE_IBLOCK_ELEMENT,
+                            "=LINK_ID" => $ID,
                             array(
-                                "=BANNER.AUTO_QUANTITY_OFF" => YandexBannerTable::ACTIVE,
+                                array(
+                                    "=BANNER.AUTO_QUANTITY_OFF" => YandexBannerTable::ACTIVE,
+                                ),
+                                array(
+                                    "=BANNER.AUTO_QUANTITY_ON" => YandexBannerTable::ACTIVE,
+                                ),
+                                'LOGIC' => "OR",
                             ),
-                            array(
-                                "=BANNER.AUTO_QUANTITY_ON" => YandexBannerTable::ACTIVE,
-                            ),
-                            'LOGIC' => "OR",
                         ),
-                    ),
-                    "select" => array(
-                        "BANNER_ID",
-                        "AUTO_QUANTITY_ON" => "BANNER.AUTO_QUANTITY_ON",
-                        "AUTO_QUANTITY_OFF" => "BANNER.AUTO_QUANTITY_OFF",
-                    ),
-                ));
+                        "select" => array(
+                            "BANNER_ID",
+                            "AUTO_QUANTITY_ON" => "BANNER.AUTO_QUANTITY_ON",
+                            "AUTO_QUANTITY_OFF" => "BANNER.AUTO_QUANTITY_OFF",
+                        ),
+                    )
+                );
 
                 $zeroQuantity = $product['QUANTITY'] <= 0;
 
@@ -88,21 +92,27 @@ class Auto
             return __CLASS__ . "::checkQuantityAgent();";
         }
 
-        $dbRes = YandexBannerTable::getList(array(
-            'filter' => array(
-                array(
-                    '=AUTO_QUANTITY_ON' => YandexBannerTable::MARKED,
+        $dbRes = YandexBannerTable::getList(
+            array(
+                'filter' => array(
+                    array(
+                        '=AUTO_QUANTITY_ON' => YandexBannerTable::MARKED,
+                    ),
+                    array(
+                        '=AUTO_QUANTITY_OFF' => YandexBannerTable::MARKED,
+                    ),
+                    'LOGIC' => "OR"
                 ),
-                array(
-                    '=AUTO_QUANTITY_OFF' => YandexBannerTable::MARKED,
+                'select' => array(
+                    'ID',
+                    'XML_ID',
+                    'CAMPAIGN_ID',
+                    'CAMPAIGN_XML_ID' => 'CAMPAIGN.XML_ID',
+                    'AUTO_QUANTITY_ON',
+                    'AUTO_QUANTITY_OFF',
                 ),
-                'LOGIC' => "OR"
-            ),
-            'select' => array(
-                'ID', 'XML_ID', 'CAMPAIGN_ID', 'CAMPAIGN_XML_ID' => 'CAMPAIGN.XML_ID',
-                'AUTO_QUANTITY_ON', 'AUTO_QUANTITY_OFF',
-            ),
-        ));
+            )
+        );
 
         $engine = new YandexDirect();
 

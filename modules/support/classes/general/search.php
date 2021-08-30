@@ -1,4 +1,5 @@
 <?php
+
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/classes/general/main.php");
 IncludeModuleLangFile(__FILE__);
 
@@ -49,7 +50,9 @@ class CSupportSearch
      */
     function GetFilterQuery($q, $idName, $titleName, $messageName, &$error)
     {
-        if (!self::CheckModule()) return "";
+        if (!self::CheckModule()) {
+            return "";
+        }
         $res = self::ParseQ(HTMLToTxt($q));
         $res = self::PrepareQuery($res, $idName, $titleName, $messageName, $error);
         return $res;
@@ -72,7 +75,7 @@ class CSupportSearch
         $arrQ = explode(" ", $q);
         foreach ($arrQ as $k => $t) {
             $t = trim($t);
-            if (strlen($t) <= 0) {
+            if ($t == '') {
                 continue;
             }
             switch ($state) {
@@ -100,8 +103,11 @@ class CSupportSearch
                 case 1:
                     if (($t == "||") || ($t == "&&")) {
                         $state = 0;
-                        if ($t == "||") $sRes .= " OR";
-                        else $sRes .= " AND";
+                        if ($t == "||") {
+                            $sRes .= " OR";
+                        } else {
+                            $sRes .= " AND";
+                        }
                     } elseif ($t == ")") {
                         $n--;
                         $state = 1;
@@ -116,7 +122,9 @@ class CSupportSearch
                     if ($t == $quote) {
                         $state = 1;
                         $inQuoteS = "%" . str_replace("^", " ", $inQuoteS) . "%";
-                        $sRes .= "\n ($titleName LIKE '" . $DB->ForSql($inQuoteS) . "' OR $messageName LIKE '" . $DB->ForSql($inQuoteS) . "')";
+                        $sRes .= "\n ($titleName LIKE '" . $DB->ForSql(
+                                $inQuoteS
+                            ) . "' OR $messageName LIKE '" . $DB->ForSql($inQuoteS) . "')";
                         $inQuoteS = "";
                         $quote = "";
                     } elseif (($t != "'") && ($t != '"')) {
@@ -146,7 +154,7 @@ class CSupportSearch
     function ParseQ($q)
     {
         $q = trim($q);
-        if (strlen($q) <= 0) {
+        if ($q == '') {
             return '';
         }
         $q = self::ParseStr($q, "^");
@@ -257,12 +265,16 @@ class CSupportSearch
                         $and = " AND";
                     }
                 } else {
-                    $res .= "\n" . $and . " ($titleName = '" . $DB->ForSql($v) . "' OR $messageName = '" . $DB->ForSql($v) . "')";
+                    $res .= "\n" . $and . " ($titleName = '" . $DB->ForSql($v) . "' OR $messageName = '" . $DB->ForSql(
+                            $v
+                        ) . "')";
                 }
             }
             $and = " AND";
         }
-        if ($res != "") $res = "\n(" . $res . "\n)\n";
+        if ($res != "") {
+            $res = "\n(" . $res . "\n)\n";
+        }
         return $res;
     }
 
@@ -273,7 +285,9 @@ class CSupportSearch
     {
         global $DB;
         $ticketSearch = self::TABLE_NAME;
-        return "\n" . $and . " EXISTS(SELECT 1 FROM $ticketSearch WHERE MESSAGE_ID = $idName AND SEARCH_WORD $sign '" . $DB->ForSql($key) . "')";
+        return "\n" . $and . " EXISTS(SELECT 1 FROM $ticketSearch WHERE MESSAGE_ID = $idName AND SEARCH_WORD $sign '" . $DB->ForSql(
+                $key
+            ) . "')";
     }
 
     /**
@@ -303,7 +317,11 @@ class CSupportSearch
         // select message rows
         if ($messages === null) {
             $messages = array();
-            $result = $DB->Query("SELECT MESSAGE FROM b_ticket_message WHERE IS_LOG='N' AND IS_HIDDEN='N' AND TICKET_ID = " . intval($ticket['ID']));
+            $result = $DB->Query(
+                "SELECT MESSAGE FROM b_ticket_message WHERE IS_LOG='N' AND TICKET_ID = " . intval(
+                    $ticket['ID']
+                ) . " AND LENGTH(MESSAGE) < 10240"
+            );
             while ($row = $result->Fetch()) {
                 $messages[] = $row;
             }
@@ -389,17 +407,22 @@ class CSupportSearch
             $tickets = array();
             $messages = array();
 
-            $result = $DB->Query($DB->TopSql("
+            $result = $DB->Query(
+                $DB->TopSql(
+                    "
 				SELECT
 					T.ID, T.SITE_ID, T.TITLE, TM.MESSAGE
 				FROM
 					b_ticket T,
 					b_ticket_message TM
 				WHERE
-					TM.TICKET_ID = T.ID AND T.ID > " . $lastId . " AND TM.IS_LOG='N' AND IS_HIDDEN='N'
+					TM.TICKET_ID = T.ID AND T.ID > " . $lastId . " AND TM.IS_LOG='N'
 				ORDER BY
 					T.ID ASC"
-                , 100));
+                    ,
+                    100
+                )
+            );
 
             while ($row = $result->Fetch()) {
                 $tickets[$row['ID']] = $row;
@@ -420,7 +443,9 @@ class CSupportSearch
 
             // reselect last ticket's messages to complete them because of previous limit in query
             unset($messages[$endTicketId]);
-            $result = $DB->Query("SELECT MESSAGE FROM b_ticket_message WHERE TICKET_ID = " . $endTicketId . " AND IS_LOG='N' AND IS_HIDDEN='N'");
+            $result = $DB->Query(
+                "SELECT MESSAGE FROM b_ticket_message WHERE TICKET_ID = " . $endTicketId . " AND IS_LOG='N' AND LENGTH(MESSAGE) < 10240"
+            );
             while ($row = $result->Fetch()) {
                 $messages[$endTicketId][] = $row;
             }
@@ -431,7 +456,9 @@ class CSupportSearch
                 $removeFromId = min($ticketIds);
                 $removeToId = max($ticketIds);
 
-                $DB->Query("DELETE FROM " . static::TABLE_NAME . " WHERE TICKET_ID >= " . $removeFromId . " AND TICKET_ID <= " . $removeToId);
+                $DB->Query(
+                    "DELETE FROM " . static::TABLE_NAME . " WHERE TICKET_ID >= " . $removeFromId . " AND TICKET_ID <= " . $removeToId
+                );
             }
 
             // add new index
@@ -450,7 +477,9 @@ class CSupportSearch
     static function WriteWordsInTable($M_ID, $SITE_ID, $s)
     {
         global $DB;
-        if (!self::CheckModule()) return;
+        if (!self::CheckModule()) {
+            return;
+        }
         $err_mess = (self::err_mess()) . "<br>Function: writeWordsInTable<br>Line: ";
         $M_ID = intval($M_ID);
         $ticketSearch = self::TABLE_NAME;
@@ -461,7 +490,9 @@ class CSupportSearch
         $DB->Query("DELETE FROM $ticketSearch WHERE MESSAGE_ID = $M_ID", false, $err_mess . __LINE__);
         $res = stemming(HTMLToTxt($s), $langID);
         foreach ($res as $key => $val) {
-            $strSql = "INSERT INTO " . $ticketSearch . "(MESSAGE_ID, SEARCH_WORD) VALUES ($M_ID, '" . $DB->ForSql($key) . "')";
+            $strSql = "INSERT INTO " . $ticketSearch . "(MESSAGE_ID, SEARCH_WORD) VALUES ($M_ID, '" . $DB->ForSql(
+                    $key
+                ) . "')";
             $res = $DB->Query($strSql, false, $err_mess . __LINE__);
             //$DB->Insert($ticketSearch, array("MESSAGE_ID" => $M_ID, "SEARCH_WORD" => "'" . $DB->ForSql($key) . "'"), $err_mess . __LINE__);
         }
@@ -488,11 +519,14 @@ class CSupportSearch
 					ON T.ID = TM.TICKET_ID
 						AND TM.ID > $firstID
 						AND TM.IS_LOG = 'N'
+						AND LENGTH(TM.MESSAGE) < 10240
 			ORDER BY TM.ID";
         $res = $DB->Query($strSql, false, $err_mess . __LINE__);
         $lastID = 0;
         while ($cs = $res->Fetch()) {
-            if (time() > $endTime) return $lastID;
+            if (time() > $endTime) {
+                return $lastID;
+            }
             self::WriteWordsInTable($cs["ID"], $cs["SITE_ID"], $cs["MESSAGE"]);
             $lastID = intval($cs["ID"]);
         }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Bitrix Framework
  * @package bitrix
@@ -15,17 +16,18 @@ class Subscription
     public static function onContentViewed(array $params)
     {
         if (
-            !is_array($params)
-            || !isset($params['userId'])
-            || intval($params['userId']) <= 0
-            || !isset($params['logId'])
-            || intval($params['logId']) <= 0
+            !isset($params['userId'], $params['logId'])
+            || !is_array($params)
+            || (int)$params['userId'] <= 0
+            || (int)$params['logId'] <= 0
             || !Loader::includeModule('im')
         ) {
             return;
         }
 
         $CIMNotify = new \CIMNotify();
-        $CIMNotify->markNotifyReadBySubTag(array("SONET|EVENT|" . intval($params['logId']) . "|" . intval($params['userId'])));
+        $CIMNotify->markNotifyReadBySubTag(
+            array("SONET|EVENT|" . (int)$params['logId'] . "|" . (int)$params['userId'])
+        );
     }
 }

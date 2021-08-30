@@ -1,10 +1,12 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/workflow/prolog.php");
 
 $WORKFLOW_RIGHT = $APPLICATION->GetGroupRight("workflow");
-if ($WORKFLOW_RIGHT == "D")
+if ($WORKFLOW_RIGHT == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/workflow/include.php");
 IncludeModuleLangFile(__FILE__);
@@ -26,7 +28,7 @@ function CheckFields() // fields check
     $FILENAME = "/" . ltrim(_normalizePath($FILENAME), "/");
     $io = CBXVirtualIo::GetInstance();
 
-    if (strlen($FILENAME) <= 0) {
+    if ($FILENAME == '') {
         $arMsg[] = array(
             "id" => "FILENAME",
             "text" => GetMessage("FLOW_FORGOT_FILENAME"),
@@ -43,8 +45,9 @@ function CheckFields() // fields check
         );
     } else {
         $SITE_ID = CWorkflow::__CheckSite($SITE_ID);
-        if (!$SITE_ID)
+        if (!$SITE_ID) {
             $SITE_ID = CSite::GetSiteByFullPath($_SERVER['DOCUMENT_ROOT'] . $FILENAME);
+        }
 
         if (!$USER->CanDoFileOperation('fm_edit_in_workflow', array($SITE_ID, $FILENAME))) {
             $s = str_replace("#FILENAME#", "$FILENAME", GetMessage("FLOW_ACCESS_DENIED"));
@@ -61,9 +64,12 @@ function CheckFields() // fields check
         ) {
             $arMsg[] = array(
                 "id" => "FILENAME",
-                "text" => GetMessage("FLOW_ACCESS_DENIED_FOR_FILE_WRITE", array(
-                    "#FILENAME#" => $FILENAME,
-                )),
+                "text" => GetMessage(
+                    "FLOW_ACCESS_DENIED_FOR_FILE_WRITE",
+                    array(
+                        "#FILENAME#" => $FILENAME,
+                    )
+                ),
             );
         } else {
             $z = CWorkflow::GetByFilename($FILENAME, $SITE_ID);
@@ -80,15 +86,16 @@ function CheckFields() // fields check
 
     if (!CWorkflow::IsAdmin()) {
         $arGroups = $USER->GetUserGroupArray();
-        if (!is_array($arGroups))
+        if (!is_array($arGroups)) {
             $arGroups = array(2);
+        }
         $arFilter = array(
             "GROUP_ID" => $arGroups,
             "PERMISSION_TYPE_1" => 1,
             "ID_EXACT_MATCH" => "Y",
             "ID" => $STATUS_ID,
         );
-        $rsStatuses = CWorkflowStatus::GetList($by = "s_c_sort", $strOrder, $arFilter, $is_filtered, array("ID"));
+        $rsStatuses = CWorkflowStatus::GetList("s_c_sort", "asc", $arFilter, null, array("ID"));
         if (!$rsStatuses->Fetch()) {
             $arMsg[] = array(
                 "id" => "STATUS_ID",
@@ -111,11 +118,13 @@ function CheckFields() // fields check
                     "text" => "Error! Fileman is not included!",
                 );
             }
-        } else if (!$USER->CanDoOperation('edit_php')) {
-            $arMsg[] = array(
-                "id" => "BODY",
-                "text" => GetMessage("FLOW_PHP_IS_NOT_AVAILABLE"),
-            );
+        } else {
+            if (!$USER->CanDoOperation('edit_php')) {
+                $arMsg[] = array(
+                    "id" => "BODY",
+                    "text" => GetMessage("FLOW_PHP_IS_NOT_AVAILABLE"),
+                );
+            }
         }
     }
 
@@ -153,10 +162,14 @@ if ($del_id > 0 && $WORKFLOW_RIGHT > "R" && check_bitrix_sessid()) {
             $str = str_replace("#DID#", "$del_id", GetMessage("FLOW_DOCUMENT_LOCKED"));
             $str = str_replace("#ID#", "$locked_by", $str);
             $str = str_replace("#DATE#", "$date_lock", $str);
-            $message = new CAdminMessage(Array("MESSAGE" => GetMessage("FLOW_ERROR"), "DETAILS" => $str, "TYPE" => "ERROR"));
+            $message = new CAdminMessage(
+                Array("MESSAGE" => GetMessage("FLOW_ERROR"), "DETAILS" => $str, "TYPE" => "ERROR")
+            );
         } else {
             $str = str_replace("#ID#", $del_id, GetMessage("FLOW_DOCUMENT_IS_NOT_AVAILABLE"));
-            $message = new CAdminMessage(Array("MESSAGE" => GetMessage("FLOW_ERROR"), "DETAILS" => $str, "TYPE" => "ERROR"));
+            $message = new CAdminMessage(
+                Array("MESSAGE" => GetMessage("FLOW_ERROR"), "DETAILS" => $str, "TYPE" => "ERROR")
+            );
         }
     }
 }
@@ -166,7 +179,7 @@ if ($ID > 0) {
     // check if it is exists in the database
     $z = $DB->Query("SELECT ID FROM b_workflow_document WHERE ID='$ID'", false, $err_mess . __LINE__);
     if (!($zr = $z->Fetch())) {
-        if (strlen($fname) > 0) {
+        if ($fname <> '') {
             $ID = 0;
         } else {
             require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
@@ -195,7 +208,13 @@ if ($ID > 0) {
     $z = CWorkflow::GetStatus($ID);
     $zr = $z->Fetch();
     if (intval($zr["ID"]) == 1) {
-        $message = new CAdminMessage(Array("MESSAGE" => GetMessage("FLOW_ERROR"), "DETAILS" => GetMessage("FLOW_DOCUMENT_IS_NOT_AVAILABLE"), "TYPE" => "ERROR"));
+        $message = new CAdminMessage(
+            Array(
+                "MESSAGE" => GetMessage("FLOW_ERROR"),
+                "DETAILS" => GetMessage("FLOW_DOCUMENT_IS_NOT_AVAILABLE"),
+                "TYPE" => "ERROR"
+            )
+        );
     } else {
         // rights check
         if (!(CWorkflow::IsHaveEditRights($ID))) {
@@ -226,27 +245,30 @@ if ($ID > 0) {
                 $str = str_replace("#ID#", "$locked_by", GetMessage("FLOW_DOCUMENT_LOCKED"));
                 $str = str_replace("#DATE#", "$date_lock", $str);
 
-                $message = new CAdminMessage(Array("MESSAGE" => GetMessage("FLOW_ERROR"), "DETAILS" => $str, "TYPE" => "ERROR"));
+                $message = new CAdminMessage(
+                    Array("MESSAGE" => GetMessage("FLOW_ERROR"), "DETAILS" => $str, "TYPE" => "ERROR")
+                );
             }
         }
     }
 }
 
 $aTabs = array();
-if (IntVal($ID) > 0)
+if (intval($ID) > 0) {
     $aTabs[] = array(
         "DIV" => "edit1",
         "TAB" => GetMessage("FLOW_EDIT_RECORD"),
         "ICON" => "workflow_edit",
         "TITLE" => GetMessage("FLOW_EDIT_RECORD_TIT"),
     );
-else
+} else {
     $aTabs[] = array(
         "DIV" => "edit1",
         "TAB" => GetMessage("FLOW_EDIT_RECORD"),
         "ICON" => "workflow_edit",
         "TITLE" => GetMessage("FLOW_NEW_RECORD"),
     );
+}
 
 $aTabs[] = array(
     "DIV" => "edit2",
@@ -265,7 +287,7 @@ $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
 // Save or Apply was clicked
 if (
-    (strlen($save) > 0 || strlen($apply) > 0)
+    ($save <> '' || $apply <> '')
     && $WORKFLOW_RIGHT > "R"
     && $_SERVER["REQUEST_METHOD"] == "POST"
     && check_bitrix_sessid()
@@ -275,56 +297,74 @@ if (
         if ($nums > 0) {
             for ($i = 1; $i <= $nums; $i++) {
                 $arFile = $_FILES["file_" . $i];
-                if (strlen($arFile["name"]) <= 0 || $arFile["tmp_name"] == "none")
+                if ($arFile["name"] == '' || $arFile["tmp_name"] == "none") {
                     continue;
+                }
 
                 $arFile["name"] = GetFileName($arFile["name"]);
                 $fname = ${"fname_" . $i};
-                if (strlen($fname) <= 0)
+                if ($fname == '') {
                     $fname = $arFile["name"];
+                }
 
                 $path = GetDirPath($FILENAME);
                 $pathto = Rel2Abs($path, $fname);
                 $ext = GetFileExtension($pathto);
+                $io = CBXVirtualIo::GetInstance();
                 if (!$USER->IsAdmin() && in_array($ext, $arExt)) {
-                    $message = new CAdminMessage(array(
-                        "MESSAGE" => GetMessage("FLOW_ERROR"),
-                        "DETAILS" => GetMessage("FLOW_FILEUPLOAD_PHPERROR") . " \"" . $pathto . "\"",
-                        "TYPE" => "ERROR",
-                    ));
+                    $message = new CAdminMessage(
+                        array(
+                            "MESSAGE" => GetMessage("FLOW_ERROR"),
+                            "DETAILS" => GetMessage("FLOW_FILEUPLOAD_PHPERROR") . " \"" . $pathto . "\"",
+                            "TYPE" => "ERROR",
+                        )
+                    );
                 } elseif (!$USER->CanDoFileOperation('fm_edit_in_workflow', array($SITE_ID, $pathto))) {
-                    $message = new CAdminMessage(array(
-                        "MESSAGE" => GetMessage("FLOW_ERROR"),
-                        "DETAILS" => GetMessage("FLOW_FILEUPLOAD_ACCESS_DENIED") . " \"" . $pathto . "\": " . GetMessage("FLOW_MIN_RIGHTS"),
-                        "TYPE" => "ERROR",
-                    ));
-                } elseif (!CBXVirtualIoFileSystem::ValidatePathString($pathto)) {
-                    $message = new CAdminMessage(array(
-                        "MESSAGE" => GetMessage("FLOW_ERROR"),
-                        "DETAILS" => GetMessage("FLOW_FILE_NAME_NOT_VALID"),
-                        "TYPE" => "ERROR",
-                    ));
+                    $message = new CAdminMessage(
+                        array(
+                            "MESSAGE" => GetMessage("FLOW_ERROR"),
+                            "DETAILS" => GetMessage(
+                                    "FLOW_FILEUPLOAD_ACCESS_DENIED"
+                                ) . " \"" . $pathto . "\": " . GetMessage("FLOW_MIN_RIGHTS"),
+                            "TYPE" => "ERROR",
+                        )
+                    );
+                } elseif (!$io->ValidatePathString($pathto)) {
+                    $message = new CAdminMessage(
+                        array(
+                            "MESSAGE" => GetMessage("FLOW_ERROR"),
+                            "DETAILS" => GetMessage("FLOW_FILE_NAME_NOT_VALID"),
+                            "TYPE" => "ERROR",
+                        )
+                    );
                 } else {
                     $z = CWorkflow::GetFileByID($ID, $pathto);
                     if ($zr = $z->Fetch()) {
-                        $message = new CAdminMessage(array(
-                            "MESSAGE" => GetMessage("FLOW_ERROR"),
-                            "DETAILS" => str_replace("#FILE#", "$pathto", GetMessage("FLOW_FILE_ALREADY_EXIST")),
-                            "TYPE" => "ERROR",
-                        ));
+                        $message = new CAdminMessage(
+                            array(
+                                "MESSAGE" => GetMessage("FLOW_ERROR"),
+                                "DETAILS" => str_replace("#FILE#", "$pathto", GetMessage("FLOW_FILE_ALREADY_EXIST")),
+                                "TYPE" => "ERROR",
+                            )
+                        );
                     } else {
                         $temp_file = CWorkflow::GetUniqueFilename($pathto);
                         $temp_dir = CWorkflow::GetTempDir();
-                        if (!file_exists($temp_dir))
+                        if (!file_exists($temp_dir)) {
                             mkdir($temp_dir, BX_DIR_PERMISSIONS);
+                        }
 
                         $temp_path = $temp_dir . $temp_file;
                         if (!copy($arFile["tmp_name"], $temp_path)) {
-                            $message = new CAdminMessage(array(
-                                "MESSAGE" => GetMessage("FLOW_ERROR"),
-                                "DETAILS" => GetMessage("FLOW_FILEUPLOAD_FILE_CREATE_ERROR") . " \"" . $temp_path . "\"",
-                                "TYPE" => "ERROR",
-                            ));
+                            $message = new CAdminMessage(
+                                array(
+                                    "MESSAGE" => GetMessage("FLOW_ERROR"),
+                                    "DETAILS" => GetMessage(
+                                            "FLOW_FILEUPLOAD_FILE_CREATE_ERROR"
+                                        ) . " \"" . $temp_path . "\"",
+                                    "TYPE" => "ERROR",
+                                )
+                            );
                         } else {
                             $arFields = array(
                                 "DOCUMENT_ID" => ($ID > 0) ? $ID : "null",
@@ -388,8 +428,9 @@ if (
 
             CWorkflow::LinkFiles2Document($arUploadedFiles, $ID);
             if (is_array($del_files)) {
-                foreach ($del_files as $del_id)
+                foreach ($del_files as $del_id) {
                     CWorkflow::CleanUpFiles($ID, $del_id);
+                }
             }
 
             $strError = "";
@@ -397,27 +438,41 @@ if (
             $strError = "";
 
             if (!$message) {
-                if ($STATUS_ID == 1)
+                if ($STATUS_ID == 1) {
                     $strNote .= GetMessage("FLOW_PUBLISHED_SUCCESS");
+                }
 
-                if (strlen($save) > 0 || $STATUS_ID == 1) {
-                    if (strlen($return_url) > 0)
+                if ($save <> '' || $STATUS_ID == 1) {
+                    if ($return_url <> '') {
                         LocalRedirect($return_url);
-                    else
-                        LocalRedirect("/bitrix/admin/workflow_list.php?lang=" . LANGUAGE_ID . "&set_default=Y&strNote=" . urlencode($strNote));
-                } elseif (strlen($apply) > 0) {
-                    LocalRedirect("/bitrix/admin/workflow_edit.php?lang=" . LANGUAGE_ID . "&ID=" . $ID . "&strNote=" . urlencode($strNote) . "&" . $tabControl->ActiveTabParam() . (strlen($return_url) ? "&return_url=" . urlencode($return_url) : ""));
+                    } else {
+                        LocalRedirect(
+                            "/bitrix/admin/workflow_list.php?lang=" . LANGUAGE_ID . "&set_default=Y&strNote=" . urlencode(
+                                $strNote
+                            )
+                        );
+                    }
+                } elseif ($apply <> '') {
+                    LocalRedirect(
+                        "/bitrix/admin/workflow_edit.php?lang=" . LANGUAGE_ID . "&ID=" . $ID . "&strNote=" . urlencode(
+                            $strNote
+                        ) . "&" . $tabControl->ActiveTabParam() . ($return_url <> '' ? "&return_url=" . urlencode(
+                                $return_url
+                            ) : "")
+                    );
                 }
             }
         }
     } else {
-        if ($e = $APPLICATION->GetException())
+        if ($e = $APPLICATION->GetException()) {
             $message = new CAdminMessage(GetMessage("FLOW_ERROR"), $e);
+        }
     }
 }
 
-if (($ID > 0) && !$message)
+if (($ID > 0) && !$message) {
     CWorkflow::Lock($ID);
+}
 
 $arDocFiles = array();
 ClearVars();
@@ -430,7 +485,7 @@ if (!($workflow->ExtractFields())) {
         $str_TITLE = $arContent["TITLE"];
         $str_BODY = $arContent["CONTENT"];
         $get_content = "Y";
-    } elseif (strlen($template) > 0) {
+    } elseif ($template <> '') {
         foreach ($arTemplates as $Template) {
             if ($Template["file"] == $template) {
                 $filesrc = GetTemplateContent($Template["file"]);
@@ -448,14 +503,15 @@ if (!($workflow->ExtractFields())) {
         $str_TITLE = $arContent["TITLE"];
         $str_BODY = $arContent["CONTENT"];
     }
-    $str_FILENAME = strlen($fname) ? htmlspecialcharsbx($fname) : "/untitled.php";
+    $str_FILENAME = $fname <> '' ? htmlspecialcharsbx($fname) : "/untitled.php";
     $str_SITE_ID = htmlspecialcharsbx($site);
     $str_BODY_TYPE = "html";
     $str_TITLE = htmlspecialcharsbx($str_TITLE);
 } else {
     $doc_files = CWorkflow::GetFileList($ID);
-    while ($zr = $doc_files->GetNext())
+    while ($zr = $doc_files->GetNext()) {
         $arDocFiles[] = $zr;
+    }
     $str_BODY = htmlspecialcharsback($str_BODY);
 }
 
@@ -474,35 +530,38 @@ if ($USER->CanDoFileOperation('fm_lpa', Array($str_SITE_ID, $str_FILENAME)) && !
         $php_count = 0;
         for ($n = 0; $n < $l; $n++) {
             $start = $arPHP[$n][0];
-            $str_BODY .= substr($content, $end, $start - $end);
+            $str_BODY .= mb_substr($content, $end, $start - $end);
             $end = $arPHP[$n][1];
 
             //Trim php tags
             $src = $arPHP[$n][2];
-            if (SubStr($src, 0, 5) == "<?" . "php")
-                $src = SubStr($src, 5);
-            else
-                $src = SubStr($src, 2);
-            $src = SubStr($src, 0, -2);
+            if (mb_substr($src, 0, 5) == "<?" . "php") {
+                $src = mb_substr($src, 5);
+            } else {
+                $src = mb_substr($src, 2);
+            }
+            $src = mb_substr($src, 0, -2);
 
             //If it's Component 2, keep the php code. If it's component 1 or ordinary PHP - than replace code by #PHPXXXX#
             $comp2_begin = '$APPLICATION->INCLUDECOMPONENT(';
-            if (strtoupper(substr($src, 0, strlen($comp2_begin))) == $comp2_begin)
+            if (mb_strtoupper(mb_substr($src, 0, mb_strlen($comp2_begin))) == $comp2_begin) {
                 $str_BODY .= $arPHP[$n][2];
-            else
+            } else {
                 $str_BODY .= '#PHP' . str_pad(++$php_count, 4, "0", STR_PAD_LEFT) . '#';
+            }
         }
-        $str_BODY .= substr($content, $end);
+        $str_BODY .= mb_substr($content, $end);
     } else {
         $str_BODY = $content;
     }
 }
 
 if ($ID > 0) {
-    if ($str_STATUS_ID > 1)
+    if ($str_STATUS_ID > 1) {
         $sDocTitle = GetMessage("FLOW_EDIT_RECORD", array("#ID#" => $ID));
-    else
+    } else {
         $sDocTitle = GetMessage("FLOW_VIEW_RECORD", array("#ID#" => $ID));
+    }
 } else {
     $sDocTitle = GetMessage("FLOW_NEW_RECORD");
 }
@@ -532,7 +591,10 @@ if (intval($ID) > 0) {
         $aMenu[] = array(
             "ICON" => "btn_delete",
             "TEXT" => GetMessage("FLOW_DELETE_DOCUMENT"),
-            "LINK" => "javascript:if(confirm('" . GetMessage("FLOW_DELETE_DOCUMENT_CONFIRM") . "')) window.location='workflow_edit.php?del_id=" . $ID . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get() . "';",
+            "LINK" => "javascript:if(confirm('" . GetMessage(
+                    "FLOW_DELETE_DOCUMENT_CONFIRM"
+                ) . "')) window.location='workflow_edit.php?del_id=" . $ID . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get(
+                ) . "';",
             "TITLE" => GetMessage("FLOW_DELETE_DOCUMENT"),
         );
     }
@@ -540,8 +602,9 @@ if (intval($ID) > 0) {
 $context = new CAdminContextMenu($aMenu);
 $context->Show();
 
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 
 CAdminMessage::ShowNote($strNote);
 
@@ -598,10 +661,16 @@ $tabControl->Begin();
             <tr>
                 <td><?= GetMessage("FLOW_TEMPLATE") ?></td>
                 <td><select name="template"
-                            onchange="window.location='/bitrix/admin/workflow_edit.php?lang=<? echo LANG ?>&amp;fname=<? echo UrlEncode($fname) ?>&amp;template='+escape(this[this.selectedIndex].value)"><?
+                            onchange="window.location='/bitrix/admin/workflow_edit.php?lang=<? echo LANG ?>&amp;fname=<? echo UrlEncode(
+                                $fname
+                            ) ?>&amp;template='+escape(this[this.selectedIndex].value)"><?
                         foreach ($arTemplates as $Template) {
                             ?>
-                            <option value="<? echo htmlspecialcharsbx($Template["file"]) ?>"<? if ($template == $Template["file"]) echo " selected" ?>><? echo htmlspecialcharsbx($Template["name"]) ?></option><?
+                            <option value="<? echo htmlspecialcharsbx(
+                                $Template["file"]
+                            ) ?>"<? if ($template == $Template["file"]) echo " selected" ?>><? echo htmlspecialcharsbx(
+                                $Template["name"]
+                            ) ?></option><?
                         }
                         ?></select></td>
             </tr>
@@ -626,20 +695,26 @@ $tabControl->Begin();
             <tr>
                 <td><?= GetMessage("FLOW_DATE_ENTER") ?></td>
                 <td><?= $str_DATE_ENTER ?>&nbsp;[<a href="user_edit.php?ID=<?= $str_ENTERED_BY ?>&lang=<?= LANG ?>"
-                                                    title="<?= GetMessage('FLOW_USER_ALT') ?>"><?= $str_ENTERED_BY ?></a>]&nbsp;<? echo $str_EUSER_NAME ?>
+                                                    title="<?= GetMessage(
+                                                        'FLOW_USER_ALT'
+                                                    ) ?>"><?= $str_ENTERED_BY ?></a>]&nbsp;<? echo $str_EUSER_NAME ?>
                 </td>
             </tr>
             <tr>
                 <td><?= GetMessage("FLOW_DATE_MODIFY") ?></td>
                 <td><?= $str_DATE_MODIFY ?>&nbsp;[<a href="user_edit.php?ID=<?= $str_MODIFIED_BY ?>&lang=<?= LANG ?>"
-                                                     title="<?= GetMessage('FLOW_USER_ALT') ?>"><?= $str_MODIFIED_BY ?></a>]&nbsp;<? echo $str_MUSER_NAME ?>
+                                                     title="<?= GetMessage(
+                                                         'FLOW_USER_ALT'
+                                                     ) ?>"><?= $str_MODIFIED_BY ?></a>]&nbsp;<? echo $str_MUSER_NAME ?>
                 </td>
             </tr>
             <? if ($str_LOCK_STATUS != "green"): ?>
                 <tr>
                     <td><?= GetMessage("FLOW_DATE_LOCK") ?>:</td>
                     <td><?= $str_DATE_LOCK ?>&nbsp;[<a href="user_edit.php?ID=<?= $str_LOCKED_BY ?>&lang=<?= LANG ?>"
-                                                       title="<?= GetMessage('FLOW_USER_ALT') ?>"><?= $str_LOCKED_BY ?></a>]&nbsp;<? echo $str_LUSER_NAME ?>
+                                                       title="<?= GetMessage(
+                                                           'FLOW_USER_ALT'
+                                                       ) ?>"><?= $str_LOCKED_BY ?></a>]&nbsp;<? echo $str_LUSER_NAME ?>
                         &nbsp;<? if ($str_LOCKED_BY == $USER->GetID()): ?><span class="required">(!)</span><? endif; ?>
                     </td>
                 </tr>
@@ -683,7 +758,10 @@ $tabControl->Begin();
             ?>
             <tr>
                 <td colspan="2" align="center"><?
-                    $limit_php_access = ($USER->CanDoFileOperation('fm_lpa', array($str_SITE_ID, $str_FILENAME)) && !$USER->CanDoOperation('edit_php'));
+                    $limit_php_access = ($USER->CanDoFileOperation(
+                            'fm_lpa',
+                            array($str_SITE_ID, $str_FILENAME)
+                        ) && !$USER->CanDoOperation('edit_php'));
                     $bWithoutPHP = !$USER->CanDoOperation('edit_php') && !$limit_php_access;
 
                     CFileMan::AddHTMLEditorFrame(
@@ -709,9 +787,14 @@ $tabControl->Begin();
             ?>
             <tr>
                 <td colspan="2" align="center"><? echo InputType("radio", "BODY_TYPE", "text", $str_BODY_TYPE, false) ?>
-                    &nbsp;<? echo GetMessage("FLOW_TEXT") ?>
-                    /&nbsp;<? echo InputType("radio", "BODY_TYPE", "html", $str_BODY_TYPE, false) ?>&nbsp;HTML&nbsp;<br><textarea
-                            name="BODY" style="width:100%" rows="30" wrap="VIRTUAL"><? echo $str_BODY ?></textarea></td>
+                    &nbsp;<? echo GetMessage("FLOW_TEXT") ?>/&nbsp;<? echo InputType(
+                        "radio",
+                        "BODY_TYPE",
+                        "html",
+                        $str_BODY_TYPE,
+                        false
+                    ) ?>&nbsp;HTML&nbsp;<br><textarea name="BODY" style="width:100%" rows="30"
+                                                      wrap="VIRTUAL"><? echo $str_BODY ?></textarea></td>
             </tr>
         <?
         endif;
@@ -790,10 +873,12 @@ $tabControl->Begin();
                                                      style="width:100%;"><? echo $str_COMMENTS ?></textarea></td>
         </tr>
         <?
-        $tabControl->Buttons(array(
-            "disabled" => $WORKFLOW_RIGHT <= "R" || $str_LOCK_STATUS == "red",
-            "back_url" => "workflow_list.php?lang=" . LANGUAGE_ID,
-        ));
+        $tabControl->Buttons(
+            array(
+                "disabled" => $WORKFLOW_RIGHT <= "R" || $str_LOCK_STATUS == "red",
+                "back_url" => "workflow_list.php?lang=" . LANGUAGE_ID,
+            )
+        );
         ?>
     </form>
 <?

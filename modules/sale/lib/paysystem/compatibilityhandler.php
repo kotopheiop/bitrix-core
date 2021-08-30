@@ -57,16 +57,19 @@ class CompatibilityHandler extends ServiceHandler implements ICheckable
 
         if ($this->initiateMode == self::STREAM) {
             $this->includeFile('payment.php');
-        } else if ($this->initiateMode == self::STRING) {
-            ob_start();
-            $content = $this->includeFile('payment.php');
+        } else {
+            if ($this->initiateMode == self::STRING) {
+                ob_start();
+                $content = $this->includeFile('payment.php');
 
-            $buffer = ob_get_contents();
-            if (strlen($buffer) > 0)
-                $content = $buffer;
+                $buffer = ob_get_contents();
+                if ($buffer <> '') {
+                    $content = $buffer;
+                }
 
-            $result->setTemplate($content);
-            ob_end_clean();
+                $result->setTemplate($content);
+                ob_end_clean();
+            }
         }
 
         if ($this->service->getField('ENCODING') != '') {
@@ -90,16 +93,19 @@ class CompatibilityHandler extends ServiceHandler implements ICheckable
 
         if ($this->initiateMode == self::STREAM) {
             $this->includeFile('payment.php');
-        } else if ($this->initiateMode == self::STRING) {
-            ob_start();
-            $content = $this->includeFile('payment.php');
+        } else {
+            if ($this->initiateMode == self::STRING) {
+                ob_start();
+                $content = $this->includeFile('payment.php');
 
-            $buffer = ob_get_contents();
-            if (strlen($buffer) > 0)
-                $content = $buffer;
+                $buffer = ob_get_contents();
+                if ($buffer <> '') {
+                    $content = $buffer;
+                }
 
-            $result->setTemplate($content);
-            ob_end_clean();
+                $result->setTemplate($content);
+                ob_end_clean();
+            }
         }
 
         if ($this->service->getField('ENCODING') != '') {
@@ -146,8 +152,9 @@ class CompatibilityHandler extends ServiceHandler implements ICheckable
                 }
             }
 
-            if (isset($templateParams['ORDER']))
+            if (isset($templateParams['ORDER'])) {
                 $orderFields = $templateParams['ORDER'];
+            }
 
             if (isset($templateParams['BASKET_ITEMS'])) {
                 $relatedData['BASKET_ITEMS'] = $templateParams['BASKET_ITEMS'];
@@ -191,8 +198,9 @@ class CompatibilityHandler extends ServiceHandler implements ICheckable
         $path = $documentRoot . $this->service->getField('ACTION_FILE') . '/' . $file;
         if (IO\File::isFileExists($path)) {
             $result = require $path;
-            if ($result !== false && $result !== 1)
+            if ($result !== false && $result !== 1) {
                 return $result;
+            }
         }
 
         return '';
@@ -247,8 +255,14 @@ class CompatibilityHandler extends ServiceHandler implements ICheckable
         /** @var \Bitrix\Sale\PropertyValue $deliveryLocation */
         $deliveryLocation = $propertyCollection->getDeliveryLocation();
 
-        if ($shipment)
-            return \CSalePaySystemsHelper::getPSPrice($psData, $payment->getSum(), $shipment->getPrice(), $deliveryLocation->getValue());
+        if ($shipment) {
+            return \CSalePaySystemsHelper::getPSPrice(
+                $psData,
+                $payment->getSum(),
+                $shipment->getPrice(),
+                $deliveryLocation->getValue()
+            );
+        }
 
         return 0;
     }
@@ -288,7 +302,13 @@ class CompatibilityHandler extends ServiceHandler implements ICheckable
             /** @var \Bitrix\Sale\Order $order */
             $order = $paymentCollection->getOrder();
 
-            \CSalePaySystemAction::InitParamArrays($order->getFieldValues(), $order->getId(), '', array(), $payment->getFieldValues());
+            \CSalePaySystemAction::InitParamArrays(
+                $order->getFieldValues(),
+                $order->getId(),
+                '',
+                array(),
+                $payment->getFieldValues()
+            );
 
             $res = $this->includeFile('result.php');
             return $res;
@@ -317,9 +337,14 @@ class CompatibilityHandler extends ServiceHandler implements ICheckable
             if ($arPSCorrespondence) {
                 $codes = $this->convertCodesToNewFormat($arPSCorrespondence);
 
-                if ($codes)
+                if ($codes) {
                     $data = array('NAME' => $psTitle, 'SORT' => 100, 'CODES' => $codes);
+                }
             }
+        }
+
+        if (isset($data["CODES"]) && is_array($data["CODES"])) {
+            $data["CODES"] = $this->filterDescriptionCodes($data["CODES"]);
         }
 
         return $data;
@@ -335,8 +360,9 @@ class CompatibilityHandler extends ServiceHandler implements ICheckable
             foreach ($arPSCorrespondence as $i => $property) {
                 if ($property['TYPE'] == 'SELECT') {
                     $options = array();
-                    foreach ($property['VALUE'] as $code => $value)
+                    foreach ($property['VALUE'] as $code => $value) {
                         $options[$code] = $value['NAME'];
+                    }
 
                     $arPSCorrespondence[$i] = array(
                         'NAME' => $property['NAME'],
@@ -346,33 +372,39 @@ class CompatibilityHandler extends ServiceHandler implements ICheckable
                         ),
                         'SORT' => $property['SORT'],
                     );
-                } else if ($property['TYPE'] == 'FILE') {
-                    $arPSCorrespondence[$i] = array(
-                        'NAME' => $property['NAME'],
-                        'INPUT' => array(
-                            'TYPE' => 'FILE'
-                        ),
-                        'SORT' => $property['SORT'],
-                    );
-                } else if ($property['TYPE'] == 'CHECKBOX') {
-                    $arPSCorrespondence[$i] = array(
-                        'NAME' => $property['NAME'],
-                        'INPUT' => array(
-                            'TYPE' => 'Y/N'
-                        ),
-                        'SORT' => $property['SORT'],
-                    );
+                } else {
+                    if ($property['TYPE'] == 'FILE') {
+                        $arPSCorrespondence[$i] = array(
+                            'NAME' => $property['NAME'],
+                            'INPUT' => array(
+                                'TYPE' => 'FILE'
+                            ),
+                            'SORT' => $property['SORT'],
+                        );
+                    } else {
+                        if ($property['TYPE'] == 'CHECKBOX') {
+                            $arPSCorrespondence[$i] = array(
+                                'NAME' => $property['NAME'],
+                                'INPUT' => array(
+                                    'TYPE' => 'Y/N'
+                                ),
+                                'SORT' => $property['SORT'],
+                            );
 
-                    if (isset($property['VALUE'])) {
-                        $arPSCorrespondence[$i]['VALUE'] = $property['VALUE'];
+                            if (isset($property['VALUE'])) {
+                                $arPSCorrespondence[$i]['VALUE'] = $property['VALUE'];
+                            }
+                        }
                     }
                 }
 
-                if (array_key_exists('DESCR', $property))
+                if (array_key_exists('DESCR', $property)) {
                     $arPSCorrespondence[$i]['DESCRIPTION'] = $property['DESCR'];
+                }
 
-                if (!isset($arPSCorrespondence[$i]['GROUP']))
+                if (!isset($arPSCorrespondence[$i]['GROUP'])) {
                     $arPSCorrespondence[$i]['GROUP'] = (isset($property['GROUP'])) ? $property['GROUP'] : 'PS_OTHER';
+                }
             }
 
             return $arPSCorrespondence;
@@ -458,8 +490,9 @@ class CompatibilityHandler extends ServiceHandler implements ICheckable
             );
 
             $dbRes = \CIBlockProperty::GetList(array(), $arFilter);
-            while ($arRow = $dbRes->Fetch())
+            while ($arRow = $dbRes->Fetch()) {
                 $data['BASKET_ITEMS'][0]['PROPERTY_' . $arRow['ID']] = 'test';
+            }
         }
 
         return $data;

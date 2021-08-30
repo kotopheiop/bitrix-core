@@ -15,8 +15,9 @@ $selfFolderUrl = $adminPage->getSelfFolderUrl();
 $listUrl = $selfFolderUrl . "cat_round_list.php?lang=" . LANGUAGE_ID;
 $listUrl = $adminSidePanelHelper->editUrlToPublicPage($listUrl);
 
-if (!($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_group')))
+if (!($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_group'))) {
     $APPLICATION->AuthForm('');
+}
 Loader::includeModule('catalog');
 $readOnly = !$USER->CanDoOperation('catalog_group');
 
@@ -29,8 +30,9 @@ $returnUrl = '';
 $rawReturnUrl = (string)$request->get('return_url');
 if ($rawReturnUrl != '') {
     $currentUrl = $APPLICATION->GetCurPage();
-    if (strtolower(substr($rawReturnUrl, strlen($currentUrl))) != strtolower($currentUrl))
+    if (mb_strtolower(mb_substr($rawReturnUrl, mb_strlen($currentUrl))) != mb_strtolower($currentUrl)) {
         $returnUrl = $rawReturnUrl;
+    }
 }
 unset($rawReturnUrl);
 
@@ -53,11 +55,13 @@ $errors = array();
 $fields = array();
 $copy = false;
 $ruleId = (int)$request->get('ID');
-if ($ruleId < 0)
+if ($ruleId < 0) {
     $ruleId = 0;
+}
 
-if ($ruleId > 0)
+if ($ruleId > 0) {
     $copy = ($request->get('action') == 'copy');
+}
 
 if (
     check_bitrix_sessid()
@@ -69,24 +73,30 @@ if (
 
     $rawData = $request->getPostList();
 
-    if (!empty($rawData['CATALOG_GROUP_ID']))
+    if (!empty($rawData['CATALOG_GROUP_ID'])) {
         $fields['CATALOG_GROUP_ID'] = $rawData['CATALOG_GROUP_ID'];
-    if (isset($rawData['PRICE']))
+    }
+    if (isset($rawData['PRICE'])) {
         $fields['PRICE'] = (float)$rawData['PRICE'];
-    if (isset($rawData['ROUND_TYPE']))
+    }
+    if (isset($rawData['ROUND_TYPE'])) {
         $fields['ROUND_TYPE'] = (int)$rawData['ROUND_TYPE'];
-    if (isset($rawData['ROUND_PRECISION']))
+    }
+    if (isset($rawData['ROUND_PRECISION'])) {
         $fields['ROUND_PRECISION'] = (float)$rawData['ROUND_PRECISION'];
+    }
 
-    if ($ruleId == 0 || $copy)
+    if ($ruleId == 0 || $copy) {
         $result = Catalog\RoundingTable::add($fields);
-    else
+    } else {
         $result = Catalog\RoundingTable::update($ruleId, $fields);
+    }
     if (!$result->isSuccess()) {
         $errors = $result->getErrorMessages();
     } else {
-        if ($ruleId == 0 || $copy)
+        if ($ruleId == 0 || $copy) {
             $ruleId = $result->getId();
+        }
     }
     unset($result);
 
@@ -97,7 +107,8 @@ if (
             $adminSidePanelHelper->sendSuccessResponse("base", array("ID" => $ruleId));
         } else {
             if ((string)$request->getPost('apply') != '') {
-                $applyUrl = $selfFolderUrl . "cat_round_edit.php?lang=" . $lang . "&ID=" . $ruleId . '&' . $control->ActiveTabParam();
+                $applyUrl = $selfFolderUrl . "cat_round_edit.php?lang=" . $lang . "&ID=" . $ruleId . '&' . $control->ActiveTabParam(
+                    );
                 $applyUrl = $adminSidePanelHelper->setDefaultQueryParams($applyUrl);
                 LocalRedirect($applyUrl);
             } else {
@@ -144,7 +155,8 @@ if (!$readOnly && $ruleId > 0) {
             'TEXT' => Loc::getMessage('PRICE_ROUND_EDIT_CONTEXT_COPY'),
             'LINK' => $addUrl . '&ID=' . $ruleId . '&action=copy'
         );
-        $deleteUrl = $selfFolderUrl . "cat_round_list.php?lang=" . LANGUAGE_ID . "&ID=" . $ruleId . "&action=delete&" . bitrix_sessid_get() . "";
+        $deleteUrl = $selfFolderUrl . "cat_round_list.php?lang=" . LANGUAGE_ID . "&ID=" . $ruleId . "&action=delete&" . bitrix_sessid_get(
+            ) . "";
         $buttonAction = "LINK";
         if ($adminSidePanelHelper->isPublicFrame()) {
             $deleteUrl = $adminSidePanelHelper->editUrlToPublicPage($deleteUrl);
@@ -153,7 +165,9 @@ if (!$readOnly && $ruleId > 0) {
         $contextMenuItems[] = array(
             'ICON' => 'btn_delete',
             'TEXT' => Loc::getMessage('PRICE_ROUND_EDIT_CONTEXT_DELETE'),
-            $buttonAction => "javascript:if (confirm('" . CUtil::JSEscape(Loc::getMessage('PRICE_ROUND_EDIT_CONTEXT_DELETE_CONFIRM')) . "')) top.window.location.href='" . $deleteUrl . "';",
+            $buttonAction => "javascript:if (confirm('" . CUtil::JSEscape(
+                    Loc::getMessage('PRICE_ROUND_EDIT_CONTEXT_DELETE_CONFIRM')
+                ) . "')) top.window.location.href='" . $deleteUrl . "';",
             'WARNING' => 'Y',
         );
     }
@@ -187,23 +201,28 @@ $selectFields[] = 'ID';
 
 $rule = array();
 if ($ruleId > 0) {
-    $rule = Catalog\RoundingTable::getList(array(
-        'select' => $selectFields,
-        'filter' => array('=ID' => $ruleId)
-    ))->fetch();
-    if (!$rule)
+    $rule = Catalog\RoundingTable::getList(
+        array(
+            'select' => $selectFields,
+            'filter' => array('=ID' => $ruleId)
+        )
+    )->fetch();
+    if (!$rule) {
         $ruleId = 0;
+    }
 }
-if ($ruleId == 0)
+if ($ruleId == 0) {
     $rule = $defaultValues;
+}
 
 $rule['CATALOG_GROUP_ID'] = (int)$rule['CATALOG_GROUP_ID'];
 $rule['PRICE'] = (float)$rule['PRICE'];
 $rule['ROUND_TYPE'] = (int)$rule['ROUND_TYPE'];
 $rule['ROUND_PRECISION'] = (float)$rule['ROUND_PRECISION'];
 
-if (!empty($errors))
+if (!empty($errors)) {
     $rule = array_merge($rule, $fields);
+}
 
 $control->BeginPrologContent();
 $control->EndPrologContent();
@@ -226,8 +245,9 @@ $formActionUrl = $adminSidePanelHelper->setDefaultQueryParams($formActionUrl);
 $control->Begin(array('FORM_ACTION' => $formActionUrl));
 $control->BeginNextFormTab();
 
-if ($ruleId > 0 && !$copy)
+if ($ruleId > 0 && !$copy) {
     $control->AddViewField('ID', Loc::getMessage('PRICE_ROUND_EDIT_FIELD_ID'), $ruleId, false);
+}
 $control->AddDropDownField(
     'CATALOG_GROUP_ID',
     Loc::getMessage('PRICE_ROUND_EDIT_FIELD_PRICE_TYPE'),

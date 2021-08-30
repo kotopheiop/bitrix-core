@@ -27,6 +27,68 @@ class Role extends \Bitrix\Landing\Internals\BaseTable
     public static $internalClass = 'RoleTable';
 
     /**
+     * For correct work we need at least one role.
+     * @return void
+     */
+    public static function checkRequiredRoles(): void
+    {
+        $type = Site\Type::getCurrentScopeId();
+        $res = self::getList(
+            [
+                'select' => [
+                    'ID'
+                ],
+                'filter' => [
+                    '=TYPE' => $type
+                ],
+                'order' => [
+                    'ID' => 'asc'
+                ]
+            ]
+        );
+        while ($role = $res->fetch()) {
+            $taskRefs = Rights::getAccessTasksReferences();
+            $taskReadId = $taskRefs[Rights::ACCESS_TYPES['read']];
+            $taskDenyId = $taskRefs[Rights::ACCESS_TYPES['denied']];
+            $resRight = RightsTable::getList(
+                [
+                    'select' => [
+                        'ID'
+                    ],
+                    'filter' => [
+                        'ENTITY_ID' => 0,
+                        'TASK_ID' => [$taskReadId, $taskDenyId],
+                        'ROLE_ID' => $role['ID'],
+                        '=ENTITY_TYPE' => Rights::ENTITY_TYPE_SITE
+                    ]
+                ]
+            );
+            if (!$resRight->fetch()) {
+                RightsTable::add(
+                    [
+                        'ENTITY_ID' => 0,
+                        'ENTITY_TYPE' => Rights::ENTITY_TYPE_SITE,
+                        'TASK_ID' => $taskReadId,
+                        'ROLE_ID' => $role['ID'],
+                        'ACCESS_CODE' => 'G1'
+                    ]
+                );
+            }
+        }
+
+        if (isset($taskRefs)) {
+            return;
+        }
+
+        $keyDemoInstalled = 'role_demo_installed';
+        if ($type) {
+            $keyDemoInstalled .= '_' . mb_strtolower($type);
+        }
+        Manager::setOption($keyDemoInstalled, 'N');
+        self::fetchAll();
+    }
+
+    /**
      * Gets all roles. Install demo data if need.
      * @return array
      */
@@ -45,14 +107,16 @@ class Role extends \Bitrix\Landing\Internals\BaseTable
         $access = new \CAccess;
 
         // gets from db
-        $res = self::getList([
-            'filter' => [
-                '=TYPE' => $type
-            ],
-            'order' => [
-                'ID' => 'asc'
+        $res = self::getList(
+            [
+                'filter' => [
+                    '=TYPE' => $type
+                ],
+                'order' => [
+                    'ID' => 'asc'
+                ]
             ]
-        ]);
+        );
         while ($row = $res->fetch()) {
             if (!trim($row['TITLE'])) {
                 $row['TITLE'] = Loc::getMessage('LANDING_ROLE_DEF_' . $row['XML_ID']);
@@ -90,7 +154,7 @@ class Role extends \Bitrix\Landing\Internals\BaseTable
         // install demo data if need
         $keyDemoInstalled = 'role_demo_installed';
         if ($type) {
-            $keyDemoInstalled .= '_' . strtolower($type);
+            $keyDemoInstalled .= '_' . mb_strtolower($type);
         }
         if (
             empty($roles) &&
@@ -119,14 +183,16 @@ class Role extends \Bitrix\Landing\Internals\BaseTable
         $defGroup = 'G1';
         // for B24 gets employees group
         if (Manager::isB24()) {
-            $res = \Bitrix\Main\GroupTable::getList([
-                'select' => [
-                    'ID'
-                ],
-                'filter' => [
-                    '=STRING_ID' => 'EMPLOYEES_' . SITE_ID
+            $res = \Bitrix\Main\GroupTable::getList(
+                [
+                    'select' => [
+                        'ID'
+                    ],
+                    'filter' => [
+                        '=STRING_ID' => 'EMPLOYEES_' . SITE_ID
+                    ]
                 ]
-            ]);
+            );
             if ($row = $res->fetch()) {
                 $defGroup = 'G' . $row['ID'];
             }
@@ -135,14 +201,16 @@ class Role extends \Bitrix\Landing\Internals\BaseTable
 
         $addRights = [];
         foreach (Rights::ADDITIONAL_RIGHTS as $accessCode) {
-            if (strpos($accessCode, '_') > 0) {
-                list($prefix,) = explode('_', $accessCode);
-                $prefix = strtoupper($prefix);
+            if (mb_strpos($accessCode, '_') > 0) {
+                [$prefix,] = explode('_', $accessCode);
+                $prefix = mb_strtoupper($prefix);
                 if ($prefix == $type) {
                     $addRights[] = $accessCode;
                 }
-            } else if ($type === null) {
-                $addRights[] = $accessCode;
+            } else {
+                if ($type === null) {
+                    $addRights[] = $accessCode;
+                }
             }
         }
 
@@ -172,7 +240,7 @@ class Role extends \Bitrix\Landing\Internals\BaseTable
         ];
         $type = (string)$type;
         foreach ($demoData as $code => $rights) {
-            $code = strtoupper($code);
+            $code = mb_strtoupper($code);
             $check = false;
             /*$check = self::getList([
                 'filter' => [
@@ -180,11 +248,13 @@ class Role extends \Bitrix\Landing\Internals\BaseTable
                 ]
                ])->fetch();*/
             if (!$check) {
-                $res = self::add([
-                    'TYPE' => $type,
-                    'XML_ID' => $code,
-                    'ADDITIONAL_RIGHTS' => $rights['additional_rights']
-                ]);
+                $res = self::add(
+                    [
+                        'TYPE' => $type,
+                        'XML_ID' => $code,
+                        'ADDITIONAL_RIGHTS' => $rights['additional_rights']
+                    ]
+                );
                 if ($res->isSuccess()) {
                     self::setRights(
                         $res->getId(),
@@ -222,9 +292,12 @@ class Role extends \Bitrix\Landing\Internals\BaseTable
 
         $roleId = intval($roleId);
 
-        self::update($roleId, [
-            'ACCESS_CODES' => $codes
-        ]);
+        self::update(
+            $roleId,
+            [
+                'ACCESS_CODES' => $codes
+            ]
+        );
 
         self::setRights(
             $roleId,
@@ -246,16 +319,18 @@ class Role extends \Bitrix\Landing\Internals\BaseTable
         $roleId = intval($roleId);
         $return = [];
 
-        $res = RightsTable::getlist([
-            'select' => [
-                'ENTITY_ID',
-                'TASK_ID'
-            ],
-            'filter' => [
-                'ROLE_ID' => $roleId,
-                '=ENTITY_TYPE' => Rights::ENTITY_TYPE_SITE
+        $res = RightsTable::getlist(
+            [
+                'select' => [
+                    'ENTITY_ID',
+                    'TASK_ID'
+                ],
+                'filter' => [
+                    'ROLE_ID' => $roleId,
+                    '=ENTITY_TYPE' => Rights::ENTITY_TYPE_SITE
+                ]
             ]
-        ]);
+        );
         while ($row = $res->fetch()) {
             if (!isset($tasks[$row['TASK_ID']])) {
                 continue;
@@ -298,22 +373,27 @@ class Role extends \Bitrix\Landing\Internals\BaseTable
                 if (!is_array($additionalRights)) {
                     $additionalRights = [];
                 }
-                self::update($roleId, [
-                    'ADDITIONAL_RIGHTS' => $additionalRights
-                ]);
+                self::update(
+                    $roleId,
+                    [
+                        'ADDITIONAL_RIGHTS' => $additionalRights
+                    ]
+                );
                 Rights::refreshAdditionalRights();
             }
         };
 
         // gets access codes from role
-        $res = self::getList([
-            'select' => [
-                'ACCESS_CODES'
-            ],
-            'filter' => [
-                'ID' => $roleId
+        $res = self::getList(
+            [
+                'select' => [
+                    'ACCESS_CODES'
+                ],
+                'filter' => [
+                    'ID' => $roleId
+                ]
             ]
-        ]);
+        );
         if ($row = $res->fetch()) {
             $accessCodes = $row['ACCESS_CODES'];
             if (!$accessCodes) {
@@ -325,15 +405,17 @@ class Role extends \Bitrix\Landing\Internals\BaseTable
         }
 
         // first remove all rights for role
-        $res = RightsTable::getlist([
-            'select' => [
-                'ID'
-            ],
-            'filter' => [
-                'ROLE_ID' => $roleId,
-                '=ENTITY_TYPE' => Rights::ENTITY_TYPE_SITE
+        $res = RightsTable::getlist(
+            [
+                'select' => [
+                    'ID'
+                ],
+                'filter' => [
+                    'ROLE_ID' => $roleId,
+                    '=ENTITY_TYPE' => Rights::ENTITY_TYPE_SITE
+                ]
             ]
-        ]);
+        );
         while ($row = $res->fetch()) {
             RightsTable::delete($row['ID']);
         }
@@ -345,12 +427,14 @@ class Role extends \Bitrix\Landing\Internals\BaseTable
 
         // check for site exists
         $siteExists = [];
-        $res = Site::getList([
-            'select' => [
-                'ID'
-            ],
-            'filter' => array_keys($rights)
-        ]);
+        $res = Site::getList(
+            [
+                'select' => [
+                    'ID'
+                ],
+                'filter' => array_keys($rights)
+            ]
+        );
         while ($row = $res->fetch()) {
             $siteExists[] = $row['ID'];
         }
@@ -367,19 +451,23 @@ class Role extends \Bitrix\Landing\Internals\BaseTable
             }
             if (in_array($deniedCode, $rightCodes)) {
                 $rightCodes = [$deniedCode];
-            } else if (!in_array($readCode, $rightCodes)) {
-                $rightCodes[] = $readCode;
+            } else {
+                if (!in_array($readCode, $rightCodes)) {
+                    $rightCodes[] = $readCode;
+                }
             }
             foreach ($rightCodes as $rightCode) {
                 if (isset($tasks[$rightCode])) {
                     foreach ($accessCodes as $accessCode) {
-                        RightsTable::add([
-                            'ROLE_ID' => $roleId,
-                            'ENTITY_ID' => $siteId,
-                            'ENTITY_TYPE' => Rights::ENTITY_TYPE_SITE,
-                            'TASK_ID' => $tasks[$rightCode],
-                            'ACCESS_CODE' => $accessCode
-                        ]);
+                        RightsTable::add(
+                            [
+                                'ROLE_ID' => $roleId,
+                                'ENTITY_ID' => $siteId,
+                                'ENTITY_TYPE' => Rights::ENTITY_TYPE_SITE,
+                                'TASK_ID' => $tasks[$rightCode],
+                                'ACCESS_CODE' => $accessCode
+                            ]
+                        );
                     }
                 }
             }
@@ -419,14 +507,16 @@ class Role extends \Bitrix\Landing\Internals\BaseTable
 
         if (!$ids) {
             $ids[] = -1;
-            $res = self::getList([
-                'select' => [
-                    'ID'
-                ],
-                'filter' => [
-                    '=TYPE' => self::$expectedType
+            $res = self::getList(
+                [
+                    'select' => [
+                        'ID'
+                    ],
+                    'filter' => [
+                        '=TYPE' => self::$expectedType
+                    ]
                 ]
-            ]);
+            );
             while ($row = $res->fetch()) {
                 $ids[] = $row['ID'];
             }

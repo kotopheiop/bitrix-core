@@ -44,7 +44,9 @@ class ProductTable extends Main\Entity\DataManager
                 $site_currency = \CBaseSaleReportHelper::getSiteCurrencyId();
             }
         }
-        if ($weight_koef <= 0) $weight_koef = 1;
+        if ($weight_koef <= 0) {
+            $weight_koef = 1;
+        }
 
         global $DB, $DBType;
 
@@ -76,7 +78,8 @@ class ProductTable extends Main\Entity\DataManager
             'DATE_UPDATED' => array(
                 'data_type' => 'datetime',
                 'expression' => array(
-                    $DB->datetimeToDateFunction('%s'), 'TIMESTAMP_X',
+                    $DB->datetimeToDateFunction('%s'),
+                    'TIMESTAMP_X',
                 )
             ),
             'QUANTITY' => array(
@@ -95,19 +98,23 @@ class ProductTable extends Main\Entity\DataManager
             'NAME' => array(
                 'data_type' => 'string',
                 'expression' => array(
-                    '%s', 'IBLOCK.NAME'
+                    '%s',
+                    'IBLOCK.NAME'
                 )
             ),
             'NAME_WITH_IDENT' => array(
                 'data_type' => 'string',
                 'expression' => array(
-                    $DB->concat('%s', '\' [\'', ___dbCastIntToChar($DBType, '%s'), '\']\''), 'NAME', 'ID'
+                    $DB->concat('%s', '\' [\'', ___dbCastIntToChar($DBType, '%s'), '\']\''),
+                    'NAME',
+                    'ID'
                 )
             ),
             'ACTIVE' => array(
                 'data_type' => 'boolean',
                 'expression' => array(
-                    '%s', 'IBLOCK.ACTIVE'
+                    '%s',
+                    'IBLOCK.ACTIVE'
                 ),
                 'values' => array('N', 'Y')
             ),
@@ -117,7 +124,8 @@ class ProductTable extends Main\Entity\DataManager
             'WEIGHT_IN_SITE_UNITS' => array(
                 'data_type' => 'float',
                 'expression' => array(
-                    '%s / ' . $DB->forSql($weight_koef), 'WEIGHT'
+                    '%s / ' . $DB->forSql($weight_koef),
+                    'WEIGHT'
                 )
             ),
             'PRICE' => array(
@@ -133,7 +141,8 @@ class ProductTable extends Main\Entity\DataManager
 						( b_catalog_price.quantity_from <= 1 OR b_catalog_price.quantity_from IS NULL )
 						AND
 						( b_catalog_price.quantity_to >= 1 OR b_catalog_price.quantity_to IS NULL)
-					LIMIT 1)', 'ID'
+					LIMIT 1)',
+                    'ID'
                 )
             ),
             'CURRENCY' => array(
@@ -149,13 +158,16 @@ class ProductTable extends Main\Entity\DataManager
 						( b_catalog_price.quantity_from <= 1 OR b_catalog_price.quantity_from IS NULL )
 						AND
 						( b_catalog_price.quantity_to >= 1 OR b_catalog_price.quantity_to IS NULL)
-					LIMIT 1)', 'ID'
+					LIMIT 1)',
+                    'ID'
                 )
             ),
             'SUMMARY_PRICE' => array(
                 'data_type' => 'float',
                 'expression' => array(
-                    '%s * %s', 'QUANTITY', 'PRICE'
+                    '%s * %s',
+                    'QUANTITY',
+                    'PRICE'
                 ),
             ),
 
@@ -166,13 +178,22 @@ class ProductTable extends Main\Entity\DataManager
                     $DBType === 'oracle'
                         ? '(SELECT r FROM (SELECT b_catalog_currency.CURRENCY c, b_catalog_product.ID i, (CASE WHEN b_catalog_currency_rate.RATE IS NOT NULL THEN b_catalog_currency_rate.RATE ELSE b_catalog_currency.AMOUNT END) r
 					FROM b_catalog_product INNER JOIN b_catalog_currency ON 1=1
-						LEFT JOIN b_catalog_currency_rate ON (b_catalog_currency.CURRENCY = b_catalog_currency_rate.CURRENCY AND b_catalog_currency_rate.DATE_RATE <= ' . $DB->datetimeToDateFunction('b_catalog_product.TIMESTAMP_X') . ')
+						LEFT JOIN b_catalog_currency_rate ON (b_catalog_currency.CURRENCY = b_catalog_currency_rate.CURRENCY AND b_catalog_currency_rate.DATE_RATE <= ' . $DB->datetimeToDateFunction(
+                            'b_catalog_product.TIMESTAMP_X'
+                        ) . ')
 					ORDER BY DATE_RATE DESC) WHERE i = %s AND c = %s AND ROWNUM = 1)'
-                        : '(' . $DB->topSql('SELECT (CASE WHEN b_catalog_currency_rate.RATE IS NOT NULL THEN b_catalog_currency_rate.RATE ELSE b_catalog_currency.AMOUNT END)
+                        : '(' . $DB->topSql(
+                            'SELECT (CASE WHEN b_catalog_currency_rate.RATE IS NOT NULL THEN b_catalog_currency_rate.RATE ELSE b_catalog_currency.AMOUNT END)
 					FROM b_catalog_product INNER JOIN b_catalog_currency ON 1=1
-						LEFT JOIN b_catalog_currency_rate ON (b_catalog_currency.CURRENCY = b_catalog_currency_rate.CURRENCY AND b_catalog_currency_rate.DATE_RATE <= ' . $DB->datetimeToDateFunction('b_catalog_product.TIMESTAMP_X') . ')
+						LEFT JOIN b_catalog_currency_rate ON (b_catalog_currency.CURRENCY = b_catalog_currency_rate.CURRENCY AND b_catalog_currency_rate.DATE_RATE <= ' . $DB->datetimeToDateFunction(
+                                'b_catalog_product.TIMESTAMP_X'
+                            ) . ')
 					WHERE b_catalog_product.ID = %s AND b_catalog_currency.CURRENCY = %s
-					ORDER BY DATE_RATE DESC', 1) . ')', 'ID', 'CURRENCY'
+					ORDER BY DATE_RATE DESC',
+                            1
+                        ) . ')',
+                    'ID',
+                    'CURRENCY'
                 )
             ),
             'CURRENT_CURRENCY_RATE_CNT' => array(
@@ -181,13 +202,22 @@ class ProductTable extends Main\Entity\DataManager
                     $DBType === 'oracle'
                         ? '(SELECT r FROM (SELECT b_catalog_currency.CURRENCY c, b_catalog_product.ID i, (CASE WHEN b_catalog_currency_rate.RATE_CNT IS NOT NULL THEN b_catalog_currency_rate.RATE_CNT ELSE b_catalog_currency.AMOUNT_CNT END) r
 					FROM b_catalog_product INNER JOIN b_catalog_currency ON 1=1
-						LEFT JOIN b_catalog_currency_rate ON (b_catalog_currency.CURRENCY = b_catalog_currency_rate.CURRENCY AND b_catalog_currency_rate.DATE_RATE <= ' . $DB->datetimeToDateFunction('b_catalog_product.TIMESTAMP_X') . ')
+						LEFT JOIN b_catalog_currency_rate ON (b_catalog_currency.CURRENCY = b_catalog_currency_rate.CURRENCY AND b_catalog_currency_rate.DATE_RATE <= ' . $DB->datetimeToDateFunction(
+                            'b_catalog_product.TIMESTAMP_X'
+                        ) . ')
 					ORDER BY DATE_RATE DESC) WHERE i = %s AND c = %s AND ROWNUM = 1)'
-                        : '(' . $DB->topSql('SELECT (CASE WHEN b_catalog_currency_rate.RATE_CNT IS NOT NULL THEN b_catalog_currency_rate.RATE_CNT ELSE b_catalog_currency.AMOUNT_CNT END)
+                        : '(' . $DB->topSql(
+                            'SELECT (CASE WHEN b_catalog_currency_rate.RATE_CNT IS NOT NULL THEN b_catalog_currency_rate.RATE_CNT ELSE b_catalog_currency.AMOUNT_CNT END)
 					FROM b_catalog_product INNER JOIN b_catalog_currency ON 1=1
-						LEFT JOIN b_catalog_currency_rate ON (b_catalog_currency.CURRENCY = b_catalog_currency_rate.CURRENCY AND b_catalog_currency_rate.DATE_RATE <= ' . $DB->datetimeToDateFunction('b_catalog_product.TIMESTAMP_X') . ')
+						LEFT JOIN b_catalog_currency_rate ON (b_catalog_currency.CURRENCY = b_catalog_currency_rate.CURRENCY AND b_catalog_currency_rate.DATE_RATE <= ' . $DB->datetimeToDateFunction(
+                                'b_catalog_product.TIMESTAMP_X'
+                            ) . ')
 					WHERE b_catalog_product.ID = %s AND b_catalog_currency.CURRENCY = %s
-					ORDER BY DATE_RATE DESC', 1) . ')', 'ID', 'CURRENCY'
+					ORDER BY DATE_RATE DESC',
+                            1
+                        ) . ')',
+                    'ID',
+                    'CURRENCY'
                 )
             ),
 
@@ -197,14 +227,24 @@ class ProductTable extends Main\Entity\DataManager
                     $DBType === 'oracle'
                         ? '(SELECT r FROM (SELECT b_catalog_product.ID i, (CASE WHEN b_catalog_currency_rate.RATE IS NOT NULL THEN b_catalog_currency_rate.RATE ELSE b_catalog_currency.AMOUNT END) r
 					FROM b_catalog_product INNER JOIN b_catalog_currency ON 1=1
-						LEFT JOIN b_catalog_currency_rate ON (b_catalog_currency.CURRENCY = b_catalog_currency_rate.CURRENCY AND b_catalog_currency_rate.DATE_RATE <= ' . $DB->datetimeToDateFunction('b_catalog_product.TIMESTAMP_X') . ')
+						LEFT JOIN b_catalog_currency_rate ON (b_catalog_currency.CURRENCY = b_catalog_currency_rate.CURRENCY AND b_catalog_currency_rate.DATE_RATE <= ' . $DB->datetimeToDateFunction(
+                            'b_catalog_product.TIMESTAMP_X'
+                        ) . ')
 					WHERE b_catalog_currency.CURRENCY = \'' . $DB->forSql($site_currency) . '\'
 					ORDER BY DATE_RATE DESC) WHERE i = %s AND ROWNUM = 1)'
-                        : '(' . $DB->topSql('SELECT (CASE WHEN b_catalog_currency_rate.RATE IS NOT NULL THEN b_catalog_currency_rate.RATE ELSE b_catalog_currency.AMOUNT END)
+                        : '(' . $DB->topSql(
+                            'SELECT (CASE WHEN b_catalog_currency_rate.RATE IS NOT NULL THEN b_catalog_currency_rate.RATE ELSE b_catalog_currency.AMOUNT END)
 					FROM b_catalog_product INNER JOIN b_catalog_currency ON 1=1
-						LEFT JOIN b_catalog_currency_rate ON (b_catalog_currency.CURRENCY = b_catalog_currency_rate.CURRENCY AND b_catalog_currency_rate.DATE_RATE <= ' . $DB->datetimeToDateFunction('b_catalog_product.TIMESTAMP_X') . ')
-					WHERE b_catalog_product.ID = %s AND b_catalog_currency.CURRENCY = \'' . $DB->forSql($site_currency) . '\'
-					ORDER BY DATE_RATE DESC', 1) . ')', 'ID'
+						LEFT JOIN b_catalog_currency_rate ON (b_catalog_currency.CURRENCY = b_catalog_currency_rate.CURRENCY AND b_catalog_currency_rate.DATE_RATE <= ' . $DB->datetimeToDateFunction(
+                                'b_catalog_product.TIMESTAMP_X'
+                            ) . ')
+					WHERE b_catalog_product.ID = %s AND b_catalog_currency.CURRENCY = \'' . $DB->forSql(
+                                $site_currency
+                            ) . '\'
+					ORDER BY DATE_RATE DESC',
+                            1
+                        ) . ')',
+                    'ID'
                 )
             ),
 
@@ -214,14 +254,24 @@ class ProductTable extends Main\Entity\DataManager
                     $DBType === 'oracle'
                         ? '(SELECT r FROM (SELECT b_catalog_product.ID i, (CASE WHEN b_catalog_currency_rate.RATE_CNT IS NOT NULL THEN b_catalog_currency_rate.RATE_CNT ELSE b_catalog_currency.AMOUNT_CNT END) r
 					FROM b_catalog_product INNER JOIN b_catalog_currency ON 1=1
-						LEFT JOIN b_catalog_currency_rate ON (b_catalog_currency.CURRENCY = b_catalog_currency_rate.CURRENCY AND b_catalog_currency_rate.DATE_RATE <= ' . $DB->datetimeToDateFunction('b_catalog_product.TIMESTAMP_X') . ')
+						LEFT JOIN b_catalog_currency_rate ON (b_catalog_currency.CURRENCY = b_catalog_currency_rate.CURRENCY AND b_catalog_currency_rate.DATE_RATE <= ' . $DB->datetimeToDateFunction(
+                            'b_catalog_product.TIMESTAMP_X'
+                        ) . ')
 					WHERE b_catalog_currency.CURRENCY = \'' . $DB->forSql($site_currency) . '\'
 					ORDER BY DATE_RATE DESC) WHERE i = %s AND ROWNUM = 1)'
-                        : '(' . $DB->topSql('SELECT (CASE WHEN b_catalog_currency_rate.RATE_CNT IS NOT NULL THEN b_catalog_currency_rate.RATE_CNT ELSE b_catalog_currency.AMOUNT_CNT END)
+                        : '(' . $DB->topSql(
+                            'SELECT (CASE WHEN b_catalog_currency_rate.RATE_CNT IS NOT NULL THEN b_catalog_currency_rate.RATE_CNT ELSE b_catalog_currency.AMOUNT_CNT END)
 					FROM b_catalog_product INNER JOIN b_catalog_currency ON 1=1
-						LEFT JOIN b_catalog_currency_rate ON (b_catalog_currency.CURRENCY = b_catalog_currency_rate.CURRENCY AND b_catalog_currency_rate.DATE_RATE <= ' . $DB->datetimeToDateFunction('b_catalog_product.TIMESTAMP_X') . ')
-					WHERE b_catalog_product.ID = %s AND b_catalog_currency.CURRENCY = \'' . $DB->forSql($site_currency) . '\'
-					ORDER BY DATE_RATE DESC', 1) . ')', 'ID'
+						LEFT JOIN b_catalog_currency_rate ON (b_catalog_currency.CURRENCY = b_catalog_currency_rate.CURRENCY AND b_catalog_currency_rate.DATE_RATE <= ' . $DB->datetimeToDateFunction(
+                                'b_catalog_product.TIMESTAMP_X'
+                            ) . ')
+					WHERE b_catalog_product.ID = %s AND b_catalog_currency.CURRENCY = \'' . $DB->forSql(
+                                $site_currency
+                            ) . '\'
+					ORDER BY DATE_RATE DESC',
+                            1
+                        ) . ')',
+                    'ID'
                 )
             ),
 
@@ -232,13 +282,22 @@ class ProductTable extends Main\Entity\DataManager
                     $DBType === 'oracle'
                         ? '(SELECT r FROM (SELECT b_catalog_currency.CURRENCY c, b_catalog_product.ID i, (CASE WHEN b_catalog_currency_rate.RATE IS NOT NULL THEN b_catalog_currency_rate.RATE ELSE b_catalog_currency.AMOUNT END) r
 					FROM b_catalog_product INNER JOIN b_catalog_currency ON 1=1
-						LEFT JOIN b_catalog_currency_rate ON (b_catalog_currency.CURRENCY = b_catalog_currency_rate.CURRENCY AND b_catalog_currency_rate.DATE_RATE <= ' . $DB->datetimeToDateFunction('b_catalog_product.TIMESTAMP_X') . ')
+						LEFT JOIN b_catalog_currency_rate ON (b_catalog_currency.CURRENCY = b_catalog_currency_rate.CURRENCY AND b_catalog_currency_rate.DATE_RATE <= ' . $DB->datetimeToDateFunction(
+                            'b_catalog_product.TIMESTAMP_X'
+                        ) . ')
 					ORDER BY DATE_RATE DESC) WHERE i = %s AND c = %s AND ROWNUM = 1)'
-                        : '(' . $DB->topSql('SELECT (CASE WHEN b_catalog_currency_rate.RATE IS NOT NULL THEN b_catalog_currency_rate.RATE ELSE b_catalog_currency.AMOUNT END)
+                        : '(' . $DB->topSql(
+                            'SELECT (CASE WHEN b_catalog_currency_rate.RATE IS NOT NULL THEN b_catalog_currency_rate.RATE ELSE b_catalog_currency.AMOUNT END)
 					FROM b_catalog_product INNER JOIN b_catalog_currency ON 1=1
-						LEFT JOIN b_catalog_currency_rate ON (b_catalog_currency.CURRENCY = b_catalog_currency_rate.CURRENCY AND b_catalog_currency_rate.DATE_RATE <= ' . $DB->datetimeToDateFunction('b_catalog_product.TIMESTAMP_X') . ')
+						LEFT JOIN b_catalog_currency_rate ON (b_catalog_currency.CURRENCY = b_catalog_currency_rate.CURRENCY AND b_catalog_currency_rate.DATE_RATE <= ' . $DB->datetimeToDateFunction(
+                                'b_catalog_product.TIMESTAMP_X'
+                            ) . ')
 					WHERE b_catalog_product.ID = %s AND b_catalog_currency.CURRENCY = %s
-					ORDER BY DATE_RATE DESC', 1) . ')', 'ID', 'PURCHASING_CURRENCY'
+					ORDER BY DATE_RATE DESC',
+                            1
+                        ) . ')',
+                    'ID',
+                    'PURCHASING_CURRENCY'
                 )
             ),
             'PURCHASING_CURRENCY_RATE_CNT' => array(
@@ -247,13 +306,22 @@ class ProductTable extends Main\Entity\DataManager
                     $DBType === 'oracle'
                         ? '(SELECT r FROM (SELECT b_catalog_currency.CURRENCY c, b_catalog_product.ID i, (CASE WHEN b_catalog_currency_rate.RATE_CNT IS NOT NULL THEN b_catalog_currency_rate.RATE_CNT ELSE b_catalog_currency.AMOUNT_CNT END) r
 					FROM b_catalog_product INNER JOIN b_catalog_currency ON 1=1
-						LEFT JOIN b_catalog_currency_rate ON (b_catalog_currency.CURRENCY = b_catalog_currency_rate.CURRENCY AND b_catalog_currency_rate.DATE_RATE <= ' . $DB->datetimeToDateFunction('b_catalog_product.TIMESTAMP_X') . ')
+						LEFT JOIN b_catalog_currency_rate ON (b_catalog_currency.CURRENCY = b_catalog_currency_rate.CURRENCY AND b_catalog_currency_rate.DATE_RATE <= ' . $DB->datetimeToDateFunction(
+                            'b_catalog_product.TIMESTAMP_X'
+                        ) . ')
 					ORDER BY DATE_RATE DESC) WHERE i = %s AND c = %s AND ROWNUM = 1)'
-                        : '(' . $DB->topSql('SELECT (CASE WHEN b_catalog_currency_rate.RATE_CNT IS NOT NULL THEN b_catalog_currency_rate.RATE_CNT ELSE b_catalog_currency.AMOUNT_CNT END)
+                        : '(' . $DB->topSql(
+                            'SELECT (CASE WHEN b_catalog_currency_rate.RATE_CNT IS NOT NULL THEN b_catalog_currency_rate.RATE_CNT ELSE b_catalog_currency.AMOUNT_CNT END)
 					FROM b_catalog_product INNER JOIN b_catalog_currency ON 1=1
-						LEFT JOIN b_catalog_currency_rate ON (b_catalog_currency.CURRENCY = b_catalog_currency_rate.CURRENCY AND b_catalog_currency_rate.DATE_RATE <= ' . $DB->datetimeToDateFunction('b_catalog_product.TIMESTAMP_X') . ')
+						LEFT JOIN b_catalog_currency_rate ON (b_catalog_currency.CURRENCY = b_catalog_currency_rate.CURRENCY AND b_catalog_currency_rate.DATE_RATE <= ' . $DB->datetimeToDateFunction(
+                                'b_catalog_product.TIMESTAMP_X'
+                            ) . ')
 					WHERE b_catalog_product.ID = %s AND b_catalog_currency.CURRENCY = %s
-					ORDER BY DATE_RATE DESC', 1) . ')', 'ID', 'PURCHASING_CURRENCY'
+					ORDER BY DATE_RATE DESC',
+                            1
+                        ) . ')',
+                    'ID',
+                    'PURCHASING_CURRENCY'
                 )
             ),
 
@@ -262,7 +330,11 @@ class ProductTable extends Main\Entity\DataManager
                 'data_type' => 'float',
                 'expression' => array(
                     '%s * (%s * %s / %s / %s)',
-                    'PRICE', 'CURRENT_CURRENCY_RATE', 'CURRENT_SITE_CURRENCY_RATE_CNT', 'CURRENT_SITE_CURRENCY_RATE', 'CURRENT_CURRENCY_RATE_CNT'
+                    'PRICE',
+                    'CURRENT_CURRENCY_RATE',
+                    'CURRENT_SITE_CURRENCY_RATE_CNT',
+                    'CURRENT_SITE_CURRENCY_RATE',
+                    'CURRENT_CURRENCY_RATE_CNT'
                 )
             ),
 
@@ -270,7 +342,11 @@ class ProductTable extends Main\Entity\DataManager
                 'data_type' => 'float',
                 'expression' => array(
                     '%s * (%s * %s / %s / %s)',
-                    'PURCHASING_PRICE', 'PURCHASING_CURRENCY_RATE', 'CURRENT_SITE_CURRENCY_RATE_CNT', 'CURRENT_SITE_CURRENCY_RATE', 'PURCHASING_CURRENCY_RATE_CNT'
+                    'PURCHASING_PRICE',
+                    'PURCHASING_CURRENCY_RATE',
+                    'CURRENT_SITE_CURRENCY_RATE_CNT',
+                    'CURRENT_SITE_CURRENCY_RATE',
+                    'PURCHASING_CURRENCY_RATE_CNT'
                 )
             ),
 
@@ -278,7 +354,11 @@ class ProductTable extends Main\Entity\DataManager
                 'data_type' => 'float',
                 'expression' => array(
                     '%s * (%s * %s / %s / %s)',
-                    'SUMMARY_PRICE', 'CURRENT_CURRENCY_RATE', 'CURRENT_SITE_CURRENCY_RATE_CNT', 'CURRENT_SITE_CURRENCY_RATE', 'CURRENT_CURRENCY_RATE_CNT'
+                    'SUMMARY_PRICE',
+                    'CURRENT_CURRENCY_RATE',
+                    'CURRENT_SITE_CURRENCY_RATE_CNT',
+                    'CURRENT_SITE_CURRENCY_RATE',
+                    'CURRENT_CURRENCY_RATE_CNT'
                 )
             )
         );

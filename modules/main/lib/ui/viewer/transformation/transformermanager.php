@@ -63,7 +63,9 @@ final class TransformerManager
                 }
 
                 if (!is_subclass_of($class, Transformation::class, true)) {
-                    throw new SystemException("Wrong event result. {$class} is not a subclass of " . Transformation::class);
+                    throw new SystemException(
+                        "Wrong event result. {$class} is not a subclass of " . Transformation::class
+                    );
                 }
 
                 $additionalList[] = $class;
@@ -140,9 +142,11 @@ final class TransformerManager
 
         if ($shouldSendPullTag) {
             $pullTag = $this->subscribeCurrentUserForTransformation($fileId);
-            $result->setData([
-                'pullTag' => $pullTag,
-            ]);
+            $result->setData(
+                [
+                    'pullTag' => $pullTag,
+                ]
+            );
         }
 
         return $result;

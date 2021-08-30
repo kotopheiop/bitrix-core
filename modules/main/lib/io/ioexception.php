@@ -37,7 +37,7 @@ class InvalidPathException extends IoException
 {
     public function __construct($path, \Exception $previous = null)
     {
-        $message = sprintf("Path '%s' is invalid.", $path);
+        $message = "Path is invalid.";
         parent::__construct($message, $path, $previous);
     }
 }
@@ -46,7 +46,7 @@ class FileNotFoundException extends IoException
 {
     public function __construct($path, \Exception $previous = null)
     {
-        $message = sprintf("Path '%s' is not found.", $path);
+        $message = "Path was not found.";
         parent::__construct($message, $path, $previous);
     }
 }
@@ -55,7 +55,7 @@ class FileDeleteException extends IoException
 {
     public function __construct($path, \Exception $previous = null)
     {
-        $message = sprintf("Error occurred during deleting file '%s'.", $path);
+        $message = "Error occurred during deleting the file.";
         parent::__construct($message, $path, $previous);
     }
 }
@@ -64,7 +64,7 @@ class FileOpenException extends IoException
 {
     public function __construct($path, \Exception $previous = null)
     {
-        $message = sprintf("Cannot open the file '%s'.", $path);
+        $message = "Cannot open the file.";
         parent::__construct($message, $path, $previous);
     }
 }
@@ -73,7 +73,7 @@ class FileNotOpenedException extends IoException
 {
     public function __construct($path, \Exception $previous = null)
     {
-        $message = sprintf("The file '%s' is not opened.", $path);
+        $message = "The file was not opened.";
         parent::__construct($message, $path, $previous);
     }
 }

@@ -19,9 +19,11 @@ final class Catalog extends Controller
         $view = $this->getViewManager()
             ->getView($this);
 
-        return ['CATALOG' => $view->prepareFieldInfos(
-            $view->getFields()
-        )];
+        return [
+            'CATALOG' => $view->prepareFieldInfos(
+                $view->getFields()
+            )
+        ];
     }
 
     public function isOffersAction($id)
@@ -49,16 +51,19 @@ final class Catalog extends Controller
             $result[] = $l;
         }
 
-        return new Page('CATALOGS', $result, function () use ($filter) {
+        return new Page(
+            'CATALOGS', $result, function () use ($filter) {
             $catalog = new \CCatalog();
 
             $list = [];
             $r = $catalog::GetList([], $filter);
-            while ($l = $r->fetch())
+            while ($l = $r->fetch()) {
                 $list[] = $l;
+            }
 
             return count($list);
-        });
+        }
+        );
     }
 
     public function getAction($id)
@@ -119,10 +124,11 @@ final class Catalog extends Controller
             $r = $this->deleteValidate($id);
             if ($r->isSuccess()) {
                 if (!\CCatalog::Delete($id)) {
-                    if ($ex = self::getApplication()->GetException())
+                    if ($ex = self::getApplication()->GetException()) {
                         $r->addError(new Error($ex->GetString(), $ex->GetId()));
-                    else
+                    } else {
                         $r->addError(new Error('delete catalog error'));
+                    }
                 }
             }
         }
@@ -151,8 +157,9 @@ final class Catalog extends Controller
     {
         $r = new Result();
 
-        if (isset($this->get($id)['ID']) == false)
+        if (isset($this->get($id)['ID']) == false) {
             $r->addError(new Error('Catalog is not exists'));
+        }
 
         return $r;
     }
@@ -167,10 +174,11 @@ final class Catalog extends Controller
         $r = new Result();
 
         if (!\CCatalog::CheckFields("ADD", $fields, $fields['ID'])) {
-            if ($ex = self::getApplication()->GetException())
+            if ($ex = self::getApplication()->GetException()) {
                 $r->addError(new Error($ex->GetString(), $ex->GetId()));
-            else
+            } else {
                 $r->addError(new Error('Validate catalog error'));
+            }
         }
 
         return $r;
@@ -181,10 +189,11 @@ final class Catalog extends Controller
         $r = new Result();
 
         if (!\CCatalog::CheckFields("UPDATE", $fields, $fields['ID'])) {
-            if ($ex = self::getApplication()->GetException())
+            if ($ex = self::getApplication()->GetException()) {
                 $r->addError(new Error($ex->GetString(), $ex->GetId()));
-            else
+            } else {
                 $r->addError(new Error('Validate catalog error'));
+            }
         }
 
         return $r;
@@ -194,15 +203,16 @@ final class Catalog extends Controller
     {
         $r = new Result();
 
-        if ($this->isOffers($id))
+        if ($this->isOffers($id)) {
             $r->addError(new Error('Catalog is offers'));
+        }
 
         return $r;
     }
 
     protected function checkPermissionEntity($name, $arguments = [])
     {
-        $name = strtolower($name); //for ajax mode
+        $name = mb_strtolower($name); //for ajax mode
 
         if ($name == 'isoffers') {
             $r = $this->checkReadPermissionEntity();
@@ -229,11 +239,15 @@ final class Catalog extends Controller
     {
         $r = new Result();
 
-        if (!static::getGlobalUser()->CanDoOperation('view_other_settings') && !static::getGlobalUser()->CanDoOperation('edit_other_settings')) {
+        if (!static::getGlobalUser()->CanDoOperation('view_other_settings') && !static::getGlobalUser()->CanDoOperation(
+                'edit_other_settings'
+            )) {
             $r->addError(new Error('Access Denied', 200040300010));
         }
 
-        if (!static::getGlobalUser()->CanDoOperation('catalog_read') && !static::getGlobalUser()->CanDoOperation('catalog_settings')) {
+        if (!static::getGlobalUser()->CanDoOperation('catalog_read') && !static::getGlobalUser()->CanDoOperation(
+                'catalog_settings'
+            )) {
             $r->addError(new Error('Access Denied', 200040300030));
         }
 

@@ -48,7 +48,9 @@ final class ImportOneCPackageSale extends ImportOneCPackage
 
                 if ($document instanceof OneC\ShipmentDocument) {
                     $shimpentFields = $document->getFieldValues();
-                    $shimpentFields['REK_VALUES']['DELIVERY_SYSTEM_ID_DEFAULT'] = $this->getDefaultDeliverySystem($documentOrder);
+                    $shimpentFields['REK_VALUES']['DELIVERY_SYSTEM_ID_DEFAULT'] = $this->getDefaultDeliverySystem(
+                        $documentOrder
+                    );
                     $document->setFields($shimpentFields);
                 }
             }

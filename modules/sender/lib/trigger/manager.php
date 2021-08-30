@@ -8,23 +8,22 @@
 
 namespace Bitrix\Sender\Trigger;
 
+use Bitrix\Main\Diag\Debug;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\EventResult;
 use Bitrix\Main\Type\DateTime;
-use Bitrix\Main\Diag\Debug;
-
 use Bitrix\Sender\ContactTable;
-use Bitrix\Sender\Recipient;
-use Bitrix\Sender\Subscription;
-use Bitrix\Sender\MailEventHandler;
-use Bitrix\Sender\MailingTable;
-use Bitrix\Sender\MailingChainTable;
-use Bitrix\Sender\MailingTriggerTable;
-use Bitrix\Sender\PostingTable;
-use Bitrix\Sender\PostingRecipientTable;
 use Bitrix\Sender\Integration;
 use Bitrix\Sender\Internals\Model;
+use Bitrix\Sender\MailEventHandler;
+use Bitrix\Sender\MailingChainTable;
+use Bitrix\Sender\MailingTable;
+use Bitrix\Sender\MailingTriggerTable;
+use Bitrix\Sender\PostingRecipientTable;
+use Bitrix\Sender\PostingTable;
+use Bitrix\Sender\Recipient;
+use Bitrix\Sender\Subscription;
 
 class Manager
 {
@@ -51,12 +50,14 @@ class Manager
             $eventData = $args;
         }
 
-        static::processEvent(array(
-            'MODULE_ID' => $moduleId,
-            'EVENT_TYPE' => $eventType,
-            'EVENT_DATA' => $eventData,
-            'FILTER' => array(),
-        ));
+        static::processEvent(
+            array(
+                'MODULE_ID' => $moduleId,
+                'EVENT_TYPE' => $eventType,
+                'EVENT_DATA' => $eventData,
+                'FILTER' => array(),
+            )
+        );
     }
 
     /**
@@ -79,36 +80,43 @@ class Manager
             $filter = $filter + $params['FILTER'];
         }
 
-        $chainDb = MailingTriggerTable::getList(array(
-            'select' => array(
-                'ENDPOINT',
-                'SITE_ID' => 'MAILING_CHAIN.MAILING.SITE_ID',
-                'ID' => 'MAILING_CHAIN.ID',
-                'MAILING_ID' => 'MAILING_CHAIN.MAILING_ID',
-                'PARENT_ID' => 'MAILING_CHAIN.PARENT_ID',
-                'POSTING_ID' => 'MAILING_CHAIN.POSTING_ID',
-                'TIME_SHIFT' => 'MAILING_CHAIN.TIME_SHIFT',
-                'STATUS' => 'MAILING_CHAIN.STATUS',
-                'AUTO_SEND_TIME' => 'MAILING_CHAIN.AUTO_SEND_TIME'
-            ),
-            'filter' => $filter,
-            'order' => array('MAILING_CHAIN_ID' => 'ASC', 'IS_TYPE_START' => 'ASC')
-        ));
+        $chainDb = MailingTriggerTable::getList(
+            array(
+                'select' => array(
+                    'ENDPOINT',
+                    'SITE_ID' => 'MAILING_CHAIN.MAILING.SITE_ID',
+                    'ID' => 'MAILING_CHAIN.ID',
+                    'MAILING_ID' => 'MAILING_CHAIN.MAILING_ID',
+                    'PARENT_ID' => 'MAILING_CHAIN.PARENT_ID',
+                    'POSTING_ID' => 'MAILING_CHAIN.POSTING_ID',
+                    'TIME_SHIFT' => 'MAILING_CHAIN.TIME_SHIFT',
+                    'STATUS' => 'MAILING_CHAIN.STATUS',
+                    'AUTO_SEND_TIME' => 'MAILING_CHAIN.AUTO_SEND_TIME'
+                ),
+                'filter' => $filter,
+                'order' => array('MAILING_CHAIN_ID' => 'ASC', 'IS_TYPE_START' => 'ASC')
+            )
+        );
         while ($chain = $chainDb->fetch()) {
             $settings = new Settings($chain['ENDPOINT']);
             $trigger = static::getOnce($settings->getEndpoint());
-            if (!$trigger) continue;
+            if (!$trigger) {
+                continue;
+            }
 
             $trigger->setSiteId($chain['SITE_ID']);
             $trigger->setFields($settings->getFields());
             $trigger->setParams(array('CHAIN' => $chain, 'EVENT' => $eventData));
 
             // mark trigger as first run for process old data
-            $runForOldData = ($trigger->canRunForOldData() && $settings->canRunForOldData() && !$settings->wasRunForOldData());
+            $runForOldData = ($trigger->canRunForOldData() && $settings->canRunForOldData(
+                ) && !$settings->wasRunForOldData());
             $trigger->setRunForOldData($runForOldData);
 
             // run trigger filter
-            if (!$trigger->filter()) continue;
+            if (!$trigger->filter()) {
+                continue;
+            }
 
             //add recipient to posting
             static::$postingId = null;
@@ -135,9 +143,7 @@ class Manager
                 //start sending of mailing chain
                 static::send($chain);
             }
-
         }
-
         //return $data;
     }
 
@@ -158,19 +164,21 @@ class Manager
         $code = Recipient\Normalizer::normalize($code, $typeId);
 
         // if mailing continue, then stop it
-        $recipientDb = PostingRecipientTable::getList(array(
-            'select' => array('ID', 'ROOT_ID', 'POSTING_ID', 'STATUS', 'POSTING_STATUS' => 'POSTING.STATUS'),
-            'filter' => array(
-                '=CONTACT.CODE' => $code,
-                '=CONTACT.TYPE_ID' => $typeId,
-                '=POSTING.MAILING_ID' => $chain['MAILING_ID'],
-                '=STATUS' => array(
-                    PostingRecipientTable::SEND_RESULT_NONE,
-                    PostingRecipientTable::SEND_RESULT_WAIT,
-                )
-            ),
-            'limit' => 1
-        ));
+        $recipientDb = PostingRecipientTable::getList(
+            array(
+                'select' => array('ID', 'ROOT_ID', 'POSTING_ID', 'STATUS', 'POSTING_STATUS' => 'POSTING.STATUS'),
+                'filter' => array(
+                    '=CONTACT.CODE' => $code,
+                    '=CONTACT.TYPE_ID' => $typeId,
+                    '=POSTING.MAILING_ID' => $chain['MAILING_ID'],
+                    '=STATUS' => array(
+                        PostingRecipientTable::SEND_RESULT_NONE,
+                        PostingRecipientTable::SEND_RESULT_WAIT,
+                    )
+                ),
+                'limit' => 1
+            )
+        );
         if ($recipient = $recipientDb->fetch()) {
             // if mailing continue, then stop it and the next was riched
             $updateFields = array('STATUS' => PostingRecipientTable::SEND_RESULT_DENY);
@@ -178,17 +186,19 @@ class Manager
 
             // change status of posting if all emails sent
             if (!in_array($recipient['POSTING_STATUS'], array(PostingTable::STATUS_NEW, PostingTable::STATUS_PART))) {
-                $recipientCountDb = PostingRecipientTable::getList(array(
-                    'select' => array('POSTING_ID'),
-                    'filter' => array(
-                        '=POSTING_ID' => $recipient['POSTING_ID'],
-                        '=STATUS' => array(
-                            PostingRecipientTable::SEND_RESULT_NONE,
-                            PostingRecipientTable::SEND_RESULT_WAIT,
-                        )
-                    ),
-                    'limit' => 1
-                ));
+                $recipientCountDb = PostingRecipientTable::getList(
+                    array(
+                        'select' => array('POSTING_ID'),
+                        'filter' => array(
+                            '=POSTING_ID' => $recipient['POSTING_ID'],
+                            '=STATUS' => array(
+                                PostingRecipientTable::SEND_RESULT_NONE,
+                                PostingRecipientTable::SEND_RESULT_WAIT,
+                            )
+                        ),
+                        'limit' => 1
+                    )
+                );
                 if (!$recipientCountDb->fetch()) {
                     Model\PostingTable::update($recipient['POSTING_ID'], ['STATUS' => PostingTable::STATUS_SENT]);
                 }
@@ -200,19 +210,21 @@ class Manager
         }
 
         // set flag of taking the goal to last success sending
-        $recipientDb = PostingRecipientTable::getList(array(
-            'select' => array('ID', 'DATE_DENY'),
-            'filter' => array(
-                '=CONTACT.CODE' => $code,
-                '=CONTACT.TYPE_ID' => $typeId,
-                '=POSTING.MAILING_ID' => $chain['MAILING_ID'],
-                '=STATUS' => array(
-                    PostingRecipientTable::SEND_RESULT_SUCCESS
-                )
-            ),
-            'order' => array('DATE_SENT' => 'DESC', 'ID' => 'DESC'),
-            'limit' => 1
-        ));
+        $recipientDb = PostingRecipientTable::getList(
+            array(
+                'select' => array('ID', 'DATE_DENY'),
+                'filter' => array(
+                    '=CONTACT.CODE' => $code,
+                    '=CONTACT.TYPE_ID' => $typeId,
+                    '=POSTING.MAILING_ID' => $chain['MAILING_ID'],
+                    '=STATUS' => array(
+                        PostingRecipientTable::SEND_RESULT_SUCCESS
+                    )
+                ),
+                'order' => array('DATE_SENT' => 'DESC', 'ID' => 'DESC'),
+                'limit' => 1
+            )
+        );
         if ($recipient = $recipientDb->fetch()) {
             if (empty($recipient['DATE_DENY'])) {
                 Model\Posting\RecipientTable::update($recipient['ID'], ['DATE_DENY' => new DateTime]);
@@ -227,8 +239,9 @@ class Manager
     protected static function send($chain)
     {
         // set send status
-        if (empty($chain['ID']))
+        if (empty($chain['ID'])) {
             return;
+        }
 
         if (empty($chain['POSTING_ID'])) {
             if (empty(static::$postingId)) {
@@ -260,7 +273,7 @@ class Manager
      */
     protected static function preventMailEvent(array $emailEvent)
     {
-        if (isset($emailEvent['EVENT_NAME']) && strlen($emailEvent['EVENT_NAME']) > 0) {
+        if (isset($emailEvent['EVENT_NAME']) && $emailEvent['EVENT_NAME'] <> '') {
             if (!empty($emailEvent['FILTER']) && is_array($emailEvent['FILTER'])) {
                 MailEventHandler::prevent($emailEvent['EVENT_NAME'], $emailEvent['FILTER']);
             }
@@ -290,22 +303,25 @@ class Manager
 
         // if this is event for child
         if (!empty($chain['PARENT_ID'])) {
-            $recipientDb = PostingRecipientTable::getList(array(
-                'select' => array('ID', 'STATUS'),
-                'filter' => array(
-                    '=CONTACT.CODE' => $code,
-                    '=CONTACT.TYPE_ID' => $typeId,
-                    '=POSTING.MAILING_CHAIN_ID' => $chain['ID'],
-                    '=POSTING.STATUS' => array(PostingTable::STATUS_NEW, PostingTable::STATUS_PART)
+            $recipientDb = PostingRecipientTable::getList(
+                array(
+                    'select' => array('ID', 'STATUS'),
+                    'filter' => array(
+                        '=CONTACT.CODE' => $code,
+                        '=CONTACT.TYPE_ID' => $typeId,
+                        '=POSTING.MAILING_CHAIN_ID' => $chain['ID'],
+                        '=POSTING.STATUS' => array(PostingTable::STATUS_NEW, PostingTable::STATUS_PART)
+                    )
                 )
-            ));
+            );
 
             while ($recipient = $recipientDb->fetch()) {
                 // check if event should came or didn't came
                 $statusNew = null;
                 if ($settings->isEventOccur() && $recipient['STATUS'] == PostingRecipientTable::SEND_RESULT_WAIT) {
                     $statusNew = PostingRecipientTable::SEND_RESULT_NONE;
-                } elseif (!$settings->isEventOccur() && $recipient['STATUS'] == PostingRecipientTable::SEND_RESULT_NONE) {
+                } elseif (!$settings->isEventOccur(
+                    ) && $recipient['STATUS'] == PostingRecipientTable::SEND_RESULT_NONE) {
                     $statusNew = PostingRecipientTable::SEND_RESULT_WAIT;
                 }
 
@@ -318,19 +334,21 @@ class Manager
             }
         } else {
             // check email to have not finished mailing
-            $recipientExistsDb = PostingRecipientTable::getList(array(
-                'select' => array('ID'),
-                'filter' => array(
-                    '=CONTACT.CODE' => $code,
-                    '=CONTACT.TYPE_ID' => $typeId,
-                    '=POSTING.MAILING_ID' => $chain['MAILING_ID'],
-                    '=STATUS' => array(
-                        PostingRecipientTable::SEND_RESULT_NONE,
-                        PostingRecipientTable::SEND_RESULT_WAIT,
-                    )
-                ),
-                'limit' => 1
-            ));
+            $recipientExistsDb = PostingRecipientTable::getList(
+                array(
+                    'select' => array('ID'),
+                    'filter' => array(
+                        '=CONTACT.CODE' => $code,
+                        '=CONTACT.TYPE_ID' => $typeId,
+                        '=POSTING.MAILING_ID' => $chain['MAILING_ID'],
+                        '=STATUS' => array(
+                            PostingRecipientTable::SEND_RESULT_NONE,
+                            PostingRecipientTable::SEND_RESULT_WAIT,
+                        )
+                    ),
+                    'limit' => 1
+                )
+            );
             if ($recipientExistsDb->fetch()) {
                 return;
             }
@@ -338,20 +356,28 @@ class Manager
             if (static::$postingId) {
                 $postingId = static::$postingId;
             } else {
-                $postingAddDb = PostingTable::add(array(
-                    'MAILING_ID' => $chain['MAILING_ID'],
-                    'MAILING_CHAIN_ID' => $chain['ID'],
-                ));
-                if (!$postingAddDb->isSuccess()) return;
+                $postingAddDb = PostingTable::add(
+                    array(
+                        'MAILING_ID' => $chain['MAILING_ID'],
+                        'MAILING_CHAIN_ID' => $chain['ID'],
+                    )
+                );
+                if (!$postingAddDb->isSuccess()) {
+                    return;
+                }
 
                 $postingId = $postingAddDb->getId();
                 static::$postingId = $postingId;
             }
 
-            $contact = ContactTable::getRow(['filter' => [
-                '=CODE' => $code,
-                '=TYPE_ID' => $typeId,
-            ]]);
+            $contact = ContactTable::getRow(
+                [
+                    'filter' => [
+                        '=CODE' => $code,
+                        '=TYPE_ID' => $typeId,
+                    ]
+                ]
+            );
             if (!$contact) {
                 $contact = [
                     'CODE' => $code,
@@ -362,12 +388,14 @@ class Manager
                 $contact['ID'] = ContactTable::add($contact)->getId();
             }
 
-            PostingRecipientTable::add([
-                'POSTING_ID' => $postingId,
-                'CONTACT_ID' => $contact['ID'],
-                'FIELDS' => !empty($data['FIELDS']) ? $data['FIELDS'] : null,
-                'USER_ID' => !empty($data['USER_ID']) ? $data['USER_ID'] : null,
-            ])->isSuccess();
+            PostingRecipientTable::add(
+                [
+                    'POSTING_ID' => $postingId,
+                    'CONTACT_ID' => $contact['ID'],
+                    'FIELDS' => !empty($data['FIELDS']) ? $data['FIELDS'] : null,
+                    'USER_ID' => !empty($data['USER_ID']) ? $data['USER_ID'] : null,
+                ]
+            )->isSuccess();
         }
     }
 
@@ -379,13 +407,15 @@ class Manager
     {
         static::actualizeHandlerForChild($activate);
 
-        $itemDb = MailingTriggerTable::getList(array(
-            'select' => array('ENDPOINT', 'MAILING_CHAIN_ID'),
-            'filter' => array(
-                '=MAILING_CHAIN.IS_TRIGGER' => 'Y',
-                '=MAILING_CHAIN.MAILING.ACTIVE' => 'Y',
+        $itemDb = MailingTriggerTable::getList(
+            array(
+                'select' => array('ENDPOINT', 'MAILING_CHAIN_ID'),
+                'filter' => array(
+                    '=MAILING_CHAIN.IS_TRIGGER' => 'Y',
+                    '=MAILING_CHAIN.MAILING.ACTIVE' => 'Y',
+                )
             )
-        ));
+        );
         while ($item = $itemDb->fetch()) {
             if (!is_array($item['ENDPOINT'])) {
                 continue;
@@ -419,7 +449,6 @@ class Manager
         $calledBeforeChange = $params['CALLED_BEFORE_CHANGE'];
 
         if ($params['IS_CLOSED_TRIGGER']) {
-
             return;
         }
 
@@ -427,24 +456,29 @@ class Manager
             // if actualizing will be called before deleting record (or updating record with clearing field),
             // query will select this record.
             // In this reason, it should be considered - check if more 1 or 0 selected rows.
-            if ($calledBeforeChange)
+            if ($calledBeforeChange) {
                 $minRowsCount = 1;
-            else
+            } else {
                 $minRowsCount = 0;
+            }
 
-            $existsDb = MailingTriggerTable::getList(array(
-                'select' => array('MAILING_CHAIN_ID'),
-                'filter' => array(
-                    '=EVENT' => $moduleId . '/' . $eventType,
-                    '=MAILING_CHAIN.IS_TRIGGER' => 'Y',
-                    '=MAILING_CHAIN.MAILING.ACTIVE' => 'Y',
-                    //'=STATUS' => array(MailingChainTable::STATUS_WAIT, MailingChainTable::STATUS_SEND)
-                ),
-                'group' => array('MAILING_CHAIN_ID'),
-                'limit' => 2
-            ));
+            $existsDb = MailingTriggerTable::getList(
+                array(
+                    'select' => array('MAILING_CHAIN_ID'),
+                    'filter' => array(
+                        '=EVENT' => $moduleId . '/' . $eventType,
+                        '=MAILING_CHAIN.IS_TRIGGER' => 'Y',
+                        '=MAILING_CHAIN.MAILING.ACTIVE' => 'Y',
+                        //'=STATUS' => array(MailingChainTable::STATUS_WAIT, MailingChainTable::STATUS_SEND)
+                    ),
+                    'group' => array('MAILING_CHAIN_ID'),
+                    'limit' => 2
+                )
+            );
             $rowsCount = 0;
-            while ($existsDb->fetch()) $rowsCount++;
+            while ($existsDb->fetch()) {
+                $rowsCount++;
+            }
 
             if ($rowsCount > $minRowsCount) {
                 $activate = true;
@@ -455,11 +489,19 @@ class Manager
 
         if ($activate) {
             EventManager::getInstance()->registerEventHandler(
-                $moduleId, $eventType, 'sender', __CLASS__, 'handleEvent'
+                $moduleId,
+                $eventType,
+                'sender',
+                __CLASS__,
+                'handleEvent'
             );
         } else {
             EventManager::getInstance()->unRegisterEventHandler(
-                $moduleId, $eventType, 'sender', __CLASS__, 'handleEvent'
+                $moduleId,
+                $eventType,
+                'sender',
+                __CLASS__,
+                'handleEvent'
             );
         }
     }
@@ -494,16 +536,22 @@ class Manager
 
             foreach ($connectorSettings as $connectorCode => $connectorFields) {
                 foreach ($connectorFields as $k => $fields) {
-                    if (isset($fieldsTmp[$moduleId][$connectorCode][$k]) && is_array($fields))
-                        $fieldsTmp[$moduleId][$connectorCode][$k] = array_merge($fieldsTmp[$moduleId][$connectorCode][$k], $fields);
-                    else
+                    if (isset($fieldsTmp[$moduleId][$connectorCode][$k]) && is_array($fields)) {
+                        $fieldsTmp[$moduleId][$connectorCode][$k] = array_merge(
+                            $fieldsTmp[$moduleId][$connectorCode][$k],
+                            $fields
+                        );
+                    } else {
                         $fieldsTmp[$moduleId][$connectorCode][$k] = $fields;
+                    }
                 }
             }
         }
 
         foreach ($fieldsTmp as $moduleId => $connectorSettings) {
-            if (is_numeric($moduleId)) $moduleId = '';
+            if (is_numeric($moduleId)) {
+                $moduleId = '';
+            }
             foreach ($connectorSettings as $connectorCode => $connectorFields) {
                 foreach ($connectorFields as $fields) {
                     $endpoint = array();
@@ -590,25 +638,30 @@ class Manager
 
             if ($eventResultParameters && array_key_exists('TRIGGER', $eventResultParameters)) {
                 $connectorClassNameList = $eventResultParameters['TRIGGER'];
-                if (!is_array($connectorClassNameList))
+                if (!is_array($connectorClassNameList)) {
                     $connectorClassNameList = array($connectorClassNameList);
+                }
 
                 foreach ($connectorClassNameList as $connectorClassName) {
                     if (!is_subclass_of($connectorClassName, '\Bitrix\Sender\Trigger')) {
                         continue;
                     }
 
-                    $connectorCode = call_user_func(array($connectorClassName, 'getCode'));
-                    if ($moduleConnectorFilter && !in_array($connectorCode, $moduleConnectorFilter[$eventResult->getModuleId()])) {
+                    $connectorCode = (new $connectorClassName)->getCode();
+                    if ($moduleConnectorFilter && !in_array(
+                            $connectorCode,
+                            $moduleConnectorFilter[$eventResult->getModuleId()]
+                        )) {
                         continue;
                     }
 
                     $isClosedTrigger = false;
-                    if (is_subclass_of($connectorClassName, '\Bitrix\Sender\TriggerConnectorClosed'))
+                    if (is_subclass_of($connectorClassName, '\Bitrix\Sender\TriggerConnectorClosed')) {
                         $isClosedTrigger = true;
+                    }
 
-                    $connectorName = call_user_func(array($connectorClassName, 'getName'));
-                    $connectorRequireConfigure = call_user_func(array($connectorClassName, 'requireConfigure'));
+                    $connectorName = (new $connectorClassName)->getName();
+                    $connectorRequireConfigure = (new $connectorClassName)->requireConfigure();
                     $resultList[] = array(
                         'MODULE_ID' => $eventResult->getModuleId(),
                         'CLASS_NAME' => $connectorClassName,
@@ -621,8 +674,9 @@ class Manager
             }
         }
 
-        if (!empty($resultList))
+        if (!empty($resultList)) {
             usort($resultList, array(__CLASS__, 'sort'));
+        }
 
         return $resultList;
     }
@@ -634,8 +688,9 @@ class Manager
      */
     public static function sort($a, $b)
     {
-        if ($a['NAME'] == $b['NAME'])
+        if ($a['NAME'] == $b['NAME']) {
             return 0;
+        }
 
         return ($a['NAME'] < $b['NAME']) ? -1 : 1;
     }
@@ -671,14 +726,16 @@ class Manager
     public static function fireClosedEventAgent($moduleId, $eventType, $chainId)
     {
         if (!empty($moduleId) && !empty($eventType) && !empty($chainId)) {
-            static::processEvent(array(
-                'MODULE_ID' => $moduleId,
-                'EVENT_TYPE' => $eventType,
-                'EVENT_DATA' => array(),
-                'FILTER' => array(
-                    '=MAILING_CHAIN.ID' => $chainId
-                ),
-            ));
+            static::processEvent(
+                array(
+                    'MODULE_ID' => $moduleId,
+                    'EVENT_TYPE' => $eventType,
+                    'EVENT_DATA' => array(),
+                    'FILTER' => array(
+                        '=MAILING_CHAIN.ID' => $chainId
+                    ),
+                )
+            );
 
             return static::getClosedEventAgentName($moduleId, $eventType, $chainId);
         } else {
@@ -711,16 +768,18 @@ class Manager
         );
 
         if ($activate === null) {
-            $existsDb = MailingChainTable::getList(array(
-                'select' => array('ID'),
-                'filter' => array(
-                    '!PARENT_ID' => null,
-                    '=IS_TRIGGER' => 'Y',
-                    '=MAILING.ACTIVE' => 'Y',
-                    //'=STATUS' => array(MailingChainTable::STATUS_WAIT, MailingChainTable::STATUS_SEND)
-                ),
-                'limit' => 1
-            ));
+            $existsDb = MailingChainTable::getList(
+                array(
+                    'select' => array('ID'),
+                    'filter' => array(
+                        '!PARENT_ID' => null,
+                        '=IS_TRIGGER' => 'Y',
+                        '=MAILING.ACTIVE' => 'Y',
+                        //'=STATUS' => array(MailingChainTable::STATUS_WAIT, MailingChainTable::STATUS_SEND)
+                    ),
+                    'limit' => 1
+                )
+            );
             if ($existsDb->fetch()) {
                 $activate = true;
             } else {
@@ -730,12 +789,14 @@ class Manager
 
         if ($activate === true) {
             $eventManager = EventManager::getInstance();
-            foreach ($eventHandlerList as $h)
+            foreach ($eventHandlerList as $h) {
                 $eventManager->registerEventHandler($h[0], $h[1], $h[2], $h[3], $h[4]);
+            }
         } elseif ($activate === false) {
             $eventManager = EventManager::getInstance();
-            foreach ($eventHandlerList as $h)
+            foreach ($eventHandlerList as $h) {
                 $eventManager->unRegisterEventHandler($h[0], $h[1], $h[2], $h[3], $h[4]);
+            }
         }
     }
 
@@ -747,30 +808,33 @@ class Manager
     {
         $data = $event->getParameter(0);
 
-        if (!$data || empty($data['MAILING_CHAIN']['ID']))
+        if (!$data || empty($data['MAILING_CHAIN']['ID'])) {
             return;
+        }
 
-        $childChainDb = MailingChainTable::getList(array(
-            'select' => array(
-                'ID',
-                'MAILING_ID',
-                'PARENT_ID',
-                'POSTING_ID',
-                'STATUS',
-                'TIME_SHIFT'
-            ),
-            'filter' => array(
-                '=MAILING.ACTIVE' => 'Y',
-                '=IS_TRIGGER' => 'Y',
-                '=STATUS' => MailingChainTable::STATUS_WAIT,
-                '=PARENT_ID' => $data['MAILING_CHAIN']['ID']
+        $childChainDb = MailingChainTable::getList(
+            array(
+                'select' => array(
+                    'ID',
+                    'MAILING_ID',
+                    'PARENT_ID',
+                    'POSTING_ID',
+                    'STATUS',
+                    'TIME_SHIFT'
+                ),
+                'filter' => array(
+                    '=MAILING.ACTIVE' => 'Y',
+                    '=IS_TRIGGER' => 'Y',
+                    '=STATUS' => MailingChainTable::STATUS_WAIT,
+                    '=PARENT_ID' => $data['MAILING_CHAIN']['ID']
+                )
             )
-        ));
+        );
         while ($childChain = $childChainDb->fetch()) {
             $isSend = false;
 
             $settings = new Settings();
-            if (strlen($settings->getEndpoint('CODE')) <= 0) {
+            if ($settings->getEndpoint('CODE') == '') {
                 // send certainly
                 $isSend = true;
             } elseif ($settings->isEventOccur()) {
@@ -787,7 +851,6 @@ class Manager
             if ($isSend) {
                 static::send($childChain);
             }
-
         }
     }
 
@@ -800,8 +863,9 @@ class Manager
     {
         $data = $event->getParameter(0);
 
-        if (!$data || !$data['SEND_RESULT'] || empty($data['POSTING']['MAILING_CHAIN_ID']))
+        if (!$data || !$data['SEND_RESULT'] || empty($data['POSTING']['MAILING_CHAIN_ID'])) {
             return;
+        }
 
         $chainId = $data['POSTING']['MAILING_CHAIN_ID'];
         $dataRecipient = $data['RECIPIENT'];
@@ -810,23 +874,30 @@ class Manager
         if (!isset($mailingParams[$chainId])) {
             $mailingParams[$chainId] = array();
 
-            $childChainDb = MailingChainTable::getList(array(
-                'select' => array(
-                    'ID', 'MAILING_ID', 'PARENT_ID', 'POSTING_ID'
-                ),
-                'filter' => array(
-                    '=MAILING.ACTIVE' => 'Y',
-                    '=IS_TRIGGER' => 'Y',
-                    '=STATUS' => array(MailingChainTable::STATUS_WAIT, MailingChainTable::STATUS_SEND),
-                    '=PARENT_ID' => $chainId
+            $childChainDb = MailingChainTable::getList(
+                array(
+                    'select' => array(
+                        'ID',
+                        'MAILING_ID',
+                        'PARENT_ID',
+                        'POSTING_ID'
+                    ),
+                    'filter' => array(
+                        '=MAILING.ACTIVE' => 'Y',
+                        '=IS_TRIGGER' => 'Y',
+                        '=STATUS' => array(MailingChainTable::STATUS_WAIT, MailingChainTable::STATUS_SEND),
+                        '=PARENT_ID' => $chainId
+                    )
                 )
-            ));
+            );
             while ($childChain = $childChainDb->fetch()) {
                 // add posting
-                $postingAddDb = PostingTable::add(array(
-                    'MAILING_ID' => $childChain['MAILING_ID'],
-                    'MAILING_CHAIN_ID' => $childChain['ID'],
-                ));
+                $postingAddDb = PostingTable::add(
+                    array(
+                        'MAILING_ID' => $childChain['MAILING_ID'],
+                        'MAILING_CHAIN_ID' => $childChain['ID'],
+                    )
+                );
                 if (!$postingAddDb->isSuccess()) {
                     continue;
                 }
@@ -842,14 +913,15 @@ class Manager
             return;
         }
 
-        foreach ($mailingParams[$chainId] as $mailingParamsItem) {
+        foreach ($mailingParams[$chainId] as $chainKey => $mailingParamsItem) {
             $postingId = $mailingParamsItem['POSTING_ID'];
             $childChain = $mailingParamsItem['CHAIN'];
 
             // check email as unsubscribed
             // TODO: modify to accept RID
-            if (Subscription::isUnsubscibed($childChain['MAILING_ID'], $data['RECIPIENT']['EMAIL']))
+            if (Subscription::isUnsubscibed($childChain['MAILING_ID'], $data['RECIPIENT']['EMAIL'])) {
                 continue;
+            }
 
             $recipient = array('POSTING_ID' => $postingId);
             $recipient['STATUS'] = PostingRecipientTable::SEND_RESULT_NONE;
@@ -871,14 +943,13 @@ class Manager
 
             // add recipient
             PostingTable::addRecipient($recipient, true);
-            if (empty($mailingParams[$chainId]['CHAIN']['POSTING_ID'])) {
+            if (empty($childChain['POSTING_ID'])) {
                 $chainUpdateDb = Model\LetterTable::update($childChain['ID'], array('POSTING_ID' => $postingId));
                 if ($chainUpdateDb->isSuccess()) {
-                    $mailingParams[$chainId]['CHAIN']['POSTING_ID'] = $postingId;
+                    $mailingParams[$chainId][$chainKey]['CHAIN']['POSTING_ID'] = $postingId;
                 }
             }
         }
-
     }
 
     /**

@@ -62,8 +62,12 @@ interface ILearnLesson
      * Also can throws other exceptions or exceptions' codes.
      *
      */
-    public static function Add($arFields, $isCourse = false,
-                               $parentLessonId = true, $arProperties = array('SORT' => 500));
+    public static function Add(
+        $arFields,
+        $isCourse = false,
+        $parentLessonId = true,
+        $arProperties = array('SORT' => 500)
+    );
 
 
     /**
@@ -197,7 +201,12 @@ interface ILearnLesson
      * @return CDBResult
      * @throws LearnException with error bit set EXC_ERR_ALL_PARAMS
      */
-    public static function GetListOfImmediateParents($lessonId, $arOrder = array(), $arFilter = array(), $arSelectFields = array());
+    public static function GetListOfImmediateParents(
+        $lessonId,
+        $arOrder = array(),
+        $arFilter = array(),
+        $arSelectFields = array()
+    );
 
 
     /**
@@ -211,7 +220,12 @@ interface ILearnLesson
      * to this method.
      * @throws LearnException with error bit set EXC_ERR_ALL_PARAMS
      */
-    public static function GetListOfImmediateChilds($lessonId, $arOrder = array(), $arFilter = array(), $arSelectFields = array());
+    public static function GetListOfImmediateChilds(
+        $lessonId,
+        $arOrder = array(),
+        $arFilter = array(),
+        $arSelectFields = array()
+    );
 
 
     /**
@@ -390,8 +404,12 @@ interface ILearnLesson
      *
      * @return array of objects CLearnPath
      */
-    public static function GetListOfParentPathes($lessonId, $breakOnLessonId = false,
-                                                 $breakBeforeLessonId = false, $arIgnoreEdges = array());
+    public static function GetListOfParentPathes(
+        $lessonId,
+        $breakOnLessonId = false,
+        $breakBeforeLessonId = false,
+        $arIgnoreEdges = array()
+    );
 
 
     /**
@@ -437,12 +455,13 @@ class CLearnLesson implements ILearnLesson
     const PUBLISH_PROHIBITION_PURGE_BOTH = 0x3;
 
 
-    final public static function Add($arFields,
-                                     $isCourse = false,
-                                     $parentLessonId = true,
-                                     $arProperties = array('SORT' => 500),
-                                     $isCheckPermissions = true,
-                                     $checkPermissionsForUserId = -1        // -1 means - for current logged user
+    final public static function Add(
+        $arFields,
+        $isCourse = false,
+        $parentLessonId = true,
+        $arProperties = array('SORT' => 500),
+        $isCheckPermissions = true,
+        $checkPermissionsForUserId = -1        // -1 means - for current logged user
     )
     {
         global $USER_FIELD_MANAGER;
@@ -471,13 +490,15 @@ class CLearnLesson implements ILearnLesson
                     }
                 }
             }
-        } else
-            $isAccessGranted = true;    // don't check permissions
+        } else {
+            $isAccessGranted = true;
+        }    // don't check permissions
 
         if (!$isAccessGranted) {
             throw new LearnException(
                 'EA_ACCESS_DENIED',
-                LearnException::EXC_ERR_ALL_ACCESS_DENIED);
+                LearnException::EXC_ERR_ALL_ACCESS_DENIED
+            );
         }
 
 
@@ -487,11 +508,13 @@ class CLearnLesson implements ILearnLesson
             $arCourseFields = self::_ExtractAdditionalCourseFields($arFields);
         }
 
-        if (!$USER_FIELD_MANAGER->CheckFields('LEARNING_LESSONS', 0, $arFields))
+        if (!$USER_FIELD_MANAGER->CheckFields('LEARNING_LESSONS', 0, $arFields)) {
             return (false);
+        }
 
-        foreach (GetModuleEvents('learning', 'OnBeforeLessonAdd', true) as $arEvent)
+        foreach (GetModuleEvents('learning', 'OnBeforeLessonAdd', true) as $arEvent) {
             ExecuteModuleEventEx($arEvent, array(&$arFields));
+        }
 
         if (
             (!isset($arFields['NAME']))
@@ -503,8 +526,9 @@ class CLearnLesson implements ILearnLesson
 
             $e = new CAdminException($arMsg);
             $GLOBALS["APPLICATION"]->ThrowException($e);
-        } else
+        } else {
             $lessonId = CLearnGraphNode::Create($arFields);
+        }
 
         if ($lessonId) {
             $USER_FIELD_MANAGER->Update('LEARNING_LESSONS', $lessonId, $arFields);
@@ -514,16 +538,18 @@ class CLearnLesson implements ILearnLesson
                 self::BecomeCourse($lessonId, $arCourseFields);
             } else {
                 // Link to parent lesson, if need
-                if ($parentLessonId !== true)
+                if ($parentLessonId !== true) {
                     self::RelationAdd($parentLessonId, $lessonId, $arProperties);
+                }
             }
 
             CLearnCacheOfLessonTreeComponent::MarkAsDirty();
         }
 
         $arFields['LESSON_ID'] = $lessonId;
-        foreach (GetModuleEvents('learning', 'OnAfterLessonAdd', true) as $arEvent)
+        foreach (GetModuleEvents('learning', 'OnAfterLessonAdd', true) as $arEvent) {
             ExecuteModuleEventEx($arEvent, array(&$arFields));
+        }
 
         if (!$isCourse) {
             \Bitrix\Learning\Integration\Search::indexLesson($lessonId);
@@ -542,16 +568,22 @@ class CLearnLesson implements ILearnLesson
         ) {
             // If SORT given, but COURSE_SORT not given => COURSE_SORT = SORT
             $arFields['COURSE_SORT'] = $arFields['SORT'];
-
             // So, if both SORT and COURSE_SORT are exists => SORT ignored.
         }
 
         // We must unset course-related fields
-        if (array_key_exists('SORT', $arFields))
+        if (array_key_exists('SORT', $arFields)) {
             unset ($arFields['SORT']);
+        }
 
-        $additionalParams = array('COURSE_SORT', 'ACTIVE_FROM',
-            'ACTIVE_TO', 'RATING', 'RATING_TYPE', 'SCORM');
+        $additionalParams = array(
+            'COURSE_SORT',
+            'ACTIVE_FROM',
+            'ACTIVE_TO',
+            'RATING',
+            'RATING_TYPE',
+            'SCORM'
+        );
 
         foreach ($additionalParams as $paramName) {
             if (array_key_exists($paramName, $arFields)) {
@@ -571,37 +603,40 @@ class CLearnLesson implements ILearnLesson
      */
     protected static function _CanonizeAndCheckAdditionalParamsForAddCourse($arFields, $forUpdate = false)
     {
-        if (!is_array($arFields))
+        if (!is_array($arFields)) {
             throw new LearnException ('EA_PARAMS', LearnException::EXC_ERR_ALL_PARAMS);
+        }
 
         $arAllowedFields = array('COURSE_SORT', 'ACTIVE_FROM', 'ACTIVE_TO', 'RATING', 'RATING_TYPE', 'SCORM');
 
         if (!$forUpdate) {
             $defaultsValues = array(
                 'COURSE_SORT' => 500,
-                'ACTIVE_FROM' => NULL,
-                'ACTIVE_TO' => NULL,
+                'ACTIVE_FROM' => null,
+                'ACTIVE_TO' => null,
                 'RATING' => 'N',
-                'RATING_TYPE' => NULL,
+                'RATING_TYPE' => null,
                 'SCORM' => 'N'
             );
 
             // set defaults values, if need
             foreach ($defaultsValues as $fieldName => $defaultValue) {
-                if (!array_key_exists($fieldName, $arFields))
+                if (!array_key_exists($fieldName, $arFields)) {
                     $arFields[$fieldName] = $defaultValue;
+                }
             }
         }
 
         // check for admitted regions (do all checks only if not forUpdate mode OR in forUpdate mode and field given):
 
         // COURSE_SORT
-        if ((!$forUpdate) || array_key_exists('COURSE_SORT', $arFields))
+        if ((!$forUpdate) || array_key_exists('COURSE_SORT', $arFields)) {
             self::_EnsureArgsStrictlyCastableToIntegers($arFields['COURSE_SORT']);
+        }
 
         // ACTIVE_FROM
         if ((!$forUpdate) || isset($arFields['ACTIVE_FROM'])) {
-            if (($arFields['ACTIVE_FROM'] !== NULL)
+            if (($arFields['ACTIVE_FROM'] !== null)
                 && (!is_string($arFields['ACTIVE_FROM']))
             ) {
                 throw new LearnException ('EA_PARAMS', LearnException::EXC_ERR_ALL_PARAMS);
@@ -610,7 +645,7 @@ class CLearnLesson implements ILearnLesson
 
         // ACTIVE_TO
         if ((!$forUpdate) || isset($arFields['ACTIVE_TO'])) {
-            if (($arFields['ACTIVE_TO'] !== NULL)
+            if (($arFields['ACTIVE_TO'] !== null)
                 && (!is_string($arFields['ACTIVE_TO']))
             ) {
                 throw new LearnException ('EA_PARAMS', LearnException::EXC_ERR_ALL_PARAMS);
@@ -619,21 +654,27 @@ class CLearnLesson implements ILearnLesson
 
         // RATING
         if ((!$forUpdate) || array_key_exists('RATING', $arFields)) {
-            if ($arFields['RATING'] === '')
-                $arFields['RATING'] = NULL;
+            if ($arFields['RATING'] === '') {
+                $arFields['RATING'] = null;
+            }
 
-            if (!in_array($arFields['RATING'], array('Y', 'N', NULL), true))
-                throw new LearnException ('EA_PARAMS: RATING is ' . $arFields['RATING'], LearnException::EXC_ERR_ALL_PARAMS);
+            if (!in_array($arFields['RATING'], array('Y', 'N', null), true)) {
+                throw new LearnException (
+                    'EA_PARAMS: RATING is ' . $arFields['RATING'],
+                    LearnException::EXC_ERR_ALL_PARAMS
+                );
+            }
         }
 
         // RATING_TYPE
         if ((!$forUpdate) || array_key_exists('RATING_TYPE', $arFields)) {
-            if (($arFields['RATING_TYPE'] !== NULL)
+            if (($arFields['RATING_TYPE'] !== null)
                 &&
                 (!in_array(
                     $arFields['RATING_TYPE'],
                     array('like', 'standart_text', 'like_graphic', 'standart'),
-                    true)
+                    true
+                )
                 )
             ) {
                 throw new LearnException ('EA_PARAMS', LearnException::EXC_ERR_ALL_PARAMS);
@@ -642,16 +683,18 @@ class CLearnLesson implements ILearnLesson
 
         // SCORM
         if ((!$forUpdate) || array_key_exists('SCORM', $arFields)) {
-            if (!in_array($arFields['SCORM'], array('Y', 'N'), true))
+            if (!in_array($arFields['SCORM'], array('Y', 'N'), true)) {
                 throw new LearnException ('EA_PARAMS', LearnException::EXC_ERR_ALL_PARAMS);
+            }
         }
 
 
         // Return only exists fields (some fields may be omitted in case $forUpdate = true)
         $rc = array();
         foreach ($arAllowedFields as $fieldName) {
-            if (array_key_exists($fieldName, $arFields))
+            if (array_key_exists($fieldName, $arFields)) {
                 $rc[$fieldName] = $arFields[$fieldName];
+            }
         }
 
         return ($rc);
@@ -665,14 +708,16 @@ class CLearnLesson implements ILearnLesson
         if (isset($arFields['ACTIVE'])
             && (!is_bool($arFields['ACTIVE']))
         ) {
-            if ($arFields['ACTIVE'] === 'Y')
+            if ($arFields['ACTIVE'] === 'Y') {
                 $arFields['ACTIVE'] = true;
-            else
+            } else {
                 $arFields['ACTIVE'] = false;
+            }
         }
 
-        if (!$USER_FIELD_MANAGER->CheckFields('LEARNING_LESSONS', $id, $arFields))
+        if (!$USER_FIELD_MANAGER->CheckFields('LEARNING_LESSONS', $id, $arFields)) {
             return (false);
+        }
 
         $courseId = self::GetLinkedCourse($id);
 
@@ -682,8 +727,9 @@ class CLearnLesson implements ILearnLesson
             $arCourseFields = self::_ExtractAdditionalCourseFields($arFields);
         }
 
-        foreach (GetModuleEvents('learning', 'OnBeforeLessonUpdate', true) as $arEvent)
+        foreach (GetModuleEvents('learning', 'OnBeforeLessonUpdate', true) as $arEvent) {
             ExecuteModuleEventEx($arEvent, array(&$arFields));
+        }
 
         if (
             array_key_exists('NAME', $arFields)
@@ -707,45 +753,59 @@ class CLearnLesson implements ILearnLesson
         // If lesson is course, update course-specific data
         if ($courseId !== false) {
             // LearnException will be throwed on invalid params
-            $arCourseFields = self::_CanonizeAndCheckAdditionalParamsForAddCourse($arCourseFields, true);    // forUpdate = true
+            $arCourseFields = self::_CanonizeAndCheckAdditionalParamsForAddCourse(
+                $arCourseFields,
+                true
+            );    // forUpdate = true
 
             $arFieldsToDb = array();
 
-            if (array_key_exists('COURSE_SORT', $arCourseFields))
+            if (array_key_exists('COURSE_SORT', $arCourseFields)) {
                 $arFieldsToDb['SORT'] = "'" . (int)($arCourseFields['COURSE_SORT'] + 0) . "'";
+            }
 
             if (array_key_exists('ACTIVE_FROM', $arCourseFields)) {
-                if (($arCourseFields['ACTIVE_FROM'] === NULL) || ($arCourseFields['ACTIVE_FROM'] === ''))
+                if (($arCourseFields['ACTIVE_FROM'] === null) || ($arCourseFields['ACTIVE_FROM'] === '')) {
                     $arFieldsToDb['ACTIVE_FROM'] = 'NULL';
-                else
+                } else {
                     $arFieldsToDb['ACTIVE_FROM'] = $DB->CharToDateFunction($arCourseFields['ACTIVE_FROM']);
+                }
             }
 
             if (array_key_exists('ACTIVE_TO', $arCourseFields)) {
-                if (($arCourseFields['ACTIVE_TO'] === NULL) || ($arCourseFields['ACTIVE_TO'] === ''))
+                if (($arCourseFields['ACTIVE_TO'] === null) || ($arCourseFields['ACTIVE_TO'] === '')) {
                     $arFieldsToDb['ACTIVE_TO'] = 'NULL';
-                else
+                } else {
                     $arFieldsToDb['ACTIVE_TO'] = $DB->CharToDateFunction($arCourseFields['ACTIVE_TO']);
+                }
             }
 
-            if (array_key_exists('RATING', $arCourseFields))
+            if (array_key_exists('RATING', $arCourseFields)) {
                 $arFieldsToDb['RATING'] = "'" . $DB->ForSql($arCourseFields['RATING']) . "'";
+            }
 
             if (array_key_exists('RATING_TYPE', $arCourseFields)) {
-                if ($arCourseFields['RATING_TYPE'] === NULL)
+                if ($arCourseFields['RATING_TYPE'] === null) {
                     $arFieldsToDb['RATING_TYPE'] = 'NULL';
-                else
+                } else {
                     $arFieldsToDb['RATING_TYPE'] = "'" . $DB->ForSql($arCourseFields['RATING_TYPE']) . "'";
+                }
             }
 
-            if (array_key_exists('SCORM', $arCourseFields))
+            if (array_key_exists('SCORM', $arCourseFields)) {
                 $arFieldsToDb['SCORM'] = "'" . $DB->ForSql($arCourseFields['SCORM']) . "'";
+            }
 
             // Does need update for some fields?
             if (count($arFieldsToDb) > 0) {
-                $rc = $DB->Update('b_learn_course', $arFieldsToDb,
-                    "WHERE ID='" . (int)($courseId + 0) . "'", __LINE__, false,
-                    false);    // we must halt on errors due to bug in CDatabase::Update();
+                $rc = $DB->Update(
+                    'b_learn_course',
+                    $arFieldsToDb,
+                    "WHERE ID='" . (int)($courseId + 0) . "'",
+                    __LINE__,
+                    false,
+                    false
+                );    // we must halt on errors due to bug in CDatabase::Update();
 
                 // reload cache of LINKED_LESSON_ID -> COURSE_ID
                 self::GetCourseToLessonMap_ReloadCache();
@@ -755,15 +815,17 @@ class CLearnLesson implements ILearnLesson
                  * and CDatabase::Insert() will be solved and $ignore_errors setted
                  * to true in Insert()/Update() call above.
                  */
-                if ($rc === false)
+                if ($rc === false) {
                     throw new LearnException ('EA_SQLERROR', LearnException::EXC_ERR_ALL_GIVEUP);
+                }
             }
         }
 
         CLearnCacheOfLessonTreeComponent::MarkAsDirty();
 
-        foreach (GetModuleEvents('learning', 'OnAfterLessonUpdate', true) as $arEvent)
+        foreach (GetModuleEvents('learning', 'OnAfterLessonUpdate', true) as $arEvent) {
             ExecuteModuleEventEx($arEvent, array(&$arFields, $id));
+        }
 
         \Bitrix\Learning\Integration\Search::indexLesson($id);
 
@@ -808,8 +870,9 @@ class CLearnLesson implements ILearnLesson
             $simulate = $options['simulate'];
             $check_permissions = $options['check_permissions'];
             $user_id = $options['user_id'];
-        } else
+        } else {
             $lesson_id = (int)$lesson_id;
+        }
 
         if ($check_permissions) {
             if ($user_id === -1) {
@@ -819,7 +882,8 @@ class CLearnLesson implements ILearnLesson
                     throw new LearnException(
                         'EA_OTHER: $USER isn\'t available.',
                         LearnException::EXC_ERR_ALL_GIVEUP
-                        | LearnException::EXC_ERR_ALL_LOGIC);
+                        | LearnException::EXC_ERR_ALL_LOGIC
+                    );
                 }
 
                 $user_id = (int)$USER->GetID();
@@ -832,7 +896,9 @@ class CLearnLesson implements ILearnLesson
 
     final public static function DeleteRecursiveLikeHardlinks($in_data)
     {
-        list ($root_lesson_id, $simulate, $check_permissions, $user_id) =
+        list (
+            $root_lesson_id, $simulate, $check_permissions, $user_id
+            ) =
             self::_funcDelete_ParseOptions($in_data);
 
         // list of lessons, which are candidates to be removed
@@ -847,8 +913,9 @@ class CLearnLesson implements ILearnLesson
             $arParents = array();
             $arEdges = self::ListImmediateParents($lesson_id);
 
-            foreach ($arEdges as $arEdgeData)
+            foreach ($arEdges as $arEdgeData) {
                 $arParents[] = (int)$arEdgeData['PARENT_LESSON'];
+            }
 
             $arCandidatesToRemove[(int)$lesson_id] = $arParents;
         }
@@ -886,8 +953,9 @@ class CLearnLesson implements ILearnLesson
                     )
                 );
             } catch (LearnException $e) {
-                if ($e->GetCode() === LearnException::EXC_ERR_LL_UNREMOVABLE_CL)
-                    ;    // course cannot be removed - ignore this error
+                if ($e->GetCode() === LearnException::EXC_ERR_LL_UNREMOVABLE_CL) {
+                    ;
+                }    // course cannot be removed - ignore this error
                 elseif ($e->GetCode() === LearnException::EXC_ERR_ALL_ACCESS_DENIED) {
                     // if lesson not exists - ignore error (lesson to be deleted is already removed)
                     $rsLesson = self::GetListUni(
@@ -916,7 +984,9 @@ class CLearnLesson implements ILearnLesson
     {
         global $USER_FIELD_MANAGER;
 
-        list ($lesson_id, $simulate, $check_permissions, $user_id) =
+        list (
+            $lesson_id, $simulate, $check_permissions, $user_id
+            ) =
             self::_funcDelete_ParseOptions($lesson_id);
 
         if ($check_permissions) {
@@ -924,7 +994,8 @@ class CLearnLesson implements ILearnLesson
             if (!$oAccess->IsLessonAccessible($lesson_id, CLearnAccess::OP_LESSON_REMOVE)) {
                 throw new LearnException(
                     'EA_ACCESS_DENIED',
-                    LearnException::EXC_ERR_ALL_ACCESS_DENIED);
+                    LearnException::EXC_ERR_ALL_ACCESS_DENIED
+                );
             }
         }
 
@@ -939,8 +1010,9 @@ class CLearnLesson implements ILearnLesson
                 $oAccess->IsLessonAccessible($lesson_id, CLearnAccess::OP_LESSON_UNLINK_FROM_PARENTS);
         }
 
-        foreach (GetModuleEvents('learning', 'OnBeforeLessonDelete', true) as $arEvent)
+        foreach (GetModuleEvents('learning', 'OnBeforeLessonDelete', true) as $arEvent) {
             ExecuteModuleEventEx($arEvent, array($lesson_id));
+        }
 
         foreach ($arNeighboursEdges as $arEdge) {
             $child_lesson_id = (int)$arEdge['CHILD_LESSON'];
@@ -963,17 +1035,20 @@ class CLearnLesson implements ILearnLesson
                         . $child_lesson_id . '), $parent_lesson_id ('
                         . $parent_lesson_id . ')',
                         LearnException::EXC_ERR_ALL_LOGIC
-                        | LearnException::EXC_ERR_ALL_GIVEUP);
+                        | LearnException::EXC_ERR_ALL_GIVEUP
+                    );
                 }
 
                 if (!$IsLessonAccessible) {
                     throw new LearnException(
                         'EA_ACCESS_DENIED',
-                        LearnException::EXC_ERR_ALL_ACCESS_DENIED);
+                        LearnException::EXC_ERR_ALL_ACCESS_DENIED
+                    );
                 }
 
-                if ($simulate === false)
+                if ($simulate === false) {
                     self::RelationRemove($parent_lesson_id, $child_lesson_id);
+                }
             }
         }
 
@@ -984,8 +1059,9 @@ class CLearnLesson implements ILearnLesson
             global $DB;
 
             if ($simulate === false) {
-                if (!$DB->Query("DELETE FROM b_learn_course_site WHERE COURSE_ID = " . (int)$linkedCourseId, true))
+                if (!$DB->Query("DELETE FROM b_learn_course_site WHERE COURSE_ID = " . (int)$linkedCourseId, true)) {
                     throw new LearnException ('EA_SQLERROR', LearnException::EXC_ERR_ALL_GIVEUP);
+                }
 
                 $rc = self::CourseBecomeLesson($linkedCourseId);
 
@@ -993,7 +1069,8 @@ class CLearnLesson implements ILearnLesson
                 if ($rc === false) {
                     throw new LearnException (
                         'EA_OTHER: lesson is unremovable because linked course is in use.',
-                        LearnException::EXC_ERR_LL_UNREMOVABLE_CL);
+                        LearnException::EXC_ERR_LL_UNREMOVABLE_CL
+                    );
                 }
 
                 // reload cache of LINKED_LESSON_ID -> COURSE_ID
@@ -1009,19 +1086,22 @@ class CLearnLesson implements ILearnLesson
                 "SELECT PREVIEW_PICTURE, DETAIL_PICTURE 
 				FROM b_learn_lesson 
 				WHERE ID = " . (int)$lesson_id,
-                true);
+                true
+            );
 
             if ($r === false) {
                 throw new LearnException(
                     'EA_SQLERROR',
-                    LearnException::EXC_ERR_ALL_GIVEUP);
+                    LearnException::EXC_ERR_ALL_GIVEUP
+                );
             }
 
             $arRes = $r->Fetch();
             if (!$arRes) {
                 throw new LearnException(
                     'EA_SQLERROR',
-                    LearnException::EXC_ERR_ALL_GIVEUP);
+                    LearnException::EXC_ERR_ALL_GIVEUP
+                );
             }
 
             CFile::Delete($arRes['PREVIEW_PICTURE']);
@@ -1036,7 +1116,8 @@ class CLearnLesson implements ILearnLesson
                 if (!CLQuestion::Delete($arQ['ID'])) {
                     throw new LearnException(
                         'EA_QUESTION_NOT_REMOVED',
-                        LearnException::EXC_ERR_ALL_GIVEUP);
+                        LearnException::EXC_ERR_ALL_GIVEUP
+                    );
                 }
             }
 
@@ -1046,12 +1127,14 @@ class CLearnLesson implements ILearnLesson
 
             CLearnCacheOfLessonTreeComponent::MarkAsDirty();
 
-            CEventLog::add(array(
-                'AUDIT_TYPE_ID' => 'LEARNING_REMOVE_ITEM',
-                'MODULE_ID' => 'learning',
-                'ITEM_ID' => 'L #' . $lesson_id,
-                'DESCRIPTION' => 'lesson removed'
-            ));
+            CEventLog::add(
+                array(
+                    'AUDIT_TYPE_ID' => 'LEARNING_REMOVE_ITEM',
+                    'MODULE_ID' => 'learning',
+                    'ITEM_ID' => 'L #' . $lesson_id,
+                    'DESCRIPTION' => 'lesson removed'
+                )
+            );
 
             if (CModule::IncludeModule('search')) {
                 CSearch::deleteIndex("learning", "U\\_%", "L" . $lesson_id, null);
@@ -1059,8 +1142,9 @@ class CLearnLesson implements ILearnLesson
         }
 
         if ($simulate === false) {
-            foreach (GetModuleEvents('learning', 'OnAfterLessonDelete', true) as $arEvent)
+            foreach (GetModuleEvents('learning', 'OnAfterLessonDelete', true) as $arEvent) {
                 ExecuteModuleEventEx($arEvent, array($lesson_id));
+            }
         }
     }
 
@@ -1087,12 +1171,14 @@ class CLearnLesson implements ILearnLesson
                 true    // ignore errors
             );
 
-            if ($rc === false)
+            if ($rc === false) {
                 throw new LearnException ('EA_SQLERROR', LearnException::EXC_ERR_ALL_GIVEUP);
+            }
 
             $arCourseData = $rc->Fetch();
-            if (($arCourseData === false) || (!isset($arCourseData['SORT'])))
+            if (($arCourseData === false) || (!isset($arCourseData['SORT']))) {
                 throw new LearnException ('EA_SQLERROR', LearnException::EXC_ERR_ALL_GIVEUP);
+            }
 
             $arData = array_merge($arData, $arCourseData);
         }
@@ -1101,10 +1187,11 @@ class CLearnLesson implements ILearnLesson
         if (isset($arData['ACTIVE'])
             && is_bool($arData['ACTIVE'])
         ) {
-            if ($arData['ACTIVE'])
+            if ($arData['ACTIVE']) {
                 $arData['ACTIVE'] = 'Y';
-            else
+            } else {
                 $arData['ACTIVE'] = 'N';
+            }
         }
 
         $arData['LESSON_ID'] = $arData['ID'];
@@ -1117,8 +1204,9 @@ class CLearnLesson implements ILearnLesson
     {
         $arMap = self::GetCourseToLessonMap();
 
-        if (!isset($arMap['L' . $lessonId]))
-            return (false);    // no corresponded course
+        if (!isset($arMap['L' . $lessonId])) {
+            return (false);
+        }    // no corresponded course
 
         // return id of corresponded course
         return ($arMap['L' . $lessonId]);
@@ -1187,13 +1275,15 @@ class CLearnLesson implements ILearnLesson
         if ($rc === false) {
             throw new LearnException (
                 'EA_SQLERROR',
-                LearnException::EXC_ERR_ALL_GIVEUP);
+                LearnException::EXC_ERR_ALL_GIVEUP
+            );
         }
 
         while ($arData = $rc->Fetch()) {
             // skip invalid elements
-            if (($arData['ID'] <= 0) || ($arData['LINKED_LESSON_ID'] <= 0))
+            if (($arData['ID'] <= 0) || ($arData['LINKED_LESSON_ID'] <= 0)) {
                 continue;
+            }
 
             $arMap['C' . $arData['ID']] = (int)$arData['LINKED_LESSON_ID'];
             $arMap['L' . $arData['LINKED_LESSON_ID']] = (int)$arData['ID'];
@@ -1241,11 +1331,13 @@ class CLearnLesson implements ILearnLesson
 
         $ACTIVE_FROM = $ACTIVE_TO = 'NULL';
 
-        if (($arCourseFields['ACTIVE_FROM'] !== NULL) && ($arCourseFields['ACTIVE_FROM'] !== ''))
+        if (($arCourseFields['ACTIVE_FROM'] !== null) && ($arCourseFields['ACTIVE_FROM'] !== '')) {
             $ACTIVE_FROM = $DB->CharToDateFunction($arCourseFields['ACTIVE_FROM']);
+        }
 
-        if (($arCourseFields['ACTIVE_TO'] !== NULL) && ($arCourseFields['ACTIVE_TO'] !== ''))
+        if (($arCourseFields['ACTIVE_TO'] !== null) && ($arCourseFields['ACTIVE_TO'] !== '')) {
             $ACTIVE_TO = $DB->CharToDateFunction($arCourseFields['ACTIVE_TO']);
+        }
 
         $arFieldsToDb = array(
             'LINKED_LESSON_ID' => "'" . (int)($lessonId + 0) . "'",
@@ -1253,11 +1345,14 @@ class CLearnLesson implements ILearnLesson
             'ACTIVE_FROM' => $ACTIVE_FROM,
             'ACTIVE_TO' => $ACTIVE_TO,
             'RATING' => "'" . $DB->ForSql($arCourseFields['RATING']) . "'",
-            'RATING_TYPE' => (($arCourseFields['RATING_TYPE'] === NULL) ? 'NULL' : ("'" . $DB->ForSql($arCourseFields['RATING_TYPE']) . "'")),
+            'RATING_TYPE' => (($arCourseFields['RATING_TYPE'] === null) ? 'NULL' : ("'" . $DB->ForSql(
+                    $arCourseFields['RATING_TYPE']
+                ) . "'")),
             'SCORM' => "'" . $DB->ForSql($arCourseFields['SCORM']) . "'"
         );
 
-        $rc = $DB->Insert('b_learn_course',
+        $rc = $DB->Insert(
+            'b_learn_course',
             $arFieldsToDb,
             __LINE__,        // $error_position
             false,            // $debug
@@ -1275,8 +1370,9 @@ class CLearnLesson implements ILearnLesson
          * and CDatabase::Insert() will be solved and $ignore_errors setted
          * to true in Insert()/Update() call above.
          */
-        if ($rc === false)
+        if ($rc === false) {
             throw new LearnException ('EA_SQLERROR', LearnException::EXC_ERR_ALL_GIVEUP);
+        }
 
         return ((int)$rc);    // returns course_id
     }
@@ -1312,17 +1408,20 @@ class CLearnLesson implements ILearnLesson
 
         // Check certificates (if exists => forbid removing course)
         $certificate = CCertification::GetList(Array(), Array("COURSE_ID" => $courseId, 'CHECK_PERMISSIONS' => 'N'));
-        if (($certificate === false) || ($certificate->GetNext()))
+        if (($certificate === false) || ($certificate->GetNext())) {
             return false;
+        }
 
         // Remove tests
         $tests = CTest::GetList(Array(), Array("COURSE_ID" => $courseId));
-        if ($tests === false)
+        if ($tests === false) {
             return (false);
+        }
 
         while ($arTest = $tests->Fetch()) {
-            if (!CTest::Delete($arTest["ID"]))
+            if (!CTest::Delete($arTest["ID"])) {
                 return false;
+            }
         }
 
         // Remove all prohibitions for lessons in context of course to be removed
@@ -1349,12 +1448,14 @@ class CLearnLesson implements ILearnLesson
          * and CDatabase::Insert() will be solved and $ignore_errors setted
          * to true in Insert()/Update() call above.
          */
-        if ($rc === false)
+        if ($rc === false) {
             throw new LearnException ('EA_SQLERROR', LearnException::EXC_ERR_ALL_GIVEUP);
+        }
 
         // If data not updated
-        if ($rc === 0)
+        if ($rc === 0) {
             throw new LearnException ('EA_OTHER: data not updated', LearnException::EXC_ERR_ALL_GIVEUP);
+        }
     }
 
 
@@ -1371,8 +1472,10 @@ class CLearnLesson implements ILearnLesson
                 (!is_numeric($arg))
                 || (!is_int($arg + 0))
             ) {
-                throw new LearnException ('EA_PARAMS',
-                    LearnException::EXC_ERR_ALL_LOGIC | LearnException::EXC_ERR_ALL_PARAMS);
+                throw new LearnException (
+                    'EA_PARAMS',
+                    LearnException::EXC_ERR_ALL_LOGIC | LearnException::EXC_ERR_ALL_PARAMS
+                );
             }
         }
 
@@ -1393,8 +1496,9 @@ class CLearnLesson implements ILearnLesson
 
     final public static function RelationUpdate($parentLessonId, $childLessonId, $arProperties)
     {
-        foreach ($arProperties as $propertyName => $value)
+        foreach ($arProperties as $propertyName => $value) {
             CLearnGraphRelation::SetProperty($parentLessonId, $childLessonId, $propertyName, $value);
+        }
 
         CLearnCacheOfLessonTreeComponent::MarkAsDirty();
     }
@@ -1437,8 +1541,14 @@ class CLearnLesson implements ILearnLesson
     }
 
 
-    protected static function GetListUni($arOrder = array(), $arFilter = array(), $arSelectFields = array(), $mode = self::GET_LIST_ALL, $lessonId = -1, $arNavParams = array())
-    {
+    protected static function GetListUni(
+        $arOrder = array(),
+        $arFilter = array(),
+        $arSelectFields = array(),
+        $mode = self::GET_LIST_ALL,
+        $lessonId = -1,
+        $arNavParams = array()
+    ) {
         global $DB, $USER_FIELD_MANAGER;
 
         $obUserFieldsSql = new CUserTypeSQL();
@@ -1490,12 +1600,14 @@ class CLearnLesson implements ILearnLesson
             && in_array($mode, $allowedModes, true)
             && self::_EnsureArgsStrictlyCastableToIntegers($lessonId);
 
-        if (!$argsCheck)
+        if (!$argsCheck) {
             throw new LearnException('EA_PARAMS', LearnException::EXC_ERR_ALL_PARAMS);
+        }
 
         $arFieldsMap = array(
             'LESSON_ID' => 'TL.ID',
-            'SITE_ID' => 'CASE WHEN (1 > 0) THEN \'no site\' ELSE \'0\' END',    // hack for compatibility with courses in shared lists
+            'SITE_ID' => 'CASE WHEN (1 > 0) THEN \'no site\' ELSE \'0\' END',
+            // hack for compatibility with courses in shared lists
             'WAS_CHAPTER_ID' => 'TL.WAS_CHAPTER_ID',
             'KEYWORDS' => 'TL.KEYWORDS',
             'CHILDS_CNT' => '(SELECT COUNT(*) FROM b_learn_lesson_edges TLES WHERE TLES.SOURCE_NODE = TL.ID)',
@@ -1526,34 +1638,40 @@ class CLearnLesson implements ILearnLesson
         );
 
         // filter by TIMESTAMP_X by default
-        if (count($arOrder) == 0)
+        if (count($arOrder) == 0) {
             $arOrder['TIMESTAMP_X'] = 'DESC';
+        }
 
         $arSqlSearch = self::GetFilter($arFilter, $mode);
 
+        $SqlSearchLang = '';
         if (isset($arFilter['SITE_ID'])) {
             $arLID = array();
 
-            if (is_array($arFilter['SITE_ID']))
+            if (is_array($arFilter['SITE_ID'])) {
                 $arLID = $arFilter['SITE_ID'];
-            else {
-                if (strlen($arFilter['SITE_ID']) > 0)
+            } else {
+                if ($arFilter['SITE_ID'] <> '') {
                     $arLID[] = $arFilter['SITE_ID'];
+                }
             }
 
             $SqlSearchLang = "''";
-            foreach ($arLID as $v)
+            foreach ($arLID as $v) {
                 $SqlSearchLang .= ", '" . $DB->ForSql($v) . "'";
+            }
         }
 
         $r = $obUserFieldsSql->GetFilter();
-        if (strlen($r) > 0)
+        if ($r <> '') {
             $arSqlSearch[] = "(" . $r . ")";
+        }
 
         $sqlSearch = '';
         foreach ($arSqlSearch as $value) {
-            if (strlen($value) > 0)
+            if ($value <> '') {
                 $sqlSearch .= ' AND ' . $value;
+            }
         }
 
         $modeSQL_join = $modeSQL_where = '';
@@ -1598,18 +1716,21 @@ class CLearnLesson implements ILearnLesson
             $arFieldsMap['SORT'] = 'TLE.SORT';
         }
 
-        if ($bReplaceCourseId)
+        if ($bReplaceCourseId) {
             $arFieldsMap['ID'] = $arFieldsMap['COURSE_ID'];
+        }
 
         // Select all fields by default
-        if (count($arSelectFields) == 0)
+        if (count($arSelectFields) == 0) {
             $arSelectFields = array_keys($arFieldsMap);
+        }
 
         // Ensure that all order fields will be selected
         foreach ($arOrder as $by => $order) {
-            $fieldName = strtoupper($by);
-            if (!in_array($fieldName, $arSelectFields))
+            $fieldName = mb_strtoupper($by);
+            if (!in_array($fieldName, $arSelectFields)) {
                 $arSelectFields[] = $fieldName;
+            }
         }
 
         // Build list of fields to be selected
@@ -1617,18 +1738,21 @@ class CLearnLesson implements ILearnLesson
         $bFirstPass = true;
         $bDefaultSortFieldSelected = false;
         foreach ($arSelectFields as $selectFieldName) {
-            if (substr($selectFieldName, 0, 3) === 'UF_')
+            if (mb_substr($selectFieldName, 0, 3) === 'UF_') {
                 continue;
+            }
 
-            if (!$bFirstPass)
+            if (!$bFirstPass) {
                 $strSqlSelect .= ', ';
-            else
+            } else {
                 $bFirstPass = false;
+            }
 
             if (!isset($arFieldsMap[$selectFieldName])) {
                 throw new LearnException(
                     'EA_OTHER: UNKNOWN FIELD: ' . $selectFieldName,
-                    LearnException::EXC_ERR_ALL_GIVEUP);
+                    LearnException::EXC_ERR_ALL_GIVEUP
+                );
             }
 
             $strSqlSelect .= $arFieldsMap[$selectFieldName] . ' AS ' . $selectFieldName;
@@ -1642,8 +1766,9 @@ class CLearnLesson implements ILearnLesson
         }
 
         if (!$bDefaultSortFieldSelected) {
-            if ($strSqlSelect !== '')
+            if ($strSqlSelect !== '') {
                 $strSqlSelect .= ', ';
+            }
 
             $strSqlSelect .= $modeSQL_defaultSortField . ' AS SORT';
         }
@@ -1652,7 +1777,7 @@ class CLearnLesson implements ILearnLesson
 
         $sqlLangConstraint = '';
 
-        if (strlen($SqlSearchLang) > 2) {
+        if (mb_strlen($SqlSearchLang) > 2) {
             $sqlLangConstraint = "
 			AND
 			EXISTS
@@ -1674,8 +1799,9 @@ class CLearnLesson implements ILearnLesson
             . $sqlLangConstraint        // filter by site IDs
             . $modeSQL_where;            // for getting only parents/childs, if need
 
-        if ($oPermParser->IsNeedCheckPerm())
+        if ($oPermParser->IsNeedCheckPerm()) {
             $strSqlFrom .= " AND TL.ID IN (" . $oPermParser->SQLForAccessibleLessons() . ") ";
+        }
 
         $strSqlFrom .= $sqlSearch;
 
@@ -1683,16 +1809,18 @@ class CLearnLesson implements ILearnLesson
 
         $arSqlOrder = array();
         foreach ($arOrder as $by => $order) {
-            $by = strtolower($by);
-            $order = strtolower($order);
+            $by = mb_strtolower($by);
+            $order = mb_strtolower($order);
 
-            if ($order !== 'asc')
+            if ($order !== 'asc') {
                 $order = 'desc';
+            }
 
-            if ($s = $obUserFieldsSql->getOrder(strtolower($by)))
+            if ($s = $obUserFieldsSql->getOrder(mb_strtolower($by))) {
                 $arSqlOrder[] = ' ' . $s . ' ' . $order . ' ';
+            }
 
-            if (substr($by, 0, 3) !== 'uf_') {
+            if (mb_substr($by, 0, 3) !== 'uf_') {
                 if (!isset($arMap[$by])) {
                     throw new LearnException(
                         'EA_PARAMS: unknown order by field: "' . $by . '"',
@@ -1718,14 +1846,17 @@ class CLearnLesson implements ILearnLesson
                 $res_cnt = $res_cnt->fetch();
                 $res = new CDBResult();
                 $rc = $res->NavQuery($sql, $res_cnt['C'], $arNavParams, true);
-                if ($rc === false)
+                if ($rc === false) {
                     throw new LearnException ('EA_SQLERROR', LearnException::EXC_ERR_ALL_GIVEUP);
+                }
             }
-        } else
+        } else {
             $res = $DB->Query($sql, true);
+        }
 
-        if ($res === false)
+        if ($res === false) {
             throw new LearnException ('EA_SQLERROR', LearnException::EXC_ERR_ALL_GIVEUP);
+        }
 
         $res->SetUserFields($USER_FIELD_MANAGER->GetUserFields('LEARNING_LESSONS'));
 
@@ -1733,21 +1864,49 @@ class CLearnLesson implements ILearnLesson
     }
 
 
-    final public static function GetList($arOrder = array(), $arFilter = array(), $arSelectFields = array(), $arNavParams = array())
-    {
+    final public static function GetList(
+        $arOrder = array(),
+        $arFilter = array(),
+        $arSelectFields = array(),
+        $arNavParams = array()
+    ) {
         return (self::GetListUni($arOrder, $arFilter, $arSelectFields, self::GET_LIST_ALL, -1, $arNavParams));
     }
 
 
-    final public static function GetListOfImmediateChilds($lessonId, $arOrder = array(), $arFilter = array(), $arSelectFields = array(), $arNavParams = array())
-    {
-        return (self::GetListUni($arOrder, $arFilter, $arSelectFields, self::GET_LIST_IMMEDIATE_CHILDS_OF, $lessonId, $arNavParams));
+    final public static function GetListOfImmediateChilds(
+        $lessonId,
+        $arOrder = array(),
+        $arFilter = array(),
+        $arSelectFields = array(),
+        $arNavParams = array()
+    ) {
+        return (self::GetListUni(
+            $arOrder,
+            $arFilter,
+            $arSelectFields,
+            self::GET_LIST_IMMEDIATE_CHILDS_OF,
+            $lessonId,
+            $arNavParams
+        ));
     }
 
 
-    final public static function GetListOfImmediateParents($lessonId, $arOrder = array(), $arFilter = array(), $arSelectFields = array(), $arNavParams = array())
-    {
-        return (self::GetListUni($arOrder, $arFilter, $arSelectFields, self::GET_LIST_IMMEDIATE_PARENTS_OF, $lessonId, $arNavParams));
+    final public static function GetListOfImmediateParents(
+        $lessonId,
+        $arOrder = array(),
+        $arFilter = array(),
+        $arSelectFields = array(),
+        $arNavParams = array()
+    ) {
+        return (self::GetListUni(
+            $arOrder,
+            $arFilter,
+            $arSelectFields,
+            self::GET_LIST_IMMEDIATE_PARENTS_OF,
+            $lessonId,
+            $arNavParams
+        ));
     }
 
 
@@ -1757,8 +1916,7 @@ class CLearnLesson implements ILearnLesson
         $arFilter = array(),
         $publishProhibitionMode = true,
         $arSelectFields = array()
-    )
-    {
+    ) {
         return (new CLearnLessonTree ($lessonId, $arOrder, $arFilter, $publishProhibitionMode, $arSelectFields));
     }
 
@@ -1771,8 +1929,9 @@ class CLearnLesson implements ILearnLesson
     {
         global $DB;
 
-        if (!is_array($arFilter))
+        if (!is_array($arFilter)) {
             throw new LearnException ('EA_PARAMS', LearnException::EXC_ERR_ALL_PARAMS);
+        }
 
         $arSqlSearch = array();
 
@@ -1781,7 +1940,7 @@ class CLearnLesson implements ILearnLesson
             $key = $res["FIELD"];
             $cOperationType = $res["OPERATION"];
 
-            $key = strtoupper($key);
+            $key = mb_strtoupper($key);
 
             switch ($key) {
                 // for courses only
@@ -1795,33 +1954,67 @@ class CLearnLesson implements ILearnLesson
 
                 case 'EDGE_SORT':
                     // edges table (TLE) available only if requested immediate childs of some parent lesson
-                    if ($mode & self::GET_LIST_IMMEDIATE_CHILDS_OF)
-                        $arSqlSearch[] = CLearnHelper::FilterCreate('TLE.SORT', $val, 'number', $bFullJoin, $cOperationType);
-                    else
-                        throw new LearnException ('EA_PARAMS: unknown field ' . $key, LearnException::EXC_ERR_ALL_PARAMS);
+                    if ($mode & self::GET_LIST_IMMEDIATE_CHILDS_OF) {
+                        $arSqlSearch[] = CLearnHelper::FilterCreate(
+                            'TLE.SORT',
+                            $val,
+                            'number',
+                            $bFullJoin,
+                            $cOperationType
+                        );
+                    } else {
+                        throw new LearnException (
+                            'EA_PARAMS: unknown field ' . $key, LearnException::EXC_ERR_ALL_PARAMS
+                        );
+                    }
                     break;
 
                 case 'SORT':
                     if ($mode & self::GET_LIST_IMMEDIATE_CHILDS_OF) {
                         // edges table (TLE) available only if requested immediate childs of some parent lesson
-                        $arSqlSearch[] = CLearnHelper::FilterCreate('TLE.SORT', $val, 'number', $bFullJoin, $cOperationType);
+                        $arSqlSearch[] = CLearnHelper::FilterCreate(
+                            'TLE.SORT',
+                            $val,
+                            'number',
+                            $bFullJoin,
+                            $cOperationType
+                        );
                     } else {
                         // so, by default sort by b_learn_course.SORT (for partially backward compatibility)
-                        $arSqlSearch[] = CLearnHelper::FilterCreate('TC.SORT', $val, 'number', $bFullJoin, $cOperationType);
+                        $arSqlSearch[] = CLearnHelper::FilterCreate(
+                            'TC.SORT',
+                            $val,
+                            'number',
+                            $bFullJoin,
+                            $cOperationType
+                        );
                     }
                     break;
 
                 case 'LINKED_LESSON_ID':
-                    $arSqlSearch[] = CLearnHelper::FilterCreate('TC.' . $key, $val, 'number', $bFullJoin, $cOperationType, false);
+                    $arSqlSearch[] = CLearnHelper::FilterCreate(
+                        'TC.' . $key,
+                        $val,
+                        'number',
+                        $bFullJoin,
+                        $cOperationType,
+                        false
+                    );
                     break;
 
                 case 'CHILDS_CNT':
-                    $arSqlSearch[] = CLearnHelper::FilterCreate('(SELECT COUNT(*) FROM b_learn_lesson_edges TLES WHERE TLES.SOURCE_NODE = TL.ID)', $val, 'number', $bFullJoin, $cOperationType);
+                    $arSqlSearch[] = CLearnHelper::FilterCreate(
+                        '(SELECT COUNT(*) FROM b_learn_lesson_edges TLES WHERE TLES.SOURCE_NODE = TL.ID)',
+                        $val,
+                        'number',
+                        $bFullJoin,
+                        $cOperationType
+                    );
                     break;
 
                 case 'ACTIVE_FROM':
                 case 'ACTIVE_TO':
-                    if (strlen($val) > 0) {
+                    if ($val <> '') {
                         $arSqlSearch[] = "(TC." . $key . " " . ($cOperationType == "N" ? "<" : ">=")
                             . $DB->CharToDateFunction($DB->ForSql($val), "FULL")
                             . ($cOperationType == "N" ? "" : " OR TC.ACTIVE_FROM IS NULL")
@@ -1830,7 +2023,7 @@ class CLearnLesson implements ILearnLesson
                     break;
 
                 case "ACTIVE_DATE":
-                    if (strlen($val) > 0) {
+                    if ($val <> '') {
                         $arSqlSearch[] = ($cOperationType == "N" ? " NOT" : "")
                             . "((TC.ACTIVE_TO >= " . $DB->GetNowFunction()
                             . " OR TC.ACTIVE_TO IS NULL) AND (TC.ACTIVE_FROM <= " . $DB->GetNowFunction()
@@ -1840,21 +2033,45 @@ class CLearnLesson implements ILearnLesson
 
                 case "DATE_ACTIVE_TO":
                 case "DATE_ACTIVE_FROM":
-                    $arSqlSearch[] = CLearnHelper::FilterCreate("TC." . $key, $val, 'date', $bFullJoin, $cOperationType);
+                    $arSqlSearch[] = CLearnHelper::FilterCreate(
+                        "TC." . $key,
+                        $val,
+                        'date',
+                        $bFullJoin,
+                        $cOperationType
+                    );
                     break;
 
                 case 'RATING_TYPE':
-                    $arSqlSearch[] = CLearnHelper::FilterCreate('TC.' . $key, $val, 'string', $bFullJoin, $cOperationType);
+                    $arSqlSearch[] = CLearnHelper::FilterCreate(
+                        'TC.' . $key,
+                        $val,
+                        'string',
+                        $bFullJoin,
+                        $cOperationType
+                    );
                     break;
 
                 case 'RATING':
                 case 'SCORM':
-                    $arSqlSearch[] = CLearnHelper::FilterCreate('TC.' . $key, $val, 'string_equal', $bFullJoin, $cOperationType);
+                    $arSqlSearch[] = CLearnHelper::FilterCreate(
+                        'TC.' . $key,
+                        $val,
+                        'string_equal',
+                        $bFullJoin,
+                        $cOperationType
+                    );
                     break;
 
                 // for all lessons
                 case 'WAS_CHAPTER_ID':
-                    $arSqlSearch[] = CLearnHelper::FilterCreate('TL.WAS_CHAPTER_ID', $val, 'number', $bFullJoin, $cOperationType);
+                    $arSqlSearch[] = CLearnHelper::FilterCreate(
+                        'TL.WAS_CHAPTER_ID',
+                        $val,
+                        'number',
+                        $bFullJoin,
+                        $cOperationType
+                    );
                     break;
 
                 case 'LESSON_ID':
@@ -1862,7 +2079,13 @@ class CLearnLesson implements ILearnLesson
                     break;
 
                 case 'CREATED_BY':
-                    $arSqlSearch[] = CLearnHelper::FilterCreate('TL.' . $key, $val, 'number', $bFullJoin, $cOperationType);
+                    $arSqlSearch[] = CLearnHelper::FilterCreate(
+                        'TL.' . $key,
+                        $val,
+                        'number',
+                        $bFullJoin,
+                        $cOperationType
+                    );
                     break;
 
                 case 'NAME':
@@ -1872,25 +2095,54 @@ class CLearnLesson implements ILearnLesson
                 case 'DETAIL_TEXT_TYPE':
                 case 'PREVIEW_TEXT':
                 case 'PREVIEW_TEXT_TYPE':
-                    $arSqlSearch[] = CLearnHelper::FilterCreate('TL.' . $key, $val, 'string', $bFullJoin, $cOperationType);
+                    $arSqlSearch[] = CLearnHelper::FilterCreate(
+                        'TL.' . $key,
+                        $val,
+                        'string',
+                        $bFullJoin,
+                        $cOperationType
+                    );
                     break;
 
                 case 'CREATED_USER_NAME':
-                    $arSqlSearch[] = CLearnHelper::FilterCreate($DB->Concat("'('", 'TU.LOGIN', "') '", 'TU.NAME', "' '", 'TU.LAST_NAME'),
-                        $val, 'string', $bFullJoin, $cOperationType);
+                    $arSqlSearch[] = CLearnHelper::FilterCreate(
+                        $DB->Concat("'('", 'TU.LOGIN', "') '", 'TU.NAME', "' '", 'TU.LAST_NAME'),
+                        $val,
+                        'string',
+                        $bFullJoin,
+                        $cOperationType
+                    );
                     break;
 
                 case 'KEYWORDS':
-                    $arSqlSearch[] = CLearnHelper::FilterCreate('TL.' . $key, $val, 'string', $bFullJoin, $cOperationType);
+                    $arSqlSearch[] = CLearnHelper::FilterCreate(
+                        'TL.' . $key,
+                        $val,
+                        'string',
+                        $bFullJoin,
+                        $cOperationType
+                    );
                     break;
 
                 case 'ACTIVE':
-                    $arSqlSearch[] = CLearnHelper::FilterCreate('TL.' . $key, $val, 'string_equal', $bFullJoin, $cOperationType);
+                    $arSqlSearch[] = CLearnHelper::FilterCreate(
+                        'TL.' . $key,
+                        $val,
+                        'string_equal',
+                        $bFullJoin,
+                        $cOperationType
+                    );
                     break;
 
                 case 'TIMESTAMP_X':
                 case 'DATE_CREATE':
-                    $arSqlSearch[] = CLearnHelper::FilterCreate('TL.' . $key, $val, 'date', $bFullJoin, $cOperationType);
+                    $arSqlSearch[] = CLearnHelper::FilterCreate(
+                        'TL.' . $key,
+                        $val,
+                        'date',
+                        $bFullJoin,
+                        $cOperationType
+                    );
                     break;
 
                 case 'SITE_ID':
@@ -1903,8 +2155,11 @@ class CLearnLesson implements ILearnLesson
                     break;
 
                 default:
-                    if (substr($key, 0, 3) !== 'UF_')
-                        throw new LearnException ('EA_PARAMS: unknown field ' . $key, LearnException::EXC_ERR_ALL_PARAMS);
+                    if (mb_substr($key, 0, 3) !== 'UF_') {
+                        throw new LearnException (
+                            'EA_PARAMS: unknown field ' . $key, LearnException::EXC_ERR_ALL_PARAMS
+                        );
+                    }
                     break;
             }
         }
@@ -1915,8 +2170,9 @@ class CLearnLesson implements ILearnLesson
 
     final public static function CountImmediateChilds($lessonId)
     {
-        if (!self::_EnsureArgsStrictlyCastableToIntegers($lessonId))
+        if (!self::_EnsureArgsStrictlyCastableToIntegers($lessonId)) {
             throw new LearnException('EA_PARAMS', LearnException::EXC_ERR_ALL_PARAMS);
+        }
 
         global $DB;
 
@@ -1927,12 +2183,14 @@ class CLearnLesson implements ILearnLesson
             true    // ignore errors
         );
 
-        if ($rc === false)
+        if ($rc === false) {
             throw new LearnException ('EA_SQLERROR', LearnException::EXC_ERR_ALL_GIVEUP);
+        }
 
         $arData = $rc->Fetch();
-        if (($arData === false) || (!isset($arData['CHILDS_COUNT'])))
+        if (($arData === false) || (!isset($arData['CHILDS_COUNT']))) {
             throw new LearnException ('EA_SQLERROR', LearnException::EXC_ERR_ALL_GIVEUP);
+        }
 
         return ((int)($arData['CHILDS_COUNT'] + 0));
     }
@@ -1962,27 +2220,34 @@ class CLearnLesson implements ILearnLesson
             self::GET_LIST_ALL
         );
 
-        if ($rc === false)
+        if ($rc === false) {
             throw new LearnException ('EA_UNKNOWN_ERROR', LearnException::EXC_ERR_ALL_GIVEUP);
+        }
 
         $row = $rc->Fetch();
-        if (!isset($row['LESSON_ID']))
+        if (!isset($row['LESSON_ID'])) {
             return (false);
-        else
+        } else {
             return ((int)$row['LESSON_ID']);
+        }
     }
 
 
     /**
      * @access private
      */
-    final public static function GetListOfAncestors($lessonId, $stopAtLessonId = false, $stopBeforeLessonId = false, $arIgnoreEdges = array())
-    {
+    final public static function GetListOfAncestors(
+        $lessonId,
+        $stopAtLessonId = false,
+        $stopBeforeLessonId = false,
+        $arIgnoreEdges = array()
+    ) {
         $arAncestors = array();
 
         $arOPathes = self::GetListOfParentPathes($lessonId, $stopAtLessonId, $stopBeforeLessonId, $arIgnoreEdges);
-        foreach ($arOPathes as $oPath)
+        foreach ($arOPathes as $oPath) {
             $arAncestors = array_merge($arAncestors, array_map('intval', $oPath->GetPathAsArray()));
+        }
 
         array_unique($arAncestors);
 
@@ -1993,8 +2258,12 @@ class CLearnLesson implements ILearnLesson
     /**
      * @access public
      */
-    final public static function GetListOfParentPathes($lessonId, $breakOnLessonId = false, $breakBeforeLesson = false, $arIgnoreEdges = array())
-    {
+    final public static function GetListOfParentPathes(
+        $lessonId,
+        $breakOnLessonId = false,
+        $breakBeforeLesson = false,
+        $arIgnoreEdges = array()
+    ) {
         $arPathes = array(
             array($lessonId)
         );
@@ -2005,12 +2274,14 @@ class CLearnLesson implements ILearnLesson
             // $arAlreadyProcessedLessons all immediate parents
             // of this lesson.
             $arEdges = self::ListImmediateParents($breakOnLessonId);
-            foreach ($arEdges as $arEdge)
+            foreach ($arEdges as $arEdge) {
                 $arAlreadyProcessedLessons[] = (int)$arEdge['PARENT_LESSON'];
+            }
         }
 
-        if ($breakBeforeLesson !== false)
+        if ($breakBeforeLesson !== false) {
             $arAlreadyProcessedLessons[] = (int)$breakBeforeLesson;
+        }
 
         $arAllPathes = self::GetListOfParentPathesRecursive($arPathes, $arAlreadyProcessedLessons, $arIgnoreEdges);
 
@@ -2021,16 +2292,20 @@ class CLearnLesson implements ILearnLesson
             $o->PopBottom();        // remove $lessonId
 
             // skip empty pathes
-            if ($o->Count() > 0)
+            if ($o->Count() > 0) {
                 $arObjPathes[] = $o;
+            }
         }
 
         return ($arObjPathes);
     }
 
 
-    protected static function GetListOfParentPathesRecursive($arPathes, &$arAlreadyProcessedLessons, $arIgnoreEdges = array())
-    {
+    protected static function GetListOfParentPathesRecursive(
+        $arPathes,
+        &$arAlreadyProcessedLessons,
+        $arIgnoreEdges = array()
+    ) {
         $arPathesNew = $arPathes;
         $must_be_stopped = 0x1;    // stop if no more parents available or finally cycled
 
@@ -2077,8 +2352,9 @@ class CLearnLesson implements ILearnLesson
             }
         }
 
-        if ($must_be_stopped)
+        if ($must_be_stopped) {
             return ($arPathesNew);
+        }
 
         return (self::GetListOfParentPathesRecursive($arPathesNew, $arAlreadyProcessedLessons, $arIgnoreEdges));
     }
@@ -2101,12 +2377,14 @@ class CLearnLesson implements ILearnLesson
             true    // ignore errors
         );
 
-        if ($rc === false)
+        if ($rc === false) {
             throw new LearnException ('EA_SQLERROR', LearnException::EXC_ERR_ALL_GIVEUP);
+        }
 
         $arData = $rc->Fetch();
-        if ($arData === false)
-            return (false);        // lesson isn't prohibited for publish under given course
+        if ($arData === false) {
+            return (false);
+        }        // lesson isn't prohibited for publish under given course
 
         return (true);        // lesson is prohibited for publish
     }
@@ -2118,8 +2396,10 @@ class CLearnLesson implements ILearnLesson
 
         self::_EnsureArgsStrictlyCastableToIntegers($in_lessonId, $in_contextCourseLessonId);
         if (!is_bool($in_isProhibited)) {
-            throw new LearnException ('EA_PARAMS: isProhibited',
-                LearnException::EXC_ERR_ALL_LOGIC | LearnException::EXC_ERR_ALL_PARAMS);
+            throw new LearnException (
+                'EA_PARAMS: isProhibited',
+                LearnException::EXC_ERR_ALL_LOGIC | LearnException::EXC_ERR_ALL_PARAMS
+            );
         }
 
         $lessonId = (int)$in_lessonId;
@@ -2141,8 +2421,9 @@ class CLearnLesson implements ILearnLesson
 
             $rc = $DB->Query($sql, true);
 
-            if ($rc === false)
+            if ($rc === false) {
                 throw new LearnException ('EA_SQLERROR', LearnException::EXC_ERR_ALL_GIVEUP);
+            }
 
             CLearnCacheOfLessonTreeComponent::MarkAsDirty();
 
@@ -2181,17 +2462,21 @@ class CLearnLesson implements ILearnLesson
             true
         )
         ) {
-            throw new LearnException ('EA_PARAMS: purgeMode',
-                LearnException::EXC_ERR_ALL_LOGIC | LearnException::EXC_ERR_ALL_PARAMS);
+            throw new LearnException (
+                'EA_PARAMS: purgeMode',
+                LearnException::EXC_ERR_ALL_LOGIC | LearnException::EXC_ERR_ALL_PARAMS
+            );
         }
 
         $arSqlCondition = array();
 
-        if ($purgeMode & self::PUBLISH_PROHIBITION_PURGE_ALL_LESSONS_IN_COURSE_CONTEXT)
+        if ($purgeMode & self::PUBLISH_PROHIBITION_PURGE_ALL_LESSONS_IN_COURSE_CONTEXT) {
             $arSqlCondition[] = 'COURSE_LESSON_ID = ' . $lessonId;
+        }
 
-        if ($purgeMode & self::PUBLISH_PROHIBITION_PURGE_LESSON_IN_ALL_COURSE_CONTEXT)
+        if ($purgeMode & self::PUBLISH_PROHIBITION_PURGE_LESSON_IN_ALL_COURSE_CONTEXT) {
             $arSqlCondition[] = 'PROHIBITED_LESSON_ID = ' . $lessonId;
+        }
 
         if (count($arSqlCondition) > 0) {
             $sqlCondition = implode(' OR ', $arSqlCondition);
@@ -2199,10 +2484,12 @@ class CLearnLesson implements ILearnLesson
             $rc = $DB->Query(
                 "DELETE FROM b_learn_publish_prohibition
 				WHERE " . $sqlCondition,
-                true);
+                true
+            );
 
-            if ($rc === false)
+            if ($rc === false) {
                 throw new LearnException ('EA_SQLERROR', LearnException::EXC_ERR_ALL_GIVEUP);
+            }
         }
 
         CLearnCacheOfLessonTreeComponent::MarkAsDirty();
@@ -2291,8 +2578,9 @@ class CLearnLesson implements ILearnLesson
 
         // convert ids to int
         $arAncestorsInt = array();
-        foreach ($arAncestors as $ancestroId)
+        foreach ($arAncestors as $ancestroId) {
             $arAncestorsInt[] = (int)$ancestroId;
+        }
 
         // 2) Get list of publish prohibitions in context of courses from step 1.
         $rc = $DB->Query(
@@ -2300,10 +2588,12 @@ class CLearnLesson implements ILearnLesson
 			FROM b_learn_publish_prohibition
 			WHERE COURSE_LESSON_ID IN (" . implode(',', $arAncestorsInt) . ")"
             ,
-            true);
+            true
+        );
 
-        if ($rc === false)
+        if ($rc === false) {
             throw new LearnException ('EA_SQLERROR', LearnException::EXC_ERR_ALL_GIVEUP);
+        }
 
         // This relation will be removed, so must be ignoredm when determine
         // future ancestors (after relation removing)

@@ -33,6 +33,7 @@ class Notify
 
     const EVENT_ON_CHECK_PRINT_SEND_EMAIL = "SALE_CHECK_PRINT";
     const EVENT_ON_CHECK_PRINT_ERROR_SEND_EMAIL = "SALE_CHECK_PRINT_ERROR";
+    const EVENT_ON_CHECK_VALIDATION_ERROR_SEND_EMAIL = "SALE_CHECK_VALIDATION_ERROR";
 
     const EVENT_ON_ORDER_PAID_SEND_EMAIL = "OnOrderPaySendEmail";
 
@@ -104,8 +105,6 @@ class Notify
             return $result;
         }
 
-        $by = $sort = '';
-
         $separator = "<br/>";
 
         $eventName = static::EVENT_ORDER_NEW_SEND_EMAIL_EVENT_NAME;
@@ -121,7 +120,7 @@ class Notify
             $filter['SITE_ID'] = SITE_ID;
         }
 
-        $res = \CEventMessage::GetList($by, $sort, $filter);
+        $res = \CEventMessage::GetList('', '', $filter);
         if ($eventMessage = $res->Fetch()) {
             if ($eventMessage['BODY_TYPE'] == 'text') {
                 $separator = "\n";
@@ -165,12 +164,23 @@ class Notify
 
         if ($send) {
             $event = new \CEvent;
-            $event->Send($eventName, $entity->getField('LID'), $fields, "Y", "", array(), static::getOrderLanguageId($entity));
+            $event->Send(
+                $eventName,
+                $entity->getField('LID'),
+                $fields,
+                "Y",
+                "",
+                array(),
+                static::getOrderLanguageId($entity)
+            );
         }
 
         static::addSentEvent($entity->getId(), static::EVENT_ORDER_NEW_SEND_EMAIL_EVENT_NAME);
 
-        \CSaleMobileOrderPush::send(static::EVENT_MOBILE_PUSH_ORDER_CREATED, array("ORDER" => static::getOrderFields($entity)));
+        \CSaleMobileOrderPush::send(
+            static::EVENT_MOBILE_PUSH_ORDER_CREATED,
+            array("ORDER" => static::getOrderFields($entity))
+        );
 
         return $result;
     }
@@ -231,10 +241,21 @@ class Notify
 
         if ($send) {
             $event = new \CEvent;
-            $event->Send($eventName, $entity->getField('LID'), $fields, "Y", "", array(), static::getOrderLanguageId($entity));
+            $event->Send(
+                $eventName,
+                $entity->getField('LID'),
+                $fields,
+                "Y",
+                "",
+                array(),
+                static::getOrderLanguageId($entity)
+            );
         }
 
-        \CSaleMobileOrderPush::send(static::EVENT_MOBILE_PUSH_ORDER_CANCELED, array("ORDER" => static::getOrderFields($entity)));
+        \CSaleMobileOrderPush::send(
+            static::EVENT_MOBILE_PUSH_ORDER_CANCELED,
+            array("ORDER" => static::getOrderFields($entity))
+        );
 
         static::addSentEvent($entity->getId(), static::EVENT_ORDER_CANCEL_SEND_EMAIL_EVENT_NAME);
 
@@ -294,10 +315,21 @@ class Notify
 
         if ($send) {
             $event = new \CEvent;
-            $event->Send($eventName, $entity->getField('LID'), $fields, "Y", "", array(), static::getOrderLanguageId($entity));
+            $event->Send(
+                $eventName,
+                $entity->getField('LID'),
+                $fields,
+                "Y",
+                "",
+                array(),
+                static::getOrderLanguageId($entity)
+            );
         }
 
-        \CSaleMobileOrderPush::send(static::EVENT_MOBILE_PUSH_ORDER_PAID, array("ORDER" => static::getOrderFields($entity)));
+        \CSaleMobileOrderPush::send(
+            static::EVENT_MOBILE_PUSH_ORDER_PAID,
+            array("ORDER" => static::getOrderFields($entity))
+        );
 
         static::addSentEvent($entity->getId(), static::EVENT_ORDER_PAID_SEND_EMAIL_EVENT_NAME);
 
@@ -333,7 +365,9 @@ class Notify
         $fields = $entity->getFields();
         $originalValues = $fields->getOriginalValues();
 
-        if (array_key_exists('STATUS_ID', $originalValues) && $originalValues['STATUS_ID'] == $entity->getField("STATUS_ID")) {
+        if (array_key_exists('STATUS_ID', $originalValues) && $originalValues['STATUS_ID'] == $entity->getField(
+                "STATUS_ID"
+            )) {
             return $result;
         }
 
@@ -346,7 +380,10 @@ class Notify
             $siteData = $cacheSiteData[$entity->getSiteId()];
         }
 
-        if (($statusData = \CSaleStatus::GetByID($entity->getField("STATUS_ID"), $siteData['LANGUAGE_ID'])) && $statusData['NOTIFY'] == "Y") {
+        if (($statusData = \CSaleStatus::GetByID(
+                $entity->getField("STATUS_ID"),
+                $siteData['LANGUAGE_ID']
+            )) && $statusData['NOTIFY'] == "Y") {
             $fields = Array(
                 "ORDER_ID" => $entity->getField("ACCOUNT_NUMBER"),
                 "ORDER_REAL_ID" => $entity->getField("ID"),
@@ -356,7 +393,9 @@ class Notify
                 "ORDER_DESCRIPTION" => $statusData["DESCRIPTION"],
                 "TEXT" => "",
                 "SALE_EMAIL" => Main\Config\Option::get("sale", "order_email", "order@" . $_SERVER["SERVER_NAME"]),
-                "ORDER_PUBLIC_URL" => Helpers\Order::isAllowGuestView($entity) ? Helpers\Order::getPublicLink($entity) : ""
+                "ORDER_PUBLIC_URL" => Helpers\Order::isAllowGuestView($entity) ? Helpers\Order::getPublicLink(
+                    $entity
+                ) : ""
             );
 
             if ($entity->getField("DATE_INSERT") instanceof Main\Type\Date) {
@@ -371,18 +410,19 @@ class Notify
 
             $isSend = true;
             foreach (GetModuleEvents("sale", static::EVENT_ORDER_STATUS_SEND_EMAIL, true) as $oldEvent) {
-                if (ExecuteModuleEventEx($oldEvent, Array($entity->getId(), &$eventName, &$fields, $entity->getField("STATUS_ID"))) === false) {
+                if (ExecuteModuleEventEx(
+                        $oldEvent,
+                        Array($entity->getId(), &$eventName, &$fields, $entity->getField("STATUS_ID"))
+                    ) === false) {
                     $isSend = false;
                 }
             }
 
             if ($isSend) {
-                $b = '';
-                $o = '';
                 $eventMessage = new \CEventMessage;
                 $eventMessageRes = $eventMessage->GetList(
-                    $b,
-                    $o,
+                    '',
+                    '',
                     array(
                         "EVENT_NAME" => $eventName,
                         "SITE_ID" => $entity->getSiteId(),
@@ -399,7 +439,10 @@ class Notify
             }
         }
 
-        \CSaleMobileOrderPush::send(static::EVENT_MOBILE_PUSH_ORDER_STATUS_CHANGE, array("ORDER" => static::getOrderFields($entity)));
+        \CSaleMobileOrderPush::send(
+            static::EVENT_MOBILE_PUSH_ORDER_STATUS_CHANGE,
+            array("ORDER" => static::getOrderFields($entity))
+        );
 
         static::addSentEvent($entity->getId(), $statusEventName);
 
@@ -435,7 +478,9 @@ class Notify
         $fields = $entity->getFields();
         $originalValues = $fields->getOriginalValues();
 
-        if (array_key_exists('STATUS_ID', $originalValues) && $originalValues['STATUS_ID'] == $entity->getField("STATUS_ID")) {
+        if (array_key_exists('STATUS_ID', $originalValues) && $originalValues['STATUS_ID'] == $entity->getField(
+                "STATUS_ID"
+            )) {
             return $result;
         }
 
@@ -443,7 +488,9 @@ class Notify
 
         /** @var ShipmentCollection $shipmentCollection */
         if (!$shipmentCollection = $entity->getCollection()) {
-            $result->addError(new ResultError(Main\Localization\Loc::getMessage("SALE_NOTIFY_SHIPMENT_COLLECTION_NOT_FOUND")));
+            $result->addError(
+                new ResultError(Main\Localization\Loc::getMessage("SALE_NOTIFY_SHIPMENT_COLLECTION_NOT_FOUND"))
+            );
             return $result;
         }
 
@@ -461,19 +508,21 @@ class Notify
             $siteData = $cacheSiteData[$order->getSiteId()];
         }
 
-        $statusData = Internals\StatusTable::getList(array(
-            'select' => array(
-                'ID',
-                'NOTIFY',
-                'NAME' => 'Bitrix\Sale\Internals\StatusLangTable:STATUS.NAME',
-            ),
-            'filter' => array(
-                '=ID' => $entity->getField("STATUS_ID"),
-                '=Bitrix\Sale\Internals\StatusLangTable:STATUS.LID' => $siteData['LANGUAGE_ID'],
-                '=TYPE' => DeliveryStatus::TYPE
-            ),
-            'limit' => 1,
-        ))->fetch();
+        $statusData = Internals\StatusTable::getList(
+            array(
+                'select' => array(
+                    'ID',
+                    'NOTIFY',
+                    'NAME' => 'Bitrix\Sale\Internals\StatusLangTable:STATUS.NAME',
+                ),
+                'filter' => array(
+                    '=ID' => $entity->getField("STATUS_ID"),
+                    '=Bitrix\Sale\Internals\StatusLangTable:STATUS.LID' => $siteData['LANGUAGE_ID'],
+                    '=TYPE' => DeliveryStatus::TYPE
+                ),
+                'limit' => 1,
+            )
+        )->fetch();
 
         if (!empty($statusData) && $statusData['NOTIFY'] == "Y") {
             $isSend = true;
@@ -489,15 +538,19 @@ class Notify
                 "EMAIL" => static::getUserEmail($order),
                 "TEXT" => "",
                 "SALE_EMAIL" => Main\Config\Option::get("sale", "order_email", "order@" . $_SERVER["SERVER_NAME"]),
-                "ORDER_PUBLIC_URL" => Helpers\Order::isAllowGuestView($order) ? Helpers\Order::getPublicLink($order) : ""
+                "ORDER_PUBLIC_URL" => Helpers\Order::isAllowGuestView($order) ? Helpers\Order::getPublicLink(
+                    $order
+                ) : ""
             );
 
             $eventManager = Main\EventManager::getInstance();
             if ($eventsList = $eventManager->findEventHandlers('sale', static::EVENT_SHIPMENT_STATUS_EMAIL)) {
-                $event = new Main\Event('sale', static::EVENT_SHIPMENT_STATUS_EMAIL, array(
+                $event = new Main\Event(
+                    'sale', static::EVENT_SHIPMENT_STATUS_EMAIL, array(
                     'EVENT_NAME' => $statusEventName,
                     'VALUES' => $fields
-                ));
+                )
+                );
                 $event->send();
 
                 if ($event->getResults()) {
@@ -513,7 +566,9 @@ class Notify
                                         $statusEventName = $eventResultParams['EVENT_NAME'];
                                     }
 
-                                    if (!empty($eventResultParams['VALUES']) && is_array($eventResultParams['VALUES'])) {
+                                    if (!empty($eventResultParams['VALUES']) && is_array(
+                                            $eventResultParams['VALUES']
+                                        )) {
                                         $fields = $eventResultParams['VALUES'];
                                     }
                                 }
@@ -524,12 +579,10 @@ class Notify
             }
 
             if ($isSend) {
-                $b = '';
-                $o = '';
                 $eventMessage = new \CEventMessage;
                 $eventMessageRes = $eventMessage->GetList(
-                    $b,
-                    $o,
+                    '',
+                    '',
                     array(
                         "EVENT_NAME" => $statusEventName,
                         "SITE_ID" => $order->getSiteId(),
@@ -542,7 +595,15 @@ class Notify
 
                 unset($o, $b);
                 $event = new \CEvent;
-                $event->Send($statusEventName, $order->getSiteId(), $fields, "Y", "", array(), $siteData['LANGUAGE_ID']);
+                $event->Send(
+                    $statusEventName,
+                    $order->getSiteId(),
+                    $fields,
+                    "Y",
+                    "",
+                    array(),
+                    $siteData['LANGUAGE_ID']
+                );
             }
         }
 
@@ -580,7 +641,9 @@ class Notify
         $fields = $entity->getFields();
         $originalValues = $fields->getOriginalValues();
 
-        if (array_key_exists('STATUS_ID', $originalValues) && $originalValues['STATUS_ID'] == $entity->getField("STATUS_ID")) {
+        if (array_key_exists('STATUS_ID', $originalValues) && $originalValues['STATUS_ID'] == $entity->getField(
+                "STATUS_ID"
+            )) {
             return $result;
         }
 
@@ -593,19 +656,21 @@ class Notify
             $siteData = $cacheSiteData[$entity->getSiteId()];
         }
 
-        $statusData = Internals\StatusTable::getList(array(
-            'select' => array(
-                'ID',
-                'NOTIFY',
-                'NAME' => 'Bitrix\Sale\Internals\StatusLangTable:STATUS.NAME',
-            ),
-            'filter' => array(
-                '=ID' => $entity->getField("STATUS_ID"),
-                '=Bitrix\Sale\Internals\StatusLangTable:STATUS.LID' => $siteData['LANGUAGE_ID'],
-                '=TYPE' => OrderStatus::TYPE
-            ),
-            'limit' => 1,
-        ))->fetch();
+        $statusData = Internals\StatusTable::getList(
+            array(
+                'select' => array(
+                    'ID',
+                    'NOTIFY',
+                    'NAME' => 'Bitrix\Sale\Internals\StatusLangTable:STATUS.NAME',
+                ),
+                'filter' => array(
+                    '=ID' => $entity->getField("STATUS_ID"),
+                    '=Bitrix\Sale\Internals\StatusLangTable:STATUS.LID' => $siteData['LANGUAGE_ID'],
+                    '=TYPE' => OrderStatus::TYPE
+                ),
+                'limit' => 1,
+            )
+        )->fetch();
 
         if (!empty($statusData) && $statusData['NOTIFY'] == "Y") {
             $isSend = true;
@@ -619,15 +684,19 @@ class Notify
                 "EMAIL" => static::getUserEmail($entity),
                 "TEXT" => "",
                 "SALE_EMAIL" => Main\Config\Option::get("sale", "order_email", "order@" . $_SERVER["SERVER_NAME"]),
-                "ORDER_PUBLIC_URL" => Helpers\Order::isAllowGuestView($entity) ? Helpers\Order::getPublicLink($entity) : ""
+                "ORDER_PUBLIC_URL" => Helpers\Order::isAllowGuestView($entity) ? Helpers\Order::getPublicLink(
+                    $entity
+                ) : ""
             );
 
             $eventManager = Main\EventManager::getInstance();
             if ($eventsList = $eventManager->findEventHandlers('sale', static::EVENT_ON_ORDER_ALLOW_PAY_STATUS_EMAIL)) {
-                $event = new Main\Event('sale', static::EVENT_ON_ORDER_ALLOW_PAY_STATUS_EMAIL, array(
+                $event = new Main\Event(
+                    'sale', static::EVENT_ON_ORDER_ALLOW_PAY_STATUS_EMAIL, array(
                     'EVENT_NAME' => $statusEventName,
                     'VALUES' => $fields
-                ));
+                )
+                );
                 $event->send();
 
                 if ($event->getResults()) {
@@ -643,7 +712,9 @@ class Notify
                                         $statusEventName = $eventResultParams['EVENT_NAME'];
                                     }
 
-                                    if (!empty($eventResultParams['VALUES']) && is_array($eventResultParams['VALUES'])) {
+                                    if (!empty($eventResultParams['VALUES']) && is_array(
+                                            $eventResultParams['VALUES']
+                                        )) {
                                         $fields = $eventResultParams['VALUES'];
                                     }
                                 }
@@ -654,12 +725,10 @@ class Notify
             }
 
             if ($isSend) {
-                $b = '';
-                $o = '';
                 $eventMessage = new \CEventMessage;
                 $eventMessageRes = $eventMessage->GetList(
-                    $b,
-                    $o,
+                    '',
+                    '',
                     array(
                         "EVENT_NAME" => $statusEventName,
                         "SITE_ID" => $entity->getSiteId(),
@@ -672,7 +741,15 @@ class Notify
 
                 unset($o, $b);
                 $event = new \CEvent;
-                $event->Send($statusEventName, $entity->getSiteId(), $fields, "Y", "", array(), $siteData['LANGUAGE_ID']);
+                $event->Send(
+                    $statusEventName,
+                    $entity->getSiteId(),
+                    $fields,
+                    "Y",
+                    "",
+                    array(),
+                    $siteData['LANGUAGE_ID']
+                );
             }
         }
 
@@ -700,13 +777,18 @@ class Notify
             throw new Main\ArgumentTypeException('entity', '\Bitrix\Sale\Shipment');
         }
 
-        if (static::hasSentEvent('s' . $entity->getId(), static::EVENT_SHIPMENT_TRACKING_NUMBER_SEND_EMAIL_EVENT_NAME)) {
+        if (static::hasSentEvent(
+            's' . $entity->getId(),
+            static::EVENT_SHIPMENT_TRACKING_NUMBER_SEND_EMAIL_EVENT_NAME
+        )) {
             return $result;
         }
 
         /** @var ShipmentCollection $shipmentCollection */
         if (!$shipmentCollection = $entity->getCollection()) {
-            $result->addError(new ResultError(Main\Localization\Loc::getMessage("SALE_NOTIFY_SHIPMENT_COLLECTION_NOT_FOUND")));
+            $result->addError(
+                new ResultError(Main\Localization\Loc::getMessage("SALE_NOTIFY_SHIPMENT_COLLECTION_NOT_FOUND"))
+            );
             return $result;
         }
 
@@ -720,7 +802,10 @@ class Notify
         $fields = $order->getFields();
         $originalValues = $fields->getOriginalValues();
 
-        if (array_key_exists('ACCOUNT_NUMBER', $originalValues) && $originalValues['ACCOUNT_NUMBER'] == $order->getField("ACCOUNT_NUMBER")) {
+        if (array_key_exists(
+                'ACCOUNT_NUMBER',
+                $originalValues
+            ) && $originalValues['ACCOUNT_NUMBER'] == $order->getField("ACCOUNT_NUMBER")) {
             return $result;
         }
 
@@ -740,7 +825,15 @@ class Notify
         );
 
         $event = new \CEvent;
-        $event->send(static::EVENT_SHIPMENT_TRACKING_NUMBER_SEND_EMAIL_EVENT_NAME, $order->getField("LID"), $emailFields, "Y", "", array(), static::getOrderLanguageId($order));
+        $event->send(
+            static::EVENT_SHIPMENT_TRACKING_NUMBER_SEND_EMAIL_EVENT_NAME,
+            $order->getField("LID"),
+            $emailFields,
+            "Y",
+            "",
+            array(),
+            static::getOrderLanguageId($order)
+        );
 
         static::addSentEvent('s' . $entity->getId(), static::EVENT_SHIPMENT_TRACKING_NUMBER_SEND_EMAIL_EVENT_NAME);
 
@@ -772,7 +865,9 @@ class Notify
 
         /** @var ShipmentCollection $shipmentCollection */
         if (!$shipmentCollection = $entity->getCollection()) {
-            $result->addError(new ResultError(Main\Localization\Loc::getMessage("SALE_NOTIFY_SHIPMENT_COLLECTION_NOT_FOUND")));
+            $result->addError(
+                new ResultError(Main\Localization\Loc::getMessage("SALE_NOTIFY_SHIPMENT_COLLECTION_NOT_FOUND"))
+            );
             return $result;
         }
 
@@ -810,10 +905,21 @@ class Notify
 
         if ($send) {
             $event = new \CEvent;
-            $event->Send($eventName, $order->getField('LID'), $fields, "Y", "", array(), static::getOrderLanguageId($order));
+            $event->Send(
+                $eventName,
+                $order->getField('LID'),
+                $fields,
+                "Y",
+                "",
+                array(),
+                static::getOrderLanguageId($order)
+            );
         }
 
-        \CSaleMobileOrderPush::send(static::EVENT_MOBILE_PUSH_SHIPMENT_ALLOW_DELIVERY, array("ORDER" => static::getOrderFields($order)));
+        \CSaleMobileOrderPush::send(
+            static::EVENT_MOBILE_PUSH_SHIPMENT_ALLOW_DELIVERY,
+            array("ORDER" => static::getOrderFields($order))
+        );
 
         static::addSentEvent('s' . $entity->getId(), static::EVENT_SHIPMENT_DELIVER_SEND_EMAIL_EVENT_NAME);
 
@@ -844,7 +950,9 @@ class Notify
 
         /** @var PaymentCollection|ShipmentCollection $collection */
         if (!$collection = $entity->getCollection()) {
-            $result->addError(new ResultError(Main\Localization\Loc::getMessage("SALE_NOTIFY_ENTITY_COLLECTION_NOT_FOUND")));
+            $result->addError(
+                new ResultError(Main\Localization\Loc::getMessage("SALE_NOTIFY_ENTITY_COLLECTION_NOT_FOUND"))
+            );
             return $result;
         }
 
@@ -864,7 +972,9 @@ class Notify
                 "EMAIL" => static::getUserEmail($order),
                 "SALE_EMAIL" => Main\Config\Option::get("sale", "order_email", "order@" . $_SERVER["SERVER_NAME"]),
                 "CHECK_LINK" => $check['LINK'],
-                "ORDER_PUBLIC_URL" => Helpers\Order::isAllowGuestView($order) ? Helpers\Order::getPublicLink($order) : "",
+                "ORDER_PUBLIC_URL" => Helpers\Order::isAllowGuestView($order) ? Helpers\Order::getPublicLink(
+                    $order
+                ) : "",
                 "LINK_URL" => static::getOrderPersonalDetailLink($order)
             );
 
@@ -973,7 +1083,9 @@ class Notify
 
         /** @var PaymentCollection|ShipmentCollection $collection */
         if (!$collection = $entity->getCollection()) {
-            $result->addError(new ResultError(Main\Localization\Loc::getMessage("SALE_NOTIFY_ENTITY_COLLECTION_NOT_FOUND")));
+            $result->addError(
+                new ResultError(Main\Localization\Loc::getMessage("SALE_NOTIFY_ENTITY_COLLECTION_NOT_FOUND"))
+            );
             return $result;
         }
 
@@ -1021,9 +1133,11 @@ class Notify
             $server = $context->getServer();
 
             if (IsModuleInstalled('crm')) {
-                $fields['LINK_URL'] = 'http://' . $server->getServerName() . '/shop/orders/details/' . $order->getId() . '/';
+                $fields['LINK_URL'] = 'http://' . $server->getServerName() . '/shop/orders/details/' . $order->getId(
+                    ) . '/';
             } else {
-                $fields['LINK_URL'] = 'http://' . $server->getServerName() . '/bitrix/admin/sale_order_view.php?ID=' . $order->getId();
+                $fields['LINK_URL'] = 'http://' . $server->getServerName(
+                    ) . '/bitrix/admin/sale_order_view.php?ID=' . $order->getId();
             }
 
             $eventName = static::EVENT_ON_CHECK_PRINT_ERROR_SEND_EMAIL;
@@ -1044,6 +1158,46 @@ class Notify
                 'CHECK' => $check
             )
         );
+
+        return $result;
+    }
+
+    /**
+     * @param Internals\Entity $order
+     * @return Result
+     * @throws Main\ArgumentNullException
+     * @throws Main\ArgumentOutOfRangeException
+     */
+    public static function sendCheckValidationError(Internals\Entity $order)
+    {
+        $result = new Result();
+
+        if (static::isNotifyDisabled()) {
+            return $result;
+        }
+
+        $context = Main\Context::getCurrent();
+        $server = $context->getServer();
+
+        $fields = array(
+            "ORDER_ID" => $order->getId(),
+            "ORDER_ACCOUNT_NUMBER" => $order->getField("ACCOUNT_NUMBER"),
+            "ORDER_DATE" => $order->getDateInsert()->toString(),
+            "EMAIL" => Main\Config\Option::get("main", "email_from"),
+            "SALE_EMAIL" => Main\Config\Option::get("sale", "order_email", "order@" . $server->getServerName()),
+        );
+
+        if (IsModuleInstalled('crm')) {
+            $fields['LINK_URL'] = 'http://' . $server->getServerName() . '/shop/orders/details/' . $order->getId(
+                ) . '/';
+        } else {
+            $fields['LINK_URL'] = 'http://' . $server->getServerName(
+                ) . '/bitrix/admin/sale_order_view.php?ID=' . $order->getId();
+        }
+
+        $eventName = static::EVENT_ON_CHECK_VALIDATION_ERROR_SEND_EMAIL;
+        $event = new \CEvent;
+        $event->Send($eventName, $order->getField('LID'), $fields, "N");
 
         return $result;
     }
@@ -1077,10 +1231,12 @@ class Notify
         }
 
         if (empty($userEmail)) {
-            $userRes = Main\UserTable::getList(array(
-                'select' => array('ID', 'LOGIN', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'EMAIL'),
-                'filter' => array('=ID' => $order->getUserId()),
-            ));
+            $userRes = Main\UserTable::getList(
+                array(
+                    'select' => array('ID', 'LOGIN', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'EMAIL'),
+                    'filter' => array('=ID' => $order->getUserId()),
+                )
+            );
             if ($userData = $userRes->fetch()) {
                 static::$cacheUserData[$order->getId()] = $userData;
                 $userEmail = $userData['EMAIL'];
@@ -1119,12 +1275,18 @@ class Notify
         }
 
         if (empty($userName)) {
-            $userRes = Main\UserTable::getList(array(
-                'select' => array('ID', 'LOGIN', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'EMAIL'),
-                'filter' => array('=ID' => $order->getUserId()),
-            ));
+            $userRes = Main\UserTable::getList(
+                array(
+                    'select' => array('ID', 'LOGIN', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'EMAIL'),
+                    'filter' => array('=ID' => $order->getUserId()),
+                )
+            );
             if ($userData = $userRes->fetch()) {
-                $userData['PAYER_NAME'] = \CUser::FormatName(\CSite::GetNameFormat(null, $order->getSiteId()), $userData, true);
+                $userData['PAYER_NAME'] = \CUser::FormatName(
+                    \CSite::GetNameFormat(null, $order->getSiteId()),
+                    $userData,
+                    true
+                );
                 static::$cacheUserData[$order->getUserId()]['PAYER_NAME'] = $userData['PAYER_NAME'];
                 $userName = $userData['PAYER_NAME'];
             }
@@ -1189,10 +1351,12 @@ class Notify
             $orderFields = static::convertDateFieldsToOldFormat($orderFields);
         }
 
-        $result->setData(array(
-            'FIELDS' => $fields,
-            'ORDER_FIELDS' => $orderFields,
-        ));
+        $result->setData(
+            array(
+                'FIELDS' => $fields,
+                'ORDER_FIELDS' => $orderFields,
+            )
+        );
 
         return $result;
     }
@@ -1206,7 +1370,8 @@ class Notify
     protected static function getOrderFields(Order $order)
     {
         $fields = $order->getFieldValues();
-        $fields = array_merge($fields,
+        $fields = array_merge(
+            $fields,
             array(
                 'ORDER_ID' => $order->getId(),
                 'ORDER_WEIGHT' => 0,
@@ -1216,7 +1381,8 @@ class Notify
                 'TAX_LIST' => array(),
                 'VAT_RATE' => $order->getVatRate(),
                 'VAT_SUM' => $order->getVatSum(),
-            ));
+            )
+        );
 
         /** @var Basket $basket */
         if ($basket = $order->getBasket()) {
@@ -1383,6 +1549,7 @@ class Notify
     {
         if (!static::hasSentEvent($code, $event)) {
             static::$sentEventList[$code][] = $event;
+
             return true;
         }
 
@@ -1395,11 +1562,11 @@ class Notify
      */
     public static function callNotify(Internals\Entity $entity, $eventName)
     {
-        if (($eventNotifyMap = EventActions::getEventNotifyMap()) && !empty($eventNotifyMap) && is_array($eventNotifyMap)) {
-            if (array_key_exists($eventName, $eventNotifyMap) && !empty($eventNotifyMap[$eventName]) && !empty($eventNotifyMap[$eventName]['METHOD'])) {
-                if ($entity instanceof $eventNotifyMap[$eventName]['ENTITY']) {
-                    call_user_func_array($eventNotifyMap[$eventName]['METHOD'], array($entity));
-                }
+        $eventNotifyMap = EventActions::getEventNotifyMap();
+
+        if (isset($eventNotifyMap[$eventName])) {
+            if ($entity instanceof $eventNotifyMap[$eventName]['ENTITY']) {
+                call_user_func_array($eventNotifyMap[$eventName]['METHOD'], [$entity]);
             }
         }
     }

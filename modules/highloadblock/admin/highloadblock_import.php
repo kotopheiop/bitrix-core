@@ -1,4 +1,5 @@
 <?php
+
 define('ADMIN_MODULE_NAME', 'highloadblock');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_before.php');
 
@@ -67,11 +68,14 @@ function __hlImportPrepareField($value, &$userField, array $params = array())
             } // add new enum
             else {
                 $userFieldEnums = new \CUserFieldEnum;
-                $userFieldEnums->setEnumValues($userField['ID'], array(
-                    'n0' => array(
-                        'VALUE' => $value
+                $userFieldEnums->setEnumValues(
+                    $userField['ID'],
+                    array(
+                        'n0' => array(
+                            'VALUE' => $value
+                        )
                     )
-                ));
+                );
                 $userField['ENUMS'] = __getEnumUserFields($userField['ID'], true);
                 $enums = array_flip($userField['ENUMS']);
                 if (isset($enums[$value])) {
@@ -89,14 +93,18 @@ $hls = array();
 $hlsOriginal = array();
 $hlTables = array();
 $xmlFields = array();
-$res = HL\HighloadBlockTable::getList(array(
-    'select' => array(
-        '*', 'NAME_LANG' => 'LANG.NAME'
-    ),
-    'order' => array(
-        'NAME_LANG' => 'ASC', 'NAME' => 'ASC'
+$res = HL\HighloadBlockTable::getList(
+    array(
+        'select' => array(
+            '*',
+            'NAME_LANG' => 'LANG.NAME'
+        ),
+        'order' => array(
+            'NAME_LANG' => 'ASC',
+            'NAME' => 'ASC'
+        )
     )
-));
+);
 while ($row = $res->fetch()) {
     $hlsOriginal[$row['ID']] = $row;
 
@@ -151,9 +159,9 @@ function __prepareArrayFromXml(array $item, $code = false)
                 $value = array_shift($value);
             }
             if (is_array($value['#'])) {
-                $fields[strtoupper($key)] = __prepareArrayFromXml($value);
+                $fields[mb_strtoupper($key)] = __prepareArrayFromXml($value);
             } else {
-                $fields[strtoupper($key)] = $value['#'];
+                $fields[mb_strtoupper($key)] = $value['#'];
             }
         }
     }
@@ -200,11 +208,11 @@ if (
     $dataExist = false;
     $startTime = time();
     $import = new CXMLFileStream;
-    $filesPath = $server->getDocumentRoot() . substr($NS['url_data_file'], 0, -4) . '_files';
+    $filesPath = $server->getDocumentRoot() . mb_substr($NS['url_data_file'], 0, -4) . '_files';
 
     // get langs
     $langs = array();
-    $res = \CLanguage::GetList($lby = 'sort', $lorder = 'asc');
+    $res = \CLanguage::GetList();
     while ($row = $res->getNext()) {
         $langs[$row['LID']] = $row;
     }
@@ -261,12 +269,14 @@ if (
                 if (!empty($lang)) {
                     $lang['ID'] = $NS['object'];
                     // delete if exist
-                    $res = HL\HighloadBlockLangTable::getList(array(
-                        'filter' => array(
-                            'ID' => $lang['ID'],
-                            'LID' => $lang['LID']
+                    $res = HL\HighloadBlockLangTable::getList(
+                        array(
+                            'filter' => array(
+                                'ID' => $lang['ID'],
+                                'LID' => $lang['LID']
+                            )
                         )
-                    ));
+                    );
                     if ($row = $res->fetch()) {
                         HL\HighloadBlockLangTable::delete($row['ID']);
                     }
@@ -280,7 +290,15 @@ if (
     // import uf
     $import->registerNodeHandler(
         '/hiblock/fields/field',
-        function (CDataXML $xmlObject) use (&$NS, $hlTables, &$userFelds, &$userFieldsEnums, $langs, &$errors, $APPLICATION) {
+        function (CDataXML $xmlObject) use (
+            &$NS,
+            $hlTables,
+            &$userFelds,
+            &$userFieldsEnums,
+            $langs,
+            &$errors,
+            $APPLICATION
+        ) {
             if ($NS['import_hl'] && $NS['object'] && empty($errors)) {
                 $field = __prepareArrayFromXml($xmlObject->GetArray(), 'field');
                 if (!empty($field)) {
@@ -296,14 +314,19 @@ if (
                             }
                         }
                         // set language keys to lowercase
-                        $codes = array('EDIT_FORM_LABEL', 'LIST_COLUMN_LABEL', 'LIST_FILTER_LABEL',
-                            'ERROR_MESSAGE', 'HELP_MESSAGE');
+                        $codes = array(
+                            'EDIT_FORM_LABEL',
+                            'LIST_COLUMN_LABEL',
+                            'LIST_FILTER_LABEL',
+                            'ERROR_MESSAGE',
+                            'HELP_MESSAGE'
+                        );
                         foreach ($codes as $code) {
                             if (isset($field[$code]) && is_array($field[$code])) {
                                 foreach ($langs as $lng => $lang) {
-                                    if ($lng !== strtoupper($lng) && isset($field[$code][strtoupper($lng)])) {
-                                        $field[$code][$lng] = $field[$code][strtoupper($lng)];
-                                        unset($field[$code][strtoupper($lng)]);
+                                    if ($lng !== mb_strtoupper($lng) && isset($field[$code][mb_strtoupper($lng)])) {
+                                        $field[$code][$lng] = $field[$code][mb_strtoupper($lng)];
+                                        unset($field[$code][mb_strtoupper($lng)]);
                                     }
                                 }
                             }
@@ -347,7 +370,15 @@ if (
     // import data
     $import->registerNodeHandler(
         '/hiblock/items/item',
-        function (CDataXML $xmlObject) use (&$NS, $hls, $filesPath, $userFelds, &$errors, $USER_FIELD_MANAGER, $hlsOriginal) {
+        function (CDataXML $xmlObject) use (
+            &$NS,
+            $hls,
+            $filesPath,
+            $userFelds,
+            &$errors,
+            $USER_FIELD_MANAGER,
+            $hlsOriginal
+        ) {
             static $class = null;
             static $hlLocal = null;
             static $userFeldsLocal = null;
@@ -403,11 +434,13 @@ if (
                     }
                     if ($class) {
                         // send event
-                        $event = new \Bitrix\Main\Event(ADMIN_MODULE_NAME, 'onBeforeItemImportAdd', array(
+                        $event = new \Bitrix\Main\Event(
+                            ADMIN_MODULE_NAME, 'onBeforeItemImportAdd', array(
                             'ITEM' => $item,
                             'USER_FIELDS' => $userFelds,
                             'NS' => $NS,
-                        ));
+                        )
+                        );
                         $event->send();
                         foreach ($event->getResults() as $result) {
                             if ($result->getResultType() != \Bitrix\Main\EventResult::ERROR) {
@@ -420,7 +453,10 @@ if (
                             } elseif ($result->getResultType() == \Bitrix\Main\EventResult::ERROR) {
                                 if (($eventErrors = $result->getErrors())) {
                                     foreach ($eventErrors as $error) {
-                                        $errors[] = Loc::getMessage('ADMIN_TOOLS_ERROR_IMPORT_ITEM', array('#ID#' => $item['ID'])) . ' ' . $error->getMessage();
+                                        $errors[] = Loc::getMessage(
+                                                'ADMIN_TOOLS_ERROR_IMPORT_ITEM',
+                                                array('#ID#' => $item['ID'])
+                                            ) . ' ' . $error->getMessage();
                                     }
                                     return;
                                 }
@@ -430,12 +466,15 @@ if (
                         $filesExist = false;
                         foreach ($item as $key => &$value) {
                             if ($key != 'ID' && !isset($userFelds[$key])) {
-                                $errors[] = Loc::getMessage('ADMIN_TOOLS_ERROR_IMPORT_ITEM', array('#ID#' => $item['ID'])) . ' ' .
+                                $errors[] = Loc::getMessage(
+                                        'ADMIN_TOOLS_ERROR_IMPORT_ITEM',
+                                        array('#ID#' => $item['ID'])
+                                    ) . ' ' .
                                     Loc::getMessage('ADMIN_TOOLS_ERROR_IMPORT_ITEM_UNKNOWN', array('#CODE#' => $key));
                                 return;
                             }
-                            if (substr($value, 0, 10) == 'serialize#') {
-                                $value = unserialize(substr($value, 10));
+                            if (mb_substr($value, 0, 10) == 'serialize#') {
+                                $value = unserialize(mb_substr($value, 10));
                             }
                             // get base type
                             $userFelds[$key]['BASE_TYPE'] = '';
@@ -458,11 +497,17 @@ if (
                                 $userFelds[$key],
                                 array(
                                     'path' => $filesPath,
-                                ));
+                                )
+                            );
                             // clear refernces
                             if (!$NS['save_reference']) {
-                                $codeReferences = array('employee', 'hlblock', 'crm',
-                                    'iblock_section', 'iblock_element');
+                                $codeReferences = array(
+                                    'employee',
+                                    'hlblock',
+                                    'crm',
+                                    'iblock_section',
+                                    'iblock_element'
+                                );
                                 if (in_array($userFelds[$key]['USER_TYPE_ID'], $codeReferences)) {
                                     $value = '';
                                 }
@@ -472,11 +517,13 @@ if (
                         // add / update item
                         $exist = false;
                         if ($NS['xml_id'] && isset($item[$NS['xml_id']]) && trim($item[$NS['xml_id']]) != '') {
-                            $exist = $class::getList($a = array(
-                                'filter' => array(
-                                    '=' . $NS['xml_id'] => trim($item[$NS['xml_id']])
+                            $exist = $class::getList(
+                                $a = array(
+                                    'filter' => array(
+                                        '=' . $NS['xml_id'] => trim($item[$NS['xml_id']])
+                                    )
                                 )
-                            ))->fetch();
+                            )->fetch();
                             if ($exist) {
                                 if (isset($item['ID'])) {
                                     unset($item['ID']);
@@ -506,7 +553,10 @@ if (
                             }
                         } else {
                             foreach ($result->getErrorMessages() as $message) {
-                                $errors[] = Loc::getMessage('ADMIN_TOOLS_ERROR_IMPORT_ITEM', array('#ID#' => $item['ID'])) . ' ' . $message;
+                                $errors[] = Loc::getMessage(
+                                        'ADMIN_TOOLS_ERROR_IMPORT_ITEM',
+                                        array('#ID#' => $item['ID'])
+                                    ) . ' ' . $message;
                             }
                         }
                     }
@@ -544,35 +594,43 @@ if (
 
     // show message (error or processing)
     if (!empty($errors)) {
-        \CAdminMessage::ShowMessage(array(
-            'MESSAGE' => Loc::getMessage('ADMIN_TOOLS_ERROR_IMPORT'),
-            'DETAILS' => implode('<br/>', $errors),
-            'HTML' => true,
-            'TYPE' => 'ERROR',
-        ));
+        \CAdminMessage::ShowMessage(
+            array(
+                'MESSAGE' => Loc::getMessage('ADMIN_TOOLS_ERROR_IMPORT'),
+                'DETAILS' => implode('<br/>', $errors),
+                'HTML' => true,
+                'TYPE' => 'ERROR',
+            )
+        );
     } else {
-        $details = Loc::getMessage('ADMIN_TOOLS_PROCESS_PERCENT',
+        $details = Loc::getMessage(
+            'ADMIN_TOOLS_PROCESS_PERCENT',
             array(
                 '#percent#' => $NS['percent'],
                 '#count#' => $NS['count'],
                 '#all#' => $NS['all'],
-            ));
+            )
+        );
         if ($NS['finish']) {
             $details .= '<br/>' . Loc::getMessage('ADMIN_TOOLS_PROCESS_FINAL');
         }
-        \CAdminMessage::ShowMessage(array(
-            'MESSAGE' => Loc::getMessage('ADMIN_TOOLS_PROCESS_IMPORT'),
-            'DETAILS' => $details,
-            'HTML' => true,
-            'TYPE' => 'PROGRESS',
-        ));
-        if ($NS['finish']) {
-            \CAdminMessage::ShowMessage(array(
-                'MESSAGE' => Loc::getMessage('ADMIN_TOOLS_PROCESS_FINISH_DELETE'),
-                'DETAILS' => '',
+        \CAdminMessage::ShowMessage(
+            array(
+                'MESSAGE' => Loc::getMessage('ADMIN_TOOLS_PROCESS_IMPORT'),
+                'DETAILS' => $details,
                 'HTML' => true,
-                'TYPE' => 'ERROR',
-            ));
+                'TYPE' => 'PROGRESS',
+            )
+        );
+        if ($NS['finish']) {
+            \CAdminMessage::ShowMessage(
+                array(
+                    'MESSAGE' => Loc::getMessage('ADMIN_TOOLS_PROCESS_FINISH_DELETE'),
+                    'DETAILS' => '',
+                    'HTML' => true,
+                    'TYPE' => 'ERROR',
+                )
+            );
         }
     }
     echo '<script>CloseWaitWindow();</script>';

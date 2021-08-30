@@ -21,6 +21,7 @@ use Bitrix\Sale\Delivery\ExtraServices;
 use Bitrix\Sale\Internals\ShipmentTable;
 use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\Internals\ServiceRestrictionTable;
+use Bitrix\Sale\Delivery\Services\Base;
 
 Loc::loadMessages(__FILE__);
 
@@ -35,6 +36,7 @@ class Manager
     const SKIP_CHILDREN_PARENT_CHECK = 1;
 
     protected static $handlers = null;
+    protected static $restHandlers = [];
     protected static $cachedFields = array();
 
     /* Directories where we can found handlers */
@@ -52,21 +54,37 @@ class Manager
     {
         $id = intval($deliveryId);
 
-        if ($id <= 0)
+        if ($id <= 0) {
             throw new SystemException("deliveryId");
+        }
 
         if (!isset(self::$cachedFields[$deliveryId]) || !is_array(self::$cachedFields[$deliveryId])) {
             self::$cachedFields[$deliveryId] = array();
 
-            $resSrvParams = Table::getList(array(
-                'filter' => array("=ID" => $deliveryId)
-            ));
+            $resSrvParams = Table::getList(
+                array(
+                    'filter' => array("=ID" => $deliveryId)
+                )
+            );
 
-            if ($srvParams = $resSrvParams->fetch())
+            if ($srvParams = $resSrvParams->fetch()) {
                 self::$cachedFields[$srvParams["ID"]] = $srvParams;
+            }
         }
 
         return self::$cachedFields[$deliveryId];
+    }
+
+    /**
+     * @param array $params
+     * @return \Bitrix\Main\ORM\Query\Result
+     * @throws SystemException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     */
+    public static function getList(array $params = array()): \Bitrix\Main\ORM\Query\Result
+    {
+        return Table::getList($params);
     }
 
     /**
@@ -74,25 +92,32 @@ class Manager
      * @param int $restrictionMode MODE_CLIENT or MODE_MANAGER from Restrictions\Manager.
      * @return Base[] delivery services objects
      */
-    public static function getRestrictedObjectsList(Shipment $shipment, $restrictionMode = Restrictions\Manager::MODE_CLIENT)
-    {
+    public static function getRestrictedObjectsList(
+        Shipment $shipment,
+        $restrictionMode = Restrictions\Manager::MODE_CLIENT
+    ) {
         $result = array();
         $services = self::getRestrictedList($shipment, $restrictionMode);
 
         foreach ($services as $srvParams) {
-            if ($srvParams["CLASS_NAME"]::canHasProfiles())
+            if ($srvParams["CLASS_NAME"]::canHasProfiles()) {
                 continue;
+            }
 
-            if (is_callable($srvParams["CLASS_NAME"] . "::canHasChildren") && $srvParams["CLASS_NAME"]::canHasChildren())
+            if (is_callable($srvParams["CLASS_NAME"] . "::canHasChildren") && $srvParams["CLASS_NAME"]::canHasChildren(
+                )) {
                 continue;
+            }
 
             $service = self::getPooledObject($srvParams);
 
-            if (!$service)
+            if (!$service) {
                 continue;
+            }
 
-            if (!$service->isCompatible($shipment))
+            if (!$service->isCompatible($shipment)) {
                 continue;
+            }
 
             if ($shipment->getCurrency() != $service->getCurrency()) {
                 $service->getExtraServices()->setOperationCurrency(
@@ -113,8 +138,9 @@ class Manager
      */
     public static function isServiceExist($deliveryId)
     {
-        if (intval($deliveryId) <= 0)
+        if (intval($deliveryId) <= 0) {
             return false;
+        }
 
         $srv = self::getById($deliveryId);
         return !empty($srv);
@@ -189,62 +215,76 @@ class Manager
             $profilesParentsIds = array();
 
             while ($service = $dbRes->fetch()) {
-                if (!is_subclass_of($service["CLASS_NAME"], 'Bitrix\Sale\Delivery\Services\Base'))
+                if (!is_subclass_of($service["CLASS_NAME"], 'Bitrix\Sale\Delivery\Services\Base')) {
                     continue;
+                }
 
-                if (!$service['RESTRICTIONS_EXIST'])
+                if (!$service['RESTRICTIONS_EXIST']) {
                     $DontHaveRestrictionsIds[] = $service['ID'];
+                }
 
-                if ($service["CLASS_NAME"]::canHasChildren())
+                if ($service["CLASS_NAME"]::canHasChildren()) {
                     $canHasChildren[$service["ID"]] = true;
+                }
 
-                if ($service['CLASS_NAME']::canHasProfiles())
+                if ($service['CLASS_NAME']::canHasProfiles()) {
                     $canHasProfiles[$service["ID"]] = true;
+                }
 
-                if ($service["PARENT_ID"] != 0)
+                if ($service["PARENT_ID"] != 0) {
                     $profilesParentsIds[$service["PARENT_ID"]] = $service['ID'];
+                }
 
                 $result[$service["ID"]] = $service;
 
-                if ($service['ACTIVE'] == 'Y')
+                if ($service['ACTIVE'] == 'Y') {
                     $activeIds[$service["ID"]] = $service["ID"];
+                }
             }
 
-            foreach (array_diff_key($canHasProfiles, $profilesParentsIds) as $id => $tmp)
+            foreach (array_diff_key($canHasProfiles, $profilesParentsIds) as $id => $tmp) {
                 unset($result[$id]);
+            }
 
             self::$cachedFields = self::$cachedFields + $result;
             Restrictions\Manager::prepareData(array_keys($result));
             ExtraServices\Manager::prepareData(array_keys($result));
 
             //selected all active
-            if (!$isDataPrepared && empty($unPreparedRestrictedIds))
+            if (!$isDataPrepared && empty($unPreparedRestrictedIds)) {
                 $isDataPrepared = true;
+            }
         }
 
-        if (is_array($restrictedIds) && !empty($restrictedIds))
+        if (is_array($restrictedIds) && !empty($restrictedIds)) {
             $storedIds = array_diff($restrictedIds, $unPreparedRestrictedIds);
-        else
+        } else {
             $storedIds = array();
+        }
 
         if (!empty($storedIds) && is_array($storedIds)) {
             foreach ($storedIds as $storedId) {
-                if (empty(self::$cachedFields[$storedId]))
+                if (empty(self::$cachedFields[$storedId])) {
                     continue;
+                }
 
                 $service = self::$cachedFields[$storedId];
 
-                if (!class_exists($service["CLASS_NAME"]))
+                if (!class_exists($service["CLASS_NAME"])) {
                     continue;
+                }
 
-                if ($service["CLASS_NAME"]::canHasChildren())
+                if ($service["CLASS_NAME"]::canHasChildren()) {
                     $canHasChildren[$storedId] = true;
+                }
 
-                if ($service['CLASS_NAME']::canHasProfiles())
+                if ($service['CLASS_NAME']::canHasProfiles()) {
                     $canHasProfiles[$storedId] = true;
+                }
 
-                if ($service['ACTIVE'] == 'Y')
+                if ($service['ACTIVE'] == 'Y') {
                     $activeIds[$storedId] = $storedId;
+                }
             }
         }
 
@@ -253,8 +293,9 @@ class Manager
         if (is_array($restrictedIds)) {
             $result = array_intersect_key($active, array_flip($DontHaveRestrictionsIds));
 
-            if (!empty($restrictedIds))
+            if (!empty($restrictedIds)) {
                 $result = $result + array_intersect_key($active, array_flip($restrictedIds));
+            }
         } else {
             $result = $active;
         }
@@ -266,18 +307,22 @@ class Manager
          */
 
         foreach ($result as $id => $fields) {
-            if (intval($fields['PARENT_ID']) <= 0)
+            if (intval($fields['PARENT_ID']) <= 0) {
                 continue;
+            }
 
-            if (empty($result[$fields['PARENT_ID']]))
+            if (empty($result[$fields['PARENT_ID']])) {
                 unset($result[$id]);
+            }
         }
 
-        if ($calculatingOnly)
+        if ($calculatingOnly) {
             $result = array_diff_key($result, $canHasChildren, $canHasProfiles);
+        }
 
-        if (!empty($result))
+        if (!empty($result)) {
             sortByColumn($result, array("SORT" => SORT_ASC, "NAME" => SORT_ASC), '', null, true);
+        }
 
         return $result;
     }
@@ -307,16 +352,23 @@ class Manager
         foreach ($services as $srvParams) {
             $srvParams["RESTRICTED"] = false;
 
-            if (!in_array(self::SKIP_PROFILE_PARENT_CHECK, $skipChecks))
-                if ($srvParams["CLASS_NAME"]::canHasProfiles())
+            if (!in_array(self::SKIP_PROFILE_PARENT_CHECK, $skipChecks)) {
+                if ($srvParams["CLASS_NAME"]::canHasProfiles()) {
                     continue;
+                }
+            }
 
-            if (!in_array(self::SKIP_CHILDREN_PARENT_CHECK, $skipChecks))
-                if (is_callable($srvParams["CLASS_NAME"] . "::canHasChildren") && $srvParams["CLASS_NAME"]::canHasChildren())
+            if (!in_array(self::SKIP_CHILDREN_PARENT_CHECK, $skipChecks)) {
+                if (is_callable(
+                        $srvParams["CLASS_NAME"] . "::canHasChildren"
+                    ) && $srvParams["CLASS_NAME"]::canHasChildren()) {
                     continue;
+                }
+            }
 
-            if (isset($restrictedSrvIds[$srvParams["ID"]]) && $restrictedSrvIds[$srvParams["ID"]] == Restrictions\Manager::SEVERITY_SOFT)
+            if (isset($restrictedSrvIds[$srvParams["ID"]]) && $restrictedSrvIds[$srvParams["ID"]] == Restrictions\Manager::SEVERITY_SOFT) {
                 $srvParams["RESTRICTED"] = true;
+            }
 
             $result[$srvParams["ID"]] = $srvParams;
         }
@@ -333,34 +385,37 @@ class Manager
     public static function createObject(array $srvParams)
     {
         self::initHandlers();
-        $errorMsg = "";
+        $errorMsg = '';
         $service = null;
 
-        if (!isset($srvParams["PARENT_ID"]))
-            $srvParams["PARENT_ID"] = 0;
-
-        if (class_exists($srvParams['CLASS_NAME'])) {
-            try {
-                $service = new $srvParams['CLASS_NAME']($srvParams);
-            } catch (SystemException $e) {
-                $errorMsg = $e->getMessage();
-            }
-
-            if ($service && !($service instanceof Base))
-                $errorMsg = "Can't create delivery object. Class " . $srvParams['CLASS_NAME'] . ' is not the instance of Bitrix\Sale\DeliveryService';
-        } else {
-            $errorMsg = "Can't create delivery object. Class \"" . $srvParams['CLASS_NAME'] . "\" does not exist.";
+        if (!isset($srvParams['PARENT_ID'])) {
+            $srvParams['PARENT_ID'] = 0;
         }
 
-        if (strlen($errorMsg) > 0) {
-            $eventLog = new \CEventLog;
-            $eventLog->Add(array(
-                "SEVERITY" => $eventLog::SEVERITY_ERROR,
-                "AUDIT_TYPE_ID" => "SALE_DELIVERY_CREATE_OBJECT_ERROR",
-                "MODULE_ID" => "sale",
-                "ITEM_ID" => 'createObject()',
-                "DESCRIPTION" => $errorMsg . " Fields: " . serialize($srvParams),
-            ));
+        if (class_exists($srvParams['CLASS_NAME'])) {
+            if (is_subclass_of($srvParams['CLASS_NAME'], Base::class)) {
+                try {
+                    $service = new $srvParams['CLASS_NAME']($srvParams);
+                } catch (SystemException $err) {
+                    $errorMsg = $err->getMessage();
+                }
+            } else {
+                $errorMsg = 'Class "' . $srvParams['CLASS_NAME'] . '" is not subclass of of Bitrix\Sale\Delivery\Services\Base';
+            }
+        } else {
+            $errorMsg = 'Can\'t create delivery object. Class "' . $srvParams['CLASS_NAME'] . '" does not exist.';
+        }
+
+        if ($errorMsg !== '') {
+            static::log(
+                [
+                    'SEVERITY' => \CEventLog::SEVERITY_ERROR,
+                    'AUDIT_TYPE_ID' => 'SALE_DELIVERY_CREATE_OBJECT_ERROR',
+                    'MODULE_ID' => 'sale',
+                    'ITEM_ID' => 'createObject()',
+                    'DESCRIPTION' => $errorMsg . ' Fields: ' . serialize($srvParams),
+                ]
+            );
 
             return null;
         }
@@ -368,10 +423,16 @@ class Manager
         return $service;
     }
 
+    protected static function log(array $params): void
+    {
+        \CEventLog::Add($params);
+    }
+
     public static function getPooledObject(array $fields)
     {
-        if (self::$objectsPool === null)
+        if (self::$objectsPool === null) {
             self::$objectsPool = new ObjectPool();
+        }
 
         return self::$objectsPool->getObject($fields);
     }
@@ -384,13 +445,15 @@ class Manager
      */
     public static function getObjectById($deliveryId)
     {
-        if (intval($deliveryId) <= 0)
+        if (intval($deliveryId) <= 0) {
             throw new ArgumentNullException("deliveryId");
+        }
 
         $srvParams = self::getById($deliveryId);
 
-        if (empty($srvParams))
+        if (empty($srvParams)) {
             return null;
+        }
 
         return self::getPooledObject($srvParams);
     }
@@ -404,8 +467,9 @@ class Manager
      */
     public static function getObjectByCode($serviceCode)
     {
-        if (strlen($serviceCode) <= 0)
+        if ($serviceCode == '') {
             throw new ArgumentNullException("serviceCode");
+        }
 
         $srvParams = array();
 
@@ -416,12 +480,15 @@ class Manager
         }
 
         if (empty($srvParams)) {
-            $resSrvParams = Table::getList(array(
-                'filter' => array('=CODE' => $serviceCode)
-            ));
+            $resSrvParams = Table::getList(
+                array(
+                    'filter' => array('=CODE' => $serviceCode)
+                )
+            );
 
-            if (!($srvParams = $resSrvParams->fetch()))
+            if (!($srvParams = $resSrvParams->fetch())) {
                 throw new SystemException("Can't get delivery service data with code: \"" . $serviceCode . "\"");
+            }
 
             self::$cachedFields[$srvParams['ID']] = $srvParams;
         }
@@ -438,12 +505,17 @@ class Manager
      */
     protected static function initHandlers()
     {
-        if (self::$handlers !== null)
+        if (self::$handlers !== null) {
             return true;
+        }
 
         self::$handlersDirectories = array(
             'LOCAL' => '/local/php_interface/include/sale_delivery/',
-            'CUSTOM' => Option::get('sale', 'delivery_handles_custom_path', BX_PERSONAL_ROOT . '/php_interface/include/sale_delivery/'),
+            'CUSTOM' => Option::get(
+                'sale',
+                'delivery_handles_custom_path',
+                BX_PERSONAL_ROOT . '/php_interface/include/sale_delivery/'
+            ),
             'SYSTEM' => '/bitrix/modules/sale/handlers/delivery/'
         );
 
@@ -452,7 +524,7 @@ class Manager
             '\Bitrix\Sale\Delivery\Services\Automatic' => 'lib/delivery/services/automatic.php',
             '\Bitrix\Sale\Delivery\Services\Configurable' => 'lib/delivery/services/configurable.php',
             '\Bitrix\Sale\Delivery\Services\AutomaticProfile' => 'lib/delivery/services/automatic_profile.php',
-            '\Bitrix\Sale\Delivery\Services\EmptyDeliveryService' => 'lib/delivery/services/emptydeliveryservice.php'
+            '\Bitrix\Sale\Delivery\Services\EmptyDeliveryService' => 'lib/delivery/services/emptydeliveryservice.php',
         );
 
         \Bitrix\Main\Loader::registerAutoLoadClasses('sale', $result);
@@ -483,13 +555,15 @@ class Manager
 
             foreach ($resultList as $eventResult) {
                 /** @var  \Bitrix\Main\EventResult $eventResult */
-                if ($eventResult->getType() != EventResult::SUCCESS)
+                if ($eventResult->getType() != EventResult::SUCCESS) {
                     continue;
+                }
 
                 $params = $eventResult->getParameters();
 
-                if (!empty($params) && is_array($params))
+                if (!empty($params) && is_array($params)) {
                     $customClasses = array_merge($customClasses, $params);
+                }
             }
 
             if (!empty($customClasses)) {
@@ -507,10 +581,10 @@ class Manager
 
         self::$handlers = array_keys($result);
 
-        /**
-         * @var \Bitrix\Sale\Delivery\Services\Base $handler
-         */
-        foreach (self::$handlers as $idx => $handler) {
+        for ($idx = count(self::$handlers) - 1; $idx >= 0; $idx--) {
+            /** @var \Bitrix\Sale\Delivery\Services\Base $handler */
+            $handler = self::$handlers[$idx];
+
             if (!$handler::isHandlerCompatible()) {
                 unset(self::$handlers[$idx]);
                 continue;
@@ -537,22 +611,25 @@ class Manager
         foreach (self::$handlersDirectories as $handlersDirectory) {
             $dirPath = $_SERVER['DOCUMENT_ROOT'] . $handlersDirectory;
 
-            if (!Directory::isDirectoryExists($dirPath))
+            if (!Directory::isDirectoryExists($dirPath)) {
                 continue;
+            }
 
             $dir = new Directory($_SERVER['DOCUMENT_ROOT'] . $handlersDirectory);
 
             foreach ($dir->getChildren() as $handler) {
-                if (!$handler->isDirectory())
+                if (!$handler->isDirectory()) {
                     continue;
+                }
 
                 /** @var Directory $handler */
 
                 $handlerDir = $handler->getPath();
                 $handlerPath = $handlerDir . '/handler.php';
 
-                if (!File::isFileExists($handlerPath))
+                if (!File::isFileExists($handlerPath)) {
                     continue;
+                }
 
                 $handlerClassName = ucfirst($handler->getName() . 'Handler');
                 $fullClassName = '\Sale\Handlers\Delivery\\' . $handlerClassName;
@@ -570,10 +647,35 @@ class Manager
      */
     public static function getHandlersList()
     {
-        if (self::$handlers === null)
+        if (self::$handlers === null) {
             self::initHandlers();
+        }
 
         return self::$handlers;
+    }
+
+    /**
+     * @return array|null
+     * @throws SystemException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     */
+    public static function getRestHandlerList(): ?array
+    {
+        static $init = false;
+        if (!$init) {
+            $init = true;
+            $restHandlerList = \Bitrix\Sale\Delivery\Rest\Internals\DeliveryRestHandlerTable::getList(
+                [
+                    'select' => ['ID', 'NAME', 'CODE', 'SORT', 'DESCRIPTION', 'SETTINGS', 'PROFILES'],
+                ]
+            )->fetchAll();
+            foreach ($restHandlerList as $restHandler) {
+                self::$restHandlers[$restHandler['CODE']] = $restHandler;
+            }
+        }
+
+        return self::$restHandlers;
     }
 
     /**
@@ -586,8 +688,9 @@ class Manager
      */
     public static function calculateDeliveryPrice(Shipment $shipment, $deliveryId = 0, $extraServices = array())
     {
-        if ($deliveryId <= 0)
+        if ($deliveryId <= 0) {
             $deliveryId = $shipment->getDeliveryId();
+        }
 
         $delivery = self::getObjectById($deliveryId);
 
@@ -611,27 +714,32 @@ class Manager
      */
     public static function getGroupId($name)
     {
-        $res = Table::getList(array(
-            'select' => array("ID"),
-            'filter' => array(
-                "=NAME" => $name,
-                "=CLASS_NAME" => '\Bitrix\Sale\Delivery\Services\Group'
+        $res = Table::getList(
+            array(
+                'select' => array("ID"),
+                'filter' => array(
+                    "=NAME" => $name,
+                    "=CLASS_NAME" => '\Bitrix\Sale\Delivery\Services\Group'
+                )
             )
-        ));
+        );
 
         if ($group = $res->fetch()) {
             $result = $group["ID"];
         } else {
-            $res = self::add(array(
-                "NAME" => $name,
-                "CLASS_NAME" => '\Bitrix\Sale\Delivery\Services\Group',
-                "ACTIVE" => "Y"
-            ));
+            $res = self::add(
+                array(
+                    "NAME" => $name,
+                    "CLASS_NAME" => '\Bitrix\Sale\Delivery\Services\Group',
+                    "ACTIVE" => "Y"
+                )
+            );
 
-            if ($res->isSuccess())
+            if ($res->isSuccess()) {
                 $result = $res->getId();
-            else
+            } else {
                 throw new SystemException(implode("<br>\n", $res->getErrorMessages()));
+            }
         }
 
         return $result;
@@ -675,14 +783,25 @@ class Manager
     public static function add(array $fields)
     {
         self::initHandlers();
+
+        if (!empty($fields["CLASS_NAME"])) {
+            /** @var \Bitrix\Main\Result $onBeforeAddResult */
+            $onBeforeAddResult = $fields["CLASS_NAME"]::onBeforeAdd($fields);
+            if (!$onBeforeAddResult->isSuccess()) {
+                return (new AddResult())->addErrors($onBeforeAddResult->getErrors());
+            }
+        }
+
         $res = \Bitrix\Sale\Delivery\Services\Table::add($fields);
 
         if ($res->isSuccess()) {
-            if (!empty($fields["CLASS_NAME"]))
+            if (!empty($fields["CLASS_NAME"])) {
                 $fields["CLASS_NAME"]::onAfterAdd($res->getId(), $fields);
+            }
 
-            if (!empty($fields['CODE']))
+            if (!empty($fields['CODE'])) {
                 self::setIdCodeCached($res->getId(), $fields['CODE']);
+            }
         }
 
         return $res;
@@ -711,11 +830,13 @@ class Manager
         $res = \Bitrix\Sale\Delivery\Services\Table::update($id, $fields);
 
         if ($res->isSuccess()) {
-            if (!empty($fields["CLASS_NAME"]) && class_exists($fields["CLASS_NAME"]))
+            if (!empty($fields["CLASS_NAME"]) && class_exists($fields["CLASS_NAME"])) {
                 $fields["CLASS_NAME"]::onAfterUpdate($res->getId(), $fields);
+            }
 
-            if (isset($fields['CODE']))
+            if (isset($fields['CODE'])) {
                 self::cleanIdCodeCached($id);
+            }
         }
 
         return $res;
@@ -732,22 +853,26 @@ class Manager
      */
     public static function delete($id)
     {
-        if (intval($id) <= 0)
+        if (intval($id) <= 0) {
             throw new ArgumentNullException('id');
+        }
 
         $res = self::checkServiceUsage($id);
 
-        if (!$res->isSuccess())
+        if (!$res->isSuccess()) {
             return $res;
+        }
 
         self::initHandlers();
 
-        $res = Table::getList(array(
-            'filter' => array(
-                'ID' => $id
-            ),
-            'select' => array('ID', 'CLASS_NAME', 'LOGOTIP')
-        ));
+        $res = Table::getList(
+            array(
+                'filter' => array(
+                    'ID' => $id
+                ),
+                'select' => array('ID', 'CLASS_NAME', 'LOGOTIP')
+            )
+        );
 
         $className = '';
         $logotip = 0;
@@ -760,13 +885,15 @@ class Manager
         $res = \Bitrix\Sale\Delivery\Services\Table::delete($id);
 
         if ($res->isSuccess()) {
-            if (!empty($className) && class_exists($className))
+            if (!empty($className) && class_exists($className)) {
                 $className::onAfterDelete($id);
+            }
 
             self::deleteRelatedEntities($id);
 
-            if ($logotip > 0)
+            if ($logotip > 0) {
                 \CFile::Delete($logotip);
+            }
         }
 
         return $res;
@@ -783,8 +910,9 @@ class Manager
     {
         static $result = null;
 
-        if ($result !== null)
+        if ($result !== null) {
             return $result;
+        }
 
         $result = array();
         $handlers = self::getHandlersList();
@@ -795,17 +923,20 @@ class Manager
             $tmpCons = $handlerClassName::onGetBusinessValueConsumers();
 
             /** @var string $handlerClassName */
-            if (!empty($tmpCons))
+            if (!empty($tmpCons)) {
                 $consumers[$handlerClassName] = $tmpCons;
+            }
         }
 
-        $res = Table::getList(array(
-            'filter' => array(
-                '=CLASS_NAME' => array_keys($consumers),
-                '=ACTIVE' => 'Y'
-            ),
-            'select' => array('ID', 'CLASS_NAME', 'NAME')
-        ));
+        $res = Table::getList(
+            array(
+                'filter' => array(
+                    '=CLASS_NAME' => array_keys($consumers),
+                    '=ACTIVE' => 'Y'
+                ),
+                'select' => array('ID', 'CLASS_NAME', 'NAME')
+            )
+        );
 
         while ($dlv = $res->fetch()) {
             $result['DELIVERY_' . $dlv['ID']] = $consumers[$dlv['CLASS_NAME']];
@@ -824,8 +955,9 @@ class Manager
         $handlers = self::getHandlersList();
 
         /** @var Base $handlerClassName */
-        foreach ($handlers as $handlerClassName)
+        foreach ($handlers as $handlerClassName) {
             $result = array_merge($result, $handlerClassName::onGetBusinessValueGroups());
+        }
 
         return $result;
     }
@@ -839,21 +971,25 @@ class Manager
      */
     public static function setChildrenFieldsValues($id, array $fields)
     {
-        if (empty($fields))
+        if (empty($fields)) {
             return 0;
+        }
 
         $counter = 0;
 
-        $res = Table::getList(array(
-            'filter' => array('PARENT_ID' => $id),
-            'select' => array('ID')
-        ));
+        $res = Table::getList(
+            array(
+                'filter' => array('PARENT_ID' => $id),
+                'select' => array('ID')
+            )
+        );
 
         while ($child = $res->fetch()) {
             $ures = self::update($child['ID'], $fields);
 
-            if ($ures->isSuccess())
+            if ($ures->isSuccess()) {
                 $counter++;
+            }
 
             $counter += self::setChildrenFieldsValues($child['ID'], $fields);
         }
@@ -869,8 +1005,9 @@ class Manager
     {
         $result = self::getIdCodeCached($code, "code");
 
-        if ($result !== false)
+        if ($result !== false) {
             return $result;
+        }
 
         foreach (self::$cachedFields as $id => $srv) {
             if ($srv['CODE'] == $code) {
@@ -879,11 +1016,13 @@ class Manager
         }
 
         if (intval($result) <= 0) {
-            $res = Table::getList(array(
-                'filter' => array(
-                    '=CODE' => $code
+            $res = Table::getList(
+                array(
+                    'filter' => array(
+                        '=CODE' => $code
+                    )
                 )
-            ));
+            );
 
             if ($handler = $res->fetch()) {
                 $result = $handler["ID"];
@@ -905,8 +1044,9 @@ class Manager
     {
         $result = self::getIdCodeCached($id, "id");
 
-        if ($result !== false)
+        if ($result !== false) {
             return $result;
+        }
 
         $srv = self::getById($id);
 
@@ -928,8 +1068,9 @@ class Manager
         $cacheId = "SALE_DELIVERY_ID_CODE_MAP_" . ($type == "id" ? "I" : "C") . "_" . $value;
         $cacheManager = \Bitrix\Main\Application::getInstance()->getManagedCache();
 
-        if ($cacheManager->read($ttl, $cacheId))
+        if ($cacheManager->read($ttl, $cacheId)) {
             $result = $cacheManager->get($cacheId);
+        }
 
         return $result;
     }
@@ -956,8 +1097,9 @@ class Manager
         $code = self::getIdCodeCached($id, "id");
         $cacheManager->clean("SALE_DELIVERY_ID_CODE_MAP_I_" . $id);
 
-        if (strlen($code) > 0)
+        if ($code <> '') {
             $cacheManager->clean("SALE_DELIVERY_ID_CODE_MAP_C_" . $code);
+        }
     }
 
     /**
@@ -967,18 +1109,21 @@ class Manager
      */
     protected static function isDeliveryInShipments($deliveryId)
     {
-        $res = ShipmentTable::getList(array(
-            'filter' => array(
-                "=DELIVERY_ID" => $deliveryId,
-                "=SYSTEM" => "N"
-            ),
-            'select' => array("ID")
-        ));
+        $res = ShipmentTable::getList(
+            array(
+                'filter' => array(
+                    "=DELIVERY_ID" => $deliveryId,
+                    "=SYSTEM" => "N"
+                ),
+                'select' => array("ID")
+            )
+        );
 
-        if ($res->fetch())
+        if ($res->fetch()) {
             $result = true;
-        else
+        } else {
             $result = false;
+        }
 
         return $result;
     }
@@ -996,12 +1141,14 @@ class Manager
         if (self::isDeliveryInShipments($deliveryId)) {
             $result->addError(new Error(Loc::getMessage('SALE_DLVR_MNGR_ERR_DEL_IN_SHPMNTS_EXIST')));
         } else {
-            $dbRes = Table::getList(array(
-                'filter' => array(
-                    "PARENT_ID" => $deliveryId
-                ),
-                'select' => array("ID")
-            ));
+            $dbRes = Table::getList(
+                array(
+                    'filter' => array(
+                        "PARENT_ID" => $deliveryId
+                    ),
+                    'select' => array("ID")
+                )
+            );
 
             while ($child = $dbRes->fetch()) {
                 if (self::isDeliveryInShipments($child["ID"])) {
@@ -1027,20 +1174,30 @@ class Manager
         $con = \Bitrix\Main\Application::getConnection();
         $deliveryId = (int)$deliveryId;
 
-        $con->queryExecute("DELETE FROM b_sale_service_rstr WHERE SERVICE_ID=" . $deliveryId);
+        $con->queryExecute(
+            "
+			DELETE FROM b_sale_service_rstr
+			WHERE
+			    SERVICE_ID = " . $deliveryId . "
+			    AND SERVICE_TYPE = " . (int)Restrictions\Manager::SERVICE_TYPE_SHIPMENT . "
+		"
+        );
         $con->queryExecute("DELETE FROM b_sale_delivery2location WHERE DELIVERY_ID=" . $deliveryId);
         $con->queryExecute("DELETE FROM b_sale_delivery2paysystem WHERE DELIVERY_ID=" . $deliveryId);
         $con->queryExecute("DELETE FROM b_sale_delivery_es WHERE DELIVERY_ID=" . $deliveryId);
 
-        $dbRes = Table::getList(array(
-            'filter' => array(
-                "PARENT_ID" => $deliveryId
-            ),
-            'select' => array("ID")
-        ));
+        $dbRes = Table::getList(
+            array(
+                'filter' => array(
+                    "PARENT_ID" => $deliveryId
+                ),
+                'select' => array("ID")
+            )
+        );
 
-        while ($child = $dbRes->fetch())
+        while ($child = $dbRes->fetch()) {
             self::delete($child["ID"]);
+        }
 
         self::cleanIdCodeCached($deliveryId);
         return true;
@@ -1069,19 +1226,23 @@ class Manager
      */
     public static function checkServiceRestriction($deliveryId, $checkParams, $restrictionClassName)
     {
-        if (empty($deliveryId))
+        if (empty($deliveryId)) {
             throw new ArgumentNullException("deliveryId");
+        }
 
-        if (!is_array($deliveryId))
+        if (!is_array($deliveryId)) {
             $deliveryId = array($deliveryId);
+        }
 
-        $dbRstrRes = ServiceRestrictionTable::getList(array(
-            'filter' => array(
-                '=SERVICE_ID' => $deliveryId,
-                '=SERVICE_TYPE' => Restrictions\Manager::SERVICE_TYPE_SHIPMENT,
-                '=CLASS_NAME' => $restrictionClassName
+        $dbRstrRes = ServiceRestrictionTable::getList(
+            array(
+                'filter' => array(
+                    '=SERVICE_ID' => $deliveryId,
+                    '=SERVICE_TYPE' => Restrictions\Manager::SERVICE_TYPE_SHIPMENT,
+                    '=CLASS_NAME' => $restrictionClassName
+                )
             )
-        ));
+        );
 
         $tmp = array();
         /** @var Restrictions\Base $restriction */
@@ -1092,14 +1253,17 @@ class Manager
             $tmp[$rstFields['SERVICE_ID']] = $restriction->check($checkParams, $rstParams, $rstFields['SERVICE_ID']);
         }
 
-        if (count($deliveryId) == 1)
+        if (count($deliveryId) == 1) {
             return current($tmp);
+        }
 
         $result = array();
 
-        foreach ($deliveryId as $id)
-            if (!isset($tmp[$id]) || (isset($tmp[$id]) && $tmp[$id] == true))
+        foreach ($deliveryId as $id) {
+            if (!isset($tmp[$id]) || (isset($tmp[$id]) && $tmp[$id] == true)) {
                 $result[] = $id;
+            }
+        }
 
         return $result;
     }
@@ -1112,16 +1276,19 @@ class Manager
      */
     public static function isDeliveryServiceClassValid($class)
     {
-        if (strlen($class) <= 0)
+        if ($class == '') {
             return false;
+        }
 
         self::initHandlers();
 
-        if (!class_exists($class))
+        if (!class_exists($class)) {
             return false;
+        }
 
-        if (!is_subclass_of($class, 'Bitrix\Sale\Delivery\Services\Base'))
+        if (!is_subclass_of($class, 'Bitrix\Sale\Delivery\Services\Base')) {
             return false;
+        }
 
         return true;
     }
@@ -1144,18 +1311,21 @@ class Manager
      */
     public static function getRestrictionObject($className)
     {
-        if (!class_exists($className))
+        if (!class_exists($className)) {
             throw new SystemException("Can't find class: " . $className);
+        }
 
         static $cache = array();
 
-        if (isset($cache[$className]))
+        if (isset($cache[$className])) {
             return $cache[$className];
+        }
 
         $restriction = new $className;
 
-        if (!is_subclass_of($className, 'Bitrix\Sale\Services\Base\Restriction'))
+        if (!is_subclass_of($className, 'Bitrix\Sale\Services\Base\Restriction')) {
             throw new SystemException('Object must be the instance of Bitrix\Sale\Services\Base\Restriction');
+        }
 
         $cache[$className] = $restriction;
         return $restriction;
@@ -1164,8 +1334,11 @@ class Manager
     /**
      * @deprecated use Restrictions\Manager::checkService()
      */
-    public static function checkServiceRestrictions($deliveryId, Shipment $shipment, $restrictionsClassesToSkip = array())
-    {
+    public static function checkServiceRestrictions(
+        $deliveryId,
+        Shipment $shipment,
+        $restrictionsClassesToSkip = array()
+    ) {
         return Restrictions\Manager::checkService($deliveryId, $shipment) == Restrictions\Manager::SEVERITY_NONE;
     }
 
@@ -1196,8 +1369,11 @@ class Manager
     /**
      * @deprecated use \Bitrix\Sale\Delivery\Services\Manager::getRestrictedList()
      */
-    public static function getServicesBriefsForShipment(Shipment $shipment = null, array $skipChecks = array(), $getAll = false)
-    {
+    public static function getServicesBriefsForShipment(
+        Shipment $shipment = null,
+        array $skipChecks = array(),
+        $getAll = false
+    ) {
         return self::getRestrictedList($shipment, Restrictions\Manager::MODE_CLIENT, $skipChecks);
     }
 

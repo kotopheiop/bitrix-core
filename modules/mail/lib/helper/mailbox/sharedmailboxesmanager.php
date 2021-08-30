@@ -42,7 +42,7 @@ class SharedMailboxesManager
         foreach ($userCodes as $userAccessCode) {
             // @TODO: departments
             if (preg_match('#U[0-9]+#', $userAccessCode['ACCESS_CODE']) === 1) {
-                $results[] = substr($userAccessCode['ACCESS_CODE'], 1);
+                $results[] = mb_substr($userAccessCode['ACCESS_CODE'], 1);
             }
         }
         return $results;
@@ -56,7 +56,15 @@ class SharedMailboxesManager
     private static function getBaseQueryForSharedMailboxes()
     {
         return MailboxAccessTable::query()
-            ->registerRuntimeField('', new ReferenceField('ref', MailboxTable::class, ['=this.MAILBOX_ID' => 'ref.ID'], ['join_type' => 'INNER']))
+            ->registerRuntimeField(
+                '',
+                new ReferenceField(
+                    'ref',
+                    MailboxTable::class,
+                    ['=this.MAILBOX_ID' => 'ref.ID'],
+                    ['join_type' => 'INNER']
+                )
+            )
             ->where(new ExpressionField('ac', 'CONCAT("U", %s)', 'ref.USER_ID'), '!=', new Column('ACCESS_CODE'))
             ->where('ref.ACTIVE', 'Y')
             ->where('ref.LID', SITE_ID);

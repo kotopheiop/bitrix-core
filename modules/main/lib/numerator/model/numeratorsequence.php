@@ -70,10 +70,13 @@ class NumeratorSequenceTable extends DataManager
 
             return $conn->getAffectedRowsCount();
         }
-        $res = static::update([
-            'NUMERATOR_ID' => intval($numeratorId),
-            'KEY' => md5($numberHash),
-        ], $fields);
+        $res = static::update(
+            [
+                'NUMERATOR_ID' => intval($numeratorId),
+                'KEY' => md5($numberHash),
+            ],
+            $fields
+        );
         if ($res->isSuccess()) {
             return $res->getAffectedRowsCount();
         }
@@ -101,10 +104,12 @@ class NumeratorSequenceTable extends DataManager
      */
     public static function getSettings($numeratorId, $numberHash)
     {
-        $sequenceSettings = static::getList([
-            'select' => ['NEXT_NUMBER', 'LAST_INVOCATION_TIME'],
-            'filter' => ['=NUMERATOR_ID' => $numeratorId, '=KEY' => md5($numberHash),],
-        ])->fetch();
+        $sequenceSettings = static::getList(
+            [
+                'select' => ['NEXT_NUMBER', 'LAST_INVOCATION_TIME'],
+                'filter' => ['=NUMERATOR_ID' => $numeratorId, '=KEY' => md5($numberHash),],
+            ]
+        )->fetch();
         return $sequenceSettings;
     }
 
@@ -119,19 +124,21 @@ class NumeratorSequenceTable extends DataManager
     public static function setSettings($numeratorId, $numberHash, $defaultNumber, $lastInvocationTime)
     {
         try {
-            $result = static::add([
-                'NUMERATOR_ID' => $numeratorId,
-                'KEY' => md5($numberHash),
-                'TEXT_KEY' => substr($numberHash, 0, 50),
-                'LAST_INVOCATION_TIME' => $lastInvocationTime,
-                'NEXT_NUMBER' => $defaultNumber,
-            ]);
+            $result = static::add(
+                [
+                    'NUMERATOR_ID' => $numeratorId,
+                    'KEY' => md5($numberHash),
+                    'TEXT_KEY' => mb_substr($numberHash, 0, 50),
+                    'LAST_INVOCATION_TIME' => $lastInvocationTime,
+                    'NEXT_NUMBER' => $defaultNumber,
+                ]
+            );
             if ($result->isSuccess()) {
                 return $result->getData();
             }
             return [];
         } catch (SqlQueryException $exc) {
-            if (stripos($exc->getMessage(), "Duplicate entry") !== false) {
+            if (mb_stripos($exc->getMessage(), "Duplicate entry") !== false) {
                 return [];
             }
             throw $exc;

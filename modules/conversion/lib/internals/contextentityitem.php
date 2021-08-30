@@ -19,7 +19,8 @@ class ContextEntityItemTable extends Entity\DataManager
             new Entity\StringField ('ENTITY', array('primary' => true, 'size' => 30)),
             new Entity\StringField ('ITEM', array('primary' => true, 'size' => 30)),
 
-            new Entity\ReferenceField('CONTEXT', 'ContextTable',
+            new Entity\ReferenceField(
+                'CONTEXT', 'ContextTable',
                 array('=this.CONTEXT_ID' => 'ref.ID'),
                 array('join_type' => 'INNER')
             ),

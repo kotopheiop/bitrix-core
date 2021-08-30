@@ -19,7 +19,6 @@ class Formula extends BaseReport implements IReportSingleData
     {
         parent::__construct();
         $this->setTitle(Loc::getMessage('FORMULA_REPORT_HANDLER_TILE'));
-
     }
 
     /**

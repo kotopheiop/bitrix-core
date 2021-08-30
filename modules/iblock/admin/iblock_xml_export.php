@@ -1,22 +1,29 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 CModule::IncludeModule("iblock");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/iblock/prolog.php");
 IncludeModuleLangFile(__FILE__);
 
-$rsIBlocks = CIBlock::GetList(array(), array(
-    "MIN_PERMISSION" => "X",
-    "OPERATION" => "iblock_export",
-));
-if (!$rsIBlocks->Fetch())
+$rsIBlocks = CIBlock::GetList(
+    array(),
+    array(
+        "MIN_PERMISSION" => "X",
+        "OPERATION" => "iblock_export",
+    )
+);
+if (!$rsIBlocks->Fetch()) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
-if (!isset($INTERVAL))
+if (!isset($INTERVAL)) {
     $INTERVAL = 30;
-else
+} else {
     $INTERVAL = intval($INTERVAL);
-if ($INTERVAL <= 0)
+}
+if ($INTERVAL <= 0) {
     @set_time_limit(0);
+}
 
 $start_time = time();
 
@@ -25,9 +32,9 @@ $arMessages = array();
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Export"] == "Y") {
     require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_js.php");
-    if (array_key_exists("NS", $_POST) && is_array($_POST["NS"]))
+    if (array_key_exists("NS", $_POST) && is_array($_POST["NS"])) {
         $NS = $_POST["NS"];
-    else
+    } else {
         $NS = array(
             "STEP" => 0,
             "IBLOCK_ID" => $_REQUEST["IBLOCK_ID"],
@@ -37,13 +44,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Export"] == "Y") {
             "DOWNLOAD_CLOUD_FILES" => $_REQUEST["DOWNLOAD_CLOUD_FILES"] === "N" ? "N" : "Y",
             "next_step" => array(),
         );
+    }
 
     $NS["catalog"] = CModule::IncludeModule('catalog');
 
     //We have to strongly check all about file names at server side
     $ABS_FILE_NAME = false;
     $WORK_DIR_NAME = false;
-    if (isset($NS["URL_DATA_FILE"]) && (strlen($NS["URL_DATA_FILE"]) > 0)) {
+    if (isset($NS["URL_DATA_FILE"]) && ($NS["URL_DATA_FILE"] <> '')) {
         $filename = trim(str_replace("\\", "/", trim($NS["URL_DATA_FILE"])), "/");
         if (
             preg_match('/[^a-zA-Z0-9\s!#\$%&\(\)\[\]\{\}+\.;=@\^_\~\/\\\\\-]/i', $filename)
@@ -52,11 +60,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Export"] == "Y") {
             $arErrors[] = GetMessage("IBLOCK_CML2_FILE_NAME_ERROR");
         } else {
             $FILE_NAME = rel2abs($_SERVER["DOCUMENT_ROOT"], "/" . $filename);
-            if ((strlen($FILE_NAME) > 1) && ($FILE_NAME === "/" . $filename)) {
+            if ((mb_strlen($FILE_NAME) > 1) && ($FILE_NAME === "/" . $filename)) {
                 $ABS_FILE_NAME = $_SERVER["DOCUMENT_ROOT"] . $FILE_NAME;
-                if (strtolower(substr($ABS_FILE_NAME, -4)) != ".xml")
+                if (mb_strtolower(mb_substr($ABS_FILE_NAME, -4)) != ".xml") {
                     $ABS_FILE_NAME .= ".xml";
-                $WORK_DIR_NAME = substr($ABS_FILE_NAME, 0, strrpos($ABS_FILE_NAME, "/") + 1);
+                }
+                $WORK_DIR_NAME = mb_substr($ABS_FILE_NAME, 0, mb_strrpos($ABS_FILE_NAME, "/") + 1);
             }
         }
     }
@@ -77,14 +86,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Export"] == "Y") {
             );
             if ($fp = fopen($ABS_FILE_NAME, "wb")) {
                 @chmod($ABS_FILE_NAME, BX_FILE_PERMISSIONS);
-                if (strtolower(substr($ABS_FILE_NAME, -4)) == ".xml") {
-                    $DIR_NAME = substr($ABS_FILE_NAME, 0, -4) . "_files";
+                if (mb_strtolower(mb_substr($ABS_FILE_NAME, -4)) == ".xml") {
+                    $DIR_NAME = mb_substr($ABS_FILE_NAME, 0, -4) . "_files";
                     if (
                         is_dir($DIR_NAME)
                         || @mkdir($DIR_NAME, BX_DIR_PERMISSIONS)
                     ) {
                         $_SESSION["BX_CML2_EXPORT"]["work_dir"] = $WORK_DIR_NAME;
-                        $_SESSION["BX_CML2_EXPORT"]["file_dir"] = substr($DIR_NAME . "/", strlen($WORK_DIR_NAME));
+                        $_SESSION["BX_CML2_EXPORT"]["file_dir"] = mb_substr($DIR_NAME . "/", mb_strlen($WORK_DIR_NAME));
                     }
                 }
             } else {
@@ -94,9 +103,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Export"] == "Y") {
         } elseif ($NS["STEP"] < 4) {
             if ($fp = fopen($ABS_FILE_NAME, "ab")) {
                 $obExport = new CIBlockCMLExport;
-                if ($obExport->Init($fp, $NS["IBLOCK_ID"], $NS["next_step"], true, $_SESSION["BX_CML2_EXPORT"]["work_dir"], $_SESSION["BX_CML2_EXPORT"]["file_dir"])) {
-                    if ($NS["DOWNLOAD_CLOUD_FILES"] === "N")
+                if ($obExport->Init(
+                    $fp,
+                    $NS["IBLOCK_ID"],
+                    $NS["next_step"],
+                    true,
+                    $_SESSION["BX_CML2_EXPORT"]["work_dir"],
+                    $_SESSION["BX_CML2_EXPORT"]["file_dir"]
+                )) {
+                    if ($NS["DOWNLOAD_CLOUD_FILES"] === "N") {
                         $obExport->DoNotDownloadCloudFiles();
+                    }
 
                     if ($NS["STEP"] == 1) {
                         $obExport->StartExport();
@@ -131,12 +148,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Export"] == "Y") {
                             $NS["ELEMENTS"] += $result;
                         } else {
                             $obExport->EndExportCatalog();
-                            $obExport->ExportProductSets();
+                            //$obExport->ExportProductSets();
                             $obExport->EndExport();
                             $NS["STEP"]++;
                         }
-                    } else
+                    } else {
                         $NS["STEP"]++;
+                    }
                     $NS["next_step"] = $obExport->next_step;
                 } else {
                     $arErrors[] = GetMessage("IBLOCK_CML2_IBLOCK_ERROR");
@@ -149,8 +167,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Export"] == "Y") {
         $arErrors[] = GetMessage("IBLOCK_CML2_FILE_ERROR") . "(2)";
     }
 
-    if ($fp)
+    if ($fp) {
         fclose($fp);
+    }
 
     ?>
     <script>
@@ -158,10 +177,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Export"] == "Y") {
     </script>
     <?
 
-    foreach ($arErrors as $strError)
+    foreach ($arErrors as $strError) {
         CAdminMessage::ShowMessage($strError);
-    foreach ($arMessages as $strMessage)
+    }
+    foreach ($arMessages as $strMessage) {
         CAdminMessage::ShowMessage(array("MESSAGE" => $strMessage, "TYPE" => "OK"));
+    }
 
     if (count($arErrors) == 0) {
         if ($NS["STEP"] < 4) {
@@ -169,40 +190,59 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Export"] == "Y") {
                 GetMessage("IBLOCK_CML2_METADATA_DONE"),
             );
 
-            if ($NS["STEP"] < 2)
+            if ($NS["STEP"] < 2) {
                 $progressItems[] = GetMessage("IBLOCK_CML2_SECTIONS");
-            elseif ($NS["STEP"] < 3)
-                $progressItems[] = "<b>" . GetMessage("IBLOCK_CML2_SECTIONS_PROGRESS", array("#COUNT#" => intval($NS["SECTIONS"]))) . "</b>";
-            else
-                $progressItems[] = GetMessage("IBLOCK_CML2_SECTIONS_PROGRESS", array("#COUNT#" => intval($NS["SECTIONS"])));
+            } elseif ($NS["STEP"] < 3) {
+                $progressItems[] = "<b>" . GetMessage(
+                        "IBLOCK_CML2_SECTIONS_PROGRESS",
+                        array("#COUNT#" => intval($NS["SECTIONS"]))
+                    ) . "</b>";
+            } else {
+                $progressItems[] = GetMessage(
+                    "IBLOCK_CML2_SECTIONS_PROGRESS",
+                    array("#COUNT#" => intval($NS["SECTIONS"]))
+                );
+            }
 
-            if ($NS["STEP"] < 3)
+            if ($NS["STEP"] < 3) {
                 $progressItems[] = GetMessage("IBLOCK_CML2_ELEMENTS");
-            elseif ($NS["STEP"] < 4)
-                $progressItems[] = "<b>" . GetMessage("IBLOCK_CML2_ELEMENTS_PROGRESS", array("#COUNT#" => intval($NS["ELEMENTS"]))) . "</b>";
-            else
-                $progressItems[] = GetMessage("IBLOCK_CML2_ELEMENTS_PROGRESS", array("#COUNT#" => intval($NS["ELEMENTS"])));
+            } elseif ($NS["STEP"] < 4) {
+                $progressItems[] = "<b>" . GetMessage(
+                        "IBLOCK_CML2_ELEMENTS_PROGRESS",
+                        array("#COUNT#" => intval($NS["ELEMENTS"]))
+                    ) . "</b>";
+            } else {
+                $progressItems[] = GetMessage(
+                    "IBLOCK_CML2_ELEMENTS_PROGRESS",
+                    array("#COUNT#" => intval($NS["ELEMENTS"]))
+                );
+            }
 
-            CAdminMessage::ShowMessage(array(
-                "DETAILS" => "<p>" . implode("</p><p>", $progressItems) . "</p>",
-                "HTML" => true,
-                "TYPE" => "PROGRESS",
-            ));
+            CAdminMessage::ShowMessage(
+                array(
+                    "DETAILS" => "<p>" . implode("</p><p>", $progressItems) . "</p>",
+                    "HTML" => true,
+                    "TYPE" => "PROGRESS",
+                )
+            );
 
-            if ($NS["STEP"] > 0)
+            if ($NS["STEP"] > 0) {
                 echo '<script>DoNext(' . CUtil::PhpToJSObject(array("NS" => $NS)) . ');</script>';
+            }
         } else {
             $progressItems = array(
                 GetMessage("IBLOCK_CML2_DONE_SECTIONS", array("#COUNT#" => intval($NS["SECTIONS"]))),
                 GetMessage("IBLOCK_CML2_DONE_ELEMENTS", array("#COUNT#" => intval($NS["ELEMENTS"]))),
             );
 
-            CAdminMessage::ShowMessage(array(
-                "MESSAGE" => GetMessage("IBLOCK_CML2_DONE"),
-                "DETAILS" => "<p>" . implode("</p><p>", $progressItems) . "</p>",
-                "HTML" => true,
-                "TYPE" => "PROGRESS",
-            ));
+            CAdminMessage::ShowMessage(
+                array(
+                    "MESSAGE" => GetMessage("IBLOCK_CML2_DONE"),
+                    "DETAILS" => "<p>" . implode("</p><p>", $progressItems) . "</p>",
+                    "HTML" => true,
+                    "TYPE" => "PROGRESS",
+                )
+            );
 
             echo '<script>EndExport();</script>';
         }
@@ -350,8 +390,9 @@ $tabControl = new CAdminTabControl("tabControl", $aTabs, true, true);
     $bHaveClouds = false;
     if (CModule::IncludeModule("clouds")) {
         $rsData = CCloudStorageBucket::GetList(array("SORT" => "DESC", "ID" => "ASC"));
-        if ($rsData->Fetch())
+        if ($rsData->Fetch()) {
             $bHaveClouds = true;
+        }
     }
     if ($bHaveClouds):?>
         <tr>

@@ -10,12 +10,11 @@ namespace Bitrix\Sender\Entity;
 
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
-
-use Bitrix\Sender\Internals\Model\MessageTable;
 use Bitrix\Sender\Internals\Model\MessageFieldTable;
-
-use Bitrix\Sender\Message\Result;
+use Bitrix\Sender\Internals\Model\MessageTable;
+use Bitrix\Sender\Internals\Model\MessageUtmTable;
 use Bitrix\Sender\Message\Configuration;
+use Bitrix\Sender\Message\Result;
 
 Loc::loadMessages(__FILE__);
 
@@ -44,7 +43,7 @@ class Message extends Base
                 $key = $option->getCode();
                 $value = isset($data[$key]) ? $data[$key] : null;
                 if ($option->getType() === $option::TYPE_FILE) {
-                    $value = (strlen($value) > 0) ? explode(',', $value) : $value;
+                    $value = ($value <> '') ? explode(',', $value) : $value;
                 }
 
                 $configuration->set($key, $value);
@@ -164,6 +163,32 @@ class Message extends Base
     }
 
     /**
+     * Get fields.
+     */
+    public function getUtm()
+    {
+        $result = array();
+        $data = $this->getData();
+        foreach ($data['UTM'] as $field) {
+            $result[$field['CODE']] = $field['VALUE'];
+        }
+
+        return $result;
+    }
+
+    /**
+     * Set fields.
+     *
+     * @param array $fields Fields.
+     * @return $this
+     */
+    public function setUtm(array $utm)
+    {
+        $this->set('UTM', $utm);
+        return $this;
+    }
+
+    /**
      * Get code.
      */
     public function getCode()
@@ -191,7 +216,8 @@ class Message extends Base
     {
         return array(
             'CODE' => '',
-            'FIELDS' => array(),
+            'FIELDS' => [],
+            'UTM' => []
         );
     }
 
@@ -212,17 +238,23 @@ class Message extends Base
         }
 
         $data['FIELDS'] = array();
-        $fieldsDb = MessageFieldTable::getList(array(
-            'select' => array('TYPE', 'CODE', 'VALUE'),
-            'filter' => array(
-                '=MESSAGE_ID' => $id
+        $fieldsDb = MessageFieldTable::getList(
+            array(
+                'select' => array('TYPE', 'CODE', 'VALUE'),
+                'filter' => array(
+                    '=MESSAGE_ID' => $id
+                )
             )
-        ));
+        );
         while ($field = $fieldsDb->fetch()) {
             $data['FIELDS'][] = $field;
         }
 
         return $data;
+    }
+
+    protected function parsePersonalizeList($text)
+    {
     }
 
     /**
@@ -235,7 +267,9 @@ class Message extends Base
     protected function saveData($id = null, array $data)
     {
         $fields = $data['FIELDS'];
+        $utmTags = $data['UTM'];
         unset($data['FIELDS']);
+        unset($data['UTM']);
 
         if (!is_array($fields) && count($fields) == 0) {
             $this->addError('No message fields.');
@@ -249,14 +283,47 @@ class Message extends Base
 
         MessageFieldTable::deleteByMessageId($id);
         foreach ($fields as $field) {
-            MessageFieldTable::add(array(
-                'MESSAGE_ID' => $id,
-                'TYPE' => $field['TYPE'],
-                'CODE' => $field['CODE'],
-                'VALUE' => $field['VALUE']
-            ));
+            if (in_array($field['CODE'], ['MESSAGE_PERSONALIZE', 'SUBJECT_PERSONALIZE'])) {
+                continue;
+            }
+
+            if (in_array($field['CODE'], ['MESSAGE', 'SUBJECT'])) {
+                preg_match_all("/#([0-9a-zA-Z_.|]+?)#/", $field['VALUE'], $matchesFindPlaceHolders);
+                $matchesFindPlaceHoldersCount = count($matchesFindPlaceHolders[1]);
+                if ($matchesFindPlaceHoldersCount > 0) {
+                    $list = json_encode($matchesFindPlaceHolders);
+                    MessageFieldTable::add(
+                        [
+                            'MESSAGE_ID' => $id,
+                            'TYPE' => $field['TYPE'],
+                            'CODE' => $field['CODE'] . '_PERSONALIZE',
+                            'VALUE' => $list
+                        ]
+                    );
+                }
+            }
+            MessageFieldTable::add(
+                array(
+                    'MESSAGE_ID' => $id,
+                    'TYPE' => $field['TYPE'],
+                    'CODE' => $field['CODE'],
+                    'VALUE' => $field['VALUE']
+                )
+            );
         }
 
+        MessageUtmTable::deleteByMessageId($id);
+        if ($utmTags) {
+            foreach ($utmTags as $utm) {
+                MessageUtmTable::add(
+                    [
+                        'MESSAGE_ID' => $id,
+                        'CODE' => $utm['CODE'],
+                        'VALUE' => $utm['VALUE']
+                    ]
+                );
+            }
+        }
 
         return $id;
     }

@@ -21,16 +21,22 @@ class CounterDataTable extends Entity\DataManager
     public static function getMap()
     {
         return array(
-            new Entity\StringField('ID', array(
+            new Entity\StringField(
+                'ID', array(
                 'primary' => true,
                 'default_value' => array(__CLASS__, 'getUniqueEventId')
-            )),
-            new Entity\StringField('TYPE', array(
+            )
+            ),
+            new Entity\StringField(
+                'TYPE', array(
                 'required' => true
-            )),
-            new Entity\TextField('DATA', array(
+            )
+            ),
+            new Entity\TextField(
+                'DATA', array(
                 'serialized' => true
-            ))
+            )
+            )
         );
     }
 
@@ -38,10 +44,10 @@ class CounterDataTable extends Entity\DataManager
     {
         list($usec, $sec) = explode(" ", microtime());
 
-        $uniqid = substr(base_convert($sec . substr($usec, 2), 10, 36), 0, 16);
+        $uniqid = mb_substr(base_convert($sec . mb_substr($usec, 2), 10, 36), 0, 16);
 
-        if (strlen($uniqid) < 16) {
-            $uniqid .= Random::getString(16 - strlen($uniqid));
+        if (mb_strlen($uniqid) < 16) {
+            $uniqid .= Random::getString(16 - mb_strlen($uniqid));
         }
 
         return $uniqid;
@@ -55,10 +61,12 @@ class CounterDataTable extends Entity\DataManager
 
         $rows = array();
 
-        $r = static::getList(array(
-            'order' => array('ID' => 'ASC'),
-            'limit' => $limit
-        ));
+        $r = static::getList(
+            array(
+                'order' => array('ID' => 'ASC'),
+                'limit' => $limit
+            )
+        );
 
         while ($row = $r->fetch()) {
             $rows[$row['ID']] = array(
@@ -76,7 +84,7 @@ class CounterDataTable extends Entity\DataManager
             $dataSizeLimit = 45000;
 
             // make an optimal dataset
-            $dataSize = strlen(base64_encode(json_encode(array_values($rows))));
+            $dataSize = mb_strlen(base64_encode(json_encode(array_values($rows))));
 
             // records to delete
             $toDelete = array();
@@ -85,8 +93,8 @@ class CounterDataTable extends Entity\DataManager
                 $reducedRows = array();
 
                 foreach ($rows as $id => $row) {
-                    $rowSize = strlen(base64_encode(json_encode(array_values($row))));
-                    $reducedDataSize = strlen(base64_encode(json_encode(array_values($reducedRows))));
+                    $rowSize = mb_strlen(base64_encode(json_encode(array_values($row))));
+                    $reducedDataSize = mb_strlen(base64_encode(json_encode(array_values($reducedRows))));
 
                     if ($rowSize > $dataSizeLimit) {
                         // abnormally big row, delete it
@@ -104,12 +112,14 @@ class CounterDataTable extends Entity\DataManager
 
             if (!empty($rows)) {
                 // if there are still some data, send it
-                $data = \http_build_query(array(
-                    'op' => 'e',
-                    'aid' => Counter::getAccountId(),
-                    'ad[cd][value]' => base64_encode(json_encode(array_values($rows))),
-                    'ad[cd][queue]' => $queueSize
-                ));
+                $data = \http_build_query(
+                    array(
+                        'op' => 'e',
+                        'aid' => Counter::getAccountId(),
+                        'ad[cd][value]' => base64_encode(json_encode(array_values($rows))),
+                        'ad[cd][queue]' => $queueSize
+                    )
+                );
 
                 $f = fsockopen('bitrix.info', 80, $errno, $errstr, 3);
 
@@ -117,7 +127,7 @@ class CounterDataTable extends Entity\DataManager
                     $out = "POST /bx_stat HTTP/1.1\r\n";
                     $out .= "Host: bitrix.info\r\n";
                     $out .= "Content-type: application/x-www-form-urlencoded\r\n";
-                    $out .= "Content-length: " . strlen($data) . "\r\n";
+                    $out .= "Content-length: " . mb_strlen($data) . "\r\n";
                     $out .= "User-Agent: Bitrix Stats Counter\r\n";
                     $out .= "Connection: Close\r\n";
                     $out .= "\r\n";
@@ -134,7 +144,7 @@ class CounterDataTable extends Entity\DataManager
                     fclose($f);
 
                     // delete rows if service received data
-                    if (strpos($response, '200 OK')) {
+                    if (mb_strpos($response, '200 OK')) {
                         $toDelete = array_merge($toDelete, array_keys($rows));
                     }
                 }

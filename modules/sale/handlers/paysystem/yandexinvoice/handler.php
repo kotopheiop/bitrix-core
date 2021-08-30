@@ -81,7 +81,10 @@ class YandexInvoiceHandler extends PaySystem\ServiceHandler
 
                             $http = new Web\HttpClient();
                             $http->setCharset("utf-8");
-                            $result = $http->post($billUrl, array('request' => $this->prepareRequest($payment, $payload)));
+                            $result = $http->post(
+                                $billUrl,
+                                array('request' => $this->prepareRequest($payment, $payload))
+                            );
                             if ($result) {
                                 try {
                                     $result = Web\Json::decode($result);
@@ -89,16 +92,19 @@ class YandexInvoiceHandler extends PaySystem\ServiceHandler
                                     $errors .= $e->getMessage();
                                 }
 
-                                if (in_array($result['status'], array('Authorized', 'Processing')))
+                                if (in_array($result['status'], array('Authorized', 'Processing'))) {
                                     $serviceResult->setPsData(array('PS_INVOICE_ID' => $result['orderId']));
-                                else
+                                } else {
                                     $errors .= $result['error'];
+                                }
                             } else {
                                 $errors .= implode("\n", $http->getError());
                             }
                         }
-                    } else if ($result['status'] == 'Refused') {
-                        $errors .= $result['error'];
+                    } else {
+                        if ($result['status'] == 'Refused') {
+                            $errors .= $result['error'];
+                        }
                     }
                 }
             } else {
@@ -153,8 +159,9 @@ class YandexInvoiceHandler extends PaySystem\ServiceHandler
     {
         $serviceResult = new PaySystem\ServiceResult();
 
-        if ($request->get('request') === null)
+        if ($request->get('request') === null) {
             return $serviceResult;
+        }
 
         list($header, $payload, $sign) = explode('.', $request->get('request'));
         if (!$this->isSignCorrect($payment, $header . '.' . $payload, $sign)) {
@@ -219,7 +226,7 @@ class YandexInvoiceHandler extends PaySystem\ServiceHandler
                 'PS_INVOICE_ID' => $payload['orderId'],
                 'PS_STATUS' => ($payload['status'] == 'Authorized') ? 'Y' : 'N',
                 'PS_SUM' => $payload['order']['amount'],
-                'PS_CURRENCY' => substr($payload['order']['currency'], 0, 3),
+                'PS_CURRENCY' => mb_substr($payload['order']['currency'], 0, 3),
                 'PS_RESPONSE_DATE' => new DateTime(),
             );
             $serviceResult->setPsData($psData);
@@ -255,7 +262,6 @@ class YandexInvoiceHandler extends PaySystem\ServiceHandler
      */
     protected function getUrlList()
     {
-
         return array(
             'test' => array(
                 self::TEST_URL => 'http://angius.yandex.ru:8082/payment-api/json-api/api/version',
@@ -307,8 +313,9 @@ class YandexInvoiceHandler extends PaySystem\ServiceHandler
         $shopId = $this->getBusinessValue($payment, 'YANDEX_INVOICE_SHOP_ID');
         if ($shopId) {
             $dbRes = YandexSettingsTable::getById($shopId);
-            if ($settings = $dbRes->fetch())
+            if ($settings = $dbRes->fetch()) {
                 $sign = $this->sign($data, $this->getKeyResource($settings['PKEY']));
+            }
         }
         return $data . '.' . self::base64Encode($sign);
     }
@@ -357,17 +364,24 @@ class YandexInvoiceHandler extends PaySystem\ServiceHandler
     private function isSignCorrect(Payment $payment, $data, $sign)
     {
         $binary = self::base64Decode($sign);
-        list($r, $s) = str_split($binary, (int)(strlen($binary) / 2));
+        list($r, $s) = str_split($binary, (int)(mb_strlen($binary) / 2));
 
         $r = ltrim($r, "\x00");
         $s = ltrim($s, "\x00");
 
-        if (ord($r[0]) > 0x7f) $r = "\x00" . $r;
-        if (ord($s[0]) > 0x7f) $s = "\x00" . $s;
+        if (ord($r[0]) > 0x7f) {
+            $r = "\x00" . $r;
+        }
+        if (ord($s[0]) > 0x7f) {
+            $s = "\x00" . $s;
+        }
 
         $binary = PaySystem\ASN1::encodeDER(
             PaySystem\ASN1::SEQUENCE,
-            PaySystem\ASN1::encodeDER(PaySystem\ASN1::INTEGER_TYPE, $r) . PaySystem\ASN1::encodeDER(PaySystem\ASN1::INTEGER_TYPE, $s),
+            PaySystem\ASN1::encodeDER(PaySystem\ASN1::INTEGER_TYPE, $r) . PaySystem\ASN1::encodeDER(
+                PaySystem\ASN1::INTEGER_TYPE,
+                $s
+            ),
             false
         );
 
@@ -389,7 +403,7 @@ class YandexInvoiceHandler extends PaySystem\ServiceHandler
     private function sign($input, $keyResource)
     {
         $signature = null;
-        $signAlgo = version_compare(phpversion(), '5.4.8', '<') ? 'SHA256' : OPENSSL_ALGO_SHA256;
+        $signAlgo = OPENSSL_ALGO_SHA256;
 
         $r = openssl_sign($input, $signature, $keyResource, $signAlgo);
 
@@ -417,8 +431,9 @@ class YandexInvoiceHandler extends PaySystem\ServiceHandler
      */
     private function getKeyResource($key)
     {
-        if (is_resource($key))
+        if (is_resource($key)) {
             return $key;
+        }
 
         return openssl_pkey_get_public($key) ?: openssl_pkey_get_private($key);
     }
@@ -451,11 +466,13 @@ class YandexInvoiceHandler extends PaySystem\ServiceHandler
         if ($payload) {
             $payload = Web\Json::decode(self::base64Decode($payload));
 
-            if (!array_key_exists('parameters', $payload['order']))
+            if (!array_key_exists('parameters', $payload['order'])) {
                 return false;
+            }
 
-            if (!array_key_exists('pay_system_id', $payload['order']['parameters']))
+            if (!array_key_exists('pay_system_id', $payload['order']['parameters'])) {
                 return false;
+            }
 
             return $paySystemId == $payload['order']['parameters']['pay_system_id'];
         }

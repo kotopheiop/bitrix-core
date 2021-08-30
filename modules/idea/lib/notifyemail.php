@@ -93,8 +93,9 @@ class NotifyEmail
         if ($IblockID > 0) {
             $this->IblockID = $IblockID;
             \CIdeaManagment::getInstance()->idea()->setCategoryListId($IblockID);
-        } else
+        } else {
             $this->IblockID = \CIdeaManagment::getInstance()->idea()->getCategoryListID();
+        }
         global $USER;
         $this->userID = $USER->getID();
     }
@@ -113,19 +114,24 @@ class NotifyEmail
     public function addCategory($category, $subscribeType = NotifyEmailTable::SUBSCRIBE_TYPE_NEW_IDEAS)
     {
         if ($this->IblockID > 0 && $this->userID > 0) {
-            $db_res = NotifyEmailTable::getList(array(
-                "filter" => array(
-                    "USER_ID" => $this->userID,
-                    "ENTITY_TYPE" => NotifyEmailTable::ENTITY_TYPE_CATEGORY,
-                    "ENTITY_CODE" => (empty($category) ? "" : $category)
-                )));
+            $db_res = NotifyEmailTable::getList(
+                array(
+                    "filter" => array(
+                        "USER_ID" => $this->userID,
+                        "ENTITY_TYPE" => NotifyEmailTable::ENTITY_TYPE_CATEGORY,
+                        "ENTITY_CODE" => (empty($category) ? "" : $category)
+                    )
+                )
+            );
             if ($db_res->getSelectedRowsCount() <= 0) {
-                $db_res = NotifyEmailTable::add(array(
-                    "USER_ID" => $this->userID,
-                    "SUBSCRIBE_TYPE" => ($subscribeType == NotifyEmailTable::SUBSCRIBE_TYPE_NEW_IDEAS ? NotifyEmailTable::SUBSCRIBE_TYPE_NEW_IDEAS : NotifyEmailTable::SUBSCRIBE_TYPE_ALL),
-                    "ENTITY_TYPE" => NotifyEmailTable::ENTITY_TYPE_CATEGORY,
-                    "ENTITY_CODE" => (empty($category) ? "" : $category)
-                ));
+                $db_res = NotifyEmailTable::add(
+                    array(
+                        "USER_ID" => $this->userID,
+                        "SUBSCRIBE_TYPE" => ($subscribeType == NotifyEmailTable::SUBSCRIBE_TYPE_NEW_IDEAS ? NotifyEmailTable::SUBSCRIBE_TYPE_NEW_IDEAS : NotifyEmailTable::SUBSCRIBE_TYPE_ALL),
+                        "ENTITY_TYPE" => NotifyEmailTable::ENTITY_TYPE_CATEGORY,
+                        "ENTITY_CODE" => (empty($category) ? "" : $category)
+                    )
+                );
             }
             return $db_res;
         }
@@ -135,11 +141,13 @@ class NotifyEmail
     public function deleteCategory($category)
     {
         if ($this->userID > 0) {
-            return NotifyEmailTable::delete(array(
-                "USER_ID" => $this->userID,
-                "ENTITY_TYPE" => NotifyEmailTable::ENTITY_TYPE_CATEGORY,
-                "ENTITY_CODE" => (empty($category) ? "" : $category)
-            ));
+            return NotifyEmailTable::delete(
+                array(
+                    "USER_ID" => $this->userID,
+                    "ENTITY_TYPE" => NotifyEmailTable::ENTITY_TYPE_CATEGORY,
+                    "ENTITY_CODE" => (empty($category) ? "" : $category)
+                )
+            );
         }
         return false;
     }
@@ -147,19 +155,24 @@ class NotifyEmail
     public function addIdea($id)
     {
         if ($this->userID > 0) {
-            $db_res = NotifyEmailTable::getList(array(
-                "filter" => array(
-                    "USER_ID" => $this->userID,
-                    "ENTITY_TYPE" => NotifyEmailTable::ENTITY_TYPE_IDEA,
-                    "ENTITY_CODE" => $id . ""
-                )));
+            $db_res = NotifyEmailTable::getList(
+                array(
+                    "filter" => array(
+                        "USER_ID" => $this->userID,
+                        "ENTITY_TYPE" => NotifyEmailTable::ENTITY_TYPE_IDEA,
+                        "ENTITY_CODE" => $id . ""
+                    )
+                )
+            );
             if (!(!!$db_res && ($res = $db_res->fetch()) && !empty($res))) {
-                $db_res = NotifyEmailTable::add(array(
-                    "USER_ID" => $this->userID,
-                    "SUBSCRIBE_TYPE" => NotifyEmailTable::SUBSCRIBE_TYPE_ALL,
-                    "ENTITY_TYPE" => NotifyEmailTable::ENTITY_TYPE_IDEA,
-                    "ENTITY_CODE" => $id . ""
-                ));
+                $db_res = NotifyEmailTable::add(
+                    array(
+                        "USER_ID" => $this->userID,
+                        "SUBSCRIBE_TYPE" => NotifyEmailTable::SUBSCRIBE_TYPE_ALL,
+                        "ENTITY_TYPE" => NotifyEmailTable::ENTITY_TYPE_IDEA,
+                        "ENTITY_CODE" => $id . ""
+                    )
+                );
                 return $db_res;
             }
             return $res;
@@ -169,29 +182,32 @@ class NotifyEmail
 
     public function deleteIdea($id)
     {
-
         if ($this->userID > 0) {
-            return NotifyEmailTable::delete(array(
-                "USER_ID" => $this->userID,
-                "ENTITY_TYPE" => NotifyEmailTable::ENTITY_TYPE_IDEA,
-                "ENTITY_CODE" => $id
-            ));
+            return NotifyEmailTable::delete(
+                array(
+                    "USER_ID" => $this->userID,
+                    "ENTITY_TYPE" => NotifyEmailTable::ENTITY_TYPE_IDEA,
+                    "ENTITY_CODE" => $id
+                )
+            );
         }
         return false;
     }
 
     protected function checkCache($userId, $params = array())
     {
-        if (!array_key_exists($userId, self::$cache))
+        if (!array_key_exists($userId, self::$cache)) {
             self::$cache[$userId] = array();
+        }
         $id = $this->getCacheId($params);
         return (array_key_exists($id, self::$cache[$userId]) ? self::$cache[$userId][$id] : false);
     }
 
     protected function setCache($userId, $params = array(), $data = array())
     {
-        if (!array_key_exists($userId, self::$cache))
+        if (!array_key_exists($userId, self::$cache)) {
             self::$cache[$userId] = array();
+        }
         $id = $this->getCacheId($params);
         self::$cache[$userId][$id] = $data;
         return true;
@@ -205,34 +221,46 @@ class NotifyEmail
             $cache = $this->checkCache($userId, array("CATEGORY" => $category));
             if (!!$cache) {
                 $return = $cache;
-            } else if (empty($category)) {
-                $return = array();
-                $db_res = NotifyEmailTable::getList(array(
-                    "filter" => array(
-                        "USER_ID" => $userId,
-                        "=ENTITY_TYPE" => NotifyEmailTable::ENTITY_TYPE_CATEGORY,
-                        "=ENTITY_CODE" => NULL
-                    )
-                ));
-                while ($res = $db_res->fetch())
-                    array_push($return, $res);
-            } else if (is_string($category) && ($categories = \CIdeaManagment::getInstance()->idea()->getCategoryList()) && !empty($categories)) {
-                $category = ToUpper($category);
-                if (array_key_exists($category, $categories)) {
+            } else {
+                if (empty($category)) {
                     $return = array();
-                    $category = $categories[$category];
-                    $db_res = NotifyEmailTable::getList(array(
-                        "filter" => array(
-                            "=USER_ID" => $userId,
-                            "=ENTITY_TYPE" => NotifyEmailTable::ENTITY_TYPE_CATEGORY,
-                            "=ASCENDED_CATEGORIES.IBLOCK_ID" => \CIdeaManagment::getInstance()->idea()->getCategoryListID(),
-                            "<=ASCENDED_CATEGORIES.DEPTH_LEVEL" => $category["DEPTH_LEVEL"],
-                            "<=ASCENDED_CATEGORIES.LEFT_MARGIN" => $category["LEFT_MARGIN"],
-                            ">=ASCENDED_CATEGORIES.RIGHT_MARGIN" => $category["RIGHT_MARGIN"]
+                    $db_res = NotifyEmailTable::getList(
+                        array(
+                            "filter" => array(
+                                "USER_ID" => $userId,
+                                "=ENTITY_TYPE" => NotifyEmailTable::ENTITY_TYPE_CATEGORY,
+                                "=ENTITY_CODE" => null
+                            )
                         )
-                    ));
-                    while ($res = $db_res->fetch())
+                    );
+                    while ($res = $db_res->fetch()) {
                         array_push($return, $res);
+                    }
+                } else {
+                    if (is_string($category) && ($categories = \CIdeaManagment::getInstance()->idea()->getCategoryList(
+                        )) && !empty($categories)) {
+                        $category = ToUpper($category);
+                        if (array_key_exists($category, $categories)) {
+                            $return = array();
+                            $category = $categories[$category];
+                            $db_res = NotifyEmailTable::getList(
+                                array(
+                                    "filter" => array(
+                                        "=USER_ID" => $userId,
+                                        "=ENTITY_TYPE" => NotifyEmailTable::ENTITY_TYPE_CATEGORY,
+                                        "=ASCENDED_CATEGORIES.IBLOCK_ID" => \CIdeaManagment::getInstance()->idea(
+                                        )->getCategoryListID(),
+                                        "<=ASCENDED_CATEGORIES.DEPTH_LEVEL" => $category["DEPTH_LEVEL"],
+                                        "<=ASCENDED_CATEGORIES.LEFT_MARGIN" => $category["LEFT_MARGIN"],
+                                        ">=ASCENDED_CATEGORIES.RIGHT_MARGIN" => $category["RIGHT_MARGIN"]
+                                    )
+                                )
+                            );
+                            while ($res = $db_res->fetch()) {
+                                array_push($return, $res);
+                            }
+                        }
+                    }
                 }
             }
             $this->setCache($userId, array("CATEGORY" => $category), $return);

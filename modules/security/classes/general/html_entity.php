@@ -4,10 +4,14 @@ class CSecurityHtmlEntity
 {
     private static $htmlMnemonics = array(
         "html" => array(
-            "/&colon;/i", "/&tab;/i", "/&newline;/i"
+            "/&colon;/i",
+            "/&tab;/i",
+            "/&newline;/i"
         ),
         "text" => array(
-            ":", "\r", "\n"
+            ":",
+            "\r",
+            "\n"
         ),
     );
 
@@ -20,8 +24,9 @@ class CSecurityHtmlEntity
     protected static function decodeCb($entity)
     {
         $ad = $entity[2];
-        if ($ad == ';')
+        if ($ad == ';') {
             $ad = "";
+        }
         $num = intval($entity[1]);
         return chr($num) . $ad;
     }
@@ -35,8 +40,9 @@ class CSecurityHtmlEntity
     protected static function decodeCbHex($entity)
     {
         $ad = $entity[2];
-        if ($ad == ';')
+        if ($ad == ';') {
             $ad = "";
+        }
         $num = intval(hexdec($entity[1]));
         return chr($num) . $ad;
     }

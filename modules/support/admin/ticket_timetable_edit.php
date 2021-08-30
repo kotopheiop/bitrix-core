@@ -7,8 +7,10 @@ function Tab1($adminForm)
     <tr class="adm-detail-required-field">
         <td width="40%" align="right"><? echo $adminForm->GetCustomLabelHTML() ?>:</td>
         <td width="60%"><input type="text" maxlength="255" name="NAME" size="50"
-                               value="<? echo CSupportPage::$timeTableFields->getFieldForOutput("NAME", CSupportTableFields::ATTRIBUTE); ?>">
-        </td>
+                               value="<? echo CSupportPage::$timeTableFields->getFieldForOutput(
+                                   "NAME",
+                                   CSupportTableFields::ATTRIBUTE
+                               ); ?>"></td>
     </tr>
     <?
     $adminForm->EndCustomField("NAME");
@@ -20,8 +22,10 @@ function Tab1($adminForm)
     </tr>
     <tr>
         <td colspan="2" align="center"><textarea style="width:60%; height:150px;" name="DESCRIPTION"
-                                                 wrap="VIRTUAL"><? echo CSupportPage::$timeTableFields->getFieldForOutput("DESCRIPTION", CSupportTableFields::ATTRIBUTE); ?></textarea>
-        </td>
+                                                 wrap="VIRTUAL"><? echo CSupportPage::$timeTableFields->getFieldForOutput(
+                    "DESCRIPTION",
+                    CSupportTableFields::ATTRIBUTE
+                ); ?></textarea></td>
     </tr>
     <?
     $adminForm->EndCustomField("DESCRIPTION");
@@ -66,7 +70,9 @@ function Tab2_JS()
 
                 oCellC = oRow.insertCell(3);
                 oCellC.innerHTML = '<a title="<? echo GetMessage("MAIN_ADMIN_MENU_COPY"); ?>" href="javascript: Copy('+i+','+j+')">' +
-				'<img src="/bitrix/images/support/copy.gif" style="vertical-align:middle" width="15" height="15" border=0 hspace="2" alt="<? echo GetMessage("MAIN_ADMIN_MENU_COPY"); ?>"></a>';*/
+				'<img src="/bitrix/images/support/copy.gif" style="vertical-align:middle" width="15" height="15" border=0 hspace="2" alt="<? echo GetMessage(
+                "MAIN_ADMIN_MENU_COPY"
+            ); ?>"></a>';*/
 
                 vF = document.getElementById("MINUTE_TILL_" + i + "_" + (j - 1)).value;
                 vT = "23:59"/*document.getElementById("MINUTE_TILL_"+i+"_"+(j-1)).value;*/
@@ -76,9 +82,15 @@ function Tab2_JS()
                 oCellF.innerHTML = '<input id="MINUTE_FROM_' + i + '_' + j + '" type="text" title="" size="4" value="' + vF + '" name="ArrShedule[' + i + '][CUSTOM_TIME][' + j + '][MINUTE_FROM]">' +
                     '<td valign="middle" nowrap="" align="center"><nobr> - </nobr></td>' +
                     '<input id="MINUTE_TILL_' + i + '_' + j + '" type="text" title="" size="4" value="' + vT + '" name="ArrShedule[' + i + '][CUSTOM_TIME][' + j + '][MINUTE_TILL]">' +
-                    '<a title="<? echo GetMessage("MAIN_ADMIN_MENU_COPY"); ?>" href="javascript: Copy(' + i + ',' + j + ')">' +
-                    '<img src="/bitrix/images/support/copy.gif" style="vertical-align:middle" width="15" height="15" border=0 hspace="2" alt="<? echo GetMessage("SUP_ADMIN_ROW_COPY"); ?>">' +
-                    '<a href="javascript: DeleteTabRow(\'' + oRow.id + '\')"><img src="/bitrix/images/support/cross.png" style="vertical-align:middle" width="15" height="15" border=0 hspace="2" alt="<? echo GetMessage("SUP_ADMIN_ROW_DELETE"); ?>"></a>' +
+                    '<a title="<? echo GetMessage(
+                        "MAIN_ADMIN_MENU_COPY"
+                    ); ?>" href="javascript: Copy(' + i + ',' + j + ')">' +
+                    '<img src="/bitrix/images/support/copy.gif" style="vertical-align:middle" width="15" height="15" border=0 hspace="2" alt="<? echo GetMessage(
+                        "SUP_ADMIN_ROW_COPY"
+                    ); ?>">' +
+                    '<a href="javascript: DeleteTabRow(\'' + oRow.id + '\')"><img src="/bitrix/images/support/cross.png" style="vertical-align:middle" width="15" height="15" border=0 hspace="2" alt="<? echo GetMessage(
+                        "SUP_ADMIN_ROW_DELETE"
+                    ); ?>"></a>' +
                     '</a>';
 
                 /*
@@ -149,7 +161,15 @@ function Tab2($adminForm, $arShedule)
                         <td class="heading"><b><? echo GetMessage("SUP_WEEKDAY_$i"); ?></b></td>
                         <?
                         foreach ($arrSO as $v => $l) {
-                            echo '<td align="center" nowrap>' . InputType("radio", "ArrShedule[$i][OPEN_TIME]", $v, $arShedule[$i]["OPEN_TIME"], false, '&nbsp;' . GetMessage($l), 'onClick="HideRC(this, \'table' . $i . '\')"') . '</td>';
+                            echo '<td align="center" nowrap>' . InputType(
+                                    "radio",
+                                    "ArrShedule[$i][OPEN_TIME]",
+                                    $v,
+                                    $arShedule[$i]["OPEN_TIME"],
+                                    false,
+                                    '&nbsp;' . GetMessage($l),
+                                    'onClick="HideRC(this, \'table' . $i . '\')"'
+                                ) . '</td>';
                         }
 
                         $styleV = " visibility: hidden;";
@@ -183,8 +203,14 @@ function Tab2($adminForm, $arShedule)
                                         '<input id="MINUTE_FROM_' . $i . '_' . $j . '" type="text" title="" size="4" value="' . $v["MINUTE_FROM"] . '" name="ArrShedule[' . $i . '][CUSTOM_TIME][' . $j . '][MINUTE_FROM]">' .
                                         '<nobr>&nbsp;-&nbsp;</nobr>' .
                                         '<input id="MINUTE_TILL_' . $i . '_' . $j . '" type="text" title="" size="4" value="' . $v["MINUTE_TILL"] . '" name="ArrShedule[' . $i . '][CUSTOM_TIME][' . $j . '][MINUTE_TILL]">' .
-                                        '<a title="' . GetMessage("MAIN_ADMIN_MENU_COPY") . '" href="javascript: Copy(' . $i . ',' . $j . ')"><img src="/bitrix/images/support/copy.gif" style="vertical-align:middle" width="15" height="15" border=0 hspace="2" alt="' . GetMessage("SUP_ADMIN_ROW_COPY") . '"></a>' .
-                                        ($j > 0 ? '<a href="javascript: DeleteTabRow(\'' . $trID . '\')"><img src="/bitrix/images/support/cross.png" style="vertical-align:middle" width="15" height="15" border=0 hspace="2" alt="' . GetMessage("SUP_ADMIN_ROW_DELETE") . '"></a>' : '') .
+                                        '<a title="' . GetMessage(
+                                            "MAIN_ADMIN_MENU_COPY"
+                                        ) . '" href="javascript: Copy(' . $i . ',' . $j . ')"><img src="/bitrix/images/support/copy.gif" style="vertical-align:middle" width="15" height="15" border=0 hspace="2" alt="' . GetMessage(
+                                            "SUP_ADMIN_ROW_COPY"
+                                        ) . '"></a>' .
+                                        ($j > 0 ? '<a href="javascript: DeleteTabRow(\'' . $trID . '\')"><img src="/bitrix/images/support/cross.png" style="vertical-align:middle" width="15" height="15" border=0 hspace="2" alt="' . GetMessage(
+                                                "SUP_ADMIN_ROW_DELETE"
+                                            ) . '"></a>' : '') .
                                         '</td></tr>';
                                     $styleFirstRow = "";
                                 }
@@ -195,8 +221,6 @@ function Tab2($adminForm, $arShedule)
                         </td>
                     </tr>
                     <?
-
-
                 }
                 ?>
             </table>
@@ -231,7 +255,7 @@ class CSupportPage
 
     static function ProcessAJAX()
     {
-        if (isset($_REQUEST[self::AJAX_VAR_NAME]) && strlen($_REQUEST[self::AJAX_VAR_NAME]) > 0) {
+        if (isset($_REQUEST[self::AJAX_VAR_NAME]) && $_REQUEST[self::AJAX_VAR_NAME] <> '') {
             self::$needShowInterface = false;
             $type = $_REQUEST[self::AJAX_VAR_NAME];
             switch ($type) {
@@ -246,15 +270,24 @@ class CSupportPage
     static function GetPost()
     {
         self::$postTimeTableFields = new CSupportTableFields(CSupportTimetable::$fieldsTypes);
-        self::$postTimeTableSheduleFields = new CSupportTableFields(CSupportTimetable::$fieldsTypesShedule, CSupportTableFields::C_Table);
+        self::$postTimeTableSheduleFields = new CSupportTableFields(
+            CSupportTimetable::$fieldsTypesShedule,
+            CSupportTableFields::C_Table
+        );
         $res = false;
-        if (isset($_REQUEST["ID"]) && intval($_REQUEST["ID"]) > 0) self::$id = intval($_REQUEST["ID"]);
+        if (isset($_REQUEST["ID"]) && intval($_REQUEST["ID"]) > 0) {
+            self::$id = intval($_REQUEST["ID"]);
+        }
 
         if (check_bitrix_sessid() && $_SERVER["REQUEST_METHOD"] == "POST") {
             // Get data from POST
             self::$postTimeTableFields->FromArray($_REQUEST);
             self::$id = self::$postTimeTableFields->ID;
-            if (isset($_REQUEST["ArrShedule"]) && is_array($_REQUEST["ArrShedule"]) && count($_REQUEST["ArrShedule"]) > 0) self::ArrSheduleInObj($_REQUEST["ArrShedule"]);
+            if (isset($_REQUEST["ArrShedule"]) && is_array($_REQUEST["ArrShedule"]) && count(
+                    $_REQUEST["ArrShedule"]
+                ) > 0) {
+                self::ArrSheduleInObj($_REQUEST["ArrShedule"]);
+            }
             $res = true;
         }
         return $res;
@@ -262,14 +295,16 @@ class CSupportPage
 
     static function Save()
     {
-        $presSave = (isset($_REQUEST["save"]) && strlen($_REQUEST["save"]) > 0);
-        $presApply = (isset($_REQUEST["apply"]) && strlen($_REQUEST["apply"]) > 0);
+        $presSave = (isset($_REQUEST["save"]) && $_REQUEST["save"] <> '');
+        $presApply = (isset($_REQUEST["apply"]) && $_REQUEST["apply"] <> '');
         if ($presSave || $presApply) {
             self::$id = intval(CSupportTimetable::Set(self::$postTimeTableFields, self::$postTimeTableSheduleFields));
             // ���� ��������� �� ������� �� self::$id ����� ����� 0 � read() �� ��������� ������ ��������� �� POST ��� ���������
             if (self::$id > 0) {
                 if (!$presApply) {
-                    LocalRedirect("/bitrix/admin/" . self::LIST_URL . "?lang=" . LANG . GetFilterParams("filter_", false));
+                    LocalRedirect(
+                        "/bitrix/admin/" . self::LIST_URL . "?lang=" . LANG . GetFilterParams("filter_", false)
+                    );
                 }
                 return true;
             }
@@ -279,7 +314,9 @@ class CSupportPage
 
     static function Read()
     {
-        if (self::$id <= 0) return false;
+        if (self::$id <= 0) {
+            return false;
+        }
         self::$timeTableFields = new CSupportTableFields(CSupportTimetable::$fieldsTypes);
         $rs = CSupportTimetable::GetList(array(), array('ID' => self::$id));
         if ($arResult = $rs->Fetch()) {
@@ -310,17 +347,22 @@ class CSupportPage
                 "TITLE" => GetMessage("SUP_ADMIN_TAB2")
             ),
         );
-        if (self::SHOW_USER_FIELDS) $res[] = $USER_FIELD_MANAGER->EditFormTab("LEARN_ATTEMPT");
+        if (self::SHOW_USER_FIELDS) {
+            $res[] = $USER_FIELD_MANAGER->EditFormTab("LEARN_ATTEMPT");
+        }
         return $res;
     }
 
     static function DoActions()
     {
         global $APPLICATION;
-        if (self::ProcessAJAX()) return;
-        if (self::GetPost()) self::Save();
+        if (self::ProcessAJAX()) {
+            return;
+        }
+        if (self::GetPost()) {
+            self::Save();
+        }
         if (!self::Read()) {
-
             self::$timeTableFields = self::$postTimeTableFields;
             self::$timeTableSheduleFields = self::$postTimeTableSheduleFields;
         }
@@ -376,10 +418,13 @@ class CSupportPage
             $aContext[] = array(
                 "ICON" => "btn_delete",
                 "TEXT" => GetMessage("MAIN_ADMIN_MENU_DELETE"),
-                "LINK" => "javascript:if(confirm('" . GetMessage("SUP_CONFIRM_DEL_MESSAGE") . "'))window.location='" . self::LIST_URL . "?lang=" . LANG .
-                    "&action=delete&ID=" . self::$timeTableFields->ID . "&" . bitrix_sessid_get() . urlencode(GetFilterParams("filter_", false)) . "';",
+                "LINK" => "javascript:if(confirm('" . GetMessage(
+                        "SUP_CONFIRM_DEL_MESSAGE"
+                    ) . "'))window.location='" . self::LIST_URL . "?lang=" . LANG .
+                    "&action=delete&ID=" . self::$timeTableFields->ID . "&" . bitrix_sessid_get() . urlencode(
+                        GetFilterParams("filter_", false)
+                    ) . "';",
             );
-
         }
 
         if (self::SHOW_FORM_SETTINGS) {
@@ -400,7 +445,9 @@ class CSupportPage
     static function Show()
     {
         global $USER_FIELD_MANAGER, $APPLICATION;
-        if (self::ShowErrors()) return;
+        if (self::ShowErrors()) {
+            return;
+        }
         self::ShowMenu();
 
         self::$objCAdminForm->BeginEpilogContent();
@@ -428,15 +475,20 @@ class CSupportPage
             self::$objCAdminForm->EndCustomField("USER_FIELDS");
         }
 
-        self::$objCAdminForm->Buttons(Array("back_url" => "ticket_timetable_list.php?lang=" . LANG . GetFilterParams("filter_", false)));
-        self::$objCAdminForm->arParams["FORM_ACTION"] = $APPLICATION->GetCurPage() . "?lang=" . LANG . GetFilterParams("filter_");
+        self::$objCAdminForm->Buttons(
+            Array("back_url" => "ticket_timetable_list.php?lang=" . LANG . GetFilterParams("filter_", false))
+        );
+        self::$objCAdminForm->arParams["FORM_ACTION"] = $APPLICATION->GetCurPage() . "?lang=" . LANG . GetFilterParams(
+                "filter_"
+            );
         self::$objCAdminForm->Show();
-
     }
 
     static function TimeToStr($t)
     {
-        if ($t == 0) return self::DEFAULT_TIME;
+        if ($t == 0) {
+            return self::DEFAULT_TIME;
+        }
         $m = intval(fmod($t, 60));
         $h = ($t - $m) / 60;
         return date("H:i", mktime($h, $m, 0, 1, 1, 2000));
@@ -453,7 +505,6 @@ class CSupportPage
 
     static function ArrSheduleInObj($arr)
     {
-
         /*
         array["ArrShedule"] = array(
             0 => array(
@@ -472,16 +523,22 @@ class CSupportPage
         self::$postTimeTableSheduleFields->RemoveExistingRows();
         $arrTTS = array();
         foreach ($arr as $DateWeekday => $arDay) {
-            if (!isset($arDay["OPEN_TIME"]) || strlen($arDay["OPEN_TIME"]) <= 0) continue;
-            if ($arDay["OPEN_TIME"] == "CUSTOM" && !(isset($arDay["CUSTOM_TIME"]) && is_array($arDay["CUSTOM_TIME"]) && count($arDay["CUSTOM_TIME"]) > 0)) continue;
+            if (!isset($arDay["OPEN_TIME"]) || $arDay["OPEN_TIME"] == '') {
+                continue;
+            }
+            if ($arDay["OPEN_TIME"] == "CUSTOM" && !(isset($arDay["CUSTOM_TIME"]) && is_array(
+                        $arDay["CUSTOM_TIME"]
+                    ) && count($arDay["CUSTOM_TIME"]) > 0)) {
+                continue;
+            }
 
             $arrTTS["TIMETABLE_ID"] = self::$id;
             $arrTTS["WEEKDAY_NUMBER"] = $DateWeekday;
             $arrTTS["OPEN_TIME"] = $arDay["OPEN_TIME"];
             if ($arDay["OPEN_TIME"] == "CUSTOM") {
                 foreach ($arDay["CUSTOM_TIME"] as $ar) {
-                    $presMF = (isset($ar["MINUTE_FROM"]) && strlen($ar["MINUTE_FROM"]) > 0);
-                    $presMT = (isset($ar["MINUTE_TILL"]) && strlen($ar["MINUTE_TILL"]) > 0);
+                    $presMF = (isset($ar["MINUTE_FROM"]) && $ar["MINUTE_FROM"] <> '');
+                    $presMT = (isset($ar["MINUTE_TILL"]) && $ar["MINUTE_TILL"] <> '');
                     if ($presMF || $presMT) {
                         $minute_from = self::StrToTime(($presMF ? $ar["MINUTE_FROM"] : "00:00"));
                         $minute_till = self::StrToTime(($presMT ? $ar["MINUTE_TILL"] : "23:59"));
@@ -500,7 +557,6 @@ class CSupportPage
 
     static function ObjInArrShedule()
     {
-
         /*
             ArrShedule = array(
                 0 => array(
@@ -522,19 +578,30 @@ class CSupportPage
         self::$timeTableSheduleFields->ResetNext();
         while (self::$timeTableSheduleFields->Next()) {
             $res[self::$timeTableSheduleFields->WEEKDAY_NUMBER]["OPEN_TIME"] = self::$timeTableSheduleFields->OPEN_TIME;
-            $res[self::$timeTableSheduleFields->WEEKDAY_NUMBER]["CUSTOM_TIME"][] = array("MINUTE_FROM" => self::TimeToStr(self::$timeTableSheduleFields->MINUTE_FROM), "MINUTE_TILL" => self::TimeToStr(self::$timeTableSheduleFields->MINUTE_TILL));
-
+            $res[self::$timeTableSheduleFields->WEEKDAY_NUMBER]["CUSTOM_TIME"][] = array(
+                "MINUTE_FROM" => self::TimeToStr(
+                    self::$timeTableSheduleFields->MINUTE_FROM
+                ),
+                "MINUTE_TILL" => self::TimeToStr(self::$timeTableSheduleFields->MINUTE_TILL)
+            );
         }
         // ��������� ��� �����
         for ($i = 0; $i <= 6; $i++) {
             if (!isset($res[$i]) || !is_array($res[$i]) || (count($res[$i]) <= 0)) {
                 $res[$i] = array("OPEN_TIME" => "24H");
             }
-            if (!isset($res[$i]["CUSTOM_TIME"]) || !is_array($res[$i]["CUSTOM_TIME"]) || (count($res[$i]["CUSTOM_TIME"]) <= 0)) {
+            if (!isset($res[$i]["CUSTOM_TIME"]) || !is_array($res[$i]["CUSTOM_TIME"]) || (count(
+                        $res[$i]["CUSTOM_TIME"]
+                    ) <= 0)) {
                 $res[$i]["CUSTOM_TIME"] = array();
             }
             $c = self::DEFAULT_TIME_INPUT_ROW - count($res[$i]["CUSTOM_TIME"]);
-            for ($j = 0; $j < $c; $j++) $res[$i]["CUSTOM_TIME"][] = array("MINUTE_FROM" => self::DEFAULT_TIME, "MINUTE_TILL" => self::DEFAULT_TIME);
+            for ($j = 0; $j < $c; $j++) {
+                $res[$i]["CUSTOM_TIME"][] = array(
+                    "MINUTE_FROM" => self::DEFAULT_TIME,
+                    "MINUTE_TILL" => self::DEFAULT_TIME
+                );
+            }
         }
         return $res;
     }

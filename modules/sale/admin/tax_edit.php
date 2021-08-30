@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 $selfFolderUrl = $adminPage->getSelfFolderUrl();
@@ -6,8 +7,9 @@ $listUrl = $selfFolderUrl . "sale_tax.php?lang=" . LANGUAGE_ID;
 $listUrl = $adminSidePanelHelper->editUrlToPublicPage($listUrl);
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions < "W")
+if ($saleModulePermissions < "W") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 
@@ -15,49 +17,56 @@ IncludeModuleLangFile(__FILE__);
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/prolog.php");
 
-$ID = IntVal($ID);
+$ID = intval($ID);
 
 ClearVars();
 
 $strError = "";
 $bInitVars = false;
-if ((strlen($save) > 0 || strlen($apply) > 0) && $REQUEST_METHOD == "POST" && $saleModulePermissions == "W" && check_bitrix_sessid()) {
+if (($save <> '' || $apply <> '') && $REQUEST_METHOD == "POST" && $saleModulePermissions == "W" && check_bitrix_sessid(
+    )) {
     $adminSidePanelHelper->decodeUriComponent();
-    if (strlen($NAME) <= 0) $strError .= GetMessage("ERROR_EMPTY_NAME") . "<br>";
-    if (strlen($LID) <= 0) $strError .= GetMessage("ERROR_EMPTY_LANG") . "<br>";
+    if ($NAME == '') {
+        $strError .= GetMessage("ERROR_EMPTY_NAME") . "<br>";
+    }
+    if ($LID == '') {
+        $strError .= GetMessage("ERROR_EMPTY_LANG") . "<br>";
+    }
 
-    if (strlen($strError) <= 0) {
+    if ($strError == '') {
         $arFields = array(
             "LID" => $LID,
             "NAME" => trim($NAME),
-            "CODE" => (strlen($CODE) <= 0) ? False : $CODE,
+            "CODE" => ($CODE == '') ? false : $CODE,
             "DESCRIPTION" => $DESCRIPTION
         );
 
-        if (IntVal($ID) > 0) {
-            if (!CSaleTax::Update($ID, $arFields))
+        if (intval($ID) > 0) {
+            if (!CSaleTax::Update($ID, $arFields)) {
                 $strError .= GetMessage("ERROR_EDIT_TAX") . "<br>";
+            }
         } else {
             $ID = CSaleTax::Add($arFields);
-            if (IntVal($ID) <= 0)
+            if (intval($ID) <= 0) {
                 $strError .= GetMessage("ERROR_ADD_TAX") . "<br>";
+            }
         }
     }
 
-    if (strlen($strError) > 0) {
+    if ($strError <> '') {
         $adminSidePanelHelper->sendJsonErrorResponse($strError);
-        $bInitVars = True;
+        $bInitVars = true;
     }
 
     $adminSidePanelHelper->sendSuccessResponse("base");
 
-    if (strlen($save) > 0 && strlen($strError) <= 0) {
+    if ($save <> '' && $strError == '') {
         $adminSidePanelHelper->localRedirect($listUrl);
         LocalRedirect($listUrl);
     }
 }
 
-if (strlen($ID) > 0) {
+if ($ID <> '') {
     $db_tax = CSaleTax::GetList(Array(), Array("ID" => $ID));
     $db_tax->ExtractFields("str_");
 }
@@ -66,10 +75,11 @@ if ($bInitVars) {
     $DB->InitTableVarsForEdit("b_sale_tax", "", "str_");
 }
 
-if ($ID > 0)
+if ($ID > 0) {
     $sDocTitle = GetMessage("SALE_EDIT_RECORD", array("#ID#" => $ID));
-else
+} else {
     $sDocTitle = GetMessage("SALE_NEW_RECORD");
+}
 $APPLICATION->SetTitle($sDocTitle);
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
@@ -97,7 +107,8 @@ if ($ID > 0 && $saleModulePermissions >= "W") {
         "ICON" => "btn_new",
         "LINK" => $addUrl
     );
-    $deleteUrl = $selfFolderUrl . "sale_tax.php?action=delete&ID[]=" . $ID . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get() . "#tb";
+    $deleteUrl = $selfFolderUrl . "sale_tax.php?action=delete&ID[]=" . $ID . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get(
+        ) . "#tb";
     $buttonAction = "LINK";
     if ($adminSidePanelHelper->isPublicFrame()) {
         $deleteUrl = $adminSidePanelHelper->editUrlToPublicPage($deleteUrl);
@@ -106,7 +117,9 @@ if ($ID > 0 && $saleModulePermissions >= "W") {
     $aMenu[] = array(
         "TEXT" => GetMessage("STEN_DELETE_TAX"),
         "ICON" => "btn_delete",
-        $buttonAction => "javascript:if(confirm('" . GetMessage("STEN_DELETE_TAX_CONFIRM") . "')) top.window.location.href='" . $deleteUrl . "';",
+        $buttonAction => "javascript:if(confirm('" . GetMessage(
+                "STEN_DELETE_TAX_CONFIRM"
+            ) . "')) top.window.location.href='" . $deleteUrl . "';",
     );
 }
 $context = new CAdminContextMenu($aMenu);
@@ -128,7 +141,12 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
 
         <?
         $aTabs = array(
-            array("DIV" => "edit1", "TAB" => GetMessage("STEN_TAB_TAX"), "ICON" => "sale", "TITLE" => GetMessage("STEN_TAB_TAX_DESCR"))
+            array(
+                "DIV" => "edit1",
+                "TAB" => GetMessage("STEN_TAB_TAX"),
+                "ICON" => "sale",
+                "TITLE" => GetMessage("STEN_TAB_TAX_DESCR")
+            )
         );
 
         $tabControl = new CAdminTabControl("tabControl", $aTabs);

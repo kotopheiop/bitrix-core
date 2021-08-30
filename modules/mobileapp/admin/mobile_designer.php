@@ -29,12 +29,14 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
 
 $ieVersion = IsIE();
 if (IsIE() !== false && IsIE() < 9) {
-    CAdminMessage::ShowMessage(array(
-        "TYPE" => "ERROR",
-        "MESSAGE" => GetMessage("MOBILEAPP_WRONG_BROWSER"),
-        "DETAILS" => GetMessage("MOBILEAPP_WRONG_BROWSER_DETAIL"),
-        "HTML" => true,
-    ));
+    CAdminMessage::ShowMessage(
+        array(
+            "TYPE" => "ERROR",
+            "MESSAGE" => GetMessage("MOBILEAPP_WRONG_BROWSER"),
+            "DETAILS" => GetMessage("MOBILEAPP_WRONG_BROWSER_DETAIL"),
+            "HTML" => true,
+        )
+    );
     require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/epilog_admin.php");
     return;
 }
@@ -104,7 +106,7 @@ function __DSGetInitData()
 }
 
 
-if (strlen($action) > 0) {
+if ($action <> '') {
     $status = false;
     $data = array();
 
@@ -130,7 +132,11 @@ if (strlen($action) > 0) {
                 $status = Bitrix\MobileApp\Designer\Manager::removeConfig($code, $platform);
                 break;
             case "createPlatform":
-                $status = \Bitrix\MobileApp\Designer\Manager::addConfig($_REQUEST["code"], $_REQUEST["platform"], array());
+                $status = \Bitrix\MobileApp\Designer\Manager::addConfig(
+                    $_REQUEST["code"],
+                    $_REQUEST["platform"],
+                    array()
+                );
                 break;
             case "createApp":
                 $code = $_REQUEST["code"];
@@ -161,18 +167,22 @@ if (strlen($action) > 0) {
                     );
 
                     $data["config"] = $initConfig;
-
                 }
 
 
-                $result = \Bitrix\MobileApp\Designer\Manager::createApp($code, $fields, $initConfig); //creating global config inside
+                $result = \Bitrix\MobileApp\Designer\Manager::createApp(
+                    $code,
+                    $fields,
+                    $initConfig
+                ); //creating global config inside
 
                 if ($result == \Bitrix\MobileApp\Designer\Manager::IS_ALREADY_EXISTS) {
                     $APPLICATION->RestartBuffer();
                     echo CUtil::PhpToJSObject(
                         array(
                             "status" => "is_already_exists"
-                        ));
+                        )
+                    );
                     die();
                 }
 
@@ -180,11 +190,20 @@ if (strlen($action) > 0) {
                 $status = ($result == \Bitrix\MobileApp\Designer\Manager::SUCCESS);
 
                 if ($status) {
-                    \Bitrix\MobileApp\Designer\Manager::copyFromTemplate($fields["FOLDER"], $code, $useOffline, $appTemplateName);
+                    \Bitrix\MobileApp\Designer\Manager::copyFromTemplate(
+                        $fields["FOLDER"],
+                        $code,
+                        $useOffline,
+                        $appTemplateName
+                    );
 
                     if ($bindTemplate) {
                         $templateId = $_REQUEST["template_id"];
-                        \Bitrix\MobileApp\Designer\Manager::bindTemplate($templateId, $fields["FOLDER"], $createTemplate);
+                        \Bitrix\MobileApp\Designer\Manager::bindTemplate(
+                            $templateId,
+                            $fields["FOLDER"],
+                            $createTemplate
+                        );
                     }
                 }
 
@@ -202,7 +221,6 @@ if (strlen($action) > 0) {
                     "files" => $files
                 );
                 break;
-
         }
     }
 
@@ -217,8 +235,16 @@ if (strlen($action) > 0) {
 <div id="designer-wrapper" class="designer-prop-wrapper">
 </div>
 <?
-AddEventHandler("mobileapp", "onDesignerFileUploaded", Array("Bitrix\\MobileApp\\Designer\\Manager", "registerFileInApp"));
-AddEventHandler("mobileapp", "onDesignerFileRemoved", Array("Bitrix\\MobileApp\\Designer\\Manager", "unregisterFileInApp"));
+AddEventHandler(
+    "mobileapp",
+    "onDesignerFileUploaded",
+    Array("Bitrix\\MobileApp\\Designer\\Manager", "registerFileInApp")
+);
+AddEventHandler(
+    "mobileapp",
+    "onDesignerFileRemoved",
+    Array("Bitrix\\MobileApp\\Designer\\Manager", "unregisterFileInApp")
+);
 
 $APPLICATION->IncludeComponent
 (
@@ -244,7 +270,12 @@ $componentParams = array(
     'ALLOW_UPLOAD_EXT' => "jpg,png,jpeg"
 );
 
-$GLOBALS['APPLICATION']->IncludeComponent('bitrix:mobileapp.designer.file.input', 'drag_n_drop', $componentParams, false);
+$GLOBALS['APPLICATION']->IncludeComponent(
+    'bitrix:mobileapp.designer.file.input',
+    'drag_n_drop',
+    $componentParams,
+    false
+);
 $initData = __DSGetInitData();
 $initDataJS = Json::encode($initData);
 ?>
@@ -266,19 +297,21 @@ $initDataJS = Json::encode($initData);
 <div>
     <?
 
-    CAdminFileDialog::ShowScript(Array
-    (
-        "event" => "openFileDialog",
-        "arResultDest" => Array("FUNCTION_NAME" => "designerEditorFileChosen"),
-        "arPath" => Array(),
-        "select" => "F", // F - file only, D - folder only, DF - files & dirs
-        "operation" => 'O',
-        "showUploadTab" => false,
-        "showAddToMenuTab" => false,
-        "fileFilter" => "js,html,htm,png,jpeg,jpg,svg,gif,txt,css",
-        "allowAllFiles" => true,
-        "SaveConfig" => true
-    ));
+    CAdminFileDialog::ShowScript(
+        Array
+        (
+            "event" => "openFileDialog",
+            "arResultDest" => Array("FUNCTION_NAME" => "designerEditorFileChosen"),
+            "arPath" => Array(),
+            "select" => "F", // F - file only, D - folder only, DF - files & dirs
+            "operation" => 'O',
+            "showUploadTab" => false,
+            "showAddToMenuTab" => false,
+            "fileFilter" => "js,html,htm,png,jpeg,jpg,svg,gif,txt,css",
+            "allowAllFiles" => true,
+            "SaveConfig" => true
+        )
+    );
     ?>
 </div>
 

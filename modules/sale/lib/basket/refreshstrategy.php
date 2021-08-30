@@ -62,8 +62,9 @@ abstract class RefreshStrategy extends BaseRefreshStrategy
 
         /** @var array $bundleBasketItemData */
         foreach ($bundleItemList as $bundleBasketItemData) {
-            if (empty($bundleBasketItemData['MODULE']) || empty($bundleBasketItemData['PRODUCT_ID']))
+            if (empty($bundleBasketItemData['MODULE']) || empty($bundleBasketItemData['PRODUCT_ID'])) {
                 return null;
+            }
 
             $props = array();
             if (!empty($bundleBasketItemData['PROPS']) && is_array($bundleBasketItemData['PROPS'])) {
@@ -71,9 +72,17 @@ abstract class RefreshStrategy extends BaseRefreshStrategy
             }
 
             /** @var BasketItem $bundleBasketItem */
-            $bundleItem = $bundleCollection->getExistsItem($bundleBasketItemData['MODULE'], $bundleBasketItemData['PRODUCT_ID'], $props);
+            $bundleItem = $bundleCollection->getExistsItem(
+                $bundleBasketItemData['MODULE'],
+                $bundleBasketItemData['PRODUCT_ID'],
+                $props
+            );
             if (!$bundleItem) {
-                $bundleItem = $basketItemClassName::create($bundleCollection, $bundleBasketItemData['MODULE'], $bundleBasketItemData['PRODUCT_ID']);
+                $bundleItem = $basketItemClassName::create(
+                    $bundleCollection,
+                    $bundleBasketItemData['MODULE'],
+                    $bundleBasketItemData['PRODUCT_ID']
+                );
             }
 
             $fields = array_intersect_key($bundleBasketItemData, $basketItemClassName::getSettableFieldsMap());

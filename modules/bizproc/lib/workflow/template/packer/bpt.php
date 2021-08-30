@@ -33,9 +33,9 @@ class Bpt extends BasePacker
         $documentFieldsAliasesMap = CBPDocument::getDocumentFieldsAliasesMap($documentFieldsTmp);
 
         $documentFields = [];
-        $len = strlen("_PRINTABLE");
+        $len = mb_strlen("_PRINTABLE");
         foreach ($documentFieldsTmp as $k => $v) {
-            if (strtoupper(substr($k, -$len)) != "_PRINTABLE") {
+            if (mb_strtoupper(mb_substr($k, -$len)) != "_PRINTABLE") {
                 $documentFields[$k] = $v;
             }
         }
@@ -75,11 +75,11 @@ class Bpt extends BasePacker
     {
         $result = new Result\Unpack();
 
-        $datumTmp = \CheckSerializedData($data) ? @unserialize($data) : null;
+        $datumTmp = \CheckSerializedData($data) ? @unserialize($data, ['allowed_classes' => false]) : null;
 
         if (!is_array($datumTmp) || is_array($datumTmp) && !array_key_exists("TEMPLATE", $datumTmp)) {
             $datumTmp = $this->uncompress($data);
-            $datumTmp = \CheckSerializedData($datumTmp) ? @unserialize($datumTmp) : null;
+            $datumTmp = \CheckSerializedData($datumTmp) ? @unserialize($datumTmp, ['allowed_classes' => false]) : null;
         }
 
         if (!is_array($datumTmp) || is_array($datumTmp) && !array_key_exists("TEMPLATE", $datumTmp)) {
@@ -94,7 +94,10 @@ class Bpt extends BasePacker
             $datumTmp["CONSTANTS"] = isset($datumTmp["CONSTANTS"]) ?
                 self::ConvertArrayCharset($datumTmp["CONSTANTS"], static::DIRECTION_IMPORT)
                 : array();
-            $datumTmp["DOCUMENT_FIELDS"] = self::ConvertArrayCharset($datumTmp["DOCUMENT_FIELDS"], static::DIRECTION_IMPORT);
+            $datumTmp["DOCUMENT_FIELDS"] = self::ConvertArrayCharset(
+                $datumTmp["DOCUMENT_FIELDS"],
+                static::DIRECTION_IMPORT
+            );
         }
 
         /** @var Tpl $tpl */
@@ -119,8 +122,9 @@ class Bpt extends BasePacker
 
     private static function replaceActivityDocumentFieldsAliases(&$activity, $aliases)
     {
-        if (!is_array($activity['Properties']))
+        if (!is_array($activity['Properties'])) {
             return;
+        }
 
         foreach ($activity['Properties'] as $key => $value) {
             $activity['Properties'][$key] = self::replaceValueDocumentFieldsAliases($value, $aliases);
@@ -136,14 +140,16 @@ class Bpt extends BasePacker
 
     private static function replaceVariablesDocumentFieldsAliases(&$variables, $aliases)
     {
-        if (!is_array($variables))
+        if (!is_array($variables)) {
             return;
+        }
 
         foreach ($variables as $key => &$variable) {
             $variable['Default'] = self::replaceValueDocumentFieldsAliases($variable['Default'], $aliases);
             //Type Internalselect use options as link to document field.
-            if (is_scalar($variable['Options']) && array_key_exists($variable['Options'], $aliases))
+            if (is_scalar($variable['Options']) && array_key_exists($variable['Options'], $aliases)) {
                 $variable['Options'] = $aliases[$variable['Options']];
+            }
         }
     }
 
@@ -152,8 +158,9 @@ class Bpt extends BasePacker
         if (is_array($value)) {
             $replacesValue = array();
             foreach ($value as $key => $val) {
-                if (array_key_exists($key, $aliases))
+                if (array_key_exists($key, $aliases)) {
                     $key = $aliases[$key];
+                }
 
                 $replacesValue[$key] = self::replaceValueDocumentFieldsAliases($val, $aliases);
             }
@@ -180,8 +187,9 @@ class Bpt extends BasePacker
     private static function replaceFieldConditionsDocumentFieldsAliases($conditions, $aliases)
     {
         foreach ($conditions as $key => $condition) {
-            if (array_key_exists($condition[0], $aliases))
+            if (array_key_exists($condition[0], $aliases)) {
                 $conditions[$key][0] = $aliases[$condition[0]];
+            }
         }
 
         return $conditions;
@@ -189,11 +197,13 @@ class Bpt extends BasePacker
 
     private static function ConvertValueCharset($s, $direction)
     {
-        if ("utf-8" == strtolower(LANG_CHARSET))
+        if ("utf-8" == mb_strtolower(LANG_CHARSET)) {
             return $s;
+        }
 
-        if (is_numeric($s))
+        if (is_numeric($s)) {
             return $s;
+        }
 
         if ($direction == static::DIRECTION_EXPORT) {
             $s = Main\Text\Encoding::convertEncoding($s, LANG_CHARSET, "UTF-8");

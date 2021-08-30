@@ -29,8 +29,8 @@ class ManagedCache
     {
         static $type = null;
         if ($type === null) {
-            $cm = Main\Application::getInstance()->getConnectionPool();
-            $type = $cm->getDefaultConnectionType();
+            $type = Main\Application::getInstance()->getConnection()->getType();
+            $type = strtoupper($type);
         }
         return $type;
     }
@@ -44,7 +44,12 @@ class ManagedCache
             $this->cache[$uniqueId] = Cache::createInstance();
             $this->cachePath[$uniqueId] = static::getDbType() . ($tableId === false ? "" : "/" . $tableId);
             $this->ttl[$uniqueId] = $ttl;
-            $this->cache_init[$uniqueId] = $this->cache[$uniqueId]->initCache($ttl, $uniqueId, $this->cachePath[$uniqueId], "managed_cache");
+            $this->cache_init[$uniqueId] = $this->cache[$uniqueId]->initCache(
+                $ttl,
+                $uniqueId,
+                $this->cachePath[$uniqueId],
+                "managed_cache"
+            );
         }
         return $this->cache_init[$uniqueId] || array_key_exists($uniqueId, $this->vars);
     }
@@ -90,7 +95,13 @@ class ManagedCache
     {
         if (isset($this->cache[$uniqueId])) {
             $obCache = Cache::createInstance();
-            $obCache->startDataCache($this->ttl[$uniqueId], $uniqueId, $this->cachePath[$uniqueId], $val, "managed_cache");
+            $obCache->startDataCache(
+                $this->ttl[$uniqueId],
+                $uniqueId,
+                $this->cachePath[$uniqueId],
+                $val,
+                "managed_cache"
+            );
             $obCache->endDataCache();
 
             unset($this->cache[$uniqueId]);
@@ -155,7 +166,13 @@ class ManagedCache
         $cache = Cache::createInstance();
         foreach ($cacheManager->cache as $uniqueId => $val) {
             if (array_key_exists($uniqueId, $cacheManager->vars)) {
-                $cache->startDataCache($cacheManager->ttl[$uniqueId], $uniqueId, $cacheManager->cachePath[$uniqueId], $cacheManager->vars[$uniqueId], "managed_cache");
+                $cache->startDataCache(
+                    $cacheManager->ttl[$uniqueId],
+                    $uniqueId,
+                    $cacheManager->cachePath[$uniqueId],
+                    $cacheManager->vars[$uniqueId],
+                    "managed_cache"
+                );
                 $cache->endDataCache();
             }
         }
@@ -169,7 +186,7 @@ class ManagedCache
         if ($BX_STATE === "WA") {
             $salt = Cache::getSalt();
         } else {
-            $salt = "/" . substr(md5($BX_STATE), 0, 3);
+            $salt = "/" . mb_substr(md5($BX_STATE), 0, 3);
         }
 
         $path = "/" . SITE_ID . $relativePath . $salt;

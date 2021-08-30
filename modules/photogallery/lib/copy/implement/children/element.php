@@ -29,10 +29,13 @@ class Element extends ElementBase
         ];
         Option::set($this->moduleId, "SectionGroupStepper_" . $copiedSectionId, serialize($queueOption));
 
-        $agent = \CAgent::getList([], [
-            "MODULE_ID" => $this->moduleId,
-            "NAME" => SectionStepper::class . "::execAgent();"
-        ])->fetch();
+        $agent = \CAgent::getList(
+            [],
+            [
+                "MODULE_ID" => $this->moduleId,
+                "NAME" => SectionStepper::class . "::execAgent();"
+            ]
+        )->fetch();
         if (!$agent) {
             SectionStepper::bind(1);
         }

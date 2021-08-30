@@ -1,4 +1,5 @@
 <?
+
 /** @global CMain $APPLICATION */
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 CModule::IncludeModule("iblock");
@@ -8,28 +9,34 @@ IncludeModuleLangFile(__FILE__);
 set_time_limit(0);
 $IBLOCK_ID = intval($IBLOCK_ID);
 $STEP = intval($STEP);
-if ($STEP <= 0)
+if ($STEP <= 0) {
     $STEP = 1;
+}
 
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["backButton"]) && strlen($_POST["backButton"]) > 0)
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["backButton"]) && $_POST["backButton"] <> '') {
     $STEP = $STEP - 2;
+}
 
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["backButton2"]) && strlen($_POST["backButton2"]) > 0)
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["backButton2"]) && $_POST["backButton2"] <> '') {
     $STEP = 1;
+}
 
 $NUM_CATALOG_LEVELS = (int)COption::GetOptionInt('iblock', 'num_catalog_levels');
-if ($NUM_CATALOG_LEVELS <= 0)
+if ($NUM_CATALOG_LEVELS <= 0) {
     $NUM_CATALOG_LEVELS = 3;
+}
 $max_execution_time = intval($max_execution_time);
-if ($max_execution_time <= 0)
+if ($max_execution_time <= 0) {
     $max_execution_time = 0;
+}
 
-if (isset($_REQUEST["CUR_LOAD_SESS_ID"]) && strlen($_REQUEST["CUR_LOAD_SESS_ID"]) > 0)
+if (isset($_REQUEST["CUR_LOAD_SESS_ID"]) && $_REQUEST["CUR_LOAD_SESS_ID"] <> '') {
     $CUR_LOAD_SESS_ID = $_REQUEST["CUR_LOAD_SESS_ID"];
-else
+} else {
     $CUR_LOAD_SESS_ID = "CL" . time();
+}
 
-$bAllLinesLoaded = True;
+$bAllLinesLoaded = true;
 $CUR_FILE_POS = isset($_REQUEST["CUR_FILE_POS"]) ? intval($_REQUEST["CUR_FILE_POS"]) : 0;
 $strError = "";
 $line_num = 0;
@@ -170,10 +177,11 @@ class CAssocData extends CCSVData
 
     function GetPos()
     {
-        if (empty($this->__pos))
+        if (empty($this->__pos)) {
             return parent::GetPos();
-        else
+        } else {
             return $this->__pos[count($this->__pos) - 1];
+        }
     }
 
     function Fetch()
@@ -201,8 +209,9 @@ class CAssocData extends CCSVData
     function SetGroupFields($arGroupFields)
     {
         $ar = array();
-        foreach ($arGroupFields as $name => $arField)
+        foreach ($arGroupFields as $name => $arField) {
             $ar[] = $name;
+        }
 
         $this->GROUP_REGEX = "/^(" . implode("|", $ar) . ")\\d+\$/";
     }
@@ -232,8 +241,9 @@ class CAssocData extends CCSVData
                 $value = "" . trim($ar[$i]);
                 if (preg_match($this->GROUP_REGEX, $key)) {
                     //IBlockSection
-                    if (!array_key_exists($key, $result))
+                    if (!array_key_exists($key, $result)) {
                         $result[$key] = array();
+                    }
 
                     $result[$key][] = $value;
                 } elseif (preg_match("/^IP_PROP/", $key)) {
@@ -254,14 +264,16 @@ class CAssocData extends CCSVData
                     $result[$key] = $value;
                 }
             }
-            if (empty($this->PK))
+            if (empty($this->PK)) {
                 return $result;
+            }
         }
         //eof
-        if (empty($result))
+        if (empty($result)) {
             return $ar;
-        else
+        } else {
             return $result;
+        }
     }
 
     function MapSections($arRes)
@@ -284,14 +296,16 @@ class CAssocData extends CCSVData
                     if (array_key_exists($key . $i, $arRes) && !empty($arRes[$key . $i])) {
                         $arGroupsTmp1[$fkey] = array_shift($arRes[$key . $i]);
                     }
-                    if ($value["important"] == "Y" && isset($arGroupsTmp1[$fkey]) && strlen($arGroupsTmp1[$fkey]) > 0)
+                    if ($value["important"] == "Y" && isset($arGroupsTmp1[$fkey]) && $arGroupsTmp1[$fkey] <> '') {
                         $bOK = true;
+                    }
                 }
                 // drop empty target sections
                 if ($bOK) {
                     // When group does not have name  "<Empty name>"
-                    if (strlen($arGroupsTmp1["NAME"]) <= 0)
+                    if ($arGroupsTmp1["NAME"] == '') {
                         $arGroupsTmp1["NAME"] = GetMessage("IBLOCK_ADM_IMP_NOMAME");
+                    }
 
                     if (!$stop_processing) {
                         $arGroupsTmp[] = $arGroupsTmp1;
@@ -302,8 +316,9 @@ class CAssocData extends CCSVData
             }
 
             //Finished with groups
-            if (empty($arGroupsTmp))
+            if (empty($arGroupsTmp)) {
                 break;
+            }
 
             // Create sections tree. Save section code for elemet insertions
             $LAST_GROUP_CODE = 0;
@@ -313,9 +328,9 @@ class CAssocData extends CCSVData
                     "CHECK_PERMISSIONS" => "N",
                 );
 
-                if (isset($arGroup["XML_ID"]) && strlen($arGroup["XML_ID"])) {
+                if (isset($arGroup["XML_ID"]) && mb_strlen($arGroup["XML_ID"])) {
                     $arFilter["=XML_ID"] = $arGroup["XML_ID"];
-                } elseif (isset($arGroup["NAME"]) && strlen($arGroup["NAME"])) {
+                } elseif (isset($arGroup["NAME"]) && mb_strlen($arGroup["NAME"])) {
                     $arFilter["=NAME"] = $arGroup["NAME"];
                 }
 
@@ -332,8 +347,9 @@ class CAssocData extends CCSVData
                     $arr = $arSectionCache[$cache_id];
                 } else {
                     $res = CIBlockSection::GetList(array(), $arFilter);
-                    if ($arr = $res->Fetch())
+                    if ($arr = $res->Fetch()) {
                         $arSectionCache[$cache_id] = $arr;
+                    }
                 }
 
                 if ($arr) {
@@ -356,8 +372,9 @@ class CAssocData extends CCSVData
                     $LAST_GROUP_CODE = $bs->Add($arGroupsTmp[$i]);
                 }
             }
-            if ($LAST_GROUP_CODE > 0)
+            if ($LAST_GROUP_CODE > 0) {
                 $result[$LAST_GROUP_CODE] = $LAST_GROUP_CODE;
+            }
         }
         return $result;
     }
@@ -366,27 +383,36 @@ class CAssocData extends CCSVData
     {
         static $arEnumCache = array();
         if (is_array($value)) {
-            foreach ($value as $k => $v)
+            foreach ($value as $k => $v) {
                 $value[$k] = $this->MapEnum($prop_id, $v);
+            }
         } else {
-            if (!isset($arEnumCache[$prop_id]))
+            if (!isset($arEnumCache[$prop_id])) {
                 $arEnumCache[$prop_id] = array();
+            }
 
             if (array_key_exists($value, $arEnumCache[$prop_id])) {
                 $value = $arEnumCache[$prop_id][$value];
             } else {
-                $res2 = CIBlockProperty::GetPropertyEnum($prop_id, array(), array(
-                    "IBLOCK_ID" => $this->IBLOCK_ID,
-                    "VALUE" => $value,
-                ));
-                if ($arRes2 = $res2->Fetch())
-                    $value = $arEnumCache[$prop_id][$value] = $arRes2["ID"];
-                else
-                    $value = $arEnumCache[$prop_id][$value] = CIBlockPropertyEnum::Add(array(
-                        "PROPERTY_ID" => $prop_id,
+                $res2 = CIBlockProperty::GetPropertyEnum(
+                    $prop_id,
+                    array(),
+                    array(
+                        "IBLOCK_ID" => $this->IBLOCK_ID,
                         "VALUE" => $value,
-                        "TMP_ID" => $this->tmpid,
-                    ));
+                    )
+                );
+                if ($arRes2 = $res2->Fetch()) {
+                    $value = $arEnumCache[$prop_id][$value] = $arRes2["ID"];
+                } else {
+                    $value = $arEnumCache[$prop_id][$value] = CIBlockPropertyEnum::Add(
+                        array(
+                            "PROPERTY_ID" => $prop_id,
+                            "VALUE" => $value,
+                            "TMP_ID" => $this->tmpid,
+                        )
+                    );
+                }
             }
         }
         return $value;
@@ -397,22 +423,27 @@ class CAssocData extends CCSVData
         global $PATH2PROP_FILES;
         $io = CBXVirtualIo::GetInstance();
 
-        if (!is_array($value))
+        if (!is_array($value)) {
             $value = array(
                 $value,
             );
+        }
 
         $result = array();
         $j = 0;
         foreach ($value as $i => $file_name) {
-            if (strlen($file_name) > 0) {
-                if (preg_match("/^(ftp|ftps|http|https):\\/\\//", $file_name))
+            if ($file_name <> '') {
+                if (preg_match("/^(ftp|ftps|http|https):\\/\\//", $file_name)) {
                     $arFile = CFile::MakeFileArray($file_name);
-                else
-                    $arFile = CFile::MakeFileArray($io->GetPhysicalName($_SERVER["DOCUMENT_ROOT"] . $PATH2PROP_FILES . "/" . $file_name));
+                } else {
+                    $arFile = CFile::MakeFileArray(
+                        $io->GetPhysicalName($_SERVER["DOCUMENT_ROOT"] . $PATH2PROP_FILES . "/" . $file_name)
+                    );
+                }
 
-                if (isset($arFile["tmp_name"]))
+                if (isset($arFile["tmp_name"])) {
                     $result["n" . ($j++)] = $arFile;
+                }
             }
         }
         return $result;
@@ -421,29 +452,47 @@ class CAssocData extends CCSVData
 
 /////////////////////////////////////////////////////////////////////
 if (($_SERVER['REQUEST_METHOD'] == "POST" || $CUR_FILE_POS > 0) && $STEP > 1 && check_bitrix_sessid()) {
+    $fieldList = [
+        'fields_type',
+        'fields_type',
+        'delimiter_r',
+        'delimiter_r',
+        'first_names_f',
+        'first_names_f',
+        'PATH2IMAGE_FILES',
+        'IMAGE_RESIZE',
+        'PATH2PROP_FILES',
+        'outFileAction',
+        'inFileAction',
+        'max_execution_time',
+    ];
+
     //*****************************************************************//
     if ($STEP > 1) {
         //*****************************************************************//
         $DATA_FILE_NAME = "";
         if (isset($_FILES["DATA_FILE"]) && is_uploaded_file($_FILES["DATA_FILE"]["tmp_name"])) {
-            if (strtolower(GetFileExtension($_FILES["DATA_FILE"]["name"])) != "csv") {
+            if (mb_strtolower(GetFileExtension($_FILES["DATA_FILE"]["name"])) != "csv") {
                 $strError .= GetMessage("IBLOCK_ADM_IMP_NOT_CSV") . "<br>";
             } else {
-                $DATA_FILE_NAME = "/" . COption::GetOptionString("main", "upload_dir", "upload") . "/" . basename($_FILES["DATA_FILE"]["name"]);
-                if ($APPLICATION->GetFileAccessPermission($DATA_FILE_NAME) >= "W")
+                $DATA_FILE_NAME = "/" . COption::GetOptionString("main", "upload_dir", "upload") . "/" . basename(
+                        $_FILES["DATA_FILE"]["name"]
+                    );
+                if ($APPLICATION->GetFileAccessPermission($DATA_FILE_NAME) >= "W") {
                     copy($_FILES["DATA_FILE"]["tmp_name"], $_SERVER["DOCUMENT_ROOT"] . $DATA_FILE_NAME);
-                else
+                } else {
                     $DATA_FILE_NAME = "";
+                }
             }
         }
 
-        if (strlen($strError) <= 0) {
-            if (strlen($DATA_FILE_NAME) <= 0) {
-                if (strlen($URL_DATA_FILE) > 0) {
+        if ($strError == '') {
+            if ($DATA_FILE_NAME == '') {
+                if ($URL_DATA_FILE <> '') {
                     $URL_DATA_FILE = trim(str_replace("\\", "/", trim($URL_DATA_FILE)), "/");
                     $FILE_NAME = rel2abs($_SERVER["DOCUMENT_ROOT"], "/" . $URL_DATA_FILE);
                     if (
-                        (strlen($FILE_NAME) > 1)
+                        (mb_strlen($FILE_NAME) > 1)
                         && ($FILE_NAME === "/" . $URL_DATA_FILE)
                         && $io->FileExists($_SERVER["DOCUMENT_ROOT"] . $FILE_NAME)
                         && ($APPLICATION->GetFileAccessPermission($FILE_NAME) >= "W")
@@ -453,22 +502,30 @@ if (($_SERVER['REQUEST_METHOD'] == "POST" || $CUR_FILE_POS > 0) && $STEP > 1 && 
                 }
             }
 
-            if (strlen($DATA_FILE_NAME) <= 0)
+            if ($DATA_FILE_NAME == '') {
                 $strError .= GetMessage("IBLOCK_ADM_IMP_NO_DATA_FILE_SIMPLE") . "<br>";
+            }
 
-            if (!CIBlockRights::UserHasRightTo($IBLOCK_ID, $IBLOCK_ID, "element_edit_any_wf_status"))
+            if (!CIBlockRights::UserHasRightTo($IBLOCK_ID, $IBLOCK_ID, "element_edit_any_wf_status")) {
                 $strError .= GetMessage("IBLOCK_ADM_IMP_NO_IBLOCK") . "<br>";
+            }
         }
 
-        if (strlen($strError) <= 0) {
-            if ($CUR_FILE_POS > 0 && is_set($_SESSION, $CUR_LOAD_SESS_ID) && is_set($_SESSION[$CUR_LOAD_SESS_ID], "LOAD_SCHEME")) {
-                parse_str($_SESSION[$CUR_LOAD_SESS_ID]["LOAD_SCHEME"]);
+        if ($strError == '') {
+            if ($CUR_FILE_POS > 0 && isset($_SESSION[$CUR_LOAD_SESS_ID]["LOAD_SCHEME"]) && is_array(
+                    $_SESSION[$CUR_LOAD_SESS_ID]["LOAD_SCHEME"]
+                )) {
+                foreach ($_SESSION[$CUR_LOAD_SESS_ID]["LOAD_SCHEME"] as $fieldName => $value) {
+                    $GLOBALS[$fieldName] = $value;
+                }
+
                 $STEP = 4;
             }
         }
 
-        if (strlen($strError) > 0)
+        if ($strError <> '') {
             $STEP = 1;
+        }
         //*****************************************************************//
 
     }
@@ -476,11 +533,12 @@ if (($_SERVER['REQUEST_METHOD'] == "POST" || $CUR_FILE_POS > 0) && $STEP > 1 && 
         //*****************************************************************//
         $csvFile = new CAssocData;
         $csvFile->LoadFile($io->GetPhysicalName($_SERVER["DOCUMENT_ROOT"] . $DATA_FILE_NAME));
-        if ($fields_type != "F" && $fields_type != "R")
+        if ($fields_type != "F" && $fields_type != "R") {
             $strError .= GetMessage("IBLOCK_ADM_IMP_NO_FILE_FORMAT") . "<br>";
+        }
 
         $arDataFileFields = array();
-        if (strlen($strError) <= 0) {
+        if ($strError == '') {
             $fields_type = (($fields_type == "F") ? "F" : "R");
             $csvFile->SetFieldsType($fields_type);
             if ($fields_type == "R") {
@@ -501,43 +559,47 @@ if (($_SERVER['REQUEST_METHOD'] == "POST" || $CUR_FILE_POS > 0) && $STEP > 1 && 
                         break;
 
                     case "OTR":
-                        $delimiter_r_char = substr($delimiter_other_r, 0, 1);
+                        $delimiter_r_char = mb_substr($delimiter_other_r, 0, 1);
                         break;
 
                     case "TZP":
                         $delimiter_r_char = ";";
                         break;
                 }
-                if (strlen($delimiter_r_char) != 1)
+                if (mb_strlen($delimiter_r_char) != 1) {
                     $strError .= GetMessage("IBLOCK_ADM_IMP_NO_DELIMITER") . "<br>";
+                }
 
-                if (strlen($strError) <= 0) {
+                if ($strError == '') {
                     $csvFile->SetDelimiter($delimiter_r_char);
                 }
             } else {
                 $first_names_f = (($first_names_f == "Y") ? "Y" : "N");
                 $csvFile->SetFirstHeader(($first_names_f == "Y") ? true : false);
-                if (strlen($metki_f) <= 0)
+                if ($metki_f == '') {
                     $strError .= GetMessage("IBLOCK_ADM_IMP_NO_METKI") . "<br>";
+                }
 
-                if (strlen($strError) <= 0) {
+                if ($strError == '') {
                     $arMetki = array();
                     foreach (preg_split("/[\D]/i", $metki_f) as $metka) {
                         $metka = intval($metka);
-                        if ($metka > 0)
+                        if ($metka > 0) {
                             $arMetki[] = $metka;
+                        }
                     }
 
-                    if (!is_array($arMetki) || count($arMetki) < 1)
+                    if (!is_array($arMetki) || count($arMetki) < 1) {
                         $strError .= GetMessage("IBLOCK_ADM_IMP_NO_METKI") . "<br>";
+                    }
 
-                    if (strlen($strError) <= 0) {
+                    if ($strError == '') {
                         $csvFile->SetWidthMap($arMetki);
                     }
                 }
             }
 
-            if (strlen($strError) <= 0) {
+            if ($strError == '') {
                 $bFirstHeaderTmp = $csvFile->GetFirstHeader();
                 $csvFile->SetFirstHeader(false);
                 if ($arRes = $csvFile->Fetch()) {
@@ -551,24 +613,26 @@ if (($_SERVER['REQUEST_METHOD'] == "POST" || $CUR_FILE_POS > 0) && $STEP > 1 && 
             }
         }
 
-        if (strlen($strError) > 0)
+        if ($strError <> '') {
             $STEP = 2;
+        }
         //*****************************************************************//
 
     }
     if ($STEP > 3) {
         //*****************************************************************//
-        $bFieldsPres = False;
+        $bFieldsPres = false;
         for ($i = 0; $i < $NUM_FIELDS; $i++) {
-            if (strlen(${"field_" . $i}) > 0) {
-                $bFieldsPres = True;
+            if (${"field_" . $i} <> '') {
+                $bFieldsPres = true;
                 break;
             }
         }
-        if (!$bFieldsPres)
+        if (!$bFieldsPres) {
             $strError .= GetMessage("IBLOCK_ADM_IMP_NO_FIELDS") . "<br>";
+        }
 
-        if (strlen($strError) <= 0) {
+        if ($strError == '') {
             $csvFile->SetPos($CUR_FILE_POS);
             if ($CUR_FILE_POS <= 0 && $bFirstHeaderTmp) {
                 $arRes = $csvFile->Fetch();
@@ -579,40 +643,51 @@ if (($_SERVER['REQUEST_METHOD'] == "POST" || $CUR_FILE_POS > 0) && $STEP > 1 && 
             $el->CancelWFSetMove();
             $tmpid = md5(uniqid(""));
             $arIBlockProperty = array();
-            $bThereIsGroups = False;
+            $bThereIsGroups = false;
             if ($CUR_FILE_POS > 0 && is_set($_SESSION, $CUR_LOAD_SESS_ID)) {
-                if (is_set($_SESSION[$CUR_LOAD_SESS_ID], "tmpid"))
+                if (is_set($_SESSION[$CUR_LOAD_SESS_ID], "tmpid")) {
                     $tmpid = $_SESSION[$CUR_LOAD_SESS_ID]["tmpid"];
+                }
 
-                if (is_set($_SESSION[$CUR_LOAD_SESS_ID], "line_num"))
+                if (is_set($_SESSION[$CUR_LOAD_SESS_ID], "line_num")) {
                     $line_num = intval($_SESSION[$CUR_LOAD_SESS_ID]["line_num"]);
+                }
 
-                if (is_set($_SESSION[$CUR_LOAD_SESS_ID], "correct_lines"))
+                if (is_set($_SESSION[$CUR_LOAD_SESS_ID], "correct_lines")) {
                     $correct_lines = intval($_SESSION[$CUR_LOAD_SESS_ID]["correct_lines"]);
+                }
 
-                if (is_set($_SESSION[$CUR_LOAD_SESS_ID], "error_lines"))
+                if (is_set($_SESSION[$CUR_LOAD_SESS_ID], "error_lines")) {
                     $error_lines = intval($_SESSION[$CUR_LOAD_SESS_ID]["error_lines"]);
+                }
 
-                if (is_set($_SESSION[$CUR_LOAD_SESS_ID], "killed_lines"))
+                if (is_set($_SESSION[$CUR_LOAD_SESS_ID], "killed_lines")) {
                     $killed_lines = intval($_SESSION[$CUR_LOAD_SESS_ID]["killed_lines"]);
+                }
 
-                if (is_set($_SESSION[$CUR_LOAD_SESS_ID], "arIBlockProperty"))
+                if (is_set($_SESSION[$CUR_LOAD_SESS_ID], "arIBlockProperty")) {
                     $arIBlockProperty = $_SESSION[$CUR_LOAD_SESS_ID]["arIBlockProperty"];
+                }
 
-                if (is_set($_SESSION[$CUR_LOAD_SESS_ID], "bThereIsGroups"))
+                if (is_set($_SESSION[$CUR_LOAD_SESS_ID], "bThereIsGroups")) {
                     $bThereIsGroups = $_SESSION[$CUR_LOAD_SESS_ID]["bThereIsGroups"];
+                }
             }
             // Prepare arrays for elements load
             $bWorkFlow = CModule::IncludeModule('workflow');
             foreach ($arIBlockAvailProdFields as $key => $arField) {
                 if ($arField["field"] === "XML_ID") {
-                    for ($i = 0; $i < $NUM_FIELDS; $i++)
-                        if ($key === $GLOBALS["field_" . $i])
+                    for ($i = 0; $i < $NUM_FIELDS; $i++) {
+                        if ($key === $GLOBALS["field_" . $i]) {
                             $csvFile->AddPrimaryKey($key, $i);
+                        }
+                    }
                 } elseif ($arField["field"] === "NAME") {
-                    for ($i = 0; $i < $NUM_FIELDS; $i++)
-                        if ($key === $GLOBALS["field_" . $i])
+                    for ($i = 0; $i < $NUM_FIELDS; $i++) {
+                        if ($key === $GLOBALS["field_" . $i]) {
                             $csvFile->AddPrimaryKey($key, $i);
+                        }
+                    }
                 }
             }
             $csvFile->tmpid = $tmpid;
@@ -632,43 +707,48 @@ if (($_SERVER['REQUEST_METHOD'] == "POST" || $CUR_FILE_POS > 0) && $STEP > 1 && 
                 );
 
                 //Preserve existing sections
-                if (empty($arLoadProductArray["IBLOCK_SECTION"]))
+                if (empty($arLoadProductArray["IBLOCK_SECTION"])) {
                     unset($arLoadProductArray["IBLOCK_SECTION"]);
-                else
+                } else {
                     $arLoadProductArray["IBLOCK_SECTION_ID"] = key($arLoadProductArray["IBLOCK_SECTION"]);
+                }
 
                 $bThereIsGroups |= !empty($arLoadProductArray["IBLOCK_SECTION"]);
                 foreach ($arIBlockAvailProdFields as $key => $arField) {
-                    if (array_key_exists($key, $arRes))
+                    if (array_key_exists($key, $arRes)) {
                         $arLoadProductArray[$arField["field"]] = $arRes[$key];
+                    }
                 }
 
                 $arFilter = array(
                     "IBLOCK_ID" => $IBLOCK_ID,
                     "CHECK_PERMISSIONS" => "N",
                 );
-                if (strlen($arLoadProductArray["XML_ID"]))
+                if ($arLoadProductArray["XML_ID"] <> '') {
                     $arFilter["=XML_ID"] = $arLoadProductArray["XML_ID"];
-                elseif (strlen($arLoadProductArray["NAME"]))
+                } elseif ($arLoadProductArray["NAME"] <> '') {
                     $arFilter["=NAME"] = $arLoadProductArray["NAME"];
-                else
-                    $strErrorR .= GetMessage("IBLOCK_ADM_IMP_LINE_NO") . " " . $line_num . ". " . GetMessage("IBLOCK_ADM_IMP_NOIDNAME") . "<br>";
+                } else {
+                    $strErrorR .= GetMessage("IBLOCK_ADM_IMP_LINE_NO") . " " . $line_num . ". " . GetMessage(
+                            "IBLOCK_ADM_IMP_NOIDNAME"
+                        ) . "<br>";
+                }
 
-                if (strlen($strErrorR) <= 0) {
+                if ($strErrorR == '') {
                     $arLoadProductArray["PROPERTY_VALUES"] = array();
                     foreach ($arRes as $key => $value) {
                         if (strncmp($key, "IP_PROP", 7) == 0) {
-                            $cur_prop_id = (int)substr($key, 7);
+                            $cur_prop_id = (int)mb_substr($key, 7);
                             if (!array_key_exists($cur_prop_id, $arIBlockProperty)) {
                                 $res1 = CIBlockProperty::GetByID($cur_prop_id, $IBLOCK_ID);
                                 $arIBlockProperty[$cur_prop_id] = $res1->Fetch();
                             }
                             if (is_array($arIBlockProperty[$cur_prop_id])) {
-                                if ($arIBlockProperty[$cur_prop_id]["PROPERTY_TYPE"] == "L")
+                                if ($arIBlockProperty[$cur_prop_id]["PROPERTY_TYPE"] == "L") {
                                     $value = $csvFile->MapEnum($cur_prop_id, $value);
-                                elseif ($arIBlockProperty[$cur_prop_id]["PROPERTY_TYPE"] == "N")
+                                } elseif ($arIBlockProperty[$cur_prop_id]["PROPERTY_TYPE"] == "N") {
                                     $value = str_replace(",", ".", $value);
-                                elseif ($arIBlockProperty[$cur_prop_id]["PROPERTY_TYPE"] == "F") {
+                                } elseif ($arIBlockProperty[$cur_prop_id]["PROPERTY_TYPE"] == "F") {
                                     $value = $csvFile->MapFiles($value);
                                     $arIBlockFileProperty[$cur_prop_id] = $cur_prop_id;
                                 }
@@ -678,69 +758,100 @@ if (($_SERVER['REQUEST_METHOD'] == "POST" || $CUR_FILE_POS > 0) && $STEP > 1 && 
                     }
                 }
 
-                if (strlen($strErrorR) <= 0) {
+                if ($strErrorR == '') {
                     if (array_key_exists("PREVIEW_PICTURE", $arLoadProductArray)) {
-                        if (strlen($arLoadProductArray["PREVIEW_PICTURE"]) > 0) {
+                        if ($arLoadProductArray["PREVIEW_PICTURE"] <> '') {
                             if (preg_match("/^(http|https):\\/\\//", $arLoadProductArray["PREVIEW_PICTURE"])) {
-                                $arLoadProductArray["PREVIEW_PICTURE"] = CFile::MakeFileArray($arLoadProductArray["PREVIEW_PICTURE"]);
+                                $arLoadProductArray["PREVIEW_PICTURE"] = CFile::MakeFileArray(
+                                    $arLoadProductArray["PREVIEW_PICTURE"]
+                                );
                             } else {
-                                $arLoadProductArray["PREVIEW_PICTURE"] = CFile::MakeFileArray($io->GetPhysicalName($_SERVER["DOCUMENT_ROOT"] . $PATH2IMAGE_FILES . "/" . $arLoadProductArray["PREVIEW_PICTURE"]));
-                                if (is_array($arLoadProductArray["PREVIEW_PICTURE"]))
+                                $arLoadProductArray["PREVIEW_PICTURE"] = CFile::MakeFileArray(
+                                    $io->GetPhysicalName(
+                                        $_SERVER["DOCUMENT_ROOT"] . $PATH2IMAGE_FILES . "/" . $arLoadProductArray["PREVIEW_PICTURE"]
+                                    )
+                                );
+                                if (is_array($arLoadProductArray["PREVIEW_PICTURE"])) {
                                     $arLoadProductArray["PREVIEW_PICTURE"]["COPY_FILE"] = "Y";
+                                }
                             }
                         }
-                        if (!is_array($arLoadProductArray["PREVIEW_PICTURE"]))
+                        if (!is_array($arLoadProductArray["PREVIEW_PICTURE"])) {
                             unset($arLoadProductArray["PREVIEW_PICTURE"]);
+                        }
                     }
 
                     if (array_key_exists("DETAIL_PICTURE", $arLoadProductArray)) {
-                        if (strlen($arLoadProductArray["DETAIL_PICTURE"]) > 0) {
+                        if ($arLoadProductArray["DETAIL_PICTURE"] <> '') {
                             if (preg_match("/^(http|https):\\/\\//", $arLoadProductArray["DETAIL_PICTURE"])) {
-                                $arLoadProductArray["DETAIL_PICTURE"] = CFile::MakeFileArray($arLoadProductArray["DETAIL_PICTURE"]);
+                                $arLoadProductArray["DETAIL_PICTURE"] = CFile::MakeFileArray(
+                                    $arLoadProductArray["DETAIL_PICTURE"]
+                                );
                             } else {
-                                $arLoadProductArray["DETAIL_PICTURE"] = CFile::MakeFileArray($io->GetPhysicalName($_SERVER["DOCUMENT_ROOT"] . $PATH2IMAGE_FILES . "/" . $arLoadProductArray["DETAIL_PICTURE"]));
-                                if (is_array($arLoadProductArray["DETAIL_PICTURE"]))
+                                $arLoadProductArray["DETAIL_PICTURE"] = CFile::MakeFileArray(
+                                    $io->GetPhysicalName(
+                                        $_SERVER["DOCUMENT_ROOT"] . $PATH2IMAGE_FILES . "/" . $arLoadProductArray["DETAIL_PICTURE"]
+                                    )
+                                );
+                                if (is_array($arLoadProductArray["DETAIL_PICTURE"])) {
                                     $arLoadProductArray["DETAIL_PICTURE"]["COPY_FILE"] = "Y";
+                                }
                             }
                         }
-                        if (!is_array($arLoadProductArray["DETAIL_PICTURE"]))
+                        if (!is_array($arLoadProductArray["DETAIL_PICTURE"])) {
                             unset($arLoadProductArray["DETAIL_PICTURE"]);
+                        }
                     }
 
-                    $res = CIBlockElement::GetList(array(), $arFilter, false, false, array(
-                        "ID",
-                        "IBLOCK_ID",
-                        "TMP_ID",
-                        "PREVIEW_PICTURE",
-                        "DETAIL_PICTURE",
-                    ));
+                    $res = CIBlockElement::GetList(
+                        array(),
+                        $arFilter,
+                        false,
+                        false,
+                        array(
+                            "ID",
+                            "IBLOCK_ID",
+                            "TMP_ID",
+                            "PREVIEW_PICTURE",
+                            "DETAIL_PICTURE",
+                        )
+                    );
 
                     if ($arr = $res->Fetch()) {
                         $PRODUCT_ID = $arr["ID"];
                         if ($arr["TMP_ID"] != $tmpid) {
-                            if (is_set($arLoadProductArray, "PREVIEW_PICTURE") && IntVal($arr["PREVIEW_PICTURE"]) > 0) {
+                            if (is_set($arLoadProductArray, "PREVIEW_PICTURE") && intval($arr["PREVIEW_PICTURE"]) > 0) {
                                 $arLoadProductArray["PREVIEW_PICTURE"]["old_file"] = $arr["PREVIEW_PICTURE"];
                             }
 
-                            if (is_set($arLoadProductArray, "DETAIL_PICTURE") && IntVal($arr["DETAIL_PICTURE"]) > 0) {
+                            if (is_set($arLoadProductArray, "DETAIL_PICTURE") && intval($arr["DETAIL_PICTURE"]) > 0) {
                                 $arLoadProductArray["DETAIL_PICTURE"]["old_file"] = $arr["DETAIL_PICTURE"];
                             }
 
                             if (!empty($arLoadProductArray["PROPERTY_VALUES"])) {
                                 $arPropsLoaded = $arLoadProductArray["PROPERTY_VALUES"];
-                                $dbPropFiles = CIBlockElement::GetProperty($IBLOCK_ID, $PRODUCT_ID, "sort", "asc", array(
-                                    "CHECK_PERMISSIONS" => "N",
-                                ));
+                                $dbPropFiles = CIBlockElement::GetProperty(
+                                    $IBLOCK_ID,
+                                    $PRODUCT_ID,
+                                    "sort",
+                                    "asc",
+                                    array(
+                                        "CHECK_PERMISSIONS" => "N",
+                                    )
+                                );
                                 while ($arPropFile = $dbPropFiles->Fetch()) {
-                                    if ($arPropFile["PROPERTY_TYPE"] == "F" && array_key_exists($arPropFile["ID"], $arPropsLoaded))
+                                    if ($arPropFile["PROPERTY_TYPE"] == "F" && array_key_exists(
+                                            $arPropFile["ID"],
+                                            $arPropsLoaded
+                                        )) {
                                         $arLoadProductArray["PROPERTY_VALUES"][$arPropFile["ID"]][$arPropFile["PROPERTY_VALUE_ID"]] = array(
                                             "del" => "Y",
                                             "tmp_name" => "",
                                         );
-                                    elseif (
+                                    } elseif (
                                         $arPropFile["PROPERTY_TYPE"] != "F"
                                         && !array_key_exists($arPropFile["ID"], $arPropsLoaded)
-                                        && (is_array($arPropFile["VALUE"]) || strlen($arPropFile["VALUE"]) > 0)
+                                        && (is_array($arPropFile["VALUE"]) || $arPropFile["VALUE"] <> '')
                                     ) {
                                         $arLoadProductArray["PROPERTY_VALUES"][$arPropFile["ID"]][$arPropFile["PROPERTY_VALUE_ID"]] = array(
                                             "VALUE" => $arPropFile["VALUE"],
@@ -752,129 +863,188 @@ if (($_SERVER['REQUEST_METHOD'] == "POST" || $CUR_FILE_POS > 0) && $STEP > 1 && 
                                 unset($arLoadProductArray["PROPERTY_VALUES"]);
                             }
 
-                            $res = $el->Update($PRODUCT_ID, $arLoadProductArray, $bWorkFlow, true, $IMAGE_RESIZE === "Y");
+                            $res = $el->Update(
+                                $PRODUCT_ID,
+                                $arLoadProductArray,
+                                $bWorkFlow,
+                                true,
+                                $IMAGE_RESIZE === "Y"
+                            );
                         } else {
                             $res = true;
                         }
                     } else {
-                        if ($arLoadProductArray["ACTIVE"] != "N")
+                        if ($arLoadProductArray["ACTIVE"] != "N") {
                             $arLoadProductArray["ACTIVE"] = "Y";
+                        }
 
                         $PRODUCT_ID = $el->Add($arLoadProductArray, $bWorkFlow, true, $IMAGE_RESIZE === "Y");
                         $res = ($PRODUCT_ID > 0);
                     }
 
                     if (!$res) {
-                        $strErrorR .= GetMessage("IBLOCK_ADM_IMP_LINE_NO") . " " . $line_num . ". " . GetMessage("IBLOCK_ADM_IMP_ERROR_LOADING") . " " . $el->LAST_ERROR . "<br>";
+                        $strErrorR .= GetMessage("IBLOCK_ADM_IMP_LINE_NO") . " " . $line_num . ". " . GetMessage(
+                                "IBLOCK_ADM_IMP_ERROR_LOADING"
+                            ) . " " . $el->LAST_ERROR . "<br>";
                     }
                 }
 
-                if (strlen($strErrorR) <= 0) {
+                if ($strErrorR == '') {
                     $correct_lines++;
                 } else {
                     $error_lines++;
                     $strError .= $strErrorR;
                 }
 
-                if (intval($max_execution_time) > 0 && (getmicrotime() - START_EXEC_TIME) > intval($max_execution_time)) {
-                    $bAllLinesLoaded = False;
+                if (intval($max_execution_time) > 0 && (getmicrotime() - START_EXEC_TIME) > intval(
+                        $max_execution_time
+                    )) {
+                    $bAllLinesLoaded = false;
                     break;
                 }
             }
             // delete sections and elements which no in datafile. Properties does not deleted
             if ($bAllLinesLoaded) {
-                if (is_set($_SESSION, $CUR_LOAD_SESS_ID))
+                if (is_set($_SESSION, $CUR_LOAD_SESS_ID)) {
                     unset($_SESSION[$CUR_LOAD_SESS_ID]);
+                }
 
                 if ($bThereIsGroups) {
                     if ($outFileAction == "D") {
-                        $res = CIBlockSection::GetList(array(), array(
-                            "IBLOCK_ID" => $IBLOCK_ID,
-                            "CHECK_PERMISSIONS" => "N",
-                            "!TMP_ID" => $tmpid,
-                        ));
-                        while ($arr = $res->Fetch())
+                        $res = CIBlockSection::GetList(
+                            array(),
+                            array(
+                                "IBLOCK_ID" => $IBLOCK_ID,
+                                "CHECK_PERMISSIONS" => "N",
+                                "!TMP_ID" => $tmpid,
+                            )
+                        );
+                        while ($arr = $res->Fetch()) {
                             CIBlockSection::Delete($arr["ID"]);
+                        }
                     } elseif ($outFileAction == "F") {
                     } else {
-                        $res = CIBlockSection::GetList(array(), array(
-                            "IBLOCK_ID" => $IBLOCK_ID,
-                            "CHECK_PERMISSIONS" => "N",
-                            "!TMP_ID" => $tmpid,
-                            "ACTIVE" => "Y",
-                        ));
-                        while ($arr = $res->Fetch())
-                            $bs->Update($arr["ID"], array(
-                                "NAME" => $arr["NAME"],
-                                "ACTIVE" => "N",
-                            ));
+                        $res = CIBlockSection::GetList(
+                            array(),
+                            array(
+                                "IBLOCK_ID" => $IBLOCK_ID,
+                                "CHECK_PERMISSIONS" => "N",
+                                "!TMP_ID" => $tmpid,
+                                "ACTIVE" => "Y",
+                            )
+                        );
+                        while ($arr = $res->Fetch()) {
+                            $bs->Update(
+                                $arr["ID"],
+                                array(
+                                    "NAME" => $arr["NAME"],
+                                    "ACTIVE" => "N",
+                                )
+                            );
+                        }
                     }
                     if ($inFileAction == "A") {
-                        $res = CIBlockSection::GetList(array(), array(
-                            "IBLOCK_ID" => $IBLOCK_ID,
-                            "CHECK_PERMISSIONS" => "N",
-                            "TMP_ID" => $tmpid,
-                            "ACTIVE" => "N",
-                        ));
-                        while ($arr = $res->Fetch())
-                            $bs->Update($arr["ID"], array(
-                                "NAME" => $arr["NAME"],
-                                "ACTIVE" => "Y",
-                            ));
+                        $res = CIBlockSection::GetList(
+                            array(),
+                            array(
+                                "IBLOCK_ID" => $IBLOCK_ID,
+                                "CHECK_PERMISSIONS" => "N",
+                                "TMP_ID" => $tmpid,
+                                "ACTIVE" => "N",
+                            )
+                        );
+                        while ($arr = $res->Fetch()) {
+                            $bs->Update(
+                                $arr["ID"],
+                                array(
+                                    "NAME" => $arr["NAME"],
+                                    "ACTIVE" => "Y",
+                                )
+                            );
+                        }
                     }
                 }
 
                 if ($outFileAction == "D") {
-                    $res = CIBlockElement::GetList(array(), array(
-                        "IBLOCK_ID" => $IBLOCK_ID,
-                        "CHECK_PERMISSIONS" => "N",
-                        "!=TMP_ID" => $tmpid,
-                    ), false, false, array(
-                        "ID",
-                        "IBLOCK_ID",
-                    ));
+                    $res = CIBlockElement::GetList(
+                        array(),
+                        array(
+                            "IBLOCK_ID" => $IBLOCK_ID,
+                            "CHECK_PERMISSIONS" => "N",
+                            "!=TMP_ID" => $tmpid,
+                        ),
+                        false,
+                        false,
+                        array(
+                            "ID",
+                            "IBLOCK_ID",
+                        )
+                    );
                     while ($arr = $res->Fetch()) {
                         CIBlockElement::Delete($arr["ID"]);
                         $killed_lines++;
                     }
                 } elseif ($outFileAction == "F") {
                 } else {
-                    $res = CIBlockElement::GetList(array(), array(
-                        "IBLOCK_ID" => $IBLOCK_ID,
-                        "CHECK_PERMISSIONS" => "N",
-                        "!=TMP_ID" => $tmpid,
-                        "ACTIVE" => "Y",
-                    ), false, false, array(
-                        "ID",
-                        "IBLOCK_ID",
-                    ));
+                    $res = CIBlockElement::GetList(
+                        array(),
+                        array(
+                            "IBLOCK_ID" => $IBLOCK_ID,
+                            "CHECK_PERMISSIONS" => "N",
+                            "!=TMP_ID" => $tmpid,
+                            "ACTIVE" => "Y",
+                        ),
+                        false,
+                        false,
+                        array(
+                            "ID",
+                            "IBLOCK_ID",
+                        )
+                    );
+                    $elementFields = array(
+                        "ACTIVE" => "N",
+                    );
+                    if ((string)\Bitrix\Main\Config\Option::get(
+                            'iblock',
+                            'change_user_by_group_active_modify'
+                        ) === 'Y') {
+                        $elementFields['MODIFIED_BY'] = $USER->GetID();
+                    }
                     while ($arr = $res->Fetch()) {
-                        $el->Update($arr["ID"], array(
-                            "ACTIVE" => "N",
-                        ));
+                        $el->Update($arr["ID"], $elementFields);
                         $killed_lines++;
                     }
                 }
 
                 if ($inFileAction == "A") {
-                    $res = CIBlockElement::GetList(array(), array(
-                        "IBLOCK_ID" => $IBLOCK_ID,
-                        "CHECK_PERMISSIONS" => "N",
-                        "TMP_ID" => $tmpid,
-                        "ACTIVE" => "N",
-                    ), false, false, array(
-                        "ID",
-                        "IBLOCK_ID",
-                    ));
+                    $res = CIBlockElement::GetList(
+                        array(),
+                        array(
+                            "IBLOCK_ID" => $IBLOCK_ID,
+                            "CHECK_PERMISSIONS" => "N",
+                            "TMP_ID" => $tmpid,
+                            "ACTIVE" => "N",
+                        ),
+                        false,
+                        false,
+                        array(
+                            "ID",
+                            "IBLOCK_ID",
+                        )
+                    );
                     while ($arr = $res->Fetch()) {
-                        $el->Update($arr["ID"], array(
-                            "ACTIVE" => "Y",
-                        ));
+                        $el->Update(
+                            $arr["ID"],
+                            array(
+                                "ACTIVE" => "Y",
+                            )
+                        );
                     }
                 }
             } else {
-                if (strlen($CUR_LOAD_SESS_ID) <= 0)
+                if ($CUR_LOAD_SESS_ID == '') {
                     $CUR_LOAD_SESS_ID = "CL" . time();
+                }
 
                 $_SESSION[$CUR_LOAD_SESS_ID]["tmpid"] = $tmpid;
                 $_SESSION[$CUR_LOAD_SESS_ID]["line_num"] = $line_num;
@@ -883,28 +1053,28 @@ if (($_SERVER['REQUEST_METHOD'] == "POST" || $CUR_FILE_POS > 0) && $STEP > 1 && 
                 $_SESSION[$CUR_LOAD_SESS_ID]["killed_lines"] = $killed_lines;
                 $_SESSION[$CUR_LOAD_SESS_ID]["arIBlockProperty"] = $arIBlockProperty;
                 $_SESSION[$CUR_LOAD_SESS_ID]["bThereIsGroups"] = $bThereIsGroups;
-                $paramsStr = "fields_type=" . urlencode($fields_type);
-                $paramsStr .= "&first_names_r=" . urlencode($first_names_r);
-                $paramsStr .= "&delimiter_r=" . urlencode($delimiter_r);
-                $paramsStr .= "&delimiter_other_r=" . urlencode($delimiter_other_r);
-                $paramsStr .= "&first_names_f=" . urlencode($first_names_f);
-                $paramsStr .= "&metki_f=" . urlencode($metki_f);
-                for ($i = 0; $i < $NUM_FIELDS; $i++) {
-                    $paramsStr .= "&field_" . $i . "=" . urlencode(${"field_" . $i});
+                $_SESSION[$CUR_LOAD_SESS_ID]["NUM_FIELDS"] = $NUM_FIELDS;
+                $loadScheme = [];
+                foreach ($fieldList as $fieldName) {
+                    if (isset($GLOBALS[$fieldName])) {
+                        $loadScheme[$fieldName] = $GLOBALS[$fieldName];
+                    }
                 }
-                $paramsStr .= "&PATH2IMAGE_FILES=" . urlencode($PATH2IMAGE_FILES);
-                $paramsStr .= "&IMAGE_RESIZE=" . urlencode($IMAGE_RESIZE);
-                $paramsStr .= "&PATH2PROP_FILES=" . urlencode($PATH2PROP_FILES);
-                $paramsStr .= "&outFileAction=" . urlencode($outFileAction);
-                $paramsStr .= "&inFileAction=" . urlencode($inFileAction);
-                $paramsStr .= "&max_execution_time=" . urlencode($max_execution_time);
-                $_SESSION[$CUR_LOAD_SESS_ID]["LOAD_SCHEME"] = $paramsStr;
+                for ($i = 0; $i < $NUM_FIELDS; $i++) {
+                    $fieldName = 'field_' . $i;
+                    if (isset($GLOBALS[$fieldName])) {
+                        $loadScheme[$fieldName] = $GLOBALS[$fieldName];
+                    }
+                }
+                $_SESSION[$CUR_LOAD_SESS_ID]["LOAD_SCHEME"] = $loadScheme;
                 $curFilePos = $csvFile->GetPos();
             }
         }
-        if (strlen($strError) > 0) {
+        if ($strError <> '') {
             $strError .= GetMessage("IBLOCK_ADM_IMP_TOTAL_ERRS") . " " . $error_lines . ".<br>";
-            $strError .= GetMessage("IBLOCK_ADM_IMP_TOTAL_COR1") . " " . $correct_lines . " " . GetMessage("IBLOCK_ADM_IMP_TOTAL_COR2") . "<br>";
+            $strError .= GetMessage("IBLOCK_ADM_IMP_TOTAL_COR1") . " " . $correct_lines . " " . GetMessage(
+                    "IBLOCK_ADM_IMP_TOTAL_COR2"
+                ) . "<br>";
             $STEP = 3;
         }
         //*****************************************************************//
@@ -921,16 +1091,27 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
 /*********************************************************************/
 CAdminMessage::ShowMessage($strError);
 if (!$bAllLinesLoaded) {
-    $strParams = bitrix_sessid_get() . "&CUR_FILE_POS=" . $curFilePos . "&CUR_LOAD_SESS_ID=" . urlencode($CUR_LOAD_SESS_ID) . "&STEP=4&URL_DATA_FILE=" . urlencode($DATA_FILE_NAME) . "&IBLOCK_ID=" . $IBLOCK_ID . "&fields_type=" . urlencode($fields_type) . "&max_execution_time=" . IntVal($max_execution_time);
-    if ($fields_type == "R")
-        $strParams .= "&delimiter_r=" . urlencode($delimiter_r) . "&delimiter_other_r=" . urlencode($delimiter_other_r) . "&first_names_r=" . urlencode($first_names_r);
-    else
+    $strParams = bitrix_sessid_get() . "&CUR_FILE_POS=" . $curFilePos . "&CUR_LOAD_SESS_ID=" . urlencode(
+            $CUR_LOAD_SESS_ID
+        ) . "&STEP=4&URL_DATA_FILE=" . urlencode(
+            $DATA_FILE_NAME
+        ) . "&IBLOCK_ID=" . $IBLOCK_ID . "&fields_type=" . urlencode($fields_type) . "&max_execution_time=" . intval(
+            $max_execution_time
+        );
+    if ($fields_type == "R") {
+        $strParams .= "&delimiter_r=" . urlencode($delimiter_r) . "&delimiter_other_r=" . urlencode(
+                $delimiter_other_r
+            ) . "&first_names_r=" . urlencode($first_names_r);
+    } else {
         $strParams .= "&metki_f=" . urlencode($metki_f) . "&first_names_f=" . urlencode($first_names_f);
+    }
     ?>
 
     <? echo GetMessage("IBLOCK_ADM_IMP_AUTO_REFRESH"); ?>
-    <a href="<? echo $APPLICATION->GetCurPage(); ?>?lang=<? echo LANGUAGE_ID; ?>&<? echo $strParams ?>"><? echo GetMessage("IBLOCK_ADM_IMP_AUTO_REFRESH_STEP"); ?></a>
-    <br>
+    <a href="<? echo $APPLICATION->GetCurPage(
+    ); ?>?lang=<? echo LANGUAGE_ID; ?>&<? echo $strParams ?>"><? echo GetMessage(
+            "IBLOCK_ADM_IMP_AUTO_REFRESH_STEP"
+        ); ?></a><br>
 
     <script type="text/javascript">
         function DoNext() {
@@ -984,24 +1165,26 @@ if (!$bAllLinesLoaded) {
                     <input type="text" name="URL_DATA_FILE" value="<? echo htmlspecialcharsbx($URL_DATA_FILE); ?>"
                            size="30">
                     <input type="button" value="<? echo GetMessage("IBLOCK_ADM_IMP_OPEN"); ?>" OnClick="BtnClick()">
-                    <? CAdminFileDialog::ShowScript(array(
-                        "event" => "BtnClick",
-                        "arResultDest" => array(
-                            "FORM_NAME" => "dataload",
-                            "FORM_ELEMENT_NAME" => "URL_DATA_FILE",
-                        ),
-                        "arPath" => array(
-                            "SITE" => SITE_ID,
-                            "PATH" => "/" . COption::GetOptionString("main", "upload_dir", "upload"),
-                        ),
-                        "select" => 'F', // F - file only, D - folder only
-                        "operation" => 'O', // O - open, S - save
-                        "showUploadTab" => true,
-                        "showAddToMenuTab" => false,
-                        "fileFilter" => 'csv',
-                        "allowAllFiles" => true,
-                        "SaveConfig" => true,
-                    ));
+                    <? CAdminFileDialog::ShowScript(
+                        array(
+                            "event" => "BtnClick",
+                            "arResultDest" => array(
+                                "FORM_NAME" => "dataload",
+                                "FORM_ELEMENT_NAME" => "URL_DATA_FILE",
+                            ),
+                            "arPath" => array(
+                                "SITE" => SITE_ID,
+                                "PATH" => "/" . COption::GetOptionString("main", "upload_dir", "upload"),
+                            ),
+                            "select" => 'F', // F - file only, D - folder only
+                            "operation" => 'O', // O - open, S - save
+                            "showUploadTab" => true,
+                            "showAddToMenuTab" => false,
+                            "fileFilter" => 'csv',
+                            "allowAllFiles" => true,
+                            "SaveConfig" => true,
+                        )
+                    );
                     ?>
                 </td>
             </tr>
@@ -1009,7 +1192,14 @@ if (!$bAllLinesLoaded) {
             <tr>
                 <td><? echo GetMessage("IBLOCK_ADM_IMP_INFOBLOCK"); ?></td>
                 <td>
-                    <? echo GetIBlockDropDownList($IBLOCK_ID, 'IBLOCK_TYPE_ID', 'IBLOCK_ID', false, 'class="adm-detail-iblock-types"', 'class="adm-detail-iblock-list"'); ?>
+                    <? echo GetIBlockDropDownList(
+                        $IBLOCK_ID,
+                        'IBLOCK_TYPE_ID',
+                        'IBLOCK_ID',
+                        false,
+                        'class="adm-detail-iblock-types"',
+                        'class="adm-detail-iblock-list"'
+                    ); ?>
                 </td>
             </tr>
             <?
@@ -1087,13 +1277,17 @@ if (!$bAllLinesLoaded) {
                     </script>
 
                     <input type="radio" name="fields_type" id="fields_type_R" value="R" <?
-                    if ($fields_type == "R" || strlen($fields_type) <= 0)
-                        echo "checked"; ?> onClick="ChangeExtra()"><label
-                            for="fields_type_R"><? echo GetMessage("IBLOCK_ADM_IMP_RAZDELITEL"); ?></label><br>
+                    if ($fields_type == "R" || $fields_type == '') {
+                        echo "checked";
+                    } ?> onClick="ChangeExtra()"><label for="fields_type_R"><? echo GetMessage(
+                            "IBLOCK_ADM_IMP_RAZDELITEL"
+                        ); ?></label><br>
                     <input type="radio" name="fields_type" id="fields_type_F" value="F" <?
-                    if ($fields_type == "F")
-                        echo "checked"; ?> onClick="ChangeExtra()"><label
-                            for="fields_type_F"><? echo GetMessage("IBLOCK_ADM_IMP_FIXED"); ?></label>
+                    if ($fields_type == "F") {
+                        echo "checked";
+                    } ?> onClick="ChangeExtra()"><label for="fields_type_F"><? echo GetMessage(
+                            "IBLOCK_ADM_IMP_FIXED"
+                        ); ?></label>
 
                 </td>
             </tr>
@@ -1105,25 +1299,30 @@ if (!$bAllLinesLoaded) {
                 <td class="adm-detail-valign-top"><? echo GetMessage("IBLOCK_ADM_IMP_RAZDEL_TYPE"); ?>:</td>
                 <td>
                     <input type="radio" name="delimiter_r" id="delimiter_r_TZP" value="TZP" <?
-                    if ($delimiter_r == "TZP" || strlen($delimiter_r) <= 0)
-                        echo "checked" ?>><label
-                            for="delimiter_r_TZP"><? echo GetMessage("IBLOCK_ADM_IMP_TZP"); ?></label><br>
+                    if ($delimiter_r == "TZP" || $delimiter_r == '')
+                        echo "checked" ?>><label for="delimiter_r_TZP"><? echo GetMessage(
+                            "IBLOCK_ADM_IMP_TZP"
+                        ); ?></label><br>
                     <input type="radio" name="delimiter_r" id="delimiter_r_ZPT" value="ZPT" <?
                     if ($delimiter_r == "ZPT")
-                        echo "checked" ?>><label
-                            for="delimiter_r_ZPT"><? echo GetMessage("IBLOCK_ADM_IMP_ZPT"); ?></label><br>
+                        echo "checked" ?>><label for="delimiter_r_ZPT"><? echo GetMessage(
+                            "IBLOCK_ADM_IMP_ZPT"
+                        ); ?></label><br>
                     <input type="radio" name="delimiter_r" id="delimiter_r_TAB" value="TAB" <?
                     if ($delimiter_r == "TAB")
-                        echo "checked" ?>><label
-                            for="delimiter_r_TAB"><? echo GetMessage("IBLOCK_ADM_IMP_TAB"); ?></label><br>
+                        echo "checked" ?>><label for="delimiter_r_TAB"><? echo GetMessage(
+                            "IBLOCK_ADM_IMP_TAB"
+                        ); ?></label><br>
                     <input type="radio" name="delimiter_r" id="delimiter_r_SPS" value="SPS" <?
                     if ($delimiter_r == "SPS")
-                        echo "checked" ?>><label
-                            for="delimiter_r_SPS"><? echo GetMessage("IBLOCK_ADM_IMP_SPS"); ?></label><br>
+                        echo "checked" ?>><label for="delimiter_r_SPS"><? echo GetMessage(
+                            "IBLOCK_ADM_IMP_SPS"
+                        ); ?></label><br>
                     <input type="radio" name="delimiter_r" id="delimiter_r_OTR" value="OTR" <?
                     if ($delimiter_r == "OTR")
-                        echo "checked" ?>><label
-                            for="delimiter_r_OTR"><? echo GetMessage("IBLOCK_ADM_IMP_OTR"); ?></label>
+                        echo "checked" ?>><label for="delimiter_r_OTR"><? echo GetMessage(
+                            "IBLOCK_ADM_IMP_OTR"
+                        ); ?></label>
                     <input type="text" name="delimiter_other_r" size="3"
                            value="<? echo htmlspecialcharsbx($delimiter_other_r); ?>">
                 </td>
@@ -1166,11 +1365,11 @@ if (!$bAllLinesLoaded) {
             <tr>
                 <td align="center" colspan="2">
                     <? $sContent = "";
-                    if (strlen($DATA_FILE_NAME) > 0) {
+                    if ($DATA_FILE_NAME <> '') {
                         $DATA_FILE_NAME = trim(str_replace("\\", "/", trim($DATA_FILE_NAME)), "/");
                         $FILE_NAME = rel2abs($_SERVER["DOCUMENT_ROOT"], "/" . $DATA_FILE_NAME);
                         if (
-                            (strlen($FILE_NAME) > 1)
+                            (mb_strlen($FILE_NAME) > 1)
                             && ($FILE_NAME == "/" . $DATA_FILE_NAME)
                             && $APPLICATION->GetFileAccessPermission($FILE_NAME) >= "W"
                         ) {
@@ -1180,16 +1379,18 @@ if (!$bAllLinesLoaded) {
                             $lContent = 0;
                             while (($line = fgets($file_id)) !== false) {
                                 $sContent .= $line;
-                                $lContent += strlen($line);
-                                if ($lContent > 10000)
+                                $lContent += mb_strlen($line);
+                                if ($lContent > 10000) {
                                     break;
+                                }
                             }
                             fclose($file_id);
                         }
                     }
                     ?>
-                    <textarea name="data" rows="10" cols="80"
-                              style="width:100%"><? echo htmlspecialcharsbx($sContent); ?></textarea>
+                    <textarea name="data" rows="10" cols="80" style="width:100%"><? echo htmlspecialcharsbx(
+                            $sContent
+                        ); ?></textarea>
                 </td>
             </tr>
             <?
@@ -1211,14 +1412,17 @@ if (!$bAllLinesLoaded) {
                 );
             }
 
-            $properties = CIBlockProperty::GetList(array(
-                "sort" => "asc",
-                "name" => "asc",
-            ), array(
-                "ACTIVE" => "Y",
-                "IBLOCK_ID" => $IBLOCK_ID,
-                "CHECK_PERMISSIONS" => "N",
-            ));
+            $properties = CIBlockProperty::GetList(
+                array(
+                    "sort" => "asc",
+                    "name" => "asc",
+                ),
+                array(
+                    "ACTIVE" => "Y",
+                    "IBLOCK_ID" => $IBLOCK_ID,
+                    "CHECK_PERMISSIONS" => "N",
+                )
+            );
             while ($prop_fields = $properties->Fetch()) {
                 $arAvailFields[] = array(
                     "value" => "IP_PROP" . $prop_fields["ID"],
@@ -1249,11 +1453,13 @@ if (!$bAllLinesLoaded) {
                             <?
                             foreach ($arAvailFields as $ar) {
                                 $bSelected = ${"field_" . $i} == $ar["value"];
-                                if (!$bSelected && !isset(${"field_" . $i}))
+                                if (!$bSelected && !isset(${"field_" . $i})) {
                                     $bSelected = $ar["value"] == $field;
+                                }
 
-                                if (!$bSelected && !isset(${"field_" . $i}))
+                                if (!$bSelected && !isset(${"field_" . $i})) {
                                     $bSelected = $ar["code"] == $field;
+                                }
                                 ?>
                                 <option value="<? echo htmlspecialcharsbx($ar["value"]); ?>" <?
                                 if ($bSelected)
@@ -1298,30 +1504,30 @@ if (!$bAllLinesLoaded) {
                 <td class="adm-detail-valign-top"><? echo GetMessage("IBLOCK_ADM_IMP_OUTFILE"); ?>:</td>
                 <td>
                     <input type="radio" id="outFileAction_H" name="outFileAction" value="H" <?
-                    if ($outFileAction == "H")
-                        echo "checked"; ?>><label
-                            for="outFileAction_H"><? echo GetMessage("IBLOCK_ADM_IMP_OF_DEACT"); ?></label><br>
+                    if ($outFileAction == "H") {
+                        echo "checked";
+                    } ?>><label for="outFileAction_H"><? echo GetMessage("IBLOCK_ADM_IMP_OF_DEACT"); ?></label><br>
                     <input type="radio" id="outFileAction_D" name="outFileAction" value="D" <?
-                    if ($outFileAction == "D")
-                        echo "checked"; ?>><label
-                            for="outFileAction_D"><? echo GetMessage("IBLOCK_ADM_IMP_OF_DEL"); ?></label><br>
+                    if ($outFileAction == "D") {
+                        echo "checked";
+                    } ?>><label for="outFileAction_D"><? echo GetMessage("IBLOCK_ADM_IMP_OF_DEL"); ?></label><br>
                     <input type="radio" id="outFileAction_F" name="outFileAction" value="F" <?
-                    if (strlen($outFileAction) <= 0 || $outFileAction == "F")
-                        echo "checked"; ?>><label
-                            for="outFileAction_F"><? echo GetMessage("IBLOCK_ADM_IMP_OF_KEEP"); ?></label>
+                    if ($outFileAction == '' || $outFileAction == "F") {
+                        echo "checked";
+                    } ?>><label for="outFileAction_F"><? echo GetMessage("IBLOCK_ADM_IMP_OF_KEEP"); ?></label>
                 </td>
             </tr>
             <tr>
                 <td class="adm-detail-valign-top"><? echo GetMessage("IBLOCK_ADM_IMP_INACTIVE_PRODS"); ?>:</td>
                 <td>
                     <input type="radio" id="inFileAction_F" name="inFileAction" value="F" <?
-                    if (strlen($inFileAction) <= 0 || ($inFileAction == "F"))
-                        echo "checked"; ?>><label
-                            for="inFileAction_F"><? echo GetMessage("IBLOCK_ADM_IMP_KEEP_AS_IS"); ?></label><br>
+                    if ($inFileAction == '' || ($inFileAction == "F")) {
+                        echo "checked";
+                    } ?>><label for="inFileAction_F"><? echo GetMessage("IBLOCK_ADM_IMP_KEEP_AS_IS"); ?></label><br>
                     <input type="radio" id="inFileAction_A" name="inFileAction" value="A" <?
-                    if ($inFileAction == "A")
-                        echo "checked"; ?>><label
-                            for="inFileAction_A"><? echo GetMessage("IBLOCK_ADM_IMP_ACTIVATE_PROD"); ?></label>
+                    if ($inFileAction == "A") {
+                        echo "checked";
+                    } ?>><label for="inFileAction_A"><? echo GetMessage("IBLOCK_ADM_IMP_ACTIVATE_PROD"); ?></label>
                 </td>
             </tr>
             <tr>
@@ -1339,11 +1545,11 @@ if (!$bAllLinesLoaded) {
             <tr>
                 <td colspan="2" align="center">
                     <? $sContent = "";
-                    if (strlen($DATA_FILE_NAME) > 0) {
+                    if ($DATA_FILE_NAME <> '') {
                         $DATA_FILE_NAME = trim(str_replace("\\", "/", trim($DATA_FILE_NAME)), "/");
                         $FILE_NAME = rel2abs($_SERVER["DOCUMENT_ROOT"], "/" . $DATA_FILE_NAME);
                         if (
-                            (strlen($FILE_NAME) > 1)
+                            (mb_strlen($FILE_NAME) > 1)
                             && ($FILE_NAME == "/" . $DATA_FILE_NAME)
                             && $APPLICATION->GetFileAccessPermission($FILE_NAME) >= "W"
                         ) {
@@ -1353,16 +1559,18 @@ if (!$bAllLinesLoaded) {
                             $lContent = 0;
                             while (($line = fgets($file_id)) !== false) {
                                 $sContent .= $line;
-                                $lContent += strlen($line);
-                                if ($lContent > 10000)
+                                $lContent += mb_strlen($line);
+                                if ($lContent > 10000) {
                                     break;
+                                }
                             }
                             fclose($file_id);
                         }
                     }
                     ?>
-                    <textarea name="data" rows="10" cols="80"
-                              style="width:100%"><? echo htmlspecialcharsbx($sContent); ?></textarea>
+                    <textarea name="data" rows="10" cols="80" style="width:100%"><? echo htmlspecialcharsbx(
+                            $sContent
+                        ); ?></textarea>
                 </td>
             </tr>
             <?
@@ -1374,23 +1582,27 @@ if (!$bAllLinesLoaded) {
             ?>
             <tr>
                 <td>
-                    <? CAdminMessage::ShowMessage(array(
-                        "TYPE" => "PROGRESS",
-                        "MESSAGE" => !$bAllLinesLoaded ? GetMessage("IBLOCK_ADM_IMP_AUTO_REFRESH_CONTINUE") : GetMessage("IBLOCK_ADM_IMP_SUCCESS"),
-                        "DETAILS" =>
+                    <? CAdminMessage::ShowMessage(
+                        array(
+                            "TYPE" => "PROGRESS",
+                            "MESSAGE" => !$bAllLinesLoaded ? GetMessage(
+                                "IBLOCK_ADM_IMP_AUTO_REFRESH_CONTINUE"
+                            ) : GetMessage("IBLOCK_ADM_IMP_SUCCESS"),
+                            "DETAILS" =>
 
-                            GetMessage("IBLOCK_ADM_IMP_SU_ALL") . ' <b>' . $line_num . '</b><br>'
-                            . GetMessage("IBLOCK_ADM_IMP_SU_CORR") . ' <b>' . $correct_lines . '</b><br>'
-                            . GetMessage("IBLOCK_ADM_IMP_SU_ER") . ' <b>' . $error_lines . '</b><br>'
-                            . ($outFileAction == "D"
-                                ? GetMessage("IBLOCK_ADM_IMP_SU_KILLED") . " <b>" . $killed_lines . "</b>"
-                                : ($outFileAction == "F"
-                                    ? ""
-                                    : GetMessage("IBLOCK_ADM_IMP_SU_HIDED") . " <b>" . $killed_lines . "</b>"
-                                )
-                            ),
-                        "HTML" => true,
-                    )) ?>
+                                GetMessage("IBLOCK_ADM_IMP_SU_ALL") . ' <b>' . $line_num . '</b><br>'
+                                . GetMessage("IBLOCK_ADM_IMP_SU_CORR") . ' <b>' . $correct_lines . '</b><br>'
+                                . GetMessage("IBLOCK_ADM_IMP_SU_ER") . ' <b>' . $error_lines . '</b><br>'
+                                . ($outFileAction == "D"
+                                    ? GetMessage("IBLOCK_ADM_IMP_SU_KILLED") . " <b>" . $killed_lines . "</b>"
+                                    : ($outFileAction == "F"
+                                        ? ""
+                                        : GetMessage("IBLOCK_ADM_IMP_SU_HIDED") . " <b>" . $killed_lines . "</b>"
+                                    )
+                                ),
+                            "HTML" => true,
+                        )
+                    ) ?>
                 </td>
             </tr>
             <?
@@ -1449,9 +1661,9 @@ if (!$bAllLinesLoaded) {
         <?
         endif
         ?>
-        <input type="submit"
-               value="<? echo ($STEP == 3) ? GetMessage("IBLOCK_ADM_IMP_NEXT_STEP_F") : GetMessage("IBLOCK_ADM_IMP_NEXT_STEP"); ?> &gt;&gt;"
-               name="submit_btn" class="adm-btn-save">
+        <input type="submit" value="<? echo ($STEP == 3) ? GetMessage("IBLOCK_ADM_IMP_NEXT_STEP_F") : GetMessage(
+            "IBLOCK_ADM_IMP_NEXT_STEP"
+        ); ?> &gt;&gt;" name="submit_btn" class="adm-btn-save">
 
         <? if ($STEP == 2)
         {

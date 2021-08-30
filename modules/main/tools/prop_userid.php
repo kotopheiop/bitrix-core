@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 class CIBlockPropertyUserID
@@ -25,16 +26,21 @@ class CIBlockPropertyUserID
     public static function GetAdminListViewHTML($arProperty, $value, $strHTMLControlName)
     {
         static $cache = array();
-        $value = intVal($value["VALUE"]);
+        $value = intval($value["VALUE"]);
         if (!array_key_exists($value, $cache)) {
-            $rsUsers = CUser::GetList($by, $order, array("ID" => $value));
+            $rsUsers = CUser::GetList('', '', array("ID" => $value));
             $cache[$value] = $rsUsers->Fetch();
         }
         $arUser = $cache[$value];
         if ($arUser) {
-            return "[<a title='" . GetMessage("MAIN_EDIT_USER_PROFILE") . "' href='user_edit.php?ID=" . $arUser["ID"] . "&lang=" . LANG . "'>" . $arUser["ID"] . "</a>] (" . htmlspecialcharsbx($arUser["LOGIN"]) . ") " . htmlspecialcharsbx($arUser["NAME"]) . " " . htmlspecialcharsbx($arUser["LAST_NAME"]);
-        } else
+            return "[<a title='" . GetMessage(
+                    "MAIN_EDIT_USER_PROFILE"
+                ) . "' href='user_edit.php?ID=" . $arUser["ID"] . "&lang=" . LANGUAGE_ID . "'>" . $arUser["ID"] . "</a>]&nbsp;(" . htmlspecialcharsbx(
+                    $arUser["LOGIN"]
+                ) . ") " . htmlspecialcharsbx($arUser["NAME"]) . " " . htmlspecialcharsbx($arUser["LAST_NAME"]);
+        } else {
             return "&nbsp;";
+        }
     }
 
     //PARAMETERS:
@@ -47,48 +53,64 @@ class CIBlockPropertyUserID
     public static function GetPropertyFieldHtml($arProperty, $value, $strHTMLControlName)
     {
         global $USER;
-        $default_value = intVal($value["VALUE"]);
+        $default_value = intval($value["VALUE"]);
         $res = "";
         if ($default_value == $USER->GetID()) {
             $select = "CU";
-            $res = "[<a title='" . GetMessage("MAIN_EDIT_USER_PROFILE") . "'  href='/bitrix/admin/user_edit.php?ID=" . $USER->GetID() . "&lang=" . LANG . "'>" . $USER->GetID() . "</a>] (" . htmlspecialcharsbx($USER->GetLogin()) . ") " . htmlspecialcharsbx($USER->GetFirstName()) . " " . htmlspecialcharsbx($USER->GetLastName());
+            $res = "[<a title='" . GetMessage(
+                    "MAIN_EDIT_USER_PROFILE"
+                ) . "'  href='/bitrix/admin/user_edit.php?ID=" . $USER->GetID() . "&lang=" . LANG . "'>" . $USER->GetID(
+                ) . "</a>] (" . htmlspecialcharsbx($USER->GetLogin()) . ") " . htmlspecialcharsbx(
+                    $USER->GetFirstName()
+                ) . " " . htmlspecialcharsbx($USER->GetLastName());
         } elseif ($default_value > 0) {
             $select = "SU";
-            $rsUsers = CUser::GetList($by, $order, array("ID" => $default_value));
-            if ($arUser = $rsUsers->Fetch())
-                $res = "[<a title='" . GetMessage("MAIN_EDIT_USER_PROFILE") . "'  href='/bitrix/admin/user_edit.php?ID=" . $arUser["ID"] . "&lang=" . LANG . "'>" . $arUser["ID"] . "</a>] (" . htmlspecialcharsbx($arUser["LOGIN"]) . ") " . htmlspecialcharsbx($arUser["NAME"]) . " " . htmlspecialcharsbx($arUser["LAST_NAME"]);
-            else
+            $rsUsers = CUser::GetList('', '', array("ID" => $default_value));
+            if ($arUser = $rsUsers->Fetch()) {
+                $res = "[<a title='" . GetMessage(
+                        "MAIN_EDIT_USER_PROFILE"
+                    ) . "'  href='/bitrix/admin/user_edit.php?ID=" . $arUser["ID"] . "&lang=" . LANG . "'>" . $arUser["ID"] . "</a>] (" . htmlspecialcharsbx(
+                        $arUser["LOGIN"]
+                    ) . ") " . htmlspecialcharsbx($arUser["NAME"]) . " " . htmlspecialcharsbx($arUser["LAST_NAME"]);
+            } else {
                 $res = "&nbsp;" . GetMessage("MAIN_NOT_FOUND");
+            }
         } else {
             $select = "none";
             $default_value = "";
         }
         $name_x = preg_replace("/([^a-z0-9])/is", "x", $strHTMLControlName["VALUE"]);
-        if (strLen(trim($strHTMLControlName["FORM_NAME"])) <= 0)
+        if (trim($strHTMLControlName["FORM_NAME"]) == '') {
             $strHTMLControlName["FORM_NAME"] = "form_element";
+        }
 
         $selfFolderUrl = (defined("SELF_FOLDER_URL") ? SELF_FOLDER_URL : "/bitrix/admin/");
 
         ob_start();
         ?><select id="SELECT<?= htmlspecialcharsbx($strHTMLControlName["VALUE"]) ?>"
-                  name="SELECT<?= htmlspecialcharsbx($strHTMLControlName["VALUE"]) ?>"
-                  onchange="if(this.value == 'none')
-                          {
-                          var v=document.getElementById('<?= htmlspecialcharsbx($strHTMLControlName["VALUE"]) ?>');
-                          v.value = '';
-                          v.readOnly = true;
-                          document.getElementById('FindUser<?= $name_x ?>').disabled = true;
-                          }
-                          else
-                          {
-                          var v=document.getElementById('<?= htmlspecialcharsbx($strHTMLControlName["VALUE"]) ?>');
-                          v.value = this.value == 'CU'?'<?= $USER->GetID() ?>':'';
-                          v.readOnly = false;
-                          document.getElementById('FindUser<?= $name_x ?>').disabled = false;
-                          }">
-        <option value="none"<? if ($select == "none") echo " selected" ?>><?= GetMessage("IBLOCK_PROP_USERID_NONE") ?></option>
-        <option value="CU"<? if ($select == "CU") echo " selected" ?>><?= GetMessage("IBLOCK_PROP_USERID_CURR") ?></option>
-        <option value="SU"<? if ($select == "SU") echo " selected" ?>><?= GetMessage("IBLOCK_PROP_USERID_OTHR") ?></option>
+                  name="SELECT<?= htmlspecialcharsbx($strHTMLControlName["VALUE"]) ?>"onchange="if(this.value == 'none')
+            {
+            var v=document.getElementById('<?= htmlspecialcharsbx($strHTMLControlName["VALUE"]) ?>');
+            v.value = '';
+            v.readOnly = true;
+            document.getElementById('FindUser<?= $name_x ?>').disabled = true;
+            }
+            else
+            {
+            var v=document.getElementById('<?= htmlspecialcharsbx($strHTMLControlName["VALUE"]) ?>');
+            v.value = this.value == 'CU'?'<?= $USER->GetID() ?>':'';
+            v.readOnly = false;
+            document.getElementById('FindUser<?= $name_x ?>').disabled = false;
+            }">
+        <option value="none"<? if ($select == "none") echo " selected" ?>><?= GetMessage(
+                "IBLOCK_PROP_USERID_NONE"
+            ) ?></option>
+        <option value="CU"<? if ($select == "CU") echo " selected" ?>><?= GetMessage(
+                "IBLOCK_PROP_USERID_CURR"
+            ) ?></option>
+        <option value="SU"<? if ($select == "SU") echo " selected" ?>><?= GetMessage(
+                "IBLOCK_PROP_USERID_OTHR"
+            ) ?></option>
         </select>&nbsp;
         <? echo FindUserIDNew(
         htmlspecialcharsbx($strHTMLControlName["VALUE"]),
@@ -121,16 +143,18 @@ class CIBlockPropertyUserID
     public static function ConvertToDB($arProperty, $value)
     {
         $value["VALUE"] = intval($value["VALUE"]);
-        if ($value["VALUE"] <= 0)
+        if ($value["VALUE"] <= 0) {
             $value["VALUE"] = "";
+        }
         return $value;
     }
 
     public static function ConvertFromDB($arProperty, $value)
     {
         $value["VALUE"] = intval($value["VALUE"]);
-        if ($value["VALUE"] <= 0)
+        if ($value["VALUE"] <= 0) {
             $value["VALUE"] = "";
+        }
         return $value;
     }
 
@@ -186,8 +210,9 @@ class CIBlockPropertyUserID
                 $filterValue = $GLOBALS[$controlName];
             } elseif (is_string($GLOBALS[$controlName])) {
                 $rawValue = trim($GLOBALS[$controlName]);
-                if ($rawValue !== '')
+                if ($rawValue !== '') {
                     $filterValue = (int)$rawValue;
+                }
             }
         }
 
@@ -195,8 +220,19 @@ class CIBlockPropertyUserID
     }
 }
 
-function FindUserIDNew($tag_name, $tag_value, $user_name = "", $form_name = "form1", $select = "none", $tag_size = "3", $tag_maxlength = "", $button_value = "...", $tag_class = "typeinput", $button_class = "tablebodybutton", $search_page = "/bitrix/admin/user_search.php")
-{
+function FindUserIDNew(
+    $tag_name,
+    $tag_value,
+    $user_name = "",
+    $form_name = "form1",
+    $select = "none",
+    $tag_size = "3",
+    $tag_maxlength = "",
+    $button_value = "...",
+    $tag_class = "typeinput",
+    $button_class = "tablebodybutton",
+    $search_page = "/bitrix/admin/user_search.php"
+) {
     global $APPLICATION, $USER;
     $tag_name_x = preg_replace("/([^a-z0-9])/is", "x", $tag_name);
     $tag_name_escaped = CUtil::JSEscape($tag_name);
@@ -211,10 +247,11 @@ function FindUserIDNew($tag_name, $tag_value, $user_name = "", $form_name = "for
 <span id=\"div_" . $tag_name . "\">" . $user_name . "</span>
 <script>
 ";
-        if ($user_name == "")
+        if ($user_name == "") {
             $strReturn .= "var tv" . $tag_name_x . "='';\n";
-        else
+        } else {
             $strReturn .= "var tv" . $tag_name_x . "='" . CUtil::JSEscape($tag_value) . "';\n";
+        }
 
         $strReturn .= "
 function Ch" . $tag_name_x . "()
@@ -235,14 +272,23 @@ function Ch" . $tag_name_x . "()
 			{
 				DV_" . $tag_name_x . ".innerHTML = '<i>" . GetMessage("MAIN_WAIT") . "</i>';
 
-				if (tv" . $tag_name_x . "!=" . intVal($USER->GetID()) . ")
+				if (tv" . $tag_name_x . "!=" . intval($USER->GetID()) . ")
 				{
-					document.getElementById(\"hiddenframe" . $tag_name_escaped . "\").src='" . $selfFolderUrl . "get_user.php?ID=' + tv" . $tag_name_x . "+'&strName=" . $tag_name_escaped . "&lang=" . LANG . (defined("ADMIN_SECTION") && ADMIN_SECTION === true ? "&admin_section=Y" : "") . "';
+					document.getElementById(\"hiddenframe" . $tag_name_escaped . "\").src='" . $selfFolderUrl . "get_user.php?ID=' + tv" . $tag_name_x . "+'&strName=" . $tag_name_escaped . "&lang=" . LANGUAGE_ID . (defined(
+                "ADMIN_SECTION"
+            ) && ADMIN_SECTION === true ? "&admin_section=Y" : "") . "';
 					document.getElementById('SELECT" . $tag_name_escaped . "').value = 'SU';
 				}
 				else
 				{
-					DV_" . $tag_name_x . ".innerHTML = '" . CUtil::JSEscape("[<a title=\"" . GetMessage("MAIN_EDIT_USER_PROFILE") . "\" class=\"tablebodylink\" href=\"/bitrix/admin/user_edit.php?ID=" . $USER->GetID() . "&lang=" . LANG . "\">" . $USER->GetID() . "</a>] (" . htmlspecialcharsbx($USER->GetLogin()) . ") " . htmlspecialcharsbx($USER->GetFirstName()) . " " . htmlspecialcharsbx($USER->GetLastName())) . "';
+					DV_" . $tag_name_x . ".innerHTML = '" . CUtil::JSEscape(
+                "[<a title=\"" . GetMessage(
+                    "MAIN_EDIT_USER_PROFILE"
+                ) . "\" class=\"tablebodylink\" href=\"/bitrix/admin/user_edit.php?ID=" . $USER->GetID(
+                ) . "&lang=" . LANGUAGE_ID . "\">" . $USER->GetID() . "</a>] (" . htmlspecialcharsbx(
+                    $USER->GetLogin()
+                ) . ") " . htmlspecialcharsbx($USER->GetFirstName()) . " " . htmlspecialcharsbx($USER->GetLastName())
+            ) . "';
 					document.getElementById('SELECT" . $tag_name_escaped . "').value = 'CU';
 				}
 			}

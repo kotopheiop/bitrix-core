@@ -33,7 +33,13 @@ class UserUtils
                     $find = Search\Content::prepareStringToken($find);
                 }
             } else {
-                $validFields = Array('ID' => 1, 'NAME' => 1, 'LAST_NAME' => 1, 'SECOND_NAME' => 1, 'WORK_POSITION' => 1);
+                $validFields = Array(
+                    'ID' => 1,
+                    'NAME' => 1,
+                    'LAST_NAME' => 1,
+                    'SECOND_NAME' => 1,
+                    'WORK_POSITION' => 1
+                );
                 foreach ($fields as $key => $value) {
                     if (isset($validFields[$key]) && $validFields[$key]) {
                         if (Search\Content::isIntegerToken($value)) {
@@ -73,7 +79,14 @@ class UserUtils
                     }
 
                     $intResult = Array('LOGIC' => 'OR');
-                    $validFields = Array('ID', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'WORK_POSITION', 'UF_DEPARTMENT_NAME');
+                    $validFields = Array(
+                        'ID',
+                        'NAME',
+                        'LAST_NAME',
+                        'SECOND_NAME',
+                        'WORK_POSITION',
+                        'UF_DEPARTMENT_NAME'
+                    );
                     foreach ($validFields as $key) {
                         if ($key == 'ID') {
                             $intResult['=ID'] = intval($findWord);
@@ -88,7 +101,14 @@ class UserUtils
                     $result = Array($result);
                 }
             } else {
-                $validFields = Array('ID' => 1, 'NAME' => 1, 'LAST_NAME' => 1, 'SECOND_NAME' => 1, 'WORK_POSITION' => 1, 'UF_DEPARTMENT_NAME' => 1);
+                $validFields = Array(
+                    'ID' => 1,
+                    'NAME' => 1,
+                    'LAST_NAME' => 1,
+                    'SECOND_NAME' => 1,
+                    'WORK_POSITION' => 1,
+                    'UF_DEPARTMENT_NAME' => 1
+                );
                 foreach ($fields as $key => $value) {
                     if (!$value) {
                         continue;
@@ -126,7 +146,15 @@ class UserUtils
                     $find = Search\Content::prepareStringToken($find);
                 }
             } else {
-                $validFields = Array('ID' => 1, 'NAME' => 1, 'LAST_NAME' => 1, 'SECOND_NAME' => 1, 'WORK_POSITION' => 1, 'EMAIL' => 1, 'LOGIN' => 1);
+                $validFields = Array(
+                    'ID' => 1,
+                    'NAME' => 1,
+                    'LAST_NAME' => 1,
+                    'SECOND_NAME' => 1,
+                    'WORK_POSITION' => 1,
+                    'EMAIL' => 1,
+                    'LOGIN' => 1
+                );
                 foreach ($fields as $key => $value) {
                     if (isset($validFields[$key]) && $validFields[$key]) {
                         if (Search\Content::isIntegerToken($value)) {
@@ -157,10 +185,12 @@ class UserUtils
                     foreach ($validFields as $key) {
                         if ($key == 'ID') {
                             $intResult['=ID'] = intval($findWord);
-                        } else if ($key == 'LOGIN' || $key == 'EMAIL') {
-                            $intResult['%=' . $key] = $helper->forSql($findWord) . '%';
                         } else {
-                            $intResult['%=INDEX.' . $key] = $helper->forSql($findWord) . '%';
+                            if ($key == 'LOGIN' || $key == 'EMAIL') {
+                                $intResult['%=' . $key] = $helper->forSql($findWord) . '%';
+                            } else {
+                                $intResult['%=INDEX.' . $key] = $helper->forSql($findWord) . '%';
+                            }
                         }
                     }
                     $result[] = $intResult;
@@ -170,7 +200,15 @@ class UserUtils
                     $result = Array($result);
                 }
             } else {
-                $validFields = Array('ID' => 1, 'NAME' => 1, 'LAST_NAME' => 1, 'SECOND_NAME' => 1, 'WORK_POSITION' => 1, 'LOGIN' => 1, 'EMAIL' => 1);
+                $validFields = Array(
+                    'ID' => 1,
+                    'NAME' => 1,
+                    'LAST_NAME' => 1,
+                    'SECOND_NAME' => 1,
+                    'WORK_POSITION' => 1,
+                    'LOGIN' => 1,
+                    'EMAIL' => 1
+                );
                 foreach ($fields as $key => $value) {
                     if (!$value) {
                         continue;
@@ -178,10 +216,12 @@ class UserUtils
                     if (isset($validFields[$key])) {
                         if ($key == 'ID') {
                             $result['=ID'] = intval($value);
-                        } else if ($key == 'LOGIN' || $key == 'EMAIL') {
-                            $result['%=' . $key] = $helper->forSql($value) . '%';
                         } else {
-                            $result['%=INDEX.' . $key] = $helper->forSql($value) . '%';
+                            if ($key == 'LOGIN' || $key == 'EMAIL') {
+                                $result['%=' . $key] = $helper->forSql($value) . '%';
+                            } else {
+                                $result['%=INDEX.' . $key] = $helper->forSql($value) . '%';
+                            }
                         }
                     }
                 }
@@ -228,20 +268,27 @@ class UserUtils
         $cache = Data\Cache::createInstance();
         if ($cache->initCache($cacheTtl, $cacheName, $cachePath) && false) {
             $companyStructure = $cache->getVars();
-        } else if ($iblockStructureId <= 0 || !Loader::includeModule('iblock')) {
-            return $result;
         } else {
-            $orm = \Bitrix\Iblock\SectionTable::getList(Array('select' => Array('ID', 'NAME', 'DEPTH_LEVEL', 'IBLOCK_SECTION_ID'), 'filter' => Array('=IBLOCK_ID' => $iblockStructureId, '=ACTIVE' => 'Y',),));
-            while ($department = $orm->fetch()) {
-                $companyStructure[$department['ID']] = $department;
-            }
+            if ($iblockStructureId <= 0 || !Loader::includeModule('iblock')) {
+                return $result;
+            } else {
+                $orm = \Bitrix\Iblock\SectionTable::getList(
+                    Array(
+                        'select' => Array('ID', 'NAME', 'DEPTH_LEVEL', 'IBLOCK_SECTION_ID'),
+                        'filter' => Array('=IBLOCK_ID' => $iblockStructureId, '=ACTIVE' => 'Y',),
+                    )
+                );
+                while ($department = $orm->fetch()) {
+                    $companyStructure[$department['ID']] = $department;
+                }
 
-            $taggedCache->startTagCache($cachePath);
-            $taggedCache->registerTag('iblock_id_' . $iblockStructureId);
-            $taggedCache->endTagCache();
+                $taggedCache->startTagCache($cachePath);
+                $taggedCache->registerTag('iblock_id_' . $iblockStructureId);
+                $taggedCache->endTagCache();
 
-            if ($cache->startDataCache()) {
-                $cache->endDataCache($companyStructure);
+                if ($cache->startDataCache()) {
+                    $cache->endDataCache($companyStructure);
+                }
             }
         }
 
@@ -395,12 +442,14 @@ class UserUtils
         if (Loader::includeModule('socialnetwork')) {
             $tagsList = [];
 
-            $res = UserTagTable::getList([
-                'filter' => [
-                    'USER_ID' => $userId
-                ],
-                'select' => ['NAME']
-            ]);
+            $res = UserTagTable::getList(
+                [
+                    'filter' => [
+                        'USER_ID' => $userId
+                    ],
+                    'select' => ['NAME']
+                ]
+            );
             while ($tagFields = $res->fetch()) {
                 $tagsList[] = $tagFields['NAME'];
             }

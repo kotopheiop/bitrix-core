@@ -74,8 +74,9 @@ abstract class Base
     {
         $bodyResult = $this->createBody($shipmentIds, $additional);
 
-        if (!$bodyResult->isSuccess())
+        if (!$bodyResult->isSuccess()) {
             return $bodyResult;
+        }
 
         $result = $this->send($bodyResult->getData(), $additional);
         $result->addResults($bodyResult->getResults());
@@ -137,24 +138,30 @@ abstract class Base
                 if ($status == 404) {
                     $message = Loc::getMessage('SALE_DLVRS_ADD_DREQ_RBASE_01');
 
-                    if (!empty($response))
-                        if ($response['code'] == '1001' && $response['sub-code'] == 'RESOURCE_NOT_FOUND')
+                    if (!empty($response)) {
+                        if ($response['code'] == '1001' && $response['sub-code'] == 'RESOURCE_NOT_FOUND') {
                             $message = Loc::getMessage('SALE_DLVRS_ADD_DREQ_RBASE_02');
+                        }
+                    }
                 } elseif ($status == 401) {
                     $message = Loc::getMessage('SALE_DLVRS_ADD_DREQ_RBASE_03');;
                 } elseif ($status == 500) {
                     $message = Loc::getMessage('SALE_DLVRS_ADD_DREQ_RBASE_INTERNAL_ERROR');;
                 }
 
-                if (strlen($message) <= 0)
-                    $message = $message . ' (' . Loc::getMessage('SALE_DLVRS_ADD_DREQ_RBASE_HTTP_STATUS') . ' ' . $status . ')';
+                if ($message == '') {
+                    $message = $message . ' (' . Loc::getMessage(
+                            'SALE_DLVRS_ADD_DREQ_RBASE_HTTP_STATUS'
+                        ) . ' ' . $status . ')';
+                }
 
                 $result->addError(new Error($message, 'STATUS_' . $status));
             } else {
                 $convertResult = $this->convertResponse($response, $requestData);
 
-                if (!$convertResult->isSuccess())
+                if (!$convertResult->isSuccess()) {
                     $result->addErrors($convertResult->getErrors());
+                }
 
                 $result->addResults($convertResult->getResults());
                 $result->setData($convertResult->getData());

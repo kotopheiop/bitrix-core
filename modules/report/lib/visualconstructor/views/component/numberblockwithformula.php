@@ -42,7 +42,6 @@ class NumberBlockWithFormula extends NumberBlock
      */
     public function addDefaultReportHandlersToWidgetHandler(BaseWidget $widgetHandler)
     {
-
         $reportHandler = Report::buildReportHandlerForWidget(EmptyReport::getClassName(), $widgetHandler->getWidget());
         $widgetHandler->addReportHandler($reportHandler);
         $reportHandler = Report::buildReportHandlerForWidget(EmptyReport::getClassName(), $widgetHandler->getWidget());

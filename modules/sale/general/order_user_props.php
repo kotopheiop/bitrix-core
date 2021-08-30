@@ -1,4 +1,5 @@
-<?
+<?php
+
 IncludeModuleLangFile(__FILE__);
 
 class CAllSaleOrderUserProps
@@ -37,7 +38,7 @@ class CAllSaleOrderUserProps
      *
      * @return bool|int
      */
-    static function DoSaveUserProfile($userId, $profileId, $profileName, $personTypeId, $orderProps, &$arErrors)
+    public static function DoSaveUserProfile($userId, $profileId, $profileName, $personTypeId, $orderProps, &$arErrors)
     {
         $profileId = intval($profileId);
 
@@ -61,7 +62,7 @@ class CAllSaleOrderUserProps
             }
 
             //if (strlen($profileName) > 0 && $profileName != $arProfile["NAME"])
-            if (strlen($profileName) > 0) {
+            if ($profileName <> '') {
                 $arFields = array("NAME" => $profileName, "USER_ID" => $userId);
                 CSaleOrderUserProps::Update($profileId, $arFields);
             }
@@ -73,8 +74,9 @@ class CAllSaleOrderUserProps
                 false,
                 array("ID", "ORDER_PROPS_ID")
             );
-            while ($arUserPropsValue = $dbUserPropsValues->Fetch())
+            while ($arUserPropsValue = $dbUserPropsValues->Fetch()) {
                 $arIDs[$arUserPropsValue["ORDER_PROPS_ID"]] = $arUserPropsValue["ID"];
+            }
         }
 
         if (!is_array($orderProps) && (int)$orderProps > 0) {
@@ -86,8 +88,9 @@ class CAllSaleOrderUserProps
                 array("ORDER_PROPS_ID", "VALUE")
             );
             $orderProps = array();
-            while ($arOrderPropsValue = $dbOrderPropsValues->Fetch())
+            while ($arOrderPropsValue = $dbOrderPropsValues->Fetch()) {
                 $orderProps[$arOrderPropsValue["ORDER_PROPS_ID"]] = $arOrderPropsValue["VALUE"];
+            }
         }
 
         if (empty($orderProps)) {
@@ -131,8 +134,9 @@ class CAllSaleOrderUserProps
 
             if (isset($curVal)) {
                 if ($profileId <= 0) {
-                    if (strlen($profileName) <= 0)
+                    if ($profileName == '') {
                         $profileName = GetMessage("SOA_PROFILE") . " " . Date("Y-m-d");
+                    }
 
                     $arFields = array(
                         "NAME" => $profileName,
@@ -140,6 +144,13 @@ class CAllSaleOrderUserProps
                         "PERSON_TYPE_ID" => $personTypeId
                     );
                     $profileId = CSaleOrderUserProps::Add($arFields);
+                    if (!$profileId) {
+                        $arErrors[] = array(
+                            "CODE" => "PROFILE_CREATE_ERROR",
+                            "TEXT" => GetMessage('SKGOUP_PROFILE_CREATE_ERROR')
+                        );
+                        return false;
+                    }
                 }
 
                 if (array_key_exists($arOrderProperty["ID"], $arIDs)) {
@@ -169,14 +180,16 @@ class CAllSaleOrderUserProps
     {
         $userId = intval($userId);
 
-        if ($userId <= 0)
+        if ($userId <= 0) {
             return null;
+        }
 
         $arResult = array();
         $arFilter = array("USER_ID" => $userId);
 
-        if ($personTypeId != null)
+        if ($personTypeId != null) {
             $arFilter["PERSON_TYPE_ID"] = $personTypeId;
+        }
 
         $dbProfile = CSaleOrderUserProps::GetList(
             array("DATE_UPDATE" => "DESC", "NAME" => "ASC"),
@@ -187,10 +200,15 @@ class CAllSaleOrderUserProps
         );
 
         while ($arProfile = $dbProfile->GetNext()) {
-            if (!array_key_exists($arProfile["PERSON_TYPE_ID"], $arResult))
+            if (!array_key_exists($arProfile["PERSON_TYPE_ID"], $arResult)) {
                 $arResult[$arProfile["PERSON_TYPE_ID"]] = array();
+            }
 
-            $arResult[$arProfile["PERSON_TYPE_ID"]][$arProfile["ID"]] = array("NAME" => $arProfile["NAME"], "VALUES" => array(), "VALUES_ORIG" => array());
+            $arResult[$arProfile["PERSON_TYPE_ID"]][$arProfile["ID"]] = array(
+                "NAME" => $arProfile["NAME"],
+                "VALUES" => array(),
+                "VALUES_ORIG" => array()
+            );
 
             $dbProps = CSaleOrderUserPropsValue::GetList(
                 array(),
@@ -202,24 +220,26 @@ class CAllSaleOrderUserProps
             while ($arProps = $dbProps->GetNext()) {
                 $arResult[$arProfile["PERSON_TYPE_ID"]][$arProfile["ID"]]["VALUES"][$arProps["ORDER_PROPS_ID"]] = $arProps["VALUE"];
 
-                if (isset($arProps["VALUE_ORIG"]))
+                if (isset($arProps["VALUE_ORIG"])) {
                     $arResult[$arProfile["PERSON_TYPE_ID"]][$arProfile["ID"]]["VALUES_ORIG"][$arProps["ORDER_PROPS_ID"]] = $arProps["VALUE_ORIG"];
+                }
             }
         }
 
         if (count($arResult) > 0) {
-            if ($personTypeId != null)
+            if ($personTypeId != null) {
                 $arResult = $arResult[$personTypeId];
+            }
         }
 
         return $arResult;
     }
 
-    function GetByID($ID)
+    public static function GetByID($ID)
     {
         global $DB;
 
-        $ID = IntVal($ID);
+        $ID = intval($ID);
         $strSql =
             "SELECT * " .
             "FROM b_sale_user_props " .
@@ -229,14 +249,14 @@ class CAllSaleOrderUserProps
         if ($res = $db_res->Fetch()) {
             return $res;
         }
-        return False;
+        return false;
     }
 
-    function CheckFields($ACTION, &$arFields, $ID = 0)
+    public static function CheckFields($ACTION, &$arFields, $ID = 0)
     {
         global $DB, $USER;
 
-        if ((is_set($arFields, "PERSON_TYPE_ID") || $ACTION == "ADD") && IntVal($arFields["PERSON_TYPE_ID"]) <= 0) {
+        if ((is_set($arFields, "PERSON_TYPE_ID") || $ACTION == "ADD") && intval($arFields["PERSON_TYPE_ID"]) <= 0) {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SKGOUP_EMPTY_PERS_TYPE"), "ERROR_NO_PERSON_TYPE_ID");
             return false;
         }
@@ -246,24 +266,26 @@ class CAllSaleOrderUserProps
             return false;
         }
 
-        if (!is_set($arFields, "USER_ID"))
-            $arFields["USER_ID"] = IntVal($USER->GetID());
+        if (!is_set($arFields, "USER_ID")) {
+            $arFields["USER_ID"] = intval($USER->GetID());
+        }
 
-        if ((is_set($arFields, "USER_ID") || $ACTION == "ADD") && IntVal($arFields["USER_ID"]) <= 0) {
+        if ((is_set($arFields, "USER_ID") || $ACTION == "ADD") && intval($arFields["USER_ID"]) <= 0) {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SKGOUP_NO_USER_ID"), "ERROR_NO_PERSON_TYPE_ID");
             return false;
         }
 
-        return True;
+        return true;
     }
 
-    function Update($ID, $arFields)
+    public static function Update($ID, $arFields)
     {
         global $DB;
 
-        $ID = IntVal($ID);
-        if (!CSaleOrderUserProps::CheckFields("UPDATE", $arFields))
+        $ID = intval($ID);
+        if (!CSaleOrderUserProps::CheckFields("UPDATE", $arFields)) {
             return false;
+        }
 
         $strUpdate = $DB->PrepareUpdate("b_sale_user_props", $arFields);
 
@@ -277,7 +299,7 @@ class CAllSaleOrderUserProps
         return $ID;
     }
 
-    function ClearEmpty()
+    public static function ClearEmpty()
     {
         global $DB;
         $strSql =
@@ -291,23 +313,21 @@ class CAllSaleOrderUserProps
         }
     }
 
-    function Delete($ID)
+    public static function Delete($ID)
     {
         global $DB;
-        $ID = IntVal($ID);
+        $ID = intval($ID);
         $DB->Query("DELETE FROM b_sale_user_props_value WHERE USER_PROPS_ID = " . $ID . "", true);
         return $DB->Query("DELETE FROM b_sale_user_props WHERE ID = " . $ID . "", true);
     }
 
-    function OnUserDelete($ID)
+    public static function OnUserDelete($ID)
     {
-        $ID = IntVal($ID);
+        $ID = intval($ID);
         $db_res = CSaleOrderUserProps::GetList(($b = "ID"), ($o = "ASC"), Array("USER_ID" => $ID));
         while ($ar_res = $db_res->Fetch()) {
-            CSaleOrderUserProps::Delete(IntVal($ar_res["ID"]));
+            CSaleOrderUserProps::Delete(intval($ar_res["ID"]));
         }
-        return True;
+        return true;
     }
 }
-
-?>

@@ -29,14 +29,20 @@ class Message
         $this->type = $type;
 
         $properties = array(
-            'headers', 'subject', 'from', 'to',
-            'text', 'html', 'attachments',
+            'headers',
+            'subject',
+            'from',
+            'to',
+            'text',
+            'html',
+            'attachments',
             'secret'
         );
 
         foreach ($properties as $property) {
-            if (isset($message[$property]))
+            if (isset($message[$property])) {
                 $this->$property = $message[$property];
+            }
         }
     }
 
@@ -109,7 +115,10 @@ class Message
             if ($this->attachmentsCount()) {
                 foreach ($this->attachments as $item) {
                     $html = preg_replace(
-                        sprintf('/<img[^>]+src\s*=\s*(\'|\")?\s*(cid:%s)\s*\1[^>]*>/is', preg_quote($item['contentId'], '/')),
+                        sprintf(
+                            '/<img[^>]+src\s*=\s*(\'|\")?\s*(cid:%s)\s*\1[^>]*>/is',
+                            preg_quote($item['contentId'], '/')
+                        ),
                         sprintf('[ATTACHMENT=%s]', $item['uniqueId']),
                         $html
                     );
@@ -143,26 +152,28 @@ class Message
 
             $sanitizer = new \CBXSanitizer();
             //$sanitizer->setLevel(\CBXSanitizer::SECURE_LEVEL_MIDDLE);
-            $sanitizer->addTags(array(
-                'a' => array('href'),
-                'b' => array(),
-                'u' => array(),
-                's' => array(),
-                'i' => array(),
-                'img' => array('src'),
-                'font' => array('color', 'size', 'face'),
-                'ul' => array(),
-                'ol' => array(),
-                'li' => array(),
-                'table' => array(),
-                'tr' => array(),
-                'td' => array(),
-                'th' => array(),
-                'quote' => array(),
-                'br' => array(),
-                //'big'   => array(),
-                //'small' => array(),
-            ));
+            $sanitizer->addTags(
+                array(
+                    'a' => array('href'),
+                    'b' => array(),
+                    'u' => array(),
+                    's' => array(),
+                    'i' => array(),
+                    'img' => array('src'),
+                    'font' => array('color', 'size', 'face'),
+                    'ul' => array(),
+                    'ol' => array(),
+                    'li' => array(),
+                    'table' => array(),
+                    'tr' => array(),
+                    'td' => array(),
+                    'th' => array(),
+                    'quote' => array(),
+                    'br' => array(),
+                    //'big'   => array(),
+                    //'small' => array(),
+                )
+            );
             $sanitizer->applyDoubleEncode(false);
             $html = $sanitizer->sanitizeHtml($html);
 
@@ -197,13 +208,14 @@ class Message
             }
         }
 
-        if ($this->type == 'reply' && strpos($text, static::QUOTE_PLACEHOLDER)) {
+        if ($this->type == 'reply' && mb_strpos($text, static::QUOTE_PLACEHOLDER)) {
             $text = $this->removeReplyHead($text);
             $text = preg_replace(sprintf('/\s*%s\s*/', preg_quote(static::QUOTE_PLACEHOLDER, '/')), "\n\n", $text);
         }
 
-        if ($this->type == 'forward')
+        if ($this->type == 'forward') {
             $text = $this->removeForwardHead($text);
+        }
 
         // TODO: TextParser
         $text = preg_replace('/\[tr\]\s*\[\/tr\]/is', '', $text);
@@ -212,11 +224,13 @@ class Message
         $text = trim($text);
         $text = preg_replace('/(\s*\n){2,}/', "\n\n", $text);
 
-        if (empty($text) && $this->attachmentsCount() == 1)
+        if (empty($text) && $this->attachmentsCount() == 1) {
             $text = sprintf('[ATTACHMENT=%s]', $item['uniqueId']);
+        }
 
-        if (!empty($this->secret))
+        if (!empty($this->secret)) {
             $text = str_replace($this->secret, 'xxxxxxxx', $text);
+        }
 
         return $text;
     }
@@ -270,15 +284,18 @@ class Message
                 array_slice($parts, -2)
             );
         } else {
-            if (count($parts) == 3)
+            if (count($parts) == 3) {
                 $parts = preg_split('/(<blockquote.+<\/blockquote>)/is', $html, null, PREG_SPLIT_DELIM_CAPTURE);
+            }
         }
 
-        if (count($parts) < 3)
+        if (count($parts) < 3) {
             $parts = preg_split(static::QUOTE_HTML_REGEX, $html, null, PREG_SPLIT_DELIM_CAPTURE);
+        }
 
-        if (count($parts) == 3)
+        if (count($parts) == 3) {
             return $parts;
+        }
 
         return false;
     }
@@ -293,8 +310,9 @@ class Message
     {
         $parts = preg_split('/((?:^>.*$\n?){2,})/m', $text, null, PREG_SPLIT_DELIM_CAPTURE);
 
-        if (count($parts) < 3)
+        if (count($parts) < 3) {
             $parts = preg_split('/((?:^\|.*$\n?){2,})/m', $text, null, PREG_SPLIT_DELIM_CAPTURE);
+        }
 
         if (count($parts) < 3) {
             $outlookRegex = '/(
@@ -304,8 +322,9 @@ class Message
             $parts = preg_split($outlookRegex, $text, null, PREG_SPLIT_DELIM_CAPTURE);
         }
 
-        if (count($parts) == 3)
+        if (count($parts) == 3) {
             return $parts;
+        }
 
         return false;
     }
@@ -320,23 +339,31 @@ class Message
     {
         $score = 0;
 
-        if (preg_match_all('/^([^\:\n]{1,20}):[\t\x20]+(.+)$/m' . BX_UTF_PCRE_MODIFIER, $head, $matches, PREG_SET_ORDER)) {
+        if (preg_match_all(
+            '/^([^\:\n]{1,20}):[\t\x20]+(.+)$/m' . BX_UTF_PCRE_MODIFIER,
+            $head,
+            $matches,
+            PREG_SET_ORDER
+        )) {
             $subject = array(
                 'value' => $this->subject,
-                'strlen' => strlen($this->subject),
-                'sgnlen' => strlen(trim($this->subject))
+                'strlen' => mb_strlen($this->subject),
+                'sgnlen' => mb_strlen(trim($this->subject))
             );
 
             $isHeader = function ($key, $value) use (&$subject) {
-                if (strlen(trim($value)) >= 10 && $subject['sgnlen'] >= 10) {
-                    $dist = $subject['strlen'] - strlen($value);
+                if (mb_strlen(trim($value)) >= 10 && $subject['sgnlen'] >= 10) {
+                    $dist = $subject['strlen'] - mb_strlen($value);
 
                     if (abs($dist) < 10) {
-                        if ($dist >= 0 && strpos($subject['value'], $value) !== false) {
+                        if ($dist >= 0 && mb_strpos($subject['value'], $value) !== false) {
                             return true;
                         }
 
-                        if (max($subject['strlen'], strlen($value)) < 256 && levenshtein($subject['value'], $value) < 10) {
+                        if (max($subject['strlen'], mb_strlen($value)) < 256 && levenshtein(
+                                $subject['value'],
+                                $value
+                            ) < 10) {
                             return true;
                         }
                     }
@@ -381,13 +408,20 @@ class Message
             $matches['date'] = trim($matches['date']);
             if (strtotime($matches['date']) !== false) {
                 $score++;
-            } else if (preg_match('/^[^\x20]+\x20+((?:[^\x20]+\x20+)?(.+))$/', $matches['date'], $date)) {
-                if (strtotime($date[1]) !== false || strtotime($date[2]) !== false)
-                    $score++;
+            } else {
+                if (preg_match('/^[^\x20]+\x20+((?:[^\x20]+\x20+)?(.+))$/', $matches['date'], $date)) {
+                    if (strtotime($date[1]) !== false || strtotime($date[2]) !== false) {
+                        $score++;
+                    }
+                }
             }
 
-            if (preg_match('/([a-z\d_](\.?[a-z\d_-]+)*)?[a-z\d_]@(([a-z\d][a-z\d-]*)?[a-z\d]\.?)+/i', $matches['from']))
+            if (preg_match(
+                '/([a-z\d_](\.?[a-z\d_-]+)*)?[a-z\d_]@(([a-z\d][a-z\d-]*)?[a-z\d]\.?)+/i',
+                $matches['from']
+            )) {
                 $score++;
+            }
         }
 
         return $score;
@@ -396,15 +430,16 @@ class Message
     /**
      * Returns significant reply text
      *
-     * @param array &$text Reply text.
+     * @param string|array &$text Reply text.
      * @return string
      */
     protected function removeReplyHead(&$text)
     {
         list($before, $after) = explode(static::QUOTE_PLACEHOLDER, $text, 2);
 
-        if (!trim($before))
+        if (!trim($before)) {
             return $text;
+        }
 
         $data = static::reduceTags($before);
 
@@ -473,13 +508,14 @@ class Message
     /**
      * Returns significant forward text
      *
-     * @param array &$text Forward text.
+     * @param string|array &$text Forward text.
      * @return string
      */
     protected function removeForwardHead(&$text)
     {
-        if (!trim($text))
+        if (!trim($text)) {
             return $text;
+        }
 
         $data = static::reduceTags($text);
 
@@ -506,7 +542,8 @@ class Message
             if ($score > 1) {
                 // @TODO: Main\Text\BinaryString::getSubstring()
                 $pattern = preg_replace(
-                    array('/.+/', '/\n/'), array('.+', '\n'),
+                    array('/.+/', '/\n/'),
+                    array('.+', '\n'),
                     array(\CUtil::binSubstr($data, 0, $matches['head'][1]), $matches['head'][0])
                 );
 
@@ -527,7 +564,8 @@ class Message
             if ($score > 0) {
                 // @TODO: Main\Text\BinaryString::getSubstring()
                 $pattern = preg_replace(
-                    array('/.+/', '/\n/'), array('.+', '\n'),
+                    array('/.+/', '/\n/'),
+                    array('.+', '\n'),
                     array(\CUtil::binSubstr($data, 0, $matches['head'][1]), $matches['head'][0])
                 );
 
@@ -547,15 +585,23 @@ class Message
     /**
      * Returns text without bb-codes
      *
-     * @param array &$text Text.
+     * @param string|array &$text Text.
      * @return string
      */
     protected static function reduceTags(&$text)
     {
         $data = $text;
 
-        $data = preg_replace('/^(\[\/?(\*|[busi]|img|table|tr|td|th|quote|(url|size|color|font|list)(=.+?)?)\])+$/im', "\t", $data);
-        $data = preg_replace('/\[\/?(\*|[busi]|img|table|tr|td|th|quote|(url|size|color|font|list)(=.+?)?)\]/i', '', $data);
+        $data = preg_replace(
+            '/^(\[\/?(\*|[busi]|img|table|tr|td|th|quote|(url|size|color|font|list)(=.+?)?)\])+$/im',
+            "\t",
+            $data
+        );
+        $data = preg_replace(
+            '/\[\/?(\*|[busi]|img|table|tr|td|th|quote|(url|size|color|font|list)(=.+?)?)\]/i',
+            '',
+            $data
+        );
 
         return $data;
     }
@@ -563,7 +609,7 @@ class Message
     /**
      * Returns non-paired bb-codes only
      *
-     * @param array &$text Text.
+     * @param string|array &$text Text.
      * @return string
      */
     public static function reduceHead(&$text)
@@ -574,8 +620,14 @@ class Message
         unset($tags);
 
         do {
-            $result = preg_replace('/\[([busi]|img|table|tr|td|th|quote|url|size|color|font|list)(=.+?)?\]\[\/\1\]/is', '', $result, -1, $n2);
-        } while ($n1 + $n2 > 0);
+            $result = preg_replace(
+                '/\[([busi]|img|table|tr|td|th|quote|url|size|color|font|list)(=.+?)?\]\[\/\1\]/is',
+                '',
+                $result,
+                -1,
+                $n2
+            );
+        } while ($n2 > 0);
 
         return $result;
     }

@@ -8,8 +8,9 @@
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
-if ($APPLICATION->GetGroupRight("sale") < "R")
+if ($APPLICATION->GetGroupRight("sale") < "R") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 
@@ -60,7 +61,7 @@ if (count($aSTabs) < 1) {
 
 $tabControl = new CAdminTabControl("tabControl", $aSTabs);
 
-if ($REQUEST_METHOD == "POST" && strlen($Update) > 0 && check_bitrix_sessid()) {
+if ($REQUEST_METHOD == "POST" && $Update <> '' && check_bitrix_sessid()) {
     foreach ($aSTabs as $arTab) {
         if ($arTab["FILE"]) {
             include($arTab["FILE"]);
@@ -93,9 +94,11 @@ require_once($DOCUMENT_ROOT . BX_ROOT . "/modules/main/include/prolog_admin_afte
 
 <?
 $bNote = false;
-foreach ($aSTabs as $arTab)
-    if ($arTab["NOTE"])
+foreach ($aSTabs as $arTab) {
+    if ($arTab["NOTE"]) {
         $bNote = true;
+    }
+}
 if ($bNote):
     echo BeginNote();
     ?>

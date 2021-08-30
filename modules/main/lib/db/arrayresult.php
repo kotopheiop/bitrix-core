@@ -1,6 +1,7 @@
 <?php
 
 namespace Bitrix\Main\DB;
+
 /**
  * Class ArrayResult is for presenting an array as database result
  * with fetch() navigation.

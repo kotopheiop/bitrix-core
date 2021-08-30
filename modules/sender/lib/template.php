@@ -79,10 +79,13 @@ class TemplateTable extends ORM\Data\DataManager
      */
     public static function incUseCount($id)
     {
-        return static::update($id, array(
-            'USE_COUNT' => new DB\SqlExpression('?# + 1', 'USE_COUNT'),
-            'DATE_USE' => new MainType\DateTime()
-        ))->isSuccess();
+        return static::update(
+            $id,
+            array(
+                'USE_COUNT' => new DB\SqlExpression('?# + 1', 'USE_COUNT'),
+                'DATE_USE' => new MainType\DateTime()
+            )
+        )->isSuccess();
     }
 
     /**
@@ -184,22 +187,32 @@ class TemplateTable extends ORM\Data\DataManager
     {
         $result = new ORM\EventResult;
         $data = $event->getParameters();
-        $chainListDb = MailingChainTable::getList(array(
-            'select' => array('ID', 'SUBJECT', 'MAILING_ID', 'MAILING_NAME' => 'TITLE'),
-            'filter' => array('TEMPLATE_TYPE' => 'USER', 'TEMPLATE_ID' => $data['primary']['ID']),
-            'order' => array('MAILING_NAME' => 'ASC', 'ID')
-        ));
+        $chainListDb = MailingChainTable::getList(
+            array(
+                'select' => array('ID', 'SUBJECT', 'MAILING_ID', 'MAILING_NAME' => 'TITLE'),
+                'filter' => array('TEMPLATE_TYPE' => 'USER', 'TEMPLATE_ID' => $data['primary']['ID']),
+                'order' => array('MAILING_NAME' => 'ASC', 'ID')
+            )
+        );
 
         if ($chainListDb->getSelectedRowsCount() > 0) {
             $template = static::getRowById($data['primary']['ID']);
             $messageList = array();
             while ($chain = $chainListDb->fetch()) {
-                $messageList[$chain['MAILING_NAME']] = '[' . $chain['ID'] . '] ' . htmlspecialcharsbx($chain['SUBJECT']) . "\n";
+                $messageList[$chain['MAILING_NAME']] = '[' . $chain['ID'] . '] ' . htmlspecialcharsbx(
+                        $chain['SUBJECT']
+                    ) . "\n";
             }
 
-            $message = Loc::getMessage('SENDER_ENTITY_TEMPLATE_DELETE_ERROR_TEMPLATE', array('#NAME#' => $template['NAME'])) . "\n";
+            $message = Loc::getMessage(
+                    'SENDER_ENTITY_TEMPLATE_DELETE_ERROR_TEMPLATE',
+                    array('#NAME#' => $template['NAME'])
+                ) . "\n";
             foreach ($messageList as $mailingName => $messageItem) {
-                $message .= Loc::getMessage('SENDER_ENTITY_TEMPLATE_DELETE_ERROR_MAILING', array('#NAME#' => $mailingName)) . "\n" . $messageItem . "\n";
+                $message .= Loc::getMessage(
+                        'SENDER_ENTITY_TEMPLATE_DELETE_ERROR_MAILING',
+                        array('#NAME#' => $mailingName)
+                    ) . "\n" . $messageItem . "\n";
             }
 
             $result->addError(new ORM\EntityError($message));
@@ -253,10 +266,13 @@ class TemplateTable extends ORM\Data\DataManager
 
         Loader::includeModule('fileman');
 
-        \CJSCore::RegisterExt("sender_editor", Array(
-            "js" => array("/bitrix/js/sender/editor/htmleditor.js"),
-            "rel" => array()
-        ));
+        \CJSCore::RegisterExt(
+            "sender_editor",
+            Array(
+                "js" => array("/bitrix/js/sender/editor/htmleditor.js"),
+                "rel" => array()
+            )
+        );
         \CJSCore::Init(array("sender_editor"));
 
         ob_start();
@@ -267,7 +283,9 @@ class TemplateTable extends ORM\Data\DataManager
                 BX.ready(function () {
                     <?if(!$isInit): $isInit = true;?>
                     var letterManager = new SenderLetterManager;
-                    letterManager.setPlaceHolderList(<?=\CUtil::PhpToJSObject(PostingRecipientTable::getPersonalizeList());?>);
+                    letterManager.setPlaceHolderList(<?=\CUtil::PhpToJSObject(
+                        PostingRecipientTable::getPersonalizeList()
+                    );?>);
                     <?endif;?>
                 });
 
@@ -277,7 +295,9 @@ class TemplateTable extends ORM\Data\DataManager
             </script>
             <textarea id="bxed_<?= htmlspecialcharsbx($fieldName) ?>"
                       name="<?= htmlspecialcharsbx($fieldName) ?>"
-                      style="height: <?= htmlspecialcharsbx($editorHeight) ?>; width: <?= htmlspecialcharsbx($editorWidth) ?>;"
+                      style="height: <?= htmlspecialcharsbx($editorHeight) ?>; width: <?= htmlspecialcharsbx(
+                          $editorWidth
+                      ) ?>;"
                       class="typearea"
             ><?= htmlspecialcharsbx($fieldValue) ?></textarea>
 
@@ -301,17 +321,19 @@ class TemplateTable extends ORM\Data\DataManager
                     $url = $contentUrl;
                 }
             }
-            echo BlockEditorMail::show(array(
-                'id' => $fieldName,
-                'charset' => $charset,
-                'site' => $site,
-                'own_result_id' => 'bxed_' . $fieldName,
-                'url' => $url,
-                'templateType' => $templateType,
-                'templateId' => $templateId,
-                'isTemplateMode' => $isTemplateMode,
-                'isUserHavePhpAccess' => $isUserHavePhpAccess,
-            ));
+            echo BlockEditorMail::show(
+                array(
+                    'id' => $fieldName,
+                    'charset' => $charset,
+                    'site' => $site,
+                    'own_result_id' => 'bxed_' . $fieldName,
+                    'url' => $url,
+                    'templateType' => $templateType,
+                    'templateId' => $templateId,
+                    'isTemplateMode' => $isTemplateMode,
+                    'isUserHavePhpAccess' => $isUserHavePhpAccess,
+                )
+            );
             ?>
         </div>
 
@@ -332,9 +354,9 @@ class TemplateTable extends ORM\Data\DataManager
                        onclick="ToggleTemplateSaveDialog();">
 				<label for="TEMPLATE_ACTION_SAVE"><?= Loc::getMessage('SENDER_TEMPLATE_EDITOR_SAVE') ?></label>
 			</span>
-                <span id="TEMPLATE_ACTION_SAVE_NAME_CONT"
-                      style="display: none;"> <?= Loc::getMessage('SENDER_TEMPLATE_EDITOR_SAVE_NAME') ?> <input
-                            type="text" name="TEMPLATE_ACTION_SAVE_NAME"></span>
+                <span id="TEMPLATE_ACTION_SAVE_NAME_CONT" style="display: none;"> <?= Loc::getMessage(
+                        'SENDER_TEMPLATE_EDITOR_SAVE_NAME'
+                    ) ?> <input type="text" name="TEMPLATE_ACTION_SAVE_NAME"></span>
             </div>
         <?
         endif;

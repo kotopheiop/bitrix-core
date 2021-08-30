@@ -23,8 +23,9 @@ class Album extends DataConverter
      */
     public function __construct($exportId)
     {
-        if (!isset($exportId) || strlen($exportId) <= 0)
+        if (!isset($exportId) || $exportId == '') {
             throw new ArgumentNullException("EXPORT_ID");
+        }
 
         $this->exportId = $exportId;
     }
@@ -40,8 +41,9 @@ class Album extends DataConverter
     {
         $this->result = array();
         $logger = new Vk\Logger($this->exportId);
-        if ($data["ELEMENT_CNT"] == 0)
+        if ($data["ELEMENT_CNT"] == 0) {
             $logger->addError("ALBUM_EMPTY", $data["ID"]);
+        }
 
         $this->result["SECTION_ID"] = $data["ID"];
         $this->result["IBLOCK_ID"] = $data["IBLOCK_ID"];
@@ -54,17 +56,19 @@ class Album extends DataConverter
             'ALBUM'
         );
         $checkedPhotos = Vk\PhotoResizer::checkPhotos($sortedPhotos, 'ALBUM');
-        if ($checkedPhotos)
+        if ($checkedPhotos) {
             foreach ($checkedPhotos["PHOTOS"] as $photo) {
                 $this->result["PHOTO_BX_ID"] = $photo["PHOTO_BX_ID"];
                 $this->result["PHOTO_URL"] = $photo["PHOTO_URL"];
             }
-        else
+        } else {
             $logger->addError("ALBUM_EMPTY_PHOTOS", $data["ID"]);
+        }
 
 //		add item to log, if image was be resized
-        if ($checkedPhotos['RESIZE'])
+        if ($checkedPhotos['RESIZE']) {
             $logger->addError('ALBUM_PHOTOS_' . $checkedPhotos['RESIZE_TYPE'], $data["ID"]);
+        }
 
         return array($data["ID"] => $this->result);
     }
@@ -77,14 +81,15 @@ class Album extends DataConverter
      * @param Vk\Logger|NULL $logger
      * @return string
      */
-    private function validateTitle($title, Vk\Logger $logger = NULL)
+    private function validateTitle($title, Vk\Logger $logger = null)
     {
         $newTitle = $title;
 
-        if (strlen($title) > self::TITLE_LENGHT_MAX) {
-            $newTitle = substr($title, 0, self::TITLE_LENGHT_MAX - 1);
-            if ($logger)
+        if (mb_strlen($title) > self::TITLE_LENGHT_MAX) {
+            $newTitle = mb_substr($title, 0, self::TITLE_LENGHT_MAX - 1);
+            if ($logger) {
                 $logger->addError('ALBUM_LONG_TITLE', $this->result["ID"]);
+            }
         }
 
         return $newTitle;

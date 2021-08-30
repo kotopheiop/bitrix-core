@@ -19,28 +19,32 @@ class UrlRewrite
         $rule = trim($rule);
 
         // check for exist
-        $check = SiteTable::getList([
-            'select' => [
-                'ID'
-            ],
-            'filter' => [
-                'ID' => $siteId,
-                '=DELETED' => ['Y', 'N']
-            ]
-        ])->fetch();
-        if (!$check) {
-            return;
-        }
-        if ($landingId) {
-            $check = SiteTable::getList([
+        $check = SiteTable::getList(
+            [
                 'select' => [
                     'ID'
                 ],
                 'filter' => [
-                    'ID' => $landingId,
+                    'ID' => $siteId,
                     '=DELETED' => ['Y', 'N']
                 ]
-            ])->fetch();
+            ]
+        )->fetch();
+        if (!$check) {
+            return;
+        }
+        if ($landingId) {
+            $check = SiteTable::getList(
+                [
+                    'select' => [
+                        'ID'
+                    ],
+                    'filter' => [
+                        'ID' => $landingId,
+                        '=DELETED' => ['Y', 'N']
+                    ]
+                ]
+            )->fetch();
             if (!$check) {
                 return;
             }
@@ -55,28 +59,37 @@ class UrlRewrite
             $filter['!LANDING_ID'] = $landingId;
         }
 
-        $res = UrlRewriteTable::getList([
-            'select' => [
-                'ID'
-            ],
-            'filter' => $filter
-        ]);
+        $res = UrlRewriteTable::getList(
+            [
+                'select' => [
+                    'ID'
+                ],
+                'filter' => $filter
+            ]
+        );
         if ($row = $res->fetch()) {
             if ($landingId) {
-                UrlRewriteTable::update($row['ID'], [
-                    'LANDING_ID' => $landingId
-                ]);
+                UrlRewriteTable::update(
+                    $row['ID'],
+                    [
+                        'LANDING_ID' => $landingId
+                    ]
+                );
             } else {
                 UrlRewriteTable::delete(
                     $row['ID']
                 );
             }
-        } else if ($landingId) {
-            UrlRewriteTable::add([
-                'SITE_ID' => $siteId,
-                'RULE' => $rule,
-                'LANDING_ID' => $landingId
-            ]);
+        } else {
+            if ($landingId) {
+                UrlRewriteTable::add(
+                    [
+                        'SITE_ID' => $siteId,
+                        'RULE' => $rule,
+                        'LANDING_ID' => $landingId
+                    ]
+                );
+            }
         }
     }
 
@@ -109,14 +122,16 @@ class UrlRewrite
      */
     public static function removeForSite($siteId)
     {
-        $res = UrlRewriteTable::getList([
-            'select' => [
-                'ID'
-            ],
-            'filter' => [
-                'SITE_ID' => $siteId
+        $res = UrlRewriteTable::getList(
+            [
+                'select' => [
+                    'ID'
+                ],
+                'filter' => [
+                    'SITE_ID' => $siteId
+                ]
             ]
-        ]);
+        );
         while ($row = $res->fetch()) {
             UrlRewriteTable::delete($row['ID']);
         }
@@ -129,14 +144,16 @@ class UrlRewrite
      */
     public static function removeForLanding($landingId)
     {
-        $res = UrlRewriteTable::getList([
-            'select' => [
-                'ID'
-            ],
-            'filter' => [
-                'LANDING_ID' => $landingId
+        $res = UrlRewriteTable::getList(
+            [
+                'select' => [
+                    'ID'
+                ],
+                'filter' => [
+                    'LANDING_ID' => $landingId
+                ]
             ]
-        ]);
+        );
         while ($row = $res->fetch()) {
             UrlRewriteTable::delete($row['ID']);
         }

@@ -13,6 +13,11 @@ class CIBlockRights
     const ALL_OPERATIONS = 2;
     const RETURN_OPERATIONS = 4;
 
+    /** @var string Public reading */
+    public const PUBLIC_READ = 'R';
+    /** @var string Admin access */
+    public const FULL_ACCESS = 'X';
+
     protected $IBLOCK_ID = 0;
     protected $id = 0;
     protected static $arLetterToTask = null;
@@ -49,36 +54,39 @@ class CIBlockRights
         $arRights = array();
         $RIGHT_ID = "";
         $i = 0;
-        foreach ($ar as $arRight) {
-            if (isset($arRight["RIGHT_ID"])) {
-                if (strlen($arRight["RIGHT_ID"]) > 0)
-                    $RIGHT_ID = $arRight["RIGHT_ID"];
-                else
-                    $RIGHT_ID = "n" . $i++;
+        if (!empty($ar) && is_array($ar)) {
+            foreach ($ar as $arRight) {
+                if (isset($arRight["RIGHT_ID"])) {
+                    if ($arRight["RIGHT_ID"] <> '') {
+                        $RIGHT_ID = $arRight["RIGHT_ID"];
+                    } else {
+                        $RIGHT_ID = "n" . $i++;
+                    }
 
-                $arRights[$RIGHT_ID] = array(
-                    "GROUP_CODE" => "",
-                    "DO_CLEAN" => "N",
-                    "TASK_ID" => 0,
-                );
-            } elseif (isset($arRight["GROUP_CODE"])) {
-                $arRights[$RIGHT_ID]["GROUP_CODE"] = $arRight["GROUP_CODE"];
-            } elseif (isset($arRight["DO_CLEAN"])) {
-                $arRights[$RIGHT_ID]["DO_CLEAN"] = $arRight["DO_CLEAN"] == "Y" ? "Y" : "N";
-            } elseif (isset($arRight["TASK_ID"])) {
-                $arRights[$RIGHT_ID]["TASK_ID"] = $arRight["TASK_ID"];
+                    $arRights[$RIGHT_ID] = array(
+                        "GROUP_CODE" => "",
+                        "DO_CLEAN" => "N",
+                        "TASK_ID" => 0,
+                    );
+                } elseif (isset($arRight["GROUP_CODE"])) {
+                    $arRights[$RIGHT_ID]["GROUP_CODE"] = $arRight["GROUP_CODE"];
+                } elseif (isset($arRight["DO_CLEAN"])) {
+                    $arRights[$RIGHT_ID]["DO_CLEAN"] = $arRight["DO_CLEAN"] == "Y" ? "Y" : "N";
+                } elseif (isset($arRight["TASK_ID"])) {
+                    $arRights[$RIGHT_ID]["TASK_ID"] = $arRight["TASK_ID"];
+                }
             }
         }
 
         foreach ($arRights as $RIGHT_ID => $arRightSet) {
-            if (substr($RIGHT_ID, 0, 1) == "n") {
-                if (strlen($arRightSet["GROUP_CODE"]) <= 0)
+            if (mb_substr($RIGHT_ID, 0, 1) == "n") {
+                if ($arRightSet["GROUP_CODE"] == '') {
                     unset($arRights[$RIGHT_ID]);
-                elseif ($arRightSet["TASK_ID"] > 0) {
+                } elseif ($arRightSet["TASK_ID"] > 0) {
                     //Mark inherited rights to overwrite
                     foreach ($arRights as $RIGHT_ID2 => $arRightSet2) {
                         if (
-                            $RIGHT_ID2 > 0
+                            (int)$RIGHT_ID2 > 0
                             && $arRightSet2["GROUP_CODE"] === $arRightSet["GROUP_CODE"]
                         ) {
                             unset($arRights[$RIGHT_ID2]);
@@ -103,8 +111,9 @@ class CIBlockRights
                 )
             );
             self::$arLetterToTask = array();
-            while ($ar = $rs->Fetch())
+            while ($ar = $rs->Fetch()) {
                 self::$arLetterToTask[$ar["LETTER"]] = $ar["ID"];
+            }
         }
     }
 
@@ -112,22 +121,24 @@ class CIBlockRights
     {
         self::initTaskLetters();
 
-        if ($letter == '')
+        if ($letter == '') {
             return self::$arLetterToTask;
-        elseif (array_key_exists($letter, self::$arLetterToTask))
+        } elseif (array_key_exists($letter, self::$arLetterToTask)) {
             return self::$arLetterToTask[$letter];
-        else
+        } else {
             return 0;
+        }
     }
 
     static function TaskToLetter($task = 0)
     {
         self::initTaskLetters();
 
-        if ($task == 0)
+        if ($task == 0) {
             return array_flip(self::$arLetterToTask);
-        else
+        } else {
             return array_search($task, self::$arLetterToTask);
+        }
     }
 
     static function LetterToOperations($letter = '')
@@ -136,17 +147,19 @@ class CIBlockRights
             self::$arLetterToOperations = array();
             foreach (CIBlockRights::LetterToTask() as $l2 => $TASK_ID) {
                 self::$arLetterToOperations[$l2] = array();
-                foreach (CTask::GetOperations($TASK_ID, true) as $op)
+                foreach (CTask::GetOperations($TASK_ID, true) as $op) {
                     self::$arLetterToOperations[$l2][$op] = $op;
+                }
             }
         }
 
-        if ($letter == '')
+        if ($letter == '') {
             return self::$arLetterToOperations;
-        elseif (array_key_exists($letter, self::$arLetterToOperations))
+        } elseif (array_key_exists($letter, self::$arLetterToOperations)) {
             return self::$arLetterToOperations[$letter];
-        else
+        } else {
             return array();
+        }
     }
 
     function ConvertGroups($arGroups)
@@ -155,13 +168,14 @@ class CIBlockRights
         $arRights = array();
         foreach ($arGroups as $GROUP_ID => $LETTER) {
             $TASK_ID = $this->LetterToTask($LETTER);
-            if ($TASK_ID > 0)
+            if ($TASK_ID > 0) {
                 $arRights["n" . $i] = array(
                     "GROUP_CODE" => "G" . $GROUP_ID,
                     "DO_INHERIT" => "Y",
                     "DO_CLEAN" => "N",
                     "TASK_ID" => $TASK_ID,
                 );
+            }
             $i++;
         }
 
@@ -180,8 +194,9 @@ class CIBlockRights
             )
         );
 
-        while ($ar = $rs->Fetch())
+        while ($ar = $rs->Fetch()) {
             $arResult[$ar["ID"]] = $bTitle ? $ar["TITLE"] : $ar["NAME"];
+        }
 
         return $arResult;
     }
@@ -191,8 +206,9 @@ class CIBlockRights
         $arResult = array();
 
         $arRights = $this->GetRights(array("operations" => $arOperations, "operations_mode" => $opMode));
-        foreach ($arRights as $arRight)
+        foreach ($arRights as $arRight) {
             $arResult[$arRight["GROUP_CODE"]] = $arRight["GROUP_CODE"];
+        }
 
         return $arResult;
     }
@@ -202,26 +218,29 @@ class CIBlockRights
         global $DB;
 
         $obQueryWhere = new CSQLWhere;
-        $obQueryWhere->SetFields(array(
-            "IBLOCK_ID" => array(
-                "TABLE_ALIAS" => "BR",
-                "FIELD_NAME" => "BR.IBLOCK_ID",
-                "MULTIPLE" => "N",
-                "FIELD_TYPE" => "int",
-                "JOIN" => false,
-            ),
-            "ITEM_ID" => array(
-                "TABLE_ALIAS" => "BR",
-                "FIELD_NAME" => "BR.IBLOCK_ID",
-                "MULTIPLE" => "N",
-                "FIELD_TYPE" => "int",
-                "JOIN" => false,
-            ),
-        ));
+        $obQueryWhere->SetFields(
+            array(
+                "IBLOCK_ID" => array(
+                    "TABLE_ALIAS" => "BR",
+                    "FIELD_NAME" => "BR.IBLOCK_ID",
+                    "MULTIPLE" => "N",
+                    "FIELD_TYPE" => "int",
+                    "JOIN" => false,
+                ),
+                "ITEM_ID" => array(
+                    "TABLE_ALIAS" => "BR",
+                    "FIELD_NAME" => "BR.IBLOCK_ID",
+                    "MULTIPLE" => "N",
+                    "FIELD_TYPE" => "int",
+                    "JOIN" => false,
+                ),
+            )
+        );
 
         $strWhere = $obQueryWhere->GetQuery($arFilter);
 
-        return $DB->Query("
+        return $DB->Query(
+            "
 			SELECT
 				BR.IBLOCK_ID ITEM_ID
 				,BR.ID RIGHT_ID
@@ -235,7 +254,8 @@ class CIBlockRights
 			" . ($strWhere ? "WHERE " . $strWhere : "") . "
 			ORDER BY
 				BR.ID
-		");
+		"
+        );
     }
 
     function GetRights($arOptions = array())
@@ -248,7 +268,8 @@ class CIBlockRights
             || !is_array($arOptions["operations"])
             || empty($arOptions["operations"])
         ) {
-            $rs = $DB->Query("
+            $rs = $DB->Query(
+                "
 				SELECT
 					BR.ID
 					,BR.GROUP_CODE
@@ -265,14 +286,16 @@ class CIBlockRights
 					AND BR.ENTITY_TYPE = 'iblock'
 				ORDER BY
 					BR.ID
-			");
+			"
+            );
         } elseif (
             isset($arOptions["operations_mode"])
             && $arOptions["operations_mode"] == CIBlockRights::ALL_OPERATIONS
             && count($arOptions["operations"]) > 1
         ) {
             $arOperations = array_map(array($DB, "ForSQL"), $arOptions["operations"]);
-            $rs = $DB->Query("
+            $rs = $DB->Query(
+                "
 				SELECT
 					BR.ID, BR.GROUP_CODE, BR.TASK_ID, BR.DO_INHERIT, 'N' IS_INHERITED, BR.XML_ID
 				FROM
@@ -289,11 +312,13 @@ class CIBlockRights
 					COUNT(DISTINCT O.ID) = " . count($arOperations) . "
 				ORDER BY
 					BR.ID
-			");
+			"
+            );
         } else//if($opMode == CIBlockRights::ANY_OPERATION)
         {
             $arOperations = array_map(array($DB, "ForSQL"), $arOptions["operations"]);
-            $rs = $DB->Query("
+            $rs = $DB->Query(
+                "
 				SELECT DISTINCT
 					BR.ID, BR.GROUP_CODE, BR.TASK_ID, BR.DO_INHERIT, 'N' IS_INHERITED, BR.XML_ID
 				FROM
@@ -306,7 +331,8 @@ class CIBlockRights
 					AND O.NAME IN ('" . implode("', '", $arOperations) . "')
 				ORDER BY
 					BR.ID
-			");
+			"
+            );
         }
 
         $obStorage = $this->_storage_object();
@@ -315,14 +341,18 @@ class CIBlockRights
                 "GROUP_CODE" => $ar["GROUP_CODE"],
                 "DO_INHERIT" => $ar["DO_INHERIT"],
                 "IS_INHERITED" => $ar["IS_INHERITED"],
-                "OVERWRITED" => isset($arOptions["count_overwrited"]) && $arOptions["count_overwrited"] ? $obStorage->CountOverWrited($ar["GROUP_CODE"]) : 0,
+                "OVERWRITED" => isset($arOptions["count_overwrited"]) && $arOptions["count_overwrited"] ? $obStorage->CountOverWrited(
+                    $ar["GROUP_CODE"]
+                ) : 0,
                 "TASK_ID" => $ar["TASK_ID"],
                 "XML_ID" => $ar["XML_ID"],
             );
-            if (isset($ar["ENTITY_TYPE"]))
+            if (isset($ar["ENTITY_TYPE"])) {
                 $arResult[$ar["ID"]]["ENTITY_TYPE"] = $ar["ENTITY_TYPE"];
-            if (isset($ar["ENTITY_ID"]))
+            }
+            if (isset($ar["ENTITY_ID"])) {
                 $arResult[$ar["ID"]]["ENTITY_ID"] = $ar["ENTITY_ID"];
+            }
         }
 
         return $arResult;
@@ -359,8 +389,9 @@ class CIBlockRights
 
         $arOwnGroupCodes = array();
         $arDBRights = $this->GetRights();
-        foreach ($arDBRights as $RIGHT_ID => $arOwnRight)
+        foreach ($arDBRights as $RIGHT_ID => $arOwnRight) {
             $arOwnGroupCodes[$arOwnRight["GROUP_CODE"]] = $RIGHT_ID;
+        }
 
         foreach ($arNewParents as $id) {
             $ob = $this->_get_parent_object($id);
@@ -382,16 +413,18 @@ class CIBlockRights
 
     function _get_parent_object($id)
     {
-        if ($id <= 0)
+        if ($id <= 0) {
             return new CIBlockRights($this->IBLOCK_ID, $id);
-        else
+        } else {
             return new CIBlockSectionRights($this->IBLOCK_ID, $id);
+        }
     }
 
     function SetRights($arRights)
     {
-        if (!$this->_self_check())
+        if (!$this->_self_check()) {
             return false;
+        }
 
         $arDBRights = $this->GetRights();
         $arTasks = $this->GetRightsList(false);
@@ -399,11 +432,12 @@ class CIBlockRights
         $arAddedCodes = array();
         $arUniqCodes = array();
         foreach ($arRights as $RIGHT_ID => $arRightSet) {
-            if (strlen($arRightSet["GROUP_CODE"]) > 0) {
-                if (isset($arUniqCodes[$arRightSet["GROUP_CODE"]]))
+            if ($arRightSet["GROUP_CODE"] <> '') {
+                if (isset($arUniqCodes[$arRightSet["GROUP_CODE"]])) {
                     unset($arRights[$RIGHT_ID]);
-                else
+                } else {
                     $arUniqCodes[$arRightSet["GROUP_CODE"]] = true;
+                }
             }
         }
 
@@ -413,8 +447,9 @@ class CIBlockRights
                 !is_array($arRightSet["TASK_ID"])
                 && !array_key_exists($arRightSet["TASK_ID"], $arTasks)
                 && array_key_exists($RIGHT_ID, $arDBRights)
-            )
+            ) {
                 $arRights[$RIGHT_ID]["TASK_ID"] = $arDBRights[$RIGHT_ID]["TASK_ID"];
+            }
         }
 
         $bCleanUp = false;
@@ -425,11 +460,13 @@ class CIBlockRights
             $bInherit = true;//$arRightSet["DO_INHERIT"] == "Y";
             $bChildrenSet = false;
 
-            if (strlen($GROUP_CODE) <= 0 || is_array($arRightSet["TASK_ID"]))
+            if ($GROUP_CODE == '' || is_array($arRightSet["TASK_ID"])) {
                 continue;
+            }
 
-            if (!array_key_exists($arRightSet["TASK_ID"], $arTasks))
+            if (!array_key_exists($arRightSet["TASK_ID"], $arTasks)) {
                 continue;
+            }
 
             if (
                 array_key_exists($RIGHT_ID, $arDBRights)
@@ -441,7 +478,7 @@ class CIBlockRights
                 $bCleanUp = true;
             }
 
-            if (substr($RIGHT_ID, 0, 1) == "n") {
+            if (mb_substr($RIGHT_ID, 0, 1) == "n") {
                 $arAddedCodes[$GROUP_CODE] = $GROUP_CODE;
                 $NEW_RIGHT_ID = $this->_add(
                     $GROUP_CODE,
@@ -450,34 +487,40 @@ class CIBlockRights
                     isset($arRightSet["XML_ID"]) ? $arRightSet["XML_ID"] : false
                 );
 
-                if (!isset($arRightSet["DO_CLEAN"]) || $arRightSet["DO_CLEAN"] !== "NOT")
+                if (!isset($arRightSet["DO_CLEAN"]) || $arRightSet["DO_CLEAN"] !== "NOT") {
                     $obStorage->DeleteSelfSet($GROUP_CODE, CIBlockRights::GROUP_CODE);
+                }
                 $obStorage->AddSelfSet($NEW_RIGHT_ID);
 
-                if (!isset($arRightSet["DO_CLEAN"]) || $arRightSet["DO_CLEAN"] !== "NOT")
+                if (!isset($arRightSet["DO_CLEAN"]) || $arRightSet["DO_CLEAN"] !== "NOT") {
                     $obStorage->DeleteChildrenSet($GROUP_CODE, CIBlockRights::GROUP_CODE);
-                if ($bInherit)
+                }
+                if ($bInherit) {
                     $obStorage->AddChildrenSet($NEW_RIGHT_ID, $GROUP_CODE, /*$bInherited=*/ true);
+                }
             } elseif (
                 array_key_exists($ID, $arDBRights)
                 && $arDBRights[$ID]["IS_INHERITED"] != "Y"
             ) {
                 $this->_update($ID, $GROUP_CODE, $bInherit, $arRightSet["TASK_ID"]);
 
-                if ($bInherit && $bChildrenSet)
+                if ($bInherit && $bChildrenSet) {
                     $obStorage->AddChildrenSet($ID, $GROUP_CODE, /*$bInherited=*/ true);
+                }
 
                 unset($arDBRights[$ID]);
             }
         }
 
         foreach ($arDBRights as $RIGHT_ID => $arRightSet) {
-            if ($arRightSet["IS_INHERITED"] == "Y")
+            if ($arRightSet["IS_INHERITED"] == "Y") {
                 continue;
+            }
 
             $obStorage->DeleteSelfSet($RIGHT_ID, CIBlockRights::RIGHT_ID);
-            if ($arRightSet["DO_INHERIT"] == "Y")
+            if ($arRightSet["DO_INHERIT"] == "Y") {
                 $obStorage->DeleteChildrenSet($RIGHT_ID, CIBlockRights::RIGHT_ID);
+            }
 
             $this->_delete($RIGHT_ID);
 
@@ -489,8 +532,9 @@ class CIBlockRights
             }
         }
 
-        if ($bCleanUp)
+        if ($bCleanUp) {
             $obStorage->CleanUp();
+        }
 
         CIBlock::clearIblockTagCache($this->IBLOCK_ID);
 
@@ -502,17 +546,20 @@ class CIBlockRights
         global $DB;
         $arOperations = CTask::GetOperations($TASK_ID, /*$return_names=*/ true);
 
-        $NEW_RIGHT_ID = $DB->Add("b_iblock_right", array(
-            "IBLOCK_ID" => $this->IBLOCK_ID,
-            "GROUP_CODE" => $GROUP_CODE,
-            "ENTITY_TYPE" => $this->_entity_type(),
-            "ENTITY_ID" => $this->id,
-            "DO_INHERIT" => $bInherit ? "Y" : "N",
-            "TASK_ID" => $TASK_ID,
-            "OP_SREAD" => in_array("section_read", $arOperations) ? "Y" : "N",
-            "OP_EREAD" => in_array("element_read", $arOperations) ? "Y" : "N",
-            "XML_ID" => (strlen($XML_ID) > 0 ? $XML_ID : false),
-        ));
+        $NEW_RIGHT_ID = $DB->Add(
+            "b_iblock_right",
+            array(
+                "IBLOCK_ID" => $this->IBLOCK_ID,
+                "GROUP_CODE" => $GROUP_CODE,
+                "ENTITY_TYPE" => $this->_entity_type(),
+                "ENTITY_ID" => $this->id,
+                "DO_INHERIT" => $bInherit ? "Y" : "N",
+                "TASK_ID" => $TASK_ID,
+                "OP_SREAD" => in_array("section_read", $arOperations) ? "Y" : "N",
+                "OP_EREAD" => in_array("element_read", $arOperations) ? "Y" : "N",
+                "XML_ID" => ($XML_ID <> '' ? $XML_ID : false),
+            )
+        );
 
         return $NEW_RIGHT_ID;
     }
@@ -523,13 +570,16 @@ class CIBlockRights
         $RIGHT_ID = intval($RIGHT_ID);
         $arOperations = CTask::GetOperations($TASK_ID, /*$return_names=*/ true);
 
-        $strUpdate = $DB->PrepareUpdate("b_iblock_right", array(
-            //"GROUP_CODE" => $GROUP_CODE,
-            "DO_INHERIT" => $bInherit ? "Y" : "N",
-            "TASK_ID" => $TASK_ID,
-            "OP_SREAD" => in_array("section_read", $arOperations) ? "Y" : "N",
-            "OP_EREAD" => in_array("element_read", $arOperations) ? "Y" : "N",
-        ));
+        $strUpdate = $DB->PrepareUpdate(
+            "b_iblock_right",
+            array(
+                //"GROUP_CODE" => $GROUP_CODE,
+                "DO_INHERIT" => $bInherit ? "Y" : "N",
+                "TASK_ID" => $TASK_ID,
+                "OP_SREAD" => in_array("section_read", $arOperations) ? "Y" : "N",
+                "OP_EREAD" => in_array("element_read", $arOperations) ? "Y" : "N",
+            )
+        );
         $DB->Query("UPDATE b_iblock_right SET " . $strUpdate . " WHERE ID = " . $RIGHT_ID);
     }
 
@@ -589,29 +639,37 @@ class CIBlockRights
 
         $RIGHTS_MODE = CIBlock::GetArrayByID($obRights->GetIBlockID(), "RIGHTS_MODE");
         if ($RIGHTS_MODE === "E") {
-            if (is_array($ID))
+            if (is_array($ID)) {
                 $arOperations = $obRights->GetUserOperations($ID, $user_id);
-            else {
+            } else {
                 static $cache;
                 $cache_id = get_class($obRights) . $user_id . "|" . $ID;
-                if (!isset($cache[$cache_id]))
+                if (!isset($cache[$cache_id])) {
                     $cache[$cache_id] = $obRights->GetUserOperations($ID, $user_id);
+                }
                 $arOperations = $cache[$cache_id];
             }
 
-            if ($flags & CIBlockRights::RETURN_OPERATIONS)
+            if ($flags & CIBlockRights::RETURN_OPERATIONS) {
                 return $arOperations;
-            else
+            } else {
                 return isset($arOperations[$permission]);
+            }
         } else//if($RIGHTS_MODE === "S")
         {
             $letter = CIBlock::GetPermission($obRights->GetIBlockID());
-            $arOperations = CIBlockRights::_mk_result($ID, CIBlockRights::LetterToOperations($letter), CIBlockRights::LetterToOperations($letter), $flags);
+            $arOperations = CIBlockRights::_mk_result(
+                $ID,
+                CIBlockRights::LetterToOperations($letter),
+                CIBlockRights::LetterToOperations($letter),
+                $flags
+            );
 
-            if ($flags & CIBlockRights::RETURN_OPERATIONS)
+            if ($flags & CIBlockRights::RETURN_OPERATIONS) {
                 return $arOperations;
-            else
+            } else {
                 return isset($arOperations[$permission]);
+            }
         }
     }
 
@@ -620,8 +678,9 @@ class CIBlockRights
         if ($flags & CIBlockRights::RETURN_OPERATIONS) {
             if (is_array($ID)) {
                 $result = array();
-                foreach ($ID as $id)
+                foreach ($ID as $id) {
                     $result[$id] = $arOperations;
+                }
             } else {
                 $result = $arOperations;
             }
@@ -637,19 +696,22 @@ class CIBlockRights
         $USER_ID = intval($USER_ID);
 
         if (is_object($USER)) {
-            if ($USER_ID <= 0)
+            if ($USER_ID <= 0) {
                 $USER_ID = intval($USER->GetID());
+            }
             $bAuthorized = $USER->IsAuthorized();
         } else {
             $bAuthorized = false;
         }
 
-        if (!is_array($arID))
+        if (!is_array($arID)) {
             $sqlID = array(intval($arID));
-        else
+        } else {
             $sqlID = array_map('intval', $arID);
+        }
 
-        $rs = $DB->Query("
+        $rs = $DB->Query(
+            "
 			SELECT IBR.ENTITY_ID ID, O.NAME
 			FROM b_iblock_right IBR
 			INNER JOIN b_task_operation T ON T.TASK_ID = IBR.TASK_ID
@@ -658,50 +720,61 @@ class CIBlockRights
 			WHERE IBR.ENTITY_TYPE = 'iblock'
 			AND IBR.ENTITY_ID in (" . implode(", ", $sqlID) . ")
 			AND (UA.USER_ID IS NOT NULL " . ($bAuthorized ? "OR IBR.GROUP_CODE = 'AU'" : "") . ")
-		");
+		"
+        );
 
         $arResult = array();
-        while ($ar = $rs->Fetch())
+        while ($ar = $rs->Fetch()) {
             $arResult[$ar["ID"]][$ar["NAME"]] = $ar["NAME"];
+        }
 
-        if (is_array($arID))
+        if (is_array($arID)) {
             return $arResult;
-        elseif (array_key_exists($arID, $arResult))
+        } elseif (array_key_exists($arID, $arResult)) {
             return $arResult[$arID];
-        else
+        } else {
             return array();
+        }
     }
 
     public static function setGroupRight($groupId, $iblockType, $letter, $iblockId = 0)
     {
         $groupId = (int)$groupId;
-        if ($groupId <= 0)
+        if ($groupId <= 0) {
             return;
+        }
 
         $iblockId = (int)$iblockId;
-        if ($iblockId < 0)
+        if ($iblockId < 0) {
             return;
+        }
 
         $groupCode = "G" . $groupId;
         $availableLetters = ["E", "R", "S", "T", "U", "W", "X"];
-        if (!in_array($letter, $availableLetters))
+        if (!in_array($letter, $availableLetters)) {
             return;
+        }
         unset($availableLetters);
 
-        $task = Main\TaskTable::getList([
-            "select" => ["ID"],
-            "filter" => ["=LETTER" => $letter, "=MODULE_ID" => "iblock", "=SYS" => "Y"]
-        ])->fetch();
+        $task = Main\TaskTable::getList(
+            [
+                "select" => ["ID"],
+                "filter" => ["=LETTER" => $letter, "=MODULE_ID" => "iblock", "=SYS" => "Y"]
+            ]
+        )->fetch();
         $rightId = (!empty($task) ? $task["ID"] : null);
         unset($task);
 
         $filter = ["=IBLOCK_TYPE_ID" => $iblockType, "=ACTIVE" => "Y"];
-        if ($iblockId > 0)
+        if ($iblockId > 0) {
             $filter["=ID"] = $iblockId;
-        $queryObject = Iblock\IblockTable::getList([
-            'select' => ['ID'],
-            'filter' => $filter
-        ]);
+        }
+        $queryObject = Iblock\IblockTable::getList(
+            [
+                'select' => ['ID'],
+                'filter' => $filter
+            ]
+        );
         while ($iblock = $queryObject->fetch()) {
             $iblockId = $iblock["ID"];
 
@@ -743,12 +816,14 @@ class CIBlockSectionRights extends CIBlockRights
     function _self_check()
     {
         global $DB;
-        $rs = $DB->Query("
+        $rs = $DB->Query(
+            "
 			SELECT ID
 			FROM b_iblock_section
 			WHERE IBLOCK_ID = " . $this->IBLOCK_ID . "
 			AND ID = " . $this->id . "
-		");
+		"
+        );
         return is_array($rs->Fetch());
     }
 
@@ -767,26 +842,29 @@ class CIBlockSectionRights extends CIBlockRights
         global $DB;
 
         $obQueryWhere = new CSQLWhere;
-        $obQueryWhere->SetFields(array(
-            "IBLOCK_ID" => array(
-                "TABLE_ALIAS" => "SR",
-                "FIELD_NAME" => "SR.IBLOCK_ID",
-                "MULTIPLE" => "N",
-                "FIELD_TYPE" => "int",
-                "JOIN" => false,
-            ),
-            "ITEM_ID" => array(
-                "TABLE_ALIAS" => "SR",
-                "FIELD_NAME" => "SR.SECTION_ID",
-                "MULTIPLE" => "N",
-                "FIELD_TYPE" => "int",
-                "JOIN" => false,
-            ),
-        ));
+        $obQueryWhere->SetFields(
+            array(
+                "IBLOCK_ID" => array(
+                    "TABLE_ALIAS" => "SR",
+                    "FIELD_NAME" => "SR.IBLOCK_ID",
+                    "MULTIPLE" => "N",
+                    "FIELD_TYPE" => "int",
+                    "JOIN" => false,
+                ),
+                "ITEM_ID" => array(
+                    "TABLE_ALIAS" => "SR",
+                    "FIELD_NAME" => "SR.SECTION_ID",
+                    "MULTIPLE" => "N",
+                    "FIELD_TYPE" => "int",
+                    "JOIN" => false,
+                ),
+            )
+        );
 
         $strWhere = $obQueryWhere->GetQuery($arFilter);
 
-        return $DB->Query("
+        return $DB->Query(
+            "
 			SELECT
 				SR.SECTION_ID ITEM_ID
 				,BR.ID RIGHT_ID
@@ -801,7 +879,8 @@ class CIBlockSectionRights extends CIBlockRights
 			" . ($strWhere ? "WHERE " . $strWhere : "") . "
 			ORDER BY
 				BR.ID
-		");
+		"
+        );
     }
 
     function GetRights($arOptions = array())
@@ -809,15 +888,17 @@ class CIBlockSectionRights extends CIBlockRights
         global $DB;
         $arResult = array();
 
-        if ($this->id <= 0)
+        if ($this->id <= 0) {
             return parent::GetRights($arOptions);
+        }
 
         if (
             !isset($arOptions["operations"])
             || !is_array($arOptions["operations"])
             || empty($arOptions["operations"])
         ) {
-            $rs = $DB->Query("
+            $rs = $DB->Query(
+                "
 				SELECT
 					BR.ID
 					,BR.GROUP_CODE
@@ -835,14 +916,16 @@ class CIBlockSectionRights extends CIBlockRights
 					AND SR.SECTION_ID = " . $this->id . "
 				ORDER BY
 					BR.ID
-			");
+			"
+            );
         } elseif (
             isset($arOptions["operations_mode"])
             && $arOptions["operations_mode"] == CIBlockRights::ALL_OPERATIONS
             && count($arOptions["operations"]) > 1
         ) {
             $arOperations = array_map(array($DB, "ForSQL"), $arOptions["operations"]);
-            $rs = $DB->Query("
+            $rs = $DB->Query(
+                "
 				SELECT
 					BR.ID, BR.GROUP_CODE, BR.TASK_ID, BR.DO_INHERIT, SR.IS_INHERITED, BR.XML_ID
 				FROM
@@ -860,11 +943,13 @@ class CIBlockSectionRights extends CIBlockRights
 					COUNT(DISTINCT O.ID) = " . count($arOperations) . "
 				ORDER BY
 					BR.ID
-			");
+			"
+            );
         } else//if($opMode == CIBlockRights::ANY_OPERATION)
         {
             $arOperations = array_map(array($DB, "ForSQL"), $arOptions["operations"]);
-            $rs = $DB->Query("
+            $rs = $DB->Query(
+                "
 				SELECT DISTINCT
 					BR.ID, BR.GROUP_CODE, BR.TASK_ID, BR.DO_INHERIT, SR.IS_INHERITED, BR.XML_ID
 				FROM
@@ -878,7 +963,8 @@ class CIBlockSectionRights extends CIBlockRights
 					AND O.NAME IN ('" . implode("', '", $arOperations) . "')
 				ORDER BY
 					BR.ID
-			");
+			"
+            );
         }
 
         if (isset($arOptions["parent"])) {
@@ -893,10 +979,12 @@ class CIBlockSectionRights extends CIBlockRights
                     "TASK_ID" => $arRight["TASK_ID"],
                     "XML_ID" => $arRight["XML_ID"],
                 );
-                if (isset($arRight["ENTITY_TYPE"]))
+                if (isset($arRight["ENTITY_TYPE"])) {
                     $arResult[$RIGHT_ID]["ENTITY_TYPE"] = $arRight["ENTITY_TYPE"];
-                if (isset($arRight["ENTITY_ID"]))
+                }
+                if (isset($arRight["ENTITY_ID"])) {
                     $arResult[$RIGHT_ID]["ENTITY_ID"] = $arRight["ENTITY_ID"];
+                }
             }
         }
 
@@ -906,14 +994,18 @@ class CIBlockSectionRights extends CIBlockRights
                 "GROUP_CODE" => $ar["GROUP_CODE"],
                 "DO_INHERIT" => $ar["DO_INHERIT"],
                 "IS_INHERITED" => $ar["IS_INHERITED"],
-                "OVERWRITED" => isset($arOptions["count_overwrited"]) && $arOptions["count_overwrited"] ? $obStorage->CountOverWrited($ar["GROUP_CODE"]) : 0,
+                "OVERWRITED" => isset($arOptions["count_overwrited"]) && $arOptions["count_overwrited"] ? $obStorage->CountOverWrited(
+                    $ar["GROUP_CODE"]
+                ) : 0,
                 "TASK_ID" => $ar["TASK_ID"],
                 "XML_ID" => $ar["XML_ID"],
             );
-            if (isset($ar["ENTITY_TYPE"]))
+            if (isset($ar["ENTITY_TYPE"])) {
                 $arResult[$ar["ID"]]["ENTITY_TYPE"] = $ar["ENTITY_TYPE"];
-            if (isset($ar["ENTITY_ID"]))
+            }
+            if (isset($ar["ENTITY_ID"])) {
                 $arResult[$ar["ID"]]["ENTITY_ID"] = $ar["ENTITY_ID"];
+            }
         }
 
         return $arResult;
@@ -948,21 +1040,24 @@ class CIBlockSectionRights extends CIBlockRights
         $USER_ID = intval($USER_ID);
 
         if (is_object($USER)) {
-            if ($USER_ID <= 0)
+            if ($USER_ID <= 0) {
                 $USER_ID = intval($USER->GetID());
+            }
             $bAuthorized = $USER->IsAuthorized();
         } else {
             $bAuthorized = false;
         }
 
-        if (!is_array($arID))
+        if (!is_array($arID)) {
             $sqlID = array(intval($arID));
-        elseif (empty($arID))
+        } elseif (empty($arID)) {
             return array();
-        else
+        } else {
             $sqlID = array_map('intval', $arID);
+        }
 
-        $rs = $DB->Query("
+        $rs = $DB->Query(
+            "
 			SELECT SR.SECTION_ID ID, O.NAME
 			FROM b_iblock_section BS
 			INNER JOIN b_iblock_section_right SR ON SR.SECTION_ID = BS.ID
@@ -976,18 +1071,21 @@ class CIBlockSectionRights extends CIBlockRights
 				" . ($bAuthorized ? "OR IBR.GROUP_CODE = 'AU'" : "") . "
 				" . ($USER_ID > 0 ? "OR (IBR.GROUP_CODE = 'CR' AND BS.CREATED_BY = " . $USER_ID . ")" : "") . "
 			)" : "") . "
-		");
+		"
+        );
 
         $arResult = array();
-        while ($ar = $rs->Fetch())
+        while ($ar = $rs->Fetch()) {
             $arResult[$ar["ID"]][$ar["NAME"]] = $ar["NAME"];
+        }
 
-        if (is_array($arID))
+        if (is_array($arID)) {
             return $arResult;
-        elseif (array_key_exists($arID, $arResult))
+        } elseif (array_key_exists($arID, $arResult)) {
             return $arResult[$arID];
-        else
+        } else {
             return array();
+        }
     }
 }
 
@@ -1002,12 +1100,14 @@ class CIBlockElementRights extends CIBlockRights
     function _self_check()
     {
         global $DB;
-        $rs = $DB->Query("
+        $rs = $DB->Query(
+            "
 			SELECT ID
 			FROM b_iblock_element
 			WHERE IBLOCK_ID = " . $this->IBLOCK_ID . "
 			AND ID = " . $this->id . "
-		");
+		"
+        );
         return is_array($rs->Fetch());
     }
 
@@ -1026,26 +1126,29 @@ class CIBlockElementRights extends CIBlockRights
         global $DB;
 
         $obQueryWhere = new CSQLWhere;
-        $obQueryWhere->SetFields(array(
-            "IBLOCK_ID" => array(
-                "TABLE_ALIAS" => "ER",
-                "FIELD_NAME" => "ER.IBLOCK_ID",
-                "MULTIPLE" => "N",
-                "FIELD_TYPE" => "int",
-                "JOIN" => false,
-            ),
-            "ITEM_ID" => array(
-                "TABLE_ALIAS" => "ER",
-                "FIELD_NAME" => "ER.ELEMENT_ID",
-                "MULTIPLE" => "N",
-                "FIELD_TYPE" => "int",
-                "JOIN" => false,
-            ),
-        ));
+        $obQueryWhere->SetFields(
+            array(
+                "IBLOCK_ID" => array(
+                    "TABLE_ALIAS" => "ER",
+                    "FIELD_NAME" => "ER.IBLOCK_ID",
+                    "MULTIPLE" => "N",
+                    "FIELD_TYPE" => "int",
+                    "JOIN" => false,
+                ),
+                "ITEM_ID" => array(
+                    "TABLE_ALIAS" => "ER",
+                    "FIELD_NAME" => "ER.ELEMENT_ID",
+                    "MULTIPLE" => "N",
+                    "FIELD_TYPE" => "int",
+                    "JOIN" => false,
+                ),
+            )
+        );
 
         $strWhere = $obQueryWhere->GetQuery($arFilter);
 
-        return $DB->Query("
+        return $DB->Query(
+            "
 			SELECT
 				ER.ELEMENT_ID ITEM_ID
 				,BR.ID RIGHT_ID
@@ -1060,7 +1163,8 @@ class CIBlockElementRights extends CIBlockRights
 			" . ($strWhere ? "WHERE " . $strWhere : "") . "
 			ORDER BY
 				BR.ID
-		");
+		"
+        );
     }
 
     function GetRights($arOptions = array())
@@ -1073,7 +1177,8 @@ class CIBlockElementRights extends CIBlockRights
             || !is_array($arOptions["operations"])
             || empty($arOptions["operations"])
         ) {
-            $rs = $DB->Query("
+            $rs = $DB->Query(
+                "
 				SELECT
 					BR.ID
 					,BR.GROUP_CODE
@@ -1091,14 +1196,16 @@ class CIBlockElementRights extends CIBlockRights
 					AND ER.ELEMENT_ID = " . $this->id . "
 				ORDER BY
 					BR.ID
-			");
+			"
+            );
         } elseif (
             isset($arOptions["operations_mode"])
             && $arOptions["operations_mode"] == CIBlockRights::ALL_OPERATIONS
             && count($arOptions["operations"]) > 1
         ) {
             $arOperations = array_map(array($DB, "ForSQL"), $arOptions["operations"]);
-            $rs = $DB->Query("
+            $rs = $DB->Query(
+                "
 				SELECT
 					BR.ID, BR.GROUP_CODE, BR.TASK_ID, BR.DO_INHERIT, ER.IS_INHERITED, BR.XML_ID
 				FROM
@@ -1116,11 +1223,13 @@ class CIBlockElementRights extends CIBlockRights
 					COUNT(DISTINCT O.ID) = " . count($arOperations) . "
 				ORDER BY
 					BR.ID
-			");
+			"
+            );
         } else//if($opMode == CIBlockRights::ANY_OPERATION)
         {
             $arOperations = array_map(array($DB, "ForSQL"), $arOptions["operations"]);
-            $rs = $DB->Query("
+            $rs = $DB->Query(
+                "
 				SELECT DISTINCT
 					BR.ID, BR.GROUP_CODE, BR.TASK_ID, BR.DO_INHERIT, ER.IS_INHERITED, BR.XML_ID
 				FROM
@@ -1134,7 +1243,8 @@ class CIBlockElementRights extends CIBlockRights
 					AND O.NAME IN ('" . implode("', '", $arOperations) . "')
 				ORDER BY
 					BR.ID
-			");
+			"
+            );
         }
 
         if (isset($arOptions["parents"]) && is_array($arOptions["parents"])) {
@@ -1150,10 +1260,12 @@ class CIBlockElementRights extends CIBlockRights
                         "TASK_ID" => $arRight["TASK_ID"],
                         "XML_ID" => $arRight["XML_ID"],
                     );
-                    if (isset($arRight["ENTITY_TYPE"]))
+                    if (isset($arRight["ENTITY_TYPE"])) {
                         $arResult[$RIGHT_ID]["ENTITY_TYPE"] = $arRight["ENTITY_TYPE"];
-                    if (isset($arRight["ENTITY_ID"]))
+                    }
+                    if (isset($arRight["ENTITY_ID"])) {
                         $arResult[$RIGHT_ID]["ENTITY_ID"] = $arRight["ENTITY_ID"];
+                    }
                 }
             }
         }
@@ -1168,10 +1280,12 @@ class CIBlockElementRights extends CIBlockRights
                 "TASK_ID" => $ar["TASK_ID"],
                 "XML_ID" => $ar["XML_ID"],
             );
-            if (isset($ar["ENTITY_TYPE"]))
+            if (isset($ar["ENTITY_TYPE"])) {
                 $arResult[$ar["ID"]]["ENTITY_TYPE"] = $ar["ENTITY_TYPE"];
-            if (isset($ar["ENTITY_ID"]))
+            }
+            if (isset($ar["ENTITY_ID"])) {
                 $arResult[$ar["ID"]]["ENTITY_ID"] = $ar["ENTITY_ID"];
+            }
         }
 
         return $arResult;
@@ -1200,8 +1314,9 @@ class CIBlockElementRights extends CIBlockRights
         $USER_ID = intval($USER_ID);
 
         if (is_object($USER)) {
-            if ($USER_ID <= 0)
+            if ($USER_ID <= 0) {
                 $USER_ID = intval($USER->GetID());
+            }
             $bAuthorized = $USER->IsAuthorized();
         } else {
             $bAuthorized = false;
@@ -1212,12 +1327,13 @@ class CIBlockElementRights extends CIBlockRights
             $acc->UpdateCodes(array('USER_ID' => $USER_ID));
         }
 
-        if (!is_array($arID))
+        if (!is_array($arID)) {
             $sqlID = array(intval($arID));
-        elseif (empty($arID))
+        } elseif (empty($arID)) {
             return array();
-        else
+        } else {
             $sqlID = array_map('intval', $arID);
+        }
 
         $arResult = array();
 
@@ -1230,7 +1346,8 @@ class CIBlockElementRights extends CIBlockRights
                 $sqlID = array();
             }
 
-            $rs = $DB->Query($s = "
+            $rs = $DB->Query(
+                $s = "
 				SELECT ER.ELEMENT_ID ID, O.NAME
 				FROM b_iblock_element E
 				INNER JOIN b_iblock_element_right ER ON ER.ELEMENT_ID = E.ID
@@ -1244,18 +1361,21 @@ class CIBlockElementRights extends CIBlockRights
 					" . ($bAuthorized ? "OR IBR.GROUP_CODE = 'AU'" : "") . "
 					" . ($USER_ID > 0 ? "OR (IBR.GROUP_CODE = 'CR' AND E.CREATED_BY = " . $USER_ID . ")" : "") . "
 				)" : "") . "
-			");
+			"
+            );
 
-            while ($ar = $rs->Fetch())
+            while ($ar = $rs->Fetch()) {
                 $arResult[$ar["ID"]][$ar["NAME"]] = $ar["NAME"];
+            }
         }
 
-        if (is_array($arID))
+        if (is_array($arID)) {
             return $arResult;
-        elseif (array_key_exists($arID, $arResult))
+        } elseif (array_key_exists($arID, $arResult)) {
             return $arResult[$arID];
-        else
+        } else {
             return array();
+        }
     }
 }
 
@@ -1283,11 +1403,16 @@ class CIBlockRightsStorage
     {
         if (!isset($this->arSection)) {
             if ($this->SECTION_ID > 0) {
-                $rsSection = CIBlockSection::GetList(array(), array(
-                    "IBLOCK_ID" => $this->IBLOCK_ID,
-                    "=ID" => $this->SECTION_ID,
-                    "CHECK_PERMISSIONS" => "N",
-                ), false, array("LEFT_MARGIN", "RIGHT_MARGIN"));
+                $rsSection = CIBlockSection::GetList(
+                    array(),
+                    array(
+                        "IBLOCK_ID" => $this->IBLOCK_ID,
+                        "=ID" => $this->SECTION_ID,
+                        "CHECK_PERMISSIONS" => "N",
+                    ),
+                    false,
+                    array("LEFT_MARGIN", "RIGHT_MARGIN")
+                );
                 $this->arSection = $rsSection->Fetch();
 
                 //We have to resort sections in some cases
@@ -1300,11 +1425,16 @@ class CIBlockRightsStorage
                 ) {
                     CIBlockSection::Resort($this->IBLOCK_ID);
 
-                    $rsSection = CIBlockSection::GetList(array(), array(
-                        "IBLOCK_ID" => $this->IBLOCK_ID,
-                        "=ID" => $this->SECTION_ID,
-                        "CHECK_PERMISSIONS" => "N",
-                    ), false, array("LEFT_MARGIN", "RIGHT_MARGIN"));
+                    $rsSection = CIBlockSection::GetList(
+                        array(),
+                        array(
+                            "IBLOCK_ID" => $this->IBLOCK_ID,
+                            "=ID" => $this->SECTION_ID,
+                            "CHECK_PERMISSIONS" => "N",
+                        ),
+                        false,
+                        array("LEFT_MARGIN", "RIGHT_MARGIN")
+                    );
                     $this->arSection = $rsSection->Fetch();
                 }
             } else {
@@ -1322,7 +1452,8 @@ class CIBlockRightsStorage
         if ($this->ELEMENT_ID > 0) {
         } elseif (is_array($this->_get_section())) {
             //Count subsections
-            $rs = $DB->Query("
+            $rs = $DB->Query(
+                "
 				SELECT
 					COUNT(DISTINCT SR.SECTION_ID) CNT
 				FROM
@@ -1335,13 +1466,16 @@ class CIBlockRightsStorage
 					AND SR.IS_INHERITED = 'N'
 					AND BS.LEFT_MARGIN  > " . $this->arSection["LEFT_MARGIN"] . "
 					AND BS.RIGHT_MARGIN < " . $this->arSection["RIGHT_MARGIN"] . "
-			");
+			"
+            );
             $ar = $rs->Fetch();
-            if ($ar)
+            if ($ar) {
                 $arResult[0] = $ar["CNT"];
+            }
 
             //Count elements in subsections
-            $rs = $DB->Query("
+            $rs = $DB->Query(
+                "
 				SELECT
 					COUNT(DISTINCT ER.ELEMENT_ID) CNT
 				FROM
@@ -1355,14 +1489,17 @@ class CIBlockRightsStorage
 					AND ER.IS_INHERITED = 'N'
 					AND BS.LEFT_MARGIN  >= " . $this->arSection["LEFT_MARGIN"] . "
 					AND BS.RIGHT_MARGIN <= " . $this->arSection["RIGHT_MARGIN"] . "
-			");
+			"
+            );
 
             $ar = $rs->Fetch();
-            if ($ar)
+            if ($ar) {
                 $arResult[1] = $ar["CNT"];
+            }
         } else {
             //Count subsections
-            $rs = $DB->Query("
+            $rs = $DB->Query(
+                "
 				SELECT
 					COUNT(DISTINCT SR.SECTION_ID) CNT
 				FROM
@@ -1372,13 +1509,16 @@ class CIBlockRightsStorage
 					BR.IBLOCK_ID = " . $this->IBLOCK_ID . "
 					AND BR.GROUP_CODE = '" . $DB->ForSQL($GROUP_CODE, 32) . "'
 					AND SR.IS_INHERITED = 'N'
-			");
+			"
+            );
             $ar = $rs->Fetch();
-            if ($ar)
+            if ($ar) {
                 $arResult[0] = $ar["CNT"];
+            }
 
             //Count elements in subsections
-            $rs = $DB->Query("
+            $rs = $DB->Query(
+                "
 				SELECT
 					COUNT(DISTINCT ER.ELEMENT_ID) CNT
 				FROM
@@ -1388,10 +1528,12 @@ class CIBlockRightsStorage
 					BR.IBLOCK_ID = " . $this->IBLOCK_ID . "
 					AND BR.GROUP_CODE = '" . $DB->ForSQL($GROUP_CODE, 32) . "'
 					AND ER.IS_INHERITED = 'N'
-			");
+			"
+            );
             $ar = $rs->Fetch();
-            if ($ar)
+            if ($ar) {
                 $arResult[1] = $ar["CNT"];
+            }
         }
 
         return $arResult;
@@ -1411,19 +1553,23 @@ class CIBlockRightsStorage
 		";
 
         if ($this->ELEMENT_ID > 0) {
-            $DB->Query("
+            $DB->Query(
+                "
 				DELETE FROM b_iblock_element_right
 				WHERE IBLOCK_ID = " . $this->IBLOCK_ID . "
 				AND ELEMENT_ID = " . $this->ELEMENT_ID . "
 				AND RIGHT_ID IN ($strRightSubQuery)
-			");
+			"
+            );
         } elseif (is_array($this->_get_section())) {
-            $DB->Query("
+            $DB->Query(
+                "
 				DELETE FROM b_iblock_section_right
 				WHERE IBLOCK_ID = " . $this->IBLOCK_ID . "
 				AND SECTION_ID = " . $this->SECTION_ID . "
 				AND RIGHT_ID IN ($strRightSubQuery)
-			");
+			"
+            );
         } else {
         }
     }
@@ -1444,7 +1590,8 @@ class CIBlockRightsStorage
         if ($this->ELEMENT_ID > 0) {
         } elseif (is_array($this->_get_section())) {
             if ($DB->type === "MYSQL") {
-                $DB->Query("
+                $DB->Query(
+                    "
 					DELETE b_iblock_section_right.*
 					FROM b_iblock_section_right
 					INNER JOIN b_iblock_section BS ON BS.ID = b_iblock_section_right.SECTION_ID
@@ -1453,8 +1600,10 @@ class CIBlockRightsStorage
 					AND LEFT_MARGIN  > " . $this->arSection["LEFT_MARGIN"] . "
 					AND RIGHT_MARGIN < " . $this->arSection["RIGHT_MARGIN"] . "
 					AND RIGHT_ID IN ($strRightSubQuery)
-				");
-                $DB->Query("
+				"
+                );
+                $DB->Query(
+                    "
 					DELETE b_iblock_element_right.*
 					FROM b_iblock_element_right
 					INNER JOIN b_iblock_section_element BSE ON BSE.IBLOCK_ELEMENT_ID = b_iblock_element_right.ELEMENT_ID
@@ -1470,9 +1619,11 @@ class CIBlockRightsStorage
 						AND RIGHT_MARGIN <= " . $this->arSection["RIGHT_MARGIN"] . "
 					) OR SECTION_ID = 0)
 					AND RIGHT_ID IN ($strRightSubQuery)
-				");
+				"
+                );
             } else {
-                $DB->Query("
+                $DB->Query(
+                    "
 					DELETE FROM b_iblock_section_right
 					WHERE IBLOCK_ID = " . $this->IBLOCK_ID . "
 					AND SECTION_ID IN (
@@ -1482,8 +1633,10 @@ class CIBlockRightsStorage
 						AND RIGHT_MARGIN < " . $this->arSection["RIGHT_MARGIN"] . "
 					)
 					AND RIGHT_ID IN ($strRightSubQuery)
-				");
-                $DB->Query("
+				"
+                );
+                $DB->Query(
+                    "
 					DELETE FROM b_iblock_element_right
 					WHERE IBLOCK_ID = " . $this->IBLOCK_ID . "
 					AND ELEMENT_ID IN (
@@ -1501,20 +1654,25 @@ class CIBlockRightsStorage
 						AND RIGHT_MARGIN <= " . $this->arSection["RIGHT_MARGIN"] . "
 					) OR SECTION_ID = 0)
 					AND RIGHT_ID IN ($strRightSubQuery)
-				");
+				"
+                );
             }
         } else {
-            $DB->Query("
+            $DB->Query(
+                "
 				DELETE FROM b_iblock_section_right
 				WHERE IBLOCK_ID = " . $this->IBLOCK_ID . "
 				AND RIGHT_ID IN ($strRightSubQuery)
-			");
+			"
+            );
 
-            $DB->Query("
+            $DB->Query(
+                "
 				DELETE FROM b_iblock_element_right
 				WHERE IBLOCK_ID = " . $this->IBLOCK_ID . "
 				AND RIGHT_ID IN ($strRightSubQuery)
-			");
+			"
+            );
         }
     }
 
@@ -1523,27 +1681,37 @@ class CIBlockRightsStorage
         global $DB;
 
         if ($this->ELEMENT_ID > 0) {
-            $DB->Query("
+            $DB->Query(
+                "
 				INSERT INTO b_iblock_element_right (IBLOCK_ID, SECTION_ID, ELEMENT_ID, RIGHT_ID, IS_INHERITED)
-				SELECT " . $this->IBLOCK_ID . ", " . $this->SECTION_ID . ", BE.ID, " . intval($RIGHT_ID) . ", '" . ($bInherited ? "Y" : "N") . "'
+				SELECT " . $this->IBLOCK_ID . ", " . $this->SECTION_ID . ", BE.ID, " . intval(
+                    $RIGHT_ID
+                ) . ", '" . ($bInherited ? "Y" : "N") . "'
 				FROM
 					b_iblock_element BE
-					LEFT JOIN b_iblock_element_right ER ON ER.ELEMENT_ID = BE.ID AND ER.SECTION_ID = " . $this->SECTION_ID . " AND ER.RIGHT_ID = " . intval($RIGHT_ID) . "
+					LEFT JOIN b_iblock_element_right ER ON ER.ELEMENT_ID = BE.ID AND ER.SECTION_ID = " . $this->SECTION_ID . " AND ER.RIGHT_ID = " . intval(
+                    $RIGHT_ID
+                ) . "
 				WHERE
 					BE.ID = " . $this->ELEMENT_ID . "
 					AND ER.SECTION_ID IS NULL
-			");
+			"
+            );
         } elseif (is_array($this->_get_section())) {
-            $DB->Query("
+            $DB->Query(
+                "
 				INSERT INTO b_iblock_section_right (IBLOCK_ID, SECTION_ID, RIGHT_ID, IS_INHERITED)
 				SELECT " . $this->IBLOCK_ID . ", BS.ID, " . intval($RIGHT_ID) . ", '" . ($bInherited ? "Y" : "N") . "'
 				FROM
 					b_iblock_section BS
-					LEFT JOIN b_iblock_section_right SR ON SR.SECTION_ID = BS.ID AND SR.RIGHT_ID = " . intval($RIGHT_ID) . "
+					LEFT JOIN b_iblock_section_right SR ON SR.SECTION_ID = BS.ID AND SR.RIGHT_ID = " . intval(
+                    $RIGHT_ID
+                ) . "
 				WHERE
 					BS.ID = " . $this->SECTION_ID . "
 					AND SR.SECTION_ID IS NULL
-			");
+			"
+            );
         } else {
         }
     }
@@ -1554,7 +1722,8 @@ class CIBlockRightsStorage
 
         if ($this->ELEMENT_ID > 0) {
         } elseif (is_array($this->_get_section())) {
-            $DB->Query("
+            $DB->Query(
+                "
 				INSERT INTO b_iblock_section_right (IBLOCK_ID, SECTION_ID, RIGHT_ID, IS_INHERITED)
 				SELECT " . $this->IBLOCK_ID . ", BS.ID, " . intval($RIGHT_ID) . ", '" . ($bInherited ? "Y" : "N") . "'
 				FROM
@@ -1572,11 +1741,15 @@ class CIBlockRightsStorage
 							BR.GROUP_CODE = '" . $DB->ForSQL($GROUP_CODE, 32) . "'
 							AND BR.IBLOCK_ID = " . $this->IBLOCK_ID . "
 					)
-			");
+			"
+            );
 
-            $DB->Query("
+            $DB->Query(
+                "
 				INSERT INTO b_iblock_element_right (IBLOCK_ID, SECTION_ID, ELEMENT_ID, RIGHT_ID, IS_INHERITED)
-				SELECT " . $this->IBLOCK_ID . ", BSE.IBLOCK_SECTION_ID, BSE.IBLOCK_ELEMENT_ID, " . intval($RIGHT_ID) . ", '" . ($bInherited ? "Y" : "N") . "'
+				SELECT " . $this->IBLOCK_ID . ", BSE.IBLOCK_SECTION_ID, BSE.IBLOCK_ELEMENT_ID, " . intval(
+                    $RIGHT_ID
+                ) . ", '" . ($bInherited ? "Y" : "N") . "'
 				FROM
 					b_iblock_section_element BSE
 				WHERE
@@ -1596,9 +1769,11 @@ class CIBlockRightsStorage
 							AND BR.IBLOCK_ID = " . $this->IBLOCK_ID . "
 							AND (ER.SECTION_ID = BSE.IBLOCK_SECTION_ID OR ER.SECTION_ID = 0)
 					)
-			");
+			"
+            );
         } else {
-            $DB->Query("
+            $DB->Query(
+                "
 				INSERT INTO b_iblock_section_right (IBLOCK_ID, SECTION_ID, RIGHT_ID, IS_INHERITED)
 				SELECT " . $this->IBLOCK_ID . ", BS.ID, " . intval($RIGHT_ID) . ", '" . ($bInherited ? "Y" : "N") . "'
 				FROM
@@ -1614,9 +1789,11 @@ class CIBlockRightsStorage
 							BR.GROUP_CODE = '" . $DB->ForSQL($GROUP_CODE, 32) . "'
 							AND BR.IBLOCK_ID = " . $this->IBLOCK_ID . "
 					)
-			");
+			"
+            );
 
-            $DB->Query("
+            $DB->Query(
+                "
 				INSERT INTO b_iblock_element_right (IBLOCK_ID, SECTION_ID, ELEMENT_ID, RIGHT_ID, IS_INHERITED)
 				SELECT " . $this->IBLOCK_ID . ", 0, BE.ID, " . intval($RIGHT_ID) . ", '" . ($bInherited ? "Y" : "N") . "'
 				FROM
@@ -1634,11 +1811,15 @@ class CIBlockRightsStorage
 							AND BR.IBLOCK_ID = " . $this->IBLOCK_ID . "
 							AND ER.SECTION_ID = 0
 					)
-			");
+			"
+            );
 
-            $DB->Query("
+            $DB->Query(
+                "
 				INSERT INTO b_iblock_element_right (IBLOCK_ID, SECTION_ID, ELEMENT_ID, RIGHT_ID, IS_INHERITED)
-				SELECT " . $this->IBLOCK_ID . ", BSE.IBLOCK_SECTION_ID, BSE.IBLOCK_ELEMENT_ID, " . intval($RIGHT_ID) . ", '" . ($bInherited ? "Y" : "N") . "'
+				SELECT " . $this->IBLOCK_ID . ", BSE.IBLOCK_SECTION_ID, BSE.IBLOCK_ELEMENT_ID, " . intval(
+                    $RIGHT_ID
+                ) . ", '" . ($bInherited ? "Y" : "N") . "'
 				FROM
 					b_iblock_section_element BSE
 				WHERE
@@ -1658,7 +1839,8 @@ class CIBlockRightsStorage
 							AND BR.IBLOCK_ID = " . $this->IBLOCK_ID . "
 							AND ER.SECTION_ID in (BSE.IBLOCK_SECTION_ID, 0)
 					)
-			");
+			"
+            );
         }
     }
 
@@ -1668,7 +1850,8 @@ class CIBlockRightsStorage
         $arResult = array();
 
         if ($this->ELEMENT_ID > 0) {
-            $rs = $DB->Query("
+            $rs = $DB->Query(
+                "
 				SELECT SR.SECTION_ID, SR.RIGHT_ID
 				FROM
 					b_iblock_section_element BSE
@@ -1678,11 +1861,14 @@ class CIBlockRightsStorage
 					BSE.IBLOCK_ELEMENT_ID = " . $this->ELEMENT_ID . "
 					AND BSE.ADDITIONAL_PROPERTY_ID IS NULL
 					AND BR.GROUP_CODE = '" . $DB->ForSQL($GROUP_CODE) . "'
-			");
-            while ($ar = $rs->Fetch())
+			"
+            );
+            while ($ar = $rs->Fetch()) {
                 $arResult[$ar["SECTION_ID"]] = $ar["RIGHT_ID"];
+            }
         } elseif (is_array($this->_get_section())) {
-            $rs = $DB->Query("
+            $rs = $DB->Query(
+                "
 				SELECT BS.IBLOCK_SECTION_ID, SR.RIGHT_ID
 				FROM
 					b_iblock_section BS
@@ -1691,16 +1877,19 @@ class CIBlockRightsStorage
 				WHERE
 					BS.ID = " . $this->SECTION_ID . "
 					AND BR.GROUP_CODE = '" . $DB->ForSQL($GROUP_CODE) . "'
-			");
-            while ($ar = $rs->Fetch())
+			"
+            );
+            while ($ar = $rs->Fetch()) {
                 $arResult[$ar["IBLOCK_SECTION_ID"]] = $ar["RIGHT_ID"];
+            }
         } else {
             return array(); //iblock does not have parent
         }
 
         //Root section or element
         if (empty($arResult)) {
-            $rs = $DB->Query("
+            $rs = $DB->Query(
+                "
 				SELECT BR.ID
 				FROM
 					b_iblock_right BR
@@ -1708,9 +1897,11 @@ class CIBlockRightsStorage
 					BR.IBLOCK_ID = " . $this->IBLOCK_ID . "
 					AND BR.GROUP_CODE = '" . $DB->ForSQL($GROUP_CODE) . "'
 					AND ENTITY_TYPE = 'iblock'
-			");
-            while ($ar = $rs->Fetch())
+			"
+            );
+            while ($ar = $rs->Fetch()) {
                 $arResult[0] = $ar["ID"];
+            }
         }
 
         return $arResult;
@@ -1737,7 +1928,8 @@ class CIBlockRightsStorage
             $DB->Query("DELETE FROM b_iblock_section_right WHERE IBLOCK_ID = " . $this->IBLOCK_ID);
             $DB->Query("DELETE FROM b_iblock_right WHERE IBLOCK_ID = " . $this->IBLOCK_ID);
         } else {
-            $DB->Query("
+            $DB->Query(
+                "
 				DELETE FROM b_iblock_right
 				WHERE IBLOCK_ID = " . $this->IBLOCK_ID . "
 				AND ENTITY_TYPE <> 'iblock'
@@ -1751,7 +1943,8 @@ class CIBlockRightsStorage
 					FROM b_iblock_element_right
 					WHERE IBLOCK_ID = " . $this->IBLOCK_ID . "
 				)
-			");
+			"
+            );
         }
     }
 
@@ -1762,7 +1955,8 @@ class CIBlockRightsStorage
         $DB->Query("DELETE FROM b_iblock_element_right WHERE IBLOCK_ID = " . $this->IBLOCK_ID);
         $DB->Query("DELETE FROM b_iblock_section_right WHERE IBLOCK_ID = " . $this->IBLOCK_ID);
         //Elements
-        $DB->Query("
+        $DB->Query(
+            "
 			INSERT INTO b_iblock_element_right (IBLOCK_ID, SECTION_ID, ELEMENT_ID, RIGHT_ID, IS_INHERITED)
 			SELECT BE.IBLOCK_ID, 0, BE.ID, BR.ID, 'N'
 			FROM
@@ -1780,9 +1974,11 @@ class CIBlockRightsStorage
 						BR0.IBLOCK_ID = " . $this->IBLOCK_ID . "
 						AND BR0.ENTITY_TYPE = 'element'
 				)
-		");
+		"
+        );
         //Sections
-        $rs = $DB->Query("
+        $rs = $DB->Query(
+            "
 			SELECT BR.ID RIGHT_ID, BS.ID SECTION_ID, BR.GROUP_CODE
 			FROM
 				b_iblock_right BR
@@ -1792,7 +1988,8 @@ class CIBlockRightsStorage
 				AND BR.ENTITY_TYPE = 'section'
 			ORDER BY
 				BS.DEPTH_LEVEL DESC
-		");
+		"
+        );
         while ($ar = $rs->Fetch()) {
             $this->_set_section($ar["SECTION_ID"]);
             $this->AddSelfSet($ar["RIGHT_ID"]);
@@ -1800,14 +1997,16 @@ class CIBlockRightsStorage
         }
         //IBlock
         $this->_set_section(0);
-        $rs = $DB->Query("
+        $rs = $DB->Query(
+            "
 			SELECT BR.ID RIGHT_ID, BR.GROUP_CODE
 			FROM
 				b_iblock_right BR
 			WHERE
 				BR.IBLOCK_ID = " . $this->IBLOCK_ID . "
 				AND BR.ENTITY_TYPE = 'iblock'
-		");
+		"
+        );
         while ($ar = $rs->Fetch()) {
             $this->AddChildrenSet($ar["RIGHT_ID"], $ar["GROUP_CODE"], /*$bInherited=*/ true);
         }
@@ -1818,15 +2017,17 @@ class CIBlockRightsStorage
         global $DB;
         $TASK_ID = intval($TASK_ID);
 
-        if (!in_array("element_read", $arOld) && in_array("element_read", $arNew))
+        if (!in_array("element_read", $arOld) && in_array("element_read", $arNew)) {
             $DB->Query("UPDATE b_iblock_right SET OP_EREAD = 'Y' WHERE TASK_ID = " . $TASK_ID);
-        elseif (in_array("element_read", $arOld) && !in_array("element_read", $arNew))
+        } elseif (in_array("element_read", $arOld) && !in_array("element_read", $arNew)) {
             $DB->Query("UPDATE b_iblock_right SET OP_EREAD = 'N' WHERE TASK_ID = " . $TASK_ID);
+        }
 
-        if (!in_array("section_read", $arOld) && in_array("section_read", $arNew))
+        if (!in_array("section_read", $arOld) && in_array("section_read", $arNew)) {
             $DB->Query("UPDATE b_iblock_right SET OP_SREAD = 'Y' WHERE TASK_ID = " . $TASK_ID);
-        elseif (in_array("section_read", $arOld) && !in_array("section_read", $arNew))
+        } elseif (in_array("section_read", $arOld) && !in_array("section_read", $arNew)) {
             $DB->Query("UPDATE b_iblock_right SET OP_SREAD = 'N' WHERE TASK_ID = " . $TASK_ID);
+        }
     }
 
     public static function OnGroupDelete($GROUP_ID)
@@ -1834,19 +2035,25 @@ class CIBlockRightsStorage
         global $DB;
         $GROUP_ID = intval($GROUP_ID);
 
-        $DB->Query("
+        $DB->Query(
+            "
 			DELETE FROM b_iblock_element_right WHERE RIGHT_ID IN (
 				SELECT ID FROM b_iblock_right WHERE GROUP_CODE = 'G" . $GROUP_ID . "'
 			)
-		");
-        $DB->Query("
+		"
+        );
+        $DB->Query(
+            "
 			DELETE FROM b_iblock_section_right WHERE RIGHT_ID IN (
 				SELECT ID FROM b_iblock_right WHERE GROUP_CODE = 'G" . $GROUP_ID . "'
 			)
-		");
-        $DB->Query("
+		"
+        );
+        $DB->Query(
+            "
 			DELETE FROM b_iblock_right WHERE GROUP_CODE = 'G" . $GROUP_ID . "'
-		");
+		"
+        );
     }
 
     public static function OnUserDelete($USER_ID)
@@ -1854,19 +2061,25 @@ class CIBlockRightsStorage
         global $DB;
         $USER_ID = intval($USER_ID);
 
-        $DB->Query("
+        $DB->Query(
+            "
 			DELETE FROM b_iblock_element_right WHERE RIGHT_ID IN (
 				SELECT ID FROM b_iblock_right WHERE GROUP_CODE = 'U" . $USER_ID . "'
 			)
-		");
-        $DB->Query("
+		"
+        );
+        $DB->Query(
+            "
 			DELETE FROM b_iblock_section_right WHERE RIGHT_ID IN (
 				SELECT ID FROM b_iblock_right WHERE GROUP_CODE = 'U" . $USER_ID . "'
 			)
-		");
-        $DB->Query("
+		"
+        );
+        $DB->Query(
+            "
 			DELETE FROM b_iblock_right WHERE GROUP_CODE = 'U" . $USER_ID . "'
-		");
+		"
+        );
     }
 }
 

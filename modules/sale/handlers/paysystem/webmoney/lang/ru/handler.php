@@ -1,12 +1,13 @@
 <?php
-$MESS['SALE_HPS_WEBMONEY_TEST'] = 'тестовый режим, реально деньги не переводились; ';
-$MESS['SALE_HPS_WEBMONEY_PAYEE_PURSE'] = 'кошелек продавца - #PAYEE_PURSE#';
-$MESS['SALE_HPS_WEBMONEY_INVS_NO'] = 'номер счета - #INVS_NO#';
-$MESS['SALE_HPS_WEBMONEY_TRANS_NO'] = 'номер платежа - #TRANS_NO#';
-$MESS['SALE_HPS_WEBMONEY_TRANS_DATE'] = 'дата платежа - #TRANS_DATE#';
-$MESS['SALE_HPS_WEBMONEY_PAYER_PURSE'] = 'кошелек покупателя - #PAYER_PURSE#';
-$MESS['SALE_HPS_WEBMONEY_PAYER_WM'] = 'WMId покупателя - #PAYER_WM#';
-$MESS['SALE_HPS_WEBMONEY_PAYMER_NUMBER'] = 'номер ВМ-карты - #PAYMER_NUMBER#';
-$MESS['SALE_HPS_WEBMONEY_PAYMER_EMAIL'] = 'paymer.com e-mail покупателя - #PAYMER_EMAIL#';
-$MESS['SALE_HPS_WEBMONEY_TELEPAT_PHONENUMBER'] = 'телефон покупателя - #TELEPAT_PHONENUMBER#';
-$MESS['SALE_HPS_WEBMONEY_TELEPAT_ORDERID'] = 'платеж в Телепате - #TELEPAT_ORDERID#';
+
+$MESS['SALE_HPS_WEBMONEY_TEST'] = 'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ; ';
+$MESS['SALE_HPS_WEBMONEY_PAYEE_PURSE'] = 'пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ - #PAYEE_PURSE#';
+$MESS['SALE_HPS_WEBMONEY_INVS_NO'] = 'пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ - #INVS_NO#';
+$MESS['SALE_HPS_WEBMONEY_TRANS_NO'] = 'пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ - #TRANS_NO#';
+$MESS['SALE_HPS_WEBMONEY_TRANS_DATE'] = 'пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ - #TRANS_DATE#';
+$MESS['SALE_HPS_WEBMONEY_PAYER_PURSE'] = 'пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ - #PAYER_PURSE#';
+$MESS['SALE_HPS_WEBMONEY_PAYER_WM'] = 'WMId пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ - #PAYER_WM#';
+$MESS['SALE_HPS_WEBMONEY_PAYMER_NUMBER'] = 'пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ-пїЅпїЅпїЅпїЅпїЅ - #PAYMER_NUMBER#';
+$MESS['SALE_HPS_WEBMONEY_PAYMER_EMAIL'] = 'paymer.com e-mail пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ - #PAYMER_EMAIL#';
+$MESS['SALE_HPS_WEBMONEY_TELEPAT_PHONENUMBER'] = 'пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ - #TELEPAT_PHONENUMBER#';
+$MESS['SALE_HPS_WEBMONEY_TELEPAT_ORDERID'] = 'пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ - #TELEPAT_ORDERID#';

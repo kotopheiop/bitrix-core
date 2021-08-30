@@ -35,7 +35,13 @@ class Callback
         global $USER_FIELD_MANAGER;
 
         $eventManager = EventManager::getInstance();
-        $eventManager->registerEventHandlerCompatible('main', 'OnUserTypeBuildList', 'rest', __CLASS__, static::getUserTypeId($fields));
+        $eventManager->registerEventHandlerCompatible(
+            'main',
+            'OnUserTypeBuildList',
+            'rest',
+            __CLASS__,
+            static::getUserTypeId($fields)
+        );
 
         $USER_FIELD_MANAGER->CleanCache();
         static::$descriptionCache = null;

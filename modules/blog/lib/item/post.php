@@ -69,10 +69,12 @@ class Post
                     $select[] = 'UF_BLOG_POST_VOTE';
                 }
 
-                $res = PostTable::getList(array(
-                    'filter' => array('=ID' => $postId),
-                    'select' => $select
-                ));
+                $res = PostTable::getList(
+                    array(
+                        'filter' => array('=ID' => $postId),
+                        'select' => $select
+                    )
+                );
                 if ($fields = $res->fetch()) {
                     $postFields = $fields;
 
@@ -184,12 +186,14 @@ class Post
                 if (Main\ModuleManager::isModuleInstalled('intranet')) {
                     $select[] = "UF_DEPARTMENT";
                 }
-                $res = Main\UserTable::getList(array(
-                    'filter' => array(
-                        "=ID" => $userId
-                    ),
-                    'select' => $select
-                ));
+                $res = Main\UserTable::getList(
+                    array(
+                        'filter' => array(
+                            "=ID" => $userId
+                        ),
+                        'select' => $select
+                    )
+                );
 
                 if ($userFields = $res->fetch()) {
                     if ($userFields["EXTERNAL_AUTH_ID"] == 'email') {
@@ -306,7 +310,11 @@ class Post
                     foreach ($permsList['SG'] as $sonetGroupPermList) {
                         if (!empty($sonetGroupPermList)) {
                             foreach ($sonetGroupPermList as $sonetGroupPerm) {
-                                if (preg_match('/^OSG(\d+)_' . (!$userId ? SONET_ROLES_ALL : SONET_ROLES_AUTHORIZED) . '$/', $sonetGroupPerm, $matches)) {
+                                if (preg_match(
+                                    '/^OSG(\d+)_' . (!$userId ? SONET_ROLES_ALL : SONET_ROLES_AUTHORIZED) . '$/',
+                                    $sonetGroupPerm,
+                                    $matches
+                                )) {
                                     $readByOpenSonetGroup = true;
                                     break;
                                 }
@@ -344,7 +352,12 @@ class Post
                                 break;
                             }
 
-                            $sonetGroupPermList = \CSocNetFeaturesPerms::getOperationPerm(SONET_ENTITY_GROUP, $sonetGroupIdList, "blog", $operation);
+                            $sonetGroupPermList = \CSocNetFeaturesPerms::getOperationPerm(
+                                SONET_ENTITY_GROUP,
+                                $sonetGroupIdList,
+                                "blog",
+                                $operation
+                            );
                             if (is_array($sonetGroupPermList)) {
                                 foreach ($sonetGroupPermList as $groupId => $role) {
                                     if (in_array($role, $entityList["SG"][$groupId])) {
@@ -465,10 +478,12 @@ class Post
             return $result;
         }
 
-        $provider = Livefeed\Provider::init(array(
-            'ENTITY_TYPE' => Livefeed\Provider::DATA_ENTITY_TYPE_BLOG_POST,
-            'ENTITY_ID' => $postId,
-        ));
+        $provider = Livefeed\Provider::init(
+            array(
+                'ENTITY_TYPE' => Livefeed\Provider::DATA_ENTITY_TYPE_BLOG_POST,
+                'ENTITY_ID' => $postId,
+            )
+        );
         if (!$provider) {
             return $result;
         }
@@ -494,9 +509,12 @@ class Post
             return $result;
         }
 
-        LogTable::update($logId, [
-            'INACTIVE' => 'Y'
-        ]);
+        LogTable::update(
+            $logId,
+            [
+                'INACTIVE' => 'Y'
+            ]
+        );
 
         return true;
     }
@@ -514,19 +532,26 @@ class Post
             return $result;
         }
 
-        $logId = $this->getLogId([
-            'inactive' => true
-        ]);
+        $logId = $this->getLogId(
+            [
+                'inactive' => true
+            ]
+        );
         if (intval($logId) <= 0) {
             return $result;
         }
 
-        $currentDateTime = new \Bitrix\Main\DB\SqlExpression(\Bitrix\Main\Application::getInstance()->getConnection()->getSqlHelper()->getCurrentDateTimeFunction());
-        LogTable::update($logId, [
-            'INACTIVE' => 'N',
-            'LOG_DATE' => $currentDateTime,
-            'LOG_UPDATE' => $currentDateTime
-        ]);
+        $currentDateTime = new \Bitrix\Main\DB\SqlExpression(
+            \Bitrix\Main\Application::getInstance()->getConnection()->getSqlHelper()->getCurrentDateTimeFunction()
+        );
+        LogTable::update(
+            $logId,
+            [
+                'INACTIVE' => 'N',
+                'LOG_DATE' => $currentDateTime,
+                'LOG_UPDATE' => $currentDateTime
+            ]
+        );
 
         return true;
     }

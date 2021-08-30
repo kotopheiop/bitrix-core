@@ -28,10 +28,12 @@ class CalendarEvent
             return $result;
         }
 
-        if ($liveFeedEntity = Provider::init(array(
-            'ENTITY_TYPE' => Provider::DATA_ENTITY_TYPE_CALENDAR_EVENT,
-            'ENTITY_ID' => $calendarEventId
-        ))) {
+        if ($liveFeedEntity = Provider::init(
+            array(
+                'ENTITY_TYPE' => Provider::DATA_ENTITY_TYPE_CALENDAR_EVENT,
+                'ENTITY_ID' => $calendarEventId
+            )
+        )) {
             $liveFeedEntity->setContentView();
         }
 

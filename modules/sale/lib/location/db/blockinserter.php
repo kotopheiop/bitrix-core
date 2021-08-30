@@ -42,7 +42,7 @@ class BlockInserter
         $this->dbHelper = $this->dbConnection->getSqlHelper();
 
         $map = array();
-        if (strlen($parameters['entityName'])) {
+        if ($parameters['entityName'] <> '') {
             $table = $parameters['entityName'];
 
             $this->tableName = $table::getTableName();
@@ -51,8 +51,14 @@ class BlockInserter
             // filter map throught $parameters['exactFields']
             if (is_array($parameters['exactFields']) && !empty($parameters['exactFields'])) {
                 foreach ($parameters['exactFields'] as $fld) {
-                    if (!isset($this->tableMap[$fld]))
-                        throw new Main\SystemException('Field does not exist in ORM class, but present in "exactFields" parameter: ' . $fld, 0, __FILE__, __LINE__);
+                    if (!isset($this->tableMap[$fld])) {
+                        throw new Main\SystemException(
+                            'Field does not exist in ORM class, but present in "exactFields" parameter: ' . $fld,
+                            0,
+                            __FILE__,
+                            __LINE__
+                        );
+                    }
 
                     $map[] = $fld;
                     $this->fldVector[$fld] = true;
@@ -63,7 +69,7 @@ class BlockInserter
                     $this->fldVector[$fld] = true;
                 }
             }
-        } elseif (strlen($parameters['tableName'])) {
+        } elseif (mb_strlen($parameters['tableName'])) {
             $this->tableName = $this->dbHelper->forSql($parameters['tableName']);
             $this->tableMap = $parameters['exactFields'];
 
@@ -91,7 +97,7 @@ class BlockInserter
 
         // automatically insert to this field an auto-increment value
         // beware of TransactSQL`s IDENTITY_INSERT when setting autoIncrementFld to a database-driven auto-increment field
-        if (strlen($parameters['parameters']['autoIncrementFld'])) {
+        if ($parameters['parameters']['autoIncrementFld'] <> '') {
             $this->autoIncFld = $this->dbHelper->forSql($this->autoIncFld);
 
             $this->autoIncFld = $parameters['parameters']['autoIncrementFld'];
@@ -106,18 +112,21 @@ class BlockInserter
 
         $this->dbType = Main\HttpApplication::getConnection()->getType();
 
-        if (!($this->mtu = intval($parameters['parameters']['mtu'])))
+        if (!($this->mtu = intval($parameters['parameters']['mtu']))) {
             $this->mtu = 9999;
+        }
 
         $dbMtu = Helper::getMaxTransferUnit();
-        if ($this->mtu > $dbMtu)
+        if ($this->mtu > $dbMtu) {
             $this->mtu = $dbMtu;
+        }
 
         $this->insertHead = Helper::getBatchInsertHead($this->tableName, $map);
         $this->insertTail = Helper::getBatchInsertTail();
 
-        if (is_callable($parameters['parameters']['CALLBACKS']['ON_BEFORE_FLUSH']))
+        if (is_callable($parameters['parameters']['CALLBACKS']['ON_BEFORE_FLUSH'])) {
             $this->callbacks['ON_BEFORE_FLUSH'] = $parameters['parameters']['CALLBACKS']['ON_BEFORE_FLUSH'];
+        }
 
         $this->map = $map;
     }
@@ -125,8 +134,9 @@ class BlockInserter
     // this method is buggy when table is empty
     public function initIndexFromField($fld = 'ID')
     {
-        if (!strlen($fld))
+        if ($fld == '') {
             throw new Main\SystemException('Field is not set');
+        }
 
         $fld = $this->dbHelper->forSql($fld);
 
@@ -153,16 +163,18 @@ class BlockInserter
 
     public function dropAutoIncrementRestrictions()
     {
-        if ($this->autoIncFld === false)
+        if ($this->autoIncFld === false) {
             return false;
+        }
 
         return Helper::dropAutoIncrementRestrictions($this->tableName);
     }
 
     public function restoreAutoIncrementRestrictions()
     {
-        if ($this->autoIncFld === false)
+        if ($this->autoIncFld === false) {
             return false;
+        }
 
         return Helper::restoreAutoIncrementRestrictions($this->tableName);
     }
@@ -174,15 +186,18 @@ class BlockInserter
 
     public function insert($row)
     {
-        if (!is_array($row) || empty($row))
+        if (!is_array($row) || empty($row)) {
             return;
+        }
 
         $this->index++;
         $this->bufferSize++;
 
         if ($this->autoIncFld !== false) {
             $row[$this->autoIncFld] = $this->index;
-            Helper::incrementSequenceForTable($this->tableName); // if this is oracle and we insert auto increment key directly, we must provide sequence increment manually
+            Helper::incrementSequenceForTable(
+                $this->tableName
+            ); // if this is oracle and we insert auto increment key directly, we must provide sequence increment manually
         }
 
         $sql = Helper::getBatchInsertValues($row, $this->tableName, $this->fldVector, $this->map);
@@ -192,30 +207,35 @@ class BlockInserter
         Oracle: insert all into b_test (F1,F2) values ('one','two') into b_test (F1,F2) values ('one1','two1') into b_test (F1,F2) values ('one2','two2')  select * from dual
         */
 
-        $nextBuffer = (empty($this->buffer) ? $this->insertHead : $this->buffer . Helper::getBatchInsertSeparator()) . $sql;
+        $nextBuffer = (empty($this->buffer) ? $this->insertHead : $this->buffer . Helper::getBatchInsertSeparator(
+                )) . $sql;
 
         // here check length
-        if (defined(SITE_CHARSET) && SITE_CHARSET == 'UTF-8')
+        if (defined(SITE_CHARSET) && SITE_CHARSET == 'UTF-8') {
             $len = mb_strlen($nextBuffer);
-        else
-            $len = strlen($nextBuffer);
+        } else {
+            $len = mb_strlen($nextBuffer);
+        }
 
-        if (($this->mtu - (strlen($nextBuffer) + 100)) < self::RED_LINE) {
+        if (($this->mtu - (mb_strlen($nextBuffer) + 100)) < self::RED_LINE) {
             $this->flush(); // flushing the previous buffer (now $this->buffer == '')
             $this->buffer = $this->insertHead . $sql;
-        } else
+        } else {
             $this->buffer = $nextBuffer;
+        }
 
         return $this->index;
     }
 
     public function flush()
     {
-        if (!strlen($this->buffer))
+        if ($this->buffer == '') {
             return;
+        }
 
-        if (isset($this->callbacks['ON_BEFORE_FLUSH']))
+        if (isset($this->callbacks['ON_BEFORE_FLUSH'])) {
             call_user_func($this->callbacks['ON_BEFORE_FLUSH']);
+        }
 
         $this->buffer .= ' ' . $this->insertTail;
 
@@ -223,8 +243,9 @@ class BlockInserter
 
         Main\HttpApplication::getConnection()->query($this->buffer);
 
-        if ($restrDropped)
+        if ($restrDropped) {
             $this->restoreAutoIncrementRestrictions();
+        }
 
         $this->buffer = '';
         $this->bufferSize = 0;

@@ -17,8 +17,9 @@ class Server
      */
     public function __construct(array $arServer)
     {
-        if (isset($arServer["DOCUMENT_ROOT"]))
+        if (isset($arServer["DOCUMENT_ROOT"])) {
             $arServer["DOCUMENT_ROOT"] = rtrim($arServer["DOCUMENT_ROOT"], "/\\");
+        }
 
         parent::__construct($arServer);
     }
@@ -27,8 +28,9 @@ class Server
     {
         $filteredValues = $filter->filter($this->values);
 
-        if ($filteredValues != null)
+        if ($filteredValues != null) {
             $this->setValuesNoDemand($filteredValues);
+        }
     }
 
     /**
@@ -50,8 +52,9 @@ class Server
     public function getPersonalRoot()
     {
         $r = $this->get("BX_PERSONAL_ROOT");
-        if ($r == null || $r == "")
+        if ($r == null || $r == "") {
             $r = "/bitrix";
+        }
 
         return $r;
     }
@@ -87,6 +90,24 @@ class Server
     }
 
     /**
+     * Returns remote address.
+     * @return string|null
+     */
+    public function getRemoteAddr()
+    {
+        return $this->get("REMOTE_ADDR");
+    }
+
+    /**
+     * Returns user agent.
+     * @return string|null
+     */
+    public function getUserAgent()
+    {
+        return $this->get("HTTP_USER_AGENT");
+    }
+
+    /**
      * Returns server port.
      *
      * @return string | null
@@ -94,6 +115,11 @@ class Server
     public function getServerPort()
     {
         return $this->get("SERVER_PORT");
+    }
+
+    public function getRequestScheme()
+    {
+        return $this->get("REQUEST_SCHEME");
     }
 
     /**
@@ -143,18 +169,21 @@ class Server
     {
         $this->values["REQUEST_URI"] = $url;
         $this->values["QUERY_STRING"] = $queryString;
-        if ($redirectStatus != null)
+        if ($redirectStatus != null) {
             $this->values["REDIRECT_STATUS"] = $redirectStatus;
+        }
     }
 
     public function transferUri($url, $queryString = "")
     {
         $this->values["REAL_FILE_PATH"] = $url;
         if ($queryString != "") {
-            if (!isset($this->values["QUERY_STRING"]))
+            if (!isset($this->values["QUERY_STRING"])) {
                 $this->values["QUERY_STRING"] = "";
-            if (isset($this->values["QUERY_STRING"]) && ($this->values["QUERY_STRING"] != ""))
+            }
+            if (isset($this->values["QUERY_STRING"]) && ($this->values["QUERY_STRING"] != "")) {
                 $this->values["QUERY_STRING"] .= "&";
+            }
             $this->values["QUERY_STRING"] .= $queryString;
         }
     }

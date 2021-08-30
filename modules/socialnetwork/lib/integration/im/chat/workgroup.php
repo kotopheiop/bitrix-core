@@ -49,12 +49,18 @@ class Workgroup
             return self::$staticCache[$cacheKey];
         }
 
-        $params['group_id'] = array_values(array_unique(array_filter(array_map(
-            function ($groupId) {
-                return (is_array($groupId) || intval($groupId) <= 0 ? false : intval($groupId));
-            },
-            $params['group_id']
-        ))));
+        $params['group_id'] = array_values(
+            array_unique(
+                array_filter(
+                    array_map(
+                        function ($groupId) {
+                            return (is_array($groupId) || intval($groupId) <= 0 ? false : intval($groupId));
+                        },
+                        $params['group_id']
+                    )
+                )
+            )
+        );
 
         if (
             !isset($params['skipAvailabilityCheck'])
@@ -67,13 +73,15 @@ class Workgroup
             }
         }
 
-        $res = ChatTable::getList(array(
-            'select' => Array('ID', 'ENTITY_ID'),
-            'filter' => array(
-                '=ENTITY_TYPE' => self::CHAT_ENTITY_TYPE,
-                '@ENTITY_ID' => $params['group_id']
+        $res = ChatTable::getList(
+            array(
+                'select' => Array('ID', 'ENTITY_ID'),
+                'filter' => array(
+                    '=ENTITY_TYPE' => self::CHAT_ENTITY_TYPE,
+                    '@ENTITY_ID' => $params['group_id']
+                )
             )
-        ));
+        );
         while ($chat = $res->fetch()) {
             $result[$chat['ENTITY_ID']] = $chat['ID'];
         }
@@ -126,13 +134,15 @@ class Workgroup
 
         $userIdList = array();
 
-        $res = UserToGroupTable::getList(array(
-            'filter' => array(
-                'GROUP_ID' => $params['group_id'],
-                '@ROLE' => UserToGroupTable::getRolesMember()
-            ),
-            'select' => array('USER_ID')
-        ));
+        $res = UserToGroupTable::getList(
+            array(
+                'filter' => array(
+                    'GROUP_ID' => $params['group_id'],
+                    '@ROLE' => UserToGroupTable::getRolesMember()
+                ),
+                'select' => array('USER_ID')
+            )
+        );
 
         while ($relation = $res->fetch()) {
             $userIdList[] = intval($relation['USER_ID']);
@@ -143,9 +153,12 @@ class Workgroup
         }
 
         $chatFields = array(
-            'TITLE' => self::buildChatName($groupFields['NAME'], array(
-                'project' => $project
-            )),
+            'TITLE' => self::buildChatName(
+                $groupFields['NAME'],
+                array(
+                    'project' => $project
+                )
+            ),
             'TYPE' => IM_MESSAGE_CHAT,
             'ENTITY_TYPE' => self::CHAT_ENTITY_TYPE,
             'ENTITY_ID' => intval($params['group_id']),
@@ -186,9 +199,13 @@ class Workgroup
             : LANGUAGE_ID
         );
 
-        return Loc::getMessage(($project ? "SOCIALNETWORK_WORKGROUP_CHAT_TITLE_PROJECT" : "SOCIALNETWORK_WORKGROUP_CHAT_TITLE"), array(
-            "#GROUP_NAME#" => $groupName
-        ), $siteLanguageId);
+        return Loc::getMessage(
+            ($project ? "SOCIALNETWORK_WORKGROUP_CHAT_TITLE_PROJECT" : "SOCIALNETWORK_WORKGROUP_CHAT_TITLE"),
+            array(
+                "#GROUP_NAME#" => $groupName
+            ),
+            $siteLanguageId
+        );
     }
 
     public static function setChatManagers($params)
@@ -210,9 +227,11 @@ class Workgroup
         $groupId = intval($params['group_id']);
         $setFlag = (isset($params['set']) && $params['set']);
 
-        $chatData = self::getChatData(array(
-            'group_id' => $groupId
-        ));
+        $chatData = self::getChatData(
+            array(
+                'group_id' => $groupId
+            )
+        );
 
         if (
             empty($chatData)
@@ -256,27 +275,42 @@ class Workgroup
         $groupFields = $groupItem->getFields();
 
         $chatMessageFields = array(
-            "MESSAGE" => str_replace('#GROUP_NAME#', $groupFields['NAME'], Loc::getMessage($groupItem->isProject() ? "SOCIALNETWORK_WORKGROUP_CHAT_UNLINKED_PROJECT" : "SOCIALNETWORK_WORKGROUP_CHAT_UNLINKED")),
+            "MESSAGE" => str_replace(
+                '#GROUP_NAME#',
+                $groupFields['NAME'],
+                Loc::getMessage(
+                    $groupItem->isProject(
+                    ) ? "SOCIALNETWORK_WORKGROUP_CHAT_UNLINKED_PROJECT" : "SOCIALNETWORK_WORKGROUP_CHAT_UNLINKED"
+                )
+            ),
             "SYSTEM" => "Y"
         );
 
-        $res = ChatTable::getList(array(
-            'select' => Array('ID'),
-            'filter' => array(
-                '=ENTITY_TYPE' => self::CHAT_ENTITY_TYPE,
-                '=ENTITY_ID' => $params['group_id']
+        $res = ChatTable::getList(
+            array(
+                'select' => Array('ID'),
+                'filter' => array(
+                    '=ENTITY_TYPE' => self::CHAT_ENTITY_TYPE,
+                    '=ENTITY_ID' => $params['group_id']
+                )
             )
-        ));
+        );
         while ($chat = $res->fetch()) {
-            if (ChatTable::update($chat['ID'], array(
-                'ENTITY_TYPE' => false,
-                'ENTITY_ID' => false
-            ))) {
-                return \CIMChat::addMessage(array_merge(
-                    $chatMessageFields, array(
-                        "TO_CHAT_ID" => $chat['ID']
+            if (ChatTable::update(
+                $chat['ID'],
+                array(
+                    'ENTITY_TYPE' => false,
+                    'ENTITY_ID' => false
+                )
+            )) {
+                return \CIMChat::addMessage(
+                    array_merge(
+                        $chatMessageFields,
+                        array(
+                            "TO_CHAT_ID" => $chat['ID']
+                        )
                     )
-                ));
+                );
             }
         }
 

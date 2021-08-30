@@ -1,5 +1,8 @@
 <?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+}
 IncludeModuleLangFile(__FILE__);
 
 if (!isset($adminFormParams) || !is_array($adminFormParams)) {
@@ -36,10 +39,11 @@ foreach ($this->arSystemTabs as $arTab) {
             foreach ($arTab["FIELDS"] as $arField) {
                 $id = htmlspecialcharsbx($arField["id"]);
                 $label = htmlspecialcharsbx(rtrim(trim($arField["content"]), " :"));
-                if ($arField["delimiter"])
+                if ($arField["delimiter"]) {
                     $arSystemFields[$id] = "--" . $label;
-                else
+                } else {
                     $arSystemFields[$id] = ($arField["required"] ? "*" : "&nbsp;&nbsp;") . $label;
+                }
             }
         }
     }
@@ -59,10 +63,11 @@ foreach ($this->tabs as $arTab) {
             foreach ($arTab["FIELDS"] as $arField) {
                 $id = htmlspecialcharsbx($arField["id"]);
                 $label = htmlspecialcharsbx(rtrim(trim($arField["content"]), " :"));
-                if ($arField["delimiter"])
+                if ($arField["delimiter"]) {
                     $ar["FIELDS"][$id] = "--" . $label;
-                else
+                } else {
                     $ar["FIELDS"][$id] = ($arField["required"] ? "*" : "&nbsp;&nbsp;") . $label;
+                }
                 unset($arAvailableFields[$id]);
             }
         }
@@ -95,7 +100,9 @@ $obJSPopup->StartContent();
     <form enctype="multipart/form-data" name="form_settings" action="<? echo $APPLICATION->GetCurPageParam() ?>"
           method="POST">
         <div class="settings-form">
-            <h2 ondblclick="exportSettingsToPhp(event, '<? echo $this->name; ?>')"><? echo GetMessage("admin_lib_sett_tab_fields") ?></h2>
+            <h2 ondblclick="exportSettingsToPhp(event, '<? echo $this->name; ?>')"><? echo GetMessage(
+                    "admin_lib_sett_tab_fields"
+                ) ?></h2>
             <table width="100%" cellspacing="0">
                 <tr valign="center">
                     <td colspan="2"><? echo GetMessage("admin_lib_sett_tab_available_tabs") ?>:</td>
@@ -107,7 +114,9 @@ $obJSPopup->StartContent();
                                 style="height: 190px;">
                             <?
                             foreach ($arSystemTabs as $id => $label) {
-                                echo '<option value="' . htmlspecialcharsbx($id) . '">' . htmlspecialcharsbx($label) . '</option>';
+                                echo '<option value="' . htmlspecialcharsbx($id) . '">' . htmlspecialcharsbx(
+                                        $label
+                                    ) . '</option>';
                             }
                             ?>
                         </select>
@@ -122,7 +131,9 @@ $obJSPopup->StartContent();
                                 style="height: 190px;">
                             <?
                             foreach ($arCustomFields as $tab_id => $arTab) {
-                                echo '<option value="' . htmlspecialcharsbx($tab_id) . '">' . htmlspecialcharsbx($arTab["TAB"]) . '</option>';
+                                echo '<option value="' . htmlspecialcharsbx($tab_id) . '">' . htmlspecialcharsbx(
+                                        $arTab["TAB"]
+                                    ) . '</option>';
                             }
                             ?>
                         </select>
@@ -218,8 +229,9 @@ $obJSPopup->StartContent();
                         <td><input type="checkbox" name="set_default" id="set_default" value="Y"></td>
                         <td><label for="set_default"><? echo GetMessage("admin_lib_sett_common_set") ?></label></td>
                         <td><a class="delete-icon" title="<? echo GetMessage("admin_lib_sett_common_del") ?>"
-                               href="javascript:if(confirm('<? echo GetMessage("admin_lib_sett_common_del_conf") ?>'))<? echo $this->name ?>.DeleteSettings(true)"></a>
-                        </td>
+                               href="javascript:if(confirm('<? echo GetMessage(
+                                   "admin_lib_sett_common_del_conf"
+                               ) ?>'))<? echo $this->name ?>.DeleteSettings(true)"></a></td>
                     </tr>
                 </table>
             <?
@@ -241,9 +253,9 @@ $obJSPopup->StartButtons();
     <input type="button" value="<? echo GetMessage("admin_lib_sett_cancel") ?>"
            onclick="<? echo $this->name ?>.CloseSettings()"
            title="<? echo GetMessage("admin_lib_sett_cancel_title") ?>">
-    <input type="button" value="<? echo GetMessage("admin_lib_sett_reset") ?>"
-           onclick="if(confirm('<? echo GetMessage("admin_lib_sett_reset_ask") ?>'))<? echo $this->name ?>.DeleteSettings()"
-           title="<? echo GetMessage("admin_lib_sett_reset_title") ?>">
+    <input type="button" value="<? echo GetMessage("admin_lib_sett_reset") ?>" onclick="if(confirm('<? echo GetMessage(
+        "admin_lib_sett_reset_ask"
+    ) ?>'))<? echo $this->name ?>.DeleteSettings()" title="<? echo GetMessage("admin_lib_sett_reset_title") ?>">
 <?
 $obJSPopup->EndButtons();
 ?>

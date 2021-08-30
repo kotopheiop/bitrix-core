@@ -6,6 +6,7 @@
  */
 
 namespace Bitrix\Iblock\Template;
+
 /**
  * Class Helper
  * Provides some helper functions.
@@ -24,7 +25,7 @@ class Helper
     public static function splitTemplate($template)
     {
         if (preg_match("/\\/(l|t.?)+\$/", $template, $match)) {
-            return array(substr($template, 0, -strlen($match[0])), substr($match[0], 1));
+            return array(mb_substr($template, 0, -mb_strlen($match[0])), mb_substr($match[0], 1));
         } else {
             return array($template, "");
         }
@@ -39,10 +40,11 @@ class Helper
      */
     public static function splitModifiers($modifiers)
     {
-        if (preg_match_all("/(l|t.?)/", $modifiers, $match))
+        if (preg_match_all("/(l|t.?)/", $modifiers, $match)) {
             return $match[0];
-        else
+        } else {
             return array();
+        }
     }
 
     /**
@@ -56,15 +58,18 @@ class Helper
     {
         $TEMPLATE = $template["TEMPLATE"];
         $modifiers = "";
-        if ($template["LOWER"] === "Y")
+        if ($template["LOWER"] === "Y") {
             $modifiers .= "l";
+        }
         if ($template["TRANSLIT"] === "Y") {
             $modifiers .= "t";
-            if ($template["SPACE"] != "")
+            if ($template["SPACE"] != "") {
                 $modifiers .= $template["SPACE"];
+            }
         }
-        if ($modifiers != "")
+        if ($modifiers != "") {
             $modifiers = "/" . $modifiers;
+        }
         return $TEMPLATE . $modifiers;
     }
 
@@ -96,7 +101,7 @@ class Helper
                 $LOWER = "Y";
             } else {
                 $TRANSLIT = "Y";
-                $SPACE = substr($mod, 1);
+                $SPACE = mb_substr($mod, 1);
             }
         }
 
@@ -123,8 +128,7 @@ class Helper
         $templateName,
         array $fields,
         array $file
-    )
-    {
+    ) {
         if (preg_match("/^(.+)(\\.[a-zA-Z0-9]+)\$/", $file["name"], $fileName)) {
             if (!isset($fields["IPROPERTY_TEMPLATES"]) || $fields["IPROPERTY_TEMPLATES"][$templateName] == "") {
                 $templates = $ipropTemplates->findTemplates();

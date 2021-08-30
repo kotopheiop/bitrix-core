@@ -88,7 +88,7 @@ class EntityCollisionType
      */
     public static function resolveID($name)
     {
-        $name = strtoupper(trim(strval($name)));
+        $name = mb_strtoupper(trim(strval($name)));
         if ($name == '') {
             return self::Undefined;
         }
@@ -236,26 +236,44 @@ class EntityCollisionType
                 self::OrderFinalStatus => GetMessage('SALE_COLLISION_TYPE_ORDER_FINAL_STATUS'),
                 self::ShipmentIsShipped => GetMessage('SALE_COLLISION_TYPE_SHIPMENT_IS_SHIPPED'),
                 self::ShipmentBasketItemNotFound => GetMessage('SALE_COLLISION_TYPE_SHIPMENT_BASKET_ITEM_NOT_FOUND'),
-                self::ShipmentBasketItemQuantityError => GetMessage('SALE_COLLISION_TYPE_SHIPMENT_BASKET_ITEM_QUANTITY_ERROR'),
+                self::ShipmentBasketItemQuantityError => GetMessage(
+                    'SALE_COLLISION_TYPE_SHIPMENT_BASKET_ITEM_QUANTITY_ERROR'
+                ),
                 self::ShipmentBasketItemsModify => GetMessage('SALE_COLLISION_TYPE_SHIPMENT_BASKET_ITEMS_MODIFY'),
                 self::OrderShipmentItemsModify => GetMessage('SALE_COLLISION_TYPE_ORDER_SHIPMENT_ITEMS_MODIFY'),
-                self::ShipmentBasketItemsModifyError => GetMessage('SALE_COLLISION_TYPE_SHIPMENT_BASKET_ITEMS_MODIFY_ERROR'),
-                self::OrderShipmentItemsModifyError => GetMessage('SALE_COLLISION_TYPE_ORDER_SHIPMENT_ITEMS_MODIFY_ERROR'),
+                self::ShipmentBasketItemsModifyError => GetMessage(
+                    'SALE_COLLISION_TYPE_SHIPMENT_BASKET_ITEMS_MODIFY_ERROR'
+                ),
+                self::OrderShipmentItemsModifyError => GetMessage(
+                    'SALE_COLLISION_TYPE_ORDER_SHIPMENT_ITEMS_MODIFY_ERROR'
+                ),
                 self::PaymentIsPayed => GetMessage('SALE_COLLISION_TYPE_PAYMENT_IS_PAYED'),
                 self::OrderShipmentDeleted => GetMessage('SALE_COLLISION_TYPE_ORDER_SHIPMENT_DELETED'),
                 self::OrderShipmentDeletedError => GetMessage('SALE_COLLISION_TYPE_ORDER_SHIPMENT_DELETED_ERROR'),
                 self::OrderPaymentDeleted => GetMessage('SALE_COLLISION_TYPE_ORDER_PAYMENT_DELETED'),
                 self::OrderPaymentDeletedError => GetMessage('SALE_COLLISION_TYPE_ORDER_PAYMENT_DELETED_ERROR'),
-                self::OrderBasketItemTaxValueError => GetMessage('SALE_COLLISION_TYPE_ORDER_BASKET_ITEM_TAX_VALUE_ERROR'),
-                self::OrderSynchronizeBasketItemsModify => GetMessage('SALE_COLLISION_TYPE_ORDER_SYNCHRONIZE_BASKET_ITEMS_MODIFY'),
+                self::OrderBasketItemTaxValueError => GetMessage(
+                    'SALE_COLLISION_TYPE_ORDER_BASKET_ITEM_TAX_VALUE_ERROR'
+                ),
+                self::OrderSynchronizeBasketItemsModify => GetMessage(
+                    'SALE_COLLISION_TYPE_ORDER_SYNCHRONIZE_BASKET_ITEMS_MODIFY'
+                ),
                 self::OrderPayedByStatusError => GetMessage('SALE_COLLISION_TYPE_ORDER_PAYED_BY_STATUS_ERROR'),
                 self::OrderBasketItemTypeError => GetMessage('SALE_COLLISION_TYPE_ORDER_BASKET_ITEM_TYPE_ERROR'),
                 self::PaymentCashBoxCheckNotFound => GetMessage('SALE_COLLISION_TYPE_PAYMENT_CASH_BOX_CHECK_NOT_FOUND'),
-                self::OrderSynchronizeBasketItemsModifyError => GetMessage('SALE_COLLISION_TYPE_ORDER_SYNCHRONIZE_BASKET_ITEMS_MODIFY_ERROR'),
-                self::BeforeUpdatePaymentDeletedError => GetMessage('SALE_COLLISION_TYPE_BEFORE_UPDATE_PAYMENT_DELETED_ERROR'),
-                self::BeforeUpdateShipmentDeletedError => GetMessage('SALE_COLLISION_TYPE_BEFORE_UPDATE_SHIPMENT_DELETED_ERROR'),
+                self::OrderSynchronizeBasketItemsModifyError => GetMessage(
+                    'SALE_COLLISION_TYPE_ORDER_SYNCHRONIZE_BASKET_ITEMS_MODIFY_ERROR'
+                ),
+                self::BeforeUpdatePaymentDeletedError => GetMessage(
+                    'SALE_COLLISION_TYPE_BEFORE_UPDATE_PAYMENT_DELETED_ERROR'
+                ),
+                self::BeforeUpdateShipmentDeletedError => GetMessage(
+                    'SALE_COLLISION_TYPE_BEFORE_UPDATE_SHIPMENT_DELETED_ERROR'
+                ),
                 self::OrderShippedByStatusError => GetMessage('SALE_COLLISION_TYPE_ORDER_SHIPPED_BY_STATUS_ERROR'),
-                self::OrderBasketItemsCurrencyModify => GetMessage('SALE_COLLISION_TYPE_ORDER_BASKET_ITEMS_CURRENCY_MODIFY'),
+                self::OrderBasketItemsCurrencyModify => GetMessage(
+                    'SALE_COLLISION_TYPE_ORDER_BASKET_ITEMS_CURRENCY_MODIFY'
+                ),
             );
         }
         return self::$ALL_DESCRIPTIONS[LANGUAGE_ID];

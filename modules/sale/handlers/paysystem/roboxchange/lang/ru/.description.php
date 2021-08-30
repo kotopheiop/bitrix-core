@@ -1,15 +1,21 @@
-<?
-$MESS["SALE_HPS_ROBOXCHANGE_TITLE"] = "RoboKassa";
-$MESS["SALE_HPS_ROBOXCHANGE_PAYMENT_ID"] = "Номер оплаты";
-$MESS["SALE_HPS_ROBOXCHANGE_SHOULD_PAY"] = "Сумма оплаты";
-$MESS["SALE_HPS_ROBOXCHANGE_CURRENCY"] = "Валюта счета";
-$MESS["SALE_HPS_ROBOXCHANGE_DATE_INSERT"] = "Дата создания оплаты";
+<?php
+
+$MESS["SALE_HPS_ROBOXCHANGE_DESCRIPTION_MAIN"] = "<a href='https://partner.robokassa.ru/Reg/Register?PromoCode=01Bitrix&culture=ru' target='_blank'>пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ Robokassa</a>";
+$MESS["SALE_HPS_ROBOXCHANGE_TITLE"] = "Robokassa";
+$MESS["SALE_HPS_ROBOXCHANGE_PAYMENT_ID"] = "пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ";
 $MESS["SALE_HPS_ROBOXCHANGE_EMAIL_USER"] = "E-mail";
-$MESS["SALE_HPS_ROBOXCHANGE_SHOPLOGIN"] = "Логин магазина";
-$MESS["SALE_HPS_ROBOXCHANGE_SHOPPASSWORD"] = "Пароль магазина";
-$MESS["SALE_HPS_ROBOXCHANGE_SHOPPASSWORD2"] = "Пароль магазина #2";
-$MESS["SALE_HPS_ROBOXCHANGE_TEST_SHOPPASSWORD"] = "Тестовый пароль магазина";
-$MESS["SALE_HPS_ROBOXCHANGE_TEST_SHOPPASSWORD2"] = "Тестовый пароль магазина #2";
-$MESS["SALE_HPS_ROBOXCHANGE_ORDERDESCR"] = "Описание оплаты";
-$MESS["SALE_HPS_ROBOXCHANGE_CHANGE_STATUS_PAY"] = "Автоматически оплачивать оплату при получении успешного статуса";
-$MESS["SALE_HPS_ROBOXCHANGE_TEST"] = "Тестовый режим";
+$MESS["SALE_HPS_ROBOXCHANGE_SHOPLOGIN"] = "пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_ROBOXCHANGE_SHOPPASSWORD"] = "пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_ROBOXCHANGE_SHOPPASSWORD2"] = "пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ #2";
+$MESS["SALE_HPS_ROBOXCHANGE_TEST_SHOPPASSWORD"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_ROBOXCHANGE_TEST_SHOPPASSWORD2"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ #2";
+$MESS["SALE_HPS_ROBOXCHANGE_TEMPLATE_TYPE"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_ROBOXCHANGE_TEMPLATE_TYPE_CHECKOUT"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ Robokassa";
+$MESS["SALE_HPS_ROBOXCHANGE_TEMPLATE_TYPE_IFRAME"] = "iFrame";
+$MESS["SALE_HPS_ROBOXCHANGE_ORDERDESCR"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_ROBOXCHANGE_CHANGE_STATUS_PAY"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_ROBOXCHANGE_TEST"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_ROBOXCHANGE_COUNTRY_CODE"] = "пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_ROBOXCHANGE_COUNTRY_CODE_DESC"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ. пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ Robokassa";
+$MESS["SALE_HPS_ROBOXCHANGE_COUNTRY_CODE_OPTION_RU"] = "пїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_ROBOXCHANGE_COUNTRY_CODE_OPTION_KZ"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";

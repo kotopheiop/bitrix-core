@@ -1,11 +1,14 @@
 <?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/prolog.php");
 /** @var CMain $APPLICATION */
 include($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/colors.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/img.php");
 $STAT_RIGHT = $APPLICATION->GetGroupRight("statistic");
-if ($STAT_RIGHT == "D") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($STAT_RIGHT == "D") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 
@@ -34,12 +37,12 @@ $arrParams = array(
  * GET | POST handlers
  ****************************************************************************/
 
-$rs = CAdv::GetList($v1 = "", $v2 = "", Array(), $v3, "", $v4, $v5);
+$rs = CAdv::GetList();
 while ($ar = $rs->Fetch()) {
     $arrADV[$ar["ID"]] = $ar["REFERER1"] . " / " . $ar["REFERER2"] . " [" . $ar["ID"] . "]";
 }
 
-$rs = CStatEventType::GetSimpleList($v1 = "", $v2 = "", array(), $v3);
+$rs = CStatEventType::GetSimpleList();
 while ($ar = $rs->Fetch()) {
     $arrEVENT[$ar["ID"]] = htmlspecialcharsbx($ar["EVENT"]) . " [" . $ar["ID"] . "]";
 }
@@ -49,8 +52,9 @@ $oSort = new CAdminSorting($sTableID);// Sorting init
 $lAdmin = new CAdminList($sTableID, $oSort);// List init
 
 if (isset($find_data_type)) {
-    if (!array_key_exists($find_data_type, $arrParams))
+    if (!array_key_exists($find_data_type, $arrParams)) {
         $find_data_type = "SESSION_SUMMA";
+    }
 } else {
     $find_data_type = false;
 }
@@ -59,10 +63,11 @@ if ($lAdmin->IsDefaultFilter()) {
     $i = 0;
     $find_adv = array();
     if (is_array($arrADV)) {
-        reset($arrADV);
-        while (list($key, $value) = each($arrADV)) {
+        foreach ($arrADV as $key => $value) {
             $i++;
-            if ($i <= 10) $find_adv[] = $key;
+            if ($i <= 10) {
+                $find_adv[] = $key;
+            }
         }
     }
     $set_filter = "Y";
@@ -79,9 +84,12 @@ $arFilterEvent = Array(
         GetMessage("STAT_F_EVENT_TYPIES"),
     ),
     Array(
-        "find_event_type_id", "find_event_type_id_exact_match",
-        "find_event1", "find_event1_exact_match",
-        "find_event2", "find_event2_exact_match",
+        "find_event_type_id",
+        "find_event_type_id_exact_match",
+        "find_event1",
+        "find_event1_exact_match",
+        "find_event2",
+        "find_event2_exact_match",
         "find_events",
     )
 );
@@ -101,14 +109,19 @@ $filter = new CAdminFilter(
 $FilterArr = array_merge(
 
     Array(
-        "find_date1", "find_date2",
-        "find_adv_id", "find_adv_id_exact_match",
-        "find_referer1", "find_referer1_exact_match",
-        "find_referer2", "find_referer2_exact_match"
+        "find_date1",
+        "find_date2",
+        "find_adv_id",
+        "find_adv_id_exact_match",
+        "find_referer1",
+        "find_referer1_exact_match",
+        "find_referer2",
+        "find_referer2_exact_match"
     ),
     Array("find_adv"),
     //Array("find_data_type"),
-    (is_array($arrEVENT) ? $arFilterEvent[1] : Array()));
+    (is_array($arrEVENT) ? $arFilterEvent[1] : Array())
+);
 
 $lAdmin->InitFilter($FilterArr);//Filter init
 
@@ -119,12 +132,15 @@ InitFilterEx($arSettings, $sTableID . "_settings", "get");
 
 if ($find_data_type === false)//Restore saved setting
 {
-    if (strlen($saved_group_by) > 0)
+    if ($saved_group_by <> '') {
         $find_data_type = $saved_group_by;
-    else
+    } else {
         $find_data_type = "SESSION_SUMMA";
+    }
 } elseif ($saved_group_by != $find_data_type)//Set if changed
+{
     $saved_group_by = $find_data_type;
+}
 
 InitFilterEx($arSettings, $sTableID . "_settings", "set");
 
@@ -195,9 +211,11 @@ else:
                 <td valign="center" class="graph"><?
                     $width = COption::GetOptionString("statistic", "GRAPH_WEIGHT");
                     $height = COption::GetOptionString("statistic", "GRAPH_HEIGHT");
-                    ?><img class="graph"
-                           src="/bitrix/admin/adv_analysis_graph.php?rand=<?= rand() ?>&find_data_type=<?= $find_data_type ?><?= GetFilterParams($FilterArr) ?>&width=<?= $width ?>&height=<?= $height ?>&lang=<?= LANGUAGE_ID ?>"
-                           width="<?= $width ?>" height="<?= $height ?>">
+                    ?><img class="graph" src="/bitrix/admin/adv_analysis_graph.php?rand=<?= rand(
+                    ) ?>&find_data_type=<?= $find_data_type ?><?= GetFilterParams(
+                        $FilterArr
+                    ) ?>&width=<?= $width ?>&height=<?= $height ?>&lang=<?= LANGUAGE_ID ?>" width="<?= $width ?>"
+                           height="<?= $height ?>">
                 </td>
             </tr>
         </table>
@@ -222,12 +240,14 @@ function sup_sort($a, $b)
 {
     $sort1 = intval($a["SM"]);
     $sort2 = intval($b["SM"]);
-    if ($sort1 == $sort2)
+    if ($sort1 == $sort2) {
         return 0;
-    if ($sort1 < $sort2)
+    }
+    if ($sort1 < $sort2) {
         return 1;
-    else
+    } else {
         return -1;
+    }
 }
 
 uasort($arrLegend, "sup_sort");
@@ -242,16 +262,31 @@ $max_width = 90;
 $max_relation = ($max * 100) / $max_width;
 
 while ($arRes = $rsData->NavNext(true, "f_")) {
-    if ($max_relation > 0) $w = round(($f_SM * 100) / $max_relation);
-    if ($total > 0) $q = number_format(($f_SM * 100) / $total, 2, '.', '');
+    if ($max_relation > 0) {
+        $w = round(($f_SM * 100) / $max_relation);
+    }
+    if ($total > 0) {
+        $q = number_format(($f_SM * 100) / $total, 2, '.', '');
+    }
     $number++;
 
     $row =& $lAdmin->AddRow($number, $arRes);
 
-    $row->AddViewField("COLOR", "&nbsp;<img src=\"/bitrix/admin/graph_legend.php?color=" . $f_CLR . "\" width=\"45\" height=\"2\">&nbsp;");
-    $row->AddViewField("ADV", "[<a href=\"/bitrix/admin/adv_list.php?lang=" . LANG . "&amp;find_id=" . $f_ID . "&amp;find_id_exact_match=Y&amp;set_filter=Y\">" . $f_ID . "</a>]&nbsp;" . $f_R1 . "&nbsp;/&nbsp;" . $f_R2);
+    $row->AddViewField(
+        "COLOR",
+        "&nbsp;<img src=\"/bitrix/admin/graph_legend.php?color=" . $f_CLR . "\" width=\"45\" height=\"2\">&nbsp;"
+    );
+    $row->AddViewField(
+        "ADV",
+        "[<a href=\"/bitrix/admin/adv_list.php?lang=" . LANG . "&amp;find_id=" . $f_ID . "&amp;find_id_exact_match=Y&amp;set_filter=Y\">" . $f_ID . "</a>]&nbsp;" . $f_R1 . "&nbsp;/&nbsp;" . $f_R2
+    );
     $row->AddViewField("PERCENT", $q . "%");
-    $row->AddViewField("COUNTER", "<a href=\"/bitrix/admin/adv_dynamic_list.php?lang=" . LANG . "&amp;find_adv_id=" . $f_ID . "&amp;find_adv_id_exact_match=Y&amp;find_date1=" . urlencode($find_date1) . "&amp;find_date2=" . urlencode($find_date2) . "&amp;set_filter=Y\">" . $f_SM . "</a>");
+    $row->AddViewField(
+        "COUNTER",
+        "<a href=\"/bitrix/admin/adv_dynamic_list.php?lang=" . LANG . "&amp;find_adv_id=" . $f_ID . "&amp;find_adv_id_exact_match=Y&amp;find_date1=" . urlencode(
+            $find_date1
+        ) . "&amp;find_date2=" . urlencode($find_date2) . "&amp;set_filter=Y\">" . $f_SM . "</a>"
+    );
 }
 
 // List footer
@@ -292,8 +327,14 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
 
         <tr valign="center">
             <td width="0%" nowrap><? echo GetMessage("STAT_F_PERIOD") . ":" ?></td>
-            <td width="0%"
-                nowrap><? echo CalendarPeriod("find_date1", $find_date1, "find_date2", $find_date2, "form1", "Y") ?></td>
+            <td width="0%" nowrap><? echo CalendarPeriod(
+                    "find_date1",
+                    $find_date1,
+                    "find_date2",
+                    $find_date2,
+                    "form1",
+                    "Y"
+                ) ?></td>
         </tr>
 
 
@@ -306,14 +347,16 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
         <tr>
             <td>referer1:</td>
             <td><input type="text" name="find_referer1" size="35"
-                       value="<? echo htmlspecialcharsbx($find_referer1) ?>"><?= ShowExactMatchCheckbox("find_referer1") ?>
-                &nbsp;<?= ShowFilterLogicHelp() ?></td>
+                       value="<? echo htmlspecialcharsbx($find_referer1) ?>"><?= ShowExactMatchCheckbox(
+                    "find_referer1"
+                ) ?>&nbsp;<?= ShowFilterLogicHelp() ?></td>
         </tr>
         <tr>
             <td>referer2:</td>
             <td><input type="text" name="find_referer2" size="35"
-                       value="<? echo htmlspecialcharsbx($find_referer2) ?>"><?= ShowExactMatchCheckbox("find_referer2") ?>
-                &nbsp;<?= ShowFilterLogicHelp() ?></td>
+                       value="<? echo htmlspecialcharsbx($find_referer2) ?>"><?= ShowExactMatchCheckbox(
+                    "find_referer2"
+                ) ?>&nbsp;<?= ShowFilterLogicHelp() ?></td>
         </tr>
 
         <? //if (is_array($arrADV)):?>
@@ -322,7 +365,15 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
                 echo GetMessage("STAT_F_SELECT_ADV") ?>:<br><img src="/bitrix/images/statistic/mouse.gif" width="44"
                                                                  height="21" border=0 alt=""></td>
             <td width="100%" nowrap><?
-                echo SelectBoxMFromArray("find_adv[]", array("REFERENCE" => $find_adv_names, "REFERENCE_ID" => $find_adv), $find_adv, "", false, "10", "style=\"width:300px;\"");
+                echo SelectBoxMFromArray(
+                    "find_adv[]",
+                    array("REFERENCE" => $find_adv_names, "REFERENCE_ID" => $find_adv),
+                    $find_adv,
+                    "",
+                    false,
+                    "10",
+                    "style=\"width:300px;\""
+                );
                 ?>
                 <script language="Javascript">
                     function selectEventType(form, field) {
@@ -367,27 +418,38 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
             <tr>
                 <td><?= GetMessage("STAT_F_ID2") ?>:</td>
                 <td><input type="text" name="find_event_type_id" size="35"
-                           value="<? echo htmlspecialcharsbx($find_event_type_id) ?>"><?= ShowExactMatchCheckbox("find_event_type_id") ?>
-                    &nbsp;<?= ShowFilterLogicHelp() ?></td>
+                           value="<? echo htmlspecialcharsbx($find_event_type_id) ?>"><?= ShowExactMatchCheckbox(
+                        "find_event_type_id"
+                    ) ?>&nbsp;<?= ShowFilterLogicHelp() ?></td>
             </tr>
             <tr>
                 <td>event1:</td>
                 <td><input type="text" name="find_event1" size="35"
-                           value="<? echo htmlspecialcharsbx($find_event1) ?>"><?= ShowExactMatchCheckbox("find_event1") ?>
-                    &nbsp;<?= ShowFilterLogicHelp() ?></td>
+                           value="<? echo htmlspecialcharsbx($find_event1) ?>"><?= ShowExactMatchCheckbox(
+                        "find_event1"
+                    ) ?>&nbsp;<?= ShowFilterLogicHelp() ?></td>
             </tr>
             <tr>
                 <td>event2:</td>
                 <td><input type="text" name="find_event2" size="35"
-                           value="<? echo htmlspecialcharsbx($find_event2) ?>"><?= ShowExactMatchCheckbox("find_event2") ?>
-                    &nbsp;<?= ShowFilterLogicHelp() ?></td>
+                           value="<? echo htmlspecialcharsbx($find_event2) ?>"><?= ShowExactMatchCheckbox(
+                        "find_event2"
+                    ) ?>&nbsp;<?= ShowFilterLogicHelp() ?></td>
             </tr>
 
             <tr valign="top">
                 <td><?= GetMessage("STAT_F_SELECT_EVENTS") ?>:</td>
                 <td>
                     <?
-                    echo SelectBoxMFromArray("find_events[]", array("REFERENCE" => $find_events_names, "REFERENCE_ID" => $find_events), $find_events, "", false, "10", "style=\"width:300px;\"");
+                    echo SelectBoxMFromArray(
+                        "find_events[]",
+                        array("REFERENCE" => $find_events_names, "REFERENCE_ID" => $find_events),
+                        $find_events,
+                        "",
+                        false,
+                        "10",
+                        "style=\"width:300px;\""
+                    );
                     ?>
                     <script language="Javascript">
                         function selectEvent(form, field) {
@@ -415,8 +477,9 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
 
 
 <?
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 $lAdmin->DisplayList();
 ?>
 

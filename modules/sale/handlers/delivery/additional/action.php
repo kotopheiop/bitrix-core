@@ -32,17 +32,20 @@ class Action
             return $result;
         }
 
-        if (self::isExecuted($params['ID']))
+        if (self::isExecuted($params['ID'])) {
             return $result;
+        }
 
         switch ($params['TYPE']) {
             case 'TYPE_CACHE_CLEAR':
 
-                if (!isset($params['PARAMS']['CACHE_TYPE']))
+                if (!isset($params['PARAMS']['CACHE_TYPE'])) {
                     break;
+                }
 
-                if (!$cache = CacheManager::getItem($params['PARAMS']['CACHE_TYPE']))
+                if (!$cache = CacheManager::getItem($params['PARAMS']['CACHE_TYPE'])) {
                     break;
+                }
 
                 $cache->clean();
                 break;
@@ -71,8 +74,11 @@ class Action
         return (
         in_array(
             $id,
-            explode(',', Option::get('sale', self::EXECUTED_OPTION, '')
-            ))
+            explode(
+                ',',
+                Option::get('sale', self::EXECUTED_OPTION, '')
+            )
+        )
         );
     }
 
@@ -85,8 +91,9 @@ class Action
         if (!self::isExecuted($id)) {
             $value = Option::get('sale', self::EXECUTED_OPTION, '');
 
-            if (strlen($value) > 0)
+            if ($value <> '') {
                 $value .= ',';
+            }
 
             $value .= $id;
 

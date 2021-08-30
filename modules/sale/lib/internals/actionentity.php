@@ -35,8 +35,9 @@ class ActionEntity extends PoolBase
         }
 
         foreach ($typeList as $type) {
-            if (!isset($actionsList[$type]))
+            if (!isset($actionsList[$type])) {
                 continue;
+            }
 
             foreach ($actionsList[$type] as $actionParams) {
                 /** @var Result $r */

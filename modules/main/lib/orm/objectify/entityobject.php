@@ -17,6 +17,7 @@ use Bitrix\Main\ORM\Data\UpdateResult;
 use Bitrix\Main\ORM\Entity;
 use Bitrix\Main\ORM\Fields\ExpressionField;
 use Bitrix\Main\ORM\Fields\IReadable;
+use Bitrix\Main\ORM\Fields\ObjectField;
 use Bitrix\Main\ORM\Fields\Relations\CascadePolicy;
 use Bitrix\Main\ORM\Fields\Relations\ManyToMany;
 use Bitrix\Main\ORM\Fields\Relations\OneToMany;
@@ -115,10 +116,30 @@ abstract class EntityObject implements ArrayAccess
         if (is_array($setDefaultValues)) {
             // we have custom default values
             foreach ($setDefaultValues as $fieldName => $defaultValue) {
-                $this->set($fieldName, $defaultValue);
+                $field = $this->entity->getField($fieldName);
+
+                if ($field instanceof Reference) {
+                    if (is_array($defaultValue)) {
+                        $defaultValue = $field->getRefEntity()->createObject($defaultValue);
+                    }
+
+                    $this->set($fieldName, $defaultValue);
+                } elseif (($field instanceof OneToMany || $field instanceof ManyToMany)
+                    && is_array($defaultValue)) {
+                    foreach ($defaultValue as $subValue) {
+                        if (is_array($subValue)) {
+                            $subValue = $field->getRefEntity()->createObject($subValue);
+                        }
+
+                        $this->addTo($fieldName, $subValue);
+                    }
+                } else {
+                    $this->set($fieldName, $defaultValue);
+                }
             }
         }
 
+        // set map default values
         if ($setDefaultValues || is_array($setDefaultValues)) {
             foreach ($this->entity->getScalarFields() as $fieldName => $field) {
                 if ($this->sysHasValue($fieldName)) {
@@ -135,17 +156,50 @@ abstract class EntityObject implements ArrayAccess
         }
     }
 
+    public function __clone()
+    {
+        $this->_actualValues = $this->cloneValues($this->_actualValues);
+        $this->_currentValues = $this->cloneValues($this->_currentValues);
+    }
+
+    protected function cloneValues(array $values): array
+    {
+        // Do not clone References to avoid infinite recursion
+        $valuesWithoutReferences = $this->filterValuesByMask($values, FieldTypeMask::REFERENCE, true);
+        $references = array_diff_key($values, $valuesWithoutReferences);
+
+        return array_merge($references, \Bitrix\Main\Type\Collection::clone($valuesWithoutReferences));
+    }
+
+    protected function filterValuesByMask(array $values, int $fieldsMask, bool $invertedFilter = false): array
+    {
+        if ($fieldsMask === FieldTypeMask::ALL) {
+            return $invertedFilter ? [] : $values;
+        }
+
+        return array_filter(
+            $values,
+            function ($fieldName) use ($fieldsMask, $invertedFilter) {
+                $maskOfSingleField = $this->entity->getField($fieldName)->getTypeMask();
+                $matchesMask = (bool)($fieldsMask & $maskOfSingleField);
+
+                return $invertedFilter ? !$matchesMask : $matchesMask;
+            },
+            ARRAY_FILTER_USE_KEY
+        );
+    }
+
     /**
      * Returns all objects values as an array
      *
      * @param int $valuesType
      * @param int $fieldsMask
+     * @param bool $recursive
      *
      * @return array
      * @throws ArgumentException
-     * @throws SystemException
      */
-    final public function collectValues($valuesType = Values::ALL, $fieldsMask = FieldTypeMask::ALL)
+    final public function collectValues($valuesType = Values::ALL, $fieldsMask = FieldTypeMask::ALL, $recursive = false)
     {
         switch ($valuesType) {
             case Values::ACTUAL:
@@ -164,6 +218,21 @@ abstract class EntityObject implements ArrayAccess
                 $fieldMask = $this->entity->getField($fieldName)->getTypeMask();
                 if (!($fieldsMask & $fieldMask)) {
                     unset($objectValues[$fieldName]);
+                }
+            }
+        }
+
+        // recursive convert object to array
+        if ($recursive) {
+            foreach ($objectValues as $fieldName => $value) {
+                if ($value instanceof EntityObject) {
+                    $objectValues[$fieldName] = $value->collectValues($valuesType, $fieldsMask, $recursive);
+                } elseif ($value instanceof Collection) {
+                    $arrayCollection = [];
+                    foreach ($value as $relationObject) {
+                        $arrayCollection[] = $relationObject->collectValues($valuesType, $fieldsMask, $recursive);
+                    }
+                    $objectValues[$fieldName] = $arrayCollection;
                 }
             }
         }
@@ -203,6 +272,26 @@ abstract class EntityObject implements ArrayAccess
 
         $dataClass = $this->entity->getDataClass();
 
+        // check for object fields, it could be changed without notification
+        foreach ($this->_currentValues as $fieldName => $currentValue) {
+            $field = $this->entity->getField($fieldName);
+
+            if ($field instanceof ObjectField) {
+                $actualValue = $this->_actualValues[$fieldName];
+
+                if ($field->encode($currentValue) !== $field->encode($actualValue)) {
+                    if ($this->_state === State::ACTUAL) {
+                        // value has changed, set new state
+                        $this->_state = State::CHANGED;
+                    }
+                } else {
+                    // value has not changed, hide it until postSave
+                    unset($this->_currentValues[$fieldName]);
+                }
+            }
+        }
+
+        // save data
         if ($this->_state == State::RAW) {
             $data = $this->_currentValues;
             $data['__object'] = $this;
@@ -218,6 +307,9 @@ abstract class EntityObject implements ArrayAccess
             // set primary
             foreach ($result->getPrimary() as $primaryName => $primaryValue) {
                 $this->sysSetActual($primaryName, $primaryValue);
+
+                // db value has priority in case of custom value for autocomplete
+                $this->sysSetValue($primaryName, $primaryValue);
             }
 
             // on primary gain event
@@ -343,16 +435,23 @@ abstract class EntityObject implements ArrayAccess
                 $primary[$entityPrimary[0]] = $row;
                 $row = [];
             } else {
-                throw new ArgumentException(sprintf(
-                    'Multi-primary for %s was not found', $objectClass
-                ));
+                throw new ArgumentException(
+                    sprintf(
+                        'Multi-primary for %s was not found',
+                        $objectClass
+                    )
+                );
             }
         } else {
             foreach ($entityPrimary as $primaryName) {
                 if (!isset($row[$primaryName])) {
-                    throw new ArgumentException(sprintf(
-                        'Primary %s for %s was not found', $primaryName, $objectClass
-                    ));
+                    throw new ArgumentException(
+                        sprintf(
+                            'Primary %s for %s was not found',
+                            $primaryName,
+                            $objectClass
+                        )
+                    );
                 }
 
                 $primary[$primaryName] = $row[$primaryName];
@@ -493,9 +592,13 @@ abstract class EntityObject implements ArrayAccess
         } elseif (array_key_exists('ID', $this->_actualValues)) {
             return $this->_actualValues['ID'];
         } elseif (!$this->entity->hasField('ID')) {
-            throw new SystemException(sprintf(
-                'Unknown method `%s` for object `%s`', 'getId', get_called_class()
-            ));
+            throw new SystemException(
+                sprintf(
+                    'Unknown method `%s` for object `%s`',
+                    'getId',
+                    get_called_class()
+                )
+            );
         } else {
             return null;
         }
@@ -685,9 +788,13 @@ abstract class EntityObject implements ArrayAccess
                 return $this->_authContext;
         }
 
-        throw new SystemException(sprintf(
-            'Unknown property `%s` for object `%s`', $name, get_called_class()
-        ));
+        throw new SystemException(
+            sprintf(
+                'Unknown property `%s` for object `%s`',
+                $name,
+                get_called_class()
+            )
+        );
     }
 
     /**
@@ -708,14 +815,22 @@ abstract class EntityObject implements ArrayAccess
             case 'dataClass':
             case 'customData':
             case 'state':
-                throw new SystemException(sprintf(
-                    'Property `%s` for object `%s` is read-only', $name, get_called_class()
-                ));
+                throw new SystemException(
+                    sprintf(
+                        'Property `%s` for object `%s` is read-only',
+                        $name,
+                        get_called_class()
+                    )
+                );
         }
 
-        throw new SystemException(sprintf(
-            'Unknown property `%s` for object `%s`', $name, get_called_class()
-        ));
+        throw new SystemException(
+            sprintf(
+                'Unknown property `%s` for object `%s`',
+                $name,
+                get_called_class()
+            )
+        );
     }
 
     /**
@@ -736,7 +851,7 @@ abstract class EntityObject implements ArrayAccess
         if ($first3 == 'get') {
             $fieldName = self::sysMethodToFieldCase(substr($name, 3));
 
-            if (!strlen($fieldName)) {
+            if ($fieldName == '') {
                 $fieldName = StringHelper::strtoupper($arguments[0]);
 
                 // check runtime
@@ -766,16 +881,19 @@ abstract class EntityObject implements ArrayAccess
             $fieldName = self::sysMethodToFieldCase(substr($name, 3));
             $value = $arguments[0];
 
-            if (!strlen($fieldName)) {
+            if ($fieldName == '') {
                 $fieldName = StringHelper::strtoupper($arguments[0]);
                 $value = $arguments[1];
 
                 // check for runtime field
                 if (array_key_exists($fieldName, $this->_runtimeValues)) {
-                    throw new SystemException(sprintf(
-                        'Setting value for runtime field `%s` in `%s` is not allowed, it is read-only field',
-                        $fieldName, get_called_class()
-                    ));
+                    throw new SystemException(
+                        sprintf(
+                            'Setting value for runtime field `%s` in `%s` is not allowed, it is read-only field',
+                            $fieldName,
+                            get_called_class()
+                        )
+                    );
                 }
 
                 // check if custom method exists
@@ -804,7 +922,7 @@ abstract class EntityObject implements ArrayAccess
         if ($first3 == 'has') {
             $fieldName = self::sysMethodToFieldCase(substr($name, 3));
 
-            if (!strlen($fieldName)) {
+            if ($fieldName == '') {
                 $fieldName = StringHelper::strtoupper($arguments[0]);
 
                 // check if custom method exists
@@ -844,7 +962,7 @@ abstract class EntityObject implements ArrayAccess
             $fieldName = self::sysMethodToFieldCase(substr($name, 5));
             $value = $arguments[0];
 
-            if (!strlen($fieldName)) {
+            if ($fieldName == '') {
                 $fieldName = StringHelper::strtoupper($arguments[0]);
                 $value = $arguments[1];
 
@@ -868,7 +986,7 @@ abstract class EntityObject implements ArrayAccess
         if ($first5 == 'unset') {
             $fieldName = self::sysMethodToFieldCase(substr($name, 5));
 
-            if (!strlen($fieldName)) {
+            if ($fieldName == '') {
                 $fieldName = StringHelper::strtoupper($arguments[0]);
 
                 // check if custom method exists
@@ -891,7 +1009,7 @@ abstract class EntityObject implements ArrayAccess
         if ($first5 == 'reset') {
             $fieldName = self::sysMethodToFieldCase(substr($name, 5));
 
-            if (!strlen($fieldName)) {
+            if ($fieldName == '') {
                 $fieldName = StringHelper::strtoupper($arguments[0]);
 
                 // check if custom method exists
@@ -922,7 +1040,7 @@ abstract class EntityObject implements ArrayAccess
         if ($first9 == 'removeAll') {
             $fieldName = self::sysMethodToFieldCase(substr($name, 9));
 
-            if (!strlen($fieldName)) {
+            if ($fieldName == '') {
                 $fieldName = StringHelper::strtoupper($arguments[0]);
 
                 // check if custom method exists
@@ -948,7 +1066,7 @@ abstract class EntityObject implements ArrayAccess
             $fieldName = self::sysMethodToFieldCase(substr($name, 10));
             $value = $arguments[0];
 
-            if (!strlen($fieldName)) {
+            if ($fieldName == '') {
                 $fieldName = StringHelper::strtoupper($arguments[0]);
                 $value = $arguments[1];
 
@@ -974,7 +1092,7 @@ abstract class EntityObject implements ArrayAccess
         if ($first12 == 'remindActual') {
             $fieldName = self::sysMethodToFieldCase(substr($name, 12));
 
-            if (!strlen($fieldName)) {
+            if ($fieldName == '') {
                 $fieldName = StringHelper::strtoupper($arguments[0]);
 
                 // check if custom method exists
@@ -1000,7 +1118,7 @@ abstract class EntityObject implements ArrayAccess
         if ($first7 == 'require') {
             $fieldName = self::sysMethodToFieldCase(substr($name, 7));
 
-            if (!strlen($fieldName)) {
+            if ($fieldName == '') {
                 $fieldName = StringHelper::strtoupper($arguments[0]);
 
                 // check if custom method exists
@@ -1027,7 +1145,7 @@ abstract class EntityObject implements ArrayAccess
         if ($first2 == 'is' && $last6 == 'Filled') {
             $fieldName = self::sysMethodToFieldCase(substr($name, 2, -6));
 
-            if (!strlen($fieldName)) {
+            if ($fieldName == '') {
                 $fieldName = StringHelper::strtoupper($arguments[0]);
 
                 // check if custom method exists
@@ -1045,7 +1163,10 @@ abstract class EntityObject implements ArrayAccess
                 $field = $this->entity->getField($fieldName);
 
                 if ($field instanceof OneToMany || $field instanceof ManyToMany) {
-                    return array_key_exists($fieldName, $this->_actualValues) && $this->_actualValues[$fieldName]->sysIsFilled();
+                    return array_key_exists(
+                            $fieldName,
+                            $this->_actualValues
+                        ) && $this->_actualValues[$fieldName]->sysIsFilled();
                 } else {
                     return $this->sysIsFilled($fieldName);
                 }
@@ -1058,7 +1179,7 @@ abstract class EntityObject implements ArrayAccess
         if ($first2 == 'is' && $last7 == 'Changed') {
             $fieldName = self::sysMethodToFieldCase(substr($name, 2, -7));
 
-            if (!strlen($fieldName)) {
+            if ($fieldName == '') {
                 $fieldName = StringHelper::strtoupper($arguments[0]);
 
                 // check if custom method exists
@@ -1076,16 +1197,23 @@ abstract class EntityObject implements ArrayAccess
                 $field = $this->entity->getField($fieldName);
 
                 if ($field instanceof OneToMany || $field instanceof ManyToMany) {
-                    return array_key_exists($fieldName, $this->_actualValues) && $this->_actualValues[$fieldName]->sysIsChanged();
+                    return array_key_exists(
+                            $fieldName,
+                            $this->_actualValues
+                        ) && $this->_actualValues[$fieldName]->sysIsChanged();
                 } else {
                     return $this->sysIsChanged($fieldName);
                 }
             }
         }
 
-        throw new SystemException(sprintf(
-            'Unknown method `%s` for object `%s`', $name, get_called_class()
-        ));
+        throw new SystemException(
+            sprintf(
+                'Unknown method `%s` for object `%s`',
+                $name,
+                get_called_class()
+            )
+        );
     }
 
     /**
@@ -1160,7 +1288,14 @@ abstract class EntityObject implements ArrayAccess
      */
     public function sysSetActual($fieldName, $value)
     {
-        $this->_actualValues[StringHelper::strtoupper($fieldName)] = $value;
+        $fieldName = StringHelper::strtoupper($fieldName);
+        $this->_actualValues[$fieldName] = $value;
+
+        // special condition for object values - it should be gotten and changed as current value
+        // and actual value will be used for comparison
+        if ($this->entity->getField($fieldName) instanceof ObjectField) {
+            $this->_currentValues[$fieldName] = clone $value;
+        }
     }
 
     /**
@@ -1189,7 +1324,6 @@ abstract class EntityObject implements ArrayAccess
 
             $this->_state = $state;
         }
-
     }
 
     /**
@@ -1222,9 +1356,12 @@ abstract class EntityObject implements ArrayAccess
             return $this->_currentValues[$fieldName];
         } else {
             if ($require && !array_key_exists($fieldName, $this->_actualValues)) {
-                throw new SystemException(sprintf(
-                    '%s value is required for further operations', $fieldName
-                ));
+                throw new SystemException(
+                    sprintf(
+                        '%s value is required for further operations',
+                        $fieldName
+                    )
+                );
             }
 
             return isset($this->_actualValues[$fieldName])
@@ -1253,19 +1390,25 @@ abstract class EntityObject implements ArrayAccess
         if ($field instanceof ScalarField) {
             // restrict updating primary
             if ($this->_state !== State::RAW && in_array($field->getName(), $this->entity->getPrimaryArray())) {
-                throw new SystemException(sprintf(
-                    'Setting value for Primary `%s` in `%s` is not allowed, it is read-only field',
-                    $field->getName(), get_called_class()
-                ));
+                throw new SystemException(
+                    sprintf(
+                        'Setting value for Primary `%s` in `%s` is not allowed, it is read-only field',
+                        $field->getName(),
+                        get_called_class()
+                    )
+                );
             }
         }
 
         // no setter for expressions
         if ($field instanceof ExpressionField && !($field instanceof UserTypeField)) {
-            throw new SystemException(sprintf(
-                'Setting value for ExpressionField `%s` in `%s` is not allowed, it is read-only field',
-                $fieldName, get_called_class()
-            ));
+            throw new SystemException(
+                sprintf(
+                    'Setting value for ExpressionField `%s` in `%s` is not allowed, it is read-only field',
+                    $fieldName,
+                    get_called_class()
+                )
+            );
         }
 
         if ($field instanceof Reference) {
@@ -1274,9 +1417,13 @@ abstract class EntityObject implements ArrayAccess
                 $remoteObjectClass = $field->getRefEntity()->getObjectClass();
 
                 if (!($value instanceof $remoteObjectClass)) {
-                    throw new ArgumentException(sprintf(
-                        'Expected instance of `%s`, got `%s` instead', $remoteObjectClass, get_class($value)
-                    ));
+                    throw new ArgumentException(
+                        sprintf(
+                            'Expected instance of `%s`, got `%s` instead',
+                            $remoteObjectClass,
+                            get_class($value)
+                        )
+                    );
                 }
             }
         }
@@ -1341,9 +1488,13 @@ abstract class EntityObject implements ArrayAccess
                 }
             }
         } else {
-            throw new SystemException(sprintf(
-                'Unknown field type `%s` in system setter of `%s`', get_class($field), get_called_class()
-            ));
+            throw new SystemException(
+                sprintf(
+                    'Unknown field type `%s` in system setter of `%s`',
+                    get_class($field),
+                    get_called_class()
+                )
+            );
         }
 
         if ($this->_state == State::ACTUAL) {
@@ -1396,6 +1547,14 @@ abstract class EntityObject implements ArrayAccess
     public function sysIsChanged($fieldName)
     {
         $fieldName = StringHelper::strtoupper($fieldName);
+        $field = $this->entity->getField($fieldName);
+
+        if ($field instanceof ObjectField) {
+            $currentValue = $this->_currentValues[$fieldName];
+            $actualValue = $this->_actualValues[$fieldName];
+
+            return $field->encode($currentValue) !== $field->encode($actualValue);
+        }
 
         return array_key_exists($fieldName, $this->_currentValues);
     }
@@ -1508,9 +1667,12 @@ abstract class EntityObject implements ArrayAccess
             try {
                 $primaryValues[$primaryName] = $this->sysGetValue($primaryName, true);
             } catch (SystemException $e) {
-                throw new SystemException(sprintf(
-                    'Primary `%s` value is required for further operations', $primaryName
-                ));
+                throw new SystemException(
+                    sprintf(
+                        'Primary `%s` value is required for further operations',
+                        $primaryName
+                    )
+                );
             }
         }
 
@@ -1541,7 +1703,8 @@ abstract class EntityObject implements ArrayAccess
             if (!isset($this->_actualValues[$fieldName])) {
                 // regular field
                 $list[] = $fieldName;
-            } elseif ($this->_actualValues[$fieldName] instanceof Collection && !$this->_actualValues[$fieldName]->sysIsFilled()) {
+            } elseif ($this->_actualValues[$fieldName] instanceof Collection && !$this->_actualValues[$fieldName]->sysIsFilled(
+                )) {
                 // non-filled collection
                 $list[] = $fieldName;
             }
@@ -1720,7 +1883,7 @@ abstract class EntityObject implements ArrayAccess
                 if ($v->state === State::ACTUAL || $v->state === State::CHANGED) {
                     $this->sysSetActual($k, $v);
                 }
-            } elseif ($field instanceof ScalarField) {
+            } elseif ($field instanceof ScalarField || $field instanceof UserTypeField) {
                 $v = $field->cast($v);
                 $this->sysSetActual($k, $v);
             }
@@ -1731,6 +1894,13 @@ abstract class EntityObject implements ArrayAccess
 
         // change state
         $this->sysChangeState(State::ACTUAL);
+
+        // return object field to current values
+        foreach ($this->_actualValues as $fieldName => $actualValue) {
+            if ($this->entity->getField($fieldName) instanceof ObjectField) {
+                $this->_currentValues[$fieldName] = clone $actualValue;
+            }
+        }
     }
 
     /**
@@ -1752,9 +1922,13 @@ abstract class EntityObject implements ArrayAccess
 
         // validate object class
         if (!($remoteObject instanceof $remoteObjectClass)) {
-            throw new ArgumentException(sprintf(
-                'Expected instance of `%s`, got `%s` instead', $remoteObjectClass, get_class($remoteObject)
-            ));
+            throw new ArgumentException(
+                sprintf(
+                    'Expected instance of `%s`, got `%s` instead',
+                    $remoteObjectClass,
+                    get_class($remoteObject)
+                )
+            );
         }
 
         // initialize collection
@@ -1777,9 +1951,11 @@ abstract class EntityObject implements ArrayAccess
             if ($this->state == State::RAW) {
                 $localObject = $this;
 
-                $this->sysAddOnPrimarySetListener(function () use ($localObject, $remoteObject, $remoteFieldName) {
-                    $remoteObject->sysSetValue($remoteFieldName, $localObject);
-                });
+                $this->sysAddOnPrimarySetListener(
+                    function () use ($localObject, $remoteObject, $remoteFieldName) {
+                        $remoteObject->sysSetValue($remoteFieldName, $localObject);
+                    }
+                );
             }
         }
 
@@ -1808,9 +1984,13 @@ abstract class EntityObject implements ArrayAccess
 
         // validate object class
         if (!($remoteObject instanceof $remoteObjectClass)) {
-            throw new ArgumentException(sprintf(
-                'Expected instance of `%s`, got `%s` instead', $remoteObjectClass, get_class($remoteObject)
-            ));
+            throw new ArgumentException(
+                sprintf(
+                    'Expected instance of `%s`, got `%s` instead',
+                    $remoteObjectClass,
+                    get_class($remoteObject)
+                )
+            );
         }
 
         /** @var Collection $collection Initialize collection */
@@ -1833,7 +2013,6 @@ abstract class EntityObject implements ArrayAccess
                 $remoteFieldName = $field->getRefField()->getName();
                 $remoteObject->sysSetValue($remoteFieldName, null);
             }
-
         }
 
         // mark object as changed

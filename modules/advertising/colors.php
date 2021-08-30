@@ -1,4 +1,5 @@
 <?
+
 $arrColor["ALL_TICKET"] = "F7BD08";
 $arrColor["OPEN_TICKET"] = "FF0000";
 $arrColor["CLOSE_TICKET"] = "0000FF";

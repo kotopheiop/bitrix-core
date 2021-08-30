@@ -1,4 +1,5 @@
 <?
+
 /********************************************************************
  * Profanity dictionary.
  ********************************************************************/
@@ -6,16 +7,17 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
 \Bitrix\Main\Loader::includeModule("forum");
 ClearVars();
 $forumPermissions = $APPLICATION->GetGroupRight("forum");
-if ($forumPermissions == "D")
+if ($forumPermissions == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 $forumPermWrite = CFilterUnquotableWords::FilterPerm();
 IncludeModuleLangFile(__FILE__);
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/forum/prolog.php");
 
 $bVarsFromForm = false;
-$ID = IntVal($ID);
+$ID = intval($ID);
 $ID = ($ID < 0) ? 0 : $ID;
-$DICTIONARY_ID = intVal($_REQUEST["DICTIONARY_ID"]);
+$DICTIONARY_ID = intval($_REQUEST["DICTIONARY_ID"]);
 $DICTIONARY_ID = ($DICTIONARY_ID < 0) ? 0 : $DICTIONARY_ID;
 $arFields = array();
 /*******************************************************************/
@@ -25,13 +27,15 @@ if ($REQUEST_METHOD == "POST" && ($Update = 'Y') && $forumPermWrite && check_bit
     $arFields["LETTER"] = trim($LETTER);
     $arFields["REPLACEMENT"] = trim($REPLACEMENT);
     $arFields["DICTIONARY_ID"] = $DICTIONARY_ID;
-    if ((($ID > 0) && (CFilterLetter::Update($ID, $arFields))) || (CFilterLetter::Add($arFields)))
+    if ((($ID > 0) && (CFilterLetter::Update($ID, $arFields))) || (CFilterLetter::Add($arFields))) {
         LocalRedirect("forum_letter.php?DICTIONARY_ID=" . $DICTIONARY_ID . "&lang=" . LANG);
+    }
 
-    if ($ex = $APPLICATION->GetException())
+    if ($ex = $APPLICATION->GetException()) {
         $APPLICATION->ThrowException($ex->GetString());
-    else
+    } else {
         $APPLICATION->ThrowException(GetMessage("FLTR_NOT_SAVE"));
+    }
 }
 $bVarsFromForm = true;
 $sDocTitle = ($ID > 0) ? str_replace("#ID#", $ID, GetMessage("FLTR_EDIT")) : GetMessage("FLTR_NEW");
@@ -43,11 +47,12 @@ $str_REPLACEMENT = "";
 $str_DICTIONARY_ID = $DICTIONARY_ID;
 if ($ID > 0) {
     $db_res = CFilterLetter::GetList(array(), array("ID" => $ID));
-    $db_res->ExtractFields("str_", False);
+    $db_res->ExtractFields("str_", false);
 }
 
-if ($bVarsFromForm)
+if ($bVarsFromForm) {
     $DB->InitTableVarsForEdit("b_forum_letter", "", "str_");
+}
 
 $aMenu = array(
     array(
@@ -66,14 +71,18 @@ if ($ID > 0 && $forumPermWrite) {
     );
     $aMenu[] = array(
         "TEXT" => GetMessage("FLTR_DEL"),
-        "LINK" => "javascript:if(confirm('" . GetMessage("FLTR_DEL_CONFIRM") . "')) window.location='/bitrix/admin/forum_letter.php?DICTIONARY_ID=" . $DICTIONARY_ID . "&lang=" . LANG . "&action=delete&ID[]=" . $ID . "&" . bitrix_sessid_get() . "';",
+        "LINK" => "javascript:if(confirm('" . GetMessage(
+                "FLTR_DEL_CONFIRM"
+            ) . "')) window.location='/bitrix/admin/forum_letter.php?DICTIONARY_ID=" . $DICTIONARY_ID . "&lang=" . LANG . "&action=delete&ID[]=" . $ID . "&" . bitrix_sessid_get(
+            ) . "';",
         "ICON" => "btn_delete",
     );
 }
 $context = new CAdminContextMenu($aMenu);
 $context->Show();
-if ($err = $APPLICATION->GetException())
+if ($err = $APPLICATION->GetException()) {
     CAdminMessage::ShowMessage($err->GetString());
+}
 /*******************************************************************/
 $db_res = CFilterDictionary::GetList(array(), array("TYPE" => "T"));
 $Dict = array();
@@ -88,7 +97,14 @@ while ($res = $db_res->Fetch()) {
     <input type="hidden" name="lang" value="<?= LANG ?>">
     <input type="hidden" name="ID" value="<?= $ID ?>">
     <?= bitrix_sessid_post() ?><?
-    $aTabs = array(array("DIV" => "edit", "TAB" => GetMessage("FLTR_TITLE"), "ICON" => "forum", "TITLE" => $sDocTitle,));
+    $aTabs = array(
+        array(
+            "DIV" => "edit",
+            "TAB" => GetMessage("FLTR_TITLE"),
+            "ICON" => "forum",
+            "TITLE" => $sDocTitle,
+        )
+    );
     $tabControl = new CAdminTabControl("tabControl", $aTabs);
     $tabControl->Begin();
     $tabControl->BeginNextTab();

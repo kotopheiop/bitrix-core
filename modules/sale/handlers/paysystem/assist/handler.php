@@ -24,7 +24,9 @@ class AssistHandler extends PaySystem\ServiceHandler implements PaySystem\IRefun
     public function initiatePay(Payment $payment, Request $request = null)
     {
         $extraParams = array(
-            'URL' => $this->getUrl($payment, 'pay')
+            'URL' => $this->getUrl($payment, 'pay'),
+            'ASSIST_SUCCESS_URL' => $this->getSuccessUrl($payment),
+            'ASSIST_FAIL_URL' => $this->getFailUrl($payment),
         );
         $this->setExtraParams($extraParams);
 
@@ -36,7 +38,16 @@ class AssistHandler extends PaySystem\ServiceHandler implements PaySystem\IRefun
      */
     public static function getIndicativeFields()
     {
-        return array('ordernumber', 'billnumber', 'orderamount', 'amount', 'meantypename', 'meantype_id', 'approvalcode', 'operationtype');
+        return array(
+            'ordernumber',
+            'billnumber',
+            'orderamount',
+            'amount',
+            'meantypename',
+            'meantype_id',
+            'approvalcode',
+            'operationtype'
+        );
     }
 
     /**
@@ -95,7 +106,9 @@ class AssistHandler extends PaySystem\ServiceHandler implements PaySystem\IRefun
         $hash = md5(
             ToUpper(
                 md5($this->getBusinessValue($payment, 'ASSIST_SHOP_SECRET_WORLD')) . md5(
-                    $this->getBusinessValue($payment, 'ASSIST_SHOP_IDP') . $request->get('ordernumber') . $request->get('amount') . $this->getBusinessValue($payment, 'PAYMENT_CURRENCY') . $request->get('orderstate')
+                    $this->getBusinessValue($payment, 'ASSIST_SHOP_IDP') . $request->get('ordernumber') . $request->get(
+                        'amount'
+                    ) . $this->getBusinessValue($payment, 'PAYMENT_CURRENCY') . $request->get('orderstate')
                 )
             )
         );
@@ -171,7 +184,7 @@ class AssistHandler extends PaySystem\ServiceHandler implements PaySystem\IRefun
             $result->setPSData(
                 array(
                     "PS_STATUS" => $psStatus,
-                    "PS_STATUS_CODE" => substr($status, 0, 5),
+                    "PS_STATUS_CODE" => mb_substr($status, 0, 5),
                     "PS_STATUS_DESCRIPTION" => Loc::getMessage('SALE_PS_DESCRIPTION_' . ToUpper($status)),
                     "PS_STATUS_MESSAGE" => Loc::getMessage('SALE_PS_MESSAGE_' . ToUpper($status)),
                     "PS_SUM" => $request->get('orderamount'),
@@ -195,7 +208,9 @@ class AssistHandler extends PaySystem\ServiceHandler implements PaySystem\IRefun
         }
 
         if (!$result->isSuccess()) {
-            PaySystem\Logger::addError('Assist: ' . $request->get('orderstate') . ': ' . join('\n', $result->getErrorMessages()));
+            PaySystem\Logger::addError(
+                'Assist: ' . $request->get('orderstate') . ': ' . join('\n', $result->getErrorMessages())
+            );
         }
 
         return $result;
@@ -231,10 +246,11 @@ class AssistHandler extends PaySystem\ServiceHandler implements PaySystem\IRefun
     protected function getUrl(Payment $payment = null, $action)
     {
         $url = parent::getUrl($payment, $action);
-        if ($this->isTestMode($payment))
+        if ($this->isTestMode($payment)) {
             $domain = 'payments.demo.paysecure.ru';
-        else
+        } else {
             $domain = $this->getBusinessValue($payment, 'ASSIST_SERVER_URL');
+        }
 
         return str_replace('#SERVER_NAME#', $domain, $url);
     }
@@ -281,14 +297,25 @@ class AssistHandler extends PaySystem\ServiceHandler implements PaySystem\IRefun
             if ($data && $data['result']['@']['firstcode'] == '0') {
                 $orderData = $data['result']['#']['order'][0]['#'];
                 if ((int)$orderData['ordernumber'][0]['#'] == $this->getBusinessValue($payment, 'PAYMENT_ID')) {
-                    $check = ToUpper(md5(ToUpper(md5($this->getBusinessValue($payment, 'ASSIST_SHOP_SECRET_WORLD')) . md5($this->getBusinessValue($payment, 'ASSIST_SHOP_IDP') . $orderData['ordernumber'][0]['#'] . $orderData['orderamount'][0]['#'] . $orderData['ordercurrency'][0]['#'] . $orderData['orderstate'][0]['#']))));
+                    $check = ToUpper(
+                        md5(
+                            ToUpper(
+                                md5($this->getBusinessValue($payment, 'ASSIST_SHOP_SECRET_WORLD')) . md5(
+                                    $this->getBusinessValue(
+                                        $payment,
+                                        'ASSIST_SHOP_IDP'
+                                    ) . $orderData['ordernumber'][0]['#'] . $orderData['orderamount'][0]['#'] . $orderData['ordercurrency'][0]['#'] . $orderData['orderstate'][0]['#']
+                                )
+                            )
+                        )
+                    );
 
                     if (ToUpper($orderData['checkvalue'][0]['#']) == $check) {
                         $status = str_replace(' ', '', $orderData['orderstate'][0]['#']);
 
                         $psData = array(
                             'PS_STATUS' => ($orderData['orderstate'][0]['#'] == 'Approved' ? 'Y' : 'N'),
-                            'PS_STATUS_CODE' => substr($orderData['orderstate'][0]['#'], 0, 5),
+                            'PS_STATUS_CODE' => mb_substr($orderData['orderstate'][0]['#'], 0, 5),
                             'PS_STATUS_DESCRIPTION' => Loc::getMessage('SALE_PS_DESCRIPTION_' . ToUpper($status)),
                             'PS_STATUS_MESSAGE' => Loc::getMessage('SALE_PS_MESSAGE_' . ToUpper($status)),
                             'PS_SUM' => DoubleVal($orderData['orderamount'][0]['#']),
@@ -313,5 +340,23 @@ class AssistHandler extends PaySystem\ServiceHandler implements PaySystem\IRefun
         }
 
         return $serviceResult;
+    }
+
+    /**
+     * @param Payment $payment
+     * @return mixed|string
+     */
+    private function getSuccessUrl(Payment $payment)
+    {
+        return $this->getBusinessValue($payment, 'ASSIST_SUCCESS_URL') ?: $this->service->getContext()->getUrl();
+    }
+
+    /**
+     * @param Payment $payment
+     * @return mixed|string
+     */
+    private function getFailUrl(Payment $payment)
+    {
+        return $this->getBusinessValue($payment, 'ASSIST_FAIL_URL') ?: $this->service->getContext()->getUrl();
     }
 }

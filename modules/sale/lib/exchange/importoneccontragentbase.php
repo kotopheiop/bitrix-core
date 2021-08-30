@@ -65,14 +65,30 @@ class ImportOneCContragentBase extends ImportOneCBase
 
                 $r = $item->load($fields);
 
-                if (intval($personalTypeId) <= 0)
-                    $r->addError(new Error(GetMessage("SALE_EXCHANGE_PACKAGE_ERROR_PERSONAL_TYPE_IS_EMPTY", array("#DOCUMENT_ID#" => $fields['XML_ID'])), "PACKAGE_ERROR_PERSONAL_TYPE_IS_EPMTY"));
+                if (intval($personalTypeId) <= 0) {
+                    $r->addError(
+                        new Error(
+                            GetMessage(
+                                "SALE_EXCHANGE_PACKAGE_ERROR_PERSONAL_TYPE_IS_EMPTY",
+                                array("#DOCUMENT_ID#" => $fields['XML_ID'])
+                            ), "PACKAGE_ERROR_PERSONAL_TYPE_IS_EPMTY"
+                        )
+                    );
+                }
 
                 if ($r->isSuccess()) {
                     $r = $this->modifyEntity($item);
 
-                    if (intval($item->getId()) <= 0)
-                        $r->addError(new Error(GetMessage("SALE_EXCHANGE_PACKAGE_ERROR_USER_IS_EMPTY", array("#DOCUMENT_ID#" => $fields['XML_ID'])), "PACKAGE_ERROR_USER_IS_EPMTY"));
+                    if (intval($item->getId()) <= 0) {
+                        $r->addError(
+                            new Error(
+                                GetMessage(
+                                    "SALE_EXCHANGE_PACKAGE_ERROR_USER_IS_EMPTY",
+                                    array("#DOCUMENT_ID#" => $fields['XML_ID'])
+                                ), "PACKAGE_ERROR_USER_IS_EPMTY"
+                            )
+                        );
+                    }
                 }
 
                 if (!$r->isSuccess()) {

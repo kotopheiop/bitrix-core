@@ -16,7 +16,7 @@ class ActionsChain
 
     protected $serverHostname = "";
 
-    public $results = "";
+    public $results = [];
 
     /**
      * @param string $actionId
@@ -27,22 +27,32 @@ class ActionsChain
      * @throws \Bitrix\Main\ArgumentNullException
      * @throws \Bitrix\Main\ArgumentTypeException
      */
-    public function __construct($actionId, $actionParams, $serverHostname = "", $userParams = array(), $freeParams = array())
-    {
-        if (strlen($actionId) <= 0)
+    public function __construct(
+        $actionId,
+        $actionParams,
+        $serverHostname = "",
+        $userParams = array(),
+        $freeParams = array()
+    ) {
+        if ($actionId == '') {
             throw new \Bitrix\Main\ArgumentNullException("actionId");
+        }
 
-        if (!is_array($actionParams) || empty($actionParams))
+        if (!is_array($actionParams) || empty($actionParams)) {
             throw new \Exception("Params of action " . $actionId . " are not defined correctly!");
+        }
 
-        if (!isset($actionParams["ACTIONS"]) || !is_array($actionParams["ACTIONS"]))
+        if (!isset($actionParams["ACTIONS"]) || !is_array($actionParams["ACTIONS"])) {
             throw new \Exception("Required param ACTIONS of action " . $actionId . " are not defined!");
+        }
 
-        if (!is_array($userParams))
+        if (!is_array($userParams)) {
             throw new \Bitrix\Main\ArgumentTypeException("userParams", "array");
+        }
 
-        if (!is_array($freeParams))
+        if (!is_array($freeParams)) {
             throw new \Bitrix\Main\ArgumentTypeException("freeParams", "array");
+        }
 
         $this->id = $actionId;
         $this->userParams = $userParams;
@@ -63,29 +73,38 @@ class ActionsChain
 
     public function start($inputParams = array())
     {
-        if (!is_array($inputParams))
+        if (!is_array($inputParams)) {
             throw new \Bitrix\Main\ArgumentTypeException("inputParams", "array");
+        }
 
         $result = true;
 
         foreach ($this->actionParams["ACTIONS"] as $actionId) {
             $action = $this->getActionObj($actionId);
 
-            if (!$action->start($inputParams))
+            if (!$action->start($inputParams)) {
                 $result = false;
+            }
 
             $arRes = $action->getResult();
 
-            foreach ($arRes as $actId => $res)
+            foreach ($arRes as $actId => $res) {
                 $this->results[$actId] = $res;
+            }
 
-            if (!$result)
+            if (!$result) {
                 break;
+            }
 
-            if (isset($arRes[$actionId]["OUTPUT"]["DATA"]["params"]) && is_array($arRes[$actionId]["OUTPUT"]["DATA"]["params"]))
-                foreach ($arRes[$actionId]["OUTPUT"]["DATA"]["params"] as $paramId => $paramValue)
-                    if (!isset($inputParams[$paramId]))
+            if (isset($arRes[$actionId]["OUTPUT"]["DATA"]["params"]) && is_array(
+                    $arRes[$actionId]["OUTPUT"]["DATA"]["params"]
+                )) {
+                foreach ($arRes[$actionId]["OUTPUT"]["DATA"]["params"] as $paramId => $paramValue) {
+                    if (!isset($inputParams[$paramId])) {
                         $inputParams[$paramId] = $paramValue;
+                    }
+                }
+            }
         }
 
         return $result;

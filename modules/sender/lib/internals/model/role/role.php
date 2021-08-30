@@ -34,14 +34,18 @@ class RoleTable extends Entity\DataManager
     public static function getMap()
     {
         return array(
-            'ID' => new Entity\IntegerField('ID', array(
+            'ID' => new Entity\IntegerField(
+                'ID', array(
                 'primary' => true,
                 'autocomplete' => true,
-            )),
-            'NAME' => new Entity\StringField('NAME', array(
+            )
+            ),
+            'NAME' => new Entity\StringField(
+                'NAME', array(
                 'required' => true,
                 'title' => Loc::getMessage('SENDER_INTERNALS_MODEL_ROLE_FIELD_NAME')
-            )),
+            )
+            ),
             'XML_ID' => array(
                 'data_type' => 'string',
                 'validation' => array(__CLASS__, 'validateXmlId'),

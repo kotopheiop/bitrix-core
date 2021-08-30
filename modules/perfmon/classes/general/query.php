@@ -57,27 +57,45 @@ class CPerfQueryWhere
 
         //Replace "expr1 = <const1> or expr1 = <const2> or expr1 = <const3> ..."
         //with "expr1 in (<const1>, ...)"
-        $new_sql = preg_replace_callback("/\\( (" . $this->equation_regex . "(?: OR " . $this->equation_regex . ")+) \\)/i", array($this, "_or2in"), CPerfQuery::removeSpaces($sql));
-        if ($new_sql !== null)
+        $new_sql = preg_replace_callback(
+            "/\\( (" . $this->equation_regex . "(?: OR " . $this->equation_regex . ")+) \\)/i",
+            array($this, "_or2in"),
+            CPerfQuery::removeSpaces($sql)
+        );
+        if ($new_sql !== null) {
             $sql = CPerfQuery::removeSpaces($new_sql);
+        }
 
         //Replace IN with no more than 5 values to equal
-        $sql = preg_replace("/ IN[ ]*\\([ ]*([0-9]+|'[^']*')([ ]*,[ ]*([0-9]+|'[^']*')[ ]*){0,5}[ ]*\\)/i", " = \\1 ", $sql);
+        $sql = preg_replace(
+            "/ IN[ ]*\\([ ]*([0-9]+|'[^']*')([ ]*,[ ]*([0-9]+|'[^']*')[ ]*){0,5}[ ]*\\)/i",
+            " = \\1 ",
+            $sql
+        );
 
         //Remove complex inner syntax
-        while (preg_match("/\\([^()]*\\)/", $sql))
+        while (preg_match("/\\([^()]*\\)/", $sql)) {
             $sql = preg_replace("/\\([^()]*\\)/", "", $sql);
+        }
 
         $this->simplified_sql = $sql;
 
         foreach (preg_split("/ and /i", $sql) as $str) {
             $match = array();
-            if (preg_match("/(" . $this->table_aliases_regex . "\\.[`\"\\[\\]]{0,1}[a-zA-Z0-9_]+[`\"\\[\\]]{0,1}) = (" . $this->table_aliases_regex . "\\.[`\"\\[\\]]{0,1}[a-zA-Z0-9_]+[`\"\\[\\]]{0,1})/", $str, $match)) {
+            if (preg_match(
+                "/(" . $this->table_aliases_regex . "\\.[`\"\\[\\]]{0,1}[a-zA-Z0-9_]+[`\"\\[\\]]{0,1}) = (" . $this->table_aliases_regex . "\\.[`\"\\[\\]]{0,1}[a-zA-Z0-9_]+[`\"\\[\\]]{0,1})/",
+                $str,
+                $match
+            )) {
                 $join = new CPerfQueryJoin;
                 $join->parse_left($match[1]);
                 $join->parse_right($match[2]);
                 $this->joins[] = $join;
-            } elseif (preg_match("/(" . $this->table_aliases_regex . "\\.[`\"\\[\\]]{0,1}[a-zA-Z0-9_]+[`\"\\[\\]]{0,1}) = ([0-9]+|'.+')/", $str, $match)) {
+            } elseif (preg_match(
+                "/(" . $this->table_aliases_regex . "\\.[`\"\\[\\]]{0,1}[a-zA-Z0-9_]+[`\"\\[\\]]{0,1}) = ([0-9]+|'.+')/",
+                $str,
+                $match
+            )) {
                 $join = new CPerfQueryJoin;
                 $join->parse_left($match[1]);
                 $join->parse_right($match[2]);
@@ -92,17 +110,28 @@ class CPerfQueryWhere
     function _remove_braces($sql)
     {
         while (true) {
-            $new_sql = preg_replace("/\\([ ]*(" . $this->equation_regex . "(?: AND " . $this->equation_regex . ")*)[ ]*\\)/i", "\\1", $sql);
-            if ($new_sql === null)
+            $new_sql = preg_replace(
+                "/\\([ ]*(" . $this->equation_regex . "(?: AND " . $this->equation_regex . ")*)[ ]*\\)/i",
+                "\\1",
+                $sql
+            );
+            if ($new_sql === null) {
                 break;
+            }
 
             if ($new_sql === $sql) {
-                $new_sql = preg_replace("/\\( \\( (" . $this->equation_regex . "(?: OR " . $this->equation_regex . ")*) \\) \\)/i", "( \\1 )", trim($sql));
-                if ($new_sql === null)
+                $new_sql = preg_replace(
+                    "/\\( \\( (" . $this->equation_regex . "(?: OR " . $this->equation_regex . ")*) \\) \\)/i",
+                    "( \\1 )",
+                    trim($sql)
+                );
+                if ($new_sql === null) {
                     break;
+                }
 
-                if ($new_sql === $sql)
+                if ($new_sql === $sql) {
                     break;
+                }
             }
 
             $sql = trim($new_sql);
@@ -115,9 +144,14 @@ class CPerfQueryWhere
         $sql = $or_match[0];
 
         $match = array();
-        if (preg_match_all("/(" . $this->table_aliases_regex . "\\.[a-zA-Z0-9_]+|[0-9]+|'[^']*') (?:=) ([0-9]+|'[^']*')/", $or_match[1], $match)) {
-            if (count(array_unique($match[1])) == 1)
+        if (preg_match_all(
+            "/(" . $this->table_aliases_regex . "\\.[a-zA-Z0-9_]+|[0-9]+|'[^']*') (?:=) ([0-9]+|'[^']*')/",
+            $or_match[1],
+            $match
+        )) {
+            if (count(array_unique($match[1])) == 1) {
                 $sql = $match[1][0] . " IN ( " . implode(", ", $match[2]) . " )";
+            }
         }
 
         return $sql;
@@ -136,12 +170,20 @@ class CPerfQueryTable
         $sql = CPerfQuery::removeSpaces($sql);
 
         $match = array();
-        if (preg_match("/^([`\"\\[\\]]{0,1}[a-z0-9_]+[`\"\\[\\]]{0,1}) ([`\"\\[\\]]{0,1}[a-z0-9_]+[`\"\\[\\]]{0,1}) on (.+)\$/i", $sql, $match)) {
+        if (preg_match(
+            "/^([`\"\\[\\]]{0,1}[a-z0-9_]+[`\"\\[\\]]{0,1}) ([`\"\\[\\]]{0,1}[a-z0-9_]+[`\"\\[\\]]{0,1}) on (.+)\$/i",
+            $sql,
+            $match
+        )) {
             $this->name = $match[1];
             $this->alias = $match[2];
             $this->join = $match[3];
         }
-        if (preg_match("/^([`\"\\[\\]]{0,1}[a-zA-Z0-9_]+[`\"\\[\\]]{0,1}) ([`\"\\[\\]]{0,1}[a-zA-Z0-9_]+[`\"\\[\\]]{0,1})(\$| )/", $sql, $match)) {
+        if (preg_match(
+            "/^([`\"\\[\\]]{0,1}[a-zA-Z0-9_]+[`\"\\[\\]]{0,1}) ([`\"\\[\\]]{0,1}[a-zA-Z0-9_]+[`\"\\[\\]]{0,1})(\$| )/",
+            $sql,
+            $match
+        )) {
             $this->name = $match[1];
             $this->alias = $match[2];
         } elseif (preg_match("/^([`\"\\[\\]]{0,1}[a-zA-Z0-9_]+[`\"\\[\\]]{0,1})\$/", $sql, $match)) {
@@ -168,15 +210,19 @@ class CPerfQueryFrom
         $sql = CPerfQuery::removeSpaces($sql);
 
         $match = array();
-        if (preg_match("/^select(.*) from (.*?) (where|group|having|order)/is", $sql, $match))
+        if (preg_match("/^select(.*) from (.*?) (where|group|having|order)/is", $sql, $match)) {
             $this->sql = $match[2];
-        elseif (preg_match("/^select(.*) from (.*?)\$/is", $sql, $match))
+        } elseif (preg_match("/^select(.*) from (.*?)\$/is", $sql, $match)) {
             $this->sql = $match[2];
-        else
+        } else {
             $this->sql = "";
+        }
 
         if ($this->sql) {
-            $arJoinTables = preg_split("/(,|inner\\s+join|left\\s+join)(?=\\s+[`\"\\[\\]]{0,1}[a-z0-9_]+[`\"\\[\\]]{0,1})/is", $this->sql);
+            $arJoinTables = preg_split(
+                "/(,|inner\\s+join|left\\s+join)(?=\\s+[`\"\\[\\]]{0,1}[a-z0-9_]+[`\"\\[\\]]{0,1})/is",
+                $this->sql
+            );
             foreach ($arJoinTables as $str) {
                 $table = new CPerfQueryTable;
                 if ($table->parse($str)) {
@@ -184,8 +230,9 @@ class CPerfQueryFrom
                 }
             }
 
-            if (count($this->tables) <= 0)
+            if (count($this->tables) <= 0) {
                 return false;
+            }
 
             $tables_regex = "(?:" . implode("|", $this->getTableAliases()) . ")";
             /** @var CPerfQueryTable $table */
@@ -204,8 +251,9 @@ class CPerfQueryFrom
     {
         $res = array();
         /** @var CPerfQueryTable $table */
-        foreach ($this->tables as $table)
+        foreach ($this->tables as $table) {
             $res[] = $table->alias;
+        }
         return $res;
     }
 }
@@ -223,14 +271,19 @@ class CPerfQuery
     public static function transform2select($sql)
     {
         $match = array();
-        if (preg_match("#^\\s*insert\\s+into\\s+(.+?)(\\(|)\\s*(\\s*select.*)\\s*\\2\\s*(\$|ON\\s+DUPLICATE\\s+KEY\\s+UPDATE)#is", $sql, $match))
+        if (preg_match(
+            "#^\\s*insert\\s+into\\s+(.+?)(\\(|)\\s*(\\s*select.*)\\s*\\2\\s*(\$|ON\\s+DUPLICATE\\s+KEY\\s+UPDATE)#is",
+            $sql,
+            $match
+        )) {
             $result = $match[3];
-        elseif (preg_match("#^\\s*DELETE\\s+#i", $sql))
+        } elseif (preg_match("#^\\s*DELETE\\s+#i", $sql)) {
             $result = preg_replace("#^\\s*(DELETE.*?FROM)#is", "select * from", $sql);
-        elseif (preg_match("#^\\s*SELECT\\s+#i", $sql))
+        } elseif (preg_match("#^\\s*SELECT\\s+#i", $sql)) {
             $result = $sql;
-        else
+        } else {
             $result = "";
+        }
 
         return $result;
     }
@@ -246,25 +299,29 @@ class CPerfQuery
         $this->sql = CPerfQuery::removeSpaces($this->sql);
 
         $match = array();
-        if (preg_match("/^(select) /i", $this->sql, $match))
-            $this->type = strtolower($match[1]);
-        else
+        if (preg_match("/^(select) /i", $this->sql, $match)) {
+            $this->type = mb_strtolower($match[1]);
+        } else {
             $this->type = "unknown";
+        }
 
         if ($this->type == "select") {
             //0 TODO replace literals with placeholders
             //1 remove subqueries from sql
-            if (!$this->parse_subqueries())
+            if (!$this->parse_subqueries()) {
                 return false;
+            }
             //2 parse from
             $this->from = new CPerfQueryFrom;
-            if (!$this->from->parse($this->sql))
+            if (!$this->from->parse($this->sql)) {
                 return false;
+            }
 
             $tables_regex = "(?:" . implode("|", $this->from->getTableAliases()) . ")";
             $this->where = new CPerfQueryWhere($tables_regex);
-            if (preg_match("/ where (.+?)(\$| group | having | order )/i", $this->sql, $match))
+            if (preg_match("/ where (.+?)(\$| group | having | order )/i", $this->sql, $match)) {
                 $this->where->parse($match[1]);
+            }
 
             return true;
         } else {
@@ -280,14 +337,15 @@ class CPerfQuery
         $subq = 0;
         $braces = 0;
         foreach ($ar as $i => $str) {
-            if ($str == ")")
+            if ($str == ")") {
                 $braces--;
-            elseif (substr($str, 0, 1) == "(")
+            } elseif (mb_substr($str, 0, 1) == "(") {
                 $braces++;
+            }
 
             if ($subq == 0) {
                 if (preg_match("/^\\(\\s*select/is", $str)) {
-                    $this->subqueries[] = substr($str, 1);
+                    $this->subqueries[] = mb_substr($str, 1);
                     $subq++;
                     unset($ar[$i]);
                 }
@@ -306,12 +364,13 @@ class CPerfQuery
 
     function cmp($table, $alias)
     {
-        if ($table === $alias)
+        if ($table === $alias) {
             return true;
-        elseif ($table === "`" . $alias . "`")
+        } elseif ($table === "`" . $alias . "`") {
             return true;
-        else
+        } else {
             return false;
+        }
     }
 
     function table_joins($table_alias)
@@ -320,11 +379,13 @@ class CPerfQuery
         $suggest_table = null;
         /** @var CPerfQueryTable $table */
         foreach ($this->from->tables as $table) {
-            if ($this->cmp($table->alias, $table_alias))
+            if ($this->cmp($table->alias, $table_alias)) {
                 $suggest_table = $table;
+            }
         }
-        if (!isset($suggest_table))
+        if (!isset($suggest_table)) {
             return array();
+        }
 
         $arTableJoins = array(
             "WHERE" => array()
@@ -332,50 +393,59 @@ class CPerfQuery
         //1 iteration gather inter tables joins
         foreach ($this->from->joins as $join) {
             if ($this->cmp($join->left_table, $table_alias) && $join->right_table !== "") {
-                if (!isset($arTableJoins[$join->right_table]))
+                if (!isset($arTableJoins[$join->right_table])) {
                     $arTableJoins[$join->right_table] = array();
+                }
                 $arTableJoins[$join->right_table][] = $join->left_column;
             } elseif ($this->cmp($join->right_table, $table_alias) && $join->left_table !== "") {
-                if (!isset($arTableJoins[$join->left_table]))
+                if (!isset($arTableJoins[$join->left_table])) {
                     $arTableJoins[$join->left_table] = array();
+                }
                 $arTableJoins[$join->left_table][] = $join->right_column;
             }
         }
         //2 iteration gather inter tables joins from where
         foreach ($this->where->joins as $join) {
             if ($this->cmp($join->left_table, $table_alias) && $join->right_table !== "") {
-                if (!isset($arTableJoins[$join->right_table]))
+                if (!isset($arTableJoins[$join->right_table])) {
                     $arTableJoins[$join->right_table] = array();
+                }
                 $arTableJoins[$join->right_table][] = $join->left_column;
             } elseif ($this->cmp($join->right_table, $table_alias) && $join->left_table !== "") {
-                if (!isset($arTableJoins[$join->left_table]))
+                if (!isset($arTableJoins[$join->left_table])) {
                     $arTableJoins[$join->left_table] = array();
+                }
                 $arTableJoins[$join->left_table][] = $join->right_column;
             }
         }
         //3 iteration add constant filters from joins
         foreach ($this->from->joins as $join) {
             if ($this->cmp($join->left_table, $table_alias) && $join->right_table === "") {
-                foreach ($arTableJoins as $i => $arColumns)
+                foreach ($arTableJoins as $i => $arColumns) {
                     $arTableJoins[$i][] = $join->left_column;
+                }
             } elseif ($this->cmp($join->right_table, $table_alias) && $join->left_table === "") {
-                foreach ($arTableJoins as $i => $arColumns)
+                foreach ($arTableJoins as $i => $arColumns) {
                     $arTableJoins[$i][] = $join->right_column;
+                }
             }
         }
         //4 iteration add constant filters from where
         foreach ($this->where->joins as $join) {
             if ($this->cmp($join->left_table, $table_alias) && $join->right_table === "") {
-                foreach ($arTableJoins as $i => $arColumns)
+                foreach ($arTableJoins as $i => $arColumns) {
                     $arTableJoins[$i][] = $join->left_column;
+                }
             } elseif ($this->cmp($join->right_table, $table_alias) && $join->left_table === "") {
-                foreach ($arTableJoins as $i => $arColumns)
+                foreach ($arTableJoins as $i => $arColumns) {
                     $arTableJoins[$i][] = $join->right_column;
+                }
             }
         }
 
-        if (empty($arTableJoins["WHERE"]))
+        if (empty($arTableJoins["WHERE"])) {
             unset($arTableJoins["WHERE"]);
+        }
 
         return $arTableJoins;
     }
@@ -387,24 +457,28 @@ class CPerfQuery
         $suggest_table = null;
         /** @var CPerfQueryTable $table */
         foreach ($this->from->tables as $table) {
-            if ($this->cmp($table->alias, $table_alias))
+            if ($this->cmp($table->alias, $table_alias)) {
                 $suggest_table = $table;
+            }
         }
-        if (!isset($suggest_table))
+        if (!isset($suggest_table)) {
             return false;
+        }
 
         $arTableJoins = $this->table_joins($table_alias);
 
         //Next read indexes already have
         $arSuggest = array();
         if (!empty($arTableJoins)) {
-            if (!$DB->TableExists($suggest_table->name))
+            if (!$DB->TableExists($suggest_table->name)) {
                 return false;
+            }
 
             $table = new CPerfomanceTable;
             $arIndexes = $table->GetIndexes($suggest_table->name);
-            foreach ($arIndexes as $index_name => $arColumns)
+            foreach ($arIndexes as $index_name => $arColumns) {
                 $arIndexes[$index_name] = implode(",", $arColumns);
+            }
 
             //Test our suggestion against existing indexes
             foreach ($arTableJoins as $i => $arColumns) {
@@ -418,12 +492,13 @@ class CPerfQuery
                         $index2test = implode(",", $arComboColumns);
                         //Try to find out if index already exists
                         foreach ($arIndexes as $index_name => $index_columns) {
-                            if (substr($index_columns, 0, strlen($index2test)) === $index2test) {
+                            if (mb_substr($index_columns, 0, mb_strlen($index2test)) === $index2test) {
                                 if (
                                     $index_found === ""
                                     || count(explode(",", $index_found)) < count(explode(",", $index2test))
-                                )
+                                ) {
                                     $index_found = $index2test;
+                                }
                             }
                         }
                     }
@@ -446,16 +521,18 @@ class CPerfQuery
     function array_power_set($array)
     {
         $results = array(array());
-        foreach ($array as $element)
-            foreach ($results as $combination)
+        foreach ($array as $element) {
+            foreach ($results as $combination) {
                 array_push($results, array_merge(array($element), $combination));
+            }
+        }
         return $results;
     }
 
     function _adjust_columns($arColumns)
     {
         $arColumns = array_unique($arColumns);
-        while (strlen(implode(",", $arColumns)) > 250) {
+        while (mb_strlen(implode(",", $arColumns)) > 250) {
             //TODO: add brains here
             //1 exclude blobs and clobs
             //2 etc.
@@ -466,8 +543,9 @@ class CPerfQuery
 
     function has_where($table_alias = false)
     {
-        if ($table_alias === false)
+        if ($table_alias === false) {
             return !empty($this->where->joins);
+        }
 
         foreach ($this->where->joins as $join) {
             if ($this->cmp($join->left_table, $table_alias)) {
@@ -531,12 +609,14 @@ class CPerfQuery
         $suggest_table = null;
         /** @var CPerfQueryTable $table */
         foreach ($this->from->tables as $table) {
-            if ($table->name === $table_name)
+            if ($table->name === $table_name) {
                 $suggest_table = $table;
+            }
         }
 
-        if (!isset($suggest_table))
+        if (!isset($suggest_table)) {
             return "";
+        }
         $table_alias = $suggest_table->alias;
 
         foreach ($this->where->joins as $join) {
@@ -576,7 +656,8 @@ class CPerfQuery
 
     public static function remove_literals($sql)
     {
-        return preg_replace('/(
+        return preg_replace(
+            '/(
 				"[^"\\\\]*(?:\\\\.[^"\\\\]*)*"                           # match double quoted string
 				|
 				\'[^\'\\\\]*(?:\\\\.[^\'\\\\]*)*\'                       # match single quoted string
@@ -590,6 +671,9 @@ class CPerfQuery
 				(?i:\\sIN\\s*\\(\\s*[0-9.]+(?:\\s*,\\s*[0-9.])*\\s*\\))  # in (1, 2, 3)
 				|
 				(?i:\\sIN\\s*\\(\\s*[\'].+?[\'](?:\\s*,\\s*[\'].+?[\'])*\\s*\\))  # in (\'a\', \'b\', \'c\')
-			)/x', '', $sql);
+			)/x',
+            '',
+            $sql
+        );
     }
 }

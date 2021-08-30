@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/support/classes/general/support.php");
 
 class CTicket extends CAllTicket
@@ -108,7 +109,9 @@ class CTicket extends CAllTicket
         $err_mess = (CTicket::err_mess()) . "<br>Function: DeleteMessage<br>Line: ";
         global $DB;
         $ID = intval($ID);
-        if ($ID <= 0) return;
+        if ($ID <= 0) {
+            return;
+        }
 
         $bAdmin = "N";
         if ($checkRights == "Y") {
@@ -181,11 +184,13 @@ class CTicket extends CAllTicket
                 "OWNER_SID" => "'" . $DB->ForSql($ownerSid, 255) . "'",
                 "OWNER_USER_ID" => (intval($ownerUserID) > 0 ? intval($ownerUserID) : "null"),
                 "MODIFIED_USER_ID" => (intval($uid) > 0 ? intval($uid) : "null"),
-                "MODIFIED_GUEST_ID" => (intval($_SESSION["SESS_GUEST_ID"]) > 0 ? intval($_SESSION["SESS_GUEST_ID"]) : "null"),
+                "MODIFIED_GUEST_ID" => (intval($_SESSION["SESS_GUEST_ID"]) > 0 ? intval(
+                    $_SESSION["SESS_GUEST_ID"]
+                ) : "null"),
                 "EXTERNAL_ID" => (intval($arFields["EXTERNAL_ID"]) > 0 ? intval($arFields["EXTERNAL_ID"]) : "null"),
                 "TASK_TIME" => (intval($arFields["TASK_TIME"]) > 0 ? intval($arFields["TASK_TIME"]) : "null"),
                 "EXTERNAL_FIELD_1" => "'" . $DB->ForSql($arFields["EXTERNAL_FIELD_1"]) . "'",
-                "IS_SPAM" => (strlen($arFields["IS_SPAM"]) > 0 ? "'" . $arFields["IS_SPAM"] . "'" : "null"),
+                "IS_SPAM" => ($arFields["IS_SPAM"] <> '' ? "'" . $arFields["IS_SPAM"] . "'" : "null"),
                 "IS_HIDDEN" => ($arFields["IS_HIDDEN"] == "Y" ? "'Y'" : "'N'"),
                 "IS_LOG" => ($arFields["IS_LOG"] == "Y" ? "'Y'" : "'N'"),
                 "IS_OVERDUE" => ($arFields["IS_OVERDUE"] == "Y" ? "'Y'" : "'N'"),
@@ -199,7 +204,12 @@ class CTicket extends CAllTicket
             );
 
 
-            $rows = $DB->Update("b_ticket_message", $arFields_u, "WHERE ID='" . $MESSAGE_ID . "'", $err_mess . __LINE__);
+            $rows = $DB->Update(
+                "b_ticket_message",
+                $arFields_u,
+                "WHERE ID='" . $MESSAGE_ID . "'",
+                $err_mess . __LINE__
+            );
             if (intval($rows) > 0) {
                 $rsMessage = CTicket::GetMessageByID($MESSAGE_ID, $checkRights);
                 if ($arMessage = $rsMessage->Fetch()) {
@@ -213,8 +223,10 @@ class CTicket extends CAllTicket
                     $arrFiles = $arFields["FILES"];
                     if (is_array($arrFiles) && count($arrFiles) > 0) {
                         foreach ($arrFiles as $arFile) {
-                            if (strlen($arFile["name"]) > 0 || $arFile["del"] == "Y") {
-                                if ($bSupportTeam != "Y" && $bAdmin != "Y") $max_file_size = intval($max_size) * 1024;
+                            if ($arFile["name"] <> '' || $arFile["del"] == "Y") {
+                                if ($bSupportTeam != "Y" && $bAdmin != "Y") {
+                                    $max_file_size = intval($max_size) * 1024;
+                                }
                                 $fes = "";
                                 $upload_dir = "support";
                                 if (!CFile::IsImage($arFile["name"], $arFile["type"])) {
@@ -223,8 +235,9 @@ class CTicket extends CAllTicket
                                     $upload_dir = $not_image_upload_dir;
                                 }
 
-                                if (!array_key_exists("MODULE_ID", $arFile) || strlen($arFile["MODULE_ID"]) <= 0)
+                                if (!array_key_exists("MODULE_ID", $arFile) || $arFile["MODULE_ID"] == '') {
                                     $arFile["MODULE_ID"] = "support";
+                                }
 
                                 $fid = intval(CFile::SaveFile($arFile, $upload_dir, $max_file_size));
 
@@ -251,7 +264,10 @@ class CTicket extends CAllTicket
                                             "MESSAGE_ID" => $MESSAGE_ID,
                                             "FILE_ID" => $fid,
                                             "TICKET_ID" => $ticketID,
-                                            "EXTENSION_SUFFIX" => (strlen($fes) > 0) ? "'" . $DB->ForSql($fes, 255) . "'" : "null"
+                                            "EXTENSION_SUFFIX" => ($fes <> '') ? "'" . $DB->ForSql(
+                                                    $fes,
+                                                    255
+                                                ) . "'" : "null"
                                         );
                                         $DB->Insert("b_ticket_message_2_file", $arFields_fi, $err_mess . __LINE__);
                                     } else // �����
@@ -259,20 +275,29 @@ class CTicket extends CAllTicket
                                         // ������� ������
                                         $arFields_fu = array(
                                             "FILE_ID" => $fid,
-                                            "EXTENSION_SUFFIX" => (strlen($fes) > 0) ? "'" . $DB->ForSql($fes, 255) . "'" : "null"
+                                            "EXTENSION_SUFFIX" => ($fes <> '') ? "'" . $DB->ForSql(
+                                                    $fes,
+                                                    255
+                                                ) . "'" : "null"
                                         );
-                                        $DB->Update("b_ticket_message_2_file", $arFields_fu, "WHERE FILE_ID = " . intval($arFile["old_file"]), $err_mess . __LINE__);
+                                        $DB->Update(
+                                            "b_ticket_message_2_file",
+                                            $arFields_fu,
+                                            "WHERE FILE_ID = " . intval($arFile["old_file"]),
+                                            $err_mess . __LINE__
+                                        );
                                     }
                                 }
                             }
                         }
                     }
-                    if ($arFields["IS_SPAM"] == "Y")
+                    if ($arFields["IS_SPAM"] == "Y") {
                         CTicket::MarkMessageAsSpam($MESSAGE_ID, "Y", $checkRights);
-                    elseif ($arFields["IS_SPAM"] == "N")
+                    } elseif ($arFields["IS_SPAM"] == "N") {
                         CTicket::MarkMessageAsSpam($MESSAGE_ID, "N", $checkRights);
-                    elseif ($arFields["IS_SPAM"] != "Y" && $arFields["IS_SPAM"] != "N")
+                    } elseif ($arFields["IS_SPAM"] != "Y" && $arFields["IS_SPAM"] != "N") {
                         CTicket::UnMarkMessageAsSpam($MESSAGE_ID, $checkRights);
+                    }
 
                     //if ($notChangeStatus != "Y")
                     //CTicket::UpdateLastParams($ticketID);
@@ -289,7 +314,7 @@ class CTicket extends CAllTicket
 
     public static function AddMessage($ticketID, $arFields, &$arrFILES, $checkRights = "Y")
     {
-        if (strlen($arFields["MESSAGE"]) > 0 || (is_array($arFields["FILES"]) && count($arFields["FILES"]) > 0)) {
+        if ($arFields["MESSAGE"] <> '' || (is_array($arFields["FILES"]) && count($arFields["FILES"]) > 0)) {
             $err_mess = (CTicket::err_mess()) . "<br>Function: AddMessage<br>Line: ";
             global $DB, $USER;
 
@@ -329,13 +354,23 @@ class CTicket extends CAllTicket
             $zr = $z->Fetch();
             $maxNumber = intval($zr['MAX_NUMBER']);
 
-            if ((strlen(trim($arFields["MESSAGE_AUTHOR_SID"])) > 0 || intval($arFields["MESSAGE_AUTHOR_USER_ID"]) > 0 || intval($arFields["MESSAGE_CREATED_USER_ID"]) > 0) && ($bSupportTeam == "Y" || $bAdmin == "Y")) {
+            if ((trim($arFields["MESSAGE_AUTHOR_SID"]) <> '' || intval(
+                        $arFields["MESSAGE_AUTHOR_USER_ID"]
+                    ) > 0 || intval(
+                        $arFields["MESSAGE_CREATED_USER_ID"]
+                    ) > 0) && ($bSupportTeam == "Y" || $bAdmin == "Y")) {
                 $ownerUserID = intval($arFields["MESSAGE_AUTHOR_USER_ID"]);
                 $ownerSid = "'" . $DB->ForSql($arFields["MESSAGE_AUTHOR_SID"], 2000) . "'";
-                $ownerGuestID = intval($arFields["MESSAGE_AUTHOR_GUEST_ID"]) > 0 ? intval($arFields["MESSAGE_AUTHOR_GUEST_ID"]) : "null";
+                $ownerGuestID = intval($arFields["MESSAGE_AUTHOR_GUEST_ID"]) > 0 ? intval(
+                    $arFields["MESSAGE_AUTHOR_GUEST_ID"]
+                ) : "null";
 
-                $createdUserID = intval($arFields["MESSAGE_CREATED_USER_ID"]) > 0 ? intval($arFields["MESSAGE_CREATED_USER_ID"]) : intval($uid);
-                $createdGuestID = intval($arFields["MESSAGE_CREATED_GUEST_ID"]) > 0 ? intval($arFields["MESSAGE_CREATED_GUEST_ID"]) : intval($_SESSION["SESS_GUEST_ID"]);
+                $createdUserID = intval($arFields["MESSAGE_CREATED_USER_ID"]) > 0 ? intval(
+                    $arFields["MESSAGE_CREATED_USER_ID"]
+                ) : intval($uid);
+                $createdGuestID = intval($arFields["MESSAGE_CREATED_GUEST_ID"]) > 0 ? intval(
+                    $arFields["MESSAGE_CREATED_GUEST_ID"]
+                ) : intval($_SESSION["SESS_GUEST_ID"]);
             } else {
                 $ownerUserID = intval($uid);
                 $ownerSid = "null";
@@ -366,7 +401,10 @@ class CTicket extends CAllTicket
                 $createdGuestID = "null";
             }
 
-            $createdModuleName = (strlen($arFields["MESSAGE_CREATED_MODULE_NAME"]) > 0) ? "'" . $DB->ForSql($arFields["MESSAGE_CREATED_MODULE_NAME"], 255) . "'" : "'support'";
+            $createdModuleName = ($arFields["MESSAGE_CREATED_MODULE_NAME"] <> '') ? "'" . $DB->ForSql(
+                    $arFields["MESSAGE_CREATED_MODULE_NAME"],
+                    255
+                ) . "'" : "'support'";
 
             $externalID = intval($arFields["EXTERNAL_ID"]) > 0 ? intval($arFields["EXTERNAL_ID"]) : "null";
             $externalField1 = $arFields["EXTERNAL_FIELD_1"];
@@ -416,7 +454,7 @@ class CTicket extends CAllTicket
                 "MESSAGE" => "'" . $DB->ForSql($arFields["MESSAGE"]) . "'",
                 "MESSAGE_SEARCH" => "'" . $DB->ForSql(ToUpper($arFields["MESSAGE"])) . "'",
                 "EXTERNAL_ID" => $externalID,
-                "EXTERNAL_FIELD_1" => (strlen($externalField1) > 0 ? "'" . $DB->ForSql($externalField1) . "'" : "null"),
+                "EXTERNAL_FIELD_1" => ($externalField1 <> '' ? "'" . $DB->ForSql($externalField1) . "'" : "null"),
                 "OWNER_USER_ID" => $ownerUserID,
                 "OWNER_GUEST_ID" => $ownerGuestID,
                 "OWNER_SID" => $ownerSid,
@@ -447,7 +485,9 @@ class CTicket extends CAllTicket
                 }
             }*/
 
-            if (intval($currentResponsibleUserID) > 0) $arFieldsI["CURRENT_RESPONSIBLE_USER_ID"] = $currentResponsibleUserID;
+            if (intval($currentResponsibleUserID) > 0) {
+                $arFieldsI["CURRENT_RESPONSIBLE_USER_ID"] = $currentResponsibleUserID;
+            }
 
 
             $mid = $DB->Insert("b_ticket_message", $arFieldsI, $err_mess . __LINE__);
@@ -458,8 +498,8 @@ class CTicket extends CAllTicket
                 // ��������� ������������� �����
                 $arFILES = $arFields["FILES"];
                 if (is_array($arFILES) && count($arFILES) > 0) {
-                    while (list($key, $arFILE) = each($arFILES)) {
-                        if (strlen($arFILE["name"]) > 0) {
+                    foreach ($arFILES as $arFILE) {
+                        if ($arFILE["name"] <> '') {
                             if ($bSupportTeam != "Y" && $bAdmin != "Y") {
                                 $max_file_size = intval($max_size) * 1024;
                             }
@@ -471,7 +511,7 @@ class CTicket extends CAllTicket
                                 $upload_dir = $not_image_upload_dir;
                             }
 
-                            if (!array_key_exists("MODULE_ID", $arFILE) || strlen($arFILE["MODULE_ID"]) <= 0) {
+                            if (!array_key_exists("MODULE_ID", $arFILE) || $arFILE["MODULE_ID"] == '') {
                                 $arFILE["MODULE_ID"] = "support";
                             }
 
@@ -488,7 +528,7 @@ class CTicket extends CAllTicket
                                     "MESSAGE_ID" => $mid,
                                     "FILE_ID" => $fid,
                                     "TICKET_ID" => $ticketID,
-                                    "EXTENSION_SUFFIX" => (strlen($fes) > 0) ? "'" . $DB->ForSql($fes, 255) . "'" : "null"
+                                    "EXTENSION_SUFFIX" => ($fes <> '') ? "'" . $DB->ForSql($fes, 255) . "'" : "null"
                                 );
                                 $link_id = $DB->Insert("b_ticket_message_2_file", $arFields_fi, $err_mess . __LINE__);
                                 if (intval($link_id) > 0) {
@@ -518,8 +558,9 @@ class CTicket extends CAllTicket
                 }
 
                 //���� ���� ����������� ������� "�� �������� ������ ��������" - ����������� ���������� ��������
-                if ($notChangeStatus == "Y" || $hidden == "Y")
+                if ($notChangeStatus == "Y" || $hidden == "Y") {
                     CTicket::UpdateMessages($ticketID);
+                }
             }
         }
         return $mid;
@@ -531,7 +572,9 @@ class CTicket extends CAllTicket
         global $DB, $USER;
 
         $ticketID = intval($ticketID);
-        if ($ticketID <= 0) return false;
+        if ($ticketID <= 0) {
+            return false;
+        }
 
         $bAdmin = (CTicket::IsAdmin()) ? "Y" : "N";
         $bSupportTeam = (CTicket::IsSupportTeam()) ? "Y" : "N";
@@ -564,13 +607,24 @@ class CTicket extends CAllTicket
 				ID = $ticketID
 			";
         $rs = $DB->Query($strSql, false, $err_mess . __LINE__);
-        if ($ar = $rs->Fetch()) return $ar["LAMP"];
+        if ($ar = $rs->Fetch()) {
+            return $ar["LAMP"];
+        }
 
         return false;
     }
 
-    public static function GetList(&$by, &$order, $arFilter = Array(), &$isFiltered, $checkRights = "Y", $getUserName = "Y", $getExtraNames = "Y", $siteID = false, $arParams = Array())
-    {
+    public static function GetList(
+        $by = 's_default',
+        $order = 'desc',
+        $arFilter = [],
+        $isFiltered = null,
+        $checkRights = "Y",
+        $getUserName = "Y",
+        $getExtraNames = "Y",
+        $siteID = false,
+        $arParams = []
+    ) {
         $err_mess = (CTicket::err_mess()) . "<br>Function: GetList<br>Line: ";
         global $DB, $USER, $USER_FIELD_MANAGER;
 
@@ -603,9 +657,15 @@ class CTicket extends CAllTicket
             $bSupportTeam = 'Y';
             $bSupportClient = 'Y';
             $bDemo = 'Y';
-            if (is_object($USER)) $uid = intval($USER->GetID()); else $uid = -1;
+            if (is_object($USER)) {
+                $uid = intval($USER->GetID());
+            } else {
+                $uid = -1;
+            }
         }
-        if ($bAdmin != 'Y' && $bSupportTeam != 'Y' && $bSupportClient != 'Y' && $bDemo != 'Y') return false;
+        if ($bAdmin != 'Y' && $bSupportTeam != 'Y' && $bSupportClient != 'Y' && $bDemo != 'Y') {
+            return false;
+        }
 
         if ($bSupportTeam == 'Y' || $bAdmin == 'Y' || $bDemo == 'Y') {
             $lamp = "
@@ -633,8 +693,11 @@ class CTicket extends CAllTicket
             for ($i = 0; $i < $filterKeysCount; $i++) {
                 $key = $filterKeys[$i];
                 $val = $arFilter[$filterKeys[$i]];
-                if ((is_array($val) && count($val) <= 0) || (!is_array($val) && (strlen($val) <= 0 || $val === 'NOT_REF')))
+                if ((is_array($val) && count($val) <= 0) || (!is_array(
+                            $val
+                        ) && ((string)$val == '' || $val === 'NOT_REF'))) {
                     continue;
+                }
                 $matchValueSet = (in_array($key . "_EXACT_MATCH", $filterKeys)) ? true : false;
                 $key = strtoupper($key);
                 switch ($key) {
@@ -649,7 +712,9 @@ class CTicket extends CAllTicket
                     case "LID":
                     case "SITE":
                     case "SITE_ID":
-                        if (is_array($val)) $val = implode(" | ", $val);
+                        if (is_array($val)) {
+                            $val = implode(" | ", $val);
+                        }
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "N" && $matchValueSet) ? "Y" : "N";
                         $arSqlSearch[] = GetFilterQuery("T.SITE_ID", $val, $match);
                         break;
@@ -663,33 +728,48 @@ class CTicket extends CAllTicket
                                 $str = TrimEx($str, ",");
                                 $arSqlSearch[] = " " . $lamp . " in (" . $str . ")";
                             }
-                        } elseif (strlen($val) > 0) {
+                        } elseif ($val <> '') {
                             $arSqlSearch[] = " " . $lamp . " = '" . $DB->ForSQL($val) . "'";
                         }
                         break;
                     case "DATE_CREATE_1":
-                        if (CheckDateTime($val))
+                        if (CheckDateTime($val)) {
                             $arSqlSearch[] = "T.DATE_CREATE>=" . $DB->CharToDateFunction($val, "SHORT");
+                        }
                         break;
                     case "DATE_CREATE_2":
-                        if (CheckDateTime($val))
-                            $arSqlSearch[] = "T.DATE_CREATE<" . $DB->CharToDateFunction($val, "SHORT") . " + INTERVAL 1 DAY";
+                        if (CheckDateTime($val)) {
+                            $arSqlSearch[] = "T.DATE_CREATE<" . $DB->CharToDateFunction(
+                                    $val,
+                                    "SHORT"
+                                ) . " + INTERVAL 1 DAY";
+                        }
                         break;
                     case "DATE_TIMESTAMP_1":
-                        if (CheckDateTime($val))
+                        if (CheckDateTime($val)) {
                             $arSqlSearch[] = "T.TIMESTAMP_X>=" . $DB->CharToDateFunction($val, "SHORT");
+                        }
                         break;
                     case "DATE_TIMESTAMP_2":
-                        if (CheckDateTime($val))
-                            $arSqlSearch[] = "T.TIMESTAMP_X<" . $DB->CharToDateFunction($val, "SHORT") . " + INTERVAL 1 DAY";
+                        if (CheckDateTime($val)) {
+                            $arSqlSearch[] = "T.TIMESTAMP_X<" . $DB->CharToDateFunction(
+                                    $val,
+                                    "SHORT"
+                                ) . " + INTERVAL 1 DAY";
+                        }
                         break;
                     case "DATE_CLOSE_1":
-                        if (CheckDateTime($val))
+                        if (CheckDateTime($val)) {
                             $arSqlSearch[] = "T.DATE_CLOSE>=" . $DB->CharToDateFunction($val, "SHORT");
+                        }
                         break;
                     case "DATE_CLOSE_2":
-                        if (CheckDateTime($val))
-                            $arSqlSearch[] = "T.DATE_CLOSE<" . $DB->CharToDateFunction($val, "SHORT") . " + INTERVAL 1 DAY";
+                        if (CheckDateTime($val)) {
+                            $arSqlSearch[] = "T.DATE_CLOSE<" . $DB->CharToDateFunction(
+                                    $val,
+                                    "SHORT"
+                                ) . " + INTERVAL 1 DAY";
+                        }
                         break;
                     case "CLOSE":
                         $arSqlSearch[] = ($val == "Y") ? "T.DATE_CLOSE is not null" : "T.DATE_CLOSE is null";
@@ -701,10 +781,14 @@ class CTicket extends CAllTicket
                         $arSqlSearch[] = "T.AUTO_CLOSE_DAYS<='" . intval($val) . "'";
                         break;
                     case "TICKET_TIME_1":
-                        $arSqlSearch[] = "UNIX_TIMESTAMP(T.DATE_CLOSE) - UNIX_TIMESTAMP(T.DATE_CREATE)>='" . (intval($val) * 86400) . "'";
+                        $arSqlSearch[] = "UNIX_TIMESTAMP(T.DATE_CLOSE) - UNIX_TIMESTAMP(T.DATE_CREATE)>='" . (intval(
+                                    $val
+                                ) * 86400) . "'";
                         break;
                     case "TICKET_TIME_2":
-                        $arSqlSearch[] = "UNIX_TIMESTAMP(T.DATE_CLOSE) - UNIX_TIMESTAMP(T.DATE_CREATE)<='" . (intval($val) * 86400) . "'";
+                        $arSqlSearch[] = "UNIX_TIMESTAMP(T.DATE_CLOSE) - UNIX_TIMESTAMP(T.DATE_CREATE)<='" . (intval(
+                                    $val
+                                ) * 86400) . "'";
                         break;
                     case "TITLE":
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "Y" && $matchValueSet) ? "N" : "Y";
@@ -732,16 +816,25 @@ class CTicket extends CAllTicket
                         break;
                     case "AUTO_CLOSE_DAYS_LEFT1":
                         $arSqlSearch[] = "CASE WHEN (UNIX_TIMESTAMP(T.DATE_CLOSE) IS NULL OR UNIX_TIMESTAMP(T.DATE_CLOSE) = 0) AND T.LAST_MESSAGE_BY_SUPPORT_TEAM = 'Y' THEN
-							TO_DAYS(ADDDATE(T.LAST_MESSAGE_DATE, INTERVAL T.AUTO_CLOSE_DAYS DAY)) - TO_DAYS(now()) ELSE -1 END >='" . intval($val) . "'";
+							TO_DAYS(ADDDATE(T.LAST_MESSAGE_DATE, INTERVAL T.AUTO_CLOSE_DAYS DAY)) - TO_DAYS(now()) ELSE -1 END >='" . intval(
+                                $val
+                            ) . "'";
                         break;
                     case "AUTO_CLOSE_DAYS_LEFT2":
                         $arSqlSearch[] = "CASE WHEN (UNIX_TIMESTAMP(T.DATE_CLOSE) IS NULL OR UNIX_TIMESTAMP(T.DATE_CLOSE) = 0) AND T.LAST_MESSAGE_BY_SUPPORT_TEAM = 'Y' THEN
-							TO_DAYS(ADDDATE(T.LAST_MESSAGE_DATE, INTERVAL T.AUTO_CLOSE_DAYS DAY))-TO_DAYS(now()) ELSE 999 END <='" . intval($val) . "'";
+							TO_DAYS(ADDDATE(T.LAST_MESSAGE_DATE, INTERVAL T.AUTO_CLOSE_DAYS DAY))-TO_DAYS(now()) ELSE 999 END <='" . intval(
+                                $val
+                            ) . "'";
                         break;
                     case "OWNER":
                         $getUserName = "Y";
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "Y" && $matchValueSet) ? "N" : "Y";
-                        $arSqlSearch[] = GetFilterQuery("UO.ID, UO.LOGIN, UO.LAST_NAME, UO.NAME", $val, $match, array("@", ".")); //T.OWNER_USER_ID,
+                        $arSqlSearch[] = GetFilterQuery(
+                            "UO.ID, UO.LOGIN, UO.LAST_NAME, UO.NAME, T.OWNER_SID",
+                            $val,
+                            $match,
+                            array("@", ".")
+                        ); //T.OWNER_USER_ID,
                         break;
                     case "OWNER_USER_ID":
                     case "OWNER_SID":
@@ -756,21 +849,35 @@ class CTicket extends CAllTicket
                     case "CREATED_BY":
                         $getUserName = "Y";
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "Y" && $matchValueSet) ? "N" : "Y";
-                        $arSqlSearch[] = GetFilterQuery("T.CREATED_USER_ID, UC.LOGIN, UC.LAST_NAME, UC.NAME, T.CREATED_MODULE_NAME", $val, $match);
+                        $arSqlSearch[] = GetFilterQuery(
+                            "T.CREATED_USER_ID, UC.LOGIN, UC.LAST_NAME, UC.NAME, T.CREATED_MODULE_NAME",
+                            $val,
+                            $match
+                        );
                         break;
                     case "RESPONSIBLE":
                         $getUserName = "Y";
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "Y" && $matchValueSet) ? "N" : "Y";
-                        $arSqlSearch[] = GetFilterQuery("T.RESPONSIBLE_USER_ID, UR.LOGIN, UR.LAST_NAME, UR.NAME", $val, $match);
+                        $arSqlSearch[] = GetFilterQuery(
+                            "T.RESPONSIBLE_USER_ID, UR.LOGIN, UR.LAST_NAME, UR.NAME",
+                            $val,
+                            $match
+                        );
                         break;
                     case "RESPONSIBLE_ID":
-                        if (intval($val) > 0) $arSqlSearch[] = "T.RESPONSIBLE_USER_ID = '" . intval($val) . "'";
-                        elseif ($val == 0) $arSqlSearch[] = "(T.RESPONSIBLE_USER_ID is null or T.RESPONSIBLE_USER_ID=0)";
+                        if (intval($val) > 0) {
+                            $arSqlSearch[] = "T.RESPONSIBLE_USER_ID = '" . intval($val) . "'";
+                        } elseif ($val == 0) {
+                            $arSqlSearch[] = "(T.RESPONSIBLE_USER_ID is null or T.RESPONSIBLE_USER_ID=0)";
+                        }
                         break;
                     case "CATEGORY_ID":
                     case "CATEGORY":
-                        if (intval($val) > 0) $arSqlSearch[] = "T.CATEGORY_ID = '" . intval($val) . "'";
-                        elseif ($val == 0) $arSqlSearch[] = "(T.CATEGORY_ID is null or T.CATEGORY_ID=0)";
+                        if (intval($val) > 0) {
+                            $arSqlSearch[] = "T.CATEGORY_ID = '" . intval($val) . "'";
+                        } elseif ($val == 0) {
+                            $arSqlSearch[] = "(T.CATEGORY_ID is null or T.CATEGORY_ID=0)";
+                        }
                         break;
                     case "CATEGORY_SID":
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "N" && $matchValueSet) ? "Y" : "N";
@@ -780,8 +887,11 @@ class CTicket extends CAllTicket
                         break;
                     case "CRITICALITY_ID":
                     case "CRITICALITY":
-                        if (intval($val) > 0) $arSqlSearch[] = "T.CRITICALITY_ID = '" . intval($val) . "'";
-                        elseif ($val == 0) $arSqlSearch[] = "(T.CRITICALITY_ID is null or T.CRITICALITY_ID=0)";
+                        if (intval($val) > 0) {
+                            $arSqlSearch[] = "T.CRITICALITY_ID = '" . intval($val) . "'";
+                        } elseif ($val == 0) {
+                            $arSqlSearch[] = "(T.CRITICALITY_ID is null or T.CRITICALITY_ID=0)";
+                        }
                         break;
                     case "CRITICALITY_SID":
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "N" && $matchValueSet) ? "Y" : "N";
@@ -789,8 +899,11 @@ class CTicket extends CAllTicket
                         break;
                     case "STATUS_ID":
                     case "STATUS":
-                        if (intval($val) > 0) $arSqlSearch[] = "T.STATUS_ID = '" . intval($val) . "'";
-                        elseif ($val == 0) $arSqlSearch[] = "(T.STATUS_ID is null or T.STATUS_ID=0)";
+                        if (intval($val) > 0) {
+                            $arSqlSearch[] = "T.STATUS_ID = '" . intval($val) . "'";
+                        } elseif ($val == 0) {
+                            $arSqlSearch[] = "(T.STATUS_ID is null or T.STATUS_ID=0)";
+                        }
                         break;
                     case "STATUS_SID":
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "N" && $matchValueSet) ? "Y" : "N";
@@ -798,8 +911,11 @@ class CTicket extends CAllTicket
                         break;
                     case "MARK_ID":
                     case "MARK":
-                        if (intval($val) > 0) $arSqlSearch[] = "T.MARK_ID = '" . intval($val) . "'";
-                        elseif ($val == 0) $arSqlSearch[] = "(T.MARK_ID is null or T.MARK_ID=0)";
+                        if (intval($val) > 0) {
+                            $arSqlSearch[] = "T.MARK_ID = '" . intval($val) . "'";
+                        } elseif ($val == 0) {
+                            $arSqlSearch[] = "(T.MARK_ID is null or T.MARK_ID=0)";
+                        }
                         break;
                     case "MARK_SID":
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "N" && $matchValueSet) ? "Y" : "N";
@@ -807,8 +923,11 @@ class CTicket extends CAllTicket
                         break;
                     case "SOURCE_ID":
                     case "SOURCE":
-                        if (intval($val) > 0) $arSqlSearch[] = "T.SOURCE_ID = '" . intval($val) . "'";
-                        elseif ($val == 0) $arSqlSearch[] = "(T.SOURCE_ID is null or T.SOURCE_ID=0)";
+                        if (intval($val) > 0) {
+                            $arSqlSearch[] = "T.SOURCE_ID = '" . intval($val) . "'";
+                        } elseif ($val == 0) {
+                            $arSqlSearch[] = "(T.SOURCE_ID is null or T.SOURCE_ID=0)";
+                        }
                         break;
                     case "SOURCE_SID":
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "N" && $matchValueSet) ? "Y" : "N";
@@ -817,8 +936,11 @@ class CTicket extends CAllTicket
 
                     case "DIFFICULTY_ID":
                     case "DIFFICULTY":
-                        if (intval($val) > 0) $arSqlSearch[] = "T.DIFFICULTY_ID = '" . intval($val) . "'";
-                        elseif ($val == 0) $arSqlSearch[] = "(T.DIFFICULTY_ID is null or T.DIFFICULTY_ID=0)";
+                        if (intval($val) > 0) {
+                            $arSqlSearch[] = "T.DIFFICULTY_ID = '" . intval($val) . "'";
+                        } elseif ($val == 0) {
+                            $arSqlSearch[] = "(T.DIFFICULTY_ID is null or T.DIFFICULTY_ID=0)";
+                        }
                         break;
                     case "DIFFICULTY_SID":
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "N" && $matchValueSet) ? "Y" : "N";
@@ -829,11 +951,17 @@ class CTicket extends CAllTicket
                     case "MODIFIED_BY":
                         $getUserName = "Y";
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "Y" && $matchValueSet) ? "N" : "Y";
-                        $arSqlSearch[] = GetFilterQuery("T.MODIFIED_USER_ID, T.MODIFIED_MODULE_NAME, UM.LOGIN, UM.LAST_NAME, UM.NAME", $val, $match);
+                        $arSqlSearch[] = GetFilterQuery(
+                            "T.MODIFIED_USER_ID, T.MODIFIED_MODULE_NAME, UM.LOGIN, UM.LAST_NAME, UM.NAME",
+                            $val,
+                            $match
+                        );
                         break;
                     case "MESSAGE":
                         global $strError;
-                        if (strlen($val) <= 0) break;
+                        if ($val == '') {
+                            break;
+                        }
 
                         if (CSupportSearch::CheckModule() && CSupportSearch::isIndexExists()) {
                             // new indexed search
@@ -850,7 +978,6 @@ class CTicket extends CAllTicket
                                     $need_group = true;
                                 }
                             }
-
                         } else {
                             if ($bSupportTeam == "Y" || $bAdmin == "Y" || $bDemo == "Y") {
                                 $messJoin = "INNER JOIN b_ticket_message M ON (M.TICKET_ID=T.ID)";
@@ -862,10 +989,12 @@ class CTicket extends CAllTicket
                             $f = new CFilterQuery("OR", "yes", $match, array(), "N", "Y", "N");
                             $query = $f->GetQueryString("T.TITLE,M.MESSAGE_SEARCH", $val);
                             $error = $f->error;
-                            if (strlen(trim($error)) > 0) {
+                            if (trim($error) <> '') {
                                 $strError .= $error . "<br>";
                                 $query = "0";
-                            } else $arSqlSearch[] = $query;
+                            } else {
+                                $arSqlSearch[] = $query;
+                            }
                         }
                         break;
                     case "LAST_MESSAGE_USER_ID":
@@ -904,7 +1033,10 @@ class CTicket extends CAllTicket
                             $val = array_unique($val);
                             $val = array_filter($val);
                             if (count($val) > 0) {
-                                $arSqlSearch[] = '(' . $table . '.GROUP_ID IS NOT NULL AND ' . $table . '.GROUP_ID IN (' . implode(',', $val) . '))';
+                                $arSqlSearch[] = '(' . $table . '.GROUP_ID IS NOT NULL AND ' . $table . '.GROUP_ID IN (' . implode(
+                                        ',',
+                                        $val
+                                    ) . '))';
                             }
                         } else {
                             $val = intval($val);
@@ -982,12 +1114,11 @@ class CTicket extends CAllTicket
         } elseif ($s = $obUserFieldsSql->GetOrder($by)) {
             $strSqlOrder = "ORDER BY " . strtoupper($s);
         } else {
-            $by = "s_default";
             $strSqlOrder = "ORDER BY IS_SUPER_TICKET DESC, T.IS_OVERDUE DESC, T.IS_NOTIFIED DESC, T.LAST_MESSAGE_DATE";
         }
+
         if ($order != "asc") {
             $strSqlOrder .= " desc ";
-            $order = "desc";
         }
 
         $arSqlSearch[] = $obUserFieldsSql->GetFilter();
@@ -1055,7 +1186,7 @@ class CTicket extends CAllTicket
 			LEFT JOIN b_ticket_sla SLA ON (SLA.ID = T.SLA_ID)
 			";
         }
-        if (strlen($siteID) > 0) {
+        if ($siteID <> '') {
             $dates_select = "
 				" . $DB->DateToCharFunction("T.DATE_CREATE", "FULL", $siteID, true) . "	DATE_CREATE,
 				" . $DB->DateToCharFunction("T.TIMESTAMP_X", "FULL", $siteID, true) . "	TIMESTAMP_X,
@@ -1066,7 +1197,12 @@ class CTicket extends CAllTicket
 				" . $DB->DateToCharFunction("T.DATE_CLOSE", "SHORT", $siteID, true) . "	DATE_CLOSE_SHORT,
 				" . $DB->DateToCharFunction("T.SUPPORT_DEADLINE", "FULL", $siteID, true) . "	SUPPORT_DEADLINE,
 				CASE WHEN (UNIX_TIMESTAMP(T.DATE_CLOSE) IS NULL OR UNIX_TIMESTAMP(T.DATE_CLOSE) = 0) AND T.LAST_MESSAGE_BY_SUPPORT_TEAM = 'Y' THEN "
-                . $DB->DateToCharFunction("ADDDATE(T.LAST_MESSAGE_DATE, INTERVAL T.AUTO_CLOSE_DAYS DAY)", "FULL", $siteID, true)
+                . $DB->DateToCharFunction(
+                    "ADDDATE(T.LAST_MESSAGE_DATE, INTERVAL T.AUTO_CLOSE_DAYS DAY)",
+                    "FULL",
+                    $siteID,
+                    true
+                )
                 . " ELSE NULL END AUTO_CLOSE_DATE
 			";
         } else {
@@ -1105,7 +1241,9 @@ class CTicket extends CAllTicket
             $ticketUsers = array($uid);
 
             // check if user has groups
-            $result = $DB->Query('SELECT GROUP_ID FROM b_ticket_user_ugroup WHERE USER_ID = ' . $uid . ' AND CAN_VIEW_GROUP_MESSAGES = \'Y\'');
+            $result = $DB->Query(
+                'SELECT GROUP_ID FROM b_ticket_user_ugroup WHERE USER_ID = ' . $uid . ' AND CAN_VIEW_GROUP_MESSAGES = \'Y\''
+            );
             if ($result) {
                 // collect members of these groups
                 $uGroups = array();
@@ -1115,7 +1253,9 @@ class CTicket extends CAllTicket
                 }
 
                 if (!empty($uGroups)) {
-                    $result = $DB->Query('SELECT USER_ID FROM b_ticket_user_ugroup WHERE GROUP_ID IN (' . join(',', $uGroups) . ')');
+                    $result = $DB->Query(
+                        'SELECT USER_ID FROM b_ticket_user_ugroup WHERE GROUP_ID IN (' . join(',', $uGroups) . ')'
+                    );
                     if ($result) {
                         while ($row = $result->Fetch()) {
                             $ticketUsers[] = $row['USER_ID'];
@@ -1205,7 +1345,6 @@ class CTicket extends CAllTicket
             $res->SetUserFields($USER_FIELD_MANAGER->GetUserFields("SUPPORT"));
         }
 
-        $isFiltered = (IsFiltered($strSqlSearch));
         return $res;
     }
 
@@ -1270,40 +1409,44 @@ class CTicket extends CAllTicket
         return $res;
     }*/
 
-    public static function GetMessageList(&$by, &$order, $arFilter = Array(), &$isFiltered, $checkRights = "Y", $getUserName = "Y")
-    {
+    public static function GetMessageList(
+        $by = 's_number',
+        $order = 'asc',
+        $arFilter = [],
+        $isFiltered = null,
+        $checkRights = "Y",
+        $getUserName = "Y"
+    ) {
         $err_mess = (CTicket::err_mess()) . "<br>Function: GetMessageList<br>Line: ";
         global $DB, $USER, $APPLICATION;
 
-        $bAdmin = "N";
-        $bSupportTeam = "N";
-        $bSupportClient = "N";
-        $bDemo = "N";
         if ($checkRights == "Y") {
             $bAdmin = (CTicket::IsAdmin()) ? "Y" : "N";
             $bSupportTeam = (CTicket::IsSupportTeam()) ? "Y" : "N";
             $bSupportClient = (CTicket::IsSupportClient()) ? "Y" : "N";
             $bDemo = (CTicket::IsDemo()) ? "Y" : "N";
-            $uid = intval($USER->GetID());
         } else {
             $bAdmin = "Y";
             $bSupportTeam = "Y";
             $bSupportClient = "Y";
             $bDemo = "Y";
-            $uid = 0;
         }
-        if ($bAdmin != "Y" && $bSupportTeam != "Y" && $bSupportClient != "Y" && $bDemo != "Y") return false;
+        if ($bAdmin != "Y" && $bSupportTeam != "Y" && $bSupportClient != "Y" && $bDemo != "Y") {
+            return false;
+        }
 
         $arSqlSearch = Array();
-        $strSqlSearch = "";
         if (is_array($arFilter)) {
             $filterKeys = array_keys($arFilter);
             $filterKeysCount = count($filterKeys);
             for ($i = 0; $i < $filterKeysCount; $i++) {
                 $key = $filterKeys[$i];
                 $val = $arFilter[$filterKeys[$i]];
-                if ((is_array($val) && count($val) <= 0) || (!is_array($val) && (strlen($val) <= 0 || $val === 'NOT_REF')))
+                if ((is_array($val) && count($val) <= 0) || (!is_array(
+                            $val
+                        ) && ((string)$val == '' || $val === 'NOT_REF'))) {
                     continue;
+                }
                 $matchValueSet = (in_array($key . "_EXACT_MATCH", $filterKeys)) ? true : false;
                 $key = strtoupper($key);
                 switch ($key) {
@@ -1363,18 +1506,18 @@ class CTicket extends CAllTicket
         }
         $strSqlSearch = GetFilterSqlSearch($arSqlSearch);
 
-        if ($by == "s_id") $strSqlOrder = "ORDER BY M.ID";
-        elseif ($by == "s_number") $strSqlOrder = "ORDER BY M.C_NUMBER";
-        else {
-            $by = "s_number";
+        if ($by == "s_id") {
+            $strSqlOrder = "ORDER BY M.ID";
+        } elseif ($by == "s_number") {
+            $strSqlOrder = "ORDER BY M.C_NUMBER";
+        } else {
             $strSqlOrder = "ORDER BY M.C_NUMBER";
         }
+
         if ($order == "desc") {
             $strSqlOrder .= " desc ";
-            $order = "desc";
         } else {
             $strSqlOrder .= " asc ";
-            $order = "asc";
         }
 
         $strSql = "
@@ -1399,38 +1542,52 @@ class CTicket extends CAllTicket
         return $res;
     }
 
-    public static function GetDynamicList(&$by, &$order, $arFilter = Array())
+    public static function GetDynamicList($by = 's_date_create', $order = 'desc', $arFilter = [])
     {
         $err_mess = (CTicket::err_mess()) . "<br>Function: GetDynamicList<br>Line: ";
         global $DB;
         $arSqlSearch = Array();
-        $strSqlSearch = "";
         if (is_array($arFilter)) {
             $filterKeys = array_keys($arFilter);
             $filterKeysCount = count($filterKeys);
             for ($i = 0; $i < $filterKeysCount; $i++) {
                 $key = $filterKeys[$i];
                 $val = $arFilter[$filterKeys[$i]];
-                if ((is_array($val) && count($val) <= 0) || (!is_array($val) && (strlen($val) <= 0 || $val === 'NOT_REF')))
+                if ((is_array($val) && count($val) <= 0) || (!is_array(
+                            $val
+                        ) && ((string)$val == '' || $val === 'NOT_REF'))) {
                     continue;
+                }
                 $matchValueSet = (in_array($key . "_EXACT_MATCH", $filterKeys)) ? true : false;
                 $key = strtoupper($key);
                 switch ($key) {
                     case "DATE_CREATE_1":
-                        if (CheckDateTime($val))
+                        if (CheckDateTime($val)) {
                             $arSqlSearch[] = "T.DATE_CREATE>=" . $DB->CharToDateFunction($val, "SHORT");
+                        }
                         break;
                     case "DATE_CREATE_2":
-                        if (CheckDateTime($val))
-                            $arSqlSearch[] = "T.DATE_CREATE<" . $DB->CharToDateFunction($val, "SHORT") . " + INTERVAL 1 DAY";
+                        if (CheckDateTime($val)) {
+                            $arSqlSearch[] = "T.DATE_CREATE<" . $DB->CharToDateFunction(
+                                    $val,
+                                    "SHORT"
+                                ) . " + INTERVAL 1 DAY";
+                        }
                         break;
                     case "RESPONSIBLE":
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "Y" && $matchValueSet) ? "N" : "Y";
-                        $arSqlSearch[] = GetFilterQuery("T.RESPONSIBLE_USER_ID, UR.LOGIN, UR.LAST_NAME, UR.NAME", $val, $match);
+                        $arSqlSearch[] = GetFilterQuery(
+                            "T.RESPONSIBLE_USER_ID, UR.LOGIN, UR.LAST_NAME, UR.NAME",
+                            $val,
+                            $match
+                        );
                         break;
                     case "RESPONSIBLE_ID":
-                        if (intval($val) > 0) $arSqlSearch[] = "T.RESPONSIBLE_USER_ID = '" . intval($val) . "'";
-                        elseif ($val == 0) $arSqlSearch[] = "(T.RESPONSIBLE_USER_ID is null or T.RESPONSIBLE_USER_ID=0)";
+                        if (intval($val) > 0) {
+                            $arSqlSearch[] = "T.RESPONSIBLE_USER_ID = '" . intval($val) . "'";
+                        } elseif ($val == 0) {
+                            $arSqlSearch[] = "(T.RESPONSIBLE_USER_ID is null or T.RESPONSIBLE_USER_ID=0)";
+                        }
                         break;
                     case "SLA_ID":
                     case "SLA":
@@ -1439,47 +1596,66 @@ class CTicket extends CAllTicket
                         break;
                     case "CATEGORY_ID":
                     case "CATEGORY":
-                        if (intval($val) > 0) $arSqlSearch[] = "T.CATEGORY_ID = '" . intval($val) . "'";
-                        elseif ($val == 0) $arSqlSearch[] = "(T.CATEGORY_ID is null or T.CATEGORY_ID=0)";
+                        if (intval($val) > 0) {
+                            $arSqlSearch[] = "T.CATEGORY_ID = '" . intval($val) . "'";
+                        } elseif ($val == 0) {
+                            $arSqlSearch[] = "(T.CATEGORY_ID is null or T.CATEGORY_ID=0)";
+                        }
                         break;
                     case "CRITICALITY_ID":
                     case "CRITICALITY":
-                        if (intval($val) > 0) $arSqlSearch[] = "T.CRITICALITY_ID = '" . intval($val) . "'";
-                        elseif ($val == 0) $arSqlSearch[] = "(T.CRITICALITY_ID is null or T.CRITICALITY_ID=0)";
+                        if (intval($val) > 0) {
+                            $arSqlSearch[] = "T.CRITICALITY_ID = '" . intval($val) . "'";
+                        } elseif ($val == 0) {
+                            $arSqlSearch[] = "(T.CRITICALITY_ID is null or T.CRITICALITY_ID=0)";
+                        }
                         break;
                     case "STATUS_ID":
                     case "STATUS":
-                        if (intval($val) > 0) $arSqlSearch[] = "T.STATUS_ID = '" . intval($val) . "'";
-                        elseif ($val == 0) $arSqlSearch[] = "(T.STATUS_ID is null or T.STATUS_ID=0)";
+                        if (intval($val) > 0) {
+                            $arSqlSearch[] = "T.STATUS_ID = '" . intval($val) . "'";
+                        } elseif ($val == 0) {
+                            $arSqlSearch[] = "(T.STATUS_ID is null or T.STATUS_ID=0)";
+                        }
                         break;
                     case "MARK_ID":
                     case "MARK":
-                        if (intval($val) > 0) $arSqlSearch[] = "T.MARK_ID = '" . intval($val) . "'";
-                        elseif ($val == 0) $arSqlSearch[] = "(T.MARK_ID is null or T.MARK_ID=0)";
+                        if (intval($val) > 0) {
+                            $arSqlSearch[] = "T.MARK_ID = '" . intval($val) . "'";
+                        } elseif ($val == 0) {
+                            $arSqlSearch[] = "(T.MARK_ID is null or T.MARK_ID=0)";
+                        }
                         break;
                     case "SOURCE_ID":
                     case "SOURCE":
-                        if (intval($val) > 0) $arSqlSearch[] = "T.SOURCE_ID = '" . intval($val) . "'";
-                        elseif ($val == 0) $arSqlSearch[] = "(T.SOURCE_ID is null or T.SOURCE_ID=0)";
+                        if (intval($val) > 0) {
+                            $arSqlSearch[] = "T.SOURCE_ID = '" . intval($val) . "'";
+                        } elseif ($val == 0) {
+                            $arSqlSearch[] = "(T.SOURCE_ID is null or T.SOURCE_ID=0)";
+                        }
                         break;
                     case "DIFFICULTY_ID":
                     case "DIFFICULTY":
-                        if (intval($val) > 0) $arSqlSearch[] = "T.DIFFICULTY_ID = '" . intval($val) . "'";
-                        elseif ($val == 0) $arSqlSearch[] = "(T.DIFFICULTY_ID is null or T.DIFFICULTY_ID=0)";
+                        if (intval($val) > 0) {
+                            $arSqlSearch[] = "T.DIFFICULTY_ID = '" . intval($val) . "'";
+                        } elseif ($val == 0) {
+                            $arSqlSearch[] = "(T.DIFFICULTY_ID is null or T.DIFFICULTY_ID=0)";
+                        }
                         break;
                 }
             }
         }
         $strSqlSearch = GetFilterSqlSearch($arSqlSearch);
-        if ($by == "s_date_create") $strSqlOrder = "ORDER BY T.DATE_CREATE";
-        else {
-            $by = "s_date_create";
+        if ($by == "s_date_create") {
+            $strSqlOrder = "ORDER BY T.DATE_CREATE";
+        } else {
             $strSqlOrder = "ORDER BY T.DATE_CREATE";
         }
+
         if ($order != "asc") {
             $strSqlOrder .= " desc ";
-            $order = "desc";
         }
+
         $strSql = "
 			SELECT
 				count(T.ID)							ALL_TICKETS,
@@ -1503,44 +1679,56 @@ class CTicket extends CAllTicket
         return $res;
     }
 
-    public static function GetMessageDynamicList(&$by, &$order, $arFilter = Array())
+    public static function GetMessageDynamicList($by = 's_date_create', $order = 'desc', $arFilter = [])
     {
         $err_mess = (CTicket::err_mess()) . "<br>Function: GetMessageDynamicList<br>Line: ";
         global $DB;
         $arSqlSearch = Array();
-        $strSqlSearch = "";
         if (is_array($arFilter)) {
             $filterKeys = array_keys($arFilter);
             $filterKeysCount = count($filterKeys);
             for ($i = 0; $i < $filterKeysCount; $i++) {
                 $key = $filterKeys[$i];
                 $val = $arFilter[$filterKeys[$i]];
-                if ((is_array($val) && count($val) <= 0) || (!is_array($val) && (strlen($val) <= 0 || $val === 'NOT_REF')))
+                if ((is_array($val) && count($val) <= 0) || (!is_array(
+                            $val
+                        ) && ((string)$val == '' || $val === 'NOT_REF'))) {
                     continue;
+                }
                 $matchValueSet = (in_array($key . "_EXACT_MATCH", $filterKeys)) ? true : false;
                 $key = strtoupper($key);
                 switch ($key) {
                     case "SITE":
                     case "SITE_ID":
-                        if (is_array($val)) $val = implode(" | ", $val);
+                        if (is_array($val)) {
+                            $val = implode(" | ", $val);
+                        }
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "N" && $matchValueSet) ? "Y" : "N";
                         $arSqlSearch[] = GetFilterQuery("T.SITE_ID", $val, $match);
                         break;
                     case "DATE_CREATE_1":
-                        if (CheckDateTime($val))
+                        if (CheckDateTime($val)) {
                             $arSqlSearch[] = "M.DATE_CREATE>=" . $DB->CharToDateFunction($val, "SHORT");
+                        }
                         break;
                     case "DATE_CREATE_2":
-                        if (CheckDateTime($val))
-                            $arSqlSearch[] = "M.DATE_CREATE<" . $DB->CharToDateFunction($val, "SHORT") . " + INTERVAL 1 DAY";
+                        if (CheckDateTime($val)) {
+                            $arSqlSearch[] = "M.DATE_CREATE<" . $DB->CharToDateFunction(
+                                    $val,
+                                    "SHORT"
+                                ) . " + INTERVAL 1 DAY";
+                        }
                         break;
                     case "OWNER":
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "Y" && $matchValueSet) ? "N" : "Y";
                         $arSqlSearch[] = GetFilterQuery("M.OWNER_USER_ID, U.LOGIN, U.LAST_NAME, U.NAME", $val, $match);
                         break;
                     case "OWNER_ID":
-                        if (intval($val) > 0) $arSqlSearch[] = "M.OWNER_USER_ID = '" . intval($val) . "'";
-                        elseif ($val == 0) $arSqlSearch[] = "(M.OWNER_USER_ID is null or M.OWNER_USER_ID=0)";
+                        if (intval($val) > 0) {
+                            $arSqlSearch[] = "M.OWNER_USER_ID = '" . intval($val) . "'";
+                        } elseif ($val == 0) {
+                            $arSqlSearch[] = "(M.OWNER_USER_ID is null or M.OWNER_USER_ID=0)";
+                        }
                         break;
                     case "IS_HIDDEN":
                     case "IS_LOG":
@@ -1554,47 +1742,66 @@ class CTicket extends CAllTicket
                         break;
                     case "CATEGORY_ID":
                     case "CATEGORY":
-                        if (intval($val) > 0) $arSqlSearch[] = "T.CATEGORY_ID = '" . intval($val) . "'";
-                        elseif ($val == 0) $arSqlSearch[] = "(T.CATEGORY_ID is null or T.CATEGORY_ID=0)";
+                        if (intval($val) > 0) {
+                            $arSqlSearch[] = "T.CATEGORY_ID = '" . intval($val) . "'";
+                        } elseif ($val == 0) {
+                            $arSqlSearch[] = "(T.CATEGORY_ID is null or T.CATEGORY_ID=0)";
+                        }
                         break;
                     case "CRITICALITY_ID":
                     case "CRITICALITY":
-                        if (intval($val) > 0) $arSqlSearch[] = "T.CRITICALITY_ID = '" . intval($val) . "'";
-                        elseif ($val == 0) $arSqlSearch[] = "(T.CRITICALITY_ID is null or T.CRITICALITY_ID=0)";
+                        if (intval($val) > 0) {
+                            $arSqlSearch[] = "T.CRITICALITY_ID = '" . intval($val) . "'";
+                        } elseif ($val == 0) {
+                            $arSqlSearch[] = "(T.CRITICALITY_ID is null or T.CRITICALITY_ID=0)";
+                        }
                         break;
                     case "STATUS_ID":
                     case "STATUS":
-                        if (intval($val) > 0) $arSqlSearch[] = "T.STATUS_ID = '" . intval($val) . "'";
-                        elseif ($val == 0) $arSqlSearch[] = "(T.STATUS_ID is null or T.STATUS_ID=0)";
+                        if (intval($val) > 0) {
+                            $arSqlSearch[] = "T.STATUS_ID = '" . intval($val) . "'";
+                        } elseif ($val == 0) {
+                            $arSqlSearch[] = "(T.STATUS_ID is null or T.STATUS_ID=0)";
+                        }
                         break;
                     case "MARK_ID":
                     case "MARK":
-                        if (intval($val) > 0) $arSqlSearch[] = "T.MARK_ID = '" . intval($val) . "'";
-                        elseif ($val == 0) $arSqlSearch[] = "(T.MARK_ID is null or T.MARK_ID=0)";
+                        if (intval($val) > 0) {
+                            $arSqlSearch[] = "T.MARK_ID = '" . intval($val) . "'";
+                        } elseif ($val == 0) {
+                            $arSqlSearch[] = "(T.MARK_ID is null or T.MARK_ID=0)";
+                        }
                         break;
                     case "SOURCE_ID":
                     case "SOURCE":
-                        if (intval($val) > 0) $arSqlSearch[] = "T.SOURCE_ID = '" . intval($val) . "'";
-                        elseif ($val == 0) $arSqlSearch[] = "(T.SOURCE_ID is null or T.SOURCE_ID=0)";
+                        if (intval($val) > 0) {
+                            $arSqlSearch[] = "T.SOURCE_ID = '" . intval($val) . "'";
+                        } elseif ($val == 0) {
+                            $arSqlSearch[] = "(T.SOURCE_ID is null or T.SOURCE_ID=0)";
+                        }
                         break;
                     case "DIFFICULTY_ID":
                     case "DIFFICULTY":
-                        if (intval($val) > 0) $arSqlSearch[] = "T.DIFFICULTY_ID = '" . intval($val) . "'";
-                        elseif ($val == 0) $arSqlSearch[] = "(T.DIFFICULTY_ID is null or T.DIFFICULTY_ID=0)";
+                        if (intval($val) > 0) {
+                            $arSqlSearch[] = "T.DIFFICULTY_ID = '" . intval($val) . "'";
+                        } elseif ($val == 0) {
+                            $arSqlSearch[] = "(T.DIFFICULTY_ID is null or T.DIFFICULTY_ID=0)";
+                        }
                         break;
                 }
             }
         }
         $strSqlSearch = GetFilterSqlSearch($arSqlSearch);
-        if ($by == "s_date_create") $strSqlOrder = "ORDER BY M.DATE_CREATE";
-        else {
-            $by = "s_date_create";
+        if ($by == "s_date_create") {
+            $strSqlOrder = "ORDER BY M.DATE_CREATE";
+        } else {
             $strSqlOrder = "ORDER BY M.DATE_CREATE";
         }
+
         if ($order != "asc") {
             $strSqlOrder .= " desc ";
-            $order = "desc";
         }
+
         $strSql = "
 			SELECT
 				count(M.ID)								COUNTER,

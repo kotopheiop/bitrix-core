@@ -88,12 +88,14 @@ class CategoryTable extends Entity\DataManager
         $result = array();
 
         do {
-            $categoryRes = self::getList(array(
-                'select' => array('CATEGORY_ID', 'NAME', 'PARENT_ID', 'LEVEL'),
-                'filter' => array(
-                    'CATEGORY_ID' => $ebayCategoryId
-                ),
-            ));
+            $categoryRes = self::getList(
+                array(
+                    'select' => array('CATEGORY_ID', 'NAME', 'PARENT_ID', 'LEVEL'),
+                    'filter' => array(
+                        'CATEGORY_ID' => $ebayCategoryId
+                    ),
+                )
+            );
 
             if ($category = $categoryRes->fetch()) {
                 $result[$category["LEVEL"]] = $category;

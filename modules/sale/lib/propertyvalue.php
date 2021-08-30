@@ -2,7 +2,7 @@
 
 namespace Bitrix\Sale;
 
-use Bitrix\Sale\Internals\OrderPropsValueTable;
+use Bitrix\Sale\Internals\Entity;
 use Bitrix\Main;
 
 /**
@@ -11,21 +11,12 @@ use Bitrix\Main;
  */
 class PropertyValue extends PropertyValueBase
 {
-
     /**
-     * @return array
-     */
-    protected static function getFieldsMap()
-    {
-        return Internals\OrderPropsValueTable::getMap();
-    }
-
-    /**
-     * @param OrderBase $order
+     * @param Entity $order
      * @return array
      * @throws Main\ObjectNotFoundException
      */
-    protected static function extractPaySystemIdList(OrderBase $order)
+    protected static function extractPaySystemIdList(Entity $order)
     {
         if (!$order instanceof Order) {
             return [];
@@ -35,12 +26,12 @@ class PropertyValue extends PropertyValueBase
     }
 
     /**
-     * @param OrderBase $order
+     * @param Entity $order
      * @return array
      * @throws Main\ArgumentException
      * @throws Main\ArgumentNullException
      */
-    protected static function extractDeliveryIdList(OrderBase $order)
+    protected static function extractDeliveryIdList(Entity $order)
     {
         if (!$order instanceof Order) {
             return [];
@@ -49,8 +40,64 @@ class PropertyValue extends PropertyValueBase
         return $order->getDeliveryIdList();
     }
 
+    protected static function constructPropertyFilter(Entity $entity): array
+    {
+        $filter = parent::constructPropertyFilter($entity);
+
+        if ($tpLandingList = static::extractTpLandingIdList($entity)) {
+            $dbRes = Internals\OrderPropsRelationTable::getList(
+                [
+                    'filter' => [
+                        '@ENTITY_ID' => $tpLandingList,
+                        '=ENTITY_TYPE' => 'L'
+                    ],
+                    'limit' => 1
+                ]
+            );
+
+            if ($dbRes->fetch()) {
+                $filter['@RELATION_TP_LANDING.ENTITY_ID'] = $tpLandingList;
+            } else {
+                $filter['=RELATION_TP_LANDING.ENTITY_ID'] = null;
+            }
+        } else {
+            $filter['=RELATION_TP_LANDING.ENTITY_ID'] = null;
+        }
+
+        return $filter;
+    }
+
+    protected static function extractTpLandingIdList(Entity $order): array
+    {
+        if (!$order instanceof Order) {
+            return [];
+        }
+
+        return $order->getTradeBindingCollection()->getTradingPlatformIdList();
+    }
+
+    protected static function getRelationRuntimeFields(): array
+    {
+        $runtime = parent::getRelationRuntimeFields();
+
+        $runtime[] = new Main\Entity\ReferenceField(
+            'RELATION_TP_LANDING',
+            '\Bitrix\Sale\Internals\OrderPropsRelation',
+            [
+                '=this.ID' => 'ref.PROPERTY_ID',
+                'ref.ENTITY_TYPE' => new Main\DB\SqlExpression('?', 'L')
+            ],
+            'left_join'
+        );
+
+        return $runtime;
+    }
+
     /**
      * @return Result
+     * @throws Main\ArgumentException
+     * @throws Main\ArgumentOutOfRangeException
+     * @throws Main\NotImplementedException
      * @throws Main\ObjectNotFoundException
      */
     protected function update()
@@ -63,7 +110,7 @@ class PropertyValue extends PropertyValueBase
             throw new Main\ObjectNotFoundException('Entity "Order" not found');
         }
 
-        $logFields = array();
+        $logFields = [];
         if ($order->getId() > 0) {
             $logFields = $this->getLogFieldsForUpdate();
         }
@@ -83,22 +130,25 @@ class PropertyValue extends PropertyValueBase
      */
     private function getLogFieldsForUpdate()
     {
-        $logFields = array(
+        $logFields = [
             "NAME" => $this->getField("NAME"),
             "VALUE" => $this->getField("VALUE"),
             "CODE" => $this->getField("CODE"),
-        );
+        ];
 
         $fields = $this->getFields();
         $originalValues = $fields->getOriginalValues();
-        if (array_key_exists("NAME", $originalValues))
+        if (array_key_exists("NAME", $originalValues)) {
             $logFields['OLD_NAME'] = $originalValues["NAME"];
+        }
 
-        if (array_key_exists("VALUE", $originalValues))
+        if (array_key_exists("VALUE", $originalValues)) {
             $logFields['OLD_VALUE'] = $originalValues["VALUE"];
+        }
 
-        if (array_key_exists("CODE", $originalValues))
+        if (array_key_exists("CODE", $originalValues)) {
             $logFields['OLD_CODE'] = $originalValues["CODE"];
+        }
 
         return $logFields;
     }
@@ -108,11 +158,11 @@ class PropertyValue extends PropertyValueBase
      */
     private function getLogFieldsForAdd()
     {
-        $logFields = array(
+        $logFields = [
             "NAME" => $this->getField("NAME"),
             "VALUE" => $this->getField("VALUE"),
             "CODE" => $this->getField("CODE"),
-        );
+        ];
 
         return $logFields;
     }
@@ -151,6 +201,10 @@ class PropertyValue extends PropertyValueBase
     /**
      * @return Result
      * @throws Main\ObjectNotFoundException
+     * @throws Main\ArgumentException
+     * @throws Main\ArgumentOutOfRangeException
+     * @throws Main\NotImplementedException
+     * @throws Main\ObjectNotFoundException
      */
     protected function add()
     {
@@ -162,7 +216,7 @@ class PropertyValue extends PropertyValueBase
             throw new Main\ObjectNotFoundException('Entity "Order" not found');
         }
 
-        $logFields = array();
+        $logFields = [];
         if ($order->getId() > 0) {
             $logFields = $this->getLogFieldsForAdd();
         }
@@ -175,46 +229,5 @@ class PropertyValue extends PropertyValueBase
         }
 
         return $result;
-    }
-
-    /**
-     * @return string
-     */
-    public static function getRegistryType()
-    {
-        return Registry::REGISTRY_TYPE_ORDER;
-    }
-
-    /**
-     * @param array $data
-     * @return Main\Entity\AddResult
-     * @throws Main\NotImplementedException
-     */
-    protected function addInternal(array $data)
-    {
-        return OrderPropsValueTable::add($data);
-    }
-
-    /**
-     * @param $primary
-     * @param array $data
-     * @return Main\Entity\UpdateResult
-     * @throws Main\NotImplementedException
-     */
-    protected function updateInternal($primary, array $data)
-    {
-        return OrderPropsValueTable::update($primary, $data);
-    }
-
-    /**
-     * @param array $parameters
-     * @return Main\DB\Result|Main\ORM\Query\Result
-     * @throws Main\ArgumentException
-     * @throws Main\ObjectPropertyException
-     * @throws Main\SystemException
-     */
-    public static function getList(array $parameters = array())
-    {
-        return Internals\OrderPropsValueTable::getList($parameters);
     }
 }

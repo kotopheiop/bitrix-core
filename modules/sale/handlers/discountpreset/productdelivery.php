@@ -55,9 +55,15 @@ class ProductDelivery extends Delivery
 				<tbody>
 				' . $this->renderDiscountValue($state, $currency) . ' 
 				<tr>
-					<td class="adm-detail-content-cell-l" style="width:40%;"><strong>' . Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_SHIPMENT_DELIVERY_LABEL') . ':</strong></td>
+					<td class="adm-detail-content-cell-l" style="width:40%;"><strong>' . Loc::getMessage(
+                'SALE_HANDLERS_DISCOUNTPRESET_SHIPMENT_DELIVERY_LABEL'
+            ) . ':</strong></td>
 					<td class="adm-detail-content-cell-r">
-						' . HtmlHelper::generateMultipleSelect('discount_delivery[]', $forSelectData, $state->get('discount_delivery', array())) . '
+						' . HtmlHelper::generateMultipleSelect(
+                'discount_delivery[]',
+                $forSelectData,
+                $state->get('discount_delivery', array())
+            ) . '
 					</td>
 				</tr>
 				</tbody>
@@ -69,7 +75,9 @@ class ProductDelivery extends Delivery
 					presetId: "' . \CUtil::JSEscape($this->className()) . '",
 					siteId: "' . \CUtil::JSEscape($lid) . '",
 					sectionCount: ' . $sectionCount . ',
-					products: ' . \CUtil::PhpToJSObject($this->generateProductsData($state->get('discount_product'), $lid)) . '
+					products: ' . \CUtil::PhpToJSObject(
+                $this->generateProductsData($state->get('discount_product'), $lid)
+            ) . '
 				});
 			});
 			</script>
@@ -107,8 +115,12 @@ class ProductDelivery extends Delivery
             'discount_value' => ArrayHelper::getByPath($discountFields, 'ACTIONS.CHILDREN.0.DATA.Value'),
             'discount_type' => ArrayHelper::getByPath($discountFields, 'ACTIONS.CHILDREN.0.DATA.Unit'),
             'discount_delivery' => ArrayHelper::getByPath($discountFields, 'CONDITIONS.CHILDREN.0.DATA.value'),
-            'discount_section' => $this->getSectionsFromConditions(ArrayHelper::getByPath($discountFields, 'CONDITIONS.CHILDREN.1.CHILDREN.0.CHILDREN')),
-            'discount_product' => $this->getProductsFromConditions(ArrayHelper::getByPath($discountFields, 'CONDITIONS.CHILDREN.1.CHILDREN.1.CHILDREN')),
+            'discount_section' => $this->getSectionsFromConditions(
+                ArrayHelper::getByPath($discountFields, 'CONDITIONS.CHILDREN.1.CHILDREN.0.CHILDREN')
+            ),
+            'discount_product' => $this->getProductsFromConditions(
+                ArrayHelper::getByPath($discountFields, 'CONDITIONS.CHILDREN.1.CHILDREN.1.CHILDREN')
+            ),
         );
 
         return parent::generateState($discountFields)->append($stateFields);
@@ -119,76 +131,79 @@ class ProductDelivery extends Delivery
         $generateProductConditions = $this->generateProductConditions($state->get('discount_product'));
         $generateSectionConditions = $this->generateSectionConditions($state->get('discount_section'));
 
-        return array_merge(parent::generateDiscount($state), array(
-            'CONDITIONS' => array(
-                'CLASS_ID' => 'CondGroup',
-                'DATA' => array(
-                    'All' => 'AND',
-                    'True' => 'True',
-                ),
-                'CHILDREN' => array(
-                    array(
-                        'CLASS_ID' => 'CondSaleDelivery',
-                        'DATA' => array(
-                            'logic' => 'Equal',
-                            'value' => $state->get('discount_delivery'),
-                        ),
+        return array_merge(
+            parent::generateDiscount($state),
+            array(
+                'CONDITIONS' => array(
+                    'CLASS_ID' => 'CondGroup',
+                    'DATA' => array(
+                        'All' => 'AND',
+                        'True' => 'True',
                     ),
-                    array(
-                        'CLASS_ID' => 'CondGroup',
-                        'DATA' => array(
-                            'All' => 'OR',
-                            'True' => 'True',
+                    'CHILDREN' => array(
+                        array(
+                            'CLASS_ID' => 'CondSaleDelivery',
+                            'DATA' => array(
+                                'logic' => 'Equal',
+                                'value' => $state->get('discount_delivery'),
+                            ),
                         ),
-                        'CHILDREN' => array(
-                            $generateSectionConditions ? array(
-                                'CLASS_ID' => 'CondBsktProductGroup',
-                                'DATA' => array(
-                                    'Found' => 'Found',
-                                    'All' => 'OR',
-                                ),
-                                'CHILDREN' => $generateSectionConditions,
-                            ) : array(),
-                            $generateProductConditions ? array(
-                                'CLASS_ID' => 'CondBsktProductGroup',
-                                'DATA' => array(
-                                    'Found' => 'Found',
-                                    'All' => 'OR',
-                                ),
-                                'CHILDREN' => $generateProductConditions,
-                            ) : array(),
+                        array(
+                            'CLASS_ID' => 'CondGroup',
+                            'DATA' => array(
+                                'All' => 'OR',
+                                'True' => 'True',
+                            ),
+                            'CHILDREN' => array(
+                                $generateSectionConditions ? array(
+                                    'CLASS_ID' => 'CondBsktProductGroup',
+                                    'DATA' => array(
+                                        'Found' => 'Found',
+                                        'All' => 'OR',
+                                    ),
+                                    'CHILDREN' => $generateSectionConditions,
+                                ) : array(),
+                                $generateProductConditions ? array(
+                                    'CLASS_ID' => 'CondBsktProductGroup',
+                                    'DATA' => array(
+                                        'Found' => 'Found',
+                                        'All' => 'OR',
+                                    ),
+                                    'CHILDREN' => $generateProductConditions,
+                                ) : array(),
+                            ),
                         ),
-                    ),
-                    array(
-                        'CLASS_ID' => 'CondBsktCntGroup',
-                        'DATA' => array(
-                            'logic' => 'Equal',
-                            'Value' => 0,
-                            'All' => 'OR',
-                        ),
-                        'CHILDREN' => array_merge(
-                            $this->generateSectionConditions($state->get('discount_section'), 'Not'),
-                            $this->generateProductConditions($state->get('discount_product'), 'Not')
-                        ),
-                    ),
-                ),
-            ),
-            'ACTIONS' => array(
-                'CLASS_ID' => 'CondGroup',
-                'DATA' => array(
-                    'All' => 'AND',
-                ),
-                'CHILDREN' => array(
-                    array(
-                        'CLASS_ID' => 'ActSaleDelivery',
-                        'DATA' => array(
-                            'Type' => $this->getTypeOfDiscount(),
-                            'Value' => $state->get('discount_value'),
-                            'Unit' => $state->get('discount_type', 'Cur'),
+                        array(
+                            'CLASS_ID' => 'CondBsktCntGroup',
+                            'DATA' => array(
+                                'logic' => 'Equal',
+                                'Value' => 0,
+                                'All' => 'OR',
+                            ),
+                            'CHILDREN' => array_merge(
+                                $this->generateSectionConditions($state->get('discount_section'), 'Not'),
+                                $this->generateProductConditions($state->get('discount_product'), 'Not')
+                            ),
                         ),
                     ),
                 ),
-            ),
-        ));
+                'ACTIONS' => array(
+                    'CLASS_ID' => 'CondGroup',
+                    'DATA' => array(
+                        'All' => 'AND',
+                    ),
+                    'CHILDREN' => array(
+                        array(
+                            'CLASS_ID' => 'ActSaleDelivery',
+                            'DATA' => array(
+                                'Type' => $this->getTypeOfDiscount(),
+                                'Value' => $state->get('discount_value'),
+                                'Unit' => $state->get('discount_type', 'Cur'),
+                            ),
+                        ),
+                    ),
+                ),
+            )
+        );
     }
 }

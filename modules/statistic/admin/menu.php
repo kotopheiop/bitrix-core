@@ -1,4 +1,5 @@
 <?php
+
 /** @var CMain $APPLICATION */
 IncludeModuleLangFile(__FILE__);
 if (

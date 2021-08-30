@@ -1,4 +1,5 @@
 <?
+
 define("BX_SESSION_ID_CHANGE", false);
 define("ADMIN_MODULE_NAME", "security");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
@@ -10,10 +11,12 @@ IncludeModuleLangFile(__FILE__);
  * @global CMain $APPLICATION
  * @global CUser $USER
  */
-if (!$USER->IsAdmin())
+if (!$USER->IsAdmin()) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
-if ($_SERVER['REQUEST_METHOD'] == "POST" && check_bitrix_sessid() && $_POST["action"] . $_POST["save"] . $_POST["apply"] != "") {
+if ($_SERVER['REQUEST_METHOD'] == "POST" && check_bitrix_sessid(
+    ) && $_POST["action"] . $_POST["save"] . $_POST["apply"] != "") {
     $result = "error";
 
     if (isset($_POST["action"]) && $_POST["action"] == "save") {
@@ -93,27 +96,31 @@ else:
     ?>
     <div id="error_container" class="adm-security-error-container" style="display:none;">
         <?
-        CAdminMessage::ShowMessage(array(
-            "MESSAGE" => GetMessage("SEC_SCANNER_CRITICAL_ERRORS_TITLE"),
-            "TYPE" => "ERROR",
-            "DETAILS" => "",
-            "HTML" => true
-        ));
+        CAdminMessage::ShowMessage(
+            array(
+                "MESSAGE" => GetMessage("SEC_SCANNER_CRITICAL_ERRORS_TITLE"),
+                "TYPE" => "ERROR",
+                "DETAILS" => "",
+                "HTML" => true
+            )
+        );
         ?>
     </div>
     <form method="POST"
-          action="security_scanner.php?lang=<?= LANG ?><?= $_GET["return_url"] ? "&amp;return_url=" . urlencode($_GET["return_url"]) : "" ?>"
-          name="settings_form">
+          action="security_scanner.php?lang=<?= LANG ?><?= $_GET["return_url"] ? "&amp;return_url=" . urlencode(
+                  $_GET["return_url"]
+              ) : "" ?>" name="settings_form">
         <? $tabControl->Begin(); ?>
         <? $tabControl->BeginNextTab(); ?>
         <div class="adm-security-wrap">
             <div id="start_container" class="adm-security-first-step">
-                <div id="first_start"
-                     class="adm-security-text-block" <?= (!CSecuritySiteChecker::isNewTestNeeded()) ? "style=\"display:none;\"" : "" ?>>
+                <div id="first_start" class="adm-security-text-block" <?= (!CSecuritySiteChecker::isNewTestNeeded(
+                )) ? "style=\"display:none;\"" : "" ?>>
                     <?= GetMessage("SEC_SCANNER_CRITICAL_FIRST_START") ?>
                 </div>
-                <span id="start_button"
-                      class="adm-btn adm-btn-green"><?= GetMessage("SEC_SCANNER_START_BUTTON") ?></span>
+                <span id="start_button" class="adm-btn adm-btn-green"><?= GetMessage(
+                        "SEC_SCANNER_START_BUTTON"
+                    ) ?></span>
             </div>
             <div id="status_bar" class="adm-security-status-bar" style="display:none;">
                 <div id="progress_bar" style="width: 500px;" class="adm-progress-bar-outer">
@@ -125,10 +132,17 @@ else:
             </div>
             <div id="results_info"
                  class="adm-security-results-info adm-security-title" <?= (empty($lastResults) && empty($lastDate)) ? "style=\"display:none;\"" : "" ?>>
-                <div id="problems_count"
-                     style="width: 500px; float: left;"><?= !empty($lastResults) ? (GetMessage("SEC_SCANNER_PROBLEMS_COUNT") . count($lastResults) . GetMessage("SEC_SCANNER_CRITICAL_PROBLEMS_COUNT") . $criticalResultsCount) : (!empty($lastTestingInfo) ? GetMessage("SEC_SCANNER_NO_PROBLEMS") : "") ?></div>
-                <div id="last_activity"
-                     style="width: 100%; text-align: right;"><?= ($lastDate != "") ? GetMessage("SEC_SCANNER_TEST_DATE", array("#DATE#" => $lastDate)) : "" ?></div>
+                <div id="problems_count" style="width: 500px; float: left;"><?= !empty($lastResults) ? (GetMessage(
+                            "SEC_SCANNER_PROBLEMS_COUNT"
+                        ) . count($lastResults) . GetMessage(
+                            "SEC_SCANNER_CRITICAL_PROBLEMS_COUNT"
+                        ) . $criticalResultsCount) : (!empty($lastTestingInfo) ? GetMessage(
+                        "SEC_SCANNER_NO_PROBLEMS"
+                    ) : "") ?></div>
+                <div id="last_activity" style="width: 100%; text-align: right;"><?= ($lastDate != "") ? GetMessage(
+                        "SEC_SCANNER_TEST_DATE",
+                        array("#DATE#" => $lastDate)
+                    ) : "" ?></div>
                 <div style="clear:both;"></div>
             </div>
             <div id="results"
@@ -137,8 +151,9 @@ else:
         <? $tabControl->End(); ?>
     </form>
 
-    <script id="scanner_messages"
-            type="application/json"><?= \Bitrix\Main\Web\Json::encode(IncludeModuleLangFile(__FILE__, false, true)) ?></script>
+    <script id="scanner_messages" type="application/json"><?= \Bitrix\Main\Web\Json::encode(
+            IncludeModuleLangFile(__FILE__, false, true)
+        ) ?></script>
     <script id="scanner_results" type="application/json"><?= \Bitrix\Main\Web\Json::encode($lastResults) ?></script>
 <? endif; ?>
 <?

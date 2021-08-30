@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 class CListFileControl
@@ -46,35 +47,47 @@ class CListFileControl
         $show_info = true;
 
         if (is_array($params)) {
-            if (isset($params['max_size']))
+            if (isset($params['max_size'])) {
                 $max_size = intval($params['max_size']);
-            if (isset($params['max_width']))
+            }
+            if (isset($params['max_width'])) {
                 $max_width = intval($params['max_width']);
-            if (isset($params['max_height']))
+            }
+            if (isset($params['max_height'])) {
                 $max_height = intval($params['max_height']);
-            if (isset($params['url_template']))
+            }
+            if (isset($params['url_template'])) {
                 $url_template = $params['url_template'];
-            if (isset($params['download_url']))
+            }
+            if (isset($params['download_url'])) {
                 $download_url = $params['download_url'];
-            if (isset($params['show_input']))
+            }
+            if (isset($params['show_input'])) {
                 $show_input = (bool)$params['show_input'];
-            if (isset($params['show_info']))
+            }
+            if (isset($params['show_info'])) {
                 $show_info = (bool)$params['show_info'];
+            }
         }
 
-        if ($download_url)
+        if ($download_url) {
             $url_template = $download_url;
+        }
 
         if ($show_input) {
-            $html .= $this->_ob_file->GetInputHTML(array(
-                'show_info' => true,
-                'url_template' => $url_template,
-                'input_name' => $this->_input_name,
-            ));
+            $html .= $this->_ob_file->GetInputHTML(
+                array(
+                    'show_info' => true,
+                    'url_template' => $url_template,
+                    'input_name' => $this->_input_name,
+                )
+            );
         } elseif ($show_info) {
-            $html .= $this->_ob_file->GetInfoHTML(array(
-                'url_template' => $url_template,
-            ));
+            $html .= $this->_ob_file->GetInfoHTML(
+                array(
+                    'url_template' => $url_template,
+                )
+            );
         }
 
         CUtil::InitJSCore(array("ui.viewer"));
@@ -85,22 +98,26 @@ class CListFileControl
             $divId = 'lists-image-' . self::$_counter;
 
             $html .= '<div id="' . $divId . '">';
-            $html .= $this->_ob_file->GetImgHtml(array(
-                'url_template' => $url_template,
-                'max_width' => $max_width,
-                'max_height' => $max_height,
-                'html_attributes' => array(
-                    'border' => '0',
-                    'data-bx-image' => $img_src,
-                ),
-            ));
+            $html .= $this->_ob_file->GetImgHtml(
+                array(
+                    'url_template' => $url_template,
+                    'max_width' => $max_width,
+                    'max_height' => $max_height,
+                    'html_attributes' => array(
+                        'border' => '0',
+                        'data-bx-image' => $img_src,
+                    ),
+                )
+            );
             $html .= '</div>';
         }
 
-        $html .= $this->_ob_file->GetLinkHtml(array(
-            'url_template' => $url_template,
-            'download_text' => $params['download_text'],
-        ));
+        $html .= $this->_ob_file->GetLinkHtml(
+            array(
+                'url_template' => $url_template,
+                'download_text' => $params['download_text'],
+            )
+        );
 
         return $html;
     }

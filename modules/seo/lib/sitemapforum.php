@@ -36,11 +36,13 @@ class SitemapForum
             case 'UPDATETOPIC':
                 if ($arguments[1]["APPROVED"] == "N") {
                     self::actionDelete($arguments[1]);
-                } else if (empty($arguments[2]) || $arguments[1]["FORUM_ID"] == $arguments[2]["FORUM_ID"]) {
-                    self::actionUpdate((empty($arguments[2]) ? $arguments[1] : $arguments[2]), $arguments[1]);
                 } else {
-                    self::actionDelete($arguments[2]);
-                    self::actionAdd(array(), $arguments[1]);
+                    if (empty($arguments[2]) || $arguments[1]["FORUM_ID"] == $arguments[2]["FORUM_ID"]) {
+                        self::actionUpdate((empty($arguments[2]) ? $arguments[1] : $arguments[2]), $arguments[1]);
+                    } else {
+                        self::actionDelete($arguments[2]);
+                        self::actionAdd(array(), $arguments[1]);
+                    }
                 }
                 break;
             case 'DELETETOPIC':
@@ -55,8 +57,9 @@ class SitemapForum
     {
         if (\Bitrix\Main\Loader::includeModule('forum')) {
             $arTopic = (!empty($arTopic) ? $arTopic : \CForumTopic::GetByID($arMessage["TOPIC_ID"]));
-            if (empty($arTopic))
+            if (empty($arTopic)) {
                 return false;
+            }
             $arSitemaps = SitemapForumTable::getSitemapsByEntityId($arTopic["FORUM_ID"]);
             if (!empty($arSitemaps) && ($arForum = \CForumNew::GetByIDEx($arTopic["FORUM_ID"])) && $arForum) {
                 $arForum["PATH2FORUM_MESSAGE"] = \CForumNew::GetSites($arTopic["FORUM_ID"]);
@@ -65,7 +68,11 @@ class SitemapForum
                 foreach ($arSitemaps as $arSitemap) {
                     $path = $arForum["PATH2FORUM_MESSAGE"][$arSitemap["SITE_ID"]];
                     if (!empty($path)) {
-                        $arSitemap["fileName"] = str_replace("#FORUM_ID#", $arForum["ID"], $arSitemap['SITEMAP_FILE_FORUM']);
+                        $arSitemap["fileName"] = str_replace(
+                            "#FORUM_ID#",
+                            $arForum["ID"],
+                            $arSitemap['SITEMAP_FILE_FORUM']
+                        );
                         $arSitemap["url"] = \CForumNew::PreparePath2Message(
                             $path,
                             array(

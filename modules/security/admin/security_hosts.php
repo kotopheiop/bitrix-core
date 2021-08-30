@@ -1,4 +1,5 @@
 <?
+
 define('ADMIN_MODULE_NAME', 'security');
 
 require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_before.php');
@@ -16,8 +17,9 @@ Loc::loadMessages(__FILE__);
  * @global \CMain $APPLICATION
  **/
 
-if (!$USER->isAdmin())
+if (!$USER->isAdmin()) {
     $APPLICATION->AuthForm(Loc::getMessage('ACCESS_DENIED'));
+}
 
 $tabs = array(
     array(
@@ -43,21 +45,25 @@ if ($request->isPost() && $request['save'] . $request['apply'] && check_bitrix_s
     try {
         $properties = $request->getPost('properties');
 
-        if (isset($properties['active']) && $properties['active'] === 'Y')
+        if (isset($properties['active']) && $properties['active'] === 'Y') {
             $properties['active'] = true;
-        else
+        } else {
             $properties['active'] = false;
+        }
 
-        if (isset($properties['logging']) && $properties['logging'] === 'Y')
+        if (isset($properties['logging']) && $properties['logging'] === 'Y') {
             $properties['logging'] = true;
-        else
+        } else {
             $properties['logging'] = false;
+        }
 
-        if (!isset($properties['action']) || !$properties['action'])
+        if (!isset($properties['action']) || !$properties['action']) {
             throw new Security\LogicException('Action not presents', 'SECURITY_HOST_EMPTY_ACTION');
+        }
 
-        if (!isset($properties['hosts']) || !trim($properties['hosts']))
+        if (!isset($properties['hosts']) || !trim($properties['hosts'])) {
             throw new Security\LogicException('Hosts not presents', 'SECURITY_HOST_EMPTY_HOSTS');
+        }
 
         $hosts
             ->setHosts($properties['hosts'])
@@ -66,17 +72,23 @@ if ($request->isPost() && $request['save'] . $request['apply'] && check_bitrix_s
             ->setActive($properties['active'])
             ->save();
 
-        if ($request['save'] && $request['return_url'] != '')
+        if ($request['save'] && $request['return_url'] != '') {
             LocalRedirect($request['return_url']);
+        }
 
-        LocalRedirect('/bitrix/admin/security_hosts.php?lang=' . LANGUAGE_ID . $returnUrlQuery . '&' . $tabControl->ActiveTabParam());
+        LocalRedirect(
+            '/bitrix/admin/security_hosts.php?lang=' . LANGUAGE_ID . $returnUrlQuery . '&' . $tabControl->ActiveTabParam(
+            )
+        );
     } catch (Security\LogicException $e) {
         $errorMessage = $e->getLocMessage();
-
     } catch (Main\ArgumentException $e) {
-        $errorMessage = Loc::getMessage('SECURITY_HOSTS_SAVE_UNKNOWN_ERROR', array(
-            '#CODE#' => $e->getMessage()
-        ));
+        $errorMessage = Loc::getMessage(
+            'SECURITY_HOSTS_SAVE_UNKNOWN_ERROR',
+            array(
+                '#CODE#' => $e->getMessage()
+            )
+        );
     }
 }
 
@@ -92,19 +104,22 @@ $APPLICATION->SetTitle(Loc::getMessage('SECURITY_HOSTS_TITLE'));
 
 require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php');
 
-\CAdminMessage::ShowMessage(array(
+\CAdminMessage::ShowMessage(
+    array(
         'MESSAGE' => $messageText,
         'TYPE' => $messageType
     )
 );
 
-if (!is_null($errorMessage))
-    \CAdminMessage::ShowMessage(array(
+if (!is_null($errorMessage)) {
+    \CAdminMessage::ShowMessage(
+        array(
             'MESSAGE' => Loc::getMessage('SECURITY_HOSTS_SAVE_ERROR'),
             'DETAILS' => $errorMessage,
             'TYPE' => 'ERROR'
         )
     );
+}
 ?>
 
     <form method="POST" action="security_hosts.php?lang=<?= LANGUAGE_ID ?><?= $returnUrlQuery ?>"
@@ -145,15 +160,19 @@ if (!is_null($errorMessage))
             <td><?= Loc::getMessage('SECURITY_HOSTS_REACTION_REDIRECT_HOST') ?>:</td>
             <td>
                 <input type="text" name="properties[action_options][host]" placeholder="http://example.com"
-                       value="<?= isset($properties['action_options']['host']) ? htmlspecialcharsbx($properties['action_options']['host']) : '' ?>">
+                       value="<?= isset($properties['action_options']['host']) ? htmlspecialcharsbx(
+                           $properties['action_options']['host']
+                       ) : '' ?>">
             </td>
         </tr>
         <tr class="adm-detail-required-field">
-            <td><?= Loc::getMessage('SECURITY_HOSTS_HOSTS_LIST') ?>
-                :<br><?= Loc::getMessage('SECURITY_HOSTS_HOSTS_LIST_EXAMPLE') ?></td>
+            <td><?= Loc::getMessage('SECURITY_HOSTS_HOSTS_LIST') ?>:<br><?= Loc::getMessage(
+                    'SECURITY_HOSTS_HOSTS_LIST_EXAMPLE'
+                ) ?></td>
             <td>
-                <textarea name="properties[hosts]" cols="40"
-                          rows="5"><?= htmlspecialcharsbx($properties['hosts'] ?: "{$properties['current_host']} # current") ?></textarea>
+                <textarea name="properties[hosts]" cols="40" rows="5"><?= htmlspecialcharsbx(
+                        $properties['hosts'] ?: "{$properties['current_host']} # current"
+                    ) ?></textarea>
             </td>
         </tr>
         <tr>

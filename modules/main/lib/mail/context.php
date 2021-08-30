@@ -29,8 +29,9 @@ class Context
         if (!empty($params) && is_array($params)) {
             foreach ($params as $name => $value) {
                 $setter = sprintf('set%s', $name);
-                if (is_callable(array($this, $setter)))
+                if (is_callable(array($this, $setter))) {
                     $this->$setter($value);
+                }
             }
         }
     }

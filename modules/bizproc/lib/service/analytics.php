@@ -47,7 +47,7 @@ class Analytics extends \CBPRuntimeService
             return false;
         }
 
-        if (strlen($content) > 0) {
+        if ($content <> '') {
             ignore_user_abort(true);
             if ($fp = @fopen($this->logFile, "ab")) {
                 if (flock($fp, LOCK_EX)) {

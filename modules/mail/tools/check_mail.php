@@ -1,4 +1,5 @@
 <?php
+
 define('NO_KEEP_STATISTIC', 'Y');
 define('NO_AGENT_STATISTIC', 'Y');
 define('NO_AGENT_CHECK', true);
@@ -57,11 +58,13 @@ $unseen = max(\Bitrix\Mail\Helper\Message::getTotalUnseenCount($userId), 0);
 \CUserCounter::set($userId, 'mail_unseen', $unseen, $siteId);
 
 header('Content-Type: application/x-javascript; charset=' . LANG_CHARSET);
-echo json_encode([
-    'result' => $error === false ? 'ok' : 'error',
-    'unseen' => $unseen,
-    'hasSuccessSync' => $hasSuccessSync,
-    'failedToSyncMailboxId' => $failedToSyncMailboxId,
-]);
+echo json_encode(
+    [
+        'result' => $error === false ? 'ok' : 'error',
+        'unseen' => $unseen,
+        'hasSuccessSync' => $hasSuccessSync,
+        'failedToSyncMailboxId' => $failedToSyncMailboxId,
+    ]
+);
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_after.php';

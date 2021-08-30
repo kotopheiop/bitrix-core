@@ -186,7 +186,7 @@ class Iblock extends CopyImplementer
         if ($rightMode == "E") {
             $rightObject = new \CIBlockRights($iblockId);
             foreach ($rightObject->getRights() as $right) {
-                if (strpos($right["GROUP_CODE"], "SG") !== 0) {
+                if (mb_strpos($right["GROUP_CODE"], "SG") !== 0) {
                     $rights["n" . (count($rights))] = [
                         "GROUP_CODE" => $right["GROUP_CODE"],
                         "DO_CLEAN" => "N",

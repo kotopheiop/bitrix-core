@@ -1,5 +1,6 @@
 <?
 /** @global CUser $USER */
+
 /** @global CMain $APPLICATION */
 define('STOP_STATISTICS', true);
 define('DisableEventsCheck', true);
@@ -70,33 +71,44 @@ if ($USER->IsAuthorized() && check_bitrix_sessid() && isset($_REQUEST['IBLOCK_ID
     CUtil::JSPostUnescape();
 
     $multiple = 'N';
-    if (isset($_REQUEST['multiple']) && $_REQUEST['multiple'] === 'Y')
+    if (isset($_REQUEST['multiple']) && $_REQUEST['multiple'] === 'Y') {
         $multiple = 'Y';
+    }
     $defaultValues['MULTIPLE'] = $multiple;
 
     function addTableXmlIDCell($intPropID, $arPropInfo)
     {
-        return '<input type="text" onchange="getDirectoryTableHead(this);" name="PROPERTY_DIRECTORY_VALUES[' . $intPropID . '][UF_XML_ID]" id="PROPERTY_VALUES_XML_' . $intPropID . '" value="' . htmlspecialcharsbx($arPropInfo['UF_XML_ID']) . '" size="20" style="width:90%">';
+        return '<input type="text" onchange="getDirectoryTableHead(this);" name="PROPERTY_DIRECTORY_VALUES[' . $intPropID . '][UF_XML_ID]" id="PROPERTY_VALUES_XML_' . $intPropID . '" value="' . htmlspecialcharsbx(
+                $arPropInfo['UF_XML_ID']
+            ) . '" size="20" style="width:90%">';
     }
 
     function addTableIdCell($intPropID, $arPropInfo)
     {
-        return '<input type="hidden" name="PROPERTY_DIRECTORY_VALUES[' . $intPropID . '][ID]" id="PROPERTY_VALUES_ID_' . $intPropID . '" value="' . htmlspecialcharsbx($arPropInfo['ID']) . '">';
+        return '<input type="hidden" name="PROPERTY_DIRECTORY_VALUES[' . $intPropID . '][ID]" id="PROPERTY_VALUES_ID_' . $intPropID . '" value="' . htmlspecialcharsbx(
+                $arPropInfo['ID']
+            ) . '">';
     }
 
     function addTableNameCell($intPropID, $arPropInfo)
     {
-        return '<input type="text" name="PROPERTY_DIRECTORY_VALUES[' . $intPropID . '][UF_NAME]" id="PROPERTY_VALUES_NAME_' . $intPropID . '" value="' . htmlspecialcharsbx($arPropInfo['UF_NAME']) . '" size="20" style="width:90%">';
+        return '<input type="text" name="PROPERTY_DIRECTORY_VALUES[' . $intPropID . '][UF_NAME]" id="PROPERTY_VALUES_NAME_' . $intPropID . '" value="' . htmlspecialcharsbx(
+                $arPropInfo['UF_NAME']
+            ) . '" size="20" style="width:90%">';
     }
 
     function addTableLinkCell($intPropID, $arPropInfo)
     {
-        return '<input type="text" name="PROPERTY_DIRECTORY_VALUES[' . $intPropID . '][UF_LINK]" id="PROPERTY_VALUES_LINK_' . $intPropID . '" value="' . htmlspecialcharsbx($arPropInfo['UF_LINK']) . '" size="35" style="width:90%">';
+        return '<input type="text" name="PROPERTY_DIRECTORY_VALUES[' . $intPropID . '][UF_LINK]" id="PROPERTY_VALUES_LINK_' . $intPropID . '" value="' . htmlspecialcharsbx(
+                $arPropInfo['UF_LINK']
+            ) . '" size="35" style="width:90%">';
     }
 
     function addTableSortCell($intPropID, $arPropInfo)
     {
-        $sort = (isset($arPropInfo['UF_SORT']) && intval($arPropInfo['UF_SORT']) > 0) ? intval($arPropInfo['UF_SORT']) : 100;
+        $sort = (isset($arPropInfo['UF_SORT']) && intval($arPropInfo['UF_SORT']) > 0) ? intval(
+            $arPropInfo['UF_SORT']
+        ) : 100;
         return '<input type="text" name="PROPERTY_DIRECTORY_VALUES[' . $intPropID . '][UF_SORT]" id="PROPERTY_VALUES_SORT_' . $intPropID . '" value="' . $sort . '" size="5" maxlength="11">';
     }
 
@@ -115,8 +127,9 @@ if ($USER->IsAuthorized() && check_bitrix_sessid() && isset($_REQUEST['IBLOCK_ID
         if ($filemanIncluded === null) {
             $filemanIncluded = Loader::includeModule('fileman');
         }
-        if (!$filemanIncluded)
+        if (!$filemanIncluded) {
             return '';
+        }
 
         $strShowFile = '';
         if (0 < $arPropInfo["UF_FILE"]) {
@@ -127,17 +140,25 @@ if ($USER->IsAuthorized() && check_bitrix_sessid() && isset($_REQUEST['IBLOCK_ID
                 $maxImageSize['H'],
                 false
             );
-            if ('' !== $strShowFile)
+            if ('' !== $strShowFile) {
                 $strShowFile .= '<br>';
-
-
+            }
         }
 
         return $strShowFile . CFile::InputFile(
                 "PROPERTY_DIRECTORY_VALUES[$intPropID][FILE]",
                 20,
                 $arPropInfo["UF_FILE"],
-                false, 0, "IMAGE", "", 0, "class=typeinput", "", true, false);
+                false,
+                0,
+                "IMAGE",
+                "",
+                0,
+                "class=typeinput",
+                "",
+                true,
+                false
+            );
     }
 
     function addTableDefCell($intPropID, $arPropInfo)
@@ -147,12 +168,16 @@ if ($USER->IsAuthorized() && check_bitrix_sessid() && isset($_REQUEST['IBLOCK_ID
 
     function addTableDescriptionCell($intPropID, $arPropInfo)
     {
-        return '<input type="text" name="PROPERTY_DIRECTORY_VALUES[' . $intPropID . '][UF_DESCRIPTION]" id="PROPERTY_VALUES_DESCRIPTION_' . $intPropID . '" value="' . (is_string($arPropInfo['UF_DESCRIPTION']) ? htmlspecialcharsbx($arPropInfo['UF_DESCRIPTION']) : '') . '" style="width:90%">';
+        return '<input type="text" name="PROPERTY_DIRECTORY_VALUES[' . $intPropID . '][UF_DESCRIPTION]" id="PROPERTY_VALUES_DESCRIPTION_' . $intPropID . '" value="' . (is_string(
+                $arPropInfo['UF_DESCRIPTION']
+            ) ? htmlspecialcharsbx($arPropInfo['UF_DESCRIPTION']) : '') . '" style="width:90%">';
     }
 
     function addTableFullDescriptionCell($intPropID, $arPropInfo)
     {
-        return '<input type="text" name="PROPERTY_DIRECTORY_VALUES[' . $intPropID . '][UF_FULL_DESCRIPTION]" id="PROPERTY_VALUES_FULL_DESCRIPTION_' . $intPropID . '" value="' . (is_string($arPropInfo['UF_FULL_DESCRIPTION']) ? htmlspecialcharsbx($arPropInfo['UF_FULL_DESCRIPTION']) : '') . '" style="width:90%">';
+        return '<input type="text" name="PROPERTY_DIRECTORY_VALUES[' . $intPropID . '][UF_FULL_DESCRIPTION]" id="PROPERTY_VALUES_FULL_DESCRIPTION_' . $intPropID . '" value="' . (is_string(
+                $arPropInfo['UF_FULL_DESCRIPTION']
+            ) ? htmlspecialcharsbx($arPropInfo['UF_FULL_DESCRIPTION']) : '') . '" style="width:90%">';
     }
 
     function addTableDelField($intPropID)
@@ -163,8 +188,9 @@ if ($USER->IsAuthorized() && check_bitrix_sessid() && isset($_REQUEST['IBLOCK_ID
 
     function addTableRow($intPropID, $arPropInfo, $fields, $json = false)
     {
-        if (empty($fields))
+        if (empty($fields)) {
             return '';
+        }
         if ($json) {
             $result = array();
 
@@ -241,7 +267,10 @@ if ($USER->IsAuthorized() && check_bitrix_sessid() && isset($_REQUEST['IBLOCK_ID
             }
         } else {
             $result = '<tr id="hlbl_property_tr_' . $intPropID . '">';
-            $result .= '<td style="vertical-align: top;">' . addTableDelField($intPropID) . addTableIdCell($intPropID, $arPropInfo) . '</td>';
+            $result .= '<td style="vertical-align: top;">' . addTableDelField($intPropID) . addTableIdCell(
+                    $intPropID,
+                    $arPropInfo
+                ) . '</td>';
             if (isset($fields['UF_NAME'])) {
                 $result .= '<td style="vertical-align: top;">' . addTableNameCell($intPropID, $arPropInfo) . '</td>';
             }
@@ -258,13 +287,22 @@ if ($USER->IsAuthorized() && check_bitrix_sessid() && isset($_REQUEST['IBLOCK_ID
                 $result .= '<td style="vertical-align: top;">' . addTableLinkCell($intPropID, $arPropInfo) . '</td>';
             }
             if (isset($fields['UF_DEF'])) {
-                $result .= '<td style="vertical-align: top; text-align:center;">' . addTableDefCell($intPropID, $arPropInfo) . '</td>';
+                $result .= '<td style="vertical-align: top; text-align:center;">' . addTableDefCell(
+                        $intPropID,
+                        $arPropInfo
+                    ) . '</td>';
             }
             if (isset($fields['UF_DESCRIPTION'])) {
-                $result .= '<td style="vertical-align: top;">' . addTableDescriptionCell($intPropID, $arPropInfo) . '</td>';
+                $result .= '<td style="vertical-align: top;">' . addTableDescriptionCell(
+                        $intPropID,
+                        $arPropInfo
+                    ) . '</td>';
             }
             if (isset($fields['UF_FULL_DESCRIPTION'])) {
-                $result .= '<td style="vertical-align: top;">' . addTableFullDescriptionCell($intPropID, $arPropInfo) . '</td>';
+                $result .= '<td style="vertical-align: top;">' . addTableFullDescriptionCell(
+                        $intPropID,
+                        $arPropInfo
+                    ) . '</td>';
             }
             $result .= '</tr>';
         }
@@ -312,11 +350,13 @@ if ($USER->IsAuthorized() && check_bitrix_sessid() && isset($_REQUEST['IBLOCK_ID
 
     function addEmptyDefaultRow($property, $fields)
     {
-        if (empty($fields) || !isset($fields['UF_DEF']))
+        if (empty($fields) || !isset($fields['UF_DEF'])) {
             return '';
+        }
 
-        if ($property['MULTIPLE'] != 'N')
+        if ($property['MULTIPLE'] != 'N') {
             return '';
+        }
 
         $result = '<tr id="hlbl_property_tr_empty">';
 
@@ -334,15 +374,18 @@ if ($USER->IsAuthorized() && check_bitrix_sessid() && isset($_REQUEST['IBLOCK_ID
         ];
 
         $countLeft = count(array_intersect_key($fields, $leftSide)) + 1;
-        $result .= '<td colspan="' . $countLeft . '" style="text-align: center;">' . Loc::getMessage('HIBLOCK_PROP_DIRECTORY_EMPTY_DEFAULT_VALUE') . '</td>';
+        $result .= '<td colspan="' . $countLeft . '" style="text-align: center;">' . Loc::getMessage(
+                'HIBLOCK_PROP_DIRECTORY_EMPTY_DEFAULT_VALUE'
+            ) . '</td>';
 
         $result .= '<td style="text-align:center;">' .
             '<input type="radio" name="PROPERTY_VALUES_DEF" id="PROPERTY_VALUES_DEF_EMPTY" value="-1" ' . ($property['UF_DEF'] == '1' ? 'checked="checked"' : '') . '>' .
             '</td>';
 
         $countRight = count(array_intersect_key($fields, $rightSide));
-        if ($countRight > 0)
+        if ($countRight > 0) {
             $result .= '<td colspan="' . $countRight . '">&nbsp;</td>';
+        }
 
         $result .= '</tr>';
 
@@ -359,14 +402,18 @@ if ($USER->IsAuthorized() && check_bitrix_sessid() && isset($_REQUEST['IBLOCK_ID
     $hlblockFields = $defaultValues;
     $orderFields = array();
     if ($hlBlockID !== '' && $hlBlockID !== '-1') {
-        $hlblock = Bitrix\Highloadblock\HighloadBlockTable::getList(array("filter" => array("=TABLE_NAME" => $hlBlockID)))->fetch();
+        $hlblock = Bitrix\Highloadblock\HighloadBlockTable::getList(
+            array("filter" => array("=TABLE_NAME" => $hlBlockID))
+        )->fetch();
         $entity = Bitrix\Highloadblock\HighloadBlockTable::compileEntity($hlblock);
         $entityDataClass = $entity->getDataClass();
         $hlblockFields = $entityDataClass::getEntity()->getFields();
-        if (isset($hlblockFields['UF_SORT']))
+        if (isset($hlblockFields['UF_SORT'])) {
             $orderFields['UF_SORT'] = 'ASC';
-        if (isset($hlblockFields['UF_NAME']))
+        }
+        if (isset($hlblockFields['UF_NAME'])) {
             $orderFields['UF_NAME'] = 'ASC';
+        }
     }
 
     if (isset($_REQUEST['addEmptyRow']) && $_REQUEST['addEmptyRow'] === 'Y') {
@@ -380,12 +427,15 @@ if ($USER->IsAuthorized() && check_bitrix_sessid() && isset($_REQUEST['IBLOCK_ID
 
             $existDefault = false;
             $rowsList = '';
-            $rsData = $entityDataClass::getList(array(
-                'order' => $orderFields
-            ));
+            $rsData = $entityDataClass::getList(
+                array(
+                    'order' => $orderFields
+                )
+            );
             while ($arData = $rsData->fetch()) {
-                if (isset($hlblockFields['UF_DEF']) && $arData['UF_DEF'] == '1')
+                if (isset($hlblockFields['UF_DEF']) && $arData['UF_DEF'] == '1') {
                     $existDefault = true;
+                }
 
                 $arData['MULTIPLE'] = $multiple;
                 $rowsList .= addTableRow($arData['ID'], $arData, $hlblockFields, false);
@@ -399,8 +449,9 @@ if ($USER->IsAuthorized() && check_bitrix_sessid() && isset($_REQUEST['IBLOCK_ID
 
             $result .= $rowsList;
 
-            if ($rowsList == '')
+            if ($rowsList == '') {
                 $result .= addTableRow('n' . $rowNumber, $defaultValues, $hlblockFields, false);
+            }
 
             unset($rowsList);
         }

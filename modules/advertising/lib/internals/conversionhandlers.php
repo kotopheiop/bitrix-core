@@ -20,7 +20,11 @@ final class ConversionHandlers
     public static function onGetCounterTypes()
     {
         return array(
-            'advertising_banner_click_day' => array('MODULE' => 'advertising', 'GROUP' => 'day', 'NAME' => 'Banner click'),
+            'advertising_banner_click_day' => array(
+                'MODULE' => 'advertising',
+                'GROUP' => 'day',
+                'NAME' => 'Banner click'
+            ),
         );
     }
 

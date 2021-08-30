@@ -39,13 +39,15 @@ abstract class ExportPattern
     public function proccess(array $fields)
     {
         $r = $this->getItems($fields);
-        if (!$r->isSuccess())
+        if (!$r->isSuccess()) {
             return $r;
+        }
 
         $entityItems = $r->getData();
         $r = $this->convert($entityItems);
-        if (!$r->isSuccess())
+        if (!$r->isSuccess()) {
             return $r;
+        }
 
         $documents = $r->getData();
         $r = $this->export($documents);

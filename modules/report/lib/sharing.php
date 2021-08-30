@@ -71,12 +71,15 @@ class Sharing
                 }
             }
             $addSharing = array_diff_key($newEntityData, $overwriteSharing);
-            if ($addSharing)
+            if ($addSharing) {
                 $this->addToManyEntity($addSharing);
-            if ($overwriteSharing)
+            }
+            if ($overwriteSharing) {
                 $this->updateManyEntity($overwriteSharing);
-            if ($deleteSharing)
+            }
+            if ($deleteSharing) {
                 $this->deleteManyEntity($deleteSharing);
+            }
         } else {
             $this->deleteManyEntity($listSharingRow);
         }
@@ -112,10 +115,12 @@ class Sharing
             $entitySharing = $cache->getVars();
         } else {
             $cache->startDataCache();
-            $result = SharingTable::getList(array(
-                'select' => array('ID', 'ENTITY', 'RIGHTS'),
-                'filter' => array('=REPORT_ID' => $reportId),
-            ));
+            $result = SharingTable::getList(
+                array(
+                    'select' => array('ID', 'ENTITY', 'RIGHTS'),
+                    'filter' => array('=REPORT_ID' => $reportId),
+                )
+            );
             while ($data = $result->fetch()) {
                 $entitySharing[] = array(
                     'ENTITY' => $data['ENTITY'],
@@ -138,7 +143,9 @@ class Sharing
         $userData = array();
 
         $userId = intval($userId);
-        $users = \CUser::getList($by = 'id', $order = 'asc',
+        $users = \CUser::getList(
+            'id',
+            'asc',
             array('ID' => $userId),
             array('FIELDS' => array('ID', 'PERSONAL_PHOTO', 'NAME', 'LAST_NAME'))
         );
@@ -199,11 +206,15 @@ class Sharing
         if ($type == self::TYPE_USER) {
             $typeData = self::getUserData($id);
         } elseif ($type == self::TYPE_GROUP) {
-
         } elseif ($type == self::TYPE_SOCNET_GROUP) {
             if (Loader::includeModule('socialnetwork')) {
-                $query = \CSocNetGroup::getList(array(), array('ID' => $id),
-                    false, false, array('IMAGE_ID', 'NAME'));
+                $query = \CSocNetGroup::getList(
+                    array(),
+                    array('ID' => $id),
+                    false,
+                    false,
+                    array('IMAGE_ID', 'NAME')
+                );
                 while ($group = $query->fetch()) {
                     $typeData['name'] = $group['NAME'];
                     $avatar = self::getImage($group['IMAGE_ID']);
@@ -247,9 +258,11 @@ class Sharing
                 'LAST' => array()
             );
 
-            $lastDestination = CSocNetLogDestination::getDestinationSort(array(
-                "DEST_CONTEXT" => "REPORT_SHARE"
-            ));
+            $lastDestination = CSocNetLogDestination::getDestinationSort(
+                array(
+                    "DEST_CONTEXT" => "REPORT_SHARE"
+                )
+            );
 
             CSocNetLogDestination::fillLastDestination($lastDestination, $destination['LAST']);
         } else {
@@ -272,7 +285,8 @@ class Sharing
         } else {
             $cache->startDataCache();
             $destination['SONETGROUPS'] = CSocNetLogDestination::getSocnetGroup(
-                array('GROUP_CLOSED' => 'N', 'features' => array("files", array("view"))));
+                array('GROUP_CLOSED' => 'N', 'features' => array("files", array("view")))
+            );
             if (defined("BX_COMP_MANAGED_CACHE")) {
                 $CACHE_MANAGER->startTagCache($cacheDir);
                 $CACHE_MANAGER->registerTag("sonet_feature_all_G_files");
@@ -289,13 +303,13 @@ class Sharing
         $destUser = array();
         $destination['SELECTED'] = array();
         foreach ($selected as $ind => $code) {
-            if (substr($code, 0, 2) == 'DR') {
+            if (mb_substr($code, 0, 2) == 'DR') {
                 $destination['SELECTED'][$code] = "department";
-            } elseif (substr($code, 0, 2) == 'UA') {
+            } elseif (mb_substr($code, 0, 2) == 'UA') {
                 $destination['SELECTED'][$code] = "groups";
-            } elseif (substr($code, 0, 2) == 'SG') {
+            } elseif (mb_substr($code, 0, 2) == 'SG') {
                 $destination['SELECTED'][$code] = "sonetgroups";
-            } elseif (substr($code, 0, 1) == 'U') {
+            } elseif (mb_substr($code, 0, 1) == 'U') {
                 $destination['SELECTED'][$code] = "users";
                 $destUser[] = str_replace('U', '', $code);
             }
@@ -312,8 +326,9 @@ class Sharing
             $destination['USERS'] = CSocNetLogDestination::getExtranetUser();
         } else {
             if (is_array($destination['LAST']['USERS'])) {
-                foreach ($destination['LAST']['USERS'] as $value)
+                foreach ($destination['LAST']['USERS'] as $value) {
                     $destUser[] = str_replace('U', '', $value);
+                }
             }
 
             $destination['EXTRANET_USER'] = 'N';
@@ -331,22 +346,28 @@ class Sharing
     public static function onReportDelete($reportId)
     {
         $reportId = intval($reportId);
-        $result = SharingTable::getList(array(
-            'select' => array('ID'),
-            'filter' => array('=REPORT_ID' => $reportId),
-        ));
-        while ($data = $result->fetch())
+        $result = SharingTable::getList(
+            array(
+                'select' => array('ID'),
+                'filter' => array('=REPORT_ID' => $reportId),
+            )
+        );
+        while ($data = $result->fetch()) {
             SharingTable::delete($data['ID']);
+        }
     }
 
     protected function getByReportId()
     {
         $listSharingRow = array();
-        $result = SharingTable::getList(array(
-            'filter' => array('=REPORT_ID' => $this->reportId),
-        ));
-        while ($data = $result->fetch())
+        $result = SharingTable::getList(
+            array(
+                'filter' => array('=REPORT_ID' => $this->reportId),
+            )
+        );
+        while ($data = $result->fetch()) {
             $listSharingRow[] = $data;
+        }
 
         return $listSharingRow;
     }
@@ -361,8 +382,9 @@ class Sharing
             );
             $result = SharingTable::add($fields);
             if (!$result->isSuccess()) {
-                foreach ($result->getErrorMessages() as $errorMessage)
+                foreach ($result->getErrorMessages() as $errorMessage) {
                     $this->errorCollection->add(array(new Error($errorMessage, self::ERROR_SHARING_ADD)));
+                }
             }
         }
     }
@@ -375,8 +397,9 @@ class Sharing
             );
             $result = SharingTable::update($data['ID'], $fields);
             if (!$result->isSuccess()) {
-                foreach ($result->getErrorMessages() as $errorMessage)
+                foreach ($result->getErrorMessages() as $errorMessage) {
                     $this->errorCollection->add(array(new Error($errorMessage, self::ERROR_SHARING_UPDATE)));
+                }
             }
         }
     }
@@ -386,8 +409,9 @@ class Sharing
         foreach ($listData as $data) {
             $result = SharingTable::delete($data['ID']);
             if (!$result->isSuccess()) {
-                foreach ($result->getErrorMessages() as $errorMessage)
+                foreach ($result->getErrorMessages() as $errorMessage) {
                     $this->errorCollection->add(array(new Error($errorMessage, self::ERROR_SHARING_DELETE)));
+                }
             }
         }
     }
@@ -403,7 +427,11 @@ class Sharing
 
     protected static function getImage($imageId)
     {
-        return \CFile::resizeImageGet($imageId,
-            array('width' => 21, 'height' => 21), \BX_RESIZE_IMAGE_EXACT, false);
+        return \CFile::resizeImageGet(
+            $imageId,
+            array('width' => 21, 'height' => 21),
+            \BX_RESIZE_IMAGE_EXACT,
+            false
+        );
     }
 }

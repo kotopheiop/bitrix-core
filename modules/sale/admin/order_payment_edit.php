@@ -4,6 +4,11 @@ use Bitrix\Main\Application;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Sale\Order;
 use Bitrix\Main\Localization\Loc;
+use \Bitrix\Sale\Exchange\Integration\Admin\Link,
+    \Bitrix\Sale\Exchange\Integration\Admin\Registry,
+    \Bitrix\Sale\Exchange\Integration\Admin\ModeType,
+    \Bitrix\Sale\Helpers\Admin\Blocks\FactoryMode,
+    \Bitrix\Sale\Helpers\Admin\Blocks\BlockType;
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/prolog.php");
@@ -12,8 +17,9 @@ $moduleId = "sale";
 global $USER;
 Bitrix\Main\Loader::includeModule('sale');
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions == "D")
+if ($saleModulePermissions == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 CUtil::InitJSCore();
@@ -32,13 +38,20 @@ $new = $paymentId <= 0;
 $tableId = "order_payment_edit_info";
 $backUrl = $request->get('backurl');
 
+$link = Link::getInstance();
+$factory = FactoryMode::create($link->getType());
+
 $registry = \Bitrix\Sale\Registry::getInstance(\Bitrix\Sale\Registry::REGISTRY_TYPE_ORDER);
 
 /** @var Order $orderClass */
 $orderClass = $registry->getOrderClassName();
 
 if ($orderId <= 0 || !($saleOrder = $orderClass::load($orderId))) {
-    LocalRedirect("/bitrix/admin/sale_order.php?lang=" . $lang . GetFilterParams("filter_", false));
+    $link
+        ->create()
+        ->fill()
+        ->setPageByType(Registry::SALE_ORDER)
+        ->redirect();
 }
 
 $allowedOrderStatusesView = \Bitrix\Sale\OrderStatus::getStatusesUserCanDoOperations($USER->GetID(), array('view'));
@@ -46,7 +59,6 @@ $allowedOrderStatusesUpdate = \Bitrix\Sale\OrderStatus::getStatusesUserCanDoOper
 
 $allowUpdate = $allowDelete = in_array($saleOrder->getField("STATUS_ID"), $allowedOrderStatusesUpdate);
 $allowView = in_array($saleOrder->getField("STATUS_ID"), $allowedOrderStatusesView);
-
 
 $payment = null;
 $errors = array();
@@ -56,8 +68,13 @@ if ($paymentId > 0) {
     $paymentCollection = $saleOrder->getPaymentCollection();
     $payment = $paymentCollection->getItemById($paymentId);
 
-    if (!$payment)
-        LocalRedirect("/bitrix/admin/sale_order.php?lang=" . LANGUAGE_ID . GetFilterParams("filter_", false));
+    if (!$payment) {
+        $link
+            ->create()
+            ->fill()
+            ->setPageByType(Registry::SALE_ORDER)
+            ->redirect();
+    }
 }
 
 $isUserResponsible = false;
@@ -77,15 +94,22 @@ if ($saleModulePermissions == 'P') {
     }
 
     if (!$isUserResponsible && !$isAllowCompany) {
-        LocalRedirect("/bitrix/admin/sale_order.php?lang=" . LANGUAGE_ID . GetFilterParams("filter_", false));
+        $link
+            ->create()
+            ->fill()
+            ->setPageByType(Registry::SALE_ORDER)
+            ->redirect();
     }
 }
 
 if ($request->get('delete') == 'Y' && check_bitrix_sessid()) {
     if (!$allowDelete) {
-        LocalRedirect('/bitrix/admin/sale_order_payment.php?lang=' . $lang . GetFilterParams('filter_', false));
+        $link
+            ->create()
+            ->fill()
+            ->setPageByType(Registry::SALE_ORDER_PAYMENT)
+            ->redirect();
     }
-
 
     if ($payment) {
         $delResult = $payment->delete();
@@ -94,31 +118,47 @@ if ($request->get('delete') == 'Y' && check_bitrix_sessid()) {
         } else {
             $result = $saleOrder->save();
             if ($result->isSuccess()) {
-                if ($backUrl)
-                    LocalRedirect($backUrl);
-                else
-                    LocalRedirect('/bitrix/admin/sale_order_payment.php?lang=' . $lang . GetFilterParams('filter_', false));
+                if ($backUrl) {
+                    $link
+                        ->create()
+                        ->setRequestUri($backUrl)
+                        ->redirect();
+                } else {
+                    $link
+                        ->create()
+                        ->fill()
+                        ->setPageByType(Registry::SALE_ORDER_PAYMENT)
+                        ->redirect();
+                }
             } else {
                 $errors = $result->getErrorMessages();
             }
         }
-
     }
 }
 
 if ($request->isPost() && check_bitrix_sessid() && $request->get('update')) {
     if (!$allowUpdate) {
         if (isset($_POST["apply"])) {
-            LocalRedirect("/bitrix/admin/sale_order_payment_edit.php?lang=" . $lang . "&order_id=" . $orderId . "&payment_id=" . $paymentId . "&backurl=" . urlencode($backUrl) . GetFilterParams("filter_", false));
+            $link
+                ->create()
+                ->setPageByType(Registry::SALE_ORDER_PAYMENT_EDIT)
+                ->setField('order_id', $orderId)
+                ->setField('payment_id', $paymentId)
+                ->setField('backurl', $backUrl)
+                ->redirect();
         } else {
-            LocalRedirect('/bitrix/admin/sale_order_payment.php?lang=' . $lang . GetFilterParams('filter_', false));
+            $link
+                ->create()
+                ->setPageByType(Registry::SALE_ORDER_PAYMENT)
+                ->redirect();
         }
     }
 
     /**
      * @var $result \Bitrix\Main\Entity\Result;
      */
-    $result = \Bitrix\Sale\Helpers\Admin\Blocks\OrderPayment::updateData($saleOrder, $request->get('PAYMENT'));
+    $result = $factory::create(BlockType::PAYMENT)->updateData($saleOrder, $request->get('PAYMENT'));
     $data = $result->getData();
     $payment = array_shift($data['PAYMENT']);
 
@@ -128,13 +168,29 @@ if ($request->isPost() && check_bitrix_sessid() && $request->get('update')) {
         if ($saveResult->isSuccess()) {
             $paymentId = $payment->getId();
 
-            if (strlen($request->getPost("apply")) == 0)
-                if ($backUrl)
-                    LocalRedirect($backUrl);
-                else
-                    LocalRedirect('/bitrix/admin/sale_order_payment.php?lang=' . $lang . GetFilterParams('filter_', false));
-            else
-                LocalRedirect("/bitrix/admin/sale_order_payment_edit.php?lang=" . $lang . "&order_id=" . $orderId . "&payment_id=" . $paymentId . "&backurl=" . urlencode($backUrl) . GetFilterParams("filter_", false));
+            if ($request->getPost("apply") == '') {
+                if ($backUrl) {
+                    $link
+                        ->create()
+                        ->setRequestUri($backUrl)
+                        ->redirect();
+                } else {
+                    $link
+                        ->create()
+                        ->fill()
+                        ->setPageByType(Registry::SALE_ORDER_PAYMENT)
+                        ->redirect();
+                }
+            } else {
+                $link
+                    ->create()
+                    ->setPageByType(Registry::SALE_ORDER_PAYMENT_EDIT)
+                    ->setField('order_id', $orderId)
+                    ->setField('payment_id', $paymentId)
+                    ->setQuery(urlencode($backUrl))
+                    ->fill()
+                    ->redirect();
+            }
         } else {
             $errors = $saveResult->getErrorMessages();
         }
@@ -146,24 +202,33 @@ if ($request->isPost() && check_bitrix_sessid() && $request->get('update')) {
         $payment = $saleOrder->getPaymentCollection()->createItem();
     }
 
-    if (!$payment)
-        LocalRedirect("/bitrix/admin/sale_order_payment.php?lang=" . $lang . GetFilterParams("filter_", false));
+    if (!$payment) {
+        $link
+            ->create()
+            ->setPageByType(Registry::SALE_ORDER_PAYMENT)
+            ->fill()
+            ->redirect();
+    }
 }
 
-if ((!$allowView && !$allowUpdate) || $orderClass::isLocked($orderId))
-    LocalRedirect('/bitrix/admin/sale_order_payment.php?lang=' . $lang . GetFilterParams('filter_', false));
-
+if ((!$allowView && !$allowUpdate) || $orderClass::isLocked($orderId)) {
+    $link
+        ->create()
+        ->fill()
+        ->setPageByType(Registry::SALE_ORDER_PAYMENT)
+        ->redirect();
+}
 
 $companyParams = array(
     'select' => array('ID', 'NAME')
 );
 
-if ($paymentId)
+if ($paymentId) {
     $title = str_replace("#ID#", $paymentId, GetMessage("EDIT_ORDER_PAYMENT"));
-else
+} else {
     $title = GetMessage("NEW_ORDER_PAYMENT");
+}
 $APPLICATION->SetTitle($title);
-
 
 if ($paymentId > 0) {
     global $historyEntity;
@@ -188,43 +253,87 @@ $aMenu[] = array(
     "ICON" => "btn_list",
     "TEXT" => Loc::getMessage("SOPE_PAYMENT_TRANSITION"),
     "TITLE" => Loc::getMessage("SOPE_PAYMENT_TRANSITION_TITLE"),
-    "LINK" => "/bitrix/admin/sale_order_view.php?ID=" . $orderId . "&lang=" . $lang . GetFilterParams("filter_")
+    "LINK" => $link
+        ->create()
+        ->fill()
+        ->setPageByType(Registry::SALE_ORDER_PAYMENT)
+        ->setField('ID', $orderId)
+        ->build()
 );
+
 if (!$new) {
     if ($allowDelete) {
+        $href = $link
+            ->create()
+            ->setPageByType(Registry::SALE_ORDER_PAYMENT_EDIT)
+            ->setField('order_id', $orderId)
+            ->setField('payment_id', $paymentId)
+            ->setField('delete', 'Y')
+            ->setQuery(bitrix_sessid_get())
+            ->fill()
+            ->build();
+
         $aMenu[] = array(
             "TEXT" => Loc::getMessage("SOPE_PAYMENT_DELETE"),
             "TITLE" => Loc::getMessage("SOPE_PAYMENT_DELETE_TITLE"),
             "LINK" => "javascript:void(0)",
-            "ONCLICK" => "if(confirm('" . Loc::getMessage('SOPE_PAYMENT_DELETE_MESSAGE') . "')) window.location.href='/bitrix/admin/sale_order_payment_edit.php?order_id=" . $orderId . "&payment_id=" . $paymentId . "&delete=Y&" . bitrix_sessid_get() . "&lang=" . LANGUAGE_ID . GetFilterParams("filter_") . "'"
+            "ONCLICK" => "if(confirm('" . Loc::getMessage(
+                    'SOPE_PAYMENT_DELETE_MESSAGE'
+                ) . "')) window.location.href='" . $href . "'"
         );
     }
 }
 
-$aMenu[] = array(
-    "TEXT" => Loc::getMessage("SOPE_PAYMENT_LIST"),
-    "TITLE" => Loc::getMessage("SOPE_PAYMENT_LIST_TITLE"),
-    "LINK" => "/bitrix/admin/sale_order_payment.php?lang=" . $lang . GetFilterParams("filter_")
-);
+if ($link->getType() == ModeType::APP_LAYOUT_TYPE) {
+    //do nothing
+} else {
+    $aMenu[] = array(
+        "TEXT" => Loc::getMessage("SOPE_PAYMENT_LIST"),
+        "TITLE" => Loc::getMessage("SOPE_PAYMENT_LIST_TITLE"),
+        "LINK" => $link
+            ->create()
+            ->setPageByType(Registry::SALE_ORDER_PAYMENT)
+            ->fill()
+            ->build()
+    );
+}
 
 $context = new CAdminContextMenu($aMenu);
 $context->Show();
 
-if (!empty($errors))
+if (!empty($errors)) {
     CAdminMessage::ShowMessage(implode("<br>\n", $errors));
+}
 
 $aTabs = array(
     array("DIV" => "tab_order", "TAB" => GetMessage("SOP_TAB_PAYMENT"), "SHOW_WRAP" => "N", "IS_DRAGGABLE" => "Y")
 );
 if ($paymentId > 0) {
-    $aTabs[] = array("DIV" => "tab_history", "TAB" => GetMessage("SOP_TAB_HISTORY"), "TITLE" => GetMessage("SOP_TAB_HISTORY"));
-    $aTabs[] = array("DIV" => "tab_analysis", "TAB" => GetMessage("SOP_TAB_ANALYSIS"), "TITLE" => GetMessage("SOP_TAB_ANALYSIS"));
+    $aTabs[] = array(
+        "DIV" => "tab_history",
+        "TAB" => GetMessage("SOP_TAB_HISTORY"),
+        "TITLE" => GetMessage("SOP_TAB_HISTORY")
+    );
+    $aTabs[] = array(
+        "DIV" => "tab_analysis",
+        "TAB" => GetMessage("SOP_TAB_ANALYSIS"),
+        "TITLE" => GetMessage("SOP_TAB_ANALYSIS")
+    );
 }
 
+$action = $link
+    ->create()
+    ->setPage($APPLICATION->GetCurPage())
+    ->setLang($lang)
+    ->setField('order_id', $orderId)
+    ->setField('paymentId', $paymentId)
+    ->setField('backurl', $backUrl)
+    ->setQuery($urlForm)
+    ->fill()
+    ->build();
+
 ?>
-    <form method="POST"
-          action="<?= $APPLICATION->GetCurPage() . "?lang=" . $lang . '&order_id=' . $orderId . $urlForm . GetFilterParams("filter_", false) . (($paymentId > 0) ? '&payment_id=' . $paymentId : '') . '&backurl=' . urlencode($backUrl) ?>"
-          name="<?= $tableId ?>_form" id="<?= $tableId ?>_form"><?
+    <form method="POST" action="<?= $action ?>" name="<?= $tableId ?>_form" id="<?= $tableId ?>_form"><?
 
 $tabControl = new CAdminTabControlDrag($tableId, $aTabs, $moduleId, false, true);
 $tabControl->Begin();
@@ -243,13 +352,14 @@ $statusOnPaid = Bitrix\Main\Config\Option::get('sale', 'status_on_paid');
 $statusOnAllowDelivery = Bitrix\Main\Config\Option::get('sale', 'status_on_allow_delivery');
 $statusOnPaid2AllowDelivery = Bitrix\Main\Config\Option::get('sale', 'status_on_payed_2_allow_delivery');
 
-if (empty($statusOnPaid) && (empty($statusOnAllowDelivery) || empty($statusOnPaid2AllowDelivery)))
+if (empty($statusOnPaid) && (empty($statusOnAllowDelivery) || empty($statusOnPaid2AllowDelivery))) {
     $defaultBlocksOrder[] = 'statusorder';
+}
 
 $blocksOrder = $tabControl->getCurrentTabBlocksOrder($defaultBlocksOrder);
 \Bitrix\Main\Page\Asset::getInstance()->addJs("/bitrix/js/sale/admin/order_ajaxer.js");
-echo \Bitrix\Sale\Helpers\Admin\Blocks\OrderAdditional::getScripts();
-echo \Bitrix\Sale\Helpers\Admin\Blocks\OrderPayment::getScripts();
+echo $factory::create(BlockType::ADDITIONAL)->getScripts();
+echo $factory::create(BlockType::PAYMENT)->getScripts();
 echo \Bitrix\Sale\Helpers\Admin\OrderEdit::getScripts($saleOrder, $tableId);
 ?>
 
@@ -267,24 +377,35 @@ $paymentCount = 1;
                 <?
                 foreach ($blocksOrder as $blockCode) {
                     $tabControl->DraggableBlockBegin(GetMessage("SALE_BLOCK_TITLE_" . toUpper($blockCode)), $blockCode);
-                    switch ($blockCode) {
-                        case "financeinfo":
-                            echo \Bitrix\Sale\Helpers\Admin\Blocks\OrderFinanceInfo::getView($saleOrder, $new);
-                            break;
-                        case "payment":
-                            $index = 1;
-                            echo \Bitrix\Sale\Helpers\Admin\Blocks\OrderPayment::getEdit($payment, $index, $_POST['PAYMENT'][$index]);
-                            break;
-                        case "buyer":
-                            echo \Bitrix\Sale\Helpers\Admin\Blocks\OrderBuyer::getView($saleOrder);
-                            break;
-                        case "additional":
-                            echo \Bitrix\Sale\Helpers\Admin\Blocks\OrderAdditional::getEdit($payment, $tableId . "_form", 'PAYMENT[1]');
-                            break;
-                        case "statusorder":
-                            echo \Bitrix\Sale\Helpers\Admin\Blocks\OrderStatus::getEditSimple($USER->GetID(), 'PAYMENT[1][ORDER_STATUS_ID]', $saleOrder->getField('STATUS_ID'));
-                            break;
+
+                    if (BlockType::isDefined(BlockType::resolveId($blockCode))) {
+                        $block = $factory::create(BlockType::resolveId($blockCode));
+
+                        switch (BlockType::resolveId($blockCode)) {
+                            case BlockType::FINANCE_INFO:
+                                echo $block::getView($saleOrder, $new);
+                                break;
+                            case BlockType::PAYMENT:
+                                $index = 1;
+                                echo $block::getEdit($payment, $index, $_POST['PAYMENT'][$index]);
+                                break;
+                            case BlockType::BUYER:
+                                echo $block::getView($saleOrder);
+                                break;
+                            case BlockType::ADDITIONAL:
+                                echo $block::getEdit($payment, $tableId . "_form", 'PAYMENT[1]');
+                                break;
+                            case BlockType::STATUS:
+                                /** @var \Bitrix\Sale\Helpers\Admin\Blocks\OrderStatus $block */
+                                echo $block::getEditSimple(
+                                    $USER->GetID(),
+                                    'PAYMENT[1][ORDER_STATUS_ID]',
+                                    $saleOrder->getField('STATUS_ID')
+                                );
+                                break;
+                        }
                     }
+
                     $tabControl->DraggableBlockEnd();
                 }
                 ?>
@@ -313,14 +434,18 @@ if ($paymentId > 0):
         <td>
             <div style="position:relative; vertical-align:top">
                 <?
-                $orderBasket = new \Bitrix\Sale\Helpers\Admin\Blocks\OrderBasket(
-                    $saleOrder,
-                    "BX.Sale.Admin.OrderBasketObj",
-                    "sale_order_basket",
-                    true,
-                    \Bitrix\Sale\Helpers\Admin\Blocks\OrderBasket::VIEW_MODE
+
+                $orderBasket = $factory::create(
+                    BlockType::BASKET,
+                    [
+                        'order' => $saleOrder,
+                        'jsObjName' => "BX.Sale.Admin.OrderBasketObj",
+                        'idPrefix' => "sale_order_basket",
+                        'createProductBasement' => true,
+                        'mode' => \Bitrix\Sale\Helpers\Admin\Blocks\OrderBasket::VIEW_MODE
+                    ]
                 );
-                echo \Bitrix\Sale\Helpers\Admin\Blocks\OrderAnalysis::getView($saleOrder, $orderBasket, true, $paymentId);
+                echo $factory::create(BlockType::ANALYSIS)->getView($saleOrder, $orderBasket, true, $paymentId);
                 ?>
             </div>
         </td>

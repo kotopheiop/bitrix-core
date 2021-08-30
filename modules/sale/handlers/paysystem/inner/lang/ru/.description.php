@@ -1,2 +1,3 @@
 <?php
-$MESS["SALE_HPS_INNER_DESC"] = "Внутренний счет";
+
+$MESS["SALE_HPS_INNER_DESC"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ";

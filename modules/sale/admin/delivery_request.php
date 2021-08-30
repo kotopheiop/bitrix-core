@@ -9,13 +9,15 @@ global $APPLICATION;
 
 $APPLICATION->SetTitle(Loc::getMessage('SALE_DELIVERY_REQUEST_SEND'));
 
-if ($APPLICATION->GetGroupRight("sale") < "U")
+if ($APPLICATION->GetGroupRight("sale") < "U") {
     $APPLICATION->AuthForm(Loc::getMessage('SALE_DELIVERY_REQUEST_ACCESS_DENIED'));
+}
 
 $adminErrorMessages = array();
 
-if (!\Bitrix\Main\Loader::includeModule('sale'))
+if (!\Bitrix\Main\Loader::includeModule('sale')) {
     $adminErrorMessages = "Error! Can't include module \"Sale\"";
+}
 
 $shipmentIds = array();
 $shipmentsIdsByDelivery = array();
@@ -25,13 +27,16 @@ $backUrl = isset($_REQUEST['BACK_URL']) ? $_REQUEST['BACK_URL'] : '';
 
 if (isset($_REQUEST['SHIPMENT_IDS']) && is_array($_REQUEST['SHIPMENT_IDS'])) {
     $shipmentIds = $_REQUEST['SHIPMENT_IDS'];
-} elseif (isset($_SESSION["SALE_DELIVERY_REQUEST_SHIPMENT_IDS"]) && is_array($_SESSION["SALE_DELIVERY_REQUEST_SHIPMENT_IDS"])) {
+} elseif (isset($_SESSION["SALE_DELIVERY_REQUEST_SHIPMENT_IDS"]) && is_array(
+        $_SESSION["SALE_DELIVERY_REQUEST_SHIPMENT_IDS"]
+    )) {
     $shipmentIds = $_SESSION["SALE_DELIVERY_REQUEST_SHIPMENT_IDS"];
     //unset($_SESSION["SALE_DELIVERY_REQUEST_SHIPMENT_IDS"]);
 }
 
-foreach ($shipmentIds as $id => $shipmentId)
+foreach ($shipmentIds as $id => $shipmentId) {
     $shipmentIds[$id] = intval($shipmentId);
+}
 
 if (empty($shipmentIds)) {
     $adminErrorMessages[] = Loc::getMessage('SALE_DELIVERY_REQUEST_SHIPMENT_IDS_EMPTY');
@@ -49,13 +54,17 @@ if (!empty($adminErrorMessages)) {
     );
     echo $adminMessage->Show();
 } else {
-    $context = new CAdminContextMenu(array(
+    $context = new CAdminContextMenu(
         array(
-            "TEXT" => !empty($backUrl) ? Loc::getMessage('SALE_DELIVERY_REQUEST_BACK') : Loc::getMessage('SALE_DELIVERY_REQUEST_LIST'),
-            "LINK" => !empty($backUrl) ? $backUrl : "/bitrix/admin/sale_delivery_request_list.php?lang=" . LANGUAGE_ID,
-            "ICON" => "btn_list"
+            array(
+                "TEXT" => !empty($backUrl) ? Loc::getMessage('SALE_DELIVERY_REQUEST_BACK') : Loc::getMessage(
+                    'SALE_DELIVERY_REQUEST_LIST'
+                ),
+                "LINK" => !empty($backUrl) ? $backUrl : "/bitrix/admin/sale_delivery_request_list.php?lang=" . LANGUAGE_ID,
+                "ICON" => "btn_list"
+            )
         )
-    ));
+    );
 
     $context->Show();
 

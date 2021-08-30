@@ -89,9 +89,12 @@ class Entities
 
         if ($options["enableSonetgroups"] != 'N') {
             $limitReached = false;
-            $sonetGroupsList = \Bitrix\Socialnetwork\ComponentHelper::getSonetGroupAvailable(array(
-                'limit' => 100
-            ), $limitReached);
+            $sonetGroupsList = \Bitrix\Socialnetwork\ComponentHelper::getSonetGroupAvailable(
+                array(
+                    'limit' => 100
+                ),
+                $limitReached
+            );
 
             $result["SONETGROUPS_LIMITED"] = ($limitReached ? 'Y' : 'N');
 
@@ -102,14 +105,19 @@ class Entities
                 $lastSonetGroupsList = array();
                 foreach ($lastItems['SONETGROUPS'] as $value) {
                     if (!array_key_exists($value, $sonetGroupsList)) {
-                        $lastSonetGroupsList[] = intval(substr($value, 2));
+                        $lastSonetGroupsList[] = intval(mb_substr($value, 2));
                     }
                 }
                 if (!empty($lastSonetGroupsList)) {
-                    $sonetGroupsAdditionalList = \CSocNetLogDestination::getSocnetGroup(array(
-                        'features' => array("blog", array("premoderate_post", "moderate_post", "write_post", "full_post")),
-                        'id' => $lastSonetGroupsList
-                    ));
+                    $sonetGroupsAdditionalList = \CSocNetLogDestination::getSocnetGroup(
+                        array(
+                            'features' => array(
+                                "blog",
+                                array("premoderate_post", "moderate_post", "write_post", "full_post")
+                            ),
+                            'id' => $lastSonetGroupsList
+                        )
+                    );
                     if (!empty($sonetGroupsAdditionalList)) {
                         $sonetGroupsList = array_merge($sonetGroupsList, $sonetGroupsAdditionalList);
                     }
@@ -131,13 +139,18 @@ class Entities
 
             $result['EXTRANET_USER'] = 'N';
             if (!empty($lastUserList)) {
-                $items['USERS'] = \CSocNetLogDestination::getUsers(array(
-                    'id' => $lastUserList,
-                    'CRM_ENTITY' => ModuleManager::isModuleInstalled('crm')
-                ));
+                $items['USERS'] = \CSocNetLogDestination::getUsers(
+                    array(
+                        'id' => $lastUserList,
+                        'CRM_ENTITY' => ModuleManager::isModuleInstalled('crm')
+                    )
+                );
                 if (
                     isset($options['extranetContext'])
-                    && in_array($options['extranetContext'], array(self::EXTRANET_CONTEXT_INTERNAL, self::EXTRANET_CONTEXT_EXTERNAL))
+                    && in_array(
+                        $options['extranetContext'],
+                        array(self::EXTRANET_CONTEXT_INTERNAL, self::EXTRANET_CONTEXT_EXTERNAL)
+                    )
                 ) {
                     foreach ($items['USERS'] as $key => $value) {
                         if (isset($value["isExtranet"])) {

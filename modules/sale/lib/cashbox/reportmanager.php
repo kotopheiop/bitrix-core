@@ -66,7 +66,10 @@ final class ReportManager
 
         if ($lastZReport && ($lastZReport['STATUS'] === 'N' || $lastZReport['STATUS'] === 'P')) {
             if ($lastZReport['STATUS'] === 'N') {
-                Internals\CashboxZReportTable::update($lastZReport['ID'], array('STATUS' => 'P', 'DATE_PRINT_START' => new DateTime()));
+                Internals\CashboxZReportTable::update(
+                    $lastZReport['ID'],
+                    array('STATUS' => 'P', 'DATE_PRINT_START' => new DateTime())
+                );
                 return $lastZReport['ID'];
             } else {
                 /** @var Date $datePrintStart */
@@ -77,21 +80,29 @@ final class ReportManager
                 if ($p > static::MIN_TIME_RESENDING_REPORT && $p < static::MAX_TIME_RESENDING_REPORT) {
                     return $lastZReport['ID'];
                 } elseif ($p >= static::MAX_TIME_RESENDING_REPORT) {
-                    Internals\CashboxZReportTable::update($lastZReport['ID'], array('STATUS' => 'E', 'DATE_PRINT_END' => new DateTime()));
+                    Internals\CashboxZReportTable::update(
+                        $lastZReport['ID'],
+                        array('STATUS' => 'E', 'DATE_PRINT_END' => new DateTime())
+                    );
                 }
             }
         } else {
             $cashbox = Manager::getCashboxFromCache($cashboxId);
             $prevPrintDate = new DateTime();
-            $prevPrintDate->setTime($cashbox['SETTINGS']['Z_REPORT']['TIME']['H'], $cashbox['SETTINGS']['Z_REPORT']['TIME']['M']);
-            if ($prevPrintDate->getTimestamp() > $nowTs)
+            $prevPrintDate->setTime(
+                $cashbox['SETTINGS']['Z_REPORT']['TIME']['H'],
+                $cashbox['SETTINGS']['Z_REPORT']['TIME']['M']
+            );
+            if ($prevPrintDate->getTimestamp() > $nowTs) {
                 $prevPrintDate->add("-1d");
+            }
 
             /** @var Date $datePrintStart */
-            if ($lastZReport)
+            if ($lastZReport) {
                 $datePrintStart = $lastZReport['DATE_PRINT_START'];
-            else
+            } else {
                 $datePrintStart = new DateTime('2017-01-01 00:00:00', 'Y-m-d H:i:s');
+            }
 
             $datePrintStartTs = $datePrintStart->getTimestamp();
 
@@ -112,7 +123,10 @@ final class ReportManager
                 $checksCount = $dbChecksCount->fetch();
                 if ($checksCount && $checksCount['CNT'] > 0) {
                     $reportId = static::addZReport($cashboxId);
-                    Internals\CashboxZReportTable::update($reportId, array('STATUS' => 'P', 'DATE_PRINT_START' => new DateTime()));
+                    Internals\CashboxZReportTable::update(
+                        $reportId,
+                        array('STATUS' => 'P', 'DATE_PRINT_START' => new DateTime())
+                    );
                     return $reportId;
                 }
             }
@@ -137,40 +151,49 @@ final class ReportManager
 
         $report = Internals\CashboxZReportTable::getRowById($reportId);
         if (!$report) {
-            $result->addError(new Error(Loc::getMessage('SALE_CASHBOX_ERROR_REPORT_NOT_FOUND', array('#REPORT_ID#' => $reportId))));
+            $result->addError(
+                new Error(Loc::getMessage('SALE_CASHBOX_ERROR_REPORT_NOT_FOUND', array('#REPORT_ID#' => $reportId)))
+            );
             return $result;
         }
 
-        if ($report['STATUS'] === 'Y')
+        if ($report['STATUS'] === 'Y') {
             return $result;
+        }
 
         if (isset($data['ERROR'])) {
             $errorMessage = Loc::getMessage('SALE_CASHBOX_ERROR_REPORT_PRINT', array('#REPORT_ID#' => $reportId));
-            if ($data['ERROR']['MESSAGE'])
+            if ($data['ERROR']['MESSAGE']) {
                 $errorMessage .= ': ' . $data['ERROR']['MESSAGE'];
+            }
 
             if ($data['ERROR']['TYPE'] === Errors\Warning::TYPE) {
                 if ($report['CNT_FAIL_PRINT'] >= 3) {
                     $data['ERROR']['TYPE'] = Errors\Error::TYPE;
                 } else {
                     $result->addError(new Errors\Warning($errorMessage));
-                    Internals\CashboxZReportTable::update($reportId, array('CNT_FAIL_PRINT' => $report['CNT_FAIL_PRINT'] + 1));
+                    Internals\CashboxZReportTable::update(
+                        $reportId,
+                        array('CNT_FAIL_PRINT' => $report['CNT_FAIL_PRINT'] + 1)
+                    );
                     return $result;
                 }
             }
 
             if ($data['ERROR']['TYPE'] === Errors\Error::TYPE) {
                 $updatedFields = array('STATUS' => 'E', 'DATE_PRINT_END' => new DateTime());
-                if ((int)$report['CNT_FAIL_PRINT'] === 0)
+                if ((int)$report['CNT_FAIL_PRINT'] === 0) {
                     $updatedFields['CNT_FAIL_PRINT'] = 1;
+                }
 
                 Internals\CashboxZReportTable::update($reportId, $updatedFields);
                 $error = new Errors\Error($errorMessage);
+                Logger::addError($error->getMessage(), $report['CASHBOX_ID']);
             } else {
                 $error = new Errors\Warning($errorMessage);
+                Logger::addWarning($error->getMessage(), $report['CASHBOX_ID']);
             }
 
-            Manager::writeToLog($report['CASHBOX_ID'], $error);
             $result->addError($error);
         } else {
             $updateResult = Internals\CashboxZReportTable::update(
@@ -186,8 +209,9 @@ final class ReportManager
                 )
             );
 
-            if (!$updateResult->isSuccess())
+            if (!$updateResult->isSuccess()) {
                 $result->addErrors($updateResult->getErrors());
+            }
         }
 
         return $result;

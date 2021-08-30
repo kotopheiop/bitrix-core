@@ -26,25 +26,32 @@ class CAdminFilter
         $uid = $USER->GetID();
         $isAdmin = $USER->CanDoOperation('edit_other_settings');
 
-        if (empty($popup) || !is_array($popup))
+        if (empty($popup) || !is_array($popup)) {
             $popup = false;
+        }
 
-        $this->id = $id;
+        $this->id = preg_replace('/[^a-z0-9_]/i', '', $id);
         $this->popup = $popup;
 
         if (is_array($arExtraParams)) {
-            if (isset($arExtraParams["url"]) && !empty($arExtraParams["url"]))
+            if (isset($arExtraParams["url"]) && !empty($arExtraParams["url"])) {
                 $this->url = $arExtraParams["url"];
+            }
 
-            if (isset($arExtraParams["table_id"]) && !empty($arExtraParams["table_id"]))
+            if (isset($arExtraParams["table_id"]) && !empty($arExtraParams["table_id"])) {
                 $this->tableId = $arExtraParams["table_id"];
+            }
         }
 
-        $this->arOptFlt = CUserOptions::GetOption("filter", $this->id, array(
-            "rows" => "",
-            "styleFolded" => "N",
-            "presetsDeleted" => ""
-        ));
+        $this->arOptFlt = CUserOptions::GetOption(
+            "filter",
+            $this->id,
+            array(
+                "rows" => "",
+                "styleFolded" => "N",
+                "presetsDeleted" => ""
+            )
+        );
 
         $presetsDeleted = explode(",", $this->arOptFlt["presetsDeleted"]);
 
@@ -52,35 +59,44 @@ class CAdminFilter
 
         $presetsDeletedJS = '';
 
-        if (is_array($presetsDeleted))
-            foreach ($presetsDeleted as $preset)
-                if (trim($preset) <> "")
-                    $presetsDeletedJS .= ($presetsDeletedJS <> "" ? "," : "") . '"' . CUtil::JSEscape(trim($preset)) . '"';
+        if (is_array($presetsDeleted)) {
+            foreach ($presetsDeleted as $preset) {
+                if (trim($preset) <> "") {
+                    $presetsDeletedJS .= ($presetsDeletedJS <> "" ? "," : "") . '"' . CUtil::JSEscape(
+                            trim($preset)
+                        ) . '"';
+                }
+            }
+        }
 
         $this->arOptFlt["presetsDeletedJS"] = $presetsDeletedJS;
 
         $dbRes = self::GetList(array(), array("USER_ID" => $uid, "FILTER_ID" => $this->id), true);
         while ($arFilter = $dbRes->Fetch()) {
-            if (!is_null($arFilter["LANGUAGE_ID"]) && $arFilter["LANGUAGE_ID"] != LANG)
+            if (!is_null($arFilter["LANGUAGE_ID"]) && $arFilter["LANGUAGE_ID"] != LANG) {
                 continue;
+            }
 
             $arItem = $arFilter;
-            $arItem["FIELDS"] = unserialize($arFilter["FIELDS"]);
+            $arItem["FIELDS"] = unserialize($arFilter["FIELDS"], ['allowed_classes' => false]);
 
-            if (!is_null($arFilter["SORT_FIELD"]))
-                $arItem["SORT_FIELD"] = unserialize($arFilter["SORT_FIELD"]);
+            if (!is_null($arFilter["SORT_FIELD"])) {
+                $arItem["SORT_FIELD"] = unserialize($arFilter["SORT_FIELD"], ['allowed_classes' => false]);
+            }
 
             if ($arFilter["PRESET"] == "Y" && is_null($arFilter["LANGUAGE_ID"])) {
                 $langName = GetMessage($arFilter["NAME"]);
 
-                if ($langName)
+                if ($langName) {
                     $arItem["NAME"] = $langName;
+                }
 
                 foreach ($arItem["FIELDS"] as $key => $field) {
                     $langValue = GetMessage($arItem["FIELDS"][$key]["value"]);
 
-                    if ($langValue)
+                    if ($langValue) {
                         $arItem["FIELDS"][$key]["value"] = $langValue;
+                    }
                 }
             }
 
@@ -90,7 +106,7 @@ class CAdminFilter
         }
     }
 
-    private function err_mess()
+    private static function err_mess()
     {
         return "<br>Class: CAdminFilter<br>File: " . __FILE__;
     }
@@ -98,9 +114,11 @@ class CAdminFilter
     private function AddItem($arItem, $bInsertFirst = false)
     {
         //if user "deleted" preset http://jabber.bx/view.php?id=34405
-        if (!$arItem["EDITABLE"] && !empty($this->arOptFlt["presetsDeleted"]))
-            if (in_array($arItem["ID"], $this->arOptFlt["presetsDeleted"]))
+        if (!$arItem["EDITABLE"] && !empty($this->arOptFlt["presetsDeleted"])) {
+            if (in_array($arItem["ID"], $this->arOptFlt["presetsDeleted"])) {
                 return false;
+            }
+        }
 
         $customPresetId = $this->FindItemByPresetId($arItem["ID"]);
 
@@ -116,51 +134,60 @@ class CAdminFilter
                 $arItem["SORT"] = $this->arItems[$presetID]["SORT"];
                 unset($this->arItems[$presetID]);
             }
-
         }
 
-        if (!isset($arItem["SORT"]))
+        if (!isset($arItem["SORT"])) {
             $arItem["SORT"] = self::$defaultSort;
+        }
 
         if ($bInsertFirst) {
             $arNewItems[$arItem["ID"]] = $arItem;
 
-            foreach ($this->arItems as $key => $item)
+            foreach ($this->arItems as $key => $item) {
                 $arNewItems[$key] = $item;
+            }
 
             $this->arItems = $arNewItems;
-        } else
+        } else {
             $this->arItems[$arItem["ID"]] = $arItem;
+        }
 
         unset($this->arItems[$arItem["ID"]][$arItem["ID"]]);
 
         return true;
     }
 
-    private function CheckFields($arFields)
+    private static function CheckFields($arFields)
     {
         /** @global CMain $APPLICATION */
         global $APPLICATION;
 
         $aMsg = array();
 
-        if (!is_set($arFields, "FILTER_ID") || (is_set($arFields, "FILTER_ID") && trim($arFields["FILTER_ID"]) == ""))
+        if (!is_set($arFields, "FILTER_ID") || (is_set($arFields, "FILTER_ID") && trim($arFields["FILTER_ID"]) == "")) {
             $aMsg[] = array("id" => "FILTER_ID", "text" => GetMessage("filters_error_table_name"));
+        }
 
-        if (!is_set($arFields, "NAME") || (is_set($arFields, "NAME") && trim($arFields["NAME"]) == ""))
+        if (!is_set($arFields, "NAME") || (is_set($arFields, "NAME") && trim($arFields["NAME"]) == "")) {
             $aMsg[] = array("id" => "NAME", "text" => GetMessage("filters_error_name"));
+        }
 
-        if (!is_set($arFields, "FIELDS") || (is_set($arFields, "FIELDS") && trim($arFields["FIELDS"]) == ""))
+        if (!is_set($arFields, "FIELDS") || (is_set($arFields, "FIELDS") && trim($arFields["FIELDS"]) == "")) {
             $aMsg[] = array("id" => "FIELDS", "text" => GetMessage("filters_error_fields"));
+        }
 
-        if ((!is_set($arFields, "USER_ID") && $arFields["COMMON"] != "Y") || (is_set($arFields, "USER_ID") && trim($arFields["USER_ID"]) == ""))
+        if ((!is_set($arFields, "USER_ID") && $arFields["COMMON"] != "Y") || (is_set($arFields, "USER_ID") && trim(
+                    $arFields["USER_ID"]
+                ) == "")) {
             $aMsg[] = array("id" => "USER_ID", "text" => GetMessage("filters_error_user"));
+        }
 
         if (is_set($arFields, "USER_ID")) {
             if (intval($arFields["USER_ID"]) > 0) {
                 $res = CUser::GetByID(intval($arFields["USER_ID"]));
-                if (!$res->Fetch())
+                if (!$res->Fetch()) {
                     $aMsg[] = array("id" => "USER_ID", "text" => GetMessage("filters_error_user"));
+                }
             }
         }
 
@@ -173,32 +200,36 @@ class CAdminFilter
         return true;
     }
 
-    private function FieldsExcess($arFields)
+    private static function FieldsExcess($arFields)
     {
         $arResult = array();
 
-        if (is_array($arFields))
-            foreach ($arFields as $key => $field)
+        if (is_array($arFields)) {
+            foreach ($arFields as $key => $field) {
                 $arResult[$key] = array(
                     "value" => $field,
                     "hidden" => "false",
                 );
+            }
+        }
         return $arResult;
     }
 
-    private function FieldsDelHiddenEmpty($arFields)
+    private static function FieldsDelHiddenEmpty($arFields)
     {
         $arResult = array();
 
-        if (!is_array($arFields))
+        if (!is_array($arFields)) {
             return false;
+        }
 
         foreach ($arFields as $key => $field) {
-            if (!empty($field["value"]) || $field["hidden"] == "false")
+            if (!empty($field["value"]) || $field["hidden"] == "false") {
                 $arResult[$key] = array(
                     "value" => $field["value"],
                     "hidden" => $field["hidden"],
                 );
+            }
         }
         return $arResult;
     }
@@ -213,16 +244,19 @@ class CAdminFilter
      */
     public function SetDefaultRows($rows)
     {
-        if (is_array($rows))
+        if (is_array($rows)) {
             $outRows = implode(",", $rows);
-        else
+        } else {
             $outRows = $rows;
+        }
 
-        if (!$outRows)
+        if (!$outRows) {
             return false;
+        }
 
-        if (!empty($this->arOptFlt["rows"]))
+        if (!empty($this->arOptFlt["rows"])) {
             return true;
+        }
 
         $this->arOptFlt["rows"] = $outRows;
 
@@ -231,16 +265,19 @@ class CAdminFilter
 
     public static function SetDefaultRowsOption($filterId, $rows)
     {
-        if (!$filterId)
+        if (!$filterId) {
             return false;
+        }
 
-        if (is_array($rows))
+        if (is_array($rows)) {
             $outRows = implode(",", $rows);
-        else
+        } else {
             $outRows = $rows;
+        }
 
-        if (!$outRows)
+        if (!$outRows) {
             return false;
+        }
 
         return CUserOptions::SetOption("filter", $filterId, array("rows" => $outRows), true);
     }
@@ -274,11 +311,13 @@ class CAdminFilter
      */
     public function AddPreset($arFields)
     {
-        if (!isset($arFields["NAME"]) || empty($arFields["NAME"]))
+        if (!isset($arFields["NAME"]) || empty($arFields["NAME"])) {
             return false;
+        }
 
-        if (!isset($arFields["ID"]) || empty($arFields["ID"]))
+        if (!isset($arFields["ID"]) || empty($arFields["ID"])) {
             return false;
+        }
 
         $item = array(
             "ID" => "page-" . $arFields["ID"],
@@ -288,18 +327,21 @@ class CAdminFilter
             "PRESET" => "Y"
         );
 
-        if (isset($arFields["FIELDS"]))
+        if (isset($arFields["FIELDS"])) {
             $item["FIELDS"] = CAdminFilter::FieldsExcess($arFields["FIELDS"]);
-        else
+        } else {
             $item["FIELDS"] = array();
+        }
 
-        if (isset($arFields["SORT"]) && !empty($arFields["SORT"]))
+        if (isset($arFields["SORT"]) && !empty($arFields["SORT"])) {
             $item["SORT"] = intval($arFields["SORT"]);
-        else
+        } else {
             $item["SORT"] = self::$defaultPresetSort + count($this->arItems) * 10;
+        }
 
-        if (isset($arFields["SORT_FIELD"]) && is_array($arFields["SORT_FIELD"]) && !empty($arFields["SORT_FIELD"]))
+        if (isset($arFields["SORT_FIELD"]) && is_array($arFields["SORT_FIELD"]) && !empty($arFields["SORT_FIELD"])) {
             $item["SORT_FIELD"] = $arFields["SORT_FIELD"];
+        }
 
         return $this->AddItem($item, false);
     }
@@ -307,45 +349,53 @@ class CAdminFilter
 
     private function FindItemByPresetId($strID)
     {
-
-        if (!is_array($this->arItems))
+        if (!is_array($this->arItems)) {
             return false;
+        }
 
-        foreach ($this->arItems as $key => $item)
-            if ($item["PRESET_ID"] == $strID)
+        foreach ($this->arItems as $key => $item) {
+            if ($item["PRESET_ID"] == $strID) {
                 return $key;
+            }
+        }
 
         return false;
     }
 
     private function FindItemByID($strID)
     {
-        if (!is_array($this->arItems))
+        if (!is_array($this->arItems)) {
             return false;
+        }
 
-        foreach ($this->arItems as $key => $item)
-            if ($item["ID"] == $strID)
+        foreach ($this->arItems as $key => $item) {
+            if ($item["ID"] == $strID) {
                 return $key;
+            }
+        }
 
         return false;
     }
 
-    public function AddPresetToBase($arFields)
+    public static function AddPresetToBase($arFields)
     {
-        if (!isset($arFields["NAME"]) || empty($arFields["NAME"]))
+        if (!isset($arFields["NAME"]) || empty($arFields["NAME"])) {
             return false;
+        }
 
         $arFields["PRESET"] = "Y";
         $arFields["COMMON"] = "Y";
 
-        if (isset($arFields["FIELDS"]))
+        if (isset($arFields["FIELDS"])) {
             $arFields["FIELDS"] = CAdminFilter::FieldsExcess($arFields["FIELDS"]);
-        else
+        } else {
             $item["FIELDS"] = array();
+        }
 
 
-        if (!isset($arFields["SORT"]) || empty($arFields["SORT"]))
+        if (!isset($arFields["SORT"]) || empty($arFields["SORT"])) {
             $arFields["SORT"] = self::$defaultPresetSort;
+        }
 
         return CAdminFilter::Add($arFields);
     }
@@ -356,16 +406,19 @@ class CAdminFilter
 
         $arFields["FIELDS"] = CAdminFilter::FieldsDelHiddenEmpty($arFields["FIELDS"]);
 
-        if (!$arFields["FIELDS"])
+        if (!$arFields["FIELDS"]) {
             return false;
+        }
 
         $arFields["FIELDS"] = serialize($arFields["FIELDS"]);
 
-        if (isset($arFields["SORT_FIELD"]))
+        if (isset($arFields["SORT_FIELD"])) {
             $arFields["SORT_FIELD"] = serialize($arFields["SORT_FIELD"]);
+        }
 
-        if (!CAdminFilter::CheckFields($arFields))
+        if (!CAdminFilter::CheckFields($arFields)) {
             return false;
+        }
 
         $ID = $DB->Add("b_filters", $arFields, array("FIELDS"));
         return $ID;
@@ -375,7 +428,11 @@ class CAdminFilter
     {
         global $DB;
 
-        return ($DB->Query("DELETE FROM b_filters WHERE ID='" . intval($ID) . "'", false, "File: " . __FILE__ . "<br>Line: " . __LINE__));
+        return ($DB->Query(
+            "DELETE FROM b_filters WHERE ID='" . intval($ID) . "'",
+            false,
+            "File: " . __FILE__ . "<br>Line: " . __LINE__
+        ));
     }
 
     public static function Update($ID, $arFields)
@@ -385,25 +442,29 @@ class CAdminFilter
 
         $arFields["FIELDS"] = CAdminFilter::FieldsDelHiddenEmpty($arFields["FIELDS"]);
 
-        if (!$arFields["FIELDS"])
+        if (!$arFields["FIELDS"]) {
             return false;
+        }
 
         $arFields["FIELDS"] = serialize($arFields["FIELDS"]);
 
-        if (isset($arFields["SORT_FIELD"]))
+        if (isset($arFields["SORT_FIELD"])) {
             $arFields["SORT_FIELD"] = serialize($arFields["SORT_FIELD"]);
+        }
 
-        if (!CAdminFilter::CheckFields($arFields))
+        if (!CAdminFilter::CheckFields($arFields)) {
             return false;
+        }
 
         $strUpdate = $DB->PrepareUpdate("b_filters", $arFields);
 
         $arBinds = Array();
-        if (is_set($arFields, "FIELDS"))
+        if (is_set($arFields, "FIELDS")) {
             $arBinds["FIELDS"] = $arFields["FIELDS"];
+        }
 
 
-        if (strlen($strUpdate) > 0) {
+        if ($strUpdate <> '') {
             $strSql = "UPDATE b_filters SET " . $strUpdate . " WHERE ID=" . $ID;
             return $DB->QueryBind($strSql, $arBinds);
 
@@ -418,22 +479,24 @@ class CAdminFilter
     {
         global $DB;
 
-        $err_mess = (CAdminFilter::err_mess()) . "<br>Function: GetList<br>Line: ";
+        $err_mess = (static::err_mess()) . "<br>Function: GetList<br>Line: ";
         $arSqlSearch = Array();
         if (is_array($arFilter)) {
             foreach ($arFilter as $key => $val) {
-                if (strlen($val) <= 0 || $val == "NOT_REF")
+                if ((string)$val == '' || $val == "NOT_REF") {
                     continue;
+                }
 
-                switch (strtoupper($key)) {
+                switch (mb_strtoupper($key)) {
                     case "ID":
                         $arSqlSearch[] = GetFilterQuery("F.ID", $val, "N");
                         break;
                     case "USER_ID":
-                        if ($getCommon)
+                        if ($getCommon) {
                             $arSqlSearch[] = "F.USER_ID=" . intval($val) . " OR F.COMMON='Y'";
-                        else
+                        } else {
                             $arSqlSearch[] = "F.USER_ID = " . intval($val);
+                        }
                         break;
                     case "FILTER_ID":
                         $arSqlSearch[] = "F.FILTER_ID = '" . $DB->ForSql($val) . "'";
@@ -468,8 +531,8 @@ class CAdminFilter
 
         $sOrder = "";
         foreach ($aSort as $key => $val) {
-            $ord = (strtoupper($val) <> "ASC" ? "DESC" : "ASC");
-            switch (strtoupper($key)) {
+            $ord = (mb_strtoupper($val) <> "ASC" ? "DESC" : "ASC");
+            switch (mb_strtoupper($key)) {
                 case "ID":
                     $sOrder .= ", F.ID " . $ord;
                     break;
@@ -505,8 +568,9 @@ class CAdminFilter
                     break;
             }
         }
-        if (strlen($sOrder) <= 0)
+        if ($sOrder == '') {
             $sOrder = "F.ID ASC";
+        }
         $strSqlOrder = " ORDER BY " . TrimEx($sOrder, ",");
 
         $strSqlSearch = GetFilterSqlSearch($arSqlSearch, "noFilterLogic");
@@ -525,8 +589,9 @@ class CAdminFilter
 
     private static function Cmp($a, $b)
     {
-        if ($a["SORT"] == $b["SORT"])
+        if ($a["SORT"] == $b["SORT"]) {
             return ($a["ID"] < $b["ID"]) ? -1 : 1;
+        }
 
         return ($a["SORT"] < $b["SORT"]) ? -1 : 1;
     }
@@ -541,16 +606,22 @@ class CAdminFilter
 		<tr>
 			<td class="adm-filter-main-table-cell">
 				<div class="adm-filter-tabs-block" id="filter-tabs-' . $this->id . '">
-					<span id="adm-filter-tab-' . $this->id . '-0" class="adm-filter-tab adm-filter-tab-active" onclick="' . $this->id . '.SetActiveTab(this); ' . $this->id . '.ApplyFilter(\'0\'); " title="' . GetMessage("admin_lib_filter_goto_dfilter") . '">' . GetMessage("admin_lib_filter_filter") . '</span>';
+					<span id="adm-filter-tab-' . $this->id . '-0" class="adm-filter-tab adm-filter-tab-active" onclick="' . $this->id . '.SetActiveTab(this); ' . $this->id . '.ApplyFilter(\'0\'); " title="' . GetMessage(
+                "admin_lib_filter_goto_dfilter"
+            ) . '">' . GetMessage("admin_lib_filter_filter") . '</span>';
 
         if (is_array($this->arItems) && !empty($this->arItems)) {
             foreach ($this->arItems as $filter_id => $filter) {
                 $name = ($filter["NAME"] <> '' ? $filter["NAME"] : GetMessage("admin_lib_filter_no_name"));
-                echo '<span id="adm-filter-tab-' . $this->id . '-' . $filter_id . '" class="adm-filter-tab" onclick="' . $this->id . '.SetActiveTab(this); ' . $this->id . '.ApplyFilter(\'' . $filter_id . '\');" title="' . GetMessage("admin_lib_filter_goto_filter") . ": &quot;" . htmlspecialcharsbx($name) . '&quot;">' . htmlspecialcharsbx($name) . '</span>';
+                echo '<span id="adm-filter-tab-' . $this->id . '-' . $filter_id . '" class="adm-filter-tab" onclick="' . $this->id . '.SetActiveTab(this); ' . $this->id . '.ApplyFilter(\'' . $filter_id . '\');" title="' . GetMessage(
+                        "admin_lib_filter_goto_filter"
+                    ) . ": &quot;" . htmlspecialcharsbx($name) . '&quot;">' . htmlspecialcharsbx($name) . '</span>';
             }
         }
 
-        echo '<span id="adm-filter-add-tab-' . $this->id . '" class="adm-filter-tab adm-filter-add-tab" onclick="' . $this->id . '.SaveAs();" title="' . GetMessage("admin_lib_filter_new") . '"></span><span onclick="' . $this->id . '.SetFoldedView();" class="adm-filter-switcher-tab"><span id="adm-filter-switcher-tab" class="adm-filter-switcher-tab-icon"></span></span><span class="adm-filter-tabs-block-underlay"></span>
+        echo '<span id="adm-filter-add-tab-' . $this->id . '" class="adm-filter-tab adm-filter-add-tab" onclick="' . $this->id . '.SaveAs();" title="' . GetMessage(
+                "admin_lib_filter_new"
+            ) . '"></span><span onclick="' . $this->id . '.SetFoldedView();" class="adm-filter-switcher-tab"><span id="adm-filter-switcher-tab" class="adm-filter-switcher-tab-icon"></span></span><span class="adm-filter-tabs-block-underlay"></span>
 				</div>
 			</td>
 		</tr>
@@ -577,43 +648,73 @@ class CAdminFilter
 
         if ($aParams !== false) {
             $url = $aParams["url"];
-            if (strpos($url, "?") === false)
+            if (mb_strpos($url, "?") === false) {
                 $url .= "?";
-            else
+            } else {
                 $url .= "&";
+            }
 
-            if (strpos($url, "lang=") === false)
+            if (mb_strpos($url, "lang=") === false) {
                 $url .= "lang=" . LANG;
+            }
 
-            if (!$this->url)
+            if (!$this->url) {
                 $this->url = $url;
+            }
 
-            if (!$this->tableId)
+            if (!$this->tableId) {
                 $this->tableId = $aParams["table_id"];
+            }
 
             if (isset($aParams['report']) && $aParams['report']) {
                 echo '
-						<input type="submit" class="adm-btn" id="' . $this->id . 'set_filter" name="set_filter" title="' . GetMessage("admin_lib_filter_set_rep_title") . $hkInst->GetTitle("set_filter") . '" onclick="return ' . htmlspecialcharsbx($this->id . '.OnSet(\'' . CUtil::AddSlashes($aParams["table_id"]) . '\', \'' . CUtil::AddSlashes($url) . '\', this);') . '" value="' . GetMessage("admin_lib_filter_set_rep") . '">
-						<input type="submit" class="adm-btn" id="' . $this->id . 'del_filter" name="del_filter" title="' . GetMessage("admin_lib_filter_clear_butt_title") . $hkInst->GetTitle("del_filter") . '" onclick="return ' . htmlspecialcharsbx($this->id . '.OnClear(\'' . CUtil::AddSlashes($aParams["table_id"]) . '\', \'' . CUtil::AddSlashes($url) . '\', this);') . '" value="' . GetMessage("admin_lib_filter_clear_butt") . '">';
-            } else
+						<input type="submit" class="adm-btn" id="' . $this->id . 'set_filter" name="set_filter" title="' . GetMessage(
+                        "admin_lib_filter_set_rep_title"
+                    ) . $hkInst->GetTitle("set_filter") . '" onclick="return ' . htmlspecialcharsbx(
+                        $this->id . '.OnSet(\'' . CUtil::AddSlashes(
+                            $aParams["table_id"]
+                        ) . '\', \'' . CUtil::AddSlashes($url) . '\', this);'
+                    ) . '" value="' . GetMessage("admin_lib_filter_set_rep") . '">
+						<input type="submit" class="adm-btn" id="' . $this->id . 'del_filter" name="del_filter" title="' . GetMessage(
+                        "admin_lib_filter_clear_butt_title"
+                    ) . $hkInst->GetTitle("del_filter") . '" onclick="return ' . htmlspecialcharsbx(
+                        $this->id . '.OnClear(\'' . CUtil::AddSlashes(
+                            $aParams["table_id"]
+                        ) . '\', \'' . CUtil::AddSlashes($url) . '\', this);'
+                    ) . '" value="' . GetMessage("admin_lib_filter_clear_butt") . '">';
+            } else {
                 echo '
-						<input type="submit" class="adm-btn" id="' . $this->id . 'set_filter" name="set_filter" title="' . GetMessage("admin_lib_filter_set_butt") . $hkInst->GetTitle("set_filter") . '" onclick="return ' . htmlspecialcharsbx($this->id . '.OnSet(\'' . CUtil::AddSlashes($aParams["table_id"]) . '\', \'' . CUtil::AddSlashes($url) . '\', this);') . '" value="' . GetMessage("admin_lib_filter_set_butt") . '">
-						<input type="submit" class="adm-btn" id="' . $this->id . 'del_filter" name="del_filter" title="' . GetMessage("admin_lib_filter_clear_butt") . $hkInst->GetTitle("del_filter") . '" onclick="return ' . htmlspecialcharsbx($this->id . '.OnClear(\'' . CUtil::AddSlashes($aParams["table_id"]) . '\', \'' . CUtil::AddSlashes($url) . '\', this);') . '" value="' . GetMessage("admin_lib_filter_clear_butt") . '">';
-
+						<input type="submit" class="adm-btn" id="' . $this->id . 'set_filter" name="set_filter" title="' . GetMessage(
+                        "admin_lib_filter_set_butt"
+                    ) . $hkInst->GetTitle("set_filter") . '" onclick="return ' . htmlspecialcharsbx(
+                        $this->id . '.OnSet(\'' . CUtil::AddSlashes(
+                            $aParams["table_id"]
+                        ) . '\', \'' . CUtil::AddSlashes($url) . '\', this);'
+                    ) . '" value="' . GetMessage("admin_lib_filter_set_butt") . '">
+						<input type="submit" class="adm-btn" id="' . $this->id . 'del_filter" name="del_filter" title="' . GetMessage(
+                        "admin_lib_filter_clear_butt"
+                    ) . $hkInst->GetTitle("del_filter") . '" onclick="return ' . htmlspecialcharsbx(
+                        $this->id . '.OnClear(\'' . CUtil::AddSlashes(
+                            $aParams["table_id"]
+                        ) . '\', \'' . CUtil::AddSlashes($url) . '\', this);'
+                    ) . '" value="' . GetMessage("admin_lib_filter_clear_butt") . '">';
+            }
         }
         if ($this->popup) {
-
             echo '
 						<div class="adm-filter-setting-block">
-							<span class="adm-filter-setting" onClick="this.blur();' . $this->id . '.SaveMenuShow(this);return false;" hidefocus="true" title="' . GetMessage("admin_lib_filter_savedel_title") . '"></span>
-							<span class="adm-filter-add-button" onClick="this.blur();' . $this->id . '.SettMenuShow(this);return false;" hidefocus="true" title="' . GetMessage("admin_lib_filter_more_title") . '"></span>
+							<span class="adm-filter-setting" onClick="this.blur();' . $this->id . '.SaveMenuShow(this);return false;" hidefocus="true" title="' . GetMessage(
+                    "admin_lib_filter_savedel_title"
+                ) . '"></span>
+							<span class="adm-filter-add-button" onClick="this.blur();' . $this->id . '.SettMenuShow(this);return false;" hidefocus="true" title="' . GetMessage(
+                    "admin_lib_filter_more_title"
+                ) . '"></span>
 						</div>';
         }
     }
 
     public function End()
     {
-
         echo '
 					</div>
 				</div>
@@ -626,16 +727,21 @@ class CAdminFilter
 
 
         if (is_array($this->popup)) {
-            foreach ($this->popup as $key => $item)
-                if ($item !== null)
+            foreach ($this->popup as $key => $item) {
+                if ($item !== null) {
                     $sRowIds .= ($sRowIds <> "" ? "," : "") . '"' . CUtil::JSEscape($key) . '"';
+                }
+            }
 
             $aRows = explode(",", $this->arOptFlt["rows"]);
 
-            if (is_array($aRows))
-                foreach ($aRows as $row)
-                    if (trim($row) <> "")
+            if (is_array($aRows)) {
+                foreach ($aRows as $row) {
+                    if (trim($row) <> "") {
                         $sVisRowsIds .= ($sVisRowsIds <> "" ? "," : "") . '"' . CUtil::JSEscape(trim($row)) . '":true';
+                    }
+                }
+            }
         }
 
         $this->PrintSaveOptionsDIV();
@@ -647,8 +753,10 @@ class CAdminFilter
         if (isset($_REQUEST["adm_filter_applied"]) && !empty($_REQUEST["adm_filter_applied"])) {
             $openedTabUri = $_REQUEST["adm_filter_applied"];
         } else {
-            $openedTabSes = $_SESSION[self::SESS_PARAMS_NAME][$this->id]["activeTabId"];
-            $filteredTab = $_SESSION[self::SESS_PARAMS_NAME][$this->id]["filteredId"];
+            $openedTabSes = \Bitrix\Main\Application::getInstance()->getSession(
+            )[self::SESS_PARAMS_NAME][$this->id]["activeTabId"];
+            $filteredTab = \Bitrix\Main\Application::getInstance()->getSession(
+            )[self::SESS_PARAMS_NAME][$this->id]["filteredId"];
         }
 
         echo '
@@ -658,7 +766,7 @@ class CAdminFilter
 		' . $this->id . ' = new BX.AdminFilter("' . $this->id . '", [' . $sRowIds . ']);
 		if (!BX.adminMenu)
 		{
-			BX.adminMenu = new BX.adminMenu();
+			BX.adminMenu = new BX.adminMenu();	
 		}
 		' . $this->id . '.state.init = true;
 		' . $this->id . '.state.folded = ' . ($this->arOptFlt["styleFolded"] == "Y" ? "true" : "false") . ';
@@ -677,9 +785,12 @@ class CAdminFilter
 		' . $this->id . '.InitFilteredTab("' . CUtil::JSEscape($tabToInit) . '");';
         }
 
-        if ($openedTabSes != null || $openedTabUri != false)
+        if ($openedTabSes != null || $openedTabUri != false) {
             echo '
-		var openedFTab = ' . $this->id . '.InitOpenedTab("' . CUtil::JSEscape($openedTabUri) . '", "' . CUtil::JSEscape($openedTabSes) . '");';
+		var openedFTab = ' . $this->id . '.InitOpenedTab("' . CUtil::JSEscape($openedTabUri) . '", "' . CUtil::JSEscape(
+                    $openedTabSes
+                ) . '");';
+        }
 
         echo '
 		' . $this->id . '.state.init = false;
@@ -692,13 +803,17 @@ class CAdminFilter
             foreach ($this->arItems as $filter_id => $filter) {
                 $arParamsAdd = array("adm_filter_applied" => $filter_id);
 
-                if (isset($filter["PRESET_ID"]))
+                if (isset($filter["PRESET_ID"])) {
                     $arParamsAdd["adm_filter_preset"] = $filter["PRESET_ID"];
+                }
 
                 $filterUrl = CHTTP::urlAddParams($registerUrl, $arParamsAdd, array("encode", "skip_empty"));
 
                 echo "
-		BX.adminMenu.registerItem('adm-filter-tab-" . $this->id . '-' . $filter_id . "', {URL:'" . $filterUrl . "', TITLE: true});";
+					if(BX.adminMenu && BX.adminMenu.registerItem) // todo: find true reason in sliders.
+					{
+						BX.adminMenu.registerItem('adm-filter-tab-" . $this->id . '-' . $filter_id . "', {URL:'" . $filterUrl . "', TITLE: true});
+					}";
             }
         }
 
@@ -717,14 +832,16 @@ class CAdminFilter
     private function GetParamsFromCookie()
     {
         $cookieName = COption::GetOptionString("main", "cookie_name", "BITRIX_SM") . "_ADM_FLT_PARAMS";
-        if (!isset($_COOKIE[$cookieName]) || $_COOKIE[$cookieName] == "")
+        if (!isset($_COOKIE[$cookieName]) || $_COOKIE[$cookieName] == "") {
             return false;
+        }
 
         $aParams = explode(",", $_COOKIE[$cookieName]);
         SetCookie($cookieName, '');
 
-        if (empty($aParams))
+        if (empty($aParams)) {
             return false;
+        }
 
         $filterId = "";
 
@@ -732,17 +849,21 @@ class CAdminFilter
             $aParam = explode(":", $aValue);
             unset($aParams[$key]);
 
-            if (!empty($aParam) && $aParam[0] != "filter_id")
+            if (!empty($aParam) && $aParam[0] != "filter_id") {
                 $aParams[$aParam[0]] = $aParam[1];
-            elseif ($aParam[0] == "filter_id")
+            } elseif ($aParam[0] == "filter_id") {
                 $filterId = $aParam[1];
+            }
         }
 
-        if ($filterId == "")
+        if ($filterId == "") {
             return false;
+        }
 
-        foreach ($aParams as $paramName => $value)
-            $_SESSION[self::SESS_PARAMS_NAME][$filterId][$paramName] = $value;
+        foreach ($aParams as $paramName => $value) {
+            \Bitrix\Main\Application::getInstance()->getSession(
+            )[self::SESS_PARAMS_NAME][$filterId][$paramName] = $value;
+        }
 
         return true;
     }
@@ -750,14 +871,17 @@ class CAdminFilter
     //experemental
     private function IsFiltered()
     {
-        $fltTable = $_SESSION["SESS_ADMIN"][$this->tableId];
+        $fltTable = \Bitrix\Main\Application::getInstance()->getSession()["SESS_ADMIN"][$this->tableId];
 
-        if (!isset($fltTable) || !is_array($fltTable))
+        if (!isset($fltTable) || !is_array($fltTable)) {
             return false;
+        }
 
-        foreach ($fltTable as $value)
-            if (!is_null($value))
+        foreach ($fltTable as $value) {
+            if (!is_null($value)) {
                 return true;
+            }
+        }
 
         return false;
     }
@@ -788,12 +912,16 @@ class CAdminFilter
 
     public static function UnEscape($aFilter)
     {
-        if (defined("BX_UTF"))
+        if (defined("BX_UTF")) {
             return;
-        if (!is_array($aFilter))
+        }
+        if (!is_array($aFilter)) {
             return;
-        foreach ($aFilter as $flt)
-            if (is_string($GLOBALS[$flt]) && CUtil::DetectUTF8($GLOBALS[$flt]))
+        }
+        foreach ($aFilter as $flt) {
+            if (is_string($GLOBALS[$flt]) && CUtil::DetectUTF8($GLOBALS[$flt])) {
                 CUtil::decodeURIComponent($GLOBALS[$flt]);
+            }
+        }
     }
 }

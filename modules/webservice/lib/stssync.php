@@ -24,7 +24,11 @@ class StsSync
             $port = \CLdapUtil::getTargetPort();
         }
 
-        return 'BX.StsSync.sync(\'' . $type . '\', \'' . static::SERVICE_PATH . $servicePath . '\', \'' . \CUtil::jsEscape($linkUrl) . '\', \'' . \CUtil::jsEscape($prefix) . '\', \'' . \CUtil::jsEscape($name) . '\', \'' . $guid . '\', ' . intval($port) . ')';
+        return 'BX.StsSync.sync(\'' . $type . '\', \'' . static::SERVICE_PATH . $servicePath . '\', \'' . \CUtil::jsEscape(
+                $linkUrl
+            ) . '\', \'' . \CUtil::jsEscape($prefix) . '\', \'' . \CUtil::jsEscape(
+                $name
+            ) . '\', \'' . $guid . '\', ' . intval($port) . ')';
     }
 
     public static function checkAuth($userId, $ap)
@@ -37,10 +41,13 @@ class StsSync
                 if ($appPassword["APPLICATION_ID"] === OutlookApplication::ID) {
                     $appManager = ApplicationManager::getInstance();
                     if ($appManager->checkScope($appPassword["APPLICATION_ID"]) === true) {
-                        ApplicationPasswordTable::update($appPassword["ID"], array(
-                            'DATE_LOGIN' => new DateTime(),
-                            'LAST_IP' => Context::getCurrent()->getRequest()->getRemoteAddress(),
-                        ));
+                        ApplicationPasswordTable::update(
+                            $appPassword["ID"],
+                            array(
+                                'DATE_LOGIN' => new DateTime(),
+                                'LAST_IP' => Context::getCurrent()->getRequest()->getRemoteAddress(),
+                            )
+                        );
 
                         setSessionExpired(true);
                         return $USER->Authorize($userId);

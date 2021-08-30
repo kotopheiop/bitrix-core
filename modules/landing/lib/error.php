@@ -40,7 +40,8 @@ class Error
     public function getFirstError()
     {
         if ($this->errors) {
-            return array_shift(array_values($this->errors));
+            $errors = array_values($this->errors);
+            return array_shift($errors);
         }
         return null;
     }

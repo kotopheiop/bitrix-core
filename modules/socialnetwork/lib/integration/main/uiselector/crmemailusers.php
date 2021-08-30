@@ -44,10 +44,12 @@ class CrmEmailUsers extends \Bitrix\Main\UI\Selector\EntityBase
         }
 
         if (!empty($lastUserList)) {
-            $usersList = \CSocNetLogDestination::getUsers(array(
-                'id' => $lastUserList,
-                'CRM_ENTITY' => ModuleManager::isModuleInstalled('crm')
-            ));
+            $usersList = \CSocNetLogDestination::getUsers(
+                array(
+                    'id' => $lastUserList,
+                    'CRM_ENTITY' => ModuleManager::isModuleInstalled('crm')
+                )
+            );
 
             foreach ($usersList as $key => $user) {
                 if (
@@ -98,10 +100,14 @@ class CrmEmailUsers extends \Bitrix\Main\UI\Selector\EntityBase
         $search = $requestFields['searchString'];
 
         if ($entityOptions['allowSearchCrmEmailUsers'] == 'Y') {
-            $crmEntities = \CSocNetLogDestination::searchCrmEntities(array(
-                "SEARCH" => $search,
-                "NAME_TEMPLATE" => \Bitrix\Socialnetwork\Integration\Main\UISelector\Users::getNameTemplate($commonOptions['userNameTemplate'])
-            ));
+            $crmEntities = \CSocNetLogDestination::searchCrmEntities(
+                array(
+                    "SEARCH" => $search,
+                    "NAME_TEMPLATE" => \Bitrix\Socialnetwork\Integration\Main\UISelector\Users::getNameTemplate(
+                        $commonOptions['userNameTemplate']
+                    )
+                )
+            );
             foreach ($crmEntities as $crmEntity) {
                 $crmEntity['id'] = 'UE' . $crmEntity['email'];
                 $result["ITEMS"][$crmEntity['id']] = $crmEntity;

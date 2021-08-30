@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/bizproc/classes/general/workflowpersister.php");
 
 class CBPWorkflowPersister
@@ -10,12 +11,13 @@ class CBPWorkflowPersister
     {
         $this->serviceInstanceId = uniqid("", true);
         $useGZipCompressionOption = \Bitrix\Main\Config\Option::get("bizproc", "use_gzip_compression", "");
-        if ($useGZipCompressionOption === "Y")
+        if ($useGZipCompressionOption === "Y") {
             $this->useGZipCompression = true;
-        elseif ($useGZipCompressionOption === "N")
+        } elseif ($useGZipCompressionOption === "N") {
             $this->useGZipCompression = false;
-        else
+        } else {
             $this->useGZipCompression = function_exists("gzcompress");
+        }
     }
 
     public static function GetPersister()
@@ -45,7 +47,9 @@ class CBPWorkflowPersister
                 $DB->Query(
                     "UPDATE b_bp_workflow_instance SET " .
                     "	OWNER_ID = '" . $DB->ForSql($this->serviceInstanceId) . "', " .
-                    "	OWNED_UNTIL = " . $DB->CharToDateFunction(date($GLOBALS["DB"]->DateFormatToPHP(FORMAT_DATETIME), $this->GetOwnershipTimeout())) . " " .
+                    "	OWNED_UNTIL = " . $DB->CharToDateFunction(
+                        date($GLOBALS["DB"]->DateFormatToPHP(FORMAT_DATETIME), $this->GetOwnershipTimeout())
+                    ) . " " .
                     "WHERE ID = '" . $DB->ForSql($instanceId) . "'"
                 );
             } elseif (!$silent) {
@@ -83,8 +87,12 @@ class CBPWorkflowPersister
                         "	WORKFLOW = '" . $DB->ForSql($buffer) . "', " .
                         "	STATUS = " . intval($status) . ", " .
                         "	MODIFIED = " . $DB->CurrentTimeFunction() . ", " .
-                        "	OWNER_ID = " . ($bUnlocked ? "NULL" : "'" . $DB->ForSql($this->serviceInstanceId) . "'") . ", " .
-                        "	OWNED_UNTIL = " . ($bUnlocked ? "NULL" : $DB->CharToDateFunction(date($GLOBALS["DB"]->DateFormatToPHP(FORMAT_DATETIME), $this->GetOwnershipTimeout()))) . " " .
+                        "	OWNER_ID = " . ($bUnlocked ? "NULL" : "'" . $DB->ForSql(
+                                $this->serviceInstanceId
+                            ) . "'") . ", " .
+                        "	OWNED_UNTIL = " . ($bUnlocked ? "NULL" : $DB->CharToDateFunction(
+                            date($GLOBALS["DB"]->DateFormatToPHP(FORMAT_DATETIME), $this->GetOwnershipTimeout())
+                        )) . " " .
                         "WHERE ID = '" . $DB->ForSql($id) . "' "
                     );
                 } else {
@@ -93,7 +101,13 @@ class CBPWorkflowPersister
             } else {
                 $DB->Query(
                     "INSERT INTO b_bp_workflow_instance (ID, WORKFLOW, STATUS, MODIFIED, OWNER_ID, OWNED_UNTIL) " .
-                    "VALUES ('" . $DB->ForSql($id) . "', '" . $DB->ForSql($buffer) . "', " . intval($status) . ", " . $DB->CurrentTimeFunction() . ", " . ($bUnlocked ? "NULL" : "'" . $DB->ForSql($this->serviceInstanceId) . "'") . ", " . ($bUnlocked ? "NULL" : $DB->CharToDateFunction(date($GLOBALS["DB"]->DateFormatToPHP(FORMAT_DATETIME), $this->GetOwnershipTimeout()))) . ")"
+                    "VALUES ('" . $DB->ForSql($id) . "', '" . $DB->ForSql($buffer) . "', " . intval(
+                        $status
+                    ) . ", " . $DB->CurrentTimeFunction() . ", " . ($bUnlocked ? "NULL" : "'" . $DB->ForSql(
+                            $this->serviceInstanceId
+                        ) . "'") . ", " . ($bUnlocked ? "NULL" : $DB->CharToDateFunction(
+                        date($GLOBALS["DB"]->DateFormatToPHP(FORMAT_DATETIME), $this->GetOwnershipTimeout())
+                    )) . ")"
                 );
             }
         }

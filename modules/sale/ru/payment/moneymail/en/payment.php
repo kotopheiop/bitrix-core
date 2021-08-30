@@ -1,4 +1,5 @@
 <?
+
 global $MESS;
 $MESS["SPCP_DTITLE"] = "MoneyMail (Russian payment system)";
 $MESS["SPCP_DDESCR"] = "<a href=\"http://www.MoneyMail.ru\">MoneyMail</a>";

@@ -5,6 +5,8 @@ namespace Bitrix\Landing\PublicAction;
 use \Bitrix\Landing\Manager;
 use \Bitrix\Landing\File;
 use \Bitrix\Landing\Landing;
+use \Bitrix\Landing\Hook;
+use \Bitrix\Landing\Assets;
 use \Bitrix\Landing\Block as BlockCore;
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Landing\PublicActionResult;
@@ -26,29 +28,33 @@ class Block
     {
         $error = new \Bitrix\Landing\Error;
         $result = new PublicActionResult();
-        $landing = Landing::createInstance($lid, [
-            'blocks_id' => $block
-        ]);
+        $landing = Landing::createInstance(
+            $lid,
+            [
+                'blocks_id' => $block
+            ]
+        );
         // try find the block in landing instance
         if ($landing->exist()) {
             $block = intval($block);
             $blocks = $landing->getBlocks();
             if (isset($blocks[$block])) {
                 // action with card  of block
-                if (strpos($selector, '@') !== false) {
-                    list($selector, $position) = explode('@', $selector);
+                if (mb_strpos($selector, '@') !== false) {
+                    [$selector, $position] = explode('@', $selector);
                 } else {
                     $position = -1;
                 }
                 if (
-                    strtolower($action) == 'clonecard' &&
+                    mb_strtolower($action) == 'clonecard' &&
                     isset($params['content'])
                 ) {
                     $res = $blocks[$block]->$action(
                         $selector,
                         $position,
                         Manager::sanitize(
-                            $params['content'], $bad
+                            $params['content'],
+                            $bad
                         )
                     );
                 } else {
@@ -135,9 +141,12 @@ class Block
 
         Landing::setEditMode();
 
-        $landing = Landing::createInstance($lid, [
-            'blocks_id' => $block
-        ]);
+        $landing = Landing::createInstance(
+            $lid,
+            [
+                'blocks_id' => $block
+            ]
+        );
         if ($landing->exist()) {
             $block = intval($block);
             $blocks = $landing->getBlocks();
@@ -179,8 +188,8 @@ class Block
 
         // collect selectors in right array
         foreach ($data as $selector => $value) {
-            if (strpos($selector, '@') !== false) {
-                list($selector, $position) = explode('@', $selector);
+            if (mb_strpos($selector, '@') !== false) {
+                [$selector, $position] = explode('@', $selector);
             } else {
                 $position = 0;
             }
@@ -191,9 +200,12 @@ class Block
         }
 
         if (!empty($content)) {
-            $landing = Landing::createInstance($lid, [
-                'blocks_id' => $block
-            ]);
+            $landing = Landing::createInstance(
+                $lid,
+                [
+                    'blocks_id' => $block
+                ]
+            );
             // try find the block in landing instance
             if ($landing->exist()) {
                 $block = intval($block);
@@ -237,9 +249,12 @@ class Block
 
         Landing::setEditMode();
 
-        $landing = Landing::createInstance($lid, [
-            'blocks_id' => $block
-        ]);
+        $landing = Landing::createInstance(
+            $lid,
+            [
+                'blocks_id' => $block
+            ]
+        );
 
         if ($landing->exist()) {
             $block = intval($block);
@@ -289,29 +304,38 @@ class Block
         if (isset($data['dynamicState']) || isset($data['dynamicBlock']))//@tmp refactor
         {
             $dynamicParamsExists = true;
-            $landing = Landing::createInstance($lid, [
-                'blocks_id' => $block
-            ]);
+            $landing = Landing::createInstance(
+                $lid,
+                [
+                    'blocks_id' => $block
+                ]
+            );
             if ($landing->exist()) {
                 if ($blockCurrent = $landing->getBlockById($block)) {
-                    // get dynamic data from request or from block
-                    if (isset($data['dynamicParams'])) {
-                        $dynamicParams = $data['dynamicParams'];
-                        unset($data['dynamicParams']);
-                    } else {
-                        $dynamicParams = $blockCurrent->getDynamicParams();
-                    }
-                    // if some dynamic is off
-                    if (isset($data['dynamicState'])) {
-                        foreach ((array)$data['dynamicState'] as $selector => $flag) {
-                            if (!Utils::isTrue($flag) && isset($dynamicParams[$selector])) {
-                                unset($dynamicParams[$selector]);
+                    $manifest = $blockCurrent->getManifest();
+                    if (
+                        !isset($manifest['block']['dynamic']) ||
+                        $manifest['block']['dynamic'] !== false
+                    ) {
+                        // get dynamic data from request or from block
+                        if (isset($data['dynamicParams'])) {
+                            $dynamicParams = $data['dynamicParams'];
+                            unset($data['dynamicParams']);
+                        } else {
+                            $dynamicParams = $blockCurrent->getDynamicParams();
+                        }
+                        // if some dynamic is off
+                        if (isset($data['dynamicState'])) {
+                            foreach ((array)$data['dynamicState'] as $selector => $flag) {
+                                if (!Utils::isTrue($flag) && isset($dynamicParams[$selector])) {
+                                    unset($dynamicParams[$selector]);
+                                }
                             }
                         }
+                        $blockCurrent->saveDynamicParams(
+                            $dynamicParams
+                        );
                     }
-                    $blockCurrent->saveDynamicParams(
-                        $dynamicParams
-                    );
                     $result->setResult(true);
                 } else {
                     $error->addError(
@@ -331,8 +355,8 @@ class Block
 
         // collect selectors in right array
         foreach ($data as $selector => $value) {
-            if (strpos($selector, '@') !== false) {
-                list($selector, $position) = explode('@', $selector);
+            if (mb_strpos($selector, '@') !== false) {
+                [$selector, $position] = explode('@', $selector);
             } else {
                 $position = -1;
             }
@@ -340,7 +364,7 @@ class Block
                 $data[$selector] = array();
             }
             if (isset($value['attrs']) && count($value) == 1) {
-                if (strpos($selector, ':') !== false) {
+                if (mb_strpos($selector, ':') !== false) {
                     $components[$selector] = $value['attrs'];
                 } else {
                     $attributes[$selector][$position] = $value['attrs'];
@@ -356,9 +380,12 @@ class Block
         // data is not empty
         if (!empty($content) || !empty($attributes) || !empty($components)) {
             if (!isset($landing)) {
-                $landing = Landing::createInstance($lid, [
-                    'blocks_id' => $block
-                ]);
+                $landing = Landing::createInstance(
+                    $lid,
+                    [
+                        'blocks_id' => $block
+                    ]
+                );
             }
             // try find the block in landing instance
             if ($landing->exist()) {
@@ -411,11 +438,13 @@ class Block
                 }
             }
             $result->setError($landing->getError());
-        } else if (!$dynamicParamsExists) {
-            $error->addError(
-                'NODES_NOT_FOUND',
-                Loc::getMessage('LANDING_BLOCK_NODES_NOT_FOUND')
-            );
+        } else {
+            if (!$dynamicParamsExists) {
+                $error->addError(
+                    'NODES_NOT_FOUND',
+                    Loc::getMessage('LANDING_BLOCK_NODES_NOT_FOUND')
+                );
+            }
         }
 
         $result->setError($error);
@@ -439,9 +468,12 @@ class Block
         Landing::setEditMode();
 
         // try find the block in landing instance
-        $landing = Landing::createInstance($lid, [
-            'blocks_id' => $block
-        ]);
+        $landing = Landing::createInstance(
+            $lid,
+            [
+                'blocks_id' => $block
+            ]
+        );
         if ($landing->exist()) {
             $block = intval($block);
             $blocks = $landing->getBlocks();
@@ -493,9 +525,9 @@ class Block
     public static function updateAttrs($lid, $block, array $data)
     {
         foreach ($data as $selector => $value) {
-            if (strpos($selector, '@') !== false) {
+            if (mb_strpos($selector, '@') !== false) {
                 unset($data[$selector]);
-                list($selector, $pos) = explode('@', $selector);
+                [$selector, $pos] = explode('@', $selector);
                 if (
                     !isset($data[$selector]) ||
                     !is_array($data[$selector])
@@ -523,11 +555,15 @@ class Block
 
         if ($editMode) {
             Landing::setEditMode();
+            Hook::setEditMode();
         }
 
-        $landing = Landing::createInstance($lid, [
-            'blocks_id' => $block
-        ]);
+        $landing = Landing::createInstance(
+            $lid,
+            [
+                'blocks_id' => $block
+            ]
+        );
         // try find the block in landing instance
         if ($landing->exist()) {
             $block = intval($block);
@@ -561,25 +597,54 @@ class Block
      * @param int $lid Landing id.
      * @param int $block Block id.
      * @param string $content Block content.
+     * @param bool $designed Block was designed.
      * @return \Bitrix\Landing\PublicActionResult
      */
-    public static function updateContent($lid, $block, $content)
+    public static function updateContent($lid, $block, $content, $designed = false)
     {
         $result = new PublicActionResult();
         $error = new \Bitrix\Landing\Error;
 
         Landing::setEditMode();
 
-        $landing = Landing::createInstance($lid, [
-            'blocks_id' => $block
-        ]);
+        $landing = Landing::createInstance(
+            $lid,
+            [
+                'blocks_id' => $block
+            ]
+        );
         // try find the block in landing instance
         if ($landing->exist()) {
             $block = intval($block);
             $blocks = $landing->getBlocks();
             if (isset($blocks[$block])) {
+                // remove extra files
+                $newContent = Manager::sanitize($content, $bad);
+                $filesBeforeSave = File::getFilesFromBlockContent(
+                    $block,
+                    $blocks[$block]->getContent()
+                );
+                $filesAfterSave = File::getFilesFromBlockContent(
+                    $block,
+                    $newContent
+                );
+                $filesRest = array_intersect($filesBeforeSave, $filesAfterSave);
+                $filesDelete = [];
+                foreach ($filesBeforeSave as $fileId) {
+                    if (!in_array($fileId, $filesRest)) {
+                        $filesDelete[] = $fileId;
+                    }
+                }
+                if ($filesDelete) {
+                    File::deleteFromBlock($block, $filesDelete);
+                }
+                // update content
                 $blocks[$block]->saveContent(
-                    Manager::sanitize($content, $bad)
+                    $newContent,
+                    Utils::isTrue($designed)
+                );
+                Assets\PreProcessing::blockUpdateNodeProcessing(
+                    $blocks[$block]
                 );
                 $result->setResult(
                     $blocks[$block]->save()
@@ -622,9 +687,12 @@ class Block
         $data = array();
         foreach ($lids as $lid) {
             $lid = intval($lid);
-            $landing = Landing::createInstance($lid, array(
-                'deleted' => isset($params['deleted']) && $params['deleted']
-            ));
+            $landing = Landing::createInstance(
+                $lid,
+                array(
+                    'deleted' => isset($params['deleted']) && $params['deleted']
+                )
+            );
             if ($landing->exist()) {
                 foreach ($landing->getBlocks() as $i => $block) {
                     if ($manifest = $block->getManifest()) {
@@ -719,9 +787,12 @@ class Block
             Landing::setEditMode();
         }
 
-        $landing = Landing::createInstance($lid, [
-            'blocks_id' => $block
-        ]);
+        $landing = Landing::createInstance(
+            $lid,
+            [
+                'blocks_id' => $block
+            ]
+        );
 
         if ($landing->exist()) {
             $block = intval($block);
@@ -754,7 +825,7 @@ class Block
     {
         $result = new PublicActionResult();
 
-        if (strpos($code, ':') === false) {
+        if (mb_strpos($code, ':') === false) {
             $code = 'bitrix:' . $code;
         }
 
@@ -827,10 +898,12 @@ class Block
             $file = Manager::savePicture($picture, $ext, $params);
             if ($file) {
                 File::addToBlock($block, $file['ID']);
-                $result->setResult(array(
-                    'id' => $file['ID'],
-                    'src' => $file['SRC']
-                ));
+                $result->setResult(
+                    array(
+                        'id' => $file['ID'],
+                        'src' => $file['SRC']
+                    )
+                );
             } else {
                 $error->addError(
                     'FILE_ERROR',

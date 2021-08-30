@@ -26,8 +26,22 @@ class Manager
     public static function getOrderFieldNames()
     {
         return array(
-            "ACCOUNT_NUMBER", "USER_ID", "PRICE", "SUM_PAID", "CURRENCY", "STATUS_ID", "PAYED", "DEDUCTED", "CANCELED",
-            "LID", "PERSON_TYPE_ID", "XML_ID", "ID_1C", "DATE_INSERT", "RESPONSIBLE_ID", "COMPANY_ID"
+            "ACCOUNT_NUMBER",
+            "USER_ID",
+            "PRICE",
+            "SUM_PAID",
+            "CURRENCY",
+            "STATUS_ID",
+            "PAYED",
+            "DEDUCTED",
+            "CANCELED",
+            "LID",
+            "PERSON_TYPE_ID",
+            "XML_ID",
+            "ID_1C",
+            "DATE_INSERT",
+            "RESPONSIBLE_ID",
+            "COMPANY_ID"
         );
     }
 
@@ -37,8 +51,21 @@ class Manager
     public static function getBasketFieldNames()
     {
         return array(
-            "PRODUCT_ID", "PRODUCT_PRICE_ID", "NAME", "PRICE", "MODULE", "QUANTITY", "WEIGHT", "DATE_INSERT",
-            "CURRENCY", "PRODUCT_XML_ID", "MEASURE_NAME", "TYPE", "SET_PARENT_ID", "MEASURE_CODE", "BASKET_DATA"
+            "PRODUCT_ID",
+            "PRODUCT_PRICE_ID",
+            "NAME",
+            "PRICE",
+            "MODULE",
+            "QUANTITY",
+            "WEIGHT",
+            "DATE_INSERT",
+            "CURRENCY",
+            "PRODUCT_XML_ID",
+            "MEASURE_NAME",
+            "TYPE",
+            "SET_PARENT_ID",
+            "MEASURE_CODE",
+            "BASKET_DATA"
         );
     }
 
@@ -83,7 +110,14 @@ class Manager
             } else {
                 $errorMessages = $resultArchiving->getErrorMessages();
                 foreach ($errorMessages as $error) {
-                    $result->addError(new Main\Error(Loc::getMessage("ARCHIVE_ERROR_ORDER_MESSAGE", array("#ID#" => $item->getId())) . ": " . $error));
+                    $result->addError(
+                        new Main\Error(
+                            Loc::getMessage(
+                                "ARCHIVE_ERROR_ORDER_MESSAGE",
+                                array("#ID#" => $item->getId())
+                            ) . ": " . $error
+                        )
+                    );
                 }
             }
 
@@ -112,11 +146,11 @@ class Manager
     {
         $filter = Option::get('sale', 'archive_params');
 
-        if (strlen($filter) <= 0) {
+        if ($filter == '') {
             throw new Main\SystemException("Settings of order's archiving are null or empty");
         }
 
-        $filter = unserialize($filter);
+        $filter = unserialize($filter, ['allowed_classes' => false]);
 
         if (isset($filter['PERIOD'])) {
             if ((int)$filter['PERIOD'] > 0) {
@@ -149,10 +183,13 @@ class Manager
         $limit = (int)$limit ? (int)$limit : 10;
         $maxTime = (int)$maxTime ? (int)$maxTime : null;
 
-        $agentsList = \CAgent::GetList(array("ID" => "DESC"), array(
-            "MODULE_ID" => "sale",
-            "NAME" => "\\Bitrix\\Sale\\Archive\\Manager::archiveOnAgent(%",
-        ));
+        $agentsList = \CAgent::GetList(
+            array("ID" => "DESC"),
+            array(
+                "MODULE_ID" => "sale",
+                "NAME" => "\\Bitrix\\Sale\\Archive\\Manager::archiveOnAgent(%",
+            )
+        );
         while ($agent = $agentsList->Fetch()) {
             $agentId = $agent["ID"];
         }
@@ -167,12 +204,18 @@ class Manager
             $resultData = $result->getData();
             if ($resultData['count']) {
                 \CAgent::Update($agentId, array("AGENT_INTERVAL" => 60 * 5));
-
             } else {
                 \CAgent::Update($agentId, array("AGENT_INTERVAL" => 24 * 60 * 60));
             }
         } else {
-            \CAgent::AddAgent("\\Bitrix\\Sale\\Archive\\Manager::archiveOnAgent(" . $limit . "," . $maxTime . ");", "sale", "N", 24 * 60 * 60, "", "Y");
+            \CAgent::AddAgent(
+                "\\Bitrix\\Sale\\Archive\\Manager::archiveOnAgent(" . $limit . "," . $maxTime . ");",
+                "sale",
+                "N",
+                24 * 60 * 60,
+                "",
+                "Y"
+            );
         }
 
         return "\\Bitrix\\Sale\\Archive\\Manager::archiveOnAgent(" . $limit . "," . $maxTime . ");";
@@ -261,8 +304,9 @@ class Manager
     public static function returnArchivedOrder($id)
     {
         $id = (int)$id;
-        if ($id <= 0)
+        if ($id <= 0) {
             throw new Main\ArgumentNullException("id");
+        }
 
         $restorer = Recovery\Restorer::load($id);
         if (!$restorer) {

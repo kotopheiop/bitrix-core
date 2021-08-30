@@ -20,7 +20,7 @@ class Demos
     {
         if ($filter) {
             foreach ($item as $key => $value) {
-                $key = strtoupper($key);
+                $key = mb_strtoupper($key);
                 if (isset($filter[$key])) {
                     $value = (array)$value;
                     $filter[$key] = (array)$filter[$key];
@@ -54,7 +54,7 @@ class Demos
         $demoCmp = new $className;
         $demoCmp->initComponent($componentName);
         $demoCmp->arParams = array(
-            'TYPE' => strtoupper($type)
+            'TYPE' => mb_strtoupper($type)
         );
 
         if ($page) {
@@ -134,7 +134,7 @@ class Demos
         $demoCmp = new $className;
         $demoCmp->initComponent($componentName);
         $demoCmp->arParams = array(
-            'TYPE' => strtoupper($type)
+            'TYPE' => mb_strtoupper($type)
         );
 
         $result->setResult($demoCmp->getUrlPreview($code));
@@ -225,8 +225,15 @@ class Demos
         // add item separate
         $success = $return = array();
         $fieldCode = array(
-            'TYPE', 'TPL_TYPE', 'SHOW_IN_LIST', 'TITLE', 'DESCRIPTION',
-            'PREVIEW_URL', 'PREVIEW', 'PREVIEW2X', 'PREVIEW3X'
+            'TYPE',
+            'TPL_TYPE',
+            'SHOW_IN_LIST',
+            'TITLE',
+            'DESCRIPTION',
+            'PREVIEW_URL',
+            'PREVIEW',
+            'PREVIEW2X',
+            'PREVIEW3X'
         );
         foreach ($data as $item) {
             // collect fields
@@ -257,7 +264,7 @@ class Demos
                 $item['items'] = [];
             }
             foreach ($fieldCode as $code) {
-                $codel = strtolower($code);
+                $codel = mb_strtolower($code);
                 if (isset($item[$codel])) {
                     $fields[$code] = $item[$codel];
                 }
@@ -291,7 +298,8 @@ class Demos
             $check = false;
             // check unique
             if ($fields['XML_ID']) {
-                $check = DemoCore::getList(array(
+                $check = DemoCore::getList(
+                    array(
                         'select' => array(
                             'ID'
                         ),
@@ -354,20 +362,22 @@ class Demos
             // set app code
             $app = \Bitrix\Landing\PublicAction::restApplication();
 
-            $res = DemoCore::getList(array(
-                'select' => array(
-                    'ID'
-                ),
-                'filter' =>
-                    isset($app['CODE'])
-                        ? array(
-                        '=XML_ID' => $code,
-                        '=APP_CODE' => $app['CODE']
-                    )
-                        : array(
-                        '=XML_ID' => $code
-                    )
-            ));
+            $res = DemoCore::getList(
+                array(
+                    'select' => array(
+                        'ID'
+                    ),
+                    'filter' =>
+                        isset($app['CODE'])
+                            ? array(
+                            '=XML_ID' => $code,
+                            '=APP_CODE' => $app['CODE']
+                        )
+                            : array(
+                            '=XML_ID' => $code
+                        )
+                )
+            );
             while ($row = $res->fetch()) {
                 // delete block from repo
                 $resDel = DemoCore::delete($row['ID']);
@@ -403,11 +413,10 @@ class Demos
         ) {
             $params['filter'] = array();
         }
+
         // set app code
         if (($app = \Bitrix\Landing\PublicAction::restApplication())) {
-            $params['filter']['APP_CODE'] = $app['CODE'];
-        } else {
-            $params['filter']['APP_CODE'] = false;
+            $params['filter']['=APP_CODE'] = $app['CODE'];
         }
 
         $data = array();
@@ -419,7 +428,10 @@ class Demos
             if (isset($row['DATE_MODIFY'])) {
                 $row['DATE_MODIFY'] = (string)$row['DATE_MODIFY'];
             }
-            $row['MANIFEST'] = unserialize($row['MANIFEST']);
+            $row['MANIFEST'] = unserialize($row['MANIFEST'], ['allowed_classes' => false]);
+            if ($row['LANG']) {
+                $row['LANG'] = unserialize($row['LANG'], ['allowed_classes' => false]);
+            }
             $data[] = $row;
         }
         $result->setResult($data);

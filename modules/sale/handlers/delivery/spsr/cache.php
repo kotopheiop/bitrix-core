@@ -16,8 +16,9 @@ class Cache
         $result = false;
         $cacheManager = Application::getInstance()->getManagedCache();
 
-        if ($cacheManager->read($ttl, $cacheId))
+        if ($cacheManager->read($ttl, $cacheId)) {
             $result = $cacheManager->get($cacheId);
+        }
 
         return $result;
     }

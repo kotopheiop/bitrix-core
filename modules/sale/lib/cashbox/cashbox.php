@@ -25,13 +25,22 @@ abstract class Cashbox
     /** @var array $fields */
     private $fields = array();
 
+    private $ofd;
+
     /**
      * @return void
+     * @throws Main\LoaderException
      */
     public static function init()
     {
         $handlers = static::getHandlerList();
         Main\Loader::registerAutoLoadClasses(null, $handlers);
+    }
+
+    public static function getCode()
+    {
+        $className = (new \ReflectionClass(static::class))->getShortName();
+        return mb_strtolower($className);
     }
 
     /**
@@ -42,17 +51,40 @@ abstract class Cashbox
         static $handlerList = array();
 
         if (!$handlerList) {
-            $handlerList = array(
-                '\Bitrix\Sale\Cashbox\CashboxAtolFarm' => '/bitrix/modules/sale/lib/cashbox/cashboxatolfarm.php',
-                '\Bitrix\Sale\Cashbox\CashboxAtolFarmV4' => '/bitrix/modules/sale/lib/cashbox/cashboxatolfarmv4.php',
-                '\Bitrix\Sale\Cashbox\CashboxOrangeData' => '/bitrix/modules/sale/lib/cashbox/cashboxorangedata.php'
-            );
-
-            if (!IsModuleInstalled('bitrix24')) {
-                $handlerList['\Bitrix\Sale\Cashbox\CashboxBitrixV2'] = '/bitrix/modules/sale/lib/cashbox/cashboxbitrixv2.php';
-                $handlerList['\Bitrix\Sale\Cashbox\CashboxBitrix'] = '/bitrix/modules/sale/lib/cashbox/cashboxbitrix.php';
-                $handlerList['\Bitrix\Sale\Cashbox\Cashbox1C'] = '/bitrix/modules/sale/lib/cashbox/cashbox1c.php';
+            $zone = '';
+            $isCloud = Main\Loader::includeModule("bitrix24");
+            if ($isCloud) {
+                $zone = \CBitrix24::getLicensePrefix();
+            } elseif (Main\Loader::includeModule('intranet')) {
+                $zone = \CIntranetUtils::getPortalZone();
             }
+            if ($zone === 'ru' && $isCloud) {
+                $handlerList = [
+                    '\Bitrix\Sale\Cashbox\CashboxAtolFarm' => '/bitrix/modules/sale/lib/cashbox/cashboxatolfarm.php',
+                    '\Bitrix\Sale\Cashbox\CashboxAtolFarmV4' => '/bitrix/modules/sale/lib/cashbox/cashboxatolfarmv4.php',
+                    '\Bitrix\Sale\Cashbox\CashboxOrangeData' => '/bitrix/modules/sale/lib/cashbox/cashboxorangedata.php',
+                    '\Bitrix\Sale\Cashbox\CashboxBusinessRu' => '/bitrix/modules/sale/lib/cashbox/cashboxbusinessru.php',
+                ];
+            } elseif ($zone === 'ua') {
+                $handlerList = [
+                    '\Bitrix\Sale\Cashbox\CashboxCheckbox' => '/bitrix/modules/sale/lib/cashbox/cashboxcheckbox.php',
+                ];
+            } else {
+                $handlerList = [
+                    '\Bitrix\Sale\Cashbox\CashboxAtolFarm' => '/bitrix/modules/sale/lib/cashbox/cashboxatolfarm.php',
+                    '\Bitrix\Sale\Cashbox\CashboxAtolFarmV4' => '/bitrix/modules/sale/lib/cashbox/cashboxatolfarmv4.php',
+                    '\Bitrix\Sale\Cashbox\CashboxOrangeData' => '/bitrix/modules/sale/lib/cashbox/cashboxorangedata.php',
+                    '\Bitrix\Sale\Cashbox\CashboxBitrixV2' => '/bitrix/modules/sale/lib/cashbox/cashboxbitrixv2.php',
+                    '\Bitrix\Sale\Cashbox\CashboxBitrix' => '/bitrix/modules/sale/lib/cashbox/cashboxbitrix.php',
+                    '\Bitrix\Sale\Cashbox\Cashbox1C' => '/bitrix/modules/sale/lib/cashbox/cashbox1c.php',
+                    '\Bitrix\Sale\Cashbox\CashboxCheckbox' => '/bitrix/modules/sale/lib/cashbox/cashboxcheckbox.php',
+                    '\Bitrix\Sale\Cashbox\CashboxBusinessRu' => '/bitrix/modules/sale/lib/cashbox/cashboxbusinessru.php',
+                ];
+            }
+
+            $handlerList['\Bitrix\Sale\Cashbox\CashboxRest'] = '/bitrix/modules/sale/lib/cashbox/cashboxrest.php';
+
+            $handlerList['\Bitrix\Sale\Cashbox\CashboxRobokassa'] = '/bitrix/modules/sale/lib/cashbox/cashboxrobokassa.php';
 
             $event = new Main\Event('sale', static::EVENT_ON_GET_CUSTOM_CASHBOX_HANDLERS);
             $event->send();
@@ -63,8 +95,9 @@ abstract class Cashbox
                     /** @var  Main\EventResult $eventResult */
                     if ($eventResult->getType() === Main\EventResult::SUCCESS) {
                         $params = $eventResult->getParameters();
-                        if (!empty($params) && is_array($params))
+                        if (!empty($params) && is_array($params)) {
                             $handlerList = array_merge($handlerList, $params);
+                        }
                     }
                 }
             }
@@ -75,15 +108,17 @@ abstract class Cashbox
 
     /**
      * @param array $settings
-     * @return Cashbox|null
+     * @return mixed|null
+     * @throws Main\LoaderException
      */
     public static function create(array $settings)
     {
         static::init();
 
         $handler = $settings['HANDLER'];
-        if (class_exists($handler))
+        if (class_exists($handler)) {
             return new $handler($settings);
+        }
 
         return null;
     }
@@ -111,13 +146,11 @@ abstract class Cashbox
      */
     public function getOfd()
     {
-        static $ofd = null;
-
-        if ($ofd === null) {
-            $ofd = Ofd::create($this);
+        if ($this->ofd === null) {
+            $this->ofd = Ofd::create($this);
         }
 
-        return $ofd;
+        return $this->ofd;
     }
 
     /**
@@ -151,8 +184,9 @@ abstract class Cashbox
         $map = $this->fields['SETTINGS'];
         if (isset($map[$name])) {
             if (is_array($map[$name])) {
-                if (isset($map[$name][$code]))
+                if (isset($map[$name][$code])) {
                     return $map[$name][$code];
+                }
 
                 return null;
             }
@@ -173,8 +207,9 @@ abstract class Cashbox
         if ($linkParams) {
             /** @var Ofd $ofd */
             $ofd = $this->getOfd();
-            if ($ofd !== null)
+            if ($ofd !== null) {
                 return $ofd->generateCheckLink($linkParams);
+            }
         }
 
         return '';
@@ -242,49 +277,65 @@ abstract class Cashbox
     }
 
     /**
-     * @param $data
      * @return Result
      */
-    public static function validateFields($data)
+    public function validate()
     {
-        $result = new Result();
+        $fields = $this->fields;
+        unset($fields['OFD_SETTINGS']);
 
-        $requiredFields = static::getRequiredFields($data['KKM_ID']);
-        if (isset($data['SETTINGS'])) {
-            $data = array_merge($data, $data['SETTINGS']);
-            unset($data['SETTINGS']);
-        }
+        $result = $this->validateFields($fields);
 
-        foreach ($data as $code => $value) {
-            if (is_array($value)) {
-                foreach ($value as $fieldCode => $subValue) {
-                    if (isset($requiredFields[$fieldCode]) && $subValue === '') {
-                        $result->addError(
-                            new Main\Error(
-                                Loc::getMessage(
-                                    'SALE_CASHBOX_VALIDATE_ERROR',
-                                    array('#FIELD_ID#' => $requiredFields[$fieldCode]
-                                    )
-                                )
-                            )
-                        );
-                    }
-                }
-            } else {
-                if (isset($requiredFields[$code]) && $value === '') {
-                    $result->addError(
-                        new Main\Error(
-                            Loc::getMessage(
-                                'SALE_CASHBOX_VALIDATE_ERROR',
-                                array('#FIELD_ID#' => $requiredFields[$code])
-                            )
-                        )
-                    );
-                }
+        $ofd = $this->getOfd();
+        if ($ofd) {
+            $r = $ofd->validate();
+            if (!$r->isSuccess()) {
+                $result->addErrors($r->getErrors());
             }
         }
 
         return $result;
+    }
+
+    protected function validateFields($fields)
+    {
+        $result = new Result();
+
+        foreach ($fields as $code => $value) {
+            if (is_array($value)) {
+                $r = $this->validateFields($value);
+                if (!$r->isSuccess()) {
+                    $result->addErrors($r->getErrors());
+                }
+
+                continue;
+            }
+
+            if (
+                $this->isRequiredField($code)
+                && $value === ''
+            ) {
+                $requiredFields = $this->getRequiredFields();
+
+                $result->addError(
+                    new Main\Error(
+                        Loc::getMessage(
+                            'SALE_CASHBOX_VALIDATE_ERROR',
+                            ['#FIELD_ID#' => $requiredFields[$code]]
+                        )
+                    )
+                );
+            }
+        }
+
+        return $result;
+    }
+
+    protected function isRequiredField($field): bool
+    {
+        $requiredFields = $this->getRequiredFields();
+
+        return isset($requiredFields[$field]);
     }
 
     /**
@@ -303,11 +354,11 @@ abstract class Cashbox
      * @param $modelId
      * @return array
      */
-    private static function getRequiredFields($modelId = 0)
+    private function getRequiredFields()
     {
         $result = static::getGeneralRequiredFields();
 
-        $settings = static::getSettings($modelId);
+        $settings = static::getSettings($this->getField('KKM_ID'));
         foreach ($settings as $groupId => $group) {
             foreach ($group['ITEMS'] as $code => $item) {
                 $isRequired = $group['REQUIRED'] === 'Y' || $item['REQUIRED'] === 'Y';
@@ -378,9 +429,16 @@ abstract class Cashbox
     /**
      * @return bool
      */
+    public function isCorrection()
+    {
+        return $this instanceof ICorrection;
+    }
+
+    /**
+     * @return bool
+     */
     public static function isSupportedFFD105()
     {
         return false;
     }
-
 }

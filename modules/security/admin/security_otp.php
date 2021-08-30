@@ -1,10 +1,11 @@
 <?
+
 define("ADMIN_MODULE_NAME", "security");
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 CModule::IncludeModule('security');
-IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/security/options_user_settings_1.php");
+IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/security/options_user_settings.php");
 IncludeModuleLangFile(__FILE__);
 
 /**
@@ -14,8 +15,9 @@ IncludeModuleLangFile(__FILE__);
 
 $canRead = $USER->CanDoOperation('security_otp_settings_read');
 $canWrite = $USER->CanDoOperation('security_otp_settings_write');
-if (!$canRead && !$canWrite)
+if (!$canRead && !$canWrite) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $aTabs = array(
     array(
@@ -34,35 +36,47 @@ $aTabs = array(
 $tabControl = new CAdminTabControl("tabControl", $aTabs, true, true);
 
 $returnUrl = $_GET["return_url"] ? "&return_url=" . urlencode($_GET["return_url"]) : "";
-if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["save"] . $_REQUEST["apply"] . $_REQUEST["otp_siteb"] != "" && $canWrite && check_bitrix_sessid()) {
-
-    if ($_REQUEST["otp_siteb"] != "")
+if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["save"] . $_REQUEST["apply"] . $_REQUEST["otp_siteb"] != "" && $canWrite && check_bitrix_sessid(
+    )) {
+    if ($_REQUEST["otp_siteb"] != "") {
         CSecurityUser::setActive($_POST["otp_active"] === "Y");
+    }
 
     $hotp_user_window = intval($_POST["window_size"]);
-    if ($hotp_user_window <= 0)
+    if ($hotp_user_window <= 0) {
         $hotp_user_window = 10;
+    }
     COption::SetOptionString("security", "hotp_user_window", $hotp_user_window);
 
     COption::SetOptionString("security", "otp_allow_remember", $_POST["otp_allow_remember"] === "Y" ? "Y" : "N");
+    COption::SetOptionString(
+        "security",
+        "otp_allow_recovery_codes",
+        $_POST["otp_allow_recovery_codes"] === "Y" ? "Y" : "N"
+    );
+    COption::SetOptionString("security", "otp_log", ($_POST["otp_log"] === "Y" ? "Y" : "N"));
 
-    COption::SetOptionString("security", "otp_allow_recovery_codes", $_POST["otp_allow_recovery_codes"] === "Y" ? "Y" : "N");
-
-    if ($_POST['otp_default_type'])
+    if ($_POST['otp_default_type']) {
         Bitrix\Security\Mfa\Otp::setDefaultType($_POST['otp_default_type']);
+    }
 
-    if (is_numeric($_POST['otp_mandatory_skip_days']))
+    if (is_numeric($_POST['otp_mandatory_skip_days'])) {
         Bitrix\Security\Mfa\Otp::setSkipMandatoryDays($_POST['otp_mandatory_skip_days']);
+    }
 
     Bitrix\Security\Mfa\Otp::setMandatoryUsing($_POST['otp_mandatory_using'] === 'Y');
 
-    if (is_array($_POST['otp_mandatory_rights']))
+    if (is_array($_POST['otp_mandatory_rights'])) {
         Bitrix\Security\Mfa\Otp::setMandatoryRights($_POST['otp_mandatory_rights']);
+    }
 
-    if ($_REQUEST["save"] != "" && $_GET["return_url"] != "")
+    if ($_REQUEST["save"] != "" && $_GET["return_url"] != "") {
         LocalRedirect($_GET["return_url"]);
-    else
-        LocalRedirect("/bitrix/admin/security_otp.php?lang=" . LANGUAGE_ID . $returnUrl . "&" . $tabControl->ActiveTabParam());
+    } else {
+        LocalRedirect(
+            "/bitrix/admin/security_otp.php?lang=" . LANGUAGE_ID . $returnUrl . "&" . $tabControl->ActiveTabParam()
+        );
+    }
 }
 
 $availableTypes = \Bitrix\Security\Mfa\Otp::getAvailableTypes();
@@ -86,11 +100,13 @@ if (CSecurityUser::isActive()) {
     $messageText = GetMessage("SEC_OTP_NEW_OFF");
 }
 
-CAdminMessage::ShowMessage(array(
-    "MESSAGE" => $messageText,
-    "TYPE" => $messageType,
-    "HTML" => true
-));
+CAdminMessage::ShowMessage(
+    array(
+        "MESSAGE" => $messageText,
+        "TYPE" => $messageType,
+        "HTML" => true
+    )
+);
 ?>
 
 <form method="POST" action="security_otp.php?lang=<?= LANGUAGE_ID ?><?= htmlspecialcharsbx($returnUrl) ?>"
@@ -130,16 +146,21 @@ CAdminMessage::ShowMessage(array(
                         getMessage('SEC_OTP_DESCRIPTION_INTRO_SITE')) ?>
                 </div>
                 <?
-                if (in_array(LANGUAGE_ID, array('en', 'ru', 'de'), true))
+                if (in_array(LANGUAGE_ID, array('en', 'ru', 'de'), true)) {
                     $imageLanguage = LANGUAGE_ID;
-                else
+                } else {
                     $imageLanguage = \Bitrix\Main\Localization\Loc::getDefaultLang(LANGUAGE_ID);
+                }
                 ?>
                 <h3 style="clear:both"><br><?= getMessage('SEC_OTP_DESCRIPTION_USING_TITLE') ?></h3>
                 <div style="float: left; margin-right: 20px">
                     <div style="-webkit-box-sizing: border-box; -moz-box-sizing: border-box; box-sizing: border-box; border: 2px solid #e0e3e5; border-radius: 2px; padding: 5px 10px; background: white; height: 150px;">
-                        <div style="float: left; background: url(/bitrix/images/security/<?= $imageLanguage ?>_login_step0.png) no-repeat top right; width: 220px; height: 120px; padding-top: 20px;"><?= getMessage('SEC_OTP_DESCRIPTION_USING_STEP_0') ?></div>
-                        <div style="float: left; background: url(/bitrix/images/security/<?= $imageLanguage ?>_login_step1.png) no-repeat top right; width: 220px; height: 120px; padding-top: 20px; margin-left:20px;"><?= getMessage('SEC_OTP_DESCRIPTION_USING_STEP_1') ?></div>
+                        <div style="float: left; background: url(/bitrix/images/security/<?= $imageLanguage ?>_login_step0.png) no-repeat top right; width: 220px; height: 120px; padding-top: 20px;"><?= getMessage(
+                                'SEC_OTP_DESCRIPTION_USING_STEP_0'
+                            ) ?></div>
+                        <div style="float: left; background: url(/bitrix/images/security/<?= $imageLanguage ?>_login_step1.png) no-repeat top right; width: 220px; height: 120px; padding-top: 20px; margin-left:20px;"><?= getMessage(
+                                'SEC_OTP_DESCRIPTION_USING_STEP_1'
+                            ) ?></div>
                     </div>
                 </div>
                 <div>
@@ -190,7 +211,9 @@ CAdminMessage::ShowMessage(array(
         </td>
         <td>
             <input type="checkbox" name="otp_allow_remember" id="otp_allow_remember"
-                   value="Y" <? if (COption::GetOptionString("security", "otp_allow_remember") == "Y") echo "checked"; ?>>
+                   value="Y" <? if (COption::GetOptionString("security", "otp_allow_remember") == "Y") {
+                echo "checked";
+            } ?>>
         </td>
     </tr>
     <tr>
@@ -199,7 +222,9 @@ CAdminMessage::ShowMessage(array(
         </td>
         <td>
             <input type="checkbox" name="otp_allow_recovery_codes" id="otp_allow_recovery_codes"
-                   value="Y" <? if (COption::GetOptionString("security", "otp_allow_recovery_codes") == "Y") echo "checked"; ?>>
+                   value="Y" <? if (COption::GetOptionString("security", "otp_allow_recovery_codes") == "Y") {
+                echo "checked";
+            } ?>>
         </td>
     </tr>
     <tr class="heading">
@@ -211,7 +236,10 @@ CAdminMessage::ShowMessage(array(
         </td>
         <td>
             <input type="checkbox" name="otp_mandatory_using" id="otp_mandatory_using"
-                   value="Y" <?= (COption::GetOptionString("security", "otp_mandatory_using") == "Y") ? "checked" : ""; ?>>
+                   value="Y" <?= (COption::GetOptionString(
+                    "security",
+                    "otp_mandatory_using"
+                ) == "Y") ? "checked" : ""; ?>>
         </td>
     </tr>
     <tr data-hide-by-mandatory="yes"
@@ -244,8 +272,23 @@ CAdminMessage::ShowMessage(array(
                     </div>
                 <? endforeach; ?>
             </div>
-            <a href="javascript:void(0)" class="bx-action-href" id="add_access"
-               data-role="add-access"><?= GetMessage("SEC_OTP_MANDATORY_RIGHTS_SELECT") ?></a>
+            <a href="javascript:void(0)" class="bx-action-href" id="add_access" data-role="add-access"><?= GetMessage(
+                    "SEC_OTP_MANDATORY_RIGHTS_SELECT"
+                ) ?></a>
+        </td>
+    </tr>
+    <tr class="heading">
+        <td colspan="2"><? echo GetMessage("SEC_OTP_LOG") ?></td>
+    </tr>
+    <tr>
+        <td>
+            <? echo GetMessage("SEC_OTP_LOG_ENABLE") ?>
+        </td>
+        <td>
+            <input type="checkbox" name="otp_log" value="Y" <?= (COption::GetOptionString(
+                    "security",
+                    "otp_log"
+                ) <> "N") ? "checked" : ""; ?>>
         </td>
     </tr>
     <?
@@ -260,9 +303,11 @@ CAdminMessage::ShowMessage(array(
     $tabControl->End();
     ?>
 </form>
-<script id="settings" type="application/json"><?= \Bitrix\Main\Web\Json::encode(array(
-        'rights' => array_flip($targetRights)
-    )) ?></script>
+<script id="settings" type="application/json"><?= \Bitrix\Main\Web\Json::encode(
+        array(
+            'rights' => array_flip($targetRights)
+        )
+    ) ?></script>
 <?
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_admin.php");
 ?>

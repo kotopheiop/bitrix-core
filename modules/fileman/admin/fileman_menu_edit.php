@@ -1,20 +1,32 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/fileman/prolog.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/condition.php");
 
-if (!$USER->CanDoOperation('fileman_edit_menu_elements'))
+if (!$USER->CanDoOperation('fileman_edit_menu_elements')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/fileman/include.php");
 IncludeModuleLangFile(__FILE__);
 
 $addUrl = 'lang=' . LANGUAGE_ID . ($logical == "Y" ? '&logical=Y' : '');
 
-if (($extended == "Y" || $extended == "N") && $extended != ${COption::GetOptionString("main", "cookie_name", "BITRIX_SM") . "_menumode"})
-    setcookie(COption::GetOptionString("main", "cookie_name", "BITRIX_SM") . "_menumode", $extended, time() + 60 * 60 * 24 * 30 * 60, '/');
-else
+if (($extended == "Y" || $extended == "N") && $extended != ${COption::GetOptionString(
+            "main",
+            "cookie_name",
+            "BITRIX_SM"
+        ) . "_menumode"}) {
+    setcookie(
+        COption::GetOptionString("main", "cookie_name", "BITRIX_SM") . "_menumode",
+        $extended,
+        time() + 60 * 60 * 24 * 30 * 60,
+        '/'
+    );
+} else {
     $extended = ${COption::GetOptionString("main", "cookie_name", "BITRIX_SM") . "_menumode"};
+}
 
 $strWarning = "";
 $menufilename = "";
@@ -22,7 +34,7 @@ $menufilename = "";
 $io = CBXVirtualIo::GetInstance();
 
 $path = $io->CombinePath("/", $path);
-$dbSitesList = CSite::GetList($b = "lendir", $o = "desc");
+$dbSitesList = CSite::GetList("lendir", "desc");
 $multiSite = false;
 $docRoot = $dbSitesList->Fetch();
 $docRoot = $docRoot['DOC_ROOT'];
@@ -40,7 +52,7 @@ reset($dbSitesList->arResult);
 if ($multiSite) {
     while ($arSite = $dbSitesList->GetNext()) {
         $dir = rtrim($arSite["DIR"], "/");
-        if (substr($path, 0, strlen($dir)) == $dir && $arSite["DOC_ROOT"] == CSite::GetSiteDocRoot($site)) {
+        if (mb_substr($path, 0, mb_strlen($dir)) == $dir && $arSite["DOC_ROOT"] == CSite::GetSiteDocRoot($site)) {
             $site = $arSite["ID"];
             break;
         }
@@ -48,7 +60,7 @@ if ($multiSite) {
 } else {
     while ($arSite = $dbSitesList->GetNext()) {
         $dir = rtrim($arSite["DIR"], "/");
-        if (substr($path, 0, strlen($dir)) == $dir) {
+        if (mb_substr($path, 0, mb_strlen($dir)) == $dir) {
             $site = $arSite["ID"];
             break;
         }
@@ -64,46 +76,63 @@ $menufilename = $path;
 $name = preg_replace("/[^a-z0-9_]/i", "", $_REQUEST["name"]);
 $bExists = false;
 $arTypes = Array();
-$armt = GetMenuTypes($site, "left=" . GetMessage("FILEMAN_MENU_EDIT_LEFT_MENU") . ",top=" . GetMessage("FILEMAN_MENU_EDIT_TOP_MENU"));
+$armt = GetMenuTypes(
+    $site,
+    "left=" . GetMessage("FILEMAN_MENU_EDIT_LEFT_MENU") . ",top=" . GetMessage(
+        "FILEMAN_MENU_EDIT_TOP_MENU"
+    )
+);
 
 foreach ($armt as $key => $title) {
-    if (!$USER->CanDoFileOperation('fm_edit_existent_file', Array($site, $path . "/." . $key . ".menu.php")))
+    if (!$USER->CanDoFileOperation('fm_edit_existent_file', Array($site, $path . "/." . $key . ".menu.php"))) {
         continue;
+    }
 
     $arTypes[] = array($key, $title);
-    if ($key == $name)
+    if ($key == $name) {
         $bExists = true;
+    }
 }
 if (!$bExists) {
     $arTypes[] = array($name, $name);
 }
 
-if ($name <> '')
+if ($name <> '') {
     $menufilename = $path . "/." . $name . ".menu.php";
+}
 
 $abs_path = $DOC_ROOT . $menufilename;
 
-if ($io->FileExists($abs_path) && strlen($new) <= 0)
+if ($io->FileExists($abs_path) && $new == '') {
     $bEdit = true;
-else
+} else {
     $bEdit = false;
+}
 
-if ($extended == "Y")
+if ($extended == "Y") {
     $bSimple = false;
-else
+} else {
     $bSimple = true;
+}
 $arPath_m = Array($site, $menufilename);
-$only_edit = (!$USER->CanDoOperation('fileman_add_element_to_menu') || !$USER->CanDoFileOperation('fm_create_new_file', $arPath_m));
+$only_edit = (!$USER->CanDoOperation('fileman_add_element_to_menu') || !$USER->CanDoFileOperation(
+        'fm_create_new_file',
+        $arPath_m
+    ));
 
 // Check access to folder
-if (!$USER->CanDoOperation('fileman_edit_existent_files') || !$USER->CanDoFileOperation('fm_edit_existent_file', $arPath_m) ||
-    (!$bEdit && $only_edit))
+if (!$USER->CanDoOperation('fileman_edit_existent_files') || !$USER->CanDoFileOperation(
+        'fm_edit_existent_file',
+        $arPath_m
+    ) ||
+    (!$bEdit && $only_edit)) {
     $strWarning = GetMessage("ACCESS_DENIED");
-else {
-    if ($REQUEST_METHOD == "POST" && strlen($save) > 0 && is_array($ids) && check_bitrix_sessid()) {
+} else {
+    if ($REQUEST_METHOD == "POST" && $save <> '' && is_array($ids) && check_bitrix_sessid()) {
         $sMenuTemplateTmp = "";
-        if (strlen($template) > 0 && $template != GetMessage("FILEMAN_MENU_EDIT_DEF"))
+        if ($template <> '' && $template != GetMessage("FILEMAN_MENU_EDIT_DEF")) {
             $sMenuTemplateTmp = Rel2Abs("/", $template);
+        }
 
         $res = CFileMan::GetMenuArray($abs_path);
         if ($bSimple) {
@@ -118,11 +147,12 @@ else {
         $aMenuSort = Array();
         for ($i = 0, $l = count($ids); $i < $l; $i++) {
             $num = $ids[$i];
-            if (!isset($aMenuLinksTmp[$num - 1]) && $only_edit)
+            if (!isset($aMenuLinksTmp[$num - 1]) && $only_edit) {
                 continue;
+            }
 
             if ($bSimple) {
-                if ((${"del_" . $num} == "Y" || (strlen(${"text_" . $num}) <= 0 && strlen(${"link_" . $num}) <= 0)) && !$only_edit) {
+                if ((${"del_" . $num} == "Y" || (${"text_" . $num} == '' && ${"link_" . $num} == '')) && !$only_edit) {
                     unset($aMenuLinksTmp[$num - 1]);
                     continue;
                 }
@@ -131,8 +161,9 @@ else {
                 $aMenuLinksTmp[$num - 1][0] = ${"text_" . $num};
                 $aMenuLinksTmp[$num - 1][1] = ${"link_" . $num};
             } else {
-                if (${"del_" . $num} == "Y" && !$only_edit)
+                if (${"del_" . $num} == "Y" && !$only_edit) {
                     continue;
+                }
 
                 $aMenuItem = Array(${"text_" . $num}, ${"link_" . $num});
 
@@ -140,35 +171,39 @@ else {
                 $additional_link = ${"additional_link_" . $num};
                 $arAddLinksTmp = explode("\n", $additional_link);
                 for ($j = 0, $m = count($arAddLinksTmp); $j < $m; $j++) {
-                    if (strlen(trim($arAddLinksTmp[$j])) > 0)
+                    if (trim($arAddLinksTmp[$j]) <> '') {
                         $arAddLinks[] = trim($arAddLinksTmp[$j]);
+                    }
                 }
                 $aMenuItem[] = $arAddLinks;
 
                 $arParams = Array();
-                $param_cnt = IntVal(${"param_cnt_" . $num});
-                for ($j = 1; $j <= IntVal($param_cnt); $j++) {
+                $param_cnt = intval(${"param_cnt_" . $num});
+                for ($j = 1; $j <= intval($param_cnt); $j++) {
                     $param_name = trim(${"param_name_" . $num . "_" . $j});
                     $param_value = trim(${"param_value_" . $num . "_" . $j});
-                    if (strlen($param_name) > 0 || strlen($param_value) > 0)
+                    if ($param_name <> '' || $param_value <> '') {
                         $arParams[$param_name] = $param_value;
+                    }
                 }
                 $aMenuItem[] = $arParams;
 
-                if ($USER->CanDoOperation('edit_php') || $_REQUEST['selected_type'][$num] != 'php')
+                if ($USER->CanDoOperation('edit_php') || $_REQUEST['selected_type'][$num] != 'php') {
                     $aMenuItem[] = ConditionCompose(${"condition_$num"}, $num);
-                else
+                } else {
                     $aMenuItem[] = $res["aMenuLinks"][$num - 1][4];
+                }
 
                 $aMenuLinksTmp_[] = $aMenuItem;
             }
-            $aMenuSort[] = IntVal(${"sort_" . $num});
+            $aMenuSort[] = intval(${"sort_" . $num});
         }
-        if (!$bSimple)
+        if (!$bSimple) {
             $aMenuLinksTmp = $aMenuLinksTmp_;
+        }
 
-        for ($i = 0, $l = count($aMenuSort) - 1; $i < $l; $i++)
-            for ($j = $i + 1, $len = count($aMenuSort); $j < $len; $j++)
+        for ($i = 0, $l = count($aMenuSort) - 1; $i < $l; $i++) {
+            for ($j = $i + 1, $len = count($aMenuSort); $j < $len; $j++) {
                 if ($aMenuSort[$i] > $aMenuSort[$j]) {
                     $tmpSort = $aMenuLinksTmp[$i];
                     $aMenuLinksTmp[$i] = $aMenuLinksTmp[$j];
@@ -178,29 +213,31 @@ else {
                     $aMenuSort[$i] = $aMenuSort[$j];
                     $aMenuSort[$j] = $tmpSort;
                 }
+            }
+        }
         //������ $aMenuLinksTmp ����� � ����� ������� ����, ��� ���� ���� ����� :-)
     }
 
-    if ($REQUEST_METHOD == "POST" && strlen($save) > 0 && strlen($name) <= 0 && check_bitrix_sessid()) {
+    if ($REQUEST_METHOD == "POST" && $save <> '' && $name == '' && check_bitrix_sessid()) {
         $strWarning = GetMessage("FILEMAN_MENU_EDIT_ENTER_TYPE");
-    } elseif (strlen($new) > 0 && strlen($name) > 0 && $io->FileExists($abs_path) && check_bitrix_sessid()) {
+    } elseif ($new <> '' && $name <> '' && $io->FileExists($abs_path) && check_bitrix_sessid()) {
         $strWarning = GetMessage("FILEMAN_MENU_EDIT_EXISTS_ERROR");
         $bEdit = false;
         $abs_path = $DOC_ROOT . $path;
     }
 
-    if (strlen($strWarning) <= 0) {
-        if ($REQUEST_METHOD == "POST" && strlen($save) > 0 && is_array($ids) && check_bitrix_sessid()) {
+    if ($strWarning == '') {
+        if ($REQUEST_METHOD == "POST" && $save <> '' && is_array($ids) && check_bitrix_sessid()) {
             CFileMan::SaveMenu(Array($site, $menufilename), $aMenuLinksTmp, $sMenuTemplateTmp);
             $bEdit = true;
 
             $module_id = "fileman";
             if (COption::GetOptionString($module_id, "log_menu", "Y") == "Y") {
                 $mt = COption::GetOptionString("fileman", "menutypes", $default_value, $site);
-                $mt = unserialize(str_replace("\\", "", $mt));
+                $mt = unserialize(str_replace("\\", "", $mt), ['allowed_classes' => false]);
                 $res_log['menu_name'] = $mt[$name];
-                $res_log['path'] = substr($path, 1);
-                if (strlen($new) <= 0)
+                $res_log['path'] = mb_substr($path, 1);
+                if ($new == '') {
                     CEventLog::Log(
                         "content",
                         "MENU_EDIT",
@@ -208,7 +245,7 @@ else {
                         "",
                         serialize($res_log)
                     );
-                else
+                } else {
                     CEventLog::Log(
                         "content",
                         "MENU_ADD",
@@ -216,28 +253,38 @@ else {
                         "",
                         serialize($res_log)
                     );
+                }
             }
-            if (strlen($apply) <= 0) {
-                if (strlen($back_url) > 0)
+            if ($apply == '') {
+                if ($back_url <> '') {
                     LocalRedirect("/" . ltrim($back_url, "/"));
-                else
-                    LocalRedirect("/bitrix/admin/fileman_admin.php?" . $addUrl . "&site=" . $site . "&path=" . UrlEncode($path));
-            } else
-                LocalRedirect("/bitrix/admin/fileman_menu_edit.php?" . $addUrl . "&site=" . $site . "&path=" . UrlEncode($path) . "&name=" . $name);
+                } else {
+                    LocalRedirect(
+                        "/bitrix/admin/fileman_admin.php?" . $addUrl . "&site=" . $site . "&path=" . UrlEncode($path)
+                    );
+                }
+            } else {
+                LocalRedirect(
+                    "/bitrix/admin/fileman_menu_edit.php?" . $addUrl . "&site=" . $site . "&path=" . UrlEncode(
+                        $path
+                    ) . "&name=" . $name
+                );
+            }
         }
     }
 }
 
-if ($bEdit)
+if ($bEdit) {
     $APPLICATION->SetTitle(GetMessage("FILEMAN_MENU_EDIT_TITLE"));
-else
+} else {
     $APPLICATION->SetTitle(GetMessage("FILEMAN_MENU_EDIT_TITLE_ADD"));
+}
 
 foreach ($arParsedPath["AR_PATH"] as $chainLevel) {
     $adminChain->AddItem(
         array(
             "TEXT" => htmlspecialcharsex($chainLevel["TITLE"]),
-            "LINK" => ((strlen($chainLevel["LINK"]) > 0) ? $chainLevel["LINK"] : ""),
+            "LINK" => (($chainLevel["LINK"] <> '') ? $chainLevel["LINK"] : ""),
         )
     );
 }
@@ -251,19 +298,27 @@ $aMenu = array(
     )
 );
 
-if (strlen($strWarning) <= 0):
+if ($strWarning == ''):
 
     $aMenu[] = array("SEPARATOR" => "Y");
 
     if ($bSimple) {
         $aMenu[] = array(
             "TEXT" => GetMessage("FILEMAN_MENU_EDIT_EXT"),
-            "LINK" => "fileman_menu_edit.php?path=" . UrlEncode($path) . "&site=" . $site . "&" . $addUrl . "&" . ($bEdit ? "name=" . $name : "new=y") . "&extended=Y&back_url=" . urlencode($back_url)
+            "LINK" => "fileman_menu_edit.php?path=" . UrlEncode(
+                    $path
+                ) . "&site=" . $site . "&" . $addUrl . "&" . ($bEdit ? "name=" . $name : "new=y") . "&extended=Y&back_url=" . urlencode(
+                    $back_url
+                )
         );
     } else {
         $aMenu[] = array(
             "TEXT" => GetMessage("FILEMAN_MENU_EDIT_SIMPLE"),
-            "LINK" => "fileman_menu_edit.php?path=" . UrlEncode($path) . "&site=" . $site . "&" . $addUrl . "&" . ($bEdit ? "name=" . $name : "new=y") . "&extended=N&back_url=" . urlencode($back_url)
+            "LINK" => "fileman_menu_edit.php?path=" . UrlEncode(
+                    $path
+                ) . "&site=" . $site . "&" . $addUrl . "&" . ($bEdit ? "name=" . $name : "new=y") . "&extended=N&back_url=" . urlencode(
+                    $back_url
+                )
         );
     }
 
@@ -273,14 +328,22 @@ if (strlen($strWarning) <= 0):
 
             $aMenu[] = array(
                 "TEXT" => GetMessage("FILEMAN_MENU_EDIT_AS_TEXT"),
-                "LINK" => "fileman_file_edit.php?path=" . UrlEncode($path . "/." . $name . ".menu.php") . "&site=" . $site . "&full_src=Y&" . $addUrl
+                "LINK" => "fileman_file_edit.php?path=" . UrlEncode(
+                        $path . "/." . $name . ".menu.php"
+                    ) . "&site=" . $site . "&full_src=Y&" . $addUrl
             );
         }
 
         $aMenu[] = array("SEPARATOR" => "Y");
         $aMenu[] = array(
             "TEXT" => GetMessage("FILEMAN_MENU_EDIT_DELETE"),
-            "LINK" => "javascript:if(confirm('" . GetMessage("FILEMAN_DEL_CONF") . "')) window.location='fileman_admin.php?path=" . UrlEncode($path) . "&action=delete&ID[]=" . UrlEncode("." . $name . ".menu.php") . "&" . $addUrl . "&" . bitrix_sessid_get() . "#tb';",
+            "LINK" => "javascript:if(confirm('" . GetMessage(
+                    "FILEMAN_DEL_CONF"
+                ) . "')) window.location='fileman_admin.php?path=" . UrlEncode(
+                    $path
+                ) . "&action=delete&ID[]=" . UrlEncode(
+                    "." . $name . ".menu.php"
+                ) . "&" . $addUrl . "&" . bitrix_sessid_get() . "#tb';",
             "WARNING" => "Y"
         );
     }
@@ -293,7 +356,7 @@ if (strlen($strWarning) <= 0):
 <? endif; ?>
 <? CAdminMessage::ShowMessage($strWarning); ?>
 
-<? if (strlen($strWarning) <= 0): ?>
+<? if ($strWarning == ''): ?>
     <? if ($USER->CanDoFileOperation('fm_edit_existent_file', $arPath_m)): ?>
 
         <?= CAdminCalendar::ShowScript() ?>
@@ -312,7 +375,9 @@ if (strlen($strWarning) <= 0):
         </tr>
         <tr>
             <td valign="top" align="right"><?= GetMessage("FILEMAN_MENU_EDIT_CONDITION") ?></td>
-            <td valign="top"><? ConditionShow(array("i" => "tmp_menu_item_id", "field_name" => "condition_tmp_menu_item_id", "form" => "fmenu")); ?>
+            <td valign="top"><? ConditionShow(
+                    array("i" => "tmp_menu_item_id", "field_name" => "condition_tmp_menu_item_id", "form" => "fmenu")
+                ); ?>
         </tr>
         <?
         $cond_str = ob_get_contents();
@@ -350,7 +415,9 @@ if (strlen($strWarning) <= 0):
                 oCell.className = '';
                 oCell.align = 'right';
                 oCell.colSpan = "2";
-                oCell.innerHTML = '<input type="button" onClick="AddMenuItem(this)" value="<?=GetMessage("FILEMAN_MENU_EDIT_ADD_ITEM")?>">';
+                oCell.innerHTML = '<input type="button" onClick="AddMenuItem(this)" value="<?=GetMessage(
+                    "FILEMAN_MENU_EDIT_ADD_ITEM"
+                )?>">';
 
                 oRow = tbl.insertRow(num * 2 + 1);
                 oRow.className = '';
@@ -379,7 +446,9 @@ if (strlen($strWarning) <= 0):
                     '<table cellpadding="1" cellspacing="0" border="0" width="100%"> ' +
                     '<tr>' +
                     '	<td valign="top" align="right" width="0%"><?=GetMessage("FILEMAN_MENU_EDIT_NAME")?></td>' +
-                    '	<td valign="top" width="100%"><input type="text" size="20" name="text_' + nums + '" value="<?=htmlspecialcharsex($aMenuLinksItem[0])?>"></td>' +
+                    '	<td valign="top" width="100%"><input type="text" size="20" name="text_' + nums + '" value="<?=htmlspecialcharsex(
+                        $aMenuLinksItem[0]
+                    )?>"></td>' +
                     '</tr>' +
                     '<tr>' +
                     '	<td valign="top" align="right"><?=GetMessage("FILEMAN_MENU_EDIT_LINK")?>:</td>' +
@@ -444,7 +513,12 @@ if (strlen($strWarning) <= 0):
 
             <?
             $aTabs = array(
-                array("DIV" => "edit1", "TAB" => GetMessage("FILEMAN_TAB1"), "ICON" => "fileman", "TITLE" => GetMessage("FILEMAN_TAB1_ALT")),
+                array(
+                    "DIV" => "edit1",
+                    "TAB" => GetMessage("FILEMAN_TAB1"),
+                    "ICON" => "fileman",
+                    "TITLE" => GetMessage("FILEMAN_TAB1_ALT")
+                ),
             );
 
             $tabControl = new CAdminTabControl("tabControl", $aTabs);
@@ -456,13 +530,14 @@ if (strlen($strWarning) <= 0):
             ?>
 
             <?
-            if ($bEdit && strlen($strWarning) <= 0) {
+            if ($bEdit && $strWarning == '') {
                 $res = CFileMan::GetMenuArray($abs_path);
                 $aMenuLinksTmp = $res["aMenuLinks"];
                 $sMenuTemplateTmp = $res["sMenuTemplate"];
             }
-            if (!is_array($aMenuLinksTmp))
+            if (!is_array($aMenuLinksTmp)) {
                 $aMenuLinksTmp = Array();
+            }
             ?>
 
             <tr>
@@ -470,7 +545,12 @@ if (strlen($strWarning) <= 0):
                 <td>
                     <script>
                         function ChType(ob) {
-                            window.location = "<?echo $APPLICATION->GetCurPage()?>?lang=<?=LANG?>&site=<?=$site?>&path=<?=htmlspecialcharsex(addslashes($path))?><?if (strlen($back_url) > 0) echo "&back_url=" . URlEncode($back_url);?>&name=" + ob[ob.selectedIndex].value;
+                            window.location = "<?echo $APPLICATION->GetCurPage(
+                            )?>?lang=<?=LANG?>&site=<?=$site?>&path=<?=htmlspecialcharsex(
+                                addslashes($path)
+                            )?><?if ($back_url <> '') {
+                                echo "&back_url=" . URlEncode($back_url);
+                            }?>&name=" + ob[ob.selectedIndex].value;
                         }
                     </script>
                     <select name="name" onChange="ChType(this)">
@@ -496,7 +576,11 @@ if (strlen($strWarning) <= 0):
                     <td><?= GetMessage("FILEMAN_MENU_EDIT_TEMPLATE") ?></td>
                     <td>
                         <input type="text" name="template" size="50" maxlength="255"
-                               value="<? if (strlen($sMenuTemplateTmp) > 0) echo htmlspecialcharsex($sMenuTemplateTmp); else echo GetMessage("FILEMAN_MENU_EDIT_DEF"); ?>"
+                               value="<? if ($sMenuTemplateTmp <> '') {
+                                   echo htmlspecialcharsex($sMenuTemplateTmp);
+                               } else {
+                                   echo GetMessage("FILEMAN_MENU_EDIT_DEF");
+                               } ?>"
                                OnFocus="if(this.value=='<?= GetMessage("FILEMAN_MENU_EDIT_DEF") ?>')this.value=''"
                                onfocusout="if(this.value=='')this.value='<?= GetMessage("FILEMAN_MENU_EDIT_DEF") ?>';">
                     </td>
@@ -519,12 +603,13 @@ if (strlen($strWarning) <= 0):
                             $itemcnt = 0;
                             for ($i = 1, $l = count($aMenuLinksTmp) + 5; $i <= $l; $i++):
                                 $itemcnt++;
-                                if ($i <= count($aMenuLinksTmp))
+                                if ($i <= count($aMenuLinksTmp)) {
                                     $aMenuLinksItem = $aMenuLinksTmp[$i - 1];
-                                elseif ($only_edit)
+                                } elseif ($only_edit) {
                                     continue;
-                                else
+                                } else {
                                     $aMenuLinksItem = Array();
+                                }
                                 ?>
                                 <input type="hidden" name="ids[]" value="<?= $i ?>">
                                 <tr>
@@ -570,31 +655,37 @@ if (strlen($strWarning) <= 0):
                                     <td valign="top" width="50%">
                                         <table cellpadding="1" cellspacing="0" border="0" width="100%">
                                             <tr>
-                                                <td valign="top" align="right"
-                                                    width="0%"><?= GetMessage("FILEMAN_MENU_EDIT_NAME") ?></td>
+                                                <td valign="top" align="right" width="0%"><?= GetMessage(
+                                                        "FILEMAN_MENU_EDIT_NAME"
+                                                    ) ?></td>
                                                 <td valign="top" width="100%"><input type="text" size="20"
                                                                                      name="text_<?= $i ?>"
-                                                                                     value="<?= htmlspecialcharsex($aMenuLinksItem[0]) ?>">
-                                                </td>
+                                                                                     value="<?= htmlspecialcharsex(
+                                                                                         $aMenuLinksItem[0]
+                                                                                     ) ?>"></td>
                                             </tr>
                                             <tr>
-                                                <td valign="top"
-                                                    align="right"><?= GetMessage("FILEMAN_MENU_EDIT_LINK") ?>:
+                                                <td valign="top" align="right"><?= GetMessage(
+                                                        "FILEMAN_MENU_EDIT_LINK"
+                                                    ) ?>:
                                                 </td>
                                                 <td valign="top"><input type="text" size="20" name="link_<?= $i ?>"
-                                                                        value="<?= htmlspecialcharsex($aMenuLinksItem[1]) ?>">
-                                                </td>
+                                                                        value="<?= htmlspecialcharsex(
+                                                                            $aMenuLinksItem[1]
+                                                                        ) ?>"></td>
                                             </tr>
                                             <tr>
-                                                <td valign="top"
-                                                    align="right"><?= GetMessage("FILEMAN_MENU_EDIT_SORT") ?>:
+                                                <td valign="top" align="right"><?= GetMessage(
+                                                        "FILEMAN_MENU_EDIT_SORT"
+                                                    ) ?>:
                                                 </td>
                                                 <td valign="top"><input type="text" size="5" name="sort_<?= $i ?>"
                                                                         value="<?= $i * 10 ?>"></td>
                                             </tr>
                                             <tr>
-                                                <td valign="top"
-                                                    align="right"><?= GetMessage("FILEMAN_MENU_EDIT_DEL") ?></td>
+                                                <td valign="top" align="right"><?= GetMessage(
+                                                        "FILEMAN_MENU_EDIT_DEL"
+                                                    ) ?></td>
                                                 <td valign="top" align="left"><input type="checkbox"
                                                                                      name="del_<?= $i ?>" value="Y">
                                                 </td>
@@ -604,35 +695,54 @@ if (strlen($strWarning) <= 0):
                                     <td valign="top" width="50%">
                                         <table>
                                             <tr>
-                                                <td valign="top"
-                                                    align="right"><?= GetMessage("FILEMAN_MENU_EDIT_ADDITIONAL_LINK") ?></td>
+                                                <td valign="top" align="right"><?= GetMessage(
+                                                        "FILEMAN_MENU_EDIT_ADDITIONAL_LINK"
+                                                    ) ?></td>
                                                 <td valign="top"><textarea rows="3" cols="30"
                                                                            name="additional_link_<?= $i ?>"
-                                                                           WRAP="off"><? for ($j = 0, $m = count($aMenuLinksItem[2]); $j < $m; $j++) echo htmlspecialcharsex($aMenuLinksItem[2][$j]) . "\n" ?></textarea>
-                                                </td>
+                                                                           WRAP="off"><? for (
+                                                            $j = 0, $m = count(
+                                                                $aMenuLinksItem[2]
+                                                            ); $j < $m; $j++
+                                                        ) echo htmlspecialcharsex(
+                                                                    $aMenuLinksItem[2][$j]
+                                                                ) . "\n" ?></textarea></td>
                                             </tr>
                                             <tr>
-                                                <td valign="top"
-                                                    align="right"><?= GetMessage("FILEMAN_MENU_EDIT_CONDITION_TYPE") ?></td>
+                                                <td valign="top" align="right"><?= GetMessage(
+                                                        "FILEMAN_MENU_EDIT_CONDITION_TYPE"
+                                                    ) ?></td>
                                                 <td valign="top">
                                                     <? ConditionParse($aMenuLinksItem[4]);
                                                     ConditionSelect($i); ?>
                                             </tr>
                                             <tr>
-                                                <td valign="top"
-                                                    align="right"><?= GetMessage("FILEMAN_MENU_EDIT_CONDITION") ?></td>
-                                                <td valign="top"><? ConditionShow(array("i" => $i, "field_name" => "condition_$i", "form" => "fmenu")); ?>
+                                                <td valign="top" align="right"><?= GetMessage(
+                                                        "FILEMAN_MENU_EDIT_CONDITION"
+                                                    ) ?></td>
+                                                <td valign="top"><? ConditionShow(
+                                                        array(
+                                                            "i" => $i,
+                                                            "field_name" => "condition_$i",
+                                                            "form" => "fmenu"
+                                                        )
+                                                    ); ?>
                                             </tr>
 
                                             <? if ($number_new_params > 0 || count($aMenuLinksItem[3]) > 0):?>
                                                 <tr>
-                                                    <td valign="top"
-                                                        align="right"><?= GetMessage("FILEMAN_MENU_EDIT_PARAMS") ?></td>
+                                                    <td valign="top" align="right"><?= GetMessage(
+                                                            "FILEMAN_MENU_EDIT_PARAMS"
+                                                        ) ?></td>
                                                     <td nowrap valign="top">
                                                         <table cellpadding="0" cellspacing="1" border="0">
                                                             <tr>
-                                                                <td align="center"><?= GetMessage("FILEMAN_MENU_EDIT_PARAM_NAME") ?></td>
-                                                                <td align="center"><?= GetMessage("FILEMAN_MENU_EDIT_PARAM_VALUE") ?></td>
+                                                                <td align="center"><?= GetMessage(
+                                                                        "FILEMAN_MENU_EDIT_PARAM_NAME"
+                                                                    ) ?></td>
+                                                                <td align="center"><?= GetMessage(
+                                                                        "FILEMAN_MENU_EDIT_PARAM_VALUE"
+                                                                    ) ?></td>
                                                             </tr>
                                                             <?
                                                             $j = 0;
@@ -643,12 +753,15 @@ if (strlen($strWarning) <= 0):
                                                                     <tr>
                                                                         <td nowrap><input type="text" size="15"
                                                                                           name="param_name_<?= $i ?>_<?= $j ?>"
-                                                                                          value="<?= htmlspecialcharsex($key) ?>">=
+                                                                                          value="<?= htmlspecialcharsex(
+                                                                                              $key
+                                                                                          ) ?>">=
                                                                         </td>
                                                                         <td><input type="text" size="25"
                                                                                    name="param_value_<?= $i ?>_<?= $j ?>"
-                                                                                   value="<?= htmlspecialcharsex($value) ?>">
-                                                                        </td>
+                                                                                   value="<?= htmlspecialcharsex(
+                                                                                       $value
+                                                                                   ) ?>"></td>
                                                                     </tr>
                                                                 <?
                                                                 endforeach;
@@ -680,8 +793,9 @@ if (strlen($strWarning) <= 0):
                                 <? if (!$only_edit):?>
                                 <tr id="<?= $i ?>">
                                     <td align="right" colspan="2"><input type="button" onClick="AddMenuItem(this)"
-                                                                         value="<?= GetMessage("FILEMAN_MENU_EDIT_ADD_ITEM") ?>">
-                                    </td>
+                                                                         value="<?= GetMessage(
+                                                                             "FILEMAN_MENU_EDIT_ADD_ITEM"
+                                                                         ) ?>"></td>
                                 </tr>
                             <? endif; ?>
                             <? endfor ?>
@@ -699,7 +813,14 @@ if (strlen($strWarning) <= 0):
             $tabControl->Buttons(
                 array(
                     "disabled" => false,
-                    "back_url" => ((strlen($back_url) > 0 && strpos($back_url, "/bitrix/admin/fileman_menu_edit.php") !== 0) ? htmlspecialcharsex($back_url) : "/bitrix/admin/fileman_admin.php?" . $addUrl . "&site=" . Urlencode($site) . "&path=" . UrlEncode($arParsedPath["FULL"]))
+                    "back_url" => (($back_url <> '' && mb_strpos(
+                            $back_url,
+                            "/bitrix/admin/fileman_menu_edit.php"
+                        ) !== 0) ? htmlspecialcharsex(
+                        $back_url
+                    ) : "/bitrix/admin/fileman_admin.php?" . $addUrl . "&site=" . Urlencode(
+                            $site
+                        ) . "&path=" . UrlEncode($arParsedPath["FULL"]))
                 )
             );
             ?>

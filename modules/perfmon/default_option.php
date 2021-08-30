@@ -1,4 +1,5 @@
 <?
+
 $perfmon_default_option = array(
     "max_graph_width" => 1024,
     "max_graph_height" => 768,
@@ -16,5 +17,8 @@ $perfmon_default_option = array(
     "test_threads_step" => 2,
     "test_server_name" => $_SERVER["HTTP_HOST"],
     "test_threads_duration" => 10,
+    "enable_tablet_generator" => "N",
+    "tablet_short_aliases" => "Y",
+    "tablet_object_settings" => "N",
+    "tablet_use_map_index" => "N",
 );
-?>

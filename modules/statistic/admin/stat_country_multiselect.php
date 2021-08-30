@@ -1,4 +1,5 @@
 <?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 /** @var CMain $APPLICATION */
 $STAT_RIGHT = $APPLICATION->GetGroupRight("statistic");
@@ -8,8 +9,9 @@ if ($STAT_RIGHT == "D") {
         $isManager = CAdvContract::IsManager();
         $isAdvertiser = CAdvContract::IsAdvertiser();
         $isAdmin = CAdvContract::IsAdmin();
-        if (!$isAdmin && !$isDemo && !$isManager && !$isAdvertiser)
+        if (!$isAdmin && !$isDemo && !$isManager && !$isAdvertiser) {
             $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+        }
     } else {
         $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
     }
@@ -44,7 +46,7 @@ $arFilter = Array(
 );
 
 $cData = new CCountry;
-$rsData = $cData->GetList($by, $order, $arFilter, $is_filtered);
+$rsData = $cData->GetList('', '', $arFilter);
 $rsData = new CAdminResult($rsData, $sTableID);
 $rsData->NavStart();
 $lAdmin->NavText($rsData->GetNavPrint(GetMessage("STAT_COUNTRY_MSEL_PAGES")));
@@ -74,7 +76,10 @@ $lAdmin->AddHeaders($arHeaders);
 
 while ($arRes = $rsData->NavNext(true, "f_")):
     $row =& $lAdmin->AddRow($f_ID, $arRes);
-    $row->AddViewField("ID", $f_ID . '<input type="hidden" name="NAME[' . $f_ID . ']" id="NAME[' . $f_ID . ']" value="[' . $f_ID . '] ' . $f_NAME . '">');
+    $row->AddViewField(
+        "ID",
+        $f_ID . '<input type="hidden" name="NAME[' . $f_ID . ']" id="NAME[' . $f_ID . ']" value="[' . $f_ID . '] ' . $f_NAME . '">'
+    );
 endwhile;
 
 $arFooter = array();
@@ -89,15 +94,18 @@ $arFooter[] = array(
 );
 $lAdmin->AddFooter($arFooter);
 
-$lAdmin->AddGroupActionTable(array(
+$lAdmin->AddGroupActionTable(
     array(
-        "action" => "setTargetValue(0, 'form_" . $sTableID . "', '" . CUtil::JSEscape($_REQUEST["field"]) . "')",
-        "value" => "select",
-        "type" => "button",
-        "title" => GetMessage("STAT_COUNTRY_MSEL_SELECT_TITLE"),
-        "name" => GetMessage("STAT_COUNTRY_MSEL_SELECT"),
-    )
-), array("disable_action_target" => true));
+        array(
+            "action" => "setTargetValue(0, 'form_" . $sTableID . "', '" . CUtil::JSEscape($_REQUEST["field"]) . "')",
+            "value" => "select",
+            "type" => "button",
+            "title" => GetMessage("STAT_COUNTRY_MSEL_SELECT_TITLE"),
+            "name" => GetMessage("STAT_COUNTRY_MSEL_SELECT"),
+        )
+    ),
+    array("disable_action_target" => true)
+);
 
 $lAdmin->CheckListMode();
 
@@ -189,8 +197,9 @@ $oFilter = new CAdminFilter($sTableID . "_filter", $arFilterDropDown);
         <tr>
             <td><? echo GetMessage("STAT_COUNTRY_MSEL_SHORT_NAME") ?></td>
             <td><input type="text" name="find_id" size="47"
-                       value="<? echo htmlspecialcharsbx($find_short_name) ?>"><?= ShowExactMatchCheckbox("find_short_name") ?>
-                &nbsp;<?= ShowFilterLogicHelp() ?></td>
+                       value="<? echo htmlspecialcharsbx($find_short_name) ?>"><?= ShowExactMatchCheckbox(
+                    "find_short_name"
+                ) ?>&nbsp;<?= ShowFilterLogicHelp() ?></td>
         </tr>
         <tr>
             <td><? echo GetMessage("STAT_COUNTRY_MSEL_NAME") ?></td>

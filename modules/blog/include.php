@@ -1,4 +1,5 @@
 <?
+
 global $DBType;
 
 IncludeModuleLangFile(__FILE__);
@@ -60,8 +61,54 @@ define("BLOG_ADD", 1);
 define("BLOG_CHANGE", 2);
 define("BLOG_RESET", 3);
 
-$GLOBALS["AR_BLOG_RESERVED_NAMES"] = array("admin", "users", "group", "rss", "new", "user", "user_friends", "search", "user_settings", "user_settings_edit", "group_edit", "blog_edit", "category_edit", "post_edit", "draft", "moderation", "trackback", "post", "post_rss", "rss", "rss_all", "index");
-$GLOBALS["AR_BLOG_POST_RESERVED_CODES"] = Array("admin", "users", "index", "group", "blog", "user", "user_friends", "search", "user_settings", "user_settings_edit", "group_edit", "blog_edit", "category_edit", "post_edit", "draft", "moderation", "trackback", "post", "post_rss", "rss", "rss_all", "new");
+$GLOBALS["AR_BLOG_RESERVED_NAMES"] = array(
+    "admin",
+    "users",
+    "group",
+    "rss",
+    "new",
+    "user",
+    "user_friends",
+    "search",
+    "user_settings",
+    "user_settings_edit",
+    "group_edit",
+    "blog_edit",
+    "category_edit",
+    "post_edit",
+    "draft",
+    "moderation",
+    "trackback",
+    "post",
+    "post_rss",
+    "rss",
+    "rss_all",
+    "index"
+);
+$GLOBALS["AR_BLOG_POST_RESERVED_CODES"] = Array(
+    "admin",
+    "users",
+    "index",
+    "group",
+    "blog",
+    "user",
+    "user_friends",
+    "search",
+    "user_settings",
+    "user_settings_edit",
+    "group_edit",
+    "blog_edit",
+    "category_edit",
+    "post_edit",
+    "draft",
+    "moderation",
+    "trackback",
+    "post",
+    "post_rss",
+    "rss",
+    "rss_all",
+    "new"
+);
 
 CModule::AddAutoloadClasses(
     "blog",

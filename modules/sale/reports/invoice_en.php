@@ -1,4 +1,6 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();?><?
+<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+}?><?
 /*
 Copy this file to /bitrix/admin/reports folder and change it as you wish
 
@@ -99,17 +101,20 @@ array(
                             <tr>
                                 <td class="mainText">
                                     <?
-                                    if (strlen($arParams["BUYER_COMPANY_NAME"]) > 0)
+                                    if ($arParams["BUYER_COMPANY_NAME"] <> '') {
                                         echo $arParams["BUYER_COMPANY_NAME"];
-                                    else
+                                    } else {
                                         echo $arParams["BUYER_LAST_NAME"] . " " . $arParams["BUYER_FIRST_NAME"] . " " . $arParams["BUYER_SECOND_NAME"];
+                                    }
 
 
                                     echo "<br>" . $arParams["BUYER_COUNTRY"] . ", " . $arParams["BUYER_CITY"];
                                     echo "<br>" . $arParams["BUYER_ADDRESS"];
                                     echo "<br>" . $arParams["BUYER_INDEX"];
 
-                                    if (strlen($arParams["BUYER_CONTACT"]) > 0) echo "<br>Contact person: " . $arParams["BUYER_CONTACT"]; ?>
+                                    if ($arParams["BUYER_CONTACT"] <> '') {
+                                        echo "<br>Contact person: " . $arParams["BUYER_CONTACT"];
+                                    } ?>
                                 </td>
                             </tr>
                             <tr>
@@ -130,17 +135,20 @@ array(
                             <tr>
                                 <td class="mainText">
                                     <?
-                                    if (strlen($arParams["BUYER_COMPANY_NAME"]) > 0)
+                                    if ($arParams["BUYER_COMPANY_NAME"] <> '') {
                                         echo $arParams["BUYER_COMPANY_NAME"];
-                                    else
+                                    } else {
                                         echo $arParams["BUYER_LAST_NAME"] . " " . $arParams["BUYER_FIRST_NAME"] . " " . $arParams["BUYER_SECOND_NAME"];
+                                    }
 
 
                                     echo "<br>" . $arParams["BUYER_COUNTRY"] . ", " . $arParams["BUYER_CITY"];
                                     echo "<br>" . $arParams["BUYER_ADDRESS"];
                                     echo "<br>" . $arParams["BUYER_INDEX"];
 
-                                    if (strlen($arParams["BUYER_CONTACT"]) > 0) echo "<br>Contact person: " . $arParams["BUYER_CONTACT"]; ?>
+                                    if ($arParams["BUYER_CONTACT"] <> '') {
+                                        echo "<br>Contact person: " . $arParams["BUYER_CONTACT"];
+                                    } ?>
                                 </td>
                             </tr>
                         </table>
@@ -179,8 +187,9 @@ array(
             for ($i = 0; $i < count($arBasketIDs); $i++) {
                 $arBasketTmp = CSaleBasket::GetByID($arBasketIDs[$i]);
 
-                if (floatval($arBasketTmp["VAT_RATE"]) > 0)
+                if (floatval($arBasketTmp["VAT_RATE"]) > 0) {
                     $bUseVat = true;
+                }
 
                 $arBasketTmp["PROPS"] = array();
                 if (isset($_GET["PROPS_ENABLE"]) && $_GET["PROPS_ENABLE"] == "Y") {
@@ -191,8 +200,9 @@ array(
                         false,
                         array("ID", "BASKET_ID", "NAME", "VALUE", "CODE", "SORT")
                     );
-                    while ($arBasketProps = $dbBasketProps->GetNext())
+                    while ($arBasketProps = $dbBasketProps->GetNext()) {
                         $arBasketTmp["PROPS"][$arBasketProps["ID"]] = $arBasketProps;
+                    }
                 }
 
                 $arBasketOrder[] = $arBasketTmp;
@@ -223,8 +233,9 @@ array(
                     $mi = 0;
                     //do
                     foreach ($arBasketOrder as $arBasket) {
-                        if (floatval($arQuantities[$mi]) <= 0)
+                        if (floatval($arQuantities[$mi]) <= 0) {
                             $arQuantities[$mi] = DoubleVal($arBasket["QUANTITY"]);
+                        }
 
                         $b_AMOUNT = DoubleVal($arBasket["PRICE"]);
                         $item_price = $b_AMOUNT;
@@ -237,9 +248,11 @@ array(
                             $bVat = true;
                         } elseif (!$bUseVat) {
                             $basket_tax = CSaleOrderTax::CountTaxes($b_AMOUNT, $arTaxList, $arOrder["CURRENCY"]);
-                            for ($i = 0; $i < count($arTaxList); $i++)
-                                if ($arTaxList[$i]["IS_IN_PRICE"] == "Y")
+                            for ($i = 0; $i < count($arTaxList); $i++) {
+                                if ($arTaxList[$i]["IS_IN_PRICE"] == "Y") {
                                     $item_price -= $arTaxList[$i]["TAX_VAL"];
+                                }
+                            }
 
                             $nds_val = DoubleVal($iNds > -1 ? $arTaxList[$iNds]["TAX_VAL"] : 0);
                             $taxRate = ($iNds > -1 ? $arTaxList[$iNds]["VALUE"] : 0);
@@ -264,7 +277,10 @@ array(
                                 <b><? echo SaleFormatCurrency($nds_val + $item_price, $arOrder["CURRENCY"]); ?></b>
                             </td>
                             <td class="tablebodycol" align="right" valign="top">
-                                <b><? echo SaleFormatCurrency(($item_price + $nds_val) * $arQuantities[$mi], $arOrder["CURRENCY"]);
+                                <b><? echo SaleFormatCurrency(
+                                        ($item_price + $nds_val) * $arQuantities[$mi],
+                                        $arOrder["CURRENCY"]
+                                    );
                                     $sum += ($item_price + $nds_val) * $arQuantities[$mi]; ?></b>
                             </td>
                         </tr>
@@ -284,7 +300,10 @@ array(
                                 </tr>
 
                                 <?
-                                $db_tax_list = CSaleOrderTax::GetList(array("APPLY_ORDER" => "ASC"), Array("ORDER_ID" => $ORDER_ID));
+                                $db_tax_list = CSaleOrderTax::GetList(
+                                    array("APPLY_ORDER" => "ASC"),
+                                    Array("ORDER_ID" => $ORDER_ID)
+                                );
                                 while ($ar_tax_list = $db_tax_list->Fetch()) {
                                     ?>
                                     <tr>
@@ -317,7 +336,10 @@ array(
                                     <tr>
                                         <td align="right" class="smallText">Discount:</td>
                                         <td align="right" class="smallText">
-                                            <? echo SaleFormatCurrency($arOrder["DISCOUNT_VALUE"], $arOrder["CURRENCY"]) ?>
+                                            <? echo SaleFormatCurrency(
+                                                $arOrder["DISCOUNT_VALUE"],
+                                                $arOrder["CURRENCY"]
+                                            ) ?>
                                         </td>
                                     </tr>
                                 <?endif ?>
@@ -329,21 +351,29 @@ array(
                                             $deliveryId = \CSaleDelivery::getIdByCode($arOrder['DELIVERY_ID']);
 
                                             if ($deliveryId > 0) {
-                                                if ($delivery = \Bitrix\Sale\Delivery\Services\Manager::getObjectById($deliveryId)) {
+                                                if ($delivery = \Bitrix\Sale\Delivery\Services\Manager::getObjectById(
+                                                    $deliveryId
+                                                )) {
                                                     echo "[" . htmlspecialcharsbx($delivery->getNameWithParent()) . "]";
                                                 }
                                             }
                                             ?>:
                                         </td>
                                         <td align="right" class="smallText">
-                                            <? echo SaleFormatCurrency($arOrder["PRICE_DELIVERY"], $arOrder["CURRENCY"]) ?>
+                                            <? echo SaleFormatCurrency(
+                                                $arOrder["PRICE_DELIVERY"],
+                                                $arOrder["CURRENCY"]
+                                            ) ?>
                                         </td>
                                     </tr>
                                 <?endif; ?>
                                 <tr>
                                     <td align="right" class="smallText">Total:</td>
                                     <td align="right" class="smallText">
-                                        <b><? echo SaleFormatCurrency($sum + $arOrder["PRICE_DELIVERY"], $arOrder["CURRENCY"]) ?></b>
+                                        <b><? echo SaleFormatCurrency(
+                                                $sum + $arOrder["PRICE_DELIVERY"],
+                                                $arOrder["CURRENCY"]
+                                            ) ?></b>
                                     </td>
                                 </tr>
                             </table>

@@ -10,7 +10,10 @@ CModule::IncludeModule("sale");
 
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"] . '/bitrix/modules/sale/delivery/delivery_russianpost.php');
 
-define('DELIVERY_RUSSIANPOST_WRITE_LOG', 0); // flag 'write to log'. use CDeliveryRUSSIANPOST::__WriteToLog() for logging.
+define(
+    'DELIVERY_RUSSIANPOST_WRITE_LOG',
+    0
+); // flag 'write to log'. use CDeliveryRUSSIANPOST::__WriteToLog() for logging.
 define('DELIVERY_RUSSIANPOST_CACHE_LIFETIME', 2592000); // cache lifetime - 30 days (60*60*24*30)
 
 define('DELIVERY_RUSSIANPOST_CATEGORY_DEFAULT', 23); // default delivery type
@@ -52,7 +55,7 @@ define(
 
 class CDeliveryRUSSIANPOST
 {
-    function Init()
+    public static function Init()
     {
         if (\Bitrix\Main\Loader::includeModule('currency') && $arCurrency = CCurrency::GetByID('RUR')) {
             $base_currency = 'RUR';
@@ -65,7 +68,9 @@ class CDeliveryRUSSIANPOST
             "SID" => "russianpost",
             "NAME" => GetMessage('SALE_DH_RUSSIANPOST_NAME'),
             "DESCRIPTION" => GetMessage('SALE_DH_RUSSIANPOST_DESCRIPTION'),
-            "DESCRIPTION_INNER" => GetMessage('SALE_DH_RUSSIANPOST_DESCRIPTION_INNER') . GetMessage('SALE_DH_RUSSIANPOST_DESCRIPTION_INNER2'),
+            "DESCRIPTION_INNER" => GetMessage('SALE_DH_RUSSIANPOST_DESCRIPTION_INNER') . GetMessage(
+                    'SALE_DH_RUSSIANPOST_DESCRIPTION_INNER2'
+                ),
             "BASE_CURRENCY" => $base_currency,
 
             "HANDLER" => __FILE__,
@@ -103,7 +108,7 @@ class CDeliveryRUSSIANPOST
         );
     }
 
-    function GetConfig()
+    public static function GetConfig()
     {
         $arConfig = array(
             "CONFIG_GROUPS" => array(
@@ -125,28 +130,31 @@ class CDeliveryRUSSIANPOST
         $arList = array(23, 12, 13, 26, 36, 16);
 
         for ($i = 0, $cnt = count($arList); $i < $cnt; $i++) {
-            $arConfig["CONFIG"]["category"]["VALUES"][$arList[$i]] = GetMessage('SALE_DH_RUSSIANPOST_CONFIG_CATEGORY_' . $arList[$i]);
+            $arConfig["CONFIG"]["category"]["VALUES"][$arList[$i]] = GetMessage(
+                'SALE_DH_RUSSIANPOST_CONFIG_CATEGORY_' . $arList[$i]
+            );
         }
 
         return $arConfig;
     }
 
-    function GetSettings($strSettings)
+    public static function GetSettings($strSettings)
     {
         return array(
             "category" => intval($strSettings)
         );
     }
 
-    function SetSettings($arSettings)
+    public static function SetSettings($arSettings)
     {
-        if (!isset($arSettings["category"]))
+        if (!isset($arSettings["category"])) {
             $arSettings["category"] = DELIVERY_RUSSIANPOST_CATEGORY_DEFAULT;
+        }
 
         return intval($arSettings["category"]);
     }
 
-    function __GetLocation($location, $bGetZIP = false)
+    public static function __GetLocation($location, $bGetZIP = false)
     {
         $arLocation = CSaleHelper::getLocationByIdHitCached($location);
 
@@ -165,7 +173,7 @@ class CDeliveryRUSSIANPOST
         return $arLocation;
     }
 
-    function __GetCountry($arLocation)
+    public static function __GetCountry($arLocation)
     {
         static $arRUSSIANPOSTCountryList;
 
@@ -188,7 +196,7 @@ class CDeliveryRUSSIANPOST
         }
     }
 
-    function Calculate($profile, $arConfig, $arOrder, $STEP, $TEMP = false)
+    public static function Calculate($profile, $arConfig, $arOrder, $STEP, $TEMP = false)
     {
         if ($STEP >= 3) {
             return array(
@@ -197,8 +205,9 @@ class CDeliveryRUSSIANPOST
             );
         }
 
-        if ($arOrder["WEIGHT"] <= 0)
+        if ($arOrder["WEIGHT"] <= 0) {
             $arOrder["WEIGHT"] = 1;
+        }
 
         $arLocationFrom = CDeliveryRUSSIANPOST::__GetLocation($arOrder["LOCATION_FROM"]);
 
@@ -210,8 +219,9 @@ class CDeliveryRUSSIANPOST
         }
 
         $zip = COption::GetOptionString('sale', 'location_zip');
-        if (strlen($zip) > 0)
+        if ($zip <> '') {
             $arLocationFrom["ZIP"] = array(0 => $zip);
+        }
 
         if ($arLocationTo["IS_RUSSIAN"] == 'Y' && count($arLocationTo["ZIP"]) <= 0) {
             return array(
@@ -222,10 +232,11 @@ class CDeliveryRUSSIANPOST
 
         $cache_id = "sale|8.0.3|russianpost|" . $profile . "|" . $arConfig["category"]["VALUE"] . "|" . $arOrder["LOCATION_FROM"] . "|" . ($arLocationTo["IS_RUSSIAN"] == 'Y' ? $arLocationTo["ZIP"][0] : $arOrder["LOCATION_TO"]);
 
-        if (in_array($arConfig["category"]["VALUE"], array(23, 12, 13, 26, 16)))
+        if (in_array($arConfig["category"]["VALUE"], array(23, 12, 13, 26, 16))) {
             $cache_id .= "|" . ceil(intval($arOrder["WEIGHT"]) / 20) . "_";
-        else
+        } else {
             $cache_id .= "|" . ceil(intval($arOrder["WEIGHT"]) / 500) . "_";
+        }
 
         $obCache = new CPHPCache();
         if ($obCache->InitCache(DELIVERY_RUSSIANPOST_CACHE_LIFETIME, $cache_id, "/")) {
@@ -233,8 +244,9 @@ class CDeliveryRUSSIANPOST
             $result = $vars["RESULT"];
 
             // only these delivery types have insurance tax of 3% or 4% from price
-            if (in_array($arConfig["category"]["VALUE"], array(36, 26, 16)))
+            if (in_array($arConfig["category"]["VALUE"], array(36, 26, 16))) {
                 $result += $arOrder["PRICE"] * DELIVERY_RUSSIANPOST_PRICE_TARIFF_1;
+            }
 
             return array(
                 "RESULT" => "OK",
@@ -248,12 +260,18 @@ class CDeliveryRUSSIANPOST
 
         if ($arLocationTo["IS_RUSSIAN"] == "Y") {
             $arQuery[] = DELIVERY_RUSSIANPOST_SERVER_POST_CATEGORY . "=" . urlencode($arConfig["category"]["VALUE"]);
-            $arQuery[] = DELIVERY_RUSSIANPOST_SERVER_POST_CATEGORY_NAME . "=" . urlencode(GetMessage("SALE_DH_RUSSIANPOST_CONFIG_CATEGORY_" . $arConfig["category"]["VALUE"]));
+            $arQuery[] = DELIVERY_RUSSIANPOST_SERVER_POST_CATEGORY_NAME . "=" . urlencode(
+                    GetMessage("SALE_DH_RUSSIANPOST_CONFIG_CATEGORY_" . $arConfig["category"]["VALUE"])
+                );
 
             $arQuery[] = DELIVERY_RUSSIANPOST_SERVER_POST_PROFILE . "=" . urlencode($arProfile[$profile]);
-            $arQuery[] = DELIVERY_RUSSIANPOST_SERVER_POST_PROFILE_NAME . '=' . urlencode(GetMessage("SALE_DH_RUSSIANPOST_" . ToUpper($profile)));
+            $arQuery[] = DELIVERY_RUSSIANPOST_SERVER_POST_PROFILE_NAME . '=' . urlencode(
+                    GetMessage("SALE_DH_RUSSIANPOST_" . ToUpper($profile))
+                );
             $arQuery[] = DELIVERY_RUSSIANPOST_SERVER_POST_COUNTRY . "=643";
-            $arQuery[] = DELIVERY_RUSSIANPOST_SERVER_POST_COUNTRY_NAME . '=' . urlencode($GLOBALS['APPLICATION']->ConvertCharset('���������� ���������', LANG_CHARSET, 'utf-8'));
+            $arQuery[] = DELIVERY_RUSSIANPOST_SERVER_POST_COUNTRY_NAME . '=' . urlencode(
+                    $GLOBALS['APPLICATION']->ConvertCharset('���������� ���������', LANG_CHARSET, 'utf-8')
+                );
 
             $arQuery[] = DELIVERY_RUSSIANPOST_SERVER_POST_WEIGHT . "=" . urlencode($arOrder["WEIGHT"]);
 
@@ -270,13 +288,19 @@ class CDeliveryRUSSIANPOST
             $arQuery[] = DELIVERY_RUSSIANPOST_SERVER_POST_ZIP . "=" . urlencode($arLocationTo["ZIP"][0]);
         } else {
             $arQuery[] = DELIVERY_RUSSIANPOST_SERVER_POST_CATEGORY . "=" . urlencode($arConfig["category"]["VALUE"]);
-            $arQuery[] = DELIVERY_RUSSIANPOST_SERVER_POST_CATEGORY_NAME . "=" . urlencode(GetMessage("SALE_DH_RUSSIANPOST_CONFIG_CATEGORY_" . $arConfig["category"]["VALUE"]));
+            $arQuery[] = DELIVERY_RUSSIANPOST_SERVER_POST_CATEGORY_NAME . "=" . urlencode(
+                    GetMessage("SALE_DH_RUSSIANPOST_CONFIG_CATEGORY_" . $arConfig["category"]["VALUE"])
+                );
             $arQuery[] = DELIVERY_RUSSIANPOST_SERVER_POST_PROFILE . "=" . urlencode($arProfile[$profile]);
-            $arQuery[] = DELIVERY_RUSSIANPOST_SERVER_POST_PROFILE_NAME . '=' . urlencode(GetMessage("SALE_DH_RUSSIANPOST_" . ToUpper($profile)));
+            $arQuery[] = DELIVERY_RUSSIANPOST_SERVER_POST_PROFILE_NAME . '=' . urlencode(
+                    GetMessage("SALE_DH_RUSSIANPOST_" . ToUpper($profile))
+                );
             $arCountry = CDeliveryRUSSIANPOST::__GetCountry($arLocationTo);
 
             $arQuery[] = DELIVERY_RUSSIANPOST_SERVER_POST_COUNTRY . "=" . urlencode($arCountry["ID"]);
-            $arQuery[] = DELIVERY_RUSSIANPOST_SERVER_POST_COUNTRY_NAME . "=" . urlencode($GLOBALS['APPLICATION']->ConvertCharset($arCountry["NAME"], LANG_CHARSET, 'utf-8'));
+            $arQuery[] = DELIVERY_RUSSIANPOST_SERVER_POST_COUNTRY_NAME . "=" . urlencode(
+                    $GLOBALS['APPLICATION']->ConvertCharset($arCountry["NAME"], LANG_CHARSET, 'utf-8')
+                );
 
             $arQuery[] = DELIVERY_RUSSIANPOST_SERVER_POST_WEIGHT . "=" . urlencode($arOrder["WEIGHT"]);
             $arQuery[] = DELIVERY_RUSSIANPOST_SERVER_POST_PRICE . "=0";
@@ -288,8 +312,9 @@ class CDeliveryRUSSIANPOST
         if (!$res->isSuccess()) {
             $errors = "";
 
-            foreach ($res->getErrorMessages() as $message)
+            foreach ($res->getErrorMessages() as $message) {
                 $errors .= $message . "\n";
+            }
 
             CDeliveryRUSSIANPOST::__Write2Log($errors);
 
@@ -304,7 +329,7 @@ class CDeliveryRUSSIANPOST
 
         CDeliveryRUSSIANPOST::__Write2Log($data);
 
-        if (strstr($data, DELIVERY_RUSSIANPOST_VALUE_CAPTHA_STRING)) {
+        if (mb_strstr($data, DELIVERY_RUSSIANPOST_VALUE_CAPTHA_STRING)) {
             $cResult = preg_match(
                 DELIVERY_RUSSIANPOST_CAPTHA_REGEXP,
                 $data,
@@ -312,15 +337,16 @@ class CDeliveryRUSSIANPOST
             );
 
             $arCode = array();
-            $arCode["key"] = IntVal($matches[1]);
+            $arCode["key"] = intval($matches[1]);
 
             $res = self::sendRequestData($arCode, DELIVERY_RUSSIANPOST_SERVER_METHOD_CAPTHA);
 
             if (!$res->isSuccess()) {
                 $errors = "";
 
-                foreach ($res->getErrorMessages() as $message)
+                foreach ($res->getErrorMessages() as $message) {
                     $errors .= $message . "\n";
+                }
 
                 CDeliveryRUSSIANPOST::__Write2Log($errors);
 
@@ -331,7 +357,7 @@ class CDeliveryRUSSIANPOST
             }
         }
 
-        if (strstr($data, DELIVERY_RUSSIANPOST_VALUE_CHECK_STRING)) {
+        if (mb_strstr($data, DELIVERY_RUSSIANPOST_VALUE_CHECK_STRING)) {
             $bResult = preg_match(
                 DELIVERY_RUSSIANPOST_VALUE_CHECK_REGEXP_RUS,
                 $data,
@@ -361,8 +387,9 @@ class CDeliveryRUSSIANPOST
                 );
 
                 // only these delivery types have insurance tax of 3% or 4% from price
-                if (in_array($arConfig["category"]["VALUE"], array(26, 16, 36)))
+                if (in_array($arConfig["category"]["VALUE"], array(26, 16, 36))) {
                     $result += $arOrder["PRICE"] * DELIVERY_RUSSIANPOST_PRICE_TARIFF_1;
+                }
 
                 return array(
                     "RESULT" => "OK",
@@ -374,14 +401,15 @@ class CDeliveryRUSSIANPOST
                     "TEXT" => GetMessage('SALE_DH_RUSSIANPOST_ERROR_RESPONSE'),
                 );
             }
-        } else
+        } else {
             return array(
                 "RESULT" => "ERROR",
                 "TEXT" => GetMessage('SALE_DH_RUSSIANPOST_ERROR_RESPONSE'),
             );
+        }
     }
 
-    function Compability($arOrder, $arConfig)
+    public static function Compability($arOrder, $arConfig)
     {
         $arLocationFrom = CSaleHelper::getLocationByIdHitCached($arOrder["LOCATION_FROM"]);
 
@@ -395,19 +423,21 @@ class CDeliveryRUSSIANPOST
         ) {
             $arLocationTo = CSaleHelper::getLocationByIdHitCached($arOrder["LOCATION_TO"]);
 
-            if (!CDeliveryRUSSIANPOST::__IsRussian($arLocationTo) && $arConfig['category']['VALUE'] == 26)
+            if (!CDeliveryRUSSIANPOST::__IsRussian($arLocationTo) && $arConfig['category']['VALUE'] == 26) {
                 return array();
+            }
 
-            if (isset($arConfig["category"]["VALUE"]) && $arConfig["category"]["VALUE"] == 26)
+            if (isset($arConfig["category"]["VALUE"]) && $arConfig["category"]["VALUE"] == 26) {
                 return array("ground");
-            else
+            } else {
                 return array("ground", "avia");
+            }
         } else {
             return array();
         }
     }
 
-    function __IsRussian($arLocation)
+    public static function __IsRussian($arLocation)
     {
         return
             (ToUpper($arLocation["COUNTRY_NAME_ORIG"]) == "������"
@@ -426,7 +456,7 @@ class CDeliveryRUSSIANPOST
             );
     }
 
-    function __Write2Log($data)
+    public static function __Write2Log($data)
     {
         if (defined('DELIVERY_RUSSIANPOST_WRITE_LOG') && DELIVERY_RUSSIANPOST_WRITE_LOG === 1) {
             $fp = fopen(dirname(__FILE__) . "/russianpost.log", "a");
@@ -446,24 +476,28 @@ class CDeliveryRUSSIANPOST
         $url = "http://" . DELIVERY_RUSSIANPOST_SERVER . DELIVERY_RUSSIANPOST_SERVER_PAGE;
         $reqResult = false;
 
-        $httpClient = new \Bitrix\Main\Web\HttpClient(array(
-            "version" => "1.1",
-            "socketTimeout" => 30,
-            "streamTimeout" => 30,
-            "redirect" => true,
-            "redirectMax" => 5,
-        ));
+        $httpClient = new \Bitrix\Main\Web\HttpClient(
+            array(
+                "version" => "1.1",
+                "socketTimeout" => 30,
+                "streamTimeout" => 30,
+                "redirect" => true,
+                "redirectMax" => 5,
+            )
+        );
 
         $method = (DELIVERY_RUSSIANPOST_SERVER_METHOD == $method ? \Bitrix\Main\Web\HttpClient::HTTP_GET : \Bitrix\Main\Web\HttpClient::HTTP_POST);
 
-        if ($httpClient->query($method, $url, $data))
+        if ($httpClient->query($method, $url, $data)) {
             $reqResult = $httpClient->getResult();
+        }
 
         $errors = $httpClient->getError();
 
         if (!$reqResult && !empty($errors)) {
-            foreach ($errors as $errorCode => $errMes)
+            foreach ($errors as $errorCode => $errMes) {
                 $result->addError(new \Bitrix\Main\Entity\EntityError($errorCode . ": " . $errMes));
+            }
         } else {
             $status = $httpClient->getStatus();
 
@@ -477,7 +511,7 @@ class CDeliveryRUSSIANPOST
         return $result;
     }
 
-    public function getAdminMessage()
+    public static function getAdminMessage()
     {
         return array(
             'MESSAGE' => GetMessage(

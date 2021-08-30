@@ -53,24 +53,31 @@ class Application extends \Bitrix\Main\Authentication\Application
 
         $password = ApplicationPasswordTable::generatePassword();
 
-        $res = ApplicationPasswordTable::add(array(
-            'USER_ID' => $USER->getID(),
-            'APPLICATION_ID' => static::ID,
-            'PASSWORD' => $password,
-            'DATE_CREATE' => new DateTime(),
-            'COMMENT' => Loc::getMessage('REST_APP_COMMENT'),
-            'SYSCOMMENT' => Loc::getMessage('REST_APP_SYSCOMMENT', array(
-                '#TITLE#' => $siteTitle,
-            )),
-        ));
+        $res = ApplicationPasswordTable::add(
+            array(
+                'USER_ID' => $USER->getID(),
+                'APPLICATION_ID' => static::ID,
+                'PASSWORD' => $password,
+                'DATE_CREATE' => new DateTime(),
+                'COMMENT' => Loc::getMessage('REST_APP_COMMENT'),
+                'SYSCOMMENT' => Loc::getMessage(
+                    'REST_APP_SYSCOMMENT',
+                    array(
+                        '#TITLE#' => $siteTitle,
+                    )
+                ),
+            )
+        );
 
         if ($res->isSuccess()) {
             $scopeList = array_unique($scopeList);
             foreach ($scopeList as $scope) {
-                PermissionTable::add(array(
-                    'PASSWORD_ID' => $res->getId(),
-                    'PERM' => $scope,
-                ));
+                PermissionTable::add(
+                    array(
+                        'PASSWORD_ID' => $res->getId(),
+                        'PERM' => $scope,
+                    )
+                );
             }
 
             return $password;

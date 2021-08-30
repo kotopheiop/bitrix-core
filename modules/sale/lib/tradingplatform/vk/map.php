@@ -189,21 +189,25 @@ class Map
             "CODE" => $mapEntityCode,
         );
 
-        $resMapEntity = MapEntityTable::getList(array(
-            "filter" => $fields,
-        ));
+        $resMapEntity = MapEntityTable::getList(
+            array(
+                "filter" => $fields,
+            )
+        );
 
         if ($mapEntity = $resMapEntity->fetch()) {
             $result = $mapEntity["ID"];
         } else {
             $resAdd = MapEntityTable::add($fields);
 
-            if ($resAdd->isSuccess())
+            if ($resAdd->isSuccess()) {
                 $result = $resAdd->getId();
+            }
         }
 
-        if ($result <= 0)
+        if ($result <= 0) {
             throw new SystemException("Can' t get map entity id for code: " . $mapEntityCode . ".");
+        }
 
         return $result;
     }
@@ -229,13 +233,15 @@ class Map
                 "ENTITY_ID" => $mapEntityID,
             );
 //			add params if not null
-            if ($item["PARAMS"])
+            if ($item["PARAMS"]) {
                 $fields["PARAMS"] = $item["PARAMS"];
+            }
 
             $addRes = MapTable::add($fields);
 
-            if (!$addRes->isSuccess() || !$result)
+            if (!$addRes->isSuccess() || !$result) {
                 $result = false;
+            }
         }
 
         return $result;
@@ -263,10 +269,12 @@ class Map
             $fields["VALUE_INTERNAL"] = strval($item["VALUE_INTERNAL"]);
             $filterToId = $fields;
 
-            if ($flagKeys == "ONLY_INTERNAL")
+            if ($flagKeys == "ONLY_INTERNAL") {
                 unset($filterToId["VALUE_EXTERNAL"]);
-            if ($flagKeys == "ONLY_EXTERNAL")
+            }
+            if ($flagKeys == "ONLY_EXTERNAL") {
                 unset($filterToId["VALUE_INTERNAL"]);
+            }
             unset($filterToId["PARAMS"]);
 
 //			get ID for current element
@@ -281,14 +289,15 @@ class Map
 //			update or create element
             if ($id = $id["ID"]) {
                 $upRes = MapTable::update($id, $fields);
-                if (!$upRes->isSuccess())
+                if (!$upRes->isSuccess()) {
                     $result = false;
+                }
             } else {
                 $addRes = MapTable::add($fields);
-                if (!$addRes->isSuccess())
+                if (!$addRes->isSuccess()) {
                     $result = false;
+                }
             }
-
         }
 
 //		if result == false - we have problem minimum in one item, maybe in all items
@@ -312,21 +321,24 @@ class Map
 //		todo: maybe we can use packed adding for acceleration
         foreach ($values as $item) {
 //			break empty items
-            if (empty($item))
+            if (empty($item)) {
                 continue;
+            }
 
 //			preserve lowercase $item
             $item = array_change_key_case($item, CASE_UPPER);
 
-            if ($flagKey == "ONLY_INTERNAL")
+            if ($flagKey == "ONLY_INTERNAL") {
                 unset($item["VALUE_EXTERNAL"]);
-            elseif ($flagKey == "ONLY_EXTERNAL")
+            } elseif ($flagKey == "ONLY_EXTERNAL") {
                 unset($item["VALUE_INTERNAL"]);
+            }
 
             $fields = array("ENTITY_ID" => $mapEntityID);
             $fields = array_merge($fields, $item);
 
-            $id = MapTable::getList(array(
+            $id = MapTable::getList(
+                array(
                     "filter" => $fields,
                     "select" => array("ID"),
                 )
@@ -335,11 +347,12 @@ class Map
 
             if ($id) {
                 $delRes = MapTable::delete($id["ID"]);
-                if (!$delRes->isSuccess() || !$result)
+                if (!$delRes->isSuccess() || !$result) {
                     $result = false;
-            } else
+                }
+            } else {
                 $result = false;
-
+            }
         }
 
 //		if result == false - we have problem minimum in one item, maybe in all items
@@ -359,16 +372,19 @@ class Map
         $result = array();
         $albumEntityId = self::getAlbumEntityId($exportId);
 
-        $catRes = MapTable::getList(array(
+        $catRes = MapTable::getList(
+            array(
 //			'select' => array('VALUE_INTERNAL'),
-            'filter' => array('=ENTITY_ID' => $albumEntityId),
-        ));
+                'filter' => array('=ENTITY_ID' => $albumEntityId),
+            )
+        );
 
-        while ($album = $catRes->fetch())
+        while ($album = $catRes->fetch()) {
             $result[$album["VALUE_INTERNAL"]] = array(
                 "SECTION_ID" => $album["VALUE_INTERNAL"],
                 "ALBUM_VK_ID" => $album["VALUE_EXTERNAL"],
             );
+        }
 
         return $result;
     }
@@ -385,16 +401,19 @@ class Map
         $result = array();
         $productEntId = self::getProductEntityId($exportId);
 
-        $catRes = MapTable::getList(array(
+        $catRes = MapTable::getList(
+            array(
 //			'select' => array('VALUE_INTERNAL'),
-            'filter' => array('=ENTITY_ID' => $productEntId),
-        ));
+                'filter' => array('=ENTITY_ID' => $productEntId),
+            )
+        );
 
-        while ($product = $catRes->fetch())
+        while ($product = $catRes->fetch()) {
             $result[$product["VALUE_INTERNAL"]] = array(
                 "BX_ID" => $product["VALUE_INTERNAL"],
                 "VK_ID" => $product["VALUE_EXTERNAL"],
             );
+        }
 
         return $result;
     }
@@ -407,26 +426,30 @@ class Map
      * @return array
      * @throws \Bitrix\Main\ArgumentException
      */
-    public static function getMappedSections($exportId, $sectionId = NULL)
+    public static function getMappedSections($exportId, $sectionId = null)
     {
         $result = array();
         $catEntId = self::getSectionsEntityId($exportId);
 
         $filter = array('=ENTITY_ID' => $catEntId);
-        if ($sectionId)
+        if ($sectionId) {
             $filter['=VALUE_INTERNAL'] = $sectionId;
+        }
 
 //		todo: we can cached map. Clear cache if set setting in section
-        $catRes = MapTable::getList(array(
-            'filter' => $filter,
-        ));
+        $catRes = MapTable::getList(
+            array(
+                'filter' => $filter,
+            )
+        );
 
-        while ($product = $catRes->fetch())
+        while ($product = $catRes->fetch()) {
             $result[$product["VALUE_INTERNAL"]] = array(
                 "BX_ID" => $product["VALUE_INTERNAL"],
                 "VK_ID" => $product["VALUE_EXTERNAL"],
                 "PARAMS" => $product["PARAMS"],
             );
+        }
 
         return $result;
     }
@@ -493,13 +516,15 @@ class Map
                     $dataMappedToRemove[] = array("VALUE_EXTERNAL" => $itemMapped[$vkKey]);
                 }
             } //			other albums not delete from map and not edit - only adding
-            else
+            else {
                 $item["FLAG_EDIT"] = false;
+            }
         }
 
 //		DELETE from mapping items which not exist in VK
-        if (!empty($dataMappedToRemove))
+        if (!empty($dataMappedToRemove)) {
             self::$deleteMapMethod($dataMappedToRemove, $exportId);
+        }
 
         return $data;
     }
@@ -515,28 +540,36 @@ class Map
     public static function deleteAllMapping()
     {
 //		GET all entity IDs
-        $resEntityIds = MapEntityTable::getList(array(
-            "filter" => array('%=CODE' => self::getGeneralCodePrefix() . '%'),
-        ));
+        $resEntityIds = MapEntityTable::getList(
+            array(
+                "filter" => array('%=CODE' => self::getGeneralCodePrefix() . '%'),
+            )
+        );
         $entityIds = array();
-        while ($entityId = $resEntityIds->fetch())
+        while ($entityId = $resEntityIds->fetch()) {
             $entityIds[] = $entityId['ID'];
+        }
 
 //		DELETE all MAP ENTITY
-        foreach ($entityIds as $entityId)
+        foreach ($entityIds as $entityId) {
             MapEntityTable::delete($entityId);
+        }
 
 
 //		GET all map items IDs
-        $resMapIds = MapTable::getList(array(
-            "filter" => array('=ENTITY_ID' => $entityIds),
-        ));
+        $resMapIds = MapTable::getList(
+            array(
+                "filter" => array('=ENTITY_ID' => $entityIds),
+            )
+        );
         $mapIds = array();
-        while ($mapId = $resMapIds->fetch())
+        while ($mapId = $resMapIds->fetch()) {
             $mapIds[] = $mapId['ID'];
+        }
 
 //		DELETE all from MAP
-        foreach ($mapIds as $mapId)
+        foreach ($mapIds as $mapId) {
             MapTable::delete($mapId);
+        }
     }
 }

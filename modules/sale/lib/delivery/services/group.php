@@ -13,8 +13,9 @@ class Group extends Base
 {
     public function __construct(array $initParams)
     {
-        if (!isset($initParams["ACTIVE"]))
+        if (!isset($initParams["ACTIVE"])) {
             $initParams["ACTIVE"] = "Y";
+        }
 
         $initParams["CONFIG"] = array();
 
@@ -35,10 +36,12 @@ class Group extends Base
     {
         $result = new CalculationResult();
 
-        $result->addError(new EntityError(
-            Loc::getMessage("SALE_DLVR_HANDL_GROUP_ERROR_CALCULATION"),
-            'DELIVERY_CALCULATION'
-        ));
+        $result->addError(
+            new EntityError(
+                Loc::getMessage("SALE_DLVR_HANDL_GROUP_ERROR_CALCULATION"),
+                'DELIVERY_CALCULATION'
+            )
+        );
 
         return $result;
     }

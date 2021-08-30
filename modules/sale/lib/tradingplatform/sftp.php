@@ -47,8 +47,9 @@ class Sftp
      */
     public function connect()
     {
-        if (!extension_loaded("ssh2"))
+        if (!extension_loaded("ssh2")) {
             throw new SystemException(Loc::getMessage("TRADING_PLATFORM_SFTP_ERROR_SSH2_EXT"));
+        }
 
         $this->connection = @ssh2_connect($this->host, $this->port);
 
@@ -68,24 +69,28 @@ class Sftp
             $fingerprint = ssh2_fingerprint($this->connection, SSH2_FINGERPRINT_MD5 | SSH2_FINGERPRINT_HEX);
 
             if ($fingerprint != $this->fingerprint) {
-                throw new SystemException(Loc::getMessage(
-                    "TRADING_PLATFORM_SFTP_ERROR_FINGERPRINT",
-                    array(
-                        "#HOST#" => $this->host,
-                        "#FINGERPRINT1#" => $fingerprint,
-                        "#FINGERPRINT2#" => $this->fingerprint,
+                throw new SystemException(
+                    Loc::getMessage(
+                        "TRADING_PLATFORM_SFTP_ERROR_FINGERPRINT",
+                        array(
+                            "#HOST#" => $this->host,
+                            "#FINGERPRINT1#" => $fingerprint,
+                            "#FINGERPRINT2#" => $this->fingerprint,
+                        )
                     )
-                ));
+                );
             }
         }
 
-        if (!@ssh2_auth_password($this->connection, $this->login, $this->pass))
+        if (!@ssh2_auth_password($this->connection, $this->login, $this->pass)) {
             throw new SystemException(Loc::getMessage("TRADING_PLATFORM_SFTP_ERROR_PASS"));
+        }
 
         $this->sftp = ssh2_sftp($this->connection);
 
-        if (!$this->sftp)
+        if (!$this->sftp) {
             throw new SystemException(Loc::getMessage("TRADING_PLATFORM_SFTP_ERROR_INIT"));
+        }
 
         return true;
     }
@@ -101,16 +106,25 @@ class Sftp
         $remotePath = "sftp://" . intval($this->sftp) . $remoteFile;
         $stream = @fopen("ssh2." . $remotePath, 'w');
 
-        if (!$stream)
-            throw new SystemException(Loc::getMessage("TRADING_PLATFORM_SFTP_ERROR_OPEN_FILE", array("#FILE#" => $remotePath)));
+        if (!$stream) {
+            throw new SystemException(
+                Loc::getMessage("TRADING_PLATFORM_SFTP_ERROR_OPEN_FILE", array("#FILE#" => $remotePath))
+            );
+        }
 
         $data = file_get_contents($localFile);
 
-        if ($data === false)
-            throw new SystemException(Loc::getMessage("TRADING_PLATFORM_SFTP_ERROR_READ_FILE", array("#FILE#" => $localFile)));
+        if ($data === false) {
+            throw new SystemException(
+                Loc::getMessage("TRADING_PLATFORM_SFTP_ERROR_READ_FILE", array("#FILE#" => $localFile))
+            );
+        }
 
-        if (fwrite($stream, $data) === false)
-            throw new SystemException(Loc::getMessage("TRADING_PLATFORM_SFTP_ERROR_WRITE_FILE", array("#FILE#" => $remotePath)));
+        if (fwrite($stream, $data) === false) {
+            throw new SystemException(
+                Loc::getMessage("TRADING_PLATFORM_SFTP_ERROR_WRITE_FILE", array("#FILE#" => $remotePath))
+            );
+        }
 
         @fclose($stream);
 
@@ -128,13 +142,19 @@ class Sftp
         $remotePath = "sftp://" . intval($this->sftp) . $remoteFile;
         $stream = @fopen("ssh2." . $remotePath, 'r');
 
-        if (!$stream)
-            throw new SystemException(Loc::getMessage("TRADING_PLATFORM_SFTP_ERROR_OPEN_FILE", array("#FILE#" => $remotePath)));
+        if (!$stream) {
+            throw new SystemException(
+                Loc::getMessage("TRADING_PLATFORM_SFTP_ERROR_OPEN_FILE", array("#FILE#" => $remotePath))
+            );
+        }
 
         $contents = stream_get_contents($stream);
 
-        if (file_put_contents($localFile, $contents) === false)
-            throw new SystemException(Loc::getMessage("TRADING_PLATFORM_SFTP_ERROR_WRITE_FILE", array("#FILE#" => $localFile)));
+        if (file_put_contents($localFile, $contents) === false) {
+            throw new SystemException(
+                Loc::getMessage("TRADING_PLATFORM_SFTP_ERROR_WRITE_FILE", array("#FILE#" => $localFile))
+            );
+        }
 
         @fclose($stream);
         return true;
@@ -151,12 +171,17 @@ class Sftp
         $fullPath = "sftp://" . intval($this->sftp) . $remotePath;
         $dirHandle = @opendir("ssh2." . $fullPath);
 
-        if ($dirHandle === false)
-            throw new SystemException(Loc::getMessage("TRADING_PLATFORM_SFTP_ERROR_OPEN_PATH", array("#PATH#" => $fullPath)));
+        if ($dirHandle === false) {
+            throw new SystemException(
+                Loc::getMessage("TRADING_PLATFORM_SFTP_ERROR_OPEN_PATH", array("#PATH#" => $fullPath))
+            );
+        }
 
-        while (false !== ($file = readdir($dirHandle)))
-            if (is_file("ssh2." . $fullPath . "/" . $file))
+        while (false !== ($file = readdir($dirHandle))) {
+            if (is_file("ssh2." . $fullPath . "/" . $file)) {
                 $result[] = $file;
+            }
+        }
 
         return $result;
     }

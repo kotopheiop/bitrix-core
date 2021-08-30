@@ -92,7 +92,7 @@ final class Manager
         }
 
         if (is_string($conditions)) {
-            $conditions = unserialize($conditions);
+            $conditions = unserialize($conditions, ['allowed_classes' => false]);
         }
 
         if (!$conditions || !is_array($conditions)) {

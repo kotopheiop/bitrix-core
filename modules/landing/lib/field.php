@@ -29,6 +29,12 @@ abstract class Field
     protected $title;
 
     /**
+     * Default value.
+     * @var string
+     */
+    protected $default;
+
+    /**
      * Field help.
      * @var string
      */
@@ -53,10 +59,11 @@ abstract class Field
      */
     public function __construct($code, array $params = array())
     {
-        $this->code = strtoupper($code);
+        $this->code = mb_strtoupper($code);
         $this->value = null;
         $this->id = isset($params['id']) ? $params['id'] : '';
         $this->title = isset($params['title']) ? $params['title'] : '';
+        $this->default = isset($params['default']) ? $params['default'] : null;
         $this->help = isset($params['help']) ? $params['help'] : '';
         $this->searchable = isset($params['searchable']) && $params['searchable'] === true;
         $this->fetchModificator = isset($params['fetch_data_modification']) ? $params['fetch_data_modification'] : null;
@@ -121,7 +128,7 @@ abstract class Field
      */
     public function setCode($code)
     {
-        $this->code = strtoupper($code);
+        $this->code = mb_strtoupper($code);
     }
 
     /**
@@ -149,7 +156,7 @@ abstract class Field
     public function getType()
     {
         $class = explode('\\', get_called_class());
-        return strtolower(array_pop($class));
+        return mb_strtolower(array_pop($class));
     }
 
     /**
@@ -158,7 +165,7 @@ abstract class Field
      */
     public function __toString()
     {
-        return (string)$this->value;
+        return $this->value ? (string)$this->value : (string)$this->default;
     }
 
     /**

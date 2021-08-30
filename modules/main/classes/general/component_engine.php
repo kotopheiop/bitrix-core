@@ -22,8 +22,9 @@ class CComponentEngine
      */
     function __construct($component = null)
     {
-        if ($component instanceof CBitrixComponent)
+        if ($component instanceof CBitrixComponent) {
             $this->component = $component;
+        }
     }
 
     /**
@@ -47,8 +48,9 @@ class CComponentEngine
     public function addGreedyPart($part)
     {
         $part = trim($part, " \t\n\r#");
-        if ($part != "")
+        if ($part != "") {
             $this->greedyParts[$part] = preg_quote($part, "'");
+        }
     }
 
     /**
@@ -60,8 +62,9 @@ class CComponentEngine
      */
     public function setResolveCallback($resolveCallback)
     {
-        if (is_callable($resolveCallback))
+        if (is_callable($resolveCallback)) {
             $this->resolveCallback = $resolveCallback;
+        }
     }
 
     /**
@@ -74,7 +77,10 @@ class CComponentEngine
      */
     public static function checkComponentName($componentName)
     {
-        return ($componentName <> '' && preg_match("#^([A-Za-z0-9_.-]+:)?([A-Za-z0-9_-]+\\.)*([A-Za-z0-9_-]+)$#i", $componentName));
+        return ($componentName <> '' && preg_match(
+                "#^([A-Za-z0-9_.-]+:)?([A-Za-z0-9_-]+\\.)*([A-Za-z0-9_-]+)$#i",
+                $componentName
+            ));
     }
 
     /**
@@ -86,8 +92,9 @@ class CComponentEngine
      */
     public static function makeComponentPath($componentName)
     {
-        if (!CComponentEngine::checkComponentName($componentName))
+        if (!CComponentEngine::checkComponentName($componentName)) {
             return "";
+        }
 
         return "/" . str_replace(":", "/", $componentName);
     }
@@ -101,7 +108,7 @@ class CComponentEngine
      */
     public function hasNoVariables($pageTemplate)
     {
-        return strpos($pageTemplate, "#") === false;
+        return mb_strpos($pageTemplate, "#") === false;
     }
 
     /**
@@ -116,10 +123,11 @@ class CComponentEngine
         if (
             !empty($this->greedyParts)
             && preg_match("'#(?:" . implode("|", $this->greedyParts) . ")#'", $pageTemplate)
-        )
+        ) {
             return true;
-        else
+        } else {
             return false;
+        }
     }
 
     /**
@@ -138,16 +146,18 @@ class CComponentEngine
         $resultWithGreedy = array();
 
         foreach ($arUrlTemplates as $pageID => $pageTemplate) {
-            $pos = strpos($pageTemplate, "?");
-            if ($pos !== false)
-                $pageTemplate = substr($pageTemplate, 0, $pos);
+            $pos = mb_strpos($pageTemplate, "?");
+            if ($pos !== false) {
+                $pageTemplate = mb_substr($pageTemplate, 0, $pos);
+            }
 
-            if ($this->hasNoVariables($pageTemplate))
+            if ($this->hasNoVariables($pageTemplate)) {
                 $resultNoHash[$pageID] = $pageTemplate;
-            elseif ($this->hasGreedyParts($pageTemplate))
+            } elseif ($this->hasGreedyParts($pageTemplate)) {
                 $resultWithGreedy[$pageID] = $pageTemplate;
-            else
+            } else {
                 $resultWithHash[$pageID] = $pageTemplate;
+            }
         }
         $bHasGreedyPartsInTemplates = !empty($resultWithGreedy);
         return array_merge($resultNoHash, $resultWithHash, $resultWithGreedy);
@@ -172,15 +182,17 @@ class CComponentEngine
             $pageTemplateReg = preg_replace("'#[^#]+?#'", "([^/]+?)", $pageTemplate);
         }
 
-        if (substr($pageTemplateReg, -1, 1) == "/")
+        if (mb_substr($pageTemplateReg, -1, 1) == "/") {
             $pageTemplateReg .= "index\\.php";
+        }
 
         $arValues = array();
         if (preg_match("'^" . $pageTemplateReg . "$'", $currentPageUrl, $arValues)) {
             $arMatches = array();
             if (preg_match_all("'#([^#]+?)#'", $pageTemplate, $arMatches)) {
-                for ($i = 0, $cnt = count($arMatches[1]); $i < $cnt; $i++)
+                for ($i = 0, $cnt = count($arMatches[1]); $i < $cnt; $i++) {
                     $arVariables[$arMatches[1][$i]] = $arValues[$i + 1];
+                }
             }
             return true;
         }
@@ -217,21 +229,25 @@ class CComponentEngine
      */
     public function guessComponentPath($folder404, $arUrlTemplates, &$arVariables, $requestURL = false)
     {
-        if (!isset($arVariables) || !is_array($arVariables))
+        if (!isset($arVariables) || !is_array($arVariables)) {
             $arVariables = array();
+        }
 
-        if ($requestURL === false)
+        if ($requestURL === false) {
             $requestURL = Bitrix\Main\Context::getCurrent()->getRequest()->getRequestedPage();
+        }
 
         $folder404 = str_replace("\\", "/", $folder404);
-        if ($folder404 != "/")
+        if ($folder404 != "/") {
             $folder404 = "/" . trim($folder404, "/ \t\n\r\0\x0B") . "/";
+        }
 
         //SEF base URL must match curent URL (several components on the same page)
-        if (strpos($requestURL, $folder404) !== 0)
+        if (mb_strpos($requestURL, $folder404) !== 0) {
             return false;
+        }
 
-        $currentPageUrl = substr($requestURL, strlen($folder404));
+        $currentPageUrl = mb_substr($requestURL, mb_strlen($folder404));
         $this->cacheSalt = md5($currentPageUrl);
 
         $pageCandidates = array();
@@ -276,22 +292,32 @@ class CComponentEngine
      * @return void
      *
      */
-    public static function initComponentVariables($componentPage, $arComponentVariables, $arVariableAliases, &$arVariables)
-    {
-        if (!isset($arVariables) || !is_array($arVariables))
+    public static function initComponentVariables(
+        $componentPage,
+        $arComponentVariables,
+        $arVariableAliases,
+        &$arVariables
+    ) {
+        if (!isset($arVariables) || !is_array($arVariables)) {
             $arVariables = array();
+        }
 
         if ($componentPage) {
             if (array_key_exists($componentPage, $arVariableAliases) && is_array($arVariableAliases[$componentPage])) {
-                foreach ($arVariableAliases[$componentPage] as $variableName => $aliasName)
-                    if (!array_key_exists($variableName, $arVariables))
+                foreach ($arVariableAliases[$componentPage] as $variableName => $aliasName) {
+                    if (!array_key_exists($variableName, $arVariables)) {
                         $arVariables[$variableName] = $_REQUEST[$aliasName];
+                    }
+                }
             }
         } else {
-            foreach ($arVariableAliases as $variableName => $aliasName)
-                if (!array_key_exists($variableName, $arVariables))
-                    if (is_string($aliasName) && array_key_exists($aliasName, $_REQUEST))
+            foreach ($arVariableAliases as $variableName => $aliasName) {
+                if (!array_key_exists($variableName, $arVariables)) {
+                    if (is_string($aliasName) && array_key_exists($aliasName, $_REQUEST)) {
                         $arVariables[$variableName] = $_REQUEST[$aliasName];
+                    }
+                }
+            }
         }
 
         if ($arComponentVariables && is_array($arComponentVariables)) {
@@ -314,8 +340,9 @@ class CComponentEngine
      */
     public static function makeComponentUrlTemplates($arDefaultUrlTemplates, $arCustomUrlTemplates)
     {
-        if (!is_array($arCustomUrlTemplates))
+        if (!is_array($arCustomUrlTemplates)) {
             $arCustomUrlTemplates = array();
+        }
 
         return array_merge($arDefaultUrlTemplates, $arCustomUrlTemplates);
     }
@@ -330,8 +357,9 @@ class CComponentEngine
      */
     public static function makeComponentVariableAliases($arDefaultVariableAliases, $arCustomVariableAliases)
     {
-        if (!is_array($arCustomVariableAliases))
+        if (!is_array($arCustomVariableAliases)) {
             $arCustomVariableAliases = array();
+        }
 
         return array_merge($arDefaultVariableAliases, $arCustomVariableAliases);
     }

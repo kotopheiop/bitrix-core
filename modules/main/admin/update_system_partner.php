@@ -12,17 +12,20 @@ ignore_user_abort(true);
 
 IncludeModuleLangFile(__FILE__);
 
-if (!$USER->CanDoOperation('install_updates'))
+if (!$USER->CanDoOperation('install_updates')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $errorMessage = "";
 $myaddmodule = "";
 
 if (is_array($_REQUEST["addmodule"])) {
-    foreach ($_REQUEST["addmodule"] as $val)
+    foreach ($_REQUEST["addmodule"] as $val) {
         $myaddmodule .= preg_replace("#[^a-zA-Z0-9.,-_]#i", "", $val) . ",";
-} else
+    }
+} else {
     $myaddmodule = preg_replace("#[^a-zA-Z0-9.,-_]#i", "", $_REQUEST["addmodule"]);
+}
 
 $stableVersionsOnly = COption::GetOptionString("main", "stable_versions_only", "Y");
 $bLockUpdateSystemKernel = false;//CUpdateSystemPartner::IsInCommonKernel();
@@ -36,7 +39,9 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
 $arMenu = array(
     array(
         "TEXT" => GetMessage("SUP_CHECK_UPDATES"),
-        "LINK" => "/bitrix/admin/update_system_partner.php?refresh=Y&amp;lang=" . LANGUAGE_ID . "&amp;addmodule=" . urlencode($myaddmodule),
+        "LINK" => "/bitrix/admin/update_system_partner.php?refresh=Y&amp;lang=" . LANGUAGE_ID . "&amp;addmodule=" . urlencode(
+                $myaddmodule
+            ),
         "ICON" => "btn_update_partner",
     ),
     array("SEPARATOR" => "Y"),
@@ -50,26 +55,37 @@ $context = new CAdminContextMenu($arMenu);
 $context->Show();
 
 if (!$bLockUpdateSystemKernel) {
-    if (!$arUpdateList = CUpdateClientPartner::GetUpdatesList($errorMessage, LANG, $stableVersionsOnly, $arRequestedModules))
+    if (!$arUpdateList = CUpdateClientPartner::GetUpdatesList(
+        $errorMessage,
+        LANG,
+        $stableVersionsOnly,
+        $arRequestedModules
+    )) {
         $errorMessage .= "<br>" . GetMessage("SUP_CANT_CONNECT") . ". ";
+    }
 } else {
     $errorMessage .= "<br>" . GetMessage("SUP_CANT_CONTRUPDATE") . ". ";
 }
 
 $strError_tmp = "";
 $arClientModules = CUpdateClientPartner::GetCurrentModules($strError_tmp);
-if (StrLen($strError_tmp) > 0)
+if ($strError_tmp <> '') {
     $errorMessage .= $strError_tmp;
+}
 
 if ($arUpdateList) {
     if (isset($arUpdateList["ERROR"])) {
-        for ($i = 0, $cnt = count($arUpdateList["ERROR"]); $i < $cnt; $i++)
+        for ($i = 0, $cnt = count($arUpdateList["ERROR"]); $i < $cnt; $i++) {
             $errorMessage .= "[" . $arUpdateList["ERROR"][$i]["@"]["TYPE"] . "] " . $arUpdateList["ERROR"][$i]["#"];
+        }
     }
 }
 
-if (strlen($errorMessage) > 0)
-    echo CAdminMessage::ShowMessage(Array("DETAILS" => $errorMessage, "TYPE" => "ERROR", "MESSAGE" => GetMessage("SUP_ERROR"), "HTML" => true));
+if ($errorMessage <> '') {
+    echo CAdminMessage::ShowMessage(
+        Array("DETAILS" => $errorMessage, "TYPE" => "ERROR", "MESSAGE" => GetMessage("SUP_ERROR"), "HTML" => true)
+    );
+}
 
 ?>
     <script language="JavaScript">
@@ -118,7 +134,7 @@ if (strlen($errorMessage) > 0)
         <?
         $tabControl->BeginNextTab();
         ?>
-        <? if (strlen($myaddmodule) > 0) {
+        <? if ($myaddmodule <> '') {
             ?>
             <script>
                 BX.ready(function () {
@@ -132,19 +148,24 @@ if (strlen($errorMessage) > 0)
                 <?
                 $countModuleUpdates = 0;
                 $countTotalImportantUpdates = 0;
-                $bLockControls = False;
+                $bLockControls = false;
 
                 if ($arUpdateList) {
-                    if (isset($arUpdateList["MODULE"]) && is_array($arUpdateList["MODULE"]) && is_array($arUpdateList["MODULE"]))
+                    if (isset($arUpdateList["MODULE"]) && is_array($arUpdateList["MODULE"]) && is_array(
+                            $arUpdateList["MODULE"]
+                        )) {
                         $countModuleUpdates = count($arUpdateList["MODULE"]);
+                    }
 
                     $countTotalImportantUpdates = 0;
                     if ($countModuleUpdates > 0) {
                         for ($i = 0, $cnt = count($arUpdateList["MODULE"]); $i < $cnt; $i++) {
-                            if (isset($arUpdateList["MODULE"][$i]["#"]["VERSION"]))
+                            if (isset($arUpdateList["MODULE"][$i]["#"]["VERSION"])) {
                                 $countTotalImportantUpdates += count($arUpdateList["MODULE"][$i]["#"]["VERSION"]);
-                            if (!array_key_exists($arUpdateList["MODULE"][$i]["@"]["ID"], $arClientModules))
+                            }
+                            if (!array_key_exists($arUpdateList["MODULE"][$i]["@"]["ID"], $arClientModules)) {
                                 $countTotalImportantUpdates += 1;
+                            }
                         }
                     }
                     ?>
@@ -230,7 +251,8 @@ if (strlen($errorMessage) > 0)
                             }
 
                             updRand++;
-                            CHttpRequest.Send('/bitrix/admin/update_system_partner_act.php?query_type=register&<?= bitrix_sessid_get() ?>&updRand=' + updRand);
+                            CHttpRequest.Send('/bitrix/admin/update_system_partner_act.php?query_type=register&<?= bitrix_sessid_get(
+                            ) ?>&updRand=' + updRand);
                         }
 
                         //-->
@@ -284,9 +306,9 @@ if (strlen($errorMessage) > 0)
                     <div id="upd_select_div" style="display:block">
                         <table border="0" cellspacing="1" cellpadding="3" width="100%" class="internal">
                             <tr class="heading">
-                                <td>
-                                    <B><?= ($countModuleUpdates > 0) ? GetMessage("SUP_SU_TITLE1") : GetMessage("SUP_SU_TITLE2") ?></B>
-                                </td>
+                                <td><B><?= ($countModuleUpdates > 0) ? GetMessage("SUP_SU_TITLE1") : GetMessage(
+                                            "SUP_SU_TITLE2"
+                                        ) ?></B></td>
                             </tr>
                             <tr>
                                 <td valign="top">
@@ -298,13 +320,18 @@ if (strlen($errorMessage) > 0)
                                             <td>
                                                 <b><?= GetMessage("SUP_SU_RECOMEND") ?>:</b>
                                                 <?
-                                                $bComma = False;
+                                                $bComma = false;
                                                 if ($countModuleUpdates > 0) {
-                                                    echo str_replace("#NUM#", $countModuleUpdates, GetMessage("SUP_SU_RECOMEND_MOD"));
-                                                    $bComma = True;
+                                                    echo str_replace(
+                                                        "#NUM#",
+                                                        $countModuleUpdates,
+                                                        GetMessage("SUP_SU_RECOMEND_MOD")
+                                                    );
+                                                    $bComma = true;
                                                 }
-                                                if ($countModuleUpdates <= 0)
+                                                if ($countModuleUpdates <= 0) {
                                                     echo GetMessage("SUP_SU_RECOMEND_NO");
+                                                }
                                                 ?>
                                                 <br><br>
                                                 <input TYPE="button" ID="install_updates_button"
@@ -313,13 +340,16 @@ if (strlen($errorMessage) > 0)
                                                        onclick="InstallUpdates()">
                                                 <br><br>
                                                 <span id="id_view_updates_list_span"><a id="id_view_updates_list"
-                                                                                        href="javascript:tabControl.SelectTab('tab2');"><?= GetMessage("SUP_SU_UPD_VIEW") ?></a></span>
+                                                                                        href="javascript:tabControl.SelectTab('tab2');"><?= GetMessage(
+                                                            "SUP_SU_UPD_VIEW"
+                                                        ) ?></a></span>
                                                 <br><br>
                                                 <?
-                                                if ($stableVersionsOnly == "N")
+                                                if ($stableVersionsOnly == "N") {
                                                     echo GetMessage("SUP_STABLE_OFF_PROMT");
-                                                else
+                                                } else {
                                                     echo GetMessage("SUP_STABLE_ON_PROMT");
+                                                }
                                                 ?>
                                                 <br><br>
                                                 <?= GetMessage("SUP_SU_UPD_HINT") ?>
@@ -442,7 +472,8 @@ if (strlen($errorMessage) > 0)
                             }
 
                             updRand++;
-                            CHttpRequest.Send('/bitrix/admin/update_system_partner_call.php?' + aStrParams + "&<?= bitrix_sessid_get() ?>&query_type=" + param + "&updRand=" + updRand);
+                            CHttpRequest.Send('/bitrix/admin/update_system_partner_call.php?' + aStrParams + "&<?= bitrix_sessid_get(
+                            ) ?>&query_type=" + param + "&updRand=" + updRand);
                         }
 
                         function InstallUpdatesDoStep(data) {
@@ -493,17 +524,24 @@ if (strlen($errorMessage) > 0)
                                     DisableUpdatesTable();
 
                                     var updSuccessDivText = document.getElementById("upd_success_div_text");
-                                    updSuccessDivText.innerHTML = '<?= GetMessageJS("SUP_SU_UPD_INSSUC") ?>: ' + globalCounter;
+                                    updSuccessDivText.innerHTML = '<?= GetMessageJS(
+                                        "SUP_SU_UPD_INSSUC"
+                                    ) ?>: ' + globalCounter;
 
                                     if (modNewCount >= 1) {
-                                        updSuccessDivText.innerHTML += '<br /><br /><b><?=GetMessageJS("SUP_SU_UPD_MP_NEW");?></b>';
+                                        updSuccessDivText.innerHTML += '<br /><br /><b><?=GetMessageJS(
+                                            "SUP_SU_UPD_MP_NEW"
+                                        );?></b>';
                                         for (i = 0; i < modNewCount; i++) {
                                             if (document.getElementById('md_name_' + moduleNew[i])) {
                                                 n = document.getElementById('md_name_' + moduleNew[i]).value;
-                                                updSuccessDivText.innerHTML += '<br />' + n + '&nbsp;&nbsp;<input type="button" onclick="window.open(\'/bitrix/admin/partner_modules.php?lang=<?=LANGUAGE_ID?>&amp;id=' + moduleNew[i] + '&amp;install=Y&amp;<?=bitrix_sessid_get()?>\');" value="<?=GetMessageJS("SUP_SU_UPD_MP_NEW_INST")?>">';
+                                                updSuccessDivText.innerHTML += '<br />' + n + '&nbsp;&nbsp;<input type="button" onclick="window.open(\'/bitrix/admin/partner_modules.php?lang=<?=LANGUAGE_ID?>&amp;id=' + moduleNew[i] + '&amp;install=Y&amp;<?=bitrix_sessid_get(
+                                                )?>\');" value="<?=GetMessageJS("SUP_SU_UPD_MP_NEW_INST")?>">';
                                             }
                                         }
-                                        updSuccessDivText.innerHTML += '<br /><br /><?=GetMessageJS("SUP_SU_UPD_MP_NEW2");?>';
+                                        updSuccessDivText.innerHTML += '<br /><br /><?=GetMessageJS(
+                                            "SUP_SU_UPD_MP_NEW2"
+                                        );?>';
                                     }
                                 }
                             } else {
@@ -551,24 +589,38 @@ if (strlen($errorMessage) > 0)
                                     </td>
                                     <td>
                                         <table border="0" cellspacing="1" cellpadding="3">
-                                            <? if (is_array($arUpdateList) && array_key_exists("CLIENT", $arUpdateList)): ?>
+                                            <? if (is_array($arUpdateList) && array_key_exists(
+                                                    "CLIENT",
+                                                    $arUpdateList
+                                                )): ?>
                                                 <tr>
                                                     <td><? echo GetMessage("SUP_REGISTERED") ?>&nbsp;&nbsp;</td>
-                                                    <td><? echo $arUpdateList["CLIENT"][0]["@"]["NAME"] ?></td>
+                                                    <td><? echo htmlspecialchars(
+                                                            $arUpdateList["CLIENT"][0]["@"]["NAME"]
+                                                        ) ?></td>
                                                 </tr>
                                             <? endif; ?>
 
                                             <tr>
                                                 <td><b><?= GetMessage("SUP_LICENSE_KEY_MD5") ?>:&nbsp;&nbsp;</b></td>
-                                                <td>
-                                                    <b><?= md5("BITRIX" . CUpdateClientPartner::GetLicenseKey() . "LICENCE"); ?></b>
-                                                </td>
+                                                <td><b><?= md5(
+                                                            "BITRIX" . CUpdateClientPartner::GetLicenseKey() . "LICENCE"
+                                                        ); ?></b></td>
                                             </tr>
                                             <tr>
                                                 <td><? echo GetMessage("SUP_ACTIVE") ?>&nbsp;&nbsp;</td>
-                                                <td><? echo GetMessage("SUP_ACTIVE_PERIOD", array("#DATE_TO#" => ((strlen($arUpdateList["CLIENT"][0]["@"]["DATE_TO"]) > 0) ? $arUpdateList["CLIENT"][0]["@"]["DATE_TO"] : "<i>N/A</i>"), "#DATE_FROM#" => ((strlen($arUpdateList["CLIENT"][0]["@"]["DATE_FROM"]) > 0) ? $arUpdateList["CLIENT"][0]["@"]["DATE_FROM"] : "<i>N/A</i>"))); ?></td>
+                                                <td><? echo GetMessage(
+                                                        "SUP_ACTIVE_PERIOD",
+                                                        array(
+                                                            "#DATE_TO#" => (($arUpdateList["CLIENT"][0]["@"]["DATE_TO"] <> '') ? $arUpdateList["CLIENT"][0]["@"]["DATE_TO"] : "<i>N/A</i>"),
+                                                            "#DATE_FROM#" => (($arUpdateList["CLIENT"][0]["@"]["DATE_FROM"] <> '') ? $arUpdateList["CLIENT"][0]["@"]["DATE_FROM"] : "<i>N/A</i>")
+                                                        )
+                                                    ); ?></td>
                                             </tr>
-                                            <? if (is_array($arUpdateList) && array_key_exists("CLIENT", $arUpdateList)): ?>
+                                            <? if (is_array($arUpdateList) && array_key_exists(
+                                                    "CLIENT",
+                                                    $arUpdateList
+                                                )): ?>
                                                 <tr>
                                                     <td><? echo GetMessage("SUP_SERVER") ?>&nbsp;&nbsp;</td>
                                                     <td><? echo $arUpdateList["CLIENT"][0]["@"]["HTTP_HOST"] ?></td>
@@ -576,7 +628,10 @@ if (strlen($errorMessage) > 0)
                                             <? else: ?>
                                                 <tr>
                                                     <td><? echo GetMessage("SUP_SERVER") ?>&nbsp;&nbsp;</td>
-                                                    <td><? echo(($s = COption::GetOptionString("main", "update_site")) == "" ? "-" : $s) ?></td>
+                                                    <td><? echo(($s = COption::GetOptionString(
+                                                            "main",
+                                                            "update_site"
+                                                        )) == "" ? "-" : $s) ?></td>
                                                 </tr>
                                             <? endif; ?>
                                         </table>
@@ -639,42 +694,73 @@ if (strlen($errorMessage) > 0)
                             for ($i = 0, $cnt = count($arUpdateList["MODULE"]); $i < $cnt; $i++) {
                                 $checked = " checked";
                                 $arModuleTmp = $arUpdateList["MODULE"][$i];
-                                $arModuleTmp["@"]["ID"] = preg_replace("#[^A-Za-z0-9._-]#", "", $arModuleTmp["@"]["ID"]);
-                                if (strlen($myaddmodule) > 0) {
-                                    if (toLower($myaddmodule) != toLower($arModuleTmp["@"]["ID"]) && strpos(toLower($myaddmodule), toLower($arModuleTmp["@"]["ID"])) === false)
+                                $arModuleTmp["@"]["ID"] = preg_replace(
+                                    "#[^A-Za-z0-9._-]#",
+                                    "",
+                                    $arModuleTmp["@"]["ID"]
+                                );
+                                if ($myaddmodule <> '') {
+                                    if (toLower($myaddmodule) != toLower($arModuleTmp["@"]["ID"]) && mb_strpos(
+                                            toLower($myaddmodule),
+                                            toLower($arModuleTmp["@"]["ID"])
+                                        ) === false) {
                                         $checked = "";
+                                    }
                                 }
                                 $strTitleTmp = $arModuleTmp["@"]["NAME"] . " (" . $arModuleTmp["@"]["ID"] . ")\n" . $arModuleTmp["@"]["DESCRIPTION"] . "\n";
-                                if (is_array($arModuleTmp["#"]) && array_key_exists("VERSION", $arModuleTmp["#"]) && count($arModuleTmp["#"]["VERSION"]) > 0)
-                                    for ($j = 0, $cntj = count($arModuleTmp["#"]["VERSION"]); $j < $cntj; $j++)
-                                        $strTitleTmp .= str_replace("#VER#", $arModuleTmp["#"]["VERSION"][$j]["@"]["ID"], GetMessage("SUP_SULL_VERSION")) . "\n" . $arModuleTmp["#"]["VERSION"][$j]["#"]["DESCRIPTION"][0]["#"] . "\n";
+                                if (is_array($arModuleTmp["#"]) && array_key_exists(
+                                        "VERSION",
+                                        $arModuleTmp["#"]
+                                    ) && count($arModuleTmp["#"]["VERSION"]) > 0) {
+                                    for ($j = 0, $cntj = count($arModuleTmp["#"]["VERSION"]); $j < $cntj; $j++) {
+                                        $strTitleTmp .= str_replace(
+                                                "#VER#",
+                                                $arModuleTmp["#"]["VERSION"][$j]["@"]["ID"],
+                                                GetMessage("SUP_SULL_VERSION")
+                                            ) . "\n" . $arModuleTmp["#"]["VERSION"][$j]["#"]["DESCRIPTION"][0]["#"] . "\n";
+                                    }
+                                }
                                 $strTitleTmp = htmlspecialcharsbx(preg_replace("/<.+?>/i", "", $strTitleTmp));
                                 ?>
-                                <tr title="<?= $strTitleTmp ?>"
-                                    ondblclick="ShowDescription('<?= CUtil::JSEscape(htmlspecialcharsbx($arModuleTmp["@"]["ID"])) ?>')">
+                                <tr title="<?= $strTitleTmp ?>" ondblclick="ShowDescription('<?= CUtil::JSEscape(
+                                    htmlspecialcharsbx($arModuleTmp["@"]["ID"])
+                                ) ?>')">
                                     <td><INPUT TYPE="checkbox"
                                                NAME="select_module_<?= htmlspecialcharsbx($arModuleTmp["@"]["ID"]) ?>"
-                                               value="Y"
-                                               onClick="ModuleCheckboxClicked(this, '<?= CUtil::JSEscape(htmlspecialcharsbx($arModuleTmp["@"]["ID"])) ?>', new Array());"<?= $checked ?>
+                                               value="Y" onClick="ModuleCheckboxClicked(this, '<?= CUtil::JSEscape(
+                                            htmlspecialcharsbx($arModuleTmp["@"]["ID"])
+                                        ) ?>', new Array());"<?= $checked ?>
                                                id="id_select_module_<?= htmlspecialcharsbx($arModuleTmp["@"]["ID"]) ?>">
                                     </td>
-                                    <td>
-                                        <label for="id_select_module_<?= htmlspecialcharsbx($arModuleTmp["@"]["ID"]) ?>"><?= $arModuleTmp["@"]["PARTNER_NAME"] ?></label>
-                                    </td>
-                                    <td><a target="_blank"
-                                           href="<?= str_replace("#NAME#", htmlspecialcharsbx($arModuleTmp["@"]["ID"]), GetMessage("SUP_SULL_MODULE_PATH")) ?>"><?= str_replace("#NAME#", ($arModuleTmp["@"]["NAME"]), GetMessage("SUP_SULL_MODULE")) ?></a>
-                                    </td>
+                                    <td><label for="id_select_module_<?= htmlspecialcharsbx(
+                                            $arModuleTmp["@"]["ID"]
+                                        ) ?>"><?= $arModuleTmp["@"]["PARTNER_NAME"] ?></label></td>
+                                    <td><a target="_blank" href="<?= str_replace(
+                                            "#NAME#",
+                                            htmlspecialcharsbx($arModuleTmp["@"]["ID"]),
+                                            GetMessage("SUP_SULL_MODULE_PATH")
+                                        ) ?>"><?= str_replace(
+                                                "#NAME#",
+                                                ($arModuleTmp["@"]["NAME"]),
+                                                GetMessage("SUP_SULL_MODULE")
+                                            ) ?></a></td>
                                     <td><?
-                                        if (array_key_exists($arUpdateList["MODULE"][$i]["@"]["ID"], $arClientModules)) {
+                                        if (array_key_exists(
+                                            $arUpdateList["MODULE"][$i]["@"]["ID"],
+                                            $arClientModules
+                                        )) {
                                             echo GetMessage("SUP_SULL_REF_O");
                                         if ($arUpdateList["MODULE"][$i]["@"]["AGR"] == "N") {
                                             ?>
-                                        <input type="hidden"
-                                               name="need_new_agr_<?= CUtil::JSEscape(htmlspecialcharsbx($arModuleTmp["@"]["ID"])); ?>"
-                                               id="need_new_agr_<?= CUtil::JSEscape(htmlspecialcharsbx($arModuleTmp["@"]["ID"])); ?>"
-                                               value="Y">
+                                        <input type="hidden" name="need_new_agr_<?= CUtil::JSEscape(
+                                            htmlspecialcharsbx($arModuleTmp["@"]["ID"])
+                                        ); ?>" id="need_new_agr_<?= CUtil::JSEscape(
+                                            htmlspecialcharsbx($arModuleTmp["@"]["ID"])
+                                        ); ?>" value="Y">
                                             <script>
-                                                arModulesList[arModulesList.length] = '<?=CUtil::JSEscape($arModuleTmp["@"]["ID"]);?>';
+                                                arModulesList[arModulesList.length] = '<?=CUtil::JSEscape(
+                                                    $arModuleTmp["@"]["ID"]
+                                                );?>';
                                                 BX("need_license").value = 'Y';
                                             </script>
                                         <?
@@ -683,27 +769,38 @@ if (strlen($errorMessage) > 0)
                                         else
                                         {
                                         echo GetMessage("SUP_SULL_REF_N");
-                                        if (toLower($myaddmodule) == toLower($arModuleTmp["@"]["ID"]) || strpos(toLower($myaddmodule), toLower($arModuleTmp["@"]["ID"])) !== false)
+                                        if (toLower($myaddmodule) == toLower($arModuleTmp["@"]["ID"]) || mb_strpos(
+                                            toLower($myaddmodule),
+                                            toLower($arModuleTmp["@"]["ID"])
+                                        ) !== false)
                                         {
                                         ?>
                                             <script>
                                                 BX("need_license").value = 'Y';
-                                                BX("need_license_module").value = '<?=CUtil::JSEscape($arModuleTmp["@"]["ID"]);?>';
+                                                BX("need_license_module").value = '<?=CUtil::JSEscape(
+                                                    $arModuleTmp["@"]["ID"]
+                                                );?>';
                                             </script><?
                                         }
                                         $md = htmlspecialcharsbx($arModuleTmp["@"]["ID"]);
                                         ?>
                                         <input type="hidden" name="md_name_<?= $md ?>" id="md_name_<?= $md ?>"
-                                               value="<?= str_replace("#NAME#", htmlspecialcharsbx($arModuleTmp["@"]["NAME"]), GetMessage("SUP_SULL_MODULE")) ?>">
+                                               value="<?= str_replace(
+                                                   "#NAME#",
+                                                   htmlspecialcharsbx($arModuleTmp["@"]["NAME"]),
+                                                   GetMessage("SUP_SULL_MODULE")
+                                               ) ?>">
                                         <input type="hidden" name="md_new_<?= $md ?>" id="md_new_<?= $md ?>" value="Y">
                                             <?
                                         }
                                         ?>
                                     </td>
-                                    <td><?= isset($arModuleTmp["#"]["VERSION"]) ? $arModuleTmp["#"]["VERSION"][count($arModuleTmp["#"]["VERSION"]) - 1]["@"]["ID"] : ""; ?></td>
-                                    <td>
-                                        <a href="javascript:ShowDescription('<?= CUtil::JSEscape(htmlspecialcharsbx($arModuleTmp["@"]["ID"])) ?>')"><?= GetMessage("SUP_SULL_NOTE_D") ?></a>
-                                    </td>
+                                    <td><?= isset($arModuleTmp["#"]["VERSION"]) ? $arModuleTmp["#"]["VERSION"][count(
+                                            $arModuleTmp["#"]["VERSION"]
+                                        ) - 1]["@"]["ID"] : ""; ?></td>
+                                    <td><a href="javascript:ShowDescription('<?= CUtil::JSEscape(
+                                            htmlspecialcharsbx($arModuleTmp["@"]["ID"])
+                                        ) ?>')"><?= GetMessage("SUP_SULL_NOTE_D") ?></a></td>
                                 </tr>
                                 <?
                             }
@@ -723,19 +820,31 @@ if (strlen($errorMessage) > 0)
                                     if (isset($arModuleTmp["#"]["VERSION"])) {
                                         for ($j = count($arModuleTmp["#"]["VERSION"]) - 1; $j >= 0; $j--) {
                                             $strTitleTmp .= '<p><b>';
-                                            $strTitleTmp .= str_replace("#VER#", $arModuleTmp["#"]["VERSION"][$j]["@"]["ID"], GetMessage("SUP_SULL_VERSION"));
+                                            $strTitleTmp .= str_replace(
+                                                "#VER#",
+                                                $arModuleTmp["#"]["VERSION"][$j]["@"]["ID"],
+                                                GetMessage("SUP_SULL_VERSION")
+                                            );
                                             $strTitleTmp .= '</b><br />';
                                             $strTitleTmp .= '';
-                                            $strTitleTmp .= strip_tags($arModuleTmp["#"]["VERSION"][$j]["#"]["DESCRIPTION"][0]["#"], "<b><i><u><li><ul><span><p>");
+                                            $strTitleTmp .= strip_tags(
+                                                $arModuleTmp["#"]["VERSION"][$j]["#"]["DESCRIPTION"][0]["#"],
+                                                "<b><i><u><li><ul><span><p>"
+                                            );
                                             $strTitleTmp .= '</p>';
                                         }
                                     }
 
-                                    $strTitleTmp = addslashes(preg_replace("/\n/", "<br>", preg_replace("/\r/", "", $strTitleTmp)));
+                                    $strTitleTmp = addslashes(
+                                        preg_replace("/\n/", "<br>", preg_replace("/\r/", "", $strTitleTmp))
+                                    );
 
-                                    if ($i > 0)
+                                    if ($i > 0) {
                                         echo ",\n";
-                                    echo "\"" . CUtil::JSEscape(htmlspecialcharsbx($arModuleTmp["@"]["ID"])) . "\" : \"" . $strTitleTmp . "\"";
+                                    }
+                                    echo "\"" . CUtil::JSEscape(
+                                            htmlspecialcharsbx($arModuleTmp["@"]["ID"])
+                                        ) . "\" : \"" . $strTitleTmp . "\"";
                                 }
                             }
                             ?>};
@@ -745,13 +854,15 @@ if (strlen($errorMessage) > 0)
                                 $i = 0;
                                 foreach ($arUpdateList["MODULE"] as $val) {
                                     if (isset($val["#"]["VERSION"])) {
-                                        if ($i > 0)
+                                        if ($i > 0) {
                                             echo ", ";
+                                        }
                                         echo "\"" . $val["@"]["ID"] . "\" : ";
-                                        if (!array_key_exists($val["@"]["ID"], $arClientModules))
+                                        if (!array_key_exists($val["@"]["ID"], $arClientModules)) {
                                             echo count($val["#"]["VERSION"]) + 1;
-                                        else
+                                        } else {
                                             echo count($val["#"]["VERSION"]);
+                                        }
                                         $i++;
                                     }
                                 }
@@ -761,17 +872,29 @@ if (strlen($errorMessage) > 0)
                         var arModuleUpdatesControl = {<?
                             if ($countModuleUpdates > 0) {
                                 for ($i = 0, $cnt = count($arUpdateList["MODULE"]); $i < $cnt; $i++) {
-                                    if ($i > 0)
+                                    if ($i > 0) {
                                         echo ", ";
+                                    }
                                     echo "\"" . $arUpdateList["MODULE"][$i]["@"]["ID"] . "\" : [";
-                                    $bFlagTmp = False;
+                                    $bFlagTmp = false;
                                     if (isset($arUpdateList["MODULE"][$i]["#"]["VERSION"])
                                         && is_array($arUpdateList["MODULE"][$i]["#"]["VERSION"])) {
-                                        for ($i1 = 0, $cnt1 = count($arUpdateList["MODULE"][$i]["#"]["VERSION"]); $i1 < $cnt1; $i1++) {
-                                            if (isset($arUpdateList["MODULE"][$i]["#"]["VERSION"][$i1]["#"]["VERSION_CONTROL"]) && is_array($arUpdateList["MODULE"][$i]["#"]["VERSION"][$i1]["#"]["VERSION_CONTROL"])) {
-                                                for ($i2 = 0, $cnt2 = count($arUpdateList["MODULE"][$i]["#"]["VERSION"][$i1]["#"]["VERSION_CONTROL"]); $i2 < $cnt2; $i2++) {
-                                                    if ($bFlagTmp)
+                                        for (
+                                            $i1 = 0, $cnt1 = count(
+                                            $arUpdateList["MODULE"][$i]["#"]["VERSION"]
+                                        ); $i1 < $cnt1; $i1++
+                                        ) {
+                                            if (isset($arUpdateList["MODULE"][$i]["#"]["VERSION"][$i1]["#"]["VERSION_CONTROL"]) && is_array(
+                                                    $arUpdateList["MODULE"][$i]["#"]["VERSION"][$i1]["#"]["VERSION_CONTROL"]
+                                                )) {
+                                                for (
+                                                    $i2 = 0, $cnt2 = count(
+                                                    $arUpdateList["MODULE"][$i]["#"]["VERSION"][$i1]["#"]["VERSION_CONTROL"]
+                                                ); $i2 < $cnt2; $i2++
+                                                ) {
+                                                    if ($bFlagTmp) {
                                                         echo ", ";
+                                                    }
                                                     echo "\"" . $arUpdateList["MODULE"][$i]["#"]["VERSION"][$i1]["#"]["VERSION_CONTROL"][$i2]["@"]["MODULE"] . "\"";
                                                     $bFlagTmp = true;
                                                 }
@@ -984,7 +1107,9 @@ if (strlen($errorMessage) > 0)
                             tabControl.DisableTab('tab2');
                             document.getElementById("install_updates_button").disabled = true;
                             document.getElementById("install_updates_sel_button").disabled = true;
-                            document.getElementById("id_view_updates_list_span").innerHTML = "<u><?= GetMessageJS("SUP_SU_UPD_VIEW") ?></u>";
+                            document.getElementById("id_view_updates_list_span").innerHTML = "<u><?= GetMessageJS(
+                                "SUP_SU_UPD_VIEW"
+                            ) ?></u>";
                             document.getElementById("id_view_updates_list_span").disabled = true;
                         }
 
@@ -994,7 +1119,9 @@ if (strlen($errorMessage) > 0)
 
                             // document.getElementById("install_updates_button").disabled = <?= (($countModuleUpdates <= 0) ? "true" : "false") ?>;
                             document.getElementById("id_view_updates_list_span").disabled = false;
-                            document.getElementById("id_view_updates_list_span").innerHTML = '<a id="id_view_updates_list" href="javascript:tabControl.SelectTab(\'tab2\');"><?= GetMessageJS("SUP_SU_UPD_VIEW") ?></a>';
+                            document.getElementById("id_view_updates_list_span").innerHTML = '<a id="id_view_updates_list" href="javascript:tabControl.SelectTab(\'tab2\');"><?= GetMessageJS(
+                                "SUP_SU_UPD_VIEW"
+                            ) ?></a>';
 
                             var cnt = document.getElementById("id_register_btn");
                             if (cnt != null)
@@ -1044,7 +1171,9 @@ if (strlen($errorMessage) > 0)
                             txt += '<input name="agree_license" type="checkbox" value="Y" id="agree_license_id">';
                             txt += '<label for="agree_license_id"><?= GetMessageJS("SUP_SUBT_AGREE") ?></label>';
                             txt += '<br /><input name="agree_license_privacy" type="checkbox" value="Y" id="agree_license_privacy">';
-                            txt += '<label for="agree_license_privacy"><?= GetMessageJS("SUP_SUBT_AGREE_PRIVACY") ?></label>';
+                            txt += '<label for="agree_license_privacy"><?= GetMessageJS(
+                                "SUP_SUBT_AGREE_PRIVACY"
+                            ) ?></label>';
                             txt += '</form>';
 
                             agrDialog = new BX.CDialog({
@@ -1149,7 +1278,8 @@ if (strlen($errorMessage) > 0)
 
                             if (param.length > 0) {
                                 updRand++;
-                                CHttpRequest.Send('/bitrix/admin/update_system_partner_act.php?query_type=coupon&<?= bitrix_sessid_get() ?>&COUPON=' + escape(param) + "&updRand=" + updRand);
+                                CHttpRequest.Send('/bitrix/admin/update_system_partner_act.php?query_type=coupon&<?= bitrix_sessid_get(
+                                ) ?>&COUPON=' + escape(param) + "&updRand=" + updRand);
                             } else {
                                 document.getElementById("id_coupon_btn").disabled = false;
                                 CloseWaitWindow();
@@ -1173,8 +1303,9 @@ if (strlen($errorMessage) > 0)
         <SCRIPT LANGUAGE="JavaScript">
             <!--
             <?
-            if ($bLockControls)
+            if ($bLockControls) {
                 echo "LockControls();";
+            }
             ?>
             //-->
         </SCRIPT>
@@ -1187,7 +1318,11 @@ if (strlen($errorMessage) > 0)
 <? echo EndNote(); ?>
 
 <?
-COption::SetOptionString("main", "update_system_check", Date($DB->DateFormatToPHP(CSite::GetDateFormat("FULL")), time()));
+COption::SetOptionString(
+    "main",
+    "update_system_check",
+    Date($DB->DateFormatToPHP(CSite::GetDateFormat("FULL")), time())
+);
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_admin.php");
 ?>

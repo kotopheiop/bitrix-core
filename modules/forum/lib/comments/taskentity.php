@@ -110,8 +110,7 @@ final class TaskEntity extends Entity
                 } else {
                     return false;
                 }
-
-            } catch (\TasksException $e) {
+            } catch (\TasksException | \CTaskAssertException $e) {
                 return false;
             }
         }
@@ -135,8 +134,9 @@ final class TaskEntity extends Entity
      */
     public static function onMessageIsIndexed($id, array $message, array &$index)
     {
-        if ($message["PARAM1"] == strtoupper(self::ENTITY_TYPE))
+        if ($message["PARAM1"] == mb_strtoupper(self::ENTITY_TYPE)) {
             return false;
+        }
 
         if (
             preg_match("/" . self::getXmlIdPrefix() . "(\\d+)/", $message["XML_ID"], $matches) &&

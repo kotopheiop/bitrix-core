@@ -53,6 +53,5 @@ abstract class CommonAction
      */
     public static function onRequest(HttpRequest $request, Controller\Response $response)
     {
-
     }
 }

@@ -1,25 +1,31 @@
 <?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/prolog.php");
 /** @var CMain $APPLICATION */
 $STAT_RIGHT = $APPLICATION->GetGroupRight("statistic");
-if ($STAT_RIGHT == "D")
+if ($STAT_RIGHT == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 include($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/colors.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/img.php");
 
 if (isset($show_money)) {
-    if ($show_money != "Y")
+    if ($show_money != "Y") {
         $show_money = "N";
-} else
-    $show_money = false;//no setting (will be read later from session)
+    }
+} else {
+    $show_money = false;
+}//no setting (will be read later from session)
 if (isset($summa)) {
-    if ($summa != "Y")
+    if ($summa != "Y") {
         $summa = "N";
-} else
-    $summa = false;//no setting (will be read later from session)
+    }
+} else {
+    $summa = false;
+}//no setting (will be read later from session)
 
 define("HELP_FILE", "event_type_list.php");
 
@@ -27,21 +33,24 @@ $sTableID = "tbl_event_graph_list";
 $lAdmin = new CAdminList($sTableID);
 
 $arrDef = array();
-$rs = CStatEventType::GetList(($v1 = "s_total_counter"), ($v2 = "desc"), $arF, $v3);
+$rs = CStatEventType::GetList("s_total_counter", "desc");
 while ($ar = $rs->Fetch()) {
-    if ($ar["DIAGRAM_DEFAULT"] == "Y") $arrDef[] = $ar["ID"];
+    if ($ar["DIAGRAM_DEFAULT"] == "Y") {
+        $arrDef[] = $ar["ID"];
+    }
     $arrEVENTS[$ar["ID"]] = $ar["EVENT"] . " [" . $ar["ID"] . "]";
 }
 
 if ($lAdmin->IsDefaultFilter()) {
     $find_events = array();
-    if (is_array($arrEVENTS))
+    if (is_array($arrEVENTS)) {
         foreach ($arrEVENTS as $key => $value) {
             if ($i <= 9 && in_array($key, $arrDef)) {
                 $find_events[] = $key;
                 $i++;
             }
         }
+    }
     $find_date1_DAYS_TO_BACK = 90;
     $set_filter = "Y";
 }
@@ -54,23 +63,30 @@ $FilterArr = array(
 
 $lAdmin->InitFilter($FilterArr);
 
-if (!is_array($find_events))
+if (!is_array($find_events)) {
     $find_events = array();
-else
-    foreach ($find_events as $key => $value)
+} else {
+    foreach ($find_events as $key => $value) {
         $find_events[$key] = intval($value);
+    }
+}
 $find_events_names = array();
-foreach ($find_events as $value)
+foreach ($find_events as $value) {
     $find_events_names[] = $arrEVENTS[$value];
+}
 
 //Restore & Save settings
 $arSettings = array("saved_show_money", "saved_summa");
 InitFilterEx($arSettings, $sTableID . "_settings", "get");
 if ($show_money === false)//Restore saved setting
+{
     $show_money = $saved_show_money;
+}
 $saved_show_money = $show_money;
 if ($summa === false)//Restore saved setting
+{
     $summa = $saved_summa;
+}
 $saved_summa = $summa;
 InitFilterEx($arSettings, $sTableID . "_settings", "set");
 
@@ -97,21 +113,23 @@ if (is_array($find_events) && count($find_events) > 0) {
     $arrDays = CStatEventType::GetGraphArray($arFilter, $arrLegend);
 
     if (function_exists("ImageCreate")) {
-        if (strlen($strError) <= 0 && count($arrLegend) > 0 && count($arrDays) > 1) :
+        if ($strError == '' && count($arrLegend) > 0 && count($arrDays) > 1) :
             $width = COption::GetOptionString("statistic", "GRAPH_WEIGHT");
             $height = COption::GetOptionString("statistic", "GRAPH_HEIGHT");
             ?>
             <div class="graph">
                 <?
-                if ($summa == "Y")
+                if ($summa == "Y") {
                     echo GetMessage("STAT_SUMMARIZED");
+                }
                 ?>
                 <table cellpadding="0" cellspacing="0" border="0" class="graph" align="center">
                     <tr>
                         <td>
-                            <img class="graph"
-                                 src="event_graph.php?<?= GetFilterParams($FilterArr) ?>&width=<?= $width ?>&height=<?= $height ?>&lang=<?= LANG ?>"
-                                 width="<?= $width ?>" height="<?= $height ?>">
+                            <img class="graph" src="event_graph.php?<?= GetFilterParams(
+                                $FilterArr
+                            ) ?>&width=<?= $width ?>&height=<?= $height ?>&lang=<?= LANG ?>" width="<?= $width ?>"
+                                 height="<?= $height ?>">
                         </td>
                         <? if ($summa != "Y") :?>
                             <td>
@@ -125,11 +143,22 @@ if (is_array($find_events) && count($find_events) > 0) {
                                                 <div style="background-color: <?= "#" . $color ?>"></div>
                                             </td>
                                             <td>
-                                                [<a class="stat_link"
-                                                    href="<? echo htmlspecialcharsbx("/bitrix/admin/event_type_list.php?lang=" . urlencode(LANGUAGE_ID) . "&find_id=" . urlencode($keyL) . "&set_filter=Y") ?>"><?= $keyL ?></a>]&nbsp;<a
-                                                        class="stat_link"
-                                                        title="<? echo GetMessage("STAT_EVENT_DYNAMIC") ?>"
-                                                        href="<? echo htmlspecialcharsbx("/bitrix/admin/event_dynamic_list.php?lang=" . urlencode(LANGUAGE_ID) . "&find_event_id=" . urlencode($keyL) . "&find_date1=" . urlencode($arFilter["DATE1"]) . "&find_date2=" . urlencode($arFilter["DATE2"]) . "&set_filter=Y") ?>"><?= htmlspecialcharsEx($arrL["NAME"]) ?></a>
+                                                [<a class="stat_link" href="<? echo htmlspecialcharsbx(
+                                                    "/bitrix/admin/event_type_list.php?lang=" . urlencode(
+                                                        LANGUAGE_ID
+                                                    ) . "&find_id=" . urlencode($keyL) . "&set_filter=Y"
+                                                ) ?>"><?= $keyL ?></a>]&nbsp;<a class="stat_link"
+                                                                                title="<? echo GetMessage(
+                                                                                    "STAT_EVENT_DYNAMIC"
+                                                                                ) ?>" href="<? echo htmlspecialcharsbx(
+                                                    "/bitrix/admin/event_dynamic_list.php?lang=" . urlencode(
+                                                        LANGUAGE_ID
+                                                    ) . "&find_event_id=" . urlencode(
+                                                        $keyL
+                                                    ) . "&find_date1=" . urlencode(
+                                                        $arFilter["DATE1"]
+                                                    ) . "&find_date2=" . urlencode($arFilter["DATE2"]) . "&set_filter=Y"
+                                                ) ?>"><?= htmlspecialcharsEx($arrL["NAME"]) ?></a>
                                             </td>
                                         </tr>
                                     <?endforeach; ?>
@@ -167,7 +196,7 @@ $aContext[] =
         ),
     );
 
-if ($STAT_RIGHT > "M")
+if ($STAT_RIGHT > "M") {
     $aContext[] =
         array(
             "TEXT" => ($show_money == "Y" ? GetMessage("STAT_SHOW_MONEY") : GetMessage("STAT_SHOW_COUNT")),
@@ -184,6 +213,7 @@ if ($STAT_RIGHT > "M")
                 ),
             ),
         );
+}
 
 
 $lAdmin->AddAdminContextMenu($aContext, false, false);
@@ -193,9 +223,11 @@ $lAdmin->CheckListMode();
 $APPLICATION->SetTitle(GetMessage("STAT_RECORDS_LIST"));
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
-$oFilter = new CAdminFilter($sTableID . "_filter", array(
+$oFilter = new CAdminFilter(
+    $sTableID . "_filter", array(
     GetMessage("STAT_F_EVENTS"),
-));
+)
+);
 ?>
 
     <form name="find_form" method="GET" action="<?= $APPLICATION->GetCurPage() ?>?">
@@ -210,7 +242,15 @@ $oFilter = new CAdminFilter($sTableID . "_filter", array(
             <td><? echo GetMessage("STAT_F_EVENTS") ?><br><IMG SRC="/bitrix/images/statistic/mouse.gif" WIDTH="44"
                                                                HEIGHT="21" BORDER=0 ALT=""></td>
             <td><?
-                echo SelectBoxMFromArray("find_events[]", array("REFERENCE" => $find_events_names, "REFERENCE_ID" => $find_events), false, "", false, "11", 'id="find_events[]"');
+                echo SelectBoxMFromArray(
+                    "find_events[]",
+                    array("REFERENCE" => $find_events_names, "REFERENCE_ID" => $find_events),
+                    false,
+                    "",
+                    false,
+                    "11",
+                    'id="find_events[]"'
+                );
                 ?>
                 <script language="Javascript">
                     function selectEventType(form, field) {
@@ -231,11 +271,23 @@ $oFilter = new CAdminFilter($sTableID . "_filter", array(
         <span class="adm-btn-wrap"><input type="submit" class="adm-btn" name="set_filter"
                                           value="<?= GetMessage("STAT_F_FIND") ?>"
                                           title="<?= GetMessage("STAT_F_FIND_TITLE") ?>"
-                                          onClick="<? echo htmlspecialcharsbx("jsSelectUtils.selectAllOptions('find_events[]');" . $oFilter->id . ".OnSet('" . CUtil::JSEscape($sTableID) . "', '" . CUtil::JSEscape($APPLICATION->GetCurPage() . "?lang=" . LANG . "&") . "'); return false;") ?>"></span>
+                                          onClick="<? echo htmlspecialcharsbx(
+                                              "jsSelectUtils.selectAllOptions('find_events[]');" . $oFilter->id . ".OnSet('" . CUtil::JSEscape(
+                                                  $sTableID
+                                              ) . "', '" . CUtil::JSEscape(
+                                                  $APPLICATION->GetCurPage() . "?lang=" . LANG . "&"
+                                              ) . "'); return false;"
+                                          ) ?>"></span>
         <span class="adm-btn-wrap"><input type="submit" class="adm-btn" name="del_filter"
                                           value="<?= GetMessage("STAT_F_CLEAR") ?>"
                                           title="<?= GetMessage("STAT_F_CLEAR_TITLE") ?>"
-                                          onClick="<? echo htmlspecialcharsbx("jsSelectUtils.selectAllOptions('find_events[]');jsSelectUtils.deleteSelectedOptions('find_events[]');" . $oFilter->id . ".OnClear('" . CUtil::JSEscape($sTableID) . "', '" . CUtil::JSEscape($APPLICATION->GetCurPage() . "?lang=" . LANG . "&") . "'); return false;") ?>"></span>
+                                          onClick="<? echo htmlspecialcharsbx(
+                                              "jsSelectUtils.selectAllOptions('find_events[]');jsSelectUtils.deleteSelectedOptions('find_events[]');" . $oFilter->id . ".OnClear('" . CUtil::JSEscape(
+                                                  $sTableID
+                                              ) . "', '" . CUtil::JSEscape(
+                                                  $APPLICATION->GetCurPage() . "?lang=" . LANG . "&"
+                                              ) . "'); return false;"
+                                          ) ?>"></span>
 
         <?
         $oFilter->End();
@@ -243,8 +295,9 @@ $oFilter = new CAdminFilter($sTableID . "_filter", array(
     </form>
 
 <?
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 $lAdmin->DisplayList();
 ?>
 

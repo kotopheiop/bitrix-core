@@ -1,6 +1,7 @@
 <?
-$MESS["SALE_HPS_BILL_FR_COMMENT"] = "Комментарий к счету";
-$MESS["SALE_HPS_BILL_FR_COMMENT_ADD"] = "Дополнительный комментарий к счету";
-$MESS['SALE_HPS_BILL_FR_BANK_CITY'] = 'Париж';
-$MESS['SALE_HPS_BILL_FR_BANK_ADDRESS'] = 'Франция';
-$MESS['SALE_HPS_BILL_FR_BUYER_COMPANY_ADDRESS'] = 'Париж';
+
+$MESS["SALE_HPS_BILL_FR_COMMENT"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_BILL_FR_COMMENT_ADD"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ";
+$MESS['SALE_HPS_BILL_FR_BANK_CITY'] = 'пїЅпїЅпїЅпїЅпїЅ';
+$MESS['SALE_HPS_BILL_FR_BANK_ADDRESS'] = 'пїЅпїЅпїЅпїЅпїЅпїЅпїЅ';
+$MESS['SALE_HPS_BILL_FR_BUYER_COMPANY_ADDRESS'] = 'пїЅпїЅпїЅпїЅпїЅ';

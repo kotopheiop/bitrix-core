@@ -1,0 +1,4 @@
+<?php
+
+$MESS["SALE_HPS_WEBMONEY_BUTTON"] = "Pay";
+$MESS["SALE_HPS_WEBMONEY_PAYMENT_DESC"] = "Payment ##ID# from #DATE_INSERT#";

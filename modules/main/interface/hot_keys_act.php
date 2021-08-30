@@ -1,4 +1,5 @@
 <?
+
 define("NO_KEEP_STATISTIC", true);
 define("NO_AGENT_STATISTIC", true);
 define("NOT_CHECK_PERMISSIONS", true);
@@ -24,15 +25,20 @@ if ($USER->IsAuthorized() && check_bitrix_sessid()) {
 
         case  'update':
 
-            if ($hkInstance->GetUIDbyHID($_REQUEST["ID"]) == $uid)
-                $res = $hkInstance->Update($_REQUEST["ID"], array("KEYS_STRING" => rawurldecode($_REQUEST["KEYS_STRING"])));
+            if ($hkInstance->GetUIDbyHID($_REQUEST["ID"]) == $uid) {
+                $res = $hkInstance->Update(
+                    $_REQUEST["ID"],
+                    array("KEYS_STRING" => rawurldecode($_REQUEST["KEYS_STRING"]))
+                );
+            }
 
             break;
 
         case  'delete':
 
-            if ($hkInstance->GetUIDbyHID($_REQUEST["ID"]) == $uid)
+            if ($hkInstance->GetUIDbyHID($_REQUEST["ID"]) == $uid) {
                 $res = $hkInstance->Delete($_REQUEST["ID"]);
+            }
 
             break;
 
@@ -40,8 +46,9 @@ if ($USER->IsAuthorized() && check_bitrix_sessid()) {
 
             $res = 0;
             $listRes = $hkInstance->GetList(array(), array("USER_ID" => $uid));
-            while ($arHK = $listRes->Fetch())
+            while ($arHK = $listRes->Fetch()) {
                 $res += $hkInstance->Delete($arHK["ID"]);
+            }
 
             break;
 
@@ -51,8 +58,9 @@ if ($USER->IsAuthorized() && check_bitrix_sessid()) {
             if ($sdRes) {
                 $res = "";
                 $listRes = $hkInstance->GetList(array(), array("USER_ID" => $uid));
-                while ($arHK = $listRes->Fetch())
+                while ($arHK = $listRes->Fetch()) {
                     $res .= $arHK["CODE_ID"] . "::" . $arHK["ID"] . "::" . $arHK["KEYS_STRING"] . ";;";
+                }
             }
 
             break;
@@ -61,14 +69,16 @@ if ($USER->IsAuthorized() && check_bitrix_sessid()) {
 
             $tmpExportFile = $hkInstance->Export();
 
-            if ($tmpExportFile)
-                if (file_exists($tmpExportFile))
+            if ($tmpExportFile) {
+                if (file_exists($tmpExportFile)) {
                     if (filesize($tmpExportFile) > 0) {
                         header('Content-type: application/force-download');
                         header('Content-Disposition: attachment; filename="' . CHotKeys::$ExpImpFileName . '"');
                         $res = file_get_contents($tmpExportFile);
                         break;
                     }
+                }
+            }
 
             $res = '
 				<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -94,8 +104,9 @@ if ($USER->IsAuthorized() && check_bitrix_sessid()) {
 
             $name = $tmpDir . basename($_FILES['bx_hk_filename']['name']);
 
-            if (move_uploaded_file($_FILES['bx_hk_filename']['tmp_name'], $tmpDir . CHotKeys::$ExpImpFileName))
+            if (move_uploaded_file($_FILES['bx_hk_filename']['tmp_name'], $tmpDir . CHotKeys::$ExpImpFileName)) {
                 $numImported = $hkInstance->Import($tmpDir . CHotKeys::$ExpImpFileName, $uid);
+            }
 
             $res = '<script type="text/javascript">window.parent.BXHotKeys.OnImportResponse("' . $numImported . '");</script>';
 

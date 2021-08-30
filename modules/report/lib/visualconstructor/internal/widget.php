@@ -33,10 +33,12 @@ class WidgetTable extends DataManager
     public static function getMap()
     {
         return array(
-            new IntegerField('ID', array(
+            new IntegerField(
+                'ID', array(
                 'primary' => true,
                 'autocomplete' => true,
-            )),
+            )
+            ),
             new StringField('GID'),
             new StringField('BOARD_ID'),
             new IntegerField('DASHBOARD_ROW_ID'),

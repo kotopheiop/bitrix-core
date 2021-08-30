@@ -47,25 +47,6 @@ class SmsLineBy extends Sender\BaseConfigurable
         return is_array($from) ? $from : [];
     }
 
-    public function getDefaultFrom()
-    {
-        $fromList = $this->getFromList();
-        $from = isset($fromList[0]) ? $fromList[0]['id'] : null;
-        //Try to find alphanumeric from
-        foreach ($fromList as $item) {
-            if (!preg_match('#^[0-9]+$#', $item['id'])) {
-                $from = $item['id'];
-                break;
-            }
-        }
-        return $from;
-    }
-
-    public function setDefaultFrom($from)
-    {
-        return $this;
-    }
-
     public function isRegistered()
     {
         return (
@@ -271,11 +252,13 @@ class SmsLineBy extends Sender\BaseConfigurable
 
     private function sendHttpRequest($method, $login, $signature, $path, $body = null)
     {
-        $httpClient = new HttpClient(array(
-            "socketTimeout" => 10,
-            "streamTimeout" => 30,
-            "waitResponse" => true,
-        ));
+        $httpClient = new HttpClient(
+            array(
+                "socketTimeout" => 10,
+                "streamTimeout" => 30,
+                "waitResponse" => true,
+            )
+        );
         $httpClient->setCharset('UTF-8');
         $httpClient->setHeader('User-Agent', 'Bitrix24');
         $httpClient->setHeader('Content-Type', 'application/json');

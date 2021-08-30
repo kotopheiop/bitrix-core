@@ -79,39 +79,56 @@ class Manager
         $result = new Result();
 
         $siteId = '';
-        $r = \CSite::GetList($by, $order);
-        while ($row = $r->fetch())
-            if ($row['ID'] == $this->getDefaultSiteId())
+        $r = \CSite::GetList();
+        while ($row = $r->fetch()) {
+            if ($row['ID'] == $this->getDefaultSiteId()) {
                 $siteId = $row['ID'];
+            }
+        }
 
-        if ($siteId == '')
+        if ($siteId == '') {
             $result->addError(new Error(Loc::getMessage('MAN_ERROR_EMPTY_FIELD_SITE')));
+        }
 
         $deliverySystemId = 0;
-        foreach (\Bitrix\Sale\Delivery\Services\Manager::getActiveList() as $row)
-            if ($row['ID'] == $this->getDefaultDeliverySystemId())
+        foreach (\Bitrix\Sale\Delivery\Services\Manager::getActiveList() as $row) {
+            if ($row['ID'] == $this->getDefaultDeliverySystemId()) {
                 $deliverySystemId = $row['ID'];
-        if ($deliverySystemId == 0)
+            }
+        }
+        if ($deliverySystemId == 0) {
             $result->addError(new Error(Loc::getMessage('MAN_ERROR_EMPTY_FIELD_DELIVERY_SERVICES')));
+        }
 
-        if (count(\Bitrix\Sale\PaySystem\Manager::getList(['filter' => ['ID' => $this->getDefaultPaySystemId()]])) <= 0)
+        if (count(
+                \Bitrix\Sale\PaySystem\Manager::getList(['filter' => ['ID' => $this->getDefaultPaySystemId()]])
+            ) <= 0) {
             $result->addError(new Error(Loc::getMessage('MAN_ERROR_EMPTY_FIELD_PAY_SYSTEM')));
-        if (count(\Bitrix\Sale\PersonType::getList(['filter' => ['ID' => $this->getDefaultPersonTypeId()]])) <= 0)
+        }
+        if (count(\Bitrix\Sale\PersonType::getList(['filter' => ['ID' => $this->getDefaultPersonTypeId()]])) <= 0) {
             $result->addError(new Error(Loc::getMessage('MAN_ERROR_EMPTY_FIELD_PERSON_TYPE')));
-        if (count(\Bitrix\Sale\OrderStatus::getList(['filter' => ['ID' => $this->getDefaultOrderStatusId()]])) <= 0)
+        }
+        if (count(\Bitrix\Sale\OrderStatus::getList(['filter' => ['ID' => $this->getDefaultOrderStatusId()]])) <= 0) {
             $result->addError(new Error('MAN_ERROR_EMPTY_FIELD_ORDER_STATUS'));
-        if (count(\Bitrix\Sale\DeliveryStatus::getList(['filter' => ['ID' => $this->getDefaultDeliveryStatusId()]])) <= 0)
+        }
+        if (count(
+                \Bitrix\Sale\DeliveryStatus::getList(['filter' => ['ID' => $this->getDefaultDeliveryStatusId()]])
+            ) <= 0) {
             $result->addError(new Error('MAN_ERROR_EMPTY_FIELD_DELIVERY_STATUS'));
+        }
 
         $catalogList = [];
         if (\Bitrix\Main\Loader::includeModule('catalog')) {
-            $catalogList = \Bitrix\Catalog\CatalogIblockTable::getList([
-                'select' => ['IBLOCK_ID', 'IBLOCK.NAME'],
-                'filter' => ['=IBLOCK.ACTIVE' => 'Y']
-            ])->fetchAll();
+            $catalogList = \Bitrix\Catalog\CatalogIblockTable::getList(
+                [
+                    'select' => ['IBLOCK_ID', 'IBLOCK.NAME'],
+                    'filter' => ['=IBLOCK.ACTIVE' => 'Y']
+                ]
+            )->fetchAll();
         }
-        if (!count($catalogList) > 0)
+        if (!count($catalogList) > 0) {
             $result->addError(new Error(Loc::getMessage('MAN_ERROR_CATALOGS')));
+        }
 
         return $result;
     }
@@ -260,13 +277,13 @@ class Manager
 
     public function getTradePlatformsXmlId($siteId)
     {
-        $r = unserialize(Option::get("sale", "config_external_trade_platforms_xml_id"));
+        $r = unserialize(Option::get("sale", "config_external_trade_platforms_xml_id"), ['allowed_classes' => false]);
         return $r[$siteId];
     }
 
     public function setTradePlatformsXmlId($siteId, $code)
     {
-        $r = unserialize(Option::get("sale", "config_external_trade_platforms_xml_id"));
+        $r = unserialize(Option::get("sale", "config_external_trade_platforms_xml_id"), ['allowed_classes' => false]);
 
         $r[$siteId] = $code;
         Option::set("sale", "config_external_trade_platforms_xml_id", serialize($r));

@@ -69,7 +69,7 @@ class TTFontFile
     var $defaultWidth;
     var $maxStrLenRead;
 
-    function TTFontFile()
+    public function __construct()
     {
         $this->maxStrLenRead = 200000;    // Maximum size of glyf table to read in as string (otherwise reads each glyph from file)
     }
@@ -89,12 +89,15 @@ class TTFontFile
         $this->descent = 0;
         $this->TTCFonts = array();
         $this->version = $version = $this->read_ulong();
-        if ($version == 0x4F54544F)
+        if ($version == 0x4F54544F) {
             die("Postscript outlines are not supported");
-        if ($version == 0x74746366)
+        }
+        if ($version == 0x74746366) {
             die("ERROR - TrueType Fonts Collections not supported");
-        if (!in_array($version, array(0x00010000, 0x74727565)))
+        }
+        if (!in_array($version, array(0x00010000, 0x74727565))) {
             die("Not a TrueType font: version=" . $version);
+        }
         $this->readTableDirectory();
         $this->extractInfo();
         fclose($this->fh);
@@ -250,7 +253,12 @@ class TTFontFile
 
     function splice($stream, $offset, $value)
     {
-        return mb_substr($stream, 0, $offset, '8bit') . $value . mb_substr($stream, $offset + mb_strlen($value, '8bit'), mb_strlen($stream, '8bit'), '8bit');
+        return mb_substr($stream, 0, $offset, '8bit') . $value . mb_substr(
+                $stream,
+                $offset + mb_strlen($value, '8bit'),
+                mb_strlen($stream, '8bit'),
+                '8bit'
+            );
     }
 
     function _set_ushort($stream, $offset, $value)
@@ -314,8 +322,9 @@ class TTFontFile
 
         $name_offset = $this->seek_table("name");
         $format = $this->read_ushort();
-        if ($format != 0)
+        if ($format != 0) {
             die("Unknown name table format " . $format);
+        }
         $numRecords = $this->read_ushort();
         $string_data_offset = $name_offset + $this->read_ushort();
         $names = array(1 => '', 2 => '', 3 => '', 4 => '', 6 => '');
@@ -328,13 +337,16 @@ class TTFontFile
             $nameId = $this->read_ushort();
             $length = $this->read_ushort();
             $offset = $this->read_ushort();
-            if (!in_array($nameId, $K)) continue;
+            if (!in_array($nameId, $K)) {
+                continue;
+            }
             $N = '';
             if ($platformId == 3 && $encodingId == 1 && $languageId == 0x409) { // Microsoft, Unicode, US English, PS Name
                 $opos = $this->_pos;
                 $this->seek($string_data_offset + $offset);
-                if ($length % 2 != 0)
+                if ($length % 2 != 0) {
                     die("PostScript name is UTF-16BE string of odd length");
+                }
                 $length /= 2;
                 $N = '';
                 while ($length > 0) {
@@ -344,28 +356,38 @@ class TTFontFile
                 }
                 $this->_pos = $opos;
                 $this->seek($opos);
-            } else if ($platformId == 1 && $encodingId == 0 && $languageId == 0) { // Macintosh, Roman, English, PS Name
-                $opos = $this->_pos;
-                $N = $this->get_chunk($string_data_offset + $offset, $length);
-                $this->_pos = $opos;
-                $this->seek($opos);
+            } else {
+                if ($platformId == 1 && $encodingId == 0 && $languageId == 0) { // Macintosh, Roman, English, PS Name
+                    $opos = $this->_pos;
+                    $N = $this->get_chunk($string_data_offset + $offset, $length);
+                    $this->_pos = $opos;
+                    $this->seek($opos);
+                }
             }
             if ($N && $names[$nameId] == '') {
                 $names[$nameId] = $N;
                 $nameCount -= 1;
-                if ($nameCount == 0) break;
+                if ($nameCount == 0) {
+                    break;
+                }
             }
         }
-        if ($names[6])
+        if ($names[6]) {
             $psName = $names[6];
-        else if ($names[4])
-            $psName = preg_replace('/ /', '-', $names[4]);
-        else if ($names[1])
-            $psName = preg_replace('/ /', '-', $names[1]);
-        else
-            $psName = '';
-        if (!$psName)
+        } else {
+            if ($names[4]) {
+                $psName = preg_replace('/ /', '-', $names[4]);
+            } else {
+                if ($names[1]) {
+                    $psName = preg_replace('/ /', '-', $names[1]);
+                } else {
+                    $psName = '';
+                }
+            }
+        }
+        if (!$psName) {
             die("Could not find PostScript font name");
+        }
         $this->name = $psName;
         if ($names[1]) {
             $this->familyName = $names[1];
@@ -407,8 +429,9 @@ class TTFontFile
         $this->skip(3 * 2);
         $indexToLocFormat = $this->read_ushort();
         $glyphDataFormat = $this->read_ushort();
-        if ($glyphDataFormat != 0)
+        if ($glyphDataFormat != 0) {
             die('Unknown glyph data format ' . $glyphDataFormat);
+        }
 
         ///////////////////////////////////
         // hhea metrics table
@@ -446,8 +469,12 @@ class TTFontFile
             $this->skip(26);
             $sTypoAscender = $this->read_short();
             $sTypoDescender = $this->read_short();
-            if (!$this->ascent) $this->ascent = ($sTypoAscender * $scale);
-            if (!$this->descent) $this->descent = ($sTypoDescender * $scale);
+            if (!$this->ascent) {
+                $this->ascent = ($sTypoAscender * $scale);
+            }
+            if (!$this->descent) {
+                $this->descent = ($sTypoDescender * $scale);
+            }
             if ($version > 1) {
                 $this->skip(16);
                 $sCapHeight = $this->read_short();
@@ -457,8 +484,12 @@ class TTFontFile
             }
         } else {
             $usWeightClass = 500;
-            if (!$this->ascent) $this->ascent = ($yMax * $scale);
-            if (!$this->descent) $this->descent = ($yMin * $scale);
+            if (!$this->ascent) {
+                $this->ascent = ($yMax * $scale);
+            }
+            if (!$this->descent) {
+                $this->descent = ($yMin * $scale);
+            }
             $this->capHeight = $this->ascent;
         }
         $this->stemV = 50 + intval(pow(($usWeightClass / 65.0), 2));
@@ -475,12 +506,15 @@ class TTFontFile
 
         $this->flags = 4;
 
-        if ($this->italicAngle != 0)
+        if ($this->italicAngle != 0) {
             $this->flags = $this->flags | 64;
-        if ($usWeightClass >= 600)
+        }
+        if ($usWeightClass >= 600) {
             $this->flags = $this->flags | 262144;
-        if ($isFixedPitch)
+        }
+        if ($isFixedPitch) {
             $this->flags = $this->flags | 1;
+        }
 
         ///////////////////////////////////
         // hhea - Horizontal header table
@@ -488,11 +522,13 @@ class TTFontFile
         $this->seek_table("hhea");
         $this->skip(32);
         $metricDataFormat = $this->read_ushort();
-        if ($metricDataFormat != 0)
+        if ($metricDataFormat != 0) {
             die('Unknown horizontal metric data format ' . $metricDataFormat);
+        }
         $numberOfHMetrics = $this->read_ushort();
-        if ($numberOfHMetrics == 0)
+        if ($numberOfHMetrics == 0) {
             die('Number of horizontal metrics is 0');
+        }
 
         ///////////////////////////////////
         // maxp - Maximum profile table
@@ -517,14 +553,17 @@ class TTFontFile
             if (($platformID == 3 && $encodingID == 1) || $platformID == 0) { // Microsoft, Unicode
                 $format = $this->get_ushort($cmap_offset + $offset);
                 if ($format == 4) {
-                    if (!$unicode_cmap_offset) $unicode_cmap_offset = $cmap_offset + $offset;
+                    if (!$unicode_cmap_offset) {
+                        $unicode_cmap_offset = $cmap_offset + $offset;
+                    }
                     break;
                 }
             }
             $this->seek($save_pos);
         }
-        if (!$unicode_cmap_offset)
+        if (!$unicode_cmap_offset) {
             die('Font (' . $this->filename . ') does not have cmap for Unicode (platform 3, encoding 1, format 4, or platform 0, any encoding, format 4)');
+        }
 
 
         $glyphToChar = array();
@@ -535,7 +574,6 @@ class TTFontFile
         // hmtx - Horizontal metrics table
         ///////////////////////////////////
         $this->getHMTX($numberOfHMetrics, $numGlyphs, $glyphToChar, $scale);
-
     }
 
 
@@ -606,8 +644,9 @@ class TTFontFile
             $this->seek($save_pos);
         }
 
-        if (!$unicode_cmap_offset)
+        if (!$unicode_cmap_offset) {
             die('Font (' . $this->filename . ') does not have cmap for Unicode (platform 3, encoding 1, format 4, or platform 0, any encoding, format 4)');
+        }
 
 
         $glyphToChar = array();
@@ -677,7 +716,12 @@ class TTFontFile
 
         // post - PostScript
         $opost = $this->get_table('post');
-        $post = "\x00\x03\x00\x00" . mb_substr($opost, 4, 12, '8bit') . "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
+        $post = "\x00\x03\x00\x00" . mb_substr(
+                $opost,
+                4,
+                12,
+                '8bit'
+            ) . "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
         $this->add('post', $post);
 
         // Sort CID2GID map into segments of contiguous codes
@@ -713,14 +757,21 @@ class TTFontFile
         $searchRange = $searchRange * 2;
         $rangeShift = $segCount * 2 - $searchRange;
         $length = 16 + (8 * $segCount) + ($numGlyphs + 1);
-        $cmap = array(0, 1,        // Index : version, number of encoding subtables
-            3, 1,                // Encoding Subtable : platform (MS=3), encoding (Unicode)
-            0, 12,            // Encoding Subtable : offset (hi,lo)
-            4, $length, 0,        // Format 4 Mapping subtable: format, length, language
+        $cmap = array(
+            0,
+            1,        // Index : version, number of encoding subtables
+            3,
+            1,                // Encoding Subtable : platform (MS=3), encoding (Unicode)
+            0,
+            12,            // Encoding Subtable : offset (hi,lo)
+            4,
+            $length,
+            0,        // Format 4 Mapping subtable: format, length, language
             $segCount * 2,
             $searchRange,
             $entrySelector,
-            $rangeShift);
+            $rangeShift
+        );
 
         // endCode(s)
         foreach ($range AS $start => $subrange) {
@@ -799,8 +850,11 @@ class TTFontFile
             if ($glyfLength < $this->maxStrLenRead) {
                 $data = mb_substr($glyphData, $glyphPos, $glyphLen, '8bit');
             } else {
-                if ($glyphLen > 0) $data = $this->get_chunk($glyfOffset + $glyphPos, $glyphLen);
-                else $data = '';
+                if ($glyphLen > 0) {
+                    $data = $this->get_chunk($glyfOffset + $glyphPos, $glyphLen);
+                } else {
+                    $data = '';
+                }
             }
 
             if ($glyphLen > 0) {
@@ -827,10 +881,14 @@ class TTFontFile
                     }
                     if ($flags & GF_SCALE) {
                         $pos_in_glyph += 2;
-                    } else if ($flags & GF_XYSCALE) {
-                        $pos_in_glyph += 4;
-                    } else if ($flags & GF_TWOBYTWO) {
-                        $pos_in_glyph += 8;
+                    } else {
+                        if ($flags & GF_XYSCALE) {
+                            $pos_in_glyph += 4;
+                        } else {
+                            if ($flags & GF_TWOBYTWO) {
+                                $pos_in_glyph += 8;
+                            }
+                        }
                     }
                 }
                 $maxComponentElements = max($maxComponentElements, $nComponentElements);
@@ -905,9 +963,11 @@ class TTFontFile
             foreach ($this->glyphdata[$originalGlyphIdx]['compGlyphs'] AS $glyphIdx) {
                 $this->getGlyphData($glyphIdx, $maxdepth, $depth, $points, $contours);
             }
-        } else if (($this->glyphdata[$originalGlyphIdx]['nContours'] > 0) && $depth > 0) {    // simple
-            $contours += $this->glyphdata[$originalGlyphIdx]['nContours'];
-            $points += $this->glyphdata[$originalGlyphIdx]['nPoints'];
+        } else {
+            if (($this->glyphdata[$originalGlyphIdx]['nContours'] > 0) && $depth > 0) {    // simple
+                $contours += $this->glyphdata[$originalGlyphIdx]['nContours'];
+                $points += $this->glyphdata[$originalGlyphIdx]['nPoints'];
+            }
         }
         $depth--;
     }
@@ -937,16 +997,22 @@ class TTFontFile
                 $savepos = ftell($this->fh);
                 $this->getGlyphs($glyphIdx, $start, $glyphSet, $subsetglyphs);
                 $this->seek($savepos);
-                if ($flags & GF_WORDS)
+                if ($flags & GF_WORDS) {
                     $this->skip(4);
-                else
+                } else {
                     $this->skip(2);
-                if ($flags & GF_SCALE)
+                }
+                if ($flags & GF_SCALE) {
                     $this->skip(2);
-                else if ($flags & GF_XYSCALE)
-                    $this->skip(4);
-                else if ($flags & GF_TWOBYTWO)
-                    $this->skip(8);
+                } else {
+                    if ($flags & GF_XYSCALE) {
+                        $this->skip(4);
+                    } else {
+                        if ($flags & GF_TWOBYTWO) {
+                            $this->skip(8);
+                        }
+                    }
+                }
             }
         }
     }
@@ -966,7 +1032,6 @@ class TTFontFile
             $this->seek($start);
         }
         for ($glyph = 0; $glyph < $numberOfHMetrics; $glyph++) {
-
             if (($numberOfHMetrics * 4) < $this->maxStrLenRead) {
                 $aw = $arr[($glyph * 2) + 1];
             } else {
@@ -974,7 +1039,6 @@ class TTFontFile
                 $lsb = $this->read_ushort();
             }
             if (isset($glyphToChar[$glyph]) || $glyph == 0) {
-
                 if ($aw >= (1 << 15)) {
                     $aw = 0;
                 }    // 1.03 Some (arabic) fonts have -ve values for width
@@ -1050,14 +1114,17 @@ class TTFontFile
             for ($n = 0; $n <= $numGlyphs; $n++) {
                 $this->glyphPos[] = ($arr[$n + 1] * 2);
             }
-        } else if ($indexToLocFormat == 1) {
-            $data = $this->get_chunk($start, ($numGlyphs * 4) + 4);
-            $arr = unpack("N*", $data);
-            for ($n = 0; $n <= $numGlyphs; $n++) {
-                $this->glyphPos[] = ($arr[$n + 1]);
+        } else {
+            if ($indexToLocFormat == 1) {
+                $data = $this->get_chunk($start, ($numGlyphs * 4) + 4);
+                $arr = unpack("N*", $data);
+                for ($n = 0; $n <= $numGlyphs; $n++) {
+                    $this->glyphPos[] = ($arr[$n + 1]);
+                }
+            } else {
+                die('Unknown location table format ' . $indexToLocFormat);
             }
-        } else
-            die('Unknown location table format ' . $indexToLocFormat);
+        }
     }
 
 
@@ -1094,17 +1161,18 @@ class TTFontFile
         for ($n = 0; $n < $segCount; $n++) {
             $endpoint = ($endCount[$n] + 1);
             for ($unichar = $startCount[$n]; $unichar < $endpoint; $unichar++) {
-                if ($idRangeOffset[$n] == 0)
+                if ($idRangeOffset[$n] == 0) {
                     $glyph = ($unichar + $idDelta[$n]) & 0xFFFF;
-                else {
+                } else {
                     $offset = ($unichar - $startCount[$n]) * 2 + $idRangeOffset[$n];
                     $offset = $idRangeOffset_start + 2 * $n + $offset;
-                    if ($offset >= $limit)
+                    if ($offset >= $limit) {
                         $glyph = 0;
-                    else {
+                    } else {
                         $glyph = $this->get_ushort($offset);
-                        if ($glyph != 0)
+                        if ($glyph != 0) {
                             $glyph = ($glyph + $idDelta[$n]) & 0xFFFF;
+                        }
                     }
                 }
                 $charToGlyph[$unichar] = $glyph;

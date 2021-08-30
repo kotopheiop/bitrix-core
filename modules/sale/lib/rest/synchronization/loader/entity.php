@@ -46,16 +46,18 @@ class Entity
 
         $entity = $this->getEntityTable();
 
-        if ($r = $entity::getList([
-            'select' => $this->getFields(),
-            'filter' => array_merge(
-                [
-                    $this->getExternalNameField() => $xmlId
-                ],
-                $this->getAdditionalFilterFileds()
-            ),
-            'order' => ['ID' => 'ASC']
-        ])->fetch()
+        if ($r = $entity::getList(
+            [
+                'select' => $this->getFields(),
+                'filter' => array_merge(
+                    [
+                        $this->getExternalNameField() => $xmlId
+                    ],
+                    $this->getAdditionalFilterFileds()
+                ),
+                'order' => ['ID' => 'ASC']
+            ]
+        )->fetch()
         ) {
             return $r['ID'];
         }

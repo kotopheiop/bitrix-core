@@ -4,9 +4,10 @@ namespace Bitrix\Seo\Analytics;
 
 use Bitrix\Main\Loader;
 
+use Bitrix\Seo\BusinessSuite\IInternalService;
 use Bitrix\Seo\Retargeting;
 
-class Service implements Retargeting\IService, Retargeting\IMultiClientService
+class Service implements Retargeting\IService, Retargeting\IMultiClientService, IInternalService
 {
     const GROUP = 'analytics';
 
@@ -133,6 +134,7 @@ class Service implements Retargeting\IService, Retargeting\IMultiClientService
                 'AUTH_URL' => $authAdapter->getAuthUrl(),
                 'HAS_ACCOUNTS' => $account->hasAccounts(),
                 'PROFILE' => $account->getProfileCached(),
+                'ENGINE_CODE' => static::getEngineCode($type),
                 'CLIENTS' => static::getClientsProfiles($authAdapter)
             );
 
@@ -248,23 +250,59 @@ class Service implements Retargeting\IService, Retargeting\IMultiClientService
     public static function getClientsProfiles(Retargeting\AuthAdapter $authAdapter)
     {
         $type = $authAdapter->getType();
-        return array_values(array_filter(array_map(function ($item) use ($type) {
-            $service = new static();
-            $service->setClientId($item['proxy_client_id']);
+        return array_values(
+            array_filter(
+                array_map(
+                    function ($item) use ($type) {
+                        $service = new static();
+                        $service->setClientId($item['proxy_client_id']);
 
-            $authAdapter = Retargeting\AuthAdapter::create($type)->setService($service);
+                        $authAdapter = Retargeting\AuthAdapter::create($type)->setService($service);
 
-            $account = Account::create($type)->setService($service);
-            $account->getRequest()->setAuthAdapter($authAdapter);
+                        $account = Account::create($type)->setService($service);
+                        $account->getRequest()->setAuthAdapter($authAdapter);
 
-            $profile = $account->getProfileCached();
-            if ($profile) {
-                return $profile;
-            } else {
-                // if no profile, then may be auth was removed in service
-                $authAdapter->removeAuth();
-                return null;
+                        $profile = $account->getProfileCached();
+                        if ($profile) {
+                            return $profile;
+                        } else {
+                            // if no profile, then may be auth was removed in service
+                            $authAdapter->removeAuth();
+                            return null;
+                        }
+                    },
+                    $authAdapter->getAuthorizedClientsList()
+                )
+            )
+        );
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public static function getTypeByEngine(string $engineCode): ?string
+    {
+        foreach (static::getTypes() as $type) {
+            if ($engineCode == static::getEngineCode($type)) {
+                return $type;
             }
-        }, $authAdapter->getAuthorizedClientsList())));
+        }
+        return null;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public static function canUseAsInternal(): bool
+    {
+        return true;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public static function getMethodPrefix(): string
+    {
+        return 'analytics';
     }
 }

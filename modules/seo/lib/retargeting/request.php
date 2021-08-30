@@ -2,9 +2,9 @@
 
 namespace Bitrix\Seo\Retargeting;
 
-use \Bitrix\Main\Error;
+use Bitrix\Main\Error;
 use Bitrix\Main\SystemException;
-use \Bitrix\Seo\Retargeting\Internals\ServiceLogTable;
+use Bitrix\Seo\Retargeting\Internals\ServiceLogTable;
 
 /**
  * Class Request
@@ -141,14 +141,8 @@ abstract class Request
         if (!$this->adapter) {
             throw new SystemException('AuthAdapter not applied.');
         }
-
-        //if (!$this->client)
-        {
-            $options = array(
-                'socketTimeout' => 5
-            );
-            $this->client = new AdsHttpClient($options);
-        }
+        $this->client = $this->client ?? new AdsHttpClient(['socketTimeout' => 5]);
+        $this->client->clearHeaders();
 
         $response = Response::create($this->type);
         $response->setRequest($this);
@@ -167,12 +161,14 @@ abstract class Request
                     continue;
                 }
 
-                ServiceLogTable::add(array(
-                    'GROUP_ID' => 'retargeting',
-                    'TYPE' => static::TYPE_CODE,
-                    'CODE' => $error->getCode(),
-                    'MESSAGE' => $error->getMessage()
-                ));
+                ServiceLogTable::add(
+                    array(
+                        'GROUP_ID' => 'retargeting',
+                        'TYPE' => static::TYPE_CODE,
+                        'CODE' => $error->getCode(),
+                        'MESSAGE' => $error->getMessage()
+                    )
+                );
             }
         }
 

@@ -16,14 +16,16 @@ class GraphData
      */
     public static function getGraphs($graphCategory)
     {
-        if (strlen($graphCategory) <= 0)
+        if ($graphCategory == '') {
             throw new \Bitrix\Main\ArgumentNullException("graphCategory");
+        }
 
         $graphics = self::getList();
         $result = array();
 
-        if (isset($graphics[$graphCategory]))
+        if (isset($graphics[$graphCategory])) {
             $result = $graphics[$graphCategory];
+        }
 
         return $result;
     }
@@ -37,18 +39,21 @@ class GraphData
         static $def = null;
 
         if ($def == null) {
-            $filename = \Bitrix\Main\Application::getDocumentRoot() . "/bitrix/modules/scale/include/graphdefinitions.php";
+            $filename = \Bitrix\Main\Application::getDocumentRoot(
+                ) . "/bitrix/modules/scale/include/graphdefinitions.php";
             $file = new \Bitrix\Main\IO\File($filename);
 
-            if ($file->isExists())
+            if ($file->isExists()) {
                 require_once($filename);
-            else
+            } else {
                 throw new \Bitrix\Main\IO\FileNotFoundException($filename);
+            }
 
-            if (isset($graphics))
+            if (isset($graphics)) {
                 $def = $graphics;
-            else
+            } else {
                 $def = array();
+            }
         }
 
         return $def;

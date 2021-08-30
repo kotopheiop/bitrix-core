@@ -1,5 +1,6 @@
 <?
 /** @global CMain $APPLICATION */
+
 /** @global CUser $USER */
 /** @global CDatabase $DB */
 /** @global CUserTypeManager $USER_FIELD_MANAGER */
@@ -8,8 +9,9 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/catalog/prolog.php");
 
 global $APPLICATION, $USER, $DB, $USER_FIELD_MANAGER;
 
-if (!$USER->CanDoOperation('catalog_read') && !$USER->CanDoOperation('catalog_view'))
+if (!$USER->CanDoOperation('catalog_read') && !$USER->CanDoOperation('catalog_view')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 CModule::IncludeModule("catalog");
 
 IncludeModuleLangFile(__FILE__);
@@ -41,26 +43,30 @@ $arFilterFields = Array(
     "find_section_code",
     "find_section_external_id"
 );
-if ($entity_id)
+if ($entity_id) {
     $USER_FIELD_MANAGER->AdminListAddFilterFields($entity_id, $arFilterFields);
+}
 
 $section_id = intval($find_section_section);
 $lAdmin->InitFilter($arFilterFields);
 $find_section_section = $section_id;
-if ($find_section_section <= 0)
+if ($find_section_section <= 0) {
     $find_section_section = -1;
+}
 
 $IBLOCK_ID = 0;
 if (0 == $IBLOCK_ID && isset($find_iblock_id)) {
     $IBLOCK_ID = intval($find_iblock_id);
-    if (0 >= $IBLOCK_ID)
+    if (0 >= $IBLOCK_ID) {
         $IBLOCK_ID = 0;
+    }
 }
 
 if (0 == $IBLOCK_ID) {
     $IBLOCK_ID = intval($_REQUEST["IBLOCK_ID"]);
-    if (0 >= $IBLOCK_ID)
+    if (0 >= $IBLOCK_ID) {
         $IBLOCK_ID = 0;
+    }
 }
 
 $arIBTYPE = false;
@@ -68,15 +74,17 @@ if ($IBLOCK_ID > 0) {
     $arIBlock = CIBlock::GetArrayByID($IBLOCK_ID);
     if ($arIBlock) {
         $arIBTYPE = CIBlockType::GetByIDLang($arIBlock["IBLOCK_TYPE_ID"], LANGUAGE_ID);
-        if (!$arIBTYPE)
+        if (!$arIBTYPE) {
             $APPLICATION->AuthForm(GetMessage("BX_MOD_CATALOG_ADMIN_CSS_BAD_BLOCK_TYPE_ID"));
+        }
 
         $bBadBlock = !CIBlockRights::UserHasRightTo($IBLOCK_ID, $IBLOCK_ID, "iblock_admin_display");
     } else {
         $bBadBlock = true;
     }
-    if ($bBadBlock)
+    if ($bBadBlock) {
         $APPLICATION->AuthForm(GetMessage("BX_MOD_CATALOG_ADMIN_CSS_BAD_IBLOCK"));
+    }
 } else {
     $arIBlock = array(
         "ID" => 0,
@@ -101,18 +109,22 @@ $arFilter = array(
     "CODE" => $find_section_code,
     "EXTERNAL_ID" => $find_section_external_id,
 );
-if ($entity_id)
+if ($entity_id) {
     $USER_FIELD_MANAGER->AdminListAddFilter($entity_id, $arFilter);
+}
 
-if ($find_section_section == "")
+if ($find_section_section == "") {
     unset($arFilter["SECTION_ID"]);
-if (isset($arFilter['ID']) && $arFilter['ID'] > 0)
+}
+if (isset($arFilter['ID']) && $arFilter['ID'] > 0) {
     unset($arFilter["SECTION_ID"]);
+}
 
-if ($IBLOCK_ID > 0)
+if ($IBLOCK_ID > 0) {
     $arFilter["IBLOCK_ID"] = $IBLOCK_ID;
-else
+} else {
     $arFilter["IBLOCK_ID"] = -1;
+}
 
 $arFilter["CHECK_PERMISSIONS"] = "Y";
 $arFilter["MIN_PERMISSION"] = "R";
@@ -188,23 +200,29 @@ $arHeaders = array(
         "sort" => "CREATED_BY",
     ),
 );
-if ($entity_id)
+if ($entity_id) {
     $USER_FIELD_MANAGER->AdminListAddHeaders($entity_id, $arHeaders);
+}
 $lAdmin->AddHeaders($arHeaders);
 
 $arVisibleColumns = $lAdmin->GetVisibleHeaderColumns();
-if (!in_array('ID', $arVisibleColumns))
+if (!in_array('ID', $arVisibleColumns)) {
     $arVisibleColumns[] = 'ID';
-if (!in_array('XML_ID', $arVisibleColumns))
+}
+if (!in_array('XML_ID', $arVisibleColumns)) {
     $arVisibleColumns[] = 'XML_ID';
+}
 $arVisibleColumnsMap = array();
-foreach ($arVisibleColumns as $value)
+foreach ($arVisibleColumns as $value) {
     $arVisibleColumnsMap[$value] = true;
+}
 
-if (!isset($by))
+if (!isset($by)) {
     $by = 'NAME';
-if (!isset($order))
+}
+if (!isset($order)) {
     $order = 'ASC';
+}
 
 if (array_key_exists("ELEMENT_CNT", $arVisibleColumnsMap)) {
     $arFilter["CNT_ALL"] = "Y";
@@ -231,23 +249,46 @@ if (intval($find_section_section) > 0) {
 $arUsersCache = array();
 
 while ($arRes = $rsData->NavNext(true, "f_")) {
-    $sec_list_url = 'cat_section_search.php?IBLOCK_ID=' . $IBLOCK_ID . '&amp;lang=' . LANGUAGE_ID . '&amp;find_section_section=' . $f_ID . '&amp;n=' . urlencode($n) . '&amp;k=' . urlencode($k) . ($m ? "&amp;m=y" : "");
+    $sec_list_url = 'cat_section_search.php?IBLOCK_ID=' . $IBLOCK_ID . '&amp;lang=' . LANGUAGE_ID . '&amp;find_section_section=' . $f_ID . '&amp;n=' . urlencode(
+            $n
+        ) . '&amp;k=' . urlencode($k) . ($m ? "&amp;m=y" : "");
 
     $row =& $lAdmin->AddRow($f_ID, $arRes);
 
-    if ($entity_id)
+    if ($entity_id) {
         $USER_FIELD_MANAGER->AddUserFields($entity_id, $arRes, $row);
+    }
 
-    $row->AddViewField("NAME", '<a href="' . $sec_list_url . '" onclick="' . $lAdmin->ActionAjaxReload($sec_list_url) . '; return false;" title="' . GetMessage("BX_MOD_CATALOG_ADMIN_CSS_LIST") . '">' . $f_NAME . '</a><div style="display:none" id="name_' . $f_ID . '">' . $strPath . $f_NAME . '&nbsp;/&nbsp;' . '</div>');
+    $row->AddViewField(
+        "NAME",
+        '<a href="' . $sec_list_url . '" onclick="' . $lAdmin->ActionAjaxReload(
+            $sec_list_url
+        ) . '; return false;" title="' . GetMessage(
+            "BX_MOD_CATALOG_ADMIN_CSS_LIST"
+        ) . '">' . $f_NAME . '</a><div style="display:none" id="name_' . $f_ID . '">' . $strPath . $f_NAME . '&nbsp;/&nbsp;' . '</div>'
+    );
 
     $row->AddCheckField("ACTIVE", false);
 
-    if (array_key_exists("ELEMENT_CNT", $arVisibleColumnsMap))
-        $row->AddViewField("ELEMENT_CNT", $f_ELEMENT_CNT . '(' . intval(CIBlockSection::GetSectionElementsCount($f_ID, Array("CNT_ALL" => "Y"))) . ')');
+    if (array_key_exists("ELEMENT_CNT", $arVisibleColumnsMap)) {
+        $row->AddViewField(
+            "ELEMENT_CNT",
+            $f_ELEMENT_CNT . '(' . intval(
+                CIBlockSection::GetSectionElementsCount($f_ID, Array("CNT_ALL" => "Y"))
+            ) . ')'
+        );
+    }
 
     if (array_key_exists("SECTION_CNT", $arVisibleColumnsMap)) {
         $arFilter = Array("IBLOCK_ID" => $IBLOCK_ID, "SECTION_ID" => $f_ID);
-        $row->AddViewField("SECTION_CNT", '<a href="' . $sec_list_url . '" onclick="' . $lAdmin->ActionAjaxReload($sec_list_url) . '; return false;" title="' . GetMessage("BX_MOD_CATALOG_ADMIN_CSS_LIST") . '">' . intval(CIBlockSection::GetCount($arFilter)) . '</a>');
+        $row->AddViewField(
+            "SECTION_CNT",
+            '<a href="' . $sec_list_url . '" onclick="' . $lAdmin->ActionAjaxReload(
+                $sec_list_url
+            ) . '; return false;" title="' . GetMessage("BX_MOD_CATALOG_ADMIN_CSS_LIST") . '">' . intval(
+                CIBlockSection::GetCount($arFilter)
+            ) . '</a>'
+        );
     }
 
     if (array_key_exists("MODIFIED_BY", $arVisibleColumnsMap) && intval($f_MODIFIED_BY) > 0) {
@@ -255,8 +296,12 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
             $rsUser = CUser::GetByID($f_MODIFIED_BY);
             $arUsersCache[$f_MODIFIED_BY] = $rsUser->Fetch();
         }
-        if ($arUser = $arUsersCache[$f_MODIFIED_BY])
-            $row->AddViewField("MODIFIED_BY", "[" . $f_MODIFIED_BY . "]&nbsp;(" . $arUser["LOGIN"] . ") " . $arUser["NAME"] . " " . $arUser["LAST_NAME"]);
+        if ($arUser = $arUsersCache[$f_MODIFIED_BY]) {
+            $row->AddViewField(
+                "MODIFIED_BY",
+                "[" . $f_MODIFIED_BY . "]&nbsp;(" . $arUser["LOGIN"] . ") " . $arUser["NAME"] . " " . $arUser["LAST_NAME"]
+            );
+        }
     }
 
     if (array_key_exists("CREATED_BY", $arVisibleColumnsMap) && intval($f_CREATED_BY) > 0) {
@@ -264,17 +309,26 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
             $rsUser = CUser::GetByID($f_CREATED_BY);
             $arUsersCache[$f_CREATED_BY] = $rsUser->Fetch();
         }
-        if ($arUser = $arUsersCache[$f_MODIFIED_BY])
-            $row->AddViewField("CREATED_BY", "[" . $f_CREATED_BY . "]&nbsp;(" . $arUser["LOGIN"] . ") " . $arUser["NAME"] . " " . $arUser["LAST_NAME"]);
+        if ($arUser = $arUsersCache[$f_MODIFIED_BY]) {
+            $row->AddViewField(
+                "CREATED_BY",
+                "[" . $f_CREATED_BY . "]&nbsp;(" . $arUser["LOGIN"] . ") " . $arUser["NAME"] . " " . $arUser["LAST_NAME"]
+            );
+        }
     }
 
-    $row->AddActions(array(
+    $row->AddActions(
         array(
-            "DEFAULT" => "Y",
-            "TEXT" => GetMessage("BX_MOD_CATALOG_ADMIN_CSS_SELECT"),
-            "ACTION" => "javascript:SelEl('" . ($get_xml_id ? $f_XML_ID : $f_ID) . "', '" . $jsPath . htmlspecialcharsbx(CUtil::JSEscape($arRes["NAME"]), ENT_QUOTES) . "&nbsp;/&nbsp;" . "')"
-        ),
-    ));
+            array(
+                "DEFAULT" => "Y",
+                "TEXT" => GetMessage("BX_MOD_CATALOG_ADMIN_CSS_SELECT"),
+                "ACTION" => "javascript:SelEl('" . ($get_xml_id ? $f_XML_ID : $f_ID) . "', '" . $jsPath . htmlspecialcharsbx(
+                        CUtil::JSEscape($arRes["NAME"]),
+                        ENT_QUOTES
+                    ) . "&nbsp;/&nbsp;" . "')"
+            ),
+        )
+    );
 }
 
 $lAdmin->AddFooter(
@@ -285,14 +339,17 @@ $lAdmin->AddFooter(
 );
 
 if ($m) {
-    $lAdmin->AddGroupActionTable(array(
+    $lAdmin->AddGroupActionTable(
         array(
-            "action" => "SelAll()",
-            "value" => "select",
-            "type" => "button",
-            "name" => GetMessage("BX_MOD_CATALOG_ADMIN_CSS_SELECT"),
-        )
-    ), array("disable_action_target" => true));
+            array(
+                "action" => "SelAll()",
+                "value" => "select",
+                "type" => "button",
+                "name" => GetMessage("BX_MOD_CATALOG_ADMIN_CSS_SELECT"),
+            )
+        ),
+        array("disable_action_target" => true)
+    );
 }
 
 $lAdmin->AddAdminContextMenu(array(), false);
@@ -303,15 +360,25 @@ if ($IBLOCK_ID > 0) {
         $nav = CIBlockSection::GetNavChain($IBLOCK_ID, $find_section_section);
         while ($ar_nav = $nav->GetNext()) {
             if ($find_section_section == $ar_nav["ID"]) {
-                $chain->AddItem(array(
-                    "TEXT" => $ar_nav["NAME"],
-                ));
+                $chain->AddItem(
+                    array(
+                        "TEXT" => $ar_nav["NAME"],
+                    )
+                );
             } else {
-                $chain->AddItem(array(
-                    "TEXT" => $ar_nav["NAME"],
-                    "LINK" => 'cat_section_search.php?lang=' . LANGUAGE_ID . '&amp;IBLOCK_ID=' . $IBLOCK_ID . '&amp;find_section_section=-1' . '&amp;n=' . urlencode($n) . '&amp;k=' . urlencode($k) . ($m ? "&amp;m=y" : ""),
-                    "ONCLICK" => $lAdmin->ActionAjaxReload('cat_section_search.php?lang=' . LANGUAGE_ID . '&IBLOCK_ID=' . $IBLOCK_ID . '&find_section_section=' . $ar_nav["ID"] . '&n=' . urlencode($n) . '&k=' . urlencode($k) . ($m ? "&m=y" : "")) . ';return false;',
-                ));
+                $chain->AddItem(
+                    array(
+                        "TEXT" => $ar_nav["NAME"],
+                        "LINK" => 'cat_section_search.php?lang=' . LANGUAGE_ID . '&amp;IBLOCK_ID=' . $IBLOCK_ID . '&amp;find_section_section=-1' . '&amp;n=' . urlencode(
+                                $n
+                            ) . '&amp;k=' . urlencode($k) . ($m ? "&amp;m=y" : ""),
+                        "ONCLICK" => $lAdmin->ActionAjaxReload(
+                                'cat_section_search.php?lang=' . LANGUAGE_ID . '&IBLOCK_ID=' . $IBLOCK_ID . '&find_section_section=' . $ar_nav["ID"] . '&n=' . urlencode(
+                                    $n
+                                ) . '&k=' . urlencode($k) . ($m ? "&m=y" : "")
+                            ) . ';return false;',
+                    )
+                );
             }
         }
     }
@@ -331,11 +398,19 @@ $lAdmin->CheckListMode();
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_popup_admin.php");
 
 $chain = new CAdminChain("main_navchain");
-$chain->AddItem(array(
-    "TEXT" => htmlspecialcharsEx($arIBlock["NAME"]),
-    "LINK" => 'cat_section_search.php?lang=' . LANGUAGE_ID . '&amp;IBLOCK_ID=' . $IBLOCK_ID . '&amp;find_section_section=0' . '&amp;n=' . urlencode($n) . '&amp;k=' . urlencode($k) . ($m ? "&amp;m=y" : ""),
-    "ONCLICK" => $lAdmin->ActionAjaxReload('cat_section_search.php?lang=' . LANGUAGE_ID . '&IBLOCK_ID=' . $IBLOCK_ID . '&find_section_section=0' . '&n=' . urlencode($n) . '&k=' . urlencode($k) . ($m ? "&m=y" : "")) . ';return false;',
-));
+$chain->AddItem(
+    array(
+        "TEXT" => htmlspecialcharsEx($arIBlock["NAME"]),
+        "LINK" => 'cat_section_search.php?lang=' . LANGUAGE_ID . '&amp;IBLOCK_ID=' . $IBLOCK_ID . '&amp;find_section_section=0' . '&amp;n=' . urlencode(
+                $n
+            ) . '&amp;k=' . urlencode($k) . ($m ? "&amp;m=y" : ""),
+        "ONCLICK" => $lAdmin->ActionAjaxReload(
+                'cat_section_search.php?lang=' . LANGUAGE_ID . '&IBLOCK_ID=' . $IBLOCK_ID . '&find_section_section=0' . '&n=' . urlencode(
+                    $n
+                ) . '&k=' . urlencode($k) . ($m ? "&m=y" : "")
+            ) . ';return false;',
+    )
+);
 $chain->Show();
 ?>
     <form method="GET" name="find_section_form" action="<? echo $APPLICATION->GetCurPage() ?>">
@@ -352,8 +427,9 @@ $chain->Show();
             "xml_id" => GetMessage("BX_MOD_CATALOG_ADMIN_CSS_HEAD_XML_ID"),
             "active" => GetMessage("BX_MOD_CATALOG_ADMIN_CSS_HEAD_ACTIVE"),
         );
-        if ($entity_id)
+        if ($entity_id) {
             $USER_FIELD_MANAGER->AddFindFields($entity_id, $arFindFields);
+        }
 
         $oFilter = new CAdminFilter($sTableID . "_filter", $arFindFields);
 
@@ -418,7 +494,14 @@ $chain->Show();
         </tr>
         <tr>
             <td><? echo GetMessage("BX_MOD_CATALOG_ADMIN_CSS_HEAD_TIMESTAMP") . ":" ?></td>
-            <td><? echo CalendarPeriod("find_section_timestamp_1", htmlspecialcharsbx($find_section_timestamp_1), "find_section_timestamp_2", htmlspecialcharsbx($find_section_timestamp_2), "find_section_form", "Y") ?></td>
+            <td><? echo CalendarPeriod(
+                    "find_section_timestamp_1",
+                    htmlspecialcharsbx($find_section_timestamp_1),
+                    "find_section_timestamp_2",
+                    htmlspecialcharsbx($find_section_timestamp_2),
+                    "find_section_form",
+                    "Y"
+                ) ?></td>
         </tr>
         <tr>
             <td><? echo GetMessage("BX_MOD_CATALOG_ADMIN_CSS_HEAD_MODIFIED_BY") ?>:</td>
@@ -426,20 +509,31 @@ $chain->Show();
                        value="<? echo htmlspecialcharsEx($find_section_modified_by) ?>" size="3">&nbsp;<?
                 $gr_res = CIBlock::GetGroupPermissions($IBLOCK_ID);
                 $res = Array(1);
-                foreach ($gr_res as $gr => $perm)
-                    if ($perm > "R")
+                foreach ($gr_res as $gr => $perm) {
+                    if ($perm > "R") {
                         $res[] = $gr;
-                $res = CUser::GetList($byx = "NAME", $orderx = "ASC", Array("GROUP_MULTI" => $res));
+                    }
+                }
+                $res = CUser::GetList("NAME", "ASC", Array("GROUP_MULTI" => $res));
                 ?><select name="find_section_modified_by">
                     <option value=""><? echo GetMessage("IBLOCK_ALL") ?></option><?
-                    while ($arr = $res->Fetch())
-                        echo "<option value='" . $arr["ID"] . "'" . ($find_section_modified_by == $arr["ID"] ? " selected" : "") . ">(" . htmlspecialcharsEx($arr["LOGIN"] . ") " . $arr["NAME"] . " " . $arr["LAST_NAME"]) . "</option>";
+                    while ($arr = $res->Fetch()) {
+                        echo "<option value='" . $arr["ID"] . "'" . ($find_section_modified_by == $arr["ID"] ? " selected" : "") . ">(" . htmlspecialcharsEx(
+                                $arr["LOGIN"] . ") " . $arr["NAME"] . " " . $arr["LAST_NAME"]
+                            ) . "</option>";
+                    }
                     ?></select>
             </td>
         </tr>
         <tr>
             <td><? echo GetMessage("BX_MOD_CATALOG_ADMIN_CSS_HEAD_DATE_CREATE") . ":" ?></td>
-            <td><? echo CalendarPeriod("find_section_date_create_1", htmlspecialcharsEx($find_section_date_create_1), "find_section_date_create_2", htmlspecialcharsEx($find_section_date_create_2), "find_section_form") ?></td>
+            <td><? echo CalendarPeriod(
+                    "find_section_date_create_1",
+                    htmlspecialcharsEx($find_section_date_create_1),
+                    "find_section_date_create_2",
+                    htmlspecialcharsEx($find_section_date_create_2),
+                    "find_section_form"
+                ) ?></td>
         </tr>
         <tr>
             <td><? echo GetMessage("BX_MOD_CATALOG_ADMIN_CSS_HEAD_CREATED_BY") ?>:</td>
@@ -447,14 +541,19 @@ $chain->Show();
                        value="<? echo htmlspecialcharsEx($find_section_created_by) ?>" size="3">&nbsp;<?
                 $gr_res = CIBlock::GetGroupPermissions($IBLOCK_ID);
                 $res = Array(1);
-                foreach ($gr_res as $gr => $perm)
-                    if ($perm > "R")
+                foreach ($gr_res as $gr => $perm) {
+                    if ($perm > "R") {
                         $res[] = $gr;
-                $res = CUser::GetList($byx = "NAME", $orderx = "ASC", Array("GROUP_MULTI" => $res));
+                    }
+                }
+                $res = CUser::GetList("NAME", "ASC", Array("GROUP_MULTI" => $res));
                 ?><select name="find_section_created_by">
                     <option value=""><? echo GetMessage("IBLOCK_ALL") ?></option><?
-                    while ($arr = $res->Fetch())
-                        echo "<option value='" . $arr["ID"] . "'" . ($find_section_created_by == $arr["ID"] ? " selected" : "") . ">(" . htmlspecialcharsEx($arr["LOGIN"] . ") " . $arr["NAME"] . " " . $arr["LAST_NAME"]) . "</option>";
+                    while ($arr = $res->Fetch()) {
+                        echo "<option value='" . $arr["ID"] . "'" . ($find_section_created_by == $arr["ID"] ? " selected" : "") . ">(" . htmlspecialcharsEx(
+                                $arr["LOGIN"] . ") " . $arr["NAME"] . " " . $arr["LAST_NAME"]
+                            ) . "</option>";
+                    }
                     ?></select>
             </td>
         </tr>
@@ -473,15 +572,26 @@ $chain->Show();
             <td>
                 <select name="find_section_active">
                     <option value=""><?= htmlspecialcharsEx(GetMessage('IBLOCK_ALL')) ?></option>
-                    <option value="Y"<? if ($find_section_active == "Y") echo " selected" ?>><?= htmlspecialcharsEx(GetMessage("IBLOCK_YES")) ?></option>
-                    <option value="N"<? if ($find_section_active == "N") echo " selected" ?>><?= htmlspecialcharsEx(GetMessage("IBLOCK_NO")) ?></option>
+                    <option value="Y"<? if ($find_section_active == "Y") echo " selected" ?>><?= htmlspecialcharsEx(
+                            GetMessage("IBLOCK_YES")
+                        ) ?></option>
+                    <option value="N"<? if ($find_section_active == "N") echo " selected" ?>><?= htmlspecialcharsEx(
+                            GetMessage("IBLOCK_NO")
+                        ) ?></option>
                 </select>
             </td>
         </tr>
         <?
-        if ($entity_id)
+        if ($entity_id) {
             $USER_FIELD_MANAGER->AdminListShowFilter($entity_id);
-        $oFilter->Buttons(array("table_id" => $sTableID, "url" => $APPLICATION->GetCurPage() . '?IBLOCK_ID=' . $IBLOCK_ID, "form" => "find_section_form"));
+        }
+        $oFilter->Buttons(
+            array(
+                "table_id" => $sTableID,
+                "url" => $APPLICATION->GetCurPage() . '?IBLOCK_ID=' . $IBLOCK_ID,
+                "form" => "find_section_form"
+            )
+        );
         $oFilter->End();
         ?>
     </form>

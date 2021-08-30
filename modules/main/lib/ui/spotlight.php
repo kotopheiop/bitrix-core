@@ -210,7 +210,7 @@ class Spotlight
         $types = array();
         $refClass = new \ReflectionClass(__CLASS__);
         foreach ($refClass->getConstants() as $name => $value) {
-            if (substr($name, 0, 9) === "USER_TYPE") {
+            if (mb_substr($name, 0, 9) === "USER_TYPE") {
                 $types[] = $value;
             }
         }

@@ -1,4 +1,5 @@
 <?
-$MESS['SALE_HPS_BILL_BY_BANK_CITY'] = 'Минск';
-$MESS['SALE_HPS_BILL_BY_BANK_ADDRESS'] = 'Беларусь';
-$MESS['SALE_HPS_BILL_BY_BUYER_COMPANY_ADDRESS'] = 'Минск';
+
+$MESS['SALE_HPS_BILL_BY_BANK_CITY'] = 'пїЅпїЅпїЅпїЅпїЅ';
+$MESS['SALE_HPS_BILL_BY_BANK_ADDRESS'] = 'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ';
+$MESS['SALE_HPS_BILL_BY_BUYER_COMPANY_ADDRESS'] = 'пїЅпїЅпїЅпїЅпїЅ';

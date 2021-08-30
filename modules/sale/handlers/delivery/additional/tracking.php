@@ -82,13 +82,15 @@ class AdditionalTracking extends \Bitrix\Sale\Delivery\Tracking\Base
         /** @var AdditionalHandler $parentService */
         $parentService = $this->deliveryService->getParentService();
 
-        if (!$parentService)
+        if (!$parentService) {
             return array();
+        }
 
         $statuses = $parentService->getTrackingStatuses($trackingNumbers);
 
-        if (empty($statuses) || !is_array($statuses))
+        if (empty($statuses) || !is_array($statuses)) {
             return array();
+        }
 
         $resultData = array();
 
@@ -137,8 +139,9 @@ class AdditionalTracking extends \Bitrix\Sale\Delivery\Tracking\Base
         $parentService = $this->deliveryService->getParentService();
         $trackingUrlTempl = $parentService->getTrackingUrlTempl();
 
-        if (!empty($trackingUrlTempl))
+        if (!empty($trackingUrlTempl)) {
             $result = str_replace('##TRACKING_NUMBER##', urlencode($trackingNumber), $trackingUrlTempl);
+        }
 
         return $result;
     }

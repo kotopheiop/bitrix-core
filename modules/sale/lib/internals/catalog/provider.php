@@ -144,9 +144,11 @@ final class Provider
             if (!empty($poolQuantity)) {
                 $tryQuantity = $quantity + $poolQuantity;
                 if ($tryQuantity == 0) {
-                    $result->setData(array(
-                        'AVAILABLE_QUANTITY' => $quantity
-                    ));
+                    $result->setData(
+                        array(
+                            'AVAILABLE_QUANTITY' => $quantity
+                        )
+                    );
 
                     return $result;
                 }
@@ -176,7 +178,10 @@ final class Provider
 
             $checkProviderName = $providerName;
             $data = $r->getData();
-            if (array_key_exists('AVAILABLE_QUANTITY_LIST', $data) && isset($data['AVAILABLE_QUANTITY_LIST'][$checkProviderName])) {
+            if (array_key_exists(
+                    'AVAILABLE_QUANTITY_LIST',
+                    $data
+                ) && isset($data['AVAILABLE_QUANTITY_LIST'][$checkProviderName])) {
                 $resultList = $data['AVAILABLE_QUANTITY_LIST'][$checkProviderName];
             }
         } else {
@@ -202,8 +207,10 @@ final class Provider
      * @throws Main\ObjectNotFoundException
      * @throws Main\SystemException
      */
-    public static function getAvailableQuantityAndPriceByBasketItem(Sale\BasketItemBase $basketItem, array $context = array())
-    {
+    public static function getAvailableQuantityAndPriceByBasketItem(
+        Sale\BasketItemBase $basketItem,
+        array $context = array()
+    ) {
         $result = new Sale\Result();
 
         /** @var \Bitrix\Sale\Basket $basket */
@@ -249,11 +256,13 @@ final class Provider
                 $productData = $data['PRODUCT_DATA_LIST'][$checkProviderName];
 
                 if (isset($productData['PRICE_LIST'][$basketItem->getProductId()][$basketItem->getBasketCode()])) {
-                    $resultData['PRICE_DATA'] = $productData['PRICE_LIST'][$basketItem->getProductId()][$basketItem->getBasketCode()];
+                    $resultData['PRICE_DATA'] = $productData['PRICE_LIST'][$basketItem->getProductId(
+                    )][$basketItem->getBasketCode()];
                 }
 
                 if (isset($productData['AVAILABLE_QUANTITY_LIST'][$basketItem->getProductId()])) {
-                    $resultData['AVAILABLE_QUANTITY'] = $productData['AVAILABLE_QUANTITY_LIST'][$basketItem->getProductId()];
+                    $resultData['AVAILABLE_QUANTITY'] = $productData['AVAILABLE_QUANTITY_LIST'][$basketItem->getProductId(
+                    )];
                 }
             }
         } else {
@@ -353,7 +362,8 @@ final class Provider
                 $providerName = trim($providerName);
                 foreach ($productAvailableQuantityList as $productId => $productAvailableQuantity) {
                     if (array_key_exists($productId, $needQuantityList[$providerName])) {
-                        if (Sale\Configuration::getProductReservationCondition() != Sale\Configuration::RESERVE_ON_SHIP) {
+                        if (Sale\Configuration::getProductReservationCondition(
+                            ) != Sale\Configuration::RESERVE_ON_SHIP) {
                             $poolQuantity = 0;
                             if ($order->getId() > 0) {
                                 $poolQuantity = (float)$pool->get(PoolQuantity::POOL_RESERVE_TYPE, $productId);
@@ -371,19 +381,27 @@ final class Provider
                             $basketItem = $shipmentItem->getBasketItem();
 
                             if ($basketItem->getProductId() == $productId) {
-                                $result->addWarning(new Sale\ResultWarning(Main\Localization\Loc::getMessage('SALE_PROVIDER_RESERVE_SHIPMENT_ITEM_WRONG_AVAILABLE_QUANTITY', array(
-                                    '#PRODUCT_NAME#' => $basketItem->getField('NAME')
-                                )), 'SALE_PROVIDER_RESERVE_SHIPMENT_ITEM_WRONG_AVAILABLE_QUANTITY'));
+                                $result->addWarning(
+                                    new Sale\ResultWarning(
+                                        Main\Localization\Loc::getMessage(
+                                            'SALE_PROVIDER_RESERVE_SHIPMENT_ITEM_WRONG_AVAILABLE_QUANTITY',
+                                            array(
+                                                '#PRODUCT_NAME#' => $basketItem->getField('NAME')
+                                            )
+                                        ), 'SALE_PROVIDER_RESERVE_SHIPMENT_ITEM_WRONG_AVAILABLE_QUANTITY'
+                                    )
+                                );
                                 break;
                             }
                         }
                     }
                 }
-
             }
 
             if (!empty($applyItemsList)) {
-                $shipmentProductIndex = static::createProductShipmentItemMapByShipmentItemCollection($shipmentItemCollection);
+                $shipmentProductIndex = static::createProductShipmentItemMapByShipmentItemCollection(
+                    $shipmentItemCollection
+                );
 
                 /** @var Sale\Shipment $shipment */
                 if (!$shipment = $shipmentItemCollection->getShipment()) {
@@ -498,7 +516,8 @@ final class Provider
                 $providerName = trim($providerName);
                 foreach ($productAvailableQuantityList as $productId => $productAvailableQuantity) {
                     if (array_key_exists($productId, $needQuantityList[$providerName])) {
-                        if (Sale\Configuration::getProductReservationCondition() != Sale\Configuration::RESERVE_ON_SHIP) {
+                        if (Sale\Configuration::getProductReservationCondition(
+                            ) != Sale\Configuration::RESERVE_ON_SHIP) {
                             $poolQuantity = 0;
                             if ($order->getId() > 0) {
                                 $poolQuantity = (float)$pool->get(PoolQuantity::POOL_RESERVE_TYPE, $productId);
@@ -515,14 +534,20 @@ final class Provider
                         $basketItem = $shipmentItem->getBasketItem();
 
                         if ($basketItem->getProductId() == $productId) {
-                            $result->addWarning(new Sale\ResultWarning(Main\Localization\Loc::getMessage('SALE_PROVIDER_RESERVE_SHIPMENT_ITEM_WRONG_AVAILABLE_QUANTITY', array(
-                                '#PRODUCT_NAME#' => $basketItem->getField('NAME')
-                            )), 'SALE_PROVIDER_RESERVE_SHIPMENT_ITEM_WRONG_AVAILABLE_QUANTITY'));
+                            $result->addWarning(
+                                new Sale\ResultWarning(
+                                    Main\Localization\Loc::getMessage(
+                                        'SALE_PROVIDER_RESERVE_SHIPMENT_ITEM_WRONG_AVAILABLE_QUANTITY',
+                                        array(
+                                            '#PRODUCT_NAME#' => $basketItem->getField('NAME')
+                                        )
+                                    ), 'SALE_PROVIDER_RESERVE_SHIPMENT_ITEM_WRONG_AVAILABLE_QUANTITY'
+                                )
+                            );
                             break;
                         }
                     }
                 }
-
             }
 
             if (!empty($applyItemsList)) {
@@ -623,7 +648,10 @@ final class Provider
             }
         }
 
-        $r = $shipmentItem->setField('RESERVED_QUANTITY', $shipmentItem->getReservedQuantity() + -1 * $reservedQuantity);
+        $r = $shipmentItem->setField(
+            'RESERVED_QUANTITY',
+            $shipmentItem->getReservedQuantity() + -1 * $reservedQuantity
+        );
         if (!$r->isSuccess()) {
             $result->addErrors($r->getErrors());
         }
@@ -658,7 +686,10 @@ final class Provider
             $providerName = static::clearProviderName($providerName);
 
             $needQuantity = ($shipmentItem->getQuantity() - $shipmentItem->getReservedQuantity());
-            if (!isset($needQuantityList[$providerName]) || !array_key_exists($productId, $needQuantityList[$providerName])) {
+            if (!isset($needQuantityList[$providerName]) || !array_key_exists(
+                    $productId,
+                    $needQuantityList[$providerName]
+                )) {
                 $needQuantityList[$providerName][$productId] = 0;
             }
 
@@ -692,7 +723,8 @@ final class Provider
         $providerName = $basketItem->getProviderName();
         $providerName = static::clearProviderName($providerName);
 
-        $needQuantityData[$providerName][$productId] = ($shipmentItem->getQuantity() - $shipmentItem->getReservedQuantity());
+        $needQuantityData[$providerName][$productId] = ($shipmentItem->getQuantity(
+            ) - $shipmentItem->getReservedQuantity());
 
         $result->setData(
             array(
@@ -742,8 +774,9 @@ final class Provider
 
             $reservedQuantity = $shipmentItem->getReservedQuantity();
 
-            if ($reservedQuantity == 0)
+            if ($reservedQuantity == 0) {
                 continue;
+            }
 
             $pool->add(Sale\Internals\PoolQuantity::POOL_RESERVE_TYPE, $productId, -1 * $reservedQuantity);
             if ($shipmentItem) {
@@ -764,11 +797,13 @@ final class Provider
                 }
             }
 
-            $r = $shipmentItem->setField('RESERVED_QUANTITY', $shipmentItem->getReservedQuantity() + -1 * $reservedQuantity);
+            $r = $shipmentItem->setField(
+                'RESERVED_QUANTITY',
+                $shipmentItem->getReservedQuantity() + -1 * $reservedQuantity
+            );
             if (!$r->isSuccess()) {
                 $result->addErrors($r->getErrors());
             }
-
         }
 
         return $result;
@@ -795,8 +830,9 @@ final class Provider
      *
      * @return array
      */
-    private static function createProductShipmentItemMapByShipmentItemCollection(Sale\ShipmentItemCollection $shipmentItemCollection)
-    {
+    private static function createProductShipmentItemMapByShipmentItemCollection(
+        Sale\ShipmentItemCollection $shipmentItemCollection
+    ) {
         static $shipmentProductIndex = array();
 
         /** @var Sale\ShipmentItem $shipmentItem */
@@ -842,14 +878,18 @@ final class Provider
      * @throws Main\ObjectNotFoundException
      * @throws \Exception
      */
-    private static function setAvailableQuantityToShipmentItemCollection(PoolQuantity $pool, array $shipmentProductIndex, array $items)
-    {
+    private static function setAvailableQuantityToShipmentItemCollection(
+        PoolQuantity $pool,
+        array $shipmentProductIndex,
+        array $items
+    ) {
         $result = new Sale\Result();
 
         foreach ($items as $providerName => $productsList) {
             foreach ($productsList as $productId => $reservedQuantity) {
-                if (empty($shipmentProductIndex[$providerName][$productId]))
+                if (empty($shipmentProductIndex[$providerName][$productId])) {
                     continue;
+                }
 
                 /**
                  * @var  $shipmetnItemIndex
@@ -860,8 +900,9 @@ final class Provider
 
                     $setQuantity = static::countNeedQuantity($needQuantity, $reservedQuantity);
 
-                    if ($needQuantity == 0 || $setQuantity == 0)
+                    if ($needQuantity == 0 || $setQuantity == 0) {
                         continue;
+                    }
 
                     $reservedQuantity -= $setQuantity;
 
@@ -906,12 +947,14 @@ final class Provider
                     }
 
 
-                    $r = $shipmentItem->setField('RESERVED_QUANTITY', $shipmentItem->getReservedQuantity() + $setQuantity);
+                    $r = $shipmentItem->setField(
+                        'RESERVED_QUANTITY',
+                        $shipmentItem->getReservedQuantity() + $setQuantity
+                    );
                     if (!$r->isSuccess()) {
                         $result->addErrors($r->getErrors());
                     }
                 }
-
             }
         }
         return $result;
@@ -990,7 +1033,6 @@ final class Provider
             } else {
                 $result->addErrors($r->getErrors());
             }
-
         }
 
         $data = $r->getData();
@@ -999,7 +1041,6 @@ final class Provider
         }
 
         if ($needSetAfterResult && !empty($tryShipProductList)) {
-
             if ($isIgnoreErrors) {
                 foreach ($tryShipProductList as $providerName => &$productList) {
                     $productList = array_fill_keys(array_keys($productList), true);
@@ -1162,9 +1203,9 @@ final class Provider
 
                 $barcodeId = ($shipmentItemStore->getId() > 0) ? $shipmentItemStore->getId() : 'n' . $countBarcode;
                 $countBarcode++;
-                $resultList[$storeId]['QUANTITY'] += $basketItem->isBarcodeMulti() ? 1 : $shipmentItemStore->getQuantity();
+                $resultList[$storeId]['QUANTITY'] += $basketItem->isBarcodeMulti(
+                ) ? 1 : $shipmentItemStore->getQuantity();
                 $resultList[$storeId]['BARCODE'][$barcodeId] = $shipmentItemStore->getBarcode();
-
             }
         }
 
@@ -1227,8 +1268,9 @@ final class Provider
         /** @var array $poolReservationList */
         $poolReservationList = $pool->getQuantities(PoolQuantity::POOL_RESERVE_TYPE);
 
-        if (empty($poolQuantitiesList) && empty($poolReservationList))
+        if (empty($poolQuantitiesList) && empty($poolReservationList)) {
             return $result;
+        }
 
         $rulesMap = ShipmentRules::createOrderRuleMap($order, $pool);
 
@@ -1408,7 +1450,10 @@ final class Provider
 
         if (class_exists($name)) {
             $productProvider = new $name();
-            if ($productProvider instanceof Sale\SaleProviderBase || array_key_exists("IBXSaleProductProvider", class_implements($name))) {
+            if ($productProvider instanceof Sale\SaleProviderBase || array_key_exists(
+                    "IBXSaleProductProvider",
+                    class_implements($name)
+                )) {
                 $providerEntityProxy[$name] = $productProvider;
                 return $productProvider;
             }
@@ -1435,8 +1480,8 @@ final class Provider
      */
     private static function clearProviderName($providerName)
     {
-        if (substr($providerName, 0, 1) == "\\") {
-            $providerName = substr($providerName, 1);
+        if (mb_substr($providerName, 0, 1) == "\\") {
+            $providerName = mb_substr($providerName, 1);
         }
 
         return trim($providerName);

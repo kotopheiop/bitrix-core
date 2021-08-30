@@ -9,22 +9,42 @@ class CCalendarSceleton
     public static function InitJS($config = array(), $data = array(), $additionalParams = array())
     {
         global $APPLICATION;
-        CJSCore::Init(array('ajax', 'window', 'popup', 'access', 'date', 'viewer', 'socnetlogdest', 'color_picker', 'sidepanel', 'clipboard'));
+        \Bitrix\Main\UI\Extension::load(
+            ['ajax', 'window', 'popup', 'access', 'date', 'viewer', 'color_picker', 'sidepanel', 'clipboard']
+        );
+        \Bitrix\Main\UI\Extension::load(
+            ['ui.alerts', 'ui.buttons', 'ui.buttons.icons', 'ui.tooltip', 'ui.entity-selector', 'ui.forms', 'ui.hint']
+        );
 
-        \Bitrix\Main\UI\Extension::load("ui.alerts");
-        \Bitrix\Main\UI\Extension::load("ui.buttons");
-        \Bitrix\Main\UI\Extension::load("ui.buttons.icons");
-        \Bitrix\Main\UI\Extension::load("ui.tooltip");
+        \Bitrix\Main\UI\Extension::load(
+            [
+                'calendar.util',
+                'calendar.entry',
+                'calendar.sectionmanager',
+                'calendar.controls',
+                'calendar.sliderloader',
+                'calendar.sync.manager',
+            ]
+        );
 
         if (\Bitrix\Main\Loader::includeModule('rest')) {
-            CJSCore::Init(array('applayout'));
+            \Bitrix\Main\UI\Extension::load('applayout');
         }
 
         if (\Bitrix\Main\Loader::includeModule('webservice')) {
-            CJSCore::Init(array('stssync'));
+            \Bitrix\Main\UI\Extension::load('stssync');
         }
 
-        if (\Bitrix\Main\Loader::includeModule('bitrix24') && !in_array(\CBitrix24::getLicenseType(), array('company', 'demo', 'edu', 'bis_inc', 'nfr'))) {
+        if (\Bitrix\Main\Loader::includeModule('bitrix24') && !in_array(
+                \CBitrix24::getLicenseType(),
+                array(
+                    'company',
+                    'demo',
+                    'edu',
+                    'bis_inc',
+                    'nfr'
+                )
+            )) {
             \CBitrix24::initLicenseInfoPopupJS();
         }
 
@@ -57,8 +77,34 @@ class CCalendarSceleton
         $config['weekStart'] = CCalendar::GetWeekStart();
         $config['weekDays'] = self::GetWeekDaysEx($config['weekStart']);
         $config['days'] = self::GetWeekDays();
-        $config['month'] = array(Loc::getMessage('EC_JAN'), Loc::getMessage('EC_FEB'), Loc::getMessage('EC_MAR'), Loc::getMessage('EC_APR'), Loc::getMessage('EC_MAY'), Loc::getMessage('EC_JUN'), Loc::getMessage('EC_JUL'), Loc::getMessage('EC_AUG'), Loc::getMessage('EC_SEP'), Loc::getMessage('EC_OCT'), Loc::getMessage('EC_NOV'), Loc::getMessage('EC_DEC'));
-        $config['month_r'] = array(Loc::getMessage('EC_JAN_R'), Loc::getMessage('EC_FEB_R'), Loc::getMessage('EC_MAR_R'), Loc::getMessage('EC_APR_R'), Loc::getMessage('EC_MAY_R'), Loc::getMessage('EC_JUN_R'), Loc::getMessage('EC_JUL_R'), Loc::getMessage('EC_AUG_R'), Loc::getMessage('EC_SEP_R'), Loc::getMessage('EC_OCT_R'), Loc::getMessage('EC_NOV_R'), Loc::getMessage('EC_DEC_R'));
+        $config['month'] = array(
+            Loc::getMessage('EC_JAN'),
+            Loc::getMessage('EC_FEB'),
+            Loc::getMessage('EC_MAR'),
+            Loc::getMessage('EC_APR'),
+            Loc::getMessage('EC_MAY'),
+            Loc::getMessage('EC_JUN'),
+            Loc::getMessage('EC_JUL'),
+            Loc::getMessage('EC_AUG'),
+            Loc::getMessage('EC_SEP'),
+            Loc::getMessage('EC_OCT'),
+            Loc::getMessage('EC_NOV'),
+            Loc::getMessage('EC_DEC')
+        );
+        $config['month_r'] = array(
+            Loc::getMessage('EC_JAN_R'),
+            Loc::getMessage('EC_FEB_R'),
+            Loc::getMessage('EC_MAR_R'),
+            Loc::getMessage('EC_APR_R'),
+            Loc::getMessage('EC_MAY_R'),
+            Loc::getMessage('EC_JUN_R'),
+            Loc::getMessage('EC_JUL_R'),
+            Loc::getMessage('EC_AUG_R'),
+            Loc::getMessage('EC_SEP_R'),
+            Loc::getMessage('EC_OCT_R'),
+            Loc::getMessage('EC_NOV_R'),
+            Loc::getMessage('EC_DEC_R')
+        );
 
         $APPLICATION->SetAdditionalCSS("/bitrix/js/calendar/cal-style.css");
         ?>
@@ -89,29 +135,35 @@ class CCalendarSceleton
     public static function GetWeekDaysEx($weekStart = 'MO')
     {
         $days = self::GetWeekDays();
-        if ($weekStart == 'MO')
+        if ($weekStart === 'MO') {
             return $days;
-        $res = array();
-        $start = false;
-        while (list($k, $day) = each($days)) {
-            if ($day[2] == $weekStart) {
-                $start = !$start;
-                if (!$start)
-                    break;
-            }
-            if ($start)
-                $res[] = $day;
-
-            if ($start && $k == 6)
-                reset($days);
         }
+
+        $res = [];
+        $startIndex = false;
+
+        foreach ($days as $k => $day) {
+            if ($day[2] === $weekStart) {
+                $startIndex = $k;
+            }
+
+            if ($startIndex !== false) {
+                $res[] = $day;
+            }
+        }
+
+        for ($i = 0; $i < $startIndex; $i++) {
+            $res[] = $days[$i];
+        }
+
         return $res;
     }
 
     public static function GetAccessHTML($binging = 'calendar_section', $id = false)
     {
-        if ($id === false)
+        if ($id === false) {
             $id = 'bxec-' . $binging;
+        }
         $arTasks = CCalendar::GetAccessTasks($binging);
         ?>
         <span style="display:none;">
@@ -128,11 +180,18 @@ class CCalendarSceleton
     {
         global $USER_FIELD_MANAGER, $APPLICATION;
         $USER_FIELDS = $USER_FIELD_MANAGER->GetUserFields("CALENDAR_EVENT", $eventId, LANGUAGE_ID);
-        if (!$USER_FIELDS || count($USER_FIELDS) == 0)
+        if (!$USER_FIELDS || count($USER_FIELDS) == 0) {
             return;
+        }
 
-        $url = CHTTP::urlDeleteParams($url, array("action", "sessid", "bx_event_calendar_request", "event_id", "reqId"));
-        $url = $url . (strpos($url, '?') === false ? '?' : '&') . 'action=userfield_save&bx_event_calendar_request=Y&' . bitrix_sessid_get();
+        $url = CHTTP::urlDeleteParams(
+            $url,
+            array("action", "sessid", "bx_event_calendar_request", "event_id", "reqId")
+        );
+        $url = $url . (mb_strpos(
+                $url,
+                '?'
+            ) === false ? '?' : '&') . 'action=userfield_save&bx_event_calendar_request=Y&' . bitrix_sessid_get();
         ?>
         <form method="post" name="calendar-event-uf-form<?= $eventId ?>" action="<?= $url ?>"
               enctype="multipart/form-data" encoding="multipart/form-data">
@@ -150,7 +209,9 @@ class CCalendarSceleton
                                     "bVarsFromForm" => false,
                                     "arUserField" => $arUserField,
                                     "form_name" => "calendar-event-uf-form" . $eventId
-                                ), null, array("HIDE_ICONS" => "Y")
+                                ),
+                                null,
+                                array("HIDE_ICONS" => "Y")
                             ); ?>
                         </td>
                     </tr>
@@ -164,13 +225,15 @@ class CCalendarSceleton
     {
         global $USER_FIELD_MANAGER, $APPLICATION;
         $USER_FIELDS = $USER_FIELD_MANAGER->GetUserFields("CALENDAR_EVENT", $eventId, LANGUAGE_ID);
-        if (!$USER_FIELDS || count($USER_FIELDS) == 0)
+        if (!$USER_FIELDS || count($USER_FIELDS) == 0) {
             return;
+        }
         $bFound = false;
 
         foreach ($USER_FIELDS as $arUserField) {
-            if ($arUserField['VALUE'] == "" || (is_array($arUserField['VALUE']) && !count($arUserField['VALUE'])))
+            if ($arUserField['VALUE'] == "" || (is_array($arUserField['VALUE']) && !count($arUserField['VALUE']))) {
                 continue;
+            }
 
             if (!$bFound) {
                 $bFound = true;
@@ -202,8 +265,26 @@ class CCalendarSceleton
     {
         if (!$colors) {
             $colors = array(
-                '#DAA187', '#78D4F1', '#C8CDD3', '#43DAD2', '#EECE8F', '#AEE5EC', '#B6A5F6', '#F0B1A1', '#82DC98', '#EE9B9A',
-                '#B47153', '#2FC7F7', '#A7ABB0', '#04B4AB', '#FFA801', '#5CD1DF', '#6E54D1', '#F73200', '#29AD49', '#FE5957'
+                '#DAA187',
+                '#78D4F1',
+                '#C8CDD3',
+                '#43DAD2',
+                '#EECE8F',
+                '#AEE5EC',
+                '#B6A5F6',
+                '#F0B1A1',
+                '#82DC98',
+                '#EE9B9A',
+                '#B47153',
+                '#2FC7F7',
+                '#A7ABB0',
+                '#04B4AB',
+                '#FFA801',
+                '#5CD1DF',
+                '#6E54D1',
+                '#F73200',
+                '#29AD49',
+                '#FE5957'
             );
         }
 
@@ -224,7 +305,10 @@ class CCalendarSceleton
     public static function CheckBitrix24Limits($params)
     {
         global $APPLICATION;
-        $result = !CCalendar::IsBitrix24() || CBitrix24BusinessTools::isToolAvailable(CCalendar::GetCurUserId(), "calendar");
+        $result = !CCalendar::IsBitrix24() || CBitrix24BusinessTools::isToolAvailable(
+                CCalendar::GetCurUserId(),
+                "calendar"
+            );
         if (!$result) {
             ?>
             <div id="<?= $params['id'] ?>-bitrix24-limit" class="bxec-b24-limit-wrap"><?
@@ -232,6 +316,26 @@ class CCalendarSceleton
             ?></div><?
         }
         return $result;
+    }
+
+    /**
+     * @param string $title
+     * @param string $content
+     * @return bool
+     */
+    public static function showCalendarGridError(string $title, string $content = ''): bool
+    {
+        global $APPLICATION;
+        $APPLICATION->IncludeComponent(
+            "bitrix:calendar.grid.error",
+            "",
+            [
+                'TITLE' => $title,
+                'CONTENT' => $content,
+            ]
+        );
+
+        return true;
     }
 }
 

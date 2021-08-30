@@ -23,12 +23,15 @@ class BusinessValueTable extends Main\Entity\DataManager
     {
         return array(
 
-            new Main\Entity\StringField('CODE_KEY', array(
+            new Main\Entity\StringField(
+                'CODE_KEY', array(
                 'primary' => true,
                 'size' => 50,
-            )),
+            )
+            ),
 
-            new Main\Entity\StringField('CONSUMER_KEY', array(
+            new Main\Entity\StringField(
+                'CONSUMER_KEY', array(
                 'primary' => true,
                 'size' => 50,
                 'save_data_modification' => function () {
@@ -45,9 +48,11 @@ class BusinessValueTable extends Main\Entity\DataManager
                         }
                     );
                 }
-            )),
+            )
+            ),
 
-            new Main\Entity\IntegerField('PERSON_TYPE_ID', array(
+            new Main\Entity\IntegerField(
+                'PERSON_TYPE_ID', array(
                 'primary' => true,
                 'size' => 50,
                 'save_data_modification' => function () {
@@ -64,12 +69,15 @@ class BusinessValueTable extends Main\Entity\DataManager
                         }
                     );
                 }
-            )),
+            )
+            ),
 
-            new Main\Entity\StringField('PROVIDER_KEY', array(
+            new Main\Entity\StringField(
+                'PROVIDER_KEY', array(
                 'required' => true,
                 'size' => 50,
-            )),
+            )
+            ),
 
             new Main\Entity\StringField('PROVIDER_VALUE'),
 

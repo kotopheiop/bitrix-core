@@ -9,7 +9,6 @@
 namespace Bitrix\Main\ORM\Fields;
 
 use Bitrix\Main\ORM\Entity;
-use Bitrix\Main\ORM\Fields\FieldTypeMask;
 use Bitrix\Main\ORM\Query\Chain;
 use Bitrix\Main\ORM\Data\Result;
 use Bitrix\Main\NotImplementedException;
@@ -55,30 +54,97 @@ class ExpressionField extends Field implements IReadable
     protected $hasSubquery;
 
     protected static
-        $aggrFunctionsMYSQL = array('AVG', 'BIT_AND', 'BIT_OR', 'BIT_XOR', 'COUNT',
-        'GROUP_CONCAT', 'MAX', 'MIN', 'STD', 'STDDEV_POP', 'STDDEV_SAMP',
-        'STDDEV', 'SUM', 'VAR_POP', 'VAR_SAMP', 'VARIANCE'
+        $aggrFunctionsMYSQL = array(
+        'AVG',
+        'BIT_AND',
+        'BIT_OR',
+        'BIT_XOR',
+        'COUNT',
+        'GROUP_CONCAT',
+        'MAX',
+        'MIN',
+        'STD',
+        'STDDEV_POP',
+        'STDDEV_SAMP',
+        'STDDEV',
+        'SUM',
+        'VAR_POP',
+        'VAR_SAMP',
+        'VARIANCE'
     ),
-        $aggrFunctionsMSSQL = array('AVG', 'MIN', 'CHECKSUM_AGG', 'OVER', 'COUNT',
-        'ROWCOUNT_BIG', 'COUNT_BIG', 'STDEV', 'GROUPING', 'STDEVP',
-        'GROUPING_ID', 'SUM', 'MAX', 'VAR', 'VARP'
+        $aggrFunctionsMSSQL = array(
+        'AVG',
+        'MIN',
+        'CHECKSUM_AGG',
+        'OVER',
+        'COUNT',
+        'ROWCOUNT_BIG',
+        'COUNT_BIG',
+        'STDEV',
+        'GROUPING',
+        'STDEVP',
+        'GROUPING_ID',
+        'SUM',
+        'MAX',
+        'VAR',
+        'VARP'
     ),
-        $aggrFunctionsORACLE = array('AVG', 'COLLECT', 'CORR', 'CORR_S', 'CORR_K',
-        'COUNT', 'COVAR_POP', 'COVAR_SAMP', 'CUME_DIST', 'DENSE_RANK', 'FIRST',
-        'GROUP_ID', 'GROUPING', 'GROUPING_ID', 'LAST', 'MAX', 'MEDIAN', 'MIN',
-        'PERCENTILE_CONT', 'PERCENTILE_DISC', 'PERCENT_RANK', 'RANK',
-        'REGR_SLOPE', 'REGR_INTERCEPT', 'REGR_COUNT', 'REGR_R2', 'REGR_AVGX',
-        'REGR_AVGY', 'REGR_SXX', 'REGR_SYY', 'REGR_SXY', 'STATS_BINOMIAL_TEST',
-        'STATS_CROSSTAB', 'STATS_F_TEST', 'STATS_KS_TEST', 'STATS_MODE',
-        'STATS_MW_TEST', 'STATS_ONE_WAY_ANOVA', 'STATS_T_TEST_ONE',
-        'STATS_T_TEST_PAIRED', 'STATS_T_TEST_INDEP', 'STATS_T_TEST_INDEPU',
-        'STATS_WSR_TEST', 'STDDEV', 'STDDEV_POP', 'STDDEV_SAMP', 'SUM',
-        'VAR_POP', 'VAR_SAMP', 'VARIANCE'
+        $aggrFunctionsORACLE = array(
+        'AVG',
+        'COLLECT',
+        'CORR',
+        'CORR_S',
+        'CORR_K',
+        'COUNT',
+        'COVAR_POP',
+        'COVAR_SAMP',
+        'CUME_DIST',
+        'DENSE_RANK',
+        'FIRST',
+        'GROUP_ID',
+        'GROUPING',
+        'GROUPING_ID',
+        'LAST',
+        'MAX',
+        'MEDIAN',
+        'MIN',
+        'PERCENTILE_CONT',
+        'PERCENTILE_DISC',
+        'PERCENT_RANK',
+        'RANK',
+        'REGR_SLOPE',
+        'REGR_INTERCEPT',
+        'REGR_COUNT',
+        'REGR_R2',
+        'REGR_AVGX',
+        'REGR_AVGY',
+        'REGR_SXX',
+        'REGR_SYY',
+        'REGR_SXY',
+        'STATS_BINOMIAL_TEST',
+        'STATS_CROSSTAB',
+        'STATS_F_TEST',
+        'STATS_KS_TEST',
+        'STATS_MODE',
+        'STATS_MW_TEST',
+        'STATS_ONE_WAY_ANOVA',
+        'STATS_T_TEST_ONE',
+        'STATS_T_TEST_PAIRED',
+        'STATS_T_TEST_INDEP',
+        'STATS_T_TEST_INDEPU',
+        'STATS_WSR_TEST',
+        'STDDEV',
+        'STDDEV_POP',
+        'STDDEV_SAMP',
+        'SUM',
+        'VAR_POP',
+        'VAR_SAMP',
+        'VARIANCE'
     ),
         $aggrFunctions;
 
     /**
-     * All fields in exression should be placed as %s (or as another placeholder for sprintf),
+     * All fields in expression should be placed as %s (or as another placeholder for sprintf),
      * and the real field names being carrying in $buildFrom array (= args for sprintf)
      *
      * @param string $name
@@ -143,15 +209,15 @@ class ExpressionField extends Field implements IReadable
     {
         parent::setEntity($entity);
 
+        $parameters = $this->initialParameters;
+        unset($parameters['expression']);
+
         if ($this->valueType !== null) {
             /** @var ScalarField $valueField */
-            $valueField = new $this->valueType($this->name);
+            $valueField = new $this->valueType($this->name, $parameters);
             $this->valueField = $this->entity->initializeField($this->name, $valueField);
         } else {
             // deprecated - old format with parameters and data_type
-            $parameters = $this->initialParameters;
-
-            unset($parameters['expression']);
             $this->valueField = $this->entity->initializeField($this->name, $parameters);
             $this->valueType = get_class($this->valueField);
         }
@@ -183,7 +249,10 @@ class ExpressionField extends Field implements IReadable
                 }
             }
 
-            $this->fullExpression = call_user_func_array('sprintf', array_merge(array($this->expression), $SQLBuildFrom));
+            $this->fullExpression = call_user_func_array(
+                'sprintf',
+                array_merge(array($this->expression), $SQLBuildFrom)
+            );
         }
 
         return $this->fullExpression;
@@ -238,10 +307,13 @@ class ExpressionField extends Field implements IReadable
                 if ($field instanceof ScalarField || $field instanceof ExpressionField) {
                     $this->buildFromChains[] = $chain;
                 } else {
-                    throw new SystemException(sprintf(
-                        'Expected ScalarField or ExpressionField in `%s` build_from, but `%s` was given.',
-                        $this->name, is_object($field) ? get_class($field) . ':' . $field->getName() : gettype($field)
-                    ));
+                    throw new SystemException(
+                        sprintf(
+                            'Expected ScalarField or ExpressionField in `%s` build_from, but `%s` was given.',
+                            $this->name,
+                            is_object($field) ? get_class($field) . ':' . $field->getName() : gettype($field)
+                        )
+                    );
                 }
             }
         }
@@ -252,9 +324,13 @@ class ExpressionField extends Field implements IReadable
     public static function checkAggregation($expression)
     {
         if (empty(self::$aggrFunctions)) {
-            self::$aggrFunctions = array_unique(array_merge(
-                self::$aggrFunctionsMYSQL, self::$aggrFunctionsMSSQL, self::$aggrFunctionsORACLE
-            ));
+            self::$aggrFunctions = array_unique(
+                array_merge(
+                    self::$aggrFunctionsMYSQL,
+                    self::$aggrFunctionsMSSQL,
+                    self::$aggrFunctionsORACLE
+                )
+            );
         }
 
         // should remove subqueries from expression here: EXISTS(..(..)..), (SELECT ..(..)..)
@@ -268,7 +344,10 @@ class ExpressionField extends Field implements IReadable
 
     public static function checkSubquery($expression)
     {
-        return (preg_match('/(?:^|[^a-zA-Z0-9_])EXISTS\s*\(/i', $expression) || preg_match('/(?:^|[^a-zA_Z0-9_])\(\s*SELECT/i', $expression));
+        return (preg_match('/(?:^|[^a-zA-Z0-9_])EXISTS\s*\(/i', $expression) || preg_match(
+                '/(?:^|[^a-zA_Z0-9_])\(\s*SELECT/i',
+                $expression
+            ));
     }
 
     public static function removeSubqueries($expression)
@@ -312,15 +391,15 @@ class ExpressionField extends Field implements IReadable
         if (!empty($matches)) {
             $substring = $matches[0];
 
-            $subqPosition = strpos($query, $substring);
-            $subqStartPosition = $subqPosition + strlen($substring);
+            $subqPosition = mb_strpos($query, $substring);
+            $subqStartPosition = $subqPosition + mb_strlen($substring);
 
             $bracketsCount = 1;
             $currentPosition = $subqStartPosition;
 
             // until initial bracket is closed
             while ($bracketsCount > 0) {
-                $symbol = substr($query, $currentPosition, 1);
+                $symbol = mb_substr($query, $currentPosition, 1);
 
                 if ($symbol == '') {
                     // end of string
@@ -336,7 +415,7 @@ class ExpressionField extends Field implements IReadable
                 $currentPosition++;
             }
 
-            $query = substr($query, 0, $subqPosition) . substr($query, $currentPosition);
+            $query = mb_substr($query, 0, $subqPosition) . mb_substr($query, $currentPosition);
         }
 
         return $query;

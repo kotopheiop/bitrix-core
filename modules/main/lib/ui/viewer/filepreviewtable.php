@@ -33,30 +33,39 @@ final class FilePreviewTable extends DataManager
     public static function getMap()
     {
         return [
-            new Entity\IntegerField('ID', [
+            new Entity\IntegerField(
+                'ID', [
                 'primary' => true,
                 'autocomplete' => true,
-            ]),
-            new Entity\IntegerField('FILE_ID', [
+            ]
+            ),
+            new Entity\IntegerField(
+                'FILE_ID', [
                 'required' => true,
-            ]),
+            ]
+            ),
             new Entity\IntegerField('PREVIEW_ID'),
             new Entity\IntegerField('PREVIEW_IMAGE_ID'),
-            new Entity\DatetimeField('CREATED_AT', [
+            new Entity\DatetimeField(
+                'CREATED_AT', [
                 'default_value' => function () {
                     return new DateTime();
                 },
-            ]),
+            ]
+            ),
             new Entity\DatetimeField('TOUCHED_AT'),
-            new Entity\ReferenceField('FILE', FileTable::class,
+            new Entity\ReferenceField(
+                'FILE', FileTable::class,
                 ['=this.FILE_ID' => 'ref.ID'],
                 ['join_type' => 'INNER']
             ),
-            new Entity\ReferenceField('PREVIEW', FileTable::class,
+            new Entity\ReferenceField(
+                'PREVIEW', FileTable::class,
                 ['=this.PREVIEW_ID' => 'ref.ID'],
                 ['join_type' => 'LEFT']
             ),
-            new Entity\ReferenceField('PREVIEW_IMAGE', FileTable::class,
+            new Entity\ReferenceField(
+                'PREVIEW_IMAGE', FileTable::class,
                 ['=this.PREVIEW_IMAGE_ID' => 'ref.ID'],
                 ['join_type' => 'LEFT']
             ),
@@ -74,11 +83,13 @@ final class FilePreviewTable extends DataManager
             ->whereNull('TOUCHED_AT')
             ->where('TOUCHED_AT', '<', $deathTime);
 
-        $files = self::getList([
-            'select' => ['ID', 'PREVIEW_IMAGE_ID', 'PREVIEW_ID'],
-            'filter' => $filter,
-            'limit' => $portion,
-        ]);
+        $files = self::getList(
+            [
+                'select' => ['ID', 'PREVIEW_IMAGE_ID', 'PREVIEW_ID'],
+                'filter' => $filter,
+                'limit' => $portion,
+            ]
+        );
 
         foreach ($files as $file) {
             $keepImage = isset($file['PREVIEW_IMAGE_ID']);
@@ -140,11 +151,13 @@ final class FilePreviewTable extends DataManager
             return;
         }
 
-        $file = self::getRow([
-            'filter' => [
-                '=FILE_ID' => $bfile['ID'],
+        $file = self::getRow(
+            [
+                'filter' => [
+                    '=FILE_ID' => $bfile['ID'],
+                ]
             ]
-        ]);
+        );
 
         if (!$file) {
             return;

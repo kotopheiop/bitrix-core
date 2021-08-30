@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 define('ADMIN_MODULE_NAME', 'seo');
@@ -44,13 +45,20 @@ $sTableID = "tbl_seo_domains";
 $oSort = new CAdminSorting($sTableID, "SORT", "asc");
 $lAdmin = new CAdminList($sTableID, $oSort);
 
-$lAdmin->AddHeaders(array(
-    array("id" => "DOMAIN", "content" => Loc::getMessage('SEO_DOMAIN'), "sort" => "DOMAIN", "default" => true),
-    array("id" => "SITE", "content" => Loc::getMessage("SEO_SITE"), "default" => true),
-    array("id" => "SITE_ACTIVE", "content" => Loc::getMessage('SEO_SITE_ACTIVE'), "sort" => "active", "default" => true),
-    array("id" => "BINDED", "content" => Loc::getMessage("SEO_BINDED"), "default" => true),
-    array("id" => "VERIFIED", "content" => Loc::getMessage("SEO_VERIFIED"), "default" => true),
-));
+$lAdmin->AddHeaders(
+    array(
+        array("id" => "DOMAIN", "content" => Loc::getMessage('SEO_DOMAIN'), "sort" => "DOMAIN", "default" => true),
+        array("id" => "SITE", "content" => Loc::getMessage("SEO_SITE"), "default" => true),
+        array(
+            "id" => "SITE_ACTIVE",
+            "content" => Loc::getMessage('SEO_SITE_ACTIVE'),
+            "sort" => "active",
+            "default" => true
+        ),
+        array("id" => "BINDED", "content" => Loc::getMessage("SEO_BINDED"), "default" => true),
+        array("id" => "VERIFIED", "content" => Loc::getMessage("SEO_VERIFIED"), "default" => true),
+    )
+);
 
 $bNeedAuth = !$engine->getAuthSettings();
 
@@ -70,20 +78,46 @@ while ($arSite = $dbSites->fetch(Converter::getHtmlConverter())) {
     $row =& $lAdmin->AddRow($arSite['DOMAIN'], $arSite);
 
     $siteDomainEnc = Converter::getHtmlConverter()->encode($arSite['DOMAIN']);
-    $siteDomainEncView = Converter::getHtmlConverter()->encode(\CBXPunycode::ToUnicode($arSite['DOMAIN'], $e = null));
+    $e = [];
+    $siteDomainEncView = Converter::getHtmlConverter()->encode(\CBXPunycode::ToUnicode($arSite['DOMAIN'], $e));
     $siteDirEnc = Converter::getHtmlConverter()->encode($arSite['SITE_DIR']);
 
-    $row->AddViewField("DOMAIN", '<a href="http://' . Converter::getHtmlConverter()->encode($arSite['DOMAIN'] . CHTTP::urnEncode($arSite['SITE_DIR'])) . '">' . $siteDomainEncView . $siteDirEnc . '</a>');
-    $row->AddViewField("SITE", '[<a href="site_edit.php?lang=' . LANGUAGE_ID . '&amp;LID=' . urlencode($arSite['LID']) . '">' . $arSite['LID'] . '</a>] ' . $arSite['SITE_NAME']);
+    $row->AddViewField(
+        "DOMAIN",
+        '<a href="http://' . Converter::getHtmlConverter()->encode(
+            $arSite['DOMAIN'] . CHTTP::urnEncode($arSite['SITE_DIR'])
+        ) . '">' . $siteDomainEncView . $siteDirEnc . '</a>'
+    );
+    $row->AddViewField(
+        "SITE",
+        '[<a href="site_edit.php?lang=' . LANGUAGE_ID . '&amp;LID=' . urlencode(
+            $arSite['LID']
+        ) . '">' . $arSite['LID'] . '</a>] ' . $arSite['SITE_NAME']
+    );
     $row->AddCheckField("SITE_ACTIVE", false);
 
-    $row->AddViewField("BINDED", '<span data-role="site-binded" data-domain="' . $siteDomainEnc . '" data-dir="' . $siteDirEnc . '">' . ($bNeedAuth ? Loc::getMessage('SEO_NEED_AUTH') : Loc::getMessage('SEO_LOADING')) . '</span>');
-    $row->AddViewField("VERIFIED", '<span data-role="site-verified" data-domain="' . $siteDomainEnc . '" data-dir="' . $siteDirEnc . '">' . ($bNeedAuth ? Loc::getMessage('SEO_NEED_AUTH') : Loc::getMessage('SEO_LOADING')) . '</span>');
+    $row->AddViewField(
+        "BINDED",
+        '<span data-role="site-binded" data-domain="' . $siteDomainEnc . '" data-dir="' . $siteDirEnc . '">' . ($bNeedAuth ? Loc::getMessage(
+            'SEO_NEED_AUTH'
+        ) : Loc::getMessage('SEO_LOADING')) . '</span>'
+    );
+    $row->AddViewField(
+        "VERIFIED",
+        '<span data-role="site-verified" data-domain="' . $siteDomainEnc . '" data-dir="' . $siteDirEnc . '">' . ($bNeedAuth ? Loc::getMessage(
+            'SEO_NEED_AUTH'
+        ) : Loc::getMessage('SEO_LOADING')) . '</span>'
+    );
 
     if (!$bNeedAuth) {
         $arActions = Array();
 
-        $arActions[] = array("ICON" => "edit", "TEXT" => Loc::getMessage('SEO_DETAIL'), "ACTION" => "getSiteInfo('" . urlencode($arSite['DOMAIN']) . "')", "DEFAULT" => true);
+        $arActions[] = array(
+            "ICON" => "edit",
+            "TEXT" => Loc::getMessage('SEO_DETAIL'),
+            "ACTION" => "getSiteInfo('" . urlencode($arSite['DOMAIN']) . "')",
+            "DEFAULT" => true
+        );
 
         $row->AddActions($arActions);
     }
@@ -103,7 +137,11 @@ if ($strError != '') {
         BX.message({'SEO_VERIFY_STATUS_NONE': '<?=Loc::getMessage('SEO_VERIFY_STATUS_NONE')?>'});
         BX.message({'SEO_VERIFY_STATUS_VERIFIED': '<?=Loc::getMessage('SEO_VERIFY_STATUS_VERIFIED')?>'});
         BX.message({'SEO_VERIFY_STATUS_IN_PROGRESS': '<?=Loc::getMessage('SEO_VERIFY_STATUS_IN_PROGRESS')?>'});
-        BX.message({'SEO_VERIFY_STATUS_VERIFICATION_FAILED': '<?=Loc::getMessage('SEO_VERIFY_STATUS_VERIFICATION_FAILED')?>'});
+        BX.message({
+            'SEO_VERIFY_STATUS_VERIFICATION_FAILED': '<?=Loc::getMessage(
+                'SEO_VERIFY_STATUS_VERIFICATION_FAILED'
+            )?>'
+        });
         BX.message({'SEO_VERIFY_STATUS_INTERNAL_ERROR': '<?=Loc::getMessage('SEO_VERIFY_STATUS_INTERNAL_ERROR')?>'});
 
         window.lastSeoResult = null;
@@ -124,7 +162,11 @@ if ($strError != '') {
         function updateCallback(res) {
             if (!!res && typeof res.error != 'undefined') {
                 if (res.error.code == 'EXPIRED_TOKEN') {
-                    BX('auth_result').innerHTML = '<?=\CUtil::JSEscape(Loc::getMessage('SEO_ERROR_ACCESS_EXPIRED'))?> <a href="javascript:void(0)" onclick="makeNewAuth();"><?=\CUtil::JSEscape(Loc::getMessage('SEO_ERROR_ACCESS_EXPIRED_LINK'))?></a>';
+                    BX('auth_result').innerHTML = '<?=\CUtil::JSEscape(
+                        Loc::getMessage('SEO_ERROR_ACCESS_EXPIRED')
+                    )?> <a href="javascript:void(0)" onclick="makeNewAuth();"><?=\CUtil::JSEscape(
+                        Loc::getMessage('SEO_ERROR_ACCESS_EXPIRED_LINK')
+                    )?></a>';
                 } else {
                     alert(res.error.message);
                 }
@@ -255,9 +297,9 @@ $arYandexSites = array();
         <input type=button onclick="makeAuth()" value="<?= Loc::getMessage('SEO_AUTH_YANDEX') ?>"/>
     </div>
     <div id="auth_code" style="display: none;">
-        <form name="auth_code_form"
-              action="<?= Converter::getHtmlConverter()->encode($APPLICATION->getCurPageParam("", array("CODE", "oauth"))) ?>"
-              method="POST"><?= bitrix_sessid_post(); ?><?= Loc::getMessage('SEO_AUTH_CODE') ?>: <input type="text"
+        <form name="auth_code_form" action="<?= Converter::getHtmlConverter()->encode(
+            $APPLICATION->getCurPageParam("", array("CODE", "oauth"))
+        ) ?>" method="POST"><?= bitrix_sessid_post(); ?><?= Loc::getMessage('SEO_AUTH_CODE') ?>: <input type="text"
                                                                                                         name="CODE"
                                                                                                         style="width: 200px"/>
             <input type="submit" name="send_code" value="<?= Loc::getMessage('SEO_AUTH_CODE_SUBMIT') ?>"></form>
@@ -269,8 +311,9 @@ if (!$bNeedAuth) {
         <div id="auth_result" class="seo-auth-result">
             <b><?= Loc::getMessage('SEO_AUTH_CURRENT') ?>:</b>
             <div style="width: 300px; padding: 10px 0 0 0;">
-                <?= Converter::getHtmlConverter()->encode($currentUser['real_name'] . ' (' . $currentUser['display_name'] . ')') ?>
-                <br/>
+                <?= Converter::getHtmlConverter()->encode(
+                    $currentUser['real_name'] . ' (' . $currentUser['display_name'] . ')'
+                ) ?><br/>
                 <a href="javascript:void(0)" onclick="makeNewAuth()"><?= Loc::getMessage('SEO_AUTH_CANCEL') ?></a>
                 <div style="clear: both;"></div>
             </div>

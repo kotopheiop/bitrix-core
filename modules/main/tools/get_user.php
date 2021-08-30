@@ -27,8 +27,9 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
 $ajaxMode = (isset($_REQUEST['ajax']) && is_string($_REQUEST['ajax']) && $_REQUEST['ajax'] == 'Y');
 $useSiteFormat = (isset($_REQUEST['format']) && is_string($_REQUEST['format']) && $_REQUEST['format'] == 'Y');
 $getRawData = false;
-if ($ajaxMode)
+if ($ajaxMode) {
     $getRawData = (isset($_REQUEST['raw']) && is_string($_REQUEST['raw']) && $_REQUEST['raw'] == 'Y');
+}
 
 $ID = intval($_REQUEST["ID"]);
 
@@ -50,13 +51,17 @@ if ($auth) {
         if ($useSiteFormat) {
             $res = CUser::FormatName(CSite::GetNameFormat(), $arUser, true, !$getRawData);
         } else {
-            $res = htmlspecialcharsbx('(' . $arUser["LOGIN"] . ') ' . $arUser["NAME"] . ' ' . $arUser["LAST_NAME"]); // old format
+            $res = htmlspecialcharsbx(
+                '(' . $arUser["LOGIN"] . ') ' . $arUser["NAME"] . ' ' . $arUser["LAST_NAME"]
+            ); // old format
         }
         if (!$ajaxMode) {
             if ($publicMode) {
                 $res = '[' . $arUser["ID"] . '] ' . $res;
             } else {
-                $res = '[<a title="' . GetMessage("MAIN_EDIT_USER_PROFILE") . '" class="tablebodylink" href="/bitrix/admin/user_edit.php?ID=' . $arUser["ID"] . '&lang=' . LANG . '">' . $arUser["ID"] . '</a>] ' . $res;
+                $res = '[<a title="' . GetMessage(
+                        "MAIN_EDIT_USER_PROFILE"
+                    ) . '" class="tablebodylink" href="/bitrix/admin/user_edit.php?ID=' . $arUser["ID"] . '&lang=' . LANG . '">' . $arUser["ID"] . '</a>] ' . $res;
             }
         }
     }
@@ -65,10 +70,12 @@ if ($auth) {
 if ($ajaxMode) {
     $APPLICATION->RestartBuffer();
     header('Content-Type: application/json');
-    echo Json::encode(array(
-        'ID' => $ID,
-        'NAME' => $res
-    ));
+    echo Json::encode(
+        array(
+            'ID' => $ID,
+            'NAME' => $res
+        )
+    );
 } else {
     $strName = preg_replace("/[^a-z0-9_\\[\\]:]/i", "", $_REQUEST["strName"]);
     ?>

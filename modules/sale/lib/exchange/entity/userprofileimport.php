@@ -52,22 +52,26 @@ class UserProfileImport extends UserImportBase
                         $propertyByConfigValue = $property[$propertyId];
                         if ($profileId == null) {
                             if (!empty($propertyByConfigValue)) {
-                                $profileId = \CSaleOrderUserProps::Add(array(
-                                    "NAME" => $fields["AGENT_NAME"],
-                                    "USER_ID" => $fields['ID'],
-                                    "PERSON_TYPE_ID" => $fields['PERSON_TYPE_ID'],
-                                    "XML_ID" => $fields["XML_ID"],
-                                    "VERSION_1C" => $fields["VERSION_1C"]
-                                ));
+                                $profileId = \CSaleOrderUserProps::Add(
+                                    array(
+                                        "NAME" => $fields["AGENT_NAME"],
+                                        "USER_ID" => $fields['ID'],
+                                        "PERSON_TYPE_ID" => $fields['PERSON_TYPE_ID'],
+                                        "XML_ID" => $fields["XML_ID"],
+                                        "VERSION_1C" => $fields["VERSION_1C"]
+                                    )
+                                );
                             }
                         }
 
-                        \CSaleOrderUserPropsValue::Add(array(
-                            "USER_PROPS_ID" => $profileId,
-                            "ORDER_PROPS_ID" => $propertyId,
-                            "NAME" => $filedsProperty["NAME"],
-                            "VALUE" => $propertyByConfigValue
-                        ));
+                        \CSaleOrderUserPropsValue::Add(
+                            array(
+                                "USER_PROPS_ID" => $profileId,
+                                "ORDER_PROPS_ID" => $propertyId,
+                                "NAME" => $filedsProperty["NAME"],
+                                "VALUE" => $propertyByConfigValue
+                            )
+                        );
                     }
                 }
             }
@@ -91,8 +95,9 @@ class UserProfileImport extends UserImportBase
     {
         $entity = $this->getEntity();
 
-        if ($entity->getId() > 0)
+        if ($entity->getId() > 0) {
             static::updateEmptyXmlId($entity->getId(), $params['TRAITS']['XML_ID']);
+        }
 
         return new Sale\Result();
     }

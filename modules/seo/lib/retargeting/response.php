@@ -60,17 +60,19 @@ abstract class Response extends Result
             } else {
                 return null;
             }
-        } else if (is_array($this->data) && isset($this->data[$this->fetchIterator])) {
-            $row = $this->data[$this->fetchIterator];
-            $this->fetchIterator++;
         } else {
-            return null;
+            if (is_array($this->data) && isset($this->data[$this->fetchIterator])) {
+                $row = $this->data[$this->fetchIterator];
+                $this->fetchIterator++;
+            } else {
+                return null;
+            }
         }
 
         if (is_array($row)) {
             $result = array();
             foreach ($row as $k => $v) {
-                $result[strtoupper($k)] = $v;
+                $result[mb_strtoupper($k)] = $v;
             }
 
             return $result;

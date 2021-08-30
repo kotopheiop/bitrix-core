@@ -57,7 +57,13 @@ class PresetMailing
 <tr>
 	<td height="40px" width="850" bgcolor="#f7f7f7" valign="top" style="border: none; padding-top: 0; padding-right: 44px; padding-bottom: 30px; padding-left: 44px;">
 		<p style="border-top: 1px solid #d1d1d1; margin-bottom: 5px; margin-top: 0; padding-top: 20px; line-height:21px;">
-			' . Loc::getMessage('PRESET_MAIL_TEMPLATE_REGARDS', array('%LINK_START%' => '<a href="http://#SERVER_NAME#" style="color:#2e6eb6;">', '%LINK_END%' => '</a>')) . '
+			' . Loc::getMessage(
+                'PRESET_MAIL_TEMPLATE_REGARDS',
+                array(
+                    '%LINK_START%' => '<a href="http://#SERVER_NAME#" style="color:#2e6eb6;">',
+                    '%LINK_END%' => '</a>'
+                )
+            ) . '
 			<br><br>
 			' . Loc::getMessage('PRESET_MAIL_TEMPLATE_UNSUB') . '
 		</p>
@@ -69,8 +75,9 @@ class PresetMailing
 
     protected static function getCoupon($perc = 5)
     {
-        if (!is_numeric($perc))
+        if (!is_numeric($perc)) {
             $perc = 5;
+        }
 
         return '<?EventMessageThemeCompiler::includeComponent(
 			"bitrix:sale.discount.coupon.mail",
@@ -142,26 +149,41 @@ class PresetMailing
                 array(
                     'TIME_SHIFT' => 0,
                     'SUBJECT' => '#SITE_NAME#: ' . Loc::getMessage('PRESET_FORGOTTEN_BASKET_LETTER_1_SUBJECT'),
-                    'MESSAGE' => self::getMailTemplate(array(
-                        'TITLE' => Loc::getMessage('PRESET_FORGOTTEN_BASKET_LETTER_1_SUBJECT'),
-                        'TEXT' => Loc::getMessage('PRESET_FORGOTTEN_BASKET_LETTER_1_MESSAGE', static::getMessagePlaceHolders()),
-                    )),
+                    'MESSAGE' => self::getMailTemplate(
+                        array(
+                            'TITLE' => Loc::getMessage('PRESET_FORGOTTEN_BASKET_LETTER_1_SUBJECT'),
+                            'TEXT' => Loc::getMessage(
+                                'PRESET_FORGOTTEN_BASKET_LETTER_1_MESSAGE',
+                                static::getMessagePlaceHolders()
+                            ),
+                        )
+                    ),
                 ),
                 array(
                     'TIME_SHIFT' => 1440,
                     'SUBJECT' => '#SITE_NAME#: ' . Loc::getMessage('PRESET_FORGOTTEN_BASKET_LETTER_2_SUBJECT'),
-                    'MESSAGE' => self::getMailTemplate(array(
-                        'TITLE' => Loc::getMessage('PRESET_FORGOTTEN_BASKET_LETTER_2_SUBJECT'),
-                        'TEXT' => Loc::getMessage('PRESET_FORGOTTEN_BASKET_LETTER_2_MESSAGE', static::getMessagePlaceHolders()),
-                    )),
+                    'MESSAGE' => self::getMailTemplate(
+                        array(
+                            'TITLE' => Loc::getMessage('PRESET_FORGOTTEN_BASKET_LETTER_2_SUBJECT'),
+                            'TEXT' => Loc::getMessage(
+                                'PRESET_FORGOTTEN_BASKET_LETTER_2_MESSAGE',
+                                static::getMessagePlaceHolders()
+                            ),
+                        )
+                    ),
                 ),
                 array(
                     'TIME_SHIFT' => 1440,
                     'SUBJECT' => '#SITE_NAME#: ' . Loc::getMessage('PRESET_FORGOTTEN_BASKET_LETTER_3_SUBJECT'),
-                    'MESSAGE' => self::getMailTemplate(array(
-                        'TITLE' => Loc::getMessage('PRESET_FORGOTTEN_BASKET_LETTER_3_SUBJECT'),
-                        'TEXT' => Loc::getMessage('PRESET_FORGOTTEN_BASKET_LETTER_3_MESSAGE', static::getMessagePlaceHolders()),
-                    )),
+                    'MESSAGE' => self::getMailTemplate(
+                        array(
+                            'TITLE' => Loc::getMessage('PRESET_FORGOTTEN_BASKET_LETTER_3_SUBJECT'),
+                            'TEXT' => Loc::getMessage(
+                                'PRESET_FORGOTTEN_BASKET_LETTER_3_MESSAGE',
+                                static::getMessagePlaceHolders()
+                            ),
+                        )
+                    ),
                 ),
             )
         );
@@ -195,26 +217,41 @@ class PresetMailing
                 array(
                     'TIME_SHIFT' => 0,
                     'SUBJECT' => '#SITE_NAME#: ' . Loc::getMessage('PRESET_CANCELED_ORDER_LETTER_1_SUBJECT'),
-                    'MESSAGE' => self::getMailTemplate(array(
-                        'TITLE' => Loc::getMessage('PRESET_CANCELED_ORDER_LETTER_1_SUBJECT'),
-                        'TEXT' => Loc::getMessage('PRESET_CANCELED_ORDER_LETTER_1_MESSAGE', static::getMessagePlaceHolders()),
-                    )),
+                    'MESSAGE' => self::getMailTemplate(
+                        array(
+                            'TITLE' => Loc::getMessage('PRESET_CANCELED_ORDER_LETTER_1_SUBJECT'),
+                            'TEXT' => Loc::getMessage(
+                                'PRESET_CANCELED_ORDER_LETTER_1_MESSAGE',
+                                static::getMessagePlaceHolders()
+                            ),
+                        )
+                    ),
                 ),
                 array(
                     'TIME_SHIFT' => 1440,
                     'SUBJECT' => '#SITE_NAME#: ' . Loc::getMessage('PRESET_CANCELED_ORDER_LETTER_2_SUBJECT'),
-                    'MESSAGE' => self::getMailTemplate(array(
-                        'TITLE' => Loc::getMessage('PRESET_CANCELED_ORDER_LETTER_2_SUBJECT'),
-                        'TEXT' => Loc::getMessage('PRESET_CANCELED_ORDER_LETTER_2_MESSAGE', static::getMessagePlaceHolders()),
-                    )),
+                    'MESSAGE' => self::getMailTemplate(
+                        array(
+                            'TITLE' => Loc::getMessage('PRESET_CANCELED_ORDER_LETTER_2_SUBJECT'),
+                            'TEXT' => Loc::getMessage(
+                                'PRESET_CANCELED_ORDER_LETTER_2_MESSAGE',
+                                static::getMessagePlaceHolders()
+                            ),
+                        )
+                    ),
                 ),
                 array(
                     'TIME_SHIFT' => 1440,
                     'SUBJECT' => '#SITE_NAME#: ' . Loc::getMessage('PRESET_CANCELED_ORDER_LETTER_3_SUBJECT'),
-                    'MESSAGE' => self::getMailTemplate(array(
-                        'TITLE' => Loc::getMessage('PRESET_CANCELED_ORDER_LETTER_3_SUBJECT'),
-                        'TEXT' => Loc::getMessage('PRESET_CANCELED_ORDER_LETTER_3_MESSAGE', static::getMessagePlaceHolders()),
-                    )),
+                    'MESSAGE' => self::getMailTemplate(
+                        array(
+                            'TITLE' => Loc::getMessage('PRESET_CANCELED_ORDER_LETTER_3_SUBJECT'),
+                            'TEXT' => Loc::getMessage(
+                                'PRESET_CANCELED_ORDER_LETTER_3_MESSAGE',
+                                static::getMessagePlaceHolders()
+                            ),
+                        )
+                    ),
                 ),
             )
         );
@@ -248,42 +285,67 @@ class PresetMailing
                 array(
                     'TIME_SHIFT' => 1440,
                     'SUBJECT' => '#SITE_NAME#: ' . Loc::getMessage('PRESET_PAID_ORDER_LETTER_1_SUBJECT'),
-                    'MESSAGE' => self::getMailTemplate(array(
-                        'TITLE' => Loc::getMessage('PRESET_PAID_ORDER_LETTER_1_SUBJECT'),
-                        'TEXT' => Loc::getMessage('PRESET_PAID_ORDER_LETTER_1_MESSAGE', static::getMessagePlaceHolders()),
-                    )),
+                    'MESSAGE' => self::getMailTemplate(
+                        array(
+                            'TITLE' => Loc::getMessage('PRESET_PAID_ORDER_LETTER_1_SUBJECT'),
+                            'TEXT' => Loc::getMessage(
+                                'PRESET_PAID_ORDER_LETTER_1_MESSAGE',
+                                static::getMessagePlaceHolders()
+                            ),
+                        )
+                    ),
                 ),
                 array(
                     'TIME_SHIFT' => 1440,
                     'SUBJECT' => '#SITE_NAME#: ' . Loc::getMessage('PRESET_PAID_ORDER_LETTER_2_SUBJECT'),
-                    'MESSAGE' => self::getMailTemplate(array(
-                        'TITLE' => Loc::getMessage('PRESET_PAID_ORDER_LETTER_2_SUBJECT'),
-                        'TEXT' => Loc::getMessage('PRESET_PAID_ORDER_LETTER_2_MESSAGE', static::getMessagePlaceHolders()),
-                    )),
+                    'MESSAGE' => self::getMailTemplate(
+                        array(
+                            'TITLE' => Loc::getMessage('PRESET_PAID_ORDER_LETTER_2_SUBJECT'),
+                            'TEXT' => Loc::getMessage(
+                                'PRESET_PAID_ORDER_LETTER_2_MESSAGE',
+                                static::getMessagePlaceHolders()
+                            ),
+                        )
+                    ),
                 ),
                 array(
                     'TIME_SHIFT' => 1440,
                     'SUBJECT' => '#SITE_NAME#: ' . Loc::getMessage('PRESET_PAID_ORDER_LETTER_3_SUBJECT'),
-                    'MESSAGE' => self::getMailTemplate(array(
-                        'TITLE' => Loc::getMessage('PRESET_PAID_ORDER_LETTER_3_SUBJECT'),
-                        'TEXT' => Loc::getMessage('PRESET_PAID_ORDER_LETTER_3_MESSAGE', static::getMessagePlaceHolders()),
-                    )),
+                    'MESSAGE' => self::getMailTemplate(
+                        array(
+                            'TITLE' => Loc::getMessage('PRESET_PAID_ORDER_LETTER_3_SUBJECT'),
+                            'TEXT' => Loc::getMessage(
+                                'PRESET_PAID_ORDER_LETTER_3_MESSAGE',
+                                static::getMessagePlaceHolders()
+                            ),
+                        )
+                    ),
                 ),
                 array(
                     'TIME_SHIFT' => 1440,
                     'SUBJECT' => '#SITE_NAME#: ' . Loc::getMessage('PRESET_PAID_ORDER_LETTER_4_SUBJECT'),
-                    'MESSAGE' => self::getMailTemplate(array(
-                        'TITLE' => Loc::getMessage('PRESET_PAID_ORDER_LETTER_4_SUBJECT'),
-                        'TEXT' => Loc::getMessage('PRESET_PAID_ORDER_LETTER_4_MESSAGE', static::getMessagePlaceHolders()),
-                    )),
+                    'MESSAGE' => self::getMailTemplate(
+                        array(
+                            'TITLE' => Loc::getMessage('PRESET_PAID_ORDER_LETTER_4_SUBJECT'),
+                            'TEXT' => Loc::getMessage(
+                                'PRESET_PAID_ORDER_LETTER_4_MESSAGE',
+                                static::getMessagePlaceHolders()
+                            ),
+                        )
+                    ),
                 ),
                 array(
                     'TIME_SHIFT' => 1440,
                     'SUBJECT' => '#SITE_NAME#: ' . Loc::getMessage('PRESET_PAID_ORDER_LETTER_5_SUBJECT'),
-                    'MESSAGE' => self::getMailTemplate(array(
-                        'TITLE' => Loc::getMessage('PRESET_PAID_ORDER_LETTER_5_SUBJECT'),
-                        'TEXT' => Loc::getMessage('PRESET_PAID_ORDER_LETTER_5_MESSAGE', static::getMessagePlaceHolders()),
-                    )),
+                    'MESSAGE' => self::getMailTemplate(
+                        array(
+                            'TITLE' => Loc::getMessage('PRESET_PAID_ORDER_LETTER_5_SUBJECT'),
+                            'TEXT' => Loc::getMessage(
+                                'PRESET_PAID_ORDER_LETTER_5_MESSAGE',
+                                static::getMessagePlaceHolders()
+                            ),
+                        )
+                    ),
                 ),
             )
         );
@@ -318,30 +380,44 @@ class PresetMailing
                 array(
                     'TIME_SHIFT' => 0,
                     'SUBJECT' => '#SITE_NAME#: ' . Loc::getMessage('PRESET_DONT_BUY_LETTER_1_SUBJECT_' . $days),
-                    'MESSAGE' => self::getMailTemplate(array(
-                        'TITLE' => Loc::getMessage('PRESET_DONT_BUY_LETTER_1_SUBJECT_' . $days),
-                        'TEXT' => Loc::getMessage('PRESET_DONT_BUY_LETTER_1_MESSAGE_' . $days, static::getMessagePlaceHolders()),
-                    )),
+                    'MESSAGE' => self::getMailTemplate(
+                        array(
+                            'TITLE' => Loc::getMessage('PRESET_DONT_BUY_LETTER_1_SUBJECT_' . $days),
+                            'TEXT' => Loc::getMessage(
+                                'PRESET_DONT_BUY_LETTER_1_MESSAGE_' . $days,
+                                static::getMessagePlaceHolders()
+                            ),
+                        )
+                    ),
                 ),
                 array(
                     'TIME_SHIFT' => 1440,
                     'SUBJECT' => '#SITE_NAME#: ' . Loc::getMessage('PRESET_DONT_BUY_LETTER_2_SUBJECT_' . $days),
-                    'MESSAGE' => self::getMailTemplate(array(
-                        'TITLE' => Loc::getMessage('PRESET_DONT_BUY_LETTER_2_SUBJECT_' . $days),
-                        'TEXT' => Loc::getMessage('PRESET_DONT_BUY_LETTER_2_MESSAGE_' . $days, static::getMessagePlaceHolders()),
-                    )),
+                    'MESSAGE' => self::getMailTemplate(
+                        array(
+                            'TITLE' => Loc::getMessage('PRESET_DONT_BUY_LETTER_2_SUBJECT_' . $days),
+                            'TEXT' => Loc::getMessage(
+                                'PRESET_DONT_BUY_LETTER_2_MESSAGE_' . $days,
+                                static::getMessagePlaceHolders()
+                            ),
+                        )
+                    ),
                 ),
                 array(
                     'TIME_SHIFT' => 1440,
                     'SUBJECT' => '#SITE_NAME#: ' . Loc::getMessage('PRESET_DONT_BUY_LETTER_3_SUBJECT_' . $days),
-                    'MESSAGE' => self::getMailTemplate(array(
-                        'TITLE' => Loc::getMessage('PRESET_DONT_BUY_LETTER_3_SUBJECT_' . $days),
-                        'TEXT' => Loc::getMessage('PRESET_DONT_BUY_LETTER_3_MESSAGE_' . $days, static::getMessagePlaceHolders()),
-                    )),
+                    'MESSAGE' => self::getMailTemplate(
+                        array(
+                            'TITLE' => Loc::getMessage('PRESET_DONT_BUY_LETTER_3_SUBJECT_' . $days),
+                            'TEXT' => Loc::getMessage(
+                                'PRESET_DONT_BUY_LETTER_3_MESSAGE_' . $days,
+                                static::getMessagePlaceHolders()
+                            ),
+                        )
+                    ),
                 ),
             )
         );
-
     }
 
     public static function getDontAuth($days)
@@ -372,37 +448,56 @@ class PresetMailing
                 array(
                     'TIME_SHIFT' => 0,
                     'SUBJECT' => '#SITE_NAME#: ' . Loc::getMessage('PRESET_DONT_AUTH_LETTER_1_SUBJECT'),
-                    'MESSAGE' => self::getMailTemplate(array(
-                        'TITLE' => Loc::getMessage('PRESET_DONT_AUTH_LETTER_1_SUBJECT'),
-                        'TEXT' => Loc::getMessage('PRESET_DONT_AUTH_LETTER_1_MESSAGE', static::getMessagePlaceHolders()),
-                    )),
+                    'MESSAGE' => self::getMailTemplate(
+                        array(
+                            'TITLE' => Loc::getMessage('PRESET_DONT_AUTH_LETTER_1_SUBJECT'),
+                            'TEXT' => Loc::getMessage(
+                                'PRESET_DONT_AUTH_LETTER_1_MESSAGE',
+                                static::getMessagePlaceHolders()
+                            ),
+                        )
+                    ),
                 ),
                 array(
                     'TIME_SHIFT' => 1440,
                     'SUBJECT' => '#SITE_NAME#: ' . Loc::getMessage('PRESET_DONT_AUTH_LETTER_2_SUBJECT'),
-                    'MESSAGE' => self::getMailTemplate(array(
-                        'TITLE' => Loc::getMessage('PRESET_DONT_AUTH_LETTER_2_SUBJECT'),
-                        'TEXT' => Loc::getMessage('PRESET_DONT_AUTH_LETTER_2_MESSAGE', static::getMessagePlaceHolders()),
-                    )),
+                    'MESSAGE' => self::getMailTemplate(
+                        array(
+                            'TITLE' => Loc::getMessage('PRESET_DONT_AUTH_LETTER_2_SUBJECT'),
+                            'TEXT' => Loc::getMessage(
+                                'PRESET_DONT_AUTH_LETTER_2_MESSAGE',
+                                static::getMessagePlaceHolders()
+                            ),
+                        )
+                    ),
                 ),
                 array(
                     'TIME_SHIFT' => 1440,
                     'SUBJECT' => '#SITE_NAME#: ' . Loc::getMessage('PRESET_DONT_AUTH_LETTER_3_SUBJECT'),
-                    'MESSAGE' => self::getMailTemplate(array(
-                        'TITLE' => Loc::getMessage('PRESET_DONT_AUTH_LETTER_3_SUBJECT'),
-                        'TEXT' => Loc::getMessage('PRESET_DONT_AUTH_LETTER_3_MESSAGE', static::getMessagePlaceHolders()),
-                    )),
+                    'MESSAGE' => self::getMailTemplate(
+                        array(
+                            'TITLE' => Loc::getMessage('PRESET_DONT_AUTH_LETTER_3_SUBJECT'),
+                            'TEXT' => Loc::getMessage(
+                                'PRESET_DONT_AUTH_LETTER_3_MESSAGE',
+                                static::getMessagePlaceHolders()
+                            ),
+                        )
+                    ),
                 ),
                 array(
                     'TIME_SHIFT' => 1440,
                     'SUBJECT' => '#SITE_NAME#: ' . Loc::getMessage('PRESET_DONT_AUTH_LETTER_4_SUBJECT'),
-                    'MESSAGE' => self::getMailTemplate(array(
-                        'TITLE' => Loc::getMessage('PRESET_DONT_AUTH_LETTER_4_SUBJECT'),
-                        'TEXT' => Loc::getMessage('PRESET_DONT_AUTH_LETTER_4_MESSAGE', static::getMessagePlaceHolders()),
-                    )),
+                    'MESSAGE' => self::getMailTemplate(
+                        array(
+                            'TITLE' => Loc::getMessage('PRESET_DONT_AUTH_LETTER_4_SUBJECT'),
+                            'TEXT' => Loc::getMessage(
+                                'PRESET_DONT_AUTH_LETTER_4_MESSAGE',
+                                static::getMessagePlaceHolders()
+                            ),
+                        )
+                    ),
                 ),
             )
         );
-
     }
 }

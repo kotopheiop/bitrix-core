@@ -21,11 +21,13 @@ $publicMode = $adminPage->publicMode;
 $selfFolderUrl = $adminPage->getSelfFolderUrl();
 
 $arIBlock = CIBlock::GetArrayByID($_GET["IBLOCK_ID"]);
-if (!is_array($arIBlock))
+if (!is_array($arIBlock)) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
-if (!CIBlockRights::UserHasRightTo($arIBlock["ID"], $arIBlock["ID"], "iblock_edit"))
+if (!CIBlockRights::UserHasRightTo($arIBlock["ID"], $arIBlock["ID"], "iblock_edit")) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $simpleTypeList = array_fill_keys(Iblock\Helpers\Admin\Property::getBaseTypeList(false), true);
 
@@ -36,15 +38,16 @@ $lAdmin = new CAdminUiList($sTableID, $oSort);
 $arPropType = Iblock\Helpers\Admin\Property::getBaseTypeList(true);
 $arUserTypeList = CIBlockProperty::GetUserType();
 Main\Type\Collection::sortByColumn($arUserTypeList, array('DESCRIPTION' => SORT_STRING));
-foreach ($arUserTypeList as $arUserType)
+foreach ($arUserTypeList as $arUserType) {
     $arPropType[$arUserType["PROPERTY_TYPE"] . ":" . $arUserType["USER_TYPE"]] = $arUserType["DESCRIPTION"];
+}
 
 $filterFields = array(
     array(
         "id" => "NAME",
         "name" => GetMessage("IBP_ADM_NAME"),
-        "filterable" => "?",
-        "quickSearch" => "",
+        "filterable" => "",
+        "quickSearch" => "?",
         "default" => true
     ),
     array(
@@ -120,33 +123,41 @@ $arFilter = array("=IBLOCK_ID" => $arIBlock["ID"]);
 
 $lAdmin->AddFilter($filterFields, $arFilter);
 
-foreach ($arFilter as $key => $value)
-    if (!strlen(trim($value)))
+foreach ($arFilter as $key => $value) {
+    if (trim($value) == '') {
         unset($arFilter[$key]);
+    }
+}
 if (isset($arFilter['=PROPERTY_TYPE'])) {
-    if (!isset($simpleTypeList[$arFilter['=PROPERTY_TYPE']]))
+    if (!isset($simpleTypeList[$arFilter['=PROPERTY_TYPE']])) {
         list($arFilter['=PROPERTY_TYPE'], $arFilter['=USER_TYPE']) = explode(':', $arFilter['=PROPERTY_TYPE'], 2);
-    else
+    } else {
         $arFilter['=USER_TYPE'] = null;
+    }
 }
 
 if ($lAdmin->EditAction()) {
-    foreach ($FIELDS as $ID => $arFields) {
+    foreach ($_REQUEST['FIELDS'] as $ID => $arFields) {
         $DB->StartTransaction();
         $ID = (int)$ID;
 
-        if (!$lAdmin->IsUpdated($ID))
+        if (!$lAdmin->IsUpdated($ID)) {
             continue;
+        }
 
         if (isset($arFields['PROPERTY_TYPE'])) {
             $arFields["USER_TYPE"] = false;
-            if (!isset($simpleTypeList[$arFields['PROPERTY_TYPE']]))
+            if (!isset($simpleTypeList[$arFields['PROPERTY_TYPE']])) {
                 list($arFields["PROPERTY_TYPE"], $arFields["USER_TYPE"]) = explode(':', $arFields["PROPERTY_TYPE"], 2);
+            }
         }
 
         $ibp = new CIBlockProperty;
         if (!$ibp->Update($ID, $arFields)) {
-            $lAdmin->AddUpdateError(GetMessage("IBP_ADM_SAVE_ERROR", array("#ID#" => $ID, "#ERROR_TEXT#" => $ibp->LAST_ERROR)), $ID);
+            $lAdmin->AddUpdateError(
+                GetMessage("IBP_ADM_SAVE_ERROR", array("#ID#" => $ID, "#ERROR_TEXT#" => $ibp->LAST_ERROR)),
+                $ID
+            );
             $DB->Rollback();
         }
         $DB->Commit();
@@ -155,23 +166,33 @@ if ($lAdmin->EditAction()) {
 
 if ($arID = $lAdmin->GroupAction()) {
     if ($lAdmin->IsGroupActionToAll()) {
-        $propertyIterator = Iblock\PropertyTable::getList(array(
-            'select' => array('ID'),
-            'filter' => $arFilter
-        ));
-        while ($property = $propertyIterator->fetch())
+        $propertyIterator = Iblock\PropertyTable::getList(
+            array(
+                'select' => array('ID'),
+                'filter' => $arFilter
+            )
+        );
+        while ($property = $propertyIterator->fetch()) {
             $arID[] = $property['ID'];
+        }
         unset($property, $propertyIterator);
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
 
         switch ($_REQUEST['action']) {
             case "delete":
-                if (!CIBlockProperty::Delete($ID))
-                    $lAdmin->AddGroupError(GetMessage("IBP_ADM_DELETE_ERROR"), $ID);
+                if (!CIBlockProperty::Delete($ID)) {
+                    $exception = $APPLICATION->getException();
+                    if ($exception) {
+                        $lAdmin->AddGroupError($exception->GetString(), $ID);
+                    } else {
+                        $lAdmin->AddGroupError(GetMessage("IBP_ADM_DELETE_ERROR"), $ID);
+                    }
+                }
                 break;
             case "activate":
             case "deactivate":
@@ -179,8 +200,12 @@ if ($arID = $lAdmin->GroupAction()) {
                 $arFields = array(
                     "ACTIVE" => ($_REQUEST['action'] == "activate" ? "Y" : "N"),
                 );
-                if (!$ibp->Update($ID, $arFields))
-                    $lAdmin->AddGroupError(GetMessage("IBP_ADM_SAVE_ERROR", array("#ID#" => $ID, "#ERROR_TEXT#" => $ibp->LAST_ERROR)), $ID);
+                if (!$ibp->Update($ID, $arFields)) {
+                    $lAdmin->AddGroupError(
+                        GetMessage("IBP_ADM_SAVE_ERROR", array("#ID#" => $ID, "#ERROR_TEXT#" => $ibp->LAST_ERROR)),
+                        $ID
+                    );
+                }
                 break;
         }
     }
@@ -284,21 +309,26 @@ $selectFieldsMap = array_fill_keys(array_keys($arHeader), false);
 $selectFieldsMap = array_merge($selectFieldsMap, $selectFields);
 
 global $by, $order;
-if (!isset($by))
+if (!isset($by)) {
     $by = 'SORT';
-if (!isset($order))
+}
+if (!isset($order)) {
     $order = 'ASC';
+}
 
 $propertyOrder = array();
-if ($by == 'PROPERTY_TYPE')
+if ($by == 'PROPERTY_TYPE') {
     $propertyOrder = array('PROPERTY_TYPE' => $order, 'USER_TYPE' => $order);
-else
-    $propertyOrder = array(strtoupper($by) => strtoupper($order));
-if (!isset($propertyOrder['ID']))
+} else {
+    $propertyOrder = array(mb_strtoupper($by) => mb_strtoupper($order));
+}
+if (!isset($propertyOrder['ID'])) {
     $propertyOrder['ID'] = 'ASC';
+}
 
-if ($selectFields['PROPERTY_TYPE'])
+if ($selectFields['PROPERTY_TYPE']) {
     $selectFields['USER_TYPE'] = true;
+}
 $selectFields = array_keys($selectFields);
 $getListParams = array(
     'select' => $selectFields,
@@ -314,8 +344,9 @@ $lAdmin->SetNavigationParams($propertyIterator, array("BASE_LINK" => $selfFolder
 while ($property = $propertyIterator->Fetch()) {
     $property['ID'] = (int)$property['ID'];
     $property['USER_TYPE'] = (string)$property['USER_TYPE'];
-    if ($property['USER_TYPE'] != '')
+    if ($property['USER_TYPE'] != '') {
         $property['PROPERTY_TYPE'] .= ':' . $property['USER_TYPE'];
+    }
 
     $urlEdit = $selfFolderUrl . 'iblock_edit_property.php?ID=' . $property['ID'] . '&lang=' . LANGUAGE_ID . "&IBLOCK_ID=" .
         $arIBlock['ID'] . ($_REQUEST['admin'] == "Y" ? "&admin=Y" : "&admin=N");
@@ -327,30 +358,42 @@ while ($property = $propertyIterator->Fetch()) {
         $row->AddInputField('NAME', array('size' => 50, 'maxlength' => 255));
         $row->AddViewField('NAME', '<a href="' . $urlEdit . '">' . htmlspecialcharsex($property['NAME']) . '</a>');
     }
-    if ($selectFieldsMap['CODE'])
+    if ($selectFieldsMap['CODE']) {
         $row->AddInputField('CODE', array('size' => 20, 'maxlength' => 50));
-    if ($selectFieldsMap['SORT'])
+    }
+    if ($selectFieldsMap['SORT']) {
         $row->AddInputField('SORT', array('size' => 5));
-    if ($selectFieldsMap['ACTIVE'])
+    }
+    if ($selectFieldsMap['ACTIVE']) {
         $row->AddCheckField('ACTIVE');
-    if ($selectFieldsMap['MULTIPLE'])
+    }
+    if ($selectFieldsMap['MULTIPLE']) {
         $row->AddCheckField('MULTIPLE');
-    if ($selectFieldsMap['XML_ID'])
+    }
+    if ($selectFieldsMap['XML_ID']) {
         $row->AddInputField('XML_ID');
-    if ($selectFieldsMap['WITH_DESCRIPTION'])
+    }
+    if ($selectFieldsMap['WITH_DESCRIPTION']) {
         $row->AddCheckField('WITH_DESCRIPTION');
-    if ($selectFieldsMap['SEARCHABLE'])
+    }
+    if ($selectFieldsMap['SEARCHABLE']) {
         $row->AddCheckField('SEARCHABLE');
-    if ($selectFieldsMap['FILTRABLE'])
+    }
+    if ($selectFieldsMap['FILTRABLE']) {
         $row->AddCheckField('FILTRABLE');
-    if ($selectFieldsMap['FILTRABLE'])
+    }
+    if ($selectFieldsMap['FILTRABLE']) {
         $row->AddCheckField('FILTRABLE');
-    if ($selectFieldsMap['IS_REQUIRED'])
+    }
+    if ($selectFieldsMap['IS_REQUIRED']) {
         $row->AddCheckField('IS_REQUIRED');
-    if ($selectFieldsMap['HINT'])
+    }
+    if ($selectFieldsMap['HINT']) {
         $row->AddInputField('HINT');
-    if ($selectFieldsMap['PROPERTY_TYPE'])
+    }
+    if ($selectFieldsMap['PROPERTY_TYPE']) {
         $row->AddSelectField('PROPERTY_TYPE', $arPropType);
+    }
 
     $arActions = array(
         array(
@@ -362,7 +405,11 @@ while ($property = $propertyIterator->Fetch()) {
         array(
             'ICON' => 'delete',
             'TEXT' => GetMessage('MAIN_ADMIN_MENU_DELETE'),
-            'ACTION' => "if(confirm('" . GetMessageJS("IBP_ADM_CONFIRM_DEL_MESSAGE") . "')) " . $lAdmin->ActionDoGroup($property['ID'], "delete", "&IBLOCK_ID=" . $arIBlock['ID'] . "&lang=" . LANGUAGE_ID),
+            'ACTION' => "if(confirm('" . GetMessageJS("IBP_ADM_CONFIRM_DEL_MESSAGE") . "')) " . $lAdmin->ActionDoGroup(
+                    $property['ID'],
+                    "delete",
+                    "&IBLOCK_ID=" . $arIBlock['ID'] . "&lang=" . LANGUAGE_ID
+                ),
         ),
     );
     $row->AddActions($arActions);
@@ -385,13 +432,15 @@ $aContext = array(
 $lAdmin->setContextSettings(array("pagePath" => $selfFolderUrl . "iblock_property_admin.php"));
 $lAdmin->AddAdminContextMenu($aContext);
 
-$lAdmin->AddGroupActionTable(array(
-    "edit" => GetMessage("MAIN_ADMIN_LIST_EDIT"),
-    "delete" => GetMessage("MAIN_ADMIN_LIST_DELETE"),
-    "activate" => GetMessage("MAIN_ADMIN_LIST_ACTIVATE"),
-    "deactivate" => GetMessage("MAIN_ADMIN_LIST_DEACTIVATE"),
-    "for_all" => true
-));
+$lAdmin->AddGroupActionTable(
+    array(
+        "edit" => GetMessage("MAIN_ADMIN_LIST_EDIT"),
+        "delete" => GetMessage("MAIN_ADMIN_LIST_DELETE"),
+        "activate" => GetMessage("MAIN_ADMIN_LIST_ACTIVATE"),
+        "deactivate" => GetMessage("MAIN_ADMIN_LIST_DEACTIVATE"),
+        "for_all" => true
+    )
+);
 
 $lAdmin->CheckListMode();
 

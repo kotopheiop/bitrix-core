@@ -66,7 +66,7 @@ class Controller
             $data = $request->getPostList()->getRaw('data');
         }
         if (!isset($parameters['IGNORE_ITEM_ERRORS'])) {
-            $parameters['ENABLE_ITEM_ERRORS'] = strtoupper($request->get('enableItemErrors')) === 'Y';
+            $parameters['ENABLE_ITEM_ERRORS'] = mb_strtoupper($request->get('enableItemErrors')) === 'Y';
         }
 
         $instance = new self();
@@ -130,8 +130,7 @@ class Controller
         }
         $answer = Json::encode($answer);
 
-        $response->flush($answer);
-        \CAllMain::FinalActions();
+        \CMain::FinalActions($answer);
         exit;
     }
 

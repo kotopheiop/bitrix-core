@@ -36,11 +36,14 @@ class CVote extends CAllVote
         $CHANNEL_ID = intval($CHANNEL_ID);
         if ($CHANNEL_ID > 0) {
             if (!array_key_exists($CHANNEL_ID, $GLOBALS["VOTE_CACHE"]["CHANNEL"])) {
-                $db_res = $DB->Query("SELECT MAX(V.ID) AS ACTIVE_VOTE_ID " .
+                $db_res = $DB->Query(
+                    "SELECT MAX(V.ID) AS ACTIVE_VOTE_ID " .
                     " FROM b_vote V " .
                     " WHERE V.CHANNEL_ID=" . intval($CHANNEL_ID) . " AND V.ACTIVE = 'Y' AND " .
-                    " NOW() >= V.DATE_START AND V.DATE_END >= NOW()");
-                $GLOBALS["VOTE_CACHE"]["CHANNEL"][$CHANNEL_ID] = ($db_res && ($tmp = $db_res->Fetch())) ? $tmp : array("ACTIVE_VOTE_ID" => 0);
+                    " NOW() >= V.DATE_START AND V.DATE_END >= NOW()"
+                );
+                $GLOBALS["VOTE_CACHE"]["CHANNEL"][$CHANNEL_ID] = ($db_res && ($tmp = $db_res->Fetch(
+                    ))) ? $tmp : array("ACTIVE_VOTE_ID" => 0);
             }
             return $GLOBALS["VOTE_CACHE"]["CHANNEL"][$CHANNEL_ID]["ACTIVE_VOTE_ID"];
         }
@@ -59,7 +62,8 @@ class CVote extends CAllVote
         $arSqlSelect = array("VE.VOTE_ID", "VE.IP", "TIMESTAMPDIFF(SECOND, VE.DATE_VOTE, NOW()) AS KEEP_IP_SEC");
         $arSqlSearch = array(
             "VE.VOTE_ID='" . $VOTE_ID . "'",
-            "VE.IP='" . $DB->ForSql($REMOTE_ADDR, 15) . "'");
+            "VE.IP='" . $DB->ForSql($REMOTE_ADDR, 15) . "'"
+        );
         if ($KEEP_IP_SEC > 0):
             $arSqlSearch[] = "(FROM_UNIXTIME(UNIX_TIMESTAMP(CURRENT_TIMESTAMP) - " . $KEEP_IP_SEC . ") <= VE.DATE_VOTE)";
         endif;
@@ -91,13 +95,14 @@ class CVote extends CAllVote
 			";
         $z = $DB->Query($strSql, false, $err_mess . __LINE__);
         $zr = $z->Fetch();
-        if (strlen($zr["MIN_DATE_START"]) <= 0)
+        if ($zr["MIN_DATE_START"] == '') {
             return GetTime(time() + CTimeZone::GetOffset(), "FULL");
-        else
+        } else {
             return $zr["MIN_DATE_START"];
+        }
     }
 
-    public static function GetList(&$by, &$order, $arFilter = Array(), &$is_filtered)
+    public static function GetList($by = 's_id', $order = 'desc', $arFilter = [])
     {
         global $DB;
         $err_mess = (CVote::err_mess()) . "<br>Function: GetList<br>Line: ";
@@ -129,10 +134,11 @@ class CVote extends CAllVote
                     $arSqlSearch[] = "V.DATE_END < " . $DB->CharToDateFunction($val, "SHORT") . " + INTERVAL 1 DAY";
                     break;
                 case "LAMP":
-                    if ($val == "red")
+                    if ($val == "red") {
                         $arSqlSearch[] = "(V.ACTIVE<>'Y' or now()<V.DATE_START or now()>V.DATE_END)";
-                    elseif ($val == "green")
+                    } elseif ($val == "green") {
                         $arSqlSearch[] = "(V.ACTIVE='Y' and now()>=V.DATE_START and now()<=V.DATE_END)";
+                    }
                     break;
                 case "CHANNEL":
                     $match = ($arFilter[$key . "_EXACT_MATCH"] == "Y" ? "N" : "Y");
@@ -144,7 +150,11 @@ class CVote extends CAllVote
                     break;
                 case "CHANNEL_ACTIVE":
                 case "CHANNEL_HIDDEN":
-                    $arSqlSearch[] = "C." . str_replace("CHANNEL_", "", $key) . " = '" . ($val == "Y" ? "Y" : "N") . "'";
+                    $arSqlSearch[] = "C." . str_replace(
+                            "CHANNEL_",
+                            "",
+                            $key
+                        ) . " = '" . ($val == "Y" ? "Y" : "N") . "'";
                     break;
                 case "TITLE":
                 case "DESCRIPTION":
@@ -159,23 +169,32 @@ class CVote extends CAllVote
                     break;
             }
         }
-        if ($by == "s_id") $strSqlOrder = "ORDER BY V.ID";
-        elseif ($by == "s_title") $strSqlOrder = "ORDER BY V.TITLE";
-        elseif ($by == "s_date_start") $strSqlOrder = "ORDER BY V.DATE_START";
-        elseif ($by == "s_date_end") $strSqlOrder = "ORDER BY V.DATE_END";
-        elseif ($by == "s_lamp") $strSqlOrder = "ORDER BY LAMP";
-        elseif ($by == "s_counter") $strSqlOrder = "ORDER BY V.COUNTER";
-        elseif ($by == "s_active") $strSqlOrder = "ORDER BY V.ACTIVE";
-        elseif ($by == "s_c_sort") $strSqlOrder = "ORDER BY V.C_SORT";
-        elseif ($by == "s_channel") $strSqlOrder = "ORDER BY V.CHANNEL_ID";
-        else {
-            $by = "s_id";
+        if ($by == "s_id") {
+            $strSqlOrder = "ORDER BY V.ID";
+        } elseif ($by == "s_title") {
+            $strSqlOrder = "ORDER BY V.TITLE";
+        } elseif ($by == "s_date_start") {
+            $strSqlOrder = "ORDER BY V.DATE_START";
+        } elseif ($by == "s_date_end") {
+            $strSqlOrder = "ORDER BY V.DATE_END";
+        } elseif ($by == "s_lamp") {
+            $strSqlOrder = "ORDER BY LAMP";
+        } elseif ($by == "s_counter") {
+            $strSqlOrder = "ORDER BY V.COUNTER";
+        } elseif ($by == "s_active") {
+            $strSqlOrder = "ORDER BY V.ACTIVE";
+        } elseif ($by == "s_c_sort") {
+            $strSqlOrder = "ORDER BY V.C_SORT";
+        } elseif ($by == "s_channel") {
+            $strSqlOrder = "ORDER BY V.CHANNEL_ID";
+        } else {
             $strSqlOrder = "ORDER BY V.ID";
         }
+
         if ($order != "asc") {
             $strSqlOrder .= " desc ";
-            $order = "desc";
         }
+
         $strSqlSearch = GetFilterSqlSearch($arSqlSearch);
         $strSql = "
 			SELECT VV.*, C.TITLE as CHANNEL_TITLE, C.ACTIVE as CHANNEL_ACTIVE,
@@ -201,7 +220,7 @@ class CVote extends CAllVote
             $strSqlOrder;
         $res = $DB->Query($strSql, false, $err_mess . __LINE__);
         $res = new _CVoteDBResult($res);
-        $is_filtered = IsFiltered($strSqlSearch);
+
         return $res;
     }
 
@@ -214,7 +233,7 @@ class CVote extends CAllVote
         $arFilter = (is_array($arFilter) ? $arFilter : array());
         foreach ($arFilter as $key => $val) {
             $key_res = CVote::GetFilterOperation($key);
-            $key = strtoupper($key_res["FIELD"]);
+            $key = mb_strtoupper($key_res["FIELD"]);
             $strNegative = $key_res["NEGATIVE"];
             $strOperation = $key_res["OPERATION"];
 
@@ -224,37 +243,54 @@ class CVote extends CAllVote
                 case "ID":
                     $str = ($strNegative == "Y" ? "NOT" : "") . "(V." . $key . " IS NULL OR V." . $key . "<=0)";
                     if (!empty($val)) {
-                        $str = ($strNegative == "Y" ? " V." . $key . " IS NULL OR NOT " : "") . "(V." . $key . " " . $strOperation . " " . ($strOperation == "LIKE" ? "'" . $DB->ForSql($val) . "'" : intval($val)) . ")";
+                        $str = ($strNegative == "Y" ? " V." . $key . " IS NULL OR NOT " : "") . "(V." . $key . " " . $strOperation . " " . ($strOperation == "LIKE" ? "'" . $DB->ForSql(
+                                    $val
+                                ) . "'" : intval($val)) . ")";
                         if ($strOperation == "IN") {
-                            $val = array_unique(array_map("intval", (is_array($val) ? $val : explode(",", $val))), SORT_NUMERIC);
-                            if (!empty($val))
-                                $str = ($strNegative == "Y" ? " NOT " : "") . "(V." . $key . " IN (" . implode(",", $val) . "))";
+                            $val = array_unique(
+                                array_map("intval", (is_array($val) ? $val : explode(",", $val))),
+                                SORT_NUMERIC
+                            );
+                            if (!empty($val)) {
+                                $str = ($strNegative == "Y" ? " NOT " : "") . "(V." . $key . " IN (" . implode(
+                                        ",",
+                                        $val
+                                    ) . "))";
+                            }
                         }
                     }
                     $arSqlSearch[] = $str;
                     break;
                 case "ACTIVE":
-                    if (empty($val))
+                    if (empty($val)) {
                         $arSqlSearch[] = ($strNegative == "Y" ? "NOT" : "") . "(V." . $key . " IS NULL OR LENGTH(V." . $key . ")<=0)";
-                    else
-                        $arSqlSearch[] = ($strNegative == "Y" ? " V." . $key . " IS NULL OR NOT " : "") . "(V." . $key . " " . $strOperation . " '" . $DB->ForSql($val) . "' )";
+                    } else {
+                        $arSqlSearch[] = ($strNegative == "Y" ? " V." . $key . " IS NULL OR NOT " : "") . "(V." . $key . " " . $strOperation . " '" . $DB->ForSql(
+                                $val
+                            ) . "' )";
+                    }
                     break;
                 case "DATE_START":
                 case "DATE_END":
-                    if (empty($val))
+                    if (empty($val)) {
                         $arSqlSearch[] = ($strNegative == "Y" ? "NOT" : "") . "(V." . $key . " IS NULL OR LENGTH(V." . $key . ")<=0)";
-                    else
-                        $arSqlSearch[] = ($strNegative == "Y" ? " V." . $key . " IS NULL OR NOT " : "") . "(V." . $key . " " . $strOperation . " " . $DB->CharToDateFunction($DB->ForSql($val), "FULL") . " )";
+                    } else {
+                        $arSqlSearch[] = ($strNegative == "Y" ? " V." . $key . " IS NULL OR NOT " : "") . "(V." . $key . " " . $strOperation . " " . $DB->CharToDateFunction(
+                                $DB->ForSql($val),
+                                "FULL"
+                            ) . " )";
+                    }
                     break;
                 case "CHANNEL":
                     $match = ($arFilter[$key . "_EXACT_MATCH"] == "Y" ? "N" : "Y");
                     $arSqlSearch[] = GetFilterQuery("C.ID, C.TITLE, C.SYMBOLIC_NAME", $val, $match);
                     break;
                 case "LAMP":
-                    if ($val == "red")
+                    if ($val == "red") {
                         $arSqlSearch[] = "(V.ACTIVE<>'Y' or now()<V.DATE_START or now()>V.DATE_END)";
-                    elseif ($val == "green")
+                    } elseif ($val == "green") {
                         $arSqlSearch[] = "(V.ACTIVE='Y' and now()>=V.DATE_START and now()<=V.DATE_END)";
+                    }
                     break;
                 case "TITLE":
                 case "DESCRIPTION":
@@ -266,9 +302,12 @@ class CVote extends CAllVote
         $strSqlSearch = (!empty($arSqlSearch) ? " AND (" . implode(") AND (", $arSqlSearch) . ") " : "");
         $arSqlOrder = array();
         foreach ($arOrder as $by => $order) {
-            $by = strtoupper($by);
-            $by = (in_array($by, array("ID", "TITLE", "DATE_START", "DATE_END", "COUNTER", "ACTIVE", "C_SORT", "CHANNEL_ID")) ? $by : "ID");
-            $arSqlOrder[] = "V." . $by . " " . (strtoupper($order) == "ASC" ? "ASC" : "DESC");
+            $by = mb_strtoupper($by);
+            $by = (in_array(
+                $by,
+                array("ID", "TITLE", "DATE_START", "DATE_END", "COUNTER", "ACTIVE", "C_SORT", "CHANNEL_ID")
+            ) ? $by : "ID");
+            $arSqlOrder[] = "V." . $by . " " . (mb_strtoupper($order) == "ASC" ? "ASC" : "DESC");
         }
         DelDuplicateSort($arSqlOrder);
         $strSqlOrder = (!empty($arSqlOrder) ? "ORDER BY " . implode(",", $arSqlOrder) : "");
@@ -300,8 +339,11 @@ class CVote extends CAllVote
         return new _CVoteDBResult($DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__));
     }
 
-    public static function GetPublicList($arFilter = Array(), $strSqlOrder = "ORDER BY C.C_SORT, C.ID, V.DATE_START desc", $params = array())
-    {
+    public static function GetPublicList(
+        $arFilter = Array(),
+        $strSqlOrder = "ORDER BY C.C_SORT, C.ID, V.DATE_START desc",
+        $params = array()
+    ) {
         global $DB, $USER;
         $err_mess = (CVote::err_mess()) . "<br>Function: GetPublicList<br>Line: ";
         $arSqlSearch = array();
@@ -310,9 +352,10 @@ class CVote extends CAllVote
         $left_join = "";
 
         foreach ($arFilter as $key => $val) {
-            if (empty($val) || (is_string($val) && $val === "NOT_REF"))
+            if (empty($val) || (is_string($val) && $val === "NOT_REF")) {
                 continue;
-            $key = strtoupper($key);
+            }
+            $key = mb_strtoupper($key);
             switch ($key) {
                 case "SITE":
                     $val = (is_array($val) ? implode(" | ", $val) : $val);
@@ -349,7 +392,10 @@ class CVote extends CAllVote
         $groups = $USER->GetGroups();
         $iCnt = 0;
 
-        if (array_key_exists("bDescPageNumbering", $params) && $params["nTopCount"] <= 0 || $params["bCount"] === true) {
+        if (array_key_exists(
+                "bDescPageNumbering",
+                $params
+            ) && $params["nTopCount"] <= 0 || $params["bCount"] === true) {
             $strSql = "SELECT COUNT(V1.ID) CNT
 				FROM (
 					SELECT V.CHANNEL_ID, V.ID, " . ($is_admin ? "2" : "max(G.PERMISSION)") . " as MAX_PERMISSION
@@ -365,10 +411,12 @@ class CVote extends CAllVote
 					HAVING MAX_PERMISSION > 0") . "
 				) V1";
             $db_res = $DB->Query($strSql, false, $err_mess . __LINE__);
-            if ($db_res && ($res = $db_res->Fetch()))
+            if ($db_res && ($res = $db_res->Fetch())) {
                 $iCnt = intval($res["CNT"]);
-            if ($params["bCount"] === true)
+            }
+            if ($params["bCount"] === true) {
                 return $iCnt;
+            }
         }
         $strSql = "
 			SELECT C.TITLE CHANNEL_TITLE, V.*, V.KEEP_IP_SEC as DELAY, 'S' as DELAY_TYPE,
@@ -406,8 +454,9 @@ class CVote extends CAllVote
             $db_res = new CDBResult();
             $db_res->NavQuery($strSql, $iCnt, $params);
         } else {
-            if ($params["nTopCount"] > 0)
+            if ($params["nTopCount"] > 0) {
                 $strSql .= " LIMIT 0," . intval($params["nTopCount"]);
+            }
             $db_res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
         }
         return $db_res;
@@ -419,7 +468,11 @@ class CVote extends CAllVote
         static $result = array();
         $ResultType = (in_array($ResultType, array("timestamp", "time")) ? $ResultType : "timestamp");
         if (empty($result)):
-            $db_res = $DB->Query("SELECT " . $DB->DateToCharFunction($DB->GetNowFunction(), "FULL") . " FORUM_DATE", false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+            $db_res = $DB->Query(
+                "SELECT " . $DB->DateToCharFunction($DB->GetNowFunction(), "FULL") . " FORUM_DATE",
+                false,
+                "File: " . __FILE__ . "<br>Line: " . __LINE__
+            );
             $res = $db_res->Fetch();
             $result["time"] = $res["FORUM_DATE"];
             $result["timestamp"] = MakeTimeStamp($res["FORUM_DATE"]);

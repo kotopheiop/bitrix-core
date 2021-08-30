@@ -2,7 +2,7 @@
 
 class CAllGuest
 {
-    public static function GetList(&$by, &$order, $arFilter = Array(), &$is_filtered)
+    public static function GetList($by = 's_last_date', $order = 'desc', $arFilter = [])
     {
         $err_mess = "File: " . __FILE__ . "<br>Line: ";
         $DB = CDatabase::GetModuleConnection('statistic');
@@ -51,11 +51,13 @@ class CAllGuest
         if (is_array($arFilter)) {
             foreach ($arFilter as $key => $val) {
                 if (is_array($val)) {
-                    if (count($val) <= 0)
+                    if (count($val) <= 0) {
                         continue;
+                    }
                 } else {
-                    if ((strlen($val) <= 0) || ($val === "NOT_REF"))
+                    if (((string)$val == '') || ($val === "NOT_REF")) {
                         continue;
+                    }
                 }
                 $match_value_set = array_key_exists($key . "_EXACT_MATCH", $arFilter);
                 $key = strtoupper($key);
@@ -65,26 +67,37 @@ class CAllGuest
                         $arSqlSearch[] = GetFilterQuery("G.ID", $val, $match);
                         break;
                     case "REGISTERED":
-                        if ($val == "Y")
+                        if ($val == "Y") {
                             $arSqlSearch[] = "G.LAST_USER_ID>0 and G.LAST_USER_ID is not null";
-                        elseif ($val == "N")
+                        } elseif ($val == "N") {
                             $arSqlSearch[] = "G.LAST_USER_ID<=0 or G.LAST_USER_ID is null";
+                        }
                         break;
                     case "FIRST_DATE1":
-                        if (CheckDateTime($val))
+                        if (CheckDateTime($val)) {
                             $arSqlSearch[] = "G.FIRST_DATE >= " . $DB->CharToDateFunction($val, "SHORT");
+                        }
                         break;
                     case "FIRST_DATE2":
-                        if (CheckDateTime($val))
-                            $arSqlSearch[] = "G.FIRST_DATE < " . CStatistics::DBDateAdd($DB->CharToDateFunction($val, "SHORT"), 1);
+                        if (CheckDateTime($val)) {
+                            $arSqlSearch[] = "G.FIRST_DATE < " . CStatistics::DBDateAdd(
+                                    $DB->CharToDateFunction($val, "SHORT"),
+                                    1
+                                );
+                        }
                         break;
                     case "LAST_DATE1":
-                        if (CheckDateTime($val))
+                        if (CheckDateTime($val)) {
                             $arSqlSearch[] = "G.LAST_DATE >= " . $DB->CharToDateFunction($val, "SHORT");
+                        }
                         break;
                     case "LAST_DATE2":
-                        if (CheckDateTime($val))
-                            $arSqlSearch[] = "G.LAST_DATE < " . CStatistics::DBDateAdd($DB->CharToDateFunction($val, "SHORT"), 1);
+                        if (CheckDateTime($val)) {
+                            $arSqlSearch[] = "G.LAST_DATE < " . CStatistics::DBDateAdd(
+                                    $DB->CharToDateFunction($val, "SHORT"),
+                                    1
+                                );
+                        }
                         break;
                     case "PERIOD_DATE1":
                         ResetFilterLogic();
@@ -98,32 +111,45 @@ class CAllGuest
                     case "PERIOD_DATE2":
                         ResetFilterLogic();
                         if (CheckDateTime($val)) {
-                            $arSqlSearch[] = "S.DATE_LAST < " . CStatistics::DBDateAdd($DB->CharToDateFunction($val, "SHORT"), 1);
+                            $arSqlSearch[] = "S.DATE_LAST < " . CStatistics::DBDateAdd(
+                                    $DB->CharToDateFunction($val, "SHORT"),
+                                    1
+                                );
                             $from0 = " INNER JOIN b_stat_session S ON (S.GUEST_ID = G.ID) ";
                             $select0 = "count(S.ID) as SESS,";
                             $bGroup = true;
                         }
                         break;
                     case "SITE_ID":
-                        if (is_array($val)) $val = implode(" | ", $val);
+                        if (is_array($val)) {
+                            $val = implode(" | ", $val);
+                        }
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "N" && $match_value_set) ? "Y" : "N";
                         $arSqlSearch[] = GetFilterQuery("G.LAST_SITE_ID, G.FIRST_SITE_ID", $val, $match);
                         break;
                     case "LAST_SITE_ID":
                     case "FIRST_SITE_ID":
-                        if (is_array($val)) $val = implode(" | ", $val);
+                        if (is_array($val)) {
+                            $val = implode(" | ", $val);
+                        }
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "N" && $match_value_set) ? "Y" : "N";
                         $arSqlSearch[] = GetFilterQuery("G." . $key, $val, $match);
                         break;
                     case "URL":
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "Y" && $match_value_set) ? "N" : "Y";
-                        $arSqlSearch[] = GetFilterQuery("G.FIRST_URL_FROM,G.FIRST_URL_TO,G.LAST_URL_LAST", $val, $match, array("/", "\\", ".", "?", "#", ":"));
+                        $arSqlSearch[] = GetFilterQuery(
+                            "G.FIRST_URL_FROM,G.FIRST_URL_TO,G.LAST_URL_LAST",
+                            $val,
+                            $match,
+                            array("/", "\\", ".", "?", "#", ":")
+                        );
                         break;
                     case "URL_404":
-                        if ($val == "Y")
+                        if ($val == "Y") {
                             $arSqlSearch[] = "G.FIRST_URL_TO_404='Y' or	G.LAST_URL_LAST_404='Y'";
-                        elseif ($val == "N")
+                        } elseif ($val == "N") {
                             $arSqlSearch[] = "G.FIRST_URL_TO_404='N' and G.LAST_URL_LAST_404='N'";
+                        }
                         break;
                     case "USER_AGENT":
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "Y" && $match_value_set) ? "N" : "Y";
@@ -187,10 +213,11 @@ class CAllGuest
                         $arSqlSearch[] = "G.HITS<='" . intval($val) . "'";
                         break;
                     case "FAVORITES":
-                        if ($val == "Y")
+                        if ($val == "Y") {
                             $arSqlSearch[] = "G.FAVORITES='Y'";
-                        elseif ($val == "N")
+                        } elseif ($val == "N") {
                             $arSqlSearch[] = "G.FAVORITES<>'Y'";
+                        }
                         break;
                     case "IP":
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "Y" && $match_value_set) ? "N" : "Y";
@@ -229,7 +256,11 @@ class CAllGuest
                             $match = ($arFilter[$key . "_EXACT_MATCH"] == "Y" && $match_value_set) ? "N" : "Y";
                             $arSqlSearch[] = $DB->IsNull("G.LAST_USER_ID", "0") . ">0";
                             $arSqlSearch[] = GetFilterQuery("G.LAST_USER_ID,A.LOGIN,A.LAST_NAME,A.NAME", $val, $match);
-                            $select1 .= ", " . $DB->Concat($DB->IsNull("A.NAME", "''"), "' '", $DB->IsNull("A.LAST_NAME", "''")) . " USER_NAME, A.LOGIN";
+                            $select1 .= ", " . $DB->Concat(
+                                    $DB->IsNull("A.NAME", "''"),
+                                    "' '",
+                                    $DB->IsNull("A.LAST_NAME", "''")
+                                ) . " USER_NAME, A.LOGIN";
                             $from1 = "LEFT JOIN  b_user A ON (A.ID = G.LAST_USER_ID) ";
                             $arrGroup["A.NAME"] = true;
                             $arrGroup["A.LAST_NAME"] = true;
@@ -242,7 +273,11 @@ class CAllGuest
                             $match = ($arFilter[$key . "_EXACT_MATCH"] == "Y" && $match_value_set) ? "N" : "Y";
                             $arSqlSearch[] = $DB->IsNull("G.LAST_USER_ID", "0") . ">0";
                             $arSqlSearch[] = GetFilterQuery("G.LAST_USER_ID", $val, $match);
-                            $select1 .= ", " . $DB->Concat($DB->IsNull("A.NAME", "''"), "' '", $DB->IsNull("A.LAST_NAME", "''")) . " USER_NAME, A.LOGIN";
+                            $select1 .= ", " . $DB->Concat(
+                                    $DB->IsNull("A.NAME", "''"),
+                                    "' '",
+                                    $DB->IsNull("A.LAST_NAME", "''")
+                                ) . " USER_NAME, A.LOGIN";
                             $from1 = "LEFT JOIN  b_user A ON (A.ID = G.LAST_USER_ID) ";
                             $arrGroup["A.NAME"] = true;
                             $arrGroup["A.LAST_NAME"] = true;
@@ -254,32 +289,50 @@ class CAllGuest
             }
         }
 
-        if ($by == "s_id") $strSqlOrder = "ORDER BY G.ID";
-        elseif ($by == "s_first_site_id") $strSqlOrder = "ORDER BY G.FIRST_SITE_ID";
-        elseif ($by == "s_last_site_id") $strSqlOrder = "ORDER BY G.LAST_SITE_ID";
-        elseif ($by == "s_events") $strSqlOrder = "ORDER BY G.C_EVENTS";
-        elseif ($by == "s_sessions") $strSqlOrder = "ORDER BY G.SESSIONS";
-        elseif ($by == "s_hits") $strSqlOrder = "ORDER BY G.HITS";
-        elseif ($by == "s_first_date") $strSqlOrder = "ORDER BY G.FIRST_DATE";
-        elseif ($by == "s_first_url_from") $strSqlOrder = "ORDER BY G.FIRST_URL_FROM";
-        elseif ($by == "s_first_url_to") $strSqlOrder = "ORDER BY G.FIRST_URL_TO";
-        elseif ($by == "s_first_adv_id") $strSqlOrder = "ORDER BY G.FIRST_ADV_ID";
-        elseif ($by == "s_last_date") $strSqlOrder = "ORDER BY " . CStatistics::DBFirstDate("G.LAST_DATE");
-        elseif ($by == "s_last_user_id") $strSqlOrder = "ORDER BY G.LAST_USER_ID";
-        elseif ($by == "s_last_url_last") $strSqlOrder = "ORDER BY G.LAST_URL_LAST";
-        elseif ($by == "s_last_user_agent") $strSqlOrder = "ORDER BY G.LAST_USER_AGENT";
-        elseif ($by == "s_last_ip") $strSqlOrder = "ORDER BY G.LAST_IP";
-        elseif ($by == "s_last_adv_id") $strSqlOrder = "ORDER BY G.LAST_ADV_ID";
-        elseif ($by == "s_last_country_id") $strSqlOrder = "ORDER BY G.LAST_COUNTRY_ID";
-        elseif ($by == "s_last_region_name") $strSqlOrder = "ORDER BY CITY.REGION";
-        elseif ($by == "s_last_city_id") $strSqlOrder = "ORDER BY G.LAST_CITY_ID";
-        else {
-            $by = "s_last_date";
+        if ($by == "s_id") {
+            $strSqlOrder = "ORDER BY G.ID";
+        } elseif ($by == "s_first_site_id") {
+            $strSqlOrder = "ORDER BY G.FIRST_SITE_ID";
+        } elseif ($by == "s_last_site_id") {
+            $strSqlOrder = "ORDER BY G.LAST_SITE_ID";
+        } elseif ($by == "s_events") {
+            $strSqlOrder = "ORDER BY G.C_EVENTS";
+        } elseif ($by == "s_sessions") {
+            $strSqlOrder = "ORDER BY G.SESSIONS";
+        } elseif ($by == "s_hits") {
+            $strSqlOrder = "ORDER BY G.HITS";
+        } elseif ($by == "s_first_date") {
+            $strSqlOrder = "ORDER BY G.FIRST_DATE";
+        } elseif ($by == "s_first_url_from") {
+            $strSqlOrder = "ORDER BY G.FIRST_URL_FROM";
+        } elseif ($by == "s_first_url_to") {
+            $strSqlOrder = "ORDER BY G.FIRST_URL_TO";
+        } elseif ($by == "s_first_adv_id") {
+            $strSqlOrder = "ORDER BY G.FIRST_ADV_ID";
+        } elseif ($by == "s_last_date") {
+            $strSqlOrder = "ORDER BY " . CStatistics::DBFirstDate("G.LAST_DATE");
+        } elseif ($by == "s_last_user_id") {
+            $strSqlOrder = "ORDER BY G.LAST_USER_ID";
+        } elseif ($by == "s_last_url_last") {
+            $strSqlOrder = "ORDER BY G.LAST_URL_LAST";
+        } elseif ($by == "s_last_user_agent") {
+            $strSqlOrder = "ORDER BY G.LAST_USER_AGENT";
+        } elseif ($by == "s_last_ip") {
+            $strSqlOrder = "ORDER BY G.LAST_IP";
+        } elseif ($by == "s_last_adv_id") {
+            $strSqlOrder = "ORDER BY G.LAST_ADV_ID";
+        } elseif ($by == "s_last_country_id") {
+            $strSqlOrder = "ORDER BY G.LAST_COUNTRY_ID";
+        } elseif ($by == "s_last_region_name") {
+            $strSqlOrder = "ORDER BY CITY.REGION";
+        } elseif ($by == "s_last_city_id") {
+            $strSqlOrder = "ORDER BY G.LAST_CITY_ID";
+        } else {
             $strSqlOrder = "ORDER BY " . CStatistics::DBFirstDate("G.LAST_DATE");
         }
+
         if ($order != "asc") {
             $strSqlOrder .= " desc ";
-            $order = "desc";
         }
 
         $strSqlGroup = $bGroup ? "GROUP BY " . implode(", ", array_keys($arrGroup)) : "";
@@ -314,7 +367,7 @@ class CAllGuest
 		";
 
         $res = $DB->Query(CStatistics::DBTopSql($strSql), false, $err_mess . __LINE__);
-        $is_filtered = (IsFiltered($strSqlSearch));
+
         return $res;
     }
 
@@ -323,7 +376,8 @@ class CAllGuest
         $DB = CDatabase::GetModuleConnection('statistic');
         $ID = intval($ID);
 
-        $res = $DB->Query("
+        $res = $DB->Query(
+            "
 			SELECT
 				G.*,
 				" . $DB->DateToCharFunction("G.FIRST_DATE") . " FIRST_DATE,
@@ -344,7 +398,10 @@ class CAllGuest
 				LEFT JOIN b_stat_city CITY ON (CITY.ID = G.LAST_CITY_ID)
 			WHERE
 				G.ID = '$ID'
-		", false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+		",
+            false,
+            "File: " . __FILE__ . "<br>Line: " . __LINE__
+        );
 
         $res = new CStatResult($res);
         return $res;

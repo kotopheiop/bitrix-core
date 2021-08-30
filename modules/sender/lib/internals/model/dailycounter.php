@@ -136,9 +136,11 @@ class DailyCounterTable extends Entity\DataManager
             $date->add("-$daysLeft day");
         }
 
-        return static::getRow(array(
-            "filter" => array("=DATE_STAT" => $date),
-            "cache" => array("ttl" => 60)
-        ));
+        return static::getRow(
+            array(
+                "filter" => array("=DATE_STAT" => $date),
+                "cache" => array("ttl" => 60)
+            )
+        );
     }
 }

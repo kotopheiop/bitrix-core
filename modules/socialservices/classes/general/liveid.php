@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 class CSocServLiveID extends CSocServAuth
@@ -7,9 +8,21 @@ class CSocServLiveID extends CSocServAuth
     {
         $liveid_disabled = !WindowsLiveLogin::IsAvailable();
         return array(
-            array("liveid_appid", GetMessage("MAIN_OPTION_AUTH_LIVEID_APPLID"), "", Array("text", 40), $liveid_disabled),
-            array("liveid_secret", GetMessage("MAIN_OPTION_AUTH_LIVEID_SECRET"), "", Array("text", 40), $liveid_disabled),
-            array("note" => GetMessage('MAIN_OPTION_COMMENT1')),
+            array(
+                "liveid_appid",
+                GetMessage("MAIN_OPTION_AUTH_LIVEID_APPLID"),
+                "",
+                Array("text", 40),
+                $liveid_disabled
+            ),
+            array(
+                "liveid_secret",
+                GetMessage("MAIN_OPTION_AUTH_LIVEID_SECRET"),
+                "",
+                Array("text", 40),
+                $liveid_disabled
+            ),
+            array("note" => GetMessage('MAIN_OPTION_COMMENT2')),
         );
     }
 
@@ -22,7 +35,10 @@ class CSocServLiveID extends CSocServAuth
 
         $_SESSION['BX_LIVEID_LAST_PAGE'] = $GLOBALS["APPLICATION"]->GetCurPageParam('', array('logout'));
 
-        return '<noindex><a href="' . $wll->getLoginUrl() . '" rel="nofollow" class="bx-ss-button liveid-button"></a><span class="bx-spacer"></span><span>' . GetMessage("socserv_liveid_note") . '</span></noindex>';
+        return '<noindex><a href="' . $wll->getLoginUrl(
+            ) . '" rel="nofollow" class="bx-ss-button liveid-button"></a><span class="bx-spacer"></span><span>' . GetMessage(
+                "socserv_liveid_note"
+            ) . '</span></noindex>';
     }
 }
 

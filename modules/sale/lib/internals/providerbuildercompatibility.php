@@ -33,7 +33,9 @@ class ProviderBuilderCompatibility extends ProviderBuilderBase
         $productId = $basketItem->getProductId();
         $providerName = $basketItem->getProviderName();
 
-        $isOrdable = ($basketItem->getField("CAN_BUY") == 'Y' && $basketItem->getField("DELAY") == 'N' && $basketItem->getField("SUBSCRIBE") == 'N');
+        $isOrdable = ($basketItem->getField("CAN_BUY") == 'Y' && $basketItem->getField(
+                "DELAY"
+            ) == 'N' && $basketItem->getField("SUBSCRIBE") == 'N');
 
         $fields = array(
             'BASKET_ITEM' => $basketItem,

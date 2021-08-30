@@ -82,7 +82,7 @@ class Contact extends Base
         try {
             $id = $this->saveByEntity(ContactTable::getEntity(), $id, $data);
         } catch (SqlQueryException $exception) {
-            if (strpos($exception->getMessage(), '(1062) Duplicate entry') !== false) {
+            if (mb_strpos($exception->getMessage(), '(1062) Duplicate entry') !== false) {
                 $this->errors->setError(new Error(Loc::getMessage('SENDER_ENTITY_CONTACT_ERROR_DUPLICATE')));
                 return $id;
             }
@@ -130,22 +130,28 @@ class Contact extends Base
     {
         $data = ContactTable::getRowById($id);
         if ($data) {
-            $list = ContactListTable::getList([
-                'select' => ['LIST_ID'],
-                'filter' => ['CONTACT_ID' => $id]
-            ])->fetchAll();
+            $list = ContactListTable::getList(
+                [
+                    'select' => ['LIST_ID'],
+                    'filter' => ['CONTACT_ID' => $id]
+                ]
+            )->fetchAll();
             $data['SET_LIST'] = array_column($list, 'LIST_ID');
 
-            $list = MailingSubscriptionTable::getList([
-                'select' => ['MAILING_ID'],
-                'filter' => ['CONTACT_ID' => $id, 'IS_UNSUB' => 'N']
-            ])->fetchAll();
+            $list = MailingSubscriptionTable::getList(
+                [
+                    'select' => ['MAILING_ID'],
+                    'filter' => ['CONTACT_ID' => $id, 'IS_UNSUB' => 'N']
+                ]
+            )->fetchAll();
             $data['SUB_LIST'] = array_column($list, 'MAILING_ID');
 
-            $list = MailingSubscriptionTable::getList([
-                'select' => ['MAILING_ID'],
-                'filter' => ['CONTACT_ID' => $id, 'IS_UNSUB' => 'Y']
-            ])->fetchAll();
+            $list = MailingSubscriptionTable::getList(
+                [
+                    'select' => ['MAILING_ID'],
+                    'filter' => ['CONTACT_ID' => $id, 'IS_UNSUB' => 'Y']
+                ]
+            )->fetchAll();
             $data['UNSUB_LIST'] = array_column($list, 'MAILING_ID');
         }
 
@@ -197,10 +203,12 @@ class Contact extends Base
         }
 
         $campaignId = $campaignId ?: Campaign::getDefaultId(SITE_ID);
-        return MailingSubscriptionTable::addSubscription(array(
-            'MAILING_ID' => $campaignId,
-            'CONTACT_ID' => $this->getId(),
-        ));
+        return MailingSubscriptionTable::addSubscription(
+            array(
+                'MAILING_ID' => $campaignId,
+                'CONTACT_ID' => $this->getId(),
+            )
+        );
     }
 
     /**
@@ -216,10 +224,12 @@ class Contact extends Base
         }
 
         $campaignId = $campaignId ?: Campaign::getDefaultId(SITE_ID);
-        return MailingSubscriptionTable::addUnSubscription(array(
-            'MAILING_ID' => $campaignId,
-            'CONTACT_ID' => $this->getId(),
-        ));
+        return MailingSubscriptionTable::addUnSubscription(
+            array(
+                'MAILING_ID' => $campaignId,
+                'CONTACT_ID' => $this->getId(),
+            )
+        );
     }
 
     /**
@@ -277,9 +287,11 @@ class Contact extends Base
             return false;
         }
 
-        return ContactListTable::delete(array(
-            'CONTACT_ID' => $this->getId(),
-            'LIST_ID' => $listId
-        ))->isSuccess();
+        return ContactListTable::delete(
+            array(
+                'CONTACT_ID' => $this->getId(),
+                'LIST_ID' => $listId
+            )
+        )->isSuccess();
     }
 }

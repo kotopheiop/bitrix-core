@@ -3,6 +3,7 @@
 namespace Bitrix\Translate\Controller\Export;
 
 use Bitrix\Main;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Translate;
 use Bitrix\Translate\Index;
 
@@ -31,7 +32,9 @@ class ExportPhraseSearch
      */
     public function __construct($name, Main\Engine\Controller $controller, $config = array())
     {
-        $this->keepField('pathList', 'seekPathId');
+        $this->keepField(['pathList', 'seekPathId']);
+
+        Loc::loadLanguageFile(__DIR__ . '/exportaction.php');
 
         parent::__construct($name, $controller, $config);
     }
@@ -69,7 +72,7 @@ class ExportPhraseSearch
 
             if ($this->totalItems > 0) {
                 $this->exportFileName = $this->generateExportFileName($path, $this->languages);
-                $this->createExportTempFile();
+                $this->createExportTempFile($this->exportFileName);
             }
 
             $this->saveProgressParameters();
@@ -110,19 +113,21 @@ class ExportPhraseSearch
         $select = array('PATH_ID', 'PHRASE_CODE', 'FILE_PATH');
 
         foreach ($this->languages as $langId) {
-            $select[] = strtoupper($langId) . "_LANG";
+            $select[] = mb_strtoupper($langId) . "_LANG";
         }
         if (!in_array($this->filter['LANGUAGE_ID'], $this->languages)) {
-            $select[] = strtoupper($this->filter['LANGUAGE_ID']) . "_LANG";
+            $select[] = mb_strtoupper($this->filter['LANGUAGE_ID']) . "_LANG";
         }
 
         /** @var Main\ORM\Query\Result $cachePathRes */
-        $phraseInxRes = Index\PhraseIndexSearch::getList(array(
-            'filter' => $phraseFilter,
-            'order' => ['TITLE' => 'ASC', 'PATH_ID' => 'ASC'],
-            'select' => $select,
-            //todo: add limit here
-        ));
+        $phraseInxRes = Index\PhraseIndexSearch::getList(
+            array(
+                'filter' => $phraseFilter,
+                'order' => ['TITLE' => 'ASC', 'PATH_ID' => 'ASC'],
+                'select' => $select,
+                //todo: add limit here
+            )
+        );
 
         $processedItemCount = 0;
 
@@ -139,17 +144,23 @@ class ExportPhraseSearch
             $pathId = (int)$phraseInx['PATH_ID'];
 
             if (!isset($fileInxCache[$pathId])) {
-                $fileInxRes = Translate\Index\Internals\FileIndexTable::getList(array(
-                    'filter' => ['=PATH_ID' => $pathId],
-                    'order' => ['ID' => 'ASC'],
-                    'select' => ['ID', 'PATH_ID', 'LANG_ID', 'FULL_PATH'],
-                ));
+                $fileInxRes = Translate\Index\Internals\FileIndexTable::getList(
+                    array(
+                        'filter' => ['=PATH_ID' => $pathId],
+                        'order' => ['ID' => 'ASC'],
+                        'select' => ['ID', 'PATH_ID', 'LANG_ID', 'FULL_PATH'],
+                    )
+                );
                 $fullPaths = array();
                 while ($fileInx = $fileInxRes->fetch()) {
                     $fullPaths[$fileInx['LANG_ID']] = $fileInx['FULL_PATH'];
                 }
 
-                $fileInxCache[$pathId] = $this->mergeLangFiles($phraseInx['FILE_PATH'], $fullPaths, $this->collectUntranslated);
+                $fileInxCache[$pathId] = $this->mergeLangFiles(
+                    $phraseInx['FILE_PATH'],
+                    $fullPaths,
+                    $this->collectUntranslated
+                );
             }
 
             $rows =& $fileInxCache[$pathId];

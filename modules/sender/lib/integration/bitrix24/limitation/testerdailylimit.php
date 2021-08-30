@@ -44,7 +44,6 @@ class TesterDailyLimit extends DailyLimit
      */
     public function setLimit($limit)
     {
-
     }
 
     /**

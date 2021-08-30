@@ -43,10 +43,13 @@ abstract class PrototypeItemDataManager extends ORM\Data\DataManager
         // check for unknown fields
         foreach ($data as $k => $v) {
             if (!(static::getEntity()->hasField($k) && static::getEntity()->getField($k) instanceof ScalarField)) {
-                throw new Main\SystemException(sprintf(
-                    'Field `%s` not found in entity when trying to query %s row.',
-                    $k, static::getEntity()->getName()
-                ));
+                throw new Main\SystemException(
+                    sprintf(
+                        'Field `%s` not found in entity when trying to query %s row.',
+                        $k,
+                        static::getEntity()->getName()
+                    )
+                );
             }
         }
 
@@ -93,8 +96,13 @@ abstract class PrototypeItemDataManager extends ORM\Data\DataManager
                 $result->addError(static::getErrorFromException());
             }
 
-            $fields = $userFieldManager->getUserFieldsWithReadyData(static::getItemUserFieldEntityId(), $oldData, LANGUAGE_ID, false, 'ID');
-
+            $fields = $userFieldManager->getUserFieldsWithReadyData(
+                static::getItemUserFieldEntityId(),
+                $oldData,
+                LANGUAGE_ID,
+                false,
+                'ID'
+            );
         } else {
             $fields = $userFieldManager->getUserFields(static::getItemUserFieldEntityId());
 
@@ -140,7 +148,10 @@ abstract class PrototypeItemDataManager extends ORM\Data\DataManager
             if (is_array($data[$fieldName]) && $field['MULTIPLE'] === 'Y') {
                 $multiValues[$fieldName] = array_filter($data[$fieldName], array('static', 'isNotNull'));
             } elseif ($field['USER_TYPE']['BASE_TYPE'] === 'file') {
-                if (is_numeric($oldData[$fieldName]) && array_key_exists($fieldName, $data) && (int)$oldData[$fieldName] !== (int)$data[$fieldName]) {
+                if (is_numeric($oldData[$fieldName]) && array_key_exists(
+                        $fieldName,
+                        $data
+                    ) && (int)$oldData[$fieldName] !== (int)$data[$fieldName]) {
                     \CFile::Delete($oldData[$fieldName]);
                 }
             }
@@ -162,10 +173,14 @@ abstract class PrototypeItemDataManager extends ORM\Data\DataManager
 
                 $helper = $connection->getSqlHelper();
                 // first, delete old values
-                $connection->query(sprintf(
-                    'DELETE FROM %s WHERE %s = %d',
-                    $helper->quote($utmTableName), $helper->quote('ID'), $id
-                ));
+                $connection->query(
+                    sprintf(
+                        'DELETE FROM %s WHERE %s = %d',
+                        $helper->quote($utmTableName),
+                        $helper->quote('ID'),
+                        $id
+                    )
+                );
             }
 
             foreach ($values as $value) {
@@ -188,16 +203,24 @@ abstract class PrototypeItemDataManager extends ORM\Data\DataManager
 
     public static function onBeforeUpdate(Event $event): ORM\EventResult
     {
-        return static::modifyValuesBeforeSave($event->getParameter('id'), $event->getParameter('fields'), [
-            'isUpdate' => true,
-        ]);
+        return static::modifyValuesBeforeSave(
+            $event->getParameter('id'),
+            $event->getParameter('fields'),
+            [
+                'isUpdate' => true,
+            ]
+        );
     }
 
     public static function onAfterUpdate(Event $event): ORM\EventResult
     {
-        return static::saveMultipleValues($event->getParameter('id'), $event->getParameter('fields'), [
-            'isUpdate' => true,
-        ]);
+        return static::saveMultipleValues(
+            $event->getParameter('id'),
+            $event->getParameter('fields'),
+            [
+                'isUpdate' => true,
+            ]
+        );
     }
 
     public static function onBeforeDelete(Event $event): ORM\EventResult
@@ -230,10 +253,14 @@ abstract class PrototypeItemDataManager extends ORM\Data\DataManager
                 $utmTableName = $typeDataClass::getMultipleValueTableName($type, $userfield);
 
                 try {
-                    $connection->query(sprintf(
-                        'DELETE FROM %s WHERE %s = %d',
-                        $helper->quote($utmTableName), $helper->quote('ID'), $id
-                    ));
+                    $connection->query(
+                        sprintf(
+                            'DELETE FROM %s WHERE %s = %d',
+                            $helper->quote($utmTableName),
+                            $helper->quote('ID'),
+                            $id
+                        )
+                    );
                 } catch (Main\DB\SqlQueryException $e) {
                     $result->addError(new ORM\EntityError($e->getMessage()));
                 }
@@ -307,6 +334,14 @@ abstract class PrototypeItemDataManager extends ORM\Data\DataManager
     {
         if (!isset($userField['USER_TYPE']) || !is_array($userField['USER_TYPE'])) {
             $userField['USER_TYPE'] = array();
+        } elseif (
+            isset($userField['USER_TYPE']['BASE_TYPE'])
+            && $userField['USER_TYPE']['BASE_TYPE'] === 'datetime'
+            && $value instanceof Main\Type\DateTime
+            && isset($userField['SETTINGS']['USE_TIMEZONE'])
+            && $userField['SETTINGS']['USE_TIMEZONE'] === 'Y'
+        ) {
+            $value = $value::createFromUserTime($value->format(Main\Type\DateTime::getFormat()));
         }
 
         if (
@@ -314,7 +349,8 @@ abstract class PrototypeItemDataManager extends ORM\Data\DataManager
             is_callable(array($userField['USER_TYPE']['CLASS_NAME'], 'onbeforesave'))
         ) {
             $value = call_user_func_array(
-                array($userField['USER_TYPE']['CLASS_NAME'], 'onbeforesave'), array($userField, $value)
+                array($userField['USER_TYPE']['CLASS_NAME'], 'onbeforesave'),
+                array($userField, $value)
             );
         }
 
@@ -364,12 +400,14 @@ abstract class PrototypeItemDataManager extends ORM\Data\DataManager
 
     public static function getUserFieldValues(int $id, array $userFields): ?array
     {
-        return static::getList([
-            'select' => array_keys($userFields),
-            'filter' => [
-                '=ID' => $id,
+        return static::getList(
+            [
+                'select' => array_keys($userFields),
+                'filter' => [
+                    '=ID' => $id,
+                ]
             ]
-        ])->fetch();
+        )->fetch();
     }
 
     public static function updateUserFieldValues(int $id, array $fields): Main\Result

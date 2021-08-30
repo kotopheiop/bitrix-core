@@ -1,4 +1,6 @@
-<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die(); ?><?
+<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+} ?><?
 //������ � �������� ����� ���������� ��������� ������� ��� �������� ���������� � �������
 //���� ������ ������������� � ��������� ����� ����� � ��������� ������� ���������� ��������
 //����� ����� �����. ���� ��������� ���������, ���������� ������� GET � ������ � ������ PAYMENT
@@ -9,19 +11,24 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_be
 CModule::IncludeModule("sale");
 if ($mode == "PAYMENT") {
     if (IntVal($issuer_id) > 0) {
-        $bCorrectPayment = True;
+        $bCorrectPayment = true;
 
-        if (!($arOrder = CSaleOrder::GetByID(IntVal($issuer_id))))
-            $bCorrectPayment = False;
+        if (!($arOrder = CSaleOrder::GetByID(IntVal($issuer_id)))) {
+            $bCorrectPayment = false;
+        }
 
-        if ($bCorrectPayment)
+        if ($bCorrectPayment) {
             CSalePaySystemAction::InitParamArrays($arOrder, $arOrder["ID"]);
+        }
 
         $PASS = CSalePaySystemAction::GetParamValue("PASS");
 
-        $strCheck = md5($PASS . "PAYMENT" . $invoice . $issuer_id . $payment_id . $payer . $currency . $value . $date . $confirmed);
-        if ($bCorrectPayment && $CHECKSUM != $strCheck)
-            $bCorrectPayment = False;
+        $strCheck = md5(
+            $PASS . "PAYMENT" . $invoice . $issuer_id . $payment_id . $payer . $currency . $value . $date . $confirmed
+        );
+        if ($bCorrectPayment && $CHECKSUM != $strCheck) {
+            $bCorrectPayment = false;
+        }
 
 
         if ($bCorrectPayment) {
@@ -33,8 +40,9 @@ if ($mode == "PAYMENT") {
 
 
             $strPS_STATUS_MESSAGE = "";
-            if (isset($payer) && strlen($payer) > 0)
+            if (isset($payer) && strlen($payer) > 0) {
                 $strPS_STATUS_MESSAGE .= "e-mail ���������� - " . $payer . "; ";
+            }
 
             $arFields = array(
                 "PS_STATUS" => "Y",
@@ -55,13 +63,15 @@ if ($mode == "PAYMENT") {
                 $arFields["EMP_PAYED_ID"] = false;
             }
 
-            if (CSaleOrder::Update($arOrder["ID"], $arFields))
+            if (CSaleOrder::Update($arOrder["ID"], $arFields)) {
                 echo "OK";
-
+            }
         }
-    } else
+    } else {
         echo "��� ������ �� �����";
-} else
+    }
+} else {
     echo "��� �������� �� PAYMENT";
+}
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_after.php");
 ?>

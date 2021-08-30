@@ -54,8 +54,9 @@ class ApiHelper
      */
     public static function extractItemsFromArray($data = array(), $keys = array())
     {
-        if (!isset($keys) || empty($keys))
+        if (!isset($keys) || empty($keys)) {
             return $data;
+        }
 
         $newArr = array();
         foreach ($data as $value) {
@@ -108,8 +109,9 @@ class ApiHelper
      */
     public static function changeArrayMainKey($data = array(), $mainKey, $keyRename = '')
     {
-        if (!isset($mainKey))
+        if (!isset($mainKey)) {
             return $data;
+        }
 
         $result = array();
         foreach ($data as $item) {
@@ -135,7 +137,7 @@ class ApiHelper
      * @deprecated use PhotoUploader class
      *
      */
-    public function uploadPhotos($data, $vkGroupId, $uploadType, Timer $timer = NULL)
+    public function uploadPhotos($data, $vkGroupId, $uploadType, Timer $timer = null)
     {
 //		todo: this is a little kostyl. In cool variant we must separately do http-upload,
 //		todo: and photo save run through execute method
@@ -176,33 +178,47 @@ class ApiHelper
 //		PROCESSED
         foreach ($data as $item) {
 //			check EXISTING photo
-            if (!array_key_exists($keyPhotoBx, $item) || empty($item[$keyPhotoBx]))
+            if (!array_key_exists($keyPhotoBx, $item) || empty($item[$keyPhotoBx])) {
                 continue;
+            }
 
 //			GET upload server by type
             $getServerParams = array("group_id" => str_replace("-", "", $vkGroupId));
-            if ($uploadType == 'PRODUCT_MAIN_PHOTO')
+            if ($uploadType == 'PRODUCT_MAIN_PHOTO') {
                 $getServerParams += self::setUploadServerMainPhotoParams($item[$keyPhotoBx]);
+            }
 
             $uploadServer = $this->api->run($uploadServerMethod, $getServerParams);
 //			todo: may be this error in upload server response
-            $this->logger->addLog("Get photo upload server", [
-                'PARAMS' => $getServerParams,
-                'RESULT' => $uploadServer,
-            ]);
+            $this->logger->addLog(
+                "Get photo upload server",
+                [
+                    'PARAMS' => $getServerParams,
+                    'RESULT' => $uploadServer,
+                ]
+            );
             $uploadServer = $uploadServer["upload_url"];
 
 
 //			UPLOAD photo by http
-            $this->logger->addLog("Upload photo HTTP before", array(
-                "UPLOAD_TYPE" => $uploadType,
-                "ITEM" => array_key_exists("BX_ID", $item) ?
-                    $item["BX_ID"] . ': ' . $item["NAME"] :
-                    $item["SECTION_ID"] . ': ' . $item["TITLE"],
-                "PHOTO_BX_ID" => array_key_exists("PHOTO_MAIN_BX_ID", $item) ? $item["PHOTO_MAIN_BX_ID"] : $item["PHOTO_BX_ID"],
-                "PHOTO_URL" => array_key_exists("PHOTO_MAIN_URL", $item) ? $item["PHOTO_MAIN_URL"] : $item["PHOTO_URL"],
-                "PHOTOS" => $item["PHOTOS"]    //only for products
-            ));
+            $this->logger->addLog(
+                "Upload photo HTTP before",
+                array(
+                    "UPLOAD_TYPE" => $uploadType,
+                    "ITEM" => array_key_exists("BX_ID", $item) ?
+                        $item["BX_ID"] . ': ' . $item["NAME"] :
+                        $item["SECTION_ID"] . ': ' . $item["TITLE"],
+                    "PHOTO_BX_ID" => array_key_exists(
+                        "PHOTO_MAIN_BX_ID",
+                        $item
+                    ) ? $item["PHOTO_MAIN_BX_ID"] : $item["PHOTO_BX_ID"],
+                    "PHOTO_URL" => array_key_exists(
+                        "PHOTO_MAIN_URL",
+                        $item
+                    ) ? $item["PHOTO_MAIN_URL"] : $item["PHOTO_URL"],
+                    "PHOTOS" => $item["PHOTOS"]    //only for products
+                )
+            );
             $responseHttp = $this->uploadPhotoHttp($item, $uploadServer, $uploadType, $timer);
 
 //			SAVE upload result
@@ -215,10 +231,12 @@ class ApiHelper
 
             // for product photo we need more params
             if ($saveMethod == "photos.saveMarketPhoto") {
-                if (isset($responseHttp["crop_hash"]) && $responseHttp["crop_hash"])
+                if (isset($responseHttp["crop_hash"]) && $responseHttp["crop_hash"]) {
                     $photoSaveParams["crop_hash"] = $responseHttp["crop_hash"];
-                if (isset($responseHttp["crop_data"]) && $responseHttp["crop_data"])
+                }
+                if (isset($responseHttp["crop_data"]) && $responseHttp["crop_data"]) {
                     $photoSaveParams["crop_data"] = $responseHttp["crop_data"];
+                }
             }
 
             $responsePhotoSave = $this->api->run($saveMethod, $photoSaveParams);
@@ -228,7 +246,6 @@ class ApiHelper
                 $keyReference => $item[$keyReference],
                 $keyPhotoVk => $responsePhotoSave[0]["id"],
             );
-
 //			todo: photo mapping. po odnomu, navernoe, ved timer
         }
 
@@ -248,7 +265,7 @@ class ApiHelper
      * @deprecated use PhotoUploader class
      *
      */
-    private function uploadPhotoHttp($data, $uploadServer, $uploadType, Timer $timer = NULL)
+    private function uploadPhotoHttp($data, $uploadServer, $uploadType, Timer $timer = null)
     {
         switch ($uploadType) {
             case 'ALBUM_PHOTO':
@@ -281,7 +298,6 @@ class ApiHelper
             default:
                 throw new SystemException("Wrong upload type");
                 break;
-
         }
 
         return $this->uploadHttp($uploadServer, $postParams);
@@ -342,11 +358,14 @@ class ApiHelper
         $http->setHeader('Content-type', 'multipart/form-data; boundary=' . $boundary);
         $http->setHeader('Content-length', \Bitrix\Main\Text\BinaryString::getLength($data));
 
-        $this->logger->addLog("Upload photo HTTP params", [
-            'SERVER' => $uploadServer,
-            'PARAMS' => $params,
-            'FILE_OK' => $file ? 'Y' : 'N',
-        ]);
+        $this->logger->addLog(
+            "Upload photo HTTP params",
+            [
+                'SERVER' => $uploadServer,
+                'PARAMS' => $params,
+                'FILE_OK' => $file ? 'Y' : 'N',
+            ]
+        );
         $result = $http->post($uploadServer, $data);
 
         $result = Json::decode($result);
@@ -355,8 +374,9 @@ class ApiHelper
 //		check TIMER if set
         if (array_key_exists("timer", $params)) {
             $timer = $params["timer"];
-            if ($timer !== NULL && !$timer->check())
+            if ($timer !== null && !$timer->check()) {
                 throw new TimeIsOverException();
+            }
         }
 
         return $result;
@@ -419,10 +439,11 @@ class ApiHelper
             }
 
 //			increment step items counter
-            if ($apiResult['count'] > Vk::GROUP_GET_STEP + $stepCount)
+            if ($apiResult['count'] > Vk::GROUP_GET_STEP + $stepCount) {
                 $stepCount += Vk::GROUP_GET_STEP;
-            else
+            } else {
                 break;
+            }
         }
 
         return $userGroups;
@@ -438,18 +459,21 @@ class ApiHelper
     public function getALbumsFromVk($vkGroupId, $flip = true)
     {
 //		todo: so slow api request. Try cached this data or other acceleration techniques
-        $albumsFromVk = $this->executer->executeMarketAlbumsGet(array(
-            "owner_id" => $vkGroupId,
-            "offset" => 0,
-            "count" => Vk::MAX_ALBUMS,
-        ));
+        $albumsFromVk = $this->executer->executeMarketAlbumsGet(
+            array(
+                "owner_id" => $vkGroupId,
+                "offset" => 0,
+                "count" => Vk::MAX_ALBUMS,
+            )
+        );
         $albumsFromVk = $albumsFromVk["items"];        //		get only items from response
         foreach ($albumsFromVk as &$item)    //		get only IDs from response
         {
             $item = $item["id"];
         }
-        if ($flip)
-            $albumsFromVk = array_flip($albumsFromVk);        // we need albumID as keys
+        if ($flip) {
+            $albumsFromVk = array_flip($albumsFromVk);
+        }        // we need albumID as keys
 
         return $albumsFromVk;
     }
@@ -466,10 +490,12 @@ class ApiHelper
         $productsFromVk = array();
         $prodGetStep = 0;
         while ($prodGetStep < Vk::MAX_PRODUCTS_IN_ALBUM) {
-            $productsFromVk += $this->executer->executeMarketProductsGet(array(
+            $productsFromVk += $this->executer->executeMarketProductsGet(
+                array(
                     "owner_id" => $vkGroupId,
                     "offset" => $prodGetStep,
-                    "step" => Vk::PRODUCTS_GET_STEP)
+                    "step" => Vk::PRODUCTS_GET_STEP
+                )
             );
             $prodGetStep += Vk::PRODUCTS_GET_STEP;
             // exit from loop, if we reach end of VK-products
@@ -480,8 +506,9 @@ class ApiHelper
         }
 
         $result = array();
-        foreach ($productsFromVk as $productFromVk)
+        foreach ($productsFromVk as $productFromVk) {
             $result[$productFromVk] = array("VK_ID" => $productFromVk);
+        }
 
         return $result;
     }
@@ -502,14 +529,16 @@ class ApiHelper
             if (isset($item["PHOTOS"]) && is_array($item["PHOTOS"])) {
                 $photosIds = array();
                 foreach ($item["PHOTOS"] as $photo) {
-                    if (is_numeric($photo["PHOTO_VK_ID"]))
+                    if (is_numeric($photo["PHOTO_VK_ID"])) {
                         $photosIds[] = $photo["PHOTO_VK_ID"];
+                    }
                 }
 
-                if (!empty($photosIds))
+                if (!empty($photosIds)) {
                     $item["PHOTOS"] = implode(",", $photosIds);
-                else
+                } else {
                     unset($item["PHOTOS"]);
+                }
             }
 
 //			check VK_CATEGORY

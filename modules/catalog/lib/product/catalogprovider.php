@@ -90,7 +90,9 @@ if (Main\Loader::includeModule('sale')) {
                 $siteId = $context['SITE_ID'];
             }
 
-            $currency = (isset($context['CURRENCY']) ? Currency\CurrencyManager::checkCurrencyID($context['CURRENCY']) : false);
+            $currency = (isset($context['CURRENCY']) ? Currency\CurrencyManager::checkCurrencyID(
+                $context['CURRENCY']
+            ) : false);
             if ($currency === false) {
                 $currency = Sale\Internals\SiteCurrencyTable::getSiteCurrency($siteId ? $siteId : SITE_ID);
             }
@@ -133,7 +135,6 @@ if (Main\Loader::includeModule('sale')) {
                 } else {
                     $productGetIdList[] = $productId;
                 }
-
             }
 
             $adminSection = (defined('ADMIN_SECTION') && ADMIN_SECTION === true);
@@ -210,24 +211,29 @@ if (Main\Loader::includeModule('sale')) {
             $catalogSelect = array_merge($catalogSelect, Catalog\Product\SystemField::getFieldList());
 
             if (is_array($options) && !in_array('CATALOG_DATA', $options)) {
-                $catalogSelect = array_merge($catalogSelect, array(
-                    'WEIGHT',
-                    'WIDTH',
-                    'HEIGHT',
-                    'LENGTH',
-                    'BARCODE_MULTI'
-                ));
+                $catalogSelect = array_merge(
+                    $catalogSelect,
+                    array(
+                        'WEIGHT',
+                        'WIDTH',
+                        'HEIGHT',
+                        'LENGTH',
+                        'BARCODE_MULTI'
+                    )
+                );
             }
 
             $catalogProductDataList = static::getCatalogProducts(array_keys($products), $catalogSelect);
 
             // Fill CATALOG_XML_ID to products - temporary hack
             foreach ($iblockProductMap as $entityData) {
-                if (empty($entityData['PRODUCT_LIST']) || !is_array($entityData['PRODUCT_LIST']))
+                if (empty($entityData['PRODUCT_LIST']) || !is_array($entityData['PRODUCT_LIST'])) {
                     continue;
+                }
                 foreach ($entityData['PRODUCT_LIST'] as $index) {
-                    if (!isset($products[$index]))
+                    if (!isset($products[$index])) {
                         continue;
+                    }
                     $products[$index]['PRODUCT_DATA']['CATALOG_XML_ID'] = $entityData['CATALOG_XML_ID'];
                 }
                 unset($index);
@@ -242,10 +248,12 @@ if (Main\Loader::includeModule('sale')) {
             // Fill PRODUCT_XML_ID to products - temporary hack
             $offerList = [];
             foreach ($catalogProductDataList as $entityData) {
-                if ($entityData['TYPE'] != Catalog\ProductTable::TYPE_OFFER)
+                if ($entityData['TYPE'] != Catalog\ProductTable::TYPE_OFFER) {
                     continue;
-                if (strpos($products[$entityData['ID']]['PRODUCT_DATA']['~XML_ID'], '#') !== false)
+                }
+                if (mb_strpos($products[$entityData['ID']]['PRODUCT_DATA']['~XML_ID'], '#') !== false) {
                     continue;
+                }
                 $offerList[] = $entityData['ID'];
             }
             unset($entityData);
@@ -255,8 +263,9 @@ if (Main\Loader::includeModule('sale')) {
                 $parentList = \CCatalogSku::getProductList($offerList, 0);
                 foreach ($parentList as $offerId => $offerData) {
                     $parentId = (int)$offerData['ID'];
-                    if (!isset($parentMap[$parentId]))
+                    if (!isset($parentMap[$parentId])) {
                         $parentMap[$parentId] = [];
+                    }
                     $parentMap[$parentId][] = $offerId;
                     $parentIdList[$parentId] = $parentId;
                 }
@@ -264,14 +273,17 @@ if (Main\Loader::includeModule('sale')) {
                 if (!empty($parentMap)) {
                     sort($parentIdList);
                     foreach (array_chunk($parentIdList, 500) as $pageIds) {
-                        $iterator = Iblock\ElementTable::getList([
-                            'select' => ['ID', 'XML_ID'],
-                            'filter' => ['@ID' => $pageIds]
-                        ]);
+                        $iterator = Iblock\ElementTable::getList(
+                            [
+                                'select' => ['ID', 'XML_ID'],
+                                'filter' => ['@ID' => $pageIds]
+                            ]
+                        );
                         while ($row = $iterator->fetch()) {
                             $parentId = (int)$row['ID'];
-                            if (empty($parentMap[$parentId]))
+                            if (empty($parentMap[$parentId])) {
                                 continue;
+                            }
                             foreach ($parentMap[$parentId] as $index) {
                                 $products[$index]['PRODUCT_DATA']['~XML_ID'] = $row['XML_ID'] . '#' . $products[$index]['PRODUCT_DATA']['~XML_ID'];
                             }
@@ -303,12 +315,14 @@ if (Main\Loader::includeModule('sale')) {
             }
 
             Price\Calculation::pushConfig();
-            Price\Calculation::setConfig(array(
-                'CURRENCY' => $currency,
-                'PRECISION' => (int)Main\Config\Option::get('sale', 'value_precision'),
-                'RESULT_WITH_VAT' => true,
-                'RESULT_MODE' => Catalog\Product\Price\Calculation::RESULT_MODE_RAW
-            ));
+            Price\Calculation::setConfig(
+                array(
+                    'CURRENCY' => $currency,
+                    'PRECISION' => (int)Main\Config\Option::get('sale', 'value_precision'),
+                    'RESULT_WITH_VAT' => true,
+                    'RESULT_MODE' => Catalog\Product\Price\Calculation::RESULT_MODE_RAW
+                )
+            );
 
             $productPriceList = array();
             $priceDataList = \CCatalogProduct::GetOptimalPriceList(
@@ -335,7 +349,11 @@ if (Main\Loader::includeModule('sale')) {
                     }
 
                     foreach ($quantityList as $basketCode => $quantity) {
-                        $nearestQuantity = \CCatalogProduct::GetNearestQuantityPrice($productId, $quantity, $userGroups);
+                        $nearestQuantity = \CCatalogProduct::GetNearestQuantityPrice(
+                            $productId,
+                            $quantity,
+                            $userGroups
+                        );
                         if (!empty($nearestQuantity)) {
                             if (!empty($productData['QUANTITY_LIST'])) {
                                 $productsQuantityList[$productId]['QUANTITY_LIST'][$basketCode]['QUANTITY'] = $nearestQuantity;
@@ -357,7 +375,6 @@ if (Main\Loader::includeModule('sale')) {
                         ($adminSection ? $siteId : false)
                     );
                 }
-
             }
 
             Price\Calculation::popConfig();
@@ -375,20 +392,27 @@ if (Main\Loader::includeModule('sale')) {
             if (!empty($priceDataList)) {
                 foreach ($priceDataList as $productId => $priceBasketDataList) {
                     foreach ($priceBasketDataList as $basketCode => $priceData) {
-                        if ($priceData === false)
+                        if ($priceData === false) {
                             continue;
+                        }
 
-                        if (empty($priceData['DISCOUNT_LIST']) && !empty($priceData['DISCOUNT']) && is_array($priceData['DISCOUNT'])) {
+                        if (empty($priceData['DISCOUNT_LIST']) && !empty($priceData['DISCOUNT']) && is_array(
+                                $priceData['DISCOUNT']
+                            )) {
                             $priceDataList[$productId][$basketCode]['DISCOUNT_LIST'] = array($priceData['DISCOUNT']);
                         }
 
                         if (!empty($priceData['DISCOUNT_LIST'])) {
-                            if (!isset($discountList[$productId]))
+                            if (!isset($discountList[$productId])) {
                                 $discountList[$productId] = [];
-                            if (!isset($discountList[$productId][$basketCode]))
+                            }
+                            if (!isset($discountList[$productId][$basketCode])) {
                                 $discountList[$productId][$basketCode] = [];
+                            }
                             foreach ($priceData['DISCOUNT_LIST'] as $discountItem) {
-                                $discountList[$productId][$basketCode][] = \CCatalogDiscount::getDiscountDescription($discountItem);
+                                $discountList[$productId][$basketCode][] = \CCatalogDiscount::getDiscountDescription(
+                                    $discountItem
+                                );
                             }
                             unset($discountItem);
                         }
@@ -474,7 +498,6 @@ if (Main\Loader::includeModule('sale')) {
                 if (!empty($measureFields)) {
                     $catalogProductDataList[$productId] = $measureFields + $catalogProductDataList[$productId];
                 }
-
             }
 
             $resultData = static::setCatalogDataToProducts($products, $catalogProductDataList, $options);
@@ -525,8 +548,9 @@ if (Main\Loader::includeModule('sale')) {
                 'CHECK_PERMISSIONS' => 'Y',
                 'MIN_PERMISSION' => 'R'
             );
-            if ($userId !== null)
+            if ($userId !== null) {
                 $filter['PERMISSIONS_BY'] = $userId;
+            }
 
             $resultList = array();
             $dbIBlockElement = \CIBlockElement::GetList(
@@ -563,7 +587,9 @@ if (Main\Loader::includeModule('sale')) {
 
             foreach ($products as $productId => $productData) {
                 $proxyCatalogProductSetKey = $productId . "|" . static::BUNDLE_TYPE;
-                if (!empty($proxyCatalogProductSet[$proxyCatalogProductSetKey]) && is_array($proxyCatalogProductSet[$proxyCatalogProductSetKey])) {
+                if (!empty($proxyCatalogProductSet[$proxyCatalogProductSetKey]) && is_array(
+                        $proxyCatalogProductSet[$proxyCatalogProductSetKey]
+                    )) {
                     $childItemList = $proxyCatalogProductSet[$proxyCatalogProductSetKey];
                 } else {
                     $childItemList = \CCatalogProductSet::getAllSetsByProduct($productId, static::BUNDLE_TYPE);
@@ -581,8 +607,9 @@ if (Main\Loader::includeModule('sale')) {
 
             $childIdList = array();
 
-            if (empty($bundleItemList))
+            if (empty($bundleItemList)) {
                 return $result;
+            }
 
             $bundleChildList = array();
             $childProducts = array();
@@ -590,9 +617,9 @@ if (Main\Loader::includeModule('sale')) {
             foreach ($bundleItemList as $parentItemid => $bundleItemData) {
                 $productId = $bundleIndex[$parentItemid];
                 foreach ($bundleItemData["ITEMS"] as $childItemid => $item) {
-
-                    if (!isset($childIdList[$item['ITEM_ID']]))
+                    if (!isset($childIdList[$item['ITEM_ID']])) {
                         $childIdList[$item['ITEM_ID']] = true;
+                    }
 
                     $bundleChildList[$item['ITEM_ID']] = $item;
                     $childProducts[$item['ITEM_ID']] = array(
@@ -617,8 +644,9 @@ if (Main\Loader::includeModule('sale')) {
                     $resultDataList = $resultData[static::RESULT_PRODUCT_LIST];
                     foreach ($resultDataList as $itemCode => $itemData) {
                         $item = $bundleChildList[$itemCode];
-                        if (array_key_exists('QUANTITY_TRACE', $itemData))
+                        if (array_key_exists('QUANTITY_TRACE', $itemData)) {
                             unset($itemData['QUANTITY_TRACE']);
+                        }
 
                         $itemData["PRODUCT_ID"] = $item["ITEM_ID"];
                         $itemData["MODULE"] = "catalog";
@@ -632,7 +660,9 @@ if (Main\Loader::includeModule('sale')) {
 
                         $itemData["PROPS"] = array();
 
-                        if (!empty($proxyCatalogSkuData[$item["ITEM_ID"]]) && is_array($proxyCatalogSkuData[$item["ITEM_ID"]])) {
+                        if (!empty($proxyCatalogSkuData[$item["ITEM_ID"]]) && is_array(
+                                $proxyCatalogSkuData[$item["ITEM_ID"]]
+                            )) {
                             $parentSkuData = $proxyCatalogSkuData[$item["ITEM_ID"]];
                         } else {
                             $parentSkuData = \CCatalogSku::GetProductInfo($item["ITEM_ID"]);
@@ -642,7 +672,6 @@ if (Main\Loader::includeModule('sale')) {
                         }
 
                         if (!empty($parentSkuData)) {
-
                             $childDataList = array();
                             $childIdGetList = array();
 
@@ -664,7 +693,18 @@ if (Main\Loader::includeModule('sale')) {
                             }
 
                             if (!empty($childIdGetList)) {
-                                $productRes = \CIBlockElement::GetList(array(), array("ID" => $childIdGetList), false, false, array('ID', 'IBLOCK_ID', 'NAME', 'IBLOCK_SECTION_ID'));
+                                $productRes = \CIBlockElement::GetList(
+                                    array(),
+                                    array("ID" => $childIdGetList),
+                                    false,
+                                    false,
+                                    array(
+                                        'ID',
+                                        'IBLOCK_ID',
+                                        'NAME',
+                                        'IBLOCK_SECTION_ID'
+                                    )
+                                );
                                 while ($productData = $productRes->Fetch()) {
                                     static::setHitCache('IBLOCK_ELEMENT', $productData["ID"], $productData);
                                     $childDataList[$productData["ID"]] = $productData;
@@ -680,7 +720,11 @@ if (Main\Loader::includeModule('sale')) {
                                 if ($propsSku = static::getHitCache('IBLOCK_PROPERTY', $iblockPropertyId)) {
                                     $iblockPropertyDataList[$iblockPropertyId] = $propsSku;
                                 } else {
-                                    $dbOfferProperties = \CIBlock::GetProperties($iblockPropertyId, array(), array("!XML_ID" => "CML2_LINK"));
+                                    $dbOfferProperties = \CIBlock::GetProperties(
+                                        $iblockPropertyId,
+                                        array(),
+                                        array("!XML_ID" => "CML2_LINK")
+                                    );
                                     while ($offerProperties = $dbOfferProperties->Fetch()) {
                                         $propsSku[] = $offerProperties["CODE"];
                                     }
@@ -713,7 +757,6 @@ if (Main\Loader::includeModule('sale')) {
                                     );
                                 }
                             }
-
                         }
 
                         $parentProductIndexData = $productIndexList[$itemCode];
@@ -725,7 +768,11 @@ if (Main\Loader::includeModule('sale')) {
                         }
 
 
-                        $bundleItemList[$parentProductIndexData['PARENT_ID']]["ITEMS"][$parentProductIndexData['CHILD_ID']] = array_merge($item, $itemData, $priceData);
+                        $bundleItemList[$parentProductIndexData['PARENT_ID']]["ITEMS"][$parentProductIndexData['CHILD_ID']] = array_merge(
+                            $item,
+                            $itemData,
+                            $priceData
+                        );
                     }
                 }
             }
@@ -738,7 +785,15 @@ if (Main\Loader::includeModule('sale')) {
                     array('ID' => $productIdList),
                     false,
                     false,
-                    array("ID", "IBLOCK_ID", "IBLOCK_SECTION_ID", "PREVIEW_PICTURE", "DETAIL_PICTURE", "IBLOCK_TYPE_ID", "XML_ID")
+                    array(
+                        "ID",
+                        "IBLOCK_ID",
+                        "IBLOCK_SECTION_ID",
+                        "PREVIEW_PICTURE",
+                        "DETAIL_PICTURE",
+                        "IBLOCK_TYPE_ID",
+                        "XML_ID"
+                    )
                 );
                 while ($productData = $productRes->GetNext()) {
                     $elementList[$productData['ID']] = $productData;
@@ -752,8 +807,9 @@ if (Main\Loader::includeModule('sale')) {
             if (!empty($elementList) && is_array($elementList)) {
                 foreach ($bundleItemList as $bundleParentId => $bundleItemData) {
                     foreach ($bundleItemData["ITEMS"] as $bundleChildId => $item) {
-                        if (!$elementList[$item["ITEM_ID"]])
+                        if (!$elementList[$item["ITEM_ID"]]) {
                             continue;
+                        }
 
                         $elementData = $elementList[$item["ITEM_ID"]];
 
@@ -767,12 +823,16 @@ if (Main\Loader::includeModule('sale')) {
                             );
 
                             $elementData['CATALOG_XML_ID'] = $strIBlockXmlID;
-
                         }
 
-                        if (!empty($proxyCatalogSkuData[$item["ITEM_ID"]]) && strpos($elementData["XML_ID"], '#') === false) {
+                        if (!empty($proxyCatalogSkuData[$item["ITEM_ID"]]) && mb_strpos(
+                                $elementData["XML_ID"],
+                                '#'
+                            ) === false) {
                             $parentSkuData = $proxyCatalogSkuData[$item["ITEM_ID"]];
-                            if (!empty($proxyParentData[$parentSkuData['ID']]) && is_array($proxyParentData[$parentSkuData['ID']])) {
+                            if (!empty($proxyParentData[$parentSkuData['ID']]) && is_array(
+                                    $proxyParentData[$parentSkuData['ID']]
+                                )) {
                                 $parentData = $proxyParentData[$parentSkuData['ID']];
                             } else {
                                 $parentIterator = Iblock\ElementTable::getList(
@@ -824,7 +884,6 @@ if (Main\Loader::includeModule('sale')) {
                         $bundleItemList[$bundleParentId]["ITEMS"][$bundleChildId]['PROPS'] = $bundleItemProps;
                     }
                 }
-
             }
 
 
@@ -833,10 +892,10 @@ if (Main\Loader::includeModule('sale')) {
             }
 
             if (!empty($bundleItemList)) {
-
                 foreach ($bundleItemList as $bundleParentId => $bundleData) {
-                    if (empty($bundleIndex[$bundleParentId]))
+                    if (empty($bundleIndex[$bundleParentId])) {
                         continue;
+                    }
 
                     $productId = $bundleIndex[$bundleParentId];
 
@@ -862,11 +921,13 @@ if (Main\Loader::includeModule('sale')) {
         protected static function getUserGroups($userId)
         {
             $userId = (int)$userId;
-            if ($userId < 0)
+            if ($userId < 0) {
                 return false;
+            }
 
-            if (!isset(self::$userCache[$userId]))
+            if (!isset(self::$userCache[$userId])) {
                 self::$userCache[$userId] = Main\UserTable::getUserGroupIds($userId);
+            }
 
             return self::$userCache[$userId];
         }
@@ -987,7 +1048,6 @@ if (Main\Loader::includeModule('sale')) {
                         }
                     }
                 } else {
-
                     if (isset($productData['USER_ID'])) {
                         $userId = $productData['USER_ID'];
                     }
@@ -1007,8 +1067,6 @@ if (Main\Loader::includeModule('sale')) {
                         'ORDER_ID' => $orderId,
                     );
                 }
-
-
             }
 
             if (!empty($deliverProductList)) {
@@ -1055,7 +1113,6 @@ if (Main\Loader::includeModule('sale')) {
                         $context['SITE_ID']
                     );
                 }
-
             }
 
             if (!empty($resultList)) {
@@ -1089,7 +1146,6 @@ if (Main\Loader::includeModule('sale')) {
                         $context['USER_ID']
                     );
                 }
-
             }
 
             if (!empty($resultList)) {
@@ -1121,7 +1177,6 @@ if (Main\Loader::includeModule('sale')) {
                     $barcodeParams
                 );
                 $resultList[$barcodeParams['BARCODE']] = (bool)($dbres->GetNext());
-
             }
 
             if (!empty($resultList)) {
@@ -1219,7 +1274,10 @@ if (Main\Loader::includeModule('sale')) {
             }
 
             foreach ($quantityList as $catalogStoreId => $amount) {
-                $resultList[$catalogStoreId] = \CCatalogStoreProduct::Update($catalogStoreId, array("AMOUNT" => $amount));
+                $resultList[$catalogStoreId] = \CCatalogStoreProduct::Update(
+                    $catalogStoreId,
+                    array("AMOUNT" => $amount)
+                );
             }
 
             $result->setData(
@@ -1317,7 +1375,6 @@ if (Main\Loader::includeModule('sale')) {
             }
 
             return static::shipQuantityWithoutStoreControl($productData);
-
         }
 
         /**
@@ -1363,7 +1420,6 @@ if (Main\Loader::includeModule('sale')) {
 
             if ($isNeedShip) {
                 if ($isExistsReserve) {
-
                     if ($catalogReservedQuantity >= $productQuantity) {
                         $fields["QUANTITY_RESERVED"] = $catalogReservedQuantity - $productQuantity;
                     } elseif ($sumCatalogQuantity >= $productQuantity) {
@@ -1497,22 +1553,8 @@ if (Main\Loader::includeModule('sale')) {
                             $fields["QUANTITY"] = $catalogQuantity - ($productQuantity - $catalogReservedQuantity);
                         }
                     } else {
-                        if ($productQuantity <= $catalogQuantity) {
-                            $fields["QUANTITY"] = $catalogQuantity - $productQuantity;
-                        } else {
-                            $fields["QUANTITY"] = 0;
-
-                            $minusQuantity = ($productQuantity - $catalogQuantity);
-
-                            $needReservedQuantity = $catalogReservedQuantity - $minusQuantity;
-                            if ($minusQuantity > $catalogReservedQuantity) {
-                                $needReservedQuantity = $catalogReservedQuantity;
-                            }
-
-                            $fields["QUANTITY_RESERVED"] = $needReservedQuantity;
-                        }
+                        $fields["QUANTITY"] = $catalogQuantity - $productQuantity;
                     }
-
                 } else //not enough products - don't deduct anything
                 {
                     $result->addError(
@@ -1583,11 +1625,13 @@ if (Main\Loader::includeModule('sale')) {
          */
         private static function isExistsReserve(array $productData)
         {
-            if (empty($productData['SHIPMENT_ITEM_LIST']))
+            if (empty($productData['SHIPMENT_ITEM_LIST'])) {
                 return false;
+            }
 
-            if (empty($productData['NEED_RESERVE_LIST']))
+            if (empty($productData['NEED_RESERVE_LIST'])) {
                 return false;
+            }
 
             /**
              * @var $shipmentItemIndex
@@ -1637,7 +1681,9 @@ if (Main\Loader::includeModule('sale')) {
                 $autoShipStore = static::getAutoShipStoreData($productData, $productStoreDataList);
 
                 if (!empty($autoShipStore)) {
-                    $needQuantityList[$autoShipStore['STORE_ID']] = ($productQuantity > $autoShipStore['AMOUNT'] ? $autoShipStore['AMOUNT'] : abs($productQuantity));
+                    $needQuantityList[$autoShipStore['STORE_ID']] = ($productQuantity > $autoShipStore['AMOUNT'] ? $autoShipStore['AMOUNT'] : abs(
+                        $productQuantity
+                    ));
 
                     $shipmentItemList = $productData['SHIPMENT_ITEM_LIST'];
                     /** @var Sale\ShipmentItem $shipmentItem */
@@ -1663,7 +1709,10 @@ if (Main\Loader::includeModule('sale')) {
                                     "DDCT_DEDUCTION_QUANTITY_STORE_ERROR",
                                     array_merge(
                                         self::getProductCatalogInfo($productId),
-                                        array("#STORE_ID#" => $productStoreData["STORE_ID"], '#PRODUCT_ID#' => $productId)
+                                        array(
+                                            "#STORE_ID#" => $productStoreData["STORE_ID"],
+                                            '#PRODUCT_ID#' => $productId
+                                        )
                                     )
                                 ), "DDCT_DEDUCTION_QUANTITY_STORE_ERROR"
                             )
@@ -1700,8 +1749,9 @@ if (Main\Loader::includeModule('sale')) {
          */
         private static function getNeedQuantityFromStore(array $productData)
         {
-            if (empty($productData['STORE_DATA_LIST']))
+            if (empty($productData['STORE_DATA_LIST'])) {
                 return false;
+            }
 
             $resultList = array();
 
@@ -1874,12 +1924,13 @@ if (Main\Loader::includeModule('sale')) {
                 } else {
                     $result->addErrors($r->getErrors());
                 }
-
             }
 
-            $result->setData(array(
-                'RESERVED_PRODUCTS_LIST' => $resultList
-            ));
+            $result->setData(
+                array(
+                    'RESERVED_PRODUCTS_LIST' => $resultList
+                )
+            );
 
             return $result;
         }
@@ -1898,7 +1949,6 @@ if (Main\Loader::includeModule('sale')) {
             }
 
             return static::reserveQuantityWithEnabledReservation($productData);
-
         }
 
         /**
@@ -1975,7 +2025,6 @@ if (Main\Loader::includeModule('sale')) {
                 $resultFields['QUANTITY_RESERVED'] = $catalogReservedQuantity;
 
                 if ($isNeedReserve) {
-
                     if ($catalogData["CAN_BUY_ZERO"] == "Y") {
                         $fields["QUANTITY_RESERVED"] = $catalogReservedQuantity + $productQuantity;
                         $fields['QUANTITY'] = $catalogQuantity - $productQuantity;
@@ -2044,7 +2093,6 @@ if (Main\Loader::includeModule('sale')) {
                         self::clearPublicCache($catalogData['ID'], $productInfo);
                     }
                 }
-
             } //quantity trace
 
 
@@ -2228,8 +2276,9 @@ if (Main\Loader::includeModule('sale')) {
         protected static function getPriceTitle($priceType)
         {
             $priceType = (int)$priceType;
-            if ($priceType <= 0)
+            if ($priceType <= 0) {
                 return '';
+            }
             if (!isset(self::$priceTitleCache[$priceType])) {
                 self::$priceTitleCache[$priceType] = '';
                 $priceTypeList = \CCatalogGroup::GetListArray();
@@ -2332,7 +2381,6 @@ if (Main\Loader::includeModule('sale')) {
                     } else {
                         $result->addErrors($r->getErrors());
                     }
-
                 }
             }
 
@@ -2428,13 +2476,14 @@ if (Main\Loader::includeModule('sale')) {
                 } else {
                     return $r;
                 }
-
             }
 
             if (!empty($resultList)) {
-                $result->setData(array(
-                    'PRODUCTS_LIST_SHIPPED' => $resultList
-                ));
+                $result->setData(
+                    array(
+                        'PRODUCTS_LIST_SHIPPED' => $resultList
+                    )
+                );
             }
 
             return $result;
@@ -2505,7 +2554,6 @@ if (Main\Loader::includeModule('sale')) {
                 if (!empty($resultData['AVAILABLE_QUANTITY_LIST'])) {
                     $availableQuantityList = $resultData['AVAILABLE_QUANTITY_LIST'];
                 }
-
             } else {
                 return $r;
             }
@@ -2640,7 +2688,9 @@ if (Main\Loader::includeModule('sale')) {
 
             $storeProductList = array();
             foreach ($products as $productId => $productData) {
-                if (!empty($productData['STORE_DATA_LIST']) && static::isExistsBarcode($productData['STORE_DATA_LIST'])) {
+                if (!empty($productData['STORE_DATA_LIST']) && static::isExistsBarcode(
+                        $productData['STORE_DATA_LIST']
+                    )) {
                     $storeProductList[$productId] = $productData['STORE_DATA_LIST'];
                     continue;
                 } elseif (!empty($canAutoShipList[$productId]) && !empty($productStoreDataList[$productId])) {
@@ -2692,13 +2742,13 @@ if (Main\Loader::includeModule('sale')) {
             }
 
             foreach ($products as $productId => $productData) {
-
                 if (!empty($productData['STORE_DATA_LIST'])) {
                     if (!static::isExistsBarcode($productData['STORE_DATA_LIST'])) {
                         $result->addError(
                             new Sale\ResultError(
                                 Main\Localization\Loc::getMessage(
-                                    "DDCT_DEDUCTION_MULTI_BARCODE_EMPTY", self::getProductCatalogInfo($productId)
+                                    "DDCT_DEDUCTION_MULTI_BARCODE_EMPTY",
+                                    self::getProductCatalogInfo($productId)
                                 ), "DDCT_DEDUCTION_MULTI_BARCODE_EMPTY"
                             )
                         );
@@ -2717,7 +2767,6 @@ if (Main\Loader::includeModule('sale')) {
             }
 
             return $result;
-
         }
 
         private static function isExistsBarcode(array $list)
@@ -2733,11 +2782,9 @@ if (Main\Loader::includeModule('sale')) {
                         }
 
                         $resultValue = true;
-
                     } else {
                         return (!empty($storeValue['BARCODE']));
                     }
-
                 }
             }
 
@@ -2772,8 +2819,9 @@ if (Main\Loader::includeModule('sale')) {
             }
 
             foreach ($products as $productId => $productData) {
-                if (empty($productData['CATALOG']))
+                if (empty($productData['CATALOG'])) {
                     continue;
+                }
 
                 $productStoreData = $productStoreDataList[$productId];
 
@@ -2803,7 +2851,11 @@ if (Main\Loader::includeModule('sale')) {
 
                                     $productQuantityList[$productId] += $storeDataValue["QUANTITY"];
 
-                                    $r = static::checkProductBarcodes($productData, $productStoreData[$storeId], $storeDataValue);
+                                    $r = static::checkProductBarcodes(
+                                        $productData,
+                                        $productStoreData[$storeId],
+                                        $storeDataValue
+                                    );
                                     if ($r->isSuccess()) {
                                         if (!array_key_exists($productId, $resultList)) {
                                             $resultList[$productId] = true;
@@ -2831,7 +2883,6 @@ if (Main\Loader::includeModule('sale')) {
                             $productQuantityList[$productId] += $quantity;
                         }
                     }
-
                 }
             }
 
@@ -2922,10 +2973,15 @@ if (Main\Loader::includeModule('sale')) {
                     }
                 }
             } else {
-                $result->addError(new Sale\ResultError(
-                    Main\Localization\Loc::getMessage("DDCT_DEDUCTION_STORE_ERROR", self::getProductCatalogInfo($productData['PRODUCT_ID'])),
-                    "DEDUCTION_STORE_ERROR1"
-                ));
+                $result->addError(
+                    new Sale\ResultError(
+                        Main\Localization\Loc::getMessage(
+                            "DDCT_DEDUCTION_STORE_ERROR",
+                            self::getProductCatalogInfo($productData['PRODUCT_ID'])
+                        ),
+                        "DEDUCTION_STORE_ERROR1"
+                    )
+                );
             }
 
             return $result;
@@ -2982,8 +3038,11 @@ if (Main\Loader::includeModule('sale')) {
          *
          * @return Sale\Result
          */
-        protected static function checkProductBarcodes(array $productData, array $productStoreData, array $storeData = array())
-        {
+        protected static function checkProductBarcodes(
+            array $productData,
+            array $productStoreData,
+            array $storeData = array()
+        ) {
             $result = new Sale\Result();
 
             $productId = $productData['PRODUCT_ID'];
@@ -3025,24 +3084,31 @@ if (Main\Loader::includeModule('sale')) {
                         );
 
                         if (!$catalogStoreBasrcodeRes = $dbres->Fetch()) {
-                            $result->addError(new Sale\ResultError(
-                                Main\Localization\Loc::getMessage(
-                                    "DDCT_DEDUCTION_BARCODE_ERROR",
-                                    array_merge(self::getProductCatalogInfo($productId), array("#BARCODE#" => $barcodeValue))
-                                ),
-                                "DDCT_DEDUCTION_BARCODE_ERROR"
-                            ));
+                            $result->addError(
+                                new Sale\ResultError(
+                                    Main\Localization\Loc::getMessage(
+                                        "DDCT_DEDUCTION_BARCODE_ERROR",
+                                        array_merge(
+                                            self::getProductCatalogInfo($productId),
+                                            array("#BARCODE#" => $barcodeValue)
+                                        )
+                                    ),
+                                    "DDCT_DEDUCTION_BARCODE_ERROR"
+                                )
+                            );
                         }
                     }
                 }
             } else {
-                $result->addError(new Sale\ResultError(
-                    Main\Localization\Loc::getMessage(
-                        "DDCT_DEDUCTION_MULTI_BARCODE_EMPTY",
-                        array_merge(self::getProductCatalogInfo($productId), array("#STORE_ID#" => $storeId))
-                    ),
-                    "DDCT_DEDUCTION_MULTI_BARCODE_EMPTY"
-                ));
+                $result->addError(
+                    new Sale\ResultError(
+                        Main\Localization\Loc::getMessage(
+                            "DDCT_DEDUCTION_MULTI_BARCODE_EMPTY",
+                            array_merge(self::getProductCatalogInfo($productId), array("#STORE_ID#" => $storeId))
+                        ),
+                        "DDCT_DEDUCTION_MULTI_BARCODE_EMPTY"
+                    )
+                );
             }
             return $result;
         }
@@ -3196,7 +3262,6 @@ if (Main\Loader::includeModule('sale')) {
                 if ($countProductInStore == 1 && !empty($storeProductData)) {
                     $outputStoreData = $storeProductData;
                 }
-
             }
 
 
@@ -3231,7 +3296,10 @@ if (Main\Loader::includeModule('sale')) {
                 foreach ($productStoreDataList as $storeId => $productStoreData) {
                     $productId = $productStoreData['PRODUCT_ID'];
                     if ($productStoreData['AMOUNT'] > 0) {
-                        if (!array_key_exists($productId, $resultList) || !array_key_exists($storeId, $resultList[$productId])) {
+                        if (!array_key_exists($productId, $resultList) || !array_key_exists(
+                                $storeId,
+                                $resultList[$productId]
+                            )) {
                             $resultList[$productId][$storeId] = 0;
                         }
 
@@ -3282,8 +3350,9 @@ if (Main\Loader::includeModule('sale')) {
             $context = $this->getContext();
 
             $filterId = array('ACTIVE' => 'Y', 'SHIPPING_CENTER' => 'Y');
-            if (isset($context['SITE_ID']) && $context['SITE_ID'] != '')
+            if (isset($context['SITE_ID']) && $context['SITE_ID'] != '') {
                 $filterId['+SITE_ID'] = $context['SITE_ID'];
+            }
 
             $cacheId = md5(serialize($filterId));
             $storeIds = static::getHitCache(self::CACHE_STORE, $cacheId);
@@ -3295,21 +3364,29 @@ if (Main\Loader::includeModule('sale')) {
                 $filter->where('SHIPPING_CENTER', '=', 'Y');
                 if (isset($context['SITE_ID']) && $context['SITE_ID'] != '') {
                     $subFilter = Main\Entity\Query::filter();
-                    $subFilter->logic('or')->where('SITE_ID', '=', $context['SITE_ID'])->where('SITE_ID', '=', '')->whereNull('SITE_ID');
+                    $subFilter->logic('or')->where('SITE_ID', '=', $context['SITE_ID'])->where(
+                        'SITE_ID',
+                        '=',
+                        ''
+                    )->whereNull('SITE_ID');
                     $filter->where($subFilter);
                     unset($subFilter);
                 }
 
-                $iterator = Catalog\StoreTable::getList(array(
-                    'select' => array('ID'),
-                    'filter' => $filter,
-                    'order' => array('ID' => 'ASC')
-                ));
-                while ($row = $iterator->fetch())
+                $iterator = Catalog\StoreTable::getList(
+                    array(
+                        'select' => array('ID'),
+                        'filter' => $filter,
+                        'order' => array('ID' => 'ASC')
+                    )
+                );
+                while ($row = $iterator->fetch()) {
                     $storeIds[] = (int)$row['ID'];
+                }
                 unset($row, $iterator, $filter);
-                if (!empty($storeIds))
+                if (!empty($storeIds)) {
                     static::setHitCache(self::CACHE_STORE, $cacheId, $storeIds);
+                }
             }
             unset($cacheId, $filterId);
 
@@ -3326,14 +3403,16 @@ if (Main\Loader::includeModule('sale')) {
             $result = new Sale\Result();
 
             //without store control stores are used for information purposes only
-            if (!Catalog\Config\State::isUsedInventoryManagement())
+            if (!Catalog\Config\State::isUsedInventoryManagement()) {
                 return $result;
+            }
 
             $resultList = array();
 
             $storeIds = $this->getStoreIds();
-            if (empty($storeIds))
+            if (empty($storeIds)) {
                 return $result;
+            }
 
             $productGetIdList = array();
             foreach ($products as $productId => $productData) {
@@ -3345,15 +3424,16 @@ if (Main\Loader::includeModule('sale')) {
                 } else {
                     $productGetIdList[$productId] = $productId;
                 }
-
             }
 
             if (!empty($productGetIdList)) {
-                $iterator = Catalog\StoreProductTable::getList(array(
-                    'select' => array('PRODUCT_ID', 'AMOUNT', 'STORE_ID', 'STORE_NAME' => 'STORE.TITLE', 'ID'),
-                    'filter' => array('=PRODUCT_ID' => $productGetIdList, '@STORE_ID' => $storeIds),
-                    'order' => array('STORE_ID' => 'ASC')
-                ));
+                $iterator = Catalog\StoreProductTable::getList(
+                    array(
+                        'select' => array('PRODUCT_ID', 'AMOUNT', 'STORE_ID', 'STORE_NAME' => 'STORE.TITLE', 'ID'),
+                        'filter' => array('=PRODUCT_ID' => $productGetIdList, '@STORE_ID' => $storeIds),
+                        'order' => array('STORE_ID' => 'ASC')
+                    )
+                );
                 while ($row = $iterator->fetch()) {
                     $resultList[$row['PRODUCT_ID']][$row['STORE_ID']] = $row;
                 }
@@ -3427,11 +3507,13 @@ if (Main\Loader::includeModule('sale')) {
          */
         protected static function setHitCache($type, $key, $value)
         {
-            if (empty(self::$hitCache[$type]))
+            if (empty(self::$hitCache[$type])) {
                 self::$hitCache[$type] = array();
+            }
 
-            if (empty(self::$hitCache[$type][$key]))
+            if (empty(self::$hitCache[$type][$key])) {
                 self::$hitCache[$type][$key] = array();
+            }
 
             self::$hitCache[$type][$key] = $value;
         }
@@ -3441,11 +3523,13 @@ if (Main\Loader::includeModule('sale')) {
          */
         protected static function clearHitCache($type = null)
         {
-            if ($type === null)
+            if ($type === null) {
                 self::$hitCache = array();
+            }
 
-            if (!empty(self::$hitCache[$type]))
+            if (!empty(self::$hitCache[$type])) {
                 unset(self::$hitCache[$type]);
+            }
         }
 
         /**
@@ -3459,8 +3543,8 @@ if (Main\Loader::includeModule('sale')) {
             $clearFields = static::getNotCacheFields();
             foreach ($fields as $name => $value) {
                 $clearName = $name;
-                if (substr($clearName, 0, 1) == '~') {
-                    $clearName = substr($clearName, 1, strlen($clearName));
+                if (mb_substr($clearName, 0, 1) == '~') {
+                    $clearName = mb_substr($clearName, 1, mb_strlen($clearName));
                 }
 
                 if (!in_array($clearName, $clearFields)) {
@@ -3495,25 +3579,37 @@ if (Main\Loader::includeModule('sale')) {
             return true;
         }
 
-        protected static function isNeedClearPublicCache($currentQuantity, $newQuantity, $quantityTrace, $canBuyZero, $ratio = 1)
-        {
-            if (!defined('BX_COMP_MANAGED_CACHE'))
+        protected static function isNeedClearPublicCache(
+            $currentQuantity,
+            $newQuantity,
+            $quantityTrace,
+            $canBuyZero,
+            $ratio = 1
+        ) {
+            if (!defined('BX_COMP_MANAGED_CACHE')) {
                 return false;
-            if ($canBuyZero == 'Y' || $quantityTrace == 'N')
+            }
+            if ($canBuyZero == 'Y' || $quantityTrace == 'N') {
                 return false;
-            if ($currentQuantity * $newQuantity > 0)
+            }
+            if ($currentQuantity * $newQuantity > 0) {
                 return false;
+            }
             return true;
         }
 
         protected static function clearPublicCache($productID, $productInfo = array())
         {
             $productID = (int)$productID;
-            if ($productID <= 0)
+            if ($productID <= 0) {
                 return;
-            $iblockID = (int)(isset($productInfo['IBLOCK_ID']) ? $productInfo['IBLOCK_ID'] : \CIBlockElement::GetIBlockByID($productID));
-            if ($iblockID <= 0)
+            }
+            $iblockID = (int)(isset($productInfo['IBLOCK_ID']) ? $productInfo['IBLOCK_ID'] : \CIBlockElement::GetIBlockByID(
+                $productID
+            ));
+            if ($iblockID <= 0) {
                 return;
+            }
             if (!isset(self::$clearAutoCache[$iblockID])) {
                 \CIBlock::clearIblockTagCache($iblockID);
                 self::$clearAutoCache[$iblockID] = true;
@@ -3522,10 +3618,12 @@ if (Main\Loader::includeModule('sale')) {
             $productInfo['ID'] = $productID;
             $productInfo['ELEMENT_IBLOCK_ID'] = $iblockID;
             $productInfo['IBLOCK_ID'] = $iblockID;
-            if (isset($productInfo['CAN_BUY_ZERO']))
+            if (isset($productInfo['CAN_BUY_ZERO'])) {
                 $productInfo['NEGATIVE_AMOUNT_TRACE'] = $productInfo['CAN_BUY_ZERO'];
-            foreach (GetModuleEvents('catalog', 'OnProductQuantityTrace', true) as $eventData)
+            }
+            foreach (GetModuleEvents('catalog', 'OnProductQuantityTrace', true) as $eventData) {
                 ExecuteModuleEventEx($eventData, array($productID, $productInfo));
+            }
         }
 
         /**
@@ -3564,7 +3662,6 @@ if (Main\Loader::includeModule('sale')) {
             }
 
             if (count($resultList) != count($products)) {
-
                 if ($this->isExistsCatalogData($products)) {
                     $items = $products;
                 } else {
@@ -3578,8 +3675,9 @@ if (Main\Loader::includeModule('sale')) {
                             $productReservedQuantity += $quantity;
                         }
                     }
-                    if (isset($isGotQuantityDataList[$productId]))
+                    if (isset($isGotQuantityDataList[$productId])) {
                         continue;
+                    }
 
                     $catalogData = $productData['CATALOG'];
 
@@ -3653,7 +3751,6 @@ if (Main\Loader::includeModule('sale')) {
                 if (!empty($catalogData['PRICE_LIST'])) {
                     $priceDataList[$productId] = $catalogData['PRICE_LIST'];
                 }
-
             }
 
             $availableQuantityData = array();
@@ -3722,7 +3819,12 @@ if (Main\Loader::includeModule('sale')) {
             $resultList = array();
             $res = Catalog\CatalogIblockTable::getList(
                 array(
-                    'select' => array('IBLOCK_ID', 'SUBSCRIPTION', 'PRODUCT_IBLOCK_ID', 'CATALOG_XML_ID' => 'IBLOCK.XML_ID'),
+                    'select' => array(
+                        'IBLOCK_ID',
+                        'SUBSCRIPTION',
+                        'PRODUCT_IBLOCK_ID',
+                        'CATALOG_XML_ID' => 'IBLOCK.XML_ID'
+                    ),
                     'filter' => array('=IBLOCK_ID' => $list)
                 )
             );
@@ -3813,17 +3915,24 @@ if (Main\Loader::includeModule('sale')) {
             $resultList = $products;
 
             foreach ($iblockProductMap as $iblockId => $iblockData) {
-                if ($iblockData['SUBSCRIPTION'] != 'Y')
+                if ($iblockData['SUBSCRIPTION'] != 'Y') {
                     continue;
+                }
 
-                if (empty($iblockData['PRODUCT_LIST']))
+                if (empty($iblockData['PRODUCT_LIST'])) {
                     continue;
+                }
 
-                foreach ($iblockData['PRODUCT_LIST'] as $productData) {
-                    $productId = $productData['PRODUCT_ID'];
-
+                foreach ($iblockData['PRODUCT_LIST'] as $productId) {
                     if (isset($resultList[$productId])) {
-                        $resultList[$productId]['QUANTITY'] = 1;
+                        if (
+                            !empty($resultList[$productId]['QUANTITY_LIST'])
+                            && is_array($resultList[$productId]['QUANTITY_LIST'])
+                        ) {
+                            foreach (array_keys($resultList[$productId]['QUANTITY_LIST']) as $index) {
+                                $resultList[$productId]['QUANTITY_LIST'][$index] = 1;
+                            }
+                        }
                     }
                 }
             }
@@ -3839,18 +3948,22 @@ if (Main\Loader::includeModule('sale')) {
          */
         private static function getCatalogProducts(array $list, array $select)
         {
-            if (empty($select))
+            if (empty($select)) {
                 $select = array('*');
-            elseif (!in_array('ID', $select))
+            } elseif (!in_array('ID', $select)) {
                 $select[] = 'ID';
+            }
             Main\Type\Collection::normalizeArrayValuesByInt($list, true);
-            if (empty($list))
+            if (empty($list)) {
                 return [];
+            }
             $resultList = [];
-            $iterator = Catalog\ProductTable::getList([
-                'select' => $select,
-                'filter' => ['@ID' => $list]
-            ]);
+            $iterator = Catalog\ProductTable::getList(
+                [
+                    'select' => $select,
+                    'filter' => ['@ID' => $list]
+                ]
+            );
             while ($row = $iterator->fetch()) {
                 Catalog\Product\SystemField::convertRow($row);
                 $resultList[$row['ID']] = $row;
@@ -3918,9 +4031,10 @@ if (Main\Loader::includeModule('sale')) {
             $priceResultList = array();
 
             foreach ($productPriceList as $basketCode => $priceData) {
-                if (!$priceData)
+                if (!$priceData) {
                     continue;
-                $priceResultList[$basketCode]['PRODUCT_PRICE_ID'] = $priceData['PRICE']['ID'];
+                }
+                $priceResultList[$basketCode]['PRODUCT_PRICE_ID'] = $priceData['RESULT_PRICE']['ID'];
                 $priceResultList[$basketCode]['NOTES'] = $priceData['PRICE']['CATALOG_GROUP_NAME'];
                 $priceResultList[$basketCode]['DISCOUNT_NAME'] = null;
                 $priceResultList[$basketCode]['DISCOUNT_COUPON'] = null;
@@ -3961,7 +4075,6 @@ if (Main\Loader::includeModule('sale')) {
                         $priceResultList[$basketCode]['DISCOUNT_LIST'] = array($priceData['DISCOUNT']);
                     }
                 }
-
             }
 
             $resultList = array();
@@ -3986,7 +4099,6 @@ if (Main\Loader::includeModule('sale')) {
                         }
                     }
                 }
-
             }
 
             return $resultList;
@@ -4010,9 +4122,12 @@ if (Main\Loader::includeModule('sale')) {
          *
          * @return array
          */
-        private static function createProductResult(array $products, array $items, array $priceList, array $productQuantityList)
-        {
-
+        private static function createProductResult(
+            array $products,
+            array $items,
+            array $priceList,
+            array $productQuantityList
+        ) {
             $resultList = array();
             foreach ($products as $productId => $productData) {
                 $itemCode = $productData['ITEM_CODE'];
@@ -4026,7 +4141,10 @@ if (Main\Loader::includeModule('sale')) {
                 $resultList[$productId]['ITEM_CODE'] = $itemCode;
 
                 QuantityControl::resetAllQuantity($productId);
-                QuantityControl::setReservedQuantity($productId, $productQuantityList[$basketCode]['QUANTITY_RESERVED']);
+                QuantityControl::setReservedQuantity(
+                    $productId,
+                    $productQuantityList[$basketCode]['QUANTITY_RESERVED']
+                );
 
                 if (!isset($priceList[$basketCode])) {
                     $priceList[$basketCode] = array();
@@ -4035,7 +4153,10 @@ if (Main\Loader::includeModule('sale')) {
                 if (!empty($productData['QUANTITY_LIST'])) {
                     foreach ($productData['QUANTITY_LIST'] as $basketCode => $quantity) {
                         QuantityControl::addQuantity($productId, $productQuantityList[$basketCode]['QUANTITY']);
-                        QuantityControl::addAvailableQuantity($productId, $productQuantityList[$basketCode]['AVAILABLE_QUANTITY']);
+                        QuantityControl::addAvailableQuantity(
+                            $productId,
+                            $productQuantityList[$basketCode]['AVAILABLE_QUANTITY']
+                        );
 
                         if (empty($priceList[$basketCode])) {
                             continue;
@@ -4055,7 +4176,10 @@ if (Main\Loader::includeModule('sale')) {
                     $resultList[$productId]['QUANTITY'] = $productQuantityList[$basketCode]['QUANTITY'];
 
                     QuantityControl::addQuantity($productId, $productQuantityList[$basketCode]['QUANTITY']);
-                    QuantityControl::addAvailableQuantity($productId, $productQuantityList[$basketCode]['AVAILABLE_QUANTITY']);
+                    QuantityControl::addAvailableQuantity(
+                        $productId,
+                        $productQuantityList[$basketCode]['AVAILABLE_QUANTITY']
+                    );
                     if (!empty($resultList[$productId])) {
                         if (empty($priceList[$basketCode])) {
                             continue;
@@ -4076,12 +4200,16 @@ if (Main\Loader::includeModule('sale')) {
          *
          * @return array
          */
-        private static function setCatalogDataToProducts(array $products, array $catalogDataList, array $options = array())
-        {
+        private static function setCatalogDataToProducts(
+            array $products,
+            array $catalogDataList,
+            array $options = array()
+        ) {
             $resultData = array();
             foreach ($products as $productId => $productData) {
-                if (!isset($catalogDataList[$productId]))
+                if (!isset($catalogDataList[$productId])) {
                     continue;
+                }
 
                 $catalogData = $catalogDataList[$productId];
 
@@ -4176,7 +4304,6 @@ if (Main\Loader::includeModule('sale')) {
                         if (empty($productOrderList[$productId][$order->getId()])) {
                             $productOrderList[$productId][$order->getId()] = $order;
                         }
-
                     }
                 }
             }
@@ -4192,11 +4319,18 @@ if (Main\Loader::includeModule('sale')) {
         private static function getProductCatalogInfo($productId)
         {
             $productId = (int)$productId;
-            if ($productId <= 0)
+            if ($productId <= 0) {
                 return array();
+            }
 
             if (!$product = static::getHitCache('IBLOCK_ELEMENT', $productId)) {
-                $productRes = \CIBlockElement::GetList(array(), array("ID" => $productId), false, false, array('ID', 'IBLOCK_ID', 'NAME', 'IBLOCK_SECTION_ID'));
+                $productRes = \CIBlockElement::GetList(
+                    array(),
+                    array("ID" => $productId),
+                    false,
+                    false,
+                    array('ID', 'IBLOCK_ID', 'NAME', 'IBLOCK_SECTION_ID')
+                );
                 $product = $productRes->fetch();
                 if ($product) {
                     static::setHitCache('IBLOCK_ELEMENT', $productId, $product);

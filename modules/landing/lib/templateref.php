@@ -26,21 +26,28 @@ class TemplateRef
     protected static function set($id, $type, array $data = array())
     {
         $id = intval($id);
-        $res = TemplateRefTable::getList(array(
-            'select' => array(
-                'ID', 'AREA', 'LANDING_ID'
-            ),
-            'filter' => array(
-                'ENTITY_ID' => $id,
-                '=ENTITY_TYPE' => $type
+        $res = TemplateRefTable::getList(
+            array(
+                'select' => array(
+                    'ID',
+                    'AREA',
+                    'LANDING_ID'
+                ),
+                'filter' => array(
+                    'ENTITY_ID' => $id,
+                    '=ENTITY_TYPE' => $type
+                )
             )
-        ));
+        );
         while (($row = $res->fetch())) {
             if (isset($data[$row['AREA']]) && $data[$row['AREA']] > 0) {
                 if ($row['LANDING_ID'] != $data[$row['AREA']]) {
-                    TemplateRefTable::update($row['ID'], array(
-                        'LANDING_ID' => $data[$row['AREA']]
-                    ));
+                    TemplateRefTable::update(
+                        $row['ID'],
+                        array(
+                            'LANDING_ID' => $data[$row['AREA']]
+                        )
+                    );
                 }
                 unset($data[$row['AREA']]);
             } else {
@@ -49,12 +56,14 @@ class TemplateRef
         }
         foreach ($data as $area => $lid) {
             if ($lid > 0) {
-                TemplateRefTable::add(array(
-                    'ENTITY_ID' => $id,
-                    'ENTITY_TYPE' => $type,
-                    'LANDING_ID' => $lid,
-                    'AREA' => $area
-                ));
+                TemplateRefTable::add(
+                    array(
+                        'ENTITY_ID' => $id,
+                        'ENTITY_TYPE' => $type,
+                        'LANDING_ID' => $lid,
+                        'AREA' => $area
+                    )
+                );
             }
         }
     }
@@ -73,15 +82,18 @@ class TemplateRef
         if (!isset($staticData[$type . $id])) {
             $data = array();
             if ($id > 0) {
-                $res = TemplateRefTable::getList(array(
-                    'select' => array(
-                        'AREA', 'LANDING_ID'
-                    ),
-                    'filter' => array(
-                        'ENTITY_ID' => $id,
-                        '=ENTITY_TYPE' => $type
+                $res = TemplateRefTable::getList(
+                    array(
+                        'select' => array(
+                            'AREA',
+                            'LANDING_ID'
+                        ),
+                        'filter' => array(
+                            'ENTITY_ID' => $id,
+                            '=ENTITY_TYPE' => $type
+                        )
                     )
-                ));
+                );
                 while (($row = $res->fetch())) {
                     $data[$row['AREA']] = $row['LANDING_ID'];
                 }
@@ -146,11 +158,13 @@ class TemplateRef
      */
     public static function landingIsArea($lid)
     {
-        $res = TemplateRefTable::getList(array(
-            'filter' => array(
-                'LANDING_ID' => $lid
+        $res = TemplateRefTable::getList(
+            array(
+                'filter' => array(
+                    'LANDING_ID' => $lid
+                )
             )
-        ));
+        );
         if (is_array($lid)) {
             $return = array();
             foreach ($lid as $id) {
@@ -174,11 +188,13 @@ class TemplateRef
     {
         $lid = intval($lid);
 
-        $res = TemplateRefTable::getList(array(
-            'filter' => array(
-                'LANDING_ID' => $lid
+        $res = TemplateRefTable::getList(
+            array(
+                'filter' => array(
+                    'LANDING_ID' => $lid
+                )
             )
-        ));
+        );
         while ($row = $res->fetch()) {
             TemplateRefTable::delete($row['ID']);
         }
@@ -193,8 +209,10 @@ class TemplateRef
     {
         if ($type == self::ENTITY_TYPE_SITE) {
             return '\Bitrix\Landing\Site';
-        } else if ($type == self::ENTITY_TYPE_LANDING) {
-            return '\Bitrix\Landing\Landing';
+        } else {
+            if ($type == self::ENTITY_TYPE_LANDING) {
+                return '\Bitrix\Landing\Landing';
+            }
         }
         return '';
     }

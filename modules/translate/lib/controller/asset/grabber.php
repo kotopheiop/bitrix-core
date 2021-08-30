@@ -28,7 +28,7 @@ class Grabber
     const ACTION_FINALIZE = 'finalize';
     const ACTION_PURGE = 'purge';
     const ACTION_CANCEL = 'cancel';
-
+    const ACTION_CLEAR = 'clear';
 
     /** @var string */
     private $archiveFilePath;
@@ -103,6 +103,11 @@ class Grabber
                 $permission
             ),
         );
+        $configureActions[self::ACTION_CLEAR] = array(
+            '+prefilters' => array(
+                $permission
+            ),
+        );
         $configureActions[self::ACTION_FINALIZE] = array(
             '+prefilters' => array(
                 $permission
@@ -140,11 +145,11 @@ class Grabber
             if (
                 (filesize($_FILES['tarFile']['tmp_name']) > 0) &&
                 (
-                    substr($_FILES['tarFile']['name'], -7) === '.tar.gz' ||
-                    substr($_FILES['tarFile']['name'], -4) === '.tar'
+                    mb_substr($_FILES['tarFile']['name'], -7) === '.tar.gz' ||
+                    mb_substr($_FILES['tarFile']['name'], -4) === '.tar'
                 )
             ) {
-                if (substr($_FILES['tarFile']['name'], -7) === '.tar.gz') {
+                if (mb_substr($_FILES['tarFile']['name'], -7) === '.tar.gz') {
                     $suffix = '.tar.gz';
                 } else {
                     $suffix = '.tar';
@@ -160,9 +165,14 @@ class Grabber
         } else {
             if ($_FILES['tarFile']['error'] == UPLOAD_ERR_INI_SIZE) {
                 $this->addError(
-                    new Main\Error(Loc::getMessage('TR_ERROR_UPLOAD_SIZE', [
-                        '#SIZE#' => \CFile::FormatSize(self::getMaxUploadSize())
-                    ]))
+                    new Main\Error(
+                        Loc::getMessage(
+                            'TR_ERROR_UPLOAD_SIZE',
+                            [
+                                '#SIZE#' => \CFile::FormatSize(self::getMaxUploadSize())
+                            ]
+                        )
+                    )
                 );
             } else {
                 $this->addError(new Main\Error(Loc::getMessage('TR_ERROR_TARFILE')));
@@ -231,6 +241,17 @@ class Grabber
         return array(
             'STATUS' => Translate\Controller\STATUS_COMPLETED
         );
+    }
+
+
+    /**
+     * Deletes generated file.
+     *
+     * @return array
+     */
+    public function clearAction()
+    {
+        return $this->purgeAction();
     }
 
 

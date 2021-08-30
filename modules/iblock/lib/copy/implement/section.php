@@ -56,7 +56,9 @@ class Section extends CopyImplementer
     public function setChangedFieldsForChildSections($changedFieldsForChildSections)
     {
         $this->changedFieldsForChildSections = array_merge(
-            $this->changedFieldsForChildSections, $changedFieldsForChildSections);
+            $this->changedFieldsForChildSections,
+            $changedFieldsForChildSections
+        );
     }
 
     /**
@@ -174,8 +176,15 @@ class Section extends CopyImplementer
 
         $containerCollection = new ContainerCollection();
 
-        $queryObject = \CIBlockSection::getList([], [
-            "SECTION_ID" => $sectionId, "CHECK_PERMISSIONS" => "N"], false, ["ID"]);
+        $queryObject = \CIBlockSection::getList(
+            [],
+            [
+                "SECTION_ID" => $sectionId,
+                "CHECK_PERMISSIONS" => "N"
+            ],
+            false,
+            ["ID"]
+        );
         while ($section = $queryObject->fetch()) {
             $container = new Container($section["ID"]);
             $container->setParentId($copiedSectionId);

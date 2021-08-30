@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 /*
@@ -43,18 +44,30 @@ class CCityLookup_geoip_extension extends CCityLookup
             }
             $this->charset = "iso-8859-1";
         } else {
-            if (array_key_exists("XPOST", $arDBRecord)) $this->postal_code = $arDBRecord["XPOST"];
-            if (array_key_exists("XLAT", $arDBRecord)) $this->latitude = $arDBRecord["XLAT"];
-            if (array_key_exists("XLON", $arDBRecord)) $this->longitude = $arDBRecord["XLON"];
+            if (array_key_exists("XPOST", $arDBRecord)) {
+                $this->postal_code = $arDBRecord["XPOST"];
+            }
+            if (array_key_exists("XLAT", $arDBRecord)) {
+                $this->latitude = $arDBRecord["XLAT"];
+            }
+            if (array_key_exists("XLON", $arDBRecord)) {
+                $this->longitude = $arDBRecord["XLON"];
+            }
         }
     }
 
     function ArrayForDB()
     {
         $ar = parent::ArrayForDB();
-        if ($this->postal_code) $ar["XPOST"] = $this->postal_code;
-        if ($this->latitude) $ar["XLAT"] = $this->latitude;
-        if ($this->longitude) $ar["XLON"] = $this->longitude;
+        if ($this->postal_code) {
+            $ar["XPOST"] = $this->postal_code;
+        }
+        if ($this->latitude) {
+            $ar["XLAT"] = $this->latitude;
+        }
+        if ($this->longitude) {
+            $ar["XLON"] = $this->longitude;
+        }
         return $ar;
     }
 

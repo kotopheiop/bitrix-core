@@ -40,6 +40,7 @@ abstract class EntityCollection
     }
 
     /**
+     * @return string
      * @throws Main\NotImplementedException
      */
     public static function getRegistryType()
@@ -66,10 +67,12 @@ abstract class EntityCollection
         $eventsList = $eventManager->findEventHandlers('sale', 'OnBeforeCollectionDeleteItem');
         if (!empty($eventsList)) {
             /** @var Main\Entity\Event $event */
-            $event = new Main\Event('sale', 'OnBeforeCollectionDeleteItem', array(
+            $event = new Main\Event(
+                'sale', 'OnBeforeCollectionDeleteItem', array(
                 'COLLECTION' => $this->collection,
                 'ENTITY' => $oldItem,
-            ));
+            )
+            );
             $event->send();
         }
 
@@ -95,10 +98,12 @@ abstract class EntityCollection
         $eventsList = $eventManager->findEventHandlers('sale', 'OnCollectionAddItem');
         if (!empty($eventsList)) {
             /** @var Main\Entity\Event $event */
-            $event = new Main\Event('sale', 'OnCollectionAddItem', array(
+            $event = new Main\Event(
+                'sale', 'OnCollectionAddItem', array(
                 'COLLECTION' => $this->collection,
                 'ENTITY' => $item,
-            ));
+            )
+            );
             $event->send();
         }
 
@@ -147,9 +152,11 @@ abstract class EntityCollection
         $eventsList = $eventManager->findEventHandlers('sale', 'OnBeforeCollectionClear');
         if (!empty($eventsList)) {
             /** @var Main\Entity\Event $event */
-            $event = new Main\Event('sale', 'OnBeforeCollectionClear', array(
+            $event = new Main\Event(
+                'sale', 'OnBeforeCollectionClear', array(
                 'COLLECTION' => $this->collection,
-            ));
+            )
+            );
             $event->send();
         }
     }

@@ -22,8 +22,9 @@ class ShellAdapter
      */
     protected function prepareExecution($command)
     {
-        if (strlen($command) <= 0)
+        if ($command == '') {
             throw new \Bitrix\Main\ArgumentNullException("command");
+        }
 
         $this->resOutput = "";
         $this->resError = "";

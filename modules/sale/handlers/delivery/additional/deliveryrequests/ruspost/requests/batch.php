@@ -46,7 +46,8 @@ class Batch extends Base
                         )
                     ),
                     Requests\RequestResult::ERROR_NOT_FOUND
-                ));
+                )
+            );
         }
 
         return $result;
@@ -73,15 +74,17 @@ class Batch extends Base
             return $result;
         }
 
-        $res = Requests\RequestTable::getList(array(
-            'filter' => array(
-                '=ID' => $requestId
+        $res = Requests\RequestTable::getList(
+            array(
+                'filter' => array(
+                    '=ID' => $requestId
+                )
             )
-        ));
+        );
 
         $row = $res->fetch();
 
-        if (!$row || strlen($row['EXTERNAL_ID']) <= 0) {
+        if (!$row || $row['EXTERNAL_ID'] == '') {
             $result->addError(new Error(Loc::getMessage('SALE_DLVRS_ADD_DREQ_RBATCH_04')));
             return $result;
         }

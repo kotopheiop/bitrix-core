@@ -110,9 +110,12 @@ class ChannelStatsRequest extends \Protobuf\AbstractMessage
     public static function fromArray(array $values)
     {
         $message = new self();
-        $values = array_merge([
-            'channels' => []
-        ], $values);
+        $values = array_merge(
+            [
+                'channels' => []
+            ],
+            $values
+        );
 
         foreach ($values['channels'] as $item) {
             $message->addChannels($item);
@@ -126,18 +129,22 @@ class ChannelStatsRequest extends \Protobuf\AbstractMessage
      */
     public static function descriptor()
     {
-        return \google\protobuf\DescriptorProto::fromArray([
-            'name' => 'ChannelStatsRequest',
-            'field' => [
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 1,
-                    'name' => 'channels',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_MESSAGE(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_REPEATED(),
-                    'type_name' => '.ChannelId'
-                ]),
-            ],
-        ]);
+        return \google\protobuf\DescriptorProto::fromArray(
+            [
+                'name' => 'ChannelStatsRequest',
+                'field' => [
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 1,
+                            'name' => 'channels',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_MESSAGE(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_REPEATED(),
+                            'type_name' => '.ChannelId'
+                        ]
+                    ),
+                ],
+            ]
+        );
     }
 
     /**
@@ -193,7 +200,6 @@ class ChannelStatsRequest extends \Protobuf\AbstractMessage
             : null;
 
         while ($limit === null || $stream->tell() < $limit) {
-
             if ($stream->eof()) {
                 break;
             }
@@ -242,7 +248,6 @@ class ChannelStatsRequest extends \Protobuf\AbstractMessage
             $unknown = new \Protobuf\Unknown($tag, $wire, $data);
 
             $this->unknownFieldSet->add($unknown);
-
         }
     }
 
@@ -285,7 +290,9 @@ class ChannelStatsRequest extends \Protobuf\AbstractMessage
     public function merge(\Protobuf\Message $message)
     {
         if (!$message instanceof \Bitrix\Pull\Protobuf\ChannelStatsRequest) {
-            throw new \InvalidArgumentException(sprintf('Argument 1 passed to %s must be a %s, %s given', __METHOD__, __CLASS__, get_class($message)));
+            throw new \InvalidArgumentException(
+                sprintf('Argument 1 passed to %s must be a %s, %s given', __METHOD__, __CLASS__, get_class($message))
+            );
         }
 
         $this->channels = ($message->channels !== null) ? $message->channels : $this->channels;

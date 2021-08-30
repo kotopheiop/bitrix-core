@@ -32,7 +32,14 @@ final class ImportOneCPackageCRM extends ImportOneCPackage
             if (!$this->hasDocumentByTypeId(Exchange\OneC\DocumentType::PAYMENT_CASH, $documents) &&
                 !$this->hasDocumentByTypeId(Exchange\OneC\DocumentType::PAYMENT_CASH_LESS, $documents) &&
                 !$this->hasDocumentByTypeId(Exchange\OneC\DocumentType::PAYMENT_CARD_TRANSACTION, $documents)) {
-                $result->addError(new Error(GetMessage('CRM_PACKAGE_NOT_FOUND_PAYMENT', array('#XML_1C_DOCUMENT_ID#' => $documentOrder->getExternalId())), 'CRM_PACKAGE_NOT_FOUND_PAYMENT'));
+                $result->addError(
+                    new Error(
+                        GetMessage(
+                            'CRM_PACKAGE_NOT_FOUND_PAYMENT',
+                            array('#XML_1C_DOCUMENT_ID#' => $documentOrder->getExternalId())
+                        ), 'CRM_PACKAGE_NOT_FOUND_PAYMENT'
+                    )
+                );
             }
 
             $countShipment = 0;
@@ -43,7 +50,14 @@ final class ImportOneCPackageCRM extends ImportOneCPackage
             }
 
             if ($countShipment >= 2) {
-                $result->addError(new Error(GetMessage('CRM_PACKAGE_PARTIAL_SHIPMENT_NOT_SUPPORTED', array('#XML_1C_DOCUMENT_ID#' => $documentOrder->getExternalId())), 'CRM_PACKAGE_NOT_FOUND_PAYMENT'));
+                $result->addError(
+                    new Error(
+                        GetMessage(
+                            'CRM_PACKAGE_PARTIAL_SHIPMENT_NOT_SUPPORTED',
+                            array('#XML_1C_DOCUMENT_ID#' => $documentOrder->getExternalId())
+                        ), 'CRM_PACKAGE_NOT_FOUND_PAYMENT'
+                    )
+                );
             }
         }
 
@@ -69,8 +83,9 @@ final class ImportOneCPackageCRM extends ImportOneCPackage
             }
         }
 
-        if ($result->isSuccess())
+        if ($result->isSuccess()) {
             $result = parent::modifyEntity($item);
+        }
 
 
         return $result;
@@ -171,7 +186,8 @@ final class ImportOneCPackageCRM extends ImportOneCPackage
                 foreach ($entityItems as $entityItem) {
                     if ($entityItem->getOwnerTypeId() == EntityType::USER_PROFILE) {
                         /** @var Exchange\Entity\UserProfileImport $entityItem */
-                        $personTypeId = $entityItem->isFiz() ? (int)$personTypes['CONTACT'] : (int)$personTypes['COMPANY'];
+                        $personTypeId = $entityItem->isFiz(
+                        ) ? (int)$personTypes['CONTACT'] : (int)$personTypes['COMPANY'];
                         break;
                     }
                 }
@@ -207,7 +223,12 @@ final class ImportOneCPackageCRM extends ImportOneCPackage
 
     public static function configuration()
     {
-        ManagerImport::registerInstance(static::getShipmentEntityTypeId(), OneC\ImportSettings::getCurrent(), new OneC\CollisionShipment(), new OneC\CriterionShipmentInvoice());
+        ManagerImport::registerInstance(
+            static::getShipmentEntityTypeId(),
+            OneC\ImportSettings::getCurrent(),
+            new OneC\CollisionShipment(),
+            new OneC\CriterionShipmentInvoice()
+        );
 
         parent::configuration();
     }
@@ -216,12 +237,13 @@ final class ImportOneCPackageCRM extends ImportOneCPackage
     {
         $typeId = EntityType::UNDEFINED;
 
-        if ($entity instanceof Order)
+        if ($entity instanceof Order) {
             $typeId = Exchange\Entity\Invoice::resolveEntityTypeId($entity);
-        elseif ($entity instanceof Payment)
+        } elseif ($entity instanceof Payment) {
             $typeId = Exchange\Entity\PaymentInvoiceBase::resolveEntityTypeId($entity);
-        elseif ($entity instanceof Shipment)
+        } elseif ($entity instanceof Shipment) {
             $typeId = Exchange\Entity\ShipmentInvoice::resolveEntityTypeId($entity);
+        }
 
         return $typeId;
     }

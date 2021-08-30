@@ -20,7 +20,20 @@ Loc::loadMessages(__FILE__);
  * </ul>
  *
  * @package Bitrix\Catalog
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_GroupLang_Query query()
+ * @method static EO_GroupLang_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_GroupLang_Result getById($id)
+ * @method static EO_GroupLang_Result getList(array $parameters = array())
+ * @method static EO_GroupLang_Entity getEntity()
+ * @method static \Bitrix\Catalog\EO_GroupLang createObject($setDefaultValues = true)
+ * @method static \Bitrix\Catalog\EO_GroupLang_Collection createCollection()
+ * @method static \Bitrix\Catalog\EO_GroupLang wakeUpObject($row)
+ * @method static \Bitrix\Catalog\EO_GroupLang_Collection wakeUpCollection($rows)
+ */
 class GroupLangTable extends Main\Entity\DataManager
 {
     /**
@@ -41,22 +54,30 @@ class GroupLangTable extends Main\Entity\DataManager
     public static function getMap()
     {
         return array(
-            'ID' => new Main\Entity\IntegerField('ID', array(
+            'ID' => new Main\Entity\IntegerField(
+                'ID', array(
                 'primary' => true,
                 'autocomplete' => true,
                 'title' => Loc::getMessage('GROUP_LANG_ENTITY_ID_FIELD')
-            )),
-            'CATALOG_GROUP_ID' => new Main\Entity\IntegerField('CATALOG_GROUP_ID', array(
+            )
+            ),
+            'CATALOG_GROUP_ID' => new Main\Entity\IntegerField(
+                'CATALOG_GROUP_ID', array(
                 'title' => Loc::getMessage('GROUP_LANG_ENTITY_CATALOG_GROUP_ID_FIELD')
-            )),
-            'LANG' => new Main\Entity\StringField('LANG', array(
+            )
+            ),
+            'LANG' => new Main\Entity\StringField(
+                'LANG', array(
                 'validation' => array(__CLASS__, 'validateLang'),
                 'title' => Loc::getMessage('GROUP_LANG_ENTITY_LANG_FIELD')
-            )),
-            'NAME' => new Main\Entity\StringField('NAME', array(
+            )
+            ),
+            'NAME' => new Main\Entity\StringField(
+                'NAME', array(
                 'validation' => array(__CLASS__, 'validateName'),
                 'title' => Loc::getMessage('GROUP_LANG_ENTITY_NAME_FIELD')
-            )),
+            )
+            ),
             'CATALOG_GROUP' => new Main\Entity\ReferenceField(
                 'CATALOG_GROUP',
                 '\Bitrix\Catalog\Group',

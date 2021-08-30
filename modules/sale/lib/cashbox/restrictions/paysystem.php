@@ -63,26 +63,31 @@ class PaySystem extends Restriction
             $collection = $entity->getPaymentCollection();
             if ($collection) {
                 /** @var Payment $item */
-                foreach ($collection as $item)
+                foreach ($collection as $item) {
                     $result[] = $item->getPaymentSystemId();
+                }
             }
         } elseif ($entity instanceof Sale\Shipment) {
             /** @var Sale\ShipmentCollection $shipmentCollection */
             $shipmentCollection = $entity->getCollection();
-            if (!$shipmentCollection)
+            if (!$shipmentCollection) {
                 return $result;
+            }
 
             $order = $shipmentCollection->getOrder();
-            if (!$order)
+            if (!$order) {
                 return $result;
+            }
 
             $paymentCollection = $order->getPaymentCollection();
-            if (!$paymentCollection)
+            if (!$paymentCollection) {
                 return $result;
+            }
 
             /** @var Payment $item */
-            foreach ($paymentCollection as $item)
+            foreach ($paymentCollection as $item) {
                 $result[] = $item->getPaymentSystemId();
+            }
         } elseif ($entity instanceof Payment) {
             $result[] = $entity->getPaymentSystemId();
         }
@@ -97,19 +102,23 @@ class PaySystem extends Restriction
     {
         static $result = null;
 
-        if ($result !== null)
+        if ($result !== null) {
             return $result;
+        }
 
         $result = array();
 
-        $dbResultList = Sale\PaySystem\Manager::getList(array(
-            'select' => array("ID", "NAME", "ACTIVE"),
-            'filter' => array("ACTIVE" => "Y"),
-            'order' => array("SORT" => "ASC", "NAME" => "ASC")
-        ));
+        $dbResultList = Sale\PaySystem\Manager::getList(
+            array(
+                'select' => array("ID", "NAME", "ACTIVE"),
+                'filter' => array("ACTIVE" => "Y"),
+                'order' => array("SORT" => "ASC", "NAME" => "ASC")
+            )
+        );
 
-        while ($arPayType = $dbResultList->fetch())
+        while ($arPayType = $dbResultList->fetch()) {
             $result[$arPayType["ID"]] = $arPayType["NAME"];
+        }
 
         return $result;
     }

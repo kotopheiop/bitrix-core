@@ -1,6 +1,18 @@
-<?
-require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
+<? require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
+
+use \Bitrix\Main\Localization\Loc;
+
 \Bitrix\Main\Loader::includeModule("forum");
+$userOpt = \CUserOptions::getOption("admin_panel", "forum");
+if ($userOpt["forum_admin"] != "old") {
+    require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
+    ?><? $APPLICATION->IncludeComponent("bitrix:forum.admin.forums", ".default", []); ?><?
+    ?><?= BeginNote(); ?><a href="javascript:void(0);"
+                            onclick="BX.userOptions.save('admin_panel', 'forum', 'forum_admin', 'old');BX.reload();return false;"><?
+    ?><?= Loc::getMessage("FORUM_ADMIN_GO_BACK_TO_OLD_VIEW") ?></a><?= EndNote();
+    require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_admin.php");
+    return;
+}
 
 $forumModulePermissions = $APPLICATION->GetGroupRight("forum");
 if ($forumModulePermissions == "D"):
@@ -14,7 +26,7 @@ global $by, $order;
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/forum/prolog.php");
 
 $arSites = array();
-$db_res = CSite::GetList($by1 = "sort", $order1 = "asc");
+$db_res = CSite::GetList();
 if ($db_res && $res = $db_res->GetNext()):
     do {
         $arSites[$res["ID"]] = $res;
@@ -26,7 +38,11 @@ $arForumGroupsTitle = array();
 array_unshift($arForumGroups, array("ID" => 0, "NAME" => "..."));
 foreach ($arForumGroups as $key => $res) {
     $arForumGroups[$res["ID"]] = $res;
-    $arForumGroupsTitle[$res["ID"]] = str_pad("", ($res["DEPTH_LEVEL"] - 1), ".") . $res["~NAME"] . " [" . $res["ID"] . "]";
+    $arForumGroupsTitle[$res["ID"]] = str_pad(
+            "",
+            ($res["DEPTH_LEVEL"] - 1),
+            "."
+        ) . $res["~NAME"] . " [" . $res["ID"] . "]";
 }
 $arForumGroupsTitle[0] = "...";
 
@@ -47,27 +63,32 @@ $lAdmin = new CAdminList($sTableID, $oSort);
 $arFilterFields = array(
     "filter_site_id",
     "filter_active",
-    "filter_group_id");
+    "filter_group_id"
+);
 
 
 $lAdmin->InitFilter($arFilterFields);
 
 $arFilter = array();
-if (strlen($filter_site_id) > 0 && $filter_site_id != "NOT_REF")
+if ($filter_site_id <> '' && $filter_site_id != "NOT_REF") {
     $arFilter["SITE_ID"] = $filter_site_id;
-if (strlen($filter_active) > 0)
+}
+if ($filter_active <> '') {
     $arFilter["ACTIVE"] = $filter_active;
-if (strlen($filter_group_id) > 0)
+}
+if ($filter_group_id <> '') {
     $arFilter["FORUM_GROUP_ID"] = $filter_group_id;
+}
 
 if (check_bitrix_sessid() && $forumModulePermissions >= "R"):
     if ($lAdmin->EditAction()) {
         foreach ($FIELDS as $ID => $arFields) {
             $DB->StartTransaction();
-            $ID = IntVal($ID);
+            $ID = intval($ID);
 
-            if (!$lAdmin->IsUpdated($ID))
+            if (!$lAdmin->IsUpdated($ID)) {
                 continue;
+            }
 
             if (!CForumNew::CanUserUpdateForum($ID, $USER->GetUserGroupArray(), $USER->GetID())) {
                 $lAdmin->AddUpdateError(GetMessage("FA_NO_PERMS2UPDATE") . " " . $ID . "", $ID);
@@ -75,10 +96,11 @@ if (check_bitrix_sessid() && $forumModulePermissions >= "R"):
             }
 
             if (!CForumNew::Update($ID, $arFields)) {
-                if ($ex = $APPLICATION->GetException())
+                if ($ex = $APPLICATION->GetException()) {
                     $lAdmin->AddUpdateError($ex->GetString(), $ID);
-                else
+                } else {
                     $lAdmin->AddUpdateError(GetMessage("FA_ERROR_UPDATE") . " " . $ID . "", $ID);
+                }
 
                 $DB->Rollback();
             }
@@ -94,13 +116,15 @@ if (check_bitrix_sessid() && $forumModulePermissions >= "R"):
                 array($by => $order),
                 $arFilter
             );
-            while ($arResult = $dbResultList->Fetch())
+            while ($arResult = $dbResultList->Fetch()) {
                 $arID[] = $arResult['ID'];
+            }
         }
 
         foreach ($arID as $ID) {
-            if (strlen($ID) <= 0)
+            if ($ID == '') {
                 continue;
+            }
             switch ($_REQUEST['action']) {
                 case "delete":
 
@@ -114,10 +138,11 @@ if (check_bitrix_sessid() && $forumModulePermissions >= "R"):
                         if (!CForumNew::Delete($ID)) {
                             $DB->Rollback();
 
-                            if ($ex = $APPLICATION->GetException())
+                            if ($ex = $APPLICATION->GetException()) {
                                 $lAdmin->AddGroupError($ex->GetString(), $ID);
-                            else
+                            } else {
                                 $lAdmin->AddGroupError(GetMessage("FA_DELETE_ERROR"), $ID);
+                            }
                         }
 
                         $DB->Commit();
@@ -133,10 +158,11 @@ if (check_bitrix_sessid() && $forumModulePermissions >= "R"):
                         );
 
                         if (!CForumNew::Update($ID, $arFields)) {
-                            if ($ex = $APPLICATION->GetException())
+                            if ($ex = $APPLICATION->GetException()) {
                                 $lAdmin->AddGroupError($ex->GetString(), $ID);
-                            else
+                            } else {
                                 $lAdmin->AddGroupError(GetMessage("FA_ERROR_UPDATE") . " " . $ID . "", $ID);
+                            }
                         }
                     }
                     break;
@@ -162,45 +188,56 @@ if (check_bitrix_sessid() && $forumModulePermissions >= "R"):
             $nameSpace . ":forum.topic.reviews",
             $nameSpace . ":forum.topic.search",
             $nameSpace . ":forum.user.list",
-            $nameSpace . ":forum.user.post");
+            $nameSpace . ":forum.user.post"
+        );
         foreach ($arComponentPath as $path) {
             $componentRelativePath = CComponentEngine::MakeComponentPath($path);
             $arComponentDescription = CComponentUtil::GetComponentDescr($path);
-            if (strLen($componentRelativePath) <= 0 || !is_array($arComponentDescription)):
+            if ($componentRelativePath == '' || !is_array($arComponentDescription)):
                 continue;
             elseif (!array_key_exists("CACHE_PATH", $arComponentDescription)):
                 continue;
             endif;
             foreach ($arSites as $res):
                 $path = $componentRelativePath;
-                if ($arComponentDescription["CACHE_PATH"] == "Y")
+                if ($arComponentDescription["CACHE_PATH"] == "Y") {
                     $path = "/" . $res["LID"] . $path;
-                if (!empty($path))
+                }
+                if (!empty($path)) {
                     BXClearCache(true, $path);
+                }
             endforeach;
         }
     }
 endif;
 $dbResultList = CForumNew::GetListEx(
     array($by => $order),
-    $arFilter);
+    $arFilter
+);
 
 $dbResultList = new CAdminResult($dbResultList, $sTableID);
 $dbResultList->NavStart();
 $lAdmin->NavText($dbResultList->GetNavPrint(GetMessage("NAV")));
 
-$lAdmin->AddHeaders(array(
-    array("id" => "ID", "content" => "ID", "sort" => "ID", "default" => false),
-    array("id" => "FORUM_GROUP_ID", "content" => GetMessage("FORUM_GROUP_ID"), "sort" => "FORUM_GROUP_LEFT_MARGIN", "default" => true,),
-    array("id" => "NAME", "content" => GetMessage("NAME"), "sort" => "NAME", "default" => true),
-    array("id" => "ACTIVE", "content" => GetMessage("ACTIVE"), "sort" => "ACTIVE", "default" => true),
-    array("id" => "LAND", "content" => GetMessage('LAND'), "default" => true),
-    array("id" => "SORT", "content" => GetMessage("SORT"), "sort" => "SORT", "align" => "right"),
-    array("id" => "MODERATION", "content" => GetMessage("MODERATION"), "sort" => "MODERATION"),
-    array("id" => "INDEXATION", "content" => GetMessage("INDEXATION"), "sort" => "INDEXATION"),
-    array("id" => "ORDER_BY", "content" => GetMessage("ORDER_BY"), "sort" => "ORDER_BY"),
-    array("id" => "ORDER_DIRECTION", "content" => GetMessage("ORDER_DIRECTION"), "sort" => "ORDER_DIRECTION"),
-));
+$lAdmin->AddHeaders(
+    array(
+        array("id" => "ID", "content" => "ID", "sort" => "ID", "default" => false),
+        array(
+            "id" => "FORUM_GROUP_ID",
+            "content" => GetMessage("FORUM_GROUP_ID"),
+            "sort" => "FORUM_GROUP_LEFT_MARGIN",
+            "default" => true,
+        ),
+        array("id" => "NAME", "content" => GetMessage("NAME"), "sort" => "NAME", "default" => true),
+        array("id" => "ACTIVE", "content" => GetMessage("ACTIVE"), "sort" => "ACTIVE", "default" => true),
+        array("id" => "LAND", "content" => GetMessage('LAND'), "default" => true),
+        array("id" => "SORT", "content" => GetMessage("SORT"), "sort" => "SORT", "align" => "right"),
+        array("id" => "MODERATION", "content" => GetMessage("MODERATION"), "sort" => "MODERATION"),
+        array("id" => "INDEXATION", "content" => GetMessage("INDEXATION"), "sort" => "INDEXATION"),
+        array("id" => "ORDER_BY", "content" => GetMessage("ORDER_BY"), "sort" => "ORDER_BY"),
+        array("id" => "ORDER_DIRECTION", "content" => GetMessage("ORDER_DIRECTION"), "sort" => "ORDER_DIRECTION"),
+    )
+);
 
 $arVisibleColumns = $lAdmin->GetVisibleHeaderColumns();
 
@@ -213,8 +250,11 @@ while ($arForum = $dbResultList->NavNext(true, "f_")) {
     $row->bReadOnly = ($bCanUpdateForum ? false : true);
 
     $row->AddField("ID", $f_ID);
-    $row->AddViewField("NAME", '<a title="' . GetMessage("FORUM_EDIT") . '" href="forum_edit.php?ID=' . $f_ID . '&amp;lang=' .
-        LANG . GetFilterParams("filter_") . '">' . $f_NAME . '</a>');
+    $row->AddViewField(
+        "NAME",
+        '<a title="' . GetMessage("FORUM_EDIT") . '" href="forum_edit.php?ID=' . $f_ID . '&amp;lang=' .
+        LANG . GetFilterParams("filter_") . '">' . $f_NAME . '</a>'
+    );
     $row->AddInputField("NAME", ($bCanUpdateForum ? array("size" => "30") : false));
 
     $row->AddCheckField("ACTIVE", ($bCanUpdateForum ? array() : false));
@@ -223,8 +263,9 @@ while ($arForum = $dbResultList->NavNext(true, "f_")) {
     if (in_array("LAND", $arVisibleColumns)) {
         $arForumSite = CForumNew::GetSites($f_ID);
         foreach ($arSites as $lid => $site) {
-            if (array_key_exists($lid, $arForumSite))
+            if (array_key_exists($lid, $arForumSite)) {
                 $res[] = $site["NAME"] . " [" . $lid . "]";
+            }
             $class = (empty($arForumSite[$lid]) ? "empty-path" : "");
             $res2[] = <<<HTML
 <dt class="$class" id="site_lid_{$key}">{$site["NAME"]} [{$key}]</dt>
@@ -251,11 +292,22 @@ HTML;
 
     $arActions = Array();
     if ($bCanUpdateForum) {
-        $arActions[] = array("ICON" => "edit", "TEXT" => GetMessage("FORUM_EDIT"), "ACTION" => $lAdmin->ActionRedirect("forum_edit.php?ID=" . $f_ID . "&lang=" . LANG . GetFilterParams("filter_", false) . ""), "DEFAULT" => true);
+        $arActions[] = array(
+            "ICON" => "edit",
+            "TEXT" => GetMessage("FORUM_EDIT"),
+            "ACTION" => $lAdmin->ActionRedirect(
+                "forum_edit.php?ID=" . $f_ID . "&lang=" . LANG . GetFilterParams("filter_", false) . ""
+            ),
+            "DEFAULT" => true
+        );
     }
     if ($bCanDeleteForum) {
         $arActions[] = array("SEPARATOR" => true);
-        $arActions[] = array("ICON" => "delete", "TEXT" => GetMessage("FORUM_DELETE"), "ACTION" => "if(confirm('" . GetMessage('DELETE_CONFIRM') . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete"));
+        $arActions[] = array(
+            "ICON" => "delete",
+            "TEXT" => GetMessage("FORUM_DELETE"),
+            "ACTION" => "if(confirm('" . GetMessage('DELETE_CONFIRM') . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete")
+        );
     }
 
     $row->AddActions($arActions);
@@ -328,8 +380,12 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
         <td>
             <select name="filter_active">
                 <option value=""><?= htmlspecialcharsex("(" . GetMessage("FFAN_ALL") . ")") ?></option>
-                <option value="Y"<? if ($filter_active == "Y") echo " selected" ?>><?= htmlspecialcharsex(GetMessage("FFAN_YES")) ?></option>
-                <option value="N"<? if ($filter_active == "N") echo " selected" ?>><?= htmlspecialcharsex(GetMessage("FFAN_NO")) ?></option>
+                <option value="Y"<? if ($filter_active == "Y") echo " selected" ?>><?= htmlspecialcharsex(
+                        GetMessage("FFAN_YES")
+                    ) ?></option>
+                <option value="N"<? if ($filter_active == "N") echo " selected" ?>><?= htmlspecialcharsex(
+                        GetMessage("FFAN_NO")
+                    ) ?></option>
             </select>
         </td>
     </tr>
@@ -343,7 +399,7 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
                 foreach ($arForumGroupsTitle as $key => $val):
                     ?>
                     <option value="<?= $key ?>"
-                    <?= (intVal($filter_group_id) == intVal($key) ? " selected" : "") ?>
+                    <?= (intval($filter_group_id) == intval($key) ? " selected" : "") ?>
                     ><?= htmlspecialcharsbx($val) ?></option><?
                 endforeach;
                 ?>
@@ -364,6 +420,10 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
 </form>
 <?= \Bitrix\Main\Update\Stepper::getHtml("forum"); ?><?
 $lAdmin->DisplayList();
+?><?= BeginNote(); ?><a href="javascript:void(0);"
+                        onclick="BX.userOptions.save('admin_panel', 'forum', 'forum_admin', 'new');BX.reload();return false;"><?= Loc::getMessage(
+        "FORUM_ADMIN_GO_TO_NEW_VIEW"
+    ) ?></a><?= EndNote();
 ?>
 <style>
     dl, dd, dt {

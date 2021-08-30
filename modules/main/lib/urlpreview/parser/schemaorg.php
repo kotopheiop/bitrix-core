@@ -25,24 +25,27 @@ class SchemaOrg extends Parser
     public function handle(HtmlDocument $document)
     {
         $this->documentEncoding = $document->getEncoding();
-        if (strpos($document->getHtml(), 'itemscope') === false)
+        if (mb_strpos($document->getHtml(), 'itemscope') === false) {
             return null;
+        }
 
-        if (!$this->initializeDom($document))
+        if (!$this->initializeDom($document)) {
             return null;
+        }
 
-        if (!$this->getSchemaMetadata())
+        if (!$this->getSchemaMetadata()) {
             return null;
+        }
 
-        if (strlen($document->getTitle()) == 0 && isset($this->schemaMetadata['name'])) {
+        if ($document->getTitle() == '' && isset($this->schemaMetadata['name'])) {
             $document->setTitle($this->schemaMetadata['name']);
         }
 
-        if (strlen($document->getDescription()) == 0 && isset($this->schemaMetadata['description'])) {
+        if ($document->getDescription() == '' && isset($this->schemaMetadata['description'])) {
             $document->setDescription($this->schemaMetadata['description']);
         }
 
-        if (strlen($document->getImage()) == 0 && isset($this->schemaMetadata['image'])) {
+        if ($document->getImage() == '' && isset($this->schemaMetadata['image'])) {
             $document->setImage($this->schemaMetadata['image']);
         }
     }
@@ -56,12 +59,14 @@ class SchemaOrg extends Parser
         $xpath = new \DOMXPath($this->dom);
         $itemScopeNodes = $xpath->query('//*[@itemscope]');
 
-        if (!is_a($itemScopeNodes, '\DOMNodeList') || $itemScopeNodes->length < 1)
+        if (!is_a($itemScopeNodes, '\DOMNodeList') || $itemScopeNodes->length < 1) {
             return false;
+        }
 
         $mainNode = $itemScopeNodes->item(0);
-        if (!is_a($mainNode, '\DOMElement'))
+        if (!is_a($mainNode, '\DOMElement')) {
             return false;
+        }
 
         $this->walkDomTree($mainNode);
 
@@ -101,10 +106,11 @@ class SchemaOrg extends Parser
                 $result = $node->getAttribute('href');
                 break;
             case 'time':
-                if ($node->hasAttribute('datetime'))
+                if ($node->hasAttribute('datetime')) {
                     $result = $node->getAttribute('datetime');
-                else
+                } else {
                     $result = $node->textContent;
+                }
                 break;
             case 'div':
                 $result = $this->getNodeInnerHtml($node);
@@ -124,7 +130,7 @@ class SchemaOrg extends Parser
         // dom extension's internal encoding is always utf-8
         $result = Encoding::convertEncoding($result, 'utf-8', $this->documentEncoding);
         $result = trim($result);
-        return (strlen($result) > 0 ? $result : null);
+        return ($result <> '' ? $result : null);
     }
 
     /**
@@ -133,7 +139,7 @@ class SchemaOrg extends Parser
     protected function handleNode(\DOMElement $node)
     {
         if ($node->hasAttribute('itemprop') && !$node->hasAttribute('itemscope')) {
-            $propertyName = strtolower($node->getAttribute('itemprop'));
+            $propertyName = mb_strtolower($node->getAttribute('itemprop'));
             $propertyValue = $this->getSchemaPropertyValue($node);
             $this->schemaMetadata[$propertyName] = $propertyValue;
         }

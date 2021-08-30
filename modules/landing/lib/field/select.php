@@ -27,8 +27,9 @@ class Select extends \Bitrix\Landing\Field
      */
     public function __construct($code, array $params = array())
     {
-        $this->code = strtoupper($code);
+        $this->code = mb_strtoupper($code);
         $this->value = null;
+        $this->default = isset($params['default']) ? $params['default'] : null;
         $this->id = isset($params['id']) ? $params['id'] : '';
         $this->title = isset($params['title']) ? $params['title'] : '';
         $this->multiple = isset($params['multiple']) && $params['multiple'];
@@ -66,45 +67,40 @@ class Select extends \Bitrix\Landing\Field
     public function viewForm(array $params = array())
     {
         ?>
-        <select <?
-                ?><?= isset($params['additional']) ? $params['additional'] . ' ' : ''; ?><?
-        ?><?= isset($params['id']) ? 'id="' . \htmlspecialcharsbx($params['id']) . '" ' : ''; ?><?
-        ?><?= $this->multiple ? 'multiple="multiple" size="3" ' : ''; ?><?
-        ?>class="<?= isset($params['class']) ? \htmlspecialcharsbx($params['class']) : ''; ?>" <?
-                ?>name="<?= $this->getName($params["name_format"]); ?><?= $this->multiple ? '[]' : ''; ?>" <?
+        <select <?php
+                ?><?= isset($params['additional']) ? $params['additional'] . ' ' : '' ?><?php
+        ?><?= isset($params['id']) ? 'id="' . \htmlspecialcharsbx($params['id']) . '" ' : '' ?><?php
+        ?><?= $this->multiple ? 'multiple="multiple" size="3" ' : '' ?><?php
+        ?>class="<?= isset($params['class']) ? \htmlspecialcharsbx($params['class']) : '' ?>" <?php
+                ?>name="<?= $this->getName($params["name_format"]) ?><?= $this->multiple ? '[]' : '' ?>" <?php
         ?> />
         <? foreach ($this->options as $code => $val):?>
-        <option value="<?= \htmlspecialcharsbx($code); ?>"<?
-        echo in_array($code, (array)$this->value) ? ' selected="selected"' : ''
+        <option value="<?= \htmlspecialcharsbx($code) ?>"<?php
+        echo in_array($code, (array)$this->value) ? ' selected="selected"' : '';
+        if (!$this->value && $code == $this->default) {
+            echo ' selected="selected"';
+        }
         ?>>
-            <?= \htmlspecialcharsbx($val); ?>
+            <?= \htmlspecialcharsbx($val) ?>
         </option>
-    <?endforeach; ?>
+    <?php endforeach; ?>
         </select>
-        <?
+        <?php
     }
 
     /**
-     * Magic method return value as string.
-     * @return string
-     */
-    public function __toString()
-    {
-        return (string)$this->value;
-    }
-
-
-    /**
-     * Create select name in correct format
+     * Creates select name in correct format.
+     * @return string $nameFormat Formatted name.
      * @return string
      */
     public function getName($nameFormat)
     {
-        return \htmlspecialcharsbx(isset($nameFormat)
-            ? str_replace('#field_code#', $this->code, $nameFormat)
-            : $this->code);
+        return \htmlspecialcharsbx(
+            isset($nameFormat)
+                ? str_replace('#field_code#', $this->code, $nameFormat)
+                : $this->code
+        );
     }
-
 
     /**
      * Get options as array

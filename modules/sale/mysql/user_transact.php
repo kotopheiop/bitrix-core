@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/general/user_transact.php");
 
 class CSaleUserTransact extends CAllSaleUserTransact
@@ -7,9 +8,10 @@ class CSaleUserTransact extends CAllSaleUserTransact
     {
         global $DB;
 
-        $ID = IntVal($ID);
-        if ($ID <= 0)
+        $ID = intval($ID);
+        if ($ID <= 0) {
             return false;
+        }
 
         $strSql =
             "SELECT UT.ID, UT.USER_ID, UT.AMOUNT, UT.CURRENCY, UT.DEBIT, UT.DESCRIPTION, " .
@@ -20,18 +22,36 @@ class CSaleUserTransact extends CAllSaleUserTransact
             "WHERE UT.ID = " . $ID . " ";
 
         $db_res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-        if ($res = $db_res->Fetch())
+        if ($res = $db_res->Fetch()) {
             return $res;
+        }
 
         return false;
     }
 
-    public static function GetList($arOrder = array(), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
-    {
+    public static function GetList(
+        $arOrder = array(),
+        $arFilter = array(),
+        $arGroupBy = false,
+        $arNavStartParams = false,
+        $arSelectFields = array()
+    ) {
         global $DB;
 
-        if (count($arSelectFields) <= 0)
-            $arSelectFields = array("ID", "USER_ID", "TIMESTAMP_X", "TRANSACT_DATE", "AMOUNT", "CURRENCY", "DEBIT", "ORDER_ID", "DESCRIPTION", "NOTES");
+        if (count($arSelectFields) <= 0) {
+            $arSelectFields = array(
+                "ID",
+                "USER_ID",
+                "TIMESTAMP_X",
+                "TRANSACT_DATE",
+                "AMOUNT",
+                "CURRENCY",
+                "DEBIT",
+                "ORDER_ID",
+                "DESCRIPTION",
+                "NOTES"
+            );
+        }
 
         // FIELDS -->
         $arFields = array(
@@ -46,12 +66,37 @@ class CSaleUserTransact extends CAllSaleUserTransact
             "TIMESTAMP_X" => array("FIELD" => "UT.TIMESTAMP_X", "TYPE" => "datetime"),
             "TRANSACT_DATE" => array("FIELD" => "UT.TRANSACT_DATE", "TYPE" => "datetime"),
             "EMPLOYEE_ID" => array("FIELD" => "UT.EMPLOYEE_ID", "TYPE" => "int"),
-            "USER_LOGIN" => array("FIELD" => "U.LOGIN", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (UT.USER_ID = U.ID)"),
-            "USER_ACTIVE" => array("FIELD" => "U.ACTIVE", "TYPE" => "char", "FROM" => "INNER JOIN b_user U ON (UT.USER_ID = U.ID)"),
-            "USER_NAME" => array("FIELD" => "U.NAME", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (UT.USER_ID = U.ID)"),
-            "USER_LAST_NAME" => array("FIELD" => "U.LAST_NAME", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (UT.USER_ID = U.ID)"),
-            "USER_EMAIL" => array("FIELD" => "U.EMAIL", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (UT.USER_ID = U.ID)"),
-            "USER_USER" => array("FIELD" => "U.LOGIN,U.NAME,U.LAST_NAME,U.EMAIL,U.ID", "WHERE_ONLY" => "Y", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (UT.USER_ID = U.ID)")
+            "USER_LOGIN" => array(
+                "FIELD" => "U.LOGIN",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_user U ON (UT.USER_ID = U.ID)"
+            ),
+            "USER_ACTIVE" => array(
+                "FIELD" => "U.ACTIVE",
+                "TYPE" => "char",
+                "FROM" => "INNER JOIN b_user U ON (UT.USER_ID = U.ID)"
+            ),
+            "USER_NAME" => array(
+                "FIELD" => "U.NAME",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_user U ON (UT.USER_ID = U.ID)"
+            ),
+            "USER_LAST_NAME" => array(
+                "FIELD" => "U.LAST_NAME",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_user U ON (UT.USER_ID = U.ID)"
+            ),
+            "USER_EMAIL" => array(
+                "FIELD" => "U.EMAIL",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_user U ON (UT.USER_ID = U.ID)"
+            ),
+            "USER_USER" => array(
+                "FIELD" => "U.LOGIN,U.NAME,U.LAST_NAME,U.EMAIL,U.ID",
+                "WHERE_ONLY" => "Y",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_user U ON (UT.USER_ID = U.ID)"
+            )
         );
         // <-- FIELDS
 
@@ -64,48 +109,57 @@ class CSaleUserTransact extends CAllSaleUserTransact
                 "SELECT " . $arSqls["SELECT"] . " " .
                 "FROM b_sale_user_transact UT " .
                 "	" . $arSqls["FROM"] . " ";
-            if (strlen($arSqls["WHERE"]) > 0)
+            if ($arSqls["WHERE"] <> '') {
                 $strSql .= "WHERE " . $arSqls["WHERE"] . " ";
-            if (strlen($arSqls["GROUPBY"]) > 0)
+            }
+            if ($arSqls["GROUPBY"] <> '') {
                 $strSql .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
+            }
 
             //echo "!1!=".htmlspecialcharsbx($strSql)."<br>";
 
             $dbRes = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-            if ($arRes = $dbRes->Fetch())
+            if ($arRes = $dbRes->Fetch()) {
                 return $arRes["CNT"];
-            else
-                return False;
+            } else {
+                return false;
+            }
         }
 
         $strSql =
             "SELECT " . $arSqls["SELECT"] . " " .
             "FROM b_sale_user_transact UT " .
             "	" . $arSqls["FROM"] . " ";
-        if (strlen($arSqls["WHERE"]) > 0)
+        if ($arSqls["WHERE"] <> '') {
             $strSql .= "WHERE " . $arSqls["WHERE"] . " ";
-        if (strlen($arSqls["GROUPBY"]) > 0)
+        }
+        if ($arSqls["GROUPBY"] <> '') {
             $strSql .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
-        if (strlen($arSqls["ORDERBY"]) > 0)
+        }
+        if ($arSqls["ORDERBY"] <> '') {
             $strSql .= "ORDER BY " . $arSqls["ORDERBY"] . " ";
+        }
 
-        if (is_array($arNavStartParams) && IntVal($arNavStartParams["nTopCount"]) <= 0) {
+        if (is_array($arNavStartParams) && intval($arNavStartParams["nTopCount"]) <= 0) {
             $strSql_tmp =
                 "SELECT COUNT('x') as CNT " .
                 "FROM b_sale_user_transact UT " .
                 "	" . $arSqls["FROM"] . " ";
-            if (strlen($arSqls["WHERE"]) > 0)
+            if ($arSqls["WHERE"] <> '') {
                 $strSql_tmp .= "WHERE " . $arSqls["WHERE"] . " ";
-            if (strlen($arSqls["GROUPBY"]) > 0)
+            }
+            if ($arSqls["GROUPBY"] <> '') {
                 $strSql_tmp .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
+            }
 
             //echo "!2.1!=".htmlspecialcharsbx($strSql_tmp)."<br>";
 
             $dbRes = $DB->Query($strSql_tmp, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             $cnt = 0;
-            if (strlen($arSqls["GROUPBY"]) <= 0) {
-                if ($arRes = $dbRes->Fetch())
+            if ($arSqls["GROUPBY"] == '') {
+                if ($arRes = $dbRes->Fetch()) {
                     $cnt = $arRes["CNT"];
+                }
             } else {
                 // FOR MYSQL!!! ANOTHER CODE FOR ORACLE
                 $cnt = $dbRes->SelectedRowsCount();
@@ -117,8 +171,9 @@ class CSaleUserTransact extends CAllSaleUserTransact
 
             $dbRes->NavQuery($strSql, $cnt, $arNavStartParams);
         } else {
-            if (is_array($arNavStartParams) && IntVal($arNavStartParams["nTopCount"]) > 0)
-                $strSql .= "LIMIT " . IntVal($arNavStartParams["nTopCount"]);
+            if (is_array($arNavStartParams) && intval($arNavStartParams["nTopCount"]) > 0) {
+                $strSql .= "LIMIT " . intval($arNavStartParams["nTopCount"]);
+            }
 
             //echo "!3!=".htmlspecialcharsbx($strSql)."<br>";
 
@@ -134,21 +189,26 @@ class CSaleUserTransact extends CAllSaleUserTransact
 
         $arFields1 = array();
         foreach ($arFields as $key => $value) {
-            if (substr($key, 0, 1) == "=") {
-                $arFields1[substr($key, 1)] = $value;
+            if (mb_substr($key, 0, 1) == "=") {
+                $arFields1[mb_substr($key, 1)] = $value;
                 unset($arFields[$key]);
             }
         }
 
-        if (!CSaleUserTransact::CheckFields("ADD", $arFields, 0))
+        if (!CSaleUserTransact::CheckFields("ADD", $arFields, 0)) {
             return false;
+        }
 
         $arInsert = $DB->PrepareInsert("b_sale_user_transact", $arFields);
 
         foreach ($arFields1 as $key => $value) {
-            if (strlen($arInsert[0]) > 0) $arInsert[0] .= ", ";
+            if ($arInsert[0] <> '') {
+                $arInsert[0] .= ", ";
+            }
             $arInsert[0] .= $key;
-            if (strlen($arInsert[1]) > 0) $arInsert[1] .= ", ";
+            if ($arInsert[1] <> '') {
+                $arInsert[1] .= ", ";
+            }
             $arInsert[1] .= $value;
         }
 
@@ -157,7 +217,7 @@ class CSaleUserTransact extends CAllSaleUserTransact
             "VALUES(" . $arInsert[1] . ")";
         $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 
-        $ID = IntVal($DB->LastID());
+        $ID = intval($DB->LastID());
 
         return $ID;
     }
@@ -166,25 +226,29 @@ class CSaleUserTransact extends CAllSaleUserTransact
     {
         global $DB;
 
-        $ID = IntVal($ID);
-        if ($ID <= 0)
-            return False;
+        $ID = intval($ID);
+        if ($ID <= 0) {
+            return false;
+        }
 
         $arFields1 = array();
         foreach ($arFields as $key => $value) {
-            if (substr($key, 0, 1) == "=") {
-                $arFields1[substr($key, 1)] = $value;
+            if (mb_substr($key, 0, 1) == "=") {
+                $arFields1[mb_substr($key, 1)] = $value;
                 unset($arFields[$key]);
             }
         }
 
-        if (!CSaleUserTransact::CheckFields("UPDATE", $arFields, $ID))
+        if (!CSaleUserTransact::CheckFields("UPDATE", $arFields, $ID)) {
             return false;
+        }
 
         $strUpdate = $DB->PrepareUpdate("b_sale_user_transact", $arFields);
 
         foreach ($arFields1 as $key => $value) {
-            if (strlen($strUpdate) > 0) $strUpdate .= ", ";
+            if ($strUpdate <> '') {
+                $strUpdate .= ", ";
+            }
             $strUpdate .= $key . "=" . $value . " ";
         }
 

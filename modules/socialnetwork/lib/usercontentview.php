@@ -88,13 +88,15 @@ class UserContentViewTable extends Entity\DataManager
 
         if (ModuleManager::isModuleInstalled('bitrix24')) {
             if (!isset($controllerUser[$userId])) {
-                $res = UserTable::getList(array(
-                    'filter' => array(
-                        '=ID' => $userId,
-                        '=EXTERNAL_AUTH_ID' => '__controller'
-                    ),
-                    'select' => array('ID')
-                ));
+                $res = UserTable::getList(
+                    array(
+                        'filter' => array(
+                            '=ID' => $userId,
+                            '=EXTERNAL_AUTH_ID' => '__controller'
+                        ),
+                        'select' => array('ID')
+                    )
+                );
                 if ($res->fetch()) {
                     $controllerUser[$userId] = true;
                 } else {
@@ -111,13 +113,15 @@ class UserContentViewTable extends Entity\DataManager
         }
 
         if ($save) {
-            $listRes = self::getList([
-                'filter' => [
-                    "USER_ID" => $userId,
-                    "RATING_TYPE_ID" => $typeId,
-                    "RATING_ENTITY_ID" => $entityId,
+            $listRes = self::getList(
+                [
+                    'filter' => [
+                        "=USER_ID" => $userId,
+                        "=RATING_TYPE_ID" => $typeId,
+                        "=RATING_ENTITY_ID" => $entityId,
+                    ]
                 ]
-            ]);
+            );
             if (!$listRes->fetch()) {
                 $connection = \Bitrix\Main\Application::getConnection();
                 $helper = $connection->getSqlHelper();

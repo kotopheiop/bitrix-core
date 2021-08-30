@@ -1,32 +1,40 @@
-<?
+<?php
+
 IncludeModuleLangFile(__FILE__);
+
 $GLOBALS["BLOG_TRACKBACK"] = Array();
 
 class CAllBlogTrackback
 {
     /*************** ADD, UPDATE, DELETE *****************/
-    function CheckFields($ACTION, &$arFields, $ID = 0)
+    public static function CheckFields($ACTION, &$arFields, $ID = 0)
     {
         global $DB;
 
-        if ((is_set($arFields, "BLOG_ID") || $ACTION == "ADD") && IntVal($arFields["BLOG_ID"]) <= 0) {
+        if ((is_set($arFields, "BLOG_ID") || $ACTION == "ADD") && intval($arFields["BLOG_ID"]) <= 0) {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("BLG_GT_EMPTY_BLOG_ID"), "EMPTY_BLOG_ID");
             return false;
         } elseif (is_set($arFields, "BLOG_ID")) {
             $arResult = CBlog::GetByID($arFields["BLOG_ID"]);
             if (!$arResult) {
-                $GLOBALS["APPLICATION"]->ThrowException(str_replace("#ID#", $arFields["BLOG_ID"], GetMessage("BLG_GT_ERROR_NO_BLOG")), "ERROR_NO_BLOG");
+                $GLOBALS["APPLICATION"]->ThrowException(
+                    str_replace("#ID#", $arFields["BLOG_ID"], GetMessage("BLG_GT_ERROR_NO_BLOG")),
+                    "ERROR_NO_BLOG"
+                );
                 return false;
             }
         }
 
-        if ((is_set($arFields, "POST_ID") || $ACTION == "ADD") && IntVal($arFields["POST_ID"]) <= 0) {
+        if ((is_set($arFields, "POST_ID") || $ACTION == "ADD") && intval($arFields["POST_ID"]) <= 0) {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("BLG_GT_EMPTY_POST_ID"), "EMPTY_POST_ID");
             return false;
         } elseif (is_set($arFields, "POST_ID")) {
             $arResult = CBlogPost::GetByID($arFields["POST_ID"]);
             if (!$arResult) {
-                $GLOBALS["APPLICATION"]->ThrowException(str_replace("#ID#", $arFields["POST_ID"], GetMessage("BLG_GT_ERROR_NO_POST")), "ERROR_NO_POST");
+                $GLOBALS["APPLICATION"]->ThrowException(
+                    str_replace("#ID#", $arFields["POST_ID"], GetMessage("BLG_GT_ERROR_NO_POST")),
+                    "ERROR_NO_POST"
+                );
                 return false;
             }
         }
@@ -36,28 +44,29 @@ class CAllBlogTrackback
             return false;
         }
 
-        if ((is_set($arFields, "TITLE") || $ACTION == "ADD") && strlen($arFields["TITLE"]) <= 0) {
+        if ((is_set($arFields, "TITLE") || $ACTION == "ADD") && $arFields["TITLE"] == '') {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("BLG_GT_EMPTY_TITLE"), "EMPTY_TITLE");
             return false;
         }
 
-        if ((is_set($arFields, "URL") || $ACTION == "ADD") && strlen($arFields["URL"]) <= 0) {
+        if ((is_set($arFields, "URL") || $ACTION == "ADD") && $arFields["URL"] == '') {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("BLG_GT_EMPTY_URL"), "EMPTY_URL");
             return false;
         }
 
-        return True;
+        return true;
     }
 
     public static function Delete($ID)
     {
         global $DB;
 
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
         $arTrackback = CBlogTrackback::GetByID($ID);
-        if ($arTrackback)
+        if ($arTrackback) {
             CBlogPost::Update($arTrackback["POST_ID"], array("=NUM_TRACKBACKS" => "NUM_TRACKBACKS - 1"));
+        }
 
         unset($GLOBALS["BLOG_TRACKBACK"]["BLOG_TRACKBACK_CACHE_" . $ID]);
 
@@ -65,13 +74,15 @@ class CAllBlogTrackback
     }
 
     //*************** SELECT *********************/
-    function GetByID($ID)
+    public static function GetByID($ID)
     {
         global $DB;
 
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
-        if (isset($GLOBALS["BLOG_TRACKBACK"]["BLOG_TRACKBACK_CACHE_" . $ID]) && is_array($GLOBALS["BLOG_TRACKBACK"]["BLOG_TRACKBACK_CACHE_" . $ID]) && is_set($GLOBALS["BLOG_TRACKBACK"]["BLOG_TRACKBACK_CACHE_" . $ID], "ID")) {
+        if (isset($GLOBALS["BLOG_TRACKBACK"]["BLOG_TRACKBACK_CACHE_" . $ID]) && is_array(
+                $GLOBALS["BLOG_TRACKBACK"]["BLOG_TRACKBACK_CACHE_" . $ID]
+            ) && is_set($GLOBALS["BLOG_TRACKBACK"]["BLOG_TRACKBACK_CACHE_" . $ID], "ID")) {
             return $GLOBALS["BLOG_TRACKBACK"]["BLOG_TRACKBACK_CACHE_" . $ID];
         } else {
             $strSql =
@@ -79,24 +90,24 @@ class CAllBlogTrackback
                 "	" . $DB->DateToCharFunction("T.POST_DATE", "FULL") . " as POST_DATE " .
                 "FROM b_blog_trackback T " .
                 "WHERE T.ID = " . $ID . "";
-            $dbResult = $DB->Query($strSql, False, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+            $dbResult = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             if ($arResult = $dbResult->Fetch()) {
                 $GLOBALS["BLOG_TRACKBACK"]["BLOG_TRACKBACK_CACHE_" . $ID] = $arResult;
                 return $arResult;
             }
         }
 
-        return False;
+        return false;
     }
 
-
     //*************** SEND / RECEIVE PINGS *********************/
-    function SendPing($postID, $arPingUrls = array())
+    public static function SendPing($postID, $arPingUrls = array())
     {
-        $postID = IntVal($postID);
+        $postID = intval($postID);
 
-        if (count($arPingUrls) <= 0)
-            return False;
+        if (count($arPingUrls) <= 0) {
+            return false;
+        }
 
         $arPost = CBlogPost::GetByID($postID);
         if ($arPost) {
@@ -104,33 +115,37 @@ class CAllBlogTrackback
             $arGroup = CBlogGroup::GetByID($arBlog["GROUP_ID"]);
 
             $title = urlencode($arPost["TITLE"]);
-            $excerpt = urlencode(substr($arPost["DETAIL_TEXT"], 0, 255));
+            $excerpt = urlencode(mb_substr($arPost["DETAIL_TEXT"], 0, 255));
             $blogName = urlencode($arBlog["NAME"]);
 
             $serverName = "";
             $charset = "";
-            $dbSite = CSite::GetList(($b = "sort"), ($o = "asc"), array("LID" => $arGroup["SITE_ID"]));
+            $dbSite = CSite::GetList("sort", "asc", array("LID" => $arGroup["SITE_ID"]));
             if ($arSite = $dbSite->Fetch()) {
                 $serverName = $arSite["SERVER_NAME"];
                 $charset = $arSite["CHARSET"];
             }
 
-            if (strlen($serverName) <= 0) {
-                if (defined("SITE_SERVER_NAME") && strlen(SITE_SERVER_NAME) > 0)
+            if ($serverName == '') {
+                if (defined("SITE_SERVER_NAME") && SITE_SERVER_NAME <> '') {
                     $serverName = SITE_SERVER_NAME;
-                else
+                } else {
                     $serverName = COption::GetOptionString("main", "server_name", "");
+                }
             }
             $serverName = \Bitrix\Main\Text\HtmlFilter::encode($serverName);
 
-            if (strlen($charset) <= 0) {
-                if (defined("SITE_CHARSET") && strlen(SITE_CHARSET) > 0)
+            if ($charset == '') {
+                if (defined("SITE_CHARSET") && SITE_CHARSET <> '') {
                     $charset = SITE_CHARSET;
-                else
+                } else {
                     $charset = "windows-1251";
+                }
             }
 
-            $url = urlencode("http://" . $serverName . CBlogPost::PreparePath($arBlog["URL"], $postID, $arGroup["SITE_ID"]));
+            $url = urlencode(
+                "http://" . $serverName . CBlogPost::PreparePath($arBlog["URL"], $postID, $arGroup["SITE_ID"])
+            );
 
 
             foreach ($arPingUrls as $pingUrl) {
@@ -154,7 +169,7 @@ class CAllBlogTrackback
                         fputs($fp, "Host: {$host}\r\n");
                         fputs($fp, "Content-type: application/x-www-form-urlencoded; charset=\"" . $charset . "\"\r\n");
                         fputs($fp, "User-Agent: bitrixBlog\r\n");
-                        fputs($fp, "Content-length: " . strlen($query) . "\r\n");
+                        fputs($fp, "Content-length: " . mb_strlen($query) . "\r\n");
                         fputs($fp, "Connection: close\r\n\r\n");
                         fputs($fp, $query . "\r\n\r\n");
                         fclose($fp);
@@ -164,25 +179,29 @@ class CAllBlogTrackback
         }
     }
 
-    function GetPing($blogUrl, $postID, $arParams = array())
+    public static function GetPing($blogUrl, $postID, $arParams = array())
     {
         global $DB;
 
         $blogUrl = Trim($blogUrl);
-        $postID = IntVal($postID);
+        $postID = intval($postID);
 
-        $bSuccess = True;
+        $bSuccess = true;
 
         $arPost = CBlogPost::GetByID($postID);
         if (!$arPost) {
             CBlogTrackback::SendPingResponce(1, "Invalid target post");
-            $bSuccess = False;
+            $bSuccess = false;
         }
 
         if ($bSuccess) {
-            if ($arPost["ENABLE_TRACKBACK"] != "Y" || COption::GetOptionString("blog", "enable_trackback", "Y") != "Y") {
+            if ($arPost["ENABLE_TRACKBACK"] != "Y" || COption::GetOptionString(
+                    "blog",
+                    "enable_trackback",
+                    "Y"
+                ) != "Y") {
                 CBlogTrackback::SendPingResponce(1, "Trackbacks disabled");
-                $bSuccess = False;
+                $bSuccess = false;
             }
         }
 
@@ -190,50 +209,68 @@ class CAllBlogTrackback
             $arBlog = CBlog::GetByID($arPost["BLOG_ID"]);
             if (!$arBlog || $arBlog["URL"] != $blogUrl) {
                 CBlogTrackback::SendPingResponce(1, "Invalid target blog");
-                $bSuccess = False;
+                $bSuccess = false;
             }
         }
 
         if ($bSuccess) {
-            if (!isset($arParams["title"]) || strlen($arParams["title"]) <= 0
-                || !isset($arParams["url"]) || strlen($arParams["url"]) <= 0) {
+            if (!isset($arParams["title"]) || $arParams["title"] == ''
+                || !isset($arParams["url"]) || $arParams["url"] == '') {
                 CBlogTrackback::SendPingResponce(1, "Missing required fields");
-                $bSuccess = False;
+                $bSuccess = false;
             }
         }
 
         if ($bSuccess) {
-            if (!isset($arParams["excerpt"]))
+            if (!isset($arParams["excerpt"])) {
                 $arParams["excerpt"] = $arParams["title"];
+            }
 
-            if (!isset($arParams["blog_name"]))
+            if (!isset($arParams["blog_name"])) {
                 $arParams["blog_name"] = "";
+            }
         }
 
         if ($bSuccess) {
             $serverCharset = "";
             $arGroup = CBlogGroup::GetByID($arBlog["GROUP_ID"]);
 
-            $dbSite = CSite::GetList(($b = "sort"), ($o = "asc"), array("LID" => $arGroup["SITE_ID"]));
-            if ($arSite = $dbSite->Fetch())
+            $dbSite = CSite::GetList("sort", "asc", array("LID" => $arGroup["SITE_ID"]));
+            if ($arSite = $dbSite->Fetch()) {
                 $serverCharset = $arSite["CHARSET"];
+            }
 
-            if (strlen($serverCharset) <= 0) {
-                if (defined("SITE_CHARSET") && strlen(SITE_CHARSET) > 0)
+            if ($serverCharset == '') {
+                if (defined("SITE_CHARSET") && SITE_CHARSET <> '') {
                     $serverCharset = SITE_CHARSET;
-                else
+                } else {
                     $serverCharset = "windows-1251";
+                }
             }
 
             preg_match("/charset=(\")*(.*?)(\")*(;|$)/", $_SERVER["CONTENT_TYPE"], $charset);
             $charset = preg_replace("#[^[:space:]a-zA-Z0-9\-]#is", "", $charset[2]);
-            if (strlen($charset) <= 0) $charset = "utf-8";
+            if ($charset == '') {
+                $charset = "utf-8";
+            }
 
             if ($charset != $serverCharset) {
-                $arParams["title"] = $GLOBALS["APPLICATION"]->ConvertCharset($arParams["title"], $charset, $serverCharset);
+                $arParams["title"] = $GLOBALS["APPLICATION"]->ConvertCharset(
+                    $arParams["title"],
+                    $charset,
+                    $serverCharset
+                );
                 $arParams["url"] = $GLOBALS["APPLICATION"]->ConvertCharset($arParams["url"], $charset, $serverCharset);
-                $arParams["excerpt"] = $GLOBALS["APPLICATION"]->ConvertCharset($arParams["excerpt"], $charset, $serverCharset);
-                $arParams["blog_name"] = $GLOBALS["APPLICATION"]->ConvertCharset($arParams["blog_name"], $charset, $serverCharset);
+                $arParams["excerpt"] = $GLOBALS["APPLICATION"]->ConvertCharset(
+                    $arParams["excerpt"],
+                    $charset,
+                    $serverCharset
+                );
+                $arParams["blog_name"] = $GLOBALS["APPLICATION"]->ConvertCharset(
+                    $arParams["blog_name"],
+                    $charset,
+                    $serverCharset
+                );
             }
 
             $arFields = array(
@@ -245,21 +282,30 @@ class CAllBlogTrackback
                 "BLOG_ID" => $arPost["BLOG_ID"],
                 "POST_ID" => $arPost["ID"]
             );
-            $dbTrackback = CBlogTrackback::GetList(array(), array("BLOG_ID" => $arPost["BLOG_ID"], "POST_ID" => $arPost["ID"], "URL" => $arParams["url"]));
+            $dbTrackback = CBlogTrackback::GetList(
+                array(),
+                array(
+                    "BLOG_ID" => $arPost["BLOG_ID"],
+                    "POST_ID" => $arPost["ID"],
+                    "URL" => $arParams["url"]
+                )
+            );
             if ($arTrackback = $dbTrackback->Fetch()) {
                 if (!CBlogTrackback::Update($arTrackback["ID"], $arFields)) {
-                    if ($ex = $GLOBALS["APPLICATION"]->GetException())
+                    if ($ex = $GLOBALS["APPLICATION"]->GetException()) {
                         $errorMessage = $ex->GetString() . ".<br>";
-                    else
+                    } else {
                         $errorMessage = "Unknown error" . ".<br>";
+                    }
                     CBlogTrackback::SendPingResponce(1, $errorMessage);
                 }
             } else {
                 if (!CBlogTrackback::Add($arFields)) {
-                    if ($ex = $GLOBALS["APPLICATION"]->GetException())
+                    if ($ex = $GLOBALS["APPLICATION"]->GetException()) {
                         $errorMessage = $ex->GetString() . ".<br>";
-                    else
+                    } else {
                         $errorMessage = "Unknown error" . ".<br>";
+                    }
                     CBlogTrackback::SendPingResponce(1, $errorMessage);
                 }
             }
@@ -270,7 +316,7 @@ class CAllBlogTrackback
         return $bSuccess;
     }
 
-    function SendPingResponce($error = 0, $text = "")
+    public static function SendPingResponce($error = 0, $text = "")
     {
         header("Content-type: text/xml; charset=" . LANG_CHARSET);
         echo "<" . "?xml version=\"1.0\" encoding=\"" . SITE_CHARSET . "\"?" . ">\n";
@@ -280,5 +326,3 @@ class CAllBlogTrackback
         echo "</response>";
     }
 }
-
-?>

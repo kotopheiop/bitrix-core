@@ -1,8 +1,8 @@
-<?
+<?php
 
 class CCountry
 {
-    public static function GetList(&$by, &$order, $arFilter = Array(), &$is_filtered)
+    public static function GetList($by = 's_name', $order = 'asc', $arFilter = [])
     {
         $err_mess = "File: " . __FILE__ . "<br>Line: ";
         $DB = CDatabase::GetModuleConnection('statistic');
@@ -10,11 +10,13 @@ class CCountry
         if (is_array($arFilter)) {
             foreach ($arFilter as $key => $val) {
                 if (is_array($val)) {
-                    if (count($val) <= 0)
+                    if (count($val) <= 0) {
                         continue;
+                    }
                 } else {
-                    if ((strlen($val) <= 0) || ($val === "NOT_REF"))
+                    if (((string)$val == '') || ($val === "NOT_REF")) {
                         continue;
+                    }
                 }
                 $match_value_set = array_key_exists($key . "_EXACT_MATCH", $arFilter);
                 $key = strtoupper($key);
@@ -58,24 +60,30 @@ class CCountry
             }
         }
 
-        if ($by == "s_id") $strSqlOrder = "ORDER BY C.ID";
-        elseif ($by == "s_short_name") $strSqlOrder = "ORDER BY C.SHORT_NAME";
-        elseif ($by == "s_name") $strSqlOrder = "ORDER BY C.NAME";
-        elseif ($by == "s_sessions") $strSqlOrder = "ORDER BY C.SESSIONS";
-        elseif ($by == "s_dropdown") $strSqlOrder = "ORDER BY C.NEW_GUESTS desc, C.NAME";
-        elseif ($by == "s_new_guests") $strSqlOrder = "ORDER BY C.NEW_GUESTS";
-        elseif ($by == "s_hits") $strSqlOrder = "ORDER BY C.HITS ";
-        elseif ($by == "s_events") $strSqlOrder = "ORDER BY C.C_EVENTS ";
-        else {
-            $by = "s_name";
+        if ($by == "s_id") {
+            $strSqlOrder = "ORDER BY C.ID";
+        } elseif ($by == "s_short_name") {
+            $strSqlOrder = "ORDER BY C.SHORT_NAME";
+        } elseif ($by == "s_name") {
+            $strSqlOrder = "ORDER BY C.NAME";
+        } elseif ($by == "s_sessions") {
+            $strSqlOrder = "ORDER BY C.SESSIONS";
+        } elseif ($by == "s_dropdown") {
+            $strSqlOrder = "ORDER BY C.NEW_GUESTS desc, C.NAME";
+        } elseif ($by == "s_new_guests") {
+            $strSqlOrder = "ORDER BY C.NEW_GUESTS";
+        } elseif ($by == "s_hits") {
+            $strSqlOrder = "ORDER BY C.HITS ";
+        } elseif ($by == "s_events") {
+            $strSqlOrder = "ORDER BY C.C_EVENTS ";
+        } else {
             $strSqlOrder = "ORDER BY C.NAME";
         }
+
         if ($order == "desc") {
             $strSqlOrder .= " desc ";
-            $order = "desc";
         } else {
             $strSqlOrder .= " asc ";
-            $order = "asc";
         }
 
         $strSqlSearch = GetFilterSqlSearch($arSqlSearch);
@@ -92,7 +100,7 @@ class CCountry
 			";
 
         $res = $DB->Query($strSql, false, $err_mess . __LINE__);
-        $is_filtered = (IsFiltered($strSqlSearch));
+
         return $res;
     }
 
@@ -106,26 +114,31 @@ class CCountry
         if (is_array($arFilter)) {
             foreach ($arFilter as $key => $val) {
                 if (is_array($val)) {
-                    if (count($val) <= 0)
+                    if (count($val) <= 0) {
                         continue;
+                    }
                 } else {
-                    if ((strlen($val) <= 0) || ($val === "NOT_REF"))
+                    if (((string)$val == '') || ($val === "NOT_REF")) {
                         continue;
+                    }
                 }
                 $match_value_set = array_key_exists($key . "_EXACT_MATCH", $arFilter);
                 $key = strtoupper($key);
                 switch ($key) {
                     case "COUNTRY_ID":
-                        if ($val != "NOT_REF")
+                        if ($val != "NOT_REF") {
                             $arSqlSearch[] = GetFilterQuery("D.COUNTRY_ID", $val, "N");
+                        }
                         break;
                     case "DATE1":
-                        if (CheckDateTime($val))
+                        if (CheckDateTime($val)) {
                             $arSqlSearch[] = "D.DATE_STAT>=" . $DB->CharToDateFunction($val, "SHORT");
+                        }
                         break;
                     case "DATE2":
-                        if (CheckDateTime($val))
+                        if (CheckDateTime($val)) {
                             $arSqlSearch[] = "D.DATE_STAT<=" . $DB->CharToDateFunction($val . " 23:59:59", "FULL");
+                        }
                         break;
                 }
             }
@@ -182,7 +195,7 @@ class CCountry
         $color_getnext = "";
         $total = sizeof($arLegend);
         foreach ($arLegend as $key => $arr) {
-            if (strlen($arCountryColor[$key]) > 0) {
+            if ($arCountryColor[$key] <> '') {
                 $color = $arCountryColor[$key];
             } else {
                 $color = GetNextRGB($color_getnext, $total);
@@ -197,5 +210,3 @@ class CCountry
         return $arrDays;
     }
 }
-
-?>

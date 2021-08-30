@@ -15,8 +15,9 @@ class Token
 
     public static function isActive($botId, $dialogId)
     {
-        if ($botId == $dialogId)
+        if ($botId == $dialogId) {
             return true;
+        }
 
         $date = new \Bitrix\Main\Type\DateTime();
 
@@ -31,8 +32,9 @@ class Token
 
     public static function get($botId, $dialogId, $prolong = false)
     {
-        if ($botId == $dialogId)
+        if ($botId == $dialogId) {
             return false;
+        }
 
         $result = self::getFromCache($botId);
 
@@ -41,11 +43,13 @@ class Token
             $cache = \Bitrix\Main\Data\Cache::createInstance();
             $cache->clean('token_' . $botId, self::CACHE_TOKEN_PATH);
 
-            $orm = \Bitrix\Im\Model\BotTokenTable::add(Array(
-                'DATE_EXPIRE' => $date->add('10 MINUTES'),
-                'BOT_ID' => $botId,
-                'DIALOG_ID' => $dialogId
-            ));
+            $orm = \Bitrix\Im\Model\BotTokenTable::add(
+                Array(
+                    'DATE_EXPIRE' => $date->add('10 MINUTES'),
+                    'BOT_ID' => $botId,
+                    'DIALOG_ID' => $dialogId
+                )
+            );
             if ($orm->getId() <= 0) {
                 return false;
             }
@@ -57,19 +61,24 @@ class Token
                 'DIALOG_ID' => $addResult['DIALOG_ID'],
                 'DATE_EXPIRE' => $addResult['DATE_EXPIRE']->getTimestamp()
             );
-        } else if ($prolong) {
-            $date = new \Bitrix\Main\Type\DateTime();
-            $orm = \Bitrix\Im\Model\BotTokenTable::update($result[$dialogId]['ID'], Array(
-                'DATE_EXPIRE' => $date->add('10 MINUTES')
-            ));
-            if ($orm->isSuccess()) {
-                $addResult = $orm->getData();
-                $result[$dialogId]['DATE_EXPIRE'] = $addResult['DATE_EXPIRE']->getTimestamp();
+        } else {
+            if ($prolong) {
+                $date = new \Bitrix\Main\Type\DateTime();
+                $orm = \Bitrix\Im\Model\BotTokenTable::update(
+                    $result[$dialogId]['ID'],
+                    Array(
+                        'DATE_EXPIRE' => $date->add('10 MINUTES')
+                    )
+                );
+                if ($orm->isSuccess()) {
+                    $addResult = $orm->getData();
+                    $result[$dialogId]['DATE_EXPIRE'] = $addResult['DATE_EXPIRE']->getTimestamp();
 
-                $cache = \Bitrix\Main\Data\Cache::createInstance();
-                $cache->initCache(self::CACHE_TOKEN_TTL, 'token_' . $botId, self::CACHE_TOKEN_PATH);
-                $cache->startDataCache();
-                $cache->endDataCache($result);
+                    $cache = \Bitrix\Main\Data\Cache::createInstance();
+                    $cache->initCache(self::CACHE_TOKEN_TTL, 'token_' . $botId, self::CACHE_TOKEN_PATH);
+                    $cache->startDataCache();
+                    $cache->endDataCache($result);
+                }
             }
         }
 
@@ -83,12 +92,14 @@ class Token
             $result = $cache->getVars();
         } else {
             $result = Array();
-            $orm = \Bitrix\Im\Model\BotTokenTable::getList(Array(
-                'filter' => array(
-                    '>DATE_EXPIRE' => new \Bitrix\Main\Type\DateTime(),
-                    '=BOT_ID' => $botId
-                ),
-            ));
+            $orm = \Bitrix\Im\Model\BotTokenTable::getList(
+                Array(
+                    'filter' => array(
+                        '>DATE_EXPIRE' => new \Bitrix\Main\Type\DateTime(),
+                        '=BOT_ID' => $botId
+                    ),
+                )
+            );
             while ($token = $orm->fetch()) {
                 $result[$token['DIALOG_ID']] = Array(
                     'ID' => $token['ID'],

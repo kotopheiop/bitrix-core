@@ -34,20 +34,25 @@ class Log
 
         $logUserId = $USER->GetID();
 
-        $logName = md5(session_id());
+        $sessionId = \Bitrix\Main\Application::getInstance()->getKernelSession()->getId();
+        $logName = md5($sessionId);
         $scriptName = \Bitrix\Main\Context::getCurrent()->getServer()->getScriptName();
         $userIp = \Bitrix\Main\Context::getCurrent()->getRequest()->getRemoteAddress();
         if ($device === 'UNKNOWN') {
-            $device = strpos($scriptName, 'desktop_app') ? 'DESKTOP' : 'BROWSER';
+            $device = mb_strpos($scriptName, 'desktop_app') ? 'DESKTOP' : 'BROWSER';
         }
 
         $log = "\n------------------------\n";
         $log .= date("Y.m.d G:i:s") . "\n";
-        $log .= $action . ' [' . $device . ' - ' . $userIp . ' :: ' . session_id() . "]\n";
+        $log .= $action . ' [' . $device . ' - ' . $userIp . ' :: ' . $sessionId . "]\n";
         $log .= print_r($params, 1);
         $log .= "\n------------------------\n";
 
-        \Bitrix\Main\IO\File::putFileContents($_SERVER["DOCUMENT_ROOT"] . "/../logs/im/$logUserId/$logName.log", $log, \Bitrix\Main\IO\File::APPEND);
+        \Bitrix\Main\IO\File::putFileContents(
+            $_SERVER["DOCUMENT_ROOT"] . "/../logs/im/$logUserId/$logName.log",
+            $log,
+            \Bitrix\Main\IO\File::APPEND
+        );
     }
 }
 

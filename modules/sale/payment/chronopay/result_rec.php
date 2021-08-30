@@ -1,24 +1,29 @@
-<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die(); ?><?
+<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+} ?><?
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     include(GetLangFileName(dirname(__FILE__) . "/", "/result_rec.php"));
 
-    $cs1 = IntVal($_POST["order_id"]);
-    if ($cs1 <= 0)
-        $cs1 = IntVal($_POST["cs1"]);
-    $bCorrectPayment = True;
+    $cs1 = intval($_POST["order_id"]);
+    if ($cs1 <= 0) {
+        $cs1 = intval($_POST["cs1"]);
+    }
+    $bCorrectPayment = true;
     $techMessage = "";
     if (!($arOrder = CSaleOrder::GetByID($cs1))) {
-        $bCorrectPayment = False;
+        $bCorrectPayment = false;
         $techMessage = GetMessage("SALE_CHR_REC_ORDER");
     }
 
-    if ($bCorrectPayment)
+    if ($bCorrectPayment) {
         CSalePaySystemAction::InitParamArrays($arOrder, $arOrder["ID"]);
+    }
 
     $sharedsecB = CSalePaySystemAction::GetParamValue("SHARED");
 
-    if (strlen($sharedsecB) <= 0)
-        $bCorrectPayment = False;
+    if ($sharedsecB == '') {
+        $bCorrectPayment = false;
+    }
 
     if ($bCorrectPayment) {
         $productIdB = CSalePaySystemAction::GetParamValue("PRODUCT_ID");
@@ -39,17 +44,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             if ($checkB == $sign) {
                 if ($transaction_type == "onetime" || $transaction_type == "Purchase") {
                     if ($product_priceB == $total) {
-
-                        if ($arOrder["PAYED"] != "Y")
+                        if ($arOrder["PAYED"] != "Y") {
                             CSaleOrder::PayOrder($arOrder["ID"], "Y");
-                    } else
+                        }
+                    } else {
                         $techMessage = GetMessage("SALE_CHR_REC_SUMM");
-                } else
+                    }
+                } else {
                     $techMessage = GetMessage("SALE_CHR_REC_TRANS");
-            } else
+                }
+            } else {
                 $techMessage = GetMessage("SALE_CHR_REC_SIGN");
-        } else
+            }
+        } else {
             $techMessage = GetMessage("SALE_CHR_REC_PRODUCT");
+        }
 
         $strPS_STATUS_DESCRIPTION = "Customer id: " . $customer_id . ";<br />";
         $strPS_STATUS_DESCRIPTION .= "Transaction id: " . $transaction_id . ";<br />";

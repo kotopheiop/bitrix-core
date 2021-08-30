@@ -428,18 +428,21 @@ class FieldDescriptorProto extends \Protobuf\AbstractMessage
     public static function fromArray(array $values)
     {
         $message = new self();
-        $values = array_merge([
-            'name' => null,
-            'number' => null,
-            'label' => null,
-            'type' => null,
-            'type_name' => null,
-            'extendee' => null,
-            'default_value' => null,
-            'oneof_index' => null,
-            'json_name' => null,
-            'options' => null
-        ], $values);
+        $values = array_merge(
+            [
+                'name' => null,
+                'number' => null,
+                'label' => null,
+                'type' => null,
+                'type_name' => null,
+                'extendee' => null,
+                'default_value' => null,
+                'oneof_index' => null,
+                'json_name' => null,
+                'options' => null
+            ],
+            $values
+        );
 
         $message->setName($values['name']);
         $message->setNumber($values['number']);
@@ -460,74 +463,96 @@ class FieldDescriptorProto extends \Protobuf\AbstractMessage
      */
     public static function descriptor()
     {
-        return \google\protobuf\DescriptorProto::fromArray([
-            'name' => 'FieldDescriptorProto',
-            'field' => [
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 1,
-                    'name' => 'name',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_STRING(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 3,
-                    'name' => 'number',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_INT32(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 4,
-                    'name' => 'label',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_ENUM(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
-                    'type_name' => '.google.protobuf.FieldDescriptorProto.Label'
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 5,
-                    'name' => 'type',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_ENUM(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
-                    'type_name' => '.google.protobuf.FieldDescriptorProto.Type'
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 6,
-                    'name' => 'type_name',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_STRING(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 2,
-                    'name' => 'extendee',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_STRING(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 7,
-                    'name' => 'default_value',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_STRING(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 9,
-                    'name' => 'oneof_index',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_INT32(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 10,
-                    'name' => 'json_name',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_STRING(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 8,
-                    'name' => 'options',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_MESSAGE(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
-                    'type_name' => '.google.protobuf.FieldOptions'
-                ]),
-            ],
-        ]);
+        return \google\protobuf\DescriptorProto::fromArray(
+            [
+                'name' => 'FieldDescriptorProto',
+                'field' => [
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 1,
+                            'name' => 'name',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_STRING(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 3,
+                            'name' => 'number',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_INT32(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 4,
+                            'name' => 'label',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_ENUM(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
+                            'type_name' => '.google.protobuf.FieldDescriptorProto.Label'
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 5,
+                            'name' => 'type',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_ENUM(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
+                            'type_name' => '.google.protobuf.FieldDescriptorProto.Type'
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 6,
+                            'name' => 'type_name',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_STRING(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 2,
+                            'name' => 'extendee',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_STRING(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 7,
+                            'name' => 'default_value',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_STRING(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 9,
+                            'name' => 'oneof_index',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_INT32(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 10,
+                            'name' => 'json_name',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_STRING(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 8,
+                            'name' => 'options',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_MESSAGE(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
+                            'type_name' => '.google.protobuf.FieldOptions'
+                        ]
+                    ),
+                ],
+            ]
+        );
     }
 
     /**
@@ -626,7 +651,6 @@ class FieldDescriptorProto extends \Protobuf\AbstractMessage
             : null;
 
         while ($limit === null || $stream->tell() < $limit) {
-
             if ($stream->eof()) {
                 break;
             }
@@ -743,7 +767,6 @@ class FieldDescriptorProto extends \Protobuf\AbstractMessage
             $unknown = new \Protobuf\Unknown($tag, $wire, $data);
 
             $this->unknownFieldSet->add($unknown);
-
         }
     }
 
@@ -838,7 +861,9 @@ class FieldDescriptorProto extends \Protobuf\AbstractMessage
     public function merge(\Protobuf\Message $message)
     {
         if (!$message instanceof \google\protobuf\FieldDescriptorProto) {
-            throw new \InvalidArgumentException(sprintf('Argument 1 passed to %s must be a %s, %s given', __METHOD__, __CLASS__, get_class($message)));
+            throw new \InvalidArgumentException(
+                sprintf('Argument 1 passed to %s must be a %s, %s given', __METHOD__, __CLASS__, get_class($message))
+            );
         }
 
         $this->name = ($message->name !== null) ? $message->name : $this->name;

@@ -124,10 +124,16 @@ class YandexHandler
                 if ($status == 0) {
                     $result->setOperationType(PaySystem\ServiceResult::MONEY_LEAVING);
                 } else {
-                    $error .= Loc::getMessage('SALE_HPS_YANDEX_REFUND_ERROR') . ' ' . Loc::getMessage('SALE_HPS_YANDEX_REFUND_ERROR_INFO', array('#STATUS#' => $status, '#ERROR#' => $element->getAttribute('error')));
+                    $error .= Loc::getMessage('SALE_HPS_YANDEX_REFUND_ERROR') . ' ' . Loc::getMessage(
+                            'SALE_HPS_YANDEX_REFUND_ERROR_INFO',
+                            array('#STATUS#' => $status, '#ERROR#' => $element->getAttribute('error'))
+                        );
                 }
             } else {
-                $error .= Loc::getMessage('SALE_HPS_YANDEX_REFUND_CONNECTION_ERROR', array('#URL#' => $url, '#ERROR#' => $curlError, '#CODE#' => $httpCode));
+                $error .= Loc::getMessage(
+                    'SALE_HPS_YANDEX_REFUND_CONNECTION_ERROR',
+                    array('#URL#' => $url, '#ERROR#' => $curlError, '#CODE#' => $httpCode)
+                );
             }
         } else {
             $error .= implode("\n", $signResult->getErrorMessages());
@@ -154,7 +160,9 @@ class YandexHandler
     private function isCorrectHash(Payment $payment, Request $request)
     {
         $hash = md5(
-            implode(";", array(
+            implode(
+                ";",
+                array(
                     $request->get('action'),
                     $request->get('orderSumAmount'),
                     $request->get('orderSumCurrencyPaycash'),
@@ -210,17 +218,18 @@ class YandexHandler
             $data['CODE'] = 200;
         }
 
-        $dateISO = date("Y-m-d\TH:i:s") . substr(date("O"), 0, 3) . ":" . substr(date("O"), -2, 2);
+        $dateISO = date("Y-m-d\TH:i:s") . mb_substr(date("O"), 0, 3) . ":" . mb_substr(date("O"), -2, 2);
         header("Content-Type: text/xml");
         header("Pragma: no-cache");
         $text = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
 
-        if (strlen($data['HEAD']) > 0) {
+        if ($data['HEAD'] <> '') {
             $text .= "<" . $data['HEAD'] . " performedDatetime=\"" . $dateISO . "\"";
             $text .= " code=\"" . $data['CODE'] . "\" shopId=\"" . $data['SHOP_ID'] . "\" invoiceId=\"" . $data['INVOICE_ID'] . "\"";
 
-            if (strlen($data['TECH_MESSAGE']) > 0)
+            if ($data['TECH_MESSAGE'] <> '') {
                 $text .= " techMessage=\"" . $data['TECH_MESSAGE'] . "\"";
+            }
 
             $text .= "/>";
         }
@@ -294,11 +303,11 @@ class YandexHandler
         }
 
         $fields = array(
-            "PS_STATUS_CODE" => substr($data['HEAD'], 0, 5),
+            "PS_STATUS_CODE" => mb_substr($data['HEAD'], 0, 5),
             "PS_STATUS_DESCRIPTION" => $description,
             "PS_STATUS_MESSAGE" => $modeList[$request->get('paymentType')],
             "PS_SUM" => $request->get('orderSumAmount'),
-            "PS_CURRENCY" => substr($request->get('orderSumCurrencyPaycash'), 0, 3),
+            "PS_CURRENCY" => mb_substr($request->get('orderSumCurrencyPaycash'), 0, 3),
             "PS_RESPONSE_DATE" => new DateTime(),
             "PS_INVOICE_ID" => $request->get('invoiceId')
         );
@@ -362,10 +371,7 @@ class YandexHandler
     protected function getUrlList()
     {
         return array(
-            'pay' => array(
-                self::TEST_URL => 'https://demomoney.yandex.ru/eshop.xml',
-                self::ACTIVE_URL => 'https://money.yandex.ru/eshop.xml'
-            ),
+            'pay' => 'https://yoomoney.ru/eshop.xml',
             'confirm' => array(
                 self::ACTIVE_URL => 'https://penelope.yamoney.ru/webservice/mws/api/confirmPayment',
                 self::TEST_URL => 'https://penelope-demo.yamoney.ru:8083/webservice/mws/api/confirmPayment'
@@ -394,15 +400,21 @@ class YandexHandler
         if ($this->isCorrectHash($payment, $request)) {
             if ($action == 'checkOrder') {
                 return $this->processCheckAction($payment, $request);
-            } else if ($action == 'cancelOrder') {
-                return $this->processCancelAction($payment, $request);
-            } else if ($action == 'paymentAviso') {
-                return $this->processNoticeAction($payment, $request);
             } else {
-                $data = $this->extractDataFromRequest($request);
-                $data['TECH_MESSAGE'] = 'Unknown action: ' . $action;
-                $result->setData($data);
-                $result->addError(new Error('Unknown action: ' . $action . '. Request=' . join(', ', $request->toArray())));
+                if ($action == 'cancelOrder') {
+                    return $this->processCancelAction($payment, $request);
+                } else {
+                    if ($action == 'paymentAviso') {
+                        return $this->processNoticeAction($payment, $request);
+                    } else {
+                        $data = $this->extractDataFromRequest($request);
+                        $data['TECH_MESSAGE'] = 'Unknown action: ' . $action;
+                        $result->setData($data);
+                        $result->addError(
+                            new Error('Unknown action: ' . $action . '. Request=' . join(', ', $request->toArray()))
+                        );
+                    }
+                }
             }
         } else {
             $data = $this->extractDataFromRequest($request);
@@ -453,10 +465,11 @@ class YandexHandler
         if ($responseString !== false) {
             $element = $this->parseXmlResponse('confirmPaymentResponse', $responseString);
             $status = (int)$element->getAttribute('status');
-            if ($status == 0)
+            if ($status == 0) {
                 $result->setOperationType(PaySystem\ServiceResult::MONEY_COMING);
-            else
+            } else {
                 $result->addError(new Error('Error on try to confirm payment. Status: ' . $status));
+            }
         } else {
             $result->addError(new Error("Error sending request. URL=" . $url . " PARAMS=" . join(' ', $request)));
         }
@@ -489,10 +502,11 @@ class YandexHandler
         if ($responseString !== false) {
             $element = $this->parseXmlResponse('cancelPaymentResponse', $responseString);
             $status = (int)$element->getAttribute('status');
-            if ($status == 0)
+            if ($status == 0) {
                 $result->setOperationType(PaySystem\ServiceResult::MONEY_LEAVING);
-            else
+            } else {
                 $result->addError(new Error('Error on try to cancel payment. Status: ' . $status));
+            }
         } else {
             $result->addError(new Error('Error sending request. URL=' . $url . ' PARAMS=' . join(' ', $request)));
         }
@@ -539,7 +553,14 @@ class YandexHandler
         $PkeyPem = PaySystem\YandexCert::getValue('PKEY', $shopId);
 
         if ($PkeyPem && $CertPem) {
-            if (openssl_pkcs7_sign($dataFile, $signedFile, $CertPem, $PkeyPem, array(), PKCS7_NOCHAIN + PKCS7_NOCERTS)) {
+            if (openssl_pkcs7_sign(
+                $dataFile,
+                $signedFile,
+                $CertPem,
+                $PkeyPem,
+                array(),
+                PKCS7_NOCHAIN + PKCS7_NOCERTS
+            )) {
                 $signedData = explode("\n\n", file_get_contents($signedFile));
                 $pkcs7 = "-----BEGIN PKCS7-----\n" . $signedData[1] . "\n-----END PKCS7-----";
                 $result->setData(array('PKCS7' => $pkcs7));
@@ -560,8 +581,9 @@ class YandexHandler
     private static function createTmpFile($data = null)
     {
         $filePath = tempnam(sys_get_temp_dir(), 'YaMWS');
-        if ($data !== null)
+        if ($data !== null) {
             file_put_contents($filePath, $data);
+        }
 
         return $filePath;
     }
@@ -632,7 +654,11 @@ class YandexHandler
 
         foreach ($paySystemList as $data) {
             foreach ($personTypeList as $personType) {
-                $shopId = BusinessValue::get('YANDEX_SHOP_ID', PaySystem\Service::PAY_SYSTEM_PREFIX . $data['ID'], $personType['ID']);
+                $shopId = BusinessValue::get(
+                    'YANDEX_SHOP_ID',
+                    PaySystem\Service::PAY_SYSTEM_PREFIX . $data['ID'],
+                    $personType['ID']
+                );
                 if ($shopId && !isset($result[$shopId])) {
                     $cert = PaySystem\YandexCert::getCert($shopId);
                     $result[$shopId] = array(

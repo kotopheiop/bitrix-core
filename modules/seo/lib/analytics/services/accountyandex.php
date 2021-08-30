@@ -100,7 +100,10 @@ class AccountYandex extends \Bitrix\Seo\Analytics\Account implements IRequestDir
                     'DateTo' => $dateTo->format('Y-m-d'),
                 ],
                 'FieldNames' => [
-                    'Impressions', 'Clicks', 'Conversions', 'Cost',
+                    'Impressions',
+                    'Clicks',
+                    'Conversions',
+                    'Cost',
                     'AvgCpc',
                     //'AvgCpm'
                 ],
@@ -171,16 +174,18 @@ class AccountYandex extends \Bitrix\Seo\Analytics\Account implements IRequestDir
 
             $response = $this->getClient()->post(
                 $this->getYandexServerAdress() . 'campaigns',
-                Json::encode([
-                    'method' => 'get',
-                    'params' => [
-                        'SelectionCriteria' => new \stdClass(),
-                        'FieldNames' => ['Currency'],
-                        'Page' => [
-                            'Limit' => 1,
+                Json::encode(
+                    [
+                        'method' => 'get',
+                        'params' => [
+                            'SelectionCriteria' => new \stdClass(),
+                            'FieldNames' => ['Currency'],
+                            'Page' => [
+                                'Limit' => 1,
+                            ],
                         ],
-                    ],
-                ])
+                    ]
+                )
             );
             if ($response) {
                 $response = Json::decode($response);
@@ -242,7 +247,7 @@ class AccountYandex extends \Bitrix\Seo\Analytics\Account implements IRequestDir
         foreach ($strings as $number => $string) {
             if ($number === 0) {
                 $titles = explode("\t", $string);
-            } elseif (!empty($string) && strpos($string, 'Total') !== 0) {
+            } elseif (!empty($string) && mb_strpos($string, 'Total') !== 0) {
                 $row = array_combine($titles, explode("\t", $string));
 
                 $result = $row;

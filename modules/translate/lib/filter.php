@@ -176,7 +176,7 @@ class Filter implements \Iterator, \Countable, \Serializable, \ArrayAccess
     public function unserialize($data)
     {
         if (!empty($data)) {
-            $deserialized = unserialize($data, [false]);
+            $deserialized = unserialize($data, ['allowed_classes' => false]);
             if (is_array($deserialized)) {
                 $this->params = $deserialized;
             }

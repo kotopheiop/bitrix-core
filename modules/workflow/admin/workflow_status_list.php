@@ -11,7 +11,9 @@
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/workflow/prolog.php");
 $WORKFLOW_RIGHT = $APPLICATION->GetGroupRight("workflow");
-if ($WORKFLOW_RIGHT == "D") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($WORKFLOW_RIGHT == "D") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/workflow/include.php");
 IncludeModuleLangFile(__FILE__);
@@ -73,17 +75,19 @@ if ($lAdmin->EditAction() && ($WORKFLOW_RIGHT == "W")) {
     foreach ($FIELDS as $ID => $arFields) {
         $ID = intval($ID);
 
-        if (!$lAdmin->IsUpdated($ID))
+        if (!$lAdmin->IsUpdated($ID)) {
             continue;
+        }
 
-        if (strlen(trim($arFields["TITLE"])) > 0) {
+        if (trim($arFields["TITLE"]) <> '') {
             $DB->StartTransaction();
 
             $obWorkflowStatus = new CWorkflowStatus;
-            if ($obWorkflowStatus->Update($ID, $arFields))
+            if ($obWorkflowStatus->Update($ID, $arFields)) {
                 $DB->Commit();
-            else
+            } else {
                 $DB->Rollback();
+            }
         } else {
             $lAdmin->AddUpdateError(GetMessage("FLOW_FORGOT_NAME", array("#ID#" => $ID)), $ID);
         }
@@ -94,15 +98,17 @@ if ($lAdmin->EditAction() && ($WORKFLOW_RIGHT == "W")) {
 // actions handlers
 if ($WORKFLOW_RIGHT == "W" && $arID = $lAdmin->GroupAction()) {
     if ($_REQUEST['action_target'] == 'selected') {
-        $rsData = CWorkflowStatus::GetList($by, $order, $arFilter, $is_filtered);
-        while ($arRes = $rsData->Fetch())
+        $rsData = CWorkflowStatus::GetList('', '', $arFilter);
+        while ($arRes = $rsData->Fetch()) {
             $arID[] = $arRes['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        $ID = IntVal($ID);
-        if ($ID <= 1)
+        $ID = intval($ID);
+        if ($ID <= 1) {
             continue;
+        }
 
         switch ($_REQUEST['action']) {
             case "delete":
@@ -120,12 +126,19 @@ if ($WORKFLOW_RIGHT == "W" && $arID = $lAdmin->GroupAction()) {
                             $lAdmin->AddGroupError(GetMessage("FLOW_CANNOT_DELETE_STATUS_IBLOCK"), $ID);
                         } else {
                             $DB->StartTransaction();
-                            $DB->Query("DELETE FROM b_workflow_status WHERE ID='" . $ID . "'", false, $err_mess . __LINE__);
-                            $DB->Query("DELETE FROM b_workflow_status2group WHERE STATUS_ID='" . $ID . "'", false, $err_mess . __LINE__);
+                            $DB->Query(
+                                "DELETE FROM b_workflow_status WHERE ID='" . $ID . "'",
+                                false,
+                                $err_mess . __LINE__
+                            );
+                            $DB->Query(
+                                "DELETE FROM b_workflow_status2group WHERE STATUS_ID='" . $ID . "'",
+                                false,
+                                $err_mess . __LINE__
+                            );
                             $DB->Commit();
                         }
                     }
-
                 }
                 break;
 
@@ -143,7 +156,9 @@ if ($WORKFLOW_RIGHT == "W" && $arID = $lAdmin->GroupAction()) {
     }
 }
 
-$rsData = CWorkflowStatus::GetList($by, $order, $arFilter, $is_filtered);
+global $by, $order;
+
+$rsData = CWorkflowStatus::GetList($by, $order, $arFilter);
 $rsData = new CAdminResult($rsData, $sTableID);
 $rsData->NavStart(50);
 
@@ -153,12 +168,27 @@ $lAdmin->NavText($rsData->GetNavPrint(GetMessage("FLOW_PAGES")));
 $arHeaders = Array();
 $arHeaders[] = Array("id" => "ID", "content" => "ID", "default" => true, "sort" => "s_id");
 
-$arHeaders[] = Array("id" => "TIMESTAMP_X", "content" => GetMessage("FLOW_TIMESTAMP"), "default" => true, "sort" => "s_timestamp");
+$arHeaders[] = Array(
+    "id" => "TIMESTAMP_X",
+    "content" => GetMessage("FLOW_TIMESTAMP"),
+    "default" => true,
+    "sort" => "s_timestamp"
+);
 $arHeaders[] = Array("id" => "ACTIVE", "content" => GetMessage("FLOW_ACTIVE"), "default" => true, "sort" => "s_active");
 $arHeaders[] = Array("id" => "C_SORT", "content" => GetMessage("FLOW_C_SORT"), "default" => true, "sort" => "s_c_sort");
 $arHeaders[] = Array("id" => "TITLE", "content" => GetMessage("FLOW_TITLE"), "default" => true, "sort" => "s_title");
-$arHeaders[] = Array("id" => "DESCRIPTION", "content" => GetMessage("FLOW_DESCRIPTION"), "default" => false, "sort" => "s_description");
-$arHeaders[] = Array("id" => "DOCUMENTS", "content" => GetMessage("FLOW_DOCUMENTS"), "default" => true, "sort" => "s_documents");
+$arHeaders[] = Array(
+    "id" => "DESCRIPTION",
+    "content" => GetMessage("FLOW_DESCRIPTION"),
+    "default" => false,
+    "sort" => "s_description"
+);
+$arHeaders[] = Array(
+    "id" => "DOCUMENTS",
+    "content" => GetMessage("FLOW_DOCUMENTS"),
+    "default" => true,
+    "sort" => "s_documents"
+);
 
 
 $lAdmin->AddHeaders($arHeaders);
@@ -171,7 +201,10 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
     $row->AddCheckField("ACTIVE");
     $row->AddInputField("C_SORT", Array("size" => "3"));
 
-    $row->AddViewField("DOCUMENTS", '<a href="workflow_list.php?lang=' . LANG . '&find_status=' . $f_ID . '&set_filter=Y">' . $f_DOCUMENTS . '</a>');
+    $row->AddViewField(
+        "DOCUMENTS",
+        '<a href="workflow_list.php?lang=' . LANG . '&find_status=' . $f_ID . '&set_filter=Y">' . $f_DOCUMENTS . '</a>'
+    );
 
 
     $arActions = Array();
@@ -185,15 +218,16 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
     );
 
     if ($WORKFLOW_RIGHT == "W" && $f_ID > 1) {
-
         $arActions[] = Array("SEPARATOR" => true);
 
         $arActions[] = array(
             "ICON" => "delete",
             "TEXT" => GetMessage("FLOW_DELETE"),
-            "ACTION" => "if(confirm('" . GetMessage('FLOW_DELETE_STATUS_CONFIRM') . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete")
+            "ACTION" => "if(confirm('" . GetMessage('FLOW_DELETE_STATUS_CONFIRM') . "')) " . $lAdmin->ActionDoGroup(
+                    $f_ID,
+                    "delete"
+                )
         );
-
     }
 
     $row->AddActions($arActions);
@@ -209,7 +243,8 @@ $lAdmin->AddFooter(
 
 if ($WORKFLOW_RIGHT == "W") {
     // action buttons
-    $lAdmin->AddGroupActionTable(Array(
+    $lAdmin->AddGroupActionTable(
+        Array(
             "activate" => GetMessage("MAIN_ADMIN_LIST_ACTIVATE"),
             "deactivate" => GetMessage("MAIN_ADMIN_LIST_DEACTIVATE"),
             "delete" => GetMessage("MAIN_ADMIN_LIST_DELETE"),
@@ -271,7 +306,10 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
         <tr valign="top">
             <td nowrap><?= GetMessage("FLOW_F_ACTIVE") ?>:</td>
             <td nowrap><?
-                $arr = array("reference" => array(GetMessage("MAIN_YES"), GetMessage("MAIN_NO")), "reference_id" => array("Y", "N"));
+                $arr = array(
+                    "reference" => array(GetMessage("MAIN_YES"), GetMessage("MAIN_NO")),
+                    "reference_id" => array("Y", "N")
+                );
                 echo SelectBoxFromArray("find_active", $arr, htmlspecialcharsbx($find_active), GetMessage("MAIN_ALL"));
                 ?></td>
         </tr>
@@ -285,16 +323,18 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
             <td nowrap><?= GetMessage("FLOW_F_DESCRIPTION") ?>:</td>
             <td nowrap><input type="text" name="find_description"
                               value="<? echo htmlspecialcharsbx($find_description) ?>"
-                              size="47"><?= ShowExactMatchCheckbox("find_description") ?>
-                &nbsp;<?= ShowFilterLogicHelp() ?></td>
+                              size="47"><?= ShowExactMatchCheckbox("find_description") ?>&nbsp;<?= ShowFilterLogicHelp(
+                ) ?></td>
         </tr>
         <tr valign="center">
             <td nowrap><? echo GetMessage("FLOW_F_DOCUMENTS") ?>:</td>
             <td nowrap><input type="text" name="find_documents_1" value="<?= htmlspecialcharsbx($find_documents_1) ?>"
                               size="5"><? echo "&nbsp;" . GetMessage("FLOW_TILL") . "&nbsp;" ?><input type="text"
                                                                                                       name="find_documents_2"
-                                                                                                      value="<?= htmlspecialcharsbx($find_documents_2) ?>"
-                                                                                                      size="5"></td>
+                                                                                                      value="<?= htmlspecialcharsbx(
+                                                                                                          $find_documents_2
+                                                                                                      ) ?>" size="5">
+            </td>
         </tr>
         <?= ShowLogicRadioBtn() ?>
 

@@ -44,7 +44,7 @@ final class ChainTable extends Entity\DataManager implements \Serializable
 
     public function unserialize($data)
     {
-        $this->procData = unserialize($data);
+        $this->procData = unserialize($data, ['allowed_classes' => false]);
         $this->initInsertHandles();
     }
 
@@ -63,8 +63,12 @@ final class ChainTable extends Entity\DataManager implements \Serializable
         $this->procData['TYPE_SORT'] = array();
 
         while ($item = $res->fetch()) {
-            if (!is_array($this->procData['ALLOWED_TYPES']) || (is_array($this->procData['ALLOWED_TYPES']) && in_array($item['ID'], $this->procData['ALLOWED_TYPES'])))
+            if (!is_array($this->procData['ALLOWED_TYPES']) || (is_array($this->procData['ALLOWED_TYPES']) && in_array(
+                        $item['ID'],
+                        $this->procData['ALLOWED_TYPES']
+                    ))) {
                 $this->procData['TYPES'][$item['CODE']] = $item['ID'];
+            }
 
             $this->procData['TYPE_SORT'][$item['ID']] = $item['DISPLAY_SORT'];
         }
@@ -76,15 +80,19 @@ final class ChainTable extends Entity\DataManager implements \Serializable
 
     public function initInsertHandles()
     {
-        $this->indexInserter = new BlockInserter(array(
-            'entityName' => '\Bitrix\Sale\Location\Search\ChainTable',
-            'exactFields' => array(
-                'LOCATION_ID', 'RELEVANCY', 'POSITION'
-            ),
-            'parameters' => array(
-                'mtu' => static::MTU
+        $this->indexInserter = new BlockInserter(
+            array(
+                'entityName' => '\Bitrix\Sale\Location\Search\ChainTable',
+                'exactFields' => array(
+                    'LOCATION_ID',
+                    'RELEVANCY',
+                    'POSITION'
+                ),
+                'parameters' => array(
+                    'mtu' => static::MTU
+                )
             )
-        ));
+        );
     }
 
     public function resetProcess()
@@ -105,7 +113,8 @@ final class ChainTable extends Entity\DataManager implements \Serializable
     {
         Helper::dropTable(static::getTableName());
 
-        Main\HttpApplication::getConnection()->query("create table " . static::getTableName() . " (
+        Main\HttpApplication::getConnection()->query(
+            "create table " . static::getTableName() . " (
 
 			LOCATION_ID " . Helper::getSqlForDataType('int') . ",
 			RELEVANCY " . Helper::getSqlForDataType('int') . " default '0',
@@ -113,26 +122,30 @@ final class ChainTable extends Entity\DataManager implements \Serializable
 
 			primary key (POSITION, LOCATION_ID)
 
-		)");
+		)"
+        );
     }
 
     public static function getFilterForInitData($parameters = array())
     {
         $filter = array();
 
-        if (!is_array($parameters))
+        if (!is_array($parameters)) {
             $parameters = array();
+        }
 
-        if (is_array($parameters['TYPES']) && !empty($parameters['TYPES']))
+        if (is_array($parameters['TYPES']) && !empty($parameters['TYPES'])) {
             $filter['=TYPE_ID'] = array_unique($parameters['TYPES']);
+        }
 
         return $filter;
     }
 
     protected static function rarefact($sorts, $window = 10000)
     {
-        if (!intval($window))
+        if (!intval($window)) {
             $window = 10000;
+        }
 
         $rSorts = array();
         $w = $window;
@@ -152,20 +165,22 @@ final class ChainTable extends Entity\DataManager implements \Serializable
     {
         $dbConnection = Main\HttpApplication::getConnection();
 
-        $res = Location\LocationTable::getList(array(
-            'select' => array(
-                'ID',
-                'TYPE_ID',
-                'DEPTH_LEVEL',
-                'SORT'
-            ),
-            //'filter' => static::getFilterForInitData(array('TYPES' => $this->procData['ALLOWED_TYPES'])),
-            'order' => array(
-                'LEFT_MARGIN' => 'asc'
-            ),
-            'limit' => self::STEP_SIZE,
-            'offset' => $this->procData['OFFSET']
-        ));
+        $res = Location\LocationTable::getList(
+            array(
+                'select' => array(
+                    'ID',
+                    'TYPE_ID',
+                    'DEPTH_LEVEL',
+                    'SORT'
+                ),
+                //'filter' => static::getFilterForInitData(array('TYPES' => $this->procData['ALLOWED_TYPES'])),
+                'order' => array(
+                    'LEFT_MARGIN' => 'asc'
+                ),
+                'limit' => self::STEP_SIZE,
+                'offset' => $this->procData['OFFSET']
+            )
+        );
 
         $this->procData['TYPE_SORT'] = $this->rarefact($this->procData['TYPE_SORT']);
 
@@ -178,8 +193,9 @@ final class ChainTable extends Entity\DataManager implements \Serializable
                 $newPC = array();
 
                 foreach ($this->procData['PATH'] as $dl => $id) {
-                    if ($dl >= $item['DEPTH_LEVEL'])
+                    if ($dl >= $item['DEPTH_LEVEL']) {
                         break;
+                    }
 
                     $newPC[$dl] = $id;
                 }
@@ -192,10 +208,14 @@ final class ChainTable extends Entity\DataManager implements \Serializable
                 'ID' => $item['ID']
             );
 
-            if (is_array($this->procData['ALLOWED_TYPES']) && in_array($item['TYPE_ID'], $this->procData['ALLOWED_TYPES'])) {
+            if (is_array($this->procData['ALLOWED_TYPES']) && in_array(
+                    $item['TYPE_ID'],
+                    $this->procData['ALLOWED_TYPES']
+                )) {
                 $data = array(
                     'LOCATION_ID' => $item['ID'],
-                    'RELEVANCY' => $this->procData['TYPE_SORT'][$item['TYPE_ID']] + $item['SORT'],// * $item['DEPTH_LEVEL'], // tmp, will be more complicated calc here later
+                    'RELEVANCY' => $this->procData['TYPE_SORT'][$item['TYPE_ID']] + $item['SORT'],
+                    // * $item['DEPTH_LEVEL'], // tmp, will be more complicated calc here later
                 );
                 $wordsAdded = array();
 
@@ -255,7 +275,6 @@ final class ChainTable extends Entity\DataManager implements \Serializable
                     }
                 }
                 unset($pathItem);
-
             }
 
             $cnt++;

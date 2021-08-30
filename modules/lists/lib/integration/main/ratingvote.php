@@ -20,13 +20,15 @@ class RatingVote
             && $params['ENTITY_TYPE_ID'] == 'LISTS_NEW_ELEMENT'
             && Loader::includeModule('socialnetwork')
         ) {
-            $res = LogTable::getList(array(
-                'filter' => array(
-                    '=SOURCE_ID' => $params['ENTITY_ID'],
-                    'EVENT_ID' => 'lists_new_element'
-                ),
-                'select' => array('USER_ID')
-            ));
+            $res = LogTable::getList(
+                array(
+                    'filter' => array(
+                        '=SOURCE_ID' => $params['ENTITY_ID'],
+                        'EVENT_ID' => 'lists_new_element'
+                    ),
+                    'select' => array('USER_ID')
+                )
+            );
             if (
                 ($logFields = $res->fetch())
                 && intval($logFields['USER_ID']) > 0

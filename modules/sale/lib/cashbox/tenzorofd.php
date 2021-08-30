@@ -38,8 +38,9 @@ class TenzorOfd extends Ofd
      */
     public function generateCheckLink($data)
     {
-        if (!isset($data[Check::PARAM_REG_NUMBER_KKT]))
+        if (!isset($data[Check::PARAM_REG_NUMBER_KKT])) {
             return '';
+        }
 
         $url = $this->getUrl();
 

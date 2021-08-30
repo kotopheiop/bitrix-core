@@ -1,117 +1,432 @@
 <? namespace Bitrix\Landing;
-$GLOBALS['____775948349'] = array(base64_decode('ZGVmaW5l'), base64_decode('ZXhwbG9' . 'kZQ=='), base64_decode('cGFjaw=' . '='), base64_decode('bWQ1'), base64_decode('Y29' . 'uc3Rhb' . 'nQ='), base64_decode('aGF' . 'zaF9obWFj'), base64_decode('c3' . 'RyY' . '21' . 'w'), base64_decode('ZXhwbG9kZQ=='), base64_decode('bWt0' . 'a' . 'W1l'), base64_decode('dGl' . 'tZQ=='), base64_decode('ZXhwbG9' . 'kZQ=='), base64_decode('cG' . 'Fjaw=='), base64_decode('bW' . 'Q1'), base64_decode('' . 'Y2' . '9uc3' . 'Rhb' . 'nQ='), base64_decode('aGFzaF9ob' . 'WFj'), base64_decode('c3RyY' . '21w'), base64_decode('ZXhwb' . 'G9kZQ=='), base64_decode('bW' . 't0aW1l'), base64_decode('dGltZQ=='), base64_decode('' . 'aW5fYX' . 'JyYXk='), base64_decode('cHJlZ19y' . 'ZX' . 'Bs' . 'YWN' . 'lX2Nhb' . 'G' . 'x' . 'iYWNr'), base64_decode('c' . '3RydG9sb3dlcg' . '=='), base64_decode('' . 'cHJ' . 'lZ19tYXR' . 'ja' . 'A=' . '='), base64_decode('cHJlZ' . '19yZXBs' . 'Y' . 'WNlX2' . 'NhbGxi' . 'YWNr'));
-if (!function_exists(__NAMESPACE__ . '\\___1799637470')) {
-    function ___1799637470($_2075002120)
+
+$GLOBALS['____390992484'] = array(
+    base64_decode('Z' . 'GVmaW5' . 'l'),
+    base64_decode('' . 'ZXh' . 'wbG9' . 'kZQ=='),
+    base64_decode('cGFjaw=='),
+    base64_decode('bWQ1'),
+    base64_decode('Y29u' . 'c3Rhbn' . 'Q='),
+    base64_decode('aGFzaF9obWFj'),
+    base64_decode('c3RyY2' . '1w'),
+    base64_decode('ZXh' . 'wbG9kZQ=='),
+    base64_decode('b' . 'W' . 't0aW1' . 'l'),
+    base64_decode('' . 'dGltZQ' . '=='),
+    base64_decode('ZXhwb' . 'G9k' . 'ZQ=='),
+    base64_decode('c' . 'GFja' . 'w=='),
+    base64_decode('bWQ' . '1'),
+    base64_decode('' . 'Y2' . '9uc3R' . 'hbnQ='),
+    base64_decode('aGFzaF9obW' . 'Fj'),
+    base64_decode('c' . '3RyY21w'),
+    base64_decode('' . 'ZX' . 'h' . 'wbG9' . 'kZ' . 'Q=='),
+    base64_decode('bWt0aW1l'),
+    base64_decode('dGltZQ=='),
+    base64_decode('a' . 'W5' . 'f' . 'YXJ' . 'yYXk' . '='),
+    base64_decode('' . 'cHJ' . 'lZ1' . '9' . 'y' . 'Z' . 'XBsYWNl' . 'X2NhbGxiYWNr'),
+    base64_decode('bWJ' . 'f' . 'c3R' . 'ydG9sb3dlcg' . '=' . '='),
+    base64_decode('c3R' . 'yX3Jlc' . 'Gxh' . 'Y2U='),
+    base64_decode('' . 'cHJlZ19' . 'tYXRjaA=='),
+    base64_decode('cHJlZ19yZX' . 'B' . 'sY' . 'WNl' . 'X2N' . 'hbGxiYWN' . 'r')
+);
+if (!function_exists(__NAMESPACE__ . '\\___648926110')) {
+    function ___648926110($_1796024232)
     {
-        static $_450681591 = false;
-        if ($_450681591 == false) $_450681591 = array('T' . 'EFORE' . 'lOR19N' . 'V' . 'VRBVE9SX01PREU=', 'bG' . 'F' . 'uZGluZw=' . '=', 'b' . '25MY' . 'W5' . 'kaW5n' . 'U3R' . 'h' . 'cnRQdWJsa' . 'W' . 'N' . 'h' . 'dGlvbg==', 'aWQ=', 'c' . '2l0' . 'ZU' . 'lk', '' . 'Zm' . 'lsdGVy', 'IU' . 'l' . 'E', 'UFVCT' . 'ElD' . 'X' . '1BBR0VfUkVB' . 'Q0hFRA' . '==', 'T' . 'EFORElOR19QVUJM' . 'SU' . 'NfUEF' . 'HRV' . '9SRUFDSEV' . 'E', 'c2VsZWN0', 'S' . 'UQ' . '=', '' . 'VFl' . 'Q' . 'RQ==', 'Z' . 'mlsdGVy', 'SUQ=', 'PUFDV' . 'E' . 'lW' . 'RQ' . '==', 'Tg=' . '=', 'Q0hFQ0tfUEVSTUlTU0lPTlM=', '' . 'Tg' . '==', '' . 'ZmlsdGV' . 'y', 'I' . 'UlE', 'S' . 'U' . 'Q=', '' . 'd' . 'H' . 'l' . 'wZQ' . '=' . '=', 'VFlQRQ=' . '=', '' . 'UFVCTElD' . 'X1NJ' . 'VEV' . 'fUkV' . 'BQ0hFRA=' . '=', 'TEFOR' . 'El' . 'O' . 'R19Q' . 'VUJMSUNfU0l' . 'UR' . 'V9SR' . 'UFD' . 'SEVE', 'c2VsZWN0', 'S' . 'UQ=', 'Zmlsd' . 'G' . 'Vy', 'U0lUR' . 'V9' . 'JR' . 'A==', 'Q0' . 'hFQ0t' . 'fUEVS' . 'TUlTU0lPTlM=', 'Tg==', '' . 'S' . 'UQ=', '' . 'c2VsZ' . 'WN' . '0', 'SUQ=', 'RU' . '5USVRZ' . 'X1RZU' . 'EU' . '=', '' . 'RU5U' . 'SVRZX0lE', 'Zm' . 'lsd' . 'GV' . 'y', 'T' . 'E9H' . 'SUM=', 'T' . '1I=', 'P' . 'U' . 'VO' . 'VEl' . 'UWV9' . 'UWV' . 'BF', 'RU5USVR' . 'ZX0' . 'lE', 'PU' . 'VOVElUW' . 'V9UWVBF', 'R' . 'U' . '5USVRZX0lE', 'P' . 'UhP' . 'T' . '0s=', 'S' . 'E' . 'V' . 'BR' . 'EJ' . 'MT' . '0' . 'NL', 'PUNPREU=', 'VV' . 'N' . 'F', '' . 'PVZ' . 'BTFVF', 'W' . 'Q==', '' . 'bGltaXQ=', 'UFVCTElD' . 'X0h' . 'UTU' . 'xfR' . 'E' . 'lTQU' . 'xMT1' . 'dF' . 'RFs=', 'RU5U' . 'SVRZX1R' . 'ZUEU=', '' . 'RU5US' . 'VRZ' . 'X0l' . 'E', '' . 'XQ=' . '=', 'TEFORElOR19QVUJ' . 'MSUNfS' . 'FRNT' . 'F9' . 'ESVNBTExPV' . '0VE', 'bGFuZGluZw==', 'b2' . '5M' . 'YW5k' . 'aW' . '5nU' . 'HVibGljYXR' . 'pb24=', '' . 'aW' . 'Q=', '' . 'Y' . 'ml0cml4MjQ=', '' . 'REI' . '=', 'U0VMRUNU' . 'IFZ' . 'B' . 'TF' . 'VF' . 'IEZST00gYl9vcH' . 'R' . 'pb24gV0hFUkU' . 'g' . 'TkF' . 'NRT0nflBBUkFNX0ZJTklTS' . 'F9' . 'EQV' . 'R' . 'FJyBBTk' . 'Qg' . 'TU9EVUxFX0l' . 'EPS' . 'dtYWluJ' . 'yB' . 'BTk' . 'Q' . 'gU0' . 'lURV9JRCBJU' . 'yBOVUxM', 'V' . 'kFMVUU=', '' . 'Lg' . '=' . '=', 'SCo=', 'Y' . 'ml0cml4', 'TElDRU5TRV9L' . 'RVk' . '=', 'c2h' . 'h' . 'M' . 'jU2', '' . 'MjAxOC0w' . 'MS0wMQ==', 'MjA' . 'xOC0wMS0wMQ==', 'LQ==', 'TElDRU' . '5' . 'TRV9' . 'FWFBJ' . 'UkV' . 'E', 'T' . 'EFO' . 'RElOR1' . '9M' . 'SUNFTlNFX0VYU' . 'ElS' . 'RUQ=', '' . 'Yml' . '0' . 'cml4MjQ=', 'R' . 'EI=', 'U0VMRUNU' . 'IF' . 'Z' . 'BT' . 'FV' . 'FIEZST00' . 'gYl9vcHRpb24gV0hFUkUgTkFNR' . 'T0' . 'nflBBUk' . 'FNX0ZJTk' . 'lTSF9EQVRFJyBBTkQgTU' . '9EVUxFX0l' . 'EPSdtYWluJy' . 'B' . 'BT' . 'k' . 'QgU0l' . 'URV9JRC' . 'BJUyBOVU' . 'xM', 'VkFM' . 'V' . 'UU=', '' . 'Lg==', 'SCo=', 'Yml0cml4', 'T' . 'ElDR' . 'U5TRV9LRVk=', 'c' . '2hhMjU2', 'MjAxOC' . '0wM' . 'S0wMQ==', 'MjAxOC0w' . 'MS0w' . 'MQ==', 'L' . 'Q==', 'T' . 'E' . 'lDRU' . '5TRV' . '9FWFB' . 'JU' . 'kV' . 'E', '' . 'TE' . 'FOREl' . 'O' . 'R19' . 'MSUNF' . 'TlNFX' . '0' . 'VYUEl' . 'SRUQ=', 'QU' . 'NU' . 'SV' . 'ZF', '' . 'WQ==', 'UFVCTElD', 'WQ==', 'REF' . 'UR' . 'V9QVUJMSU' . 'M=', 'R' . 'E' . 'F' . 'U' . 'RV9' . 'NT0R' . 'J' . 'Rlk' . '=', 'Q' . 'UNUSVZ' . 'F', 'WQ==', 'LyhbXDsiXX' . 'swL' . 'DF9KSNibG9jayhbXG' . 'RdKyko' . 'W1wmIl' . '17MCwxf' . 'Sk' . 'vaXM=', 'c2Vs' . 'ZWN0', 'SUQ' . '=', 'UF' . 'VC' . 'TElD', 'UEF' . 'S' . 'RU5' . 'U' . 'X0lE', 'Q09ERQ==', 'U09' . 'SV' . 'A=' . '=', 'QUNUSV' . 'Z' . 'F', 'QU5DSE9S', 'QUN' . 'DRVNT', 'Q09' . 'OVEVO' . 'VA=' . '=', 'U0VBU' . 'kNIX' . '0' . 'NP' . 'TlR' . 'F' . 'TlQ' . '=', 'U09VUkN' . 'FX1BBUk' . 'FN' . 'U' . 'w' . '==', 'Zmls' . 'dGVy', 'TElE', 'PURFTEVURUQ=', 'Tg' . '==', 'S' . 'UQ=', 'UFVCTElD', 'W' . 'Q' . '==', 'Q0' . '9' . 'O' . 'VEVOV' . 'A==', '' . 'L2hyZWZc' . 'PSIjY2F0YWxvZy' . 'hFb' . 'GVtZ' . 'W50fFN' . 'lY3R' . 'pb24' . 'p' . 'KFtcZF0rKS' . 'Iva' . 'Q==', 'aHJlZj0i', '' . 'Ig=' . '=', 'Q09OVEVOVA==', 'UEFSRU5' . 'UX0lE', 'UEFSR' . 'U5UX0lE', 'S' . 'U' . 'Q' . '=', 'U09SVA=' . '=', 'U' . '09S' . 'V' . 'A==', '' . 'QUNUSVZF', '' . 'QUNUSVZ' . 'F', 'QU5' . 'D' . 'SE9S', '' . 'QU5D' . 'S' . 'E9S', 'QU' . 'NDRVNT', '' . 'QUN' . 'DRVN' . 'T', 'U0' . '9' . 'VUkN' . 'FX1BBUkFN' . 'Uw' . '==', 'U' . '09VUk' . 'NFX1BBUkF' . 'NU' . 'w==', '' . 'Q0' . '9OVEVOVA==', 'Q09OVE' . 'VOVA=' . '=', 'U' . '0VBU' . 'kNI' . 'X0NPT' . 'l' . 'RFTlQ=', 'U0VB' . 'U' . 'kNIX0NPT' . 'lRFTlQ=', '' . 'UEFS' . 'RU5UX0l' . 'E', 'Q09OV' . 'EVOVA==', 'TEl' . 'E', '' . 'Q09ERQ==', 'Q09ER' . 'Q==', 'U' . '09SVA==', '' . 'U09' . 'SV' . 'A=' . '=', 'QU5' . 'DSE9S', 'QU' . '5DS' . 'E9S', 'QUNUSVZF', 'QUNUSVZ' . 'F', 'QUNDRVNT', 'QUNDR' . 'VNT', 'U09VUk' . 'NFX1' . 'BBUk' . 'FNUw==', 'U0' . '9V' . 'UkNFX1BB' . 'UkFNU' . 'w==', 'Q09OVEVOVA=' . '=', 'Q0' . '9OVEVOVA=' . '=', 'U0' . 'VBUkNIX0' . 'NPTlRFTl' . 'Q=', '' . 'U0VBUk' . 'NIX0N' . 'P' . 'TlRFTlQ' . '=', 'UEFSRU5UX0lE', 'Q09O' . 'VEVOV' . 'A==', 'Q09OVE' . 'VOV' . 'A==', 'Q0' . '9' . 'OVEVOVA==', 'I2Js' . 'b2' . 'Nr', '' . 'I2Js' . 'b' . '2Nr', 'Q0' . '9OVE' . 'V' . 'OVA==');
-        return base64_decode($_450681591[$_2075002120]);
+        static $_148574772 = false;
+        if ($_148574772 == false) {
+            $_148574772 = array(
+                '' . 'TEF' . 'ORElOR19NVVRBV' . 'E9SX01PR' . 'EU=',
+                'b' . 'GFuZGlu' . 'Zw==',
+                'b2' . '5MYW' . '5kaW' . '5nU3R' . 'hcnRQdWJsa' . 'WN' . 'hdGl' . 'vb' . 'g' . '==',
+                'aWQ=',
+                'c2l0ZU' . 'lk',
+                '' . 'Z' . 'ml' . 'sdG' . 'Vy',
+                'IU' . 'lE',
+                'UFVCT' . 'ElDX1BBR0VfU' . 'kVBQ0h' . 'FRA=' . '=',
+                'b' . 'G' . 'l' . 'taXR' . 'fc' . '2l0ZXNfbnVtY' . 'mVyX3' . 'BhZ2U=',
+                'SU5J' . 'VE' . 'lBVE9S' . 'X' . '0F' . 'QUF9DT0R' . 'F',
+                'cmVzdA=' . '=',
+                'Zml' . 's' . 'dGVy',
+                '' . 'P' . 'UNP' . 'REU=',
+                'SU5' . 'J' . 'VElB' . 'VE9SX0FQUF9DT0' . 'RF',
+                '',
+                '' . 'UEFZTUVOVF' . '9BTE' . 'xPVw=' . '=',
+                'WQ=' . '=',
+                'TEFOREl' . 'OR19QQVlN' . 'RU5UX0ZBS' . 'UxFRA==',
+                'bGFuZ' . 'G' . 'l' . 'u' . 'Z1' . '9wYXlt' . 'ZW' . '5' . '0' . 'X2ZhaWxlZF8y',
+                'c2VsZWN' . '0',
+                'S' . 'UQ=',
+                'VFl' . 'QRQ==',
+                'ZmlsdGVy',
+                'SUQ' . '=',
+                'PUFDVElW' . 'RQ==',
+                'Tg==',
+                'Q0hFQ0tfU' . 'EVSTUl' . 'TU0lPT' . 'l' . 'M=',
+                'Tg==',
+                'Z' . 'mlsdGVy',
+                'IUlE',
+                'SUQ=',
+                'dH' . 'lwZQ==',
+                'VFlQ' . 'RQ==',
+                'U' . 'FV' . 'CTElDX1' . 'N' . 'JV' . 'EVfUkV' . 'B' . 'Q0' . 'hFRA==',
+                'b' . 'Glta' . 'XRf' . 'c' . '2l0ZXNfbnVt' . 'Ym' . 'Vy',
+                'c2Vs' . 'Z' . 'WN0',
+                'S' . 'UQ=',
+                'Zm' . 'ls' . 'dGVy',
+                'U0lURV9JRA==',
+                'Q0hFQ0tfU' . 'EVSTUlTU0lPT' . 'lM=',
+                'Tg==',
+                'SU' . 'Q=',
+                'c2Vs' . 'ZWN' . '0',
+                'SUQ' . '=',
+                '' . 'RU' . '5USVRZX1RZUEU' . '=',
+                '' . 'R' . 'U5USVRZ' . 'X0lE',
+                'Z' . 'mlsdG' . 'Vy',
+                'TE9H' . 'SUM' . '=',
+                'T' . '1I=',
+                'PUVO' . 'VElUWV9U' . 'WVBF',
+                'R' . 'U5U' . 'SVR' . 'Z' . 'X' . '0' . 'lE',
+                '' . 'P' . 'U' . 'VOVEl' . 'UWV9UWVBF',
+                '' . 'RU5US' . 'VRZX0l' . 'E',
+                'PUhPT0s=',
+                'SEVBR' . 'E' . 'J' . 'MT0NL',
+                '' . 'P' . 'UN' . 'PREU' . '=',
+                'VVN' . 'F',
+                'PVZBTFVF',
+                'W' . 'Q==',
+                'bG' . 'lta' . 'XQ=',
+                'U' . 'FVCT' . 'El' . 'DX0' . 'hUTUxfRElTQ' . 'UxMT1dFRFs=',
+                '' . 'RU5USVRZX1RZU' . 'EU=',
+                'RU5USVR' . 'ZX0lE',
+                'X' . 'Q==',
+                'bGlt' . 'aXRf' . 'c' . '2l0ZX' . 'Nf' . 'aHRtbF' . '9qcw' . '==',
+                'bGFuZGluZw' . '==',
+                'b' . '25M' . 'Y' . 'W5' . 'k' . 'aW5' . 'nU' . 'HVib' . 'GljYXRpb24=',
+                'aWQ=',
+                'Ym' . 'l0cml4M' . 'jQ=',
+                'REI=',
+                'U' . '0VMRU' . 'N' . 'UIFZBTFVFIEZ' . 'ST00g' . 'Yl9vcHRpb24' . 'gV0hFUkUgTkFN' . 'R' . 'T' . '0nflBB' . 'UkFN' . 'X0Z' . 'JT' . 'klTSF' . '9EQV' . 'RF' . 'J' . 'yBBTkQgTU9' . 'EVUxFX' . '0lEPSd' . 'tYWlu' . 'JyBBTkQgU' . '0' . 'lUR' . 'V9JRCBJUyBOVUxM',
+                'Vk' . 'FMVUU=',
+                'Lg==',
+                'S' . 'Co=',
+                'Yml0cml4',
+                'TElDRU' . '5TR' . 'V9LRVk' . '=',
+                'c2hhMj' . 'U2',
+                'MjAxOC' . '0' . 'wMS0wMQ==',
+                'MjAxOC' . '0wMS0wMQ==',
+                'L' . 'Q==',
+                'T' . 'ElDRU' . '5T' . 'RV9FW' . 'FBJUkVE',
+                'TE' . 'FORElOR19MS' . 'UNFTlNFX0VYUElSRUQ' . '=',
+                'Y' . 'ml' . '0cml4Mj' . 'Q=',
+                'RE' . 'I=',
+                '' . 'U' . '0VMRU' . 'NUIFZBTFV' . 'F' . 'IE' . 'ZST00gYl9vcHRpb24gV0hFU' . 'kUgTkFNRT0' . 'nfl' . 'BB' . 'UkFNX0ZJTk' . 'lT' . 'S' . 'F9EQVR' . 'FJyBBTkQgT' . 'U' . '9' . 'E' . 'VUxFX0lEP' . 'S' . 'dtY' . 'WluJyBBTkQgU0lURV9JR' . 'CB' . 'J' . 'U' . 'y' . 'BOVU' . 'xM',
+                'VkFMVUU=',
+                'Lg=' . '=',
+                'SCo=',
+                '' . 'Yml0' . 'c' . 'm' . 'l4',
+                'T' . 'ElD' . 'RU5TR' . 'V9LRVk=',
+                'c' . '2' . 'h' . 'h' . 'MjU2',
+                'MjAxOC0wMS0w' . 'MQ' . '==',
+                'M' . 'jAxOC0w' . 'MS0wMQ==',
+                '' . 'LQ==',
+                'TElDR' . 'U5T' . 'RV9' . 'FWFBJU' . 'kVE',
+                'T' . 'E' . 'FORElOR19MSU' . 'NFTlNFX0VYUE' . 'lSRUQ' . '=',
+                'QUN' . 'USVZF',
+                'WQ' . '==',
+                'UFV' . 'CTElD',
+                'WQ==',
+                'REFURV9QVUJM' . 'SUM=',
+                '' . 'R' . 'EF' . 'URV9NT0RJR' . 'lk=',
+                'QUN' . 'U' . 'SVZF',
+                'W' . 'Q=' . '=',
+                'LyhbXD' . 'siX' . 'XswLDF9' . 'KSN' . 'i' . 'bG' . '9jay' . 'hbX' . 'GRdK' . 'ykoW1wmIl' . '17MCwxfS' . 'kvaX' . 'M=',
+                '' . 'c2VsZWN' . '0',
+                'SU' . 'Q=',
+                'UFVC' . 'TE' . 'lD',
+                '' . 'UEF' . 'SRU5UX0lE',
+                '' . 'Q' . '09E' . 'RQ==',
+                'U0' . '9S' . 'VA==',
+                'QU' . 'NU' . 'SVZ' . 'F',
+                '' . 'Q' . 'U5' . 'DSE' . '9S',
+                'QUN' . 'DRVN' . 'T',
+                'Q' . '0' . '9OVEVOVA==',
+                'U0VBUkN' . 'I' . 'X0NPTlRFT' . 'lQ=',
+                'U09VU' . 'kNFX1B' . 'BU' . 'kFNU' . 'w==',
+                'Q' . 'V' . 'NTRVRT',
+                'WE1MX0lE',
+                'REV' . 'TS' . 'U' . 'd' . 'O' . 'R' . 'UQ=',
+                'Zm' . 'lsdGVy',
+                'TElE',
+                'PURFTE' . 'VURUQ=',
+                'T' . 'g==',
+                'SUQ=',
+                'UF' . 'V' . 'C' . 'T' . 'El' . 'D',
+                'WQ=' . '=',
+                'Q09OV' . 'EVOVA==',
+                'L2hyZWZcPS' . 'IjY2F0' . 'YW' . 'xv' . 'Zyh' . 'FbGVtZW' . '5' . '0' . 'fFNl' . 'Y3' . 'R' . 'pb24' . 'p' . 'KF' . 'tc' . 'ZF' . '0' . 'rKSIvaQ==',
+                'aH' . 'JlZj0i',
+                'Ig=' . '=',
+                'Q09O' . 'VEVOVA==',
+                'Q09OV' . 'EV' . 'OVA==',
+                'Q09OVEVOVA==',
+                'Q09OV' . 'EVOVA' . '==',
+                '' . 'Y29' . 'udGVudGV' . 'k' . 'aXRhYmxl' . 'P' . 'S' . 'J0c' . 'nV' . 'lIg==',
+                '',
+                'Q' . '09OVE' . 'VOVA==',
+                'UEFSR' . 'U5U' . 'X0' . 'lE',
+                '' . 'U' . 'E' . 'FS' . 'R' . 'U5' . 'U' . 'X0lE',
+                'SUQ=',
+                '' . 'U09SV' . 'A==',
+                'U09SVA' . '==',
+                'QUN' . 'U' . 'SV' . 'ZF',
+                'QUNUSVZF',
+                'QU5DSE9S',
+                'QU5D' . 'SE9S',
+                'WE' . '1' . 'MX0lE',
+                'WE1M' . 'X0lE',
+                'QUNDRVN' . 'T',
+                'QUNDRVNT',
+                'REV' . 'TSUdOR' . 'UQ=',
+                'REVT' . 'SUdORUQ=',
+                'U09VUkNFX1BBUkFNUw==',
+                'U' . '09' . 'VUkNFX1BB' . 'UkFNU' . 'w' . '=' . '=',
+                'Q09' . 'OVE' . 'VOVA==',
+                'Q09OV' . 'EVOVA==',
+                '' . 'U0VBUkNIX' . '0NPTl' . 'RFTl' . 'Q=',
+                'U0VBU' . 'kN' . 'I' . 'X0NPTlRF' . 'TlQ=',
+                'QVN' . 'TRVRT',
+                'QV' . 'NTRVRT',
+                'UE' . 'FSRU5' . 'U' . 'X0lE',
+                'Q09OVEVOVA==',
+                'TElE',
+                '' . 'Q09ER' . 'Q' . '==',
+                'Q09ERQ' . '==',
+                'U09SVA==',
+                'U09SV' . 'A=' . '=',
+                'QU5DSE9S',
+                'QU5DSE9S',
+                '' . 'QU5DS' . 'E9S',
+                'Y' . 'g=' . '=',
+                'WE1' . 'MX0' . 'lE',
+                '' . 'WE1MX0lE',
+                'QUNUSVZ' . 'F',
+                'QUN' . 'USVZF',
+                '' . 'QUNDRV' . 'NT',
+                'QUNDRV' . 'NT',
+                'REVTSUdORUQ=',
+                'REV' . 'T' . 'SU' . 'dORUQ=',
+                'U0' . '9VU' . 'kNFX1BB' . 'UkFNUw==',
+                'U09VU' . 'kN' . 'F' . 'X1BBUk' . 'FNU' . 'w==',
+                'Q09O' . 'VEVOVA==',
+                '' . 'Q09' . 'OVEVOV' . 'A' . '==',
+                'U0VBUk' . 'NIX0N' . 'PTlR' . 'F' . 'Tl' . 'Q' . '=',
+                '' . 'U' . '0VBUkNIX0NPT' . 'lR' . 'FTlQ=',
+                '' . 'QVNTRVRT',
+                'QV' . 'NTRV' . 'RT',
+                'UEFS' . 'RU' . '5U' . 'X' . '0' . 'lE',
+                'Q' . '09OV' . 'E' . 'V' . 'OVA==',
+                'Q0' . '9OVEV' . 'OVA' . '==',
+                'Q09OVEVOVA' . '==',
+                'I2J' . 's' . 'b2N' . 'r',
+                'I2Jsb2N' . 'r',
+                'Q09OV' . 'EVOV' . 'A=' . '='
+            );
+        }
+        return base64_decode($_148574772[$_1796024232]);
     }
 };
 
 use \Bitrix\Landing\Internals\HookDataTable as HookData;
 use \Bitrix\Landing\Assets;
 use \Bitrix\Landing\Block\Cache;
+use \Bitrix\Landing\Restriction;
 use \Bitrix\Main\Event;
 use \Bitrix\Main\EventResult;
 use \Bitrix\Main\Localization\Loc;
+use \Bitrix\Rest\AppTable;
 
 Loc::loadMessages(__FILE__);
-$GLOBALS['____775948349'][0](___1799637470(0), true);
+$GLOBALS['____390992484'][0](___648926110(0), true);
 
 class Mutator
 {
     public static function landingPublication(Landing $landing)
     {
-        static $_1592843798 = array();
+        static $_498397084 = array();
         Manager::disableAllFeaturesTmp();
-        $_190290435 = new Event(___1799637470(1), ___1799637470(2), array(___1799637470(3) => $landing->getId(), ___1799637470(4) => $landing->getSiteId()));
-        $_190290435->send();
-        foreach ($_190290435->getResults() as $_1291464675) {
-            if ($_1291464675->getType() == EventResult::ERROR) {
-                foreach ($_1291464675->getErrors() as $_828848851) {
-                    $landing->getError()->addError($_828848851->getCode(), $_828848851->getMessage());
+        $_415174322 = new Event(
+            ___648926110(1),
+            ___648926110(2),
+            array(___648926110(3) => $landing->getId(), ___648926110(4) => $landing->getSiteId())
+        );
+        $_415174322->send();
+        foreach ($_415174322->getResults() as $_1072132098) {
+            if ($_1072132098->getType() == EventResult::ERROR) {
+                foreach ($_1072132098->getErrors() as $_1954447448) {
+                    $landing->getError()->addError($_1954447448->getCode(), $_1954447448->getMessage());
                 }
                 return false;
             }
         }
-        if (!Manager::checkFeature(Manager::FEATURE_PUBLICATION_PAGE, array(___1799637470(5) => array(___1799637470(6) => $landing->getId())))) {
-            $landing->getError()->addError(___1799637470(7), Loc::getMessage(___1799637470(8)));
+        if (!Manager::checkFeature(
+            Manager::FEATURE_PUBLICATION_PAGE,
+            array(___648926110(5) => array(___648926110(6) => $landing->getId()))
+        )) {
+            $landing->getError()->addError(
+                ___648926110(7),
+                Restriction\Manager::getSystemErrorMessage(___648926110(8))
+            );
             return false;
         }
-        $_1267467269 = Site::getList(array(___1799637470(9) => array(___1799637470(10), ___1799637470(11)), ___1799637470(12) => array(___1799637470(13) => $landing->getSiteId(), ___1799637470(14) => ___1799637470(15), ___1799637470(16) => ___1799637470(17))));
-        if ($_996781823 = $_1267467269->fetch()) {
-            if (!Manager::checkFeature(Manager::FEATURE_PUBLICATION_SITE, array(___1799637470(18) => array(___1799637470(19) => $_996781823[___1799637470(20)]), ___1799637470(21) => $_996781823[___1799637470(22)]))) {
-                $landing->getError()->addError(___1799637470(23), Loc::getMessage(___1799637470(24)));
-                return false;
-            }
-        }
-        if (\Bitrix\Landing\Hook\Page\HeadBlock::isLockedFeature()) {
-            $_620083883 = [$landing->getId()];
-            $_1267467269 = Landing::getList([___1799637470(25) => [___1799637470(26)], ___1799637470(27) => [___1799637470(28) => $landing->getSiteId(), ___1799637470(29) => ___1799637470(30)]]);
-            while ($_996781823 = $_1267467269->fetch()) {
-                $_620083883[] = $_996781823[___1799637470(31)];
-            }
-            $_1267467269 = HookData::getList([___1799637470(32) => [___1799637470(33), ___1799637470(34), ___1799637470(35)], ___1799637470(36) => [[___1799637470(37) => ___1799637470(38), [___1799637470(39) => Hook::ENTITY_TYPE_SITE, ___1799637470(40) => $landing->getSiteId()], [___1799637470(41) => Hook::ENTITY_TYPE_LANDING, ___1799637470(42) => $_620083883]], ___1799637470(43) => ___1799637470(44), ___1799637470(45) => ___1799637470(46), ___1799637470(47) => ___1799637470(48)], ___1799637470(49) => round(0 + 0.33333333333333 + 0.33333333333333 + 0.33333333333333)]);
-            if ($_996781823 = $_1267467269->fetch()) {
-                $landing->getError()->addError(___1799637470(50) . $_996781823[___1799637470(51)] . $_996781823[___1799637470(52)] . ___1799637470(53), Loc::getMessage(___1799637470(54)));
-                unset($_996781823, $_1267467269);
-                return false;
-            }
-            unset($_620083883, $_996781823, $_1267467269);
-        }
-        $_190290435 = new Event(___1799637470(55), ___1799637470(56), array(___1799637470(57) => $landing->getId()));
-        $_190290435->send();
-        foreach ($_190290435->getResults() as $_1291464675) {
-            if ($_1291464675->getResultType() == EventResult::ERROR) {
-                foreach ($_1291464675->getErrors() as $_828848851) {
-                    $landing->getError()->addError($_828848851->getCode(), $_828848851->getMessage());
-                }
-                return false;
-            }
-        }
-        if (!\Bitrix\Main\ModuleManager::isModuleInstalled(___1799637470(58))) {
-            $_1820919554 = $GLOBALS[___1799637470(59)]->Query(___1799637470(60), true);
-            if ($_1267467269 = $_1820919554->Fetch()) {
-                $_597551810 = $_1267467269[___1799637470(61)];
-                list($_1183353077, $_829535158) = $GLOBALS['____775948349'][1](___1799637470(62), $_597551810);
-                $_426910235 = $GLOBALS['____775948349'][2](___1799637470(63), $_1183353077);
-                $_1370622113 = ___1799637470(64) . $GLOBALS['____775948349'][3]($GLOBALS['____775948349'][4](___1799637470(65)));
-                $_666525048 = $GLOBALS['____775948349'][5](___1799637470(66), $_829535158, $_1370622113, true);
-                if ($GLOBALS['____775948349'][6]($_666525048, $_426910235) !== (237 * 2 - 474)) {
-                    $_829535158 = ___1799637470(67);
-                }
-            } else {
-                $_829535158 = ___1799637470(68);
-            }
-            if (!empty($_829535158)) {
-                $_1196929762 = $GLOBALS['____775948349'][7](___1799637470(69), $_829535158);
-                $_461805656 = $GLOBALS['____775948349'][8](min(82, 0, 27.333333333333), (1380 / 2 - 690), (884 - 2 * 442), $_1196929762[round(0 + 0.33333333333333 + 0.33333333333333 + 0.33333333333333)], $_1196929762[round(0 + 0.66666666666667 + 0.66666666666667 + 0.66666666666667)], $_1196929762[(938 - 2 * 469)]);
-                if ($_461805656 <= $GLOBALS['____775948349'][9]()) {
-                    $landing->getError()->addError(___1799637470(70), Loc::getMessage(___1799637470(71)));
+        $_590429762 = $landing->getMeta();
+        if (isset($_590429762[___648926110(9)]) && \Bitrix\Main\Loader::includeModule(___648926110(10))) {
+            $_1754885396 = AppTable::getList([___648926110(11) => [___648926110(12) => $_590429762[___648926110(13)]]]);
+            if ($_83146691 = $_1754885396->fetch()) {
+                $_1673929169 = AppTable::getAppStatusInfo($_83146691, ___648926110(14));
+                if ($_1673929169[___648926110(15)] != ___648926110(16)) {
+                    $landing->getError()->addError(
+                        ___648926110(17),
+                        Restriction\Manager::getSystemErrorMessage(___648926110(18))
+                    );
                     return false;
                 }
             }
         }
-        if (!\Bitrix\Main\ModuleManager::isModuleInstalled(___1799637470(72))) {
-            $_1820919554 = $GLOBALS[___1799637470(73)]->Query(___1799637470(74), true);
-            if ($_1267467269 = $_1820919554->Fetch()) {
-                $_597551810 = $_1267467269[___1799637470(75)];
-                list($_1183353077, $_829535158) = $GLOBALS['____775948349'][10](___1799637470(76), $_597551810);
-                $_426910235 = $GLOBALS['____775948349'][11](___1799637470(77), $_1183353077);
-                $_1370622113 = ___1799637470(78) . $GLOBALS['____775948349'][12]($GLOBALS['____775948349'][13](___1799637470(79)));
-                $_666525048 = $GLOBALS['____775948349'][14](___1799637470(80), $_829535158, $_1370622113, true);
-                if ($GLOBALS['____775948349'][15]($_666525048, $_426910235) !== (934 - 2 * 467)) {
-                    $_829535158 = ___1799637470(81);
+        $_1754885396 = Site::getList(
+            array(
+                ___648926110(19) => array(___648926110(20), ___648926110(21)),
+                ___648926110(22) => array(
+                    ___648926110(23) => $landing->getSiteId(),
+                    ___648926110(24) => ___648926110(25),
+                    ___648926110(26) => ___648926110(27)
+                )
+            )
+        );
+        if ($_83146691 = $_1754885396->fetch()) {
+            if (!Manager::checkFeature(
+                Manager::FEATURE_PUBLICATION_SITE,
+                array(
+                    ___648926110(28) => array(
+                        ___648926110(29) => $_83146691[___648926110(
+                            30
+                        )]
+                    ),
+                    ___648926110(31) => $_83146691[___648926110(32)]
+                )
+            )) {
+                $landing->getError()->addError(
+                    ___648926110(33),
+                    Restriction\Manager::getSystemErrorMessage(___648926110(34))
+                );
+                return false;
+            }
+        }
+        if (\Bitrix\Landing\Hook\Page\HeadBlock::isLockedFeature()) {
+            $_1652004051 = [$landing->getId()];
+            $_1754885396 = Landing::getList(
+                [
+                    ___648926110(35) => [___648926110(36)],
+                    ___648926110(37) => [
+                        ___648926110(38) => $landing->getSiteId(),
+                        ___648926110(39) => ___648926110(40)
+                    ]
+                ]
+            );
+            while ($_83146691 = $_1754885396->fetch()) {
+                $_1652004051[] = $_83146691[___648926110(41)];
+            }
+            $_1754885396 = HookData::getList(
+                [
+                    ___648926110(42) => [___648926110(43), ___648926110(44), ___648926110(45)],
+                    ___648926110(46) => [
+                        [
+                            ___648926110(47) => ___648926110(48),
+                            [___648926110(49) => Hook::ENTITY_TYPE_SITE, ___648926110(50) => $landing->getSiteId()],
+                            [___648926110(51) => Hook::ENTITY_TYPE_LANDING, ___648926110(52) => $_1652004051]
+                        ],
+                        ___648926110(53) => ___648926110(54),
+                        ___648926110(55) => ___648926110(56),
+                        ___648926110(57) => ___648926110(58)
+                    ],
+                    ___648926110(59) => round(0 + 0.5 + 0.5)
+                ]
+            );
+            if ($_83146691 = $_1754885396->fetch()) {
+                $landing->getError()->addError(
+                    ___648926110(60) . $_83146691[___648926110(61)] . $_83146691[___648926110(62)] . ___648926110(63),
+                    Restriction\Manager::getSystemErrorMessage(___648926110(64))
+                );
+                return false;
+            }
+        }
+        $_415174322 = new Event(___648926110(65), ___648926110(66), array(___648926110(67) => $landing->getId()));
+        $_415174322->send();
+        foreach ($_415174322->getResults() as $_1072132098) {
+            if ($_1072132098->getResultType() == EventResult::ERROR) {
+                foreach ($_1072132098->getErrors() as $_1954447448) {
+                    $landing->getError()->addError($_1954447448->getCode(), $_1954447448->getMessage());
+                }
+                return false;
+            }
+        }
+        if (!\Bitrix\Main\ModuleManager::isModuleInstalled(___648926110(68))) {
+            $_173112585 = $GLOBALS[___648926110(69)]->Query(___648926110(70), true);
+            if ($_1754885396 = $_173112585->Fetch()) {
+                $_1665745194 = $_1754885396[___648926110(71)];
+                list($_1171999324, $_1304029955) = $GLOBALS['____390992484'][1](___648926110(72), $_1665745194);
+                $_960465694 = $GLOBALS['____390992484'][2](___648926110(73), $_1171999324);
+                $_231792936 = ___648926110(74) . $GLOBALS['____390992484'][3](
+                        $GLOBALS['____390992484'][4](___648926110(75))
+                    );
+                $_1769062848 = $GLOBALS['____390992484'][5](___648926110(76), $_1304029955, $_231792936, true);
+                if ($GLOBALS['____390992484'][6]($_1769062848, $_960465694) !== (776 - 2 * 388)) {
+                    $_1304029955 = ___648926110(77);
                 }
             } else {
-                $_829535158 = ___1799637470(82);
+                $_1304029955 = ___648926110(78);
             }
-            if (!empty($_829535158)) {
-                $_1196929762 = $GLOBALS['____775948349'][16](___1799637470(83), $_829535158);
-                $_461805656 = $GLOBALS['____775948349'][17]((906 - 2 * 453), (131 * 2 - 262), (1004 / 2 - 502), $_1196929762[round(0 + 1)], $_1196929762[round(0 + 0.4 + 0.4 + 0.4 + 0.4 + 0.4)], $_1196929762[(996 - 2 * 498)]);
-                if ($_461805656 <= $GLOBALS['____775948349'][18]()) {
-                    $landing->getError()->addError(___1799637470(84), Loc::getMessage(___1799637470(85)));
+            if (!empty($_1304029955)) {
+                $_1167406593 = $GLOBALS['____390992484'][7](___648926110(79), $_1304029955);
+                $_1411662016 = $GLOBALS['____390992484'][8](
+                    (798 - 2 * 399),
+                    (998 - 2 * 499),
+                    (176 * 2 - 352),
+                    $_1167406593[round(0 + 0.25 + 0.25 + 0.25 + 0.25)],
+                    $_1167406593[round(0 + 0.4 + 0.4 + 0.4 + 0.4 + 0.4)],
+                    $_1167406593[(210 * 2 - 420)]
+                );
+                if ($_1411662016 <= $GLOBALS['____390992484'][9]()) {
+                    $landing->getError()->addError(___648926110(80), Loc::getMessage(___648926110(81)));
+                    return false;
+                }
+            }
+        }
+        if (!\Bitrix\Main\ModuleManager::isModuleInstalled(___648926110(82))) {
+            $_173112585 = $GLOBALS[___648926110(83)]->Query(___648926110(84), true);
+            if ($_1754885396 = $_173112585->Fetch()) {
+                $_1665745194 = $_1754885396[___648926110(85)];
+                list($_1171999324, $_1304029955) = $GLOBALS['____390992484'][10](___648926110(86), $_1665745194);
+                $_960465694 = $GLOBALS['____390992484'][11](___648926110(87), $_1171999324);
+                $_231792936 = ___648926110(88) . $GLOBALS['____390992484'][12](
+                        $GLOBALS['____390992484'][13](___648926110(89))
+                    );
+                $_1769062848 = $GLOBALS['____390992484'][14](___648926110(90), $_1304029955, $_231792936, true);
+                if ($GLOBALS['____390992484'][15]($_1769062848, $_960465694) !== (193 * 2 - 386)) {
+                    $_1304029955 = ___648926110(91);
+                }
+            } else {
+                $_1304029955 = ___648926110(92);
+            }
+            if (!empty($_1304029955)) {
+                $_1167406593 = $GLOBALS['____390992484'][16](___648926110(93), $_1304029955);
+                $_1411662016 = $GLOBALS['____390992484'][17](
+                    (1212 / 2 - 606),
+                    (1128 / 2 - 564),
+                    (1108 / 2 - 554),
+                    $_1167406593[round(0 + 1)],
+                    $_1167406593[round(0 + 0.4 + 0.4 + 0.4 + 0.4 + 0.4)],
+                    $_1167406593[(127 * 2 - 254)]
+                );
+                if ($_1411662016 <= $GLOBALS['____390992484'][18]()) {
+                    $landing->getError()->addError(___648926110(94), Loc::getMessage(___648926110(95)));
                     return false;
                 }
             }
@@ -121,20 +436,28 @@ class Mutator
         Hook::publicationLanding($landing->getId());
         Assets\Manager::rebuildWebpackForLanding($landing->getId());
         Block::publicationBlocks($landing);
-        $_328641072 = new \Bitrix\Main\Type\DateTime;
-        $_1267467269 = Landing::update($landing->getId(), array(___1799637470(86) => ___1799637470(87), ___1799637470(88) => ___1799637470(89), ___1799637470(90) => $_328641072, ___1799637470(91) => false));
-        if ($_1267467269->isSuccess()) {
-            if (!$GLOBALS['____775948349'][19]($landing->getSiteId(), $_1592843798)) {
-                $_1592843798[] = $landing->getSiteId();
-                $_1267467269 = Site::update($landing->getSiteId(), array(___1799637470(92) => ___1799637470(93)));
-                if (!$_1267467269->isSuccess()) {
-                    $landing->getError()->addFromResult($_1267467269);
+        $_937349606 = new \Bitrix\Main\Type\DateTime;
+        $_1754885396 = Landing::update(
+            $landing->getId(),
+            array(
+                ___648926110(96) => ___648926110(97),
+                ___648926110(98) => ___648926110(99),
+                ___648926110(100) => $_937349606,
+                ___648926110(101) => false
+            )
+        );
+        if ($_1754885396->isSuccess()) {
+            if (!$GLOBALS['____390992484'][19]($landing->getSiteId(), $_498397084)) {
+                $_498397084[] = $landing->getSiteId();
+                $_1754885396 = Site::update($landing->getSiteId(), array(___648926110(102) => ___648926110(103)));
+                if (!$_1754885396->isSuccess()) {
+                    $landing->getError()->addFromResult($_1754885396);
                     return false;
                 }
             }
             return true;
         } else {
-            $landing->getError()->addFromResult($_1267467269);
+            $landing->getError()->addFromResult($_1754885396);
         }
         return false;
     }
@@ -142,57 +465,158 @@ class Mutator
     public static function blocksPublication(\Bitrix\Landing\Landing $landing)
     {
         if ($landing->exist()) {
-            $_171141234 = $landing->getId();
-            $_1835841078 = array();
-            $_1880368204 = array();
-            $_1137415550 = array();
-            $_1466658192 = ___1799637470(94);
-            $_1267467269 = Block::getList(array(___1799637470(95) => array(___1799637470(96), ___1799637470(97), ___1799637470(98), ___1799637470(99), ___1799637470(100), ___1799637470(101), ___1799637470(102), ___1799637470(103), ___1799637470(104), ___1799637470(105), ___1799637470(106)), ___1799637470(107) => array(___1799637470(108) => $landing->getId(), ___1799637470(109) => ___1799637470(110))));
-            while ($_996781823 = $_1267467269->fetch()) {
-                $_1835841078[$_996781823[___1799637470(111)]] = $_996781823;
+            $_1515939932 = $landing->getId();
+            $_1673664167 = array();
+            $_1895289087 = array();
+            $_33520246 = array();
+            $_1191701578 = ___648926110(104);
+            $_1754885396 = Block::getList(
+                array(
+                    ___648926110(105) => array(
+                        ___648926110(106),
+                        ___648926110(107),
+                        ___648926110(108),
+                        ___648926110(109),
+                        ___648926110(110),
+                        ___648926110(111),
+                        ___648926110(112),
+                        ___648926110(113),
+                        ___648926110(114),
+                        ___648926110(115),
+                        ___648926110(116),
+                        ___648926110(117),
+                        ___648926110(118),
+                        ___648926110(119)
+                    ),
+                    ___648926110(120) => array(
+                        ___648926110(121) => $landing->getId(),
+                        ___648926110(122) => ___648926110(123)
+                    )
+                )
+            );
+            while ($_83146691 = $_1754885396->fetch()) {
+                $_1673664167[$_83146691[___648926110(124)]] = $_83146691;
             }
-            foreach ($_1835841078 as $_1426936076 => $_147033820) {
-                if ($_147033820[___1799637470(112)] != ___1799637470(113)) {
-                    $_147033820[___1799637470(114)] = $GLOBALS['____775948349'][20](___1799637470(115), function ($_2120696873) {
-                        return ___1799637470(116) . PublicAction\Utils::getIblockURL($_2120696873[round(0 + 0.4 + 0.4 + 0.4 + 0.4 + 0.4)], $GLOBALS['____775948349'][21]($_2120696873[round(0 + 0.2 + 0.2 + 0.2 + 0.2 + 0.2)])) . ___1799637470(117);
-                    }, $_147033820[___1799637470(118)]);
-                    $_889314033 = isset($_1835841078[$_147033820[___1799637470(119)]]) ? $_1835841078[$_147033820[___1799637470(120)]][___1799637470(121)] : min(6, 0, 2);
-                    if ($_889314033) {
-                        Cache::clear($_889314033);
-                        $_1267467269 = Block::update($_889314033, array(___1799637470(122) => $_147033820[___1799637470(123)], ___1799637470(124) => $_147033820[___1799637470(125)], ___1799637470(126) => $_147033820[___1799637470(127)], ___1799637470(128) => $_147033820[___1799637470(129)], ___1799637470(130) => $_147033820[___1799637470(131)], ___1799637470(132) => $_147033820[___1799637470(133)], ___1799637470(134) => $_147033820[___1799637470(135)]));
-                        $_1267467269->isSuccess();
-                        unset($_1835841078[$_147033820[___1799637470(136)]]);
-                        File::replaceInBlock($_889314033, File::getFilesFromBlockContent($_1426936076, $_147033820[___1799637470(137)]));
+            foreach ($_1673664167 as $_1574588732 => $_1461565305) {
+                if ($_1461565305[___648926110(125)] != ___648926110(126)) {
+                    $_1461565305[___648926110(127)] = $GLOBALS['____390992484'][20](
+                        ___648926110(128),
+                        function ($_864482338) {
+                            return ___648926110(129) . PublicAction\Utils::getIblockURL(
+                                    $_864482338[round(0 + 2)],
+                                    $GLOBALS['____390992484'][21](
+                                        $_864482338[round(
+                                            0 + 0.33333333333333 + 0.33333333333333 + 0.33333333333333
+                                        )]
+                                    )
+                                ) . ___648926110(130);
+                        },
+                        $_1461565305[___648926110(131)]
+                    );
+                    $_1461565305[___648926110(132)] = Subtype\Form::prepareFormsToPublication(
+                        $_1461565305[___648926110(133)]
+                    );
+                    $_1461565305[___648926110(134)] = $GLOBALS['____390992484'][22](
+                        ___648926110(135),
+                        ___648926110(136),
+                        $_1461565305[___648926110(137)]
+                    );
+                    $_126545664 = isset(
+                        $_1673664167[$_1461565305[___648926110(
+                            138
+                        )]]
+                    ) ? $_1673664167[$_1461565305[___648926110(139)]][___648926110(140)] : (189 * 2 - 378);
+                    if ($_126545664) {
+                        Cache::clear($_126545664);
+                        $_1754885396 = Block::update(
+                            $_126545664,
+                            array(
+                                ___648926110(141) => $_1461565305[___648926110(142)],
+                                ___648926110(143) => $_1461565305[___648926110(144)],
+                                ___648926110(145) => $_1461565305[___648926110(146)],
+                                ___648926110(147) => $_1461565305[___648926110(148)],
+                                ___648926110(149) => $_1461565305[___648926110(150)],
+                                ___648926110(151) => $_1461565305[___648926110(152)],
+                                ___648926110(153) => $_1461565305[___648926110(154)],
+                                ___648926110(155) => $_1461565305[___648926110(156)],
+                                ___648926110(157) => $_1461565305[___648926110(158)],
+                                ___648926110(159) => $_1461565305[___648926110(160)]
+                            )
+                        );
+                        $_1754885396->isSuccess();
+                        unset($_1673664167[$_1461565305[___648926110(161)]]);
+                        File::replaceInBlock(
+                            $_126545664,
+                            File::getFilesFromBlockContent(
+                                $_1574588732,
+                                $_1461565305[___648926110(162)]
+                            )
+                        );
+                        Assets\PreProcessing::blockPublicationProcessing(new Block($_126545664));
                     } else {
-                        $_1267467269 = Block::add(array(___1799637470(138) => $_171141234, ___1799637470(139) => $_147033820[___1799637470(140)], ___1799637470(141) => $_147033820[___1799637470(142)], ___1799637470(143) => $_147033820[___1799637470(144)], ___1799637470(145) => $_147033820[___1799637470(146)], ___1799637470(147) => $_147033820[___1799637470(148)], ___1799637470(149) => $_147033820[___1799637470(150)], ___1799637470(151) => $_147033820[___1799637470(152)], ___1799637470(153) => $_147033820[___1799637470(154)]));
-                        if ($_1267467269->isSuccess()) {
-                            $_889314033 = $_1267467269->getId();
-                            $_1267467269 = Block::update($_1426936076, array(___1799637470(155) => $_889314033));
-                            $_1267467269->isSuccess();
-                            File::addToBlock($_889314033, File::getFilesFromBlockContent($_1426936076, $_147033820[___1799637470(156)]));
+                        $_1754885396 = Block::add(
+                            array(
+                                ___648926110(163) => $_1515939932,
+                                ___648926110(164) => $_1461565305[___648926110(165)],
+                                ___648926110(166) => $_1461565305[___648926110(167)],
+                                ___648926110(168) => $_1461565305[___648926110(169)] ? $_1461565305[___648926110(
+                                    170
+                                )] : ___648926110(171) . $_1574588732,
+                                ___648926110(172) => $_1461565305[___648926110(173)],
+                                ___648926110(174) => $_1461565305[___648926110(175)],
+                                ___648926110(176) => $_1461565305[___648926110(177)],
+                                ___648926110(178) => $_1461565305[___648926110(179)],
+                                ___648926110(180) => $_1461565305[___648926110(181)],
+                                ___648926110(182) => $_1461565305[___648926110(183)],
+                                ___648926110(184) => $_1461565305[___648926110(185)],
+                                ___648926110(186) => $_1461565305[___648926110(187)]
+                            )
+                        );
+                        if ($_1754885396->isSuccess()) {
+                            $_126545664 = $_1754885396->getId();
+                            $_1754885396 = Block::update($_1574588732, array(___648926110(188) => $_126545664));
+                            $_1754885396->isSuccess();
+                            File::addToBlock(
+                                $_126545664,
+                                File::getFilesFromBlockContent(
+                                    $_1574588732,
+                                    $_1461565305[___648926110(189)]
+                                )
+                            );
+                            Assets\PreProcessing::blockPublicationProcessing(new Block($_126545664));
                         }
                     }
-                    if ($GLOBALS['____775948349'][22]($_1466658192, $_147033820[___1799637470(157)])) {
-                        $_1880368204[$_889314033] = $_147033820[___1799637470(158)];
+                    if ($GLOBALS['____390992484'][23]($_1191701578, $_1461565305[___648926110(190)])) {
+                        $_1895289087[$_126545664] = $_1461565305[___648926110(191)];
                     }
-                    $_1137415550[$_1426936076] = $_889314033;
-                    unset($_1835841078[$_1426936076]);
+                    $_33520246[$_1574588732] = $_126545664;
+                    unset($_1673664167[$_1574588732]);
                 }
             }
-            foreach ($_1835841078 as $_1426936076 => $_147033820) {
-                $_1267467269 = Block::delete($_1426936076);
-                $_1267467269->isSuccess();
+            foreach ($_1673664167 as $_1574588732 => $_1461565305) {
+                $_1754885396 = Block::delete($_1574588732);
+                $_1754885396->isSuccess();
             }
-            foreach ($_1880368204 as $_1426936076 => $_1765104429) {
-                $_1765104429 = $GLOBALS['____775948349'][23]($_1466658192, function ($_1676884907) use ($_1137415550) {
-                    if (isset($_1137415550[$_1676884907[round(0 + 2)]])) {
-                        return $_1676884907[round(0 + 0.25 + 0.25 + 0.25 + 0.25)] . ___1799637470(159) . $_1137415550[$_1676884907[round(0 + 0.5 + 0.5 + 0.5 + 0.5)]] . $_1676884907[round(0 + 0.75 + 0.75 + 0.75 + 0.75)];
-                    } else {
-                        return $_1676884907[round(0 + 1)] . ___1799637470(160) . $_1676884907[round(0 + 2)] . $_1676884907[round(0 + 0.75 + 0.75 + 0.75 + 0.75)];
-                    }
-                }, $_1765104429);
-                $_1267467269 = Block::update($_1426936076, array(___1799637470(161) => $_1765104429));
-                $_1267467269->isSuccess();
+            foreach ($_1895289087 as $_1574588732 => $_606351119) {
+                $_606351119 = $GLOBALS['____390992484'][24](
+                    $_1191701578,
+                    function ($_1503082483) use ($_33520246) {
+                        if (isset($_33520246[$_1503082483[round(0 + 0.5 + 0.5 + 0.5 + 0.5)]])) {
+                            return $_1503082483[round(0 + 0.5 + 0.5)] . ___648926110(
+                                    192
+                                ) . $_33520246[$_1503082483[round(
+                                    0 + 0.66666666666667 + 0.66666666666667 + 0.66666666666667
+                                )]] . $_1503082483[round(0 + 0.6 + 0.6 + 0.6 + 0.6 + 0.6)];
+                        } else {
+                            return $_1503082483[round(0 + 0.2 + 0.2 + 0.2 + 0.2 + 0.2)] . ___648926110(
+                                    193
+                                ) . $_1503082483[round(0 + 1 + 1)] . $_1503082483[round(0 + 3)];
+                        }
+                    },
+                    $_606351119
+                );
+                $_1754885396 = Block::update($_1574588732, array(___648926110(194) => $_606351119));
+                $_1754885396->isSuccess();
             }
         }
     }

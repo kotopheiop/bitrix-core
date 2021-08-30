@@ -200,7 +200,6 @@ class MethodSchedule implements iMethod
         $this->letter->set('AUTO_SEND_TIME', $this->getNextDate());
         $this->letter->save();
         $this->letter->getState()->wait($this);
-
     }
 
     /**
@@ -236,7 +235,7 @@ class MethodSchedule implements iMethod
     public static function parseDaysOfMonth($daysOfMonth)
     {
         $result = [];
-        if (strlen($daysOfMonth) > 0) {
+        if ($daysOfMonth <> '') {
             $days = explode(",", $daysOfMonth);
             $found = [];
             foreach ($days as $day) {
@@ -248,7 +247,9 @@ class MethodSchedule implements iMethod
                         $result[] = intval($found[1]);
                     }
                 } elseif (preg_match("/^(\d{1,2})-(\d{1,2})$/", $day, $found)) {
-                    if (intval($found[1]) < 1 || intval($found[1]) > 31 || intval($found[2]) < 1 || intval($found[2]) > 31 || intval($found[1]) >= intval($found[2])) {
+                    if (intval($found[1]) < 1 || intval($found[1]) > 31 || intval($found[2]) < 1 || intval(
+                            $found[2]
+                        ) > 31 || intval($found[1]) >= intval($found[2])) {
                         return [];
                     } else {
                         for ($i = intval($found[1]); $i <= intval($found[2]); $i++) {
@@ -274,7 +275,7 @@ class MethodSchedule implements iMethod
      */
     public static function parseDaysOfWeek($daysOfWeek)
     {
-        if (strlen($daysOfWeek) <= 0) {
+        if ($daysOfWeek == '') {
             return [];
         }
 
@@ -305,17 +306,17 @@ class MethodSchedule implements iMethod
      */
     public static function parseMonthsOfYear($monthsOfYear)
     {
-        if (strlen($monthsOfYear) <= 0) {
+        if ($monthsOfYear == '') {
             return [];
         }
 
         $result = [];
-        $days = explode(",", $monthsOfYear);
-        foreach ($days as $day) {
-            $day = trim($day);
+        $months = explode(",", $monthsOfYear);
+        foreach ($months as $month) {
+            $month = trim($month);
             $found = [];
             if (
-                preg_match("/^(\d)$/", $day, $found)
+                preg_match("/^(\d{1,2})$/", $month, $found)
                 && $found[1] >= 1
                 && $found[1] <= 12
             ) {
@@ -336,7 +337,7 @@ class MethodSchedule implements iMethod
      */
     public static function parseTimesOfDay($time)
     {
-        if (strlen($time) <= 0) {
+        if ($time == '') {
             return null;
         }
 

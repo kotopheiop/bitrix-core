@@ -13,15 +13,24 @@ ClearVars();
 
 function UserInfo($USER_ID)
 {
-    if (intval($USER_ID) <= 0)
+    if (intval($USER_ID) <= 0) {
         return "";
+    }
     $user = CUser::GetByID($USER_ID);
-    if ($user_arr = $user->Fetch())
-        return '[<a title="' . GetMessage("MAIN_USER_PROFILE") . '" href="user_edit.php?ID=' . $user_arr["ID"] . '&amp;lang=' . LANG . '">' . $user_arr["ID"] . '</a>] (' . htmlspecialcharsbx($user_arr["LOGIN"]) . ') ' . htmlspecialcharsbx($user_arr["NAME"]) . ' ' . htmlspecialcharsbx($user_arr["LAST_NAME"]);
+    if ($user_arr = $user->Fetch()) {
+        return '[<a title="' . GetMessage(
+                "MAIN_USER_PROFILE"
+            ) . '" href="user_edit.php?ID=' . $user_arr["ID"] . '&amp;lang=' . LANG . '">' . $user_arr["ID"] . '</a>] (' . htmlspecialcharsbx(
+                $user_arr["LOGIN"]
+            ) . ') ' . htmlspecialcharsbx($user_arr["NAME"]) . ' ' . htmlspecialcharsbx($user_arr["LAST_NAME"]);
+    }
 }
 
-if (!$USER->CanDoOperation('edit_own_profile') && !$USER->CanDoOperation('edit_other_settings') && !$USER->CanDoOperation('view_other_settings'))
+if (!$USER->CanDoOperation('edit_own_profile') && !$USER->CanDoOperation(
+        'edit_other_settings'
+    ) && !$USER->CanDoOperation('view_other_settings')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $isAdmin = $USER->CanDoOperation('edit_other_settings');
 
@@ -35,7 +44,12 @@ $bVarsFromForm = false;
 if ($ID > 0 && !$isAdmin) {
     $db_fav = CFavorites::GetByID($ID);
     if (($db_fav_arr = $db_fav->Fetch()) && $USER->GetID() <> $db_fav_arr["USER_ID"]) {
-        CAdminMessage::ShowMessage(array("MESSAGE" => GetMessage("fav_edit_access_error"), "DETAILS" => GetMessage("fav_edit_access_error_mess")));
+        CAdminMessage::ShowMessage(
+            array(
+                "MESSAGE" => GetMessage("fav_edit_access_error"),
+                "DETAILS" => GetMessage("fav_edit_access_error_mess")
+            )
+        );
         require_once($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/epilog_admin.php");
     }
 }
@@ -63,29 +77,34 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && ($_POST['save'] <> "" || $_POST['app
         $arFields["MODULE_ID"] = ($arFields["COMMON"] == "Y" && $_POST['MODULE_ID'] <> "" ? $_POST['MODULE_ID'] : false);
     }
 
-    if ($ID > 0)
+    if ($ID > 0) {
         $res = CFavorites::Update($ID, $arFields);
-    else {
+    } else {
         $ID = CFavorites::Add($arFields);
         $res = ($ID > 0);
     }
 
     if ($res) {
         if ($apply <> "") {
-            $_SESSION["SESS_ADMIN"]["FAVORITES_EDIT_MESSAGE"] = array("MESSAGE" => GetMessage("fav_edit_success"), "TYPE" => "OK");
+            \Bitrix\Main\Application::getInstance()->getSession()["SESS_ADMIN"]["FAVORITES_EDIT_MESSAGE"] = array(
+                "MESSAGE" => GetMessage("fav_edit_success"),
+                "TYPE" => "OK"
+            );
             LocalRedirect("favorite_edit.php?ID=" . $ID . "&lang=" . LANG);
-        } else
+        } else {
             LocalRedirect(($_REQUEST["addurl"] <> "" ? $_REQUEST["addurl"] : "favorite_list.php?lang=" . LANG));
+        }
     } else {
-        if ($e = $APPLICATION->GetException())
+        if ($e = $APPLICATION->GetException()) {
             $message = new CAdminMessage(GetMessage("fav_edit_error"), $e);
+        }
         $bVarsFromForm = true;
     }
-
 }
 
-if ($_REQUEST["encoded"] == "Y")
+if ($_REQUEST["encoded"] == "Y") {
     CUtil::decodeURIComponent($_REQUEST["name"]);
+}
 $str_NAME = htmlspecialcharsbx($_REQUEST["name"]);
 $str_URL = htmlspecialcharsbx($_REQUEST["addurl"]);
 $str_C_SORT = 100;
@@ -95,11 +114,13 @@ $str_LANGUAGE_ID = LANGUAGE_ID;
 
 if ($ID > 0) {
     $fav = CFavorites::GetByID($ID);
-    if (!($fav_arr = $fav->ExtractFields("str_")))
+    if (!($fav_arr = $fav->ExtractFields("str_"))) {
         $ID = 0;
+    }
 }
-if ($bVarsFromForm)
+if ($bVarsFromForm) {
     $DB->InitTableVarsForEdit("b_favorite", "", "str_");
+}
 
 $sDocTitle = ($ID > 0 ? GetMessage("MAIN_EDIT_RECORD", array("#ID#" => $ID)) : GetMessage("MAIN_NEW_RECORD"));
 
@@ -125,20 +146,26 @@ if ($ID > 0) {
     $aMenu[] = array(
         "TEXT" => GetMessage("fav_edit_del"),
         "TITLE" => GetMessage("fav_edit_del_title"),
-        "LINK" => "javascript:if(confirm('" . GetMessage("fav_edit_del_conf") . "')) window.location='favorite_list.php?ID=" . $ID . "&action=delete&lang=" . LANG . "&" . bitrix_sessid_get() . "';",
+        "LINK" => "javascript:if(confirm('" . GetMessage(
+                "fav_edit_del_conf"
+            ) . "')) window.location='favorite_list.php?ID=" . $ID . "&action=delete&lang=" . LANG . "&" . bitrix_sessid_get(
+            ) . "';",
         "ICON" => "btn_delete",
     );
 }
 $context = new CAdminContextMenu($aMenu);
 $context->Show();
 
-if (is_array($_SESSION["SESS_ADMIN"]["FAVORITES_EDIT_MESSAGE"])) {
-    CAdminMessage::ShowMessage($_SESSION["SESS_ADMIN"]["FAVORITES_EDIT_MESSAGE"]);
-    $_SESSION["SESS_ADMIN"]["FAVORITES_EDIT_MESSAGE"] = false;
+if (is_array(\Bitrix\Main\Application::getInstance()->getSession()["SESS_ADMIN"]["FAVORITES_EDIT_MESSAGE"])) {
+    CAdminMessage::ShowMessage(
+        \Bitrix\Main\Application::getInstance()->getSession()["SESS_ADMIN"]["FAVORITES_EDIT_MESSAGE"]
+    );
+    \Bitrix\Main\Application::getInstance()->getSession()["SESS_ADMIN"]["FAVORITES_EDIT_MESSAGE"] = false;
 }
 
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 
 $aTabs = array(
     array("DIV" => "edit1", "TAB" => GetMessage("fav_edit_tab"), "TITLE" => GetMessage("fav_edit_tab_title")),
@@ -157,13 +184,13 @@ $tabControl = new CAdminTabControl("tabControl", $aTabs);
         $tabControl->Begin();
         $tabControl->BeginNextTab();
         ?>
-        <? if (strlen($str_TIMESTAMP_X) > 0) : ?>
+        <? if ($str_TIMESTAMP_X <> '') : ?>
             <tr>
                 <td><? echo GetMessage("MAIN_TIMESTAMP_X") ?></td>
                 <td><?= $str_TIMESTAMP_X ?> / <? echo UserInfo($str_MODIFIED_BY) ?></td>
             </tr>
         <? endif; ?>
-        <? if (strlen($str_DATE_CREATE) > 0) : ?>
+        <? if ($str_DATE_CREATE <> '') : ?>
             <tr>
                 <td><? echo GetMessage("MAIN_CREATED") ?></td>
                 <td><?= $str_DATE_CREATE ?> / <? echo UserInfo($str_CREATED_BY) ?></td>
@@ -209,9 +236,20 @@ $tabControl = new CAdminTabControl("tabControl", $aTabs);
                 <td><? echo GetMessage("fav_edit_user") ?></td>
                 <td><?
                     $sUser = "";
-                    if ($ID > 0)
+                    if ($ID > 0) {
                         $sUser = UserInfo($str_USER_ID);
-                    echo FindUserID("USER_ID", ($str_USER_ID > 0 ? $str_USER_ID : ""), $sUser, "favform", "10", "", " ... ", "", "");
+                    }
+                    echo FindUserID(
+                        "USER_ID",
+                        ($str_USER_ID > 0 ? $str_USER_ID : ""),
+                        $sUser,
+                        "favform",
+                        "10",
+                        "",
+                        " ... ",
+                        "",
+                        ""
+                    );
                     ?>
                 </td>
             </tr>
@@ -224,7 +262,11 @@ $tabControl = new CAdminTabControl("tabControl", $aTabs);
                         $a = CModule::GetDropDownList();
                         while ($ar = $a->Fetch()):
                             ?>
-                            <option value="<? echo htmlspecialcharsbx($ar["REFERENCE_ID"]) ?>"<? if ($ar["REFERENCE_ID"] == $str_MODULE_ID) echo " selected" ?>><? echo htmlspecialcharsbx($ar["REFERENCE"]) ?></option>
+                            <option value="<? echo htmlspecialcharsbx(
+                                $ar["REFERENCE_ID"]
+                            ) ?>"<? if ($ar["REFERENCE_ID"] == $str_MODULE_ID) echo " selected" ?>><? echo htmlspecialcharsbx(
+                                    $ar["REFERENCE"]
+                                ) ?></option>
                         <?endwhile ?>
                     </select>
                     <script type="text/javascript">
@@ -241,10 +283,12 @@ $tabControl = new CAdminTabControl("tabControl", $aTabs);
         endif; //$isAdmin
         ?>
         <?
-        $tabControl->Buttons(array(
-            "disabled" => false,
-            "back_url" => ($_REQUEST["addurl"] <> "" ? $_REQUEST["addurl"] : "favorite_list.php?lang=" . LANG),
-        ));
+        $tabControl->Buttons(
+            array(
+                "disabled" => false,
+                "back_url" => ($_REQUEST["addurl"] <> "" ? $_REQUEST["addurl"] : "favorite_list.php?lang=" . LANG),
+            )
+        );
         $tabControl->End();
         ?>
     </form>

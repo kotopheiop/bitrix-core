@@ -12,7 +12,8 @@ use Bitrix\Report\VisualConstructor\IReportSingleData;
  * Class EmptyReport
  * @package Bitrix\Report\VisualConstructor\Handler
  */
-class EmptyReport extends BaseReport implements IReportMultipleBiGroupedData, IReportMultipleGroupedData, IReportMultipleData, IReportSingleData
+class EmptyReport extends BaseReport implements IReportMultipleBiGroupedData, IReportMultipleGroupedData,
+                                                IReportMultipleData, IReportSingleData
 {
 
     /**
@@ -41,8 +42,6 @@ class EmptyReport extends BaseReport implements IReportMultipleBiGroupedData, IR
         if ($calculateField) {
             $this->removeFormElement($calculateField);
         }
-
-
     }
 
     /**

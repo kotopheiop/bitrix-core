@@ -151,8 +151,9 @@ class MailBlockBase
     {
         $result = false;
         $fullPathOfFile = \Bitrix\Main\Loader::getLocal(static::LOCAL_DIR_BLOCK . bx_basename($blockName) . '.html');
-        if ($fullPathOfFile)
+        if ($fullPathOfFile) {
             $result = File::putFileContents($fullPathOfFile, $html);
+        }
 
         return $result;
     }

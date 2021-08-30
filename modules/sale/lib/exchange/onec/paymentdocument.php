@@ -306,14 +306,16 @@ class PaymentDocument extends DocumentBase
                         case 'PROP_VALUES':
                             $result .= $this->openNodeDirectory($level + 2, $code);
                             $result .= $this->openNodeDirectory($level + 3, 'PROP_VALUE');
-                            foreach ($value as $k => $v)
+                            foreach ($value as $k => $v) {
                                 $result .= $this->formatXMLNode($level + 4, $k, $v);
+                            }
                             $result .= $this->closeNodeDirectory($level + 3, 'PROP_VALUE');
                             $result .= $this->closeNodeDirectory($level + 2, $code);
                             break;
                     }
-                } else
+                } else {
                     $result .= $this->formatXMLNode($level + 2, $code, $value);
+                }
             }
             $result .= $this->closeNodeDirectory($level + 1, 'CASHBOX_CHECK');
         }

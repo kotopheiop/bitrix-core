@@ -1,4 +1,4 @@
-<?
+<?php
 
 use Bitrix\Iblock;
 use Bitrix\Main;
@@ -11,7 +11,7 @@ class CALLSaleProduct
 {
     public static $arProductIblockInfoCache = array();
 
-    static function GetProductSkuProps($ID, $IBLOCK_ID = '', $getExt = false)
+    public static function GetProductSkuProps($ID, $IBLOCK_ID = '', $getExt = false)
     {
         $getExt = ($getExt === true);
         $arSkuProps = array();
@@ -19,8 +19,9 @@ class CALLSaleProduct
         $IBLOCK_ID = (int)$IBLOCK_ID;
         if ($ID > 0 && \Bitrix\Main\Loader::includeModule('catalog')) {
             $filter = array('ID' => $ID, 'ACTIVE' => 'Y');
-            if ($IBLOCK_ID > 0)
+            if ($IBLOCK_ID > 0) {
                 $filter['IBLOCK_ID'] = $IBLOCK_ID;
+            }
             $res = CIBlockElement::GetList(
                 array(),
                 $filter,
@@ -47,21 +48,23 @@ class CALLSaleProduct
                             $boolArr = is_array($prop["VALUE"]);
                             if (
                                 ($boolArr && !empty($prop["VALUE"]))
-                                || (!$boolArr && strlen($prop["VALUE"]) > 0)
+                                || (!$boolArr && $prop["VALUE"] <> '')
                             ) {
                                 $displayProperty = CIBlockFormatProperties::GetDisplayValue($arElement, $prop, '');
                                 $mxValues = '';
                                 if ('E' == $prop['PROPERTY_TYPE']) {
                                     if (!empty($displayProperty['LINK_ELEMENT_VALUE'])) {
                                         $mxValues = array();
-                                        foreach ($displayProperty['LINK_ELEMENT_VALUE'] as $arTempo)
+                                        foreach ($displayProperty['LINK_ELEMENT_VALUE'] as $arTempo) {
                                             $mxValues[] = $arTempo['NAME'] . ' [' . $arTempo['ID'] . ']';
+                                        }
                                     }
                                 } elseif ('G' == $prop['PROPERTY_TYPE']) {
                                     if (!empty($displayProperty['LINK_SECTION_VALUE'])) {
                                         $mxValues = array();
-                                        foreach ($displayProperty['LINK_SECTION_VALUE'] as $arTempo)
+                                        foreach ($displayProperty['LINK_SECTION_VALUE'] as $arTempo) {
                                             $mxValues[] = $arTempo['NAME'] . ' [' . $arTempo['ID'] . ']';
+                                        }
                                     }
                                 }
                                 if (empty($mxValues)) {
@@ -72,10 +75,14 @@ class CALLSaleProduct
                                         'ID' => $prop["ID"],
                                         'CODE' => $prop['CODE'],
                                         'NAME' => $prop["NAME"],
-                                        'VALUE' => strip_tags(is_array($mxValues) ? implode("/ ", $mxValues) : $mxValues)
+                                        'VALUE' => strip_tags(
+                                            is_array($mxValues) ? implode("/ ", $mxValues) : $mxValues
+                                        )
                                     );
                                 } else {
-                                    $arSkuProps[$prop["NAME"]] = strip_tags(is_array($mxValues) ? implode("/ ", $mxValues) : $mxValues);
+                                    $arSkuProps[$prop["NAME"]] = strip_tags(
+                                        is_array($mxValues) ? implode("/ ", $mxValues) : $mxValues
+                                    );
                                 }
                             }
                         }
@@ -86,7 +93,6 @@ class CALLSaleProduct
         }
         return $arSkuProps;
     }
-
 
     /**
      * get sku for product.
@@ -99,17 +105,25 @@ class CALLSaleProduct
      * @param array $arProduct Iblock list.
      * @return array|false
      */
-    function GetProductSku($USER_ID, $LID, $PRODUCT_ID, $PRODUCT_NAME = '', $CURRENCY = '', $arProduct = array())
-    {
+    public static function GetProductSku(
+        $USER_ID,
+        $LID,
+        $PRODUCT_ID,
+        $PRODUCT_NAME = '',
+        $CURRENCY = '',
+        $arProduct = array()
+    ) {
         $USER_ID = (int)$USER_ID;
 
         $PRODUCT_ID = (int)$PRODUCT_ID;
-        if ($PRODUCT_ID <= 0)
+        if ($PRODUCT_ID <= 0) {
             return false;
+        }
 
         $LID = trim($LID);
-        if ($LID == '')
+        if ($LID == '') {
             return false;
+        }
 
         $PRODUCT_NAME = trim($PRODUCT_NAME);
         $arResult = array();
@@ -117,27 +131,34 @@ class CALLSaleProduct
 
         static $arCacheGroups = array();
 
-        if (!is_set($arCacheGroups[$USER_ID]))
+        if (!is_set($arCacheGroups[$USER_ID])) {
             $arCacheGroups[$USER_ID] = CUser::GetUserGroup($USER_ID);
+        }
         $arGroups = $arCacheGroups[$USER_ID];
 
-        if (empty($arProduct))
+        if (empty($arProduct)) {
             $arProduct = CSaleProduct::GetProductListIblockInfo(array($PRODUCT_ID));
+        }
 
         static $arOffersIblock = array();
         if (!is_set($arOffersIblock[$arProduct["IBLOCK_ID"]])) {
             $mxResult = CCatalogSKU::GetInfoByProductIBlock($arProduct["IBLOCK_ID"]);
-            if (is_array($mxResult))
+            if (is_array($mxResult)) {
                 $arOffersIblock[$arProduct["IBLOCK_ID"]] = $mxResult["IBLOCK_ID"];
+            }
         }
 
         if ($arOffersIblock[$arProduct["IBLOCK_ID"]] > 0) {
-
             static $arCacheOfferProperties = array();
             if (!is_set($arCacheOfferProperties[$arOffersIblock[$arProduct["IBLOCK_ID"]]])) {
-                $dbOfferProperties = CIBlock::GetProperties($arOffersIblock[$arProduct["IBLOCK_ID"]], array(), array("!XML_ID" => "CML2_LINK"));
-                while ($arOfferProperties = $dbOfferProperties->Fetch())
+                $dbOfferProperties = CIBlock::GetProperties(
+                    $arOffersIblock[$arProduct["IBLOCK_ID"]],
+                    array(),
+                    array("!XML_ID" => "CML2_LINK")
+                );
+                while ($arOfferProperties = $dbOfferProperties->Fetch()) {
                     $arCacheOfferProperties[$arOffersIblock[$arProduct["IBLOCK_ID"]]][] = $arOfferProperties;
+                }
             }
             $arOfferProperties = $arCacheOfferProperties[$arOffersIblock[$arProduct["IBLOCK_ID"]]];
 
@@ -170,23 +191,47 @@ class CALLSaleProduct
 
             $arSkuId = array();
             $arImgSku = array();
-            foreach ($arOffers as $arOffer)
+            foreach ($arOffers as $arOffer) {
                 $arSkuId[] = $arOffer['ID'];
+            }
 
             if (!empty($arSkuId)) {
-                $res = CIBlockElement::GetList(array(), array("ID" => $arSkuId), false, false, array("ID", "IBLOCK_ID", "NAME", "PREVIEW_PICTURE", "DETAIL_PICTURE", "DETAIL_PAGE_URL"));
-                while ($arOfferImg = $res->GetNext())
+                $res = CIBlockElement::GetList(
+                    array(),
+                    array("ID" => $arSkuId),
+                    false,
+                    false,
+                    array(
+                        "ID",
+                        "IBLOCK_ID",
+                        "NAME",
+                        "PREVIEW_PICTURE",
+                        "DETAIL_PICTURE",
+                        "DETAIL_PAGE_URL"
+                    )
+                );
+                while ($arOfferImg = $res->GetNext()) {
                     $arImgSku[$arOfferImg["ID"]] = $arOfferImg;
+                }
             }
 
             foreach ($arOffers as $arOffer) {
                 $arPrice = CCatalogProduct::GetOptimalPrice($arOffer['ID'], 1, $arGroups, "N", array(), $LID);
                 if (empty($arPrice)) {
                     break;
-                } elseif (strlen($CURRENCY) > 0) {
-                    $arPrice["PRICE"]["PRICE"] = CCurrencyRates::ConvertCurrency($arPrice["PRICE"]["PRICE"], $arPrice["PRICE"]["CURRENCY"], $CURRENCY);
-                    if ($arPrice["DISCOUNT_PRICE"] > 0)
-                        $arPrice["DISCOUNT_PRICE"] = CCurrencyRates::ConvertCurrency($arPrice["DISCOUNT_PRICE"], $arPrice["PRICE"]["CURRENCY"], $CURRENCY);
+                } elseif ($CURRENCY <> '') {
+                    $arPrice["PRICE"]["PRICE"] = CCurrencyRates::ConvertCurrency(
+                        $arPrice["PRICE"]["PRICE"],
+                        $arPrice["PRICE"]["CURRENCY"],
+                        $CURRENCY
+                    );
+                    if ($arPrice["DISCOUNT_PRICE"] > 0) {
+                        $arPrice["DISCOUNT_PRICE"] = CCurrencyRates::ConvertCurrency(
+                            $arPrice["DISCOUNT_PRICE"],
+                            $arPrice["PRICE"]["CURRENCY"],
+                            $CURRENCY
+                        );
+                    }
 
                     $arPrice["PRICE"]["CURRENCY"] = $CURRENCY;
                 }
@@ -195,34 +240,46 @@ class CALLSaleProduct
                 $arOffer["CAN_BUY"] = "N";
                 $arCatalogProduct = CCatalogProduct::GetByID($arOffer['ID']);
                 if (!empty($arCatalogProduct)) {
-                    if ($arCatalogProduct["CAN_BUY_ZERO"] != "Y" && ($arCatalogProduct["QUANTITY_TRACE"] == "Y" && doubleval($arCatalogProduct["QUANTITY"]) <= 0))
+                    if ($arCatalogProduct["CAN_BUY_ZERO"] != "Y" && ($arCatalogProduct["QUANTITY_TRACE"] == "Y" && doubleval(
+                                $arCatalogProduct["QUANTITY"]
+                            ) <= 0)) {
                         $arOffer["CAN_BUY"] = "N";
-                    else
+                    } else {
                         $arOffer["CAN_BUY"] = "Y";
+                    }
                 }
 
                 $arSkuTmp["ImageUrl"] = '';
                 if ($arOffer["CAN_BUY"] == "Y") {
                     $productImg = "";
                     if (isset($arImgSku[$arOffer['ID']]) && !empty($arImgSku[$arOffer['ID']])) {
-                        if ('' == $PRODUCT_NAME)
+                        if ('' == $PRODUCT_NAME) {
                             $PRODUCT_NAME = $arImgSku[$arOffer['ID']]["~NAME"];
+                        }
 
-                        if ($arImgSku[$arOffer['ID']]["PREVIEW_PICTURE"] != "")
+                        if ($arImgSku[$arOffer['ID']]["PREVIEW_PICTURE"] != "") {
                             $productImg = $arImgSku[$arOffer['ID']]["PREVIEW_PICTURE"];
-                        elseif ($arImgSku[$arOffer['ID']]["DETAIL_PICTURE"] != "")
+                        } elseif ($arImgSku[$arOffer['ID']]["DETAIL_PICTURE"] != "") {
                             $productImg = $arImgSku[$arOffer['ID']]["DETAIL_PICTURE"];
+                        }
 
                         if ($productImg == "") {
-                            if ($arProduct["PREVIEW_PICTURE"] != "")
+                            if ($arProduct["PREVIEW_PICTURE"] != "") {
                                 $productImg = $arProduct["PREVIEW_PICTURE"];
-                            elseif ($arProduct["DETAIL_PICTURE"] != "")
+                            } elseif ($arProduct["DETAIL_PICTURE"] != "") {
                                 $productImg = $arProduct["DETAIL_PICTURE"];
+                            }
                         }
 
                         if ($productImg != "") {
                             $arFile = CFile::GetFileArray($productImg);
-                            $productImg = CFile::ResizeImageGet($arFile, array('width' => 80, 'height' => 80), BX_RESIZE_IMAGE_PROPORTIONAL, false, false);
+                            $productImg = CFile::ResizeImageGet(
+                                $arFile,
+                                array('width' => 80, 'height' => 80),
+                                BX_RESIZE_IMAGE_PROPORTIONAL,
+                                false,
+                                false
+                            );
                             $arSkuTmp["ImageUrl"] = $productImg["src"];
                         }
                     }
@@ -235,10 +292,11 @@ class CALLSaleProduct
 
                 foreach ($arIblockOfferProps as $arCode) {
                     if (array_key_exists($arCode["CODE"], $arOffer["PROPERTIES"])) {
-                        if (is_array($arOffer["PROPERTIES"][$arCode["CODE"]]["VALUE"]))
+                        if (is_array($arOffer["PROPERTIES"][$arCode["CODE"]]["VALUE"])) {
                             $arSkuTmp[] = implode("/", $arOffer["PROPERTIES"][$arCode["CODE"]]["VALUE"]);
-                        else
+                        } else {
                             $arSkuTmp[] = $arOffer["PROPERTIES"][$arCode["CODE"]]["VALUE"];
+                        }
                     }
                 }
 
@@ -271,17 +329,25 @@ class CALLSaleProduct
                 $arSkuTmp["DISCOUNT_PRICE"] = '';
                 $arSkuTmp["DISCOUNT_PRICE_FORMATED"] = '';
                 $arSkuTmp["PRICE"] = $arPrice["PRICE"]["PRICE"];
-                $arSkuTmp["PRICE_FORMATED"] = CCurrencyLang::CurrencyFormat($arPrice["PRICE"]["PRICE"], $arPrice["PRICE"]["CURRENCY"], false);
+                $arSkuTmp["PRICE_FORMATED"] = CCurrencyLang::CurrencyFormat(
+                    $arPrice["PRICE"]["PRICE"],
+                    $arPrice["PRICE"]["CURRENCY"],
+                    false
+                );
 
                 $arPriceType = GetCatalogGroup($arPrice["PRICE"]["CATALOG_GROUP_ID"]);
                 $arSkuTmp["PRICE_TYPE"] = $arPriceType["NAME_LANG"];
                 $arSkuTmp["VAT_RATE"] = $arPrice["PRICE"]["VAT_RATE"];
 
                 if (count($arPrice["DISCOUNT"]) > 0) {
-                    $discountPercent = IntVal($arPrice["DISCOUNT"]["VALUE"]);
+                    $discountPercent = intval($arPrice["DISCOUNT"]["VALUE"]);
 
                     $arSkuTmp["DISCOUNT_PRICE"] = $arPrice["DISCOUNT_PRICE"];
-                    $arSkuTmp["DISCOUNT_PRICE_FORMATED"] = CCurrencyLang::CurrencyFormat($arPrice["DISCOUNT_PRICE"], $arPrice["PRICE"]["CURRENCY"], false);
+                    $arSkuTmp["DISCOUNT_PRICE_FORMATED"] = CCurrencyLang::CurrencyFormat(
+                        $arPrice["DISCOUNT_PRICE"],
+                        $arPrice["PRICE"]["CURRENCY"],
+                        false
+                    );
                 }
 
                 $arCurFormat = CCurrencyLang::GetCurrencyFormat($arPrice["PRICE"]["CURRENCY"]);
@@ -294,8 +360,9 @@ class CALLSaleProduct
             }
             if ((!is_array($arIblockOfferProps) || empty($arIblockOfferProps)) && is_array($arSku) && !empty($arSku)) {
                 $arIblockOfferProps[0] = array("CODE" => "TITLE", "NAME" => GetMessage("SKU_TITLE"));
-                foreach ($arSku as $key => $val)
+                foreach ($arSku as $key => $val) {
                     $arSku[$key][0] = $val["NAME"];
+                }
             }
 
             $arResult["SKU_ELEMENTS"] = $arSku;
@@ -316,21 +383,25 @@ class CALLSaleProduct
      */
     public static function GetProductListIblockInfo($arProductId)
     {
-        if (!CModule::IncludeModule('iblock'))
+        if (!CModule::IncludeModule('iblock')) {
             return false;
+        }
         $arNewProductId = array();
         $arResult = array();
 
-        if (!is_array($arProductId))
+        if (!is_array($arProductId)) {
             $arProductId = array($arProductId);
+        }
 
         foreach ($arProductId as $productId) {
             $productId = (int)$productId;
-            if ($productId <= 0)
+            if ($productId <= 0) {
                 return false;
+            }
 
-            if (!isset(self::$arProductIblockInfoCache[$productId]))
+            if (!isset(self::$arProductIblockInfoCache[$productId])) {
                 $arNewProductId[$productId] = $productId;
+            }
         }
 
         if (!empty($arNewProductId)) {
@@ -341,20 +412,22 @@ class CALLSaleProduct
                 false,
                 array('ID', 'IBLOCK_ID', 'IBLOCK_SECTION_ID', 'PREVIEW_PICTURE', 'DETAIL_PICTURE')
             );
-            while ($arProduct = $dbProduct->Fetch())
+            while ($arProduct = $dbProduct->Fetch()) {
                 self::$arProductIblockInfoCache[$arProduct["ID"]] = $arProduct;
+            }
         }
 
         foreach ($arProductId as $productId) {
-            if (isset(self::$arProductIblockInfoCache[$productId]))
+            if (isset(self::$arProductIblockInfoCache[$productId])) {
                 $arResult[$productId] = self::$arProductIblockInfoCache[$productId];
+            }
         }
 
         return $arResult;
     }
 
     /** @deprecated */
-    function RefreshProductList()
+    public static function RefreshProductList()
     {
         $liveTime = (int)Main\Config\Option::get('sale', 'p2p_del_exp', 10);
         \Bitrix\Sale\Product2ProductTable::refreshProductStatistic($liveTime);
@@ -372,47 +445,65 @@ class CALLSaleProduct
      * @param int $cntProductDefault Max count.
      * @return array
      */
-    function GetRecommendetProduct($USER_ID, $LID, $arFilterRecomendet = array(), $recomMore = 'N', $cntProductDefault = 2)
-    {
+    public static function GetRecommendetProduct(
+        $USER_ID,
+        $LID,
+        $arFilterRecomendet = array(),
+        $recomMore = 'N',
+        $cntProductDefault = 2
+    ) {
         $arRecomendetResult = array();
 
         if (CModule::IncludeModule('catalog') && !empty($arFilterRecomendet)) {
             $arRecomendet = array();
-            if (!is_array($arFilterRecomendet))
+            if (!is_array($arFilterRecomendet)) {
                 $arFilterRecomendet = array($arFilterRecomendet);
+            }
             Main\Type\Collection::normalizeArrayValuesByInt($arFilterRecomendet);
-            if (empty($arFilterRecomendet))
+            if (empty($arFilterRecomendet)) {
                 return $arRecomendetResult;
+            }
 
             $iblockRecommended = array();
-            $productIterator = Iblock\ElementTable::getList(array(
-                'select' => array('ID', 'IBLOCK_ID'),
-                'filter' => array('@ID' => $arFilterRecomendet, '=ACTIVE' => 'Y')
-            ));
+            $productIterator = Iblock\ElementTable::getList(
+                array(
+                    'select' => array('ID', 'IBLOCK_ID'),
+                    'filter' => array('@ID' => $arFilterRecomendet, '=ACTIVE' => 'Y')
+                )
+            );
             while ($product = $productIterator->fetch()) {
                 $product['ID'] = (int)$product['ID'];
                 $product['IBLOCK_ID'] = (int)$product['IBLOCK_ID'];
-                if (!isset($iblockRecommended[$product['IBLOCK_ID']]))
+                if (!isset($iblockRecommended[$product['IBLOCK_ID']])) {
                     $iblockRecommended[$product['IBLOCK_ID']] = array();
+                }
                 $iblockRecommended[$product['IBLOCK_ID']][] = $product['ID'];
             }
             unset($product, $productIterator);
-            if (empty($iblockRecommended))
+            if (empty($iblockRecommended)) {
                 return $arRecomendetResult;
+            }
 
             $propertyList = array();
-            $propertyIterator = Iblock\PropertyTable::getList(array(
-                'select' => array('ID', 'IBLOCK_ID'),
-                'filter' => array('@IBLOCK_ID' => array_keys($iblockRecommended), '=CODE' => 'RECOMMEND', '=PROPERTY_TYPE' => Iblock\PropertyTable::TYPE_ELEMENT)
-            ));
+            $propertyIterator = Iblock\PropertyTable::getList(
+                array(
+                    'select' => array('ID', 'IBLOCK_ID'),
+                    'filter' => array(
+                        '@IBLOCK_ID' => array_keys($iblockRecommended),
+                        '=CODE' => 'RECOMMEND',
+                        '=PROPERTY_TYPE' => Iblock\PropertyTable::TYPE_ELEMENT
+                    )
+                )
+            );
             while ($property = $propertyIterator->fetch()) {
                 $property['ID'] = (int)$property['ID'];
                 $property['IBLOCK_ID'] = (int)$property['IBLOCK_ID'];
                 $propertyList[$property['IBLOCK_ID']] = $property['ID'];
             }
             unset($property, $propertyIterator);
-            if (empty($propertyList))
+            if (empty($propertyList)) {
                 return $arRecomendetResult;
+            }
 
             foreach ($propertyList as $iblockID => $propertyID) {
                 $propertyValue = 'PROPERTY_' . $propertyID;
@@ -421,19 +512,22 @@ class CALLSaleProduct
                 $propertyValue .= '_VALUE';
                 $elementIterator = CIBlockElement::GetList(array(), $filter, false, false, $select);
                 while ($element = $elementIterator->Fetch()) {
-                    if (empty($element[$propertyValue]))
+                    if (empty($element[$propertyValue])) {
                         continue;
+                    }
                     if (is_array($element[$propertyValue])) {
                         foreach ($element[$propertyValue] as &$recId) {
                             $recId = (int)$recId;
-                            if ($recId > 0)
+                            if ($recId > 0) {
                                 $arRecomendet[$recId] = true;
+                            }
                         }
                         unset($recId);
                     } else {
                         $recId = (int)$element[$propertyValue];
-                        if ($recId > 0)
+                        if ($recId > 0) {
                             $arRecomendet[$recId] = true;
+                        }
                     }
                 }
             }
@@ -449,27 +543,47 @@ class CALLSaleProduct
                     $arFilter,
                     false,
                     false,
-                    array("NAME", "ID", "LID", 'IBLOCK_ID', 'IBLOCK_SECTION_ID', "DETAIL_PICTURE", "PREVIEW_PICTURE", "DETAIL_PAGE_URL")
+                    array(
+                        "NAME",
+                        "ID",
+                        "LID",
+                        'IBLOCK_ID',
+                        'IBLOCK_SECTION_ID',
+                        "DETAIL_PICTURE",
+                        "PREVIEW_PICTURE",
+                        "DETAIL_PAGE_URL"
+                    )
                 );
 
                 Catalog\Product\Price\Calculation::pushConfig();
-                Catalog\Product\Price\Calculation::setConfig(array(
-                    'CURRENCY' => Sale\Internals\SiteCurrencyTable::getSiteCurrency($LID),
-                    'PRECISION' => (int)Main\Config\Option::get('sale', 'value_precision'),
-                    'USE_DISCOUNTS' => true,
-                    'RESULT_WITH_VAT' => true
-                ));
+                Catalog\Product\Price\Calculation::setConfig(
+                    array(
+                        'CURRENCY' => Sale\Internals\SiteCurrencyTable::getSiteCurrency($LID),
+                        'PRECISION' => (int)Main\Config\Option::get('sale', 'value_precision'),
+                        'USE_DISCOUNTS' => true,
+                        'RESULT_WITH_VAT' => true
+                    )
+                );
 
                 $i = 0;
                 while ($arElement = $rsElement->GetNext()) {
-                    if (in_array($arElement["ID"], $arFilterRecomendet))
+                    if (in_array($arElement["ID"], $arFilterRecomendet)) {
                         continue;
+                    }
                     if (($recomMore == "N" && $i < $cntProductDefault) || $recomMore == "Y") {
                         $arElement["MODULE"] = "catalog";
                         $arElement["PRODUCT_PROVIDER_CLASS"] = "CCatalogProductProvider";
                         $arElement["PRODUCT_ID"] = $arElement["ID"];
 
-                        $arPrice = CCatalogProduct::GetOptimalPrice($arElement["ID"], 1, $arBuyerGroups, "N", array(), $LID, array());
+                        $arPrice = CCatalogProduct::GetOptimalPrice(
+                            $arElement["ID"],
+                            1,
+                            $arBuyerGroups,
+                            "N",
+                            array(),
+                            $LID,
+                            array()
+                        );
 
                         $currentPrice = $arPrice['RESULT_PRICE']['DISCOUNT_PRICE'];
                         $arElement["PRICE"] = $currentPrice;
@@ -477,10 +591,14 @@ class CALLSaleProduct
                         $arElement["DISCOUNT_PRICE"] = $arPrice['RESULT_PRICE']['DISCOUNT'];
 
                         if ($arElement["IBLOCK_ID"] > 0 && $arElement["IBLOCK_SECTION_ID"] > 0) {
-                            $arElement["EDIT_PAGE_URL"] = CIBlock::GetAdminElementEditLink($arElement["IBLOCK_ID"], $arElement["PRODUCT_ID"], array(
-                                "find_section_section" => $arElement["IBLOCK_SECTION_ID"],
-                                'WF' => 'Y',
-                            ));
+                            $arElement["EDIT_PAGE_URL"] = CIBlock::GetAdminElementEditLink(
+                                $arElement["IBLOCK_ID"],
+                                $arElement["PRODUCT_ID"],
+                                array(
+                                    "find_section_section" => $arElement["IBLOCK_SECTION_ID"],
+                                    'WF' => 'Y',
+                                )
+                            );
                         }
 
                         $arRecomendetResult[] = $arElement;
@@ -504,16 +622,19 @@ class CAllSaleViewedProduct
      * @param array $arFields - parameters for update
      * @return true false
      */
-    public function Update($ID, $arFields)
+    public static function Update($ID, $arFields)
     {
         global $DB;
 
-        foreach (GetModuleEvents("sale", "OnBeforeViewedUpdate", true) as $arEvent)
-            if (ExecuteModuleEventEx($arEvent, array($ID, &$arFields)) === false)
+        foreach (GetModuleEvents("sale", "OnBeforeViewedUpdate", true) as $arEvent) {
+            if (ExecuteModuleEventEx($arEvent, array($ID, &$arFields)) === false) {
                 return false;
+            }
+        }
 
-        if (isset($arFields["ID"]))
+        if (isset($arFields["ID"])) {
             unset($arFields["ID"]);
+        }
 
         $strUpdateSql = "";
         if (!empty($arFields["~DATE_VISIT"])) {
@@ -524,7 +645,7 @@ class CAllSaleViewedProduct
             $strUpdateSql .= ", DATE_VISIT = " . $DB->GetNowFunction() . " ";
         }
 
-        $ID = IntVal($ID);
+        $ID = intval($ID);
         $strUpdate = $DB->PrepareUpdate("b_sale_viewed_product", $arFields);
 
         $strSql = "UPDATE b_sale_viewed_product SET " .
@@ -532,8 +653,9 @@ class CAllSaleViewedProduct
             " WHERE ID = " . $ID . " ";
         $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 
-        foreach (GetModuleEvents("sale", "OnViewedUpdate", true) as $arEvent)
+        foreach (GetModuleEvents("sale", "OnViewedUpdate", true) as $arEvent) {
             ExecuteModuleEventEx($arEvent, array($ID, $arFields));
+        }
 
         return $ID;
     }
@@ -544,7 +666,7 @@ class CAllSaleViewedProduct
      * @param
      * @return true false
      */
-    public function ClearViewed()
+    public static function ClearViewed()
     {
         CSaleViewedProduct::_ClearViewed();
 

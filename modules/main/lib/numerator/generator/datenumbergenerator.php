@@ -43,9 +43,15 @@ class DateNumberGenerator extends NumberGenerator
     /** @inheritdoc */
     public function parseTemplate($template)
     {
-        $wordDay = date(Date::convertFormatToPhp(str_replace(["MM", "YYYY"], "", \CSite::GetDateFormat("SHORT"))), mktime(0, 0, 0, date("m"), date("d"), date("Y")));
+        $wordDay = date(
+            Date::convertFormatToPhp(str_replace(["MM", "YYYY"], "", \CSite::GetDateFormat("SHORT"))),
+            mktime(0, 0, 0, date("m"), date("d"), date("Y"))
+        );
         $wordDay = preg_replace("/[^0-9]/", "", $wordDay);
-        $wordMonth = date(Date::convertFormatToPhp(str_replace(["DD", "YYYY"], "", \CSite::GetDateFormat("SHORT"))), mktime(0, 0, 0, date("m"), date("d"), date("Y")));
+        $wordMonth = date(
+            Date::convertFormatToPhp(str_replace(["DD", "YYYY"], "", \CSite::GetDateFormat("SHORT"))),
+            mktime(0, 0, 0, date("m"), date("d"), date("Y"))
+        );
         $wordMonth = preg_replace("/[^0-9]/", "", $wordMonth);
         $template = str_replace(static::getPatternFor(static::TEMPLATE_WORD_DAY), $wordDay, $template);
         $template = str_replace(static::getPatternFor(static::TEMPLATE_WORD_MONTH), $wordMonth, $template);

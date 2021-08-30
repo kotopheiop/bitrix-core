@@ -111,7 +111,9 @@ class ApClient
             foreach ($actions as $queryKey => $cmdData) {
                 if (is_array($cmdData)) {
                     list($cmd, $cmdParams) = array_values($cmdData);
-                    $batch['cmd'][$queryKey] = $cmd . (is_array($cmdParams) ? '?' . http_build_query($this->prepareRequestData($cmdParams)) : '');
+                    $batch['cmd'][$queryKey] = $cmd . (is_array($cmdParams) ? '?' . http_build_query(
+                                $this->prepareRequestData($cmdParams)
+                            ) : '');
                 } else {
                     $batch['cmd'][$queryKey] = $cmdData;
                 }
@@ -128,10 +130,12 @@ class ApClient
 
     protected function getHttpClient()
     {
-        return new HttpClient(array(
-            'socketTimeout' => static::HTTP_SOCKET_TIMEOUT,
-            'streamTimeout' => static::HTTP_STREAM_TIMEOUT,
-        ));
+        return new HttpClient(
+            array(
+                'socketTimeout' => static::HTTP_SOCKET_TIMEOUT,
+                'streamTimeout' => static::HTTP_STREAM_TIMEOUT,
+            )
+        );
     }
 
     protected function getRequestUrl($methodName)

@@ -38,7 +38,9 @@ class Grid extends GroupedDataGrid
                 foreach ($items as $item) {
                     $result['items'][$item['groupBy']][$reportKey] = $item;
                 }
-                $result['config']['reportOptions'][$reportKey]['title'] = htmlspecialcharsbx($reportHandlerResult['config']['reportTitle']);
+                $result['config']['reportOptions'][$reportKey]['title'] = htmlspecialcharsbx(
+                    $reportHandlerResult['config']['reportTitle']
+                );
                 $result['config']['reportOptions'][$reportKey]['amount'] = !empty($reportHandlerResult['config']['amount']) ? $reportHandlerResult['config']['amount'] : [];
 
                 if (!empty($reportHandlerResult['config']['groupsLabelMap'])) {

@@ -45,12 +45,14 @@ class ElementProperty extends Base
     {
         if ($this->loadFromDatabase()) {
             if (isset($this->elementLinkProperties[$entity])) {
-                if (!is_object($this->elementLinkProperties[$entity]))
+                if (!is_object($this->elementLinkProperties[$entity])) {
                     $this->elementLinkProperties[$entity] = new Element($this->elementLinkProperties[$entity]);
+                }
                 return $this->elementLinkProperties[$entity];
             } elseif (isset($this->sectionLinkProperties[$entity])) {
-                if (!is_object($this->sectionLinkProperties[$entity]))
+                if (!is_object($this->sectionLinkProperties[$entity])) {
                     $this->sectionLinkProperties[$entity] = new Element($this->sectionLinkProperties[$entity]);
+                }
                 return $this->sectionLinkProperties[$entity];
             }
         }
@@ -72,34 +74,42 @@ class ElementProperty extends Base
             && $this->iblockId > 0
         ) {
             $properties = array();
-            $propertyList = \Bitrix\Iblock\PropertyTable::getList(array(
-                "select" => array("*"),
-                "filter" => array("=IBLOCK_ID" => $this->iblockId),
-            ));
+            $propertyList = \Bitrix\Iblock\PropertyTable::getList(
+                array(
+                    "select" => array("*"),
+                    "filter" => array("=IBLOCK_ID" => $this->iblockId),
+                )
+            );
             while ($row = $propertyList->fetch()) {
-                if ($row["USER_TYPE_SETTINGS"])
-                    $row["USER_TYPE_SETTINGS"] = unserialize($row["USER_TYPE_SETTINGS"]);
+                if ($row["USER_TYPE_SETTINGS"]) {
+                    $row["USER_TYPE_SETTINGS"] = unserialize(
+                        $row["USER_TYPE_SETTINGS"],
+                        array('allowed_classes' => false)
+                    );
+                }
 
                 $properties[$row["ID"]] = $row;
-                if ($row["CODE"] != "")
+                if ($row["CODE"] != "") {
                     $properties[$row["CODE"]] = &$properties[$row["ID"]];
+                }
             }
 
             foreach ($fields as $propertyCode => $propertyValues) {
                 if (is_array($propertyValues)) {
                     foreach ($propertyValues as $i => $propertyValue) {
                         if (is_array($propertyValue) && array_key_exists("VALUE", $propertyValue)) {
-                            if ($propertyValue["VALUE"] != "")
+                            if ($propertyValue["VALUE"] != "") {
                                 $propertyValues[$i] = $propertyValue["VALUE"];
-                            else
+                            } else {
                                 unset($propertyValues[$i]);
+                            }
                         }
                     }
                 }
 
                 if (isset($properties[$propertyCode])) {
                     $property = $properties[$propertyCode];
-                    $fieldCode = strtolower($propertyCode);
+                    $fieldCode = mb_strtolower($propertyCode);
 
                     if ($property["PROPERTY_TYPE"] === "L") {
                         if (is_numeric($propertyValues)) {
@@ -107,8 +117,9 @@ class ElementProperty extends Base
                         } elseif (is_array($propertyValues)) {
                             $value = array();
                             foreach ($propertyValues as $propertyValue) {
-                                if (is_numeric($propertyValue))
+                                if (is_numeric($propertyValue)) {
                                     $value[] = new ElementPropertyEnum($propertyValue);
+                                }
                             }
                         } else {
                             $value = $propertyValues;
@@ -123,8 +134,9 @@ class ElementProperty extends Base
                         } elseif (is_array($propertyValues)) {
                             $value = array();
                             foreach ($propertyValues as $propertyValue) {
-                                if (is_numeric($propertyValue))
+                                if (is_numeric($propertyValue)) {
                                     $value[] = new ElementPropertyElement($propertyValue);
+                                }
                             }
                         } else {
                             $value = $propertyValues;
@@ -139,14 +151,15 @@ class ElementProperty extends Base
                         } elseif (is_array($propertyValues)) {
                             $value = array();
                             foreach ($propertyValues as $propertyValue) {
-                                if (is_numeric($propertyValue))
+                                if (is_numeric($propertyValue)) {
                                     $value[] = new ElementPropertySection($propertyValue);
+                                }
                             }
                         } else {
                             $value = $propertyValues;
                         }
                     } else {
-                        if (strlen($property["USER_TYPE"])) {
+                        if ($property["USER_TYPE"] <> '') {
                             if (is_array($propertyValues)) {
                                 $value = array();
                                 foreach ($propertyValues as $propertyValue) {
@@ -162,8 +175,9 @@ class ElementProperty extends Base
 
                     $this->fieldMap[$fieldCode] = $property["ID"];
                     $this->fieldMap[$property["ID"]] = $property["ID"];
-                    if ($property["CODE"] != "")
-                        $this->fieldMap[strtolower($property["CODE"])] = $property["ID"];
+                    if ($property["CODE"] != "") {
+                        $this->fieldMap[mb_strtolower($property["CODE"])] = $property["ID"];
+                    }
 
                     $this->fields[$property["ID"]] = $value;
                 }
@@ -194,16 +208,18 @@ class ElementProperty extends Base
                     $value = $property["VALUE_ENUM"];
                 } elseif ($property["PROPERTY_TYPE"] === "E") {
                     $this->elementLinkProperties[$property["ID"]] = $property["VALUE"];
-                    if ($property["CODE"] != "")
-                        $this->elementLinkProperties[strtolower($property["CODE"])] = $property["VALUE"];
+                    if ($property["CODE"] != "") {
+                        $this->elementLinkProperties[mb_strtolower($property["CODE"])] = $property["VALUE"];
+                    }
                     $value = new ElementPropertyElement($property["VALUE"]);
                 } elseif ($property["PROPERTY_TYPE"] === "G") {
                     $this->sectionLinkProperties[$property["ID"]] = $property["VALUE"];
-                    if ($property["CODE"] != "")
-                        $this->sectionLinkProperties[strtolower($property["CODE"])] = $property["VALUE"];
+                    if ($property["CODE"] != "") {
+                        $this->sectionLinkProperties[mb_strtolower($property["CODE"])] = $property["VALUE"];
+                    }
                     $value = new ElementPropertySection($property["VALUE"]);
                 } else {
-                    if (strlen($property["USER_TYPE"])) {
+                    if ($property["USER_TYPE"] <> '') {
                         $value = new ElementPropertyUserField($property["VALUE"], $property);
                     } else {
                         $value = $property["VALUE"];
@@ -211,13 +227,15 @@ class ElementProperty extends Base
                 }
 
                 $this->fieldMap[$property["ID"]] = $property["ID"];
-                if ($property["CODE"] != "")
-                    $this->fieldMap[strtolower($property["CODE"])] = $property["ID"];
+                if ($property["CODE"] != "") {
+                    $this->fieldMap[mb_strtolower($property["CODE"])] = $property["ID"];
+                }
 
-                if ($property["MULTIPLE"] == "Y")
+                if ($property["MULTIPLE"] == "Y") {
                     $this->fields[$property["ID"]][] = $value;
-                else
+                } else {
                     $this->fields[$property["ID"]] = $value;
+                }
             }
         }
         return is_array($this->fields);
@@ -250,7 +268,8 @@ class ElementPropertyUserField extends LazyValueLoader
     {
         $propertyFormatFunction = $this->getFormatFunction();
         if ($propertyFormatFunction) {
-            return call_user_func_array($propertyFormatFunction,
+            return call_user_func_array(
+                $propertyFormatFunction,
                 array(
                     $this->property,
                     array("VALUE" => $this->key),
@@ -273,7 +292,7 @@ class ElementPropertyUserField extends LazyValueLoader
         static $propertyFormatFunction = array();
         if (!isset($propertyFormatFunction[$this->property["ID"]])) {
             $propertyFormatFunction[$this->property["ID"]] = false;
-            if ($this->property && strlen($this->property["USER_TYPE"])) {
+            if ($this->property && mb_strlen($this->property["USER_TYPE"])) {
                 $propertyUserType = \CIBlockProperty::getUserType($this->property["USER_TYPE"]);
                 if (
                     array_key_exists("GetPublicViewHTML", $propertyUserType)
@@ -296,15 +315,18 @@ class ElementPropertyEnum extends LazyValueLoader
      */
     protected function load()
     {
-        $enumList = \Bitrix\Iblock\PropertyEnumerationTable::getList(array(
-            "select" => array("VALUE"),
-            "filter" => array("=ID" => $this->key),
-        ));
+        $enumList = \Bitrix\Iblock\PropertyEnumerationTable::getList(
+            array(
+                "select" => array("VALUE"),
+                "filter" => array("=ID" => $this->key),
+            )
+        );
         $enum = $enumList->fetch();
-        if ($enum)
+        if ($enum) {
             return $enum["VALUE"];
-        else
+        } else {
             return "";
+        }
     }
 }
 
@@ -317,15 +339,18 @@ class ElementPropertyElement extends LazyValueLoader
      */
     protected function load()
     {
-        $elementList = \Bitrix\Iblock\ElementTable::getList(array(
-            "select" => array("NAME"),
-            "filter" => array("=ID" => $this->key),
-        ));
+        $elementList = \Bitrix\Iblock\ElementTable::getList(
+            array(
+                "select" => array("NAME"),
+                "filter" => array("=ID" => $this->key),
+            )
+        );
         $element = $elementList->fetch();
-        if ($element)
+        if ($element) {
             return $element["NAME"];
-        else
+        } else {
             return "";
+        }
     }
 }
 
@@ -338,14 +363,17 @@ class ElementPropertySection extends LazyValueLoader
      */
     protected function load()
     {
-        $sectionList = \Bitrix\Iblock\SectionTable::getList(array(
-            "select" => array("NAME"),
-            "filter" => array("=ID" => $this->key),
-        ));
+        $sectionList = \Bitrix\Iblock\SectionTable::getList(
+            array(
+                "select" => array("NAME"),
+                "filter" => array("=ID" => $this->key),
+            )
+        );
         $section = $sectionList->fetch();
-        if ($section)
+        if ($section) {
             return $section["NAME"];
-        else
+        } else {
             return "";
+        }
     }
 }

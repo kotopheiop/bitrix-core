@@ -18,15 +18,17 @@ class Search
         $siteId = (int)$siteId;
         $tplCode = (string)$tplCode;
 
-        $res = Landing::getList([
-            'select' => [
-                'ID'
-            ],
-            'filter' => [
-                'SITE_ID' => $siteId,
-                '=TPL_CODE' => $tplCode
+        $res = Landing::getList(
+            [
+                'select' => [
+                    'ID'
+                ],
+                'filter' => [
+                    'SITE_ID' => $siteId,
+                    '=TPL_CODE' => $tplCode
+                ]
             ]
-        ]);
+        );
         if ($row = $res->fetch()) {
             $landingId = $row['ID'];
         } else {
@@ -48,6 +50,10 @@ class Search
      */
     protected static function prepareForm(array $manifest, array $params = [])
     {
+        if (\Bitrix\Landing\Transfer\AppConfiguration::inProcess()) {
+            return $manifest;
+        }
+
         // necessary params
         if (!isset($params['resultPage'])) {
             return $manifest;
@@ -78,11 +84,13 @@ class Search
                     }
                 }
 
-                $block->setAttributes([
-                    $attributeSelector => [
-                        'action' => '#landing' . $landingId
+                $block->setAttributes(
+                    [
+                        $attributeSelector => [
+                            'action' => '#landing' . $landingId
+                        ]
                     ]
-                ]);
+                );
                 $block->save();
             },
         );

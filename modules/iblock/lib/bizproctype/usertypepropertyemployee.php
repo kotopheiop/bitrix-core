@@ -17,15 +17,17 @@ if (Loader::requireModule('bizproc')) {
          */
         public static function getType()
         {
-            if (!static::isCompatibleMode())
+            if (!static::isCompatibleMode()) {
                 return FieldType::USER;
+            }
             return FieldType::STRING;
         }
 
         public static function convertTo(FieldType $fieldType, $value, $toTypeClass)
         {
-            if (is_array($value) && isset($value['VALUE']))
+            if (is_array($value) && isset($value['VALUE'])) {
                 $value = $value['VALUE'];
+            }
 
             $value = (string)$value;
             return BaseType\User::convertTo($fieldType, $value, $toTypeClass);
@@ -39,8 +41,9 @@ if (Loader::requireModule('bizproc')) {
          */
         public static function convertFrom(FieldType $fieldType, $value, $fromTypeClass)
         {
-            if ($value === null)
+            if ($value === null) {
                 return null;
+            }
 
             /** @var BaseType\Base $fromTypeClass */
             $type = $fromTypeClass::getType();
@@ -54,7 +57,7 @@ if (Loader::requireModule('bizproc')) {
                 case FieldType::STRING:
                 case FieldType::TEXT:
                 case FieldType::USER:
-                    if (strpos($value, 'user_') === false) {
+                    if (mb_strpos($value, 'user_') === false) {
                         $value = null;
                     } elseif (static::isCompatibleMode()) {
                         $value = \CBPHelper::stripUserPrefix($value);
@@ -96,8 +99,13 @@ if (Loader::requireModule('bizproc')) {
          * @param int $renderMode Control render mode.
          * @return string
          */
-        public static function renderControlSingle(FieldType $fieldType, array $field, $value, $allowSelection, $renderMode)
-        {
+        public static function renderControlSingle(
+            FieldType $fieldType,
+            array $field,
+            $value,
+            $allowSelection,
+            $renderMode
+        ) {
             $value = static::fixUserPrefix($value);
             $renderResult = parent::renderControlSingle($fieldType, $field, $value, false, $renderMode);
 
@@ -117,19 +125,26 @@ if (Loader::requireModule('bizproc')) {
          * @param int $renderMode Control render mode.
          * @return string
          */
-        public static function renderControlMultiple(FieldType $fieldType, array $field, $value, $allowSelection, $renderMode)
-        {
+        public static function renderControlMultiple(
+            FieldType $fieldType,
+            array $field,
+            $value,
+            $allowSelection,
+            $renderMode
+        ) {
             $value = static::fixUserPrefix($value);
             $renderResult = parent::renderControlMultiple($fieldType, $field, $value, false, $renderMode);
 
             if ($allowSelection) {
                 $selectorValue = null;
-                if (!is_array($value) || is_array($value) && \CBPHelper::isAssociativeArray($value))
+                if (!is_array($value) || is_array($value) && \CBPHelper::isAssociativeArray($value)) {
                     $value = array($value);
+                }
 
                 foreach ($value as $v) {
-                    if (\CBPActivity::isExpression($v))
+                    if (\CBPActivity::isExpression($v)) {
                         $selectorValue = $v;
+                    }
                 }
                 $renderResult .= static::renderControlSelector($field, $selectorValue, true, 'employee', $fieldType);
             }
@@ -146,8 +161,9 @@ if (Loader::requireModule('bizproc')) {
         protected static function extractValue(FieldType $fieldType, array $field, array $request)
         {
             $value = (int)parent::extractValue($fieldType, $field, $request);
-            if (empty($value))
+            if (empty($value)) {
                 $value = null;
+            }
 
             if ($value !== null && !static::isCompatibleMode()) {
                 $value = "user_" . $value;
@@ -171,8 +187,9 @@ if (Loader::requireModule('bizproc')) {
         {
             $value = static::fixUserPrefix($value);
             $userType = static::getUserType($fieldType);
-            if (is_array($value) && isset($value['VALUE']))
+            if (is_array($value) && isset($value['VALUE'])) {
                 $value = $value['VALUE'];
+            }
 
             if (!empty($userType['GetPublicViewHTML'])) {
                 $result = call_user_func_array(
@@ -202,10 +219,11 @@ if (Loader::requireModule('bizproc')) {
         private static function fixUserPrefix($value)
         {
             if (!static::isCompatibleMode()) {
-                if (is_array($value) && isset($value['VALUE']))
+                if (is_array($value) && isset($value['VALUE'])) {
                     $value['VALUE'] = \CBPHelper::stripUserPrefix($value['VALUE']);
-                else
+                } else {
                     $value = \CBPHelper::stripUserPrefix($value);
+                }
             }
 
             return $value;

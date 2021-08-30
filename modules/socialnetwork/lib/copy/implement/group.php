@@ -99,7 +99,12 @@ class Group extends CopyImplementer
         $fields = [];
 
         $queryObject = \CSocNetGroup::getList(
-            ["ID" => "DESC"], ["ID" => (int)$entityId], false, false, ["*"]);
+            ["ID" => "DESC"],
+            ["ID" => (int)$entityId],
+            false,
+            false,
+            ["*"]
+        );
         while ($group = $queryObject->fetch()) {
             if ($group["IMAGE_ID"] > 0) {
                 $group["IMAGE_ID"] = \CFile::makeFileArray($group["IMAGE_ID"]);
@@ -141,18 +146,18 @@ class Group extends CopyImplementer
      * Starts copying children entities.
      *
      * @param Container $container
-     * @param int $entityId Group id.
-     * @param int $copiedEntityId Copied group id.
+     * @param int $groupId Group id.
+     * @param int $copiedGroupId Copied group id.
      * @return Result
      */
-    public function copyChildren(Container $container, $entityId, $copiedEntityId)
+    public function copyChildren(Container $container, $groupId, $copiedGroupId)
     {
-        $copiedEntityId = (int)$copiedEntityId;
-        if (!$copiedEntityId) {
+        $copiedGroupId = (int)$copiedGroupId;
+        if (!$copiedGroupId) {
             return new Result();
         }
 
-        $this->copyUfFields($entityId, $copiedEntityId, "SONET_GROUP");
+        $this->copyUfFields($groupId, $copiedGroupId, "SONET_GROUP");
 
         foreach ($this->features as $feature) {
             //todo Perhaps it�s worth making the parameters not in the array, but in the object.
@@ -160,8 +165,10 @@ class Group extends CopyImplementer
             if (method_exists($feature, "setProjectTerm")) {
                 $feature->setProjectTerm($this->projectTerm);
             }
-            $feature->copy($entityId, $copiedEntityId);
+            $feature->copy($groupId, $copiedGroupId);
         }
+
+        $this->copyFeatures($groupId, $copiedGroupId);
 
         return $this->getResult();
     }
@@ -228,7 +235,9 @@ class Group extends CopyImplementer
 
             if (!empty($fields["PROJECT_DATE_FINISH"])) {
                 $dateFinish = new \DateTime($fields["PROJECT_DATE_FINISH"]);
-                $interval = new \DateInterval("PT" . ($dateFinish->getTimestamp() - $oldDateStart->getTimestamp()) . "S");
+                $interval = new \DateInterval(
+                    "PT" . ($dateFinish->getTimestamp() - $oldDateStart->getTimestamp()) . "S"
+                );
                 $newDateStart->add($interval);
                 $fields["PROJECT_DATE_FINISH"] = $newDateStart->format($phpDateFormat);
             }
@@ -268,12 +277,14 @@ class Group extends CopyImplementer
     {
         $siteIds = [];
 
-        $queryObject = WorkgroupSiteTable::getList([
-            "filter" => [
-                "GROUP_ID" => $groupId
-            ],
-            "select" => ["SITE_ID"]
-        ]);
+        $queryObject = WorkgroupSiteTable::getList(
+            [
+                "filter" => [
+                    "GROUP_ID" => $groupId
+                ],
+                "select" => ["SITE_ID"]
+            ]
+        );
         while ($workGroupSite = $queryObject->fetch()) {
             $siteIds[] = $workGroupSite["SITE_ID"];
         }
@@ -291,5 +302,22 @@ class Group extends CopyImplementer
         }
 
         return false;
+    }
+
+    private function copyFeatures(int $groupId, int $copiedGroupId): void
+    {
+        $queryObject = \CSocNetFeatures::getList(
+            [],
+            ["ENTITY_ID" => $groupId, "ENTITY_TYPE" => SONET_ENTITY_GROUP]
+        );
+        while ($feature = $queryObject->fetch()) {
+            \CSocNetFeatures::setFeature(
+                SONET_ENTITY_GROUP,
+                $copiedGroupId,
+                $feature["FEATURE"],
+                ($feature["ACTIVE"] == "Y"),
+                false
+            );
+        }
     }
 }

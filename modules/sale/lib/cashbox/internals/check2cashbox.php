@@ -14,7 +14,8 @@ class Check2CashboxTable extends DataManager
     public static function getMap()
     {
         return array(
-            'ID' => array('primary' => true,
+            'ID' => array(
+                'primary' => true,
                 'autocomplete' => true,
                 'autoincrement' => true,
                 'data_type' => 'integer',

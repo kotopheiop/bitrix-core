@@ -18,13 +18,15 @@ final class CallbackRegistry
      */
     public static function add(array $data)
     {
-        $dbRes = Sale\Internals\CallbackRegistryTable::add([
-            'DATE_INSERT' => new Main\Type\DateTime(),
-            'DOCUMENT_ID' => $data['DOCUMENT_ID'],
-            'MODULE_ID' => $data['MODULE_ID'],
-            'CALLBACK_CLASS' => $data['CALLBACK_CLASS'],
-            'CALLBACK_METHOD' => $data['CALLBACK_METHOD'],
-        ]);
+        $dbRes = Sale\Internals\CallbackRegistryTable::add(
+            [
+                'DATE_INSERT' => new Main\Type\DateTime(),
+                'DOCUMENT_ID' => $data['DOCUMENT_ID'],
+                'MODULE_ID' => $data['MODULE_ID'],
+                'CALLBACK_CLASS' => $data['CALLBACK_CLASS'],
+                'CALLBACK_METHOD' => $data['CALLBACK_METHOD'],
+            ]
+        );
 
         return $dbRes->isSuccess();
     }
@@ -41,11 +43,13 @@ final class CallbackRegistry
         $documentId = $event->getParameter('documentId');
         $data = $event->getParameter('data');
 
-        $dbRes = Sale\Internals\CallbackRegistryTable::getList([
-            'filter' => [
-                '=DOCUMENT_ID' => $documentId
+        $dbRes = Sale\Internals\CallbackRegistryTable::getList(
+            [
+                'filter' => [
+                    '=DOCUMENT_ID' => $documentId
+                ]
             ]
-        ]);
+        );
 
         if ($result = $dbRes->fetch()) {
             if (!Main\ModuleManager::isModuleInstalled($result['MODULE_ID'])) {

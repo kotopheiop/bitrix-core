@@ -7,8 +7,6 @@ use Bitrix\Main\UrlPreview\UrlPreview;
 use Bitrix\Main\Web\HttpClient;
 use Bitrix\Main\UrlPreview\HtmlDocument;
 use Bitrix\Main\UrlPreview\Parser;
-use Bitrix\Main\Web\Json;
-
 
 class Oembed extends Parser
 {
@@ -32,11 +30,29 @@ class Oembed extends Parser
      */
     public function handle(HtmlDocument $document, HttpClient $httpClient = null)
     {
-        if (!$this->detectOembedLink($document) || strlen($this->metadataUrl) == 0) {
+        if (!$this->detectOembedLink($document) || $this->metadataUrl == '') {
             return;
         }
 
+        $isHttpClientPassed = true;
+        if (!$httpClient) {
+            $httpClient = $this->initHttpClient();
+            $isHttpClientPassed = false;
+        }
         $rawMetadata = $this->getRawMetaData($httpClient);
+        // if request was served through http - try to switch to https
+        if (
+            (
+                !$rawMetadata
+                || $httpClient->getStatus() === 403
+            )
+            && mb_strpos($this->metadataUrl, 'http://') === 0) {
+            if (!$isHttpClientPassed) {
+                $httpClient = $this->initHttpClient();
+            }
+            $metadataUrl = str_replace('http://', 'https://', $this->metadataUrl);
+            $rawMetadata = $httpClient->get($metadataUrl);
+        }
 
         if ($rawMetadata === false) {
             return;
@@ -44,8 +60,12 @@ class Oembed extends Parser
 
         $parsedMetadata = $this->parseMetadata($rawMetadata);
         if ($parsedMetadata !== false) {
-            if (strlen($this->metadataEncoding) > 0 && $document->getEncoding() !== $this->metadataEncoding) {
-                $parsedMetadata = Encoding::convertEncoding($parsedMetadata, $this->metadataEncoding, $document->getEncoding());
+            if ($this->metadataEncoding <> '' && $document->getEncoding() !== $this->metadataEncoding) {
+                $parsedMetadata = Encoding::convertEncoding(
+                    $parsedMetadata,
+                    $this->metadataEncoding,
+                    $document->getEncoding()
+                );
             }
 
             if ($document->getTitle() == '' && $parsedMetadata['title'] != '') {
@@ -83,12 +103,12 @@ class Oembed extends Parser
         preg_match_all('/<link.+?alternate.+?>/', $document->getHtml(), $linkElements);
 
         foreach ($linkElements[0] as $linkElement) {
-            $typeJson = (strpos($linkElement, $this::OEMBED_TYPE_JSON) !== false);
-            $typeXml = (strpos($linkElement, $this::OEMBED_TYPE_XML) !== false);
+            $typeJson = (mb_strpos($linkElement, $this::OEMBED_TYPE_JSON) !== false);
+            $typeXml = (mb_strpos($linkElement, $this::OEMBED_TYPE_XML) !== false);
             if ($typeJson || $typeXml) {
                 if (preg_match('/href=[\'"](.+?)[\'"]/', $linkElement, $attributes)) {
                     $this->metadataType = ($typeJson ? 'json' : 'xml');
-                    $this->metadataUrl = $attributes[1];
+                    $this->metadataUrl = htmlspecialcharsback($attributes[1]);
                     return true;
                 }
             }
@@ -132,10 +152,11 @@ class Oembed extends Parser
         $xml = new \CDataXML();
         if ($xml->LoadString($rawMetadata)) {
             //detect xml encoding
-            if (preg_match('/<\?xml[^>]+?encoding=[\'"](.+?)[\'"]\?>/', $rawMetadata, $matches))
+            if (preg_match('/<\?xml[^>]+?encoding=[\'"](.+?)[\'"]\?>/', $rawMetadata, $matches)) {
                 $this->metadataEncoding = $matches[1];
-            else
+            } else {
                 $this->metadataEncoding = 'UTF-8';
+            }
 
             $result = array();
             $dom = $xml->GetTree();
@@ -149,16 +170,21 @@ class Oembed extends Parser
         return false;
     }
 
-    protected function getRawMetaData(HttpClient $httpClient = null)
+    protected function getRawMetaData(HttpClient $httpClient)
     {
-        if (!$httpClient) {
-            $httpClient = new HttpClient();
-            $httpClient->setTimeout(5);
-            $httpClient->setStreamTimeout(5);
-            $httpClient->setHeader('User-Agent', UrlPreview::USER_AGENT, true);
-        }
         $rawMetadata = $httpClient->get($this->metadataUrl);
 
         return $rawMetadata;
+    }
+
+    protected function initHttpClient(): HttpClient
+    {
+        $httpClient = new HttpClient();
+        $httpClient->setTimeout(5);
+        $httpClient->setStreamTimeout(5);
+        $httpClient->setHeader('User-Agent', UrlPreview::USER_AGENT, true);
+        $httpClient->setPrivateIp(false);
+
+        return $httpClient;
     }
 }

@@ -39,8 +39,9 @@ class CBitrixCloudCDNClass
         if (is_array($extensions)) {
             foreach ($extensions as $extension) {
                 $extension = trim($extension, " \t\n\r");
-                if ($extension != "")
+                if ($extension != "") {
                     $this->extensions[] = $extension;
+                }
             }
         }
         return $this;

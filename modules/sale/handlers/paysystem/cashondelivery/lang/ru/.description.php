@@ -1,2 +1,3 @@
 <?
-$MESS["SALE_HPS_CASH_DELIVERY"] = "Наложенный платеж";
+
+$MESS["SALE_HPS_CASH_DELIVERY"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ";

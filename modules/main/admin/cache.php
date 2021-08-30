@@ -1,4 +1,5 @@
 <?
+
 if (
     isset($_SERVER["REQUEST_METHOD"]) && $_SERVER["REQUEST_METHOD"] == "POST"
     && isset($_REQUEST["ajax"]) && $_REQUEST["ajax"] == "y"
@@ -37,11 +38,13 @@ if (
         \Bitrix\Main\Loader::includeModule("landing")
     ) {
         \Bitrix\Landing\Block::clearRepositoryCache();
-        CAdminMessage::ShowMessage(array(
-            "MESSAGE" => GetMessage("main_cache_finished"),
-            "HTML" => true,
-            "TYPE" => "OK",
-        ));
+        CAdminMessage::ShowMessage(
+            array(
+                "MESSAGE" => GetMessage("main_cache_finished"),
+                "HTML" => true,
+                "TYPE" => "OK",
+            )
+        );
         ?>
         <script type="text/javascript">
             CloseWaitWindow();
@@ -49,42 +52,43 @@ if (
         </script>
         <?
         require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/epilog_admin_js.php");
-    } else if (
-        $_REQUEST["cachetype"] === "html"
-        || \Bitrix\Main\Data\Cache::getCacheEngineType() == "cacheenginefiles"
-    ) {
-        require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/classes/general/cache_files_cleaner.php");
+    } else {
+        if (
+            $_REQUEST["cachetype"] === "html"
+            || \Bitrix\Main\Data\Cache::getCacheEngineType() == "cacheenginefiles"
+        ) {
+            require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/classes/general/cache_files_cleaner.php");
 
-        if (isset($_POST["path"]) && is_string($_POST["path"]) && strlen($_POST["path"])) {
-            $path = $_POST["path"];
-        } else {
-            $path = "";
-            $_SESSION["CACHE_STAT"] = array();
-        }
+            if (isset($_POST["path"]) && is_string($_POST["path"]) && mb_strlen($_POST["path"])) {
+                $path = $_POST["path"];
+            } else {
+                $path = "";
+                \Bitrix\Main\Application::getInstance()->getSession()["CACHE_STAT"] = array();
+            }
 
-        $bDoNotCheckExpiredDate =
-            ($_REQUEST["cachetype"] === "all")
-            || ($_REQUEST["cachetype"] === "menu")
-            || ($_REQUEST["cachetype"] === "managed")
-            || ($_REQUEST["cachetype"] === "html");
+            $bDoNotCheckExpiredDate =
+                ($_REQUEST["cachetype"] === "all")
+                || ($_REQUEST["cachetype"] === "menu")
+                || ($_REQUEST["cachetype"] === "managed")
+                || ($_REQUEST["cachetype"] === "html");
 
-        $curentTime = time();
-        $endTime = time() + 5;
+            $curentTime = time();
+            $endTime = time() + 5;
 
-        $obCacheCleaner = new CFileCacheCleaner($_REQUEST["cachetype"]);
-        if (!$obCacheCleaner->InitPath($path)) {
-            ShowError(GetMessage("main_cache_wrong_cache_path"));
-            ?>
-            <script>
-                CloseWaitWindow();
-            </script>
-            <?
-            require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/epilog_admin_js.php");
+            $obCacheCleaner = new CFileCacheCleaner($_REQUEST["cachetype"]);
+            if (!$obCacheCleaner->InitPath($path)) {
+                ShowError(GetMessage("main_cache_wrong_cache_path"));
+                ?>
+                <script>
+                    CloseWaitWindow();
+                </script>
+                <?
+                require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/epilog_admin_js.php");
+            }
         }
     }
 
     if ($_REQUEST["cachetype"] === "html") {
-
         $obCacheCleaner->Start();
         $space_freed = 0;
         while ($file = $obCacheCleaner->GetNextFile()) {
@@ -93,19 +97,20 @@ if (
                 && !preg_match("/(\\.enabled|\\.size|.config\\.php)\$/", $file)
             ) {
                 $file_size = filesize($file);
-                $_SESSION["CACHE_STAT"]["scanned"]++;
-                $_SESSION["CACHE_STAT"]["space_total"] += $file_size;
+                \Bitrix\Main\Application::getInstance()->getSession()["CACHE_STAT"]["scanned"]++;
+                \Bitrix\Main\Application::getInstance()->getSession()["CACHE_STAT"]["space_total"] += $file_size;
 
                 if (@unlink($file)) {
-                    $_SESSION["CACHE_STAT"]["deleted"]++;
-                    $_SESSION["CACHE_STAT"]["space_freed"] += $file_size;
+                    \Bitrix\Main\Application::getInstance()->getSession()["CACHE_STAT"]["deleted"]++;
+                    \Bitrix\Main\Application::getInstance()->getSession()["CACHE_STAT"]["space_freed"] += $file_size;
                     $space_freed += $file_size;
                 } else {
-                    $_SESSION["CACHE_STAT"]["errors"]++;
+                    \Bitrix\Main\Application::getInstance()->getSession()["CACHE_STAT"]["errors"]++;
                 }
 
-                if (time() >= $endTime)
+                if (time() >= $endTime) {
                     break;
+                }
             }
 
             //no more than 200 files per second
@@ -120,24 +125,26 @@ if (
                 if ($date_expire) {
                     $file_size = filesize($file);
 
-                    $_SESSION["CACHE_STAT"]["scanned"]++;
-                    $_SESSION["CACHE_STAT"]["space_total"] += $file_size;
+                    \Bitrix\Main\Application::getInstance()->getSession()["CACHE_STAT"]["scanned"]++;
+                    \Bitrix\Main\Application::getInstance()->getSession()["CACHE_STAT"]["space_total"] += $file_size;
 
                     if (
                         $bDoNotCheckExpiredDate
                         || ($date_expire < $curentTime)
                     ) {
                         if (@unlink($file)) {
-                            $_SESSION["CACHE_STAT"]["deleted"]++;
-                            $_SESSION["CACHE_STAT"]["space_freed"] += $file_size;
+                            \Bitrix\Main\Application::getInstance()->getSession()["CACHE_STAT"]["deleted"]++;
+                            \Bitrix\Main\Application::getInstance()->getSession(
+                            )["CACHE_STAT"]["space_freed"] += $file_size;
                         } else {
-                            $_SESSION["CACHE_STAT"]["errors"]++;
+                            \Bitrix\Main\Application::getInstance()->getSession()["CACHE_STAT"]["errors"]++;
                         }
                     }
                 }
 
-                if (time() >= $endTime)
+                if (time() >= $endTime) {
                     break;
+                }
             }
 
             //no more than 200 files per second
@@ -145,29 +152,69 @@ if (
         }
     } else {
         $file = false;
-        $_SESSION["CACHE_STAT"] = array();
+        \Bitrix\Main\Application::getInstance()->getSession()["CACHE_STAT"] = array();
     }
 
     if (is_string($file)) {
-        $currentPath = substr($file, strlen($_SERVER["DOCUMENT_ROOT"]));
+        $currentPath = mb_substr($file, mb_strlen($_SERVER["DOCUMENT_ROOT"]));
         _CFileTree::ExtractFileFromPath($currentPath);
-        CAdminMessage::ShowMessage(array(
-            "MESSAGE" => GetMessage("main_cache_in_progress"),
-            "DETAILS" => ""
-                . GetMessage("main_cache_files_scanned_count", array("#value#" => "<b>" . intval($_SESSION["CACHE_STAT"]["scanned"]) . "</b>")) . "<br>"
-                . GetMessage("main_cache_files_scanned_size", array("#value#" => "<b>" . CFile::FormatSize($_SESSION["CACHE_STAT"]["space_total"]) . "</b>")) . "<br>"
-                . GetMessage("main_cache_files_deleted_count", array("#value#" => "<b>" . intval($_SESSION["CACHE_STAT"]["deleted"]) . "</b>")) . "<br>"
-                . GetMessage("main_cache_files_deleted_size", array("#value#" => "<b>" . CFile::FormatSize($_SESSION["CACHE_STAT"]["space_freed"]) . "</b>")) . "<br>"
-                . GetMessage("main_cache_files_delete_errors", array("#value#" => "<b>" . intval($_SESSION["CACHE_STAT"]["errors"]) . "</b>")) . "<br>"
-                . GetMessage("main_cache_files_last_path", array("#value#" => "<b>" . htmlspecialcharsbx($currentPath) . "</b>")) . "<br>"
-        ,
-            "HTML" => true,
-            "TYPE" => "OK",
-        ));
+        CAdminMessage::ShowMessage(
+            array(
+                "MESSAGE" => GetMessage("main_cache_in_progress"),
+                "DETAILS" => ""
+                    . GetMessage(
+                        "main_cache_files_scanned_count",
+                        array(
+                            "#value#" => "<b>" . intval(
+                                    \Bitrix\Main\Application::getInstance()->getSession()["CACHE_STAT"]["scanned"]
+                                ) . "</b>"
+                        )
+                    ) . "<br>"
+                    . GetMessage(
+                        "main_cache_files_scanned_size",
+                        array(
+                            "#value#" => "<b>" . CFile::FormatSize(
+                                    \Bitrix\Main\Application::getInstance()->getSession()["CACHE_STAT"]["space_total"]
+                                ) . "</b>"
+                        )
+                    ) . "<br>"
+                    . GetMessage(
+                        "main_cache_files_deleted_count",
+                        array(
+                            "#value#" => "<b>" . intval(
+                                    \Bitrix\Main\Application::getInstance()->getSession()["CACHE_STAT"]["deleted"]
+                                ) . "</b>"
+                        )
+                    ) . "<br>"
+                    . GetMessage(
+                        "main_cache_files_deleted_size",
+                        array(
+                            "#value#" => "<b>" . CFile::FormatSize(
+                                    \Bitrix\Main\Application::getInstance()->getSession()["CACHE_STAT"]["space_freed"]
+                                ) . "</b>"
+                        )
+                    ) . "<br>"
+                    . GetMessage(
+                        "main_cache_files_delete_errors",
+                        array(
+                            "#value#" => "<b>" . intval(
+                                    \Bitrix\Main\Application::getInstance()->getSession()["CACHE_STAT"]["errors"]
+                                ) . "</b>"
+                        )
+                    ) . "<br>"
+                    . GetMessage(
+                        "main_cache_files_last_path",
+                        array("#value#" => "<b>" . htmlspecialcharsbx($currentPath) . "</b>")
+                    ) . "<br>"
+            ,
+                "HTML" => true,
+                "TYPE" => "OK",
+            )
+        );
         ?>
         <script>
             CloseWaitWindow();
-            DoNext(<?echo CUtil::PhpToJSObject(substr($file, strlen($_SERVER["DOCUMENT_ROOT"])))?>);
+            DoNext(<?echo CUtil::PhpToJSObject(mb_substr($file, mb_strlen($_SERVER["DOCUMENT_ROOT"])))?>);
         </script>
         <?
     } else {
@@ -184,29 +231,72 @@ if (
             BXClearCache(true);
             $GLOBALS["CACHE_MANAGER"]->CleanAll();
             $GLOBALS["stackCacheManager"]->CleanAll();
+            $taggedCache = \Bitrix\Main\Application::getInstance()->getTaggedCache();
+            $taggedCache->deleteAllTags();
             $page = \Bitrix\Main\Composite\Page::getInstance();
             $page->deleteAll();
         }
 
-        if ($_SESSION["CACHE_STAT"]) {
-            CAdminMessage::ShowMessage(array(
-                "MESSAGE" => GetMessage("main_cache_finished"),
-                "DETAILS" => ""
-                    . GetMessage("main_cache_files_scanned_count", array("#value#" => "<b>" . intval($_SESSION["CACHE_STAT"]["scanned"]) . "</b>")) . "<br>"
-                    . GetMessage("main_cache_files_scanned_size", array("#value#" => "<b>" . CFile::FormatSize($_SESSION["CACHE_STAT"]["space_total"]) . "</b>")) . "<br>"
-                    . GetMessage("main_cache_files_deleted_count", array("#value#" => "<b>" . intval($_SESSION["CACHE_STAT"]["deleted"]) . "</b>")) . "<br>"
-                    . GetMessage("main_cache_files_deleted_size", array("#value#" => "<b>" . CFile::FormatSize($_SESSION["CACHE_STAT"]["space_freed"]) . "</b>")) . "<br>"
-                    . GetMessage("main_cache_files_delete_errors", array("#value#" => "<b>" . intval($_SESSION["CACHE_STAT"]["errors"]) . "</b>")) . "<br>"
-            ,
-                "HTML" => true,
-                "TYPE" => "OK",
-            ));
+        if (\Bitrix\Main\Application::getInstance()->getSession()["CACHE_STAT"]) {
+            CAdminMessage::ShowMessage(
+                array(
+                    "MESSAGE" => GetMessage("main_cache_finished"),
+                    "DETAILS" => ""
+                        . GetMessage(
+                            "main_cache_files_scanned_count",
+                            array(
+                                "#value#" => "<b>" . intval(
+                                        \Bitrix\Main\Application::getInstance()->getSession()["CACHE_STAT"]["scanned"]
+                                    ) . "</b>"
+                            )
+                        ) . "<br>"
+                        . GetMessage(
+                            "main_cache_files_scanned_size",
+                            array(
+                                "#value#" => "<b>" . CFile::FormatSize(
+                                        \Bitrix\Main\Application::getInstance()->getSession(
+                                        )["CACHE_STAT"]["space_total"]
+                                    ) . "</b>"
+                            )
+                        ) . "<br>"
+                        . GetMessage(
+                            "main_cache_files_deleted_count",
+                            array(
+                                "#value#" => "<b>" . intval(
+                                        \Bitrix\Main\Application::getInstance()->getSession()["CACHE_STAT"]["deleted"]
+                                    ) . "</b>"
+                            )
+                        ) . "<br>"
+                        . GetMessage(
+                            "main_cache_files_deleted_size",
+                            array(
+                                "#value#" => "<b>" . CFile::FormatSize(
+                                        \Bitrix\Main\Application::getInstance()->getSession(
+                                        )["CACHE_STAT"]["space_freed"]
+                                    ) . "</b>"
+                            )
+                        ) . "<br>"
+                        . GetMessage(
+                            "main_cache_files_delete_errors",
+                            array(
+                                "#value#" => "<b>" . intval(
+                                        \Bitrix\Main\Application::getInstance()->getSession()["CACHE_STAT"]["errors"]
+                                    ) . "</b>"
+                            )
+                        ) . "<br>"
+                ,
+                    "HTML" => true,
+                    "TYPE" => "OK",
+                )
+            );
         } else {
-            CAdminMessage::ShowMessage(array(
-                "MESSAGE" => GetMessage("main_cache_finished"),
-                "HTML" => true,
-                "TYPE" => "OK",
-            ));
+            CAdminMessage::ShowMessage(
+                array(
+                    "MESSAGE" => GetMessage("main_cache_finished"),
+                    "HTML" => true,
+                    "TYPE" => "OK",
+                )
+            );
         }
         ?>
         <script>
@@ -218,9 +308,9 @@ if (
 
     require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/epilog_admin_js.php");
 } else {
-
-    if (!$USER->CanDoOperation('cache_control') && !$USER->CanDoOperation('view_other_settings'))
+    if (!$USER->CanDoOperation('cache_control') && !$USER->CanDoOperation('view_other_settings')) {
         $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+    }
 
     $errorMessage = "";
     $okMessage = "";
@@ -239,26 +329,34 @@ if (
         }
     }
 
-    if ($REQUEST_METHOD == "POST" && ($managed_cache_on == "Y" || $managed_cache_on == "N") && check_bitrix_sessid() && $isAdmin) {
+    if ($REQUEST_METHOD == "POST" && ($managed_cache_on == "Y" || $managed_cache_on == "N") && check_bitrix_sessid(
+        ) && $isAdmin) {
         COption::SetOptionString("main", "component_managed_cache_on", $managed_cache_on);
         if ($managed_cache_on == "N") {
             $taggedCache = \Bitrix\Main\Application::getInstance()->getTaggedCache();
             $taggedCache->clearByTag(true);
         }
-        LocalRedirect($APPLICATION->GetCurPage() . "?lang=" . LANGUAGE_ID . "&tabControl_active_tab=fedit4&res=managed_saved");
+        LocalRedirect(
+            $APPLICATION->GetCurPage() . "?lang=" . LANGUAGE_ID . "&tabControl_active_tab=fedit4&res=managed_saved"
+        );
     }
-    if ($_REQUEST["res"] == "managed_saved")
+    if ($_REQUEST["res"] == "managed_saved") {
         $okMessage .= GetMessage("main_cache_managed_saved");
+    }
 
     $APPLICATION->SetTitle(GetMessage("MCACHE_TITLE"));
     require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
     ?>
 
     <?
-    if (strlen($errorMessage) > 0)
-        echo CAdminMessage::ShowMessage(Array("DETAILS" => $errorMessage, "TYPE" => "ERROR", "MESSAGE" => GetMessage("SAE_ERROR"), "HTML" => true));
-    if (strlen($okMessage) > 0)
+    if ($errorMessage <> '') {
+        echo CAdminMessage::ShowMessage(
+            Array("DETAILS" => $errorMessage, "TYPE" => "ERROR", "MESSAGE" => GetMessage("SAE_ERROR"), "HTML" => true)
+        );
+    }
+    if ($okMessage <> '') {
         echo CAdminMessage::ShowNote($okMessage);
+    }
     ?>
 
     <script language="JavaScript">
@@ -385,13 +483,14 @@ if (
             <td valign="top" colspan="2" align="left">
                 <? if (COption::GetOptionString("main", "component_cache_on", "Y") == "Y"):?>
                     <input type="hidden" name="cache_on" value="N">
-                    <input type="submit" name="cache_siteb"
-                           value="<? echo GetMessage("MAIN_OPTION_CACHE_BUTTON_OFF") ?>"<? if (!$isAdmin) echo " disabled" ?>>
+                    <input type="submit" name="cache_siteb" value="<? echo GetMessage(
+                        "MAIN_OPTION_CACHE_BUTTON_OFF"
+                    ) ?>"<? if (!$isAdmin) echo " disabled" ?>>
                 <? else:?>
                     <input type="hidden" name="cache_on" value="Y">
-                    <input type="submit" name="cache_siteb"
-                           value="<? echo GetMessage("MAIN_OPTION_CACHE_BUTTON_ON") ?>"<? if (!$isAdmin) echo " disabled" ?>
-                           class="adm-btn-save">
+                    <input type="submit" name="cache_siteb" value="<? echo GetMessage(
+                        "MAIN_OPTION_CACHE_BUTTON_ON"
+                    ) ?>"<? if (!$isAdmin) echo " disabled" ?> class="adm-btn-save">
                 <?endif ?>
             </td>
         </tr>
@@ -427,15 +526,17 @@ if (
             <td valign="top" colspan="2" align="left">
                 <? if ($component_managed_cache <> "N" || defined("BX_COMP_MANAGED_CACHE")):?>
                     <input type="hidden" name="managed_cache_on" value="N">
-                    <input type="submit" name=""
-                           value="<? echo GetMessage("main_cache_managed_turn_off") ?>"<? if (!$isAdmin || $component_managed_cache == "N") echo " disabled" ?>>
-                    <? if ($component_managed_cache == "N"):?><br>
-                        <br><? echo GetMessage("main_cache_managed_const") ?><?endif ?>
+                    <input type="submit" name="" value="<? echo GetMessage(
+                        "main_cache_managed_turn_off"
+                    ) ?>"<? if (!$isAdmin || $component_managed_cache == "N") echo " disabled" ?>>
+                    <? if ($component_managed_cache == "N"):?><br><br><? echo GetMessage(
+                        "main_cache_managed_const"
+                    ) ?><?endif ?>
                 <? else:?>
                     <input type="hidden" name="managed_cache_on" value="Y">
-                    <input type="submit" name=""
-                           value="<? echo GetMessage("main_cache_managed_turn_on") ?>"<? if (!$isAdmin) echo " disabled" ?>
-                           class="adm-btn-save">
+                    <input type="submit" name="" value="<? echo GetMessage(
+                        "main_cache_managed_turn_on"
+                    ) ?>"<? if (!$isAdmin) echo " disabled" ?> class="adm-btn-save">
                 <?endif ?>
             </td>
         </tr>

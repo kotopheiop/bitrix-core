@@ -106,11 +106,13 @@ class TriggerOrderStatusChange extends \Bitrix\Sender\TriggerConnector
     public function getForm()
     {
         $statusInput = '';
-        $statusDb = \Bitrix\Sale\Internals\StatusLangTable::getList(array(
-            'select' => array('STATUS_ID', 'NAME'),
-            'filter' => array('=LID' => LANGUAGE_ID, '=STATUS_ID' => \Bitrix\Sale\OrderStatus::getAllStatuses()),
-            'order' => array('STATUS.SORT')
-        ));
+        $statusDb = \Bitrix\Sale\Internals\StatusLangTable::getList(
+            array(
+                'select' => array('STATUS_ID', 'NAME'),
+                'filter' => array('=LID' => LANGUAGE_ID, '=STATUS_ID' => \Bitrix\Sale\OrderStatus::getAllStatuses()),
+                'order' => array('STATUS.SORT')
+            )
+        );
         while ($status = $statusDb->fetch()) {
             $selected = $status['STATUS_ID'] == $this->getFieldValue('STATUS_ID') ? ' selected' : '';
             $statusInput .= '<option value="' . $status['STATUS_ID'] . '"' . $selected . '>'

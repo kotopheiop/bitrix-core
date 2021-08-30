@@ -30,7 +30,10 @@ class DocumentBase
      */
     protected static function getMessage()
     {
-        return Main\Localization\Loc::loadLanguageFile($_SERVER["DOCUMENT_ROOT"] . '/bitrix/components/bitrix/sale.export.1c/component.php', self::CML_LANG_ID);
+        return Main\Localization\Loc::loadLanguageFile(
+            $_SERVER["DOCUMENT_ROOT"] . '/bitrix/components/bitrix/sale.export.1c/component.php',
+            self::CML_LANG_ID
+        );
     }
 
     /**
@@ -39,8 +42,14 @@ class DocumentBase
     static protected function getMessageExport()
     {
         return array_merge(
-            Main\Localization\Loc::loadLanguageFile($_SERVER["DOCUMENT_ROOT"] . '/bitrix/components/bitrix/sale.export.1c/component.php', self::CML_LANG_ID),
-            Main\Localization\Loc::loadLanguageFile($_SERVER["DOCUMENT_ROOT"] . '/bitrix/modules/sale/general/export.php', self::CML_LANG_ID)
+            Main\Localization\Loc::loadLanguageFile(
+                $_SERVER["DOCUMENT_ROOT"] . '/bitrix/components/bitrix/sale.export.1c/component.php',
+                self::CML_LANG_ID
+            ),
+            Main\Localization\Loc::loadLanguageFile(
+                $_SERVER["DOCUMENT_ROOT"] . '/bitrix/modules/sale/general/export.php',
+                self::CML_LANG_ID
+            )
         );
     }
 
@@ -145,8 +154,9 @@ class DocumentBase
                 $typeId = DocumentType::PAYMENT_CARD_TRANSACTION;
             } elseif ($operation == $message["CC_BSC1_SHIPMENT"]) {
                 $typeId = DocumentType::SHIPMENT;
-            } else
+            } else {
                 $typeId = DocumentType::UNDEFINED;
+            }
         }
 
         return $typeId;
@@ -196,6 +206,12 @@ class DocumentBase
                 break;
             case 'ITEM_UNIT':
                 $result = self::resolveUnitParams($value, $fieldsInfo);
+                break;
+            case 'MARKING_GROUP':
+                $result = self::resolveMarkingGroupParams($value, $fieldsInfo);
+                break;
+            case 'MARKINGS':
+                $result = self::resolveMarkingParams($value, $fieldsInfo);
                 break;
             case 'DISCOUNTS':
                 $result = self::resolveDiscountsParams($value, $fieldsInfo);
@@ -266,8 +282,9 @@ class DocumentBase
                 foreach ($val["#"][$message["CC_BSC1_PROPERTY_VALUES"]][0]["#"][$message["CC_BSC1_PROPERTY_VALUE"]] as $property) {
                     $propertyName = $property["#"][$message["CC_BSC1_ID"]][0]["#"];
                     $propertyValue = $property["#"][$message["CC_BSC1_VALUE"]][0]["#"];
-                    if (strlen($propertyValue) > 0)
+                    if ($propertyValue <> '') {
                         $properties[$propertyName] = $propertyValue;
+                    }
                 }
             }
 
@@ -301,8 +318,9 @@ class DocumentBase
             foreach ($value["#"][$message["CC_BSC1_REK_VALUES"]][0]["#"][$message["CC_BSC1_REK_VALUE"]] as $val) {
                 $traitName = $val["#"][$message["CC_BSC1_NAME"]][0]["#"];
                 $traitValue = $val["#"][$message["CC_BSC1_VALUE"]][0]["#"];
-                if (strlen($traitValue) > 0)
+                if ($traitValue <> '') {
                     $traits[$traitName] = $traitValue;
+                }
             }
 
             foreach ($fieldsInfo['FIELDS'] as $name => $fieldInfo) {
@@ -310,9 +328,9 @@ class DocumentBase
                 if ($name == 'PROPERTY_VALUE_BASKET') {
                     foreach ($traits as $k => $v) {
                         $namePropertyBaslet = $message["CC_BSC1_PROP_BASKET"];
-                        if (strpos($k, $namePropertyBaslet . "#") === 0) {
-                            $position = strpos($k, $namePropertyBaslet . "#");
-                            $idBasketProperty = substr($k, $position + strlen($namePropertyBaslet . "#"));
+                        if (mb_strpos($k, $namePropertyBaslet . "#") === 0) {
+                            $position = mb_strpos($k, $namePropertyBaslet . "#");
+                            $idBasketProperty = mb_substr($k, $position + mb_strlen($namePropertyBaslet . "#"));
 
                             self::internalizeFields($v);
 
@@ -320,10 +338,11 @@ class DocumentBase
                         }
                     }
                 } elseif ($name == 'TYPE_OF_NOMENKLATURA') {
-                    if ($traits[$message["CC_BSC1_ITEM_TYPE"]] == $message["CC_BSC1_ITEM"])
+                    if ($traits[$message["CC_BSC1_ITEM_TYPE"]] == $message["CC_BSC1_ITEM"]) {
                         $fieldValue = Exchange\ImportBase::ITEM_ITEM;
-                    elseif ($traits[$message["CC_BSC1_ITEM_TYPE"]] == $message["CC_BSC1_SERVICE"])
+                    } elseif ($traits[$message["CC_BSC1_ITEM_TYPE"]] == $message["CC_BSC1_SERVICE"]) {
                         $fieldValue = Exchange\ImportBase::ITEM_SERVICE;
+                    }
 
                     self::internalizeFields($fieldValue, $fieldInfo['FIELDS']['VALUE']);
 
@@ -425,6 +444,61 @@ class DocumentBase
     }
 
     /**
+     * @param $value
+     * @param array $fieldsInfo
+     * @return null
+     */
+    protected static function resolveMarkingGroupParams($value, array $fieldsInfo)
+    {
+        $result = null;
+        $message = self::getMessage();
+
+        if (is_array($value["#"][$message["CC_BSC1_MARKING_GROUP"]])
+            && !empty($value["#"][$message["CC_BSC1_MARKING_GROUP"]])) {
+            $field = $value["#"][$message["CC_BSC1_MARKING_GROUP"]];
+
+            foreach ($fieldsInfo['FIELDS'] as $name => $info) {
+                if (is_array($field[0]["#"])) {
+                    if (!empty($field[0]["#"][$message["CC_BSC1_MARKING_GROUP_" . $name]][0]["#"])) {
+                        $fieldValue = $field[0]["#"][$message["CC_BSC1_MARKING_GROUP_" . $name]][0]["#"];
+                        self::internalizeFields($fieldValue, $info);
+                        $result[$name] = $fieldValue;
+                    }
+                }
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * @param array $value
+     * @param array $fieldsInfo
+     * @return null
+     */
+    protected static function resolveMarkingParams(array $value, array $fieldsInfo)
+    {
+        $result = [];
+        $message = self::getMessage();
+
+        if (is_array($value["#"][$message["CC_BSC1_MARKINGS"]][0]["#"][$message["CC_BSC1_MARKING"]])
+            && !empty($value["#"][$message["CC_BSC1_MARKINGS"]][0]["#"][$message["CC_BSC1_MARKING"]])) {
+            $fields = $value["#"][$message["CC_BSC1_MARKINGS"]][0]["#"][$message["CC_BSC1_MARKING"]];
+
+            foreach ($fields as $k => $field) {
+                foreach ($fieldsInfo['FIELDS'] as $name => $info) {
+                    if (!empty($field["#"][$message["CC_BSC1_MARKING_" . $name]][0]["#"])) {
+                        $fieldValue = $field["#"][$message["CC_BSC1_MARKING_" . $name]][0]["#"];
+                        self::internalizeFields($fieldValue, $info);
+
+                        $result[] = $fieldValue;
+                    }
+                }
+            }
+        }
+        return $result;
+    }
+
+    /**
      * @param array $fields
      * @return array|null
      */
@@ -435,8 +509,9 @@ class DocumentBase
         $basketItems = array();
         foreach ($fields['ITEMS_FIELDS'] as $item) {
             $priceone = $item['PRICE_PER_UNIT'];
-            if (DoubleVal($priceone) <= 0)
+            if (DoubleVal($priceone) <= 0) {
                 $priceone = $item["PRICE_ONE"];
+            }
 
 
             $discountPrice = "";
@@ -445,10 +520,12 @@ class DocumentBase
                 $priceone = PriceMaths::roundPrecision($priceone);
 
                 if (isset($item['DISCOUNTS']['SUMM']) && $item['DISCOUNTS']['SUMM'] <> '') {
-                    if ($priceone != $price)
+                    if ($priceone != $price) {
                         $discountPrice = DoubleVal($priceone - $price);
-                } elseif ($priceone > 0)
+                    }
+                } elseif ($priceone > 0) {
                     $price = $priceone;
+                }
 
                 $basketItems = Array(
                     'ID' => $item['ID'],
@@ -460,9 +537,12 @@ class DocumentBase
                     'MEASURE_CODE' => !empty($item['ITEM_UNIT']) ? $item['ITEM_UNIT']['ITEM_UNIT_CODE'] : null,
                     'MEASURE_NAME' => !empty($item['ITEM_UNIT']) ? $item['ITEM_UNIT']['ITEM_UNIT_NAME'] : null,
                     'ATTRIBUTES' => !empty($item['REK_VALUES']['PROP_BASKET']) ? $item['REK_VALUES']['PROP_BASKET'] : null,
+                    'MARKING_GROUP' => !empty($item['MARKING_GROUP']['CODE']) ? $item['MARKING_GROUP']['CODE'] : null,
+                    'MARKINGS' => !empty($item['MARKINGS']) ? $item['MARKINGS'] : null,
                     'TAX' => array(
                         'VAT_RATE' => !empty($item['TAXES']['TAX_VALUE']) ? $item['TAXES']['TAX_VALUE'] / 100 : null,
-                        'VAT_INCLUDED' => !empty($item['TAXES']['IN_PRICE']) ? $item['TAXES']['IN_PRICE'] : 'Y'//if tax is null then always included by default
+                        'VAT_INCLUDED' => !empty($item['TAXES']['IN_PRICE']) ? $item['TAXES']['IN_PRICE'] : 'Y'
+                        //if tax is null then always included by default
                     ),
                     'DISCOUNT' => array(
                         'PRICE' => $discountPrice
@@ -485,7 +565,9 @@ class DocumentBase
             switch ($fieldInfo['TYPE']) {
                 case 'datetime':
                     $date = str_replace("T", " ", $value);
-                    $value = new Type\DateTime(\CAllDatabase::FormatDate($date, "YYYY-MM-DD HH:MI:SS", \CAllSite::GetDateFormat("FULL", LANG)));
+                    $value = new Type\DateTime(
+                        \CAllDatabase::FormatDate($date, "YYYY-MM-DD HH:MI:SS", \CAllSite::GetDateFormat("FULL", LANG))
+                    );
                     break;
                 case 'bool':
                     $value = $value == "true" ? 'Y' : 'N';
@@ -581,8 +663,9 @@ class DocumentBase
                 case 'ITEMS':
                     $fields['ITEMS_FIELDS'] = self::resolveItemsParams($document, $v);
 
-                    if (!empty($fields['ITEMS_FIELDS']))
+                    if (!empty($fields['ITEMS_FIELDS'])) {
                         $fields[$k] = self::fillItemsFields($fields);
+                    }
                     break;
                 case 'TAXES':
                     $taxValue = 0;
@@ -592,7 +675,7 @@ class DocumentBase
                             foreach ($items as $item) {
                                 $taxValueTmp = isset($item['TAX_VALUE']) ? $item['TAX_VALUE'] : 0;
 
-                                if (IntVal($taxValueTmp) > IntVal($taxValue)) {
+                                if (intval($taxValueTmp) > intval($taxValue)) {
                                     $taxName = $item['NAME'];
                                     $taxValue = $taxValueTmp;
                                 }
@@ -600,7 +683,7 @@ class DocumentBase
                         }
                     }
 
-                    if (IntVal($taxValue) > 0) {
+                    if (intval($taxValue) > 0) {
                         $fields[$k] = self::resolveTaxParams($document, $v);
                         $fields[$k]['VALUE'] = $taxValue;
                         $fields[$k]['NAME'] = $taxName;
@@ -609,10 +692,16 @@ class DocumentBase
                 case 'AGENT':
                     /* includes document profile */
                     $documentProfile = new UserProfileDocument();
-                    $mess = Main\Localization\Loc::loadLanguageFile($_SERVER["DOCUMENT_ROOT"] . '/bitrix/modules/sale/general/export.php');
+                    $mess = Main\Localization\Loc::loadLanguageFile(
+                        $_SERVER["DOCUMENT_ROOT"] . '/bitrix/modules/sale/general/export.php'
+                    );
 
-                    if (is_array($document["#"][$mess["SALE_EXPORT_CONTRAGENTS"]][0]["#"][$mess["SALE_EXPORT_CONTRAGENT"]][0]["#"])) {
-                        $fields[$k] = $documentProfile::prepareFieldsData($document["#"][$mess["SALE_EXPORT_CONTRAGENTS"]][0]["#"][$mess["SALE_EXPORT_CONTRAGENT"]][0]["#"]);
+                    if (is_array(
+                        $document["#"][$mess["SALE_EXPORT_CONTRAGENTS"]][0]["#"][$mess["SALE_EXPORT_CONTRAGENT"]][0]["#"]
+                    )) {
+                        $fields[$k] = $documentProfile::prepareFieldsData(
+                            $document["#"][$mess["SALE_EXPORT_CONTRAGENTS"]][0]["#"][$mess["SALE_EXPORT_CONTRAGENT"]][0]["#"]
+                        );
                     }
 
                     break;
@@ -646,12 +735,15 @@ class DocumentBase
     {
         $params = '';
         if (count($parameters) > 0) {
-            foreach ($parameters as $code => $v)
+            foreach ($parameters as $code => $v) {
                 $params .= ' ' . static::getLangByCodeField($code) . '="' . $v . '" ';
+            }
         }
 
         $name = static::getLangByCodeField($name);
-        return str_repeat("\t", $level) . "<" . $name . $params . ">" . \CDataXML::xmlspecialchars($value) . "</" . $name . ">\n";
+        return str_repeat("\t", $level) . "<" . $name . $params . ">" . \CDataXML::xmlspecialchars(
+                $value
+            ) . "</" . $name . ">\n";
     }
 
     /**
@@ -699,9 +791,9 @@ class DocumentBase
                         $xml .= $this->outputXmlDiscounts($level, $name, $value);
                         break;
                 }
-            } else
+            } else {
                 $xml .= $this->formatXMLNode($level, $name, $value);
-
+            }
         }
         return $xml;
     }
@@ -729,8 +821,9 @@ class DocumentBase
         $result .= $this->openNodeDirectory($level + 0, $name);
         foreach ($value as $list) {
             $result .= $this->openNodeDirectory($level + 1, 'REK_VALUE');
-            foreach ($list as $k => $v)
+            foreach ($list as $k => $v) {
                 $result .= $this->formatXMLNode($level + 2, $k, $v);
+            }
             $result .= $this->closeNodeDirectory($level + 1, 'REK_VALUE');
         }
         $result .= $this->closeNodeDirectory($level + 0, $name);
@@ -741,8 +834,9 @@ class DocumentBase
     {
         $result = '';
         $result .= $this->openNodeDirectory($level + 0, $name);
-        foreach ($list as $k => $v)
+        foreach ($list as $k => $v) {
             $result .= $this->formatXMLNode($level + 1, $k, $v);
+        }
         $result .= $this->closeNodeDirectory($level + 0, $name);
 
         return $result;
@@ -750,11 +844,16 @@ class DocumentBase
 
     protected function outputXmlBaseUnit($level, $name, $value)
     {
-        return $this->formatXMLNode($level + 0, $name, '', array(
-            "CODE" => $value,
-            "FULL_NAME_UNIT" => static::getLangByCodeField("SHTUKA"),
-            "INTERNATIONAL_ABR" => static::getLangByCodeField("RCE")
-        ));
+        return $this->formatXMLNode(
+            $level + 0,
+            $name,
+            '',
+            array(
+                "CODE" => $value,
+                "FULL_NAME_UNIT" => static::getLangByCodeField("SHTUKA"),
+                "INTERNATIONAL_ABR" => static::getLangByCodeField("RCE")
+            )
+        );
     }
 
     protected function outputXmlItems($level, $name, $items)
@@ -784,10 +883,11 @@ class DocumentBase
                             $result .= $this->outputXmlTaxes($level + 2, $code, array($value));
                             break;
                     }
-                } elseif ($code == 'BASE_UNIT')
+                } elseif ($code == 'BASE_UNIT') {
                     $result .= $this->outputXmlBaseUnit($level + 2, $code, $value);
-                else
+                } else {
                     $result .= $this->formatXMLNode($level + 2, $code, $value);
+                }
             }
 
             $result .= $this->closeNodeDirectory($level + 1, 'ITEM');
@@ -803,12 +903,14 @@ class DocumentBase
             if (is_array($address)) {
                 foreach ($address as $values) {
                     $result .= $this->openNodeDirectory($level + 0, $code);
-                    foreach ($values as $k => $v)
+                    foreach ($values as $k => $v) {
                         $result .= $this->formatXMLNode($level + 1, $k, $v);
+                    }
                     $result .= $this->closeNodeDirectory($level + 0, $code);
                 }
-            } else
+            } else {
                 $result .= $this->formatXMLNode($level + 0, $code, $address);
+            }
         }
         return $result;
     }
@@ -830,8 +932,9 @@ class DocumentBase
                             $result .= $this->closeNodeDirectory($level + 2, $code);
                             break;
                     }
-                } else
+                } else {
                     $result .= $this->formatXMLNode($level + 2, $code, $value);
+                }
             }
             $result .= $this->closeNodeDirectory($level + 1, 'STORY');
         }
@@ -848,8 +951,9 @@ class DocumentBase
         foreach ($taxes as $tax) {
             $result .= $this->openNodeDirectory($level + 1, 'RATE');
 
-            foreach ($tax as $k => $v)
+            foreach ($tax as $k => $v) {
                 $result .= $this->formatXMLNode($level + 2, $k, $v);
+            }
 
             $result .= $this->closeNodeDirectory($level + 1, 'RATE');
         }
@@ -865,8 +969,9 @@ class DocumentBase
         foreach ($taxes as $tax) {
             $result .= $this->openNodeDirectory($level + 1, 'TAX');
 
-            foreach ($tax as $k => $v)
+            foreach ($tax as $k => $v) {
                 $result .= $this->formatXMLNode($level + 2, $k, $v);
+            }
 
             $result .= $this->closeNodeDirectory($level + 1, 'TAX');
         }
@@ -880,8 +985,9 @@ class DocumentBase
         $result .= $this->openNodeDirectory($level + 0, $name);
         $result .= $this->openNodeDirectory($level + 1, 'DISCOUNT');
 
-        foreach ($discounts as $k => $v)
+        foreach ($discounts as $k => $v) {
             $result .= $this->formatXMLNode($level + 2, $k, $v);
+        }
 
         $result .= $this->closeNodeDirectory($level + 1, 'DISCOUNT');
         $result .= $this->closeNodeDirectory($level + 0, $name);

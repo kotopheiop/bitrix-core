@@ -1,16 +1,18 @@
-<?
+<?php
 
 class CAllSaleOrderUserPropsValue
 {
-    function GetByID($ID)
+    public static function GetByID($ID)
     {
         global $DB;
 
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
         if (CSaleLocation::isLocationProMigrated()) {
             $strSql =
-                "SELECT V.ID, V.USER_PROPS_ID, V.ORDER_PROPS_ID, V.NAME, " . self::getPropertyValueFieldSelectSql('V') . ", P.TYPE " .
+                "SELECT V.ID, V.USER_PROPS_ID, V.ORDER_PROPS_ID, V.NAME, " . self::getPropertyValueFieldSelectSql(
+                    'V'
+                ) . ", P.TYPE " .
                 "FROM b_sale_user_props_value V " .
                 "INNER JOIN b_sale_order_props P ON (V.ORDER_PROPS_ID = P.ID) " .
                 self::getLocationTableJoinSql('V') .
@@ -27,27 +29,27 @@ class CAllSaleOrderUserPropsValue
         if ($res = $db_res->Fetch()) {
             return $res;
         }
-        return False;
+        return false;
     }
 
-    function Delete($ID)
+    public static function Delete($ID)
     {
         global $DB;
-        $ID = IntVal($ID);
+        $ID = intval($ID);
         return $DB->Query("DELETE FROM b_sale_user_props_value WHERE ID = " . $ID . "", true);
     }
 
-    function DeleteAll($ID)
+    public static function DeleteAll($ID)
     {
         global $DB;
-        $ID = IntVal($ID);
+        $ID = intval($ID);
         return $DB->Query("DELETE FROM b_sale_user_props_value WHERE USER_PROPS_ID = " . $ID . "", true);
     }
 
-    function Update($ID, $arFields)
+    public static function Update($ID, $arFields)
     {
         global $DB;
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
         // need to check here if we got CODE or ID came
         if (isset($arFields['VALUE']) && ((string)$arFields['VALUE'] != '') && CSaleLocation::isLocationProMigrated()) {
@@ -73,7 +75,7 @@ class CAllSaleOrderUserPropsValue
         $tableAlias = \Bitrix\Main\HttpApplication::getConnection()->getSqlHelper()->forSql($tableAlias);
         $propTableAlias = \Bitrix\Main\HttpApplication::getConnection()->getSqlHelper()->forSql($propTableAlias);
 
-        if (CSaleLocation::isLocationProMigrated())
+        if (CSaleLocation::isLocationProMigrated()) {
             return "
 				CASE
 
@@ -85,8 +87,9 @@ class CAllSaleOrderUserPropsValue
 					ELSE
 						" . $tableAlias . ".VALUE
 				END as VALUE, " . $tableAlias . ".VALUE as VALUE_ORIG";
-        else
+        } else {
             return $tableAlias . ".VALUE";
+        }
     }
 
     protected static function getLocationTableJoinSql($tableAlias = 'PV', $propTableAlias = 'P')
@@ -94,16 +97,18 @@ class CAllSaleOrderUserPropsValue
         $tableAlias = \Bitrix\Main\HttpApplication::getConnection()->getSqlHelper()->forSql($tableAlias);
         $propTableAlias = \Bitrix\Main\HttpApplication::getConnection()->getSqlHelper()->forSql($propTableAlias);
 
-        if (CSaleLocation::isLocationProMigrated())
+        if (CSaleLocation::isLocationProMigrated()) {
             return "LEFT JOIN b_sale_location L ON (" . $propTableAlias . ".TYPE = 'LOCATION' AND " . $tableAlias . ".VALUE IS NOT NULL AND (" . $tableAlias . ".VALUE = L.CODE))";
-        else
+        } else {
             return " ";
+        }
     }
 
     protected static function translateLocationIDToCode($id, $orderPropId)
     {
-        if (!CSaleLocation::isLocationProMigrated())
+        if (!CSaleLocation::isLocationProMigrated()) {
             return $id;
+        }
 
         $prop = CSaleOrderProps::GetByID($orderPropId);
         if (isset($prop['TYPE']) && $prop['TYPE'] == 'LOCATION') {
@@ -122,9 +127,13 @@ class CAllSaleOrderUserPropsValue
 
         // locations kept in CODEs, but must be shown as IDs
         if (CSaleLocation::isLocationProMigrated()) {
-            $arSelectFields = array_merge(array('PROP_TYPE'), $arSelectFields); // P.TYPE should be there and go above our join
+            $arSelectFields = array_merge(
+                array('PROP_TYPE'),
+                $arSelectFields
+            ); // P.TYPE should be there and go above our join
 
-            $arFields['VALUE'] = array("FIELD" => "
+            $arFields['VALUE'] = array(
+                "FIELD" => "
 				CASE
 
 					WHEN
@@ -135,7 +144,10 @@ class CAllSaleOrderUserPropsValue
 					ELSE
 						" . $tableAlias . ".VALUE
 				END
-			", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_location L ON (P.TYPE = 'LOCATION' AND " . $tableAlias . ".VALUE IS NOT NULL AND " . $tableAlias . ".VALUE = L.CODE)");
+			",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_sale_location L ON (P.TYPE = 'LOCATION' AND " . $tableAlias . ".VALUE IS NOT NULL AND " . $tableAlias . ".VALUE = L.CODE)"
+            );
             $arFields['VALUE_ORIG'] = array("FIELD" => $tableAlias . ".VALUE", "TYPE" => "string");
         } else {
             $arFields['VALUE'] = array("FIELD" => $tableAlias . ".VALUE", "TYPE" => "string");
@@ -188,5 +200,3 @@ class CAllSaleOrderUserPropsValue
 //		));
 //	}
 }
-
-?>

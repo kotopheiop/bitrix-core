@@ -33,12 +33,14 @@ class Agent
      */
     public static function start($feedType, $exportId, $startPosition = "", $once = false, $execNumber = 1)
     {
-        if (empty($exportId))
+        if (empty($exportId)) {
             throw new ArgumentNullException('exportId');
+        }
         $exportId = \EscapePHPString($exportId);
 
-        if (!in_array($feedType, Vk::getExportTypes()))
+        if (!in_array($feedType, Vk::getExportTypes())) {
             throw new ArgumentOutOfRangeException('feedType');
+        }
 
         $result = "";
         $vk = Vk::getInstance();
@@ -51,10 +53,11 @@ class Agent
 
         try {
 //			if we run ALL export - first we must add ALBUMS. After this we create PRODUCTS agent
-            if ($feedType == 'ALL')
+            if ($feedType == 'ALL') {
                 $feedTypeCurr = 'ALBUMS';
-            else
+            } else {
                 $feedTypeCurr = $feedType;
+            }
 
             $timelimit = $vk->getTimelimit($exportId);
             $vkFeed = Manager::createFeed($feedTypeCurr, $exportId, $timelimit, $startPosition);
@@ -65,12 +68,14 @@ class Agent
             if ($startPosition == $endPosition) {
                 $execNumber++;
                 if ($execNumber >= 3) {
-                    \CAdminNotify::Add(array(
-                        'MESSAGE' => Loc::getMessage("SALE_VK__TOO_MUCH_TIMES_NOTIFY"),
-                        'MODULE_ID' => 'sale',
-                        'TAG' => 'vk_agent_much_times_notify',
-                        'NOTIFY_TYPE' => \CAdminNotify::TYPE_ERROR,
-                    ));
+                    \CAdminNotify::Add(
+                        array(
+                            'MESSAGE' => Loc::getMessage("SALE_VK__TOO_MUCH_TIMES_NOTIFY"),
+                            'MODULE_ID' => 'sale',
+                            'TAG' => 'vk_agent_much_times_notify',
+                            'NOTIFY_TYPE' => \CAdminNotify::TYPE_ERROR,
+                        )
+                    );
                 }
             } else {
                 $execNumber = 1;
@@ -88,7 +93,8 @@ class Agent
         } catch (\Exception $e) {
             $vk->log(
                 TradingPlatform\Logger::LOG_LEVEL_ERROR,
-                "VK_AGENT__FEED_ERRORS", 'FEED_' . $feedType,
+                "VK_AGENT__FEED_ERRORS",
+                'FEED_' . $feedType,
                 "VKontakte export of " . $feedType . " for profile " . $exportId . " finished with some errors. " .
                 $e->getMessage()
             );
@@ -136,11 +142,13 @@ class Agent
      */
     public static function add($feedType, $exportId, $startPosition = "", $interval, $once = false)
     {
-        if ($interval <= 0)
+        if ($interval <= 0) {
             return 0;
+        }
 
-        if (empty($exportId))
+        if (empty($exportId)) {
             throw new ArgumentNullException('exportId');
+        }
 
         $exportId = \EscapePHPString($exportId);
 
@@ -179,8 +187,13 @@ class Agent
      *
      * Create name for creating new agent
      */
-    protected static function createAgentNameForAdd($feedType, $exportId, $startPosition, $once = false, $execNumber = 1)
-    {
+    protected static function createAgentNameForAdd(
+        $feedType,
+        $exportId,
+        $startPosition,
+        $once = false,
+        $execNumber = 1
+    ) {
         return 'Bitrix\Sale\TradingPlatform\Vk\Agent::start("' . $feedType . '","' . $exportId . '","' . $startPosition . '",' . ($once ? 'true' : 'false') . ',' . $execNumber . ');';
     }
 
@@ -223,8 +236,9 @@ class Agent
             }
         } //		agent not exist - CREATE
         else {
-            if ($interval > 0)
+            if ($interval > 0) {
                 $result = self::add($feedType, $exportId, "", $interval, $once);
+            }
         }
 
         return $result;
@@ -272,8 +286,9 @@ class Agent
         );
 
         $agents = array();
-        while ($agent = $dbRes->Fetch())
+        while ($agent = $dbRes->Fetch()) {
             $agents[$agent["ID"]] = $agent["ID"];
+        }
 
         return $agents;
     }
@@ -297,8 +312,9 @@ class Agent
         );
 
         $agents = array();
-        while ($agent = $dbRes->Fetch())
+        while ($agent = $dbRes->Fetch()) {
             $agents[$agent["ID"]] = $agent["ID"];
+        }
 
         return $agents;
     }

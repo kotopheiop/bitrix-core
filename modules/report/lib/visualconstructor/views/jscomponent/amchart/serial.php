@@ -84,9 +84,9 @@ abstract class Serial extends Base
             if (isset($data['items'])) {
                 foreach ($data['items'] as $key => $res) {
                     if (!isset($result['dataProvider'][$res['groupBy']])) {
-                        $result['dataProvider'][$res['groupBy']] = array(
-                            'groupingField' => !empty($data['config']['groupsLabelMap'][$res['groupBy']]) ? $data['config']['groupsLabelMap'][$res['groupBy']] : '-',
-                        );
+                        $result['dataProvider'][$res['groupBy']] = [
+                            'groupingField' => $data['config']['groupsLabelMap'][$res['groupBy']] ?? '-',
+                        ];
                     }
                     //$result['dataProvider'][$res['groupBy']]['bullet'] = "https://www.amcharts.com/lib/images/faces/A04.png";
                     $result['dataProvider'][$res['groupBy']]['value_' . $reportCount] = $res['value'];
@@ -111,7 +111,7 @@ abstract class Serial extends Base
                 $graph = array(
                     "bullet" => "round",
                     //"labelText" => "[[value]]",
-                    "title" => $data['config']['reportTitle'],
+                    "title" => htmlspecialcharsbx($data['config']['reportTitle']),
                     "fillColors" => $data['config']['reportColor'],
                     "lineColor" => $data['config']['reportColor'],
                     "valueField" => 'value_' . $reportCount,
@@ -122,12 +122,10 @@ abstract class Serial extends Base
                 if (isset($data["config"]["balloonFunction"])) {
                     $graph["balloonFunction"] = $data["config"]["balloonFunction"];
                 } else {
-                    $graph["balloonText"] = $data["config"]["reportTitle"] . " [[value]]";
+                    $graph["balloonText"] = htmlspecialcharsbx($data["config"]["reportTitle"]) . " [[value]]";
                 }
                 $result['graphs'][] = $graph;
             }
-
-
         }
 
         if (static::ENABLE_SORTING) {
@@ -151,15 +149,20 @@ abstract class Serial extends Base
         $whatWillCalculateField = $reportHandler->getFormElement('calculate');
         $labelField = $reportHandler->getFormElement('label');
         if ($whatWillCalculateField) {
-            $labelField->addJsEventListener($whatWillCalculateField, $whatWillCalculateField::JS_EVENT_ON_CHANGE, array(
-                'class' => 'BX.Report.VisualConstructor.FieldEventHandlers.Title',
-                'action' => 'whatWillCalculateChange',
-            ));
-            $whatWillCalculateField->addAssets(array(
-                'js' => array('/bitrix/js/report/js/visualconstructor/fields/reporttitle.js')
-            ));
+            $labelField->addJsEventListener(
+                $whatWillCalculateField,
+                $whatWillCalculateField::JS_EVENT_ON_CHANGE,
+                array(
+                    'class' => 'BX.Report.VisualConstructor.FieldEventHandlers.Title',
+                    'action' => 'whatWillCalculateChange',
+                )
+            );
+            $whatWillCalculateField->addAssets(
+                array(
+                    'js' => array('/bitrix/js/report/js/visualconstructor/fields/reporttitle.js')
+                )
+            );
         }
-
     }
 
     /**

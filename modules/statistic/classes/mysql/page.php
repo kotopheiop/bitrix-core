@@ -2,7 +2,7 @@
 
 class CPage
 {
-    public static function GetDynamicList($URL, &$by, &$order, $arFilter = Array())
+    public static function GetDynamicList($URL, $by = 's_date', $order = 'desc', $arFilter = [])
     {
         $err_mess = "File: " . __FILE__ . "<br>Line: ";
         $DB = CDatabase::GetModuleConnection('statistic');
@@ -13,7 +13,7 @@ class CPage
         $enter_counter = "SUM(D.ENTER_COUNTER)";
         $exit_counter = "SUM(if(D.EXIT_COUNTER>0,D.EXIT_COUNTER,0))";
         if (is_array($arFilter)) {
-            if (strlen($arFilter["ADV"]) > 0) {
+            if ($arFilter["ADV"] <> '') {
                 $from_adv = " , b_stat_page_adv A ";
                 $where_adv = "and A.PAGE_ID = D.ID";
 
@@ -34,22 +34,29 @@ class CPage
 
             foreach ($arFilter as $key => $val) {
                 if (is_array($val)) {
-                    if (count($val) <= 0)
+                    if (count($val) <= 0) {
                         continue;
+                    }
                 } else {
-                    if ((strlen($val) <= 0) || ($val === "NOT_REF"))
+                    if (((string)$val == '') || ($val === "NOT_REF")) {
                         continue;
+                    }
                 }
                 $match_value_set = array_key_exists($key . "_EXACT_MATCH", $arFilter);
                 $key = strtoupper($key);
                 switch ($key) {
                     case "DATE1":
-                        if (CheckDateTime($val))
+                        if (CheckDateTime($val)) {
                             $arSqlSearch[] = "D.DATE_STAT>=" . $DB->CharToDateFunction($val, "SHORT");
+                        }
                         break;
                     case "DATE2":
-                        if (CheckDateTime($val))
-                            $arSqlSearch[] = "D.DATE_STAT<" . $DB->CharToDateFunction($val, "SHORT") . " + INTERVAL 1 DAY";
+                        if (CheckDateTime($val)) {
+                            $arSqlSearch[] = "D.DATE_STAT<" . $DB->CharToDateFunction(
+                                    $val,
+                                    "SHORT"
+                                ) . " + INTERVAL 1 DAY";
+                        }
                         break;
                     case "ADV":
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "N" && $match_value_set) ? "Y" : "N";
@@ -62,16 +69,14 @@ class CPage
             }
         }
 
-        if ($by == "s_date")
+        if ($by == "s_date") {
             $strSqlOrder = "ORDER BY D.DATE_STAT";
-        else {
-            $by = "s_date";
+        } else {
             $strSqlOrder = "ORDER BY D.DATE_STAT";
         }
 
         if ($order != "asc") {
             $strSqlOrder .= " desc ";
-            $order = "desc";
         }
 
         $strSqlSearch = GetFilterSqlSearch($arSqlSearch);
@@ -98,12 +103,13 @@ class CPage
         return $res;
     }
 
-    public static function GetList($COUNTER_TYPE, &$by, &$order, $arFilter = Array(), &$is_filtered)
+    public static function GetList($COUNTER_TYPE, $by = 's_counter', $order = 'desc', $arFilter = [])
     {
         $err_mess = "File: " . __FILE__ . "<br>Line: ";
         $DB = CDatabase::GetModuleConnection('statistic');
-        if ($COUNTER_TYPE != "ENTER_COUNTER" && $COUNTER_TYPE != "EXIT_COUNTER")
+        if ($COUNTER_TYPE != "ENTER_COUNTER" && $COUNTER_TYPE != "EXIT_COUNTER") {
             $COUNTER_TYPE = "COUNTER";
+        }
         $counter = "V." . $COUNTER_TYPE;
         $where_counter = "and V." . $COUNTER_TYPE . ">0";
         $arSqlSearch = Array();
@@ -112,7 +118,7 @@ class CPage
         $from_adv = "";
         $where_adv = "";
         if (is_array($arFilter)) {
-            if (strlen($arFilter["ADV"]) > 0) {
+            if ($arFilter["ADV"] <> '') {
                 $from_adv = " , b_stat_page_adv A ";
                 $where_adv = "and A.PAGE_ID = V.ID";
 
@@ -130,22 +136,29 @@ class CPage
 
             foreach ($arFilter as $key => $val) {
                 if (is_array($val)) {
-                    if (count($val) <= 0)
+                    if (count($val) <= 0) {
                         continue;
+                    }
                 } else {
-                    if ((strlen($val) <= 0) || ($val === "NOT_REF"))
+                    if (((string)$val == '') || ($val === "NOT_REF")) {
                         continue;
+                    }
                 }
                 $match_value_set = array_key_exists($key . "_EXACT_MATCH", $arFilter);
                 $key = strtoupper($key);
                 switch ($key) {
                     case "DATE1":
-                        if (CheckDateTime($val))
+                        if (CheckDateTime($val)) {
                             $arSqlSearch[] = "V.DATE_STAT>=" . $DB->CharToDateFunction($val, "SHORT");
+                        }
                         break;
                     case "DATE2":
-                        if (CheckDateTime($val))
-                            $arSqlSearch[] = "V.DATE_STAT<" . $DB->CharToDateFunction($val, "SHORT") . " + INTERVAL 1 DAY";
+                        if (CheckDateTime($val)) {
+                            $arSqlSearch[] = "V.DATE_STAT<" . $DB->CharToDateFunction(
+                                    $val,
+                                    "SHORT"
+                                ) . " + INTERVAL 1 DAY";
+                        }
                         break;
                     case "SHOW":
                     case "DIR":
@@ -158,7 +171,9 @@ class CPage
                         break;
                     case "SECTION_ID":
                     case "URL_ID":
-                        $arSqlSearch[] = "(V.URL like '" . $DB->ForSql($val) . "' and V.URL<>'" . $DB->ForSql($val) . "')";
+                        $arSqlSearch[] = "(V.URL like '" . $DB->ForSql($val) . "' and V.URL<>'" . $DB->ForSql(
+                                $val
+                            ) . "')";
                         break;
                     case "PAGE_404":
                     case "URL_404":
@@ -169,7 +184,9 @@ class CPage
                         $arSqlSearch[] = GetFilterQuery("A.ADV_ID", $val, $match);
                         break;
                     case "SITE_ID":
-                        if (is_array($val)) $val = implode(" | ", $val);
+                        if (is_array($val)) {
+                            $val = implode(" | ", $val);
+                        }
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "N" && $match_value_set) ? "Y" : "N";
                         $arSqlSearch[] = GetFilterQuery("V.SITE_ID", $val, $match);
                         break;
@@ -178,21 +195,20 @@ class CPage
         }
 
         $strSqlSearch = GetFilterSqlSearch($arSqlSearch);
-        foreach ($arSqlSearch_h as $sqlWhere)
+        foreach ($arSqlSearch_h as $sqlWhere) {
             $strSqlSearch_h .= " and (" . $sqlWhere . ") ";
+        }
 
-        if ($by == "s_url")
+        if ($by == "s_url") {
             $strSqlOrder = "ORDER BY V.URL";
-        elseif ($by == "s_counter")
+        } elseif ($by == "s_counter") {
             $strSqlOrder = "ORDER BY COUNTER";
-        else {
-            $by = "s_counter";
+        } else {
             $strSqlOrder = "ORDER BY COUNTER desc, V.URL";
         }
 
         if ($order != "asc") {
             $strSqlOrder .= " desc ";
-            $order = "desc";
         }
 
         $strSql = "
@@ -218,7 +234,7 @@ class CPage
 			";
 
         $res = $DB->Query($strSql, false, $err_mess . __LINE__);
-        $is_filtered = (IsFiltered($strSqlSearch) || strlen($strSqlSearch_h) > 0);
+
         return $res;
     }
 }

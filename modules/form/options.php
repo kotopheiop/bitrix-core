@@ -1,25 +1,25 @@
 <?
+/** @global CMain $APPLICATION */
+
+/** @global CUser $USER */
+/** @global CDatabase $DB */
+/** @global string $mid */
 $module_id = "form";
-require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/" . $module_id . "/include.php");
+
+use Bitrix\Main\Loader;
+
+Loader::includeModule('form');
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/" . $module_id . "/options.php");
 $old_module_version = CForm::IsOldVersion();
 $FORM_RIGHT = $APPLICATION->GetGroupRight($module_id);
 if ($FORM_RIGHT >= "R") :
 
-    if ($REQUEST_METHOD == "GET" && CForm::IsAdmin() && strlen($RestoreDefaults) > 0 && check_bitrix_sessid()) {
+    if ($_SERVER['REQUEST_METHOD'] == "GET" && CForm::IsAdmin() && $RestoreDefaults <> '' && check_bitrix_sessid()) {
         COption::RemoveOption("form");
-        $arGROUPS = array();
-        $z = CGroup::GetList($v1, $v2, array("ACTIVE" => "Y", "ADMIN" => "N"));
+        $z = CGroup::GetList('', '', array("ACTIVE" => "Y", "ADMIN" => "N"));
         while ($zr = $z->Fetch()) {
-            $ar = array();
-            $ar["ID"] = intval($zr["ID"]);
-            $ar["NAME"] = htmlspecialcharsbx($zr["NAME"]) . " [<a title=\"" . GetMessage("MAIN_USER_GROUP_TITLE") . "\" href=\"/bitrix/admin/group_edit.php?ID=" . intval($zr["ID"]) . "&lang=" . LANGUAGE_ID . "\">" . intval($zr["ID"]) . "</a>]";
-            $groups[$zr["ID"]] = "[" . $zr["ID"] . "] " . $zr["NAME"];
-            $arGROUPS[] = $ar;
+            $APPLICATION->DelGroupRight($module_id, array($zr["ID"]));
         }
-        reset($arGROUPS);
-        while (list(, $value) = each($arGROUPS))
-            $APPLICATION->DelGroupRight($module_id, array($value["ID"]));
     }
 
     $arAllOptions = array(
@@ -40,21 +40,22 @@ if ($FORM_RIGHT >= "R") :
         unset($arAllOptions[5]);
     }
 
-    if ($REQUEST_METHOD == "POST" && strlen($Update) > 0 && CForm::IsAdmin() && check_bitrix_sessid()) {
+    if ($_SERVER['REQUEST_METHOD'] == "POST" && $Update <> '' && CForm::IsAdmin() && check_bitrix_sessid()) {
         foreach ($arAllOptions as $ar) {
             $name = $ar[0];
-            $val = $$name;
+            $val = ${$name};
             if ($ar[2][0] == "checkbox" && $val != "Y") {
                 $val = "N";
             }
             COption::SetOptionString($module_id, $name, $val);
         }
-        COption::SetOptionString("form", "FORM_DEFAULT_PERMISSION", $FORM_DEFAULT_PERMISSION);
+        COption::SetOptionString("form", "FORM_DEFAULT_PERMISSION", $_POST['FORM_DEFAULT_PERMISSION']);
     }
 
     if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_REQUEST['saveCrm'] && CForm::IsAdmin() && check_bitrix_sessid()) {
-        if ($_REQUEST['ajax'])
+        if ($_REQUEST['ajax']) {
             CUtil::JSPostUnEscape();
+        }
 
         $arAdditionalAuthData = array();
         $lastUpdated = '';
@@ -79,7 +80,7 @@ if ($FORM_RIGHT >= "R") :
 
                         $lastUpdated = $arCrm['ID'];
 
-                        if (strlen($arCrm['LOGIN']) > 0 && strlen($arCrm['PASSWORD']) > 0) {
+                        if ($arCrm['LOGIN'] <> '' && $arCrm['PASSWORD'] <> '') {
                             $arAdditionalAuthData[$arCrm['ID']] = array(
                                 'LOGIN' => $arCrm['LOGIN'],
                                 'PASSWORD' => $arCrm['PASSWORD'],
@@ -94,10 +95,12 @@ if ($FORM_RIGHT >= "R") :
             $arCRMServers = array();
             $dbRes = CFormCrm::GetList(array('NAME' => 'ASC', 'ID' => 'ASC'), array());
             while ($arServer = $dbRes->Fetch()) {
-                if (isset($arAdditionalAuthData[$arServer['ID']]))
+                if (isset($arAdditionalAuthData[$arServer['ID']])) {
                     $arServer = array_merge($arServer, $arAdditionalAuthData[$arServer['ID']]);
-                if ($lastUpdated == $arServer['ID'])
+                }
+                if ($lastUpdated == $arServer['ID']) {
                     $arServer['NEW'] = 'Y';
+                }
 
                 $arCRMServers[] = $arServer;
             }
@@ -110,17 +113,33 @@ if ($FORM_RIGHT >= "R") :
     }
 
     $aTabs = array(
-        array("DIV" => "edit1", "TAB" => GetMessage("MAIN_TAB_SET"), "ICON" => "form_settings", "TITLE" => GetMessage("MAIN_TAB_TITLE_SET")),
-        array("DIV" => "edit_crm", "TAB" => GetMessage("FORM_TAB_CRM"), "ICON" => "form_settings", "TITLE" => GetMessage("FORM_TAB_CRM_TITLE")),
-        array("DIV" => "edit2", "TAB" => GetMessage("MAIN_TAB_RIGHTS"), "ICON" => "form_settings", "TITLE" => GetMessage("MAIN_TAB_TITLE_RIGHTS")),
+        array(
+            "DIV" => "edit1",
+            "TAB" => GetMessage("MAIN_TAB_SET"),
+            "ICON" => "form_settings",
+            "TITLE" => GetMessage("MAIN_TAB_TITLE_SET")
+        ),
+        array(
+            "DIV" => "edit_crm",
+            "TAB" => GetMessage("FORM_TAB_CRM"),
+            "ICON" => "form_settings",
+            "TITLE" => GetMessage("FORM_TAB_CRM_TITLE")
+        ),
+        array(
+            "DIV" => "edit2",
+            "TAB" => GetMessage("MAIN_TAB_RIGHTS"),
+            "ICON" => "form_settings",
+            "TITLE" => GetMessage("MAIN_TAB_TITLE_RIGHTS")
+        ),
     );
     $tabControl = new CAdminTabControl("tabControl", $aTabs);
     ?>
     <?
     $tabControl->Begin();
     ?>
-    <form method="POST"
-          action="<? echo $APPLICATION->GetCurPage() ?>?mid=<?= htmlspecialcharsbx($mid) ?>&lang=<?= LANGUAGE_ID ?>"><?= bitrix_sessid_post() ?><?
+    <form method="POST"action="<? echo $APPLICATION->GetCurPage() ?>?mid=<?= htmlspecialcharsbx(
+    $mid
+) ?>&lang=<?= LANGUAGE_ID ?>"><?= bitrix_sessid_post() ?><?
     $tabControl->BeginNextTab();
     ?>
     <?
@@ -130,23 +149,27 @@ if ($FORM_RIGHT >= "R") :
             $type = $Option[2];
             ?>
             <tr>
-                <td valign="top" width="50%"><? if ($type[0] == "checkbox")
+                <td valign="top" width="50%"><? if ($type[0] == "checkbox") {
                         echo "<label for=\"" . htmlspecialcharsbx($Option[0]) . "\">" . $Option[1] . "</label>";
-                    else
-                        echo $Option[1]; ?>
+                    } else {
+                        echo $Option[1];
+                    } ?>
                 </td>
                 <td valign="top" nowrap width="50%"><?
                     if ($type[0] == "checkbox"):
                         ?><input type="checkbox" name="<? echo htmlspecialcharsbx($Option[0]) ?>"
-                                 id="<? echo htmlspecialcharsbx($Option[0]) ?>"
-                                 value="Y"<? if ($val == "Y") echo " checked"; ?>><?
+                                 id="<? echo htmlspecialcharsbx($Option[0]) ?>" value="Y"<? if ($val == "Y") {
+                        echo " checked";
+                    } ?>><?
                     elseif ($type[0] == "text"):
                         ?><input type="text" size="<? echo $type[1] ?>" maxlength="255"
                                  value="<? echo htmlspecialcharsbx($val) ?>"
                                  name="<? echo htmlspecialcharsbx($Option[0]) ?>"><?
                     elseif ($type[0] == "textarea"):
                         ?><textarea rows="<? echo $type[1] ?>" cols="<? echo $type[2] ?>"
-                                    name="<? echo htmlspecialcharsbx($Option[0]) ?>"><? echo htmlspecialcharsbx($val) ?></textarea><?
+                                    name="<? echo htmlspecialcharsbx($Option[0]) ?>"><? echo htmlspecialcharsbx(
+                        $val
+                    ) ?></textarea><?
                     endif;
                     ?></td>
             </tr>
@@ -232,8 +255,9 @@ if ($FORM_RIGHT >= "R") :
                     ?>
                     <tr>
                         <td colspan="4" align="center"><?= GetMessage('FORM_TAB_CRM_NOTE'); ?> <a
-                                    href="javascript:void(0)"
-                                    onclick="CRM(); return false;"><?= GetMessage('FORM_TAB_CRM_NOTE_LINK'); ?></a></td>
+                                    href="javascript:void(0)" onclick="CRM(); return false;"><?= GetMessage(
+                                    'FORM_TAB_CRM_NOTE_LINK'
+                                ); ?></a></td>
                     </tr>
                 <?
                 endif;
@@ -242,8 +266,9 @@ if ($FORM_RIGHT >= "R") :
                 <tfoot>
                 <tr>
                     <td colspan="4" align="left"><input type="button" onclick="CRM(); return false;"
-                                                        value="<?= htmlspecialcharsbx(GetMessage('FORM_TAB_CRM_ADD_BUTTON')); ?>">
-                    </td>
+                                                        value="<?= htmlspecialcharsbx(
+                                                            GetMessage('FORM_TAB_CRM_ADD_BUTTON')
+                                                        ); ?>"></td>
                 </tr>
                 </tfoot>
             </table>
@@ -282,13 +307,49 @@ if ($FORM_RIGHT >= "R") :
             }
 
             if (!data.AUTH_HASH) {
-                var content = '<div class="form-crm-settings"><form name="form_' + popup_id + '"><table cellpadding="0" cellspacing="2" border="0"><tr><td align="right"><?=CUtil::JSEscape(GetMessage('FORM_TAB_CRM_ROW_TITLE'))?>:</td><td><input type="text" name="NAME" value="' + BX.util.htmlspecialchars(data.NAME || '') + '"></td></tr><tr><td align="right"><?=CUtil::JSEscape(GetMessage('FORM_TAB_CRM_FORM_URL_SERVER'))?>:</td><td><input type="text" name="URL_SERVER" value="' + BX.util.htmlspecialchars(data.URL_SERVER || '') + '"></td></tr><tr><td align="right"><?=CUtil::JSEscape(GetMessage('FORM_TAB_CRM_FORM_URL_PATH'))?>:</td><td><input type="text" name="URL_PATH" value="' + BX.util.htmlspecialchars(data.URL_PATH || '<?=FORM_CRM_DEFAULT_PATH?>') + '"></td></tr><tr><td colspan="2" align="center"><b><?=CUtil::JSEscape(GetMessage('FORM_TAB_CRM_ROW_AUTH'))?></b></td></tr><tr><td align="right"><?=CUtil::JSEscape(GetMessage('FORM_TAB_CRM_ROW_AUTH_LOGIN'))?>:</td><td><input type="text" name="LOGIN" value="' + BX.util.htmlspecialchars(data.LOGIN || '') + '"></td></tr><tr><td align="right"><?=CUtil::JSEscape(GetMessage('FORM_TAB_CRM_ROW_AUTH_PASSWORD'))?>:</td><td><input type="password" name="PASSWORD" value="' + BX.util.htmlspecialchars(data.PASSWORD || '') + '"></td></tr><tr><td></td><td><a href="javascript:void(0)" onclick="_showPass(document.forms[\'form_' + popup_id + '\'].PASSWORD); BX.hide(this.parentNode);"><?=CUtil::JSEscape(GetMessage('FORM_TAB_CRM_ROW_AUTH_PASSWORD_SHOW'))?></a></td></tr></table></form></div>';
+                var content = '<div class="form-crm-settings"><form name="form_' + popup_id + '"><table cellpadding="0" cellspacing="2" border="0"><tr><td align="right"><?=CUtil::JSEscape(
+                    GetMessage('FORM_TAB_CRM_ROW_TITLE')
+                )?>:</td><td><input type="text" name="NAME" value="' + BX.util.htmlspecialchars(data.NAME || '') + '"></td></tr><tr><td align="right"><?=CUtil::JSEscape(
+                    GetMessage('FORM_TAB_CRM_FORM_URL_SERVER')
+                )?>:</td><td><input type="text" name="URL_SERVER" value="' + BX.util.htmlspecialchars(data.URL_SERVER || '') + '"></td></tr><tr><td align="right"><?=CUtil::JSEscape(
+                    GetMessage('FORM_TAB_CRM_FORM_URL_PATH')
+                )?>:</td><td><input type="text" name="URL_PATH" value="' + BX.util.htmlspecialchars(data.URL_PATH || '<?=FORM_CRM_DEFAULT_PATH?>') + '"></td></tr><tr><td colspan="2" align="center"><b><?=CUtil::JSEscape(
+                    GetMessage('FORM_TAB_CRM_ROW_AUTH')
+                )?></b></td></tr><tr><td align="right"><?=CUtil::JSEscape(
+                    GetMessage('FORM_TAB_CRM_ROW_AUTH_LOGIN')
+                )?>:</td><td><input type="text" name="LOGIN" value="' + BX.util.htmlspecialchars(data.LOGIN || '') + '"></td></tr><tr><td align="right"><?=CUtil::JSEscape(
+                    GetMessage('FORM_TAB_CRM_ROW_AUTH_PASSWORD')
+                )?>:</td><td><input type="password" name="PASSWORD" value="' + BX.util.htmlspecialchars(data.PASSWORD || '') + '"></td></tr><tr><td></td><td><a href="javascript:void(0)" onclick="_showPass(document.forms[\'form_' + popup_id + '\'].PASSWORD); BX.hide(this.parentNode);"><?=CUtil::JSEscape(
+                    GetMessage('FORM_TAB_CRM_ROW_AUTH_PASSWORD_SHOW')
+                )?></a></td></tr></table></form></div>';
             } else {
-                var content = '<div class="form-crm-settings form-crm-settings-hide-auth" id="popup_cont_' + popup_id + '"><form name="form_' + popup_id + '"><table cellpadding="0" cellspacing="2" border="0"><tr><td align="right"><?=CUtil::JSEscape(GetMessage('FORM_TAB_CRM_ROW_TITLE'))?>:</td><td><input type="text" name="NAME" value="' + BX.util.htmlspecialchars(data.NAME || '') + '"></td></tr><tr><td align="right"><?=CUtil::JSEscape(GetMessage('FORM_TAB_CRM_FORM_URL_SERVER'))?>:</td><td><input type="text" name="URL_SERVER" value="' + BX.util.htmlspecialchars(data.URL_SERVER || '') + '"></td></tr><tr><td align="right"><?=CUtil::JSEscape(GetMessage('FORM_TAB_CRM_FORM_URL_PATH'))?>:</td><td><input type="text" name="URL_PATH" value="' + BX.util.htmlspecialchars(data.URL_PATH || '<?=FORM_CRM_DEFAULT_PATH?>') + '"></td></tr><tr class="form-crm-auth"><td colspan="2" align="center"><b><?=CUtil::JSEscape(GetMessage('FORM_TAB_CRM_ROW_AUTH'))?></b></td></tr><tr class="form-crm-auth"><td align="right"><?=CUtil::JSEscape(GetMessage('FORM_TAB_CRM_ROW_AUTH_LOGIN'))?>:</td><td><input type="text" name="LOGIN" value="' + BX.util.htmlspecialchars(data.LOGIN || '') + '"></td></tr><tr class="form-crm-auth"><td align="right"><?=CUtil::JSEscape(GetMessage('FORM_TAB_CRM_ROW_AUTH_PASSWORD'))?>:</td><td><input type="password" name="PASSWORD" value="' + BX.util.htmlspecialchars(data.PASSWORD || '') + '"></td></tr><tr><td align="right"></td><td><a href="javascript:void(0)" onclick="_showPass(document.forms[\'form_' + popup_id + '\'].PASSWORD);BX.hide(this);" class="form-crm-auth"><?=CUtil::JSEscape(GetMessage('FORM_TAB_CRM_ROW_AUTH_PASSWORD_SHOW'))?></a><a href="javascript:void(0)" onclick="BX.removeClass(BX(\'popup_cont_' + popup_id + '\'), \'form-crm-settings-hide-auth\'); BX.hide(this);"><?=CUtil::JSEscape(GetMessage('FORM_TAB_CRM_ROW_AUTH_SHOW'))?></a></td></tr></table></form></div>';
+                var content = '<div class="form-crm-settings form-crm-settings-hide-auth" id="popup_cont_' + popup_id + '"><form name="form_' + popup_id + '"><table cellpadding="0" cellspacing="2" border="0"><tr><td align="right"><?=CUtil::JSEscape(
+                    GetMessage('FORM_TAB_CRM_ROW_TITLE')
+                )?>:</td><td><input type="text" name="NAME" value="' + BX.util.htmlspecialchars(data.NAME || '') + '"></td></tr><tr><td align="right"><?=CUtil::JSEscape(
+                    GetMessage('FORM_TAB_CRM_FORM_URL_SERVER')
+                )?>:</td><td><input type="text" name="URL_SERVER" value="' + BX.util.htmlspecialchars(data.URL_SERVER || '') + '"></td></tr><tr><td align="right"><?=CUtil::JSEscape(
+                    GetMessage('FORM_TAB_CRM_FORM_URL_PATH')
+                )?>:</td><td><input type="text" name="URL_PATH" value="' + BX.util.htmlspecialchars(data.URL_PATH || '<?=FORM_CRM_DEFAULT_PATH?>') + '"></td></tr><tr class="form-crm-auth"><td colspan="2" align="center"><b><?=CUtil::JSEscape(
+                    GetMessage('FORM_TAB_CRM_ROW_AUTH')
+                )?></b></td></tr><tr class="form-crm-auth"><td align="right"><?=CUtil::JSEscape(
+                    GetMessage('FORM_TAB_CRM_ROW_AUTH_LOGIN')
+                )?>:</td><td><input type="text" name="LOGIN" value="' + BX.util.htmlspecialchars(data.LOGIN || '') + '"></td></tr><tr class="form-crm-auth"><td align="right"><?=CUtil::JSEscape(
+                    GetMessage('FORM_TAB_CRM_ROW_AUTH_PASSWORD')
+                )?>:</td><td><input type="password" name="PASSWORD" value="' + BX.util.htmlspecialchars(data.PASSWORD || '') + '"></td></tr><tr><td align="right"></td><td><a href="javascript:void(0)" onclick="_showPass(document.forms[\'form_' + popup_id + '\'].PASSWORD);BX.hide(this);" class="form-crm-auth"><?=CUtil::JSEscape(
+                    GetMessage('FORM_TAB_CRM_ROW_AUTH_PASSWORD_SHOW')
+                )?></a><a href="javascript:void(0)" onclick="BX.removeClass(BX(\'popup_cont_' + popup_id + '\'), \'form-crm-settings-hide-auth\'); BX.hide(this);"><?=CUtil::JSEscape(
+                    GetMessage('FORM_TAB_CRM_ROW_AUTH_SHOW')
+                )?></a></td></tr></table></form></div>';
             }
 
             var wnd = new BX.PopupWindow('popup_' + popup_id, window, {
-                titleBar: {content: BX.create('SPAN', {text: !isNaN(parseInt(data.ID)) ? '<?=CUtil::JSEscape(GetMessage('FORM_CRM_TITLEBAR_EDIT'))?>' : '<?=CUtil::JSEscape(GetMessage('FORM_CRM_TITLEBAR_NEW'))?>'})},
+                titleBar: {
+                    content: BX.create('SPAN', {
+                        text: !isNaN(parseInt(data.ID)) ? '<?=CUtil::JSEscape(
+                            GetMessage('FORM_CRM_TITLEBAR_EDIT')
+                        )?>' : '<?=CUtil::JSEscape(GetMessage('FORM_CRM_TITLEBAR_NEW'))?>'
+                    })
+                },
                 draggable: true,
                 autoHide: false,
                 closeIcon: true,
@@ -329,16 +390,23 @@ if ($FORM_RIGHT >= "R") :
                 var tr = table.insertRow(-1);
                 tr.id = 'crm_row_' + data[i].ID;
 
-                tr.insertCell(-1).appendChild(document.createTextNode(data[i].NAME || '<?=CUtil::JSEscape(GetMessage('FORM_TAB_CRM_UNTITLED'))?>'));
+                tr.insertCell(-1).appendChild(document.createTextNode(data[i].NAME || '<?=CUtil::JSEscape(
+                    GetMessage('FORM_TAB_CRM_UNTITLED')
+                )?>'));
                 tr.insertCell(-1).appendChild(document.createTextNode(data[i].URL));
 
                 var authCell = tr.insertCell(-1);
                 authCell.id = 'crm_auth_cell_' + data[i].ID;
                 if (!!data[i].LOGIN && !!data[i].PASSWORD) {
-                    authCell.appendChild(document.createTextNode('<?=CUtil::JSEscape(GetMessage('FORM_TAB_CRM_CHECK_LOADING'))?>'));
-                    BX.ajax.loadJSON('/bitrix/admin/form_crm.php?action=check&reload=Y&ID=' + BX.util.urlencode(data[i].ID) + '&LOGIN=' + BX.util.urlencode(data[i].LOGIN) + '&PASSWORD=' + BX.util.urlencode(data[i].PASSWORD) + '&<?=bitrix_sessid_get()?>', BX.delegate(function (data) {
+                    authCell.appendChild(document.createTextNode('<?=CUtil::JSEscape(
+                        GetMessage('FORM_TAB_CRM_CHECK_LOADING')
+                    )?>'));
+                    BX.ajax.loadJSON('/bitrix/admin/form_crm.php?action=check&reload=Y&ID=' + BX.util.urlencode(data[i].ID) + '&LOGIN=' + BX.util.urlencode(data[i].LOGIN) + '&PASSWORD=' + BX.util.urlencode(data[i].PASSWORD) + '&<?=bitrix_sessid_get(
+                    )?>', BX.delegate(function (data) {
                         BX.cleanNode(this);
-                        this.innerHTML = (data && data.result == 'ok') ? 'OK' : ('<?=CUtil::JSEscape(GetMessage('FORM_TAB_CRM_CHECK_ERROR'))?>'.replace('#ERROR#', data.error || ''));
+                        this.innerHTML = (data && data.result == 'ok') ? 'OK' : ('<?=CUtil::JSEscape(
+                            GetMessage('FORM_TAB_CRM_CHECK_ERROR')
+                        )?>'.replace('#ERROR#', data.error || ''));
                     }, authCell));
                 } else if (data[i].AUTH_HASH) {
                     authCell.appendChild(BX.create('A', {
@@ -352,7 +420,9 @@ if ($FORM_RIGHT >= "R") :
                         text: '<?=CUtil::JSEscape(GetMessage('FORM_TAB_CRM_CHECK'))?>'
                     }));
                 } else {
-                    authCell.appendChild(document.createTextNode('<?=CUtil::JSEscape(GetMessage('FORM_TAB_CRM_CHECK_NO'))?>'));
+                    authCell.appendChild(document.createTextNode('<?=CUtil::JSEscape(
+                        GetMessage('FORM_TAB_CRM_CHECK_NO')
+                    )?>'));
                 }
 
                 BX.adjust(tr.insertCell(-1), {
@@ -427,7 +497,9 @@ if ($FORM_RIGHT >= "R") :
                 BX.ajax({
                     method: 'POST',
                     dataType: 'json',
-                    url: '<?=CUtil::JSEscape($APPLICATION->GetCurPageParam('saveCrm=Y&ajax=Y&' . bitrix_sessid_get()))?>',
+                    url: '<?=CUtil::JSEscape(
+                        $APPLICATION->GetCurPageParam('saveCrm=Y&ajax=Y&' . bitrix_sessid_get())
+                    )?>',
                     data: query_str,
                     onsuccess: CRMRedraw
                 });
@@ -442,7 +514,9 @@ if ($FORM_RIGHT >= "R") :
                 BX.ajax({
                     method: 'POST',
                     dataType: 'json',
-                    url: '<?=CUtil::JSEscape($APPLICATION->GetCurPageParam('saveCrm=Y&ajax=Y&' . bitrix_sessid_get()))?>',
+                    url: '<?=CUtil::JSEscape(
+                        $APPLICATION->GetCurPageParam('saveCrm=Y&ajax=Y&' . bitrix_sessid_get())
+                    )?>',
                     data: 'CRM[' + ID + '][DELETED]=Y',
                     onsuccess: CRMRedraw
                 });
@@ -455,12 +529,15 @@ if ($FORM_RIGHT >= "R") :
                 c.innerHTML = '<?=CUtil::JSEscape(GetMessage('FORM_TAB_CRM_CHECK_LOADING'))?>';
             }
 
-            BX.ajax.loadJSON('/bitrix/admin/form_crm.php?action=check&ID=' + ID + '&reload=Y&<?=bitrix_sessid_get();?>', function (res) {
+            BX.ajax.loadJSON('/bitrix/admin/form_crm.php?action=check&ID=' + ID + '&reload=Y&<?=bitrix_sessid_get(
+            );?>', function (res) {
                 if (!!res) {
                     if (res.result == 'ok') {
                         BX('crm_auth_cell_' + ID).innerHTML = 'OK';
                     } else {
-                        BX('crm_auth_cell_' + ID).innerHTML = '<?=CUtil::JSEscape(GetMessage('FORM_TAB_CRM_CHECK_ERROR'))?>'.replace('#ERROR#', res.error || '');
+                        BX('crm_auth_cell_' + ID).innerHTML = '<?=CUtil::JSEscape(
+                            GetMessage('FORM_TAB_CRM_CHECK_ERROR')
+                        )?>'.replace('#ERROR#', res.error || '');
                     }
                 }
             });
@@ -483,10 +560,11 @@ if ($FORM_RIGHT >= "R") :
     <? $tabControl->BeginNextTab(); ?>
     <? require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/admin/group_rights.php"); ?>
     <? $tabControl->Buttons(); ?>
-    <script language="JavaScript">
+    <script type="text/javascript">
         function RestoreDefaults() {
             if (confirm('<?echo AddSlashes(GetMessage("MAIN_HINT_RESTORE_DEFAULTS_WARNING"))?>'))
-                window.location = "<?echo $APPLICATION->GetCurPage()?>?RestoreDefaults=Y&lang=<?=LANGUAGE_ID?>&mid=<?echo urlencode($mid)?>&<?=bitrix_sessid_get()?>";
+                window.location = "<?echo $APPLICATION->GetCurPage(
+                )?>?RestoreDefaults=Y&lang=<?=LANGUAGE_ID?>&mid=<?echo urlencode($mid)?>&<?=bitrix_sessid_get()?>";
         }
     </script>
     <input <? if ($FORM_RIGHT < "W") echo "disabled" ?> type="submit" name="Update"
@@ -499,4 +577,4 @@ if ($FORM_RIGHT >= "R") :
                                                         value="<? echo GetMessage("MAIN_RESTORE_DEFAULTS") ?>">
     <? $tabControl->End(); ?>
     </form>
-<? endif; ?>
+<? endif;

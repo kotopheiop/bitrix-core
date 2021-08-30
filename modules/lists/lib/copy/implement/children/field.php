@@ -52,14 +52,18 @@ class Field extends BaseField
 
                 $copiedField["CODE"] = $field["CODE"];
                 $copiedField["LINK_IBLOCK_ID"] = $field["LINK_IBLOCK_ID"];
-                if (!empty($field["PROPERTY_USER_TYPE"]["USER_TYPE"]))
+                if (!empty($field["PROPERTY_USER_TYPE"]["USER_TYPE"])) {
                     $copiedField["USER_TYPE"] = $field["PROPERTY_USER_TYPE"]["USER_TYPE"];
-                if (!empty($field["ROW_COUNT"]))
+                }
+                if (!empty($field["ROW_COUNT"])) {
                     $copiedField["ROW_COUNT"] = $field["ROW_COUNT"];
-                if (!empty($field["COL_COUNT"]))
+                }
+                if (!empty($field["COL_COUNT"])) {
                     $copiedField["COL_COUNT"] = $field["COL_COUNT"];
-                if (!empty($field["USER_TYPE_SETTINGS"]))
+                }
+                if (!empty($field["USER_TYPE_SETTINGS"])) {
                     $copiedField["USER_TYPE_SETTINGS"] = $field["USER_TYPE_SETTINGS"];
+                }
             }
             $fields[] = $copiedField;
         }

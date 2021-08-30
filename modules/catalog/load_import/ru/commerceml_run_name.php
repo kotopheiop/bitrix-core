@@ -1,4 +1,5 @@
 <?
+
 $nameUTF = array(
     "CommerceInfo" => "����������������������",
     "OffersList" => "����������������",

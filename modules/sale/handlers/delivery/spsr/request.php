@@ -18,13 +18,15 @@ class Request
 
     public function __construct()
     {
-        $this->httpClient = new \Bitrix\Main\Web\HttpClient(array(
-            "version" => "1.1",
-            "socketTimeout" => 30,
-            "streamTimeout" => 30,
-            "redirect" => true,
-            "redirectMax" => 5,
-        ));
+        $this->httpClient = new \Bitrix\Main\Web\HttpClient(
+            array(
+                "version" => "1.1",
+                "socketTimeout" => 30,
+                "streamTimeout" => 30,
+                "redirect" => true,
+                "redirectMax" => 5,
+            )
+        );
 
         $this->httpClient->setHeader("Content-Type", "application/xml");
     }
@@ -37,8 +39,9 @@ class Request
     {
         $result = new Result();
 
-        if (strtolower(SITE_CHARSET) != 'utf-8')
+        if (mb_strtolower(SITE_CHARSET) != 'utf-8') {
             $requestData = Encoding::convertEncodingArray($requestData, SITE_CHARSET, 'UTF-8');
+        }
 
         $httpRes = $this->httpClient->post(self::$url_https, $requestData);
         $errors = $this->httpClient->getError();
@@ -46,19 +49,22 @@ class Request
         if (!$httpRes && !empty($errors)) {
             $strError = "";
 
-            foreach ($errors as $errorCode => $errMes)
+            foreach ($errors as $errorCode => $errMes) {
                 $strError .= $errorCode . ": " . $errMes;
+            }
 
             $result->addError(new Error(Loc::getMessage('SALE_DLV_SRV_SPSR_ERROR_HTTP_PUBLIC')));
 
             $eventLog = new \CEventLog;
-            $eventLog->Add(array(
-                "SEVERITY" => $eventLog::SEVERITY_ERROR,
-                "AUDIT_TYPE_ID" => "SALE_DELIVERY_HANDLER_SPSR_HTTP_ERROR",
-                "MODULE_ID" => "sale",
-                "ITEM_ID" => 'REQUEST',
-                "DESCRIPTION" => Loc::getMessage('SALE_DLV_SRV_SPSR_ERROR_HTTP') . ":" . $strError,
-            ));
+            $eventLog->Add(
+                array(
+                    "SEVERITY" => $eventLog::SEVERITY_ERROR,
+                    "AUDIT_TYPE_ID" => "SALE_DELIVERY_HANDLER_SPSR_HTTP_ERROR",
+                    "MODULE_ID" => "sale",
+                    "ITEM_ID" => 'REQUEST',
+                    "DESCRIPTION" => Loc::getMessage('SALE_DLV_SRV_SPSR_ERROR_HTTP') . ":" . $strError,
+                )
+            );
         } else {
             $status = $this->httpClient->getStatus();
 
@@ -66,13 +72,15 @@ class Request
                 $result->addError(new Error(Loc::getMessage('SALE_DLV_SRV_SPSR_ERROR_HTTP_PUBLIC')));
 
                 $eventLog = new \CEventLog;
-                $eventLog->Add(array(
-                    "SEVERITY" => $eventLog::SEVERITY_ERROR,
-                    "AUDIT_TYPE_ID" => "SALE_DELIVERY_HANDLER_SPSR_HTTP_STATUS_ERROR",
-                    "MODULE_ID" => "sale",
-                    "ITEM_ID" => 'REQUEST',
-                    "DESCRIPTION" => Loc::getMessage('SALE_DLV_SRV_SPSR_ERROR_HTTP_STATUS') . ": " . $status,
-                ));
+                $eventLog->Add(
+                    array(
+                        "SEVERITY" => $eventLog::SEVERITY_ERROR,
+                        "AUDIT_TYPE_ID" => "SALE_DELIVERY_HANDLER_SPSR_HTTP_STATUS_ERROR",
+                        "MODULE_ID" => "sale",
+                        "ITEM_ID" => 'REQUEST',
+                        "DESCRIPTION" => Loc::getMessage('SALE_DLV_SRV_SPSR_ERROR_HTTP_STATUS') . ": " . $status,
+                    )
+                );
             } else {
                 $xmlAnswer = new \SimpleXMLElement($httpRes);
 
@@ -82,13 +90,17 @@ class Request
                     $result->addError(new Error(Loc::getMessage('SALE_DLV_SRV_SPSR_ERROR_HTTP_PUBLIC')));
 
                     $eventLog = new \CEventLog;
-                    $eventLog->Add(array(
-                        "SEVERITY" => $eventLog::SEVERITY_ERROR,
-                        "AUDIT_TYPE_ID" => "SALE_DELIVERY_HANDLER_SPSR_ERROR",
-                        "MODULE_ID" => "sale",
-                        "ITEM_ID" => 'REQUEST',
-                        "DESCRIPTION" => Loc::getMessage('SALE_DLV_SRV_SPSR_ERROR') . ": " . self::utfDecode($xmlAnswer->error['ErrorMessageRU']->__toString()),
-                    ));
+                    $eventLog->Add(
+                        array(
+                            "SEVERITY" => $eventLog::SEVERITY_ERROR,
+                            "AUDIT_TYPE_ID" => "SALE_DELIVERY_HANDLER_SPSR_ERROR",
+                            "MODULE_ID" => "sale",
+                            "ITEM_ID" => 'REQUEST',
+                            "DESCRIPTION" => Loc::getMessage('SALE_DLV_SRV_SPSR_ERROR') . ": " . self::utfDecode(
+                                    $xmlAnswer->error['ErrorMessageRU']->__toString()
+                                ),
+                        )
+                    );
                 }
             }
 
@@ -100,8 +112,9 @@ class Request
 
     protected static function utfDecode($str)
     {
-        if (strtolower(SITE_CHARSET) != 'utf-8')
+        if (mb_strtolower(SITE_CHARSET) != 'utf-8') {
             $str = Encoding::convertEncoding($str, 'UTF-8', SITE_CHARSET);
+        }
 
         return $str;
     }
@@ -110,10 +123,11 @@ class Request
     {
         $result = new Result();
 
-        if (strlen($sid) > 0)
+        if ($sid <> '') {
             $sidStr = ' SID="' . $sid . '"';
-        else
+        } else {
             $sidStr = '';
+        }
 
         $requestData = '<root  xmlns="http://spsr.ru/webapi/Info/Info/1.0">
 			<p:Params Name="WAGetServices" Ver="1.0" xmlns:p="http://spsr.ru/webapi/WA/1.0" />
@@ -129,8 +143,9 @@ class Request
 
             if ((bool)$xmlAnswer->MainServices->Service) {
                 foreach ($xmlAnswer->MainServices->Service as $service) {
-                    if (!in_array((int)$service['ID'], $knownServices))
+                    if (!in_array((int)$service['ID'], $knownServices)) {
                         continue;
+                    }
 
                     $srvs[(string)$service['ID']] = array(
                         'ID' => self::utfDecode((string)$service['ID']),
@@ -147,13 +162,15 @@ class Request
                 $result->addError(new Error(Loc::getMessage('SALE_DLV_SRV_SPSR_ERROR_HTTP_PUBLIC')));
 
                 $eventLog = new \CEventLog;
-                $eventLog->Add(array(
-                    "SEVERITY" => $eventLog::SEVERITY_ERROR,
-                    "AUDIT_TYPE_ID" => "SALE_DELIVERY_HANDLER_SPSR_SERVICE_TYPE_ERROR",
-                    "MODULE_ID" => "sale",
-                    "ITEM_ID" => 'REQUEST',
-                    "DESCRIPTION" => Loc::getMessage('SALE_DLV_SRV_SPSR_ERROR_SERVICE_TYPES'),
-                ));
+                $eventLog->Add(
+                    array(
+                        "SEVERITY" => $eventLog::SEVERITY_ERROR,
+                        "AUDIT_TYPE_ID" => "SALE_DELIVERY_HANDLER_SPSR_SERVICE_TYPE_ERROR",
+                        "MODULE_ID" => "sale",
+                        "ITEM_ID" => 'REQUEST',
+                        "DESCRIPTION" => Loc::getMessage('SALE_DLV_SRV_SPSR_ERROR_SERVICE_TYPES'),
+                    )
+                );
             }
         } else {
             $result->addErrors($res->getErrors());
@@ -188,13 +205,17 @@ class Request
                 $result->addError(new Error(Loc::getMessage('SALE_DLV_SRV_SPSR_ERROR_HTTP_PUBLIC')));
 
                 $eventLog = new \CEventLog;
-                $eventLog->Add(array(
-                    "SEVERITY" => $eventLog::SEVERITY_ERROR,
-                    "AUDIT_TYPE_ID" => "SALE_DELIVERY_HANDLER_SPSR_SESSION_ERROR",
-                    "MODULE_ID" => "sale",
-                    "ITEM_ID" => 'REQUEST',
-                    "DESCRIPTION" => Loc::getMessage('SALE_DLV_SRV_SPSR_ERROR_SESSION') . " (" . self::utfDecode($data[0]) . ")",
-                ));
+                $eventLog->Add(
+                    array(
+                        "SEVERITY" => $eventLog::SEVERITY_ERROR,
+                        "AUDIT_TYPE_ID" => "SALE_DELIVERY_HANDLER_SPSR_SESSION_ERROR",
+                        "MODULE_ID" => "sale",
+                        "ITEM_ID" => 'REQUEST',
+                        "DESCRIPTION" => Loc::getMessage('SALE_DLV_SRV_SPSR_ERROR_SESSION') . " (" . self::utfDecode(
+                                $data[0]
+                            ) . ")",
+                    )
+                );
             }
         } else {
             $result->addErrors($res->getErrors());
@@ -207,15 +228,17 @@ class Request
     {
         $result = new Result();
 
-        if (strlen($sid) > 0)
+        if ($sid <> '') {
             $sidStr = ' SID="' . $sid . '"';
-        else
+        } else {
             $sidStr = '';
+        }
 
-        if (strlen($sid) > 0)
+        if ($sid <> '') {
             $icnStr = ' ICN="' . $icn . '"';
-        else
+        } else {
             $icnStr = '';
+        }
 
         $requestData = '
 			<root xmlns="http://spsr.ru/webapi/Monitoring/MonInvoiceInfo/1.3">
@@ -223,8 +246,9 @@ class Request
 				<Login' . $sidStr . $icnStr . '/>
 				<Monitoring Language="' . $lang . '" >';
 
-        foreach ($invoiceNumbers as $number)
+        foreach ($invoiceNumbers as $number) {
             $requestData .= '<Invoice InvoiceNumber="' . $number . '"/>';
+        }
 
         $requestData .= '
 				</Monitoring>
@@ -243,12 +267,13 @@ class Request
             } else {
                 $errorMsg = Loc::getMessage('SALE_DLV_SRV_SPSR_T_ERROR_DATA');
 
-                if (!empty($invoiceInfo['root']['#']['error'][0]['@']['ErrorMessageRU']))
+                if (!empty($invoiceInfo['root']['#']['error'][0]['@']['ErrorMessageRU'])) {
                     $errorMsg = $invoiceInfo['root']['#']['error'][0]['@']['ErrorMessageRU'];
-                elseif (!empty($invoiceInfo['root']['#']['error'][0]['@']['ErrorMessageEn']))
+                } elseif (!empty($invoiceInfo['root']['#']['error'][0]['@']['ErrorMessageEn'])) {
                     $errorMsg = $invoiceInfo['root']['#']['error'][0]['@']['ErrorMessageEn'];
-                elseif (!empty($invoiceInfo['root']['#']['error'][0]['@']['ErrorMessage']))
+                } elseif (!empty($invoiceInfo['root']['#']['error'][0]['@']['ErrorMessage'])) {
                     $errorMsg = $invoiceInfo['root']['#']['error'][0]['@']['ErrorMessage'];
+                }
 
                 $result->addError(new Error($errorMsg));
             }

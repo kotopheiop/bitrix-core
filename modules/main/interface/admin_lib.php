@@ -6,7 +6,7 @@
  * @copyright 2001-2015 Bitrix
  */
 
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) {die();}
 
 IncludeModuleLangFile(__FILE__);
 
@@ -17,6 +17,8 @@ class CAdminPage
 	var $aModules = array();
 	var $bInit = false;
 	var $publicMode = false;
+
+	private $isHideTitle = false;
 
 	public function __construct()
 	{
@@ -29,12 +31,12 @@ class CAdminPage
 	public function Init()
 	{
 		if($this->bInit)
-			return;
+			{return;}
 		$this->bInit = true;
 
 		$module_list = CModule::GetList();
 		while($module = $module_list->Fetch())
-			$this->aModules[] = $module["ID"];
+			{$this->aModules[] = $module["ID"];}
 	}
 
 	public function ShowTitle()
@@ -49,13 +51,23 @@ class CAdminPage
 		$APPLICATION->AddBufferContent(array(&$this, "GetJsTitle"));
 	}
 
-	function GetTitle()
+	public function GetTitle()
 	{
 		global $APPLICATION;
 		return htmlspecialcharsex($APPLICATION->GetTitle(false, true));
 	}
 
-	function GetJsTitle()
+	public function isHideTitle()
+	{
+		return $this->isHideTitle;
+	}
+
+	public function hideTitle()
+	{
+		$this->isHideTitle = true;
+	}
+
+	public function GetJsTitle()
 	{
 		global $APPLICATION;
 		return CUtil::JSEscape($APPLICATION->GetTitle(false, true));
@@ -83,7 +95,7 @@ class CAdminPage
 		{
 			$bExternalLink = (strncmp($arCSS[$i], 'http://', 7) == 0 || strncmp($arCSS[$i], 'https://', 8) == 0);
 			if($bExternalLink || file_exists($_SERVER['DOCUMENT_ROOT'].$arCSS[$i]))
-				$s .= 'top.BX.loadCSS(\''.CUtil::JSEscape($arCSS[$i]).'\');'."\n";
+				{$s .= 'top.BX.loadCSS(\''.CUtil::JSEscape($arCSS[$i]).'\');'."\n";}
 		}
 		$s .= '</script>';
 		return $s;
@@ -116,7 +128,7 @@ class CAdminPage
 		{
 			$bExternalLink = (strncmp($css, 'http://', 7) == 0 || strncmp($css, 'https://', 8) == 0);
 			if($bExternalLink || file_exists($_SERVER['DOCUMENT_ROOT'].$css))
-				$s .= '<link rel="stylesheet" type="text/css" href="'.($bExternalLink? $css : CUtil::GetAdditionalFileURL($css, true)).'">'."\n";
+				{$s .= '<link rel="stylesheet" type="text/css" href="'.($bExternalLink? $css : CUtil::GetAdditionalFileURL($css, true)).'">'."\n";}
 		}
 		return $s;
 	}
@@ -130,13 +142,13 @@ class CAdminPage
 		if($module_id <> '' && $this->aModules[$module_id] <> '')
 		{
 			if(file_exists($abs_theme_path.$module_id.".css"))
-				return array($rel_theme_path.$module_id.'.css');
+				{return array($rel_theme_path.$module_id.'.css');}
 		}
 
 		if($CACHE_MANAGER->Read(36000000, ADMIN_THEME_ID, "modules_css"))
-			$time_cached = $CACHE_MANAGER->Get(ADMIN_THEME_ID);
+			{$time_cached = $CACHE_MANAGER->Get(ADMIN_THEME_ID);}
 		else
-			$time_cached = '';
+			{$time_cached = '';}
 
 		//check modification time
 		$time_fact = '';
@@ -144,7 +156,7 @@ class CAdminPage
 		{
 			$fname = $abs_theme_path.$module.".css";
 			if(file_exists($fname))
-				$time_fact .= filemtime($fname);
+				{$time_fact .= filemtime($fname);}
 		}
 
 		$css_file = $abs_theme_path."modules.css";
@@ -157,7 +169,7 @@ class CAdminPage
 			{
 				$fname = $abs_theme_path.$module.".css";
 				if(file_exists($fname))
-					$sCss .= file_get_contents($fname)."\n";
+					{$sCss .= file_get_contents($fname)."\n";}
 			}
 
 			//create summary modules css
@@ -173,9 +185,9 @@ class CAdminPage
 		}
 
 		if(file_exists($css_file))
-			return array($rel_theme_path.'modules.css');
+			{return array($rel_theme_path.'modules.css');}
 		else
-			return array();
+			{return array();}
 	}
 
 	public function ShowScript()
@@ -202,7 +214,7 @@ var phpVars = {
 	'LANGUAGE_ID': '".CUtil::JSEscape(LANGUAGE_ID)."',
 	'FORMAT_DATE': '".CUtil::JSEscape(FORMAT_DATE)."',
 	'FORMAT_DATETIME': '".CUtil::JSEscape(FORMAT_DATETIME)."',
-	'opt_context_ctrl': ".($aUserOpt["context_ctrl"] == "Y"? "true":"false").",
+	'opt_context_ctrl': ".(($aUserOpt["context_ctrl"] ?? '') == "Y"? "true":"false").",
 	'cookiePrefix': '".CUtil::JSEscape(COption::GetOptionString("main", "cookie_name", "BITRIX_SM"))."',
 	'titlePrefix': '".CUtil::JSEscape(COption::GetOptionString("main", "site_name", $_SERVER["SERVER_NAME"]))." - ',
 	'bitrix_sessid': '".bitrix_sessid()."',
@@ -226,13 +238,9 @@ var phpVars = {
 };
 </script>
 ";
-
-		CJSCore::Init(array('admin_sidepanel'));
-
 		$APPLICATION->AddHeadScript('/bitrix/js/main/admin_tools.js');
 		$APPLICATION->AddHeadScript('/bitrix/js/main/popup_menu.js');
 		$APPLICATION->AddHeadScript('/bitrix/js/main/admin_search.js');
-		$APPLICATION->AddHeadScript('/bitrix/js/main/admin_sidepanel.js');
 
 		return $s;
 	}
@@ -261,7 +269,7 @@ var phpVars = {
 			';
 
 		if($module_id === false)
-			$this->Init();
+			{$this->Init();}
 
 		/** @global CAdminMenu() $adminMenu */
 		global $adminMenu;
@@ -272,7 +280,7 @@ var phpVars = {
 		echo '</div>';
 	}
 
-	function ShowSound()
+	public function ShowSound()
 	{
 		/** @global CMain $APPLICATION */
 		global $USER, $APPLICATION;
@@ -284,7 +292,7 @@ var phpVars = {
 			if($aUserOptGlobal["sound"] == 'Y')
 			{
 				if($aUserOptGlobal["sound_login"] == '')
-					$aUserOptGlobal["sound_login"] = "/bitrix/sounds/main/bitrix_tune.mp3";
+					{$aUserOptGlobal["sound_login"] = "/bitrix/sounds/main/bitrix_tune.mp3";}
 
 				ob_start();
 				$APPLICATION->IncludeComponent("bitrix:player",	"audio",
@@ -411,7 +419,6 @@ var phpVars = {
 
 use Bitrix\Main\HttpResponse;
 use Bitrix\Main\Application;
-use Bitrix\Main\Web\Json;
 
 class CAdminAjaxHelper
 {
@@ -428,14 +435,11 @@ class CAdminAjaxHelper
 	{
 		$this->context = Application::getInstance()->getContext();
 		$this->request = $this->context->getRequest();
-		$this->httpResponse = new HttpResponse($this->context);
+		$this->httpResponse = new HttpResponse();
 	}
 
 	/**
      * Sends JSON response with status "success".
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 */
 	public function sendJsonSuccessResponse()
 	{
@@ -445,9 +449,6 @@ class CAdminAjaxHelper
 	/**
      * Sends JSON response with status "error" and with errors.
 	 * @param string $message Error message.
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 */
 	public function sendJsonErrorResponse($message)
 	{
@@ -457,17 +458,14 @@ class CAdminAjaxHelper
 	/**
 	 * Sends JSON response.
 	 * @param array $params Data structure.
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 */
 	public function sendJsonResponse($params = array())
 	{
 		if ($this->isAjaxRequest() && !$this->skipResponse)
 		{
-			$this->httpResponse->addHeader("Content-Type", "application/json");
-			$this->httpResponse->flush(Json::encode($params));
-			$this->end();
+			$response = new Bitrix\Main\Engine\Response\Json($params);
+			$response = Bitrix\Main\Context::getCurrent()->getResponse()->copyHeadersTo($response);
+			Bitrix\Main\Application::getInstance()->end(0, $response);
 		}
 	}
 
@@ -484,7 +482,7 @@ class CAdminAjaxHelper
 			CUtil::decodeURIComponent($_REQUEST);
 			$listKeys = array_keys($_REQUEST);
 			foreach ($listKeys as $key)
-				CUtil::decodeURIComponent($GLOBALS[$key]);
+				{CUtil::decodeURIComponent($GLOBALS[$key]);}
 		}
 	}
 
@@ -521,15 +519,15 @@ class CAdminSidePanelHelper extends CAdminAjaxHelper
 		{
 			case "base":
 				if ($post["save"] != "")
-					$listActions[] = "destroy";
+					{$listActions[] = "destroy";}
 				if ($post["save_and_add"] != "")
-					$listActions[] = "closeAndOpen";
+					{$listActions[] = "closeAndOpen";}
 				break;
 			case "apply":
 				if ($post["save"] != "")
-					$listActions[] = "close";
+					{$listActions[] = "close";}
 				if ($post["apply"] != "")
-					$listActions[] = "reload";
+					{$listActions[] = "reload";}
 				break;
 			case "close":
 				$listActions[] = "close";
@@ -545,7 +543,7 @@ class CAdminSidePanelHelper extends CAdminAjaxHelper
 		{
 			if ($this->isPublicSidePanel())
 			{
-				if (strpos("publicSidePanel", $dataToForm["reloadUrl"]) === false)
+				if (mb_strpos("publicSidePanel",$dataToForm["reloadUrl"]) === false)
 				{
 					$dataToForm["reloadUrl"] = CHTTP::urlAddParams(
 						$dataToForm["reloadUrl"], array("publicSidePanel" => "Y"));
@@ -586,27 +584,27 @@ class CAdminSidePanelHelper extends CAdminAjaxHelper
 	 */
 	public function isSidePanelRequest()
 	{
-		return ($_REQUEST["IFRAME"] == "Y") && ($_REQUEST["IFRAME_TYPE"] == "SIDE_SLIDER");
+		return (($_REQUEST["IFRAME"] ?? '') == "Y") && (($_REQUEST["IFRAME_TYPE"] ?? '') == "SIDE_SLIDER");
 	}
 
 	public function isSidePanel()
 	{
-		return (isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y");
+		return (($_REQUEST["IFRAME"] ?? '') === "Y");
 	}
 
 	public function isPublicSidePanel()
 	{
-		return ($this->isSidePanel() && ($_REQUEST["publicSidePanel"] === "Y" || $_REQUEST["IFRAME_TYPE"] == "PUBLIC_FRAME"));
+		return ($this->isSidePanel() && (($_REQUEST["publicSidePanel"] ?? '') === "Y" || ($_REQUEST["IFRAME_TYPE"] ?? '') == "PUBLIC_FRAME"));
 	}
 
 	public function isSidePanelFrame()
 	{
-		return ($_REQUEST["IFRAME"] == "Y") && ($_REQUEST["IFRAME_TYPE"] == "SIDE_SLIDER");
+		return (($_REQUEST["IFRAME"] ?? '') == "Y") && (($_REQUEST["IFRAME_TYPE"] ?? '') == "SIDE_SLIDER");
 	}
 
 	public function isPublicFrame()
 	{
-		return ($_REQUEST["IFRAME"] == "Y") && ($_REQUEST["IFRAME_TYPE"] == "PUBLIC_FRAME");
+		return (($_REQUEST["IFRAME"] ?? '') == "Y") && (($_REQUEST["IFRAME_TYPE"] ?? '') == "PUBLIC_FRAME");
 	}
 
 	public function setDefaultQueryParams($url)
@@ -669,7 +667,7 @@ class CAdminMenu
 		global $APPLICATION, $USER, $DB, $MESS;
 
 		if($this->bInit)
-			return;
+			{return;}
 		$this->bInit = true;
 
 		$aOptMenu = CUserOptions::GetOption("admin_menu", "pos", array());
@@ -713,7 +711,7 @@ class CAdminMenu
 		//additional user menu
 		$aMenuLinks = array();
 		if(file_exists($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/admin/.left.menu.php"))
-			include($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/admin/.left.menu.php");
+			{include($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/admin/.left.menu.php");}
 		if(!empty($aMenuLinks))
 		{
 			$bWasSeparator = false;
@@ -724,7 +722,7 @@ class CAdminMenu
 				{
 					//first level
 					if(!empty($menu))
-						$aModuleMenu[] = $menu;
+						{$aModuleMenu[] = $menu;}
 
 					$menu = array(
 						"parent_menu" => "global_menu_services",
@@ -769,7 +767,7 @@ class CAdminMenu
 						if($section["section"] == $module_menu[3]["SECTION_ID"])
 						{
 							if(!is_array($aModuleMenu[$i]["items"]))
-								$aModuleMenu[$i]["items"] = array();
+								{$aModuleMenu[$i]["items"] = array();}
 
 							$aModuleMenu[$i]["items"][] = array(
 								"text" => $module_menu[0],
@@ -783,7 +781,7 @@ class CAdminMenu
 				}
 			}
 			if(!empty($menu))
-				$aModuleMenu[] = $menu;
+				{$aModuleMenu[] = $menu;}
 		}
 
 		$this->aGlobalMenu = array(
@@ -877,13 +875,13 @@ class CAdminMenu
 			$bSort = true;
 			$arRes = ExecuteModuleEventEx($arEvent, array(&$this->aGlobalMenu, &$aModuleMenu));
 			if(is_array($arRes))
-				$this->aGlobalMenu = array_merge($this->aGlobalMenu, $arRes);
+				{$this->aGlobalMenu = array_merge($this->aGlobalMenu, $arRes);}
 		}
 		if($bSort)
-			uasort($this->aGlobalMenu, array($this, '_sort'));
+			{uasort($this->aGlobalMenu, array($this, '_sort'));}
 
 		foreach($aModuleMenu as $menu)
-			$this->aGlobalMenu[$menu["parent_menu"]]["items"][] = $menu;
+			{$this->aGlobalMenu[$menu["parent_menu"]]["items"][] = $menu;}
 
 		$sort_func = array($this, '_sort');
 		foreach($this->aGlobalMenu as $key => $menu)
@@ -899,14 +897,14 @@ class CAdminMenu
 		}
 
 		foreach($this->aGlobalMenu as $key=>$menu)
-			if($this->_SetActiveItems($this->aGlobalMenu[$key]))
-				break;
+			{if($this->_SetActiveItems($this->aGlobalMenu[$key]))
+				{break;}}
 	}
 
 	function _sort($a, $b)
 	{
 		if($a["sort"] == $b["sort"])
-			return 0;
+			{return 0;}
 		return ($a["sort"] < $b["sort"]? -1 : 1);
 	}
 
@@ -919,7 +917,7 @@ class CAdminMenu
 		$menu =  include($fname);
 
 		if(is_array($menu) && !empty($menu))
-			return $menu;
+			{return $menu;}
 
 		if(!empty($aModuleMenuLinks))
 		{
@@ -965,27 +963,28 @@ class CAdminMenu
 
 		$bSubmenu = (isset($aMenu["items"]) && is_array($aMenu["items"]) && !empty($aMenu["items"]));
 		if($bSubmenu)
-			$aSections[$aMenu["items_id"]] = array(
+			{$aSections[$aMenu["items_id"]] = array(
 				"menu_id" => $aMenu["menu_id"],
 				"items_id"=>$aMenu["items_id"],
 				"page_icon"=>isset($aMenu["page_icon"])? $aMenu["page_icon"]: null,
 				"text"=>$aMenu["text"],
-				"url"=>$aMenu["url"],
+				"url"=>isset($aMenu["url"]) ? $aMenu["url"] : null,
 				"skip_chain"=>isset($aMenu["skip_chain"])? $aMenu["skip_chain"]: null,
 				"help_section"=>isset($aMenu["help_section"])? $aMenu["help_section"]: null,
-			);
+			);}
 
 		$bSelected = false;
-		$bMoreUrl = (isset($aMenu["more_url"]) && is_array($aMenu["more_url"]) && !empty($aMenu["more_url"]));
-		if($aMenu["url"] <> "" || $bMoreUrl)
+		$mainUrl = (isset($aMenu["url"]) && $aMenu["url"] <> "");
+		$bMoreUrl = (!empty($aMenu["more_url"]) && is_array($aMenu["more_url"]));
+		if($mainUrl || $bMoreUrl)
 		{
 			$cur_page = $APPLICATION->GetCurPage();
 
 			$all_links = array();
-			if($aMenu["url"] <> "")
-				$all_links[] = $aMenu["url"];
+			if($mainUrl)
+				{$all_links[] = $aMenu["url"];}
 			if($bMoreUrl)
-				$all_links = array_merge($all_links, $aMenu["more_url"]);
+				{$all_links = array_merge($all_links, $aMenu["more_url"]);}
 
 			$n = count($all_links);
 			for($j = 0; $j < $n; $j++)
@@ -994,30 +993,30 @@ class CAdminMenu
 				//"/admin/index.php"
 				//"/admin/index.php?module=mail"
 				if(empty($all_links[$j]))
-					continue;
+					{continue;}
 
-				if(strpos($all_links[$j], "/bitrix/admin/") !== 0)
-					$tested_link = "/bitrix/admin/".$all_links[$j];
+				if(mb_strpos($all_links[$j],"/bitrix/admin/") !== 0)
+					{$tested_link = "/bitrix/admin/".$all_links[$j];}
 				else
-					$tested_link = $all_links[$j];
+					{$tested_link = $all_links[$j];}
 
-				if(strlen($tested_link) > 0 && strpos($cur_page, $tested_link) === 0)
+				if($tested_link <> '' && mb_strpos($cur_page,$tested_link) === 0)
 				{
 					$bSelected = true;
 					break;
 				}
 
-				if(($pos = strpos($tested_link, "?"))!==false)
+				if(($pos = mb_strpos($tested_link,"?"))!==false)
 				{
-					if(substr($tested_link, 0, $pos)==$cur_page)
+					if(mb_substr($tested_link,0,$pos)==$cur_page)
 					{
-						$right = substr($tested_link, $pos+1);
+						$right = mb_substr($tested_link,$pos+1);
 						$params = explode("&", $right);
 						$bOK = true;
 
 						foreach ($params as $paramKeyAndValue)
 						{
-							$eqpos = strpos($paramKeyAndValue, "=");
+							$eqpos = mb_strpos($paramKeyAndValue,"=");
 							$varvalue = "";
 							if($eqpos === false)
 							{
@@ -1029,8 +1028,8 @@ class CAdminMenu
 							}
 							else
 							{
-								$varname = substr($paramKeyAndValue, 0, $eqpos);
-								$varvalue = urldecode(substr($paramKeyAndValue, $eqpos+1));
+								$varname = mb_substr($paramKeyAndValue,0,$eqpos);
+								$varvalue = urldecode(mb_substr($paramKeyAndValue,$eqpos+1));
 							}
 
 							$globvarvalue = isset($_REQUEST[$varname]) ? $_REQUEST[$varname] : "";
@@ -1055,11 +1054,11 @@ class CAdminMenu
 		if($bSubmenu)
 		{
 			foreach($aMenu["items"] as $key=>$submenu)
-				if($this->_SetActiveItems($aMenu["items"][$key], $aSections))
+				{if($this->_SetActiveItems($aMenu["items"][$key], $aSections))
 				{
 					$bSelectedInside = true;
 					break;
-				}
+				}}
 		}
 
 		if($bSelected && !$bSelectedInside)
@@ -1068,11 +1067,11 @@ class CAdminMenu
 			{
 				$aSections["_active"] = array(
 					"menu_id"=>$aMenu["menu_id"],
-					"page_icon"=>$aMenu["page_icon"],
+					"page_icon"=>isset($aMenu["page_icon"])? $aMenu["page_icon"]: null,
 					"text"=>$aMenu["text"],
 					"url"=>$aMenu["url"],
-					"skip_chain"=>$aMenu["skip_chain"],
-					"help_section"=>$aMenu["help_section"],
+					"skip_chain"=>isset($aMenu["skip_chain"])? $aMenu["skip_chain"]: null,
+					"help_section"=>isset($aMenu["help_section"]) ? $aMenu["help_section"]: null,
 				);
 			}
 			$aMenu["_active"] = true;
@@ -1153,7 +1152,7 @@ class CAdminMenu
 			echo "</div>";
 		}
 		else
-			echo  "<div class=\"adm-sub-submenu-block-children\"></div>";
+			{echo  "<div class=\"adm-sub-submenu-block-children\"></div>";}
 ?></div><?
 		$url = str_replace("&amp;", "&", $aMenu['url']);
 
@@ -1182,7 +1181,7 @@ class CAdminMenu
 		foreach($aMenu["items"] as $submenu)
 		{
 			if(!$submenu)
-				continue;
+				{continue;}
 			echo
 				'<div class="index-icon-block" align="center">'.
 				'<a href="'.$submenu["url"].'" title="'.$submenu["title"].'"><div class="index-icon" id="'.($submenu["page_icon"]<>""? $submenu["page_icon"]:$aMenu["page_icon"]).'"></div>'.
@@ -1197,7 +1196,7 @@ class CAdminMenu
 		foreach($aMenu["items"] as $submenu)
 		{
 			if(!$submenu)
-				continue;
+				{continue;}
 			echo '<div class="index-list" id="'.($submenu["icon"]<>""? $submenu["icon"]:$aMenu["icon"]).'"><a href="'.$submenu["url"].'" title="'.$submenu["title"].'">'.$submenu["text"].'</a></div>';
 		}
 	}
@@ -1219,7 +1218,7 @@ class CAdminMenu
 		{
 			// Populate list with data
 			if(!$submenu)
-				continue;
+				{continue;}
 			$row = &$lAdmin->AddRow(0, null, $submenu["url"], GetMessage("admin_lib_index_go"));
 			$row->AddField("NAME", '<a href="'.$submenu["url"].'" title="'.$submenu["title"].'">'.$submenu["text"].'</a>');
 			$row->AddField("DESCRIPTION", $submenu["title"]);
@@ -1238,8 +1237,8 @@ class CAdminMenu
 	function ShowSubmenu($menu_id, $mode="menu")
 	{
 		foreach($this->aGlobalMenu as $key=>$menu)
-			if($this->_ShowSubmenu($this->aGlobalMenu[$key], $menu_id, $mode))
-				break;
+			{if($this->_ShowSubmenu($this->aGlobalMenu[$key], $menu_id, $mode))
+				{break;}}
 	}
 
 	function _ShowSubmenu(&$aMenu, $menu_id, $mode, $level=0)
@@ -1257,22 +1256,22 @@ class CAdminMenu
 						$menuScripts .= $this->Show($submenu, $level);
 					}
 					if ($menuScripts != "")
-						echo '<script type="text/javascript">'.$menuScripts.'</script>';
+						{echo '<script type="text/javascript">'.$menuScripts.'</script>';}
 				}
 				elseif($mode == "icon")
-					$this->ShowIcons($aMenu);
+					{$this->ShowIcons($aMenu);}
 				elseif($mode == "list")
-					$this->ShowList($aMenu);
+					{$this->ShowList($aMenu);}
 				elseif($mode == "table")
-					$this->ShowTable($aMenu);
+					{$this->ShowTable($aMenu);}
 
 				return true;
 			}
 			else
 			{
 				foreach($aMenu["items"] as $submenu)
-					if($this->_ShowSubmenu($submenu, $menu_id, $mode, $level+1))
-						return true;
+					{if($this->_ShowSubmenu($submenu, $menu_id, $mode, $level+1))
+						{return true;}}
 			}
 		}
 		return false;
@@ -1281,11 +1280,11 @@ class CAdminMenu
 	function ActiveSection()
 	{
 		if(!empty($this->aActiveSections))
-			foreach($this->aActiveSections as $menu)
-				return $menu;
+			{foreach($this->aActiveSections as $menu)
+				{return $menu;}}
 
 		foreach($this->aGlobalMenu as $menu)
-			return $menu;
+			{return $menu;}
 
 		return null;
 	}
@@ -1296,8 +1295,8 @@ class CAdminMenu
 		{
 			$aSections = array_keys($this->aActiveSections);
 			for($i=count($aSections)-1; $i>=0; $i--)
-				if($this->aActiveSections[$aSections[$i]]["page_icon"] <> "")
-					return $this->aActiveSections[$aSections[$i]]["page_icon"];
+				{if($this->aActiveSections[$aSections[$i]]["page_icon"] <> "")
+					{return $this->aActiveSections[$aSections[$i]]["page_icon"];}}
 		}
 		return "default_page_icon";
 	}
@@ -1306,8 +1305,8 @@ class CAdminMenu
 	{
 		$aSect = explode(",", $sections);
 		foreach($aSect as $sect)
-			if(trim($sect) <> "")
-				$this->aOpenedSections[] = trim($sect);
+			{if(trim($sect) <> "")
+				{$this->aOpenedSections[] = trim($sect);}}
 	}
 
 	function IsSectionActive($section)
@@ -1361,9 +1360,9 @@ window.'.$this->name.' = new PopupMenu("'.$this->id.'"'.
 ';
 		}
 		if($bReturnValue)
-			return $s;
+			{return $s;}
 		else
-			echo $s;
+			{echo $s;}
 		return null;
 	}
 
@@ -1430,14 +1429,14 @@ window.'.$this->name.' = new PopupMenu("'.$this->id.'"'.
 			foreach($items as $action)
 			{
 				if($i > 0)
-					$sMenuUrl .= ",\n";
+					{$sMenuUrl .= ",\n";}
 
 				if(isset($action["SEPARATOR"]) && ($action["SEPARATOR"] === true || $action["SEPARATOR"] == "Y"))
-					$sMenuUrl .= "{'SEPARATOR':true}";
+					{$sMenuUrl .= "{'SEPARATOR':true}";}
 				else
 				{
-					if($action["ONCLICK"] <> "")
-						$action["ACTION"] = $action["ONCLICK"];
+					if(($action["ONCLICK"] ?? '') <> "")
+						{$action["ACTION"] = $action["ONCLICK"];}
 
 					if (isset($action["ICON"]) && $action["ICON"]<>""
 						&& empty($action["GLOBAL_ICON"]))
@@ -1461,18 +1460,18 @@ window.'.$this->name.' = new PopupMenu("'.$this->id.'"'.
 						(isset($action["DISABLED"]) && $action["DISABLED"] == true? "'DISABLED':true,":"").
 						(isset($action["AUTOHIDE"]) && $action["AUTOHIDE"] == false? "'AUTOHIDE':false,":"").
 						(isset($action["DEFAULT"]) && $action["DEFAULT"] == true? "'DEFAULT':true,":"").
-						($action["TEXT"]<>""? "'TEXT':'".CUtil::JSEscape($action["TEXT"])."',":"").
-						($action["HTML"]<>""? "'HTML':'".CUtil::JSEscape($action["HTML"])."',":"").
+						(($action["TEXT"] ?? '') <> '' ? "'TEXT':'".CUtil::JSEscape($action["TEXT"])."'," : "").
+						(($action["HTML"] ?? '') <> '' ? "'HTML':'".CUtil::JSEscape($action["HTML"])."'," : "").
 						(isset($action["TITLE"]) && $action["TITLE"]<>""? "'TITLE':'".CUtil::JSEscape($action["TITLE"])."',":"").
 						(isset($action["SHOW_TITLE"]) && $action["SHOW_TITLE"] == true ? "'SHOW_TITLE':true,":"").
-						($action["ACTION"]<>""? "'ONCLICK':'".CUtil::JSEscape(str_replace("&amp;", "&", $action["ACTION"]))."',":"").
+						(($action["ACTION"] ?? '') <> '' ? "'ONCLICK':'".CUtil::JSEscape(str_replace("&amp;", "&", $action["ACTION"]))."'," : "").
 						(isset($action["ONMENUPOPUP"]) && $action["ONMENUPOPUP"]<>""? "'ONMENUPOPUP':'".CUtil::JSEscape($action["ONMENUPOPUP"])."',":"").
 						(isset($action["MENU"]) && is_array($action["MENU"])? "'MENU':".CAdminPopup::PhpToJavaScript($action["MENU"]).",":"").
 						(isset($action["MENU_URL"]) && $action["MENU_URL"]<>''? "'MENU_URL':'".CUtil::JSEscape($action["MENU_URL"])."',":"").
 						(isset($action["MENU_PRELOAD"]) && $action["MENU_PRELOAD"] == true? "'MENU_PRELOAD':true,":"").
 						(isset($action["CLOSE_ON_CLICK"]) && $action["CLOSE_ON_CLICK"] == false? "'CLOSE_ON_CLICK':false,":"");
 					if($sItem <> "")
-						$sItem = substr($sItem, 0, -1); //delete last comma
+						{$sItem = mb_substr($sItem,0,-1);} //delete last comma
 					$sMenuUrl .= "{".$sItem."}";
 				}
 				$i++;
@@ -1507,7 +1506,7 @@ class CAdminPopupEx extends CAdminPopup
 		{
 			$params = '';
 			if (is_array($this->params))
-				$params = ', '.CUtil::PhpToJsObject($params);
+				{$params = ', '.CUtil::PhpToJsObject($params);}
 
 			$s .=
 "<script type=\"text/javascript\">
@@ -1520,9 +1519,9 @@ BX.ready(function(){
 		}
 
 		if($bReturnValue)
-			return $s;
+			{return $s;}
 		else
-			echo $s;
+			{echo $s;}
 		return null;
 	}
 }
@@ -1601,7 +1600,7 @@ class CAdminContextMenu
 					else
 					{
 						if (!empty($item["LINK"]) && preg_match("/set_default/", $item["LINK"]))
-							$item["LINK"] .= "&apply_filter=Y";
+							{$item["LINK"] .= "&apply_filter=Y";}
 					}
 					break;
 				case "delete":
@@ -1649,20 +1648,10 @@ class CAdminContextMenu
 		}
 	}
 
-	/**
-	 * @param $items
-	 * @param array $additional_items
-	 *@deprecated
-	 */
-	function CAdminContextMenu($items, $additional_items = array())
-	{
-		self::__construct($items, $additional_items);
-	}
-
 	function Show()
 	{
 		if (defined('BX_PUBLIC_MODE') && BX_PUBLIC_MODE == 1)
-			return;
+			{return;}
 
 		foreach(GetModuleEvents("main", "OnAdminContextMenuShow", true) as $arEvent)
 		{
@@ -1681,13 +1670,13 @@ class CAdminContextMenu
 		foreach($this->items as $item)
 		{
 			if(!empty($item["NEWBAR"]))
-				$this->EndBar();
+				{$this->EndBar();}
 
 			if($bFirst || !empty($item["NEWBAR"]))
-				$this->BeginBar();
+				{$this->BeginBar();}
 
 			if(!empty($item["NEWBAR"]) || !empty($item['SEPARATOR']))
-				continue;
+				{continue;}
 
 			if ($item['ICON'] != 'btn_list' && !$bNeedSplitClosing)
 			{
@@ -1711,7 +1700,7 @@ class CAdminContextMenu
 		}
 
 		if ($bNeedSplitClosing)
-			$this->EndRightBar();
+			{$this->EndRightBar();}
 
 		$this->EndBar();
 	}
@@ -1795,7 +1784,7 @@ BX.Fix(right_bar, {type: 'right', limit_node: BX.previousSibling(right_bar)});
 				", {active_class: '".$this->GetActiveClassByID($item["ICON"])."', public_frame: '".($this->isPublicFrame ? 1 : 0)."'});";
 			$sClassName = $this->GetClassByID($item["ICON"]);
 ?>
-	<a href="javascript:void(0)" hidefocus="true" onclick="this.blur();<?=$sMenuUrl?> return false;" class="adm-btn<?=$sClassName != '' ? ' '.$sClassName : ''?> adm-btn-menu" title="<?=$item["TITLE"];?>"><?=$item["TEXT"]?></a>
+	<a href="javascript:void(0)" hidefocus="true" onclick="this.blur();<?=$sMenuUrl?> return false;" class="adm-btn<?=$sClassName != '' ? ' '.$sClassName : ''?> adm-btn-menu" title="<?=($item["TITLE"] ?? '');?>"><?=$item["TEXT"]?></a>
 <?
 		}
 		else
@@ -1840,24 +1829,24 @@ class CAdminContextMenuList extends CAdminContextMenu
 
 	function GetClassByID($icon_id)
 	{
-		if (substr($icon_id, 0, 7) == 'btn_new')
-			return 'adm-btn-save adm-btn-add';
+		if (mb_substr($icon_id,0,7) == 'btn_new')
+			{return 'adm-btn-save adm-btn-add';}
 		else
-			return parent::GetClassByID($icon_id);
+			{return parent::GetClassByID($icon_id);}
 	}
 
 	function GetActiveClassByID($icon_id)
 	{
-		if (substr($icon_id, 0, 7) == 'btn_new')
-			return 'adm-btn-save-active';
+		if (mb_substr($icon_id,0,7) == 'btn_new')
+			{return 'adm-btn-save-active';}
 		else
-			return parent::GetActiveClassByID($icon_id);
+			{return parent::GetActiveClassByID($icon_id);}
 	}
 
 	function Button($item, $hkInst)
 	{
 		if (isset($item['ICON']) && $item['ICON'] == 'btn_list')
-			$item['ICON'] = '';
+			{$item['ICON'] = '';}
 
 		parent::Button($item, $hkInst);
 	}
@@ -1897,11 +1886,11 @@ class CAdminSorting
 		$needUserOrder = false;
 		if(isset($GLOBALS[$this->by_name]))
 		{
-			$_SESSION["SESS_SORT_BY"][$this->table_id] = $GLOBALS[$this->by_name];
+			\Bitrix\Main\Application::getInstance()->getSession()["SESS_SORT_BY"][$this->table_id] = $GLOBALS[$this->by_name];
 		}
-		elseif(isset($_SESSION["SESS_SORT_BY"][$this->table_id]))
+		elseif(isset(\Bitrix\Main\Application::getInstance()->getSession()["SESS_SORT_BY"][$this->table_id]))
 		{
-			$GLOBALS[$this->by_name] = $_SESSION["SESS_SORT_BY"][$this->table_id];
+			$GLOBALS[$this->by_name] = \Bitrix\Main\Application::getInstance()->getSession()["SESS_SORT_BY"][$this->table_id];
 		}
 		else
 		{
@@ -1910,11 +1899,11 @@ class CAdminSorting
 
 		if(isset($GLOBALS[$this->ord_name]))
 		{
-			$_SESSION["SESS_SORT_ORDER"][$this->table_id] = $GLOBALS[$this->ord_name];
+			\Bitrix\Main\Application::getInstance()->getSession()["SESS_SORT_ORDER"][$this->table_id] = $GLOBALS[$this->ord_name];
 		}
-		elseif(isset($_SESSION["SESS_SORT_ORDER"][$this->table_id]))
+		elseif(isset(\Bitrix\Main\Application::getInstance()->getSession()["SESS_SORT_ORDER"][$this->table_id]))
 		{
-			$GLOBALS[$this->ord_name] = $_SESSION["SESS_SORT_ORDER"][$this->table_id];
+			$GLOBALS[$this->ord_name] = \Bitrix\Main\Application::getInstance()->getSession()["SESS_SORT_ORDER"][$this->table_id];
 		}
 		else
 		{
@@ -1927,16 +1916,16 @@ class CAdminSorting
 			if ($needUserByField)
 			{
 				if (!empty($userSorting["by"]))
-					$GLOBALS[$this->by_name] = $userSorting["by"];
+					{$GLOBALS[$this->by_name] = $userSorting["by"];}
 				elseif ($this->by_initial !== false)
-					$GLOBALS[$this->by_name] = $this->by_initial;
+					{$GLOBALS[$this->by_name] = $this->by_initial;}
 			}
 			if ($needUserOrder)
 			{
 				if(!empty($userSorting["order"]))
-					$GLOBALS[$this->ord_name] = $userSorting["order"];
+					{$GLOBALS[$this->ord_name] = $userSorting["order"];}
 				elseif($this->order_initial !== false)
-					$GLOBALS[$this->ord_name] = $this->order_initial;
+					{$GLOBALS[$this->ord_name] = $this->order_initial;}
 			}
 		}
 
@@ -1957,9 +1946,9 @@ class CAdminSorting
 		$class = "";
 		$title = GetMessage("admin_lib_sort_title")." ".($alt_title?$alt_title:$text);
 
-		if(strtolower($this->field) == strtolower($sort_by))
+		if(mb_strtolower($this->field) == mb_strtolower($sort_by))
 		{
-			if(strtolower($this->order) == "desc")
+			if(mb_strtolower($this->order) == "desc")
 			{
 				$class = "-down";
 				$title .= " ".GetMessage("admin_lib_sort_down");
@@ -1983,8 +1972,8 @@ class CAdminSorting
 			$path = preg_replace("/([?&])action=[^&]*[&]*/i", "\\1", $path);
 			$sep = "&";
 		}
-		if(($last = substr($path, -1, 1)) == "?" || $last == "&")
-			$sep = "";
+		if(($last = mb_substr($path,-1,1)) == "?" || $last == "&")
+			{$sep = "";}
 
 		$url = $path.$sep.$this->by_name."=".$sort_by."&".$this->ord_name."=".($class <> ""? $ord:"");
 
@@ -2047,26 +2036,16 @@ class CAdminResult extends CDBResult
 		$this->table_id = $table_id;
 	}
 
-	/**
-	* @param mixed $res
-	* @param string $table_id
-	*@deprecated
- 	*/
-	public function CAdminResult($res, $table_id)
-	{
-		self::__construct($res, $table_id);
-	}
-
 	public function NavStart($nPageSize=20, $bShowAll=true, $iNumPage=false)
 	{
 		$nSize = self::GetNavSize($this->table_id, $nPageSize);
 
 		if(!is_array($nPageSize))
-			$nPageSize = array();
+			{$nPageSize = array();}
 
 		$nPageSize["nPageSize"] = $nSize;
 		if($_REQUEST["mode"] == "excel")
-			$nPageSize["NavShowAll"] = true;
+			{$nPageSize["NavShowAll"] = true;}
 
 		$this->nInitialSize = $nPageSize["nPageSize"];
 
@@ -2083,38 +2062,38 @@ class CAdminResult extends CDBResult
 	 * @param int|array $nPageSize
 	 * @return int
 	 */
-	public function GetNavSize($table_id=false, $nPageSize=20)
+	public static function GetNavSize($table_id=false, $nPageSize=20)
 	{
 		/** @global CMain $APPLICATION */
 		global $NavNum, $APPLICATION;
 
 		if (!isset($NavNum))
-			$NavNum = 0;
+			{$NavNum = 0;}
 
 		$bSess = (CPageOption::GetOptionString("main", "nav_page_in_session", "Y")=="Y");
 		if(is_array($nPageSize))
-			$sNavID = $nPageSize["sNavID"];
+			{$sNavID = $nPageSize["sNavID"];}
 		$unique = md5((isset($sNavID)? $sNavID : $APPLICATION->GetCurPage()));
 
 		if(isset($_REQUEST["SIZEN_".($NavNum+1)]))
 		{
 			$nSize = (int)$_REQUEST["SIZEN_".($NavNum+1)];
 			if($bSess)
-				$_SESSION["NAV_PAGE_SIZE"][$unique] = $nSize;
+				{\Bitrix\Main\Application::getInstance()->getSession()["NAV_PAGE_SIZE"][$unique] = $nSize;}
 		}
-		elseif($bSess && isset($_SESSION["NAV_PAGE_SIZE"][$unique]))
+		elseif($bSess && isset(\Bitrix\Main\Application::getInstance()->getSession()["NAV_PAGE_SIZE"][$unique]))
 		{
-			$nSize = $_SESSION["NAV_PAGE_SIZE"][$unique];
+			$nSize = \Bitrix\Main\Application::getInstance()->getSession()["NAV_PAGE_SIZE"][$unique];
 		}
 		else
 		{
 			$aOptions = array();
 			if($table_id)
-				$aOptions = CUserOptions::GetOption("list", $table_id);
+				{$aOptions = CUserOptions::GetOption("list", $table_id);}
 			if(intval($aOptions["page_size"]) > 0)
-				$nSize = intval($aOptions["page_size"]);
+				{$nSize = intval($aOptions["page_size"]);}
 			else
-				$nSize = (is_array($nPageSize)? $nPageSize["nPageSize"]:$nPageSize);
+				{$nSize = (is_array($nPageSize)? $nPageSize["nPageSize"]:$nPageSize);}
 		}
 		return $nSize;
 	}
@@ -2122,7 +2101,7 @@ class CAdminResult extends CDBResult
 	public function GetNavPrint($title, $show_allways=true, $StyleText="", $template_path=false, $arDeleteParam=false)
 	{
 		if($template_path === false)
-			$template_path = $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/interface/navigation.php";
+			{$template_path = $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/interface/navigation.php";}
 		return parent::GetNavPrint($title, $show_allways, $StyleText, $template_path, array('action', 'sessid'));
 	}
 }
@@ -2141,24 +2120,14 @@ class CAdminMessage
 	{
 		//array("MESSAGE"=>"", "TYPE"=>("ERROR"|"OK"|"PROGRESS"), "DETAILS"=>"", "HTML"=>true)
 		if(!is_array($message))
-			$message = array("MESSAGE"=>$message, "TYPE"=>"ERROR");
+			{$message = array("MESSAGE"=>$message, "TYPE"=>"ERROR");}
 		if(empty($message["DETAILS"]) && $exception !== false)
-			$message["DETAILS"] = $exception->GetString();
+			{$message["DETAILS"] = $exception->GetString();}
 		$this->message = $message;
 		$this->exception = $exception;
 	}
 
-	/**
-	* @param string|array $message
-	 * @param CAdminException|bool $exception
-	*@deprecated
-	 */
-	public function CAdminMessage($message, $exception=false)
-	{
-		self::__construct($message, $exception);
-	}
-
-	function Show()
+	public function Show()
 	{
 		$publicMode = false;
 		if (defined('BX_PUBLIC_MODE') && BX_PUBLIC_MODE == 1 && $this->message["TYPE"] != "PROGRESS" && (!isset($this->message['SKIP_PUBLIC_MODE']) || $this->message['SKIP_PUBLIC_MODE'] !== true))
@@ -2170,7 +2139,7 @@ class CAdminMessage
 			ob_end_clean();
 			echo "<script>
 			var currentWindow = top.window;
-			if (top.BX.SidePanel.Instance && top.BX.SidePanel.Instance.getTopSlider())
+			if (top.BX.SidePanel && top.BX.SidePanel.Instance && top.BX.SidePanel.Instance.getTopSlider())
 			{
 				currentWindow = top.BX.SidePanel.Instance.getTopSlider().getWindow();
 			}
@@ -2185,14 +2154,14 @@ class CAdminMessage
 		}
 
 		if($this->message["MESSAGE"])
-			$title = '<div class="adm-info-message-title">'.$this->_formatHTML($this->message["MESSAGE"]).'</div>';
+			{$title = '<div class="adm-info-message-title">'.$this->_formatHTML($this->message["MESSAGE"]).'</div>';}
 		else
-			$title = '';
+			{$title = '';}
 
 		if($this->message["DETAILS"])
-			$details = $this->_formatHTML($this->message["DETAILS"]);
+			{$details = $this->_formatHTML($this->message["DETAILS"]);}
 		else
-			$details = '';
+			{$details = '';}
 
 		if($this->message["TYPE"] == "OK")
 		{
@@ -2225,7 +2194,7 @@ class CAdminMessage
 			}
 
 			if ($this->message['PROGRESS_ICON'])
-				$title = '<div class="adm-info-message-icon-progress"></div>'.$title;
+				{$title = '<div class="adm-info-message-icon-progress"></div>'.$title;}
 
 			$details = str_replace("#PROGRESS_BAR#", $this->_getProgressHtml(), $details);
 			$s = '
@@ -2261,17 +2230,17 @@ class CAdminMessage
 		return $s;
 	}
 
-	function _getProgressHtml()
+	public function _getProgressHtml()
 	{
 		$w = isset($this->message['PROGRESS_WIDTH']) ? intval($this->message['PROGRESS_WIDTH']) : 500;
 		$p = 0;
 		if ($this->message['PROGRESS_TOTAL'] > 0)
-			$p = $this->message['PROGRESS_VALUE']/$this->message['PROGRESS_TOTAL'];
+			{$p = $this->message['PROGRESS_VALUE']/$this->message['PROGRESS_TOTAL'];}
 
 		if ($p < 0)
-			$p = 0;
+			{$p = 0;}
 		elseif ($p > 1)
-			$p = 1;
+			{$p = 1;}
 
 		$innerText = number_format(100*$p, 0) .'%';
 		if ($this->message['PROGRESS_TEMPLATE'])
@@ -2288,33 +2257,33 @@ class CAdminMessage
 		return $s;
 	}
 
-	function _getButtonsHtml()
+	public function _getButtonsHtml()
 	{
 		$s = '';
 		if(isset($this->message["BUTTONS"]) && is_array($this->message["BUTTONS"]))
 		{
 			foreach($this->message["BUTTONS"] as $button)
-				$s .= '<input type="button" onclick="'.htmlspecialcharsbx($button["ONCLICK"]).'" value="'.htmlspecialcharsbx($button["VALUE"]).'" '.($button["ID"]? 'id="'.htmlspecialcharsbx($button["ID"]).'"': '').'>';
+				{$s .= '<input type="button" onclick="'.htmlspecialcharsbx($button["ONCLICK"]).'" value="'.htmlspecialcharsbx($button["VALUE"]).'" '.($button["ID"]? 'id="'.htmlspecialcharsbx($button["ID"]).'"': '').'>';}
 		}
 		return $s;
 	}
 
-	function _formatHTML($html)
+	public function _formatHTML($html)
 	{
 		if($this->message["HTML"])
-			return $html;
+			{return $html;}
 		else
-			return _ShowHtmlspec($html);
+			{return _ShowHtmlspec($html);}
 	}
 
-	function GetMessages()
+	public function GetMessages()
 	{
 		if($this->exception && method_exists($this->exception, 'GetMessages'))
-			return $this->exception->GetMessages();
+			{return $this->exception->GetMessages();}
 		return false;
 	}
 
-	function ShowOldStyleError($message)
+	public static function ShowOldStyleError($message)
 	{
 		if(!empty($message))
 		{
@@ -2323,7 +2292,7 @@ class CAdminMessage
 		}
 	}
 
-	function ShowMessage($message)
+	public static function ShowMessage($message)
 	{
 		if(!empty($message))
 		{
@@ -2332,10 +2301,10 @@ class CAdminMessage
 		}
 	}
 
-	function ShowNote($message)
+	public static function ShowNote($message)
 	{
 		if(!empty($message))
-			CAdminMessage::ShowMessage(array("MESSAGE"=>$message, "TYPE"=>"OK"));
+			{CAdminMessage::ShowMessage(array("MESSAGE"=>$message, "TYPE"=>"OK"));}
 	}
 }
 
@@ -2350,16 +2319,16 @@ class CAdminChain
 		$this->bVisible = $bVisible;
 	}
 
-	function AddItem($item)
+	public function AddItem($item)
 	{
 		//array("TEXT"=>"", "LINK"=>"", "ONCLICK"=>"", "MENU"=>array(array("TEXT"=>"", "LINK"=>"", "CLASS"=>""), ...))
 		$this->items[] = $item;
 	}
 
-	function Show()
+	public function Show()
 	{
 		if(empty($this->items))
-			return null;
+			{return null;}
 
 		$chainScripts = '';
 
@@ -2451,7 +2420,7 @@ class CAdminMainChain extends CAdminChain
 		global $adminMenu;
 
 		if($this->bInit)
-			return;
+			{return;}
 		$this->bInit = true;
 		$adminPage->Init();
 		$adminMenu->Init($adminPage->aModules);
@@ -2461,11 +2430,11 @@ class CAdminMainChain extends CAdminChain
 		foreach($adminMenu->aActiveSections as $sect)
 		{
 			if($sect["skip_chain"] !== true)
-				parent::AddItem(array("TEXT"=>$sect["text"], "LINK"=>$sect["url"], "ID" => $sect['items_id']));
+				{parent::AddItem(array("TEXT"=>$sect["text"], "LINK"=>$sect["url"], "ID" => $sect['items_id']));}
 		}
 	}
 
-	function AddItem($item)
+	public function AddItem($item)
 	{
 		$this->Init();
 		parent::AddItem($item);
@@ -2491,35 +2460,42 @@ class CAdminTheme
 
 					$sLangFile = $_SERVER["DOCUMENT_ROOT"].$path."/lang/".LANGUAGE_ID."/.description.php";
 					if(file_exists($sLangFile))
-						include($sLangFile);
+						{include($sLangFile);}
 					else
 					{
 						$sLangFile = $_SERVER["DOCUMENT_ROOT"].$path."/lang/en/.description.php";
 						if(file_exists($sLangFile))
-							include($sLangFile);
+							{include($sLangFile);}
 					}
 
 					$aTheme = array();
 					$sDescFile = $_SERVER["DOCUMENT_ROOT"].$path."/.description.php";
 					if(file_exists($sDescFile))
-						$aTheme = include($sDescFile);
+						{$aTheme = include($sDescFile);}
 					$aTheme["ID"] = $file;
 					if($aTheme["NAME"] == "")
-						$aTheme["NAME"] = $file;
+						{$aTheme["NAME"] = $file;}
 
 					$aThemes[] = $aTheme;
 				}
 			}
 			closedir($dh);
 		}
-		usort($aThemes, create_function('$a, $b', 'return strcasecmp($a["ID"], $b["ID"]);'));
+
+		usort(
+			$aThemes,
+			function ($a, $b) {
+				return strcasecmp($a["ID"], $b["ID"]);
+			}
+		);
+
 		return $aThemes;
 	}
 
 	public static function GetCurrentTheme()
 	{
 		$aUserOpt = CUserOptions::GetOption("global", "settings");
-		if($aUserOpt["theme_id"] <> "")
+		if (is_array($aUserOpt) && ($aUserOpt["theme_id"] ?? '') <> '')
 		{
 			$theme = preg_replace("/[^a-z0-9_.-]/i", "", $aUserOpt["theme_id"]);
 			if($theme <> "")
@@ -2542,7 +2518,7 @@ class CAdminUtil
 			foreach ($vars as $varName => $varValue)
 			{
 				if (in_array($varName, $arExclusions))
-					continue;
+					{continue;}
 
 				$result .= self::dumpVar($varName, $varValue);
 			}
@@ -2568,7 +2544,7 @@ class CAdminUtil
 			{
 				$htmlName = $varStack[0];
 				for ($i = 1, $intCount = count($varStack); $i < $intCount; $i++)
-					$htmlName .= "[".$varStack[$i]."]";
+					{$htmlName .= "[".$varStack[$i]."]";}
 				$htmlName .= "[".$varName."]";
 			}
 

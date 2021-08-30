@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 if (!CModule::IncludeModule('sale')) {
@@ -20,10 +21,11 @@ function saleLocationLoadFile($arParams)
     define('DLMETHOD', $arParams['DLMETHOD']);
     define('DLZIPFILE', $arParams['DLZIPFILE']);
 
-    if (isset($arParams['TMP_PATH']))
+    if (isset($arParams['TMP_PATH'])) {
         $sTmpFilePath = $arParams['TMP_PATH'];
-    else
+    } else {
         $sTmpFilePath = CTempFile::GetDirectoryName(12, 'sale');
+    }
 
     set_time_limit(600);
 
@@ -31,20 +33,26 @@ function saleLocationLoadFile($arParams)
     $CSVFILE = $arParams["CSVFILE"];
     $LOADZIP = $arParams["LOADZIP"];
 
-    if (strlen($CSVFILE) > 0 && !in_array($CSVFILE, array(
+    if ($CSVFILE <> '' && !in_array(
+            $CSVFILE,
+            array(
                 'loc_ussr.csv',
                 'loc_ua.csv',
                 'loc_kz.csv',
                 'loc_usa.csv',
                 'loc_cntr.csv',
-                'locations.csv')
+                'locations.csv'
+            )
         )
     ) {
         $arReturn['ERROR'] = GetMessage('SL_IMPORT_ERROR_FILES');
     } else {
-        if ($STEP == 1 && (strlen($CSVFILE) <= 0 || $CSVFILE == 'locations.csv')) {
-            if ($LOADZIP == 'Y') $STEP = 2;
-            else $STEP = 3;
+        if ($STEP == 1 && ($CSVFILE == '' || $CSVFILE == 'locations.csv')) {
+            if ($LOADZIP == 'Y') {
+                $STEP = 2;
+            } else {
+                $STEP = 3;
+            }
         }
 
         switch ($STEP) {
@@ -66,7 +74,7 @@ function saleLocationLoadFile($arParams)
                     DLMETHOD
                 );
 
-                if (strlen($data) > 0) {
+                if ($data <> '') {
                     CheckDirPath($sTmpFilePath);
                     $fp = fopen($sTmpFilePath . $CSVFILE, 'w');
                     fwrite($fp, $GLOBALS['APPLICATION']->ConvertCharset($data, 'windows-1251', LANG_CHARSET));
@@ -94,7 +102,7 @@ function saleLocationLoadFile($arParams)
                     DLMETHOD
                 );
 
-                if (strlen($data) > 0) {
+                if ($data <> '') {
                     CheckDirPath($sTmpFilePath);
                     $fp = fopen($sTmpFilePath . DLZIPFILE, 'w');
                     fwrite($fp, $GLOBALS['APPLICATION']->ConvertCharset($data, 'windows-1251', LANG_CHARSET));
@@ -132,8 +140,9 @@ function saleLocationImport($arParams)
 
     $step_length = intval($arParams["STEP_LENGTH"]);
 
-    if ($step_length <= 0)
+    if ($step_length <= 0) {
         $step_length = 10;
+    }
 
     define('ZIP_STEP_LENGTH', $step_length);
     define('LOC_STEP_LENGTH', $step_length);
@@ -144,26 +153,34 @@ function saleLocationImport($arParams)
     $LOADZIP = $arParams["LOADZIP"];
     $bSync = $arParams["SYNC"] == "Y";
 
-    if (isset($arParams['TMP_PATH']))
+    if (isset($arParams['TMP_PATH'])) {
         $sTmpFilePath = $arParams['TMP_PATH'];
-    else
+    } else {
         $sTmpFilePath = CTempFile::GetDirectoryName(12, 'sale');
+    }
 
 
-    if (strlen($CSVFILE) > 0 && !in_array($CSVFILE, array('loc_ussr.csv',
+    if ($CSVFILE <> '' && !in_array(
+            $CSVFILE,
+            array(
+                'loc_ussr.csv',
                 'loc_ua.csv',
                 'loc_kz.csv',
                 'loc_usa.csv',
                 'loc_cntr.csv',
-                'locations.csv')
+                'locations.csv'
+            )
         )
     ) {
         //echo GetMessage('SL_IMPORT_ERROR_FILES');
         $arReturn['ERROR'] = GetMessage('SL_IMPORT_ERROR_FILES');
     } else {
-        if ($STEP == 1 && strlen($CSVFILE) <= 0) {
-            if ($LOADZIP == 'Y') $STEP = 2;
-            else $STEP = 3;
+        if ($STEP == 1 && $CSVFILE == '') {
+            if ($LOADZIP == 'Y') {
+                $STEP = 2;
+            } else {
+                $STEP = 3;
+            }
         }
 
         switch ($STEP) {
@@ -175,7 +192,9 @@ function saleLocationImport($arParams)
             case 1:
 
                 $time_limit = ini_get('max_execution_time');
-                if ($time_limit < LOC_STEP_LENGTH) set_time_limit(LOC_STEP_LENGTH + 5);
+                if ($time_limit < LOC_STEP_LENGTH) {
+                    set_time_limit(LOC_STEP_LENGTH + 5);
+                }
 
                 $start_time = time();
                 $finish_time = $start_time + LOC_STEP_LENGTH;
@@ -190,7 +209,7 @@ function saleLocationImport($arParams)
                 $bFinish = true;
 
                 $arSysLangs = Array();
-                $db_lang = CLangAdmin::GetList(($b = "sort"), ($o = "asc"), array("ACTIVE" => "Y"));
+                $db_lang = CLangAdmin::GetList("sort", "asc", array("ACTIVE" => "Y"));
                 while ($arLang = $db_lang->Fetch()) {
                     $arSysLangs[$arLang["LID"]] = $arLang["LID"];
                 }
@@ -207,15 +226,17 @@ function saleLocationImport($arParams)
                         array(),
                         false,
                         false,
-                        array("ID", "COUNTRY_ID", "REGION_ID", "CITY_ID"));
+                        array("ID", "COUNTRY_ID", "REGION_ID", "CITY_ID")
+                    );
 
                     while ($arLoc = $dbLocations->Fetch()) {
                         $arLocations[$arLoc["ID"]] = $arLoc;
                     }
                 }
 
-                if (count($arLocations) <= 0)
+                if (count($arLocations) <= 0) {
                     $bSync = false;
+                }
 
                 include_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/classes/general/csv_data.php");
 
@@ -226,18 +247,18 @@ function saleLocationImport($arParams)
                 $csvFile->SetDelimiter(",");
 
                 $arRes = $csvFile->Fetch();
-                if (!is_array($arRes) || count($arRes) <= 0 || strlen($arRes[0]) != 2) {
+                if (!is_array($arRes) || count($arRes) <= 0 || mb_strlen($arRes[0]) != 2) {
                     $strWarning .= GetMessage('SL_IMPORT_ERROR_WRONG_LOC_FILE') . "<br />";
                 }
 
-                if (strlen($strWarning) <= 0) {
+                if ($strWarning == '') {
                     $DefLang = $arRes[0];
                     if (!in_array($DefLang, $arSysLangs)) {
                         $strWarning .= GetMessage('SL_IMPORT_ERROR_NO_LANG') . "<br />";
                     }
                 }
 
-                if (strlen($strWarning) > 0) {
+                if ($strWarning <> '') {
                     $arReturn['ERROR'] = $strWarning . "<br />";
                     break;
                 }
@@ -280,7 +301,7 @@ function saleLocationImport($arParams)
                     }
 
                     //country
-                    if (is_array($arArrayTmp) && strlen($arArrayTmp["NAME"]) > 0) {
+                    if (is_array($arArrayTmp) && $arArrayTmp["NAME"] <> '') {
                         if ($type == "S") {
                             $CurRegionID = null;
                             $arRegionList = Array();
@@ -296,19 +317,21 @@ function saleLocationImport($arParams)
                                     )
                                 );
                                 if ($arContList = $db_contList->Fetch()) {
-                                    $LLL = IntVal($arContList["ID"]);
-                                    $CurCountryID = IntVal($arContList["COUNTRY_ID"]);
+                                    $LLL = intval($arContList["ID"]);
+                                    $CurCountryID = intval($arContList["COUNTRY_ID"]);
                                 }
                             }
 
-                            if (IntVal($CurCountryID) <= 0) {
+                            if (intval($CurCountryID) <= 0) {
                                 $CurCountryID = CSaleLocation::AddCountry($arArrayTmp);
-                                $CurCountryID = IntVal($CurCountryID);
+                                $CurCountryID = intval($CurCountryID);
                                 if ($CurCountryID > 0) {
                                     $numCountries++;
-                                    if (IntVal($LLL) <= 0) {
+                                    if (intval($LLL) <= 0) {
                                         $LLL = CSaleLocation::AddLocation(array("COUNTRY_ID" => $CurCountryID));
-                                        if (IntVal($LLL) > 0) $numLocations++;
+                                        if (intval($LLL) > 0) {
+                                            $numLocations++;
+                                        }
                                     }
                                 }
                             }
@@ -328,22 +351,26 @@ function saleLocationImport($arParams)
                                 );
                                 if ($arRegionList = $db_rengList->Fetch()) {
                                     $LLL = $arRegionList["ID"];
-                                    $CurRegionID = IntVal($arRegionList["REGION_ID"]);
+                                    $CurRegionID = intval($arRegionList["REGION_ID"]);
                                 }
                             }
 
-                            if (IntVal($CurRegionID) <= 0) {
+                            if (intval($CurRegionID) <= 0) {
                                 $CurRegionID = CSaleLocation::AddRegion($arArrayTmp);
-                                $CurRegionID = IntVal($CurRegionID);
+                                $CurRegionID = intval($CurRegionID);
                                 if ($CurRegionID > 0) {
                                     $numRegiones++;
-                                    if (IntVal($LLL) <= 0) {
-                                        $LLL = CSaleLocation::AddLocation(array("COUNTRY_ID" => $CurCountryID, "REGION_ID" => $CurRegionID));
-                                        if (IntVal($LLL) > 0) $numLocations++;
+                                    if (intval($LLL) <= 0) {
+                                        $LLL = CSaleLocation::AddLocation(
+                                            array("COUNTRY_ID" => $CurCountryID, "REGION_ID" => $CurRegionID)
+                                        );
+                                        if (intval($LLL) > 0) {
+                                            $numLocations++;
+                                        }
                                     }
                                 }
                             }
-                        } elseif ($type == "T" && IntVal($CurCountryID) > 0) //city
+                        } elseif ($type == "T" && intval($CurCountryID) > 0) //city
                         {
                             $city_id = 0;
                             $LLL = 0;
@@ -355,8 +382,9 @@ function saleLocationImport($arParams)
                                     "CITY_NAME" => $arArrayTmp["NAME"],
                                     "LID" => $DefLang
                                 );
-                                if (IntVal($CurRegionID) > 0)
+                                if (intval($CurRegionID) > 0) {
                                     $arFilter["REGION_ID"] = $CurRegionID;
+                                }
 
                                 $db_cityList = CSaleLocation::GetList(
                                     Array(),
@@ -364,27 +392,31 @@ function saleLocationImport($arParams)
                                 );
                                 if ($arCityList = $db_cityList->Fetch()) {
                                     $LLL = $arCityList["ID"];
-                                    $city_id = IntVal($arCityList["CITY_ID"]);
+                                    $city_id = intval($arCityList["CITY_ID"]);
                                 }
                             }
 
                             if ($city_id <= 0) {
                                 $city_id = CSaleLocation::AddCity($arArrayTmp);
-                                $city_id = IntVal($city_id);
-                                if ($city_id > 0)
+                                $city_id = intval($city_id);
+                                if ($city_id > 0) {
                                     $numCities++;
+                                }
                             }
 
                             if ($city_id > 0) {
-                                if (IntVal($LLL) <= 0) {
+                                if (intval($LLL) <= 0) {
                                     $LLL = CSaleLocation::AddLocation(
                                         array(
                                             "COUNTRY_ID" => $CurCountryID,
                                             "REGION_ID" => $CurRegionID,
                                             "CITY_ID" => $city_id
-                                        ));
+                                        )
+                                    );
 
-                                    if (intval($LLL) > 0) $numLocations++;
+                                    if (intval($LLL) > 0) {
+                                        $numLocations++;
+                                    }
                                 }
                             }
                         }
@@ -437,7 +469,9 @@ function saleLocationImport($arParams)
 
             case 2:
                 $time_limit = ini_get('max_execution_time');
-                if ($time_limit < ZIP_STEP_LENGTH) set_time_limit(ZIP_STEP_LENGTH + 5);
+                if ($time_limit < ZIP_STEP_LENGTH) {
+                    set_time_limit(ZIP_STEP_LENGTH + 5);
+                }
 
                 $start_time = time();
                 $finish_time = $start_time + ZIP_STEP_LENGTH;
@@ -448,14 +482,17 @@ function saleLocationImport($arParams)
                         array("LID" => 'ru'),
                         false,
                         false,
-                        array("ID", "CITY_NAME_LANG", "REGION_NAME_LANG"));
+                        array("ID", "CITY_NAME_LANG", "REGION_NAME_LANG")
+                    );
                     $arLocationMap = array();
                     while ($arLocation = $rsLocations->Fetch()) {
-                        if (strlen($arLocation["REGION_NAME_LANG"]) > 0) {
-                            if (strlen($arLocation["CITY_NAME_LANG"]) > 0)
+                        if ($arLocation["REGION_NAME_LANG"] <> '') {
+                            if ($arLocation["CITY_NAME_LANG"] <> '') {
                                 $arLocationMap[$arLocation["CITY_NAME_LANG"]][$arLocation["REGION_NAME_LANG"]] = $arLocation["ID"];
-                        } else
+                            }
+                        } else {
                             $arLocationMap[$arLocation["CITY_NAME_LANG"]] = $arLocation["ID"];
+                        }
                     }
 
                     $DB->StartTransaction();
@@ -484,14 +521,16 @@ function saleLocationImport($arParams)
                     while ($arRes = $csvFile->Fetch()) {
                         $tt++;
                         $CITY = $arRes[1];
-                        if (strlen($arRes[3]) > 0)
+                        if ($arRes[3] <> '') {
                             $REGION = $arRes[3];
+                        }
 
                         if (array_key_exists($CITY, $arLocationMap)) {
-                            if (strlen($REGION) > 0)
+                            if ($REGION <> '') {
                                 $ID = $arLocationMap[$CITY][$REGION];
-                            else
+                            } else {
                                 $ID = $arLocationMap[$CITY];
+                            }
                         } else {
                             $ID = 0;
                         }

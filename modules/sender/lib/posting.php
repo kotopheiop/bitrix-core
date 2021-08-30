@@ -11,11 +11,9 @@ namespace Bitrix\Sender;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type as MainType;
-
-use Bitrix\Sender\Posting\Builder as PostingBuilder;
 use Bitrix\Sender\Integration;
 use Bitrix\Sender\Internals\Model;
-
+use Bitrix\Sender\Posting\Builder as PostingBuilder;
 
 Loc::loadMessages(__FILE__);
 
@@ -26,6 +24,7 @@ class PostingTable extends Entity\DataManager
     const STATUS_SENT = 'S';
     const STATUS_SENT_WITH_ERRORS = 'E';
     const STATUS_ABORT = 'A';
+    const STATUS_WAIT = 'W';
 
     /**
      * @return string
@@ -159,17 +158,19 @@ class PostingTable extends Entity\DataManager
             $listId[] = $data['primary']['ID'];
         } else {
             $filter = array();
-            foreach ($data['primary'] as $primKey => $primVal)
+            foreach ($data['primary'] as $primKey => $primVal) {
                 $filter[$primKey] = $primVal;
+            }
 
-            $tableDataList = static::getList(array(
-                'select' => array('ID'),
-                'filter' => $filter
-            ));
+            $tableDataList = static::getList(
+                array(
+                    'select' => array('ID'),
+                    'filter' => $filter
+                )
+            );
             while ($tableData = $tableDataList->fetch()) {
                 $listId[] = $tableData['ID'];
             }
-
         }
 
         foreach ($listId as $primaryId) {
@@ -193,13 +194,15 @@ class PostingTable extends Entity\DataManager
         if (!$checkDuplicate) {
             $needAdd = true;
         } else {
-            $row = PostingRecipientTable::getRow(array(
-                'select' => array('ID'),
-                'filter' => array(
-                    '=CONTACT_ID' => $ar['CONTACT_ID'],
-                    '=POSTING_ID' => $ar['POSTING_ID']
+            $row = PostingRecipientTable::getRow(
+                array(
+                    'select' => array('ID'),
+                    'filter' => array(
+                        '=CONTACT_ID' => $ar['CONTACT_ID'],
+                        '=POSTING_ID' => $ar['POSTING_ID']
+                    )
                 )
-            ));
+            );
             if (!$row) {
                 $needAdd = true;
             } else {
@@ -212,18 +215,16 @@ class PostingTable extends Entity\DataManager
         }
     }
 
-
     /**
      * @param $postingId
      * @param bool $checkDuplicate
+     * @param bool $prepareFields
+     *
      * @return bool
-     * @throws \Bitrix\Main\ArgumentException
      */
     public static function initGroupRecipients($postingId, $checkDuplicate = true)
     {
-        PostingBuilder::create()->run($postingId, $checkDuplicate);
-
-        return true;
+        return PostingBuilder::create()->run($postingId, $checkDuplicate);
     }
 
     /**
@@ -237,13 +238,16 @@ class PostingTable extends Entity\DataManager
 
         $select = array('CNT', 'STATUS');
         $filter = array('POSTING_ID' => $id);
-        $postingContactDb = PostingRecipientTable::getList(array(
-            'select' => $select,
-            'filter' => $filter,
-            'runtime' => array(new Entity\ExpressionField('CNT', 'COUNT(*)')),
-        ));
-        while ($postingContact = $postingContactDb->fetch())
+        $postingContactDb = PostingRecipientTable::getList(
+            array(
+                'select' => $select,
+                'filter' => $filter,
+                'runtime' => array(new Entity\ExpressionField('CNT', 'COUNT(*)')),
+            )
+        );
+        while ($postingContact = $postingContactDb->fetch()) {
             $statusList[$postingContact['STATUS']] = intval($postingContact['CNT']);
+        }
 
         return $statusList;
     }
@@ -258,10 +262,13 @@ class PostingTable extends Entity\DataManager
         $count = 0;
 
         $ar = static::getRecipientCountByStatus($id);
-        if ($status != '')
+        if ($status != '') {
             $count = (array_key_exists($status, $ar) ? $ar[$status] : 0);
-        else
-            foreach ($ar as $k => $v) $count += $v;
+        } else {
+            foreach ($ar as $k => $v) {
+                $count += $v;
+            }
+        }
 
         return $count;
     }
@@ -361,9 +368,12 @@ class PostingReadTable extends Entity\DataManager
         // update read counter of posting
         $resultDb = static::getList(array('filter' => array('RECIPIENT_ID' => $data['RECIPIENT_ID'])));
         if ($resultDb->getSelectedRowsCount() == 1) {
-            Model\PostingTable::update($data['POSTING_ID'], array(
-                'COUNT_READ' => new \Bitrix\Main\DB\SqlExpression('?# + 1', 'COUNT_READ')
-            ));
+            Model\PostingTable::update(
+                $data['POSTING_ID'],
+                array(
+                    'COUNT_READ' => new \Bitrix\Main\DB\SqlExpression('?# + 1', 'COUNT_READ')
+                )
+            );
         }
 
         return $result;
@@ -432,9 +442,12 @@ class PostingClickTable extends Entity\DataManager
         // update click counter of posting
         $resultDb = static::getList(array('filter' => array('RECIPIENT_ID' => $data['RECIPIENT_ID'])));
         if ($resultDb->getSelectedRowsCount() == 1) {
-            Model\PostingTable::update($data['POSTING_ID'], array(
-                'COUNT_CLICK' => new \Bitrix\Main\DB\SqlExpression('?# + 1', 'COUNT_CLICK')
-            ));
+            Model\PostingTable::update(
+                $data['POSTING_ID'],
+                array(
+                    'COUNT_CLICK' => new \Bitrix\Main\DB\SqlExpression('?# + 1', 'COUNT_CLICK')
+                )
+            );
         }
 
         return $result;
@@ -503,9 +516,12 @@ class PostingUnsubTable extends Entity\DataManager
         // update unsub counter of posting
         $resultDb = static::getList(array('filter' => array('RECIPIENT_ID' => $data['RECIPIENT_ID'])));
         if ($resultDb->getSelectedRowsCount() == 1) {
-            Model\PostingTable::update($data['POSTING_ID'], array(
-                'COUNT_UNSUB' => new \Bitrix\Main\DB\SqlExpression('?# + 1', 'COUNT_UNSUB')
-            ));
+            Model\PostingTable::update(
+                $data['POSTING_ID'],
+                array(
+                    'COUNT_UNSUB' => new \Bitrix\Main\DB\SqlExpression('?# + 1', 'COUNT_UNSUB')
+                )
+            );
         }
 
         return $result;
@@ -662,7 +678,7 @@ class PostingRecipientTable extends Entity\DataManager
         );
     }
 
-    public static function hasUnprocessed($postingId)
+    public static function hasUnprocessed($postingId, $threadId = null)
     {
         return (static::getCount(['=POSTING_ID' => $postingId, '=STATUS' => self::SEND_RESULT_NONE]) > 0);
     }

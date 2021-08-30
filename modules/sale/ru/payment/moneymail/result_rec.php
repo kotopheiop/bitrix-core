@@ -1,23 +1,31 @@
-<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die(); ?><?
+<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+} ?><?
 // ���� ��������� ���������, ���������� ������� GET � ������ � ������ PAYMENT
 if ($mode == "PAYMENT") {
-    if (IntVal($issuer_id) > 0) {
-        $bCorrectPayment = True;
-        if (!($arOrder = CSaleOrder::GetByID(IntVal($issuer_id))))
-            $bCorrectPayment = False;
+    if (intval($issuer_id) > 0) {
+        $bCorrectPayment = true;
+        if (!($arOrder = CSaleOrder::GetByID(intval($issuer_id)))) {
+            $bCorrectPayment = false;
+        }
 
-        if ($bCorrectPayment)
+        if ($bCorrectPayment) {
             CSalePaySystemAction::InitParamArrays($arOrder, $arOrder["ID"]);
+        }
 
         $PASS = CSalePaySystemAction::GetParamValue("PASS");
 
-        if (strlen($PASS) <= 0)
-            $bCorrectPayment = False;
-        else
-            $strCheck = md5($PASS . "PAYMENT" . $invoice . $issuer_id . $payment_id . $payer . $currency . $value . $date . $confirmed);
+        if ($PASS == '') {
+            $bCorrectPayment = false;
+        } else {
+            $strCheck = md5(
+                $PASS . "PAYMENT" . $invoice . $issuer_id . $payment_id . $payer . $currency . $value . $date . $confirmed
+            );
+        }
 
-        if ($bCorrectPayment && $CHECKSUM != $strCheck)
-            $bCorrectPayment = False;
+        if ($bCorrectPayment && $CHECKSUM != $strCheck) {
+            $bCorrectPayment = false;
+        }
 
         if ($bCorrectPayment) {
             $strPS_STATUS_DESCRIPTION = "";
@@ -27,8 +35,9 @@ if ($mode == "PAYMENT") {
             $strPS_STATUS_DESCRIPTION .= "��� ������������� ������� - " . $confirmed . "";
 
             $strPS_STATUS_MESSAGE = "";
-            if (isset($payer) && strlen($payer) > 0)
+            if (isset($payer) && $payer <> '') {
                 $strPS_STATUS_MESSAGE .= "e-mail ���������� - " . $payer . "; ";
+            }
 
             $arFields = array(
                 "PS_STATUS" => "Y",
@@ -43,16 +52,18 @@ if ($mode == "PAYMENT") {
 
             // You can comment this code if you want PAYED flag not to be set automatically
             if ($arOrder["PRICE"] == $value
-                && IntVal($confirmed) == 1) {
+                && intval($confirmed) == 1) {
                 CSaleOrder::PayOrder($arOrder["ID"], "Y");
             }
 
-            if (CSaleOrder::Update($arOrder["ID"], $arFields))
+            if (CSaleOrder::Update($arOrder["ID"], $arFields)) {
                 echo "OK";
-
+            }
         }
-    } else
+    } else {
         echo "��� ������ �� �����";
-} else
+    }
+} else {
     echo "��� �������� �� PAYMENT";
+}
 ?>

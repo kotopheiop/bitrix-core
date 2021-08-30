@@ -1,6 +1,7 @@
 <?php
 
 namespace Bitrix\Sale\Exchange;
+
 /** @depricate */
 
 use Bitrix\Main\ArgumentOutOfRangeException;
@@ -59,8 +60,12 @@ final class Manager
      * @throws ArgumentOutOfRangeException
      * @internal
      */
-    static public function registerInstance($typeId, ISettings $settings, ICollision $collision = null, ICriterion $criterion = null)
-    {
+    static public function registerInstance(
+        $typeId,
+        ISettings $settings,
+        ICollision $collision = null,
+        ICriterion $criterion = null
+    ) {
         if (!is_int($typeId)) {
             $typeId = (int)$typeId;
         }

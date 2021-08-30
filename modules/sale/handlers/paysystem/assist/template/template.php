@@ -7,11 +7,13 @@ Loc::loadMessages(__FILE__);
 $context = \Bitrix\Main\Application::getInstance()->getContext();
 ?>
 <div class="paysystem-yandex mb-4" id="paysystem-assest">
-    <form id="paysystem-assest-form" action="<?= $params['URL']; ?>" METHOD="POST" target="_blank">
+    <form id="paysystem-assest-form" action="<?= $params['URL']; ?>" METHOD="POST">
 
         <p><? echo Loc::getMessage("SALE_HANDLERS_PAY_SYSTEM_ASSIST_PROMT"); ?></p>
         <p><? echo Loc::getMessage("SALE_HANDLERS_PAY_SYSTEM_ASSIST_ACCOUNT_NO"); ?>
-            <? echo $payment->getField('ACCOUNT_NUMBER') . Loc::getMessage("SALE_HANDLERS_PAY_SYSTEM_ASSIST_ORDER_FROM") . $params['PAYMENT_DATE_INSERT']; ?></p>
+            <? echo $payment->getField('ACCOUNT_NUMBER') . Loc::getMessage(
+                    "SALE_HANDLERS_PAY_SYSTEM_ASSIST_ORDER_FROM"
+                ) . $params['PAYMENT_DATE_INSERT']; ?></p>
         <p><? echo Loc::getMessage("SALE_HANDLERS_PAY_SYSTEM_ASSIST_ORDER_SUM"); ?>
             <? echo SaleFormatCurrency($params['PAYMENT_SHOULD_PAY'], $params['PAYMENT_CURRENCY']); ?></p>
         <? $comment = "Invoice " . $params['PAYMENT_ID'] . " (" . $params['PAYMENT_DATE_INSERT'] . ")"; ?>
@@ -20,7 +22,9 @@ $context = \Bitrix\Main\Application::getInstance()->getContext();
         <input type="hidden" name="OrderNumber" value="<?= htmlspecialcharsbx($params['PAYMENT_ID']) ?>">
         <input type="hidden" name="OrderAmount" value="<?= (str_replace(",", ".", $params['PAYMENT_SHOULD_PAY'])); ?>">
         <input type="hidden" name="OrderCurrency"
-               value="<?= (($params['PAYMENT_CURRENCY'] == "RUR") ? "RUB" : htmlspecialcharsbx($params['PAYMENT_CURRENCY'])); ?>">
+               value="<?= (($params['PAYMENT_CURRENCY'] == "RUR") ? "RUB" : htmlspecialcharsbx(
+                   $params['PAYMENT_CURRENCY']
+               )); ?>">
         <input type="hidden" name="Delay" value="<?= htmlspecialcharsbx($params['ASSIST_DELAY']) ?>">
         <input type="hidden" name="Language" value="<?= $context->getLanguage(); ?>">
         <input type="hidden" name="URL_RETURN_OK" value="<?= htmlspecialcharsbx($params['ASSIST_SUCCESS_URL']); ?>">
@@ -42,7 +46,7 @@ $context = \Bitrix\Main\Application::getInstance()->getContext();
         <input type="hidden" name="AssistIDPayment"
                value="<?= ((int)$params['ASSIST_PAYMENT_AssistIDCCPayment'] == 1) ? 1 : 0; ?>">
 
-        <input type="submit" name="Submit" class="btn btn-primary pl-4 pr-4"
+        <input type="submit" name="Submit" class="btn btn-lg btn-success pl-4 pr-4" style="border-radius: 32px;"
                value="<?= Loc::getMessage("SALE_HANDLERS_PAY_SYSTEM_ASSIST_ACTION"); ?>">
     </form>
 

@@ -89,21 +89,25 @@ class MapHelper
             "CODE" => $mapEntityCode
         );
 
-        $catMapVarEntRes = MapEntityTable::getList(array(
-            "filter" => $fields
-        ));
+        $catMapVarEntRes = MapEntityTable::getList(
+            array(
+                "filter" => $fields
+            )
+        );
 
         if ($arCatVarMapEnt = $catMapVarEntRes->fetch()) {
             $result = $arCatVarMapEnt["ID"];
         } else {
             $addRes = MapEntityTable::add($fields);
 
-            if ($addRes->isSuccess())
+            if ($addRes->isSuccess()) {
                 $result = $addRes->getId();
+            }
         }
 
-        if ($result <= 0)
+        if ($result <= 0) {
             throw new SystemException("Can' t get map entity id for code: " . $mapEntityCode . ".");
+        }
 
         return $result;
     }
@@ -118,15 +122,18 @@ class MapHelper
         $result = array();
         $deliveryEntId = self::getDeliveryEntityId($siteId);
 
-        $deliveryRes = MapTable::getList(array(
-            "filter" => array(
-                "ENTITY_ID" => $deliveryEntId,
-                "VALUE_EXTERNAL" => $ebayDelivery
+        $deliveryRes = MapTable::getList(
+            array(
+                "filter" => array(
+                    "ENTITY_ID" => $deliveryEntId,
+                    "VALUE_EXTERNAL" => $ebayDelivery
+                )
             )
-        ));
+        );
 
-        while ($arMapRes = $deliveryRes->fetch())
+        while ($arMapRes = $deliveryRes->fetch()) {
             $result[$arMapRes["VALUE_EXTERNAL"]] = $arMapRes["VALUE_INTERNAL"];
+        }
 
         return $result;
     }

@@ -11,8 +11,8 @@ Loc::loadMessages(__FILE__);
 
 if ($USER->IsAdmin()
     && getenv('BITRIX_VA_VER')
-    && stristr(php_uname('s'), 'linux')
-    && strtolower($DB->type) == 'mysql'
+    && mb_stristr(php_uname('s'), 'linux')
+    && $DB->type == 'MYSQL'
 ) {
     $menu = array(
         "parent_menu" => "global_menu_settings",

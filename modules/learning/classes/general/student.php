@@ -32,8 +32,9 @@ class CStudent
             $arFields["TRANSCRIPT"] = CStudent::GenerateTranscipt();
         }
 
-        if (is_set($arFields, "PUBLIC_PROFILE") && $arFields["PUBLIC_PROFILE"] != "N")
+        if (is_set($arFields, "PUBLIC_PROFILE") && $arFields["PUBLIC_PROFILE"] != "N") {
             $arFields["ACTIVE"] = "Y";
+        }
 
         return true;
     }
@@ -45,12 +46,13 @@ class CStudent
         $TranscriptLength = intval($TranscriptLength);
 
         $digits = "312467589";
-        $max = strlen($digits) - 1;
+        $max = mb_strlen($digits) - 1;
 
         $str = "";
 
-        for ($i = 0; $i < $TranscriptLength; $i++)
+        for ($i = 0; $i < $TranscriptLength; $i++) {
             $str .= $digits[mt_rand(0, $max)];
+        }
 
         return $str;
     }
@@ -66,15 +68,17 @@ class CStudent
 
             $arInsert = $DB->PrepareInsert("b_learn_student", $arFields, "learning");
 
-            if (strlen($arInsert[0]) <= 0 || strlen($arInsert[0]) <= 0)
+            if ($arInsert[0] == '' || $arInsert[0] == '') {
                 return false;
+            }
 
             $strSql =
                 "INSERT INTO b_learn_student(" . $arInsert[0] . ") " .
                 "VALUES(" . $arInsert[1] . ")";
 
-            if (!$DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__))
+            if (!$DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__)) {
                 return false;
+            }
 
             CLearnHelper::FireEvent('OnAfterStudentAdd', $arFields);
 
@@ -91,12 +95,13 @@ class CStudent
         global $DB;
 
         $ID = intval($ID);
-        if ($ID < 1) return false;
+        if ($ID < 1) {
+            return false;
+        }
 
         unset($arFields["USER_ID"]);
 
         if (CStudent::CheckFields($arFields, $ID)) {
-
             $arBinds = Array(
                 "RESUME" => $arFields["RESUME"]
             );
@@ -124,7 +129,9 @@ class CStudent
         global $DB;
 
         $ID = intval($ID);
-        if ($ID < 1) return false;
+        if ($ID < 1) {
+            return false;
+        }
 
         CLearnHelper::FireEvent('OnBeforeStudentDelete', $ID);
 
@@ -142,8 +149,9 @@ class CStudent
 
         $strSql = "DELETE FROM b_learn_student WHERE USER_ID = " . $ID;
 
-        if (!$DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__))
+        if (!$DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__)) {
             return false;
+        }
 
         CLearnHelper::FireEvent('OnAfterStudentDelete', $ID);
 
@@ -161,9 +169,9 @@ class CStudent
     // 2012-04-16 Checked/modified for compatibility with new data model
     public static function GetFilter($arFilter)
     {
-
-        if (!is_array($arFilter))
+        if (!is_array($arFilter)) {
             $arFilter = Array();
+        }
 
         $arSqlSearch = Array();
 
@@ -172,23 +180,40 @@ class CStudent
             $key = $res["FIELD"];
             $cOperationType = $res["OPERATION"];
 
-            $key = strtoupper($key);
+            $key = mb_strtoupper($key);
 
             switch ($key) {
                 case "USER_ID":
                 case "TRANSCRIPT":
-                    $arSqlSearch[] = CLearnHelper::FilterCreate("S." . $key, $val, "number", $bFullJoin, $cOperationType);
+                    $arSqlSearch[] = CLearnHelper::FilterCreate(
+                        "S." . $key,
+                        $val,
+                        "number",
+                        $bFullJoin,
+                        $cOperationType
+                    );
                     break;
 
                 case "PUBLIC_PROFILE":
-                    $arSqlSearch[] = CLearnHelper::FilterCreate("S." . $key, $val, "string_equal", $bFullJoin, $cOperationType);
+                    $arSqlSearch[] = CLearnHelper::FilterCreate(
+                        "S." . $key,
+                        $val,
+                        "string_equal",
+                        $bFullJoin,
+                        $cOperationType
+                    );
                     break;
 
                 case "RESUME":
-                    $arSqlSearch[] = CLearnHelper::FilterCreate("S." . $key, $val, "string", $bFullJoin, $cOperationType);
+                    $arSqlSearch[] = CLearnHelper::FilterCreate(
+                        "S." . $key,
+                        $val,
+                        "string",
+                        $bFullJoin,
+                        $cOperationType
+                    );
                     break;
             }
-
         }
 
         return $arSqlSearch;
@@ -204,7 +229,7 @@ class CStudent
 
         $strSqlSearch = "";
         for ($i = 0, $length = count($arSqlSearch); $i < $length; $i++) {
-            if (strlen($arSqlSearch[$i]) > 0) {
+            if ($arSqlSearch[$i] <> '') {
                 $strSqlSearch .= " AND " . $arSqlSearch[$i] . " ";
             }
         }
@@ -216,18 +241,23 @@ class CStudent
             "WHERE 1=1 " .
             $strSqlSearch;
 
-        if (!is_array($arOrder))
+        if (!is_array($arOrder)) {
             $arOrder = Array();
+        }
 
+        $arSqlOrder = [];
         foreach ($arOrder as $by => $order) {
-            $by = strtolower($by);
-            $order = strtolower($order);
-            if ($order != "asc")
+            $by = mb_strtolower($by);
+            $order = mb_strtolower($order);
+            if ($order != "asc") {
                 $order = "desc";
+            }
 
-            if ($by == "user_id") $arSqlOrder[] = " S.USER_ID " . $order . " ";
-            elseif ($by == "public_profile") $arSqlOrder[] = " S.PUBLIC_PROFILE " . $order . " ";
-            else {
+            if ($by == "user_id") {
+                $arSqlOrder[] = " S.USER_ID " . $order . " ";
+            } elseif ($by == "public_profile") {
+                $arSqlOrder[] = " S.PUBLIC_PROFILE " . $order . " ";
+            } else {
                 $arSqlOrder[] = " S.USER_ID " . $order . " ";
                 $by = "user_id";
             }

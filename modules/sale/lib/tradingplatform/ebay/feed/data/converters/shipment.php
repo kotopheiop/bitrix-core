@@ -12,8 +12,9 @@ class Shipment extends DataConverter
     {
         $result = "";
 
-        if (!is_array($data))
+        if (!is_array($data)) {
             throw new ArgumentTypeException("data", "array");
+        }
 
         foreach ($data as $item) {
             if (!isset($item["ORDER_ID"])

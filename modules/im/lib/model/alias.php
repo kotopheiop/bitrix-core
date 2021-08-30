@@ -2,8 +2,10 @@
 
 namespace Bitrix\Im\Model;
 
+use Bitrix\Im\Internals\Query;
 use Bitrix\Main,
     Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Application;
 
 Loc::loadMessages(__FILE__);
 
@@ -19,7 +21,20 @@ Loc::loadMessages(__FILE__);
  * </ul>
  *
  * @package Bitrix\Im
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Alias_Query query()
+ * @method static EO_Alias_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Alias_Result getById($id)
+ * @method static EO_Alias_Result getList(array $parameters = array())
+ * @method static EO_Alias_Entity getEntity()
+ * @method static \Bitrix\Im\Model\EO_Alias createObject($setDefaultValues = true)
+ * @method static \Bitrix\Im\Model\EO_Alias_Collection createCollection()
+ * @method static \Bitrix\Im\Model\EO_Alias wakeUpObject($row)
+ * @method static \Bitrix\Im\Model\EO_Alias_Collection wakeUpCollection($rows)
+ */
 class AliasTable extends Main\Entity\DataManager
 {
     /**
@@ -51,6 +66,11 @@ class AliasTable extends Main\Entity\DataManager
                 'required' => true,
                 'validation' => array(__CLASS__, 'validateAlias'),
                 'title' => Loc::getMessage('ALIAS_ENTITY_ALIAS_FIELD'),
+            ),
+            'DATE_CREATE' => array(
+                'data_type' => 'datetime',
+                'required' => true,
+                'title' => Loc::getMessage('ALIAS_ENTITY_ENTITY_DATE_CREATE_FIELD'),
             ),
             'ENTITY_TYPE' => array(
                 'data_type' => 'string',
@@ -101,5 +121,27 @@ class AliasTable extends Main\Entity\DataManager
         return array(
             new Main\Entity\Validator\Length(null, 255),
         );
+    }
+
+    public static function deleteBatch(array $filter, $limit = 0)
+    {
+        $tableName = static::getTableName();
+        $connection = Application::getConnection();
+        $sqlHelper = $connection->getSqlHelper();
+
+        $query = new Query(static::getEntity());
+        $query->setFilter($filter);
+        $query->getQuery();
+
+        $alias = $sqlHelper->quote($query->getInitAlias()) . '.';
+        $where = str_replace($alias, '', $query->getWhere());
+
+        $sql = 'DELETE FROM ' . $tableName . ' WHERE ' . $where;
+        if ($limit > 0) {
+            $sql .= ' LIMIT ' . $limit;
+        }
+
+        $connection->queryExecute($sql);
+        return $connection->getAffectedRowsCount();
     }
 }

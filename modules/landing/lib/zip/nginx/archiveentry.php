@@ -51,15 +51,17 @@ class ArchiveEntry
         $fileArray = \CFile::MakeFileArray($filePath);
 
         if ($fileArray) {
-            return self::createFromFile([
-                'ID' => 0,
-                'ORIGINAL_NAME' => $fileArray['name'],
-                'FILE_SIZE' => $fileArray['size'],
-                'SRC' => substr(
-                    $fileArray['tmp_name'],
-                    strlen(Manager::getDocRoot())
-                ),
-            ]);
+            return self::createFromFile(
+                [
+                    'ID' => 0,
+                    'ORIGINAL_NAME' => $fileArray['name'],
+                    'FILE_SIZE' => $fileArray['size'],
+                    'SRC' => substr(
+                        $fileArray['tmp_name'],
+                        strlen(Manager::getDocRoot())
+                    ),
+                ]
+            );
         }
 
         return null;
@@ -133,7 +135,10 @@ class ArchiveEntry
     {
         $result = '';
         $parts = preg_split(
-            "#(://|:\\d+/|/|\\?|=|&)#", $uri, -1, PREG_SPLIT_DELIM_CAPTURE
+            "#(://|:\\d+/|/|\\?|=|&)#",
+            $uri,
+            -1,
+            PREG_SPLIT_DELIM_CAPTURE
         );
 
         foreach ($parts as $i => $part) {

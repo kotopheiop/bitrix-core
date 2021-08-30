@@ -122,8 +122,9 @@ class BaseObject
                 $groups = $USER->getUserGroupArray();
             } else {
                 $groups = \Bitrix\Main\UserTable::getUserGroupIds($userId);
-                if (empty($groups))
+                if (empty($groups)) {
                     $groups = array(2);
+                }
             }
             self::$userGroups[$userId] = $groups;
         }
@@ -137,7 +138,6 @@ class BaseObject
      */
     public static function loadFromId($id, $shouldBeNewIfIdIsNull = false)
     {
-
         if (empty(self::$objectStorage)) {
             register_shutdown_function([__CLASS__, "shutdown"]);
         }

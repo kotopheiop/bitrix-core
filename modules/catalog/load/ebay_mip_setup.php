@@ -1,4 +1,5 @@
 <?
+
 //<title>Ebay</title>
 IncludeModuleLangFile($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/catalog/export_setup_templ.php');
 
@@ -9,30 +10,33 @@ $arSetupErrors = array();
 $strAllowExportPath = COption::GetOptionString("catalog", "export_default_path", "/bitrix/catalog_export/");
 
 if (($ACTION == 'EXPORT_EDIT' || $ACTION == 'EXPORT_COPY') && $STEP == 1) {
-    if (array_key_exists('IBLOCK_ID', $arOldSetupVars))
+    if (array_key_exists('IBLOCK_ID', $arOldSetupVars)) {
         $IBLOCK_ID = $arOldSetupVars['IBLOCK_ID'];
-    if (array_key_exists('SETUP_FILE_NAME', $arOldSetupVars))
-        $SETUP_FILE_NAME = str_replace($strAllowExportPath, '', $arOldSetupVars['SETUP_FILE_NAME']);
-    if (array_key_exists('SETUP_PROFILE_NAME', $arOldSetupVars))
-        $SETUP_PROFILE_NAME = $arOldSetupVars['SETUP_PROFILE_NAME'];
-    if (array_key_exists('V', $arOldSetupVars))
-        $V = $arOldSetupVars['V'];
-    if (array_key_exists('XML_DATA', $arOldSetupVars)) {
-        if (get_magic_quotes_gpc()) {
-            $XML_DATA = base64_encode(stripslashes($arOldSetupVars['XML_DATA']));
-        } else {
-            $XML_DATA = base64_encode($arOldSetupVars['XML_DATA']);
-        }
     }
-    if (array_key_exists('SETUP_SERVER_NAME', $arOldSetupVars))
+    if (array_key_exists('SETUP_FILE_NAME', $arOldSetupVars)) {
+        $SETUP_FILE_NAME = str_replace($strAllowExportPath, '', $arOldSetupVars['SETUP_FILE_NAME']);
+    }
+    if (array_key_exists('SETUP_PROFILE_NAME', $arOldSetupVars)) {
+        $SETUP_PROFILE_NAME = $arOldSetupVars['SETUP_PROFILE_NAME'];
+    }
+    if (array_key_exists('V', $arOldSetupVars)) {
+        $V = $arOldSetupVars['V'];
+    }
+    if (array_key_exists('XML_DATA', $arOldSetupVars)) {
+        $XML_DATA = base64_encode($arOldSetupVars['XML_DATA']);
+    }
+    if (array_key_exists('SETUP_SERVER_NAME', $arOldSetupVars)) {
         $SETUP_SERVER_NAME = $arOldSetupVars['SETUP_SERVER_NAME'];
+    }
 }
 
 if ($STEP > 1) {
     $IBLOCK_ID = intval($IBLOCK_ID);
     $rsIBlocks = CIBlock::GetByID($IBLOCK_ID);
     if ($IBLOCK_ID <= 0 || !($arIBlock = $rsIBlocks->Fetch())) {
-        $arSetupErrors[] = GetMessage("CET_ERROR_NO_IBLOCK1") . " #" . $IBLOCK_ID . " " . GetMessage("CET_ERROR_NO_IBLOCK2");
+        $arSetupErrors[] = GetMessage("CET_ERROR_NO_IBLOCK1") . " #" . $IBLOCK_ID . " " . GetMessage(
+                "CET_ERROR_NO_IBLOCK2"
+            );
     } else {
         $bRightBlock = !CIBlockRights::UserHasRightTo($IBLOCK_ID, $IBLOCK_ID, "iblock_admin_display");
         if ($bRightBlock) {
@@ -40,12 +44,16 @@ if ($STEP > 1) {
         }
     }
 
-    if (strlen($SETUP_FILE_NAME) <= 0) {
+    if ($SETUP_FILE_NAME == '') {
         $arSetupErrors[] = GetMessage("CET_ERROR_NO_FILENAME");
     } elseif (preg_match(BX_CATALOG_FILENAME_REG, $strAllowExportPath . $SETUP_FILE_NAME)) {
         $arSetupErrors[] = GetMessage("CES_ERROR_BAD_EXPORT_FILENAME");
     } elseif ($APPLICATION->GetFileAccessPermission($strAllowExportPath . $SETUP_FILE_NAME) < "W") {
-        $arSetupErrors[] = str_replace("#FILE#", $strAllowExportPath . $SETUP_FILE_NAME, GetMessage('CET_YAND_RUN_ERR_SETUP_FILE_ACCESS_DENIED'));
+        $arSetupErrors[] = str_replace(
+            "#FILE#",
+            $strAllowExportPath . $SETUP_FILE_NAME,
+            GetMessage('CET_YAND_RUN_ERR_SETUP_FILE_ACCESS_DENIED')
+        );
     }
 
     $SETUP_SERVER_NAME = trim($SETUP_SERVER_NAME);
@@ -68,7 +76,12 @@ if ($STEP > 1) {
 
         if (!$bAllSections && !empty($arSections)) {
             $arCheckSections = array();
-            $rsSections = CIBlockSection::GetList(array(), array('IBLOCK_ID' => $IBLOCK_ID, 'ID' => $arSections), false, array('ID'));
+            $rsSections = CIBlockSection::GetList(
+                array(),
+                array('IBLOCK_ID' => $IBLOCK_ID, 'ID' => $arSections),
+                false,
+                array('ID')
+            );
             while ($arOneSection = $rsSections->Fetch()) {
                 $arCheckSections[] = $arOneSection['ID'];
             }
@@ -88,21 +101,23 @@ if ($STEP > 1) {
 
     $arCatalog = CCatalogSKU::GetInfoByIBlock($IBLOCK_ID);
     if (CCatalogSKU::TYPE_PRODUCT == $arCatalog['CATALOG_TYPE'] || CCatalogSKU::TYPE_FULL == $arCatalog['CATALOG_TYPE']) {
-        if (strlen($XML_DATA) <= 0) {
+        if ($XML_DATA == '') {
             $arSetupErrors[] = GetMessage('YANDEX_ERR_SKU_SETTINGS_ABSENT');
         }
     }
 
-    if (($ACTION == "EXPORT_SETUP" || $ACTION == "EXPORT_EDIT" || $ACTION == "EXPORT_COPY") && strlen($SETUP_PROFILE_NAME) <= 0)
+    if (($ACTION == "EXPORT_SETUP" || $ACTION == "EXPORT_EDIT" || $ACTION == "EXPORT_COPY") && $SETUP_PROFILE_NAME == '') {
         $arSetupErrors[] = GetMessage("CET_ERROR_NO_PROFILE_NAME");
+    }
 
     if (!empty($arSetupErrors)) {
         $STEP = 1;
     }
 }
 
-if (!empty($arSetupErrors))
+if (!empty($arSetupErrors)) {
     echo ShowError(implode('<br />', $arSetupErrors));
+}
 
 $aMenu = array(
     array(
@@ -127,8 +142,18 @@ if ($adminSidePanelHelper->isSidePanel()) {
     <?
 
     $aTabs = array(
-        array("DIV" => "yand_edit1", "TAB" => GetMessage("CAT_ADM_MISC_EXP_TAB1"), "ICON" => "store", "TITLE" => GetMessage("CAT_ADM_MISC_EXP_TAB1_TITLE")),
-        array("DIV" => "yand_edit2", "TAB" => GetMessage("CAT_ADM_MISC_EXP_TAB2"), "ICON" => "store", "TITLE" => GetMessage("CAT_ADM_MISC_EXP_TAB2_TITLE")),
+        array(
+            "DIV" => "yand_edit1",
+            "TAB" => GetMessage("CAT_ADM_MISC_EXP_TAB1"),
+            "ICON" => "store",
+            "TITLE" => GetMessage("CAT_ADM_MISC_EXP_TAB1_TITLE")
+        ),
+        array(
+            "DIV" => "yand_edit2",
+            "TAB" => GetMessage("CAT_ADM_MISC_EXP_TAB2"),
+            "ICON" => "store",
+            "TITLE" => GetMessage("CAT_ADM_MISC_EXP_TAB2_TITLE")
+        ),
     );
 
     $tabControl = new CAdminTabControl("tabYandex", $aTabs, false, true);
@@ -151,8 +176,9 @@ if ($adminSidePanelHelper->isSidePanel()) {
             );
             while ($arCatalog = $rsCatalogs->Fetch()) {
                 $arCatalog['PRODUCT_IBLOCK_ID'] = intval($arCatalog['PRODUCT_IBLOCK_ID']);
-                if (0 < $arCatalog['PRODUCT_IBLOCK_ID'])
+                if (0 < $arCatalog['PRODUCT_IBLOCK_ID']) {
                     $arIBlockIDs[$arCatalog['PRODUCT_IBLOCK_ID']] = true;
+                }
             }
             $rsCatalogs = CCatalog::GetList(
                 array(),
@@ -163,19 +189,27 @@ if ($adminSidePanelHelper->isSidePanel()) {
             );
             while ($arCatalog = $rsCatalogs->Fetch()) {
                 $arCatalog['IBLOCK_ID'] = intval($arCatalog['IBLOCK_ID']);
-                if (0 < $arCatalog['IBLOCK_ID'])
+                if (0 < $arCatalog['IBLOCK_ID']) {
                     $arIBlockIDs[$arCatalog['IBLOCK_ID']] = true;
+                }
             }
-            if (empty($arIBlockIDs))
+            if (empty($arIBlockIDs)) {
                 $arIBlockIDs[-1] = true;
+            }
             echo GetIBlockDropDownListEx(
-                $IBLOCK_ID, 'IBLOCK_TYPE_ID', 'IBLOCK_ID',
+                $IBLOCK_ID,
+                'IBLOCK_TYPE_ID',
+                'IBLOCK_ID',
                 array(
-                    'ID' => array_keys($arIBlockIDs), 'ACTIVE' => 'Y',
-                    'CHECK_PERMISSIONS' => 'Y', 'MIN_PERMISSION' => 'W'
+                    'ID' => array_keys($arIBlockIDs),
+                    'ACTIVE' => 'Y',
+                    'CHECK_PERMISSIONS' => 'Y',
+                    'MIN_PERMISSION' => 'W'
                 ),
-                "ClearSelected(); BX('id_ifr').src='/bitrix/tools/catalog_export/yandex_util.php?IBLOCK_ID=0&'+'" . bitrix_sessid_get() . "';",
-                "ClearSelected(); BX('id_ifr').src='/bitrix/tools/catalog_export/yandex_util.php?IBLOCK_ID='+this[this.selectedIndex].value+'&'+'" . bitrix_sessid_get() . "';",
+                "ClearSelected(); BX('id_ifr').src='/bitrix/tools/catalog_export/yandex_util.php?IBLOCK_ID=0&'+'" . bitrix_sessid_get(
+                ) . "';",
+                "ClearSelected(); BX('id_ifr').src='/bitrix/tools/catalog_export/yandex_util.php?IBLOCK_ID='+this[this.selectedIndex].value+'&'+'" . bitrix_sessid_get(
+                ) . "';",
                 'class="adm-detail-iblock-types"',
                 'class="adm-detail-iblock-list"'
             );
@@ -251,7 +285,9 @@ if ($adminSidePanelHelper->isSidePanel()) {
 
                         buffer = '<table border="0" cellspacing="0" cellpadding="0">';
                         buffer += '<tr>';
-                        buffer += '<td colspan="2" valign="top" align="left"><input type="checkbox" name="V[]" value="0" id="v0"' + (BX.util.in_array(0, TreeSelected) ? ' checked' : '') + ' onclick="delOldV(this);"><label for="v0"><font class="text"><b><?echo CUtil::JSEscape(GetMessage("CET_ALL_GROUPS"));?></b></font></label></td>';
+                        buffer += '<td colspan="2" valign="top" align="left"><input type="checkbox" name="V[]" value="0" id="v0"' + (BX.util.in_array(0, TreeSelected) ? ' checked' : '') + ' onclick="delOldV(this);"><label for="v0"><font class="text"><b><?echo CUtil::JSEscape(
+                            GetMessage("CET_ALL_GROUPS")
+                        );?></b></font></label></td>';
                         buffer += '</tr>';
 
                         for (i in Tree[0]) {
@@ -311,8 +347,9 @@ if ($adminSidePanelHelper->isSidePanel()) {
                         BX.adminPanel.modifyFormElements('yandex_setup_form');
                     }
                 </script>
-                <iframe src="/bitrix/tools/catalog_export/yandex_util.php?IBLOCK_ID=<?= intval($IBLOCK_ID) ?>&<? echo bitrix_sessid_get(); ?>"
-                        id="id_ifr" name="ifr" style="display:none"></iframe>
+                <iframe src="/bitrix/tools/catalog_export/yandex_util.php?IBLOCK_ID=<?= intval(
+                    $IBLOCK_ID
+                ) ?>&<? echo bitrix_sessid_get(); ?>" id="id_ifr" name="ifr" style="display:none"></iframe>
             </td>
         </tr>
 
@@ -326,7 +363,8 @@ if ($adminSidePanelHelper->isSidePanel()) {
                             var dat = BX('XML_DATA');
                             var obDetailWindow = new BX.CAdminDialog({
                                 'content_url': '/bitrix/tools/catalog_export/yandex_detail.php?lang=<?=LANGUAGE_ID?>&bxpublic=Y&IBLOCK_ID=' + s[s.selectedIndex].value,
-                                'content_post': 'XML_DATA=' + BX.util.urlencode(dat.value) + '&' + '<?echo bitrix_sessid_get(); ?>',
+                                'content_post': 'XML_DATA=' + BX.util.urlencode(dat.value) + '&' + '<?echo bitrix_sessid_get(
+                                ); ?>',
                                 'width': 900, 'height': 550,
                                 'resizable': true
                             });
@@ -341,26 +379,30 @@ if ($adminSidePanelHelper->isSidePanel()) {
                 <input type="button" onclick="showDetailPopup(); return false;"
                        value="<? echo GetMessage('CAT_DETAIL_PROPS_RUN'); ?>">
                 <input type="hidden" id="XML_DATA" name="XML_DATA"
-                       value="<? echo(strlen($XML_DATA) > 0 ? $XML_DATA : ''); ?>"/>
+                       value="<? echo($XML_DATA <> '' ? $XML_DATA : ''); ?>"/>
             </td>
         </tr>
         <tr>
             <td width="40%"><? echo GetMessage("CET_SERVER_NAME"); ?></td>
             <td width="60%">
                 <input type="text" name="SETUP_SERVER_NAME"
-                       value="<? echo (strlen($SETUP_SERVER_NAME) > 0) ? htmlspecialcharsbx($SETUP_SERVER_NAME) : '' ?>"
+                       value="<? echo ($SETUP_SERVER_NAME <> '') ? htmlspecialcharsbx($SETUP_SERVER_NAME) : '' ?>"
                        size="50"/> <input type="button"
                                           onclick="this.form['SETUP_SERVER_NAME'].value = window.location.host;"
-                                          value="<? echo htmlspecialcharsbx(GetMessage('CET_SERVER_NAME_SET_CURRENT')) ?>"/>
+                                          value="<? echo htmlspecialcharsbx(
+                                              GetMessage('CET_SERVER_NAME_SET_CURRENT')
+                                          ) ?>"/>
             </td>
         </tr>
         <tr>
             <td width="40%"><? echo GetMessage("CET_SAVE_FILENAME"); ?></td>
             <td width="60%">
-                <b><? echo htmlspecialcharsbx(COption::GetOptionString("catalog", "export_default_path", "/bitrix/catalog_export/")); ?></b><input
-                        type="text" name="SETUP_FILE_NAME"
-                        value="<? echo (strlen($SETUP_FILE_NAME) > 0) ? htmlspecialcharsbx($SETUP_FILE_NAME) : "ebay_product_feed_" . mktime() . ".xml" ?>"
-                        size="50"/>
+                <b><? echo htmlspecialcharsbx(
+                        COption::GetOptionString("catalog", "export_default_path", "/bitrix/catalog_export/")
+                    ); ?></b><input type="text" name="SETUP_FILE_NAME"
+                                    value="<? echo ($SETUP_FILE_NAME <> '') ? htmlspecialcharsbx(
+                                        $SETUP_FILE_NAME
+                                    ) : "ebay_product_feed_" . time() . ".xml" ?>" size="50"/>
             </td>
         </tr>
         <?
@@ -382,7 +424,7 @@ if ($adminSidePanelHelper->isSidePanel()) {
 
     if ($STEP == 2) {
         $SETUP_FILE_NAME = $strAllowExportPath . $SETUP_FILE_NAME;
-        if (strlen($XML_DATA) > 0) {
+        if ($XML_DATA <> '') {
             $XML_DATA = base64_decode($XML_DATA);
         }
         $SETUP_SERVER_NAME = htmlspecialcharsbx($SETUP_SERVER_NAME);

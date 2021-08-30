@@ -30,20 +30,27 @@ class PropertiesDialog
         $this->activityFile = $activityFile;
 
         if (is_array($data)) {
-            if (isset($data['documentType']) && is_array($data['documentType']))
+            if (isset($data['documentType']) && is_array($data['documentType'])) {
                 $this->setDocumentType($data['documentType']);
-            if (isset($data['activityName']))
+            }
+            if (isset($data['activityName'])) {
                 $this->setActivityName($data['activityName']);
-            if (isset($data['workflowTemplate']) && is_array($data['workflowTemplate']))
+            }
+            if (isset($data['workflowTemplate']) && is_array($data['workflowTemplate'])) {
                 $this->setWorkflowTemplate($data['workflowTemplate']);
-            if (isset($data['workflowParameters']) && is_array($data['workflowParameters']))
+            }
+            if (isset($data['workflowParameters']) && is_array($data['workflowParameters'])) {
                 $this->setWorkflowParameters($data['workflowParameters']);
-            if (isset($data['currentValues']) && is_array($data['currentValues']))
+            }
+            if (isset($data['currentValues']) && is_array($data['currentValues'])) {
                 $this->setCurrentValues($data['currentValues']);
-            if (isset($data['formName']))
+            }
+            if (isset($data['formName'])) {
                 $this->setFormName($data['formName']);
-            if (isset($data['siteId']))
+            }
+            if (isset($data['siteId'])) {
                 $this->setSiteId($data['siteId']);
+            }
         }
     }
 
@@ -170,8 +177,9 @@ class PropertiesDialog
             if (is_array($currentActivity) && is_array($currentActivity['Properties'])) {
                 $map = $this->getMap();
                 foreach ($map as $id => $property) {
-                    if (!isset($property['FieldName']))
+                    if (!isset($property['FieldName'])) {
                         continue;
+                    }
 
                     $this->currentValues[$property['FieldName']] = null;
 
@@ -183,7 +191,12 @@ class PropertiesDialog
                         ) {
                             $getter = $property['Getter'];
                             $property['Id'] = $id;
-                            $this->currentValues[$property['FieldName']] = $getter($this, $property, $currentActivity, $compatible);
+                            $this->currentValues[$property['FieldName']] = $getter(
+                                $this,
+                                $property,
+                                $currentActivity,
+                                $compatible
+                            );
                         } else {
                             $this->currentValues[$property['FieldName']] = $currentActivity['Properties'][$id];
                         }
@@ -308,8 +321,9 @@ class PropertiesDialog
      */
     public function setMapCallback($callback)
     {
-        if (!is_callable($callback))
+        if (!is_callable($callback)) {
             throw new ArgumentException('Wrong callable argument.');
+        }
 
         $this->mapCallback = $callback;
 
@@ -349,8 +363,12 @@ class PropertiesDialog
         return null;
     }
 
-    public function renderFieldControl($field, $value = null, $allowSelection = true, $renderMode = FieldType::RENDER_MODE_PUBLIC)
-    {
+    public function renderFieldControl(
+        $field,
+        $value = null,
+        $allowSelection = true,
+        $renderMode = FieldType::RENDER_MODE_PUBLIC
+    ) {
         if (is_string($field)) {
             $field = $this->getMap()[$field];
         }
@@ -375,8 +393,9 @@ class PropertiesDialog
 
     public function setRenderer($callable)
     {
-        if (!is_callable($callable))
+        if (!is_callable($callable)) {
             throw new ArgumentException('Wrong callable argument.');
+        }
 
         $this->renderer = $callable;
     }
@@ -393,12 +412,14 @@ class PropertiesDialog
         return (string)$runtime->executeResourceFile(
             $this->activityFile,
             $this->dialogFileName,
-            array_merge(array(
-                'dialog' => $this,
-                //compatible parameters
-                'arCurrentValues' => $this->getCurrentValues($this->dialogFileName === 'properties_dialog.php'),
-                'formName' => $this->getFormName()
-            ), $this->getRuntimeData()
+            array_merge(
+                array(
+                    'dialog' => $this,
+                    //compatible parameters
+                    'arCurrentValues' => $this->getCurrentValues($this->dialogFileName === 'properties_dialog.php'),
+                    'formName' => $this->getFormName()
+                ),
+                $this->getRuntimeData()
             )
         );
     }
@@ -429,8 +450,9 @@ class PropertiesDialog
     public function setDialogFileName($dialogFileName)
     {
         $dialogFileName = (string)$dialogFileName;
-        if (strpos($dialogFileName, '.') === false)
+        if (mb_strpos($dialogFileName, '.') === false) {
             $dialogFileName .= '.php';
+        }
 
         $this->dialogFileName = $dialogFileName;
 

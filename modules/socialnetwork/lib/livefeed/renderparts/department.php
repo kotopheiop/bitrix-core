@@ -34,7 +34,11 @@ final class Department extends Base
                     $departmentPath = (
                     (!isset($options['mobile']) || !$options['mobile'])
                     && (!isset($options['im']) || !$options['im'])
-                        ? Option::get('main', 'TOOLTIP_PATH_TO_CONPANY_DEPARTMENT', SITE_DIR . "company/structure.php?set_filter_structure=Y&structure_UF_DEPARTMENT=#ID#")
+                        ? Option::get(
+                        'main',
+                        'TOOLTIP_PATH_TO_CONPANY_DEPARTMENT',
+                        SITE_DIR . "company/structure.php?set_filter_structure=Y&structure_UF_DEPARTMENT=#ID#"
+                    )
                         : ''
                     );
                 }

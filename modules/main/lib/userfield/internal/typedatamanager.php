@@ -6,6 +6,8 @@ use Bitrix\Main\Application;
 use Bitrix\Main\DB\MssqlConnection;
 use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\Entity\Validator\RegExp;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Entity;
 use Bitrix\Main\ORM\EntityError;
 use Bitrix\Main\ORM\Event;
@@ -23,16 +25,13 @@ use Bitrix\Main\Text\StringHelper;
 /**
  * @deprecated
  */
-abstract class TypeDataManager extends \Bitrix\Main\ORM\Data\DataManager
+abstract class TypeDataManager extends DataManager
 {
     protected static $temporaryStorage;
 
     public static function getMap(): array
     {
-        $sqlHelper = Application::getConnection()->getSqlHelper();
-
-        /** @noinspection PhpMethodParametersCountMismatchInspection */
-        $fieldsMap = [
+        return [
             (new IntegerField('ID'))
                 ->configurePrimary()
                 ->configureAutocomplete(),
@@ -41,19 +40,18 @@ abstract class TypeDataManager extends \Bitrix\Main\ORM\Data\DataManager
                 ->configureUnique()
                 ->configureSize(100)
                 ->configureFormat('/^[A-Z][A-Za-z0-9]*$/')
-                ->addValidator(new RegExp(
-                    '/(?<!Table)$/i'
-                )),
+                ->addValidator(
+                    new RegExp(
+                        '/(?<!Table)$/i'
+                    )
+                ),
             (new StringField('TABLE_NAME'))
                 ->configureRequired()
                 ->configureUnique()
                 ->configureSize(64)
                 ->configureFormat('/^[a-z0-9_]+$/')
                 ->addValidator([get_called_class(), 'validateTableExisting']),
-            (new ExpressionField('FIELDS_COUNT', '(SELECT COUNT(ID) FROM b_user_field WHERE b_user_field.ENTITY_ID = ' . $sqlHelper->getConcatFunction("'" . static::getFactory()->getUserFieldEntityPrefix() . "'", $sqlHelper->castToChar('%s')) . ')', 'ID'))
         ];
-
-        return $fieldsMap;
     }
 
     public static function getFactory(): TypeFactory
@@ -119,16 +117,22 @@ abstract class TypeDataManager extends \Bitrix\Main\ORM\Data\DataManager
 
             if ($connection instanceof MssqlConnection) {
                 // rename constraint
-                $connection->query(sprintf(
-                    "EXEC sp_rename %s, %s, 'OBJECT'",
-                    $sqlHelper->quote($oldData['TABLE_NAME'] . '_ibpk_1'),
-                    $sqlHelper->quote($data['TABLE_NAME'] . '_ibpk_1')
-                ));
+                $connection->query(
+                    sprintf(
+                        "EXEC sp_rename %s, %s, 'OBJECT'",
+                        $sqlHelper->quote($oldData['TABLE_NAME'] . '_ibpk_1'),
+                        $sqlHelper->quote($data['TABLE_NAME'] . '_ibpk_1')
+                    )
+                );
             }
 
             // rename also uf multiple tables and its constraints, sequences, and triggers
             /** @noinspection PhpMethodOrClassCallIsNotCaseSensitiveInspection */
-            foreach ($userFieldManager->getUserFields(static::getFactory()->getUserFieldEntityId($oldData['ID'])) as $field) {
+            foreach (
+                $userFieldManager->getUserFields(
+                    static::getFactory()->getUserFieldEntityId($oldData['ID'])
+                ) as $field
+            ) {
                 if ($field['MULTIPLE'] == 'Y') {
                     $oldUtmTableName = static::getMultipleValueTableName($oldData, $field);
                     $newUtmTableName = static::getMultipleValueTableName($data, $field);
@@ -254,10 +258,9 @@ abstract class TypeDataManager extends \Bitrix\Main\ORM\Data\DataManager
             return new EventResult();
         }
 
-        $connection = Application::getConnection();
-
-        // drop hl table
-        $connection->dropTable($oldData['TABLE_NAME']);
+        if (Application::getConnection()->isTableExists($oldData['TABLE_NAME'])) {
+            Application::getConnection()->dropTable($oldData['TABLE_NAME']);
+        }
 
         return new EventResult();
     }
@@ -272,7 +275,7 @@ abstract class TypeDataManager extends \Bitrix\Main\ORM\Data\DataManager
             $type = $type->collectValues();
         }
         if (!is_array($type)) {
-            if (is_int($type) || is_numeric(substr($type, 0, 1))) {
+            if (is_int($type) || is_numeric(mb_substr($type, 0, 1))) {
                 // we have an id
                 $type = static::getById($type)->fetch();
             } elseif (is_string($type) && $type !== '') {
@@ -282,15 +285,19 @@ abstract class TypeDataManager extends \Bitrix\Main\ORM\Data\DataManager
                 $type = null;
             }
         }
-        if (empty($type))
+        if (empty($type)) {
             return null;
+        }
 
-        if (!isset($type['ID']))
+        if (!isset($type['ID'])) {
             return null;
-        if (!isset($type['NAME']) || !preg_match('/^[a-z0-9_]+$/i', $type['NAME']))
+        }
+        if (!isset($type['NAME']) || !preg_match('/^[a-z0-9_]+$/i', $type['NAME'])) {
             return null;
-        if (empty($type['TABLE_NAME']))
+        }
+        if (empty($type['TABLE_NAME'])) {
             return null;
+        }
 
         return $type;
     }
@@ -306,9 +313,12 @@ abstract class TypeDataManager extends \Bitrix\Main\ORM\Data\DataManager
         $rawType = $type;
         $type = static::resolveType($type);
         if (empty($type)) {
-            throw new SystemException(sprintf(
-                'Invalid type description `%s`.', mydump($rawType)
-            ));
+            throw new SystemException(
+                sprintf(
+                    'Invalid type description `%s`.',
+                    mydump($rawType)
+                )
+            );
         }
         $factory = static::getFactory();
         $type['code'] = $factory->getCode();
@@ -326,12 +336,16 @@ abstract class TypeDataManager extends \Bitrix\Main\ORM\Data\DataManager
             Entity::destroy($entityClassName);
             $entity = Entity::getInstance($entityClassName);
         } else {
-            $entity = Entity::compileEntity($entityName, [], [
-                'table_name' => $entityTableName,
-                'parent' => $itemDataClass,
-                'object_parent' => $factory->getItemParentClass(),
-                //'namespace' => __NAMESPACE__,
-            ]);
+            $entity = Entity::compileEntity(
+                $entityName,
+                [],
+                [
+                    'table_name' => $entityTableName,
+                    'parent' => $itemDataClass,
+                    'object_parent' => $factory->getItemParentClass(),
+                    //'namespace' => __NAMESPACE__,
+                ]
+            );
         }
         Registry::getInstance()->registerTypeByEntity($entity, $type);
 
@@ -378,10 +392,14 @@ abstract class TypeDataManager extends \Bitrix\Main\ORM\Data\DataManager
             $utmEntity = Entity::getInstance($utmClassName);
         } else {
             // create entity from scratch
-            $utmEntity = Entity::compileEntity($utmClassName, [], [
-                'table_name' => $utmTableName,
-                //'namespace' => __NAMESPACE__,
-            ]);
+            $utmEntity = Entity::compileEntity(
+                $utmClassName,
+                [],
+                [
+                    'table_name' => $utmTableName,
+                    //'namespace' => __NAMESPACE__,
+                ]
+            );
         }
 
         // main fields
@@ -451,7 +469,7 @@ abstract class TypeDataManager extends \Bitrix\Main\ORM\Data\DataManager
      */
     public static function getMultipleValueTableName(array $type, array $userField): string
     {
-        return $type['TABLE_NAME'] . '_' . strtolower($userField['FIELD_NAME']);
+        return $type['TABLE_NAME'] . '_' . mb_strtolower($userField['FIELD_NAME']);
     }
 
     public static function validateTableExisting($value, $primary, array $row, Field $field)
@@ -475,8 +493,10 @@ abstract class TypeDataManager extends \Bitrix\Main\ORM\Data\DataManager
 
         if (!empty($checkName)) {
             if (Application::getConnection()->isTableExists($checkName)) {
-                return GetMessage('HIGHLOADBLOCK_HIGHLOAD_BLOCK_ENTITY_TABLE_NAME_ALREADY_EXISTS',
-                    array('#TABLE_NAME#' => $value)
+                Loc::loadLanguageFile(__DIR__ . '/highloadblock.php');
+                return Loc::getMessage(
+                    'HIGHLOADBLOCK_HIGHLOAD_BLOCK_ENTITY_TABLE_NAME_ALREADY_EXISTS',
+                    ['#TABLE_NAME#' => $value]
                 );
             }
         }

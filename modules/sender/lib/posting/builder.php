@@ -8,22 +8,24 @@
 
 namespace Bitrix\Sender\Posting;
 
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Application;
-
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Sender\Connector;
-use Bitrix\Sender\Integration;
-use Bitrix\Sender\Entity;
-use Bitrix\Sender\MailingSubscriptionTable;
-use Bitrix\Sender\Recipient;
-use Bitrix\Sender\Message;
-
-use Bitrix\Sender\PostingTable;
 use Bitrix\Sender\ContactTable;
-use Bitrix\Sender\MailingGroupTable;
-use Bitrix\Sender\PostingRecipientTable;
+use Bitrix\Sender\Entity;
+use Bitrix\Sender\GroupTable;
+use Bitrix\Sender\Integration;
 use Bitrix\Sender\Internals\Model;
 use Bitrix\Sender\Internals\SqlBatch;
+use Bitrix\Sender\MailingGroupTable;
+use Bitrix\Sender\MailingSubscriptionTable;
+use Bitrix\Sender\Message;
+use Bitrix\Sender\PostingRecipientTable;
+use Bitrix\Sender\PostingTable;
+use Bitrix\Sender\Recipient;
+use Bitrix\Sender\Runtime\RecipientBuilderJob;
+use Bitrix\Sender\Service\GroupQueueService;
+use Bitrix\Sender\Service\GroupQueueServiceInterface;
 
 Loc::loadMessages(__FILE__);
 
@@ -48,6 +50,16 @@ class Builder
     /** @var integer $typeId Type ID. */
     protected $typeId;
 
+    /**
+     * @var bool $result
+     */
+    private $result;
+
+    /**
+     * @var GroupQueueServiceInterface $groupQueueService
+     */
+    private $groupQueueService;
+
 
     /**
      * Create instance.
@@ -60,6 +72,27 @@ class Builder
     }
 
     /**
+     * @return bool
+     */
+    public function isResult(): bool
+    {
+        return $this->result;
+    }
+
+    /**
+     * @param bool $result
+     *
+     * @return Builder
+     */
+    public function setResult(bool $result): Builder
+    {
+        $this->result = $result;
+
+        return $this;
+    }
+
+
+    /**
      * Shaper constructor.
      *
      * @param integer|null $postingId Posting ID.
@@ -67,8 +100,9 @@ class Builder
      */
     public function __construct($postingId = null, $checkDuplicates = true)
     {
+        $this->groupQueueService = new GroupQueueService();
         if ($postingId) {
-            $this->run($postingId, $checkDuplicates);
+            $this->setResult($this->run($postingId, $checkDuplicates));
         }
     }
 
@@ -77,18 +111,51 @@ class Builder
      *
      * @param integer $postingId Posting ID.
      * @param bool $checkDuplicates Check duplicates.
+     *
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      */
-    public function run($postingId, $checkDuplicates = true)
+    public function run($postingId, $checkDuplicates = true): bool
     {
-        $postingData = PostingTable::getList(array(
-            'select' => array('*', 'MESSAGE_TYPE' => 'MAILING_CHAIN.MESSAGE_CODE'),
-            'filter' => array('ID' => $postingId),
-            'limit' => 1
-        ))->fetch();
+        $postingData = PostingTable::getList(
+            array(
+                'select' => array(
+                    '*',
+                    'MESSAGE_TYPE' => 'MAILING_CHAIN.MESSAGE_CODE',
+                    'WAITING_RECIPIENT' => 'MAILING_CHAIN.WAITING_RECIPIENT',
+                    'MAILING_STATUS' => 'MAILING_CHAIN.STATUS',
+                    'MESSAGE_ID' => 'MAILING_CHAIN.MESSAGE_ID'
+                ),
+                'filter' => array('ID' => $postingId),
+                'limit' => 1
+            )
+        )->fetch();
         if (!$postingData) {
-            return;
+            return true;
         }
 
+        if ($postingData['MAILING_STATUS'] === Model\LetterTable::STATUS_END) {
+            Model\LetterTable::update(
+                $postingData['MAILING_CHAIN_ID'],
+                [
+                    'WAITING_RECIPIENT' => 'N'
+                ]
+            );
+
+            return true;
+        }
+
+        $entityProcessed = $this->groupQueueService->isEntityProcessed(
+            Model\GroupQueueTable::TYPE['POSTING'],
+            $postingId
+        );
+        if (
+            $postingData['MAILING_STATUS'] === Model\LetterTable::STATUS_SEND && $postingData['WAITING_RECIPIENT'] === 'N'
+            && !$entityProcessed
+        ) {
+            return true;
+        }
 
         $this->postingData = $postingData;
         $this->checkDuplicates = $checkDuplicates;
@@ -103,15 +170,40 @@ class Builder
             }
         }
 
+        $messageFields = Model\MessageFieldTable::getList(
+            ['filter' => ['=MESSAGE_ID' => $postingData['MESSAGE_ID']]]
+        )->fetchAll();
 
-        $message = Message\Adapter::create($this->postingData['MESSAGE_TYPE']);
-        foreach ($message->getSupportedRecipientTypes() as $typeId) {
-            if (!Recipient\Type::getCode($typeId)) {
+        $personalizeFields = [];
+        foreach ($messageFields as $messageField) {
+            if (!in_array(
+                $messageField['CODE'],
+                [
+                    'MESSAGE_PERSONALIZE',
+                    'SUBJECT_PERSONALIZE',
+                    'TITLE_PERSONALIZE'
+                ]
+            )) {
                 continue;
             }
 
-            $this->typeId = $typeId;
-            $this->runForRecipientType();
+            $personalizeFields[$messageField['CODE']] =
+                json_decode($messageField['VALUE'], true)[1];
+        }
+
+        try {
+            $groups = $this->prepareGroups();
+            $message = Message\Adapter::create($this->postingData['MESSAGE_TYPE']);
+            foreach ($message->getSupportedRecipientTypes() as $typeId) {
+                if (!Recipient\Type::getCode($typeId)) {
+                    continue;
+                }
+
+                $this->typeId = $typeId;
+                $this->runForRecipientType($personalizeFields, $groups);
+            }
+        } catch (NotCompletedException $e) {
+            return false;
         }
 
 
@@ -121,14 +213,39 @@ class Builder
                 'COUNT_SEND_ALL' => PostingRecipientTable::getCount(array('POSTING_ID' => $postingId))
             )
         );
+
+        $usedGroups = [];
+        foreach ($groups as $group) {
+            if ($group['GROUP_ID'] && !isset($usedGroups[$group['GROUP_ID']])) {
+                RecipientBuilderJob::removeAgentFromDB($this->postingId);
+
+                $this->groupQueueService->releaseGroup(
+                    Model\GroupQueueTable::TYPE['POSTING'],
+                    $this->postingId,
+                    $group['GROUP_ID']
+                );
+                $usedGroups[$group['GROUP_ID']] = $group['GROUP_ID'];
+            }
+        }
+
+        $this->postingData['WAITING_RECIPIENT'] = 'N';
+        Model\LetterTable::update(
+            $this->postingData['MAILING_CHAIN_ID'],
+            [
+                'WAITING_RECIPIENT' => $this->postingData['WAITING_RECIPIENT']
+            ]
+        );
+
+        return true;
     }
 
-    protected function runForRecipientType()
+    protected function prepareGroups()
     {
-        // fetch all connectors for getting emails
-        $groups = array();
+        $groups = [];
         $groups = array_merge($groups, $this->getLetterConnectors($this->postingData['MAILING_CHAIN_ID']));
         $groups = array_merge($groups, $this->getSubscriptionConnectors($this->postingData['MAILING_ID']));
+
+        // fetch all connectors for getting emails
 
         // sort groups by include value
         usort(
@@ -142,9 +259,40 @@ class Builder
             }
         );
 
+        Model\LetterTable::update(
+            $this->postingData['MAILING_CHAIN_ID'],
+            [
+                'WAITING_RECIPIENT' => 'N'
+            ]
+        );
+
+        foreach ($groups as $group) {
+            if ($group['GROUP_ID']) {
+                $this->groupQueueService
+                    ->addToDB(Model\GroupQueueTable::TYPE['POSTING'], $this->postingId, $group['GROUP_ID']);
+            }
+
+            if (in_array($group['STATUS'], [GroupTable::STATUS_NEW, GroupTable::STATUS_DONE])) {
+                SegmentDataBuilder::actualize($group['GROUP_ID'], true);
+                $this->stopRecipientListBuilding();
+            }
+
+            if ($group['STATUS'] !== GroupTable::STATUS_READY_TO_USE) {
+                SegmentDataBuilder::checkIsSegmentPrepared($group['GROUP_ID']);
+                $this->stopRecipientListBuilding();
+            }
+        }
+
+        return $groups;
+    }
+
+    protected function runForRecipientType($usedPersonalizeFields = [], $groups = [])
+    {
         // import recipients
         foreach ($groups as $group) {
-            if (is_array($group['ENDPOINT']) && !(isset($group['CONNECTOR']) && $group['CONNECTOR'] instanceof Connector\Base)) {
+            if (is_array(
+                    $group['ENDPOINT']
+                ) && !(isset($group['CONNECTOR']) && $group['CONNECTOR'] instanceof Connector\Base)) {
                 $group['CONNECTOR'] = Connector\Manager::getConnector($group['ENDPOINT']);
             }
 
@@ -158,20 +306,42 @@ class Builder
                 $connector->setFieldValues($group['ENDPOINT']['FIELDS']);
             }
 
-            $this->fill($connector, $group['INCLUDE'], $group['GROUP_ID']);
+            $this->fill(
+                $connector,
+                $group,
+                $usedPersonalizeFields
+            );
         }
+
 
         // update group counter of addresses
         foreach ($this->groupCount as $groupId => $count) {
             Entity\Segment::updateAddressCounters(
                 $groupId,
                 array(
-                    new Connector\DataCounter(array(
-                        $this->typeId => $count
-                    ))
+                    new Connector\DataCounter(
+                        array(
+                            $this->typeId => $count
+                        )
+                    )
                 )
             );
         }
+    }
+
+    protected function stopRecipientListBuilding()
+    {
+        RecipientBuilderJob::removeAgentFromDB($this->postingData['ID']);
+        RecipientBuilderJob::addEventAgent($this->postingData['ID']);
+
+        Model\LetterTable::update(
+            $this->postingData['MAILING_CHAIN_ID'],
+            [
+                'WAITING_RECIPIENT' => $this->postingData['MAILING_STATUS'] !== Model\LetterTable::STATUS_END ? 'Y' : 'N'
+            ]
+        );
+
+        throw new NotCompletedException();
     }
 
     protected static function clean($postingId)
@@ -201,12 +371,16 @@ class Builder
             'INCLUDE' => true,
             'ENDPOINT' => array('FIELDS' => array('MAILING_ID' => $campaignId)),
             'GROUP_ID' => null,
+            'STATUS' => GroupTable::STATUS_READY_TO_USE,
+            'FILTER_ID' => null,
             'CONNECTOR' => new Integration\Sender\Connectors\Subscriber
         );
         $groups[] = array(
             'INCLUDE' => false,
             'ENDPOINT' => array('FIELDS' => array('MAILING_ID' => $campaignId)),
             'GROUP_ID' => null,
+            'STATUS' => GroupTable::STATUS_READY_TO_USE,
+            'FILTER_ID' => null,
             'CONNECTOR' => new Integration\Sender\Connectors\UnSubscribers
         );
 
@@ -216,17 +390,19 @@ class Builder
     protected function getCampaignGroups($campaignId)
     {
         $groups = array();
-        $groupConnectorDb = MailingGroupTable::getList(array(
-            'select' => array(
-                'INCLUDE',
-                'CONNECTOR_ENDPOINT' => 'GROUP.GROUP_CONNECTOR.ENDPOINT',
-                'GROUP_ID'
-            ),
-            'filter' => array(
-                '=MAILING_ID' => $campaignId,
-            ),
-            'order' => array('INCLUDE' => 'DESC', 'GROUP_ID' => 'ASC')
-        ));
+        $groupConnectorDb = MailingGroupTable::getList(
+            array(
+                'select' => array(
+                    'INCLUDE',
+                    'CONNECTOR_ENDPOINT' => 'GROUP.GROUP_CONNECTOR.ENDPOINT',
+                    'GROUP_ID'
+                ),
+                'filter' => array(
+                    '=MAILING_ID' => $campaignId,
+                ),
+                'order' => array('INCLUDE' => 'DESC', 'GROUP_ID' => 'ASC')
+            )
+        );
         while ($group = $groupConnectorDb->fetch()) {
             $groups[] = array(
                 'INCLUDE' => $group['INCLUDE'],
@@ -242,22 +418,28 @@ class Builder
     protected function getLetterConnectors($letterId)
     {
         $groups = array();
-        $groupConnectors = Model\LetterSegmentTable::getList(array(
-            'select' => array(
-                'INCLUDE',
-                'CONNECTOR_ENDPOINT' => 'SEGMENT.GROUP_CONNECTOR.ENDPOINT',
-                'SEGMENT_ID'
-            ),
-            'filter' => array(
-                '=LETTER_ID' => $letterId,
-            ),
-            'order' => array('INCLUDE' => 'DESC', 'LETTER_ID' => 'ASC')
-        ));
+        $groupConnectors = Model\LetterSegmentTable::getList(
+            array(
+                'select' => array(
+                    'INCLUDE',
+                    'STATUS' => 'SEGMENT.STATUS',
+                    'FILTER_ID' => 'SEGMENT.GROUP_CONNECTOR.FILTER_ID',
+                    'CONNECTOR_ENDPOINT' => 'SEGMENT.GROUP_CONNECTOR.ENDPOINT',
+                    'SEGMENT_ID'
+                ),
+                'filter' => array(
+                    '=LETTER_ID' => $letterId,
+                ),
+                'order' => array('INCLUDE' => 'DESC', 'LETTER_ID' => 'ASC')
+            )
+        );
         while ($group = $groupConnectors->fetch()) {
             $groups[] = array(
                 'INCLUDE' => $group['INCLUDE'],
                 'ENDPOINT' => $group['CONNECTOR_ENDPOINT'],
                 'GROUP_ID' => $group['SEGMENT_ID'],
+                'FILTER_ID' => $group['FILTER_ID'],
+                'STATUS' => $group['STATUS'],
                 'CONNECTOR' => null
             );
         }
@@ -353,12 +535,69 @@ class Builder
         }
     }
 
-    protected function fill(Connector\Base $connector, $isInclude = false, $groupId = null)
+    protected function checkUsedFields($entityType, $ids, $usedPersonalizeFields, &$dataList)
+    {
+        $usedFields = [];
+        foreach ($usedPersonalizeFields as $personalizeField) {
+            foreach ($personalizeField as $usedField) {
+                $usedFieldExploded = explode('.', $usedField);
+                if (
+                    $entityType == $usedFieldExploded[0] &&
+                    isset
+                    (
+                        $usedFieldExploded[1]
+                    )) {
+                    unset($usedFieldExploded[0]);
+                    $usedFields[$usedField] = implode('.', $usedFieldExploded);
+                }
+            }
+        }
+        $fields = Integration\Crm\Connectors\Helper::getData(
+            $entityType,
+            $ids,
+            $usedFields
+        );
+
+        foreach ($fields as &$entity) {
+            foreach ($entity as $key => $field) {
+                $entity[$entityType . '.' . $key] = $field;
+                unset($entity[$key]);
+            }
+        }
+
+        foreach ($dataList as &$data) {
+            if (
+                isset($fields[(int)$data['FIELDS']['CRM_ENTITY_ID']])
+                && $data['FIELDS']['CRM_ENTITY_TYPE'] === $entityType
+            ) {
+                $data['FIELDS'] = array_merge(
+                    $data['FIELDS'],
+                    $fields[$data['FIELDS']['CRM_ENTITY_ID']]
+                );
+            }
+        }
+
+        return $usedFields;
+    }
+
+    protected function fill(Connector\Base $connector, $group, $usedPersonalizeFields = [])
     {
         $count = 0;
 
         $typeCode = $this->getTypeCode();
-        $result = $connector->getResult();
+
+        $isIncrementally = $connector instanceof Connector\IncrementallyConnector && $group['FILTER_ID'];
+        if ($isIncrementally) {
+            $segmentBuilder = new SegmentDataBuilder($group['GROUP_ID'], $group['FILTER_ID'], $group['ENDPOINT']);
+
+            if (!$segmentBuilder->isBuildingCompleted()) {
+                throw new NotCompletedException();
+            }
+        }
+
+        $result = $isIncrementally
+            ? $segmentBuilder->getPreparedData()
+            : $connector->getResult();
 
         while (true) {
             $dataList = array();
@@ -370,10 +609,9 @@ class Builder
                 }
 
                 $primary = Recipient\Normalizer::normalize($data[$typeCode], $this->typeId);
-                if (strlen($primary) <= 0) {
+                if ($primary == '') {
                     continue;
                 }
-
                 $dataList[$primary] = $data;
 
                 $count++;
@@ -387,9 +625,8 @@ class Builder
             if (count($dataList) === 0) {
                 break;
             }
-
             $this->setRecipientIdentificators($dataList);
-            if ($isInclude) {
+            if ($group['INCLUDE']) {
                 // add address if not exists
                 if ($this->checkDuplicates) {
                     $primariesString = SqlBatch::getInString(array_keys($dataList));
@@ -411,14 +648,45 @@ class Builder
                     continue;
                 }
 
+                if (
+                    count($usedPersonalizeFields) > 0
+                ) {
+                    $preparedFields = [];
+
+                    foreach ($dataList as $data) {
+                        if (!isset($data['FIELDS'])) {
+                            continue;
+                        }
+
+                        $field = $data['FIELDS'];
+                        if (!isset($preparedFields[$field['CRM_ENTITY_TYPE']])) {
+                            $preparedFields[$field['CRM_ENTITY_TYPE']] = [];
+                        }
+                        $preparedFields[$field['CRM_ENTITY_TYPE']][] = $field['CRM_ENTITY_ID'];
+                    }
+
+
+                    foreach ($preparedFields as $entityType => $ids) {
+                        $this->checkUsedFields(
+                            $entityType,
+                            $ids,
+                            $usedPersonalizeFields,
+                            $dataList
+                        );
+                    }
+                }
+
                 $this->addPostingRecipients($dataList);
             } else {
                 $this->removePostingRecipients($dataList);
             }
         }
 
+        if (!$group['GROUP_ID']) {
+            return;
+        }
 
-        $this->incGroupCounters($groupId, $count);
+        $this->incGroupCounters($group['GROUP_ID'], $count);
     }
 
     protected function removePostingRecipients(array &$list)
@@ -505,6 +773,5 @@ class Builder
         } else {
             $this->groupCount[$groupId] = $count;
         }
-
     }
 }

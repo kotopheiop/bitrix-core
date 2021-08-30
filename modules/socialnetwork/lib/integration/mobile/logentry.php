@@ -29,11 +29,13 @@ class LogEntry
         }
 
         if ($contentId = Provider::getContentId($logEventFields)) {
-            if ($liveFeedEntity = Provider::init(array(
-                'ENTITY_TYPE' => $contentId['ENTITY_TYPE'],
-                'ENTITY_ID' => $contentId['ENTITY_ID'],
-                'LOG_ID' => $logEventFields["ID"]
-            ))) {
+            if ($liveFeedEntity = Provider::init(
+                array(
+                    'ENTITY_TYPE' => $contentId['ENTITY_TYPE'],
+                    'ENTITY_ID' => $contentId['ENTITY_ID'],
+                    'LOG_ID' => $logEventFields["ID"]
+                )
+            )) {
                 if ($liveFeedEntity->setContentView()) {
                     $result = new EventResult(
                         EventResult::SUCCESS,

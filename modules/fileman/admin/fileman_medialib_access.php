@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/fileman/prolog.php");
 
@@ -9,8 +10,9 @@ CModule::IncludeModule("fileman");
 $APPLICATION->SetTitle(GetMessage('FM_ML_ACCESS_TITLE'));
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
-if (!CMedialib::CanDoOperation('medialib_view_collection', 0) || !CMedialib::CanDoOperation('medialib_access', 0))
+if (!CMedialib::CanDoOperation('medialib_view_collection', 0) || !CMedialib::CanDoOperation('medialib_access', 0)) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $aContext = Array();
 $aContext[] = Array(
@@ -24,24 +26,30 @@ $menu->Show();
 
 function __CanDoAccess($colId)
 {
-    return CMedialib::CanDoOperation('medialib_view_collection', $colId) && CMedialib::CanDoOperation('medialib_access', $colId);
+    return CMedialib::CanDoOperation('medialib_view_collection', $colId) && CMedialib::CanDoOperation(
+            'medialib_access',
+            $colId
+        );
 }
 
 $ctRes = CMedialib::GetCollectionTree(array('CheckAccessFunk' => '__CanDoAccess'));
-$curColId = isset($col_id, $ctRes['Collections'][$col_id]) ? intVal($col_id) : 0;
+$curColId = isset($col_id, $ctRes['Collections'][$col_id]) ? intval($col_id) : 0;
 //Fetch groups
 $arGroups = array();
-$db_groups = CGroup::GetList($order = "sort", $by = "asc", array("ACTIVE" => "Y", "ADMIN" => "N"));
-while ($arRes = $db_groups->Fetch())
+$db_groups = CGroup::GetList("sort", "asc", array("ACTIVE" => "Y", "ADMIN" => "N"));
+while ($arRes = $db_groups->Fetch()) {
     $arGroups[] = $arRes;
+}
+$i = 0;
 
-if ($REQUEST_METHOD == "POST" && strlen($saveperm) > 0 && check_bitrix_sessid()) // TODO: access
+if ($REQUEST_METHOD == "POST" && $saveperm <> '' && check_bitrix_sessid()) // TODO: access
 {
     $arTaskPerm = array();
     for ($i = 0, $l = count($arGroups); $i < $l; $i++) {
         $id = $arGroups[$i]['ID'];
-        if (isset($_POST['g_' . $id]) && intVal($_POST['g_' . $id]) > 0)
-            $arTaskPerm[$id] = intVal($_POST['g_' . $id]);
+        if (isset($_POST['g_' . $id]) && intval($_POST['g_' . $id]) > 0) {
+            $arTaskPerm[$id] = intval($_POST['g_' . $id]);
+        }
     }
     CMedialib::SaveAccessPermissions($curColId, $arTaskPerm);
 }
@@ -52,8 +60,9 @@ $arTasks = Array();
 $res = CTask::GetList(Array('LETTER' => 'asc'), Array('MODULE_ID' => 'fileman', 'BINDING' => 'medialib'));
 while ($arRes = $res->Fetch()) {
     $name = $arRes['TITLE'];
-    if (strlen($name) == 0)
+    if ($name == '') {
         $name = $arRes['NAME'];
+    }
 
     $arTasks[$arRes['ID']] = Array('title' => $name, 'letter' => $arRes['LETTER']);
 }
@@ -67,21 +76,29 @@ while ($arRes = $res->Fetch()) {
 
         <?
         $aTabs = array(
-            array("DIV" => "medialib_access", "TAB" => GetMessage("FM_ML_TAB_NAME"), "ICON" => "fileman", "TITLE" => GetMessage("FM_ML_TAB_TITLE")),
+            array(
+                "DIV" => "medialib_access",
+                "TAB" => GetMessage("FM_ML_TAB_NAME"),
+                "ICON" => "fileman",
+                "TITLE" => GetMessage("FM_ML_TAB_TITLE")
+            ),
         );
 
         $tabControl = new CAdminTabControl("tabControl", $aTabs);
         $tabControl->Begin();
         ?>
         <? $tabControl->BeginNextTab(); ?>
-
         <tr>
             <td colspan="2">
-                <?= GetMessage('ML_SELECT_COLLECTION') ?>: <select name="col_id" id="item_cols_sel_<?= $i ?>"
+                <?= GetMessage('ML_SELECT_COLLECTION') ?>: <select name="col_id" id="item_cols_sel_<?= (int)$i ?>"
                                                                    onchange="colsOnChange(this);">
                     <option value="0"><?= GetMessage('ML_ACCESS_FOR_ALL') ?></option>
-                    <?= CMedialib::_BuildCollectionsSelectOptions($ctRes['Collections'], $ctRes['arColTree'], 0, $curColId) ?>
-                </select>
+                    <?= CMedialib::_BuildCollectionsSelectOptions(
+                        $ctRes['Collections'],
+                        $ctRes['arColTree'],
+                        0,
+                        $curColId
+                    ) ?></select>
             </td>
         </tr>
 
@@ -101,17 +118,20 @@ while ($arRes = $res->Fetch()) {
                     <?
                     //for each groups
                     foreach ($arGroups as $arGroup) {
-                        $arGroup['ID'] = intVal($arGroup['ID']);
+                        $arGroup['ID'] = intval($arGroup['ID']);
                         ?>
                         <tr valign="top">
                             <td>
-                                [<a href="/bitrix/admin/group_edit.php?ID=<?= $arGroup['ID'] ?>&lang=<?= LANGUAGE_ID ?>"><?= $arGroup['ID'] ?></a>]&nbsp;<?= htmlspecialcharsex($arGroup['NAME']) ?>
-                                :
+                                [<a href="/bitrix/admin/group_edit.php?ID=<?= $arGroup['ID'] ?>&lang=<?= LANGUAGE_ID ?>"><?= $arGroup['ID'] ?></a>]&nbsp;<?= htmlspecialcharsex(
+                                    $arGroup['NAME']
+                                ) ?>:
                             </td>
                             <td>
                                 <select name="g_<?= $arGroup['ID'] ?>" class="typeselect">
                                     <? foreach ($arTasks as $id => $ar):?>
-                                        <option value="<?= $id ?>"<? if ($arGroupTask[$arGroup['ID']] == $id) echo " selected"; ?>><?= htmlspecialcharsex($ar['title']); ?></option>
+                                        <option value="<?= $id ?>"<? if ($arGroupTask[$arGroup['ID']] == $id) {
+                                            echo " selected";
+                                        } ?>><?= htmlspecialcharsex($ar['title']); ?></option>
                                     <?endforeach; ?>
                                 </select>
                             </td>
@@ -131,7 +151,8 @@ while ($arRes = $res->Fetch()) {
         $tabControl->Buttons(
             array(
                 "disabled" => false,
-                "back_url" => "fileman_medialib_admin.php?" . $addUrl . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get()
+                "back_url" => "fileman_medialib_admin.php?" . $addUrl . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get(
+                    )
             )
         );
         ?>
@@ -141,7 +162,8 @@ while ($arRes = $res->Fetch()) {
     </form>
     <script>
         function colsOnChange(pSel) {
-            window.location = "/bitrix/admin/fileman_medialib_access.php?col_id=" + pSel.value + "&lang=<?= LANGUAGE_ID?>&<?= bitrix_sessid_get()?>";
+            window.location = "/bitrix/admin/fileman_medialib_access.php?col_id=" + pSel.value + "&lang=<?= LANGUAGE_ID?>&<?= bitrix_sessid_get(
+            )?>";
         }
     </script>
 <?

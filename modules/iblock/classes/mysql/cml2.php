@@ -1,5 +1,7 @@
 <?
 
+use Bitrix\Main;
+
 /*
 This class is used to parse and load an xml file into database table.
 */
@@ -23,14 +25,7 @@ class CIBlockXMLFile
     function __construct($table_name = "b_xml_tree")
     {
         $this->_table_name = strtolower($table_name);
-        if (defined("BX_UTF")) {
-            if (function_exists("mb_orig_strpos") && function_exists("mb_orig_strlen") && function_exists("mb_orig_substr"))
-                $this->_get_xml_chunk_function = "_get_xml_chunk_mb_orig";
-            else
-                $this->_get_xml_chunk_function = "_get_xml_chunk_mb";
-        } else {
-            $this->_get_xml_chunk_function = "_get_xml_chunk";
-        }
+        $this->_get_xml_chunk_function = "_get_xml_chunk";
     }
 
     function StartSession($sess_id)
@@ -39,8 +34,9 @@ class CIBlockXMLFile
 
         if (!$DB->TableExists($this->_table_name)) {
             $res = $this->CreateTemporaryTables(true);
-            if ($res)
+            if ($res) {
                 $res = $this->IndexTemporaryTables(true);
+            }
         } else {
             $res = true;
         }
@@ -50,12 +46,14 @@ class CIBlockXMLFile
 
             $rs = $this->GetList(array(), array("PARENT_ID" => -1), array("ID", "NAME"));
             if (!$rs->Fetch()) {
-                $this->Add(array(
-                    "PARENT_ID" => -1,
-                    "LEFT_MARGIN" => 0,
-                    "NAME" => "SESS_ID",
-                    "VALUE" => ConvertDateTime(ConvertTimeStamp(false, "FULL"), "YYYY-MM-DD HH:MI:SS"),
-                ));
+                $this->Add(
+                    array(
+                        "PARENT_ID" => -1,
+                        "LEFT_MARGIN" => 0,
+                        "NAME" => "SESS_ID",
+                        "VALUE" => ConvertDateTime(ConvertTimeStamp(false, "FULL"), "YYYY-MM-DD HH:MI:SS"),
+                    )
+                );
             }
         }
 
@@ -65,7 +63,11 @@ class CIBlockXMLFile
     function GetSessionRoot()
     {
         global $DB;
-        $rs = $DB->Query("SELECT ID MID from " . $this->_table_name . " WHERE SESS_ID = '" . $DB->ForSQL($this->_sessid) . "' AND PARENT_ID = 0");
+        $rs = $DB->Query(
+            "SELECT ID MID from " . $this->_table_name . " WHERE SESS_ID = '" . $DB->ForSQL(
+                $this->_sessid
+            ) . "' AND PARENT_ID = 0"
+        );
         $ar = $rs->Fetch();
         return $ar["MID"];
     }
@@ -77,10 +79,14 @@ class CIBlockXMLFile
         //Delete "expired" sessions
         $expired = ConvertDateTime(ConvertTimeStamp(time() - 3600, "FULL"), "YYYY-MM-DD HH:MI:SS");
 
-        $rs = $DB->Query("select ID, SESS_ID, VALUE from " . $this->_table_name . " where PARENT_ID = -1 AND NAME = 'SESS_ID' ORDER BY ID");
+        $rs = $DB->Query(
+            "select ID, SESS_ID, VALUE from " . $this->_table_name . " where PARENT_ID = -1 AND NAME = 'SESS_ID' ORDER BY ID"
+        );
         while ($ar = $rs->Fetch()) {
             if ($ar["SESS_ID"] == $this->_sessid || $ar["VALUE"] < $expired) {
-                $DB->Query("DELETE from " . $this->_table_name . " WHERE SESS_ID = '" . $DB->ForSQL($ar["SESS_ID"]) . "'");
+                $DB->Query(
+                    "DELETE from " . $this->_table_name . " WHERE SESS_ID = '" . $DB->ForSQL($ar["SESS_ID"]) . "'"
+                );
             }
         }
         return true;
@@ -100,61 +106,57 @@ class CIBlockXMLFile
     return : result of the CDatabase::Query method
     We use drop due to mysql innodb slow truncate bug.
     */
-    function DropTemporaryTables()
+    public function DropTemporaryTables()
     {
-        if (!isset($this) || !is_object($this) || strlen($this->_table_name) <= 0) {
-            $ob = new CIBlockXMLFile;
-            return $ob->DropTemporaryTables();
-        } else {
-            global $DB;
-            if ($DB->TableExists($this->_table_name))
-                return $DB->DDL("drop table " . $this->_table_name);
-            else
-                return true;
+        global $DB;
+
+        if ($DB->TableExists($this->_table_name)) {
+            return $DB->DDL("drop table " . $this->_table_name);
         }
+        return true;
     }
 
-    function CreateTemporaryTables($with_sess_id = false)
+    public function CreateTemporaryTables($with_sess_id = false)
     {
-        if (!isset($this) || !is_object($this) || strlen($this->_table_name) <= 0) {
-            $ob = new CIBlockXMLFile;
-            return $ob->CreateTemporaryTables();
-        } else {
-            global $DB;
+        global $DB;
 
-            if ($DB->TableExists($this->_table_name))
-                return false;
-
-            if (defined("MYSQL_TABLE_TYPE") && strlen(MYSQL_TABLE_TYPE) > 0)
-                $DB->Query("SET storage_engine = '" . MYSQL_TABLE_TYPE . "'", true);
-
-            $res = $DB->DDL("create table " . $this->_table_name . "
-				(
-					ID int(11) not null auto_increment,
-					" . ($with_sess_id ? "SESS_ID varchar(32)," : "") . "
-					PARENT_ID int(11),
-					LEFT_MARGIN int(11),
-					RIGHT_MARGIN int(11),
-					DEPTH_LEVEL int(11),
-					NAME varchar(255),
-					VALUE longtext,
-					ATTRIBUTES text,
-					PRIMARY KEY (ID)
-				)
-			");
-
-            if ($res && defined("BX_XML_CREATE_INDEXES_IMMEDIATELY"))
-                $res = $this->IndexTemporaryTables($with_sess_id);
-
-            return $res;
+        if ($DB->TableExists($this->_table_name)) {
+            return false;
         }
+
+        if (defined("MYSQL_TABLE_TYPE") && MYSQL_TABLE_TYPE <> '') {
+            $DB->Query("SET storage_engine = '" . MYSQL_TABLE_TYPE . "'", true);
+        }
+
+        $res = $DB->DDL(
+            "create table " . $this->_table_name . "
+			(
+				ID int(11) not null auto_increment,
+				" . ($with_sess_id ? "SESS_ID varchar(32)," : "") . "
+				PARENT_ID int(11),
+				LEFT_MARGIN int(11),
+				RIGHT_MARGIN int(11),
+				DEPTH_LEVEL int(11),
+				NAME varchar(255),
+				VALUE longtext,
+				ATTRIBUTES text,
+				PRIMARY KEY (ID)
+			)
+		"
+        );
+
+        if ($res && defined("BX_XML_CREATE_INDEXES_IMMEDIATELY")) {
+            $res = $this->IndexTemporaryTables($with_sess_id);
+        }
+
+        return $res;
     }
 
     function IsExistTemporaryTable()
     {
         global $DB;
 
-        if (!isset($this) || !is_object($this) || strlen($this->_table_name) <= 0) {
+        if (!isset($this) || !is_object($this) || $this->_table_name == '') {
             $ob = new CIBlockXMLFile;
             return $ob->IsExistTemporaryTable();
         } else {
@@ -168,7 +170,7 @@ class CIBlockXMLFile
 
         $parentID = (int)$parentID;
 
-        if (!isset($this) || !is_object($this) || strlen($this->_table_name) <= 0) {
+        if (!isset($this) || !is_object($this) || $this->_table_name == '') {
             $ob = new CIBlockXMLFile;
             return $ob->GetCountItemsWithParent($parentID);
         } else {
@@ -187,29 +189,36 @@ class CIBlockXMLFile
 
     return : result of the CDatabase::Query method
     */
-    function IndexTemporaryTables($with_sess_id = false)
+    public function IndexTemporaryTables($with_sess_id = false)
     {
-        if (!isset($this) || !is_object($this) || strlen($this->_table_name) <= 0) {
-            $ob = new CIBlockXMLFile;
-            return $ob->IndexTemporaryTables();
-        } else {
-            global $DB;
-            $res = true;
+        global $DB;
+        $res = true;
 
-            if ($with_sess_id) {
-                if (!$DB->IndexExists($this->_table_name, array("SESS_ID", "PARENT_ID")))
-                    $res = $DB->DDL("CREATE INDEX ix_" . $this->_table_name . "_parent on " . $this->_table_name . "(SESS_ID, PARENT_ID)");
-                if ($res && !$DB->IndexExists($this->_table_name, array("SESS_ID", "LEFT_MARGIN")))
-                    $res = $DB->DDL("CREATE INDEX ix_" . $this->_table_name . "_left on " . $this->_table_name . "(SESS_ID, LEFT_MARGIN)");
-            } else {
-                if (!$DB->IndexExists($this->_table_name, array("PARENT_ID")))
-                    $res = $DB->DDL("CREATE INDEX ix_" . $this->_table_name . "_parent on " . $this->_table_name . "(PARENT_ID)");
-                if ($res && !$DB->IndexExists($this->_table_name, array("LEFT_MARGIN")))
-                    $res = $DB->DDL("CREATE INDEX ix_" . $this->_table_name . "_left on " . $this->_table_name . "(LEFT_MARGIN)");
+        if ($with_sess_id) {
+            if (!$DB->IndexExists($this->_table_name, array("SESS_ID", "PARENT_ID"))) {
+                $res = $DB->DDL(
+                    "CREATE INDEX ix_" . $this->_table_name . "_parent on " . $this->_table_name . "(SESS_ID, PARENT_ID)"
+                );
             }
-
-            return $res;
+            if ($res && !$DB->IndexExists($this->_table_name, array("SESS_ID", "LEFT_MARGIN"))) {
+                $res = $DB->DDL(
+                    "CREATE INDEX ix_" . $this->_table_name . "_left on " . $this->_table_name . "(SESS_ID, LEFT_MARGIN)"
+                );
+            }
+        } else {
+            if (!$DB->IndexExists($this->_table_name, array("PARENT_ID"))) {
+                $res = $DB->DDL(
+                    "CREATE INDEX ix_" . $this->_table_name . "_parent on " . $this->_table_name . "(PARENT_ID)"
+                );
+            }
+            if ($res && !$DB->IndexExists($this->_table_name, array("LEFT_MARGIN"))) {
+                $res = $DB->DDL(
+                    "CREATE INDEX ix_" . $this->_table_name . "_left on " . $this->_table_name . "(LEFT_MARGIN)"
+                );
+            }
         }
+
+        return $res;
     }
 
     function Add($arFields)
@@ -217,7 +226,9 @@ class CIBlockXMLFile
         global $DB;
 
         $strSql1 = "PARENT_ID, LEFT_MARGIN, RIGHT_MARGIN, DEPTH_LEVEL, NAME";
-        $strSql2 = intval($arFields["PARENT_ID"]) . ", " . intval($arFields["LEFT_MARGIN"]) . ", " . intval($arFields["RIGHT_MARGIN"]) . ", " . intval($arFields["DEPTH_LEVEL"]) . ", '" . $DB->ForSQL($arFields["NAME"], 255) . "'";
+        $strSql2 = intval($arFields["PARENT_ID"]) . ", " . intval($arFields["LEFT_MARGIN"]) . ", " . intval(
+                $arFields["RIGHT_MARGIN"]
+            ) . ", " . intval($arFields["DEPTH_LEVEL"]) . ", '" . $DB->ForSQL($arFields["NAME"], 255) . "'";
 
         if (array_key_exists("ATTRIBUTES", $arFields)) {
             $strSql1 .= ", ATTRIBUTES";
@@ -261,19 +272,20 @@ class CIBlockXMLFile
     */
     function ReadXMLToDatabase($fp, &$NS, $time_limit = 0, $read_size = 1024)
     {
-        global $APPLICATION;
-
         //Initialize object
-        if (!array_key_exists("charset", $NS))
+        if (!array_key_exists("charset", $NS)) {
             $NS["charset"] = false;
+        }
         $this->charset = &$NS["charset"];
 
-        if (!array_key_exists("element_stack", $NS))
+        if (!array_key_exists("element_stack", $NS)) {
             $NS["element_stack"] = array();
+        }
         $this->element_stack = &$NS["element_stack"];
 
-        if (!array_key_exists("file_position", $NS))
+        if (!array_key_exists("file_position", $NS)) {
             $NS["file_position"] = 0;
+        }
         $this->file_position = &$NS["file_position"];
 
         $this->read_size = $read_size;
@@ -282,45 +294,49 @@ class CIBlockXMLFile
         $this->buf_len = 0;
 
         //This is an optimization. We assume than no step can take more than one year.
-        if ($time_limit > 0)
+        if ($time_limit > 0) {
             $end_time = time() + $time_limit;
-        else
-            $end_time = time() + 365 * 24 * 3600; // One year
+        } else {
+            $end_time = time() + 365 * 24 * 3600;
+        } // One year
 
         $cs = $this->charset;
-        $_get_xml_chunk = array($this, $this->_get_xml_chunk_function);
         fseek($fp, $this->file_position);
-        while (($xmlChunk = call_user_func_array($_get_xml_chunk, array($fp))) !== false) {
+        while (($xmlChunk = $this->_get_xml_chunk($fp)) !== false) {
             if ($cs) {
-                $xmlChunk = $APPLICATION->ConvertCharset($xmlChunk, $cs, LANG_CHARSET);
+                $xmlChunk = Main\Text\Encoding::convertEncoding($xmlChunk, $cs, LANG_CHARSET);
             }
 
             if ($xmlChunk[0] == "/") {
                 $this->_end_element($xmlChunk);
-                if (time() > $end_time)
+                if (time() > $end_time) {
                     break;
+                }
             } elseif ($xmlChunk[0] == "!" || $xmlChunk[0] == "?") {
-                if (substr($xmlChunk, 0, 4) === "?xml") {
+                if (strncmp($xmlChunk, "?xml", 4) === 0) {
                     if (preg_match('#encoding[\s]*=[\s]*"(.*?)"#i', $xmlChunk, $arMatch)) {
                         $this->charset = $arMatch[1];
-                        if (strtoupper($this->charset) === strtoupper(LANG_CHARSET))
+                        if (strtoupper($this->charset) === strtoupper(LANG_CHARSET)) {
                             $this->charset = false;
+                        }
                         $cs = $this->charset;
                     }
                 }
             } else {
                 $this->_start_element($xmlChunk);
             }
-
         }
 
         return feof($fp);
     }
 
-    /*
-    Internal function.
-    Used to read an xml by chunks started with "<" and endex with "<"
-    */
+    /**
+     * Internal function.
+     * Used to read an xml by chunks started with "<" and endex with "<"
+     *
+     * @param resource $fp
+     * @return bool|string
+     */
     function _get_xml_chunk($fp)
     {
         if ($this->buf_position >= $this->buf_len) {
@@ -328,8 +344,9 @@ class CIBlockXMLFile
                 $this->buf = fread($fp, $this->read_size);
                 $this->buf_position = 0;
                 $this->buf_len = strlen($this->buf);
-            } else
+            } else {
                 return false;
+            }
         }
 
         //Skip line delimiters (ltrim)
@@ -343,8 +360,9 @@ class CIBlockXMLFile
                     $this->buf = fread($fp, $this->read_size);
                     $this->buf_position = 0;
                     $this->buf_len = strlen($this->buf);
-                } else
+                } else {
                     return false;
+                }
             }
             $xml_position = strpos($this->buf, "<", $this->buf_position);
         }
@@ -356,14 +374,16 @@ class CIBlockXMLFile
             if (!feof($fp)) {
                 $this->buf .= fread($fp, $this->read_size);
                 $this->buf_len = strlen($this->buf);
-            } else
+            } else {
                 break;
+            }
 
             //Let's find xml tag start
             $xml_position = strpos($this->buf, "<", $next_search);
         }
-        if ($xml_position === false)
+        if ($xml_position === false) {
             $xml_position = $this->buf_len + 1;
+        }
 
         $len = $xml_position - $this->buf_position;
         $this->file_position += $len;
@@ -373,10 +393,14 @@ class CIBlockXMLFile
         return $result;
     }
 
-    /*
-    Internal function.
-    Used to read an xml by chunks started with "<" and endex with "<"
-    */
+    /**
+     * Internal function.
+     * Used to read an xml by chunks started with "<" and endex with "<"
+     *
+     * @param resource $fp
+     * @return bool|string
+     * @deprecated deprecated since iblock 20.100.0
+     */
     function _get_xml_chunk_mb_orig($fp)
     {
         if ($this->buf_position >= $this->buf_len) {
@@ -384,8 +408,9 @@ class CIBlockXMLFile
                 $this->buf = fread($fp, $this->read_size);
                 $this->buf_position = 0;
                 $this->buf_len = mb_orig_strlen($this->buf);
-            } else
+            } else {
                 return false;
+            }
         }
 
         //Skip line delimiters (ltrim)
@@ -399,8 +424,9 @@ class CIBlockXMLFile
                     $this->buf = fread($fp, $this->read_size);
                     $this->buf_position = 0;
                     $this->buf_len = mb_orig_strlen($this->buf);
-                } else
+                } else {
                     return false;
+                }
             }
             $xml_position = mb_orig_strpos($this->buf, "<", $this->buf_position);
         }
@@ -412,14 +438,16 @@ class CIBlockXMLFile
             if (!feof($fp)) {
                 $this->buf .= fread($fp, $this->read_size);
                 $this->buf_len = mb_orig_strlen($this->buf);
-            } else
+            } else {
                 break;
+            }
 
             //Let's find xml tag start
             $xml_position = mb_orig_strpos($this->buf, "<", $next_search);
         }
-        if ($xml_position === false)
+        if ($xml_position === false) {
             $xml_position = $this->buf_len + 1;
+        }
 
         $len = $xml_position - $this->buf_position;
         $this->file_position += $len;
@@ -429,23 +457,28 @@ class CIBlockXMLFile
         return $result;
     }
 
-    /*
-    Internal function.
-    Used to read an xml by chunks started with "<" and endex with "<"
-    */
+    /**
+     * Internal function.
+     * Used to read an xml by chunks started with "<" and endex with "<"
+     *
+     * @param resource $fp
+     * @return bool|string
+     * @deprecated deprecated since iblock 20.100.0
+     */
     function _get_xml_chunk_mb($fp)
     {
         if ($this->buf_position >= $this->buf_len) {
             if (!feof($fp)) {
                 $this->buf = fread($fp, $this->read_size);
                 $this->buf_position = 0;
-                $this->buf_len = mb_strlen($this->buf);
-            } else
+                $this->buf_len = mb_strlen($this->buf, 'latin1');
+            } else {
                 return false;
+            }
         }
 
         //Skip line delimiters (ltrim)
-        $xml_position = mb_strpos($this->buf, "<", $this->buf_position);
+        $xml_position = mb_strpos($this->buf, "<", $this->buf_position, 'latin1');
         while ($xml_position === $this->buf_position) {
             $this->buf_position++;
             $this->file_position++;
@@ -454,11 +487,12 @@ class CIBlockXMLFile
                 if (!feof($fp)) {
                     $this->buf = fread($fp, $this->read_size);
                     $this->buf_position = 0;
-                    $this->buf_len = mb_strlen($this->buf);
-                } else
+                    $this->buf_len = mb_strlen($this->buf, 'latin1');
+                } else {
                     return false;
+                }
             }
-            $xml_position = mb_strpos($this->buf, "<", $this->buf_position);
+            $xml_position = mb_strpos($this->buf, "<", $this->buf_position, 'latin1');
         }
 
         //Let's find next line delimiter
@@ -467,19 +501,21 @@ class CIBlockXMLFile
             //Delimiter not in buffer so try to add more data to it
             if (!feof($fp)) {
                 $this->buf .= fread($fp, $this->read_size);
-                $this->buf_len = mb_strlen($this->buf);
-            } else
+                $this->buf_len = mb_strlen($this->buf, 'latin1');
+            } else {
                 break;
+            }
 
             //Let's find xml tag start
-            $xml_position = mb_strpos($this->buf, "<", $next_search);
+            $xml_position = mb_strpos($this->buf, "<", $next_search, 'latin1');
         }
-        if ($xml_position === false)
+        if ($xml_position === false) {
             $xml_position = $this->buf_len + 1;
+        }
 
         $len = $xml_position - $this->buf_position;
         $this->file_position += $len;
-        $result = mb_substr($this->buf, $this->buf_position, $len);
+        $result = mb_substr($this->buf, $this->buf_position, $len, 'latin1');
         $this->buf_position = $xml_position;
 
         return $result;
@@ -516,12 +552,13 @@ class CIBlockXMLFile
                 $bHaveChildren = true;
                 $elementName = substr($xmlChunk, 0, $p);
                 $elementValue = substr($xmlChunk, $p + 1);
-                if (preg_match("/^\s*$/", $elementValue))
+                if (preg_match("/^\s*$/", $elementValue)) {
                     $DBelementValue = false;
-                elseif (strpos($elementValue, "&") === false)
+                } elseif (strpos($elementValue, "&") === false) {
                     $DBelementValue = $elementValue;
-                else
+                } else {
                     $DBelementValue = preg_replace($search, $replace, $elementValue);
+                }
             }
 
             if (($ps = strpos($elementName, " ")) !== false) {
@@ -531,20 +568,24 @@ class CIBlockXMLFile
                 preg_match_all("/(\\S+)\\s*=\\s*[\"](.*?)[\"]/s" . BX_UTF_PCRE_MODIFIER, $elementAttrs, $attrs_tmp);
                 $attrs = array();
                 if (strpos($elementAttrs, "&") === false) {
-                    foreach ($attrs_tmp[1] as $i => $attrs_tmp_1)
+                    foreach ($attrs_tmp[1] as $i => $attrs_tmp_1) {
                         $attrs[$attrs_tmp_1] = $attrs_tmp[2][$i];
+                    }
                 } else {
-                    foreach ($attrs_tmp[1] as $i => $attrs_tmp_1)
+                    foreach ($attrs_tmp[1] as $i => $attrs_tmp_1) {
                         $attrs[$attrs_tmp_1] = preg_replace($search, $replace, $attrs_tmp[2][$i]);
+                    }
                 }
                 $DBelementAttrs = serialize($attrs);
-            } else
+            } else {
                 $DBelementAttrs = false;
+            }
 
-            if ($c = count($this->element_stack))
+            if ($c = count($this->element_stack)) {
                 $parent = $this->element_stack[$c - 1];
-            else
+            } else {
                 $parent = array("ID" => "NULL", "L" => 0, "R" => 1);
+            }
 
             $left = $parent["R"];
             $right = $left + 1;
@@ -565,10 +606,11 @@ class CIBlockXMLFile
 
             $ID = $this->Add($arFields);
 
-            if ($bHaveChildren)
+            if ($bHaveChildren) {
                 $this->element_stack[] = array("ID" => $ID, "L" => $left, "R" => $right, "RO" => $right);
-            else
+            } else {
                 $this->element_stack[$c - 1]["R"] = $right + 1;
+            }
         }
     }
 
@@ -582,8 +624,13 @@ class CIBlockXMLFile
 
         $child = array_pop($this->element_stack);
         $this->element_stack[count($this->element_stack) - 1]["R"] = $child["R"] + 1;
-        if ($child["R"] != $child["RO"])
-            $DB->Query("UPDATE " . $this->_table_name . " SET RIGHT_MARGIN = " . intval($child["R"]) . " WHERE ID = " . intval($child["ID"]));
+        if ($child["R"] != $child["RO"]) {
+            $DB->Query(
+                "UPDATE " . $this->_table_name . " SET RIGHT_MARGIN = " . intval($child["R"]) . " WHERE ID = " . intval(
+                    $child["ID"]
+                )
+            );
+        }
     }
 
     /*
@@ -616,8 +663,9 @@ class CIBlockXMLFile
                 $handleAttributes
             );
             $arParent = $rs->Fetch();
-            if (!$arParent)
+            if (!$arParent) {
                 return $arResult;
+            }
         }
 
         //Array of the references to the arResult array members with xml_id as index.
@@ -630,8 +678,9 @@ class CIBlockXMLFile
             $handleAttributes
         );
         while ($ar = $rs->Fetch()) {
-            if (isset($ar["VALUE_CLOB"]))
+            if (isset($ar["VALUE_CLOB"])) {
                 $ar["VALUE"] = $ar["VALUE_CLOB"];
+            }
 
             if (isset($arSalt[$ar["PARENT_ID"]][$ar["NAME"]])) {
                 $salt = ++$arSalt[$ar["PARENT_ID"]][$ar["NAME"]];
@@ -645,8 +694,9 @@ class CIBlockXMLFile
                 $arIndex[$ar["ID"]] = &$arResult[$ar["NAME"]];
             } else {
                 $parent_id = $ar["PARENT_ID"];
-                if (!is_array($arIndex[$parent_id]))
+                if (!is_array($arIndex[$parent_id])) {
                     $arIndex[$parent_id] = array();
+                }
                 $arIndex[$parent_id][$ar["NAME"]] = $ar["VALUE"];
                 $arIndex[$ar["ID"]] = &$arIndex[$parent_id][$ar["NAME"]];
             }
@@ -667,35 +717,41 @@ class CIBlockXMLFile
             "NAME" => "NAME",
             "VALUE" => "VALUE",
         );
-        foreach ($arSelect as $i => $field)
-            if (!array_key_exists($field, $arFields))
+        foreach ($arSelect as $i => $field) {
+            if (!array_key_exists($field, $arFields)) {
                 unset($arSelect[$i]);
-        if (count($arSelect) <= 0)
+            }
+        }
+        if (count($arSelect) <= 0) {
             $arSelect[] = "*";
+        }
 
         $arSQLWhere = array();
         foreach ($arFilter as $field => $value) {
-            if ($field == "ID" && is_array($value) && !empty($value))
+            if ($field == "ID" && is_array($value) && !empty($value)) {
                 $arSQLWhere[$field] = $field . " in (" . implode(",", array_map("intval", $value)) . ")";
-            elseif ($field == "ID" || $field == "LEFT_MARGIN")
+            } elseif ($field == "ID" || $field == "LEFT_MARGIN") {
                 $arSQLWhere[$field] = $field . " = " . intval($value);
-            elseif ($field == "PARENT_ID" || $field == "PARENT_ID+0")
+            } elseif ($field == "PARENT_ID" || $field == "PARENT_ID+0") {
                 $arSQLWhere[$field] = $field . " = " . intval($value);
-            elseif ($field == ">ID")
+            } elseif ($field == ">ID") {
                 $arSQLWhere[$field] = "ID > " . intval($value);
-            elseif ($field == "><LEFT_MARGIN")
+            } elseif ($field == "><LEFT_MARGIN") {
                 $arSQLWhere[$field] = "LEFT_MARGIN between " . intval($value[0]) . " AND " . intval($value[1]);
-            elseif ($field == "NAME")
+            } elseif ($field == "NAME") {
                 $arSQLWhere[$field] = $field . " = " . "'" . $DB->ForSQL($value) . "'";
+            }
         }
-        if ($this->_sessid)
+        if ($this->_sessid) {
             $arSQLWhere[] = "SESS_ID = '" . $DB->ForSQL($this->_sessid) . "'";
+        }
 
         foreach ($arOrder as $field => $by) {
-            if (!array_key_exists($field, $arFields))
+            if (!array_key_exists($field, $arFields)) {
                 unset($arSelect[$field]);
-            else
+            } else {
                 $arOrder[$field] = $field . " " . ($by == "desc" ? "desc" : "asc");
+            }
         }
 
         $strSql = "
@@ -723,23 +779,26 @@ class CIBlockXMLFile
 
     public static function UnZip($file_name, $last_zip_entry = "", $start_time = 0, $interval = 0)
     {
-        global $APPLICATION;
-
         //Function and securioty checks
-        if (!function_exists("zip_open"))
+        if (!function_exists("zip_open")) {
             return false;
+        }
         $dir_name = substr($file_name, 0, strrpos($file_name, "/") + 1);
-        if (strlen($dir_name) <= strlen($_SERVER["DOCUMENT_ROOT"]))
+        if (strlen($dir_name) <= strlen($_SERVER["DOCUMENT_ROOT"])) {
             return false;
+        }
 
         $hZip = zip_open($file_name);
-        if (!is_resource($hZip))
+        if (!is_resource($hZip)) {
             return false;
+        }
         //Skip from last step
         if ($last_zip_entry) {
-            while ($entry = zip_read($hZip))
-                if (zip_entry_name($entry) == $last_zip_entry)
+            while ($entry = zip_read($hZip)) {
+                if (zip_entry_name($entry) == $last_zip_entry) {
                     break;
+                }
+            }
         }
 
         $io = CBXVirtualIo::GetInstance();
@@ -749,10 +808,13 @@ class CIBlockXMLFile
             //Check for directory
             zip_entry_open($hZip, $entry);
             if (zip_entry_filesize($entry)) {
-
                 $file_name = trim(str_replace("\\", "/", trim($entry_name)), "/");
-                $file_name = $APPLICATION->ConvertCharset($file_name, "cp866", LANG_CHARSET);
-                $file_name = preg_replace("#^import_files/tmp/webdata/\\d+/\\d+/import_files/#", "import_files/", $file_name);
+                $file_name = Main\Text\Encoding::convertEncoding($file_name, "cp866", LANG_CHARSET);
+                $file_name = preg_replace(
+                    "#^import_files/tmp/webdata/\\d+/\\d+/import_files/#",
+                    "import_files/",
+                    $file_name
+                );
 
                 $bBadFile = HasScriptExtension($file_name)
                     || IsFileUnsafe($file_name)
@@ -762,13 +824,16 @@ class CIBlockXMLFile
                     $file_name = $io->GetPhysicalName($dir_name . Rel2Abs("/", $file_name));
                     CheckDirPath($file_name);
                     $fout = fopen($file_name, "wb");
-                    if (!$fout)
+                    if (!$fout) {
                         return false;
+                    }
+                    $useMbstring = function_exists('mb_strlen');
                     while ($data = zip_entry_read($entry, 102400)) {
-                        $data_len = function_exists('mb_strlen') ? mb_strlen($data, 'latin1') : strlen($data);
+                        $data_len = $useMbstring ? mb_strlen($data, 'latin1') : strlen($data);
                         $result = fwrite($fout, $data);
-                        if ($result !== $data_len)
+                        if ($result !== $data_len) {
                             return false;
+                        }
                     }
                 }
             }

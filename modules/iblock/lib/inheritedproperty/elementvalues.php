@@ -92,15 +92,18 @@ class ElementValues extends BaseValues
     {
         $parents = array();
         if ($this->elementId > 0) {
-            $elementList = \Bitrix\Iblock\ElementTable::getList(array(
-                "select" => array("IBLOCK_SECTION_ID"),
-                "filter" => array("=ID" => $this->elementId),
-            ));
+            $elementList = \Bitrix\Iblock\ElementTable::getList(
+                array(
+                    "select" => array("IBLOCK_SECTION_ID"),
+                    "filter" => array("=ID" => $this->elementId),
+                )
+            );
             $element = $elementList->fetch();
-            if ($element && $element["IBLOCK_SECTION_ID"] > 0)
+            if ($element && $element["IBLOCK_SECTION_ID"] > 0) {
                 $parents[] = new SectionValues($this->iblockId, $element["IBLOCK_SECTION_ID"]);
-            else
+            } else {
                 $parents[] = new IblockValues($this->iblockId);
+            }
         } elseif ($this->sectionId > 0) {
             $parents[] = new SectionValues($this->iblockId, $this->sectionId);
         } else {
@@ -122,7 +125,8 @@ class ElementValues extends BaseValues
         if ($this->hasTemplates()) {
             if ($this->queue->getElement($this->iblockId, $this->elementId) === false) {
                 $ids = $this->queue->get($this->iblockId);
-                $query = $connection->query("
+                $query = $connection->query(
+                    "
 					SELECT
 						P.ID
 						,P.CODE
@@ -137,7 +141,8 @@ class ElementValues extends BaseValues
 					WHERE
 						IP.IBLOCK_ID = " . $this->iblockId . "
 						AND IP.ELEMENT_ID in (" . implode(", ", $ids) . ")
-				");
+				"
+                );
                 $result = array();
                 while ($row = $query->fetch()) {
                     $result[$row["ELEMENT_ID"]][$row["CODE"]] = $row;
@@ -150,10 +155,12 @@ class ElementValues extends BaseValues
                 $result = parent::queryValues();
                 if (!empty($result)) {
                     $sqlHelper = $connection->getSqlHelper();
-                    $elementList = \Bitrix\Iblock\ElementTable::getList(array(
-                        "select" => array("IBLOCK_SECTION_ID"),
-                        "filter" => array("=ID" => $this->elementId),
-                    ));
+                    $elementList = \Bitrix\Iblock\ElementTable::getList(
+                        array(
+                            "select" => array("IBLOCK_SECTION_ID"),
+                            "filter" => array("=ID" => $this->elementId),
+                        )
+                    );
                     $element = $elementList->fetch();
                     $element['IBLOCK_SECTION_ID'] = (int)$element['IBLOCK_SECTION_ID'];
 
@@ -189,11 +196,13 @@ class ElementValues extends BaseValues
     function clearValues()
     {
         $connection = \Bitrix\Main\Application::getConnection();
-        $connection->query("
+        $connection->query(
+            "
 			DELETE FROM b_iblock_element_iprop
 			WHERE IBLOCK_ID = " . $this->iblockId . "
 			AND ELEMENT_ID = " . $this->elementId . "
-		");
+		"
+        );
         $this->queue->deleteElement($this->iblockId, $this->elementId);
     }
 }

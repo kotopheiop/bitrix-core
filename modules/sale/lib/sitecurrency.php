@@ -50,14 +50,17 @@ class SiteCurrencyTable extends Entity\DataManager
             $managed = Application::getInstance()->getManagedCache();
             $key = self::getTableName();
 
-            if ($managed->read(3600, $key))
+            if ($managed->read(3600, $key)) {
                 self::$cache = $managed->get($key);
-            else {
-                $result = self::getList(array(
-                    'select' => array('*')
-                ));
-                while ($row = $result->fetch())
+            } else {
+                $result = self::getList(
+                    array(
+                        'select' => array('*')
+                    )
+                );
+                while ($row = $result->fetch()) {
                     self::$cache[$row['LID']] = $row;
+                }
                 $managed->set($key, self::$cache);
             }
         }

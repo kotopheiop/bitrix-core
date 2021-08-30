@@ -24,21 +24,25 @@ class UserGroupHelper
         $deleteIds = array_diff($currentModeratorsIds, $this->moderatorsIds);
 
         if ($addIds) {
-            UserToGroup::addModerators([
-                "group_id" => $groupId,
-                "user_id" => $addIds,
-                "current_user_id" => $this->executiveUserId
-            ]);
+            UserToGroup::addModerators(
+                [
+                    "group_id" => $groupId,
+                    "user_id" => $addIds,
+                    "current_user_id" => $this->executiveUserId
+                ]
+            );
         }
 
         if ($deleteIds) {
-            $resRelation = UserToGroupTable::getList([
-                "filter" => [
-                    "GROUP_ID" => $groupId,
-                    "@USER_ID" => $deleteIds
-                ],
-                "select" => ["ID"]
-            ]);
+            $resRelation = UserToGroupTable::getList(
+                [
+                    "filter" => [
+                        "GROUP_ID" => $groupId,
+                        "@USER_ID" => $deleteIds
+                    ],
+                    "select" => ["ID"]
+                ]
+            );
             while ($relation = $resRelation->fetch()) {
                 \CSocNetUserToGroup::delete($relation["ID"]);
             }
@@ -49,14 +53,16 @@ class UserGroupHelper
     {
         $ids = [];
 
-        $queryObject = UserToGroupTable::getList([
-            "filter" => [
-                "ROLE" => UserToGroupTable::ROLE_MODERATOR,
-                "GROUP_ID" => $groupId,
-                "=USER.ACTIVE" => "Y"
-            ],
-            "select" => ["USER_ID"]
-        ]);
+        $queryObject = UserToGroupTable::getList(
+            [
+                "filter" => [
+                    "ROLE" => UserToGroupTable::ROLE_MODERATOR,
+                    "GROUP_ID" => $groupId,
+                    "=USER.ACTIVE" => "Y"
+                ],
+                "select" => ["USER_ID"]
+            ]
+        );
         while ($relation = $queryObject->fetch()) {
             $ids[] = $relation["USER_ID"];
         }

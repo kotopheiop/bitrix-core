@@ -162,11 +162,13 @@ class YandexCampaignTable extends AdvEntity
                 $campaignSettings = $engine->getCampaign(array($data['XML_ID']));
                 $data['SETTINGS'] = $campaignSettings[0];
             } catch (Engine\YandexDirectException $e) {
-                $result->addError(new Entity\FieldError(
-                    static::getEntity()->getField('ENGINE_ID'),
-                    $e->getMessage(),
-                    $e->getCode()
-                ));
+                $result->addError(
+                    new Entity\FieldError(
+                        static::getEntity()->getField('ENGINE_ID'),
+                        $e->getMessage(),
+                        $e->getCode()
+                    )
+                );
             }
         }
 
@@ -205,19 +207,23 @@ class YandexCampaignTable extends AdvEntity
             $engine = self::getEngine();
 
             if ($currentData['ENGINE_ID'] != $engine->getId()) {
-                $result->addError(new Entity\FieldError(
-                    static::getEntity()->getField('ENGINE_ID'),
-                    Loc::getMessage("SEO_CAMPAIGN_ERROR_WRONG_ENGINE")
-                ));
+                $result->addError(
+                    new Entity\FieldError(
+                        static::getEntity()->getField('ENGINE_ID'),
+                        Loc::getMessage("SEO_CAMPAIGN_ERROR_WRONG_ENGINE")
+                    )
+                );
             }
 
             $ownerInfo = $engine->getCurrentUser();
 
             if ($currentData['OWNER_ID'] != $ownerInfo['id']) {
-                $result->addError(new Entity\FieldError(
-                    static::getEntity()->getField('OWNER_ID'),
-                    Loc::getMessage("SEO_CAMPAIGN_ERROR_WRONG_OWNER")
-                ));
+                $result->addError(
+                    new Entity\FieldError(
+                        static::getEntity()->getField('OWNER_ID'),
+                        Loc::getMessage("SEO_CAMPAIGN_ERROR_WRONG_OWNER")
+                    )
+                );
             }
 
             $data['OWNER_NAME'] = $ownerInfo['login'];
@@ -298,13 +304,15 @@ class YandexCampaignTable extends AdvEntity
 
         $engine = self::getEngine();
 
-        $dbRes = YandexBannerTable::getList(array(
-            'filter' => array(
-                '=CAMPAIGN_ID' => $primary,
-                '=ENGINE_ID' => $engine->getId(),
-            ),
-            'select' => array('ID')
-        ));
+        $dbRes = YandexBannerTable::getList(
+            array(
+                'filter' => array(
+                    '=CAMPAIGN_ID' => $primary,
+                    '=ENGINE_ID' => $engine->getId(),
+                ),
+                'select' => array('ID')
+            )
+        );
 
         YandexBannerTable::setSkipRemoteUpdate(true);
         while ($banner = $dbRes->fetch()) {
@@ -364,22 +372,26 @@ class YandexCampaignTable extends AdvEntity
 
         if ($newCampaign || isset($data['SETTINGS']["Name"])) {
             $campaignParam["Name"] = trim($data['SETTINGS']["Name"]);
-            if (strlen($campaignParam["Name"]) <= 0) {
-                $result->addError(new Entity\FieldError(
-                    static::getEntity()->getField('NAME'),
-                    Loc::getMessage('SEO_CAMPAIGN_ERROR_NO_NAME')
-                ));
+            if ($campaignParam["Name"] == '') {
+                $result->addError(
+                    new Entity\FieldError(
+                        static::getEntity()->getField('NAME'),
+                        Loc::getMessage('SEO_CAMPAIGN_ERROR_NO_NAME')
+                    )
+                );
             }
         }
 
         if ($newCampaign || isset($data["SETTINGS"]["FIO"])) {
             $campaignParam["FIO"] = trim($data["SETTINGS"]["FIO"]);
 
-            if (strlen($campaignParam["FIO"]) <= 0) {
-                $result->addError(new Entity\FieldError(
-                    static::getEntity()->getField('SETTINGS'),
-                    Loc::getMessage('SEO_CAMPAIGN_ERROR_NO_FIO')
-                ));
+            if ($campaignParam["FIO"] == '') {
+                $result->addError(
+                    new Entity\FieldError(
+                        static::getEntity()->getField('SETTINGS'),
+                        Loc::getMessage('SEO_CAMPAIGN_ERROR_NO_FIO')
+                    )
+                );
             }
         }
 
@@ -398,10 +410,12 @@ class YandexCampaignTable extends AdvEntity
             }
 
             if (!$campaignParam["StartDate"]) {
-                $result->addError(new Entity\FieldError(
-                    static::getEntity()->getField('SETTINGS'),
-                    Loc::getMessage('SEO_CAMPAIGN_ERROR_NO_START_DATE')
-                ));
+                $result->addError(
+                    new Entity\FieldError(
+                        static::getEntity()->getField('SETTINGS'),
+                        Loc::getMessage('SEO_CAMPAIGN_ERROR_NO_START_DATE')
+                    )
+                );
             }
         }
 
@@ -411,10 +425,12 @@ class YandexCampaignTable extends AdvEntity
                 || !is_array($data["SETTINGS"]["Strategy"])
                 || empty($data["SETTINGS"]["Strategy"]["StrategyName"])
             ) {
-                $result->addError(new Entity\FieldError(
-                    static::getEntity()->getField('SETTINGS'),
-                    Loc::getMessage('SEO_CAMPAIGN_ERROR_NO_STRATEGY')
-                ));
+                $result->addError(
+                    new Entity\FieldError(
+                        static::getEntity()->getField('SETTINGS'),
+                        Loc::getMessage('SEO_CAMPAIGN_ERROR_NO_STRATEGY')
+                    )
+                );
             }
 
             if (array_key_exists($data["SETTINGS"]["Strategy"]["StrategyName"], self::$strategyConfig)) {
@@ -430,16 +446,18 @@ class YandexCampaignTable extends AdvEntity
                         if (array_key_exists($param, $config)) {
                             $campaignParam["Strategy"][$param] = $value;
                         } else {
-                            $result->addError(new Entity\FieldError(
-                                static::getEntity()->getField('SETTINGS'),
-                                Loc::getMessage(
-                                    'SEO_CAMPAIGN_ERROR_STRATEGY_PARAM_NOT_SUPPORTED',
-                                    array(
-                                        '#PARAM#' => $param,
-                                        '#STRATEGY#' => $strategy,
+                            $result->addError(
+                                new Entity\FieldError(
+                                    static::getEntity()->getField('SETTINGS'),
+                                    Loc::getMessage(
+                                        'SEO_CAMPAIGN_ERROR_STRATEGY_PARAM_NOT_SUPPORTED',
+                                        array(
+                                            '#PARAM#' => $param,
+                                            '#STRATEGY#' => $strategy,
+                                        )
                                     )
                                 )
-                            ));
+                            );
                         }
                     }
                 }
@@ -461,28 +479,32 @@ class YandexCampaignTable extends AdvEntity
                     }
 
                     if ($def['mandatory'] && empty($campaignParam["Strategy"][$key])) {
-                        $result->addError(new Entity\FieldError(
-                            static::getEntity()->getField('SETTINGS'),
-                            Loc::getMessage(
-                                'SEO_CAMPAIGN_ERROR_STRATEGY_PARAM_MANDATORY',
-                                array(
-                                    '#PARAM#' => Loc::getMessage('SEO_CAMPAIGN_STRATEGY_PARAM_' . ToUpper($key)),
-                                    '#STRATEGY#' => Loc::getMessage('SEO_CAMPAIGN_STRATEGY_' . $strategy),
+                        $result->addError(
+                            new Entity\FieldError(
+                                static::getEntity()->getField('SETTINGS'),
+                                Loc::getMessage(
+                                    'SEO_CAMPAIGN_ERROR_STRATEGY_PARAM_MANDATORY',
+                                    array(
+                                        '#PARAM#' => Loc::getMessage('SEO_CAMPAIGN_STRATEGY_PARAM_' . ToUpper($key)),
+                                        '#STRATEGY#' => Loc::getMessage('SEO_CAMPAIGN_STRATEGY_' . $strategy),
+                                    )
                                 )
                             )
-                        ));
+                        );
                     }
                 }
             } else {
-                $result->addError(new Entity\FieldError(
-                    static::getEntity()->getField('SETTINGS'),
-                    Loc::getMessage(
-                        'SEO_CAMPAIGN_ERROR_STRATEGY_NOT_SUPPORTED',
-                        array(
-                            '#STRATEGY#' => $data["SETTINGS"]["Strategy"]["StrategyName"],
+                $result->addError(
+                    new Entity\FieldError(
+                        static::getEntity()->getField('SETTINGS'),
+                        Loc::getMessage(
+                            'SEO_CAMPAIGN_ERROR_STRATEGY_NOT_SUPPORTED',
+                            array(
+                                '#STRATEGY#' => $data["SETTINGS"]["Strategy"]["StrategyName"],
+                            )
                         )
                     )
-                ));
+                );
             }
         }
 
@@ -492,10 +514,12 @@ class YandexCampaignTable extends AdvEntity
                 || !is_array($data["SETTINGS"]["EmailNotification"])
                 || !check_email($data["SETTINGS"]["EmailNotification"]['Email'])
             ) {
-                $result->addError(new Entity\FieldError(
-                    static::getEntity()->getField('SETTINGS'),
-                    Loc::getMessage('SEO_CAMPAIGN_ERROR_WRONG_EMAIL')
-                ));
+                $result->addError(
+                    new Entity\FieldError(
+                        static::getEntity()->getField('SETTINGS'),
+                        Loc::getMessage('SEO_CAMPAIGN_ERROR_WRONG_EMAIL')
+                    )
+                );
             }
 
             $campaignParam["EmailNotification"] = array(
@@ -520,17 +544,25 @@ class YandexCampaignTable extends AdvEntity
                 $campaignParam["EmailNotification"]['SendWarn'] = Engine\YandexDirect::BOOL_NO;
             }
 
-            if (!in_array($campaignParam["EmailNotification"]["WarnPlaceInterval"], self::$allowedWarnPlaceIntervalValues)) {
+            if (!in_array(
+                $campaignParam["EmailNotification"]["WarnPlaceInterval"],
+                self::$allowedWarnPlaceIntervalValues
+            )) {
                 if ($campaignParam["EmailNotification"]['SendWarn'] == Engine\YandexDirect::BOOL_YES) {
-                    $result->addError(new Entity\FieldError(
-                        static::getEntity()->getField('SETTINGS'),
-                        Loc::getMessage(
-                            'SEO_CAMPAIGN_ERROR_WRONG_INTERVAL',
-                            array('#VALUES#' => implode(
-                                ',', self::$allowedWarnPlaceIntervalValues
-                            ))
+                    $result->addError(
+                        new Entity\FieldError(
+                            static::getEntity()->getField('SETTINGS'),
+                            Loc::getMessage(
+                                'SEO_CAMPAIGN_ERROR_WRONG_INTERVAL',
+                                array(
+                                    '#VALUES#' => implode(
+                                        ',',
+                                        self::$allowedWarnPlaceIntervalValues
+                                    )
+                                )
+                            )
                         )
-                    ));
+                    );
                 } else {
                     $campaignParam["EmailNotification"]["WarnPlaceInterval"] = self::MONEY_WARN_PLACE_INTERVAL_DEFAULT;
                 }
@@ -540,22 +572,24 @@ class YandexCampaignTable extends AdvEntity
                 $campaignParam["EmailNotification"]["MoneyWarningValue"] < self::$allowedMoneyWarningInterval[0]
                 || $campaignParam["EmailNotification"]["MoneyWarningValue"] > self::$allowedMoneyWarningInterval[1]
             ) {
-                $result->addError(new Entity\FieldError(
-                    static::getEntity()->getField('SETTINGS'),
-                    Loc::getMessage(
-                        'SEO_CAMPAIGN_ERROR_WRONG_WARNING',
-                        array(
-                            '#MIN#' => self::$allowedMoneyWarningInterval[0],
-                            '#MAX#' => self::$allowedMoneyWarningInterval[1],
+                $result->addError(
+                    new Entity\FieldError(
+                        static::getEntity()->getField('SETTINGS'),
+                        Loc::getMessage(
+                            'SEO_CAMPAIGN_ERROR_WRONG_WARNING',
+                            array(
+                                '#MIN#' => self::$allowedMoneyWarningInterval[0],
+                                '#MAX#' => self::$allowedMoneyWarningInterval[1],
+                            )
                         )
                     )
-                ));
+                );
             }
         }
 
         if ($newCampaign || isset($data["SETTINGS"]["MinusKeywords"])) {
             if (!is_array($data["SETTINGS"]["MinusKeywords"])) {
-                if (strlen($data["SETTINGS"]["MinusKeywords"]) > 0) {
+                if ($data["SETTINGS"]["MinusKeywords"] <> '') {
                     $data["SETTINGS"]["MinusKeywords"] = array();
                 } else {
                     $data["SETTINGS"]["MinusKeywords"] = array($data["SETTINGS"]["MinusKeywords"]);
@@ -570,13 +604,15 @@ class YandexCampaignTable extends AdvEntity
                 $yandexCampaignParam = $engine->getCampaign($data["XML_ID"]);
 
                 if (!is_array($yandexCampaignParam) || count($yandexCampaignParam) <= 0) {
-                    $result->addError(new Entity\FieldError(
-                        static::getEntity()->getField('XML_ID'),
-                        Loc::getMessage(
-                            'SEO_CAMPAIGN_ERROR_CAMPAIGN_NOT_FOUND',
-                            array('#ID#' => $data["XML_ID"])
+                    $result->addError(
+                        new Entity\FieldError(
+                            static::getEntity()->getField('XML_ID'),
+                            Loc::getMessage(
+                                'SEO_CAMPAIGN_ERROR_CAMPAIGN_NOT_FOUND',
+                                array('#ID#' => $data["XML_ID"])
+                            )
                         )
-                    ));
+                    );
                 } else {
                     $campaignParam = array_replace_recursive($yandexCampaignParam[0], $campaignParam);
                 }

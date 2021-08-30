@@ -33,8 +33,9 @@ final class DayContext extends Internals\BaseContext
         if ($this->id === null && $this === $instance) {
             $pending =& self::$session['PENDING_COUNTERS'];
 
-            if (empty($pending[$name]))
+            if (empty($pending[$name])) {
                 $pending[$name] = 0;
+            }
 
             $pending[$name] += (float)$value;
         } else {
@@ -91,11 +92,13 @@ final class DayContext extends Internals\BaseContext
      */
     public function attachEntityItem($entity, $item)
     {
-        if (!is_string($entity))
+        if (!is_string($entity)) {
             throw new ArgumentTypeException('entity', 'string');
+        }
 
-        if (!is_scalar($item))
+        if (!is_scalar($item)) {
             throw new ArgumentTypeException('item', 'scalar');
+        }
 
         $instance = self::getInstance();
 
@@ -103,11 +106,13 @@ final class DayContext extends Internals\BaseContext
             self::$session['PENDING_ENTITY_ITEMS'][$entity . ':' . $item] = array('ENTITY' => $entity, 'ITEM' => $item);
         } else {
             try {
-                Internals\ContextEntityItemTable::add(array(
-                    'CONTEXT_ID' => $this->id,
-                    'ENTITY' => $entity,
-                    'ITEM' => $item,
-                ));
+                Internals\ContextEntityItemTable::add(
+                    array(
+                        'CONTEXT_ID' => $this->id,
+                        'ENTITY' => $entity,
+                        'ITEM' => $item,
+                    )
+                );
             } catch (\Bitrix\Main\DB\SqlQueryException $e) {
             }
         }
@@ -124,11 +129,13 @@ final class DayContext extends Internals\BaseContext
     {
         $instance = self::getInstance();
 
-        $context = Internals\ContextEntityItemTable::getList(array(
-            'select' => array('CONTEXT_ID'),
-            'filter' => array('=ENTITY' => $entity, '=ITEM' => $item),
-            'limit' => 1,
-        ))->fetch();
+        $context = Internals\ContextEntityItemTable::getList(
+            array(
+                'select' => array('CONTEXT_ID'),
+                'filter' => array('=ENTITY' => $entity, '=ITEM' => $item),
+                'limit' => 1,
+            )
+        )->fetch();
 
         $contextId = !empty($context['CONTEXT_ID']) ? $context['CONTEXT_ID'] : self::EMPTY_CONTEXT_ID;
         if ($contextId !== $instance->id) {
@@ -149,11 +156,18 @@ final class DayContext extends Internals\BaseContext
     {
         $instance = self::getInstance();
 
-        if (preg_match('/[a-z0-9_]{2}/i', $siteId) && self::getSiteId() != $siteId && \CSite::getById($siteId)->fetch()) {
+        if (preg_match('/[a-z0-9_]{2}/i', $siteId) && self::getSiteId() != $siteId && \CSite::getById($siteId)->fetch(
+            )) {
             $instance = new self;
 
-            foreach (EventManager::getInstance()->findEventHandlers('conversion', 'OnSetDayContextAttributes') as $handler)
+            foreach (
+                EventManager::getInstance()->findEventHandlers(
+                    'conversion',
+                    'OnSetDayContextAttributes'
+                ) as $handler
+            ) {
                 ExecuteModuleEventEx($handler, array($instance));
+            }
 
             $instance->setAttribute('conversion_site', $siteId);
             $instance->save();
@@ -217,11 +231,13 @@ final class DayContext extends Internals\BaseContext
 
         $cookie = new Main\Web\Cookie(
             self::getVarName(),
-            Json::encode(array(
-                'ID' => $session['ID'],
-                'EXPIRE' => $session['EXPIRE'],
-                'UNIQUE' => $session['UNIQUE'],
-            )),
+            Json::encode(
+                array(
+                    'ID' => $session['ID'],
+                    'EXPIRE' => $session['EXPIRE'],
+                    'UNIQUE' => $session['UNIQUE'],
+                )
+            ),
             strtotime('+1 year'),
             false
         );
@@ -237,8 +253,14 @@ final class DayContext extends Internals\BaseContext
         $session =& self::$session;
 
         if ($instance->id === null) {
-            foreach (EventManager::getInstance()->findEventHandlers('conversion', 'OnSetDayContextAttributes') as $handler)
+            foreach (
+                EventManager::getInstance()->findEventHandlers(
+                    'conversion',
+                    'OnSetDayContextAttributes'
+                ) as $handler
+            ) {
                 ExecuteModuleEventEx($handler, array($instance));
+            }
 
             $instance->save();
         }
@@ -247,18 +269,21 @@ final class DayContext extends Internals\BaseContext
         $instance->setCookie();
 
         if (!empty($session['PENDING_COUNTERS']) && is_array($session['PENDING_COUNTERS'])) {
-            foreach ($session['PENDING_COUNTERS'] as $name => $value)
+            foreach ($session['PENDING_COUNTERS'] as $name => $value) {
                 $instance->addCounter($name, $value);
+            }
         }
 
         if (!empty($session['PENDING_DAY_COUNTERS']) && is_array($session['PENDING_DAY_COUNTERS'])) {
-            foreach ($session['PENDING_DAY_COUNTERS'] as $name => $value)
+            foreach ($session['PENDING_DAY_COUNTERS'] as $name => $value) {
                 $instance->addDayCounter($name, $value);
+            }
         }
 
         if (!empty($session['PENDING_ENTITY_ITEMS']) && is_array($session['PENDING_ENTITY_ITEMS'])) {
-            foreach ($session['PENDING_ENTITY_ITEMS'] as $i)
+            foreach ($session['PENDING_ENTITY_ITEMS'] as $i) {
                 $instance->attachEntityItem($i['ENTITY'], $i['ITEM']);
+            }
         }
     }
 
@@ -283,11 +308,13 @@ final class DayContext extends Internals\BaseContext
             $siteId = '';
 
             if (defined('ADMIN_SECTION') && ADMIN_SECTION === true) {
-                if ($row = SiteTable::getList(array(
-                    'select' => array('LID'),
-                    'order' => array('DEF' => 'DESC', 'SORT' => 'ASC'),
-                    'limit' => 1,
-                ))->fetch()) {
+                if ($row = SiteTable::getList(
+                    array(
+                        'select' => array('LID'),
+                        'order' => array('DEF' => 'DESC', 'SORT' => 'ASC'),
+                        'limit' => 1,
+                    )
+                )->fetch()) {
                     $siteId = $row['LID'];
                 }
             } else {

@@ -31,10 +31,12 @@ class AccountNumberGenerator
 
         $accountNumber = static::generateCustom($order);
         if ($accountNumber) {
-            $dbRes = $order::getList([
-                'select' => ['ID'],
-                'filter' => ['=ACCOUNT_NUMBER' => $accountNumber]
-            ]);
+            $dbRes = $order::getList(
+                [
+                    'select' => ['ID'],
+                    'filter' => ['=ACCOUNT_NUMBER' => $accountNumber]
+                ]
+            );
             if ($dbRes->fetch()) {
                 $accountNumber = null;
             }
@@ -47,10 +49,12 @@ class AccountNumberGenerator
             $accountNumber = static::generateById($order);
         }
 
-        $dbRes = $order::getList([
-            'select' => ['ID'],
-            'filter' => ['=ACCOUNT_NUMBER' => $accountNumber]
-        ]);
+        $dbRes = $order::getList(
+            [
+                'select' => ['ID'],
+                'filter' => ['=ACCOUNT_NUMBER' => $accountNumber]
+            ]
+        );
         if ($dbRes->fetch()) {
             $accountNumber = static::generateForOrder($order);
         }
@@ -88,10 +92,12 @@ class AccountNumberGenerator
     {
         $accountNumber = $order->getId();
         for ($i = 1; $i <= 10; $i++) {
-            $dbRes = $order::getList([
-                'select' => ['ID'],
-                'filter' => ['=ACCOUNT_NUMBER' => $accountNumber]
-            ]);
+            $dbRes = $order::getList(
+                [
+                    'select' => ['ID'],
+                    'filter' => ['=ACCOUNT_NUMBER' => $accountNumber]
+                ]
+            );
             if ($dbRes->fetch()) {
                 $accountNumber = $order->getId() . "-" . $i;
             } else {
@@ -174,12 +180,16 @@ class AccountNumberGenerator
         /** @var CollectableEntity $itemCollection */
         foreach ($collection as $itemCollection) {
             if (strval($itemCollection->getField("ACCOUNT_NUMBER")) != "") {
-                $accountNumberIdList = explode(static::ACCOUNT_NUMBER_SEPARATOR, $itemCollection->getField("ACCOUNT_NUMBER"));
+                $accountNumberIdList = explode(
+                    static::ACCOUNT_NUMBER_SEPARATOR,
+                    $itemCollection->getField("ACCOUNT_NUMBER")
+                );
 
                 $itemAccountNumber = trim(end($accountNumberIdList));
 
-                if ($count <= $itemAccountNumber)
+                if ($count <= $itemAccountNumber) {
                     $count = $itemAccountNumber + 1;
+                }
             }
         }
 
@@ -206,7 +216,8 @@ class AccountNumberGenerator
                 $numeratorForOrderSettings['id'],
                 [
                     'ORDER_ID' => $order->getId()
-                ]);
+                ]
+            );
         }
         if ($numerator) {
             $accountNumber = $numerator->getNext();

@@ -1,4 +1,5 @@
 <?php
+
 IncludeModuleLangFile(__FILE__);
 
 class CBitrixCloudCDN
@@ -72,7 +73,13 @@ class CBitrixCloudCDN
                             return false;
                         }
                     }
-                    RegisterModuleDependences("main", "OnEndBufferContent", "bitrixcloud", "CBitrixCloudCDN", "OnEndBufferContent");
+                    RegisterModuleDependences(
+                        "main",
+                        "OnEndBufferContent",
+                        "bitrixcloud",
+                        "CBitrixCloudCDN",
+                        "OnEndBufferContent"
+                    );
                     self::$domain_changed = false;
                 } catch (CBitrixCloudException $e) {
                     $ex = new CApplicationException($e->getMessage() . "\n" . $e->getDebugInfo());
@@ -94,9 +101,21 @@ class CBitrixCloudCDN
             if (self::IsActive() || $force) {
                 try {
                     self::stop();
-                    UnRegisterModuleDependences("main", "OnEndBufferContent", "bitrixcloud", "CBitrixCloudCDN", "OnEndBufferContent");
+                    UnRegisterModuleDependences(
+                        "main",
+                        "OnEndBufferContent",
+                        "bitrixcloud",
+                        "CBitrixCloudCDN",
+                        "OnEndBufferContent"
+                    );
                 } catch (CBitrixCloudException $e) {
-                    UnRegisterModuleDependences("main", "OnEndBufferContent", "bitrixcloud", "CBitrixCloudCDN", "OnEndBufferContent");
+                    UnRegisterModuleDependences(
+                        "main",
+                        "OnEndBufferContent",
+                        "bitrixcloud",
+                        "CBitrixCloudCDN",
+                        "OnEndBufferContent"
+                    );
                     $ex = new CApplicationException($e->getMessage() . "\n" . $e->getDebugInfo());
                     $APPLICATION->ThrowException($ex);
                     return false;
@@ -113,8 +132,9 @@ class CBitrixCloudCDN
      */
     private static function updateConfig()
     {
-        if (!self::$config->lock())
+        if (!self::$config->lock()) {
             return true;
+        }
 
         $delayExpiration = true;
         try {
@@ -135,14 +155,19 @@ class CBitrixCloudCDN
                 self::$config->setExpired(time() + 1800);
             }
 
-            CAdminNotify::Add(array(
-                "MESSAGE" => GetMessage("BCL_CDN_NOTIFY", array(
-                    "#HREF#" => "/bitrix/admin/bitrixcloud_cdn.php?lang=" . LANGUAGE_ID,
-                )),
-                "TAG" => "bitrixcloud_off",
-                "MODULE_ID" => "bitrixcloud",
-                "ENABLE_CLOSE" => "Y",
-            ));
+            CAdminNotify::Add(
+                array(
+                    "MESSAGE" => GetMessage(
+                        "BCL_CDN_NOTIFY",
+                        array(
+                            "#HREF#" => "/bitrix/admin/bitrixcloud_cdn.php?lang=" . LANGUAGE_ID,
+                        )
+                    ),
+                    "TAG" => "bitrixcloud_off",
+                    "MODULE_ID" => "bitrixcloud",
+                    "ENABLE_CLOSE" => "Y",
+                )
+            );
             self::$config->unlock();
             return false;
         }
@@ -154,23 +179,27 @@ class CBitrixCloudCDN
             //By traffic quota
             if (self::$config->getQuota()->getTrafficSize() > self::$config->getQuota()->getAllowedSize()) {
                 self::$config->setExpired(time() + 1800);
-                CAdminNotify::Add(array(
-                    "MESSAGE" => GetMessage("BCL_CDN_NOTIFY_QUOTA_LIMIT"),
-                    "TAG" => "bitrixcloud_off",
-                    "MODULE_ID" => "bitrixcloud",
-                    "ENABLE_CLOSE" => "N",
-                ));
+                CAdminNotify::Add(
+                    array(
+                        "MESSAGE" => GetMessage("BCL_CDN_NOTIFY_QUOTA_LIMIT"),
+                        "TAG" => "bitrixcloud_off",
+                        "MODULE_ID" => "bitrixcloud",
+                        "ENABLE_CLOSE" => "N",
+                    )
+                );
                 self::$config->unlock();
                 return false;
             } //Or by license
             elseif (self::$config->getQuota()->isExpired()) {
                 self::$config->setExpired(time() + 1800);
-                CAdminNotify::Add(array(
-                    "MESSAGE" => GetMessage("BCL_CDN_NOTIFY_QUOTA_EXPIRED"),
-                    "TAG" => "bitrixcloud_off",
-                    "MODULE_ID" => "bitrixcloud",
-                    "ENABLE_CLOSE" => "N",
-                ));
+                CAdminNotify::Add(
+                    array(
+                        "MESSAGE" => GetMessage("BCL_CDN_NOTIFY_QUOTA_EXPIRED"),
+                        "TAG" => "bitrixcloud_off",
+                        "MODULE_ID" => "bitrixcloud",
+                        "ENABLE_CLOSE" => "N",
+                    )
+                );
                 self::$config->unlock();
                 return false;
             }
@@ -188,40 +217,54 @@ class CBitrixCloudCDN
      */
     public static function OnEndBufferContent(&$content)
     {
-        if (isset($_GET["nocdn"]))
+        if (isset($_GET["nocdn"])) {
             return;
+        }
 
         $appCache = \Bitrix\Main\Data\AppCacheManifest::getInstance();
-        if ($appCache->isEnabled())
+        if ($appCache->isEnabled()) {
             return;
+        }
 
         self::$proto = CMain::IsHTTPS() ? "https" : "http";
         self::$config = CBitrixCloudCDNConfig::getInstance()->loadFromOptions();
 
         if (self::$config->isExpired()) {
-            if (!self::updateConfig())
+            if (!self::updateConfig()) {
                 return;
+            }
         }
 
-        if (!self::$config->isActive())
+        if (!self::$config->isActive()) {
             return;
+        }
 
         $sites = self::$config->getSites();
         $siteId = defined("ADMIN_SECTION") ? "admin" : (defined("SITE_ID") ? SITE_ID : "");
-        if (!isset($sites[$siteId]))
+        if (!isset($sites[$siteId])) {
             return;
+        }
 
-        self::$ajax = preg_match("/<head>/i", substr($content, 0, 1024)) === 0;
+        self::$ajax = preg_match("/<head>/i", mb_substr($content, 0, 1024)) === 0;
 
-        $arPrefixes = array_map(array(
-            "CBitrixCloudCDN",
-            "_preg_quote",
-        ), self::$config->getLocationsPrefixes(self::$config->isKernelRewriteEnabled(), self::$config->isContentRewriteEnabled()));
+        $arPrefixes = array_map(
+            array(
+                "CBitrixCloudCDN",
+                "_preg_quote",
+            ),
+            self::$config->getLocationsPrefixes(
+                self::$config->isKernelRewriteEnabled(),
+                self::$config->isContentRewriteEnabled()
+            )
+        );
 
-        $arExtensions = array_map(array(
-            "CBitrixCloudCDN",
-            "_preg_quote",
-        ), self::$config->getLocationsExtensions());
+        $arExtensions = array_map(
+            array(
+                "CBitrixCloudCDN",
+                "_preg_quote",
+            ),
+            self::$config->getLocationsExtensions()
+        );
 
         if (!empty($arPrefixes) && !empty($arExtensions)) {
             $prefix_regex = "(?:" . implode("|", $arPrefixes) . ")";
@@ -245,10 +288,14 @@ class CBitrixCloudCDN
 				(|\\?\\d+|\\?v=\\d+)                                 #params
 				(\\2)                                                #close_quote
 			/x";
-            $content = preg_replace_callback($regex, array(
-                "CBitrixCloudCDN",
-                "_filter",
-            ), $content);
+            $content = preg_replace_callback(
+                $regex,
+                array(
+                    "CBitrixCloudCDN",
+                    "_filter",
+                ),
+                $content
+            );
         }
     }
 
@@ -291,8 +338,9 @@ class CBitrixCloudCDN
         $location = /*.(CBitrixCloudCDNLocation).*/
             null;
 
-        if (self::$ajax && $extension === "js")
+        if (self::$ajax && $extension === "js") {
             return $match[0];
+        }
 
         //if(preg_match("/^background/i", $attribute))
         //	$proto = self::$proto."://";
@@ -305,8 +353,9 @@ class CBitrixCloudCDN
                 $server = $location->getServerNameByPrefixAndExtension($prefix, $extension, $link);
                 if ($server !== "") {
                     $filePath = $prefix . $link . $extension;
-                    if ($params === '')
+                    if ($params === '') {
                         $filePath = CUtil::GetAdditionalFileURL($filePath);
+                    }
 
                     //Fix spaces in the link
                     $link = str_replace(" ", "%20", $link);
@@ -326,8 +375,9 @@ class CBitrixCloudCDN
     {
         global $USER;
 
-        if (IsModuleInstalled('intranet'))
+        if (IsModuleInstalled('intranet')) {
             return;
+        }
 
         $CDNAIParams = array(
             "TITLE" => GetMessage("BCL_CDN_AI_TITLE"),
@@ -336,7 +386,9 @@ class CBitrixCloudCDN
 
         if (self::IsActive()) {
             if ($USER->CanDoOperation("bitrixcloud_cdn")) {
-                $CDNAIParams["FOOTER"] = '<a href="/bitrix/admin/bitrixcloud_cdn.php?lang=' . LANGUAGE_ID . '">' . GetMessage("BCL_CDN_AI_SETT") . '</a>';
+                $CDNAIParams["FOOTER"] = '<a href="/bitrix/admin/bitrixcloud_cdn.php?lang=' . LANGUAGE_ID . '">' . GetMessage(
+                        "BCL_CDN_AI_SETT"
+                    ) . '</a>';
             }
 
             $cdn_config = CBitrixCloudCDNConfig::getInstance()->loadFromOptions();
@@ -346,29 +398,36 @@ class CBitrixCloudCDN
 
             if ($PROGRESS_TOTAL > 0.0 || $PROGRESS_VALUE > 0.0) {
                 $PROGRESS_AVAILABLE = $PROGRESS_TOTAL - $PROGRESS_VALUE;
-                if ($PROGRESS_AVAILABLE < 0.0)
+                if ($PROGRESS_AVAILABLE < 0.0) {
                     $PROGRESS_AVAILABLE = 0.0;
+                }
 
                 $PROGRESS_FREE = 0.0;
-                if ($PROGRESS_TOTAL > 0.0)
+                if ($PROGRESS_TOTAL > 0.0) {
                     $PROGRESS_FREE = round(($PROGRESS_TOTAL - $PROGRESS_VALUE) / $PROGRESS_TOTAL * 100);
+                }
 
                 $PROGRESS_FREE_BAR = $PROGRESS_FREE > 100.0 ? 100 : intval($PROGRESS_FREE);
                 $PROGRESS_FREE_BAR = $PROGRESS_FREE < 0.0 ? 0 : intval($PROGRESS_FREE_BAR);
 
                 $CDNAIParams["ALERT"] = false;
-                if ($PROGRESS_FREE < 10.0)
+                if ($PROGRESS_FREE < 10.0) {
                     $CDNAIParams["ALERT"] = true;
-                elseif (!$cdn_config->isActive())
+                } elseif (!$cdn_config->isActive()) {
                     $CDNAIParams["ALERT"] = true;
+                }
 
                 $CDNAIParams["HTML"] = '
 					<div class="adm-informer-item-section">
 						<span class="adm-informer-item-l">
-							<span class="adm-informer-strong-text">' . GetMessage("BCL_CDN_AI_USAGE_TOTAL") . '</span> ' . CFile::FormatSize($PROGRESS_TOTAL, 0) . '
+							<span class="adm-informer-strong-text">' . GetMessage(
+                        "BCL_CDN_AI_USAGE_TOTAL"
+                    ) . '</span> ' . CFile::FormatSize($PROGRESS_TOTAL, 0) . '
 						</span>
 						<span class="adm-informer-item-r">
-								<span class="adm-informer-strong-text">' . GetMessage("BCL_CDN_AI_USAGE_AVAIL") . '</span> ' . CFile::FormatSize($PROGRESS_AVAILABLE, 0) . '
+								<span class="adm-informer-strong-text">' . GetMessage(
+                        "BCL_CDN_AI_USAGE_AVAIL"
+                    ) . '</span> ' . CFile::FormatSize($PROGRESS_AVAILABLE, 0) . '
 						</span>
 					</div>
 					<div class="adm-informer-status-bar-block" >
@@ -389,7 +448,9 @@ class CBitrixCloudCDN
 			';
             $CDNAIParams["ALERT"] = true;
             if ($USER->CanDoOperation("bitrixcloud_cdn")) {
-                $CDNAIParams["FOOTER"] = '<a href="/bitrix/admin/bitrixcloud_cdn.php?lang=' . LANGUAGE_ID . '">' . GetMessage("BCL_CDN_AI_TURN_ON") . '</a>';
+                $CDNAIParams["FOOTER"] = '<a href="/bitrix/admin/bitrixcloud_cdn.php?lang=' . LANGUAGE_ID . '">' . GetMessage(
+                        "BCL_CDN_AI_TURN_ON"
+                    ) . '</a>';
             }
         }
 

@@ -1,11 +1,13 @@
 <?
+
 require_once(dirname(__FILE__) . "/../include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/prolog.php");
 define("HELP_FILE", "settings/wizard_load.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/classes/general/wizard.php");
 
-if (!$USER->CanDoOperation('edit_php') && !$USER->CanDoOperation('view_other_settings'))
+if (!$USER->CanDoOperation('edit_php') && !$USER->CanDoOperation('view_other_settings')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $isAdmin = $USER->CanDoOperation('edit_php');
 
@@ -13,13 +15,14 @@ IncludeModuleLangFile(__FILE__);
 
 $strError = $strOK = "";
 do {
-    if (!($_SERVER["REQUEST_METHOD"] == "POST" && $_POST["action"] == "import" && $isAdmin && check_bitrix_sessid()))
+    if (!($_SERVER["REQUEST_METHOD"] == "POST" && $_POST["action"] == "import" && $isAdmin && check_bitrix_sessid())) {
         break;
+    }
 
     if (!is_uploaded_file($_FILES["wizardFile"]["tmp_name"])) {
         $strError .= GetMessage("MAIN_WIZARD_LOAD_ERROR_LOAD");
         break;
-    } elseif (GetFileExtension(strtolower($_FILES["wizardFile"]["name"])) != "gz") {
+    } elseif (GetFileExtension(mb_strtolower($_FILES["wizardFile"]["name"])) != "gz") {
         $strError .= GetMessage("MAIN_WIZARD_TAR_GZ");
         break;
     }
@@ -34,10 +37,12 @@ do {
         $arErrors = &$oArchiver->GetErrors();
         if (count($arErrors) > 0) {
             $strError .= ":<br>";
-            foreach ($arErrors as $value)
+            foreach ($arErrors as $value) {
                 $strError .= "[" . $value[0] . "] " . $value[1] . "<br>";
-        } else
+            }
+        } else {
             $strError .= ".<br>";
+        }
 
         break;
     }
@@ -45,7 +50,13 @@ do {
     $strOK .= GetMessage("MAIN_WIZARD_LOAD_OK");
 } while (false);
 
-$aTabs = Array(Array("DIV" => "edit1", "TAB" => GetMessage("MAIN_WIZARD_LOAD_TITLE"), "TITLE" => GetMessage("MAIN_WIZARD_LOAD_TITLE")));
+$aTabs = Array(
+    Array(
+        "DIV" => "edit1",
+        "TAB" => GetMessage("MAIN_WIZARD_LOAD_TITLE"),
+        "TITLE" => GetMessage("MAIN_WIZARD_LOAD_TITLE")
+    )
+);
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
 $APPLICATION->SetTitle(GetMessage("MAIN_WIZARD_LOAD_TITLE"));

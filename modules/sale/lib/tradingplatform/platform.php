@@ -3,7 +3,6 @@
 namespace Bitrix\Sale\TradingPlatform;
 
 use Bitrix\Main\ArgumentNullException;
-use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Entity\EventResult;
 use Bitrix\Main\Entity\Result;
 use Bitrix\Main\SystemException;
@@ -18,7 +17,8 @@ use Bitrix\Main\EventManager;
  */
 abstract class Platform
 {
-    const LINK_TYPE_PUBLIC_DETAIL_ORDER = 'PUBLIC_DETAIL_ORDER';
+    public const LINK_TYPE_PUBLIC_DETAIL_ORDER = 'PUBLIC_DETAIL_ORDER';
+    public const LINK_TYPE_PUBLIC_FEEDBACK = 'PUBLIC_FEEDBACK';
 
     protected $logger;
     protected $logLevel = Logger::LOG_LEVEL_ERROR;
@@ -45,18 +45,21 @@ abstract class Platform
     {
         $this->code = $code;
 
-        $resPltf = TradingPlatformTable::getList(array(
-            'filter' => array(
-                '=CODE' => $this->code,
-            ),
-        ));
+        $dbRes = TradingPlatformTable::getList(
+            [
+                'filter' => [
+                    '=CODE' => $this->code,
+                ],
+            ]
+        );
 
-        if ($platform = $resPltf->fetch()) {
-            $this->isActive = $platform["ACTIVE"] == "Y" ? true : false;
-            $this->isNeedCatalogSectionsTab = strlen($platform["CATALOG_SECTION_TAB_CLASS_NAME"]) > 0 ? true : false;
+        if ($platform = $dbRes->fetch()) {
+            $this->isActive = $platform["ACTIVE"] == "Y";
+            $this->isNeedCatalogSectionsTab = $platform["CATALOG_SECTION_TAB_CLASS_NAME"] <> '';
 
-            if (is_array($platform["SETTINGS"]))
+            if (is_array($platform["SETTINGS"])) {
                 $this->settings = $platform["SETTINGS"];
+            }
 
             $this->isInstalled = true;
             $this->id = $platform["ID"];
@@ -77,11 +80,13 @@ abstract class Platform
      */
     public static function getInstanceByCode($code)
     {
-        if (strlen($code) <= 0)
+        if ($code === '') {
             throw new ArgumentNullException("code");
+        }
 
-        if (!isset(self::$instances[$code]))
+        if (!isset(self::$instances[$code])) {
             self::$instances[$code] = new static($code);
+        }
 
         return self::$instances[$code];
     }
@@ -121,7 +126,7 @@ abstract class Platform
     }
 
     /**
-     * @return bool Is the platfor active?.
+     * @return bool
      */
     public function isActive()
     {
@@ -134,17 +139,20 @@ abstract class Platform
      */
     public function setActive()
     {
-        if ($this->isActive())
+        if ($this->isActive()) {
             return true;
+        }
 
         $this->isActive = true;
 
-        if ($this->isNeedCatalogSectionsTab && !$this->isSomebodyUseCatalogSectionsTab())
+        if ($this->isNeedCatalogSectionsTab && !$this->isSomebodyUseCatalogSectionsTab()) {
             $this->setCatalogSectionsTabEvent();
+        }
 
         // if we are the first, let's switch on the event to notify about the track numbers changings
-        if (!$this->isActiveItemsExist())
+        if (!$this->isActiveItemsExist()) {
             $this->setShipmentTableOnAfterUpdateEvent();
+        }
 
         $res = TradingPlatformTable::update($this->id, array("ACTIVE" => "Y"));
 
@@ -159,33 +167,32 @@ abstract class Platform
     {
         $this->isActive = false;
 
-        if ($this->isNeedCatalogSectionsTab && !$this->isSomebodyUseCatalogSectionsTab())
+        if ($this->isNeedCatalogSectionsTab && !$this->isSomebodyUseCatalogSectionsTab()) {
             $this->unSetCatalogSectionsTabEvent();
+        }
 
         $res = TradingPlatformTable::update($this->id, array("ACTIVE" => "N"));
 
         //If we are last let's switch off unused event about track numbers changing
-        if (!$this->isActiveItemsExist())
+        if (!$this->isActiveItemsExist()) {
             $this->unSetShipmentTableOnAfterUpdateEvent();
+        }
 
         return $res->isSuccess();
     }
 
     protected static function isActiveItemsExist()
     {
-        $dbRes = TradingPlatformTable::getList(array(
-            'filter' => array(
-                'ACTIVE' => 'Y',
-            ),
-            'select' => array('ID'),
-        ));
+        $dbRes = TradingPlatformTable::getList(
+            [
+                'filter' => [
+                    'ACTIVE' => 'Y',
+                ],
+                'select' => ['ID'],
+            ]
+        );
 
-        if ($platform = $dbRes->fetch())
-            $result = true;
-        else
-            $result = false;
-
-        return $result;
+        return (bool)$dbRes->fetch();
     }
 
     public static function setShipmentTableOnAfterUpdateEvent()
@@ -220,16 +227,18 @@ abstract class Platform
     {
         $result = false;
 
-        $res = TradingPlatformTable::getList(array(
-            'select' => array("ID", "CATALOG_SECTION_TAB_CLASS_NAME"),
-            'filter' => array(
-                '!=CODE' => $this->code,
-                '=ACTIVE' => 'Y',
-            ),
-        ));
+        $res = TradingPlatformTable::getList(
+            array(
+                'select' => array("ID", "CATALOG_SECTION_TAB_CLASS_NAME"),
+                'filter' => array(
+                    '!=CODE' => $this->code,
+                    '=ACTIVE' => 'Y',
+                ),
+            )
+        );
 
         while ($arRes = $res->fetch()) {
-            if (strlen($arRes["CATALOG_SECTIONS_TAB_CLASS_NAME"]) > 0) {
+            if ($arRes["CATALOG_SECTIONS_TAB_CLASS_NAME"] <> '') {
                 $result = true;
                 break;
             }
@@ -241,13 +250,25 @@ abstract class Platform
     protected function setCatalogSectionsTabEvent()
     {
         $eventManager = EventManager::getInstance();
-        $eventManager->registerEventHandlerCompatible("main", "OnAdminIBlockSectionEdit", "sale", "\\Bitrix\\Sale\\TradingPlatform\\CatalogSectionTab", "OnInit");
+        $eventManager->registerEventHandlerCompatible(
+            "main",
+            "OnAdminIBlockSectionEdit",
+            "sale",
+            "\\Bitrix\\Sale\\TradingPlatform\\CatalogSectionTab",
+            "OnInit"
+        );
     }
 
     protected function unSetCatalogSectionsTabEvent()
     {
         $eventManager = EventManager::getInstance();
-        $eventManager->unRegisterEventHandler("main", "OnAdminIBlockSectionEdit", "sale", "\\Bitrix\\Sale\\TradingPlatform\\CatalogSectionTab", "OnInit");
+        $eventManager->unRegisterEventHandler(
+            "main",
+            "OnAdminIBlockSectionEdit",
+            "sale",
+            "\\Bitrix\\Sale\\TradingPlatform\\CatalogSectionTab",
+            "OnInit"
+        );
     }
 
     /**
@@ -278,8 +299,9 @@ abstract class Platform
             unset($settings[$siteId]);
         }
 
-        if (empty($settings))
+        if (empty($settings)) {
             $this->unsetActive();
+        }
 
         return $this->saveSettings($settings);
     }
@@ -298,10 +320,12 @@ abstract class Platform
      */
     public function install()
     {
-        $res = TradingPlatformTable::add(array(
-            "CODE" => self::TRADING_PLATFORM_CODE,
-            "ACTIVE" => "N",
-        ));
+        $res = TradingPlatformTable::add(
+            array(
+                "CODE" => self::TRADING_PLATFORM_CODE,
+                "ACTIVE" => "N",
+            )
+        );
 
         self::$instances[$this->getCode()] = new static($this->getCode());
 
@@ -334,6 +358,14 @@ abstract class Platform
         return $this->code;
     }
 
+    /**
+     * @return string Platform code.
+     */
+    public function getAnalyticCode()
+    {
+        return static::TRADING_PLATFORM_CODE;
+    }
+
     public static function onAfterUpdateShipment(\Bitrix\Main\Event $event, array $additional)
     {
         return new EventResult();
@@ -345,6 +377,15 @@ abstract class Platform
     public function getInfo()
     {
         return [];
+    }
+
+    /**
+     * @param string $storeType
+     * @return bool
+     */
+    public function isOfType(string $type): bool
+    {
+        return false;
     }
 
     /**

@@ -9,6 +9,7 @@
 namespace Bitrix\Iblock\ORM;
 
 
+use Bitrix\Iblock\ORM\Fields\PropertyOneToMany;
 use Bitrix\Iblock\ORM\Fields\PropertyReference;
 use Bitrix\Main\ORM\Data\Result;
 use Bitrix\Main\ORM\Objectify\EntityObject;
@@ -34,9 +35,12 @@ abstract class ElementV2 extends CommonElement
         /** @var EntityObject[] $valueObjects objects to save */
         $valueObjects = [];
 
-        // save single value references
+        // compose data for update query
+        $valuesToDb = [];
+
         foreach ($this->entity->getFields() as $field) {
             if ($field instanceof PropertyReference) {
+                // save single value references
                 if ($this->has($field->getName())) {
                     $valueObject = $this->get($field->getName());
 
@@ -44,11 +48,12 @@ abstract class ElementV2 extends CommonElement
                         $valueObjects[$field->getName()] = $valueObject;
                     }
                 }
+            } elseif ($field instanceof PropertyOneToMany && $this->state === State::CHANGED) {
+                // clear serialized multiple value cache
+                $columnName = 'PROPERTY_' . $field->getIblockElementProperty()->getId();
+                $valuesToDb[$columnName] = null;
             }
         }
-
-        // compose data for update query
-        $valuesToDb = [];
 
         foreach ($valueObjects as $valueObject) {
             // collect changed values and descriptions from all the objects

@@ -1,4 +1,5 @@
 <?
+
 /********************************************************************************
  * Simple delivery services.
  * It uses fixed delivery price for any location groups. Needs at least one group of locations to be configured.
@@ -9,7 +10,7 @@ IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"] . '/bitrix/modules/sale/delivery
 
 class CDeliverySimple
 {
-    function Init()
+    public static function Init()
     {
         return array(
             /* Basic description */
@@ -42,7 +43,7 @@ class CDeliverySimple
         );
     }
 
-    function GetConfig()
+    public static function GetConfig()
     {
         $arConfig = array(
             "CONFIG_GROUPS" => array(
@@ -57,7 +58,13 @@ class CDeliverySimple
             $arConfig["CONFIG"]["price_" . $arLocationGroup["ID"]] = array(
                 "TYPE" => "STRING",
                 "DEFAULT" => "",
-                "TITLE" => GetMessage("SALE_DH_SIMPLE_GROUP_PRICE") . " \"" . $arLocationGroup["NAME"] . "\" (" . COption::GetOptionString("sale", "default_currency", "RUB") . ')',
+                "TITLE" => GetMessage(
+                        "SALE_DH_SIMPLE_GROUP_PRICE"
+                    ) . " \"" . $arLocationGroup["NAME"] . "\" (" . COption::GetOptionString(
+                        "sale",
+                        "default_currency",
+                        "RUB"
+                    ) . ')',
                 "GROUP" => "all",
             );
         }
@@ -65,32 +72,35 @@ class CDeliverySimple
         return $arConfig;
     }
 
-    function GetSettings($strSettings)
+    public static function GetSettings($strSettings)
     {
-        return unserialize($strSettings);
+        return unserialize($strSettings, ['allowed_classes' => false]);
     }
 
-    function SetSettings($arSettings)
+    public static function SetSettings($arSettings)
     {
         foreach ($arSettings as $key => $value) {
-            if (strlen($value) > 0)
+            if ($value <> '') {
                 $arSettings[$key] = doubleval($value);
-            else
+            } else {
                 unset($arSettings[$key]);
+            }
         }
 
         return serialize($arSettings);
     }
 
-    function __GetLocationPrice($LOCATION_ID, $arConfig)
+    public static function __GetLocationPrice($LOCATION_ID, $arConfig)
     {
-        $dbLocationGroups = CSaleLocationGroup::GetLocationList(array("LOCATION_" . (CSaleLocation::checkIsCode($LOCATION_ID) ? 'CODE' : 'ID') => $LOCATION_ID));
+        $dbLocationGroups = CSaleLocationGroup::GetLocationList(
+            array("LOCATION_" . (CSaleLocation::checkIsCode($LOCATION_ID) ? 'CODE' : 'ID') => $LOCATION_ID)
+        );
 
         while ($arLocationGroup = $dbLocationGroups->Fetch()) {
             if (
                 array_key_exists('price_' . $arLocationGroup["LOCATION_GROUP_ID"], $arConfig)
                 &&
-                strlen($arConfig['price_' . $arLocationGroup["LOCATION_GROUP_ID"]]["VALUE"]) > 0
+                $arConfig['price_' . $arLocationGroup["LOCATION_GROUP_ID"]]["VALUE"] <> ''
             ) {
                 return $arConfig['price_' . $arLocationGroup["LOCATION_GROUP_ID"]]["VALUE"];
             }
@@ -99,19 +109,20 @@ class CDeliverySimple
         return false;
     }
 
-    function Calculate($profile, $arConfig, $arOrder, $STEP, $TEMP = false)
+    public static function Calculate($profile, $arConfig, $arOrder, $STEP, $TEMP = false)
     {
         return CDeliverySimple::__GetLocationPrice($arOrder["LOCATION_TO"], $arConfig);
     }
 
-    function Compability($arOrder, $arConfig)
+    public static function Compability($arOrder, $arConfig)
     {
         $price = CDeliverySimple::__GetLocationPrice($arOrder["LOCATION_TO"], $arConfig);
 
-        if ($price === false)
+        if ($price === false) {
             return array();
-        else
+        } else {
             return array('simple');
+        }
     }
 }
 

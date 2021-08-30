@@ -1,4 +1,5 @@
 <?
+
 define("ADMIN_MODULE_NAME", "sender");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
@@ -31,9 +32,11 @@ $request = Context::getCurrent()->getRequest();
 $action = $request->get('action');
 if ($action == 'get_counters_dynamic') {
     $stat = Statistics::create()->setUserId($USER->GetID())->initFilterFromRequest();
-    echo Json::encode(array(
-        'countersDynamic' => $stat->getCountersDynamic(),
-    ));
+    echo Json::encode(
+        array(
+            'countersDynamic' => $stat->getCountersDynamic(),
+        )
+    );
     \CMain::FinalActions();
     exit;
 } else {
@@ -86,7 +89,9 @@ else:
 				<?= htmlspecialcharsbx($chain['DATE_SENT_FORMATTED']) ?>
 			</span>
                 <?= Loc::getMessage('SENDER_STATS_IN') ?>
-                <a href="/bitrix/admin/sender_campaign.php?edit&ID=<?= htmlspecialcharsbx($chain['MAILING_ID']) ?>&lang=<?= LANGUAGE_ID ?>"
+                <a href="/bitrix/admin/sender_campaign.php?edit&ID=<?= htmlspecialcharsbx(
+                    $chain['MAILING_ID']
+                ) ?>&lang=<?= LANGUAGE_ID ?>"
                    onclick="BX.Sender.Page.open(this.href); return false;"
                    class="bx-sender-releases-section"
                 >
@@ -94,7 +99,9 @@ else:
                 </a>
             </p>
 
-            <a href="/bitrix/admin/sender_letters.php?stat&ID=<?= htmlspecialcharsbx($chain['MAILING_ID']) ?>&ID=<?= htmlspecialcharsbx($chain['ID']) ?>&lang=<?= LANGUAGE_ID ?>"
+            <a href="/bitrix/admin/sender_letters.php?stat&ID=<?= htmlspecialcharsbx(
+                $chain['MAILING_ID']
+            ) ?>&ID=<?= htmlspecialcharsbx($chain['ID']) ?>&lang=<?= LANGUAGE_ID ?>"
                onclick="BX.Sender.Page.open(this.href); return false;"
                class="bx-sender-releases-title"
             >
@@ -106,24 +113,28 @@ else:
     ?>
 
     <script id="sender-stat-template-last-posting" type="text/html">
-        <? $showLastPostingHtml(array(
-            'DATE_SENT_FORMATTED' => '%DATE_SENT_FORMATTED%',
-            'MAILING_ID' => '%MAILING_ID%',
-            'MAILING_NAME' => '%MAILING_NAME%',
-            'NAME' => '%NAME%',
-            'ID' => '%ID%',
-        )); ?>
+        <? $showLastPostingHtml(
+            array(
+                'DATE_SENT_FORMATTED' => '%DATE_SENT_FORMATTED%',
+                'MAILING_ID' => '%MAILING_ID%',
+                'MAILING_NAME' => '%MAILING_NAME%',
+                'NAME' => '%NAME%',
+                'ID' => '%ID%',
+            )
+        ); ?>
     </script>
 
     <script>
         BX.ready(function () {
-            var params = <?=Json::encode(array(
-                'filters' => $stat->getGlobalFilterData(),
-                'efficiency' => $arResult['DATA']['efficiency'],
-                'mess' => array(
-                    '' => '',
+            var params = <?=Json::encode(
+                array(
+                    'filters' => $stat->getGlobalFilterData(),
+                    'efficiency' => $arResult['DATA']['efficiency'],
+                    'mess' => array(
+                        '' => '',
+                    )
                 )
-            ))?>;
+            )?>;
 
             params.context = BX('BX_SENDER_STATISTICS');
             BX.Sender.GlobalStats.load(params);
@@ -142,13 +153,17 @@ else:
                         <?= htmlspecialcharsbx($arResult['DATA']['counters']['SEND_ALL']['VALUE_DISPLAY']) ?>
                     </div>
                     <div class="bx-sender-mailfilter-item">
-                        <span class="bx-sender-mailfilter-item-light"><?= Loc::getMessage('SENDER_STATS_FILTER_PERIOD_FOR') ?></span>
+                        <span class="bx-sender-mailfilter-item-light"><?= Loc::getMessage(
+                                'SENDER_STATS_FILTER_PERIOD_FOR'
+                            ) ?></span>
                         <span id="sender_stat_filter_period" class="bx-sender-mailfilter-item-link">
 
 					</span>
                     </div>
                     <div class="bx-sender-mailfilter-item">
-                        <span class="bx-sender-mailfilter-item-light"><?= Loc::getMessage('SENDER_STATS_FILTER_FROM_AUTHOR') ?></span>
+                        <span class="bx-sender-mailfilter-item-light"><?= Loc::getMessage(
+                                'SENDER_STATS_FILTER_FROM_AUTHOR'
+                            ) ?></span>
                         <span id="sender_stat_filter_authorid" class="bx-sender-mailfilter-item-link">
 
 					</span>
@@ -157,34 +172,44 @@ else:
 
                 <div class="bx-sender-mailfilter-result" style="margin: 0 0 0 25px;">
                     <div class="bx-sender-mailfilter-result-item">
-                        <p class="bx-sender-mailfilter-result-title"><?= Loc::getMessage('SENDER_STATS_COUNTER_READ') ?></p>
+                        <p class="bx-sender-mailfilter-result-title"><?= Loc::getMessage(
+                                'SENDER_STATS_COUNTER_READ'
+                            ) ?></p>
                         <span data-bx-point="counters/READ/PERCENT_VALUE_DISPLAY"
                               class="bx-sender-mailfilter-result-total bx-sender-mailfilter-result-total-proc">
 						<?= htmlspecialcharsbx($arResult['DATA']['counters']['READ']['PERCENT_VALUE_DISPLAY']) ?>
 					</span>
                     </div>
                     <div class="bx-sender-mailfilter-result-item">
-                        <p class="bx-sender-mailfilter-result-title"><?= Loc::getMessage('SENDER_STATS_COUNTER_CLICK') ?></p>
+                        <p class="bx-sender-mailfilter-result-title"><?= Loc::getMessage(
+                                'SENDER_STATS_COUNTER_CLICK'
+                            ) ?></p>
                         <span data-bx-point="counters/CLICK/PERCENT_VALUE_DISPLAY"
                               class="bx-sender-mailfilter-result-total bx-sender-mailfilter-result-total-proc">
 						<?= htmlspecialcharsbx($arResult['DATA']['counters']['CLICK']['PERCENT_VALUE_DISPLAY']) ?>
 					</span>
                     </div>
                     <div class="bx-sender-mailfilter-result-item">
-                        <p class="bx-sender-mailfilter-result-title"><?= Loc::getMessage('SENDER_STATS_COUNTER_UNSUB') ?></p>
+                        <p class="bx-sender-mailfilter-result-title"><?= Loc::getMessage(
+                                'SENDER_STATS_COUNTER_UNSUB'
+                            ) ?></p>
                         <span data-bx-point="counters/UNSUB/PERCENT_VALUE_DISPLAY"
                               class="bx-sender-mailfilter-result-total bx-sender-mailfilter-result-total-proc">
 						<?= htmlspecialcharsbx($arResult['DATA']['counters']['UNSUB']['PERCENT_VALUE_DISPLAY']) ?>
 					</span>
                     </div>
                     <div class="bx-sender-mailfilter-result-item">
-                        <p class="bx-sender-mailfilter-result-title"><?= Loc::getMessage('SENDER_STATS_COUNTER_SUBS') ?></p>
+                        <p class="bx-sender-mailfilter-result-title"><?= Loc::getMessage(
+                                'SENDER_STATS_COUNTER_SUBS'
+                            ) ?></p>
                         <span data-bx-point="counters/SUBS/VALUE_DISPLAY" class="bx-sender-mailfilter-result-total">
 						<?= htmlspecialcharsbx($arResult['DATA']['counters']['SUBS']['VALUE_DISPLAY']) ?>
 					</span>
                     </div>
                     <div class="bx-sender-mailfilter-result-item">
-                        <p class="bx-sender-mailfilter-result-title"><?= Loc::getMessage('SENDER_STATS_COUNTER_POSTINGS') ?></p>
+                        <p class="bx-sender-mailfilter-result-title"><?= Loc::getMessage(
+                                'SENDER_STATS_COUNTER_POSTINGS'
+                            ) ?></p>
                         <span data-bx-point="counters/POSTINGS/VALUE_DISPLAY" class="bx-sender-mailfilter-result-total">
 						<?= htmlspecialcharsbx($arResult['DATA']['counters']['POSTINGS']['VALUE_DISPLAY']) ?>
 					</span>
@@ -205,27 +230,37 @@ else:
 
                             <div class="bx-gadget-speed-graph-box">
                                 <span class="bx-gadget-speed-graph-part bx-gadget-speed-graph-veryslow"></span>
-                                <span class="bx-gadget-speed-graph-text"><?= Loc::getMessage('SENDER_STATS_EFFICIENCY_LEVEL_1') ?></span>
+                                <span class="bx-gadget-speed-graph-text"><?= Loc::getMessage(
+                                        'SENDER_STATS_EFFICIENCY_LEVEL_1'
+                                    ) ?></span>
                             </div>
 
                             <div class="bx-gadget-speed-graph-box">
                                 <span class="bx-gadget-speed-graph-part bx-gadget-speed-graph-slow"></span>
-                                <span class="bx-gadget-speed-graph-text"><?= Loc::getMessage('SENDER_STATS_EFFICIENCY_LEVEL_2') ?></span>
+                                <span class="bx-gadget-speed-graph-text"><?= Loc::getMessage(
+                                        'SENDER_STATS_EFFICIENCY_LEVEL_2'
+                                    ) ?></span>
                             </div>
 
                             <div class="bx-gadget-speed-graph-box">
                                 <span class="bx-gadget-speed-graph-part bx-gadget-speed-graph-notfast"></span>
-                                <span class="bx-gadget-speed-graph-text"><?= Loc::getMessage('SENDER_STATS_EFFICIENCY_LEVEL_3') ?></span>
+                                <span class="bx-gadget-speed-graph-text"><?= Loc::getMessage(
+                                        'SENDER_STATS_EFFICIENCY_LEVEL_3'
+                                    ) ?></span>
                             </div>
 
                             <div class="bx-gadget-speed-graph-box">
                                 <span class="bx-gadget-speed-graph-part bx-gadget-speed-graph-fast"></span>
-                                <span class="bx-gadget-speed-graph-text"><?= Loc::getMessage('SENDER_STATS_EFFICIENCY_LEVEL_4') ?></span>
+                                <span class="bx-gadget-speed-graph-text"><?= Loc::getMessage(
+                                        'SENDER_STATS_EFFICIENCY_LEVEL_4'
+                                    ) ?></span>
                             </div>
 
                             <div class="bx-gadget-speed-graph-box">
                                 <span class="bx-gadget-speed-graph-part bx-gadget-speed-graph-varyfast"></span>
-                                <span class="bx-gadget-speed-graph-text"><?= Loc::getMessage('SENDER_STATS_EFFICIENCY_LEVEL_5') ?></span>
+                                <span class="bx-gadget-speed-graph-text"><?= Loc::getMessage(
+                                        'SENDER_STATS_EFFICIENCY_LEVEL_5'
+                                    ) ?></span>
                             </div>
 
                             <div data-bx-view-data-eff="" class="bx-gadget-speed-pointer" id="site-speed-pointer"
@@ -294,7 +329,9 @@ else:
                             </div>
                             <div data-bx-view-data="" class="bx-sender-block-view-data bx-sender-resizer"></div>
                             <div data-bx-view-text="" class="bx-sender-block-view-text">
-                                <div class="bx-sender-block-view-text-item"><?= Loc::getMessage('SENDER_STATS_NO_DATA') ?></div>
+                                <div class="bx-sender-block-view-text-item"><?= Loc::getMessage(
+                                        'SENDER_STATS_NO_DATA'
+                                    ) ?></div>
                             </div>
                         </div>
                     <?

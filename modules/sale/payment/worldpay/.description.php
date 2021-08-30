@@ -1,4 +1,6 @@
-<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die(); ?><?
+<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+} ?><?
 $psTitle = "WorldPay";
 $psDescription = "Select Junior Integration (HTTP integration method) <a href=\"http://www.worldpay.com\">http://www.worldpay.com</a><br><br>";
 $psDescription .= "If you want to get Payment Response automatically, please read the following:<br>";

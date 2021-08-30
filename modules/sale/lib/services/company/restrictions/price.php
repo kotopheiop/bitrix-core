@@ -21,11 +21,11 @@ class Price extends Restrictions\Price
         /** @var \Bitrix\Sale\PaymentCollection|\Bitrix\Sale\ShipmentCollection|null $collection */
         $collection = null;
 
-        if ($entity instanceof Payment)
+        if ($entity instanceof Payment) {
             $collection = $entity->getCollection();
-        elseif ($entity instanceof Shipment)
+        } elseif ($entity instanceof Shipment) {
             $collection = $entity->getCollection();
-        elseif ($entity instanceof Order) {
+        } elseif ($entity instanceof Order) {
             return array('PRICE_PAYMENT' => $entity->getPrice());
         }
 

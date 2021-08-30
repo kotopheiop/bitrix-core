@@ -64,12 +64,17 @@ class NotifyIm implements INotify
                 Auth::updateTokenParameters($tokenInfo);
 
                 foreach (GetModuleEvents('rest', 'OnRestAppMethodConfirm', true) as $event) {
-                    ExecuteModuleEventEx($event, array(array(
-                        'APP_ID' => $clientId,
-                        'TOKEN' => $token,
-                        'METHOD' => $method,
-                        'CONFIRMED' => $value == 'Y',
-                    )));
+                    ExecuteModuleEventEx(
+                        $event,
+                        array(
+                            array(
+                                'APP_ID' => $clientId,
+                                'TOKEN' => $token,
+                                'METHOD' => $method,
+                                'CONFIRMED' => $value == 'Y',
+                            )
+                        )
+                    );
                 }
 
                 \CIMNotify::deleteBySubTag($notifyFields["NOTIFY_SUB_TAG"]);
@@ -77,7 +82,9 @@ class NotifyIm implements INotify
                 \CIMNotify::DeleteBySubTag("REST|APP_INSTALL_REQUEST");
 
                 if ($value == "Y") {
-                    if (isset($notifyFields["NOTIFY_BUTTONS"][0]["APP_URL"]) && \Bitrix\Main\Loader::includeModule("im")) {
+                    if (isset($notifyFields["NOTIFY_BUTTONS"][0]["APP_URL"]) && \Bitrix\Main\Loader::includeModule(
+                            "im"
+                        )) {
                         $messageFields = array(
                             "TO_USER_ID" => $notifyFields["RELATION_USER_ID"],
                             "FROM_USER_ID" => $notifyFields["AUTHOR_ID"],
@@ -85,7 +92,13 @@ class NotifyIm implements INotify
                             "NOTIFY_MODULE" => "rest",
                             "NOTIFY_TAG" => "REST|APP_INSTALL_LINK|" . $notifyFields["AUTHOR_ID"] . "|TO|" . $notifyFields["RELATION_USER_ID"],
                             "NOTIFY_SUB_TAG" => "REST|APP_INSTALL_LINK|" . $notifyFields["RELATION_USER_ID"],
-                            "NOTIFY_MESSAGE" => GetMessage("REST_APP_INSTALL_REQUEST", array("#APP_URL#" => $notifyFields["NOTIFY_BUTTONS"][0]["APP_URL"], "#APP_NAME#" => $notifyFields["NOTIFY_BUTTONS"][0]["APP_NAME"]))
+                            "NOTIFY_MESSAGE" => GetMessage(
+                                "REST_APP_INSTALL_REQUEST",
+                                array(
+                                    "#APP_URL#" => $notifyFields["NOTIFY_BUTTONS"][0]["APP_URL"],
+                                    "#APP_NAME#" => $notifyFields["NOTIFY_BUTTONS"][0]["APP_NAME"]
+                                )
+                            )
                         );
                         \CIMNotify::Add($messageFields);
                     }

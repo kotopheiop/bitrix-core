@@ -22,29 +22,35 @@ class PropertyFeature
      * @param array $features Feature list.
      * @return Main\Entity\Result
      */
-    public static function addFeatures($propertyId, array $features)
+    public static function addFeatures($propertyId, array $features): Main\Entity\Result
     {
         $result = new Main\Entity\Result();
 
         $propertyId = (int)$propertyId;
         if ($propertyId <= 0) {
-            $result->addError(new Main\Error(
-                Loc::getMessage('PROPERTY_FEATURE_ERR_BAD_PROPERTY_ID')
-            ));
+            $result->addError(
+                new Main\Error(
+                    Loc::getMessage('PROPERTY_FEATURE_ERR_BAD_PROPERTY_ID')
+                )
+            );
             return $result;
         }
 
         if (empty($features)) {
-            $result->addError(new Main\Error(
-                Loc::getMessage('PROPERTY_FEATURE_ERR_EMPTY_FEATURE_LIST')
-            ));
+            $result->addError(
+                new Main\Error(
+                    Loc::getMessage('PROPERTY_FEATURE_ERR_EMPTY_FEATURE_LIST')
+                )
+            );
             return $result;
         }
         $features = self::checkFeatureList($features);
         if ($features === null) {
-            $result->addError(new Main\Error(
-                Loc::getMessage('PROPERTY_FEATURE_ERR_BAD_FEATURE_LIST')
-            ));
+            $result->addError(
+                new Main\Error(
+                    Loc::getMessage('PROPERTY_FEATURE_ERR_BAD_FEATURE_LIST')
+                )
+            );
             return $result;
         }
 
@@ -61,64 +67,126 @@ class PropertyFeature
         return $result;
     }
 
-    public static function updateFeatures($propertyId, array $features)
+    /**
+     * Upsert features for exist property.
+     *
+     * @param int $propertyId Property id.
+     * @param array $features Feature list.
+     * @return Main\Entity\Result
+     */
+    public static function updateFeatures($propertyId, array $features): Main\Entity\Result
     {
         $result = new Main\Entity\Result();
 
         $propertyId = (int)$propertyId;
         if ($propertyId <= 0) {
-            $result->addError(new Main\Error(
-                Loc::getMessage('PROPERTY_FEATURE_ERR_BAD_PROPERTY_ID')
-            ));
+            $result->addError(
+                new Main\Error(
+                    Loc::getMessage('PROPERTY_FEATURE_ERR_BAD_PROPERTY_ID')
+                )
+            );
             return $result;
         }
+
+        if (empty($features)) {
+            $result->addError(
+                new Main\Error(
+                    Loc::getMessage('PROPERTY_FEATURE_ERR_EMPTY_FEATURE_LIST')
+                )
+            );
+            return $result;
+        }
+
+        $features = self::checkFeatureList($features);
+        if ($features === null) {
+            $result->addError(
+                new Main\Error(
+                    Loc::getMessage('PROPERTY_FEATURE_ERR_BAD_FEATURE_LIST')
+                )
+            );
+            return $result;
+        }
+
+        $currentList = [];
+        $iterator = Iblock\PropertyFeatureTable::getList(
+            [
+                'select' => ['*'],
+                'filter' => ['=PROPERTY_ID' => $propertyId]
+            ]
+        );
+        while ($row = $iterator->fetch()) {
+            $currentList[self::getIndex($row)] = $row;
+        }
+        unset($row, $iterator);
+
+        foreach ($features as $index => $row) {
+            if (isset($currentList[$index])) {
+                $internalResult = Iblock\PropertyFeatureTable::update(
+                    $currentList[$index]['ID'],
+                    ['IS_ENABLED' => $row['IS_ENABLED']]
+                );
+            } else {
+                $row['PROPERTY_ID'] = $propertyId;
+                $internalResult = Iblock\PropertyFeatureTable::add($row);
+            }
+            if (!$internalResult->isSuccess()) {
+                $result->addErrors($internalResult->getErrors());
+                return $result;
+            }
+        }
+        unset($internalResult, $index, $row);
+        unset($currentList);
 
         return $result;
     }
 
     /**
-     * Upsert property features.
+     * Replace property features.
      *
      * @param int $propertyId Property id.
      * @param array $features Feature list.
      * @return Main\Entity\Result
-     * @throws Main\ArgumentException
-     * @throws Main\Db\SqlQueryException
-     * @throws Main\ObjectPropertyException
-     * @throws Main\SystemException
      */
-    public static function setFeatures($propertyId, array $features)
+    public static function setFeatures($propertyId, array $features): Main\Entity\Result
     {
         $result = new Main\Entity\Result();
 
         $propertyId = (int)$propertyId;
         if ($propertyId <= 0) {
-            $result->addError(new Main\Error(
-                Loc::getMessage('PROPERTY_FEATURE_ERR_BAD_PROPERTY_ID')
-            ));
+            $result->addError(
+                new Main\Error(
+                    Loc::getMessage('PROPERTY_FEATURE_ERR_BAD_PROPERTY_ID')
+                )
+            );
             return $result;
         }
 
         if (empty($features)) {
-            $result->addError(new Main\Error(
-                Loc::getMessage('PROPERTY_FEATURE_ERR_EMPTY_FEATURE_LIST')
-            ));
+            $result->addError(
+                new Main\Error(
+                    Loc::getMessage('PROPERTY_FEATURE_ERR_EMPTY_FEATURE_LIST')
+                )
+            );
             return $result;
         }
         $features = self::checkFeatureList($features);
         if ($features === null) {
-            $result->addError(new Main\Error(
-                Loc::getMessage('PROPERTY_FEATURE_ERR_BAD_FEATURE_LIST')
-            ));
+            $result->addError(
+                new Main\Error(
+                    Loc::getMessage('PROPERTY_FEATURE_ERR_BAD_FEATURE_LIST')
+                )
+            );
             return $result;
         }
 
         $currentList = [];
         $idList = [];
-        $iterator = Iblock\PropertyFeatureTable::getList([
-            'select' => ['*'],
-            'filter' => ['=PROPERTY_ID' => $propertyId]
-        ]);
+        $iterator = Iblock\PropertyFeatureTable::getList(
+            [
+                'select' => ['*'],
+                'filter' => ['=PROPERTY_ID' => $propertyId]
+            ]
+        );
         while ($row = $iterator->fetch()) {
             $row['ID'] = (int)$row['ID'];
             $currentList[self::getIndex($row)] = $row;
@@ -132,8 +200,9 @@ class PropertyFeature
                     $currentList[$index]['ID'],
                     ['IS_ENABLED' => $row['IS_ENABLED']]
                 );
-                if ($internalResult->isSuccess())
+                if ($internalResult->isSuccess()) {
                     unset($idList[$currentList[$index]['ID']]);
+                }
             } else {
                 $row['PROPERTY_ID'] = $propertyId;
                 $internalResult = Iblock\PropertyFeatureTable::add($row);
@@ -166,16 +235,18 @@ class PropertyFeature
      * @param array $list Raw features.
      * @return array|null
      */
-    protected static function checkFeatureList(array $list)
+    protected static function checkFeatureList(array $list): ?array
     {
-        if (empty($list))
+        if (empty($list)) {
             return null;
+        }
 
         $result = [];
         foreach ($list as $rawRow) {
             $row = self::checkFeature($rawRow);
-            if ($row === null)
+            if ($row === null) {
                 return null;
+            }
             $result[self::getIndex($row)] = $row;
         }
         unset($rawRow);
@@ -189,25 +260,32 @@ class PropertyFeature
      * @param array $feature Raw feature parameters.
      * @return array|null
      */
-    protected static function checkFeature(array $feature)
+    protected static function checkFeature(array $feature): ?array
     {
-        if (empty($feature))
+        if (empty($feature)) {
             return null;
-        if (!isset($feature['MODULE_ID']))
+        }
+        if (!isset($feature['MODULE_ID'])) {
             return null;
+        }
         $feature['MODULE_ID'] = trim((string)$feature['MODULE_ID']);
-        if ($feature['MODULE_ID'] === '')
+        if ($feature['MODULE_ID'] === '') {
             return null;
-        if (!isset($feature['FEATURE_ID']))
+        }
+        if (!isset($feature['FEATURE_ID'])) {
             return null;
+        }
         $feature['FEATURE_ID'] = trim((string)$feature['FEATURE_ID']);
-        if ($feature['FEATURE_ID'] === '')
+        if ($feature['FEATURE_ID'] === '') {
             return null;
-        if (!isset($feature['IS_ENABLED']))
+        }
+        if (!isset($feature['IS_ENABLED'])) {
             return null;
+        }
         $feature['IS_ENABLED'] = trim((string)$feature['IS_ENABLED']);
-        if ($feature['IS_ENABLED'] !== 'Y' && $feature['IS_ENABLED'] !== 'N')
+        if ($feature['IS_ENABLED'] !== 'Y' && $feature['IS_ENABLED'] !== 'N') {
             return null;
+        }
 
         return [
             'MODULE_ID' => $feature['MODULE_ID'],
@@ -222,7 +300,7 @@ class PropertyFeature
      * @param array $feature Normalize feature parameters.
      * @return string
      */
-    public static function getIndex(array $feature)
+    public static function getIndex(array $feature): string
     {
         return $feature['MODULE_ID'] . ':' . $feature['FEATURE_ID'];
     }
@@ -234,7 +312,7 @@ class PropertyFeature
      * @param array $description Additional description.
      * @return array
      */
-    public static function getPropertyFeatureList(array $property, array $description = [])
+    public static function getPropertyFeatureList(array $property, array $description = []): array
     {
         $result = self::getIblockFeatureList();
 
@@ -245,17 +323,21 @@ class PropertyFeature
         );
         $event->send();
         foreach ($event->getResults() as $eventResult) {
-            if ($eventResult->getType() !== Main\EventResult::SUCCESS)
+            if ($eventResult->getType() !== Main\EventResult::SUCCESS) {
                 continue;
+            }
             $list = $eventResult->getParameters();
-            if (empty($list) || !is_array($list))
+            if (empty($list) || !is_array($list)) {
                 continue;
+            }
             foreach ($list as $item) {
-                if (empty($item) || !is_array($item))
+                if (empty($item) || !is_array($item)) {
                     continue;
+                }
                 $item = self::prepareFeatureDescription($item);
-                if (empty($item))
+                if (empty($item)) {
                     continue;
+                }
                 $result[] = $item;
             }
             unset($item, $list);
@@ -276,11 +358,12 @@ class PropertyFeature
      *        </ul>
      * @return array|null
      */
-    public static function getListPageShowPropertyCodes($iblockId, array $parameters = [])
+    public static function getListPageShowPropertyCodes($iblockId, array $parameters = []): ?array
     {
         $iblockId = (int)$iblockId;
-        if ($iblockId <= 0)
+        if ($iblockId <= 0) {
             return null;
+        }
 
         return self::getFilteredPropertyCodes(
             $iblockId,
@@ -303,11 +386,12 @@ class PropertyFeature
      *        </ul>
      * @return array|null
      */
-    public static function getDetailPageShowPropertyCodes($iblockId, array $parameters = [])
+    public static function getDetailPageShowPropertyCodes($iblockId, array $parameters = []): ?array
     {
         $iblockId = (int)$iblockId;
-        if ($iblockId <= 0)
+        if ($iblockId <= 0) {
             return null;
+        }
 
         return self::getFilteredPropertyCodes(
             $iblockId,
@@ -331,7 +415,7 @@ class PropertyFeature
      *
      * @deprecated deprecated since iblock 19.0.0
      */
-    public static function getDetailPageShowProperties($iblockId, array $parameters = [])
+    public static function getDetailPageShowProperties($iblockId, array $parameters = []): ?array
     {
         return self::getDetailPageShowPropertyCodes($iblockId, $parameters);
     }
@@ -347,22 +431,20 @@ class PropertyFeature
      *        <li>CODE    Return symbolic code as identifier (Y/N, default N).
      *        </ul>
      * @return array|null
-     * @throws Main\ArgumentException
-     * @throws Main\ArgumentNullException
-     * @throws Main\ArgumentOutOfRangeException
-     * @throws Main\ObjectPropertyException
-     * @throws Main\SystemException
      */
-    protected static function getFilteredPropertyCodes($iblockId, array $filter, array $parameters = [])
+    protected static function getFilteredPropertyCodes($iblockId, array $filter, array $parameters = []): ?array
     {
-        if ((string)Main\Config\Option::get('iblock', 'property_features_enabled') !== 'Y')
+        if ((string)Main\Config\Option::get('iblock', 'property_features_enabled') !== 'Y') {
             return null;
+        }
 
         $iblockId = (int)$iblockId;
-        if ($iblockId <= 0)
+        if ($iblockId <= 0) {
             return null;
-        if (!isset($filter['=MODULE_ID']) || !isset($filter['=FEATURE_ID']))
+        }
+        if (!isset($filter['=MODULE_ID']) || !isset($filter['=FEATURE_ID'])) {
             return null;
+        }
 
         $getCode = (isset($parameters['CODE']) && $parameters['CODE'] == 'Y');
 
@@ -370,16 +452,18 @@ class PropertyFeature
         $filter['=PROPERTY.IBLOCK_ID'] = $iblockId;
         $filter['=PROPERTY.ACTIVE'] = 'Y';
         $filter['=IS_ENABLED'] = 'Y';
-        $iterator = Iblock\PropertyFeatureTable::getList([
-            'select' => [
-                'IBLOCK_PROPERTY_ID' => 'PROPERTY.ID',
-                'IBLOCK_PROPERTY_CODE' => 'PROPERTY.CODE',
-                'IBLOCK_PROPERTY_SORT' => 'PROPERTY.SORT'
-            ],
-            'filter' => $filter,
-            'order' => ['IBLOCK_PROPERTY_SORT' => 'ASC', 'IBLOCK_PROPERTY_ID' => 'ASC']
-        ]);
-        while ($row = $iterator->fetch())
+        $iterator = Iblock\PropertyFeatureTable::getList(
+            [
+                'select' => [
+                    'IBLOCK_PROPERTY_ID' => 'PROPERTY.ID',
+                    'IBLOCK_PROPERTY_CODE' => 'PROPERTY.CODE',
+                    'IBLOCK_PROPERTY_SORT' => 'PROPERTY.SORT'
+                ],
+                'filter' => $filter,
+                'order' => ['IBLOCK_PROPERTY_SORT' => 'ASC', 'IBLOCK_PROPERTY_ID' => 'ASC']
+            ]
+        );
+        while ($row = $iterator->fetch()) {
             $result[(int)$row['IBLOCK_PROPERTY_ID']] = self::getPropertyCode(
                 [
                     'ID' => $row['IBLOCK_PROPERTY_ID'],
@@ -387,6 +471,7 @@ class PropertyFeature
                 ],
                 $getCode
             );
+        }
         unset($row, $iterator);
         unset($filter, $getCode);
 
@@ -398,9 +483,9 @@ class PropertyFeature
      *
      * @param array $property Property description (the ID and CODE fields are definitely needed)
      * @param bool $getCode if true, returns property code or ID (if CODE is empty). Other - returns ID.
-     * @return int|string
+     * @return string
      */
-    protected static function getPropertyCode(array $property, $getCode = false)
+    protected static function getPropertyCode(array $property, $getCode = false): string
     {
         if ($getCode) {
             $code = (string)$property['CODE'];
@@ -416,16 +501,18 @@ class PropertyFeature
      * @param array $row Feature description.
      * @return array
      */
-    private static function prepareFeatureDescription(array $row)
+    private static function prepareFeatureDescription(array $row): array
     {
-        if (empty($row))
+        if (empty($row)) {
             return [];
+        }
         if (
             !isset($row['MODULE_ID'])
             || !isset($row['FEATURE_ID'])
             || !isset($row['FEATURE_NAME'])
-        )
+        ) {
             return [];
+        }
 
         return [
             'MODULE_ID' => $row['MODULE_ID'],
@@ -440,7 +527,7 @@ class PropertyFeature
      *
      * @return array
      */
-    private static function getIblockFeatureList()
+    private static function getIblockFeatureList(): array
     {
         return [
             [
@@ -460,10 +547,8 @@ class PropertyFeature
      * Returns three if the feature engine is enabled.
      *
      * @return bool
-     * @throws Main\ArgumentNullException
-     * @throws Main\ArgumentOutOfRangeException
      */
-    public static function isEnabledFeatures()
+    public static function isEnabledFeatures(): bool
     {
         return ((string)Main\Config\Option::get('iblock', 'property_features_enabled') == 'Y');
     }
@@ -472,10 +557,8 @@ class PropertyFeature
      * Returns true, if property features exist.
      *
      * @return bool
-     * @throws Main\ObjectPropertyException
-     * @throws Main\SystemException
      */
-    public static function isPropertyFeaturesExist()
+    public static function isPropertyFeaturesExist(): bool
     {
         $featureCount = (int)Iblock\PropertyFeatureTable::getCount([], ['ttl' => 86400]);
         return ($featureCount > 0);

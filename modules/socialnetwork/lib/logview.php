@@ -47,21 +47,23 @@ class LogViewTable extends Entity\DataManager
         $result = 'Y';
 
         $eventId = trim($eventId);
-        if (strlen($eventId)) {
+        if ($eventId <> '') {
             throw new Main\SystemException("Empty eventId.");
         }
         if (!$full) {
             $eventId = \CSocNetLogTools::findFullSetByEventID($eventId);
         }
 
-        $res = self::getList(array(
-            'order' => array(),
-            'filter' => array(
-                '=USER_ID' => 0,
-                '=EVENT_ID' => \Bitrix\Main\Application::getConnection()->getSqlHelper()->forSql($eventId)
-            ),
-            'select' => array('TYPE')
-        ));
+        $res = self::getList(
+            array(
+                'order' => array(),
+                'filter' => array(
+                    '=USER_ID' => 0,
+                    '=EVENT_ID' => \Bitrix\Main\Application::getConnection()->getSqlHelper()->forSql($eventId)
+                ),
+                'select' => array('TYPE')
+            )
+        );
 
         if ($row = $res->fetch()) {
             $result = $row['TYPE'];
@@ -75,7 +77,7 @@ class LogViewTable extends Entity\DataManager
         $userId = intval($userId);
         $type = ($type == "Y" ? "Y" : "N");
         $eventId = trim($eventId);
-        if (strlen($eventId) <= 0) {
+        if ($eventId == '') {
             throw new Main\SystemException("Empty eventId.");
         }
         $eventId = \CSocNetLogTools::findFullSetByEventID($eventId);

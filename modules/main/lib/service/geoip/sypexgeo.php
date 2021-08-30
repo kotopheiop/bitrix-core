@@ -44,8 +44,9 @@ final class SypexGeo extends Base
         $httpClient = $this->getHttpClient();
         $url = 'http://api.sypexgeo.net/';
 
-        if (strlen($key) > 0)
+        if ($key <> '') {
             $url .= $key . '/';
+        }
 
         $url .= "json/" . $ip;
 
@@ -55,8 +56,9 @@ final class SypexGeo extends Base
         if (!$httpRes && !empty($errors)) {
             $strError = "";
 
-            foreach ($errors as $errorCode => $errMes)
+            foreach ($errors as $errorCode => $errMes) {
                 $strError .= $errorCode . ": " . $errMes;
+            }
 
             $result->addError(new Error($strError));
         } else {
@@ -68,8 +70,9 @@ final class SypexGeo extends Base
                 $arRes = json_decode($httpRes, true);
 
                 if (is_array($arRes)) {
-                    if (strtolower(SITE_CHARSET) != 'utf-8')
+                    if (mb_strtolower(SITE_CHARSET) != 'utf-8') {
                         $arRes = Encoding::convertEncoding($arRes, 'UTF-8', SITE_CHARSET);
+                    }
 
                     $result->setData($arRes);
                 } else {
@@ -86,13 +89,15 @@ final class SypexGeo extends Base
      */
     protected static function getHttpClient()
     {
-        return new HttpClient(array(
-            "version" => "1.1",
-            "socketTimeout" => 5,
-            "streamTimeout" => 5,
-            "redirect" => true,
-            "redirectMax" => 5,
-        ));
+        return new HttpClient(
+            array(
+                "version" => "1.1",
+                "socketTimeout" => 5,
+                "streamTimeout" => 5,
+                "redirect" => true,
+                "redirectMax" => 5,
+            )
+        );
     }
 
     /**
@@ -115,7 +120,7 @@ final class SypexGeo extends Base
         $geoData = new Data();
 
         $geoData->ip = $ip;
-        $geoData->lang = $lang = strlen($lang) > 0 ? $lang : 'en';
+        $geoData->lang = $lang = $lang <> '' ? $lang : 'en';
         $key = !empty($this->config['KEY']) ? $this->config['KEY'] : '';
         $res = $this->sendRequest($ip, $key);
 

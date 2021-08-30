@@ -97,18 +97,22 @@ class Service
             $text = $errorMessages[$code];
         }
 
-        self::answer(array(
-            'error' => array('code' => $code, 'text' => $text),
-            'data' => array()
-        ));
+        self::answer(
+            array(
+                'error' => array('code' => $code, 'text' => $text),
+                'data' => array()
+            )
+        );
     }
 
     protected static function answerData(array $data = array())
     {
-        self::answer(array(
-            'error' => false,
-            'data' => $data
-        ));
+        self::answer(
+            array(
+                'error' => false,
+                'data' => $data
+            )
+        );
     }
 
     /**
@@ -247,12 +251,14 @@ class Service
 
     protected static function getData($type, $externalId)
     {
-        $list = Internals\WebHookTable::getList(array(
-            'filter' => array(
-                '=TYPE' => $type,
-                '=EXTERNAL_ID' => $externalId,
+        $list = Internals\WebHookTable::getList(
+            array(
+                'filter' => array(
+                    '=TYPE' => $type,
+                    '=EXTERNAL_ID' => $externalId,
+                )
             )
-        ));
+        );
 
         return $list->fetch();
     }
@@ -291,9 +297,11 @@ class Service
 
     protected function sendEvent()
     {
-        $event = new Event('seo', 'OnWebHook', array(
+        $event = new Event(
+            'seo', 'OnWebHook', array(
             'PAYLOAD' => $this->payload,
-        ));
+        )
+        );
         EventManager::getInstance()->send($event);
         foreach ($event->getResults() as $result) {
             $parameters = $result->getParameters();

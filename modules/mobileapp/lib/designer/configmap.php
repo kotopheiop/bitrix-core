@@ -47,19 +47,21 @@ class ConfigMap
 
         self::$configMap = $map;
         self::$configMap["groups"] = array();
-        $groupTypes = array(ParameterType::GROUP, ParameterType::GROUP_BACKGROUND, ParameterType::GROUP_BACKGROUND_LIGHT);
+        $groupTypes = array(
+            ParameterType::GROUP,
+            ParameterType::GROUP_BACKGROUND,
+            ParameterType::GROUP_BACKGROUND_LIGHT
+        );
 
         foreach ($map["types"] as $paramName => $intType) {
             if (in_array($intType, $groupTypes)) {
                 self::$configMap["groups"][] = $paramName;
             }
-
         }
     }
 
     public function getMap()
     {
-
         if (!self::$configMap) {
             self::createMap();
         }
@@ -184,7 +186,7 @@ class ConfigMap
 
         if (is_array($groups)) {
             foreach ($groups as $group) {
-                if (strpos($paramName, $group) === 0) {
+                if (mb_strpos($paramName, $group) === 0) {
                     return $group;
                 }
             }

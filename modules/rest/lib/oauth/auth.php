@@ -12,6 +12,8 @@ namespace Bitrix\Rest\OAuth;
 use Bitrix\Rest\Application;
 use Bitrix\Rest\AppTable;
 use Bitrix\Rest\AuthStorageInterface;
+use Bitrix\Rest\Engine\Access;
+use Bitrix\Rest\Engine\Access\HoldEntity;
 use Bitrix\Rest\Event\Session;
 use Bitrix\Rest\OAuthService;
 
@@ -31,7 +33,8 @@ class Auth
     protected static $storage = null;
 
     protected static $authQueryParams = array(
-        'auth', 'access_token'
+        'auth',
+        'access_token'
     );
 
     protected static $authQueryAdditional = array(
@@ -69,7 +72,35 @@ class Auth
                 $error = array_key_exists('error', $tokenInfo);
 
                 if (!$error && !array_key_exists('client_id', $tokenInfo)) {
-                    $tokenInfo = array('error' => 'CONNECTION_ERROR', 'error_description' => 'Error connecting to authorization server');
+                    $tokenInfo = array(
+                        'error' => 'CONNECTION_ERROR',
+                        'error_description' => 'Error connecting to authorization server'
+                    );
+                    $error = true;
+                }
+
+                if (!$error && HoldEntity::is(HoldEntity::TYPE_APP, $tokenInfo['client_id'])) {
+                    $tokenInfo = [
+                        'error' => 'OVERLOAD_LIMIT',
+                        'error_description' => 'REST API is blocked due to overload.'
+                    ];
+                    $error = true;
+                }
+
+                if (
+                    !$error
+                    && (
+                        !Access::isAvailable($tokenInfo['client_id'])
+                        || (
+                            Access::needCheckCount()
+                            && !Access::isAvailableCount(Access::ENTITY_TYPE_APP, $tokenInfo['client_id'])
+                        )
+                    )
+                ) {
+                    $tokenInfo = [
+                        'error' => 'ACCESS_DENIED',
+                        'error_description' => 'REST is available only on commercial plans.'
+                    ];
                     $error = true;
                 }
 
@@ -80,30 +111,46 @@ class Auth
                     }
 
                     if (!is_array($clientInfo) || $clientInfo['ACTIVE'] !== 'Y') {
-                        $tokenInfo = array('error' => 'APPLICATION_NOT_FOUND', 'error_description' => 'Application not found');
+                        $tokenInfo = array(
+                            'error' => 'APPLICATION_NOT_FOUND',
+                            'error_description' => 'Application not found'
+                        );
                         $error = true;
                     }
                 }
 
                 if (!$error && $tokenInfo['expires'] <= time()) {
-                    $tokenInfo = array('error' => 'expired_token', 'error_description' => 'The access token provided has expired');
+                    $tokenInfo = array(
+                        'error' => 'expired_token',
+                        'error_description' => 'The access token provided has expired'
+                    );
                     $error = true;
                 }
 
                 if (!$error && $scope !== \CRestUtil::GLOBAL_SCOPE && isset($tokenInfo['scope'])) {
                     $tokenScope = explode(',', $tokenInfo['scope']);
+                    $tokenScope = \Bitrix\Rest\Engine\RestManager::fillAlternativeScope($scope, $tokenScope);
                     if (!in_array($scope, $tokenScope)) {
-                        $tokenInfo = array('error' => 'insufficient_scope', 'error_description' => 'The request requires higher privileges than provided by the access token');
+                        $tokenInfo = array(
+                            'error' => 'insufficient_scope',
+                            'error_description' => 'The request requires higher privileges than provided by the access token'
+                        );
                         $error = true;
                     }
                 }
 
                 if (!$error && $tokenInfo['user_id'] > 0) {
                     if (!\CRestUtil::makeAuth($tokenInfo)) {
-                        $tokenInfo = array('error' => 'authorization_error', 'error_description' => 'Unable to authorize user');
+                        $tokenInfo = array(
+                            'error' => 'authorization_error',
+                            'error_description' => 'Unable to authorize user'
+                        );
                         $error = true;
                     } elseif (!\CRestUtil::checkAppAccess($tokenInfo['client_id'])) {
-                        $tokenInfo = array('error' => 'user_access_error', 'error_description' => 'The user does not have access to the application.');
+                        $tokenInfo = array(
+                            'error' => 'user_access_error',
+                            'error_description' => 'The user does not have access to the application.'
+                        );
                         $error = true;
                     }
                 }

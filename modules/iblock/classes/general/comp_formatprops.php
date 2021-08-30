@@ -7,34 +7,35 @@ IncludeModuleLangFile(__FILE__);
 class CIBlockFormatProperties
 {
     private static $b24Installed = null;
-    private static $statisticInstalled = null;
 
-    public static function GetDisplayValue($arItem, $arProperty, $event1)
+    public static function GetDisplayValue($arItem, $arProperty, $event1 = '')
     {
-        if (self::$b24Installed === null)
+        if (self::$b24Installed === null) {
             self::$b24Installed = ModuleManager::isModuleInstalled('bitrix24');
-        if (self::$statisticInstalled === null)
-            self::$statisticInstalled = ModuleManager::isModuleInstalled('statistic');
+        }
 
         /** @var array $arUserTypeFormat */
         $arUserTypeFormat = false;
         if (isset($arProperty["USER_TYPE"]) && !empty($arProperty["USER_TYPE"])) {
             $arUserType = CIBlockProperty::GetUserType($arProperty["USER_TYPE"]);
-            if (isset($arUserType["GetPublicViewHTML"]))
+            if (isset($arUserType["GetPublicViewHTML"])) {
                 $arUserTypeFormat = $arUserType["GetPublicViewHTML"];
+            }
         }
 
         static $CACHE = array("E" => array(), "G" => array());
         if ($arUserTypeFormat) {
-            if ($arProperty["MULTIPLE"] == "N" || !is_array($arProperty["~VALUE"]))
+            if ($arProperty["MULTIPLE"] == "N" || !is_array($arProperty["~VALUE"])) {
                 $arValues = array($arProperty["~VALUE"]);
-            else
+            } else {
                 $arValues = $arProperty["~VALUE"];
+            }
         } else {
-            if (is_array($arProperty["VALUE"]))
+            if (is_array($arProperty["VALUE"])) {
                 $arValues = $arProperty["VALUE"];
-            else
+            } else {
                 $arValues = array($arProperty["VALUE"]);
+            }
         }
         $arDisplayValue = array();
         $arFiles = array();
@@ -42,12 +43,14 @@ class CIBlockFormatProperties
         $arLinkSections = array();
         foreach ($arValues as $val) {
             if ($arUserTypeFormat) {
-                $arDisplayValue[] = call_user_func_array($arUserTypeFormat,
+                $arDisplayValue[] = call_user_func_array(
+                    $arUserTypeFormat,
                     array(
                         $arProperty,
                         array("VALUE" => $val),
                         array(),
-                    ));
+                    )
+                );
             } elseif ($arProperty["PROPERTY_TYPE"] == "E") {
                 if (intval($val) > 0) {
                     if (!isset($CACHE["E"][$val])) {
@@ -63,15 +66,24 @@ class CIBlockFormatProperties
                             $arLinkFilter,
                             false,
                             false,
-                            array("ID", "IBLOCK_ID", "NAME", "DETAIL_PAGE_URL", "PREVIEW_PICTURE", "DETAIL_PICTURE", "SORT")
+                            array(
+                                "ID",
+                                "IBLOCK_ID",
+                                "NAME",
+                                "DETAIL_PAGE_URL",
+                                "PREVIEW_PICTURE",
+                                "DETAIL_PICTURE",
+                                "SORT"
+                            )
                         );
                         $CACHE["E"][$val] = $rsLink->GetNext();
                     }
                     if (is_array($CACHE["E"][$val])) {
-                        if (self::$b24Installed)
+                        if (self::$b24Installed) {
                             $arDisplayValue[] = $CACHE["E"][$val]["NAME"];
-                        else
+                        } else {
                             $arDisplayValue[] = '<a href="' . $CACHE["E"][$val]["DETAIL_PAGE_URL"] . '">' . $CACHE["E"][$val]["NAME"] . '</a>';
+                        }
                         $arLinkElements[$val] = $CACHE["E"][$val];
                     }
                 }
@@ -91,10 +103,11 @@ class CIBlockFormatProperties
                         $CACHE["G"][$val] = $rsSection->GetNext();
                     }
                     if (is_array($CACHE["G"][$val])) {
-                        if (self::$b24Installed)
+                        if (self::$b24Installed) {
                             $arDisplayValue[] = $CACHE["G"][$val]["NAME"];
-                        else
+                        } else {
                             $arDisplayValue[] = '<a href="' . $CACHE["G"][$val]["SECTION_PAGE_URL"] . '">' . $CACHE["G"][$val]["NAME"] . '</a>';
+                        }
                         $arLinkSections[$val] = $CACHE["G"][$val];
                     }
                 }
@@ -103,44 +116,42 @@ class CIBlockFormatProperties
             } elseif ($arProperty["PROPERTY_TYPE"] == "F") {
                 if ($arFile = CFile::GetFileArray($val)) {
                     $arFiles[] = $arFile;
-                    if (self::$statisticInstalled)
-                        $arDisplayValue[] = '<a href="' . htmlspecialcharsbx("/bitrix/redirect.php?event1=" . urlencode($event1) . "&event2=" . urlencode($arFile["SRC"]) . "&event3=" . urlencode($arFile["ORIGINAL_NAME"]) . "&goto=" . urlencode($arFile["SRC"])) . '">' . GetMessage('IBLOCK_DOWNLOAD') . '</a>';
-                    else
-                        $arDisplayValue[] = '<a href="' . htmlspecialcharsbx($arFile["SRC"]) . '">' . GetMessage('IBLOCK_DOWNLOAD') . '</a>';
+                    $arDisplayValue[] = '<a href="' . htmlspecialcharsbx($arFile["SRC"]) . '">' . GetMessage(
+                            'IBLOCK_DOWNLOAD'
+                        ) . '</a>';
                 }
             } else {
                 $trimmed = trim($val);
                 if (strpos($trimmed, "http") === 0) {
-                    if (self::$statisticInstalled)
-                        $arDisplayValue[] = '<a href="' . htmlspecialcharsbx("/bitrix/redirect.php?event1=" . urlencode($event1) . "&event2=" . urlencode($trimmed) . "&event3=" . urlencode($arItem["NAME"]) . "&goto=" . urlencode($trimmed)) . '">' . $trimmed . '</a>';
-                    else
-                        $arDisplayValue[] = '<a href="' . htmlspecialcharsbx($trimmed) . '">' . $trimmed . '</a>';
+                    $arDisplayValue[] = '<a href="' . htmlspecialcharsbx($trimmed) . '">' . $trimmed . '</a>';
                 } elseif (strpos($trimmed, "www") === 0) {
-                    if (self::$statisticInstalled)
-                        $arDisplayValue[] = '<a href="' . htmlspecialcharsbx("/bitrix/redirect.php?event1=" . urlencode($event1) . "&event2=" . urlencode("http://" . $trimmed) . "&event3=" . urlencode($arItem["NAME"]) . "&goto=" . urlencode("http://" . $trimmed)) . '">' . $trimmed . '</a>';
-                    else
-                        $arDisplayValue[] = '<a href="' . htmlspecialcharsbx("http://" . $trimmed) . '">' . $trimmed . '</a>';
-                } else
+                    $arDisplayValue[] = '<a href="' . htmlspecialcharsbx(
+                            "http://" . $trimmed
+                        ) . '">' . $trimmed . '</a>';
+                } else {
                     $arDisplayValue[] = $val;
+                }
             }
         }
 
         $displayCount = count($arDisplayValue);
-        if ($displayCount == 1)
+        if ($displayCount == 1) {
             $arProperty["DISPLAY_VALUE"] = $arDisplayValue[0];
-        elseif ($displayCount > 1)
+        } elseif ($displayCount > 1) {
             $arProperty["DISPLAY_VALUE"] = $arDisplayValue;
-        else
+        } else {
             $arProperty["DISPLAY_VALUE"] = false;
+        }
 
         if ($arProperty["PROPERTY_TYPE"] == "F") {
             $fileCount = count($arFiles);
-            if ($fileCount == 1)
+            if ($fileCount == 1) {
                 $arProperty["FILE_VALUE"] = $arFiles[0];
-            elseif ($fileCount > 1)
+            } elseif ($fileCount > 1) {
                 $arProperty["FILE_VALUE"] = $arFiles;
-            else
+            } else {
                 $arProperty["FILE_VALUE"] = false;
+            }
         } elseif ($arProperty['PROPERTY_TYPE'] == 'E') {
             $arProperty['LINK_ELEMENT_VALUE'] = (!empty($arLinkElements) ? $arLinkElements : false);
         } elseif ($arProperty['PROPERTY_TYPE'] == 'G') {

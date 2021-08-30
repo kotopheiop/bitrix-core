@@ -1,9 +1,11 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions == "D")
+if ($saleModulePermissions == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 
@@ -23,23 +25,32 @@ ClearVars();
 $errorMessage = "";
 $bVarsFromForm = false;
 
-$ID = IntVal($ID);
+$ID = intval($ID);
 
 $aTabs = array(
-    array("DIV" => "edit1", "TAB" => GetMessage("SAE_AFF_TAB"), "ICON" => "sale", "TITLE" => GetMessage("SAE_AFF_TAB_TITLE")),
+    array(
+        "DIV" => "edit1",
+        "TAB" => GetMessage("SAE_AFF_TAB"),
+        "ICON" => "sale",
+        "TITLE" => GetMessage("SAE_AFF_TAB_TITLE")
+    ),
 );
 
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
-if ($REQUEST_METHOD == "POST" && strlen($Update) > 0 && $saleModulePermissions >= "W" && check_bitrix_sessid()) {
-    if (StrLen($SITE_ID) <= 0)
+if ($REQUEST_METHOD == "POST" && $Update <> '' && $saleModulePermissions >= "W" && check_bitrix_sessid()) {
+    if ($SITE_ID == '') {
         $errorMessage .= GetMessage("SAE_NO_SITE_PLAN") . ".<br>";
-    if (IntVal($USER_ID) <= 0)
+    }
+    if (intval($USER_ID) <= 0) {
         $errorMessage .= GetMessage("SAE_NO_USER") . ".<br>";
-    if (IntVal($PLAN_ID) <= 0)
+    }
+    if (intval($PLAN_ID) <= 0) {
         $errorMessage .= GetMessage("SAE_NO_PLAN") . ".<br>";
-    if (StrLen($DATE_CREATE) <= 0)
+    }
+    if ($DATE_CREATE == '') {
         $errorMessage .= GetMessage("SAE_NO_DATE_CREATE") . ".<br>";
+    }
 
     $ACTIVE = (($ACTIVE == "Y") ? "Y" : "N");
     $FIX_PLAN = (($FIX_PLAN == "Y") ? "Y" : "N");
@@ -53,24 +64,32 @@ if ($REQUEST_METHOD == "POST" && strlen($Update) > 0 && $saleModulePermissions >
     $PENDING_SUM = str_replace(",", ".", $PENDING_SUM);
     $PENDING_SUM = DoubleVal($PENDING_SUM);
 
-    if (StrLen($errorMessage) <= 0) {
-        $dbAffiliate = CSaleAffiliate::GetList(array(), array("USER_ID" => $USER_ID, "SITE_ID" => $SITE_ID, "!ID" => $ID));
-        if ($dbAffiliate->Fetch())
-            $errorMessage .= str_replace("#USER_ID#", $USER_ID, str_replace("#SITE_ID#", $SITE_ID, GetMessage("SAE_AFFILIATE_ALREADY_EXISTS"))) . ".<br>";
+    if ($errorMessage == '') {
+        $dbAffiliate = CSaleAffiliate::GetList(
+            array(),
+            array("USER_ID" => $USER_ID, "SITE_ID" => $SITE_ID, "!ID" => $ID)
+        );
+        if ($dbAffiliate->Fetch()) {
+            $errorMessage .= str_replace(
+                    "#USER_ID#",
+                    $USER_ID,
+                    str_replace("#SITE_ID#", $SITE_ID, GetMessage("SAE_AFFILIATE_ALREADY_EXISTS"))
+                ) . ".<br>";
+        }
     }
 
-    if (StrLen($errorMessage) <= 0) {
+    if ($errorMessage == '') {
         $arFields = array(
             "SITE_ID" => $SITE_ID,
             "USER_ID" => $USER_ID,
-            "AFFILIATE_ID" => (IntVal($AFFILIATE_ID) > 0 ? $AFFILIATE_ID : false),
+            "AFFILIATE_ID" => (intval($AFFILIATE_ID) > 0 ? $AFFILIATE_ID : false),
             "PLAN_ID" => $PLAN_ID,
             "ACTIVE" => $ACTIVE,
             "DATE_CREATE" => $DATE_CREATE,
             "PAID_SUM" => $PAID_SUM,
             "APPROVED_SUM" => $APPROVED_SUM,
             "PENDING_SUM" => $PENDING_SUM,
-            "LAST_CALCULATE" => (StrLen($LAST_CALCULATE) > 0 ? $LAST_CALCULATE : false),
+            "LAST_CALCULATE" => ($LAST_CALCULATE <> '' ? $LAST_CALCULATE : false),
             "AFF_SITE" => $AFF_SITE,
             "AFF_DESCRIPTION" => $AFF_DESCRIPTION,
             "FIX_PLAN" => $FIX_PLAN
@@ -78,28 +97,33 @@ if ($REQUEST_METHOD == "POST" && strlen($Update) > 0 && $saleModulePermissions >
 
         if ($ID > 0) {
             if (!CSaleAffiliate::Update($ID, $arFields)) {
-                if ($ex = $APPLICATION->GetException())
+                if ($ex = $APPLICATION->GetException()) {
                     $errorMessage .= $ex->GetString() . ".<br>";
-                else
+                } else {
                     $errorMessage .= GetMessage("SAE_ERROR_SAVE_AFF") . ".<br>";
+                }
             }
         } else {
             $ID = CSaleAffiliate::Add($arFields);
-            $ID = IntVal($ID);
+            $ID = intval($ID);
             if ($ID <= 0) {
-                if ($ex = $APPLICATION->GetException())
+                if ($ex = $APPLICATION->GetException()) {
                     $errorMessage .= $ex->GetString() . ".<br>";
-                else
+                } else {
                     $errorMessage .= GetMessage("SAE_ERROR_SAVE_AFF") . ".<br>";
+                }
             }
         }
     }
 
-    if (strlen($errorMessage) <= 0) {
-        if (strlen($apply) <= 0)
+    if ($errorMessage == '') {
+        if ($apply == '') {
             LocalRedirect("/bitrix/admin/sale_affiliate.php?lang=" . LANG . GetFilterParams("filter_", false));
-        else
-            LocalRedirect("/bitrix/admin/sale_affiliate_edit.php?lang=" . LANG . "&ID=" . $ID . GetFilterParams("filter_", false));
+        } else {
+            LocalRedirect(
+                "/bitrix/admin/sale_affiliate_edit.php?lang=" . LANG . "&ID=" . $ID . GetFilterParams("filter_", false)
+            );
+        }
     } else {
         $bVarsFromForm = true;
     }
@@ -107,19 +131,22 @@ if ($REQUEST_METHOD == "POST" && strlen($Update) > 0 && $saleModulePermissions >
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/prolog.php");
 
-if ($ID > 0)
+if ($ID > 0) {
     $APPLICATION->SetTitle(str_replace("#ID#", $ID, GetMessage("SAE_TITLE_UPDATE_AFF")));
-else
+} else {
     $APPLICATION->SetTitle(GetMessage("SAE_TITLE_ADD_AFF"));
+}
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
 $dbAffiliate = CSaleAffiliate::GetList(array(), array("ID" => $ID));
-if (!$dbAffiliate->ExtractFields("str_"))
+if (!$dbAffiliate->ExtractFields("str_")) {
     $ID = 0;
+}
 
-if ($bVarsFromForm)
+if ($bVarsFromForm) {
     $DB->InitTableVarsForEdit("b_sale_affiliate", "", "str_");
+}
 ?>
 
 <?
@@ -143,7 +170,10 @@ if ($ID > 0) {
     if ($saleModulePermissions >= "W") {
         $aMenu[] = array(
             "TEXT" => GetMessage("SAE_AFF_DELETE"),
-            "LINK" => "javascript:if(confirm('" . GetMessage("SAE_AFF_DELETE_CONF") . "')) window.location='/bitrix/admin/sale_affiliate.php?ID=" . $ID . "&action=delete&lang=" . LANG . "&" . bitrix_sessid_get() . "#tb';",
+            "LINK" => "javascript:if(confirm('" . GetMessage(
+                    "SAE_AFF_DELETE_CONF"
+                ) . "')) window.location='/bitrix/admin/sale_affiliate.php?ID=" . $ID . "&action=delete&lang=" . LANG . "&" . bitrix_sessid_get(
+                ) . "#tb';",
             "WARNING" => "Y",
             "ICON" => "btn_delete"
         );
@@ -153,8 +183,16 @@ $context = new CAdminContextMenu($aMenu);
 $context->Show();
 ?>
 
-<? if (strlen($errorMessage) > 0)
-    echo CAdminMessage::ShowMessage(Array("DETAILS" => $errorMessage, "TYPE" => "ERROR", "MESSAGE" => GetMessage("SAE_ERROR_SAVE_AFF"), "HTML" => true)); ?>
+<? if ($errorMessage <> '') {
+    echo CAdminMessage::ShowMessage(
+        Array(
+            "DETAILS" => $errorMessage,
+            "TYPE" => "ERROR",
+            "MESSAGE" => GetMessage("SAE_ERROR_SAVE_AFF"),
+            "HTML" => true
+        )
+    );
+} ?>
 
     <script language="JavaScript">
         <!--
@@ -163,7 +201,7 @@ $context->Show();
         <?
         $arBaseLangCurrencies = array();
         $i = -1;
-        $dbSiteList = CSite::GetList(($b = "sort"), ($o = "asc"));
+        $dbSiteList = CSite::GetList();
         while ($arSite = $dbSiteList->Fetch())
         {
         $i++;
@@ -218,7 +256,12 @@ $context->Show();
 
                     //-->
                 </script>
-                <? echo CSite::SelectBox("SITE_ID", $str_SITE_ID, "", "OnChangeSite(this[this.selectedIndex].value)"); ?>
+                <? echo CSite::SelectBox(
+                    "SITE_ID",
+                    $str_SITE_ID,
+                    "",
+                    "OnChangeSite(this[this.selectedIndex].value)"
+                ); ?>
             </td>
         </tr>
         <tr class="adm-detail-required-field">
@@ -228,8 +271,15 @@ $context->Show();
                 $userName = "";
                 if ($str_USER_ID > 0) {
                     $dbUser = CUser::GetByID($str_USER_ID);
-                    if ($arUser = $dbUser->Fetch())
-                        $userName = "[<a class=\"tablebodylink\" title=\"" . GetMessage("SAE_PROFILE") . "\" href=\"/bitrix/admin/user_edit.php?lang=" . LANGUAGE_ID . "&ID=" . $str_USER_ID . "\">" . $str_USER_ID . "</a>] (" . htmlspecialcharsex($arUser["LOGIN"]) . ") " . htmlspecialcharsex($arUser["NAME"]) . " " . htmlspecialcharsex($arUser["LAST_NAME"]);
+                    if ($arUser = $dbUser->Fetch()) {
+                        $userName = "[<a class=\"tablebodylink\" title=\"" . GetMessage(
+                                "SAE_PROFILE"
+                            ) . "\" href=\"/bitrix/admin/user_edit.php?lang=" . LANGUAGE_ID . "&ID=" . $str_USER_ID . "\">" . $str_USER_ID . "</a>] (" . htmlspecialcharsex(
+                                $arUser["LOGIN"]
+                            ) . ") " . htmlspecialcharsex($arUser["NAME"]) . " " . htmlspecialcharsex(
+                                $arUser["LAST_NAME"]
+                            );
+                    }
                 }
 
                 echo FindUserID("USER_ID", $str_USER_ID, $userName, "form1");
@@ -257,7 +307,9 @@ $context->Show();
                         if (val != "NA")
                             document.getElementById('div_affiliate_name').innerHTML = val;
                         else
-                            document.getElementById('div_affiliate_name').innerHTML = '<?= GetMessage("SAE_NO_AFFILIATE") ?>';
+                            document.getElementById('div_affiliate_name').innerHTML = '<?= GetMessage(
+                                "SAE_NO_AFFILIATE"
+                            ) ?>';
                     }
 
                     var affiliateID = '';
@@ -266,7 +318,9 @@ $context->Show();
                         if (affiliateID != document.form1.AFFILIATE_ID.value) {
                             affiliateID = document.form1.AFFILIATE_ID.value;
                             if (affiliateID != '' && !isNaN(parseInt(affiliateID, 10))) {
-                                document.getElementById('div_affiliate_name').innerHTML = '<i><?= GetMessage("SAE_WAIT") ?></i>';
+                                document.getElementById('div_affiliate_name').innerHTML = '<i><?= GetMessage(
+                                    "SAE_WAIT"
+                                ) ?></i>';
                                 window.frames["hiddenframe_affiliate"].location.replace('/bitrix/admin/sale_affiliate_get.php?ID=' + affiliateID + '&func_name=SetAffiliateName');
                             } else
                                 document.getElementById('div_affiliate_name').innerHTML = '';
@@ -284,10 +338,18 @@ $context->Show();
             <td>
                 <select name="PLAN_ID">
                     <?
-                    $dbPlan = CSaleAffiliatePlan::GetList(array("NAME" => "ASC"), array(), false, false, array("ID", "NAME", "SITE_ID"));
+                    $dbPlan = CSaleAffiliatePlan::GetList(
+                        array("NAME" => "ASC"),
+                        array(),
+                        false,
+                        false,
+                        array("ID", "NAME", "SITE_ID")
+                    );
                     while ($arPlan = $dbPlan->Fetch()) {
                         ?>
-                        <option value="<?= $arPlan["ID"] ?>"<? if ($str_PLAN_ID == $arPlan["ID"]) echo " selected" ?>><?= htmlspecialcharsex("[" . $arPlan["ID"] . "] " . $arPlan["NAME"] . " (" . $arPlan["SITE_ID"] . ")") ?></option><?
+                        <option value="<?= $arPlan["ID"] ?>"<? if ($str_PLAN_ID == $arPlan["ID"]) echo " selected" ?>><?= htmlspecialcharsex(
+                        "[" . $arPlan["ID"] . "] " . $arPlan["NAME"] . " (" . $arPlan["SITE_ID"] . ")"
+                    ) ?></option><?
                     }
                     ?>
                 </select>

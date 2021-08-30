@@ -45,21 +45,29 @@ class RecoveryCodesTable
     public static function getMap()
     {
         return array(
-            new Entity\IntegerField('ID', array(
+            new Entity\IntegerField(
+                'ID', array(
                 'primary' => true,
                 'autocomplete' => true
-            )),
-            new Entity\IntegerField('USER_ID', array(
+            )
+            ),
+            new Entity\IntegerField(
+                'USER_ID', array(
                 'required' => true
-            )),
-            new Entity\StringField('CODE', array(
+            )
+            ),
+            new Entity\StringField(
+                'CODE', array(
                 'required' => true,
                 'format' => static::CODE_PATTERN
-            )),
-            new Entity\BooleanField('USED', array(
+            )
+            ),
+            new Entity\BooleanField(
+                'USED', array(
                 'values' => array('Y', 'N'),
                 'default' => 'N'
-            )),
+            )
+            ),
             new Entity\DatetimeField('USING_DATE'),
             new Entity\StringField('USING_IP'),
             new Entity\ReferenceField(
@@ -82,13 +90,16 @@ class RecoveryCodesTable
     public static function clearByUser($userId)
     {
         $userId = (int)$userId;
-        if ($userId <= 0)
+        if ($userId <= 0) {
             throw new ArgumentTypeException('userId', 'positive integer');
+        }
 
-        $codes = static::getList(array(
-            'select' => array('ID'),
-            'filter' => array('=USER_ID' => $userId)
-        ));
+        $codes = static::getList(
+            array(
+                'select' => array('ID'),
+                'filter' => array('=USER_ID' => $userId)
+            )
+        );
 
         while (($code = $codes->fetch())) {
             static::delete($code['ID']);
@@ -108,8 +119,9 @@ class RecoveryCodesTable
     public static function regenerateCodes($userId)
     {
         $userId = (int)$userId;
-        if ($userId <= 0)
+        if ($userId <= 0) {
             throw new ArgumentTypeException('userId', 'positive integer');
+        }
 
         static::clearByUser($userId);
 
@@ -140,25 +152,33 @@ class RecoveryCodesTable
     public static function useCode($userId, $searchCode)
     {
         $userId = (int)$userId;
-        if ($userId <= 0)
+        if ($userId <= 0) {
             throw new ArgumentTypeException('userId', 'positive integer');
+        }
 
-        if (!preg_match(static::CODE_PATTERN, $searchCode))
+        if (!preg_match(static::CODE_PATTERN, $searchCode)) {
             throw new ArgumentTypeException('searchCode', sprintf('string, check pattern "%s"', static::CODE_PATTERN));
+        }
 
-        $codes = static::getList(array(
-            'select' => array('ID', 'CODE'),
-            'filter' => array('=USER_ID' => $userId, '=USED' => 'N'),
-        ));
+        $codes = static::getList(
+            array(
+                'select' => array('ID', 'CODE'),
+                'filter' => array('=USER_ID' => $userId, '=USED' => 'N'),
+            )
+        );
 
         $found = false;
         while (($code = $codes->fetch())) {
             if ($code['CODE'] === $searchCode) {
-                static::update($code['ID'], array(
-                    'USED' => 'Y',
-                    'USING_DATE' => new Type\DateTime,
-                    'USING_IP' => \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->getRemoteAddress()
-                ));
+                static::update(
+                    $code['ID'],
+                    array(
+                        'USED' => 'Y',
+                        'USING_DATE' => new Type\DateTime,
+                        'USING_IP' => \Bitrix\Main\Application::getInstance()->getContext()->getRequest(
+                        )->getRemoteAddress()
+                    )
+                );
                 $found = true;
                 break;
             }

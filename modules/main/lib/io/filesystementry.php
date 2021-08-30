@@ -13,32 +13,36 @@ abstract class FileSystemEntry
 
     public function __construct($path, $siteId = null)
     {
-        if ($path == '')
+        if ($path == '') {
             throw new InvalidPathException($path);
+        }
 
         $this->originalPath = $path;
         $this->path = Path::normalize($path);
         $this->siteId = $siteId;
 
-        if ($this->path == '')
+        if ($this->path == '') {
             throw new InvalidPathException($path);
+        }
     }
 
     public function isSystem()
     {
-        if (preg_match("#/\\.#", $this->path))
+        if (preg_match("#/\\.#", $this->path)) {
             return true;
+        }
 
         $documentRoot = static::getDocumentRoot($this->siteId);
 
-        if (substr($this->path, 0, strlen($documentRoot)) === $documentRoot) {
-            $relativePath = substr($this->path, strlen($documentRoot));
+        if (mb_substr($this->path, 0, mb_strlen($documentRoot)) === $documentRoot) {
+            $relativePath = mb_substr($this->path, mb_strlen($documentRoot));
             $relativePath = ltrim($relativePath, "/");
-            if (($pos = strpos($relativePath, "/")) !== false)
-                $s = substr($relativePath, 0, $pos);
-            else
+            if (($pos = mb_strpos($relativePath, "/")) !== false) {
+                $s = mb_substr($relativePath, 0, $pos);
+            } else {
                 $s = $relativePath;
-            $s = strtolower(rtrim($s, "."));
+            }
+            $s = mb_strtolower(rtrim($s, "."));
 
             $ar = array(
                 "bitrix" => 1,
@@ -46,8 +50,9 @@ abstract class FileSystemEntry
                 "local" => 1,
                 "urlrewrite.php" => 1,
             );
-            if (isset($ar[$s]))
+            if (isset($ar[$s])) {
                 return true;
+            }
         }
 
         return false;
@@ -95,8 +100,9 @@ abstract class FileSystemEntry
 
     public function getPhysicalPath()
     {
-        if (is_null($this->pathPhysical))
+        if (is_null($this->pathPhysical)) {
             $this->pathPhysical = Path::convertLogicalToPhysical($this->path);
+        }
 
         return $this->pathPhysical;
     }
@@ -106,8 +112,9 @@ abstract class FileSystemEntry
         $newPathNormalized = Path::normalize($newPath);
 
         $success = true;
-        if ($this->isExists())
+        if ($this->isExists()) {
             $success = rename($this->getPhysicalPath(), Path::convertLogicalToPhysical($newPathNormalized));
+        }
 
         if ($success) {
             $this->originalPath = $newPath;

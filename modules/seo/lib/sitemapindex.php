@@ -29,9 +29,15 @@ class SitemapIndex
 
         foreach ($arIndex as $file) {
             if (!$file->isSystem() && $file->isExists()) {
+                $e = [];
                 $str .= sprintf(
                     self::ENTRY_TPL,
-                    Converter::getXmlConverter()->encode($this->settings['PROTOCOL'] . '://' . \CBXPunycode::toASCII($this->settings['DOMAIN'], $e = null) . $this->getFileUrl($file)),
+                    Converter::getXmlConverter()->encode(
+                        $this->settings['PROTOCOL'] . '://' . \CBXPunycode::toASCII(
+                            $this->settings['DOMAIN'],
+                            $e
+                        ) . $this->getFileUrl($file)
+                    ),
                     date('c', $file->getModificationTime())
                 );
             }
@@ -45,7 +51,13 @@ class SitemapIndex
     public function appendIndexEntry($file)
     {
         if ($this->isExists() && $file->isExists()) {
-            $fileUrlEnc = Converter::getXmlConverter()->encode($this->settings['PROTOCOL'] . '://' . \CBXPunycode::toASCII($this->settings['DOMAIN'], $e = null) . $this->getFileUrl($file));
+            $e = [];
+            $fileUrlEnc = Converter::getXmlConverter()->encode(
+                $this->settings['PROTOCOL'] . '://' . \CBXPunycode::toASCII(
+                    $this->settings['DOMAIN'],
+                    $e
+                ) . $this->getFileUrl($file)
+            );
 
             $contents = $this->getContents();
 
@@ -61,7 +73,7 @@ class SitemapIndex
             $contents = preg_replace($reg, $newEntry, $contents, 1, $count);
 
             if ($count <= 0) {
-                $contents = substr($contents, 0, -strlen(self::FILE_FOOTER))
+                $contents = mb_substr($contents, 0, -mb_strlen(self::FILE_FOOTER))
                     . $newEntry . self::FILE_FOOTER;
             }
 

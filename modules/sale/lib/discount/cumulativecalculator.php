@@ -43,12 +43,15 @@ final class CumulativeCalculator
 
         $filter = $this->createFilterBySumConfiguration($this->sumConfiguration);
         $orderUserId = $this->userId;
-        $filter = array_merge(array(
-            'USER_ID' => $orderUserId,
-            '=LID' => $this->siteId,
-            '=PAYED' => 'Y',
-            '=CANCELED' => 'N',
-        ), $filter);
+        $filter = array_merge(
+            array(
+                'USER_ID' => $orderUserId,
+                '=LID' => $this->siteId,
+                '=PAYED' => 'Y',
+                '=CANCELED' => 'N',
+            ),
+            $filter
+        );
 
         $sum = 0;
         foreach (array(self::TYPE_ORDER_NON_ARCHIVED, self::TYPE_ORDER_ARCHIVED) as $orderType) {

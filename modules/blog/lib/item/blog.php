@@ -75,7 +75,7 @@ class Blog
             ) {
                 $ideaBlogGroupIdList = array();
                 if (ModuleManager::isModuleInstalled("idea")) {
-                    $res = \CSite::getList($by = "sort", $order = "desc", Array("ACTIVE" => "Y"));
+                    $res = \CSite::getList("sort", "desc", Array("ACTIVE" => "Y"));
                     while ($site = $res->fetch()) {
                         $val = Config\Option::get("idea", "blog_group_id", false, $site["LID"]);
                         if ($val) {
@@ -108,11 +108,13 @@ class Blog
             && isset($params["CREATE"])
             && $params["CREATE"] == "Y"
         ) {
-            $result = \Bitrix\Socialnetwork\ComponentHelper::createUserBlog(array(
-                "BLOG_GROUP_ID" => $groupId,
-                "USER_ID" => $userId,
-                "SITE_ID" => $siteId
-            ));
+            $result = \Bitrix\Socialnetwork\ComponentHelper::createUserBlog(
+                array(
+                    "BLOG_GROUP_ID" => $groupId,
+                    "USER_ID" => $userId,
+                    "SITE_ID" => $siteId
+                )
+            );
         }
 
         return $result;

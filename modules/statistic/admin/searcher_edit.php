@@ -1,9 +1,12 @@
 <?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/prolog.php");
 /** @var CMain $APPLICATION */
 $STAT_RIGHT = $APPLICATION->GetGroupRight("statistic");
-if ($STAT_RIGHT == "D") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($STAT_RIGHT == "D") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 $err_mess = "File: " . __FILE__ . "<br>Line: ";
@@ -11,7 +14,12 @@ define("HELP_FILE", "searcher_list.php");
 $strError = "";
 $statDB = CDatabase::GetModuleConnection('statistic');
 $aTabs = array(
-    array("DIV" => "edit1", "TAB" => GetMessage("STAT_PROP"), "ICON" => "stat_edit", "TITLE" => GetMessage("STAT_PROP_TITLE")),
+    array(
+        "DIV" => "edit1",
+        "TAB" => GetMessage("STAT_PROP"),
+        "ICON" => "stat_edit",
+        "TITLE" => GetMessage("STAT_PROP_TITLE")
+    ),
 );
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 /***************************************************************************
@@ -21,9 +29,15 @@ function CheckFields()
 {
     global $strError, $str_NAME;
     $str = "";
-    if (strlen(trim($str_NAME)) <= 0) $str .= GetMessage("STAT_FORGOT_NAME") . "<br>";
+    if (trim($str_NAME) == '') {
+        $str .= GetMessage("STAT_FORGOT_NAME") . "<br>";
+    }
     $strError .= $str;
-    if (strlen($str) > 0) return false; else return true;
+    if ($str <> '') {
+        return false;
+    } else {
+        return true;
+    }
 }
 
 function Set_Params()
@@ -31,7 +45,9 @@ function Set_Params()
     global $ID, $PARAM, $err_mess, $statDB;
 
     foreach ($PARAM as $pid) {
-        if (intval($pid) <= 0) continue;
+        if (intval($pid) <= 0) {
+            continue;
+        }
         $var_PARAM_ID = "PARAM_ID_" . $pid;
         $var_DOMAIN = "DOMAIN_" . $pid;
         $var_VARIABLE = "VARIABLE_" . $pid;
@@ -45,11 +61,21 @@ function Set_Params()
         $strSql = "SELECT 'x' FROM b_stat_searcher_params WHERE ID='" . intval($$var_PARAM_ID) . "'";
         $b = $statDB->Query($strSql, false, $err_mess . __LINE__);
         if ($br = $b->Fetch()) {
-            if (strlen(trim($$var_DOMAIN)) <= 0)
-                $statDB->Query("DELETE FROM b_stat_searcher_params WHERE ID='" . intval($$var_PARAM_ID) . "'", false, $err_mess . __LINE__);
-            else
-                $statDB->Update("b_stat_searcher_params", $arFields, "WHERE ID='" . intval($$var_PARAM_ID) . "'", $err_mess . __LINE__);
-        } elseif (strlen(trim($$var_DOMAIN)) > 0) {
+            if (trim($$var_DOMAIN) == '') {
+                $statDB->Query(
+                    "DELETE FROM b_stat_searcher_params WHERE ID='" . intval($$var_PARAM_ID) . "'",
+                    false,
+                    $err_mess . __LINE__
+                );
+            } else {
+                $statDB->Update(
+                    "b_stat_searcher_params",
+                    $arFields,
+                    "WHERE ID='" . intval($$var_PARAM_ID) . "'",
+                    $err_mess . __LINE__
+                );
+            }
+        } elseif (trim($$var_DOMAIN) <> '') {
             $arFields["SEARCHER_ID"] = intval($ID);
             $statDB->Insert("b_stat_searcher_params", $arFields, $err_mess . __LINE__);
         }
@@ -62,21 +88,21 @@ InitBVar($SAVE_STATISTIC);
 InitBVar($DIAGRAM_DEFAULT);
 InitBVar($CHECK_ACTIVITY);
 
-if ((strlen($save) > 0 || strlen($apply) > 0) && $REQUEST_METHOD == "POST" && $STAT_RIGHT >= "W" && check_bitrix_sessid()) {
+if (($save <> '' || $apply <> '') && $REQUEST_METHOD == "POST" && $STAT_RIGHT >= "W" && check_bitrix_sessid()) {
     $strSql = "SELECT HIT_KEEP_DAYS FROM b_stat_searcher WHERE ID = $ID";
     $rsSearcher = $statDB->Query($strSql, false, $err_mess . __LINE__);
     $arSearcher = $rsSearcher->Fetch();
 
     $statDB->PrepareFields("b_stat_searcher");
-    $sql_HIT_KEEP_DAYS = (strlen($HIT_KEEP_DAYS) <= 0) ? "null" : intval($HIT_KEEP_DAYS);
+    $sql_HIT_KEEP_DAYS = ($HIT_KEEP_DAYS == '') ? "null" : intval($HIT_KEEP_DAYS);
     $arFields = array(
         "ACTIVE" => "'" . $str_ACTIVE . "'",
         "SAVE_STATISTIC" => "'" . $str_SAVE_STATISTIC . "'",
         "DIAGRAM_DEFAULT" => "'" . $str_DIAGRAM_DEFAULT . "'",
         "NAME" => "'" . $str_NAME . "'",
-        "USER_AGENT" => (strlen($USER_AGENT) <= 0) ? "null" : "'" . $str_USER_AGENT . "'",
+        "USER_AGENT" => ($USER_AGENT == '') ? "null" : "'" . $str_USER_AGENT . "'",
         "HIT_KEEP_DAYS" => $sql_HIT_KEEP_DAYS,
-        "DYNAMIC_KEEP_DAYS" => (strlen($DYNAMIC_KEEP_DAYS) <= 0) ? "null" : intval($DYNAMIC_KEEP_DAYS),
+        "DYNAMIC_KEEP_DAYS" => ($DYNAMIC_KEEP_DAYS == '') ? "null" : intval($DYNAMIC_KEEP_DAYS),
         "CHECK_ACTIVITY" => "'" . $str_CHECK_ACTIVITY . "'"
     );
     if (CheckFields()) {
@@ -90,14 +116,21 @@ if ((strlen($save) > 0 || strlen($apply) > 0) && $REQUEST_METHOD == "POST" && $S
             }
         } else {
             $ID = $statDB->Insert("b_stat_searcher", $arFields, $err_mess . __LINE__);
-            if (intval($ID) > 0) Set_Params();
+            if (intval($ID) > 0) {
+                Set_Params();
+            }
             $new = "Y";
         }
-        if (strlen($strError) <= 0) {
+        if ($strError == '') {
             $statDB->Commit();
-            if (strlen($save) > 0) LocalRedirect("searcher_list.php?lang=" . LANG);
-            elseif ($new == "Y") LocalRedirect($APPLICATION->GetCurPage() . "?lang=" . LANG . "&ID=" . $ID);
-        } else $statDB->Rollback();
+            if ($save <> '') {
+                LocalRedirect("searcher_list.php?lang=" . LANG);
+            } elseif ($new == "Y") {
+                LocalRedirect($APPLICATION->GetCurPage() . "?lang=" . LANG . "&ID=" . $ID);
+            }
+        } else {
+            $statDB->Rollback();
+        }
     }
 }
 
@@ -111,10 +144,15 @@ if (!($searcher->ExtractFields())) {
     $str_NAME = htmlspecialcharsbx($nm);
     $str_CHECK_ACTIVITY = "Y";
 }
-if (strlen($strError) > 0) $statDB->InitTableVarsForEdit("b_stat_searcher", "", "str_");
+if ($strError <> '') {
+    $statDB->InitTableVarsForEdit("b_stat_searcher", "", "str_");
+}
 
-if ($ID > 0) $sDocTitle = GetMessage("STAT_EDIT_RECORD", array("#ID#" => $ID));
-else $sDocTitle = GetMessage("STAT_NEW_RECORD");
+if ($ID > 0) {
+    $sDocTitle = GetMessage("STAT_EDIT_RECORD", array("#ID#" => $ID));
+} else {
+    $sDocTitle = GetMessage("STAT_NEW_RECORD");
+}
 
 $APPLICATION->SetTitle($sDocTitle);
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
@@ -146,7 +184,10 @@ if (intval($ID) > 0) {
         "ICON" => "btn_delete",
         "TEXT" => GetMessage("STAT_DELETE"),
         "TITLE" => GetMessage("STAT_DELETE_SEARCHER"),
-        "LINK" => "javascript:if(confirm('" . GetMessageJS("STAT_DELETE_SEARCHER_CONFIRM") . "'))window.location='searcher_list.php?action=delete&ID=" . $ID . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get() . "';",
+        "LINK" => "javascript:if(confirm('" . GetMessageJS(
+                "STAT_DELETE_SEARCHER_CONFIRM"
+            ) . "'))window.location='searcher_list.php?action=delete&ID=" . $ID . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get(
+            ) . "';",
     );
 }
 
@@ -157,7 +198,9 @@ $context->Show();
 if ($strError) {
     $aMsg = array();
     $arrErr = explode("<br>", $strError);
-    while (list(, $err) = each($arrErr)) $aMsg[]['text'] = $err;
+    foreach ($arrErr as $err) {
+        $aMsg[]['text'] = $err;
+    }
 
     $e = new CAdminException($aMsg);
     $GLOBALS["APPLICATION"]->ThrowException($e);
@@ -221,7 +264,7 @@ if ($strError) {
                         <td><? echo GetMessage("STAT_CHAR_SET") ?></td>
                     </tr>
                     <?
-                    $rs = CSearcher::GetDomainList($v1 = "s_id", $v2 = "asc", array("SEARCHER_ID" => $ID), $v3);
+                    $rs = CSearcher::GetDomainList("s_id", "asc", array("SEARCHER_ID" => $ID));
                     $i = 1;
                     while ($arDomain = $rs->GetNext()):
                         ?>
@@ -262,7 +305,9 @@ if ($strError) {
         </tr>
         <?
         $tabControl->EndTab();
-        $tabControl->Buttons(array("disabled" => ($STAT_RIGHT < "W"), "back_url" => "searcher_list.php?lang=" . LANGUAGE_ID));
+        $tabControl->Buttons(
+            array("disabled" => ($STAT_RIGHT < "W"), "back_url" => "searcher_list.php?lang=" . LANGUAGE_ID)
+        );
         $tabControl->End();
         ?>
     </form>

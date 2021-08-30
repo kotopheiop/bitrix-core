@@ -42,8 +42,11 @@ abstract class Result implements \IteratorAggregate
      * @param Connection $dbConnection Connection object.
      * @param \Bitrix\Main\Diag\SqlTrackerQuery $trackerQuery Helps to collect debug information.
      */
-    public function __construct($result, Connection $dbConnection = null, \Bitrix\Main\Diag\SqlTrackerQuery $trackerQuery = null)
-    {
+    public function __construct(
+        $result,
+        Connection $dbConnection = null,
+        \Bitrix\Main\Diag\SqlTrackerQuery $trackerQuery = null
+    ) {
         $this->resource = $result;
         $this->connection = $dbConnection;
         $this->trackerQuery = $trackerQuery;
@@ -174,8 +177,9 @@ abstract class Result implements \IteratorAggregate
 
         if ($this->serializedFields) {
             foreach ($this->serializedFields as $field) {
-                if (isset($data[$field]))
+                if (isset($data[$field])) {
                     $data[$field] = unserialize($data[$field]);
+                }
             }
         }
 

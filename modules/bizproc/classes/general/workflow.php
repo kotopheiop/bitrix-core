@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 /**
@@ -66,10 +67,12 @@ class CBPWorkflow
      */
     public function __construct($instanceId, CBPRuntime $runtime)
     {
-        if (strlen($instanceId) <= 0)
+        if ($instanceId == '') {
             throw new Exception("instanceId");
-        if (!$runtime)
+        }
+        if (!$runtime) {
             throw new Exception("runtime");
+        }
 
         $this->instanceId = $instanceId;
         $this->runtime = $runtime;
@@ -86,8 +89,14 @@ class CBPWorkflow
 
     /************************  CREATE / LOAD WORKFLOW  ****************************************/
 
-    public function Initialize(CBPActivity $rootActivity, $documentId, $workflowParameters = array(), $workflowVariablesTypes = array(), $workflowParametersTypes = array(), $workflowTemplateId = 0)
-    {
+    public function Initialize(
+        CBPActivity $rootActivity,
+        $documentId,
+        $workflowParameters = array(),
+        $workflowVariablesTypes = array(),
+        $workflowParametersTypes = array(),
+        $workflowTemplateId = 0
+    ) {
         $this->rootActivity = $rootActivity;
         $rootActivity->SetWorkflow($this);
         if (method_exists($rootActivity, 'SetWorkflowTemplateId')) {
@@ -152,15 +161,17 @@ class CBPWorkflow
     {
         $workflowStatus = $this->GetWorkflowStatus();
 
-        if ($workflowStatus == CBPWorkflowStatus::Suspended)
+        if ($workflowStatus == CBPWorkflowStatus::Suspended) {
             return;
+        }
 
         if ($this->rootActivity->executionStatus == CBPActivityExecutionStatus::Closed) {
             $this->SetWorkflowStatus(CBPWorkflowStatus::Completed);
         } else {
             $workflowStatus = $this->GetWorkflowStatus();
-            if ($workflowStatus == CBPWorkflowStatus::Running)
+            if ($workflowStatus == CBPWorkflowStatus::Running) {
                 $this->SetWorkflowStatus(CBPWorkflowStatus::Suspended);
+            }
         }
 
         $persister = CBPWorkflowPersister::GetPersister();
@@ -175,8 +186,9 @@ class CBPWorkflow
      */
     public function Start()
     {
-        if ($this->GetWorkflowStatus() != CBPWorkflowStatus::Created)
+        if ($this->GetWorkflowStatus() != CBPWorkflowStatus::Created) {
             throw new Exception("CanNotStartInstanceTwice");
+        }
 
         $this->isNew = true;
         $this->SetWorkflowStatus(CBPWorkflowStatus::Running);
@@ -194,8 +206,9 @@ class CBPWorkflow
             $this->SetWorkflowStatus(CBPWorkflowStatus::Completed);
         } else {
             $workflowStatus = $this->GetWorkflowStatus();
-            if ($workflowStatus == CBPWorkflowStatus::Running)
+            if ($workflowStatus == CBPWorkflowStatus::Running) {
                 $this->SetWorkflowStatus(CBPWorkflowStatus::Suspended);
+            }
         }
 
         $persister = CBPWorkflowPersister::GetPersister();
@@ -208,12 +221,12 @@ class CBPWorkflow
      */
     public function Resume()
     {
-        if ($this->GetWorkflowStatus() != CBPWorkflowStatus::Suspended)
+        if ($this->GetWorkflowStatus() != CBPWorkflowStatus::Suspended) {
             throw new Exception("CanNotResumeInstance");
-
-        $this->SetWorkflowStatus(CBPWorkflowStatus::Running);
+        }
 
         try {
+            $this->SetWorkflowStatus(CBPWorkflowStatus::Running);
             $this->RunQueue();
         } catch (Exception $e) {
             $this->Terminate($e);
@@ -224,8 +237,9 @@ class CBPWorkflow
             $this->SetWorkflowStatus(CBPWorkflowStatus::Completed);
         } else {
             $workflowStatus = $this->GetWorkflowStatus();
-            if ($workflowStatus == CBPWorkflowStatus::Running)
+            if ($workflowStatus == CBPWorkflowStatus::Running) {
                 $this->SetWorkflowStatus(CBPWorkflowStatus::Suspended);
+            }
         }
 
         $persister = CBPWorkflowPersister::GetPersister();
@@ -259,18 +273,21 @@ class CBPWorkflow
 
         if (is_a($activity, "CBPCompositeActivity")) {
             $arSubActivities = $activity->CollectNestedActivities();
-            foreach ($arSubActivities as $subActivity)
+            foreach ($arSubActivities as $subActivity) {
                 $this->FillNameActivityMapInternal($subActivity);
+            }
         }
     }
 
     private function FillNameActivityMap()
     {
-        if (!is_array($this->activitiesNamesMap))
+        if (!is_array($this->activitiesNamesMap)) {
             $this->activitiesNamesMap = array();
+        }
 
-        if (count($this->activitiesNamesMap) > 0)
+        if (count($this->activitiesNamesMap) > 0) {
             return;
+        }
 
         $this->FillNameActivityMapInternal($this->rootActivity);
     }
@@ -283,15 +300,17 @@ class CBPWorkflow
      */
     public function GetActivityByName($activityName)
     {
-        if (strlen($activityName) <= 0)
+        if ($activityName == '') {
             throw new Exception("activityName");
+        }
 
         $activity = null;
 
         $this->FillNameActivityMap();
 
-        if (array_key_exists($activityName, $this->activitiesNamesMap))
+        if (array_key_exists($activityName, $this->activitiesNamesMap)) {
             $activity = $this->activitiesNamesMap[$activityName];
+        }
 
         return $activity;
     }
@@ -305,11 +324,13 @@ class CBPWorkflow
      */
     public function InitializeActivity(CBPActivity $activity)
     {
-        if ($activity == null)
+        if ($activity == null) {
             throw new CBPArgumentNullException("activity");
+        }
 
-        if ($activity->executionStatus != CBPActivityExecutionStatus::Initialized)
+        if ($activity->executionStatus != CBPActivityExecutionStatus::Initialized) {
             throw new Exception("InvalidInitializingState");
+        }
 
         $activity->Initialize();
     }
@@ -322,11 +343,13 @@ class CBPWorkflow
      */
     public function ExecuteActivity(CBPActivity $activity, $arEventParameters = array())
     {
-        if ($activity == null)
+        if ($activity == null) {
             throw new Exception("activity");
+        }
 
-        if ($activity->executionStatus != CBPActivityExecutionStatus::Initialized)
+        if ($activity->executionStatus != CBPActivityExecutionStatus::Initialized) {
             throw new Exception("InvalidExecutionState");
+        }
 
         $activity->SetStatus(CBPActivityExecutionStatus::Executing, $arEventParameters);
         $this->AddItemToQueue(array($activity, CBPActivityExecutorOperationType::Execute));
@@ -368,11 +391,13 @@ class CBPWorkflow
      */
     public function CancelActivity(CBPActivity $activity, $arEventParameters = array())
     {
-        if ($activity == null)
+        if ($activity == null) {
             throw new Exception("activity");
+        }
 
-        if ($activity->executionStatus != CBPActivityExecutionStatus::Executing)
+        if ($activity->executionStatus != CBPActivityExecutionStatus::Executing) {
             throw new Exception("InvalidCancelingState");
+        }
 
         $activity->SetStatus(CBPActivityExecutionStatus::Canceling, $arEventParameters);
         $this->AddItemToQueue(array($activity, CBPActivityExecutorOperationType::Cancel));
@@ -380,14 +405,16 @@ class CBPWorkflow
 
     public function FaultActivity(CBPActivity $activity, Exception $e, $arEventParameters = array())
     {
-        if ($activity == null)
+        if ($activity == null) {
             throw new Exception("activity");
+        }
 
         if ($activity->executionStatus == CBPActivityExecutionStatus::Closed) {
-            if ($activity->parent == null)
+            if ($activity->parent == null) {
                 $this->Terminate($e);
-            else
+            } else {
                 $this->FaultActivity($activity->parent, $e, $arEventParameters);
+            }
         } else {
             $activity->SetStatus(CBPActivityExecutionStatus::Faulting);
             $this->AddItemToQueue(array($activity, CBPActivityExecutorOperationType::HandleFault, $e));
@@ -407,16 +434,18 @@ class CBPWorkflow
             $this->ProcessQueuedEvents();
 
             $item = array_shift($this->activitiesQueue);
-            if ($item == null)
+            if ($item == null) {
                 return;
+            }
 
             try {
                 $this->RunQueuedItem($item[0], $item[1], (count($item) > 2 ? $item[2] : null));
             } catch (Exception $e) {
                 $this->FaultActivity($item[0], $e);
 
-                if ($this->GetWorkflowStatus() == CBPWorkflowStatus::Terminated)
+                if ($this->GetWorkflowStatus() == CBPWorkflowStatus::Terminated) {
                     return;
+                }
             }
         }
     }
@@ -428,20 +457,31 @@ class CBPWorkflow
             if ($activity->executionStatus == CBPActivityExecutionStatus::Executing) {
                 try {
                     $trackingService = $this->GetService("TrackingService");
-                    $trackingService->Write($this->GetInstanceId(), CBPTrackingType::ExecuteActivity, $activity->GetName(), $activity->executionStatus, $activity->executionResult, ($activity->IsPropertyExists("Title") ? $activity->Title : ""), "");
+                    $trackingService->Write(
+                        $this->GetInstanceId(),
+                        CBPTrackingType::ExecuteActivity,
+                        $activity->GetName(),
+                        $activity->executionStatus,
+                        $activity->executionResult,
+                        ($activity->IsPropertyExists("Title") ? $activity->Title : ""),
+                        ""
+                    );
                     $newStatus = $activity->Execute();
 
                     //analyse robots - Temporary, it is prototype
                     if ($trackingService->isForcedMode($this->GetInstanceId())) {
-                        $activityType = substr(get_class($activity), 3);
-                        if (!in_array($activityType, [
-                            'SequentialWorkflowActivity',
-                            'ParallelActivity',
-                            'SequenceActivity',
-                            'DelayActivity',
-                            'IfElseActivity',
-                            'IfElseBranchActivity'
-                        ])) {
+                        $activityType = mb_substr(get_class($activity), 3);
+                        if (!in_array(
+                            $activityType,
+                            [
+                                'SequentialWorkflowActivity',
+                                'ParallelActivity',
+                                'SequenceActivity',
+                                'DelayActivity',
+                                'IfElseActivity',
+                                'IfElseBranchActivity'
+                            ]
+                        )) {
                             /** @var \Bitrix\Bizproc\Service\Analytics $analyticsService */
                             $analyticsService = $this->GetService("AnalyticsService");
                             if ($analyticsService->isEnabled()) {
@@ -450,10 +490,11 @@ class CBPWorkflow
                         }
                     }
 
-                    if ($newStatus == CBPActivityExecutionStatus::Closed)
+                    if ($newStatus == CBPActivityExecutionStatus::Closed) {
                         $this->CloseActivity($activity);
-                    elseif ($newStatus != CBPActivityExecutionStatus::Executing)
+                    } elseif ($newStatus != CBPActivityExecutionStatus::Executing) {
                         throw new Exception("InvalidExecutionStatus");
+                    }
                 } catch (Exception $e) {
                     throw $e;
                 }
@@ -462,14 +503,23 @@ class CBPWorkflow
             if ($activity->executionStatus == CBPActivityExecutionStatus::Canceling) {
                 try {
                     $trackingService = $this->GetService("TrackingService");
-                    $trackingService->Write($this->GetInstanceId(), CBPTrackingType::CancelActivity, $activity->GetName(), $activity->executionStatus, $activity->executionResult, ($activity->IsPropertyExists("Title") ? $activity->Title : ""), "");
+                    $trackingService->Write(
+                        $this->GetInstanceId(),
+                        CBPTrackingType::CancelActivity,
+                        $activity->GetName(),
+                        $activity->executionStatus,
+                        $activity->executionResult,
+                        ($activity->IsPropertyExists("Title") ? $activity->Title : ""),
+                        ""
+                    );
 
                     $newStatus = $activity->Cancel();
 
-                    if ($newStatus == CBPActivityExecutionStatus::Closed)
+                    if ($newStatus == CBPActivityExecutionStatus::Closed) {
                         $this->CloseActivity($activity);
-                    elseif ($newStatus != CBPActivityExecutionStatus::Canceling)
+                    } elseif ($newStatus != CBPActivityExecutionStatus::Canceling) {
                         throw new Exception("InvalidExecutionStatus");
+                    }
                 } catch (Exception $e) {
                     throw $e;
                 }
@@ -478,14 +528,24 @@ class CBPWorkflow
             if ($activity->executionStatus == CBPActivityExecutionStatus::Faulting) {
                 try {
                     $trackingService = $this->GetService("TrackingService");
-                    $trackingService->Write($this->GetInstanceId(), CBPTrackingType::FaultActivity, $activity->GetName(), $activity->executionStatus, $activity->executionResult, ($activity->IsPropertyExists("Title") ? $activity->Title : ""), ($exception != null ? ($exception->getCode() ? "[" . $exception->getCode() . "] " : '') . $exception->getMessage() : ""));
+                    $trackingService->Write(
+                        $this->GetInstanceId(),
+                        CBPTrackingType::FaultActivity,
+                        $activity->GetName(),
+                        $activity->executionStatus,
+                        $activity->executionResult,
+                        ($activity->IsPropertyExists("Title") ? $activity->Title : ""),
+                        ($exception != null ? ($exception->getCode() ? "[" . $exception->getCode(
+                                ) . "] " : '') . $exception->getMessage() : "")
+                    );
 
                     $newStatus = $activity->HandleFault($exception);
 
-                    if ($newStatus == CBPActivityExecutionStatus::Closed)
+                    if ($newStatus == CBPActivityExecutionStatus::Closed) {
                         $this->CloseActivity($activity);
-                    elseif ($newStatus != CBPActivityExecutionStatus::Faulting)
+                    } elseif ($newStatus != CBPActivityExecutionStatus::Faulting) {
                         throw new Exception("InvalidExecutionStatus");
+                    }
                 } catch (Exception $e) {
                     throw $e;
                 }
@@ -497,7 +557,7 @@ class CBPWorkflow
     {
         /** @var CBPTaskService $taskService */
         $taskService = $this->GetService("TaskService");
-        $taskService->DeleteAllWorkflowTasks($this->GetInstanceId());
+        $taskService->DeleteByWorkflow($this->GetInstanceId(), \CBPTaskStatus::Running);
 
         $this->SetWorkflowStatus(CBPWorkflowStatus::Terminated);
 
@@ -518,7 +578,15 @@ class CBPWorkflow
 
         if ($e != null) {
             $trackingService = $this->GetService("TrackingService");
-            $trackingService->Write($this->instanceId, CBPTrackingType::FaultActivity, "none", CBPActivityExecutionStatus::Faulting, CBPActivityExecutionResult::Faulted, "Exception", ($e->getCode() ? "[" . $e->getCode() . "] " : '') . $e->getMessage());
+            $trackingService->Write(
+                $this->instanceId,
+                CBPTrackingType::FaultActivity,
+                "none",
+                CBPActivityExecutionStatus::Faulting,
+                CBPActivityExecutionResult::Faulted,
+                GetMessage('BPCGWF_EXCEPTION_TITLE'),
+                ($e->getCode() ? "[" . $e->getCode() . "] " : '') . $e->getMessage()
+            );
         }
     }
 
@@ -529,8 +597,9 @@ class CBPWorkflow
      */
     public function FinalizeActivity(CBPActivity $activity)
     {
-        if ($activity == null)
+        if ($activity == null) {
             throw new CBPArgumentNullException("activity");
+        }
 
         //if ($activity->executionStatus != CBPActivityExecutionStatus::Closed)
         //	throw new Exception("InvalidFinalizingState");
@@ -549,8 +618,9 @@ class CBPWorkflow
     {
         while (true) {
             $arEvent = array_shift($this->eventsQueue);
-            if ($arEvent == null)
+            if ($arEvent == null) {
                 return;
+            }
 
             $eventName = $arEvent[0];
             $arEventParameters = $arEvent[1];
@@ -561,12 +631,14 @@ class CBPWorkflow
 
     private function ProcessQueuedEvent($eventName, $arEventParameters = array())
     {
-        if (!array_key_exists($eventName, $this->rootActivity->arEventsMap))
+        if (!array_key_exists($eventName, $this->rootActivity->arEventsMap)) {
             return;
+        }
 
         foreach ($this->rootActivity->arEventsMap[$eventName] as $eventHandler) {
-            if (is_a($eventHandler, "IBPActivityExternalEventListener"))
+            if (is_a($eventHandler, "IBPActivityExternalEventListener")) {
                 $eventHandler->OnExternalEvent($arEventParameters);
+            }
         }
     }
 
@@ -578,11 +650,13 @@ class CBPWorkflow
      */
     public function AddEventHandler($eventName, IBPActivityExternalEventListener $eventHandler)
     {
-        if (!is_array($this->rootActivity->arEventsMap))
+        if (!is_array($this->rootActivity->arEventsMap)) {
             $this->rootActivity->arEventsMap = array();
+        }
 
-        if (!array_key_exists($eventName, $this->rootActivity->arEventsMap))
+        if (!array_key_exists($eventName, $this->rootActivity->arEventsMap)) {
             $this->rootActivity->arEventsMap[$eventName] = array();
+        }
 
         $this->rootActivity->arEventsMap[$eventName][] = $eventHandler;
     }
@@ -595,18 +669,22 @@ class CBPWorkflow
      */
     public function RemoveEventHandler($eventName, IBPActivityExternalEventListener $eventHandler)
     {
-        if (!is_array($this->rootActivity->arEventsMap))
+        if (!is_array($this->rootActivity->arEventsMap)) {
             $this->rootActivity->arEventsMap = array();
+        }
 
-        if (!array_key_exists($eventName, $this->rootActivity->arEventsMap))
+        if (!array_key_exists($eventName, $this->rootActivity->arEventsMap)) {
             $this->rootActivity->arEventsMap[$eventName] = array();
+        }
 
         $idx = array_search($eventHandler, $this->rootActivity->arEventsMap[$eventName], true);
-        if ($idx !== false)
+        if ($idx !== false) {
             unset($this->rootActivity->arEventsMap[$eventName][$idx]);
+        }
 
-        if (count($this->rootActivity->arEventsMap[$eventName]) <= 0)
+        if (count($this->rootActivity->arEventsMap[$eventName]) <= 0) {
             unset($this->rootActivity->arEventsMap[$eventName]);
+        }
     }
 
     /*******************  UTILITIES  ***************************************************************/
@@ -617,8 +695,9 @@ class CBPWorkflow
      */
     public function GetAvailableStateEvents()
     {
-        if (!is_a($this->rootActivity, "CBPStateMachineWorkflowActivity"))
+        if (!is_a($this->rootActivity, "CBPStateMachineWorkflowActivity")) {
             throw new Exception("NotAStateMachineWorkflow");
+        }
 
         return $this->rootActivity->GetAvailableStateEvents();
     }

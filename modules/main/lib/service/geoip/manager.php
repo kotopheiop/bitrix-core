@@ -187,8 +187,9 @@ final class Manager
     {
         $result = null;
 
-        if (strlen($ip) <= 0)
+        if ($ip == '') {
             $ip = self::getRealIp();
+        }
 
         self::$data[$ip] = self::getFromStore($ip);
 
@@ -197,7 +198,7 @@ final class Manager
             foreach (self::$data[$ip] as $data) {
                 if (is_object($data) && ($data instanceof Data)) {
                     if (empty($required) || self::hasDataAllRequiredFields($required, $data)) {
-                        if (strlen($lang) <= 0 || $data->lang == $lang) {
+                        if ($lang == '' || $data->lang == $lang) {
                             $result = new Result();
                             $result->setGeoData($data);
                             break;
@@ -210,40 +211,52 @@ final class Manager
         }
 
         if (!$result) {
-            if (self::$handlers === null)
+            if (self::$handlers === null) {
                 self::initHandlers();
+            }
 
             /** @var Base $handler */
             foreach (self::$handlers as $handler) {
-                if (!$handler->isInstalled())
+                if (!$handler->isInstalled()) {
                     continue;
+                }
 
-                if (!$handler->isActive())
+                if (!$handler->isActive()) {
                     continue;
+                }
 
-                if (strlen($lang) > 0)
-                    if (!in_array($lang, $handler->getSupportedLanguages()))
+                if ($lang <> '') {
+                    if (!in_array($lang, $handler->getSupportedLanguages())) {
                         continue;
+                    }
+                }
 
-                if (!empty($required) && !self::hasDataAllRequiredFields($required, $handler->getProvidingData()))
+                if (!empty($required) && !self::hasDataAllRequiredFields($required, $handler->getProvidingData())) {
                     continue;
+                }
 
                 $dataResult = $handler->getDataResult($ip, $lang);
 
-                if (!$dataResult)
+                if (!$dataResult) {
                     continue;
+                }
 
                 if (!$dataResult->isSuccess()) {
                     if (self::$logErrors) {
                         $eventLog = new \CEventLog;
 
-                        $eventLog->Add(array(
-                            "SEVERITY" => \CEventLog::SEVERITY_ERROR,
-                            "AUDIT_TYPE_ID" => 'MAIN_SERVICES_GEOIP_GETDATA_ERROR',
-                            "MODULE_ID" => "main",
-                            "ITEM_ID" => $ip . '(' . $lang . ')',
-                            "DESCRIPTION" => 'Handler id: ' . $handler->getId() . "\n<br>" . implode("\n<br>", $dataResult->getErrorMessages()),
-                        ));
+                        $eventLog->Add(
+                            array(
+                                "SEVERITY" => \CEventLog::SEVERITY_ERROR,
+                                "AUDIT_TYPE_ID" => 'MAIN_SERVICES_GEOIP_GETDATA_ERROR',
+                                "MODULE_ID" => "main",
+                                "ITEM_ID" => $ip . '(' . $lang . ')',
+                                "DESCRIPTION" => 'Handler id: ' . $handler->getId() . "\n<br>" . implode(
+                                        "\n<br>",
+                                        $dataResult->getErrorMessages()
+                                    ),
+                            )
+                        );
                     }
 
                     continue;
@@ -269,19 +282,23 @@ final class Manager
     {
         $name = self::getStoreVarName();
 
-        if (!isset($_SESSION[$name][$ip]) || !is_array($_SESSION[$name][$ip])) {
+        if (!isset(\Bitrix\Main\Application::getInstance()->getSession()[$name][$ip]) || !is_array(
+                \Bitrix\Main\Application::getInstance()->getSession()[$name][$ip]
+            )) {
             return false;
         }
 
-        $storedData = $_SESSION[$name][$ip];
+        $storedData = \Bitrix\Main\Application::getInstance()->getSession()[$name][$ip];
         $result = array();
 
         foreach ($storedData as $class => $data) {
             $tmpData = new Data();
 
-            foreach ($data as $attr => $value)
-                if (property_exists($tmpData, $attr))
+            foreach ($data as $attr => $value) {
+                if (property_exists($tmpData, $attr)) {
                     $tmpData->$attr = $value;
+                }
+            }
 
             $result[$class] = $tmpData;
         }
@@ -301,16 +318,18 @@ final class Manager
             $storedData[$class] = array();
             $values = get_object_vars($data);
 
-            foreach ($values as $attr => $value)
-                if ($value !== self::INFO_NOT_AVAILABLE)
+            foreach ($values as $attr => $value) {
+                if ($value !== self::INFO_NOT_AVAILABLE) {
                     $storedData[$class][$attr] = $value;
+                }
+            }
         }
 
-        if (!is_array($_SESSION[self::getStoreVarName()])) {
-            $_SESSION[self::getStoreVarName()] = [];
+        if (!is_array(\Bitrix\Main\Application::getInstance()->getSession()[self::getStoreVarName()])) {
+            \Bitrix\Main\Application::getInstance()->getSession()[self::getStoreVarName()] = [];
         }
 
-        $_SESSION[self::getStoreVarName()][$ip] = $storedData;
+        \Bitrix\Main\Application::getInstance()->getSession()[self::getStoreVarName()][$ip] = $storedData;
     }
 
     /**
@@ -328,22 +347,26 @@ final class Manager
      */
     private static function hasDataAllRequiredFields(array $required, $geoData)
     {
-        if (empty($required))
+        if (empty($required)) {
             return true;
+        }
 
         $vars = get_object_vars($geoData);
 
-        foreach ($required as $field)
-            if ($vars[$field] === self::INFO_NOT_AVAILABLE)
+        foreach ($required as $field) {
+            if ($vars[$field] === self::INFO_NOT_AVAILABLE) {
                 return false;
+            }
+        }
 
         return true;
     }
 
     private static function initHandlers()
     {
-        if (self::$handlers !== null)
+        if (self::$handlers !== null) {
             return;
+        }
 
         self::$handlers = array();
         $handlersList = array();
@@ -358,8 +381,9 @@ final class Manager
         $handlersFields = array();
         $res = HandlerTable::getList();
 
-        while ($row = $res->fetch())
+        while ($row = $res->fetch()) {
             $handlersFields[$row['CLASS_NAME']] = $row;
+        }
 
         foreach ($buildInHandlers as $class => $file) {
             if (self::isHandlerClassValid($class)) {
@@ -378,13 +402,15 @@ final class Manager
 
             foreach ($resultList as $eventResult) {
                 /** @var  EventResult $eventResult */
-                if ($eventResult->getType() != EventResult::SUCCESS)
+                if ($eventResult->getType() != EventResult::SUCCESS) {
                     continue;
+                }
 
                 $params = $eventResult->getParameters();
 
-                if (!empty($params) && is_array($params))
+                if (!empty($params) && is_array($params)) {
                     $customClasses = array_merge($customClasses, $params);
+                }
             }
 
             if (!empty($customClasses)) {
@@ -406,8 +432,9 @@ final class Manager
 
         asort($handlersSort, SORT_NUMERIC);
 
-        foreach ($handlersSort as $class => $sort)
+        foreach ($handlersSort as $class => $sort) {
             self::$handlers[$class] = $handlersList[$class];
+        }
     }
 
     /**
@@ -416,11 +443,13 @@ final class Manager
      */
     private static function isHandlerClassValid($className)
     {
-        if (!class_exists($className))
+        if (!class_exists($className)) {
             return false;
+        }
 
-        if (!is_subclass_of($className, '\Bitrix\Main\Service\GeoIp\Base'))
+        if (!is_subclass_of($className, '\Bitrix\Main\Service\GeoIp\Base')) {
             return false;
+        }
 
         return true;
     }
@@ -458,8 +487,9 @@ final class Manager
 
     public static function getHandlers()
     {
-        if (self::$handlers === null)
+        if (self::$handlers === null) {
             self::initHandlers();
+        }
 
         return self::$handlers;
     }
@@ -470,8 +500,9 @@ final class Manager
      */
     public static function getHandlerByClassName($className)
     {
-        if (self::$handlers === null)
+        if (self::$handlers === null) {
             self::initHandlers();
+        }
 
         return isset(self::$handlers[$className]) ? self::$handlers[$className] : null;
     }
@@ -532,14 +563,17 @@ final class Manager
     {
         $dataResult = self::getDataResult($ip, $lang, $required);
 
-        if (!$dataResult)
+        if (!$dataResult) {
             return null;
+        }
 
         $result = new DataResult();
 
-        foreach ($dataResult as $attr => $value)
-            if (property_exists($result, $attr))
+        foreach ($dataResult as $attr => $value) {
+            if (property_exists($result, $attr)) {
                 $result->$attr = $value;
+            }
+        }
 
         return $result;
     }

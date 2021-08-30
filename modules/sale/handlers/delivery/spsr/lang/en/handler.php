@@ -1,4 +1,5 @@
 <?
+
 $MESS["SALE_DLV_SRV_SPSR_TITLE"] = "SPSR EXPRESS";
 $MESS["SALE_DLV_SRV_SPSR_DESCRIPTION"] = "#A1#SPSR EXPRESS#A2# provides a wide range of delivery services across Russia and abroad.";
 $MESS["SALE_DLV_SRV_SPSR_MAIN_TITLE"] = "Settings";

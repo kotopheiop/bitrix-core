@@ -1,4 +1,5 @@
 <?
+
 define("ADMIN_MODULE_NAME", "security");
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
@@ -14,8 +15,9 @@ IncludeModuleLangFile(__FILE__);
 
 $canRead = $USER->CanDoOperation('security_iprule_settings_read');
 $canWrite = $USER->CanDoOperation('security_iprule_settings_write');
-if (!$canRead && !$canWrite)
+if (!$canRead && !$canWrite) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $aTabs = array(
     array(
@@ -33,25 +35,30 @@ $bVarsFromForm = false;
 $bShowForce = false;
 $message = CSecurityIPRule::CheckAntiFile(true);
 
-if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["save"] . $_REQUEST["apply"] != "" && $canWrite && check_bitrix_sessid()) {
-    if (!is_array($_POST["INCL_IPS"]))
+if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["save"] . $_REQUEST["apply"] != "" && $canWrite && check_bitrix_sessid(
+    )) {
+    if (!is_array($_POST["INCL_IPS"])) {
         $inclIps = array($_POST["INCL_IPS"]);
-    else
+    } else {
         $inclIps = $_POST["INCL_IPS"];
+    }
 
     $filteredInclIps = preg_grep("#^\d{1,3}(\.\d{1,3}){3}#", $inclIps);
-    if (empty($filteredInclIps))
+    if (empty($filteredInclIps)) {
         $APPLICATION->ThrowException(GetMessage("SEC_IP_EDIT_SAVE_ERROR_EMPTY_INCL_IPS"));
+    }
     unset($inclIps);
 
-    if (!is_array($_POST["INCL_MASKS"]))
+    if (!is_array($_POST["INCL_MASKS"])) {
         $inclMasks = array($_POST["INCL_MASKS"]);
-    else
+    } else {
         $inclMasks = $_POST["INCL_MASKS"];
+    }
 
     $filteredInclMasks = preg_grep("#^/#", $inclMasks);
-    if (empty($filteredInclMasks))
+    if (empty($filteredInclMasks)) {
         $APPLICATION->ThrowException(GetMessage("SEC_IP_EDIT_SAVE_ERROR_EMPTY_INCL_MASKS"));
+    }
     unset($inclMasks);
 
     if ($e = $APPLICATION->GetException()) {
@@ -62,12 +69,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["save"] . $_REQUEST["apply
         $selfBlock = $ob->CheckIP($_POST["INCL_IPS"], $_POST["EXCL_IPS"]);
 
         if ($selfBlock && (COption::GetOptionString("security", "ipcheck_allow_self_block") !== "Y")) {
-            if ($e = $APPLICATION->GetException())
+            if ($e = $APPLICATION->GetException()) {
                 $message = new CAdminMessage(GetMessage("SEC_IP_EDIT_SAVE_ERROR"), $e);
+            }
             $bVarsFromForm = true;
         } elseif ($selfBlock && $_POST["USE_THE_FORCE_LUK"] !== "Y") {
-            if ($e = $APPLICATION->GetException())
+            if ($e = $APPLICATION->GetException()) {
                 $message = new CAdminMessage(GetMessage("SEC_IP_EDIT_SAVE_ERROR"), $e);
+            }
             $bVarsFromForm = true;
             $bShowForce = true;
         } else {
@@ -93,13 +102,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["save"] . $_REQUEST["apply
             }
 
             if ($res) {
-                if ($_REQUEST["apply"] != "")
-                    LocalRedirect("/bitrix/admin/security_iprule_edit.php?ID=" . $ID . "&lang=" . LANG . "&" . $tabControl->ActiveTabParam());
-                else
+                if ($_REQUEST["apply"] != "") {
+                    LocalRedirect(
+                        "/bitrix/admin/security_iprule_edit.php?ID=" . $ID . "&lang=" . LANG . "&" . $tabControl->ActiveTabParam(
+                        )
+                    );
+                } else {
                     LocalRedirect("/bitrix/admin/security_iprule_list.php?lang=" . LANG);
+                }
             } else {
-                if ($e = $APPLICATION->GetException())
+                if ($e = $APPLICATION->GetException()) {
                     $message = new CAdminMessage(GetMessage("SEC_IP_EDIT_SAVE_ERROR"), $e);
+                }
                 $bVarsFromForm = true;
             }
         }
@@ -117,12 +131,14 @@ $str_ACTIVE_TO = "";
 
 if ($ID > 0) {
     $rs = CSecurityIPRule::GetList(array(), array("=ID" => $ID), array());
-    if (!$rs->ExtractFields("str_"))
+    if (!$rs->ExtractFields("str_")) {
         $ID = 0;
+    }
 }
 
-if ($bVarsFromForm)
+if ($bVarsFromForm) {
     $DB->InitTableVarsForEdit("b_sec_iprule", "", "str_");
+}
 
 $APPLICATION->SetTitle(($ID > 0 ? GetMessage("SEC_IP_EDIT_EDIT_TITLE") : GetMessage("SEC_IP_EDIT_ADD_TITLE")));
 
@@ -150,15 +166,19 @@ if ($ID > 0) {
     $aMenu[] = array(
         "TEXT" => GetMessage("SEC_IP_EDIT_MENU_DELETE"),
         "TITLE" => GetMessage("SEC_IP_EDIT_MENU_DELETE_TITLE"),
-        "LINK" => "javascript:if(confirm('" . GetMessage("SEC_IP_EDIT_MENU_DELETE_CONF") . "'))window.location='security_iprule_list.php?ID=" . $ID . "&action=delete&lang=" . LANG . "&" . bitrix_sessid_get() . "';",
+        "LINK" => "javascript:if(confirm('" . GetMessage(
+                "SEC_IP_EDIT_MENU_DELETE_CONF"
+            ) . "'))window.location='security_iprule_list.php?ID=" . $ID . "&action=delete&lang=" . LANG . "&" . bitrix_sessid_get(
+            ) . "';",
         "ICON" => "btn_delete",
     );
 }
 $context = new CAdminContextMenu($aMenu);
 $context->Show();
 
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 ?>
 
     <form method="POST" action="<? echo $APPLICATION->GetCurPage() ?>" enctype="multipart/form-data" name="editform">
@@ -205,14 +225,16 @@ if ($message)
             <td><? echo CAdminCalendar::CalendarDate("ACTIVE_TO", $str_ACTIVE_TO, 19, true) ?></td>
         </tr>
         <tr class="adm-detail-required-field">
-            <td class="adm-detail-valign-top"><? echo GetMessage("SEC_IP_EDIT_INCL_IPS") ?>
-                :<br><? echo GetMessage("SEC_IP_EDIT_INCL_IPS_SAMPLE") ?></td>
+            <td class="adm-detail-valign-top"><? echo GetMessage("SEC_IP_EDIT_INCL_IPS") ?>:<br><? echo GetMessage(
+                    "SEC_IP_EDIT_INCL_IPS_SAMPLE"
+                ) ?></td>
             <td>
                 <table cellpadding="0" cellspacing="0" border="0" class="nopadding" width="100%" id="tbINCL_IPS">
-                    <? if ($bVarsFromForm)
+                    <? if ($bVarsFromForm) {
                         $arIPs = $_POST["INCL_IPS"];
-                    else
+                    } else {
                         $arIPs = CSecurityIPRule::GetRuleInclIPs($ID);
+                    }
 
                     foreach ($arIPs as $i => $ip):?>
                         <tr>
@@ -243,10 +265,11 @@ if ($message)
             </td>
             <td>
                 <table cellpadding="0" cellspacing="0" border="0" class="nopadding" width="100%" id="tbEXCL_IPS">
-                    <? if ($bVarsFromForm)
+                    <? if ($bVarsFromForm) {
                         $arIPs = $_POST["EXCL_IPS"];
-                    else
+                    } else {
                         $arIPs = CSecurityIPRule::GetRuleExclIPs($ID);
+                    }
 
                     foreach ($arIPs as $i => $ip):?>
                         <tr>
@@ -273,14 +296,16 @@ if ($message)
             </td>
         </tr>
         <tr class="adm-detail-required-field">
-            <td class="adm-detail-valign-top"><? echo GetMessage("SEC_IP_EDIT_INCL_MASKS") ?>
-                :<br><? echo GetMessage("SEC_IP_EDIT_INCL_MASKS_SAMPLE") ?></td>
+            <td class="adm-detail-valign-top"><? echo GetMessage("SEC_IP_EDIT_INCL_MASKS") ?>:<br><? echo GetMessage(
+                    "SEC_IP_EDIT_INCL_MASKS_SAMPLE"
+                ) ?></td>
             <td>
                 <table cellpadding="0" cellspacing="0" border="0" class="nopadding" width="100%" id="tbINCL_PATH">
-                    <? if ($bVarsFromForm)
+                    <? if ($bVarsFromForm) {
                         $arMasks = $_POST["INCL_MASKS"];
-                    else
+                    } else {
                         $arMasks = CSecurityIPRule::GetRuleInclMasks($ID);
+                    }
 
                     foreach ($arMasks as $i => $mask):?>
                         <tr>
@@ -312,10 +337,11 @@ if ($message)
             </td>
             <td>
                 <table cellpadding="0" cellspacing="0" border="0" class="nopadding" width="100%" id="tbEXCL_PATH">
-                    <? if ($bVarsFromForm)
+                    <? if ($bVarsFromForm) {
                         $arMasks = $_POST["EXCL_MASKS"];
-                    else
+                    } else {
                         $arMasks = CSecurityIPRule::GetRuleExclMasks($ID);
+                    }
 
                     foreach ($arMasks as $i => $mask):?>
                         <tr>

@@ -14,13 +14,15 @@ class Store extends Base
 {
     protected static function getStoresList($nameOnly = true, $siteId = "")
     {
-        if (!\Bitrix\Main\Loader::includeModule('catalog'))
+        if (!\Bitrix\Main\Loader::includeModule('catalog')) {
             return array();
+        }
 
         $filter = array("ACTIVE" => "Y", "ISSUING_CENTER" => "Y");
 
-        if (strlen($siteId) > 0)
+        if ($siteId <> '') {
             $filter["+SITE_ID"] = $siteId;
+        }
 
         $result = array();
         $dbList = \CCatalogStore::GetList(
@@ -28,20 +30,33 @@ class Store extends Base
             $filter,
             false,
             false,
-            array("ID", "SITE_ID", "TITLE", "ADDRESS", "DESCRIPTION", "IMAGE_ID", "PHONE", "SCHEDULE", "LOCATION_ID", "GPS_N", "GPS_S")
+            array(
+                "ID",
+                "SITE_ID",
+                "TITLE",
+                "ADDRESS",
+                "DESCRIPTION",
+                "IMAGE_ID",
+                "PHONE",
+                "SCHEDULE",
+                "LOCATION_ID",
+                "GPS_N",
+                "GPS_S"
+            )
         );
 
         while ($store = $dbList->Fetch()) {
-            if ($nameOnly)
-                $result[$store["ID"]] = $store["TITLE"] . (strlen($store["SITE_ID"]) > 0 ? " [" . $store["SITE_ID"] . "]" : "");
-            else
+            if ($nameOnly) {
+                $result[$store["ID"]] = $store["TITLE"] . ($store["SITE_ID"] <> '' ? " [" . $store["SITE_ID"] . "]" : "");
+            } else {
                 $result[$store["ID"]] = $store;
+            }
         }
 
         return $result;
     }
 
-    public function getClassTitle()
+    public static function getClassTitle()
     {
         return Loc::getMessage("DELIVERY_EXTRA_SERVICE_STORE_TITLE");
     }
@@ -71,8 +86,9 @@ class Store extends Base
 
     public function getAdminDefaultControl($name = "", $value = false)
     {
-        if (strlen($name) <= 0)
+        if ($name == '') {
             throw new ArgumentNullException(new Error('name'));
+        }
 
         return Input\Manager::getEditHtml(
             $name,
@@ -88,11 +104,12 @@ class Store extends Base
     {
         global $APPLICATION;
 
-        if (!$value)
+        if (!$value) {
             $value = $this->value;
+        }
 
         $result = '<div class="view_map">';
-        $siteId = strlen(SITE_ID) > 0 ? SITE_ID : "";
+        $siteId = SITE_ID <> '' ? SITE_ID : "";
 
         ob_start();
         $APPLICATION->IncludeComponent(
@@ -103,7 +120,8 @@ class Store extends Base
                 "DELIVERY_ID" => $this->deliveryId,
                 "SELECTED_STORE" => $value,
                 "STORES_LIST" => self::getStoresList(false, $siteId)
-            ));
+            )
+        );
 
         $result .= ob_get_contents();
         ob_end_clean();
@@ -117,7 +135,7 @@ class Store extends Base
         return Input\Manager::getViewHtml(
             array(
                 "TYPE" => "ENUM",
-                "OPTIONS" => self::getStoresList(true, strlen(SITE_ID) > 0 ? SITE_ID : "")
+                "OPTIONS" => self::getStoresList(true, SITE_ID <> '' ? SITE_ID : "")
             ),
             $this->value
         );

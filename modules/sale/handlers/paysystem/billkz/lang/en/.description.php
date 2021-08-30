@@ -1,4 +1,5 @@
 <?
+
 $MESS["SALE_HPS_BILL_KZ_DATE"] = "Order date";
 $MESS["SALE_HPS_BILL_KZ_DATE_DESC"] = "Date when the order was created";
 $MESS["SALE_HPS_BILL_KZ_ORDER_SUBJECT"] = "Account type";

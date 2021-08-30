@@ -1,11 +1,14 @@
 <?php
 
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+}
 
 $salePermissions = $APPLICATION->GetGroupRight('sale');
 
-if ($salePermissions < 'R')
+if ($salePermissions < 'R') {
     return;
+}
 
 \Bitrix\Main\Loader::includeModule('sale');
 
@@ -20,9 +23,10 @@ $errors = array();
 
 $businessValueControl = new BusinessValueControl('bizval');
 
-if ($REQUEST_METHOD == 'POST' && strlen($Update) > 0 && $salePermissions >= 'W' && check_bitrix_sessid()) {
-    if ($isSuccess = $businessValueControl->setMapFromPost())
+if ($REQUEST_METHOD == 'POST' && $Update <> '' && $salePermissions >= 'W' && check_bitrix_sessid()) {
+    if ($isSuccess = $businessValueControl->setMapFromPost()) {
         $businessValueControl->saveMap();
+    }
 }
 
 ?>

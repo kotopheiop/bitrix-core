@@ -1,11 +1,13 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 $crmMode = (defined("BX_PUBLIC_MODE") && BX_PUBLIC_MODE && isset($_REQUEST["CRM_MANAGER_USER_ID"]));
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions == "D")
+if ($saleModulePermissions == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 \Bitrix\Main\Loader::includeModule('sale');
 
@@ -13,13 +15,15 @@ IncludeModuleLangFile(__FILE__);
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/prolog.php");
 
 ClearVars();
-$ID = IntVal($ID);
-if ($ID <= 0)
+$ID = intval($ID);
+if ($ID <= 0) {
     LocalRedirect("sale_order.php?lang=" . LANG . GetFilterParams("filter_", false));
+}
 
 $db_order = CSaleOrder::GetList(Array("ID" => "DESC"), Array("ID" => $ID));
-if (!$db_order->ExtractFields("str_"))
+if (!$db_order->ExtractFields("str_")) {
     LocalRedirect("sale_order.php?lang=" . LANG . GetFilterParams("filter_", false));
+}
 
 $APPLICATION->SetTitle(GetMessage("SALE_PRINT_RECORD", array("#ID#" => $ID)));
 
@@ -30,35 +34,42 @@ global $USER;
 $bUserCanViewOrder = false;
 $bUserCanEditOrder = false;
 
-$allowedStatusesView = \Bitrix\Sale\OrderStatus::getStatusesGroupCanDoOperations($USER->GetUserGroupArray(), array('view'));
+$allowedStatusesView = \Bitrix\Sale\OrderStatus::getStatusesGroupCanDoOperations(
+    $USER->GetUserGroupArray(),
+    array('view')
+);
 if (in_array($str_STATUS_ID, $allowedStatusesView)) {
     $bUserCanViewOrder = true;
 }
 
-$allowedStatusesUpdate = \Bitrix\Sale\OrderStatus::getStatusesGroupCanDoOperations($USER->GetUserGroupArray(), array('update'));
+$allowedStatusesUpdate = \Bitrix\Sale\OrderStatus::getStatusesGroupCanDoOperations(
+    $USER->GetUserGroupArray(),
+    array('update')
+);
 if (in_array($str_STATUS_ID, $allowedStatusesUpdate)) {
     $bUserCanEditOrder = true;
 }
 
 $errorMessage = "";
 
-if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($Print) > 0 && check_bitrix_sessid() && $bUserCanViewOrder) {
+if ($_SERVER["REQUEST_METHOD"] == "POST" && $Print <> '' && check_bitrix_sessid() && $bUserCanViewOrder) {
     if (count($REPORT_ID) > 0) {
         $sBasket = "";
         $sQuantity = "";
-        $bFirst = True;
+        $bFirst = true;
         $countBasketId = count($BASKET_IDS);
         for ($i = 0; $i < $countBasketId; $i++) {
-            if (IntVal($BASKET_IDS[$i]) <= 0)
+            if (intval($BASKET_IDS[$i]) <= 0) {
                 continue;
-            $sBasket .= ($bFirst ? "" : ",") . IntVal($BASKET_IDS[$i]);
-            $sQuantity .= ($bFirst ? "" : ",") . ${"QUANTITY_" . IntVal($BASKET_IDS[$i])};
+            }
+            $sBasket .= ($bFirst ? "" : ",") . intval($BASKET_IDS[$i]);
+            $sQuantity .= ($bFirst ? "" : ",") . ${"QUANTITY_" . intval($BASKET_IDS[$i])};
             $bFirst = false;
         }
 
         $urlParams = "BASKET_IDS=" . urlencode($sBasket) . "&QUANTITIES=" . urlencode($sQuantity);
 
-        $PROPS_ENABLE = (!isset($_POST["PROPS_ENABLE"]) || $_POST["PROPS_ENABLE"] == N) ? "N" : "Y";
+        $PROPS_ENABLE = (!isset($_POST["PROPS_ENABLE"]) || $_POST["PROPS_ENABLE"] == 'N') ? "N" : "Y";
 
         ?>
         <script language="JavaScript">
@@ -67,14 +78,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($Print) > 0 && check_bitrix_s
             for ($i = 0; $i < $countReportId; $i++)
             {
             ?>
-            window.open('/bitrix/admin/sale_print.php?PROPS_ENABLE=<?=$PROPS_ENABLE?>&doc=<?echo CUtil::JSEscape($REPORT_ID[$i]) ?>&ORDER_ID=<?echo $ID ?>&<?=$urlParams?>', '_blank');
+            window.open('/bitrix/admin/sale_print.php?PROPS_ENABLE=<?=$PROPS_ENABLE?>&doc=<?echo CUtil::JSEscape(
+                $REPORT_ID[$i]
+            ) ?>&ORDER_ID=<?echo $ID ?>&<?=$urlParams?>', '_blank');
             <?
             }
             ?>
         </script>
         <?
-    } else
+    } else {
         $errorMessage = GetMessage("SOP_ERROR_REPORT");
+    }
 }
 
 /*********************************************************************/
@@ -122,7 +136,12 @@ if (!$bUserCanViewOrder) {
 
         <?
         $aTabs = array(
-            array("DIV" => "edit1", "TAB" => GetMessage("SOPN_TAB_PRINT"), "ICON" => "sale", "TITLE" => GetMessage("SOPN_TAB_PRINT_DESCR"))
+            array(
+                "DIV" => "edit1",
+                "TAB" => GetMessage("SOPN_TAB_PRINT"),
+                "ICON" => "sale",
+                "TITLE" => GetMessage("SOPN_TAB_PRINT_DESCR")
+            )
         );
 
         $tabControl = new CAdminTabControl("tabControl", $aTabs);
@@ -162,8 +181,9 @@ if (!$bUserCanViewOrder) {
         </tr>
         <tr>
             <td>
-                <? echo GetMessage("P_ORDER_CANCELED") ?> / <? echo GetMessage("P_ORDER_PAYED") ?>
-                / <? echo GetMessage("P_ORDER_ALLOW_DELIVERY") ?>:
+                <? echo GetMessage("P_ORDER_CANCELED") ?> / <? echo GetMessage("P_ORDER_PAYED") ?> / <? echo GetMessage(
+                    "P_ORDER_ALLOW_DELIVERY"
+                ) ?>:
             </td>
             <td>
                 <?
@@ -215,8 +235,9 @@ if (!$bUserCanViewOrder) {
                                     array("ID", "BASKET_ID", "NAME", "VALUE", "CODE", "SORT")
                                 );
                                 while ($arBasketProps = $dbBasketProps->GetNext()) {
-                                    if (strlen($arBasketProps["VALUE"]) > 0 && $arBasketProps["CODE"] != "CATALOG.XML_ID" && $arBasketProps["CODE"] != "PRODUCT.XML_ID")
+                                    if ($arBasketProps["VALUE"] <> '' && $arBasketProps["CODE"] != "CATALOG.XML_ID" && $arBasketProps["CODE"] != "PRODUCT.XML_ID") {
                                         echo "<div style=\"font-size:8pt\">" . $arBasketProps["NAME"] . ": " . $arBasketProps["VALUE"] . "</div>";
+                                    }
                                 }
 
                                 $arCurFormat = CCurrencyLang::GetCurrencyFormat($arBasket["CURRENCY"]);
@@ -231,7 +252,12 @@ if (!$bUserCanViewOrder) {
                                 <?= number_format($arBasket["PRICE"], 2, ',', ' ') . " " . $vatString ?>
                             </td>
                             <td valign="top" nowrap style="text-align:right;">
-                                <?= number_format($arBasket["QUANTITY"] * $arBasket["PRICE"], 2, ',', ' ') . " " . $vatString ?>
+                                <?= number_format(
+                                    $arBasket["QUANTITY"] * $arBasket["PRICE"],
+                                    2,
+                                    ',',
+                                    ' '
+                                ) . " " . $vatString ?>
                             </td>
                         </tr>
                         <?
@@ -251,10 +277,13 @@ if (!$bUserCanViewOrder) {
                 <td align="right" width="50%">
                     <?
                     echo htmlspecialcharsbx($ar_tax_list["TAX_NAME"]);
-                    if ($ar_tax_list["IS_IN_PRICE"] == "Y")
-                        echo " (" . (($ar_tax_list["IS_PERCENT"] == "Y") ? "" . DoubleVal($ar_tax_list["VALUE"]) . "%, " : "") . GetMessage("SALE_TAX_INPRICE") . ")";
-                    elseif ($ar_tax_list["IS_PERCENT"] == "Y")
+                    if ($ar_tax_list["IS_IN_PRICE"] == "Y") {
+                        echo " (" . (($ar_tax_list["IS_PERCENT"] == "Y") ? "" . DoubleVal(
+                                    $ar_tax_list["VALUE"]
+                                ) . "%, " : "") . GetMessage("SALE_TAX_INPRICE") . ")";
+                    } elseif ($ar_tax_list["IS_PERCENT"] == "Y") {
                         echo " (" . DoubleVal($ar_tax_list["VALUE"]) . "%)";
+                    }
                     ?>:
                 </td>
                 <td align="left" width="50%">
@@ -288,41 +317,56 @@ if (!$bUserCanViewOrder) {
                 <select size="5" multiple name="REPORT_ID[]">
                     <?
                     $arSysLangs = array();
-                    $db_lang = CLangAdmin::GetList(($b = "sort"), ($o = "asc"), array("ACTIVE" => "Y"));
-                    while ($arLang = $db_lang->Fetch())
+                    $db_lang = CLangAdmin::GetList("sort", "asc", array("ACTIVE" => "Y"));
+                    while ($arLang = $db_lang->Fetch()) {
                         $arSysLangs[] = $arLang["LID"];
+                    }
 
                     $arReports = array();
                     if (file_exists($_SERVER["DOCUMENT_ROOT"] . "/bitrix/admin/reports/")) {
                         if ($handle = opendir($_SERVER["DOCUMENT_ROOT"] . "/bitrix/admin/reports/")) {
                             while (($file = readdir($handle)) !== false) {
-                                if ($file == "." || $file == ".." || $file == ".access.php")
+                                if ($file == "." || $file == ".." || $file == ".access.php") {
                                     continue;
+                                }
 
-                                if (is_file($_SERVER["DOCUMENT_ROOT"] . "/bitrix/admin/reports/" . $file) && ToUpper(substr($file, -4)) == ".PHP") {
+                                if (is_file($_SERVER["DOCUMENT_ROOT"] . "/bitrix/admin/reports/" . $file) && ToUpper(
+                                        mb_substr($file, -4)
+                                    ) == ".PHP") {
                                     $rep_title = $file;
-                                    $file_contents = file_get_contents($_SERVER["DOCUMENT_ROOT"] . "/bitrix/admin/reports/" . $file);
+                                    $file_contents = file_get_contents(
+                                        $_SERVER["DOCUMENT_ROOT"] . "/bitrix/admin/reports/" . $file
+                                    );
 
                                     $rep_langs = "";
                                     $arMatches = array();
-                                    if (preg_match("#<title([\s]+langs[\s]*=[\s]*\"([^\"]*)\"|)[\s]*>([^<]*)</title[\s]*>#i", $file_contents, $arMatches)) {
+                                    if (preg_match(
+                                        "#<title([\s]+langs[\s]*=[\s]*\"([^\"]*)\"|)[\s]*>([^<]*)</title[\s]*>#i",
+                                        $file_contents,
+                                        $arMatches
+                                    )) {
                                         $arMatches[3] = Trim($arMatches[3]);
-                                        if (strlen($arMatches[3]) > 0) $rep_title = $arMatches[3];
+                                        if ($arMatches[3] <> '') {
+                                            $rep_title = $arMatches[3];
+                                        }
                                         $arMatches[2] = Trim($arMatches[2]);
-                                        if (strlen($arMatches[2]) > 0) $rep_langs = $arMatches[2];
+                                        if ($arMatches[2] <> '') {
+                                            $rep_langs = $arMatches[2];
+                                        }
                                     }
 
-                                    if (strlen($rep_langs) > 0) {
-                                        $bContinue = True;
+                                    if ($rep_langs <> '') {
+                                        $bContinue = true;
                                         $countarSys = count($arSysLangs);
                                         for ($ic = 0; $ic < $countarSys; $ic++) {
-                                            if (strpos($rep_langs, $arSysLangs[$ic]) !== false) {
-                                                $bContinue = False;
+                                            if (mb_strpos($rep_langs, $arSysLangs[$ic]) !== false) {
+                                                $bContinue = false;
                                                 break;
                                             }
                                         }
-                                        if ($bContinue)
+                                        if ($bContinue) {
                                             continue;
+                                        }
                                     }
 
                                     $arReports[$file] = $rep_title;
@@ -334,39 +378,53 @@ if (!$bUserCanViewOrder) {
 
                     if ($handle = opendir($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/reports/")) {
                         while (($file = readdir($handle)) !== false) {
-                            if ($file == "." || $file == ".." || isset($arReports[$file]))
+                            if ($file == "." || $file == ".." || isset($arReports[$file])) {
                                 continue;
+                            }
 
                             if (is_file($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/reports/" . $file)
-                                && ToUpper(substr($file, -4)) == ".PHP"
+                                && ToUpper(mb_substr($file, -4)) == ".PHP"
                             ) {
                                 $rep_title = $file;
                                 if (is_file($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/ru/reports/" . $file)) {
-                                    $file_contents = file_get_contents($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/ru/reports/" . $file);
+                                    $file_contents = file_get_contents(
+                                        $_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/ru/reports/" . $file
+                                    );
                                 } else {
-                                    $file_contents = file_get_contents($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/reports/" . $file);
+                                    $file_contents = file_get_contents(
+                                        $_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/reports/" . $file
+                                    );
                                 }
 
                                 $rep_langs = "";
                                 $arMatches = array();
-                                if (preg_match("#<title([\s]+langs[\s]*=[\s]*\"([^\"]*)\"|)[\s]*>([^<]*)</title[\s]*>#i", $file_contents, $arMatches)) {
+                                if (preg_match(
+                                    "#<title([\s]+langs[\s]*=[\s]*\"([^\"]*)\"|)[\s]*>([^<]*)</title[\s]*>#i",
+                                    $file_contents,
+                                    $arMatches
+                                )) {
                                     $arMatches[3] = Trim($arMatches[3]);
-                                    if (strlen($arMatches[3]) > 0) $rep_title = $arMatches[3];
+                                    if ($arMatches[3] <> '') {
+                                        $rep_title = $arMatches[3];
+                                    }
                                     $arMatches[2] = Trim($arMatches[2]);
-                                    if (strlen($arMatches[2]) > 0) $rep_langs = $arMatches[2];
+                                    if ($arMatches[2] <> '') {
+                                        $rep_langs = $arMatches[2];
+                                    }
                                 }
 
-                                if (strlen($rep_langs) > 0) {
-                                    $bContinue = True;
+                                if ($rep_langs <> '') {
+                                    $bContinue = true;
                                     $countArSysLang = count($arSysLangs);
                                     for ($ic = 0; $ic < $countArSysLang; $ic++) {
-                                        if (strpos($rep_langs, $arSysLangs[$ic]) !== false) {
-                                            $bContinue = False;
+                                        if (mb_strpos($rep_langs, $arSysLangs[$ic]) !== false) {
+                                            $bContinue = false;
                                             break;
                                         }
                                     }
-                                    if ($bContinue)
+                                    if ($bContinue) {
                                         continue;
+                                    }
                                 }
 
                                 $arReports[$file] = $rep_title;
@@ -376,7 +434,7 @@ if (!$bUserCanViewOrder) {
                     closedir($handle);
 
                     foreach ($arReports as $file => $title):?>
-                        <option value="<? echo substr($file, 0, strlen($file) - 4); ?>"><?= $title; ?></option>
+                        <option value="<? echo mb_substr($file, 0, mb_strlen($file) - 4); ?>"><?= $title; ?></option>
                     <?endforeach; ?>
                 </select>
             </td>

@@ -6,12 +6,10 @@ use Bitrix\Main;
 use Bitrix\Translate;
 use Bitrix\Translate\Index;
 
-
 class Aggregate
 {
     /** @var Main\ORM\Entity[] */
     private static $entities = [];
-
 
     /**
      * @param array $params Array of parameters:
@@ -24,7 +22,6 @@ class Aggregate
      *
      * @return Main\ORM\Query\Query
      * @throws Main\ArgumentException
-     * @throws Main\SystemException
      */
     public static function buildAggregateQuery(array $params)
     {
@@ -37,13 +34,23 @@ class Aggregate
         $query->addSelect($params['GROUP_BY']);
         $query->addGroup($params['GROUP_BY']);
 
+        if (empty($params['CURRENT_LANG'])) {
+            throw new Main\ArgumentException('Parameter CURRENT_LANG has not defined');
+        }
+        $currentLanguage = $params['CURRENT_LANG'];
+
         if (empty($params['LANGUAGES'])) {
             $languages = Translate\Config::getEnabledLanguages();
         } else {
             $languages = $params['LANGUAGES'];
         }
-
-        $languageUpperKeys = array_combine($languages, array_map('strtoupper', $languages));
+        usort(
+            $languages,
+            function ($langId) use ($currentLanguage) {
+                return $langId === $currentLanguage ? 0 : 1;
+            }
+        );
+        $languageUpperKeys = array_combine($languages, array_map('mb_strtoupper', $languages));
 
         foreach ($languageUpperKeys as $langId => $alias) {
             // phrase count
@@ -56,11 +63,15 @@ class Aggregate
             // phrase excess
             $query->addSelect(new Main\ORM\Fields\ExpressionField("{$alias}_EXCESS", "SUM({$alias}_EXCESS)"));
 
-            if ($langId != $params['CURRENT_LANG']) {
+            if ($langId != $currentLanguage) {
                 // file deficiency
-                $query->addSelect(new Main\ORM\Fields\ExpressionField("{$alias}_FILE_DEFICIENCY", "SUM({$alias}_FILE_DEFICIENCY)"));
+                $query->addSelect(
+                    new Main\ORM\Fields\ExpressionField("{$alias}_FILE_DEFICIENCY", "SUM({$alias}_FILE_DEFICIENCY)")
+                );
                 // phrase deficiency
-                $query->addSelect(new Main\ORM\Fields\ExpressionField("{$alias}_DEFICIENCY", "SUM({$alias}_DEFICIENCY)"));
+                $query->addSelect(
+                    new Main\ORM\Fields\ExpressionField("{$alias}_DEFICIENCY", "SUM({$alias}_DEFICIENCY)")
+                );
             }
         }
 
@@ -79,7 +90,6 @@ class Aggregate
      * @return Main\ORM\Query\Query
      *
      * @throws Main\ArgumentException
-     * @throws Main\SystemException
      */
     public static function buildQuery(array $params)
     {
@@ -100,38 +110,51 @@ class Aggregate
         } else {
             $languages = $params['LANGUAGES'];
         }
+        usort(
+            $languages,
+            function ($langId) use ($currentLanguage) {
+                return $langId === $currentLanguage ? 0 : 1;
+            }
+        );
+
         $className .= "_" . implode('', $languages);
 
         if (!empty($params['PATH_LIST'])) {
             $className .= "_" . md5(implode('', $params['PATH_LIST']));
         }
 
-        $languageUpperKeys = array_combine($languages, array_map('strtoupper', $languages));
+        $languageUpperKeys = array_combine($languages, array_map('mb_strtoupper', $languages));
 
         if (!isset(self::$entities[$className])) {
             $entity = Index\Internals\PathTreeTable::getEntity();
             $query = new Main\ORM\Query\Query($entity);
 
-            $query->registerRuntimeField(new Main\ORM\Fields\Relations\Reference(
-                'FOLDER_NODE',
-                Translate\Index\Internals\PathIndexTable::class,
-                Main\ORM\Query\Join::on('ref.ID', '=', 'this.PATH_ID')->where('ref.IS_DIR', '=', 'Y'),
-                array('join_type' => 'INNER')
-            ));
+            $query->registerRuntimeField(
+                new Main\ORM\Fields\Relations\Reference(
+                    'FOLDER_NODE',
+                    Translate\Index\Internals\PathIndexTable::class,
+                    Main\ORM\Query\Join::on('ref.ID', '=', 'this.PATH_ID')->where('ref.IS_DIR', '=', 'Y'),
+                    array('join_type' => 'INNER')
+                )
+            );
 
 
-            $query->registerRuntimeField(new Main\ORM\Fields\Relations\Reference(
-                'FILE_LIST',
-                Translate\Index\Internals\PathTreeTable::class,
-                Main\ORM\Query\Join::on('ref.PARENT_ID', '=', 'this.PATH_ID'),
-                array('join_type' => 'INNER')
-            ));
-            $query->registerRuntimeField(new Main\ORM\Fields\Relations\Reference(
-                'FILE_NODE',
-                Translate\Index\Internals\PathIndexTable::class,
-                Main\ORM\Query\Join::on('ref.ID', '=', 'this.FILE_LIST.PATH_ID')->where('ref.IS_DIR', '=', 'N'),
-                array('join_type' => 'INNER')
-            ));
+            $query->registerRuntimeField(
+                new Main\ORM\Fields\Relations\Reference(
+                    'FILE_LIST',
+                    Translate\Index\Internals\PathTreeTable::class,
+                    Main\ORM\Query\Join::on('ref.PARENT_ID', '=', 'this.PATH_ID'),
+                    array('join_type' => 'INNER')
+                )
+            );
+            $query->registerRuntimeField(
+                new Main\ORM\Fields\Relations\Reference(
+                    'FILE_NODE',
+                    Translate\Index\Internals\PathIndexTable::class,
+                    Main\ORM\Query\Join::on('ref.ID', '=', 'this.FILE_LIST.PATH_ID')->where('ref.IS_DIR', '=', 'N'),
+                    array('join_type' => 'INNER')
+                )
+            );
 
             //$query->addSelect('PARENT_ID');
             $query->addSelect('FOLDER_NODE.PATH', 'PARENT_PATH');
@@ -142,86 +165,116 @@ class Aggregate
             foreach ($languageUpperKeys as $langId => $alias) {
                 $tblAlias = "File{$alias}";
 
-                $query->registerRuntimeField(new Main\ORM\Fields\Relations\Reference(
-                    $tblAlias,
-                    Translate\Index\Internals\FileIndexTable::class,
-                    Main\ORM\Query\Join::on('ref.PATH_ID', '=', 'this.FILE_NODE.ID')->where('ref.LANG_ID', '=', $langId),
-                    array('join_type' => 'LEFT')
-                ));
+                $query->registerRuntimeField(
+                    new Main\ORM\Fields\Relations\Reference(
+                        $tblAlias,
+                        Translate\Index\Internals\FileIndexTable::class,
+                        Main\ORM\Query\Join::on('ref.PATH_ID', '=', 'this.FILE_NODE.ID')->where(
+                            'ref.LANG_ID',
+                            '=',
+                            $langId
+                        ),
+                        array('join_type' => 'LEFT')
+                    )
+                );
 
-                $query->addSelect(new Main\ORM\Fields\ExpressionField(
-                    "{$alias}_OBLI",
-                    "@{$alias}_OBLI := case when (INSTR(IFNULL(%s, '{$langId}'), '{$langId}') > 0) then 1 else 0 end",
-                    'FILE_NODE.OBLIGATORY_LANGS'
-                ));
+                $query->addSelect(
+                    new Main\ORM\Fields\ExpressionField(
+                        "{$alias}_OBLI",
+                        "@{$alias}_OBLI := case when (INSTR(IFNULL(%s, '{$langId}'), '{$langId}') > 0) then 1 else 0 end",
+                        'FILE_NODE.OBLIGATORY_LANGS'
+                    )
+                );
 
 
                 if ($langId == $currentLanguage) {
                     // phrase count
-                    $query->addSelect(new Main\ORM\Fields\ExpressionField(
-                        "{$alias}_CNT",
-                        '@ETHALON_CNT := IFNULL(%s, 0)',
-                        "{$tblAlias}.PHRASE_COUNT"
-                    ));
+                    $query->addSelect(
+                        new Main\ORM\Fields\ExpressionField(
+                            "{$alias}_CNT",
+                            '@ETHALON_CNT := IFNULL(%s, 0)',
+                            "{$tblAlias}.PHRASE_COUNT"
+                        )
+                    );
                     // file count
-                    $query->addSelect(new Main\ORM\Fields\ExpressionField(
-                        "{$alias}_FILE_CNT",
-                        "case when (@ETHALON_CNT > 0) then 1 else 0 end"
-                    ));
+                    $query->addSelect(
+                        new Main\ORM\Fields\ExpressionField(
+                            "{$alias}_FILE_CNT",
+                            "case when (@ETHALON_CNT > 0) then 1 else 0 end"
+                        )
+                    );
                     // file excess
-                    $query->addSelect(new Main\ORM\Fields\ExpressionField(
-                        "{$alias}_FILE_EXCESS",
-                        "case when (@ETHALON_CNT > 0) and (@{$alias}_OBLI = 0) then 1 else 0 end"
-                    ));
+                    $query->addSelect(
+                        new Main\ORM\Fields\ExpressionField(
+                            "{$alias}_FILE_EXCESS",
+                            "case when (@ETHALON_CNT > 0) and (@{$alias}_OBLI = 0) then 1 else 0 end"
+                        )
+                    );
                     // phrase excess
-                    $query->addSelect(new Main\ORM\Fields\ExpressionField(
-                        "{$alias}_EXCESS",
-                        "case when (@ETHALON_CNT > 0) and (@{$alias}_OBLI = 0) then @ETHALON_CNT else 0 end"
-                    ));
+                    $query->addSelect(
+                        new Main\ORM\Fields\ExpressionField(
+                            "{$alias}_EXCESS",
+                            "case when (@ETHALON_CNT > 0) and (@{$alias}_OBLI = 0) then @ETHALON_CNT else 0 end"
+                        )
+                    );
                 } else {
                     // phrase count
-                    $query->addSelect(new Main\ORM\Fields\ExpressionField(
-                        "{$alias}_CNT",
-                        "@{$alias}_CNT := IFNULL(%s, 0)",
-                        ["{$tblAlias}.PHRASE_COUNT"]
-                    ));
+                    $query->addSelect(
+                        new Main\ORM\Fields\ExpressionField(
+                            "{$alias}_CNT",
+                            "@{$alias}_CNT := IFNULL(%s, 0)",
+                            ["{$tblAlias}.PHRASE_COUNT"]
+                        )
+                    );
                     // phrase count diff from ethalon
-                    $query->addSelect(new Main\ORM\Fields\ExpressionField(
-                        "{$alias}_DIFF",
-                        "@{$alias}_DIFF := @{$alias}_CNT - @ETHALON_CNT"
-                    ));
+                    $query->addSelect(
+                        new Main\ORM\Fields\ExpressionField(
+                            "{$alias}_DIFF",
+                            "@{$alias}_DIFF := @{$alias}_CNT - @ETHALON_CNT"
+                        )
+                    );
                     // file count
-                    $query->addSelect(new Main\ORM\Fields\ExpressionField(
-                        "{$alias}_FILE_CNT",
-                        "case when (@{$alias}_CNT > 0) then 1 else 0 end"
-                    ));
+                    $query->addSelect(
+                        new Main\ORM\Fields\ExpressionField(
+                            "{$alias}_FILE_CNT",
+                            "case when (@{$alias}_CNT > 0) then 1 else 0 end"
+                        )
+                    );
                     // file deficiency
-                    $query->addSelect(new Main\ORM\Fields\ExpressionField(
-                        "{$alias}_FILE_DEFICIENCY",
-                        "case when (@{$alias}_CNT = 0) and (@ETHALON_CNT > 0) AND (@{$alias}_OBLI = 1) then 1 else 0 end"
-                    ));
+                    $query->addSelect(
+                        new Main\ORM\Fields\ExpressionField(
+                            "{$alias}_FILE_DEFICIENCY",
+                            "case when (@{$alias}_CNT = 0) and (@ETHALON_CNT > 0) AND (@{$alias}_OBLI = 1) then 1 else 0 end"
+                        )
+                    );
                     // file excess
-                    $query->addSelect(new Main\ORM\Fields\ExpressionField(
-                        "{$alias}_FILE_EXCESS",
-                        "case when (@{$alias}_CNT > 0) and (@ETHALON_CNT = 0) then 1 " .
-                        "when (@{$alias}_CNT > 0) and (@ETHALON_CNT > 0) AND (@{$alias}_OBLI = 0) then 1 " .
-                        "else 0 end"
-                    ));
+                    $query->addSelect(
+                        new Main\ORM\Fields\ExpressionField(
+                            "{$alias}_FILE_EXCESS",
+                            "case when (@{$alias}_CNT > 0) and (@ETHALON_CNT = 0) then 1 " .
+                            "when (@{$alias}_CNT > 0) and (@ETHALON_CNT > 0) AND (@{$alias}_OBLI = 0) then 1 " .
+                            "else 0 end"
+                        )
+                    );
                     // phrase excess
-                    $query->addSelect(new Main\ORM\Fields\ExpressionField(
-                        "{$alias}_EXCESS",
-                        "case when (@{$alias}_CNT > 0) and (@ETHALON_CNT = 0) then @{$alias}_CNT " .
-                        "when (@{$alias}_CNT > 0) and (@ETHALON_CNT > 0) AND (@{$alias}_DIFF > 0) and (@{$alias}_OBLI = 1) then @{$alias}_DIFF " .
-                        "when (@{$alias}_CNT > 0) and (@ETHALON_CNT > 0) and (@{$alias}_OBLI = 0) then @{$alias}_CNT " .
-                        "else 0 end"
-                    ));
+                    $query->addSelect(
+                        new Main\ORM\Fields\ExpressionField(
+                            "{$alias}_EXCESS",
+                            "case when (@{$alias}_CNT > 0) and (@ETHALON_CNT = 0) then @{$alias}_CNT " .
+                            "when (@{$alias}_CNT > 0) and (@ETHALON_CNT > 0) AND (@{$alias}_DIFF > 0) and (@{$alias}_OBLI = 1) then @{$alias}_DIFF " .
+                            "when (@{$alias}_CNT > 0) and (@ETHALON_CNT > 0) and (@{$alias}_OBLI = 0) then @{$alias}_CNT " .
+                            "else 0 end"
+                        )
+                    );
                     // phrase deficiency
-                    $query->addSelect(new Main\ORM\Fields\ExpressionField(
-                        "{$alias}_DEFICIENCY",
-                        "case when (@{$alias}_CNT = 0) and (@ETHALON_CNT > 0) AND (@{$alias}_OBLI = 1) then @ETHALON_CNT " .
-                        "when (@{$alias}_CNT > 0) and (@ETHALON_CNT > 0) AND (@{$alias}_DIFF < 0) and (@{$alias}_OBLI = 1) then - @{$alias}_DIFF " .
-                        "else 0 end"
-                    ));
+                    $query->addSelect(
+                        new Main\ORM\Fields\ExpressionField(
+                            "{$alias}_DEFICIENCY",
+                            "case when (@{$alias}_CNT = 0) and (@ETHALON_CNT > 0) AND (@{$alias}_OBLI = 1) then @ETHALON_CNT " .
+                            "when (@{$alias}_CNT > 0) and (@ETHALON_CNT > 0) AND (@{$alias}_DIFF < 0) and (@{$alias}_OBLI = 1) then - @{$alias}_DIFF " .
+                            "else 0 end"
+                        )
+                    );
                 }
             }
             unset($langId, $langUpper, $alias, $tblAlias);

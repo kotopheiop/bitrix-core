@@ -26,19 +26,23 @@ class BasketProperties extends Controller
                 /** @var BasketPropertyItem $basketPropertyClass */
                 $basketPropertyClass = $registry->getBasketPropertyItemClassName();
 
-                $b = $basketPropertyClass::getList([
-                    'select' => ['BASKET_ID'],
-                    'filter' => ['ID' => $id]
-                ]);
+                $b = $basketPropertyClass::getList(
+                    [
+                        'select' => ['BASKET_ID'],
+                        'filter' => ['ID' => $id]
+                    ]
+                );
 
                 if ($bRow = $b->fetch()) {
                     /** @var Sale\Basket $basketClass */
                     $basketClass = $registry->getBasketClassName();
 
-                    $r = $basketClass::getList([
-                        'select' => ['ORDER_ID'],
-                        'filter' => ['ID' => $bRow['BASKET_ID']]
-                    ]);
+                    $r = $basketClass::getList(
+                        [
+                            'select' => ['ORDER_ID'],
+                            'filter' => ['ID' => $bRow['BASKET_ID']]
+                        ]
+                    );
 
                     if ($row = $r->fetch()) {
                         /** @var Sale\Order $orderClass */
@@ -65,9 +69,11 @@ class BasketProperties extends Controller
     public function getFieldsAction()
     {
         $entity = new \Bitrix\Sale\Rest\Entity\BasketProperties();
-        return ['BASKET_PROPERTIES' => $entity->prepareFieldInfos(
-            $entity->getFields()
-        )];
+        return [
+            'BASKET_PROPERTIES' => $entity->prepareFieldInfos(
+                $entity->getFields()
+            )
+        ];
     }
 
     public function listAction($select = [], $filter = [], $order = [], PageNavigation $pageNavigation)
@@ -85,11 +91,13 @@ class BasketProperties extends Controller
             ]
         )->fetchAll();
 
-        return new Page('BASKET_PROPERTIES', $items, function () use ($filter) {
+        return new Page(
+            'BASKET_PROPERTIES', $items, function () use ($filter) {
             return count(
                 \Bitrix\Sale\Internals\BasketPropertyTable::getList(['filter' => $filter])->fetchAll()
             );
-        });
+        }
+        );
     }
 
     public function getAction(\Bitrix\Sale\BasketPropertyItem $basketProperty)
@@ -110,10 +118,12 @@ class BasketProperties extends Controller
         /** @var Sale\Basket $basketClass */
         $basketClass = $registry->getBasketClassName();
 
-        $r = $basketClass::getList([
-            'select' => ['ORDER_ID'],
-            'filter' => ['ID' => $basketId]
-        ]);
+        $r = $basketClass::getList(
+            [
+                'select' => ['ORDER_ID'],
+                'filter' => ['ID' => $basketId]
+            ]
+        );
 
         if ($row = $r->fetch()) {
             /** @var Sale\Order $orderClass */

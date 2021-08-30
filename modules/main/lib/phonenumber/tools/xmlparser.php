@@ -52,8 +52,9 @@ abstract class XmlParser
 
             // if element was parsed by subParser, XMLReader cursor will be moved to the end of the current element
             // and thus we should exit current level of recursion.
-            if ($xmlReader->nodeType == \XMLReader::END_ELEMENT)
+            if ($xmlReader->nodeType == \XMLReader::END_ELEMENT) {
                 return;
+            }
         }
 
         if ($xmlReader->nodeType == \XMLReader::ELEMENT && $xmlReader->hasAttributes) {
@@ -61,15 +62,19 @@ abstract class XmlParser
         }
 
         // empty element does not have child elements
-        if ($xmlReader->isEmptyElement)
+        if ($xmlReader->isEmptyElement) {
             return;
+        }
 
         // recursively reading child elements or leaving recursion on the end of the current element
         while ($xmlReader->read()) {
-            if ($xmlReader->nodeType == \XMLReader::ELEMENT)
+            if ($xmlReader->nodeType == \XMLReader::ELEMENT) {
                 $this->walkDomTree($xmlReader, $path);
-            else if ($xmlReader->nodeType == \XMLReader::END_ELEMENT)
-                return;
+            } else {
+                if ($xmlReader->nodeType == \XMLReader::END_ELEMENT) {
+                    return;
+                }
+            }
         }
     }
 
@@ -95,19 +100,21 @@ abstract class XmlParser
      */
     protected function getField($path)
     {
-        if (array_key_exists($path, $this->attributesMapping))
+        if (array_key_exists($path, $this->attributesMapping)) {
             return $this->attributesMapping[$path];
-        else
+        } else {
             return null;
+        }
     }
 
     protected function getElementValue(\XMLReader $xmlReader, $path, XmlField $field)
     {
         $subParser = $field->getSubParser();
-        if (is_null($subParser))
+        if (is_null($subParser)) {
             return $field->decodeValue($xmlReader->readString());
-        else
+        } else {
             return $subParser->parseElement($xmlReader, $path);
+        }
     }
 
     /**

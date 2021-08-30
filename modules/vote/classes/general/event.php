@@ -1,4 +1,5 @@
-<?
+<?php
+
 #############################################
 # Bitrix Site Manager Forum					#
 # Copyright (c) 2002-2009 Bitrix			#
@@ -8,21 +9,23 @@
 
 class CAllVoteEvent
 {
-    function err_mess()
+    public static function err_mess()
     {
         $module_id = "vote";
         return "<br>Module: " . $module_id . "<br>Class: CAllVoteEvent<br>File: " . __FILE__;
     }
 
-    function GetByID($ID)
+    public static function GetByID($ID)
     {
         $ID = intval($ID);
-        if ($ID <= 0) return;
-        $res = CVoteEvent::GetList($by, $order, array("ID" => $ID), $is_filtered, "Y");
+        if ($ID <= 0) {
+            return;
+        }
+        $res = CVoteEvent::GetList('', '', array("ID" => $ID), null, "Y");
         return $res;
     }
 
-    function GetAnswer($EVENT_ID, $ANSWER_ID)
+    public static function GetAnswer($EVENT_ID, $ANSWER_ID)
     {
         $err_mess = (self::err_mess()) . "<br>Function: GetAnswer<br>Line: ";
         global $DB;
@@ -44,7 +47,11 @@ class CAllVoteEvent
 			";
         $z = $DB->Query($strSql, false, $err_mess . __LINE__);
         if ($zr = $z->Fetch()) {
-            if (strlen($zr["MESSAGE"]) > 0) return $zr["MESSAGE"]; else return $zr["ANSWER_ID"];
+            if ($zr["MESSAGE"] <> '') {
+                return $zr["MESSAGE"];
+            } else {
+                return $zr["ANSWER_ID"];
+            }
         }
         return false;
     }
@@ -54,17 +61,16 @@ class CAllVoteEvent
         return \Bitrix\Vote\Event::deleteEvent($eventId);
     }
 
-    function SetValid($eventId, $valid)
+    public static function SetValid($eventId, $valid)
     {
         return \Bitrix\Vote\Event::setValid($eventId, $valid);
     }
 
-    function GetList(&$by, &$order, $arFilter = Array(), &$is_filtered, $get_user = "N")
+    public static function GetList($by = 's_id', $order = 'desc', $arFilter = [], $is_filtered = null, $get_user = "N")
     {
         $err_mess = (self::err_mess()) . "<br>Function: GetList<br>Line: ";
         global $DB;
         $arSqlSearch = Array();
-        $strSqlSearch = "";
         if (is_array($arFilter)) {
             $filter_keys = array_keys($arFilter);
             $count = count($filter_keys);
@@ -72,11 +78,13 @@ class CAllVoteEvent
                 $key = $filter_keys[$i];
                 $val = $arFilter[$filter_keys[$i]];
                 if (is_array($val)) {
-                    if (count($val) <= 0)
+                    if (count($val) <= 0) {
                         continue;
+                    }
                 } else {
-                    if ((strlen($val) <= 0) || ($val === "NOT_REF"))
+                    if (((string)$val == '') || ($val === "NOT_REF")) {
                         continue;
+                    }
                 }
                 $match_value_set = (in_array($key . "_EXACT_MATCH", $filter_keys)) ? true : false;
                 $key = strtoupper($key);
@@ -124,21 +132,28 @@ class CAllVoteEvent
             }
         }
 
-        if ($by == "s_id") $strSqlOrder = "ORDER BY E.ID";
-        elseif ($by == "s_valid") $strSqlOrder = "ORDER BY E.VALID";
-        elseif ($by == "s_date") $strSqlOrder = "ORDER BY E.DATE_VOTE";
-        elseif ($by == "s_session") $strSqlOrder = "ORDER BY E.STAT_SESSION_ID";
-        elseif ($by == "s_vote_user") $strSqlOrder = "ORDER BY E.VOTE_USER_ID";
-        elseif ($by == "s_vote") $strSqlOrder = "ORDER BY E.VOTE_ID";
-        elseif ($by == "s_ip") $strSqlOrder = "ORDER BY E.IP";
-        else {
-            $by = "s_id";
+        if ($by == "s_id") {
+            $strSqlOrder = "ORDER BY E.ID";
+        } elseif ($by == "s_valid") {
+            $strSqlOrder = "ORDER BY E.VALID";
+        } elseif ($by == "s_date") {
+            $strSqlOrder = "ORDER BY E.DATE_VOTE";
+        } elseif ($by == "s_session") {
+            $strSqlOrder = "ORDER BY E.STAT_SESSION_ID";
+        } elseif ($by == "s_vote_user") {
+            $strSqlOrder = "ORDER BY E.VOTE_USER_ID";
+        } elseif ($by == "s_vote") {
+            $strSqlOrder = "ORDER BY E.VOTE_ID";
+        } elseif ($by == "s_ip") {
+            $strSqlOrder = "ORDER BY E.IP";
+        } else {
             $strSqlOrder = "ORDER BY E.ID";
         }
+
         if ($order != "asc") {
             $strSqlOrder .= " desc ";
-            $order = "desc";
         }
+
         if ($get_user == "Y") {
             $select = " ,
 				U.AUTH_USER_ID, U.STAT_GUEST_ID,
@@ -149,7 +164,6 @@ class CAllVoteEvent
 			LEFT JOIN b_vote_user U ON (U.ID = E.VOTE_USER_ID)
 			LEFT JOIN b_user A ON (A.ID = U.AUTH_USER_ID)
 			";
-
         }
 
         $strSqlSearch = GetFilterSqlSearch($arSqlSearch);
@@ -168,9 +182,7 @@ class CAllVoteEvent
 			$strSqlOrder
 			";
         $res = $DB->Query($strSql, false, $err_mess . __LINE__);
-        $is_filtered = (IsFiltered($strSqlSearch));
+
         return $res;
     }
 }
-
-?>

@@ -32,6 +32,8 @@ class ExportFileList
     {
         $this->keepField('seekPathLangId');
 
+        Loc::loadLanguageFile(__DIR__ . '/exportaction.php');
+
         parent::__construct($name, $controller, $config);
     }
 
@@ -71,7 +73,7 @@ class ExportFileList
 
             if ($this->totalItems > 0) {
                 $this->exportFileName = $this->generateExportFileName($path, $this->languages);
-                $this->createExportTempFile();
+                $this->createExportTempFile($this->exportFileName);
             }
 
             $this->saveProgressParameters();
@@ -113,11 +115,13 @@ class ExportFileList
             $pathFilter['>ID'] = $this->seekPathLangId;
         }
 
-        $cachePathLangRes = Index\Internals\PathLangTable::getList(array(
-            'filter' => $pathFilter,
-            'order' => array('ID' => 'ASC'),
-            'select' => ['ID', 'PATH'],
-        ));
+        $cachePathLangRes = Index\Internals\PathLangTable::getList(
+            array(
+                'filter' => $pathFilter,
+                'order' => array('ID' => 'ASC'),
+                'select' => ['ID', 'PATH'],
+            )
+        );
         $processedItemCount = 0;
         while ($pathLang = $cachePathLangRes->fetch()) {
             $lookThroughPath = $pathLang['PATH'] . '/#LANG_ID#';

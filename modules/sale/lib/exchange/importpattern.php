@@ -38,13 +38,15 @@ abstract class ImportPattern
     {
         /** @var Result $r */
         $r = $this->parse($rawData);
-        if (!$r->isSuccess())
+        if (!$r->isSuccess()) {
             return $r;
+        }
 
         $documents = $r->getData();
         $r = $this->convert($documents);
-        if (!$r->isSuccess())
+        if (!$r->isSuccess()) {
             return $r;
+        }
 
         $entityItems = $r->getData();
         $r = $this->import($entityItems);

@@ -1,4 +1,5 @@
 <?php
+
 IncludeModuleLangFile(__FILE__);
 
 class CSearchParameters
@@ -7,8 +8,9 @@ class CSearchParameters
     {
         $exFILTER = array();
 
-        if (!is_array($arParams[$strFilterParamName]) && strlen($arParams[$strFilterParamName]) > 0)
+        if (!is_array($arParams[$strFilterParamName]) && $arParams[$strFilterParamName] <> '') {
             $arParams[$strFilterParamName] = array($arParams[$strFilterParamName]);
+        }
 
         if (is_array($arParams[$strFilterParamName])) {
             foreach ($arParams[$strFilterParamName] as $strFILTER) {
@@ -17,8 +19,9 @@ class CSearchParameters
                         $exFILTER[] = CSearchParameters::_main($arParams[$strFilterParamName . "_main"]);
                         break;
                     case "forum":
-                        if (IsModuleInstalled("forum"))
+                        if (IsModuleInstalled("forum")) {
                             $exFILTER[] = CSearchParameters::_forum($arParams[$strFilterParamName . "_forum"]);
+                        }
                         break;
                     case "blog":
                         $exFILTER[] = CSearchParameters::_blog($arParams[$strFilterParamName . "_blog"]);
@@ -30,10 +33,14 @@ class CSearchParameters
                         );
                         break;
                     case "socialnetwork":
-                        $exFILTER[] = CSearchParameters::_socialnetwork($arParams[$strFilterParamName . "_socialnetwork"]);
+                        $exFILTER[] = CSearchParameters::_socialnetwork(
+                            $arParams[$strFilterParamName . "_socialnetwork"]
+                        );
                         break;
                     case "socialnetwork_user":
-                        $exFILTER[] = CSearchParameters::_socialnetwork_user($arParams[$strFilterParamName . "_socialnetwork_user"]);
+                        $exFILTER[] = CSearchParameters::_socialnetwork_user(
+                            $arParams[$strFilterParamName . "_socialnetwork_user"]
+                        );
                         break;
                     case "intranet":
                         $exFILTER[] = array(
@@ -53,12 +60,16 @@ class CSearchParameters
                     case "no":
                         break;
                     default:
-                        if (strpos($strFILTER, "iblock_") === 0)
-                            $exFILTER[] = CSearchParameters::_iblock($arParams[$strFilterParamName . "_" . $strFILTER], $strFILTER);
-                        else
+                        if (mb_strpos($strFILTER, "iblock_") === 0) {
+                            $exFILTER[] = CSearchParameters::_iblock(
+                                $arParams[$strFilterParamName . "_" . $strFILTER],
+                                $strFILTER
+                            );
+                        } else {
                             $exFILTER[] = array(
                                 "=MODULE_ID" => $strFILTER,
                             );
+                        }
                         break;
                 }
             }
@@ -69,29 +80,33 @@ class CSearchParameters
 
     public static function GetFilterDropDown($bFilter = false)
     {
-        if ($bFilter)
+        if ($bFilter) {
             $arrDropdown = array(
                 "no" => GetMessage("SEARCH_CP_NO_LIMIT"),
                 "main" => "[main] " . GetMessage("SEARCH_CP_STATIC"),
             );
-        else
+        } else {
             $arrDropdown = array();
+        }
 
-        if (IsModuleInstalled("forum"))
+        if (IsModuleInstalled("forum")) {
             $arrDropdown["forum"] = "[forum] " . GetMessage("SEARCH_CP_FORUM");
+        }
 
         if (CModule::IncludeModule("iblock")) {
             $rsType = CIBlockType::GetList(array("sort" => "asc"), array("ACTIVE" => "Y"));
             while ($arr = $rsType->Fetch()) {
-                if ($ar = CIBlockType::GetByIDLang($arr["ID"], LANGUAGE_ID))
+                if ($ar = CIBlockType::GetByIDLang($arr["ID"], LANGUAGE_ID)) {
                     $arrDropdown["iblock_" . $arr["ID"]] = "[iblock_" . $arr["ID"] . "] " . $ar["~NAME"];
+                }
             }
         }
 
         if (IsModuleInstalled("blog")) {
             $arrDropdown["blog"] = "[blog] " . GetMessage("SEARCH_CP_BLOG");
-            if ($bFilter)
+            if ($bFilter) {
                 $arrDropdown["microblog"] = "[microblog] " . GetMessage("SEARCH_CP_MICROBLOG");
+            }
         }
 
         if (IsModuleInstalled("socialnetwork")) {
@@ -146,7 +161,7 @@ class CSearchParameters
             "REFRESH" => "Y",
         );
 
-        if (!is_array($arCurrentValues[$name]) && strlen($arCurrentValues[$name]) > 0) {
+        if (!is_array($arCurrentValues[$name]) && $arCurrentValues[$name] <> '') {
             $arCurrentValues[$name] = array($arCurrentValues[$name]);
         }
 
@@ -166,8 +181,9 @@ class CSearchParameters
                     if (CModule::IncludeModule("forum")) {
                         $arrFILTER["all"] = GetMessage("SEARCH_CP_ALL");
                         $rsForum = CForumNew::GetList();
-                        while ($arForum = $rsForum->Fetch())
+                        while ($arForum = $rsForum->Fetch()) {
                             $arrFILTER[$arForum["ID"]] = $arForum["NAME"];
+                        }
                     }
 
                     $arComponentParameters["PARAMETERS"][$name . "_" . $strFILTER] = array(
@@ -179,13 +195,14 @@ class CSearchParameters
                         "ADDITIONAL_VALUES" => "N",
                         "DEFAULT" => "all",
                     );
-                } elseif (strpos($strFILTER, "iblock_") === 0) {
+                } elseif (mb_strpos($strFILTER, "iblock_") === 0) {
                     $arrFILTER = array();
                     if (CModule::IncludeModule("iblock")) {
                         $arrFILTER["all"] = GetMessage("SEARCH_CP_ALL");
-                        $rsIBlock = CIBlock::GetList(array("SORT" => "ASC"), array("TYPE" => substr($strFILTER, 7)));
-                        while ($arIBlock = $rsIBlock->Fetch())
+                        $rsIBlock = CIBlock::GetList(array("SORT" => "ASC"), array("TYPE" => mb_substr($strFILTER, 7)));
+                        while ($arIBlock = $rsIBlock->Fetch()) {
                             $arrFILTER[$arIBlock["ID"]] = $arIBlock["NAME"];
+                        }
                     }
 
                     $arComponentParameters["PARAMETERS"][$name . "_" . $strFILTER] = array(
@@ -202,8 +219,9 @@ class CSearchParameters
                     if (CModule::IncludeModule("blog")) {
                         $arrFILTER["all"] = GetMessage("SEARCH_CP_ALL");
                         $rsBlog = CBlog::GetList();
-                        while ($arBlog = $rsBlog->Fetch())
+                        while ($arBlog = $rsBlog->Fetch()) {
                             $arrFILTER[$arBlog["ID"]] = $arBlog["NAME"];
+                        }
                     }
 
                     $arComponentParameters["PARAMETERS"][$name . "_" . $strFILTER] = array(
@@ -219,9 +237,16 @@ class CSearchParameters
                     $arrFILTER = array();
                     if (CModule::IncludeModule("socialnetwork")) {
                         $arrFILTER["all"] = GetMessage("SEARCH_CP_ALL");
-                        $rsGroup = CSocNetGroup::GetList(array("ID" => "DESC"), array(), false, false, array("ID", "NAME"));
-                        while ($arGroup = $rsGroup->Fetch())
+                        $rsGroup = CSocNetGroup::GetList(
+                            array("ID" => "DESC"),
+                            array(),
+                            false,
+                            false,
+                            array("ID", "NAME")
+                        );
+                        while ($arGroup = $rsGroup->Fetch()) {
                             $arrFILTER[$arGroup["ID"]] = $arGroup["NAME"];
+                        }
                     }
 
                     $arComponentParameters["PARAMETERS"][$name . "_" . $strFILTER] = array(
@@ -251,16 +276,18 @@ class CSearchParameters
             $arURL = array();
             foreach ($arParam as $strURL) {
                 $strURL = trim($strURL);
-                if ($strURL)
+                if ($strURL) {
                     $arURL[] = $strURL . "%";
+                }
             }
 
-            if (count($arURL) > 0)
+            if (count($arURL) > 0) {
                 return array(
                     "=MODULE_ID" => "main",
                     "URL" => $arURL,
                 );
-        } elseif (strlen($arParam)) {
+            }
+        } elseif (mb_strlen($arParam)) {
             return array(
                 "=MODULE_ID" => "main",
                 "URL" => $arParam . "%",
@@ -277,9 +304,11 @@ class CSearchParameters
     {
         if (is_array($arParam)) {
             $arForum = array();
-            foreach ($arParam as $strForum)
-                if ($strForum != "all")
+            foreach ($arParam as $strForum) {
+                if ($strForum != "all") {
                     $arForum[] = intval($strForum);
+                }
+            }
 
             if (count($arForum) > 0) {
                 return array(
@@ -303,28 +332,30 @@ class CSearchParameters
     {
         if (is_array($arParam)) {
             $arIBlock = array();
-            foreach ($arParam as $strIBlock)
-                if ($strIBlock != "all")
+            foreach ($arParam as $strIBlock) {
+                if ($strIBlock != "all") {
                     $arIBlock[] = intval($strIBlock);
+                }
+            }
 
             if (count($arIBlock) > 0) {
                 return array(
                     "=MODULE_ID" => "iblock",
-                    "PARAM1" => substr($strFILTER, 7),
+                    "PARAM1" => mb_substr($strFILTER, 7),
                     "PARAM2" => $arIBlock,
                 );
             }
         } elseif ($arParam > 0) {
             return array(
                 "=MODULE_ID" => "iblock",
-                "PARAM1" => substr($strFILTER, 7),
+                "PARAM1" => mb_substr($strFILTER, 7),
                 "PARAM2" => intval($arParam),
             );
         }
 
         return array(
             "=MODULE_ID" => "iblock",
-            "PARAM1" => substr($strFILTER, 7),
+            "PARAM1" => mb_substr($strFILTER, 7),
         );
     }
 
@@ -332,9 +363,11 @@ class CSearchParameters
     {
         if (is_array($arParam)) {
             $arBlog = array();
-            foreach ($arParam as $strBlog)
-                if ($strBlog != "all")
+            foreach ($arParam as $strBlog) {
+                if ($strBlog != "all") {
                     $arBlog[] = intval($strBlog);
+                }
+            }
 
             if (count($arBlog) > 0) {
                 return array(
@@ -361,9 +394,11 @@ class CSearchParameters
     {
         if (is_array($arParam)) {
             $arSCGroups = array();
-            foreach ($arParam as $strSCGroup)
-                if ($strSCGroup != "all")
+            foreach ($arParam as $strSCGroup) {
+                if ($strSCGroup != "all") {
                     $arSCGroups[] = intval($strSCGroup);
+                }
+            }
 
             if (count($arSCGroups) > 0) {
                 return array(
@@ -386,14 +421,15 @@ class CSearchParameters
     protected static function _socialnetwork_user($arParam)
     {
         $intSCUser = intval($arParam);
-        if ($intSCUser > 0)
+        if ($intSCUser > 0) {
             return array(
                 "PARAMS" => array("socnet_user" => $intSCUser),
                 "USE_TF_FILTER" => false,
             );
-        else
+        } else {
             return array(
                 "=MODULE_ID" => "socialnetwork",
             );
+        }
     }
 }

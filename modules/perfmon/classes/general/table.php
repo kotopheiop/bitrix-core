@@ -10,23 +10,27 @@ class CAllPerfomanceTable
 
         $arFields = $this->GetTableFields();
 
-        if (!is_array($arSelect))
+        if (!is_array($arSelect)) {
             $arSelect = array();
-        if (count($arSelect) < 1)
+        }
+        if (count($arSelect) < 1) {
             $arSelect = array_keys($arFields);
+        }
 
-        if (!is_array($arOrder))
+        if (!is_array($arOrder)) {
             $arOrder = array();
+        }
 
         $arQueryOrder = array();
         foreach ($arOrder as $strColumn => $strDirection) {
-            $strDirection = strtoupper($strDirection) == "ASC" ? "ASC" : "DESC";
+            $strDirection = mb_strtoupper($strDirection) == "ASC" ? "ASC" : "DESC";
             if (array_key_exists($strColumn, $arFields)) {
                 $arSelect[] = $strColumn;
-                if ($arFields[$strColumn] == "datetime" || $arFields[$strColumn] == "date")
+                if ($arFields[$strColumn] == "datetime" || $arFields[$strColumn] == "date") {
                     $arQueryOrder[$strColumn] = $this->escapeColumn("TMP_" . $strColumn) . " " . $strDirection;
-                else
+                } else {
                     $arQueryOrder[$strColumn] = $this->escapeColumn($strColumn) . " " . $strDirection;
+                }
             }
         }
 
@@ -35,9 +39,18 @@ class CAllPerfomanceTable
             if (array_key_exists($strColumn, $arFields)) {
                 if ($arFields[$strColumn] == "datetime" || $arFields[$strColumn] == "date") {
                     $arQuerySelect["TMP_" . $strColumn] = "t." . $this->escapeColumn($strColumn) . " TMP_" . $strColumn;
-                    $arQuerySelect[$strColumn] = $DB->DateToCharFunction("t." . $this->escapeColumn($strColumn), "SHORT") . " " . $this->escapeColumn($strColumn);
-                    $arQuerySelect["FULL_" . $strColumn] = $DB->DateToCharFunction("t." . $this->escapeColumn($strColumn), "FULL") . " FULL_" . $strColumn;
-                    $arQuerySelect["SHORT_" . $strColumn] = $DB->DateToCharFunction("t." . $this->escapeColumn($strColumn), "SHORT") . " SHORT_" . $strColumn;
+                    $arQuerySelect[$strColumn] = $DB->DateToCharFunction(
+                            "t." . $this->escapeColumn($strColumn),
+                            "SHORT"
+                        ) . " " . $this->escapeColumn($strColumn);
+                    $arQuerySelect["FULL_" . $strColumn] = $DB->DateToCharFunction(
+                            "t." . $this->escapeColumn($strColumn),
+                            "FULL"
+                        ) . " FULL_" . $strColumn;
+                    $arQuerySelect["SHORT_" . $strColumn] = $DB->DateToCharFunction(
+                            "t." . $this->escapeColumn($strColumn),
+                            "SHORT"
+                        ) . " SHORT_" . $strColumn;
                 } else {
                     $arQuerySelect[$strColumn] = "t." . $this->escapeColumn($strColumn);
                 }
@@ -56,11 +69,18 @@ class CAllPerfomanceTable
         $obQueryWhere = new CSQLWhere;
         $obQueryWhere->SetFields($arFields);
 
-        if (count($arQuerySelect) < 1)
+        if (count($arQuerySelect) < 1) {
             $arQuerySelect = array("*" => "t.*");
+        }
 
         if (is_array($arNavParams)) {
-            return $this->NavQuery($arNavParams, $arQuerySelect, $this->TABLE_NAME, $obQueryWhere->GetQuery($arFilter), $arQueryOrder);
+            return $this->NavQuery(
+                $arNavParams,
+                $arQuerySelect,
+                $this->TABLE_NAME,
+                $obQueryWhere->GetQuery($arFilter),
+                $arQueryOrder
+            );
         } else {
             $strSql = "
 				SELECT
@@ -164,10 +184,11 @@ class CAllPerfomanceTable
 
     function GetTableFields($TABLE_NAME = false, $bExtended = false)
     {
-        if ($TABLE_NAME && $bExtended)
+        if ($TABLE_NAME && $bExtended) {
             return array();
-        else
+        } else {
             return array();
+        }
     }
 
     function getCreateIndexDDL($TABLE_NAME, $INDEX_NAME, $INDEX_COLUMNS)

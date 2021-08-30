@@ -39,8 +39,9 @@ class Element extends Entity
      */
     protected function checkModules()
     {
-        if ($this->catalogIncluded === null)
+        if ($this->catalogIncluded === null) {
             $this->catalogIncluded = Loader::includeModule('catalog');
+        }
     }
 
     /**
@@ -49,8 +50,9 @@ class Element extends Entity
     protected function initEntitySettings()
     {
         parent::initEntitySettings();
-        if (!$this->catalogIncluded)
+        if (!$this->catalogIncluded) {
             return;
+        }
         $iblockId = (int)$this->getStorageItem(self::STORAGE_ENTITY_IBLOCK, 'IBLOCK_ID');
         if ($iblockId > 0) {
             $description = [
@@ -69,7 +71,6 @@ class Element extends Entity
                     $description['SKU_PROPERTY_ID'] = $catalog['SKU_PROPERTY_ID'];
                 }
                 $description['FILTER_ALL'] = Loc::getMessage('IBLOCK_SELECTOR_ELEMENT_SLIDER_FILTER_ALL_PRODUCTS');
-
             }
             unset($catalog);
             $this->fillStorageNode(self::STORAGE_ENTITY_IBLOCK, $description);
@@ -91,8 +92,9 @@ class Element extends Entity
             foreach ($result as $id => $row) {
                 $newResult[$id] = $row;
                 if ($id == 'ID') {
-                    foreach (array_keys($sectionFilter) as $index)
+                    foreach (array_keys($sectionFilter) as $index) {
                         $newResult[$index] = $sectionFilter[$index];
+                    }
                     unset($index);
                 }
             }
@@ -140,8 +142,9 @@ class Element extends Entity
         );
 
         $properties = $this->getElementPropertiesDescription();
-        if (!empty($properties))
+        if (!empty($properties)) {
             $result = array_merge($result, $properties);
+        }
         unset($properties);
 
         return $result;
@@ -230,13 +233,15 @@ class Element extends Entity
                 }
             } else {
                 $selectedFields[] = $columnId;
-                if ($columnId == 'TYPE')
+                if ($columnId == 'TYPE') {
                     $selectedFields[] = 'BUNDLE';
+                }
             }
         }
         unset($columnId);
-        if (!in_array('ID', $selectedFields))
+        if (!in_array('ID', $selectedFields)) {
             $selectedFields[] = 'ID';
+        }
 
         $viewedColumns = array_fill_keys($viewedColumns, true);
 
@@ -244,8 +249,9 @@ class Element extends Entity
         $needProperties = $iblockId > 0 && !empty($selectedProperties);
 
         $productTypeList = [];
-        if ($this->catalogIncluded)
+        if ($this->catalogIncluded) {
             $productTypeList = Catalog\ProductTable::getProductTypes(true);
+        }
 
         $listIds = [];
 
@@ -260,20 +266,27 @@ class Element extends Entity
         while ($row = $iterator->Fetch()) {
             $row['ID'] = (int)$row['ID'];
 
-            if (isset($viewedColumns['ACTIVE']))
+            if (isset($viewedColumns['ACTIVE'])) {
                 $row['ACTIVE'] = ($row['ACTIVE'] == 'Y' ? $binaryStates['Y'] : $binaryStates['N']);
-            if (isset($viewedColumns['NAME']))
+            }
+            if (isset($viewedColumns['NAME'])) {
                 $row['NAME'] = htmlspecialcharsEx((string)$row['NAME']);
-            if (isset($viewedColumns['SORT']))
+            }
+            if (isset($viewedColumns['SORT'])) {
                 $row['SORT'] = (int)$row['SORT'];
-            if (isset($viewedColumns['CODE']))
+            }
+            if (isset($viewedColumns['CODE'])) {
                 $row['CODE'] = htmlspecialcharsbx((string)$row['CODE']);
-            if (isset($viewedColumns['XML_ID']))
+            }
+            if (isset($viewedColumns['XML_ID'])) {
                 $row['XML_ID'] = htmlspecialcharsbx((string)$row['XML_ID']);
-            if (isset($viewedColumns['ACTIVE_FROM']))
+            }
+            if (isset($viewedColumns['ACTIVE_FROM'])) {
                 $row['ACTIVE_FROM'] = htmlspecialcharsbx((string)$row['ACTIVE_FROM']);
-            if (isset($viewedColumns['ACTIVE_TO']))
+            }
+            if (isset($viewedColumns['ACTIVE_TO'])) {
                 $row['ACTIVE_TO'] = htmlspecialcharsbx((string)$row['ACTIVE_TO']);
+            }
 
             if (isset($viewedColumns['TYPE'])) {
                 if ($row['TYPE'] === null) {
@@ -294,11 +307,13 @@ class Element extends Entity
                 }
                 unset($row['BUNDLE']);
             }
-            if (isset($viewedColumns['AVAILABLE']))
+            if (isset($viewedColumns['AVAILABLE'])) {
                 $row['AVAILABLE'] = ($row['AVAILABLE'] == 'Y' ? $binaryStates['Y'] : $binaryStates['N']);
+            }
 
-            if ($needProperties)
+            if ($needProperties) {
                 $row['PROPERTIES'] = [];
+            }
             $this->rows[$row['ID']] = $row;
             $listIds[] = $row['ID'];
         }
@@ -337,8 +352,9 @@ class Element extends Entity
                             $userType = $property['PROPERTY_USER_TYPE'];
                             if (isset($userType['GetAdminListViewHTML'])) {
                                 $rawValue = $value['VALUE'];
-                                if ($property['MULTIPLE'] == 'N' || !$complexValue)
+                                if ($property['MULTIPLE'] == 'N' || !$complexValue) {
                                     $rawValue = [$rawValue];
+                                }
                                 foreach ($rawValue as $item) {
                                     $itemValue = (string)call_user_func_array(
                                         $userType['GetAdminListViewHTML'],
@@ -354,13 +370,15 @@ class Element extends Entity
                                             ]
                                         ]
                                     );
-                                    if ($itemValue !== '')
+                                    if ($itemValue !== '') {
                                         $assembly[] = $itemValue;
+                                    }
                                 }
                             } else {
                                 $rawValue = $value['VALUE'];
-                                if (!$complexValue)
+                                if (!$complexValue) {
                                     $rawValue = [$rawValue];
+                                }
 
                                 switch ($this->elementProperties[$index]['PROPERTY_TYPE']) {
                                     case Iblock\PropertyTable::TYPE_STRING:
@@ -372,34 +390,42 @@ class Element extends Entity
                                         foreach ($rawValue as $item) {
                                             if (!isset($elementCache[$item])) {
                                                 $elementCache[$item] = '';
-                                                $valueIterator = Iblock\ElementTable::getList([
-                                                    'select' => ['ID', 'NAME'],
-                                                    'filter' => ['=ID' => $item]
-                                                ]);
+                                                $valueIterator = Iblock\ElementTable::getList(
+                                                    [
+                                                        'select' => ['ID', 'NAME'],
+                                                        'filter' => ['=ID' => $item]
+                                                    ]
+                                                );
                                                 $valueRow = $valueIterator->fetch();
-                                                if (!empty($valueRow))
+                                                if (!empty($valueRow)) {
                                                     $elementCache[$item] = '[' . $valueRow['ID'] . '] ' . $valueRow['NAME'];
+                                                }
                                                 unset($valueRow, $valueIterator);
                                             }
-                                            if ($elementCache[$item] !== '')
+                                            if ($elementCache[$item] !== '') {
                                                 $assembly[] = $elementCache[$item];
+                                            }
                                         }
                                         break;
                                     case Iblock\PropertyTable::TYPE_SECTION:
                                         foreach ($rawValue as $item) {
                                             if (!isset($sectionCache[$item])) {
                                                 $sectionCache[$item] = '';
-                                                $valueIterator = Iblock\SectionTable::getList([
-                                                    'select' => ['ID', 'NAME'],
-                                                    'filter' => ['=ID' => $item]
-                                                ]);
+                                                $valueIterator = Iblock\SectionTable::getList(
+                                                    [
+                                                        'select' => ['ID', 'NAME'],
+                                                        'filter' => ['=ID' => $item]
+                                                    ]
+                                                );
                                                 $valueRow = $valueIterator->fetch();
-                                                if (!empty($valueRow))
+                                                if (!empty($valueRow)) {
                                                     $sectionCache[$item] = '[' . $valueRow['ID'] . '] ' . $valueRow['NAME'];
+                                                }
                                                 unset($valueRow, $valueIterator);
                                             }
-                                            if ($sectionCache[$item] !== '')
+                                            if ($sectionCache[$item] !== '') {
                                                 $assembly[] = $sectionCache[$item];
+                                            }
                                         }
                                         break;
                                     case Iblock\PropertyTable::TYPE_FILE:
@@ -479,8 +505,9 @@ class Element extends Entity
 
             unset($sectionCache, $elementCache);
         }
-        if (!empty($this->rows))
+        if (!empty($this->rows)) {
             $this->rows = array_values($this->rows);
+        }
 
         $this->setImplicitNavigationData($iterator);
         unset($iterator);
@@ -492,8 +519,9 @@ class Element extends Entity
     protected function getNavigationTitle()
     {
         $title = $this->getStorageItem(self::STORAGE_ENTITY_IBLOCK, 'IBLOCK_ELEMENTS_NAME');
-        if (!empty($title))
+        if (!empty($title)) {
             return $title;
+        }
         return Loc::getMessage('IBLOCK_SELECTOR_ELEMENT_GRID_PAGENAVIGATION_TITLE');
     }
 
@@ -652,8 +680,9 @@ class Element extends Entity
         $result = [];
 
         $this->loadElementPropertiesDescription();
-        if (!empty($this->elementProperties))
+        if (!empty($this->elementProperties)) {
             $result = $this->compileFilterProperties($this->elementProperties);
+        }
 
         return $result;
     }
@@ -669,8 +698,9 @@ class Element extends Entity
         if (!empty($this->offerProperties)) {
             $result = $this->compileFilterProperties($this->offerProperties);
             if (!empty($result)) {
-                foreach (array_keys($result) as $index)
+                foreach (array_keys($result) as $index) {
                     $result[$index]['entity'] = 'offer';
+                }
                 unset($index);
             }
         }
@@ -685,8 +715,9 @@ class Element extends Entity
     protected function compileFilterProperties(array $list)
     {
         $result = [];
-        if (empty($list))
+        if (empty($list)) {
             return $result;
+        }
 
         $operators = [
             Iblock\PropertyTable::TYPE_STRING => [
@@ -733,8 +764,9 @@ class Element extends Entity
                         'type' => 'custom',
                         'value' => ''
                     ];
-                    if (isset($operators[$row['PROPERTY_TYPE']]))
+                    if (isset($operators[$row['PROPERTY_TYPE']])) {
                         $field['operators'] = $operators[$row['PROPERTY_TYPE']];
+                    }
                     call_user_func_array(
                         $row['PROPERTY_USER_TYPE']['GetUIFilterProperty'],
                         [
@@ -762,13 +794,16 @@ class Element extends Entity
                     break;
                 case Iblock\PropertyTable::TYPE_LIST:
                     $list = [];
-                    $valueIterator = Iblock\PropertyEnumerationTable::getList([
-                        'select' => ['ID', 'VALUE', 'SORT'],
-                        'filter' => ['=PROPERTY_ID' => $row['ID']],
-                        'order' => ['SORT' => 'ASC', 'VALUE' => 'ASC']
-                    ]);
-                    while ($value = $valueIterator->fetch())
+                    $valueIterator = Iblock\PropertyEnumerationTable::getList(
+                        [
+                            'select' => ['ID', 'VALUE', 'SORT'],
+                            'filter' => ['=PROPERTY_ID' => $row['ID']],
+                            'order' => ['SORT' => 'ASC', 'VALUE' => 'ASC']
+                        ]
+                    );
+                    while ($value = $valueIterator->fetch()) {
                         $list[$value['ID']] = $value['VALUE'];
+                    }
                     unset($value, $valueIterator);
                     if (!empty($list)) {
                         $field = [
@@ -788,13 +823,18 @@ class Element extends Entity
                         $list = [];
                         $valueIterator = \CIBlockElement::GetList(
                             ['SORT' => 'ASC', 'NAME' => 'ASC'],
-                            ['IBLOCK_ID' => $row['LINK_IBLOCK_ID'], 'CHECK_PERMISSIONS' => 'Y', 'MIN_PERMISSION' => 'R'],
+                            [
+                                'IBLOCK_ID' => $row['LINK_IBLOCK_ID'],
+                                'CHECK_PERMISSIONS' => 'Y',
+                                'MIN_PERMISSION' => 'R'
+                            ],
                             false,
                             false,
                             ['ID', 'IBLOCK_ID', 'NAME', 'SORT']
                         );
-                        while ($value = $valueIterator->Fetch())
+                        while ($value = $valueIterator->Fetch()) {
                             $list[$value['ID']] = '[' . $value['ID'] . '] ' . $value['NAME'];
+                        }
                         unset($value, $valueIterator);
                         if (!empty($list)) {
                             $field = [
@@ -815,12 +855,20 @@ class Element extends Entity
                         $list = [];
                         $valueIterator = \CIBlockSection::GetList(
                             ['LEFT_MARGIN' => 'ASC'],
-                            ['IBLOCK_ID' => $row['LINK_IBLOCK_ID'], 'CHECK_PERMISSIONS' => 'Y', 'MIN_PERMISSION' => 'R'],
+                            [
+                                'IBLOCK_ID' => $row['LINK_IBLOCK_ID'],
+                                'CHECK_PERMISSIONS' => 'Y',
+                                'MIN_PERMISSION' => 'R'
+                            ],
                             false,
                             ['ID', 'IBLOCK_ID', 'DEPTH_LEVEL', 'NAME', 'LEFT_MARGIN']
                         );
-                        while ($value = $valueIterator->Fetch())
-                            $list[$value['ID']] = str_repeat('. ', $value['DEPTH_LEVEL'] - 1) . '[' . $value['ID'] . '] ' . $value['NAME'];
+                        while ($value = $valueIterator->Fetch()) {
+                            $list[$value['ID']] = str_repeat(
+                                    '. ',
+                                    $value['DEPTH_LEVEL'] - 1
+                                ) . '[' . $value['ID'] . '] ' . $value['NAME'];
+                        }
                         unset($value, $valueIterator);
                         if (!empty($list)) {
                             $field = [
@@ -835,8 +883,9 @@ class Element extends Entity
                     }
                     break;
             }
-            if (!empty($field))
+            if (!empty($field)) {
                 $result[$id] = $field;
+            }
         }
         unset($id, $row, $iterator);
         unset($operators);
@@ -944,14 +993,18 @@ class Element extends Entity
      */
     protected function loadElementPropertiesDescription()
     {
-        if ($this->elementProperties !== null)
+        if ($this->elementProperties !== null) {
             return;
+        }
 
         $iblockId = (int)$this->getStorageItem(self::STORAGE_ENTITY_IBLOCK, 'IBLOCK_ID');
         if ($iblockId > 0) {
-            $this->elementProperties = $this->loadPropertiesDescription([
-                '=IBLOCK_ID' => $iblockId, '=ACTIVE' => 'Y'
-            ]);
+            $this->elementProperties = $this->loadPropertiesDescription(
+                [
+                    '=IBLOCK_ID' => $iblockId,
+                    '=ACTIVE' => 'Y'
+                ]
+            );
         }
         unset($iblockId);
     }
@@ -961,19 +1014,25 @@ class Element extends Entity
      */
     protected function loadOfferPropertiesDescription()
     {
-        if ($this->offerProperties !== null)
+        if ($this->offerProperties !== null) {
             return;
+        }
 
-        if (!$this->catalogIncluded)
+        if (!$this->catalogIncluded) {
             return;
+        }
 
         $iblockId = (int)$this->getStorageItem(self::STORAGE_ENTITY_IBLOCK, 'OFFERS_IBLOCK_ID');
         $skuPropertyId = (int)$this->getStorageItem(self::STORAGE_ENTITY_IBLOCK, 'SKU_PROPERTY_ID');
 
         if ($iblockId > 0 && $skuPropertyId > 0) {
-            $this->offerProperties = $this->loadPropertiesDescription([
-                '=IBLOCK_ID' => $iblockId, '!=ID' => $skuPropertyId, '=ACTIVE' => 'Y'
-            ]);
+            $this->offerProperties = $this->loadPropertiesDescription(
+                [
+                    '=IBLOCK_ID' => $iblockId,
+                    '!=ID' => $skuPropertyId,
+                    '=ACTIVE' => 'Y'
+                ]
+            );
         }
         unset($skuPropertyId, $iblockId);
     }
@@ -985,21 +1044,34 @@ class Element extends Entity
     protected function loadPropertiesDescription(array $filter)
     {
         $result = [];
-        if (empty($filter))
+        if (empty($filter)) {
             return $result;
+        }
 
-        $iterator = Iblock\PropertyTable::getList([
-            'select' => [
-                'ID', 'IBLOCK_ID', 'NAME', 'SORT', 'PROPERTY_TYPE',
-                'MULTIPLE', 'LINK_IBLOCK_ID', 'FILTRABLE', 'VERSION',
-                'USER_TYPE', 'USER_TYPE_SETTINGS_LIST'
-            ],
-            'filter' => $filter,
-            'order' => ['SORT' => 'ASC', 'NAME' => 'ASC']
-        ]);
+        $iterator = Iblock\PropertyTable::getList(
+            [
+                'select' => [
+                    'ID',
+                    'IBLOCK_ID',
+                    'NAME',
+                    'SORT',
+                    'PROPERTY_TYPE',
+                    'MULTIPLE',
+                    'LINK_IBLOCK_ID',
+                    'FILTRABLE',
+                    'VERSION',
+                    'USER_TYPE',
+                    'USER_TYPE_SETTINGS_LIST'
+                ],
+                'filter' => $filter,
+                'order' => ['SORT' => 'ASC', 'NAME' => 'ASC']
+            ]
+        );
         while ($row = $iterator->fetch()) {
             $row['USER_TYPE'] = (string)$row['USER_TYPE'];
-            $row['PROPERTY_USER_TYPE'] = ($row['USER_TYPE'] !== '' ? \CIBlockProperty::GetUserType($row['USER_TYPE']) : []);
+            $row['PROPERTY_USER_TYPE'] = ($row['USER_TYPE'] !== '' ? \CIBlockProperty::GetUserType(
+                $row['USER_TYPE']
+            ) : []);
             $row['USER_TYPE_SETTINGS'] = $row['USER_TYPE_SETTINGS_LIST'];
             unset($row['USER_TYPE_SETTINGS_LIST']);
             $result['PROPERTY_' . $row['ID']] = $row;

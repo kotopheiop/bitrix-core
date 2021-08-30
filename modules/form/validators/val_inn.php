@@ -1,22 +1,30 @@
-<?
+<?php
+
 IncludeModuleLangFile(__FILE__);
 
 class CFormValidatorINN
 {
-    function GetDescription()
+    public static function GetDescription()
     {
         return array(
-            "NAME" => "INN", // validator string ID
-            "DESCRIPTION" => GetMessage("FORM_VALIDATOR_VAL_INN_DESCRIPTION"), // validator description
-            "TYPES" => array("text", "textarea"), //  list of types validator can be applied.
-            "SETTINGS" => array("CFormValidatorINN", "GetSettings"), // method returning array of validator settings, optional
-            "CONVERT_TO_DB" => array("CFormValidatorINN", "ToDB"), // method, processing validator settings to string to put to db, optional
-            "CONVERT_FROM_DB" => array("CFormValidatorINN", "FromDB"), // method, processing validator settings from string from db, optional
-            "HANDLER" => array("CFormValidatorINN", "DoValidate") // main validation method
+            "NAME" => "INN",
+            // validator string ID
+            "DESCRIPTION" => GetMessage("FORM_VALIDATOR_VAL_INN_DESCRIPTION"),
+            // validator description
+            "TYPES" => array("text", "textarea"),
+            //  list of types validator can be applied.
+            "SETTINGS" => array("CFormValidatorINN", "GetSettings"),
+            // method returning array of validator settings, optional
+            "CONVERT_TO_DB" => array("CFormValidatorINN", "ToDB"),
+            // method, processing validator settings to string to put to db, optional
+            "CONVERT_FROM_DB" => array("CFormValidatorINN", "FromDB"),
+            // method, processing validator settings from string from db, optional
+            "HANDLER" => array("CFormValidatorINN", "DoValidate")
+            // main validation method
         );
     }
 
-    function GetSettings()
+    public static function GetSettings()
     {
         return array(
             "TYPE" => array(
@@ -32,7 +40,7 @@ class CFormValidatorINN
         );
     }
 
-    function ToDB($arParams)
+    public static function ToDB($arParams)
     {
         $arPar = array(
             "TYPE" => $arParams["TYPE"] == "phys" || $arParams["TYPE"] == "jur" ? $arParams["TYPE"] : "both"
@@ -41,22 +49,24 @@ class CFormValidatorINN
         return serialize($arPar);
     }
 
-    function FromDB($strParams)
+    public static function FromDB($strParams)
     {
-        return unserialize($strParams);
+        return unserialize($strParams, ['allowed_classes' => false]);
     }
 
-    function DoValidate($arParams, $arQuestion, $arAnswers, $arValues)
+    public static function DoValidate($arParams, $arQuestion, $arAnswers, $arValues)
     {
         global $APPLICATION;
 
         foreach ($arValues as $value) {
             $value = strval($value);
 
-            if (strlen($value) <= 0) continue;
+            if ($value == '') {
+                continue;
+            }
 
             // check inn
-            $lenValue = strlen($value);
+            $lenValue = mb_strlen($value);
             if ($lenValue > 0) {
                 $res = true;
 
@@ -95,11 +105,11 @@ class CFormValidatorINN
         return true;
     }
 
-    function __checkINN($value)
+    public static function __checkINN($value)
     {
         $arCheck = array(41, 37, 31, 29, 23, 19, 17, 13, 7, 5, 3);
 
-        $lenValue = strlen($value);
+        $lenValue = mb_strlen($value);
         if ($lenValue == 10) {
             $arCheckArrays = array(
                 array_values(array_slice($arCheck, 2)),
@@ -121,10 +131,13 @@ class CFormValidatorINN
 
             $checkNum = 11 - $checkSum % 11;
 
-            if ($checkNum == 10 || $checkNum == 11) $checkNum = 0;
+            if ($checkNum == 10 || $checkNum == 11) {
+                $checkNum = 0;
+            }
 
-            if ($checkNum != intval(substr($value, -$checkKey - 1, 1)))
+            if ($checkNum != intval(mb_substr($value, -$checkKey - 1, 1))) {
                 return false;
+            }
         }
 
         return true;
@@ -132,4 +145,3 @@ class CFormValidatorINN
 }
 
 AddEventHandler("form", "onFormValidatorBuildList", array("CFormValidatorINN", "GetDescription"));
-?>

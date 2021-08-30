@@ -1,16 +1,19 @@
 <?
+
 define("ADMIN_MODULE_NAME", "clouds");
 
 /*.require_module 'standard';.*/
 /*.require_module 'pcre';.*/
 /*.require_module 'bitrix_main_include_prolog_admin_before';.*/
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
-if (!$USER->CanDoOperation("clouds_config"))
+if (!$USER->CanDoOperation("clouds_config")) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 /*.require_module 'bitrix_clouds_include';.*/
-if (!CModule::IncludeModule('clouds'))
+if (!CModule::IncludeModule('clouds')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 
@@ -21,14 +24,17 @@ $lAdmin = new CAdminList($sTableID, $oSort);
 $bOnTheMove = isset($_GET["themove"]);
 
 $upload_dir = $_SERVER["DOCUMENT_ROOT"] . "/" . COption::GetOptionString("main", "upload_dir", "upload");
-$bHasLocalStorage = file_exists($upload_dir) && (is_dir($upload_dir) || is_link($upload_dir)) && is_writable($upload_dir);
+$bHasLocalStorage = file_exists($upload_dir) && (is_dir($upload_dir) || is_link($upload_dir)) && is_writable(
+        $upload_dir
+    );
 
 $arID = $lAdmin->GroupAction();
 $action = isset($_REQUEST["action"]) && is_string($_REQUEST["action"]) ? "$_REQUEST[action]" : "";
 if (is_array($arID)) {
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0 || intval($ID) <= 0)
+        if ($ID == '' || intval($ID) <= 0) {
             continue;
+        }
 
         switch ($action) {
             case "delete":
@@ -40,33 +46,41 @@ if (is_array($arID)) {
                 break;
             case "deactivate":
                 $ob = new CCloudStorageBucket(intval($ID));
-                if ($ob->ACTIVE === "Y")
+                if ($ob->ACTIVE === "Y") {
                     $ob->Update(array("ACTIVE" => "N"));
+                }
                 break;
             case "activate":
                 $ob = new CCloudStorageBucket(intval($ID));
-                if ($ob->ACTIVE === "N")
+                if ($ob->ACTIVE === "N") {
                     $ob->Update(array("ACTIVE" => "Y"));
+                }
                 break;
             case "download":
                 $ob = new CCloudStorageBucket(intval($ID));
                 if ($ob->Init() && $ob->ACTIVE === "Y") {
-                    if (isset($_SESSION["last_file_id"]))
+                    if (isset($_SESSION["last_file_id"])) {
                         $last_file_id = intval($_SESSION["last_file_id"]);
-                    else
+                    } else {
                         $last_file_id = 0;
+                    }
 
-                    if (isset($_SESSION["last_file_pos"]))
+                    if (isset($_SESSION["last_file_pos"])) {
                         $last_file_pos = doubleval($_SESSION["last_file_pos"]);
-                    else
+                    } else {
                         $last_file_pos = 0;
+                    }
 
-                    $rsNextFile = $DB->Query("
-					SELECT MIN(ID) ID, COUNT(1) CNT, SUM(FILE_SIZE) FILE_SIZE
+                    $rsNextFile = $DB->Query(
+                        "
+					SELECT MIN(b_file.ID) ID, COUNT(1) CNT, SUM(b_file.FILE_SIZE) FILE_SIZE
 					FROM b_file
-					WHERE ID > " . intval($last_file_id) . "
-					AND HANDLER_ID = '" . $DB->ForSQL($ob->ID) . "'
-				");
+					LEFT JOIN b_file_duplicate on b_file_duplicate.DUPLICATE_ID = b_file.ID
+					WHERE b_file.ID > " . intval($last_file_id) . "
+					AND b_file.HANDLER_ID = '" . $DB->ForSQL($ob->ID) . "'
+					AND b_file_duplicate.DUPLICATE_ID is null
+				"
+                    );
 
                     $lAdmin->BeginPrologContent();
                     if (
@@ -78,8 +92,20 @@ if (is_array($arID)) {
                         $maxPartSize = 1024 * 1024; //1M
 
                         $arFile = CFile::GetFileArray($ar["ID"]);
-                        $filePath = preg_replace("#[\\\\\\/]+#", "/", "/" . $arFile["SUBDIR"] . "/" . $arFile["FILE_NAME"]);
-                        $absPath = preg_replace("#[\\\\\\/]+#", "/", $_SERVER["DOCUMENT_ROOT"] . "/" . COption::GetOptionString("main", "upload_dir", "upload") . $filePath);
+                        $filePath = preg_replace(
+                            "#[\\\\\\/]+#",
+                            "/",
+                            "/" . $arFile["SUBDIR"] . "/" . $arFile["FILE_NAME"]
+                        );
+                        $absPath = preg_replace(
+                            "#[\\\\\\/]+#",
+                            "/",
+                            $_SERVER["DOCUMENT_ROOT"] . "/" . COption::GetOptionString(
+                                "main",
+                                "upload_dir",
+                                "upload"
+                            ) . $filePath
+                        );
                         $absPath = $io->GetPhysicalName($absPath);
                         $absTempPath = $absPath . "~";
 
@@ -91,7 +117,11 @@ if (is_array($arID)) {
                             $obRequest->fp = fopen($absTempPath, "ab");
                             if (is_resource($obRequest->fp)) {
                                 if ($arFile["FILE_SIZE"] > $maxPartSize) {
-                                    $obRequest->additional_headers["Range"] = sprintf("bytes=%u-%u", $last_file_pos, ($last_file_pos + $maxPartSize > $arFile["FILE_SIZE"] ? $arFile["FILE_SIZE"] : $last_file_pos + $maxPartSize) - 1);
+                                    $obRequest->additional_headers["Range"] = sprintf(
+                                        "bytes=%u-%u",
+                                        $last_file_pos,
+                                        ($last_file_pos + $maxPartSize > $arFile["FILE_SIZE"] ? $arFile["FILE_SIZE"] : $last_file_pos + $maxPartSize) - 1
+                                    );
                                 }
 
                                 $res = $obRequest->HTTPQuery('GET', $ob->GetFileSRC($arFile));
@@ -111,17 +141,23 @@ if (is_array($arID)) {
 
                                     if (
                                         array_key_exists("Content-Range", $obRequest->headers)
-                                        && preg_match("/(\\d+)-(\\d+)\\/(\\d+)\$/", $obRequest->headers["Content-Range"], $match)
-                                    )
+                                        && preg_match(
+                                            "/(\\d+)-(\\d+)\\/(\\d+)\$/",
+                                            $obRequest->headers["Content-Range"],
+                                            $match
+                                        )
+                                    ) {
                                         $FILE_SIZE = $match[3];
-                                    elseif (
+                                    } elseif (
                                         array_key_exists("Content-Length", $obRequest->headers)
                                         && preg_match("/^(\\d+)\$/", $obRequest->headers["Content-Length"], $match)
                                         && $match[1] > $maxPartSize
-                                    )
-                                        $FILE_SIZE = 0; //Chunk download not supported
-                                    else
+                                    ) {
+                                        $FILE_SIZE = 0;
+                                    } //Chunk download not supported
+                                    else {
                                         $FILE_SIZE = $arFile["FILE_SIZE"];
+                                    }
 
                                     if ($last_file_pos > $FILE_SIZE) {
                                         $last_file_pos = $arFile["FILE_SIZE"];
@@ -143,32 +179,54 @@ if (is_array($arID)) {
                             if ($bFileMoved) {
                                 rename($absTempPath, $absPath);
                                 $ob->DeleteFile($filePath);
-                                $DB->Query("
+
+                                $filesToUpdate = array(intval($arFile["ID"]));
+                                //Find duplicates of the file
+                                $duplicates = \Bitrix\Main\File\Internal\FileDuplicateTable::query()
+                                    ->addSelect("DUPLICATE_ID")
+                                    ->where("ORIGINAL_ID", $arFile["ID"])
+                                    ->fetchAll();
+                                foreach ($duplicates as $dupFile) {
+                                    $filesToUpdate[] = intval($dupFile["DUPLICATE_ID"]);
+                                }
+                                //Mark them as moved
+                                $updateResult = $DB->Query(
+                                    "
 								UPDATE b_file
 								SET HANDLER_ID = null
-								WHERE ID = " . intval($arFile["ID"]) . "
-							");
-                                CFile::CleanCache($arFile["ID"]);
+								WHERE ID in (" . implode(",", $filesToUpdate) . ")
+							"
+                                );
+                                $updateCount = $updateResult->AffectedRowsCount();
+                                //Clean cache
+                                foreach ($filesToUpdate as $updatedFileId) {
+                                    CFile::CleanCache($updatedFileId);
+                                }
                                 $ob->DecFileCounter((float)$arFile["FILE_SIZE"]);
                                 $ob->Update(array("LAST_FILE_ID" => 0));
                             }
                         }
 
-                        CAdminMessage::ShowMessage(array(
-                            "TYPE" => "PROGRESS",
-                            "MESSAGE" => GetMessage("CLO_STORAGE_LIST_DOWNLOAD_IN_PROGRESS"),
-                            "DETAILS" => GetMessage("CLO_STORAGE_LIST_DOWNLOAD_PROGRESS", array(
-                                "#remain#" => $ar["CNT"] - $bNextFile,
-                                "#bytes#" => CFile::FormatSize($ar["FILE_SIZE"] - $last_file_pos),
-                            )),
-                            "HTML" => true,
-                            "BUTTONS" => array(
-                                array(
-                                    "VALUE" => GetMessage("CLO_STORAGE_LIST_STOP"),
-                                    "ONCLICK" => 'window.location = \'/bitrix/admin/clouds_storage_list.php?lang=' . LANGUAGE_ID . '\'',
+                        CAdminMessage::ShowMessage(
+                            array(
+                                "TYPE" => "PROGRESS",
+                                "MESSAGE" => GetMessage("CLO_STORAGE_LIST_DOWNLOAD_IN_PROGRESS"),
+                                "DETAILS" => GetMessage(
+                                    "CLO_STORAGE_LIST_DOWNLOAD_PROGRESS",
+                                    array(
+                                        "#remain#" => $ar["CNT"] - $bNextFile,
+                                        "#bytes#" => CFile::FormatSize($ar["FILE_SIZE"] - $last_file_pos),
+                                    )
                                 ),
-                            ),
-                        ));
+                                "HTML" => true,
+                                "BUTTONS" => array(
+                                    array(
+                                        "VALUE" => GetMessage("CLO_STORAGE_LIST_STOP"),
+                                        "ONCLICK" => 'window.location = \'/bitrix/admin/clouds_storage_list.php?lang=' . LANGUAGE_ID . '\'',
+                                    ),
+                                ),
+                            )
+                        );
 
                         $bOnTheMove = true;
                         echo '<script>', $lAdmin->ActionDoGroup($ID, "download", "themove=y"), '</script>';
@@ -176,11 +234,13 @@ if (is_array($arID)) {
                         unset($_SESSION["last_file_id"]);
                         unset($_SESSION["last_file_pos"]);
 
-                        CAdminMessage::ShowMessage(array(
-                            "MESSAGE" => GetMessage("CLO_STORAGE_LIST_DOWNLOAD_DONE"),
-                            "TYPE" => "OK",
-                            "HTML" => true,
-                        ));
+                        CAdminMessage::ShowMessage(
+                            array(
+                                "MESSAGE" => GetMessage("CLO_STORAGE_LIST_DOWNLOAD_DONE"),
+                                "TYPE" => "OK",
+                                "HTML" => true,
+                            )
+                        );
                         $bOnTheMove = false;
                     }
                     $lAdmin->EndPrologContent();
@@ -196,23 +256,32 @@ if (is_array($arID)) {
                     $_skip = 0;
 
                     if (intval($ob->LAST_FILE_ID) > 0) {
-                        if (isset($_SESSION["arMoveStat_done"]))
+                        if (isset($_SESSION["arMoveStat_done"])) {
                             $_done = intval($_SESSION["arMoveStat_done"]);
-                        if (isset($_SESSION["arMoveStat_size"]))
+                        }
+                        if (isset($_SESSION["arMoveStat_size"])) {
                             $_size = doubleval($_SESSION["arMoveStat_size"]);
-                        if (isset($_SESSION["arMoveStat_skip"]))
+                        }
+                        if (isset($_SESSION["arMoveStat_skip"])) {
                             $_skip = intval($_SESSION["arMoveStat_skip"]);
+                        }
                     }
 
                     $files_per_step = 50;
-                    $rsNextFile = $DB->Query($DB->TopSQL("
+                    $rsNextFile = $DB->Query(
+                        $DB->TopSQL(
+                            "
 					SELECT *
 					FROM b_file
 					WHERE ID > " . intval($ob->LAST_FILE_ID) . "
 					AND (HANDLER_ID IS NULL OR HANDLER_ID <> '" . $DB->ForSQL($ob->ID) . "')
 					ORDER BY ID ASC
-				", $files_per_step));
+				",
+                            $files_per_step
+                        )
+                    );
 
+                    $file_skip_reason = array();
                     $counter = 0;
                     $bWasMoved = false;
                     $moveResult = CCloudStorage::FILE_SKIPPED;
@@ -220,17 +289,46 @@ if (is_array($arID)) {
                         $moveResult == CCloudStorage::FILE_PARTLY_UPLOADED
                         || is_array($arFile = $rsNextFile->Fetch())
                     ) {
+                        //Check if file is a duplicate then skip it
+                        $original = \Bitrix\Main\File\Internal\FileDuplicateTable::query()
+                            ->addSelect("DUPLICATE_ID")
+                            ->where("DUPLICATE_ID", $arFile["ID"])
+                            ->fetch();
+                        if ($original) {
+                            $ob->Update(array("LAST_FILE_ID" => $arFile["ID"]));
+                            $counter++;
+                            continue;
+                        }
+
                         CCloudStorage::FixFileContentType($arFile);
                         $moveResult = CCloudStorage::MoveFile($arFile, $ob);
+                        $file_skip_reason[$arFile["ID"]] = CCloudStorage::$file_skip_reason;
                         if ($moveResult == CCloudStorage::FILE_MOVED) {
-                            $DB->Query("
+                            $filesToUpdate = array(intval($arFile["ID"]));
+                            //Find duplicates of the file
+                            $duplicates = \Bitrix\Main\File\Internal\FileDuplicateTable::query()
+                                ->addSelect("DUPLICATE_ID")
+                                ->where("ORIGINAL_ID", $arFile["ID"])
+                                ->fetchAll();
+                            foreach ($duplicates as $dupFile) {
+                                $filesToUpdate[] = intval($dupFile["DUPLICATE_ID"]);
+                            }
+                            //Mark them as moved
+                            $updateResult = $DB->Query(
+                                "
 							UPDATE b_file
 							SET HANDLER_ID = '" . $DB->ForSQL($ob->ID) . "'
-							WHERE ID = " . intval($arFile["ID"]) . "
-						");
-                            CFile::CleanCache($arFile["ID"]);
-                            $_done += 1;
-                            $_size += doubleval($arFile["FILE_SIZE"]);
+							WHERE ID in (" . implode(",", $filesToUpdate) . ")
+							and (HANDLER_ID is null or HANDLER_ID <> '" . $DB->ForSQL($ob->ID) . "')
+						"
+                            );
+                            $updateCount = $updateResult->AffectedRowsCount();
+                            //Clean cache
+                            foreach ($filesToUpdate as $updatedFileId) {
+                                CFile::CleanCache($updatedFileId);
+                            }
+                            $_done += $updateCount;
+                            $_size += doubleval($arFile["FILE_SIZE"]) * $updateCount;
                             $bWasMoved = true;
                             $ob->Update(array("LAST_FILE_ID" => $arFile["ID"]));
                             $counter++;
@@ -259,40 +357,54 @@ if (is_array($arID)) {
                     if (is_object($message)) {
                         echo $message->Show();
                     } elseif ($counter < $files_per_step && !$bWasMoved) {
-                        CAdminMessage::ShowMessage(array(
-                            "MESSAGE" => GetMessage("CLO_STORAGE_LIST_MOVE_DONE"),
-                            "DETAILS" => GetMessage("CLO_STORAGE_LIST_MOVE_PROGRESS", array(
-                                "#bytes#" => CFile::FormatSize($_size),
-                                "#total#" => $_done + $_skip,
-                                "#moved#" => $_done,
-                                "#skiped#" => $_skip,
-                            )),
-                            "HTML" => true,
-                            "TYPE" => "OK",
-                        ));
+                        CAdminMessage::ShowMessage(
+                            array(
+                                "MESSAGE" => GetMessage("CLO_STORAGE_LIST_MOVE_DONE"),
+                                "DETAILS" => GetMessage(
+                                    "CLO_STORAGE_LIST_MOVE_PROGRESS",
+                                    array(
+                                        "#bytes#" => CFile::FormatSize($_size),
+                                        "#total#" => $_done + $_skip,
+                                        "#moved#" => $_done,
+                                        "#skiped#" => $_skip,
+                                    )
+                                ),
+                                "HTML" => true,
+                                "TYPE" => "OK",
+                            )
+                        );
                         $bOnTheMove = false;
                         $ob->Update(array("LAST_FILE_ID" => false));
                     } else {
-                        CAdminMessage::ShowMessage(array(
-                            "TYPE" => "PROGRESS",
-                            "MESSAGE" => GetMessage("CLO_STORAGE_LIST_MOVE_IN_PROGRESS"),
-                            "DETAILS" => GetMessage("CLO_STORAGE_LIST_MOVE_PROGRESS", array(
-                                "#bytes#" => CFile::FormatSize($_size + CCloudStorage::$part_count * CCloudStorage::$part_size),
-                                "#total#" => $_done + $_skip,
-                                "#moved#" => $_done,
-                                "#skiped#" => $_skip,
-                            )),
-                            "HTML" => true,
-                            "BUTTONS" => array(
-                                array(
-                                    "VALUE" => GetMessage("CLO_STORAGE_LIST_STOP"),
-                                    "ONCLICK" => 'window.location = \'/bitrix/admin/clouds_storage_list.php?lang=' . LANGUAGE_ID . '\'',
+                        CAdminMessage::ShowMessage(
+                            array(
+                                "TYPE" => "PROGRESS",
+                                "MESSAGE" => GetMessage("CLO_STORAGE_LIST_MOVE_IN_PROGRESS"),
+                                "DETAILS" => GetMessage(
+                                    "CLO_STORAGE_LIST_MOVE_PROGRESS",
+                                    array(
+                                        "#bytes#" => CFile::FormatSize(
+                                            $_size + CCloudStorage::$part_count * CCloudStorage::$part_size
+                                        ),
+                                        "#total#" => $_done + $_skip,
+                                        "#moved#" => $_done,
+                                        "#skiped#" => $_skip,
+                                    )
                                 ),
-                            ),
-                        ));
+                                "HTML" => true,
+                                "BUTTONS" => array(
+                                    array(
+                                        "VALUE" => GetMessage("CLO_STORAGE_LIST_STOP"),
+                                        "ONCLICK" => 'window.location = \'/bitrix/admin/clouds_storage_list.php?lang=' . LANGUAGE_ID . '\'',
+                                    ),
+                                ),
+                            )
+                        );
                         $bOnTheMove = true;
                         echo '<script>', $lAdmin->ActionDoGroup($ID, "move", "themove=y"), '</script>';
                     }
+                    //File skip reasons debug infirmation:
+                    echo "\n<!--\nFile skip reasons:\n" . print_r($file_skip_reason, true) . "-->\n";
                     $lAdmin->EndPrologContent();
 
                     $_SESSION["arMoveStat_done"] = $_done;
@@ -362,15 +474,24 @@ $rsData = new CAdminResult($rsData, $sTableID);
 while (is_array($arRes = $rsData->Fetch())) {
     $row =& $lAdmin->AddRow($arRes["ID"], $arRes);
 
-    $row->AddViewField("ID", '<a href="clouds_storage_edit.php?lang=' . LANGUAGE_ID . '&ID=' . $arRes["ID"] . '">' . $arRes["ID"] . '</a>');
+    $row->AddViewField(
+        "ID",
+        '<a href="clouds_storage_edit.php?lang=' . LANGUAGE_ID . '&ID=' . $arRes["ID"] . '">' . $arRes["ID"] . '</a>'
+    );
 
-    if ($arRes["ACTIVE"] === "Y")
+    if ($arRes["ACTIVE"] === "Y") {
         $html = '<div class="lamp-green"></div>';
-    else
+    } else {
         $html = '<div class="lamp-red"></div>';
+    }
 
     $row->AddViewField("ACTIVE", $html);
-    $row->AddViewField("READ_ONLY", $arRes["READ_ONLY"] === "Y" ? GetMessage("CLO_STORAGE_LIST_READ_ONLY") : GetMessage("CLO_STORAGE_LIST_READ_WRITE"));
+    $row->AddViewField(
+        "READ_ONLY",
+        $arRes["READ_ONLY"] === "Y" ? GetMessage("CLO_STORAGE_LIST_READ_ONLY") : GetMessage(
+            "CLO_STORAGE_LIST_READ_WRITE"
+        )
+    );
     $row->AddViewField("SERVICE", CCloudStorage::GetServiceDescription($arRes["SERVICE_ID"]));
     $row->AddViewField("FILE_SIZE", CFile::FormatSize($arRes["FILE_SIZE"]));
 
@@ -402,13 +523,17 @@ while (is_array($arRes = $rsData->Fetch())) {
         if ($bHasLocalStorage) {
             $arActions[] = array(
                 "TEXT" => GetMessage("CLO_STORAGE_LIST_MOVE_LOCAL"),
-                "ACTION" => "if(confirm('" . GetMessage("CLO_STORAGE_LIST_MOVE_LOCAL_CONF") . "')) " . $lAdmin->ActionDoGroup($arRes["ID"], "download")
+                "ACTION" => "if(confirm('" . GetMessage(
+                        "CLO_STORAGE_LIST_MOVE_LOCAL_CONF"
+                    ) . "')) " . $lAdmin->ActionDoGroup($arRes["ID"], "download")
             );
         }
 
         $arActions[] = array(
             "TEXT" => GetMessage("CLO_STORAGE_LIST_DEACTIVATE"),
-            "ACTION" => "if(confirm('" . GetMessage("CLO_STORAGE_LIST_DEACTIVATE_CONF") . "')) " . $lAdmin->ActionDoGroup($arRes["ID"], "deactivate")
+            "ACTION" => "if(confirm('" . GetMessage(
+                    "CLO_STORAGE_LIST_DEACTIVATE_CONF"
+                ) . "')) " . $lAdmin->ActionDoGroup($arRes["ID"], "deactivate")
         );
     } else {
         $arActions[] = array(
@@ -427,13 +552,16 @@ while (is_array($arRes = $rsData->Fetch())) {
         $arActions[] = array(
             "ICON" => "delete",
             "TEXT" => GetMessage("CLO_STORAGE_LIST_DELETE"),
-            "ACTION" => "if(confirm('" . GetMessage("CLO_STORAGE_LIST_DELETE_CONF") . "')) " . $lAdmin->ActionDoGroup($arRes["ID"], "delete")
+            "ACTION" => "if(confirm('" . GetMessage("CLO_STORAGE_LIST_DELETE_CONF") . "')) " . $lAdmin->ActionDoGroup(
+                    $arRes["ID"],
+                    "delete"
+                )
         );
     }
 
-    if (!empty($arActions) && !$bOnTheMove)
+    if (!empty($arActions) && !$bOnTheMove) {
         $row->AddActions($arActions);
-
+    }
 }
 
 $arFooter = array(

@@ -50,8 +50,9 @@ class ElementSku extends Base
                 }
             }
 
-            if ($this->property)
+            if ($this->property) {
                 return $this->property;
+            }
         } elseif ($entity === "price") {
             if (!$this->price && $this->loadFromDatabase()) {
                 if ($this->skuIblockId) {
@@ -59,8 +60,9 @@ class ElementSku extends Base
                 }
             }
 
-            if ($this->price)
+            if ($this->price) {
                 return $this->price;
+            }
         }
         return parent::resolve($entity);
     }
@@ -77,19 +79,27 @@ class ElementSku extends Base
             $this->fields = array();
             $select = array_values($this->fieldMap);
 
-            $elementList = \Bitrix\Iblock\ElementTable::getList(array(
-                "select" => $select,
-                "filter" => array("=ID" => $this->id),
-            ));
+            $elementList = \Bitrix\Iblock\ElementTable::getList(
+                array(
+                    "select" => $select,
+                    "filter" => array("=ID" => $this->id),
+                )
+            );
             $this->elementFields = $elementList->fetch();
             if ($this->elementFields) {
                 $catalog = \CCatalogSKU::getInfoByProductIBlock($this->elementFields["IBLOCK_ID"]);
                 if (!empty($catalog)) {
                     $this->skuIblockId = $catalog["IBLOCK_ID"];
-                    $skuList = \CIBlockElement::getList(array(), array(
-                        "IBLOCK_ID" => $catalog["IBLOCK_ID"],
-                        "=PROPERTY_" . $catalog["SKU_PROPERTY_ID"] => $this->id,
-                    ), false, false, $select);
+                    $skuList = \CIBlockElement::getList(
+                        array(),
+                        array(
+                            "IBLOCK_ID" => $catalog["IBLOCK_ID"],
+                            "=PROPERTY_" . $catalog["SKU_PROPERTY_ID"] => $this->id,
+                        ),
+                        false,
+                        false,
+                        $select
+                    );
                     while ($sku = $skuList->fetch()) {
                         $this->skuList[] = $sku;
                         foreach ($sku as $fieldName => $fieldValue) {

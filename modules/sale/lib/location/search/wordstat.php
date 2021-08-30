@@ -68,8 +68,9 @@ final class WordStatTable extends Entity\DataManager
         foreach ($words as $k => &$word) {
             $word = ToUpper(trim($word));
 
-            if (strlen($word) < 2 || isset(static::$blackList[$word]))
+            if (strlen($word) < 2 || isset(static::$blackList[$word])) {
                 continue;
+            }
 
             $result[] = $word;
         }
@@ -90,19 +91,21 @@ final class WordStatTable extends Entity\DataManager
         $stat = array();
 
         while (true) {
-            $res = Location\Name\LocationTable::getList(array(
-                'select' => array(
-                    'NAME',
-                    'LOCATION_ID',
-                    'TID' => 'LOCATION.TYPE_ID'
-                ),
-                'filter' => array(
-                    '=LOCATION.TYPE.CODE' => array('CITY', 'VILLAGE', 'STREET'),
-                    '=LANGUAGE_ID' => 'ru'
-                ),
-                'limit' => self::STEP_SIZE,
-                'offset' => $offset
-            ));
+            $res = Location\Name\LocationTable::getList(
+                array(
+                    'select' => array(
+                        'NAME',
+                        'LOCATION_ID',
+                        'TID' => 'LOCATION.TYPE_ID'
+                    ),
+                    'filter' => array(
+                        '=LOCATION.TYPE.CODE' => array('CITY', 'VILLAGE', 'STREET'),
+                        '=LANGUAGE_ID' => 'ru'
+                    ),
+                    'limit' => self::STEP_SIZE,
+                    'offset' => $offset
+                )
+            );
 
             $cnt = 0;
             while ($item = $res->fetch()) {
@@ -111,20 +114,19 @@ final class WordStatTable extends Entity\DataManager
 
                     foreach ($words as $k => &$word) {
                         try {
-
-                            static::add(array(
-                                'WORD' => $word,
-                                'TYPE_ID' => $item['TID'],
-                                'LOCATION_ID' => $item['LOCATION_ID']
-                            ));
-
+                            static::add(
+                                array(
+                                    'WORD' => $word,
+                                    'TYPE_ID' => $item['TID'],
+                                    'LOCATION_ID' => $item['LOCATION_ID']
+                                )
+                            );
                         } catch (\Bitrix\Main\DB\SqlQueryException $e) {
                             // duplicate or smth
                         }
                     }
 
                     $stat['W_' . count($words)] += 1;
-
                     //_print_r($words);
                 }
 
@@ -132,8 +134,9 @@ final class WordStatTable extends Entity\DataManager
                 $totalCnt++;
             }
 
-            if (!$cnt)
+            if (!$cnt) {
                 break;
+            }
 
             $offset += self::STEP_SIZE;
         }

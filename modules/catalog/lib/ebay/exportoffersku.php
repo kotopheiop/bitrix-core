@@ -28,14 +28,16 @@ class ExportOfferSKU extends ExportOffer
         $this->arSelectOfferProps = array();
         $arOffers = \CCatalogSku::GetInfoByProductIBlock($this->iBlockId);
 
-        if (empty($arOffers['IBLOCK_ID']))
+        if (empty($arOffers['IBLOCK_ID'])) {
             return array();
+        }
 
         $this->intOfferIBlockID = $arOffers['IBLOCK_ID'];
         $rsOfferIBlocks = \CIBlock::GetByID($this->intOfferIBlockID);
 
-        if (!$this->arOfferIBlock = $rsOfferIBlocks->Fetch())
+        if (!$this->arOfferIBlock = $rsOfferIBlocks->Fetch()) {
             throw new SystemException("Bad offers iBlock ID  (" . __CLASS__ . "::" . __METHOD__ . ")");
+        }
 
         $rsProps = \CIBlockProperty::GetList(
             array('SORT' => 'ASC', 'NAME' => 'ASC'),
@@ -51,8 +53,9 @@ class ExportOfferSKU extends ExportOffer
                 $this->arIblock['OFFERS_PROPERTY'][$arProp['ID']] = $arProp;
                 $this->arProperties[$arProp['ID']] = $arProp;
 
-                if (in_array($arProp['PROPERTY_TYPE'], $arSelectedPropTypes))
+                if (in_array($arProp['PROPERTY_TYPE'], $arSelectedPropTypes)) {
                     $this->arSelectOfferProps[] = $arProp['ID'];
+                }
 
                 if ($arProp['CODE'] !== '') {
                     foreach ($this->arIblock['PROPERTY'] as &$arMainProp) {
@@ -62,8 +65,9 @@ class ExportOfferSKU extends ExportOffer
                         }
                     }
 
-                    if (isset($arMainProp))
+                    if (isset($arMainProp)) {
                         unset($arMainProp);
+                    }
                 }
             }
         }
@@ -78,7 +82,6 @@ class ExportOfferSKU extends ExportOffer
         );
 
         while ($arProp = $rsProps->Fetch()) {
-
             $arProp['ID'] = (int)$arProp['ID'];
             $arProp['USER_TYPE'] = (string)$arProp['USER_TYPE'];
             $arProp['CODE'] = (string)$arProp['CODE'];
@@ -106,27 +109,42 @@ class ExportOfferSKU extends ExportOffer
         $arSKUExport = array();
 
         if (is_array($this->arOfferIBlock) && !empty($this->arOfferIBlock)) {
-            if (empty($this->xmlData['SKU_EXPORT']))
+            if (empty($this->xmlData['SKU_EXPORT'])) {
                 throw new SystemException("YANDEX_ERR_SKU_SETTINGS_ABSENT");
+            }
 
             $arSKUExport = $this->xmlData['SKU_EXPORT'];
 
-            if (empty($arSKUExport['SKU_EXPORT_COND']) || !in_array($arSKUExport['SKU_EXPORT_COND'], $arOffersSelectKeys))
+            if (empty($arSKUExport['SKU_EXPORT_COND']) || !in_array(
+                    $arSKUExport['SKU_EXPORT_COND'],
+                    $arOffersSelectKeys
+                )) {
                 throw new SystemException("YANDEX_SKU_EXPORT_ERR_CONDITION_ABSENT");
+            }
 
             if (YANDEX_SKU_EXPORT_PROP == $arSKUExport['SKU_EXPORT_COND']) {
-                if (empty($arSKUExport['SKU_PROP_COND']) || !is_array($arSKUExport['SKU_PROP_COND']))
+                if (empty($arSKUExport['SKU_PROP_COND']) || !is_array($arSKUExport['SKU_PROP_COND'])) {
                     throw new SystemException("YANDEX_SKU_EXPORT_ERR_PROPERTY_ABSENT");
+                }
 
-                if (empty($arSKUExport['SKU_PROP_COND']['PROP_ID']) || !in_array($arSKUExport['SKU_PROP_COND']['PROP_ID'], $this->arSelectOfferProps))
+                if (empty($arSKUExport['SKU_PROP_COND']['PROP_ID']) || !in_array(
+                        $arSKUExport['SKU_PROP_COND']['PROP_ID'],
+                        $this->arSelectOfferProps
+                    )) {
                     throw new SystemException("YANDEX_SKU_EXPORT_ERR_PROPERTY_ABSENT");
+                }
 
-                if (empty($arSKUExport['SKU_PROP_COND']['COND']) || !in_array($arSKUExport['SKU_PROP_COND']['COND'], $arCondSelectProp))
+                if (empty($arSKUExport['SKU_PROP_COND']['COND']) || !in_array(
+                        $arSKUExport['SKU_PROP_COND']['COND'],
+                        $arCondSelectProp
+                    )) {
                     throw new SystemException("YANDEX_SKU_EXPORT_ERR_PROPERTY_COND_ABSENT");
+                }
 
                 if ($arSKUExport['SKU_PROP_COND']['COND'] == 'EQUAL' || $arSKUExport['SKU_PROP_COND']['COND'] == 'NONEQUAL') {
-                    if (empty($arSKUExport['SKU_PROP_COND']['VALUES']))
+                    if (empty($arSKUExport['SKU_PROP_COND']['VALUES'])) {
                         throw new SystemException("YANDEX_SKU_EXPORT_ERR_PROPERTY_VALUES_ABSENT");
+                    }
                 }
             }
         }
@@ -144,8 +162,9 @@ class ExportOfferSKU extends ExportOffer
                     $strOfferTemplateURL = '#PRODUCT_URL#';
                     break;
                 case YANDEX_SKU_TEMPLATE_CUSTOM:
-                    if (!empty($this->arSKUExport['SKU_URL_TEMPLATE']))
+                    if (!empty($this->arSKUExport['SKU_URL_TEMPLATE'])) {
                         $strOfferTemplateURL = $this->arSKUExport['SKU_URL_TEMPLATE'];
+                    }
                     break;
                 case YANDEX_SKU_TEMPLATE_OFFERS:
                 default:
@@ -159,26 +178,43 @@ class ExportOfferSKU extends ExportOffer
 
     protected function getOffersItemsDb($itemId)
     {
-        $arOfferSelect = array("ID", "LID", "IBLOCK_ID", "NAME", "PREVIEW_PICTURE", "PREVIEW_TEXT",
-            "PREVIEW_TEXT_TYPE", "DETAIL_PICTURE", "DETAIL_PAGE_URL", "DETAIL_TEXT");
+        $arOfferSelect = array(
+            "ID",
+            "LID",
+            "IBLOCK_ID",
+            "NAME",
+            "PREVIEW_PICTURE",
+            "PREVIEW_TEXT",
+            "PREVIEW_TEXT_TYPE",
+            "DETAIL_PICTURE",
+            "DETAIL_PAGE_URL",
+            "DETAIL_TEXT"
+        );
 
-        $arOfferFilter = array('IBLOCK_ID' => $this->intOfferIBlockID, 'PROPERTY_' . $this->arOffers['SKU_PROPERTY_ID'] => 0,
-            "ACTIVE" => "Y", "ACTIVE_DATE" => "Y");
+        $arOfferFilter = array(
+            'IBLOCK_ID' => $this->intOfferIBlockID,
+            'PROPERTY_' . $this->arOffers['SKU_PROPERTY_ID'] => 0,
+            "ACTIVE" => "Y",
+            "ACTIVE_DATE" => "Y"
+        );
 
-        if ($this->onlyAvailableElements)
+        if ($this->onlyAvailableElements) {
             $arOfferFilter["CATALOG_AVAILABLE"] = "Y";
+        }
 
         if (YANDEX_SKU_EXPORT_PROP == $this->arSKUExport['SKU_EXPORT_COND']) {
             $strExportKey = '';
             $mxValues = false;
 
-            if ($this->arSKUExport['SKU_PROP_COND']['COND'] == 'NONZERO' || $this->arSKUExport['SKU_PROP_COND']['COND'] == 'NONEQUAL')
+            if ($this->arSKUExport['SKU_PROP_COND']['COND'] == 'NONZERO' || $this->arSKUExport['SKU_PROP_COND']['COND'] == 'NONEQUAL') {
                 $strExportKey = '!';
+            }
 
             $strExportKey .= 'PROPERTY_' . $this->arSKUExport['SKU_PROP_COND']['PROP_ID'];
 
-            if ($this->arSKUExport['SKU_PROP_COND']['COND'] == 'EQUAL' || $this->arSKUExport['SKU_PROP_COND']['COND'] == 'NONEQUAL')
+            if ($this->arSKUExport['SKU_PROP_COND']['COND'] == 'EQUAL' || $this->arSKUExport['SKU_PROP_COND']['COND'] == 'NONEQUAL') {
                 $mxValues = $this->arSKUExport['SKU_PROP_COND']['VALUES'];
+            }
 
             $arOfferFilter[$strExportKey] = $mxValues;
         }
@@ -192,11 +228,13 @@ class ExportOfferSKU extends ExportOffer
         $arCross = array();
 
         if (!empty($arItem['PROPERTIES'])) {
-            foreach ($arItem['PROPERTIES'] as &$arProp)
+            foreach ($arItem['PROPERTIES'] as &$arProp) {
                 $arCross[$arProp['ID']] = $arProp;
+            }
 
-            if (isset($arProp))
+            if (isset($arProp)) {
                 unset($arProp);
+            }
         }
 
         return $arCross;
@@ -224,9 +262,11 @@ class ExportOfferSKU extends ExportOffer
         $arCross = (!empty($arItem['PROPERTIES']) ? $arItem['PROPERTIES'] : array());
         $props = $obOfferItem->GetProperties();
 
-        if (!empty($props))
-            foreach ($props as $arProp)
+        if (!empty($props)) {
+            foreach ($props as $arProp) {
                 $arCross[$arProp['ID']] = $arProp;
+            }
+        }
 
         return $arCross;
     }
@@ -245,17 +285,19 @@ class ExportOfferSKU extends ExportOffer
             $arOfferItem = $obOfferItem->GetFields();
             $arOfferItem["PRICES"] = $this->getPrices($obOfferItem["ID"], $this->arOfferIBlock['LID']);
 
-            if ($arOfferItem["PRICES"]["MIN"] <= 0)
+            if ($arOfferItem["PRICES"]["MIN"] <= 0) {
                 continue;
+            }
 
             if ($boolFirst) {
                 $dblAllMinPrice = $arOfferItem["PRICES"]["MIN"];
                 $boolFirst = false;
             } else {
-                if ($dblAllMinPrice > $arOfferItem["PRICES"]["MIN_RUB"])
+                if ($dblAllMinPrice > $arOfferItem["PRICES"]["MIN_RUB"]) {
                     $dblAllMinPrice = $arOfferItem["PRICES"]["MIN_RUB"];
-                else
+                } else {
                     continue;
+                }
             }
         }
 
@@ -275,8 +317,9 @@ class ExportOfferSKU extends ExportOffer
     protected function nextItem()
     {
         /** @var \_CIBElement $obItem */
-        if (!$obItem = $this->dbItems->GetNextElement())
+        if (!$obItem = $this->dbItems->GetNextElement()) {
             return false;
+        }
         $arItem = $obItem->GetFields();
 
         $arItem['PROPERTIES'] = $obItem->GetProperties($arItem);
@@ -289,8 +332,9 @@ class ExportOfferSKU extends ExportOffer
         $strOfferTemplateURL = $this->getOfferTemplateUrl();
         $rsOfferItems = $this->getOffersItemsDb($arItem["ID"]);
 
-        if (!empty($strOfferTemplateURL))
+        if (!empty($strOfferTemplateURL)) {
             $rsOfferItems->SetUrlTemplates($strOfferTemplateURL);
+        }
 
         if (YANDEX_SKU_EXPORT_MIN_PRICE == $this->arSKUExport['SKU_EXPORT_COND']) {
             $arOfferItem = $this->getMinPriceOffer($rsOfferItems, $arItem);
@@ -304,8 +348,9 @@ class ExportOfferSKU extends ExportOffer
                 $arOfferItem = $obOfferItem->GetFields();
                 $arOfferItem["PRICES"] = $this->getPrices($arOfferItem["ID"], $this->arOfferIBlock['LID']);
 
-                if ($arOfferItem["PRICES"]["MIN"] <= 0)
+                if ($arOfferItem["PRICES"]["MIN"] <= 0) {
                     continue;
+                }
 
                 $arOfferItem['PROPERTIES'] = $this->getItemProps($obOfferItem, $arItem);
                 $arOfferItem = $this->getItemParams($arOfferItem);

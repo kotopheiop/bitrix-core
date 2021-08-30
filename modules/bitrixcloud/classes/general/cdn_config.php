@@ -1,4 +1,5 @@
 <?php
+
 IncludeModuleLangFile(__FILE__);
 
 class CBitrixCloudCDNConfig
@@ -48,8 +49,9 @@ class CBitrixCloudCDNConfig
      */
     public static function getInstance()
     {
-        if (!isset(self::$instance))
+        if (!isset(self::$instance)) {
             self::$instance = new CBitrixCloudCDNConfig;
+        }
 
         return self::$instance;
     }
@@ -64,12 +66,18 @@ class CBitrixCloudCDNConfig
         $web_service = new CBitrixCloudCDNWebService($this->domain);
         $obXML = $web_service->actionQuota();
         $node = $obXML->SelectNodes("/control/quota");
-        if (is_object($node))
+        if (is_object($node)) {
             $this->quota = CBitrixCloudCDNQuota::fromXMLNode($node);
-        else
-            throw new CBitrixCloudException(GetMessage("BCL_CDN_CONFIG_XML_PARSE", array(
-                "#CODE#" => "6",
-            )));
+        } else {
+            throw new CBitrixCloudException(
+                GetMessage(
+                    "BCL_CDN_CONFIG_XML_PARSE",
+                    array(
+                        "#CODE#" => "6",
+                    )
+                )
+            );
+        }
 
         $this->quota->saveOption(CBitrixCloudOption::getOption("cdn_config_quota"));
         return $this;
@@ -109,36 +117,60 @@ class CBitrixCloudCDNConfig
         }
 
         $node = $obXML->SelectNodes("/control/quota");
-        if (is_object($node))
+        if (is_object($node)) {
             $this->quota = CBitrixCloudCDNQuota::fromXMLNode($node);
-        else
-            throw new CBitrixCloudException(GetMessage("BCL_CDN_CONFIG_XML_PARSE", array(
-                "#CODE#" => "2",
-            )));
+        } else {
+            throw new CBitrixCloudException(
+                GetMessage(
+                    "BCL_CDN_CONFIG_XML_PARSE",
+                    array(
+                        "#CODE#" => "2",
+                    )
+                )
+            );
+        }
 
         $node = $obXML->SelectNodes("/control/classes");
-        if (is_object($node))
+        if (is_object($node)) {
             $this->classes = CBitrixCloudCDNClasses::fromXMLNode($node);
-        else
-            throw new CBitrixCloudException(GetMessage("BCL_CDN_CONFIG_XML_PARSE", array(
-                "#CODE#" => "3",
-            )));
+        } else {
+            throw new CBitrixCloudException(
+                GetMessage(
+                    "BCL_CDN_CONFIG_XML_PARSE",
+                    array(
+                        "#CODE#" => "3",
+                    )
+                )
+            );
+        }
 
         $node = $obXML->SelectNodes("/control/servergroups");
-        if (is_object($node))
+        if (is_object($node)) {
             $this->server_groups = CBitrixCloudCDNServerGroups::fromXMLNode($node);
-        else
-            throw new CBitrixCloudException(GetMessage("BCL_CDN_CONFIG_XML_PARSE", array(
-                "#CODE#" => "4",
-            )));
+        } else {
+            throw new CBitrixCloudException(
+                GetMessage(
+                    "BCL_CDN_CONFIG_XML_PARSE",
+                    array(
+                        "#CODE#" => "4",
+                    )
+                )
+            );
+        }
 
         $node = $obXML->SelectNodes("/control/locations");
-        if (is_object($node))
+        if (is_object($node)) {
             $this->locations = CBitrixCloudCDNLocations::fromXMLNode($node, $this);
-        else
-            throw new CBitrixCloudException(GetMessage("BCL_CDN_CONFIG_XML_PARSE", array(
-                "#CODE#" => "5",
-            )));
+        } else {
+            throw new CBitrixCloudException(
+                GetMessage(
+                    "BCL_CDN_CONFIG_XML_PARSE",
+                    array(
+                        "#CODE#" => "5",
+                    )
+                )
+            );
+        }
 
         return $this;
     }
@@ -223,8 +255,9 @@ class CBitrixCloudCDNConfig
     public function isHttpsEnabled()
     {
         //It is true by default
-        if (!isset($this->https))
+        if (!isset($this->https)) {
             $this->https = (CBitrixCloudOption::getOption("cdn_config_https")->getStringValue() === "true");
+        }
         return $this->https;
     }
 
@@ -250,8 +283,9 @@ class CBitrixCloudCDNConfig
     public function isOptimizationEnabled()
     {
         //It is true by default
-        if (!isset($this->optimize))
+        if (!isset($this->optimize)) {
             $this->optimize = (CBitrixCloudOption::getOption("cdn_config_optimize")->getStringValue() === "true");
+        }
         return $this->optimize;
     }
 
@@ -277,8 +311,10 @@ class CBitrixCloudCDNConfig
     public function isKernelRewriteEnabled()
     {
         //It is true by default
-        if (!isset($this->kernel_rewrite))
-            $this->kernel_rewrite = (CBitrixCloudOption::getOption("cdn_config_kernel_rewrite")->getStringValue() !== "false");
+        if (!isset($this->kernel_rewrite)) {
+            $this->kernel_rewrite = (CBitrixCloudOption::getOption("cdn_config_kernel_rewrite")->getStringValue(
+                ) !== "false");
+        }
         return $this->kernel_rewrite;
     }
 
@@ -304,8 +340,10 @@ class CBitrixCloudCDNConfig
     public function isContentRewriteEnabled()
     {
         //It is false by default
-        if (!isset($this->content_rewrite))
-            $this->content_rewrite = (CBitrixCloudOption::getOption("cdn_config_content_rewrite")->getStringValue() !== "false");
+        if (!isset($this->content_rewrite)) {
+            $this->content_rewrite = (CBitrixCloudOption::getOption("cdn_config_content_rewrite")->getStringValue(
+                ) !== "false");
+        }
         return $this->content_rewrite;
     }
 
@@ -345,8 +383,9 @@ class CBitrixCloudCDNConfig
         $this->sites = /*.(array[string]string).*/
             array();
         if (is_array($sites)) {
-            foreach ($sites as $site_id)
+            foreach ($sites as $site_id) {
                 $this->sites[$site_id] = $site_id;
+            }
         }
         return $this;
     }
@@ -419,11 +458,13 @@ class CBitrixCloudCDNConfig
 
         foreach ($arPrefixes as $i => $prefix) {
             if ($this->isKernelPrefix($prefix)) {
-                if (!$bKernel)
+                if (!$bKernel) {
                     unset($arPrefixes[$i]);
+                }
             } else {
-                if (!$bContent)
+                if (!$bContent) {
                     unset($arPrefixes[$i]);
+                }
             }
         }
 
@@ -463,14 +504,22 @@ class CBitrixCloudCDNConfig
         CBitrixCloudOption::getOption("cdn_config_expire_time")->setStringValue((string)$this->expires);
         CBitrixCloudOption::getOption("cdn_config_domain")->setStringValue($this->domain);
         CBitrixCloudOption::getOption("cdn_config_site")->setArrayValue($this->sites);
-        if ($this->https !== null)
+        if ($this->https !== null) {
             CBitrixCloudOption::getOption("cdn_config_https")->setStringValue($this->https ? "true" : "false");
-        if ($this->optimize !== null)
+        }
+        if ($this->optimize !== null) {
             CBitrixCloudOption::getOption("cdn_config_optimize")->setStringValue($this->optimize ? "true" : "false");
-        if ($this->content_rewrite !== null)
-            CBitrixCloudOption::getOption("cdn_config_content_rewrite")->setStringValue($this->content_rewrite ? "true" : "false");
-        if ($this->kernel_rewrite !== null)
-            CBitrixCloudOption::getOption("cdn_config_kernel_rewrite")->setStringValue($this->kernel_rewrite ? "true" : "false");
+        }
+        if ($this->content_rewrite !== null) {
+            CBitrixCloudOption::getOption("cdn_config_content_rewrite")->setStringValue(
+                $this->content_rewrite ? "true" : "false"
+            );
+        }
+        if ($this->kernel_rewrite !== null) {
+            CBitrixCloudOption::getOption("cdn_config_kernel_rewrite")->setStringValue(
+                $this->kernel_rewrite ? "true" : "false"
+            );
+        }
         $this->quota->saveOption(CBitrixCloudOption::getOption("cdn_config_quota"));
         $this->classes->saveOption(CBitrixCloudOption::getOption("cdn_class"));
         $this->server_groups->saveOption(CBitrixCloudOption::getOption("cdn_server_group"));
@@ -493,7 +542,9 @@ class CBitrixCloudCDNConfig
         $this->sites = CBitrixCloudOption::getOption("cdn_config_site")->getArrayValue();
         $this->quota = CBitrixCloudCDNQuota::fromOption(CBitrixCloudOption::getOption("cdn_config_quota"));
         $this->classes = CBitrixCloudCDNClasses::fromOption(CBitrixCloudOption::getOption("cdn_class"));
-        $this->server_groups = CBitrixCloudCDNServerGroups::fromOption(CBitrixCloudOption::getOption("cdn_server_group"));
+        $this->server_groups = CBitrixCloudCDNServerGroups::fromOption(
+            CBitrixCloudOption::getOption("cdn_server_group")
+        );
         $this->locations = CBitrixCloudCDNLocations::fromOption(CBitrixCloudOption::getOption("cdn_location"), $this);
         return $this;
     }

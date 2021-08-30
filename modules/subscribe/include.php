@@ -1,8 +1,9 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 global $DB;
-$db_type = strtolower($DB->type);
+$db_type = mb_strtolower($DB->type);
 CModule::AddAutoloadClasses(
     "subscribe",
     array(

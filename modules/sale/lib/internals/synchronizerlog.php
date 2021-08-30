@@ -49,19 +49,23 @@ class SynchronizerLogTable extends DataManager
     {
         $tableName = static::getTableName();
 
-        $r = SynchronizerLogTable::getList(array(
-            'select' => array(
-                new ExpressionField('MAX_DATE_INSERT', 'MAX(%s)', array('DATE_INSERT'))
+        $r = SynchronizerLogTable::getList(
+            array(
+                'select' => array(
+                    new ExpressionField('MAX_DATE_INSERT', 'MAX(%s)', array('DATE_INSERT'))
+                )
             )
-        ));
+        );
 
         if ($loggingRecord = $r->fetch()) {
-            if (strlen($loggingRecord['MAX_DATE_INSERT']) > 0) {
+            if ($loggingRecord['MAX_DATE_INSERT'] <> '') {
                 $maxDateInsert = $loggingRecord['MAX_DATE_INSERT'];
                 $date = new DateTime($maxDateInsert);
                 $interval = LoggerDiag::getInterval();
                 $connection = Application::getConnection();
-                $connection->queryExecute("delete from {$tableName} where DATE_INSERT < DATE_SUB('{$date->format("Y-m-d")}', INTERVAL {$interval} DAY)");
+                $connection->queryExecute(
+                    "delete from {$tableName} where DATE_INSERT < DATE_SUB('{$date->format("Y-m-d")}', INTERVAL {$interval} DAY)"
+                );
             }
         }
     }

@@ -89,7 +89,7 @@ class PersonType
 
     /**
      * @param array $parameters
-     * @return \Bitrix\Main\ORM\Query\Result|Internals\EO_PersonType_Result
+     * @return \Bitrix\Main\ORM\Query\Result
      * @throws ArgumentException
      * @throws \Bitrix\Main\ObjectPropertyException
      * @throws \Bitrix\Main\SystemException
@@ -124,7 +124,9 @@ class PersonType
             return $result;
         }
 
-        if (($personTypeList = static::load($order->getSiteId())) && !empty($personTypeList) && is_array($personTypeList)) {
+        if (($personTypeList = static::load($order->getSiteId())) && !empty($personTypeList) && is_array(
+                $personTypeList
+            )) {
             $firstPersonType = reset($personTypeList);
             $order->setPersonTypeId($firstPersonType["ID"]);
         } else {

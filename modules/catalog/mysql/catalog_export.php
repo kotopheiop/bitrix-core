@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/catalog/general/catalog_export.php");
 
 class CCatalogExport extends CAllCatalogExport
@@ -7,8 +8,9 @@ class CCatalogExport extends CAllCatalogExport
     {
         global $DB;
 
-        if (!CCatalogExport::CheckFields("ADD", $arFields))
+        if (!CCatalogExport::CheckFields("ADD", $arFields)) {
             return false;
+        }
 
         $arInsert = $DB->PrepareInsert("b_catalog_export", $arFields);
 
@@ -25,11 +27,13 @@ class CCatalogExport extends CAllCatalogExport
         global $DB;
 
         $ID = (int)$ID;
-        if ($ID <= 0)
+        if ($ID <= 0) {
             return false;
+        }
 
-        if (!CCatalogExport::CheckFields("UPDATE", $arFields))
+        if (!CCatalogExport::CheckFields("UPDATE", $arFields)) {
             return false;
+        }
 
         $strUpdate = $DB->PrepareUpdate("b_catalog_export", $arFields);
 

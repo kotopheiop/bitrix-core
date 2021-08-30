@@ -8,24 +8,22 @@ $messages = Loc::loadLanguageFile(__FILE__);
 $sum = round($params['SUM'], 2);
 ?>
 
-<div class="mb-4" id="paysystem-yandex">
-    <p><?= Loc::getMessage('SALE_HANDLERS_PAY_SYSTEM_YANDEX_CHECKOUT_DESCRIPTION') . " " . SaleFormatCurrency($sum, $params['CURRENCY']); ?></p>
-    <div class="d-flex align-items-center mb-3">
-        <div id="payment-widget-form" style="width: 100%"></div>
-    </div>
-    <p><?= Loc::getMessage('SALE_HANDLERS_PAY_SYSTEM_YANDEX_CHECKOUT_WARNING_RETURN'); ?></p>
+<div class="mb-4" id="paysystem-yookassa">
+    <p class="mb-4"><?= Loc::getMessage(
+            'SALE_HANDLERS_PAY_SYSTEM_YANDEX_CHECKOUT_DESCRIPTION'
+        ) . " " . SaleFormatCurrency($sum, $params['CURRENCY']); ?></p>
+    <div id="payment-widget-form"></div>
+    <p class="mb-4"><?= Loc::getMessage('SALE_HANDLERS_PAY_SYSTEM_YANDEX_CHECKOUT_WARNING_RETURN'); ?></p>
 </div>
 
-<script src="https://kassa.yandex.ru/checkout-ui/v2.js"></script>
+<script src="https://yookassa.ru/checkout-widget/v1/checkout-widget.js"></script>
 <script>
     BX.message(<?=CUtil::PhpToJSObject($messages)?>);
-    var checkout = new window.YandexCheckout({
+    var checkout = new window.YooMoneyCheckoutWidget({
         confirmation_token: '<?=CUtil::JSEscape($params['CONFIRMATION_TOKEN'])?>',
         return_url: '<?=CUtil::JSEscape($params['RETURN_URL'])?>',
-        error_callback(error) {
-            console.log(error);
-
-            var paySystemBlockNode = BX("paysystem-yandex"),
+        error_callback: function (error) {
+            var paySystemBlockNode = BX("paysystem-yookassa"),
                 resultDiv = document.createElement('div');
 
             resultDiv.innerHTML = BX.message("SALE_HANDLERS_PAY_SYSTEM_YANDEX_CHECKOUT_ERROR_MESSAGE");

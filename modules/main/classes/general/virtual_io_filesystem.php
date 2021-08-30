@@ -1,5 +1,8 @@
 <?
 
+/**
+ * @deprecated Use \Bitrix\Main\IO
+ */
 class CBXVirtualIoFileSystem
     implements IBXVirtualIO, IBXGetErrors
 {
@@ -18,38 +21,50 @@ class CBXVirtualIoFileSystem
     public static function ConvertCharset($string, $direction = 1, $skipEvents = false)
     {
         if (is_null(self::$systemEncoding)) {
-            self::$systemEncoding = strtolower(defined("BX_FILE_SYSTEM_ENCODING") ? BX_FILE_SYSTEM_ENCODING : "");
+            self::$systemEncoding = mb_strtolower(defined("BX_FILE_SYSTEM_ENCODING") ? BX_FILE_SYSTEM_ENCODING : "");
             if (empty(self::$systemEncoding)) {
-                if (strtoupper(substr(PHP_OS, 0, 3)) === "WIN")
+                if (mb_strtoupper(mb_substr(PHP_OS, 0, 3)) === "WIN") {
                     self::$systemEncoding = "windows-1251";
-                else
+                } else {
                     self::$systemEncoding = "utf-8";
+                }
             }
         }
 
         if (is_null(self::$serverEncoding)) {
-            if (defined('BX_UTF'))
+            if (defined('BX_UTF')) {
                 self::$serverEncoding = "utf-8";
-            elseif (defined("SITE_CHARSET") && (strlen(SITE_CHARSET) > 0))
+            } elseif (defined("SITE_CHARSET") && (SITE_CHARSET <> '')) {
                 self::$serverEncoding = SITE_CHARSET;
-            elseif (defined("LANG_CHARSET") && (strlen(LANG_CHARSET) > 0))
+            } elseif (defined("LANG_CHARSET") && (LANG_CHARSET <> '')) {
                 self::$serverEncoding = LANG_CHARSET;
-            elseif (defined("BX_DEFAULT_CHARSET"))
+            } elseif (defined("BX_DEFAULT_CHARSET")) {
                 self::$serverEncoding = BX_DEFAULT_CHARSET;
-            else
+            } else {
                 self::$serverEncoding = "windows-1251";
+            }
 
-            self::$serverEncoding = strtolower(self::$serverEncoding);
+            self::$serverEncoding = mb_strtolower(self::$serverEncoding);
         }
 
-        if (self::$serverEncoding == self::$systemEncoding)
+        if (self::$serverEncoding == self::$systemEncoding) {
             return $string;
+        }
 
         include_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/classes/general/charset_converter.php");
-        if ($direction == self::directionEncode)
-            $result = \Bitrix\Main\Text\Encoding::convertEncoding($string, self::$serverEncoding, self::$systemEncoding);
-        else
-            $result = \Bitrix\Main\Text\Encoding::convertEncoding($string, self::$systemEncoding, self::$serverEncoding);
+        if ($direction == self::directionEncode) {
+            $result = \Bitrix\Main\Text\Encoding::convertEncoding(
+                $string,
+                self::$serverEncoding,
+                self::$systemEncoding
+            );
+        } else {
+            $result = \Bitrix\Main\Text\Encoding::convertEncoding(
+                $string,
+                self::$systemEncoding,
+                self::$serverEncoding
+            );
+        }
 
         if (
             defined('BX_IO_Compartible')
@@ -79,19 +94,22 @@ class CBXVirtualIoFileSystem
     public function CombinePath()
     {
         $numArgs = func_num_args();
-        if ($numArgs <= 0)
+        if ($numArgs <= 0) {
             return "";
+        }
 
         $arParts = array();
         for ($i = 0; $i < $numArgs; $i++) {
             $arg = func_get_arg($i);
-            if (empty($arg))
+            if (empty($arg)) {
                 continue;
+            }
 
             if (is_array($arg)) {
                 foreach ($arg as $v) {
-                    if (empty($v))
+                    if (empty($v)) {
                         continue;
+                    }
                     $arParts[] = $v;
                 }
             } else {
@@ -101,8 +119,9 @@ class CBXVirtualIoFileSystem
 
         $result = "";
         foreach ($arParts as $part) {
-            if (!empty($result))
+            if (!empty($result)) {
                 $result .= "/";
+            }
             $result .= $part;
         }
 
@@ -113,8 +132,9 @@ class CBXVirtualIoFileSystem
 
     public function RelativeToAbsolutePath($relativePath)
     {
-        if (empty($relativePath))
+        if (empty($relativePath)) {
             return null;
+        }
 
         $basePath = $_SERVER["DOCUMENT_ROOT"];
 
@@ -128,10 +148,12 @@ class CBXVirtualIoFileSystem
         } else {
             $dbSite = CSite::GetByID($site);
             $site = "";
-            if ($arSite = $dbSite->Fetch())
+            if ($arSite = $dbSite->Fetch()) {
                 $site = $_REQUEST["site"];
-            if ((string)$site === "")
+            }
+            if ((string)$site === "") {
                 $site = SITE_ID;
+            }
         }
 
         $basePath = CSite::GetSiteDocRoot($site);
@@ -152,20 +174,22 @@ class CBXVirtualIoFileSystem
     public function ExtractNameFromPath($path)
     {
         $path = rtrim($path, "\\/");
-        if (preg_match("#[^\\\\/]+$#", $path, $match))
+        if (preg_match("#[^\\\\/]+$#", $path, $match)) {
             $path = $match[0];
+        }
         return $path;
     }
 
     public function ExtractPathFromPath($path)
     {
-        return substr($path, 0, -strlen($this->ExtractNameFromPath($path)) - 1);
+        return mb_substr($path, 0, -mb_strlen($this->ExtractNameFromPath($path)) - 1);
     }
 
     private function FormatPath($path)
     {
-        if ($path == "")
+        if ($path == "") {
             return null;
+        }
 
         //slashes doesn't matter for Windows
         if (strncasecmp(PHP_OS, "WIN", 3) == 0) {
@@ -180,34 +204,40 @@ class CBXVirtualIoFileSystem
 
         $res = preg_replace($pattern, "/", $path);
 
-        if (($p = strpos($res, "\0")) !== false)
-            $res = substr($res, 0, $p);
+        if (mb_strpos($res, "\0") !== false) {
+            throw new \Bitrix\Main\IO\InvalidPathException($path);
+        }
 
         $arPath = explode('/', $res);
         $nPath = count($arPath);
         $pathStack = array();
 
         for ($i = 0; $i < $nPath; $i++) {
-            if ($arPath[$i] === ".")
+            if ($arPath[$i] === ".") {
                 continue;
-            if (($arPath[$i] === '') && ($i !== ($nPath - 1)) && ($i !== 0))
+            }
+            if (($arPath[$i] === '') && ($i !== ($nPath - 1)) && ($i !== 0)) {
                 continue;
+            }
 
-            if ($arPath[$i] === "..")
+            if ($arPath[$i] === "..") {
                 array_pop($pathStack);
-            else
+            } else {
                 array_push($pathStack, $arPath[$i]);
+            }
         }
 
         $res = implode("/", $pathStack);
 
         $res = rtrim($res, $tailPattern);
 
-        if (substr($path, 0, 1) === "/" && substr($res, 0, 1) !== "/")
+        if (mb_substr($path, 0, 1) === "/" && mb_substr($res, 0, 1) !== "/") {
             $res = "/" . $res;
+        }
 
-        if ($res === "")
+        if ($res === "") {
             $res = "/";
+        }
 
         return $res;
     }
@@ -218,7 +248,7 @@ class CBXVirtualIoFileSystem
             return false;
         }
 
-        if (strpos($path, "\0") !== false) {
+        if (mb_strpos($path, "\0") !== false) {
             return false;
         }
 
@@ -235,7 +265,7 @@ class CBXVirtualIoFileSystem
 
     function ValidatePathString($path)
     {
-        if (strlen($path) > 4096) {
+        if (mb_strlen($path) > 4096) {
             return false;
         }
 
@@ -243,7 +273,10 @@ class CBXVirtualIoFileSystem
             return false;
         }
 
-        return (preg_match("#^([a-z]:)?/([^\x01-\x1F" . preg_quote(self::invalidChars, "#") . "]+/?)*$#isD", $path) > 0);
+        return (preg_match(
+                "#^([a-z]:)?/([^\x01-\x1F" . preg_quote(self::invalidChars, "#") . "]+/?)*$#isD",
+                $path
+            ) > 0);
     }
 
     function ValidateFilenameString($filename)
@@ -301,8 +334,8 @@ class CBXVirtualIoFileSystem
     {
         $this->ClearErrors();
 
-        if (substr($path, 0, strlen($_SERVER["DOCUMENT_ROOT"])) == $_SERVER["DOCUMENT_ROOT"]) {
-            $pathTmp = substr($path, strlen($_SERVER["DOCUMENT_ROOT"]));
+        if (mb_substr($path, 0, mb_strlen($_SERVER["DOCUMENT_ROOT"])) == $_SERVER["DOCUMENT_ROOT"]) {
+            $pathTmp = mb_substr($path, mb_strlen($_SERVER["DOCUMENT_ROOT"]));
             if (empty($pathTmp) || $pathTmp == '/') {
                 $this->AddError("Can not delete the root folder of the project");
                 return false;
@@ -313,20 +346,26 @@ class CBXVirtualIoFileSystem
 
         $f = true;
         if (is_file($pathEncoded) || is_link($pathEncoded)) {
-            if (@unlink($pathEncoded))
+            if (@unlink($pathEncoded)) {
                 return true;
+            }
 
             $this->AddError(sprintf("Can not delete file '%s'", $path));
             return false;
         } elseif (is_dir($pathEncoded)) {
             if ($handle = opendir($pathEncoded)) {
                 while (($file = readdir($handle)) !== false) {
-                    if ($file == "." || $file == "..")
+                    if ($file == "." || $file == "..") {
                         continue;
+                    }
 
-                    $pathDecodedTmp = CBXVirtualIoFileSystem::ConvertCharset($pathEncoded . "/" . $file, CBXVirtualIoFileSystem::directionDecode);
-                    if (!$this->Delete($pathDecodedTmp))
+                    $pathDecodedTmp = CBXVirtualIoFileSystem::ConvertCharset(
+                        $pathEncoded . "/" . $file,
+                        CBXVirtualIoFileSystem::directionDecode
+                    );
+                    if (!$this->Delete($pathDecodedTmp)) {
                         $f = false;
+                    }
                 }
                 closedir($handle);
             }
@@ -346,7 +385,7 @@ class CBXVirtualIoFileSystem
     {
         $this->ClearErrors();
 
-        if (strpos($pathTo . "/", $pathFrom . "/") === 0) {
+        if (mb_strpos($pathTo . "/", $pathFrom . "/") === 0) {
             $this->AddError("Can not copy a file onto itself");
             return false;
         }
@@ -367,8 +406,9 @@ class CBXVirtualIoFileSystem
             if (is_file($pathToEncoded)) {
                 @chmod($pathToEncoded, BX_FILE_PERMISSIONS);
 
-                if ($bDeleteAfterCopy)
+                if ($bDeleteAfterCopy) {
                     @unlink($pathFromEncoded);
+                }
             } else {
                 $this->AddError(sprintf("Creation of file '%s' failed", $pathTo));
                 return false;
@@ -382,30 +422,41 @@ class CBXVirtualIoFileSystem
         $pathToEncoded = CBXVirtualIoFileSystem::ConvertCharset($pathTo);
         if ($handle = @opendir($pathFromEncoded)) {
             while (($file = readdir($handle)) !== false) {
-                if ($file == "." || $file == "..")
+                if ($file == "." || $file == "..") {
                     continue;
+                }
 
                 if (is_dir($pathFromEncoded . "/" . $file)) {
-                    $pathFromDecodedTmp = CBXVirtualIoFileSystem::ConvertCharset($pathFromEncoded . "/" . $file, CBXVirtualIoFileSystem::directionDecode);
-                    $pathToDecodedTmp = CBXVirtualIoFileSystem::ConvertCharset($pathToEncoded . "/" . $file, CBXVirtualIoFileSystem::directionDecode);
+                    $pathFromDecodedTmp = CBXVirtualIoFileSystem::ConvertCharset(
+                        $pathFromEncoded . "/" . $file,
+                        CBXVirtualIoFileSystem::directionDecode
+                    );
+                    $pathToDecodedTmp = CBXVirtualIoFileSystem::ConvertCharset(
+                        $pathToEncoded . "/" . $file,
+                        CBXVirtualIoFileSystem::directionDecode
+                    );
                     CopyDirFiles($pathFromDecodedTmp, $pathToDecodedTmp, $bRewrite, $bDeleteAfterCopy);
-                    if ($bDeleteAfterCopy)
+                    if ($bDeleteAfterCopy) {
                         @rmdir($pathFromEncoded . "/" . $file);
+                    }
                 } elseif (is_file($pathFromEncoded . "/" . $file)) {
-                    if (file_exists($pathToEncoded . "/" . $file) && !$bRewrite)
+                    if (file_exists($pathToEncoded . "/" . $file) && !$bRewrite) {
                         continue;
+                    }
 
                     @copy($pathFromEncoded . "/" . $file, $pathToEncoded . "/" . $file);
                     @chmod($pathToEncoded . "/" . $file, BX_FILE_PERMISSIONS);
 
-                    if ($bDeleteAfterCopy)
+                    if ($bDeleteAfterCopy) {
                         @unlink($pathFromEncoded . "/" . $file);
+                    }
                 }
             }
             @closedir($handle);
 
-            if ($bDeleteAfterCopy)
+            if ($bDeleteAfterCopy) {
                 @rmdir($pathFromEncoded);
+            }
 
             return true;
         }
@@ -434,8 +485,9 @@ class CBXVirtualIoFileSystem
     public function CreateDirectory($path)
     {
         $fld = $this->GetDirectory($path);
-        if ($fld->Create())
+        if ($fld->Create()) {
             return $fld;
+        }
 
         return null;
     }
@@ -452,8 +504,9 @@ class CBXVirtualIoFileSystem
 
     protected function AddError($error, $errorCode = "")
     {
-        if (empty($error))
+        if (empty($error)) {
             return;
+        }
 
         $fs = (empty($errorCode) ? "%s" : "[%s] %s");
         $this->arErrors[] = sprintf($fs, $error, $errorCode);
@@ -465,6 +518,9 @@ class CBXVirtualIoFileSystem
     }
 }
 
+/**
+ * @deprecated Use \Bitrix\Main\IO
+ */
 class CBXVirtualFileFileSystem
     extends CBXVirtualFile
 {
@@ -473,30 +529,33 @@ class CBXVirtualFileFileSystem
 
     protected function GetPathWithNameEncoded()
     {
-        if (is_null($this->pathEncoded))
+        if (is_null($this->pathEncoded)) {
             $this->pathEncoded = CBXVirtualIoFileSystem::ConvertCharset($this->path);
+        }
 
         return $this->pathEncoded;
     }
 
     public function Open($mode)
     {
-        $lmode = strtolower(substr($mode, 0, 1));
+        $lmode = mb_strtolower(mb_substr($mode, 0, 1));
         $bExists = $this->IsExists();
 
         if (
             ($bExists && ($lmode !== 'x'))
             || (!$bExists && ($lmode !== 'r'))
-        )
+        ) {
             return fopen($this->GetPathWithNameEncoded(), $mode);
+        }
 
         return null;
     }
 
     public function GetContents()
     {
-        if ($this->IsExists())
+        if ($this->IsExists()) {
             return file_get_contents($this->GetPathWithNameEncoded());
+        }
 
         return null;
     }
@@ -512,8 +571,9 @@ class CBXVirtualFileFileSystem
             return false;
         }
 
-        if ($this->IsExists() && !$this->IsWritable())
+        if ($this->IsExists() && !$this->IsWritable()) {
             $this->MarkWritable();
+        }
 
         $fd = fopen($this->GetPathWithNameEncoded(), "wb");
         if (!$fd) {
@@ -521,7 +581,9 @@ class CBXVirtualFileFileSystem
             return false;
         }
         if (fwrite($fd, $data) === false) {
-            $this->AddError(sprintf("Can not write %d bytes to file '%s'", strlen($data), $this->GetPathWithNameEncoded()));
+            $this->AddError(
+                sprintf("Can not write %d bytes to file '%s'", mb_strlen($data), $this->GetPathWithNameEncoded())
+            );
             fclose($fd);
             return false;
         }
@@ -532,32 +594,36 @@ class CBXVirtualFileFileSystem
 
     public function GetFileSize()
     {
-        if ($this->IsExists())
+        if ($this->IsExists()) {
             return intval(filesize($this->GetPathWithNameEncoded()));
+        }
 
         return 0;
     }
 
     public function GetCreationTime()
     {
-        if ($this->IsExists())
+        if ($this->IsExists()) {
             return filectime($this->GetPathWithNameEncoded());
+        }
 
         return null;
     }
 
     public function GetModificationTime()
     {
-        if ($this->IsExists())
+        if ($this->IsExists()) {
             return filemtime($this->GetPathWithNameEncoded());
+        }
 
         return null;
     }
 
     public function GetLastAccessTime()
     {
-        if ($this->IsExists())
+        if ($this->IsExists()) {
             return fileatime($this->GetPathWithNameEncoded());
+        }
 
         return null;
     }
@@ -574,8 +640,9 @@ class CBXVirtualFileFileSystem
 
     public function MarkWritable()
     {
-        if ($this->IsExists())
+        if ($this->IsExists()) {
             @chmod($this->GetPathWithNameEncoded(), BX_FILE_PERMISSIONS);
+        }
     }
 
     public function IsExists()
@@ -606,8 +673,9 @@ class CBXVirtualFileFileSystem
 
     protected function AddError($error, $errorCode = "")
     {
-        if (empty($error))
+        if (empty($error)) {
             return;
+        }
 
         $fs = (empty($errorCode) ? "%s" : "[%s] %s");
         $this->arErrors[] = sprintf($fs, $error, $errorCode);
@@ -619,6 +687,9 @@ class CBXVirtualFileFileSystem
     }
 }
 
+/**
+ * @deprecated Use \Bitrix\Main\IO
+ */
 class CBXVirtualDirectoryFileSystem
     extends CBXVirtualDirectory
 {
@@ -627,8 +698,9 @@ class CBXVirtualDirectoryFileSystem
 
     protected function GetPathWithNameEncoded()
     {
-        if (is_null($this->pathEncoded))
+        if (is_null($this->pathEncoded)) {
             $this->pathEncoded = CBXVirtualIoFileSystem::ConvertCharset($this->path);
+        }
 
         return $this->pathEncoded;
     }
@@ -640,19 +712,25 @@ class CBXVirtualDirectoryFileSystem
     {
         $arResult = array();
 
-        if (!$this->IsExists())
+        if (!$this->IsExists()) {
             return $arResult;
+        }
 
         if ($handle = opendir($this->GetPathWithNameEncoded())) {
             while (($file = readdir($handle)) !== false) {
-                if ($file == "." || $file == "..")
+                if ($file == "." || $file == "..") {
                     continue;
+                }
 
-                $pathDecoded = CBXVirtualIoFileSystem::ConvertCharset($this->GetPathWithNameEncoded() . "/" . $file, CBXVirtualIoFileSystem::directionDecode);
-                if (is_dir($this->GetPathWithNameEncoded() . "/" . $file))
+                $pathDecoded = CBXVirtualIoFileSystem::ConvertCharset(
+                    $this->GetPathWithNameEncoded() . "/" . $file,
+                    CBXVirtualIoFileSystem::directionDecode
+                );
+                if (is_dir($this->GetPathWithNameEncoded() . "/" . $file)) {
                     $arResult[] = new CBXVirtualDirectoryFileSystem($pathDecoded);
-                else
+                } else {
                     $arResult[] = new CBXVirtualFileFileSystem($pathDecoded);
+                }
             }
             closedir($handle);
         }
@@ -662,10 +740,11 @@ class CBXVirtualDirectoryFileSystem
 
     public function Create()
     {
-        if (!file_exists($this->GetPathWithNameEncoded()))
+        if (!file_exists($this->GetPathWithNameEncoded())) {
             return mkdir($this->GetPathWithNameEncoded(), BX_DIR_PERMISSIONS, true);
-        else
+        } else {
             return is_dir($this->GetPathWithNameEncoded());
+        }
     }
 
     public function IsExists()
@@ -676,8 +755,9 @@ class CBXVirtualDirectoryFileSystem
 
     public function MarkWritable()
     {
-        if ($this->IsExists())
+        if ($this->IsExists()) {
             @chmod($this->GetPathWithNameEncoded(), BX_DIR_PERMISSIONS);
+        }
     }
 
     public function GetPermissions()
@@ -687,24 +767,27 @@ class CBXVirtualDirectoryFileSystem
 
     public function GetCreationTime()
     {
-        if ($this->IsExists())
+        if ($this->IsExists()) {
             return filectime($this->GetPathWithNameEncoded());
+        }
 
         return null;
     }
 
     public function GetModificationTime()
     {
-        if ($this->IsExists())
+        if ($this->IsExists()) {
             return filemtime($this->GetPathWithNameEncoded());
+        }
 
         return null;
     }
 
     public function GetLastAccessTime()
     {
-        if ($this->IsExists())
+        if ($this->IsExists()) {
             return fileatime($this->GetPathWithNameEncoded());
+        }
 
         return null;
     }
@@ -737,8 +820,9 @@ class CBXVirtualDirectoryFileSystem
 
     protected function AddError($error, $errorCode = "")
     {
-        if (empty($error))
+        if (empty($error)) {
             return;
+        }
 
         $fs = (empty($errorCode) ? "%s" : "[%s] %s");
         $this->arErrors[] = sprintf($fs, $error, $errorCode);

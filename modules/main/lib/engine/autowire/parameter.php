@@ -30,7 +30,6 @@ class Parameter
 
             $this->setExternalNameConstructor($externalNameConstructor);
         }
-
     }
 
     public function getPriority()
@@ -65,9 +64,11 @@ class Parameter
         if ($status === Binder::STATUS_NOT_FOUND) {
             $result->addError(new Error("Could not find value for {{$externalName}}"));
         } else {
-            $result->setData([
-                $value
-            ]);
+            $result->setData(
+                [
+                    $value
+                ]
+            );
         }
 
         return $result;

@@ -38,8 +38,9 @@ class CListFile
 
     function SetSocnetGroup($socnet_group_id)
     {
-        if ($socnet_group_id > 0)
+        if ($socnet_group_id > 0) {
             $this->_socnet_group_id = intval($socnet_group_id);
+        }
     }
 
     function GetInfoHTML($params = array())
@@ -60,6 +61,7 @@ class CListFile
             }
 
             $attributes = ItemAttributes::buildByFileData($this->_file, $img_src);
+            $attributes->setTitle($this->_file['FILE_NAME']);
 
             if ($divId) {
                 $html .= '<div id="' . $divId . '">';
@@ -68,14 +70,22 @@ class CListFile
             }
 
             if (isset($params['view']) && $params['view'] == 'short') {
-                $info = $this->_file["FILE_NAME"] . ' (';
+                $info = $this->_file["ORIGINAL_NAME"] . ' (';
                 if ($intWidth > 0 && $intHeight > 0) {
                     $info .= $intWidth . 'x' . $intHeight . ', ';
                 }
                 $info .= CFile::FormatSize($this->_file['FILE_SIZE']) . ')';
-                $html .= GetMessage('FILE_TEXT') . ': <span class="lists-file-preview-data" ' . $attributes . '>' . htmlspecialcharsex($info) . '</span>';
+                $html .= GetMessage(
+                        'FILE_TEXT'
+                    ) . ': <span class="lists-file-preview-data" ' . $attributes . '>' . htmlspecialcharsex(
+                        $info
+                    ) . '</span>';
             } else {
-                $html .= GetMessage('FILE_TEXT') . ': <span class="lists-file-preview-data" ' . $attributes . '>' . htmlspecialcharsex($this->_file["FILE_NAME"]) . '</span>';
+                $html .= GetMessage(
+                        'FILE_TEXT'
+                    ) . ': <span class="lists-file-preview-data" ' . $attributes . '>' . htmlspecialcharsex(
+                        $this->_file["ORIGINAL_NAME"]
+                    ) . '</span>';
 
                 if ($intWidth > 0 && $intHeight > 0) {
                     $html .= '<br>' . GetMessage('FILE_WIDTH') . ': ' . $intWidth;
@@ -97,32 +107,42 @@ class CListFile
         $show_info = false;
 
         if (is_array($params)) {
-            if (isset($params['input_name']))
+            if (isset($params['input_name'])) {
                 $input_name = $params['input_name'];
-            if (isset($params['size']))
+            }
+            if (isset($params['size'])) {
                 $size = intval($params['size']);
-            if (isset($params['show_info']))
+            }
+            if (isset($params['show_info'])) {
                 $show_info = (bool)$params['show_info'];
+            }
         }
 
         $strReturn = ' <input name="' . htmlspecialcharsbx($input_name) . '" size="' . $size . '" type="file" />';
 
         if (is_array($this->_file)) {
             if ($show_info) {
-                $strReturn .= $this->GetInfoHTML(array(
-                    'url_template' => $params['url_template'],
-                    'view' => 'short',
-                ));
+                $strReturn .= $this->GetInfoHTML(
+                    array(
+                        'url_template' => $params['url_template'],
+                        'view' => 'short',
+                    )
+                );
             }
 
-            $p = strpos($input_name, "[");
-            if ($p > 0)
-                $del_name = substr($input_name, 0, $p) . "_del" . substr($input_name, $p);
-            else
+            $p = mb_strpos($input_name, "[");
+            if ($p > 0) {
+                $del_name = mb_substr($input_name, 0, $p) . "_del" . mb_substr($input_name, $p);
+            } else {
                 $del_name = $input_name . "_del";
+            }
 
-            $strReturn .= '<input type="checkbox" name="' . htmlspecialcharsbx($del_name) . '" value="Y" id="' . htmlspecialcharsbx($del_name) . '" />';
-            $strReturn .= ' <label for="' . htmlspecialcharsbx($del_name) . '">' . GetMessage('FILE_DELETE') . '</label><br>';
+            $strReturn .= '<input type="checkbox" name="' . htmlspecialcharsbx(
+                    $del_name
+                ) . '" value="Y" id="' . htmlspecialcharsbx($del_name) . '" />';
+            $strReturn .= ' <label for="' . htmlspecialcharsbx($del_name) . '">' . GetMessage(
+                    'FILE_DELETE'
+                ) . '</label><br>';
         }
 
         return $strReturn;
@@ -130,10 +150,17 @@ class CListFile
 
     function GetImgSrc($params = array())
     {
-        if (is_array($params) && isset($params['url_template']) && (strlen($params['url_template']) > 0)) {
+        if (is_array($params) && isset($params['url_template']) && ($params['url_template'] <> '')) {
             $result = str_replace(
                 array('#list_id#', '#section_id#', '#element_id#', '#field_id#', '#file_id#', '#group_id#'),
-                array($this->_list_id, $this->_section_id, $this->_element_id, $this->_field_id, $this->_file_id, $this->_socnet_group_id),
+                array(
+                    $this->_list_id,
+                    $this->_section_id,
+                    $this->_element_id,
+                    $this->_field_id,
+                    $this->_file_id,
+                    $this->_socnet_group_id
+                ),
                 $params['url_template']
             );
             return CHTTP::urlAddParams($result, array("ncc" => "y", "download" => "y"));
@@ -142,7 +169,6 @@ class CListFile
         } else {
             return '';
         }
-
     }
 
     function GetImgHtml($params = array())
@@ -151,10 +177,12 @@ class CListFile
         $max_height = 0;
 
         if (is_array($params)) {
-            if (isset($params['max_width']))
+            if (isset($params['max_width'])) {
                 $max_width = intval($params['max_width']);
-            if (isset($params['max_height']))
+            }
+            if (isset($params['max_height'])) {
                 $max_height = intval($params['max_height']);
+            }
         }
 
         if (is_array($this->_file)) {
@@ -170,11 +198,15 @@ class CListFile
 
             $src = $this->GetImgSrc($params);
             $attributes = ItemAttributes::buildByFileData($this->_file, $src);
-            $html = '<img class="lists-file-preview-data" src="' . htmlspecialcharsbx($src) . '" ' . $attributes . ' width="' . $intWidth . '" height="' . $intHeight . '"';
+            $html = '<img class="lists-file-preview-data" src="' . htmlspecialcharsbx(
+                    $src
+                ) . '" ' . $attributes . ' width="' . $intWidth . '" height="' . $intHeight . '"';
             if (is_array($params) && isset($params['html_attributes']) && is_array($params['html_attributes'])) {
-                foreach ($params['html_attributes'] as $name => $value)
-                    if (preg_match('/^[a-zA-Z-]+$/', $name))
+                foreach ($params['html_attributes'] as $name => $value) {
+                    if (preg_match('/^[a-zA-Z-]+$/', $name)) {
                         $html .= ' ' . $name . '="' . htmlspecialcharsbx($value) . '"';
+                    }
+                }
             }
             $html .= '/>';
             return $html;
@@ -187,7 +219,9 @@ class CListFile
     {
         if (is_array($this->_file)) {
             $src = CHTTP::urlAddParams($this->GetImgSrc($params), array("download" => "y"));
-            return ' [ <a href="' . htmlspecialcharsbx($src) . '" target="_self">' . $params['download_text'] . '</a> ] ';
+            return ' [ <a href="' . htmlspecialcharsbx(
+                    $src
+                ) . '" target="_self">' . $params['download_text'] . '</a> ] ';
         } else {
             return '';
         }
@@ -205,10 +239,11 @@ class CListFile
 
     function GetSize()
     {
-        if (is_array($this->_file))
+        if (is_array($this->_file)) {
             return $this->_file["FILE_SIZE"];
-        else
+        } else {
             return 0;
+        }
     }
 
     function IsImage()

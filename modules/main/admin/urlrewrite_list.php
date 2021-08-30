@@ -12,8 +12,9 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
 require_once($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/prolog.php");
 define("HELP_FILE", "settings/urlrewrite_list.php");
 
-if (!$USER->CanDoOperation('edit_php') && !$USER->CanDoOperation('view_other_settings'))
+if (!$USER->CanDoOperation('edit_php') && !$USER->CanDoOperation('view_other_settings')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $isAdmin = $USER->CanDoOperation('edit_php');
 
@@ -39,7 +40,7 @@ $lAdmin->InitFilter($arFilterFields);
 
 $siteId = \CSite::getDefSite($filter_site_id);
 
-if (StrLen($filter_site_id) <= 0) {
+if ($filter_site_id == '') {
     $set_filter = "Y";
     $filter_site_id = $siteId;
     $lAdmin->InitFilter($arFilterFields);
@@ -47,22 +48,30 @@ if (StrLen($filter_site_id) <= 0) {
 
 $arFilter = array();
 
-if (strlen($filter_condition) > 0) $arFilter["CONDITION"] = $filter_condition;
-if (strlen($filter_id) > 0) $arFilter["ID"] = $filter_id;
-if (strlen($filter_path) > 0) $arFilter["PATH"] = $filter_path;
+if ($filter_condition <> '') {
+    $arFilter["CONDITION"] = $filter_condition;
+}
+if ($filter_id <> '') {
+    $arFilter["ID"] = $filter_id;
+}
+if ($filter_path <> '') {
+    $arFilter["PATH"] = $filter_path;
+}
 
 // ��������� �������� ��������� � ���������
 if (($arID = $lAdmin->GroupAction()) && $isAdmin) {
     if ($_REQUEST['action_target'] == 'selected') {
         $arID = Array();
         $dbResultList = UrlRewriter::getList($siteId, $arFilter);
-        while ($arResult = $dbResultList->Fetch())
+        while ($arResult = $dbResultList->Fetch()) {
             $arID[] = $arResult["CONDITION"];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
 
         switch ($_REQUEST['action']) {
             case "delete":
@@ -85,18 +94,27 @@ $dbResultList->NavStart();
 $lAdmin->NavText($dbResultList->GetNavPrint(GetMessage("SAA_NAV")));
 
 // ��������� ������
-$lAdmin->AddHeaders(array(
-    array("id" => "CONDITION", "content" => GetMessage("MURL_USL"), "sort" => "CONDITION", "default" => true),
-    array("id" => "ID", "content" => GetMessage("MURL_COMPONENT"), "sort" => "ID", "default" => true),
-    array("id" => "PATH", "content" => GetMessage("MURL_FILE"), "sort" => "PATH", "default" => true),
-    array("id" => "RULE", "content" => GetMessage("MURL_RULE"), "sort" => "RULE", "default" => true),
-));
+$lAdmin->AddHeaders(
+    array(
+        array("id" => "CONDITION", "content" => GetMessage("MURL_USL"), "sort" => "CONDITION", "default" => true),
+        array("id" => "ID", "content" => GetMessage("MURL_COMPONENT"), "sort" => "ID", "default" => true),
+        array("id" => "PATH", "content" => GetMessage("MURL_FILE"), "sort" => "PATH", "default" => true),
+        array("id" => "RULE", "content" => GetMessage("MURL_RULE"), "sort" => "RULE", "default" => true),
+    )
+);
 
 $arVisibleColumns = $lAdmin->GetVisibleHeaderColumns();
 
 // ���������� ������
 while ($arResult = $dbResultList->NavNext(true, "f_")) {
-    $row =& $lAdmin->AddRow($f_CONDITION, $arResult, "urlrewrite_edit.php?CONDITION=" . UrlEncode($arResult["CONDITION"]) . "&lang=" . LANG . "&site_id=" . UrlEncode($filter_site_id), GetMessage("MURL_EDIT"));
+    $row =& $lAdmin->AddRow(
+        $f_CONDITION,
+        $arResult,
+        "urlrewrite_edit.php?CONDITION=" . UrlEncode(
+            $arResult["CONDITION"]
+        ) . "&lang=" . LANG . "&site_id=" . UrlEncode($filter_site_id),
+        GetMessage("MURL_EDIT")
+    );
 
     $row->AddField("CONDITION", $f_CONDITION);
     $row->AddField("ID", $f_ID);
@@ -104,9 +122,26 @@ while ($arResult = $dbResultList->NavNext(true, "f_")) {
     $row->AddField("RULE", $f_RULE);
 
     $arActions = Array();
-    $arActions[] = array("ICON" => "edit", "TEXT" => GetMessage("MURL_EDIT"), "ACTION" => $lAdmin->ActionRedirect("urlrewrite_edit.php?CONDITION=" . UrlEncode($arResult["CONDITION"]) . "&lang=" . LANG . "&site_id=" . UrlEncode($filter_site_id)), "DEFAULT" => true);
-    if ($isAdmin)
-        $arActions[] = array("ICON" => "delete", "TEXT" => GetMessage("MURL_DELETE"), "ACTION" => "if(confirm('" . GetMessage("MURL_DELETE_CONF") . "')) " . $lAdmin->ActionDoGroup(UrlEncode($arResult["CONDITION"]), "delete"));
+    $arActions[] = array(
+        "ICON" => "edit",
+        "TEXT" => GetMessage("MURL_EDIT"),
+        "ACTION" => $lAdmin->ActionRedirect(
+            "urlrewrite_edit.php?CONDITION=" . UrlEncode(
+                $arResult["CONDITION"]
+            ) . "&lang=" . LANG . "&site_id=" . UrlEncode($filter_site_id)
+        ),
+        "DEFAULT" => true
+    );
+    if ($isAdmin) {
+        $arActions[] = array(
+            "ICON" => "delete",
+            "TEXT" => GetMessage("MURL_DELETE"),
+            "ACTION" => "if(confirm('" . GetMessage("MURL_DELETE_CONF") . "')) " . $lAdmin->ActionDoGroup(
+                    UrlEncode($arResult["CONDITION"]),
+                    "delete"
+                )
+        );
+    }
 
     $row->AddActions($arActions);
 }
@@ -120,11 +155,13 @@ $lAdmin->AddGroupActionTable(
 
 $arDDMenu = array();
 
-$dbRes = CLang::GetList(($b = "sort"), ($o = "asc"));
+$dbRes = CLang::GetList();
 while (($arRes = $dbRes->Fetch())) {
     $arDDMenu[] = array(
         "TEXT" => htmlspecialcharsbx("[" . $arRes["LID"] . "] " . $arRes["NAME"]),
-        "ACTION" => "window.location = 'urlrewrite_edit.php?lang=" . urlencode(LANG) . "&site_id=" . urlencode($arRes["LID"]) . "';"
+        "ACTION" => "window.location = 'urlrewrite_edit.php?lang=" . urlencode(LANG) . "&site_id=" . urlencode(
+                $arRes["LID"]
+            ) . "';"
     );
 }
 

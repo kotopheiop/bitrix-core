@@ -29,7 +29,7 @@ class SaveFile
             $this->addError(new Main\Error(Loc::getMessage('TR_EDIT_FILE_PATH_ERROR')));
             return $result;
         }
-        if (!Translate\IO\Path::isLangDir($file, true) || (substr($file, -4) !== '.php')) {
+        if (!Translate\IO\Path::isLangDir($file, true) || (mb_substr($file, -4) !== '.php')) {
             $this->addError(new Main\Error(Loc::getMessage('TR_EDIT_ERROR_FILE_NOT_LANG', array('#FILE#' => $file))));
             return $result;
         }
@@ -120,8 +120,16 @@ class SaveFile
                 $langFile->setOperatingEncoding(Main\Localization\Translation::getSourceEncoding($langId));
             }
 
-            if (!$langFile->load() && $langFile->hasErrors()) {
-                $this->addErrors($langFile->getErrors());
+            if (!$langFile->loadTokens()) {
+                if (!$langFile->load() && $langFile->hasErrors()) {
+                    foreach ($langFile->getErrors() as $error) {
+                        if ($error->getCode() !== 'EMPTY_CONTENT') {
+                            $this->addError($error);
+                        }
+                    }
+                }
+            }
+            if (count($this->getErrors()) > 0) {
                 continue;
             }
 
@@ -156,7 +164,7 @@ class SaveFile
                     $inpValue = $request->getPost($fldName);
 
                     /** @var \ArrayAccess $langFile */
-                    if (!empty($inpValue)) {
+                    if (!empty($inpValue) || $inpValue === '0') {
                         if ($langFile[$phraseId] !== $inpValue) {
                             $langFile[$phraseId] = $inpValue;
 

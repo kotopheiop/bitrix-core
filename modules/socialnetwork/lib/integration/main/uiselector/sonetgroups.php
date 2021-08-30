@@ -105,7 +105,7 @@ class SonetGroups extends \Bitrix\Main\UI\Selector\EntityBase
 
             if (!empty($options['feature'])) {
                 $feature = $options['feature'];
-                if (strlen(trim($feature)) > 0) {
+                if (trim($feature) <> '') {
                     $operations = self::getFeatureOperations($feature);
                     if (!empty($operations)) {
                         $filter['features'] = [$feature, $operations];
@@ -144,7 +144,7 @@ class SonetGroups extends \Bitrix\Main\UI\Selector\EntityBase
 
             if (!empty($options['feature'])) {
                 $feature = $options['feature'];
-                if (strlen(trim($feature)) > 0) {
+                if (trim($feature) <> '') {
                     $operations = self::getFeatureOperations($feature);
                     if (!empty($operations)) {
                         $filter['features'] = [$feature, $operations];
@@ -176,10 +176,16 @@ class SonetGroups extends \Bitrix\Main\UI\Selector\EntityBase
         }
 
         if (!empty($selectedItems[Handler::ENTITY_TYPE_SONETGROUPS])) {
-            $hiddenItemsList = array_diff($selectedItems[Handler::ENTITY_TYPE_SONETGROUPS], array_keys($sonetGroupsList));
-            $hiddenItemsList = array_map(function ($code) {
-                return preg_replace('/^SG(\d+)$/', '$1', $code);
-            }, $hiddenItemsList);
+            $hiddenItemsList = array_diff(
+                $selectedItems[Handler::ENTITY_TYPE_SONETGROUPS],
+                array_keys($sonetGroupsList)
+            );
+            $hiddenItemsList = array_map(
+                function ($code) {
+                    return preg_replace('/^SG(\d+)$/', '$1', $code);
+                },
+                $hiddenItemsList
+            );
 
             if (!empty($hiddenItemsList)) {
                 $filter = array(
@@ -194,10 +200,12 @@ class SonetGroups extends \Bitrix\Main\UI\Selector\EntityBase
                 }
 
                 $isCurrentUserModuleAdmin = \CSocNetUser::isCurrentUserModuleAdmin();
-                $res = \Bitrix\Socialnetwork\WorkgroupTable::getList(array(
-                    'filter' => $filter,
-                    'select' => array("ID", "NAME", "DESCRIPTION", "OPENED", "VISIBLE")
-                ));
+                $res = \Bitrix\Socialnetwork\WorkgroupTable::getList(
+                    array(
+                        'filter' => $filter,
+                        'select' => array("ID", "NAME", "DESCRIPTION", "OPENED", "VISIBLE")
+                    )
+                );
 
                 $extranetGroupsIdList = \Bitrix\Socialnetwork\ComponentHelper::getExtranetSonetGroupIdList();
 
@@ -270,12 +278,14 @@ class SonetGroups extends \Bitrix\Main\UI\Selector\EntityBase
         ) {
             $filter = array(
                 "SEARCH" => $requestFields['searchString'],
-                "LANDING" => (!empty($entityOptions['landing']) && ModuleManager::isModuleInstalled('landing') && $entityOptions['landing'] == 'Y' ? 'Y' : 'N')
+                "LANDING" => (!empty($entityOptions['landing']) && ModuleManager::isModuleInstalled(
+                    'landing'
+                ) && $entityOptions['landing'] == 'Y' ? 'Y' : 'N')
             );
 
             if (!empty($entityOptions['feature'])) {
                 $feature = $entityOptions['feature'];
-                if (strlen(trim($feature)) > 0) {
+                if (trim($feature) <> '') {
                     $operations = self::getFeatureOperations($feature);
                     if (!empty($operations)) {
                         $filter['FEATURES'] = [$feature, $operations];
@@ -311,12 +321,14 @@ class SonetGroups extends \Bitrix\Main\UI\Selector\EntityBase
         );
 
         if ($entityId > 0) {
-            $res = WorkgroupTable::getList(array(
-                'filter' => array(
-                    '=ID' => $entityId
-                ),
-                'select' => array('VISIBLE', 'NAME')
-            ));
+            $res = WorkgroupTable::getList(
+                array(
+                    'filter' => array(
+                        '=ID' => $entityId
+                    ),
+                    'select' => array('VISIBLE', 'NAME')
+                )
+            );
             if (
                 ($workgroupFields = $res->fetch())
                 && ($workgroupFields["VISIBLE"] == "Y")

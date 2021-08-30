@@ -1,4 +1,7 @@
 <?
+
+use \Bitrix\Main\Application;
+
 IncludeModuleLangFile(__FILE__);
 
 /*********************************************************************
@@ -13,24 +16,35 @@ function CheckFilterDates($date1, $date2, &$date1_wrong, &$date2_wrong, &$date2_
     $date1_wrong = "N";
     $date2_wrong = "N";
     $date2_less_date1 = "N";
-    if (strlen($date1) > 0 && !CheckDateTime($date1)) $date1_wrong = "Y";
-    if (strlen($date2) > 0 && !CheckDateTime($date2)) $date2_wrong = "Y";
-    if ($date1_wrong != "Y" && $date2_wrong != "Y" && strlen($date1) > 0 && strlen($date2) > 0 && $DB->CompareDates($date2, $date1) < 0) $date2_less_date1 = "Y";
+    if ($date1 <> '' && !CheckDateTime($date1)) {
+        $date1_wrong = "Y";
+    }
+    if ($date2 <> '' && !CheckDateTime($date2)) {
+        $date2_wrong = "Y";
+    }
+    if ($date1_wrong != "Y" && $date2_wrong != "Y" && $date1 <> '' && $date2 <> '' && $DB->CompareDates(
+            $date2,
+            $date1
+        ) < 0) {
+        $date2_less_date1 = "Y";
+    }
 }
 
 function InitFilterEx($arName, $varName, $action = "set", $session = true, $FilterLogic = "FILTER_logic")
 {
-
-    if ($session && is_array($_SESSION["SESS_ADMIN"][$varName]))
-        $FILTER = $_SESSION["SESS_ADMIN"][$varName];
-    else
+    $sessAdmin = Application::getInstance()->getSession()["SESS_ADMIN"];
+    if ($session && is_array($sessAdmin[$varName])) {
+        $FILTER = $sessAdmin[$varName];
+    } else {
         $FILTER = Array();
+    }
 
     global $$FilterLogic;
-    if ($action == "set")
+    if ($action == "set") {
         $FILTER[$FilterLogic] = $$FilterLogic;
-    else
+    } else {
         $$FilterLogic = $FILTER[$FilterLogic];
+    }
 
     for ($i = 0, $n = count($arName); $i < $n; $i++) {
         $name = $arName[$i];
@@ -42,27 +56,31 @@ function InitFilterEx($arName, $varName, $action = "set", $session = true, $Filt
 
         if ($action == "set") {
             $FILTER[$name] = $$name;
-            if (isset($$period) || isset($FILTER[$period]))
+            if (isset($$period) || isset($FILTER[$period])) {
                 $FILTER[$period] = $$period;
+            }
 
-            if (isset($$direction) || isset($FILTER[$direction]))
+            if (isset($$direction) || isset($FILTER[$direction])) {
                 $FILTER[$direction] = $$direction;
+            }
 
             if (isset($$bdays) || isset($FILTER[$bdays])) {
                 $FILTER[$bdays] = $$bdays;
-                if (strlen($$bdays) > 0 && $$bdays != "NOT_REF")
+                if ((string)$$bdays <> '' && $$bdays != "NOT_REF") {
                     $$name = GetTime(time() - 86400 * intval($FILTER[$bdays]));
+                }
             }
-
         } else {
             $$name = isset($FILTER[$name]) ? $FILTER[$name] : null;
-            if (isset($$period) || isset($FILTER[$period]))
+            if (isset($$period) || isset($FILTER[$period])) {
                 $$period = $FILTER[$period];
+            }
 
-            if (isset($$direction) || isset($FILTER[$direction]))
+            if (isset($$direction) || isset($FILTER[$direction])) {
                 $$direction = $FILTER[$direction];
+            }
 
-            if (isset($FILTER[$bdays]) && strlen($FILTER[$bdays]) > 0 && $FILTER[$bdays] != "NOT_REF") {
+            if (isset($FILTER[$bdays]) && (string)$FILTER[$bdays] <> '' && $FILTER[$bdays] != "NOT_REF") {
                 $$bdays = $FILTER[$bdays];
                 $$name = GetTime(time() - 86400 * intval($FILTER[$bdays]));
             }
@@ -70,9 +88,10 @@ function InitFilterEx($arName, $varName, $action = "set", $session = true, $Filt
     }
 
     if ($session) {
-        if (!is_array($_SESSION["SESS_ADMIN"]))
-            $_SESSION["SESS_ADMIN"] = array();
-        $_SESSION["SESS_ADMIN"][$varName] = $FILTER;
+        if (!is_array(Application::getInstance()->getSession()["SESS_ADMIN"])) {
+            Application::getInstance()->getSession()->set("SESS_ADMIN", []);
+        }
+        Application::getInstance()->getSession()["SESS_ADMIN"][$varName] = $FILTER;
     }
 }
 
@@ -80,8 +99,9 @@ function DelFilterEx($arName, $varName, $session = true, $FilterLogic = "FILTER_
 {
     global $$FilterLogic;
 
-    if ($session)
-        unset($_SESSION["SESS_ADMIN"][$varName]);
+    if ($session) {
+        unset(Application::getInstance()->getSession()["SESS_ADMIN"][$varName]);
+    }
 
     foreach ($arName as $name) {
         $period = $name . "_FILTER_PERIOD";
@@ -102,24 +122,25 @@ function DelFilterEx($arName, $varName, $session = true, $FilterLogic = "FILTER_
 function InitFilter($arName)
 {
     $md5Path = md5(GetPagePath());
-    $FILTER = $_SESSION["SESS_ADMIN"][$md5Path];
+    $FILTER = Application::getInstance()->getSession()->get("SESS_ADMIN")[$md5Path];
 
     foreach ($arName as $name) {
         global $$name;
 
-        if (isset($$name))
+        if (isset($$name)) {
             $FILTER[$name] = $$name;
-        else
+        } else {
             $$name = $FILTER[$name];
+        }
     }
 
-    $_SESSION["SESS_ADMIN"][$md5Path] = $FILTER;
+    Application::getInstance()->getSession()->get("SESS_ADMIN")[$md5Path] = $FILTER;
 }
 
 function DelFilter($arName)
 {
     $md5Path = md5(GetPagePath());
-    unset($_SESSION["SESS_ADMIN"][$md5Path]);
+    unset(Application::getInstance()->getSession()->get("SESS_ADMIN")[$md5Path]);
 
     foreach ($arName as $name) {
         global $$name;
@@ -134,12 +155,16 @@ function GetFilterHiddens($var = "filter_", $button = array("filter" => "Y", "se
         // ������� ����� ���������� ������� �� ��������
         $arKeys = @array_merge(array_keys($_GET), array_keys($_POST));
         if (is_array($arKeys) && count($arKeys) > 0) {
-            $len = strlen($var);
-            foreach (array_unique($arKeys) as $key)
-                if (substr($key, 0, $len) == $var)
+            $len = mb_strlen($var);
+            foreach (array_unique($arKeys) as $key) {
+                if (mb_substr($key, 0, $len) == $var) {
                     $arrVars[] = $key;
+                }
+            }
         }
-    } else $arrVars = $var;
+    } else {
+        $arrVars = $var;
+    }
 
     // ���� �������� ������ ���������� ������� ��
     if (is_array($arrVars) && count($arrVars) > 0) {
@@ -148,24 +173,28 @@ function GetFilterHiddens($var = "filter_", $button = array("filter" => "Y", "se
             global $$var_name;
             $value = $$var_name;
             if (is_array($value)) {
-                if (count($value) > 0) {
-                    reset($value);
-                    foreach ($value as $v) {
-                        $res .= '<input type="hidden" name="' . htmlspecialcharsbx($var_name) . '[]" value="' . htmlspecialcharsbx($v) . '">';
-                    }
+                foreach ($value as $v) {
+                    $res .= '<input type="hidden" name="' . htmlspecialcharsbx(
+                            $var_name
+                        ) . '[]" value="' . htmlspecialcharsbx($v) . '">';
                 }
-            } elseif (strlen($value) > 0 && $value != "NOT_REF") {
-                $res .= '<input type="hidden" name="' . htmlspecialcharsbx($var_name) . '" value="' . htmlspecialcharsbx($value) . '">';
+            } elseif ((string)$value <> '' && $value != "NOT_REF") {
+                $res .= '<input type="hidden" name="' . htmlspecialcharsbx(
+                        $var_name
+                    ) . '" value="' . htmlspecialcharsbx($value) . '">';
             }
         }
     }
 
     if (is_array($button)) {
-        reset($button); // php bug
-        while (list($key, $value) = each($button))
-            $res .= '<input type="hidden" name="' . htmlspecialcharsbx($key) . '" value="' . htmlspecialcharsbx($value) . '">';
-    } else
+        foreach ($button as $key => $val) {
+            $res .= '<input type="hidden" name="' . htmlspecialcharsbx($key) . '" value="' . htmlspecialcharsbx(
+                    $val
+                ) . '">';
+        }
+    } else {
         $res .= $button;
+    }
 
     return $res;
 }
@@ -180,13 +209,16 @@ function GetFilterParams($var = "filter_", $bDoHtmlEncode = true, $button = arra
         // ������� ����� ���������� ������� �� ��������
         $arKeys = @array_merge(array_keys($_GET), array_keys($_POST));
         if (is_array($arKeys) && count($arKeys) > 0) {
-            $len = strlen($var);
-            foreach (array_unique($arKeys) as $key)
-                if (substr($key, 0, $len) == $var)
+            $len = mb_strlen($var);
+            foreach (array_unique($arKeys) as $key) {
+                if (mb_substr($key, 0, $len) == $var) {
                     $arrVars[] = $key;
+                }
+            }
         }
-    } else
+    } else {
         $arrVars = $var;
+    }
 
     // ���� �������� ������ ���������� ������� ��
     if (is_array($arrVars) && count($arrVars) > 0) {
@@ -195,23 +227,22 @@ function GetFilterParams($var = "filter_", $bDoHtmlEncode = true, $button = arra
             global $$var_name;
             $value = $$var_name;
             if (is_array($value)) {
-                if (count($value) > 0) {
-                    reset($value);
-                    foreach ($value as $v)
-                        $res .= "&" . urlencode($var_name) . "[]=" . urlencode($v);
+                foreach ($value as $v) {
+                    $res .= "&" . urlencode($var_name) . "[]=" . urlencode($v);
                 }
-            } elseif (strlen($value) > 0 && $value != "NOT_REF") {
+            } elseif ((string)$value <> '' && $value != "NOT_REF") {
                 $res .= "&" . urlencode($var_name) . "=" . urlencode($value);
             }
         }
     }
 
     if (is_array($button)) {
-        reset($button); // php bug
-        while (list($key, $value) = each($button))
-            $res .= "&" . $key . "=" . urlencode($value);
-    } else
+        foreach ($button as $key => $val) {
+            $res .= "&" . $key . "=" . urlencode($val);
+        }
+    } else {
         $res .= $button;
+    }
 
 
     $tmp_phpbug = ($bDoHtmlEncode) ? htmlspecialcharsbx($res) : $res;
@@ -232,7 +263,7 @@ function GetFilterStr($arr, $button = "set_filter")
                     $str .= "&" . urlencode($var) . "[]=" . urlencode($v);
                 }
             }
-        } elseif (strlen($value) > 0 && $value != "NOT_REF") {
+        } elseif ((string)$value <> '' && $value != "NOT_REF") {
             $str .= "&" . urlencode($var) . "=" . urlencode($value);
         }
     }
@@ -243,19 +274,34 @@ function ShowExactMatchCheckbox($name, $title = false)
 {
     $var = $name . "_exact_match";
     global $$var;
-    if ($title === false) $title = GetMessage("MAIN_EXACT_MATCH");
-    return '<input type="hidden" name="' . $name . '_exact_match" value="N">' . InputType("checkbox", $name . "_exact_match", "Y", $$var, false, "", "title='" . $title . "'");
+    if ($title === false) {
+        $title = GetMessage("MAIN_EXACT_MATCH");
+    }
+    return '<input type="hidden" name="' . $name . '_exact_match" value="N">' . InputType(
+            "checkbox",
+            $name . "_exact_match",
+            "Y",
+            $$var,
+            false,
+            "",
+            "title='" . $title . "'"
+        );
 }
 
 function GetUrlFromArray($arr)
 {
-    if (!is_array($arr))
+    if (!is_array($arr)) {
         return "";
+    }
     $str = "";
-    while (list($key, $value) = each($arr)) {
-        if (is_array($value) && count($value) > 0) {
-            foreach ($value as $a) $str .= "&" . $key . urlencode("[]") . "=" . urlencode($a);
-        } elseif (strlen($value) > 0 && $value != "NOT_REF") $str .= "&" . $key . "=" . urlencode($value);
+    foreach ($arr as $key => $value) {
+        if (is_array($value)) {
+            foreach ($value as $a) {
+                $str .= "&" . $key . urlencode("[]") . "=" . urlencode($a);
+            }
+        } elseif ((string)$value <> '' && $value != "NOT_REF") {
+            $str .= "&" . $key . "=" . urlencode($value);
+        }
     }
     return $str;
 }
@@ -263,18 +309,24 @@ function GetUrlFromArray($arr)
 function ShowAddFavorite($filterName = false, $btnName = "set_filter", $module = "statistic", $alt = false)
 {
     global $QUERY_STRING, $SCRIPT_NAME, $sFilterID;
-    if ($alt === false)
+    if ($alt === false) {
         $alt = GetMessage("MAIN_ADD_TO_FAVORITES");
-    if ($filterName === false)
+    }
+    if ($filterName === false) {
         $filterName = $sFilterID;
-    $url = urlencode($SCRIPT_NAME . "?" . $QUERY_STRING . GetUrlFromArray($_SESSION["SESS_ADMIN"][$filterName]) . "&" . $btnName . "=Y");
+    }
+    $url = urlencode(
+        $SCRIPT_NAME . "?" . $QUERY_STRING . GetUrlFromArray(
+            Application::getInstance()->getSession()["SESS_ADMIN"][$filterName]
+        ) . "&" . $btnName . "=Y"
+    );
     $str = "<a target='_blank' href='" . BX_ROOT . "/admin/favorite_edit.php?lang=" . LANG . "&module=$module&url=$url'><img alt='" . $alt . "' src='" . BX_ROOT . "/images/main/add_favorite.gif' width='16' height='16' border=0></a>";
     echo $str;
 }
 
 function IsFiltered($strSqlSearch)
 {
-    return (strlen($strSqlSearch) > 0 && $strSqlSearch != "(1=1)" && $strSqlSearch != "(1=2)");
+    return ($strSqlSearch <> '' && $strSqlSearch != "(1=1)" && $strSqlSearch != "(1=2)");
 }
 
 function ResetFilterLogic($FilterLogic = "FILTER_logic")
@@ -288,16 +340,21 @@ function ShowFilterLogicHelp()
 {
     global $LogicHelp;
     $str = "";
-    if (LANGUAGE_ID == "ru")
+    if (LANGUAGE_ID == "ru") {
         $help_link = "https://dev.1c-bitrix.ru/api_help/main/general/filter.php";
-    else
-        $help_link = "http://www.bitrixsoft.com/help/index.html?page=" . urlencode("source/main/help/en/filter.php.html");
+    } else {
+        $help_link = "http://www.bitrixsoft.com/help/index.html?page=" . urlencode(
+                "source/main/help/en/filter.php.html"
+            );
+    }
     if ($LogicHelp != "Y") {
         $str = "<script type=\"text/javascript\">
 		function LogicHelp() { window.open('" . $help_link . "', '','scrollbars=yes,resizable=yes,width=780,height=500,top='+Math.floor((screen.height - 500)/2-14)+',left='+Math.floor((screen.width - 780)/2-5)); }
 		</script>";
     }
-    $str .= "<a title='" . GetMessage("FILTER_LOGIC_HELP") . "' class='adm-input-help-icon' href='javascript:LogicHelp()'></a>";
+    $str .= "<a title='" . GetMessage(
+            "FILTER_LOGIC_HELP"
+        ) . "' class='adm-input-help-icon' href='javascript:LogicHelp()'></a>";
     $LogicHelp = "Y";
     return $str;
 }
@@ -310,17 +367,28 @@ function ShowLogicRadioBtn($FilterLogic = "FILTER_logic")
         $s_or = "checked";
         $s_and = "";
     }
-    $str = "<tr><td>" . GetMessage("FILTER_LOGIC") . "</td><td><input type='radio' name='$FilterLogic' value='and' " . $s_and . ">" . GetMessage("AND") . "&nbsp;<input type='radio' name='$FilterLogic' value='or' " . $s_or . ">" . GetMessage("OR") . "</td></tr>";
+    $str = "<tr><td>" . GetMessage(
+            "FILTER_LOGIC"
+        ) . "</td><td><input type='radio' name='$FilterLogic' value='and' " . $s_and . ">" . GetMessage(
+            "AND"
+        ) . "&nbsp;<input type='radio' name='$FilterLogic' value='or' " . $s_or . ">" . GetMessage("OR") . "</td></tr>";
     return $str;
 }
 
-function GetFilterQuery($field, $val, $procent = "Y", $ex_sep = array(), $clob = "N", $div_fields = "Y", $clob_upper = "N")
-{
+function GetFilterQuery(
+    $field,
+    $val,
+    $procent = "Y",
+    $ex_sep = array(),
+    $clob = "N",
+    $div_fields = "Y",
+    $clob_upper = "N"
+) {
     global $strError;
     $f = new CFilterQuery("and", "yes", $procent, $ex_sep, $clob, $div_fields, $clob_upper);
     $query = $f->GetQueryString($field, $val);
     $error = $f->error;
-    if (strlen(trim($error)) > 0) {
+    if (trim($error) <> '') {
         $strError .= $error . "<br>";
         $query = "0";
     }
@@ -337,15 +405,16 @@ function GetFilterSqlSearch($arSqlSearch = array(), $FilterLogic = "FILTER_logic
         $$FilterLogic = "and";
         $strError .= GetMessage("FILTER_ERROR_LOGIC") . "<br>";
     }
-    if ($$FilterLogic == "or")
+    if ($$FilterLogic == "or") {
         $strSqlSearch = "1=2";
-    else
+    } else {
         $strSqlSearch = "1=1";
+    }
     if (is_array($arSqlSearch) && count($arSqlSearch) > 0) {
         foreach ($arSqlSearch as $condition) {
-            if (strlen($condition) > 0 && $condition != "0") {
+            if ($condition <> '' && $condition != "0") {
                 $strSqlSearch .= "
-					" . strtoupper($$FilterLogic) . "
+					" . mb_strtoupper($$FilterLogic) . "
 					(
 						" . $condition . "
 					)
@@ -450,13 +519,15 @@ tmpImage.src = "' . BX_ROOT . '/images/admin/line_up.gif";
     parse_str($_COOKIE["flts"], $arFlts);
     if (is_set($arFlts, $sID)) {
         $fltval = $arFlts[$sID];
-        if (is_set($_COOKIE, "flt_" . $sID))
+        if (is_set($_COOKIE, "flt_" . $sID)) {
             unset($_COOKIE["flt_" . $sID]);
-    } else
+        }
+    } else {
         $fltval = $_COOKIE["flt_" . $sID];
+    }
 
     $s .= '
-<table border="0" cellspacing="0" cellpadding="0" width="' . ($fltval[0] == "N" ? intval(substr($fltval, 1)) : '') . '"><tr><td>
+<table border="0" cellspacing="0" cellpadding="0" width="' . ($fltval[0] == "N" ? intval(mb_substr($fltval, 1)) : '') . '"><tr><td>
 <table border="0" cellspacing="0" cellpadding="0" width="100%" id="flt_head_' . $sID . '">
 <tr>
 	<td class="tablefilterhead">
@@ -467,7 +538,9 @@ tmpImage.src = "' . BX_ROOT . '/images/admin/line_up.gif";
         $s .= '
 	<td width="0%"><img src="' . BX_ROOT . '/images/admin/' . ($bFilterSet ? "green.gif" : "grey.gif") . '" alt="" width="16" height="16" border="0" hspace="1" vspace="1"></td>
 	<td width="0%"><font class="tableheadtext">&nbsp;</font></td>
-	<td width="100%" nowrap><font class="tableheadtext">' . ($bFilterSet ? GetMessage("admin_filter_filter_set") : GetMessage("admin_filter_filter_not_set")) . '</font></td>
+	<td width="100%" nowrap><font class="tableheadtext">' . ($bFilterSet ? GetMessage(
+                "admin_filter_filter_set"
+            ) : GetMessage("admin_filter_filter_not_set")) . '</font></td>
 	<td width="0%"><font class="tableheadtext">&nbsp;&nbsp;&nbsp;</font></td>
 ';
     } else {
@@ -476,8 +549,16 @@ tmpImage.src = "' . BX_ROOT . '/images/admin/line_up.gif";
 ';
     }
     $s .= '
-	<td width="0%"><font class="tableheadtext"><div id="flt_link_hide_' . $sID . '" style="display:inline;"><a href="javascript:showfilter(\'' . $sID . '\');" title="' . GetMessage("admin_filter_hide") . '">' . GetMessage("admin_filter_hide2") . '</a></div><div id="flt_link_show_' . $sID . '" style="display:none;"><a href="javascript:showfilter(\'' . $sID . '\');" title="' . GetMessage("admin_filter_show") . '">' . GetMessage("admin_filter_show2") . '</a></div></font></td>
-	<td width="0%"><font class="tableheadtext">&nbsp;</font><a href="javascript:showfilter(\'' . $sID . '\');"><img id="flt_image_' . $sID . '" src="' . BX_ROOT . '/images/admin/line_up.gif" alt="' . GetMessage("admin_filter_hide") . '" width="30" height="11" border="0" hspace="3"></a></td>
+	<td width="0%"><font class="tableheadtext"><div id="flt_link_hide_' . $sID . '" style="display:inline;"><a href="javascript:showfilter(\'' . $sID . '\');" title="' . GetMessage(
+            "admin_filter_hide"
+        ) . '">' . GetMessage(
+            "admin_filter_hide2"
+        ) . '</a></div><div id="flt_link_show_' . $sID . '" style="display:none;"><a href="javascript:showfilter(\'' . $sID . '\');" title="' . GetMessage(
+            "admin_filter_show"
+        ) . '">' . GetMessage("admin_filter_show2") . '</a></div></font></td>
+	<td width="0%"><font class="tableheadtext">&nbsp;</font><a href="javascript:showfilter(\'' . $sID . '\');"><img id="flt_image_' . $sID . '" src="' . BX_ROOT . '/images/admin/line_up.gif" alt="' . GetMessage(
+            "admin_filter_hide"
+        ) . '" width="30" height="11" border="0" hspace="3"></a></td>
 </tr>
 </table>
 	</td>
@@ -492,8 +573,9 @@ tmpImage.src = "' . BX_ROOT . '/images/admin/line_up.gif";
 function EndFilter($sID = "")
 {
     global $sFilterID;
-    if ($sID == "")
+    if ($sID == "") {
         $sID = $sFilterID;
+    }
     $s = '
 </table>
 </div>
@@ -501,13 +583,15 @@ function EndFilter($sID = "")
 
 ';
     parse_str($_COOKIE["flts"], $arFlts);
-    if (is_set($arFlts, $sID))
+    if (is_set($arFlts, $sID)) {
         $fltval = $arFlts[$sID];
-    else
+    } else {
         $fltval = $_COOKIE["flt_" . $sID];
+    }
 
-    if ($fltval[0] <> "Y")
+    if ($fltval[0] <> "Y") {
         $s .= '<script type="text/javascript">hidefilter(\'' . CUtil::JSEscape($sID) . '\');</script>' . "\n";
+    }
     return $s;
 }
 
@@ -586,59 +670,80 @@ function InitSorting($Path = false, $sByVar = "by", $sOrderVar = "order")
 {
     global $APPLICATION, $$sByVar, $$sOrderVar;
 
-    if ($Path === false)
+    if ($Path === false) {
         $Path = $APPLICATION->GetCurPage();
+    }
 
     $md5Path = md5($Path);
 
-    if (strlen($$sByVar) > 0)
-        $_SESSION["SESS_SORT_BY"][$md5Path] = $$sByVar;
-    else
-        $$sByVar = $_SESSION["SESS_SORT_BY"][$md5Path];
+    if ($$sByVar <> '') {
+        Application::getInstance()->getSession()["SESS_SORT_BY"][$md5Path] = $$sByVar;
+    } else {
+        $$sByVar = Application::getInstance()->getSession()["SESS_SORT_BY"][$md5Path];
+    }
 
-    if (strlen($$sOrderVar) > 0)
-        $_SESSION["SESS_SORT_ORDER"][$md5Path] = $$sOrderVar;
-    else
-        $$sOrderVar = $_SESSION["SESS_SORT_ORDER"][$md5Path];
+    if ($$sOrderVar <> '') {
+        Application::getInstance()->getSession()["SESS_SORT_ORDER"][$md5Path] = $$sOrderVar;
+    } else {
+        $$sOrderVar = Application::getInstance()->getSession()["SESS_SORT_ORDER"][$md5Path];
+    }
 
-    strtolower($$sByVar);
-    strtolower($$sOrderVar);
+    mb_strtolower($$sByVar);
+    mb_strtolower($$sOrderVar);
 }
 
 function SortingEx($By, $Path = false, $sByVar = "by", $sOrderVar = "order", $Anchor = "nav_start")
 {
     global $APPLICATION;
 
-    $sImgDown = "<img src=\"" . BX_ROOT . "/images/icons/up.gif\" width=\"15\" height=\"15\" border=\"0\" alt=\"" . GetMessage("ASC_ORDER") . "\">";
-    $sImgUp = "<img src=\"" . BX_ROOT . "/images/icons/down.gif\" width=\"15\" height=\"15\" border=\"0\" alt=\"" . GetMessage("DESC_ORDER") . "\">";
+    $sImgDown = "<img src=\"" . BX_ROOT . "/images/icons/up.gif\" width=\"15\" height=\"15\" border=\"0\" alt=\"" . GetMessage(
+            "ASC_ORDER"
+        ) . "\">";
+    $sImgUp = "<img src=\"" . BX_ROOT . "/images/icons/down.gif\" width=\"15\" height=\"15\" border=\"0\" alt=\"" . GetMessage(
+            "DESC_ORDER"
+        ) . "\">";
 
     global $$sByVar, $$sOrderVar;
     $by = $$sByVar;
     $order = $$sOrderVar;
 
-    if (strtoupper($By) == strtoupper($by)) {
-        if (strtoupper($order) == "DESC")
-            $sImgUp = "<img src=\"" . BX_ROOT . "/images/icons/down-$$$.gif\" width=\"15\" height=\"15\" border=\"0\" alt=\"" . GetMessage("DESC_ORDER") . "\">";
-        else
-            $sImgDown = "<img src=\"" . BX_ROOT . "/images/icons/up-$$$.gif\" width=\"15\" height=\"15\" border=\"0\" alt=\"" . GetMessage("ASC_ORDER") . "\">";
+    if (mb_strtoupper($By) == mb_strtoupper($by)) {
+        if (mb_strtoupper($order) == "DESC") {
+            $sImgUp = "<img src=\"" . BX_ROOT . "/images/icons/down-$$$.gif\" width=\"15\" height=\"15\" border=\"0\" alt=\"" . GetMessage(
+                    "DESC_ORDER"
+                ) . "\">";
+        } else {
+            $sImgDown = "<img src=\"" . BX_ROOT . "/images/icons/up-$$$.gif\" width=\"15\" height=\"15\" border=\"0\" alt=\"" . GetMessage(
+                    "ASC_ORDER"
+                ) . "\">";
+        }
     }
 
     //���� ���� �� �����, �� ����� ����� ������� �� ����� �����������
-    if ($Path === false)
+    if ($Path === false) {
         $Path = $APPLICATION->GetCurUri();
+    }
 
     //���� ��� ����������, �� ���� ��������� ��������� ����� ?
-    $found = strpos($Path, "?");
-    if ($found === false) $strAdd2URL = "?";
-    else $strAdd2URL = "&";
+    $found = mb_strpos($Path, "?");
+    if ($found === false) {
+        $strAdd2URL = "?";
+    } else {
+        $strAdd2URL = "&";
+    }
 
     $Path = preg_replace("/([?&])" . $sByVar . "=[^&]*[&]*/i", "\\1", $Path);
     $Path = preg_replace("/([?&])" . $sOrderVar . "=[^&]*[&]*/i", "\\1", $Path);
 
-    $strTest = substr($Path, strlen($Path) - 1);
-    if ($strTest == "&" OR $strTest == "?")
+    $strTest = mb_substr($Path, mb_strlen($Path) - 1);
+    if ($strTest == "&" OR $strTest == "?") {
         $strAdd2URL = "";
+    }
 
-    return "<nobr><a href=\"" . htmlspecialcharsbx($Path . $strAdd2URL . $sByVar . "=" . $By . "&" . $sOrderVar . "=asc#" . $Anchor) . "\">" . $sImgDown . "</a>" .
-        "<a href=\"" . htmlspecialcharsbx($Path . $strAdd2URL . $sByVar . "=" . $By . "&" . $sOrderVar . "=desc#" . $Anchor) . "\">" . $sImgUp . "</a></nobr>";
+    return "<nobr><a href=\"" . htmlspecialcharsbx(
+            $Path . $strAdd2URL . $sByVar . "=" . $By . "&" . $sOrderVar . "=asc#" . $Anchor
+        ) . "\">" . $sImgDown . "</a>" .
+        "<a href=\"" . htmlspecialcharsbx(
+            $Path . $strAdd2URL . $sByVar . "=" . $By . "&" . $sOrderVar . "=desc#" . $Anchor
+        ) . "\">" . $sImgUp . "</a></nobr>";
 } ?>

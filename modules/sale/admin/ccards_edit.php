@@ -1,9 +1,11 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions == "D")
+if ($saleModulePermissions == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 \Bitrix\Main\Loader::includeModule('sale');
 
@@ -23,40 +25,46 @@ ClearVars();
 $errorMessage = "";
 $bVarsFromForm = false;
 
-$ID = IntVal($ID);
+$ID = intval($ID);
 
-if ($REQUEST_METHOD == "POST" && strlen($Update) > 0 && $saleModulePermissions == "W" && check_bitrix_sessid()) {
-    $USER_ID = IntVal($USER_ID);
-    if ($USER_ID <= 0)
+if ($REQUEST_METHOD == "POST" && $Update <> '' && $saleModulePermissions == "W" && check_bitrix_sessid()) {
+    $USER_ID = intval($USER_ID);
+    if ($USER_ID <= 0) {
         $errorMessage .= GetMessage("SCE_EMPTY_USER") . ".<br>";
+    }
 
-    $PAY_SYSTEM_ACTION_ID = IntVal($PAY_SYSTEM_ACTION_ID);
-    if ($PAY_SYSTEM_ACTION_ID <= 0)
+    $PAY_SYSTEM_ACTION_ID = intval($PAY_SYSTEM_ACTION_ID);
+    if ($PAY_SYSTEM_ACTION_ID <= 0) {
         $errorMessage .= GetMessage("SCE_EMPTY_PAY_SYS") . ".<br>";
+    }
 
     $CARD_TYPE = Trim($CARD_TYPE);
     $CARD_TYPE = ToUpper($CARD_TYPE);
-    if (strlen($CARD_TYPE) <= 0)
+    if ($CARD_TYPE == '') {
         $errorMessage .= GetMessage("SCE_EMPTY_CARD_TYPE") . ".<br>";
+    }
 
     $CARD_NUM = preg_replace("/[\D]+/", "", $CARD_NUM);
-    if (strlen($CARD_NUM) <= 0) {
+    if ($CARD_NUM == '') {
         $errorMessage .= GetMessage("SCE_EMPTY_CARD_NUM") . ".<br>";
     } else {
         $cardType = CSaleUserCards::IdentifyCardType($CARD_NUM);
-        if ($cardType != $CARD_TYPE)
+        if ($cardType != $CARD_TYPE) {
             $errorMessage .= GetMessage("SCE_WRONG_CARD_NUM") . ".<br>";
+        }
     }
 
-    $CARD_EXP_MONTH = IntVal($CARD_EXP_MONTH);
-    if ($CARD_EXP_MONTH < 1 || $CARD_EXP_MONTH > 12)
+    $CARD_EXP_MONTH = intval($CARD_EXP_MONTH);
+    if ($CARD_EXP_MONTH < 1 || $CARD_EXP_MONTH > 12) {
         $errorMessage .= GetMessage("SCE_WRONG_MONTH") . ".<br>";
+    }
 
-    $CARD_EXP_YEAR = IntVal($CARD_EXP_YEAR);
-    if ($CARD_EXP_YEAR < 2000 || $CARD_EXP_YEAR > 2100)
+    $CARD_EXP_YEAR = intval($CARD_EXP_YEAR);
+    if ($CARD_EXP_YEAR < 2000 || $CARD_EXP_YEAR > 2100) {
         $errorMessage .= GetMessage("SCE_WRONG_YEAR") . ".<br>";
+    }
 
-    if (strlen($errorMessage) <= 0) {
+    if ($errorMessage == '') {
         $CURRENT_BUDGET = str_replace(",", ".", $CURRENT_BUDGET);
         $CURRENT_BUDGET = DoubleVal($CURRENT_BUDGET);
         $SUM_MIN = str_replace(",", ".", $SUM_MIN);
@@ -64,30 +72,31 @@ if ($REQUEST_METHOD == "POST" && strlen($Update) > 0 && $saleModulePermissions =
         $SUM_MAX = str_replace(",", ".", $SUM_MAX);
         $SUM_MAX = DoubleVal($SUM_MAX);
         $ACTIVE = (($ACTIVE == "Y") ? "Y" : "N");
-        $SORT = ((IntVal($SORT) > 0) ? IntVal($SORT) : 100);
+        $SORT = ((intval($SORT) > 0) ? intval($SORT) : 100);
         $CURRENCY = Trim($CURRENCY);
         $SUM_CURRENCY = Trim($SUM_CURRENCY);
 
-        if (($SUM_MIN > 0 || $SUM_MAX > 0) && strlen($SUM_CURRENCY) <= 0)
+        if (($SUM_MIN > 0 || $SUM_MAX > 0) && $SUM_CURRENCY == '') {
             $errorMessage .= GetMessage("SCE_EMPTY_CURRENCY") . ".<br>";
+        }
     }
 
-    if (strlen($errorMessage) <= 0) {
+    if ($errorMessage == '') {
         $arFields = array(
             "USER_ID" => $USER_ID,
             "ACTIVE" => $ACTIVE,
             "SORT" => $SORT,
             "PAY_SYSTEM_ACTION_ID" => $PAY_SYSTEM_ACTION_ID,
-            "CURRENCY" => ((strlen($CURRENCY) > 0) ? $CURRENCY : False),
+            "CURRENCY" => (($CURRENCY <> '') ? $CURRENCY : false),
             "CARD_TYPE" => $CARD_TYPE,
             "CARD_NUM" => CSaleUserCards::CryptData($CARD_NUM, "E"),
             "CARD_EXP_MONTH" => $CARD_EXP_MONTH,
             "CARD_EXP_YEAR" => $CARD_EXP_YEAR,
-            "DESCRIPTION" => ((strlen($DESCRIPTION) > 0) ? $DESCRIPTION : False),
+            "DESCRIPTION" => (($DESCRIPTION <> '') ? $DESCRIPTION : false),
             "CARD_CODE" => $CARD_CODE,
-            "SUM_MIN" => (($SUM_MIN > 0) ? $SUM_MIN : False),
-            "SUM_MAX" => (($SUM_MAX > 0) ? $SUM_MAX : False),
-            "SUM_CURRENCY" => ((strlen($SUM_CURRENCY) > 0) ? $SUM_CURRENCY : False)
+            "SUM_MIN" => (($SUM_MIN > 0) ? $SUM_MIN : false),
+            "SUM_MAX" => (($SUM_MAX > 0) ? $SUM_MAX : false),
+            "SUM_CURRENCY" => (($SUM_CURRENCY <> '') ? $SUM_CURRENCY : false)
         );
 
         if ($ID > 0) {
@@ -99,13 +108,15 @@ if ($REQUEST_METHOD == "POST" && strlen($Update) > 0 && $saleModulePermissions =
 
         if (!$res) {
             $bVarsFromForm = true;
-            if ($ex = $APPLICATION->GetException())
+            if ($ex = $APPLICATION->GetException()) {
                 $errorMessage .= $ex->GetString() . ".<br>";
-            else
+            } else {
                 $errorMessage .= GetMessage("SCE_SAVING") . ".<br>";
+            }
         } else {
-            if (strlen($apply) <= 0)
+            if ($apply == '') {
                 LocalRedirect("/bitrix/admin/sale_ccards_admin.php?lang=" . LANG . GetFilterParams("filter_", false));
+            }
         }
     } else {
         $bVarsFromForm = true;
@@ -114,10 +125,11 @@ if ($REQUEST_METHOD == "POST" && strlen($Update) > 0 && $saleModulePermissions =
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/prolog.php");
 
-if ($ID > 0)
+if ($ID > 0) {
     $APPLICATION->SetTitle(GetMessage("SCE_ERROR_UPDATING"));
-else
+} else {
     $APPLICATION->SetTitle(GetMessage("SCE_ADD_NEW"));
+}
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
@@ -127,17 +139,46 @@ $dbCCard = CSaleUserCards::GetList(
     array("ID" => $ID),
     false,
     false,
-    array("ID", "USER_ID", "ACTIVE", "SORT", "PAY_SYSTEM_ACTION_ID", "CURRENCY", "CARD_TYPE", "CARD_NUM", "CARD_CODE", "CARD_EXP_MONTH", "CARD_EXP_YEAR", "DESCRIPTION", "SUM_MIN", "SUM_MAX", "SUM_CURRENCY", "TIMESTAMP_X", "LAST_STATUS", "LAST_STATUS_CODE", "LAST_STATUS_DESCRIPTION", "LAST_STATUS_MESSAGE", "LAST_SUM", "LAST_CURRENCY", "LAST_DATE", "USER_LOGIN", "USER_NAME", "USER_LAST_NAME")
+    array(
+        "ID",
+        "USER_ID",
+        "ACTIVE",
+        "SORT",
+        "PAY_SYSTEM_ACTION_ID",
+        "CURRENCY",
+        "CARD_TYPE",
+        "CARD_NUM",
+        "CARD_CODE",
+        "CARD_EXP_MONTH",
+        "CARD_EXP_YEAR",
+        "DESCRIPTION",
+        "SUM_MIN",
+        "SUM_MAX",
+        "SUM_CURRENCY",
+        "TIMESTAMP_X",
+        "LAST_STATUS",
+        "LAST_STATUS_CODE",
+        "LAST_STATUS_DESCRIPTION",
+        "LAST_STATUS_MESSAGE",
+        "LAST_SUM",
+        "LAST_CURRENCY",
+        "LAST_DATE",
+        "USER_LOGIN",
+        "USER_NAME",
+        "USER_LAST_NAME"
+    )
 );
 if (!$dbCCard->ExtractFields("str_")) {
     $ID = 0;
     $str_ACTIVE = "Y";
     $str_SORT = 100;
-} else
+} else {
     $str_CARD_NUM = CSaleUserCards::CryptData($str_CARD_NUM, "D");
+}
 
-if ($bVarsFromForm)
+if ($bVarsFromForm) {
     $DB->InitTableVarsForEdit("b_sale_user_cards", "", "str_");
+}
 
 ?>
 
@@ -164,7 +205,10 @@ if ($ID > 0 && $saleModulePermissions >= "U") {
     if ($saleModulePermissions >= "W") {
         $aMenu[] = array(
             "TEXT" => GetMessage("SCEN_DELETE_CCARD"),
-            "LINK" => "javascript:if(confirm('" . GetMessage("SCEN_DELETE_CCARD_CONFIRM") . "')) window.location='/bitrix/admin/sale_ccards_admin.php?ID=" . $ID . "&action=delete&lang=" . LANG . "&" . bitrix_sessid_get() . "#tb';",
+            "LINK" => "javascript:if(confirm('" . GetMessage(
+                    "SCEN_DELETE_CCARD_CONFIRM"
+                ) . "')) window.location='/bitrix/admin/sale_ccards_admin.php?ID=" . $ID . "&action=delete&lang=" . LANG . "&" . bitrix_sessid_get(
+                ) . "#tb';",
             "WARNING" => "Y",
             "ICON" => "btn_delete"
         );
@@ -173,11 +217,21 @@ if ($ID > 0 && $saleModulePermissions >= "U") {
 $context = new CAdminContextMenu($aMenu);
 $context->Show();
 
-if (!CSaleUserCards::CheckPassword())
-    echo CAdminMessage::ShowMessage(Array("DETAILS" => GetMessage("SCE_NO_VALID_PASSWORD"), "TYPE" => "ERROR", "MESSAGE" => GetMessage("SCE_ATTENTION")));
+if (!CSaleUserCards::CheckPassword()) {
+    CAdminMessage::ShowMessage(
+        Array(
+            "DETAILS" => GetMessage("SCE_NO_VALID_PASSWORD"),
+            "TYPE" => "ERROR",
+            "MESSAGE" => GetMessage("SCE_ATTENTION")
+        )
+    );
+}
 ?>
-<? if (strlen($errorMessage) > 0)
-    echo CAdminMessage::ShowMessage(Array("DETAILS" => $errorMessage, "TYPE" => "ERROR", "MESSAGE" => GetMessage("SCE_ERROR"), "HTML" => true)); ?>
+<? if ($errorMessage <> '') {
+    CAdminMessage::ShowMessage(
+        Array("DETAILS" => $errorMessage, "TYPE" => "ERROR", "MESSAGE" => GetMessage("SCE_ERROR"), "HTML" => true)
+    );
+} ?>
 
 
     <form method="POST" action="<? echo $APPLICATION->GetCurPage() ?>?" name="fccards_edit">
@@ -189,7 +243,12 @@ if (!CSaleUserCards::CheckPassword())
 
         <?
         $aTabs = array(
-            array("DIV" => "edit1", "TAB" => GetMessage("SCEN_TAB_CCARD"), "ICON" => "sale", "TITLE" => GetMessage("SCEN_TAB_CCARD_DESCR"))
+            array(
+                "DIV" => "edit1",
+                "TAB" => GetMessage("SCEN_TAB_CCARD"),
+                "ICON" => "sale",
+                "TITLE" => GetMessage("SCEN_TAB_CCARD_DESCR")
+            )
         );
 
         $tabControl = new CAdminTabControl("tabControl", $aTabs);
@@ -214,8 +273,11 @@ if (!CSaleUserCards::CheckPassword())
             <td width="40%"><? echo GetMessage("SCE_USER") ?></td>
             <td width="60%"><?
                 $user_name = "";
-                if ($ID > 0)
-                    $user_name = "[<a title=\"" . GetMessage("SCE_USER_PROFILE") . "\" href=\"/bitrix/admin/user_edit.php?lang=" . LANGUAGE_ID . "&ID=" . $str_USER_ID . "\">" . $str_USER_ID . "</a>] (" . $str_USER_LOGIN . ") " . $str_USER_NAME . " " . $str_USER_LAST_NAME;
+                if ($ID > 0) {
+                    $user_name = "[<a title=\"" . GetMessage(
+                            "SCE_USER_PROFILE"
+                        ) . "\" href=\"/bitrix/admin/user_edit.php?lang=" . LANGUAGE_ID . "&ID=" . $str_USER_ID . "\">" . $str_USER_ID . "</a>] (" . $str_USER_LOGIN . ") " . $str_USER_NAME . " " . $str_USER_LAST_NAME;
+                }
 
                 echo FindUserID("USER_ID", $str_USER_ID, $user_name, "fccards_edit");
                 ?></td>
@@ -246,7 +308,13 @@ if (!CSaleUserCards::CheckPassword())
                     );
                     while ($arPaySysActions = $dbPaySysActions->Fetch()) {
                         ?>
-                        <option value="<?= $arPaySysActions["ID"] ?>"<? if (IntVal($str_PAY_SYSTEM_ACTION_ID) == IntVal($arPaySysActions["ID"])) echo " selected"; ?>><?= htmlspecialcharsEx($arPaySysActions["NAME"] . " [" . $arPaySysActions["PS_NAME"] . " / " . $arPaySysActions["PT_NAME"] . "]") ?></option><?
+                        <option value="<?= $arPaySysActions["ID"] ?>"<? if (intval($str_PAY_SYSTEM_ACTION_ID) == intval(
+                                $arPaySysActions["ID"]
+                            )) {
+                            echo " selected";
+                        } ?>><?= htmlspecialcharsEx(
+                        $arPaySysActions["NAME"] . " [" . $arPaySysActions["PS_NAME"] . " / " . $arPaySysActions["PT_NAME"] . "]"
+                    ) ?></option><?
                     }
                     ?>
                 </select>
@@ -262,14 +330,34 @@ if (!CSaleUserCards::CheckPassword())
             <td><? echo GetMessage("SCE_CARD_TYPE") ?></td>
             <td>
                 <select name="CARD_TYPE">
-                    <option value="VISA"<? if ($str_CARD_TYPE == "VISA") echo " selected"; ?>>Visa</option>
-                    <option value="MASTERCARD"<? if ($str_CARD_TYPE == "MASTERCARD") echo " selected"; ?>>MasterCard
+                    <option value="VISA"<? if ($str_CARD_TYPE == "VISA") {
+                        echo " selected";
+                    } ?>>Visa
                     </option>
-                    <option value="AMEX"<? if ($str_CARD_TYPE == "AMEX") echo " selected"; ?>>Amex</option>
-                    <option value="DINERS"<? if ($str_CARD_TYPE == "DINERS") echo " selected"; ?>>Diners</option>
-                    <option value="DISCOVER"<? if ($str_CARD_TYPE == "DISCOVER") echo " selected"; ?>>Discover</option>
-                    <option value="JCB"<? if ($str_CARD_TYPE == "JCB") echo " selected"; ?>>JCB</option>
-                    <option value="ENROUTE"<? if ($str_CARD_TYPE == "ENROUTE") echo " selected"; ?>>Enroute</option>
+                    <option value="MASTERCARD"<? if ($str_CARD_TYPE == "MASTERCARD") {
+                        echo " selected";
+                    } ?>>MasterCard
+                    </option>
+                    <option value="AMEX"<? if ($str_CARD_TYPE == "AMEX") {
+                        echo " selected";
+                    } ?>>Amex
+                    </option>
+                    <option value="DINERS"<? if ($str_CARD_TYPE == "DINERS") {
+                        echo " selected";
+                    } ?>>Diners
+                    </option>
+                    <option value="DISCOVER"<? if ($str_CARD_TYPE == "DISCOVER") {
+                        echo " selected";
+                    } ?>>Discover
+                    </option>
+                    <option value="JCB"<? if ($str_CARD_TYPE == "JCB") {
+                        echo " selected";
+                    } ?>>JCB
+                    </option>
+                    <option value="ENROUTE"<? if ($str_CARD_TYPE == "ENROUTE") {
+                        echo " selected";
+                    } ?>>Enroute
+                    </option>
                 </select>
             </td>
         </tr>
@@ -277,7 +365,11 @@ if (!CSaleUserCards::CheckPassword())
             <td><? echo GetMessage("SCE_CARD_NUM") ?></td>
             <td>
                 <input type="text" name="CARD_NUM" size="30" maxlength="30"
-                       value="<?= (($saleModulePermissions == "W") ? $str_CARD_NUM : "XXXXXXXXXXX" . substr($str_CARD_NUM, strlen($str_CARD_NUM) - 4, 4)); ?>">
+                       value="<?= (($saleModulePermissions == "W") ? $str_CARD_NUM : "XXXXXXXXXXX" . mb_substr(
+                               $str_CARD_NUM,
+                               mb_strlen($str_CARD_NUM) - 4,
+                               4
+                           )); ?>">
             </td>
         </tr>
         <tr>
@@ -287,7 +379,9 @@ if (!CSaleUserCards::CheckPassword())
                     <?
                     for ($i = 1; $i <= 12; $i++) {
                         ?>
-                        <option value="<?= $i ?>"<? if (IntVal($str_CARD_EXP_MONTH) == $i) echo " selected"; ?>><?= ((strlen($i) < 2) ? "0" . $i : $i) ?></option><?
+                        <option value="<?= $i ?>"<? if (intval($str_CARD_EXP_MONTH) == $i) {
+                            echo " selected";
+                        } ?>><?= ((mb_strlen($i) < 2) ? "0" . $i : $i) ?></option><?
                     }
                     ?>
                 </select>
@@ -295,7 +389,9 @@ if (!CSaleUserCards::CheckPassword())
                     <?
                     for ($i = 2005; $i <= 2100; $i++) {
                         ?>
-                        <option value="<?= $i ?>"<? if (IntVal($str_CARD_EXP_YEAR) == $i) echo " selected"; ?>><?= $i ?></option><?
+                        <option value="<?= $i ?>"<? if (intval($str_CARD_EXP_YEAR) == $i) {
+                            echo " selected";
+                        } ?>><?= $i ?></option><?
                     }
                     ?>
                 </select>
@@ -311,14 +407,20 @@ if (!CSaleUserCards::CheckPassword())
             <td><? echo GetMessage("SCE_MIN_SUM") ?></td>
             <td>
                 <input type="text" name="SUM_MIN" size="10" maxlength="10"
-                       value="<?= ((DoubleVal($str_SUM_MIN) > 0) ? roundEx($str_SUM_MIN, SALE_VALUE_PRECISION) : "") ?>">
+                       value="<?= ((DoubleVal($str_SUM_MIN) > 0) ? roundEx(
+                           $str_SUM_MIN,
+                           SALE_VALUE_PRECISION
+                       ) : "") ?>">
             </td>
         </tr>
         <tr>
             <td><? echo GetMessage("SCE_MAX_SUM") ?></td>
             <td>
                 <input type="text" name="SUM_MAX" size="10" maxlength="10"
-                       value="<?= ((DoubleVal($str_SUM_MAX) > 0) ? roundEx($str_SUM_MAX, SALE_VALUE_PRECISION) : "") ?>">
+                       value="<?= ((DoubleVal($str_SUM_MAX) > 0) ? roundEx(
+                           $str_SUM_MAX,
+                           SALE_VALUE_PRECISION
+                       ) : "") ?>">
             </td>
         </tr>
         <tr>

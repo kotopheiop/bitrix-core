@@ -1,4 +1,5 @@
 <?
+
 global $MESS;
 
 $MESS["SWMWP_DTITLE"] = "Payment via PayMaster (Russian payment system)";

@@ -1,4 +1,5 @@
 <?
+
 define('BX_PUBLIC_MODE', 0);
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_js.php");
@@ -17,13 +18,18 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/fileman/include.php");
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/fileman/admin/fileman_html_edit.php");
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/public/file_edit.php");
 
-$obJSPopup = new CJSPopup("lang=" . urlencode($_GET["lang"]) . "&site=" . urlencode($_GET["site"]) . "&back_url=" . urlencode($_GET["back_url"]) . "&path=" . urlencode($_GET["path"]) . "&name=" . urlencode($_GET["name"]), array("SUFFIX" => ($_REQUEST['subdialog'] == 'Y' ? 'editor' : '')));
+$obJSPopup = new CJSPopup(
+    "lang=" . urlencode($_GET["lang"]) . "&site=" . urlencode($_GET["site"]) . "&back_url=" . urlencode(
+        $_GET["back_url"]
+    ) . "&path=" . urlencode($_GET["path"]) . "&name=" . urlencode($_GET["name"]),
+    array("SUFFIX" => ($_REQUEST['subdialog'] == 'Y' ? 'editor' : ''))
+);
 
 $strWarning = "";
 $site_template = false;
 $rsSiteTemplates = CSite::GetTemplateList($site);
 while ($arSiteTemplate = $rsSiteTemplates->Fetch()) {
-    if (strlen($arSiteTemplate["CONDITION"]) <= 0) {
+    if ($arSiteTemplate["CONDITION"] == '') {
         $site_template = $arSiteTemplate["TEMPLATE"];
         break;
     }
@@ -35,7 +41,7 @@ $bVarsFromForm = false;    // if 'true' - we will get content  and variables fro
 $bSessIDRefresh = false;    // ����, �����������, ����� �� ��������� �� ������ �� �������
 $editor_name = (isset($_REQUEST['editor_name']) ? $_REQUEST['editor_name'] : 'filesrc_pub');
 
-if (strlen($filename) > 0 && ($mess = CFileMan::CheckFileName($filename)) !== true) {
+if ($filename <> '' && ($mess = CFileMan::CheckFileName($filename)) !== true) {
     $filename2 = $filename;
     $filename = '';
     $strWarning = $mess;
@@ -46,23 +52,25 @@ $path = urldecode($path);
 $path = $io->CombinePath("/", $path);
 
 $site = CFileMan::__CheckSite($site);
-if (!$site)
+if (!$site) {
     $site = CSite::GetSiteByFullPath($_SERVER["DOCUMENT_ROOT"] . $path);
+}
 
 $DOC_ROOT = CSite::GetSiteDocRoot($site);
 $abs_path = $DOC_ROOT . $path;
 
-if (GetFileType($abs_path) == "IMAGE")
+if (GetFileType($abs_path) == "IMAGE") {
     $strWarning = GetMessage("PUBLIC_EDIT_FILE_IMAGE_ERROR");
+}
 
 $arPath = Array($site, $path);
 
 if (!$io->FileExists($abs_path) && !$io->DirectoryExists($abs_path)) {
-    $p = strrpos($path, "/");
+    $p = mb_strrpos($path, "/");
     if ($p !== false) {
         $new = "Y";
-        $filename = substr($path, $p + 1);
-        $path = substr($path, 0, $p);
+        $filename = mb_substr($path, $p + 1);
+        $path = mb_substr($path, 0, $p);
     }
 }
 $relPath = $io->ExtractPathFromPath($path);
@@ -72,20 +80,22 @@ $NEW_ROW_CNT = 1;
 $arParsedPath = CFileMan::ParsePath(Array($site, $path), true, false, "", false);
 $isScriptExt = in_array(CFileman::GetFileExtension($path), CFileMan::GetScriptFileExt());
 
-if (CAutoSave::Allowed())
+if (CAutoSave::Allowed()) {
     $AUTOSAVE = new CAutoSave();
+}
 
 $imgName = $filename;
-if ($filename == '')
+if ($filename == '') {
     $imgName = $io->ExtractNameFromPath($path);
-else
+} else {
     $imgName = $filename;
+}
 $imgName = GetFileNameWithoutExtension($imgName) . '-img';
 
 //Check access to file
 if (
     (
-        strlen($new) > 0 &&
+        $new <> '' &&
         !(
             $USER->CanDoOperation('fileman_admin_files') &&
             $USER->CanDoFileOperation('fm_create_new_file', $arPath)
@@ -93,7 +103,7 @@ if (
     )
     ||
     (
-        strlen($new) < 0 &&
+        $new == '' &&
         !(
             $USER->CanDoOperation('fileman_edit_existent_files') &&
             $USER->CanDoFileOperation('fm_edit_existent_file', $arPath)
@@ -101,8 +111,8 @@ if (
     )
 ) {
     $strWarning = GetMessage("ACCESS_DENIED");
-} elseif (strlen($strWarning) <= 0) {
-    if (!$USER->IsAdmin() && substr(CFileman::GetFileName($abs_path), 0, 1) == ".") {
+} elseif ($strWarning == '') {
+    if (!$USER->IsAdmin() && mb_substr(CFileman::GetFileName($abs_path), 0, 1) == ".") {
         $strWarning = GetMessage("FILEMAN_FILEEDIT_BAD_FNAME") . " ";
         $bEdit = false;
         $bVarsFromForm = true;
@@ -112,38 +122,45 @@ if (
     } elseif ($new == 'Y') {
         $bEdit = false;
     } else {
-        if (!$io->FileExists($abs_path))
+        if (!$io->FileExists($abs_path)) {
             $strWarning = GetMessage("FILEMAN_FILEEDIT_FOLDER_EXISTS") . " ";
-        else
+        } else {
             $bEdit = true;
+        }
     }
 
     $limit_php_access = ($USER->CanDoFileOperation('fm_lpa', $arPath) && !$USER->CanDoOperation('edit_php'));
     if ($limit_php_access) {
         //OFP - 'original full path' used for restorin' php code fragments in limit_php_access mode
-        if (!isset($_SESSION['arOFP']))
-            $_SESSION['arOFP'] = Array();
+        if (!isset(\Bitrix\Main\Application::getInstance()->getSession()['arOFP'])) {
+            \Bitrix\Main\Application::getInstance()->getSession()['arOFP'] = Array();
+        }
 
         if (isset($_POST['ofp_id'])) {
             $ofp_id = $_POST['ofp_id'];
         } else {
-            $ofp_id = substr(md5($site . '|' . $path), 0, 8);
-            if (!isset($_SESSION['arOFP'][$ofp_id]))
-                $_SESSION['arOFP'][$ofp_id] = $path;
+            $ofp_id = mb_substr(md5($site . '|' . $path), 0, 8);
+            if (!isset(\Bitrix\Main\Application::getInstance()->getSession()['arOFP'][$ofp_id])) {
+                \Bitrix\Main\Application::getInstance()->getSession()['arOFP'][$ofp_id] = $path;
+            }
         }
     }
 }
 
-if (strlen($strWarning) <= 0) {
+if ($strWarning == '') {
     if ($bEdit) {
         $oFile = $io->GetFile($abs_path);
         $filesrc_tmp = $oFile->GetContents();
     } else {
         $arTemplates = CFileman::GetFileTemplates(LANGUAGE_ID, array($site_template));
-        if (strlen($template) > 0) {
+        if ($template <> '') {
             foreach ($arTemplates as $arTemplate) {
                 if ($arTemplate["file"] == $template) {
-                    $filesrc_tmp = CFileman::GetTemplateContent($arTemplate["file"], LANGUAGE_ID, array($site_template));
+                    $filesrc_tmp = CFileman::GetTemplateContent(
+                        $arTemplate["file"],
+                        LANGUAGE_ID,
+                        array($site_template)
+                    );
                     break;
                 }
             }
@@ -158,14 +175,16 @@ if (strlen($strWarning) <= 0) {
             $strWarning = GetMessage("FILEMAN_SESSION_EXPIRED");
             $bVarsFromForm = true;
             $bSessIDRefresh = true;
-        } elseif ((CFileman::IsPHP($filesrc) || $isScriptExt) && !($USER->CanDoOperation('edit_php') || $limit_php_access)) //check rights
+        } elseif ((CFileman::IsPHP($filesrc) || $isScriptExt) && !($USER->CanDoOperation(
+                    'edit_php'
+                ) || $limit_php_access)) //check rights
         {
             $strWarning = GetMessage("FILEMAN_FILEEDIT_CHANGE");
             $bVarsFromForm = true;
         } else {
             if ($limit_php_access) {
                 // ofp - original full path :)
-                $ofp = $_SESSION['arOFP'][$ofp_id];
+                $ofp = \Bitrix\Main\Application::getInstance()->getSession()['arOFP'][$ofp_id];
                 $ofp = $io->CombinePath("/", $ofp);
                 $abs_ofp = $DOC_ROOT . $ofp;
 
@@ -179,31 +198,42 @@ if (strlen($strWarning) <= 0) {
             $res = CFileman::ParseFileContent($filesrc_tmp, true);
             $prolog = CFileman::SetTitle($res["PROLOG"], $title);
             for ($i = 0; $i <= $maxind; $i++) {
-                if (strlen(Trim($_POST["CODE_" . $i])) > 0) {
+                if (Trim($_POST["CODE_" . $i]) <> '') {
                     if ($_POST["CODE_" . $i] != $_POST["H_CODE_" . $i]) {
                         $prolog = CFileman::SetProperty($prolog, Trim($_POST["H_CODE_" . $i]), "");
-                        $prolog = CFileman::SetProperty($prolog, Trim($_POST["CODE_" . $i]), Trim($_POST["VALUE_" . $i]));
-                    } else
-                        $prolog = CFileman::SetProperty($prolog, Trim($_POST["CODE_" . $i]), Trim($_POST["VALUE_" . $i]));
-                } else
+                        $prolog = CFileman::SetProperty(
+                            $prolog,
+                            Trim($_POST["CODE_" . $i]),
+                            Trim($_POST["VALUE_" . $i])
+                        );
+                    } else {
+                        $prolog = CFileman::SetProperty(
+                            $prolog,
+                            Trim($_POST["CODE_" . $i]),
+                            Trim($_POST["VALUE_" . $i])
+                        );
+                    }
+                } else {
                     $prolog = CFileman::SetProperty($prolog, Trim($_POST["H_CODE_" . $i]), "");
+                }
             }
             $epilog = $res["EPILOG"];
             $filesrc_for_save = $prolog . $filesrc . $epilog;
         }
 
-        if (strlen($strWarning) <= 0) {
+        if ($strWarning == '') {
             if (!CFileMan::CheckOnAllowedComponents($filesrc_for_save)) {
                 $str_err = $APPLICATION->GetException();
-                if ($str_err && ($err = $str_err->GetString()))
+                if ($str_err && ($err = $str_err->GetString())) {
                     $strWarning .= $err;
+                }
                 $bVarsFromForm = true;
             }
         }
 
-        if (strlen($strWarning) <= 0) {
+        if ($strWarning == '') {
             // File was created just a second ago
-            if (isset($_REQUEST["edit_new_file_undo"]) && strlen($_REQUEST["edit_new_file_undo"]) > 0) {
+            if (isset($_REQUEST["edit_new_file_undo"]) && $_REQUEST["edit_new_file_undo"] <> '') {
                 CUndo::ShowUndoMessage($_REQUEST["edit_new_file_undo"]);
             } else {
                 $f = $io->GetFile($abs_path);
@@ -220,8 +250,9 @@ if (strlen($strWarning) <= 0) {
 
             if (!$APPLICATION->SaveFileContent($abs_path, $filesrc_for_save)) {
                 if ($str_err = $APPLICATION->GetException()) {
-                    if ($err = $str_err->GetString())
+                    if ($err = $str_err->GetString()) {
                         $strWarning = $err;
+                    }
 
                     $bVarsFromForm = true;
                     $path = $io->CombinePath("/", $arParsedPath["PREV"]);
@@ -229,11 +260,12 @@ if (strlen($strWarning) <= 0) {
                     $abs_path = $DOC_ROOT . $path;
                 }
 
-                if (empty($strWarning))
+                if (empty($strWarning)) {
                     $strWarning = GetMessage("FILEMAN_FILE_SAVE_ERROR") . " ";
+                }
             } else {
                 if (COption::GetOptionString("fileman", "log_page", "Y") == "Y") {
-                    $res_log['path'] = substr($path, 1);
+                    $res_log['path'] = mb_substr($path, 1);
                     CEventLog::Log(
                         "content",
                         "PAGE_EDIT",
@@ -244,21 +276,23 @@ if (strlen($strWarning) <= 0) {
                     );
                 }
 
-                if (CAutoSave::Allowed())
+                if (CAutoSave::Allowed()) {
                     $AUTOSAVE->Reset();
+                }
             }
         }
 
-        if (strlen($strWarning) <= 0) {
-            if ($arUndoParams)
+        if ($strWarning == '') {
+            if ($arUndoParams) {
                 CUndo::ShowUndoMessage(CUndo::Add($arUndoParams));
+            }
 
             ?>
             <script>
                 <?
                 if($_REQUEST['subdialog'] != 'Y'):
                 $url = $_REQUEST["back_url"];
-                if (substr($url, 0, 1) != "/" || substr($url, 1, 1) == "/") {
+                if (mb_substr($url, 0, 1) != "/" || mb_substr($url, 1, 1) == "/") {
                     //only local /url is allowed
                     $url = '';
                 }
@@ -312,37 +346,42 @@ if (!$bVarsFromForm) {
             $php_count = 0;
             for ($n = 0; $n < $l; $n++) {
                 $start = $arPHP[$n][0];
-                $new_filesrc .= substr($filesrc, $end, $start - $end);
+                $new_filesrc .= mb_substr($filesrc, $end, $start - $end);
                 $end = $arPHP[$n][1];
 
                 //Trim php tags
                 $src = $arPHP[$n][2];
-                if (SubStr($src, 0, 5) == "<?" . "php")
-                    $src = SubStr($src, 5);
-                else
-                    $src = SubStr($src, 2);
-                $src = SubStr($src, 0, -2);
+                if (mb_substr($src, 0, 5) == "<?" . "php") {
+                    $src = mb_substr($src, 5);
+                } else {
+                    $src = mb_substr($src, 2);
+                }
+                $src = mb_substr($src, 0, -2);
 
                 //If it's Component 2, keep the php code. If it's component 1 or ordinary PHP - than replace code by #PHPXXXX# (XXXX - count of PHP scripts)
                 $comp2_begin = '$APPLICATION->INCLUDECOMPONENT(';
-                if (strtoupper(substr($src, 0, strlen($comp2_begin))) == $comp2_begin)
+                if (mb_strtoupper(mb_substr($src, 0, mb_strlen($comp2_begin))) == $comp2_begin) {
                     $new_filesrc .= $arPHP[$n][2];
-                else
+                } else {
                     $new_filesrc .= '#PHP' . str_pad(++$php_count, 4, "0", STR_PAD_LEFT) . '#';
+                }
             }
-            $new_filesrc .= substr($filesrc, $end);
+            $new_filesrc .= mb_substr($filesrc, $end);
             $filesrc = $new_filesrc;
         }
     }
 
-    $bEditProps = (strpos($res["PROLOG"], "prolog_before") > 0 || strpos($res["PROLOG"], "header.php") > 0);
+    $bEditProps = (mb_strpos($res["PROLOG"], "prolog_before") > 0 || mb_strpos($res["PROLOG"], "header.php") > 0);
     $title = $res["TITLE"];
 
-    if ((CFileman::IsPHP($filesrc) || $isScriptExt) && !($USER->CanDoOperation('edit_php') || $limit_php_access))
+    if ((CFileman::IsPHP($filesrc) || $isScriptExt) && !($USER->CanDoOperation('edit_php') || $limit_php_access)) {
         $strWarning = GetMessage("FILEMAN_FILEEDIT_CHANGE_ACCESS");
+    }
 }
 
-$obJSPopup->ShowTitlebar(GetMessage('PUBLIC_EDIT_TITLE' . ($bFromComponent ? '_COMP' : '')) . ': ' . htmlspecialcharsex($_GET['path']));
+$obJSPopup->ShowTitlebar(
+    GetMessage('PUBLIC_EDIT_TITLE' . ($bFromComponent ? '_COMP' : '')) . ': ' . htmlspecialcharsex($_GET['path'])
+);
 
 
 $obJSPopup->StartContent(
@@ -408,18 +447,20 @@ $obJSPopup->StartContent(
             /* ************* HTML EDITOR 3.0 ************* */
         if ($useEditor3) {
             $Editor = new CHTMLEditor;
-            $Editor->Show(array(
-                'name' => $editor_name,
-                'id' => $editor_name,
-                'width' => '100%',
-                'height' => '490',
-                'content' => $filesrc,
-                'bAllowPhp' => $USER->CanDoOperation('edit_php'),
-                "limitPhpAccess" => $limit_php_access,
-                "site" => $site,
-                "relPath" => $relPath,
-                "templateId" => $_REQUEST['templateID'],
-            ));
+            $Editor->Show(
+                array(
+                    'name' => $editor_name,
+                    'id' => $editor_name,
+                    'width' => '100%',
+                    'height' => '490',
+                    'content' => $filesrc,
+                    'bAllowPhp' => $USER->CanDoOperation('edit_php'),
+                    "limitPhpAccess" => $limit_php_access,
+                    "site" => $site,
+                    "relPath" => $relPath,
+                    "templateId" => $_REQUEST['templateID'],
+                )
+            );
 
             ?>
             <script>
@@ -527,20 +568,29 @@ $obJSPopup->StartContent(
         else
         {
         /* ************* OLD HTML EDITOR ************* */
-        CFileman::ShowHTMLEditControl($editor_name, $filesrc, Array(
-            "site" => $site,
-            "templateID" => $_REQUEST['templateID'],
-            "bUseOnlyDefinedStyles" => COption::GetOptionString("fileman", "show_untitled_styles", "N") != "Y",
-            "bWithoutPHP" => (!$USER->CanDoOperation('edit_php')),
-            "toolbarConfig" => CFileman::GetEditorToolbarConfig($editor_name),
-            "arTaskbars" => Array("BXComponentsTaskbar", "BXComponents2Taskbar", "BXPropertiesTaskbar", "BXSnippetsTaskbar"),
-            "sBackUrl" => $back_url,
-            "path" => $path,
-            "limit_php_access" => $limit_php_access,
-            'height' => '490',
-            'width' => '100%',
-            'light_mode' => true,
-        ));
+        CFileman::ShowHTMLEditControl(
+            $editor_name,
+            $filesrc,
+            Array(
+                "site" => $site,
+                "templateID" => $_REQUEST['templateID'],
+                "bUseOnlyDefinedStyles" => COption::GetOptionString("fileman", "show_untitled_styles", "N") != "Y",
+                "bWithoutPHP" => (!$USER->CanDoOperation('edit_php')),
+                "toolbarConfig" => CFileman::GetEditorToolbarConfig($editor_name),
+                "arTaskbars" => Array(
+                    "BXComponentsTaskbar",
+                    "BXComponents2Taskbar",
+                    "BXPropertiesTaskbar",
+                    "BXSnippetsTaskbar"
+                ),
+                "sBackUrl" => $back_url,
+                "path" => $path,
+                "limit_php_access" => $limit_php_access,
+                'height' => '490',
+                'width' => '100%',
+                'light_mode' => true,
+            )
+        );
 
         ?>
             <script>

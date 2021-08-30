@@ -1,11 +1,14 @@
 <?
+
+use Bitrix\Main\Loader;
+
 define("ADMIN_MODULE_NAME", "perfmon");
 define("PERFMON_STOP", true);
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 /** @global CMain $APPLICATION */
 /** @global CDatabase $DB */
 /** @global CUser $USER */
-require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/perfmon/include.php");
+Loader::includeModule('perfmon');
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/perfmon/prolog.php");
 
 IncludeModuleLangFile(__FILE__);
@@ -15,8 +18,9 @@ $obTable = new CPerfomanceTable;
 $obTable->Init($table_name);
 
 $RIGHT = $APPLICATION->GetGroupRight("perfmon");
-if ($RIGHT == "D" || !$obTable->IsExists())
+if ($RIGHT == "D" || !$obTable->IsExists()) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 if (
     $_SERVER["REQUEST_METHOD"] === "GET"
@@ -50,8 +54,9 @@ if (
 
 $arFieldsEx = $obTable->GetTableFields(false, true);
 $arFields = array();
-foreach ($arFieldsEx as $FIELD_NAME => $FIELD_INFO)
+foreach ($arFieldsEx as $FIELD_NAME => $FIELD_INFO) {
     $arFields[$FIELD_NAME] = $FIELD_INFO["type"];
+}
 
 $arUniqueIndexes = $obTable->GetUniqueIndexes();
 $sTableID = "tbl_perfmon_table" . md5($table_name);
@@ -69,10 +74,13 @@ if ($lAdmin->GroupAction() && $RIGHT >= "W") {
                     if (count($arMissed) == 0) {
                         $strSql = "delete from " . $table_name . " WHERE 1=1 ";
                         foreach ($arRowPK as $column => $value) {
-                            if (strlen($value))
+                            if ($value <> '') {
                                 $strSql .= " AND " . $column . "='" . $DB->ForSQL($value) . "'";
-                            else
-                                $strSql .= " AND (" . $column . "='" . $DB->ForSQL($value) . "' or " . $column . " is null)";
+                            } else {
+                                $strSql .= " AND (" . $column . "='" . $DB->ForSQL(
+                                        $value
+                                    ) . "' or " . $column . " is null)";
+                            }
                         }
                         $DB->Query($strSql);
                         break;
@@ -88,8 +96,9 @@ $FilterArr = array(
     "find_type",
 );
 foreach ($arFields as $FIELD_NAME => $FIELD_TYPE) {
-    if ($FIELD_TYPE != "unknown")
+    if ($FIELD_TYPE != "unknown") {
         $FilterArr[] = "find_" . $FIELD_NAME;
+    }
 }
 
 $lAdmin->InitFilter($FilterArr);
@@ -100,11 +109,11 @@ foreach ($arFields as $FIELD_NAME => $FIELD_TYPE) {
     if ($FIELD_TYPE != "unknown") {
         if (
             isset($find_type) && $find_type == $FIELD_NAME
-            && isset($find) && strlen($find)
+            && isset($find) && mb_strlen($find)
         ) {
             $filterValue = $find;
         } elseif (
-            isset($GLOBALS["find_" . $FIELD_NAME]) && strlen($GLOBALS["find_" . $FIELD_NAME])
+            isset($GLOBALS["find_" . $FIELD_NAME]) && mb_strlen($GLOBALS["find_" . $FIELD_NAME])
         ) {
             $filterValue = $GLOBALS["find_" . $FIELD_NAME];
         } else {
@@ -112,17 +121,21 @@ foreach ($arFields as $FIELD_NAME => $FIELD_TYPE) {
     }
 
     if (isset($filterValue)) {
-        $op = CSQLWhere::MakeOperation($filterValue);
+        $where = new CSQLWhere();
 
-        if ($filterValue === $op["FIELD"])
+        $op = $where->MakeOperation($filterValue);
+
+        if ($filterValue === $op["FIELD"]) {
             $op["OPERATOR"] = "%=";
-        else
-            $op["OPERATOR"] = substr($filterValue, 0, strlen($filterValue) - strlen($op["FIELD"]));
+        } else {
+            $op["OPERATOR"] = mb_substr($filterValue, 0, mb_strlen($filterValue) - mb_strlen($op["FIELD"]));
+        }
 
-        if ($op["OPERATION"] === "B" || $op["OPERATION"] === "NB")
+        if ($op["OPERATION"] === "B" || $op["OPERATION"] === "NB") {
             $op["FIELD"] = array_map('trim', explode(",", $op["FIELD"], 2));
-        elseif ($op["OPERATION"] === "IN" || $op["OPERATION"] === "NIN")
+        } elseif ($op["OPERATION"] === "IN" || $op["OPERATION"] === "NIN") {
             $op["FIELD"] = array_map('trim', explode(",", $op["FIELD"]));
+        }
 
         $arFilter[$op["OPERATOR"] . $FIELD_NAME] = $op["FIELD"] === "NULL" ? false : $op["FIELD"];
     }
@@ -136,8 +149,9 @@ foreach ($arFields as $FIELD_NAME => $FIELD_TYPE) {
         "sort" => $arFieldsEx[$FIELD_NAME]["sortable"] ? $FIELD_NAME : "",
         "default" => true,
     );
-    if ($FIELD_TYPE == "int" || $FIELD_TYPE == "datetime" || $FIELD_TYPE == "date" || $FIELD_TYPE == "double")
+    if ($FIELD_TYPE == "int" || $FIELD_TYPE == "datetime" || $FIELD_TYPE == "date" || $FIELD_TYPE == "double") {
         $arHeaders[$FIELD_NAME]["align"] = "right";
+    }
 }
 
 $lAdmin->AddHeaders($arHeaders);
@@ -169,7 +183,12 @@ $arChildren = $obSchema->GetChildren($table_name);
 $arParents = $obSchema->GetParents($table_name);
 
 CTimeZone::Disable();
-$rsData = $obTable->GetList($arSelectedFields, $arFilter, array($by => $order), array("nPageSize" => CAdminResult::GetNavSize($sTableID)));
+$rsData = $obTable->GetList(
+    $arSelectedFields,
+    $arFilter,
+    array($by => $order),
+    array("nPageSize" => CAdminResult::GetNavSize($sTableID))
+);
 CTimeZone::Enable();
 
 function TableExists($tableName)
@@ -193,7 +212,7 @@ while ($arRes = $rsData->Fetch()):
 
     $arRowPK = array();
     foreach ($arFields as $FIELD_NAME => $FIELD_TYPE) {
-        if (strlen($arRes[$FIELD_NAME]) > 0) {
+        if ($arRes[$FIELD_NAME] <> '') {
             if ($FIELD_TYPE == "int") {
                 $val = perfmon_NumberFormat($arRes[$FIELD_NAME], 0);
             } elseif ($FIELD_TYPE == "double") {
@@ -206,8 +225,11 @@ while ($arRes = $rsData->Fetch()):
                 $val = htmlspecialcharsbx($arRes[$FIELD_NAME]);
             }
 
-            if (array_key_exists($FIELD_NAME, $arParents) && TableExists($arParents[$FIELD_NAME]["PARENT_TABLE"]))
-                $val = '<a onmouseover="addTimer(this)" onmouseout="removeTimer(this)" href="perfmon_table.php?set_filter=Y&table_name=' . $arParents[$FIELD_NAME]["PARENT_TABLE"] . '&find=' . urlencode($arRes[$FIELD_NAME]) . '&find_type=' . $arParents[$FIELD_NAME]["PARENT_COLUMN"] . '">' . $val . '</a>';
+            if (array_key_exists($FIELD_NAME, $arParents) && TableExists($arParents[$FIELD_NAME]["PARENT_TABLE"])) {
+                $val = '<a onmouseover="addTimer(this)" onmouseout="removeTimer(this)" href="perfmon_table.php?set_filter=Y&table_name=' . $arParents[$FIELD_NAME]["PARENT_TABLE"] . '&find=' . urlencode(
+                        $arRes[$FIELD_NAME]
+                    ) . '&find_type=' . $arParents[$FIELD_NAME]["PARENT_COLUMN"] . '">' . $val . '</a>';
+            }
 
             $row->AddViewField($FIELD_NAME, $val);
         }
@@ -223,13 +245,22 @@ while ($arRes = $rsData->Fetch()):
             "ICON" => "edit",
             "DEFAULT" => true,
             "TEXT" => GetMessage("MAIN_EDIT"),
-            "ACTION" => $lAdmin->ActionRedirect("perfmon_row_edit.php?lang=" . LANGUAGE_ID . "&table_name=" . urlencode($table_name) . "&" . implode("&", $arRowPK)),
+            "ACTION" => $lAdmin->ActionRedirect(
+                "perfmon_row_edit.php?lang=" . LANGUAGE_ID . "&table_name=" . urlencode($table_name) . "&" . implode(
+                    "&",
+                    $arRowPK
+                )
+            ),
         );
         $arActions[] = array(
             "ICON" => "delete",
             "DEFAULT" => false,
             "TEXT" => GetMessage("MAIN_DELETE"),
-            "ACTION" => $lAdmin->ActionDoGroup($arRes["ID"], "delete", "table_name=" . urlencode($table_name) . "&" . implode("&", $arRowPK)),
+            "ACTION" => $lAdmin->ActionDoGroup(
+                $arRes["ID"],
+                "delete",
+                "table_name=" . urlencode($table_name) . "&" . implode("&", $arRowPK)
+            ),
         );
     }
 
@@ -241,14 +272,19 @@ while ($arRes = $rsData->Fetch()):
                     "ICON" => "",
                     "DEFAULT" => false,
                     "TEXT" => $arChild["CHILD_TABLE"] . "." . $arChild["CHILD_COLUMN"] . " = " . $arChild["PARENT_COLUMN"],
-                    "ACTION" => $lAdmin->ActionRedirect("perfmon_table.php?set_filter=Y&table_name=" . $arChild["CHILD_TABLE"] . "&find=" . urlencode($arRes[$arChild["PARENT_COLUMN"]]) . "&find_type=" . $arChild["CHILD_COLUMN"]),
+                    "ACTION" => $lAdmin->ActionRedirect(
+                        "perfmon_table.php?set_filter=Y&table_name=" . $arChild["CHILD_TABLE"] . "&find=" . urlencode(
+                            $arRes[$arChild["PARENT_COLUMN"]]
+                        ) . "&find_type=" . $arChild["CHILD_COLUMN"]
+                    ),
                 );
             }
         }
     }
 
-    if (count($arActions))
+    if (count($arActions)) {
         $row->AddActions($arActions);
+    }
 
 endwhile;
 
@@ -264,14 +300,16 @@ $lAdmin->AddFooter(
 $aContext = array();
 
 $sLastTables = CUserOptions::GetOption("perfmon", "last_tables", "");
-if (strlen($sLastTables) > 0)
+if ($sLastTables <> '') {
     $arLastTables = array_flip(explode(",", $sLastTables));
-else
+} else {
     $arLastTables = array();
-unset($arLastTables[strtolower($table_name)]);
-$arLastTables[strtolower($table_name)] = true;
-if (count($arLastTables) > 10)
+}
+unset($arLastTables[mb_strtolower($table_name)]);
+$arLastTables[mb_strtolower($table_name)] = true;
+if (count($arLastTables) > 10) {
     array_shift($arLastTables);
+}
 CUserOptions::SetOption("perfmon", "last_tables", implode(",", array_keys($arLastTables)));
 
 unset($arLastTables[$table_name]);
@@ -281,13 +319,14 @@ if (count($arLastTables) > 0) {
     );
     ksort($arLastTables);
     foreach ($arLastTables as $table => $flag) {
-        if (TableExists($table))
+        if (TableExists($table)) {
             $ar["MENU"][] = array(
                 "TEXT" => $table,
                 "ACTION" => $lAdmin->ActionRedirect("perfmon_table.php?table_name=" . $table),
             );
-        else
+        } else {
             unset($arLastTables[$table]);
+        }
     }
     $ar["TEXT"] = GetMessage("PERFMON_TABLE_RECENTLY_BROWSED", array("#COUNT#" => count($arLastTables)));
     $aContext[] = $ar;
@@ -301,7 +340,9 @@ if ($bDelete) {
                 if (count($arMissed) == 0) {
                     $aContext[] = array(
                         "TEXT" => GetMessage("MAIN_ADD"),
-                        "LINK" => "/bitrix/admin/perfmon_row_edit.php?lang=" . LANGUAGE_ID . "&table_name=" . urlencode($table_name),
+                        "LINK" => "/bitrix/admin/perfmon_row_edit.php?lang=" . LANGUAGE_ID . "&table_name=" . urlencode(
+                                $table_name
+                            ),
                         "ICON" => "btn_new",
                     );
                     break;
@@ -320,9 +361,11 @@ $APPLICATION->SetTitle(GetMessage("PERFMON_TABLE_ALT_TITLE", array("#TABLE_NAME#
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
 $arFilter = array();
-foreach ($arFields as $FIELD_NAME => $FIELD_TYPE)
-    if ($FIELD_TYPE != "unknown")
+foreach ($arFields as $FIELD_NAME => $FIELD_TYPE) {
+    if ($FIELD_TYPE != "unknown") {
         $arFilter[$FIELD_NAME] = $FIELD_NAME;
+    }
+}
 $oFilter = new CAdminFilter($sTableID . "_filter", $arFilter);
 
 CJSCore::Init(array("ajax", "popup"));
@@ -397,11 +440,13 @@ CJSCore::Init(array("ajax", "popup"));
             <? endif ?>
         <? endforeach ?>
         <?
-        $oFilter->Buttons(array(
-            "table_id" => $sTableID,
-            "url" => $APPLICATION->GetCurPage(),
-            "form" => "find_form",
-        ));
+        $oFilter->Buttons(
+            array(
+                "table_id" => $sTableID,
+                "url" => $APPLICATION->GetCurPage(),
+                "form" => "find_form",
+            )
+        );
         $oFilter->End();
         ?>
     </form>
@@ -412,14 +457,14 @@ echo BeginNote();
 echo '
 	<ul>
 	<li>= Identical</li>
-	<li>&amp;gt; Greater</li>
-	<li>&amp;gt;= Greater or Equal</li>
-	<li>&amp;lt; Less</li>
-	<li>&amp;lt;= Less or Equal</li>
+	<li>&gt; Greater</li>
+	<li>&gt;= Greater or Equal</li>
+	<li>&lt; Less</li>
+	<li>&lt;= Less or Equal</li>
 	<li>% Substring</li>
 	<li>? Logic</li>
-	<li>&amp;gt;&amp;lt;MIN,MAX Between</li>
-	<li>&amp;#64;N1,N2,...,NN IN</li>
+	<li>&gt;lt;MIN,MAX Between</li>
+	<li>#64;N1,N2,...,NN IN</li>
 	<li>NULL Empty</li>
 	<li>! Negate any of above</li>
 	</ul>

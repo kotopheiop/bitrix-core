@@ -1,11 +1,15 @@
-<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die(); ?><?
+<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+} ?><?
 $product_price = number_format(CSalePaySystemAction::GetParamValue("SHOULD_PAY"), 2, '.', '');
 
 ?>
 <form action="https://payments.chronopay.com/" method="POST" name="payment_form">
     <input type="hidden" name="product_id" value="<?= CSalePaySystemAction::GetParamValue("PRODUCT_ID"); ?>">
     <input type="hidden" name="product_name"
-           value="<?= CSalePaySystemAction::GetParamValue("PRODUCT_NAME") . CSalePaySystemAction::GetParamValue("ORDER_ID") ?>">
+           value="<?= CSalePaySystemAction::GetParamValue("PRODUCT_NAME") . CSalePaySystemAction::GetParamValue(
+               "ORDER_ID"
+           ) ?>">
     <input type="hidden" name="product_price" value="<?= $product_price ?>">
     <input type="hidden" name="cs1" value="<?= CSalePaySystemAction::GetParamValue("ORDER_ID"); ?>">
     <input type="hidden" name="cs2" value="<?= CSalePaySystemAction::GetParamValue("CS2"); ?>">
@@ -25,28 +29,36 @@ $product_price = number_format(CSalePaySystemAction::GetParamValue("SHOULD_PAY")
     <input type="hidden" name="phone" value="<?= CSalePaySystemAction::GetParamValue("PHONE") ?>">
     <input type="hidden" name="email" value="<?= CSalePaySystemAction::GetParamValue("EMAIL") ?>">
     <?
-    if (strlen(CSalePaySystemAction::GetParamValue("ORDER_UNIQ")) > 0) {
+    if (CSalePaySystemAction::GetParamValue("ORDER_UNIQ") <> '') {
         ?>
         <input type="hidden" name="order_id" value="<?= CSalePaySystemAction::GetParamValue("ORDER_ID"); ?>">
-        <input type="hidden" name="sign"
-               value="<?= md5(CSalePaySystemAction::GetParamValue("PRODUCT_ID") . "-" . $product_price . "-" . CSalePaySystemAction::GetParamValue("ORDER_ID") . "-" . CSalePaySystemAction::GetParamValue("SHARED")) ?>">
+        <input type="hidden" name="sign" value="<?= md5(
+            CSalePaySystemAction::GetParamValue(
+                "PRODUCT_ID"
+            ) . "-" . $product_price . "-" . CSalePaySystemAction::GetParamValue(
+                "ORDER_ID"
+            ) . "-" . CSalePaySystemAction::GetParamValue("SHARED")
+        ) ?>">
         <?
     } else {
         ?>
-        <input type="hidden" name="sign"
-               value="<?= md5(CSalePaySystemAction::GetParamValue("PRODUCT_ID") . "-" . $product_price . "-" . CSalePaySystemAction::GetParamValue("SHARED")) ?>">
+        <input type="hidden" name="sign" value="<?= md5(
+            CSalePaySystemAction::GetParamValue(
+                "PRODUCT_ID"
+            ) . "-" . $product_price . "-" . CSalePaySystemAction::GetParamValue("SHARED")
+        ) ?>">
         <?
     }
 
-    if (strlen(CSalePaySystemAction::GetParamValue("YANDEX_FORWARD")) > 0) {
+    if (CSalePaySystemAction::GetParamValue("YANDEX_FORWARD") <> '') {
         ?>
         <input type="hidden" name="payment_type_group_id" value="16">
         <?
-    } elseif (strlen(CSalePaySystemAction::GetParamValue("WEBMONEY_FORWARD")) > 0) {
+    } elseif (CSalePaySystemAction::GetParamValue("WEBMONEY_FORWARD") <> '') {
         ?>
         <input type="hidden" name="payment_type_group_id" value="15">
         <?
-    } elseif (strlen(CSalePaySystemAction::GetParamValue("QIWI_FORWARD")) > 0) {
+    } elseif (CSalePaySystemAction::GetParamValue("QIWI_FORWARD") <> '') {
         ?>
         <input type="hidden" name="payment_type_group_id" value="21">
         <?

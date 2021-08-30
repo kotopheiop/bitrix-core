@@ -1,4 +1,5 @@
 <?
+
 $MESS["SALE_HPS_BILL_BY_TITLE"] = "���� (�����������)";
 $MESS["SALE_HPS_BILL_BY_DATE"] = "���� ������";
 $MESS["SALE_HPS_BILL_BY_DATE_DESC"] = "���� �������� ������";

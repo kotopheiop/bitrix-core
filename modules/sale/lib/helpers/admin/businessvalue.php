@@ -24,8 +24,9 @@ final class BusinessValueControl
 
     public function setMapFromPost()
     {
-        if ($this->consumerCodePersonMapping)
+        if ($this->consumerCodePersonMapping) {
             throw new SystemException('Map is already set from post!');
+        }
 
         if (is_array($_POST[$this->name]['MAP'])) {
             $_POST = Input\File::getPostWithFiles($_POST, $_FILES);
@@ -48,13 +49,15 @@ final class BusinessValueControl
                     continue;
                 }
 
-                if (!(($codes = $consumer['CODES']) && is_array($codes)))
+                if (!(($codes = $consumer['CODES']) && is_array($codes))) {
                     $codes = array();
+                }
 
                 $skipNewCodeSanitation = $consumer['SKIP_NEW_CODE_SANITATION'];
 
-                if (!(($sanitizeMapping = $consumer['SANITIZE_MAPPING']) && is_callable($sanitizeMapping)))
+                if (!(($sanitizeMapping = $consumer['SANITIZE_MAPPING']) && is_callable($sanitizeMapping))) {
                     $sanitizeMapping = null;
+                }
 
                 if ((!$codes && !$skipNewCodeSanitation)
                     || ($skipNewCodeSanitation && !$sanitizeMapping)
@@ -96,16 +99,26 @@ final class BusinessValueControl
                         }
 
                         if ($sanitizeMapping) {
-                            if ($e = call_user_func_array($sanitizeMapping, array($codeKey, $personTypeId, &$mapping)))
+                            if ($e = call_user_func_array(
+                                $sanitizeMapping,
+                                array($codeKey, $personTypeId, &$mapping)
+                            )) {
                                 $errors[$consumerKey][$codeKey][$personTypeId] = $e;
+                            }
                         } elseif (is_array($code['INPUT'])) {
                             $mapping['PROVIDER_KEY'] = 'INPUT';
 
-                            if ($e = Input\Manager::getError($code['INPUT'], $mapping['PROVIDER_VALUE']))
+                            if ($e = Input\Manager::getError($code['INPUT'], $mapping['PROVIDER_VALUE'])) {
                                 $errors[$consumerKey][$codeKey][$personTypeId]['PROVIDER_VALUE'] = $e;
+                            }
                         } else {
-                            if ($e = self::sanitizeMapping($personTypeId, $mapping, $code['PROVIDERS'] ?: $consumer['PROVIDERS']))
+                            if ($e = self::sanitizeMapping(
+                                $personTypeId,
+                                $mapping,
+                                $code['PROVIDERS'] ?: $consumer['PROVIDERS']
+                            )) {
                                 $errors[$consumerKey][$codeKey][$personTypeId] = $e;
+                            }
                         }
 
                         if (!$mapping) {
@@ -130,15 +143,17 @@ final class BusinessValueControl
         if (($providerInput = self::getProviderInput($personTypeId, $providerKeys))
             && ($providerValueInput = self::$personProviderValueInput[$personTypeId])
             && ($valueInput = $providerValueInput[$mapping['PROVIDER_KEY']])) {
-            if ($e = Input\Manager::getError($providerInput, $mapping['PROVIDER_KEY']))
+            if ($e = Input\Manager::getError($providerInput, $mapping['PROVIDER_KEY'])) {
                 $error['PROVIDER_KEY'] = $e;
-            else
+            } else {
                 $mapping['PROVIDER_KEY'] = Input\Manager::getValue($providerInput, $mapping['PROVIDER_KEY']);
+            }
 
-            if ($e = Input\Manager::getError($valueInput, $mapping['PROVIDER_VALUE']))
+            if ($e = Input\Manager::getError($valueInput, $mapping['PROVIDER_VALUE'])) {
                 $error['PROVIDER_VALUE'] = $e;
-            else
+            } else {
                 $mapping['PROVIDER_VALUE'] = Input\Manager::getValue($valueInput, $mapping['PROVIDER_VALUE']);
+            }
         } else {
             $mapping = array(); // remove from post
         }
@@ -158,8 +173,9 @@ final class BusinessValueControl
 
     public function saveMap()
     {
-        if ($this->errors)
+        if ($this->errors) {
             throw new SystemException('There are errors in map!');
+        }
 
         $consumers = BusinessValue::getConsumers();
 
@@ -171,8 +187,11 @@ final class BusinessValueControl
             foreach ($codePersonMapping as $codeKey => $personMapping) {
                 $code = $codes[$codeKey] ?: array();
                 $fileInput = $code['INPUT'];
-                if (!(is_array($fileInput) && ($fileInput['TYPE'] == 'FILE' || $fileInput['TYPE'] == 'DATABASE_FILE')))
+                if (!(is_array(
+                        $fileInput
+                    ) && ($fileInput['TYPE'] == 'FILE' || $fileInput['TYPE'] == 'DATABASE_FILE'))) {
                     $fileInput = null;
+                }
 
                 foreach ($personMapping as $personTypeId => $mapping) {
                     if ($setMapping) {
@@ -182,7 +201,9 @@ final class BusinessValueControl
                         if ($fileInput && ($file =& $mapping['PROVIDER_VALUE'])) {
                             if (Input\File::isDeletedSingle($file)) {
                                 if ($fileInput['TYPE'] == 'FILE') {
-                                    if (is_numeric($file['ID']) && isset($consumerCodePersonMapping[$consumerKey][$codeKey][$personTypeId])) {
+                                    if (is_numeric(
+                                            $file['ID']
+                                        ) && isset($consumerCodePersonMapping[$consumerKey][$codeKey][$personTypeId])) {
                                         \CFile::Delete($file['ID']); // TODO isSuccess
                                     }
                                 }
@@ -190,9 +211,18 @@ final class BusinessValueControl
                                 $file = null;
                             } elseif (Input\File::isUploadedSingle($file)) {
                                 if ($fileInput['TYPE'] == 'FILE') {
-                                    if (($file = \CFile::SaveFile(array('MODULE_ID' => 'sale') + $file, 'sale/bizval')) && is_numeric($file)) {
-                                        if (($oldFile = BusinessValue::getMapping($codeKey, $consumerKey, $personTypeId, array('MATCH' => BusinessValue::MATCH_EXACT))) && is_numeric($oldFile['PROVIDER_VALUE']))
-                                            \CFile::Delete($oldFile['PROVIDER_VALUE']); // TODO isSuccess
+                                    if (($file = \CFile::SaveFile(
+                                            array('MODULE_ID' => 'sale') + $file,
+                                            'sale/bizval'
+                                        )) && is_numeric($file)) {
+                                        if (($oldFile = BusinessValue::getMapping(
+                                                $codeKey,
+                                                $consumerKey,
+                                                $personTypeId,
+                                                array('MATCH' => BusinessValue::MATCH_EXACT)
+                                            )) && is_numeric($oldFile['PROVIDER_VALUE'])) {
+                                            \CFile::Delete($oldFile['PROVIDER_VALUE']);
+                                        } // TODO isSuccess
                                     } else {
                                         $this->errors[$consumerKey][$codeKey][$personTypeId]['DATABASE'] = 'unable to save file';
                                         continue;
@@ -214,7 +244,9 @@ final class BusinessValueControl
                             }
                         } elseif ($fileInput['TYPE'] == 'FILE') {
                             if (isset($consumerCodePersonMapping[$consumerKey][$codeKey][$personTypeId])) {
-                                \CFile::Delete($consumerCodePersonMapping[$consumerKey][$codeKey][$personTypeId]['PROVIDER_VALUE']);
+                                \CFile::Delete(
+                                    $consumerCodePersonMapping[$consumerKey][$codeKey][$personTypeId]['PROVIDER_VALUE']
+                                );
                             }
                         }
 
@@ -222,8 +254,9 @@ final class BusinessValueControl
                         $result = BusinessValue::setMapping($codeKey, $consumerKey, $personTypeId, $mapping, $common);
                     }
 
-                    if (!$result->isSuccess())
+                    if (!$result->isSuccess()) {
                         $this->errors[$consumerKey][$codeKey][$personTypeId]['DATABASE'] = $result->getErrorMessages();
+                    }
                 }
             }
         }
@@ -267,8 +300,9 @@ final class BusinessValueControl
 
         $consumer = $consumers[$filter['CONSUMER_KEY']];
 
-        if ((!$filter['PROVIDER_KEY'] && !$filter['CODE_KEY']) || $filter['CONSUMER_KEY'])
+        if ((!$filter['PROVIDER_KEY'] && !$filter['CODE_KEY']) || $filter['CONSUMER_KEY']) {
             $consumers = array($filter['CONSUMER_KEY'] => $consumer);
+        }
 
         foreach (self::$personTypes as $personTypeId => $personType) {
             foreach ($consumers as $consumerKey => $consumer) {
@@ -277,7 +311,11 @@ final class BusinessValueControl
                         if (is_array($code)
                             && (!$filter['CODE_KEY'] || $filter['CODE_KEY'] == $codeKey)
                             && (!isset($code['PERSON_TYPE_ID']) || $code['PERSON_TYPE_ID'] == $personTypeId)
-                            && (!is_array($code['DOMAINS']) || in_array($personType['DOMAIN'], $code['DOMAINS'], true))) {
+                            && (!is_array($code['DOMAINS']) || in_array(
+                                    $personType['DOMAIN'],
+                                    $code['DOMAINS'],
+                                    true
+                                ))) {
                             $code['CONSUMER_KEY'] = $consumerKey;
 
                             if ($filter['PROVIDER_KEY']) {
@@ -300,7 +338,9 @@ final class BusinessValueControl
             }
 
             if (isset($personGroupCodes[$personTypeId]) && !$filter['PROVIDER_KEY'] && !$filter['CODE_KEY']) // GROUP
+            {
                 self::sortRenameGroups($personGroupCodes[$personTypeId], self::$groups);
+            }
         }
 
         return $personGroupCodes;
@@ -317,11 +357,15 @@ final class BusinessValueControl
         $consumerCodePersonMapping = BusinessValue::getConsumerCodePersonMapping();
 
         if ($this->errors) {
-            foreach ($this->consumerCodePersonMapping as $consumerKey => $codePersonMapping)
-                foreach ($codePersonMapping as $codeKey => $personMapping)
-                    foreach ($personMapping as $personTypeId => $mapping)
-                        if ($mapping['PROVIDER_KEY'])
+            foreach ($this->consumerCodePersonMapping as $consumerKey => $codePersonMapping) {
+                foreach ($codePersonMapping as $codeKey => $personMapping) {
+                    foreach ($personMapping as $personTypeId => $mapping) {
+                        if ($mapping['PROVIDER_KEY']) {
                             $consumerCodePersonMapping[$consumerKey][$codeKey][$personTypeId] = $mapping;
+                        }
+                    }
+                }
+            }
         }
 
         $tabControl->Begin();
@@ -356,16 +400,18 @@ final class BusinessValueControl
                     ob_start(); // $rowsHTML
 
                     foreach ($codes as $codeKey => $code) {
-                        if ($codeKey === 'USER_COLUMNS')
+                        if ($codeKey === 'USER_COLUMNS') {
                             continue;
+                        }
 
                         $consumerKey = $code['CONSUMER_KEY'];
                         $consumer = $consumers[$consumerKey];
 
                         if (isset($this->errors[$consumerKey][$codeKey][$personTypeId]) &&
                             ($error = $this->errors[$consumerKey][$codeKey][$personTypeId])) {
-                            if (!is_array($error))
+                            if (!is_array($error)) {
                                 $error = array($error);
+                            }
 
                             ?>
                             <tr>
@@ -373,8 +419,9 @@ final class BusinessValueControl
                                 <td style="color:#ff1118; padding: 1em 0 0 13em;">
                                     <?
 
-                                    foreach ($error as $k => $e)
+                                    foreach ($error as $k => $e) {
                                         echo htmlspecialcharsbx(is_array($e) ? implode(', ', $e) : $e) . '<br>';
+                                    }
 
                                     ?>
                                 </td>
@@ -402,9 +449,24 @@ final class BusinessValueControl
                         );
 
                         $mappings = array(
-                            'EXACT' => BusinessValue::getMapping($codeKey, $consumerKey, $personTypeId, array('MATCH' => BusinessValue::MATCH_EXACT) + $o),
-                            'COMMON' => BusinessValue::getMapping($codeKey, $consumerKey, $personTypeId, array('MATCH' => BusinessValue::MATCH_COMMON) + $o),
-                            'DEFAULT' => BusinessValue::getMapping($codeKey, $consumerKey, $personTypeId, array('MATCH' => BusinessValue::MATCH_DEFAULT) + $o),
+                            'EXACT' => BusinessValue::getMapping(
+                                $codeKey,
+                                $consumerKey,
+                                $personTypeId,
+                                array('MATCH' => BusinessValue::MATCH_EXACT) + $o
+                            ),
+                            'COMMON' => BusinessValue::getMapping(
+                                $codeKey,
+                                $consumerKey,
+                                $personTypeId,
+                                array('MATCH' => BusinessValue::MATCH_COMMON) + $o
+                            ),
+                            'DEFAULT' => BusinessValue::getMapping(
+                                $codeKey,
+                                $consumerKey,
+                                $personTypeId,
+                                array('MATCH' => BusinessValue::MATCH_DEFAULT) + $o
+                            ),
                         );
 
                         $inputNamePrefix = $this->name . '[MAP]['
@@ -417,16 +479,28 @@ final class BusinessValueControl
                         ob_start(); // $columnsHTML
 
                         if (is_callable($consumer['RENDER_COLUMNS'])) {
-                            $hideCode = call_user_func($consumer['RENDER_COLUMNS'], $codeKey, $personTypeId, $mappings, $inputNamePrefix);
+                            $hideCode = call_user_func(
+                                $consumer['RENDER_COLUMNS'],
+                                $codeKey,
+                                $personTypeId,
+                                $mappings,
+                                $inputNamePrefix
+                            );
                         } else {
                             ?>
                             <td>
                                 <?
 
                                 if (is_array($code['CONSUMERS']) && count($code['CONSUMERS']) > 1) {
-                                    echo implode(', ', array_map(function ($i) {
-                                        return htmlspecialcharsbx($i);
-                                    }, array_flip($code['NAMES'])));
+                                    echo implode(
+                                        ', ',
+                                        array_map(
+                                            function ($i) {
+                                                return htmlspecialcharsbx($i);
+                                            },
+                                            array_flip($code['NAMES'])
+                                        )
+                                    );
 
                                     ?>
                                     <img src="/bitrix/js/main/core/images/hint.gif" style="cursor: help;"
@@ -450,7 +524,11 @@ final class BusinessValueControl
                                 $commonProviderInput = $commonProviderValueInput = null;
 
                                 if (is_array($code['INPUT'])) {
-                                    $providerInput = array('TYPE' => 'ENUM', 'HIDDEN' => true, 'OPTIONS' => array('INPUT' => ''));
+                                    $providerInput = array(
+                                        'TYPE' => 'ENUM',
+                                        'HIDDEN' => true,
+                                        'OPTIONS' => array('INPUT' => '')
+                                    );
                                     $providerValueInput = array(
                                         'INPUT' => array(
                                                 'REQUIRED' => true,
@@ -459,17 +537,30 @@ final class BusinessValueControl
                                             + $code['INPUT']
                                     );
                                 } else {
-                                    $providerInput = self::getProviderInput($personTypeId, $code['PROVIDERS'] ?: $consumer['PROVIDERS']);
+                                    $providerInput = self::getProviderInput(
+                                        $personTypeId,
+                                        $code['PROVIDERS'] ?: $consumer['PROVIDERS']
+                                    );
                                     $providerValueInput = self::getValueInput($personTypeId);
 
                                     if ($personTypeId) {
-                                        $commonProviderInput = self::getProviderInput('', $code['PROVIDERS'] ?: $consumer['PROVIDERS']);
+                                        $commonProviderInput = self::getProviderInput(
+                                            '',
+                                            $code['PROVIDERS'] ?: $consumer['PROVIDERS']
+                                        );
                                         $commonProviderValueInput = self::getValueInput('');
                                     }
                                 }
 
                                 try {
-                                    $hideCode = self::renderMapping($mappings, $inputNamePrefix, $providerInput, $providerValueInput, $commonProviderInput, $commonProviderValueInput);
+                                    $hideCode = self::renderMapping(
+                                        $mappings,
+                                        $inputNamePrefix,
+                                        $providerInput,
+                                        $providerValueInput,
+                                        $commonProviderInput,
+                                        $commonProviderValueInput
+                                    );
                                 } catch (SystemException $exception) {
                                     $hideCode = '';
                                 }
@@ -503,8 +594,9 @@ final class BusinessValueControl
                         ?>
                         <tr<?
 
-                        if ($hideFilledCodes && !$groupHasVisibleRows)
+                        if ($hideFilledCodes && !$groupHasVisibleRows) {
                             echo ' class="' . $this->name . $personTypeId . 'row-with-value" style="display:none;"';
+                        }
 
                         ?>>
                             <td colspan="2" style="
@@ -546,10 +638,17 @@ final class BusinessValueControl
     }
 
     /** @internal */
-    public static function renderMapping(array $mappings, $inputNamePrefix, array $providerInput, array $providerValueInput, array $commonProviderInput = null, array $commonProviderValueInput = null)
-    {
-        foreach ($mappings as &$m)
+    public static function renderMapping(
+        array $mappings,
+        $inputNamePrefix,
+        array $providerInput,
+        array $providerValueInput,
+        array $commonProviderInput = null,
+        array $commonProviderValueInput = null
+    ) {
+        foreach ($mappings as &$m) {
             $m = self::correctMapping($providerInput, $providerValueInput, $m);
+        }
         unset($m);
 
         if ($m = ($mappings['EXACT'] ?: $mappings['COMMON'] ?: $mappings['DEFAULT'])) {
@@ -574,8 +673,9 @@ final class BusinessValueControl
 
                 case 'FILE':
 
-                    if ($providerValue)
+                    if ($providerValue) {
                         $providerValue = Input\File::loadInfoSingle($providerValue);
+                    }
 
                     $valueInput['CLASS'] = 'adm-designed-file';
 
@@ -592,7 +692,11 @@ final class BusinessValueControl
                 && !$mappings['EXACT']
                 && !$mappings['COMMON']
                 && $mappings['DEFAULT']
-                && $mappings['DEFAULT'] == self::correctMapping($commonProviderInput, $commonProviderValueInput, $mappings['DEFAULT'])) {
+                && $mappings['DEFAULT'] == self::correctMapping(
+                    $commonProviderInput,
+                    $commonProviderValueInput,
+                    $mappings['DEFAULT']
+                )) {
                 $mappings['COMMON'] = $mappings['DEFAULT'];
             }
         }
@@ -605,8 +709,9 @@ final class BusinessValueControl
 //				$mapping = $code['DEFAULT'];
 //		}
 
-        if (!$mappings['EXACT'] && $mappings['COMMON'])
+        if (!$mappings['EXACT'] && $mappings['COMMON']) {
             $providerInput['DISABLED'] = $valueInput['DISABLED'] = true;
+        }
 
         // !!! Do not change DOM !!!
         ?><span><?=
@@ -615,24 +720,24 @@ final class BusinessValueControl
 
         ?> </span><span><?=
 
-        Input\Manager::getEditHtml($inputNamePrefix . '[PROVIDER_VALUE]', $valueInput, $providerValue)
+            Input\Manager::getEditHtml($inputNamePrefix . '[PROVIDER_VALUE]', $valueInput, $providerValue)
 
-        ?> </span><label <?= $mappings['COMMON'] ? '' : ' style="display:none"' ?>>
+            ?> </span><label <?= $mappings['COMMON'] ? '' : ' style="display:none"' ?>>
         <?= Loc::getMessage('BIZVAL_PAGE_DELETE_MAPPING') ?>
         <input
                 type="checkbox"
                 name="<?= $inputNamePrefix ?>[DELETE]"'
         <? if (!$mappings['EXACT'] && $mappings['COMMON']):?>
-        checked
-    <?endif ?>
+            checked
+        <?endif ?>
         <? if ($m = $mappings['EXACT']):?>
-        data-initial-key="<?= htmlspecialcharsbx($m['PROVIDER_KEY']) ?>"
-        data-initial-value="<?= htmlspecialcharsbx($m['PROVIDER_VALUE']) ?>"
-    <?endif ?>
+            data-initial-key="<?= htmlspecialcharsbx($m['PROVIDER_KEY']) ?>"
+            data-initial-value="<?= htmlspecialcharsbx($m['PROVIDER_VALUE']) ?>"
+        <?endif ?>
         <? if ($m = $mappings['COMMON']):?>
-        data-default-key="<?= htmlspecialcharsbx($m['PROVIDER_KEY']) ?>"
-        data-default-value="<?= htmlspecialcharsbx($m['PROVIDER_VALUE']) ?>"
-    <?endif ?>
+            data-default-key="<?= htmlspecialcharsbx($m['PROVIDER_KEY']) ?>"
+            data-default-value="<?= htmlspecialcharsbx($m['PROVIDER_VALUE']) ?>"
+        <?endif ?>
         onclick="bizvalToggleDelete(this)">
         </label><?
 
@@ -653,8 +758,9 @@ final class BusinessValueControl
     private static function renderScript()
     {
         static $done;
-        if ($done)
+        if ($done) {
             return;
+        }
         $done = true;
 
         ?>
@@ -696,9 +802,11 @@ final class BusinessValueControl
                     echo \CUtil::PhpToJSObject(
                         call_user_func(
                             function () use ($personProviderValueInput) {
-                                foreach ($personProviderValueInput as &$providerFieldInput)
-                                    foreach ($providerFieldInput as &$fieldInput)
+                                foreach ($personProviderValueInput as &$providerFieldInput) {
+                                    foreach ($providerFieldInput as &$fieldInput) {
                                         $fieldInput = Input\Manager::getEditHtml('', $fieldInput);
+                                    }
+                                }
 
                                 return $personProviderValueInput;
                             }
@@ -883,9 +991,11 @@ final class BusinessValueControl
 
             <?
 
-            foreach (BusinessValue::getConsumers() as $consumerKey => $consumer)
-                if (is_callable($consumer['GET_JAVASCRIPT']))
+            foreach (BusinessValue::getConsumers() as $consumerKey => $consumer) {
+                if (is_callable($consumer['GET_JAVASCRIPT'])) {
                     echo call_user_func($consumer['GET_JAVASCRIPT']);
+                }
+            }
 
             ?>
         </script>
@@ -896,7 +1006,15 @@ final class BusinessValueControl
     public static function getFilter($filter)
     {
         $filter = is_array($filter)
-            ? array_intersect_key($filter, array('CODE_KEY' => 1, 'CONSUMER_KEY' => 1, 'PROVIDER_KEY' => 1, 'PROVIDER_VALUE' => 1))
+            ? array_intersect_key(
+                $filter,
+                array(
+                    'CODE_KEY' => 1,
+                    'CONSUMER_KEY' => 1,
+                    'PROVIDER_KEY' => 1,
+                    'PROVIDER_VALUE' => 1
+                )
+            )
             : array();
 
         if (self::$consumerInput['OPTIONS']) {
@@ -906,7 +1024,10 @@ final class BusinessValueControl
         }
 
         if (is_array(self::$consumerCodeInput[$filter['CONSUMER_KEY']])) {
-            $filter['CODE_KEY'] = !Input\Manager::getError(self::$consumerCodeInput[$filter['CONSUMER_KEY']], $filter['CODE_KEY'])
+            $filter['CODE_KEY'] = !Input\Manager::getError(
+                self::$consumerCodeInput[$filter['CONSUMER_KEY']],
+                $filter['CODE_KEY']
+            )
                 ? Input\Manager::getValue(self::$consumerCodeInput[$filter['CONSUMER_KEY']], $filter['CODE_KEY'])
                 : null;
         }
@@ -920,8 +1041,14 @@ final class BusinessValueControl
 
         // TODO null - personTypeId
         $filter['PROVIDER_VALUE'] = $filter['PROVIDER_KEY']
-        && !Input\Manager::getError(self::$personProviderValueInput[null][$filter['PROVIDER_KEY']], $filter['PROVIDER_VALUE'])
-            ? Input\Manager::getValue(self::$personProviderValueInput[null][$filter['PROVIDER_KEY']], $filter['PROVIDER_VALUE'])
+        && !Input\Manager::getError(
+            self::$personProviderValueInput[null][$filter['PROVIDER_KEY']],
+            $filter['PROVIDER_VALUE']
+        )
+            ? Input\Manager::getValue(
+                self::$personProviderValueInput[null][$filter['PROVIDER_KEY']],
+                $filter['PROVIDER_VALUE']
+            )
             : null;
 
         return $filter;
@@ -936,13 +1063,24 @@ final class BusinessValueControl
     /** @internal */
     public static function initialize()
     {
-        self::$personTypes = array('' => array('DOMAIN' => '', 'TITLE' => Loc::getMessage('BIZVAL_DOMAIN_COMMON'))) + BusinessValue::getPersonTypes();
+        self::$personTypes = array(
+                '' => array(
+                    'DOMAIN' => '',
+                    'TITLE' => Loc::getMessage('BIZVAL_DOMAIN_COMMON')
+                )
+            ) + BusinessValue::getPersonTypes();
 
-        list (self::$personProviderInput, self::$personProviderValueInput) = self::getProviderInputs(BusinessValue::getProviders(), self::$personTypes);
+        list (self::$personProviderInput, self::$personProviderValueInput) = self::getProviderInputs(
+            BusinessValue::getProviders(),
+            self::$personTypes
+        );
 
         self::$groups = array('' => array()) + BusinessValue::getGroups();
 
-        list (self::$consumerInput, self::$consumerCodeInput) = self::getConsumerInputs(BusinessValue::getConsumers(), self::$groups);
+        list (self::$consumerInput, self::$consumerCodeInput) = self::getConsumerInputs(
+            BusinessValue::getConsumers(),
+            self::$groups
+        );
     }
 
     /** @internal */
@@ -950,8 +1088,9 @@ final class BusinessValueControl
     {
         $providerInput = self::$personProviderInput[$personTypeId];
 
-        if ($providerKeys && is_array($providerInput['OPTIONS']))
+        if ($providerKeys && is_array($providerInput['OPTIONS'])) {
             $providerInput['OPTIONS'] = array_intersect_key($providerInput['OPTIONS'], array_flip($providerKeys));
+        }
 
         return $providerInput;
     }
@@ -996,9 +1135,13 @@ final class BusinessValueControl
                     $fieldOptions = array();
 
                     // group fields
-                    foreach ($fields as $fieldKey => $field)
-                        if (is_array($field) && (!$field['PERSON_TYPE_ID'] || $field['PERSON_TYPE_ID'] == $personTypeId))
+                    foreach ($fields as $fieldKey => $field) {
+                        if (is_array(
+                                $field
+                            ) && (!$field['PERSON_TYPE_ID'] || $field['PERSON_TYPE_ID'] == $personTypeId)) {
                             $fieldOptions[$field['GROUP']][$fieldKey] = $field['NAME'] ?: $fieldKey;
+                        }
+                    }
 
                     if (count($fieldOptions) == 1) {
                         $fieldOptions = reset($fieldOptions);
@@ -1008,11 +1151,19 @@ final class BusinessValueControl
 
                     if (!empty($fieldOptions)) {
                         $providerOptions[$providerKey] = $provider['NAME'] ?: $providerKey;
-                        $personProviderValueInput[$personTypeId][$providerKey] = array('TYPE' => 'ENUM', 'OPTIONS' => $fieldOptions, 'ONCHANGE' => $onChange);
+                        $personProviderValueInput[$personTypeId][$providerKey] = array(
+                            'TYPE' => 'ENUM',
+                            'OPTIONS' => $fieldOptions,
+                            'ONCHANGE' => $onChange
+                        );
                     }
                 } else {
                     $providerOptions[$providerKey] = $provider['NAME'] ?: $providerKey;
-                    $personProviderValueInput[$personTypeId][$providerKey] = array('TYPE' => 'STRING', 'SIZE' => 30, 'ONCHANGE' => $onChange);
+                    $personProviderValueInput[$personTypeId][$providerKey] = array(
+                        'TYPE' => 'STRING',
+                        'SIZE' => 30,
+                        'ONCHANGE' => $onChange
+                    );
                 }
             }
 
@@ -1049,14 +1200,17 @@ final class BusinessValueControl
 
                 $codeOptions = array();
 
-                foreach ($consumerCodes as $codeKey => $code)
-                    if (is_array($code))
+                foreach ($consumerCodes as $codeKey => $code) {
+                    if (is_array($code)) {
                         $codeOptions[$code['GROUP']][$codeKey] = $code['NAME'] ?: $codeKey;
+                    }
+                }
 
-                if (count($codeOptions) == 1)
+                if (count($codeOptions) == 1) {
                     $codeOptions = reset($codeOptions);
-                else
+                } else {
                     self::sortRenameGroups($codeOptions, $groups, true);
+                }
 
                 $consumerCodeInput[$consumerKey] = array(
                     'TYPE' => 'ENUM',

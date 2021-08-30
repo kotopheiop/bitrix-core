@@ -44,13 +44,19 @@ class Activity extends Base
         $whatWillCalculateField = $reportHandler->getFormElement('calculate');
         if ($whatWillCalculateField) {
             $labelField = $reportHandler->getWidgetHandler()->getFormElement('label');
-            $labelField->addJsEventListener($whatWillCalculateField, $whatWillCalculateField::JS_EVENT_ON_CHANGE, array(
-                'class' => 'BX.Report.VisualConstructor.FieldEventHandlers.Title',
-                'action' => 'whatWillCalculateChange',
-            ));
-            $whatWillCalculateField->addAssets(array(
-                'js' => array('/bitrix/js/report/js/visualconstructor/fields/reporttitle.js')
-            ));
+            $labelField->addJsEventListener(
+                $whatWillCalculateField,
+                $whatWillCalculateField::JS_EVENT_ON_CHANGE,
+                array(
+                    'class' => 'BX.Report.VisualConstructor.FieldEventHandlers.Title',
+                    'action' => 'whatWillCalculateChange',
+                )
+            );
+            $whatWillCalculateField->addAssets(
+                array(
+                    'js' => array('/bitrix/js/report/js/visualconstructor/fields/reporttitle.js')
+                )
+            );
         }
 
         $removeFormElement = $reportHandler->getFormElementByDataAttribute('role', 'report-remove-button');
@@ -86,7 +92,6 @@ class Activity extends Base
         if ($dataFromReport['items']) {
             $items = array();
             foreach ($dataFromReport['items'] as $item) {
-
                 if (!empty($items[$item['firstGroupId']][$item['secondGroupId']])) {
                     $items[$item['firstGroupId']][$item['secondGroupId']]['active'] += (int)$item['value'];
                 } else {
@@ -96,7 +101,6 @@ class Activity extends Base
                         'active' => (int)$item['value'],
                     );
                 }
-
             }
 
             foreach ($items as $firstGroupId => $secondGroup) {
@@ -117,7 +121,7 @@ class Activity extends Base
      *
      * @return array
      */
-    private function getWeekDaysMap()
+    protected function getWeekDaysMap()
     {
         return array(
             array(
@@ -159,7 +163,7 @@ class Activity extends Base
      *
      * @return array
      */
-    private function getHourList()
+    protected function getHourList()
     {
         $result = array();
         for ($i = 1; $i <= 24; $i++) {

@@ -1,18 +1,27 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/options.php");
 CModule::IncludeModule('calendar');
 CModule::IncludeModule('iblock');
 
 if (!$USER->CanDoOperation('edit_php')) // Is admin
+{
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $aTabs = array(
     array(
-        "DIV" => "edit1", "TAB" => GetMessage("CAL_OPT_SETTINGS"), "ICON" => "calendar_settings", "TITLE" => GetMessage("CAL_SETTINGS_TITLE"),
+        "DIV" => "edit1",
+        "TAB" => GetMessage("CAL_OPT_SETTINGS"),
+        "ICON" => "calendar_settings",
+        "TITLE" => GetMessage("CAL_SETTINGS_TITLE"),
     ),
     array(
-        "DIV" => "edit2", "TAB" => GetMessage("CAL_OPT_TYPES"), "ICON" => "calendar_settings", "TITLE" => GetMessage("CAL_OPT_TYPES"),
+        "DIV" => "edit2",
+        "TAB" => GetMessage("CAL_OPT_TYPES"),
+        "ICON" => "calendar_settings",
+        "TITLE" => GetMessage("CAL_OPT_TYPES"),
     )
 );
 
@@ -21,68 +30,77 @@ $tabControl = new CAdminTabControl("tabControl", $aTabs);
 CUtil::InitJSCore(array('ajax', 'window', 'popup', 'access'));
 
 $arTypes = CCalendarType::GetList();
-$dbSites = CSite::GetList($by = 'sort', $order = 'asc', array('ACTIVE' => 'Y'));
+$dbSites = CSite::GetList('sort', 'asc', array('ACTIVE' => 'Y'));
 $sites = array();
 $default_site = '';
 while ($arRes = $dbSites->GetNext()) {
     $sites[$arRes['ID']] = '(' . $arRes['ID'] . ') ' . $arRes['NAME'];
-    if ($arRes['DEF'] == 'Y')
+    if ($arRes['DEF'] == 'Y') {
         $default_site = $arRes['ID'];
+    }
 }
 
 $arForums = array();
 if (CModule::IncludeModule("forum")) {
     $db = CForumNew::GetListEx();
-    while ($ar = $db->GetNext())
+    while ($ar = $db->GetNext()) {
         $arForums[$ar["ID"]] = "[" . $ar["ID"] . "] " . $ar["NAME"];
+    }
 }
 
-if ($REQUEST_METHOD == "POST" && isset($_REQUEST['save_type']) && $_REQUEST['save_type'] == 'Y' && check_bitrix_sessid()) {
+if ($REQUEST_METHOD == "POST" && isset($_REQUEST['save_type']) && $_REQUEST['save_type'] == 'Y' && check_bitrix_sessid(
+    )) {
     //CUtil::JSPostUnEscape();
     $APPLICATION->RestartBuffer();
     if (isset($_REQUEST['del_type']) && $_REQUEST['del_type'] == 'Y') {
         $xmlId = trim($_REQUEST['type_xml_id']);
-        if ($xmlId != '')
+        if ($xmlId != '') {
             CCalendarType::Delete($xmlId);
+        }
     } else {
         $bNew = isset($_POST['type_new']) && $_POST['type_new'] == 'Y';
         $xmlId = trim($bNew ? $_POST['type_xml_id'] : $_POST['type_xml_id_hidden']);
         $name = trim($_POST['type_name']);
 
         if ($xmlId != '' && $name != '') {
-            $XML_ID = CCalendarType::Edit(array(
-                'NEW' => $bNew,
-                'arFields' => array(
-                    'XML_ID' => $xmlId,
-                    'NAME' => $name,
-                    'DESCRIPTION' => trim($_POST['type_desc'])
+            $XML_ID = CCalendarType::Edit(
+                array(
+                    'NEW' => $bNew,
+                    'arFields' => array(
+                        'XML_ID' => $xmlId,
+                        'NAME' => $name,
+                        'DESCRIPTION' => trim($_POST['type_desc'])
+                    )
                 )
-            ));
+            );
 
             if ($XML_ID) {
                 $arTypes_ = CCalendarType::GetList(array('arFilter' => array('XML_ID' => $XML_ID)));
-                if ($arTypes_[0])
+                if ($arTypes_[0]) {
                     OutputTypeHtml($arTypes_[0]);
+                }
             }
         }
     }
     die();
 }
 
-if ($REQUEST_METHOD == "POST" && strlen($Update . $Apply . $RestoreDefaults) > 0 && check_bitrix_sessid()) {
-    if (strlen($RestoreDefaults) > 0) {
+if ($REQUEST_METHOD == "POST" && $Update . $Apply . $RestoreDefaults <> '' && check_bitrix_sessid()) {
+    if ($RestoreDefaults <> '') {
         COption::RemoveOption("calendar");
     } else {
         // Save permissions for calendar types
         foreach ($_POST['cal_type_perm'] as $xml_id => $perm) {
             // Save type permissions
-            CCalendarType::Edit(array(
-                'NEW' => false,
-                'arFields' => array(
-                    'XML_ID' => $xml_id,
-                    'ACCESS' => $perm
+            CCalendarType::Edit(
+                array(
+                    'NEW' => false,
+                    'arFields' => array(
+                        'XML_ID' => $xml_id,
+                        'ACCESS' => $perm
+                    )
                 )
-            ));
+            );
         }
 
         $SET = array(
@@ -90,7 +108,7 @@ if ($REQUEST_METHOD == "POST" && strlen($Update . $Apply . $RestoreDefaults) > 0
             'work_time_end' => $_REQUEST['work_time_end'],
             'year_holidays' => $_REQUEST['year_holidays'],
             'year_workdays' => $_REQUEST['year_workdays'],
-            'week_holidays' => implode('|', $_REQUEST['week_holidays']),
+            'week_holidays' => is_array($_REQUEST['week_holidays']) ? implode('|', $_REQUEST['week_holidays']) : '',
             //'week_start' => $_REQUEST['week_start'],
             'user_name_template' => $_REQUEST['user_name_template'],
             'sync_by_push' => isset($_REQUEST['sync_by_push']),
@@ -105,7 +123,7 @@ if ($REQUEST_METHOD == "POST" && strlen($Update . $Apply . $RestoreDefaults) > 0
             'pathes_for_sites' => isset($_REQUEST['pathes_for_sites']),
             'pathes' => $_REQUEST['pathes'],
             'dep_manager_sub' => isset($_REQUEST['dep_manager_sub']),
-            'forum_id' => intVal($_REQUEST['calendar_forum_id']),
+            'forum_id' => intval($_REQUEST['calendar_forum_id']),
 
             'rm_iblock_type' => $_REQUEST['rm_iblock_type'],
             'rm_iblock_id' => $_REQUEST['rm_iblock_id'],
@@ -125,23 +143,30 @@ if ($REQUEST_METHOD == "POST" && strlen($Update . $Apply . $RestoreDefaults) > 0
         }
 
         foreach ($arTypes as $type) {
-            if (!in_array($type['XML_ID'], $_REQUEST['denied_superpose_types']))
+            if (!in_array($type['XML_ID'], $_REQUEST['denied_superpose_types'])) {
                 $SET['denied_superpose_types'][] = $type['XML_ID'];
+            }
         }
 
         $CUR_SET = CCalendar::GetSettings(array('getDefaultForEmpty' => false));
         foreach ($CUR_SET as $key => $value) {
-            if (!isset($SET[$key]) && isset($value))
+            if (!isset($SET[$key]) && isset($value)) {
                 $SET[$key] = $value;
+            }
         }
 
         CCalendar::SetSettings($SET);
     }
 
-    if (strlen($Update) > 0 && strlen($_REQUEST["back_url_settings"]) > 0)
+    if ($Update <> '' && $_REQUEST["back_url_settings"] <> '') {
         LocalRedirect($_REQUEST["back_url_settings"]);
-    else
-        LocalRedirect($APPLICATION->GetCurPage() . "?mid=" . urlencode($mid) . "&lang=" . urlencode(LANGUAGE_ID) . "&back_url_settings=" . urlencode($_REQUEST["back_url_settings"]) . "&" . $tabControl->ActiveTabParam());
+    } else {
+        LocalRedirect(
+            $APPLICATION->GetCurPage() . "?mid=" . urlencode($mid) . "&lang=" . urlencode(
+                LANGUAGE_ID
+            ) . "&back_url_settings=" . urlencode($_REQUEST["back_url_settings"]) . "&" . $tabControl->ActiveTabParam()
+        );
+    }
 }
 
 $dbIBlockType = CIBlockType::GetList();
@@ -222,6 +247,7 @@ $tabControl->Begin();
 		</td>
 	</tr>
 	*/
+
     ?>
     <tr>
         <td><label for="cal_year_holidays"><?= GetMessage("CAL_YEAR_HOLIDAYS") ?>:</label></td>
@@ -279,7 +305,10 @@ $tabControl->Begin();
             <td>
                 <select size="3" multiple=true id="denied_superpose_types" name="denied_superpose_types[]">
                     <? foreach ($arTypes as $type): ?>
-                        <option value="<?= $type["XML_ID"] ?>" <? if (!in_array($type["XML_ID"], $SET['denied_superpose_types'])) {
+                        <option value="<?= $type["XML_ID"] ?>" <? if (!in_array(
+                            $type["XML_ID"],
+                            $SET['denied_superpose_types']
+                        )) {
                             echo ' selected="selected"';
                         } ?>><?= htmlspecialcharsex($type["NAME"]) ?></option>
                     <? endforeach; ?>
@@ -321,8 +350,13 @@ $tabControl->Begin();
                 <td colSpan="2" align="center">
                     <?
                     $aSubTabs = array();
-                    foreach ($sites as $siteId => $siteName)
-                        $aSubTabs[] = array("DIV" => "opt_cal_path_" . $siteId, "TAB" => $siteName, 'TITLE' => $siteName);
+                    foreach ($sites as $siteId => $siteName) {
+                        $aSubTabs[] = array(
+                            "DIV" => "opt_cal_path_" . $siteId,
+                            "TAB" => $siteName,
+                            'TITLE' => $siteName
+                        );
+                    }
 
                     $innerTabControl = new CAdminViewTabControl("childTabControlUserCommonPath", $aSubTabs);
                     $innerTabControl->Begin(); ?>
@@ -332,15 +366,23 @@ $tabControl->Begin();
                             <?
                             foreach ($arPathes as $pathName) {
                                 $val = $SET['pathes'][$siteId][$pathName];
-                                if (!isset($val) || empty($val))
+                                if (!isset($val) || empty($val)) {
                                     $val = $SET[$pathName];
+                                }
 
-                                $title = GetMessage("CAL_" . strtoupper($pathName));
-                                if ($title == '' && substr($pathName, 0, strlen('path_to_type_')) == 'path_to_type_') {
-                                    $typeXmlId = substr($pathName, strlen('path_to_type_'));
+                                $title = GetMessage("CAL_" . mb_strtoupper($pathName));
+                                if ($title == '' && mb_substr(
+                                        $pathName,
+                                        0,
+                                        mb_strlen('path_to_type_')
+                                    ) == 'path_to_type_') {
+                                    $typeXmlId = mb_substr($pathName, mb_strlen('path_to_type_'));
                                     foreach ($arTypes as $type) {
                                         if ($type['XML_ID'] == $typeXmlId) {
-                                            $title = GetMessage("CAL_PATH_TO_CAL_TYPE", array("#CALENDAR_TYPE#" => $type['NAME']));
+                                            $title = GetMessage(
+                                                "CAL_PATH_TO_CAL_TYPE",
+                                                array("#CALENDAR_TYPE#" => $type['NAME'])
+                                            );
                                             break;
                                         }
                                     }
@@ -364,13 +406,14 @@ $tabControl->Begin();
 
         <?
         /* common pathes for all sites*/
-        if (count($sites) <= 1)
+        if (count($sites) <= 1) {
             $commonForSites = true;
+        }
 
         foreach ($arPathes as $pathName) {
-            $title = GetMessage("CAL_" . strtoupper($pathName));
-            if ($title == '' && substr($pathName, 0, strlen('path_to_type_')) == 'path_to_type_') {
-                $typeXmlId = substr($pathName, strlen('path_to_type_'));
+            $title = GetMessage("CAL_" . mb_strtoupper($pathName));
+            if ($title == '' && mb_substr($pathName, 0, mb_strlen('path_to_type_')) == 'path_to_type_') {
+                $typeXmlId = mb_substr($pathName, mb_strlen('path_to_type_'));
                 foreach ($arTypes as $type) {
                     if ($type['XML_ID'] == $typeXmlId) {
                         $title = GetMessage("CAL_PATH_TO_CAL_TYPE", array("#CALENDAR_TYPE#" => $type['NAME']));
@@ -394,8 +437,9 @@ $tabControl->Begin();
         <!-- Reserve meetings and video reserve meetings -->
         <?
         $reserveMeetingForSites = $SET['rm_for_sites'];
-        if (count($sites) <= 1)
+        if (count($sites) <= 1) {
             $reserveMeetingForSites = true;
+        }
         ?>
         <tr class="heading">
             <td colSpan="2"><?= GetMessage('CAL_RESERVE_MEETING') ?></td>
@@ -441,8 +485,9 @@ $tabControl->Begin();
                 <td colSpan="2" align="center">
                     <?
                     $aSubTabs = array();
-                    foreach ($sites as $siteId => $siteName)
+                    foreach ($sites as $siteId => $siteName) {
                         $aSubTabs[] = array("DIV" => "opt_cal_rm_" . $siteId, "TAB" => $siteName, 'TITLE' => $siteName);
+                    }
 
                     $innerTabControl = new CAdminViewTabControl("childTabControlUserCommon", $aSubTabs);
                     $innerTabControl->Begin(); ?>
@@ -451,15 +496,21 @@ $tabControl->Begin();
                         <? $innerTabControl->BeginNextTab(); ?>
                         <table>
                             <tr>
-                                <td class="field-name"><label
-                                            for="cal_rm_iblock_id_<?= $siteId ?>"><?= GetMessage("CAL_RM_IBLOCK_ID") ?>
-                                        :</label></td>
+                                <td class="field-name"><label for="cal_rm_iblock_id_<?= $siteId ?>"><?= GetMessage(
+                                            "CAL_RM_IBLOCK_ID"
+                                        ) ?>:</label></td>
                                 <td>
                                     <select id="cal_rm_iblock_id_<?= $siteId ?>" name="rm_iblock_ids[<?= $siteId ?>]">
                                         <? if ($SET['rm_iblock_type']): ?>
                                             <option value=""><?= GetMessage('CAL_NOT_SET') ?></option>
                                             <? foreach ($arIB[$SET['rm_iblock_type']] as $iblock_id => $iblock):
-                                                $valueForSite = COption::GetOptionString('calendar', 'rm_iblock_id', "", $siteId, true); ?>
+                                                $valueForSite = COption::GetOptionString(
+                                                    'calendar',
+                                                    'rm_iblock_id',
+                                                    "",
+                                                    $siteId,
+                                                    true
+                                                ); ?>
                                                 <option value="<?= $iblock_id ?>"<? if ($iblock_id == $valueForSite) {
                                                     echo ' selected="selected"';
                                                 } ?>><?= htmlspecialcharsbx($iblock) ?></option>
@@ -576,7 +627,7 @@ $tabControl->Begin();
            title="<?= GetMessage("MAIN_OPT_SAVE_TITLE") ?>"/>
     <input type="submit" name="Apply" value="<?= GetMessage("MAIN_APPLY") ?>"
            title="<?= GetMessage("MAIN_OPT_APPLY_TITLE") ?>">
-    <? if (strlen($_REQUEST["back_url_settings"]) > 0): ?>
+    <? if ($_REQUEST["back_url_settings"] <> ''): ?>
         <input type="button" name="Cancel" value="<?= GetMessage("MAIN_OPT_CANCEL") ?>"
                title="<?= GetMessage("MAIN_OPT_CANCEL_TITLE") ?>"
                onclick="window.location='<?= htmlspecialcharsbx(CUtil::addslashes($_REQUEST["back_url_settings"])) ?>'">
@@ -590,8 +641,9 @@ $tabControl->Begin();
 
 <div id="edit_type_dialog" class="bxco-popup">
     <form method="POST" name="caltype_dialog_form" id="caltype_dialog_form"
-          action="<?= $APPLICATION->GetCurPage() ?>?mid=<?= urlencode($mid) ?>&amp;lang=<?= LANGUAGE_ID ?>&amp;save_type=Y"
-          ENCTYPE="multipart/form-data">
+          action="<?= $APPLICATION->GetCurPage() ?>?mid=<?= urlencode(
+              $mid
+          ) ?>&amp;lang=<?= LANGUAGE_ID ?>&amp;save_type=Y" ENCTYPE="multipart/form-data">
         <?= bitrix_sessid_post() ?>
         <input type="hidden" name="type_new" id="type_new_inp" value="Y" size="32"/>
         <table border="0" cellSpacing="0" class="bxco-popup-tbl">
@@ -730,7 +782,9 @@ $tabControl->Begin();
 
     function delType(xml_id) {
         if (confirm('<?= GetMessage('CAL_DELETE_CONFIRM')?>')) {
-            BX.ajax.post('<?= $APPLICATION->GetCurPage()?>?mid=<?= urlencode($mid)?>&lang=<?=LANGUAGE_ID?>&save_type=Y&del_type=Y&type_xml_id=' + xml_id, {sessid: BX.bitrix_sessid()}, function () {
+            BX.ajax.post('<?= $APPLICATION->GetCurPage()?>?mid=<?= urlencode(
+                $mid
+            )?>&lang=<?=LANGUAGE_ID?>&save_type=Y&del_type=Y&type_xml_id=' + xml_id, {sessid: BX.bitrix_sessid()}, function () {
                 var pCont = BX('type-cont-' + xml_id);
                 if (pCont && pCont.parentNode)
                     BX.cleanNode(pCont.parentNode, true);
@@ -748,19 +802,23 @@ function OutputTypeHtml($type)
     <div class="bxcopt-type-cont" id="type-cont-<?= $XML_ID ?>"">
     <div class="bxcopt-type-cont-title">
         <span class="bxcopt-type-title-label"><?= htmlspecialcharsbx($type['NAME']) ?> [<?= $XML_ID ?>]</span>
+        <a href="javascript:void(0);" onclick="delType('<?= $XML_ID ?>'); return false;"><?= GetMessage(
+                'CAL_DELETE'
+            ) ?></a>
         <a href="javascript:void(0);"
-           onclick="delType('<?= $XML_ID ?>'); return false;"><?= GetMessage('CAL_DELETE') ?></a>
-        <a href="javascript:void(0);"
-           onclick="addType(<?= htmlspecialcharsbx(CUtil::PhpToJsObject($type)) ?>); return false;"><?= GetMessage('CAL_CHANGE') ?></a>
+           onclick="addType(<?= htmlspecialcharsbx(CUtil::PhpToJsObject($type)) ?>); return false;"><?= GetMessage(
+                'CAL_CHANGE'
+            ) ?></a>
     </div>
-    <? if (strlen($type['DESCRIPTION']) > 0): ?>
+    <? if ($type['DESCRIPTION'] <> ''): ?>
     <span class="bxcopt-type-desc"><?= htmlspecialcharsbx($type['DESCRIPTION']) ?></span>
 <? endif; ?>
     <div class="bxcopt-type-access-cont">
         <span class="bxcopt-type-access-cont-title"><?= GetMessage('CAL_TYPE_PERMISSION_ACCESS') ?>:</span>
         <div class="bxcopt-type-access-values-cont" id="type-access-values-cont<?= $XML_ID ?>"></div>
-        <a class="bxcopt-add-access-link" href="javascript:void(0);"
-           id="type-access-link<?= $XML_ID ?>"><?= GetMessage('CAL_ADD_ACCESS') ?></a>
+        <a class="bxcopt-add-access-link" href="javascript:void(0);" id="type-access-link<?= $XML_ID ?>"><?= GetMessage(
+                'CAL_ADD_ACCESS'
+            ) ?></a>
     </div>
     <script>
         BX = top.BX;

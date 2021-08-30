@@ -21,16 +21,17 @@ class Payment extends Controller
             Sale\Payment::class,
             'payment',
             function ($className, $id) {
-
                 $registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
 
                 /** @var Sale\Payment $paymentClass */
                 $paymentClass = $registry->getPaymentClassName();
 
-                $r = $paymentClass::getList([
-                    'select' => ['ORDER_ID'],
-                    'filter' => ['ID' => $id]
-                ]);
+                $r = $paymentClass::getList(
+                    [
+                        'select' => ['ORDER_ID'],
+                        'filter' => ['ID' => $id]
+                    ]
+                );
 
                 if ($row = $r->fetch()) {
                     /** @var Sale\Order $orderClass */
@@ -53,9 +54,11 @@ class Payment extends Controller
     public function getFieldsAction()
     {
         $entity = new \Bitrix\Sale\Rest\Entity\Payment();
-        return ['PAYMENT' => $entity->prepareFieldInfos(
-            $entity->getFields()
-        )];
+        return [
+            'PAYMENT' => $entity->prepareFieldInfos(
+                $entity->getFields()
+            )
+        ];
     }
 
     public function modifyAction($fields)
@@ -89,9 +92,11 @@ class Payment extends Controller
         $data['ORDER']['PAYMENTS'] = [$fields];
 
         $builder = $this->getBuilder(
-            new SettingsContainer([
-                'deletePaymentIfNotExists' => false
-            ])
+            new SettingsContainer(
+                [
+                    'deletePaymentIfNotExists' => false
+                ]
+            )
         );
 
         $builder->buildEntityPayments($data);
@@ -134,9 +139,11 @@ class Payment extends Controller
         $data['ORDER']['PAYMENTS'] = [$fields];
 
         $builder = $this->getBuilder(
-            new SettingsContainer([
-                'deletePaymentIfNotExists' => false
-            ])
+            new SettingsContainer(
+                [
+                    'deletePaymentIfNotExists' => false
+                ]
+            )
         );
         $builder->buildEntityPayments($data);
 
@@ -197,11 +204,15 @@ class Payment extends Controller
             ]
         )->fetchAll();
 
-        return new Page('payments', $payments, function () use ($select, $filter, $runtime) {
+        return new Page(
+            'payments', $payments, function () use ($select, $filter, $runtime) {
             return count(
-                \Bitrix\Sale\Payment::getList(['select' => $select, 'filter' => $filter, 'runtime' => $runtime])->fetchAll()
+                \Bitrix\Sale\Payment::getList(
+                    ['select' => $select, 'filter' => $filter, 'runtime' => $runtime]
+                )->fetchAll()
             );
-        });
+        }
+        );
     }
 
     public function getOrderIdAction(\Bitrix\Sale\Payment $payment)

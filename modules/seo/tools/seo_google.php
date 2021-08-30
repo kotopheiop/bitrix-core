@@ -1,9 +1,11 @@
 <?
+
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/prolog.php");
 
-if (!$USER->CanDoOperation('seo_tools'))
+if (!$USER->CanDoOperation('seo_tools')) {
     die(GetMessage("ACCESS_DENIED"));
+}
 
 use Bitrix\Seo\Engine;
 use Bitrix\Main\IO\Path;
@@ -20,11 +22,14 @@ if (isset($_REQUEST['action']) && check_bitrix_sessid()) {
     $res = array();
 
     $arDomain = null;
-    if (isset($_REQUEST['domain']) && strlen($_REQUEST['domain']) > 0) {
+    if (isset($_REQUEST['domain']) && $_REQUEST['domain'] <> '') {
         $bFound = false;
         $arDomains = \CSeoUtils::getDomainsList();
         foreach ($arDomains as $arDomain) {
-            if ($arDomain['DOMAIN'] == $_REQUEST['domain'] && rtrim($arDomain['SITE_DIR'], '/') == rtrim($_REQUEST['dir'], '/')) {
+            if ($arDomain['DOMAIN'] == $_REQUEST['domain'] && rtrim($arDomain['SITE_DIR'], '/') == rtrim(
+                    $_REQUEST['dir'],
+                    '/'
+                )) {
                 $bFound = true;
                 break;
             }
@@ -63,12 +68,16 @@ if (isset($_REQUEST['action']) && check_bitrix_sessid()) {
                             // paranoia?
                             $filename = preg_replace("/^(.*?)\..*$/", "\\1.html", $filename);
 
-                            if (strlen($filename) > 0) {
-                                $path = Path::combine((
-                                strlen($arDomain['SITE_DOC_ROOT']) > 0
-                                    ? $arDomain['SITE_DOC_ROOT']
-                                    : $_SERVER['DOCUMENT_ROOT']
-                                ), $arDomain['SITE_DIR'], $filename);
+                            if ($filename <> '') {
+                                $path = Path::combine(
+                                    (
+                                    $arDomain['SITE_DOC_ROOT'] <> ''
+                                        ? $arDomain['SITE_DOC_ROOT']
+                                        : $_SERVER['DOCUMENT_ROOT']
+                                    ),
+                                    $arDomain['SITE_DIR'],
+                                    $filename
+                                );
 
                                 $obFile = new \Bitrix\Main\IO\File($path);
 

@@ -133,10 +133,13 @@ class SqlTracker implements \Iterator
     public function writeFileLog($sql, $executionTime = 0.0, $additional = "", $traceSkip = 2)
     {
         if ($this->logFilePath) {
-            $header = "TIME: " . round($executionTime, 6) . " SESSION: " . session_id() . " " . $additional . "\n";
-            $headerLength = strlen($header);
+            $sessionId = \Bitrix\Main\Application::getInstance()->getKernelSession()->getId();
+            $header = "TIME: " . round($executionTime, 6) . " SESSION: " . $sessionId . " " . $additional . "\n";
+            $headerLength = mb_strlen($header);
             $body = $this->formatSql($sql);
-            $trace = $this->formatTrace(\Bitrix\Main\Diag\Helper::getBackTrace($this->depthBackTrace, null, $traceSkip));
+            $trace = $this->formatTrace(
+                \Bitrix\Main\Diag\Helper::getBackTrace($this->depthBackTrace, null, $traceSkip)
+            );
             $footer = str_repeat("-", $headerLength);
             $message =
                 "\n" . $header .
@@ -179,15 +182,16 @@ class SqlTracker implements \Iterator
                     unset($sqlLines[$i]);
                 } else {
                     $skip = false;
-                    $tabs = strlen($line) - strlen(ltrim($line, "\t"));
+                    $tabs = mb_strlen($line) - mb_strlen(ltrim($line, "\t"));
                 }
             }
             if ($tabs) {
                 $line = preg_replace("/^[\\t]{1,$tabs}/", "", $line);
-                if ($line !== "")
+                if ($line !== "") {
                     $sqlLines[$i] = $line;
-                else
+                } else {
                     unset($sqlLines[$i]);
+                }
             }
         }
         return implode("\n", $sqlLines);
@@ -208,20 +212,24 @@ class SqlTracker implements \Iterator
             foreach ($trace as $traceNum => $traceInfo) {
                 $traceLine = '';
 
-                if (array_key_exists('class', $traceInfo))
+                if (array_key_exists('class', $traceInfo)) {
                     $traceLine .= $traceInfo['class'] . $traceInfo['type'];
+                }
 
-                if (array_key_exists('function', $traceInfo))
+                if (array_key_exists('function', $traceInfo)) {
                     $traceLine .= $traceInfo['function'] . '()';
+                }
 
                 if (array_key_exists('file', $traceInfo)) {
                     $traceLine .= ' ' . $traceInfo['file'];
-                    if (array_key_exists('line', $traceInfo))
+                    if (array_key_exists('line', $traceInfo)) {
                         $traceLine .= ':' . $traceInfo['line'];
+                    }
                 }
 
-                if ($traceLine)
+                if ($traceLine) {
                     $traceLines[] = ' from ' . $traceLine;
+                }
             }
 
             return implode("\n", $traceLines);

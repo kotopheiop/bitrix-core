@@ -4,11 +4,17 @@ namespace Bitrix\Landing\Assets;
 
 use Bitrix\Landing\File;
 use Bitrix\Main;
+use Bitrix\Main\FileTable;
+use Bitrix\Main\Security\Random;
 use Bitrix\Main\Web\WebPacker;
 
 class WebpackFile
 {
     protected const MODULE_ID = 'landing';
+    protected const DIR_NAME = 'assets';
+    protected const DEFAULT_NAME = 'assets_webpack';
+    protected const CORE_EXTENSION = 'ui.webpacker';
+    protected const LANG_RESOURCE = '/bitrix/js/landing/webpackassets/message_loader.js';
 
     /**
      * @var WebPacker\FileController
@@ -29,10 +35,21 @@ class WebpackFile
     protected $package;
 
     /**
+     * @var WebPacker\Resource\Profile
+     */
+    protected $profile;
+
+    /**
      * Name of file. If not set - will be using default
-     * @var
+     * @var string
      */
     protected $filename;
+
+    /**
+     * Unique string of current assets package
+     * @var string
+     */
+    protected $packageHash;
 
     /**
      * WebpackFile constructor.
@@ -41,6 +58,7 @@ class WebpackFile
     {
         $this->fileController = new WebPacker\FileController();
         $this->package = new WebPacker\Resource\Package();
+        $this->profile = new WebPacker\Resource\Profile();
     }
 
     /**
@@ -49,7 +67,16 @@ class WebpackFile
      */
     public function setLandingId(int $lid): void
     {
-        $this->landingId = (int)$lid;
+        $this->landingId = $lid;
+    }
+
+    /**
+     * Set unique string for current assets package
+     * @param string $hash
+     */
+    public function setPackageHash(string $hash): void
+    {
+        $this->packageHash = $hash;
     }
 
     /**
@@ -63,13 +90,19 @@ class WebpackFile
 
     protected function getFileName(): string
     {
-        return $this->filename ?: WebpackBuilder::PACKAGE_NAME . WebpackBuilder::PACKAGE_NAME_SUFFIX . '.js';
+        if ($this->packageHash) {
+            $this->filename = self::DEFAULT_NAME . '_' . $this->packageHash . '_' . time() . '.js';
+        } else {
+            $this->filename = self::DEFAULT_NAME . '_' . Random::getString(16) . '.js';
+        }
+
+        return $this->filename;
     }
 
     /**
      * @param string $resource Relative path to asset.
      */
-    public function addResource($resource): void
+    public function addResource(string $resource): void
     {
         $this->package->addAsset(WebPacker\Resource\Asset::create($resource));
     }
@@ -100,45 +133,66 @@ class WebpackFile
         // todo: js cache lifetime
         if ($fileId = $this->findExistFile()) {
             $this->fileId = $fileId;
+            $file = \CFile::GetByID($fileId)->Fetch();
+            $this->setFileName($file['ORIGINAL_NAME'] ?: $this->filename);
         }
 
         $this->fileController->configureFile(
             $this->fileId,
             self::MODULE_ID,
-            '',
+            self::DIR_NAME,
             $this->getFileName()
         );
     }
 
     /**
      * Search existing asset file for current landing
-     * @return bool|int - ID of file or false if not exist
+     * @return null|int - ID of file or false if not exist
      */
-    protected function findExistFile()
+    protected function findExistFile(): ?int
     {
         if ($this->landingId) {
-            $files = File::getFilesFromAsset($this->landingId);
-            if (!empty($files)) {
-                return $files[count($files) - 1];    //last
+            foreach (File::getFilesFromAsset($this->landingId) as $fileId) {
+                if (
+                    $fileId > 0
+                    && $this->packageHash
+                    && ($file = \CFile::GetByID($fileId)->Fetch())
+                    && strpos($file['ORIGINAL_NAME'], self::DEFAULT_NAME . '_' . $this->packageHash) === 0
+                ) {
+                    return $fileId;
+                }
             }
-        } // old variant - have not landing ID
-        else {
-            $resFile = \CFile::GetList([], [
-                'ORIGINAL_NAME' => $this->getFileName(),
-                'MODULE_ID' => self::MODULE_ID,
-            ]);
-            if ($file = $resFile->Fetch()) {
-                return $file['ID'];
-            }
+
+            return null;
         }
 
-        return false;
+        // if have not landing ID - old variant, find something
+        $fileQuery = FileTable::query()
+            ->addSelect('ID')
+            ->addSelect('ORIGINAL_NAME')
+            ->where('MODULE_ID', self::MODULE_ID)
+            ->where('%ORIGINAL_NAME', self::DEFAULT_NAME);
+        $file = $fileQuery->fetch();
+
+        return $file ? $file['ID'] : null;
+    }
+
+    public function setUseLang(): void
+    {
+        $this->profile->useAllLangs(true);
+        $this->addResource(self::LANG_RESOURCE);
     }
 
     protected function configureResources(): void
     {
-        $this->fileController->addExtension('ui.webpacker');    // need core ext always
-        $this->fileController->addModule(new WebPacker\Module(WebpackBuilder::PACKAGE_NAME, $this->package));
+        $this->fileController->addExtension(self::CORE_EXTENSION);    // need core ext always
+        $this->fileController->addModule(
+            new WebPacker\Module(
+                self::DEFAULT_NAME,
+                $this->package,
+                $this->profile
+            )
+        );
     }
 
     /**
@@ -155,10 +209,8 @@ class WebpackFile
      * Mark webpack files for landing as "need rebuild", but not delete them. File will be exist until not created new file.
      * @param int|[int] $lid - array of landing IDs.
      * @throws Main\ArgumentException
-     * @throws Main\ObjectPropertyException
      * @throws Main\SystemException
      */
-
     public static function markToRebuild($lid): void
     {
         if (!$lid || empty($lid)) {
@@ -170,9 +222,6 @@ class WebpackFile
 
     /**
      * * Mark webpack files for landing as "need rebuild", but not delete them. File will be exist until not created new file.
-     * @throws Main\ArgumentException
-     * @throws Main\ObjectPropertyException
-     * @throws Main\SystemException
      */
     public static function markAllToRebuild(): void
     {

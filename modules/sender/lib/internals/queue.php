@@ -205,10 +205,12 @@ class Queue
      */
     public function restore()
     {
-        $row = QueueTable::getRow([
-            'select' => ['LAST_ITEM'],
-            'filter' => ['=ENTITY_TYPE' => $this->type, '=ENTITY_ID' => $this->id]
-        ]);
+        $row = QueueTable::getRow(
+            [
+                'select' => ['LAST_ITEM'],
+                'filter' => ['=ENTITY_TYPE' => $this->type, '=ENTITY_ID' => $this->id]
+            ]
+        );
         $this->setLastItem($row ? $row['LAST_ITEM'] : null);
 
         return $this;

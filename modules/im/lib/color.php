@@ -166,7 +166,7 @@ class Color
         if (!$number) {
             $code = $colors[mt_rand(0, 9)];
         } else {
-            $number = intval(substr($number . '', -1));
+            $number = intval(mb_substr($number . '', -1));
             $number = $number == 0 ? 9 : $number - 1;
 
             $code = $colors[$number];

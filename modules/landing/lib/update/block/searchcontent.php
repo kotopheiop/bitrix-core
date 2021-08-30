@@ -32,39 +32,43 @@ class SearchContent extends Stepper
         $finished = true;
 
         // gets common quantity
-        $res = BlockTable::getList([
-            'select' => [
-                new \Bitrix\Main\Entity\ExpressionField(
-                    'CNT', 'COUNT(*)'
-                )
+        $res = BlockTable::getList(
+            [
+                'select' => [
+                    new \Bitrix\Main\Entity\ExpressionField(
+                        'CNT', 'COUNT(*)'
+                    )
+                ]
             ]
-        ]);
+        );
         if ($row = $res->fetch()) {
             $result['count'] = $row['CNT'];
         }
 
         // gets group of blocks for update
-        $res = BlockTable::getList([
-            'select' => [
-                'ID',
-                'SORT',
-                'CODE',
-                'ANCHOR',
-                'ACTIVE',
-                'PUBLIC',
-                'DELETED',
-                'CONTENT',
-                'LID',
-                'SITE_ID' => 'LANDING.SITE_ID',
-            ],
-            'filter' => [
-                '>ID' => $lastId
-            ],
-            'order' => [
-                'ID' => 'ASC'
-            ],
-            'limit' => 20
-        ]);
+        $res = BlockTable::getList(
+            [
+                'select' => [
+                    'ID',
+                    'SORT',
+                    'CODE',
+                    'ANCHOR',
+                    'ACTIVE',
+                    'PUBLIC',
+                    'DELETED',
+                    'CONTENT',
+                    'LID',
+                    'SITE_ID' => 'LANDING.SITE_ID',
+                ],
+                'filter' => [
+                    '>ID' => $lastId
+                ],
+                'order' => [
+                    'ID' => 'ASC'
+                ],
+                'limit' => 20
+            ]
+        );
         while ($row = $res->fetch()) {
             $lastId = $row['ID'];
             $result['steps']++;
@@ -73,9 +77,12 @@ class SearchContent extends Stepper
             $searchContent = $block->getSearchContent();
 
             if ($searchContent) {
-                BlockTable::update($row['ID'], [
-                    'SEARCH_CONTENT' => $searchContent
-                ]);
+                BlockTable::update(
+                    $row['ID'],
+                    [
+                        'SEARCH_CONTENT' => $searchContent
+                    ]
+                );
             }
 
             $finished = false;

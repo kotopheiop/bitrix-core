@@ -3,6 +3,7 @@
 use Bitrix\Main,
     Bitrix\Main\Localization\Loc,
     Bitrix\Catalog;
+use Bitrix\Main\Loader;
 
 Loc::loadMessages(__FILE__);
 
@@ -20,12 +21,14 @@ class CAllCatalog
         $arMsg = array();
         $boolResult = true;
 
-        if (array_key_exists('OFFERS', $arFields))
+        if (array_key_exists('OFFERS', $arFields)) {
             unset($arFields['OFFERS']);
+        }
         $ID = (int)$ID;
         $arCatalog = false;
-        if (0 < $ID)
+        if (0 < $ID) {
             $arCatalog = CCatalog::GetByID($ID);
+        }
         if ($boolResult) {
             if (('UPDATE' == $ACTION) && (false == $arCatalog)) {
                 $boolResult = false;
@@ -36,29 +39,41 @@ class CAllCatalog
         if ($boolResult) {
             if ('ADD' == $ACTION || is_set($arFields, 'IBLOCK_ID')) {
                 if (!is_set($arFields, 'IBLOCK_ID')) {
-                    $arMsg[] = array('id' => 'IBLOCK_ID', "text" => Loc::getMessage('BT_MOD_CATALOG_ERR_IBLOCK_ID_FIELD_ABSENT'));
+                    $arMsg[] = array(
+                        'id' => 'IBLOCK_ID',
+                        "text" => Loc::getMessage('BT_MOD_CATALOG_ERR_IBLOCK_ID_FIELD_ABSENT')
+                    );
                     $boolResult = false;
                 } elseif ((int)$arFields['IBLOCK_ID'] <= 0) {
-                    $arMsg[] = array('id' => 'IBLOCK_ID', "text" => Loc::getMessage('BT_MOD_CATALOG_ERR_IBLOCK_ID_INVALID'));
+                    $arMsg[] = array(
+                        'id' => 'IBLOCK_ID',
+                        "text" => Loc::getMessage('BT_MOD_CATALOG_ERR_IBLOCK_ID_INVALID')
+                    );
                     $boolResult = false;
                 } else {
                     $arFields['IBLOCK_ID'] = (int)$arFields['IBLOCK_ID'];
                     $rsIBlocks = CIBlock::GetByID($arFields['IBLOCK_ID']);
                     if (!($arIBlock = $rsIBlocks->Fetch())) {
-                        $arMsg[] = array('id' => 'IBLOCK_ID', "text" => Loc::getMessage('BT_MOD_CATALOG_ERR_IBLOCK_ID_ABSENT'));
+                        $arMsg[] = array(
+                            'id' => 'IBLOCK_ID',
+                            "text" => Loc::getMessage('BT_MOD_CATALOG_ERR_IBLOCK_ID_ABSENT')
+                        );
                         $boolResult = false;
                     }
                 }
             }
-            if ((is_set($arFields, "SUBSCRIPTION") || $ACTION == "ADD") && $arFields["SUBSCRIPTION"] != "Y")
+            if ((is_set($arFields, "SUBSCRIPTION") || $ACTION == "ADD") && $arFields["SUBSCRIPTION"] != "Y") {
                 $arFields["SUBSCRIPTION"] = "N";
-            if ((is_set($arFields, "YANDEX_EXPORT") || $ACTION == "ADD") && $arFields["YANDEX_EXPORT"] != "Y")
+            }
+            if ((is_set($arFields, "YANDEX_EXPORT") || $ACTION == "ADD") && $arFields["YANDEX_EXPORT"] != "Y") {
                 $arFields["YANDEX_EXPORT"] = "N";
+            }
 
             if ((is_set($arFields, 'VAT_ID') || ('ADD' == $ACTION))) {
                 $arFields['VAT_ID'] = (int)$arFields['VAT_ID'];
-                if ($arFields['VAT_ID'] <= 0)
+                if ($arFields['VAT_ID'] <= 0) {
                     $arFields['VAT_ID'] = 0;
+                }
             }
         }
 
@@ -67,19 +82,28 @@ class CAllCatalog
                 if (!is_set($arFields, "PRODUCT_IBLOCK_ID")) {
                     $arFields["PRODUCT_IBLOCK_ID"] = 0;
                 } elseif (0 > (int)$arFields["PRODUCT_IBLOCK_ID"]) {
-                    $arMsg[] = array('id' => 'PRODUCT_IBLOCK_ID', "text" => Loc::getMessage('BT_MOD_CATALOG_ERR_PRODUCT_ID_INVALID'));
+                    $arMsg[] = array(
+                        'id' => 'PRODUCT_IBLOCK_ID',
+                        "text" => Loc::getMessage('BT_MOD_CATALOG_ERR_PRODUCT_ID_INVALID')
+                    );
                     $arFields["PRODUCT_IBLOCK_ID"] = 0;
                     $boolResult = false;
                 } elseif (0 < (int)$arFields["PRODUCT_IBLOCK_ID"]) {
                     $arFields["PRODUCT_IBLOCK_ID"] = (int)$arFields["PRODUCT_IBLOCK_ID"];
                     $rsIBlocks = CIBlock::GetByID($arFields['PRODUCT_IBLOCK_ID']);
                     if (!($arIBlock = $rsIBlocks->Fetch())) {
-                        $arMsg[] = array('id' => 'PRODUCT_IBLOCK_ID', "text" => Loc::getMessage('BT_MOD_CATALOG_ERR_PRODUCT_ID_ABSENT'));
+                        $arMsg[] = array(
+                            'id' => 'PRODUCT_IBLOCK_ID',
+                            "text" => Loc::getMessage('BT_MOD_CATALOG_ERR_PRODUCT_ID_ABSENT')
+                        );
                         $arFields["PRODUCT_IBLOCK_ID"] = 0;
                         $boolResult = false;
                     } else {
                         if ($arFields["PRODUCT_IBLOCK_ID"] == $arFields['IBLOCK_ID']) {
-                            $arMsg[] = array('id' => 'PRODUCT_IBLOCK_ID', "text" => Loc::getMessage('BT_MOD_CATALOG_ERR_PRODUCT_ID_SELF'));
+                            $arMsg[] = array(
+                                'id' => 'PRODUCT_IBLOCK_ID',
+                                "text" => Loc::getMessage('BT_MOD_CATALOG_ERR_PRODUCT_ID_SELF')
+                            );
                             $arFields["PRODUCT_IBLOCK_ID"] = 0;
                             $boolResult = false;
                         }
@@ -91,7 +115,10 @@ class CAllCatalog
                 if (!is_set($arFields, "SKU_PROPERTY_ID")) {
                     $arFields["SKU_PROPERTY_ID"] = 0;
                 } elseif (0 > (int)$arFields["SKU_PROPERTY_ID"]) {
-                    $arMsg[] = array('id' => 'SKU_PROPERTY_ID', "text" => Loc::getMessage('BT_MOD_CATALOG_ERR_SKU_PROP_ID_INVALID'));
+                    $arMsg[] = array(
+                        'id' => 'SKU_PROPERTY_ID',
+                        "text" => Loc::getMessage('BT_MOD_CATALOG_ERR_SKU_PROP_ID_INVALID')
+                    );
                     $arFields["SKU_PROPERTY_ID"] = 0;
                     $boolResult = false;
                 } else {
@@ -99,49 +126,86 @@ class CAllCatalog
                 }
 
                 if ((0 < $arFields["PRODUCT_IBLOCK_ID"]) && (0 == $arFields['SKU_PROPERTY_ID'])) {
-                    $arMsg[] = array('id' => 'SKU_PROPERTY_ID', "text" => Loc::getMessage('BT_MOD_CATALOG_ERR_PRODUCT_WITHOUT_SKU_PROP'));
+                    $arMsg[] = array(
+                        'id' => 'SKU_PROPERTY_ID',
+                        "text" => Loc::getMessage('BT_MOD_CATALOG_ERR_PRODUCT_WITHOUT_SKU_PROP')
+                    );
                     $boolResult = false;
                 } elseif ((0 == $arFields["PRODUCT_IBLOCK_ID"]) && (0 < $arFields['SKU_PROPERTY_ID'])) {
-                    $arMsg[] = array('id' => 'PRODUCT_IBLOCK_ID', "text" => Loc::getMessage('BT_MOD_CATALOG_ERR_SKU_PROP_WITHOUT_PRODUCT'));
+                    $arMsg[] = array(
+                        'id' => 'PRODUCT_IBLOCK_ID',
+                        "text" => Loc::getMessage('BT_MOD_CATALOG_ERR_SKU_PROP_WITHOUT_PRODUCT')
+                    );
                     $boolResult = false;
                 } elseif ((0 < $arFields["PRODUCT_IBLOCK_ID"]) && (0 < $arFields['SKU_PROPERTY_ID'])) {
-                    $rsProps = CIBlockProperty::GetList(array(), array('IBLOCK_ID' => $arFields['IBLOCK_ID'], 'ID' => $arFields['SKU_PROPERTY_ID'], 'ACTIVE' => 'Y'));
+                    $rsProps = CIBlockProperty::GetList(
+                        array(),
+                        array(
+                            'IBLOCK_ID' => $arFields['IBLOCK_ID'],
+                            'ID' => $arFields['SKU_PROPERTY_ID'],
+                            'ACTIVE' => 'Y'
+                        )
+                    );
                     if ($arProp = $rsProps->Fetch()) {
                         if (('E' != $arProp['PROPERTY_TYPE']) || ($arFields["PRODUCT_IBLOCK_ID"] != $arProp['LINK_IBLOCK_ID'])) {
-                            $arMsg[] = array('id' => 'SKU_PROPERTY_ID', "text" => Loc::getMessage('BT_MOD_CATALOG_ERR_SKU_PROP_WITHOUT_PRODUCT'));
+                            $arMsg[] = array(
+                                'id' => 'SKU_PROPERTY_ID',
+                                "text" => Loc::getMessage('BT_MOD_CATALOG_ERR_SKU_PROP_WITHOUT_PRODUCT')
+                            );
                             $boolResult = false;
                         }
                     } else {
-                        $arMsg[] = array('id' => 'SKU_PROPERTY_ID', "text" => Loc::getMessage('BT_MOD_CATALOG_ERR_SKU_PROP_NOT_FOUND'));
+                        $arMsg[] = array(
+                            'id' => 'SKU_PROPERTY_ID',
+                            "text" => Loc::getMessage('BT_MOD_CATALOG_ERR_SKU_PROP_NOT_FOUND')
+                        );
                         $boolResult = false;
                     }
                 }
             } elseif ('UPDATE' == $ACTION) {
                 $boolLocalFlag = (is_set($arFields, 'PRODUCT_IBLOCK_ID') == is_set($arFields, 'SKU_PROPERTY_ID'));
                 if (!$boolLocalFlag) {
-                    $arMsg[] = array('id' => 'PRODUCT_IBLOCK_ID', "text" => Loc::getMessage('BT_MOD_CATALOG_ERR_PRODUCT_ID_AND_SKU_PROPERTY_ID_NEED'));
+                    $arMsg[] = array(
+                        'id' => 'PRODUCT_IBLOCK_ID',
+                        "text" => Loc::getMessage('BT_MOD_CATALOG_ERR_PRODUCT_ID_AND_SKU_PROPERTY_ID_NEED')
+                    );
                     $boolResult = false;
                 } else {
                     if (is_set($arFields, 'PRODUCT_IBLOCK_ID')) {
                         if (0 > (int)$arFields["PRODUCT_IBLOCK_ID"]) {
-                            $arMsg[] = array('id' => 'PRODUCT_IBLOCK_ID', "text" => Loc::getMessage('BT_MOD_CATALOG_ERR_PRODUCT_ID_INVALID'));
+                            $arMsg[] = array(
+                                'id' => 'PRODUCT_IBLOCK_ID',
+                                "text" => Loc::getMessage('BT_MOD_CATALOG_ERR_PRODUCT_ID_INVALID')
+                            );
                             $arFields["PRODUCT_IBLOCK_ID"] = 0;
                             $boolResult = false;
                         } elseif (0 < (int)$arFields["PRODUCT_IBLOCK_ID"]) {
                             $arFields["PRODUCT_IBLOCK_ID"] = (int)$arFields["PRODUCT_IBLOCK_ID"];
                             $rsIBlocks = CIBlock::GetByID($arFields['PRODUCT_IBLOCK_ID']);
                             if (!($arIBlock = $rsIBlocks->Fetch())) {
-                                $arMsg[] = array('id' => 'PRODUCT_IBLOCK_ID', "text" => Loc::getMessage('BT_MOD_CATALOG_ERR_PRODUCT_ID_ABSENT'));
+                                $arMsg[] = array(
+                                    'id' => 'PRODUCT_IBLOCK_ID',
+                                    "text" => Loc::getMessage('BT_MOD_CATALOG_ERR_PRODUCT_ID_ABSENT')
+                                );
                                 $arFields["PRODUCT_IBLOCK_ID"] = 0;
                                 $boolResult = false;
                             } else {
                                 if (0 < $ID && $arFields["PRODUCT_IBLOCK_ID"] == $ID) {
-                                    $arMsg[] = array('id' => 'PRODUCT_IBLOCK_ID', "text" => Loc::getMessage('BT_MOD_CATALOG_ERR_PRODUCT_ID_SELF'));
+                                    $arMsg[] = array(
+                                        'id' => 'PRODUCT_IBLOCK_ID',
+                                        "text" => Loc::getMessage('BT_MOD_CATALOG_ERR_PRODUCT_ID_SELF')
+                                    );
                                     $arFields["PRODUCT_IBLOCK_ID"] = 0;
                                     $boolResult = false;
                                 } else {
-                                    if (is_set($arFields, 'IBLOCK_ID') && $arFields["PRODUCT_IBLOCK_ID"] == $arFields['IBLOCK_ID']) {
-                                        $arMsg[] = array('id' => 'PRODUCT_IBLOCK_ID', "text" => Loc::getMessage('BT_MOD_CATALOG_ERR_PRODUCT_ID_SELF'));
+                                    if (is_set(
+                                            $arFields,
+                                            'IBLOCK_ID'
+                                        ) && $arFields["PRODUCT_IBLOCK_ID"] == $arFields['IBLOCK_ID']) {
+                                        $arMsg[] = array(
+                                            'id' => 'PRODUCT_IBLOCK_ID',
+                                            "text" => Loc::getMessage('BT_MOD_CATALOG_ERR_PRODUCT_ID_SELF')
+                                        );
                                         $arFields["PRODUCT_IBLOCK_ID"] = 0;
                                         $boolResult = false;
                                     }
@@ -152,7 +216,10 @@ class CAllCatalog
 
                     if (is_set($arFields, 'SKU_PROPERTY_ID')) {
                         if (0 > (int)$arFields["SKU_PROPERTY_ID"]) {
-                            $arMsg[] = array('id' => 'SKU_PROPERTY_ID', "text" => Loc::getMessage('BT_MOD_CATALOG_ERR_SKU_PROP_ID_INVALID'));
+                            $arMsg[] = array(
+                                'id' => 'SKU_PROPERTY_ID',
+                                "text" => Loc::getMessage('BT_MOD_CATALOG_ERR_SKU_PROP_ID_INVALID')
+                            );
                             $arFields["SKU_PROPERTY_ID"] = 0;
                             $boolResult = false;
                         } else {
@@ -161,20 +228,39 @@ class CAllCatalog
                     }
                     if (is_set($arFields, 'PRODUCT_IBLOCK_ID') && is_set($arFields, 'SKU_PROPERTY_ID')) {
                         if ((0 < $arFields["PRODUCT_IBLOCK_ID"]) && (0 == $arFields['SKU_PROPERTY_ID'])) {
-                            $arMsg[] = array('id' => 'SKU_PROPERTY_ID', "text" => Loc::getMessage('BT_MOD_CATALOG_ERR_PRODUCT_WITHOUT_SKU_PROP'));
+                            $arMsg[] = array(
+                                'id' => 'SKU_PROPERTY_ID',
+                                "text" => Loc::getMessage('BT_MOD_CATALOG_ERR_PRODUCT_WITHOUT_SKU_PROP')
+                            );
                             $boolResult = false;
                         } elseif ((0 == $arFields["PRODUCT_IBLOCK_ID"]) && (0 < $arFields['SKU_PROPERTY_ID'])) {
-                            $arMsg[] = array('id' => 'PRODUCT_IBLOCK_ID', "text" => Loc::getMessage('BT_MOD_CATALOG_ERR_SKU_PROP_WITHOUT_PRODUCT'));
+                            $arMsg[] = array(
+                                'id' => 'PRODUCT_IBLOCK_ID',
+                                "text" => Loc::getMessage('BT_MOD_CATALOG_ERR_SKU_PROP_WITHOUT_PRODUCT')
+                            );
                             $boolResult = false;
                         } elseif ((0 < $arFields["PRODUCT_IBLOCK_ID"]) && (0 < $arFields['SKU_PROPERTY_ID'])) {
-                            $rsProps = CIBlockProperty::GetList(array(), array('IBLOCK_ID' => $ID, 'ID' => $arFields['SKU_PROPERTY_ID'], 'ACTIVE' => 'Y'));
+                            $rsProps = CIBlockProperty::GetList(
+                                array(),
+                                array(
+                                    'IBLOCK_ID' => $ID,
+                                    'ID' => $arFields['SKU_PROPERTY_ID'],
+                                    'ACTIVE' => 'Y'
+                                )
+                            );
                             if ($arProp = $rsProps->Fetch()) {
                                 if (('E' != $arProp['PROPERTY_TYPE']) || ($arFields["PRODUCT_IBLOCK_ID"] != $arProp['LINK_IBLOCK_ID'])) {
-                                    $arMsg[] = array('id' => 'SKU_PROPERTY_ID', "text" => Loc::getMessage('BT_MOD_CATALOG_ERR_SKU_PROP_WITHOUT_PRODUCT'));
+                                    $arMsg[] = array(
+                                        'id' => 'SKU_PROPERTY_ID',
+                                        "text" => Loc::getMessage('BT_MOD_CATALOG_ERR_SKU_PROP_WITHOUT_PRODUCT')
+                                    );
                                     $boolResult = false;
                                 }
                             } else {
-                                $arMsg[] = array('id' => 'SKU_PROPERTY_ID', "text" => Loc::getMessage('BT_MOD_CATALOG_ERR_SKU_PROP_NOT_FOUND'));
+                                $arMsg[] = array(
+                                    'id' => 'SKU_PROPERTY_ID',
+                                    "text" => Loc::getMessage('BT_MOD_CATALOG_ERR_SKU_PROP_NOT_FOUND')
+                                );
                                 $boolResult = false;
                             }
                         }
@@ -196,8 +282,9 @@ class CAllCatalog
         global $DB;
 
         $ID = (int)$ID;
-        if ($ID <= 0)
+        if ($ID <= 0) {
             return false;
+        }
 
         if (isset(self::$arCatalogCache[$ID])) {
             return self::$arCatalogCache[$ID];
@@ -247,39 +334,43 @@ class CAllCatalog
         );
 
         $key = (string)$key;
-        if ($key == '')
+        if ($key == '') {
             return false;
+        }
         if (0 == strncmp($key, '!', 1)) {
             $arResult['NEGATIVE'] = 'Y';
-            $key = substr($key, 1);
-            if ($key == '')
+            $key = mb_substr($key, 1);
+            if ($key == '') {
                 return false;
+            }
             if (0 == strncmp($key, '+', 1)) {
                 $arResult['OR_NULL'] = 'Y';
-                $key = substr($key, 1);
+                $key = mb_substr($key, 1);
             }
         } elseif (0 == strncmp($key, '+', 1)) {
             $arResult['OR_NULL'] = 'Y';
-            $key = substr($key, 1);
-            if ($key == '')
+            $key = mb_substr($key, 1);
+            if ($key == '') {
                 return false;
+            }
             if (0 == strncmp($key, '!', 1)) {
                 $arResult['NEGATIVE'] = 'Y';
-                $key = substr($key, 1);
+                $key = mb_substr($key, 1);
             }
         }
-        if ($key == '')
+        if ($key == '') {
             return false;
-        $strKeyOp = substr($key, 0, 2);
+        }
+        $strKeyOp = mb_substr($key, 0, 2);
         if ('' != $strKeyOp && isset($arDoubleModify[$strKeyOp])) {
             $arResult['OPERATION'] = $arDoubleModify[$strKeyOp];
-            $arResult['FIELD'] = substr($key, 2);
+            $arResult['FIELD'] = mb_substr($key, 2);
             return $arResult;
         }
-        $strKeyOp = substr($key, 0, 1);
+        $strKeyOp = mb_substr($key, 0, 1);
         if ('' != $strKeyOp && isset($arOneModify[$strKeyOp])) {
             $arResult['OPERATION'] = $arOneModify[$strKeyOp];
-            $arResult['FIELD'] = substr($key, 1);
+            $arResult['FIELD'] = mb_substr($key, 1);
             return $arResult;
         }
         $arResult['OPERATION'] = '=';
@@ -304,7 +395,7 @@ class CAllCatalog
         reset($arFields);
         $firstField = current($arFields);
 
-        $strDBType = strtoupper($DB->type);
+        $strDBType = $DB->type;
         $oracleEdition = ('ORACLE' == $strDBType);
 
         $arGroupByFunct = array(
@@ -319,8 +410,8 @@ class CAllCatalog
         if (!empty($arGroupBy) && is_array($arGroupBy)) {
             $arSelectFields = $arGroupBy;
             foreach ($arGroupBy as $key => $val) {
-                $val = strtoupper($val);
-                $key = strtoupper($key);
+                $val = mb_strtoupper($val);
+                $key = mb_strtoupper($key);
                 if (isset($arFields[$val]) && !isset($arGroupByFunct[$key])) {
                     $sqlGroupByList[] = $arFields[$val]["FIELD"];
                     if (isset($arFields[$val]["FROM"]) && !empty($arFields[$val]["FROM"])) {
@@ -329,8 +420,9 @@ class CAllCatalog
                 }
             }
         }
-        if (!empty($sqlGroupByList))
+        if (!empty($sqlGroupByList)) {
             $strSqlGroupBy = implode(', ', $sqlGroupByList);
+        }
         // <-- GROUP BY
 
         // SELECT -->
@@ -360,8 +452,9 @@ class CAllCatalog
                     switch ($fieldDescr['TYPE']) {
                         case 'datetime':
                         case 'date':
-                            if (isset($arOrder[$fieldKey]))
+                            if (isset($arOrder[$fieldKey])) {
                                 $sqlSelect[] = $fieldDescr['FIELD'] . ' as ' . $fieldKey . '_X1';
+                            }
 
                             $sqlSelect[] = $DB->DateToCharFunction(
                                     $fieldDescr['FIELD'],
@@ -378,8 +471,8 @@ class CAllCatalog
                 }
             } else {
                 foreach ($arSelectFields as $key => $val) {
-                    $val = strtoupper($val);
-                    $key = strtoupper($key);
+                    $val = mb_strtoupper($val);
+                    $key = mb_strtoupper($key);
                     if (isset($arFields[$val])) {
                         if (isset($arGroupByFunct[$key])) {
                             $sqlSelect[] = $key . '(' . $arFields[$val]['FIELD'] . ') as ' . $val;
@@ -387,8 +480,9 @@ class CAllCatalog
                             switch ($arFields[$val]['TYPE']) {
                                 case 'datetime':
                                 case 'date':
-                                    if (isset($arOrder[$val]))
+                                    if (isset($arOrder[$val])) {
                                         $sqlSelect[] = $arFields[$val]['FIELD'] . ' as ' . $val . '_X1';
+                                    }
 
                                     $sqlSelect[] = $DB->DateToCharFunction(
                                             $arFields[$val]['FIELD'],
@@ -426,8 +520,9 @@ class CAllCatalog
 
             $key = $filter_keys[$i];
             $key_res = CCatalog::GetFilterOperation($key);
-            if (empty($key_res))
+            if (empty($key_res)) {
                 continue;
+            }
             $key = $key_res["FIELD"];
             $strNegative = $key_res["NEGATIVE"];
             $strOperation = $key_res["OPERATION"];
@@ -441,10 +536,19 @@ class CAllCatalog
                         if (isset($arFields[$key]["WHERE"])) {
                             $arSqlSearch_tmp1 = call_user_func_array(
                                 $arFields[$key]["WHERE"],
-                                array($vals, $key, $strOperation, $strNegative, $arFields[$key]["FIELD"], &$arFields, &$arFilter)
+                                array(
+                                    $vals,
+                                    $key,
+                                    $strOperation,
+                                    $strNegative,
+                                    $arFields[$key]["FIELD"],
+                                    &$arFields,
+                                    &$arFilter
+                                )
                             );
-                            if ($arSqlSearch_tmp1 !== false)
+                            if ($arSqlSearch_tmp1 !== false) {
                                 $arSqlSearch_tmp[] = $arSqlSearch_tmp1;
+                            }
                         } else {
                             if ($arFields[$key]['TYPE'] == 'int') {
                                 $clearVals = array();
@@ -453,46 +557,62 @@ class CAllCatalog
                                     $clearVals[$item] = $item;
                                 }
                                 unset($item);
-                                if (empty($clearVals))
+                                if (empty($clearVals)) {
                                     $arSqlSearch_tmp[] = '(1 = 2)';
-                                else
-                                    $arSqlSearch_tmp[] = ($strNegative == 'Y' ? ' NOT ' : '') . '(' . $arFields[$key]['FIELD'] . ' IN (' . implode(',', $clearVals) . '))';
+                                } else {
+                                    $arSqlSearch_tmp[] = ($strNegative == 'Y' ? ' NOT ' : '') . '(' . $arFields[$key]['FIELD'] . ' IN (' . implode(
+                                            ',',
+                                            $clearVals
+                                        ) . '))';
+                                }
                                 unset($clearVals);
                             } elseif ($arFields[$key]['TYPE'] == 'double') {
                                 $clearVals = array();
-                                foreach ($vals as $item)
+                                foreach ($vals as $item) {
                                     $clearVals[] = (float)$item;
+                                }
                                 unset($item);
                                 if (empty($clearVals)) {
                                     $arSqlSearch_tmp[] = '(1 = 2)';
                                 } else {
                                     $clearVals = array_unique($clearVals);
-                                    $arSqlSearch_tmp[] = ($strNegative == 'Y' ? ' NOT ' : '') . '(' . $arFields[$key]['FIELD'] . ' IN (' . implode(',', $clearVals) . '))';
+                                    $arSqlSearch_tmp[] = ($strNegative == 'Y' ? ' NOT ' : '') . '(' . $arFields[$key]['FIELD'] . ' IN (' . implode(
+                                            ',',
+                                            $clearVals
+                                        ) . '))';
                                 }
                                 unset($clearVals);
                             } elseif ($arFields[$key]['TYPE'] == 'string' || $arFields[$key]['TYPE'] == 'char') {
                                 $clearVals = array();
-                                foreach ($vals as $item)
+                                foreach ($vals as $item) {
                                     $clearVals[] = "'" . $DB->ForSql($item) . "'";
+                                }
                                 unset($item);
                                 if (empty($clearVals)) {
                                     $arSqlSearch_tmp[] = '(1 = 2)';
                                 } else {
                                     $clearVals = array_unique($clearVals);
-                                    $arSqlSearch_tmp[] = (($strNegative == 'Y') ? ' NOT ' : '') . '(' . $arFields[$key]['FIELD'] . ' ' . $strOperation . ' (' . implode(',', $clearVals) . '))';
+                                    $arSqlSearch_tmp[] = (($strNegative == 'Y') ? ' NOT ' : '') . '(' . $arFields[$key]['FIELD'] . ' ' . $strOperation . ' (' . implode(
+                                            ',',
+                                            $clearVals
+                                        ) . '))';
                                 }
                                 unset($clearVals);
                             } elseif ($arFields[$key]['TYPE'] == 'datetime' || $arFields[$key]['TYPE'] == 'date') {
                                 $valueFormat = ($arFields[$key]['TYPE'] == 'datetime' ? 'FULL' : 'SHORT');
                                 $clearVals = array();
-                                foreach ($vals as $item)
-                                    $clearVals[] = "'" . $DB->CharToDateFunction($DB->ForSql($item), $valueFormat) . "'";
+                                foreach ($vals as $item) {
+                                    $clearVals[] = $DB->CharToDateFunction($item, $valueFormat);
+                                }
                                 unset($item);
                                 if (empty($clearVals)) {
                                     $arSqlSearch_tmp[] = '(1 = 2)';
                                 } else {
                                     $clearVals = array_unique($clearVals);
-                                    $arSqlSearch_tmp[] = ($strNegative == 'Y' ? ' NOT ' : '') . '(' . $arFields[$key]['FIELD'] . ' ' . $strOperation . ' (' . implode(',', $clearVals) . '))';
+                                    $arSqlSearch_tmp[] = ($strNegative == 'Y' ? ' NOT ' : '') . '(' . $arFields[$key]['FIELD'] . ' ' . $strOperation . ' (' . implode(
+                                            ',',
+                                            $clearVals
+                                        ) . '))';
                                 }
                                 unset($clearVals, $valueFormat);
                             }
@@ -504,42 +624,68 @@ class CAllCatalog
                             if (isset($arFields[$key]["WHERE"])) {
                                 $arSqlSearch_tmp1 = call_user_func_array(
                                     $arFields[$key]["WHERE"],
-                                    array($val, $key, $strOperation, $strNegative, $arFields[$key]["FIELD"], &$arFields, &$arFilter)
+                                    array(
+                                        $val,
+                                        $key,
+                                        $strOperation,
+                                        $strNegative,
+                                        $arFields[$key]["FIELD"],
+                                        &$arFields,
+                                        &$arFilter
+                                    )
                                 );
-                                if ($arSqlSearch_tmp1 !== false)
+                                if ($arSqlSearch_tmp1 !== false) {
                                     $arSqlSearch_tmp[] = $arSqlSearch_tmp1;
+                                }
                             } else {
                                 if ($arFields[$key]["TYPE"] == "int") {
-                                    if ((int)$val == 0 && strpos($strOperation, "=") !== false)
+                                    if ((int)$val == 0 && mb_strpos($strOperation, "=") !== false) {
                                         $arSqlSearch_tmp[] = "(" . $arFields[$key]["FIELD"] . " IS " . (($strNegative == "Y") ? "NOT " : "") . "NULL) " . (($strNegative == "Y") ? "AND" : "OR") . " " . (($strNegative == "Y") ? "NOT " : "") . "(" . $arFields[$key]["FIELD"] . " " . $strOperation . " 0)";
-                                    else
+                                    } else {
                                         $arSqlSearch_tmp[] = (($strNegative == "Y") ? " " . $arFields[$key]["FIELD"] . " IS NULL OR NOT " : "") . "(" . $arFields[$key]["FIELD"] . " " . $strOperation . " " . (int)$val . " )";
+                                    }
                                 } elseif ($arFields[$key]["TYPE"] == "double") {
                                     $val = str_replace(",", ".", $val);
 
-                                    if ((float)$val == 0 && strpos($strOperation, "=") !== false)
+                                    if ((float)$val == 0 && mb_strpos($strOperation, "=") !== false) {
                                         $arSqlSearch_tmp[] = "(" . $arFields[$key]["FIELD"] . " IS " . (($strNegative == "Y") ? "NOT " : "") . "NULL) " . (($strNegative == "Y") ? "AND" : "OR") . " " . (($strNegative == "Y") ? "NOT " : "") . "(" . $arFields[$key]["FIELD"] . " " . $strOperation . " 0)";
-                                    else
+                                    } else {
                                         $arSqlSearch_tmp[] = (($strNegative == "Y") ? " " . $arFields[$key]["FIELD"] . " IS NULL OR NOT " : "") . "(" . $arFields[$key]["FIELD"] . " " . $strOperation . " " . (float)$val . " )";
+                                    }
                                 } elseif ($arFields[$key]["TYPE"] == "string" || $arFields[$key]["TYPE"] == "char") {
                                     if ($strOperation == "QUERY") {
                                         $arSqlSearch_tmp[] = GetFilterQuery($arFields[$key]["FIELD"], $val, "Y");
                                     } else {
-                                        if ((strlen($val) == 0) && (strpos($strOperation, "=") !== false))
-                                            $arSqlSearch_tmp[] = "(" . $arFields[$key]["FIELD"] . " IS " . (($strNegative == "Y") ? "NOT " : "") . "NULL) " . (($strNegative == "Y") ? "AND NOT" : "OR") . " (" . $DB->Length($arFields[$key]["FIELD"]) . " <= 0) " . (($strNegative == "Y") ? "AND NOT" : "OR") . " (" . $arFields[$key]["FIELD"] . " " . $strOperation . " '" . $DB->ForSql($val) . "' )";
-                                        else
-                                            $arSqlSearch_tmp[] = (($strNegative == "Y") ? " " . $arFields[$key]["FIELD"] . " IS NULL OR NOT " : "") . "(" . $arFields[$key]["FIELD"] . " " . $strOperation . " '" . $DB->ForSql($val) . "' )";
+                                        if (($val == '') && (mb_strpos($strOperation, "=") !== false)) {
+                                            $arSqlSearch_tmp[] = "(" . $arFields[$key]["FIELD"] . " IS " . (($strNegative == "Y") ? "NOT " : "") . "NULL) " . (($strNegative == "Y") ? "AND NOT" : "OR") . " (" . $DB->Length(
+                                                    $arFields[$key]["FIELD"]
+                                                ) . " <= 0) " . (($strNegative == "Y") ? "AND NOT" : "OR") . " (" . $arFields[$key]["FIELD"] . " " . $strOperation . " '" . $DB->ForSql(
+                                                    $val
+                                                ) . "' )";
+                                        } else {
+                                            $arSqlSearch_tmp[] = (($strNegative == "Y") ? " " . $arFields[$key]["FIELD"] . " IS NULL OR NOT " : "") . "(" . $arFields[$key]["FIELD"] . " " . $strOperation . " '" . $DB->ForSql(
+                                                    $val
+                                                ) . "' )";
+                                        }
                                     }
                                 } elseif ($arFields[$key]["TYPE"] == "datetime") {
-                                    if (strlen($val) <= 0)
+                                    if ($val == '') {
                                         $arSqlSearch_tmp[] = ($strNegative == "Y" ? "NOT" : "") . "(" . $arFields[$key]["FIELD"] . " IS NULL)";
-                                    else
-                                        $arSqlSearch_tmp[] = ($strNegative == "Y" ? " " . $arFields[$key]["FIELD"] . " IS NULL OR NOT " : "") . "(" . $arFields[$key]["FIELD"] . " " . $strOperation . " " . $DB->CharToDateFunction($DB->ForSql($val), "FULL") . ")";
+                                    } else {
+                                        $arSqlSearch_tmp[] = ($strNegative == "Y" ? " " . $arFields[$key]["FIELD"] . " IS NULL OR NOT " : "") . "(" . $arFields[$key]["FIELD"] . " " . $strOperation . " " . $DB->CharToDateFunction(
+                                                $val,
+                                                "FULL"
+                                            ) . ")";
+                                    }
                                 } elseif ($arFields[$key]["TYPE"] == "date") {
-                                    if (strlen($val) <= 0)
+                                    if ($val == '') {
                                         $arSqlSearch_tmp[] = ($strNegative == "Y" ? "NOT" : "") . "(" . $arFields[$key]["FIELD"] . " IS NULL)";
-                                    else
-                                        $arSqlSearch_tmp[] = ($strNegative == "Y" ? " " . $arFields[$key]["FIELD"] . " IS NULL OR NOT " : "") . "(" . $arFields[$key]["FIELD"] . " " . $strOperation . " " . $DB->CharToDateFunction($DB->ForSql($val), "SHORT") . ")";
+                                    } else {
+                                        $arSqlSearch_tmp[] = ($strNegative == "Y" ? " " . $arFields[$key]["FIELD"] . " IS NULL OR NOT " : "") . "(" . $arFields[$key]["FIELD"] . " " . $strOperation . " " . $DB->CharToDateFunction(
+                                                $val,
+                                                "SHORT"
+                                            ) . ")";
+                                    }
                                 }
                             }
                         }
@@ -552,51 +698,59 @@ class CAllCatalog
 
                 $strSqlSearch_tmp = "";
                 for ($j = 0, $intCountSearch = count($arSqlSearch_tmp); $j < $intCountSearch; $j++) {
-                    if ($j > 0)
+                    if ($j > 0) {
                         $strSqlSearch_tmp .= ($strNegative == "Y" ? " AND " : " OR ");
+                    }
                     $strSqlSearch_tmp .= "(" . $arSqlSearch_tmp[$j] . ")";
                 }
                 if ($strOrNull == "Y") {
-                    if (strlen($strSqlSearch_tmp) > 0)
+                    if ($strSqlSearch_tmp <> '') {
                         $strSqlSearch_tmp .= ($strNegative == "Y" ? " AND " : " OR ");
+                    }
                     $strSqlSearch_tmp .= "(" . $arFields[$key]["FIELD"] . " IS " . ($strNegative == "Y" ? "NOT " : "") . "NULL)";
 
                     if ($arFields[$key]["TYPE"] == "int" || $arFields[$key]["TYPE"] == "double") {
-                        if (strlen($strSqlSearch_tmp) > 0)
+                        if ($strSqlSearch_tmp <> '') {
                             $strSqlSearch_tmp .= ($strNegative == "Y" ? " AND " : " OR ");
+                        }
                         $strSqlSearch_tmp .= "(" . $arFields[$key]["FIELD"] . " " . ($strNegative == "Y" ? "<>" : "=") . " 0)";
                     } elseif ($arFields[$key]["TYPE"] == "string" || $arFields[$key]["TYPE"] == "char") {
-                        if (strlen($strSqlSearch_tmp) > 0)
+                        if ($strSqlSearch_tmp <> '') {
                             $strSqlSearch_tmp .= ($strNegative == "Y" ? " AND " : " OR ");
+                        }
                         $strSqlSearch_tmp .= "(" . $arFields[$key]["FIELD"] . " " . ($strNegative == "Y" ? "<>" : "=") . " '')";
                     }
                 }
 
-                if ($strSqlSearch_tmp != "")
+                if ($strSqlSearch_tmp != "") {
                     $arSqlSearch[] = "(" . $strSqlSearch_tmp . ")";
+                }
             }
         }
 
-        if (!empty($arSqlSearch))
+        if (!empty($arSqlSearch)) {
             $strSqlWhere = '(' . implode(') and (', $arSqlSearch) . ')';
+        }
         // <-- WHERE
 
         // ORDER BY -->
         $arSqlOrder = array();
         $sortExist = array();
         foreach ($arOrder as $by => $order) {
-            $by = strtoupper($by);
-            $order = strtoupper($order);
+            $by = mb_strtoupper($by);
+            $order = mb_strtoupper($order);
 
-            if ($order != 'ASC')
+            if ($order != 'ASC') {
                 $order = 'DESC';
+            }
             if ($oracleEdition) {
                 $order .= ($order == 'ASC' ? ' NULLS FIRST' : ' NULLS LAST');
             }
 
             if (isset($arFields[$by])) {
-                if (isset($sortExist[$by]))
+                if (isset($sortExist[$by])) {
                     continue;
+                }
                 $sortExist[$by] = true;
                 $arSqlOrder[] = $arFields[$by]["FIELD"] . ' ' . $order;
                 if (isset($arFields[$by]["FROM"]) && !empty($arFields[$by]["FROM"])) {
@@ -643,7 +797,7 @@ class CAllCatalog
 
         $sqlGroupByList = array();
 
-        $strDBType = strtoupper($DB->type);
+        $strDBType = $DB->type;
         $oracleEdition = ('ORACLE' == $strDBType);
 
         $arGroupByFunct = array(
@@ -659,24 +813,26 @@ class CAllCatalog
         // GROUP BY -->
         if (!empty($arGroupBy) && is_array($arGroupBy)) {
             foreach ($arGroupBy as $key => $val) {
-                $val = strtoupper($val);
-                $key = strtoupper($key);
+                $val = mb_strtoupper($val);
+                $key = mb_strtoupper($key);
                 if (isset($arFields[$val]) && !isset($arGroupByFunct[$key])) {
                     $sqlGroupByList[] = $arFields[$val]["FIELD"];
 
                     if (isset($arFields[$val]["FROM"])
-                        && strlen($arFields[$val]["FROM"]) > 0
+                        && $arFields[$val]["FROM"] <> ''
                         && !in_array($arFields[$val]["FROM"], $arAlreadyJoined)) {
-                        if (strlen($strSqlFrom) > 0)
+                        if ($strSqlFrom <> '') {
                             $strSqlFrom .= " ";
+                        }
                         $strSqlFrom .= $arFields[$val]["FROM"];
                         $arAlreadyJoined[] = $arFields[$val]["FROM"];
                     }
                 }
             }
         }
-        if (!empty($sqlGroupByList))
+        if (!empty($sqlGroupByList)) {
             $strSqlGroupBy = implode(', ', $sqlGroupByList);
+        }
         // <-- GROUP BY
 
         // SELECT -->
@@ -704,61 +860,83 @@ class CAllCatalog
                         continue;
                     }
 
-                    if ('' != $strSqlSelect)
+                    if ('' != $strSqlSelect) {
                         $strSqlSelect .= ", ";
+                    }
 
                     if ($arFields[$arFieldsKeys[$i]]["TYPE"] == "datetime") {
-                        if (isset($arOrder[$arFieldsKeys[$i]]))
+                        if (isset($arOrder[$arFieldsKeys[$i]])) {
                             $strSqlSelect .= $arFields[$arFieldsKeys[$i]]["FIELD"] . " as " . $arFieldsKeys[$i] . "_X1, ";
+                        }
 
-                        $strSqlSelect .= $DB->DateToCharFunction($arFields[$arFieldsKeys[$i]]["FIELD"], "FULL") . " as " . $arFieldsKeys[$i];
+                        $strSqlSelect .= $DB->DateToCharFunction(
+                                $arFields[$arFieldsKeys[$i]]["FIELD"],
+                                "FULL"
+                            ) . " as " . $arFieldsKeys[$i];
                     } elseif ($arFields[$arFieldsKeys[$i]]["TYPE"] == "date") {
-                        if (isset($arOrder[$arFieldsKeys[$i]]))
+                        if (isset($arOrder[$arFieldsKeys[$i]])) {
                             $strSqlSelect .= $arFields[$arFieldsKeys[$i]]["FIELD"] . " as " . $arFieldsKeys[$i] . "_X1, ";
+                        }
 
-                        $strSqlSelect .= $DB->DateToCharFunction($arFields[$arFieldsKeys[$i]]["FIELD"], "SHORT") . " as " . $arFieldsKeys[$i];
-                    } else
+                        $strSqlSelect .= $DB->DateToCharFunction(
+                                $arFields[$arFieldsKeys[$i]]["FIELD"],
+                                "SHORT"
+                            ) . " as " . $arFieldsKeys[$i];
+                    } else {
                         $strSqlSelect .= $arFields[$arFieldsKeys[$i]]["FIELD"] . " as " . $arFieldsKeys[$i];
+                    }
 
                     if (isset($arFields[$arFieldsKeys[$i]]["FROM"])
-                        && strlen($arFields[$arFieldsKeys[$i]]["FROM"]) > 0
+                        && $arFields[$arFieldsKeys[$i]]["FROM"] <> ''
                         && !in_array($arFields[$arFieldsKeys[$i]]["FROM"], $arAlreadyJoined)) {
-                        if (strlen($strSqlFrom) > 0)
+                        if ($strSqlFrom <> '') {
                             $strSqlFrom .= " ";
+                        }
                         $strSqlFrom .= $arFields[$arFieldsKeys[$i]]["FROM"];
                         $arAlreadyJoined[] = $arFields[$arFieldsKeys[$i]]["FROM"];
                     }
                 }
             } else {
                 foreach ($arSelectFields as $key => $val) {
-                    $val = strtoupper($val);
-                    $key = strtoupper($key);
+                    $val = mb_strtoupper($val);
+                    $key = mb_strtoupper($key);
                     if (isset($arFields[$val])) {
-                        if ('' != $strSqlSelect)
+                        if ('' != $strSqlSelect) {
                             $strSqlSelect .= ", ";
+                        }
 
                         if (isset($arGroupByFunct[$key])) {
                             $strSqlSelect .= $key . "(" . $arFields[$val]["FIELD"] . ") as " . $val;
                         } else {
                             if ($arFields[$val]["TYPE"] == "datetime") {
-                                if (isset($arOrder[$val]))
+                                if (isset($arOrder[$val])) {
                                     $strSqlSelect .= $arFields[$val]["FIELD"] . " as " . $val . "_X1, ";
+                                }
 
-                                $strSqlSelect .= $DB->DateToCharFunction($arFields[$val]["FIELD"], "FULL") . " as " . $val;
+                                $strSqlSelect .= $DB->DateToCharFunction(
+                                        $arFields[$val]["FIELD"],
+                                        "FULL"
+                                    ) . " as " . $val;
                             } elseif ($arFields[$val]["TYPE"] == "date") {
-                                if (isset($arOrder[$val]))
+                                if (isset($arOrder[$val])) {
                                     $strSqlSelect .= $arFields[$val]["FIELD"] . " as " . $val . "_X1, ";
+                                }
 
-                                $strSqlSelect .= $DB->DateToCharFunction($arFields[$val]["FIELD"], "SHORT") . " as " . $val;
-                            } else
+                                $strSqlSelect .= $DB->DateToCharFunction(
+                                        $arFields[$val]["FIELD"],
+                                        "SHORT"
+                                    ) . " as " . $val;
+                            } else {
                                 $strSqlSelect .= $arFields[$val]["FIELD"] . " as " . $val;
+                            }
                         }
 
                         if (isset($arFields[$val]["FROM"])
-                            && strlen($arFields[$val]["FROM"]) > 0
+                            && $arFields[$val]["FROM"] <> ''
                             && !in_array($arFields[$val]["FROM"], $arAlreadyJoined)) {
-                            if ('' != $strSqlFrom)
+                            if ('' != $strSqlFrom) {
                                 $strSqlFrom .= " ";
+                            }
                             $strSqlFrom .= $arFields[$val]["FROM"];
                             $arAlreadyJoined[] = $arFields[$val]["FROM"];
                         }
@@ -767,8 +945,9 @@ class CAllCatalog
             }
 
             if ('' != $strSqlGroupBy) {
-                if ('' != $strSqlSelect)
+                if ('' != $strSqlSelect) {
                     $strSqlSelect .= ", ";
+                }
                 $strSqlSelect .= "COUNT(%%_DISTINCT_%% " . $arFields[$arFieldsKeys[0]]["FIELD"] . ") as CNT";
             } else {
                 $strSqlSelect = "%%_DISTINCT_%% " . $strSqlSelect;
@@ -788,8 +967,9 @@ class CAllCatalog
 
             $key = $filter_keys[$i];
             $key_res = CCatalog::GetFilterOperation($key);
-            if (empty($key_res))
+            if (empty($key_res)) {
                 continue;
+            }
             $key = $key_res["FIELD"];
             $strNegative = $key_res["NEGATIVE"];
             $strOperation = $key_res["OPERATION"];
@@ -804,142 +984,184 @@ class CAllCatalog
                     if (isset($arFields[$key]["WHERE"])) {
                         $arSqlSearch_tmp1 = call_user_func_array(
                             $arFields[$key]["WHERE"],
-                            array($val, $key, $strOperation, $strNegative, $arFields[$key]["FIELD"], &$arFields, &$arFilter)
+                            array(
+                                $val,
+                                $key,
+                                $strOperation,
+                                $strNegative,
+                                $arFields[$key]["FIELD"],
+                                &$arFields,
+                                &$arFilter
+                            )
                         );
                         if ($arSqlSearch_tmp1 !== false) {
-                            if (isset($arFields[$key]["GROUPED"]) && $arFields[$key]["GROUPED"] == "Y")
+                            if (isset($arFields[$key]["GROUPED"]) && $arFields[$key]["GROUPED"] == "Y") {
                                 $arSqlHaving_tmp[] = $arSqlSearch_tmp1;
-                            else
+                            } else {
                                 $arSqlSearch_tmp[] = $arSqlSearch_tmp1;
+                            }
                         }
                     } else {
                         $arSqlSearch_tmp1 = "";
 
                         if ($arFields[$key]["TYPE"] == "int") {
-                            if ((int)$val == 0 && strpos($strOperation, "=") !== false)
+                            if ((int)$val == 0 && mb_strpos($strOperation, "=") !== false) {
                                 $arSqlSearch_tmp1 = "(" . $arFields[$key]["FIELD"] . " IS " . (($strNegative == "Y") ? "NOT " : "") . "NULL) " . (($strNegative == "Y") ? "AND" : "OR") . " " . (($strNegative == "Y") ? "NOT " : "") . "(" . $arFields[$key]["FIELD"] . " " . $strOperation . " 0)";
-                            else
+                            } else {
                                 $arSqlSearch_tmp1 = (($strNegative == "Y") ? " " . $arFields[$key]["FIELD"] . " IS NULL OR NOT " : "") . "(" . $arFields[$key]["FIELD"] . " " . $strOperation . " " . (int)$val . " )";
+                            }
                         } elseif ($arFields[$key]["TYPE"] == "double") {
                             $val = str_replace(",", ".", $val);
 
-                            if ((float)$val == 0 && strpos($strOperation, "=") !== false)
+                            if ((float)$val == 0 && mb_strpos($strOperation, "=") !== false) {
                                 $arSqlSearch_tmp1 = "(" . $arFields[$key]["FIELD"] . " IS " . (($strNegative == "Y") ? "NOT " : "") . "NULL) " . (($strNegative == "Y") ? "AND" : "OR") . " " . (($strNegative == "Y") ? "NOT " : "") . "(" . $arFields[$key]["FIELD"] . " " . $strOperation . " 0)";
-                            else
+                            } else {
                                 $arSqlSearch_tmp1 = (($strNegative == "Y") ? " " . $arFields[$key]["FIELD"] . " IS NULL OR NOT " : "") . "(" . $arFields[$key]["FIELD"] . " " . $strOperation . " " . (float)$val . " )";
+                            }
                         } elseif ($arFields[$key]["TYPE"] == "string" || $arFields[$key]["TYPE"] == "char") {
                             if ($strOperation == "QUERY") {
                                 $arSqlSearch_tmp1 = GetFilterQuery($arFields[$key]["FIELD"], $val, "Y");
                             } else {
-                                if ((strlen($val) == 0) && (strpos($strOperation, "=") !== false))
-                                    $arSqlSearch_tmp1 = "(" . $arFields[$key]["FIELD"] . " IS " . (($strNegative == "Y") ? "NOT " : "") . "NULL) " . (($strNegative == "Y") ? "AND NOT" : "OR") . " (" . $DB->Length($arFields[$key]["FIELD"]) . " <= 0) " . (($strNegative == "Y") ? "AND NOT" : "OR") . " (" . $arFields[$key]["FIELD"] . " " . $strOperation . " '" . $DB->ForSql($val) . "' )";
-                                else
-                                    $arSqlSearch_tmp1 = (($strNegative == "Y") ? " " . $arFields[$key]["FIELD"] . " IS NULL OR NOT " : "") . "(" . $arFields[$key]["FIELD"] . " " . $strOperation . " '" . $DB->ForSql($val) . "' )";
+                                if (($val == '') && (mb_strpos($strOperation, "=") !== false)) {
+                                    $arSqlSearch_tmp1 = "(" . $arFields[$key]["FIELD"] . " IS " . (($strNegative == "Y") ? "NOT " : "") . "NULL) " . (($strNegative == "Y") ? "AND NOT" : "OR") . " (" . $DB->Length(
+                                            $arFields[$key]["FIELD"]
+                                        ) . " <= 0) " . (($strNegative == "Y") ? "AND NOT" : "OR") . " (" . $arFields[$key]["FIELD"] . " " . $strOperation . " '" . $DB->ForSql(
+                                            $val
+                                        ) . "' )";
+                                } else {
+                                    $arSqlSearch_tmp1 = (($strNegative == "Y") ? " " . $arFields[$key]["FIELD"] . " IS NULL OR NOT " : "") . "(" . $arFields[$key]["FIELD"] . " " . $strOperation . " '" . $DB->ForSql(
+                                            $val
+                                        ) . "' )";
+                                }
                             }
                         } elseif ($arFields[$key]["TYPE"] == "datetime") {
-                            if (strlen($val) <= 0)
+                            if ($val == '') {
                                 $arSqlSearch_tmp1 = ($strNegative == "Y" ? "NOT" : "") . "(" . $arFields[$key]["FIELD"] . " IS NULL)";
-                            else
-                                $arSqlSearch_tmp1 = ($strNegative == "Y" ? " " . $arFields[$key]["FIELD"] . " IS NULL OR NOT " : "") . "(" . $arFields[$key]["FIELD"] . " " . $strOperation . " " . $DB->CharToDateFunction($DB->ForSql($val), "FULL") . ")";
+                            } else {
+                                $arSqlSearch_tmp1 = ($strNegative == "Y" ? " " . $arFields[$key]["FIELD"] . " IS NULL OR NOT " : "") . "(" . $arFields[$key]["FIELD"] . " " . $strOperation . " " . $DB->CharToDateFunction(
+                                        $val,
+                                        "FULL"
+                                    ) . ")";
+                            }
                         } elseif ($arFields[$key]["TYPE"] == "date") {
-                            if (strlen($val) <= 0)
+                            if ($val == '') {
                                 $arSqlSearch_tmp1 = ($strNegative == "Y" ? "NOT" : "") . "(" . $arFields[$key]["FIELD"] . " IS NULL)";
-                            else
-                                $arSqlSearch_tmp1 = ($strNegative == "Y" ? " " . $arFields[$key]["FIELD"] . " IS NULL OR NOT " : "") . "(" . $arFields[$key]["FIELD"] . " " . $strOperation . " " . $DB->CharToDateFunction($DB->ForSql($val), "SHORT") . ")";
+                            } else {
+                                $arSqlSearch_tmp1 = ($strNegative == "Y" ? " " . $arFields[$key]["FIELD"] . " IS NULL OR NOT " : "") . "(" . $arFields[$key]["FIELD"] . " " . $strOperation . " " . $DB->CharToDateFunction(
+                                        $val,
+                                        "SHORT"
+                                    ) . ")";
+                            }
                         }
 
-                        if (isset($arFields[$key]["GROUPED"]) && $arFields[$key]["GROUPED"] == "Y")
+                        if (isset($arFields[$key]["GROUPED"]) && $arFields[$key]["GROUPED"] == "Y") {
                             $arSqlHaving_tmp[] = $arSqlSearch_tmp1;
-                        else
+                        } else {
                             $arSqlSearch_tmp[] = $arSqlSearch_tmp1;
+                        }
                     }
                 }
 
                 if (isset($arFields[$key]["FROM"])
-                    && strlen($arFields[$key]["FROM"]) > 0
+                    && $arFields[$key]["FROM"] <> ''
                     && !in_array($arFields[$key]["FROM"], $arAlreadyJoined)) {
-                    if (strlen($strSqlFrom) > 0)
+                    if ($strSqlFrom <> '') {
                         $strSqlFrom .= " ";
+                    }
                     $strSqlFrom .= $arFields[$key]["FROM"];
                     $arAlreadyJoined[] = $arFields[$key]["FROM"];
                 }
 
                 $strSqlSearch_tmp = "";
                 for ($j = 0, $intCountSearchTmp = count($arSqlSearch_tmp); $j < $intCountSearchTmp; $j++) {
-                    if ($j > 0)
+                    if ($j > 0) {
                         $strSqlSearch_tmp .= ($strNegative == "Y" ? " AND " : " OR ");
+                    }
                     $strSqlSearch_tmp .= "(" . $arSqlSearch_tmp[$j] . ")";
                 }
                 if ($strOrNull == "Y") {
-                    if (strlen($strSqlSearch_tmp) > 0)
+                    if ($strSqlSearch_tmp <> '') {
                         $strSqlSearch_tmp .= ($strNegative == "Y" ? " AND " : " OR ");
+                    }
                     $strSqlSearch_tmp .= "(" . $arFields[$key]["FIELD"] . " IS " . ($strNegative == "Y" ? "NOT " : "") . "NULL)";
 
                     if ($arFields[$key]["TYPE"] == "int" || $arFields[$key]["TYPE"] == "double") {
-                        if (strlen($strSqlSearch_tmp) > 0)
+                        if ($strSqlSearch_tmp <> '') {
                             $strSqlSearch_tmp .= ($strNegative == "Y" ? " AND " : " OR ");
+                        }
                         $strSqlSearch_tmp .= "(" . $arFields[$key]["FIELD"] . " " . ($strNegative == "Y" ? "<>" : "=") . " 0)";
                     } elseif ($arFields[$key]["TYPE"] == "string" || $arFields[$key]["TYPE"] == "char") {
-                        if (strlen($strSqlSearch_tmp) > 0)
+                        if ($strSqlSearch_tmp <> '') {
                             $strSqlSearch_tmp .= ($strNegative == "Y" ? " AND " : " OR ");
+                        }
                         $strSqlSearch_tmp .= "(" . $arFields[$key]["FIELD"] . " " . ($strNegative == "Y" ? "<>" : "=") . " '')";
                     }
                 }
 
-                if ($strSqlSearch_tmp != "")
+                if ($strSqlSearch_tmp != "") {
                     $arSqlSearch[] = "(" . $strSqlSearch_tmp . ")";
+                }
 
                 $strSqlHaving_tmp = "";
                 for ($j = 0, $intCountHavingTmp = count($arSqlHaving_tmp); $j < $intCountHavingTmp; $j++) {
-                    if ($j > 0)
+                    if ($j > 0) {
                         $strSqlHaving_tmp .= ($strNegative == "Y" ? " AND " : " OR ");
+                    }
                     $strSqlHaving_tmp .= "(" . $arSqlHaving_tmp[$j] . ")";
                 }
                 if ($strOrNull == "Y") {
-                    if (strlen($strSqlHaving_tmp) > 0)
+                    if ($strSqlHaving_tmp <> '') {
                         $strSqlHaving_tmp .= ($strNegative == "Y" ? " AND " : " OR ");
+                    }
                     $strSqlHaving_tmp .= "(" . $arFields[$key]["FIELD"] . " IS " . ($strNegative == "Y" ? "NOT " : "") . "NULL)";
 
-                    if (strlen($strSqlHaving_tmp) > 0)
+                    if ($strSqlHaving_tmp <> '') {
                         $strSqlHaving_tmp .= ($strNegative == "Y" ? " AND " : " OR ");
-                    if ($arFields[$key]["TYPE"] == "int" || $arFields[$key]["TYPE"] == "double")
+                    }
+                    if ($arFields[$key]["TYPE"] == "int" || $arFields[$key]["TYPE"] == "double") {
                         $strSqlHaving_tmp .= "(" . $arFields[$key]["FIELD"] . " " . ($strNegative == "Y" ? "<>" : "=") . " 0)";
-                    elseif ($arFields[$key]["TYPE"] == "string" || $arFields[$key]["TYPE"] == "char")
+                    } elseif ($arFields[$key]["TYPE"] == "string" || $arFields[$key]["TYPE"] == "char") {
                         $strSqlHaving_tmp .= "(" . $arFields[$key]["FIELD"] . " " . ($strNegative == "Y" ? "<>" : "=") . " '')";
+                    }
                 }
 
-                if ($strSqlHaving_tmp != "")
+                if ($strSqlHaving_tmp != "") {
                     $arSqlHaving[] = "(" . $strSqlHaving_tmp . ")";
+                }
             }
         }
 
-        if (!empty($arSqlSearch))
+        if (!empty($arSqlSearch)) {
             $strSqlWhere = '(' . implode(') and (', $arSqlSearch) . ')';
+        }
 
         $strSqlHaving = '';
-        if (!empty($arSqlHaving))
+        if (!empty($arSqlHaving)) {
             $strSqlHaving = '(' . implode(') and (', $arSqlHaving) . ')';
+        }
         // <-- WHERE
 
         // ORDER BY -->
         $arSqlOrder = array();
         foreach ($arOrder as $by => $order) {
-            $by = strtoupper($by);
-            $order = strtoupper($order);
+            $by = mb_strtoupper($by);
+            $order = mb_strtoupper($order);
 
-            if ($order != "ASC")
+            if ($order != "ASC") {
                 $order = "DESC" . ($oracleEdition ? " NULLS LAST" : "");
-            else
+            } else {
                 $order = "ASC" . ($oracleEdition ? " NULLS FIRST" : "");
+            }
 
             if (isset($arFields[$by])) {
                 $arSqlOrder[] = " " . $arFields[$by]["FIELD"] . " " . $order . " ";
 
                 if (isset($arFields[$by]["FROM"])
-                    && strlen($arFields[$by]["FROM"]) > 0
+                    && $arFields[$by]["FROM"] <> ''
                     && !in_array($arFields[$by]["FROM"], $arAlreadyJoined)) {
-                    if (strlen($strSqlFrom) > 0)
+                    if ($strSqlFrom <> '') {
                         $strSqlFrom .= " ";
+                    }
                     $strSqlFrom .= $arFields[$by]["FROM"];
                     $arAlreadyJoined[] = $arFields[$by]["FROM"];
                 }
@@ -948,8 +1170,9 @@ class CAllCatalog
 
         $strSqlOrder = '';
         DelDuplicateSort($arSqlOrder);
-        if (!empty($arSqlOrder))
+        if (!empty($arSqlOrder)) {
             $strSqlOrder = implode(', ', $arSqlOrder);
+        }
         // <-- ORDER BY
 
         return array(
@@ -966,8 +1189,9 @@ class CAllCatalog
     {
         global $DB;
 
-        if (!CCatalog::CheckFields("ADD", $arFields, 0))
+        if (!CCatalog::CheckFields("ADD", $arFields, 0)) {
             return false;
+        }
 
         $arInsert = $DB->PrepareInsert("b_catalog_iblock", $arFields);
 
@@ -984,8 +1208,9 @@ class CAllCatalog
         global $DB;
         $ID = (int)$ID;
 
-        if (!CCatalog::CheckFields("UPDATE", $arFields, $ID))
+        if (!CCatalog::CheckFields("UPDATE", $arFields, $ID)) {
             return false;
+        }
 
         $strUpdate = $DB->PrepareUpdate("b_catalog_iblock", $arFields);
         if (!empty($strUpdate)) {
@@ -999,8 +1224,9 @@ class CAllCatalog
                     $CATALOG_CATALOG_CACHE = self::$arCatalogCache;
                 }
             }
-            if (isset(self::$catalogVatCache[$ID]))
+            if (isset(self::$catalogVatCache[$ID])) {
                 unset(self::$catalogVatCache[$ID]);
+            }
         }
         CCatalogSku::ClearCache();
         return true;
@@ -1012,12 +1238,14 @@ class CAllCatalog
         $ID = (int)$ID;
 
         foreach (GetModuleEvents("catalog", "OnBeforeCatalogDelete", true) as $arEvent) {
-            if (ExecuteModuleEventEx($arEvent, array($ID)) === false)
+            if (ExecuteModuleEventEx($arEvent, array($ID)) === false) {
                 return false;
+            }
         }
 
-        foreach (GetModuleEvents("catalog", "OnCatalogDelete", true) as $arEvent)
+        foreach (GetModuleEvents("catalog", "OnCatalogDelete", true) as $arEvent) {
             ExecuteModuleEventEx($arEvent, array($ID));
+        }
 
         if (isset(self::$arCatalogCache[$ID])) {
             unset(self::$arCatalogCache[$ID]);
@@ -1026,8 +1254,9 @@ class CAllCatalog
                 $CATALOG_CATALOG_CACHE = self::$arCatalogCache;
             }
         }
-        if (isset(self::$catalogVatCache[$ID]))
+        if (isset(self::$catalogVatCache[$ID])) {
             unset(self::$catalogVatCache[$ID]);
+        }
 
         CCatalogSku::ClearCache();
         CCatalogProduct::ClearCache();
@@ -1044,7 +1273,9 @@ class CAllCatalog
         if ($xml_type == 'yandex') {
             $strYandexAgent = (string)Main\Config\Option::get('catalog', 'yandex_agent_file');
             if ($strYandexAgent != '') {
-                if (file_exists($_SERVER['DOCUMENT_ROOT'] . $strYandexAgent) && is_file($_SERVER['DOCUMENT_ROOT'] . $strYandexAgent)) {
+                if (file_exists($_SERVER['DOCUMENT_ROOT'] . $strYandexAgent) && is_file(
+                        $_SERVER['DOCUMENT_ROOT'] . $strYandexAgent
+                    )) {
                     include_once($_SERVER['DOCUMENT_ROOT'] . $strYandexAgent);
                 } else {
                     CEventLog::Log('WARNING', 'CAT_YAND_FILE', 'catalog', 'YandexAgent', $strYandexAgent);
@@ -1094,15 +1325,18 @@ class CAllCatalog
             if (0 < $intIBlockID) {
                 $arCatalog = CCatalogSku::GetInfoByProductIBlock($intIBlockID);
                 if (!empty($arCatalog)) {
-                    $arFilter = array('IBLOCK_ID' => $arCatalog['IBLOCK_ID'], '=PROPERTY_' . $arCatalog['SKU_PROPERTY_ID'] => $ID);
+                    $arFilter = array(
+                        'IBLOCK_ID' => $arCatalog['IBLOCK_ID'],
+                        '=PROPERTY_' . $arCatalog['SKU_PROPERTY_ID'] => $ID
+                    );
                     $rsOffers = CIBlockElement::GetList(array(), $arFilter, false, false, array('ID', 'IBLOCK_ID'));
                     while ($arOffer = $rsOffers->Fetch()) {
                         foreach (GetModuleEvents("iblock", "OnBeforeIBlockElementDelete", true) as $arEvent) {
                             if (ExecuteModuleEventEx($arEvent, array($arOffer['ID'])) === false) {
-                                $err = Loc::getMessage("BT_MOD_CATALOG_ERR_BEFORE_DEL_TITLE") . ' ' . $arEvent['TO_NAME'];
+                                $err = "";
                                 $err_id = false;
                                 if ($ex = $APPLICATION->GetException()) {
-                                    $err .= ': ' . $ex->GetString();
+                                    $err = $ex->GetString();
                                     $err_id = $ex->GetID();
                                 }
                                 $APPLICATION->ThrowException($err, $err_id);
@@ -1127,19 +1361,27 @@ class CAllCatalog
         $arMsg = array();
 
         $ID = (int)$ID;
-        if (0 >= $ID)
+        if (0 >= $ID) {
             return true;
+        }
         $arCatalog = CCatalogSku::GetInfoByIBlock($ID);
-        if (empty($arCatalog))
+        if (empty($arCatalog)) {
             return true;
+        }
         if (CCatalogSku::TYPE_CATALOG != $arCatalog['CATALOG_TYPE']) {
             if (CCatalogSku::TYPE_OFFERS == $arCatalog['CATALOG_TYPE']) {
-                $arMsg[] = array('id' => 'IBLOCK_ID', 'text' => Loc::getMessage('BT_MOD_CATALOG_ERR_CANNOT_DELETE_SKU_IBLOCK'));
+                $arMsg[] = array(
+                    'id' => 'IBLOCK_ID',
+                    'text' => Loc::getMessage('BT_MOD_CATALOG_ERR_CANNOT_DELETE_SKU_IBLOCK')
+                );
                 $obError = new CAdminException($arMsg);
                 $APPLICATION->ThrowException($obError);
                 return false;
             } else {
-                $arMsg[] = array('id' => 'PRODUCT_IBLOCK_ID', 'text' => Loc::getMessage('BT_MOD_CATALOG_ERR_CANNOT_DELETE_PRODUCT_IBLOCK'));
+                $arMsg[] = array(
+                    'id' => 'PRODUCT_IBLOCK_ID',
+                    'text' => Loc::getMessage('BT_MOD_CATALOG_ERR_CANNOT_DELETE_PRODUCT_IBLOCK')
+                );
                 $obError = new CAdminException($arMsg);
                 $APPLICATION->ThrowException($obError);
                 return false;
@@ -1168,31 +1410,50 @@ class CAllCatalog
         global $APPLICATION;
 
         $result = true;
-        if (
-            isset($fields['ID'])
-            && isset($fields['ACTIVE'])
-            && $fields['ACTIVE'] != 'Y'
-        ) {
-            $id = (int)$fields['ID'];
-            if ($id > 0) {
-                $iterator = Catalog\CatalogIblockTable::getList(array(
-                    'select' => array('IBLOCK_ID', 'PRODUCT_IBLOCK_ID', 'SKU_PROPERTY_ID'),
-                    'filter' => array('=SKU_PROPERTY_ID' => $id)
-                ));
+        $id = (int)$fields['ID'];
+        if ($id > 0) {
+            if (
+                isset($fields['ID'])
+                && isset($fields['ACTIVE'])
+                && $fields['ACTIVE'] != 'Y'
+            ) {
+                $iterator = Catalog\CatalogIblockTable::getList(
+                    array(
+                        'select' => array('IBLOCK_ID', 'PRODUCT_IBLOCK_ID', 'SKU_PROPERTY_ID'),
+                        'filter' => array('=SKU_PROPERTY_ID' => $id)
+                    )
+                );
                 $row = $iterator->fetch();
                 unset($iterator);
                 if (!empty($row)) {
-                    $APPLICATION->ThrowException(Loc::getMessage(
-                        'BT_MOD_CATALOG_ERR_CANNOT_DEACTIVE_SKU_PROPERTY',
-                        array(
-                            '#SKU_PROPERTY_ID#' => $row['SKU_PROPERTY_ID'],
-                            '#PRODUCT_IBLOCK_ID#' => $row['PRODUCT_IBLOCK_ID'],
-                            '#IBLOCK_ID#' => $row['IBLOCK_ID'],
+                    $APPLICATION->ThrowException(
+                        Loc::getMessage(
+                            'BT_MOD_CATALOG_ERR_CANNOT_DEACTIVE_SKU_PROPERTY',
+                            array(
+                                '#SKU_PROPERTY_ID#' => $row['SKU_PROPERTY_ID'],
+                                '#PRODUCT_IBLOCK_ID#' => $row['PRODUCT_IBLOCK_ID'],
+                                '#IBLOCK_ID#' => $row['IBLOCK_ID'],
+                            )
                         )
-                    ));
+                    );
                     $result = false;
                 }
                 unset($row);
+            } elseif (self::isCrmCatalogBrandProperty($id)) {
+                $property = \CIBlockProperty::GetByID($id)->Fetch();
+
+                if ($fields['NAME'] !== $property['NAME']) {
+                    $APPLICATION->throwException(GetMessage("BT_MOD_CATALOG_ERR_CANNOT_CHANGE_BRAND_PROPERTY_NAME"));
+                    $result = false;
+                } elseif ($fields['CODE'] !== 'BRAND') {
+                    $APPLICATION->throwException(GetMessage("BT_MOD_CATALOG_ERR_CANNOT_CHANGE_BRAND_PROPERTY_CODE"));
+                    $result = false;
+                } elseif ($fields['MULTIPLE'] !== 'Y') {
+                    $APPLICATION->throwException(
+                        GetMessage("BT_MOD_CATALOG_ERR_CANNOT_CHANGE_BRAND_PROPERTY_MULTIPLE")
+                    );
+                    $result = false;
+                }
             }
             unset($id);
         }
@@ -1210,27 +1471,50 @@ class CAllCatalog
 
         $result = true;
         $intPropertyID = (int)$intPropertyID;
-        if ($intPropertyID <= 0)
+        if ($intPropertyID <= 0) {
             return $result;
-        $propertyIterator = Catalog\CatalogIblockTable::getList(array(
-            'select' => array('IBLOCK_ID', 'PRODUCT_IBLOCK_ID', 'SKU_PROPERTY_ID'),
-            'filter' => array('=SKU_PROPERTY_ID' => $intPropertyID)
-        ));
+        }
+        $propertyIterator = Catalog\CatalogIblockTable::getList(
+            array(
+                'select' => array('IBLOCK_ID', 'PRODUCT_IBLOCK_ID', 'SKU_PROPERTY_ID'),
+                'filter' => array('=SKU_PROPERTY_ID' => $intPropertyID)
+            )
+        );
         $property = $propertyIterator->fetch();
         unset($propertyIterator);
         if (!empty($property)) {
-            $APPLICATION->ThrowException(Loc::getMessage(
-                'BT_MOD_CATALOG_ERR_CANNOT_DELETE_SKU_PROPERTY',
-                array(
-                    '#SKU_PROPERTY_ID#' => $property['SKU_PROPERTY_ID'],
-                    '#PRODUCT_IBLOCK_ID#' => $property['PRODUCT_IBLOCK_ID'],
-                    '#IBLOCK_ID#' => $property['IBLOCK_ID'],
+            $APPLICATION->ThrowException(
+                Loc::getMessage(
+                    'BT_MOD_CATALOG_ERR_CANNOT_DELETE_SKU_PROPERTY',
+                    array(
+                        '#SKU_PROPERTY_ID#' => $property['SKU_PROPERTY_ID'],
+                        '#PRODUCT_IBLOCK_ID#' => $property['PRODUCT_IBLOCK_ID'],
+                        '#IBLOCK_ID#' => $property['IBLOCK_ID'],
+                    )
                 )
-            ));
+            );
+            $result = false;
+        } elseif (self::isCrmCatalogBrandProperty($intPropertyID)) {
+            $APPLICATION->throwException(GetMessage("BT_MOD_CATALOG_ERR_CANNOT_DELETE_BRAND_PROPERTY"));
             $result = false;
         }
         unset($property);
         return $result;
+    }
+
+    private static function isCrmCatalogBrandProperty($propertyId): bool
+    {
+        if (
+            !Loader::includeModule('crm')
+            || !Loader::includeModule('bitrix24')
+        ) {
+            return false;
+        }
+
+        $crmCatalogId = \CCrmCatalog::GetDefaultID();
+        $property = \CIBlockProperty::GetByID($propertyId)->Fetch();
+
+        return $property['CODE'] === 'BRAND' && (int)$property['IBLOCK_ID'] === $crmCatalogId;
     }
 
     public static function OnIBlockModuleUnInstall()
@@ -1243,14 +1527,16 @@ class CAllCatalog
 
     public static function OnBeforeIBlockUpdate(array &$fields)
     {
-        if (!self::isEnabledHandler())
+        if (!self::isEnabledHandler()) {
             return true;
+        }
         if (isset($fields['ID']) && isset($fields['ACTIVE'])) {
             $catalog = CCatalogSku::GetInfoByOfferIBlock($fields['ID']);
             if (!empty($catalog)) {
                 $parentActive = CIBlock::GetArrayByID($catalog['PRODUCT_IBLOCK_ID'], 'ACTIVE');
-                if (!empty($parentActive))
+                if (!empty($parentActive)) {
                     $fields['ACTIVE'] = $parentActive;
+                }
                 unset($parentActive);
             }
             unset($catalog);
@@ -1261,12 +1547,15 @@ class CAllCatalog
 
     public static function OnAfterIBlockUpdate(array &$fields)
     {
-        if (!self::isEnabledHandler())
+        if (!self::isEnabledHandler()) {
             return true;
-        if (!$fields['RESULT'])
+        }
+        if (!$fields['RESULT']) {
             return;
-        if (!isset($fields['ID']) || !isset($fields['ACTIVE']))
+        }
+        if (!isset($fields['ID']) || !isset($fields['ACTIVE'])) {
             return;
+        }
 
         $catalog = CCatalogSku::GetInfoByProductIBlock($fields['ID']);
         if (!empty($catalog)) {
@@ -1323,7 +1612,10 @@ class CAllCatalog
 
         $ID = (int)$ID;
         if (0 >= $ID) {
-            $arMsg[] = array('id' => 'PRODUCT_IBLOCK_ID', 'text' => Loc::getMessage('BT_MOD_CATALOG_ERR_PRODUCT_ID_INVALID'));
+            $arMsg[] = array(
+                'id' => 'PRODUCT_IBLOCK_ID',
+                'text' => Loc::getMessage('BT_MOD_CATALOG_ERR_PRODUCT_ID_INVALID')
+            );
             $boolResult = false;
         }
 
@@ -1341,8 +1633,9 @@ class CAllCatalog
                     'PRODUCT_IBLOCK_ID' => 0,
                     'SKU_PROPERTY_ID' => 0,
                 );
-                if (!CCatalog::Update($arCatalog['IBLOCK_ID'], $arFields))
+                if (!CCatalog::Update($arCatalog['IBLOCK_ID'], $arFields)) {
                     return false;
+                }
             }
         }
         if (!$boolResult) {
@@ -1373,16 +1666,25 @@ class CAllCatalog
         $propertyId = 0;
         $ID = (int)$ID;
         if (0 >= $ID) {
-            $arMsg[] = array('id' => 'PRODUCT_IBLOCK_ID', 'text' => Loc::getMessage('BT_MOD_CATALOG_ERR_PRODUCT_ID_INVALID'));
+            $arMsg[] = array(
+                'id' => 'PRODUCT_IBLOCK_ID',
+                'text' => Loc::getMessage('BT_MOD_CATALOG_ERR_PRODUCT_ID_INVALID')
+            );
             $boolResult = false;
         }
         $SKUID = (int)$SKUID;
         if (0 >= $SKUID) {
-            $arMsg[] = array('id' => 'OFFERS_IBLOCK_ID', 'text' => Loc::getMessage('BT_MOD_CATALOG_ERR_OFFERS_ID_INVALID'));
+            $arMsg[] = array(
+                'id' => 'OFFERS_IBLOCK_ID',
+                'text' => Loc::getMessage('BT_MOD_CATALOG_ERR_OFFERS_ID_INVALID')
+            );
             $boolResult = false;
         }
         if ($ID == $SKUID) {
-            $arMsg[] = array('id' => 'OFFERS_IBLOCK_ID', 'text' => Loc::getMessage('BT_MOD_CATALOG_ERR_PRODUCT_ID_SELF'));
+            $arMsg[] = array(
+                'id' => 'OFFERS_IBLOCK_ID',
+                'text' => Loc::getMessage('BT_MOD_CATALOG_ERR_PRODUCT_ID_SELF')
+            );
             $boolResult = false;
         }
 

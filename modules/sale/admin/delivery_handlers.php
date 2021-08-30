@@ -1,11 +1,13 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 \Bitrix\Main\Loader::includeModule('sale');
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions < "W")
+if ($saleModulePermissions < "W") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/prolog.php");
 
@@ -30,8 +32,9 @@ if (($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "W") {
     $bError = false;
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
 
         switch ($_REQUEST['action']) {
             case "reset":
@@ -47,23 +50,26 @@ if (($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "W") {
                 break;
         }
 
-        if ($bError) break;
+        if ($bError) {
+            break;
+        }
     }
-    if (!$bError)
+    if (!$bError) {
         $DB->Commit();
-    else
+    } else {
         $DB->Rollback();
+    }
 }
 
 $arList = array();
 $arDeliveryHandlersList = array();
 $rsDeliveryHandlers = CSaleDeliveryHandler::GetAdminList(array($by => $order));
 while ($arHandler = $rsDeliveryHandlers->GetNext()) {
-    if (strlen($arHandler["LID"]) > 0)
+    if ($arHandler["LID"] <> '') {
         $arDeliveryHandlersList[$arHandler["SID"]][$arHandler["LID"]] = $arHandler;
-    else
+    } else {
         $arDeliveryHandlersList[$arHandler["SID"]] = array("ALL" => $arHandler);
-
+    }
 }
 
 foreach ($arDeliveryHandlersList as $SID => $arSiteList) {
@@ -79,19 +85,26 @@ $dbResultList->NavStart();
 
 $lAdmin->NavText($dbResultList->GetNavPrint(GetMessage('SALE_DH_NAV_TITLE')));
 
-$lAdmin->AddHeaders(array(
-    //array("id"=>"INSTALLED", "content" => GetMessage('SALE_DH_TABLE_ISCONFIG'), "sort"=>"ISCONFIG", "default"=>true),
-    array("id" => "ACTIVE", "content" => GetMessage('SALE_DH_TABLE_ACTIVE'), "sort" => "ACTIVE", "default" => true),
-    array("id" => "SORT", "content" => GetMessage("SALE_DH_TABLE_SORT"), "sort" => "SORT", "default" => true),
-    array("id" => "SID", "content" => "SID", "sort" => "SID", "default" => true),
-    array("id" => "NAME", "content" => GetMessage("SALE_DH_TABLE_NAME"), "sort" => "NAME", "default" => true),
-    array("id" => "HANDLER", "content" => GetMessage("SALE_DH_TABLE_PATH"), "sort" => "HANDLER", "default" => true),
-));
+$lAdmin->AddHeaders(
+    array(
+        //array("id"=>"INSTALLED", "content" => GetMessage('SALE_DH_TABLE_ISCONFIG'), "sort"=>"ISCONFIG", "default"=>true),
+        array("id" => "ACTIVE", "content" => GetMessage('SALE_DH_TABLE_ACTIVE'), "sort" => "ACTIVE", "default" => true),
+        array("id" => "SORT", "content" => GetMessage("SALE_DH_TABLE_SORT"), "sort" => "SORT", "default" => true),
+        array("id" => "SID", "content" => "SID", "sort" => "SID", "default" => true),
+        array("id" => "NAME", "content" => GetMessage("SALE_DH_TABLE_NAME"), "sort" => "NAME", "default" => true),
+        array("id" => "HANDLER", "content" => GetMessage("SALE_DH_TABLE_PATH"), "sort" => "HANDLER", "default" => true),
+    )
+);
 
 $arVisibleColumns = $lAdmin->GetVisibleHeaderColumns();
 
 while ($arDeliveryService = $dbResultList->Fetch()) {
-    $row =& $lAdmin->AddRow($arDeliveryService['SID'], $arDeliveryService, "sale_delivery_handler_edit.php?SID=" . $arDeliveryService['SID'] . "&lang=" . LANGUAGE_ID, GetMessage("SALE_EDIT_DESCR"));
+    $row =& $lAdmin->AddRow(
+        $arDeliveryService['SID'],
+        $arDeliveryService,
+        "sale_delivery_handler_edit.php?SID=" . $arDeliveryService['SID'] . "&lang=" . LANGUAGE_ID,
+        GetMessage("SALE_EDIT_DESCR")
+    );
 
     $row->AddField("SID", $arDeliveryService['SID']);
     //$row->AddViewField("INSTALLED", '<div class="lamp-'.($f_INSTALLED == "Y" ? "green" : "red").'"></div>');
@@ -109,7 +122,9 @@ while ($arDeliveryService = $dbResultList->Fetch()) {
             }
         }
 
-        if ($bUseTable) $res = '<table>' . $res . '</table>';
+        if ($bUseTable) {
+            $res = '<table>' . $res . '</table>';
+        }
     } else {
         $res = '<div class="lamp-red"></div>';
     }
@@ -123,11 +138,35 @@ while ($arDeliveryService = $dbResultList->Fetch()) {
         $arActions = Array();
 
         if ($arDeliveryService['INSTALLED'] == "Y") {
-            $arActions[] = array("ICON" => "edit", "TEXT" => GetMessage("SALE_DH_EDIT_DESCR"), "ACTION" => $lAdmin->ActionRedirect("sale_delivery_handler_edit.php?SID=" . urlencode($arDeliveryService['SID']) . "&lang=" . LANGUAGE_ID), "DEFAULT" => true);
+            $arActions[] = array(
+                "ICON" => "edit",
+                "TEXT" => GetMessage("SALE_DH_EDIT_DESCR"),
+                "ACTION" => $lAdmin->ActionRedirect(
+                    "sale_delivery_handler_edit.php?SID=" . urlencode(
+                        $arDeliveryService['SID']
+                    ) . "&lang=" . LANGUAGE_ID
+                ),
+                "DEFAULT" => true
+            );
             $arActions[] = array("SEPARATOR" => true);
-            $arActions[] = array("ICON" => "delete", "TEXT" => GetMessage("SALE_DH_DELETE_DESCR"), "ACTION" => "if(confirm('" . GetMessageJS('SALE_DH_CONFIRM_UNINSTALL') . "')) " . $lAdmin->ActionDoGroup($arDeliveryService['SID'], "reset"));
+            $arActions[] = array(
+                "ICON" => "delete",
+                "TEXT" => GetMessage("SALE_DH_DELETE_DESCR"),
+                "ACTION" => "if(confirm('" . GetMessageJS(
+                        'SALE_DH_CONFIRM_UNINSTALL'
+                    ) . "')) " . $lAdmin->ActionDoGroup($arDeliveryService['SID'], "reset")
+            );
         } else {
-            $arActions[] = array("ICON" => "edit", "TEXT" => GetMessage("SALE_DH_EDIT_DESCR"), "ACTION" => $lAdmin->ActionRedirect("sale_delivery_handler_edit.php?SID=" . urlencode($arDeliveryService['SID']) . "&lang=" . LANGUAGE_ID), "DEFAULT" => true);
+            $arActions[] = array(
+                "ICON" => "edit",
+                "TEXT" => GetMessage("SALE_DH_EDIT_DESCR"),
+                "ACTION" => $lAdmin->ActionRedirect(
+                    "sale_delivery_handler_edit.php?SID=" . urlencode(
+                        $arDeliveryService['SID']
+                    ) . "&lang=" . LANGUAGE_ID
+                ),
+                "DEFAULT" => true
+            );
         }
     }
 
@@ -188,7 +227,7 @@ echo BeginNote();
 $location_diff = COption::GetOptionString('sale', 'ADDRESS_different_set', 'N');
 if ($location_diff == "Y") {
     $siteList = array();
-    $rsSites = CSite::GetList($by = "sort", $order = "asc", Array());
+    $rsSites = CSite::GetList();
     while ($arRes = $rsSites->Fetch()) {
         $arRes["ID"];
 
@@ -199,9 +238,13 @@ if ($location_diff == "Y") {
         if ($location > 0) {
             $arLocation = CSaleLocation::GetByID($location);
             if ($arLocation["ID"] > 0) {
-                echo '<b>' . htmlspecialcharsEx($arLocation["COUNTRY_NAME"] . " - " . $arLocation["CITY_NAME"]) . "</b><br />";
+                echo '<b>' . htmlspecialcharsEx(
+                        $arLocation["COUNTRY_NAME"] . " - " . $arLocation["CITY_NAME"]
+                    ) . "</b><br />";
             } else {
-                echo '<span style="color: red;"><b>' . GetMessage('SALE_DH_HINT_SHOP_ADDRESS_ERROR') . '</b></span><br />';
+                echo '<span style="color: red;"><b>' . GetMessage(
+                        'SALE_DH_HINT_SHOP_ADDRESS_ERROR'
+                    ) . '</b></span><br />';
             }
         } else {
             echo '<span style="color: red;"><b>' . GetMessage('SALE_DH_HINT_SHOP_ADDRESS_ERROR') . '</b></span><br />';
@@ -211,7 +254,9 @@ if ($location_diff == "Y") {
         if ($location_zip > 0) {
             echo '<b>' . htmlspecialcharsEx($location_zip) . "</b><br />";
         } else {
-            echo '<span style="color: red;"><b>' . GetMessage('SALE_DH_HINT_SHOP_ADDRESS_ZIP_ERROR') . '</b></span><br />';
+            echo '<span style="color: red;"><b>' . GetMessage(
+                    'SALE_DH_HINT_SHOP_ADDRESS_ZIP_ERROR'
+                ) . '</b></span><br />';
         }
 
         echo '<br />';
@@ -224,7 +269,9 @@ if ($location_diff == "Y") {
     if ($location > 0) {
         $arLocation = CSaleLocation::GetByID($location);
         if ($arLocation["ID"] > 0) {
-            echo '<b>' . htmlspecialcharsEx($arLocation["COUNTRY_NAME"] . " - " . $arLocation["CITY_NAME"]) . "</b><br />";
+            echo '<b>' . htmlspecialcharsEx(
+                    $arLocation["COUNTRY_NAME"] . " - " . $arLocation["CITY_NAME"]
+                ) . "</b><br />";
         } else {
             echo '<span style="color: red;"><b>' . GetMessage('SALE_DH_HINT_SHOP_ADDRESS_ERROR') . '</b></span><br />';
         }
@@ -242,12 +289,19 @@ if ($location_diff == "Y") {
     echo '<br />';
 }
 
-echo '<a href="/bitrix/admin/settings.php?mid=sale&lang=' . LANG . '&back_url_settings=' . $APPLICATION->GetCurPage() . '&tabControl_active_tab=edit5">' . GetMessage('SALE_DH_SHOP_ADDRESS_CHANGE') . '</a>';
+echo '<a href="/bitrix/admin/settings.php?mid=sale&lang=' . LANG . '&back_url_settings=' . $APPLICATION->GetCurPage(
+    ) . '&tabControl_active_tab=edit5">' . GetMessage('SALE_DH_SHOP_ADDRESS_CHANGE') . '</a>';
 
 echo EndNote();
 
 echo BeginNote();
-echo GetMessage("SALE_DH_HINT_ADD") . " " . htmlspecialcharsEx(COption::GetOptionString('sale', 'delivery_handles_custom_path', BX_PERSONAL_ROOT . "/php_interface/include/sale_delivery/"));
+echo GetMessage("SALE_DH_HINT_ADD") . " " . htmlspecialcharsEx(
+        COption::GetOptionString(
+            'sale',
+            'delivery_handles_custom_path',
+            BX_PERSONAL_ROOT . "/php_interface/include/sale_delivery/"
+        )
+    );
 echo EndNote();
 
 $lAdmin->DisplayList();
@@ -273,15 +327,21 @@ echo '<li>' . GetMessage('SALE_DH_LOCATIONS_LOC_STATS') . ': ' . $numLocations .
 
 $rsLocationGroups = CSaleLocationGroup::GetList();
 $numGroups = 0;
-while ($arGroup = $rsLocationGroups->Fetch()) $numGroups++;
+while ($arGroup = $rsLocationGroups->Fetch()) {
+    $numGroups++;
+}
 
 echo '<li>' . GetMessage('SALE_DH_LOCATIONS_GROUP_STATS') . ': ' . $numGroups . '</li>';
 
 echo '</ul>';
 
-echo '<a href="/bitrix/admin/sale_location_admin.php?lang=' . LANG . '">' . GetMessage('SALE_DH_LOCATIONS_LINK') . '</a>';
+echo '<a href="/bitrix/admin/sale_location_admin.php?lang=' . LANG . '">' . GetMessage(
+        'SALE_DH_LOCATIONS_LINK'
+    ) . '</a>';
 echo '&nbsp;|&nbsp;';
-echo '<a href="/bitrix/admin/sale_location_import.php?lang=' . LANG . '">' . GetMessage('SALE_DH_LOCATIONS_IMPORT_LINK') . '</a>';
+echo '<a href="/bitrix/admin/sale_location_import.php?lang=' . LANG . '">' . GetMessage(
+        'SALE_DH_LOCATIONS_IMPORT_LINK'
+    ) . '</a>';
 
 echo EndNote();
 

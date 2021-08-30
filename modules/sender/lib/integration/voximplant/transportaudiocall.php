@@ -130,10 +130,12 @@ class TransportAudioCall implements Transport\iBase, Transport\iDuration, Transp
         );
 
         if ($callId && $message->getRecipientId()) {
-            CallLogTable::add(array(
-                'CALL_ID' => $callId,
-                'RECIPIENT_ID' => $message->getRecipientId()
-            ));
+            CallLogTable::add(
+                array(
+                    'CALL_ID' => $callId,
+                    'RECIPIENT_ID' => $message->getRecipientId()
+                )
+            );
         }
 
         return !!$callId;
@@ -145,7 +147,6 @@ class TransportAudioCall implements Transport\iBase, Transport\iDuration, Transp
      */
     public function end()
     {
-
     }
 
     /**

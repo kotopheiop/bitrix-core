@@ -51,7 +51,8 @@ class Posting
                     "LAST_NAME" => $postingData['CREATED_BY_LAST_NAME'],
                     "LOGIN" => $postingData['CREATED_BY_LOGIN'],
                 ),
-                true, false
+                true,
+                false
             ),
             'url' => $pathToUser,
         );

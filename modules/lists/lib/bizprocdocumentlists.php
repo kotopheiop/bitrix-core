@@ -25,18 +25,21 @@ class BizprocDocumentLists extends \BizprocDocument
      * @throws \CBPArgumentOutOfRangeException
      * @throws \Exception
      */
-    public function getDocument($documentId)
+    public static function getDocument($documentId)
     {
         $documentId = intval($documentId);
-        if ($documentId <= 0)
+        if ($documentId <= 0) {
             throw new \CBPArgumentNullException('documentId');
+        }
 
         $result = array();
         $element = array();
         $elementProperty = array();
 
-        $queryElement = \CIBlockElement::getList(array(),
-            array('ID' => $documentId, 'SHOW_NEW' => 'Y', 'SHOW_HISTORY' => 'Y'));
+        $queryElement = \CIBlockElement::getList(
+            array(),
+            array('ID' => $documentId, 'SHOW_NEW' => 'Y', 'SHOW_HISTORY' => 'Y')
+        );
         while ($queryResult = $queryElement->fetch()) {
             $element = $queryResult;
             $queryProperty = \CIBlockElement::getProperty(
@@ -66,41 +69,48 @@ class BizprocDocumentLists extends \BizprocDocument
                 $result[$fieldId . '_PRINTABLE'] = $element[($fieldId == 'MODIFIED_BY')
                     ? 'USER_NAME' : 'CREATED_USER_NAME'];
             } elseif (in_array($fieldId, array('PREVIEW_TEXT', 'DETAIL_TEXT'))) {
-                if ($element[$fieldId . '_TYPE'] == 'html')
+                if ($element[$fieldId . '_TYPE'] == 'html') {
                     $result[$fieldId] = HTMLToTxt($fieldValue);
+                }
             }
         }
         foreach ($elementProperty as $propertyId => $property) {
-            if (strlen(trim($property['CODE'])) > 0)
+            if (trim($property['CODE']) <> '') {
                 $propertyId = $property['CODE'];
-            else
+            } else {
                 $propertyId = $property['ID'];
+            }
 
             if (!empty($property['USER_TYPE'])) {
                 if ($property['USER_TYPE'] == 'UserID' || $property['USER_TYPE'] == 'employee' &&
                     (\COption::getOptionString('bizproc', 'employee_compatible_mode', 'N') != 'Y')) {
-                    if (empty($property['VALUE']))
+                    if (empty($property['VALUE'])) {
                         continue;
-                    if (!is_array($property['VALUE']))
+                    }
+                    if (!is_array($property['VALUE'])) {
                         $property['VALUE'] = array($property['VALUE']);
+                    }
 
                     $listUsers = implode(' | ', $property['VALUE']);
-                    $userQuery = \CUser::getList($by = 'ID', $order = 'ASC',
+                    $userQuery = \CUser::getList(
+                        'ID',
+                        'ASC',
                         array('ID' => $listUsers),
-                        array('FIELDS' => array('ID', 'LOGIN', 'NAME', 'LAST_NAME')));
+                        array('FIELDS' => array('ID', 'LOGIN', 'NAME', 'LAST_NAME'))
+                    );
                     while ($user = $userQuery->fetch()) {
                         if ($property['MULTIPLE'] == 'Y') {
                             $result = self::setArray($result, 'PROPERTY_' . $propertyId);
                             $result = self::setArray($result, 'PROPERTY_' . $propertyId . '_PRINTABLE');
                             $result['PROPERTY_' . $propertyId][] = 'user_' . intval($user['ID']);
                             $result['PROPERTY_' . $propertyId . '_PRINTABLE'][] = '(' . $user['LOGIN'] . ')' .
-                                ((strlen($user['NAME']) > 0 || strlen($user['LAST_NAME']) > 0) ? ' ' : '') . $user['NAME'] .
-                                ((strlen($user['NAME']) > 0 && strlen($user['LAST_NAME']) > 0) ? ' ' : '') . $user['LAST_NAME'];
+                                (($user['NAME'] <> '' || $user['LAST_NAME'] <> '') ? ' ' : '') . $user['NAME'] .
+                                (($user['NAME'] <> '' && $user['LAST_NAME'] <> '') ? ' ' : '') . $user['LAST_NAME'];
                         } else {
                             $result['PROPERTY_' . $propertyId] = 'user_' . intval($user['ID']);
                             $result['PROPERTY_' . $propertyId . '_PRINTABLE'] = '(' . $user['LOGIN'] . ')' .
-                                ((strlen($user['NAME']) > 0 || strlen($user['LAST_NAME']) > 0) ? ' ' : '') . $user['NAME'] .
-                                ((strlen($user['NAME']) > 0 && strlen($user['LAST_NAME']) > 0) ? ' ' : '') . $user['LAST_NAME'];
+                                (($user['NAME'] <> '' || $user['LAST_NAME'] <> '') ? ' ' : '') . $user['NAME'] .
+                                (($user['NAME'] <> '' && $user['LAST_NAME'] <> '') ? ' ' : '') . $user['LAST_NAME'];
                         }
                     }
                 } elseif ($property['USER_TYPE'] == 'DiskFile') {
@@ -111,14 +121,19 @@ class BizprocDocumentLists extends \BizprocDocument
                         $result = self::setArray($result, 'PROPERTY_' . $propertyId . '_PRINTABLE');
                         foreach ($diskValues as $attachedId) {
                             $fileId = null;
-                            if (array_key_exists('GetObjectId', $userType))
+                            if (array_key_exists('GetObjectId', $userType)) {
                                 $fileId = call_user_func_array($userType['GetObjectId'], array($attachedId));
-                            if (!$fileId)
+                            }
+                            if (!$fileId) {
                                 continue;
+                            }
                             $printableUrl = '';
-                            if (array_key_exists('GetUrlAttachedFileElement', $userType))
-                                $printableUrl = call_user_func_array($userType['GetUrlAttachedFileElement'],
-                                    array($documentId, $fileId));
+                            if (array_key_exists('GetUrlAttachedFileElement', $userType)) {
+                                $printableUrl = call_user_func_array(
+                                    $userType['GetUrlAttachedFileElement'],
+                                    array($documentId, $fileId)
+                                );
+                            }
 
                             $result['PROPERTY_' . $propertyId][$attachedId] = $fileId;
                             $result['PROPERTY_' . $propertyId . '_PRINTABLE'][$attachedId] = $printableUrl;
@@ -174,8 +189,9 @@ class BizprocDocumentLists extends \BizprocDocument
                 //$result = self::setArray($result, 'PROPERTY_'.$propertyId.'_PRINTABLE');
                 $propertyArray = array();
                 $propertyKeyArray = array();
-                if (!is_array($property['VALUE']))
+                if (!is_array($property['VALUE'])) {
                     $property['VALUE'] = array($property['VALUE']);
+                }
                 foreach ($property['VALUE'] as $enumId) {
                     $enumsObject = \CIBlockProperty::getPropertyEnum(
                         $property['ID'],
@@ -187,14 +203,16 @@ class BizprocDocumentLists extends \BizprocDocument
                         $propertyKeyArray[] = (self::getVersion() > 1) ? $enums['XML_ID'] : $enums['ID'];
                     }
                 }
-                for ($i = 0, $cnt = count($propertyArray); $i < $cnt; $i++)
+                for ($i = 0, $cnt = count($propertyArray); $i < $cnt; $i++) {
                     $result['PROPERTY_' . $propertyId][$propertyKeyArray[$i]] = $propertyArray[$i];
+                }
             } elseif ($property['PROPERTY_TYPE'] == 'F') {
                 $result = self::setArray($result, 'PROPERTY_' . $propertyId);
                 $result = self::setArray($result, 'PROPERTY_' . $propertyId . '_PRINTABLE');
                 $propertyArray = $property['VALUE'];
-                if (!is_array($propertyArray))
+                if (!is_array($propertyArray)) {
                     $propertyArray = array($propertyArray);
+                }
 
                 foreach ($propertyArray as $v) {
                     $fileArray = \CFile::getFileArray($v);
@@ -214,8 +232,9 @@ class BizprocDocumentLists extends \BizprocDocument
         if (!empty($result)) {
             $documentFields = static::getDocumentFields(static::getDocumentType($documentId));
             foreach ($documentFields as $fieldKey => $field) {
-                if (!array_key_exists($fieldKey, $result))
+                if (!array_key_exists($fieldKey, $result)) {
                     $result[$fieldKey] = null;
+                }
             }
         }
 
@@ -227,11 +246,12 @@ class BizprocDocumentLists extends \BizprocDocument
      * @return array
      * @throws \CBPArgumentOutOfRangeException
      */
-    public function getDocumentFields($documentType)
+    public static function getDocumentFields($documentType)
     {
-        $iblockId = intval(substr($documentType, strlen("iblock_")));
-        if ($iblockId <= 0)
+        $iblockId = intval(mb_substr($documentType, mb_strlen("iblock_")));
+        if ($iblockId <= 0) {
             throw new \CBPArgumentOutOfRangeException("documentType", $documentType);
+        }
 
         $documentFieldTypes = self::getDocumentFieldTypes($documentType);
 
@@ -243,7 +263,7 @@ class BizprocDocumentLists extends \BizprocDocument
         );
         $ignoreProperty = array();
         while ($property = $propertyObject->fetch()) {
-            if (strlen(trim($property["CODE"])) > 0) {
+            if (trim($property["CODE"]) <> '') {
                 $key = "PROPERTY_" . $property["CODE"];
                 $ignoreProperty["PROPERTY_" . $property["ID"]] = "PROPERTY_" . $property["CODE"];
             } else {
@@ -261,14 +281,19 @@ class BizprocDocumentLists extends \BizprocDocument
                 "UserTypeSettings" => $property["USER_TYPE_SETTINGS"]
             );
 
-            if (strlen(trim($property["CODE"])) > 0)
+            if (trim($property["CODE"]) <> '') {
                 $result[$key]["Alias"] = "PROPERTY_" . $property["ID"];
+            }
 
-            if (strlen($property["USER_TYPE"]) > 0) {
+            if ($property["USER_TYPE"] <> '') {
                 $result[$key]["TypeReal"] = $property["PROPERTY_TYPE"] . ":" . $property["USER_TYPE"];
 
                 if ($property["USER_TYPE"] == "UserID"
-                    || $property["USER_TYPE"] == "employee" && (\COption::getOptionString("bizproc", "employee_compatible_mode", "N") != "Y")) {
+                    || $property["USER_TYPE"] == "employee" && (\COption::getOptionString(
+                            "bizproc",
+                            "employee_compatible_mode",
+                            "N"
+                        ) != "Y")) {
                     $result[$key]["Type"] = "user";
                     $result[$key . "_PRINTABLE"] = array(
                         "Name" => $property["NAME"] . GetMessage("IBD_FIELD_USERNAME_PROPERTY"),
@@ -354,8 +379,9 @@ class BizprocDocumentLists extends \BizprocDocument
         $list = new \CList($iblockId);
         $fields = $list->getFields();
         foreach ($fields as $fieldId => $field) {
-            if (empty($field["SETTINGS"]))
+            if (empty($field["SETTINGS"])) {
                 $field["SETTINGS"] = array("SHOW_ADD_FORM" => 'Y', "SHOW_EDIT_FORM" => 'Y');
+            }
 
             if (array_key_exists($fieldId, $ignoreProperty)) {
                 $ignoreProperty[$fieldId] ? $key = $ignoreProperty[$fieldId] : $key = $fieldId;
@@ -402,11 +428,12 @@ class BizprocDocumentLists extends \BizprocDocument
         return in_array($feature, array(\CBPDocumentService::FEATURE_MARK_MODIFIED_FIELDS));
     }
 
-    public function getDocumentAdminPage($documentId)
+    public static function getDocumentAdminPage($documentId)
     {
         $documentId = intval($documentId);
-        if ($documentId <= 0)
+        if ($documentId <= 0) {
             throw new \CBPArgumentNullException("documentId");
+        }
 
         $db = \CIBlockElement::getList(
             array(),
@@ -418,8 +445,9 @@ class BizprocDocumentLists extends \BizprocDocument
         if ($ar = $db->fetch()) {
             foreach (GetModuleEvents("iblock", "CIBlockDocument_OnGetDocumentAdminPage", true) as $arEvent) {
                 $url = ExecuteModuleEventEx($arEvent, array($ar));
-                if ($url)
+                if ($url) {
                     return $url;
+                }
             }
             return "/bitrix/admin/iblock_element_edit.php?view=Y&ID=" . $documentId . "&IBLOCK_ID=" .
                 $ar["IBLOCK_ID"] . "&type=" . $ar["IBLOCK_TYPE_ID"];

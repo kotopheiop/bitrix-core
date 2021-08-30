@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 CModule::IncludeModule("iblock");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/iblock/prolog.php");
@@ -10,7 +11,7 @@ $sTableID = "tbl_iblock_type";
 
 // Sorting init
 $oSort = new CAdminSorting($sTableID, "ID", "asc");
-$arOrder = (strtoupper($by) === "ID" ? array($by => $order) : array($by => $order, "ID" => "ASC"));
+$arOrder = (mb_strtoupper($by) === "ID" ? array($by => $order) : array($by => $order, "ID" => "ASC"));
 // List init
 $lAdmin = new CAdminList($sTableID, $oSort);
 
@@ -32,27 +33,35 @@ if ($USER->IsAdmin()) {
 } else {
     $arTypesToShow = array();
     $rsIBlocks = CIBlock::GetList(array(), array("MIN_PERMISSION" => "X"));
-    while ($arIBlock = $rsIBlocks->Fetch())
+    while ($arIBlock = $rsIBlocks->Fetch()) {
         $arTypesToShow[$arIBlock["IBLOCK_TYPE_ID"]] = $arIBlock["IBLOCK_TYPE_ID"];
+    }
 
-    if (empty($arTypesToShow))
+    if (empty($arTypesToShow)) {
         $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
-    else
+    } else {
         $arFilter["=ID"] = $arTypesToShow;
+    }
 }
 
 // Editing handling (rights check should be done!)
 if ($USER->IsAdmin() && $lAdmin->EditAction()) // Save button was pressed
 {
     foreach ($FIELDS as $ID => $arFields) {
-        if (!$lAdmin->IsUpdated($ID))
+        if (!$lAdmin->IsUpdated($ID)) {
             continue;
+        }
 
         $DB->StartTransaction();
         $obBlocktype = new CIBlockType;
         $res = $obBlocktype->Update($ID, $arFields);
         if (!$res) {
-            $lAdmin->AddUpdateError(GetMessage("IBLOCK_TYPE_ADMIN_ERR_SAVE") . " (&quot;" . htmlspecialcharsbx($ID) . "&quot;): " . $obBlocktype->LAST_ERROR, $ID);
+            $lAdmin->AddUpdateError(
+                GetMessage("IBLOCK_TYPE_ADMIN_ERR_SAVE") . " (&quot;" . htmlspecialcharsbx(
+                    $ID
+                ) . "&quot;): " . $obBlocktype->LAST_ERROR,
+                $ID
+            );
             $DB->Rollback();
         }
         $DB->Commit();
@@ -61,20 +70,25 @@ if ($USER->IsAdmin() && $lAdmin->EditAction()) // Save button was pressed
 if ($USER->IsAdmin() && ($arID = $lAdmin->GroupAction())) {
     if ($lAdmin->IsGroupActionToAll()) {
         $rsData = CIBlockType::GetList($arOrder, $arFilter);
-        while ($arRes = $rsData->Fetch())
+        while ($arRes = $rsData->Fetch()) {
             $arID[] = $arRes['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
 
         switch ($_REQUEST['action']) {
             case "delete":
                 $DB->StartTransaction();
                 if (!CIBlockType::Delete($ID)) {
                     $DB->Rollback();
-                    $lAdmin->AddGroupError(GetMessage("IBLOCK_TYPE_ADMIN_ERR_DEL") . " (&quot;" . htmlspecialcharsbx($ID) . "&quot;)", $ID);
+                    $lAdmin->AddGroupError(
+                        GetMessage("IBLOCK_TYPE_ADMIN_ERR_DEL") . " (&quot;" . htmlspecialcharsbx($ID) . "&quot;)",
+                        $ID
+                    );
                 }
                 $DB->Commit();
                 break;
@@ -92,46 +106,48 @@ $lAdmin->NavText($rsData->GetNavPrint(GetMessage("IBLOCK_TYPE_ADMIN_NAV")));
 
 // List headers/columns
 
-$lAdmin->AddHeaders(array(
+$lAdmin->AddHeaders(
     array(
-        "id" => "ID",
-        "content" => "ID",
-        "sort" => "id",
-        "default" => true,
-    ),
-    array(
-        "id" => "NAME",
-        "content" => GetMessage("IBLOCK_TYPE_ADMIN_COL_NAME"),
-        "default" => true,
-    ),
-    array(
-        "id" => "SORT",
-        "content" => GetMessage("IBLOCK_TYPE_ADMIN_COL_SORT"),
-        "sort" => "sort",
-        "default" => true,
-        "align" => "right",
-    ),
-    array(
-        "id" => "SECTIONS",
-        "content" => GetMessage("IBLOCK_TYPE_ADMIN_COL_SECT"),
-        "default" => true,
-        "align" => "center",
-    ),
-    array(
-        "id" => "IN_RSS",
-        "content" => GetMessage("IBLOCK_TYPE_ADMIN_COL_RSS"),
-        "default" => true,
-        "align" => "center",
-    ),
-    array(
-        "id" => "EDIT_FILE_BEFORE",
-        "content" => GetMessage("IBLOCK_TYPE_ADMIN_COL_EDIT_BEF"),
-    ),
-    array(
-        "id" => "EDIT_FILE_AFTER",
-        "content" => GetMessage("IBLOCK_TYPE_ADMIN_COL_EDIT_AFT"),
-    ),
-));
+        array(
+            "id" => "ID",
+            "content" => "ID",
+            "sort" => "id",
+            "default" => true,
+        ),
+        array(
+            "id" => "NAME",
+            "content" => GetMessage("IBLOCK_TYPE_ADMIN_COL_NAME"),
+            "default" => true,
+        ),
+        array(
+            "id" => "SORT",
+            "content" => GetMessage("IBLOCK_TYPE_ADMIN_COL_SORT"),
+            "sort" => "sort",
+            "default" => true,
+            "align" => "right",
+        ),
+        array(
+            "id" => "SECTIONS",
+            "content" => GetMessage("IBLOCK_TYPE_ADMIN_COL_SECT"),
+            "default" => true,
+            "align" => "center",
+        ),
+        array(
+            "id" => "IN_RSS",
+            "content" => GetMessage("IBLOCK_TYPE_ADMIN_COL_RSS"),
+            "default" => true,
+            "align" => "center",
+        ),
+        array(
+            "id" => "EDIT_FILE_BEFORE",
+            "content" => GetMessage("IBLOCK_TYPE_ADMIN_COL_EDIT_BEF"),
+        ),
+        array(
+            "id" => "EDIT_FILE_AFTER",
+            "content" => GetMessage("IBLOCK_TYPE_ADMIN_COL_EDIT_AFT"),
+        ),
+    )
+);
 
 // Build elements list
 while ($arRes = $rsData->NavNext(true, "f_")) {
@@ -170,7 +186,10 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
         $arActions[] = array(
             "ICON" => "delete",
             "TEXT" => GetMessage("MAIN_ADMIN_MENU_DELETE"),
-            "ACTION" => "if(confirm('" . GetMessageJS("IBLOCK_TYPE_ADMIN_DEL_CONF") . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete"),
+            "ACTION" => "if(confirm('" . GetMessageJS("IBLOCK_TYPE_ADMIN_DEL_CONF") . "')) " . $lAdmin->ActionDoGroup(
+                    $f_ID,
+                    "delete"
+                ),
         );
     }
     $row->AddActions($arActions);
@@ -186,8 +205,9 @@ $lAdmin->AddFooter(
 
 // Add form with actions
 $arGroupActions = array();
-if ($USER->IsAdmin())
+if ($USER->IsAdmin()) {
     $arGroupActions["delete"] = GetMessage("MAIN_ADMIN_LIST_DELETE");
+}
 $lAdmin->AddGroupActionTable($arGroupActions);
 
 // Add context menu

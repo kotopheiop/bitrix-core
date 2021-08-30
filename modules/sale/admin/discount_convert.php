@@ -1,18 +1,21 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 global $USER;
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions < "W")
+if ($saleModulePermissions < "W") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 \Bitrix\Main\Loader::includeModule('sale');
 
 IncludeModuleLangFile(__FILE__);
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/prolog.php");
 
-if ('POST' == $_SERVER['REQUEST_METHOD'] && (isset($_REQUEST["Convert"]) && 'Y' == $_REQUEST["Convert"]) && check_bitrix_sessid()) {
+if ('POST' == $_SERVER['REQUEST_METHOD'] && (isset($_REQUEST["Convert"]) && 'Y' == $_REQUEST["Convert"]) && check_bitrix_sessid(
+    )) {
     CUtil::JSPostUnescape();
 
     require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_js.php");
@@ -26,8 +29,9 @@ if ('POST' == $_SERVER['REQUEST_METHOD'] && (isset($_REQUEST["Convert"]) && 'Y' 
     $converted = isset($_REQUEST['converted']) ? intval($_REQUEST['converted']) : 0;
     $maxMessage = isset($_REQUEST['maxMessage']) ? intval($_REQUEST['maxMessage']) : 0;
     $maxMessagePerStep = isset($_REQUEST['maxMessagePerStep']) ? intval($_REQUEST['maxMessagePerStep']) : 100;
-    if ($converted == 0 && $maxMessage == 0)
+    if ($converted == 0 && $maxMessage == 0) {
         $maxMessage = CSaleDiscountConvert::GetCountOld();
+    }
     $strSessID = isset($_REQUEST['DC']) ? $_REQUEST['DC'] : '';
 
     CSaleDiscountConvert::$intConvertPerStep = 0;
@@ -38,18 +42,34 @@ if ('POST' == $_SERVER['REQUEST_METHOD'] && (isset($_REQUEST["Convert"]) && 'Y' 
 
     if (CSaleDiscountConvert::$intConvertPerStep > 0) {
         $aboutMinute = ($maxMessage - CSaleDiscountConvert::$intConverted) / CSaleDiscountConvert::$intConvertPerStep * $max_execution_time / 60;
-        $strAbout = ($aboutMinute >= 1 ? str_replace('#MIN#', ceil($aboutMinute), GetMessage('SALE_DISC_CONVERT_TOTAL_MIN')) : str_replace('#SEC#', ceil($aboutMinute * 60), GetMessage('SALE_DISC_CONVERT_TOTAL_SEC')));
+        $strAbout = ($aboutMinute >= 1 ? str_replace(
+            '#MIN#',
+            ceil($aboutMinute),
+            GetMessage('SALE_DISC_CONVERT_TOTAL_MIN')
+        ) : str_replace('#SEC#', ceil($aboutMinute * 60), GetMessage('SALE_DISC_CONVERT_TOTAL_SEC')));
 
-        CAdminMessage::ShowMessage(array(
-            "MESSAGE" => GetMessage("SALE_DISC_CONVERT_IN_PROGRESS"),
-            "DETAILS" => str_replace(array('#COUNT#', '#PERCENT#', '#TIME#'), array($converted, ceil(CSaleDiscountConvert::$intConverted / $maxMessage * 100), $strAbout), GetMessage('SALE_DISC_CONVERT_TOTAL')),
-            "HTML" => true,
-            "TYPE" => "OK",
-        ));
+        CAdminMessage::ShowMessage(
+            array(
+                "MESSAGE" => GetMessage("SALE_DISC_CONVERT_IN_PROGRESS"),
+                "DETAILS" => str_replace(
+                    array('#COUNT#', '#PERCENT#', '#TIME#'),
+                    array(
+                        $converted,
+                        ceil(CSaleDiscountConvert::$intConverted / $maxMessage * 100),
+                        $strAbout
+                    ),
+                    GetMessage('SALE_DISC_CONVERT_TOTAL')
+                ),
+                "HTML" => true,
+                "TYPE" => "OK",
+            )
+        );
         ?>
         <script type="text/javascript">
             BX.closeWait();
-            DoNext(<? echo CSaleDiscountConvert::$intConverted; ?>, <?=$maxMessage?>, <?=CSaleDiscountConvert::$intNextConvertPerStep; ?>, '<?=\CUtil::JSEscape(CSaleDiscountConvert::$strSessID); ?>');
+            DoNext(<? echo CSaleDiscountConvert::$intConverted; ?>, <?=$maxMessage?>, <?=CSaleDiscountConvert::$intNextConvertPerStep; ?>, '<?=\CUtil::JSEscape(
+                CSaleDiscountConvert::$strSessID
+            ); ?>');
         </script><?
     } else {
         $strDetail = '';
@@ -69,21 +89,28 @@ if ('POST' == $_SERVER['REQUEST_METHOD'] && (isset($_REQUEST["Convert"]) && 'Y' 
                         GetMessage('SALE_DISC_CONVERT_ONE_ERROR')
                     ) . '</li>';
             }
-            if (isset($arOneError))
+            if (isset($arOneError)) {
                 unset($arOneError);
+            }
             $strDetail .= '</ul>';
             $strDetail .= GetMessage('SALE_DISC_CONVERT_ERROR_RESUME');
             $strDetail .= '<div id="cat_disc_convert_finish"></div>';
         } else {
-            $strDetail = str_replace('#COUNT#', $converted, GetMessage("SALE_DISC_CONVERT_RESULT")) . '<div id="cat_disc_convert_finish"></div>';
+            $strDetail = str_replace(
+                    '#COUNT#',
+                    $converted,
+                    GetMessage("SALE_DISC_CONVERT_RESULT")
+                ) . '<div id="cat_disc_convert_finish"></div>';
         }
 
-        CAdminMessage::ShowMessage(array(
-            "MESSAGE" => GetMessage("SALE_DISC_CONVERT_COMPLETE"),
-            "DETAILS" => $strDetail,
-            "HTML" => true,
-            "TYPE" => "OK",
-        ));
+        CAdminMessage::ShowMessage(
+            array(
+                "MESSAGE" => GetMessage("SALE_DISC_CONVERT_COMPLETE"),
+                "DETAILS" => $strDetail,
+                "HTML" => true,
+                "TYPE" => "OK",
+            )
+        );
         CAdminNotify::DeleteByTag("SALE_DISC_CONVERT");
         ?>
         <script type="text/javascript">
@@ -96,7 +123,12 @@ if ('POST' == $_SERVER['REQUEST_METHOD'] && (isset($_REQUEST["Convert"]) && 'Y' 
     $APPLICATION->SetTitle(GetMessage("SALE_DISC_CONVERT_TITLE"));
 
     $aTabs = array(
-        array("DIV" => "edit1", "TAB" => GetMessage("SALE_DISC_CONVERT_TAB"), "ICON" => "catalog", "TITLE" => GetMessage("SALE_DISC_CONVERT_TAB_TITLE")),
+        array(
+            "DIV" => "edit1",
+            "TAB" => GetMessage("SALE_DISC_CONVERT_TAB"),
+            "ICON" => "catalog",
+            "TITLE" => GetMessage("SALE_DISC_CONVERT_TAB_TITLE")
+        ),
     );
     $tabControl = new CAdminTabControl("tabControl", $aTabs, true, true);
 
@@ -158,20 +190,24 @@ if ('POST' == $_SERVER['REQUEST_METHOD'] && (isset($_REQUEST["Convert"]) && 'Y' 
     </script><?
     $intCountOld = CSaleDiscountConvert::GetCountOld();
     if (0 >= $intCountOld) {
-        CAdminMessage::ShowMessage(array(
-            "MESSAGE" => GetMessage("SALE_DISC_CONVERT_COMPLETE"),
-            "DETAILS" => GetMessage("SALE_DISC_CONVERT_COMPLETE_ALL_OK"),
-            "HTML" => true,
-            "TYPE" => "OK",
-        ));
+        CAdminMessage::ShowMessage(
+            array(
+                "MESSAGE" => GetMessage("SALE_DISC_CONVERT_COMPLETE"),
+                "DETAILS" => GetMessage("SALE_DISC_CONVERT_COMPLETE_ALL_OK"),
+                "HTML" => true,
+                "TYPE" => "OK",
+            )
+        );
         CAdminNotify::DeleteByTag("SALE_DISC_CONVERT");
     } elseif (1 < $intCountOld) {
-        CAdminMessage::ShowMessage(array(
-            "MESSAGE" => GetMessage("SALE_DISC_CONVERT_DISABLE"),
-            "DETAILS" => GetMessage("SALE_DISC_CONVERT_DISABLE_ALL"),
-            "HTML" => true,
-            "TYPE" => "OK",
-        ));
+        CAdminMessage::ShowMessage(
+            array(
+                "MESSAGE" => GetMessage("SALE_DISC_CONVERT_DISABLE"),
+                "DETAILS" => GetMessage("SALE_DISC_CONVERT_DISABLE_ALL"),
+                "HTML" => true,
+                "TYPE" => "OK",
+            )
+        );
     }
     ?>
     <div id="convert_result_div" style="margin:0;"></div>
@@ -180,14 +216,16 @@ if ('POST' == $_SERVER['REQUEST_METHOD'] && (isset($_REQUEST["Convert"]) && 'Y' 
         $tabControl->BeginNextTab();
 
         $max_execution_time = intval(COption::GetOptionString("sale", "max_execution_time", 10));
-        if ($max_execution_time <= 0)
+        if ($max_execution_time <= 0) {
             $max_execution_time = '';
+        }
         ?>
         <tr>
             <td width="40%"><? echo GetMessage("SALE_DISC_CONVERT_STEP") ?></td>
             <td><input type="text" name="max_execution_time" id="max_execution_time" size="3"
-                       value="<? echo htmlspecialcharsbx($max_execution_time); ?>"> <? echo GetMessage("SALE_DISC_CONVERT_STEP_SEC") ?>
-            </td>
+                       value="<? echo htmlspecialcharsbx($max_execution_time); ?>"> <? echo GetMessage(
+                    "SALE_DISC_CONVERT_STEP_SEC"
+                ) ?></td>
         </tr>
         <?
         $tabControl->Buttons();

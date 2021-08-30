@@ -30,14 +30,18 @@ class Demos extends \Bitrix\Landing\Internals\BaseTable
         $demos = [];
 
         // delete blocks from repo
-        $res = self::getList([
-            'select' => [
-                'ID', 'APP_CODE', 'XML_ID'
-            ],
-            'filter' => [
-                '=APP_CODE' => $code
+        $res = self::getList(
+            [
+                'select' => [
+                    'ID',
+                    'APP_CODE',
+                    'XML_ID'
+                ],
+                'filter' => [
+                    '=APP_CODE' => $code
+                ]
             ]
-        ]);
+        );
         while ($row = $res->fetch()) {
             $demos[$row['APP_CODE'] . '.' . $row['XML_ID']] = $row;
             self::delete($row['ID']);
@@ -45,14 +49,16 @@ class Demos extends \Bitrix\Landing\Internals\BaseTable
 
         // and pages, which created with this templates
         if ($demos) {
-            $res = Landing::getList([
-                'select' => [
-                    'ID'
-                ],
-                'filter' => [
-                    '=TPL_CODE' => array_keys($demos)
+            $res = Landing::getList(
+                [
+                    'select' => [
+                        'ID'
+                    ],
+                    'filter' => [
+                        '=TPL_CODE' => array_keys($demos)
+                    ]
                 ]
-            ]);
+            );
             while ($row = $res->fetch()) {
                 Landing::delete($row['ID'], true);
             }

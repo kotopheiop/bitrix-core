@@ -17,6 +17,7 @@ use Bitrix\Sale\Helpers\Admin\OrderEdit;
 use Bitrix\Sale\Internals;
 use Bitrix\Sale\Helpers\Admin\Blocks;
 use Bitrix\Sale\Order;
+use Bitrix\Sale;
 
 
 Loc::loadMessages(__FILE__);
@@ -58,17 +59,19 @@ class PaySystem extends BasePreset
 
     protected function getPaymentSystems()
     {
-        $dbRes = Internals\PaySystemActionTable::getList(array(
-            'select' => array(
-                'ID',
-                'NAME',
-                'SORT',
-                'DESCRIPTION',
-                'ACTIVE',
-                'ACTION_FILE',
-                'LOGOTIP',
+        $dbRes = Sale\PaySystem\Manager::getList(
+            array(
+                'select' => array(
+                    'ID',
+                    'NAME',
+                    'SORT',
+                    'DESCRIPTION',
+                    'ACTIVE',
+                    'ACTION_FILE',
+                    'LOGOTIP',
+                )
             )
-        ));
+        );
 
         $result = array();
         while ($paySystem = $dbRes->fetch()) {
@@ -97,15 +100,24 @@ class PaySystem extends BasePreset
 			<table width="100%" border="0" cellspacing="7" cellpadding="0">
 				<tbody>
 				<tr>
-					<td class="adm-detail-content-cell-l" style="width:40%;"><strong>' . $this->getLabelDiscountValue() . ':</strong></td>
+					<td class="adm-detail-content-cell-l" style="width:40%;"><strong>' . $this->getLabelDiscountValue(
+            ) . ':</strong></td>
 					<td class="adm-detail-content-cell-r" style="width:60%;">
-						<input type="text" name="discount_value" value="' . htmlspecialcharsbx($state->get('discount_value')) . '" maxlength="100" style="width: 100px;"> <span>' . $currency . '</span>
+						<input type="text" name="discount_value" value="' . htmlspecialcharsbx(
+                $state->get('discount_value')
+            ) . '" maxlength="100" style="width: 100px;"> <span>' . $currency . '</span>
 					</td>
 				</tr>
 				<tr>
-					<td class="adm-detail-content-cell-l" style="width:40%;"><strong>' . Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_PAYSYSTEM_PAYMENT_LABEL') . ':</strong></td>
+					<td class="adm-detail-content-cell-l" style="width:40%;"><strong>' . Loc::getMessage(
+                'SALE_HANDLERS_DISCOUNTPRESET_PAYSYSTEM_PAYMENT_LABEL'
+            ) . ':</strong></td>
 					<td class="adm-detail-content-cell-r">
-						' . HtmlHelper::generateSelect('discount_payment', $forSelectData, $state->get('discount_payment')) . '
+						' . HtmlHelper::generateSelect(
+                'discount_payment',
+                $forSelectData,
+                $state->get('discount_payment')
+            ) . '
 					</td>
 				</tr>
 				</tbody>
@@ -158,43 +170,46 @@ class PaySystem extends BasePreset
 
     public function generateDiscount(State $state)
     {
-        return array_merge(parent::generateDiscount($state), array(
-            'CONDITIONS' => array(
-                'CLASS_ID' => 'CondGroup',
-                'DATA' => array(
-                    'All' => 'AND',
-                    'True' => 'True',
-                ),
-                'CHILDREN' => array(
-                    array(
-                        'CLASS_ID' => 'CondSalePaySystem',
-                        'DATA' => array(
-                            'logic' => 'Equal',
-                            'value' => array($state->get('discount_payment')),
+        return array_merge(
+            parent::generateDiscount($state),
+            array(
+                'CONDITIONS' => array(
+                    'CLASS_ID' => 'CondGroup',
+                    'DATA' => array(
+                        'All' => 'AND',
+                        'True' => 'True',
+                    ),
+                    'CHILDREN' => array(
+                        array(
+                            'CLASS_ID' => 'CondSalePaySystem',
+                            'DATA' => array(
+                                'logic' => 'Equal',
+                                'value' => array($state->get('discount_payment')),
+                            ),
                         ),
                     ),
                 ),
-            ),
-            'ACTIONS' => array(
-                'CLASS_ID' => 'CondGroup',
-                'DATA' => array(
-                    'All' => 'AND',
-                ),
-                'CHILDREN' => array(
-                    array(
-                        'CLASS_ID' => 'ActSaleBsktGrp',
-                        'DATA' => array(
-                            'Type' => $this->getTypeOfDiscount(),
-                            'Value' => $state->get('discount_value'),
-                            'Unit' => $state->get('discount_type', 'CurAll'),
-                            'Max' => 0,
-                            'All' => 'AND',
-                            'True' => 'True',
+                'ACTIONS' => array(
+                    'CLASS_ID' => 'CondGroup',
+                    'DATA' => array(
+                        'All' => 'AND',
+                    ),
+                    'CHILDREN' => array(
+                        array(
+                            'CLASS_ID' => 'ActSaleBsktGrp',
+                            'DATA' => array(
+                                'Type' => $this->getTypeOfDiscount(),
+                                'Value' => $state->get('discount_value'),
+                                'Unit' => $state->get('discount_type', 'CurAll'),
+                                'Max' => 0,
+                                'All' => 'AND',
+                                'True' => 'True',
+                            ),
+                            'CHILDREN' => array(),
                         ),
-                        'CHILDREN' => array(),
                     ),
                 ),
-            ),
-        ));
+            )
+        );
     }
 }

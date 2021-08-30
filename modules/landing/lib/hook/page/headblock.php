@@ -24,17 +24,21 @@ class HeadBlock extends \Bitrix\Landing\Hook\Page
     protected function getMap()
     {
         return array(
-            'USE' => new Field\Checkbox('USE', array(
-                'title' => Loc::getMessage('LANDING_HOOK_HEADBLOCK_USE')
-            )),
-            'CODE' => new Field\Textarea('CODE', array(
+            'USE' => new Field\Checkbox(
+                'USE', array(
+                'title' => Loc::getMessage('LANDING_HOOK_HEADBLOCK_USE2')
+            )
+            ),
+            'CODE' => new Field\Textarea(
+                'CODE', array(
                 'title' => Loc::getMessage('LANDING_HOOK_HEADBLOCK_CODE'),
-                'help' => Loc::getMessage('LANDING_HOOK_HEADBLOCK_CODE_HELP2'),
+                'help' => Loc::getMessage('LANDING_HOOK_HEADBLOCK_CODE_HELP3'),
                 'placeholder' => '<script>
 	var googletag = googletag || {};
 	googletag.cmd = googletag.cmd || [];
 </script>'
-            ))
+            )
+            )
         );
     }
 
@@ -72,15 +76,15 @@ class HeadBlock extends \Bitrix\Landing\Hook\Page
     public static function isLockedFeature()
     {
         if (ModuleManager::isModuleInstalled('bitrix24')) {
-            $checkFeature = Manager::checkFeature(
-                Manager::FEATURE_ENABLE_ALL_HOOKS,
-                ['hook' => 'headblock']
+            $checkFeature = \Bitrix\Landing\Restriction\Manager::isAllowed(
+                'limit_sites_html_js'
             );
             if ($checkFeature) {
                 return false;
             }
             $dateCreate = \Bitrix\Main\Config\Option::get(
-                'main', '~controller_date_create'
+                'main',
+                '~controller_date_create'
             );
             // for all portals early than 01.07.2019, feature are available
             if ($dateCreate < 1562000000) {
@@ -92,15 +96,6 @@ class HeadBlock extends \Bitrix\Landing\Hook\Page
         }
 
         return false;
-    }
-
-    /**
-     * Gets message for locked state.
-     * @return string
-     */
-    public function getLockedMessage()
-    {
-        return Loc::getMessage('LANDING_HOOK_HEADBLOCK_LOCKED');
     }
 
     /**
@@ -167,7 +162,8 @@ class HeadBlock extends \Bitrix\Landing\Hook\Page
             self::$lastInsertedCode = $code;
             $code = str_replace(
                 '<script',
-                '<script data-skip-moving="true"', $code
+                '<script data-skip-moving="true"',
+                $code
             );
             \Bitrix\Main\Page\Asset::getInstance()->addString($code);
         }

@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/support/classes/general/update.php");
 
 class CSupportUpdate extends CAllSupportUpdate

@@ -11,8 +11,9 @@ class ConverterDocumentInvoice extends ConverterDocumentOrder
 
         list($originatorId, $productXmlId) = explode("#", $xml, 2);
         if ($productXmlId <> '') {
-            if ($sales === null)
+            if ($sales === null) {
                 $sales = \CCrmExternalSaleHelper::PrepareListItems();
+            }
 
             if (isset($sales[$originatorId])) {
                 $xml = $productXmlId;

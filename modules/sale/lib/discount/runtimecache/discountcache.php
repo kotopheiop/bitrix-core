@@ -49,21 +49,22 @@ final class DiscountCache
         if (!isset($this->discountIds[$cacheKey])) {
             $this->discountIds[$cacheKey] = array();
 
-            $groupDiscountIterator = DiscountGroupTable::getList(array(
-                'select' => array('DISCOUNT_ID'),
-                'filter' => array(
-                    '@GROUP_ID' => $userGroups,
-                    '=ACTIVE' => 'Y',
-                ),
-                'order' => array('DISCOUNT_ID' => 'ASC')
-            ));
+            $groupDiscountIterator = DiscountGroupTable::getList(
+                array(
+                    'select' => array('DISCOUNT_ID'),
+                    'filter' => array(
+                        '@GROUP_ID' => $userGroups,
+                        '=ACTIVE' => 'Y',
+                    ),
+                    'order' => array('DISCOUNT_ID' => 'ASC')
+                )
+            );
             while ($groupDiscount = $groupDiscountIterator->fetch()) {
                 $groupDiscount['DISCOUNT_ID'] = (int)$groupDiscount['DISCOUNT_ID'];
                 if ($groupDiscount['DISCOUNT_ID'] > 0) {
                     $this->discountIds[$cacheKey][$groupDiscount['DISCOUNT_ID']] = $groupDiscount['DISCOUNT_ID'];
                 }
             }
-
         }
 
         return $this->discountIds[$cacheKey];
@@ -117,8 +118,9 @@ final class DiscountCache
                 }
             }
 
-            if (!empty($needToLoad))
+            if (!empty($needToLoad)) {
                 self::recursiveMerge($resultEntities, DiscountEntitiesTable::getByDiscount($needToLoad));
+            }
 
             $this->discountEntities[$cacheKey] = array($discountIds, $resultEntities);
         }
@@ -138,11 +140,31 @@ final class DiscountCache
         if (!isset($this->discounts[$cacheKey])) {
             $currentList = array();
 
+            \CTimeZone::Disable();
             $currentDatetime = new DateTime();
             $discountSelect = array(
-                'ID', 'PRIORITY', 'SORT', 'LAST_DISCOUNT', 'LAST_LEVEL_DISCOUNT', 'UNPACK', 'APPLICATION', 'USE_COUPONS', 'EXECUTE_MODULE',
-                'NAME', 'CONDITIONS_LIST', 'ACTIONS_LIST', 'ACTIVE_FROM', 'ACTIVE_TO', 'PREDICTIONS_LIST', 'PREDICTIONS_APP',
-                'PREDICTION_TEXT', 'PRESET_ID', 'CURRENCY', 'LID', 'SHORT_DESCRIPTION', 'SHORT_DESCRIPTION_STRUCTURE',
+                'ID',
+                'PRIORITY',
+                'SORT',
+                'LAST_DISCOUNT',
+                'LAST_LEVEL_DISCOUNT',
+                'UNPACK',
+                'APPLICATION',
+                'USE_COUPONS',
+                'EXECUTE_MODULE',
+                'NAME',
+                'CONDITIONS_LIST',
+                'ACTIONS_LIST',
+                'ACTIVE_FROM',
+                'ACTIVE_TO',
+                'PREDICTIONS_LIST',
+                'PREDICTIONS_APP',
+                'PREDICTION_TEXT',
+                'PRESET_ID',
+                'CURRENCY',
+                'LID',
+                'SHORT_DESCRIPTION',
+                'SHORT_DESCRIPTION_STRUCTURE',
             );
             $discountFilter = array(
                 '@ID' => $discountIds,
@@ -150,27 +172,30 @@ final class DiscountCache
                 '@EXECUTE_MODULE' => $executeModuleFilter,
                 array(
                     'LOGIC' => 'OR',
-                    'ACTIVE_FROM' => '',
+                    '=ACTIVE_FROM' => null,
                     '<=ACTIVE_FROM' => $currentDatetime
                 ),
                 array(
                     'LOGIC' => 'OR',
-                    'ACTIVE_TO' => '',
+                    '=ACTIVE_TO' => null,
                     '>=ACTIVE_TO' => $currentDatetime
                 )
             );
 
             $couponsDiscount = array();
             if (!empty($couponList)) {
-                $iterator = DiscountCouponTable::getList(array(
-                    'select' => array('DISCOUNT_ID', 'COUPON'),
-                    'filter' => array('@DISCOUNT_ID' => $discountIds, '@COUPON' => array_keys($couponList)),
-                    'order' => array('DISCOUNT_ID' => 'ASC')
-                ));
+                $iterator = DiscountCouponTable::getList(
+                    array(
+                        'select' => array('DISCOUNT_ID', 'COUPON'),
+                        'filter' => array('@DISCOUNT_ID' => $discountIds, '@COUPON' => array_keys($couponList)),
+                        'order' => array('DISCOUNT_ID' => 'ASC')
+                    )
+                );
                 while ($row = $iterator->fetch()) {
                     $id = (int)$row['DISCOUNT_ID'];
-                    if (isset($couponsDiscount[$id]))
+                    if (isset($couponsDiscount[$id])) {
                         continue;
+                    }
                     $couponsDiscount[$id] = $row['COUPON'];
                 }
                 unset($id, $row, $iterator);
@@ -190,16 +215,19 @@ final class DiscountCache
             }
 
             //todo remove order. It's unnecessary because we rearrange discounts after by benefit for client.
-            $discountIterator = DiscountTable::getList(array(
-                'select' => $discountSelect,
-                'filter' => $discountFilter,
-                'order' => array('PRIORITY' => 'DESC', 'SORT' => 'ASC', 'ID' => 'ASC')
-            ));
+            $discountIterator = DiscountTable::getList(
+                array(
+                    'select' => $discountSelect,
+                    'filter' => $discountFilter,
+                    'order' => array('PRIORITY' => 'DESC', 'SORT' => 'ASC', 'ID' => 'ASC')
+                )
+            );
 
             while ($discount = $discountIterator->fetch()) {
                 $discount['ID'] = (int)$discount['ID'];
-                if ($discount['USE_COUPONS'] == 'Y')
+                if ($discount['USE_COUPONS'] == 'Y') {
                     $discount['COUPON'] = $couponList[$couponsDiscount[$discount['ID']]];
+                }
                 $discount['CONDITIONS'] = $discount['CONDITIONS_LIST'];
                 $discount['ACTIONS'] = $discount['ACTIONS_LIST'];
                 $discount['PREDICTIONS'] = $discount['PREDICTIONS_LIST'];
@@ -208,11 +236,15 @@ final class DiscountCache
                 unset($discount['ACTIONS_LIST'], $discount['CONDITIONS_LIST'], $discount['PREDICTIONS_LIST']);
                 $currentList[$discount['ID']] = $discount;
             }
+            unset($discount, $discountIterator);
+
+            \CTimeZone::Enable();
 
             if (!empty($currentList)) {
                 $discountModules = static::getDiscountModules(array_keys($currentList));
-                foreach ($discountModules as $id => $modules)
+                foreach ($discountModules as $id => $modules) {
                     $currentList[$id]['MODULES'] = $modules;
+                }
                 unset($id, $modules, $discountModules);
             }
 
@@ -231,8 +263,9 @@ final class DiscountCache
      */
     private static function recursiveMerge(&$dest, $src)
     {
-        if (!is_array($dest) || !is_array($src))
+        if (!is_array($dest) || !is_array($src)) {
             return;
+        }
         if (empty($dest)) {
             $dest = $src;
             return;
@@ -242,8 +275,9 @@ final class DiscountCache
                 $dest[$key] = $value;
                 continue;
             }
-            if (is_array($dest[$key]))
+            if (is_array($dest[$key])) {
                 self::recursiveMerge($dest[$key], $value);
+            }
         }
         unset($value, $key);
     }

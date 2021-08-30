@@ -8,11 +8,13 @@ class Config extends \Bitrix\Main\Engine\Controller
 {
     public function getAction($cache = true, $reopen = false)
     {
-        $config = \Bitrix\Pull\Config::get([
-            'CACHE' => $cache,
-            'REOPEN' => $reopen,
-            'JSON' => true
-        ]);
+        $config = \Bitrix\Pull\Config::get(
+            [
+                'CACHE' => $cache,
+                'REOPEN' => $reopen,
+                'JSON' => true
+            ]
+        );
 
         if (!$config) {
             $this->errorCollection[] = new Error("Push & Pull server is not configured", "SERVER_ERROR");

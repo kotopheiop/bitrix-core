@@ -142,9 +142,10 @@ final class Product extends Base
                 ]
             );
             while ($property = $res->Fetch()) {
-                if (isset($property['USER_TYPE'])) {
-                    if (!in_array($property['PROPERTY_TYPE'] . ':' . $property['USER_TYPE'], self::getUserType()))
+                if ((string)$property['USER_TYPE'] !== '') {
+                    if (!in_array($property['PROPERTY_TYPE'] . ':' . $property['USER_TYPE'], self::getUserType())) {
                         continue;
+                    }
                 }
 
                 $info = array(
@@ -158,10 +159,12 @@ final class Product extends Base
                 $isMultuple = isset($property['MULTIPLE']) && $property['MULTIPLE'] === 'Y';
                 $isRequired = isset($property['IS_REQUIRED']) && $property['IS_REQUIRED'] === 'Y';
                 if ($isMultuple || $isRequired) {
-                    if ($isMultuple)
+                    if ($isMultuple) {
                         $info['ATTRIBUTES'][] = Attributes::MULTIPLE;
-                    if ($isRequired)
+                    }
+                    if ($isRequired) {
                         $info['ATTRIBUTES'][] = Attributes::REQUIRED;
+                    }
                 }
 
                 if ($property['PROPERTY_TYPE'] === 'L') {
@@ -537,7 +540,8 @@ final class Product extends Base
                             $this->getFieldsIBlockElement(),
                             $this->getFieldsIBlockPropertyValuesByFilter(['IBLOCK_ID' => $iblockId])->getData(),
                             $this->getFieldsCatalogProductCommonFields(),
-                            $this->getFieldsCatalogProductByType($productTypeId))
+                            $this->getFieldsCatalogProductByType($productTypeId)
+                        )
                     );
                 }
             }
@@ -750,32 +754,41 @@ final class Product extends Base
             $value = $isMultiple ? $value : [$value];
 
             if ($propertyType === 'S' && $userType === 'Date') {
-                array_walk($value, function (&$item) use ($r) {
-                    $date = $this->internalizeDateProductPropertyValue($item['VALUE']);
-                    if ($date->isSuccess()) {
-                        $item['VALUE'] = $date->getData()[0];
-                    } else {
-                        $r->addErrors($date->getErrors());
+                array_walk(
+                    $value,
+                    function (&$item) use ($r) {
+                        $date = $this->internalizeDateProductPropertyValue($item['VALUE']);
+                        if ($date->isSuccess()) {
+                            $item['VALUE'] = $date->getData()[0];
+                        } else {
+                            $r->addErrors($date->getErrors());
+                        }
                     }
-                });
+                );
             } elseif ($propertyType === 'S' && $userType === 'DateTime') {
-                array_walk($value, function (&$item) use ($r) {
-                    $date = $this->internalizeDateTimeProductPropertyValue($item['VALUE']);
-                    if ($date->isSuccess()) {
-                        $item['VALUE'] = $date->getData()[0];
-                    } else {
-                        $r->addErrors($date->getErrors());
+                array_walk(
+                    $value,
+                    function (&$item) use ($r) {
+                        $date = $this->internalizeDateTimeProductPropertyValue($item['VALUE']);
+                        if ($date->isSuccess()) {
+                            $item['VALUE'] = $date->getData()[0];
+                        } else {
+                            $r->addErrors($date->getErrors());
+                        }
                     }
-                });
+                );
             } elseif ($propertyType === 'F' && empty($userType)) {
-                array_walk($value, function (&$item) use ($r) {
-                    $date = $this->internalizeFileValue($item['VALUE']);
-                    if (count($date) > 0) {
-                        $item['VALUE'] = $date;
-                    } else {
-                        $r->addError(new Error('Wrong file date'));
+                array_walk(
+                    $value,
+                    function (&$item) use ($r) {
+                        $date = $this->internalizeFileValue($item['VALUE']);
+                        if (count($date) > 0) {
+                            $item['VALUE'] = $date;
+                        } else {
+                            $r->addError(new Error('Wrong file date'));
+                        }
                     }
-                });
+                );
             }
             //elseif($propertyType === 'S' && $userType === 'HTML'){}
 
@@ -874,15 +887,20 @@ final class Product extends Base
         if ($name == 'getfieldsbyfilter') {
             if (isset($arguments['filter'])) {
                 $filter = $arguments['filter'];
-                if (!empty($filter))
+                if (!empty($filter)) {
                     $arguments['filter'] = $this->convertKeysToSnakeCaseFilter($filter);
+                }
             }
         } elseif ($name == 'download') {
             if (isset($arguments['fields'])) {
                 $fields = $arguments['fields'];
                 if (!empty($fields)) {
-                    $converter = new Converter(Converter::VALUES | Converter::TO_SNAKE | Converter::TO_SNAKE_DIGIT | Converter::TO_UPPER);
-                    $converterForKey = new Converter(Converter::KEYS | Converter::TO_SNAKE | Converter::TO_SNAKE_DIGIT | Converter::TO_UPPER);
+                    $converter = new Converter(
+                        Converter::VALUES | Converter::TO_SNAKE | Converter::TO_SNAKE_DIGIT | Converter::TO_UPPER
+                    );
+                    $converterForKey = new Converter(
+                        Converter::KEYS | Converter::TO_SNAKE | Converter::TO_SNAKE_DIGIT | Converter::TO_UPPER
+                    );
 
                     $result = [];
                     foreach ($converter->process($fields) as $key => $value) {
@@ -903,16 +921,20 @@ final class Product extends Base
         $r = new Result();
 
         $error = [];
-        if (!in_array('ID', $arguments['select']))
+        if (!in_array('ID', $arguments['select'])) {
             $error[] = 'id';
-        if (!in_array('IBLOCK_ID', $arguments['select']))
+        }
+        if (!in_array('IBLOCK_ID', $arguments['select'])) {
             $error[] = 'iblockId';
+        }
 
-        if (count($error) > 0)
+        if (count($error) > 0) {
             $r->addError(new Error('Required select fields: ' . implode(', ', $error)));
+        }
 
-        if (!isset($arguments['filter']['IBLOCK_ID']))
+        if (!isset($arguments['filter']['IBLOCK_ID'])) {
             $r->addError(new Error('Required filter fields: iblockId'));
+        }
 
         return $r;
     }
@@ -933,14 +955,17 @@ final class Product extends Base
 
         $emptyFields = [];
 
-        if (!isset($fields['FIELD_NAME']))
+        if (!isset($fields['FIELD_NAME'])) {
             $emptyFields[] = 'fieldName';
+        }
 
-        if (!isset($fields['FILE_ID']))
+        if (!isset($fields['FILE_ID'])) {
             $emptyFields[] = 'fileId';
+        }
 
-        if (!isset($fields['PRODUCT_ID']))
+        if (!isset($fields['PRODUCT_ID'])) {
             $emptyFields[] = 'productId';
+        }
 
         if (count($emptyFields) > 0) {
             $r->addError(new Error('Required fields: ' . implode(', ', $emptyFields)));
@@ -995,27 +1020,40 @@ final class Product extends Base
             $value = $isMultiple ? $value : [$value];
 
             if ($propertyType === 'S' && $userType === 'Date') {
-                array_walk($value, function (&$item) use ($r) {
-                    $date = $this->externalizeDateValue($item['VALUE']);
-                    if ($date->isSuccess()) {
-                        $item['VALUE'] = $date->getData()[0];
-                    } else {
-                        $r->addErrors($date->getErrors());
+                array_walk(
+                    $value,
+                    function (&$item) use ($r) {
+                        $date = $this->externalizeDateValue($item['VALUE']);
+                        if ($date->isSuccess()) {
+                            $item['VALUE'] = $date->getData()[0];
+                        } else {
+                            $r->addErrors($date->getErrors());
+                        }
                     }
-                });
+                );
             } elseif ($propertyType === 'S' && $userType === 'DateTime') {
-                array_walk($value, function (&$item) use ($r) {
-                    $date = $this->externalizeDateTimeValue($item['VALUE']);
-                    if ($date->isSuccess()) {
-                        $item['VALUE'] = $date->getData()[0];
-                    } else {
-                        $r->addErrors($date->getErrors());
+                array_walk(
+                    $value,
+                    function (&$item) use ($r) {
+                        $date = $this->externalizeDateTimeValue($item['VALUE']);
+                        if ($date->isSuccess()) {
+                            $item['VALUE'] = $date->getData()[0];
+                        } else {
+                            $r->addErrors($date->getErrors());
+                        }
                     }
-                });
+                );
             } elseif ($propertyType === 'F' && empty($userType)) {
-                array_walk($value, function (&$item) use ($fields, $name) {
-                    $item['VALUE'] = $this->externalizeFileValue($name, $item['VALUE'], ['PRODUCT_ID' => $fields['ID']]);
-                });
+                array_walk(
+                    $value,
+                    function (&$item) use ($fields, $name) {
+                        $item['VALUE'] = $this->externalizeFileValue(
+                            $name,
+                            $item['VALUE'],
+                            ['PRODUCT_ID' => $fields['ID']]
+                        );
+                    }
+                );
             }
 
             $value = $isMultiple ? $value : $value[0];

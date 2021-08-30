@@ -52,11 +52,14 @@ class Log
         $content = "";
         $element = false;
 
-        if (intval($sourceId) > 0) {
-            $element = \CWiki::getElementById($sourceId, array(
-                'CHECK_PERMISSIONS' => 'N',
-                'ACTIVE' => 'Y'
-            ));
+        if ((int)($sourceId) > 0) {
+            $element = \CWiki::getElementById(
+                $sourceId,
+                array(
+                    'CHECK_PERMISSIONS' => 'N',
+                    'ACTIVE' => 'Y'
+                )
+            );
         }
 
         if ($element) {
@@ -64,12 +67,31 @@ class Log
                 $wikiParser = new \CWikiParser();
             }
 
-            $element['DETAIL_TEXT'] = $wikiParser->parse($element['DETAIL_TEXT'], $element['DETAIL_TEXT_TYPE'], array());
-            $element['DETAIL_TEXT'] = $wikiParser->clear($element['DETAIL_TEXT']);
+            $element['DETAIL_TEXT'] = $wikiParser->parse(
+                $element['DETAIL_TEXT'],
+                $element['DETAIL_TEXT_TYPE'],
+                array()
+            );
+            $element['DETAIL_TEXT'] = \CWikiParser::clear($element['DETAIL_TEXT']);
 
             $content .= LogIndex::getUserName($element["CREATED_BY"]) . " ";
             $content .= $element['NAME'] . " ";
             $content .= \CTextParser::clearAllTags($element['DETAIL_TEXT']);
+
+            if (
+                !empty($element['_TAGS'])
+                && is_array($element['_TAGS'])
+            ) {
+                $tagList = [];
+                foreach ($element['_TAGS'] as $tag) {
+                    $tagList[] = $tag["NAME"];
+                    $tagList[] = '#' . $tag["NAME"];
+                }
+
+                if (!empty($tagList)) {
+                    $content .= ' ' . implode(' ', $tagList);
+                }
+            }
         }
 
         $result = new EventResult(

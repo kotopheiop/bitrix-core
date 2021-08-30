@@ -27,55 +27,77 @@ if ($MOD_RIGHT >= 'R'):
     );
 
     if (IsModuleInstalled('forum')) {
-        if (!CModule::IncludeModule('forum'))
+        if (!CModule::IncludeModule('forum')) {
             return false;
+        }
 
         $rsForum = CForumNew::GetList();
         $arForumList = Array();
         $arForumList[] = '';
 
-        while ($arForum = $rsForum->Fetch())
+        while ($arForum = $rsForum->Fetch()) {
             $arForumList[$arForum['ID']] = $arForum['NAME'];
+        }
 
-        $socnet_message_per_page = isset($_POST['socnet_message_per_page']) ? $_POST['socnet_message_per_page'] : COption::GetOptionString('wiki', 'socnet_message_per_page', '20');
+        $socnet_message_per_page = isset($_POST['socnet_message_per_page']) ? $_POST['socnet_message_per_page'] : COption::GetOptionString(
+            'wiki',
+            'socnet_message_per_page',
+            '20'
+        );
 
         $arForumOptions = Array(
             array('socnet_use_review', Loc::getMessage('WIKI_OPTIONS_SOCNET_USE_REVIEW'), 'Y', Array('checkbox')),
-            array('socnet_forum_id', Loc::getMessage('WIKI_OPTIONS_SOCNET_FORUM_ID'), '', Array('selectbox', $arForumList)),
-            array('socnet_message_per_page', Loc::getMessage('WIKI_OPTIONS_SOCNET_MESSAGE_PER_PAGE'), $socnet_message_per_page, Array('text')),
+            array(
+                'socnet_forum_id',
+                Loc::getMessage('WIKI_OPTIONS_SOCNET_FORUM_ID'),
+                '',
+                Array('selectbox', $arForumList)
+            ),
+            array(
+                'socnet_message_per_page',
+                Loc::getMessage('WIKI_OPTIONS_SOCNET_MESSAGE_PER_PAGE'),
+                $socnet_message_per_page,
+                Array('text')
+            ),
             array('socnet_use_captcha', Loc::getMessage('WIKI_OPTIONS_SOCNET_USE_CAPTCHA'), 'Y', Array('checkbox'))
         );
     }
 
     if ($MOD_RIGHT >= 'Y' || $USER->IsAdmin()):
 
-        if ($REQUEST_METHOD == 'GET' && strlen($RestoreDefaults) > 0 && check_bitrix_sessid()) {
+        if ($REQUEST_METHOD == 'GET' && $RestoreDefaults <> '' && check_bitrix_sessid()) {
             COption::RemoveOption($module_id);
-            $z = CGroup::GetList($v1 = 'id', $v2 = 'asc', array('ACTIVE' => 'Y', 'ADMIN' => 'N'));
-            while ($zr = $z->Fetch())
+            $z = CGroup::GetList('id', 'asc', array('ACTIVE' => 'Y', 'ADMIN' => 'N'));
+            while ($zr = $z->Fetch()) {
                 $APPLICATION->DelGroupRight($module_id, array($zr['ID']));
+            }
         }
 
-        if ($REQUEST_METHOD == 'POST' && strlen($Update) > 0 && check_bitrix_sessid()) {
+        if ($REQUEST_METHOD == 'POST' && $Update <> '' && check_bitrix_sessid()) {
             $arOptions = $arAllOptions;
-            if (IsModuleInstalled('forum'))
+            if (IsModuleInstalled('forum')) {
                 $arOptions = array_merge($arAllOptions, $arForumOptions);
+            }
 
             //fix: http://jabber.bx/view.php?id=20941 (for compatibility)
             COption::RemoveOption($module_id, 'socnet_message_per_page');
 
             foreach ($arOptions as $option) {
-                if (!is_array($option) || isset($option['note']))
+                if (!is_array($option) || isset($option['note'])) {
                     continue;
+                }
 
                 $name = $option[0];
                 $val = ${$name};
-                if ($option[3][0] == 'checkbox' && $val != 'Y')
+                if ($option[3][0] == 'checkbox' && $val != 'Y') {
                     $val = 'N';
-                if ($option[3][0] == 'multiselectbox')
+                }
+                if ($option[3][0] == 'multiselectbox') {
                     $val = @implode(',', $val);
-                if ($name == 'image_max_width' || $name == 'image_max_height')
+                }
+                if ($name == 'image_max_width' || $name == 'image_max_height') {
                     $val = (int)$val;
+                }
 
                 COption::SetOptionString($module_id, $name, $val, $option[1]);
             }
@@ -91,7 +113,12 @@ if ($MOD_RIGHT >= 'R'):
     endif; //if($MOD_RIGHT>="W"):
 
     $aTabs = array();
-    $aTabs[] = array('DIV' => 'set', 'TAB' => Loc::getMessage('MAIN_TAB_SET'), 'ICON' => 'wiki_settings', 'TITLE' => Loc::getMessage('MAIN_TAB_TITLE_SET'));
+    $aTabs[] = array(
+        'DIV' => 'set',
+        'TAB' => Loc::getMessage('MAIN_TAB_SET'),
+        'ICON' => 'wiki_settings',
+        'TITLE' => Loc::getMessage('MAIN_TAB_TITLE_SET')
+    );
 
     if (IsModuleInstalled('socialnetwork')) {
         $aTabs[] = array(
@@ -101,7 +128,12 @@ if ($MOD_RIGHT >= 'R'):
             'ICON' => 'wiki_settings'
         );
     }
-    $aTabs[] = array('DIV' => 'rights', 'TAB' => Loc::getMessage('MAIN_TAB_RIGHTS'), 'ICON' => 'wiki_settings', 'TITLE' => Loc::getMessage('MAIN_TAB_TITLE_RIGHTS'));
+    $aTabs[] = array(
+        'DIV' => 'rights',
+        'TAB' => Loc::getMessage('MAIN_TAB_RIGHTS'),
+        'ICON' => 'wiki_settings',
+        'TITLE' => Loc::getMessage('MAIN_TAB_TITLE_RIGHTS')
+    );
 
     $tabControl = new CAdminTabControl('tabControl', $aTabs);
     ?>
@@ -121,14 +153,32 @@ if ($MOD_RIGHT >= 'R'):
         <?
         if (IsModuleInstalled('socialnetwork')) {
             $socnet_iblock_id = COption::GetOptionString($module_id, 'socnet_iblock_id');
-            $socnet_enable = COption::GetOptionString($module_id, 'socnet_enable') == 'Y' && CWikiSocnet::IsEnabledSocnet() ? 'Y' : 'N';
+            $socnet_enable = COption::GetOptionString(
+                $module_id,
+                'socnet_enable'
+            ) == 'Y' && CWikiSocnet::IsEnabledSocnet() ? 'Y' : 'N';
             $tabControl->BeginNextTab();
 
-            __AdmSettingsDrawRow('wiki', array('socnet_enable', Loc::getMessage('WIKI_OPTIONS_SOCNET_ENABLE'), $socnet_enable, Array('checkbox')))
+            __AdmSettingsDrawRow(
+                'wiki',
+                array(
+                    'socnet_enable',
+                    Loc::getMessage('WIKI_OPTIONS_SOCNET_ENABLE'),
+                    $socnet_enable,
+                    Array('checkbox')
+                )
+            )
             ?>
             <tr>
                 <td><? echo Loc::getMessage('WIKI_OPTIONS_SOCNET_IBLOCK_ID') ?></td>
-                <td><? echo GetIBlockDropDownList($socnet_iblock_id, 'socnet_iblock_type_id', 'socnet_iblock_id', false, 'class="adm-detail-iblock-types"', 'class="adm-detail-iblock-list"'); ?></td>
+                <td><? echo GetIBlockDropDownList(
+                        $socnet_iblock_id,
+                        'socnet_iblock_type_id',
+                        'socnet_iblock_id',
+                        false,
+                        'class="adm-detail-iblock-types"',
+                        'class="adm-detail-iblock-list"'
+                    ); ?></td>
             </tr>
             <?
             if (IsModuleInstalled('forum')) {
@@ -141,7 +191,9 @@ if ($MOD_RIGHT >= 'R'):
         <script language="JavaScript">
             function RestoreDefaults() {
                 if (confirm('<?echo AddSlashes(Loc::getMessage('MAIN_HINT_RESTORE_DEFAULTS_WARNING'))?>'))
-                    window.location = "<?echo $APPLICATION->GetCurPage()?>?RestoreDefaults=Y&lang=<?echo LANG?>&mid=<?echo rawurlencode($mid) . "&" . bitrix_sessid_get();?>";
+                    window.location = "<?echo $APPLICATION->GetCurPage(
+                    )?>?RestoreDefaults=Y&lang=<?echo LANG?>&mid=<?echo rawurlencode($mid) . "&" . bitrix_sessid_get(
+                        );?>";
             }
         </script>
         <input type="submit" name="Update" <? if ($MOD_RIGHT < 'W') echo "disabled" ?>

@@ -79,7 +79,7 @@ class MailingTriggerTable extends Entity\DataManager
         $data = $event->getParameters();
 
         if (is_string($data['fields']['ENDPOINT'])) {
-            $data['fields']['ENDPOINT'] = unserialize($data['fields']['ENDPOINT']);
+            $data['fields']['ENDPOINT'] = unserialize($data['fields']['ENDPOINT'], ['allowed_classes' => false]);
         }
         if (!is_array($data['fields']['ENDPOINT'])) {
             $data['fields']['ENDPOINT'] = null;
@@ -149,10 +149,12 @@ class MailingTriggerTable extends Entity\DataManager
         $settingsNew = null;
         $settingsOld = null;
 
-        if ($fieldsNew)
+        if ($fieldsNew) {
             $settingsNew = new Trigger\Settings($fieldsNew);
-        if ($fieldsOld)
+        }
+        if ($fieldsOld) {
             $settingsOld = new Trigger\Settings($fieldsOld);
+        }
 
 
         // if old item was closed trigger
@@ -166,20 +168,24 @@ class MailingTriggerTable extends Entity\DataManager
 
             $agent = new \CAgent;
             $agentListDb = $agent->GetList(array(), array('MODULE_ID' => 'sender', 'NAME' => $agentName));
-            while ($agentItem = $agentListDb->Fetch())
+            while ($agentItem = $agentListDb->Fetch()) {
                 $agent->Delete($agentItem['ID']);
+            }
         }
 
 
         // if new item is closed trigger
         if ($settingsNew && $settingsNew->isClosedTrigger()) {
             // check active state of mailing
-            $chainDb = MailingChainTable::getList(array(
-                'select' => array('ID'),
-                'filter' => array('=ID' => $chainId, '=MAILING.ACTIVE' => 'Y')
-            ));
-            if (!$chainDb->fetch())
+            $chainDb = MailingChainTable::getList(
+                array(
+                    'select' => array('ID'),
+                    'filter' => array('=ID' => $chainId, '=MAILING.ACTIVE' => 'Y')
+                )
+            );
+            if (!$chainDb->fetch()) {
                 return;
+            }
 
             // add new agent
             $agentName = Trigger\Manager::getClosedEventAgentName(
@@ -191,15 +197,18 @@ class MailingTriggerTable extends Entity\DataManager
             // set date of next exec
             $agentTime = $settingsNew->getClosedTriggerTime();
             $agentInterval = $settingsNew->getClosedTriggerInterval();
-            if ($agentInterval <= 0) $agentInterval = 1440;
+            if ($agentInterval <= 0) {
+                $agentInterval = 1440;
+            }
 
             $agentTimeArray = explode(":", $agentTime);
             $agentDate = new DateTime;
             $agentDate->setTime((int)$agentTimeArray[0], (int)$agentTimeArray[1]);
 
             // set next exec on next day if exec was today
-            if ($agentDate->getTimestamp() < time())
+            if ($agentDate->getTimestamp() < time()) {
                 $agentDate->add("1 days");
+            }
 
             // add agent
             $agent = new \CAgent;
@@ -213,22 +222,26 @@ class MailingTriggerTable extends Entity\DataManager
             // if delete operation(no the NEW)
             // or change operation(the NEW is not equal to the OLD)
             if (!$settingsNew || $settingsOld->getFullEventType() != $settingsNew->getFullEventType()) {
-                Trigger\Manager::actualizeHandler(array(
-                    'MODULE_ID' => $settingsOld->getEventModuleId(),
-                    'EVENT_TYPE' => $settingsOld->getEventType(),
-                    'CALLED_BEFORE_CHANGE' => true
-                ));
+                Trigger\Manager::actualizeHandler(
+                    array(
+                        'MODULE_ID' => $settingsOld->getEventModuleId(),
+                        'EVENT_TYPE' => $settingsOld->getEventType(),
+                        'CALLED_BEFORE_CHANGE' => true
+                    )
+                );
             }
         }
 
         // actualize new event
         if ($settingsNew && $settingsNew->getFullEventType()) {
             $calledBeforeChange = ($fieldsOld ? false : true);
-            Trigger\Manager::actualizeHandler(array(
-                'MODULE_ID' => $settingsNew->getEventModuleId(),
-                'EVENT_TYPE' => $settingsNew->getEventType(),
-                'CALLED_BEFORE_CHANGE' => $calledBeforeChange
-            ));
+            Trigger\Manager::actualizeHandler(
+                array(
+                    'MODULE_ID' => $settingsNew->getEventModuleId(),
+                    'EVENT_TYPE' => $settingsNew->getEventType(),
+                    'CALLED_BEFORE_CHANGE' => $calledBeforeChange
+                )
+            );
         }
     }
 }

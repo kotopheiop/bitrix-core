@@ -13,13 +13,16 @@ class CAllPullStack
         $strSql = "
 				SELECT ps.ID, ps.MESSAGE
 				FROM b_pull_stack ps " . ($lastId > 0 ? '' : 'LEFT JOIN b_pull_channel pc ON pc.CHANNEL_ID = ps.CHANNEL_ID') . "
-				WHERE ps.CHANNEL_ID = '" . $DB->ForSQL($channelId) . "'" . ($lastId > 0 ? " AND ps.ID > " . intval($lastId) : " AND ps.ID > pc.LAST_ID");
+				WHERE ps.CHANNEL_ID = '" . $DB->ForSQL($channelId) . "'" . ($lastId > 0 ? " AND ps.ID > " . intval(
+                    $lastId
+                ) : " AND ps.ID > pc.LAST_ID");
         $dbRes = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
         while ($arRes = $dbRes->Fetch()) {
-            if ($newLastId < $arRes['ID'])
+            if ($newLastId < $arRes['ID']) {
                 $newLastId = $arRes['ID'];
+            }
 
-            $data = unserialize($arRes['MESSAGE']);
+            $data = unserialize($arRes['MESSAGE'], ["allowed_classes" => false]);
             $data['id'] = $arRes['ID'];
             $data['extra'] = Array(
                 'server_time' => date('c'),
@@ -32,8 +35,9 @@ class CAllPullStack
             $arMessage[] = $data;
         }
 
-        if ($lastId < $newLastId)
+        if ($lastId < $newLastId) {
             CPullChannel::UpdateLastId($channelId, $newLastId);
+        }
 
         return $arMessage;
     }
@@ -52,16 +56,19 @@ class CAllPullStack
         }
 
         $result = false;
-        if (strlen($params['module_id']) <= 0 || strlen($params['command']) <= 0) {
+        if ($params['module_id'] == '' || $params['command'] == '') {
             return false;
         }
 
         $extra = is_array($params['extra']) ? $params['extra'] : Array();
-        $extra = array_merge($extra, Array(
-            'server_name' => COption::GetOptionString('main', 'server_name', $_SERVER['SERVER_NAME']),
-            'revision_web' => PULL_REVISION_WEB,
-            'revision_mobile' => PULL_REVISION_MOBILE,
-        ));
+        $extra = array_merge(
+            $extra,
+            Array(
+                'server_name' => COption::GetOptionString('main', 'server_name', $_SERVER['SERVER_NAME']),
+                'revision_web' => PULL_REVISION_WEB,
+                'revision_mobile' => PULL_REVISION_MOBILE,
+            )
+        );
 
         if (!isset($extra['server_time'])) {
             $extra['server_time'] = date('c');
@@ -71,7 +78,7 @@ class CAllPullStack
         }
 
         $arData = Array(
-            'module_id' => strtolower($params['module_id']),
+            'module_id' => mb_strtolower($params['module_id']),
             'command' => $params['command'],
             'params' => is_array($params['params']) ? $params['params'] : Array(),
             'extra' => $extra
@@ -100,8 +107,9 @@ class CAllPullStack
 
     public static function AddShared($arMessage, $channelType = 'shared')
     {
-        if (!CPullOptions::GetQueueServerStatus())
+        if (!CPullOptions::GetQueueServerStatus()) {
             return false;
+        }
 
         $arChannel = CPullChannel::GetChannelShared($channelType);
         return self::AddByChannel($arChannel['CHANNEL_ID'], $arMessage);

@@ -1,95 +1,96 @@
 <?
-$MESS["SALE_HPS_BILL_UA_DTITLE"] = "Счет (Украинский)";
 
-$MESS["SALE_HPS_BILL_UA_DATE"] = "Дата заказа";
-$MESS["SALE_HPS_BILL_UA_DATE_DESC"] = "Дата оформления заказа";
-$MESS["SALE_HPS_BILL_UA_SUPPLI"] = "Название компании поставщика";
-$MESS["SALE_HPS_BILL_UA_PAY_BEFORE"] = "Срок оплаты";
-$MESS["SALE_HPS_BILL_UA_SUPPLI_DESC"] = "Название компании-поставщика (продавца)";
-$MESS["SALE_HPS_BILL_UA_ORDER_SUPPLI"] = "Расчетный счет компании-поставщика";
-$MESS["SALE_HPS_BILL_UA_ORDER_SUPPLI_DESC"] = "Расчетный счет компании-поставщика (продавца)";
-$MESS["SALE_HPS_BILL_UA_ORDER_BANK"] = "Банк поставщика";
-$MESS["SALE_HPS_BILL_UA_ORDER_MFO"] = "МФО";
-$MESS["SALE_HPS_BILL_UA_ADRESS_SUPPLI"] = "Юридический адрес компании-поставщика";
-$MESS["SALE_HPS_BILL_UA_ADRESS_SUPPLI_DESC"] = "Юридический адрес компании-поставщика (продавца)";
-$MESS["SALE_HPS_BILL_UA_PHONE_SUPPLI"] = "Телефон компании-поставщика";
-$MESS["SALE_HPS_BILL_UA_PHONE_SUPPLI_DESC"] = "Телефон  компании-поставщика (продавца)";
-$MESS["SALE_HPS_BILL_UA_EDRPOY_SUPPLI"] = "ЕГРПОУ компании-поставщика";
-$MESS["SALE_HPS_BILL_UA_EDRPOY_SUPPLI_DESC"] = "ЕГРПОУ  компании-поставщика (продавца)";
-$MESS["SALE_HPS_BILL_UA_IPN_SUPPLI"] = "ИНН  компании-поставщика";
-$MESS["SALE_HPS_BILL_UA_IPN_SUPPLI_DESC"] = "ИНН  компании-поставщика (продавца)";
-$MESS["SALE_HPS_BILL_UA_PDV_SUPPLI"] = "№ свид. НДС компании-поставщика";
-$MESS["SALE_HPS_BILL_UA_PDV_SUPPLI_DESC"] = "№ свид. НДС компании-поставщика (продавца)";
-$MESS["SALE_HPS_BILL_UA_SYS_SUPPLI"] = "Система налогообложения";
-$MESS["SALE_HPS_BILL_UA_SYS_SUPPLI_DESC"] = " Система налогообложения";
-$MESS["SALE_HPS_BILL_UA_CUSTOMER"] = "Название компании-заказчика";
-$MESS["SALE_HPS_BILL_UA_CUSTOMER_DESC"] = "Название компании-заказчика (покупателя)";
-$MESS["SALE_HPS_BILL_UA_CUSTOMER_PHONE"] = "Телефон компании-заказчика";
-$MESS["SALE_HPS_BILL_UA_CUSTOMER_PHONE_DESC"] = "Телефон компании-заказчика (покупателя)";
-$MESS["SALE_HPS_BILL_UA_CUSTOMER_DOGOVOR"] = "Договор";
-$MESS["SALE_HPS_BILL_UA_PRINT"] = "Печать";
-$MESS["SALE_HPS_BILL_UA_PRINT_DESC"] = "Путь к изображению печати компании-поставщика на сайте";
-$MESS["SALE_HPS_BILL_UA_CUSTOMER_ADRES"] = "Адреса компании-заказчика";
-$MESS["SALE_HPS_BILL_UA_CUSTOMER_ADRES_DESC"] = "Адреса компании-заказчика (покупателя)";
-$MESS["SALE_HPS_BILL_UA_CUSTOMER_FAX"] = "Факс компании-заказчика";
-$MESS["SALE_HPS_BILL_UA_CUSTOMER_FAX_DESC"] = "Факс компании-заказчика (покупателя)";
-$MESS["SALE_HPS_BILL_UA_ORDER_ID"] = "Код заказа";
-$MESS["SALE_HPS_BILL_UA_ACC_SUPPLI"] = "ФИО бухгалтера";
-$MESS["SALE_HPS_BILL_UA_ACC_POS_SUPPLI"] = "Должность бухгалтера";
+$MESS["SALE_HPS_BILL_UA_DTITLE"] = "пїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ)";
 
-$MESS["SALE_HPS_BILL_UA_ACC_SIGN_SUPPLI"] = "Подпись бухгалтера (рекомендованный размер 200x50px)";
+$MESS["SALE_HPS_BILL_UA_DATE"] = "пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_BILL_UA_DATE_DESC"] = "пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_BILL_UA_SUPPLI"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_BILL_UA_PAY_BEFORE"] = "пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_BILL_UA_SUPPLI_DESC"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ)";
+$MESS["SALE_HPS_BILL_UA_ORDER_SUPPLI"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_BILL_UA_ORDER_SUPPLI_DESC"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ)";
+$MESS["SALE_HPS_BILL_UA_ORDER_BANK"] = "пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_BILL_UA_ORDER_MFO"] = "пїЅпїЅпїЅ";
+$MESS["SALE_HPS_BILL_UA_ADRESS_SUPPLI"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_BILL_UA_ADRESS_SUPPLI_DESC"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ)";
+$MESS["SALE_HPS_BILL_UA_PHONE_SUPPLI"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_BILL_UA_PHONE_SUPPLI_DESC"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅ  пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ)";
+$MESS["SALE_HPS_BILL_UA_EDRPOY_SUPPLI"] = "пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_BILL_UA_EDRPOY_SUPPLI_DESC"] = "пїЅпїЅпїЅпїЅпїЅпїЅ  пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ)";
+$MESS["SALE_HPS_BILL_UA_IPN_SUPPLI"] = "пїЅпїЅпїЅ  пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_BILL_UA_IPN_SUPPLI_DESC"] = "пїЅпїЅпїЅ  пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ)";
+$MESS["SALE_HPS_BILL_UA_PDV_SUPPLI"] = "пїЅ пїЅпїЅпїЅпїЅ. пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_BILL_UA_PDV_SUPPLI_DESC"] = "пїЅ пїЅпїЅпїЅпїЅ. пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ)";
+$MESS["SALE_HPS_BILL_UA_SYS_SUPPLI"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_BILL_UA_SYS_SUPPLI_DESC"] = " пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_BILL_UA_CUSTOMER"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_BILL_UA_CUSTOMER_DESC"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ)";
+$MESS["SALE_HPS_BILL_UA_CUSTOMER_PHONE"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_BILL_UA_CUSTOMER_PHONE_DESC"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ)";
+$MESS["SALE_HPS_BILL_UA_CUSTOMER_DOGOVOR"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_BILL_UA_PRINT"] = "пїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_BILL_UA_PRINT_DESC"] = "пїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_BILL_UA_CUSTOMER_ADRES"] = "пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_BILL_UA_CUSTOMER_ADRES_DESC"] = "пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ)";
+$MESS["SALE_HPS_BILL_UA_CUSTOMER_FAX"] = "пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_BILL_UA_CUSTOMER_FAX_DESC"] = "пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ)";
+$MESS["SALE_HPS_BILL_UA_ORDER_ID"] = "пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_BILL_UA_ACC_SUPPLI"] = "пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_BILL_UA_ACC_POS_SUPPLI"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
 
-$MESS["SALE_HPS_BILL_UA_PRINT"] = "Печать (рекомендованный размер 150x150px)";
-$MESS["SALE_HPS_BILL_UA_PRINT_DESC"] = "Изображение печати компании-поставщика на сайте";
+$MESS["SALE_HPS_BILL_UA_ACC_SIGN_SUPPLI"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ 200x50px)";
 
-$MESS["SALE_HPS_BILL_UA_BACKGROUND"] = "Фон (рекомендованный размер 800x1120px)";
-$MESS["SALE_HPS_BILL_UA_BACKGROUND_DESC"] = "Фон";
+$MESS["SALE_HPS_BILL_UA_PRINT"] = "пїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ 150x150px)";
+$MESS["SALE_HPS_BILL_UA_PRINT_DESC"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ";
 
-$MESS["SALE_HPS_BILL_UA_BACKGROUND_STYLE"] = "Стиль отображения фона";
-$MESS["SALE_HPS_BILL_UA_BACKGROUND_STYLE_NONE"] = "Как есть";
-$MESS["SALE_HPS_BILL_UA_BACKGROUND_STYLE_TILE"] = "Замостить";
-$MESS["SALE_HPS_BILL_UA_BACKGROUND_STYLE_STRETCH"] = "Растянуть";
+$MESS["SALE_HPS_BILL_UA_BACKGROUND"] = "пїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ 800x1120px)";
+$MESS["SALE_HPS_BILL_UA_BACKGROUND_DESC"] = "пїЅпїЅпїЅ";
 
-$MESS["SALE_HPS_BILL_UA_COMMENT1"] = "Комментарий 1";
-$MESS["SALE_HPS_BILL_UA_COMMENT2"] = "Комментарий 2";
-$MESS["SALE_HPS_BILL_UA_MARGIN_TOP"] = "Отступ сверху страницы (мм)";
-$MESS["SALE_HPS_BILL_UA_MARGIN_RIGHT"] = "Отступ справа страницы (мм)";
-$MESS["SALE_HPS_BILL_UA_MARGIN_BOTTOM"] = "Отступ снизу страницы (мм)";
-$MESS["SALE_HPS_BILL_UA_MARGIN_LEFT"] = "Отступ слева страницы (мм)";
+$MESS["SALE_HPS_BILL_UA_BACKGROUND_STYLE"] = "пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_BILL_UA_BACKGROUND_STYLE_NONE"] = "пїЅпїЅпїЅ пїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_BILL_UA_BACKGROUND_STYLE_TILE"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_BILL_UA_BACKGROUND_STYLE_STRETCH"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+
+$MESS["SALE_HPS_BILL_UA_COMMENT1"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ 1";
+$MESS["SALE_HPS_BILL_UA_COMMENT2"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ 2";
+$MESS["SALE_HPS_BILL_UA_MARGIN_TOP"] = "пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅ)";
+$MESS["SALE_HPS_BILL_UA_MARGIN_RIGHT"] = "пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅ)";
+$MESS["SALE_HPS_BILL_UA_MARGIN_BOTTOM"] = "пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅ)";
+$MESS["SALE_HPS_BILL_UA_MARGIN_LEFT"] = "пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅ)";
 
 
-$MESS["SALE_HPS_BILL_UA_TOTAL_SHOW"] = "Показывать итоговую информацию";
-$MESS["SALE_HPS_BILL_UA_SELLER_SHOW"] = "Показывать информацию о получателе";
-$MESS["SALE_HPS_BILL_UA_FOOTER_SHOW"] = "Выводить нижний блок";
-$MESS["SALE_HPS_BILL_UA_PAYER_SHOW"] = "Показывать информацию о покупателе";
+$MESS["SALE_HPS_BILL_UA_TOTAL_SHOW"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_BILL_UA_SELLER_SHOW"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_BILL_UA_FOOTER_SHOW"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_BILL_UA_PAYER_SHOW"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
 
-$MESS["SALE_HPS_BILL_UA_COLUMN_NUMBER_TITLE"] = "Заголовок для колонки \"№\"";
-$MESS["SALE_HPS_BILL_UA_COLUMN_NUMBER_VALUE"] = "№";
+$MESS["SALE_HPS_BILL_UA_COLUMN_NUMBER_TITLE"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ \"пїЅ\"";
+$MESS["SALE_HPS_BILL_UA_COLUMN_NUMBER_VALUE"] = "пїЅ";
 
-$MESS["SALE_HPS_BILL_UA_COLUMN_NAME_TITLE"] = "Заголовок для колонки \"Товар/Послуга\"";
-$MESS["SALE_HPS_BILL_UA_COLUMN_NAME_VALUE"] = "Товар/Послуга";
+$MESS["SALE_HPS_BILL_UA_COLUMN_NAME_TITLE"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ \"пїЅпїЅпїЅпїЅпїЅ/пїЅпїЅпїЅпїЅпїЅпїЅпїЅ\"";
+$MESS["SALE_HPS_BILL_UA_COLUMN_NAME_VALUE"] = "пїЅпїЅпїЅпїЅпїЅ/пїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
 
-$MESS["SALE_HPS_BILL_UA_COLUMN_QUANTITY_TITLE"] = "Заголовок для колонки \"Кіл-сть\"";
-$MESS["SALE_HPS_BILL_UA_COLUMN_QUANTITY_VALUE"] = "Кіл-сть";
+$MESS["SALE_HPS_BILL_UA_COLUMN_QUANTITY_TITLE"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ \"КіпїЅ-пїЅпїЅпїЅ\"";
+$MESS["SALE_HPS_BILL_UA_COLUMN_QUANTITY_VALUE"] = "КіпїЅ-пїЅпїЅпїЅ";
 
-$MESS["SALE_HPS_BILL_UA_COLUMN_MEASURE_TITLE"] = "Заголовок для колонки \"Од.\"";
-$MESS["SALE_HPS_BILL_UA_COLUMN_MEASURE_VALUE"] = "Од.";
+$MESS["SALE_HPS_BILL_UA_COLUMN_MEASURE_TITLE"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ \"пїЅпїЅ.\"";
+$MESS["SALE_HPS_BILL_UA_COLUMN_MEASURE_VALUE"] = "пїЅпїЅ.";
 
-$MESS["SALE_HPS_BILL_UA_COLUMN_PRICE_TITLE"] = "Заголовок для колонки \"Ціна без ПДВ\"";
-$MESS["SALE_HPS_BILL_UA_COLUMN_PRICE_VALUE"] = "Ціна без ПДВ";
-$MESS["SALE_HPS_BILL_UA_COLUMN_PRICE_TAX_TITLE"] = "Заголовок для колонки \"Ціна з ПДВ\"";
-$MESS["SALE_HPS_BILL_UA_COLUMN_PRICE_TAX_VALUE"] = "Ціна з ПДВ";
+$MESS["SALE_HPS_BILL_UA_COLUMN_PRICE_TITLE"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ \"ЦіпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅ\"";
+$MESS["SALE_HPS_BILL_UA_COLUMN_PRICE_VALUE"] = "ЦіпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅ";
+$MESS["SALE_HPS_BILL_UA_COLUMN_PRICE_TAX_TITLE"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ \"ЦіпїЅпїЅ пїЅ пїЅпїЅпїЅ\"";
+$MESS["SALE_HPS_BILL_UA_COLUMN_PRICE_TAX_VALUE"] = "ЦіпїЅпїЅ пїЅ пїЅпїЅпїЅ";
 
-$MESS["SALE_HPS_BILL_UA_COLUMN_SUM_TITLE"] = "Заголовок для колонки \"Сума без ПДВ\"";
-$MESS["SALE_HPS_BILL_UA_COLUMN_SUM_VALUE"] = "Сума без ПДВ";
-$MESS["SALE_HPS_BILL_UA_COLUMN_SUM_TAX_TITLE"] = "Заголовок для колонки \"Сума з ПДВ\"";
-$MESS["SALE_HPS_BILL_UA_COLUMN_SUM_TAX_VALUE"] = "Сума з ПДВ";
+$MESS["SALE_HPS_BILL_UA_COLUMN_SUM_TITLE"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ \"пїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅ\"";
+$MESS["SALE_HPS_BILL_UA_COLUMN_SUM_VALUE"] = "пїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅ";
+$MESS["SALE_HPS_BILL_UA_COLUMN_SUM_TAX_TITLE"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ \"пїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅ\"";
+$MESS["SALE_HPS_BILL_UA_COLUMN_SUM_TAX_VALUE"] = "пїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅ";
 
-$MESS["SALE_HPS_BILL_UA_COLUMN_VAT_RATE_TITLE"] = "Заголовок для колонки \"Ставка ПДВ\"";
-$MESS["SALE_HPS_BILL_UA_COLUMN_VAT_RATE_VALUE"] = "Ставка ПДВ";
+$MESS["SALE_HPS_BILL_UA_COLUMN_VAT_RATE_TITLE"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ \"пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ\"";
+$MESS["SALE_HPS_BILL_UA_COLUMN_VAT_RATE_VALUE"] = "пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ";
 
-$MESS["SALE_HPS_BILL_UA_COLUMN_SORT"] = "Сортировка";
-$MESS["SALE_HPS_BILL_UA_COLUMN_SHOW"] = "Активность";
+$MESS["SALE_HPS_BILL_UA_COLUMN_SORT"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_BILL_UA_COLUMN_SHOW"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
 
-$MESS["SALE_HPS_BILL_UA_HEADER"] = "Заголовок счета";
-$MESS["SALE_HPS_BILL_UA_HEADER_VALUE"] = "Рахунок на оплату";
+$MESS["SALE_HPS_BILL_UA_HEADER"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_HPS_BILL_UA_HEADER_VALUE"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ";

@@ -66,6 +66,7 @@ class Utils
         $publicResult = new PublicActionResult();
 
         if (!$iblock) {
+            \Bitrix\Landing\Hook::setEditMode(true);
             $settings = \Bitrix\Landing\Hook\Page\Settings::getDataForSite(
                 $siteId
             );
@@ -86,9 +87,12 @@ class Utils
             'IBLOCK_ID' => $iblockId,
             array_merge(
                 ['LOGIC' => 'AND'],
-                array_map(function ($fragment) {
-                    return ['%NAME' => trim($fragment)];
-                }, explode(' ', trim($query)))
+                array_map(
+                    function ($fragment) {
+                        return ['%NAME' => trim($fragment)];
+                    },
+                    explode(' ', trim($query))
+                )
             )
         ];
 
@@ -98,13 +102,20 @@ class Utils
             $type === self::TYPE_CATALOG_ELEMENT) {
             $order = [];
             $groupBy = false;
-            $navParams = false;
+            $navParams = ['nTopCount' => 50];
             $select = [
-                'ID', 'NAME', 'IBLOCK_SECTION_ID', 'DETAIL_PICTURE'
+                'ID',
+                'NAME',
+                'IBLOCK_SECTION_ID',
+                'DETAIL_PICTURE'
             ];
 
             $result = \CIBlockElement::getList(
-                $order, $filter, $groupBy, $navParams, $select
+                $order,
+                $filter,
+                $groupBy,
+                $navParams,
+                $select
             );
             while ($item = $result->fetch()) {
                 $chain = [];
@@ -129,10 +140,14 @@ class Utils
         ) {
             $order = [];
             $select = [
-                'ID', 'NAME', 'IBLOCK_SECTION_ID', 'DETAIL_PICTURE'
+                'ID',
+                'NAME',
+                'IBLOCK_SECTION_ID',
+                'DETAIL_PICTURE'
             ];
             $filter = [
-                'IBLOCK_ID' => $iblockId, '%NAME' => trim($query)
+                'IBLOCK_ID' => $iblockId,
+                '%NAME' => trim($query)
             ];
             $count = false;
 
@@ -207,7 +222,10 @@ class Utils
                         'nTopCount' => 1
                     ),
                     array(
-                        'ID', 'NAME', 'DETAIL_PICTURE', 'IBLOCK_SECTION_ID'
+                        'ID',
+                        'NAME',
+                        'DETAIL_PICTURE',
+                        'IBLOCK_SECTION_ID'
                     )
                 );
             } else {
@@ -219,7 +237,9 @@ class Utils
                     ),
                     false,
                     array(
-                        'ID', 'NAME', 'IBLOCK_SECTION_ID'
+                        'ID',
+                        'NAME',
+                        'IBLOCK_SECTION_ID'
                     ),
                     array(
                         'nTopCount' => 1
@@ -319,6 +339,7 @@ class Utils
         }
 
         if (empty($settings)) {
+            \Bitrix\Landing\Hook::setEditMode(true);
             $settings = \Bitrix\Landing\Hook\Page\Settings::getDataForSite();
         }
 
@@ -328,15 +349,19 @@ class Utils
         // build url
         if ($urlType == 'detail' || $urlType == 'element') {
             // element additional info
-            $res = \Bitrix\Iblock\ElementTable::getList(array(
-                'select' => array(
-                    'ID', 'CODE', 'IBLOCK_SECTION_ID'
-                ),
-                'filter' => array(
-                    'ID' => $elementId,
-                    'IBLOCK_ID' => $iblockId
+            $res = \Bitrix\Iblock\ElementTable::getList(
+                array(
+                    'select' => array(
+                        'ID',
+                        'CODE',
+                        'IBLOCK_SECTION_ID'
+                    ),
+                    'filter' => array(
+                        'ID' => $elementId,
+                        'IBLOCK_ID' => $iblockId
+                    )
                 )
-            ));
+            );
             if (!($element = $res->fetch())) {
                 return $urls[$key];
             }
@@ -365,10 +390,12 @@ class Utils
     {
         $result = new PublicActionResult();
 
-        $result->setResult(Manager::checkMultiFeature(
-            (array)$code,
-            $params
-        ));
+        $result->setResult(
+            Manager::checkMultiFeature(
+                (array)$code,
+                $params
+            )
+        );
 
         return $result;
     }

@@ -11,9 +11,8 @@ namespace Bitrix\Sender\Internals\Model;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type;
-
-use Bitrix\Sender\Message\iBase;
 use Bitrix\Sender\MailingChainTable;
+use Bitrix\Sender\Message\iBase;
 
 Loc::loadMessages(__FILE__);
 
@@ -88,6 +87,10 @@ class LetterTable extends Entity\DataManager
                 'data_type' => 'datetime',
                 'default_value' => new Type\DateTime(),
             ),
+            'DATE_UPDATE' => array(
+                'data_type' => 'datetime',
+                'default_value' => new Type\DateTime(),
+            ),
             'STATUS' => array(
                 'data_type' => 'string',
                 'required' => true,
@@ -147,6 +150,10 @@ class LetterTable extends Entity\DataManager
                 'fetch_data_modification' => array('\Bitrix\Main\Text\Emoji', 'getFetchModificator'),
             ),
 
+            'MESSAGE' => array(
+                'data_type' => MessageTable::class,
+                'reference' => array('=this.MESSAGE_ID' => 'ref.ID'),
+            ),
             'CAMPAIGN' => array(
                 'data_type' => 'Bitrix\Sender\MailingTable',
                 'reference' => array('=this.CAMPAIGN_ID' => 'ref.ID'),
@@ -162,6 +169,11 @@ class LetterTable extends Entity\DataManager
             'CREATED_BY_USER' => array(
                 'data_type' => 'Bitrix\Main\UserTable',
                 'reference' => array('=this.CREATED_BY' => 'ref.ID'),
+            ),
+            'WAITING_RECIPIENT' => array(
+                'data_type' => 'boolean',
+                'default_value' => 'N',
+                'values' => array('N', 'Y')
             ),
         );
     }
@@ -211,6 +223,23 @@ class LetterTable extends Entity\DataManager
         $data = $event->getParameters();
         $fields = static::getRowById($data['primary']['ID']);
         if ($fields) {
+            $fileQuery = MessageFieldTable::getById(
+                [
+                    'MESSAGE_ID' => $fields['MESSAGE_ID'],
+                    'CODE' => 'ATTACHMENT',
+                ]
+            );
+
+            if ($row = $fileQuery->fetch()) {
+                $files = explode(",", $row['VALUE']);
+
+                foreach ($files as $file) {
+                    if ((int)$file) {
+                        \CFile::Delete((int)$file);
+                    }
+                }
+            }
+
             MessageTable::delete($fields['MESSAGE_ID']);
         }
 

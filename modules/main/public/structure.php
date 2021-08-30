@@ -13,26 +13,27 @@
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_js.php");
 
-if (CModule::IncludeModule("compression"))
-    CCompress::Disable2048Spaces();
-
 IncludeModuleLangFile(__FILE__);
 
 $obJSPopup = new CJSPopup(GetMessage("pub_struct_title"));
 
-if (!$USER->CanDoOperation('fileman_view_file_structure') || !$USER->CanDoFileOperation('fm_edit_existent_folder', array(SITE_ID, "/")))
+if (!$USER->CanDoOperation('fileman_view_file_structure') || !$USER->CanDoFileOperation(
+        'fm_edit_existent_folder',
+        array(SITE_ID, "/")
+    )) {
     $obJSPopup->ShowError(GetMessage("ACCESS_DENIED"));
+}
 
 function __struct_file_sort($a, $b)
 {
-    if ($a["type"] == "D" && $b["type"] == "F")
+    if ($a["type"] == "D" && $b["type"] == "F") {
         return -1;
-    elseif ($a["type"] == "F" && $b["type"] == "D")
+    } elseif ($a["type"] == "F" && $b["type"] == "D") {
         return 1;
-    else {
+    } else {
         $name1 = ($a["name"] <> '' ? $a["name"] : $a["file"]);
         $name2 = ($b["name"] <> '' ? $b["name"] : $b["file"]);
-        return strcmp(strtoupper($name1), strtoupper($name2));
+        return strcmp(mb_strtoupper($name1), mb_strtoupper($name2));
     }
 }
 
@@ -80,24 +81,27 @@ function __struct_show_files($arFiles, $doc_root, $path, $open_path, $dirsonly =
     global $USER;
 
     static $tzOffset = false;
-    if ($tzOffset === false)
+    if ($tzOffset === false) {
         $tzOffset = CTimeZone::GetOffset();
+    }
 
     $res = '';
     $hintScript = '';
     $scrDest = '';
     $scrSrc = '';
     foreach ($arFiles as $arFile) {
-        if ($arFile["name"] == '' && $arFile["file"] <> "/" && $GLOBALS['arOptions']['show_all_files'] != true)
+        if ($arFile["name"] == '' && $arFile["file"] <> "/" && $GLOBALS['arOptions']['show_all_files'] != true) {
             continue;
+        }
 
         $full_path = rtrim($path, "/") . "/" . trim($arFile["file"], "/");
         $encPath = urlencode($full_path);
         $name = ($arFile["name"] <> '' ? htmlspecialcharsback($arFile["name"]) : $arFile["file"]);
 
         $md5 = md5($full_path);
-        if ($dirsonly)
+        if ($dirsonly) {
             $md5 = "_dirs" . $md5;
+        }
         $itemID = 'item' . $md5;
         $item = '';
         if ($arFile["type"] == 'D') {
@@ -110,20 +114,26 @@ function __struct_show_files($arFiles, $doc_root, $path, $open_path, $dirsonly =
                 "del_folder" => $USER->CanDoFileOperation("fm_delete_folder", $arPath),
             );
 
-            $bOpenSubdir = ($open_path <> "" && (strpos($open_path . "/", $full_path . "/") === 0 || $arFile["file"] == "/"));
+            $bOpenSubdir = ($open_path <> "" && (mb_strpos(
+                        $open_path . "/",
+                        $full_path . "/"
+                    ) === 0 || $arFile["file"] == "/"));
             $dirID = 'dir' . $md5;
             $item = '<div id="sign' . $md5 . '" class="' . ($bOpenSubdir ? 'bx-struct-minus' : 'bx-struct-plus') . '" onclick="structGetSubDir(this, \'' . $dirID . '\', \'' . $encPath . '\', ' . ($dirsonly ? 'true' : 'false') . ')"></div>
 				<div class="bx-struct-dir" id="icon' . $md5 . '"></div>
 				<div id="' . $itemID . '" __bx_path="' . $encPath . '" __bx_type="D" class="bx-struct-name"' .
-                ' onmouseover="structNameOver(this)" onmouseout="structNameOut(this)" onclick="structShowDirMenu(this, ' . ($dirsonly ? 'true' : 'false') . ', ' . CUtil::PhpToJSObject($arPerm) . ')"' .
+                ' onmouseover="structNameOver(this)" onmouseout="structNameOut(this)" onclick="structShowDirMenu(this, ' . ($dirsonly ? 'true' : 'false') . ', ' . CUtil::PhpToJSObject(
+                    $arPerm
+                ) . ')"' .
                 ' ondblclick="structGetSubdirAction(\'sign' . $md5 . '\')">' . htmlspecialcharsEx($name) . '</div>
 				<div style="clear:both;"></div>
 				<div id="' . $dirID . '" class="bx-struct-sub" style="display:' . ($bOpenSubdir ? 'block' : 'none') . '">' .
                 ($bOpenSubdir ? __struct_get_files($doc_root, $full_path, $open_path, $dirsonly) : '') . '</div>';
 
             $scrDest .= ($scrDest <> '' ? ', ' : '') . "'" . $itemID . "'";
-            if ($arFile["file"] <> '/')
+            if ($arFile["file"] <> '/') {
                 $scrSrc .= ($scrSrc <> '' ? ', ' : '') . "'" . $itemID . "', 'icon" . $md5 . "'";
+            }
         } elseif ($dirsonly == false) {
             $arPath = array($_GET['site'], $full_path);
             $arPerm = array(
@@ -132,39 +142,61 @@ function __struct_show_files($arFiles, $doc_root, $path, $open_path, $dirsonly =
                 "del_file" => $USER->CanDoFileOperation("fm_delete_file", $arPath),
             );
 
-            if ($GLOBALS['bFileman'] == true && $GLOBALS['arOptions']['show_all_files'] == true)
+            if ($GLOBALS['bFileman'] == true && $GLOBALS['arOptions']['show_all_files'] == true) {
                 $type = CFileMan::GetFileTypeEx($arFile["file"]);
-            else
+            } else {
                 $type = "";
+            }
 
             $item = '<div style="float:left"></div><div class="bx-struct-file' . ($type <> '' ? ' bx-struct-type-' . $type : '') . '" id="icon' . $md5 . '"></div>
-				<div id="' . $itemID . '" __bx_path="' . $encPath . '" __bx_type="F" class="bx-struct-name" onmouseover="structNameOver(this)" onmouseout="structNameOut(this)" onclick="structShowFileMenu(this, ' . CUtil::PhpToJSObject($arPerm) . ')" ondblclick="structEditFileAction(this)">' . htmlspecialcharsEx($name) . '</div>
+				<div id="' . $itemID . '" __bx_path="' . $encPath . '" __bx_type="F" class="bx-struct-name" onmouseover="structNameOver(this)" onmouseout="structNameOut(this)" onclick="structShowFileMenu(this, ' . CUtil::PhpToJSObject(
+                    $arPerm
+                ) . ')" ondblclick="structEditFileAction(this)">' . htmlspecialcharsEx($name) . '</div>
 				<div style="clear:both;"></div>';
 
             $scrSrc .= ($scrSrc <> '' ? ', ' : '') . "'" . $itemID . "', 'icon" . $md5 . "'";
         }
-        if ($item <> '')
+        if ($item <> '') {
             $res .= '<div class="bx-struct-item">' . $item . '</div>';
+        }
 
         if ($GLOBALS['arOptions']['show_file_info'] == true) {
             $sHint = '<table cellspacing="0" border="0">' .
-                '<tr><td colspan="2"><b>' . ($arFile["type"] == 'D' ? GetMessage("pub_struct_folder") : GetMessage("pub_struct_file")) . '</b></td></tr>' .
-                '<tr><td class="bx-grey">' . GetMessage("pub_struct_name") . '</td><td>' . htmlspecialcharsEx($arFile["file"]) . '</td></tr>' .
-                ($arFile["type"] == 'F' ? '<tr><td class="bx-grey">' . GetMessage("pub_struct_size") . "</td><td>" . number_format($arFile["size"], 0, ".", ",") . " " . GetMessage("pub_struct_byte") . '</td></tr>' : '') .
-                '<tr><td class="bx-grey">' . GetMessage("pub_struct_modified") . '</td><td>' . htmlspecialcharsEx(ConvertTimeStamp($arFile["time"] + $tzOffset, 'FULL', $_GET['site'])) . '</td></tr>';
-            if (is_array($arFile["properties"]))
-                foreach ($arFile["properties"] as $prop_name => $prop_val)
-                    $sHint .= '<tr valign="top"><td class="bx-grey">' . htmlspecialcharsEx($prop_name) . ':</td><td>' . htmlspecialcharsEx($prop_val) . '</td></tr>';
+                '<tr><td colspan="2"><b>' . ($arFile["type"] == 'D' ? GetMessage("pub_struct_folder") : GetMessage(
+                    "pub_struct_file"
+                )) . '</b></td></tr>' .
+                '<tr><td class="bx-grey">' . GetMessage("pub_struct_name") . '</td><td>' . htmlspecialcharsEx(
+                    $arFile["file"]
+                ) . '</td></tr>' .
+                ($arFile["type"] == 'F' ? '<tr><td class="bx-grey">' . GetMessage(
+                        "pub_struct_size"
+                    ) . "</td><td>" . number_format($arFile["size"], 0, ".", ",") . " " . GetMessage(
+                        "pub_struct_byte"
+                    ) . '</td></tr>' : '') .
+                '<tr><td class="bx-grey">' . GetMessage("pub_struct_modified") . '</td><td>' . htmlspecialcharsEx(
+                    ConvertTimeStamp($arFile["time"] + $tzOffset, 'FULL', $_GET['site'])
+                ) . '</td></tr>';
+            if (is_array($arFile["properties"])) {
+                foreach ($arFile["properties"] as $prop_name => $prop_val) {
+                    $sHint .= '<tr valign="top"><td class="bx-grey">' . htmlspecialcharsEx(
+                            $prop_name
+                        ) . ':</td><td>' . htmlspecialcharsEx($prop_val) . '</td></tr>';
+                }
+            }
             $sHint .= '</table>';
 
-            $hintScript .= 'window.structHint' . $itemID . ' = new BXHint(\'' . CUtil::JSEscape($sHint) . '\', document.getElementById(\'' . $itemID . '\')); ';
+            $hintScript .= 'window.structHint' . $itemID . ' = new BXHint(\'' . CUtil::JSEscape(
+                    $sHint
+                ) . '\', document.getElementById(\'' . $itemID . '\')); ';
         }
     }
-    if ($hintScript <> '')
+    if ($hintScript <> '') {
         $res .= '<script>' . $hintScript . '</script>';
+    }
 
-    if ($GLOBALS['bFileman'] == true)
+    if ($GLOBALS['bFileman'] == true) {
         $res .= '<script>structRegisterDD([' . $scrSrc . '], [' . $scrDest . ']);</script>';
+    }
 
     return $res;
 }
@@ -173,8 +205,9 @@ function __struct_get_files($doc_root, $path = "", $open_path = "", $dirsonly = 
 {
     global $USER;
 
-    if (!$USER->CanDoFileOperation('fm_view_listing', array($_GET['site'], $path)))
+    if (!$USER->CanDoFileOperation('fm_view_listing', array($_GET['site'], $path))) {
         return '';
+    }
 
     $arFiles = array();
     $abs_path = $doc_root . "/" . $path;
@@ -185,10 +218,12 @@ function __struct_get_files($doc_root, $path = "", $open_path = "", $dirsonly = 
     foreach ($arChildren as $child) {
         $n = $child->GetName();
         if (!$child->IsDirectory()) {
-            if ($n == '.section.php' || $n == '.access.php')
+            if ($n == '.section.php' || $n == '.access.php') {
                 continue;
-            if (preg_match('/^\.(.*)?\.menu\.(php|html|php3|php4|php5|php6|phtml)$/', $n))
+            }
+            if (preg_match('/^\.(.*)?\.menu\.(php|html|php3|php4|php5|php6|phtml)$/', $n)) {
                 continue;
+            }
         }
         $arFile = __struct_get_file_info($abs_path, $n);
         $arFiles[] = $arFile;
@@ -205,8 +240,9 @@ $strWarning = "";
 $DOC_ROOT = CSite::GetSiteDocRoot($_GET["site"]);
 
 $arOptions = CUserOptions::GetOption("public_structure", "options", array());
-if (!isset($arOptions['show_file_info']))
+if (!isset($arOptions['show_file_info'])) {
     $arOptions['show_file_info'] = true;
+}
 
 $io = CBXVirtualIo::GetInstance();
 // **********************************************
@@ -214,12 +250,13 @@ $io = CBXVirtualIo::GetInstance();
 if ($_GET['ajax'] == 'Y') {
     if ($_GET['action'] == 'delfolder' && check_bitrix_sessid() && $bFileman) {
         $normPath = $io->CombinePath("/", $_GET["path"]);
-        if ($normPath <> "")
+        if ($normPath <> "") {
             $strWarning = CFileMan::DeleteEx(array($_GET["site"], $normPath));
+        }
 
         $module_id = "fileman";
         if (COption::GetOptionString($module_id, "log_page", "Y") == "Y") {
-            $res_log['path'] = substr($_GET["path"], 1);
+            $res_log['path'] = mb_substr($_GET["path"], 1);
             CEventLog::Log(
                 "content",
                 "SECTION_DELETE",
@@ -231,26 +268,41 @@ if ($_GET['ajax'] == 'Y') {
     } elseif (($_GET['action'] == 'copy' || $_GET['action'] == 'move') && check_bitrix_sessid() && $bFileman) {
         $normFrom = $io->CombinePath("/", $_GET["from"]);
         $name = "";
-        if (($pos = strrpos($normFrom, "/")) !== false)
-            $name = substr($normFrom, $pos + 1);
+        if (($pos = mb_strrpos($normFrom, "/")) !== false) {
+            $name = mb_substr($normFrom, $pos + 1);
+        }
         $normTo = $io->CombinePath("/", $_GET["to"] . "/" . $name);
-        if ($normFrom <> "" && $normTo <> "")
-            $strWarning = CFileMan::CopyEx(array($_GET["site"], $normFrom), array($_GET["site"], $normTo), ($_GET['action'] == "move" ? true : false));
+        if ($normFrom <> "" && $normTo <> "") {
+            $strWarning = CFileMan::CopyEx(
+                array($_GET["site"], $normFrom),
+                array($_GET["site"], $normTo),
+                ($_GET['action'] == "move" ? true : false)
+            );
+        }
     }
 
-    if (isset($_GET['show_all_files']))
+    if (isset($_GET['show_all_files'])) {
         $arOptions['show_all_files'] = ($_GET['show_all_files'] == 'Y');
-    if (isset($_GET['show_file_info']))
+    }
+    if (isset($_GET['show_file_info'])) {
         $arOptions['show_file_info'] = ($_GET['show_file_info'] == 'Y');
-    if (isset($_GET['show_all_files']) || isset($_GET['show_file_info']))
+    }
+    if (isset($_GET['show_all_files']) || isset($_GET['show_file_info'])) {
         CUserOptions::SetOption("public_structure", "options", $arOptions);
+    }
 
     if ($_GET['load_path'] <> '') {
         echo __struct_get_files($DOC_ROOT, _normalizePath($_GET['load_path']), "", ($_GET['dirsonly'] == 'Y'));
     } elseif ($_GET['reload'] == 'Y') {
         //display first level tree
         $arRoot = __struct_get_file_info($DOC_ROOT, "/");
-        echo __struct_show_files(array($arRoot), $DOC_ROOT, "", _normalizePath($_GET["path"]), ($_GET['dirsonly'] == 'Y'));
+        echo __struct_show_files(
+            array($arRoot),
+            $DOC_ROOT,
+            "",
+            _normalizePath($_GET["path"]),
+            ($_GET['dirsonly'] == 'Y')
+        );
     }
 
     if ($strWarning <> "") {
@@ -378,9 +430,13 @@ $encTemplateID = urlencode($_GET["templateID"]);
         window.structAddFile = function (path, isFolder) {
             structShowSubDialog();
             <?
-            $url = $APPLICATION->GetPopupLink(array(
-                "URL" => "/bitrix/admin/public_file_new.php?subdialog=Y&lang=" . $encLang . "&site=" . $encSite . "&templateID=" . $encTemplateID . "&path=#PATH#",
-                "PARAMS" => Array("min_width" => 450, "min_height" => 250)), "subdialog");
+            $url = $APPLICATION->GetPopupLink(
+                array(
+                    "URL" => "/bitrix/admin/public_file_new.php?subdialog=Y&lang=" . $encLang . "&site=" . $encSite . "&templateID=" . $encTemplateID . "&path=#PATH#",
+                    "PARAMS" => Array("min_width" => 450, "min_height" => 250)
+                ),
+                "subdialog"
+            );
             $url = str_replace("#PATH#", "'+path+(isFolder==true? '&newFolder=Y':'')+'", $url);
             echo $url . ";";
             ?>
@@ -389,9 +445,13 @@ $encTemplateID = urlencode($_GET["templateID"]);
         window.structAccessDialog = function (path) {
             structShowSubDialog();
             <?
-            $url = $APPLICATION->GetPopupLink(Array(
-                "URL" => "/bitrix/admin/public_access_edit.php?subdialog=Y&lang=" . $encLang . "&site=" . $encSite . "&path=#PATH#",
-                "PARAMS" => Array("min_width" => 450, "min_height" => 250)), "subdialog");
+            $url = $APPLICATION->GetPopupLink(
+                Array(
+                    "URL" => "/bitrix/admin/public_access_edit.php?subdialog=Y&lang=" . $encLang . "&site=" . $encSite . "&path=#PATH#",
+                    "PARAMS" => Array("min_width" => 450, "min_height" => 250)
+                ),
+                "subdialog"
+            );
             $url = str_replace("#PATH#", "'+path+'", $url);
             echo $url . ";";
             ?>
@@ -400,9 +460,13 @@ $encTemplateID = urlencode($_GET["templateID"]);
         window.structEditFolder = function (path) {
             structShowSubDialog();
             <?
-            $url = $APPLICATION->GetPopupLink(array(
-                "URL" => "/bitrix/admin/public_folder_edit.php?subdialog=Y&lang=" . $encLang . "&site=" . $encSite . "&path=#PATH#",
-                "PARAMS" => Array("min_width" => 450, "min_height" => 250)), "subdialog");
+            $url = $APPLICATION->GetPopupLink(
+                array(
+                    "URL" => "/bitrix/admin/public_folder_edit.php?subdialog=Y&lang=" . $encLang . "&site=" . $encSite . "&path=#PATH#",
+                    "PARAMS" => Array("min_width" => 450, "min_height" => 250)
+                ),
+                "subdialog"
+            );
             $url = str_replace("#PATH#", "'+path+'", $url);
             echo $url . ";";
             ?>
@@ -413,9 +477,13 @@ $encTemplateID = urlencode($_GET["templateID"]);
 //	structShowSubDialog();
 //	jsPopup_editor.ShowDialog('/bitrix/admin/public_file_edit.php?bxpublic=Y&subdialog=Y&lang=<?=$encLang?>&site=<?=$encSite?>&templateID=<?=$encTemplateID?>&path='+path, {width: 780, height: 570, resize: false});
             <?
-            $url = $APPLICATION->GetPopupLink(Array(
-                "URL" => "/bitrix/admin/public_file_edit.php?bxpublic=Y&subdialog=Y&lang=" . $encLang . "&path=#PATH#&site=" . $encSite,
-                "PARAMS" => array("width" => 780, "height" => 570, "resize" => true)), "editor");
+            $url = $APPLICATION->GetPopupLink(
+                Array(
+                    "URL" => "/bitrix/admin/public_file_edit.php?bxpublic=Y&subdialog=Y&lang=" . $encLang . "&path=#PATH#&site=" . $encSite,
+                    "PARAMS" => array("width" => 780, "height" => 570, "resize" => true)
+                ),
+                "editor"
+            );
             $url = str_replace("#PATH#", "'+path+'", $url);
             echo $url . ";";
             ?>
@@ -424,9 +492,13 @@ $encTemplateID = urlencode($_GET["templateID"]);
         window.structEditFileHtml = function (path) {
             //structShowSubDialog();
             <?
-            $url = $APPLICATION->GetPopupLink(Array(
-                "URL" => "/bitrix/admin/public_file_edit.php?bxpublic=Y&subdialog=Y&lang=" . $encLang . "&noeditor=Y&path=#PATH#&site=" . $encSite,
-                "PARAMS" => array("width" => 780, "height" => 570, "resize" => true)), "editor");
+            $url = $APPLICATION->GetPopupLink(
+                Array(
+                    "URL" => "/bitrix/admin/public_file_edit.php?bxpublic=Y&subdialog=Y&lang=" . $encLang . "&noeditor=Y&path=#PATH#&site=" . $encSite,
+                    "PARAMS" => array("width" => 780, "height" => 570, "resize" => true)
+                ),
+                "editor"
+            );
             $url = str_replace("#PATH#", "'+path+'", $url);
             echo $url . ";";
             ?>
@@ -435,9 +507,13 @@ $encTemplateID = urlencode($_GET["templateID"]);
         window.structFileProp = function (path) {
             structShowSubDialog();
             <?
-            $url = $APPLICATION->GetPopupLink(Array(
-                "URL" => "/bitrix/admin/public_file_property.php?subdialog=Y&lang=" . $encLang . "&site=" . $encSite . "&path=#PATH#",
-                "PARAMS" => Array("min_width" => 450, "min_height" => 250)), "subdialog");
+            $url = $APPLICATION->GetPopupLink(
+                Array(
+                    "URL" => "/bitrix/admin/public_file_property.php?subdialog=Y&lang=" . $encLang . "&site=" . $encSite . "&path=#PATH#",
+                    "PARAMS" => Array("min_width" => 450, "min_height" => 250)
+                ),
+                "subdialog"
+            );
             $url = str_replace("#PATH#", "'+path+'", $url);
             echo $url . ";";
             ?>
@@ -446,9 +522,13 @@ $encTemplateID = urlencode($_GET["templateID"]);
         window.structDelFile = function (path) {
             structShowSubDialog();
             <?
-            $url = $APPLICATION->GetPopupLink(array(
-                "URL" => "/bitrix/admin/public_file_delete.php?subdialog=Y&lang=" . $encLang . "&site=" . $encSite . "&path=#PATH#",
-                "PARAMS" => Array("min_width" => 250, "min_height" => 150, 'height' => 150, 'width' => 350)), "subdialog");
+            $url = $APPLICATION->GetPopupLink(
+                array(
+                    "URL" => "/bitrix/admin/public_file_delete.php?subdialog=Y&lang=" . $encLang . "&site=" . $encSite . "&path=#PATH#",
+                    "PARAMS" => Array("min_width" => 250, "min_height" => 150, 'height' => 150, 'width' => 350)
+                ),
+                "subdialog"
+            );
             $url = str_replace("#PATH#", "'+path+'", $url);
             echo $url . ";";
             ?>
@@ -456,7 +536,8 @@ $encTemplateID = urlencode($_GET["templateID"]);
 
         window.structDelFolder = function (path) {
             if (confirm('<?=CUtil::JSEscape(GetMessage("pub_struct_folder_del_confirm"))?>'))
-                structReload(path, 'action=delfolder&<?="lang=" . $encLang . "&site=" . $encSite . "&" . bitrix_sessid_get()?>&path=' + path);
+                structReload(path, 'action=delfolder&<?="lang=" . $encLang . "&site=" . $encSite . "&" . bitrix_sessid_get(
+                )?>&path=' + path);
         };
 
         window.structShowDirMenu = function (el, dirsonly, arPerm) {
@@ -562,7 +643,9 @@ $encTemplateID = urlencode($_GET["templateID"]);
                 items[items.length] = {'SEPARATOR': true};
             items[items.length] = {
                 'ICONCLASS': 'panel-file-delete',
-                'TEXT': (bText ? '<?=CUtil::JSEscape(GetMessage("pub_struct_file_del"))?>' : '<?=CUtil::JSEscape(GetMessage("pub_struct_file_del_title"))?>'),
+                'TEXT': (bText ? '<?=CUtil::JSEscape(GetMessage("pub_struct_file_del"))?>' : '<?=CUtil::JSEscape(
+                    GetMessage("pub_struct_file_del_title")
+                )?>'),
                 'ONCLICK': 'structDelFile(\'' + path + '\')',
                 'TITLE': '<?=CUtil::JSEscape(GetMessage("pub_struct_file_del_title1"))?>',
                 'DISABLED': !arPerm.del_file
@@ -662,8 +745,12 @@ $encTemplateID = urlencode($_GET["templateID"]);
                         container.innerHTML =
                             '<div class="bx-popup-title" id="bx_popup_title_dirs"><table cellspacing="0" class="bx-width100">' +
                             '<tr>' +
-                            '	<td class="bx-width100 bx-title-text" onmousedown="jsFloatDiv.StartDrag(arguments[0], document.getElementById(\'bx_struct_dirs\'));">' + '<?=CUtil::JSEscape(GetMessage("pub_struct_sections"))?>' + '</td>' +
-                            '	<td class="bx-width0"><a class="bx-popup-close" href="javascript:void(0)" onclick="structCloseDirs()" title="' + '<?=CUtil::JSEscape(GetMessage("pub_struct_close"))?>' + '"></a></td>' +
+                            '	<td class="bx-width100 bx-title-text" onmousedown="jsFloatDiv.StartDrag(arguments[0], document.getElementById(\'bx_struct_dirs\'));">' + '<?=CUtil::JSEscape(
+                                GetMessage("pub_struct_sections")
+                            )?>' + '</td>' +
+                            '	<td class="bx-width0"><a class="bx-popup-close" href="javascript:void(0)" onclick="structCloseDirs()" title="' + '<?=CUtil::JSEscape(
+                                GetMessage("pub_struct_close")
+                            )?>' + '"></a></td>' +
                             '</tr>' +
                             '</table></div>' +
                             '<div class="bx-popup-content" id="bx_struct_dirs_content"><div class="bx-popup-content-container" id="bx_struct_dirs_container">' + result + '</div></div>';
@@ -802,14 +889,19 @@ $encTemplateID = urlencode($_GET["templateID"]);
             var mess;
             var bFolder = (obDrag.getAttribute('__bx_type') == 'D');
             if (e.ctrlKey)
-                mess = (bFolder ? '<?=CUtil::JSEscape(GetMessage("pub_struct_folder_confirm_copy"))?>' : '<?=CUtil::JSEscape(GetMessage("pub_struct_file_confirm_copy"))?>');
+                mess = (bFolder ? '<?=CUtil::JSEscape(
+                    GetMessage("pub_struct_folder_confirm_copy")
+                )?>' : '<?=CUtil::JSEscape(GetMessage("pub_struct_file_confirm_copy"))?>');
             else
-                mess = (bFolder ? '<?=CUtil::JSEscape(GetMessage("pub_struct_folder_confirm_move"))?>' : '<?=CUtil::JSEscape(GetMessage("pub_struct_file_confirm_move"))?>');
+                mess = (bFolder ? '<?=CUtil::JSEscape(
+                    GetMessage("pub_struct_folder_confirm_move")
+                )?>' : '<?=CUtil::JSEscape(GetMessage("pub_struct_file_confirm_move"))?>');
 
             mess = mess.replace(/#FROM#/g, from);
             mess = mess.replace(/#TO#/g, unescape(enc_to));
             if (confirm(mess))
-                structReload(enc_to, 'action=' + (e.ctrlKey ? 'copy' : 'move') + '&from=' + enc_from + '&to=' + enc_to + '&<?=bitrix_sessid_get()?>');
+                structReload(enc_to, 'action=' + (e.ctrlKey ? 'copy' : 'move') + '&from=' + enc_from + '&to=' + enc_to + '&<?=bitrix_sessid_get(
+                )?>');
 
             return true;
         };
@@ -832,7 +924,9 @@ $obJSPopup->StartDescription('bx-structure');
     <div class="bx-struct-settings bx-struct-button" onclick="structOpenDirs(this)"
          onmouseover="this.className+=' bx-struct-settings-over'"
          onmouseout="this.className=this.className.replace(/\s*bx-struct-settings-over/ig, '')"
-         title="<? echo GetMessage("pub_struct_folders_title") ?>"><? echo GetMessage("pub_struct_folders_button") ?></div>
+         title="<? echo GetMessage("pub_struct_folders_title") ?>"><? echo GetMessage(
+            "pub_struct_folders_button"
+        ) ?></div>
     <br/>
     <br style="clear:both;"/>
 <?

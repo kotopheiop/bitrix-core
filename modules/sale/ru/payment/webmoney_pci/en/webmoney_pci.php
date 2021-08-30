@@ -1,4 +1,5 @@
 <?
+
 global $MESS;
 
 $MESS["SWMPP_DTITLE"] = "Payment via WebMoney (PCI) (Russian payment system)";

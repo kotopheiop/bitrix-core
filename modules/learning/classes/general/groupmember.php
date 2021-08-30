@@ -31,8 +31,9 @@ class CLearningGroupMember
     {
         global $DB;
 
-        if (!self::checkFields($arFields))
+        if (!self::checkFields($arFields)) {
             return false;
+        }
 
         $userId = (int)$arFields['USER_ID'];
         $groupId = (int)$arFields['LEARNING_GROUP_ID'];
@@ -42,8 +43,9 @@ class CLearningGroupMember
 
         $rc = $DB->query($strSql, $bIgnoreErrors = true);
 
-        foreach (GetModuleEvents('learning', 'OnAfterLearningGroupMemberAdd', true) as $arEvent)
+        foreach (GetModuleEvents('learning', 'OnAfterLearningGroupMemberAdd', true) as $arEvent) {
             ExecuteModuleEventEx($arEvent, array(&$arFields));
+        }
 
         return ($rc !== false);
     }
@@ -68,19 +70,23 @@ class CLearningGroupMember
             'USER_ID' => 'LGM.USER_ID'
         );
 
-        if (count($arSelect) <= 0 || in_array("*", $arSelect))
+        if (count($arSelect) <= 0 || in_array("*", $arSelect)) {
             $arSelect = array_keys($arFields);
+        }
 
-        if (!is_array($arOrder))
+        if (!is_array($arOrder)) {
             $arOrder = array();
+        }
 
+        $arSqlOrder = [];
         foreach ($arOrder as $by => $order) {
             $by = (string)$by;
             $needle = null;
-            $order = strtolower($order);
+            $order = mb_strtolower($order);
 
-            if ($order != "asc")
+            if ($order != "asc") {
                 $order = "desc";
+            }
 
             if (array_key_exists($by, $arFields)) {
                 $arSqlOrder[] = ' ' . $by . ' ' . $order . ' ';
@@ -97,13 +103,15 @@ class CLearningGroupMember
 
         $arSqlSelect = array();
         foreach ($arSelect as $field) {
-            $field = strtoupper($field);
-            if (array_key_exists($field, $arFields))
+            $field = mb_strtoupper($field);
+            if (array_key_exists($field, $arFields)) {
                 $arSqlSelect[$field] = $arFields[$field] . ' AS ' . $field;
+            }
         }
 
-        if (!sizeof($arSqlSelect))
+        if (!sizeof($arSqlSelect)) {
             $arSqlSelect[] = 'LGM.USER_ID AS USER_ID';
+        }
 
         $arSqlSearch = self::getFilter($arFilter);
 
@@ -128,10 +136,11 @@ class CLearningGroupMember
         $strSqlOrder = "";
         DelDuplicateSort($arSqlOrder);
         for ($i = 0, $arSqlOrderCnt = count($arSqlOrder); $i < $arSqlOrderCnt; $i++) {
-            if ($i == 0)
+            if ($i == 0) {
                 $strSqlOrder = " ORDER BY ";
-            else
+            } else {
                 $strSqlOrder .= ",";
+            }
 
             $strSqlOrder .= $arSqlOrder[$i];
         }
@@ -146,7 +155,13 @@ class CLearningGroupMember
                 $res_cnt = $DB->Query("SELECT COUNT(LGM.ID) as C " . $strFrom);
                 $res_cnt = $res_cnt->Fetch();
                 $res = new CDBResult();
-                $rc = $res->NavQuery($strSql, $res_cnt["C"], $arNavParams, $bIgnoreErrors = false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+                $rc = $res->NavQuery(
+                    $strSql,
+                    $res_cnt["C"],
+                    $arNavParams,
+                    $bIgnoreErrors = false,
+                    "File: " . __FILE__ . "<br>Line: " . __LINE__
+                );
             }
         } else {
             $res = $DB->Query($strSql, $bIgnoreErrors = false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
@@ -227,20 +242,22 @@ class CLearningGroupMember
 
         $arMsg = array();
 
-        if (!array_key_exists('LEARNING_GROUP_ID', $arFields))
+        if (!array_key_exists('LEARNING_GROUP_ID', $arFields)) {
             $arMsg[] = array("id" => "LEARNING_GROUP_ID", "text" => GetMessage("LEARNING_BAD_LEARNING_GROUP_ID"));
-        else {
+        } else {
             $rs = CLearningGroup::getList(array(), array('ID' => (int)$arFields['LEARNING_GROUP_ID']), array('ID'));
-            if (!($rs && $rs->fetch()))
+            if (!($rs && $rs->fetch())) {
                 $arMsg[] = array("text" => GetMessage("LEARNING_BAD_LEARNING_GROUP_ID_EX"), "id" => "BAD_USER_ID");
+            }
         }
 
-        if (!array_key_exists('USER_ID', $arFields))
+        if (!array_key_exists('USER_ID', $arFields)) {
             $arMsg[] = array("id" => "USER_ID", "text" => GetMessage("LEARNING_BAD_USER_ID"));
-        else {
+        } else {
             $r = CUser::GetByID((int)$arFields["USER_ID"]);
-            if (!($r && $r->fetch()))
+            if (!($r && $r->fetch())) {
                 $arMsg[] = array("text" => GetMessage("LEARNING_BAD_USER_ID_EX"), "id" => "BAD_USER_ID");
+            }
         }
 
         if (!empty($arMsg)) {
@@ -255,8 +272,9 @@ class CLearningGroupMember
 
     private static function getFilter($arFilter)
     {
-        if (!is_array($arFilter))
+        if (!is_array($arFilter)) {
             $arFilter = array();
+        }
 
         $arSqlSearch = array();
 
@@ -265,12 +283,18 @@ class CLearningGroupMember
             $key = $res["FIELD"];
             $cOperationType = $res["OPERATION"];
 
-            $key = strtoupper($key);
+            $key = mb_strtoupper($key);
 
             switch ($key) {
                 case 'USER_ID':
                 case 'LEARNING_GROUP_ID':
-                    $arSqlSearch[] = CLearnHelper::FilterCreate('LGM.' . $key, $val, 'number', $bFullJoin, $cOperationType);
+                    $arSqlSearch[] = CLearnHelper::FilterCreate(
+                        'LGM.' . $key,
+                        $val,
+                        'number',
+                        $bFullJoin,
+                        $cOperationType
+                    );
                     break;
             }
         }

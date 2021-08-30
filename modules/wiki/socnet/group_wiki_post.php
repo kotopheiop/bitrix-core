@@ -1,4 +1,6 @@
-<? if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die(); ?>
+<? if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
+    die();
+} ?>
 <?
 $pageId = "group_wiki";
 include($_SERVER["DOCUMENT_ROOT"] . "/bitrix/components/bitrix/socialnetwork_group/templates/.default/util_group_menu.php");
@@ -47,7 +49,12 @@ include($_SERVER["DOCUMENT_ROOT"] . "/bitrix/components/bitrix/socialnetwork_gro
         'ELEMENT_NAME' => isset($arResult['VARIABLES']['title']) ? $arResult['VARIABLES']['title'] : $arResult['VARIABLES']['wiki_name'],
         'SOCNET_GROUP_ID' => $arResult['VARIABLES']['group_id'],
         'NAME_TEMPLATE' => $arResult['NAME_TEMPLATE'],
-        'HIDE_OWNER_IN_TITLE' => $arParams['HIDE_OWNER_IN_TITLE']
+        'HIDE_OWNER_IN_TITLE' => $arParams['HIDE_OWNER_IN_TITLE'],
+        'PATH_TO_TAG' => str_replace(
+                '#group_id#',
+                (int)$arResult['VARIABLES']['group_id'],
+                $arResult['PATH_TO_GROUP_GENERAL']
+            ) . (mb_strpos($arResult['PATH_TO_GROUP_GENERAL'], '?') === false ? '?' : '&') . 'TAG=#tag#&apply_filter=Y'
     ),
     $component
 ); ?>
@@ -80,7 +87,6 @@ if (!empty($ID)) {
             'URL_TEMPLATES_READ' => '',
             'SHOW_LINK_TO_FORUM' => 'N',
             'POST_FIRST_MESSAGE' => 'Y',
-            'SOCNET_GROUP_ID' => $arResult['VARIABLES']['group_id'],
             'SHOW_RATING' => $arResult['SHOW_RATING'],
             'RATING_TYPE' => $arResult['RATING_TYPE'],
             'PATH_TO_USER' => $arResult['PATH_TO_USER'],

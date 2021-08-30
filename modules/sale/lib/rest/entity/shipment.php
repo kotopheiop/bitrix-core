@@ -182,20 +182,46 @@ class Shipment extends Base
         $shipmentItem = new ShipmentItem();
 
         $fieldsInfo = empty($fieldsInfo) ? $this->getFields() : $fieldsInfo;
-        $listFieldsInfoAdd = $this->getListFieldInfo($fieldsInfo, ['filter' => ['ignoredAttributes' => [Attributes::Hidden, Attributes::ReadOnly]]]);
-        $listFieldsInfoUpdate = $this->getListFieldInfo($fieldsInfo, ['filter' => ['ignoredAttributes' => [Attributes::Hidden, Attributes::ReadOnly, Attributes::Immutable], 'skipFields' => ['ID']]]);
+        $listFieldsInfoAdd = $this->getListFieldInfo(
+            $fieldsInfo,
+            [
+                'filter' => [
+                    'ignoredAttributes' => [
+                        Attributes::Hidden,
+                        Attributes::ReadOnly
+                    ]
+                ]
+            ]
+        );
+        $listFieldsInfoUpdate = $this->getListFieldInfo(
+            $fieldsInfo,
+            [
+                'filter' => [
+                    'ignoredAttributes' => [
+                        Attributes::Hidden,
+                        Attributes::ReadOnly,
+                        Attributes::Immutable
+                    ],
+                    'skipFields' => ['ID']
+                ]
+            ]
+        );
 
-        if (isset($fields['ORDER']['ID']))
+        if (isset($fields['ORDER']['ID'])) {
             $result['ORDER']['ID'] = (int)$fields['ORDER']['ID'];
+        }
 
         if (isset($fields['ORDER']['SHIPMENTS'])) {
             foreach ($fields['ORDER']['SHIPMENTS'] as $k => $item) {
-                $result['ORDER']['SHIPMENTS'][$k] = $this->internalizeFields($item,
+                $result['ORDER']['SHIPMENTS'][$k] = $this->internalizeFields(
+                    $item,
                     $this->isNewItem($item) ? $listFieldsInfoAdd : $listFieldsInfoUpdate
                 );
 
                 if (isset($item['SHIPMENT_ITEMS'])) {
-                    $result['ORDER']['SHIPMENTS'][$k]['SHIPMENT_ITEMS'] = $shipmentItem->internalizeFieldsModify(['SHIPMENT' => ['SHIPMENT_ITEMS' => $item['SHIPMENT_ITEMS']]])['SHIPMENT']['SHIPMENT_ITEMS'];
+                    $result['ORDER']['SHIPMENTS'][$k]['SHIPMENT_ITEMS'] = $shipmentItem->internalizeFieldsModify(
+                        ['SHIPMENT' => ['SHIPMENT_ITEMS' => $item['SHIPMENT_ITEMS']]]
+                    )['SHIPMENT']['SHIPMENT_ITEMS'];
                 }
             }
         }
@@ -221,8 +247,9 @@ class Shipment extends Base
 
         $result = parent::externalizeFields($fields);
 
-        if (isset($fields['SHIPMENT_ITEMS']))
+        if (isset($fields['SHIPMENT_ITEMS'])) {
             $result['SHIPMENT_ITEMS'] = $shipmentItem->externalizeListFields($fields['SHIPMENT_ITEMS']);
+        }
 
         return $result;
     }
@@ -259,19 +286,46 @@ class Shipment extends Base
 
         $shipmentItem = new ShipmentItem();
 
-        $listFieldsInfoAdd = $this->getListFieldInfo($this->getFields(), ['filter' => ['ignoredAttributes' => [Attributes::Hidden, Attributes::ReadOnly], 'ignoredFields' => ['ORDER_ID']]]);
-        $listFieldsInfoUpdate = $this->getListFieldInfo($this->getFields(), ['filter' => ['ignoredAttributes' => [Attributes::Hidden, Attributes::ReadOnly, Attributes::Immutable]]]);
+        $listFieldsInfoAdd = $this->getListFieldInfo(
+            $this->getFields(),
+            [
+                'filter' => [
+                    'ignoredAttributes' => [
+                        Attributes::Hidden,
+                        Attributes::ReadOnly
+                    ],
+                    'ignoredFields' => ['ORDER_ID']
+                ]
+            ]
+        );
+        $listFieldsInfoUpdate = $this->getListFieldInfo(
+            $this->getFields(),
+            [
+                'filter' => [
+                    'ignoredAttributes' => [
+                        Attributes::Hidden,
+                        Attributes::ReadOnly,
+                        Attributes::Immutable
+                    ]
+                ]
+            ]
+        );
 
         foreach ($fields['ORDER']['SHIPMENTS'] as $k => $item) {
-            $required = $this->checkRequiredFields($item,
+            $required = $this->checkRequiredFields(
+                $item,
                 $this->isNewItem($item) ? $listFieldsInfoAdd : $listFieldsInfoUpdate
             );
             if (!$required->isSuccess()) {
-                $r->addError(new Error('[shipments][' . $k . '] - ' . implode(', ', $required->getErrorMessages()) . '.'));
+                $r->addError(
+                    new Error('[shipments][' . $k . '] - ' . implode(', ', $required->getErrorMessages()) . '.')
+                );
             }
 
             if (isset($item['SHIPMENT_ITEMS'])) {
-                $requiredShipmentItems = $shipmentItem->checkRequiredFieldsModify(['SHIPMENT' => ['SHIPMENT_ITEMS' => $item['SHIPMENT_ITEMS']]]);
+                $requiredShipmentItems = $shipmentItem->checkRequiredFieldsModify(
+                    ['SHIPMENT' => ['SHIPMENT_ITEMS' => $item['SHIPMENT_ITEMS']]]
+                );
                 if (!$requiredShipmentItems->isSuccess()) {
                     $requiredPShipmentItemsFields = [];
                     foreach ($requiredShipmentItems->getErrorMessages() as $errorMessage) {

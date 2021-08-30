@@ -14,9 +14,11 @@ class TradeBinding extends Controller
     public function getFieldsAction()
     {
         $entity = new \Bitrix\Sale\Rest\Entity\TradeBinding();
-        return ['TRADE_BINDING' => $entity->prepareFieldInfos(
-            $entity->getFields()
-        )];
+        return [
+            'TRADE_BINDING' => $entity->prepareFieldInfos(
+                $entity->getFields()
+            )
+        ];
     }
 
     public function listAction($select = [], $filter = [], $order = [], PageNavigation $pageNavigation)
@@ -38,7 +40,8 @@ class TradeBinding extends Controller
             ]
         )->fetchAll();
 
-        return new Page('TRADE_BINDINGS', $tradeBindings, function () use ($filter) {
+        return new Page(
+            'TRADE_BINDINGS', $tradeBindings, function () use ($filter) {
             $registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
             /** @var TradeBindingCollection $tradeBindingCollection */
             $tradeBindingCollection = $registry->get(Registry::ENTITY_TRADE_BINDING_COLLECTION);
@@ -46,7 +49,8 @@ class TradeBinding extends Controller
             return count(
                 $tradeBindingCollection::getList(['filter' => $filter])->fetchAll()
             );
-        });
+        }
+        );
     }
 
     static public function prepareFields($fields)

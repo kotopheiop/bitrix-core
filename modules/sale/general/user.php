@@ -1,4 +1,5 @@
-<?
+<?php
+
 IncludeModuleLangFile(__FILE__);
 
 define("SALE_TIME_LOCK_USER", 600);
@@ -10,10 +11,15 @@ $GLOBALS["SALE_USER_ACCOUNT"] = array();
 
 class CAllSaleUserAccount
 {
-    static function DoPayOrderFromAccount($userId, $currency, $orderId, $orderSum, $arOptions, &$arErrors)
+    public static function DoPayOrderFromAccount($userId, $currency, $orderId, $orderSum, $arOptions, &$arErrors)
     {
-        if (!array_key_exists("ONLY_FULL_PAY_FROM_ACCOUNT", $arOptions))
-            $arOptions["ONLY_FULL_PAY_FROM_ACCOUNT"] = COption::GetOptionString("sale", "ONLY_FULL_PAY_FROM_ACCOUNT", "N");
+        if (!array_key_exists("ONLY_FULL_PAY_FROM_ACCOUNT", $arOptions)) {
+            $arOptions["ONLY_FULL_PAY_FROM_ACCOUNT"] = COption::GetOptionString(
+                "sale",
+                "ONLY_FULL_PAY_FROM_ACCOUNT",
+                "N"
+            );
+        }
 
         $dbUserAccount = CSaleUserAccount::GetList(
             array(),
@@ -24,12 +30,17 @@ class CAllSaleUserAccount
         );
         $arUserAccount = $dbUserAccount->Fetch();
 
-        if (!$arUserAccount)
+        if (!$arUserAccount) {
             return false;
-        if ($arUserAccount["CURRENT_BUDGET"] <= 0)
+        }
+        if ($arUserAccount["CURRENT_BUDGET"] <= 0) {
             return false;
-        if (($arOptions["ONLY_FULL_PAY_FROM_ACCOUNT"] == "Y") && (doubleval($arUserAccount["CURRENT_BUDGET"]) < doubleval($orderSum)))
+        }
+        if (($arOptions["ONLY_FULL_PAY_FROM_ACCOUNT"] == "Y") && (doubleval(
+                    $arUserAccount["CURRENT_BUDGET"]
+                ) < doubleval($orderSum))) {
             return false;
+        }
 
         $withdrawSum = CSaleUserAccount::Withdraw(
             $userId,
@@ -45,8 +56,9 @@ class CAllSaleUserAccount
             );
 
             CSaleOrder::Update($orderId, $arFields);
-            if ($withdrawSum == $orderSum)
-                CSaleOrder::PayOrder($orderId, "Y", False, False);
+            if ($withdrawSum == $orderSum) {
+                CSaleOrder::PayOrder($orderId, "Y", false, false);
+            }
 
             return true;
         }
@@ -61,7 +73,7 @@ class CAllSaleUserAccount
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SKGU_EMPTY_USER_ID"), "EMPTY_USER_ID");
             return false;
         }
-        if ((is_set($arFields, "CURRENCY") || $ACTION == "ADD") && strlen($arFields["CURRENCY"]) <= 0) {
+        if ((is_set($arFields, "CURRENCY") || $ACTION == "ADD") && $arFields["CURRENCY"] == '') {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SKGU_EMPTY_CURRENCY"), "EMPTY_CURRENCY");
             return false;
         }
@@ -71,13 +83,17 @@ class CAllSaleUserAccount
             $arFields["CURRENT_BUDGET"] = doubleval($arFields["CURRENT_BUDGET"]);
         }
 
-        if ((is_set($arFields, "LOCKED") || $ACTION == "ADD") && $arFields["LOCKED"] != "Y")
+        if ((is_set($arFields, "LOCKED") || $ACTION == "ADD") && $arFields["LOCKED"] != "Y") {
             $arFields["LOCKED"] = "N";
+        }
 
         if (is_set($arFields, "USER_ID")) {
             $dbUser = CUser::GetByID($arFields["USER_ID"]);
             if (!$dbUser->Fetch()) {
-                $GLOBALS["APPLICATION"]->ThrowException(str_replace("#ID#", $arFields["USER_ID"], GetMessage("SKGU_NO_USER")), "ERROR_NO_USER_ID");
+                $GLOBALS["APPLICATION"]->ThrowException(
+                    str_replace("#ID#", $arFields["USER_ID"], GetMessage("SKGU_NO_USER")),
+                    "ERROR_NO_USER_ID"
+                );
                 return false;
             }
         }
@@ -90,8 +106,9 @@ class CAllSaleUserAccount
         global $DB;
 
         $ID = (int)$ID;
-        if ($ID <= 0)
-            return False;
+        if ($ID <= 0) {
+            return false;
+        }
 
         $db_events = GetModuleEvents("sale", "OnBeforeUserAccountDelete");
         while ($arEvent = $db_events->Fetch()) {
@@ -109,8 +126,9 @@ class CAllSaleUserAccount
             false,
             array("ID", "USER_ID")
         );
-        while ($arTrans = $dbTrans->Fetch())
+        while ($arTrans = $dbTrans->Fetch()) {
             CSaleUserTransact::Delete($arTrans["ID"]);
+        }
 
         unset($GLOBALS["SALE_USER_ACCOUNT"]["SALE_USER_ACCOUNT_CACHE_" . $ID]);
         unset($GLOBALS["SALE_USER_ACCOUNT"]["SALE_USER_ACCOUNT_CACHE_" . $arOldUserAccount["USER_ID"] . "_" . $arOldUserAccount["CURRENCY"]]);
@@ -125,19 +143,20 @@ class CAllSaleUserAccount
         return $res;
     }
 
-
     //********** LOCK **************//
-    function Lock($userID, $payCurrency)
+    public static function Lock($userID, $payCurrency)
     {
         global $DB, $APPLICATION;
 
         $userID = (int)$userID;
-        if ($userID <= 0)
+        if ($userID <= 0) {
             return false;
+        }
 
         $payCurrency = trim($payCurrency);
-        if ($payCurrency == '')
+        if ($payCurrency == '') {
             return false;
+        }
 
         CTimeZone::Disable();
         $dbUserAccount = CSaleUserAccount::GetList(
@@ -151,14 +170,19 @@ class CAllSaleUserAccount
         if ($arUserAccount = $dbUserAccount->Fetch()) {
             $dateLocked = 0;
             if ($arUserAccount["LOCKED"] == "Y") {
-                if (!($dateLocked = MakeTimeStamp($arUserAccount["DATE_LOCKED"], CSite::GetDateFormat("FULL", SITE_ID))))
+                if (!($dateLocked = MakeTimeStamp(
+                    $arUserAccount["DATE_LOCKED"],
+                    CSite::GetDateFormat("FULL", SITE_ID)
+                ))) {
                     $dateLocked = mktime(0, 0, 0, 1, 1, 1990);
+                }
             }
 
-            if (defined("SALE_TIME_LOCK_USER") && intval(SALE_TIME_LOCK_USER) > 0)
+            if (defined("SALE_TIME_LOCK_USER") && intval(SALE_TIME_LOCK_USER) > 0) {
                 $timeLockUser = intval(SALE_TIME_LOCK_USER);
-            else
+            } else {
                 $timeLockUser = 10 * 60;
+            }
 
             if (($arUserAccount["LOCKED"] != "Y")
                 || (($arUserAccount["LOCKED"] == "Y") && ((time() - $dateLocked) > $timeLockUser))) {
@@ -166,10 +190,11 @@ class CAllSaleUserAccount
                     "LOCKED" => "Y",
                     "=DATE_LOCKED" => $DB->GetNowFunction()
                 );
-                if (CSaleUserAccount::Update($arUserAccount["ID"], $arFields))
+                if (CSaleUserAccount::Update($arUserAccount["ID"], $arFields)) {
                     return true;
-                else
+                } else {
                     return false;
+                }
             } else {
                 $APPLICATION->ThrowException(GetMessage("SKGU_ACCOUNT_LOCKED"), "ACCOUNT_LOCKED");
                 return false;
@@ -183,22 +208,25 @@ class CAllSaleUserAccount
                 "=TIMESTAMP_X" => $DB->GetNowFunction(),
                 "=DATE_LOCKED" => $DB->GetNowFunction()
             );
-            if (CSaleUserAccount::Add($arFields))
+            if (CSaleUserAccount::Add($arFields)) {
                 return true;
-            else
+            } else {
                 return false;
+            }
         }
     }
 
-    function UnLock($userID, $payCurrency)
+    public static function UnLock($userID, $payCurrency)
     {
         $userID = (int)$userID;
-        if ($userID <= 0)
+        if ($userID <= 0) {
             return false;
+        }
 
         $payCurrency = trim($payCurrency);
-        if ($payCurrency == '')
+        if ($payCurrency == '') {
             return false;
+        }
 
         CTimeZone::Disable();
         $dbUserAccount = CSaleUserAccount::GetList(
@@ -231,20 +259,22 @@ class CAllSaleUserAccount
                 "LOCKED" => "N",
                 "DATE_LOCKED" => false
             );
-            if (CSaleUserAccount::Add($arFields))
+            if (CSaleUserAccount::Add($arFields)) {
                 return true;
-            else
+            } else {
                 return false;
+            }
         }
     }
 
-    function UnLockByID($ID)
+    public static function UnLockByID($ID)
     {
         global $APPLICATION;
 
         $ID = (int)$ID;
-        if ($ID <= 0)
+        if ($ID <= 0) {
             return false;
+        }
 
         if ($arUserAccount = CSaleUserAccount::GetByID($ID)) {
             if ($arUserAccount["LOCKED"] == "Y") {
@@ -252,10 +282,11 @@ class CAllSaleUserAccount
                     "LOCKED" => "N",
                     "DATE_LOCKED" => false
                 );
-                if (CSaleUserAccount::Update($arUserAccount["ID"], $arFields))
+                if (CSaleUserAccount::Update($arUserAccount["ID"], $arFields)) {
                     return true;
-                else
+                } else {
                     return false;
+                }
             } else {
                 return true;
             }
@@ -274,7 +305,7 @@ class CAllSaleUserAccount
     // $orderID - ID of order (if known)
     // $useCC - increase the local user account from credit card if necessary (default - True)
     // Return True if the necessary sum withdraw from an account or False in other way
-    function Pay($userID, $paySum, $payCurrency, $orderID = 0, $useCC = true, $paymentId = null)
+    public static function Pay($userID, $paySum, $payCurrency, $orderID = 0, $useCC = true, $paymentId = null)
     {
         global $DB, $APPLICATION, $USER;
 
@@ -316,8 +347,9 @@ class CAllSaleUserAccount
             array(),
             array("USER_ID" => $userID, "CURRENCY" => $payCurrency)
         );
-        if ($arUserAccount = $dbUserAccount->Fetch())
+        if ($arUserAccount = $dbUserAccount->Fetch()) {
             $currentBudget = roundEx((float)$arUserAccount["CURRENT_BUDGET"], SALE_VALUE_PRECISION);
+        }
 
         $withdrawSum = 0;
         if (($currentBudget < $paySum) && $useCC) {
@@ -405,7 +437,7 @@ class CAllSaleUserAccount
                 "ORDER_ID" => ($orderID > 0 ? $orderID : false),
                 "PAYMENT_ID" => ($paymentId > 0 ? $paymentId : false),
                 "DESCRIPTION" => "ORDER_PAY",
-                "EMPLOYEE_ID" => ($USER->IsAuthorized() ? $USER->GetID() : False)
+                "EMPLOYEE_ID" => ($USER->IsAuthorized() ? $USER->GetID() : false)
             );
             CTimeZone::Disable();
             CSaleUserTransact::Add($arFields);
@@ -428,7 +460,7 @@ class CAllSaleUserAccount
     // $payCurrency - currency
     // $orderID - ID of order (if known)
     // Return withdrawn sum or False
-    function Withdraw($userID, $paySum, $payCurrency, $orderID = 0)
+    public static function Withdraw($userID, $paySum, $payCurrency, $orderID = 0)
     {
         global $DB, $APPLICATION, $USER;
 
@@ -479,7 +511,8 @@ class CAllSaleUserAccount
                 /** @var \Bitrix\Sale\Order $order */
                 if ($order = $orderClass::load($orderID)) {
                     /** @var \Bitrix\Sale\PaymentCollection $paymentCollection */
-                    if (($paymentCollection = $order->getPaymentCollection()) && $paymentCollection->isExistsInnerPayment()) {
+                    if (($paymentCollection = $order->getPaymentCollection(
+                        )) && $paymentCollection->isExistsInnerPayment()) {
                         /** @var \Bitrix\Sale\Payment $payment */
                         if (($payment = $paymentCollection->getInnerPayment()) && $payment->isPaid()) {
                             return 0;
@@ -490,8 +523,9 @@ class CAllSaleUserAccount
 
             if ($currentBudget > 0) {
                 $withdrawSum = $paySum;
-                if ($withdrawSum > $currentBudget)
+                if ($withdrawSum > $currentBudget) {
                     $withdrawSum = $currentBudget;
+                }
 
                 $arFields = array(
                     "CURRENT_BUDGET" => ($currentBudget - $withdrawSum)
@@ -527,19 +561,26 @@ class CAllSaleUserAccount
     // $currency - currency
     // $description - reason of modification
     // Return True on success or False in other way
-    function UpdateAccount($userID, $sum, $currency, $description = "", $orderID = 0, $notes = "", $paymentId = null)
-    {
+    public static function UpdateAccount(
+        $userID,
+        $sum,
+        $currency,
+        $description = "",
+        $orderID = 0,
+        $notes = "",
+        $paymentId = null
+    ) {
         global $DB, $APPLICATION, $USER;
 
         $userID = (int)$userID;
         if ($userID <= 0) {
             $APPLICATION->ThrowException(GetMessage("SKGU_EMPTYID"), "EMPTY_USER_ID");
-            return False;
+            return false;
         }
         $dbUser = CUser::GetByID($userID);
         if (!$dbUser->Fetch()) {
             $APPLICATION->ThrowException(str_replace("#ID#", $userID, GetMessage("SKGU_NO_USER")), "ERROR_NO_USER_ID");
-            return False;
+            return false;
         }
 
         $sum = (float)str_replace(",", ".", $sum);
@@ -547,14 +588,14 @@ class CAllSaleUserAccount
         $currency = trim($currency);
         if ($currency === '') {
             $APPLICATION->ThrowException(GetMessage("SKGU_EMPTY_CUR"), "EMPTY_CURRENCY");
-            return False;
+            return false;
         }
 
         $orderID = (int)$orderID;
         $paymentId = (int)$paymentId;
         if (!CSaleUserAccount::Lock($userID, $currency)) {
             $APPLICATION->ThrowException(GetMessage("SKGU_ACCOUNT_NOT_WORK"), "ACCOUNT_NOT_LOCKED");
-            return False;
+            return false;
         }
 
         $currentBudget = 0.0000;
@@ -595,8 +636,9 @@ class CAllSaleUserAccount
         }
 
         if ($result) {
-            if (isset($GLOBALS["SALE_USER_ACCOUNT"]["SALE_USER_ACCOUNT_CACHE_" . $userID . "_" . $currency]))
+            if (isset($GLOBALS["SALE_USER_ACCOUNT"]["SALE_USER_ACCOUNT_CACHE_" . $userID . "_" . $currency])) {
                 unset($GLOBALS["SALE_USER_ACCOUNT"]["SALE_USER_ACCOUNT_CACHE_" . $userID . "_" . $currency]);
+            }
 
             $arFields = array(
                 "USER_ID" => $userID,
@@ -607,8 +649,8 @@ class CAllSaleUserAccount
                 "DEBIT" => ($sum > 0 ? "Y" : "N"),
                 "ORDER_ID" => ($orderID > 0 ? $orderID : false),
                 "PAYMENT_ID" => ($paymentId > 0 ? $paymentId : false),
-                "DESCRIPTION" => ((strlen($description) > 0) ? $description : null),
-                "NOTES" => ((strlen($notes) > 0) ? $notes : False),
+                "DESCRIPTION" => (($description <> '') ? $description : null),
+                "NOTES" => (($notes <> '') ? $notes : false),
                 "EMPLOYEE_ID" => ($USER->IsAuthorized() ? $USER->GetID() : false)
             );
             CTimeZone::Disable();
@@ -624,12 +666,14 @@ class CAllSaleUserAccount
     public static function OnBeforeCurrencyDelete($Currency)
     {
         $Currency = (string)$Currency;
-        if ($Currency === '')
+        if ($Currency === '') {
             return true;
+        }
 
         $cnt = CSaleUserAccount::GetList(array(), array("CURRENCY" => $Currency), array());
-        if ($cnt > 0)
+        if ($cnt > 0) {
             return false;
+        }
 
         return true;
     }
@@ -642,8 +686,9 @@ class CAllSaleUserAccount
 
         $dbUserAccounts = CSaleUserAccount::GetList(array(), array("USER_ID" => $userID), false, false, array("ID"));
         while ($arUserAccount = $dbUserAccounts->Fetch()) {
-            if (!CSaleUserAccount::Delete($arUserAccount["ID"]))
+            if (!CSaleUserAccount::Delete($arUserAccount["ID"])) {
                 $bSuccess = false;
+            }
         }
 
         return $bSuccess;
@@ -665,7 +710,10 @@ class CAllSaleUserAccount
             array("ID")
         );
         if ($arUserAccount = $dbUserAccounts->Fetch()) {
-            $APPLICATION->ThrowException(str_replace("#USER_ID#", $userID, GetMessage("UA_ERROR_USER")), "ERROR_UACCOUNT");
+            $APPLICATION->ThrowException(
+                str_replace("#USER_ID#", $userID, GetMessage("UA_ERROR_USER")),
+                "ERROR_UACCOUNT"
+            );
             return false;
         }
 

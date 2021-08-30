@@ -40,8 +40,9 @@ class ContentJson extends Content
         $errorCodes = [];
         foreach ($this->getErrorCollection() as $error) {
             /** @var \Bitrix\Main\Error $error Error. */
-            if ($error->getCode())
+            if ($error->getCode()) {
                 $errorCodes[] = $error->getCode();
+            }
         }
         if ($errorCodes) {
             $default['code'] = $errorCodes[0];

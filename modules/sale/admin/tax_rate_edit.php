@@ -9,8 +9,9 @@ $listUrl = $selfFolderUrl . "sale_tax_rate.php?lang=" . LANGUAGE_ID;
 $listUrl = $adminSidePanelHelper->editUrlToPublicPage($listUrl);
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions < "W")
+if ($saleModulePermissions < "W") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 
@@ -18,7 +19,7 @@ IncludeModuleLangFile(__FILE__);
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/prolog.php");
 
-$ID = IntVal($ID);
+$ID = intval($ID);
 
 ClearVars();
 ClearVars("fp_");
@@ -28,42 +29,56 @@ $bInitVars = false;
 
 $lpEnabled = CSaleLocation::isLocationProEnabled();
 
-if ((strlen($save) > 0 || strlen($apply) > 0) && $REQUEST_METHOD == "POST" && $saleModulePermissions == "W" && check_bitrix_sessid()) {
+if (($save <> '' || $apply <> '') && $REQUEST_METHOD == "POST" && $saleModulePermissions == "W" && check_bitrix_sessid(
+    )) {
     $adminSidePanelHelper->decodeUriComponent();
-    $TAX_ID = IntVal($TAX_ID);
-    if ($TAX_ID <= 0)
+    $TAX_ID = intval($TAX_ID);
+    if ($TAX_ID <= 0) {
         $strError .= GetMessage("ERROR_NO_TAX_ID") . "<br>";
+    }
 
     $VALUE = str_replace(",", ".", $VALUE);
     $VALUE = DoubleVal($VALUE);
-    if ($VALUE <= 0)
+    if ($VALUE <= 0) {
         $strError .= GetMessage("ERROR_NO_VALUE") . "<br>";
+    }
 
-    if ($IS_IN_PRICE != "Y") $IS_IN_PRICE = "N";
-    if ($ACTIVE != "Y") $ACTIVE = "N";
+    if ($IS_IN_PRICE != "Y") {
+        $IS_IN_PRICE = "N";
+    }
+    if ($ACTIVE != "Y") {
+        $ACTIVE = "N";
+    }
 
     $IS_PERCENT = "Y";
-    if ($IS_PERCENT != "Y") $IS_PERCENT = "N";
+    if ($IS_PERCENT != "Y") {
+        $IS_PERCENT = "N";
+    }
 
-    if ($IS_PERCENT != "Y" && strlen($CURRENCY) <= 0)
+    if ($IS_PERCENT != "Y" && $CURRENCY == '') {
         $strError .= GetMessage("ERROR_PERCENT_OR_CURRENCY") . "<br>";
+    }
 
-    $APPLY_ORDER = IntVal($APPLY_ORDER);
-    if ($APPLY_ORDER <= 0) $APPLY_ORDER = 100;
+    $APPLY_ORDER = intval($APPLY_ORDER);
+    if ($APPLY_ORDER <= 0) {
+        $APPLY_ORDER = 100;
+    }
 
     $arLocation = array();
     if ($lpEnabled) {
-        if (strlen($_REQUEST['LOCATION']['L']))
+        if ($_REQUEST['LOCATION']['L'] <> '') {
             $LOCATION1 = explode(':', $_REQUEST['LOCATION']['L']);
+        }
 
-        if (strlen($_REQUEST['LOCATION']['G']))
+        if ($_REQUEST['LOCATION']['G'] <> '') {
             $LOCATION2 = explode(':', $_REQUEST['LOCATION']['G']);
+        }
     }
 
     if (isset($LOCATION1) && is_array($LOCATION1) && count($LOCATION1) > 0) {
         $countLocation = count($LOCATION1);
         for ($i = 0; $i < $countLocation; $i++) {
-            if (strlen($LOCATION1[$i])) {
+            if ($LOCATION1[$i] <> '') {
                 $arLocation[] = array(
                     "LOCATION_ID" => $LOCATION1[$i],
                     "LOCATION_TYPE" => "L"
@@ -75,7 +90,7 @@ if ((strlen($save) > 0 || strlen($apply) > 0) && $REQUEST_METHOD == "POST" && $s
     if (isset($LOCATION2) && is_array($LOCATION2) && count($LOCATION2) > 0) {
         $countLocation2 = count($LOCATION2);
         for ($i = 0; $i < $countLocation2; $i++) {
-            if (strlen($LOCATION2[$i])) {
+            if ($LOCATION2[$i] <> '') {
                 $arLocation[] = array(
                     "LOCATION_ID" => $LOCATION2[$i],
                     "LOCATION_TYPE" => "G"
@@ -84,16 +99,17 @@ if ((strlen($save) > 0 || strlen($apply) > 0) && $REQUEST_METHOD == "POST" && $s
         }
     }
 
-    if (!is_array($arLocation) || count($arLocation) <= 0)
+    if (!is_array($arLocation) || count($arLocation) <= 0) {
         $strError .= GetMessage("ERROR_NO_LOCATION") . "<br>";
+    }
 
-    if (strlen($strError) <= 0) {
+    if ($strError == '') {
         unset($arFields);
         $arFields = array(
-            "PERSON_TYPE_ID" => (IntVal($PERSON_TYPE_ID) > 0) ? IntVal($PERSON_TYPE_ID) : False,
+            "PERSON_TYPE_ID" => (intval($PERSON_TYPE_ID) > 0) ? intval($PERSON_TYPE_ID) : false,
             "TAX_ID" => $TAX_ID,
             "VALUE" => $VALUE,
-            "CURRENCY" => (strlen($CURRENCY) > 0) ? $CURRENCY : False,
+            "CURRENCY" => ($CURRENCY <> '') ? $CURRENCY : false,
             "IS_PERCENT" => $IS_PERCENT,
             "IS_IN_PRICE" => $IS_IN_PRICE,
             "APPLY_ORDER" => $APPLY_ORDER,
@@ -103,23 +119,25 @@ if ((strlen($save) > 0 || strlen($apply) > 0) && $REQUEST_METHOD == "POST" && $s
         );
 
         if ($ID > 0) {
-            if (!CSaleTaxRate::Update($ID, $arFields, array("EXPECT_LOCATION_CODES" => $lpEnabled)))
+            if (!CSaleTaxRate::Update($ID, $arFields, array("EXPECT_LOCATION_CODES" => $lpEnabled))) {
                 $strError .= GetMessage("ERROR_EDIT_TAX_RATE") . "<br>";
+            }
         } else {
             $ID = CSaleTaxRate::Add($arFields, array("EXPECT_LOCATION_CODES" => $lpEnabled));
-            if ($ID <= 0)
+            if ($ID <= 0) {
                 $strError .= GetMessage("ERROR_ADD_TAX_RATE") . "<br>";
+            }
         }
     }
 
-    if (strlen($strError) > 0) {
+    if ($strError <> '') {
         $adminSidePanelHelper->sendJsonErrorResponse($strError);
-        $bInitVars = True;
+        $bInitVars = true;
     }
 
     $adminSidePanelHelper->sendSuccessResponse("base");
 
-    if (strlen($save) > 0 && strlen($strError) <= 0) {
+    if ($save <> '' && $strError == '') {
         $adminSidePanelHelper->localRedirect($listUrl);
         LocalRedirect($listUrl);
     }
@@ -139,10 +157,11 @@ if ($bInitVars) {
     $DB->InitTableVarsForEdit("b_sale_tax_rate", "", "str_");
 }
 
-if ($ID > 0)
+if ($ID > 0) {
     $sDocTitle = GetMessage("TAX_RATE_EDIT_RECORD", array("#ID#" => $ID));
-else
+} else {
     $sDocTitle = GetMessage("TAX_RATE_NEW_RECORD");
+}
 $APPLICATION->SetTitle($sDocTitle);
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
@@ -170,7 +189,8 @@ if ($ID > 0 && $saleModulePermissions >= "W") {
         "ICON" => "btn_new",
         "LINK" => $addUrl
     );
-    $deleteUrl = $selfFolderUrl . "sale_tax_rate.php?action=delete&ID[]=" . $ID . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get() . "#tb";
+    $deleteUrl = $selfFolderUrl . "sale_tax_rate.php?action=delete&ID[]=" . $ID . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get(
+        ) . "#tb";
     $buttonAction = "LINK";
     if ($adminSidePanelHelper->isPublicFrame()) {
         $deleteUrl = $adminSidePanelHelper->editUrlToPublicPage($deleteUrl);
@@ -179,7 +199,9 @@ if ($ID > 0 && $saleModulePermissions >= "W") {
     $aMenu[] = array(
         "TEXT" => GetMessage("STREN_DELETE_RATE"),
         "ICON" => "btn_delete",
-        $buttonAction => "javascript:if(confirm('" . GetMessage("STREN_DELETE_RATE_CONFIRM") . "')) top.window.location.href='" . $deleteUrl . "';",
+        $buttonAction => "javascript:if(confirm('" . GetMessage(
+                "STREN_DELETE_RATE_CONFIRM"
+            ) . "')) top.window.location.href='" . $deleteUrl . "';",
     );
 }
 $context = new CAdminContextMenu($aMenu);
@@ -200,7 +222,12 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
 
         <?
         $aTabs = array(
-            array("DIV" => "edit1", "TAB" => GetMessage("STREN_TAB_RATE"), "ICON" => "sale", "TITLE" => GetMessage("STREN_TAB_RATE_DESCR"))
+            array(
+                "DIV" => "edit1",
+                "TAB" => GetMessage("STREN_TAB_RATE"),
+                "ICON" => "sale",
+                "TITLE" => GetMessage("STREN_TAB_RATE_DESCR")
+            )
         );
 
         $tabControl = new CAdminTabControl("tabControl", $aTabs);
@@ -239,9 +266,9 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
                     $db_TAX = CSaleTax::GetList(array("NAME" => "ASC"), array());
                     while ($db_TAX_arr = $db_TAX->NavNext(true, "fp_")) {
                         ?>
-                        <option
-                        value="<? echo intval($fp_ID) ?>" <? if (IntVal($fp_ID) == IntVal($str_TAX_ID)) echo "selected"; ?>><?= $fp_NAME ?>
-                        (<? echo $fp_LID ?>)</option><?
+                        <option value="<? echo intval($fp_ID) ?>" <? if (intval($fp_ID) == intval($str_TAX_ID)) {
+                            echo "selected";
+                        } ?>><?= $fp_NAME ?> (<? echo $fp_LID ?>)</option><?
                     }
                     ?>
                 </select>
@@ -252,7 +279,9 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
                 <? echo GetMessage("RATE_ACTIVE"); ?>:
             </td>
             <td width="60%">
-                <input type="checkbox" name="ACTIVE" value="Y" <? if ($str_ACTIVE == "Y") echo "checked"; ?>>
+                <input type="checkbox" name="ACTIVE" value="Y" <? if ($str_ACTIVE == "Y") {
+                    echo "checked";
+                } ?>>
             </td>
         </tr>
         <tr>
@@ -260,7 +289,14 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
                 <? echo GetMessage("SALE_F_PERSON_TYPE") ?>:
             </td>
             <td width="60%">
-                <? echo CSalePersonType::SelectBox("PERSON_TYPE_ID", $str_PERSON_TYPE_ID, GetMessage("SALE_ANY"), True, "", "") ?>
+                <? echo CSalePersonType::SelectBox(
+                    "PERSON_TYPE_ID",
+                    $str_PERSON_TYPE_ID,
+                    GetMessage("SALE_ANY"),
+                    true,
+                    "",
+                    ""
+                ) ?>
 
             </td>
         </tr>
@@ -278,8 +314,12 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
             </td>
             <td width="60%">
                 <select name="IS_IN_PRICE">
-                    <option value="N" <? if ($str_IS_IN_PRICE == "N" || strlen($str_IS_IN_PRICE) <= 0) echo " selected" ?>><? echo GetMessage("RATE_NET"); ?></option>
-                    <option value="Y" <? if ($str_IS_IN_PRICE == "Y") echo " selected" ?>><? echo GetMessage("RATE_YES"); ?></option>
+                    <option value="N" <? if ($str_IS_IN_PRICE == "N" || $str_IS_IN_PRICE == '') echo " selected" ?>><? echo GetMessage(
+                            "RATE_NET"
+                        ); ?></option>
+                    <option value="Y" <? if ($str_IS_IN_PRICE == "Y") echo " selected" ?>><? echo GetMessage(
+                            "RATE_YES"
+                        ); ?></option>
                 </select>
             </td>
         </tr>
@@ -301,15 +341,24 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
             <tr class="adm-detail-required-field">
                 <td colspan="2">
 
-                    <? $APPLICATION->IncludeComponent("bitrix:sale.location.selector.system", "", array(
-                        "ENTITY_PRIMARY" => $ID,
-                        "LINK_ENTITY_NAME" => CSaleTaxRate::CONN_ENTITY_NAME,
-                        "INPUT_NAME" => 'LOCATION',
-                        "SELECTED_IN_REQUEST" => array(
-                            'L' => isset($_REQUEST['LOCATION']['L']) ? explode(':', $_REQUEST['LOCATION']['L']) : false,
-                            'G' => isset($_REQUEST['LOCATION']['G']) ? explode(':', $_REQUEST['LOCATION']['G']) : false
-                        )
-                    ),
+                    <? $APPLICATION->IncludeComponent(
+                        "bitrix:sale.location.selector.system",
+                        "",
+                        array(
+                            "ENTITY_PRIMARY" => $ID,
+                            "LINK_ENTITY_NAME" => CSaleTaxRate::CONN_ENTITY_NAME,
+                            "INPUT_NAME" => 'LOCATION',
+                            "SELECTED_IN_REQUEST" => array(
+                                'L' => isset($_REQUEST['LOCATION']['L']) ? explode(
+                                    ':',
+                                    $_REQUEST['LOCATION']['L']
+                                ) : false,
+                                'G' => isset($_REQUEST['LOCATION']['G']) ? explode(
+                                    ':',
+                                    $_REQUEST['LOCATION']['G']
+                                ) : false
+                            )
+                        ),
                         false
                     ); ?>
 
@@ -320,25 +369,45 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
             <tr class="adm-detail-required-field">
                 <td width="40%" valign="top"><? echo GetMessage("F_LOCATION1"); ?>:</td>
                 <td width="60%" valign="top">
-                    <? $db_vars = CSaleLocation::GetList(Array("SORT" => "ASC", "COUNTRY_NAME_LANG" => "ASC", "REGION_NAME_LANG" => "ASC", "CITY_NAME_LANG" => "ASC"), array("LID" => LANGUAGE_ID), LANG) ?>
+                    <? $db_vars = CSaleLocation::GetList(
+                        Array(
+                            "SORT" => "ASC",
+                            "COUNTRY_NAME_LANG" => "ASC",
+                            "REGION_NAME_LANG" => "ASC",
+                            "CITY_NAME_LANG" => "ASC"
+                        ),
+                        array("LID" => LANGUAGE_ID),
+                        LANG
+                    ) ?>
 
-                    <? $db_location = CSaleTaxRate::GetLocationList(Array("TAX_RATE_ID" => $ID, "LOCATION_TYPE" => "L")); ?>
+                    <? $db_location = CSaleTaxRate::GetLocationList(
+                        Array("TAX_RATE_ID" => $ID, "LOCATION_TYPE" => "L")
+                    ); ?>
                     <select name="LOCATION1[]" size="5" multiple>
                         <?
                         $arLOCATION1 = array();
                         if ($bInitVars) {
                             $arLOCATION1 = $LOCATION1;
                         } else {
-
                             while ($arLocation = $db_location->Fetch()) {
                                 $arLOCATION1[] = $arLocation["LOCATION_ID"];
                             }
                         }
-                        if (!is_array($arLOCATION1))
+                        if (!is_array($arLOCATION1)) {
                             $arLOCATION1 = Array();
+                        }
                         ?>
                         <? while ($vars = $db_vars->Fetch()): ?>
-                            <option value="<? echo $vars["ID"] ?>"<? if (in_array(IntVal($vars["ID"]), $arLOCATION1)) echo " selected" ?>><? echo htmlspecialcharsbx($vars["COUNTRY_NAME_LANG"]) ?><? if (strlen($vars["REGION_NAME_LANG"]) > 0) echo " - " . htmlspecialcharsbx($vars["REGION_NAME_LANG"]) ?><? if (strlen($vars["CITY_NAME_LANG"]) > 0) echo " - " . htmlspecialcharsbx($vars["CITY_NAME_LANG"]) ?></option>
+                            <option value="<? echo $vars["ID"] ?>"<? if (in_array(
+                                intval($vars["ID"]),
+                                $arLOCATION1
+                            )) echo " selected" ?>><? echo htmlspecialcharsbx(
+                                    $vars["COUNTRY_NAME_LANG"]
+                                ) ?><? if ($vars["REGION_NAME_LANG"] <> '') echo " - " . htmlspecialcharsbx(
+                                        $vars["REGION_NAME_LANG"]
+                                    ) ?><? if ($vars["CITY_NAME_LANG"] <> '') echo " - " . htmlspecialcharsbx(
+                                        $vars["CITY_NAME_LANG"]
+                                    ) ?></option>
                         <? endwhile; ?>
                     </select>
                 </td>
@@ -353,16 +422,22 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
                         if ($bInitVars) {
                             $arLOCATION2 = $LOCATION2;
                         } else {
-                            $db_location = CSaleTaxRate::GetLocationList(Array("TAX_RATE_ID" => $ID, "LOCATION_TYPE" => "G"));
+                            $db_location = CSaleTaxRate::GetLocationList(
+                                Array("TAX_RATE_ID" => $ID, "LOCATION_TYPE" => "G")
+                            );
                             while ($arLocation = $db_location->Fetch()) {
                                 $arLOCATION2[] = $arLocation["LOCATION_ID"];
                             }
                         }
-                        if (!is_array($arLOCATION2))
+                        if (!is_array($arLOCATION2)) {
                             $arLOCATION2 = Array();
+                        }
                         ?>
                         <? while ($vars = $db_vars->Fetch()): ?>
-                            <option value="<? echo $vars["ID"] ?>"<? if (in_array(IntVal($vars["ID"]), $arLOCATION2)) echo " selected" ?>><? echo htmlspecialcharsbx($vars["NAME"]) ?></option>
+                            <option value="<? echo $vars["ID"] ?>"<? if (in_array(
+                                intval($vars["ID"]),
+                                $arLOCATION2
+                            )) echo " selected" ?>><? echo htmlspecialcharsbx($vars["NAME"]) ?></option>
                         <? endwhile; ?>
                     </select>
                 </td>

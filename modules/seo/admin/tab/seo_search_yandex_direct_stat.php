@@ -12,7 +12,9 @@
  * @global array $bannerList
  */
 
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+}
 
 use \Bitrix\Currency\CurrencyManager;
 use \Bitrix\Main\Localization\Loc;
@@ -41,8 +43,9 @@ foreach ($bannerList as $bannerId => $banner) {
                     <div class="seo-adv-block seo-adv-block-gray seo-adv-block-no-title">
                         <div class="seo-adv-block-icon"></div>
                         <div class="seo-adv-block-text"><?= Loc::getMessage('SEO_YANDEX_STATS_NO_START_DATE') ?> <a
-                                    href="/bitrix/admin/seo_yandex_direct_edit.php?lang=<?= LANGUAGE_ID ?>&ID=<?= $banner["CAMPAIGN_ID"] ?>"><?= Loc::getMessage('SEO_YANDEX_STATS_NO_START_DATE_SET') ?></a>
-                        </div>
+                                    href="/bitrix/admin/seo_yandex_direct_edit.php?lang=<?= LANGUAGE_ID ?>&ID=<?= $banner["CAMPAIGN_ID"] ?>"><?= Loc::getMessage(
+                                    'SEO_YANDEX_STATS_NO_START_DATE_SET'
+                                ) ?></a></div>
                     </div>
                 <?
                 elseif ($banner['LOADING_NEEDED']):
@@ -50,11 +53,13 @@ foreach ($bannerList as $bannerId => $banner) {
                     <div class="seo-adv-block seo-adv-block-gray seo-adv-block-no-title">
                         <div class="seo-adv-block-icon"></div>
                         <div class="seo-adv-block-text"
-                             id="yandex_banner_message_<?= $banner['ID'] ?>"><?= Loc::getMessage('SEO_YANDEX_STATS_NO_STATS') ?>
-                            <a href="javascript:void(0)"
-                               onclick="loadBannerStats('<?= $banner['ID'] ?>', '<?= $banner['DATE_START']->toString() ?>')"
-                               class="bx-action-href"
-                               hidefocus="true"><?= Loc::getMessage('SEO_YANDEX_STATS_NO_STATS_LOAD') ?></a></div>
+                             id="yandex_banner_message_<?= $banner['ID'] ?>"><?= Loc::getMessage(
+                                'SEO_YANDEX_STATS_NO_STATS'
+                            ) ?> <a href="javascript:void(0)"
+                                    onclick="loadBannerStats('<?= $banner['ID'] ?>', '<?= $banner['DATE_START']->toString(
+                                    ) ?>')" class="bx-action-href" hidefocus="true"><?= Loc::getMessage(
+                                    'SEO_YANDEX_STATS_NO_STATS_LOAD'
+                                ) ?></a></div>
                     </div>
                 <?
                 else:
@@ -86,8 +91,14 @@ foreach ($bannerList as $bannerId => $banner) {
                             ?>
                             <div class="seo-adv-block seo-adv-block-<?= $color ?>">
                                 <div class="seo-adv-block-icon"></div>
-                                <div class="seo-adv-block-title"><?= $prefix ?><?= \CCurrencyLang::CurrencyFormat($profit, CurrencyManager::getBaseCurrency(), true) ?></div>
-                                <div class="seo-adv-block-text"><?= Loc::getMessage('SEO_YANDEX_STATS_HINT_BOTH') ?></div>
+                                <div class="seo-adv-block-title"><?= $prefix ?><?= \CCurrencyLang::CurrencyFormat(
+                                        $profit,
+                                        CurrencyManager::getBaseCurrency(),
+                                        true
+                                    ) ?></div>
+                                <div class="seo-adv-block-text"><?= Loc::getMessage(
+                                        'SEO_YANDEX_STATS_HINT_BOTH'
+                                    ) ?></div>
                             </div>
                             <?
                         } else {
@@ -97,8 +108,14 @@ foreach ($bannerList as $bannerId => $banner) {
                             ?>
                             <div class="seo-adv-block seo-adv-block-<?= $color ?>">
                                 <div class="seo-adv-block-icon"></div>
-                                <div class="seo-adv-block-title"><?= $prefix ?><?= \CCurrencyLang::CurrencyFormat($profit, CurrencyManager::getBaseCurrency(), true) ?></div>
-                                <div class="seo-adv-block-text"><?= Loc::getMessage('SEO_YANDEX_STATS_HINT_GROSS') ?></div>
+                                <div class="seo-adv-block-title"><?= $prefix ?><?= \CCurrencyLang::CurrencyFormat(
+                                        $profit,
+                                        CurrencyManager::getBaseCurrency(),
+                                        true
+                                    ) ?></div>
+                                <div class="seo-adv-block-text"><?= Loc::getMessage(
+                                        'SEO_YANDEX_STATS_HINT_GROSS'
+                                    ) ?></div>
                             </div>
                             <?
                             $color = $expences > 0 ? 'red' : 'gray';
@@ -115,7 +132,9 @@ foreach ($bannerList as $bannerId => $banner) {
                             <div class="seo-adv-block seo-adv-block-<?= $color ?>">
                                 <div class="seo-adv-block-icon"></div>
                                 <div class="seo-adv-block-title"><?= $prefix ?><?= $text ?></div>
-                                <div class="seo-adv-block-text"><?= Loc::getMessage('SEO_YANDEX_STATS_HINT_EXPENCES') ?></div>
+                                <div class="seo-adv-block-text"><?= Loc::getMessage(
+                                        'SEO_YANDEX_STATS_HINT_EXPENCES'
+                                    ) ?></div>
                             </div>
                             <?
                         }
@@ -152,7 +171,9 @@ foreach ($bannerList as $bannerId => $banner) {
                 ?>
                 <div style="position: absolute; bottom: 10px;">
                     <span class="yandex-delete"
-                          onclick="deleteLinkStat('<?= $banner['ID'] ?>', this)"><?= Loc::getMessage('SEO_YANDEX_STATS_DELETE_LINK') ?></span>
+                          onclick="deleteLinkStat('<?= $banner['ID'] ?>', this)"><?= Loc::getMessage(
+                            'SEO_YANDEX_STATS_DELETE_LINK'
+                        ) ?></span>
                 </div>
             </td>
             <td valign="top">
@@ -211,16 +232,24 @@ foreach ($bannerList as $bannerId => $banner) {
                 }
 
                 ?>
-                <span style="display: inline-block;width: 140px;"><?= Loc::getMessage('SEO_YANDEX_STATS_BANNER_STATUS') ?>:</span>
+                <span style="display: inline-block;width: 140px;"><?= Loc::getMessage(
+                        'SEO_YANDEX_STATS_BANNER_STATUS'
+                    ) ?>:</span>
                 <span style="white-space:nowrap;"><div class="lamp-<?= $activeBanner ?>"
                                                        style="display:inline-block;"></div>&nbsp;<?= $activeBannerTitle; ?></span><br/>
-                <span style="display: inline-block;width: 140px;"><?= Loc::getMessage('SEO_YANDEX_STATS_CAMPAIGN_STATUS') ?>:</span>
+                <span style="display: inline-block;width: 140px;"><?= Loc::getMessage(
+                        'SEO_YANDEX_STATS_CAMPAIGN_STATUS'
+                    ) ?>:</span>
                 <span style="white-space:nowrap;"><div class="lamp-<?= $activeCampaign ?>"
                                                        style="display:inline-block;"></div>&nbsp;<?= $activeCampaignTitle; ?></span>
 
                 <div style="margin-top: 15px;">
-                    <a href="/bitrix/admin/seo_search_yandex_direct_banner_edit.php?lang=<?= LANGUAGE_ID ?>&ID=<?= $banner['ID'] ?>&tabControl_active_tab=edit_stats"><?= Loc::getMessage('SEO_YANDEX_STATS_BANNER_STATS') ?></a><br/>
-                    <a href="/bitrix/admin/seo_search_yandex_direct_edit.php?lang=<?= LANGUAGE_ID ?>&ID=<?= $banner['CAMPAIGN_ID'] ?>&tabControl_active_tab=edit_stats"><?= Loc::getMessage('SEO_YANDEX_STATS_CAMPAIGN_STATS') ?></a><br/>
+                    <a href="/bitrix/admin/seo_search_yandex_direct_banner_edit.php?lang=<?= LANGUAGE_ID ?>&ID=<?= $banner['ID'] ?>&tabControl_active_tab=edit_stats"><?= Loc::getMessage(
+                            'SEO_YANDEX_STATS_BANNER_STATS'
+                        ) ?></a><br/>
+                    <a href="/bitrix/admin/seo_search_yandex_direct_edit.php?lang=<?= LANGUAGE_ID ?>&ID=<?= $banner['CAMPAIGN_ID'] ?>&tabControl_active_tab=edit_stats"><?= Loc::getMessage(
+                            'SEO_YANDEX_STATS_CAMPAIGN_STATS'
+                        ) ?></a><br/>
                 </div>
             </td>
         </tr>

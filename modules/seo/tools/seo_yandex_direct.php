@@ -1,4 +1,5 @@
 <?
+
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/prolog.php");
 
@@ -11,8 +12,9 @@ require_once($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/prolog.php");
  * @global CCacheManager $CACHE_MANAGER
  */
 
-if (!$USER->CanDoOperation('seo_tools') || !check_bitrix_sessid())
+if (!$USER->CanDoOperation('seo_tools') || !check_bitrix_sessid()) {
     die(GetMessage("ACCESS_DENIED"));
+}
 
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -47,7 +49,6 @@ if ($action !== "register") {
             $bNeedAuth = true;
         }
     }
-
 } else {
     $bNeedAuth = false;
 }
@@ -114,7 +115,7 @@ if (isset($action) && !$bNeedAuth) {
 
                 if (is_array($phraseList)) {
                     $phraseList = array_values(array_unique($phraseList));
-                    $geoList = strlen($geo) > 0 ? preg_split("/[^0-9\\-]+\\s*/", $geo) : array();
+                    $geoList = $geo <> '' ? preg_split("/[^0-9\\-]+\\s*/", $geo) : array();
 
                     $phraseHash = md5(implode('|', $phraseList) . '|||' . $geo);
 
@@ -176,7 +177,7 @@ if (isset($action) && !$bNeedAuth) {
 
                 if (is_array($phraseList)) {
                     $phraseList = array_values(array_unique($phraseList));
-                    $geoList = strlen($geo) > 0 ? preg_split("/[^0-9\-]+\\s*/", $geo) : array();
+                    $geoList = $geo <> '' ? preg_split("/[^0-9\-]+\\s*/", $geo) : array();
 
                     $phraseHash = md5(implode('|', $phraseList) . '|||' . $geo);
 
@@ -245,25 +246,31 @@ if (isset($action) && !$bNeedAuth) {
 
                 if ($linkId > 0 & $bannerId > 0) {
                     if ($_REQUEST['action'] == 'link_delete') {
-                        $result = Adv\LinkTable::delete(array(
-                            'LINK_TYPE' => $linkType,
-                            'LINK_ID' => $linkId,
-                            'BANNER_ID' => $bannerId,
-                        ));
-
-                        $res = array('result' => $result->isSuccess());
-                    } elseif ($_REQUEST['action'] == 'link_create') {
-                        $dbRes = Adv\LinkTable::getByPrimary(array(
-                            'LINK_TYPE' => $linkType,
-                            'LINK_ID' => $linkId,
-                            'BANNER_ID' => $bannerId,
-                        ));
-                        if (!$dbRes->fetch()) {
-                            $result = Adv\LinkTable::add(array(
+                        $result = Adv\LinkTable::delete(
+                            array(
                                 'LINK_TYPE' => $linkType,
                                 'LINK_ID' => $linkId,
                                 'BANNER_ID' => $bannerId,
-                            ));
+                            )
+                        );
+
+                        $res = array('result' => $result->isSuccess());
+                    } elseif ($_REQUEST['action'] == 'link_create') {
+                        $dbRes = Adv\LinkTable::getByPrimary(
+                            array(
+                                'LINK_TYPE' => $linkType,
+                                'LINK_ID' => $linkId,
+                                'BANNER_ID' => $bannerId,
+                            )
+                        );
+                        if (!$dbRes->fetch()) {
+                            $result = Adv\LinkTable::add(
+                                array(
+                                    'LINK_TYPE' => $linkType,
+                                    'LINK_ID' => $linkId,
+                                    'BANNER_ID' => $bannerId,
+                                )
+                            );
 
                             $res = array('result' => $result->isSuccess());
                         } else {
@@ -285,19 +292,22 @@ if (isset($action) && !$bNeedAuth) {
                             )
                         );
 
-                        $dbRes = Adv\LinkTable::getList(array(
-                            "filter" => array(
-                                '=LINK_TYPE' => Adv\LinkTable::TYPE_IBLOCK_ELEMENT,
-                                '=LINK_ID' => $linkId,
-                                "=BANNER.ENGINE_ID" => $engine->getId(),
-                            ),
-                            "select" => array(
-                                "BANNER_ID",
-                                "BANNER_NAME" => "BANNER.NAME", "BANNER_XML_ID" => "BANNER.XML_ID",
-                                "BANNER_CAMPAIGN_ID" => "BANNER.CAMPAIGN_ID",
-                                "LINK_IBLOCK_ID" => "IBLOCK_ELEMENT.IBLOCK_ID",
+                        $dbRes = Adv\LinkTable::getList(
+                            array(
+                                "filter" => array(
+                                    '=LINK_TYPE' => Adv\LinkTable::TYPE_IBLOCK_ELEMENT,
+                                    '=LINK_ID' => $linkId,
+                                    "=BANNER.ENGINE_ID" => $engine->getId(),
+                                ),
+                                "select" => array(
+                                    "BANNER_ID",
+                                    "BANNER_NAME" => "BANNER.NAME",
+                                    "BANNER_XML_ID" => "BANNER.XML_ID",
+                                    "BANNER_CAMPAIGN_ID" => "BANNER.CAMPAIGN_ID",
+                                    "LINK_IBLOCK_ID" => "IBLOCK_ELEMENT.IBLOCK_ID",
+                                )
                             )
-                        ));
+                        );
 
                         $arBanners = array();
                         while ($banner = $dbRes->fetch()) {
@@ -309,17 +319,21 @@ if (isset($action) && !$bNeedAuth) {
                             $iblockElementInfo['IBLOCK']['ID'] = $banner['LINK_IBLOCK_ID'];
                         }
 
-                        $dbRes = Adv\YandexCampaignTable::getList(array(
-                            "order" => array("NAME" => "asc"),
-                            "filter" => array(
-                                "=ID" > array_keys($arBanners),
-                                '=ACTIVE' => Adv\YandexCampaignTable::ACTIVE,
-                                '=ENGINE_ID' => $engine->getId(),
-                            ),
-                            'select' => array(
-                                "ID", "NAME", "XML_ID"
+                        $dbRes = Adv\YandexCampaignTable::getList(
+                            array(
+                                "order" => array("NAME" => "asc"),
+                                "filter" => array(
+                                    "=ID" > array_keys($arBanners),
+                                    '=ACTIVE' => Adv\YandexCampaignTable::ACTIVE,
+                                    '=ENGINE_ID' => $engine->getId(),
+                                ),
+                                'select' => array(
+                                    "ID",
+                                    "NAME",
+                                    "XML_ID"
+                                )
                             )
-                        ));
+                        );
                         $campaignList = array();
 
                         while ($campaign = $dbRes->fetch()) {
@@ -328,18 +342,21 @@ if (isset($action) && !$bNeedAuth) {
 
                         require(dirname(__FILE__) . "/../admin/tab/seo_search_yandex_direct_list_link.php");
                     } elseif ($_REQUEST['get_list_html'] == '2') {
-                        $dbRes = Adv\LinkTable::getList(array(
-                            "filter" => array(
-                                '=BANNER_ID' => $bannerId,
-                            ),
-                            "select" => array(
-                                "LINK_TYPE", "LINK_ID",
-                                "ELEMENT_NAME" => "IBLOCK_ELEMENT.NAME",
-                                "ELEMENT_IBLOCK_ID" => "IBLOCK_ELEMENT.IBLOCK_ID",
-                                "ELEMENT_IBLOCK_TYPE_ID" => "IBLOCK_ELEMENT.IBLOCK.IBLOCK_TYPE_ID",
-                                'ELEMENT_IBLOCK_SECTION_ID' => 'IBLOCK_ELEMENT.IBLOCK_SECTION_ID',
+                        $dbRes = Adv\LinkTable::getList(
+                            array(
+                                "filter" => array(
+                                    '=BANNER_ID' => $bannerId,
+                                ),
+                                "select" => array(
+                                    "LINK_TYPE",
+                                    "LINK_ID",
+                                    "ELEMENT_NAME" => "IBLOCK_ELEMENT.NAME",
+                                    "ELEMENT_IBLOCK_ID" => "IBLOCK_ELEMENT.IBLOCK_ID",
+                                    "ELEMENT_IBLOCK_TYPE_ID" => "IBLOCK_ELEMENT.IBLOCK.IBLOCK_TYPE_ID",
+                                    'ELEMENT_IBLOCK_SECTION_ID' => 'IBLOCK_ELEMENT.IBLOCK_SECTION_ID',
+                                )
                             )
-                        ));
+                        );
 
                         $arLinks = array();
                         while ($link = $dbRes->fetch()) {
@@ -367,17 +384,19 @@ if (isset($action) && !$bNeedAuth) {
 
                 if ($campaignId > 0) {
                     $res = array();
-                    $dbRes = Adv\YandexBannerTable::getList(array(
-                        'filter' => array(
-                            '=CAMPAIGN_ID' => $campaignId,
-                            '=ACTIVE' => Adv\YandexBannerTable::ACTIVE,
-                            '=ENGINE_ID' => $engine->getId(),
-                        ),
-                        'order' => array(
-                            'NAME' => 'ASC',
-                        ),
-                        'select' => array('ID', 'NAME', 'XML_ID')
-                    ));
+                    $dbRes = Adv\YandexBannerTable::getList(
+                        array(
+                            'filter' => array(
+                                '=CAMPAIGN_ID' => $campaignId,
+                                '=ACTIVE' => Adv\YandexBannerTable::ACTIVE,
+                                '=ENGINE_ID' => $engine->getId(),
+                            ),
+                            'order' => array(
+                                'NAME' => 'ASC',
+                            ),
+                            'select' => array('ID', 'NAME', 'XML_ID')
+                        )
+                    );
                     while ($banner = $dbRes->fetch()) {
                         $res[] = $banner;
                     }
@@ -411,24 +430,40 @@ if (isset($action) && !$bNeedAuth) {
                         array("week_ago", "month_ago", "interval")
                     )) {
                         $period = array();
-                        \CGridOptions::CalcDates("", array(
-                            "_datesel" => $_REQUEST["type"],
-                            "_days" => 1,
-                            "_from" => $_REQUEST["date_from"],
-                            "_to" => $_REQUEST["date_to"],
-                        ), $period);
+                        \CGridOptions::CalcDates(
+                            "",
+                            array(
+                                "_datesel" => $_REQUEST["type"],
+                                "_days" => 1,
+                                "_from" => $_REQUEST["date_from"],
+                                "_to" => $_REQUEST["date_to"],
+                            ),
+                            $period
+                        );
 
                         if (Date::isCorrect($period['_from'])) {
                             $dateStart = new Date($period['_from']);
                         } else {
-                            $res = array('error' => array('message' => Loc::getMessage('SEO_ERROR_INCORRECT_DATE') . ': ' . $period['_from']));
+                            $res = array(
+                                'error' => array(
+                                    'message' => Loc::getMessage(
+                                            'SEO_ERROR_INCORRECT_DATE'
+                                        ) . ': ' . $period['_from']
+                                )
+                            );
                             break;
                         }
 
                         if (Date::isCorrect($period['_to'])) {
                             $dateFinish = new Date($period['_to']);
                         } else {
-                            $res = array('error' => array('message' => Loc::getMessage('SEO_ERROR_INCORRECT_DATE') . ': ' . $period['_to']));
+                            $res = array(
+                                'error' => array(
+                                    'message' => Loc::getMessage(
+                                            'SEO_ERROR_INCORRECT_DATE'
+                                        ) . ': ' . $period['_to']
+                                )
+                            );
                             break;
                         }
 
@@ -439,7 +474,6 @@ if (isset($action) && !$bNeedAuth) {
                         );
 
                         $gaps = Adv\YandexStatTable::getMissedPeriods($statsData, $dateStart, $dateFinish);
-
                     } else {
                         $res = array('error' => array('message' => 'invalid interval type'));
                     }
@@ -513,28 +547,34 @@ if (isset($action) && !$bNeedAuth) {
                             && \Bitrix\Main\ModuleManager::isModuleInstalled('catalog')
                             && Loader::includeModule('currency')
                         ) {
-                            $orderStats = Adv\OrderTable::getList(array(
-                                'filter' => array(
-                                    '=BANNER_ID' => $bannerId,
-                                    '=PROCESSED' => Adv\OrderTable::PROCESSED,
-                                    ">=TIMESTAMP_X" => $dateStart,
-                                    "<TIMESTAMP_X" => $dateFinish,
-                                ),
-                                'group' => array(
-                                    'BANNER_ID'
-                                ),
-                                'select' => array('BANNER_SUM'),
-                                'runtime' => array(
-                                    new \Bitrix\Main\Entity\ExpressionField('BANNER_SUM', 'SUM(SUM)'),
-                                ),
-                            ));
+                            $orderStats = Adv\OrderTable::getList(
+                                array(
+                                    'filter' => array(
+                                        '=BANNER_ID' => $bannerId,
+                                        '=PROCESSED' => Adv\OrderTable::PROCESSED,
+                                        ">=TIMESTAMP_X" => $dateStart,
+                                        "<TIMESTAMP_X" => $dateFinish,
+                                    ),
+                                    'group' => array(
+                                        'BANNER_ID'
+                                    ),
+                                    'select' => array('BANNER_SUM'),
+                                    'runtime' => array(
+                                        new \Bitrix\Main\Entity\ExpressionField('BANNER_SUM', 'SUM(SUM)'),
+                                    ),
+                                )
+                            );
                             if ($stat = $orderStats->fetch()) {
                                 $res["order_sum"] = $stat['BANNER_SUM'];
                             } else {
                                 $res["order_sum"] = 0;
                             }
 
-                            $res["order_sum_format"] = \CCurrencyLang::CurrencyFormat(doubleval($res["order_sum"]), \Bitrix\Currency\CurrencyManager::getBaseCurrency(), true);
+                            $res["order_sum_format"] = \CCurrencyLang::CurrencyFormat(
+                                doubleval($res["order_sum"]),
+                                \Bitrix\Currency\CurrencyManager::getBaseCurrency(),
+                                true
+                            );
                         }
                     }
                 } else {
@@ -573,24 +613,40 @@ if (isset($action) && !$bNeedAuth) {
                         array("week_ago", "month_ago", "interval")
                     )) {
                         $period = array();
-                        \CGridOptions::CalcDates("", array(
-                            "_datesel" => $_REQUEST["type"],
-                            "_days" => 1,
-                            "_from" => $_REQUEST["date_from"],
-                            "_to" => $_REQUEST["date_to"],
-                        ), $period);
+                        \CGridOptions::CalcDates(
+                            "",
+                            array(
+                                "_datesel" => $_REQUEST["type"],
+                                "_days" => 1,
+                                "_from" => $_REQUEST["date_from"],
+                                "_to" => $_REQUEST["date_to"],
+                            ),
+                            $period
+                        );
 
                         if (Date::isCorrect($period['_from'])) {
                             $dateStart = new Date($period['_from']);
                         } else {
-                            $res = array('error' => array('message' => Loc::getMessage('SEO_ERROR_INCORRECT_DATE') . ': ' . $period['_from']));
+                            $res = array(
+                                'error' => array(
+                                    'message' => Loc::getMessage(
+                                            'SEO_ERROR_INCORRECT_DATE'
+                                        ) . ': ' . $period['_from']
+                                )
+                            );
                             break;
                         }
 
                         if (Date::isCorrect($period['_to'])) {
                             $dateFinish = new Date($period['_to']);
                         } else {
-                            $res = array('error' => array('message' => Loc::getMessage('SEO_ERROR_INCORRECT_DATE') . ': ' . $period['_to']));
+                            $res = array(
+                                'error' => array(
+                                    'message' => Loc::getMessage(
+                                            'SEO_ERROR_INCORRECT_DATE'
+                                        ) . ': ' . $period['_to']
+                                )
+                            );
                             break;
                         }
 
@@ -702,16 +758,20 @@ if (isset($action) && !$bNeedAuth) {
                     array_map('intval', $bannerId);
 
                     if (count($bannerId) > 0) {
-                        $dbBanners = Adv\YandexBannerTable::getList(array(
-                            'filter' => array(
-                                '@ID' => $bannerId,
-                                '=ENGINE_ID' => $engine->getId(),
-                                '=ACTIVE' => Adv\YandexBannerTable::ACTIVE,
-                            ),
-                            'select' => array(
-                                'ID', 'CAMPAIGN_ID', 'SETTINGS'
-                            ),
-                        ));
+                        $dbBanners = Adv\YandexBannerTable::getList(
+                            array(
+                                'filter' => array(
+                                    '@ID' => $bannerId,
+                                    '=ENGINE_ID' => $engine->getId(),
+                                    '=ACTIVE' => Adv\YandexBannerTable::ACTIVE,
+                                ),
+                                'select' => array(
+                                    'ID',
+                                    'CAMPAIGN_ID',
+                                    'SETTINGS'
+                                ),
+                            )
+                        );
 
                         $bannerList = array();
                         $campaignList = array();
@@ -724,16 +784,19 @@ if (isset($action) && !$bNeedAuth) {
                         $campaignList = array_unique($campaignList);
 
                         if (count($campaignList) > 0) {
-                            $dbCampaigns = Adv\YandexCampaignTable::getList(array(
-                                'filter' => array(
-                                    '@ID' => $campaignList,
-                                    '=ENGINE_ID' => $engine->getId(),
-                                    '=ACTIVE' => Adv\YandexCampaignTable::ACTIVE,
-                                ),
-                                'select' => array(
-                                    'ID', 'SETTINGS'
-                                ),
-                            ));
+                            $dbCampaigns = Adv\YandexCampaignTable::getList(
+                                array(
+                                    'filter' => array(
+                                        '@ID' => $campaignList,
+                                        '=ENGINE_ID' => $engine->getId(),
+                                        '=ACTIVE' => Adv\YandexCampaignTable::ACTIVE,
+                                    ),
+                                    'select' => array(
+                                        'ID',
+                                        'SETTINGS'
+                                    ),
+                                )
+                            );
 
                             $campaignList = array();
                             while ($campaign = $dbCampaigns->fetch()) {
@@ -759,7 +822,11 @@ if (isset($action) && !$bNeedAuth) {
                                         $dateFinish
                                     );
 
-                                    $gaps = Adv\YandexStatTable::getMissedPeriods($banner['STATS_DATA'], $banner['DATE_START'], $dateFinish);
+                                    $gaps = Adv\YandexStatTable::getMissedPeriods(
+                                        $banner['STATS_DATA'],
+                                        $banner['DATE_START'],
+                                        $dateFinish
+                                    );
 
                                     if (count($gaps) > 0) {
                                         $banner['LOADING_NEEDED'] = true;
@@ -773,19 +840,21 @@ if (isset($action) && !$bNeedAuth) {
                             }
 
                             if ($bSale && count($bannerListToCheck) > 0) {
-                                $orderStats = Adv\OrderTable::getList(array(
-                                    'filter' => array(
-                                        '@BANNER_ID' => $bannerListToCheck,
-                                        '=PROCESSED' => Adv\OrderTable::PROCESSED,
-                                    ),
-                                    'group' => array(
-                                        'BANNER_ID'
-                                    ),
-                                    'select' => array('BANNER_ID', 'BANNER_SUM'),
-                                    'runtime' => array(
-                                        new \Bitrix\Main\Entity\ExpressionField('BANNER_SUM', 'SUM(SUM)'),
-                                    ),
-                                ));
+                                $orderStats = Adv\OrderTable::getList(
+                                    array(
+                                        'filter' => array(
+                                            '@BANNER_ID' => $bannerListToCheck,
+                                            '=PROCESSED' => Adv\OrderTable::PROCESSED,
+                                        ),
+                                        'group' => array(
+                                            'BANNER_ID'
+                                        ),
+                                        'select' => array('BANNER_ID', 'BANNER_SUM'),
+                                        'runtime' => array(
+                                            new \Bitrix\Main\Entity\ExpressionField('BANNER_SUM', 'SUM(SUM)'),
+                                        ),
+                                    )
+                                );
                                 while ($stat = $orderStats->fetch()) {
                                     $bannerList[$stat['BANNER_ID']]['PROFIT'] = $stat['BANNER_SUM'];
                                 }

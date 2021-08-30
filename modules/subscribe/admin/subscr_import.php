@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/subscribe/include.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/subscribe/prolog.php");
@@ -6,20 +7,27 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/subscribe/prolog.php")
 IncludeModuleLangFile(__FILE__);
 
 $POST_RIGHT = $APPLICATION->GetGroupRight("subscribe");
-if ($POST_RIGHT == "D")
+if ($POST_RIGHT == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $MAIN_RIGHT = $APPLICATION->GetGroupRight("main");
 
 $aTabs = array(
-    array("DIV" => "edit1", "TAB" => GetMessage("imp_import_tab"), "ICON" => "main_user_edit", "TITLE" => GetMessage("imp_import_tab_title")),
+    array(
+        "DIV" => "edit1",
+        "TAB" => GetMessage("imp_import_tab"),
+        "ICON" => "main_user_edit",
+        "TITLE" => GetMessage("imp_import_tab_title")
+    ),
 );
 $tabControl = new CAdminTabControl("tabControl", $aTabs, true, true);
 
 $arError = array();
 $bShowRes = false;
-if (!is_array($USER_GROUP_ID))
+if (!is_array($USER_GROUP_ID)) {
     $USER_GROUP_ID = array();
+}
 
 if ($REQUEST_METHOD == "POST" && !empty($Import) && $POST_RIGHT >= "W" && check_bitrix_sessid()) {
     //*************************************
@@ -29,26 +37,35 @@ if ($REQUEST_METHOD == "POST" && !empty($Import) && $POST_RIGHT >= "W" && check_
     $sAddr = $ADDR_LIST . ",";
     //And this is from the file
     if (!empty($_FILES["ADDR_FILE"]["tmp_name"])) {
-        if ((integer)$_FILES["ADDR_FILE"]["error"] <> 0)
-            $arError[] = array("id" => "ADDR_FILE", "text" => GetMessage("subscr_imp_err1") . " (" . GetMessage("subscr_imp_err2") . " " . $_FILES["ADDR_FILE"]["error"] . ")");
-        else
+        if ((integer)$_FILES["ADDR_FILE"]["error"] <> 0) {
+            $arError[] = array(
+                "id" => "ADDR_FILE",
+                "text" => GetMessage("subscr_imp_err1") . " (" . GetMessage(
+                        "subscr_imp_err2"
+                    ) . " " . $_FILES["ADDR_FILE"]["error"] . ")"
+            );
+        } else {
             $sAddr .= file_get_contents($_FILES["ADDR_FILE"]["tmp_name"]);
+        }
     }
 
     //explode to emails array
     $aEmail = array();
     $addr = strtok($sAddr, ", \r\n\t");
     while ($addr !== false) {
-        if (strlen($addr) > 0)
+        if ($addr <> '') {
             $aEmail[$addr] = true;
+        }
         $addr = strtok(", \r\n\t");
     }
 
     //check for duplicate emails
     $addr = CSubscription::GetList();
-    while ($addr_arr = $addr->Fetch())
-        if (isset($aEmail[$addr_arr["EMAIL"]]))
+    while ($addr_arr = $addr->Fetch()) {
+        if (isset($aEmail[$addr_arr["EMAIL"]])) {
             unset($aEmail[$addr_arr["EMAIL"]]);
+        }
+    }
 
     //*************************************
     //add users and subscribers
@@ -66,8 +83,9 @@ if ($REQUEST_METHOD == "POST" && !empty($Import) && $POST_RIGHT >= "W" && check_
     );
 
     //constant part of the user
-    if ($USER_TYPE == "U")
+    if ($USER_TYPE == "U") {
         $user = new CUser;
+    }
 
     $nError = 0;
     $nSuccess = 0;
@@ -83,14 +101,20 @@ if ($REQUEST_METHOD == "POST" && !empty($Import) && $POST_RIGHT >= "W" && check_
                 "CONFIRM_PASSWORD" => $sPassw,
                 "EMAIL" => $email,
                 "ACTIVE" => "Y",
-                "GROUP_ID" => ($MAIN_RIGHT >= "W" ? $USER_GROUP_ID : array(COption::GetOptionString("main", "new_user_registration_def_group")))
+                "GROUP_ID" => ($MAIN_RIGHT >= "W" ? $USER_GROUP_ID : array(
+                    COption::GetOptionString(
+                        "main",
+                        "new_user_registration_def_group"
+                    )
+                ))
             );
             if ($USER_ID = $user->Add($arUserFields)) {
                 $user->Update($USER_ID, array("LOGIN" => "user" . $USER_ID));
 
                 //send registration message
-                if ($SEND_REG_INFO == "Y")
+                if ($SEND_REG_INFO == "Y") {
                     $user->SendUserInfo($USER_ID, $LID, GetMessage("subscr_send_info"));
+                }
             } else {
                 $arError[] = array("id" => "", "text" => $email . ": " . $user->LAST_ERROR);
                 $nError++;
@@ -104,9 +128,9 @@ if ($REQUEST_METHOD == "POST" && !empty($Import) && $POST_RIGHT >= "W" && check_
         if (!$subscr->Add($arFields, $LID)) {
             $arError[] = array("id" => "", "text" => $email . ": " . $subscr->LAST_ERROR);
             $nError++;
-        } else
+        } else {
             $nSuccess++;
-
+        }
     }//foreach
     $bShowRes = true;
 }//$REQUEST_METHOD=="POST"
@@ -132,14 +156,16 @@ if (count($arError) > 0) {
 ?>
 <?
 if ($bShowRes) {
-    CAdminMessage::ShowMessage(array(
-        "MESSAGE" => GetMessage("imp_results"),
-        "DETAILS" => GetMessage("imp_results_total") . ' <b>' . count($aEmail) . '</b><br>'
-            . GetMessage("imp_results_added") . ' <b>' . $nSuccess . '</b><br>'
-            . GetMessage("imp_results_err") . ' <b>' . $nError . '</b>',
-        "HTML" => true,
-        "TYPE" => "PROGRESS",
-    ));
+    CAdminMessage::ShowMessage(
+        array(
+            "MESSAGE" => GetMessage("imp_results"),
+            "DETAILS" => GetMessage("imp_results_total") . ' <b>' . count($aEmail) . '</b><br>'
+                . GetMessage("imp_results_added") . ' <b>' . $nSuccess . '</b><br>'
+                . GetMessage("imp_results_err") . ' <b>' . $nError . '</b>',
+            "HTML" => true,
+            "TYPE" => "PROGRESS",
+        )
+    );
 }
 ?>
     <form ENCTYPE="multipart/form-data" action="<? echo $APPLICATION->GetCurPage(); ?>" method="POST" name="impform">
@@ -201,10 +227,15 @@ if ($bShowRes) {
             <tr>
                 <td class="adm-detail-valign-top"><? echo GetMessage("imp_add_gr") ?></td>
                 <td><select name="USER_GROUP_ID[]" multiple size=10><?
-                        $groups = CGroup::GetList(($by1 = "sort"), ($order1 = "asc"), Array("ACTIVE" => "Y"));
+                        $groups = CGroup::GetList("sort", "asc", Array("ACTIVE" => "Y"));
                         while (($gr = $groups->Fetch())):
                             ?>
-                            <OPTION VALUE="<? echo $gr["ID"] ?>"<? if (in_array($gr["ID"], $USER_GROUP_ID)) echo " SELECTED" ?>><? echo htmlspecialcharsbx($gr["NAME"]) . " [" . $gr["ID"] . "]" ?></OPTION><?
+                            <OPTION VALUE="<? echo $gr["ID"] ?>"<? if (in_array(
+                            $gr["ID"],
+                            $USER_GROUP_ID
+                        )) echo " SELECTED" ?>><? echo htmlspecialcharsbx(
+                                $gr["NAME"]
+                            ) . " [" . $gr["ID"] . "]" ?></OPTION><?
                         endwhile;
                         ?></SELECT>
                     <script language="JavaScript">
@@ -226,18 +257,24 @@ if ($bShowRes) {
             <td>
                 <div class="adm-list">
                     <?
-                    $rubrics = CRubric::GetList(array("LID" => "ASC", "SORT" => "ASC", "NAME" => "ASC"), array("ACTIVE" => "Y"));
+                    $rubrics = CRubric::GetList(
+                        array("LID" => "ASC", "SORT" => "ASC", "NAME" => "ASC"),
+                        array("ACTIVE" => "Y")
+                    );
                     $n = 1;
                     while (($rub = $rubrics->Fetch())):
                         ?>
                         <div class="adm-list-item">
                             <div class="adm-list-control"><input type="checkbox" id="RUB_ID_<? echo $n ?>"
                                                                  name="RUB_ID[]"
-                                                                 value="<? echo $rub["ID"] ?>"<? if (!$bShowRes || in_array($rub["ID"], $RUB_ID)) echo " checked" ?>>
-                            </div>
+                                                                 value="<? echo $rub["ID"] ?>"<? if (!$bShowRes || in_array(
+                                        $rub["ID"],
+                                        $RUB_ID
+                                    )) echo " checked" ?>></div>
                             <div class="adm-list-label"><label
-                                        for="RUB_ID_<? echo $n ?>"><? echo "[" . $rub["LID"] . "]&nbsp;" . htmlspecialcharsbx($rub["NAME"]) ?></label>
-                            </div>
+                                        for="RUB_ID_<? echo $n ?>"><? echo "[" . $rub["LID"] . "]&nbsp;" . htmlspecialcharsbx(
+                                            $rub["NAME"]
+                                        ) ?></label></div>
                         </div>
                         <?
                         $n++;
@@ -262,9 +299,9 @@ if ($bShowRes) {
         <?
         $tabControl->Buttons();
         ?>
-        <input<? if ($POST_RIGHT < "W") echo " disabled"; ?> type="submit" name="Import"
-                                                             value="<? echo GetMessage("imp_butt") ?>"
-                                                             class="adm-btn-save">
+        <input<? if ($POST_RIGHT < "W") {
+            echo " disabled";
+        } ?> type="submit" name="Import" value="<? echo GetMessage("imp_butt") ?>" class="adm-btn-save">
         <input type="hidden" name="lang" value="<? echo LANG ?>">
         <? echo bitrix_sessid_post(); ?>
         <?

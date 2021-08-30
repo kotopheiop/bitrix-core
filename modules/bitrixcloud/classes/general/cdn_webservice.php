@@ -1,4 +1,5 @@
 <?php
+
 IncludeModuleLangFile(__FILE__);
 
 class CBitrixCloudCDNWebService extends CBitrixCloudWebService
@@ -16,10 +17,12 @@ class CBitrixCloudCDNWebService extends CBitrixCloudWebService
     public function __construct($domain, $optimize = null, $https = null)
     {
         $this->domain = $domain;
-        if (isset($optimize))
+        if (isset($optimize)) {
             $this->optimize = ($optimize == true);
-        if (isset($https))
+        }
+        if (isset($https)) {
             $this->https = ($https == true);
+        }
     }
 
     /**
@@ -34,21 +37,28 @@ class CBitrixCloudCDNWebService extends CBitrixCloudWebService
         $arErrors = /*.(array[int]string).*/
             array();
         $domainTmp = CBXPunycode::ToASCII($this->domain, $arErrors);
-        if (strlen($domainTmp) > 0)
+        if ($domainTmp <> '') {
             $domain = $domainTmp;
-        else
+        } else {
             $domain = $this->domain;
+        }
 
         $arParams["license"] = md5(LICENSE_KEY);
         $arParams["domain"] = $domain;
-        if (isset($this->https))
+        if (isset($this->https)) {
             $arParams["https"] = ($this->https ? "Y" : "N");
-        if (isset($this->optimize))
+        }
+        if (isset($this->optimize)) {
             $arParams["optimize"] = ($this->optimize ? "Y" : "N");
+        }
         $url = COption::GetOptionString("bitrixcloud", "cdn_policy_url");
-        $url = CHTTP::urlAddParams($url, $arParams, array(
-            "encode" => true,
-        ));
+        $url = CHTTP::urlAddParams(
+            $url,
+            $arParams,
+            array(
+                "encode" => true,
+            )
+        );
         return $url;
     }
 

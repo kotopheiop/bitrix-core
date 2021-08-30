@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 class CForumHTMLPresrnation
@@ -7,18 +8,34 @@ class CForumHTMLPresrnation
     {
         $arItemLast = array();
         $arItems = array();
-        if (!is_array($items))
+        if (!is_array($items)) {
             return false;
-        if (!is_set($templates, "T_SEPARATOR"))
+        }
+        if (!is_set($templates, "T_SEPARATOR")) {
             $templates["T_SEPARATOR"] = "<font class=\"forum-chain-separator\">&nbsp;/&nbsp;</font>";
-        if (!is_set($templates, "T_ALL_ITEMS"))
+        }
+        if (!is_set($templates, "T_ALL_ITEMS")) {
             $templates["T_ALL_ITEMS"] = "<a href=\"#LINK#\" class=\"forum-chain-item\">#TITLE#</a>";
-        if (!is_set($templates, "T_LAST_ITEM"))
+        }
+        if (!is_set($templates, "T_LAST_ITEM")) {
             $templates["T_LAST_ITEM"] = "<font class=\"forum-chain-last\">#TITLE#</font>";
+        }
         $arItemLast = array_pop($items);
-        foreach ($items as $res)
-            $arItems[] = str_replace(array("#LINK#", "#TITLE#"), array(htmlspecialcharsbx($res["LINK"]), htmlspecialcharsbx($res["TITLE"])), $templates["T_ALL_ITEMS"]);
-        $arItems[] = str_replace(array("#LINK#", "#TITLE#"), array(htmlspecialcharsbx($arItemLast["LINK"]), htmlspecialcharsbx($arItemLast["TITLE"])), $templates["T_LAST_ITEM"]);
+        foreach ($items as $res) {
+            $arItems[] = str_replace(
+                array("#LINK#", "#TITLE#"),
+                array(htmlspecialcharsbx($res["LINK"]), htmlspecialcharsbx($res["TITLE"])),
+                $templates["T_ALL_ITEMS"]
+            );
+        }
+        $arItems[] = str_replace(
+            array("#LINK#", "#TITLE#"),
+            array(
+                htmlspecialcharsbx($arItemLast["LINK"]),
+                htmlspecialcharsbx($arItemLast["TITLE"])
+            ),
+            $templates["T_LAST_ITEM"]
+        );
         return implode($templates["T_SEPARATOR"], $arItems);
     }
 
@@ -37,22 +54,28 @@ class CForumHTMLPresrnation
             }
         }
 
-        if ((empty($arFields)) || !is_array($arFields["params"]))
+        if ((empty($arFields)) || !is_array($arFields["params"])) {
             return false;
-        if (strLen($arForm["formName"]) <= 0)
+        }
+        if ($arForm["formName"] == '') {
             $arForm["formName"] = "form1";
-        if (empty($arForm["formMethod"]))
+        }
+        if (empty($arForm["formMethod"])) {
             $arForm["formMethod"] = "get";
+        }
         $res_first = array();
         $all_checkbox = true;
         $prefix = "f";
-        if (!empty($arFields["prefix"]))
+        if (!empty($arFields["prefix"])) {
             $prefix = $arFields["prefix"];
-        if (empty($arFields["visible"]))
+        }
+        if (empty($arFields["visible"])) {
             $arFields["visible"] = 2;
+        }
         $res_visible = array();
-        for ($ii = 0; $ii < $arFields["visible"]; $ii++)
+        for ($ii = 0; $ii < $arFields["visible"]; $ii++) {
             $res_visible[] = array_shift($arFields["params"]);
+        }
         $res_other = $arFields["params"];
 
         $JSFile = "";
@@ -78,7 +101,9 @@ class CForumHTMLPresrnation
                     '<tr><td><div onMouseOver="this.className=\'filter-check-hover\';" onMouseOut="this.className=\'filter-check\';" class="filter-check" onclick="SectionSH(\'' . $name . '\', \'\', \'' . $prefix . '\');"><input type="checkbox" name="' . $name . '_checkbox" id="' . $name . '_checkbox" onclick="this.checked=(this.checked==true) ? false:true;"' . (($arGroupCookie[$name] != "Y") ? "" : " checked") . ' />' . $res["title"] . '</div></td></tr>';
             }
             $outPut["body"] .=
-                '<tr><th><div onMouseOver="this.className=\'filter-check-hover\';" onMouseOut="this.className=\'filter-check\';" class="filter-check" onclick="var checkbox=document.getElementById(\'' . $prefix . '_all_checkbox\'); checkbox.checked=(checkbox.checked ? false : true); SectionGA(\'' . $prefix . '\', document.getElementById(\'' . $prefix . '_all_checkbox\'));"><input type="checkbox" name="' . $prefix . '_all_checkbox" id="' . $prefix . '_all_checkbox" ' . ($all_checkbox ? "checked" : "") . ' onclick="this.checked=(this.checked==true) ? false:true;" />' . GetMessage("FORUM_SHOW_ALL_FILTER") . '</div></th></tr>
+                '<tr><th><div onMouseOver="this.className=\'filter-check-hover\';" onMouseOut="this.className=\'filter-check\';" class="filter-check" onclick="var checkbox=document.getElementById(\'' . $prefix . '_all_checkbox\'); checkbox.checked=(checkbox.checked ? false : true); SectionGA(\'' . $prefix . '\', document.getElementById(\'' . $prefix . '_all_checkbox\'));"><input type="checkbox" name="' . $prefix . '_all_checkbox" id="' . $prefix . '_all_checkbox" ' . ($all_checkbox ? "checked" : "") . ' onclick="this.checked=(this.checked==true) ? false:true;" />' . GetMessage(
+                    "FORUM_SHOW_ALL_FILTER"
+                ) . '</div></th></tr>
 		</table></div>';
         }
         $outPut["body"] .=

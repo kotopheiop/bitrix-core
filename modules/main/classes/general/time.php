@@ -42,8 +42,9 @@ class CTimeZone
 
     private static function __tzsort($a, $b)
     {
-        if ($a['offset'] == $b['offset'])
+        if ($a['offset'] == $b['offset']) {
             return strcmp($a['timezone_id'], $b['timezone_id']);
+        }
         return ($a['offset'] < $b['offset'] ? -1 : 1);
     }
 
@@ -52,11 +53,31 @@ class CTimeZone
         IncludeModuleLangFile(__FILE__);
 
         $aTZ = array();
-        static $aExcept = array("Etc/", "GMT", "UTC", "UCT", "HST", "PST", "MST", "CST", "EST", "CET", "MET", "WET", "EET", "PRC", "ROC", "ROK", "W-SU");
+        static $aExcept = array(
+            "Etc/",
+            "GMT",
+            "UTC",
+            "UCT",
+            "HST",
+            "PST",
+            "MST",
+            "CST",
+            "EST",
+            "CET",
+            "MET",
+            "WET",
+            "EET",
+            "PRC",
+            "ROC",
+            "ROK",
+            "W-SU"
+        );
         foreach (DateTimeZone::listIdentifiers() as $tz) {
-            foreach ($aExcept as $ex)
-                if (strpos($tz, $ex) === 0)
+            foreach ($aExcept as $ex) {
+                if (mb_strpos($tz, $ex) === 0) {
                     continue 2;
+                }
+            }
             try {
                 $oTz = new DateTimeZone($tz);
                 $aTZ[$tz] = array('timezone_id' => $tz, 'offset' => $oTz->getOffset(new DateTime("now", $oTz)));
@@ -67,8 +88,12 @@ class CTimeZone
         uasort($aTZ, array('CTimeZone', '__tzsort'));
 
         $aZones = array("" => GetMessage("tz_local_time"));
-        foreach ($aTZ as $z)
-            $aZones[$z['timezone_id']] = '(UTC' . ($z['offset'] <> 0 ? ' ' . ($z['offset'] < 0 ? '-' : '+') . sprintf("%02d", ($h = floor(abs($z['offset']) / 3600))) . ':' . sprintf("%02d", abs($z['offset']) / 60 - $h * 60) : '') . ') ' . $z['timezone_id'];
+        foreach ($aTZ as $z) {
+            $aZones[$z['timezone_id']] = '(UTC' . ($z['offset'] <> 0 ? ' ' . ($z['offset'] < 0 ? '-' : '+') . sprintf(
+                        "%02d",
+                        ($h = floor(abs($z['offset']) / 3600))
+                    ) . ':' . sprintf("%02d", abs($z['offset']) / 60 - $h * 60) : '') . ') ' . $z['timezone_id'];
+        }
 
         return $aZones;
     }
@@ -80,8 +105,15 @@ class CTimeZone
 
         $cookie_prefix = COption::GetOptionString('main', 'cookie_name', 'BITRIX_SM');
         if (self::IsAutoTimeZone(trim($USER->GetParam("AUTO_TIME_ZONE")))) {
+            $cookieDate = (new \Bitrix\Main\Type\DateTime())->add("12M");
+            $cookieDate->setDate((int)$cookieDate->format('Y'), (int)$cookieDate->format('m'), 1);
+            $cookieDate->setTime(0, 0);
+
             $APPLICATION->AddHeadString(
-                '<script type="text/javascript">var bxDate = new Date(); document.cookie="' . $cookie_prefix . '_TIME_ZONE="+bxDate.getTimezoneOffset()+"; path=/; expires=Fri, 01-Jan-2038 00:00:00 GMT"</script>', true
+                '<script type="text/javascript">var bxDate = new Date(); document.cookie="' . $cookie_prefix . '_TIME_ZONE="+bxDate.getTimezoneOffset()+"; path=/; expires=' . $cookieDate->format(
+                    "r"
+                ) . '"</script>',
+                true
             );
         } elseif (isset($_COOKIE[$cookie_prefix . "_TIME_ZONE"])) {
             unset($_COOKIE[$cookie_prefix . "_TIME_ZONE"]);

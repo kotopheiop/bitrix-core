@@ -6,6 +6,22 @@ use Bitrix\Main\Entity,
     Bitrix\Main\Type\DateTime,
     Bitrix\Main\Application;
 
+/**
+ * Class SubscribeAccessTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_SubscribeAccess_Query query()
+ * @method static EO_SubscribeAccess_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_SubscribeAccess_Result getById($id)
+ * @method static EO_SubscribeAccess_Result getList(array $parameters = array())
+ * @method static EO_SubscribeAccess_Entity getEntity()
+ * @method static \Bitrix\Catalog\EO_SubscribeAccess createObject($setDefaultValues = true)
+ * @method static \Bitrix\Catalog\EO_SubscribeAccess_Collection createCollection()
+ * @method static \Bitrix\Catalog\EO_SubscribeAccess wakeUpObject($row)
+ * @method static \Bitrix\Catalog\EO_SubscribeAccess_Collection wakeUpCollection($rows)
+ */
 class SubscribeAccessTable extends Entity\DataManager
 {
     const TOKEN_LIFE_TIME = 3600;
@@ -75,7 +91,8 @@ class SubscribeAccessTable extends Entity\DataManager
     {
         $connection = Application::getConnection();
         $helper = $connection->getSqlHelper();
-        $connection->queryExecute('delete from ' . $helper->quote(static::getTableName()) . ' where '
+        $connection->queryExecute(
+            'delete from ' . $helper->quote(static::getTableName()) . ' where '
             . $helper->quote('DATE_FROM') . ' < ' . $helper->addSecondsToDateTime(-(static::TOKEN_LIFE_TIME))
         );
     }

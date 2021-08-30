@@ -23,20 +23,21 @@ $selfFolderUrl = $adminPage->getSelfFolderUrl();
 
 $saleModulePermissions = $APPLICATION->GetGroupRight('sale');
 $readOnly = ($saleModulePermissions < 'W');
-if ($saleModulePermissions < 'R')
+if ($saleModulePermissions < 'R') {
     $APPLICATION->AuthForm('');
+}
 
 Loader::includeModule('sale');
 Loc::loadMessages(__FILE__);
 
 $catalogNamePostfix = ' (' . Loc::getMessage('BT_SALE_DISCOUNT_LIST_MESS_TITLE_CATALOG_ID') . ')';
-$catalogNamePostfixLength = strlen($catalogNamePostfix);
+$catalogNamePostfixLength = mb_strlen($catalogNamePostfix);
 
 $enableDiscountConstructor = Sale\Config\Feature::isDiscountConstructorEnabled();
 
 $adminListTableID = 'tbl_sale_discount';
 
-$adminSort = new CAdminSorting($adminListTableID, 'ID', 'ASC');
+$adminSort = new CAdminUiSorting($adminListTableID, 'ID', 'ASC');
 $adminList = new CAdminUiList($adminListTableID, $adminSort);
 
 $filterSiteList = array();
@@ -44,16 +45,19 @@ $arSitesShop = array();
 $arSitesTmp = array();
 $siteList = array();
 $sitesList = array();
-$siteIterator = SiteTable::getList(array(
-    'select' => array('LID', 'NAME', 'ACTIVE', 'SORT'),
-    'order' => array('SORT' => 'ASC')
-));
+$siteIterator = SiteTable::getList(
+    array(
+        'select' => array('LID', 'NAME', 'ACTIVE', 'SORT'),
+        'order' => array('SORT' => 'ASC')
+    )
+);
 while ($site = $siteIterator->fetch()) {
     $sitesList[$site['LID']] = $site['NAME'];
     $filterSiteList[] = $site;
     $siteList[$site['LID']] = $site['LID'];
-    if ($site['ACTIVE'] != 'Y')
+    if ($site['ACTIVE'] != 'Y') {
         continue;
+    }
     $arSitesTmp[] = array(
         'ID' => $site['LID'],
         'NAME' => $site['NAME']
@@ -194,8 +198,9 @@ if (!$readOnly && $adminList->EditAction()) {
         $conn = Application::getConnection();
         foreach ($FIELDS as $ID => $fields) {
             $ID = (int)$ID;
-            if ($ID <= 0 || !$adminList->IsUpdated($ID))
+            if ($ID <= 0 || !$adminList->IsUpdated($ID)) {
                 continue;
+            }
 
             if (isset($fields['ACTIVE_FROM']) && is_string($fields['ACTIVE_FROM'])) {
                 $fields['ACTIVE_FROM'] = trim($fields['ACTIVE_FROM']);
@@ -231,12 +236,15 @@ if (!$readOnly && $adminList->EditAction()) {
 if (!$readOnly && ($listID = $adminList->GroupAction())) {
     if ($_REQUEST['action_target'] == 'selected') {
         $listID = array();
-        $discountIterator = Sale\Internals\DiscountTable::getList(array(
-            'select' => array('ID'),
-            'filter' => $filter
-        ));
-        while ($discount = $discountIterator->fetch())
+        $discountIterator = Sale\Internals\DiscountTable::getList(
+            array(
+                'select' => array('ID'),
+                'filter' => $filter
+            )
+        );
+        while ($discount = $discountIterator->fetch()) {
             $listID[] = $discount['ID'];
+        }
     }
 
     $listID = array_filter($listID);
@@ -249,8 +257,9 @@ if (!$readOnly && ($listID = $adminList->GroupAction())) {
                 );
                 foreach ($listID as &$discountID) {
                     $result = Sale\Internals\DiscountTable::update($discountID, $fields);
-                    if (!$result->isSuccess())
+                    if (!$result->isSuccess()) {
                         $adminList->AddGroupError(implode('<br>', $result->getErrorMessages()), $discountID);
+                    }
                     unset($result);
                 }
                 unset($discountID, $fields);
@@ -258,8 +267,9 @@ if (!$readOnly && ($listID = $adminList->GroupAction())) {
             case 'delete':
                 foreach ($listID as &$discountID) {
                     $result = Sale\Internals\DiscountTable::delete($discountID);
-                    if (!$result->isSuccess())
+                    if (!$result->isSuccess()) {
                         $adminList->AddGroupError(implode('<br>', $result->getErrorMessages()), $discountID);
+                    }
                     unset($result);
                 }
                 unset($discountID);
@@ -412,10 +422,12 @@ $selectFields['PRESET_ID'] = true;
 $selectFields['ACTIONS_LIST'] = true;
 
 global $by, $order;
-if (!isset($by))
+if (!isset($by)) {
     $by = 'ID';
-if (!isset($order))
+}
+if (!isset($order)) {
     $order = 'ASC';
+}
 
 $usePageNavigation = true;
 $navyParams = array();
@@ -456,8 +468,9 @@ if ($usePageNavigation) {
     $totalCount = Sale\Internals\DiscountTable::getCount($getListParams['filter']);
     if ($totalCount > 0) {
         $totalPages = ceil($totalCount / $navyParams['SIZEN']);
-        if ($navyParams['PAGEN'] > $totalPages)
+        if ($navyParams['PAGEN'] > $totalPages) {
             $navyParams['PAGEN'] = $totalPages;
+        }
     } else {
         $navyParams['PAGEN'] = 1;
     }
@@ -513,13 +526,15 @@ while ($discount = $discountIterator->Fetch()) {
 
     if ($selectFieldsMap['CREATED_BY']) {
         $discount['CREATED_BY'] = (int)$discount['CREATED_BY'];
-        if ($discount['CREATED_BY'] > 0)
+        if ($discount['CREATED_BY'] > 0) {
             $arUserID[$discount['CREATED_BY']] = true;
+        }
     }
     if ($selectFieldsMap['MODIFIED_BY']) {
         $discount['MODIFIED_BY'] = (int)$discount['MODIFIED_BY'];
-        if ($discount['MODIFIED_BY'] > 0)
+        if ($discount['MODIFIED_BY'] > 0) {
             $arUserID[$discount['MODIFIED_BY']] = true;
+        }
     }
 
     $urlEdit = $selfFolderUrl . 'sale_discount_edit.php?ID=' . $discount['ID'] . '&lang=' . LANGUAGE_ID;
@@ -546,73 +561,99 @@ while ($discount = $discountIterator->Fetch()) {
     );
     $row->AddViewField('ID', '<a href="' . $urlEdit . '">' . $discount['ID'] . '</a>');
 
-    if ($selectFieldsMap['DATE_CREATE'])
+    if ($selectFieldsMap['DATE_CREATE']) {
         $row->AddViewField('DATE_CREATE', $discount['DATE_CREATE']);
-    if ($selectFieldsMap['TIMESTAMP_X'])
+    }
+    if ($selectFieldsMap['TIMESTAMP_X']) {
         $row->AddViewField('TIMESTAMP_X', $discount['TIMESTAMP_X']);
-    if ($selectFieldsMap['USE_COUPONS'])
+    }
+    if ($selectFieldsMap['USE_COUPONS']) {
         $row->AddCheckField('USE_COUPONS', false);
+    }
 
     if (!empty($discount['CATALOG_DISCOUNT_ID'])) {
-        if ($selectFieldsMap['NAME'])
+        if ($selectFieldsMap['NAME']) {
             $row->AddViewField('NAME', htmlspecialcharsbx($discount['NAME'] . $catalogNamePostfix));
+        }
     }
     if (!$readOnly) {
-        if ($selectFieldsMap['LID'])
+        if ($selectFieldsMap['LID']) {
             $row->AddViewField('LID', $siteList[$discount['LID']]);
-        if ($selectFieldsMap['ACTIVE'])
+        }
+        if ($selectFieldsMap['ACTIVE']) {
             $row->AddCheckField('ACTIVE');
+        }
 
-        if ($selectFieldsMap['NAME'])
+        if ($selectFieldsMap['NAME']) {
             $row->AddInputField('NAME', array('size' => 50, 'maxlength' => 255));
+        }
 
-        if ($selectFieldsMap['SORT'])
+        if ($selectFieldsMap['SORT']) {
             $row->AddInputField('SORT', array('size' => 4));
+        }
 
-        if ($selectFieldsMap['ACTIVE_FROM'])
+        if ($selectFieldsMap['ACTIVE_FROM']) {
             $row->AddCalendarField('ACTIVE_FROM', array(), true);
-        if ($selectFieldsMap['ACTIVE_TO'])
+        }
+        if ($selectFieldsMap['ACTIVE_TO']) {
             $row->AddCalendarField('ACTIVE_TO', array(), true);
+        }
 
-        if ($selectFieldsMap['PRIORITY'])
+        if ($selectFieldsMap['PRIORITY']) {
             $row->AddInputField('PRIORITY');
-        if ($selectFieldsMap['LAST_DISCOUNT'])
+        }
+        if ($selectFieldsMap['LAST_DISCOUNT']) {
             $row->AddCheckField('LAST_DISCOUNT');
-        if ($selectFieldsMap['LAST_LEVEL_DISCOUNT'])
+        }
+        if ($selectFieldsMap['LAST_LEVEL_DISCOUNT']) {
             $row->AddCheckField('LAST_LEVEL_DISCOUNT');
-        if ($selectFieldsMap['EXECUTE_MODULE'])
+        }
+        if ($selectFieldsMap['EXECUTE_MODULE']) {
             $row->AddCheckField('EXECUTE_MODULE', false);
+        }
 
-        if ($selectFieldsMap['XML_ID'])
+        if ($selectFieldsMap['XML_ID']) {
             $row->AddInputField('XML_ID', array('size' => 20, 'maxlength' => 255));
+        }
     } else {
-        if ($selectFieldsMap['LID'])
+        if ($selectFieldsMap['LID']) {
             $row->AddViewField('LID', $siteList[$discount['LID']]);
-        if ($selectFieldsMap['ACTIVE'])
+        }
+        if ($selectFieldsMap['ACTIVE']) {
             $row->AddCheckField('ACTIVE', false);
+        }
 
-        if ($selectFieldsMap['NAME'])
+        if ($selectFieldsMap['NAME']) {
             $row->AddInputField('NAME', false);
+        }
 
-        if ($selectFieldsMap['SORT'])
+        if ($selectFieldsMap['SORT']) {
             $row->AddInputField('SORT', false);
+        }
 
-        if ($selectFieldsMap['ACTIVE_FROM'])
+        if ($selectFieldsMap['ACTIVE_FROM']) {
             $row->AddCalendarField('ACTIVE_FROM', false);
-        if ($selectFieldsMap['ACTIVE_TO'])
+        }
+        if ($selectFieldsMap['ACTIVE_TO']) {
             $row->AddCalendarField('ACTIVE_TO', false);
+        }
 
-        if ($selectFieldsMap['PRIORITY'])
+        if ($selectFieldsMap['PRIORITY']) {
             $row->AddInputField('PRIORITY', false);
-        if ($selectFieldsMap['LAST_DISCOUNT'])
+        }
+        if ($selectFieldsMap['LAST_DISCOUNT']) {
             $row->AddCheckField('LAST_DISCOUNT', false);
-        if ($selectFieldsMap['LAST_LEVEL_DISCOUNT'])
+        }
+        if ($selectFieldsMap['LAST_LEVEL_DISCOUNT']) {
             $row->AddCheckField('LAST_LEVEL_DISCOUNT', false);
-        if ($selectFieldsMap['EXECUTE_MODULE'])
+        }
+        if ($selectFieldsMap['EXECUTE_MODULE']) {
             $row->AddCheckField('EXECUTE_MODULE', false);
+        }
 
-        if ($selectFieldsMap['XML_ID'])
+        if ($selectFieldsMap['XML_ID']) {
             $row->AddInputField('XML_ID', false);
+        }
     }
 
     $arActions = array();
@@ -650,22 +691,27 @@ while ($discount = $discountIterator->Fetch()) {
         $arActions[] = array(
             'ICON' => 'delete',
             'TEXT' => Loc::getMessage('BT_SALE_DISCOUNT_LIST_MESS_DELETE_DISCOUNT_SHORT'),
-            'ACTION' => "if(confirm('" . Loc::getMessage('BT_SALE_DISCOUNT_LIST_MESS_DELETE_DISCOUNT_CONFIRM') . "')) " . $adminList->ActionDoGroup($discount['ID'], 'delete'),
+            'ACTION' => "if(confirm('" . Loc::getMessage(
+                    'BT_SALE_DISCOUNT_LIST_MESS_DELETE_DISCOUNT_CONFIRM'
+                ) . "')) " . $adminList->ActionDoGroup($discount['ID'], 'delete'),
             'DEFAULT' => false,
         );
     }
 
     $row->AddActions($arActions);
 }
-if (isset($row))
+if (isset($row)) {
     unset($row);
+}
 
 if ($selectFieldsMap['CREATED_BY'] || $selectFieldsMap['MODIFIED_BY']) {
     if (!empty($arUserID)) {
-        $userIterator = UserTable::getList(array(
-            'select' => array('ID', 'LOGIN', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'EMAIL'),
-            'filter' => array('ID' => array_keys($arUserID)),
-        ));
+        $userIterator = UserTable::getList(
+            array(
+                'select' => array('ID', 'LOGIN', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'EMAIL'),
+                'filter' => array('ID' => array_keys($arUserID)),
+            )
+        );
         while ($arOneUser = $userIterator->fetch()) {
             $arOneUser['ID'] = (int)$arOneUser['ID'];
             if ($publicMode) {
@@ -694,48 +740,63 @@ if ($selectFieldsMap['CREATED_BY'] || $selectFieldsMap['MODIFIED_BY']) {
             $row->AddViewField("MODIFIED_BY", $strModifiedBy);
         }
     }
-    if (isset($row))
+    if (isset($row)) {
         unset($row);
+    }
 }
 
-$adminList->AddGroupActionTable([
-    "edit" => true,
-    "delete" => true,
-    "activate" => Loc::getMessage("MAIN_ADMIN_LIST_ACTIVATE"),
-    "deactivate" => Loc::getMessage("MAIN_ADMIN_LIST_DEACTIVATE")
-]);
+$adminList->AddGroupActionTable(
+    [
+        "edit" => true,
+        "delete" => true,
+        "activate" => Loc::getMessage("MAIN_ADMIN_LIST_ACTIVATE"),
+        "deactivate" => Loc::getMessage("MAIN_ADMIN_LIST_DEACTIVATE")
+    ]
+);
 
-if (!$readOnly && !isset($filter['=PRESET_ID']) && $enableDiscountConstructor) {
-    $siteLID = '';
-    $arSiteMenu = array();
+$aContext = [];
+if (!$readOnly && !isset($filter['=PRESET_ID'])) {
+    if ($enableDiscountConstructor) {
+        $siteLID = '';
+        $arSiteMenu = array();
 
-    if (count($arSitesShop) == 1) {
-        $siteLID = "&LID=" . $arSitesShop[0]['ID'];
-    } else {
-        foreach ($arSitesShop as $val) {
-            $editUrl = $selfFolderUrl . "sale_discount_edit.php?lang=" . LANGUAGE_ID . "&LID=" . $val['ID'];
-            $editUrl = $adminSidePanelHelper->editUrlToPublicPage($editUrl);
-            $arSiteMenu[] = array(
-                "TEXT" => $val["NAME"] . " (" . $val['ID'] . ")",
-                "LINK" => $editUrl
-            );
+        if (count($arSitesShop) == 1) {
+            $siteLID = "&LID=" . $arSitesShop[0]['ID'];
+        } else {
+            foreach ($arSitesShop as $val) {
+                $editUrl = $selfFolderUrl . "sale_discount_edit.php?lang=" . LANGUAGE_ID . "&LID=" . $val['ID'];
+                $editUrl = $adminSidePanelHelper->editUrlToPublicPage($editUrl);
+                $arSiteMenu[] = array(
+                    "TEXT" => $val["NAME"] . " (" . $val['ID'] . ")",
+                    "LINK" => $editUrl
+                );
+            }
         }
-    }
-    $addUrl = $selfFolderUrl . "sale_discount_edit.php?lang=" . LANGUAGE_ID . $siteLID;
-    $addUrl = $adminSidePanelHelper->editUrlToPublicPage($addUrl);
-    $aContext = array(
-        array(
+        $addUrl = $selfFolderUrl . "sale_discount_edit.php?lang=" . LANGUAGE_ID . $siteLID;
+        $addUrl = $adminSidePanelHelper->editUrlToPublicPage($addUrl);
+        $aContext[] = [
             "TEXT" => Loc::getMessage("BT_SALE_DISCOUNT_LIST_MESS_NEW_DISCOUNT"),
             "ICON" => "btn_new",
             "LINK" => $addUrl,
             "TITLE" => Loc::getMessage("BT_SALE_DISCOUNT_LIST_MESS_NEW_DISCOUNT_TITLE"),
             "MENU" => $arSiteMenu
-        ),
-    );
-
-    $adminList->setContextSettings(array("pagePath" => $selfFolderUrl . "sale_discount.php"));
-    $adminList->AddAdminContextMenu($aContext);
+        ];
+    } else {
+        $helpLink = Sale\Config\Feature::getDiscountConstructorHelpLink();
+        if (!empty($helpLink)) {
+            $aContext[] = [
+                "TEXT" => Loc::getMessage("BT_SALE_DISCOUNT_LIST_MESS_NEW_DISCOUNT"),
+                "ICON" => "btn_lock",
+                $helpLink['TYPE'] => $helpLink['LINK'],
+                "TITLE" => Loc::getMessage("BT_SALE_DISCOUNT_LIST_MESS_NEW_DISCOUNT_TITLE"),
+            ];
+        }
+        unset($helpLink);
+    }
 }
+$adminList->setContextSettings(array("pagePath" => $selfFolderUrl . "sale_discount.php"));
+$adminList->AddAdminContextMenu($aContext);
+unset($aContext);
 
 $adminList->CheckListMode();
 

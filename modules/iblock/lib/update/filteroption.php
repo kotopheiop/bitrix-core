@@ -37,8 +37,9 @@ class FilterOption extends Stepper
     public static function setFilterToConvert($filterId, $tableId, array $ratioFields)
     {
         $listFilter = Option::get(self::$moduleId, "listFilterToConvert", "");
-        if ($listFilter !== "")
+        if ($listFilter !== "") {
             $listFilter = unserialize($listFilter);
+        }
         $listFilter = is_array($listFilter) ? $listFilter : array();
         if (!array_key_exists($filterId, $listFilter)) {
             $listFilter[$filterId] = array(
@@ -53,8 +54,9 @@ class FilterOption extends Stepper
     public function execute(array &$option)
     {
         $listFilter = Option::get(self::$moduleId, "listFilterToConvert", "");
-        if ($listFilter !== "")
+        if ($listFilter !== "") {
             $listFilter = unserialize($listFilter);
+        }
         $listFilter = is_array($listFilter) ? $listFilter : array();
         if (empty($listFilter)) {
             Option::delete(self::$moduleId, array("name" => "listFilterToConvert"));
@@ -66,8 +68,11 @@ class FilterOption extends Stepper
         $sqlHelper = $connection->getSqlHelper();
 
         foreach ($listFilter as $filterId => $filter) {
-            $queryObject = $connection->query("SELECT * FROM `b_filters` WHERE `FILTER_ID` = '" . $sqlHelper->forSql(
-                    $filterId) . "' ORDER BY ID ASC LIMIT " . $this->limit . " OFFSET " . $filter["offset"]);
+            $queryObject = $connection->query(
+                "SELECT * FROM `b_filters` WHERE `FILTER_ID` = '" . $sqlHelper->forSql(
+                    $filterId
+                ) . "' ORDER BY ID ASC LIMIT " . $this->limit . " OFFSET " . $filter["offset"]
+            );
             $selectedRowsCount = $queryObject->getSelectedRowsCount();
             while ($oldFilter = $queryObject->fetch()) {
                 $filters = array();
@@ -75,7 +80,9 @@ class FilterOption extends Stepper
                 $oldFields = unserialize($oldFilter["FIELDS"]);
                 if (is_array($oldFields)) {
                     list($newFields, $newRows) = $this->convertOldFieldsToNewFields(
-                        $oldFields, $filter["ratioFields"]);
+                        $oldFields,
+                        $filter["ratioFields"]
+                    );
                     $presetId = "filter_" . (time() + (int)$oldFilter["ID"]);
                     $filters[$presetId] = array(
                         "name" => $oldFilter["NAME"],
@@ -102,15 +109,20 @@ class FilterOption extends Stepper
                             // This is a check whether presets exist with that name.
                             foreach ($optionCurrentFilterValue["filters"] as $currentFilter) {
                                 $name = (!empty($currentFilter["name"]) ? $currentFilter["name"] : "");
-                                $listNewPresetName = array_filter($listNewPresetName, function ($oldName) use ($name) {
-                                    return ($oldName !== $name);
-                                });
+                                $listNewPresetName = array_filter(
+                                    $listNewPresetName,
+                                    function ($oldName) use ($name) {
+                                        return ($oldName !== $name);
+                                    }
+                                );
                             }
 
                             $filters = array_intersect_key($filters, $listNewPresetName);
 
                             $optionCurrentFilterValue["filters"] = array_merge(
-                                $optionCurrentFilterValue["filters"], $filters);
+                                $optionCurrentFilterValue["filters"],
+                                $filters
+                            );
                             $optionCurrentFilterValue["update_default_presets"] = true;
 
                             $connection->query(
@@ -129,7 +141,9 @@ class FilterOption extends Stepper
                         "INSERT INTO `b_user_option` 
 						(`ID`, `USER_ID`, `CATEGORY`, `NAME`, `VALUE`, `COMMON`) VALUES 
 						(NULL, '" . $sqlHelper->forSql($oldFilter["USER_ID"]) . "', 'main.ui.filter', '" .
-                        $sqlHelper->forSql($filter["tableId"]) . "', '" . $sqlHelper->forSql(serialize($optionNewFilter)) .
+                        $sqlHelper->forSql($filter["tableId"]) . "', '" . $sqlHelper->forSql(
+                            serialize($optionNewFilter)
+                        ) .
                         "', '" . $sqlHelper->forSql($oldFilter["COMMON"]) . "')"
                     );
                 }
@@ -159,8 +173,9 @@ class FilterOption extends Stepper
         $newRows = [];
         foreach ($oldFields as $fieldId => $field) {
             if ($field["hidden"] !== "false" || (array_key_exists($fieldId, $ratioFields) &&
-                    array_key_exists($ratioFields[$fieldId], $newFields)))
+                    array_key_exists($ratioFields[$fieldId], $newFields))) {
                 continue;
+            }
 
             if (preg_match("/_FILTER_PERIOD/", $fieldId, $matches, PREG_OFFSET_CAPTURE)) {
                 $searchResult = current($matches);
@@ -247,7 +262,10 @@ class FilterOption extends Stepper
                     $newFields[$ratioFields[$fieldId] . "_quarter"] = "";
                     $newFields[$ratioFields[$fieldId] . "_year"] = "";
                 }
-            } elseif (substr($fieldId, -5) == "_from" && !array_key_exists($fieldId . "_FILTER_DIRECTION", $oldFields)) {
+            } elseif (substr($fieldId, -5) == "_from" && !array_key_exists(
+                    $fieldId . "_FILTER_DIRECTION",
+                    $oldFields
+                )) {
                 $fieldId = substr($fieldId, 0, strlen($fieldId) - 5);
                 $rangeType = (($oldFields[$fieldId . "_from"] === $oldFields[$fieldId . "_to"]) ? "exact" : "range");
                 $newFields[$ratioFields[$fieldId] . "_numsel"] = $rangeType;

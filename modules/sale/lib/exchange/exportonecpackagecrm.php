@@ -17,12 +17,13 @@ class ExportOneCPackageCRM extends ExportOneCPackageSale
     {
         $typeId = EntityType::UNDEFINED;
 
-        if ($entity instanceof Order)
+        if ($entity instanceof Order) {
             $typeId = Invoice::resolveEntityTypeId($entity);
-        elseif ($entity instanceof Payment)
+        } elseif ($entity instanceof Payment) {
             $typeId = PaymentInvoiceBase::resolveEntityTypeId($entity);
-        elseif ($entity instanceof Shipment)
+        } elseif ($entity instanceof Shipment) {
             $typeId = ShipmentInvoice::resolveEntityTypeId($entity);
+        }
 
         return $typeId;
     }

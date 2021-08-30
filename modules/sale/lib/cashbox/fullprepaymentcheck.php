@@ -73,11 +73,17 @@ class FullPrepaymentCheck extends Check
             $result['PRODUCTS'][$i]['PAYMENT_OBJECT'] = static::PAYMENT_OBJECT_PAYMENT;
         }
 
-        foreach ($result['DELIVERY'] as $i => $item) {
-            $result['DELIVERY'][$i]['PAYMENT_OBJECT'] = static::PAYMENT_OBJECT_PAYMENT;
+        if (!empty($result['DELIVERY']) && \is_array($result['DELIVERY'])) {
+            foreach ($result['DELIVERY'] as $i => $item) {
+                $result['DELIVERY'][$i]['PAYMENT_OBJECT'] = static::PAYMENT_OBJECT_PAYMENT;
+            }
         }
 
         return $result;
     }
 
+    protected function needPrintMarkingCode($basketItem): bool
+    {
+        return false;
+    }
 }

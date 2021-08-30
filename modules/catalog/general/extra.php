@@ -18,8 +18,9 @@ class CAllExtra
         global $DB;
 
         $ID = (int)$ID;
-        if ($ID <= 0)
+        if ($ID <= 0) {
             return false;
+        }
 
         if (isset(self::$arExtraCache[$ID])) {
             return self::$arExtraCache[$ID];
@@ -27,14 +28,20 @@ class CAllExtra
             $strSql = "SELECT ID, NAME, PERCENTAGE FROM b_catalog_extra WHERE ID = " . $ID;
             $db_res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             $res = $db_res->Fetch();
-            if (!empty($res))
+            if (!empty($res)) {
                 return $res;
+            }
         }
         return false;
     }
 
-    public static function SelectBox($sFieldName, $sValue, $sDefaultValue = "", $JavaChangeFunc = "", $sAdditionalParams = "")
-    {
+    public static function SelectBox(
+        $sFieldName,
+        $sValue,
+        $sDefaultValue = "",
+        $JavaChangeFunc = "",
+        $sAdditionalParams = ""
+    ) {
         if (empty(self::$arExtraCache)) {
             $rsExtras = CExtra::GetList(
                 array("NAME" => "ASC")
@@ -49,21 +56,29 @@ class CAllExtra
             }
         }
         $s = '<select name="' . $sFieldName . '"';
-        if (!empty($JavaChangeFunc))
+        if (!empty($JavaChangeFunc)) {
             $s .= ' onchange="' . $JavaChangeFunc . '"';
-        if (!empty($sAdditionalParams))
+        }
+        if (!empty($sAdditionalParams)) {
             $s .= ' ' . $sAdditionalParams . ' ';
+        }
         $s .= '>';
         $sValue = intval($sValue);
         $boolFound = isset(self::$arExtraCache[$sValue]);
-        if (!empty($sDefaultValue))
-            $s .= '<option value="0"' . ($boolFound ? '' : ' selected') . '>' . htmlspecialcharsex($sDefaultValue) . '</option>';
+        if (!empty($sDefaultValue)) {
+            $s .= '<option value="0"' . ($boolFound ? '' : ' selected') . '>' . htmlspecialcharsex(
+                    $sDefaultValue
+                ) . '</option>';
+        }
 
         foreach (self::$arExtraCache as &$arExtra) {
-            $s .= '<option value="' . $arExtra['ID'] . '"' . ($arExtra['ID'] == $sValue ? ' selected' : '') . '>' . htmlspecialcharsex($arExtra['NAME']) . ' (' . htmlspecialcharsex($arExtra['PERCENTAGE']) . '%)</option>';
+            $s .= '<option value="' . $arExtra['ID'] . '"' . ($arExtra['ID'] == $sValue ? ' selected' : '') . '>' . htmlspecialcharsex(
+                    $arExtra['NAME']
+                ) . ' (' . htmlspecialcharsex($arExtra['PERCENTAGE']) . '%)</option>';
         }
-        if (isset($arExtra))
+        if (isset($arExtra)) {
             unset($arExtra);
+        }
         return $s . '</select>';
     }
 
@@ -72,10 +87,12 @@ class CAllExtra
         global $DB;
 
         $ID = (int)$ID;
-        if ($ID <= 0)
+        if ($ID <= 0) {
             return false;
-        if (!static::CheckFields('UPDATE', $arFields, $ID))
+        }
+        if (!static::CheckFields('UPDATE', $arFields, $ID)) {
             return false;
+        }
 
         $strUpdate = $DB->PrepareUpdate("b_catalog_extra", $arFields);
         if (!empty($strUpdate)) {
@@ -94,8 +111,9 @@ class CAllExtra
     {
         global $DB;
         $ID = (int)$ID;
-        if ($ID <= 0)
+        if ($ID <= 0) {
             return false;
+        }
         $DB->Query("UPDATE b_catalog_price SET EXTRA_ID = NULL WHERE EXTRA_ID = " . $ID);
         static::ClearCache();
         return $DB->Query("DELETE FROM b_catalog_extra WHERE ID = " . $ID, true);
@@ -108,7 +126,7 @@ class CAllExtra
         $arMsg = array();
         $boolResult = true;
 
-        $strAction = strtoupper($strAction);
+        $strAction = mb_strtoupper($strAction);
 
         $ID = (int)$ID;
         if ('UPDATE' == $strAction && 0 >= $ID) {

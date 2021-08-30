@@ -9,20 +9,23 @@ class CIBlockFindTools
         if ($element_id > 0) {
             return $element_id;
         } elseif ($element_code != '') {
-            if (!is_array($arFilter))
+            if (!is_array($arFilter)) {
                 $arFilter = array();
+            }
             $arFilter['=CODE'] = $element_code;
 
             $section_id = (int)$section_id;
             $section_code = (string)$section_code;
-            if ($section_id > 0)
+            if ($section_id > 0) {
                 $arFilter['SECTION_ID'] = $section_id;
-            elseif ($section_code != '')
+            } elseif ($section_code != '') {
                 $arFilter["SECTION_CODE"] = $section_code;
+            }
 
             $rsElement = CIBlockElement::GetList(array(), $arFilter, false, false, array("ID"));
-            if ($arElement = $rsElement->Fetch())
+            if ($arElement = $rsElement->Fetch()) {
                 return (int)$arElement["ID"];
+            }
         }
         return 0;
     }
@@ -34,19 +37,24 @@ class CIBlockFindTools
         if ($section_id > 0) {
             return $section_id;
         } elseif ($section_code != '') {
-            if (!is_array($arFilter))
+            if (!is_array($arFilter)) {
                 $arFilter = array();
+            }
             $arFilter['=CODE'] = $section_code;
 
             $rsSection = CIBlockSection::GetList(array(), $arFilter, false, array("ID"));
-            if ($arSection = $rsSection->Fetch())
+            if ($arSection = $rsSection->Fetch()) {
                 return (int)$arSection["ID"];
+            }
         }
         return 0;
     }
 
     public static function GetSectionIDByCodePath($iblock_id, $section_code_path)
     {
+        if ($section_code_path == '') {
+            return 0;
+        }
         $arVariables = array(
             "SECTION_CODE_PATH" => $section_code_path,
         );
@@ -72,14 +80,18 @@ class CIBlockFindTools
         //To fix GetPagePath security hack for SMART_FILTER_PATH
         foreach ($pageCandidates as $pageID => $arVariablesTmp) {
             foreach ($arVariablesTmp as $variableName => $variableValue) {
-                if ($variableName === "SMART_FILTER_PATH")
+                if ($variableName === "SMART_FILTER_PATH") {
                     $pageCandidates[$pageID][$variableName] = str_replace($aSearch, $aReplace, $variableValue);
+                }
             }
         }
 
         $requestURL = $APPLICATION->GetCurPage(true);
 
-        $cacheId = $requestURL . implode("|", array_keys($pageCandidates)) . "|" . SITE_ID . "|" . $iblock_id . $engine->cacheSalt;
+        $cacheId = $requestURL . implode(
+                "|",
+                array_keys($pageCandidates)
+            ) . "|" . SITE_ID . "|" . $iblock_id . $engine->cacheSalt;
         $cache = new CPHPCache;
         if ($cache->StartDataCache(3600, $cacheId, "iblock_find")) {
             if (defined("BX_COMP_MANAGED_CACHE")) {
@@ -94,8 +106,9 @@ class CIBlockFindTools
                 ) {
                     if (CIBlockFindTools::checkElement($iblock_id, $arVariablesTmp, $strict_check)) {
                         $arVariables = $arVariablesTmp;
-                        if (defined("BX_COMP_MANAGED_CACHE"))
+                        if (defined("BX_COMP_MANAGED_CACHE")) {
                             $CACHE_MANAGER->EndTagCache();
+                        }
                         $cache->EndDataCache(array($pageID, $arVariablesTmp));
                         return $pageID;
                     }
@@ -109,16 +122,18 @@ class CIBlockFindTools
                 ) {
                     if (CIBlockFindTools::checkSection($iblock_id, $arVariablesTmp)) {
                         $arVariables = $arVariablesTmp;
-                        if (defined("BX_COMP_MANAGED_CACHE"))
+                        if (defined("BX_COMP_MANAGED_CACHE")) {
                             $CACHE_MANAGER->EndTagCache();
+                        }
                         $cache->EndDataCache(array($pageID, $arVariablesTmp));
                         return $pageID;
                     }
                 }
             }
 
-            if (defined("BX_COMP_MANAGED_CACHE"))
+            if (defined("BX_COMP_MANAGED_CACHE")) {
                 $CACHE_MANAGER->AbortTagCache();
+            }
             $cache->AbortDataCache();
         } else {
             $vars = $cache->GetVars();
@@ -144,7 +159,9 @@ class CIBlockFindTools
 
         $strWhere = "
 			" . ($arVariables["ELEMENT_ID"] != "" ? "AND BE.ID = " . intval($arVariables["ELEMENT_ID"]) : "") . "
-			" . ($arVariables["ELEMENT_CODE"] != "" ? "AND BE.CODE = '" . $DB->ForSql($arVariables["ELEMENT_CODE"]) . "'" : "") . "
+			" . ($arVariables["ELEMENT_CODE"] != "" ? "AND BE.CODE = '" . $DB->ForSql(
+                    $arVariables["ELEMENT_CODE"]
+                ) . "'" : "") . "
 		";
 
         if ($arVariables["SECTION_CODE_PATH"] != "") {
@@ -182,8 +199,9 @@ class CIBlockFindTools
 		";
         $rs = $DB->Query($strSql);
         if ($rs->Fetch()) {
-            if (isset($sectionPath))
+            if (isset($sectionPath)) {
                 $arVariables["SECTION_CODE"] = $sectionPath[count($sectionPath) - 1];
+            }
             return true;
         } else {
             return false;
@@ -197,8 +215,9 @@ class CIBlockFindTools
         $sectionPath = explode("/", $arVariables["SECTION_CODE_PATH"]);
 
         // B24 fix
-        if (count($sectionPath) > 61)
+        if (count($sectionPath) > 61) {
             return false;
+        }
 
         $strFrom = "";
         $joinField = "";

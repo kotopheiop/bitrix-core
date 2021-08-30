@@ -35,8 +35,9 @@ class ConverterDocumentOrder extends Converter
      */
     public function resolveParams($documentImport)
     {
-        if (!($documentImport instanceof DocumentBase))
+        if (!($documentImport instanceof DocumentBase)) {
             throw new ArgumentException("Document must be instanceof DocumentBase");
+        }
 
         $result = array();
 
@@ -52,17 +53,20 @@ class ConverterDocumentOrder extends Converter
             switch ($k) {
                 case 'ID_1C':
                 case 'VERSION_1C':
-                    if (isset($params[$k]))
+                    if (isset($params[$k])) {
                         $fields[$k] = $params[$k];
+                    }
                     break;
                 case 'COMMENTS':
-                    if (isset($params['COMMENT']))
+                    if (isset($params['COMMENT'])) {
                         $fields[$k] = $params['COMMENT'];
+                    }
                     break;
                 case 'CANCELED':
                     $value = '';
-                    if (isset($params['CANCELED']))
+                    if (isset($params['CANCELED'])) {
                         $value = $params['CANCELED'];
+                    }
 
                     if ($value == 'Y') {
                         $fields[$k] = 'Y';
@@ -80,21 +84,24 @@ class ConverterDocumentOrder extends Converter
                     }
                     break;
                 case 'DATE_INSERT':
-                    if (isset($params['1C_TIME']) && $params['1C_TIME'] instanceof DateTime)
+                    if (isset($params['1C_TIME']) && $params['1C_TIME'] instanceof DateTime) {
                         $fields[$k] = $params['1C_TIME'];
+                    }
                     break;
                 case 'STATUS_ID':
                     if (isset($params['REK_VALUES']['1C_STATUS_ID'])) {
                         /** @var ISettingsImport $settings */
                         $settings = $this->getSettings();
-                        if ($settings->changeStatusFor($this->getEntityTypeId()) == 'Y')
+                        if ($settings->changeStatusFor($this->getEntityTypeId()) == 'Y') {
                             $fields[$k] = $params['REK_VALUES']['1C_STATUS_ID'];
+                        }
                     }
                     break;
                 case '1C_PAYED_DATE':
                 case '1C_DELIVERY_DATE':
-                    if (isset($params['REK_VALUES'][$k]))
+                    if (isset($params['REK_VALUES'][$k])) {
                         $fields[$k] = $params['REK_VALUES'][$k];
+                    }
                     break;
             }
         }
@@ -113,25 +120,30 @@ class ConverterDocumentOrder extends Converter
      */
     static public function sanitizeFields($order = null, array &$fields, ISettings $settings)
     {
-        if (!empty($order) && !($order instanceof Sale\Order))
+        if (!empty($order) && !($order instanceof Sale\Order)) {
             throw new ArgumentException("Entity must be instanceof Order");
+        }
 
         if (empty($order)) {
             $fields['DATE_STATUS'] = new DateTime();
             $fields['DATE_UPDATE'] = new DateTime();
         } else {
-            if (isset($fields['DATE_INSERT']))
+            if (isset($fields['DATE_INSERT'])) {
                 unset($fields['DATE_INSERT']);
+            }
         }
 
-        if (isset($fields['ID']))
+        if (isset($fields['ID'])) {
             unset($fields['ID']);
+        }
 
-        if (isset($fields['1C_PAYED_DATE']))
+        if (isset($fields['1C_PAYED_DATE'])) {
             unset($fields['1C_PAYED_DATE']);
+        }
 
-        if (isset($fields['1C_DELIVERY_DATE']))
+        if (isset($fields['1C_DELIVERY_DATE'])) {
             unset($fields['1C_DELIVERY_DATE']);
+        }
     }
 
     /**
@@ -177,7 +189,7 @@ class ConverterDocumentOrder extends Converter
                     break;
                 case 'CURRENCY':
                     $replaceCurrency = $settings->getReplaceCurrency();
-                    $value = substr($replaceCurrency <> '' ? $replaceCurrency : $traits[$k], 0, 3);
+                    $value = mb_substr($replaceCurrency <> '' ? $replaceCurrency : $traits[$k], 0, 3);
                     break;
                 case 'CURRENCY_RATE':
                     $value = self::CURRENCY_RATE_DEFAULT;
@@ -198,12 +210,14 @@ class ConverterDocumentOrder extends Converter
                     $value = $this->externalizeDiscounts($traits, $v);
                     break;
                 case 'TAXES':
-                    if (count($taxes) > 0)
+                    if (count($taxes) > 0) {
                         $value = $this->externalizeTaxes($taxes, $v);
+                    }
                     break;
                 case 'STORIES':
-                    if (count($stories) > 0)
+                    if (count($stories) > 0) {
                         $value = $this->externalizeStories(current($stories), $v);
+                    }
                     break;
                 case 'ITEMS':
                     $value = $this->externalizeItems($items, $v);
@@ -242,7 +256,9 @@ class ConverterDocumentOrder extends Converter
                                 $valueRV = ($traits['STATUS_ID'] == 'F' ? 'Y' : 'N');
                                 break;
                             case 'ORDER_STATUS':
-                                $valueRV = "[" . $traits['STATUS_ID'] . "] " . static::getStatusNameById($traits['STATUS_ID']);
+                                $valueRV = "[" . $traits['STATUS_ID'] . "] " . static::getStatusNameById(
+                                        $traits['STATUS_ID']
+                                    );
                                 break;
                             case 'ORDER_STATUS_ID':
                                 $valueRV = $traits['STATUS_ID'];
@@ -316,7 +332,9 @@ class ConverterDocumentOrder extends Converter
                         $value = self::KOEF_DEFAULT;
                         break;
                     case 'ITEM_UNIT':
-                        $code = (intval($item['MEASURE_CODE']) > 0 ? $item['MEASURE_CODE'] : self::MEASURE_CODE_DEFAULT);
+                        $code = (intval(
+                            $item['MEASURE_CODE']
+                        ) > 0 ? $item['MEASURE_CODE'] : self::MEASURE_CODE_DEFAULT);
                         foreach ($fieldInfo['FIELDS'] as $unitFieldName => $unitFieldInfo) {
                             $unitValue = '';
                             switch ($unitFieldName) {
@@ -364,7 +382,9 @@ class ConverterDocumentOrder extends Converter
                                                 $valueProp = DocumentBase::getLangByCodeField('TYPE_NOMENKLATURA');
                                                 break;
                                             case 'VALUE':
-                                                $valueProp = DocumentBase::getLangByCodeField($item['PRODUCT_XML_ID'] == ImportOneCBase::DELIVERY_SERVICE_XMLID ? ImportBase::ITEM_SERVICE : ImportBase::ITEM_ITEM);
+                                                $valueProp = DocumentBase::getLangByCodeField(
+                                                    $item['PRODUCT_XML_ID'] == ImportOneCBase::DELIVERY_SERVICE_XMLID ? ImportBase::ITEM_SERVICE : ImportBase::ITEM_ITEM
+                                                );
                                                 break;
                                         }
                                         $this->externalizeField($valueProp, $infoProp);
@@ -380,7 +400,9 @@ class ConverterDocumentOrder extends Converter
                                                 $valueProp = DocumentBase::getLangByCodeField('TYPE_OF_NOMENKLATURA');
                                                 break;
                                             case 'VALUE':
-                                                $valueProp = DocumentBase::getLangByCodeField($item['PRODUCT_XML_ID'] == ImportOneCBase::DELIVERY_SERVICE_XMLID ? ImportBase::ITEM_SERVICE : ImportBase::ITEM_ITEM);
+                                                $valueProp = DocumentBase::getLangByCodeField(
+                                                    $item['PRODUCT_XML_ID'] == ImportOneCBase::DELIVERY_SERVICE_XMLID ? ImportBase::ITEM_SERVICE : ImportBase::ITEM_ITEM
+                                                );
                                                 break;
                                         }
                                         $this->externalizeField($valueProp, $infoProp);
@@ -412,7 +434,9 @@ class ConverterDocumentOrder extends Converter
                                                 $valueProp = '';
                                                 switch ($nameProp) {
                                                     case 'NAME':
-                                                        $valueProp = DocumentBase::getLangByCodeField('PROPERTY_VALUE_BASKET') . '#' . ($attribute['CODE'] <> '' ? $attribute['CODE'] : $attribute['NAME']);
+                                                        $valueProp = DocumentBase::getLangByCodeField(
+                                                                'PROPERTY_VALUE_BASKET'
+                                                            ) . '#' . ($attribute['CODE'] <> '' ? $attribute['CODE'] : $attribute['NAME']);
                                                         break;
                                                     case 'VALUE':
                                                         $valueProp = $attribute['VALUE'];
@@ -504,16 +528,25 @@ class ConverterDocumentOrder extends Converter
                         $value = $store['TITLE'];
                         break;
                     case 'ADDRESS':
-                        if (isset($store['ADDRESS']))
-                            $value = $converterProfile->externalizeArrayFields(array('STREET' => $store['ADDRESS']), $fieldInfo);
+                        if (isset($store['ADDRESS'])) {
+                            $value = $converterProfile->externalizeArrayFields(
+                                array('STREET' => $store['ADDRESS']),
+                                $fieldInfo
+                            );
+                        }
                         break;
                     case 'CONTACTS':
-                        if (isset($store['PHONE']))
-                            $value = $converterProfile->externalizeArrayFields(array('WORK_PHONE_NEW' => $store['PHONE']), $fieldInfo);
+                        if (isset($store['PHONE'])) {
+                            $value = $converterProfile->externalizeArrayFields(
+                                array('WORK_PHONE_NEW' => $store['PHONE']),
+                                $fieldInfo
+                            );
+                        }
                         break;
                 }
-                if (!is_array($value))
+                if (!is_array($value)) {
                     $this->externalizeField($value, $fieldInfo);
+                }
                 $resultStores[$name] = $value;
             }
             $result[] = $resultStores;
@@ -604,8 +637,9 @@ class ConverterDocumentOrder extends Converter
                     $measure[$res["CODE"]] = $res["MEASURE_TITLE"];
                 }
             }
-            if ($measure === null)
+            if ($measure === null) {
                 $measure[self::MEASURE_CODE_DEFAULT] = \CSaleExport::getTagName("SALE_EXPORT_SHTUKA");
+            }
         }
         return $measure[$code];
     }
@@ -627,8 +661,9 @@ class ConverterDocumentOrder extends Converter
                     array("ID", "SORT", "TITLE", "ADDRESS", "DESCRIPTION", "PHONE", "EMAIL", "XML_ID")
                 );
                 while ($store = $res->Fetch()) {
-                    if (strlen($store["XML_ID"]) <= 0)
+                    if ($store["XML_ID"] == '') {
                         $store["XML_ID"] = $store["ID"];
+                    }
 
                     $stories[$store["ID"]] = $store;
                 }
@@ -650,10 +685,12 @@ class ConverterDocumentOrder extends Converter
         static $statuses;
 
         if ($statuses === null) {
-            $res = StatusLangTable::getList(array(
-                'select' => array('*'),
-                'filter' => array('=LID' => LANGUAGE_ID)
-            ));
+            $res = StatusLangTable::getList(
+                array(
+                    'select' => array('*'),
+                    'filter' => array('=LID' => LANGUAGE_ID)
+                )
+            );
             while ($status = $res->fetch()) {
                 $statuses[$status['STATUS_ID']] = $status['NAME'];
             }

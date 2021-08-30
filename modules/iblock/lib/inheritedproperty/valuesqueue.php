@@ -25,8 +25,9 @@ class ValuesQueue
      */
     public static function getInstance($key)
     {
-        if (!isset(self::$queues[$key]))
+        if (!isset(self::$queues[$key])) {
             self::$queues[$key] = new ValuesQueue();
+        }
         return self::$queues[$key];
     }
 
@@ -54,8 +55,9 @@ class ValuesQueue
     {
         $ids = array();
         foreach ($this->db_values[$iblockId] as $id => $loaded) {
-            if ($loaded === false)
+            if ($loaded === false) {
                 $ids[$id] = intval($id);
+            }
         }
         return $ids;
     }
@@ -72,10 +74,11 @@ class ValuesQueue
     public function set($iblockId, $values)
     {
         foreach ($this->db_values[$iblockId] as $id => $loaded) {
-            if (isset($values[$id]))
+            if (isset($values[$id])) {
                 $this->db_values[$iblockId][$id] = $values[$id];
-            else
+            } else {
                 $this->db_values[$iblockId][$id] = array();
+            }
         }
     }
 

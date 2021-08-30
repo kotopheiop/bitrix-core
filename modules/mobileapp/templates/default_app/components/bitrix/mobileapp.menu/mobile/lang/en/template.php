@@ -1,4 +1,5 @@
 <?
+
 $MESS["MB_AUTH"] = "Log in";
 $MESS["MB_EXIT"] = "Exit";
 $MESS["PULL_TEXT"] = "Pull down to refresh...";

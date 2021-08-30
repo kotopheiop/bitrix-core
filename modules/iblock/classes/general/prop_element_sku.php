@@ -24,7 +24,10 @@ class CIBlockPropertySKU extends CIBlockPropertyElementAutoComplete
             "GetSettingsHTML" => array(__CLASS__, 'GetSettingsHTML'),
             "PrepareSettings" => array(__CLASS__, 'PrepareSettings'),
             "AddFilterFields" => array(__CLASS__, 'AddFilterFields'),
-            "GetUIFilterProperty" => array(__CLASS__, 'GetUIFilterProperty')
+            "GetUIFilterProperty" => array(__CLASS__, 'GetUIFilterProperty'),
+            'GetUIEntityEditorProperty' => array(__CLASS__, 'GetUIEntityEditorProperty'),
+            'GetUIEntityEditorPropertyEditHtml' => array(__CLASS__, 'GetUIEntityEditorPropertyEditHtml'),
+            'GetUIEntityEditorPropertyViewHtml' => array(__CLASS__, 'GetUIEntityEditorPropertyViewHtml'),
         );
     }
 
@@ -59,32 +62,51 @@ class CIBlockPropertySKU extends CIBlockPropertyElementAutoComplete
         );
 
         $arSettings = static::PrepareSettings($arFields);
-        if (isset($arSettings['USER_TYPE_SETTINGS']))
+        if (isset($arSettings['USER_TYPE_SETTINGS'])) {
             $arSettings = $arSettings['USER_TYPE_SETTINGS'];
+        }
 
         $strResult = '<tr>
 		<td>' . Loc::getMessage('BT_UT_SKU_SETTING_VIEW') . '</td>
-		<td>' . SelectBoxFromArray($strHTMLControlName["NAME"] . '[VIEW]', static::GetPropertyViewsList(true), htmlspecialcharsbx($arSettings['VIEW'])) . '</td>
+		<td>' . SelectBoxFromArray(
+                $strHTMLControlName["NAME"] . '[VIEW]',
+                static::GetPropertyViewsList(true),
+                htmlspecialcharsbx($arSettings['VIEW'])
+            ) . '</td>
 		</tr>
 		<tr>
 		<td>' . Loc::getMessage('BT_UT_SKU_SETTING_MAX_WIDTH') . '</td>
-		<td><input type="text" name="' . $strHTMLControlName["NAME"] . '[MAX_WIDTH]" value="' . intval($arSettings['MAX_WIDTH']) . '">&nbsp;' . Loc::getMessage('BT_UT_SKU_SETTING_COMMENT_MAX_WIDTH') . '</td>
+		<td><input type="text" name="' . $strHTMLControlName["NAME"] . '[MAX_WIDTH]" value="' . intval(
+                $arSettings['MAX_WIDTH']
+            ) . '">&nbsp;' . Loc::getMessage('BT_UT_SKU_SETTING_COMMENT_MAX_WIDTH') . '</td>
 		</tr>
 		<tr>
 		<td>' . Loc::getMessage('BT_UT_SKU_SETTING_MIN_HEIGHT') . '</td>
-		<td><input type="text" name="' . $strHTMLControlName["NAME"] . '[MIN_HEIGHT]" value="' . intval($arSettings['MIN_HEIGHT']) . '">&nbsp;' . Loc::getMessage('BT_UT_SKU_SETTING_COMMENT_MIN_HEIGHT') . '</td>
+		<td><input type="text" name="' . $strHTMLControlName["NAME"] . '[MIN_HEIGHT]" value="' . intval(
+                $arSettings['MIN_HEIGHT']
+            ) . '">&nbsp;' . Loc::getMessage('BT_UT_SKU_SETTING_COMMENT_MIN_HEIGHT') . '</td>
 		</tr>
 		<tr>
 		<td>' . Loc::getMessage('BT_UT_SKU_SETTING_MAX_HEIGHT') . '</td>
-		<td><input type="text" name="' . $strHTMLControlName["NAME"] . '[MAX_HEIGHT]" value="' . intval($arSettings['MAX_HEIGHT']) . '">&nbsp;' . Loc::getMessage('BT_UT_SKU_SETTING_COMMENT_MAX_HEIGHT') . '</td>
+		<td><input type="text" name="' . $strHTMLControlName["NAME"] . '[MAX_HEIGHT]" value="' . intval(
+                $arSettings['MAX_HEIGHT']
+            ) . '">&nbsp;' . Loc::getMessage('BT_UT_SKU_SETTING_COMMENT_MAX_HEIGHT') . '</td>
 		</tr>
 		<tr>
 		<td>' . Loc::getMessage('BT_UT_SKU_SETTING_BAN_SYMBOLS') . '</td>
-		<td><input type="text" name="' . $strHTMLControlName["NAME"] . '[BAN_SYM]" value="' . htmlspecialcharsbx($arSettings['BAN_SYM']) . '"></td>
+		<td><input type="text" name="' . $strHTMLControlName["NAME"] . '[BAN_SYM]" value="' . htmlspecialcharsbx(
+                $arSettings['BAN_SYM']
+            ) . '"></td>
 		</tr>
 		<tr>
 		<td>' . Loc::getMessage('BT_UT_SKU_SETTING_REP_SYMBOL') . '</td>
-		<td>' . SelectBoxFromArray($strHTMLControlName["NAME"] . '[REP_SYM]', static::GetReplaceSymList(true), htmlspecialcharsbx($arSettings['REP_SYM'])) . '&nbsp;<input type="text" name="' . $strHTMLControlName["NAME"] . '[OTHER_REP_SYM]" size="1" maxlength="1" value="' . htmlspecialcharsbx($arSettings['OTHER_REP_SYM']) . '"></td>
+		<td>' . SelectBoxFromArray(
+                $strHTMLControlName["NAME"] . '[REP_SYM]',
+                static::GetReplaceSymList(true),
+                htmlspecialcharsbx($arSettings['REP_SYM'])
+            ) . '&nbsp;<input type="text" name="' . $strHTMLControlName["NAME"] . '[OTHER_REP_SYM]" size="1" maxlength="1" value="' . htmlspecialcharsbx(
+                $arSettings['OTHER_REP_SYM']
+            ) . '"></td>
 		</tr>';
 
         return $strResult;

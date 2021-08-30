@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 use Bitrix\Main\Localization\Loc;
@@ -11,8 +12,9 @@ Loader::includeModule('sale');
 global $APPLICATION;
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions < "W")
+if ($saleModulePermissions < "W") {
     $APPLICATION->AuthForm(Loc::getMessage("SALE_DSL_ACCESS_DENIED"));
+}
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/prolog.php");
 
@@ -37,8 +39,9 @@ $vk = Vk\Vk::getInstance();
 
 if (($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "W") {
     foreach ($arID as $id) {
-        if (strlen($id) <= 0)
+        if ($id == '') {
             continue;
+        }
 
         switch ($_REQUEST['action']) {
             case "delete":
@@ -53,15 +56,28 @@ if (($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "W") {
 
 
 //HEADERS for columns
-$lAdmin->AddHeaders(array(
-    array("id" => "ID", "content" => Loc::getMessage("SALE_VK_TABLE__ID"), "sort" => "ID", "default" => true),
-    array("id" => "NAME", "content" => Loc::getMessage("SALE_VK_TABLE__DESCRIPTION"), "sort" => "", "default" => true),
-    array("id" => "ACTIVE", "content" => Loc::getMessage("SALE_VK_TABLE__ACTIVE"), "sort" => "ACTIVE", "default" => true),
-));
+$lAdmin->AddHeaders(
+    array(
+        array("id" => "ID", "content" => Loc::getMessage("SALE_VK_TABLE__ID"), "sort" => "ID", "default" => true),
+        array(
+            "id" => "NAME",
+            "content" => Loc::getMessage("SALE_VK_TABLE__DESCRIPTION"),
+            "sort" => "",
+            "default" => true
+        ),
+        array(
+            "id" => "ACTIVE",
+            "content" => Loc::getMessage("SALE_VK_TABLE__ACTIVE"),
+            "sort" => "ACTIVE",
+            "default" => true
+        ),
+    )
+);
 
 
 //find ITEMS for list
-$resProfiles = Vk\ExportProfileTable::GetList(array(
+$resProfiles = Vk\ExportProfileTable::GetList(
+    array(
         'filter' => array('PLATFORM_ID' => $vk->getId()),
         'select' => array('ID', 'DESCRIPTION', 'EXPORT_SETTINGS'),
     )
@@ -74,21 +90,40 @@ while ($profile = $resProfiles->NavNext(true)) {
     $exportId = $profile["ID"];
     $row =& $lAdmin->AddRow($exportId, $profile);
 
-    $row->AddField("ID", "<a href=\"/bitrix/admin/sale_vk_export_edit.php?ID=" . $exportId . "&lang=" . LANG . "\">" . $exportId . "</a>");
+    $row->AddField(
+        "ID",
+        "<a href=\"/bitrix/admin/sale_vk_export_edit.php?ID=" . $exportId . "&lang=" . LANG . "\">" . $exportId . "</a>"
+    );
     $row->AddField("NAME", $profile['DESCRIPTION'] ? HtmlFilter::encode($profile['DESCRIPTION']) : '');
     if ($profile["EXPORT_SETTINGS"]['ACTIVE'] == 'N') {
         $row->AddField("ACTIVE", Loc::getMessage("SALE_VK_TABLE__ACTIVE_NO"));
     } else {
-        $row->AddField("ACTIVE", $profile["EXPORT_SETTINGS"]['ACTIVE'] == 'Y' ? Loc::getMessage("SALE_VK_TABLE__YES") : Loc::getMessage("SALE_VK_TABLE__ACTIVE_NO"));
+        $row->AddField(
+            "ACTIVE",
+            $profile["EXPORT_SETTINGS"]['ACTIVE'] == 'Y' ? Loc::getMessage(
+                "SALE_VK_TABLE__YES"
+            ) : Loc::getMessage("SALE_VK_TABLE__ACTIVE_NO")
+        );
     }
 
 //		add ACTIONS to item
     $arActions = Array();
-    $arActions[] = array("ICON" => "edit", "TEXT" => Loc::GetMessage("SALE_VK_TABLE__EDIT"), "ACTION" => $lAdmin->ActionRedirect("sale_vk_export_edit.php?ID=" . $exportId . "&lang=" . LANG), "DEFAULT" => true);
+    $arActions[] = array(
+        "ICON" => "edit",
+        "TEXT" => Loc::GetMessage("SALE_VK_TABLE__EDIT"),
+        "ACTION" => $lAdmin->ActionRedirect("sale_vk_export_edit.php?ID=" . $exportId . "&lang=" . LANG),
+        "DEFAULT" => true
+    );
 
     if ($saleModulePermissions >= "W") {
         $arActions[] = array("SEPARATOR" => true);
-        $arActions[] = array("ICON" => "delete", "TEXT" => Loc::GetMessage("SALE_VK_TABLE__DELETE"), "ACTION" => "if(confirm('" . Loc::getMessage('SALE_VK_TABLE__DELETE_ALERT') . "')) " . $lAdmin->ActionDoGroup($exportId, "delete"));
+        $arActions[] = array(
+            "ICON" => "delete",
+            "TEXT" => Loc::GetMessage("SALE_VK_TABLE__DELETE"),
+            "ACTION" => "if(confirm('" . Loc::getMessage(
+                    'SALE_VK_TABLE__DELETE_ALERT'
+                ) . "')) " . $lAdmin->ActionDoGroup($exportId, "delete")
+        );
     }
 
     $row->AddActions($arActions);

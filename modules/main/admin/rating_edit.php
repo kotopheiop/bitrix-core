@@ -16,8 +16,9 @@ require_once(dirname(__FILE__) . "/../include/prolog_admin_before.php");
 
 ClearVars();
 
-if (!$USER->CanDoOperation('edit_ratings'))
+if (!$USER->CanDoOperation('edit_ratings')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 
@@ -36,22 +37,27 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && ($_POST['save'] <> "" || $_POST['app
         "AUTHORITY" => isset($_POST['AUTHORITY']) ? 'Y' : 'N',
         "NEW_CALC" => isset($_POST['NEW_CALC']) ? 'Y' : 'N',
     );
-    if ($ID > 0)
+    if ($ID > 0) {
         $res = CRatings::Update($ID, $arFields);
-    else {
+    } else {
         $ID = CRatings::Add($arFields);
         $res = ($ID > 0);
     }
 
     if ($res) {
         if ($_POST["apply"] <> "") {
-            $_SESSION["SESS_ADMIN"]["RATING_EDIT_MESSAGE"] = array("MESSAGE" => GetMessage("RATING_EDIT_SUCCESS"), "TYPE" => "OK");
+            \Bitrix\Main\Application::getInstance()->getSession()["SESS_ADMIN"]["RATING_EDIT_MESSAGE"] = array(
+                "MESSAGE" => GetMessage("RATING_EDIT_SUCCESS"),
+                "TYPE" => "OK"
+            );
             LocalRedirect("rating_edit.php?ID=" . $ID . "&lang=" . LANG);
-        } else
+        } else {
             LocalRedirect(($_REQUEST["addurl"] <> "" ? $_REQUEST["addurl"] : "rating_list.php?lang=" . LANG));
+        }
     } else {
-        if ($e = $APPLICATION->GetException())
+        if ($e = $APPLICATION->GetException()) {
             $message = new CAdminMessage(GetMessage("RATING_EDIT_ERROR"), $e);
+        }
         $bVarsFromForm = true;
     }
 }
@@ -59,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && ($_POST['save'] <> "" || $_POST['app
 $bTypeChange = isset($_POST["action"]) && $_POST["action"] == 'type_changed' ? true : false;
 $str_NAME = isset($_REQUEST["NAME"]) ? htmlspecialcharsbx($_REQUEST["NAME"]) : GetMessage("RATING_DEF_NAME");
 $str_ENTITY_ID = isset($_REQUEST["ENTITY_ID"]) ? htmlspecialcharsbx($_REQUEST["ENTITY_ID"]) : 'USER';
-$str_CALCULATION_METHOD = isset($_REQUEST["CALCULATION_METHOD"]) ? IntVal($_REQUEST["CALCULATION_METHOD"]) : '1';
+$str_CALCULATION_METHOD = isset($_REQUEST["CALCULATION_METHOD"]) ? intval($_REQUEST["CALCULATION_METHOD"]) : '1';
 $str_ACTIVE = isset($_REQUEST["ACTIVE"]) && $_REQUEST["ACTIVE"] == 'Y' ? 'Y' : 'N';
 $str_POSITION = isset($_REQUEST["POSITION"]) && $_REQUEST["POSITION"] == 'Y' ? 'Y' : 'N';
 $str_AUTHORITY = isset($_REQUEST["AUTHORITY"]) && $_REQUEST["AUTHORITY"] == 'Y' ? 'Y' : 'N';
@@ -71,12 +77,15 @@ if ($ID == 0 && empty($_POST)) {
 }
 if ($ID > 0 && !$bTypeChange) {
     $raging = CRatings::GetByID($ID);
-    if (!($raging_arr = $raging->ExtractFields("str_")))
+    if (!($raging_arr = $raging->ExtractFields("str_"))) {
         $ID = 0;
-    $str_CONFIGS = unserialize(htmlspecialcharsback($str_CONFIGS));
+    }
+    $str_CONFIGS = unserialize(htmlspecialcharsback($str_CONFIGS), ['allowed_classes' => false]);
 }
 
-$sDocTitle = ($ID > 0 ? GetMessage("MAIN_RATING_EDIT_RECORD", array("#ID#" => $ID)) : GetMessage("MAIN_RATING_NEW_RECORD"));
+$sDocTitle = ($ID > 0 ? GetMessage("MAIN_RATING_EDIT_RECORD", array("#ID#" => $ID)) : GetMessage(
+    "MAIN_RATING_NEW_RECORD"
+));
 $APPLICATION->SetTitle($sDocTitle);
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/ratings.css");
 
@@ -91,7 +100,6 @@ $aMenu = array(
     )
 );
 if ($ID > 0) {
-
     $aMenu[] = array("SEPARATOR" => "Y");
     $aMenu[] = array(
         "TEXT" => GetMessage("RATING_EDIT_ADD"),
@@ -102,23 +110,33 @@ if ($ID > 0) {
     $aMenu[] = array(
         "TEXT" => GetMessage("RATING_EDIT_DEL"),
         "TITLE" => GetMessage("RATING_EDIT_DEL_TITLE"),
-        "LINK" => "javascript:if(confirm('" . GetMessage("RATING_EDIT_DEL_CONF") . "')) window.location='rating_list.php?ID=" . $ID . "&action=delete&lang=" . LANG . "&" . bitrix_sessid_get() . "';",
+        "LINK" => "javascript:if(confirm('" . GetMessage(
+                "RATING_EDIT_DEL_CONF"
+            ) . "')) window.location='rating_list.php?ID=" . $ID . "&action=delete&lang=" . LANG . "&" . bitrix_sessid_get(
+            ) . "';",
         "ICON" => "btn_delete",
     );
 }
 $context = new CAdminContextMenu($aMenu);
 $context->Show();
 
-if (is_array($_SESSION["SESS_ADMIN"]["RATING_EDIT_MESSAGE"])) {
-    CAdminMessage::ShowMessage($_SESSION["SESS_ADMIN"]["RATING_EDIT_MESSAGE"]);
-    $_SESSION["SESS_ADMIN"]["RATING_EDIT_MESSAGE"] = false;
+if (is_array(\Bitrix\Main\Application::getInstance()->getSession()["SESS_ADMIN"]["RATING_EDIT_MESSAGE"])) {
+    CAdminMessage::ShowMessage(
+        \Bitrix\Main\Application::getInstance()->getSession()["SESS_ADMIN"]["RATING_EDIT_MESSAGE"]
+    );
+    \Bitrix\Main\Application::getInstance()->getSession()["SESS_ADMIN"]["RATING_EDIT_MESSAGE"] = false;
 }
 
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 
 $aTabs = array(
-    array("DIV" => "edit1", "TAB" => GetMessage("RATING_EDIT_TAB_MAIN"), "TITLE" => GetMessage("RATING_EDIT_TAB_MAIN_TITLE")),
+    array(
+        "DIV" => "edit1",
+        "TAB" => GetMessage("RATING_EDIT_TAB_MAIN"),
+        "TITLE" => GetMessage("RATING_EDIT_TAB_MAIN_TITLE")
+    ),
 );
 
 $tabControl = new CAdminForm("rating", $aTabs);
@@ -137,14 +155,26 @@ $tabControl->Begin();
 
 $tabControl->BeginNextFormTab();
 
-$tabControl->AddEditField("NAME", GetMessage('RATING_EDIT_FRM_NAME'), true, array("size" => 54, "maxlength" => 255), $str_NAME);
+$tabControl->AddEditField(
+    "NAME",
+    GetMessage('RATING_EDIT_FRM_NAME'),
+    true,
+    array("size" => 54, "maxlength" => 255),
+    $str_NAME
+);
 
 $tabControl->BeginCustomField("ENTITY_ID", GetMessage('RATING_EDIT_FRM_TYPE_ID'), true);
 $arObjects = CRatings::GetRatingObjects();
 ?>
 <tr style="<?= (count($arObjects) > 1 ? '' : 'display:none') ?>" class="adm-detail-required-field">
     <td><?= GetMessage("RATING_EDIT_FRM_TYPE_ID") ?></td>
-    <td><?= SelectBoxFromArray("ENTITY_ID", array('reference_id' => $arObjects, 'reference' => $arObjects), $str_ENTITY_ID, "", "onChange=\"jsTypeChanged('rating_form')\""); ?></td>
+    <td><?= SelectBoxFromArray(
+            "ENTITY_ID",
+            array('reference_id' => $arObjects, 'reference' => $arObjects),
+            $str_ENTITY_ID,
+            "",
+            "onChange=\"jsTypeChanged('rating_form')\""
+        ); ?></td>
 </tr>
 <?
 $tabControl->EndCustomField("ENTITY_ID");
@@ -181,8 +211,13 @@ $tabControl->BeginCustomField("CAT_WHAT_CNT_FORM", '', true);
     <td width="100%" colspan="2">
         <?
         $aTabs2 = Array();
-        foreach ($arRatingConfigs as $arConfigModule => $arConfigModuleValue)
-            $aTabs2[] = Array("DIV" => "panel_" . $arConfigModule, "TAB" => $arConfigModuleValue['MODULE_NAME'], "TITLE" => $arConfigModuleValue['MODULE_NAME']);
+        foreach ($arRatingConfigs as $arConfigModule => $arConfigModuleValue) {
+            $aTabs2[] = Array(
+                "DIV" => "panel_" . $arConfigModule,
+                "TAB" => $arConfigModuleValue['MODULE_NAME'],
+                "TITLE" => $arConfigModuleValue['MODULE_NAME']
+            );
+        }
 
         $tabControl2 = new CAdminViewTabControl("tabControl2", $aTabs2);
         $tabControl2->Begin();
@@ -208,8 +243,9 @@ $tabControl->BeginCustomField("CAT_WHAT_CNT_FORM", '', true);
 
                         // if exist editing data and block configuration is active
                         if (isset($str_CONFIGS[$arConfigModule][$arConfigType][$arConfig['ID']]['ACTIVE']) &&
-                            $str_CONFIGS[$arConfigModule][$arConfigType][$arConfig['ID']]['ACTIVE'] == 'Y')
+                            $str_CONFIGS[$arConfigModule][$arConfigType][$arConfig['ID']]['ACTIVE'] == 'Y') {
                             $bGroupFieldStatus = true;
+                        }
 
                         ?>
                         <table cellpadding="2" cellspacing="0" width="100%" class="rating-table">
@@ -244,15 +280,17 @@ $tabControl->BeginCustomField("CAT_WHAT_CNT_FORM", '', true);
                                                                 $strFieldValue = isset($_POST['CONFIGS'][$arConfigModule][$arConfigType][$arConfig['ID']][$arConfig['FIELDS'][$i]['ID']]) ?
                                                                     ($_POST['CONFIGS'][$arConfigModule][$arConfigType][$arConfig['ID']][$arConfig['FIELDS'][$i]['ID']]) : $arConfig['FIELDS'][$i]['DEFAULT'];
                                                                 // if exist editing data and block configuration is active
-                                                                if (isset($str_CONFIGS[$arConfigModule][$arConfigType][$arConfig['ID']][$arConfig['FIELDS'][$i]['ID']]))
+                                                                if (isset($str_CONFIGS[$arConfigModule][$arConfigType][$arConfig['ID']][$arConfig['FIELDS'][$i]['ID']])) {
                                                                     $strFieldValue = $str_CONFIGS[$arConfigModule][$arConfigType][$arConfig['ID']][$arConfig['FIELDS'][$i]['ID']];
+                                                                }
 
                                                                 // define a default value
                                                                 $strFieldValueInput = isset($_POST['CONFIGS'][$arConfigModule][$arConfigType][$arConfig['ID']][$arConfig['FIELDS'][$i]['ID_INPUT']]) ?
                                                                     ($_POST['CONFIGS'][$arConfigModule][$arConfigType][$arConfig['ID']][$arConfig['FIELDS'][$i]['ID_INPUT']]) : $arConfig['FIELDS'][$i]['DEFAULT_INPUT'];
                                                                 // if exist editing data and block configuration is active
-                                                                if (isset($str_CONFIGS[$arConfigModule][$arConfigType][$arConfig['ID']][$arConfig['FIELDS'][$i]['ID_INPUT']]))
+                                                                if (isset($str_CONFIGS[$arConfigModule][$arConfigType][$arConfig['ID']][$arConfig['FIELDS'][$i]['ID_INPUT']])) {
                                                                     $strFieldValue = $str_CONFIGS[$arConfigModule][$arConfigType][$arConfig['ID']][$arConfig['FIELDS'][$i]['ID_INPUT']];
+                                                                }
 
                                                                 $arSelect = array();
                                                                 foreach ($arConfig['FIELDS'][$i]['PARAMS'] as $key => $value) {
@@ -264,15 +302,22 @@ $tabControl->BeginCustomField("CAT_WHAT_CNT_FORM", '', true);
                                                                 <tr valign="top">
                                                                     <td class="rating-table-component-table-td-table-td rating-table-component-table-td-table-td-1 field-name"
                                                                         style="vertical-align:middle">
-                                                                        <label><? echo isset($arConfig['FIELDS'][$i]['NAME']) ? $arConfig['FIELDS'][$i]['NAME'] : GetMessage('RATING_FIELDS_DEF_NAME') ?></label>
-                                                                    </td>
+                                                                        <label><? echo isset($arConfig['FIELDS'][$i]['NAME']) ? $arConfig['FIELDS'][$i]['NAME'] : GetMessage(
+                                                                                'RATING_FIELDS_DEF_NAME'
+                                                                            ) ?></label></td>
                                                                     <td class="rating-table-component-table-td-table-td rating-table-component-table-td-table-td-2"
                                                                         width="25%">
-                                                                        <?= SelectBoxFromArray("CONFIGS[$arConfigModule][$arConfigType>][" . $arConfig['ID'] . "][" . $arConfig['FIELDS'][$i]['ID'] . "]", $arSelect, $strFieldValue, ""); ?>
+                                                                        <?= SelectBoxFromArray(
+                                                                            "CONFIGS[$arConfigModule][$arConfigType>][" . $arConfig['ID'] . "][" . $arConfig['FIELDS'][$i]['ID'] . "]",
+                                                                            $arSelect,
+                                                                            $strFieldValue,
+                                                                            ""
+                                                                        ); ?>
                                                                         <input type="text"
                                                                                name="CONFIGS[<?= $arConfigModule ?>][<?= $arConfigType ?>][<?= $arConfig['ID'] ?>][<?= $arConfig['FIELDS'][$i]['ID_INPUT'] ?>]"
-                                                                               value="<?= htmlspecialcharsbx($strFieldValueInput) ?>"
-                                                                               style="width:45px;">
+                                                                               value="<?= htmlspecialcharsbx(
+                                                                                   $strFieldValueInput
+                                                                               ) ?>" style="width:45px;">
                                                                     </td>
                                                                 </tr>
                                                                 <?
@@ -281,19 +326,22 @@ $tabControl->BeginCustomField("CAT_WHAT_CNT_FORM", '', true);
                                                                 $strFieldValue = isset($_POST['CONFIGS'][$arConfigModule][$arConfigType][$arConfig['ID']][$arConfig['FIELDS'][$i]['ID']]) ?
                                                                     ($_POST['CONFIGS'][$arConfigModule][$arConfigType][$arConfig['ID']][$arConfig['FIELDS'][$i]['ID']]) : $arConfig['FIELDS'][$i]['DEFAULT'];
                                                                 // if exist editing data and block configuration is active
-                                                                if (isset($str_CONFIGS[$arConfigModule][$arConfigType][$arConfig['ID']][$arConfig['FIELDS'][$i]['ID']]))
+                                                                if (isset($str_CONFIGS[$arConfigModule][$arConfigType][$arConfig['ID']][$arConfig['FIELDS'][$i]['ID']])) {
                                                                     $strFieldValue = $str_CONFIGS[$arConfigModule][$arConfigType][$arConfig['ID']][$arConfig['FIELDS'][$i]['ID']];
+                                                                }
                                                                 ?>
                                                                 <tr valign="top" style="">
                                                                     <td class="rating-table-component-table-td-table-td rating-table-component-table-td-table-td-1 field-name"
                                                                         style="vertical-align:middle">
-                                                                        <label><? echo isset($arConfig['FIELDS'][$i]['NAME']) ? $arConfig['FIELDS'][$i]['NAME'] : GetMessage('RATING_FIELDS_DEF_NAME') ?></label>
-                                                                    </td>
+                                                                        <label><? echo isset($arConfig['FIELDS'][$i]['NAME']) ? $arConfig['FIELDS'][$i]['NAME'] : GetMessage(
+                                                                                'RATING_FIELDS_DEF_NAME'
+                                                                            ) ?></label></td>
                                                                     <td class="rating-table-component-table-td-table-td rating-table-component-table-td-table-td-2"
                                                                         width="20%"><input type="text"
                                                                                            name="CONFIGS[<?= $arConfigModule ?>][<?= $arConfigType ?>][<?= $arConfig['ID'] ?>][<?= $arConfig['FIELDS'][$i]['ID'] ?>]"
-                                                                                           value="<?= htmlspecialcharsbx($strFieldValue) ?>">
-                                                                    </td>
+                                                                                           value="<?= htmlspecialcharsbx(
+                                                                                               $strFieldValue
+                                                                                           ) ?>"></td>
                                                                 </tr>
                                                                 <?
                                                             }
@@ -312,7 +360,9 @@ $tabControl->BeginCustomField("CAT_WHAT_CNT_FORM", '', true);
                                                     <? if (isset($arConfig['FORMULA'])): ?>
                                                         <p class="formula"><?= $arConfig['FORMULA'] ?></p>
                                                     <? else: ?>
-                                                        <p class="formula"><?= GetMessage('RATING_FIELDS_DEF_FORMULA') ?></p>
+                                                        <p class="formula"><?= GetMessage(
+                                                                'RATING_FIELDS_DEF_FORMULA'
+                                                            ) ?></p>
                                                     <? endif; ?>
                                                     <? if (isset($arConfig['FORMULA_DESC'])): ?>
                                                         <p><?= $arConfig['FORMULA_DESC'] ?></p>
@@ -341,17 +391,35 @@ $tabControl->BeginCustomField("CAT_WHAT_CNT_FORM", '', true);
 <?
 $tabControl->EndCustomField("CAT_WHAT_CNT_FORM");
 $tabControl->AddSection("CAT_WHAT_NEW_CALC", GetMessage("RATING_EDIT_CAT_WHAT_NEW_CALC"));
-$tabControl->AddCheckBoxField("POSITION", GetMessage('RATING_EDIT_FRM_POSITION'), false, "Y", ($str_POSITION == 'Y' ? true : false), array());
+$tabControl->AddCheckBoxField(
+    "POSITION",
+    GetMessage('RATING_EDIT_FRM_POSITION'),
+    false,
+    "Y",
+    ($str_POSITION == 'Y' ? true : false),
+    array()
+);
 
-if ($str_ENTITY_ID == 'USER')
-    $tabControl->AddCheckBoxField("AUTHORITY", GetMessage('RATING_EDIT_FRM_AUTHORITY'), false, "Y", ($str_AUTHORITY == 'Y' ? true : false), array());
-if ($ID > 0)
+if ($str_ENTITY_ID == 'USER') {
+    $tabControl->AddCheckBoxField(
+        "AUTHORITY",
+        GetMessage('RATING_EDIT_FRM_AUTHORITY'),
+        false,
+        "Y",
+        ($str_AUTHORITY == 'Y' ? true : false),
+        array()
+    );
+}
+if ($ID > 0) {
     $tabControl->AddCheckBoxField("NEW_CALC", GetMessage('RATING_EDIT_FRM_NEW_CALC'), false, "Y", false, array());
+}
 
-$tabControl->Buttons(array(
-    "disabled" => false,
-    "back_url" => ($_REQUEST["addurl"] <> "" ? $_REQUEST["addurl"] : "rating_list.php?lang=" . LANG),
-));
+$tabControl->Buttons(
+    array(
+        "disabled" => false,
+        "back_url" => ($_REQUEST["addurl"] <> "" ? $_REQUEST["addurl"] : "rating_list.php?lang=" . LANG),
+    )
+);
 $tabControl->Show();
 $tabControl->ShowWarnings($tabControl->GetName(), $message);
 ?>

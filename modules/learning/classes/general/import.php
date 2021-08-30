@@ -10,11 +10,24 @@ class CCourseImport
     var $COURSE_ID = 0;
     var $objXML;
     var $arDraftFields = Array("detail_text", "preview_text", "description");
-    var $arUnsetFields = Array("id", "site_id", "timestamp_x", 'date_create',
-        "chapter_id", "course_id", "lesson_id", "question_id",
-        "created_by", 'created_user_name', 'linked_lesson_id',
-        'childs_cnt', 'is_childs', 'description', 'description_type',
-        'was_chapter_id');
+    var $arUnsetFields = Array(
+        "id",
+        "site_id",
+        "timestamp_x",
+        'date_create',
+        "chapter_id",
+        "course_id",
+        "lesson_id",
+        "question_id",
+        "created_by",
+        'created_user_name',
+        'linked_lesson_id',
+        'childs_cnt',
+        'is_childs',
+        'description',
+        'description_type',
+        'was_chapter_id'
+    );
     var $arPicture = Array("detail_picture", "preview_picture", "file_id");
     var $arDate = Array("active_from", "active_to");
     var $arWarnings = Array();
@@ -22,18 +35,28 @@ class CCourseImport
 
 
     // List of fields, writable to unilessons
-    protected $arLessonWritableFields = array('NAME', 'ACTIVE', 'CODE',
-        'PREVIEW_PICTURE', 'PREVIEW_TEXT', 'PREVIEW_TEXT_TYPE',
-        'DETAIL_PICTURE', 'DETAIL_TEXT', 'DETAIL_TEXT_TYPE',
-        'LAUNCH', 'KEYWORDS');
+    protected $arLessonWritableFields = array(
+        'NAME',
+        'ACTIVE',
+        'CODE',
+        'PREVIEW_PICTURE',
+        'PREVIEW_TEXT',
+        'PREVIEW_TEXT_TYPE',
+        'DETAIL_PICTURE',
+        'DETAIL_TEXT',
+        'DETAIL_TEXT_TYPE',
+        'LAUNCH',
+        'KEYWORDS'
+    );
 
 
     // 2012-04-18 Checked/modified for compatibility with new data model
     public function __construct($PACKAGE_DIR, $arSITE_ID)
     {
         //Cut last slash
-        if (substr($PACKAGE_DIR, -1, 1) == "/")
-            $PACKAGE_DIR = substr($PACKAGE_DIR, 0, -1);
+        if (mb_substr($PACKAGE_DIR, -1, 1) == "/") {
+            $PACKAGE_DIR = mb_substr($PACKAGE_DIR, 0, -1);
+        }
 
         $this->package_dir = $_SERVER["DOCUMENT_ROOT"] . $PACKAGE_DIR;
 
@@ -74,8 +97,9 @@ class CCourseImport
     {
         global $APPLICATION;
 
-        if (strlen($this->LAST_ERROR) > 0)
+        if ($this->LAST_ERROR <> '') {
             return false;
+        }
 
         if (!$title = $this->objXML->SelectNodes("/manifest/organizations/organization/item/title")) {
             $this->LAST_ERROR = GetMessage("LEARNING_BAD_NAME");
@@ -92,17 +116,20 @@ class CCourseImport
         $res = ($this->COURSE_ID);
 
         if (!$res) {
-            if ($e = $APPLICATION->GetException())
+            if ($e = $APPLICATION->GetException()) {
                 $this->LAST_ERROR = $e->GetString();
+            }
             return false;
         }
 
         $r = new CDataXML();
-        if (!$r->Load($this->package_dir . "/res1.xml"))
+        if (!$r->Load($this->package_dir . "/res1.xml")) {
             return false;
+        }
 
-        if (!$data = $r->SelectNodes("/coursetoc/"))
+        if (!$data = $r->SelectNodes("/coursetoc/")) {
             return false;
+        }
 
         $ar = $data->__toArray();
         $arFields = $this->_MakeFields($ar);
@@ -110,16 +137,28 @@ class CCourseImport
         $res = $course->Update($this->COURSE_ID, $arFields);
 
         if (!$res) {
-            if ($e = $APPLICATION->GetException())
+            if ($e = $APPLICATION->GetException()) {
                 $this->LAST_ERROR = $e->GetString();
+            }
             return false;
         }
 
-        CheckDirPath($_SERVER["DOCUMENT_ROOT"] . "/" . (COption::GetOptionString("main", "upload_dir", "upload")) . "/learning/" . $this->COURSE_ID);
+        CheckDirPath(
+            $_SERVER["DOCUMENT_ROOT"] . "/" . (COption::GetOptionString(
+                "main",
+                "upload_dir",
+                "upload"
+            )) . "/learning/" . $this->COURSE_ID
+        );
         CLearnHelper::CopyDirFiles(
             $this->package_dir . "/resources/res1",
-            $_SERVER["DOCUMENT_ROOT"] . "/" . (COption::GetOptionString("main", "upload_dir", "upload")) . "/learning/" . $this->COURSE_ID . "/res1",
-            true);
+            $_SERVER["DOCUMENT_ROOT"] . "/" . (COption::GetOptionString(
+                "main",
+                "upload_dir",
+                "upload"
+            )) . "/learning/" . $this->COURSE_ID . "/res1",
+            true
+        );
 
         return true;
     }
@@ -128,8 +167,9 @@ class CCourseImport
     // 2012-04-19 Checked/modified for compatibility with new data model
     protected function CreateContent($arItems = Array(), $PARENT_ID = 0)
     {
-        if (strlen($this->LAST_ERROR) > 0)
+        if ($this->LAST_ERROR <> '') {
             return false;
+        }
 
         if (empty($arItems)) {
             if ($items = $this->objXML->SelectNodes("/manifest/organizations/organization/item/")) {
@@ -139,14 +179,15 @@ class CCourseImport
         }
 
         foreach ($arItems as $ar) {
-            $type = substr($ar["@"]["identifier"], 0, 3);
+            $type = mb_substr($ar["@"]["identifier"], 0, 3);
             $res_id = $ar["@"]["identifierref"];
             $title = $ar["#"]["title"][0]["#"];
 
             $ID = $this->_MakeItems($title, $type, $res_id, $PARENT_ID);
 
-            if (is_set($ar["#"], "item"))
+            if (is_set($ar["#"], "item")) {
                 $this->CreateContent($ar["#"]["item"], $ID);
+            }
         }
     }
 
@@ -156,10 +197,11 @@ class CCourseImport
     {
         global $APPLICATION;
 
-        if ($PARENT_ID === 0)
+        if ($PARENT_ID === 0) {
             $linkToParentLessonId = CCourse::CourseGetLinkedLesson($this->COURSE_ID);
-        else
+        } else {
             $linkToParentLessonId = (int)$PARENT_ID;
+        }
 
         $createUnilesson = false;
 
@@ -193,13 +235,15 @@ class CCourseImport
             $arFields = array();
 
             $cl = new CLTestMark;
-        } else
+        } else {
             return $PARENT_ID;
+        }
 
 
         $r = new CDataXML();
-        if (!$r->Load($this->package_dir . "/" . strtolower($RES_ID) . ".xml"))
+        if (!$r->Load($this->package_dir . "/" . mb_strtolower($RES_ID) . ".xml")) {
             $r = false;
+        }
 
         if ($r !== false) {
             if ($TYPE == "QUE") {
@@ -212,19 +256,23 @@ class CCourseImport
                     $arData = $data->__toArray();
                     $arResp = $resp->__toArray();
 
-                    if (is_set($arData["#"]["material"][0]["#"], "mattext"))
+                    if (is_set($arData["#"]["material"][0]["#"], "mattext")) {
                         $arQ["NAME"] = $arData["#"]["material"][0]["#"]["mattext"][0]["#"];
+                    }
 
                     if (is_set($arData["#"]["material"][0]["#"], "matimage")) {
                         $imageDescription = '';
-                        if (is_set($arData["#"]["material"][0]["#"], 'image_description'))
+                        if (is_set($arData["#"]["material"][0]["#"], 'image_description')) {
                             $imageDescription = $arData["#"]["material"][0]["#"]['image_description'][0]['#'];
+                        }
 
                         $arQ["FILE_ID"] = Array(
                             "MODULE_ID" => "learning",
                             "name" => basename($arData["#"]["material"][0]["#"]["matimage"][0]["@"]["uri"]),
                             "tmp_name" => $this->package_dir . "/" . $arData["#"]["material"][0]["#"]["matimage"][0]["@"]["uri"],
-                            "size" => @filesize($this->package_dir . "/" . $arData["#"]["material"][0]["#"]["matimage"][0]["@"]["uri"]),
+                            "size" => @filesize(
+                                $this->package_dir . "/" . $arData["#"]["material"][0]["#"]["matimage"][0]["@"]["uri"]
+                            ),
                             "type" => $arData["#"]["material"][0]["#"]["matimage"][0]["@"]["imagtype"],
                             'description' => $imageDescription
                         );
@@ -247,8 +295,9 @@ class CCourseImport
                         }
                     }
 
-                    if (is_set($arResp["#"]["respcondition"][0]["#"], "setvar"))
+                    if (is_set($arResp["#"]["respcondition"][0]["#"], "setvar")) {
                         $arQ["POINT"] = $arResp["#"]["respcondition"][0]["#"]["setvar"][0]['#'];
+                    }
 
                     //Additional
                     if ($bx = $r->SelectNodes("/questestinterop/item/bitrix/")) {
@@ -269,9 +318,9 @@ class CCourseImport
                             &&
                             is_set($arResp["#"]["respcondition"][0]["#"]["conditionvar"][0]["#"], "varequal")
                         ) {
-
-                            foreach ($arResp["#"]["respcondition"][0]["#"]["conditionvar"][0]["#"]["varequal"] as $ar)
+                            foreach ($arResp["#"]["respcondition"][0]["#"]["conditionvar"][0]["#"]["varequal"] as $ar) {
                                 $arCorrect[] = $ar["#"];
+                            }
                         }
 
                         if (is_set($arData["#"]["response_lid"][0]["#"], "render_choice")
@@ -292,14 +341,19 @@ class CCourseImport
                                 $AswerID = $cl->Add($arFields);
                                 $res = ($AswerID > 0);
                                 if (!$res) {
-                                    if ($e = $APPLICATION->GetException())
-                                        $this->arWarnings[$TYPE][] = Array("TITLE" => $TITLE, "TEXT" => $e->GetString());
+                                    if ($e = $APPLICATION->GetException()) {
+                                        $this->arWarnings[$TYPE][] = Array(
+                                            "TITLE" => $TITLE,
+                                            "TEXT" => $e->GetString()
+                                        );
+                                    }
                                 }
                             }
                         }
                     } else {
-                        if ($e = $APPLICATION->GetException())
+                        if ($e = $APPLICATION->GetException()) {
                             $this->arWarnings[$TYPE][] = Array("TITLE" => $TITLE, "TEXT" => $e->GetString());
+                        }
                     }
 
                     unset($cl);
@@ -315,13 +369,18 @@ class CCourseImport
                 if ($data = $r->SelectNodes("/content/")) {
                     $ar = $data->__toArray();
                     $arFields = array_merge($arFields, $this->_MakeFields($ar, $TYPE));
-                    if ($TYPE === 'TMK')
+                    if ($TYPE === 'TMK') {
                         $arFields['TEST_ID'] = (int)$PARENT_ID;
+                    }
 
-                    if (is_set($arFields, "COMPLETED_SCORE") && intval($arFields["COMPLETED_SCORE"]) <= 0)
+                    if (is_set($arFields, "COMPLETED_SCORE") && intval($arFields["COMPLETED_SCORE"]) <= 0) {
                         unset($arFields["COMPLETED_SCORE"]);
-                    if ((is_set($arFields, "PREVIOUS_TEST_ID") && intval($arFields["PREVIOUS_TEST_ID"]) <= 0) || !CTest::GetByID($arFields["PREVIOUS_TEST_ID"])->Fetch())
+                    }
+                    if ((is_set($arFields, "PREVIOUS_TEST_ID") && intval(
+                                $arFields["PREVIOUS_TEST_ID"]
+                            ) <= 0) || !CTest::GetByID($arFields["PREVIOUS_TEST_ID"])->Fetch()) {
                         unset($arFields["PREVIOUS_TEST_ID"], $arFields["PREVIOUS_TEST_SCORE"]);
+                    }
                 }
             }
         }
@@ -348,8 +407,9 @@ class CCourseImport
             }
 
             if (isset($arFields['META_PUBLISH_PROHIBITED'])) {
-                if ($arFields['META_PUBLISH_PROHIBITED'] === 'Y')
+                if ($arFields['META_PUBLISH_PROHIBITED'] === 'Y') {
                     $bProhibitPublish = true;
+                }
 
                 unset($arFields['META_PUBLISH_PROHIBITED']);
             }
@@ -358,8 +418,9 @@ class CCourseImport
             $arUnilessonFields = $arFields;
             $arFieldsNames = array_keys($arUnilessonFields);
             foreach ($arFieldsNames as $fieldName) {
-                if (!in_array(strtoupper($fieldName), $this->arLessonWritableFields))
+                if (!in_array(mb_strtoupper($fieldName), $this->arLessonWritableFields)) {
                     unset ($arUnilessonFields[$fieldName]);
+                }
             }
 
             $ID = CLearnLesson::Add(
@@ -369,15 +430,17 @@ class CCourseImport
                 $arProperties
             );
 
-            if ($bProhibitPublish && ($ID > 0))
+            if ($bProhibitPublish && ($ID > 0)) {
                 CLearnLesson::PublishProhibitionSetTo($ID, $linkToParentLessonId, $bProhibitPublish);
+            }
         }
 
-        if ($ID > 0)
+        if ($ID > 0) {
             return $ID;
-        else {
-            if ($e = $APPLICATION->GetException())
+        } else {
+            if ($e = $APPLICATION->GetException()) {
                 $this->arWarnings[$TYPE][] = Array("TITLE" => $TITLE, "TEXT" => $e->GetString());
+            }
         }
     }
 
@@ -390,33 +453,40 @@ class CCourseImport
 
         $arStopList = array();
         foreach ($arFields["#"] as $field => $arValue) {
-            if (in_array($field, $arStopList))
+            if (in_array($field, $arStopList)) {
                 continue;
-
-            if (in_array($field, $this->arUnsetFields) && ($itemType !== 'TMK') && ($itemType !== 'QUE')) {
-                if (!($itemType === 'TES' && in_array($field, $this->arPreventUnsetFieldsForTest)))
-                    continue;
             }
 
-            if (in_array($field, $this->arDraftFields) && ($itemType !== 'TMK')) {
-                if (is_set($arValue[0]["#"], "cdata-section")) {
-                    $arRes[strtoupper($field)] = preg_replace(
-                        "~([\"'])(cid:resources/(.+?))(\\1)~is",
-                        "\\1/" . $upload_dir . "/learning/" . $this->COURSE_ID . "/\\3\\1",
-                        $arValue[0]["#"]["cdata-section"][0]["#"]);
-                    continue;
-                } elseif (isset($arValue[0]["#"])) {
-                    $arRes[strtoupper($field)] = preg_replace(
-                        "~([\"'])(cid:resources/(.+?))(\\1)~is",
-                        "\\1/" . $upload_dir . "/learning/" . $this->COURSE_ID . "/\\3\\1",
-                        $arValue[0]["#"]);
+            if (in_array($field, $this->arUnsetFields) && ($itemType !== 'TMK') && ($itemType !== 'QUE')) {
+                if (!($itemType === 'TES' && in_array($field, $this->arPreventUnsetFieldsForTest))) {
                     continue;
                 }
             }
 
-            if (in_array($field, $this->arDate) && strlen($arValue[0]["#"]) > 0) {
+            if (in_array($field, $this->arDraftFields) && ($itemType !== 'TMK')) {
+                if (is_set($arValue[0]["#"], "cdata-section")) {
+                    $arRes[mb_strtoupper($field)] = preg_replace(
+                        "~([\"'])(cid:resources/(.+?))(\\1)~is",
+                        "\\1/" . $upload_dir . "/learning/" . $this->COURSE_ID . "/\\3\\1",
+                        $arValue[0]["#"]["cdata-section"][0]["#"]
+                    );
+                    continue;
+                } elseif (isset($arValue[0]["#"])) {
+                    $arRes[mb_strtoupper($field)] = preg_replace(
+                        "~([\"'])(cid:resources/(.+?))(\\1)~is",
+                        "\\1/" . $upload_dir . "/learning/" . $this->COURSE_ID . "/\\3\\1",
+                        $arValue[0]["#"]
+                    );
+                    continue;
+                }
+            }
+
+            if (in_array($field, $this->arDate) && $arValue[0]["#"] <> '') {
                 $time = date("His", $arValue[0]["#"]);
-                $arRes[strtoupper($field)] = ConvertTimeStamp($arValue[0]["#"], $time == "000000" ? "SHORT" : "FULL");
+                $arRes[mb_strtoupper($field)] = ConvertTimeStamp(
+                    $arValue[0]["#"],
+                    $time == "000000" ? "SHORT" : "FULL"
+                );
                 continue;
             }
 
@@ -425,17 +495,20 @@ class CCourseImport
 
                 if (method_exists('CFile', 'GetImageSize')) {
                     $aImage = @CFile::GetImageSize($file);
-                    if ($aImage === false)
+                    if ($aImage === false) {
                         continue;
+                    }
 
-                    if (function_exists("image_type_to_mime_type"))
+                    if (function_exists("image_type_to_mime_type")) {
                         $image_type_to_mime_type = image_type_to_mime_type($aImage[2]);
-                    else
+                    } else {
                         $image_type_to_mime_type = CCourseImport::ImageTypeToMimeType($aImage[2]);
-                } else
+                    }
+                } else {
                     $image_type_to_mime_type = self::ImageTypeToMimeTypeByFileName($file);
+                }
 
-                $arRes[strtoupper($field)] = array(
+                $arRes[mb_strtoupper($field)] = array(
                     "MODULE_ID" => "learning",
                     "name" => $arValue[0]["#"],
                     "tmp_name" => $file,
@@ -444,14 +517,14 @@ class CCourseImport
                 );
 
                 if (isset($arFields["#"][$field . '_description'][0]['#'])) {
-                    $arRes[strtoupper($field)]['description'] = $arFields["#"][$field . '_description'][0]['#'];
+                    $arRes[mb_strtoupper($field)]['description'] = $arFields["#"][$field . '_description'][0]['#'];
                     $arStopList[] = $field . '_description';
                 }
 
                 continue;
             }
 
-            $arRes[strtoupper($field)] = $arValue[0]["#"];
+            $arRes[mb_strtoupper($field)] = $arValue[0]["#"];
         }
         unset($arFields);
         return $arRes;
@@ -461,16 +534,22 @@ class CCourseImport
     // 2012-04-18 Checked/modified for compatibility with new data model
     public function ImportPackage()
     {
-        if (!$this->CreateCourse())
+        if (!$this->CreateCourse()) {
             return false;
+        }
 
         $this->CreateContent();
 
         CLearnHelper::CopyDirFiles(
             $this->package_dir . "/resources",
-            $_SERVER["DOCUMENT_ROOT"] . "/" . (COption::GetOptionString("main", "upload_dir", "upload")) . "/learning/" . $this->COURSE_ID,
+            $_SERVER["DOCUMENT_ROOT"] . "/" . (COption::GetOptionString(
+                "main",
+                "upload_dir",
+                "upload"
+            )) . "/learning/" . $this->COURSE_ID,
             true,
-            true);
+            true
+        );
 
         return true;
     }
@@ -478,7 +557,7 @@ class CCourseImport
 
     protected static function ImageTypeToMimeTypeByFileName($file)
     {
-        $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+        $ext = mb_strtolower(pathinfo($file, PATHINFO_EXTENSION));
 
         switch ($ext) {
             case 'jpg':
@@ -532,9 +611,10 @@ class CCourseImport
             15 => "image/vnd.wap.wbmp",
             16 => "image/xbm"
         );
-        if (!empty($aTypes[$type]))
+        if (!empty($aTypes[$type])) {
             return $aTypes[$type];
-        else
+        } else {
             return "application/octet-stream";
+        }
     }
 }

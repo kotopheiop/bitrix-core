@@ -160,23 +160,38 @@ class Toolbar
 
     public function renderAfterTitleButtons()
     {
-        return implode(array_map(function (Button $button) {
-            return self::processButtonRender($button);
-        }, $this->afterTitleButtons));
+        return implode(
+            array_map(
+                function (Button $button) {
+                    return self::processButtonRender($button);
+                },
+                $this->afterTitleButtons
+            )
+        );
     }
 
     public function renderRightButtons()
     {
-        return implode(array_map(function (Button $button) {
-            return self::processButtonRender($button);
-        }, $this->buttons));
+        return implode(
+            array_map(
+                function (Button $button) {
+                    return self::processButtonRender($button);
+                },
+                $this->buttons
+            )
+        );
     }
 
     public function renderAfterFilterButtons()
     {
-        return implode(array_map(function (Button $button) {
-            return self::processButtonRender($button);
-        }, $this->filterButtons));
+        return implode(
+            array_map(
+                function (Button $button) {
+                    return self::processButtonRender($button);
+                },
+                $this->filterButtons
+            )
+        );
     }
 
     /**
@@ -190,11 +205,14 @@ class Toolbar
 
     protected function processButtonRender(Button $button)
     {
-        $shouldAddThemeModifier = (bool)array_intersect($button->getClassList(), [
-            'ui-btn-light-border',
-            'ui-btn-light',
-            'ui-btn-link',
-        ]);
+        $shouldAddThemeModifier = (bool)array_intersect(
+            $button->getClassList(),
+            [
+                'ui-btn-light-border',
+                'ui-btn-light',
+                'ui-btn-link',
+            ]
+        );
 
         if ($shouldAddThemeModifier) {
             $button->addClass('ui-btn-themes');

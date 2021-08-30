@@ -14,8 +14,9 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/sale/prolog.php');
 
 Loc::loadMessages(__FILE__);
 
-if ($APPLICATION->GetGroupRight("sale") < "W")
+if ($APPLICATION->GetGroupRight("sale") < "W") {
     $APPLICATION->AuthForm(Loc::getMessage('SALE_MODULE_ACCES_DENIED'));
+}
 
 $userIsAdmin = $APPLICATION->GetGroupRight("sale") >= "W";
 
@@ -60,21 +61,30 @@ try {
             $DB->StartTransaction();
 
             if (!$lAdmin->IsUpdated($id)) // if there were no data change on this row - do nothing with it
+            {
                 continue;
+            }
 
             try {
                 $res = Helper::update($id, $arFields);
 
                 if (!empty($res['errors'])) {
-                    foreach ($res['errors'] as &$error)
+                    foreach ($res['errors'] as &$error) {
                         $error = '&nbsp;&nbsp;' . $error;
+                    }
                     unset($error);
 
                     throw new Main\SystemException(implode(',<br />', $res['errors']));
                 }
             } catch (Main\SystemException $e) {
                 // todo: do smth
-                $lAdmin->AddUpdateError(Loc::getMessage('SALE_LOCATION_L_ITEM_SAVE_ERROR', array('#ITEM#' => $id)) . ": <br />" . $e->getMessage() . '<br />', $id);
+                $lAdmin->AddUpdateError(
+                    Loc::getMessage(
+                        'SALE_LOCATION_L_ITEM_SAVE_ERROR',
+                        array('#ITEM#' => $id)
+                    ) . ": <br />" . $e->getMessage() . '<br />',
+                    $id
+                );
                 $DB->Rollback();
             }
 
@@ -84,24 +94,36 @@ try {
 
     if (($ids = $lAdmin->GroupAction()) && $userIsAdmin) {
         if ($_REQUEST['action_target'] == 'selected') // get all ids if they were not specified (user choice was "for all")
+        {
             $ids = Helper::getIdsByFilter($listParams['filter']);
+        }
 
         @set_time_limit(0);
 
         foreach ($ids as $id) {
-            if (!($id = intval($id)))
+            if (!($id = intval($id))) {
                 continue;
+            }
 
             if ($_REQUEST['action'] == 'delete') {
                 $DB->StartTransaction();
 
                 try {
                     $res = Helper::delete($id);
-                    if (!$res['success'])
-                        throw new Main\SystemException(Loc::getMessage('SALE_LOCATION_L_ITEM') . ' ' . $id . ' : ' . implode('<br />', $res['errors']));
+                    if (!$res['success']) {
+                        throw new Main\SystemException(
+                            Loc::getMessage('SALE_LOCATION_L_ITEM') . ' ' . $id . ' : ' . implode(
+                                '<br />',
+                                $res['errors']
+                            )
+                        );
+                    }
                     $DB->Commit();
                 } catch (Main\SystemException $e) {
-                    $lAdmin->AddGroupError(Loc::getMessage('SALE_LOCATION_L_ITEM_DELETE_ERROR') . ": <br /><br />" . $e->getMessage(), $id);
+                    $lAdmin->AddGroupError(
+                        Loc::getMessage('SALE_LOCATION_L_ITEM_DELETE_ERROR') . ": <br /><br />" . $e->getMessage(),
+                        $id
+                    );
                     $DB->Rollback();
                 }
             }
@@ -110,7 +132,9 @@ try {
 
     $adminResult = Helper::getList($listParams, $sTableID);
     $adminResult->NavStart();
-    $lAdmin->NavText($adminResult->GetNavPrint(Loc::getMessage('SALE_LOCATION_L_PAGES'), true)); // do not relocate the call relative to DisplayList(), or you`ll catch a strange nav bar disapper bug
+    $lAdmin->NavText(
+        $adminResult->GetNavPrint(Loc::getMessage('SALE_LOCATION_L_PAGES'), true)
+    ); // do not relocate the call relative to DisplayList(), or you`ll catch a strange nav bar disapper bug
 } catch (Main\SystemException $e) {
     $code = $e->getCode();
     $fatal = $e->getMessage() . (!empty($code) ? ' (' . $code . ')' : '');
@@ -122,8 +146,9 @@ try {
 
 if (empty($fatal)) {
     $headers = array();
-    foreach ($columns as $code => $fld)
+    foreach ($columns as $code => $fld) {
         $headers[] = array("id" => $code, "content" => $fld['title'], "sort" => $code, "default" => true);
+    }
 
     $lAdmin->AddHeaders($headers);
     while ($elem = $adminResult->NavNext(true, "f_")) {
@@ -141,28 +166,51 @@ if (empty($fatal)) {
         $row =& $lAdmin->AddRow($f_ID, $elem, $editUrl, Loc::getMessage('SALE_LOCATION_L_EDIT_ITEM'));
 
         foreach ($columns as $code => $fld) {
-            if ($code == 'ID')
-                $row->AddViewField($code, '<a href="' . $editUrl . '" title="' . Loc::getMessage('SALE_LOCATION_L_EDIT_ITEM') . '">' . $f_ID . '</a>');
-            else
+            if ($code == 'ID') {
+                $row->AddViewField(
+                    $code,
+                    '<a href="' . $editUrl . '" title="' . Loc::getMessage(
+                        'SALE_LOCATION_L_EDIT_ITEM'
+                    ) . '">' . $f_ID . '</a>'
+                );
+            } else {
                 $row->AddInputField($code);
+            }
         }
 
         $arActions = array();
 
-        $arActions[] = array("ICON" => "edit", "TEXT" => Loc::getMessage('SALE_LOCATION_L_EDIT_ITEM'), "ACTION" => $lAdmin->ActionRedirect($editUrl), "DEFAULT" => true);
+        $arActions[] = array(
+            "ICON" => "edit",
+            "TEXT" => Loc::getMessage('SALE_LOCATION_L_EDIT_ITEM'),
+            "ACTION" => $lAdmin->ActionRedirect($editUrl),
+            "DEFAULT" => true
+        );
 
         if ($userIsAdmin) {
-            $arActions[] = array("ICON" => "copy", "TEXT" => Loc::getMessage('SALE_LOCATION_L_COPY_ITEM'), "ACTION" => $lAdmin->ActionRedirect($copyUrl));
+            $arActions[] = array(
+                "ICON" => "copy",
+                "TEXT" => Loc::getMessage('SALE_LOCATION_L_COPY_ITEM'),
+                "ACTION" => $lAdmin->ActionRedirect($copyUrl)
+            );
             $arActions[] = array("SEPARATOR" => true);
-            $arActions[] = array("ICON" => "delete", "TEXT" => Loc::getMessage('SALE_LOCATION_L_DELETE_ITEM'), "ACTION" => "if(confirm('" . CUtil::JSEscape(Loc::getMessage('SALE_LOCATION_L_CONFIRM_DELETE_ITEM')) . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete"));
+            $arActions[] = array(
+                "ICON" => "delete",
+                "TEXT" => Loc::getMessage('SALE_LOCATION_L_DELETE_ITEM'),
+                "ACTION" => "if(confirm('" . CUtil::JSEscape(
+                        Loc::getMessage('SALE_LOCATION_L_CONFIRM_DELETE_ITEM')
+                    ) . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete")
+            );
         }
 
         $row->AddActions($arActions);
     }
 
-    $lAdmin->AddGroupActionTable(Array(
-        "delete" => true
-    ));
+    $lAdmin->AddGroupActionTable(
+        Array(
+            "delete" => true
+        )
+    );
 
     $aContext = array(
         array(
@@ -174,7 +222,6 @@ if (empty($fatal)) {
     );
     $lAdmin->AddAdminContextMenu($aContext);
     $lAdmin->CheckListMode();
-
 } // empty($fatal)
 ?>
 
@@ -189,11 +236,13 @@ if (empty($fatal)) {
 ?>
 
 <? //temporal code?>
-<? if (!CSaleLocation::locationProCheckEnabled()) require($DOCUMENT_ROOT . "/bitrix/modules/main/include/epilog_admin.php"); ?>
+<? if (!CSaleLocation::locationProCheckEnabled()) {
+    require($DOCUMENT_ROOT . "/bitrix/modules/main/include/epilog_admin.php");
+} ?>
 
 <? SearchHelper::checkIndexesValid(); ?>
 
-<? if (strlen($fatal)): ?>
+<? if ($fatal <> ''): ?>
 
     <div class="error-message">
         <? CAdminMessage::ShowMessage(array('MESSAGE' => $fatal, 'type' => 'ERROR')) ?>
@@ -214,7 +263,11 @@ if (empty($fatal)) {
             <? //if(!in_array($code, $excludedColumns)):?>
             <tr>
 
-                <td><?= htmlspecialcharsbx($fld['title']) ?><? if ($fld['data_type'] == 'integer'): ?> (<?= Loc::getMessage('SALE_LOCATION_L_FROM_AND_TO') ?>)<? endif ?>
+                <td><?= htmlspecialcharsbx(
+                        $fld['title']
+                    ) ?><? if ($fld['data_type'] == 'integer'): ?> (<?= Loc::getMessage(
+                        'SALE_LOCATION_L_FROM_AND_TO'
+                    ) ?>)<? endif ?>
                     :
                 </td>
                 <td>
@@ -236,7 +289,9 @@ if (empty($fatal)) {
             <? //endif?>
         <? endforeach ?>
         <?
-        $oFilter->Buttons(array("table_id" => $sTableID, "url" => $APPLICATION->GetCurPageParam(), "form" => "filter_form"));
+        $oFilter->Buttons(
+            array("table_id" => $sTableID, "url" => $APPLICATION->GetCurPageParam(), "form" => "filter_form")
+        );
         $oFilter->End();
         ?>
 

@@ -144,6 +144,16 @@ class ItemAttributes
         return $this->setAttribute('data-title', htmlspecialcharsbx($title));
     }
 
+    public function setTypeClass(string $class)
+    {
+        return $this->setAttribute('data-viewer-type-class', htmlspecialcharsbx($class));
+    }
+
+    public function getTypeClass()
+    {
+        return $this->getAttribute('data-viewer-type-class');
+    }
+
     /**
      * @param $id
      *
@@ -295,11 +305,13 @@ class ItemAttributes
         }
 
         $previewManager = new PreviewManager();
-        $renderClass = $previewManager->getRenderClassByFile([
-            'contentType' => $contentType,
-            'originalName' => $originalName,
-            'size' => isset($fileArray['FILE_SIZE']) ? $fileArray['FILE_SIZE'] : null,
-        ]);
+        $renderClass = $previewManager->getRenderClassByFile(
+            [
+                'contentType' => $contentType,
+                'originalName' => $originalName,
+                'size' => isset($fileArray['FILE_SIZE']) ? $fileArray['FILE_SIZE'] : null,
+            ]
+        );
 
         if ($renderClass === Renderer\Stub::class) {
             $transformerManager = new TransformerManager();
@@ -308,10 +320,12 @@ class ItemAttributes
                 $transformation = $transformerManager->buildTransformationByFile($fileArray);
                 if ($transformation) {
                     $contentType = $transformation->getOutputContentType();
-                    $renderClass = $previewManager->getRenderClassByFile([
-                        'contentType' => $contentType,
-                        'originalName' => $originalName,
-                    ]);
+                    $renderClass = $previewManager->getRenderClassByFile(
+                        [
+                            'contentType' => $contentType,
+                            'originalName' => $originalName,
+                        ]
+                    );
                 }
             }
         }
@@ -378,7 +392,7 @@ class ItemAttributes
     protected function convertKeyToDataSet($key)
     {
         $key = str_replace('data-', '', $key);
-        $key = str_replace('-', ' ', strtolower($key));
+        $key = str_replace('-', ' ', mb_strtolower($key));
 
         return lcfirst(str_replace(' ', '', ucwords($key)));
     }

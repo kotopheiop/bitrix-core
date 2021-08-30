@@ -21,24 +21,49 @@ class ContextMenu
     public function addItem($params)
     {
         $button = Array();
-        $button['BOT_ID'] = $this->botId;
-        if (!isset($params['TEXT']) || strlen(trim($params['TEXT'])) <= 0)
+        if (isset($button['BOT_ID']) && intval($button['BOT_ID']) > 0) {
+            $button['BOT_ID'] = intval($button['BOT_ID']);
+        } else {
+            $button['BOT_ID'] = $this->botId;
+        }
+        if (!isset($params['TEXT']) || trim($params['TEXT']) == '') {
             return false;
+        }
 
         if (isset($params['LINK']) && preg_match('#^(?:/|https?://)#', $params['LINK'])) {
             $button['LINK'] = htmlspecialcharsbx($params['LINK']);
-        } else if (isset($params['FUNCTION'])) {
-            $button['FUNCTION'] = htmlspecialcharsbx($params['FUNCTION']);
-        } else if (isset($params['APP_ID'])) {
-            $button['APP_ID'] = intval($params['APP_ID']);
-            if (isset($params['APP_PARAMS']) && strlen(trim($params['APP_PARAMS'])) > 0) {
-                $button['APP_PARAMS'] = $params['APP_PARAMS'];
-            }
-        } else if ($this->botId > 0 && isset($params['COMMAND']) && strlen(trim($params['COMMAND'])) > 0) {
-            $button['COMMAND'] = substr($params['COMMAND'], 0, 1) == '/' ? substr($params['COMMAND'], 1) : $params['COMMAND'];
-            $button['COMMAND_PARAMS'] = isset($params['COMMAND_PARAMS']) && strlen(trim($params['COMMAND_PARAMS'])) > 0 ? $params['COMMAND_PARAMS'] : '';
         } else {
-            return false;
+            if (isset($params['FUNCTION'])) {
+                $button['FUNCTION'] = htmlspecialcharsbx($params['FUNCTION']);
+            } else {
+                if (isset($params['APP_ID'])) {
+                    $button['APP_ID'] = intval($params['APP_ID']);
+                    if (isset($params['APP_PARAMS']) && trim($params['APP_PARAMS']) <> '') {
+                        $button['APP_PARAMS'] = $params['APP_PARAMS'];
+                    }
+                } else {
+                    if (
+                        isset($params['ACTION'])
+                        && in_array($params['ACTION'], ['PUT', 'SEND', 'COPY', 'CALL', 'DIALOG'])
+                        && trim($params['ACTION_VALUE']) <> ''
+                    ) {
+                        $button['ACTION'] = $params['ACTION'];
+                        $button['ACTION_VALUE'] = $params['ACTION_VALUE'];
+                    } else {
+                        if ($this->botId > 0 && isset($params['COMMAND']) && trim($params['COMMAND']) <> '') {
+                            $button['COMMAND'] = mb_substr($params['COMMAND'], 0, 1) == '/' ? mb_substr(
+                                $params['COMMAND'],
+                                1
+                            ) : $params['COMMAND'];
+                            $button['COMMAND_PARAMS'] = isset($params['COMMAND_PARAMS']) && trim(
+                                $params['COMMAND_PARAMS']
+                            ) <> '' ? $params['COMMAND_PARAMS'] : '';
+                        } else {
+                            return false;
+                        }
+                    }
+                }
+            }
         }
 
         $button['TEXT'] = htmlspecialcharsbx(trim($params['TEXT']));
@@ -94,7 +119,7 @@ class ContextMenu
 
     public function getJson()
     {
-        $result = \Bitrix\Main\Web\Json::encode($this->items);
-        return strlen($result) < 60000 ? $result : "";
+        $result = \Bitrix\Im\Common::jsonEncode($this->items);
+        return mb_strlen($result) < 60000 ? $result : "";
     }
 }

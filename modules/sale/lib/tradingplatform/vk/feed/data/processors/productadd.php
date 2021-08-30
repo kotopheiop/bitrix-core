@@ -115,11 +115,13 @@ class ProductAdd extends DataProcessor
 //			ADD or EDIT products
             $logger->addLog("Add or edit products", $data);
             $productsData = Vk\Api\ApiHelper::prepareProductsDataToVk($data);
-            $productsAddEditResults = $this->executer->executeMarketProductAddEdit(array(
-                "owner_id" => $this->vkGroupId,
-                "data" => $productsData,
-                "count" => count($productsData),
-            ));
+            $productsAddEditResults = $this->executer->executeMarketProductAddEdit(
+                array(
+                    "owner_id" => $this->vkGroupId,
+                    "data" => $productsData,
+                    "count" => count($productsData),
+                )
+            );
             $data = Vk\Api\ApiHelper::addResultToData($data, $productsAddEditResults, "BX_ID");
             unset($productsAddEditResults, $productsData);
 
@@ -160,11 +162,13 @@ class ProductAdd extends DataProcessor
             }
 
             $logger->addLog("Add products to albums", $productsToAlbums);
-            $this->executer->executeMarketProductAddToAlbums(array(
-                "owner_id" => $this->vkGroupId,
-                "data" => $productsToAlbums,
-                "count" => count($productsToAlbums),
-            ));
+            $this->executer->executeMarketProductAddToAlbums(
+                array(
+                    "owner_id" => $this->vkGroupId,
+                    "data" => $productsToAlbums,
+                    "count" => count($productsToAlbums),
+                )
+            );
 
 //			WRITE successful results TO MAP
 //			we don't need use timer in last operation	. Timer will be checked in feed cycle.

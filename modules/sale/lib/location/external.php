@@ -33,20 +33,26 @@ class ExternalTable extends Entity\DataManager
         $primaryOwner = Assert::expectIntegerPositive($primaryOwner, '$primaryOwner');
 
         // nothing to connect to, simply exit
-        if (!is_array($external) || empty($external))
+        if (!is_array($external) || empty($external)) {
             return false;
+        }
 
         foreach ($external as $data) {
             $serivceId = intval($data['SERVICE_ID']);
 
-            if ($serivceId && strlen($data['XML_ID'])) {
-                $res = self::add(array(
-                    'SERVICE_ID' => $serivceId,
-                    'XML_ID' => $data['XML_ID'],
-                    'LOCATION_ID' => $primaryOwner
-                ));
-                if (!$res->isSuccess())
-                    throw new Main\SystemException(Loc::getMessage('SALE_LOCATION_EXTERNAL_ENTITY_CANNOT_ADD_DATA_EXCEPTION')); // .': '.implode(', ', $res->getErrorMessages())
+            if ($serivceId && mb_strlen($data['XML_ID'])) {
+                $res = self::add(
+                    array(
+                        'SERVICE_ID' => $serivceId,
+                        'XML_ID' => $data['XML_ID'],
+                        'LOCATION_ID' => $primaryOwner
+                    )
+                );
+                if (!$res->isSuccess()) {
+                    throw new Main\SystemException(
+                        Loc::getMessage('SALE_LOCATION_EXTERNAL_ENTITY_CANNOT_ADD_DATA_EXCEPTION')
+                    );
+                } // .': '.implode(', ', $res->getErrorMessages())
             }
         }
 
@@ -57,56 +63,77 @@ class ExternalTable extends Entity\DataManager
     {
         $primaryOwner = Assert::expectIntegerPositive($primaryOwner, '$primaryOwner');
 
-        $res = self::getList(array(
-            'filter' => array('LOCATION_ID' => $primaryOwner)
-        ));
+        $res = self::getList(
+            array(
+                'filter' => array('LOCATION_ID' => $primaryOwner)
+            )
+        );
 
         $existed = array();
-        while ($item = $res->fetch())
+        while ($item = $res->fetch()) {
             $existed[$item['ID']][$item['SERVICE_ID']] = $item['XML_ID'];
+        }
 
         foreach ($external as $id => $data) {
             $serivceId = intval($data['SERVICE_ID']);
             $id = intval($id);
 
             if (isset($existed[$id])) {
-                if (!strlen($data['XML_ID']) || !$serivceId || $data['REMOVE']) // field either empty or prepared to remove
+                if (!mb_strlen(
+                        $data['XML_ID']
+                    ) || !$serivceId || $data['REMOVE']) // field either empty or prepared to remove
+                {
                     self::delete($id);
-                else {
-                    $res = self::update($id, array(
-                        'SERVICE_ID' => $serivceId,
-                        'XML_ID' => $data['XML_ID']
-                    ));
-                    if (!$res->isSuccess())
-                        throw new Main\SystemException(Loc::getMessage('SALE_LOCATION_EXTERNAL_ENTITY_CANNOT_UPDATE_DATA_EXCEPTION'));
+                } else {
+                    $res = self::update(
+                        $id,
+                        array(
+                            'SERVICE_ID' => $serivceId,
+                            'XML_ID' => $data['XML_ID']
+                        )
+                    );
+                    if (!$res->isSuccess()) {
+                        throw new Main\SystemException(
+                            Loc::getMessage('SALE_LOCATION_EXTERNAL_ENTITY_CANNOT_UPDATE_DATA_EXCEPTION')
+                        );
+                    }
                 }
             } else {
-                if ($serivceId && strlen($data['XML_ID'])) {
-                    $res = self::add(array(
-                        'SERVICE_ID' => $serivceId,
-                        'XML_ID' => $data['XML_ID'],
-                        'LOCATION_ID' => $primaryOwner
-                    ));
-                    if (!$res->isSuccess())
-                        throw new Main\SystemException(Loc::getMessage('SALE_LOCATION_EXTERNAL_ENTITY_CANNOT_ADD_DATA_EXCEPTION'));
+                if ($serivceId && mb_strlen($data['XML_ID'])) {
+                    $res = self::add(
+                        array(
+                            'SERVICE_ID' => $serivceId,
+                            'XML_ID' => $data['XML_ID'],
+                            'LOCATION_ID' => $primaryOwner
+                        )
+                    );
+                    if (!$res->isSuccess()) {
+                        throw new Main\SystemException(
+                            Loc::getMessage('SALE_LOCATION_EXTERNAL_ENTITY_CANNOT_ADD_DATA_EXCEPTION')
+                        );
+                    }
                 }
             }
         }
-
     }
 
     public static function deleteMultipleForOwner($primaryOwner)
     {
         $primaryOwner = Assert::expectIntegerPositive($primaryOwner, '$primaryOwner');
 
-        $listRes = self::getList(array(
-            'filter' => array('LOCATION_ID' => $primaryOwner),
-            'select' => array('ID')
-        ));
+        $listRes = self::getList(
+            array(
+                'filter' => array('LOCATION_ID' => $primaryOwner),
+                'select' => array('ID')
+            )
+        );
         while ($item = $listRes->fetch()) {
             $res = self::delete($item['ID']);
-            if (!$res->isSuccess())
-                throw new Main\SystemException(Loc::getMessage('SALE_LOCATION_EXTERNAL_ENTITY_CANNOT_DELETE_DATA_EXCEPTION'));
+            if (!$res->isSuccess()) {
+                throw new Main\SystemException(
+                    Loc::getMessage('SALE_LOCATION_EXTERNAL_ENTITY_CANNOT_DELETE_DATA_EXCEPTION')
+                );
+            }
         }
     }
 
@@ -117,8 +144,9 @@ class ExternalTable extends Entity\DataManager
      */
     public static function deleteMultipleByParentRangeSql($sql)
     {
-        if (!strlen($sql))
+        if ($sql == '') {
             throw new Main\SystemException('Range sql is empty');
+        }
 
         $dbConnection = Main\HttpApplication::getConnection();
 

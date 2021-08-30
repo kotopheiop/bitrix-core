@@ -93,7 +93,6 @@ class TransportSms implements Transport\iBase, Transport\iLimitation
 
     public function end()
     {
-
     }
 
     /**

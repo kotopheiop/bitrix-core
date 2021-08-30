@@ -17,8 +17,9 @@ require_once(dirname(__FILE__) . "/../include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/prolog.php");
 define("HELP_FILE", "settings/mail_events/message_edit.php");
 
-if (!$USER->CanDoOperation('edit_other_settings') && !$USER->CanDoOperation('view_other_settings'))
+if (!$USER->CanDoOperation('edit_other_settings') && !$USER->CanDoOperation('view_other_settings')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 CModule::IncludeModule("fileman");
 
@@ -34,15 +35,26 @@ $bVarsFromForm = false;
 $ID = intval($ID);
 $COPY_ID = intval($COPY_ID);
 $message = null;
-if ($COPY_ID > 0)
+if ($COPY_ID > 0) {
     $ID = $COPY_ID;
+}
 $aTabs = array(
-    array("DIV" => "edit1", "TAB" => GetMessage("MAIN_TAB"), "ICON" => "message_edit", "TITLE" => GetMessage("MAIN_TAB_TITLE")),
-    array("DIV" => "edit2", "TAB" => GetMessage("ATTACHMENT_TAB"), "ICON" => "message_edit", "TITLE" => GetMessage("ATTACHMENT_TAB_TITLE")),
+    array(
+        "DIV" => "edit1",
+        "TAB" => GetMessage("MAIN_TAB"),
+        "ICON" => "message_edit",
+        "TITLE" => GetMessage("MAIN_TAB_TITLE")
+    ),
+    array(
+        "DIV" => "edit2",
+        "TAB" => GetMessage("ATTACHMENT_TAB"),
+        "ICON" => "message_edit",
+        "TITLE" => GetMessage("ATTACHMENT_TAB_TITLE")
+    ),
 );
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
-if ($REQUEST_METHOD == "POST" && (strlen($save) > 0 || strlen($apply) > 0) && $isAdmin && check_bitrix_sessid()) {
+if ($REQUEST_METHOD == "POST" && ($save <> '' || $apply <> '') && $isAdmin && check_bitrix_sessid()) {
     if (!$isUserHavePhpAccess) {
         $MESSAGE_OLD = false;
         if ($ID > 0) {
@@ -58,11 +70,12 @@ if ($REQUEST_METHOD == "POST" && (strlen($save) > 0 || strlen($apply) > 0) && $i
     if (is_array($ADDITIONAL_FIELD)) {
         $ADDITIONAL_FIELD_tmp = array();
         foreach ($ADDITIONAL_FIELD['NAME'] as $AddFieldNum => $addFieldName) {
-            if (strlen($addFieldName) > 0) {
-                if (isset($ADDITIONAL_FIELD['VALUE'][$AddFieldNum]))
+            if ($addFieldName <> '') {
+                if (isset($ADDITIONAL_FIELD['VALUE'][$AddFieldNum])) {
                     $addFieldValue = $ADDITIONAL_FIELD['VALUE'][$AddFieldNum];
-                else
+                } else {
                     $addFieldValue = '';
+                }
 
                 $ADDITIONAL_FIELD_tmp[] = array('NAME' => $addFieldName, 'VALUE' => $addFieldValue);
             }
@@ -96,9 +109,9 @@ if ($REQUEST_METHOD == "POST" && (strlen($save) > 0 || strlen($apply) > 0) && $i
         "LANGUAGE_ID" => $_POST["LANGUAGE_ID"],
     );
 
-    if ($ID > 0 && $COPY_ID <= 0)
+    if ($ID > 0 && $COPY_ID <= 0) {
         $res = $em->Update($ID, $arFields);
-    else {
+    } else {
         $ID = $em->Add($arFields);
         $res = ($ID > 0);
         $new = "Y";
@@ -125,8 +138,10 @@ if ($REQUEST_METHOD == "POST" && (strlen($save) > 0 || strlen($apply) > 0) && $i
             foreach ($arFiles as $index => $file) {
                 if (!is_uploaded_file($file["tmp_name"])) {
                     unset($arFiles[$index]);
-                } else if ($index > 0) {
-                    $FILE_ID_tmp[] = intval($index);
+                } else {
+                    if ($index > 0) {
+                        $FILE_ID_tmp[] = intval($index);
+                    }
                 }
             }
         }
@@ -135,16 +150,19 @@ if ($REQUEST_METHOD == "POST" && (strlen($save) > 0 || strlen($apply) > 0) && $i
         if (!empty($FILES_del) && is_array($FILES_del)) {
             foreach ($FILES_del as $file => $fileMarkDel) {
                 $file = intval($file);
-                if ($file > 0)
+                if ($file > 0) {
                     $FILE_ID_tmp[] = $file;
+                }
             }
         }
 
         if (count($FILE_ID_tmp) > 0) {
-            $deleteFileDb = \Bitrix\Main\Mail\Internal\EventMessageAttachmentTable::getList(array(
-                'select' => array('EVENT_MESSAGE_ID', 'FILE_ID'),
-                'filter' => array('=EVENT_MESSAGE_ID' => $ID, '=FILE_ID' => $FILE_ID_tmp),
-            ));
+            $deleteFileDb = \Bitrix\Main\Mail\Internal\EventMessageAttachmentTable::getList(
+                array(
+                    'select' => array('EVENT_MESSAGE_ID', 'FILE_ID'),
+                    'filter' => array('=EVENT_MESSAGE_ID' => $ID, '=FILE_ID' => $FILE_ID_tmp),
+                )
+            );
             while ($deleteFile = $deleteFileDb->fetch()) {
                 CFile::Delete($deleteFile["FILE_ID"]);
                 \Bitrix\Main\Mail\Internal\EventMessageAttachmentTable::delete($deleteFile);
@@ -154,21 +172,25 @@ if ($REQUEST_METHOD == "POST" && (strlen($save) > 0 || strlen($apply) > 0) && $i
         //Brandnew
         if (is_array($_FILES["NEW_FILE"])) {
             foreach ($_FILES["NEW_FILE"] as $attribute => $files) {
-                if (is_array($files))
-                    foreach ($files as $index => $value)
+                if (is_array($files)) {
+                    foreach ($files as $index => $value) {
                         $arFiles[$index][$attribute] = $value;
+                    }
+                }
             }
 
             foreach ($arFiles as $index => $file) {
-                if (!is_uploaded_file($file["tmp_name"]))
+                if (!is_uploaded_file($file["tmp_name"])) {
                     unset($arFiles[$index]);
+                }
             }
         }
 
         //New from media library and file structure
         if (array_key_exists("NEW_FILE", $_POST) && is_array($_POST["NEW_FILE"])) {
-            foreach ($_POST["NEW_FILE"] as $index => $value)
+            foreach ($_POST["NEW_FILE"] as $index => $value) {
                 $arFiles[$index] = CFile::MakeFileArray($value);
+            }
         }
 
         //Copy
@@ -177,18 +199,21 @@ if ($REQUEST_METHOD == "POST" && (strlen($save) > 0 || strlen($apply) > 0) && $i
                 $arFileCopy_tmp = array();
                 foreach (array_reverse($_POST["FILES"], true) as $key => $file_id) {
                     //skip "deleted"
-                    if (is_array($FILES_del) && array_key_exists($key, $FILES_del))
+                    if (is_array($FILES_del) && array_key_exists($key, $FILES_del)) {
                         continue;
+                    }
                     //clone file
                     if (intval($file_id) > 0) {
                         $arFileCopy_tmp[] = $file_id;
                     }
                 }
 
-                $deleteFileDb = \Bitrix\Main\Mail\Internal\EventMessageAttachmentTable::getList(array(
-                    'select' => array('FILE_ID'),
-                    'filter' => array('EVENT_MESSAGE_ID' => $COPY_ID, 'FILE_ID' => $arFileCopy_tmp),
-                ));
+                $deleteFileDb = \Bitrix\Main\Mail\Internal\EventMessageAttachmentTable::getList(
+                    array(
+                        'select' => array('FILE_ID'),
+                        'filter' => array('EVENT_MESSAGE_ID' => $COPY_ID, 'FILE_ID' => $arFileCopy_tmp),
+                    )
+                );
                 while ($arExistingFile = $deleteFileDb->fetch()) {
                     array_unshift($arFiles, CFile::MakeFileArray($arExistingFile["FILE_ID"]));
                 }
@@ -197,7 +222,7 @@ if ($REQUEST_METHOD == "POST" && (strlen($save) > 0 || strlen($apply) > 0) && $i
                 foreach (array_reverse($_POST["FILES"], true) as $file) {
                     if (
                         is_array($file)
-                        && strlen($file["tmp_name"]) > 0
+                        && $file["tmp_name"] <> ''
                         && $APPLICATION->GetFileAccessPermission($file["tmp_name"]) >= "W"
                     ) {
                         array_unshift($arFiles, $file);
@@ -207,52 +232,64 @@ if ($REQUEST_METHOD == "POST" && (strlen($save) > 0 || strlen($apply) > 0) && $i
         }
 
         foreach ($arFiles as $file) {
-            if (strlen($file["name"]) > 0 and intval($file["size"]) > 0) {
+            if ($file["name"] <> '' and intval($file["size"]) > 0) {
                 $resultInsertAttachFile = false;
                 $file["MODULE_ID"] = "main";
                 $fid = intval(CFile::SaveFile($file, "main", true));
                 if ($fid > 0) {
-                    $resultAddAttachFile = \Bitrix\Main\Mail\Internal\EventMessageAttachmentTable::add(array(
-                        'EVENT_MESSAGE_ID' => $ID,
-                        'FILE_ID' => $fid
-                    ));
+                    $resultAddAttachFile = \Bitrix\Main\Mail\Internal\EventMessageAttachmentTable::add(
+                        array(
+                            'EVENT_MESSAGE_ID' => $ID,
+                            'FILE_ID' => $fid
+                        )
+                    );
                     $resultInsertAttachFile = $resultAddAttachFile->isSuccess();
                 }
 
-                if (!$resultInsertAttachFile)
+                if (!$resultInsertAttachFile) {
                     break;
+                }
             }
         }
 
-        if (strlen($save) > 0) {
-            if (!empty($_REQUEST["type"]))
+        if ($save <> '') {
+            if (!empty($_REQUEST["type"])) {
                 LocalRedirect(BX_ROOT . "/admin/type_edit.php?EVENT_NAME=" . $EVENT_NAME . "&lang=" . LANGUAGE_ID);
-            else
+            } else {
                 LocalRedirect(BX_ROOT . "/admin/message_admin.php?lang=" . LANGUAGE_ID);
-        } else
-            LocalRedirect(BX_ROOT . "/admin/message_edit.php?lang=" . LANGUAGE_ID . "&ID=" . $ID . "&type=" . $_REQUEST["type"] . "&" . $tabControl->ActiveTabParam());
+            }
+        } else {
+            LocalRedirect(
+                BX_ROOT . "/admin/message_edit.php?lang=" . LANGUAGE_ID . "&ID=" . $ID . "&type=" . $_REQUEST["type"] . "&" . $tabControl->ActiveTabParam(
+                )
+            );
+        }
     }
 }
 
 $arEventMessageFile = array();
 $str_ACTIVE = "Y";
-$str_EVENT_NAME = $EVENT_NAME;
+$str_EVENT_NAME = $_REQUEST["EVENT_NAME"];
 $em = CEventMessage::GetByID($ID);
 if (!$em->ExtractEditFields("str_")) {
     $ID = 0;
 } else {
     $str_LID = Array();
     $db_LID = CEventMessage::GetLang($ID);
-    while ($ar_LID = $db_LID->Fetch())
+    while ($ar_LID = $db_LID->Fetch()) {
         $str_LID[] = $ar_LID["LID"];
+    }
 
-    $attachmentFileDb = \Bitrix\Main\Mail\Internal\EventMessageAttachmentTable::getList(array(
-        'select' => array('FILE_ID'),
-        'filter' => array('EVENT_MESSAGE_ID' => $ID),
-    ));
+    $attachmentFileDb = \Bitrix\Main\Mail\Internal\EventMessageAttachmentTable::getList(
+        array(
+            'select' => array('FILE_ID'),
+            'filter' => array('EVENT_MESSAGE_ID' => $ID),
+        )
+    );
     while ($ar = $attachmentFileDb->fetch()) {
-        if ($arFileFetch = CFile::GetFileArray($ar['FILE_ID']))
+        if ($arFileFetch = CFile::GetFileArray($ar['FILE_ID'])) {
             $arEventMessageFile[] = $arFileFetch;
+        }
     }
 }
 
@@ -264,18 +301,19 @@ if ($bVarsFromForm) {
 
 $arMailSiteTemplate = array();
 $mailSiteTemplateDb = CSiteTemplate::GetList(null, array('TYPE' => 'mail'));
-while ($mailSiteTemplate = $mailSiteTemplateDb->GetNext())
+while ($mailSiteTemplate = $mailSiteTemplateDb->GetNext()) {
     $arMailSiteTemplate[] = $mailSiteTemplate;
-
+}
 
 if (!$isUserHavePhpAccess) {
     $str_MESSAGE = htmlspecialcharsbx(LPA::PrepareContent(htmlspecialcharsback($str_MESSAGE)));
 }
 
-if ($ID > 0 && $COPY_ID <= 0)
+if ($ID > 0 && $COPY_ID <= 0) {
     $APPLICATION->SetTitle(str_replace("#ID#", "$ID", GetMessage("EDIT_MESSAGE_TITLE")));
-else
+} else {
     $APPLICATION->SetTitle(GetMessage("NEW_MESSAGE_TITLE"));
+}
 
 require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admin_after.php");
 ?>
@@ -353,7 +391,10 @@ require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admi
 
             $aMenu[] = array(
                 "TEXT" => GetMessage("MAIN_DELETE_RECORD"),
-                "LINK" => "javascript:if(confirm('" . GetMessage("MAIN_DELETE_RECORD_CONF") . "')) window.location='/bitrix/admin/message_admin.php?ID=" . $ID . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get() . "&action=delete';",
+                "LINK" => "javascript:if(confirm('" . GetMessage(
+                        "MAIN_DELETE_RECORD_CONF"
+                    ) . "')) window.location='/bitrix/admin/message_admin.php?ID=" . $ID . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get(
+                    ) . "&action=delete';",
                 "TITLE" => GetMessage("MAIN_DELETE_RECORD_TITLE"),
                 "ICON" => "btn_delete"
             );
@@ -361,13 +402,16 @@ require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admi
         $context = new CAdminContextMenu($aMenu);
         $context->Show();
 
-        if ($e = $APPLICATION->GetException())
+        if ($e = $APPLICATION->GetException()) {
             $message = new CAdminMessage(GetMessage("MAIN_ERROR_SAVING"), $e);
-        if ($message)
+        }
+        if ($message) {
             echo $message->Show();
+        }
 
-        if (strlen($strError) > 0)
+        if ($strError <> '') {
             CAdminMessage::ShowMessage(Array("MESSAGE" => $strError, "HTML" => true, "TYPE" => "ERROR"));
+        }
 
         $tabControl->Begin();
 
@@ -380,7 +424,8 @@ require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admi
                 $rsType = CEventType::GetList(
                     array(
                         "LID" => LANGUAGE_ID,
-                        "EVENT_TYPE" => \Bitrix\Main\Mail\Internal\EventTypeTable::TYPE_EMAIL),
+                        "EVENT_TYPE" => \Bitrix\Main\Mail\Internal\EventTypeTable::TYPE_EMAIL
+                    ),
                     array("name" => "asc")
                 );
                 while ($arType = $rsType->Fetch()) {
@@ -402,8 +447,9 @@ require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admi
                             onchange="window.location='message_edit.php?lang=<?= LANGUAGE_ID ?>&EVENT_NAME='+this[this.selectedIndex].value">
                         <?
                         foreach ($event_type_ref as $ev_name => $arType):
-                            if ($id_1st === false)
+                            if ($id_1st === false) {
                                 $id_1st = $ev_name;
+                            }
                             ?>
                             <option value="<?= htmlspecialcharsbx($arType["EVENT_NAME"]) ?>"<?
                             if ($str_EVENT_NAME == $arType["EVENT_NAME"]) {
@@ -441,10 +487,12 @@ require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admi
                 <select name="LANGUAGE_ID">
                     <option value=""><? echo GetMessage("main_mess_edit_lang_not_set") ?></option>
                     <?
-                    $languages = \Bitrix\Main\Localization\LanguageTable::getList(array(
-                        "filter" => array("=ACTIVE" => "Y"),
-                        "order" => array("SORT" => "ASC", "NAME" => "ASC")
-                    ));
+                    $languages = \Bitrix\Main\Localization\LanguageTable::getList(
+                        array(
+                            "filter" => array("=ACTIVE" => "Y"),
+                            "order" => array("SORT" => "ASC", "NAME" => "ASC")
+                        )
+                    );
                     ?>
                     <? while ($language = $languages->fetch()): ?>
                         <option value="<?= $language["LID"] ?>"<? if ($str_LANGUAGE_ID == $language["LID"]) echo " selected" ?>>
@@ -530,9 +578,15 @@ require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admi
                        value="<? echo $str_PRIORITY ?>" onfocus="t=this">
                 <select onchange="document.getElementById('MSG_PRIORITY').value=this.value">
                     <option value=""></option>
-                    <option value="1 (Highest)"<? if ($str_PRIORITY == '1 (Highest)') echo ' selected' ?>><? echo GetMessage("MSG_PRIORITY_1") ?></option>
-                    <option value="3 (Normal)"<? if ($str_PRIORITY == '3 (Normal)') echo ' selected' ?>><? echo GetMessage("MSG_PRIORITY_3") ?></option>
-                    <option value="5 (Lowest)"<? if ($str_PRIORITY == '5 (Lowest)') echo ' selected' ?>><? echo GetMessage("MSG_PRIORITY_5") ?></option>
+                    <option value="1 (Highest)"<? if ($str_PRIORITY == '1 (Highest)') echo ' selected' ?>><? echo GetMessage(
+                            "MSG_PRIORITY_1"
+                        ) ?></option>
+                    <option value="3 (Normal)"<? if ($str_PRIORITY == '3 (Normal)') echo ' selected' ?>><? echo GetMessage(
+                            "MSG_PRIORITY_3"
+                        ) ?></option>
+                    <option value="5 (Lowest)"<? if ($str_PRIORITY == '5 (Lowest)') echo ' selected' ?>><? echo GetMessage(
+                            "MSG_PRIORITY_5"
+                        ) ?></option>
                 </select>
             </td>
         </tr>
@@ -543,8 +597,9 @@ require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admi
             array('NAME' => '', 'VALUE' => ''),
             array('NAME' => '', 'VALUE' => ''),
         );
-        if (is_array($str_ADDITIONAL_FIELD))
+        if (is_array($str_ADDITIONAL_FIELD)) {
             $arADDITIONAL_FIELD = array_merge($str_ADDITIONAL_FIELD, $arADDITIONAL_FIELD);
+        }
 
         ?>
         <? foreach ($arADDITIONAL_FIELD as $additionalField): ?>
@@ -619,7 +674,7 @@ require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admi
         <?
         $arAttachedImagePlaceHolders = array();
         foreach ($arEventMessageFile as $arFile) {
-            if (substr($arFile['CONTENT_TYPE'], 0, 5) == 'image') {
+            if (mb_substr($arFile['CONTENT_TYPE'], 0, 5) == 'image') {
                 $arAttachedImagePlaceHolders[] = $arFile;
             }
         }
@@ -629,8 +684,9 @@ require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admi
                 <td align="left" colspan="2"><br><b><?= GetMessage("AVAILABLE_FIELDS_ATTACHMENT") ?></b><br><br>
                     <? foreach ($arAttachedImagePlaceHolders as $arFile): ?>
                         <a title="<?= GetMessage("MAIN_INSERT") ?>"
-                           href="javascript:PutAttachString('<img bxmailattachcid=\'<?= $arFile["ID"] ?>\' src=\'<?= $arFile['SRC'] ?>\' width=\'<?= $arFile['WIDTH'] ?>\' height=\'<?= $arFile['HEIGHT'] ?>\'>');"><?= htmlspecialcharsbx($arFile['ORIGINAL_NAME']) ?></a>
-                        <br>
+                           href="javascript:PutAttachString('<img bxmailattachcid=\'<?= $arFile["ID"] ?>\' src=\'<?= $arFile['SRC'] ?>\' width=\'<?= $arFile['WIDTH'] ?>\' height=\'<?= $arFile['HEIGHT'] ?>\'>');"><?= htmlspecialcharsbx(
+                                $arFile['ORIGINAL_NAME']
+                            ) ?></a><br>
                     <? endforeach; ?>
                 </td>
             </tr>
@@ -643,7 +699,13 @@ require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admi
 	";
         function ReplaceVars($str)
         {
-            return preg_replace("/(#.+?#)/", "<a title='" . GetMessage("MAIN_INSERT") . "' href=\"javascript:PutString('\\1')\">\\1</a>", $str);
+            return preg_replace(
+                "/(#.+?#)/",
+                "<a title='" . GetMessage(
+                    "MAIN_INSERT"
+                ) . "' href=\"javascript:PutString('\\1')\">\\1</a>",
+                $str
+            );
         }
 
         ?>
@@ -670,9 +732,13 @@ require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admi
             <td>
                 <?
                 $arInputControlValues = array();
-                foreach ($arEventMessageFile as $arFile) $arInputControlValues["FILES[" . $arFile["ID"] . "]"] = $arFile["ID"];
+                foreach ($arEventMessageFile as $arFile) {
+                    $arInputControlValues["FILES[" . $arFile["ID"] . "]"] = $arFile["ID"];
+                }
                 \Bitrix\Main\Loader::includeModule("fileman");
-                echo CFileInput::ShowMultiple($arInputControlValues, "NEW_FILE[n#IND#]",
+                echo CFileInput::ShowMultiple(
+                    $arInputControlValues,
+                    "NEW_FILE[n#IND#]",
                     array(
                         "IMAGE" => "Y",
                         "PATH" => "Y",

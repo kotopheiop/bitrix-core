@@ -1,7 +1,11 @@
-<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die(); ?><?
+<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+} ?><?
 include(GetLangFileName(dirname(__FILE__) . "/", "/.description.php"));
 $psTitle = "authorize.net";
-$psDescription = GetMessage("AN_NAME") . " <a href=\"http://www.authorize.net\" target=\"_blank\">http://www.authorize.net</a>";
+$psDescription = GetMessage(
+        "AN_NAME"
+    ) . " <a href=\"http://www.authorize.net\" target=\"_blank\">http://www.authorize.net</a>";
 
 $arPSCorrespondence = array(
     "PS_LOGIN" => array(

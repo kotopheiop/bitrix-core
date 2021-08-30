@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 \Bitrix\Main\Loader::includeModule('sale');
@@ -8,8 +9,9 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/prolog.php");
 global $DB;
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions <= "D")
+if ($saleModulePermissions <= "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 if (!CBXFeatures::IsFeatureEnabled('SaleReports')) {
@@ -42,7 +44,6 @@ if (!CModule::IncludeModule('iblock')) {
 }
 
 if (!$errorMessage) {
-
     CBaseSaleReportHelper::init();
 
     $arParams = array(
@@ -54,13 +55,19 @@ if (!$errorMessage) {
 
     // auto create fresh default reports only if some reports alredy exist
     $optionSaleReportsVersion = '~U_' . SALE_REPORT_OWNER_ID . '_REPORTS';
-    $userReportVersion = CUserOptions::GetOption('sale', $optionSaleReportsVersion, CBaseSaleReportHelper::getFirstVersion());
+    $userReportVersion = CUserOptions::GetOption(
+        'sale',
+        $optionSaleReportsVersion,
+        CBaseSaleReportHelper::getFirstVersion()
+    );
 
     $saleReportVersion = CBaseSaleReportHelper::getCurrentVersion();
 
     if ($saleReportVersion !== $userReportVersion && CheckVersion($saleReportVersion, $userReportVersion)) {
         $nReps = 0;
-        foreach (CBaseSaleReportHelper::getOwners() as $ownerId) $nReps += CReport::GetCountInt($ownerId);
+        foreach (CBaseSaleReportHelper::getOwners() as $ownerId) {
+            $nReps += CReport::GetCountInt($ownerId);
+        }
         if ($nReps > 0) {
             $dReports = CBaseSaleReportHelper::getDefaultReports();
 
@@ -123,28 +130,37 @@ if (!$errorMessage) {
         if ($_REQUEST['action_target'] === 'on' || $_REQUEST['action_target'] === 'selected') {
             $arID = array();
             // Getting reports list.
-            $res = Bitrix\Report\ReportTable::getList(array(
-                'select' => array('ID'),
-                'filter' => array('=CREATED_BY' => $USER->GetID(), '=OWNER_ID' => CBaseSaleReportHelper::getOwners())
-            ));
-            while ($row = $res->fetch())
+            $res = Bitrix\Report\ReportTable::getList(
+                array(
+                    'select' => array('ID'),
+                    'filter' => array(
+                        '=CREATED_BY' => $USER->GetID(),
+                        '=OWNER_ID' => CBaseSaleReportHelper::getOwners()
+                    )
+                )
+            );
+            while ($row = $res->fetch()) {
                 $arID[] = $row['ID'];
+            }
             unset($res);
             unset($row);
         }
 
         foreach ($arID as $ID) {
-            if (strlen($ID) <= 0) continue;
+            if ($ID == '') {
+                continue;
+            }
             switch ($_REQUEST['action']) {
                 case "delete":
                     @set_time_limit(0);
                     $DB->StartTransaction();
                     if (!CReport::Delete($ID)) {
                         $DB->Rollback();
-                        if ($ex = $APPLICATION->GetException())
+                        if ($ex = $APPLICATION->GetException()) {
                             $lReports->AddGroupError($ex->GetString(), $ID);
-                        else
+                        } else {
                             $lReports->AddGroupError(GetMessage("SALE_REPORT_ERROR_DELREPFROMLIST"), $ID);
+                        }
                     }
                     $DB->Commit();
                     break;
@@ -153,10 +169,12 @@ if (!$errorMessage) {
     }
 
     // Getting reports list.
-    $dbRepList = Bitrix\Report\ReportTable::getList(array(
-        'select' => array('ID', 'TITLE', 'DESCRIPTION', 'CREATED_DATE', 'MARK_DEFAULT'),
-        'filter' => array('=CREATED_BY' => $USER->GetID(), '=OWNER_ID' => CBaseSaleReportHelper::getOwners())
-    ));
+    $dbRepList = Bitrix\Report\ReportTable::getList(
+        array(
+            'select' => array('ID', 'TITLE', 'DESCRIPTION', 'CREATED_DATE', 'MARK_DEFAULT'),
+            'filter' => array('=CREATED_BY' => $USER->GetID(), '=OWNER_ID' => CBaseSaleReportHelper::getOwners())
+        )
+    );
 
     $dbRepList = new CAdminResult($dbRepList, $sTableID);
     $dbRepList->NavStart();
@@ -183,13 +201,22 @@ if (!$errorMessage) {
     $nReports = 0;
     while ($arRes = $dbRepList->NavNext(false)) {
         $lRow = $lReports->AddRow($arRes['ID'], $arRes);
-        $lRow->AddViewField('TITLE', "<a href='" . "sale_report_view.php?lang=" . LANG . '&ID=' . $arRes['ID'] . "' title='" . CUtil::addslashes(htmlspecialcharsEx($arRes['DESCRIPTION'])) . "'>" . CUtil::addslashes(htmlspecialcharsEx($arRes['TITLE'])) . "</a>");
-        $createdDateStr = ($arRes['CREATED_DATE'] instanceof \Bitrix\Main\Type\DateTime || $arRes['CREATED_DATE'] instanceof \Bitrix\Main\Type\Date) ? ConvertTimeStamp($arRes['CREATED_DATE']->getTimestamp(), 'SHORT') : '';
+        $lRow->AddViewField(
+            'TITLE',
+            "<a href='" . "sale_report_view.php?lang=" . LANG . '&ID=' . $arRes['ID'] . "' title='" . CUtil::addslashes(
+                htmlspecialcharsEx($arRes['DESCRIPTION'])
+            ) . "'>" . CUtil::addslashes(htmlspecialcharsEx($arRes['TITLE'])) . "</a>"
+        );
+        $createdDateStr = ($arRes['CREATED_DATE'] instanceof \Bitrix\Main\Type\DateTime || $arRes['CREATED_DATE'] instanceof \Bitrix\Main\Type\Date) ? ConvertTimeStamp(
+            $arRes['CREATED_DATE']->getTimestamp(),
+            'SHORT'
+        ) : '';
         $lRow->AddViewField('CREATED_DATE', $createdDateStr);
 
         $markNum = 0;
-        if (isset($arRes['MARK_DEFAULT']))
+        if (isset($arRes['MARK_DEFAULT'])) {
             $markNum = intval($arRes['MARK_DEFAULT']);
+        }
 
         // <editor-fold defaultstate="collapsed" desc="Context menu of rows of AdminList.">
         $arRowActions = array();
@@ -205,21 +232,28 @@ if (!$errorMessage) {
             $arRowActions[] = array(
                 "ICON" => "copy",
                 "TEXT" => GetMessage('SALE_REPORT_LIST_ROW_ACTIONS_COPY_TEXT'),
-                "ACTION" => $lReports->ActionRedirect("sale_report_construct.php?copyID=" . $arRes['ID'] . "&lang=" . LANG),
+                "ACTION" => $lReports->ActionRedirect(
+                    "sale_report_construct.php?copyID=" . $arRes['ID'] . "&lang=" . LANG
+                ),
                 //"DEFAULT"=>true
             );
             if ($markNum === 0) {
                 $arRowActions[] = array(
                     "ICON" => "edit",
                     "TEXT" => GetMessage('SALE_REPORT_LIST_ROW_ACTIONS_EDIT_TEXT'),
-                    "ACTION" => $lReports->ActionRedirect("sale_report_construct.php?ID=" . $arRes['ID'] . "&lang=" . LANG),
+                    "ACTION" => $lReports->ActionRedirect(
+                        "sale_report_construct.php?ID=" . $arRes['ID'] . "&lang=" . LANG
+                    ),
                     //"DEFAULT"=>true
                 );
             }
             $arRowActions[] = array(
                 "ICON" => "delete",
                 "TEXT" => GetMessage('SALE_REPORT_LIST_ROW_ACTIONS_DELETE_TEXT'),
-                "ACTION" => "if(confirm('" . GetMessage("REPORT_DELETE_CONFIRM") . "')) " . $lReports->ActionDoGroup($arRes['ID'], "delete")
+                "ACTION" => "if(confirm('" . GetMessage("REPORT_DELETE_CONFIRM") . "')) " . $lReports->ActionDoGroup(
+                        $arRes['ID'],
+                        "delete"
+                    )
             );
         }
         // </editor-fold>
@@ -251,8 +285,10 @@ if (!$errorMessage) {
     // Adding summary row.
     $lReports->AddFooter(
         array(
-            array("title" => GetMessage("MAIN_ADMIN_LIST_SELECTED"), "value" => $dbRepList->SelectedRowsCount()), // quatity of elements
-            array("counter" => true, "title" => GetMessage("MAIN_ADMIN_LIST_CHECKED"), "value" => "0"), // counter of selected elements
+            array("title" => GetMessage("MAIN_ADMIN_LIST_SELECTED"), "value" => $dbRepList->SelectedRowsCount()),
+            // quatity of elements
+            array("counter" => true, "title" => GetMessage("MAIN_ADMIN_LIST_CHECKED"), "value" => "0"),
+            // counter of selected elements
         )
     );
 

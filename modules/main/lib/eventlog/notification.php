@@ -197,9 +197,13 @@ class Notification
             return $this->data->__call($name, $arguments);
         }
 
-        throw new Main\SystemException(sprintf(
-            'Unknown method `%s` for object `%s`', $name, get_called_class()
-        ));
+        throw new Main\SystemException(
+            sprintf(
+                'Unknown method `%s` for object `%s`',
+                $name,
+                get_called_class()
+            )
+        );
     }
 
     /**

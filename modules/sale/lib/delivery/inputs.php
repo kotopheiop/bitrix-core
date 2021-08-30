@@ -1,7 +1,8 @@
 <?php
 
 namespace Bitrix\Sale\Delivery\Inputs;
-require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/lib/internals/input.php");
+
+require_once __DIR__ . '/../internals/input.php';
 
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentTypeException;
@@ -14,19 +15,23 @@ class Period extends Input\Base
 {
     public static function getViewHtmlSingle(array $input, $values)
     {
-        if (!is_array($values))
+        if (!is_array($values)) {
             throw new ArgumentTypeException('values', 'array');
+        }
 
         self::checkArgs($input, $values);
 
-        return $input["ITEMS"]["FROM"]["NAME"] . ": " . Input\Manager::getViewHtml($input["ITEMS"]["FROM"], $values["FROM"]) .
+        return $input["ITEMS"]["FROM"]["NAME"] . ": " . Input\Manager::getViewHtml(
+                $input["ITEMS"]["FROM"],
+                $values["FROM"]
+            ) .
             $input["ITEMS"]["TO"]["NAME"] . ": " . Input\Manager::getViewHtml($input["ITEMS"]["TO"], $values["TO"]) .
             " " . Input\Manager::getViewHtml($input["ITEMS"]["TYPE"], $values["TYPE"]);
     }
 
     public static function getEditHtmlSingle($name, array $input, $values)
     {
-        if (!isset($input["ITEMS"]))
+        if (!isset($input["ITEMS"])) {
             $input["ITEMS"] = array(
                 "FROM" => array(
                     "TYPE" => "STRING",
@@ -45,37 +50,51 @@ class Period extends Input\Base
                     )
                 )
             );
+        }
 
-        return $input["ITEMS"]["FROM"]["NAME"] . Input\Manager::getEditHtml($name . "[FROM]", $input["ITEMS"]["FROM"], $values["FROM"]) .
-            $input["ITEMS"]["TO"]["NAME"] . Input\Manager::getEditHtml($name . "[TO]", $input["ITEMS"]["TO"], $values["TO"]) .
+        return $input["ITEMS"]["FROM"]["NAME"] . Input\Manager::getEditHtml(
+                $name . "[FROM]",
+                $input["ITEMS"]["FROM"],
+                $values["FROM"]
+            ) .
+            $input["ITEMS"]["TO"]["NAME"] . Input\Manager::getEditHtml(
+                $name . "[TO]",
+                $input["ITEMS"]["TO"],
+                $values["TO"]
+            ) .
             " " . Input\Manager::getEditHtml($name . "[TYPE]", $input["ITEMS"]["TYPE"], $values["TYPE"]);
     }
 
     public static function getError(array $input, $values)
     {
-        if (!is_array($values))
+        if (!is_array($values)) {
             throw new ArgumentTypeException('values', 'array');
+        }
 
         return self::getErrorSingle($input, $values);
     }
 
     public static function getErrorSingle(array $input, $values)
     {
-        if (!is_array($values))
+        if (!is_array($values)) {
             throw new ArgumentTypeException('values', 'array');
+        }
 
         self::checkArgs($input, $values);
 
         $errors = array();
 
-        if ($error = Input\Manager::getError($input["ITEMS"]["FROM"], $values["FROM"]))
+        if ($error = Input\Manager::getError($input["ITEMS"]["FROM"], $values["FROM"])) {
             $errors = $error;
+        }
 
-        if ($error = Input\Manager::getError($input["ITEMS"]["TO"], $values["TO"]))
+        if ($error = Input\Manager::getError($input["ITEMS"]["TO"], $values["TO"])) {
             $errors = array_merge($errors, $error);
+        }
 
-        if ($error = Input\Manager::getError($input["ITEMS"]["TYPE"], $values["TYPE"]))
+        if ($error = Input\Manager::getError($input["ITEMS"]["TYPE"], $values["TYPE"])) {
             $errors = array_merge($errors, $error);
+        }
 
         return $errors;
     }
@@ -92,20 +111,25 @@ class Period extends Input\Base
 
     protected static function checkArgs(array $input, array $values)
     {
-        if (!isset($input["ITEMS"]["FROM"]) || !isset($input["ITEMS"]["TO"]) || !isset($input["ITEMS"]["TYPE"]))
+        if (!isset($input["ITEMS"]["FROM"]) || !isset($input["ITEMS"]["TO"]) || !isset($input["ITEMS"]["TYPE"])) {
             throw new ArgumentException("Wrong argument structure!", "input");
+        }
 
-        if (!isset($values["FROM"]) || !isset($values["TO"]) || !isset($values["TYPE"]))
+        if (!isset($values["FROM"]) || !isset($values["TO"]) || !isset($values["TYPE"])) {
             throw new \Bitrix\Main\ArgumentException("Wrong argument structure!", "values");
+        }
 
         return true;
     }
 }
 
-Input\Manager::register('DELIVERY_PERIOD', array(
-    'CLASS' => __NAMESPACE__ . '\\Period',
-    'NAME' => Loc::getMessage('INPUT_DELIVERY_PERIOD')
-));
+Input\Manager::register(
+    'DELIVERY_PERIOD',
+    array(
+        'CLASS' => __NAMESPACE__ . '\\Period',
+        'NAME' => Loc::getMessage('INPUT_DELIVERY_PERIOD')
+    )
+);
 
 class ReadOnly extends Input\Base
 {
@@ -113,8 +137,9 @@ class ReadOnly extends Input\Base
     {
         $result = '<span';
 
-        if (!empty($input['ID']))
+        if (!empty($input['ID'])) {
             $result .= ' id="' . $input['ID'] . '_view"';
+        }
 
         $result .= '>';
         $result .= isset($input["VALUE_VIEW"]) ? $input["VALUE_VIEW"] : $value;
@@ -125,10 +150,13 @@ class ReadOnly extends Input\Base
     public static function getEditHtmlSingle($name, array $input, $value)
     {
         $value = str_replace('"', "'", $value);
-        $res = self::getViewHtml($input, $value) . '<input type="hidden" value="' . htmlspecialcharsbx($value) . '" name="' . htmlspecialcharsbx($name) . '"';
+        $res = self::getViewHtml($input, $value) . '<input type="hidden" value="' . htmlspecialcharsbx(
+                $value
+            ) . '" name="' . htmlspecialcharsbx($name) . '"';
 
-        if (!empty($input['ID']))
+        if (!empty($input['ID'])) {
             $res .= ' id="' . $input['ID'] . '"';
+        }
 
         $res .= '>';
         return $res;
@@ -156,10 +184,13 @@ class ReadOnly extends Input\Base
     }
 }
 
-Input\Manager::register('DELIVERY_READ_ONLY', array(
-    'CLASS' => __NAMESPACE__ . '\\ReadOnly',
-    'NAME' => Loc::getMessage('INPUT_DELIVERY_READ_ONLY')
-));
+Input\Manager::register(
+    'DELIVERY_READ_ONLY',
+    array(
+        'CLASS' => __NAMESPACE__ . '\\ReadOnly',
+        'NAME' => Loc::getMessage('INPUT_DELIVERY_READ_ONLY')
+    )
+);
 
 class MultiControlString extends Input\Base
 {
@@ -209,11 +240,12 @@ class MultiControlString extends Input\Base
     {
         $result = "";
 
-        foreach ($input["ITEMS"] as $key => $item)
+        foreach ($input["ITEMS"] as $key => $item) {
             $result .=
                 isset($item["NAME"]) ? $item["NAME"] : "" .
                     Input\Manager::getViewHtml($item, isset($values[$key]) ? $values[$key] : null) .
                     " ";
+        }
 
         return $result;
     }
@@ -222,25 +254,33 @@ class MultiControlString extends Input\Base
     {
         $result = "";
 
-        foreach ($input["ITEMS"] as $key => $item)
+        foreach ($input["ITEMS"] as $key => $item) {
             $result .=
                 isset($item["NAME"]) ? $item["NAME"] : "" .
-                    Input\Manager::getEditHtml($name . "[" . $key . "]", $item, isset($values[$key]) ? $values[$key] : null) .
+                    Input\Manager::getEditHtml(
+                        $name . "[" . $key . "]",
+                        $item,
+                        isset($values[$key]) ? $values[$key] : null
+                    ) .
                     " ";
+        }
 
         return $result;
     }
 
     public static function getErrorSingle(array $input, $values)
     {
-        if (!is_array($values))
+        if (!is_array($values)) {
             throw new ArgumentTypeException('values', 'array');
+        }
 
         $errors = array();
 
-        foreach ($input["ITEMS"] as $key => $item)
-            if ($error = Input\Manager::getError($item, isset($values[$key]) ? $values[$key] : null))
+        foreach ($input["ITEMS"] as $key => $item) {
+            if ($error = Input\Manager::getError($item, isset($values[$key]) ? $values[$key] : null)) {
                 $errors[$key] = $error;
+            }
+        }
 
         return $errors;
     }
@@ -277,7 +317,6 @@ class MultiControlString extends Input\Base
         }
 
         return $errors;
-
     }
 
     /**
@@ -295,10 +334,13 @@ class MultiControlString extends Input\Base
     }
 }
 
-Input\Manager::register('DELIVERY_MULTI_CONTROL_STRING', array(
-    'CLASS' => __NAMESPACE__ . '\\MultiControlString',
-    'NAME' => Loc::getMessage('INPUT_DELIVERY_MULTI_CONTROL_STRING')
-));
+Input\Manager::register(
+    'DELIVERY_MULTI_CONTROL_STRING',
+    array(
+        'CLASS' => __NAMESPACE__ . '\\MultiControlString',
+        'NAME' => Loc::getMessage('INPUT_DELIVERY_MULTI_CONTROL_STRING')
+    )
+);
 
 class LocationMulti extends Input\Base
 {
@@ -317,8 +359,9 @@ class LocationMulti extends Input\Base
             )
         );
 
-        while ($loc = $res->fetch())
+        while ($loc = $res->fetch()) {
             $result .= htmlspecialcharsbx($loc["LNAME"]) . "<br>\n";
+        }
 
         $res = $class::getConnectedGroups(
             $input["DELIVERY_ID"],
@@ -328,8 +371,9 @@ class LocationMulti extends Input\Base
             )
         );
 
-        while ($loc = $res->fetch())
+        while ($loc = $res->fetch()) {
             $result .= htmlspecialcharsbx($loc["LNAME"]) . "<br>\n";
+        }
 
         return $result;
     }
@@ -345,7 +389,7 @@ class LocationMulti extends Input\Base
             "",
             array(
                 "ENTITY_PRIMARY" => $input["DELIVERY_ID"],
-                "LINK_ENTITY_NAME" => substr(static::$d2LClass, 0, -5),
+                "LINK_ENTITY_NAME" => mb_substr(static::$d2LClass, 0, -5),
                 "INPUT_NAME" => $name
             ),
             false
@@ -406,50 +450,63 @@ class LocationMulti extends Input\Base
     }
 }
 
-Input\Manager::register('LOCATION_MULTI', array(
-    'CLASS' => __NAMESPACE__ . '\\LocationMulti',
-    'NAME' => Loc::getMessage('INPUT_DELIVERY_LOCATION_MULTI')
-));
+Input\Manager::register(
+    'LOCATION_MULTI',
+    array(
+        'CLASS' => __NAMESPACE__ . '\\LocationMulti',
+        'NAME' => Loc::getMessage('INPUT_DELIVERY_LOCATION_MULTI')
+    )
+);
 
 class LocationMultiExclude extends LocationMulti
 {
     protected static $d2LClass = '\Bitrix\Sale\Delivery\DeliveryLocationExcludeTable';
 }
 
-Input\Manager::register('LOCATION_MULTI_EXCLUDE', array(
-    'CLASS' => __NAMESPACE__ . '\\LocationMultiExclude',
-    'NAME' => Loc::getMessage('INPUT_DELIVERY_LOCATION_MULTI')
-));
+Input\Manager::register(
+    'LOCATION_MULTI_EXCLUDE',
+    array(
+        'CLASS' => __NAMESPACE__ . '\\LocationMultiExclude',
+        'NAME' => Loc::getMessage('INPUT_DELIVERY_LOCATION_MULTI')
+    )
+);
 
 class ProductCategories extends Input\Base
 {
     public static function getViewHtml(array $input, $values = null)
     {
-        if (!is_array($values))
+        if (!is_array($values)) {
             return '';
+        }
 
         $result = '<br><br>';
         $catList = self::getCategoriesList($values);
 
-        foreach ($catList as $catName)
+        foreach ($catList as $catName) {
             $result .= '<div> - ' . $catName . '</div>';
+        }
 
         return $result;
     }
 
     public static function getEditHtml($name, array $input, $values = null)
     {
-        if (!is_array($values))
+        if (!is_array($values)) {
             $values = array();
+        }
 
-        $result = '<br><a style="color:#113c7d;text-decoration:none;border-bottom:1px dashed #113c7d;font-weight: bold;" href="javascript:void(0);" id="' . $input["ID"] . '" onclick="window.open(\'' . $input["URL"] . '\',\'choose category\',\'width=850,height=600\');">' . Loc::getMessage('SALE_DELIVERY_INP_ADD') . '</a><br><br>' .
+        $result = '<br><a style="color:#113c7d;text-decoration:none;border-bottom:1px dashed #113c7d;font-weight: bold;" href="javascript:void(0);" id="' . $input["ID"] . '" onclick="window.open(\'' . $input["URL"] . '\',\'choose category\',\'width=850,height=600\');">' . Loc::getMessage(
+                'SALE_DELIVERY_INP_ADD'
+            ) . '</a><br><br>' .
             '<script type="text/javascript">' . $input["SCRIPT"] . '</script>' .
-            '<script type="text/javascript">BX.message({SALE_DELIVERY_INP_DELETE: "' . Loc::getMessage("SALE_DELIVERY_INP_DELETE") . '"});</script>';
+            '<script type="text/javascript">BX.message({SALE_DELIVERY_INP_DELETE: "' . Loc::getMessage(
+                "SALE_DELIVERY_INP_DELETE"
+            ) . '"});</script>';
 
         $catList = self::getCategoriesList($values);
         $existCatHtml = '<table id="sale-admin-delivery-restriction-cat-content" width="100%">';
 
-        foreach ($catList as $catId => $catName)
+        foreach ($catList as $catId => $catName) {
             $existCatHtml .= '
 				<tr class="adm-s-delivery-restriction-delcat" id="sale-admin-delivery-restriction-cat-' . $catId . '">
 					<td>
@@ -457,9 +514,12 @@ class ProductCategories extends Input\Base
 						<input type="hidden" name="RESTRICTION[CATEGORIES][]" value="' . $catId . '">
 					</td>
 					<td align="right">
-						&nbsp;<a class="adm-s-bus-morelinkqhsw" href="javascript:void(0);" onclick="BX.Sale.Delivery.deleteRestrictionProductSection(\'' . $catId . '\');">' . Loc::getMessage('SALE_DELIVERY_INP_DELETE') . '</a>
+						&nbsp;<a class="adm-s-bus-morelinkqhsw" href="javascript:void(0);" onclick="BX.Sale.Delivery.deleteRestrictionProductSection(\'' . $catId . '\');">' . Loc::getMessage(
+                    'SALE_DELIVERY_INP_DELETE'
+                ) . '</a>
 					</td>
 				</tr>';
+        }
 
         $existCatHtml .= '</table>';
 
@@ -468,20 +528,24 @@ class ProductCategories extends Input\Base
 
     protected static function getCategoriesList($ids)
     {
-        if (!\Bitrix\Main\Loader::includeModule('iblock'))
+        if (!\Bitrix\Main\Loader::includeModule('iblock')) {
             return array();
+        }
 
         $result = array();
 
-        $res = \Bitrix\Iblock\SectionTable::getList(array(
-            'filter' => array(
-                'ID' => $ids
-            ),
-            'select' => array('ID', 'NAME')
-        ));
+        $res = \Bitrix\Iblock\SectionTable::getList(
+            array(
+                'filter' => array(
+                    'ID' => $ids
+                ),
+                'select' => array('ID', 'NAME')
+            )
+        );
 
-        while ($section = $res->fetch())
+        while ($section = $res->fetch()) {
             $result[$section['ID']] = htmlspecialcharsbx($section['NAME']);
+        }
 
         return $result;
     }
@@ -508,21 +572,25 @@ class ProductCategories extends Input\Base
     }
 }
 
-Input\Manager::register('DELIVERY_PRODUCT_CATEGORIES', array(
-    'CLASS' => __NAMESPACE__ . '\\ProductCategories',
-    'NAME' => Loc::getMessage('INPUT_DELIVERY_PRODUCT_CATEGORIES')
-));
+Input\Manager::register(
+    'DELIVERY_PRODUCT_CATEGORIES',
+    array(
+        'CLASS' => __NAMESPACE__ . '\\ProductCategories',
+        'NAME' => Loc::getMessage('INPUT_DELIVERY_PRODUCT_CATEGORIES')
+    )
+);
 
 class ButtonSelector extends Input\Base
 {
     public static function getViewHtmlSingle(array $input, $values)
     {
-        if (!is_array($values))
+        if (!is_array($values)) {
             throw new ArgumentTypeException('values', 'array');
+        }
 
-        $itemName = (strlen($values['NAME']) > 0 ? htmlspecialcharsbx($values['NAME']) : '');
+        $itemName = ($values['NAME'] <> '' ? htmlspecialcharsbx($values['NAME']) : '');
 
-        if (strlen($itemName) <= 0 && strlen($input['NAME_DEFAULT']) > 0) {
+        if ($itemName == '' && $input['NAME_DEFAULT'] <> '') {
             $itemName = htmlspecialcharsbx($input['NAME_DEFAULT']);
         }
 
@@ -531,21 +599,23 @@ class ButtonSelector extends Input\Base
 
     public static function getEditHtmlSingle($name, array $input, $values)
     {
-        if (!isset($input["NAME"]))
+        if (!isset($input["NAME"])) {
             $input["NAME"] = '';
+        }
 
-        if (!isset($input["VALUE"]))
+        if (!isset($input["VALUE"])) {
             $input["VALUE"] = '';
+        }
 
-        $itemName = (strlen($values['NAME']) > 0 ? htmlspecialcharsbx($values['NAME']) : '');
+        $itemName = ($values['NAME'] <> '' ? htmlspecialcharsbx($values['NAME']) : '');
 
-        if (strlen($itemName) <= 0 && strlen($input['NAME_DEFAULT']) > 0) {
+        if ($itemName == '' && $input['NAME_DEFAULT'] <> '') {
             $itemName = htmlspecialcharsbx($input['NAME_DEFAULT']);
         }
 
-        $itemValue = (strlen($values['VALUE']) > 0 ? htmlspecialcharsbx($values['VALUE']) : '');
+        $itemValue = ($values['VALUE'] <> '' ? htmlspecialcharsbx($values['VALUE']) : '');
 
-        if (strlen($itemName) <= 0 && strlen($input['VALUE_DEFAULT']) > 0) {
+        if ($itemName == '' && $input['VALUE_DEFAULT'] <> '') {
             $itemValue = htmlspecialcharsbx($input['VALUE_DEFAULT']);
         }
 
@@ -583,8 +653,11 @@ class ButtonSelector extends Input\Base
     }
 }
 
-Input\Manager::register('DELIVERY_BUTTON_SELECTOR', array(
-    'CLASS' => __NAMESPACE__ . '\\ButtonSelector',
-    'NAME' => Loc::getMessage('INPUT_DELIVERY_BUTTON_SELECTOR')
-));
+Input\Manager::register(
+    'DELIVERY_BUTTON_SELECTOR',
+    array(
+        'CLASS' => __NAMESPACE__ . '\\ButtonSelector',
+        'NAME' => Loc::getMessage('INPUT_DELIVERY_BUTTON_SELECTOR')
+    )
+);
 

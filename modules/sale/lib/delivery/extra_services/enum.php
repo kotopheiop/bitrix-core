@@ -11,22 +11,25 @@ class Enum extends Base
 {
     public function __construct($id, array $structure, $currency, $value = null, array $additionalParams = array())
     {
-        $prices = !empty($structure["PARAMS"]["PRICES"]) && is_array($structure["PARAMS"]["PRICES"]) ? $structure["PARAMS"]["PRICES"] : array();
+        $prices = !empty($structure["PARAMS"]["PRICES"]) && is_array(
+            $structure["PARAMS"]["PRICES"]
+        ) ? $structure["PARAMS"]["PRICES"] : array();
         $structure["PARAMS"]["ONCHANGE"] = $this->createJSOnchange($id, $prices);
         parent::__construct($id, $structure, $currency, $value);
         $this->params["TYPE"] = "ENUM";
         $this->params["OPTIONS"] = array();
     }
 
-    public function getClassTitle()
+    public static function getClassTitle()
     {
         return Loc::getMessage("DELIVERY_EXTRA_SERVICE_ENUM_TITLE");
     }
 
     public function getCost()
     {
-        if (!isset($this->params["PRICES"]) || !is_array($this->params["PRICES"]))
+        if (!isset($this->params["PRICES"]) || !is_array($this->params["PRICES"])) {
             throw new SystemException("Service id: " . $this->id . " doesn't have field array PRICES");
+        }
 
         if (isset($this->params["PRICES"][$this->value]["PRICE"])) {
             $result = $this->params["PRICES"][$this->value]["PRICE"];
@@ -40,12 +43,15 @@ class Enum extends Base
 
     public static function prepareParamsToSave(array $params)
     {
-        if (!isset($params["PARAMS"]["PRICES"]) || !is_array($params["PARAMS"]["PRICES"]))
+        if (!isset($params["PARAMS"]["PRICES"]) || !is_array($params["PARAMS"]["PRICES"])) {
             return $params;
+        }
 
-        foreach ($params["PARAMS"]["PRICES"] as $id => $price)
-            if (strlen($price["TITLE"]) <= 0)
+        foreach ($params["PARAMS"]["PRICES"] as $id => $price) {
+            if ($price["TITLE"] == '') {
                 unset($params["PARAMS"]["PRICES"][$id]);
+            }
+        }
 
         return $params;
     }
@@ -61,14 +67,15 @@ class Enum extends Base
 
         if (isset($params["PARAMS"]["PRICES"]) && is_array($params["PARAMS"]["PRICES"])) {
             foreach ($params["PARAMS"]["PRICES"] as $id => $price) {
-                if (!isset($params["PARAMS"]["PRICES"][$id]))
+                if (!isset($params["PARAMS"]["PRICES"][$id])) {
                     $params["PARAMS"]["PRICES"][$id] = 0;
+                }
 
                 $result .= self::getValueHtml($name, $id, $price["TITLE"], $price["PRICE"], $currency) . "<br><br>";
             }
         }
 
-        $i = strval(mktime());
+        $i = strval(time());
         $result .= self::getValueHtml($name, $i, "", "", $currency) . "<br><br>" .
             '<input type="button" value="' . Loc::getMessage("DELIVERY_EXTRA_SERVICE_ENUM_ADD") .
             '" onclick=\'var d=new Date(); ' .
@@ -84,20 +91,26 @@ class Enum extends Base
         $currency = htmlspecialcharsbx($currency);
 
         return Loc::getMessage("DELIVERY_EXTRA_SERVICE_ENUM_NAME") .
-            ':&nbsp;<input name="' . $name . '[PARAMS][PRICES][' . $id . '][TITLE]" value="' . htmlspecialcharsbx($title) . '">&nbsp;&nbsp;' .
+            ':&nbsp;<input name="' . $name . '[PARAMS][PRICES][' . $id . '][TITLE]" value="' . htmlspecialcharsbx(
+                $title
+            ) . '">&nbsp;&nbsp;' .
             Loc::getMessage("DELIVERY_EXTRA_SERVICE_ENUM_PRICE") .
-            ':&nbsp;<input name="' . $name . '[PARAMS][PRICES][' . $id . '][PRICE]" value="' . $price . '">' . (strlen($currency) > 0 ? " (" . $currency . ")" : "");
+            ':&nbsp;<input name="' . $name . '[PARAMS][PRICES][' . $id . '][PRICE]" value="' . $price . '">' . ($currency <> '' ? " (" . $currency . ")" : "");
     }
 
     protected static function getJSPrice(array $prices)
     {
-        if (empty($prices))
+        if (empty($prices)) {
             return "";
+        }
 
-        foreach ($prices as $id => $price)
+        foreach ($prices as $id => $price) {
             $prices[$id] = roundEx(floatval($price), SALE_VALUE_PRECISION);
+        }
 
-        return "(function(value){var prices=" . \CUtil::PhpToJSObject($prices) . "; return prices[value]['PRICE'];})(this.value)";
+        return "(function(value){var prices=" . \CUtil::PhpToJSObject(
+                $prices
+            ) . "; return prices[value]['PRICE'];})(this.value)";
     }
 
     public function setOperatingCurrency($currency)
@@ -105,8 +118,9 @@ class Enum extends Base
         if (!empty($this->params["PRICES"]) && is_array($this->params["PRICES"])) {
             $prices = array();
 
-            foreach ($this->params["PRICES"] as $id => $price)
+            foreach ($this->params["PRICES"] as $id => $price) {
                 $prices[$id] = $this->convertToOperatingCurrency($price);
+            }
 
             $this->params["ONCHANGE"] = $this->createJSOnchange($this->id, $prices);
         }
@@ -119,16 +133,18 @@ class Enum extends Base
     {
         $this->params["OPTIONS"] = array();
 
-        if (empty($this->params["PRICES"]) || !is_array($this->params["PRICES"]))
+        if (empty($this->params["PRICES"]) || !is_array($this->params["PRICES"])) {
             return;
+        }
 
         foreach ($this->params["PRICES"] as $key => $price) {
-            if (strlen($price["TITLE"]) <= 0)
+            if ($price["TITLE"] == '') {
                 continue;
+            }
 
             $priceVal = floatval($price["PRICE"]);
             $this->params["OPTIONS"][$key] =
-                $price["TITLE"] .
+                htmlspecialcharsbx($price["TITLE"]) .
                 " (" .
                 strip_tags(
                     SaleFormatCurrency(
@@ -155,7 +171,18 @@ class Enum extends Base
 
     protected function createJSOnchange($id, array $prices)
     {
-        return "BX.onCustomEvent('onDeliveryExtraServiceValueChange', [{'id' : '" . $id . "', 'value': this.value, 'price': " . $this->getJSPrice($prices) . "}]);";
+        return "BX.onCustomEvent('onDeliveryExtraServiceValueChange', [{'id' : '" . $id . "', 'value': this.value, 'price': " . $this->getJSPrice(
+                $prices
+            ) . "}]);";
     }
 
+    /**
+     * @inheritDoc
+     */
+    public function getDisplayValue(): ?string
+    {
+        return isset($this->params['PRICES'][$this->value])
+            ? (string)$this->params['PRICES'][$this->value]['TITLE']
+            : null;
+    }
 }

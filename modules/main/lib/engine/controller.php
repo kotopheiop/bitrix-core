@@ -3,9 +3,11 @@
 namespace Bitrix\Main\Engine;
 
 
+use Bitrix\Main\Application;
 use Bitrix\Main\Component\ParameterSigner;
 use Bitrix\Main\Config\Configuration;
 use Bitrix\Main\Diag\ExceptionHandlerFormatter;
+use Bitrix\Main\Engine\AutoWire\BinderArgumentException;
 use Bitrix\Main\Engine\AutoWire\Parameter;
 use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Engine\Response\Converter;
@@ -87,6 +89,36 @@ class Controller implements Errorable, Controllerable
     }
 
     /**
+     * @param Controller $controller
+     * @param string $actionName
+     * @param array $parameters
+     *
+     * @return HttpResponse|mixed
+     * @throws SystemException
+     */
+    public function forward($controller, string $actionName, array $parameters = null)
+    {
+        if (is_string($controller)) {
+            $controller = new $controller;
+        }
+
+        // override parameters
+        $controller->request = $this->getRequest();
+        $controller->setScope($this->getScope());
+        $controller->setCurrentUser($this->getCurrentUser());
+
+        // run action
+        $result = $controller->run(
+            $actionName,
+            $parameters === null ? $this->getSourceParametersList() : [$parameters]
+        );
+
+        $this->addErrors($controller->getErrors());
+
+        return $result;
+    }
+
+    /**
      * Initializes controller.
      * This method is invoked at the end of constructor.
      * @return void
@@ -137,7 +169,7 @@ class Controller implements Errorable, Controllerable
      */
     final public function getActionUri($actionName, array $params = array(), $absolute = false)
     {
-        if (strpos($this->getFilePath(), '/components/') === false) {
+        if (mb_strpos($this->getFilePath(), '/components/') === false) {
             return UrlManager::getInstance()->createByController($this, $actionName, $params, $absolute);
         }
 
@@ -221,13 +253,13 @@ class Controller implements Errorable, Controllerable
     final public function listNameActions()
     {
         $actions = array_keys($this->getConfigurationOfActions());
-        $lengthSuffix = strlen(self::METHOD_ACTION_SUFFIX);
+        $lengthSuffix = mb_strlen(self::METHOD_ACTION_SUFFIX);
 
         $class = new \ReflectionClass($this);
         foreach ($class->getMethods(\ReflectionMethod::IS_PUBLIC) as $method) {
-            $probablySuffix = substr($method->getName(), -$lengthSuffix);
+            $probablySuffix = mb_substr($method->getName(), -$lengthSuffix);
             if ($probablySuffix === self::METHOD_ACTION_SUFFIX) {
-                $actions[] = strtolower(substr($method->getName(), 0, -$lengthSuffix));
+                $actions[] = mb_strtolower(mb_substr($method->getName(), 0, -$lengthSuffix));
             }
         }
 
@@ -343,6 +375,9 @@ class Controller implements Errorable, Controllerable
             }
 
             $this->attachFilters($action);
+            if ($this->shouldDecodePostData($action)) {
+                $this->decodePostData();
+            }
 
             if ($this->prepareParams() &&
                 $this->processBeforeAction($action) === true &&
@@ -359,12 +394,9 @@ class Controller implements Errorable, Controllerable
             if ($probablyResult !== null) {
                 $result = $probablyResult;
             }
-        } catch (\Exception $e) {
-            $this->runProcessingException($e);
-        } catch (\Error $e) {
-            $this->runProcessingError($e);
-        } finally {
+        } catch (\Throwable $e) {
             $this->processExceptionInDebug($e);
+            $this->runProcessingThrowable($e);
         }
 
         $this->logDebugInfo();
@@ -372,10 +404,20 @@ class Controller implements Errorable, Controllerable
         return $result;
     }
 
-    private function processExceptionInDebug($e)
+    protected function writeToLogException(\Throwable $e)
     {
+        $exceptionHandler = Application::getInstance()->getExceptionHandler();
+        $exceptionHandler->writeToLog($e);
+    }
+
+    private function processExceptionInDebug(\Throwable $e)
+    {
+        if (!($e instanceof BinderArgumentException)) {
+            $this->writeToLogException($e);
+        }
+
         $exceptionHandling = Configuration::getValue('exception_handling');
-        if (!empty($exceptionHandling['debug']) && ($e instanceof \Throwable || $e instanceof \Exception)) {
+        if (!empty($exceptionHandling['debug'])) {
             $this->addError(new Error(ExceptionHandlerFormatter::format($e)));
             if ($e->getPrevious()) {
                 $this->addError(new Error(ExceptionHandlerFormatter::format($e->getPrevious())));
@@ -423,12 +465,18 @@ class Controller implements Errorable, Controllerable
      */
     protected function processBeforeAction(Action $action)
     {
-        if ($this->request->isPost()) {
-            \CUtil::jSPostUnescape();
-            $this->request->addFilter(new PostDecodeFilter);
-        }
-
         return true;
+    }
+
+    protected function shouldDecodePostData(Action $action): bool
+    {
+        return $this->request->isPost();
+    }
+
+    final protected function decodePostData(): void
+    {
+        \CUtil::jSPostUnescape();
+        $this->request->addFilter(new PostDecodeFilter);
     }
 
     /**
@@ -520,10 +568,13 @@ class Controller implements Errorable, Controllerable
 
         if (method_exists($this, $methodName)) {
             $method = new \ReflectionMethod($this, $methodName);
-            if ($method->isPublic() && strtolower($method->getName()) === strtolower($methodName)) {
+            if ($method->isPublic() && mb_strtolower($method->getName()) === mb_strtolower($methodName)) {
                 return new InlineAction($actionName, $this, $config);
             }
         } else {
+            if (!$config && ($this instanceof Contract\FallbackActionInterface)) {
+                return new FallbackAction($actionName, $this, []);
+            }
             if (!$config) {
                 throw new SystemException(
                     "Could not find description of {$actionName} in {$this::className()}",
@@ -701,7 +752,6 @@ class Controller implements Errorable, Controllerable
                 static::getFullEventName(static::EVENT_ON_BEFORE_ACTION),
                 array($filter, 'onBeforeAction')
             );
-
         }
 
         foreach ($modifiedConfig['postfilters'] as $filter) {
@@ -724,7 +774,7 @@ class Controller implements Errorable, Controllerable
     final protected function getActionConfig($actionName)
     {
         $listOfActions = array_change_key_case($this->configurationOfActions, CASE_LOWER);
-        $actionName = strtolower($actionName);
+        $actionName = mb_strtolower($actionName);
 
         if (!isset($listOfActions[$actionName])) {
             return null;
@@ -738,6 +788,15 @@ class Controller implements Errorable, Controllerable
         $this->configurationOfActions[$actionName] = $config;
 
         return $this;
+    }
+
+    protected function runProcessingThrowable(\Throwable $throwable)
+    {
+        if ($throwable instanceof \Exception) {
+            $this->runProcessingException($throwable);
+        } elseif ($throwable instanceof \Error) {
+            $this->runProcessingError($throwable);
+        }
     }
 
     /**
@@ -791,6 +850,11 @@ class Controller implements Errorable, Controllerable
         $this->errorCollection[] = new Error('Invalid csrf token');
 
         throw new SystemException('Invalid csrf token');
+    }
+
+    public function redirectTo($url): HttpResponse
+    {
+        return Context::getCurrent()->getResponse()->redirectTo($url);
     }
 
     /**

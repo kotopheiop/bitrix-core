@@ -49,46 +49,64 @@ class OrderRoundTable extends Main\Entity\DataManager
     public static function getMap()
     {
         return array(
-            'ID' => new Main\Entity\IntegerField('ID', array(
+            'ID' => new Main\Entity\IntegerField(
+                'ID', array(
                 'primary' => true,
                 'autocomplete' => true,
                 'title' => Loc::getMessage('ORDER_ROUND_ENTITY_ID_FIELD')
-            )),
-            'ORDER_ID' => new Main\Entity\IntegerField('ORDER_ID', array(
+            )
+            ),
+            'ORDER_ID' => new Main\Entity\IntegerField(
+                'ORDER_ID', array(
                 'required' => true,
                 'title' => Loc::getMessage('ORDER_ROUND_ENTITY_ORDER_ID_FIELD')
-            )),
-            'APPLY_BLOCK_COUNTER' => new Main\Entity\IntegerField('APPLY_BLOCK_COUNTER', array(
+            )
+            ),
+            'APPLY_BLOCK_COUNTER' => new Main\Entity\IntegerField(
+                'APPLY_BLOCK_COUNTER', array(
                 'required' => true,
-            )),
-            'ORDER_ROUND' => new Main\Entity\BooleanField('ORDER_ROUND', array(
+            )
+            ),
+            'ORDER_ROUND' => new Main\Entity\BooleanField(
+                'ORDER_ROUND', array(
                 'required' => true,
                 'values' => array('N', 'Y'),
                 'default_value' => 'Y',
                 'title' => Loc::getMessage('ORDER_ROUND_ENTITY_ORDER_ROUND_FIELD')
-            )),
-            'ENTITY_TYPE' => new Main\Entity\EnumField('ENTITY_TYPE', array(
+            )
+            ),
+            'ENTITY_TYPE' => new Main\Entity\EnumField(
+                'ENTITY_TYPE', array(
                 'required' => true,
                 'values' => array(self::ENTITY_TYPE_BASKET_ITEM),
                 'title' => Loc::getMessage('ORDER_ROUND_ENTITY_ENTITY_TYPE_FIELD')
-            )),
-            'ENTITY_ID' => new Main\Entity\IntegerField('ENTITY_ID', array(
+            )
+            ),
+            'ENTITY_ID' => new Main\Entity\IntegerField(
+                'ENTITY_ID', array(
                 'required' => true,
                 'title' => Loc::getMessage('ORDER_ROUND_ENTITY_ENTITY_ID_FIELD')
-            )),
-            'ENTITY_VALUE' => new Main\Entity\StringField('ENTITY_VALUE', array(
+            )
+            ),
+            'ENTITY_VALUE' => new Main\Entity\StringField(
+                'ENTITY_VALUE', array(
                 'validation' => array(__CLASS__, 'validateEntityValue'),
                 'title' => Loc::getMessage('ORDER_ROUND_ENTITY_ENTITY_VALUE_FIELD')
-            )),
-            'APPLY' => new Main\Entity\BooleanField('APPLY', array(
+            )
+            ),
+            'APPLY' => new Main\Entity\BooleanField(
+                'APPLY', array(
                 'required' => true,
                 'values' => array('N', 'Y'),
                 'title' => Loc::getMessage('ORDER_ROUND_ENTITY_APPLY_FIELD')
-            )),
-            'ROUND_RULE' => new Main\Entity\TextField('ROUND_RULE', array(
+            )
+            ),
+            'ROUND_RULE' => new Main\Entity\TextField(
+                'ROUND_RULE', array(
                 'required' => true,
                 'serialized' => true
-            ))
+            )
+            )
         );
     }
 
@@ -113,12 +131,17 @@ class OrderRoundTable extends Main\Entity\DataManager
     public static function clearByOrder($order)
     {
         $order = (int)$order;
-        if ($order <= 0)
+        if ($order <= 0) {
             return false;
+        }
 
         $conn = Main\Application::getConnection();
         $helper = $conn->getSqlHelper();
-        $conn->queryExecute('delete from ' . $helper->quote(self::getTableName()) . ' where ' . $helper->quote('ORDER_ID') . ' = ' . $order);
+        $conn->queryExecute(
+            'delete from ' . $helper->quote(self::getTableName()) . ' where ' . $helper->quote(
+                'ORDER_ID'
+            ) . ' = ' . $order
+        );
         unset($helper, $conn);
 
         return true;

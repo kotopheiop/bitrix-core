@@ -174,7 +174,9 @@ final class Manager
                         $presetList[] = $preset;
                     }
                 } else {
-                    throw new SystemException("Wrong event result by building preset list. Could not find class by CLASS {$preset['CLASS']}");
+                    throw new SystemException(
+                        "Wrong event result by building preset list. Could not find class by CLASS {$preset['CLASS']}"
+                    );
                 }
             }
         }
@@ -278,9 +280,12 @@ final class Manager
             }
         }
 
-        uasort($presets, function (BasePreset $a, BasePreset $b) {
-            return $a->getSort() > $b->getSort();
-        });
+        uasort(
+            $presets,
+            function (BasePreset $a, BasePreset $b) {
+                return $a->getSort() > $b->getSort();
+            }
+        );
 
         return $presets;
     }
@@ -306,9 +311,11 @@ final class Manager
     {
         $countQuery = new Query(DiscountTable::getEntity());
         $countQuery->addSelect(new ExpressionField('CNT', 'COUNT(1)'));
-        $countQuery->setFilter(array(
-            '=PRESET_ID' => $preset::className(),
-        ));
+        $countQuery->setFilter(
+            array(
+                '=PRESET_ID' => $preset::className(),
+            )
+        );
         $totalCount = $countQuery->setLimit(null)->setOffset(null)->exec()->fetch();
 
         return (bool)$totalCount['CNT'];

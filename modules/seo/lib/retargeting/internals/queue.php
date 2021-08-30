@@ -100,11 +100,13 @@ class QueueTable extends Entity\DataManager
 
     public static function processQueueAutoRemoveAgent()
     {
-        $queueDb = static::getList(array(
-            'select' => array('ID'),
-            'filter' => array('=ACTION' => self::ACTION_AUTO_REMOVE),
-            'limit' => 1
-        ));
+        $queueDb = static::getList(
+            array(
+                'select' => array('ID'),
+                'filter' => array('=ACTION' => self::ACTION_AUTO_REMOVE),
+                'limit' => 1
+            )
+        );
         if ($queueDb->fetch()) {
             $connection = Application::getConnection();
             $sql = "UPDATE " . self::getTableName() . " " .
@@ -148,17 +150,19 @@ class QueueTable extends Entity\DataManager
         $audience = Service::getAudience($type);
         $maxQuantity = $audience->getMaxContactsPerPacket();
         $maxQuantity = $maxQuantity > 1000 ? 1000 : $maxQuantity;
-        $queueDb = static::getList(array(
-            'filter' => array(
-                '=TYPE' => $type,
-                '=ACTION' => array(
-                    self::ACTION_IMPORT,
-                    self::ACTION_REMOVE,
-                    self::ACTION_IMPORT_AND_AUTO_REMOVE,
-                )
-            ),
-            'limit' => $maxQuantity
-        ));
+        $queueDb = static::getList(
+            array(
+                'filter' => array(
+                    '=TYPE' => $type,
+                    '=ACTION' => array(
+                        self::ACTION_IMPORT,
+                        self::ACTION_REMOVE,
+                        self::ACTION_IMPORT_AND_AUTO_REMOVE,
+                    )
+                ),
+                'limit' => $maxQuantity
+            )
+        );
         while ($queueItem = $queueDb->fetch()) {
             $hasQueue = true;
 
@@ -262,7 +266,13 @@ class QueueTable extends Entity\DataManager
                     Application::getConnection()->query(
                         "DELETE FROM " . self::getTableName() .
                         " WHERE TYPE = '" . Application::getConnection()->getSqlHelper()->forSql($type) . "'" .
-                        " AND ACTION in ('" . implode("', '", [self::ACTION_IMPORT, self::ACTION_IMPORT_AND_AUTO_REMOVE, self::ACTION_REMOVE]) . "')" .
+                        " AND ACTION in ('" . implode("', '",
+                                                      [
+                                                          self::ACTION_IMPORT,
+                                                          self::ACTION_IMPORT_AND_AUTO_REMOVE,
+                                                          self::ACTION_REMOVE
+                                                      ]
+                        ) . "')" .
                         " AND DATE_INSERT < '" . (new DateTime())->add('-1 day')->format("Y-m-d H:i:s") . "'"
                     );
                 }
@@ -303,10 +313,13 @@ class QueueTable extends Entity\DataManager
 
         $agentName = static::processQueueAutoRemoveAgentName();
         $agent = new \CAgent();
-        $agentsDb = $agent->GetList(array("ID" => "DESC"), array(
-            "MODULE_ID" => self::MODULE_ID,
-            "NAME" => $agentName,
-        ));
+        $agentsDb = $agent->GetList(
+            array("ID" => "DESC"),
+            array(
+                "MODULE_ID" => self::MODULE_ID,
+                "NAME" => $agentName,
+            )
+        );
         if (!$agentsDb->Fetch()) {
             $agent->AddAgent($agentName, self::MODULE_ID, "N", 86400, null, "Y", "");
         }
@@ -321,10 +334,13 @@ class QueueTable extends Entity\DataManager
         $agent = new \CAgent();
         if ($type) {
             $agentName = static::getProcessQueueAgentName($type);
-            $agentsDb = $agent->GetList(array("ID" => "DESC"), array(
-                "MODULE_ID" => self::MODULE_ID,
-                "NAME" => $agentName,
-            ));
+            $agentsDb = $agent->GetList(
+                array("ID" => "DESC"),
+                array(
+                    "MODULE_ID" => self::MODULE_ID,
+                    "NAME" => $agentName,
+                )
+            );
             if (!$agentsDb->Fetch()) {
                 $interval = ($type == 'yandex' ? 900 : 30); // yandex queues must be processed rarely
                 $agent->AddAgent($agentName, self::MODULE_ID, "N", $interval, null, "Y", "");

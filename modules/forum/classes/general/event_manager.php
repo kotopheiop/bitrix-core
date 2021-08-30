@@ -7,7 +7,7 @@
 #############################################
 class ForumEventManager
 {
-    function ForumEventManager()
+    public function __construct()
     {
         if (IsModuleInstalled("iblock")) {
             AddEventHandler("forum", "onAfterMessageAdd", array(&$this, "updateIBlockPropertyAfterAddingMessage"));
@@ -34,13 +34,27 @@ class ForumEventManager
     {
         if ($ID > 0 && $arMessage["PARAM1"] != "IB" && IsModuleInstalled("iblock")) {
             $arTopic = (empty($arTopic) ? CForumTopic::GetByID($arMessage["TOPIC_ID"]) : $arTopic);
-            if (!empty($arTopic) && $arTopic["XML_ID"] == "IBLOCK_" . $arMessage["PARAM2"] && CModule::IncludeModule("iblock")) {
-                CIBlockElement::SetPropertyValuesEx($arMessage["PARAM2"], 0, array(
-                    "FORUM_MESSAGE_CNT" => array(
-                        "VALUE" => CForumMessage::GetList(array(), array("TOPIC_ID" => $arMessage["TOPIC_ID"], "APPROVED" => "Y", "!PARAM1" => "IB"), true),
-                        "DESCRIPTION" => "",
+            if (!empty($arTopic) && $arTopic["XML_ID"] == "IBLOCK_" . $arMessage["PARAM2"] && CModule::IncludeModule(
+                    "iblock"
+                )) {
+                CIBlockElement::SetPropertyValuesEx(
+                    $arMessage["PARAM2"],
+                    0,
+                    array(
+                        "FORUM_MESSAGE_CNT" => array(
+                            "VALUE" => CForumMessage::GetList(
+                                array(),
+                                array(
+                                    "TOPIC_ID" => $arMessage["TOPIC_ID"],
+                                    "APPROVED" => "Y",
+                                    "!PARAM1" => "IB"
+                                ),
+                                true
+                            ),
+                            "DESCRIPTION" => "",
+                        )
                     )
-                ));
+                );
             }
         }
     }

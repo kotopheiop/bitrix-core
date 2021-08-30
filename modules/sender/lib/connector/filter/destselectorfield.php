@@ -44,8 +44,9 @@ class DestSelectorField extends AbstractField
         }
         $label = $filterFields[$id . '_label'];
 
-        if (!$value || !$label)
+        if (!$value || !$label) {
             return [];
+        }
 
         return [
             '_value' => $value,

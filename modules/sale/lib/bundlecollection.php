@@ -108,21 +108,59 @@ class BundleCollection extends BasketItemCollection
      */
     public function loadFromDb(array $filter)
     {
-        $select = array("ID", "LID", "MODULE", "PRODUCT_ID", "QUANTITY", "WEIGHT",
-            "DELAY", "CAN_BUY", "PRICE", "CUSTOM_PRICE", "BASE_PRICE", 'PRODUCT_PRICE_ID', "CURRENCY", 'BARCODE_MULTI',
-            "RESERVED", "RESERVE_QUANTITY", "NAME", "CATALOG_XML_ID", "VAT_RATE", "NOTES", "DISCOUNT_PRICE",
-            "PRODUCT_PROVIDER_CLASS", "CALLBACK_FUNC", "ORDER_CALLBACK_FUNC", "PAY_CALLBACK_FUNC", "CANCEL_CALLBACK_FUNC",
-            "DIMENSIONS", "TYPE", "SET_PARENT_ID", "DETAIL_PAGE_URL", "FUSER_ID", 'MEASURE_CODE', 'MEASURE_NAME', 'ORDER_ID',
-            'DATE_INSERT', 'DATE_UPDATE', 'PRODUCT_XML_ID', 'SUBSCRIBE', 'RECOMMENDATION', 'VAT_INCLUDED', 'SORT'
+        $select = array(
+            "ID",
+            "LID",
+            "MODULE",
+            "PRODUCT_ID",
+            "QUANTITY",
+            "WEIGHT",
+            "DELAY",
+            "CAN_BUY",
+            "PRICE",
+            "CUSTOM_PRICE",
+            "BASE_PRICE",
+            'PRODUCT_PRICE_ID',
+            "CURRENCY",
+            'BARCODE_MULTI',
+            "RESERVED",
+            "RESERVE_QUANTITY",
+            "NAME",
+            "CATALOG_XML_ID",
+            "VAT_RATE",
+            "NOTES",
+            "DISCOUNT_PRICE",
+            "PRODUCT_PROVIDER_CLASS",
+            "CALLBACK_FUNC",
+            "ORDER_CALLBACK_FUNC",
+            "PAY_CALLBACK_FUNC",
+            "CANCEL_CALLBACK_FUNC",
+            "DIMENSIONS",
+            "TYPE",
+            "SET_PARENT_ID",
+            "DETAIL_PAGE_URL",
+            "FUSER_ID",
+            'MEASURE_CODE',
+            'MEASURE_NAME',
+            'ORDER_ID',
+            'DATE_INSERT',
+            'DATE_UPDATE',
+            'PRODUCT_XML_ID',
+            'SUBSCRIBE',
+            'RECOMMENDATION',
+            'VAT_INCLUDED',
+            'SORT'
         );
 
         $itemList = array();
 
-        $res = static::getList(array(
-            "filter" => $filter,
-            "select" => $select,
-            "order" => array('SORT' => 'ASC', 'ID' => 'ASC'),
-        ));
+        $res = static::getList(
+            array(
+                "filter" => $filter,
+                "select" => $select,
+                "order" => array('SORT' => 'ASC', 'ID' => 'ASC'),
+            )
+        );
         while ($item = $res->fetch()) {
             $itemList[$item['ID']] = $item;
         }
@@ -213,8 +251,9 @@ class BundleCollection extends BasketItemCollection
      */
     public function onItemModify(Internals\CollectableEntity $item, $name = null, $oldValue = null, $value = null)
     {
-        if (!($item instanceof BasketItemBase))
+        if (!($item instanceof BasketItemBase)) {
             throw new Main\ArgumentTypeException($item);
+        }
 
         $result = new Result();
 

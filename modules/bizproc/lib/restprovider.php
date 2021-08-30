@@ -150,8 +150,9 @@ class RestProviderTable extends Entity\DataManager
      */
     public static function prepareLocalization($value)
     {
-        if (!is_array($value))
+        if (!is_array($value)) {
             $value = array('*' => (string)$value);
+        }
         return $value;
     }
 
@@ -163,17 +164,18 @@ class RestProviderTable extends Entity\DataManager
     public static function getLocalization($field, $langId)
     {
         $result = '';
-        $langId = strtoupper($langId);
-        if (is_string($field))
+        $langId = mb_strtoupper($langId);
+        if (is_string($field)) {
             $result = $field;
-        elseif (!empty($field[$langId]))
+        } elseif (!empty($field[$langId])) {
             $result = $field[$langId];
-        elseif ($langId == 'UA' && !empty($field['RU']))
+        } elseif ($langId == 'UA' && !empty($field['RU'])) {
             $result = $field['RU'];
-        elseif (!empty($field['EN']))
+        } elseif (!empty($field['EN'])) {
             $result = $field['EN'];
-        elseif (!empty($field['*']))
+        } elseif (!empty($field['*'])) {
             $result = $field['*'];
+        }
         return $result;
     }
 

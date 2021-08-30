@@ -92,22 +92,34 @@ class UserTagTable extends Entity\DataManager
 
         $tagName = (
         (is_array($params['tagName']) && !empty($params['tagName']))
-        || (!is_array($params['tagName']) && strlen($params['tagName']) > 0)
+        || (!is_array($params['tagName']) && $params['tagName'] <> '')
             ? $params['tagName']
             : false
         );
 
         $nameFilter = (
         $tagName !== false
-            ? (is_array($tagName)) ? " IN (" . implode(',', array_map(function ($val) use ($DB) {
-                return "'" . $DB->forSql($val) . "'";
-            }, $tagName)) . ")" : " = '" . $DB->forSql($tagName) . "'"
+            ? (is_array($tagName)) ? " IN (" . implode(
+                ',',
+                array_map(
+                    function ($val) use ($DB) {
+                        return "'" . $DB->forSql($val) . "'";
+                    },
+                    $tagName
+                )
+            ) . ")" : " = '" . $DB->forSql($tagName) . "'"
             : ($userId ? ' IN (SELECT NAME FROM ' . self::getTableName() . ' WHERE USER_ID = ' . $userId . ')' : '')
         );
 
-        $whereClause = (!empty($nameFilter) ? 'WHERE NAME ' . $nameFilter : '');
+        $whereClause = "WHERE U.ACTIVE='Y' " . (!empty($nameFilter) ? 'AND UT.NAME ' . $nameFilter : '');
 
-        $sql = 'SELECT CASE WHEN (MIN(USER_ID) = 0) THEN COUNT(USER_ID)-1 ELSE COUNT(USER_ID) END AS CNT, NAME FROM ' . self::getTableName() . ' ' . $whereClause . ' GROUP BY NAME';
+        $sql = '
+			SELECT CASE WHEN (MIN(USER_ID) = 0) THEN COUNT(USER_ID)-1 ELSE COUNT(USER_ID) END AS CNT, UT.NAME AS NAME
+			FROM ' . self::getTableName() . ' UT 
+			INNER JOIN b_user U ON U.ID=UT.USER_ID ' .
+            $whereClause . ' 
+			GROUP BY UT.NAME
+		';
 
         $res = $connection->query($sql);
         while ($tagData = $res->fetch()) {
@@ -155,16 +167,22 @@ class UserTagTable extends Entity\DataManager
 
         $tagName = (
         (is_array($params['tagName']) && !empty($params['tagName']))
-        || (!is_array($params['tagName']) && strlen($params['tagName']) > 0)
+        || (!is_array($params['tagName']) && $params['tagName'] <> '')
             ? $params['tagName']
             : false
         );
 
         $nameFilter = (
         $tagName !== false
-            ? (is_array($tagName)) ? " NAME IN (" . implode(',', array_map(function ($val) use ($DB) {
-                return "'" . $DB->forSql($val) . "'";
-            }, $tagName)) . ")" : " NAME = '" . $DB->forSql($tagName) . "'"
+            ? (is_array($tagName)) ? " NAME IN (" . implode(
+                ',',
+                array_map(
+                    function ($val) use ($DB) {
+                        return "'" . $DB->forSql($val) . "'";
+                    },
+                    $tagName
+                )
+            ) . ")" : " NAME = '" . $DB->forSql($tagName) . "'"
             : ($userId ? " USER_ID = " . $userId : "")
         );
 
@@ -178,7 +196,8 @@ class UserTagTable extends Entity\DataManager
                 return $result;
             }
 
-            $res = $connection->query("SELECT
+            $res = $connection->query(
+                "SELECT /*+ NO_DERIVED_CONDITION_PUSHDOWN() */
 				@user_rank := IF(
 					@current_name = tmp.NAME,
 					@user_rank + 1,
@@ -189,7 +208,7 @@ class UserTagTable extends Entity\DataManager
 				tmp.NAME as NAME,
 				tmp.WEIGHT as WEIGHT
 			FROM (
-				SELECT
+				SELECT /*+ NO_DERIVED_CONDITION_PUSHDOWN() */
 					@rownum := @rownum + 1 as ROWNUM,
 					RS1.ENTITY_ID as USER_ID,
 					UT1.NAME as NAME,
@@ -197,18 +216,22 @@ class UserTagTable extends Entity\DataManager
 				FROM
 					b_rating_subordinate RS1,
 					" . self::getTableName() . " UT1
+				INNER JOIN b_user U ON U.ID = UT1.USER_ID
 				WHERE
 					RS1.RATING_ID = " . intval($ratingId) . "
 					AND RS1.ENTITY_ID = UT1.USER_ID
 					AND UT1.NAME IN (" . $tagsSql . ")
+					AND U.ACTIVE = 'Y'
 				GROUP BY
 					UT1.NAME, RS1.ENTITY_ID
 				ORDER BY
 					UT1.NAME,
 					WEIGHT DESC
-			) tmp");
+			) tmp"
+            );
         } else {
-            $res = $connection->query("SELECT
+            $res = $connection->query(
+                "SELECT /*+ NO_DERIVED_CONDITION_PUSHDOWN() */
 				@user_rank := IF(
 					@current_name = tmp.NAME,
 					@user_rank + 1,
@@ -218,17 +241,20 @@ class UserTagTable extends Entity\DataManager
 				tmp.NAME as NAME,
 				1 as WEIGHT
 			FROM (
-				SELECT
+				SELECT /*+ NO_DERIVED_CONDITION_PUSHDOWN() */
 					@rownum := @rownum + 1 as ROWNUM,
 					UT1.USER_ID as USER_ID,
 					UT1.NAME as NAME
 				FROM
 					" . self::getTableName() . " UT1
+				INNER JOIN b_user U ON U.ID = UT1.USER_ID
 				WHERE
 					UT1.NAME IN (" . $tagsSql . ")
+					AND U.ACTIVE = 'Y'
 				ORDER BY
 					UT1.NAME
-			) tmp");
+			) tmp"
+            );
         }
 
         $userWeightData = $tagUserData = array();
@@ -263,10 +289,12 @@ class UserTagTable extends Entity\DataManager
             }
         }
 
-        $userData = \Bitrix\Socialnetwork\Item\UserTag::getUserData([
-            'userIdList' => array_keys($userWeightData),
-            'avatarSize' => $avatarSize
-        ]);
+        $userData = \Bitrix\Socialnetwork\Item\UserTag::getUserData(
+            [
+                'userIdList' => array_keys($userWeightData),
+                'avatarSize' => $avatarSize
+            ]
+        );
 
         foreach ($tagUserData as $tagName => $userIdList) {
             $result[$tagName] = array();

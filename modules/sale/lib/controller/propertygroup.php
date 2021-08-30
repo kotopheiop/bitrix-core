@@ -15,9 +15,11 @@ class PropertyGroup extends Controller
     public function getFieldsAction()
     {
         $entity = new \Bitrix\Sale\Rest\Entity\PropertyGroup();
-        return ['PROPERTY_GROUP' => $entity->prepareFieldInfos(
-            $entity->getFields()
-        )];
+        return [
+            'PROPERTY_GROUP' => $entity->prepareFieldInfos(
+                $entity->getFields()
+            )
+        ];
     }
 
     public function addAction(array $fields)
@@ -27,10 +29,12 @@ class PropertyGroup extends Controller
         $propertyGroupId = 0;
         $orderPropsGroup = new \CSaleOrderPropsGroup();
 
-        if ((int)$fields['PERSON_TYPE_ID'] <= 0)
+        if ((int)$fields['PERSON_TYPE_ID'] <= 0) {
             $r->addError(new Error(Loc::getMessage('CONTROLLER_ERROR_PERSON_TYPE_ID_FIELD_EMPTY'), 200950000001));
-        if (trim($fields['NAME']) == '')
+        }
+        if (trim($fields['NAME']) == '') {
             $r->addError(new Error(Loc::getMessage('CONTROLLER_ERROR_PERSON_TYPE_ID_FIELD_EMPTY'), 200950000002));
+        }
 
         if ($r->isSuccess()) {
             $propertyGroupId = $orderPropsGroup->Add($fields);
@@ -48,10 +52,9 @@ class PropertyGroup extends Controller
                 $this->addError(new Error($error->getMessage(), 200950000006));
             }
             return null;
-        } else
+        } else {
             return ['PROPERTY_GROUP' => $this->get($propertyGroupId)];
-
-
+        }
     }
 
     public function updateAction($id, array $fields)
@@ -60,8 +63,9 @@ class PropertyGroup extends Controller
 
         $r = $this->exists($id);
         if ($r->isSuccess()) {
-            if (isset($fields['PERSON_TYPE_ID']))
+            if (isset($fields['PERSON_TYPE_ID'])) {
                 unset($fields['PERSON_TYPE_ID']);
+            }
 
             if (!$orderPropsGroup->Update($id, $fields)) {
                 if ($ex = self::getApplication()->GetException()) {
@@ -69,8 +73,11 @@ class PropertyGroup extends Controller
                     self::getApplication()->ThrowException($ex->GetString(), 200950000008);
 
                     $r->addError(new Error($ex->GetString(), $ex->GetID()));
-                } else
-                    $r->addError(new Error(Loc::getMessage('CONTROLLER_ERROR_UPDATE_PROPS_GROUP', ['#ID#' => $id]), 200950000004));
+                } else {
+                    $r->addError(
+                        new Error(Loc::getMessage('CONTROLLER_ERROR_UPDATE_PROPS_GROUP', ['#ID#' => $id]), 200950000004)
+                    );
+                }
             }
         }
 
@@ -91,8 +98,11 @@ class PropertyGroup extends Controller
             if (!$orderPropsGroup->Delete($id)) {
                 if ($ex = self::getApplication()->GetException()) {
                     $r->addError(new Error($ex->GetString(), $ex->GetID()));
-                } else
-                    $r->addError(new Error(Loc::getMessage('CONTROLLER_ERROR_DELETE_PROPS_GROUP', ['#ID#' => $id]), 200950000005));
+                } else {
+                    $r->addError(
+                        new Error(Loc::getMessage('CONTROLLER_ERROR_DELETE_PROPS_GROUP', ['#ID#' => $id]), 200950000005)
+                    );
+                }
             }
         }
 
@@ -125,19 +135,23 @@ class PropertyGroup extends Controller
         $order = empty($order) ? ['ID' => 'ASC'] : $order;
 
         $r = $orderPropsGroup->GetList($order, $filter, false, self::getNavData($start), $select);
-        while ($l = $r->fetch())
+        while ($l = $r->fetch()) {
             $result[] = $l;
+        }
 
-        return new Page('PROPERTY_GROUPS', $result, function () use ($filter) {
+        return new Page(
+            'PROPERTY_GROUPS', $result, function () use ($filter) {
             $orderPropsGroup = new \CSaleOrderPropsGroup();
 
             $list = [];
             $r = $orderPropsGroup->GetList([], $filter);
-            while ($l = $r->fetch())
+            while ($l = $r->fetch()) {
                 $list[] = $l;
+            }
 
             return count($list);
-        });
+        }
+        );
     }
 
     //end region
@@ -152,8 +166,9 @@ class PropertyGroup extends Controller
     protected function exists($id)
     {
         $r = new Result();
-        if ($this->get($id)['ID'] <= 0)
+        if ($this->get($id)['ID'] <= 0) {
             $r->addError(new Error('property group is not exists', 200940400001));
+        }
 
         return $r;
     }

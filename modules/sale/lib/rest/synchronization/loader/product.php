@@ -18,18 +18,22 @@ class Product extends Entity
         Loader::includeModule('catalog');
 
         $iblockIds = [];
-        $row = \Bitrix\Catalog\CatalogIblockTable::getList([
-            'select' => ['IBLOCK_ID'],
-            'filter' => ['=IBLOCK.ACTIVE' => 'Y']
-        ]);
-        while ($res = $row->fetch())
+        $row = \Bitrix\Catalog\CatalogIblockTable::getList(
+            [
+                'select' => ['IBLOCK_ID'],
+                'filter' => ['=IBLOCK.ACTIVE' => 'Y']
+            ]
+        );
+        while ($res = $row->fetch()) {
             $iblockIds[] = $res['IBLOCK_ID'];
+        }
 
         //TODO: ���������� ���������� �� ����� ������ ��������, ������� �� ���� ��������� ������������ product_xml_id � ���������� ������� ��������.
         if (empty($iblockIds)) {
             // nothing here
         } else {
-            $r = \CIBlockElement::GetList(array(),
+            $r = \CIBlockElement::GetList(
+                array(),
                 array("=XML_ID" => $code, "ACTIVE" => "Y", "CHECK_PERMISSIONS" => "Y", "IBLOCK_ID" => $iblockIds),
                 false,
                 false,
@@ -54,7 +58,7 @@ class Product extends Entity
     {
         $result = '';
 
-        if (strpos($code, '#') !== false) {
+        if (mb_strpos($code, '#') !== false) {
             $code = explode('#', $code);
             $result = $code[1];
         }
@@ -67,8 +71,9 @@ class Product extends Entity
 
         if ($iblock_fields[$iblockId] == null) {
             $r = \CIBlock::GetList(array(), array("ID" => $iblockId));
-            if ($ar = $r->Fetch())
+            if ($ar = $r->Fetch()) {
                 $iblock_fields[$iblockId] = $ar;
+            }
         }
         return $iblock_fields;
     }

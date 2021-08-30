@@ -30,7 +30,6 @@ class Normalizer
     {
         if (!$code) {
             return null;
-
         }
         switch ($typeId) {
             case Type::IM:
@@ -57,7 +56,7 @@ class Normalizer
      */
     public static function normalizeEmail($code)
     {
-        return trim(strtolower($code));
+        return trim(mb_strtolower($code));
     }
 
     /**
@@ -82,8 +81,8 @@ class Normalizer
     public static function normalizeIm($code)
     {
         $code = trim($code);
-        if (strpos($code, 'imol|') === 0) {
-            $code = substr($code, 5);
+        if (mb_strpos($code, 'imol|') === 0) {
+            $code = mb_substr($code, 5);
         }
 
         return $code;

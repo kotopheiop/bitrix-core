@@ -1,4 +1,5 @@
 <?
+
 global $MESS;
 
 $MESS["CHRP_SHOULD_PAY"] = "Amount to be paid";
@@ -10,12 +11,12 @@ $MESS["CHRP_DESC_PRODUCT_NAME"] = "Name of product for purchase";
 $MESS["CHRP_ORDER_ID"] = "Order number";
 $MESS["CHRP_DESC_ORDER_ID"] = "Order number in you Internet store";
 $MESS["CHRP_CB_URL"] = "Contact address for payment notification";
-$MESS["CHRP_DESC_CB_URL"] = "URL script (on seller’s website) for notification of payment result";
+$MESS["CHRP_DESC_CB_URL"] = "URL script (on sellerï¿½s website) for notification of payment result";
 $MESS["CHRP_DECLINE_URL"] = "Contact address in case of error in payment";
-$MESS["CHRP_DESC_DECLINE_URL"] = "URL (on seller’s website) for redirecting buyer in case of unsuccessful payment";
+$MESS["CHRP_DESC_DECLINE_URL"] = "URL (on sellerï¿½s website) for redirecting buyer in case of unsuccessful payment";
 $MESS["CHRP_SUCCESS_URL"] = "Contact address for successful payment";
-$MESS["CHRP_DESC_SUCCESS_URL"] = "URL (on seller’s website) for redirecting buyer after successful purchase";
-$MESS["CHRP_SHARED"] = "Seller’s code word";
+$MESS["CHRP_DESC_SUCCESS_URL"] = "URL (on sellerï¿½s website) for redirecting buyer after successful purchase";
+$MESS["CHRP_SHARED"] = "Sellerï¿½s code word";
 $MESS["CHRP_DESC_SHARED"] = "The code field (shared secret) is defined in the process of concluding an agreement for the reception of payment and serves as the connection manager";
 $MESS["CHRP_YANDEX_FORWARD"] = "Redirecting to the Yandex payment system";
 $MESS["CHRP_DESC_YANDEX_FORWARD"] = "Indicate a non-empty value for automatic forwarding to the Yandex payment system";
@@ -30,7 +31,7 @@ $MESS["CHRP_DESC_CS2"] = "This is stored with other payer data and is returned u
 $MESS["CHRP_CS3"] = "Additional parameter 2";
 $MESS["CHRP_DESC_CS3"] = "This is stored with other payer data and returns upon notification of payment";
 $MESS["CHRP_LANGUAGE"] = "Interface language for Chronopay form";
-$MESS["CHRP_DESC_LANGUAGE"] = "Possible values: En – English (default); Ru – Russian; Nl – Dutch; Es - Spanish";
+$MESS["CHRP_DESC_LANGUAGE"] = "Possible values: En ï¿½ English (default); Ru ï¿½ Russian; Nl ï¿½ Dutch; Es - Spanish";
 $MESS["CHRP_F_NAME"] = "User name";
 $MESS["CHRP_DESC_F_NAME"] = "";
 $MESS["CHRP_S_NAME"] = "Last name of user";

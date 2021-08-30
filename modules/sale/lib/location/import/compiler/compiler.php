@@ -62,7 +62,19 @@ final class Compiler
 
     private $headers = array(
         'SHORT' => array('CODE', 'PARENT_CODE', 'NAME.RU.NAME', 'NAME.EN.NAME', 'NAME.UA.NAME'),
-        'LONG' => array('CODE', 'PARENT_CODE', 'TYPE_CODE', 'NAME.RU.NAME', 'NAME.EN.NAME', 'NAME.UA.NAME', 'LONGITUDE', 'LATITUDE', 'EXT.YAMARKET.0', 'EXT.ZIP.0'/*, 'EXT.ZIP.1', 'EXT.ZIP.2', 'EXT.ZIP.3'*/),
+        'LONG' => array(
+            'CODE',
+            'PARENT_CODE',
+            'TYPE_CODE',
+            'NAME.RU.NAME',
+            'NAME.EN.NAME',
+            'NAME.UA.NAME',
+            'LONGITUDE',
+            'LATITUDE',
+            'EXT.YAMARKET.0',
+            'EXT.ZIP.0'
+            /*, 'EXT.ZIP.1', 'EXT.ZIP.2', 'EXT.ZIP.3'*/
+        ),
         'GROUP_FILE' => array('CODE', 'TYPES')
     );
 
@@ -74,12 +86,12 @@ final class Compiler
             'FILE_NAME_TEMPLATE' => 'layout.csv'
         ),
         /*
-        'SELECTABLE' => array(
-            'TYPES' => array('COUNTRY', 'COUNTRY_DISTRICT', 'REGION'),
-            'HEADER' => 'LONG',
-            'FILE_NAME_TEMPLATE' => 'selectable.csv'
-        ),
-        */
+		'SELECTABLE' => array(
+			'TYPES' => array('COUNTRY', 'COUNTRY_DISTRICT', 'REGION'),
+			'HEADER' => 'LONG',
+			'FILE_NAME_TEMPLATE' => 'selectable.csv'
+		),
+		*/
         'AREAS' => array(
             'CODE' => 'AREAS',
             'TYPES' => array('CITY', 'SUBREGION', 'VILLAGE'/*, 'CITY_DISTRICT', 'METRO_STATION', 'OTHER'*/),
@@ -223,8 +235,10 @@ final class Compiler
     );
 
     private $forbiddenPathIds = array(
-        'af7cdb7f-e47d-4f65-93d5-3a2b70a809ce' => true, // Боровой микрорайон should be placed inside village, not street
-        '762758bb-18b9-440f-bc61-8e1e77ff3fd8' => true, // московский посёлок cannot be inside московский город, those are the same
+        'af7cdb7f-e47d-4f65-93d5-3a2b70a809ce' => true,
+        // Боровой микрорайон should be placed inside village, not street
+        '762758bb-18b9-440f-bc61-8e1e77ff3fd8' => true,
+        // московский посёлок cannot be inside московский город, those are the same
     );
 
     private $allowedFiasStats = array(
@@ -301,8 +315,9 @@ final class Compiler
         //if(!file_exists($_SERVER['DOCUMENT_ROOT'].$this->workDir.self::OUTPUT_DIR))
         //	mkdir($_SERVER['DOCUMENT_ROOT'].$this->workDir.self::OUTPUT_DIR, 0700, true);
 
-        foreach ($this->typeGroups as $id => &$params)
+        foreach ($this->typeGroups as $id => &$params) {
             $params['I_TYPES'] = array_flip($params['TYPES']);
+        }
 
         foreach ($this->fiasToBaseType as $type => $fTypes) {
             foreach ($fTypes as $fType => $fReplace) {
@@ -336,11 +351,11 @@ final class Compiler
         // step 2: processing huge fias file
         //$this->splitFiasOnRegions(); // split huge fias file onto small pieces of bundles
         /*
-        Handwriting:
-        move 0c5b2444-70a0-4932-980c-b4dc0d3f02b5;1;1;Москва;г; TO 29251dcf-00a1-4e34-98d4-5c47484a36d4.csv
-        move c2deb16a-0330-4f05-821f-1d09c93331e6;1;1;Санкт-Петербург;г;190000 TO 6d1ebb35-70c6-4129-bd55-da3969658f5d.csv
-        move 6fdecb78-893a-4e3f-a5ba-aa062459463b;1;1;Севастополь;г; TO bd8e6511-e4b9-4841-90de-6bbc231a789e.csv
-        */
+		Handwriting:
+		move 0c5b2444-70a0-4932-980c-b4dc0d3f02b5;1;1;Москва;г; TO 29251dcf-00a1-4e34-98d4-5c47484a36d4.csv
+		move c2deb16a-0330-4f05-821f-1d09c93331e6;1;1;Санкт-Петербург;г;190000 TO 6d1ebb35-70c6-4129-bd55-da3969658f5d.csv
+		move 6fdecb78-893a-4e3f-a5ba-aa062459463b;1;1;Севастополь;г; TO bd8e6511-e4b9-4841-90de-6bbc231a789e.csv
+		*/
         //$this->copyFias2DB(); // place fias to db
 
         // step 3: map fias to yandex id. There were some handwriting to map files, so do not uncomment unless you want files to be overwritten
@@ -354,23 +369,23 @@ final class Compiler
         ##########################################################
 
         /*
-        $this->copyFias2DB();
+		$this->copyFias2DB();
 
-        update b_tmp_fias set PARENTGUID = '29251dcf-00a1-4e34-98d4-5c47484a36d4' where AOGUID = '0c5b2444-70a0-4932-980c-b4dc0d3f02b5' and AOID = '5c8b06f1-518e-496e-b683-7bf917e0d70b';
-        update b_tmp_fias set PARENTGUID = '6d1ebb35-70c6-4129-bd55-da3969658f5d' where AOGUID = 'c2deb16a-0330-4f05-821f-1d09c93331e6' and AOID = 'aad1469e-54ff-4605-af4f-f016c75b84d2';
-        update b_tmp_fias set PARENTGUID = 'bd8e6511-e4b9-4841-90de-6bbc231a789e' where AOGUID = '6fdecb78-893a-4e3f-a5ba-aa062459463b' and AOID = '6fdecb78-893a-4e3f-a5ba-aa062459463b';
-        */
+		update b_tmp_fias set PARENTGUID = '29251dcf-00a1-4e34-98d4-5c47484a36d4' where AOGUID = '0c5b2444-70a0-4932-980c-b4dc0d3f02b5' and AOID = '5c8b06f1-518e-496e-b683-7bf917e0d70b';
+		update b_tmp_fias set PARENTGUID = '6d1ebb35-70c6-4129-bd55-da3969658f5d' where AOGUID = 'c2deb16a-0330-4f05-821f-1d09c93331e6' and AOID = 'aad1469e-54ff-4605-af4f-f016c75b84d2';
+		update b_tmp_fias set PARENTGUID = 'bd8e6511-e4b9-4841-90de-6bbc231a789e' where AOGUID = '6fdecb78-893a-4e3f-a5ba-aa062459463b' and AOID = '6fdecb78-893a-4e3f-a5ba-aa062459463b';
+		*/
 
         ##########################################################
         #### MAKE EXPORT TABLE
         ##########################################################
 
         /*
-        $res = YandexGeoCoder::query(array(
-            'query' => 'Ненецкий автономный округ Шойна село Школьная улица',
-            'kind' => YandexGeoCoder::KIND_STREET
-        ));
-        */
+		$res = YandexGeoCoder::query(array(
+			'query' => 'Ненецкий автономный округ Шойна село Школьная улица',
+			'kind' => YandexGeoCoder::KIND_STREET
+		));
+		*/
 
         $this->output('Build main tree');
         $this->buildMainTree();
@@ -378,107 +393,111 @@ final class Compiler
         $this->createExportTables();
 
         /*
-        ###################################################################
-        ###################################################################
-        ###################################################################
+		###################################################################
+		###################################################################
+		###################################################################
 
-        // making world
-        $this->eTreeDB->cleanup();
-        $this->eTreeDB->dropIndexes();
+		// making world
+		$this->eTreeDB->cleanup();
+		$this->eTreeDB->dropIndexes();
 
-        $this->output('Generate export tree: Belarus');
-        $this->generateExportTreeBelorussia();
+		$this->output('Generate export tree: Belarus');
+		$this->generateExportTreeBelorussia();
 
-        $this->output('Generate export tree: Kazakhstan');
-        $this->generateExportTreeLegacy(self::KAZAKHSTAN_SOURCE);
+		$this->output('Generate export tree: Kazakhstan');
+		$this->generateExportTreeLegacy(self::KAZAKHSTAN_SOURCE);
 
-        $this->output('Generate export tree: Ukrain');
-        $this->generateExportTreeUkrain();
+		$this->output('Generate export tree: Ukrain');
+		$this->generateExportTreeUkrain();
 
-        $this->output('Generate export tree: USA');
-        $this->generateExportTreeUSA();
+		$this->output('Generate export tree: USA');
+		$this->generateExportTreeUSA();
 
-        $this->output('Generate export tree: World Countries');
-        $this->generateExportTreeWorld();
+		$this->output('Generate export tree: World Countries');
+		$this->generateExportTreeWorld();
 
-        $this->output('Generate export tree: EX-CIS');
-        $this->generateExportTreeLegacy(self::CIS_SOURCE);
+		$this->output('Generate export tree: EX-CIS');
+		$this->generateExportTreeLegacy(self::CIS_SOURCE);
 
-        ###################################################################
-        ###################################################################
-        ###################################################################
+		###################################################################
+		###################################################################
+		###################################################################
 
-        $this->output('Last occupied: '.$this->eTreeDB->getLastOccupiedCode());
-        $this->output('Next free: '.$this->eTreeDB->getNextFreeCode());
+		$this->output('Last occupied: '.$this->eTreeDB->getLastOccupiedCode());
+		$this->output('Next free: '.$this->eTreeDB->getNextFreeCode());
 
-        // making russia
-        $this->eTreeDBRussia->cleanup();
-        $this->eTreeDBRussia->dropIndexes();
+		// making russia
+		$this->eTreeDBRussia->cleanup();
+		$this->eTreeDBRussia->dropIndexes();
 
-        $this->output('Generate export tree: Russia');
-        $this->generateExportTreeRussia();
+		$this->output('Generate export tree: Russia');
+		$this->generateExportTreeRussia();
 
-        $this->output('Last occupied: '.$this->eTreeDBRussia->getLastOccupiedCode());
-        $this->output('Next free: '.$this->eTreeDBRussia->getNextFreeCode());
+		$this->output('Last occupied: '.$this->eTreeDBRussia->getLastOccupiedCode());
+		$this->output('Next free: '.$this->eTreeDBRussia->getNextFreeCode());
 
-        ###################################################################
-        ###################################################################
-        ###################################################################
-        */
+		###################################################################
+		###################################################################
+		###################################################################
+		*/
 
         $this->restoreExportTablesIndexes();
 
         $this->output('Build export files');
 
         /*
-        $this->cleanPoolDir('assets');
+		$this->cleanPoolDir('assets');
 
-        $this->eTreeDB->walkInDeep(array($this, 'generateExportFilesFromTableBundle')); // world
-        $this->eTreeDBRussia->walkInDeep(array($this, 'generateExportFilesFromTableBundle')); // russia
-        */
+		$this->eTreeDB->walkInDeep(array($this, 'generateExportFilesFromTableBundle')); // world
+		$this->eTreeDBRussia->walkInDeep(array($this, 'generateExportFilesFromTableBundle')); // russia
+		*/
 
         $this->cleanPoolDir('assets_standard');
-        $this->eTreeDB->walkInDeep(array(
-            'ITEM' => array($this, 'generateExportFilesFromTableBundle_Standard')
-        )); // world
-        $this->eTreeDBRussia->walkInDeep(array(
-            'ITEM' => array($this, 'generateExportFilesFromTableBundle_Standard_YandexOnly')
-        )); // russia
+        $this->eTreeDB->walkInDeep(
+            array(
+                'ITEM' => array($this, 'generateExportFilesFromTableBundle_Standard')
+            )
+        ); // world
+        $this->eTreeDBRussia->walkInDeep(
+            array(
+                'ITEM' => array($this, 'generateExportFilesFromTableBundle_Standard_YandexOnly')
+            )
+        ); // russia
 
         /*
-        // types by groups
-        $this->makeTypeGroupFile(self::GROUP_FILE);
+		// types by groups
+		$this->makeTypeGroupFile(self::GROUP_FILE);
 
-        $this->copyStaticCSV();
-        */
+		$this->copyStaticCSV();
+		*/
 
         ###################################################################
         ###################################################################
         ###################################################################
 
         /*
-        $this->output('Build demo files');
+		$this->output('Build demo files');
 
-        $this->cleanPoolDir('demo');
+		$this->cleanPoolDir('demo');
 
-        $this->eTreeDB->walkInDeep(array($this, 'generateDemoFilesWorld'), array('VILLAGE' => 1)); // world
-        $this->eTreeDBRussia->walkInDeep(array($this, 'generateDemoFilesRussia'), array('VILLAGE' => 1)); // world
-        */
+		$this->eTreeDB->walkInDeep(array($this, 'generateDemoFilesWorld'), array('VILLAGE' => 1)); // world
+		$this->eTreeDBRussia->walkInDeep(array($this, 'generateDemoFilesRussia'), array('VILLAGE' => 1)); // world
+		*/
 
         /*
-        добавить сюда генерацию файла country_codes.php с содержимым:
+		добавить сюда генерацию файла country_codes.php с содержимым:
 
-        <?
-        $LOCALIZATION_COUNTRY_CODE_MAP = array(
-            'ru' => '0000028023',
-            'ua' => '0000000364',
-            'kz' => '0000000276',
-            'bl' => '0000000001'
-        );
+		<?
+		$LOCALIZATION_COUNTRY_CODE_MAP = array(
+			'ru' => '0000028023',
+			'ua' => '0000000364',
+			'kz' => '0000000276',
+			'bl' => '0000000001'
+		);
 
-        этот файл потом идёт в мастер установки интернет-магазина, вместе с демо-данными, types.csv и externalservice.csv
+		этот файл потом идёт в мастер установки интернет-магазина, вместе с демо-данными, types.csv и externalservice.csv
 
-        */
+		*/
 
         $this->output('DONE');
     }
@@ -487,45 +506,56 @@ final class Compiler
     ### ABOUT EXPORT TABLE
     #######################################################
 
-    private $allowedForDemo = array('COUNTRY' => 1, 'COUNTRY_DISTRICT' => 1, 'REGION' => 1, 'SUBREGION' => 1, 'CITY' => 1);
+    private $allowedForDemo = array(
+        'COUNTRY' => 1,
+        'COUNTRY_DISTRICT' => 1,
+        'REGION' => 1,
+        'SUBREGION' => 1,
+        'CITY' => 1
+    );
     private $demoCategory = false;
 
     public function generateDemoFilesWorld($item, $table)
     {
-        if (!isset($this->allowedForDemo[$item['TYPE_CODE']]))
+        if (!isset($this->allowedForDemo[$item['TYPE_CODE']])) {
             return;
+        }
 
         if ($item['TYPE_CODE'] == 'COUNTRY') {
             $this->addItemToCSV('world', 'demo', $item);
 
             // this part must not depend on codes, which may flow left and right. in future we may add
             // some markers like "is_ukrain" or "is_russia" etc to database instead of relying on names
-            if ($item['NAME'] == 'Україна')
+            if ($item['NAME'] == 'Україна') {
                 $this->demoCategory = 'ukrain';
-            elseif ($item['NAME'] == 'Казахстан')
+            } elseif ($item['NAME'] == 'Казахстан') {
                 $this->demoCategory = 'kazakhstan';
-            elseif ($item['NAME'] == 'Беларусь')
+            } elseif ($item['NAME'] == 'Беларусь') {
                 $this->demoCategory = 'belarus';
-            elseif ($item['NAME'] == 'США')
+            } elseif ($item['NAME'] == 'США') {
                 $this->demoCategory = 'usa';
-            else
+            } else {
                 $this->demoCategory = false;
+            }
         }
 
         //$this->output($table->getWalkPathString());
         //$this->output($this->demoCategory);
 
-        if ($this->demoCategory !== false)
+        if ($this->demoCategory !== false) {
             $this->addItemToCSV($this->demoCategory, 'demo', $item);
+        }
     }
 
     public function generateDemoFilesRussia($item, $table)
     {
-        if (!isset($this->allowedForDemo[$item['TYPE_CODE']]))
+        if (!isset($this->allowedForDemo[$item['TYPE_CODE']])) {
             return;
+        }
 
-        if ($item['TYPE_CODE'] == 'COUNTRY')
+        if ($item['TYPE_CODE'] == 'COUNTRY') {
             $this->addItemToCSV('world', 'demo', $item);
+        }
 
         $this->addItemToCSV('russia', 'demo', $item);//done
     }
@@ -578,8 +608,9 @@ final class Compiler
 
         $name = unserialize($item['LANGNAMES']);
         foreach ($name as $lid => $values) {
-            foreach ($values as $i => $val)
+            foreach ($values as $i => $val) {
                 $data['NAME.' . $lid . '.' . $i] = $val;
+            }
         }
 
         $data['EXT.YAMARKET.0'] = '';
@@ -589,8 +620,9 @@ final class Compiler
         if (!empty($externals)) {
             foreach ($externals as $type => $values) {
                 if (is_array($values)) {
-                    foreach ($values as $i => $val)
+                    foreach ($values as $i => $val) {
                         $data['EXT.' . $type . '.' . $i] = $val;
+                    }
                 }
             }
         }
@@ -599,10 +631,10 @@ final class Compiler
         $data['LATITUDE'] = $item['LATITUDE'];
 
         /*
-        $this->output($data);
-        $this->output($group);
-        $this->output($fName);
-        */
+		$this->output($data);
+		$this->output($group);
+		$this->output($fName);
+		*/
 
         $this->putToFile2(
             $data,
@@ -614,8 +646,9 @@ final class Compiler
 
     public function generateExportFilesFromTableBundle($item, $table)
     {
-        if (in_array($item['TYPE_CODE'], $this->typeGroups['LAYOUT']['TYPES']))
+        if (in_array($item['TYPE_CODE'], $this->typeGroups['LAYOUT']['TYPES'])) {
             $this->currentParentGroup = $item['CODE'];
+        }
 
         ########################################################
         ########################################################
@@ -624,15 +657,19 @@ final class Compiler
         $cat = $this->sysMaps['BASETYPE2GROUP'][$item['TYPE_CODE']];
         $fName = $this->typeGroups[$cat]['FILE_NAME_TEMPLATE'];
 
-        $fName = str_replace(array(
-            '%BASE_PARENT_ITEM_CODE%',
-            '%CODE%',
-            '.csv'
-        ), array(
-            $cat == 'LAYOUT' ? '' : $this->currentParentGroup,
-            ToLower($cat),
-            ''
-        ), $fName);
+        $fName = str_replace(
+            array(
+                '%BASE_PARENT_ITEM_CODE%',
+                '%CODE%',
+                '.csv'
+            ),
+            array(
+                $cat == 'LAYOUT' ? '' : $this->currentParentGroup,
+                ToLower($cat),
+                ''
+            ),
+            $fName
+        );
 
         $this->addItemToCSV($fName, 'assets', $item);
 
@@ -643,8 +680,9 @@ final class Compiler
 
     public function generateExportFilesFromTableBundle_Standard($item, $table)
     {
-        if (in_array($item['TYPE_CODE'], $this->typeGroups['LAYOUT']['TYPES']))
+        if (in_array($item['TYPE_CODE'], $this->typeGroups['LAYOUT']['TYPES'])) {
             $this->currentParentGroup = $item['CODE'];
+        }
 
         ########################################################
         ########################################################
@@ -653,15 +691,19 @@ final class Compiler
         $cat = $this->sysMaps['BASETYPE2GROUP'][$item['TYPE_CODE']];
         $fName = $this->typeGroups[$cat]['FILE_NAME_TEMPLATE'];
 
-        $fName = str_replace(array(
-            '%BASE_PARENT_ITEM_CODE%',
-            '%CODE%',
-            '.csv'
-        ), array(
-            $cat == 'LAYOUT' ? '' : $this->currentParentGroup,
-            ToLower($cat),
-            ''
-        ), $fName);
+        $fName = str_replace(
+            array(
+                '%BASE_PARENT_ITEM_CODE%',
+                '%CODE%',
+                '.csv'
+            ),
+            array(
+                $cat == 'LAYOUT' ? '' : $this->currentParentGroup,
+                ToLower($cat),
+                ''
+            ),
+            $fName
+        );
 
         $this->addItemToCSV($fName, 'assets_standard', $item);
 
@@ -672,14 +714,18 @@ final class Compiler
 
     public function generateExportFilesFromTableBundle_Standard_YandexOnly($item, $table)
     {
-        if (in_array($item['TYPE_CODE'], $this->typeGroups['LAYOUT']['TYPES']))
+        if (in_array($item['TYPE_CODE'], $this->typeGroups['LAYOUT']['TYPES'])) {
             $this->currentParentGroup = $item['CODE'];
+        }
 
         ########################################################
         ########################################################
         ########################################################
 
-        if ($item['TYPE_CODE'] == 'VILLAGE' && strpos($item['EXTERNALS'], 'YAMARKET') === false/*not from yandex database*/) {
+        if ($item['TYPE_CODE'] == 'VILLAGE' && strpos(
+                $item['EXTERNALS'],
+                'YAMARKET'
+            ) === false/*not from yandex database*/) {
             //$this->output($item['NAME'].' skipped');
             return false;
         }
@@ -687,15 +733,19 @@ final class Compiler
         $cat = $this->sysMaps['BASETYPE2GROUP'][$item['TYPE_CODE']];
         $fName = $this->typeGroups[$cat]['FILE_NAME_TEMPLATE'];
 
-        $fName = str_replace(array(
-            '%BASE_PARENT_ITEM_CODE%',
-            '%CODE%',
-            '.csv'
-        ), array(
-            $cat == 'LAYOUT' ? '' : $this->currentParentGroup,
-            ToLower($cat),
-            ''
-        ), $fName);
+        $fName = str_replace(
+            array(
+                '%BASE_PARENT_ITEM_CODE%',
+                '%CODE%',
+                '.csv'
+            ),
+            array(
+                $cat == 'LAYOUT' ? '' : $this->currentParentGroup,
+                ToLower($cat),
+                ''
+            ),
+            $fName
+        );
 
         $this->addItemToCSV($fName, 'assets_standard', $item);
 
@@ -711,7 +761,9 @@ final class Compiler
         $this->fiasDB = new Db\FiasTable();
 
         $this->eTreeDBRussia->dropCodeIndex();
-        $this->eTreeDBRussia->setExportOffset(intval($this->eTreeDB->getNextFreeCode())); // start where the previous table ended
+        $this->eTreeDBRussia->setExportOffset(
+            intval($this->eTreeDB->getNextFreeCode())
+        ); // start where the previous table ended
 
         // get yandex regions
         $regions = $this->readFiasRootMapV2();
@@ -760,7 +812,6 @@ final class Compiler
                 $this->fiasPath = array();
                 $this->generateExportTreePutRussiaInnerBundle($regionGuid);
             }
-
             //break;
         }
     }
@@ -772,13 +823,23 @@ final class Compiler
         //if($baseType == 'CITY' || $baseType == 'VILLAGE')
         //	$this->output('Doubtfull city\village: '.$item['FORMALNAME'].' ('.$item['SHORTNAME'].')');
 
-        $skip = array('5544bf6a-0ec1-4b5f-bbc5-49294f71de16'/*тягловая подстанция*/, '22a77f13-3764-41dc-aa23-db680b03ef5d'/*6 км АЗС*/, '3f2ab130-274e-4fd6-b611-a94467b04f57'/*Велтон Парк duplicate*/, '762758bb-18b9-440f-bc61-8e1e77ff3fd8', /*Московский посёлок, not exists*/);
+        $skip = array(
+            '5544bf6a-0ec1-4b5f-bbc5-49294f71de16'
+            /*тягловая подстанция*/,
+            '22a77f13-3764-41dc-aa23-db680b03ef5d'
+            /*6 км АЗС*/,
+            '3f2ab130-274e-4fd6-b611-a94467b04f57'
+            /*Велтон Парк duplicate*/,
+            '762758bb-18b9-440f-bc61-8e1e77ff3fd8',
+            /*Московский посёлок, not exists*/
+        );
 
         return ($baseType == 'CITY' || $baseType == 'VILLAGE') &&
             (
                 $this->fiasToBaseType[$baseType][$item['SHORTNAME']]['U'] /*code is in a list of allowed types for export*/
                 ||
-                isset($this->fias2yandexCityMap[$item['AOGUID']] /*code is present in yandex2fias city map*/
+                isset(
+                    $this->fias2yandexCityMap[$item['AOGUID']] /*code is present in yandex2fias city map*/
                 ) &&
                 !in_array($item['AOGUID'], $skip) // not one of those forbidden broken items
             );
@@ -794,15 +855,15 @@ final class Compiler
     public function generateExportTreePutRussiaFiasPathCutForbidden($path)
     {
         /*
-        $object = $path[count($path) - 1];
-        if($object['AOGUID'] == 'da99f366-1a88-43b1-9aa8-c1b66334c97f')
-        {
-            $found = true;
+		$object = $path[count($path) - 1];
+		if($object['AOGUID'] == 'da99f366-1a88-43b1-9aa8-c1b66334c97f')
+		{
+			$found = true;
 
-            \_print_r('Wow: da99f366-1a88-43b1-9aa8-c1b66334c97f');
-            \_print_r($object);
-        }
-        */
+			\_print_r('Wow: da99f366-1a88-43b1-9aa8-c1b66334c97f');
+			\_print_r($object);
+		}
+		*/
 
         //$path = array_reverse($path);
 
@@ -810,7 +871,9 @@ final class Compiler
         $lastValidId = false;
         $neepPasteLastValid = false;
         foreach ($path as $item) {
-            if (isset($this->forbiddenPathTypes[$item['SHORTNAME']]) || isset($this->forbiddenPathIds[$item['AOGUID']]) || $this->checkIsAllowedStreet($item['SHORTNAME'])) {
+            if (isset($this->forbiddenPathTypes[$item['SHORTNAME']]) || isset($this->forbiddenPathIds[$item['AOGUID']]) || $this->checkIsAllowedStreet(
+                    $item['SHORTNAME']
+                )) {
                 $neepPasteLastValid = true;
                 continue;
             } else {
@@ -826,13 +889,13 @@ final class Compiler
         }
 
         /*
-        if($found)
-        {
-            \_print_r('Path is now:');
-            \_print_r($newPath);
-            die();
-        }
-        */
+		if($found)
+		{
+			\_print_r('Path is now:');
+			\_print_r($newPath);
+			die();
+		}
+		*/
 
         return $newPath;
     }
@@ -848,10 +911,12 @@ final class Compiler
 
             // external data
             $externals = array();
-            if (strlen($item['POSTALCODE']))
+            if (strlen($item['POSTALCODE'])) {
                 $externals['ZIP'][] = $item['POSTALCODE'];
-            if (isset($this->fias2yandexCityMap[$item['AOGUID']]))
+            }
+            if (isset($this->fias2yandexCityMap[$item['AOGUID']])) {
                 $externals['YAMARKET'][] = $this->fias2yandexCityMap[$item['AOGUID']]['ID'];
+            }
 
             // type and name
             $itemType = $item['SHORTNAME'];
@@ -859,37 +924,8 @@ final class Compiler
             $typeNameReplace = $baseType != 'CITY' ? $this->sysMaps['FIASTYPEREPLACE'][$itemType] : ''; // replace base type (e.g. "п" => "посёлок", "д" => "деревня", ...)
             $name = trim($item['FORMALNAME']) . (strlen($typeNameReplace) ? ' ' . $typeNameReplace : '');
 
-            $this->eTreeDBRussia->insert(array(
-                'TYPE_CODE' => $baseType,
-                'FIAS_TYPE' => $itemType,
-                'NAME' => $name,
-                'LANGNAMES' => array('RU' => array('NAME' => $name)),
-                'EXTERNALS' => $externals,
-                'SOURCE' => self::SOURCE_FIAS,
-
-                'SYS_CODE' => $this->mapETCodeAsFias($item['AOGUID']),
-                'PARENT_SYS_CODE' => $i ? $this->mapETCodeAsFias($item['PARENTGUID']) : $this->currentRegion
-            ));
-        }
-    }
-
-    private function generateExportTreePutRussiaStreets($parentGuid)
-    {
-        if (!strlen($parentGuid))
-            return;
-
-        $res = $this->fiasDB->getActualChildren($parentGuid);
-        while ($item = $res->fetch()) {
-            $itemType = $item['SHORTNAME'];
-            if ($this->checkIsAllowedStreet($item)) {
-                $externals = array();
-                if (strlen($item['POSTALCODE']))
-                    $externals['ZIP'][] = $item['POSTALCODE'];
-
-                $baseType = $this->sysMaps['FIAS2BASETYPE'][$itemType];
-                $name = trim($item['FORMALNAME']) . ' ' . $this->sysMaps['FIASTYPEREPLACE'][$itemType];
-
-                $this->eTreeDBRussia->insert(array(
+            $this->eTreeDBRussia->insert(
+                array(
                     'TYPE_CODE' => $baseType,
                     'FIAS_TYPE' => $itemType,
                     'NAME' => $name,
@@ -898,35 +934,76 @@ final class Compiler
                     'SOURCE' => self::SOURCE_FIAS,
 
                     'SYS_CODE' => $this->mapETCodeAsFias($item['AOGUID']),
-                    'PARENT_SYS_CODE' => $this->mapETCodeAsFias($parentGuid),
-                ));
+                    'PARENT_SYS_CODE' => $i ? $this->mapETCodeAsFias($item['PARENTGUID']) : $this->currentRegion
+                )
+            );
+        }
+    }
+
+    private function generateExportTreePutRussiaStreets($parentGuid)
+    {
+        if (!strlen($parentGuid)) {
+            return;
+        }
+
+        $res = $this->fiasDB->getActualChildren($parentGuid);
+        while ($item = $res->fetch()) {
+            $itemType = $item['SHORTNAME'];
+            if ($this->checkIsAllowedStreet($item)) {
+                $externals = array();
+                if (strlen($item['POSTALCODE'])) {
+                    $externals['ZIP'][] = $item['POSTALCODE'];
+                }
+
+                $baseType = $this->sysMaps['FIAS2BASETYPE'][$itemType];
+                $name = trim($item['FORMALNAME']) . ' ' . $this->sysMaps['FIASTYPEREPLACE'][$itemType];
+
+                $this->eTreeDBRussia->insert(
+                    array(
+                        'TYPE_CODE' => $baseType,
+                        'FIAS_TYPE' => $itemType,
+                        'NAME' => $name,
+                        'LANGNAMES' => array('RU' => array('NAME' => $name)),
+                        'EXTERNALS' => $externals,
+                        'SOURCE' => self::SOURCE_FIAS,
+
+                        'SYS_CODE' => $this->mapETCodeAsFias($item['AOGUID']),
+                        'PARENT_SYS_CODE' => $this->mapETCodeAsFias($parentGuid),
+                    )
+                );
             }
         }
     }
 
     private function generateExportTreePutRussiaInnerBundle($parentGuid)
     {
-        if (!strlen($parentGuid))
+        if (!strlen($parentGuid)) {
             return;
+        }
 
         $res = $this->fiasDB->getActualChildren($parentGuid);
         while ($item = $res->fetch()) {
             $item['PARENTGUID'] = $parentGuid;
             array_push($this->fiasPath, $item);
 
-            if ($this->checkIsAllowedCityVillage($item)) // check if this is a village or city or what else we should add to export
+            if ($this->checkIsAllowedCityVillage(
+                $item
+            )) // check if this is a village or city or what else we should add to export
             {
                 //$this->output('Allowed city\village '.$item['FORMALNAME']);
 
-                $this->generateExportTreePutRussiaFiasPath($item); // ALSO store intermediate locations from current region-to-city(village, etc) being stored
-                $this->generateExportTreePutRussiaStreets($item['AOGUID']); // store all streets of current village\city\...
+                $this->generateExportTreePutRussiaFiasPath(
+                    $item
+                ); // ALSO store intermediate locations from current region-to-city(village, etc) being stored
+                $this->generateExportTreePutRussiaStreets(
+                    $item['AOGUID']
+                ); // store all streets of current village\city\...
             }
 
             $this->generateExportTreePutRussiaInnerBundle($item['AOGUID']);
 
             array_pop($this->fiasPath);
         }
-
     }
 
     private function generateExportTreePutRussiaBundle($bundle, $regions, $dl = 0)
@@ -935,42 +1012,52 @@ final class Compiler
             $node = $this->data['TREES']['MAIN']['NODES'][$id];
 
             $edges = array();
-            if (isset($this->data['TREES']['MAIN']['EDGES'][$id]))
+            if (isset($this->data['TREES']['MAIN']['EDGES'][$id])) {
                 $edges = $this->data['TREES']['MAIN']['EDGES'][$id];
+            }
 
             if (in_array($node['TYPE_CODE'], array('COUNTRY', 'COUNTRY_DISTRICT', 'REGION'))) {
                 if ($node['TYPE_CODE'] == 'REGION') {
                     // get fias code & postal code, if any
                     $fNode = $this->fiasDB->getByAOGUID($regions[$node['ID']]['AOGUID']);
-                    if (strlen($fNode['POSTALCODE']))
+                    if (strlen($fNode['POSTALCODE'])) {
                         $node['EXT']['ZIP'][] = $fNode['POSTALCODE'];
+                    }
 
                     $edges = array(); // no way farther
                 }
 
                 // set english name for Russia
-                if ($node['TYPE_CODE'] == 'COUNTRY')
+                if ($node['TYPE_CODE'] == 'COUNTRY') {
                     $node['NAME']['EN']['NAME'] = 'Russian Federation';
+                }
 
-                if ($node['NAME']['RU']['NAME'] == 'Москва и Московская область')
+                if ($node['NAME']['RU']['NAME'] == 'Москва и Московская область') {
                     $node['NAME']['RU']['NAME'] = 'Московская область';
+                }
 
-                if ($node['NAME']['RU']['NAME'] == 'Санкт-Петербург и Ленинградская область')
+                if ($node['NAME']['RU']['NAME'] == 'Санкт-Петербург и Ленинградская область') {
                     $node['NAME']['RU']['NAME'] = 'Ленинградская область';
+                }
 
-                $this->eTreeDBRussia->insert(array(
-                    'TYPE_CODE' => $node['TYPE_CODE'],
-                    'NAME' => $node['NAME']['RU']['NAME'],
-                    'LANGNAMES' => $node['NAME'],
-                    'EXTERNALS' => $node['EXT'],
-                    'SOURCE' => self::SOURCE_YANDEX,
+                $this->eTreeDBRussia->insert(
+                    array(
+                        'TYPE_CODE' => $node['TYPE_CODE'],
+                        'NAME' => $node['NAME']['RU']['NAME'],
+                        'LANGNAMES' => $node['NAME'],
+                        'EXTERNALS' => $node['EXT'],
+                        'SOURCE' => self::SOURCE_YANDEX,
 
-                    'SYS_CODE' => $this->mapETCodeAsYandex($node['ID']),
-                    'PARENT_SYS_CODE' => strlen($node['PARENT_ID']) && $dl > 0 ? $this->mapETCodeAsYandex($node['PARENT_ID']) : ''
-                ));
+                        'SYS_CODE' => $this->mapETCodeAsYandex($node['ID']),
+                        'PARENT_SYS_CODE' => strlen($node['PARENT_ID']) && $dl > 0 ? $this->mapETCodeAsYandex(
+                            $node['PARENT_ID']
+                        ) : ''
+                    )
+                );
 
-                if (!empty($edges))
+                if (!empty($edges)) {
                     $this->generateExportTreePutRussiaBundle($edges, $regions, $dl + 1);
+                }
             }
         }
     }
@@ -993,29 +1080,55 @@ final class Compiler
             $item = explode(',', $item[0]);
 
             if (!isset($item[1])) // its a language marker
+            {
                 continue;
+            }
 
             // exclude the following countries, kz we got an extended file for them
-            if (in_array($item[2], array('USA', 'Kazakhstan', 'Ukraine', 'Byelorussia', 'Russian Federation', 'Azerbaijan', 'Estonia', 'Georgia', 'Latvia', 'Lithuania', 'Moldavia', 'Turkmenistan', 'Armenia', 'Tadjikistan', 'Uzbekistan')))
+            if (in_array(
+                $item[2],
+                array(
+                    'USA',
+                    'Kazakhstan',
+                    'Ukraine',
+                    'Byelorussia',
+                    'Russian Federation',
+                    'Azerbaijan',
+                    'Estonia',
+                    'Georgia',
+                    'Latvia',
+                    'Lithuania',
+                    'Moldavia',
+                    'Turkmenistan',
+                    'Armenia',
+                    'Tadjikistan',
+                    'Uzbekistan'
+                )
+            )) {
                 continue;
+            }
 
             $id = implode(':', $item);
 
             $countries[] = $item[2] . ' - ' . $item[4];
 
-            $this->eTreeDB->insert(array(
-                'TYPE_CODE' => 'COUNTRY',
-                'NAME' => $item[4],
-                'LANGNAMES' => serialize(array(
-                    'RU' => array('NAME' => $item[4]),
-                    'EN' => array('NAME' => $item[2])
-                )),
-                'EXTERNALS' => '',
-                'SOURCE' => self::SOURCE_LEGACY,
+            $this->eTreeDB->insert(
+                array(
+                    'TYPE_CODE' => 'COUNTRY',
+                    'NAME' => $item[4],
+                    'LANGNAMES' => serialize(
+                        array(
+                            'RU' => array('NAME' => $item[4]),
+                            'EN' => array('NAME' => $item[2])
+                        )
+                    ),
+                    'EXTERNALS' => '',
+                    'SOURCE' => self::SOURCE_LEGACY,
 
-                'SYS_CODE' => $this->mapETCodeAsLegacy($id),
-                'PARENT_SYS_CODE' => ''
-            ));
+                    'SYS_CODE' => $this->mapETCodeAsLegacy($id),
+                    'PARENT_SYS_CODE' => ''
+                )
+            );
         }
 
         $this->eTreeDB->doneInsert();
@@ -1040,7 +1153,9 @@ final class Compiler
             $item = explode(',', $item[0]);
 
             if (!isset($item[1])) // its a language marker
+            {
                 continue;
+            }
 
             if ($item[0] == 'R') {
                 $item[2] = preg_replace('# obl$#', ' region', $item[2]);
@@ -1049,40 +1164,48 @@ final class Compiler
 
             $parentId = '';
 
-            if ($item[0] == 'S')
+            if ($item[0] == 'S') {
                 $type = 'COUNTRY';
-            if ($item[0] == 'R')
+            }
+            if ($item[0] == 'R') {
                 $type = 'REGION';
-            if ($item[0] == 'T')
+            }
+            if ($item[0] == 'T') {
                 $type = 'CITY';
+            }
 
             $id = implode(':', $item);
 
-            if ($type == 'REGION')
+            if ($type == 'REGION') {
                 $parentId = $lastOnes['COUNTRY'];
-            elseif ($type == 'CITY')
+            } elseif ($type == 'CITY') {
                 $parentId = $lastOnes['PARENT'];
-            else
+            } else {
                 $parentId = '';
+            }
 
             if ($type != 'CITY') {
                 $lastOnes[$type] = $id;
                 $lastOnes['PARENT'] = $id;
             }
 
-            $this->eTreeDB->insert(array(
-                'TYPE_CODE' => $type,
-                'NAME' => $item[4],
-                'LANGNAMES' => serialize(array(
-                    'RU' => array('NAME' => $item[4]),
-                    'EN' => array('NAME' => $item[2])
-                )),
-                'EXTERNALS' => '',
-                'SOURCE' => self::SOURCE_LEGACY,
+            $this->eTreeDB->insert(
+                array(
+                    'TYPE_CODE' => $type,
+                    'NAME' => $item[4],
+                    'LANGNAMES' => serialize(
+                        array(
+                            'RU' => array('NAME' => $item[4]),
+                            'EN' => array('NAME' => $item[2])
+                        )
+                    ),
+                    'EXTERNALS' => '',
+                    'SOURCE' => self::SOURCE_LEGACY,
 
-                'SYS_CODE' => $this->mapETCodeAsLegacy($id),
-                'PARENT_SYS_CODE' => strlen($parentId) ? $this->mapETCodeAsLegacy($parentId) : ''
-            ));
+                    'SYS_CODE' => $this->mapETCodeAsLegacy($id),
+                    'PARENT_SYS_CODE' => strlen($parentId) ? $this->mapETCodeAsLegacy($parentId) : ''
+                )
+            );
         }
 
         $this->eTreeDB->doneInsert();
@@ -1107,47 +1230,58 @@ final class Compiler
             $item = explode(',', $item[0]);
 
             if (!isset($item[1])) // its a language marker
+            {
                 continue;
+            }
 
             $parentId = '';
 
-            if ($item[0] == 'S')
+            if ($item[0] == 'S') {
                 $type = 'COUNTRY';
-            if ($item[0] == 'R')
+            }
+            if ($item[0] == 'R') {
                 $type = 'REGION';
-            if ($item[0] == 'T')
+            }
+            if ($item[0] == 'T') {
                 $type = 'CITY';
+            }
 
             $id = implode(':', $item);
 
-            if ($type == 'REGION')
+            if ($type == 'REGION') {
                 $parentId = $lastOnes['COUNTRY'];
-            elseif ($type == 'CITY')
+            } elseif ($type == 'CITY') {
                 $parentId = $lastOnes['PARENT'];
-            else
+            } else {
                 $parentId = '';
+            }
 
             if ($type != 'CITY') {
                 $lastOnes[$type] = $id;
                 $lastOnes['PARENT'] = $id;
             }
 
-            if ($item['2'] == 'USA')
+            if ($item['2'] == 'USA') {
                 $item['4'] = 'США';
+            }
 
-            $this->eTreeDB->insert(array(
-                'TYPE_CODE' => $type,
-                'NAME' => $item[4],
-                'LANGNAMES' => serialize(array(
-                    'RU' => array('NAME' => $item[4]),
-                    'EN' => array('NAME' => $item[2])
-                )),
-                'EXTERNALS' => '',
-                'SOURCE' => self::SOURCE_LEGACY,
+            $this->eTreeDB->insert(
+                array(
+                    'TYPE_CODE' => $type,
+                    'NAME' => $item[4],
+                    'LANGNAMES' => serialize(
+                        array(
+                            'RU' => array('NAME' => $item[4]),
+                            'EN' => array('NAME' => $item[2])
+                        )
+                    ),
+                    'EXTERNALS' => '',
+                    'SOURCE' => self::SOURCE_LEGACY,
 
-                'SYS_CODE' => $this->mapETCodeAsLegacy($id),
-                'PARENT_SYS_CODE' => strlen($parentId) ? $this->mapETCodeAsLegacy($parentId) : ''
-            ));
+                    'SYS_CODE' => $this->mapETCodeAsLegacy($id),
+                    'PARENT_SYS_CODE' => strlen($parentId) ? $this->mapETCodeAsLegacy($parentId) : ''
+                )
+            );
         }
 
         $this->eTreeDB->doneInsert();
@@ -1175,30 +1309,36 @@ final class Compiler
             $node = $this->data['TREES']['MAIN']['NODES'][$id];
 
             $edges = array();
-            if (isset($this->data['TREES']['MAIN']['EDGES'][$id]))
+            if (isset($this->data['TREES']['MAIN']['EDGES'][$id])) {
                 $edges = $this->data['TREES']['MAIN']['EDGES'][$id];
+            }
 
             // attach to belorussia its en-name
-            if ($node['TYPE_CODE'] == 'COUNTRY')
+            if ($node['TYPE_CODE'] == 'COUNTRY') {
                 $node['NAME']['EN']['NAME'] = 'Belarus';
+            }
 
             // these two types are not allowed currently, because we do not have the corresponding types in fias
-            if ($node['TYPE_CODE'] == 'METRO_STATION' || $node['TYPE_CODE'] == 'CITY_DISTRICT')
+            if ($node['TYPE_CODE'] == 'METRO_STATION' || $node['TYPE_CODE'] == 'CITY_DISTRICT') {
                 continue;
+            }
 
-            $this->eTreeDB->insert(array(
-                'TYPE_CODE' => $node['TYPE_CODE'],
-                'NAME' => $node['NAME']['RU']['NAME'],
-                'LANGNAMES' => serialize($node['NAME']),
-                'EXTERNALS' => serialize($node['EXT']),
-                'SOURCE' => self::SOURCE_YANDEX,
+            $this->eTreeDB->insert(
+                array(
+                    'TYPE_CODE' => $node['TYPE_CODE'],
+                    'NAME' => $node['NAME']['RU']['NAME'],
+                    'LANGNAMES' => serialize($node['NAME']),
+                    'EXTERNALS' => serialize($node['EXT']),
+                    'SOURCE' => self::SOURCE_YANDEX,
 
-                'SYS_CODE' => $this->mapETCodeAsYandex($node['ID']),
-                'PARENT_SYS_CODE' => strlen($node['PARENT_ID']) ? $this->mapETCodeAsYandex($node['PARENT_ID']) : ''
-            ));
+                    'SYS_CODE' => $this->mapETCodeAsYandex($node['ID']),
+                    'PARENT_SYS_CODE' => strlen($node['PARENT_ID']) ? $this->mapETCodeAsYandex($node['PARENT_ID']) : ''
+                )
+            );
 
-            if (!empty($edges))
+            if (!empty($edges)) {
                 $this->generateExportTreePutBelorussiaBundle($edges);
+            }
         }
     }
 
@@ -1250,10 +1390,11 @@ final class Compiler
 
             $regionId = 'r' . md5($line['RNAME']['UA']['NAME']);
 
-            if ($line['RNAME']['UA']['NAME'] == 'Севастополь, Місто' || $line['RNAME']['UA']['NAME'] == 'Автономна Республіка Крим')
+            if ($line['RNAME']['UA']['NAME'] == 'Севастополь, Місто' || $line['RNAME']['UA']['NAME'] == 'Автономна Республіка Крим') {
                 $source = self::SOURCE_UKRAIN;
-            else
+            } else {
                 $source = self::SOURCE_YANDEX;
+            }
 
             if ($line['RNAME']['UA']['NAME'] == 'Севастополь, Місто') {
                 $typeCode = 'SUBREGION';
@@ -1271,8 +1412,9 @@ final class Compiler
                     'PARENT_ID' => $line['CDID'],
                 );
 
-                if ($source == self::SOURCE_YANDEX)
+                if ($source == self::SOURCE_YANDEX) {
                     $tree['NODES'][$regionId]['EXT']['YAMARKET'][] = $line['RID'];
+                }
             }
 
             $tree['EDGES'][$line['CDID']][$regionId] = true;
@@ -1281,8 +1423,9 @@ final class Compiler
         $res = $this->getDataFromCSV('ukrain_kazakhstan', 'ukrain');
 
         foreach ($res as $line) {
-            if ($line['REGION'] == 'Автономна республіка Крим')
+            if ($line['REGION'] == 'Автономна республіка Крим') {
                 $line['REGION'] = 'Автономна Республіка Крим';
+            }
 
             $line['REGION'] = $this->mb_str_replace('Місто', 'місто', $line['REGION']);
             $line['SUBREGION'] = $this->mb_str_replace('Місто', 'місто', $line['SUBREGION']);
@@ -1302,8 +1445,9 @@ final class Compiler
                         'PARENT_ID' => $regionId,
                         'EXT' => array()
                     );
-                    if (!isset($tree['EDGES'][$regionId][$subRegionId]))
+                    if (!isset($tree['EDGES'][$regionId][$subRegionId])) {
                         $tree['EDGES'][$regionId][$subRegionId] = true;
+                    }
                 }
             }
 
@@ -1316,13 +1460,15 @@ final class Compiler
                     'PARENT_ID' => $subRegionId,
                     'EXT' => array()
                 );
-                if (!isset($tree['EDGES'][$subRegionId][$cityId]))
+                if (!isset($tree['EDGES'][$subRegionId][$cityId])) {
                     $tree['EDGES'][$subRegionId][$cityId] = true;
+                }
             }
         }
 
-        foreach ($tree['EDGES'] as $k => $edges)
+        foreach ($tree['EDGES'] as $k => $edges) {
             $tree['EDGES'][$k] = array_keys($edges);
+        }
 
         $this->data['TREES']['UKRAIN'] = $tree;
 
@@ -1339,22 +1485,28 @@ final class Compiler
             $node = $this->data['TREES']['UKRAIN']['NODES'][$id];
 
             $edges = array();
-            if (isset($this->data['TREES']['UKRAIN']['EDGES'][$id]))
+            if (isset($this->data['TREES']['UKRAIN']['EDGES'][$id])) {
                 $edges = $this->data['TREES']['UKRAIN']['EDGES'][$id];
+            }
 
-            $this->eTreeDB->insert(array(
-                'TYPE_CODE' => $node['TYPE_CODE'],
-                'NAME' => $node['NAME']['UA']['NAME'],
-                'LANGNAMES' => serialize($node['NAME']),
-                'EXTERNALS' => serialize($node['EXT']),
-                'SOURCE' => $node['SOURCE'],
+            $this->eTreeDB->insert(
+                array(
+                    'TYPE_CODE' => $node['TYPE_CODE'],
+                    'NAME' => $node['NAME']['UA']['NAME'],
+                    'LANGNAMES' => serialize($node['NAME']),
+                    'EXTERNALS' => serialize($node['EXT']),
+                    'SOURCE' => $node['SOURCE'],
 
-                'SYS_CODE' => $this->mapETCodeAsUkrainian($node['ID']),
-                'PARENT_SYS_CODE' => strlen($node['PARENT_ID']) ? $this->mapETCodeAsUkrainian($node['PARENT_ID']) : ''
-            ));
+                    'SYS_CODE' => $this->mapETCodeAsUkrainian($node['ID']),
+                    'PARENT_SYS_CODE' => strlen($node['PARENT_ID']) ? $this->mapETCodeAsUkrainian(
+                        $node['PARENT_ID']
+                    ) : ''
+                )
+            );
 
-            if (!empty($edges))
+            if (!empty($edges)) {
                 $this->generateExportTreePutUkrainBundle($edges);
+            }
         }
     }
 
@@ -1385,14 +1537,18 @@ final class Compiler
 
     private function mapETCodeBySource($value, $source)
     {
-        if ($source == self::SOURCE_YANDEX)
+        if ($source == self::SOURCE_YANDEX) {
             return 'Y_' . $value;
-        if ($source == self::SOURCE_FIAS)
+        }
+        if ($source == self::SOURCE_FIAS) {
             return 'F_' . $value;
-        if ($source == self::SOURCE_UKRAIN)
+        }
+        if ($source == self::SOURCE_UKRAIN) {
             return 'U_' . md5($name);
-        if ($source == self::SOURCE_KAZAKHSTAN)
+        }
+        if ($source == self::SOURCE_KAZAKHSTAN) {
             return 'K_' . md5($name);
+        }
     }
 
     private function startExportFromScratch()
@@ -1407,8 +1563,9 @@ final class Compiler
     {
         $this->restoreTDRusExpIndex();
 
-        if (!empty($this->alreadyDumped))
+        if (!empty($this->alreadyDumped)) {
             return;
+        }
 
         $regions = $this->readFiasRootMapV2();
         $this->generateExportTreePutRussiaBundleOld(array(self::RUSSIA_YANDEX_CODE), $regions, 0);
@@ -1418,8 +1575,9 @@ final class Compiler
 
     private function restoreTDRusExpIndex()
     {
-        if (!empty($this->alreadyDumped))
+        if (!empty($this->alreadyDumped)) {
             return;
+        }
 
         $this->alreadyDumped = $this->getStoredTemporalData(self::TMP_DATA_RUS_EXPORT_INDEX);
     }
@@ -1443,8 +1601,9 @@ final class Compiler
             $node = $this->data['TREES']['MAIN']['NODES'][$id];
 
             $edges = array();
-            if (isset($this->data['TREES']['MAIN']['EDGES'][$id]))
+            if (isset($this->data['TREES']['MAIN']['EDGES'][$id])) {
                 $edges = $this->data['TREES']['MAIN']['EDGES'][$id];
+            }
 
             if (in_array($node['TYPE_CODE'], array('COUNTRY', 'COUNTRY_DISTRICT', 'REGION'))) {
                 if ($node['TYPE_CODE'] == 'REGION') {
@@ -1452,23 +1611,29 @@ final class Compiler
                     //$node['EXT']['FIAS'][] = $regions[$node['ID']]['AOGUID'];
 
                     $fNode = $this->fiasGetByAOGUID($regions[$node['ID']]['AOGUID']);
-                    if (strlen($fNode['POSTALCODE']))
+                    if (strlen($fNode['POSTALCODE'])) {
                         $node['EXT']['ZIP'][] = $fNode['POSTALCODE'];
+                    }
 
                     $edges = array(); // no way farther
                 }
 
-                $this->addItemToExportTree(array(
-                    'ID' => $this->mapETCodeAsYandex($node['ID']),
-                    'PARENT_ID' => strlen($node['PARENT_ID']) && $dl > 0 ? $this->mapETCodeAsYandex($node['PARENT_ID']) : '',
-                    'TYPE' => $node['TYPE_CODE'],
-                    'NAME' => $node['NAME'],
-                    'EXTERNALS' => $node['EXT'],
-                    'SOURCE' => self::SOURCE_YANDEX,
-                ));
+                $this->addItemToExportTree(
+                    array(
+                        'ID' => $this->mapETCodeAsYandex($node['ID']),
+                        'PARENT_ID' => strlen($node['PARENT_ID']) && $dl > 0 ? $this->mapETCodeAsYandex(
+                            $node['PARENT_ID']
+                        ) : '',
+                        'TYPE' => $node['TYPE_CODE'],
+                        'NAME' => $node['NAME'],
+                        'EXTERNALS' => $node['EXT'],
+                        'SOURCE' => self::SOURCE_YANDEX,
+                    )
+                );
 
-                if (!empty($edges))
+                if (!empty($edges)) {
                     $this->generateExportTreePutRussiaBundle($edges, $regions, $dl + 1);
+                }
             }
         }
     }
@@ -1522,13 +1687,15 @@ final class Compiler
 
     private function generateExportTreeRussiaInnerBundle($parentGuid)
     {
-        if (!strlen($parentGuid))
+        if (!strlen($parentGuid)) {
             return;
+        }
 
         $res = $this->getDataFromCSV('fias_tree', $parentGuid);
         foreach ($res as $item) {
-            if ($item['LIVESTATUS'] != '1' || $item['ACTSTATUS'] != '1')
+            if ($item['LIVESTATUS'] != '1' || $item['ACTSTATUS'] != '1') {
                 continue;
+            }
 
             $item['PARENT_ID'] = $parentGuid;
             array_push($this->fiasPath, $item);
@@ -1543,7 +1710,6 @@ final class Compiler
 
             array_pop($this->fiasPath);
         }
-
     }
 
 
@@ -1560,7 +1726,10 @@ final class Compiler
         $header = $this->typeGroups[$cat];
         $this->alreadyDumped[$item['ID']] = $this->exportOffset;
 
-        $parentCode = strlen($item['PARENT_ID']) ? $this->addLeadingZero($this->alreadyDumped[$item['PARENT_ID']], self::CODE_LENGTH) : '';
+        $parentCode = strlen($item['PARENT_ID']) ? $this->addLeadingZero(
+            $this->alreadyDumped[$item['PARENT_ID']],
+            self::CODE_LENGTH
+        ) : '';
 
         $data = array(
             'CODE' => $this->addLeadingZero($this->exportOffset, self::CODE_LENGTH),
@@ -1569,34 +1738,43 @@ final class Compiler
         );
 
         foreach ($item['NAME'] as $lid => $values) {
-            foreach ($values as $i => $val)
+            foreach ($values as $i => $val) {
                 $data['NAME.' . $lid . '.' . $i] = $val;
+            }
         }
 
         $data['EXT.YAMARKET.0'] = '';
         $data['EXT.ZIP.0'] = '';
         if (!empty($item['EXTERNALS'])) {
             foreach ($item['EXTERNALS'] as $type => $values) {
-                foreach ($values as $i => $val)
+                foreach ($values as $i => $val) {
                     $data['EXT.' . $type . '.' . $i] = $val;
+                }
             }
         }
 
-        $parentGroupId = strlen($item['PARENT_GROUP_ID']) ? $this->addLeadingZero($this->alreadyDumped[$item['PARENT_GROUP_ID']], self::CODE_LENGTH) : '';
+        $parentGroupId = strlen($item['PARENT_GROUP_ID']) ? $this->addLeadingZero(
+            $this->alreadyDumped[$item['PARENT_GROUP_ID']],
+            self::CODE_LENGTH
+        ) : '';
 
         $data['LONGITUDE'] = '';
         $data['LATITUDE'] = '';
         //$this->output('PGID is set to '.$parentGroupId);
 
-        $fName = str_replace(array(
-            '%BASE_PARENT_ITEM_CODE%',
-            '%CODE%',
-            '.csv'
-        ), array(
-            $parentGroupId,
-            ToLower($cat),
-            ''
-        ), $fName);
+        $fName = str_replace(
+            array(
+                '%BASE_PARENT_ITEM_CODE%',
+                '%CODE%',
+                '.csv'
+            ),
+            array(
+                $parentGroupId,
+                ToLower($cat),
+                ''
+            ),
+            $fName
+        );
 
         $this->output('PUT:');
         $this->output($data);
@@ -1625,8 +1803,9 @@ final class Compiler
         $this->data['INDEXES'] = array();
 
         $done = false;
-        while (!$done)
+        while (!$done) {
             $done = $this->buildMainTreeNext();
+        }
 
         // build name-path index for russia
         $this->buildRussiaPathIndex($this->data['TREES']['MAIN']['EDGES'][self::RUSSIA_YANDEX_CODE], array());
@@ -1643,8 +1822,9 @@ final class Compiler
                 $parent = isset($item['PARENT_ID']) ? $item['PARENT_ID'] : 'ROOT';
                 $this->data['TREES']['MAIN']['EDGES'][$parent][] = $item['ID'];
 
-                if ($item['CHILDREN_COUNT'] > 0)
+                if ($item['CHILDREN_COUNT'] > 0) {
                     $this->queue[] = $item['ID'];
+                }
             }
         }
 
@@ -1674,12 +1854,16 @@ final class Compiler
 
                         $this->output($map);
 
-                        $res = DB\FiasTable::getList(array('filter' => array(
-                            'FORMALNAME' => $map['NAME'],
-                            '!SHORTNAME' => array('ул', 'пер'),
-                            'ACTSTATUS' => '1',
-                            'LIVESTATUS' => '1'
-                        )));
+                        $res = DB\FiasTable::getList(
+                            array(
+                                'filter' => array(
+                                    'FORMALNAME' => $map['NAME'],
+                                    '!SHORTNAME' => array('ул', 'пер'),
+                                    'ACTSTATUS' => '1',
+                                    'LIVESTATUS' => '1'
+                                )
+                            )
+                        );
                         while ($item = $res->fetch()) {
                             $this->output($item);
                         }
@@ -1695,11 +1879,15 @@ final class Compiler
 
     private function showChildren($pId)
     {
-        $res = DB\FiasTable::getList(array('filter' => array(
-            'PARENTGUID' => $pId,
-            'ACTSTATUS' => '1',
-            'LIVESTATUS' => '1'
-        )));
+        $res = DB\FiasTable::getList(
+            array(
+                'filter' => array(
+                    'PARENTGUID' => $pId,
+                    'ACTSTATUS' => '1',
+                    'LIVESTATUS' => '1'
+                )
+            )
+        );
         while ($item = $res->fetch()) {
             $this->output($item);
         }
@@ -1723,26 +1911,35 @@ final class Compiler
     {
         $pId = $aoguid;
 
-        while ($pId && $res = DB\FiasTable::getList(array('filter' => array(
-                'AOGUID' => $pId,
-                'ACTSTATUS' => '1',
-                'LIVESTATUS' => '1'
-            )))->fetch()) {
+        while ($pId && $res = DB\FiasTable::getList(
+                array(
+                    'filter' => array(
+                        'AOGUID' => $pId,
+                        'ACTSTATUS' => '1',
+                        'LIVESTATUS' => '1'
+                    )
+                )
+            )->fetch()) {
             $this->output($res);
-            if ($res['PARENTGUID'])
+            if ($res['PARENTGUID']) {
                 $pId = $res['PARENTGUID'];
-            else
+            } else {
                 $pId = false;
+            }
         }
     }
 
     private function fiasFind2()
     {
-        $res = DB\FiasTable::getList(array('filter' => array(
-            'FORMALNAME' => array(),
-            //'ACTSTATUS' => '1',
-            //'LIVESTATUS' => '1'
-        )));
+        $res = DB\FiasTable::getList(
+            array(
+                'filter' => array(
+                    'FORMALNAME' => array(),
+                    //'ACTSTATUS' => '1',
+                    //'LIVESTATUS' => '1'
+                )
+            )
+        );
         while ($item = $res->fetch()) {
             $this->output($item);
         }
@@ -1768,11 +1965,15 @@ final class Compiler
 
         );
 
-        $res = DB\FiasTable::getList(array('filter' => array(
-            'CODE' => array_values($findInFias),
-            'ACTSTATUS' => '1',
-            'LIVESTATUS' => '1'
-        )));
+        $res = DB\FiasTable::getList(
+            array(
+                'filter' => array(
+                    'CODE' => array_values($findInFias),
+                    'ACTSTATUS' => '1',
+                    'LIVESTATUS' => '1'
+                )
+            )
+        );
         while ($item = $res->fetch()) {
             $this->output($item);
         }
@@ -1780,54 +1981,58 @@ final class Compiler
 
     private function fiasGetByAOGUID($fiasId)
     {
-        return DB\FiasTable::getList(array('filter' => array(
-            '=AOGUID' => $fiasId,
-        )))->fetch();
+        return DB\FiasTable::getList(
+            array(
+                'filter' => array(
+                    '=AOGUID' => $fiasId,
+                )
+            )
+        )->fetch();
     }
 
     /*
-    private function parseFiasCode($code)
-    {
-        //СС(0) А(1) РРР(2) ГГГ(3) ВВВ(4) ППП(5) УУУУ(6) ЭЭЭЭ(7) ЦЦЦ(8)
-        $code = explode(' ', $code);
-        return array(
-            'REGIONCODE' => $code[0],
-            'AREACODE' => $code[2],
-            'AUTOCODE' => $code[1],
-            'CITYCODE' => $code[3],
-            'CTARCODE' => $code[4],
-            'PLACECODE' => $code[5],
-            'STREETCODE' => $code[6],
-            'EXTRCODE' => $code[7],
-            'SEXTCODE' => $code[8]
-        );
-    }
+	private function parseFiasCode($code)
+	{
+		//СС(0) А(1) РРР(2) ГГГ(3) ВВВ(4) ППП(5) УУУУ(6) ЭЭЭЭ(7) ЦЦЦ(8)
+		$code = explode(' ', $code);
+		return array(
+			'REGIONCODE' => $code[0],
+			'AREACODE' => $code[2],
+			'AUTOCODE' => $code[1],
+			'CITYCODE' => $code[3],
+			'CTARCODE' => $code[4],
+			'PLACECODE' => $code[5],
+			'STREETCODE' => $code[6],
+			'EXTRCODE' => $code[7],
+			'SEXTCODE' => $code[8]
+		);
+	}
 
-    private function checkFitItemByCode($code, $item)
-    {
-        $code = $this->parseFiasCode($code);
+	private function checkFitItemByCode($code, $item)
+	{
+		$code = $this->parseFiasCode($code);
 
-        return (
-            $item['REGIONCODE'] == $code['REGIONCODE']
-            &&
-            $item['AREACODE'] == $code['AREACODE']
-            &&
-            $item['AUTOCODE'] == $code['AUTOCODE']
-            &&
-            $item['CITYCODE'] == $code['CITYCODE']
-            &&
-            $item['CTARCODE'] == $code['CTARCODE']
-            &&
-            $item['PLACECODE'] == $code['PLACECODE']
-            &&
-            $item['STREETCODE'] == $code['STREETCODE']
-            &&
-            $item['EXTRCODE'] == $code['EXTRCODE']
-            &&
-            $item['SEXTCODE'] == $code['SEXTCODE']
-        );
-    }
-    */
+		return (
+			$item['REGIONCODE'] == $code['REGIONCODE']
+			&&
+			$item['AREACODE'] == $code['AREACODE']
+			&&
+			$item['AUTOCODE'] == $code['AUTOCODE']
+			&&
+			$item['CITYCODE'] == $code['CITYCODE']
+			&&
+			$item['CTARCODE'] == $code['CTARCODE']
+			&&
+			$item['PLACECODE'] == $code['PLACECODE']
+			&&
+			$item['STREETCODE'] == $code['STREETCODE']
+			&&
+			$item['EXTRCODE'] == $code['EXTRCODE']
+			&&
+			$item['SEXTCODE'] == $code['SEXTCODE']
+		);
+	}
+	*/
 
     private function mapFiasCities()
     {
@@ -1875,8 +2080,9 @@ final class Compiler
                     $item = $this->fiasGetByAOGUID($exactId);
                     if ($item) {
                         $exactCode = $item['CODE'];
-                    } else
+                    } else {
                         $this->output('no record in fias for: ' . $exactId);
+                    }
                 }
 
                 $data = array(
@@ -1923,7 +2129,6 @@ final class Compiler
                     true
                 );
             }
-
             //break;//tmp
         }
     }
@@ -1944,24 +2149,27 @@ final class Compiler
         $one = $this->makeNameIndexKey($one);
         $two = $this->makeNameIndexKey($two);
 
-        if ($one == $two)
+        if ($one == $two) {
             return true;
+        }
 
         // try ё => e
 
         $one = $this->mb_str_replace('ё', 'е', $one);
         $two = $this->mb_str_replace('ё', 'е', $two);
 
-        if ($one == $two)
+        if ($one == $two) {
             return true;
+        }
 
         // try й => и
 
         $one = $this->mb_str_replace('й', 'и', $one);
         $two = $this->mb_str_replace('й', 'и', $two);
 
-        if ($one == $two)
+        if ($one == $two) {
             return true;
+        }
 
         // there could be also multiple spaces between
 
@@ -1976,27 +2184,31 @@ final class Compiler
         $one = $this->makeNameIndexKey($one);
         $two = $this->makeNameIndexKey($two);
 
-        if (strpos($one, $two) !== false || strpos($two, $one) !== false)
+        if (strpos($one, $two) !== false || strpos($two, $one) !== false) {
             return true;
+        }
 
         $one = $this->mb_str_replace('ё', 'е', $one);
         $two = $this->mb_str_replace('ё', 'е', $two);
 
-        if (strpos($one, $two) !== false || strpos($two, $one) !== false)
+        if (strpos($one, $two) !== false || strpos($two, $one) !== false) {
             return true;
+        }
 
         $one = $this->mb_str_replace('й', 'и', $one);
         $two = $this->mb_str_replace('й', 'и', $two);
 
-        if (strpos($one, $two) !== false || strpos($two, $one) !== false)
+        if (strpos($one, $two) !== false || strpos($two, $one) !== false) {
             return true;
+        }
 
 
         $one = preg_replace('#\s+-\s+#', '-', $one);
         $two = preg_replace('#\s+-\s+#', '-', $two);
 
-        if (strpos($one, $two) !== false || strpos($two, $one) !== false)
+        if (strpos($one, $two) !== false || strpos($two, $one) !== false) {
             return true;
+        }
 
         return false;
     }
@@ -2020,11 +2232,13 @@ final class Compiler
                     {
                         // check if name fits too
                         foreach ($toBeFound as &$keptNode) {
-                            if ($keptNode['TYPE_CODE'] != $type)
+                            if ($keptNode['TYPE_CODE'] != $type) {
                                 continue;
+                            }
 
-                            if (!$this->checkAllowedState($node))
+                            if (!$this->checkAllowedState($node)) {
                                 continue;
+                            }
 
                             if ($this->checkNamesEqual($name, $keptNode['NAME']['RU']['NAME'])) {
                                 $keptNode['MATCH'][$node['AOGUID']] = $node;
@@ -2046,11 +2260,13 @@ final class Compiler
 
         $result = array();
         foreach ($res as $reg) {
-            if ($skipMapped && $reg['CITIES_MAPPED'] == '1')
+            if ($skipMapped && $reg['CITIES_MAPPED'] == '1') {
                 continue;
+            }
 
-            if ($skipCompiled && $reg['COMPILED'] == '1')
+            if ($skipCompiled && $reg['COMPILED'] == '1') {
                 continue;
+            }
 
             $fias = array($reg['AOGUID']);
 
@@ -2087,34 +2303,34 @@ final class Compiler
     }
 
     /*
-    public function dropFiasTreeDuplicates()
-    {
-        foreach(new \DirectoryIterator($this->getPoolDirName('fias_tree')) as $file)
-        {
-            if($file->isDot() || $file->isDir())
-                continue;
+	public function dropFiasTreeDuplicates()
+	{
+		foreach(new \DirectoryIterator($this->getPoolDirName('fias_tree')) as $file)
+		{
+			if($file->isDot() || $file->isDir())
+				continue;
 
-            $csv = $this->getDataFromCSV('fias_tree', str_replace('.csv', '', $file->getFilename()));
+			$csv = $this->getDataFromCSV('fias_tree', str_replace('.csv', '', $file->getFilename()));
 
-            $index = array();
-            foreach($csv as $id => $line)
-            {
-                if(isset($index[$line['ID']]))
-                {
-                    unset($csv[$id]);
-                    continue;
-                }
+			$index = array();
+			foreach($csv as $id => $line)
+			{
+				if(isset($index[$line['ID']]))
+				{
+					unset($csv[$id]);
+					continue;
+				}
 
-                $index[$line['ID']] = true;
-            }
+				$index[$line['ID']] = true;
+			}
 
-            $this->putDataToCSV($csv, 'fias_tree', str_replace('.csv', '', $file->getFilename()));
+			$this->putDataToCSV($csv, 'fias_tree', str_replace('.csv', '', $file->getFilename()));
 
-            unset($index);
-            unset($csv);
-        }
-    }
-    */
+			unset($index);
+			unset($csv);
+		}
+	}
+	*/
 
     public function fiasGotOneSplit($data)
     {
@@ -2146,46 +2362,51 @@ final class Compiler
     {
         $item = $data['__ATTR'];
 
-        $code = implode(' ', array(
-            $item['REGIONCODE'],
-            $item['AUTOCODE'],
-            $item['AREACODE'],
-            $item['CITYCODE'],
-            $item['CTARCODE'],
-            $item['PLACECODE'],
-            $item['STREETCODE'],
-            $item['EXTRCODE'],
-            $item['SEXTCODE'],
-        ));
+        $code = implode(
+            ' ',
+            array(
+                $item['REGIONCODE'],
+                $item['AUTOCODE'],
+                $item['AREACODE'],
+                $item['CITYCODE'],
+                $item['CTARCODE'],
+                $item['PLACECODE'],
+                $item['STREETCODE'],
+                $item['EXTRCODE'],
+                $item['SEXTCODE'],
+            )
+        );
 
         // if db works in cp1251
         /*
-        $formalName = \CharsetConverter::ConvertCharset($item['FORMALNAME'], 'UTF-8', SITE_CHARSET);
-        $nameLC = \CharsetConverter::ConvertCharset($this->makeNameIndexKey($item['FORMALNAME']), 'UTF-8', SITE_CHARSET);
-        $shortName = \CharsetConverter::ConvertCharset($item['SHORTNAME'], 'UTF-8', SITE_CHARSET);
-        */
+		$formalName = \CharsetConverter::ConvertCharset($item['FORMALNAME'], 'UTF-8', SITE_CHARSET);
+		$nameLC = \CharsetConverter::ConvertCharset($this->makeNameIndexKey($item['FORMALNAME']), 'UTF-8', SITE_CHARSET);
+		$shortName = \CharsetConverter::ConvertCharset($item['SHORTNAME'], 'UTF-8', SITE_CHARSET);
+		*/
 
         $formalName = $item['FORMALNAME'];
         $nameLC = $this->makeNameIndexKey($item['FORMALNAME']);
         $shortName = $item['SHORTNAME'];
 
-        $this->fiasDB->insert(array(
-            'AOGUID' => $item['AOGUID'],
-            'PARENTGUID' => $item['PARENTGUID'],
+        $this->fiasDB->insert(
+            array(
+                'AOGUID' => $item['AOGUID'],
+                'PARENTGUID' => $item['PARENTGUID'],
 
-            'AOID' => $item['AOID'],
-            'NEXTID' => $item['NEXTID'],
+                'AOID' => $item['AOID'],
+                'NEXTID' => $item['NEXTID'],
 
-            'FORMALNAME' => $formalName,
-            'SHORTNAME' => $shortName,
-            'POSTALCODE' => $item['POSTALCODE'],
+                'FORMALNAME' => $formalName,
+                'SHORTNAME' => $shortName,
+                'POSTALCODE' => $item['POSTALCODE'],
 
-            'ACTSTATUS' => $item['ACTSTATUS'],
-            'LIVESTATUS' => $item['LIVESTATUS'],
+                'ACTSTATUS' => $item['ACTSTATUS'],
+                'LIVESTATUS' => $item['LIVESTATUS'],
 
-            'NAME_LC' => $nameLC,
-            'CODE' => $code
-        ));
+                'NAME_LC' => $nameLC,
+                'CODE' => $code
+            )
+        );
     }
 
     private function getByAOID($aoid)
@@ -2196,8 +2417,9 @@ final class Compiler
     private function printCurrentFiasPath()
     {
         $path = array();
-        foreach ($this->fiasCPath as $item)
+        foreach ($this->fiasCPath as $item) {
             $path[] = $item['NAME'];
+        }
 
         return implode('>', $path);
     }
@@ -2243,8 +2465,9 @@ final class Compiler
 
                 if (count($reg['MATCH'])) {
                     $additResults = array();
-                    foreach ($reg['MATCH'] as $additRes)
+                    foreach ($reg['MATCH'] as $additRes) {
                         $additResults[] = $additRes['ID'] . ':"' . $additRes['NAME'] . '"';
+                    }
 
                     $additResults = implode(', ', $additResults);
                 }
@@ -2293,8 +2516,9 @@ final class Compiler
             $csv = new Import\CSVReader('R', false);
             $result = array();
             $data = $csv->ReadBlock($this->getPoolFileName('fias_yamarket_links', 'rootv2', false));
-            foreach ($data as $region)
+            foreach ($data as $region) {
                 $result[$region['YAMARKET']] = $region;
+            }
 
             return $result;
         } catch (\Exception $e) {
@@ -2304,17 +2528,20 @@ final class Compiler
 
     private function walkFias($callback, $limit = -1)
     {
-        $sax = new SAXParser(array(
-            'watch4Tag' => 'Object',
-            'onEachParseResult' => array($this, $callback),
-            'limit' => $limit,
-            'collapseAttr' => true
-        ));
+        $sax = new SAXParser(
+            array(
+                'watch4Tag' => 'Object',
+                'onEachParseResult' => array($this, $callback),
+                'limit' => $limit,
+                'collapseAttr' => true
+            )
+        );
 
         $fd = fopen($_SERVER['DOCUMENT_ROOT'] . $this->options['fiasAddrobjFile'], 'r');
         while ($block = fread($fd, 1024)) {
-            if (!$sax->putToParser($block))
+            if (!$sax->putToParser($block)) {
                 break;
+            }
         }
 
         unset($sax);
@@ -2331,11 +2558,13 @@ final class Compiler
             $name = $this->makeNameIndexKey($node['NAME']['RU']['NAME']);
 
             //regions:
-            if ($node['TYPE_CODE'] == 'REGION')
+            if ($node['TYPE_CODE'] == 'REGION') {
                 $this->data['MAPS']['REGIONS'][$id] = $node;
+            }
 
-            if (isset($this->data['TREES']['MAIN']['EDGES'][$id]))
+            if (isset($this->data['TREES']['MAIN']['EDGES'][$id])) {
                 $this->buildRussiaPathIndex($this->data['TREES']['MAIN']['EDGES'][$id], $ppp);
+            }
         }
     }
 
@@ -2349,8 +2578,9 @@ final class Compiler
                 $buffer[$id] = $node;
             }
 
-            if (isset($this->data['TREES']['MAIN']['EDGES'][$id]))
+            if (isset($this->data['TREES']['MAIN']['EDGES'][$id])) {
                 $this->getMainTreeNodesOfType($this->data['TREES']['MAIN']['EDGES'][$id], $types, $buffer);
+            }
         }
     }
 
@@ -2361,8 +2591,9 @@ final class Compiler
     private function putToFile($data, $poolName, $fileSubname)
     {
         $dir = $_SERVER['DOCUMENT_ROOT'] . $this->workDir . $this->filePools[$poolName]['DIR'];
-        if (!file_exists($dir))
+        if (!file_exists($dir)) {
             mkdir($dir, 0755, true);
+        }
 
         if (!isset($this->filePoolsp[$poolName][$fileSubname])) {
             $fd = $this->filePoolsp[$poolName][$fileSubname] = fopen($dir . $fileSubname . '.csv', 'w');
@@ -2380,11 +2611,13 @@ final class Compiler
         $dir = $_SERVER['DOCUMENT_ROOT'] . $this->workDir . $this->filePools[$poolName]['DIR'];
         $fName = $dir . $fileSubname . '.csv';
 
-        if ($checkDir && !file_exists($dir))
+        if ($checkDir && !file_exists($dir)) {
             mkdir($dir, 0755, true);
+        }
 
-        if (!file_exists($fName))
+        if (!file_exists($fName)) {
             file_put_contents($fName, implode(';', array_keys($data)) . PHP_EOL, FILE_APPEND);
+        }
 
         file_put_contents($fName, implode(';', $data) . PHP_EOL, FILE_APPEND);
     }
@@ -2393,8 +2626,9 @@ final class Compiler
     {
         $name = $_SERVER['DOCUMENT_ROOT'] . $this->workDir . $this->filePools[$poolName]['DIR'] . $fileSubname . '.csv';
 
-        if (file_exists($name))
+        if (file_exists($name)) {
             unlink($name);
+        }
     }
 
     private function getPoolFileName($poolName, $fileSubname, $docRoot = true)
@@ -2410,8 +2644,9 @@ final class Compiler
     private function cleanPoolDir($poolName)
     {
         $dir = $_SERVER['DOCUMENT_ROOT'] . $this->workDir . $this->filePools[$poolName]['DIR'];
-        if (file_exists($dir))
+        if (file_exists($dir)) {
             system('rm -rf ' . $dir);
+        }
 
         mkdir($dir, 0755, true);
     }
@@ -2432,8 +2667,9 @@ final class Compiler
         if (file_exists($fName)) {
             $header = implode(';', array_keys($data[0])) . PHP_EOL;
             file_put_contents($fName, $header);
-            foreach ($data as $line)
+            foreach ($data as $line) {
                 file_put_contents($fName, implode(';', $line) . PHP_EOL, FILE_APPEND);
+            }
         }
     }
 
@@ -2458,8 +2694,9 @@ final class Compiler
         fputs($fd, implode(';', $this->headers['GROUP_FILE']) . PHP_EOL);
         foreach ($this->typeGroups as $code => $group) {
             $line = array();
-            foreach ($this->headers['GROUP_FILE'] as $colCode)
+            foreach ($this->headers['GROUP_FILE'] as $colCode) {
                 $line[] = is_array($group[$colCode]) ? implode(':', $group[$colCode]) : $group[$colCode];
+            }
 
             fputs($fd, implode(';', $line) . PHP_EOL);
         }
@@ -2476,8 +2713,9 @@ final class Compiler
             foreach ($bundle as $item) {
                 $this->putToGroups($item);
 
-                if ($item['CHILDREN_COUNT'] > 0)
+                if ($item['CHILDREN_COUNT'] > 0) {
                     $this->queue[] = $item['ID'];
+                }
             }
         }
 
@@ -2486,8 +2724,9 @@ final class Compiler
 
     private function queueShift()
     {
-        if ($this->queue !== false)
+        if ($this->queue !== false) {
             return array_shift($this->queue);
+        }
 
         return 'root';
     }
@@ -2503,15 +2742,17 @@ final class Compiler
             }
 
             //$item['NAME'] = \CharsetConverter::ConvertCharset($item['NAME'], 'UTF-8', SITE_CHARSET); // temp
-            if (isset($this->typeMap[$item['TYPE_CODE']]))
+            if (isset($this->typeMap[$item['TYPE_CODE']])) {
                 $item['TYPE_CODE'] = $this->typeMap[$item['TYPE_CODE']];
+            }
 
             // type "OTHER" which is a child of type "REGION" is actually a "SUBREGION"
             if ($item['TYPE_CODE'] == 'OTHER') {
                 $parentType = $this->yaIdType[$item['PARENT_ID']];
 
-                if ($parentType == 'REGION')
+                if ($parentType == 'REGION') {
                     $item['TYPE_CODE'] = 'SUBREGION';
+                }
             }
 
             $code = $this->addLeadingZero($this->codeOffset, $this->leading);
@@ -2541,19 +2782,22 @@ final class Compiler
 
     private function getParentOfType($code, $types)
     {
-        if (empty($types))
+        if (empty($types)) {
             return '';
+        }
 
         $nextCode = $code;
         $i = -1;
         while ($nextCode) {
             $i++;
 
-            if ($i > 50)
+            if ($i > 50) {
                 throw new Main\SystemException('Recursion gone too deep when trying to find parent of type');
+            }
 
-            if (isset($types[$this->code2type[$nextCode]]))
+            if (isset($types[$this->code2type[$nextCode]])) {
                 return $nextCode;
+            }
 
             $nextCode = $this->relations[$nextCode];
         }
@@ -2566,8 +2810,9 @@ final class Compiler
         foreach ($this->typeGroups as $gCode => &$group) {
             //_dump_r('Item '.$item['NAME.RU.NAME'].' ('.$item['TYPE_CODE'].')');
 
-            if (!isset($group['I_TYPES'][$item['TYPE_CODE']]))
+            if (!isset($group['I_TYPES'][$item['TYPE_CODE']])) {
                 continue;
+            }
 
             //_dump_r('Goes to group: '.$gCode);
 
@@ -2576,13 +2821,17 @@ final class Compiler
             //_dump_r('Base parent is: '.$baseParent);
 
             if (!$group['FD'][$baseParent]) {
-                $fName = str_replace(array(
-                    '%BASE_PARENT_ITEM_CODE%',
-                    '%CODE%'
-                ), array(
-                    $baseParent,
-                    ToLower($gCode)
-                ), $group['FILE_NAME_TEMPLATE']);
+                $fName = str_replace(
+                    array(
+                        '%BASE_PARENT_ITEM_CODE%',
+                        '%CODE%'
+                    ),
+                    array(
+                        $baseParent,
+                        ToLower($gCode)
+                    ),
+                    $group['FILE_NAME_TEMPLATE']
+                );
 
                 $group['FD'][$baseParent] = $this->fileOpen($fName);
                 fputs($group['FD'][$baseParent], implode(';', $this->headers[$group['HEADER']]) . PHP_EOL);
@@ -2590,8 +2839,9 @@ final class Compiler
 
             $header = $this->headers[$group['HEADER']];
             $line = array();
-            foreach ($header as $code)
+            foreach ($header as $code) {
                 $line[] = isset($item[$code]) ? $item[$code] : '';
+            }
 
             fputs($group['FD'][$baseParent], implode(';', $line) . PHP_EOL);
         }
@@ -2604,13 +2854,15 @@ final class Compiler
 
     private static function addLeadingZero($value, $length)
     {
-        if (strlen($value) >= $length)
+        if (strlen($value) >= $length) {
             return $value;
+        }
 
         $diff = abs($length - strlen($value));
 
-        for ($i = 0; $i < $diff; $i++)
+        for ($i = 0; $i < $diff; $i++) {
             $value = '0' . $value;
+        }
 
         return $value;
     }
@@ -2622,8 +2874,9 @@ final class Compiler
     private function storeTemporalData($dataCode, $data)
     {
         $dir = $_SERVER['DOCUMENT_ROOT'] . $this->workDir . self::TMP_DATA_DIR;
-        if (!file_exists($dir))
+        if (!file_exists($dir)) {
             mkdir($dir, 0755, true);
+        }
 
         file_put_contents($dir . $dataCode, serialize($data));
     }
@@ -2632,42 +2885,46 @@ final class Compiler
     {
         $file = $_SERVER['DOCUMENT_ROOT'] . $this->workDir . self::TMP_DATA_DIR . $dataCode;
 
-        if (is_readable($file))
+        if (is_readable($file)) {
             return unserialize(file_get_contents($file));
-        else
+        } else {
             return array();
+        }
     }
 
     private function cleanTemporalData($dataCode)
     {
         $file = $_SERVER['DOCUMENT_ROOT'] . $this->workDir . self::TMP_DATA_DIR . $dataCode;
 
-        if (is_readable($file))
+        if (is_readable($file)) {
             unlink($file);
+        }
     }
 
     /*
-    private function dropTemporalFile()
-    {
-        $file = $_SERVER['DOCUMENT_ROOT'].$this->workDir.self::TMP_DATA_FILE;
+	private function dropTemporalFile()
+	{
+		$file = $_SERVER['DOCUMENT_ROOT'].$this->workDir.self::TMP_DATA_FILE;
 
-        if(is_readable($file))
-            unlink($file);
-    }
-    */
+		if(is_readable($file))
+			unlink($file);
+	}
+	*/
 
     public function cleanOutput()
     {
         $file = $_SERVER['DOCUMENT_ROOT'] . $this->workDir . self::OUTPUT_FILE;
 
-        if (is_readable($file))
+        if (is_readable($file)) {
             unlink($file);
+        }
     }
 
     public function output($data, $important = true)
     {
-        if (!$important)
+        if (!$important) {
             return false;
+        }
 
         ob_start();
         print_r($data);

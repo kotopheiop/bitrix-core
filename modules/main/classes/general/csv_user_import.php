@@ -43,8 +43,9 @@ class CSVUserImport
             return;
         }
 
-        foreach ($this->arHeader as $key => $val)
-            $this->arHeader[$key] = strtoupper($val);
+        foreach ($this->arHeader as $key => $val) {
+            $this->arHeader[$key] = mb_strtoupper($val);
+        }
 
         if (!$this->CheckRequiredFields()) {
             $this->isErrorOccured = true;
@@ -79,8 +80,9 @@ class CSVUserImport
         $iblockID = intval($iblockID);
         if (CModule::IncludeModule("iblock") && $iblockID > 0) {
             $dbIblock = CIBlock::GetByID($iblockID);
-            if ($dbIblock->Fetch())
+            if ($dbIblock->Fetch()) {
                 $this->attachIBlockID = $iblockID;
+            }
         }
     }
 
@@ -88,8 +90,9 @@ class CSVUserImport
     {
         $userPropertyName = trim($userPropertyName);
 
-        if (strlen($userPropertyName) > 0)
+        if ($userPropertyName <> '') {
             $this->userPropertyName = $userPropertyName;
+        }
     }
 
     function GenerateUserPassword($pass_len = 10)
@@ -98,8 +101,9 @@ class CSVUserImport
         $n = 61;
 
         $string = "";
-        for ($i = 0; $i < $pass_len; $i++)
+        for ($i = 0; $i < $pass_len; $i++) {
             $string .= $allchars[mt_rand(0, $n)];
+        }
 
         return $string;
     }
@@ -111,8 +115,9 @@ class CSVUserImport
 
     function SetExternalAuthID($externalAuthID)
     {
-        if (strlen($externalAuthID) > 0)
+        if ($externalAuthID <> '') {
             $this->externalAuthID = $externalAuthID;
+        }
     }
 
     function GetErrorMessage()
@@ -127,8 +132,9 @@ class CSVUserImport
 
     function SetCallback($functionName)
     {
-        if (is_callable($functionName))
+        if (is_callable($functionName)) {
             $this->callback = $functionName;
+        }
     }
 
     function &GetCsvObject()
@@ -138,31 +144,36 @@ class CSVUserImport
 
     function SetDefaultEmail($email)
     {
-        if (check_email($email))
+        if (check_email($email)) {
             $this->defaultEmail = $email;
+        }
     }
 
     function GetDefaultEmail()
     {
-        if ($this->defaultEmail !== false)
+        if ($this->defaultEmail !== false) {
             return $this->defaultEmail;
+        }
 
         return COption::GetOptionString("main", "email_from", "admin@" . $_SERVER["SERVER_NAME"]);
     }
 
     function SetUserGroups($arGroups)
     {
-        if (!is_array($arGroups))
+        if (!is_array($arGroups)) {
             return;
+        }
 
         foreach ($arGroups as $groupID) {
             $groupID = intval($groupID);
             $rsGroup = CGroup::GetByID($groupID);
-            if (!$rsGroup->Fetch())
+            if (!$rsGroup->Fetch()) {
                 continue;
+            }
 
-            if (!is_array($this->userGroups))
+            if (!is_array($this->userGroups)) {
                 $this->userGroups = Array();
+            }
 
             $this->userGroups[] = $groupID;
         }
@@ -171,22 +182,30 @@ class CSVUserImport
     function SetImageFilePath($relativePath)
     {
         $relativePath = Rel2Abs("/", $relativePath);
-        if (is_dir($_SERVER["DOCUMENT_ROOT"] . $relativePath))
+        if (is_dir($_SERVER["DOCUMENT_ROOT"] . $relativePath)) {
             $this->imageFilePath = rtrim($_SERVER["DOCUMENT_ROOT"] . $relativePath, "/");
+        }
     }
 
     function __CreateUserProperty()
     {
-        if ($this->attachIBlockID < 1)
+        if ($this->attachIBlockID < 1) {
             return false;
+        }
 
         $success = true;
-        $dbRes = CUserTypeEntity::GetList(Array(), Array("ENTITY_ID" => "USER", "FIELD_NAME" => $this->userPropertyName));
+        $dbRes = CUserTypeEntity::GetList(
+            Array(),
+            Array("ENTITY_ID" => "USER", "FIELD_NAME" => $this->userPropertyName)
+        );
         if (!$dbRes->Fetch()) {
             $arLabelNames = Array();
-            $rsLanguage = CLanguage::GetList($by, $order, array());
+            $rsLanguage = CLanguage::GetList();
             while ($arLanguage = $rsLanguage->Fetch()) {
-                IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/classes/general/csv_user_import_labels.php", $arLanguage["LID"]);
+                IncludeModuleLangFile(
+                    $_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/classes/general/csv_user_import_labels.php",
+                    $arLanguage["LID"]
+                );
                 $arLabelNames[$arLanguage["LID"]] = GetMessage("DEPARTMENT_USER_PROPERTY_NAME");
             }
 
@@ -229,12 +248,14 @@ class CSVUserImport
             $i++;
 
             $csvSectionCode = "IBLOCK_SECTION_NAME_" . $i;
-            if (!array_key_exists($csvSectionCode, $arFields))
+            if (!array_key_exists($csvSectionCode, $arFields)) {
                 break;
+            }
 
             $sectionName = trim($arFields[$csvSectionCode]);
-            if (strlen($sectionName) < 1)
+            if (mb_strlen($sectionName) < 1) {
                 break;
+            }
 
             $cacheID = md5($csvSectionCode . "_" . $sectionName . "_" . $sectionID);
             if (array_key_exists($cacheID, $this->arSectionCache)) {
@@ -242,7 +263,14 @@ class CSVUserImport
                 continue;
             }
 
-            $dbSection = CIBlockSection::GetList(Array(), Array("IBLOCK_ID" => $this->attachIBlockID, "NAME" => $sectionName, "SECTION_ID" => $sectionID));
+            $dbSection = CIBlockSection::GetList(
+                Array(),
+                Array(
+                    "IBLOCK_ID" => $this->attachIBlockID,
+                    "NAME" => $sectionName,
+                    "SECTION_ID" => $sectionID
+                )
+            );
             if ($arGroup = $dbSection->Fetch()) {
                 $sectionID = $arGroup["ID"];
                 $this->arSectionCache[$cacheID] = $sectionID;
@@ -258,10 +286,11 @@ class CSVUserImport
             );
 
             $sectionID = (int)$iblockSection->Add($arSectionFields);
-            if ($sectionID > 1)
+            if ($sectionID > 1) {
                 $this->arSectionCache[$cacheID] = $sectionID;
-            else
+            } else {
                 return 0;
+            }
         }
 
         return $sectionID;
@@ -269,64 +298,82 @@ class CSVUserImport
 
     function ImportUser()
     {
-        if ($this->isErrorOccured)
+        if ($this->isErrorOccured) {
             return false;
+        }
 
         $this->errorMessage = "";
 
         $defaultEmail = $this->GetDefaultEmail();
 
-        if (!$arUser = $this->csv->FetchDelimiter())
+        if (!$arUser = $this->csv->FetchDelimiter()) {
             return false;
+        }
 
         $arFields = Array();
-        foreach ($this->arHeader as $index => $key)
-            if (($f = trim($arUser[$index])) <> '')
+        foreach ($this->arHeader as $index => $key) {
+            if (($f = trim($arUser[$index])) <> '') {
                 $arFields[$key] = $f;
+            }
+        }
 
-        if (!array_key_exists("NAME", $arFields) || strlen($arFields["NAME"]) < 1) {
+        if (!array_key_exists("NAME", $arFields) || mb_strlen($arFields["NAME"]) < 1) {
             $this->errorMessage = GetMessage("CSV_IMPORT_NO_NAME") . " (" . implode(", ", $arFields) . ").<br>";
             return true;
         }
 
-        if (!array_key_exists("LAST_NAME", $arFields) || strlen($arFields["LAST_NAME"]) < 1) {
+        if (!array_key_exists("LAST_NAME", $arFields) || mb_strlen($arFields["LAST_NAME"]) < 1) {
             $this->errorMessage = GetMessage("CSV_IMPORT_NO_LASTNAME") . " (" . implode(", ", $arFields) . ").<br>";
             return true;
         }
 
-        if (!array_key_exists("PASSWORD", $arFields) || strlen($arFields["PASSWORD"]) < 1)
+        if (!array_key_exists("PASSWORD", $arFields) || mb_strlen($arFields["PASSWORD"]) < 1) {
             $arFields["PASSWORD"] = $this->GenerateUserPassword(6);
+        }
         $arFields["CONFIRM_PASSWORD"] = $arFields["PASSWORD"];
 
-        if (!array_key_exists("EMAIL", $arFields) || strlen($arFields["EMAIL"]) < 3 || !check_email($arFields["EMAIL"]))
+        if (!array_key_exists("EMAIL", $arFields) || mb_strlen($arFields["EMAIL"]) < 3 || !check_email(
+                $arFields["EMAIL"]
+            )) {
             $arFields["EMAIL"] = $defaultEmail;
+        }
 
-        if (!array_key_exists("LOGIN", $arFields))
+        if (!array_key_exists("LOGIN", $arFields)) {
             $arFields["LOGIN"] = ToLower($arFields["NAME"] . " " . $arFields["LAST_NAME"]);
+        }
 
-        if (array_key_exists("PERSONAL_BIRTHDAY", $arFields) && (strlen($arFields["PERSONAL_BIRTHDAY"]) < 2 || !CheckDateTime($arFields["PERSONAL_BIRTHDAY"])))
+        if (array_key_exists("PERSONAL_BIRTHDAY", $arFields) && (mb_strlen(
+                    $arFields["PERSONAL_BIRTHDAY"]
+                ) < 2 || !CheckDateTime($arFields["PERSONAL_BIRTHDAY"]))) {
             unset($arFields["PERSONAL_BIRTHDAY"]);
+        }
 
-        if (array_key_exists("DATE_REGISTER", $arFields) && (strlen($arFields["DATE_REGISTER"]) < 2 || !CheckDateTime($arFields["DATE_REGISTER"])))
+        if (array_key_exists("DATE_REGISTER", $arFields) && (mb_strlen(
+                    $arFields["DATE_REGISTER"]
+                ) < 2 || !CheckDateTime($arFields["DATE_REGISTER"]))) {
             unset($arFields["DATE_REGISTER"]);
+        }
 
-        if ($this->externalAuthID !== null && !array_key_exists("EXTERNAL_AUTH_ID", $arFields))
+        if ($this->externalAuthID !== null && !array_key_exists("EXTERNAL_AUTH_ID", $arFields)) {
             $arFields["EXTERNAL_AUTH_ID"] = $this->externalAuthID;
+        }
 
-        if (!array_key_exists("XML_ID", $arFields))
+        if (!array_key_exists("XML_ID", $arFields)) {
             $arFields["XML_ID"] = md5(uniqid(rand(), true));
+        }
 
-        if (!array_key_exists("CHECKWORD", $arFields) || strlen($arFields["CHECKWORD"]) <= 0)
+        if (!array_key_exists("CHECKWORD", $arFields) || $arFields["CHECKWORD"] == '') {
             $arFields["CHECKWORD"] = md5(CMain::GetServerUniqID() . uniqid());
+        }
 
         if ($this->imageFilePath !== null) {
-            if (array_key_exists("PERSONAL_PHOTO", $arFields) && strlen($arFields["PERSONAL_PHOTO"]) > 0) {
+            if (array_key_exists("PERSONAL_PHOTO", $arFields) && $arFields["PERSONAL_PHOTO"] <> '') {
                 $arFile = CFile::MakeFileArray($this->imageFilePath . "/" . $arFields["PERSONAL_PHOTO"]);
                 $arFile["MODULE_ID"] = "main";
                 $arFields["PERSONAL_PHOTO"] = $arFile;
             }
 
-            if (array_key_exists("WORK_LOGO", $arFields) && strlen($arFields["WORK_LOGO"]) > 0) {
+            if (array_key_exists("WORK_LOGO", $arFields) && $arFields["WORK_LOGO"] <> '') {
                 $arFile = CFile::MakeFileArray($this->imageFilePath . "/" . $arFields["WORK_LOGO"]);
                 $arFile["MODULE_ID"] = "main";
                 $arFields["WORK_LOGO"] = $arFile;
@@ -342,8 +389,9 @@ class CSVUserImport
         $userID = (int)$user->Add($arFields);
 
         if ($userID <= 0) {
-            if ($user->LAST_ERROR <> '')
+            if ($user->LAST_ERROR <> '') {
                 $this->errorMessage = $arFields["NAME"] . " " . $arFields["LAST_NAME"] . ": " . $user->LAST_ERROR;
+            }
         }
 
         if ($userID <= 0 && $this->ignoreDuplicate === false) {
@@ -351,16 +399,17 @@ class CSVUserImport
             $login = $arFields["LOGIN"];
             do {
                 $rsUser = CUser::GetByLogin($arFields["LOGIN"]);
-                if (!$rsUser->Fetch())
+                if (!$rsUser->Fetch()) {
                     break;
+                }
 
                 $arFields["LOGIN"] = $login . $postFix;
                 $userID = (int)$user->Add($arFields);
-                if ($userID > 1)
+                if ($userID > 1) {
                     break;
+                }
 
                 $postFix++;
-
             } while (true);
         }
 
@@ -368,8 +417,9 @@ class CSVUserImport
             if ($this->attachIBlockID > 0) {
                 $iblockSectionID = $this->__GetIBlockSectionID($arFields);
                 if ($iblockSectionID > 0) {
-                    if (!$this->isUserPropertyCreate)
+                    if (!$this->isUserPropertyCreate) {
                         $this->isUserPropertyCreate = $this->__CreateUserProperty();
+                    }
 
                     $arUpdate = Array();
                     $arUpdate[$this->userPropertyName] = Array($iblockSectionID);
@@ -378,11 +428,11 @@ class CSVUserImport
                 }
             }
 
-            if ($this->callback !== null)
+            if ($this->callback !== null) {
                 call_user_func_array($this->callback, Array(&$arFields, &$userID));
+            }
         }
 
         return true;
-
     }
 }

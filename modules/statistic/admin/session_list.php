@@ -1,9 +1,12 @@
 <?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/prolog.php");
 /** @var CMain $APPLICATION */
 $STAT_RIGHT = $APPLICATION->GetGroupRight("statistic");
-if ($STAT_RIGHT == "D") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($STAT_RIGHT == "D") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 $statDB = CDatabase::GetModuleConnection('statistic');
@@ -11,7 +14,9 @@ $statDB = CDatabase::GetModuleConnection('statistic');
 function CheckFilter()
 {
     global $strError, $arFilterFields, $statDB;
-    foreach ($arFilterFields as $f) global $$f;
+    foreach ($arFilterFields as $f) {
+        global $$f;
+    }
     $str = "";
     $arMsg = Array();
     $arr = array();
@@ -33,21 +38,24 @@ function CheckFilter()
     );
 
     foreach ($arr as $ar) {
-        if (strlen($ar["date1"]) > 0 && !CheckDateTime($ar["date1"]))
+        if ($ar["date1"] <> '' && !CheckDateTime($ar["date1"])) {
             $arMsg[] = array("id" => "find_date1", "text" => $ar["mess1"]);
-        elseif (strlen($ar["date2"]) > 0 && !CheckDateTime($ar["date2"]))
+        } elseif ($ar["date2"] <> '' && !CheckDateTime($ar["date2"])) {
             $arMsg[] = array("id" => "find_date2", "text" => $ar["mess2"]);
-        elseif (strlen($ar["date1"]) > 0 && strlen($ar["date2"]) > 0 && $statDB->CompareDates($ar["date1"], $ar["date2"]) == 1)
+        } elseif ($ar["date1"] <> '' && $ar["date2"] <> '' && $statDB->CompareDates($ar["date1"], $ar["date2"]) == 1) {
             $arMsg[] = array("id" => "find_date2", "text" => $ar["mess3"]);
+        }
     }
 
     // hits
-    if (intval($find_hits1) > 0 and intval($find_hits2) > 0 and $find_hits1 > $find_hits2)
+    if (intval($find_hits1) > 0 and intval($find_hits2) > 0 and $find_hits1 > $find_hits2) {
         $arMsg[] = array("id" => "find_hits2", "text" => GetMessage("STAT_HITS1_HITS2"));
+    }
 
     // events
-    if (intval($find_events1) > 0 and intval($find_events2) > 0 and $find_events1 > $find_events2)
+    if (intval($find_events1) > 0 and intval($find_events2) > 0 and $find_events1 > $find_events2) {
         $arMsg[] = array("id" => "find_events2", "text" => GetMessage("STAT_EVENTS1_EVENTS2"));
+    }
 
     if (!empty($arMsg)) {
         $e = new CAdminException($arMsg);
@@ -60,7 +68,7 @@ function CheckFilter()
 
 $arSites = array();
 $ref = $ref_id = array();
-$rs = CSite::GetList(($v1 = "sort"), ($v2 = "asc"));
+$rs = CSite::GetList();
 while ($ar = $rs->Fetch()) {
     $ref[] = $ar["ID"];
     $ref_id[] = $ar["ID"];
@@ -226,12 +234,14 @@ if (CheckFilter()) {
         "URL_TO_EXACT_MATCH" => $find_url_to_exact_match,
     );
 } else {
-    if ($e = $APPLICATION->GetException())
+    if ($e = $APPLICATION->GetException()) {
         $GLOBALS["lAdmin"]->AddFilterError(GetMessage("STAT_FILTER_ERROR") . ": " . $e->GetString());
+    }
 }
 
+global $by, $order;
 
-$rsData = CSession::GetList($by, $order, $arFilter, $is_filtered);
+$rsData = CSession::GetList($by, $order, $arFilter);
 $rsData = new CAdminResult($rsData, $sTableID);
 $rsData->NavStart();
 
@@ -240,39 +250,97 @@ $lAdmin->NavText($rsData->GetNavPrint(GetMessage("STAT_SESS_PAGES")));
 $arHeaders = Array();
 
 $arHeaders[] = array("id" => "ID", "content" => "ID", "sort" => "s_id", "default" => true,);
-$arHeaders[] = array("id" => "USER_ID", "content" => GetMessage("STAT_USER"), "sort" => "s_user_id", "default" => true,);
+$arHeaders[] = array(
+    "id" => "USER_ID",
+    "content" => GetMessage("STAT_USER"),
+    "sort" => "s_user_id",
+    "default" => true,
+);
 
 
-$arHeaders[] = array("id" => "DATE_FIRST", "content" => GetMessage("STAT_START"), "sort" => "s_date_first", "default" => true,);
-$arHeaders[] = array("id" => "DATE_LAST", "content" => GetMessage("STAT_END"), "sort" => "s_date_last", "default" => false,);
-$arHeaders[] = array("id" => "SESSION_TIME", "content" => GetMessage("STAT_SESSION_PERIOD"), "sort" => "", "default" => true,);
+$arHeaders[] = array(
+    "id" => "DATE_FIRST",
+    "content" => GetMessage("STAT_START"),
+    "sort" => "s_date_first",
+    "default" => true,
+);
+$arHeaders[] = array(
+    "id" => "DATE_LAST",
+    "content" => GetMessage("STAT_END"),
+    "sort" => "s_date_last",
+    "default" => false,
+);
+$arHeaders[] = array(
+    "id" => "SESSION_TIME",
+    "content" => GetMessage("STAT_SESSION_PERIOD"),
+    "sort" => "",
+    "default" => true,
+);
 $arHeaders[] = array("id" => "IP_LAST", "content" => GetMessage("STAT_IP"), "sort" => "s_ip", "default" => true,);
-$arHeaders[] = array("id" => "HITS", "content" => GetMessage("STAT_NUM_PAGES"), "sort" => "s_hits", "default" => true, "align" => "right");
-$arHeaders[] = array("id" => "C_EVENTS", "content" => GetMessage("STAT_EVENTS"), "sort" => "s_events", "default" => true, "align" => "right");
+$arHeaders[] = array(
+    "id" => "HITS",
+    "content" => GetMessage("STAT_NUM_PAGES"),
+    "sort" => "s_hits",
+    "default" => true,
+    "align" => "right"
+);
+$arHeaders[] = array(
+    "id" => "C_EVENTS",
+    "content" => GetMessage("STAT_EVENTS"),
+    "sort" => "s_events",
+    "default" => true,
+    "align" => "right"
+);
 $arHeaders[] = array("id" => "ADV_ID", "content" => GetMessage("STAT_ADV"), "sort" => "s_adv_id", "default" => true,);
-$arHeaders[] = array("id" => "URL_TO", "content" => GetMessage("STAT_FIRST_PAGE"), "sort" => "s_url_to", "default" => false,);
-$arHeaders[] = array("id" => "URL_LAST", "content" => GetMessage("STAT_LAST_PAGE"), "sort" => "s_url_last", "default" => false,);
-$arHeaders[] = array("id" => "COUNTRY_ID", "content" => GetMessage("STAT_COUNTRY"), "sort" => "s_country_id", "default" => false,);
-$arHeaders[] = array("id" => "REGION_NAME", "content" => GetMessage("STAT_REGION"), "sort" => "s_region_name", "default" => false,);
-$arHeaders[] = array("id" => "CITY_ID", "content" => GetMessage("STAT_CITY"), "sort" => "s_city_id", "default" => false,);
+$arHeaders[] = array(
+    "id" => "URL_TO",
+    "content" => GetMessage("STAT_FIRST_PAGE"),
+    "sort" => "s_url_to",
+    "default" => false,
+);
+$arHeaders[] = array(
+    "id" => "URL_LAST",
+    "content" => GetMessage("STAT_LAST_PAGE"),
+    "sort" => "s_url_last",
+    "default" => false,
+);
+$arHeaders[] = array(
+    "id" => "COUNTRY_ID",
+    "content" => GetMessage("STAT_COUNTRY"),
+    "sort" => "s_country_id",
+    "default" => false,
+);
+$arHeaders[] = array(
+    "id" => "REGION_NAME",
+    "content" => GetMessage("STAT_REGION"),
+    "sort" => "s_region_name",
+    "default" => false,
+);
+$arHeaders[] = array(
+    "id" => "CITY_ID",
+    "content" => GetMessage("STAT_CITY"),
+    "sort" => "s_city_id",
+    "default" => false,
+);
 
 $lAdmin->AddHeaders($arHeaders);
 
 $arrUsers = array();
 
 while ($arRes = $rsData->NavNext(true, "f_")) {
-
-
     $row =& $lAdmin->AddRow($f_ID, $arRes);
 
-    if ($_SESSION["SESS_SESSION_ID"] == $f_ID)
+    if ($_SESSION["SESS_SESSION_ID"] == $f_ID) {
         $row->AddViewField("ID", '<span class="stat_attention">' . $f_ID . '</span>');
+    }
 
 
     $str = "";
     if ($f_USER_ID > 0) :
-        if (strlen($f_LOGIN) > 0) :
-            $str .= "[<a title=\"" . GetMessage("STAT_EDIT_USER") . "\" href=\"user_edit.php?lang=" . LANG . "&amp;ID=" . $f_USER_ID . "\">" . $f_USER_ID . "</a>] ($f_LOGIN) $f_USER_NAME";
+        if ($f_LOGIN <> '') :
+            $str .= "[<a title=\"" . GetMessage(
+                    "STAT_EDIT_USER"
+                ) . "\" href=\"user_edit.php?lang=" . LANG . "&amp;ID=" . $f_USER_ID . "\">" . $f_USER_ID . "</a>] ($f_LOGIN) $f_USER_NAME";
         else :
             if (!array_key_exists($f_USER_ID, $arrUsers)) {
                 $rsUser = CUser::GetByID($f_USER_ID);
@@ -285,8 +353,10 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
             $USER_NAME = $arrUsers[$f_USER_ID]["USER_NAME"];
             $LOGIN = $arrUsers[$f_USER_ID]["LOGIN"];
 
-            $str .= "[<a title=\"" . GetMessage("STAT_EDIT_USER") . "\" href=\"user_edit.php?lang=" . LANG . "&amp;ID=" . $f_USER_ID . "\">" . $f_USER_ID . "</a>] ";
-            if (strlen($LOGIN) > 0) :
+            $str .= "[<a title=\"" . GetMessage(
+                    "STAT_EDIT_USER"
+                ) . "\" href=\"user_edit.php?lang=" . LANG . "&amp;ID=" . $f_USER_ID . "\">" . $f_USER_ID . "</a>] ";
+            if ($LOGIN <> '') :
                 $str .= "(" . $LOGIN . ") " . $USER_NAME . "";
             endif;
         endif;
@@ -296,7 +366,9 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
     endif;
     $str .= "<br>[<a href=\"guest_list.php?lang=" . LANG . "&amp;find_id=" . $f_GUEST_ID . "&amp;find_id_exact_match=Y&amp;set_filter=Y\">" . $f_GUEST_ID . "</a>]&nbsp;";
 
-    $str .= ($f_NEW_GUEST == "Y") ? "<span class=\"stat_newguest\">" . GetMessage("STAT_NEW_GUEST") . "</span>" : "<span class='stat_oldguest'>" . GetMessage("STAT_OLD_GUEST") . "</span>";
+    $str .= ($f_NEW_GUEST == "Y") ? "<span class=\"stat_newguest\">" . GetMessage(
+            "STAT_NEW_GUEST"
+        ) . "</span>" : "<span class='stat_oldguest'>" . GetMessage("STAT_OLD_GUEST") . "</span>";
 
     $row->AddViewField("USER_ID", $str);
 
@@ -313,51 +385,74 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
 
     $row->AddViewField("IP_LAST", GetWhoisLink($f_IP_LAST));
 
-    if (strlen($f_CITY_ID) > 0) {
+    if ($f_CITY_ID <> '') {
         $row->AddViewField("CITY_ID", "[" . $f_CITY_ID . "] " . $f_CITY_NAME);
     }
 
-    $str = "<a title=\"" . GetMessage("STAT_VIEW_HITS_LIST_2") . "\"  href=\"hit_list.php?lang=" . LANGUAGE_ID . "&amp;find_session_id=" . $f_ID . "&amp;find_session_id_exact_match=Y&amp;set_filter=Y&amp;rand=" . rand() . "\">" . $f_HITS . "</a>";
+    $str = "<a title=\"" . GetMessage(
+            "STAT_VIEW_HITS_LIST_2"
+        ) . "\"  href=\"hit_list.php?lang=" . LANGUAGE_ID . "&amp;find_session_id=" . $f_ID . "&amp;find_session_id_exact_match=Y&amp;set_filter=Y&amp;rand=" . rand(
+        ) . "\">" . $f_HITS . "</a>";
     $row->AddViewField("HITS", $str);
 
-    $str = "<a title=\"" . GetMessage("STAT_VIEW_EVENTS") . "\"  href=\"event_list.php?lang=" . LANGUAGE_ID . "&amp;find_session_id=" . $f_ID . "&amp;find_session_id_exact_match=Y&amp;set_filter=Y&amp;rand=" . rand() . "\">" . $f_C_EVENTS . "</a>";
+    $str = "<a title=\"" . GetMessage(
+            "STAT_VIEW_EVENTS"
+        ) . "\"  href=\"event_list.php?lang=" . LANGUAGE_ID . "&amp;find_session_id=" . $f_ID . "&amp;find_session_id_exact_match=Y&amp;set_filter=Y&amp;rand=" . rand(
+        ) . "\">" . $f_C_EVENTS . "</a>";
     $row->AddViewField("C_EVENTS", $str);
 
     if (intval($f_ADV_ID) > 0) :
         $str = "<a href=\"adv_list.php?lang=" . LANGUAGE_ID . "&find_id=" . $f_ADV_ID . "&find_id_exact_match=Y&set_filter=Y\">" . $f_ADV_ID . "</a>";
-        if ($f_ADV_BACK == "Y")
+        if ($f_ADV_BACK == "Y") {
             $str .= "*";
+        }
         $str .= "<br>" . $f_REFERER1 . " / " . $f_REFERER2 . "<br>" . $f_REFERER3;
         $row->AddViewField("ADV_ID", $str);
     endif;
 
 
     $str = "";
-    if (strlen($f_FIRST_SITE_ID) > 0):
-        $str .= "[<a title=\"" . GetMessage("STAT_SITE") . "\" href=\"/bitrix/admin/site_edit.php?LID=" . $f_FIRST_SITE_ID . "&lang=" . LANGUAGE_ID . "\">" . $f_FIRST_SITE_ID . "</a>]&nbsp;";
+    if ($f_FIRST_SITE_ID <> ''):
+        $str .= "[<a title=\"" . GetMessage(
+                "STAT_SITE"
+            ) . "\" href=\"/bitrix/admin/site_edit.php?LID=" . $f_FIRST_SITE_ID . "&lang=" . LANGUAGE_ID . "\">" . $f_FIRST_SITE_ID . "</a>]&nbsp;";
     endif;
 
-    $row->AddViewField("URL_TO", $str . StatAdminListFormatURL($arRes["URL_TO"], array(
-            "new_window" => false,
-            "attention" => $f_URL_TO_404 == "Y",
-            "max_display_chars" => "default",
-            "chars_per_line" => "default",
-            "kill_sessid" => $STAT_RIGHT < "W",
-        )));
+    $row->AddViewField(
+        "URL_TO",
+        $str . StatAdminListFormatURL(
+            $arRes["URL_TO"],
+            array(
+                "new_window" => false,
+                "attention" => $f_URL_TO_404 == "Y",
+                "max_display_chars" => "default",
+                "chars_per_line" => "default",
+                "kill_sessid" => $STAT_RIGHT < "W",
+            )
+        )
+    );
 
     $str = "";
-    if (strlen($f_LAST_SITE_ID) > 0):
-        $str .= '[<a title="' . GetMessage("STAT_SITE") . '" href="/bitrix/admin/site_edit.php?LID=' . $f_LAST_SITE_ID . '&lang=' . LANGUAGE_ID . '">' . $f_LAST_SITE_ID . '</a>]&nbsp;';
+    if ($f_LAST_SITE_ID <> ''):
+        $str .= '[<a title="' . GetMessage(
+                "STAT_SITE"
+            ) . '" href="/bitrix/admin/site_edit.php?LID=' . $f_LAST_SITE_ID . '&lang=' . LANGUAGE_ID . '">' . $f_LAST_SITE_ID . '</a>]&nbsp;';
     endif;
 
     $row->AddViewField("", $str);
-    $row->AddViewField("URL_LAST", $str . StatAdminListFormatURL($arRes["URL_LAST"], array(
-            "new_window" => false,
-            "attention" => $f_URL_LAST_404 == "Y",
-            "max_display_chars" => "default",
-            "chars_per_line" => "default",
-            "kill_sessid" => $STAT_RIGHT < "W",
-        )));
+    $row->AddViewField(
+        "URL_LAST",
+        $str . StatAdminListFormatURL(
+            $arRes["URL_LAST"],
+            array(
+                "new_window" => false,
+                "attention" => $f_URL_LAST_404 == "Y",
+                "max_display_chars" => "default",
+                "chars_per_line" => "default",
+                "kill_sessid" => $STAT_RIGHT < "W",
+            )
+        )
+    );
 
     $arActions = Array();
 
@@ -380,7 +475,9 @@ $lAdmin->AddFooter(
 $lAdmin->AddAdminContextMenu();
 $lAdmin->CheckListMode();
 
-$APPLICATION->SetTitle(GetMessage("STAT_RECORDS_LIST", array("#STATISTIC_DAYS#" => COption::GetOptionString("statistic", "SESSION_DAYS"))));
+$APPLICATION->SetTitle(
+    GetMessage("STAT_RECORDS_LIST", array("#STATISTIC_DAYS#" => COption::GetOptionString("statistic", "SESSION_DAYS")))
+);
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 ?>
@@ -404,19 +501,32 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
         </tr>
         <tr valign="center">
             <td width="0%" nowrap><? echo GetMessage("STAT_F_START_DATE") . ":" ?></td>
-            <td width="0%"
-                nowrap><? echo CalendarPeriod("find_date1", $find_date1, "find_date2", $find_date2, "form1", "Y") ?></td>
+            <td width="0%" nowrap><? echo CalendarPeriod(
+                    "find_date1",
+                    $find_date1,
+                    "find_date2",
+                    $find_date2,
+                    "form1",
+                    "Y"
+                ) ?></td>
         </tr>
         <tr valign="center">
             <td width="0%" nowrap><? echo GetMessage("STAT_F_DATE_END") . ":" ?></td>
-            <td width="0%"
-                nowrap><? echo CalendarPeriod("find_date_end1", $find_date_end1, "find_date_end2", $find_date_end2, "form1", "Y") ?></td>
+            <td width="0%" nowrap><? echo CalendarPeriod(
+                    "find_date_end1",
+                    $find_date_end1,
+                    "find_date_end2",
+                    $find_date_end2,
+                    "form1",
+                    "Y"
+                ) ?></td>
         </tr>
         <tr>
             <td><? echo GetMessage("STAT_F_GUEST_ID") ?>:</td>
             <td><input type="text" name="find_guest_id" size="30"
-                       value="<? echo htmlspecialcharsbx($find_guest_id) ?>"><?= ShowExactMatchCheckbox("find_guest_id") ?>
-                &nbsp;<?= ShowFilterLogicHelp() ?></td>
+                       value="<? echo htmlspecialcharsbx($find_guest_id) ?>"><?= ShowExactMatchCheckbox(
+                    "find_guest_id"
+                ) ?>&nbsp;<?= ShowFilterLogicHelp() ?></td>
         </tr>
 
         <tr>
@@ -425,15 +535,31 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
             </td>
             <td>
                 <?
-                $arr = array("reference" => array(GetMessage("STAT_YES"), GetMessage("STAT_NO")), "reference_id" => array("Y", "N"));
-                echo SelectBoxFromArray("find_registered", $arr, htmlspecialcharsbx($find_registered), GetMessage("MAIN_ALL"));
+                $arr = array(
+                    "reference" => array(GetMessage("STAT_YES"), GetMessage("STAT_NO")),
+                    "reference_id" => array("Y", "N")
+                );
+                echo SelectBoxFromArray(
+                    "find_registered",
+                    $arr,
+                    htmlspecialcharsbx($find_registered),
+                    GetMessage("MAIN_ALL")
+                );
                 ?></td>
         </tr>
         <tr>
             <td><? echo GetMessage("STAT_F_NEW_GUEST") ?>:</td>
             <td><?
-                $arr = array("reference" => array(GetMessage("STAT_NEW_GUEST_1"), GetMessage("STAT_OLD_GUEST_1")), "reference_id" => array("Y", "N"));
-                echo SelectBoxFromArray("find_new_guest", $arr, htmlspecialcharsbx($find_new_guest), GetMessage("MAIN_ALL"));
+                $arr = array(
+                    "reference" => array(GetMessage("STAT_NEW_GUEST_1"), GetMessage("STAT_OLD_GUEST_1")),
+                    "reference_id" => array("Y", "N")
+                );
+                echo SelectBoxFromArray(
+                    "find_new_guest",
+                    $arr,
+                    htmlspecialcharsbx($find_new_guest),
+                    GetMessage("MAIN_ALL")
+                );
                 ?></td>
         </tr>
         <tr>
@@ -444,9 +570,10 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
         </tr>
         <tr>
             <td valign="top"><? echo GetMessage("STAT_F_USER_AGENT") ?>:</td>
-            <td><textarea class="typearea" name="find_user_agent" cols="30"
-                          rows="5"><? echo htmlspecialcharsbx($find_user_agent) ?></textarea><?= ShowExactMatchCheckbox("find_user_agent") ?>
-                &nbsp;<?= ShowFilterLogicHelp() ?></td>
+            <td><textarea class="typearea" name="find_user_agent" cols="30" rows="5"><? echo htmlspecialcharsbx(
+                        $find_user_agent
+                    ) ?></textarea><?= ShowExactMatchCheckbox("find_user_agent") ?>&nbsp;<?= ShowFilterLogicHelp() ?>
+            </td>
         </tr>
         <tr>
             <td><? echo GetMessage("STAT_F_COUNTRY") ?>:</td>
@@ -454,15 +581,17 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
                 [&nbsp;<input type="text" name="find_country_id" size="5"
                               value="<? echo htmlspecialcharsbx($find_country_id) ?>">&nbsp;]&nbsp;&nbsp;&nbsp;<input
                         type="text" name="find_country" size="30"
-                        value="<? echo htmlspecialcharsbx($find_country) ?>"><? echo ShowExactMatchCheckbox("find_country") ?>
-                &nbsp;<? echo ShowFilterLogicHelp() ?>
+                        value="<? echo htmlspecialcharsbx($find_country) ?>"><? echo ShowExactMatchCheckbox(
+                    "find_country"
+                ) ?>&nbsp;<? echo ShowFilterLogicHelp() ?>
             </td>
         </tr>
         <tr>
             <td><? echo GetMessage("STAT_F_REGION") ?>:</td>
             <td><input type="text" name="find_region" size="50"
-                       value="<? echo htmlspecialcharsbx($find_region) ?>"><? echo ShowExactMatchCheckbox("find_region") ?>
-                &nbsp;<? echo ShowFilterLogicHelp() ?></td>
+                       value="<? echo htmlspecialcharsbx($find_region) ?>"><? echo ShowExactMatchCheckbox(
+                    "find_region"
+                ) ?>&nbsp;<? echo ShowFilterLogicHelp() ?></td>
         </tr>
         <tr>
             <td><? echo GetMessage("STAT_F_CITY") ?>:</td>
@@ -477,15 +606,19 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
         <tr>
             <td><? echo GetMessage("STAT_F_STOP") ?>:</td>
             <td><?
-                $arr = array("reference" => array(GetMessage("STAT_YES"), GetMessage("STAT_NO")), "reference_id" => array("Y", "N"));
+                $arr = array(
+                    "reference" => array(GetMessage("STAT_YES"), GetMessage("STAT_NO")),
+                    "reference_id" => array("Y", "N")
+                );
                 echo SelectBoxFromArray("find_stop", $arr, htmlspecialcharsbx($find_stop), GetMessage("MAIN_ALL"));
                 ?></td>
         </tr>
         <tr>
             <td><? echo GetMessage("STAT_F_STOP_LIST_ID") ?>:</td>
             <td><input type="text" name="find_stop_list_id" size="30"
-                       value="<? echo htmlspecialcharsbx($find_stop_list_id) ?>"><?= ShowExactMatchCheckbox("find_stop_list_id") ?>
-                &nbsp;<?= ShowFilterLogicHelp() ?></td>
+                       value="<? echo htmlspecialcharsbx($find_stop_list_id) ?>"><?= ShowExactMatchCheckbox(
+                    "find_stop_list_id"
+                ) ?>&nbsp;<?= ShowFilterLogicHelp() ?></td>
         </tr>
         <tr>
             <td>
@@ -493,8 +626,10 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
             </td>
             <td>
                 <input type="text" name="find_hits1" size="10"
-                       value="<? echo htmlspecialcharsbx($find_hits1) ?>"><? echo "&nbsp;" . GetMessage("STAT_TILL") . "&nbsp;" ?>
-                <input type="text" name="find_hits2" size="10" value="<? echo htmlspecialcharsbx($find_hits2) ?>"></td>
+                       value="<? echo htmlspecialcharsbx($find_hits1) ?>"><? echo "&nbsp;" . GetMessage(
+                        "STAT_TILL"
+                    ) . "&nbsp;" ?><input type="text" name="find_hits2" size="10"
+                                          value="<? echo htmlspecialcharsbx($find_hits2) ?>"></td>
         </tr>
         <tr>
             <td>
@@ -502,14 +637,18 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
             </td>
             <td>
                 <input type="text" name="find_events1" size="10"
-                       value="<? echo htmlspecialcharsbx($find_events1) ?>"><? echo "&nbsp;" . GetMessage("STAT_TILL") . "&nbsp;" ?>
-                <input type="text" name="find_events2" size="10" value="<? echo htmlspecialcharsbx($find_events2) ?>">
-            </td>
+                       value="<? echo htmlspecialcharsbx($find_events1) ?>"><? echo "&nbsp;" . GetMessage(
+                        "STAT_TILL"
+                    ) . "&nbsp;" ?><input type="text" name="find_events2" size="10"
+                                          value="<? echo htmlspecialcharsbx($find_events2) ?>"></td>
         </tr>
         <tr>
             <td><? echo GetMessage("STAT_F_CAME_ADV") ?>:</td>
             <td><?
-                $arr = array("reference" => array(GetMessage("STAT_YES"), GetMessage("STAT_NO")), "reference_id" => array("Y", "N"));
+                $arr = array(
+                    "reference" => array(GetMessage("STAT_YES"), GetMessage("STAT_NO")),
+                    "reference_id" => array("Y", "N")
+                );
                 echo SelectBoxFromArray("find_adv", $arr, htmlspecialcharsbx($find_adv), GetMessage("MAIN_ALL"));
                 ?></td>
         </tr>
@@ -523,14 +662,16 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
             <td><? echo GetMessage("STAT_F_REFERER12") ?>:</td>
             <td><input type="text" name="find_referer1" size="14" value="<? echo htmlspecialcharsbx($find_referer1) ?>">&nbsp;/&nbsp;<input
                         type="text" name="find_referer2" size="14"
-                        value="<? echo htmlspecialcharsbx($find_referer2) ?>"><?= ShowExactMatchCheckbox("find_referer12") ?>
-                &nbsp;<?= ShowFilterLogicHelp() ?></td>
+                        value="<? echo htmlspecialcharsbx($find_referer2) ?>"><?= ShowExactMatchCheckbox(
+                    "find_referer12"
+                ) ?>&nbsp;<?= ShowFilterLogicHelp() ?></td>
         </tr>
         <tr>
             <td><? echo GetMessage("STAT_F_REFERER3") ?>:</td>
             <td><input type="text" name="find_referer3" size="30"
-                       value="<? echo htmlspecialcharsbx($find_referer3) ?>"><?= ShowExactMatchCheckbox("find_referer3") ?>
-                &nbsp;<?= ShowFilterLogicHelp() ?></td>
+                       value="<? echo htmlspecialcharsbx($find_referer3) ?>"><?= ShowExactMatchCheckbox(
+                    "find_referer3"
+                ) ?>&nbsp;<?= ShowFilterLogicHelp() ?></td>
         </tr>
         <tr>
             <td>
@@ -538,29 +679,65 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
             </td>
             <td>
                 <?
-                $arr = array("reference" => array(GetMessage("STAT_YES"), GetMessage("STAT_NO")), "reference_id" => array("Y", "N"));
-                echo SelectBoxFromArray("find_adv_back", $arr, htmlspecialcharsbx($find_adv_back), GetMessage("MAIN_ALL"));
+                $arr = array(
+                    "reference" => array(GetMessage("STAT_YES"), GetMessage("STAT_NO")),
+                    "reference_id" => array("Y", "N")
+                );
+                echo SelectBoxFromArray(
+                    "find_adv_back",
+                    $arr,
+                    htmlspecialcharsbx($find_adv_back),
+                    GetMessage("MAIN_ALL")
+                );
                 ?></td>
         </tr>
         <tr>
             <td><? echo GetMessage("STAT_F_URL_TO") ?>:</td>
             <td><?
-                echo SelectBoxFromArray("find_first_site_id", $arSiteDropdown, $find_first_site_id, GetMessage("STAT_F_SITE"));
+                echo SelectBoxFromArray(
+                    "find_first_site_id",
+                    $arSiteDropdown,
+                    $find_first_site_id,
+                    GetMessage("STAT_F_SITE")
+                );
                 ?>&nbsp;<?
-                echo SelectBoxFromArray("find_url_to_404", array("reference" => array(GetMessage("STAT_YES"), GetMessage("STAT_NO")), "reference_id" => array("Y", "N")), htmlspecialcharsbx($find_url_to_404), GetMessage("STAT_404"));
+                echo SelectBoxFromArray(
+                    "find_url_to_404",
+                    array(
+                        "reference" => array(GetMessage("STAT_YES"), GetMessage("STAT_NO")),
+                        "reference_id" => array("Y", "N")
+                    ),
+                    htmlspecialcharsbx($find_url_to_404),
+                    GetMessage("STAT_404")
+                );
                 ?>&nbsp;<input type="text" name="find_url_to" size="34"
-                               value="<? echo htmlspecialcharsbx($find_url_to) ?>"><?= ShowExactMatchCheckbox("find_url_to") ?>
-                &nbsp;<?= ShowFilterLogicHelp() ?></td>
+                               value="<? echo htmlspecialcharsbx($find_url_to) ?>"><?= ShowExactMatchCheckbox(
+                    "find_url_to"
+                ) ?>&nbsp;<?= ShowFilterLogicHelp() ?></td>
         </tr>
         <tr>
             <td><? echo GetMessage("STAT_F_URL_LAST") ?>:</td>
             <td><?
-                echo SelectBoxFromArray("find_last_site_id", $arSiteDropdown, $find_last_site_id, GetMessage("STAT_D_SITE"));
+                echo SelectBoxFromArray(
+                    "find_last_site_id",
+                    $arSiteDropdown,
+                    $find_last_site_id,
+                    GetMessage("STAT_D_SITE")
+                );
                 ?>&nbsp;<?
-                echo SelectBoxFromArray("find_url_last_404", array("reference" => array(GetMessage("STAT_YES"), GetMessage("STAT_NO")), "reference_id" => array("Y", "N")), htmlspecialcharsbx($find_url_last_404), GetMessage("STAT_404"));
+                echo SelectBoxFromArray(
+                    "find_url_last_404",
+                    array(
+                        "reference" => array(GetMessage("STAT_YES"), GetMessage("STAT_NO")),
+                        "reference_id" => array("Y", "N")
+                    ),
+                    htmlspecialcharsbx($find_url_last_404),
+                    GetMessage("STAT_404")
+                );
                 ?>&nbsp;<input type="text" name="find_url_last" size="34"
-                               value="<? echo htmlspecialcharsbx($find_url_last) ?>"><?= ShowExactMatchCheckbox("find_url_last") ?>
-                &nbsp;<?= ShowFilterLogicHelp() ?></td>
+                               value="<? echo htmlspecialcharsbx($find_url_last) ?>"><?= ShowExactMatchCheckbox(
+                    "find_url_last"
+                ) ?>&nbsp;<?= ShowFilterLogicHelp() ?></td>
         </tr>
         <?= ShowLogicRadioBtn() ?>
         <? $filter->Buttons(array("table_id" => $sTableID, "url" => $APPLICATION->GetCurPage(), "form" => "form1"));
@@ -568,8 +745,9 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
     </form>
 
 <?
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 ?>
 
 <? $lAdmin->DisplayList(); ?>

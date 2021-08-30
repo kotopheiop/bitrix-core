@@ -114,8 +114,9 @@ final class Formatter
                     }
                 }
                 if ($process) {
-                    if (!isset($data['VALUE_ACTION']))
+                    if (!isset($data['VALUE_ACTION'])) {
                         $data['VALUE_ACTION'] = self::VALUE_ACTION_DISCOUNT;
+                    }
                     if (
                         $data['VALUE_ACTION'] != self::VALUE_ACTION_DISCOUNT
                         && $data['VALUE_ACTION'] != self::VALUE_ACTION_EXTRA
@@ -135,8 +136,9 @@ final class Formatter
                         $data['VALUE_TYPE'] == self::VALUE_TYPE_CURRENCY
                         || $data['VALUE_TYPE'] == self::VALUE_TYPE_SUMM
                         || $data['VALUE_TYPE'] == self::VALUE_TYPE_SUMM_BASKET
-                    )
+                    ) {
                         $result['VALUE_UNIT'] = $data['VALUE_UNIT'];
+                    }
                     if (isset($data['RESULT_VALUE']) && isset($data['RESULT_UNIT'])) {
                         $result['RESULT_VALUE'] = (string)$data['RESULT_VALUE'];
                         $result['RESULT_UNIT'] = $data['RESULT_UNIT'];
@@ -213,8 +215,13 @@ final class Formatter
             case self::TYPE_VALUE:
                 if ($action['VALUE_TYPE'] == self::VALUE_TYPE_PERCENT) {
                     $value = $action['VALUE'] . '%';
-                    if (isset($action['RESULT_VALUE']) && isset($action['RESULT_UNIT']))
-                        $value .= ' (' . \CCurrencyLang::CurrencyFormat($action['RESULT_VALUE'], $action['RESULT_UNIT'], true) . ')';
+                    if (isset($action['RESULT_VALUE']) && isset($action['RESULT_UNIT'])) {
+                        $value .= ' (' . \CCurrencyLang::CurrencyFormat(
+                                $action['RESULT_VALUE'],
+                                $action['RESULT_UNIT'],
+                                true
+                            ) . ')';
+                    }
                 } else {
                     if ($action['VALUE_TYPE'] == self::VALUE_TYPE_CURRENCY) {
                         $value = \CCurrencyLang::CurrencyFormat($action['VALUE'], $action['VALUE_UNIT'], true);
@@ -226,12 +233,23 @@ final class Formatter
                         );
                         $value = Loc::getMessage(
                             $subMessageID,
-                            array('#VALUE#' => \CCurrencyLang::CurrencyFormat($action['VALUE'], $action['VALUE_UNIT'], true))
+                            array(
+                                '#VALUE#' => \CCurrencyLang::CurrencyFormat(
+                                    $action['VALUE'],
+                                    $action['VALUE_UNIT'],
+                                    true
+                                )
+                            )
                         );
                         unset($subMessageID);
                     }
-                    if (isset($action['RESULT_VALUE']) && isset($action['RESULT_UNIT']) && $action['VALUE_UNIT'] != $action['RESULT_UNIT'])
-                        $value .= ' (' . \CCurrencyLang::CurrencyFormat($action['RESULT_VALUE'], $action['RESULT_UNIT'], true) . ')';
+                    if (isset($action['RESULT_VALUE']) && isset($action['RESULT_UNIT']) && $action['VALUE_UNIT'] != $action['RESULT_UNIT']) {
+                        $value .= ' (' . \CCurrencyLang::CurrencyFormat(
+                                $action['RESULT_VALUE'],
+                                $action['RESULT_UNIT'],
+                                true
+                            ) . ')';
+                    }
                 }
                 $messageId = 'SALE_DISCOUNT_FORMATTER_MESS_TYPE_DISCOUNT';
                 if (isset($action['VALUE_ACTION'])) {
@@ -260,8 +278,13 @@ final class Formatter
                         '#LIMIT#' => \CCurrencyLang::CurrencyFormat($action['LIMIT_VALUE'], $action['LIMIT_UNIT'], true)
                     )
                 );
-                if (isset($action['RESULT_VALUE']) && isset($action['RESULT_UNIT']))
-                    $value .= ' (' . \CCurrencyLang::CurrencyFormat($action['RESULT_VALUE'], $action['RESULT_UNIT'], true) . ')';
+                if (isset($action['RESULT_VALUE']) && isset($action['RESULT_UNIT'])) {
+                    $value .= ' (' . \CCurrencyLang::CurrencyFormat(
+                            $action['RESULT_VALUE'],
+                            $action['RESULT_UNIT'],
+                            true
+                        ) . ')';
+                }
                 $messageId = (
                 isset($action['VALUE_ACTION']) && $action['VALUE_ACTION'] == self::VALUE_ACTION_EXTRA
                     ? 'SALE_DISCOUNT_FORMATTER_MESS_TYPE_EXTRA'
@@ -278,10 +301,15 @@ final class Formatter
                 break;
             case self::TYPE_MAX_BOUND:
                 $value = \CCurrencyLang::CurrencyFormat($action['VALUE'], $action['VALUE_UNIT'], true);
-                if (isset($action['RESULT_VALUE']) && isset($action['RESULT_UNIT']))
-                    $value .= ' (' . \CCurrencyLang::CurrencyFormat($action['RESULT_VALUE'], $action['RESULT_UNIT'], true) . ')';
-                else
+                if (isset($action['RESULT_VALUE']) && isset($action['RESULT_UNIT'])) {
+                    $value .= ' (' . \CCurrencyLang::CurrencyFormat(
+                            $action['RESULT_VALUE'],
+                            $action['RESULT_UNIT'],
+                            true
+                        ) . ')';
+                } else {
                     $value .= ' (' . $value . ')';
+                }
                 $result = Loc::getMessage(
                     'SALE_DISCOUNT_FORMATTER_MESS_MAX_BOUND_FORMAT',
                     array('#VALUE#' => $value)
@@ -310,11 +338,13 @@ final class Formatter
         $result = array();
         if (!empty($actionList)) {
             foreach ($actionList as $row) {
-                if (!is_array($row))
+                if (!is_array($row)) {
                     return null;
+                }
                 $value = self::formatRow($row);
-                if ($value === null)
+                if ($value === null) {
                     return null;
+                }
                 $result[] = $value;
             }
             unset($value, $row);
@@ -350,8 +380,9 @@ final class Formatter
      */
     private static function addError($error)
     {
-        if ($error === '')
+        if ($error === '') {
             return;
+        }
         self::$errors[] = $error;
     }
 }

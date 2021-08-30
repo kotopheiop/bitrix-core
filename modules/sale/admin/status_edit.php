@@ -1,12 +1,13 @@
 <?
+
 require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_before.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/sale/prolog.php');
-require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/sale/include.php');
 
 $readOnly = $APPLICATION->GetGroupRight('sale') < 'W';
 
-if ($readOnly)
+if ($readOnly) {
     $APPLICATION->AuthForm(GetMessage('ACCESS_DENIED'));
+}
 
 use    Bitrix\Sale\Internals\StatusTable,
     Bitrix\Sale\Internals\StatusLangTable,
@@ -32,24 +33,30 @@ $groups = array(); // ID => NAME
 $errors = array();
 
 $tasks = array(); // ID => TASK
-$result = TaskTable::getList(array(
-    'select' => array('*'),
-    'filter' => array('=MODULE_ID' => 'sale', '=BINDING' => 'status'),
-));
-while ($row = $result->fetch())
+$result = TaskTable::getList(
+    array(
+        'select' => array('*'),
+        'filter' => array('=MODULE_ID' => 'sale', '=BINDING' => 'status'),
+    )
+);
+while ($row = $result->fetch()) {
     $tasks[$row['ID']] = $row;
+}
 asort($tasks);
 
 $statusFields = StatusTable::getEntity()->getFields();
 $statusLangFields = StatusLangTable::getEntity()->getFields();
 
 // get languages
-$result = LanguageTable::getList(array(
-    'select' => array('LID', 'NAME'),
-    'filter' => array('=ACTIVE' => 'Y')
-));
-while ($row = $result->fetch())
+$result = LanguageTable::getList(
+    array(
+        'select' => array('LID', 'NAME'),
+        'filter' => array('=ACTIVE' => 'Y')
+    )
+);
+while ($row = $result->fetch()) {
     $languages[$row['LID']] = $row['NAME'];
+}
 
 // get groups
 $saleGroupIds = array();
@@ -61,17 +68,21 @@ while ($row = $result->Fetch()) {
 }
 
 if ($saleGroupIds) {
-    $result = GroupTable::getList(array(
-        'select' => array('ID', 'NAME'),
-        'filter' => array('=ID' => $saleGroupIds),
-        'order' => array('C_SORT' => 'ASC', 'ID' => 'ASC'),
-    ));
-    while ($row = $result->fetch())
+    $result = GroupTable::getList(
+        array(
+            'select' => array('ID', 'NAME'),
+            'filter' => array('=ID' => $saleGroupIds),
+            'order' => array('C_SORT' => 'ASC', 'ID' => 'ASC'),
+        )
+    );
+    while ($row = $result->fetch()) {
         $groups[$row['ID']] = $row['NAME'];
+    }
 }
 
 // A D D / U P D A T E /////////////////////////////////////////////////////////////////////////////////////////////////
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && !$readOnly && check_bitrix_sessid() && ($_POST['save'] || $_POST['apply'])) {
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && !$readOnly && check_bitrix_sessid(
+    ) && ($_POST['save'] || $_POST['apply'])) {
     $adminSidePanelHelper->decodeUriComponent();
 
     $errors = array();
@@ -91,9 +102,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !$readOnly && check_bitrix_sessid() 
         foreach ($lockedStatusList as $lockStatusType => $lockStatusIdList) {
             foreach ($lockStatusIdList as $lockStatusId) {
                 if ($lockStatusId == $statusId && $statusType != $lockStatusType) {
-                    $errors[] = Loc::getMessage('SALE_STATUS_WRONG_TYPE', array(
+                    $errors[] = Loc::getMessage(
+                        'SALE_STATUS_WRONG_TYPE',
+                        array(
                             '#STATUS_ID#' => htmlspecialcharsEx($statusId),
-                            '#STATUS_TYPE#' => Loc::getMessage('SSEN_TYPE_' . $statusType))
+                            '#STATUS_TYPE#' => Loc::getMessage('SSEN_TYPE_' . $statusType)
+                        )
                     );
                     break;
                 }
@@ -107,8 +121,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !$readOnly && check_bitrix_sessid() 
         'TYPE' => $statusType,
         'SORT' => ($statusSort = intval($_POST['SORT'])) ? $statusSort : 100,
         'NOTIFY' => $_POST['NOTIFY'] ? 'Y' : 'N',
-        'COLOR' => strlen($_POST['NEW_COLOR']) ? $_POST['NEW_COLOR'] : "",
-        'XML_ID' => strlen($_POST['XML_ID']) ? $_POST['XML_ID'] : StatusTable::generateXmlId(),
+        'COLOR' => $_POST['NEW_COLOR'] <> '' ? $_POST['NEW_COLOR'] : "",
+        'XML_ID' => $_POST['XML_ID'] <> '' ? $_POST['XML_ID'] : StatusTable::generateXmlId(),
     );
 
     $isNew = true;
@@ -116,11 +130,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !$readOnly && check_bitrix_sessid() 
 
     if ($statusId) {
         $isNew = false;
-        if ($statusData = StatusTable::getList(array(
-            'select' => array('ID', 'TYPE', 'COLOR'),
-            'filter' => array('=ID' => $statusId),
-            'limit' => 1,
-        ))->fetch()) {
+        if ($statusData = StatusTable::getList(
+            array(
+                'select' => array('ID', 'TYPE', 'COLOR'),
+                'filter' => array('=ID' => $statusId),
+                'limit' => 1,
+            )
+        )->fetch()) {
             if ($statusData['TYPE'] != $statusType) {
                 $checkFilter = array(
                     'select' => array('ID'),
@@ -130,18 +146,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !$readOnly && check_bitrix_sessid() 
 
                 if ($statusData['TYPE'] == \Bitrix\Sale\OrderStatus::TYPE) {
                     $checkStatus = \Bitrix\Sale\Internals\OrderTable::getList($checkFilter)->fetch();
-                    $errorMessageCheck = Loc::getMessage('SALE_STATUS_TYPE_ORDER_EXISTS', array(
-                        '#STATUS_ID#' => htmlspecialcharsEx($statusId),
-                        '#STATUS_TYPE#' => Loc::getMessage('SSEN_TYPE_' . $statusType),
-                        '#CURRENT_STATUS_ID#' => $statusId
-                    ));
+                    $errorMessageCheck = Loc::getMessage(
+                        'SALE_STATUS_TYPE_ORDER_EXISTS',
+                        array(
+                            '#STATUS_ID#' => htmlspecialcharsEx($statusId),
+                            '#STATUS_TYPE#' => Loc::getMessage('SSEN_TYPE_' . $statusType),
+                            '#CURRENT_STATUS_ID#' => $statusId
+                        )
+                    );
                 } else {
                     $checkStatus = \Bitrix\Sale\Internals\ShipmentTable::getList($checkFilter)->fetch();
-                    $errorMessageCheck = Loc::getMessage('SALE_STATUS_TYPE_SHIPMENT_EXISTS', array(
-                        '#STATUS_ID#' => htmlspecialcharsEx($statusId),
-                        '#STATUS_TYPE#' => Loc::getMessage('SSEN_TYPE_' . $statusType),
-                        '#CURRENT_STATUS_ID#' => $statusId,
-                    ));
+                    $errorMessageCheck = Loc::getMessage(
+                        'SALE_STATUS_TYPE_SHIPMENT_EXISTS',
+                        array(
+                            '#STATUS_ID#' => htmlspecialcharsEx($statusId),
+                            '#STATUS_TYPE#' => Loc::getMessage('SSEN_TYPE_' . $statusType),
+                            '#CURRENT_STATUS_ID#' => $statusId,
+                        )
+                    );
                 }
 
                 if (!empty($checkStatus)) {
@@ -171,8 +193,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !$readOnly && check_bitrix_sessid() 
             'NAME' => $translationName,
             'DESCRIPTION' => trim($_REQUEST['DESCRIPTION_' . $languageId]),
         );
-        if (!$translationName)
+        if (!$translationName) {
             $errors[] = Loc::getMessage('ERROR_NO_NAME') . " [$languageId] " . htmlspecialcharsbx($languageName);
+        }
     }
 
     // prepare & check group tasks
@@ -183,8 +206,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !$readOnly && check_bitrix_sessid() 
             'GROUP_ID' => $groupId,
             'TASK_ID' => $taskId,
         );
-        if (!$tasks[$taskId])
+        if (!$tasks[$taskId]) {
             $errors[] = Loc::getMessage('SSEN_INVALID_TASK_ID_FOR') . ' ' . $groupName;
+        }
     }
 
     // add or update status
@@ -195,8 +219,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !$readOnly && check_bitrix_sessid() 
             if ($result->isSuccess()) {
                 StatusLangTable::deleteByStatus($statusId);
                 StatusGroupTaskTable::deleteByStatus($statusId);
-            } else
+            } else {
                 $errors = $result->getErrorMessages();
+            }
         } // add new status, create mail template
         else {
             $result = StatusTable::add($status);
@@ -205,7 +230,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !$readOnly && check_bitrix_sessid() 
             } else {
                 $errors = $result->getErrorMessages();
             }
-
         }
     }
 
@@ -227,47 +251,61 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !$readOnly && check_bitrix_sessid() 
 
         $adminSidePanelHelper->sendSuccessResponse("base", array("ID" => $statusId));
 
-        if ($_POST['save'])
+        if ($_POST['save']) {
             LocalRedirect('sale_status.php?lang=' . LANGUAGE_ID . GetFilterParams('filter_', false));
-        else
-            LocalRedirect("sale_status_edit.php?ID=" . $statusId . "&lang=" . LANGUAGE_ID . GetFilterParams("filter_", false));
+        } else {
+            LocalRedirect(
+                "sale_status_edit.php?ID=" . $statusId . "&lang=" . LANGUAGE_ID . GetFilterParams("filter_", false)
+            );
+        }
     } else {
         $adminSidePanelHelper->sendJsonErrorResponse($errors);
     }
 } // L O A D  O R  N E W /////////////////////////////////////////////////////////////////////////////////////////////////
-else if ($statusId) {
-    if ($row = StatusTable::getList(array(
-        'select' => array('*'),
-        'filter' => array('=ID' => $statusId),
-        'limit' => 1,
-    ))->fetch()) {
-        $status = $row;
+else {
+    if ($statusId) {
+        if ($row = StatusTable::getList(
+            array(
+                'select' => array('*'),
+                'filter' => array('=ID' => $statusId),
+                'limit' => 1,
+            )
+        )->fetch()) {
+            $status = $row;
 
-        $result = StatusLangTable::getList(array(
-            'select' => array('*'),
-            'filter' => array('=STATUS_ID' => $statusId),
-        ));
-        while ($row = $result->fetch())
-            $translations[$row['LID']] = $row;
+            $result = StatusLangTable::getList(
+                array(
+                    'select' => array('*'),
+                    'filter' => array('=STATUS_ID' => $statusId),
+                )
+            );
+            while ($row = $result->fetch()) {
+                $translations[$row['LID']] = $row;
+            }
 
-        $result = StatusGroupTaskTable::getList(array(
-            'select' => array('*'),
-            'filter' => array('=STATUS_ID' => $statusId),
-        ));
-        while ($row = $result->fetch())
-            $groupTasks[$row['GROUP_ID']] = $row;
-    } else {
-        $status['ID'] = $statusId;
-        $statusId = null;
+            $result = StatusGroupTaskTable::getList(
+                array(
+                    'select' => array('*'),
+                    'filter' => array('=STATUS_ID' => $statusId),
+                )
+            );
+            while ($row = $result->fetch()) {
+                $groupTasks[$row['GROUP_ID']] = $row;
+            }
+        } else {
+            $status['ID'] = $statusId;
+            $statusId = null;
+        }
     }
 }
 
 // V I E W /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-if ($statusId)
+if ($statusId) {
     $APPLICATION->SetTitle(Loc::getMessage('SALE_EDIT_RECORD', array('#ID#' => $statusId)));
-else
+} else {
     $APPLICATION->SetTitle(Loc::getMessage('SALE_NEW_RECORD'));
+}
 
 require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php');
 
@@ -289,7 +327,11 @@ if ($statusId && !$readOnly) {
     $aMenu[] = array(
         "TEXT" => Loc::getMessage("SSEN_DELETE_STATUS"),
         "ICON" => "btn_delete",
-        "LINK" => "javascript:if(confirm('" . GetMessageJS("SSEN_DELETE_STATUS_CONFIRM") . "')) window.location='/bitrix/admin/sale_status.php?action=delete&ID[]=" . urlencode($statusId) . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get() . "#tb';",
+        "LINK" => "javascript:if(confirm('" . GetMessageJS(
+                "SSEN_DELETE_STATUS_CONFIRM"
+            ) . "')) window.location='/bitrix/admin/sale_status.php?action=delete&ID[]=" . urlencode(
+                $statusId
+            ) . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get() . "#tb';",
     );
 }
 $context = new CAdminContextMenu($aMenu);
@@ -315,16 +357,24 @@ if ($errors) {
         <?= bitrix_sessid_post() ?>
 
         <?
-        $tabControl = new CAdminTabControl("tabControl", array(
-            array("DIV" => "edit1", "TAB" => Loc::getMessage("SSEN_TAB_STATUS"), "ICON" => "sale", "TITLE" => Loc::getMessage("SSEN_TAB_STATUS_DESCR")),
-        ));
+        $tabControl = new CAdminTabControl(
+            "tabControl", array(
+            array(
+                "DIV" => "edit1",
+                "TAB" => Loc::getMessage("SSEN_TAB_STATUS"),
+                "ICON" => "sale",
+                "TITLE" => Loc::getMessage("SSEN_TAB_STATUS_DESCR")
+            ),
+        )
+        );
         $tabControl->Begin();
         $tabControl->BeginNextTab();
         ?>
 
         <tr class="adm-detail-required-field">
-            <td width="40%"><?= $statusFields['ID']->getTitle() ?><?= $statusId ? '' : ' (1-2 ' . Loc::getMessage('SALE_CODE_LEN') . ')' ?>
-                :
+            <td width="40%"><?= $statusFields['ID']->getTitle() ?><?= $statusId ? '' : ' (1-2 ' . Loc::getMessage(
+                        'SALE_CODE_LEN'
+                    ) . ')' ?>:
             </td>
             <td width="60%">
                 <? if ($statusId): ?>
@@ -339,8 +389,12 @@ if ($errors) {
             <td><?= $statusFields['TYPE']->getTitle() ?>:</td>
             <td>
                 <select name="TYPE">
-                    <option value="O"<?= $status['TYPE'] == 'O' ? 'selected' : '' ?>><?= Loc::getMessage('SSEN_TYPE_O') ?></option>
-                    <option value="D"<?= $status['TYPE'] == 'D' ? 'selected' : '' ?>><?= Loc::getMessage('SSEN_TYPE_D') ?></option>
+                    <option value="O"<?= $status['TYPE'] == 'O' ? 'selected' : '' ?>><?= Loc::getMessage(
+                            'SSEN_TYPE_O'
+                        ) ?></option>
+                    <option value="D"<?= $status['TYPE'] == 'D' ? 'selected' : '' ?>><?= Loc::getMessage(
+                            'SSEN_TYPE_D'
+                        ) ?></option>
                 </select>
             </td>
         </tr>
@@ -430,9 +484,9 @@ if ($errors) {
         </tr>
         <tr>
             <td><?= $statusFields['XML_ID']->getTitle() ?>:</td>
-            <td><input type="text" name="XML_ID"
-                       value="<?= $status['XML_ID'] ? htmlspecialcharsbx($status['XML_ID']) : StatusTable::generateXmlId(); ?>"
-                       size="30"></td>
+            <td><input type="text" name="XML_ID" value="<?= $status['XML_ID'] ? htmlspecialcharsbx(
+                    $status['XML_ID']
+                ) : StatusTable::generateXmlId(); ?>" size="30"></td>
         </tr>
         <? foreach ($languages as $languageId => $languageName): ?>
             <tr class="heading">
@@ -462,7 +516,11 @@ if ($errors) {
                         <select name="TASK<?= $groupId ?>">
                             <? foreach ($tasks as $taskId => $task): ?>
                                 <option value="<?= $taskId ?>" <?= $taskId == $groupTaskId ? 'selected' : '' ?>>
-                                    <?= htmlspecialcharsbx(($name = Loc::getMessage('TASK_NAME_' . strtoupper($task['NAME']))) ? $name : $task['NAME']) ?>
+                                    <?= htmlspecialcharsbx(
+                                        ($name = Loc::getMessage(
+                                            'TASK_NAME_' . mb_strtoupper($task['NAME'])
+                                        )) ? $name : $task['NAME']
+                                    ) ?>
                                 </option>
                             <? endforeach ?>
                         </select>
@@ -492,10 +550,12 @@ if ($errors) {
 
         <?
         $tabControl->EndTab();
-        $tabControl->Buttons(array(
-            "disabled" => $readOnly,
-            "back_url" => "/bitrix/admin/sale_status.php?lang=" . LANGUAGE_ID . GetFilterParams("filter_")
-        ));
+        $tabControl->Buttons(
+            array(
+                "disabled" => $readOnly,
+                "back_url" => "/bitrix/admin/sale_status.php?lang=" . LANGUAGE_ID . GetFilterParams("filter_")
+            )
+        );
         $tabControl->End();
         ?>
 

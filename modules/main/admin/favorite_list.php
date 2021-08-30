@@ -9,35 +9,43 @@
 require_once(dirname(__FILE__) . "/../include/prolog_admin_before.php");
 define("HELP_FILE", "favorites/favorite_admin.php");
 
-if (!$USER->CanDoOperation('edit_own_profile') && !$USER->CanDoOperation('edit_other_settings') && !$USER->CanDoOperation('view_other_settings'))
+if (!$USER->CanDoOperation('edit_own_profile') && !$USER->CanDoOperation(
+        'edit_other_settings'
+    ) && !$USER->CanDoOperation('view_other_settings')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $isAdmin = $USER->CanDoOperation('edit_other_settings');
 
 IncludeModuleLangFile(__FILE__);
 
 $sTableID = "tbl_favorites";
-if ($isAdmin)
+if ($isAdmin) {
     $oSort = new CAdminSorting($sTableID, "id", "desc");
-else
+} else {
     $oSort = new CAdminSorting($sTableID, "sort", "asc");
+}
 $lAdmin = new CAdminList($sTableID, $oSort);
 
 function CheckFilter() // �������� ��������� �����
 {
     global $FilterArr, $lAdmin;
-    foreach ($FilterArr as $f) global $$f;
+    foreach ($FilterArr as $f) {
+        global $$f;
+    }
     $date_1_ok = false;
     $date1_stm = MkDateTime(FmtDate($find_date1, "D.M.Y"), "d.m.Y");
     $date2_stm = MkDateTime(FmtDate($find_date2, "D.M.Y") . " 23:59", "d.m.Y H:i");
-    if (!$date1_stm && strlen(trim($find_date1)) > 0)
+    if (!$date1_stm && trim($find_date1) <> '') {
         $lAdmin->AddFilterError(GetMessage("MAIN_WRONG_DATE_FROM"));
-    else
+    } else {
         $date_1_ok = true;
-    if (!$date2_stm && strlen(trim($find_date2)) > 0)
+    }
+    if (!$date2_stm && trim($find_date2) <> '') {
         $lAdmin->AddFilterError(GetMessage("MAIN_WRONG_DATE_TILL"));
-    elseif ($date_1_ok && $date2_stm <= $date1_stm && strlen($date2_stm) > 0)
+    } elseif ($date_1_ok && $date2_stm <= $date1_stm && $date2_stm <> '') {
         $lAdmin->AddFilterError(GetMessage("MAIN_FROM_TILL_DATE"));
+    }
     return count($lAdmin->arFilterErrors) == 0;
 }
 
@@ -79,20 +87,24 @@ if (CheckFilter()) {
         "MENU_ID" => $find_menu_id,
     );
 }
-if (!$isAdmin)
+if (!$isAdmin) {
     $arFilter["USER_ID"] = $USER->GetID();
+}
 
 if ($lAdmin->EditAction()) {
     foreach ($FIELDS as $ID => $arFields) {
-        $ID = IntVal($ID);
-        if ($ID <= 0)
+        $ID = intval($ID);
+        if ($ID <= 0) {
             continue;
-        if (!$lAdmin->IsUpdated($ID))
+        }
+        if (!$lAdmin->IsUpdated($ID)) {
             continue;
+        }
         if (!$isAdmin) {
             $db_fav = CFavorites::GetByID($ID);
-            if (($db_fav_arr = $db_fav->Fetch()) && $USER->GetID() <> $db_fav_arr["USER_ID"])
+            if (($db_fav_arr = $db_fav->Fetch()) && $USER->GetID() <> $db_fav_arr["USER_ID"]) {
                 continue;
+            }
         }
         if (!CFavorites::Update($ID, $arFields)) {
             $e = $APPLICATION->GetException();
@@ -104,23 +116,27 @@ if ($lAdmin->EditAction()) {
 if (($arID = $lAdmin->GroupAction())) {
     if ($_REQUEST['action_target'] == 'selected') {
         $rsData = CFavorites::GetList(array($by => $order), $arFilter);
-        while ($arRes = $rsData->Fetch())
+        while ($arRes = $rsData->Fetch()) {
             $arID[] = $arRes['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        $ID = IntVal($ID);
-        if ($ID <= 0)
+        $ID = intval($ID);
+        if ($ID <= 0) {
             continue;
+        }
         if (!$isAdmin) {
             $db_fav = CFavorites::GetByID($ID);
-            if (($db_fav_arr = $db_fav->Fetch()) && $USER->GetID() <> $db_fav_arr["USER_ID"])
+            if (($db_fav_arr = $db_fav->Fetch()) && $USER->GetID() <> $db_fav_arr["USER_ID"]) {
                 continue;
+            }
         }
         switch ($_REQUEST['action']) {
             case "delete":
-                if (!CFavorites::Delete($ID))
+                if (!CFavorites::Delete($ID)) {
                     $lAdmin->AddGroupError(GetMessage("fav_list_err_del"), $ID);
+                }
                 break;
         }
     }
@@ -134,17 +150,53 @@ $lAdmin->NavText($rsData->GetNavPrint(GetMessage("fav_list_nav")));
 $aHeaders = array(
     array("id" => "NAME", "content" => GetMessage("MAIN_TITLE"), "sort" => "name", "default" => true),
     array("id" => "URL", "content" => GetMessage("fav_list_head_link"), "sort" => "url", "default" => true),
-    array("id" => "C_SORT", "content" => GetMessage("MAIN_SORT"), "sort" => "sort", "align" => "right", "default" => true),
-    array("id" => "LANGUAGE_ID", "content" => GetMessage("fav_list_head_lang"), "sort" => "language_id", "default" => true),
+    array(
+        "id" => "C_SORT",
+        "content" => GetMessage("MAIN_SORT"),
+        "sort" => "sort",
+        "align" => "right",
+        "default" => true
+    ),
+    array(
+        "id" => "LANGUAGE_ID",
+        "content" => GetMessage("fav_list_head_lang"),
+        "sort" => "language_id",
+        "default" => true
+    ),
     array("id" => "MENU_ID", "content" => GetMessage("fav_list_flt_menu_id"), "sort" => "menu_id", "default" => true),
 );
 if ($isAdmin) {
-    $aHeaders[] = array("id" => "COMMON", "content" => GetMessage("fav_list_head_common"), "sort" => "common", "default" => true);
-    $aHeaders[] = array("id" => "USER_ID", "content" => GetMessage("fav_list_head_user"), "sort" => "user_id", "default" => true);
-    $aHeaders[] = array("id" => "MODULE_ID", "content" => GetMessage("MAIN_MODULE"), "sort" => "module_id", "default" => true);
+    $aHeaders[] = array(
+        "id" => "COMMON",
+        "content" => GetMessage("fav_list_head_common"),
+        "sort" => "common",
+        "default" => true
+    );
+    $aHeaders[] = array(
+        "id" => "USER_ID",
+        "content" => GetMessage("fav_list_head_user"),
+        "sort" => "user_id",
+        "default" => true
+    );
+    $aHeaders[] = array(
+        "id" => "MODULE_ID",
+        "content" => GetMessage("MAIN_MODULE"),
+        "sort" => "module_id",
+        "default" => true
+    );
 }
-$aHeaders[] = array("id" => "TIMESTAMP_X", "content" => GetMessage("MAIN_TIMESTAMP_X"), "sort" => "timestamp_x", "default" => false);
-$aHeaders[] = array("id" => "MODIFIED_BY", "content" => GetMessage("MAIN_MODIFIED_BY"), "sort" => "modified_by", "default" => false);
+$aHeaders[] = array(
+    "id" => "TIMESTAMP_X",
+    "content" => GetMessage("MAIN_TIMESTAMP_X"),
+    "sort" => "timestamp_x",
+    "default" => false
+);
+$aHeaders[] = array(
+    "id" => "MODIFIED_BY",
+    "content" => GetMessage("MAIN_MODIFIED_BY"),
+    "sort" => "modified_by",
+    "default" => false
+);
 $aHeaders[] = array("id" => "ID", "content" => "ID", "sort" => "id", "default" => true);
 
 $lAdmin->AddHeaders($aHeaders);
@@ -154,12 +206,34 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
 
     $row->AddInputField("MENU_ID", array("size" => 20));
     $row->AddInputField("NAME", array("size" => 20));
-    $row->AddViewField("NAME", '<a href="' . $f_URL . '" title="' . GetMessage("fav_list_go_title") . '">' . $f_NAME . '</a>');
+    $row->AddViewField(
+        "NAME",
+        '<a href="' . $f_URL . '" title="' . GetMessage("fav_list_go_title") . '">' . $f_NAME . '</a>'
+    );
     $row->AddInputField("URL", array("size" => 20));
-    $row->AddViewField("URL", '<a href="favorite_edit.php?ID=' . $f_ID . '&amp;lang=' . LANG . '" title="' . GetMessage("fav_list_edit_title") . '">' . (strlen($f_URL) > 60 && $_REQUEST["mode"] <> 'excel' ? substr($f_URL, 0, 60) . "..." : $f_URL) . '</a>');
+    $row->AddViewField(
+        "URL",
+        '<a href="favorite_edit.php?ID=' . $f_ID . '&amp;lang=' . LANG . '" title="' . GetMessage(
+            "fav_list_edit_title"
+        ) . '">' . (mb_strlen($f_URL) > 60 && $_REQUEST["mode"] <> 'excel' ? mb_substr(
+                $f_URL,
+                0,
+                60
+            ) . "..." : $f_URL) . '</a>'
+    );
     $row->AddInputField("C_SORT", array("size" => 5));
-    $row->AddViewField("MODIFIED_BY", '[<a title="' . GetMessage("MAIN_USER_PROFILE") . '" href="user_edit.php?lang=' . LANG . '&amp;ID=' . $f_MODIFIED_BY . '">' . $f_MODIFIED_BY . '</a>] (' . $f_M_LOGIN . ') ' . $f_M_USER_NAME);
-    $row->AddViewField("USER_ID", ($f_USER_ID > 0 ? '[<a title="' . GetMessage("MAIN_USER_PROFILE") . '" href="user_edit.php?lang=' . LANG . '&amp;ID=' . $f_USER_ID . '">' . $f_USER_ID . '</a>] (' . $f_LOGIN . ') ' . $f_USER_NAME : ''));
+    $row->AddViewField(
+        "MODIFIED_BY",
+        '[<a title="' . GetMessage(
+            "MAIN_USER_PROFILE"
+        ) . '" href="user_edit.php?lang=' . LANG . '&amp;ID=' . $f_MODIFIED_BY . '">' . $f_MODIFIED_BY . '</a>] (' . $f_M_LOGIN . ') ' . $f_M_USER_NAME
+    );
+    $row->AddViewField(
+        "USER_ID",
+        ($f_USER_ID > 0 ? '[<a title="' . GetMessage(
+                "MAIN_USER_PROFILE"
+            ) . '" href="user_edit.php?lang=' . LANG . '&amp;ID=' . $f_USER_ID . '">' . $f_USER_ID . '</a>] (' . $f_LOGIN . ') ' . $f_USER_NAME : '')
+    );
     $row->AddViewField("COMMON", ($f_COMMON == "Y" ? GetMessage("fav_list_yes") : GetMessage("fav_list_no")));
 
     $arActions = Array(
@@ -172,15 +246,20 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
         array(
             "ICON" => "delete",
             "TEXT" => GetMessage("fav_list_del"),
-            "ACTION" => "if(confirm('" . GetMessage("fav_list_del_conf") . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete")
+            "ACTION" => "if(confirm('" . GetMessage("fav_list_del_conf") . "')) " . $lAdmin->ActionDoGroup(
+                    $f_ID,
+                    "delete"
+                )
         ),
     );
     $row->AddActions($arActions);
 }
 
-$lAdmin->AddGroupActionTable(Array(
-    "delete" => true,
-));
+$lAdmin->AddGroupActionTable(
+    Array(
+        "delete" => true,
+    )
+);
 
 $aContext = array(
     array(
@@ -292,8 +371,12 @@ $oFilter = new CAdminFilter($sTableID . "_filter", $arFRows);
             <td><? echo GetMessage("fav_list_flt_common1") ?></td>
             <td><select name="find_common">
                     <option value=""><? echo GetMessage("fav_list_flt_all") ?></option>
-                    <option value="Y"<? if ($find_common == "Y") echo " selected" ?>><? echo GetMessage("fav_list_yes") ?></option>
-                    <option value="N"<? if ($find_common == "N") echo " selected" ?>><? echo GetMessage("fav_list_no") ?></option>
+                    <option value="Y"<? if ($find_common == "Y") echo " selected" ?>><? echo GetMessage(
+                            "fav_list_yes"
+                        ) ?></option>
+                    <option value="N"<? if ($find_common == "N") echo " selected" ?>><? echo GetMessage(
+                            "fav_list_no"
+                        ) ?></option>
                 </select></td>
         </tr>
         <tr>

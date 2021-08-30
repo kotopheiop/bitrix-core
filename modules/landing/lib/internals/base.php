@@ -45,7 +45,10 @@ class BaseTable
         $date = new \Bitrix\Main\Type\DateTime;
 
         $charValue = array(
-            'ACTIVE', 'PUBLIC', 'SITEMAP', 'FOLDER'
+            'ACTIVE',
+            'PUBLIC',
+            'SITEMAP',
+            'FOLDER'
         );
         foreach ($charValue as $code) {
             if (isset($fields[$code]) && $fields[$code] != 'Y') {
@@ -82,7 +85,10 @@ class BaseTable
         $date = new \Bitrix\Main\Type\DateTime;
 
         $charValue = array(
-            'ACTIVE', 'PUBLIC', 'SITEMAP', 'FOLDER'
+            'ACTIVE',
+            'PUBLIC',
+            'SITEMAP',
+            'FOLDER'
         );
         foreach ($charValue as $code) {
             if (isset($fields[$code]) && $fields[$code] != 'Y') {
@@ -95,8 +101,10 @@ class BaseTable
         }
         if (!isset($fields['MODIFIED_BY_ID'])) {
             $fields['MODIFIED_BY_ID'] = $uid;
-        } else if (!$fields['MODIFIED_BY_ID']) {
-            unset($fields['MODIFIED_BY_ID']);
+        } else {
+            if (!$fields['MODIFIED_BY_ID']) {
+                unset($fields['MODIFIED_BY_ID']);
+            }
         }
         if (!isset($fields['DATE_MODIFY'])) {
             $fields['DATE_MODIFY'] = $date;
@@ -119,6 +127,11 @@ class BaseTable
     {
         /** @var \Bitrix\Main\ORM\Data\DataManager $class */
         $class = self::getCallingClass();
+        \Bitrix\Landing\Debug::log(
+            $class,
+            'id: ' . $id . '@' . print_r(\Bitrix\Main\Diag\Helper::getBackTrace(5), true),
+            'LANDING_ENTITY_DELETE'
+        );
         return $class::delete($id);
     }
 
@@ -148,8 +161,8 @@ class BaseTable
     public static function callback($code, $callback)
     {
         $class = self::getCallingClass();
-        if (substr(strtolower($class), -5) == 'table') {
-            $class = substr($class, 0, -5);
+        if (mb_substr(mb_strtolower($class), -5) == 'table') {
+            $class = mb_substr($class, 0, -5);
             if ($class) {
                 $eventManager = \Bitrix\Main\EventManager::getInstance();
                 $eventManager->addEventHandler(

@@ -29,28 +29,37 @@ class StatusLangTable extends Main\Entity\DataManager
     {
         return array(
 
-            new Main\Entity\StringField('STATUS_ID', array(
+            new Main\Entity\StringField(
+                'STATUS_ID', array(
                 'primary' => true,
                 'format' => '/^[A-Za-z]{1,2}$/',
                 'title' => Loc::getMessage('B_SALE_STATUS_LANG_STATUS_ID'),
-            )),
+            )
+            ),
 
-            new Main\Entity\StringField('LID', array(
+            new Main\Entity\StringField(
+                'LID', array(
                 'primary' => true,
                 'format' => '/^[a-z]{2}$/',
                 'title' => Loc::getMessage('B_SALE_STATUS_LANG_LID'),
-            )),
+            )
+            ),
 
-            new Main\Entity\StringField('NAME', array(
+            new Main\Entity\StringField(
+                'NAME', array(
                 'required' => true,
                 'title' => Loc::getMessage('B_SALE_STATUS_LANG_NAME'),
-            )),
+            )
+            ),
 
-            new Main\Entity\StringField('DESCRIPTION', array(
+            new Main\Entity\StringField(
+                'DESCRIPTION', array(
                 'title' => Loc::getMessage('B_SALE_STATUS_LANG_DESCRIPTION'),
-            )),
+            )
+            ),
 
-            new Main\Entity\ReferenceField('STATUS', 'Bitrix\Sale\Internals\StatusTable',
+            new Main\Entity\ReferenceField(
+                'STATUS', 'Bitrix\Sale\Internals\StatusTable',
                 array('=this.STATUS_ID' => 'ref.ID'),
                 array('join_type' => 'INNER')
             ),
@@ -68,10 +77,12 @@ class StatusLangTable extends Main\Entity\DataManager
 
     public static function deleteByStatus($statusId)
     {
-        $result = self::getList(array(
-            'select' => array('STATUS_ID', 'LID'),
-            'filter' => array('=STATUS_ID' => $statusId)
-        ));
+        $result = self::getList(
+            array(
+                'select' => array('STATUS_ID', 'LID'),
+                'filter' => array('=STATUS_ID' => $statusId)
+            )
+        );
 
         while ($primary = $result->fetch()) {
             self::delete($primary);

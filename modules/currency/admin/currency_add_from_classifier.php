@@ -12,8 +12,9 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/currency/prolog.php");
 
 $currencyRights = $APPLICATION->GetGroupRight("currency");
-if ($currencyRights == "D")
+if ($currencyRights == "D") {
     $APPLICATION->AuthForm(Loc::getMessage("ACCESS_DENIED"));
+}
 
 Loader::includeModule('currency');
 Loc::loadMessages(__FILE__);
@@ -68,7 +69,8 @@ $lastValues = array(
     'SORT_INDEX' => 100
 );
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && $currencyRights == "W" && (!empty($_POST['save']) || !empty($_POST['apply'])) && check_bitrix_sessid()) {
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && $currencyRights == "W" && (!empty($_POST['save']) || !empty($_POST['apply'])) && check_bitrix_sessid(
+    )) {
     $needle = $_POST['admin_classifier_currency_needle'];
     $selectedIndex = $_POST['sym_code'];
     $nominal = $_POST['nominal'];
@@ -77,8 +79,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $currencyRights == "W" && (!empty($_
 
     $maxIntValue = 2147483647;
 
-    if (!preg_match('/^[1-9][0-9]{0,10}$/', $nominal) || ($nominal > $maxIntValue))
+    if (!preg_match('/^[1-9][0-9]{0,10}$/', $nominal) || ($nominal > $maxIntValue)) {
         $errorMessage[] = Loc::getMessage('ADMIN_CURRENCY_CLASSIFIER_FIELDS_NOMINAL_ERROR');
+    }
 
     if (!preg_match('/^[0-9]{0,14}[\.]{0,1}[0-9]{0,4}$/', $exchangeRate) ||
         ($exchangeRate <= 0) ||
@@ -86,8 +89,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $currencyRights == "W" && (!empty($_
         $errorMessage[] = Loc::getMessage('ADMIN_CURRENCY_CLASSIFIER_FIELDS_EXCHANGE_RATE_ERROR');
     }
 
-    if (!preg_match('/^[1-9][0-9]{0,10}$/', $sortIndex) || ($sortIndex > $maxIntValue))
+    if (!preg_match('/^[1-9][0-9]{0,10}$/', $sortIndex) || ($sortIndex > $maxIntValue)) {
         $errorMessage[] = Loc::getMessage('ADMIN_CURRENCY_CLASSIFIER_FIELDS_SORT_INDEX_ERROR');
+    }
 
     if (!empty($errorMessage)) {
         $lastValues['NEEDLE'] = $needle;
@@ -112,7 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $currencyRights == "W" && (!empty($_
         }
 
         foreach ($languageIdList as $languageId) {
-            $locFields = $currencyData[strtoupper($languageId)];
+            $locFields = $currencyData[mb_strtoupper($languageId)];
 
             $locFields['CURRENCY'] = $currencyId;
             $locFields['HIDE_ZERO'] = $_POST['hide_zero_' . $languageId] ? 'Y' : 'N';
@@ -128,7 +132,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $currencyRights == "W" && (!empty($_
         $result = is_string($currencyId) && ($currencyId !== '');
         if (!$result) {
             $exception = $APPLICATION->GetException();
-            $errorMessage[] = ($exception) ? $exception->GetString() : Loc::getMessage('ADMIN_CURRENCY_CLASSIFIER_UNKNOWN_ERROR_ADD');
+            $errorMessage[] = ($exception) ? $exception->GetString() : Loc::getMessage(
+                'ADMIN_CURRENCY_CLASSIFIER_UNKNOWN_ERROR_ADD'
+            );
         }
 
         if (!$result) {
@@ -141,10 +147,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $currencyRights == "W" && (!empty($_
         } else {
             $DB->Commit();
 
-            if ($_POST['apply'])
-                LocalRedirect('/bitrix/admin/currency_edit.php?ID=' . $currencyId . '&lang=' . LANGUAGE_ID . '&' . $tabControl->ActiveTabParam());
-            else
+            if ($_POST['apply']) {
+                LocalRedirect(
+                    '/bitrix/admin/currency_edit.php?ID=' . $currencyId . '&lang=' . LANGUAGE_ID . '&' . $tabControl->ActiveTabParam(
+                    )
+                );
+            } else {
                 LocalRedirect('/bitrix/admin/currencies.php?lang=' . LANGUAGE_ID);
+            }
         }
     }
 }
@@ -153,8 +163,9 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
 
 $adminContext->Show();
 
-if (!empty($errorMessage))
+if (!empty($errorMessage)) {
     CAdminMessage::ShowMessage(implode('<br>', $errorMessage));
+}
 ?>
 
     <form method="post" action="<? $APPLICATION->GetCurPage() ?>" name="admin_currency_classifier">
@@ -184,8 +195,11 @@ if (!empty($errorMessage))
             <td width="60%">
                 <select id="admin_classifier_currency_id" name="admin_classifier_currency_id" size="10"
                         style="width: 312px">
-                    <? foreach ($classifier as $key => $value)
-                        echo "<option value=" . HtmlFilter::encode($key) . ">" . HtmlFilter::encode($value[strtoupper(LANGUAGE_ID)]['FULL_NAME']) . "</option>"; ?>
+                    <? foreach ($classifier as $key => $value) {
+                        echo "<option value=" . HtmlFilter::encode($key) . ">" . HtmlFilter::encode(
+                                $value[mb_strtoupper(LANGUAGE_ID)]['FULL_NAME']
+                            ) . "</option>";
+                    } ?>
                 </select>
             </td>
         </tr>
@@ -228,7 +242,9 @@ if (!empty($errorMessage))
 							<label style="margin: 0 5px 0 0">=</label>
 							<input id="exchange_rate" name="exchange_rate" type="text" style="width: 100px"
                                    value="<?= HtmlFilter::encode($lastValues['EXCHANGE_RATE']); ?>"/>
-							<label style="width: 30px; display: inline-block"><?= HtmlFilter::encode($baseCurrencyId); ?></label>
+							<label style="width: 30px; display: inline-block"><?= HtmlFilter::encode(
+                                    $baseCurrencyId
+                                ); ?></label>
 						</span>
                         </td>
                     </tr>
@@ -312,25 +328,33 @@ if (!empty($errorMessage))
         <?
         }
         $tabControl->EndTab();
-        $tabControl->Buttons(array("disabled" => $currencyRights < "W", "back_url" => "/bitrix/admin/currencies.php?lang=" . LANGUAGE_ID));
+        $tabControl->Buttons(
+            array("disabled" => $currencyRights < "W", "back_url" => "/bitrix/admin/currencies.php?lang=" . LANGUAGE_ID)
+        );
         $tabControl->End(); ?>
     </form>
 
 <?= BeginNote(); ?>
     <div style="padding: 5px">
-        <label><?= Loc::getMessage('ADMIN_CURRENCY_CLASSIFIER_FOOTER_ISO_STANDART', array('#ISO_LINK#' => CURRENCY_ISO_STANDART_URL)) ?></label>
+        <label><?= Loc::getMessage(
+                'ADMIN_CURRENCY_CLASSIFIER_FOOTER_ISO_STANDART',
+                array('#ISO_LINK#' => CURRENCY_ISO_STANDART_URL)
+            ) ?></label>
     </div>
     <div style="padding: 5px">
-        <span class="required" style="vertical-align: super; font-size: smaller;">1</span>
-        - <?= Loc::getMessage('ADMIN_CURRENCY_CLASSIFIER_FOOTER_EXCHANGE_RATE') ?>
+        <span class="required" style="vertical-align: super; font-size: smaller;">1</span> - <?= Loc::getMessage(
+            'ADMIN_CURRENCY_CLASSIFIER_FOOTER_EXCHANGE_RATE'
+        ) ?>
     </div>
     <div style="padding: 5px">
-        <span class="required" style="vertical-align: super; font-size: smaller;">2</span>
-        - <?= Loc::getMessage('ADMIN_CURRENCY_CLASSIFIER_FOOTER_DECIMALS_NUMBER') ?>
+        <span class="required" style="vertical-align: super; font-size: smaller;">2</span> - <?= Loc::getMessage(
+            'ADMIN_CURRENCY_CLASSIFIER_FOOTER_DECIMALS_NUMBER'
+        ) ?>
     </div>
     <div style="padding: 5px">
-        <span class="required" style="vertical-align: super; font-size: smaller;">3</span>
-        - <?= Loc::getMessage('ADMIN_CURRENCY_CLASSIFIER_FOOTER_HIDE_ZERO') ?>
+        <span class="required" style="vertical-align: super; font-size: smaller;">3</span> - <?= Loc::getMessage(
+            'ADMIN_CURRENCY_CLASSIFIER_FOOTER_HIDE_ZERO'
+        ) ?>
     </div>
 <?= EndNote(); ?>
 
@@ -422,14 +446,16 @@ if (!empty($errorMessage))
         })();
 
         BX(function () {
-            BX.AdminCurrencyClassifier = new BX.AdminCurrencyClassifierClass(<?= Json::encode(array(
-                'index' => $lastValues['SELECTED_INDEX'],
-                'lastIndex' => $lastValues['SELECTED_INDEX'],
-                'needle' => $lastValues['NEEDLE'],
-                'currencies' => $classifier,
-                'lids' => $languageIdList,
-                'baseLanguage' => LANGUAGE_ID
-            ));?>);
+            BX.AdminCurrencyClassifier = new BX.AdminCurrencyClassifierClass(<?= Json::encode(
+                array(
+                    'index' => $lastValues['SELECTED_INDEX'],
+                    'lastIndex' => $lastValues['SELECTED_INDEX'],
+                    'needle' => $lastValues['NEEDLE'],
+                    'currencies' => $classifier,
+                    'lids' => $languageIdList,
+                    'baseLanguage' => LANGUAGE_ID
+                )
+            );?>);
         });
     </script>
 

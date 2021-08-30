@@ -1,4 +1,5 @@
 <?php
+
 IncludeModuleLangFile(__FILE__);
 
 class CBitrixCloudMonitoring
@@ -17,8 +18,9 @@ class CBitrixCloudMonitoring
      */
     public static function getInstance()
     {
-        if (!isset(self::$instance))
+        if (!isset(self::$instance)) {
             self::$instance = new CBitrixCloudMonitoring;
+        }
 
         return self::$instance;
     }
@@ -29,19 +31,19 @@ class CBitrixCloudMonitoring
         $converter = CBXPunycode::GetConverter();
 
         $domainName = COption::GetOptionString("main", "server_name", "");
-        if ($domainName != "")
+        if ($domainName != "") {
             $result[$domainName] = $domainName;
+        }
 
-        $by = "";
-        $order = "";
-        $siteList = CSite::GetList($by, $order, array("ACTIVE" => "Y"));
+        $siteList = CSite::GetList('', '', array("ACTIVE" => "Y"));
         while ($site = $siteList->Fetch()) {
             $domains = explode("\r\n", $site["DOMAINS"]);
             foreach ($domains as $domainName) {
                 if ($domainName != "") {
                     $punyName = $converter->Encode($domainName);
-                    if ($punyName !== false)
+                    if ($punyName !== false) {
                         $result[$punyName] = $domainName;
+                    }
                 }
             }
         }
@@ -106,8 +108,9 @@ class CBitrixCloudMonitoring
         $devices = $option->getArrayValue();
         foreach ($devices as $domain_device) {
             if (list ($myDomain, $myDevice) = explode("|", $domain_device, 2)) {
-                if ($myDomain === $domain)
+                if ($myDomain === $domain) {
                     $result[] = $myDevice;
+                }
             }
         }
         return $result;
@@ -159,8 +162,9 @@ class CBitrixCloudMonitoring
             && $interval != 30
             && $interval != 90
             && $interval != 365
-        )
+        ) {
             $interval = 7;
+        }
         $this->interval = $interval;
         return $interval;
     }
@@ -174,18 +178,20 @@ class CBitrixCloudMonitoring
                 && $this->interval != 30
                 && $this->interval != 90
                 && $this->interval != 365
-            )
+            ) {
                 $this->interval = 7;
+            }
         }
         return $this->interval;
     }
 
     public function getMonitoringResults($interval = false)
     {
-        if ($interval === false)
+        if ($interval === false) {
             $interval = $this->getInterval();
-        else
+        } else {
             $interval = $this->setInterval($interval);
+        }
 
         if ($this->result === null) {
             try {
@@ -198,7 +204,9 @@ class CBitrixCloudMonitoring
                         $control = $xml->SelectNodes("/control");
                         if (is_object($control)) {
                             $this->result->saveToOptions();
-                            CBitrixCloudMonitoringResult::setExpirationTime(strtotime($control->getAttribute("expires")));
+                            CBitrixCloudMonitoringResult::setExpirationTime(
+                                strtotime($control->getAttribute("expires"))
+                            );
                         }
                     }
                 } else {
@@ -219,8 +227,9 @@ class CBitrixCloudMonitoring
             $alerts = array();
             foreach ($this->result as $domainName => $domainResult) {
                 foreach ($domainResult as $testId => $testResult) {
-                    if ($testResult->getStatus() === CBitrixCloudMonitoringResult::RED_LAMP)
+                    if ($testResult->getStatus() === CBitrixCloudMonitoringResult::RED_LAMP) {
                         $alerts[$domainName][$testId] = $testId;
+                    }
                 }
 
                 if (isset($alerts[$domainName])) {
@@ -292,14 +301,15 @@ class CBitrixCloudMonitoring
     {
         $monitoring = CBitrixCloudMonitoring::getInstance();
         $rsR = CLanguage::GetById("ru");
-        if ($rsR->Fetch())
+        if ($rsR->Fetch()) {
             $language_id = "ru";
-        else {
+        } else {
             $rsD = CLanguage::GetById("de");
-            if ($rsD->Fetch())
+            if ($rsD->Fetch()) {
                 $language_id = "de";
-            else
+            } else {
                 $language_id = "en";
+            }
         }
 
         $monitoring->startMonitoring(

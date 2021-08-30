@@ -85,26 +85,31 @@ class SubscribeManager
      */
     public function addSubscribe(array $subscribeData)
     {
-        $this->checkRequiredInputParams($subscribeData,
-            array('USER_CONTACT', 'ITEM_ID', 'SITE_ID', 'CONTACT_TYPE'));
+        $this->checkRequiredInputParams(
+            $subscribeData,
+            array('USER_CONTACT', 'ITEM_ID', 'SITE_ID', 'CONTACT_TYPE')
+        );
         if (!$this->errorCollection->isEmpty()) {
             return false;
         }
 
-        $resultObject = ProductTable::getList(array(
-            'select' => array(
-                'SUBSCRIBE',
-                'USER_CONTACT' => 'Bitrix\Catalog\SubscribeTable:PRODUCT.USER_CONTACT',
-                'CONTACT_TYPE' => 'Bitrix\Catalog\SubscribeTable:PRODUCT.CONTACT_TYPE',
-                'DATE_TO' => 'Bitrix\Catalog\SubscribeTable:PRODUCT.DATE_TO',
-            ),
-            'filter' => array(
-                '=ID' => $subscribeData['ITEM_ID'],
-            ),
-        ));
+        $resultObject = ProductTable::getList(
+            array(
+                'select' => array(
+                    'SUBSCRIBE',
+                    'USER_CONTACT' => 'Bitrix\Catalog\SubscribeTable:PRODUCT.USER_CONTACT',
+                    'CONTACT_TYPE' => 'Bitrix\Catalog\SubscribeTable:PRODUCT.CONTACT_TYPE',
+                    'DATE_TO' => 'Bitrix\Catalog\SubscribeTable:PRODUCT.DATE_TO',
+                ),
+                'filter' => array(
+                    '=ID' => $subscribeData['ITEM_ID'],
+                ),
+            )
+        );
         while ($productSubscribeData = $resultObject->fetch()) {
-            if (!$this->checkDataBeforeSave($productSubscribeData, $subscribeData))
+            if (!$this->checkDataBeforeSave($productSubscribeData, $subscribeData)) {
                 break;
+            }
         }
         if (!$this->errorCollection->isEmpty()) {
             return false;
@@ -127,8 +132,9 @@ class SubscribeManager
             $this->setSessionOfSibscribedProducts($subscribeData['ITEM_ID']);
             return $result->getId();
         } else {
-            foreach ($result->getErrorMessages() as $errorMessage)
+            foreach ($result->getErrorMessages() as $errorMessage) {
                 $this->errorCollection->add(array(new Error($errorMessage, self::ERROR_ADD_SUBSCRIBE)));
+            }
             return false;
         }
     }
@@ -147,13 +153,19 @@ class SubscribeManager
             if ($this->checkAccessToSubscription($subscribeId)) {
                 $result = SubscribeTable::delete($subscribeId);
                 if (!$result->isSuccess()) {
-                    foreach ($result->getErrorMessages() as $errorMessage)
+                    foreach ($result->getErrorMessages() as $errorMessage) {
                         $this->errorCollection->add(array(new Error($errorMessage, self::ERROR_DELETE_SUBSCRIBE)));
+                    }
                     return false;
                 }
             } else {
-                $this->errorCollection->add(array(new Error(
-                    Loc::getMessage('ERROR_ACCESS_DENIDE_DELETE_SUBSCRIBE'), self::ERROR_DELETE_SUBSCRIBE)));
+                $this->errorCollection->add(
+                    array(
+                        new Error(
+                            Loc::getMessage('ERROR_ACCESS_DENIDE_DELETE_SUBSCRIBE'), self::ERROR_DELETE_SUBSCRIBE
+                        )
+                    )
+                );
                 return false;
             }
         }
@@ -177,13 +189,15 @@ class SubscribeManager
             return true;
         }
 
-        $resultObject = SubscribeTable::getList(array(
-            'select' => array(
-                'USER_ID',
-                'TOKEN' => 'Bitrix\Catalog\SubscribeAccessTable:SUBSCRIBE.TOKEN',
-            ),
-            'filter' => array('=ID' => intval($subscribeId)),
-        ));
+        $resultObject = SubscribeTable::getList(
+            array(
+                'select' => array(
+                    'USER_ID',
+                    'TOKEN' => 'Bitrix\Catalog\SubscribeAccessTable:SUBSCRIBE.TOKEN',
+                ),
+                'filter' => array('=ID' => intval($subscribeId)),
+            )
+        );
         if ($subscribeData = $resultObject->fetch()) {
             if ($this->userId) {
                 if ($subscribeData['USER_ID'] == $this->userId) {
@@ -210,16 +224,24 @@ class SubscribeManager
      */
     public function runSubscriberIdentification(array $subscriberData, $sendLetter = true)
     {
-        $this->checkRequiredInputParams($subscriberData,
-            array('contactType', 'userContact', 'siteId'));
+        $this->checkRequiredInputParams(
+            $subscriberData,
+            array('contactType', 'userContact', 'siteId')
+        );
         if (!$this->errorCollection->isEmpty()) {
             return false;
         }
 
         $currentContactType = $this->contactTypes[$subscriberData['contactType']];
         if (!preg_match($currentContactType['RULE'], $subscriberData['userContact'])) {
-            $this->errorCollection->add(array(new Error(
-                Loc::getMessage('ERROR_SUBSCRIBE_ENTRY_CONFIRMATION_CODE'), self::ERROR_SUBSCRIBER_IDENTIFICATION)));
+            $this->errorCollection->add(
+                array(
+                    new Error(
+                        Loc::getMessage('ERROR_SUBSCRIBE_ENTRY_CONFIRMATION_CODE'),
+                        self::ERROR_SUBSCRIBER_IDENTIFICATION
+                    )
+                )
+            );
             return false;
         }
 
@@ -234,20 +256,31 @@ class SubscribeManager
                 )
             );
             if ($accessRow['ID']) {
-                $result = SubscribeAccessTable::update($accessRow['ID'], array(
-                    'DATE_FROM' => new DateTime(),
-                    'TOKEN' => $token
-                ));
+                $result = SubscribeAccessTable::update(
+                    $accessRow['ID'],
+                    array(
+                        'DATE_FROM' => new DateTime(),
+                        'TOKEN' => $token
+                    )
+                );
             } else {
-                $result = SubscribeAccessTable::add(array(
-                    'DATE_FROM' => new DateTime(),
-                    'USER_CONTACT' => $subscriberData['userContact'],
-                    'TOKEN' => $token
-                ));
+                $result = SubscribeAccessTable::add(
+                    array(
+                        'DATE_FROM' => new DateTime(),
+                        'USER_CONTACT' => $subscriberData['userContact'],
+                        'TOKEN' => $token
+                    )
+                );
             }
             if (!$result) {
-                $this->errorCollection->add(array(new Error(
-                    Loc::getMessage('ERROR_SUBSCRIBE_ENTRY_CONFIRMATION_CODE'), self::ERROR_SUBSCRIBER_IDENTIFICATION)));
+                $this->errorCollection->add(
+                    array(
+                        new Error(
+                            Loc::getMessage('ERROR_SUBSCRIBE_ENTRY_CONFIRMATION_CODE'),
+                            self::ERROR_SUBSCRIBER_IDENTIFICATION
+                        )
+                    )
+                );
             }
         } catch (\Exception $errorObject) {
             $this->errorCollection->add(array(new Error($errorObject->getMessage())));
@@ -271,10 +304,22 @@ class SubscribeManager
             'USER_NAME' => Loc::getMessage('EMAIL_TEMPLATE_USER_NAME'),
             'TOKEN' => $token,
             'LIST_SUBSCRIBES' => $listSubscribesUrl,
-            'TOKEN_URL' => \CHTTP::urlAddParams($listSubscribesUrl, array('accessCodeVerification' => 'Y',
-                'userContact' => $subscriberData['userContact'], 'subscribeToken' => $token)),
-            'URL_PARAMETERS' => \CHTTP::urlAddParams('', array('accessCodeVerification' => 'Y',
-                'userContact' => $subscriberData['userContact'], 'subscribeToken' => $token))
+            'TOKEN_URL' => \CHTTP::urlAddParams(
+                $listSubscribesUrl,
+                array(
+                    'accessCodeVerification' => 'Y',
+                    'userContact' => $subscriberData['userContact'],
+                    'subscribeToken' => $token
+                )
+            ),
+            'URL_PARAMETERS' => \CHTTP::urlAddParams(
+                '',
+                array(
+                    'accessCodeVerification' => 'Y',
+                    'userContact' => $subscriberData['userContact'],
+                    'subscribeToken' => $token
+                )
+            )
         );
 
         foreach ($this->contactTypes as $typeId => $typeData) {
@@ -316,8 +361,13 @@ class SubscribeManager
             );
 
             if (!$accessRow['ID']) {
-                $this->errorCollection->add(array(new Error(
-                    Loc::getMessage('ERROR_AUTHORIZATION_ACCESS_ROW_NOT_FOUND'), self::ERROR_AUTHORIZATION)));
+                $this->errorCollection->add(
+                    array(
+                        new Error(
+                            Loc::getMessage('ERROR_AUTHORIZATION_ACCESS_ROW_NOT_FOUND'), self::ERROR_AUTHORIZATION
+                        )
+                    )
+                );
                 return false;
             }
 
@@ -353,20 +403,27 @@ class SubscribeManager
 
         $itemId = intval($data['productId']);
 
-        $subscribe = SubscribeTable::getList(array(
-            'select' => array('CNT'),
-            'filter' => array(
-                '=ID' => intval($data['subscribeId']),
-                '=ITEM_ID' => $itemId,
-                '=USER_CONTACT' => $data['userContact'],
-            ),
-            'runtime' => array(new Entity\ExpressionField('CNT', 'COUNT(*)'))
-        ))->fetch();
+        $subscribe = SubscribeTable::getList(
+            array(
+                'select' => array('CNT'),
+                'filter' => array(
+                    '=ID' => intval($data['subscribeId']),
+                    '=ITEM_ID' => $itemId,
+                    '=USER_CONTACT' => $data['userContact'],
+                ),
+                'runtime' => array(new Entity\ExpressionField('CNT', 'COUNT(*)'))
+            )
+        )->fetch();
         if (intval($subscribe['CNT'])) {
             SubscribeTable::delete($data['subscribeId']);
         } else {
-            $this->errorCollection->add(array(new Error(
-                Loc::getMessage('ERROR_UNSUBSCRIBE_ALREADY_UNSUBSCRIBE'), self::ERROR_UNSUBSCRIBE)));
+            $this->errorCollection->add(
+                array(
+                    new Error(
+                        Loc::getMessage('ERROR_UNSUBSCRIBE_ALREADY_UNSUBSCRIBE'), self::ERROR_UNSUBSCRIBE
+                    )
+                )
+            );
             return false;
         }
 
@@ -394,8 +451,9 @@ class SubscribeManager
         foreach ($listSubscribeId as $subscribeId) {
             $result = SubscribeTable::update($subscribeId, $fields);
             if (!$result->isSuccess()) {
-                foreach ($result->getErrorMessages() as $errorMessage)
+                foreach ($result->getErrorMessages() as $errorMessage) {
                     $this->errorCollection->add(array(new Error($errorMessage, self::ERROR_ACTIVITY_CHANGE)));
+                }
                 return false;
             }
         }
@@ -415,8 +473,9 @@ class SubscribeManager
         foreach ($listSubscribeId as $subscribeId) {
             $result = SubscribeTable::update($subscribeId, array('DATE_TO' => new DateTime()));
             if (!$result->isSuccess()) {
-                foreach ($result->getErrorMessages() as $errorMessage)
+                foreach ($result->getErrorMessages() as $errorMessage) {
                     $this->errorCollection->add(array(new Error($errorMessage, self::ERROR_ACTIVITY_CHANGE)));
+                }
                 return false;
             }
         }
@@ -455,8 +514,9 @@ class SubscribeManager
             && is_array($_SESSION['SUBSCRIBE_PRODUCT']['LIST_PRODUCT_ID'])) {
             $_SESSION['SUBSCRIBE_PRODUCT']['LIST_PRODUCT_ID'][$itemId] = true;
         } else {
-            if (empty($_SESSION['SUBSCRIBE_PRODUCT']))
+            if (empty($_SESSION['SUBSCRIBE_PRODUCT'])) {
                 $_SESSION['SUBSCRIBE_PRODUCT'] = array();
+            }
 
             $_SESSION['SUBSCRIBE_PRODUCT']['LIST_PRODUCT_ID'] = array();
             $_SESSION['SUBSCRIBE_PRODUCT']['LIST_PRODUCT_ID'][$itemId] = true;
@@ -473,25 +533,45 @@ class SubscribeManager
     private function checkDataBeforeSave($productSubscribeData, array $subscribeData)
     {
         if (!$productSubscribeData || !is_array($productSubscribeData)) {
-            $this->errorCollection->add(array(new Error(
-                Loc::getMessage('ERROR_PRODUCT_NOT_FOUND'), self::ERROR_ADD_SUBSCRIBE)));
+            $this->errorCollection->add(
+                array(
+                    new Error(
+                        Loc::getMessage('ERROR_PRODUCT_NOT_FOUND'), self::ERROR_ADD_SUBSCRIBE
+                    )
+                )
+            );
             return false;
         }
         if (!SubscribeTable::checkPermissionSubscribe($productSubscribeData['SUBSCRIBE'])) {
-            $this->errorCollection->add(array(new Error(
-                Loc::getMessage('ERROR_SUBSCRIBE_DENIED'), self::ERROR_ADD_SUBSCRIBE)));
+            $this->errorCollection->add(
+                array(
+                    new Error(
+                        Loc::getMessage('ERROR_SUBSCRIBE_DENIED'), self::ERROR_ADD_SUBSCRIBE
+                    )
+                )
+            );
             return false;
         }
         if (!array_key_exists($subscribeData['CONTACT_TYPE'], $this->contactTypes)) {
-            $this->errorCollection->add(array(new Error(
-                Loc::getMessage('ERROR_CONTACT_TYPE'), self::ERROR_ADD_SUBSCRIBE)));
+            $this->errorCollection->add(
+                array(
+                    new Error(
+                        Loc::getMessage('ERROR_CONTACT_TYPE'), self::ERROR_ADD_SUBSCRIBE
+                    )
+                )
+            );
             return false;
         }
         if ($productSubscribeData['USER_CONTACT'] == $subscribeData['USER_CONTACT']
             && $productSubscribeData['DATE_TO'] == null) {
             $this->setSessionOfSibscribedProducts($subscribeData['ITEM_ID']);
-            $this->errorCollection->add(array(new Error(
-                Loc::getMessage('ERROR_SUBSCRIBE_ALREADY_EXISTS'), self::ERROR_ADD_SUBSCRIBE_ALREADY_EXISTS)));
+            $this->errorCollection->add(
+                array(
+                    new Error(
+                        Loc::getMessage('ERROR_SUBSCRIBE_ALREADY_EXISTS'), self::ERROR_ADD_SUBSCRIBE_ALREADY_EXISTS
+                    )
+                )
+            );
             return false;
         }
         return true;
@@ -504,15 +584,31 @@ class SubscribeManager
                 case 'DATE_TO':
                     if (!($fieldValue instanceof DateTime) ||
                         ($fieldValue instanceof DateTime && $fieldValue->getTimestamp() < time())) {
-                        $this->errorCollection->add(array(new Error(Loc::getMessage('ERROR_VALIDATE_FIELDS',
-                            array('#FIELD#' => $fieldId)), self::ERROR_VALIDATE_FIELDS)));
+                        $this->errorCollection->add(
+                            array(
+                                new Error(
+                                    Loc::getMessage(
+                                        'ERROR_VALIDATE_FIELDS',
+                                        array('#FIELD#' => $fieldId)
+                                    ), self::ERROR_VALIDATE_FIELDS
+                                )
+                            )
+                        );
                     }
                     break;
                 case 'USER_CONTACT':
                     $currentContactType = $this->contactTypes[$this->fields['CONTACT_TYPE']];
                     if (!preg_match($currentContactType['RULE'], $fieldValue)) {
-                        $this->errorCollection->add(array(new Error(Loc::getMessage('ERROR_VALIDATE_FIELDS',
-                            array('#FIELD#' => $fieldId)), self::ERROR_VALIDATE_FIELDS)));
+                        $this->errorCollection->add(
+                            array(
+                                new Error(
+                                    Loc::getMessage(
+                                        'ERROR_VALIDATE_FIELDS',
+                                        array('#FIELD#' => $fieldId)
+                                    ), self::ERROR_VALIDATE_FIELDS
+                                )
+                            )
+                        );
                     }
                     break;
             }
@@ -523,9 +619,17 @@ class SubscribeManager
     {
         foreach ($requiredParams as $param) {
             if (!isset($inputParams[$param]) || (!$inputParams[$param] &&
-                    !(is_string($inputParams[$param]) && strlen($inputParams[$param])))) {
-                $this->errorCollection->add(array(new Error(Loc::getMessage('ERROR_REQUIRED_PARAMATERS',
-                    array('#PARAM#' => $param)), self::ERROR_REQUIRED_PARAMATERS)));
+                    !(is_string($inputParams[$param]) && mb_strlen($inputParams[$param])))) {
+                $this->errorCollection->add(
+                    array(
+                        new Error(
+                            Loc::getMessage(
+                                'ERROR_REQUIRED_PARAMATERS',
+                                array('#PARAM#' => $param)
+                            ), self::ERROR_REQUIRED_PARAMATERS
+                        )
+                    )
+                );
                 return false;
             }
         }

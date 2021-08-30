@@ -28,6 +28,7 @@ class CIBlockPropertyDate extends CIBlockPropertyDateTime
             "GetPublicFilterHTML" => array(__CLASS__, "GetPublicFilterHTML"),
             "AddFilterFields" => array(__CLASS__, "AddFilterFields"),
             "GetUIFilterProperty" => array(__CLASS__, "GetUIFilterProperty"),
+            'GetUIEntityEditorProperty' => array(__CLASS__, 'GetUIEntityEditorProperty'),
             //"GetORMFields" => array(__CLASS__, "GetORMFields"),
         );
     }
@@ -50,16 +51,18 @@ class CIBlockPropertyDate extends CIBlockPropertyDateTime
 
     public static function ConvertToDB($arProperty, $value)
     {
-        if (strlen($value["VALUE"]) > 0)
+        if ($value["VALUE"] <> '') {
             $value["VALUE"] = CDatabase::FormatDate($value["VALUE"], CLang::GetDateFormat("SHORT"), "YYYY-MM-DD");
+        }
 
         return $value;
     }
 
     public static function ConvertFromDB($arProperty, $value, $format = '')
     {
-        if (strlen($value["VALUE"]) > 0)
+        if ($value["VALUE"] <> '') {
             $value["VALUE"] = CDatabase::FormatDate($value["VALUE"], "YYYY-MM-DD", CLang::GetDateFormat("SHORT"));
+        }
 
         return $value;
     }
@@ -69,7 +72,9 @@ class CIBlockPropertyDate extends CIBlockPropertyDateTime
         /** @var CMain */
         global $APPLICATION;
 
-        $s = '<input type="text" name="' . htmlspecialcharsbx($strHTMLControlName["VALUE"]) . '" size="25" value="' . htmlspecialcharsbx($value["VALUE"]) . '" />';
+        $s = '<input type="text" name="' . htmlspecialcharsbx(
+                $strHTMLControlName["VALUE"]
+            ) . '" size="25" value="' . htmlspecialcharsbx($value["VALUE"]) . '" />';
         ob_start();
         $APPLICATION->IncludeComponent(
             'bitrix:main.calendar',
@@ -92,7 +97,9 @@ class CIBlockPropertyDate extends CIBlockPropertyDateTime
     {
         return CAdminCalendar::CalendarDate($strHTMLControlName["VALUE"], $value["VALUE"], 20, false) .
             ($arProperty["WITH_DESCRIPTION"] == "Y" && '' != trim($strHTMLControlName["DESCRIPTION"]) ?
-                '&nbsp;<input type="text" size="20" name="' . $strHTMLControlName["DESCRIPTION"] . '" value="' . htmlspecialcharsbx($value["DESCRIPTION"]) . '">'
+                '&nbsp;<input type="text" size="20" name="' . $strHTMLControlName["DESCRIPTION"] . '" value="' . htmlspecialcharsbx(
+                    $value["DESCRIPTION"]
+                ) . '">'
                 : ''
             );
     }
@@ -107,5 +114,21 @@ class CIBlockPropertyDate extends CIBlockPropertyDateTime
     {
         parent::GetUIFilterProperty($property, $control, $fields);
         unset($fields["time"]);
+    }
+
+    /**
+     * @param $settings
+     * @param $value
+     *
+     * @return array
+     */
+    public static function GetUIEntityEditorProperty($settings, $value)
+    {
+        $dateTimeResult = parent::GetUIEntityEditorProperty($settings, $value);
+        $dateTimeResult['data'] = [
+            'enableTime' => false,
+            'dateViewFormat' => \Bitrix\Main\Context::getCurrent()->getCulture()->getLongDateFormat(),
+        ];
+        return $dateTimeResult;
     }
 }

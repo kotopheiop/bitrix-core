@@ -16,7 +16,7 @@ class PHPUnit_Util_Log_BX_Plain extends PHPUnit_Util_Printer implements PHPUnit_
      * @var     boolean
      * @access  private
      */
-    protected $currentTestPass = TRUE;
+    protected $currentTestPass = true;
 
     protected $messages;
 
@@ -32,12 +32,12 @@ class PHPUnit_Util_Log_BX_Plain extends PHPUnit_Util_Printer implements PHPUnit_
         $this->writeCase(
             'error',
             $time,
-            PHPUnit_Util_Filter::getFilteredStacktrace($e, FALSE),
+            PHPUnit_Util_Filter::getFilteredStacktrace($e, false),
             $e->getMessage() . " @ " . $e->getFile() . ":" . $e->getLine(),
             $test
         );
 
-        $this->currentTestPass = FALSE;
+        $this->currentTestPass = false;
     }
 
     /**
@@ -51,10 +51,10 @@ class PHPUnit_Util_Log_BX_Plain extends PHPUnit_Util_Printer implements PHPUnit_
     {
         $this->write('fail: ' . $e->getMessage());
 
-        $trace = current(PHPUnit_Util_Filter::getFilteredStacktrace($e, FALSE));
+        $trace = current(PHPUnit_Util_Filter::getFilteredStacktrace($e, false));
         $this->write('trace: ' . print_r($trace, 1));
 
-        $this->currentTestPass = FALSE;
+        $this->currentTestPass = false;
     }
 
     /**
@@ -68,7 +68,7 @@ class PHPUnit_Util_Log_BX_Plain extends PHPUnit_Util_Printer implements PHPUnit_
     {
         $this->writeCase('error', $time, array(), 'Incomplete Test', $test);
 
-        $this->currentTestPass = FALSE;
+        $this->currentTestPass = false;
     }
 
     /**
@@ -82,7 +82,7 @@ class PHPUnit_Util_Log_BX_Plain extends PHPUnit_Util_Printer implements PHPUnit_
     {
         $this->writeCase('error', $time, array(), 'Skipped Test', $test);
 
-        $this->currentTestPass = FALSE;
+        $this->currentTestPass = false;
     }
 
     /**
@@ -95,11 +95,14 @@ class PHPUnit_Util_Log_BX_Plain extends PHPUnit_Util_Printer implements PHPUnit_
         $this->currentTestSuiteName = $suite->getName();
         $this->currentTestName = '';
 
-        $this->write(sprintf('suite started: %s (%d test%s)',
-            $this->currentTestSuiteName,
-            count($suite),
-            count($suite) == 1 ? '' : 's'
-        ));
+        $this->write(
+            sprintf(
+                'suite started: %s (%d test%s)',
+                $this->currentTestSuiteName,
+                count($suite),
+                count($suite) == 1 ? '' : 's'
+            )
+        );
     }
 
     /**
@@ -121,13 +124,16 @@ class PHPUnit_Util_Log_BX_Plain extends PHPUnit_Util_Printer implements PHPUnit_
     public function startTest(PHPUnit_Framework_Test $test)
     {
         $this->currentTestName = PHPUnit_Util_Test::describe($test);
-        $this->currentTestPass = TRUE;
+        $this->currentTestPass = true;
 
         $this->write("\n");
 
-        $this->write(sprintf('test started: %s',
-            $this->currentTestName
-        ));
+        $this->write(
+            sprintf(
+                'test started: %s',
+                $this->currentTestName
+            )
+        );
     }
 
     /**
@@ -139,9 +145,12 @@ class PHPUnit_Util_Log_BX_Plain extends PHPUnit_Util_Printer implements PHPUnit_
     public function endTest(PHPUnit_Framework_Test $test, $time)
     {
         if ($this->currentTestPass) {
-            $this->write(sprintf('test passed in %.3f sec.',
-                $time
-            ));
+            $this->write(
+                sprintf(
+                    'test passed in %.3f sec.',
+                    $time
+                )
+            );
         }
 
         echo $test->getActualOutput();
@@ -153,11 +162,11 @@ class PHPUnit_Util_Log_BX_Plain extends PHPUnit_Util_Printer implements PHPUnit_
      * @param array $trace
      * @param string $message
      */
-    protected function writeCase($status, $time, array $trace = array(), $message = '', $test = NULL)
+    protected function writeCase($status, $time, array $trace = array(), $message = '', $test = null)
     {
         $output = '';
 
-        if ($test !== NULL && $test->hasOutput()) {
+        if ($test !== null && $test->hasOutput()) {
             $output = $test->getActualOutput();
         }
 

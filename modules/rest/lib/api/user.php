@@ -2,27 +2,100 @@
 
 namespace Bitrix\Rest\Api;
 
+use Bitrix\Intranet\Invitation;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\UserTable;
+use Bitrix\Rest\AppTable;
 use Bitrix\Rest\RestException;
+use Bitrix\Rest\Controller\File;
 
 class User extends \IRestService
 {
-    const SCOPE_USER = 'user';
+    public const SCOPE_USER = 'user';
+    public const SCOPE_USER_BASIC = 'user_basic';
+    public const SCOPE_USER_BRIEF = 'user_brief';
+
+    private const ALLOWED_USER_NAME_FIELDS = [
+        'ID',
+        'ACTIVE',
+        'NAME',
+        'LAST_NAME',
+        'SECOND_NAME',
+        'IS_ONLINE',
+        'TIME_ZONE_OFFSET',
+    ];
+
+    private const ALLOWED_USER_BASIC_FIELDS = [
+        'ID',
+        'ACTIVE',
+        'NAME',
+        'LAST_NAME',
+        'SECOND_NAME',
+        'EMAIL',
+        'PERSONAL_PHONE',
+        'WORK_PHONE',
+        'WORK_POSITION',
+        'WORK_COMPANY',
+        'IS_ONLINE',
+        'TIME_ZONE_OFFSET',
+    ];
+
+    private static $entityUser = 'USER';
+    private static $nameFieldFullPrefix = 'UF_USR_';
+    private static $userUserFieldList;
 
     protected static $allowedUserFields = array(
         "ID", /*"LOGIN", */
-        "ACTIVE", "EMAIL",
-        "NAME", "LAST_NAME", "SECOND_NAME",
-        "PERSONAL_GENDER", "PERSONAL_PROFESSION", "PERSONAL_WWW", "PERSONAL_BIRTHDAY", "PERSONAL_PHOTO",
-        "PERSONAL_ICQ", "PERSONAL_PHONE", "PERSONAL_FAX", "PERSONAL_MOBILE", "PERSONAL_PAGER", "PERSONAL_STREET", "PERSONAL_CITY", "PERSONAL_STATE", "PERSONAL_ZIP", "PERSONAL_COUNTRY",
+        "ACTIVE",
+        "EMAIL",
+        "LAST_LOGIN",
+        "DATE_REGISTER",
+        "IS_ONLINE",
+        "NAME",
+        "LAST_NAME",
+        "SECOND_NAME",
+        "PERSONAL_GENDER",
+        "PERSONAL_PROFESSION",
+        "PERSONAL_WWW",
+        "PERSONAL_BIRTHDAY",
+        "PERSONAL_PHOTO",
+        "PERSONAL_ICQ",
+        "PERSONAL_PHONE",
+        "PERSONAL_FAX",
+        "PERSONAL_MOBILE",
+        "PERSONAL_PAGER",
+        "PERSONAL_STREET",
+        "PERSONAL_CITY",
+        "PERSONAL_STATE",
+        "PERSONAL_ZIP",
+        "PERSONAL_COUNTRY",
 
-        "WORK_COMPANY", "WORK_POSITION", "WORK_PHONE",
+        "TIME_ZONE_OFFSET",
+        "WORK_COMPANY",
+        "WORK_POSITION",
+        "WORK_PHONE",
 
-        "UF_DEPARTMENT", "UF_INTERESTS", "UF_SKILLS", "UF_WEB_SITES", "UF_XING", "UF_LINKEDIN", "UF_FACEBOOK", "UF_TWITTER", "UF_SKYPE", "UF_DISTRICT", "UF_PHONE_INNER"
+        "UF_DEPARTMENT",
+        "UF_INTERESTS",
+        "UF_SKILLS",
+        "UF_WEB_SITES",
+        "UF_XING",
+        "UF_LINKEDIN",
+        "UF_FACEBOOK",
+        "UF_TWITTER",
+        "UF_SKYPE",
+        "UF_DISTRICT",
+        "UF_PHONE_INNER"
     );
+
+    protected static $holdEditFields = [
+        "LAST_LOGIN",
+        "DATE_REGISTER",
+        "IS_ONLINE",
+        "TIME_ZONE_OFFSET",
+    ];
 
     public static function getDefaultAllowedUserFields()
     {
@@ -35,9 +108,51 @@ class User extends \IRestService
         return $result;
     }
 
+    private static function isMainScope(\CRestServer $server)
+    {
+        return in_array(static::SCOPE_USER, $server->getAuthScope());
+    }
+
+    private static function getErrorScope()
+    {
+        return [
+            'error' => 'insufficient_scope',
+            'error_description' => 'The request requires higher privileges than provided by the access token',
+        ];
+    }
+
+    private static function getAllowedUserFields($scopeList): array
+    {
+        $result = [];
+        if (in_array(static::SCOPE_USER, $scopeList)) {
+            $result = static::getDefaultAllowedUserFields();
+        } else {
+            if (in_array(static::SCOPE_USER_BASIC, $scopeList)) {
+                $result = static::ALLOWED_USER_BASIC_FIELDS;
+            } elseif (in_array(static::SCOPE_USER_BRIEF, $scopeList)) {
+                $result = static::ALLOWED_USER_NAME_FIELDS;
+            }
+
+            if (Loader::includeModule('intranet')) {
+                $result[] = 'USER_TYPE';
+            }
+
+            if (in_array(UserField::SCOPE_USER_USERFIELD, $scopeList)) {
+                $result = array_merge($result, static::getUserFields());
+            }
+        }
+
+        return $result;
+    }
+
     public static function unsetDefaultAllowedUserField($key)
     {
         unset(static::$allowedUserFields[$key]);
+    }
+
+    public static function setDefaultAllowedUserField($field)
+    {
+        static::$allowedUserFields[] = $field;
     }
 
     public static function onRestServiceBuildDescription()
@@ -64,9 +179,36 @@ class User extends \IRestService
                     'OnUserAdd' => array('main', 'OnUserInitialize', array(__CLASS__, 'onUserInitialize')),
                 ),
             );
+            $result[static::SCOPE_USER_BRIEF] = [];
+            $result[static::SCOPE_USER_BASIC] = [];
+            $result[UserField::SCOPE_USER_USERFIELD] = [
+                'user.userfield.add' => [UserField::class, 'addRest'],
+                'user.userfield.update' => [UserField::class, 'updateRest'],
+                'user.userfield.delete' => [UserField::class, 'deleteRest'],
+                'user.userfield.list' => [UserField::class, 'getListRest'],
+                'user.userfield.file.get' => [__CLASS__, 'getFile'],
+            ];
         }
 
         return $result;
+    }
+
+    private static function getUserFields()
+    {
+        if (is_null(static::$userUserFieldList)) {
+            static::$userUserFieldList = [];
+            global $USER_FIELD_MANAGER;
+
+            $fields = $USER_FIELD_MANAGER->GetUserFields("USER");
+
+            foreach ($fields as $code => $field) {
+                if (mb_strpos($code, static::$nameFieldFullPrefix) === 0) {
+                    static::$userUserFieldList[] = $code;
+                }
+            }
+        }
+
+        return static::$userUserFieldList;
     }
 
     protected static function checkAllowedFields()
@@ -76,8 +218,14 @@ class User extends \IRestService
         $fields = $USER_FIELD_MANAGER->GetUserFields("USER");
 
         foreach (static::getDefaultAllowedUserFields() as $key => $field) {
-            if (substr($field, 0, 3) === 'UF_' && !array_key_exists($field, $fields)) {
+            if (mb_substr($field, 0, 3) === 'UF_' && !array_key_exists($field, $fields)) {
                 static::unsetDefaultAllowedUserField($key);
+            }
+        }
+
+        foreach ($fields as $code => $field) {
+            if (mb_strpos($code, static::$nameFieldFullPrefix) === 0) {
+                static::setDefaultAllowedUserField($code);
             }
         }
     }
@@ -93,7 +241,16 @@ class User extends \IRestService
             throw new RestException('Unnecessary event call for this user type');
         }
 
-        $arRes = self::getUserData($arUser);
+        $allowedFields = null;
+        if ($arHandler['APP_ID'] > 0) {
+            $app = AppTable::getByClientId($arHandler['APP_CODE']);
+            if ($app['SCOPE']) {
+                $scope = explode(',', $app['SCOPE']);
+                $allowedFields = static::getAllowedUserFields($scope);
+            }
+        }
+
+        $arRes = self::getUserData($arUser, $allowedFields);
         if ($arUser['PERSONAL_PHOTO'] > 0) {
             $arRes['PERSONAL_PHOTO'] = \CRestUtil::GetFile($arUser["PERSONAL_PHOTO"]);
         }
@@ -129,15 +286,16 @@ class User extends \IRestService
             $ob = new \CAccess();
             $res = $ob->getNames($params['ACCESS']);
             foreach ($res as $key => $value) {
-                if (!in_array($key, $params['ACCESS']))
+                if (!in_array($key, $params['ACCESS'])) {
                     unset($res[$key]);
+                }
             }
 
             return $res;
         }
     }
 
-    public static function getFields()
+    public static function getFields($query = [], $nav = 0, \CRestServer $server = null)
     {
         global $USER_FIELD_MANAGER;
 
@@ -150,12 +308,17 @@ class User extends \IRestService
             IncludeModuleLangFile('/bitrix/modules/main/admin/user_admin.php', false, true)
         );
         $fieldsList = $USER_FIELD_MANAGER->getUserFields('USER', 0, LANGUAGE_ID);
-        foreach (static::getDefaultAllowedUserFields() as $key) {
-            if (substr($key, 0, 3) != 'UF_') {
+        if (!is_null($server)) {
+            $allowedFields = static::getAllowedUserFields($server->getAuthScope());
+        } else {
+            $allowedFields = static::getDefaultAllowedUserFields();
+        }
+        foreach ($allowedFields as $key) {
+            if (mb_substr($key, 0, 3) != 'UF_') {
                 $lkey = isset($langMessages[$key]) ? $key : str_replace('PERSONAL_', 'USER_', $key);
                 $res[$key] = isset($langMessages[$lkey]) ? $langMessages[$lkey] : $key;
-                if (substr($res[$key], -1) == ':') {
-                    $res[$key] = substr($res[$key], 0, -1);
+                if (mb_substr($res[$key], -1) == ':') {
+                    $res[$key] = mb_substr($res[$key], 0, -1);
                 }
             } else {
                 $res[$key] = $fieldsList[$key]['EDIT_FORM_LABEL'];
@@ -174,16 +337,19 @@ class User extends \IRestService
         $dbRes = \CUser::getByID($USER->getID());
         $userFields = $dbRes->fetch();
 
-        $result = self::getUserData($userFields);
+        $allowedFields = static::getAllowedUserFields($server->getAuthScope());
+        $result = self::getUserData($userFields, $allowedFields);
         if ($userFields['PERSONAL_PHOTO'] > 0) {
             $result['PERSONAL_PHOTO'] = \CRestUtil::GetFile($userFields["PERSONAL_PHOTO"]);
         }
 
-        $server->setSecurityState(array(
-            "ID" => $result['ID'],
-            "EMAIL" => $result['EMAIL'],
-            "NAME" => $result['NAME'],
-        ));
+        $server->setSecurityState(
+            array(
+                "ID" => $result['ID'],
+                "EMAIL" => $result['EMAIL'],
+                "NAME" => $result['NAME'],
+            )
+        );
 
         return $result;
     }
@@ -224,7 +390,7 @@ class User extends \IRestService
             }
         }
 
-        $allowedUserFields = static::getDefaultAllowedUserFields();
+        $allowedUserFields = static::getAllowedUserFields($server->getAuthScope());
         $allowedUserFields[] = 'IS_ONLINE';
         $allowedUserFields[] = 'HAS_DEPARTAMENT';
         $allowedUserFields[] = 'NAME_SEARCH';
@@ -232,6 +398,7 @@ class User extends \IRestService
         if ($server->getMethod() == "user.search") {
             $allowedUserFields[] = 'FIND';
             $allowedUserFields[] = 'UF_DEPARTMENT_NAME';
+            $allowedUserFields[] = 'CONFIRM_CODE';
         }
 
         if (isset($query['FILTER']) && is_array($query['FILTER'])) {
@@ -249,24 +416,36 @@ class User extends \IRestService
             unset($filter['NAME_SEARCH']);
             unset($filter['FIND']);
 
-            $filter = array_merge($filter, \Bitrix\Main\UserUtils::getUserSearchFilter(Array(
-                'FIND' => $nameSearch
-            )));
-        } else if ($server->getMethod() == "user.search") {
-            $previousFilter = $filter;
-            unset($filter['NAME']);
-            unset($filter['LAST_NAME']);
-            unset($filter['SECOND_NAME']);
-            unset($filter['WORK_POSITION']);
-            unset($filter['UF_DEPARTMENT_NAME']);
+            $filter = array_merge(
+                $filter,
+                \Bitrix\Main\UserUtils::getUserSearchFilter(
+                    Array(
+                        'FIND' => $nameSearch
+                    )
+                )
+            );
+        } else {
+            if ($server->getMethod() == "user.search") {
+                $previousFilter = $filter;
+                unset($filter['NAME']);
+                unset($filter['LAST_NAME']);
+                unset($filter['SECOND_NAME']);
+                unset($filter['WORK_POSITION']);
+                unset($filter['UF_DEPARTMENT_NAME']);
 
-            $filter = array_merge($filter, \Bitrix\Main\UserUtils::getUserSearchFilter(Array(
-                'NAME' => $previousFilter['NAME'],
-                'LAST_NAME' => $previousFilter['LAST_NAME'],
-                'SECOND_NAME' => $previousFilter['SECOND_NAME'],
-                'WORK_POSITION' => $previousFilter['WORK_POSITION'],
-                'UF_DEPARTMENT_NAME' => $previousFilter['UF_DEPARTMENT_NAME'],
-            )));
+                $filter = array_merge(
+                    $filter,
+                    \Bitrix\Main\UserUtils::getUserSearchFilter(
+                        Array(
+                            'NAME' => $previousFilter['NAME'],
+                            'LAST_NAME' => $previousFilter['LAST_NAME'],
+                            'SECOND_NAME' => $previousFilter['SECOND_NAME'],
+                            'WORK_POSITION' => $previousFilter['WORK_POSITION'],
+                            'UF_DEPARTMENT_NAME' => $previousFilter['UF_DEPARTMENT_NAME'],
+                        )
+                    )
+                );
+            }
         }
 
         if (
@@ -289,12 +468,15 @@ class User extends \IRestService
                     );
                 }
             } else {
-                $filter["ID"] = (isset($filter["ID"]) ? array_intersect((is_array($filter["ID"]) ? $filter["ID"] : array($filter["ID"])), $filteredUserIDs) : $filteredUserIDs);
+                $filter["ID"] = (isset($filter["ID"]) ? array_intersect(
+                    (is_array($filter["ID"]) ? $filter["ID"] : array($filter["ID"])),
+                    $filteredUserIDs
+                ) : $filteredUserIDs);
             }
         }
 
         if (array_key_exists("HAS_DEPARTAMENT", $filter)) {
-            if ($filter["HAS_DEPARTAMENT"] == "Y") {
+            if ($filter["HAS_DEPARTAMENT"] === "Y") {
                 $filter[] = [
                     'LOGIC' => 'AND',
                     '!UF_DEPARTMENT' => false,
@@ -314,10 +496,12 @@ class User extends \IRestService
         }
         $getListMethodName = 'getList';
 
-        $dbResCnt = $getListClassName::$getListMethodName(array(
-            'filter' => $filter,
-            'select' => array("CNT" => new ExpressionField('CNT', 'COUNT(1)')),
-        ));
+        $dbResCnt = $getListClassName::$getListMethodName(
+            array(
+                'filter' => $filter,
+                'select' => array("CNT" => new ExpressionField('CNT', 'COUNT(1)')),
+            )
+        );
 
         $resCnt = $dbResCnt->fetch();
         if ($resCnt && $resCnt["CNT"] > 0) {
@@ -327,21 +511,23 @@ class User extends \IRestService
             if ($sort && $order) {
                 $querySort[$sort] = $order;
             }
-
-            $dbRes = $getListClassName::$getListMethodName(array(
-                'order' => $querySort,
-                'filter' => $filter,
-                'select' => static::getDefaultAllowedUserFields(),
-                'limit' => $navParams['limit'],
-                'offset' => $navParams['offset'],
-                'data_doubling' => false,
-            ));
+            $allowedFields = static::getAllowedUserFields($server->getAuthScope());
+            $dbRes = $getListClassName::$getListMethodName(
+                array(
+                    'order' => $querySort,
+                    'filter' => $filter,
+                    'select' => $allowedFields,
+                    'limit' => $navParams['limit'],
+                    'offset' => $navParams['offset'],
+                    'data_doubling' => false,
+                )
+            );
 
             $result = array();
             $files = array();
 
             while ($userInfo = $dbRes->fetch()) {
-                $result[] = self::getUserData($userInfo);
+                $result[] = self::getUserData($userInfo, $allowedFields);
 
                 if ($userInfo['PERSONAL_PHOTO'] > 0) {
                     $files[] = $userInfo['PERSONAL_PHOTO'];
@@ -372,12 +558,14 @@ class User extends \IRestService
 
     public static function userOnline()
     {
-        $dbRes = UserTable::getList(array(
-            'filter' => array(
-                'IS_ONLINE' => 'Y',
-            ),
-            'select' => array('ID')
-        ));
+        $dbRes = UserTable::getList(
+            array(
+                'filter' => array(
+                    'IS_ONLINE' => 'Y',
+                ),
+                'select' => array('ID')
+            )
+        );
 
         $onlineUsers = array();
         while ($userData = $dbRes->fetch()) {
@@ -402,8 +590,12 @@ class User extends \IRestService
         return $counters;
     }
 
-    public static function userAdd($userFields)
+    public static function userAdd($userFields, $nav = 0, \CRestServer $server = null)
     {
+        if (!is_null($server) && !static::isMainScope($server)) {
+            return static::getErrorScope();
+        }
+
         global $APPLICATION, $USER;
 
         static::checkAllowedFields();
@@ -444,7 +636,7 @@ class User extends \IRestService
                 unset($userFields["EXTRANET"]);
             }
 
-            $inviteFields = self::prepareUserData($userFields);
+            $inviteFields = self::prepareSaveData($userFields);
 
             $userFields["EMAIL"] = trim($userFields["EMAIL"]);
             if (check_email($userFields["EMAIL"])) {
@@ -466,7 +658,7 @@ class User extends \IRestService
 
                     $ID = \CIntranetInviteDialog::RegisterUser($inviteFields);
                     if (is_array($ID)) {
-                        throw new \Exception(implode($ID, "\n"));
+                        throw new \Exception(implode("\n", $ID));
                     } elseif ($ID > 0) {
                         $obUser = new \CUser;
                         if (!$obUser->update($ID, $inviteFields)) {
@@ -475,9 +667,18 @@ class User extends \IRestService
 
                         $inviteFields['ID'] = $ID;
 
+                        Invitation::add(
+                            [
+                                'USER_ID' => $ID,
+                                'TYPE' => Invitation::TYPE_EMAIL
+                            ]
+                        );
+
                         \CIntranetInviteDialog::InviteUser(
                             $inviteFields,
-                            (isset($userFields["MESSAGE_TEXT"])) ? htmlspecialcharsbx($userFields["MESSAGE_TEXT"]) : GetMessage("BX24_INVITE_DIALOG_INVITE_MESSAGE_TEXT_1")
+                            (isset($userFields["MESSAGE_TEXT"])) ? htmlspecialcharsbx(
+                                $userFields["MESSAGE_TEXT"]
+                            ) : GetMessage("BX24_INVITE_DIALOG_INVITE_MESSAGE_TEXT_1")
                         );
 
                         if (
@@ -486,7 +687,13 @@ class User extends \IRestService
                             && \CModule::IncludeModule('socialnetwork')
                         ) {
                             foreach ($sonetGroupId as $groupId) {
-                                if (!\CSocNetUserToGroup::SendRequestToJoinGroup($USER->GetID(), $ID, $groupId, "", false)) {
+                                if (!\CSocNetUserToGroup::SendRequestToJoinGroup(
+                                    $USER->GetID(),
+                                    $ID,
+                                    $groupId,
+                                    "",
+                                    false
+                                )) {
                                     if ($e = $APPLICATION->GetException()) {
                                         throw new \Exception($e->GetString());
                                     }
@@ -509,22 +716,26 @@ class User extends \IRestService
         return $res;
     }
 
-    public static function userUpdate($userFields)
+    public static function userUpdate($userFields, $nav = 0, \CRestServer $server = null)
     {
+        if (!is_null($server) && !static::isMainScope($server)) {
+            return static::getErrorScope();
+        }
+
         global $USER;
 
         static::checkAllowedFields();
 
         $bB24 = ModuleManager::isModuleInstalled('bitrix24');
 
-        $bAdmin = $bB24 && $USER->canDoOperation('bitrix24_invite')
+        $bAdmin = ($bB24 && $USER->canDoOperation('bitrix24_invite'))
             || $USER->canDoOperation('edit_all_users');
 
         $userFields = array_change_key_case($userFields, CASE_UPPER);
 
         if ($userFields['ID'] > 0) {
             if ($bAdmin || ($USER->getID() == $userFields['ID'] && $USER->CanDoOperation('edit_own_profile'))) {
-                $updateFields = self::prepareUserData($userFields);
+                $updateFields = self::prepareSaveData($userFields);
 
                 // security
                 if (!$bAdmin) {
@@ -549,6 +760,66 @@ class User extends \IRestService
         return $res;
     }
 
+    private static function prepareUserField($params, $data)
+    {
+        $result = $data;
+        switch ($params['USER_TYPE_ID']) {
+            case 'datetime':
+                $result = \CRestUtil::unConvertDateTime($data);
+                break;
+            case 'date':
+                $result = \CRestUtil::unConvertDate($data);
+                break;
+            case 'file':
+                if (is_array($data)) {
+                    if ($params['MULTIPLE'] === 'N') {
+                        if (!empty($data['fileData'])) {
+                            $result = \CRestUtil::saveFile($data['fileData']);
+                            $result['old_id'] = $params['VALUE'];
+                        }
+                        $id = isset($data['id']) ? (int)$data['id'] : 0;
+                        $remove = isset($data['remove']) && is_string($data['remove']) && mb_strtoupper(
+                                $data['remove']
+                            ) === 'Y';
+                        if ($remove && $id > 0) {
+                            $result = [
+                                'old_id' => $id,
+                                'del' => 'Y'
+                            ];
+                        }
+                    } else {
+                        if ($params['VALUE']) {
+                            $result = array_merge($result, $params['VALUE']);
+                        }
+
+                        foreach ($result as $key => $value) {
+                            if ($value['fileData']) {
+                                $result[$key] = \CRestUtil::saveFile($value['fileData']);
+                            } else {
+                                $id = isset($value['id']) ? (int)$value['id'] : 0;
+                                $remove = isset($value['remove']) && is_string($value['remove']) && mb_strtoupper(
+                                        $value['remove']
+                                    ) === 'Y';
+                                if ($remove && $id > 0) {
+                                    $result[$key] = [
+                                        'old_id' => $id,
+                                        'del' => 'Y'
+                                    ];
+                                } elseif ($value > 0) {
+                                    $result[$key] = [
+                                        'old_id' => $value,
+                                        'error' => 'Y'
+                                    ];
+                                }
+                            }
+                        }
+                    }
+                }
+                break;
+        }
+        return $result;
+    }
+
     protected static function prepareUserData($userData, $allowedUserFields = null)
     {
         $user = array();
@@ -570,17 +841,25 @@ class User extends \IRestService
             }
         }
 
-        if (isset($user['ACTIVE']))
+        if (isset($user['ACTIVE'])) {
             $user['ACTIVE'] = ($user['ACTIVE'] && $user['ACTIVE'] != 'N') ? 'Y' : 'N';
+        }
 
-        if (isset($user['IS_ONLINE']))
+        if (isset($user['IS_ONLINE'])) {
             $user['IS_ONLINE'] = ($user['IS_ONLINE'] && $user['IS_ONLINE'] != 'N') ? 'Y' : 'N';
+        }
 
-        if (isset($user['PERSONAL_BIRTHDAY']))
+        if (isset($user['PERSONAL_BIRTHDAY'])) {
             $user['PERSONAL_BIRTHDAY'] = \CRestUtil::unConvertDate($user['PERSONAL_BIRTHDAY']);
+        }
 
-        if (isset($user['UF_DEPARTMENT']) && !is_array($user['UF_DEPARTMENT']) && !empty($user['UF_DEPARTMENT']))
+        if (isset($user['UF_DEPARTMENT']) && !is_array($user['UF_DEPARTMENT']) && !empty($user['UF_DEPARTMENT'])) {
             $user['UF_DEPARTMENT'] = array($user['UF_DEPARTMENT']);
+        }
+
+        if (isset($user['AUTO_TIME_ZONE'])) {
+            $user['AUTO_TIME_ZONE'] = ($user['AUTO_TIME_ZONE'] && $user['AUTO_TIME_ZONE'] === 'Y') ? 'Y' : 'N';
+        }
 
         if (isset($user['PERSONAL_PHOTO'])) {
             $user['PERSONAL_PHOTO'] = \CRestUtil::saveFile($user['PERSONAL_PHOTO']);
@@ -590,23 +869,88 @@ class User extends \IRestService
             }
         }
 
+        if (
+            isset($user['CONFIRM_CODE'])
+            && $user['CONFIRM_CODE'] === '0'
+        ) {
+            $user['CONFIRM_CODE'] = false;
+        }
+
         return $user;
     }
 
-    protected static function getUserData($userFields)
+    protected static function prepareSaveData($userData, $allowedUserFields = null)
+    {
+        global $USER_FIELD_MANAGER;
+        $user = array();
+
+        if (!$allowedUserFields) {
+            $allowedUserFields = static::getDefaultAllowedUserFields();
+        }
+
+        $userId = (int)$userData['ID'];
+
+        $fieldsList = $USER_FIELD_MANAGER->getUserFields('USER', $userId, LANGUAGE_ID);
+
+        foreach ($userData as $key => $value) {
+            if (in_array($key, $allowedUserFields, true)) {
+                if (mb_strpos($key, static::$nameFieldFullPrefix) === 0) {
+                    $user[$key] = static::prepareUserField($fieldsList[$key], $value);
+                } else {
+                    $user[$key] = $value;
+                }
+            }
+        }
+
+
+        if (isset($user['ACTIVE'])) {
+            $user['ACTIVE'] = ($user['ACTIVE'] && $user['ACTIVE'] != 'N') ? 'Y' : 'N';
+        }
+
+        if (isset($user['PERSONAL_BIRTHDAY'])) {
+            $user['PERSONAL_BIRTHDAY'] = \CRestUtil::unConvertDate($user['PERSONAL_BIRTHDAY']);
+        }
+
+        if (isset($user['UF_DEPARTMENT']) && !is_array($user['UF_DEPARTMENT']) && !empty($user['UF_DEPARTMENT'])) {
+            $user['UF_DEPARTMENT'] = array($user['UF_DEPARTMENT']);
+        }
+
+        if (isset($user['PERSONAL_PHOTO'])) {
+            $user['PERSONAL_PHOTO'] = \CRestUtil::saveFile($user['PERSONAL_PHOTO']);
+
+            if (!$user['PERSONAL_PHOTO']) {
+                $user['PERSONAL_PHOTO'] = array('del' => 'Y');
+            }
+        }
+
+        $user = array_diff_key($user, array_fill_keys(static::$holdEditFields, 'Y'));
+
+        return $user;
+    }
+
+    protected static function getUserData($userFields, $allowedFields = null)
     {
         static $extranetModuleInstalled = null;
         if ($extranetModuleInstalled === null) {
             $extranetModuleInstalled = ModuleManager::isModuleInstalled('extranet');
         }
+        global $USER_FIELD_MANAGER;
+        $fieldsList = $USER_FIELD_MANAGER->getUserFields(static::$entityUser, 0, LANGUAGE_ID);
+
+        $urlManager = \Bitrix\Main\Engine\UrlManager::getInstance();
 
         $res = array();
-        foreach (static::getDefaultAllowedUserFields() as $key) {
+        if (is_null($allowedFields)) {
+            $allowedFields = static::getDefaultAllowedUserFields();
+        }
+        foreach ($allowedFields as $key) {
             switch ($key) {
                 case 'ACTIVE':
                     $res[$key] = $userFields[$key] == 'Y';
                     break;
                 case 'PERSONAL_BIRTHDAY':
+                case 'LAST_LOGIN':
+                case 'DATE_REGISTER':
                     $res[$key] = \CRestUtil::convertDate($userFields[$key]);
                     break;
                 case 'EXTERNAL_AUTH_ID':
@@ -615,11 +959,80 @@ class User extends \IRestService
                     unset($userFields[$key]);
                     break;
                 default:
-                    $res[$key] = $userFields[$key];
+                    if (!empty($fieldsList[$key])) {
+                        if ($fieldsList[$key]['USER_TYPE_ID'] === 'date') {
+                            if ($fieldsList[$key]['MULTIPLE'] === 'Y' && is_array($userFields[$key])) {
+                                foreach ($userFields[$key] as $k => $value) {
+                                    $res[$key][$k] = \CRestUtil::convertDate($userFields[$key][$k]);
+                                }
+                            } else {
+                                $res[$key] = \CRestUtil::convertDate($userFields[$key]);
+                            }
+                        } elseif ($fieldsList[$key]['USER_TYPE_ID'] === 'datetime') {
+                            if ($fieldsList[$key]['MULTIPLE'] === 'Y' && is_array($userFields[$key])) {
+                                foreach ($userFields[$key] as $k => $value) {
+                                    $res[$key][$k] = \CRestUtil::convertDateTime($userFields[$key][$k]);
+                                }
+                            } else {
+                                $res[$key] = \CRestUtil::convertDateTime($userFields[$key]);
+                            }
+                        } elseif ($fieldsList[$key]['USER_TYPE_ID'] === 'file') {
+                            if ($fieldsList[$key]['MULTIPLE'] === 'Y' && is_array($userFields[$key])) {
+                                foreach ($userFields[$key] as $k => $value) {
+                                    $res[$key][$k] = [
+                                        'id' => $userFields[$key][$k],
+                                        'showUrl' => $urlManager->create(
+                                            'rest.file.get',
+                                            [
+                                                'entity' => static::$entityUser,
+                                                'id' => $userFields['ID'],
+                                                'field' => $key,
+                                                'value' => $userFields[$key]
+                                            ]
+                                        ),
+                                        'downloadData' => [
+                                            'id' => $userFields['ID'],
+                                            'field' => $key,
+                                            'value' => $userFields[$key][$k],
+                                        ],
+                                    ];
+                                }
+                            } else {
+                                $res[$key] = [
+                                    'id' => $userFields[$key],
+                                    'showUrl' => $urlManager->create(
+                                        'rest.file.get',
+                                        [
+                                            'entity' => static::$entityUser,
+                                            'id' => $userFields['ID'],
+                                            'field' => $key,
+                                            'value' => $userFields[$key]
+                                        ]
+                                    ),
+                                    'downloadData' => [
+                                        'id' => $userFields['ID'],
+                                        'field' => $key,
+                                        'value' => $userFields[$key]
+                                    ]
+                                ];
+                            }
+                        }
+                    }
+
+                    if (!isset($res[$key])) {
+                        $res[$key] = $userFields[$key];
+                    }
+                    break;
             }
         }
 
         return $res;
+    }
+
+    public static function getFile($query, $n, \CRestServer $server)
+    {
+        $file = new File();
+        return $file->getAction(static::$entityUser, $query['id'], $query['field'], $query['value'], $server);
     }
 
     protected static function getDefaultSite()

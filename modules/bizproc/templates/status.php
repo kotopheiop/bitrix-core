@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 $arFields = Array(
@@ -217,7 +218,10 @@ $arFields = Array(
                                     'Properties' => Array
                                     (
                                         'MailSubject' => GetMessage("BPT_ST_SUBJECT"),
-                                        'MailText' => CBPDocument::_ReplaceTaskURL(GetMessage("BPT_ST_TEXT"), $documentType),
+                                        'MailText' => CBPDocument::_ReplaceTaskURL(
+                                            GetMessage("BPT_ST_TEXT"),
+                                            $documentType
+                                        ),
                                         'MailMessageType' => 'plain',
                                         'MailCharset' => LANG_CHARSET,
                                         'MailUserFrom' => '',

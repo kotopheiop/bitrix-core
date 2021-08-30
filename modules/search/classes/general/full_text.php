@@ -58,8 +58,14 @@ class CSearchFullText
         return false;
     }
 
-    function searchTitle($phrase = "", $arPhrase = array(), $nTopCount = 5, $arParams = array(), $bNotFilter = false, $order = "")
-    {
+    function searchTitle(
+        $phrase = "",
+        $arPhrase = array(),
+        $nTopCount = 5,
+        $arParams = array(),
+        $bNotFilter = false,
+        $order = ""
+    ) {
         return false;
     }
 

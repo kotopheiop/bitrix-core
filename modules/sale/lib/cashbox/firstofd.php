@@ -53,17 +53,20 @@ class FirstOfd extends Ofd
                 if ($queryKey === 't') {
                     $dateTime = Main\Type\DateTime::createFromTimestamp($data[$checkKey]);
                     $queryParams[] = $queryKey . '=' . $dateTime->format('Ymd\THis');
-                } else if ($queryKey === 'n') {
-                    $calculatedSignMap = $this->getCalculatedSignMap();
-                    $queryParams[] = $queryKey . '=' . $calculatedSignMap[$data[$checkKey]];
                 } else {
-                    $queryParams[] = $queryKey . '=' . $data[$checkKey];
+                    if ($queryKey === 'n') {
+                        $calculatedSignMap = $this->getCalculatedSignMap();
+                        $queryParams[] = $queryKey . '=' . $calculatedSignMap[$data[$checkKey]];
+                    } else {
+                        $queryParams[] = $queryKey . '=' . $data[$checkKey];
+                    }
                 }
             }
         }
 
-        if (empty($queryParams))
+        if (empty($queryParams)) {
             return '';
+        }
 
         $url = $this->getUrl();
         return $url . implode('&', $queryParams);

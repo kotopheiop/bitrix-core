@@ -1,7 +1,8 @@
 <?
 
-if (!CModule::IncludeModule('iblock'))
+if (!CModule::IncludeModule('iblock')) {
     return false;
+}
 
 IncludeModuleLangFile(__FILE__);
 

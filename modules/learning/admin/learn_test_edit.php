@@ -1,13 +1,15 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 if (!CModule::IncludeModule('learning')) {
     require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php'); // second system's prolog
 
-    if (IsModuleInstalled('learning') && defined('LEARNING_FAILED_TO_LOAD_REASON'))
+    if (IsModuleInstalled('learning') && defined('LEARNING_FAILED_TO_LOAD_REASON')) {
         echo LEARNING_FAILED_TO_LOAD_REASON;
-    else
+    } else {
         CAdminMessage::ShowMessage(GetMessage('LEARNING_MODULE_NOT_FOUND'));
+    }
 
     require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin.php');    // system's epilog
     exit();
@@ -24,9 +26,24 @@ $ID = intval($ID);
 $COURSE_ID = intval($COURSE_ID);
 
 $aTabs = array(
-    array("DIV" => "edit1", "TAB" => GetMessage('LEARNING_TEST'), "ICON" => "main_user_edit", "TITLE" => GetMessage('LEARNING_TEST_TITLE')),
-    array("DIV" => "edit2", "TAB" => GetMessage('LEARNING_DESC'), "ICON" => "main_user_edit", "TITLE" => GetMessage('LEARNING_DESC_TITLE')),
-    array("DIV" => "edit3", "TAB" => GetMessage('LEARNING_MARKS'), "ICON" => "main_user_edit", "TITLE" => GetMessage('LEARNING_MARKS_TITLE')),
+    array(
+        "DIV" => "edit1",
+        "TAB" => GetMessage('LEARNING_TEST'),
+        "ICON" => "main_user_edit",
+        "TITLE" => GetMessage('LEARNING_TEST_TITLE')
+    ),
+    array(
+        "DIV" => "edit2",
+        "TAB" => GetMessage('LEARNING_DESC'),
+        "ICON" => "main_user_edit",
+        "TITLE" => GetMessage('LEARNING_DESC_TITLE')
+    ),
+    array(
+        "DIV" => "edit3",
+        "TAB" => GetMessage('LEARNING_MARKS'),
+        "ICON" => "main_user_edit",
+        "TITLE" => GetMessage('LEARNING_MARKS_TITLE')
+    ),
 );
 $tabControl = new CAdminForm("testTabControl", $aTabs);
 
@@ -39,8 +56,9 @@ $oAccess = CLearnAccess::GetInstance($USER->GetID());
 $linkedLessonId = CCourse::CourseGetLinkedLesson($COURSE_ID);
 
 if ($linkedLessonId !== false) {
-    if ($oAccess->IsLessonAccessible($linkedLessonId, CLearnAccess::OP_LESSON_READ))
+    if ($oAccess->IsLessonAccessible($linkedLessonId, CLearnAccess::OP_LESSON_READ)) {
         $isReadAccess = true;
+    }
 
     if ($oAccess->IsLessonAccessible($linkedLessonId, CLearnAccess::OP_LESSON_WRITE)) {
         $isReadAccess = true;
@@ -74,19 +92,24 @@ if ($isReadAccess === false) {
 $arNewIDs = array();
 $nextNum = 0;
 
-if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($_POST["Update"]) > 0 && check_bitrix_sessid() && $isCreateOrEditAccess) {
+if ($_SERVER["REQUEST_METHOD"] == "POST" && $_POST["Update"] <> '' && check_bitrix_sessid() && $isCreateOrEditAccess) {
     $test = new CTest;
 
     foreach ($_POST as $key => $val) {
-        if (substr($key, 0, 7) == "N_MARK_") {
-            $arNewIDs[] = intval(substr($key, 7));
+        if (mb_substr($key, 0, 7) == "N_MARK_") {
+            $arNewIDs[] = intval(mb_substr($key, 7));
         }
     }
-    if (count($arNewIDs) > 0)
+    if (count($arNewIDs) > 0) {
         $nextNum = max($arNewIDs);
+    }
 
-    $QUESTIONS_AMOUNT = (intval(${"QUESTIONS_AMOUNT_" . $QUESTIONS_FROM}) > 0 ? intval(${"QUESTIONS_AMOUNT_" . $QUESTIONS_FROM}) : 0);
-    $QUESTIONS_FROM_ID = (intval(${"QUESTIONS_FROM_ID_" . $QUESTIONS_FROM}) > 0 ? intval(${"QUESTIONS_FROM_ID_" . $QUESTIONS_FROM}) : 0);
+    $QUESTIONS_AMOUNT = (intval(${"QUESTIONS_AMOUNT_" . $QUESTIONS_FROM}) > 0 ? intval(
+        ${"QUESTIONS_AMOUNT_" . $QUESTIONS_FROM}
+    ) : 0);
+    $QUESTIONS_FROM_ID = (intval(${"QUESTIONS_FROM_ID_" . $QUESTIONS_FROM}) > 0 ? intval(
+        ${"QUESTIONS_FROM_ID_" . $QUESTIONS_FROM}
+    ) : 0);
 
     if ($CURRENT_INDICATION == "Y") {
         $CURRENT_INDICATION =
@@ -106,7 +129,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($_POST["Update"]) > 0 && chec
         $FINAL_INDICATION = 0;
     }
 
-    $MIN_TIME_BETWEEN_ATTEMPTS = $MIN_TIME_BETWEEN_ATTEMPTS_D * 60 * 24 + $MIN_TIME_BETWEEN_ATTEMPTS_H * 60 + $MIN_TIME_BETWEEN_ATTEMPTS_M;
+    $MIN_TIME_BETWEEN_ATTEMPTS =
+        (int)$MIN_TIME_BETWEEN_ATTEMPTS_D * 60 * 24
+        + (int)$MIN_TIME_BETWEEN_ATTEMPTS_H * 60
+        + (int)$MIN_TIME_BETWEEN_ATTEMPTS_M;
 
     $NEXT_QUESTION_ON_ERROR = ($SHOW_ERRORS == "Y" && $NEXT_QUESTION_ON_ERROR == "N" && $PASSAGE_TYPE == "2") ? "N" : "Y";
 
@@ -149,7 +175,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($_POST["Update"]) > 0 && chec
         "MIN_TIME_BETWEEN_ATTEMPTS" => $MIN_TIME_BETWEEN_ATTEMPTS,
     );
 
-    if (strlen($arFields["COMPLETED_SCORE"]) <= 0) {
+    if ($arFields["COMPLETED_SCORE"] == '') {
         unset($arFields["COMPLETED_SCORE"]);
         $arFields["APPROVED"] = "N";
     }
@@ -157,7 +183,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($_POST["Update"]) > 0 && chec
     if (intval($arFields["PREVIOUS_TEST_ID"]) <= 0) {
         $arFields["PREVIOUS_TEST_ID"] = false;
     }
-    if (strlen($arFields["PREVIOUS_TEST_SCORE"]) <= 0) {
+    if ($arFields["PREVIOUS_TEST_SCORE"] == '') {
         $arFields["PREVIOUS_TEST_SCORE"] = 0;
     }
 
@@ -173,8 +199,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($_POST["Update"]) > 0 && chec
     }
 
     if (!$res) {
-        if ($e = $APPLICATION->GetException())
+        if ($e = $APPLICATION->GetException()) {
             $message = new CAdminMessage(GetMessage("LEARNING_ERROR"), $e);
+        }
         $bVarsFromForm = true;
     } else {
         //Marks
@@ -192,10 +219,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($_POST["Update"]) > 0 && chec
             }
 
             if (in_array(${"SCORE_" . $m["ID"]}, $arScores)) {
-                $message = new CAdminMessage(Array("MESSAGE" => str_replace("##SCORE##", ${"SCORE_" . $m["ID"]}, GetMessage("LEARNING_SCORE_EXISTS_ERROR"))));
+                $message = new CAdminMessage(
+                    Array(
+                        "MESSAGE" => str_replace(
+                            "##SCORE##",
+                            ${"SCORE_" . $m["ID"]},
+                            GetMessage("LEARNING_SCORE_EXISTS_ERROR")
+                        )
+                    )
+                );
                 $bVarsFromForm = true;
             } elseif (in_array(${"MARK_" . $m["ID"]}, $arMarks)) {
-                $message = new CAdminMessage(Array("MESSAGE" => str_replace("##MARK##", ${"MARK_" . $m["ID"]}, GetMessage("LEARNING_MARK_EXISTS_ERROR"))));
+                $message = new CAdminMessage(
+                    Array(
+                        "MESSAGE" => str_replace(
+                            "##MARK##",
+                            ${"MARK_" . $m["ID"]},
+                            GetMessage("LEARNING_MARK_EXISTS_ERROR")
+                        )
+                    )
+                );
                 $bVarsFromForm = true;
             } else {
                 if (${"MARK_" . $m["ID"] . "_DEL"} != "Y") {
@@ -221,13 +264,31 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($_POST["Update"]) > 0 && chec
 
         //add new
         foreach ($arNewIDs as $i) {
-            if (strlen(${"N_MARK_" . $i}) <= 0 && strlen(${"N_SCORE_" . $i}) <= 0) continue;
+            if (${"N_MARK_" . $i} == '' && ${"N_SCORE_" . $i} == '') {
+                continue;
+            }
 
             if (in_array(${"N_SCORE_" . $i}, $arScores)) {
-                $message = new CAdminMessage(Array("MESSAGE" => str_replace("##SCORE##", ${"N_SCORE_" . $i}, GetMessage("LEARNING_SCORE_EXISTS_ERROR"))));
+                $message = new CAdminMessage(
+                    Array(
+                        "MESSAGE" => str_replace(
+                            "##SCORE##",
+                            ${"N_SCORE_" . $i},
+                            GetMessage("LEARNING_SCORE_EXISTS_ERROR")
+                        )
+                    )
+                );
                 $bVarsFromForm = true;
             } elseif (in_array(${"N_MARK_" . $i}, $arMarks)) {
-                $message = new CAdminMessage(Array("MESSAGE" => str_replace("##MARK##", ${"N_MARK_" . $i}, GetMessage("LEARNING_MARK_EXISTS_ERROR"))));
+                $message = new CAdminMessage(
+                    Array(
+                        "MESSAGE" => str_replace(
+                            "##MARK##",
+                            ${"N_MARK_" . $i},
+                            GetMessage("LEARNING_MARK_EXISTS_ERROR")
+                        )
+                    )
+                );
                 $bVarsFromForm = true;
             } else {
                 $arMarks[] = ${"N_MARK_" . $i};
@@ -242,8 +303,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($_POST["Update"]) > 0 && chec
                 $mark = new CLTestMark;
                 $MarkID = $mark->Add($arFields);
                 if (intval($MarkID) <= 0) {
-                    if ($e = $APPLICATION->GetException())
+                    if ($e = $APPLICATION->GetException()) {
                         $message = new CAdminMessage(GetMessage("LEARNING_ERROR"), $e);
+                    }
                     $bVarsFromForm = true;
                 }
             }
@@ -253,39 +315,43 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($_POST["Update"]) > 0 && chec
             $message = new CAdminMessage(Array("MESSAGE" => GetMessage("LEARNING_MAX_MARK_ERROR")));
             $bVarsFromForm = true;
         }
-
     }
 
     //Redirect
     if (!$bVarsFromForm) {
         $DB->Commit();
 
-        if (strlen($apply) <= 0) {
+        if ($apply == '') {
             if ($from == "learn_admin") {
-                LocalRedirect("/bitrix/admin/learn_unilesson_admin.php?lang=" . LANG
+                LocalRedirect(
+                    "/bitrix/admin/learn_unilesson_admin.php?lang=" . LANG
                     . '&PARENT_LESSON_ID=' . ($_GET['PARENT_LESSON_ID'] + 0)
                     . '&LESSON_PATH=' . urlencode($_GET['LESSON_PATH'])
-                    . "&" . GetFilterParams("filter_", false));
-            } elseif (strlen($return_url) > 0) {
-                if (strpos($return_url, "#TEST_ID#") !== false) {
+                    . "&" . GetFilterParams("filter_", false)
+                );
+            } elseif ($return_url <> '') {
+                if (mb_strpos($return_url, "#TEST_ID#") !== false) {
                     $return_url = str_replace("#TEST_ID#", $ID, $return_url);
                 }
                 LocalRedirect($return_url);
             } else {
-                LocalRedirect("/bitrix/admin/learn_test_admin.php?lang=" . LANG
+                LocalRedirect(
+                    "/bitrix/admin/learn_test_admin.php?lang=" . LANG
                     . "&COURSE_ID=" . $COURSE_ID
                     . '&PARENT_LESSON_ID=' . ($_GET['PARENT_LESSON_ID'] + 0)
                     . '&LESSON_PATH=' . urlencode($_GET['LESSON_PATH'])
-                    . GetFilterParams("filter_", false));
+                    . GetFilterParams("filter_", false)
+                );
             }
         }
-        LocalRedirect("/bitrix/admin/learn_test_edit.php?lang=" . LANG
+        LocalRedirect(
+            "/bitrix/admin/learn_test_edit.php?lang=" . LANG
             . "&COURSE_ID=" . $COURSE_ID
             . '&PARENT_LESSON_ID=' . ($_GET['PARENT_LESSON_ID'] + 0)
             . '&LESSON_PATH=' . urlencode($_GET['LESSON_PATH'])
             . "&ID=" . $ID
-            . "&tabControl_active_tab=" . urlencode($tabControl_active_tab) . GetFilterParams("filter_", false));
-
+            . "&tabControl_active_tab=" . urlencode($tabControl_active_tab) . GetFilterParams("filter_", false)
+        );
     } else {
         if ($actionType == "add") {
             $ID = 0;
@@ -294,10 +360,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($_POST["Update"]) > 0 && chec
     }
 }
 
-if ($ID > 0)
+if ($ID > 0) {
     $APPLICATION->SetTitle(str_replace("#ID#", $ID, GetMessage("LEARNING_EDIT_TITLE2")));
-else
+} else {
     $APPLICATION->SetTitle(GetMessage("LEARNING_EDIT_TITLE1"));
+}
 
 //Defaults
 $str_ACTIVE = "Y";
@@ -349,7 +416,9 @@ if (!$res->ExtractFields("str_")) {
     }
 
     $str_MIN_TIME_BETWEEN_ATTEMPTS_D = floor($str_MIN_TIME_BETWEEN_ATTEMPTS / (60 * 24));
-    $str_MIN_TIME_BETWEEN_ATTEMPTS_H = floor(($str_MIN_TIME_BETWEEN_ATTEMPTS - $str_MIN_TIME_BETWEEN_ATTEMPTS_D * 60 * 24) / 60);
+    $str_MIN_TIME_BETWEEN_ATTEMPTS_H = floor(
+        ($str_MIN_TIME_BETWEEN_ATTEMPTS - $str_MIN_TIME_BETWEEN_ATTEMPTS_D * 60 * 24) / 60
+    );
     $str_MIN_TIME_BETWEEN_ATTEMPTS_M = $str_MIN_TIME_BETWEEN_ATTEMPTS - $str_MIN_TIME_BETWEEN_ATTEMPTS_D * 60 * 24 - $str_MIN_TIME_BETWEEN_ATTEMPTS_H * 60;
 }
 
@@ -380,8 +449,9 @@ if ($bVarsFromForm) {
 
 require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admin_after.php");
 
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 
 $aContext = array(
     array(
@@ -420,11 +490,14 @@ if ($ID > 0) {
     $aContext[] = array(
         "ICON" => "btn_delete",
         "TEXT" => GetMessage("MAIN_ADMIN_MENU_DELETE"),
-        "LINK" => "javascript:if(confirm('" . GetMessage("LEARNING_CONFIRM_DEL_MESSAGE") . "'))window.location='learn_test_admin.php?lang=" . LANG
-            . "&COURSE_ID=" . $COURSE_ID . "&action=delete&ID=" . $ID . "&" . bitrix_sessid_get() . urlencode(GetFilterParams("filter_", false))
+        "LINK" => "javascript:if(confirm('" . GetMessage(
+                "LEARNING_CONFIRM_DEL_MESSAGE"
+            ) . "'))window.location='learn_test_admin.php?lang=" . LANG
+            . "&COURSE_ID=" . $COURSE_ID . "&action=delete&ID=" . $ID . "&" . bitrix_sessid_get() . urlencode(
+                GetFilterParams("filter_", false)
+            )
             . '&return_url=' . urlencode(urlencode($returnUrl)) . "';",
     );
-
 }
 
 $context = new CAdminContextMenu($aContext);
@@ -438,8 +511,8 @@ $context->Show();
     <input type="hidden" name="ID" value="<? echo $ID ?>">
     <input type="hidden" name="COURSE_ID" value="<? echo $COURSE_ID ?>">
     <input type="hidden" name="from" value="<? echo htmlspecialcharsbx($from) ?>">
-<? if (strlen($return_url) > 0): ?><input type="hidden" name="return_url"
-                                          value="<?= htmlspecialcharsbx($return_url) ?>"><?endif ?>
+<? if ($return_url <> ''): ?><input type="hidden" name="return_url"
+                                    value="<?= htmlspecialcharsbx($return_url) ?>"><?endif ?>
 <?php $tabControl->EndEpilogContent(); ?>
 <? $tabControl->Begin(); ?>
 <? $tabControl->BeginNextFormTab(); ?>
@@ -492,15 +565,17 @@ $context->Show();
             <table>
                 <tr>
                     <td colspan="2"><input type="radio" name="QUESTIONS_FROM" id="QUESTIONS_FROM_A"
-                                           value="A"<? if ($str_QUESTIONS_FROM == "A" && intval($str_QUESTIONS_AMOUNT) == 0) echo " checked" ?>
-                                           onClick="OnChangeAnswer('');"><label
+                                           value="A"<? if ($str_QUESTIONS_FROM == "A" && intval(
+                                $str_QUESTIONS_AMOUNT
+                            ) == 0) echo " checked" ?> onClick="OnChangeAnswer('');"><label
                                 for="QUESTIONS_FROM_A"><? echo GetMessage("LEARNING_QUESTIONS_FROM_ALL") ?></label></td>
                 </tr>
 
                 <?php
                 $linkedLessonId = CCourse::CourseGetLinkedLesson($COURSE_ID);
-                if ($linkedLessonId === false)
+                if ($linkedLessonId === false) {
                     throw new Exception();
+                }
 
                 $oTree = CLearnLesson::GetTree($linkedLessonId);
 
@@ -521,17 +596,20 @@ $context->Show();
                     <td colspan="2">
                         <input type="radio" name="QUESTIONS_FROM" id="QUESTIONS_FROM_R" value="R"
                             <?php
-                            if (($str_QUESTIONS_FROM == "R") && (intval($str_QUESTIONS_AMOUNT) == 0))
+                            if (($str_QUESTIONS_FROM == "R") && (intval($str_QUESTIONS_AMOUNT) == 0)) {
                                 echo " checked ";
-                            ?> onclick="OnChangeAnswer('R');"><label
-                                for="QUESTIONS_FROM_R"><?php echo GetMessage("LEARNING_QUESTIONS_FROM_ALL_LESSON_WITH_SUBLESSONS"); ?></label>
+                            }
+                            ?> onclick="OnChangeAnswer('R');"><label for="QUESTIONS_FROM_R"><?php echo GetMessage(
+                                "LEARNING_QUESTIONS_FROM_ALL_LESSON_WITH_SUBLESSONS"
+                            ); ?></label>
                         <select name="QUESTIONS_FROM_ID_R">
                             <?php
                             foreach ($arSubLessons as $key => $arSubLesson) {
-                                if (($str_QUESTIONS_FROM == "R") && ($str_QUESTIONS_FROM_ID == $arSubLesson['LESSON_ID']))
+                                if (($str_QUESTIONS_FROM == "R") && ($str_QUESTIONS_FROM_ID == $arSubLesson['LESSON_ID'])) {
                                     $htmlSelected = ' selected="selected" ';
-                                else
+                                } else {
                                     $htmlSelected = ' ';
+                                }
 
                                 ?>
                                 <option value="<?php echo $arSubLesson['LESSON_ID']; ?>"
@@ -549,17 +627,20 @@ $context->Show();
                     <td colspan="2">
                         <input type="radio" name="QUESTIONS_FROM" id="QUESTIONS_FROM_S" value="S"
                             <?php
-                            if (($str_QUESTIONS_FROM == "S") && (intval($str_QUESTIONS_AMOUNT) == 0))
+                            if (($str_QUESTIONS_FROM == "S") && (intval($str_QUESTIONS_AMOUNT) == 0)) {
                                 echo " checked ";
-                            ?> onclick="OnChangeAnswer('S');"><label
-                                for="QUESTIONS_FROM_S"><?php echo GetMessage("LEARNING_QUESTIONS_FROM_ALL_LESSON"); ?></label>
+                            }
+                            ?> onclick="OnChangeAnswer('S');"><label for="QUESTIONS_FROM_S"><?php echo GetMessage(
+                                "LEARNING_QUESTIONS_FROM_ALL_LESSON"
+                            ); ?></label>
                         <select name="QUESTIONS_FROM_ID_S">
                             <?php
                             foreach ($arSubLessons as $key => $arSubLesson) {
-                                if (($str_QUESTIONS_FROM == "S") && ($str_QUESTIONS_FROM_ID == $arSubLesson['LESSON_ID']))
+                                if (($str_QUESTIONS_FROM == "S") && ($str_QUESTIONS_FROM_ID == $arSubLesson['LESSON_ID'])) {
                                     $htmlSelected = ' selected="selected" ';
-                                else
+                                } else {
                                     $htmlSelected = ' ';
+                                }
 
                                 ?>
                                 <option value="<?php echo $arSubLesson['LESSON_ID']; ?>"
@@ -576,11 +657,14 @@ $context->Show();
 
                 <tr>
                     <td colspan="2"><input type="radio" name="QUESTIONS_FROM" id="QUESTIONS_FROM_A2"
-                                           value="A"<? if ($str_QUESTIONS_FROM == "A" && intval($str_QUESTIONS_AMOUNT) != 0) echo " checked" ?>
-                                           onclick="OnChangeAnswer('A');"><label for="QUESTIONS_FROM_A2"><input
-                                    type="text" name="QUESTIONS_AMOUNT_A" onclick="return false;" size="2"
-                                    value="<? echo($str_QUESTIONS_FROM == "A" && $str_QUESTIONS_AMOUNT != 0 ? $str_QUESTIONS_AMOUNT : "") ?>">&nbsp;<? echo GetMessage("LEARNING_QUESTIONS_FROM_COURSE") ?>
-                        </label></td>
+                                           value="A"<? if ($str_QUESTIONS_FROM == "A" && intval(
+                                $str_QUESTIONS_AMOUNT
+                            ) != 0) echo " checked" ?> onclick="OnChangeAnswer('A');"><label
+                                for="QUESTIONS_FROM_A2"><input type="text" name="QUESTIONS_AMOUNT_A"
+                                                               onclick="return false;" size="2"
+                                                               value="<? echo($str_QUESTIONS_FROM == "A" && $str_QUESTIONS_AMOUNT != 0 ? $str_QUESTIONS_AMOUNT : "") ?>">&nbsp;<? echo GetMessage(
+                                "LEARNING_QUESTIONS_FROM_COURSE"
+                            ) ?></label></td>
                 </tr>
 
                 <tr>
@@ -590,8 +674,9 @@ $context->Show();
                                                                                                    name="QUESTIONS_AMOUNT_C"
                                                                                                    onclick="return false;"
                                                                                                    size="2"
-                                                                                                   value="<? echo($str_QUESTIONS_FROM == "C" ? $str_QUESTIONS_AMOUNT : "") ?>">&nbsp;<? echo GetMessage("LEARNING_QUESTIONS_FROM_CHAPTERS") ?>
-                        </label></td>
+                                                                                                   value="<? echo($str_QUESTIONS_FROM == "C" ? $str_QUESTIONS_AMOUNT : "") ?>">&nbsp;<? echo GetMessage(
+                                "LEARNING_QUESTIONS_FROM_CHAPTERS"
+                            ) ?></label></td>
                 </tr>
 
                 <tr>
@@ -601,16 +686,18 @@ $context->Show();
                                                                                                    name="QUESTIONS_AMOUNT_L"
                                                                                                    onclick="return false;"
                                                                                                    size="2"
-                                                                                                   value="<? echo($str_QUESTIONS_FROM == "L" ? $str_QUESTIONS_AMOUNT : "") ?>">&nbsp;<? echo GetMessage("LEARNING_QUESTIONS_FROM_LESSONS") ?>
-                        </label></td>
+                                                                                                   value="<? echo($str_QUESTIONS_FROM == "L" ? $str_QUESTIONS_AMOUNT : "") ?>">&nbsp;<? echo GetMessage(
+                                "LEARNING_QUESTIONS_FROM_LESSONS"
+                            ) ?></label></td>
                 </tr>
             </table>
             <script type="text/javascript">
                 <?
-                if ($str_QUESTIONS_AMOUNT == '0' && $str_QUESTIONS_FROM != "S" && $str_QUESTIONS_FROM != "H" && $str_QUESTIONS_FROM != "R")
+                if ($str_QUESTIONS_AMOUNT == '0' && $str_QUESTIONS_FROM != "S" && $str_QUESTIONS_FROM != "H" && $str_QUESTIONS_FROM != "R") {
                     $str = "";
-                else
+                } else {
                     $str = $str_QUESTIONS_FROM;
+                }
                 ?>
 
                 var QUESTIONS_FROM = '<?=$str?>';
@@ -674,12 +761,17 @@ $context->Show();
     <tr>
         <td><? echo $tabControl->GetCustomLabelHTML() ?>:</td>
         <td>
-            <input type="text" name="ATTEMPT_LIMIT" value="<? echo $str_ATTEMPT_LIMIT ?>"
-                   size="3"> <? echo GetMessage("LEARNING_ATTEMPT_LIMIT_HINT") ?>
+            <input type="text" name="ATTEMPT_LIMIT" value="<? echo $str_ATTEMPT_LIMIT ?>" size="3"> <? echo GetMessage(
+                "LEARNING_ATTEMPT_LIMIT_HINT"
+            ) ?>
         </td>
     </tr>
 <?php $tabControl->EndCustomField("ATTEMPT_LIMIT"); ?>
-<?php $tabControl->BeginCustomField("MIN_TIME_BETWEEN_ATTEMPTS", GetMessage("LEARNING_MIN_TIME_BETWEEN_ATTEMPTS"), false); ?>
+<?php $tabControl->BeginCustomField(
+    "MIN_TIME_BETWEEN_ATTEMPTS",
+    GetMessage("LEARNING_MIN_TIME_BETWEEN_ATTEMPTS"),
+    false
+); ?>
     <tr>
         <td><? echo $tabControl->GetCustomLabelHTML() ?>:</td>
         <td>
@@ -687,9 +779,12 @@ $context->Show();
                    size="3"> <? echo GetMessage("LEARNING_MIN_TIME_BETWEEN_ATTEMPTS_D") ?> <input type="text"
                                                                                                   name="MIN_TIME_BETWEEN_ATTEMPTS_H"
                                                                                                   value="<? echo $str_MIN_TIME_BETWEEN_ATTEMPTS_H ?>"
-                                                                                                  size="3"> <? echo GetMessage("LEARNING_MIN_TIME_BETWEEN_ATTEMPTS_H") ?>
-            <input type="text" name="MIN_TIME_BETWEEN_ATTEMPTS_M" value="<? echo $str_MIN_TIME_BETWEEN_ATTEMPTS_M ?>"
-                   size="3"> <? echo GetMessage("LEARNING_MIN_TIME_BETWEEN_ATTEMPTS_M") ?>
+                                                                                                  size="3"> <? echo GetMessage(
+                "LEARNING_MIN_TIME_BETWEEN_ATTEMPTS_H"
+            ) ?> <input type="text" name="MIN_TIME_BETWEEN_ATTEMPTS_M"
+                        value="<? echo $str_MIN_TIME_BETWEEN_ATTEMPTS_M ?>" size="3"> <? echo GetMessage(
+                "LEARNING_MIN_TIME_BETWEEN_ATTEMPTS_M"
+            ) ?>
         </td>
     </tr>
 <?php $tabControl->EndCustomField("MIN_TIME_BETWEEN_ATTEMPTS"); ?>
@@ -697,8 +792,9 @@ $context->Show();
     <tr>
         <td><? echo $tabControl->GetCustomLabelHTML() ?>:</td>
         <td>
-            <input type="text" name="TIME_LIMIT" value="<? echo $str_TIME_LIMIT ?>"
-                   size="3"> <? echo GetMessage("LEARNING_TIME_LIMIT_HINT") ?>
+            <input type="text" name="TIME_LIMIT" value="<? echo $str_TIME_LIMIT ?>" size="3"> <? echo GetMessage(
+                "LEARNING_TIME_LIMIT_HINT"
+            ) ?>
         </td>
     </tr>
 <?php $tabControl->EndCustomField("TIME_LIMIT"); ?>
@@ -758,8 +854,9 @@ $context->Show();
 
 $PREVIOUS_TEST_COURSE_ID = null;
 $t = CTest::GetList(array(), array("ACTIVE" => "Y", 'ID' => $str_PREVIOUS_TEST_ID));
-if ($arData = $t->Fetch())
+if ($arData = $t->Fetch()) {
     $PREVIOUS_TEST_COURSE_ID = $arData['COURSE_ID'];
+}
 
 ?>
     <tr>
@@ -798,11 +895,19 @@ if ($arData = $t->Fetch())
             <select name="PREVIOUS_TEST_COURSE_ID" id="PREVIOUS_TEST_COURSE_ID" onchange="filterTests()">
                 <?
                 // was: $course = CCourse::GetList(array("SORT" => "ASC"), array("MIN_PERMISSION" => "W"));
-                $course = CCourse::GetList(array("SORT" => "ASC"), array("ACCESS_OPERATIONS" => CLearnAccess::OP_LESSON_READ));
+                $course = CCourse::GetList(
+                    array("SORT" => "ASC"),
+                    array("ACCESS_OPERATIONS" => CLearnAccess::OP_LESSON_READ)
+                );
                 while ($course->ExtractFields("f_")) {
                     ?>
-                    <option
-                    value="<? echo $f_ID ?>" <? if (IntVal($f_ID) == $PREVIOUS_TEST_COURSE_ID || (!isset($PREVIOUS_TEST_COURSE_ID) && IntVal($f_ID) == $COURSE_ID)) echo "selected"; ?>><? echo $f_NAME ?></option><?
+                    <option value="<? echo $f_ID ?>" <? if (intval(
+                            $f_ID
+                        ) == $PREVIOUS_TEST_COURSE_ID || (!isset($PREVIOUS_TEST_COURSE_ID) && intval(
+                                $f_ID
+                            ) == $COURSE_ID)) {
+                        echo "selected";
+                    } ?>><? echo $f_NAME ?></option><?
                 }
                 ?>
             </select>
@@ -857,11 +962,13 @@ if ($arData = $t->Fetch())
                    onClick="toggleIndication(this.checked, 1);" id="indication_cb_1">
             <div id="indication_1">
                 <label><input type="checkbox" name="CURRENT_INDICATION_PERCENT"
-                              value="Y"<? if ($str_CURRENT_INDICATION_PERCENT == "Y") echo " checked" ?>><? echo GetMessage("LEARNING_CURRENT_INDICATION_PERCENT") ?>
-                </label><br/>
+                              value="Y"<? if ($str_CURRENT_INDICATION_PERCENT == "Y") echo " checked" ?>><? echo GetMessage(
+                        "LEARNING_CURRENT_INDICATION_PERCENT"
+                    ) ?></label><br/>
                 <label><input type="checkbox" name="CURRENT_INDICATION_MARK"
-                              value="Y"<? if ($str_CURRENT_INDICATION_MARK == "Y") echo " checked" ?>><? echo GetMessage("LEARNING_CURRENT_INDICATION_MARK") ?>
-                </label>
+                              value="Y"<? if ($str_CURRENT_INDICATION_MARK == "Y") echo " checked" ?>><? echo GetMessage(
+                        "LEARNING_CURRENT_INDICATION_MARK"
+                    ) ?></label>
             </div>
         </td>
     </tr>
@@ -875,17 +982,21 @@ if ($arData = $t->Fetch())
                    onClick="toggleIndication(this.checked, 2);" id="indication_cb_2">
             <div id="indication_2">
                 <label><input type="checkbox" name="FINAL_INDICATION_CORRECT_COUNT"
-                              value="Y"<? if ($str_FINAL_INDICATION_CORRECT_COUNT == "Y") echo " checked" ?>><? echo GetMessage("LEARNING_FINAL_INDICATION_CORRECT_COUNT") ?>
-                </label><br/>
+                              value="Y"<? if ($str_FINAL_INDICATION_CORRECT_COUNT == "Y") echo " checked" ?>><? echo GetMessage(
+                        "LEARNING_FINAL_INDICATION_CORRECT_COUNT"
+                    ) ?></label><br/>
                 <label><input type="checkbox" name="FINAL_INDICATION_SCORE"
-                              value="Y"<? if ($str_FINAL_INDICATION_SCORE == "Y") echo " checked" ?>><? echo GetMessage("LEARNING_FINAL_INDICATION_SCORE") ?>
-                </label><br/>
+                              value="Y"<? if ($str_FINAL_INDICATION_SCORE == "Y") echo " checked" ?>><? echo GetMessage(
+                        "LEARNING_FINAL_INDICATION_SCORE"
+                    ) ?></label><br/>
                 <label><input type="checkbox" name="FINAL_INDICATION_MARK"
-                              value="Y"<? if ($str_FINAL_INDICATION_MARK == "Y") echo " checked" ?>><? echo GetMessage("LEARNING_FINAL_INDICATION_MARK") ?>
-                </label><br/>
+                              value="Y"<? if ($str_FINAL_INDICATION_MARK == "Y") echo " checked" ?>><? echo GetMessage(
+                        "LEARNING_FINAL_INDICATION_MARK"
+                    ) ?></label><br/>
                 <label><input type="checkbox" name="FINAL_INDICATION_MESSAGE"
-                              value="Y"<? if ($str_FINAL_INDICATION_MESSAGE == "Y") echo " checked" ?>><? echo GetMessage("LEARNING_FINAL_INDICATION_MESSAGE") ?>
-                </label>
+                              value="Y"<? if ($str_FINAL_INDICATION_MESSAGE == "Y") echo " checked" ?>><? echo GetMessage(
+                        "LEARNING_FINAL_INDICATION_MESSAGE"
+                    ) ?></label>
             </div>
         </td>
     </tr>
@@ -915,10 +1026,13 @@ if ($arData = $t->Fetch())
         <td valign="top"><? echo $tabControl->GetCustomLabelHTML() ?>:</td>
         <td>
             <input type="radio" name="NEXT_QUESTION_ON_ERROR"
-                   value="Y"<? if ($str_NEXT_QUESTION_ON_ERROR != "N") echo " checked" ?>>&nbsp;<? echo GetMessage("LEARNING_NEXT_QUESTION_ON_ERROR") ?>
-            <br/>
+                   value="Y"<? if ($str_NEXT_QUESTION_ON_ERROR != "N") echo " checked" ?>>&nbsp;<? echo GetMessage(
+                "LEARNING_NEXT_QUESTION_ON_ERROR"
+            ) ?><br/>
             <input type="radio" name="NEXT_QUESTION_ON_ERROR"
-                   value="N"<? if ($str_NEXT_QUESTION_ON_ERROR == "N") echo " checked" ?>>&nbsp;<? echo GetMessage("LEARNING_PREV_QUESTION_ON_ERROR") ?>
+                   value="N"<? if ($str_NEXT_QUESTION_ON_ERROR == "N") echo " checked" ?>>&nbsp;<? echo GetMessage(
+                "LEARNING_PREV_QUESTION_ON_ERROR"
+            ) ?>
         </td>
     </tr>
     <script type="text/javascript">
@@ -955,7 +1069,11 @@ if ($arData = $t->Fetch())
                 false,
                 true,
                 false,
-                array('toolbarConfig' => CFileman::GetEditorToolbarConfig("learning_" . (defined('BX_PUBLIC_MODE') && BX_PUBLIC_MODE == 1 ? 'public' : 'admin')))
+                array(
+                    'toolbarConfig' => CFileman::GetEditorToolbarConfig(
+                        "learning_" . (defined('BX_PUBLIC_MODE') && BX_PUBLIC_MODE == 1 ? 'public' : 'admin')
+                    )
+                )
             ); ?>
         </td>
     </tr>
@@ -964,9 +1082,13 @@ if ($arData = $t->Fetch())
         <td align="center"><? echo GetMessage("LEARNING_DESC_TYPE") ?>:</td>
         <td>
             <input type="radio" name="DESCRIPTION_TYPE"
-                   value="text"<? if ($str_DESCRIPTION_TYPE != "html") echo " checked" ?>> <? echo GetMessage("LEARNING_DESC_TYPE_TEXT") ?>
+                   value="text"<? if ($str_DESCRIPTION_TYPE != "html") echo " checked" ?>> <? echo GetMessage(
+                "LEARNING_DESC_TYPE_TEXT"
+            ) ?>
             <input type="radio" name="DESCRIPTION_TYPE"
-                   value="html"<? if ($str_DESCRIPTION_TYPE == "html") echo " checked" ?>> <? echo GetMessage("LEARNING_DESC_TYPE_HTML") ?>
+                   value="html"<? if ($str_DESCRIPTION_TYPE == "html") echo " checked" ?>> <? echo GetMessage(
+                "LEARNING_DESC_TYPE_HTML"
+            ) ?>
         </td>
     </tr>
     <tr>
@@ -1017,7 +1139,9 @@ if ($arData = $t->Fetch())
                         </td>
                         <td align="center">
                             <input type="text" size="60" name="DESCRIPTION_<?php echo $s_ID ?>" value="<?php
-                            echo isset(${"DESCRIPTION_" . $s_ID}) ? htmlspecialcharsbx(${"DESCRIPTION_" . $s_ID}) : $s_DESCRIPTION;
+                            echo isset(${"DESCRIPTION_" . $s_ID}) ? htmlspecialcharsbx(
+                                ${"DESCRIPTION_" . $s_ID}
+                            ) : $s_DESCRIPTION;
                             ?>">
                         </td>
                         <td align="center"><input type="checkbox" name="MARK_<?php echo $s_ID ?>_DEL" value="Y"></td>
@@ -1031,17 +1155,22 @@ if ($arData = $t->Fetch())
                         <td align="center">
                             <div style="white-space:nowrap;"><? echo GetMessage("LEARNING_TEST_SCORE_TILL") ?> <input
                                         type="text" size="4" name="N_SCORE_<?php echo $i ?>"
-                                        value="<?php echo isset(${"N_SCORE_" . $i}) ? intval(${"N_SCORE_" . $i}) : "" ?>">
-                                %
+                                        value="<?php echo isset(${"N_SCORE_" . $i}) ? intval(
+                                            ${"N_SCORE_" . $i}
+                                        ) : "" ?>"> %
                             </div>
                         </td>
                         <td align="center">
                             <input type="text" size="20" name="N_MARK_<?php echo $i ?>"
-                                   value="<?php echo isset(${"N_MARK_" . $i}) ? htmlspecialcharsbx(${"N_MARK_" . $i}) : "" ?>">
+                                   value="<?php echo isset(${"N_MARK_" . $i}) ? htmlspecialcharsbx(
+                                       ${"N_MARK_" . $i}
+                                   ) : "" ?>">
                         </td>
                         <td align="center">
                             <input type="text" size="60" name="N_DESCRIPTION_<?php echo $i ?>"
-                                   value="<?php echo isset(${"N_DESCRIPTION_" . $i}) ? htmlspecialcharsbx(${"N_DESCRIPTION_" . $i}) : "" ?>">
+                                   value="<?php echo isset(${"N_DESCRIPTION_" . $i}) ? htmlspecialcharsbx(
+                                       ${"N_DESCRIPTION_" . $i}
+                                   ) : "" ?>">
                         </td>
                         <td align="center"><a href="javascript:void(0);"
                                               onclick="BX.remove(this.parentNode.parentNode)"><img
@@ -1062,7 +1191,9 @@ if ($arData = $t->Fetch())
                                 html: '&nbsp;'
                             }),
                             BX.create('td', {
-                                html: '<div style="white-space:nowrap;"><?echo GetMessage("LEARNING_TEST_SCORE_TILL")?> <input type="text" size="4" name="N_SCORE_' + nextNum + '" value=""> %</div>',
+                                html: '<div style="white-space:nowrap;"><?echo GetMessage(
+                                    "LEARNING_TEST_SCORE_TILL"
+                                )?> <input type="text" size="4" name="N_SCORE_' + nextNum + '" value=""> %</div>',
                                 props: {align: 'center'}
                             }),
                             BX.create('td', {
@@ -1093,8 +1224,9 @@ if ($arData = $t->Fetch())
                 ?>
             </script>
             <br/>
-            <a href="javascript:void(0)" class="adm-btn"
-               onclick="addMark();"><?php echo GetMessage("LEARNING_ADD_MARK") ?></a>
+            <a href="javascript:void(0)" class="adm-btn" onclick="addMark();"><?php echo GetMessage(
+                    "LEARNING_ADD_MARK"
+                ) ?></a>
         </td>
     </tr>
 <?php $tabControl->EndCustomField("MARKS"); ?>
@@ -1107,7 +1239,9 @@ $tabControl->Buttons(
             . '&PARENT_LESSON_ID=' . ($_GET['PARENT_LESSON_ID'] + 0)
             . '&LESSON_PATH=' . htmlspecialcharsbx($_GET['LESSON_PATH'])
             . "&COURSE_ID=" . $COURSE_ID
-            . GetFilterParams("find_", false)));
+            . GetFilterParams("find_", false)
+    )
+);
 
 $tabControl->arParams["FORM_ACTION"] = $APPLICATION->GetCurPage() . "?lang=" . LANG
     . "&COURSE_ID=" . $COURSE_ID

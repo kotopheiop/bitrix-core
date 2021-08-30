@@ -109,17 +109,23 @@ class UserTable extends Entity\DataManager
      */
     public static function setCounter(array $id, $increment = true)
     {
-        if (empty($id))
+        if (empty($id)) {
             return;
+        }
 
         $connection = \Bitrix\Main\Application::getInstance()->getConnection();
 
         $sql = intval($increment);
-        if ($increment === true)
+        if ($increment === true) {
             $sql = "COUNTER+1";
-        else if ($increment === false)
-            $sql = "COUNTER-1";
-        $connection->queryExecute("UPDATE " . self::getTableName() . " SET COUNTER=" . $sql . " WHERE ID IN (" . implode(", ", $id) . ")");
+        } else {
+            if ($increment === false) {
+                $sql = "COUNTER-1";
+            }
+        }
+        $connection->queryExecute(
+            "UPDATE " . self::getTableName() . " SET COUNTER=" . $sql . " WHERE ID IN (" . implode(", ", $id) . ")"
+        );
     }
 }
 
@@ -159,15 +165,17 @@ class User extends BaseObject
             "COOKIE_ID" => $cookieId,
             "AUTH_USER_ID" => intval($this->getId())
         ];
-        $id = implode($filter, "_");
+        $id = implode("_", $filter);
 
-        if ($cookieId > 0 && !array_key_exists($id, self::$usersIds) && ($res = UserTable::getList([
-                "select" => ["ID"],
-                "filter" => [
-                    "COOKIE_ID" => $cookieId,
-                    "AUTH_USER_ID" => intval($this->getId())
+        if ($cookieId > 0 && !array_key_exists($id, self::$usersIds) && ($res = UserTable::getList(
+                [
+                    "select" => ["ID"],
+                    "filter" => [
+                        "COOKIE_ID" => $cookieId,
+                        "AUTH_USER_ID" => intval($this->getId())
+                    ]
                 ]
-            ])->fetch())) {
+            )->fetch())) {
             self::$usersIds[$id] = intval($res["ID"]);
         }
         return isset(self::$usersIds[$id]) ? self::$usersIds[$id] : 0;
@@ -194,10 +202,13 @@ class User extends BaseObject
             "DATE_LAST" => new DateTime(),
             "LAST_IP" => $_SERVER["REMOTE_ADDR"]
         );
-        if ($incrementCount === true)
+        if ($incrementCount === true) {
             $fields["COUNTER"] = new SqlExpression('?# + 1', 'COUNTER');
-        else if ($incrementCount === false)
-            $fields["COUNTER"] = new SqlExpression('?# - 1', 'COUNTER');
+        } else {
+            if ($incrementCount === false) {
+                $fields["COUNTER"] = new SqlExpression('?# - 1', 'COUNTER');
+            }
+        }
 
         if ($id > 0) {
             $dbRes = UserTable::update($id, $fields);
@@ -218,7 +229,8 @@ class User extends BaseObject
                 $insert = $connection->getSqlHelper()->prepareInsert(UserTable::getTableName(), $fields);
                 $connection->queryExecute(
                     "INSERT INTO " . UserTable::getTableName() . "(COOKIE_ID, " . $insert[0] . ") " .
-                    "SELECT MAX(COOKIE_ID) + 1, " . $insert[1] . " FROM " . UserTable::getTableName());
+                    "SELECT MAX(COOKIE_ID) + 1, " . $insert[1] . " FROM " . UserTable::getTableName()
+                );
                 $dbRes = new AddResult();
                 $dbRes->setId($connection->getInsertedId());
                 $dbRes->setData(UserTable::getById($dbRes->getId())->fetch());
@@ -226,10 +238,13 @@ class User extends BaseObject
         }
         $id = $dbRes->getId();
         $fields = $dbRes->getData();
-        self::$usersIds[implode([
-            "COOKIE_ID" => $fields["COOKIE_ID"],
-            "AUTH_USER_ID" => $fields["AUTH_USER_ID"]
-        ], "_")] = $id;
+        self::$usersIds[implode(
+            "_",
+            [
+                "COOKIE_ID" => $fields["COOKIE_ID"],
+                "AUTH_USER_ID" => $fields["AUTH_USER_ID"]
+            ]
+        )] = $id;
         self::setCookieId($fields["COOKIE_ID"]);
         return $id;
     }
@@ -271,8 +286,9 @@ class User extends BaseObject
     public static function getCurrent()
     {
         global $USER;
-        if (is_null(self::$instance))
+        if (is_null(self::$instance)) {
             self::$instance = self::loadFromId($USER->getId());
+        }
         return self::$instance;
     }
 

@@ -112,17 +112,19 @@ class YandexStatTable extends Entity\DataManager
     {
         $result = array();
 
-        $dbRes = static::getList(array(
-            'order' => array(
-                'BANNER_ID' => 'ASC',
-                'DATE_DAY' => 'ASC',
-            ),
-            'filter' => array(
-                '=BANNER_ID' => $bannerId,
-                '>=DATE_DAY' => $dateStart,
-                '<=DATE_DAY' => $dateFinish,
+        $dbRes = static::getList(
+            array(
+                'order' => array(
+                    'BANNER_ID' => 'ASC',
+                    'DATE_DAY' => 'ASC',
+                ),
+                'filter' => array(
+                    '=BANNER_ID' => $bannerId,
+                    '>=DATE_DAY' => $dateStart,
+                    '<=DATE_DAY' => $dateFinish,
+                )
             )
-        ));
+        );
 
         while ($statEntry = $dbRes->fetch()) {
             $result[$statEntry['DATE_DAY']->toString()] = $statEntry;
@@ -135,34 +137,44 @@ class YandexStatTable extends Entity\DataManager
     {
         $result = array();
 
-        $dbRes = static::getList(array(
-            'order' => array(
-                'DATE_DAY' => 'ASC',
-            ),
-            'group' => array('CAMPAIGN_ID', 'DATE_DAY', 'CURRENCY'),
-            'filter' => array(
-                '=CAMPAIGN_ID' => $campaignId,
-                '>=DATE_DAY' => $dateStart,
-                '<=DATE_DAY' => $dateFinish,
-            ),
-            'select' => array(
-                'CAMPAIGN_ID', 'DATE_DAY', 'CURRENCY',
-                'CAMPAIGN_SUM', 'CAMPAIGN_SUM_SEARCH', 'CAMPAIGN_SUM_CONTEXT',
-                'CAMPAIGN_SHOWS', 'CAMPAIGN_SHOWS_SEARCH', 'CAMPAIGN_SHOWS_CONTEXT',
-                'CAMPAIGN_CLICKS', 'CAMPAIGN_CLICKS_SEARCH', 'CAMPAIGN_CLICKS_CONTEXT',
-            ),
-            'runtime' => array(
-                new Entity\ExpressionField('CAMPAIGN_SUM', 'SUM(SUM)'),
-                new Entity\ExpressionField('CAMPAIGN_SUM_SEARCH', 'SUM(SUM_SEARCH)'),
-                new Entity\ExpressionField('CAMPAIGN_SUM_CONTEXT', 'SUM(SUM_CONTEXT)'),
-                new Entity\ExpressionField('CAMPAIGN_SHOWS', 'SUM(SHOWS)'),
-                new Entity\ExpressionField('CAMPAIGN_SHOWS_SEARCH', 'SUM(SHOWS_SEARCH)'),
-                new Entity\ExpressionField('CAMPAIGN_SHOWS_CONTEXT', 'SUM(SHOWS_CONTEXT)'),
-                new Entity\ExpressionField('CAMPAIGN_CLICKS', 'SUM(CLICKS)'),
-                new Entity\ExpressionField('CAMPAIGN_CLICKS_SEARCH', 'SUM(CLICKS_SEARCH)'),
-                new Entity\ExpressionField('CAMPAIGN_CLICKS_CONTEXT', 'SUM(CLICKS_CONTEXT)'),
-            ),
-        ));
+        $dbRes = static::getList(
+            array(
+                'order' => array(
+                    'DATE_DAY' => 'ASC',
+                ),
+                'group' => array('CAMPAIGN_ID', 'DATE_DAY', 'CURRENCY'),
+                'filter' => array(
+                    '=CAMPAIGN_ID' => $campaignId,
+                    '>=DATE_DAY' => $dateStart,
+                    '<=DATE_DAY' => $dateFinish,
+                ),
+                'select' => array(
+                    'CAMPAIGN_ID',
+                    'DATE_DAY',
+                    'CURRENCY',
+                    'CAMPAIGN_SUM',
+                    'CAMPAIGN_SUM_SEARCH',
+                    'CAMPAIGN_SUM_CONTEXT',
+                    'CAMPAIGN_SHOWS',
+                    'CAMPAIGN_SHOWS_SEARCH',
+                    'CAMPAIGN_SHOWS_CONTEXT',
+                    'CAMPAIGN_CLICKS',
+                    'CAMPAIGN_CLICKS_SEARCH',
+                    'CAMPAIGN_CLICKS_CONTEXT',
+                ),
+                'runtime' => array(
+                    new Entity\ExpressionField('CAMPAIGN_SUM', 'SUM(SUM)'),
+                    new Entity\ExpressionField('CAMPAIGN_SUM_SEARCH', 'SUM(SUM_SEARCH)'),
+                    new Entity\ExpressionField('CAMPAIGN_SUM_CONTEXT', 'SUM(SUM_CONTEXT)'),
+                    new Entity\ExpressionField('CAMPAIGN_SHOWS', 'SUM(SHOWS)'),
+                    new Entity\ExpressionField('CAMPAIGN_SHOWS_SEARCH', 'SUM(SHOWS_SEARCH)'),
+                    new Entity\ExpressionField('CAMPAIGN_SHOWS_CONTEXT', 'SUM(SHOWS_CONTEXT)'),
+                    new Entity\ExpressionField('CAMPAIGN_CLICKS', 'SUM(CLICKS)'),
+                    new Entity\ExpressionField('CAMPAIGN_CLICKS_SEARCH', 'SUM(CLICKS_SEARCH)'),
+                    new Entity\ExpressionField('CAMPAIGN_CLICKS_CONTEXT', 'SUM(CLICKS_CONTEXT)'),
+                ),
+            )
+        );
 
         while ($statEntry = $dbRes->fetch()) {
             $result[$statEntry['DATE_DAY']->toString()] = $statEntry;
@@ -171,21 +183,23 @@ class YandexStatTable extends Entity\DataManager
         return $result;
     }
 
-
     public static function loadBannerStat($bannerId, $dateStart, $dateFinish)
     {
         $directEngine = new YandexDirect();
 
-        $dbRes = YandexBannerTable::getList(array(
-            'filter' => array(
-                '=ID' => $bannerId,
-                '=ENGINE_ID' => $directEngine->getId()
-            ),
-            'select' => array(
-                'ID', 'CAMPAIGN_ID',
-                'CAMPAIGN_XML_ID' => 'CAMPAIGN.XML_ID'
+        $dbRes = YandexBannerTable::getList(
+            array(
+                'filter' => array(
+                    '=ID' => $bannerId,
+                    '=ENGINE_ID' => $directEngine->getId()
+                ),
+                'select' => array(
+                    'ID',
+                    'CAMPAIGN_ID',
+                    'CAMPAIGN_XML_ID' => 'CAMPAIGN.XML_ID'
+                )
             )
-        ));
+        );
 
         $banner = $dbRes->fetch();
         if ($banner) {
@@ -203,15 +217,18 @@ class YandexStatTable extends Entity\DataManager
     {
         $directEngine = new YandexDirect();
 
-        $dbRes = YandexCampaignTable::getList(array(
-            'filter' => array(
-                '=ID' => $campaignId,
-                '=ENGINE_ID' => $directEngine->getId()
-            ),
-            'select' => array(
-                'ID', 'XML_ID'
+        $dbRes = YandexCampaignTable::getList(
+            array(
+                'filter' => array(
+                    '=ID' => $campaignId,
+                    '=ENGINE_ID' => $directEngine->getId()
+                ),
+                'select' => array(
+                    'ID',
+                    'XML_ID'
+                )
             )
-        ));
+        );
 
         $campaign = $dbRes->fetch();
         if ($campaign) {
@@ -225,8 +242,13 @@ class YandexStatTable extends Entity\DataManager
         return false;
     }
 
-    protected function loadStat(YandexDirect $directEngine, $campaignXmlId, $dateStart, $dateFinish, $skipCurrency = false)
-    {
+    protected static function loadStat(
+        YandexDirect $directEngine,
+        $campaignXmlId,
+        $dateStart,
+        $dateFinish,
+        $skipCurrency = false
+    ) {
         $dateStart = new Date($dateStart);
         $dateFinish = new Date($dateFinish);
 
@@ -235,7 +257,8 @@ class YandexStatTable extends Entity\DataManager
             "StartDate" => $dateStart->format("Y-m-d"),
             'EndDate' => $dateFinish->format("Y-m-d"),
             'GroupByColumns' => array(
-                'clDate', 'clBanner'
+                'clDate',
+                'clBanner'
             ),
         );
 
@@ -269,7 +292,7 @@ class YandexStatTable extends Entity\DataManager
         return $result;
     }
 
-    protected function processStatsResult($campaignId, array $result, YandexDirect $directEngine)
+    protected static function processStatsResult($campaignId, array $result, YandexDirect $directEngine)
     {
         if ($result['Stat']) {
             $bannerIds = array();
@@ -278,15 +301,18 @@ class YandexStatTable extends Entity\DataManager
             }
 
             if (count($bannerIds) > 0) {
-                $dbRes = YandexBannerTable::getList(array(
-                    'filter' => array(
-                        '=XML_ID' => array_values(array_unique($bannerIds)),
-                        '=ENGINE_ID' => $directEngine->getId()
-                    ),
-                    'select' => array(
-                        'ID', 'XML_ID'
+                $dbRes = YandexBannerTable::getList(
+                    array(
+                        'filter' => array(
+                            '=XML_ID' => array_values(array_unique($bannerIds)),
+                            '=ENGINE_ID' => $directEngine->getId()
+                        ),
+                        'select' => array(
+                            'ID',
+                            'XML_ID'
+                        )
                     )
-                ));
+                );
                 $bannerList = array();
                 while ($bannerData = $dbRes->fetch()) {
                     $bannerList[$bannerData['XML_ID']] = $bannerData['ID'];
@@ -311,13 +337,15 @@ class YandexStatTable extends Entity\DataManager
                                 'SHOWS_CONTEXT' => $statEntry['ShowsContext'],
                             );
 
-                            $statCheckRes = static::getList(array(
-                                'filter' => array(
-                                    'BANNER_ID' => $statFields['BANNER_ID'],
-                                    'DATE_DAY' => $statFields['DATE_DAY'],
-                                ),
-                                'select' => array('ID')
-                            ));
+                            $statCheckRes = static::getList(
+                                array(
+                                    'filter' => array(
+                                        'BANNER_ID' => $statFields['BANNER_ID'],
+                                        'DATE_DAY' => $statFields['DATE_DAY'],
+                                    ),
+                                    'select' => array('ID')
+                                )
+                            );
 
                             $statCheck = $statCheckRes->fetch();
                             if (!$statCheck) {

@@ -1,4 +1,4 @@
-<?
+<?php
 
 // 2012-04-13 Checked/modified for compatibility with new data model
 class CLTestMark
@@ -9,8 +9,9 @@ class CLTestMark
         global $DB;
         $arMsg = Array();
 
-        if ((is_set($arFields, "MARK") || $ID === false) && strlen($arFields["MARK"]) <= 0)
+        if ((is_set($arFields, "MARK") || $ID === false) && (string)$arFields["MARK"] == '') {
             $arMsg[] = array("id" => "MARK", "text" => GetMessage("LEARNING_BAD_MARK"));
+        }
 
 
         if (
@@ -21,8 +22,9 @@ class CLTestMark
             $arMsg[] = array("id" => "TEST_ID", "text" => GetMessage("LEARNING_BAD_TEST_ID"));
         } elseif (is_set($arFields, "TEST_ID")) {
             $res = CTest::GetByID($arFields["TEST_ID"]);
-            if (!$arRes = $res->Fetch())
+            if (!$arRes = $res->Fetch()) {
                 $arMsg[] = array("id" => "TEST_ID", "text" => GetMessage("LEARNING_BAD_TEST_ID"));
+            }
         }
 
         if (!is_set($arFields, "SCORE") || intval($arFields["SCORE"]) > 100 || intval($arFields["SCORE"]) < 1) {
@@ -62,7 +64,9 @@ class CLTestMark
         global $DB;
 
         $ID = intval($ID);
-        if ($ID < 1) return false;
+        if ($ID < 1) {
+            return false;
+        }
 
 
         if ($this->CheckFields($arFields, $ID)) {
@@ -83,41 +87,46 @@ class CLTestMark
 
 
     // 2012-04-13 Checked/modified for compatibility with new data model
-    function Delete($ID)
+    public static function Delete($ID)
     {
         global $DB;
 
         $ID = intval($ID);
-        if ($ID < 1) return false;
+        if ($ID < 1) {
+            return false;
+        }
 
         $strSql = "DELETE FROM b_learn_test_mark WHERE ID = " . $ID;
 
-        if (!$DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__))
+        if (!$DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__)) {
             return false;
+        }
 
         return true;
     }
 
 
     // 2012-04-13 Checked/modified for compatibility with new data model
-    function GetByID($ID)
+    public static function GetByID($ID)
     {
         return CLTestMark::GetList($arOrder = Array(), $arFilter = Array("ID" => $ID));
     }
 
 
     // 2012-04-13 Checked/modified for compatibility with new data model
-    function GetByPercent($TEST_ID, $PERCENT)
+    public static function GetByPercent($TEST_ID, $PERCENT)
     {
         global $DB;
 
         $PERCENT = intval($PERCENT);
-        if ($PERCENT < 0 || $PERCENT > 100)
+        if ($PERCENT < 0 || $PERCENT > 100) {
             return false;
+        }
 
         $TEST_ID = intval($TEST_ID);
-        if ($TEST_ID <= 0)
+        if ($TEST_ID <= 0) {
             return false;
+        }
 
         $arFilter = array(
             ">=SCORE" => $PERCENT,
@@ -130,18 +139,20 @@ class CLTestMark
 
         $rsMark = CLTestMark::GetList($arOrder, $arFilter);
 
-        if ($arMark = $rsMark->GetNext())
+        if ($arMark = $rsMark->GetNext()) {
             return $arMark["MARK"];
-        else
+        } else {
             return false;
+        }
     }
 
 
     // 2012-04-13 Checked/modified for compatibility with new data model
-    function GetFilter($arFilter)
+    public static function GetFilter($arFilter)
     {
-        if (!is_array($arFilter))
+        if (!is_array($arFilter)) {
             $arFilter = Array();
+        }
 
         $arSqlSearch = Array();
 
@@ -150,16 +161,21 @@ class CLTestMark
             $key = $res["FIELD"];
             $cOperationType = $res["OPERATION"];
 
-            $key = strtoupper($key);
+            $key = mb_strtoupper($key);
 
             switch ($key) {
                 case "ID":
                 case "SCORE":
                 case "TEST_ID":
-                    $arSqlSearch[] = CLearnHelper::FilterCreate("TM." . $key, $val, "number", $bFullJoin, $cOperationType);
+                    $arSqlSearch[] = CLearnHelper::FilterCreate(
+                        "TM." . $key,
+                        $val,
+                        "number",
+                        $bFullJoin,
+                        $cOperationType
+                    );
                     break;
             }
-
         }
 
         return $arSqlSearch;
@@ -167,16 +183,18 @@ class CLTestMark
 
 
     // 2012-04-13 Checked/modified for compatibility with new data model
-    function GetList($arOrder = Array(), $arFilter = Array())
+    public static function GetList($arOrder = Array(), $arFilter = Array())
     {
         global $DB, $USER;
 
         $arSqlSearch = CLTestMark::GetFilter($arFilter);
 
         $strSqlSearch = "";
-        for ($i = 0; $i < count($arSqlSearch); $i++)
-            if (strlen($arSqlSearch[$i]) > 0)
+        for ($i = 0; $i < count($arSqlSearch); $i++) {
+            if ($arSqlSearch[$i] <> '') {
                 $strSqlSearch .= " AND " . $arSqlSearch[$i] . " ";
+            }
+        }
 
         $strSql =
             "SELECT TM.* " .
@@ -184,20 +202,27 @@ class CLTestMark
             "WHERE 1=1 " .
             $strSqlSearch;
 
-        if (!is_array($arOrder))
+        if (!is_array($arOrder)) {
             $arOrder = Array();
+        }
 
+        $arSqlOrder = [];
         foreach ($arOrder as $by => $order) {
-            $by = strtolower($by);
-            $order = strtolower($order);
-            if ($order != "asc")
+            $by = mb_strtolower($by);
+            $order = mb_strtolower($order);
+            if ($order != "asc") {
                 $order = "desc";
+            }
 
-            if ($by == "id") $arSqlOrder[] = " TM.ID " . $order . " ";
-            elseif ($by == "mark") $arSqlOrder[] = " TM.MARK " . $order . " ";
-            elseif ($by == "score") $arSqlOrder[] = " TM.SCORE " . $order . " ";
-            elseif ($by == "rand") $arSqlOrder[] = CTest::GetRandFunction();
-            else {
+            if ($by == "id") {
+                $arSqlOrder[] = " TM.ID " . $order . " ";
+            } elseif ($by == "mark") {
+                $arSqlOrder[] = " TM.MARK " . $order . " ";
+            } elseif ($by == "score") {
+                $arSqlOrder[] = " TM.SCORE " . $order . " ";
+            } elseif ($by == "rand") {
+                $arSqlOrder[] = CTest::GetRandFunction();
+            } else {
                 $arSqlOrder[] = " TM.ID " . $order . " ";
                 $by = "id";
             }
@@ -206,10 +231,11 @@ class CLTestMark
         $strSqlOrder = "";
         DelDuplicateSort($arSqlOrder);
         for ($i = 0; $i < count($arSqlOrder); $i++) {
-            if ($i == 0)
+            if ($i == 0) {
                 $strSqlOrder = " ORDER BY ";
-            else
+            } else {
                 $strSqlOrder .= ",";
+            }
 
             $strSqlOrder .= $arSqlOrder[$i];
         }

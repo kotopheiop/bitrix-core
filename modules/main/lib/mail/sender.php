@@ -17,14 +17,16 @@ class Sender
 
         if (empty($fields['IS_CONFIRMED']) && !empty($fields['OPTIONS']['smtp'])) {
             $smtpConfig = $fields['OPTIONS']['smtp'];
-            $smtpConfig = new Smtp\Config(array(
-                'from' => $fields['EMAIL'],
-                'host' => $smtpConfig['server'],
-                'port' => $smtpConfig['port'],
-                'protocol' => $smtpConfig['protocol'],
-                'login' => $smtpConfig['login'],
-                'password' => $smtpConfig['password'],
-            ));
+            $smtpConfig = new Smtp\Config(
+                array(
+                    'from' => $fields['EMAIL'],
+                    'host' => $smtpConfig['server'],
+                    'port' => $smtpConfig['port'],
+                    'protocol' => $smtpConfig['protocol'],
+                    'login' => $smtpConfig['login'],
+                    'password' => $smtpConfig['password'],
+                )
+            );
 
             if ($smtpConfig->canCheck()) {
                 if ($smtpConfig->check($error, $errors)) {
@@ -36,7 +38,10 @@ class Sender
         }
 
         if (empty($fields['IS_CONFIRMED'])) {
-            $fields['OPTIONS']['confirm_code'] = \Bitrix\Main\Security\Random::getStringByCharsets(5, '0123456789abcdefghjklmnpqrstuvwxyz');
+            $fields['OPTIONS']['confirm_code'] = \Bitrix\Main\Security\Random::getStringByCharsets(
+                5,
+                '0123456789abcdefghjklmnpqrstuvwxyz'
+            );
             $fields['OPTIONS']['confirm_time'] = time();
         }
 
@@ -51,7 +56,7 @@ class Sender
                 'DEFAULT_EMAIL_FROM' => $fields['EMAIL'],
                 'EMAIL_TO' => $fields['EMAIL'],
                 'MESSAGE_SUBJECT' => getMessage('MAIN_MAIL_CONFIRM_MESSAGE_SUBJECT'),
-                'CONFIRM_CODE' => strtoupper($fields['OPTIONS']['confirm_code']),
+                'CONFIRM_CODE' => mb_strtoupper($fields['OPTIONS']['confirm_code']),
             );
 
             if (!empty($smtpConfig)) {
@@ -79,11 +84,13 @@ class Sender
     public static function confirm($ids)
     {
         if (!empty($ids)) {
-            $res = Internal\SenderTable::getList(array(
-                'filter' => array(
-                    '@ID' => (array)$ids,
-                ),
-            ));
+            $res = Internal\SenderTable::getList(
+                array(
+                    'filter' => array(
+                        '@ID' => (array)$ids,
+                    ),
+                )
+            );
 
             while ($item = $res->fetch()) {
                 Internal\SenderTable::update(
@@ -112,14 +119,16 @@ class Sender
         }
         $smtpConfigs = [];
 
-        $senders = SenderTable::getList([
+        $senders = SenderTable::getList(
+            [
                 'order' => [
                     'ID' => 'desc',
                 ],
                 'filter' => [
                     '=USER_ID' => CurrentUser::get()->getId(),
                     '@ID' => $ids,
-                    'IS_CONFIRMED' => true]
+                    'IS_CONFIRMED' => true
+                ]
             ]
         )->fetchAll();
         foreach ($senders as $sender) {
@@ -128,22 +137,27 @@ class Sender
             }
         }
         if (!empty($smtpConfigs)) {
-            $senders = SenderTable::getList([
-                'order' => [
-                    'ID' => 'desc',
-                ],
-                'filter' => [
-                    '@EMAIL' => array_keys($smtpConfigs),
-                    '!ID' => $ids
+            $senders = SenderTable::getList(
+                [
+                    'order' => [
+                        'ID' => 'desc',
+                    ],
+                    'filter' => [
+                        '@EMAIL' => array_keys($smtpConfigs),
+                        '!ID' => $ids
+                    ]
                 ]
-            ])->fetchAll();
+            )->fetchAll();
             foreach ($senders as $sender) {
                 if (isset($smtpConfigs[$sender['EMAIL']])) {
                     $options = $sender['OPTIONS'];
                     $options['smtp'] = $smtpConfigs[$sender['EMAIL']];
-                    $result = SenderTable::update($sender['ID'], [
-                        'OPTIONS' => $options,
-                    ]);
+                    $result = SenderTable::update(
+                        $sender['ID'],
+                        [
+                            'OPTIONS' => $options,
+                        ]
+                    );
                     if ($result->isSuccess()) {
                         unset($smtpConfigs[$sender['EMAIL']]);
                         static::clearCustomSmtpCache($sender['EMAIL']);
@@ -179,15 +193,17 @@ class Sender
             if ($cache->initCache(30 * 24 * 3600, $email, '/main/mail/smtp')) {
                 $config = $cache->getVars();
             } else {
-                $res = Internal\SenderTable::getList(array(
-                    'filter' => array(
-                        'IS_CONFIRMED' => true,
-                        '=EMAIL' => $email,
-                    ),
-                    'order' => array(
-                        'ID' => 'DESC',
-                    ),
-                ));
+                $res = Internal\SenderTable::getList(
+                    array(
+                        'filter' => array(
+                            'IS_CONFIRMED' => true,
+                            '=EMAIL' => $email,
+                        ),
+                        'order' => array(
+                            'ID' => 'DESC',
+                        ),
+                    )
+                );
                 while ($item = $res->fetch()) {
                     if (!empty($item['OPTIONS']['smtp']['server']) && empty($item['OPTIONS']['smtp']['encrypted'])) {
                         $config = $item['OPTIONS']['smtp'];
@@ -200,14 +216,16 @@ class Sender
             }
 
             if ($config) {
-                $config = new Smtp\Config(array(
-                    'from' => $email,
-                    'host' => $config['server'],
-                    'port' => $config['port'],
-                    'protocol' => $config['protocol'],
-                    'login' => $config['login'],
-                    'password' => $config['password'],
-                ));
+                $config = new Smtp\Config(
+                    array(
+                        'from' => $email,
+                        'host' => $config['server'],
+                        'port' => $config['port'],
+                        'protocol' => $config['protocol'],
+                        'login' => $config['login'],
+                        'password' => $config['password'],
+                    )
+                );
             }
 
             $smtp[$email] = $config;
@@ -281,10 +299,12 @@ class Sender
 
             $isAdmin = in_array(1, $USER->getUserGroupArray());
         } else {
-            $userData = Main\UserTable::getList(array(
-                'select' => array('ID', 'TITLE', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'LOGIN', 'EMAIL'),
-                'filter' => array('=ID' => $userId),
-            ))->fetch();
+            $userData = Main\UserTable::getList(
+                array(
+                    'select' => array('ID', 'TITLE', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'LOGIN', 'EMAIL'),
+                    'filter' => array('=ID' => $userId),
+                )
+            )->fetch();
 
             $isAdmin = in_array(1, \CUser::getUserGroup($userId));
         }
@@ -296,7 +316,7 @@ class Sender
                 if (!empty($mailbox['EMAIL'])) {
                     $mailboxName = trim($mailbox['USERNAME']) ?: trim($mailbox['OPTIONS']['name']) ?: $userNameFormated;
 
-                    $key = hash('crc32b', strtolower($mailboxName) . $mailbox['EMAIL']);
+                    $key = hash('crc32b', mb_strtolower($mailboxName) . $mailbox['EMAIL']);
                     $mailboxes[$userId][$key] = array(
                         'name' => $mailboxName,
                         'email' => $mailbox['EMAIL'],
@@ -308,7 +328,7 @@ class Sender
         // @TODO: query
         $crmAddress = new Address(Main\Config\Option::get('crm', 'mail', ''));
         if ($crmAddress->validate()) {
-            $key = hash('crc32b', strtolower($userNameFormated) . $crmAddress->getEmail());
+            $key = hash('crc32b', mb_strtolower($userNameFormated) . $crmAddress->getEmail());
 
             $mailboxes[$userId][$key] = array(
                 'name' => $crmAddress->getName() ?: $userNameFormated,
@@ -316,23 +336,25 @@ class Sender
             );
         }
 
-        $res = SenderTable::getList(array(
-            'filter' => array(
-                'IS_CONFIRMED' => true,
-                array(
-                    'LOGIC' => 'OR',
-                    '=USER_ID' => $userId,
-                    'IS_PUBLIC' => true,
+        $res = SenderTable::getList(
+            array(
+                'filter' => array(
+                    'IS_CONFIRMED' => true,
+                    array(
+                        'LOGIC' => 'OR',
+                        '=USER_ID' => $userId,
+                        'IS_PUBLIC' => true,
+                    ),
                 ),
-            ),
-            'order' => array(
-                'ID' => 'ASC',
-            ),
-        ));
+                'order' => array(
+                    'ID' => 'ASC',
+                ),
+            )
+        );
         while ($item = $res->fetch()) {
             $item['NAME'] = trim($item['NAME']) ?: $userNameFormated;
-            $item['EMAIL'] = strtolower($item['EMAIL']);
-            $key = hash('crc32b', strtolower($item['NAME']) . $item['EMAIL']);
+            $item['EMAIL'] = mb_strtolower($item['EMAIL']);
+            $key = hash('crc32b', mb_strtolower($item['NAME']) . $item['EMAIL']);
 
             if (!isset($mailboxes[$userId][$key])) {
                 $mailboxes[$userId][$key] = array(
@@ -347,7 +369,8 @@ class Sender
         foreach ($mailboxes[$userId] as $key => $item) {
             $mailboxes[$userId][$key]['formated'] = sprintf(
                 $item['name'] ? '%s <%s>' : '%s%s',
-                $item['name'], $item['email']
+                $item['name'],
+                $item['email']
             );
         }
 

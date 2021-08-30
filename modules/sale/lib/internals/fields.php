@@ -23,8 +23,9 @@ class Fields
 
     public function __construct(array $values = null)
     {
-        if ($values !== null)
+        if ($values !== null) {
             $this->values = $values;
+        }
     }
 
     /**
@@ -143,8 +144,9 @@ class Fields
      */
     public function setValues(array $values)
     {
-        foreach ($values as $name => $value)
+        foreach ($values as $name => $value) {
             $this->set($name, $value);
+        }
     }
 
     /**
@@ -153,8 +155,9 @@ class Fields
     public function resetValues(array $values)
     {
         $this->values = array();
-        if ($values !== null)
+        if ($values !== null) {
             $this->values = $values;
+        }
     }
 
     /**
@@ -203,8 +206,9 @@ class Fields
     {
         $r = array();
         foreach ($this->values as $k => $v) {
-            if (isset($this->changedValues[$k]))
+            if (isset($this->changedValues[$k])) {
                 $r[$k] = $v;
+            }
         }
         return $r;
     }
@@ -293,8 +297,9 @@ class Fields
     public function offsetUnset($offset)
     {
         unset($this->values[$offset]);
-        if (isset($this->changedValues[$offset]))
+        if (isset($this->changedValues[$offset])) {
             unset($this->changedValues[$offset]);
+        }
     }
 
     /**

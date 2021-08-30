@@ -28,9 +28,11 @@ class Iblock extends Entity
         $manager->setIblockImplementer(new IblockImplementer());
         $manager->setFieldImplementer(new Field());
 
-        $dictionary = new Dictionary([
-            "LIST_ELEMENT_URL" => ($params["LIST_ELEMENT_URL"] ? $params["LIST_ELEMENT_URL"] : "")
-        ]);
+        $dictionary = new Dictionary(
+            [
+                "LIST_ELEMENT_URL" => ($params["LIST_ELEMENT_URL"] ? $params["LIST_ELEMENT_URL"] : "")
+            ]
+        );
         $manager->setDictionary($dictionary);
 
         $result = $manager->startCopy();

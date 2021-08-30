@@ -31,14 +31,17 @@ class CSecurityTaintCheckingTest
      */
     public function checkRequirements($params = array())
     {
-        if (extension_loaded('tokenizer') !== true)
+        if (extension_loaded('tokenizer') !== true) {
             throw new CSecurityRequirementsException(GetMessage("SECURITY_SITE_CHECKER_TAINT_TOKENIZER_NOT_FOUND"));
+        }
         $maxExecutionTime = ini_get("max_execution_time");
-        if ($maxExecutionTime > 0 && $maxExecutionTime <= 20)
+        if ($maxExecutionTime > 0 && $maxExecutionTime <= 20) {
             throw new CSecurityRequirementsException(GetMessage("SECURITY_SITE_CHECKER_TAINT_EXECUTION_TIME"));
+        }
         $memoryLimit = CUtil::Unformat(ini_get("memory_limit"));
-        if ($memoryLimit > 0 && $memoryLimit <= 250 * 1024 * 1024)
+        if ($memoryLimit > 0 && $memoryLimit <= 250 * 1024 * 1024) {
             throw new CSecurityRequirementsException(GetMessage("SECURITY_SITE_CHECKER_TAINT_MEMORY_LIMIT"));
+        }
         return true;
     }
 
@@ -108,11 +111,15 @@ class CSecurityTaintCheckingTest
      */
     protected static function formatDetail($pDetail)
     {
-        $detail = preg_replace("#
+        $detail = preg_replace(
+            "#
 				(<span\sclass=\"checklist-vulnscan-filename\">[^<]+</span>\s*)
 				(<div\sid=\"[^\"]+\">\s*<div\sclass=\"checklist-vulnscan-vulnblock\">\s*)
 				(<div\sclass=\"checklist-vulnscan-vulnscan-blocktitle\">[^<]+</div>)
-			#xis", "\\3\\2\\1", $pDetail);
+			#xis",
+            "\\3\\2\\1",
+            $pDetail
+        );
         return $detail;
     }
 

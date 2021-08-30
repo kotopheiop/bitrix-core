@@ -1,5 +1,6 @@
 <?
 
+use Bitrix\Main\Loader;
 use Bitrix\Catalog;
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
@@ -13,9 +14,10 @@ $selfFolderUrl = $adminPage->getSelfFolderUrl();
 $listUrl = $selfFolderUrl . "cat_store_list.php?lang=" . LANGUAGE_ID;
 $listUrl = $adminSidePanelHelper->editUrlToPublicPage($listUrl);
 
-if (!($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_store')))
+if (!($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_store'))) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
-CModule::IncludeModule("catalog");
+}
+Loader::includeModule("catalog");
 $bReadOnly = !$USER->CanDoOperation('catalog_store');
 
 if ($ex = $APPLICATION->GetException()) {
@@ -27,12 +29,12 @@ if ($ex = $APPLICATION->GetException()) {
 }
 
 $id = (isset($_REQUEST['ID']) ? (int)$_REQUEST['ID'] : 0);
-if ($id < 0)
+if ($id < 0) {
     $id = 0;
+}
 
 if (!Catalog\Config\Feature::isMultiStoresEnabled()) {
-    $dbResultList = CCatalogStore::GetList(array());
-    if (($arResult = $dbResultList->Fetch()) && $id != $arResult["ID"]) {
+    if (Catalog\Config\State::isExceededStoreLimit()) {
         require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
         ShowError(GetMessage("CAT_FEATURE_NOT_ALLOW"));
         require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_admin.php");
@@ -48,9 +50,9 @@ $bVarsFromForm = false;
 
 $userId = (int)$USER->GetID();
 
-$entityId = "CAT_STORE";
+$entityId = Catalog\StoreTable::getUfId();
 
-if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($_REQUEST["Update"]) > 0 && !$bReadOnly && check_bitrix_sessid()) {
+if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Update"] <> '' && !$bReadOnly && check_bitrix_sessid()) {
     $adminSidePanelHelper->decodeUriComponent();
 
     $arPREVIEW_PICTURE = $_FILES["IMAGE_ID"];
@@ -61,12 +63,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($_REQUEST["Update"]) > 0 && !
     $fileId = 0;
     $isImage = CFile::CheckImageFile($arPREVIEW_PICTURE);
 
-    if (trim($ADDRESS) == '')
+    if (trim($ADDRESS) == '') {
         $errorMessage .= GetMessage("ADDRESS_EMPTY") . "<br>";
+    }
 
-    if (strlen($isImage) == 0 && (strlen($arPREVIEW_PICTURE["name"]) > 0 || strlen($arPREVIEW_PICTURE["del"]) > 0)) {
+    if ($isImage == '' && ($arPREVIEW_PICTURE["name"] <> '' || $arPREVIEW_PICTURE["del"] <> '')) {
         $fileId = CFile::SaveFile($arPREVIEW_PICTURE, "catalog");
-    } elseif (strlen($isImage) > 0) {
+    } elseif ($isImage <> '') {
         $errorMessage .= $isImage . "<br>";
     }
 
@@ -92,10 +95,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($_REQUEST["Update"]) > 0 && !
 
     $USER_FIELD_MANAGER->EditFormAddFields($entityId, $arFields);
 
-    if (intval($fileId) > 0)
+    if (intval($fileId) > 0) {
         $arFields["IMAGE_ID"] = intval($fileId);
-    elseif ($fileId === "NULL")
+    } elseif ($fileId === "NULL") {
         $arFields["IMAGE_ID"] = "null";
+    }
 
     $DB->StartTransaction();
 
@@ -104,14 +108,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($_REQUEST["Update"]) > 0 && !
             $res = CCatalogStore::Update($id, $arFields);
         } else {
             $res = CCatalogStore::Add($arFields);
-            if ($res)
+            if ($res) {
                 $id = (int)$res;
+            }
         }
         if (!$res) {
-            if ($ex = $APPLICATION->GetException())
+            if ($ex = $APPLICATION->GetException()) {
                 $errorMessage .= $ex->GetString() . "<br>";
-            else
+            } else {
                 $errorMessage .= GetMessage('STORE_SAVE_ERROR') . '<br>';
+            }
         } else {
             $ufUpdated = $USER_FIELD_MANAGER->Update($entityId, $id, $arFields);
         }
@@ -119,7 +125,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($_REQUEST["Update"]) > 0 && !
     if ($errorMessage == '') {
         $DB->Commit();
 
-        if (strlen($_REQUEST["apply"]) <= 0) {
+        if ($_REQUEST["apply"] == '') {
             $adminSidePanelHelper->sendSuccessResponse("base", array("ID" => $id));
             $adminSidePanelHelper->localRedirect($listUrl);
             LocalRedirect($listUrl);
@@ -136,10 +142,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($_REQUEST["Update"]) > 0 && !
     }
 }
 
-if ($id > 0)
+if ($id > 0) {
     $APPLICATION->SetTitle(str_replace("#ID#", $id, GetMessage("STORE_TITLE_UPDATE")));
-else
+} else {
     $APPLICATION->SetTitle(GetMessage("STORE_TITLE_ADD"));
+}
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 $str_ACTIVE = "Y";
@@ -167,15 +174,18 @@ if ($id > 0) {
     );
 
     $dbResult = CCatalogStore::GetList(array(), array('ID' => $id), false, false, $arSelect);
-    if (!$dbResult->ExtractFields("str_"))
+    if (!$dbResult->ExtractFields("str_")) {
         $id = 0;
+    }
 }
 
-if ($bVarsFromForm)
+if ($bVarsFromForm) {
     $DB->InitTableVarsForEdit("b_catalog_store", "", "str_");
+}
 
-if (isset($str_ADDRESS))
+if (isset($str_ADDRESS)) {
     $str_ADDRESS = (trim($str_ADDRESS) != '') ? $str_ADDRESS : '';
+}
 
 $aMenu = array(
     array(
@@ -186,23 +196,39 @@ $aMenu = array(
 );
 
 if ($id > 0 && !$bReadOnly) {
-    $aMenu[] = array("SEPARATOR" => "Y");
+    $aMenu[] = ["SEPARATOR" => "Y"];
 
-    $addUrl = $selfFolderUrl . "cat_store_edit.php?lang=" . LANGUAGE_ID;
-    $addUrl = $adminSidePanelHelper->editUrlToPublicPage($addUrl);
-    $aMenu[] = array(
-        "TEXT" => GetMessage("STORE_NEW"),
-        "ICON" => "btn_new",
-        "LINK" => $addUrl
-    );
-    $deleteUrl = $selfFolderUrl . "cat_store_list.php?action=delete&ID[]=" . $id . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get() . "#tb";
+    if (Catalog\Config\State::isAllowedNewStore()) {
+        $addUrl = $selfFolderUrl . "cat_store_edit.php?lang=" . LANGUAGE_ID;
+        $addUrl = $adminSidePanelHelper->editUrlToPublicPage($addUrl);
+        $aMenu[] = [
+            "TEXT" => GetMessage("STORE_NEW"),
+            "ICON" => "btn_new",
+            "LINK" => $addUrl
+        ];
+        unset($addUrl);
+    } else {
+        $helpLink = Catalog\Config\Feature::getMultiStoresHelpLink();
+        if (!empty($helpLink)) {
+            $aMenu[] = [
+                "TEXT" => GetMessage("STORE_NEW"),
+                "ICON" => "btn_lock",
+                $helpLink['TYPE'] => $helpLink['LINK'],
+            ];
+        }
+        unset($helpLink);
+    }
+    $deleteUrl = $selfFolderUrl . "cat_store_list.php?action=delete&ID[]=" . $id . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get(
+        ) . "#tb";
     if ($adminSidePanelHelper->isPublicFrame()) {
         $deleteUrl = $adminSidePanelHelper->editUrlToPublicPage($deleteUrl);
     }
     $aMenu[] = array(
         "TEXT" => GetMessage("STORE_DELETE"),
         "ICON" => "btn_delete",
-        "LINK" => "javascript:if(confirm('" . GetMessage("STORE_DELETE_CONFIRM") . "')) top.window.location='" . $deleteUrl . "';",
+        "LINK" => "javascript:if(confirm('" . GetMessage(
+                "STORE_DELETE_CONFIRM"
+            ) . "')) top.window.location='" . $deleteUrl . "';",
         "WARNING" => "Y"
     );
 }
@@ -210,7 +236,7 @@ $context = new CAdminContextMenu($aMenu);
 $context->Show();
 $arSitesShop = array();
 $arSitesTmp = array();
-$rsSites = CSite::GetList($_REQUEST["by"] = "id", $_REQUEST["order"] = "asc", Array("ACTIVE" => "Y"));
+$rsSites = CSite::GetList("id", "asc", Array("ACTIVE" => "Y"));
 while ($arSite = $rsSites->GetNext()) {
     $site = COption::GetOptionString("sale", "SHOP_SITE_" . $arSite["ID"], "");
     if ($arSite["ID"] == $site) {
@@ -233,7 +259,9 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
 
 $userFieldUrl = $selfFolderUrl . "userfield_edit.php?lang=" . LANGUAGE_ID . "&ENTITY_ID=" . $entityId;
 $userFieldUrl = $adminSidePanelHelper->editUrlToPublicPage($userFieldUrl);
-$userFieldUrl .= "&back_url=" . urlencode($APPLICATION->GetCurPageParam('', array('bxpublic')) . "&tabControl_active_tab=user_fields_tab");
+$userFieldUrl .= "&back_url=" . urlencode(
+        $APPLICATION->GetCurPageParam('', array('bxpublic')) . "&tabControl_active_tab=user_fields_tab"
+    );
 ?>
     <form enctype="multipart/form-data" method="POST" action="<?= $actionUrl ?>" name="store_edit">
         <? echo GetFilterHiddens("filter_"); ?>
@@ -242,7 +270,12 @@ $userFieldUrl .= "&back_url=" . urlencode($APPLICATION->GetCurPageParam('', arra
         <input type="hidden" name="ID" value="<? echo $id ?>">
         <?= bitrix_sessid_post() ?><?
         $aTabs = array(
-            array("DIV" => "edit1", "TAB" => GetMessage("STORE_TAB"), "ICON" => "catalog", "TITLE" => GetMessage("STORE_TAB_DESCR")),
+            array(
+                "DIV" => "edit1",
+                "TAB" => GetMessage("STORE_TAB"),
+                "ICON" => "catalog",
+                "TITLE" => GetMessage("STORE_TAB_DESCR")
+            ),
         );
 
         $tabControl = new CAdminTabControl("tabControl", $aTabs);
@@ -264,22 +297,27 @@ $userFieldUrl .= "&back_url=" . urlencode($APPLICATION->GetCurPageParam('', arra
         <tr>
             <td width="40%"><?= GetMessage("STORE_ACTIVE") ?>:</td>
             <td width="60%">
-                <input type="checkbox" name="ACTIVE"
-                       value="Y" <? if (($str_ACTIVE == 'Y') || ($id == 0)) echo "checked"; ?> size="50"/>
+                <input type="checkbox" name="ACTIVE" value="Y" <? if (($str_ACTIVE == 'Y') || ($id == 0)) {
+                    echo "checked";
+                } ?> size="50"/>
             </td>
         </tr>
         <tr>
             <td width="40%"><?= GetMessage("ISSUING_CENTER") ?>:</td>
             <td width="60%">
                 <input type="checkbox" name="ISSUING_CENTER"
-                       value="Y" <? if (($str_ISSUING_CENTER == 'Y') || $id == 0) echo "checked"; ?> size="50"/>
+                       value="Y" <? if (($str_ISSUING_CENTER == 'Y') || $id == 0) {
+                    echo "checked";
+                } ?> size="50"/>
             </td>
         </tr>
         <tr>
             <td width="40%"><?= GetMessage("SHIPPING_CENTER") ?>:</td>
             <td width="60%">
                 <input type="checkbox" name="SHIPPING_CENTER"
-                       value="Y" <? if (($str_SHIPPING_CENTER == 'Y') || $id == 0) echo "checked"; ?> size="50"/>
+                       value="Y" <? if (($str_SHIPPING_CENTER == 'Y') || $id == 0) {
+                    echo "checked";
+                } ?> size="50"/>
             </td>
         </tr>
         <tr>
@@ -290,7 +328,9 @@ $userFieldUrl .= "&back_url=" . urlencode($APPLICATION->GetCurPageParam('', arra
                     <option value=""><?= GetMessage("STORE_SELECT_SITE_ID") ?></option>
                     <? foreach ($arSitesShop as $key => $val) {
                         $selected = ($val['ID'] == $str_SITE_ID) ? 'selected' : '';
-                        echo "<option " . $selected . " value=" . htmlspecialcharsbx($val['ID']) . ">" . htmlspecialcharsbx($val["NAME"] . " (" . $val["ID"] . ")") . "</option>";
+                        echo "<option " . $selected . " value=" . htmlspecialcharsbx(
+                                $val['ID']
+                            ) . ">" . htmlspecialcharsbx($val["NAME"] . " (" . $val["ID"] . ")") . "</option>";
                     }
                     ?>
                 </select>
@@ -381,10 +421,11 @@ $userFieldUrl .= "&back_url=" . urlencode($APPLICATION->GetCurPageParam('', arra
             echo $USER_FIELD_MANAGER->GetEditFormHTML($bVarsFromForm, $GLOBALS[$FIELD_NAME], $arUserField);
 
             $form_value = $GLOBALS[$FIELD_NAME];
-            if (!$bVarsFromForm)
+            if (!$bVarsFromForm) {
                 $form_value = $arUserField["VALUE"];
-            elseif ($arUserField["USER_TYPE"]["BASE_TYPE"] == "file")
+            } elseif ($arUserField["USER_TYPE"]["BASE_TYPE"] == "file") {
                 $form_value = $GLOBALS[$arUserField["FIELD_NAME"] . "_old_id"];
+            }
         }
 
         $tabControl->EndTab();
@@ -392,4 +433,7 @@ $userFieldUrl .= "&back_url=" . urlencode($APPLICATION->GetCurPageParam('', arra
         $tabControl->End();
         ?>
     </form>
+<?
+Catalog\Config\Feature::initUiHelpScope();
+?>
 <? require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_admin.php");

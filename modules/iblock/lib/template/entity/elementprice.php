@@ -57,11 +57,17 @@ class ElementPrice extends Base
     protected function loadFromDatabase()
     {
         if (!isset($this->fields)) {
-            $pricesList = \CPrice::getListEx(array(), array(
-                "=PRODUCT_ID" => $this->id,
-                "+<=QUANTITY_FROM" => 1,
-                "+>=QUANTITY_TO" => 1,
-            ), false, false, array("PRICE", "CURRENCY", "CATALOG_GROUP_ID", "CATALOG_GROUP_CODE"));
+            $pricesList = \CPrice::getListEx(
+                array(),
+                array(
+                    "=PRODUCT_ID" => $this->id,
+                    "+<=QUANTITY_FROM" => 1,
+                    "+>=QUANTITY_TO" => 1,
+                ),
+                false,
+                false,
+                array("PRICE", "CURRENCY", "CATALOG_GROUP_ID", "CATALOG_GROUP_CODE")
+            );
             $this->fields = array();
             while ($priceInfo = $pricesList->fetch()) {
                 $priceId = $priceInfo["CATALOG_GROUP_ID"];

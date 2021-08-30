@@ -1,4 +1,5 @@
 <?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/prolog.php");
 /** @var CMain $APPLICATION */
@@ -6,7 +7,9 @@ include($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/colors.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/img.php");
 
 $STAT_RIGHT = $APPLICATION->GetGroupRight("statistic");
-if ($STAT_RIGHT == "D") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($STAT_RIGHT == "D") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 IncludeModuleLangFile(__FILE__);
 $statDB = CDatabase::GetModuleConnection('statistic');
 $err_mess = "File: " . __FILE__ . "<br>Line: ";
@@ -17,20 +20,26 @@ define("HELP_FILE", "adv_list.php");
  ****************************************************************************/
 $ADV_ID = intval($ADV_ID);
 
-if ($context == "tab")
+if ($context == "tab") {
     $find_events = array();
-$rs = CAdv::GetEventList($ADV_ID, ($by = "s_def"), ($order = "desc"), array(), $v3);
+}
+$rs = CAdv::GetEventList($ADV_ID, "s_def", "desc");
 while ($ar = $rs->Fetch()) {
     $arrEVENTS[$ar["ID"]] = $ar["EVENT"] . " [" . $ar["ID"] . "]";
-    if ($context == "tab")
+    if ($context == "tab") {
         $find_events[] = $ar["ID"];
+    }
 }
 $sTableID = "t_adv_graph_list";
 $oSort = new CAdminSorting($sTableID);
 $lAdmin = new CAdminList($sTableID, $oSort);
 
-if (strlen($DATE1) > 0) $find_date1 = $DATE1;
-if (strlen($DATE2) > 0) $find_date2 = $DATE2;
+if ($DATE1 <> '') {
+    $find_date1 = $DATE1;
+}
+if ($DATE2 <> '') {
+    $find_date2 = $DATE2;
+}
 
 $filter = new CAdminFilter(
     $sTableID . "_filter_id",
@@ -41,10 +50,11 @@ $filter = new CAdminFilter(
 
 if ($lAdmin->IsDefaultFilter()) {
     if (is_array($arrEVENTS)) {
-        reset($arrEVENTS);
-        while (list($key, $value) = each($arrEVENTS)) {
+        foreach ($arrEVENTS as $key => $value) {
             $i++;
-            if ($i <= 5) $find_events[] = $key;
+            if ($i <= 5) {
+                $find_events[] = $key;
+            }
         }
     }
     $find_date1_DAYS_TO_BACK = 90;
@@ -127,42 +137,53 @@ if ($dynamic_days < 2) {
     $height = COption::GetOptionString("statistic", "GRAPH_HEIGHT");
     $str = "ADV_ID=" . $ADV_ID . "&find_date1=" . urlencode($find_date1) . "&find_date2=" . urlencode($find_date2);
     $s = "";
-    if ($find_sessions == "Y")
+    if ($find_sessions == "Y") {
         $s .= "&find_sessions=Y";
-    if ($find_sessions_back == "Y")
+    }
+    if ($find_sessions_back == "Y") {
         $s .= "&find_sessions_back=Y";
-    if ($find_guests == "Y")
+    }
+    if ($find_guests == "Y") {
         $s .= "&find_guests=Y";
-    if ($find_guests_back == "Y")
+    }
+    if ($find_guests_back == "Y") {
         $s .= "&find_guests_back=Y";
-    if ($find_new_guests == "Y")
+    }
+    if ($find_new_guests == "Y") {
         $s .= "&find_new_guests=Y";
-    if ($find_hosts == "Y")
+    }
+    if ($find_hosts == "Y") {
         $s .= "&find_hosts=Y";
-    if ($find_hosts_back == "Y")
+    }
+    if ($find_hosts_back == "Y") {
         $s .= "&find_hosts_back=Y";
-    if ($find_hits == "Y")
+    }
+    if ($find_hits == "Y") {
         $s .= "&find_hits=Y";
-    if ($find_hits_back == "Y")
+    }
+    if ($find_hits_back == "Y") {
         $s .= "&find_hits_back=Y";
+    }
 
-    if (strlen($s) > 0) {
+    if ($s <> '') {
         $graph_1 = "Y";
         $str .= $s;
         ?>
         <? if ($context == "tab"):?>
-            <a href="/bitrix/admin/adv_dynamic_list.php?lang=<?= LANG ?>&amp;find_adv_id=<?= $ADV_ID ?>&amp;set_default=Y"><?= GetMessage("STAT_ALL_DYNAMICS") ?></a>
-            <br>
-            <a href="/bitrix/admin/adv_graph_list.php?lang=<?= LANG ?>&amp;ADV_ID=<?= $ADV_ID ?>"><?= GetMessage("STAT_ALL_GRAPHICS") ?></a>
-            <br>
+            <a href="/bitrix/admin/adv_dynamic_list.php?lang=<?= LANG ?>&amp;find_adv_id=<?= $ADV_ID ?>&amp;set_default=Y"><?= GetMessage(
+                    "STAT_ALL_DYNAMICS"
+                ) ?></a><br>
+            <a href="/bitrix/admin/adv_graph_list.php?lang=<?= LANG ?>&amp;ADV_ID=<?= $ADV_ID ?>"><?= GetMessage(
+                    "STAT_ALL_GRAPHICS"
+                ) ?></a><br>
         <?endif; ?>
         <div class="graph">
             <?= GetMessage("STAT_GRAPH_1") ?>
             <table cellspacing="0" cellpadding="0" class="graph" border="0" align="center">
                 <tr>
                     <td valign="top" class="graph">
-                        <img class="graph"
-                             src="adv_graph_1.php?rand=<?= rand() ?>&amp;<?= $str ?>&amp;width=<?= $width ?>&amp;height=<?= $height ?>&amp;lang=<?= LANGUAGE_ID ?>"
+                        <img class="graph" src="adv_graph_1.php?rand=<?= rand(
+                        ) ?>&amp;<?= $str ?>&amp;width=<?= $width ?>&amp;height=<?= $height ?>&amp;lang=<?= LANGUAGE_ID ?>"
                              width="<?= $width ?>" height="<?= $height ?>">
                     </td>
                     <td valign="center">
@@ -179,8 +200,9 @@ if ($dynamic_days < 2) {
                                     </td>
                                     <td><img src="/bitrix/admin/graph_legend.php?color=<?= $arrColor["HITS"] ?>&dash=Y"
                                              width="45" height="2"></td>
-                                    <td nowrap><img src="/bitrix/images/1.gif" width="3"
-                                                    height="1"><?= GetMessage("STAT_HITS") ?></td>
+                                    <td nowrap><img src="/bitrix/images/1.gif" width="3" height="1"><?= GetMessage(
+                                            "STAT_HITS"
+                                        ) ?></td>
                                 </tr>
                             <?endif; ?>
                             <? if ($find_sessions == "Y" || $find_sessions_back == "Y"):?>
@@ -191,8 +213,9 @@ if ($dynamic_days < 2) {
                                     <td valign="center"><img
                                                 src="/bitrix/admin/graph_legend.php?color=<?= $arrColor["SESSIONS"] ?>&dash=Y"
                                                 width="45" height="2"></td>
-                                    <td nowrap><img src="/bitrix/images/1.gif" width="3"
-                                                    height="1"><?= GetMessage("STAT_SESSIONS") ?></td>
+                                    <td nowrap><img src="/bitrix/images/1.gif" width="3" height="1"><?= GetMessage(
+                                            "STAT_SESSIONS"
+                                        ) ?></td>
                                 </tr>
                             <?endif; ?>
                             <? if ($find_guests == "Y" || $find_guests_back == "Y"):?>
@@ -203,8 +226,9 @@ if ($dynamic_days < 2) {
                                     <td>
                                         <img src="/bitrix/admin/graph_legend.php?color=<?= $arrColor["GUESTS"] ?>&dash=Y"
                                              width="45" height="2"></td>
-                                    <td nowrap><img src="/bitrix/images/1.gif" width="3"
-                                                    height="1"><?= GetMessage("STAT_GUESTS") ?></td>
+                                    <td nowrap><img src="/bitrix/images/1.gif" width="3" height="1"><?= GetMessage(
+                                            "STAT_GUESTS"
+                                        ) ?></td>
                                 </tr>
                             <?endif; ?>
                             <? if ($find_hosts == "Y" || $find_hosts_back == "Y"):?>
@@ -214,8 +238,9 @@ if ($dynamic_days < 2) {
                                     </td>
                                     <td><img src="/bitrix/admin/graph_legend.php?color=<?= $arrColor["HOSTS"] ?>&dash=Y"
                                              width="45" height="2"></td>
-                                    <td nowrap><img src="/bitrix/images/1.gif" width="3"
-                                                    height="1"><?= GetMessage("STAT_HOSTS") ?></td>
+                                    <td nowrap><img src="/bitrix/images/1.gif" width="3" height="1"><?= GetMessage(
+                                            "STAT_HOSTS"
+                                        ) ?></td>
                                 </tr>
                             <?endif; ?>
                             <? if ($find_new_guests == "Y"):?>
@@ -224,8 +249,9 @@ if ($dynamic_days < 2) {
                                         <div style="background-color: <?= "#" . $arrColor["NEW_GUESTS"] ?>"></div>
                                     </td>
                                     <td></td>
-                                    <td nowrap><img src="/bitrix/images/1.gif" width="3"
-                                                    height="1"><?= GetMessage("STAT_NEW_GUESTS") ?></td>
+                                    <td nowrap><img src="/bitrix/images/1.gif" width="3" height="1"><?= GetMessage(
+                                            "STAT_NEW_GUESTS"
+                                        ) ?></td>
                                 </tr>
                             <?endif; ?>
                         </table>
@@ -240,14 +266,17 @@ if ($dynamic_days < 2) {
         $arF["ID"] = implode(" | ", $find_events);
         $arF["DATE1_PERIOD"] = $arFilter["DATE1"];
         $arF["DATE2_PERIOD"] = $arFilter["DATE2"];
-        $events = CAdv::GetEventList($ADV_ID, $by, $order, $arF, $is_filtered);
+        $events = CAdv::GetEventList($ADV_ID, '', '', $arF);
 
         if ($er = $events->Fetch()) {
             $graph_2 = "Y";
-            $str = "ADV_ID=" . $ADV_ID . "&find_date1=" . urlencode($find_date1) . "&find_date2=" . urlencode($find_date2) . "&find_show_money=" . $find_show_money;
+            $str = "ADV_ID=" . $ADV_ID . "&find_date1=" . urlencode($find_date1) . "&find_date2=" . urlencode(
+                    $find_date2
+                ) . "&find_show_money=" . $find_show_money;
             $s = "";
-            foreach ($find_events as $eid)
+            foreach ($find_events as $eid) {
                 $s .= "&find_events[]=" . $eid;
+            }
             $str .= $s;
             ?>
             <div class="graph">
@@ -255,8 +284,8 @@ if ($dynamic_days < 2) {
                 <table cellspacing="0" cellpadding="0" class="graph" border="0" align="center">
                     <tr>
                         <td valign="top" class="graph">
-                            <img class="graph"
-                                 src="adv_graph_2.php?rand=<?= rand() ?>&amp;<?= $str ?>&amp;width=<?= $width ?>&amp;height=<?= $height ?>&amp;lang=<?= LANG ?>"
+                            <img class="graph" src="adv_graph_2.php?rand=<?= rand(
+                            ) ?>&amp;<?= $str ?>&amp;width=<?= $width ?>&amp;height=<?= $height ?>&amp;lang=<?= LANG ?>"
                                  width="<?= $width ?>" height="<?= $height ?>">
                         </td>
                         <td valign="center">
@@ -311,12 +340,15 @@ if (!$message) {
     $aContext[] = array(
         "TEXT" => str_replace("#ID#", $ADV_ID, GetMessage("STAT_DYNAMIC")),
         //"ICON" => "btn_list",
-        "LINK" => "/bitrix/admin/adv_dynamic_list.php?lang=" . LANG . "&find_adv_id=" . $ADV_ID . "&find_date1=" . urlencode($arFilter["DATE1"]) . "&find_date2=" . urlencode($arFilter["DATE2"]) . "&set_filter=Y",
+        "LINK" => "/bitrix/admin/adv_dynamic_list.php?lang=" . LANG . "&find_adv_id=" . $ADV_ID . "&find_date1=" . urlencode(
+                $arFilter["DATE1"]
+            ) . "&find_date2=" . urlencode($arFilter["DATE2"]) . "&set_filter=Y",
     );
 }
 
-if ($context <> "tab")
+if ($context <> "tab") {
     $lAdmin->AddAdminContextMenu($aContext);
+}
 
 $lAdmin->CheckListMode();
 
@@ -328,8 +360,14 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
         <? $filter->Begin(); ?>
         <tr valign="center">
             <td width="0%" nowrap><? echo GetMessage("STAT_F_PERIOD") . ":" ?></td>
-            <td width="0%"
-                nowrap><? echo CalendarPeriod("find_date1", $find_date1, "find_date2", $find_date2, "form1", "Y") ?>
+            <td width="0%" nowrap><? echo CalendarPeriod(
+                    "find_date1",
+                    $find_date1,
+                    "find_date2",
+                    $find_date2,
+                    "form1",
+                    "Y"
+                ) ?>
             </td>
         </tr>
 
@@ -337,7 +375,15 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
             <td><?= GetMessage("STAT_F_SELECT_EVENTS") ?>:</td>
             <td>
                 <?
-                echo SelectBoxMFromArray("find_events[]", array("REFERENCE" => $find_events_names, "REFERENCE_ID" => $find_events), $find_events, "", false, "10", "style=\"width:300px;\"");
+                echo SelectBoxMFromArray(
+                    "find_events[]",
+                    array("REFERENCE" => $find_events_names, "REFERENCE_ID" => $find_events),
+                    $find_events,
+                    "",
+                    false,
+                    "10",
+                    "style=\"width:300px;\""
+                );
                 ?>
                 <script language="Javascript">
                     function selectEventType(form, field) {
@@ -356,13 +402,20 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
 
             </td>
         </tr>
-        <? $filter->Buttons(array("table_id" => $sTableID, "url" => $APPLICATION->GetCurPage() . "?ADV_ID=" . $ADV_ID, "form" => "form1"));
+        <? $filter->Buttons(
+            array(
+                "table_id" => $sTableID,
+                "url" => $APPLICATION->GetCurPage() . "?ADV_ID=" . $ADV_ID,
+                "form" => "form1"
+            )
+        );
         $filter->End(); ?>
     </form>
 
 <?
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 $lAdmin->DisplayList();
 ?>
 
@@ -388,27 +441,81 @@ $lAdmin->DisplayList();
                             </tr>
                             <tr>
                                 <td nowrap><?= GetMessage("STAT_HITS") ?></td>
-                                <td align="center"><? echo InputType("checkbox", "find_hits", "Y", $find_hits, false); ?></td>
-                                <td align="center"><? echo InputType("checkbox", "find_hits_back", "Y", $find_hits_back, false); ?></td>
+                                <td align="center"><? echo InputType(
+                                        "checkbox",
+                                        "find_hits",
+                                        "Y",
+                                        $find_hits,
+                                        false
+                                    ); ?></td>
+                                <td align="center"><? echo InputType(
+                                        "checkbox",
+                                        "find_hits_back",
+                                        "Y",
+                                        $find_hits_back,
+                                        false
+                                    ); ?></td>
                             </tr>
                             <tr>
                                 <td nowrap><?= GetMessage("STAT_SESSIONS") ?></td>
-                                <td align="center"><? echo InputType("checkbox", "find_sessions", "Y", $find_sessions, false); ?></td>
-                                <td align="center"><? echo InputType("checkbox", "find_sessions_back", "Y", $find_sessions_back, false); ?></td>
+                                <td align="center"><? echo InputType(
+                                        "checkbox",
+                                        "find_sessions",
+                                        "Y",
+                                        $find_sessions,
+                                        false
+                                    ); ?></td>
+                                <td align="center"><? echo InputType(
+                                        "checkbox",
+                                        "find_sessions_back",
+                                        "Y",
+                                        $find_sessions_back,
+                                        false
+                                    ); ?></td>
                             </tr>
                             <tr>
                                 <td nowrap><?= GetMessage("STAT_GUESTS") ?></td>
-                                <td align="center"><? echo InputType("checkbox", "find_guests", "Y", $find_guests, false); ?></td>
-                                <td align="center"><? echo InputType("checkbox", "find_guests_back", "Y", $find_guests_back, false); ?></td>
+                                <td align="center"><? echo InputType(
+                                        "checkbox",
+                                        "find_guests",
+                                        "Y",
+                                        $find_guests,
+                                        false
+                                    ); ?></td>
+                                <td align="center"><? echo InputType(
+                                        "checkbox",
+                                        "find_guests_back",
+                                        "Y",
+                                        $find_guests_back,
+                                        false
+                                    ); ?></td>
                             </tr>
                             <tr>
                                 <td nowrap><?= GetMessage("STAT_HOSTS") ?></td>
-                                <td align="center"><? echo InputType("checkbox", "find_hosts", "Y", $find_hosts, false); ?></td>
-                                <td align="center"><? echo InputType("checkbox", "find_hosts_back", "Y", $find_hosts_back, false); ?></td>
+                                <td align="center"><? echo InputType(
+                                        "checkbox",
+                                        "find_hosts",
+                                        "Y",
+                                        $find_hosts,
+                                        false
+                                    ); ?></td>
+                                <td align="center"><? echo InputType(
+                                        "checkbox",
+                                        "find_hosts_back",
+                                        "Y",
+                                        $find_hosts_back,
+                                        false
+                                    ); ?></td>
                             </tr>
                             <tr>
                                 <td nowrap><?= GetMessage("STAT_NEW_GUESTS") ?></td>
-                                <td align="center"><? echo InputType("checkbox", "find_new_guests", "Y", $find_new_guests, false); ?></td>
+                                <td align="center"><? echo InputType(
+                                        "checkbox",
+                                        "find_new_guests",
+                                        "Y",
+                                        $find_new_guests,
+                                        false
+                                    ); ?></td>
                                 <td></td>
                             </tr>
                             <tr>

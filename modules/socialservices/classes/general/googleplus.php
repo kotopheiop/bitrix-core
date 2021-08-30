@@ -1,4 +1,5 @@
 <?php
+
 IncludeModuleLangFile(__FILE__);
 
 use \Bitrix\Main\Web\HttpClient;
@@ -102,8 +103,9 @@ class CGooglePlusOAuthInterface extends CGoogleOAuthInterface
 
     protected function query($url)
     {
-        if ($this->access_token === false)
+        if ($this->access_token === false) {
             return false;
+        }
 
         $http = new HttpClient();
         $http->setHeader("authorization", "Bearer " . $this->access_token);

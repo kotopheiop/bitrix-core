@@ -35,8 +35,11 @@ class TradeBindingEntity extends Internals\CollectableEntity
     public static function getAvailableFields()
     {
         return [
-            'ORDER_ID', 'EXTERNAL_ORDER_ID',
-            'TRADING_PLATFORM_ID', 'PARAMS', 'XML_ID'
+            'ORDER_ID',
+            'EXTERNAL_ORDER_ID',
+            'TRADING_PLATFORM_ID',
+            'PARAMS',
+            'XML_ID'
         ];
     }
 
@@ -72,8 +75,9 @@ class TradeBindingEntity extends Internals\CollectableEntity
 
         if ($platform !== null) {
             $entity->setFieldNoDemand('TRADING_PLATFORM_ID', $platform->getId());
-            $entity->setFieldNoDemand('XML_ID', static::generateXmlId());
         }
+
+        $entity->setFieldNoDemand('XML_ID', static::generateXmlId());
 
         return $entity;
     }
@@ -81,7 +85,7 @@ class TradeBindingEntity extends Internals\CollectableEntity
     /**
      * @return string
      */
-    public static function generateXmlId()
+    protected static function generateXmlId()
     {
         return uniqid('bx_');
     }
@@ -118,9 +122,11 @@ class TradeBindingEntity extends Internals\CollectableEntity
 
         /** @var TradeBindingCollection $tradeBindingCollection */
         $tradeBindingCollection = $registry->get(Registry::ENTITY_TRADE_BINDING_COLLECTION);
-        $dbRes = $tradeBindingCollection::getList([
-            'filter' => ['ORDER_ID' => $id]
-        ]);
+        $dbRes = $tradeBindingCollection::getList(
+            [
+                'filter' => ['ORDER_ID' => $id]
+            ]
+        );
 
         $entityList = [];
         while ($data = $dbRes->fetch()) {
@@ -190,12 +196,14 @@ class TradeBindingEntity extends Internals\CollectableEntity
     {
         if ($this->tradePlatform === null) {
             if ($this->getField('TRADING_PLATFORM_ID') > 0) {
-                $dbRes = TradingPlatformTable::getList([
-                    'select' => ['CODE'],
-                    'filter' => [
-                        '=ID' => $this->getField('TRADING_PLATFORM_ID')
+                $dbRes = TradingPlatformTable::getList(
+                    [
+                        'select' => ['CODE'],
+                        'filter' => [
+                            '=ID' => $this->getField('TRADING_PLATFORM_ID')
+                        ]
                     ]
-                ]);
+                );
 
                 if ($item = $dbRes->fetch()) {
                     $this->tradePlatform = TradingPlatform\Landing\Landing::getInstanceByCode($item['CODE']);

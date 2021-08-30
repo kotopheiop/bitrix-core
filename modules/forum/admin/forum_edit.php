@@ -6,8 +6,9 @@
  * @global CMain $APPLICATION
  */
 $forumPermissions = $APPLICATION->GetGroupRight("forum");
-if ($forumPermissions == "D")
+if ($forumPermissions == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 /********************************************************************
  * Simple text
  ********************************************************************/
@@ -15,6 +16,11 @@ if ($forumPermissions == "D")
 CModule::IncludeModule("forum");
 IncludeModuleLangFile(__FILE__);
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/forum/prolog.php");
+$aForumPermissions = \Bitrix\Forum\Permission::getTitledList();
+$aForumPermissions = [
+    "reference" => array_values($aForumPermissions),
+    "reference_id" => array_keys($aForumPermissions)
+];
 
 /********************************************************************
  * Input params
@@ -24,11 +30,12 @@ $arError = array();
 $bVarsFromForm = false;
 $arFields = array();
 $message = false;
-$ID = intVal($_REQUEST["ID"]);
+$ID = intval($_REQUEST["ID"]);
 $arSites = array();
-$db_res = CSite::GetList($by = "sort", $order = "asc");
-while ($res = $db_res->GetNext())
+$db_res = CSite::GetList();
+while ($res = $db_res->GetNext()) {
     $arSites[$res["LID"]] = $res;
+}
 $arGroups = CForumGroup::GetByLang(LANGUAGE_ID);
 array_unshift($arGroups, array("ID" => 0, "NAME" => GetMessage("FE_ROOT_GROUP")));
 /********************************************************************
@@ -38,15 +45,18 @@ array_unshift($arGroups, array("ID" => 0, "NAME" => GetMessage("FE_ROOT_GROUP"))
 /********************************************************************
  * Action
  ********************************************************************/
-if ($_SERVER['REQUEST_METHOD'] == "POST" && $forumPermissions >= "W" && $_REQUEST["Update"] == "Y" && check_bitrix_sessid()) {
+if ($_SERVER['REQUEST_METHOD'] == "POST" && $forumPermissions >= "W" && $_REQUEST["Update"] == "Y" && check_bitrix_sessid(
+    )) {
     if ($ID > 0 && !CForumNew::CanUserUpdateForum($ID, $USER->GetUserGroupArray(), $USER->GetID())) {
         $arError[] = array(
             "code" => "not_right_for_edit",
-            "title" => GetMessage("FE_NO_PERMS2UPDATE"));
+            "title" => GetMessage("FE_NO_PERMS2UPDATE")
+        );
     } elseif ($ID <= 0 && !CForumNew::CanUserAddForum($USER->GetUserGroupArray(), $USER->GetID())) {
         $arError[] = array(
             "code" => "not_right_for_add",
-            "title" => GetMessage("FE_NO_PERMS2ADD"));
+            "title" => GetMessage("FE_NO_PERMS2ADD")
+        );
     } else {
         $arFields = Array(
             "NAME" => $_REQUEST["NAME"],
@@ -62,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && $forumPermissions >= "W" && $_REQUES
             "INDEXATION" => ($_REQUEST["INDEXATION"] == "Y" ? "Y" : "N"),
             "DEDUPLICATION" => ($_REQUEST["DEDUPLICATION"] == "Y" ? "Y" : "N"),
 
-            "SORT" => (intVal($_REQUEST["SORT"]) <= 0 ? 150 : $_REQUEST["SORT"]),
+            "SORT" => (intval($_REQUEST["SORT"]) <= 0 ? 150 : $_REQUEST["SORT"]),
             "ORDER_BY" => $_REQUEST["ORDER_BY"],
             "ORDER_DIRECTION" => $_REQUEST["ORDER_DIRECTION"],
 
@@ -81,7 +91,10 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && $forumPermissions >= "W" && $_REQUES
             "ALLOW_ALIGN" => ($_REQUEST["ALLOW_ALIGN"] == "Y" ? "Y" : "N"),
             "ALLOW_FONT" => ($_REQUEST["ALLOW_FONT"] == "Y" ? "Y" : "N"),
             "ALLOW_SMILES" => ($_REQUEST["ALLOW_SMILES"] == "Y" ? "Y" : "N"),
-            "ALLOW_UPLOAD" => (in_array($_REQUEST["ALLOW_UPLOAD"], array("Y", "A", "F")) ? $_REQUEST["ALLOW_UPLOAD"] : "N"),
+            "ALLOW_UPLOAD" => (in_array(
+                $_REQUEST["ALLOW_UPLOAD"],
+                array("Y", "A", "F")
+            ) ? $_REQUEST["ALLOW_UPLOAD"] : "N"),
             "ALLOW_UPLOAD_EXT" => $_REQUEST["ALLOW_UPLOAD_EXT"],
             "ALLOW_TOPIC_TITLED" => ($_REQUEST["ALLOW_TOPIC_TITLED"] == "Y" ? "Y" : "N"),
             "ALLOW_NL2BR" => ($_REQUEST["ALLOW_NL2BR"] == "Y" ? "Y" : "N"),
@@ -89,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && $forumPermissions >= "W" && $_REQUES
             "ALLOW_SIGNATURE" => ($_REQUEST["ALLOW_SIGNATURE"] == "Y" ? "Y" : "N")
         );
 
-        $db_res = CSite::GetList($lby = "sort", $lorder = "asc");
+        $db_res = CSite::GetList();
         while ($res = $db_res->Fetch()) {
             if ($_REQUEST["SITE"][$res["LID"]] == "Y") {
                 $arFields["SITES"][$res["LID"]] = $_REQUEST["SITE_PATH"][$res["LID"]];
@@ -100,8 +113,9 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && $forumPermissions >= "W" && $_REQUES
             $arFields["EVENT2"] = $_REQUEST["EVENT2"];
             $arFields["EVENT3"] = $_REQUEST["EVENT3"];
         }
-        if (!IsModuleInstalled("search"))
+        if (!IsModuleInstalled("search")) {
             unset($arFields["INDEXATION"]);
+        }
 
         $res = false;
 
@@ -123,20 +137,24 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && $forumPermissions >= "W" && $_REQUES
         $nameSpace . ":forum.topic.reviews",
         $nameSpace . ":forum.topic.search",
         $nameSpace . ":forum.user.list",
-        $nameSpace . ":forum.user.post");
+        $nameSpace . ":forum.user.post"
+    );
     foreach ($arComponentPath as $path) {
         $componentRelativePath = CComponentEngine::MakeComponentPath($path);
         $arComponentDescription = CComponentUtil::GetComponentDescr($path);
-        if (strLen($componentRelativePath) <= 0 || !is_array($arComponentDescription))
+        if ($componentRelativePath == '' || !is_array($arComponentDescription)) {
             continue;
-        elseif (!array_key_exists("CACHE_PATH", $arComponentDescription))
+        } elseif (!array_key_exists("CACHE_PATH", $arComponentDescription)) {
             continue;
+        }
         foreach ($arSites as $res) {
             $path = $componentRelativePath;
-            if ($arComponentDescription["CACHE_PATH"] == "Y")
+            if ($arComponentDescription["CACHE_PATH"] == "Y") {
                 $path = "/" . $res["LID"] . $path;
-            if (!empty($path))
+            }
+            if (!empty($path)) {
                 BXClearCache(true, $path);
+            }
         }
     }
 
@@ -144,16 +162,19 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && $forumPermissions >= "W" && $_REQUES
         $message = new CAdminMessage(($ID > 0 ? GetMessage("FE_ERROR_UPDATE") : GetMessage("FE_ERROR_ADD")), $e);
         $bVarsFromForm = true;
     } else {
-        if (strLen($_REQUEST["apply"]) <= 0)
+        if ($_REQUEST["apply"] == '') {
             LocalRedirect("forum_admin.php?lang=" . LANG . "&" . GetFilterParams("filter_", false));
-        else
+        } else {
             LocalRedirect("forum_edit.php?lang=" . LANG . "&ID=" . $ID);
+        }
     }
 }
 /********************************************************************
  * /Action
  ********************************************************************/
-$APPLICATION->SetTitle(($ID > 0 ? str_replace("#ID#", $ID, GetMessage("FE_PAGE_TITLE1")) : GetMessage("FE_PAGE_TITLE2")));
+$APPLICATION->SetTitle(
+    ($ID > 0 ? str_replace("#ID#", $ID, GetMessage("FE_PAGE_TITLE1")) : GetMessage("FE_PAGE_TITLE2"))
+);
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
 /********************************************************************
@@ -200,7 +221,8 @@ $arForum = array(
 
     "EVENT1" => "forum",
     "EVENT2" => "message",
-    "EVENT3" => "");
+    "EVENT3" => ""
+);
 
 if ($ID > 0) {
     $db_res = CForumNew::GetList(array(), array("ID" => $ID));
@@ -215,8 +237,9 @@ if (!function_exists("__recursive_htmlspecialcharsbx")) {
     function __recursive_htmlspecialcharsbx(&$res)
     {
         if (is_array($res)) {
-            foreach ($res as $key => $val)
+            foreach ($res as $key => $val) {
                 $res[$key] = __recursive_htmlspecialcharsbx($val);
+            }
         } elseif (is_string($res)) {
             $res = htmlspecialcharsbx($res);
         }
@@ -255,22 +278,42 @@ if ($ID > 0 && $forumPermissions >= "W") {
 
     $aMenu[] = array(
         "TEXT" => GetMessage("FEN_DELETE_FORUM"),
-        "LINK" => "javascript:if(confirm('" . GetMessage("FEN_DELETE_FORUM_CONFIRM") . "')) window.location='/bitrix/admin/forum_admin.php?action=delete&ID[]=" . $ID . "&lang=" . LANG . "&" . bitrix_sessid_get() . "';",
+        "LINK" => "javascript:if(confirm('" . GetMessage(
+                "FEN_DELETE_FORUM_CONFIRM"
+            ) . "')) window.location='/bitrix/admin/forum_admin.php?action=delete&ID[]=" . $ID . "&lang=" . LANG . "&" . bitrix_sessid_get(
+            ) . "';",
         "ICON" => "btn_delete",
     );
 }
 
 $aTabs = array(
-    array("DIV" => "edit1", "TAB" => GetMessage("FEN_TAB_FORUM"), "ICON" => "forum", "TITLE" => GetMessage("FEN_TAB_FORUM_DESCR")),
-    array("DIV" => "edit2", "TAB" => GetMessage("FEN_TAB_SETTINGS"), "ICON" => "forum", "TITLE" => GetMessage("FEN_TAB_SETTINGS_DESCR")),
-    array("DIV" => "edit3", "TAB" => GetMessage("FEN_TAB_ACCESS"), "ICON" => "forum", "TITLE" => GetMessage("FEN_TAB_ACCESS_DESCR")));
+    array(
+        "DIV" => "edit1",
+        "TAB" => GetMessage("FEN_TAB_FORUM"),
+        "ICON" => "forum",
+        "TITLE" => GetMessage("FEN_TAB_FORUM_DESCR")
+    ),
+    array(
+        "DIV" => "edit2",
+        "TAB" => GetMessage("FEN_TAB_SETTINGS"),
+        "ICON" => "forum",
+        "TITLE" => GetMessage("FEN_TAB_SETTINGS_DESCR")
+    ),
+    array(
+        "DIV" => "edit3",
+        "TAB" => GetMessage("FEN_TAB_ACCESS"),
+        "ICON" => "forum",
+        "TITLE" => GetMessage("FEN_TAB_ACCESS_DESCR")
+    )
+);
 
 $context = new CAdminContextMenu($aMenu);
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
 $context->Show();
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 ?>
     <form method="POST" action="<?= $APPLICATION->GetCurPageParam() ?>?" name="forum_edit">
         <input type="hidden" name="Update" value="Y">
@@ -432,10 +475,19 @@ if ($message)
             <td><?= GetMessage("ALLOW_UPLOAD") ?>:</td>
             <td>
                 <select name="ALLOW_UPLOAD">
-                    <option value="N" <?= (!in_array($arForum["ALLOW_UPLOAD"], array("Y", "F", "A")) ? "selected" : "") ?>><?= GetMessage("FE_NOT") ?></option>
-                    <option value="Y" <? if ($arForum["ALLOW_UPLOAD"] == "Y") echo " selected" ?>><?= GetMessage("FE_IMAGEY") ?></option>
-                    <option value="F" <? if ($arForum["ALLOW_UPLOAD"] == "F") echo " selected" ?>><?= GetMessage("FE_FILEY") ?></option>
-                    <option value="A" <? if ($arForum["ALLOW_UPLOAD"] == "A") echo " selected" ?>><?= GetMessage("FE_ANY_FILEY") ?></option>
+                    <option value="N" <?= (!in_array(
+                        $arForum["ALLOW_UPLOAD"],
+                        array("Y", "F", "A")
+                    ) ? "selected" : "") ?>><?= GetMessage("FE_NOT") ?></option>
+                    <option value="Y" <? if ($arForum["ALLOW_UPLOAD"] == "Y") echo " selected" ?>><?= GetMessage(
+                            "FE_IMAGEY"
+                        ) ?></option>
+                    <option value="F" <? if ($arForum["ALLOW_UPLOAD"] == "F") echo " selected" ?>><?= GetMessage(
+                            "FE_FILEY"
+                        ) ?></option>
+                    <option value="A" <? if ($arForum["ALLOW_UPLOAD"] == "A") echo " selected" ?>><?= GetMessage(
+                            "FE_ANY_FILEY"
+                        ) ?></option>
                 </select>
             </td>
         </tr>
@@ -614,10 +666,13 @@ if ($message)
 
         $arPerm = ($ID > 0 ? $arForum["GROUP_ID"] : array());
 
-        $db_res = CGroup::GetList($by = "sort", $order = "asc", Array("ADMIN" => "N"));
+        $db_res = CGroup::GetList("sort", "asc", Array("ADMIN" => "N"));
         while ($res = $db_res->GetNext()) {
             $strSelected = $arForum["GROUP_ID"][$res["ID"]];
-            $strSelected = (!in_array(strtoupper($strSelected), $aForumPermissions["reference_id"]) ? "A" : $strSelected);
+            $strSelected = (!in_array(
+                mb_strtoupper($strSelected),
+                $aForumPermissions["reference_id"]
+            ) ? "A" : $strSelected);
             ?>
             <tr>
                 <td width="40%"><?= $res["NAME"] ?>&nbsp;[<a
@@ -644,11 +699,11 @@ if ($message)
         ?>
 
         <?
-        $editable = True;
+        $editable = true;
         if ($ID > 0 && !CForumNew::CanUserUpdateForum($ID, $USER->GetUserGroupArray(), $USER->GetID())) {
-            $editable = False;
+            $editable = false;
         } elseif ($ID <= 0 && !CForumNew::CanUserAddForum($USER->GetUserGroupArray(), $USER->GetID())) {
-            $editable = False;
+            $editable = false;
         }
 
         $tabControl->Buttons(
@@ -686,7 +741,9 @@ if (IsModuleInstalled("search")) {
 }
 $res = CForumNew::PreparePath2Message(null);
 ?>
-<?= GetMessage("FE_SAMPLE_SITEPATH") ?>: /forum/index.php?PAGE_NAME=message&FID=#FORUM_ID#&TID=#TOPIC_ID#&MID=#MESSAGE_ID#
+<?= GetMessage(
+    "FE_SAMPLE_SITEPATH"
+) ?>: /forum/index.php?PAGE_NAME=message&FID=#FORUM_ID#&TID=#TOPIC_ID#&MID=#MESSAGE_ID#
     <br/><?= implode(', ', $res) ?><br/>
 <?= EndNote(); ?>
 <?

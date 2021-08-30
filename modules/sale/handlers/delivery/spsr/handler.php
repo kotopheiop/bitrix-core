@@ -5,6 +5,7 @@ namespace Sale\Handlers\Delivery;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
+use Bitrix\Main\ModuleManager;
 use Bitrix\Sale\Internals\CompanyTable;
 use Bitrix\Sale\Result;
 use \Bitrix\Sale\Shipment;
@@ -88,25 +89,30 @@ class SpsrHandler extends \Bitrix\Sale\Delivery\Services\Base
         $sid = $data[0];
         $additional = array();
 
-        if (!empty($this->config['MAIN']['NATURE']))
+        if (!empty($this->config['MAIN']['NATURE'])) {
             $additional['NATURE'] = $this->config['MAIN']['NATURE'];
+        }
 
-        if (isset($this->config['MAIN']['AMOUNT_CHECK']) && intval($this->config['MAIN']['AMOUNT_CHECK']) >= 0)
+        if (isset($this->config['MAIN']['AMOUNT_CHECK']) && intval($this->config['MAIN']['AMOUNT_CHECK']) >= 0) {
             $additional['AMOUNT_CHECK'] = $this->config['MAIN']['AMOUNT_CHECK'];
+        }
 
-        if (!empty($icn))
+        if (!empty($icn)) {
             $additional['ICN'] = $icn;
+        }
 
         $additional['DEFAULT_WEIGHT'] = $this->config['MAIN']['DEFAULT_WEIGHT'];
 
-        if (strlen($sid) > 0)
+        if ($sid <> '') {
             $additional['SID'] = $sid;
+        }
 
         foreach ($shipment->getExtraServices() as $srvId => $value) {
             $srvItem = $this->extraServices->getItem($srvId);
 
-            if ($srvItem && strlen($srvItem->getCode()) > 0)
+            if ($srvItem && $srvItem->getCode() <> '') {
                 $additional['EXTRA_SERVICES'][$srvItem->getCode()] = $value;
+            }
         }
 
         $res = Calculator::calculate($shipment, $additional);
@@ -137,7 +143,7 @@ class SpsrHandler extends \Bitrix\Sale\Delivery\Services\Base
         }
 
         foreach ($res->getData() as $tarffParams) {
-            if (strpos(ToUpper($tarffParams['TariffType']), ToUpper($tariff)) !== false) {
+            if (mb_strpos(ToUpper($tarffParams['TariffType']), ToUpper($tariff)) !== false) {
                 $result->setData($res->getData());
                 $result->setDeliveryPrice(
                     floatval($tarffParams['Total_Dost']) +
@@ -146,14 +152,16 @@ class SpsrHandler extends \Bitrix\Sale\Delivery\Services\Base
                 );
                 $result->setExtraServicesPrice(floatval($tarffParams['Total_DopUsl']));
 
-                if (strlen($tarffParams['DP']) > 0) {
-                    $result->setPeriodDescription($tarffParams['DP'] . ' (' . Loc::getMessage('SALE_DLV_SRV_SPSR_DAYS') . ')');
+                if ($tarffParams['DP'] <> '') {
+                    $result->setPeriodDescription(
+                        $tarffParams['DP'] . ' (' . Loc::getMessage('SALE_DLV_SRV_SPSR_DAYS') . ')'
+                    );
 
-                    $hyphenPos = strpos($tarffParams['DP'], '-');
+                    $hyphenPos = mb_strpos($tarffParams['DP'], '-');
 
                     if ($hyphenPos !== false) {
-                        $result->setPeriodFrom(intval(substr($tarffParams['DP'], 0, $hyphenPos)));
-                        $result->setPeriodTo(intval(substr($tarffParams['DP'], $hyphenPos + 1)));
+                        $result->setPeriodFrom(intval(mb_substr($tarffParams['DP'], 0, $hyphenPos)));
+                        $result->setPeriodTo(intval(mb_substr($tarffParams['DP'], $hyphenPos + 1)));
                         $result->setPeriodType(CalculationResult::PERIOD_TYPE_DAY);
                     }
                 }
@@ -240,8 +248,9 @@ class SpsrHandler extends \Bitrix\Sale\Delivery\Services\Base
         $result = array();
         $codes = array(1, 2, 17, 18, 19, 20, 21, 22, 23, 24);
 
-        foreach ($codes as $code)
+        foreach ($codes as $code) {
             $result[$code] = Loc::getMessage('SALE_DLV_SRV_SPSR_NATURE_' . $code);
+        }
 
         return $result;
     }
@@ -252,8 +261,9 @@ class SpsrHandler extends \Bitrix\Sale\Delivery\Services\Base
      */
     protected static function getProfileNatures($profileId = 0)
     {
-        if ($profileId <= 0)
+        if ($profileId <= 0) {
             return array(1, 2, 17, 18, 19, 20, 21, 22, 23, 24);
+        }
 
         $natures = array(
             20 => array(1, 2, 17),                                //colibri
@@ -282,8 +292,9 @@ class SpsrHandler extends \Bitrix\Sale\Delivery\Services\Base
      */
     public static function onGetBusinessValueConsumers()
     {
-        if (!self::isHoldingUsed())
+        if (!self::isHoldingUsed()) {
             return array();
+        }
 
         static $consumers;
 
@@ -291,9 +302,24 @@ class SpsrHandler extends \Bitrix\Sale\Delivery\Services\Base
             $providerKeys = array('', 'VALUE', 'COMPANY');
 
             $codes = array(
-                'DELIVERY_SPSR_LOGIN' => array('NAME' => Loc::getMessage('SALE_DLV_SRV_SPSR_LOGIN'), 'SORT' => 100, 'GROUP' => 'DELIVERY_SPSR_AUTH', 'PROVIDERS' => $providerKeys),
-                'DELIVERY_SPSR_PASS' => array('NAME' => Loc::getMessage('SALE_DLV_SRV_SPSR_PASS'), 'SORT' => 200, 'GROUP' => 'DELIVERY_SPSR_AUTH', 'PROVIDERS' => $providerKeys),
-                'DELIVERY_SPSR_ICN' => array('NAME' => Loc::getMessage('SALE_DLV_SRV_SPSR_ICN'), 'SORT' => 300, 'GROUP' => 'DELIVERY_SPSR_AUTH', 'PROVIDERS' => $providerKeys),
+                'DELIVERY_SPSR_LOGIN' => array(
+                    'NAME' => Loc::getMessage('SALE_DLV_SRV_SPSR_LOGIN'),
+                    'SORT' => 100,
+                    'GROUP' => 'DELIVERY_SPSR_AUTH',
+                    'PROVIDERS' => $providerKeys
+                ),
+                'DELIVERY_SPSR_PASS' => array(
+                    'NAME' => Loc::getMessage('SALE_DLV_SRV_SPSR_PASS'),
+                    'SORT' => 200,
+                    'GROUP' => 'DELIVERY_SPSR_AUTH',
+                    'PROVIDERS' => $providerKeys
+                ),
+                'DELIVERY_SPSR_ICN' => array(
+                    'NAME' => Loc::getMessage('SALE_DLV_SRV_SPSR_ICN'),
+                    'SORT' => 300,
+                    'GROUP' => 'DELIVERY_SPSR_AUTH',
+                    'PROVIDERS' => $providerKeys
+                ),
             );
 
             $consumers = array(
@@ -308,8 +334,9 @@ class SpsrHandler extends \Bitrix\Sale\Delivery\Services\Base
 
     public static function onGetBusinessValueGroups()
     {
-        if (!self::isHoldingUsed())
+        if (!self::isHoldingUsed()) {
             return array();
+        }
 
         return array(
             'DELIVERY_SPSR_AUTH' => array('NAME' => Loc::getMessage('SALE_DLV_SRV_SPSR_BV_AUTH'), 'SORT' => 100),
@@ -320,20 +347,27 @@ class SpsrHandler extends \Bitrix\Sale\Delivery\Services\Base
     {
         static $result = null;
 
-        if ($result !== null)
+        if ($result !== null) {
             return $result;
+        }
 
-        $dbRes = CompanyTable::getList(array(
-            'filter' => array('=ACTIVE' => 'Y'),
-            'select' => array('CNT'),
-            'runtime' => array(
-                new ExpressionField('CNT', 'COUNT(*)'
-                ))
-        ));
+        $dbRes = CompanyTable::getList(
+            array(
+                'filter' => array('=ACTIVE' => 'Y'),
+                'select' => array('CNT'),
+                'runtime' => array(
+                    new ExpressionField(
+                        'CNT', 'COUNT(*)'
+                    )
+                )
+            )
+        );
 
-        if ($row = $dbRes->fetch())
-            if (intval($row['CNT']) > 1)
+        if ($row = $dbRes->fetch()) {
+            if (intval($row['CNT']) > 1) {
                 $result = true;
+            }
+        }
 
         return $result;
     }
@@ -345,8 +379,9 @@ class SpsrHandler extends \Bitrix\Sale\Delivery\Services\Base
      */
     protected static function utfDecode($str)
     {
-        if (strtolower(SITE_CHARSET) != 'utf-8')
+        if (mb_strtolower(SITE_CHARSET) != 'utf-8') {
             $str = Encoding::convertEncodingArray($str, 'UTF-8', SITE_CHARSET);
+        }
 
         return $str;
     }
@@ -419,13 +454,15 @@ class SpsrHandler extends \Bitrix\Sale\Delivery\Services\Base
         if ($shipment && self::isHoldingUsed()) {
             $result = BusinessValue::get('DELIVERY_SPSR_' . $fieldName, 'DELIVERY_' . $this->getId(), $shipment);
 
-            if (strlen($result) <= 0)
+            if ($result == '') {
                 $result = $this->config['MAIN'][$fieldName];
+            }
         } else {
             $result = $this->config['MAIN'][$fieldName];
 
-            if (strlen($result) <= 0 && self::isHoldingUsed())
+            if ($result == '' && self::isHoldingUsed()) {
                 $result = BusinessValue::get('DELIVERY_SPSR_' . $fieldName, 'DELIVERY_' . $this->getId(), $shipment);
+            }
         }
 
         return strval($result);
@@ -493,8 +530,9 @@ class SpsrHandler extends \Bitrix\Sale\Delivery\Services\Base
             Cache::setServiceTypes($types, $login, $pass);
         }
 
-        if (!is_array($types))
+        if (!is_array($types)) {
             $types = array();
+        }
 
         $result->setData($types);
         return $result;
@@ -626,9 +664,11 @@ class SpsrHandler extends \Bitrix\Sale\Delivery\Services\Base
         $resSrv = $this->getServiceTypes($shipment);
         $data = $resSrv->getData();
 
-        if (is_array($data))
-            foreach ($data as $id => $params)
+        if (is_array($data)) {
+            foreach ($data as $id => $params) {
                 $result[$id] = $params['Name'];
+            }
+        }
 
         return $result;
     }
@@ -641,22 +681,24 @@ class SpsrHandler extends \Bitrix\Sale\Delivery\Services\Base
     {
         static $compatibleProfiles = null;
 
-        if ($compatibleProfiles !== null)
+        if ($compatibleProfiles !== null) {
             return $compatibleProfiles;
+        }
 
         $profilesList = $this->getProfilesList($shipment);
 
         if ($this->isCalculatePriceImmediately()) {
             $res = $this->getTarifsReq($shipment);
 
-            if (!$res->isSuccess())
+            if (!$res->isSuccess()) {
                 return array();
+            }
 
             $compatibleProfiles = array();
 
             foreach ($res->getData() as $tarffParams) {
                 foreach ($profilesList as $id => $name) {
-                    if (strpos(ToUpper($tarffParams['TariffType']), ToUpper($name)) !== false) {
+                    if (mb_strpos(ToUpper($tarffParams['TariffType']), ToUpper($name)) !== false) {
                         $compatibleProfiles[] = $id;
                         break;
                     }
@@ -681,8 +723,9 @@ class SpsrHandler extends \Bitrix\Sale\Delivery\Services\Base
      */
     public static function onAfterAdd($serviceId, array $fields = array())
     {
-        if ($serviceId <= 0)
+        if ($serviceId <= 0) {
             return false;
+        }
 
         $result = true;
 
@@ -819,4 +862,16 @@ class SpsrHandler extends \Bitrix\Sale\Delivery\Services\Base
         );
     }
 
+    /** @inheritDoc */
+    public static function isHandlerCompatible()
+    {
+        if (!parent::isHandlerCompatible()) {
+            return false;
+        }
+
+        return in_array(
+            \Bitrix\Sale\Delivery\Helper::getPortalZone(),
+            ['ru', 'kz', 'by']
+        );
+    }
 }

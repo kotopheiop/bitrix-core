@@ -36,8 +36,9 @@ class CSecurityTemporaryStorage
      */
     protected function initializeSessionData($sessionKey = '')
     {
-        if (!is_string($sessionKey) || !$sessionKey)
+        if (!is_string($sessionKey) || !$sessionKey) {
             $sessionKey = self::DEFAULT_DATA_KEY;
+        }
 
         $this->sessionData = &$_SESSION[self::SESSION_DATA_KEY][$sessionKey];
         if (!is_array($this->sessionData)) {

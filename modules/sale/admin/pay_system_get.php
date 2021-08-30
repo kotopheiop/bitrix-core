@@ -1,8 +1,9 @@
 <? require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_before.php");
 CModule::IncludeModule("sale");
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions < "W")
+if ($saleModulePermissions < "W") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 ?>
     <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
     <html>
@@ -12,21 +13,24 @@ if ($saleModulePermissions < "W")
 <?
 IncludeModuleLangFile(__FILE__);
 
-$divInd = IntVal($divInd);
+$divInd = intval($divInd);
 
 $file = str_replace("\\", "/", $file);
-while (strpos($file, "//") !== false)
+while (mb_strpos($file, "//") !== false) {
     $file = str_replace("//", "/", $file);
-while (substr($file, strlen($file) - 1, 1) == "/")
-    $file = substr($file, 0, strlen($file) - 1);
+}
+while (mb_substr($file, mb_strlen($file) - 1, 1) == "/") {
+    $file = mb_substr($file, 0, mb_strlen($file) - 1);
+}
 
 
 function LocalGetPSActionParams($fileName)
 {
     $arPSCorrespondence = array();
 
-    if (file_exists($fileName) && is_file($fileName))
+    if (file_exists($fileName) && is_file($fileName)) {
         include($fileName);
+    }
 
     return $arPSCorrespondence;
 }
@@ -38,42 +42,53 @@ $fields = "";
 $arPSCorrespondence = array();
 
 $path2SystemPSFiles = "/bitrix/modules/sale/payment/";
-$path2UserPSFiles = COption::GetOptionString("sale", "path2user_ps_files", BX_PERSONAL_ROOT . "/php_interface/include/sale_payment/");
-if (substr($path2UserPSFiles, strlen($path2UserPSFiles) - 1, 1) != "/")
+$path2UserPSFiles = COption::GetOptionString(
+    "sale",
+    "path2user_ps_files",
+    BX_PERSONAL_ROOT . "/php_interface/include/sale_payment/"
+);
+if (mb_substr($path2UserPSFiles, mb_strlen($path2UserPSFiles) - 1, 1) != "/") {
     $path2UserPSFiles .= "/";
+}
 
-$bSystemPSFile = (substr($file, 0, strlen($path2SystemPSFiles)) == $path2SystemPSFiles);
+$bSystemPSFile = (mb_substr($file, 0, mb_strlen($path2SystemPSFiles)) == $path2SystemPSFiles);
 
 if (!$bSystemPSFile) {
-    if (substr($path2UserPSFiles, strlen($path2UserPSFiles) - 1, 1) != "/")
+    if (mb_substr($path2UserPSFiles, mb_strlen($path2UserPSFiles) - 1, 1) != "/") {
         $path2UserPSFiles .= "/";
-    $bUserPSFile = (substr($file, 0, strlen($path2UserPSFiles)) == $path2UserPSFiles);
+    }
+    $bUserPSFile = (mb_substr($file, 0, mb_strlen($path2UserPSFiles)) == $path2UserPSFiles);
 }
 
 if ($bUserPSFile || $bSystemPSFile) {
-    if ($bUserPSFile)
-        $fileName = substr($file, strlen($path2UserPSFiles));
-    else
-        $fileName = substr($file, strlen($path2SystemPSFiles));
+    if ($bUserPSFile) {
+        $fileName = mb_substr($file, mb_strlen($path2UserPSFiles));
+    } else {
+        $fileName = mb_substr($file, mb_strlen($path2SystemPSFiles));
+    }
 
     $fileName = preg_replace("#[^A-Za-z0-9_.-]#i", "", $fileName);
 
-    $arPSCorrespondence = LocalGetPSActionParams($_SERVER["DOCUMENT_ROOT"] . (($bUserPSFile) ? $path2UserPSFiles : $path2SystemPSFiles) . $fileName . "/.description.php");
+    $arPSCorrespondence = LocalGetPSActionParams(
+        $_SERVER["DOCUMENT_ROOT"] . (($bUserPSFile) ? $path2UserPSFiles : $path2SystemPSFiles) . $fileName . "/.description.php"
+    );
 
     if (is_array($arPSCorrespondence) && count($arPSCorrespondence) > 0) {
         $res = '<table border="0" cellspacing="0" cellpadding="0" class="internal" width="100%">';
         $res .= '<tr class="heading"><td align="center" colspan="2">' . GetMessage("SPSG_ACT_PROP") . '</td></tr>';
 
         foreach ($arPSCorrespondence as $key => $value) {
-            if (strlen($fields) > 0)
+            if ($fields <> '') {
                 $fields .= ",";
+            }
             $fields .= $key;
 
             if ($value["TYPE"] == "SELECT" || $value["TYPE"] == "RADIO" || $value["TYPE"] == "FILE") {
                 $res .= '<tr><td width="40%">\n';
                 $res .= $value["NAME"];
-                if (strlen($value["DESCR"]) > 0)
+                if ($value["DESCR"] <> '') {
                     $res .= "<br><small>" . $value["DESCR"] . "</small>";
+                }
                 $res .= '</td>\n';
                 $res .= '<td width="60%">';
                 $res .= '<table border="0" cellspacing="2" cellpadding="0"><tr>\n';
@@ -86,12 +101,15 @@ if ($bUserPSFile || $bSystemPSFile) {
                     $res .= '<span id="' . $key . '_' . $divInd . '_preview"><br>';
                     $res .= '<img id="' . $key . '_' . $divInd . '_preview_img" style="max-width: 150px; max-height: 150px; "><br><br>\n';
                     $res .= '<input type="checkbox" name="' . $key . '_' . $divInd . '_del" value="Y" id="' . $key . '_' . $divInd . '_del" >\n';
-                    $res .= '<label for="' . $key . '_' . $divInd . '_del">' . GetMessage("SPSG_DEL") . '</label></span>\n';
+                    $res .= '<label for="' . $key . '_' . $divInd . '_del">' . GetMessage(
+                            "SPSG_DEL"
+                        ) . '</label></span>\n';
                 } elseif ($value["TYPE"] == "SELECT") {
                     $res .= '<select name="VALUE1_' . $key . '_' . $divInd . '" id="VALUE1_' . $key . '_' . $divInd . '">';
 
-                    foreach ($value["VALUE"] as $k => $v)
+                    foreach ($value["VALUE"] as $k => $v) {
                         $res .= '<option value="' . $k . '">' . $v["NAME"] . '</option>\n';
+                    }
 
                     $res .= '</select>\n';
                 } elseif ($value["TYPE"] == "RADIO") {
@@ -99,14 +117,14 @@ if ($bUserPSFile || $bSystemPSFile) {
                         $res .= '<input type="radio" name="VALUE1_' . $key . '_' . $divInd . '" id="VALUE1_' . $k . '_' . $divInd . '" value="' . $k . '">\n';
                         $res .= '<label for="VALUE1_' . $k . '_' . $divInd . '">' . $v["NAME"] . '</label><br>\n';
                     }
-
                 }
                 $res .= '</td></tr></table></td></tr>\n';
             } else {
                 $res .= '<tr><td width="40%">\n';
                 $res .= $value["NAME"];
-                if (strlen($value["DESCR"]) > 0)
+                if ($value["DESCR"] <> '') {
                     $res .= "<br><small>" . $value["DESCR"] . "</small>";
+                }
                 $res .= '</td>\n';
                 $res .= '<td width="60%">';
 
@@ -131,7 +149,11 @@ if ($bUserPSFile || $bSystemPSFile) {
         }
 
 
-        $arTarif = CSalePaySystemsHelper::getPaySystemTarif((($bUserPSFile) ? $path2UserPSFiles : $path2SystemPSFiles) . $fileName, $_REQUEST["psid"], $divInd);
+        $arTarif = CSalePaySystemsHelper::getPaySystemTarif(
+            (($bUserPSFile) ? $path2UserPSFiles : $path2SystemPSFiles) . $fileName,
+            $_REQUEST["psid"],
+            $divInd
+        );
 
         if (is_array($arTarif) && !empty($arTarif)) {
             $res .= '<tr class="heading"><td align="center" colspan="2">' . GetMessage('SPSG_TARIFS') . '</td></tr>';
@@ -161,8 +183,9 @@ if ($bUserPSFile || $bSystemPSFile) {
                 $res .= CSaleHelper::wrapAdminHtml($controlHtml, $arField);
             }
 
-            if (!empty($arMultiControlQuery))
+            if (!empty($arMultiControlQuery)) {
                 $res .= CSaleHelper::getAdminMultilineControl($arMultiControlQuery);
+            }
         }
 
         $res .= '</table>\n';
@@ -193,7 +216,7 @@ if ($bUserPSFile || $bSystemPSFile) {
     {
     foreach ($arPSCorrespondence as $key => $value)
     {
-    if(strlen($value["TYPE"]) > 0)
+    if($value["TYPE"] <> '')
     {
     ?>
     window.parent.document.getElementById("TYPE_<?=$key?>_<?=$divInd?>").value = '<?=CUtil::JSEscape($value["TYPE"])?>';
@@ -201,17 +224,19 @@ if ($bUserPSFile || $bSystemPSFile) {
 
     <?
     }
-    elseif(strlen($value["VALUE"]) > 0)
+    elseif($value["VALUE"] <> '')
     {
     ?>
-    window.parent.document.getElementById("VALUE2_<?=$key?>_<?=$divInd?>").value = '<?=CUtil::JSEscape($value["VALUE"])?>';
+    window.parent.document.getElementById("VALUE2_<?=$key?>_<?=$divInd?>").value = '<?=CUtil::JSEscape(
+        $value["VALUE"]
+    )?>';
     <?
     }
     }
     }
     }
 
-    if (strlen($res) <= 0)
+    if ($res == '')
     {
     ?>
     window.parent.document.getElementById("pay_sys_switch_<?= $divInd ?>").innerHTML = "";

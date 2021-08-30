@@ -6,24 +6,28 @@ class CPerfomanceComponent
     {
         global $DB;
 
-        if (!is_array($arSelect))
+        if (!is_array($arSelect)) {
             $arSelect = array();
-        if (count($arSelect) < 1)
+        }
+        if (count($arSelect) < 1) {
             $arSelect = array(
                 "ID",
             );
+        }
 
-        if (!is_array($arOrder))
+        if (!is_array($arOrder)) {
             $arOrder = array();
-        if (count($arOrder) < 1)
+        }
+        if (count($arOrder) < 1) {
             $arOrder = array(
                 "HIT_ID" => "DESC",
                 "NN" => "ASC",
             );
+        }
 
         $arQueryOrder = array();
         foreach ($arOrder as $strColumn => $strDirection) {
-            $strColumn = strtoupper($strColumn);
+            $strColumn = mb_strtoupper($strColumn);
             if (preg_match("/^(MIN|MAX|AVG|SUM)_(.*)$/", $strColumn, $arMatch)) {
                 $strGroupFunc = $arMatch[1];
                 $strColumn = $arMatch[2];
@@ -31,7 +35,7 @@ class CPerfomanceComponent
                 $strGroupFunc = "";
             }
 
-            $strDirection = strtoupper($strDirection) == "ASC" ? "ASC" : "DESC";
+            $strDirection = mb_strtoupper($strDirection) == "ASC" ? "ASC" : "DESC";
             switch ($strColumn) {
                 case "ID":
                 case "HIT_ID":
@@ -74,7 +78,7 @@ class CPerfomanceComponent
         $arQueryGroup = array();
         $arQuerySelect = array();
         foreach ($arSelect as $strColumn) {
-            $strColumn = strtoupper($strColumn);
+            $strColumn = mb_strtoupper($strColumn);
             if (preg_match("/^(MIN|MAX|AVG|SUM)_(.*)$/", $strColumn, $arMatch)) {
                 $strGroupFunc = $arMatch[1];
                 $strColumn = $arMatch[2];
@@ -89,8 +93,9 @@ class CPerfomanceComponent
                 case "CACHE_TYPE":
                 case "COMPONENT_NAME":
                     if ($strGroupFunc == "") {
-                        if ($bGroup)
+                        if ($bGroup) {
                             $arQueryGroup[$strColumn] = "c." . $strColumn;
+                        }
                         $arQuerySelect[$strColumn] = "c." . $strColumn;
                     }
                     break;
@@ -102,20 +107,24 @@ class CPerfomanceComponent
                 case "QUERIES":
                 case "QUERIES_TIME":
                     if ($strGroupFunc == "") {
-                        if (!$bGroup)
+                        if (!$bGroup) {
                             $arQuerySelect[$strColumn] = "c." . $strColumn;
+                        }
                     } else {
-                        if ($bGroup)
+                        if ($bGroup) {
                             $arQuerySelect[$strGroupFunc . "_" . $strColumn] = $strGroupFunc . "(c." . $strColumn . ") " . $strGroupFunc . "_" . $strColumn;
+                        }
                     }
                     break;
                 case "CACHE_COUNT":
                     if ($strGroupFunc == "") {
-                        if (!$bGroup)
+                        if (!$bGroup) {
                             $arQuerySelect[$strColumn] = "(c.CACHE_COUNT_R + c.CACHE_COUNT_W + c.CACHE_COUNT_C) CACHE_COUNT";
+                        }
                     } else {
-                        if ($bGroup)
+                        if ($bGroup) {
                             $arQuerySelect[$strGroupFunc . "_" . $strColumn] = $strGroupFunc . "(c.CACHE_COUNT_R + c.CACHE_COUNT_W + c.CACHE_COUNT_C) " . $strGroupFunc . "_" . $strColumn;
+                        }
                     }
                     break;
                 case "COUNT":
@@ -192,8 +201,9 @@ class CPerfomanceComponent
         );
         $obQueryWhere->SetFields($arWhereFields);
 
-        if (count($arQuerySelect) < 1)
+        if (count($arQuerySelect) < 1) {
             $arQuerySelect = array("ID" => "c.ID");
+        }
 
         $strQueryWhere = $obQueryWhere->GetQuery($arFilter);
         $strHaving = "";
@@ -206,7 +216,8 @@ class CPerfomanceComponent
         }
 
         if (is_array($arNavStartParams) && $arNavStartParams["nTopCount"] > 0) {
-            $strSql = $DB->TopSQL("
+            $strSql = $DB->TopSQL(
+                "
 				SELECT " . implode(", ", $arQuerySelect) . "
 				FROM b_perf_component c
 				" . $obQueryWhere->GetJoins() . "
@@ -214,7 +225,9 @@ class CPerfomanceComponent
 				" . ($bGroup ? "GROUP BY " . implode(", ", $arQueryGroup) : "") . "
 				" . $strHaving . "
 				" . (count($arQueryOrder) ? "ORDER BY " . implode(", ", $arQueryOrder) : "") . "
-			", $arNavStartParams["nTopCount"]);
+			",
+                $arNavStartParams["nTopCount"]
+            );
             $res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
         } elseif (is_array($arNavStartParams)) {
             $strSql = "

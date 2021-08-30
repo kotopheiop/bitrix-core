@@ -1,5 +1,6 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();?><!DOCTYPE HTML PUBLIC
-        "-//W3C//DTD HTML 4.0 Transitional//EN">
+<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+}?><!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
 <html>
 <head>
     <title>ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö²ï¿½</title>
@@ -175,8 +176,9 @@ $arKvit = array(0 => "ï¿½ï¿½Â²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½", 1 => "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿
             <td class="content">
                 <div class="form">ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½61 ï¿½.3</div>
 
-                <div class="text">ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
-                    ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½<span><?= (CSalePaySystemAction::GetParamValue("RECIPIENT_NAME")) ?></span></div>
+                <div class="text">ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½<span><?= (CSalePaySystemAction::GetParamValue(
+                            "RECIPIENT_NAME"
+                        )) ?></span></div>
 
                 <table>
                     <tr>
@@ -208,14 +210,17 @@ $arKvit = array(0 => "ï¿½ï¿½Â²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½", 1 => "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿
                     <?
                     $adres = CSalePaySystemAction::GetParamValue("PAYER_FIO");
 
-                    if (strlen(CSalePaySystemAction::GetParamValue("PAYER_INDEX")) > 0)
+                    if (CSalePaySystemAction::GetParamValue("PAYER_INDEX") <> '') {
                         $adres .= ($adres <> "" ? ", " : "") . CSalePaySystemAction::GetParamValue("PAYER_INDEX");
+                    }
 
-                    if (strlen(CSalePaySystemAction::GetParamValue("PAYER_TOWN")) > 0)
+                    if (CSalePaySystemAction::GetParamValue("PAYER_TOWN") <> '') {
                         $adres .= ($adres <> "" ? ", " : "") . "ï¿½." . CSalePaySystemAction::GetParamValue("PAYER_TOWN");
+                    }
 
-                    if (strlen(CSalePaySystemAction::GetParamValue("PAYER_ADRES")) > 0)
+                    if (CSalePaySystemAction::GetParamValue("PAYER_ADRES") <> '') {
                         $adres .= ($adres <> "" ? ", " : "") . CSalePaySystemAction::GetParamValue("PAYER_ADRES");
+                    }
 
                     echo $adres;
                     ?>

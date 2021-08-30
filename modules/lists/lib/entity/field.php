@@ -26,9 +26,23 @@ class Field implements Controllable, Errorable
         $this->param = $param;
         $this->params = $param->getParams();
 
-        $this->fieldList = ["NAME", "IS_REQUIRED", "MULTIPLE", "TYPE", "SORT", "DEFAULT_VALUE", "LIST",
-            "USER_TYPE_SETTINGS", "LIST_TEXT_VALUES", "LIST_DEF", "CODE", "SETTINGS", "ROW_COUNT",
-            "COL_COUNT", "LINK_IBLOCK_ID"];
+        $this->fieldList = [
+            "NAME",
+            "IS_REQUIRED",
+            "MULTIPLE",
+            "TYPE",
+            "SORT",
+            "DEFAULT_VALUE",
+            "LIST",
+            "USER_TYPE_SETTINGS",
+            "LIST_TEXT_VALUES",
+            "LIST_DEF",
+            "CODE",
+            "SETTINGS",
+            "ROW_COUNT",
+            "COL_COUNT",
+            "LINK_IBLOCK_ID"
+        ];
 
         $this->iblockId = Utils::getIblockId($this->params);
 
@@ -102,8 +116,14 @@ class Field implements Controllable, Errorable
 
     public function update()
     {
-        $this->param->checkRequiredInputParams(["IBLOCK_CODE", "IBLOCK_ID",
-            "FIELD_ID", ["FIELDS" => ["NAME", "TYPE"]]]);
+        $this->param->checkRequiredInputParams(
+            [
+                "IBLOCK_CODE",
+                "IBLOCK_ID",
+                "FIELD_ID",
+                ["FIELDS" => ["NAME", "TYPE"]]
+            ]
+        );
         if ($this->param->hasErrors()) {
             $this->errorCollection->add($this->param->getErrors());
             return [];
@@ -193,7 +213,7 @@ class Field implements Controllable, Errorable
             }
             foreach (explode("\n", $fields["LIST_TEXT_VALUES"]) as $valueLine) {
                 $value = trim($valueLine, " \t\n\r");
-                if (strlen($value) > 0 && !isset($listMap[$value])) {
+                if ((string)$value <> '' && !isset($listMap[$value])) {
                     $maxSort += 10;
                     $listMap[$value] = "m" . $maxSort;
                     $fields["LIST"]["m" . $maxSort] = array(
@@ -238,7 +258,7 @@ class Field implements Controllable, Errorable
             $defaultValueError = false;
             switch ($fields["TYPE"]) {
                 case "SORT":
-                    $defaultValueError = (strlen($fields["DEFAULT_VALUE"]) <= 0);
+                    $defaultValueError = ($fields["DEFAULT_VALUE"] == '');
                     break;
                 case "L":
                     if (is_array($fields["LIST_DEF"])) {
@@ -252,8 +272,11 @@ class Field implements Controllable, Errorable
                     $defaultValueError = (empty($fields["DEFAULT_VALUE"]));
             }
             if ($defaultValueError) {
-                $this->errorCollection->setError(new Error(
-                    "The default value of the field \"" . $fields["NAME"] . "\" is required", self::ERROR_SAVE_FIELD));
+                $this->errorCollection->setError(
+                    new Error(
+                        "The default value of the field \"" . $fields["NAME"] . "\" is required", self::ERROR_SAVE_FIELD
+                    )
+                );
             }
         }
 
@@ -261,7 +284,8 @@ class Field implements Controllable, Errorable
         if ($fields["TYPE"] == "PREVIEW_PICTURE") {
             $fields["DEFAULT_VALUE"]["METHOD"] = "resample";
             $fields["DEFAULT_VALUE"]["COMPRESSION"] = intval(
-                \COption::getOptionString("main", "image_resize_quality", "95"));
+                \COption::getOptionString("main", "image_resize_quality", "95")
+            );
         } elseif ($fields["TYPE"] == "S:Date") {
             if (!empty($fields["DEFAULT_VALUE"]) && !CheckDateTime($fields["DEFAULT_VALUE"], FORMAT_DATE)) {
                 $formatError = "The default value of the field \"" . $fields["NAME"] . "\" is incorrect";
@@ -273,7 +297,7 @@ class Field implements Controllable, Errorable
         }
         if (preg_match("/^(G|G:|E|E:)/", $fields["TYPE"])) {
             $blocks = \CLists::getIBlocks($this->params["IBLOCK_TYPE_ID"], "Y", $this->params["SOCNET_GROUP_ID"]);
-            if (substr($fields["TYPE"], 0, 1) == "G") {
+            if (mb_substr($fields["TYPE"], 0, 1) == "G") {
                 unset($blocks[$this->params["IBLOCK_ID"]]);
             }
             if (!array_key_exists($fields["LINK_IBLOCK_ID"], $blocks)) {
@@ -281,8 +305,11 @@ class Field implements Controllable, Errorable
             }
         }
         if ($formatError) {
-            $this->errorCollection->setError(new Error(
-                "The default value of the field \"" . $fields["NAME"] . "\" is required", self::ERROR_SAVE_FIELD));
+            $this->errorCollection->setError(
+                new Error(
+                    "The default value of the field \"" . $fields["NAME"] . "\" is required", self::ERROR_SAVE_FIELD
+                )
+            );
         }
     }
 
@@ -290,10 +317,11 @@ class Field implements Controllable, Errorable
     {
         foreach ($fields as $fieldId => &$field) {
             if ($field["TYPE"] == "ACTIVE_FROM") {
-                if ($field["DEFAULT_VALUE"] === "=now")
+                if ($field["DEFAULT_VALUE"] === "=now") {
                     $field["DEFAULT_VALUE"] = ConvertTimeStamp(time() + \CTimeZone::getOffset(), "FULL");
-                elseif ($field["DEFAULT_VALUE"] === "=today")
+                } elseif ($field["DEFAULT_VALUE"] === "=today") {
                     $field["DEFAULT_VALUE"] = ConvertTimeStamp(time() + \CTimeZone::getOffset(), "SHORT");
+                }
             } elseif ($field["TYPE"] == "L") {
                 $option = [];
                 $propertyEnum = \CIBlockProperty::getPropertyEnum($field["ID"]);
@@ -307,15 +335,22 @@ class Field implements Controllable, Errorable
             } elseif ($field["TYPE"] == "G") {
                 $option = [];
                 $sections = \CIBlockSection::getTreeList(["IBLOCK_ID" => $field["LINK_IBLOCK_ID"]]);
-                while ($section = $sections->getNext())
+                while ($section = $sections->getNext()) {
                     $option[$section["ID"]] = str_repeat(" . ", $section["DEPTH_LEVEL"]) . $section["~NAME"];
+                }
                 $field["DISPLAY_VALUES_FORM"] = $option;
             } elseif (preg_match("/^(E|E:)/", $field["TYPE"])) {
                 $option = [];
-                $elements = \CIBlockElement::getList(["NAME" => "ASC"],
-                    ["IBLOCK_ID" => $field["LINK_IBLOCK_ID"]], false, false, ["ID", "NAME"]);
-                while ($element = $elements->fetch())
+                $elements = \CIBlockElement::getList(
+                    ["NAME" => "ASC"],
+                    ["IBLOCK_ID" => $field["LINK_IBLOCK_ID"]],
+                    false,
+                    false,
+                    ["ID", "NAME"]
+                );
+                while ($element = $elements->fetch()) {
                     $option[$element["ID"]] = $element["NAME"];
+                }
                 $field["DISPLAY_VALUES_FORM"] = $option;
             } elseif ($field["TYPE"] == "N:Sequence") {
                 $sequence = new \CIBlockSequence($field["IBLOCK_ID"], $field["ID"]);

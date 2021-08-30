@@ -43,8 +43,9 @@ class UserAuth extends TriggerBase
     {
         $eventData = $this->getParam('EVENT');
 
-        if (empty($eventData[0]['user_fields']))
+        if (empty($eventData[0]['user_fields'])) {
             return null;
+        }
 
         return array(
             'EMAIL' => $eventData[0]['user_fields']['EMAIL'],

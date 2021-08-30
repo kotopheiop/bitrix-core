@@ -1,4 +1,5 @@
 <?
+
 $arCheckListStructure = Array(
     "CATEGORIES" => Array(
         "QDESIGN" => Array(),

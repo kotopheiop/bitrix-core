@@ -3,6 +3,7 @@
 namespace Bitrix\Rest;
 
 use Bitrix\Main;
+use Bitrix\Rest\Preset\EventController;
 
 /**
  * Class AppLangTable
@@ -16,7 +17,20 @@ use Bitrix\Main;
  * </ul>
  *
  * @package Bitrix\Rest
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_AppLang_Query query()
+ * @method static EO_AppLang_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_AppLang_Result getById($id)
+ * @method static EO_AppLang_Result getList(array $parameters = array())
+ * @method static EO_AppLang_Entity getEntity()
+ * @method static \Bitrix\Rest\EO_AppLang createObject($setDefaultValues = true)
+ * @method static \Bitrix\Rest\EO_AppLang_Collection createCollection()
+ * @method static \Bitrix\Rest\EO_AppLang wakeUpObject($row)
+ * @method static \Bitrix\Rest\EO_AppLang_Collection wakeUpCollection($rows)
+ */
 class AppLangTable extends Main\Entity\DataManager
 {
     /**
@@ -89,5 +103,10 @@ class AppLangTable extends Main\Entity\DataManager
         return array(
             new Main\Entity\Validator\Length(null, 500),
         );
+    }
+
+    public static function onAfterAdd(Main\Entity\Event $event)
+    {
+        EventController::onAddAppLang($event);
     }
 }

@@ -69,19 +69,21 @@ class SitemapTable extends Entity\DataManager
 
     protected static function compileMask($mask)
     {
-        if (strlen($mask) > 0) {
+        if ($mask <> '') {
             $arMask = preg_split("/[\s,;]+/", $mask);
 
             foreach ($arMask as $key => $subMask) {
-                if (strlen($subMask) > 0) {
+                if ($subMask <> '') {
                     $arMask[$key] = str_replace(
                         array("___ALL___", "___ONE___"),
                         array(".*?", "."),
-                        preg_quote(str_replace(
-                            array("*", "?"),
-                            array("___ALL___", "___ONE___"),
-                            $subMask
-                        ))
+                        preg_quote(
+                            str_replace(
+                                array("*", "?"),
+                                array("___ALL___", "___ONE___"),
+                                $subMask
+                            )
+                        )
                     );
                 } else {
                     unset($arMask[$key]);
@@ -112,8 +114,8 @@ class SitemapTable extends Entity\DataManager
                 ksort($arSettings['FILE'], SORT_STRING);
 
                 foreach ($arSettings['FILE'] as $file => $value) {
-                    $pos = strrpos($file, '/');
-                    $parentDir = $pos > 0 ? substr($file, 0, $pos) : '/';
+                    $pos = mb_strrpos($file, '/');
+                    $parentDir = $pos > 0 ? mb_substr($file, 0, $pos) : '/';
 
                     if (isset($arSettings['DIR'][$parentDir]) && $arSettings['DIR'][$parentDir] == $value) {
                         unset($arSettings['FILE'][$file]);
@@ -126,11 +128,12 @@ class SitemapTable extends Entity\DataManager
 
                 foreach ($arSettings['DIR'] as $dir => $value) {
                     if ($dir != '/') {
-                        $pos = strrpos($dir, '/');
-                        $parentDir = substr($dir, 0, $pos);
+                        $pos = mb_strrpos($dir, '/');
+                        $parentDir = mb_substr($dir, 0, $pos);
 
-                        if ($parentDir == '')
+                        if ($parentDir == '') {
                             $parentDir = '/';
+                        }
 
                         if (isset($arSettings['DIR'][$parentDir]) && $arSettings['DIR'][$parentDir] == $value) {
                             unset($arSettings['DIR'][$dir]);

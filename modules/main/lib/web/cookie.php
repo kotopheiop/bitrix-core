@@ -14,6 +14,7 @@ class Cookie
     protected $httpOnly = true;
     protected $spread;
     protected $name;
+    protected $originalName;
     protected $path = '/';
     protected $secure = false;
     protected $value;
@@ -32,6 +33,7 @@ class Cookie
         } else {
             $this->name = $name;
         }
+        $this->originalName = $name;
         $this->value = $value;
         $this->expires = $expires;
         if ($this->expires === null) {
@@ -49,7 +51,7 @@ class Cookie
         if ($cookiePrefix === null) {
             $cookiePrefix = Config\Option::get("main", "cookie_name", "BITRIX_SM") . "_";
         }
-        if (strpos($name, $cookiePrefix) !== 0) {
+        if (mb_strpos($name, $cookiePrefix) !== 0) {
             $name = $cookiePrefix . $name;
         }
         return $name;
@@ -104,6 +106,11 @@ class Cookie
     {
         $this->name = $name;
         return $this;
+    }
+
+    public function getOriginalName(): string
+    {
+        return $this->originalName;
     }
 
     public function getName()
@@ -170,7 +177,9 @@ class Cookie
             return $domain;
         }
 
-        $server = \Bitrix\Main\Context::getCurrent()->getServer();
+        $request = \Bitrix\Main\Context::getCurrent()->getRequest();
+
+        $httpHost = $request->getHttpHost();
 
         $cacheFlags = Config\Configuration::getValue("cache_flags");
         $cacheTtl = (isset($cacheFlags["site_domain"]) ? $cacheFlags["site_domain"] : 0);
@@ -181,7 +190,10 @@ class Cookie
 
             $sql = "SELECT DOMAIN " .
                 "FROM b_lang_domain " .
-                "WHERE '" . $sqlHelper->forSql('.' . $server->getHttpHost()) . "' like " . $sqlHelper->getConcatFunction("'%.'", "DOMAIN") . " " .
+                "WHERE '" . $sqlHelper->forSql('.' . $httpHost) . "' like " . $sqlHelper->getConcatFunction(
+                    "'%.'",
+                    "DOMAIN"
+                ) . " " .
                 "ORDER BY " . $sqlHelper->getLengthFunction("DOMAIN") . " ";
             $recordset = $connection->query($sql);
             if ($record = $recordset->fetch()) {
@@ -212,7 +224,10 @@ class Cookie
             }
 
             foreach ($arLangDomain["DOMAIN"] as $record) {
-                if (strcasecmp(substr('.' . $server->getHttpHost(), -(strlen($record['DOMAIN']) + 1)), "." . $record['DOMAIN']) == 0) {
+                if (strcasecmp(
+                        mb_substr('.' . $httpHost, -(mb_strlen($record['DOMAIN']) + 1)),
+                        "." . $record['DOMAIN']
+                    ) == 0) {
                     $domain = $record['DOMAIN'];
                     break;
                 }

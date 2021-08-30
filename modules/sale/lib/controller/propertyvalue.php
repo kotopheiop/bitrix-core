@@ -24,10 +24,12 @@ class PropertyValue extends Controller
                 /** @var Sale\Property $propertyValueClass */
                 $propertyValueClass = $registry->getPropertyValueClassName();
 
-                $r = $propertyValueClass::getList([
-                    'select' => ['ORDER_ID'],
-                    'filter' => ['ID' => $id]
-                ]);
+                $r = $propertyValueClass::getList(
+                    [
+                        'select' => ['ORDER_ID'],
+                        'filter' => ['ID' => $id]
+                    ]
+                );
 
                 if ($row = $r->fetch()) {
                     /** @var Sale\Order $orderClass */
@@ -51,9 +53,11 @@ class PropertyValue extends Controller
     public function getFieldsAction()
     {
         $entity = new \Bitrix\Sale\Rest\Entity\PropertyValue();
-        return ['PROPERTY_VALUE' => $entity->prepareFieldInfos(
-            $entity->getFields()
-        )];
+        return [
+            'PROPERTY_VALUE' => $entity->prepareFieldInfos(
+                $entity->getFields()
+            )
+        ];
     }
 
     public function modifyAction(array $fields)
@@ -87,8 +91,9 @@ class PropertyValue extends Controller
                 ->save();
         }
 
-        if (!$r->isSuccess())
+        if (!$r->isSuccess()) {
             $this->addErrors($r->getErrors());
+        }
 
         return $r->isSuccess();
     }
@@ -121,21 +126,27 @@ class PropertyValue extends Controller
             ]
         )->fetchAll();
 
-        return new Page('PROPERTY_VALUES', $payments, function () use ($select, $filter, $runtime) {
+        return new Page(
+            'PROPERTY_VALUES', $payments, function () use ($select, $filter, $runtime) {
             return count(
-                \Bitrix\Sale\PropertyValue::getList(['select' => $select, 'filter' => $filter, 'runtime' => $runtime])->fetchAll()
+                \Bitrix\Sale\PropertyValue::getList(
+                    ['select' => $select, 'filter' => $filter, 'runtime' => $runtime]
+                )->fetchAll()
             );
-        });
+        }
+        );
     }
 
     //end region
 
     protected function get(\Bitrix\Sale\PropertyValue $propertyValue, array $fields = [])
     {
-        $properties = $this->toArray($propertyValue
-            ->getCollection()
-            ->getOrder(),
-            $fields)['ORDER']['PROPERTY_VALUES'];
+        $properties = $this->toArray(
+            $propertyValue
+                ->getCollection()
+                ->getOrder(),
+            $fields
+        )['ORDER']['PROPERTY_VALUES'];
         foreach ($properties as $property) {
             if ($property['ID'] == $propertyValue->getId()) {
                 return $property;

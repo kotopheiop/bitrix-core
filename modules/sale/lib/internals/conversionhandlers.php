@@ -53,7 +53,13 @@ final class ConversionHandlers
                 'UNITS' => $units,
                 'MODULE' => 'sale',
                 'SORT' => 1100,
-                'COUNTERS' => array('conversion_visit_day', 'sale_payment_add_day', 'sale_payment_add', 'sale_payment_add_cmpfb', 'sale_payment_sum_add'),
+                'COUNTERS' => array(
+                    'conversion_visit_day',
+                    'sale_payment_add_day',
+                    'sale_payment_add',
+                    'sale_payment_add_cmpfb',
+                    'sale_payment_sum_add'
+                ),
                 'CALCULATE' => function (array $counters) {
                     $denominator = $counters['conversion_visit_day'] ?: 0;
                     $numerator = $counters['sale_payment_add_day'] ?: 0;
@@ -77,7 +83,13 @@ final class ConversionHandlers
                 'UNITS' => $units,
                 'MODULE' => 'sale',
                 'SORT' => 1200,
-                'COUNTERS' => array('conversion_visit_day', 'sale_order_add_day', 'sale_order_add', 'sale_order_add_cmpfb', 'sale_order_sum_add'),
+                'COUNTERS' => array(
+                    'conversion_visit_day',
+                    'sale_order_add_day',
+                    'sale_order_add',
+                    'sale_order_add_cmpfb',
+                    'sale_order_sum_add'
+                ),
                 'CALCULATE' => function (array $counters) {
                     $denominator = $counters['conversion_visit_day'] ?: 0;
                     $numerator = $counters['sale_order_add_day'] ?: 0;
@@ -101,7 +113,13 @@ final class ConversionHandlers
                 'UNITS' => $units,
                 'MODULE' => 'sale',
                 'SORT' => 1300,
-                'COUNTERS' => array('conversion_visit_day', 'sale_cart_add_day', 'sale_cart_add', 'sale_cart_add_cmpfb', 'sale_cart_sum_add'),
+                'COUNTERS' => array(
+                    'conversion_visit_day',
+                    'sale_cart_add_day',
+                    'sale_cart_add',
+                    'sale_cart_add_cmpfb',
+                    'sale_cart_sum_add'
+                ),
                 'CALCULATE' => function (array $counters) {
                     $denominator = $counters['conversion_visit_day'] ?: 0;
                     $numerator = $counters['sale_cart_add_day'] ?: 0;
@@ -236,8 +254,9 @@ final class ConversionHandlers
 
     public static function onSaleBasketItemSaved(Main\Event $event)
     {
-        if (!$event->getParameter('IS_NEW'))
+        if (!$event->getParameter('IS_NEW')) {
             return;
+        }
 
         $basketItem = $event->getParameter('ENTITY');
 
@@ -252,8 +271,9 @@ final class ConversionHandlers
                 $context->addDayCounter('sale_cart_add_day', 1);
                 $context->addCounter('sale_cart_add', 1);
 
-                if ($price * $quantity && $currency)
+                if ($price * $quantity && $currency) {
                     $context->addCurrencyCounter('sale_cart_sum_add', $price * $quantity, $currency);
+                }
             }
         }
     }
@@ -274,7 +294,11 @@ final class ConversionHandlers
             $context = DayContext::getSiteInstance($fields['LID']);
             $context->addDayCounter('sale_cart_add_day', 1);
             $context->addCounter('sale_cart_add', 1);
-            $context->addCurrencyCounter('sale_cart_sum_add', $fields['PRICE'] * self::$onBeforeBasketAddQuantity, $fields['CURRENCY']);
+            $context->addCurrencyCounter(
+                'sale_cart_sum_add',
+                $fields['PRICE'] * self::$onBeforeBasketAddQuantity,
+                $fields['CURRENCY']
+            );
         }
 
         self::$onBeforeBasketAddQuantity = 0;
@@ -350,8 +374,9 @@ final class ConversionHandlers
 
     public static function onSaleOrderSaved(Main\Event $event)
     {
-        if (!$event->getParameter('IS_NEW'))
+        if (!$event->getParameter('IS_NEW')) {
             return;
+        }
 
         $order = $event->getParameter('ENTITY');
 
@@ -366,8 +391,9 @@ final class ConversionHandlers
                 $context->addCounter('sale_order_add', 1);
                 $context->attachEntityItem('sale_order', $order->getId());
 
-                if ($price && $currency)
+                if ($price && $currency) {
                     $context->addCurrencyCounter('sale_order_sum_add', $price, $currency);
+                }
             }
         }
     }
@@ -389,8 +415,9 @@ final class ConversionHandlers
     {
         $order = $event->getParameter('ENTITY');
 
-        if (!$order->isPaid())
+        if (!$order->isPaid()) {
             return;
+        }
 
         if ($order instanceof Sale\Order) {
             $price = $order->getPrice();
@@ -403,8 +430,9 @@ final class ConversionHandlers
                 $context->$addMethod('sale_payment_add_day', 1);
                 $context->addCounter('sale_payment_add', 1);
 
-                if ($price && $currency)
+                if ($price && $currency) {
                     $context->addCurrencyCounter('sale_payment_sum_add', $price, $currency);
+                }
             }
         }
     }

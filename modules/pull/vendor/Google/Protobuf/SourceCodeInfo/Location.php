@@ -285,13 +285,16 @@ class Location extends \Protobuf\AbstractMessage
     public static function fromArray(array $values)
     {
         $message = new self();
-        $values = array_merge([
-            'path' => [],
-            'span' => [],
-            'leading_comments' => null,
-            'trailing_comments' => null,
-            'leading_detached_comments' => []
-        ], $values);
+        $values = array_merge(
+            [
+                'path' => [],
+                'span' => [],
+                'leading_comments' => null,
+                'trailing_comments' => null,
+                'leading_detached_comments' => []
+            ],
+            $values
+        );
 
         $message->setLeadingComments($values['leading_comments']);
         $message->setTrailingComments($values['trailing_comments']);
@@ -316,41 +319,53 @@ class Location extends \Protobuf\AbstractMessage
      */
     public static function descriptor()
     {
-        return \google\protobuf\DescriptorProto::fromArray([
-            'name' => 'Location',
-            'field' => [
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 1,
-                    'name' => 'path',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_INT32(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_REPEATED()
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 2,
-                    'name' => 'span',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_INT32(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_REPEATED()
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 3,
-                    'name' => 'leading_comments',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_STRING(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 4,
-                    'name' => 'trailing_comments',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_STRING(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 6,
-                    'name' => 'leading_detached_comments',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_STRING(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_REPEATED()
-                ]),
-            ],
-        ]);
+        return \google\protobuf\DescriptorProto::fromArray(
+            [
+                'name' => 'Location',
+                'field' => [
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 1,
+                            'name' => 'path',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_INT32(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_REPEATED()
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 2,
+                            'name' => 'span',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_INT32(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_REPEATED()
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 3,
+                            'name' => 'leading_comments',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_STRING(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 4,
+                            'name' => 'trailing_comments',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_STRING(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 6,
+                            'name' => 'leading_detached_comments',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_STRING(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_REPEATED()
+                        ]
+                    ),
+                ],
+            ]
+        );
     }
 
     /**
@@ -447,7 +462,6 @@ class Location extends \Protobuf\AbstractMessage
             : null;
 
         while ($limit === null || $stream->tell() < $limit) {
-
             if ($stream->eof()) {
                 break;
             }
@@ -535,7 +549,6 @@ class Location extends \Protobuf\AbstractMessage
             $unknown = new \Protobuf\Unknown($tag, $wire, $data);
 
             $this->unknownFieldSet->add($unknown);
-
         }
     }
 
@@ -613,7 +626,9 @@ class Location extends \Protobuf\AbstractMessage
     public function merge(\Protobuf\Message $message)
     {
         if (!$message instanceof \google\protobuf\SourceCodeInfo\Location) {
-            throw new \InvalidArgumentException(sprintf('Argument 1 passed to %s must be a %s, %s given', __METHOD__, __CLASS__, get_class($message)));
+            throw new \InvalidArgumentException(
+                sprintf('Argument 1 passed to %s must be a %s, %s given', __METHOD__, __CLASS__, get_class($message))
+            );
         }
 
         $this->path = ($message->path !== null) ? $message->path : $this->path;

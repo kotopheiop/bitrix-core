@@ -12,7 +12,9 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/mail/prolog.php");
 
 $MOD_RIGHT = $APPLICATION->GetGroupRight("mail");
-if ($MOD_RIGHT < "R") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($MOD_RIGHT < "R") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 IncludeModuleLangFile(__FILE__);
 Bitrix\Main\Loader::includeModule('mail');
 
@@ -101,25 +103,29 @@ if ($MOD_RIGHT == "W" && $arID = $lAdmin->GroupAction()) {
         }
         $FilterTmp = $arFilter + $FilterTmp;
 
-        $rsData = Bitrix\Mail\MailMessageTable::getList(array(
-            'select' => array('ID'),
-            'filter' => array_filter($FilterTmp),
-            'order' => array(strtoupper($by) => $order),
-        ));
+        $rsData = Bitrix\Mail\MailMessageTable::getList(
+            array(
+                'select' => array('ID'),
+                'filter' => array_filter($FilterTmp),
+                'order' => array(mb_strtoupper($by) => $order),
+            )
+        );
 
-        while ($arRes = $rsData->fetch())
+        while ($arRes = $rsData->fetch()) {
             $arID[] = $arRes['ID'];
+        }
     }
 
     $filter_id = false;
-    if (substr($_REQUEST['action'], 0, strlen("refilter_num_")) == "refilter_num_") {
-        $filter_id = substr($_REQUEST['action'], strlen("refilter_num_"));
+    if (mb_substr($_REQUEST['action'], 0, mb_strlen("refilter_num_")) == "refilter_num_") {
+        $filter_id = mb_substr($_REQUEST['action'], mb_strlen("refilter_num_"));
         $_REQUEST['action'] = "refilter";
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
 
         $ID = intval($ID);
 
@@ -148,36 +154,92 @@ if ($MOD_RIGHT == "W" && $arID = $lAdmin->GroupAction()) {
 
 $nav = new Bitrix\Main\UI\AdminPageNavigation('nav-mail-message');
 
-$messageList = Bitrix\Mail\MailMessageTable::getList(array(
-    'select' => array(
-        'ID', 'MAILBOX_ID', 'MAILBOX_NAME' => 'MAILBOX.NAME', 'NEW_MESSAGE', 'SUBJECT', 'MESSAGE_SIZE', 'SPAM', 'SPAM_RATING', // required
-        'FIELD_FROM', 'FIELD_REPLY_TO', 'FIELD_CC', 'FIELD_BCC', 'FIELD_DATE', 'DATE_INSERT', 'ATTACHMENTS', 'MSG_ID' // optional
-    ),
-    'filter' => array_filter($arFilter),
-    'order' => array(strtoupper($by) => $order),
-    'offset' => $nav->getOffset(),
-    'limit' => $nav->getLimit(),
-    'count_total' => true,
-));
+$messageList = Bitrix\Mail\MailMessageTable::getList(
+    array(
+        'select' => array(
+            'ID',
+            'MAILBOX_ID',
+            'MAILBOX_NAME' => 'MAILBOX.NAME',
+            'NEW_MESSAGE',
+            'SUBJECT',
+            'MESSAGE_SIZE',
+            'SPAM',
+            'SPAM_RATING', // required
+            'FIELD_FROM',
+            'FIELD_REPLY_TO',
+            'FIELD_CC',
+            'FIELD_BCC',
+            'FIELD_DATE',
+            'DATE_INSERT',
+            'ATTACHMENTS',
+            'MSG_ID' // optional
+        ),
+        'filter' => array_filter($arFilter),
+        'order' => array(mb_strtoupper($by) => $order),
+        'offset' => $nav->getOffset(),
+        'limit' => $nav->getLimit(),
+        'count_total' => true,
+    )
+);
 
 $nav->setRecordCount($messageList->getCount());
 
 $lAdmin->setNavigation($nav, Bitrix\Main\Localization\Loc::getMessage("MAIL_MSG_ADM_NAVIGATION"));
 
 $arHeaders = Array();
-$arHeaders[] = Array("id" => "SUBJECT", "content" => GetMessage("MAIL_MSG_ADM_SUBJECT"), "default" => true, "sort" => "subject");
-$arHeaders[] = Array("id" => "FIELD_FROM", "content" => GetMessage("MAIL_MSG_ADM_FROM"), "default" => true, "sort" => "field_from");
-$arHeaders[] = Array("id" => "FIELD_REPLY_TO", "content" => GetMessage("MAIL_MSG_ADM_REPLY_TO"), "sort" => "field_reply_to");
+$arHeaders[] = Array(
+    "id" => "SUBJECT",
+    "content" => GetMessage("MAIL_MSG_ADM_SUBJECT"),
+    "default" => true,
+    "sort" => "subject"
+);
+$arHeaders[] = Array(
+    "id" => "FIELD_FROM",
+    "content" => GetMessage("MAIL_MSG_ADM_FROM"),
+    "default" => true,
+    "sort" => "field_from"
+);
+$arHeaders[] = Array(
+    "id" => "FIELD_REPLY_TO",
+    "content" => GetMessage("MAIL_MSG_ADM_REPLY_TO"),
+    "sort" => "field_reply_to"
+);
 $arHeaders[] = Array("id" => "FIELD_CC", "content" => GetMessage("MAIL_MSG_ADM_CC"), "sort" => "field_cc");
 $arHeaders[] = Array("id" => "FIELD_BCC", "content" => GetMessage("MAIL_MSG_ADM_BCC"), "sort" => "field_bcc");
-$arHeaders[] = Array("id" => "FIELD_DATE", "content" => GetMessage("MAIL_MSG_ADM_DATE"), "default" => true, "sort" => "field_date");
+$arHeaders[] = Array(
+    "id" => "FIELD_DATE",
+    "content" => GetMessage("MAIL_MSG_ADM_DATE"),
+    "default" => true,
+    "sort" => "field_date"
+);
 $arHeaders[] = Array("id" => "DATE_INSERT", "content" => GetMessage("MAIL_MSG_ADM_RECEIVED"), "sort" => "date_insert");
-$arHeaders[] = Array("id" => "MAILBOX_NAME", "content" => GetMessage("MAIL_MSG_ADM_MBOX"), "default" => true, "sort" => "mailbox_name");
-$arHeaders[] = Array("id" => "MESSAGE_SIZE", "content" => GetMessage("MAIL_MSG_ADM_SIZE"), "default" => true, "sort" => "message_size", "align" => "right");
+$arHeaders[] = Array(
+    "id" => "MAILBOX_NAME",
+    "content" => GetMessage("MAIL_MSG_ADM_MBOX"),
+    "default" => true,
+    "sort" => "mailbox_name"
+);
+$arHeaders[] = Array(
+    "id" => "MESSAGE_SIZE",
+    "content" => GetMessage("MAIL_MSG_ADM_SIZE"),
+    "default" => true,
+    "sort" => "message_size",
+    "align" => "right"
+);
 
-$arHeaders[] = Array("id" => "SPAM_RATING", "content" => GetMessage("MAIL_MSG_ADM_SPAM") . "<br>" . GetMessage("MAIL_MSG_ADM_SPAM_R"), "default" => true, "sort" => "spam_rating");
+$arHeaders[] = Array(
+    "id" => "SPAM_RATING",
+    "content" => GetMessage("MAIL_MSG_ADM_SPAM") . "<br>" . GetMessage("MAIL_MSG_ADM_SPAM_R"),
+    "default" => true,
+    "sort" => "spam_rating"
+);
 
-$arHeaders[] = Array("id" => "ATTACHMENTS", "content" => GetMessage("MAIL_MSG_ADM_SPAM_ATTCH"), "default" => true, "sort" => "attachments");
+$arHeaders[] = Array(
+    "id" => "ATTACHMENTS",
+    "content" => GetMessage("MAIL_MSG_ADM_SPAM_ATTCH"),
+    "default" => true,
+    "sort" => "attachments"
+);
 
 $arHeaders[] = Array("id" => "ID", "content" => "ID", "sort" => "id");
 $arHeaders[] = Array("id" => "MSG_ID", "content" => "Message-ID");
@@ -191,25 +253,37 @@ while ($arRes = $messageList->fetch()) {
     if ($arRes['SPAM'] == "Y"):
 
         if ($arRes['NEW_MESSAGE'] != "Y"):
-            $str .= '<div class="mail-message-spam adm-list-mail-icon" title="' . GetMessage("MAIL_MSG_ADM_READ_SPAM") . '"></div>';
+            $str .= '<div class="mail-message-spam adm-list-mail-icon" title="' . GetMessage(
+                    "MAIL_MSG_ADM_READ_SPAM"
+                ) . '"></div>';
         else:
-            $str .= '<div class="mail-message-unread-spam adm-list-mail-icon" title="' . GetMessage("MAIL_MSG_ADM_NOTREAD_SPAM") . '"></div>';
+            $str .= '<div class="mail-message-unread-spam adm-list-mail-icon" title="' . GetMessage(
+                    "MAIL_MSG_ADM_NOTREAD_SPAM"
+                ) . '"></div>';
         endif;
 
     elseif ($arRes['SPAM'] == "N"):
 
         if ($arRes['NEW_MESSAGE'] != "Y"):
-            $str .= '<div class="mail-message-notspam adm-list-mail-icon" title="' . GetMessage("MAIL_MSG_ADM_READ_NOTSPAM") . '"></div>';
+            $str .= '<div class="mail-message-notspam adm-list-mail-icon" title="' . GetMessage(
+                    "MAIL_MSG_ADM_READ_NOTSPAM"
+                ) . '"></div>';
         else:
-            $str .= '<div class="mail-message-unread-notspam adm-list-mail-icon" title="' . GetMessage("MAIL_MSG_ADM_NOTREAD_NOTSPAM") . '"></div>';
+            $str .= '<div class="mail-message-unread-notspam adm-list-mail-icon" title="' . GetMessage(
+                    "MAIL_MSG_ADM_NOTREAD_NOTSPAM"
+                ) . '"></div>';
         endif;
 
     else:
 
         if ($arRes['NEW_MESSAGE'] != "Y"):
-            $str .= '<div class="mail-message adm-list-mail-icon" title="' . GetMessage("MAIL_MSG_ADM_READ") . '"></div>';
+            $str .= '<div class="mail-message adm-list-mail-icon" title="' . GetMessage(
+                    "MAIL_MSG_ADM_READ"
+                ) . '"></div>';
         else:
-            $str .= '<div class="mail-message-unread adm-list-mail-icon" title="' . GetMessage("MAIL_MSG_ADM_NOTREAD") . '"></div>';
+            $str .= '<div class="mail-message-unread adm-list-mail-icon" title="' . GetMessage(
+                    "MAIL_MSG_ADM_NOTREAD"
+                ) . '"></div>';
         endif;
 
     endif;
@@ -218,7 +292,7 @@ while ($arRes = $messageList->fetch()) {
         '<a href="mail_message_view.php?lang=%s&amp;ID=%u">%s</a>',
         htmlspecialcharsbx(LANG),
         $arRes['ID'],
-        strlen($arRes['SUBJECT']) > 0 ? htmlspecialcharsbx($arRes['SUBJECT']) : getMessage('MAIL_MSG_ADM_NOSUBJ')
+        $arRes['SUBJECT'] <> '' ? htmlspecialcharsbx($arRes['SUBJECT']) : getMessage('MAIL_MSG_ADM_NOSUBJ')
     );
 
     $row->AddViewField("SUBJECT", $str);
@@ -253,26 +327,38 @@ while ($arRes = $messageList->fetch()) {
         if ($arRes['SPAM'] != "Y") {
             $arActions[] = array(
                 "TEXT" => GetMessage("MAIL_MSG_ADM_PROC_ACT_SPAM"),
-                "ACTION" => $lAdmin->ActionAjaxReload($APPLICATION->GetCurPage() . "?action=mark_as_spam&ID=" . $arRes['ID'] . "&lang=" . LANG . "&" . bitrix_sessid_get())
+                "ACTION" => $lAdmin->ActionAjaxReload(
+                    $APPLICATION->GetCurPage(
+                    ) . "?action=mark_as_spam&ID=" . $arRes['ID'] . "&lang=" . LANG . "&" . bitrix_sessid_get()
+                )
             );
         }
 
         if ($arRes['SPAM'] != "N") {
             $arActions[] = array(
                 "TEXT" => GetMessage("MAIL_MSG_ADM_PROC_ACT_NOTSPAM"),
-                "ACTION" => $lAdmin->ActionAjaxReload($APPLICATION->GetCurPage() . "?action=mark_as_notspam&ID=" . $arRes['ID'] . "&lang=" . LANG . "&" . bitrix_sessid_get())
+                "ACTION" => $lAdmin->ActionAjaxReload(
+                    $APPLICATION->GetCurPage(
+                    ) . "?action=mark_as_notspam&ID=" . $arRes['ID'] . "&lang=" . LANG . "&" . bitrix_sessid_get()
+                )
             );
         }
 
         if ($arRes['NEW_MESSAGE'] == "Y") {
             $arActions[] = array(
                 "TEXT" => GetMessage("MAIL_MSG_ADM_PROC_ACT_READ"),
-                "ACTION" => $lAdmin->ActionAjaxReload($APPLICATION->GetCurPage() . "?action=mark_as_read&ID=" . $arRes['ID'] . "&lang=" . LANG . "&" . bitrix_sessid_get())
+                "ACTION" => $lAdmin->ActionAjaxReload(
+                    $APPLICATION->GetCurPage(
+                    ) . "?action=mark_as_read&ID=" . $arRes['ID'] . "&lang=" . LANG . "&" . bitrix_sessid_get()
+                )
             );
         } else {
             $arActions[] = array(
                 "TEXT" => GetMessage("MAIL_MSG_ADM_PROC_ACT_NOTREAD"),
-                "ACTION" => $lAdmin->ActionAjaxReload($APPLICATION->GetCurPage() . "?action=mark_as_unread&ID=" . $arRes['ID'] . "&lang=" . LANG . "&" . bitrix_sessid_get())
+                "ACTION" => $lAdmin->ActionAjaxReload(
+                    $APPLICATION->GetCurPage(
+                    ) . "?action=mark_as_unread&ID=" . $arRes['ID'] . "&lang=" . LANG . "&" . bitrix_sessid_get()
+                )
             );
         }
 
@@ -282,7 +368,10 @@ while ($arRes = $messageList->fetch()) {
         $arActions[] = array(
             "ICON" => "delete",
             "TEXT" => GetMessage("MAIL_MSG_ADM_PROC_ACT_DELETE"),
-            "ACTION" => "if(confirm('" . GetMessage('MAIL_MSG_ADM_FILTER_CONFIRM10') . "')) " . $lAdmin->ActionDoGroup($arRes['ID'], "delete")
+            "ACTION" => "if(confirm('" . GetMessage('MAIL_MSG_ADM_FILTER_CONFIRM10') . "')) " . $lAdmin->ActionDoGroup(
+                    $arRes['ID'],
+                    "delete"
+                )
         );
     }
 
@@ -299,11 +388,15 @@ $arActions["delete"] = GetMessage("MAIL_MSG_ADM_PROC_ACT_DELETE");
 $arActions["refilter"] = GetMessage("MAIL_MSG_ADM_PROC_ACT_RULES");
 
 $res = CMailFilter::GetList(Array("NAME" => "ASC"), Array("ACTIVE" => "Y", "WHEN_MANUALLY_RUN" => "Y"));
-while ($flt_arr = $res->Fetch())
-    $arActions["refilter_num_" . $flt_arr["ID"]] = GetMessage("MAIL_MSG_ADM_PROC_ACT_RULE") . " " . htmlspecialcharsbx(substr($flt_arr["NAME"], 0, 30));
+while ($flt_arr = $res->Fetch()) {
+    $arActions["refilter_num_" . $flt_arr["ID"]] = GetMessage("MAIL_MSG_ADM_PROC_ACT_RULE") . " " . htmlspecialcharsbx(
+            mb_substr($flt_arr["NAME"], 0, 30)
+        );
+}
 
-if ($MOD_RIGHT == "W")
+if ($MOD_RIGHT == "W") {
     $lAdmin->AddGroupActionTable($arActions);
+}
 
 ob_start();
 ?>
@@ -316,7 +409,10 @@ ob_start();
                     <option value=""><? echo GetMessage("MAIL_MSG_ADM_ALLMAILBOXES") ?></option>
                     <?
                     ClearVars("mb_");
-                    $l = CMailbox::GetList(array('NAME' => 'ASC', 'ID' => 'ASC'), array('VISIBLE' => 'Y', 'USER_ID' => 0));
+                    $l = CMailbox::GetList(
+                        array('NAME' => 'ASC', 'ID' => 'ASC'),
+                        array('VISIBLE' => 'Y', 'USER_ID' => 0)
+                    );
                     while ($l->ExtractFields("mb_")):
                         ?>
                         <option value="<? echo $mb_ID ?>"<? if ($find_mailbox_id == $mb_ID) echo " selected" ?>><? echo $mb_NAME ?></option><?
@@ -380,8 +476,12 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
         <td nowrap>
             <select name="find_spam">
                 <option value=""><? echo GetMessage("MAIL_MSG_ADM_FILTER_ANY") ?></option>
-                <option value="Y"<? if ($find_spam == "Y") echo " selected" ?>><? echo GetMessage("MAIL_MSG_ADM_FILTER_YES") ?></option>
-                <option value="N"<? if ($find_spam == "N") echo " selected" ?>><? echo GetMessage("MAIL_MSG_ADM_FILTER_NO") ?></option>
+                <option value="Y"<? if ($find_spam == "Y") echo " selected" ?>><? echo GetMessage(
+                        "MAIL_MSG_ADM_FILTER_YES"
+                    ) ?></option>
+                <option value="N"<? if ($find_spam == "N") echo " selected" ?>><? echo GetMessage(
+                        "MAIL_MSG_ADM_FILTER_NO"
+                    ) ?></option>
             </select>
         </td>
     </tr>
@@ -390,8 +490,12 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
         <td nowrap>
             <select name="find_new">
                 <option value=""><? echo GetMessage("MAIL_MSG_ADM_FILTER_ANY") ?></option>
-                <option value="Y"<? if ($find_new == "Y") echo " selected" ?>><? echo GetMessage("MAIL_MSG_ADM_FILTER_NEW") ?></option>
-                <option value="N"<? if ($find_new == "N") echo " selected" ?>><? echo GetMessage("MAIL_MSG_ADM_FILTER_OLD") ?></option>
+                <option value="Y"<? if ($find_new == "Y") echo " selected" ?>><? echo GetMessage(
+                        "MAIL_MSG_ADM_FILTER_NEW"
+                    ) ?></option>
+                <option value="N"<? if ($find_new == "N") echo " selected" ?>><? echo GetMessage(
+                        "MAIL_MSG_ADM_FILTER_OLD"
+                    ) ?></option>
             </select>
         </td>
     </tr>

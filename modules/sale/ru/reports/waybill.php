@@ -1,4 +1,6 @@
-<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die(); ?>
+<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+} ?>
 <html>
 <head>
     <meta http-equiv=Content-Type content="text/html; charset=windows-1251">
@@ -172,40 +174,49 @@ border-top:none;padding:0cm 2.0pt 0cm 2.0pt;height:9.0pt'>
                         echo "[" . $arOrder["USER_ID"] . "] ";
                         $db_user = CUser::GetByID($arOrder["USER_ID"]);
                         $arUser = $db_user->Fetch();
-                        echo htmlspecialcharsbx($arUser["NAME"]) . " " . htmlspecialcharsbx($arUser["LAST_NAME"]) . ", ";
+                        echo htmlspecialcharsbx($arUser["NAME"]) . " " . htmlspecialcharsbx(
+                                $arUser["LAST_NAME"]
+                            ) . ", ";
 
-                        if (strlen($arOrderProps["F_INDEX"]) > 0) echo $arOrderProps["F_INDEX"] . ",";
+                        if ($arOrderProps["F_INDEX"] <> '') {
+                            echo $arOrderProps["F_INDEX"] . ",";
+                        }
 
                         $arVal = CSaleLocation::GetByID($arOrderProps["F_LOCATION"], "ru");
-                        if (strlen($arVal["COUNTRY_NAME"]) > 0 && strlen($arVal["CITY_NAME"]) > 0)
+                        if ($arVal["COUNTRY_NAME"] <> '' && $arVal["CITY_NAME"] <> '') {
                             echo htmlspecialcharsbx($arVal["COUNTRY_NAME"] . " - " . $arVal["CITY_NAME"]);
-                        elseif (strlen($arVal["COUNTRY_NAME"]) > 0 || strlen($arVal["CITY_NAME"]) > 0)
+                        } elseif ($arVal["COUNTRY_NAME"] <> '' || $arVal["CITY_NAME"] <> '') {
                             echo htmlspecialcharsbx($arVal["COUNTRY_NAME"] . $arVal["CITY_NAME"]);
+                        }
 
-                        if (strlen($arOrderProps["F_CITY"]) > 0) echo ", �. " . $arOrderProps["F_CITY"];
-                        if (strlen($arOrderProps["F_ADDRESS"]) > 0 && strlen($arOrderProps["F_CITY"]) > 0)
+                        if ($arOrderProps["F_CITY"] <> '') {
+                            echo ", �. " . $arOrderProps["F_CITY"];
+                        }
+                        if ($arOrderProps["F_ADDRESS"] <> '' && $arOrderProps["F_CITY"] <> '') {
                             echo ", " . $arOrderProps["F_ADDRESS"];
-                        elseif (strlen($arOrderProps["F_ADDRESS"]) > 0)
+                        } elseif ($arOrderProps["F_ADDRESS"] <> '') {
                             echo $arOrderProps["F_ADDRESS"];
+                        }
 
                         if (strval($arOrderProps["PHONE"]) != "") {
                             echo ", �������: " . $arOrderProps["PHONE"];
                         }
-
                     } else {
-                        if (strlen($arParams["BUYER_COMPANY_NAME"]) > 0)
+                        if ($arParams["BUYER_COMPANY_NAME"] <> '') {
                             echo $arParams["BUYER_COMPANY_NAME"];
-                        else
+                        } else {
                             echo $arParams["BUYER_LAST_NAME"] . " " . $arParams["BUYER_FIRST_NAME"] . " " . $arParams["BUYER_SECOND_NAME"];
+                        }
 
-                        if (strlen($arParams["BUYER_INN"]) > 0) echo " ���/���: " . $arParams["BUYER_INN"] . " / " . $arParams["BUYER_KPP"];
+                        if ($arParams["BUYER_INN"] <> '') {
+                            echo " ���/���: " . $arParams["BUYER_INN"] . " / " . $arParams["BUYER_KPP"];
+                        }
 
                         echo ", " . $arParams["BUYER_COUNTRY"] . ", " . $arParams["BUYER_INDEX"] . ", �. " . $arParams["BUYER_CITY"] . ", " . $arParams["BUYER_ADDRESS"] . ", �/� " . $arParams["BUYER_RSCH"] . " � " . $arParams["BUYER_RSCH_BANK"] . " �. " . $arParams["BUYER_RSCH_CITY"] . ", �/� " . $arParams["BUYER_KSCH"] . ", ��� " . $arParams["BUYER_BIK"];
 
                         if (strval($arParams["BUYER_PHONE"]) != "") {
                             echo ", �������: " . $arParams["BUYER_PHONE"];
                         }
-
                     } ?></p>
                 <p class=Normal style='margin:0cm;margin-bottom:.0001pt;line-height:normal'>&nbsp;</p>
             </td>
@@ -262,42 +273,53 @@ margin-left:0cm;margin-bottom:.0001pt;line-height:normal'><span
                             echo "[" . $arOrder["USER_ID"] . "] ";
                             $db_user = CUser::GetByID($arOrder["USER_ID"]);
                             $arUser = $db_user->Fetch();
-                            echo htmlspecialcharsbx($arUser["NAME"]) . " " . htmlspecialcharsbx($arUser["LAST_NAME"]) . ", ";
+                            echo htmlspecialcharsbx($arUser["NAME"]) . " " . htmlspecialcharsbx(
+                                    $arUser["LAST_NAME"]
+                                ) . ", ";
 
-                            if (strlen($arOrderProps["F_INN"]) > 0) echo "���: " . $arOrderProps["F_INN"];
+                            if ($arOrderProps["F_INN"] <> '') {
+                                echo "���: " . $arOrderProps["F_INN"];
+                            }
 
-                            if (strlen($arOrderProps["F_INDEX"]) > 0) echo $arOrderProps["F_INDEX"] . ",";
+                            if ($arOrderProps["F_INDEX"] <> '') {
+                                echo $arOrderProps["F_INDEX"] . ",";
+                            }
 
                             $arVal = CSaleLocation::GetByID($arOrderProps["F_LOCATION"], "ru");
-                            if (strlen($arVal["COUNTRY_NAME"]) > 0 && strlen($arVal["CITY_NAME"]) > 0)
+                            if ($arVal["COUNTRY_NAME"] <> '' && $arVal["CITY_NAME"] <> '') {
                                 echo htmlspecialcharsbx($arVal["COUNTRY_NAME"] . " - " . $arVal["CITY_NAME"]);
-                            elseif (strlen($arVal["COUNTRY_NAME"]) > 0 || strlen($arVal["CITY_NAME"]) > 0)
+                            } elseif ($arVal["COUNTRY_NAME"] <> '' || $arVal["CITY_NAME"] <> '') {
                                 echo htmlspecialcharsbx($arVal["COUNTRY_NAME"] . $arVal["CITY_NAME"]);
+                            }
 
-                            if (strlen($arOrderProps["F_CITY"]) > 0) echo ", �. " . $arOrderProps["F_CITY"];
-                            if (strlen($arOrderProps["F_ADDRESS"]) > 0 && strlen($arOrderProps["F_CITY"]) > 0)
+                            if ($arOrderProps["F_CITY"] <> '') {
+                                echo ", �. " . $arOrderProps["F_CITY"];
+                            }
+                            if ($arOrderProps["F_ADDRESS"] <> '' && $arOrderProps["F_CITY"] <> '') {
                                 echo ", " . $arOrderProps["F_ADDRESS"];
-                            elseif (strlen($arOrderProps["F_ADDRESS"]) > 0)
+                            } elseif ($arOrderProps["F_ADDRESS"] <> '') {
                                 echo $arOrderProps["F_ADDRESS"];
+                            }
 
                             if (strval($arOrderProps["PHONE"]) != "") {
                                 echo ", �������: " . $arOrderProps["PHONE"];
                             }
                         } else {
-                            if (strlen($arParams["BUYER_COMPANY_NAME"]) > 0)
+                            if ($arParams["BUYER_COMPANY_NAME"] <> '') {
                                 echo $arParams["BUYER_COMPANY_NAME"];
-                            else
+                            } else {
                                 echo $arParams["BUYER_LAST_NAME"] . " " . $arParams["BUYER_FIRST_NAME"] . " " . $arParams["BUYER_SECOND_NAME"];
+                            }
 
-                            if (strlen($arParams["BUYER_INN"]) > 0) echo " ���/���: " . $arParams["BUYER_INN"] . " / " . $arParams["BUYER_KPP"];
+                            if ($arParams["BUYER_INN"] <> '') {
+                                echo " ���/���: " . $arParams["BUYER_INN"] . " / " . $arParams["BUYER_KPP"];
+                            }
 
                             echo ", " . $arParams["BUYER_COUNTRY"] . ", " . $arParams["BUYER_INDEX"] . ", �. " . $arParams["BUYER_CITY"] . ", " . $arParams["BUYER_ADDRESS"] . ", �/� " . $arParams["BUYER_RSCH"] . " � " . $arParams["BUYER_RSCH_BANK"] . " �. " . $arParams["BUYER_RSCH_CITY"] . ", �/� " . $arParams["BUYER_KSCH"] . ", ��� " . $arParams["BUYER_BIK"];
 
                             if (strval($arParams["BUYER_PHONE"]) != "") {
                                 echo ", �������: " . $arParams["BUYER_PHONE"];
                             }
-
-
                         } ?></span></p>
                 <p class=Normal style='margin-top:1.0pt;margin-right:0cm;margin-bottom:0cm;
 margin-left:0cm;margin-bottom:.0001pt;line-height:normal'><span
@@ -732,8 +754,9 @@ text-align:center;line-height:normal'>&nbsp;</p>
         for ($i = 0, $max = count($arBasketIDs); $i < $max; $i++) {
             $arBasketTmp = CSaleBasket::GetByID($arBasketIDs[$i]);
 
-            if (floatval($arBasketTmp["VAT_RATE"]) > 0)
+            if (floatval($arBasketTmp["VAT_RATE"]) > 0) {
                 $bUseVat = true;
+            }
 
             $priceTotal += $arBasketTmp["PRICE"] * $arBasketTmp["QUANTITY"];
 
@@ -746,8 +769,9 @@ text-align:center;line-height:normal'>&nbsp;</p>
                     false,
                     array("ID", "BASKET_ID", "NAME", "VALUE", "CODE", "SORT")
                 );
-                while ($arBasketProps = $dbBasketProps->GetNext())
+                while ($arBasketProps = $dbBasketProps->GetNext()) {
                     $arBasketTmp["PROPS"][$arBasketProps["ID"]] = $arBasketProps;
+                }
             }
 
             $arBasketOrder[] = $arBasketTmp;
@@ -778,8 +802,9 @@ text-align:center;line-height:normal'>&nbsp;</p>
             // ����������, ����� �� ������� - ���
             // ��� ������ ����� ��� NDS, ���� ���������� ��������� ���� ������
             // � ������� ���������������� �������� � ���������
-            if ($arTaxList[$i]["CODE"] == "NDS")
+            if ($arTaxList[$i]["CODE"] == "NDS") {
                 $iNds = $i;
+            }
             $i++;
         }
 
@@ -794,8 +819,9 @@ text-align:center;line-height:normal'>&nbsp;</p>
         $mi = 0;
 
         foreach ($arBasketOrder as $arBasket):
-            if (floatval($arQuantities[$mi]) <= 0)
+            if (floatval($arQuantities[$mi]) <= 0) {
                 $arQuantities[$mi] = DoubleVal($arBasket["QUANTITY"]);
+            }
 
             $nds_val = 0;
             $taxRate = 0;
@@ -810,10 +836,15 @@ text-align:center;line-height:normal'>&nbsp;</p>
                 $taxRate = $arBasket["VAT_RATE"] * 100;
                 $bVat = true;
             } elseif (!$bUseVat) {
-                $basket_tax = CSaleOrderTax::CountTaxes($b_AMOUNT * $arQuantities[$mi], $arTaxList, $arOrder["CURRENCY"]);
+                $basket_tax = CSaleOrderTax::CountTaxes(
+                    $b_AMOUNT * $arQuantities[$mi],
+                    $arTaxList,
+                    $arOrder["CURRENCY"]
+                );
                 for ($i = 0, $max = count($arTaxList); $i < $max; $i++) {
-                    if ($arTaxList[$i]["IS_IN_PRICE"] == "Y")
+                    if ($arTaxList[$i]["IS_IN_PRICE"] == "Y") {
                         $item_price -= $arTaxList[$i]["TAX_VAL"];
+                    }
 
                     $nds_val += DoubleVal($arTaxList[$i]["TAX_VAL"]);
                     $taxRate += ($arTaxList[$i]["VALUE"]);
@@ -837,8 +868,9 @@ padding:0cm 2.0pt 0cm 2.0pt;height:9.0pt;width:200px;'>
                         <?
                         if (is_array($arBasket["PROPS"]) && $_GET["PROPS_ENABLE"] == "Y") {
                             foreach ($arBasket["PROPS"] as $vv) {
-                                if (strlen($vv["VALUE"]) > 0 && $vv["CODE"] != "CATALOG.XML_ID" && $vv["CODE"] != "PRODUCT.XML_ID")
+                                if ($vv["VALUE"] <> '' && $vv["CODE"] != "CATALOG.XML_ID" && $vv["CODE"] != "PRODUCT.XML_ID") {
                                     echo "<div style=\"font-size:8pt\">" . $vv["NAME"] . ": " . $vv["VALUE"] . "</div>";
+                                }
                             }
                         }
                         ?>
@@ -902,8 +934,9 @@ text-align:center;line-height:normal'>&nbsp;</p>
 border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
 padding:0cm 2.0pt 0cm 2.0pt;height:9.0pt'>
                     <p class=Normal align=center style='margin:0cm;margin-bottom:.0001pt;
-text-align:center;line-height:normal'><a
-                                name=�������������46></a><? echo Bitrix\Sale\BasketItem::formatQuantity($arQuantities[$mi]);
+text-align:center;line-height:normal'><a name=�������������46></a><? echo Bitrix\Sale\BasketItem::formatQuantity(
+                            $arQuantities[$mi]
+                        );
                         $total_n += $arQuantities[$mi]; ?></p>
                     <p class=Normal align=center style='margin:0cm;margin-bottom:.0001pt;
 text-align:center;line-height:normal'>&nbsp;</p>
@@ -912,9 +945,11 @@ text-align:center;line-height:normal'>&nbsp;</p>
 border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
 padding:0cm 2.0pt 0cm 2.0pt;height:9.0pt'>
                     <p class=Normal align=center style='margin:0cm;margin-bottom:.0001pt;
-text-align:center;line-height:normal'><a
-                                name=�������������49></a><?= CCurrencyLang::CurrencyFormat($item_price, $arOrder["CURRENCY"], false); ?>
-                    </p>
+text-align:center;line-height:normal'><a name=�������������49></a><?= CCurrencyLang::CurrencyFormat(
+                            $item_price,
+                            $arOrder["CURRENCY"],
+                            false
+                        ); ?></p>
                     <p class=Normal align=center style='margin:0cm;margin-bottom:.0001pt;
 text-align:center;line-height:normal'>&nbsp;</p>
                 </td>
@@ -924,7 +959,11 @@ padding:0cm 2.0pt 0cm 2.0pt;height:9.0pt'>
                     <p class=Normal align=center style='margin:0cm;margin-bottom:.0001pt;
 text-align:center;line-height:normal'>
                         <?
-                        echo CCurrencyLang::CurrencyFormat($item_price * $arQuantities[$mi], $arOrder["CURRENCY"], false);
+                        echo CCurrencyLang::CurrencyFormat(
+                            $item_price * $arQuantities[$mi],
+                            $arOrder["CURRENCY"],
+                            false
+                        );
                         if (empty($arBasket['SET_PARENT_ID'])) {
                             $total_price += ($item_price * $arQuantities[$mi]);
                         }
@@ -937,9 +976,9 @@ text-align:center;line-height:normal'>&nbsp;</p>
 border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
 padding:0cm 2.0pt 0cm 2.0pt;height:9.0pt'>
                     <p class=Normal align=center style='margin:0cm;margin-bottom:.0001pt;
-text-align:center;line-height:normal'><a
-                                name=�������������54></a><?= ($taxRate > 0 || count($arTaxList) > 0) ? $taxRate . "%" : "��� ���"; ?>
-                    </p>
+text-align:center;line-height:normal'><a name=�������������54></a><?= ($taxRate > 0 || count(
+                                $arTaxList
+                            ) > 0) ? $taxRate . "%" : "��� ���"; ?></p>
                     <p class=Normal align=center style='margin:0cm;margin-bottom:.0001pt;
 text-align:center;line-height:normal'>&nbsp;</p>
                 </td>
@@ -966,9 +1005,15 @@ padding:0cm 2.0pt 0cm 2.0pt;height:9.0pt'>
                     <p class=Normal align=center style='margin:0cm;margin-bottom:.0001pt;
 text-align:center;line-height:normal'>
                         <?
-                        echo CCurrencyLang::CurrencyFormat($arQuantities[$mi] * ($item_price) + $nds_val * $arQuantities[$mi], $arOrder["CURRENCY"], false);
+                        echo CCurrencyLang::CurrencyFormat(
+                            $arQuantities[$mi] * ($item_price) + $nds_val * $arQuantities[$mi],
+                            $arOrder["CURRENCY"],
+                            false
+                        );
                         if (empty($arBasket['SET_PARENT_ID'])) {
-                            $total_sum += $item_price * $arQuantities[$mi] + $nds_val * $arQuantities[$mi];
+                            $total_sum += \Bitrix\Sale\PriceMaths::roundPrecision(
+                                $item_price * $arQuantities[$mi] + $nds_val * $arQuantities[$mi]
+                            );
                         }
                         ?>
                     </p>
@@ -1063,9 +1108,11 @@ text-align:center;line-height:normal'>&nbsp;</p>
 border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
 padding:0cm 2.0pt 0cm 2.0pt;height:9.0pt'>
                     <p class=Normal align=center style='margin:0cm;margin-bottom:.0001pt;
-text-align:center;line-height:normal'><a
-                                name=�������������50></a><?= CCurrencyLang::CurrencyFormat($item_price, $arOrder["CURRENCY"], false); ?>
-                    </p>
+text-align:center;line-height:normal'><a name=�������������50></a><?= CCurrencyLang::CurrencyFormat(
+                            $item_price,
+                            $arOrder["CURRENCY"],
+                            false
+                        ); ?></p>
                     <p class=Normal align=center style='margin:0cm;margin-bottom:.0001pt;
 text-align:center;line-height:normal'>&nbsp;</p>
                 </td>
@@ -1073,8 +1120,11 @@ text-align:center;line-height:normal'>&nbsp;</p>
 border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
 padding:0cm 2.0pt 0cm 2.0pt;height:9.0pt'>
                     <p class=Normal align=center style='margin:0cm;margin-bottom:.0001pt;
-text-align:center;line-height:normal'><a
-                                name=�������������52></a><?= CCurrencyLang::CurrencyFormat($item_price, $arOrder["CURRENCY"], false);
+text-align:center;line-height:normal'><a name=�������������52></a><?= CCurrencyLang::CurrencyFormat(
+                            $item_price,
+                            $arOrder["CURRENCY"],
+                            false
+                        );
                         $total_price += $item_price; ?></p>
                     <p class=Normal align=center style='margin:0cm;margin-bottom:.0001pt;
 text-align:center;line-height:normal'>&nbsp;</p>
@@ -1083,9 +1133,9 @@ text-align:center;line-height:normal'>&nbsp;</p>
 border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
 padding:0cm 2.0pt 0cm 2.0pt;height:9.0pt'>
                     <p class=Normal align=center style='margin:0cm;margin-bottom:.0001pt;
-text-align:center;line-height:normal'><a
-                                name=�������������55></a><?= ($nds_pr > 0 || count($arTaxList) > 0) ? $nds_pr . "%" : "��� ���"; ?>
-                    </p>
+text-align:center;line-height:normal'><a name=�������������55></a><?= ($nds_pr > 0 || count(
+                                $arTaxList
+                            ) > 0) ? $nds_pr . "%" : "��� ���"; ?></p>
                     <p class=Normal align=center style='margin:0cm;margin-bottom:.0001pt;
 text-align:center;line-height:normal'>&nbsp;</p>
                 </td>
@@ -1093,8 +1143,11 @@ text-align:center;line-height:normal'>&nbsp;</p>
 border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
 padding:0cm 2.0pt 0cm 2.0pt;height:9.0pt'>
                     <p class=Normal align=center style='margin:0cm;margin-bottom:.0001pt;
-text-align:center;line-height:normal'><a
-                                name=�������������57></a><?= CCurrencyLang::CurrencyFormat($nds_val, $arOrder["CURRENCY"], false);
+text-align:center;line-height:normal'><a name=�������������57></a><?= CCurrencyLang::CurrencyFormat(
+                            $nds_val,
+                            $arOrder["CURRENCY"],
+                            false
+                        );
                         $total_nds += $nds_val; ?></p>
                     <p class=Normal align=center style='margin:0cm;margin-bottom:.0001pt;
 text-align:center;line-height:normal'>&nbsp;</p>
@@ -1104,8 +1157,11 @@ text-align:center;line-height:normal'>&nbsp;</p>
 border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
 padding:0cm 2.0pt 0cm 2.0pt;height:9.0pt'>
                     <p class=Normal align=center style='margin:0cm;margin-bottom:.0001pt;
-text-align:center;line-height:normal'><a
-                                name=�������������62></a><?= CCurrencyLang::CurrencyFormat($nds_val + $item_price, $arOrder["CURRENCY"], false);
+text-align:center;line-height:normal'><a name=�������������62></a><?= CCurrencyLang::CurrencyFormat(
+                            $nds_val + $item_price,
+                            $arOrder["CURRENCY"],
+                            false
+                        );
                         $total_sum += $nds_val + $item_price; ?></p>
                     <p class=Normal align=center style='margin:0cm;margin-bottom:.0001pt;
 text-align:center;line-height:normal'>&nbsp;</p>
@@ -1275,15 +1331,18 @@ line-height:133%'><?= CCurrencyLang::CurrencyFormat($total_sum, $arOrder["CURREN
         <?
         function PrintRussian($num, $ext)
         {
-            if (strlen($num) > 1 && substr($num, strlen($num) - 2, 1) == "1")
+            if (mb_strlen($num) > 1 && mb_substr($num, mb_strlen($num) - 2, 1) == "1") {
                 return $ext[2];
+            }
 
-            $c = IntVal(substr($num, strlen($num) - 1, 1));
-            if ($c == 0 || ($c >= 5 && $c <= 9))
+            $c = intval(mb_substr($num, mb_strlen($num) - 1, 1));
+            if ($c == 0 || ($c >= 5 && $c <= 9)) {
                 return $ext[2];
+            }
 
-            if ($c == 1)
+            if ($c == 1) {
                 return $ext[0];
+            }
 
             return $ext[1];
         }
@@ -1293,8 +1352,9 @@ line-height:133%'><?= CCurrencyLang::CurrencyFormat($total_sum, $arOrder["CURREN
             <td width=481 colspan=2 valign=top style='width:361.0pt;border:none;
 border-bottom:solid windowtext 1.0pt;padding:0cm 2.0pt 0cm 2.0pt;height:9.0pt'>
                 <p class=Normal style='margin:0cm;margin-bottom:.0001pt;line-height:133%'>��������
-                    ��������� ����� ���������� �� <a
-                            name=�������������4></a><?= htmlspecialcharsbx(Number2Word_Rus(1, false)) ?> ������</p>
+                    ��������� ����� ���������� �� <a name=�������������4></a><?= htmlspecialcharsbx(
+                        Number2Word_Rus(1, false)
+                    ) ?> ������</p>
                 <p class=Normal style='margin:0cm;margin-bottom:.0001pt;line-height:133%'>&nbsp;</p>
             </td>
             <td width=409 colspan=6 valign=top style='width:307.0pt;border:none;
@@ -1317,9 +1377,10 @@ border-bottom:solid windowtext 1.0pt;padding:0cm 2.0pt 0cm 2.0pt;height:9.0pt'>
             </td>
             <td width=409 colspan=6 valign=top style='width:307.0pt;border:none;
 border-bottom:solid windowtext 1.0pt;padding:0cm 2.0pt 0cm 2.0pt;height:9.0pt'>
-                <p class=Normal style='margin:0cm;margin-bottom:.0001pt;line-height:133%'>
-                    ��������<?= PrintRussian($n - 1, array("��", "��", "��")) ?>
-                    �����<?= PrintRussian($n - 1, array("", "�", "��")) ?> �������</p>
+                <p class=Normal style='margin:0cm;margin-bottom:.0001pt;line-height:133%'>��������<?= PrintRussian(
+                        $n - 1,
+                        array("��", "��", "��")
+                    ) ?> �����<?= PrintRussian($n - 1, array("", "�", "��")) ?> �������</p>
                 <p class=Normal style='margin:0cm;margin-bottom:.0001pt;line-height:133%'>&nbsp;</p>
             </td>
             <td width=116 colspan=2 valign=top style='width:87.0pt;padding:0cm 2.0pt 0cm 2.0pt;
@@ -1475,9 +1536,12 @@ margin-left:0cm;margin-bottom:.0001pt;line-height:normal'>&nbsp;</p>
             <td width=481 colspan=2 valign=top style='width:361.0pt;padding:0cm 2.0pt 0cm 2.0pt;
 height:19.0pt'>
                 <p class=Normal style='margin-top:1.0pt;margin-right:0cm;margin-bottom:0cm;
-margin-left:0cm;margin-bottom:.0001pt;line-height:133%'>�����
-                    ������� <? echo htmlspecialcharsbx(Number2Word_Rus($n - 1, false)) . " ��������" . PrintRussian($n - 1, array("��", "��", "��")) . " �����" . PrintRussian($n - 1, array("", "�", "��")); ?>
-                    ������������ </p>
+margin-left:0cm;margin-bottom:.0001pt;line-height:133%'>����� ������� <? echo htmlspecialcharsbx(
+                            Number2Word_Rus($n - 1, false)
+                        ) . " ��������" . PrintRussian($n - 1, array("��", "��", "��")) . " �����" . PrintRussian(
+                            $n - 1,
+                            array("", "�", "��")
+                        ); ?> ������������ </p>
                 <p class=Normal style='margin-top:1.0pt;margin-right:0cm;margin-bottom:0cm;
 margin-left:0cm;margin-bottom:.0001pt;line-height:133%'>�� ����� ��<a
                             name=�������������11></a><? echo htmlspecialcharsbx(Number2Word_rus($total_sum)); ?></p>

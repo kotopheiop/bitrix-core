@@ -1,4 +1,5 @@
 <?
+
 $module_id = "blog";
 $BLOG_RIGHT = $APPLICATION->GetGroupRight($module_id);
 if ($BLOG_RIGHT >= "R") :
@@ -9,11 +10,12 @@ if ($BLOG_RIGHT >= "R") :
 
     CModule::IncludeModule('blog');
 
-    if ($REQUEST_METHOD == "GET" && strlen($RestoreDefaults) > 0 && $BLOG_RIGHT == "W" && check_bitrix_sessid()) {
+    if ($REQUEST_METHOD == "GET" && $RestoreDefaults <> '' && $BLOG_RIGHT == "W" && check_bitrix_sessid()) {
         COption::RemoveOption("blog");
-        $z = CGroup::GetList($v1 = "id", $v2 = "asc", array("ACTIVE" => "Y", "ADMIN" => "N"));
-        while ($zr = $z->Fetch())
+        $z = CGroup::GetList("id", "asc", array("ACTIVE" => "Y", "ADMIN" => "N"));
+        while ($zr = $z->Fetch()) {
             $APPLICATION->DelGroupRight($module_id, array($zr["ID"]));
+        }
     }
 
     $arAllOptions = array(
@@ -31,25 +33,84 @@ if ($BLOG_RIGHT >= "R") :
         array("parser_nofollow", GetMessage("BLOG_PARSER_NOFOLLOW"), "N", Array("checkbox")),
         array("use_autosave", GetMessage("BLOG_USE_AUTOSAVE"), "Y", Array("checkbox")),
         array("use_image_perm", GetMessage("BLOG_USE_IMAGE_PERM"), "N", Array("checkbox")),
-        array("captcha_choice", GetMessage("BLOG_CAPTCHA_CHOICE"), "U", Array("selectbox"), Array("U" => GetMessage("BLOG_CAPTCHA_CHOICE_U"), "A" => GetMessage("BLOG_CAPTCHA_CHOICE_A"), "D" => GetMessage("BLOG_CAPTCHA_CHOICE_D"))),
+        array(
+            "captcha_choice",
+            GetMessage("BLOG_CAPTCHA_CHOICE"),
+            "U",
+            Array("selectbox"),
+            Array(
+                "U" => GetMessage("BLOG_CAPTCHA_CHOICE_U"),
+                "A" => GetMessage("BLOG_CAPTCHA_CHOICE_A"),
+                "D" => GetMessage("BLOG_CAPTCHA_CHOICE_D")
+            )
+        ),
         array("send_blog_ping", GetMessage("BLOG_SEND_BLOG_PING"), "N", Array("checkbox")),
-        array("send_blog_ping_address", GetMessage("BLOG_SEND_BLOG_PING_ADDRESS"), "http://ping.blogs.yandex.ru/RPC2\r\nhttp://rpc.weblogs.com/RPC2", Array("textarea", 5, 40)),
-        array("post_everyone_max_rights", GetMessage("BLOG_POST_EVERYONE_MAX_RIGHTS"), "I", Array("selectbox"), $GLOBALS["AR_BLOG_PERMS_EVERYONE"]),
-        array("comment_everyone_max_rights", GetMessage("BLOG_COMMENT_EVERYONE_MAX_RIGHTS"), "P", Array("selectbox"), $GLOBALS["AR_BLOG_PERMS"]),
-        array("post_auth_user_max_rights", GetMessage("BLOG_POST_AUTH_USER_MAX_RIGHTS"), "I", Array("selectbox"), $GLOBALS["AR_BLOG_PERMS"]),
-        array("comment_auth_user_max_rights", GetMessage("BLOG_COMMENT_AUTH_USER_MAX_RIGHTS"), "P", Array("selectbox"), $GLOBALS["AR_BLOG_PERMS"]),
-        array("post_group_user_max_rights", GetMessage("BLOG_POST_GROUP_USER_MAX_RIGHTS"), "W", Array("selectbox"), $GLOBALS["AR_BLOG_PERMS"]),
-        array("comment_group_user_max_rights", GetMessage("BLOG_COMMENT_GROUP_USER_MAX_RIGHTS"), "W", Array("selectbox"), $GLOBALS["AR_BLOG_PERMS"]),
-        array("smile_gallery_id", GetMessage("BLOG_OPTIONS_SMILE_GALLERY_ID"), 0, Array("selectbox"), CSmileGallery::getListForForm()),
+        array(
+            "send_blog_ping_address",
+            GetMessage("BLOG_SEND_BLOG_PING_ADDRESS"),
+            "http://ping.blogs.yandex.ru/RPC2\r\nhttp://rpc.weblogs.com/RPC2",
+            Array("textarea", 5, 40)
+        ),
+        array(
+            "post_everyone_max_rights",
+            GetMessage("BLOG_POST_EVERYONE_MAX_RIGHTS"),
+            "I",
+            Array("selectbox"),
+            $GLOBALS["AR_BLOG_PERMS_EVERYONE"]
+        ),
+        array(
+            "comment_everyone_max_rights",
+            GetMessage("BLOG_COMMENT_EVERYONE_MAX_RIGHTS"),
+            "P",
+            Array("selectbox"),
+            $GLOBALS["AR_BLOG_PERMS"]
+        ),
+        array(
+            "post_auth_user_max_rights",
+            GetMessage("BLOG_POST_AUTH_USER_MAX_RIGHTS"),
+            "I",
+            Array("selectbox"),
+            $GLOBALS["AR_BLOG_PERMS"]
+        ),
+        array(
+            "comment_auth_user_max_rights",
+            GetMessage("BLOG_COMMENT_AUTH_USER_MAX_RIGHTS"),
+            "P",
+            Array("selectbox"),
+            $GLOBALS["AR_BLOG_PERMS"]
+        ),
+        array(
+            "post_group_user_max_rights",
+            GetMessage("BLOG_POST_GROUP_USER_MAX_RIGHTS"),
+            "W",
+            Array("selectbox"),
+            $GLOBALS["AR_BLOG_PERMS"]
+        ),
+        array(
+            "comment_group_user_max_rights",
+            GetMessage("BLOG_COMMENT_GROUP_USER_MAX_RIGHTS"),
+            "W",
+            Array("selectbox"),
+            $GLOBALS["AR_BLOG_PERMS"]
+        ),
+        array(
+            "smile_gallery_id",
+            GetMessage("BLOG_OPTIONS_SMILE_GALLERY_ID"),
+            0,
+            Array("selectbox"),
+            CSmileGallery::getListForForm()
+        ),
     );
 
     $strWarning = "";
-    if ($REQUEST_METHOD == "POST" && strlen($Update) > 0 && $BLOG_RIGHT == "W" && check_bitrix_sessid() && strlen($use_sonnet_button) <= 0) {
+    if ($REQUEST_METHOD == "POST" && $Update <> '' && $BLOG_RIGHT == "W" && check_bitrix_sessid(
+        ) && $use_sonnet_button == '') {
         foreach ($arAllOptions as $option) {
             $name = $option[0];
             $val = $$name;
-            if ($option[3][0] == "checkbox" && $val != "Y")
+            if ($option[3][0] == "checkbox" && $val != "Y") {
                 $val = "N";
+            }
             COption::SetOptionString("blog", $name, $val, $option[1]);
         }
 
@@ -57,10 +118,11 @@ if ($BLOG_RIGHT >= "R") :
         $arPathsNullType = array();
         $dbPaths = CBlogSitePath::GetList();
         while ($arPath = $dbPaths->Fetch()) {
-            if (strlen($arPath["TYPE"]) > 0)
+            if ($arPath["TYPE"] <> '') {
                 $arPaths[$arPath["SITE_ID"]][$arPath["TYPE"]] = $arPath["ID"];
-            else
+            } else {
                 $arPathsNullType[$arPath["SITE_ID"]] = $arPath["ID"];
+            }
         }
 
         $arType = array("B", "P", "U", "G", "H");
@@ -71,16 +133,23 @@ if ($BLOG_RIGHT >= "R") :
         "G" - group blog,
         "H" - group post
         */
-        $dbSites = CSite::GetList(($b = ""), ($o = ""), array("ACTIVE" => "Y"));
+        $dbSites = CSite::GetList('', '', array("ACTIVE" => "Y"));
         while ($arSite = $dbSites->Fetch()) {
-            BXClearCache(True, "/" . $arSite["LID"] . "/blog/");
+            BXClearCache(true, "/" . $arSite["LID"] . "/blog/");
 
             foreach ($arType as $type) {
-                if (IntVal($arPaths[$arSite["LID"]][$type]) > 0) {
-                    if (strlen(${"SITE_PATH_" . $arSite["LID"] . "_" . $type}) > 0)
-                        CBlogSitePath::Update($arPaths[$arSite["LID"]][$type], array("PATH" => ${"SITE_PATH_" . $arSite["LID"] . "_" . $type}, "TYPE" => $type));
-                    else
+                if (intval($arPaths[$arSite["LID"]][$type]) > 0) {
+                    if (${"SITE_PATH_" . $arSite["LID"] . "_" . $type} <> '') {
+                        CBlogSitePath::Update(
+                            $arPaths[$arSite["LID"]][$type],
+                            array(
+                                "PATH" => ${"SITE_PATH_" . $arSite["LID"] . "_" . $type},
+                                "TYPE" => $type
+                            )
+                        );
+                    } else {
                         CBlogSitePath::Delete($arPaths[$arSite["LID"]][$type]);
+                    }
                 } else {
                     CBlogSitePath::Add(
                         array(
@@ -93,13 +162,21 @@ if ($BLOG_RIGHT >= "R") :
             }
             unset($arPaths[$arSite["LID"]]);
 
-            if (strlen(${"SITE_PATH_" . $arSite["LID"]}) > 0)
-                ${"SITE_PATH_" . $arSite["LID"]} = "/" . trim(str_replace("\\", "/", ${"SITE_PATH_" . $arSite["LID"]}), "/");
+            if (${"SITE_PATH_" . $arSite["LID"]} <> '') {
+                ${"SITE_PATH_" . $arSite["LID"]} = "/" . trim(
+                        str_replace("\\", "/", ${"SITE_PATH_" . $arSite["LID"]}),
+                        "/"
+                    );
+            }
             if (array_key_exists($arSite["LID"], $arPathsNullType)) {
-                if (strlen(${"SITE_PATH_" . $arSite["LID"]}) > 0)
-                    CBlogSitePath::Update($arPathsNullType[$arSite["LID"]], array("PATH" => ${"SITE_PATH_" . $arSite["LID"]}));
-                else
+                if (${"SITE_PATH_" . $arSite["LID"]} <> '') {
+                    CBlogSitePath::Update(
+                        $arPathsNullType[$arSite["LID"]],
+                        array("PATH" => ${"SITE_PATH_" . $arSite["LID"]})
+                    );
+                } else {
                     CBlogSitePath::Delete($arPathsNullType[$arSite["LID"]]);
+                }
             } else {
                 CBlogSitePath::Add(
                     array(
@@ -111,19 +188,37 @@ if ($BLOG_RIGHT >= "R") :
             unset($arPathsNullType[$arSite["LID"]]);
         }
 
-        foreach ($arPaths as $key)
-            foreach ($key as $val)
+        foreach ($arPaths as $key) {
+            foreach ($key as $val) {
                 CBlogSitePath::Delete($val);
+            }
+        }
     }
 
 
-    if (strlen($strWarning) > 0)
+    if ($strWarning <> '') {
         CAdminMessage::ShowMessage($strWarning);
+    }
 
     $aTabs = array(
-        array("DIV" => "edit1", "TAB" => GetMessage("BLO_TAB_SET"), "ICON" => "blog_settings", "TITLE" => GetMessage("BLO_TAB_SET_ALT")),
-        array("DIV" => "edit3", "TAB" => GetMessage("BLO_SITE_PATH3"), "ICON" => "blog_path", "TITLE" => GetMessage("BLO_SITE_PATH3")),
-        array("DIV" => "edit2", "TAB" => GetMessage("BLO_TAB_RIGHTS"), "ICON" => "blog_settings", "TITLE" => GetMessage("BLO_TAB_RIGHTS_ALT")),
+        array(
+            "DIV" => "edit1",
+            "TAB" => GetMessage("BLO_TAB_SET"),
+            "ICON" => "blog_settings",
+            "TITLE" => GetMessage("BLO_TAB_SET_ALT")
+        ),
+        array(
+            "DIV" => "edit3",
+            "TAB" => GetMessage("BLO_SITE_PATH3"),
+            "ICON" => "blog_path",
+            "TITLE" => GetMessage("BLO_SITE_PATH3")
+        ),
+        array(
+            "DIV" => "edit2",
+            "TAB" => GetMessage("BLO_TAB_RIGHTS"),
+            "ICON" => "blog_settings",
+            "TITLE" => GetMessage("BLO_TAB_RIGHTS_ALT")
+        ),
     );
 
     $tabControl = new CAdminTabControl("tabControl", $aTabs);
@@ -142,28 +237,34 @@ if ($BLOG_RIGHT >= "R") :
         ?>
         <tr>
             <td valign="top" width="50%"><?
-                if ($type[0] == "checkbox")
+                if ($type[0] == "checkbox") {
                     echo "<label for=\"" . htmlspecialcharsbx($Option[0]) . "\">" . $Option[1] . "</label>";
-                else
+                } else {
                     echo $Option[1];
+                }
                 ?></td>
             <td valign="middle" width="50%">
                 <? if ($type[0] == "checkbox"):?>
                     <input type="checkbox" name="<? echo htmlspecialcharsbx($Option[0]) ?>"
-                           id="<? echo htmlspecialcharsbx($Option[0]) ?>"
-                           value="Y"<? if ($val == "Y") echo " checked"; ?>>
+                           id="<? echo htmlspecialcharsbx($Option[0]) ?>" value="Y"<? if ($val == "Y") {
+                        echo " checked";
+                    } ?>>
                 <? elseif ($type[0] == "text"):?>
                     <input type="text" size="<? echo $type[1] ?>" value="<? echo htmlspecialcharsbx($val) ?>"
                            name="<? echo htmlspecialcharsbx($Option[0]) ?>">
                 <? elseif ($type[0] == "textarea"):?>
                     <textarea rows="<? echo $type[1] ?>" cols="<? echo $type[2] ?>"
-                              name="<? echo htmlspecialcharsbx($Option[0]) ?>"><? echo htmlspecialcharsbx($val) ?></textarea>
+                              name="<? echo htmlspecialcharsbx($Option[0]) ?>"><? echo htmlspecialcharsbx(
+                            $val
+                        ) ?></textarea>
                 <? elseif ($type[0] == "selectbox"):?>
                     <select name="<? echo htmlspecialcharsbx($Option[0]) ?>"
                             id="<? echo htmlspecialcharsbx($Option[0]) ?>">
                         <? foreach ($Option[4] as $v => $k) {
                             ?>
-                            <option value="<?= $v ?>"<? if ($val == $v) echo " selected"; ?>><?= $k ?></option><?
+                            <option value="<?= $v ?>"<? if ($val == $v) {
+                                echo " selected";
+                            } ?>><?= $k ?></option><?
                         }
                         ?>
                     </select>
@@ -180,15 +281,19 @@ if ($BLOG_RIGHT >= "R") :
     <?
     $arPaths = array();
     $dbPaths = CBlogSitePath::GetList();
-    while ($arPath = $dbPaths->Fetch())
+    while ($arPath = $dbPaths->Fetch()) {
         $arPaths[$arPath["SITE_ID"]][$arPath["TYPE"]] = $arPath["PATH"];
+    }
 
-    $dbSites = CSite::GetList(($b = ""), ($o = ""), Array("ACTIVE" => "Y"));
+    $dbSites = CSite::GetList('', '', Array("ACTIVE" => "Y"));
     while ($arSite = $dbSites->Fetch()) {
         ?>
         <tr>
-            <td valign="top" colspan="2"
-                align="center"><?= str_replace("#SITE#", $arSite["LID"], GetMessage("BLO_SITE_PATH_SITE")) ?>:
+            <td valign="top" colspan="2" align="center"><?= str_replace(
+                    "#SITE#",
+                    $arSite["LID"],
+                    GetMessage("BLO_SITE_PATH_SITE")
+                ) ?>:
             </td>
         </tr>
         <tr>
@@ -258,11 +363,12 @@ if ($BLOG_RIGHT >= "R") :
     $arPaths = array();
     $dbPaths = CBlogSitePath::GetList();
     while ($arPath = $dbPaths->Fetch()) {
-        if (strlen($arPath["TYPE"]) <= 0)
+        if ($arPath["TYPE"] == '') {
             $arPaths[$arPath["SITE_ID"]] = $arPath["PATH"];
+        }
     }
 
-    $dbSites = CSite::GetList(($b = ""), ($o = ""), Array("ACTIVE" => "Y"));
+    $dbSites = CSite::GetList('', '', Array("ACTIVE" => "Y"));
     while ($arSite = $dbSites->Fetch()) {
         ?>
         <tr>
@@ -285,7 +391,8 @@ if ($BLOG_RIGHT >= "R") :
     <script language="JavaScript">
         function RestoreDefaults() {
             if (confirm('<?echo AddSlashes(GetMessage("MAIN_HINT_RESTORE_DEFAULTS_WARNING"))?>'))
-                window.location = "<?echo $APPLICATION->GetCurPage()?>?RestoreDefaults=Y&lang=<?echo LANG?>&mid=<?echo urlencode($mid) . "&" . bitrix_sessid_get();?>";
+                window.location = "<?echo $APPLICATION->GetCurPage(
+                )?>?RestoreDefaults=Y&lang=<?echo LANG?>&mid=<?echo urlencode($mid) . "&" . bitrix_sessid_get();?>";
         }
     </script>
 

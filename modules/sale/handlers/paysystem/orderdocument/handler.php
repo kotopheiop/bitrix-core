@@ -38,11 +38,16 @@ class OrderDocumentHandler
      */
     public function initiatePay(Sale\Payment $payment, Request $request = null)
     {
+        $result = new PaySystem\ServiceResult();
         if (!Main\Loader::includeModule('documentgenerator')
             ||
             !Main\Loader::includeModule('crm')
         ) {
-            return new PaySystem\ServiceResult();
+            return $result;
+        }
+
+        if ($request === null) {
+            $request = Main\Context::getCurrent()->getRequest();
         }
 
         $document = $this->getDocument($payment);
@@ -51,7 +56,12 @@ class OrderDocumentHandler
         }
 
         $documentInfo = $document->getFile()->getData();
-        $params = array_merge($documentInfo, DocumentGenerator\Model\ExternalLinkTable::getPublicUrlsByDocumentId($document->ID));
+        $result->setData($documentInfo);
+
+        $params = array_merge(
+            $documentInfo,
+            DocumentGenerator\Model\ExternalLinkTable::getPublicUrlsByDocumentId($document->ID)
+        );
         if (!empty($params['hash'])) {
             $params['isPublicMode'] = true;
         }
@@ -59,9 +69,25 @@ class OrderDocumentHandler
             $params['IFRAME'] = 'Y';
             $params['PRINT'] = 'Y';
         }
+
+        $params['PAYMENT_ID'] = $payment->getId();
+        $params['PAYSYSTEM_ID'] = $this->service->getField('ID');
+
         $this->setExtraParams($params);
 
-        return $this->showTemplate($payment, 'template');
+        $showTemplateResult = $this->showTemplate($payment, $this->getTemplate($request));
+        if ($showTemplateResult->isSuccess()) {
+            $result->setTemplate($showTemplateResult->getTemplate());
+        } else {
+            $result->addErrors($showTemplateResult->getErrors());
+        }
+
+        return $result;
+    }
+
+    private function getTemplate(Request $request)
+    {
+        return $request->get('template') ?? 'template';
     }
 
     /**
@@ -137,16 +163,18 @@ class OrderDocumentHandler
      */
     protected function getDocument(Sale\Payment $payment)
     {
-        $dbRes = DocumentGenerator\Model\DocumentTable::getList([
-            'select' => ['ID', 'UPDATE_TIME'],
-            'filter' => [
-                '=PROVIDER' => static::getDataProviderClass(),
-                '=VALUE' => $payment->getOrderId(),
-                '=TEMPLATE_ID' => $this->service->getField('PS_MODE'),
-            ],
-            'order' => ['ID' => 'DESC'],
-            'limit' => 1,
-        ]);
+        $dbRes = DocumentGenerator\Model\DocumentTable::getList(
+            [
+                'select' => ['ID', 'UPDATE_TIME'],
+                'filter' => [
+                    '=PROVIDER' => static::getDataProviderClass(),
+                    '=VALUE' => $payment->getOrderId(),
+                    '=TEMPLATE_ID' => $this->service->getField('PS_MODE'),
+                ],
+                'order' => ['ID' => 'DESC'],
+                'limit' => 1,
+            ]
+        );
 
         $data = $dbRes->fetch();
         if ($data) {
@@ -188,7 +216,11 @@ class OrderDocumentHandler
     protected function getFileName(Payment $payment)
     {
         $today = new Main\Type\Date();
-        return 'invoice_' . $this->getInvoiceNumber($payment) . '_' . str_replace(['.', '\\', '/'], '-', $today->toString());
+        return 'invoice_' . $this->getInvoiceNumber($payment) . '_' . str_replace(
+                ['.', '\\', '/'],
+                '-',
+                $today->toString()
+            );
     }
 
     /**

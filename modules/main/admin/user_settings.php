@@ -8,13 +8,24 @@ require_once(dirname(__FILE__) . "/../include/prolog_admin_before.php");
 define("HELP_FILE", "settings/user_settings.php");
 
 $editable = ($USER->CanDoOperation('edit_own_profile') || $USER->CanDoOperation('edit_other_settings'));
-if (!$USER->CanDoOperation('view_other_settings') && !$editable)
+if (!$USER->CanDoOperation('view_other_settings') && !$editable) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 IncludeModuleLangFile(__FILE__);
 
 $aTabs = array(
-    array("DIV" => "edit1", "TAB" => GetMessage("user_sett_tab"), "ICON" => "", "TITLE" => GetMessage("user_sett_tab_title")),
-    array("DIV" => "edit2", "TAB" => GetMessage("user_sett_del"), "ICON" => "", "TITLE" => GetMessage("user_sett_del_title")),
+    array(
+        "DIV" => "edit1",
+        "TAB" => GetMessage("user_sett_tab"),
+        "ICON" => "",
+        "TITLE" => GetMessage("user_sett_tab_title")
+    ),
+    array(
+        "DIV" => "edit2",
+        "TAB" => GetMessage("user_sett_del"),
+        "ICON" => "",
+        "TITLE" => GetMessage("user_sett_del_title")
+    ),
 );
 
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
@@ -40,7 +51,7 @@ if ($_REQUEST["action"] <> "" && $editable && check_bitrix_sessid()) {
         $sSuccessMsg .= GetMessage("user_sett_mess_del_user") . "<br>";
     }
     if ($sSuccessMsg <> "") {
-        $_SESSION["ADMIN"]["USER_SETTINGS_MSG"] = $sSuccessMsg;
+        \Bitrix\Main\Application::getInstance()->getSession()["ADMIN"]["USER_SETTINGS_MSG"] = $sSuccessMsg;
         LocalRedirect($APPLICATION->GetCurPage() . "?lang=" . LANGUAGE_ID . "&" . $tabControl->ActiveTabParam());
     }
 }
@@ -77,7 +88,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Update"] == "Y" && $edita
         CUserOptions::SetOption("global", "settings", $aFields);
         $sSuccessMsg .= GetMessage("user_sett_mess_save1") . "<br>";
 
-        $_SESSION["ADMIN"]["USER_SETTINGS_MSG"] = $sSuccessMsg;
+        \Bitrix\Main\Application::getInstance()->getSession()["ADMIN"]["USER_SETTINGS_MSG"] = $sSuccessMsg;
         LocalRedirect($APPLICATION->GetCurPage() . "?lang=" . LANGUAGE_ID);
     } else {
         $bFormValues = true;
@@ -108,19 +119,45 @@ if ($bFormValues) {
     );
 } else {
     $aUserOpt = CUserOptions::GetOption("global", "settings");
-    if ($aUserOpt["context_menu"] == "") $aUserOpt["context_menu"] = "Y";
-    if ($aUserOpt["context_ctrl"] == "") $aUserOpt["context_ctrl"] = "N";
-    if ($aUserOpt["autosave"] == "") $aUserOpt["autosave"] = "Y";
-    if ($aUserOpt["start_menu_links"] == "") $aUserOpt["start_menu_links"] = "5";
-    if ($aUserOpt["start_menu_preload"] == "") $aUserOpt["start_menu_preload"] = "N";
-    if ($aUserOpt["start_menu_title"] == "") $aUserOpt["start_menu_title"] = "Y";
-    if ($aUserOpt["panel_dynamic_mode"] == "") $aUserOpt["panel_dynamic_mode"] = "N";
-    if ($aUserOpt["page_edit_control_enable"] == "") $aUserOpt["page_edit_control_enable"] = "Y";
-    if ($aUserOpt["messages"]["support"] == "") $aUserOpt["messages"]["support"] = "Y";
-    if ($aUserOpt["messages"]["security"] == "") $aUserOpt["messages"]["security"] = "Y";
-    if ($aUserOpt["messages"]["perfmon"] == "") $aUserOpt["messages"]["perfmon"] = "Y";
-    if ($aUserOpt["sound"] == "") $aUserOpt["sound"] = "N";
-    if ($aUserOpt["sound_login"] == "") $aUserOpt["sound_login"] = "/bitrix/sounds/main/bitrix_tune.mp3";
+    if ($aUserOpt["context_menu"] == "") {
+        $aUserOpt["context_menu"] = "Y";
+    }
+    if ($aUserOpt["context_ctrl"] == "") {
+        $aUserOpt["context_ctrl"] = "N";
+    }
+    if ($aUserOpt["autosave"] == "") {
+        $aUserOpt["autosave"] = "Y";
+    }
+    if ($aUserOpt["start_menu_links"] == "") {
+        $aUserOpt["start_menu_links"] = "5";
+    }
+    if ($aUserOpt["start_menu_preload"] == "") {
+        $aUserOpt["start_menu_preload"] = "N";
+    }
+    if ($aUserOpt["start_menu_title"] == "") {
+        $aUserOpt["start_menu_title"] = "Y";
+    }
+    if ($aUserOpt["panel_dynamic_mode"] == "") {
+        $aUserOpt["panel_dynamic_mode"] = "N";
+    }
+    if ($aUserOpt["page_edit_control_enable"] == "") {
+        $aUserOpt["page_edit_control_enable"] = "Y";
+    }
+    if ($aUserOpt["messages"]["support"] == "") {
+        $aUserOpt["messages"]["support"] = "Y";
+    }
+    if ($aUserOpt["messages"]["security"] == "") {
+        $aUserOpt["messages"]["security"] = "Y";
+    }
+    if ($aUserOpt["messages"]["perfmon"] == "") {
+        $aUserOpt["messages"]["perfmon"] = "Y";
+    }
+    if ($aUserOpt["sound"] == "") {
+        $aUserOpt["sound"] = "N";
+    }
+    if ($aUserOpt["sound_login"] == "") {
+        $aUserOpt["sound_login"] = "/bitrix/sounds/main/bitrix_tune.mp3";
+    }
 }
 
 $message = null;
@@ -129,9 +166,16 @@ if ($e = $APPLICATION->GetException()) {
     echo $message->Show();
 }
 
-if (!empty($_SESSION["ADMIN"]["USER_SETTINGS_MSG"])) {
-    CAdminMessage::ShowMessage(array("MESSAGE" => GetMessage("user_sett_mess_title"), "TYPE" => "OK", "DETAILS" => $_SESSION["ADMIN"]["USER_SETTINGS_MSG"], "HTML" => true));
-    unset($_SESSION["ADMIN"]["USER_SETTINGS_MSG"]);
+if (!empty(\Bitrix\Main\Application::getInstance()->getSession()["ADMIN"]["USER_SETTINGS_MSG"])) {
+    CAdminMessage::ShowMessage(
+        array(
+            "MESSAGE" => GetMessage("user_sett_mess_title"),
+            "TYPE" => "OK",
+            "DETAILS" => \Bitrix\Main\Application::getInstance()->getSession()["ADMIN"]["USER_SETTINGS_MSG"],
+            "HTML" => true
+        )
+    );
+    unset(\Bitrix\Main\Application::getInstance()->getSession()["ADMIN"]["USER_SETTINGS_MSG"]);
 }
 ?>
 <form method="POST" name="form1" action="<? echo $APPLICATION->GetCurPage() ?>">
@@ -199,7 +243,10 @@ if (!empty($_SESSION["ADMIN"]["USER_SETTINGS_MSG"])) {
         <td>
             <input type="text" name="start_menu_links"
                    value="<? echo htmlspecialcharsbx($aUserOpt["start_menu_links"]) ?>" size="10">
-            <a href="javascript:if(confirm('<? echo CUtil::addslashes(GetMessage("user_sett_del_links_conf")) ?>'))window.location='user_settings.php?action=clear_links&lang=<? echo LANG ?>&<? echo bitrix_sessid_get() ?>';"><? echo GetMessage("user_sett_del_links") ?></a>
+            <a href="javascript:if(confirm('<? echo CUtil::addslashes(
+                GetMessage("user_sett_del_links_conf")
+            ) ?>'))window.location='user_settings.php?action=clear_links&lang=<? echo LANG ?>&<? echo bitrix_sessid_get(
+            ) ?>';"><? echo GetMessage("user_sett_del_links") ?></a>
         </td>
     </tr>
 
@@ -247,17 +294,18 @@ if (!empty($_SESSION["ADMIN"]["USER_SETTINGS_MSG"])) {
                     <div class="adm-list-control"><input type="checkbox" name="messages_support" value="Y"
                                                          id="messages_support"<? if ($aUserOpt['messages']['support'] == 'Y') echo " checked" ?>>
                     </div>
-                    <div class="adm-list-label"><label
-                                for="messages_support"><? echo GetMessage("user_sett_mess_support") ?></label></div>
+                    <div class="adm-list-label"><label for="messages_support"><? echo GetMessage(
+                                "user_sett_mess_support"
+                            ) ?></label></div>
                 </div>
                 <? if (file_exists($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/security/install/index.php")): ?>
                     <div class="adm-list-item">
                         <div class="adm-list-control"><input type="checkbox" name="messages_security" value="Y"
                                                              id="messages_security"<? if ($aUserOpt['messages']['security'] == 'Y') echo " checked" ?>>
                         </div>
-                        <div class="adm-list-label"><label
-                                    for="messages_security"><? echo GetMessage("user_sett_mess_security") ?></label>
-                        </div>
+                        <div class="adm-list-label"><label for="messages_security"><? echo GetMessage(
+                                    "user_sett_mess_security"
+                                ) ?></label></div>
                     </div>
                 <? endif; ?>
                 <? if (file_exists($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/perfmon/install/index.php")): ?>
@@ -265,8 +313,9 @@ if (!empty($_SESSION["ADMIN"]["USER_SETTINGS_MSG"])) {
                         <div class="adm-list-control"><input type="checkbox" name="messages_perfmon" value="Y"
                                                              id="messages_perfmon"<? if ($aUserOpt['messages']['perfmon'] == 'Y') echo " checked" ?>>
                         </div>
-                        <div class="adm-list-label"><label
-                                    for="messages_perfmon"><? echo GetMessage("user_sett_mess_perfmon") ?></label></div>
+                        <div class="adm-list-label"><label for="messages_perfmon"><? echo GetMessage(
+                                    "user_sett_mess_perfmon"
+                                ) ?></label></div>
                     </div>
                 <? endif; ?>
             </div>
@@ -285,20 +334,23 @@ if (!empty($_SESSION["ADMIN"]["USER_SETTINGS_MSG"])) {
     $tabControl->BeginNextTab();
     ?>
     <tr>
-        <td colspan="2"><a
-                    href="javascript:if(confirm('<? echo CUtil::addslashes(GetMessage("user_sett_del_pers_conf")) ?>'))window.location='user_settings.php?action=clear&lang=<? echo LANG ?>&<? echo bitrix_sessid_get() ?>&tabControl_active_tab=edit2';"><? echo GetMessage("user_sett_del_pers1") ?></a>
-        </td>
+        <td colspan="2"><a href="javascript:if(confirm('<? echo CUtil::addslashes(
+                GetMessage("user_sett_del_pers_conf")
+            ) ?>'))window.location='user_settings.php?action=clear&lang=<? echo LANG ?>&<? echo bitrix_sessid_get(
+            ) ?>&tabControl_active_tab=edit2';"><? echo GetMessage("user_sett_del_pers1") ?></a></td>
     </tr>
     <? if ($USER->CanDoOperation('edit_other_settings')): ?>
         <tr>
-            <td colspan="2"><a
-                        href="javascript:if(confirm('<? echo CUtil::addslashes(GetMessage("user_sett_del_common_conf")) ?>'))window.location='user_settings.php?action=clear_all&lang=<? echo LANG ?>&<? echo bitrix_sessid_get() ?>&tabControl_active_tab=edit2';"><? echo GetMessage("user_sett_del_common1") ?></a>
-            </td>
+            <td colspan="2"><a href="javascript:if(confirm('<? echo CUtil::addslashes(
+                    GetMessage("user_sett_del_common_conf")
+                ) ?>'))window.location='user_settings.php?action=clear_all&lang=<? echo LANG ?>&<? echo bitrix_sessid_get(
+                ) ?>&tabControl_active_tab=edit2';"><? echo GetMessage("user_sett_del_common1") ?></a></td>
         </tr>
         <tr>
-            <td colspan="2"><a
-                        href="javascript:if(confirm('<? echo CUtil::addslashes(GetMessage("user_sett_del_user_conf")) ?>'))window.location='user_settings.php?action=clear_all_user&lang=<? echo LANG ?>&<? echo bitrix_sessid_get() ?>&tabControl_active_tab=edit2';"><? echo GetMessage("user_sett_del_user1") ?></a>
-            </td>
+            <td colspan="2"><a href="javascript:if(confirm('<? echo CUtil::addslashes(
+                    GetMessage("user_sett_del_user_conf")
+                ) ?>'))window.location='user_settings.php?action=clear_all_user&lang=<? echo LANG ?>&<? echo bitrix_sessid_get(
+                ) ?>&tabControl_active_tab=edit2';"><? echo GetMessage("user_sett_del_user1") ?></a></td>
         </tr>
     <? endif; ?>
 

@@ -9,7 +9,7 @@ IncludeModuleLangFile(__FILE__);
 
 class CAllVoteChannel
 {
-    function err_mess()
+    public static function err_mess()
     {
         $module_id = "vote";
         return "<br>Module: " . $module_id . "<br>Class: CAllVoteChannel<br>File: " . __FILE__;
@@ -24,10 +24,12 @@ class CAllVoteChannel
         foreach (array("TITLE", "SYMBOLIC_NAME") as $key) {
             if (is_set($arFields, $key) || $ACTION == "ADD") {
                 $arFields[$key] = trim($arFields[$key]);
-                if (empty($arFields[$key]))
+                if (empty($arFields[$key])) {
                     $aMsg[] = array(
                         "id" => $key,
-                        "text" => GetMessage("VOTE_FORGOT_" . $key));
+                        "text" => GetMessage("VOTE_FORGOT_" . $key)
+                    );
+                }
 //				GetMessage("VOTE_FORGOT_SYMBOLIC_NAME");
 //				GetMessage("VOTE_FORGOT_TITLE");
             }
@@ -36,7 +38,8 @@ class CAllVoteChannel
             if (!(is_array($arFields["SITE"]) && !empty($arFields["SITE"]))) {
                 $aMsg[] = array(
                     "id" => "SITE",
-                    "text" => GetMessage("VOTE_FORGOT_SITE"));
+                    "text" => GetMessage("VOTE_FORGOT_SITE")
+                );
             } else {
                 reset($arFields["SITE"]);
             }
@@ -45,25 +48,31 @@ class CAllVoteChannel
             if (preg_match("/[^a-z_0-9]/is", $arFields["SYMBOLIC_NAME"], $matches)) {
                 $aMsg[] = array(
                     "id" => "SYMBOLIC_NAME",
-                    "text" => GetMessage("VOTE_INCORRECT_SYMBOLIC_NAME"));
+                    "text" => GetMessage("VOTE_INCORRECT_SYMBOLIC_NAME")
+                );
             } elseif (is_set($arFields, "SITE")) {
                 $arFilter = array(
                     "ID" => "~" . $ID,
                     "SITE" => $arFields["SITE"],
                     "ACTIVE" => "Y",
                     "SID" => $arFields["SYMBOLIC_NAME"],
-                    "SID_EXACT_MATCH" => "Y");
-                $db_res = CVoteChannel::GetList($v1, $v2, $arFilter, $v3);
+                    "SID_EXACT_MATCH" => "Y"
+                );
+                $db_res = CVoteChannel::GetList('', '', $arFilter);
                 if ($db_res && ($res = $db_res->Fetch())) {
                     $aMsg[] = array(
                         "id" => "SYMBOLIC_NAME",
                         "text" => str_replace(
-                            "#ID#", $res["ID"],
-                            GetMessage("VOTE_SYMBOLIC_NAME_ALREADY_IN_USE")));
+                            "#ID#",
+                            $res["ID"],
+                            GetMessage("VOTE_SYMBOLIC_NAME_ALREADY_IN_USE")
+                        )
+                    );
                 }
             }
-            if (empty($aMsg))
-                $arFields["SYMBOLIC_NAME"] = strtoupper($arFields["SYMBOLIC_NAME"]);
+            if (empty($aMsg)) {
+                $arFields["SYMBOLIC_NAME"] = mb_strtoupper($arFields["SYMBOLIC_NAME"]);
+            }
         }
 
         unset($arFields["TIMESTAMP_X"]);
@@ -73,9 +82,14 @@ class CAllVoteChannel
             unset($arFields["FIRST_SITE_ID"]);
         }
 
-        if (is_set($arFields, "C_SORT") || $ACTION == "ADD") $arFields["C_SORT"] = trim($arFields["C_SORT"]);
-        foreach (array("ACTIVE", "HIDDEN", "VOTE_SINGLE", "USE_CAPTCHA") as $key)
-            if (is_set($arFields, $key) || $ACTION == "ADD") $arFields[$key] = ($arFields[$key] == "Y" ? "Y" : "N");
+        if (is_set($arFields, "C_SORT") || $ACTION == "ADD") {
+            $arFields["C_SORT"] = trim($arFields["C_SORT"]);
+        }
+        foreach (array("ACTIVE", "HIDDEN", "VOTE_SINGLE", "USE_CAPTCHA") as $key) {
+            if (is_set($arFields, $key) || $ACTION == "ADD") {
+                $arFields[$key] = ($arFields[$key] == "Y" ? "Y" : "N");
+            }
+        }
 
         if (!empty($aMsg)) {
             $e = new CAdminException($aMsg);
@@ -89,15 +103,19 @@ class CAllVoteChannel
     {
         global $DB;
 
-        if (!self::CheckFields("ADD", $arFields))
+        if (!self::CheckFields("ADD", $arFields)) {
             return false;
+        }
         /***************** Event onBeforeMessageAdd ************************/
-        foreach (GetModuleEvents("vote", "onBeforeVoteChannelAdd", true) as $arEvent)
-            if (ExecuteModuleEventEx($arEvent, array(&$arFields)) === false)
+        foreach (GetModuleEvents("vote", "onBeforeVoteChannelAdd", true) as $arEvent) {
+            if (ExecuteModuleEventEx($arEvent, array(&$arFields)) === false) {
                 return false;
+            }
+        }
         /***************** /Event ******************************************/
-        if ($DB->type == "ORACLE")
+        if ($DB->type == "ORACLE") {
             $arFields["ID"] = $DB->NextID("SQ_B_VOTE_CHANNEL");
+        }
 
         $arInsert = $DB->PrepareInsert("b_vote_channel", $arFields);
 
@@ -115,26 +133,31 @@ class CAllVoteChannel
                 $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             }
         }
-        if (is_array($arFields["GROUP_ID"]) && !empty($arFields["GROUP_ID"]))
+        if (is_array($arFields["GROUP_ID"]) && !empty($arFields["GROUP_ID"])) {
             self::SetAccessPermissions($ID, $arFields["GROUP_ID"]);
+        }
         /***************** Events onAfterMessageAdd ************************/
-        foreach (GetModuleEvents("vote", "onAfterVoteChannelAdd", true) as $arEvent)
+        foreach (GetModuleEvents("vote", "onAfterVoteChannelAdd", true) as $arEvent) {
             ExecuteModuleEventEx($arEvent, array($ID, $arFields));
+        }
         /***************** /Events *****************************************/
 
         return $ID;
     }
 
-    function Update($ID, $arFields)
+    public static function Update($ID, $arFields)
     {
         global $DB;
-        if (!self::CheckFields("UPDATE", $arFields, $ID))
+        if (!self::CheckFields("UPDATE", $arFields, $ID)) {
             return false;
+        }
         $ID = intval($ID);
         /***************** Event onBeforeMessageAdd ************************/
-        foreach (GetModuleEvents("vote", "onBeforeVoteChannelUpdate", true) as $arEvent)
-            if (ExecuteModuleEventEx($arEvent, array(&$arFields)) === false)
+        foreach (GetModuleEvents("vote", "onBeforeVoteChannelUpdate", true) as $arEvent) {
+            if (ExecuteModuleEventEx($arEvent, array(&$arFields)) === false) {
                 return false;
+            }
+        }
         /***************** /Event ******************************************/
 
         $strUpdate = $DB->PrepareUpdate("b_vote_channel", $arFields);
@@ -143,33 +166,40 @@ class CAllVoteChannel
         $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 
         if (!empty($arFields["SITE"])) {
-            $DB->Query("DELETE FROM b_vote_channel_2_site WHERE CHANNEL_ID=" . $ID, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+            $DB->Query(
+                "DELETE FROM b_vote_channel_2_site WHERE CHANNEL_ID=" . $ID,
+                false,
+                "File: " . __FILE__ . "<br>Line: " . __LINE__
+            );
             foreach ($arFields["SITE"] as $sid) {
                 $strSql = "INSERT INTO b_vote_channel_2_site (CHANNEL_ID, SITE_ID) " .
                     "VALUES ($ID, '" . $DB->ForSql($sid, 2) . "')";
                 $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             }
         }
-        if (is_array($arFields["GROUP_ID"]) && !empty($arFields["GROUP_ID"]))
+        if (is_array($arFields["GROUP_ID"]) && !empty($arFields["GROUP_ID"])) {
             self::SetAccessPermissions($ID, $arFields["GROUP_ID"]);
+        }
         /***************** Events onAfterMessageAdd ************************/
-        foreach (GetModuleEvents("vote", "onAfterVoteChannelUpdate", true) as $arEvent)
+        foreach (GetModuleEvents("vote", "onAfterVoteChannelUpdate", true) as $arEvent) {
             ExecuteModuleEventEx($arEvent, array($ID, $arFields));
+        }
         /***************** /Events *****************************************/
 
         return $ID;
     }
 
-    function SetAccessPermissions($ID, $arGroups)
+    public static function SetAccessPermissions($ID, $arGroups)
     {
         global $DB;
         $ID = intval($ID);
         $arGroups = (is_array($arGroups) ? $arGroups : array());
         $arMainGroups = array();
-        if ($ID <= 0 || empty($arGroups))
+        if ($ID <= 0 || empty($arGroups)) {
             return false;
+        }
 
-        $db_res = CGroup::GetList($by = "ID", $order = "ASC");
+        $db_res = CGroup::GetList("ID", "ASC");
         if ($db_res && $res = $db_res->Fetch()) {
             do {
                 $arMainGroups[$res["ID"]] = $res["ID"];
@@ -178,24 +208,28 @@ class CAllVoteChannel
 
             $DB->Query(
                 "DELETE FROM b_vote_channel_2_group WHERE CHANNEL_ID=" . $ID,
-                false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+                false,
+                "File: " . __FILE__ . "<br>Line: " . __LINE__
+            );
 
             foreach ($arGroups as $key => $val) {
                 $key = intval($key);
                 $val = intval($val);
-                if ($key <= 1 || !in_array($val, $GLOBALS["aVotePermissions"]["reference_id"]))
+                if ($key <= 1 || !in_array($val, $GLOBALS["aVotePermissions"]["reference_id"])) {
                     continue;
+                }
                 $arFields = array(
                     "CHANNEL_ID" => $ID,
                     "GROUP_ID" => $key,
-                    "PERMISSION" => "'" . $val . "'");
+                    "PERMISSION" => "'" . $val . "'"
+                );
                 $DB->Insert("b_vote_channel_2_group", $arFields, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             }
         }
         return true;
     }
 
-    public static function GetList(&$by, &$order, $arFilter = Array(), &$is_filtered)
+    public static function GetList($by = 's_id', $order = 'desc', $arFilter = [])
     {
         $err_mess = (CVoteChannel::err_mess()) . "<br>Function: GetList<br>Line: ";
         global $DB;
@@ -204,11 +238,13 @@ class CAllVoteChannel
         if (is_array($arFilter)) {
             foreach ($arFilter as $key => $val) {
                 if (is_array($val)) {
-                    if (count($val) <= 0)
+                    if (count($val) <= 0) {
                         continue;
+                    }
                 } else {
-                    if ((strlen($val) <= 0) || ($val === "NOT_REF"))
+                    if (((string)$val == '') || ($val === "NOT_REF")) {
                         continue;
+                    }
                 }
                 $match_value_set = array_key_exists($key . "_EXACT_MATCH", $arFilter);
                 $key = strtoupper($key);
@@ -219,7 +255,9 @@ class CAllVoteChannel
                         break;
                     case "SITE_ID":
                     case "SITE":
-                        if (is_array($val)) $val = implode(" | ", $val);
+                        if (is_array($val)) {
+                            $val = implode(" | ", $val);
+                        }
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "N" && $match_value_set) ? "Y" : "N";
                         $arSqlSearch[] = GetFilterQuery("CS.SITE_ID", $val, $match);
                         $left_join = "LEFT JOIN b_vote_channel_2_site CS ON (C.ID = CS.CHANNEL_ID)";
@@ -246,21 +284,28 @@ class CAllVoteChannel
             }
         }
 
-        if ($by == "s_id") $strSqlOrder = "ORDER BY C.ID";
-        elseif ($by == "s_timestamp") $strSqlOrder = "ORDER BY C.TIMESTAMP_X";
-        elseif ($by == "s_c_sort") $strSqlOrder = "ORDER BY C.C_SORT";
-        elseif ($by == "s_active") $strSqlOrder = "ORDER BY C.ACTIVE";
-        elseif ($by == "s_hidden") $strSqlOrder = "ORDER BY C.HIDDEN";
-        elseif ($by == "s_symbolic_name") $strSqlOrder = "ORDER BY C.SYMBOLIC_NAME";
-        elseif ($by == "s_title") $strSqlOrder = "ORDER BY C.TITLE ";
-        elseif ($by == "s_votes") $strSqlOrder = "ORDER BY VOTES";
-        else {
-            $by = "s_id";
+        if ($by == "s_id") {
+            $strSqlOrder = "ORDER BY C.ID";
+        } elseif ($by == "s_timestamp") {
+            $strSqlOrder = "ORDER BY C.TIMESTAMP_X";
+        } elseif ($by == "s_c_sort") {
+            $strSqlOrder = "ORDER BY C.C_SORT";
+        } elseif ($by == "s_active") {
+            $strSqlOrder = "ORDER BY C.ACTIVE";
+        } elseif ($by == "s_hidden") {
+            $strSqlOrder = "ORDER BY C.HIDDEN";
+        } elseif ($by == "s_symbolic_name") {
+            $strSqlOrder = "ORDER BY C.SYMBOLIC_NAME";
+        } elseif ($by == "s_title") {
+            $strSqlOrder = "ORDER BY C.TITLE ";
+        } elseif ($by == "s_votes") {
+            $strSqlOrder = "ORDER BY VOTES";
+        } else {
             $strSqlOrder = "ORDER BY C.ID";
         }
+
         if ($order != "asc") {
             $strSqlOrder .= " desc ";
-            $order = "desc";
         }
 
         $strSqlSearch = GetFilterSqlSearch($arSqlSearch);
@@ -277,9 +322,7 @@ class CAllVoteChannel
 		INNER JOIN b_vote_channel C ON (C.ID = CC.ID)
 		" . $strSqlOrder;
 
-        $is_filtered = IsFiltered($strSqlSearch);
-
-        if (VOTE_CACHE_TIME === false || strpos($_SERVER['REQUEST_URI'], '/bitrix/admin/') !== false) {
+        if (VOTE_CACHE_TIME === false || mb_strpos($_SERVER['REQUEST_URI'], '/bitrix/admin/') !== false) {
             $res = $DB->Query($strSql, false, $err_mess . __LINE__);
             return $res;
         } else {
@@ -290,8 +333,9 @@ class CAllVoteChannel
                 $arCache = $CACHE_MANAGER->Get("b_vote_channel_" . $md5);
             } else {
                 $res = $DB->Query($strSql, false, $err_mess . __LINE__);
-                while ($ar = $res->Fetch())
+                while ($ar = $res->Fetch()) {
                     $arCache[] = $ar;
+                }
 
                 $CACHE_MANAGER->Set("b_vote_channel_" . $md5, $arCache);
             }
@@ -303,19 +347,27 @@ class CAllVoteChannel
         }
     }
 
-    function GetSiteArray($CHANNEL_ID)
+    public static function GetSiteArray($CHANNEL_ID)
     {
         $err_mess = (CAllVoteChannel::err_mess()) . "<br>Function: GetSiteArray<br>Line: ";
         global $DB;
         $CHANNEL_ID = intval($CHANNEL_ID);
-        if ($CHANNEL_ID <= 0) return false;
+        if ($CHANNEL_ID <= 0) {
+            return false;
+        }
 
         $arCache = Array();
 
         if (VOTE_CACHE_TIME === false) {
             $arrRes = array();
-            $rs = $DB->Query("SELECT CS.SITE_ID FROM b_vote_channel_2_site CS WHERE CS.CHANNEL_ID = " . $CHANNEL_ID, false, $err_mess . __LINE__);
-            while ($ar = $rs->Fetch()) $arrRes[] = $ar["SITE_ID"];
+            $rs = $DB->Query(
+                "SELECT CS.SITE_ID FROM b_vote_channel_2_site CS WHERE CS.CHANNEL_ID = " . $CHANNEL_ID,
+                false,
+                $err_mess . __LINE__
+            );
+            while ($ar = $rs->Fetch()) {
+                $arrRes[] = $ar["SITE_ID"];
+            }
             return $arrRes;
         } else {
             global $CACHE_MANAGER;
@@ -323,20 +375,21 @@ class CAllVoteChannel
                 $arCache = $CACHE_MANAGER->Get("b_vote_channel_2_site");
             } else {
                 $rs = $DB->Query('SELECT * ' . 'FROM b_vote_channel_2_site', false, $err_mess . __LINE__);
-                while ($ar = $rs->Fetch())
+                while ($ar = $rs->Fetch()) {
                     $arCache[$ar["CHANNEL_ID"]][] = $ar["SITE_ID"];
+                }
 
                 $CACHE_MANAGER->Set("b_vote_channel_2_site", $arCache);
             }
-            if (array_key_exists($CHANNEL_ID, $arCache))
+            if (array_key_exists($CHANNEL_ID, $arCache)) {
                 return $arCache[$CHANNEL_ID];
-            else
+            } else {
                 return array();
+            }
         }
-
     }
 
-    function Delete($ID)
+    public static function Delete($ID)
     {
         global $DB;
         $err_mess = (CAllVoteChannel::err_mess()) . "<br>Function: Delete<br>Line: ";
@@ -345,35 +398,41 @@ class CAllVoteChannel
             return true;
         endif;
         /***************** Event onBeforeVoteChannelDelete ******************/
-        foreach (GetModuleEvents("vote", "onBeforeVoteChannelDelete", true) as $arEvent)
-            if (ExecuteModuleEventEx($arEvent, array(&$ID)) === false)
+        foreach (GetModuleEvents("vote", "onBeforeVoteChannelDelete", true) as $arEvent) {
+            if (ExecuteModuleEventEx($arEvent, array(&$ID)) === false) {
                 return false;
+            }
+        }
         /***************** /Event ******************************************/
 
         // drop votes
         $z = $DB->Query("SELECT ID FROM b_vote WHERE CHANNEL_ID='$ID'", false, $err_mess . __LINE__);
-        while ($zr = $z->Fetch()) CVote::Delete($zr["ID"]);
+        while ($zr = $z->Fetch()) {
+            CVote::Delete($zr["ID"]);
+        }
 
         $DB->Query("DELETE FROM b_vote_channel_2_group WHERE CHANNEL_ID=" . $ID, false, $err_mess . __LINE__);
         $DB->Query("DELETE FROM b_vote_channel_2_site WHERE CHANNEL_ID=" . $ID, false, $err_mess . __LINE__);
         $res = $DB->Query("DELETE FROM b_vote_channel WHERE ID=" . $ID, false, $err_mess . __LINE__);
         /***************** Event onAfterVoteChannelDelete ******************/
-        foreach (GetModuleEvents("vote", "onAfterVoteChannelDelete", true) as $arEvent)
+        foreach (GetModuleEvents("vote", "onAfterVoteChannelDelete", true) as $arEvent) {
             ExecuteModuleEventEx($arEvent, array($ID));
+        }
         /***************** /Event ******************************************/
         return $res;
     }
 
-    function GetByID($ID)
+    public static function GetByID($ID)
     {
         $ID = intval($ID);
-        if ($ID <= 0)
+        if ($ID <= 0) {
             return false;
-        $res = CVoteChannel::GetList($by, $order, array("ID" => $ID), $is_filtered);
+        }
+        $res = CVoteChannel::GetList('', '', array("ID" => $ID));
         return $res;
     }
 
-    function GetArrayGroupPermission($channel_id)
+    public static function GetArrayGroupPermission($channel_id)
     {
         global $DB;
 
@@ -384,11 +443,11 @@ class CAllVoteChannel
 
         $dbres = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
         $arRes = Array();
-        while ($res = $dbres->Fetch())
+        while ($res = $dbres->Fetch()) {
             $arRes[$res["GROUP_ID"]] = $res["PERMISSION"];
+        }
 
         return $arRes;
-
     }
 
     public static function GetGroupPermission($channel_id, $arGroups = false, $params = array())
@@ -404,15 +463,19 @@ class CAllVoteChannel
         $cache = array(
             "channel_id" => $channel_id,
             "groups" => $arGroups,
-            "get_from_database" => $params["get_from_database"]);
+            "get_from_database" => $params["get_from_database"]
+        );
         $cache_id = "b_vote_perm_" . md5(serialize($cache));
         $permission = 0;
 
         if (VOTE_CACHE_TIME !== false && $CACHE_MANAGER->Read(VOTE_CACHE_TIME, $cache_id, "b_vote_perm")) {
             $permission = intval($CACHE_MANAGER->Get($cache_id));
         } else {
-            if ($params["get_from_database"] != "Y")
-                $permission = ((in_array(1, $USER->GetUserGroupArray()) || $APPLICATION->GetGroupRight("vote") >= "W") ? 4 : $permission);
+            if ($params["get_from_database"] != "Y") {
+                $permission = ((in_array(1, $USER->GetUserGroupArray()) || $APPLICATION->GetGroupRight(
+                        "vote"
+                    ) >= "W") ? 4 : $permission);
+            }
 
             if ($permission <= 0 && !empty($groups)) {
                 $strSql =
@@ -446,13 +509,8 @@ class CVoteDiagramType
 {
     var $arType = Array();
 
-    function CVoteDiagramType($directCall = true)
+    public function __construct()
     {
-        if ($directCall) {
-            trigger_error("CVoteDiagramType is singleton!", E_USER_ERROR);
-            return;
-        }
-
         $this->arType = Array(
             VOTE_DEFAULT_DIAGRAM_TYPE => GetMessage("VOTE_DIAGRAM_TYPE_HISTOGRAM"),
             "circle" => GetMessage("VOTE_DIAGRAM_TYPE_CIRCLE")
@@ -462,8 +520,9 @@ class CVoteDiagramType
     public static function &getInstance()
     {
         static $instance;
-        if (!is_object($instance))
-            $instance = new CVoteDiagramType(false);
+        if (!is_object($instance)) {
+            $instance = new CVoteDiagramType();
+        }
 
         return $instance;
     }
@@ -473,28 +532,28 @@ class CVoteDiagramType
 function VoteGetFilterOperation($key)
 {
     $strNegative = "N";
-    if (substr($key, 0, 1) == "!") {
-        $key = substr($key, 1);
+    if (mb_substr($key, 0, 1) == "!") {
+        $key = mb_substr($key, 1);
         $strNegative = "Y";
     }
 
-    if (substr($key, 0, 2) == ">=") {
-        $key = substr($key, 2);
+    if (mb_substr($key, 0, 2) == ">=") {
+        $key = mb_substr($key, 2);
         $strOperation = ">=";
-    } elseif (substr($key, 0, 1) == ">") {
-        $key = substr($key, 1);
+    } elseif (mb_substr($key, 0, 1) == ">") {
+        $key = mb_substr($key, 1);
         $strOperation = ">";
-    } elseif (substr($key, 0, 2) == "<=") {
-        $key = substr($key, 2);
+    } elseif (mb_substr($key, 0, 2) == "<=") {
+        $key = mb_substr($key, 2);
         $strOperation = "<=";
-    } elseif (substr($key, 0, 1) == "<") {
-        $key = substr($key, 1);
+    } elseif (mb_substr($key, 0, 1) == "<") {
+        $key = mb_substr($key, 1);
         $strOperation = "<";
-    } elseif (substr($key, 0, 1) == "@") {
-        $key = substr($key, 1);
+    } elseif (mb_substr($key, 0, 1) == "@") {
+        $key = mb_substr($key, 1);
         $strOperation = "IN";
-    } elseif (substr($key, 0, 1) == "%") {
-        $key = substr($key, 1);
+    } elseif (mb_substr($key, 0, 1) == "%") {
+        $key = mb_substr($key, 1);
         $strOperation = "LIKE";
     } else {
         $strOperation = "=";

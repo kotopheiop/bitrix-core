@@ -1,20 +1,23 @@
 <?
+
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/blog/options_user_settings.php");
 
 if (CModule::IncludeModule("blog")):
-    $ID = IntVal($ID);
+    $ID = intval($ID);
     $str_blog_AVATAR = "";
     ClearVars("str_blog_");
     $db_res = CBlogUser::GetList(array(), array("USER_ID" => $ID));
-    if (!$db_res->ExtractFields("str_blog_", True)) {
-        if (!isset($str_blog_ALLOW_POST) || ($str_blog_ALLOW_POST != "Y" && $str_blog_ALLOW_POST != "N"))
+    if (!$db_res->ExtractFields("str_blog_", true)) {
+        if (!isset($str_blog_ALLOW_POST) || ($str_blog_ALLOW_POST != "Y" && $str_blog_ALLOW_POST != "N")) {
             $str_blog_ALLOW_POST = "Y";
+        }
     }
 
-    if ($COPY_ID > 0)
+    if ($COPY_ID > 0) {
         $str_blog_AVATAR = "";
+    }
 
-    if (strlen($strError) > 0) {
+    if ($strError <> '') {
         $str_blog_ALLOW_POST = htmlspecialcharsbx($_POST["blog_ALLOW_POST"]);
         $str_blog_ALIAS = htmlspecialcharsbx($_POST["blog_ALIAS"]);
         $str_blog_DESCRIPTION = htmlspecialcharsbx($_POST["blog_DESCRIPTION"]);
@@ -25,8 +28,9 @@ if (CModule::IncludeModule("blog")):
     <? if ($USER->IsAdmin()):?>
     <tr>
         <td width="40%"><?= GetMessage("blog_ALLOW_POST") ?></td>
-        <td width="60%"><input type="checkbox" name="blog_ALLOW_POST"
-                               value="Y" <? if ($str_blog_ALLOW_POST == "Y") echo "checked"; ?>></td>
+        <td width="60%"><input type="checkbox" name="blog_ALLOW_POST" value="Y" <? if ($str_blog_ALLOW_POST == "Y") {
+                echo "checked";
+            } ?>></td>
     </tr>
 <?endif; ?>
     <tr>
@@ -48,7 +52,7 @@ if (CModule::IncludeModule("blog")):
         <td><?= GetMessage("blog_AVATAR") ?></td>
         <td><?
             echo CFile::InputFile("blog_AVATAR", 20, $str_blog_AVATAR);
-            if (IntVal($str_blog_AVATAR) > 0):
+            if (intval($str_blog_AVATAR) > 0):
                 ?>
                 <div class="adm-detail-file-image"><?
                 echo CFile::ShowImage($str_blog_AVATAR, 150, 150, "border=0", "", true); ?></div><?

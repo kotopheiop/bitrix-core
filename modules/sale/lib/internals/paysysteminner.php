@@ -2,7 +2,6 @@
 
 namespace Bitrix\Sale\Internals;
 
-use Bitrix\Sale\Internals\PaySystemActionTable;
 use Bitrix\Main\InvalidOperationException;
 use Bitrix\Main\Entity\EntityError;
 use Bitrix\Main\Entity\Result;
@@ -10,6 +9,7 @@ use Bitrix\Sale\Provider;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\Order;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Sale\PaySystem;
 
 Loc::loadMessages(__FILE__);
 
@@ -34,11 +34,13 @@ class PaySystemInner
         $cacheManager = \Bitrix\Main\Application::getInstance()->getManagedCache();
         $ttl = $useCache ? self::TTL : 0;
 
-        if ($cacheManager->read($ttl, self::CACHE_ID))
+        if ($cacheManager->read($ttl, self::CACHE_ID)) {
             $id = $cacheManager->get(self::CACHE_ID);
+        }
 
         if (intval($id) <= 0) {
-            $dbRes = PaySystemActionTable::getList(array(
+            $dbRes = PaySystem\Manager::getList(
+                array(
                     'filter' => array('ACTION_FILE' => self::ACTION_FILE_TEXT),
                     'select' => array('PAY_SYSTEM_ID')
                 )
@@ -69,14 +71,18 @@ class PaySystemInner
             $userBudget = UserBudgetPool::getUserBudgetByOrder($order);
 
             if ($userBudget >= $paymentSum) {
-                UserBudgetPool::addPoolItem($order, ($paymentSum * -1), UserBudgetPool::BUDGET_TYPE_ORDER_PAY, $payment);
+                UserBudgetPool::addPoolItem(
+                    $order,
+                    ($paymentSum * -1),
+                    UserBudgetPool::BUDGET_TYPE_ORDER_PAY,
+                    $payment
+                );
 //				$payment->setField('PAID', 'Y');
             } else {
                 $result->addError(new EntityError(Loc::getMessage('ORDER_PS_INNER_ERROR_INSUFFICIENT_MONEY')));
             }
         } elseif ($operation == self::OPERATION_CREDIT) {
             UserBudgetPool::addPoolItem($order, ($paymentSum), UserBudgetPool::BUDGET_TYPE_ORDER_UNPAY, $payment);
-
 //			$payment->setField('PAID', 'N');
         } elseif ($operation == self::OPERATION_RETURN) {
             $sumPaid = $order->getSumPaid();
@@ -104,24 +110,28 @@ class PaySystemInner
     {
         $id = self::getId(false);
 
-        if ($id > 0)
+        if ($id > 0) {
             return $id;
+        }
 
         $result = 0;
 
-        $res = PaySystemTable::add(array(
-            'NAME' => Loc::getMessage('ORDER_PS_INNER_NAME'),
-            'DESCRIPTION' => Loc::getMessage('ORDER_PS_INNER_DESCRIPTION'),
-            'SORT' => 10,
-            'LID' => '',
-            'CURRENCY' => ''
-        ));
+        $res = PaySystemTable::add(
+            array(
+                'NAME' => Loc::getMessage('ORDER_PS_INNER_NAME'),
+                'DESCRIPTION' => Loc::getMessage('ORDER_PS_INNER_DESCRIPTION'),
+                'SORT' => 10,
+                'LID' => '',
+                'CURRENCY' => ''
+            )
+        );
 
         if ($res->isSuccess()) {
             $cacheManager = \Bitrix\Main\Application::getInstance()->getManagedCache();
             $cacheManager->set(self::CACHE_ID, $res->getId());
 
-            $res = PaySystemActionTable::add(array(
+            $res = PaySystem\Manager::add(
+                array(
                     'PAY_SYSTEM_ID' => $res->getId(),
                     'PERSON_TYPE_ID' => 0,
                     'NAME' => Loc::getMessage('ORDER_PS_INNER_NAME'),
@@ -129,8 +139,9 @@ class PaySystemInner
                 )
             );
 
-            if ($res->isSuccess())
+            if ($res->isSuccess()) {
                 $result = $res->getId();
+            }
         }
 
         return $result;

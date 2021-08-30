@@ -1,4 +1,5 @@
 <?php
+
 define('ADMIN_MODULE_NAME', 'highloadblock');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_before.php');
 
@@ -62,9 +63,11 @@ if ($ID > 0) {
     }
 
     // localization
-    $res = HL\HighloadBlockLangTable::getList(array(
-        'filter' => array('ID' => $ID)
-    ));
+    $res = HL\HighloadBlockLangTable::getList(
+        array(
+            'filter' => array('ID' => $ID)
+        )
+    );
     while ($row = $res->fetch()) {
         $localization[$row['LID']] = array(
             'ID' => $row['ID'],
@@ -75,7 +78,7 @@ if ($ID > 0) {
 
 // get langs
 $langs = array();
-$res = \CLanguage::GetList($lby = 'sort', $lorder = 'asc');
+$res = \CLanguage::GetList();
 while ($row = $res->getNext()) {
     $langs[] = $row;
 }
@@ -83,11 +86,13 @@ while ($row = $res->getNext()) {
 // current access
 $accessCodes = array();
 if ($ID) {
-    $res = HL\HighloadBlockRightsTable::getList(array(
-        'filter' => array(
-            'HL_ID' => $ID
+    $res = HL\HighloadBlockRightsTable::getList(
+        array(
+            'filter' => array(
+                'HL_ID' => $ID
+            )
         )
-    ));
+    );
     while ($row = $res->fetch()) {
         $currentRights[$row['ID']] = array(
             'ACCESS_CODE' => $row['ACCESS_CODE'],
@@ -113,7 +118,9 @@ if ($is_create_form) {
     $hlblock = array_fill_keys(array('ID', 'NAME', 'TABLE_NAME'), '');
     $APPLICATION->SetTitle(GetMessage('HLBLOCK_ADMIN_ENTITY_EDIT_PAGE_TITLE_NEW'));
 } else {
-    $APPLICATION->SetTitle(GetMessage('HLBLOCK_ADMIN_ENTITY_EDIT_PAGE_TITLE_EDIT', array('#NAME#' => $hlblock['NAME'])));
+    $APPLICATION->SetTitle(
+        GetMessage('HLBLOCK_ADMIN_ENTITY_EDIT_PAGE_TITLE_EDIT', array('#NAME#' => $hlblock['NAME']))
+    );
 
     $entity = HL\HighloadBlockTable::compileEntity($hlblock);
 
@@ -125,8 +132,12 @@ if ($is_create_form) {
 
 // delete action
 if ($is_update_form && $action === 'delete' && check_bitrix_sessid()) {
-    HL\HighloadBlockTable::delete($hlblock['ID']);
-    \LocalRedirect('highloadblock_index.php?lang=' . LANGUAGE_ID);
+    $result = HL\HighloadBlockTable::delete($hlblock['ID']);
+    if ($result->isSuccess()) {
+        \LocalRedirect('highloadblock_index.php?lang=' . LANGUAGE_ID);
+    } else {
+        $errors = $result->getErrorMessages();
+    }
 }
 
 // save action
@@ -151,11 +162,13 @@ if (($save != '' || $apply != '') && $requestMethod == 'POST' && check_bitrix_se
         if (is_array($request->get('LANGS'))) {
             foreach ($request->get('LANGS') as $lng => $val) {
                 if (trim($val) != '') {
-                    HL\HighloadBlockLangTable::add(array(
-                        'ID' => $ID,
-                        'LID' => $lng,
-                        'NAME' => $val
-                    ));
+                    HL\HighloadBlockLangTable::add(
+                        array(
+                            'ID' => $ID,
+                            'LID' => $lng,
+                            'NAME' => $val
+                        )
+                    );
                 }
             }
         }
@@ -178,17 +191,22 @@ if (($save != '' || $apply != '') && $requestMethod == 'POST' && check_bitrix_se
                         // update
                         if ($rid > 0 && isset($currentRights[$rid])) {
                             unset($notUpdated[$rid]);
-                            HL\HighloadBlockRightsTable::update($rid, array(
-                                'ACCESS_CODE' => $rights['ACCESS_CODE'][$k],
-                                'TASK_ID' => $rights['TASK_ID'][$k]
-                            ));
+                            HL\HighloadBlockRightsTable::update(
+                                $rid,
+                                array(
+                                    'ACCESS_CODE' => $rights['ACCESS_CODE'][$k],
+                                    'TASK_ID' => $rights['TASK_ID'][$k]
+                                )
+                            );
                         } // add
                         else {
-                            HL\HighloadBlockRightsTable::add(array(
-                                'HL_ID' => $ID,
-                                'ACCESS_CODE' => $rights['ACCESS_CODE'][$k],
-                                'TASK_ID' => $rights['TASK_ID'][$k]
-                            ));
+                            HL\HighloadBlockRightsTable::add(
+                                array(
+                                    'HL_ID' => $ID,
+                                    'ACCESS_CODE' => $rights['ACCESS_CODE'][$k],
+                                    'TASK_ID' => $rights['TASK_ID'][$k]
+                                )
+                            );
                         }
                     }
                 }
@@ -204,7 +222,9 @@ if (($save != '' || $apply != '') && $requestMethod == 'POST' && check_bitrix_se
         if ($save != '') {
             \LocalRedirect('highloadblock_index.php?lang=' . LANGUAGE_ID);
         } else {
-            \LocalRedirect('highloadblock_entity_edit.php?ID=' . $ID . '&lang=' . LANGUAGE_ID . '&' . $tabControl->ActiveTabParam());
+            \LocalRedirect(
+                'highloadblock_entity_edit.php?ID=' . $ID . '&lang=' . LANGUAGE_ID . '&' . $tabControl->ActiveTabParam()
+            );
         }
     } else {
         $errors = $result->getErrorMessages();
@@ -296,15 +316,17 @@ if (!empty($errors)) {
         <? if ($is_update_form): ?>
             <tr>
                 <td><?= GetMessage('HLBLOCK_ADMIN_ENTITY_EDIT_FIELDS_COUNT') ?></td>
-                <td>
-                    <a href="userfield_admin.php?lang=<?= LANGUAGE_ID ?>&amp;set_filter=Y&amp;find=HLBLOCK_<?= intval($hlblock['ID']) ?>&amp;find_type=ENTITY_ID&amp;back_url=<?= urlencode($APPLICATION->GetCurPageParam()) ?>">[<?= intval($hlblock['FIELDS_COUNT']) ?>
-                        ]</a></td>
+                <td><a href="userfield_admin.php?lang=<?= LANGUAGE_ID ?>&amp;set_filter=Y&amp;find=HLBLOCK_<?= intval(
+                        $hlblock['ID']
+                    ) ?>&amp;find_type=ENTITY_ID&amp;back_url=<?= urlencode(
+                        $APPLICATION->GetCurPageParam()
+                    ) ?>">[<?= intval($hlblock['FIELDS_COUNT']) ?>]</a></td>
             </tr>
             <tr>
                 <td><?= GetMessage('HLBLOCK_ADMIN_ENTITY_EDIT_ROWS_COUNT') ?></td>
-                <td>
-                    <a href="highloadblock_rows_list.php?lang=<?= LANGUAGE_ID ?>&amp;ENTITY_ID=<?= intval($hlblock['ID']) ?>">[<?= intval($hlblock['ROWS_COUNT']) ?>
-                        ]</a></td>
+                <td><a href="highloadblock_rows_list.php?lang=<?= LANGUAGE_ID ?>&amp;ENTITY_ID=<?= intval(
+                        $hlblock['ID']
+                    ) ?>">[<?= intval($hlblock['ROWS_COUNT']) ?>]</a></td>
             </tr>
         <? endif; ?>
         <tr class="heading">
@@ -314,8 +336,9 @@ if (!empty($errors)) {
             <tr>
                 <td><?= $lng['NAME'] ?></td>
                 <td><input type="text" name="LANGS[<?= $lng['LID'] ?>]" size="30" maxlength="100"
-                           value="<?= isset($localization[$lng['LID']]) ? htmlspecialcharsbx($localization[$lng['LID']]['NAME']) : '' ?>"/>
-                </td>
+                           value="<?= isset($localization[$lng['LID']]) ? htmlspecialcharsbx(
+                               $localization[$lng['LID']]['NAME']
+                           ) : '' ?>"/></td>
             </tr>
         <? endforeach; ?>
         <? $tabControl->BeginNextTab(); ?>
@@ -363,8 +386,9 @@ if (!empty($errors)) {
                     <tr>
                         <td width="40%" align="right">&nbsp;</td>
                         <td width="60%" align="left">
-                            <a href="javascript:void(0)" onclick="showForm();"
-                               class="bx-action-href"><?= GetMessage('HLBLOCK_ADMIN_ENTITY_RIGHTS_ADD') ?></a>
+                            <a href="javascript:void(0)" onclick="showForm();" class="bx-action-href"><?= GetMessage(
+                                    'HLBLOCK_ADMIN_ENTITY_RIGHTS_ADD'
+                                ) ?></a>
                         </td>
                     </tr>
                     </tbody>
@@ -408,7 +432,7 @@ if (!empty($errors)) {
                                                 row.cells[0].style.textAlign = 'right';
                                                 row.cells[0].style.verticalAlign = 'middle';
                                                 row.cells[0].innerHTML = BX.Access.GetProviderName(provider) + ' ' +
-                                                    obSelected[provider][id].name + ':' +
+                                                    BX.util.htmlspecialchars(obSelected[provider][id].name) + ':' +
                                                     '<input type="hidden" name="' + name + '[RIGHT_ID][]" value="">' +
                                                     '<input type="hidden" name="' + name + '[ACCESS_CODE][]" value="' + id + '">';
                                                 row.cells[1].align = 'left';
@@ -424,7 +448,9 @@ if (!empty($errors)) {
             </td>
         </tr>
         <?
-        $tabControl->Buttons(array('disabled' => !$isEditMode, 'back_url' => 'highloadblock_index.php?lang=' . LANGUAGE_ID));
+        $tabControl->Buttons(
+            array('disabled' => !$isEditMode, 'back_url' => 'highloadblock_index.php?lang=' . LANGUAGE_ID)
+        );
         $tabControl->End();
         ?>
     </form>

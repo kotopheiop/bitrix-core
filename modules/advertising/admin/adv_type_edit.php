@@ -8,9 +8,11 @@
 ##############################################
 */
 
+use Bitrix\Main\Loader;
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/advertising/prolog.php");
-require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/advertising/include.php");
+Loader::includeModule('advertising');
 
 ClearVars();
 
@@ -19,7 +21,9 @@ $isManager = CAdvContract::IsManager();
 $isAdvertiser = CAdvContract::IsAdvertiser();
 $isAdmin = CAdvContract::IsAdmin();
 
-if (!$isAdmin && !$isDemo && !$isManager && !$isAdvertiser) $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if (!$isAdmin && !$isDemo && !$isManager && !$isAdvertiser) {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 
@@ -27,20 +31,29 @@ IncludeModuleLangFile(__FILE__);
  * ��������� GET | POST
  ****************************************************************************/
 $aTabs = array(
-    array("DIV" => "edit1", "TAB" => GetMessage("AD_TYPE"), "ICON" => "banner_type_edit", "TITLE" => GetMessage("AD_TYPE")),
+    array(
+        "DIV" => "edit1",
+        "TAB" => GetMessage("AD_TYPE"),
+        "ICON" => "banner_type_edit",
+        "TITLE" => GetMessage("AD_TYPE")
+    ),
 
 );
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
 $isEditMode = true;
-if ((!$isAdmin && !$isDemo) || $action == "view") $isEditMode = false;
+if ((!$isAdmin && !$isDemo) || $action == "view") {
+    $isEditMode = false;
+}
 
 $SID = preg_replace("~[^A-Za-z_0-9]~", "", $SID);
 $OLD_SID = preg_replace("~[^A-Za-z_0-9]~", "", $OLD_SID);
 $strError = '';
 
-if ((strlen($save) > 0 || strlen($apply) > 0) && $REQUEST_METHOD == "POST" && check_bitrix_sessid()) {
-    if ($ACTIVE != "Y") $ACTIVE = "N";
+if (($save <> '' || $apply <> '') && $REQUEST_METHOD == "POST" && check_bitrix_sessid()) {
+    if ($ACTIVE != "Y") {
+        $ACTIVE = "N";
+    }
     $arFields = array(
         "SID" => $SID,
         "ACTIVE" => $ACTIVE,
@@ -49,14 +62,19 @@ if ((strlen($save) > 0 || strlen($apply) > 0) && $REQUEST_METHOD == "POST" && ch
         "DESCRIPTION" => $DESCRIPTION
     );
     if ($SID = CAdvType::Set($arFields, $OLD_SID)) {
-        if (strlen($strError) <= 0) {
-            if (strlen($save) > 0) LocalRedirect("adv_type_list.php?lang=" . LANGUAGE_ID);
-            else LocalRedirect("adv_type_edit.php?SID=" . $SID . "&lang=" . LANGUAGE_ID . "&" . $tabControl->ActiveTabParam());
+        if ($strError == '') {
+            if ($save <> '') {
+                LocalRedirect("adv_type_list.php?lang=" . LANGUAGE_ID);
+            } else {
+                LocalRedirect(
+                    "adv_type_edit.php?SID=" . $SID . "&lang=" . LANGUAGE_ID . "&" . $tabControl->ActiveTabParam()
+                );
+            }
         }
     }
     $DB->PrepareFields("b_adv_type");
 }
-if (strlen($strError) > 0) {
+if ($strError <> '') {
     $original_SID = $SID;
     $SID = $OLD_SID;
 }
@@ -65,9 +83,11 @@ if (!$rsType || !$rsType->ExtractFields()) {
     $str_SORT = CAdvType::GetNextSort();
     $str_ACTIVE = "Y";
 }
-if (strlen($strError) > 0) $DB->InitTableVarsForEdit("b_adv_type", "", "str_");
+if ($strError <> '') {
+    $DB->InitTableVarsForEdit("b_adv_type", "", "str_");
+}
 
-$sDocTitle = (strlen($SID) > 0) ? GetMessage("AD_EDIT_TYPE", array("#SID#" => $SID)) : GetMessage("AD_NEW_TYPE");
+$sDocTitle = ($SID <> '') ? GetMessage("AD_EDIT_TYPE", array("#SID#" => $SID)) : GetMessage("AD_NEW_TYPE");
 $APPLICATION->SetTitle($sDocTitle);
 
 /***************************************************************************
@@ -82,7 +102,7 @@ $aMenu = array(
         "ICON" => "btn_list"
     )
 );
-if (strlen($SID) > 0) {
+if ($SID <> '') {
     $aMenu[] = array("SEPARATOR" => "Y");
 
     $aMenu[] = array(
@@ -118,7 +138,10 @@ if (strlen($SID) > 0) {
 
         $aMenu[] = array(
             "TEXT" => GetMessage("AD_DELETE_TYPE"),
-            "LINK" => "javascript:if(confirm('" . GetMessage("AD_DELETE_TYPE_CONFIRM") . "'))window.location='adv_type_list.php?ID=" . $SID . "&lang=" . LANGUAGE_ID . "&action=delete&sessid=" . bitrix_sessid() . "';",
+            "LINK" => "javascript:if(confirm('" . GetMessage(
+                    "AD_DELETE_TYPE_CONFIRM"
+                ) . "'))window.location='adv_type_list.php?ID=" . $SID . "&lang=" . LANGUAGE_ID . "&action=delete&sessid=" . bitrix_sessid(
+                ) . "';",
             "ICON" => "btn_delete"
         );
     }
@@ -138,27 +161,39 @@ $context->Show();
     $tabControl->BeginNextTab();
     ?>
 
-    <? if (strlen($SID) > 0): ?>
-        <? if (strlen($str_DATE_CREATE) > 0) : ?>
+    <? if ($SID <> ''): ?>
+        <? if ($str_DATE_CREATE <> '') : ?>
             <tr valign="top">
                 <td><?= GetMessage("AD_CREATED") ?></td>
                 <td><?= $str_DATE_CREATE ?><?
                     if (intval($str_CREATED_BY) > 0) :
                         $rsUser = CUser::GetByID($str_CREATED_BY);
                         $arUser = $rsUser->Fetch();
-                        echo "&nbsp;&nbsp;[<a href='/bitrix/admin/user_edit.php?ID=" . $str_CREATED_BY . "' title='" . GetMessage("AD_USER_ALT") . "'>" . $str_CREATED_BY . "</a>]&nbsp;(" . htmlspecialcharsbx($arUser["LOGIN"]) . ") " . htmlspecialcharsbx($arUser["NAME"]) . " " . htmlspecialcharsbx($arUser["LAST_NAME"]);
+                        echo "&nbsp;&nbsp;[<a href='/bitrix/admin/user_edit.php?ID=" . $str_CREATED_BY . "' title='" . GetMessage(
+                                "AD_USER_ALT"
+                            ) . "'>" . $str_CREATED_BY . "</a>]&nbsp;(" . htmlspecialcharsbx(
+                                $arUser["LOGIN"]
+                            ) . ") " . htmlspecialcharsbx($arUser["NAME"]) . " " . htmlspecialcharsbx(
+                                $arUser["LAST_NAME"]
+                            );
                     endif;
                     ?></td>
             </tr>
         <? endif; ?>
-        <? if (strlen($str_DATE_MODIFY) > 0) : ?>
+        <? if ($str_DATE_MODIFY <> '') : ?>
             <tr valign="top">
                 <td><?= GetMessage("AD_MODIFIED") ?></td>
                 <td><?= $str_DATE_MODIFY ?><?
                     if (intval($str_MODIFIED_BY) > 0) :
                         $rsUser = CUser::GetByID($str_MODIFIED_BY);
                         $arUser = $rsUser->Fetch();
-                        echo "&nbsp;&nbsp;[<a href='/bitrix/admin/user_edit.php?ID=" . $str_MODIFIED_BY . "' title='" . GetMessage("AD_USER_ALT") . "'>" . $str_MODIFIED_BY . "</a>]&nbsp;(" . htmlspecialcharsbx($arUser["LOGIN"]) . ") " . htmlspecialcharsbx($arUser["NAME"]) . " " . htmlspecialcharsbx($arUser["LAST_NAME"]);
+                        echo "&nbsp;&nbsp;[<a href='/bitrix/admin/user_edit.php?ID=" . $str_MODIFIED_BY . "' title='" . GetMessage(
+                                "AD_USER_ALT"
+                            ) . "'>" . $str_MODIFIED_BY . "</a>]&nbsp;(" . htmlspecialcharsbx(
+                                $arUser["LOGIN"]
+                            ) . ") " . htmlspecialcharsbx($arUser["NAME"]) . " " . htmlspecialcharsbx(
+                                $arUser["LAST_NAME"]
+                            );
                     endif;
                     ?></td>
             </tr>
@@ -196,7 +231,7 @@ $context->Show();
         <td><?
             if ($isEditMode) :
                 ?><input maxlength="255" type="text" name="SID" size="20"
-                         value="<? echo (strlen($strError) > 0) ? $original_SID : $str_SID ?>"><?
+                         value="<? echo ($strError <> '') ? $original_SID : $str_SID ?>"><?
             else :
                 echo $str_SID;
             endif;
@@ -225,8 +260,9 @@ $context->Show();
 
     <?
     $disable = true;
-    if (($isAdmin || $isDemo) && $isEditMode)
+    if (($isAdmin || $isDemo) && $isEditMode) {
         $disable = false;
+    }
 
     $tabControl->Buttons(array("disabled" => $disable, "back_url" => "adv_type_list.php?lang=" . LANGUAGE_ID));
     $tabControl->End();

@@ -108,7 +108,6 @@ class Form implements IErrorable
         }
 
         $this->fields = $newFieldsList;
-
     }
 
     /**

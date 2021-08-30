@@ -1,4 +1,5 @@
 <?
+
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 //Functions
@@ -17,11 +18,12 @@ function BXDeleteFromSystem($absoluteFilePath, $path, $site)
 
     $sucess = $io->Delete($absoluteFilePath);
 
-    if (!$sucess)
+    if (!$sucess) {
         return false;
+    }
 
     if (COption::GetOptionString("fileman", "log_page", "Y") == "Y") {
-        $res_log['path'] = substr($path, 1);
+        $res_log['path'] = mb_substr($path, 1);
         CEventLog::Log(
             "content",
             "PAGE_DELETE",
@@ -32,8 +34,9 @@ function BXDeleteFromSystem($absoluteFilePath, $path, $site)
     }
     $GLOBALS["APPLICATION"]->RemoveFileAccessPermission(Array($site, $path));
 
-    if (CModule::IncludeModule("search"))
+    if (CModule::IncludeModule("search")) {
         CSearch::DeleteIndex("main", $site . "|" . $path);
+    }
 
     //Delete from rewrite rule
     \Bitrix\Main\UrlRewriter::delete($site, array("PATH" => $path));
@@ -44,15 +47,20 @@ function BXDeleteFromSystem($absoluteFilePath, $path, $site)
 
 function BXDeleteFromMenu($documentRoot, $path, $site)
 {
-    if (!CModule::IncludeModule("fileman"))
+    if (!CModule::IncludeModule("fileman")) {
         return false;
+    }
 
-    if (!$GLOBALS["USER"]->CanDoOperation("fileman_edit_menu_elements") || !$GLOBALS["USER"]->CanDoOperation("fileman_edit_existent_files"))
+    if (!$GLOBALS["USER"]->CanDoOperation("fileman_edit_menu_elements") || !$GLOBALS["USER"]->CanDoOperation(
+            "fileman_edit_existent_files"
+        )) {
         return false;
+    }
 
     $arMenuTypes = GetMenuTypes($site);
-    if (empty($arMenuTypes))
+    if (empty($arMenuTypes)) {
         return false;
+    }
 
     $currentPath = $path;
     $result = array();
@@ -62,30 +70,36 @@ function BXDeleteFromMenu($documentRoot, $path, $site)
     while (true) {
         $currentPath = rtrim($currentPath, "/");
 
-        if (strlen($currentPath) <= 0) {
+        if ($currentPath == '') {
             $currentPath = "/";
             $slash = "";
         } else {
             //Find parent folder
-            $position = strrpos($currentPath, "/");
-            if ($position === false)
+            $position = mb_strrpos($currentPath, "/");
+            if ($position === false) {
                 break;
-            $currentPath = substr($currentPath, 0, $position);
+            }
+            $currentPath = mb_substr($currentPath, 0, $position);
             $slash = "/";
         }
 
         foreach ($arMenuTypes as $menuType => $menuDesc) {
             $menuFile = $currentPath . $slash . "." . $menuType . ".menu.php";
 
-            if ($io->FileExists($documentRoot . $menuFile) && $GLOBALS["USER"]->CanDoFileOperation("fm_edit_existent_file", Array($site, $menuFile))) {
+            if ($io->FileExists($documentRoot . $menuFile) && $GLOBALS["USER"]->CanDoFileOperation(
+                    "fm_edit_existent_file",
+                    Array($site, $menuFile)
+                )) {
                 $arFound = BXDeleteFromMenuFile($menuFile, $documentRoot, $site, $path);
-                if ($arFound)
+                if ($arFound) {
                     $result[] = $arFound;
+                }
             }
         }
 
-        if (strlen($currentPath) <= 0)
+        if ($currentPath == '') {
             break;
+        }
     }
 
     return $result;
@@ -96,21 +110,25 @@ function BXDeleteFromMenuFile($menuFile, $documentRoot, $site, $path)
     $aMenuLinks = Array();
 
     $arMenu = CFileman::GetMenuArray($documentRoot . $menuFile);
-    if (empty($arMenu["aMenuLinks"]))
+    if (empty($arMenu["aMenuLinks"])) {
         return false;
+    }
 
     $arFound = false;
     foreach ($arMenu["aMenuLinks"] as $menuIndex => $arItem) {
-        if (!isset($arItem[1]))
+        if (!isset($arItem[1])) {
             continue;
+        }
 
         $menuLink = $arItem[1];
-        $position = strpos($menuLink, "?");
-        if ($position !== false)
-            $menuLink = substr($menuLink, 0, $position);
+        $position = mb_strpos($menuLink, "?");
+        if ($position !== false) {
+            $menuLink = mb_substr($menuLink, 0, $position);
+        }
 
-        if ($menuLink != "/")
+        if ($menuLink != "/") {
             $menuLink = rtrim($menuLink, "/");
+        }
 
         $filename = basename($path);
         $dirName = str_replace("\\", "/", dirname($path));
@@ -131,9 +149,9 @@ function BXDeleteFromMenuFile($menuFile, $documentRoot, $site, $path)
         if (COption::GetOptionString("fileman", "log_page", "Y") == "Y") {
             $res_log = array();
             $mt = COption::GetOptionString("fileman", "menutypes", $default_value, $site);
-            $mt = unserialize(str_replace("\\", "", $mt));
+            $mt = unserialize(str_replace("\\", "", $mt), ['allowed_classes' => false]);
             $res_log['menu_name'] = $mt[$menuType];
-            $res_log['path'] = substr($dirName, 1);
+            $res_log['path'] = mb_substr($dirName, 1);
             CEventLog::Log(
                 "content",
                 "MENU_EDIT",
@@ -148,56 +166,67 @@ function BXDeleteFromMenuFile($menuFile, $documentRoot, $site, $path)
 
 IncludeModuleLangFile(__FILE__);
 
-$popupWindow = new CJSPopup(GetMessage("PAGE_DELETE_WINDOW_TITLE"), array("SUFFIX" => ($_GET['subdialog'] == 'Y' ? 'subdialog' : '')));
+$popupWindow = new CJSPopup(
+    GetMessage("PAGE_DELETE_WINDOW_TITLE"),
+    array("SUFFIX" => ($_GET['subdialog'] == 'Y' ? 'subdialog' : ''))
+);
 
 if (IsModuleInstalled("fileman")) {
-    if (!$USER->CanDoOperation('fileman_admin_files'))
+    if (!$USER->CanDoOperation('fileman_admin_files')) {
         $popupWindow->ShowError(GetMessage("PAGE_DELETE_ACCESS_DENIED"));
+    }
 }
 
 $io = CBXVirtualIo::GetInstance();
 
 //Page path
 $path = "/";
-if (isset($_REQUEST["path"]) && strlen($_REQUEST["path"]) > 0)
+if (isset($_REQUEST["path"]) && $_REQUEST["path"] <> '') {
     $path = $io->CombinePath("/", $_REQUEST["path"]);
+}
 
 //Lang
-if (!isset($_REQUEST["lang"]) || strlen($_REQUEST["lang"]) <= 0)
+if (!isset($_REQUEST["lang"]) || $_REQUEST["lang"] == '') {
     $lang = LANGUAGE_ID;
+}
 
 //BackUrl
 $back_url = (isset($_REQUEST["back_url"]) ? $_REQUEST["back_url"] : "");
-if ($back_url == "")
+if ($back_url == "") {
     $back_url = ($io->ExtractNameFromPath($path) == "index.php" ? "/" : str_replace("\\", "/", dirname($path)));
+}
 
 //Site ID
 $site = SITE_ID;
-if (isset($_REQUEST["site"]) && strlen($_REQUEST["site"]) > 0) {
+if (isset($_REQUEST["site"]) && $_REQUEST["site"] <> '') {
     $obSite = CSite::GetByID($_REQUEST["site"]);
-    if ($arSite = $obSite->Fetch())
+    if ($arSite = $obSite->Fetch()) {
         $site = $_REQUEST["site"];
+    }
 }
 
 $documentRoot = CSite::GetSiteDocRoot($site);
 $absoluteFilePath = $documentRoot . $path;
 
 //Check permissions
-if (!$io->FileExists($absoluteFilePath) || preg_match("~\/\.access\.php$~i", $path))
+if (!$io->FileExists($absoluteFilePath) || preg_match("~\/\.access\.php$~i", $path)) {
     $popupWindow->ShowError(GetMessage("PAGE_DELETE_FILE_NOT_FOUND") . " (" . htmlspecialcharsbx($path) . ")");
-elseif (!$USER->CanDoFileOperation('fm_delete_file', Array($site, $path)))
+} elseif (!$USER->CanDoFileOperation('fm_delete_file', Array($site, $path))) {
     $popupWindow->ShowError(GetMessage("PAGE_DELETE_ACCESS_DENIED"));
+}
 
 //Check post values
 $strWarning = "";
 $strNotice = "";
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $deleteFromMenu = (isset($_REQUEST["delete_from_menu"]) && $_REQUEST["delete_from_menu"] == "Y");
-    if (!check_bitrix_sessid())
+    if (!check_bitrix_sessid()) {
         $strWarning = GetMessage("MAIN_SESSION_EXPIRED");
+    }
 } else {
-    if ($io->ExtractNameFromPath($path) == "index.php")
+    if ($io->ExtractNameFromPath($path) == "index.php") {
         $strNotice = GetMessage("PAGE_DELETE_INDEX_WARNING");
+    }
     $deleteFromMenu = true;
 }
 
@@ -223,11 +252,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_REQUEST["save"]) && $strWarn
 
     $success = BXDeleteFromSystem($absoluteFilePath, $path, $site);
     if ($success) {
-        if ($deleteFromMenu)
+        if ($deleteFromMenu) {
             $arUndoParams['arContent']['menu'] = BXDeleteFromMenu($documentRoot, $path, $site);
+        }
 
-        if ($_GET['subdialog'] == 'Y')
+        if ($_GET['subdialog'] == 'Y') {
             echo "<script>structReload('" . urlencode($_REQUEST["path"]) . "');</script>";
+        }
 
         $ID = CUndo::Add($arUndoParams);
 
@@ -249,8 +280,9 @@ $popupWindow->StartDescription("bx-delete-page");
 <?
 $popupWindow->EndDescription("bx-delete-page");
 $popupWindow->StartContent();
-if (isset($strWarning) && $strWarning != "")
+if (isset($strWarning) && $strWarning != "") {
     $popupWindow->ShowValidationError($strWarning);
+}
 ?>
 <? if (IsModuleInstalled("fileman")): ?>
     <input type="checkbox" name="delete_from_menu" value="Y"

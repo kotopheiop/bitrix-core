@@ -64,10 +64,12 @@ class GroupCounterTable extends Entity\DataManager
      */
     public static function deleteByGroupId($groupId)
     {
-        $items = static::getList([
-            'select' => ['GROUP_ID', 'TYPE_ID'],
-            'filter' => ['=GROUP_ID' => $groupId]
-        ]);
+        $items = static::getList(
+            [
+                'select' => ['GROUP_ID', 'TYPE_ID'],
+                'filter' => ['=GROUP_ID' => $groupId]
+            ]
+        );
         foreach ($items as $primary) {
             $result = static::delete($primary);
             if (!$result->isSuccess()) {

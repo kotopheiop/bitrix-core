@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 class CSocServLiveIDOAuth extends CSocServAuth
@@ -34,9 +35,18 @@ class CSocServLiveIDOAuth extends CSocServAuth
     public function GetFormHtml($arParams)
     {
         $url = $this->getUrl('opener', null, $arParams);
-        if ($arParams["FOR_INTRANET"])
-            return array("ON_CLICK" => 'onclick="BX.util.popup(\'' . htmlspecialcharsbx(CUtil::JSEscape($url)) . '\', 580, 400)"');
-        return '<a href="javascript:void(0)" onclick="BX.util.popup(\'' . htmlspecialcharsbx(CUtil::JSEscape($url)) . '\', 580, 400)" class="bx-ss-button liveid-button"></a><span class="bx-spacer"></span><span>' . GetMessage("MAIN_OPTION_COMMENT") . '</span>';
+        if ($arParams["FOR_INTRANET"]) {
+            return array(
+                "ON_CLICK" => 'onclick="BX.util.popup(\'' . htmlspecialcharsbx(
+                        CUtil::JSEscape($url)
+                    ) . '\', 580, 400)"'
+            );
+        }
+        return '<a href="javascript:void(0)" onclick="BX.util.popup(\'' . htmlspecialcharsbx(
+                CUtil::JSEscape($url)
+            ) . '\', 580, 400)" class="bx-ss-button liveid-button"></a><span class="bx-spacer"></span><span>' . GetMessage(
+                "MAIN_OPTION_COMMENT"
+            ) . '</span>';
     }
 
     public function GetOnClickJs($arParams)
@@ -50,16 +60,25 @@ class CSocServLiveIDOAuth extends CSocServAuth
         global $APPLICATION;
 
         $this->entityOAuth = new CLiveIDOAuthInterface();
-        if ($this->userId == null)
+        if ($this->userId == null) {
             $this->entityOAuth->setRefreshToken("skip");
-        if ($addScope !== null)
+        }
+        if ($addScope !== null) {
             $this->entityOAuth->addScope($addScope);
+        }
 
         CSocServAuthManager::SetUniqueKey();
         if (IsModuleInstalled('bitrix24') && defined('BX24_HOST_NAME')) {
             $redirect_uri = self::CONTROLLER_URL . "/redirect.php";
             $state = \CHTTP::URN2URI("/bitrix/tools/oauth/liveid.php") . "?state=";
-            $backurl = urlencode($GLOBALS["APPLICATION"]->GetCurPageParam('check_key=' . $_SESSION["UNIQUE_KEY"], array("logout", "auth_service_error", "auth_service_id", "backurl"))) . (isset($arParams['BACKURL']) ? '&redirect_url=' . urlencode($arParams['BACKURL']) : '') . '&mode=' . $location;
+            $backurl = urlencode(
+                    $GLOBALS["APPLICATION"]->GetCurPageParam(
+                        'check_key=' . $_SESSION["UNIQUE_KEY"],
+                        array("logout", "auth_service_error", "auth_service_id", "backurl")
+                    )
+                ) . (isset($arParams['BACKURL']) ? '&redirect_url=' . urlencode(
+                        $arParams['BACKURL']
+                    ) : '') . '&mode=' . $location;
             $state .= urlencode(urlencode("backurl=" . $backurl));
         } else {
             $backurl = $APPLICATION->GetCurPageParam(
@@ -68,7 +87,11 @@ class CSocServLiveIDOAuth extends CSocServAuth
             );
 
             $redirect_uri = \CHTTP::URN2URI("/bitrix/tools/oauth/liveid.php");
-            $state = 'site_id=' . SITE_ID . '&backurl=' . urlencode($backurl) . (isset($arParams['BACKURL']) ? '&redirect_url=' . urlencode($arParams['BACKURL']) : '') . '&mode=' . $location;
+            $state = 'site_id=' . SITE_ID . '&backurl=' . urlencode(
+                    $backurl
+                ) . (isset($arParams['BACKURL']) ? '&redirect_url=' . urlencode(
+                        $arParams['BACKURL']
+                    ) : '') . '&mode=' . $location;
         }
 
         return $this->entityOAuth->GetAuthUrl($redirect_uri, $state);
@@ -79,18 +102,24 @@ class CSocServLiveIDOAuth extends CSocServAuth
         $accessToken = null;
         $userId = intval($this->userId);
         if ($userId > 0) {
-            $dbSocservUser = \Bitrix\Socialservices\UserTable::getList([
-                'filter' => ['=USER_ID' => $userId, "=EXTERNAL_AUTH_ID" => "LiveIDOAuth"],
-                'select' => ["OATOKEN", "REFRESH_TOKEN", "OATOKEN_EXPIRES"]
-            ]);
+            $dbSocservUser = \Bitrix\Socialservices\UserTable::getList(
+                [
+                    'filter' => ['=USER_ID' => $userId, "=EXTERNAL_AUTH_ID" => "LiveIDOAuth"],
+                    'select' => ["OATOKEN", "REFRESH_TOKEN", "OATOKEN_EXPIRES"]
+                ]
+            );
             if ($arOauth = $dbSocservUser->fetch()) {
                 $accessToken = $arOauth["OATOKEN"];
 
-                if (empty($accessToken) || ((intval($arOauth["OATOKEN_EXPIRES"]) > 0) && (intval($arOauth["OATOKEN_EXPIRES"] < intval(time()))))) {
-                    if (isset($arOauth['REFRESH_TOKEN']))
+                if (empty($accessToken) || ((intval($arOauth["OATOKEN_EXPIRES"]) > 0) && (intval(
+                            $arOauth["OATOKEN_EXPIRES"] < intval(time())
+                        )))) {
+                    if (isset($arOauth['REFRESH_TOKEN'])) {
                         $this->entityOAuth->getNewAccessToken($arOauth['REFRESH_TOKEN'], $userId, true);
-                    if (($accessToken = $this->entityOAuth->getToken()) === false)
+                    }
+                    if (($accessToken = $this->entityOAuth->getToken()) === false) {
                         return null;
+                    }
                 }
             }
         }
@@ -108,10 +137,11 @@ class CSocServLiveIDOAuth extends CSocServAuth
         $bSuccess = SOCSERV_AUTHORISATION_ERROR;
 
         if (isset($_REQUEST["code"]) && $_REQUEST["code"] != '' && CSocServAuthManager::CheckUniqueKey()) {
-            if (IsModuleInstalled('bitrix24') && defined('BX24_HOST_NAME'))
+            if (IsModuleInstalled('bitrix24') && defined('BX24_HOST_NAME')) {
                 $redirect_uri = self::CONTROLLER_URL . "/redirect.php";
-            else
+            } else {
                 $redirect_uri = \CHTTP::URN2URI("/bitrix/tools/oauth/liveid.php");
+            }
 
             $appID = trim(self::GetOption("liveid_appid"));
             $appSecret = trim(self::GetOption("liveid_appsecret"));
@@ -121,16 +151,17 @@ class CSocServLiveIDOAuth extends CSocServAuth
             $bProcessState = true;
 
             if ($gAuth->GetAccessToken($redirect_uri) !== false) {
-
                 $arLiveIDUser = $gAuth->GetCurrentUser();
                 if (is_array($arLiveIDUser) && ($arLiveIDUser['id'] <> '')) {
                     $email = $first_name = $last_name = "";
                     $login = "LiveID" . $arLiveIDUser['id'];
                     $uId = $arLiveIDUser['id'];
-                    if ($arLiveIDUser['first_name'] <> '')
+                    if ($arLiveIDUser['first_name'] <> '') {
                         $first_name = $arLiveIDUser['first_name'];
-                    if ($arLiveIDUser['last_name'] <> '')
+                    }
+                    if ($arLiveIDUser['last_name'] <> '') {
                         $last_name = $arLiveIDUser['last_name'];
+                    }
                     if ($arLiveIDUser['emails']['preferred'] <> '') {
                         $email = $arLiveIDUser['emails']['preferred'];
                         $login = $arLiveIDUser['emails']['preferred'];
@@ -145,18 +176,21 @@ class CSocServLiveIDOAuth extends CSocServAuth
                         'LAST_NAME' => $last_name,
                     );
                     $arFields["PERSONAL_WWW"] = $arLiveIDUser["link"];
-                    if (isset($arLiveIDUser['access_token']))
+                    if (isset($arLiveIDUser['access_token'])) {
                         $arFields["OATOKEN"] = $arLiveIDUser['access_token'];
+                    }
 
-                    if (isset($arLiveIDUser['refresh_token']))
+                    if (isset($arLiveIDUser['refresh_token'])) {
                         $arFields["REFRESH_TOKEN"] = $arLiveIDUser['refresh_token'];
+                    }
 
-                    if (isset($arLiveIDUser['expires_in']))
+                    if (isset($arLiveIDUser['expires_in'])) {
                         $arFields["OATOKEN_EXPIRES"] = time() + $arLiveIDUser['expires_in'];
-                    if (strlen(SITE_ID) > 0)
+                    }
+                    if (SITE_ID <> '') {
                         $arFields["SITE_ID"] = SITE_ID;
+                    }
                     $bSuccess = $this->AuthorizeUser($arFields);
-
                 }
             }
         }
@@ -166,7 +200,17 @@ class CSocServLiveIDOAuth extends CSocServAuth
         }
 
         $url = ($APPLICATION->GetCurDir() == "/login/") ? "" : $APPLICATION->GetCurDir();
-        $aRemove = array("logout", "auth_service_error", "auth_service_id", "code", "error_reason", "error", "error_description", "check_key", "current_fieldset");
+        $aRemove = array(
+            "logout",
+            "auth_service_error",
+            "auth_service_id",
+            "code",
+            "error_reason",
+            "error",
+            "error_description",
+            "check_key",
+            "current_fieldset"
+        );
 
         $mode = 'opener';
         $addParams = true;
@@ -175,14 +219,14 @@ class CSocServLiveIDOAuth extends CSocServAuth
             parse_str($_REQUEST["state"], $arState);
             if (isset($arState['backurl']) || isset($arState['redirect_url'])) {
                 $url = !empty($arState['redirect_url']) ? $arState['redirect_url'] : $arState['backurl'];
-                if (substr($url, 0, 1) !== "#") {
+                if (mb_substr($url, 0, 1) !== "#") {
                     $parseUrl = parse_url($url);
                     $urlPath = $parseUrl["path"];
                     $arUrlQuery = explode('&', $parseUrl["query"]);
 
                     foreach ($arUrlQuery as $key => $value) {
                         foreach ($aRemove as $param) {
-                            if (strpos($value, $param . "=") === 0) {
+                            if (mb_strpos($value, $param . "=") === 0) {
                                 unset($arUrlQuery[$key]);
                                 break;
                             }
@@ -206,11 +250,15 @@ class CSocServLiveIDOAuth extends CSocServAuth
         } elseif ($bSuccess !== true) {
             $url = (isset($parseUrl))
                 ? $urlPath . '?auth_service_id=' . self::ID . '&auth_service_error=' . $bSuccess
-                : $APPLICATION->GetCurPageParam(('auth_service_id=' . self::ID . '&auth_service_error=' . $bSuccess), $aRemove);
+                : $APPLICATION->GetCurPageParam(
+                    ('auth_service_id=' . self::ID . '&auth_service_error=' . $bSuccess),
+                    $aRemove
+                );
         }
 
-        if ($addParams && CModule::IncludeModule("socialnetwork") && strpos($url, "current_fieldset=") === false)
+        if ($addParams && CModule::IncludeModule("socialnetwork") && mb_strpos($url, "current_fieldset=") === false) {
             $url = (preg_match("/\?/", $url)) ? $url . "&current_fieldset=SOCSERV" : $url . "?current_fieldset=SOCSERV";
+        }
 
         $url = CUtil::JSEscape($url);
 
@@ -341,10 +389,11 @@ class CLiveIDOAuthInterface
 
     public function addScope($scope)
     {
-        if (is_array($scope))
+        if (is_array($scope)) {
             $this->scope = array_merge($this->scope, $scope);
-        else
+        } else {
             $this->scope[] = $scope;
+        }
         return $this;
     }
 
@@ -388,13 +437,18 @@ class CLiveIDOAuthInterface
             return false;
         }
 
-        $result = CHTTP::sPostHeader(self::TOKEN_URL, array(
-            "code" => $this->code,
-            "client_id" => $this->appID,
-            "client_secret" => $this->appSecret,
-            "redirect_uri" => $redirect_uri,
-            "grant_type" => "authorization_code",
-        ), array(), $this->httpTimeout);
+        $result = CHTTP::sPostHeader(
+            self::TOKEN_URL,
+            array(
+                "code" => $this->code,
+                "client_id" => $this->appID,
+                "client_secret" => $this->appSecret,
+                "redirect_uri" => $redirect_uri,
+                "grant_type" => "authorization_code",
+            ),
+            array(),
+            $this->httpTimeout
+        );
 
         $arResult = CUtil::JsObjectToPhp($result);
 
@@ -412,12 +466,18 @@ class CLiveIDOAuthInterface
 
     public function GetCurrentUser()
     {
-        if ($this->access_token === false)
+        if ($this->access_token === false) {
             return false;
+        }
 
-        $result = CHTTP::sGetHeader(self::CONTACTS_URL . "?access_token=" . urlencode($this->access_token), array(), $this->httpTimeout);
-        if (!defined("BX_UTF"))
+        $result = CHTTP::sGetHeader(
+            self::CONTACTS_URL . "?access_token=" . urlencode($this->access_token),
+            array(),
+            $this->httpTimeout
+        );
+        if (!defined("BX_UTF")) {
             $result = CharsetConverter::ConvertCharset($result, "utf-8", LANG_CHARSET);
+        }
 
         $result = CUtil::JsObjectToPhp($result);
 
@@ -431,8 +491,9 @@ class CLiveIDOAuthInterface
 
     public function GetCurrentUserFriends($limit = 0, $offset = 0)
     {
-        if ($this->access_token === false)
+        if ($this->access_token === false) {
             return false;
+        }
 
         $url = self::FRIENDS_URL . "?access_token=" . urlencode($this->access_token);
 
@@ -441,8 +502,9 @@ class CLiveIDOAuthInterface
         }
 
         $result = CHTTP::sGetHeader($url, array(), $this->httpTimeout);
-        if (!defined("BX_UTF"))
+        if (!defined("BX_UTF")) {
             $result = CharsetConverter::ConvertCharset($result, "utf-8", LANG_CHARSET);
+        }
 
         $result = CUtil::JsObjectToPhp($result);
 
@@ -459,10 +521,12 @@ class CLiveIDOAuthInterface
         global $USER;
 
         if (is_object($USER)) {
-            $dbSocservUser = \Bitrix\Socialservices\UserTable::getList([
-                'filter' => ['=USER_ID' => $USER->GetID(), "=EXTERNAL_AUTH_ID" => CSocServLiveIDOAuth::ID],
-                'select' => ["USER_ID", "OATOKEN", "OATOKEN_EXPIRES", "REFRESH_TOKEN"]
-            ]);
+            $dbSocservUser = \Bitrix\Socialservices\UserTable::getList(
+                [
+                    'filter' => ['=USER_ID' => $USER->GetID(), "=EXTERNAL_AUTH_ID" => CSocServLiveIDOAuth::ID],
+                    'select' => ["USER_ID", "OATOKEN", "OATOKEN_EXPIRES", "REFRESH_TOKEN"]
+                ]
+            );
             return $dbSocservUser->fetch();
         }
 
@@ -476,15 +540,21 @@ class CLiveIDOAuthInterface
 
     public function getNewAccessToken($refreshToken, $userId = 0, $save = false)
     {
-        if ($this->appID == false || $this->appSecret == false)
+        if ($this->appID == false || $this->appSecret == false) {
             return false;
+        }
 
-        $result = CHTTP::sPostHeader(self::TOKEN_URL, array(
-            "refresh_token" => $refreshToken,
-            "client_id" => $this->appID,
-            "client_secret" => $this->appSecret,
-            "grant_type" => "refresh_token",
-        ), array(), $this->httpTimeout);
+        $result = CHTTP::sPostHeader(
+            self::TOKEN_URL,
+            array(
+                "refresh_token" => $refreshToken,
+                "client_id" => $this->appID,
+                "client_secret" => $this->appSecret,
+                "grant_type" => "refresh_token",
+            ),
+            array(),
+            $this->httpTimeout
+        );
 
         $arResult = CUtil::JsObjectToPhp($result);
 
@@ -492,15 +562,24 @@ class CLiveIDOAuthInterface
             $this->access_token = $arResult["access_token"];
             $this->accessTokenExpires = $arResult["expires_in"];
             if ($save && intval($userId) > 0) {
-                $dbSocservUser = \Bitrix\Socialservices\UserTable::getList([
-                    'filter' => [
-                        '=USER_ID' => intval($userId),
-                        "=EXTERNAL_AUTH_ID" => 'LiveIDOAuth'
-                    ],
-                    'select' => ["ID"]
-                ]);
-                if ($arOauth = $dbSocservUser->fetch())
-                    \Bitrix\Socialservices\UserTable::update($arOauth["ID"], array("OATOKEN" => $this->access_token, "OATOKEN_EXPIRES" => time() + $this->accessTokenExpires));
+                $dbSocservUser = \Bitrix\Socialservices\UserTable::getList(
+                    [
+                        'filter' => [
+                            '=USER_ID' => intval($userId),
+                            "=EXTERNAL_AUTH_ID" => 'LiveIDOAuth'
+                        ],
+                        'select' => ["ID"]
+                    ]
+                );
+                if ($arOauth = $dbSocservUser->fetch()) {
+                    \Bitrix\Socialservices\UserTable::update(
+                        $arOauth["ID"],
+                        array(
+                            "OATOKEN" => $this->access_token,
+                            "OATOKEN_EXPIRES" => time() + $this->accessTokenExpires
+                        )
+                    );
+                }
             }
             return true;
         }
@@ -512,13 +591,15 @@ class CLiveIDOAuthInterface
         global $USER;
 
         if (is_object($USER) && $USER->IsAuthorized()) {
-            $dbSocservUser = \Bitrix\Socialservices\UserTable::getList(array(
-                'filter' => array(
-                    '=USER_ID' => $USER->GetID(),
-                    "=EXTERNAL_AUTH_ID" => static::SERVICE_ID
-                ),
-                'select' => array("ID")
-            ));
+            $dbSocservUser = \Bitrix\Socialservices\UserTable::getList(
+                array(
+                    'filter' => array(
+                        '=USER_ID' => $USER->GetID(),
+                        "=EXTERNAL_AUTH_ID" => static::SERVICE_ID
+                    ),
+                    'select' => array("ID")
+                )
+            );
 
             while ($accessToken = $dbSocservUser->fetch()) {
                 \Bitrix\Socialservices\UserTable::delete($accessToken['ID']);

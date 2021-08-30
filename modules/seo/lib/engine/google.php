@@ -70,7 +70,9 @@ class Google extends Engine implements IEngine
     public function getInterface()
     {
         if ($this->authInterface === null) {
-            $this->authInterface = new \CGoogleOAuthInterface($this->engine['CLIENT_ID'], $this->engine['CLIENT_SECRET']);
+            $this->authInterface = new \CGoogleOAuthInterface(
+                $this->engine['CLIENT_ID'], $this->engine['CLIENT_SECRET']
+            );
             $this->authInterface->setScope($this->getScope());
 
             if ($this->engineSettings['AUTH']) {
@@ -147,7 +149,7 @@ class Google extends Engine implements IEngine
                 return false;
             }
 
-            if ($queryResult->getStatus() == self::HTTP_STATUS_OK && strlen($queryResult->getResult()) > 0) {
+            if ($queryResult->getStatus() == self::HTTP_STATUS_OK && $queryResult->getResult() <> '') {
                 $res = Json::decode($queryResult->getResult());
                 if (is_array($res)) {
                     $this->engineSettings['AUTH_USER'] = $APPLICATION->convertCharsetArray($res, 'utf-8', LANG_CHARSET);
@@ -166,7 +168,7 @@ class Google extends Engine implements IEngine
     public function getFeeds()
     {
         $queryResult = $this->queryJson(self::QUERY_BASE . self::SCOPE_FEED_SITES);
-        if ($queryResult->getStatus() == self::HTTP_STATUS_OK && strlen($queryResult->getResult()) > 0) {
+        if ($queryResult->getStatus() == self::HTTP_STATUS_OK && $queryResult->getResult() <> '') {
             $result = Json::decode($queryResult->getResult());
             $response = array();
             if (is_array($result) && is_array($result['siteEntry'])) {
@@ -229,7 +231,7 @@ class Google extends Engine implements IEngine
             return false;
         }
 
-        if ($queryResult->getStatus() == self::HTTP_STATUS_OK && strlen($queryResult->getResult()) > 0) {
+        if ($queryResult->getStatus() == self::HTTP_STATUS_OK && $queryResult->getResult() <> '') {
             $result = Json::decode($queryResult->getResult());
             return $result["token"];
         } else {
@@ -256,7 +258,7 @@ class Google extends Engine implements IEngine
             return false;
         }
 
-        if ($queryResult->getStatus() == self::HTTP_STATUS_OK && strlen($queryResult->getResult()) > 0) {
+        if ($queryResult->getStatus() == self::HTTP_STATUS_OK && $queryResult->getResult() <> '') {
             return true;
         } else {
             throw new \Exception('Query error! ' . $queryResult->getStatus() . ': ' . $queryResult->getResult());
@@ -269,8 +271,13 @@ class Google extends Engine implements IEngine
         return $this->query($scope, $method, $data, $bSkipRefreshAuth, 'application/json');
     }
 
-    protected function query($scope, $method = "GET", $data = null, $bSkipRefreshAuth = false, $contentType = 'application/json')
-    {
+    protected function query(
+        $scope,
+        $method = "GET",
+        $data = null,
+        $bSkipRefreshAuth = false,
+        $contentType = 'application/json'
+    ) {
         if ($this->engineSettings['AUTH']) {
             $http = new HttpClient();
             $http->setHeader("Authorization", 'Bearer ' . $this->engineSettings['AUTH']['access_token']);

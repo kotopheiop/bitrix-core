@@ -23,17 +23,20 @@ if ($token = $request->get('token')) {
         $forceLogin = false;
 
         if ($USER->isAuthorized() && $USER->getId() != $userRelation['USER_ID']) {
-            $forceLogin = Bitrix\Main\UserTable::getList(array(
-                'select' => array('ID'),
-                'filter' => array(
-                    '=ID' => $USER->getId(),
-                    '=EXTERNAL_AUTH_ID' => 'email'
+            $forceLogin = Bitrix\Main\UserTable::getList(
+                array(
+                    'select' => array('ID'),
+                    'filter' => array(
+                        '=ID' => $USER->getId(),
+                        '=EXTERNAL_AUTH_ID' => 'email'
+                    )
                 )
-            ))->fetch() ? true : false;
+            )->fetch() ? true : false;
         }
 
-        if (!$USER->isAuthorized() || $forceLogin)
+        if (!$USER->isAuthorized() || $forceLogin) {
             Bitrix\Mail\User::login();
+        }
 
         if ($USER->isAuthorized()) {
             $link = $userRelation['ENTITY_LINK'];
@@ -51,10 +54,12 @@ if ($token = $request->get('token')) {
 $APPLICATION->restartBuffer();
 
 header('Content-Type: application/x-javascript; charset=UTF-8');
-echo json_encode(array(
-    'result' => $error === false ? $link : 'error',
-    'error' => CharsetConverter::convertCharset($error, SITE_CHARSET, 'UTF-8'),
-    'backurl' => $backurl
-));
+echo json_encode(
+    array(
+        'result' => $error === false ? $link : 'error',
+        'error' => CharsetConverter::convertCharset($error, SITE_CHARSET, 'UTF-8'),
+        'backurl' => $backurl
+    )
+);
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_after.php';

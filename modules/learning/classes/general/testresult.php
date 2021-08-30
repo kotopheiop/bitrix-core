@@ -2,7 +2,7 @@
 
 class CTestResult
 {
-    function CheckFields(&$arFields, $ID = false)
+    public function CheckFields(&$arFields, $ID = false)
     {
         global $DB, $APPLICATION;
 
@@ -32,9 +32,10 @@ class CTestResult
 
         if (is_set($arFields, "RESPONSE") && is_array($arFields["RESPONSE"])) {
             $s = "";
-            foreach ($arFields["RESPONSE"] as $val)
+            foreach ($arFields["RESPONSE"] as $val) {
                 $s .= $val . ",";
-            $arFields["RESPONSE"] = substr($s, 0, -1);
+            }
+            $arFields["RESPONSE"] = mb_substr($s, 0, -1);
         }
 
         /*
@@ -48,14 +49,14 @@ class CTestResult
         }
         */
 
-        if (is_set($arFields, "CORRECT") && $arFields["CORRECT"] != "Y")
+        if (is_set($arFields, "CORRECT") && $arFields["CORRECT"] != "Y") {
             $arFields["CORRECT"] = "N";
+        }
 
         return true;
     }
 
-
-    function Add($arFields)
+    public function Add($arFields)
     {
         global $DB;
 
@@ -70,13 +71,14 @@ class CTestResult
         return false;
     }
 
-
-    function AddResponse($TEST_RESULT_ID, $RESPONSE)
+    public static function AddResponse($TEST_RESULT_ID, $RESPONSE)
     {
         global $DB;
 
         $TEST_RESULT_ID = intval($TEST_RESULT_ID);
-        if ($TEST_RESULT_ID < 1) return false;
+        if ($TEST_RESULT_ID < 1) {
+            return false;
+        }
 
         $rsTestResult = CTestResult::GetList(Array(), Array("ID" => $TEST_RESULT_ID, 'CHECK_PERMISSIONS' => 'N'));
 
@@ -89,8 +91,9 @@ class CTestResult
                     "CORRECT" => "N",
                 );
             } else {
-                if (!is_array($RESPONSE))
+                if (!is_array($RESPONSE)) {
                     $RESPONSE = Array($RESPONSE);
+                }
 
                 $strSql =
                     "SELECT A.ID, Q.POINT " .
@@ -101,8 +104,9 @@ class CTestResult
                     ($arTestResult["QUESTION_TYPE"] != "R" ? "AND A.CORRECT = 'Y' " : "") .
                     "ORDER BY A.SORT ASC, A.ID ASC";
 
-                if (!$res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__))
+                if (!$res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__)) {
                     return false;
+                }
 
                 $arAnswer = Array();
                 while ($arRes = $res->Fetch()) {
@@ -111,13 +115,15 @@ class CTestResult
                 }
 
                 if ($arTestResult["QUESTION_TYPE"] == "R") {
-                    if ($arAnswer != $RESPONSE)
+                    if ($arAnswer != $RESPONSE) {
                         $str_POINT = "0";
+                    }
                 } else {
                     $t1 = array_diff($arAnswer, $RESPONSE);
                     $t2 = array_diff($RESPONSE, $arAnswer);
-                    if ($t1 != $t2 || $t2 != Array())
+                    if ($t1 != $t2 || $t2 != Array()) {
                         $str_POINT = "0";
+                    }
                 }
 
                 //echo "!".$str_POINT."!";
@@ -131,8 +137,9 @@ class CTestResult
             }
 
             $tr = new CTestResult;
-            if (!$res = $tr->Update($TEST_RESULT_ID, $arFields))
+            if (!$res = $tr->Update($TEST_RESULT_ID, $arFields)) {
                 return false;
+            }
 
             return $arFields;
         } else {
@@ -140,13 +147,14 @@ class CTestResult
         }
     }
 
-
-    function Update($ID, $arFields)
+    public function Update($ID, $arFields)
     {
         global $DB;
 
         $ID = intval($ID);
-        if ($ID < 1) return false;
+        if ($ID < 1) {
+            return false;
+        }
 
         if ($this->CheckFields($arFields, $ID)) {
             unset($arFields["ID"]);
@@ -166,29 +174,31 @@ class CTestResult
         return false;
     }
 
-
-    function Delete($ID)
+    public static function Delete($ID)
     {
         global $DB;
 
         $ID = intval($ID);
-        if ($ID < 1) return false;
+        if ($ID < 1) {
+            return false;
+        }
 
         $strSql = "DELETE FROM b_learn_test_result WHERE ID = " . $ID;
 
-        if (!$DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__))
+        if (!$DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__)) {
             return false;
+        }
 
         return true;
     }
 
-
-    function GetList($arOrder = array(), $arFilter = array(), $arNavParams = array())
+    public static function GetList($arOrder = array(), $arFilter = array(), $arNavParams = array())
     {
         global $DB, $USER, $APPLICATION;
 
-        if (!is_array($arFilter))
+        if (!is_array($arFilter)) {
             $arFilter = Array();
+        }
 
         $oPermParser = new CLearnParsePermissionsFromFilter ($arFilter);
         $arSqlSearch = CTestResult::GetFilter($arFilter);
@@ -196,8 +206,9 @@ class CTestResult
         // Remove empty strings from array
         $arSqlSearch = array_filter($arSqlSearch);
 
-        if ($oPermParser->IsNeedCheckPerm())
+        if ($oPermParser->IsNeedCheckPerm()) {
             $arSqlSearch[] = " L.ID IN (" . $oPermParser->SQLForAccessibleLessons() . ") ";
+        }
 
         $strSqlSearch = ' ';
         if (!empty($arSqlSearch)) {
@@ -214,34 +225,37 @@ class CTestResult
 			Q.POINT as QUESTION_POINT, Q.LESSON_ID "
             . $strSqlFrom;
 
-        if (!is_array($arOrder))
+        if (!is_array($arOrder)) {
             $arOrder = Array();
+        }
 
+        $arSqlOrder = [];
         foreach ($arOrder as $by => $order) {
-            $by = strtolower($by);
-            $order = strtolower($order);
-            if ($order != "asc")
+            $by = mb_strtolower($by);
+            $order = mb_strtolower($order);
+            if ($order != "asc") {
                 $order = "desc";
+            }
 
-            if ($by == "id")
+            if ($by == "id") {
                 $arSqlOrder[] = " TR.ID " . $order . " ";
-            elseif ($by == "attempt_id")
+            } elseif ($by == "attempt_id") {
                 $arSqlOrder[] = " TR.ATTEMPT_ID " . $order . " ";
-            elseif ($by == "question_id")
+            } elseif ($by == "question_id") {
                 $arSqlOrder[] = " TR.QUESTION_ID " . $order . " ";
-            elseif ($by == "point")
+            } elseif ($by == "point") {
                 $arSqlOrder[] = " TR.POINT " . $order . " ";
-            elseif ($by == "correct")
+            } elseif ($by == "correct") {
                 $arSqlOrder[] = " TR.CORRECT " . $order . " ";
-            elseif ($by == "answered")
+            } elseif ($by == "answered") {
                 $arSqlOrder[] = " TR.ANSWERED " . $order . " ";
-            elseif ($by == "question_point")
+            } elseif ($by == "question_point") {
                 $arSqlOrder[] = " QUESTION_POINT " . $order . " ";
-            elseif ($by == "question_name")
+            } elseif ($by == "question_name") {
                 $arSqlOrder[] = " QUESTION_NAME " . $order . " ";
-            elseif ($by == "rand")
+            } elseif ($by == "rand") {
                 $arSqlOrder[] = CTest::GetRandFunction();
-            else {
+            } else {
                 $arSqlOrder[] = " TR.ID " . $order . " ";
                 $by = "id";
             }
@@ -251,10 +265,11 @@ class CTestResult
         DelDuplicateSort($arSqlOrder);
         $arSqlOrderCnt = count($arSqlOrder);
         for ($i = 0; $i < $arSqlOrderCnt; $i++) {
-            if ($i == 0)
+            if ($i == 0) {
                 $strSqlOrder = " ORDER BY ";
-            else
+            } else {
                 $strSqlOrder .= ",";
+            }
 
             $strSqlOrder .= $arSqlOrder[$i];
         }
@@ -271,23 +286,23 @@ class CTestResult
                 $res = new CDBResult();
                 $res->NavQuery($strSql, $res_cnt['C'], $arNavParams);
             }
-        } else
+        } else {
             $res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+        }
 
         return $res;
     }
 
-
-    function GetByID($ID)
+    public static function GetByID($ID)
     {
         return CTestResult::GetList(Array(), Array("ID" => $ID));
     }
 
-
-    function GetFilter($arFilter)
+    public static function GetFilter($arFilter)
     {
-        if (!is_array($arFilter))
+        if (!is_array($arFilter)) {
             $arFilter = Array();
+        }
 
         $arSqlSearch = Array();
 
@@ -296,18 +311,30 @@ class CTestResult
             $key = $res["FIELD"];
             $cOperationType = $res["OPERATION"];
 
-            $key = strtoupper($key);
+            $key = mb_strtoupper($key);
 
             switch ($key) {
                 case "ID":
                 case "ATTEMPT_ID":
                 case "QUESTION_ID":
                 case "POINT":
-                    $arSqlSearch[] = CLearnHelper::FilterCreate("TR." . $key, $val, "number", $bFullJoin, $cOperationType);
+                    $arSqlSearch[] = CLearnHelper::FilterCreate(
+                        "TR." . $key,
+                        $val,
+                        "number",
+                        $bFullJoin,
+                        $cOperationType
+                    );
                     break;
 
                 case "RESPONSE":
-                    $arSqlSearch[] = CLearnHelper::FilterCreate("TR." . $key, $val, "string", $bFullJoin, $cOperationType);
+                    $arSqlSearch[] = CLearnHelper::FilterCreate(
+                        "TR." . $key,
+                        $val,
+                        "string",
+                        $bFullJoin,
+                        $cOperationType
+                    );
                     break;
 
                 case "QUESTION_NAME":
@@ -316,7 +343,13 @@ class CTestResult
 
                 case "ANSWERED":
                 case "CORRECT":
-                    $arSqlSearch[] = CLearnHelper::FilterCreate("TR." . $key, $val, "string_equal", $bFullJoin, $cOperationType);
+                    $arSqlSearch[] = CLearnHelper::FilterCreate(
+                        "TR." . $key,
+                        $val,
+                        "string_equal",
+                        $bFullJoin,
+                        $cOperationType
+                    );
                     break;
             }
         }
@@ -324,15 +357,15 @@ class CTestResult
         return $arSqlSearch;
     }
 
-
-    function OnTestResultChange($TEST_RESULT_ID)
+    public static function OnTestResultChange($TEST_RESULT_ID)
     {
         global $DB;
 
         $TEST_RESULT_ID = intval($TEST_RESULT_ID);
 
-        if ($TEST_RESULT_ID < 1)
+        if ($TEST_RESULT_ID < 1) {
             return false;
+        }
 
         $strSql =
             "SELECT TR.* " .
@@ -340,8 +373,9 @@ class CTestResult
             "WHERE TR.ID = '" . $TEST_RESULT_ID . "'";
 
         $res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-        if (!$arAttemptResult = $res->Fetch())
+        if (!$arAttemptResult = $res->Fetch()) {
             return false;
+        }
 
         $strSql =
             "SELECT SUM(TR.POINT) as SUM_POINT, SUM( Q.POINT ) MAX_POINT " .
@@ -350,21 +384,22 @@ class CTestResult
             "WHERE TR.ATTEMPT_ID = '" . $arAttemptResult["ATTEMPT_ID"] . "'";
 
         $res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-        if (!$arSum = $res->Fetch())
+        if (!$arSum = $res->Fetch()) {
             return false;
+        }
 
         $strSql =
             "UPDATE b_learn_attempt SET SCORE = '" . $arSum["SUM_POINT"] . "', MAX_SCORE ='" . $arSum["MAX_POINT"] . "' " .
             "WHERE ID = '" . $arAttemptResult["ATTEMPT_ID"] . "'";
 
-        if (!$res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__))
+        if (!$res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__)) {
             return false;
+        }
 
         return CTestAttempt::OnAttemptChange($arAttemptResult["ATTEMPT_ID"]);
     }
 
-
-    function GetProgress($ATTEMPT_ID)
+    public static function GetProgress($ATTEMPT_ID)
     {
         global $DB;
         $ATTEMPT_ID = intval($ATTEMPT_ID);
@@ -375,16 +410,16 @@ class CTestResult
             "GROUP BY ANSWERED";
         $rs = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
         while ($ar = $rs->Fetch()) {
-            if ($ar["ANSWERED"] == "Y")
+            if ($ar["ANSWERED"] == "Y") {
                 $res["DONE"] = $ar["C"];
-            elseif ($ar["ANSWERED"] == "N")
+            } elseif ($ar["ANSWERED"] == "N") {
                 $res["TODO"] = $ar["C"];
+            }
         }
         return $res;
     }
 
-
-    function GetCount($ATTEMPT_ID)
+    public static function GetCount($ATTEMPT_ID)
     {
         global $DB;
 
@@ -397,7 +432,6 @@ class CTestResult
         $res_cnt = $res->Fetch();
 
         return intval($res_cnt["C"]);
-
         /*$strSql =
         "SELECT COUNT(*) as CNT, SUM(Q.POINT) MAX_SCORE ".
         "FROM b_learn_test_result TR ".
@@ -406,8 +440,7 @@ class CTestResult
         */
     }
 
-
-    function GetPercent($ATTEMPT_ID)
+    public static function GetPercent($ATTEMPT_ID)
     {
         global $DB;
 
@@ -416,28 +449,33 @@ class CTestResult
             "FROM b_learn_test_result TR, b_learn_question Q " .
             "WHERE TR.ATTEMPT_ID = '" . intval($ATTEMPT_ID) . "' AND TR.QUESTION_ID = Q.ID";
 
-        if (!$res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__))
+        if (!$res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__)) {
             return false;
+        }
 
-        if (!$arStat = $res->Fetch())
+        if (!$arStat = $res->Fetch()) {
             return false;
+        }
 
         // Round bottom in right way, some magic due to IEEE 754
         return ((int)(floor($arStat["PCNT"] + 0.00001) + 0.00001));
     }
 
-
-    function GetCorrectCount($ATTEMPT_ID)
+    public static function GetCorrectCount($ATTEMPT_ID)
     {
         global $DB;
 
-        $strSql = "SELECT SUM(CASE WHEN TR.CORRECT = 'Y' THEN 1 ELSE 0 END) AS CNT FROM b_learn_test_result TR WHERE TR.ATTEMPT_ID = " . intval($ATTEMPT_ID) . " GROUP BY ATTEMPT_ID";
+        $strSql = "SELECT SUM(CASE WHEN TR.CORRECT = 'Y' THEN 1 ELSE 0 END) AS CNT FROM b_learn_test_result TR WHERE TR.ATTEMPT_ID = " . intval(
+                $ATTEMPT_ID
+            ) . " GROUP BY ATTEMPT_ID";
 
-        if (!$res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__))
+        if (!$res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__)) {
             return 0;
+        }
 
-        if (!$arStat = $res->Fetch())
+        if (!$arStat = $res->Fetch()) {
             return 0;
+        }
 
         return $arStat["CNT"];
     }

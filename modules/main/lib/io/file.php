@@ -55,8 +55,9 @@ class File
 
     public function getContents()
     {
-        if (!$this->isExists())
+        if (!$this->isExists()) {
             throw new FileNotFoundException($this->originalPath);
+        }
 
         return file_get_contents($this->getPhysicalPath());
     }
@@ -64,11 +65,13 @@ class File
     public function putContents($data, $flags = self::REWRITE)
     {
         $dir = $this->getDirectory();
-        if (!$dir->isExists())
+        if (!$dir->isExists()) {
             $dir->create();
+        }
 
-        if ($this->isExists() && !$this->isWritable())
+        if ($this->isExists() && !$this->isWritable()) {
             $this->markWritable();
+        }
 
         return $flags & self::APPEND
             ? file_put_contents($this->getPhysicalPath(), $data, FILE_APPEND)
@@ -152,80 +155,90 @@ class File
 
     public function isWritable()
     {
-        if (!$this->isExists())
+        if (!$this->isExists()) {
             throw new FileNotFoundException($this->originalPath);
+        }
 
         return is_writable($this->getPhysicalPath());
     }
 
     public function isReadable()
     {
-        if (!$this->isExists())
+        if (!$this->isExists()) {
             throw new FileNotFoundException($this->originalPath);
+        }
 
         return is_readable($this->getPhysicalPath());
     }
 
     public function readFile()
     {
-        if (!$this->isExists())
+        if (!$this->isExists()) {
             throw new FileNotFoundException($this->originalPath);
+        }
 
         return readfile($this->getPhysicalPath());
     }
 
     public function getCreationTime()
     {
-        if (!$this->isExists())
+        if (!$this->isExists()) {
             throw new FileNotFoundException($this->originalPath);
+        }
 
         return filectime($this->getPhysicalPath());
     }
 
     public function getLastAccessTime()
     {
-        if (!$this->isExists())
+        if (!$this->isExists()) {
             throw new FileNotFoundException($this->originalPath);
+        }
 
         return fileatime($this->getPhysicalPath());
     }
 
     public function getModificationTime()
     {
-        if (!$this->isExists())
+        if (!$this->isExists()) {
             throw new FileNotFoundException($this->originalPath);
+        }
 
         return filemtime($this->getPhysicalPath());
     }
 
     public function markWritable()
     {
-        if (!$this->isExists())
+        if (!$this->isExists()) {
             throw new FileNotFoundException($this->originalPath);
+        }
 
         @chmod($this->getPhysicalPath(), BX_FILE_PERMISSIONS);
     }
 
     public function getPermissions()
     {
-        if (!$this->isExists())
+        if (!$this->isExists()) {
             throw new FileNotFoundException($this->originalPath);
+        }
 
         return fileperms($this->getPhysicalPath());
     }
 
     public function delete()
     {
-        if ($this->isExists())
+        if ($this->isExists()) {
             return unlink($this->getPhysicalPath());
+        }
 
         return true;
     }
 
     public function getContentType()
     {
-        if (!$this->isExists())
+        if (!$this->isExists()) {
             throw new FileNotFoundException($this->originalPath);
+        }
 
         $finfo = \finfo_open(FILEINFO_MIME_TYPE);
         $contentType = \finfo_file($finfo, $this->getPath());

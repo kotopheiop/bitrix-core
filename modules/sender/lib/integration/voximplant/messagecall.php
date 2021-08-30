@@ -75,62 +75,65 @@ class MessageCall implements Message\iBase, Message\iMailable
             return;
         }
 
-        $this->configuration->setArrayOptions(array(
+        $this->configuration->setArrayOptions(
             array(
-                'type' => 'list',
-                'code' => 'OUTPUT_NUMBER',
-                'name' => Loc::getMessage('SENDER_INTEGRATION_CALL_MESSAGE_CONFIG_OUTPUT_NUMBER'),
-                'items' => \CVoxImplantConfig::GetPortalNumbers(false),
-                'view' => function () {
-                    /** @var \CAllMain {$GLOBALS['APPLICATION']} */
-                    ob_start();
-                    $GLOBALS['APPLICATION']->includeComponent(
-                        "bitrix:sender.call.number", "",
-                        array(
-                            "INPUT_NAME" => "%INPUT_NAME%",
-                            "VALUE" => "%INPUT_VALUE%",
-                            "MESSAGE_TYPE" => $this->getCode()
-                        )
-                    );
-                    return ob_get_clean();
-                },
-                'required' => true,
-                'show_in_list' => true,
-                'readonly_view' => function ($value) {
-                    return Service::getFormattedOutputNumber($value);
-                },
-            ),
-            array(
-                'type' => 'text',
-                'code' => 'MESSAGE_TEXT',
-                'name' => Loc::getMessage('SENDER_INTEGRATION_CALL_MESSAGE_CONFIG_MESSAGE_TEXT'),
-                'required' => true,
-            ),
-            array(
-                'type' => 'list',
-                'code' => 'VOICE_LANGUAGE',
-                'name' => Loc::getMessage('SENDER_INTEGRATION_CALL_MESSAGE_CONFIG_VOICE_LANGUAGE'),
-                'items' => Tts\Language::getList(),
-                'required' => true,
-                'group' => Message\ConfigurationOption::GROUP_ADDITIONAL,
-            ),
-            array(
-                'type' => 'list',
-                'code' => 'VOICE_SPEED',
-                'name' => Loc::getMessage('SENDER_INTEGRATION_CALL_MESSAGE_CONFIG_VOICE_SPEED'),
-                'items' => Tts\Speed::getList(),
-                'required' => true,
-                'group' => Message\ConfigurationOption::GROUP_ADDITIONAL,
-            ),
-            array(
-                'type' => 'list',
-                'code' => 'VOICE_VOLUME',
-                'name' => Loc::getMessage('SENDER_INTEGRATION_CALL_MESSAGE_CONFIG_VOICE_VOLUME'),
-                'items' => Tts\Volume::getList(),
-                'required' => true,
-                'group' => Message\ConfigurationOption::GROUP_ADDITIONAL,
-            ),
-        ));
+                array(
+                    'type' => 'list',
+                    'code' => 'OUTPUT_NUMBER',
+                    'name' => Loc::getMessage('SENDER_INTEGRATION_CALL_MESSAGE_CONFIG_OUTPUT_NUMBER'),
+                    'items' => \CVoxImplantConfig::GetPortalNumbers(false),
+                    'view' => function () {
+                        /** @var \CAllMain {$GLOBALS['APPLICATION']} */
+                        ob_start();
+                        $GLOBALS['APPLICATION']->includeComponent(
+                            "bitrix:sender.call.number",
+                            "",
+                            array(
+                                "INPUT_NAME" => "%INPUT_NAME%",
+                                "VALUE" => "%INPUT_VALUE%",
+                                "MESSAGE_TYPE" => $this->getCode()
+                            )
+                        );
+                        return ob_get_clean();
+                    },
+                    'required' => true,
+                    'show_in_list' => true,
+                    'readonly_view' => function ($value) {
+                        return Service::getFormattedOutputNumber($value);
+                    },
+                ),
+                array(
+                    'type' => 'text',
+                    'code' => 'MESSAGE_TEXT',
+                    'name' => Loc::getMessage('SENDER_INTEGRATION_CALL_MESSAGE_CONFIG_MESSAGE_TEXT'),
+                    'required' => true,
+                ),
+                array(
+                    'type' => 'list',
+                    'code' => 'VOICE_LANGUAGE',
+                    'name' => Loc::getMessage('SENDER_INTEGRATION_CALL_MESSAGE_CONFIG_VOICE_LANGUAGE'),
+                    'items' => Tts\Language::getList(),
+                    'required' => true,
+                    'group' => Message\ConfigurationOption::GROUP_ADDITIONAL,
+                ),
+                array(
+                    'type' => 'list',
+                    'code' => 'VOICE_SPEED',
+                    'name' => Loc::getMessage('SENDER_INTEGRATION_CALL_MESSAGE_CONFIG_VOICE_SPEED'),
+                    'items' => Tts\Speed::getList(),
+                    'required' => true,
+                    'group' => Message\ConfigurationOption::GROUP_ADDITIONAL,
+                ),
+                array(
+                    'type' => 'list',
+                    'code' => 'VOICE_VOLUME',
+                    'name' => Loc::getMessage('SENDER_INTEGRATION_CALL_MESSAGE_CONFIG_VOICE_VOLUME'),
+                    'items' => Tts\Volume::getList(),
+                    'required' => true,
+                    'group' => Message\ConfigurationOption::GROUP_ADDITIONAL,
+                ),
+            )
+        );
     }
 
     /**

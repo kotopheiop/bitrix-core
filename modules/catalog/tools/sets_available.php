@@ -1,5 +1,6 @@
 <?
 /** @global CUser $USER */
+
 /** @global CMain $APPLICATION */
 define('STOP_STATISTICS', true);
 define('NO_AGENT_CHECK', true);
@@ -14,7 +15,9 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_ad
 
 Loc::loadMessages(__FILE__);
 
-if (!$USER->CanDoOperation('catalog_price') || !Loader::includeModule('catalog') || !Catalog\Config\Feature::isProductSetsEnabled()) {
+if (!$USER->CanDoOperation('catalog_price') || !Loader::includeModule(
+        'catalog'
+    ) || !Catalog\Config\Feature::isProductSetsEnabled()) {
     require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
     ShowError(Loc::getMessage('CAT_SETS_AVAILABLE_ERRORS_FATAL'));
     require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_admin.php");
@@ -36,13 +39,20 @@ if (
         'lastID' => $_GET['lastID']
     );
 
-    $setsAvailable = new CCatalogProductSetAvailable($params['sessID'], $params['maxExecutionTime'], $params['maxOperationCounter']);
+    $setsAvailable = new CCatalogProductSetAvailable(
+        $params['sessID'],
+        $params['maxExecutionTime'],
+        $params['maxOperationCounter']
+    );
     $setsAvailable->initStep($params['counter'], $params['operationCounter'], $params['lastID']);
     $setsAvailable->run();
     $result = $setsAvailable->saveStep();
 
     if ($result['finishOperation']) {
-        $adminNotifyIterator = CAdminNotify::GetList(array(), array('MODULE_ID' => 'catalog', 'TAG' => 'CATALOG_SETS_AVAILABLE'));
+        $adminNotifyIterator = CAdminNotify::GetList(
+            array(),
+            array('MODULE_ID' => 'catalog', 'TAG' => 'CATALOG_SETS_AVAILABLE')
+        );
         if ($adminNotify = $adminNotifyIterator->Fetch()) {
             CAdminNotify::DeleteByTag('CATALOG_SETS_AVAILABLE');
         }
@@ -91,8 +101,9 @@ if (
         </tr><?
         $tabControl->Buttons();
         ?>
-        <input type="button" id="start_button"
-               value="<? echo Loc::getMessage('CAT_SETS_AVAILABLE_UPDATE_BTN') ?>"<? echo($setsCounter > 0 ? '' : ' disabled'); ?>>
+        <input type="button" id="start_button" value="<? echo Loc::getMessage(
+            'CAT_SETS_AVAILABLE_UPDATE_BTN'
+        ) ?>"<? echo($setsCounter > 0 ? '' : ' disabled'); ?>>
         <input type="button" id="stop_button" value="<? echo Loc::getMessage('CAT_SETS_AVAILABLE_STOP_BTN') ?>"
                disabled>
         <?

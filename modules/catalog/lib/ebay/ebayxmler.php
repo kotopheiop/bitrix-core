@@ -30,17 +30,19 @@ class EbayXMLer
                     if (!$this->isChildExist($productNode, $pathItem)) {
                         $newNode = $dom->createElement($pathItem);
 
-                        if ($oldNewNode)
+                        if ($oldNewNode) {
                             $oldNewNode->appendChild($newNode);
-                        else
+                        } else {
                             $productNode->appendChild($newNode);
+                        }
 
                         $oldNewNode = $newNode;
                     }
                 }
 
-                if ($newNode)
+                if ($newNode) {
                     $newNode->nodeValue = $product[$bitrixFieldId];
+                }
             }
         }
 

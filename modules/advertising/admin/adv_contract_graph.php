@@ -8,16 +8,20 @@
 ##############################################
 */
 
+use Bitrix\Main\Loader;
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/advertising/prolog.php");
-require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/advertising/include.php");
+Loader::includeModule('advertising');
 
 $isAdmin = CAdvContract::IsAdmin();
 $isDemo = CAdvContract::IsDemo();
 $isManager = CAdvContract::IsManager();
 $isAdvertiser = CAdvContract::IsAdvertiser();
 
-if (!$isAdmin && !$isDemo && !$isManager && !$isAdvertiser) $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if (!$isAdmin && !$isDemo && !$isManager && !$isAdvertiser) {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/advertising/admin/adv_stat_list.php");
@@ -28,7 +32,7 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/img.php");
  * ��������� GET | POST
  ****************************************************************************/
 $strError = '';
-$rsContracts = CAdvContract::GetList($v1 = "s_sort", $v2 = "desc", array(), $v3);
+$rsContracts = CAdvContract::GetList("s_sort", "desc");
 $contract_ref_id = array();
 $contract_ref = array();
 $j = 0;
@@ -36,8 +40,9 @@ while ($arContract = $rsContracts->Fetch()) {
     $contract_ref_id[] = $arContract["ID"];
     $contract_ref[] = "[" . $arContract["ID"] . "] " . $arContract["NAME"];
 }
-if (empty($contract_ref))
+if (empty($contract_ref)) {
     $strError = GetMessage("ADV_NO_CONTRACTS_FOR_GRAPHIC");
+}
 
 $FilterArr = Array(
     "find_date1",
@@ -62,11 +67,14 @@ if (!isset($_SESSION["SESS_ADMIN"]["AD_STAT_CONTRACT_GRAPH"]) || empty($_SESSION
     $man = true;
 }
 
-if (strlen($set_filter) > 0 || $man)
+if ($set_filter <> '' || $man) {
     InitFilterEx($FilterArr, "AD_STAT_CONTRACT_GRAPH", "set", true);
-else
+} else {
     InitFilterEx($FilterArr, "AD_STAT_CONTRACT_GRAPH", "get", true);
-if (strlen($del_filter) > 0) DelFilterEx($FilterArr, "AD_STAT_LIST", true);
+}
+if ($del_filter <> '') {
+    DelFilterEx($FilterArr, "AD_STAT_LIST", true);
+}
 
 //if((!is_set($find_contract_id) && !is_set($find_what_show)) || (!is_set($find_what_show) && is_set($find_contract_id)) || (is_set($find_what_show) && !is_set($find_contract_id)))
 //	$strError = GetMessage("ADV_F_NO_FIELDS");
@@ -98,9 +106,13 @@ if (count($find_contract_id) < 2) {
 $arrDays = CAdvBanner::GetDynamicList($arFilter, $arrLegend, $is_filtered);
 $arShow = $find_what_show;
 $filter_selected = 0;
-if (is_array($find_contract_id) && count($find_contract_id) > 0) $filter_selected++;
+if (is_array($find_contract_id) && count($find_contract_id) > 0) {
+    $filter_selected++;
+}
 
-if ($filter_selected > 0) $is_filtered = true;
+if ($filter_selected > 0) {
+    $is_filtered = true;
+}
 
 $arrStat = CAdvContract::GetStatList($by, $order, $arFilter);
 
@@ -111,7 +123,8 @@ $lAdmin->NavText($rsData->GetNavPrint(GetMessage('ADV_DATE_TABLE_TITLE')));
 $arHeaders = array();
 
 $arHeaders[] =
-    array("id" => "DATE",
+    array(
+        "id" => "DATE",
         "content" => GetMessage('ADV_DATE'),
         "sort" => "s_date",
         "align" => "right",
@@ -119,14 +132,16 @@ $arHeaders[] =
     );
 if ($find_contract_summa == "N") {
     $arHeaders[] =
-        array("id" => "CONTRACT_ID",
+        array(
+            "id" => "CONTRACT_ID",
             "content" => GetMessage('ADV_CONTRACT_ID'),
             "sort" => "s_id",
             "align" => "right",
             "default" => false
         );
     $arHeaders[] =
-        array("id" => "CONTRACT_NAME",
+        array(
+            "id" => "CONTRACT_NAME",
             "content" => GetMessage('ADV_CONTRACT'),
             "sort" => false,
             "align" => "left",
@@ -134,21 +149,24 @@ if ($find_contract_summa == "N") {
         );
 }
 $arHeaders[] =
-    array("id" => "VISITORS",
+    array(
+        "id" => "VISITORS",
         "content" => GetMessage('AD_VISITOR'),
         "sort" => "s_visitors",
         "align" => "right",
         "default" => true
     );
 $arHeaders[] =
-    array("id" => "CTR",
+    array(
+        "id" => "CTR",
         "content" => GetMessage('AD_CTR'),
         "sort" => "s_ctr",
         "align" => "right",
         "default" => true
     );
 $arHeaders[] =
-    array("id" => "SHOWS",
+    array(
+        "id" => "SHOWS",
         "content" => GetMessage('AD_SHOW'),
         "sort" => "s_show",
         "align" => "right",
@@ -189,9 +207,15 @@ if (!function_exists("ImageCreate")) :
 else :
     echo BeginNote();
     echo GetMessage("AD_SERVER_TIME") . "&nbsp;&nbsp;<i>" . GetTime(time(), "FULL") . "</i><br>";
-    echo GetMessage("AD_DAYS_TO_KEEP") . "&nbsp;&nbsp;<i>" . COption::GetOptionString("advertising", "BANNER_DAYS") . "</i>";
-    if ($isAdmin)
-        echo "&nbsp;&nbsp;[<a href='/bitrix/admin/settings.php?lang=" . LANGUAGE_ID . "&mid=advertising' title='" . GetMessage("AD_SET_EDIT") . "'>" . GetMessage("AD_EDIT") . "</a>]";
+    echo GetMessage("AD_DAYS_TO_KEEP") . "&nbsp;&nbsp;<i>" . COption::GetOptionString(
+            "advertising",
+            "BANNER_DAYS"
+        ) . "</i>";
+    if ($isAdmin) {
+        echo "&nbsp;&nbsp;[<a href='/bitrix/admin/settings.php?lang=" . LANGUAGE_ID . "&mid=advertising' title='" . GetMessage(
+                "AD_SET_EDIT"
+            ) . "'>" . GetMessage("AD_EDIT") . "</a>]";
+    }
     echo EndNote(); ?>
 
     <div class="graph">
@@ -221,9 +245,7 @@ else :
                             </tr>
                         <?endif; ?>
                         <?
-                        reset($arrLegend);
-
-                        while (list($keyL, $arrS) = each($arrLegend)) :
+                        foreach ($arrLegend as $keyL => $arrS):
                             ?>
                             <tr valign="center">
                             <? if (in_array("visitor", $arShow)):?>
@@ -255,7 +277,9 @@ else :
                                 ?>
                                 <td nowrap width="100%"><img src="/bitrix/images/1.gif" width="3" height="1"><?
                                     if ($arrS["COUNTER_TYPE"] == "DETAIL") :
-                                        echo "[<a href='/bitrix/admin/adv_contract_edit.php?ID=" . $arrS["ID"] . "&lang=" . LANGUAGE_ID . "&action=view' title='" . GetMessage("AD_CONTRACT_VIEW") . "'>" . $arrS["ID"] . "</a>] " . $arrS["NAME"];
+                                        echo "[<a href='/bitrix/admin/adv_contract_edit.php?ID=" . $arrS["ID"] . "&lang=" . LANGUAGE_ID . "&action=view' title='" . GetMessage(
+                                                "AD_CONTRACT_VIEW"
+                                            ) . "'>" . $arrS["ID"] . "</a>] " . $arrS["NAME"];
                                     else :
                                         echo GetMessage("AD_CONTRACT_SUM");
                                     endif;
@@ -263,7 +287,7 @@ else :
                                 <?
                             }
                             ?></tr><?
-                        endwhile;
+                        endforeach;
                         ?>
                     </table>
                 </td>
@@ -297,10 +321,17 @@ $filter = new CAdminFilter(
         <? $filter->Begin();
         ?>
         <tr valign="center">
-            <td width="0%"
-                nowrap><? echo GetMessage("AD_F_PERIOD") . " (" . CSite::GetDateFormat("SHORT") . "):" ?></td>
-            <td width="0%"
-                nowrap><? echo CalendarPeriod("find_date1", $find_date1, "find_date2", $find_date2, "form1", "Y") ?></td>
+            <td width="0%" nowrap><? echo GetMessage("AD_F_PERIOD") . " (" . CSite::GetDateFormat(
+                        "SHORT"
+                    ) . "):" ?></td>
+            <td width="0%" nowrap><? echo CalendarPeriod(
+                    "find_date1",
+                    $find_date1,
+                    "find_date2",
+                    $find_date2,
+                    "form1",
+                    "Y"
+                ) ?></td>
         </tr>
         <tr>
             <td nowrap valign="top"><span class="required">*</span><?= GetMessage("AD_F_WHAT_TO_SHOW") ?>:<br><img
@@ -311,12 +342,15 @@ $filter = new CAdminFilter(
                         GetMessage("AD_VISITOR_GRAPH"),
                         GetMessage("AD_SHOW_GRAPH"),
                         GetMessage("AD_CLICK_GRAPH"),
-                        "CTR"),
+                        "CTR"
+                    ),
                     "reference_id" => array(
                         "visitor",
                         "show",
                         "click",
-                        "ctr"));
+                        "ctr"
+                    )
+                );
                 echo SelectBoxMFromArray("find_what_show[]", $arr, $find_what_show, "", false, "4");
                 ?></td>
         </tr>
@@ -325,10 +359,27 @@ $filter = new CAdminFilter(
                         src="/bitrix/images/advertising/mouse.gif" width="44" height="21" border=0 alt=""></td>
             <td nowrap><?
                 if (count($contract_ref_id) > 1) {
-                    $arr = array("reference" => array(GetMessage("AD_SEPARATED"), GetMessage("AD_SUMMA")), "reference_id" => array("N", "Y"));
-                    echo SelectBoxFromArray("find_contract_summa", $arr, htmlspecialcharsbx($find_contract_summa), "", "style='width:100%'") . "<br>";
+                    $arr = array(
+                        "reference" => array(GetMessage("AD_SEPARATED"), GetMessage("AD_SUMMA")),
+                        "reference_id" => array("N", "Y")
+                    );
+                    echo SelectBoxFromArray(
+                            "find_contract_summa",
+                            $arr,
+                            htmlspecialcharsbx($find_contract_summa),
+                            "",
+                            "style='width:100%'"
+                        ) . "<br>";
                 }
-                echo SelectBoxMFromArray("find_contract_id[]", array("REFERENCE" => $contract_ref, "REFERENCE_ID" => $contract_ref_id), $find_contract_id, "", false, "5", "style='width:100%'");
+                echo SelectBoxMFromArray(
+                    "find_contract_id[]",
+                    array("REFERENCE" => $contract_ref, "REFERENCE_ID" => $contract_ref_id),
+                    $find_contract_id,
+                    "",
+                    false,
+                    "5",
+                    "style='width:100%'"
+                );
                 ?></td>
         </tr>
         <?

@@ -51,9 +51,11 @@ class OrderProcessingTable extends DataManager
     public static function hasAddedProducts($orderId = 0)
     {
         $orderId = (int)$orderId;
-        $iterator = static::getList(array(
-            "filter" => array("ORDER_ID" => $orderId)
-        ));
+        $iterator = static::getList(
+            array(
+                "filter" => array("ORDER_ID" => $orderId)
+            )
+        );
 
         $row = $iterator->fetch();
         return $row && $row['PRODUCTS_ADDED'] == "Y";
@@ -69,9 +71,11 @@ class OrderProcessingTable extends DataManager
     public static function hasRemovedProducts($orderId = 0)
     {
         $orderId = (int)$orderId;
-        $iterator = static::getList(array(
-            "filter" => array("ORDER_ID" => $orderId)
-        ));
+        $iterator = static::getList(
+            array(
+                "filter" => array("ORDER_ID" => $orderId)
+            )
+        );
 
         $row = $iterator->fetch();
         return $row && $row['PRODUCTS_REMOVED'] == "Y";
@@ -85,9 +89,11 @@ class OrderProcessingTable extends DataManager
     public static function markProductsAdded($orderId = 0)
     {
         $orderId = (int)$orderId;
-        $iterator = static::getList(array(
-            "filter" => array("ORDER_ID" => $orderId)
-        ));
+        $iterator = static::getList(
+            array(
+                "filter" => array("ORDER_ID" => $orderId)
+            )
+        );
         if ($row = $iterator->fetch()) {
             static::update($orderId, array("PRODUCTS_ADDED" => 'Y'));
         } else {
@@ -104,14 +110,18 @@ class OrderProcessingTable extends DataManager
     {
         $preparedIds = array();
         foreach ($orderIds as $orderId) {
-            if ((int)$orderId > 0)
+            if ((int)$orderId > 0) {
                 $preparedIds[] = (int)$orderId;
+            }
         }
 
         $connection = \Bitrix\Main\Application::getConnection();
         $type = $connection->getType();
         if ($type == "mysql" && !empty($preparedIds)) {
-            $sqlUpdate = "UPDATE " . static::getTableName() . " SET PRODUCTS_ADDED = 'Y' WHERE ORDER_ID IN (" . implode(',', $preparedIds) . ")";
+            $sqlUpdate = "UPDATE " . static::getTableName() . " SET PRODUCTS_ADDED = 'Y' WHERE ORDER_ID IN (" . implode(
+                    ',',
+                    $preparedIds
+                ) . ")";
             $connection->query($sqlUpdate);
         }
     }
@@ -124,9 +134,11 @@ class OrderProcessingTable extends DataManager
     public static function markProductsRemoved($orderId = 0)
     {
         $orderId = (int)$orderId;
-        $iterator = static::getList(array(
-            "filter" => array("ORDER_ID" => $orderId)
-        ));
+        $iterator = static::getList(
+            array(
+                "filter" => array("ORDER_ID" => $orderId)
+            )
+        );
         if ($row = $iterator->fetch()) {
             static::update($orderId, array("PRODUCTS_REMOVED" => 'Y'));
         } else {
@@ -141,8 +153,9 @@ class OrderProcessingTable extends DataManager
      */
     public static function deleteByOrderId($orderId)
     {
-        if ((int)($orderId) <= 0)
+        if ((int)($orderId) <= 0) {
             return false;
+        }
 
         $con = \Bitrix\Main\Application::getConnection();
         $con->queryExecute("DELETE FROM " . static::getTableName() . " WHERE ORDER_ID=" . (int)($orderId));

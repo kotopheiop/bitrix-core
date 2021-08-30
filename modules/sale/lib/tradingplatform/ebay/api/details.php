@@ -18,8 +18,9 @@ class Details extends Entity
 
         $dataXml = $this->apiCaller->sendRequest("GeteBayDetails", $data);
 
-        if (strtolower(SITE_CHARSET) != 'utf-8')
+        if (mb_strtolower(SITE_CHARSET) != 'utf-8') {
             $dataXml = Encoding::convertEncoding($dataXml, 'UTF-8', SITE_CHARSET);
+        }
 
         $result = Xml2Array::convert($dataXml);
         return $result;
@@ -32,14 +33,16 @@ class Details extends Entity
         $cacheManager = \Bitrix\Main\Application::getInstance()->getManagedCache();
         $cacheId = "BITRIX_SALE_TRADINGPLATFORM_EBAY_API_DETAILS_" . $this->siteId;
 
-        if ($cacheManager->read($ttl, $cacheId))
+        if ($cacheManager->read($ttl, $cacheId)) {
             $result = $cacheManager->get($cacheId);
+        }
 
         if (empty($result)) {
             $result = $this->requestData();
 
-            if (!empty($result))
+            if (!empty($result)) {
                 $cacheManager->set($cacheId, $result);
+            }
         }
 
         return $result;
@@ -55,8 +58,9 @@ class Details extends Entity
 
             if (isset($data["ShippingServiceDetails"]) && is_array($data["ShippingServiceDetails"])) {
                 foreach ($data["ShippingServiceDetails"] as $service) {
-                    if (!in_array($service["ShippingService"], self::getUsableDeliveries()))
+                    if (!in_array($service["ShippingService"], self::getUsableDeliveries())) {
                         continue;
+                    }
 
                     $result[$service["ShippingService"]] = $service["Description"];
                 }
@@ -69,8 +73,13 @@ class Details extends Entity
     public static function getUsableDeliveries()
     {
         return array(
-            'RU_ExpeditedDelivery', 'RU_ExpeditedMoscowOnly', 'RU_StandardDelivery', 'RU_StandardMoscowOnly',
-            'RU_EconomyDelivery', 'RU_OvernightDelivery', 'RU_LocalPickup'
+            'RU_ExpeditedDelivery',
+            'RU_ExpeditedMoscowOnly',
+            'RU_StandardDelivery',
+            'RU_StandardMoscowOnly',
+            'RU_EconomyDelivery',
+            'RU_OvernightDelivery',
+            'RU_LocalPickup'
         );
     }
 
@@ -86,8 +95,9 @@ class Details extends Entity
                 $data["PaymentOptionDetails"] = Xml2Array::normalize($data["PaymentOptionDetails"]);
 
                 foreach ($data["PaymentOptionDetails"] as $payment) {
-                    if (!in_array($payment["PaymentOption"], self::getUsablePaySystems()))
+                    if (!in_array($payment["PaymentOption"], self::getUsablePaySystems())) {
                         continue;
+                    }
 
                     $result[$payment["PaymentOption"]] = $payment["Description"];
                 }

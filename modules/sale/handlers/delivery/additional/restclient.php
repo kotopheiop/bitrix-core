@@ -92,8 +92,13 @@ class RestClient extends \Bitrix\Sale\Services\Base\RestClient
      * @return CalculationResult
      * @throws \Bitrix\Main\ArgumentOutOfRangeException
      */
-    public function getDeliveryPrice($serviceType, $profileType, array $serviceParams, array $profileParams, Shipment $shipment)
-    {
+    public function getDeliveryPrice(
+        $serviceType,
+        $profileType,
+        array $serviceParams,
+        array $profileParams,
+        Shipment $shipment
+    ) {
         $params = array(
             'serviceType' => $serviceType,
             'profileType' => $profileType,
@@ -113,7 +118,7 @@ class RestClient extends \Bitrix\Sale\Services\Base\RestClient
 
         if ($answer->isSuccess()) {
             $data = $answer->getData();
-            $result = unserialize(rawurldecode($data['PRICE']));
+            $result = unserialize(rawurldecode($data['PRICE']), ['allowed_classes' => [CalculationResult::class]]);
 
             if (!($result instanceof CalculationResult)) {
                 $result = new CalculationResult();
@@ -123,13 +128,15 @@ class RestClient extends \Bitrix\Sale\Services\Base\RestClient
 
             if (!$result->isSuccess() && defined('SALE_HANDLERS_DLV_ADD_LOG_PRICE_ERRORS')) {
                 $eventLog = new \CEventLog();
-                $eventLog->Add(array(
-                    "SEVERITY" => $eventLog::SEVERITY_ERROR,
-                    "AUDIT_TYPE_ID" => "SALE_HANDLERS_DLV_ADD_LOG_PRICE_ERRORS",
-                    "MODULE_ID" => "sale",
-                    "ITEM_ID" => $serviceType . '_' . $profileType,
-                    "DESCRIPTION" => implode(', ', $result->getErrorMessages()),
-                ));
+                $eventLog->Add(
+                    array(
+                        "SEVERITY" => $eventLog::SEVERITY_ERROR,
+                        "AUDIT_TYPE_ID" => "SALE_HANDLERS_DLV_ADD_LOG_PRICE_ERRORS",
+                        "MODULE_ID" => "sale",
+                        "ITEM_ID" => $serviceType . '_' . $profileType,
+                        "DESCRIPTION" => implode(', ', $result->getErrorMessages()),
+                    )
+                );
             }
         } else {
             $result = new CalculationResult();
@@ -174,7 +181,11 @@ class RestClient extends \Bitrix\Sale\Services\Base\RestClient
         return $this->getItem(
             'delivery.tracking.statuses',
             CacheManager::TYPE_NONE,
-            array('serviceType' => $serviceType, 'serviceParams' => $serviceParams, 'trackingNumbers' => $trackingNumbers)
+            array(
+                'serviceType' => $serviceType,
+                'serviceParams' => $serviceParams,
+                'trackingNumbers' => $trackingNumbers
+            )
         );
     }
 
@@ -192,12 +203,13 @@ class RestClient extends \Bitrix\Sale\Services\Base\RestClient
         $result = false;
 
         if (!$skipCache && !$isLicenseWrong && $cache && $result = $cache->get($cacheIds)) {
-            $result = unserialize($result);
+            $result = unserialize($result, ['allowed_classes' => [ResultSerializable::class]]);
         }
 
         if (!($result instanceof ResultSerializable)) {
-            if ($isLicenseWrong && $cache)
+            if ($isLicenseWrong && $cache) {
                 $cache->clean();
+            }
 
             $result = $this->call(static::SCOPE . '.' . $callMethod, $callParams);
 
@@ -210,8 +222,9 @@ class RestClient extends \Bitrix\Sale\Services\Base\RestClient
                     $result->setData($data);
                 }
 
-                if ($cache)
+                if ($cache) {
                     $cache->set(serialize($result), $cacheIds);
+                }
             } else {
                 foreach ($result->getErrors() as $error) {
                     if ($error->getCode() == self::ERROR_WRONG_LICENSE) {
@@ -222,19 +235,22 @@ class RestClient extends \Bitrix\Sale\Services\Base\RestClient
 
                 if (defined('SALE_HANDLERS_DLV_ADD_LOG_REST_ERRORS')) {
                     $eventLog = new \CEventLog();
-                    $eventLog->Add(array(
-                        "SEVERITY" => $eventLog::SEVERITY_ERROR,
-                        "AUDIT_TYPE_ID" => "SALE_HANDLERS_DLV_ADD_LOG_REST_ERRORS",
-                        "MODULE_ID" => "sale",
-                        "ITEM_ID" => $callMethod,
-                        "DESCRIPTION" => implode(', ', $result->getErrorMessages()),
-                    ));
+                    $eventLog->Add(
+                        array(
+                            "SEVERITY" => $eventLog::SEVERITY_ERROR,
+                            "AUDIT_TYPE_ID" => "SALE_HANDLERS_DLV_ADD_LOG_REST_ERRORS",
+                            "MODULE_ID" => "sale",
+                            "ITEM_ID" => $callMethod,
+                            "DESCRIPTION" => implode(', ', $result->getErrorMessages()),
+                        )
+                    );
                 }
             }
         }
 
-        if ($result->isSuccess() && $isLicenseWrong)
+        if ($result->isSuccess() && $isLicenseWrong) {
             Option::delete('sale', array('name' => self::WRONG_LICENSE_OPTION));
+        }
 
         return $result;
     }
@@ -246,13 +262,15 @@ class RestClient extends \Bitrix\Sale\Services\Base\RestClient
 
             if (!$res->isSuccess() && defined('SALE_HANDLERS_DLV_ADD_LOG_ACTIONS_ERRORS')) {
                 $eventLog = new \CEventLog();
-                $eventLog->Add(array(
-                    "SEVERITY" => $eventLog::SEVERITY_ERROR,
-                    "AUDIT_TYPE_ID" => "SALE_HANDLERS_DLV_ADD_LOG_ACTIONS_ERRORS",
-                    "MODULE_ID" => "sale",
-                    "ITEM_ID" => $actType,
-                    "DESCRIPTION" => implode(', ', $res->getErrorMessages()),
-                ));
+                $eventLog->Add(
+                    array(
+                        "SEVERITY" => $eventLog::SEVERITY_ERROR,
+                        "AUDIT_TYPE_ID" => "SALE_HANDLERS_DLV_ADD_LOG_ACTIONS_ERRORS",
+                        "MODULE_ID" => "sale",
+                        "ITEM_ID" => $actType,
+                        "DESCRIPTION" => implode(', ', $res->getErrorMessages()),
+                    )
+                );
             }
         }
     }

@@ -26,12 +26,16 @@ class WidgetConfigurationTable extends DataManager
     public static function getMap()
     {
         return array(
-            new IntegerField('WIDGET_ID', array(
+            new IntegerField(
+                'WIDGET_ID', array(
                 'primary' => true
-            )),
-            new IntegerField('CONFIGURATION_ID', array(
+            )
+            ),
+            new IntegerField(
+                'CONFIGURATION_ID', array(
                 'primary' => true
-            )),
+            )
+            ),
             new ReferenceField(
                 'WIDGET',
                 'Bitrix\Report\VisualConstructor\Internal\WidgetTable',

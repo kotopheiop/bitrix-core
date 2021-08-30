@@ -1,4 +1,6 @@
 <?php
+
+define('ADMIN_SECTION', false);
 if (
     isset($_GET['template']) &&
     preg_match('/^[a-z0-9_]+$/i', $_GET['template'])
@@ -6,6 +8,12 @@ if (
     define('SITE_TEMPLATE_ID', $_GET['template']);
 } else {
     define('SITE_TEMPLATE_ID', 'landing24');
+}
+if (
+    isset($_GET['site']) &&
+    preg_match('/^[a-z0-9_]+$/i', $_GET['site'])
+) {
+    define('SITE_ID', $_GET['site']);
 }
 
 require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_before.php');
@@ -54,31 +62,26 @@ $filter = [
     '=TYPE' => $type,
     'CHECK_PERMISSIONS' => 'N'
 ];
-if ($site) {
-    $filter['=SMN_SITE_ID'] = $site;
-} else if ($siteId) {
+if ($siteId) {
     $filter['ID'] = $siteId;
 } else {
-    $filter['ID'] = -1;
-}
-
-//for show PREVIEW sites on repo
-if ($request->get('type') == 'PREVIEW' && defined('LANDING_IS_REPO') && LANDING_IS_REPO === true) {
-    $type = 'PREVIEW';
-    $filter['=TYPE'] = $type;
-    if ($siteId) {
-        $filter['ID'] = $siteId;
+    if ($site) {
+        $filter['=SMN_SITE_ID'] = $site;
+    } else {
+        $filter['ID'] = -1;
     }
 }
 
 $rights = [];
-
-$res = Site::getList([
-    'select' => [
-        'ID', 'SMN_SITE_ID'
-    ],
-    'filter' => $filter
-]);
+$res = Site::getList(
+    [
+        'select' => [
+            'ID',
+            'SMN_SITE_ID'
+        ],
+        'filter' => $filter
+    ]
+);
 if ($row = $res->fetch()) {
     $siteId = $row['ID'];
     $site = $row['SMN_SITE_ID'];
@@ -94,13 +97,15 @@ if ($row = $res->fetch()) {
         ($siteRow = SiteTable::getById($site)->fetch())
     ) {
         // create site if not exist
-        $res = Site::add(array(
-            'TITLE' => $siteRow['NAME'],
-            'SMN_SITE_ID' => $site,
-            'TYPE' => $type,
-            'DOMAIN_ID' => !Manager::isB24() ? Domain::getCurrentId() : ' ',
-            'CODE' => strtolower(\randString(10))
-        ));
+        $res = Site::add(
+            array(
+                'TITLE' => $siteRow['NAME'],
+                'SMN_SITE_ID' => $site,
+                'TYPE' => $type,
+                'DOMAIN_ID' => !Manager::isB24() ? Domain::getCurrentId() : ' ',
+                'CODE' => mb_strtolower(\randString(10))
+            )
+        );
         if ($res->isSuccess()) {
             $siteId = $res->getId();
             $rights = Rights::getOperationsForSite($siteId);
@@ -125,6 +130,8 @@ $editPage = $landingsPage . '&cmp=landing_edit&id=#landing_edit#';
 $editPage .= ($siteTemplate ? '&template=' . $siteTemplate : '');
 $editSite = $landingsPage . '&cmp=site_edit';
 $editSite .= ($siteTemplate ? '&template=' . $siteTemplate : '');
+$editCookies = $landingsPage . '&cmp=cookies_edit';
+$editCookies .= ($siteTemplate ? '&template=' . $siteTemplate : '');
 $viewPage = 'landing_view.php?lang=' . LANGUAGE_ID . '&id=#landing_edit#&site=' . $site . '&template=' . $siteTemplate;
 
 if ($isFrame) {
@@ -139,12 +146,14 @@ if ($isFrame) {
     );
     include $server->getDocumentRoot() .
         '/bitrix/modules/landing/install/components/bitrix/landing.start/templates/.default/slider_header.php';
-} else if (!$isAjax) {
-    require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php');
-    // js scripts
-    $application->showHeadStrings();
-    $application->showHeadScripts();
-    $application->showCSS();
+} else {
+    if (!$isAjax) {
+        require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php');
+        // js scripts
+        $application->showHeadStrings();
+        $application->showHeadScripts();
+        $application->showCSS();
+    }
 }
 
 // emulate site_id
@@ -165,28 +174,30 @@ if (!$cmp && !$isFrame) {
     // create buttons
     if (!Rights::hasAccessForSite($siteId, Rights::ACCESS_TYPES['edit'])) {
         $buttons = [];
-    } else if ($storeEnabled) {
-        $buttons = array(
-            array(
-                'LINK' => '#',
-                'TITLE' => Loc::getMessage('LANDING_ADMIN_ACTION_ADD')
-            ),
-            array(
-                'LINK' => str_replace('#landing_edit#', 0, $editPage) . '&type=PAGE',
-                'TITLE' => Loc::getMessage('LANDING_ADMIN_ACTION_ADD_PAGE')
-            ),
-            array(
-                'LINK' => str_replace('#landing_edit#', 0, $editPage) . '&type=STORE',
-                'TITLE' => Loc::getMessage('LANDING_ADMIN_ACTION_ADD_STORE')
-            )
-        );
     } else {
-        $buttons = array(
-            array(
-                'LINK' => str_replace('#landing_edit#', 0, $editPage) . '&type=PAGE',
-                'TITLE' => Loc::getMessage('LANDING_ADMIN_ACTION_ADD_ONE')
-            )
-        );
+        if ($storeEnabled) {
+            $buttons = array(
+                array(
+                    'LINK' => '#',
+                    'TITLE' => Loc::getMessage('LANDING_ADMIN_ACTION_ADD')
+                ),
+                array(
+                    'LINK' => str_replace('#landing_edit#', 0, $editPage) . '&type=PAGE',
+                    'TITLE' => Loc::getMessage('LANDING_ADMIN_ACTION_ADD_PAGE')
+                ),
+                array(
+                    'LINK' => str_replace('#landing_edit#', 0, $editPage) . '&type=STORE',
+                    'TITLE' => Loc::getMessage('LANDING_ADMIN_ACTION_ADD_STORE')
+                )
+            );
+        } else {
+            $buttons = array(
+                array(
+                    'LINK' => str_replace('#landing_edit#', 0, $editPage) . '&type=PAGE',
+                    'TITLE' => Loc::getMessage('LANDING_ADMIN_ACTION_ADD_ONE')
+                )
+            );
+        }
     }
 
     // settings menu
@@ -291,7 +302,18 @@ if ($cmp == 'landing_edit') {
             'SITE_ID' => $siteId,
             'PAGE_URL_SITES' => '',
             'PAGE_URL_LANDING_VIEW' => $viewPage,
+            'PAGE_URL_SITE_COOKIES' => $editCookies,
             'TEMPLATE' => $tpl
+        ),
+        $component
+    );
+} elseif ($cmp == 'cookies_edit') {
+    $APPLICATION->IncludeComponent(
+        'bitrix:landing.site_cookies',
+        '.default',
+        array(
+            'TYPE' => $type,
+            'SITE_ID' => $siteId
         ),
         $component
     );
@@ -304,7 +326,8 @@ if ($cmp == 'landing_edit') {
             'SITE_ID' => $siteId,
             'ACTION_FOLDER' => $actionFolder,
             'PAGE_URL_LANDING_EDIT' => $editPage,
-            'PAGE_URL_LANDING_VIEW' => $viewPage
+            'PAGE_URL_LANDING_VIEW' => $viewPage,
+            'PAGE_URL_LANDING_DESIGN' => 'null'
         ),
         false
     );
@@ -315,8 +338,10 @@ echo '</div>';
 if ($isFrame) {
     include $server->getDocumentRoot() .
         '/bitrix/modules/landing/install/components/bitrix/landing.start/templates/.default/slider_footer.php';
-} else if (!$isAjax) {
-    require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin_before.php');
+} else {
+    if (!$isAjax) {
+        require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin_before.php');
+    }
 }
 
 require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin_after.php');

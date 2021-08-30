@@ -17,6 +17,7 @@ use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Main\Web\Uri;
+use Bitrix\Rest\Engine\ScopeManager;
 use Bitrix\Rest\RestException;
 
 class RestManager extends \IRestService
@@ -29,10 +30,11 @@ class RestManager extends \IRestService
     public static function onFindMethodDescription($potentialAction)
     {
         $restManager = new static();
+        $potentialActionData = ScopeManager::getInstance()->getMethodInfo($potentialAction);
 
         $request = new \Bitrix\Main\HttpRequest(
             Context::getCurrent()->getServer(),
-            ['action' => $potentialAction],
+            ['action' => $potentialActionData['method']],
             [], [], []
         );
 
@@ -49,9 +51,10 @@ class RestManager extends \IRestService
         }
 
         return [
-            'scope' => static::getModuleScopeAlias($router->getModule()),
+            'scope' => static::getModuleScopeAlias($potentialActionData['scope']),
             'callback' => [
-                $restManager, 'processMethodRequest'
+                $restManager,
+                'processMethodRequest'
             ]
         ];
     }
@@ -63,6 +66,33 @@ class RestManager extends \IRestService
         }
 
         return $moduleId;
+    }
+
+    private static function getAlternativeScope($scope): ?array
+    {
+        if ($scope === \Bitrix\Rest\Api\User::SCOPE_USER) {
+            return [
+                \Bitrix\Rest\Api\User::SCOPE_USER_BRIEF,
+                \Bitrix\Rest\Api\User::SCOPE_USER_BASIC,
+            ];
+        }
+
+        return null;
+    }
+
+    public static function fillAlternativeScope($scope, $scopeList)
+    {
+        if (!in_array($scope, $scopeList, true)) {
+            $altScopeList = static::getAlternativeScope($scope);
+            if (is_array($altScopeList)) {
+                $hasScope = array_intersect($scopeList, $altScopeList);
+                if (count($hasScope) > 0) {
+                    $scopeList[] = $scope;
+                }
+            }
+        }
+
+        return $scopeList;
     }
 
     /**
@@ -82,16 +112,17 @@ class RestManager extends \IRestService
 
         $errorCollection = new ErrorCollection();
         $method = $restServer->getMethod();
+        $methodData = ScopeManager::getInstance()->getMethodInfo($method);
 
         $request = new \Bitrix\Main\HttpRequest(
             Context::getCurrent()->getServer(),
-            ['action' => $method],
+            ['action' => $methodData['method']],
             [], [], []
         );
         $router = new Engine\Router($request);
 
         /** @var Controller $controller */
-        list ($controller, $action) = Resolver::getControllerAndAction(
+        [$controller, $action] = Resolver::getControllerAndAction(
             $router->getVendor(),
             $router->getModule(),
             $router->getAction(),
@@ -104,7 +135,7 @@ class RestManager extends \IRestService
         $autoWirings = $this->getAutoWirings();
 
         $this->registerAutoWirings($autoWirings);
-        $result = $controller->run($action, [$params]);
+        $result = $controller->run($action, [$params, ['__restServer' => $restServer]]);
         $this->unRegisterAutoWirings($autoWirings);
 
         if ($result instanceof Engine\Response\File) {
@@ -118,6 +149,10 @@ class RestManager extends \IRestService
             }
 
             $result = $result->getContent();
+        }
+
+        if ($result instanceof RestException) {
+            throw $result;
         }
 
         if ($result === null) {
@@ -206,7 +241,6 @@ class RestManager extends \IRestService
                 } else {
                     $result[$key] = $this->processData($item);
                 }
-
             }
         } elseif ($result instanceof \Traversable) {
             $newResult = [];

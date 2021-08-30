@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 class CSticker
@@ -14,8 +15,9 @@ class CSticker
         $userGroups = $USER->GetUserGroupArray();
         $key = implode('-', $userGroups);
 
-        if (!is_array($arOp))
+        if (!is_array($arOp)) {
             $arOp = array();
+        }
 
         if (!is_array($arOp[$key])) {
             $res = CSticker::GetAccessPermissions();
@@ -23,16 +25,18 @@ class CSticker
             $bDefaultTask = false;
 
             $count = 0;
-            foreach ($res as $group_id => $task_id)
+            foreach ($res as $group_id => $task_id) {
                 if (in_array($group_id, $userGroups)) {
                     $arOp[$key] = array_merge($arOp[$key], CTask::GetOperations($task_id, true));
                     $count++;
                 }
+            }
 
             if ($count < count($userGroups)) {
                 $defaultAccess = COption::GetOptionString('fileman', 'stickers_default_access', false);
-                if ($defaultAccess !== false)
+                if ($defaultAccess !== false) {
                     $arOp[$key] = array_merge($arOp[$key], CTask::GetOperations($defaultAccess, true));
+                }
             }
         }
         return $arOp[$key];
@@ -40,8 +44,9 @@ class CSticker
 
     public static function CanDoOperation($operation)
     {
-        if ($GLOBALS["USER"]->IsAdmin())
+        if ($GLOBALS["USER"]->IsAdmin()) {
             return true;
+        }
 
         $arOp = CSticker::GetOperations();
         return in_array($operation, $arOp);
@@ -56,8 +61,9 @@ class CSticker
         $res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 
         $arResult = array();
-        while ($arRes = $res->Fetch())
-            $arResult[intVal($arRes['GROUP_ID'])] = intVal($arRes['TASK_ID']);
+        while ($arRes = $res->Fetch()) {
+            $arResult[intval($arRes['GROUP_ID'])] = intval($arRes['TASK_ID']);
+        }
 
         return $arResult;
     }
@@ -68,7 +74,10 @@ class CSticker
         $DB->Query("DELETE FROM b_sticker_group_task WHERE 1=1", false, "FILE: " . __FILE__ . "<br> LINE: " . __LINE__);
 
         foreach ($arTaskPerm as $group_id => $task_id) {
-            $arInsert = $DB->PrepareInsert("b_sticker_group_task", array("GROUP_ID" => $group_id, "TASK_ID" => $task_id));
+            $arInsert = $DB->PrepareInsert(
+                "b_sticker_group_task",
+                array("GROUP_ID" => $group_id, "TASK_ID" => $task_id)
+            );
             $strSql = "INSERT INTO b_sticker_group_task(" . $arInsert[0] . ") VALUES(" . $arInsert[1] . ")";
             $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
         }
@@ -80,10 +89,12 @@ class CSticker
         $res = CTask::GetList(Array('LETTER' => 'asc'), Array('MODULE_ID' => 'fileman', 'BINDING' => 'stickers'));
         while ($arRes = $res->Fetch()) {
             $name = '';
-            if ($arRes['SYS'])
-                $name = GetMessage('TASK_NAME_' . strtoupper($arRes['NAME']));
-            if (strlen($name) == 0)
+            if ($arRes['SYS']) {
+                $name = GetMessage('TASK_NAME_' . mb_strtoupper($arRes['NAME']));
+            }
+            if ($name == '') {
                 $name = $arRes['TITLE'];
+            }
             $arTasks[$arRes['ID']] = Array('title' => $name, 'letter' => $arRes['LETTER']);
         }
         return $arTasks;
@@ -91,8 +102,9 @@ class CSticker
 
     public static function GetList($Params = array())
     {
-        if (!CSticker::CanDoOperation('sticker_view'))
+        if (!CSticker::CanDoOperation('sticker_view')) {
             return false;
+        }
 
         global $DB, $USER;
         $bDBResult = isset($Params['bDBResult']) ? $Params['bDBResult'] : false;
@@ -140,48 +152,60 @@ class CSticker
         if ($bCache) {
             $cache = new CPHPCache;
             $cacheId = serialize(array($arFilter, $bDBResult));
-            if (($tzOffset = CTimeZone::GetOffset()) <> 0)
+            if (($tzOffset = CTimeZone::GetOffset()) <> 0) {
                 $cacheId .= "_" . $tzOffset;
+            }
 
             if ($cache->InitCache($cacheTime, $cacheId, $cachePath)) {
                 $cachedRes = $cache->GetVars();
-                if (!empty($cachedRes['stickers']))
+                if (!empty($cachedRes['stickers'])) {
                     return $cachedRes['stickers'];
+                }
             }
         }
 
         if (is_array($arFilter)) {
             $filter_keys = array_keys($arFilter);
             for ($i = 0, $l = count($filter_keys); $i < $l; $i++) {
-                $n = strtoupper($filter_keys[$i]);
+                $n = mb_strtoupper($filter_keys[$i]);
                 $val = $arFilter[$filter_keys[$i]];
-                if (is_string($val) && strlen($val) <= 0)
+                if (is_string($val) && $val == '') {
                     continue;
+                }
 
-                if ($n == 'ID')
+                if ($n == 'ID') {
                     $arSqlSearch[] = GetFilterQuery("ST.ID", $val, 'N');
-                if ($n == 'PAGE_URL')
+                }
+                if ($n == 'PAGE_URL') {
                     $arSqlSearch[] = GetFilterQuery("ST.PAGE_URL", $val, 'N');
-                if ($n == 'SITE_ID')
+                }
+                if ($n == 'SITE_ID') {
                     $arSqlSearch[] = GetFilterQuery("ST.SITE_ID", $val, 'N');
-                elseif (isset($arFields[$n]))
+                } elseif (isset($arFields[$n])) {
                     $arSqlSearch[] = GetFilterQuery($arFields[$n]["FIELD_NAME"], $val);
+                }
             }
         }
 
         $strOrderBy = '';
-        foreach ($arOrder as $by => $order)
-            if (isset($arFields[strtoupper($by)]))
-                $strOrderBy .= $arFields[strtoupper($by)]["FIELD_NAME"] . ' ' . (strtolower($order) == 'desc' ? 'desc' . (strtoupper($DB->type) == "ORACLE" ? " NULLS LAST" : "") : 'asc' . (strtoupper($DB->type) == "ORACLE" ? " NULLS FIRST" : "")) . ',';
+        foreach ($arOrder as $by => $order) {
+            if (isset($arFields[mb_strtoupper($by)])) {
+                $strOrderBy .= $arFields[mb_strtoupper($by)]["FIELD_NAME"] . ' ' . (mb_strtolower(
+                        $order
+                    ) == 'desc' ? 'desc' . ($DB->type == "ORACLE" ? " NULLS LAST" : "") : 'asc' . ($DB->type == "ORACLE" ? " NULLS FIRST" : "")) . ',';
+            }
+        }
 
-        if (strlen($strOrderBy) > 0)
+        if ($strOrderBy <> '') {
             $strOrderBy = "ORDER BY " . rtrim($strOrderBy, ",");
+        }
 
         $strSqlSearch = GetFilterSqlSearch($arSqlSearch);
         if (is_array($arFilter['COLORS'])) {
             $strColors = "";
-            for ($i = 0; $i < count($arFilter['COLORS']); $i++)
-                $strColors .= "," . IntVal($arFilter['COLORS'][$i]);
+            for ($i = 0; $i < count($arFilter['COLORS']); $i++) {
+                $strColors .= "," . intval($arFilter['COLORS'][$i]);
+            }
             $strSqlSearch .= "\n AND COLOR in (" . trim($strColors, ", ") . ")";
         }
 
@@ -202,25 +226,33 @@ class CSticker
             while ($arRes = $res->Fetch()) {
                 if ($arFilter['USER_ID'] > 0 && $arRes['CREATED_BY'] != $arFilter['USER_ID'] &&
                     ($arRes['PERSONAL'] == 'Y'/* It's another user's personal sticker*/
-                        || $arFilter['ONLY_OWNER'] == 'Y'/* display only owner's stickers*/))
+                        || $arFilter['ONLY_OWNER'] == 'Y'/* display only owner's stickers*/)) {
                     continue;
+                }
 
                 if (!$bDBResult) {
                     $arRes['AUTHOR'] = CSticker::GetUserName($arRes['CREATED_BY']);
-                    $arRes['INFO'] = CSticker::GetStickerInfo($arRes['CREATED_BY'], $arRes['DATE_CREATE2'], $arRes['MODIFIED_BY'], $arRes['DATE_UPDATE2']);
+                    $arRes['INFO'] = CSticker::GetStickerInfo(
+                        $arRes['CREATED_BY'],
+                        $arRes['DATE_CREATE2'],
+                        $arRes['MODIFIED_BY'],
+                        $arRes['DATE_UPDATE2']
+                    );
                     $arRes['HTML_CONTENT'] = CSticker::BBParseToHTML($arRes['CONTENT']);
-                    $arRes['MARKER_ADJUST'] = unserialize($arRes['MARKER_ADJUST']);
+                    $arRes['MARKER_ADJUST'] = unserialize($arRes['MARKER_ADJUST'], ['allowed_classes' => false]);
                 }
 
                 $arResult[] = $arRes;
             }
 
-            if ($bDBResult)
+            if ($bDBResult) {
                 $res->InitFromArray($arResult);
+            }
         }
 
-        if ($bDBResult)
+        if ($bDBResult) {
             $arResult = $res;
+        }
 
         if ($bCache) {
             $cache->StartDataCache($cacheTime, $cacheId, $cachePath);
@@ -245,18 +277,21 @@ class CSticker
             array(
                 'arFilter' => array(
                     'USER_ID' => $USER->GetId(),
-                    'ID' => intVal($id),
+                    'ID' => intval($id),
                 )
-            ));
-        if ($res && is_array($res) && count($res) > 0)
+            )
+        );
+        if ($res && is_array($res) && count($res) > 0) {
             return $res[0];
+        }
         return false;
     }
 
     public static function GetPagesList($site)
     {
-        if (!CSticker::CanDoOperation('sticker_view'))
+        if (!CSticker::CanDoOperation('sticker_view')) {
             return false;
+        }
 
         global $USER, $DB;
         $userId = $USER->GetId();
@@ -271,8 +306,9 @@ class CSticker
 
             if ($cache->InitCache($cacheTime, $cacheId, $cachePath)) {
                 $cachedRes = $cache->GetVars();
-                if (!empty($cachedRes['page_list']))
+                if (!empty($cachedRes['page_list'])) {
                     return $cachedRes['page_list'];
+                }
             }
         }
         $err_mess = (CSticker::GetErrorMess()) . "<br>Function: GetPagesList<br>Line: ";
@@ -282,7 +318,7 @@ class CSticker
 			where
 				DELETED='N'
 				AND SITE_ID='" . $DB->ForSql($site) . "'
-				AND ((PERSONAL='Y' AND CREATED_BY=" . intVal($userId) . ") OR PERSONAL='N')
+				AND ((PERSONAL='Y' AND CREATED_BY=" . intval($userId) . ") OR PERSONAL='N')
 			group by PAGE_URL, PAGE_TITLE
 			order by MAX_DATE_UPDATE desc";
 
@@ -291,8 +327,9 @@ class CSticker
         $res = $DB->Query($strSql, false, $err_mess . __LINE__);
 
         $arResult = array();
-        while ($arRes = $res->Fetch())
+        while ($arRes = $res->Fetch()) {
             $arResult[] = $arRes;
+        }
 
         if ($bCache) {
             $cache->StartDataCache($cacheTime, $cacheId, $cachePath);
@@ -305,10 +342,12 @@ class CSticker
     public static function GetCurPageCount()
     {
         global $APPLICATION;
-        return CSticker::GetCount(array(
-            "PAGE_URL" => str_replace(' ', '%20', $APPLICATION->GetCurPage()),
-            "SITE_ID" => SITE_ID
-        ));
+        return CSticker::GetCount(
+            array(
+                "PAGE_URL" => str_replace(' ', '%20', $APPLICATION->GetCurPage()),
+                "SITE_ID" => SITE_ID
+            )
+        );
     }
 
     public static function GetCount($Params)
@@ -319,14 +358,18 @@ class CSticker
         $cacheId = 'stickers_count_' . $userId . "_" . $Params["PAGE_URL"];
         $bCache = CACHED_stickers_count !== false;
 
-        if ($bCache && $CACHE_MANAGER->Read(CACHED_stickers_count, $cacheId, "fileman_stickers_count"))
+        if ($bCache && $CACHE_MANAGER->Read(CACHED_stickers_count, $cacheId, "fileman_stickers_count")) {
             return $CACHE_MANAGER->Get($cacheId);
+        }
 
-        $strSqlSearch = "((ST.PERSONAL='Y' AND ST.CREATED_BY=" . intVal($userId) . ") OR ST.PERSONAL='N')";
-        $strSqlSearch .= "\n AND ST.CLOSED='N' AND ST.DELETED='N' AND ST.SITE_ID='" . $DB->ForSql($Params['SITE_ID']) . "'";
+        $strSqlSearch = "((ST.PERSONAL='Y' AND ST.CREATED_BY=" . intval($userId) . ") OR ST.PERSONAL='N')";
+        $strSqlSearch .= "\n AND ST.CLOSED='N' AND ST.DELETED='N' AND ST.SITE_ID='" . $DB->ForSql(
+                $Params['SITE_ID']
+            ) . "'";
 
-        if ($Params["PAGE_URL"])
+        if ($Params["PAGE_URL"]) {
             $strSqlSearch .= "\n AND ST.PAGE_URL='" . $DB->ForSql($Params["PAGE_URL"]) . "'";
+        }
 
         $strSql = "
 			SELECT
@@ -340,46 +383,55 @@ class CSticker
         $res = $DB->Query($strSql, false, $err_mess . __LINE__);
 
         $count = 0;
-        if ($arRes = $res->Fetch())
+        if ($arRes = $res->Fetch()) {
             $count = $arRes['CNT'];
+        }
 
-        if ($bCache)
+        if ($bCache) {
             $CACHE_MANAGER->Set($cacheId, $count);
+        }
 
         return $count;
     }
 
     public static function Edit($Params)
     {
-        if (!CSticker::CanDoOperation('sticker_edit'))
+        if (!CSticker::CanDoOperation('sticker_edit')) {
             return;
+        }
 
         global $DB, $USER;
         $arFields = $Params['arFields'];
 
-        if (!CSticker::CheckFields($arFields))
+        if (!CSticker::CheckFields($arFields)) {
             return false;
+        }
 
         $bNew = !isset($arFields['ID']) || $arFields['ID'] <= 0;
 
-        if (!isset($arFields['~DATE_UPDATE']))
+        if (!isset($arFields['~DATE_UPDATE'])) {
             $arFields['~DATE_UPDATE'] = $DB->CurrentTimeFunction();
+        }
 
-        if (!isset($arFields['MODIFIED_BY']))
+        if (!isset($arFields['MODIFIED_BY'])) {
             $arFields['MODIFIED_BY'] = $USER->GetId();
+        }
 
-        if (!isset($arFields['SITE_ID']))
+        if (!isset($arFields['SITE_ID'])) {
             $arFields['SITE_ID'] = $_REQUEST['site_id'];
+        }
 
         $arFields['PAGE_URL'] = str_replace(' ', '%20', $arFields['PAGE_URL']);
 
         if ($bNew) // Add
         {
-            if (!isset($arFields['CREATED_BY']))
+            if (!isset($arFields['CREATED_BY'])) {
                 $arFields['CREATED_BY'] = $arFields['MODIFIED_BY'];
+            }
 
-            if (!isset($arFields['~DATE_CREATE']))
+            if (!isset($arFields['~DATE_CREATE'])) {
                 $arFields['~DATE_CREATE'] = $arFields['~DATE_UPDATE'];
+            }
 
             unset($arFields['ID']);
 
@@ -393,9 +445,14 @@ class CSticker
             $strSql =
                 "UPDATE b_sticker SET " .
                 $strUpdate .
-                " WHERE ID=" . IntVal($ID);
+                " WHERE ID=" . intval($ID);
 
-            $DB->QueryBind($strSql, Array("CONTENT" => $arFields["CONTENT"], "MARKER_ADJUST" => $arFields["MARKER_ADJUST"]), false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+            $DB->QueryBind(
+                $strSql,
+                Array("CONTENT" => $arFields["CONTENT"], "MARKER_ADJUST" => $arFields["MARKER_ADJUST"]),
+                false,
+                "File: " . __FILE__ . "<br>Line: " . __LINE__
+            );
         }
 
         CSticker::ClearCache();
@@ -404,12 +461,14 @@ class CSticker
 
     public static function DeleteAll()
     {
-        if (!CSticker::CanDoOperation('sticker_del'))
+        if (!CSticker::CanDoOperation('sticker_del')) {
             return GetMessage('FMST_DEL_ACCESS_ERROR');
+        }
 
         global $DB;
-        if (!$DB->Query("DELETE FROM b_sticker WHERE 1=1", false, "File: " . __FILE__ . "<br>Line: " . __LINE__))
+        if (!$DB->Query("DELETE FROM b_sticker WHERE 1=1", false, "File: " . __FILE__ . "<br>Line: " . __LINE__)) {
             return GetMessage('FMST_REQ_ERROR');
+        }
 
         CSticker::ClearCache();
         return true;
@@ -417,23 +476,28 @@ class CSticker
 
     public static function Delete($ids = array())
     {
-        if (!is_array($ids))
+        if (!is_array($ids)) {
             $ids = array($ids);
+        }
 
-        if (!CSticker::CanDoOperation('sticker_del'))
+        if (!CSticker::CanDoOperation('sticker_del')) {
             return GetMessage('FMST_DEL_ACCESS_ERROR');
+        }
 
-        if (count($ids) == 0)
+        if (count($ids) == 0) {
             return GetMessage('FMST_NO_ITEMS_WARN');
+        }
 
         global $DB;
         $strIds = "";
-        for ($i = 0; $i < count($ids); $i++)
-            $strIds .= "," . IntVal($ids[$i]);
+        for ($i = 0; $i < count($ids); $i++) {
+            $strIds .= "," . intval($ids[$i]);
+        }
         $strSql = "DELETE FROM b_sticker WHERE ID in (" . trim($strIds, ", ") . ")";
 
-        if (!$DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__))
+        if (!$DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__)) {
             return GetMessage('FMST_REQ_ERROR');
+        }
 
         CSticker::ClearCache();
         return true;
@@ -446,19 +510,23 @@ class CSticker
 
     public static function SetHiden($ids = array(), $bHide)
     {
-        if (!is_array($ids))
+        if (!is_array($ids)) {
             $ids = array($ids);
+        }
 
-        if (!CSticker::CanDoOperation('sticker_edit'))
+        if (!CSticker::CanDoOperation('sticker_edit')) {
             return GetMessage('FMST_EDIT_ACCESS_ERROR');
+        }
 
-        if (count($ids) == 0)
+        if (count($ids) == 0) {
             return GetMessage('FMST_NO_ITEMS_WARN');
+        }
 
         global $DB;
         $strIds = "";
-        for ($i = 0; $i < count($ids); $i++)
-            $strIds .= "," . IntVal($ids[$i]);
+        for ($i = 0; $i < count($ids); $i++) {
+            $strIds .= "," . intval($ids[$i]);
+        }
 
         $arFields = array("CLOSED" => $bHide ? "Y" : "N");
         $strUpdate = $DB->PrepareUpdate("b_sticker", $arFields);
@@ -467,8 +535,9 @@ class CSticker
             $strUpdate .
             " WHERE ID in (" . trim($strIds, ", ") . ")";
 
-        if (!$DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__))
+        if (!$DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__)) {
             return GetMessage('FMST_REQ_ERROR');
+        }
 
         CSticker::ClearCache();
         return true;
@@ -483,8 +552,9 @@ class CSticker
 
         $pageUrl = $APPLICATION->GetCurPage();
         $pageTitle = $APPLICATION->GetTitle();
-        if ($pageTitle == '')
+        if ($pageTitle == '') {
             $pageTitle = $pageUrl;
+        }
 
         $listSize = CUtil::GetPopupSize("bx_sticker_list_resize_id", array("width" => 800, "height" => 450));
         $size = explode("_", COption::GetOptionString("fileman", "stickers_start_sizes", "350_200"));
@@ -510,14 +580,15 @@ class CSticker
             "useHotkeys" => COption::GetOptionString('fileman', "stickers_use_hotkeys", "Y") == "Y",
             "filterParams" => CSticker::GetFilterParams(),
             "bHideBottom" => COption::GetOptionString("fileman", "stickers_hide_bottom", "Y") == "Y",
-            "focusOnSticker" => isset($_GET['show_sticker']) ? intVal($_GET['show_sticker']) : 0,
+            "focusOnSticker" => isset($_GET['show_sticker']) ? intval($_GET['show_sticker']) : 0,
             "strDate" => FormatDate("j F", time() + CTimeZone::GetOffset()),
             "curPageCount" => $Params['curPageCount'],
             "site_id" => SITE_ID
         );
 
-        if (!is_array($Params['stickers']))
+        if (!is_array($Params['stickers'])) {
             $Params['stickers'] = array();
+        }
 
         self::$Params = array("JSCONFIG" => $JSConfig, "STICKERS" => $Params['stickers']);
     }
@@ -525,7 +596,10 @@ class CSticker
     public static function InitJsAfter()
     {
         if (is_array(self::$Params)) {
-            return '<script type="text/javascript">BX.ready(function(){' . CSticker::AppendLangMessages() . " window.oBXSticker = new BXSticker(" . CUtil::PhpToJSObject(self::$Params['JSCONFIG']) . ", " . CUtil::PhpToJSObject(self::$Params['STICKERS']) . ", BXST_MESS);});</script>";
+            return '<script type="text/javascript">BX.ready(function(){' . CSticker::AppendLangMessages(
+                ) . " window.oBXSticker = new BXSticker(" . CUtil::PhpToJSObject(
+                    self::$Params['JSCONFIG']
+                ) . ", " . CUtil::PhpToJSObject(self::$Params['STICKERS']) . ", BXST_MESS);});</script>";
         }
     }
 
@@ -535,18 +609,21 @@ class CSticker
         static $arUsersCache = array();
 
         if ($id !== false) {
-            if (isset($arUsersCache[$id]))
+            if (isset($arUsersCache[$id])) {
                 return $arUsersCache[$id];
+            }
 
             $rsu = CUser::GetByID($id);
-            if ($arUser = $rsu->Fetch())
+            if ($arUser = $rsu->Fetch()) {
                 $arUsersCache[$id] = htmlspecialcharsback(CUser::FormatName(CSite::GetNameFormat(), $arUser));
-            else
+            } else {
                 $arUsersCache[$id] = '- Unknown -';
+            }
         } else {
             $id = $USER->GetId();
-            if (isset($arUsersCache[$id]))
+            if (isset($arUsersCache[$id])) {
                 return $arUsersCache[$id];
+            }
 
             $arUsersCache[$id] = htmlspecialcharsback($USER->GetFormattedName());
         }
@@ -590,33 +667,38 @@ class CSticker
     {
         global $APPLICATION, $USER;
 
-        if (!CSticker::CanDoOperation('sticker_view'))
+        if (!CSticker::CanDoOperation('sticker_view')) {
             return;
+        }
         // Dectect - show stickers or No
         $bGetStickers = CSticker::GetBShowStickers();
 
         $Stickers = array();
         if ($bGetStickers) {
-            $Stickers = CSticker::GetList(array(
-                'arFilter' => array(
-                    'USER_ID' => $USER->GetId(),
-                    'PAGE_URL' => $APPLICATION->GetCurPage(),
-                    'CLOSED' => 'N',
-                    'DELETED' => 'N',
-                    'SITE_ID' => SITE_ID
+            $Stickers = CSticker::GetList(
+                array(
+                    'arFilter' => array(
+                        'USER_ID' => $USER->GetId(),
+                        'PAGE_URL' => $APPLICATION->GetCurPage(),
+                        'CLOSED' => 'N',
+                        'DELETED' => 'N',
+                        'SITE_ID' => SITE_ID
+                    )
                 )
-            ));
+            );
         } else {
             $Stickers = array();
         }
 
         $curPageCount = isset($Params['curPageCount']) ? $Params['curPageCount'] : CSticker::GetCurPageCount();
 
-        CSticker::InitJS(array(
-            'bInit' => $bGetStickers,
-            'stickers' => $Stickers,
-            'curPageCount' => $curPageCount
-        ));
+        CSticker::InitJS(
+            array(
+                'bInit' => $bGetStickers,
+                'stickers' => $Stickers,
+                'curPageCount' => $curPageCount
+            )
+        );
     }
 
     public static function GetErrorMess()
@@ -626,23 +708,26 @@ class CSticker
 
     public static function GetScriptStr($mode)
     {
-        if ($mode == 'add')
+        if ($mode == 'add') {
             return "if (window.oBXSticker){window.oBXSticker.AddSticker();}";
-        elseif ($mode == 'list_cur')
+        } elseif ($mode == 'list_cur') {
             return "if (window.oBXSticker){window.oBXSticker.ShowList('current');}";
-        elseif ($mode == 'list_all')
+        } elseif ($mode == 'list_all') {
             return "if (window.oBXSticker){window.oBXSticker.ShowList('all');}";
-        elseif ($mode == 'show')
+        } elseif ($mode == 'show') {
             return "if (window.oBXSticker){window.oBXSticker.ShowAll();}";
+        }
         return '';
     }
 
     public static function GetBShowStickers()
     {
-        if (isset($_SESSION["SESS_SHOW_STICKERS"]) && $_SESSION["SESS_SHOW_STICKERS"] == "Y")
+        if (isset($_SESSION["SESS_SHOW_STICKERS"]) && $_SESSION["SESS_SHOW_STICKERS"] == "Y") {
             return true;
-        if (isset($_GET['show_sticker']) && intVal($_GET['show_sticker']) > 0)
+        }
+        if (isset($_GET['show_sticker']) && intval($_GET['show_sticker']) > 0) {
             return true;
+        }
         return false;
     }
 
@@ -657,20 +742,39 @@ class CSticker
         if ($text != "") {
             if (!is_object(self::$TextParser)) {
                 self::$TextParser = new CTextParser();
-                self::$TextParser->allow = array("HTML" => "N", "ANCHOR" => "Y", "BIU" => "Y", "IMG" => "N", "QUOTE" => "N", "CODE" => "N", "FONT" => "Y", "LIST" => "Y", "SMILES" => "N", "NL2BR" => "N", "VIDEO" => "N", "TABLE" => "N", "CUT_ANCHOR" => "N", "ALIGN" => "N");
+                self::$TextParser->allow = array(
+                    "HTML" => "N",
+                    "ANCHOR" => "Y",
+                    "BIU" => "Y",
+                    "IMG" => "N",
+                    "QUOTE" => "N",
+                    "CODE" => "N",
+                    "FONT" => "Y",
+                    "LIST" => "Y",
+                    "SMILES" => "N",
+                    "NL2BR" => "N",
+                    "VIDEO" => "N",
+                    "TABLE" => "N",
+                    "CUT_ANCHOR" => "N",
+                    "ALIGN" => "N"
+                );
             }
 
             $html = self::$TextParser->convertText($text);
 
             if ($bForList) {
-                $html = preg_replace(array(
-                    "/\[st_title\](.+?)\[\/st_title\]/is" . BX_UTF_PCRE_MODIFIER,
-                    "/<br(.+?)>/is" . BX_UTF_PCRE_MODIFIER,
-                    "/<\/??ol(.+?)>/is" . BX_UTF_PCRE_MODIFIER,
-                    "/<\/??ul(.+?)>/is" . BX_UTF_PCRE_MODIFIER,
-                    "/<\/??li(.+?)>/is" . BX_UTF_PCRE_MODIFIER,
-                    "/<\/??w+(.+?)>/is" . BX_UTF_PCRE_MODIFIER
-                ), " ", $html);
+                $html = preg_replace(
+                    array(
+                        "/\[st_title\](.+?)\[\/st_title\]/is" . BX_UTF_PCRE_MODIFIER,
+                        "/<br(.+?)>/is" . BX_UTF_PCRE_MODIFIER,
+                        "/<\/??ol(.+?)>/is" . BX_UTF_PCRE_MODIFIER,
+                        "/<\/??ul(.+?)>/is" . BX_UTF_PCRE_MODIFIER,
+                        "/<\/??li(.+?)>/is" . BX_UTF_PCRE_MODIFIER,
+                        "/<\/??w+(.+?)>/is" . BX_UTF_PCRE_MODIFIER
+                    ),
+                    " ",
+                    $html
+                );
 
                 $html = preg_replace(
                     array(
@@ -681,8 +785,9 @@ class CSticker
                     $html
                 );
 
-                if (strlen($html) > 40)
-                    $html = substr($html, 0, 40) . "...";
+                if (mb_strlen($html) > 40) {
+                    $html = mb_substr($html, 0, 40) . "...";
+                }
             } else {
                 $html = preg_replace(
                     "/\[st_title\](.*?)\[\/st_title\]/is" . BX_UTF_PCRE_MODIFIER,
@@ -707,9 +812,13 @@ class CSticker
 
     public static function GetStickerInfo($createdBy, $dateCreate, $modBy, $dateMod)
     {
-        $str = GetMessage("FMST_CREATED") . ": <b>" . htmlspecialcharsEx(CSticker::GetUserName($createdBy)) . "</b> " . CSticker::GetUsableDate($dateCreate) .
+        $str = GetMessage("FMST_CREATED") . ": <b>" . htmlspecialcharsEx(
+                CSticker::GetUserName($createdBy)
+            ) . "</b> " . CSticker::GetUsableDate($dateCreate) .
             "<br/>" .
-            GetMessage("FMST_UPDATED") . ": <b>" . htmlspecialcharsEx(CSticker::GetUserName($modBy)) . "</b> " . CSticker::GetUsableDate($dateMod);
+            GetMessage("FMST_UPDATED") . ": <b>" . htmlspecialcharsEx(
+                CSticker::GetUserName($modBy)
+            ) . "</b> " . CSticker::GetUsableDate($dateMod);
         return $str;
     }
 
@@ -735,16 +844,20 @@ class CSticker
 
         $res = CUserOptions::GetOption('fileman', "stickers_list_filter", false);
         if ($res !== false && CheckSerializedData($res)) {
-            $Filter = unserialize($res);
+            $Filter = unserialize($res, ['allowed_classes' => false]);
             if (is_array($Filter)) {
-                if ($Filter['type'])
+                if ($Filter['type']) {
                     $result['type'] = $Filter['type'] == 'my' ? 'my' : 'all';
-                if ($Filter['status'] && in_array($Filter['status'], array('all', 'opened', 'closed')))
+                }
+                if ($Filter['status'] && in_array($Filter['status'], array('all', 'opened', 'closed'))) {
                     $result['status'] = $Filter['status'];
-                if ($Filter['page'])
+                }
+                if ($Filter['page']) {
                     $result['page'] = $Filter['page'];
-                if ($Filter['colors'])
+                }
+                if ($Filter['colors']) {
                     $result['colors'] = $Filter['colors'];
+                }
             }
         }
 

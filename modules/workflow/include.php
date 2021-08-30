@@ -1,4 +1,5 @@
 <?
+
 global $DBType;
 
 CModule::AddAutoloadClasses(
@@ -26,7 +27,11 @@ function GetDefaultEpilog()
 
 function PathToWF($text, $DOCUMENT_ID)
 {
-    return preg_replace("'(<img[^>]+?src\\s*=\\s*\")(\\S+)(\"[^>]*>)'i", "\\1/bitrix/admin/workflow_get_file.php?did=" . $DOCUMENT_ID . "&fname=\\2\\3", $text);
+    return preg_replace(
+        "'(<img[^>]+?src\\s*=\\s*\")(\\S+)(\"[^>]*>)'i",
+        "\\1/bitrix/admin/workflow_get_file.php?did=" . $DOCUMENT_ID . "&fname=\\2\\3",
+        $text
+    );
 }
 
 function convert_image($img = "", $query = "", $param = "")
@@ -47,7 +52,11 @@ function convert_image($img = "", $query = "", $param = "")
 
 function WFToPath($text)
 {
-    return preg_replace_callback("'(<img[^>]+?src\\s*=\\s*[\"\'])/bitrix/admin/workflow_get_file.php\\?([^>]+)([\"\'][^>]*>)'i", "convert_image", $text);
+    return preg_replace_callback(
+        "'(<img[^>]+?src\\s*=\\s*[\"\'])/bitrix/admin/workflow_get_file.php\\?([^>]+)([\"\'][^>]*>)'i",
+        "convert_image",
+        $text
+    );
 }
 
 function SavePreviewContent($abs_path, $strContent)
@@ -102,12 +111,15 @@ function LongestCommonSubsequence($X, $Y)
                 if ($k != 0) {
                     $C[$i][$j] = $k;
                     //Clean up to the left
-                    if ($C[$i][$j - 1] < $k)
-                        for ($jj = $j - 1; $jj >= $n_start; $jj--)
-                            if (is_array($C[$i]) && array_key_exists($jj, $C[$i]))
+                    if ($C[$i][$j - 1] < $k) {
+                        for ($jj = $j - 1; $jj >= $n_start; $jj--) {
+                            if (is_array($C[$i]) && array_key_exists($jj, $C[$i])) {
                                 unset($C[$i][$jj]);
-                            else
+                            } else {
                                 break;
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -116,8 +128,9 @@ function LongestCommonSubsequence($X, $Y)
             $ii = $i - 1;
             if (is_array($C[$ii])) {
                 for ($j = $n_end; $j > $n_start && array_key_exists($j, $C[$ii]); $j--) {
-                    if ($C[$i][$j] > $C[$ii][$j])
+                    if ($C[$i][$j] > $C[$ii][$j]) {
                         unset($C[$ii][$j]);
+                    }
                 }
             }
         }
@@ -159,7 +172,6 @@ function printDiff($C, $X, $Y, $Xt, $Yt, $i, $j)
 
 function getDiff($X, $Y)
 {
-
     preg_match_all("/(<.*?>\s*|\s+)([^\s<]*)/", " " . $X, $Xmatch);
     preg_match_all("/(<.*?>\s*|\s+)([^\s<]*)/", " " . $Y, $Ymatch);
 

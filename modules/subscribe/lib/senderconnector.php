@@ -61,24 +61,29 @@ if (Loader::includeModule('sender')) {
             $filter = array();
 
             $rubric = $this->getFieldValue('RUBRIC', null);
-            if ($rubric)
+            if ($rubric) {
                 $filter['RUBRIC'] = $rubric;
+            }
 
             $active = $this->getFieldValue('ACTIVE', null);
-            if ($active)
+            if ($active) {
                 $filter['ACTIVE'] = $active;
+            }
 
             $confirmed = $this->getFieldValue('CONFIRMED', null);
-            if ($confirmed)
+            if ($confirmed) {
                 $filter['CONFIRMED'] = $confirmed;
+            }
 
             $dateInsertFrom = $this->getFieldValue('DATE_INSERT_FROM', null);
-            if ($dateInsertFrom)
+            if ($dateInsertFrom) {
                 $filter['INSERT_1'] = $dateInsertFrom;
+            }
 
             $dateInsertTo = $this->getFieldValue('DATE_INSERT_TO', null);
-            if ($dateInsertTo)
+            if ($dateInsertTo) {
                 $filter['INSERT_2'] = $dateInsertTo;
+            }
 
             $subscriberList = \CSubscription::GetList(array('ID' => 'ASC'), $filter);
 

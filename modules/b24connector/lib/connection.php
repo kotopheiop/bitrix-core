@@ -8,7 +8,6 @@ use Bitrix\Main\Result;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Socialservices\ApTable;
-use Bitrix\Socialservices\ContactConnectTable;
 
 Loc::loadMessages(__FILE__);
 
@@ -24,11 +23,13 @@ class Connection
      */
     private static function getAppId()
     {
-        if (!Loader::includeModule('socialservices'))
+        if (!Loader::includeModule('socialservices')) {
             return '';
+        }
 
-        if (!self::isLinkedToNet())
+        if (!self::isLinkedToNet()) {
             self::linkToNet();
+        }
 
         $interface = new \CBitrix24NetOAuthInterface();
         return $interface->getAppID();
@@ -43,18 +44,22 @@ class Connection
      */
     private static function linkToNet()
     {
-        if (!Loader::includeModule('socialservices'))
+        if (!Loader::includeModule('socialservices')) {
             return false;
+        }
 
-        if (self::isLinkedToNet())
+        if (self::isLinkedToNet()) {
             return true;
+        }
 
         $result = false;
         $request = \Bitrix\Main\Context::getCurrent()->getRequest();
         $host = ($request->isHttps() ? 'https://' : 'http://') . $request->getHttpHost();
         $registerResult = \CSocServBitrix24Net::registerSite($host);
 
-        if (is_array($registerResult) && isset($registerResult["client_id"]) && isset($registerResult["client_secret"])) {
+        if (is_array(
+                $registerResult
+            ) && isset($registerResult["client_id"]) && isset($registerResult["client_secret"])) {
             Option::set('socialservices', 'bitrix24net_domain', $host);
             Option::set('socialservices', 'bitrix24net_id', $registerResult["client_id"]);
             Option::set('socialservices', 'bitrix24net_secret', $registerResult["client_secret"]);
@@ -91,20 +96,24 @@ class Connection
         if ($connection = self::getFields()) {
             $res = ApTable::delete($connection['ID']);
 
-            if (!$res->isSuccess())
+            if (!$res->isSuccess()) {
                 $result->addErrors($res->getErrors());
+            }
 
-            $dbRes = ButtonTable::getList(array(
-                'filter' => array(
-                    '=APP_ID' => $connection['ID']
+            $dbRes = ButtonTable::getList(
+                array(
+                    'filter' => array(
+                        '=APP_ID' => $connection['ID']
+                    )
                 )
-            ));
+            );
 
             while ($but = $dbRes->fetch()) {
                 $res = ButtonTable::delete($but['ID']);
 
-                if (!$res->isSuccess())
+                if (!$res->isSuccess()) {
                     $result->addErrors($res->getErrors());
+                }
             }
         }
 
@@ -125,14 +134,16 @@ class Connection
         $href = 'javascript:void(0)';
         $moduleAccess = $APPLICATION->GetGroupRight('b24connector');
 
-        if (strlen($title) <= 0)
+        if ($title == '') {
             $title = Loc::getMessage('B24C_CONN_BUTT_CONNECT');
+        }
 
         if (!Loader::includeModule('socialservices') || $moduleAccess <= "R") {
             $class .= ' connector-btn-blue-disabled';
         } else {
-            if (!self::isLinkedToNet())
+            if (!self::isLinkedToNet()) {
                 self::linkToNet();
+            }
 
             $hosts = self::getHostsList();
 
@@ -140,7 +151,9 @@ class Connection
                 $urlTeml = self::getUrl('##HOST##');
 
                 if (!empty($urlTeml)) {
-                    $onclick = 'BX.B24Connector.showPortalChoosingDialog(\'' . \CUtil::JSEscape($urlTeml) . '\', ' . \CUtil::PhpToJSObject($hosts) . ');';
+                    $onclick = 'BX.B24Connector.showPortalChoosingDialog(\'' . \CUtil::JSEscape(
+                            $urlTeml
+                        ) . '\', ' . \CUtil::PhpToJSObject($hosts) . ');';
                 } else {
                     $onclick = 'alert(\'' . Loc::getMessage('B24C_CONN_CONNECT_ERROR') . '\');';
                 }
@@ -150,7 +163,7 @@ class Connection
         }
 
         $result = '<a href="' . htmlspecialcharsbx($href) . '"' .
-            (strlen($onclick) > 0 ? ' onclick="' . $onclick . '"' : '') .
+            ($onclick <> '' ? ' onclick="' . $onclick . '"' : '') .
             ' class="' . $class . '" >' .
             $title . '</a>';
 
@@ -171,8 +184,9 @@ class Connection
         if (!\Bitrix\Main\Loader::includeModule('socialservices')) {
             $disabled = true;
         } else {
-            if (!self::isLinkedToNet())
+            if (!self::isLinkedToNet()) {
                 self::linkToNet();
+            }
 
             $hosts = self::getHostsList();
 
@@ -180,7 +194,9 @@ class Connection
                 $urlTeml = self::getUrl('##HOST##');
 
                 if (!empty($urlTeml)) {
-                    $onclick = 'BX.B24Connector.showPortalChoosingDialog(\'' . \CUtil::JSEscape($urlTeml) . '\', ' . \CUtil::PhpToJSObject($hosts) . ');';
+                    $onclick = 'BX.B24Connector.showPortalChoosingDialog(\'' . \CUtil::JSEscape(
+                            $urlTeml
+                        ) . '\', ' . \CUtil::PhpToJSObject($hosts) . ');';
                 } else {
                     $onclick = 'alert(\'' . \CUtil::JSEscape(Loc::getMessage('B24C_CONN_CONNECT_ERROR')) . '\');';
                 }
@@ -189,7 +205,9 @@ class Connection
             }
         }
 
-        return '<input type="button" onclick="' . htmlspecialcharsbx($onclick) . '" value="' . $title . '"' . ($disabled ? ' disabled' : '') . '>';
+        return '<input type="button" onclick="' . htmlspecialcharsbx(
+                $onclick
+            ) . '" value="' . $title . '"' . ($disabled ? ' disabled' : '') . '>';
     }
 
     /**
@@ -203,8 +221,9 @@ class Connection
         if ($result === null) {
             $result = array();
 
-            if (Loader::includeModule('socialservices'))
+            if (Loader::includeModule('socialservices')) {
                 $result = ApTable::getConnection();
+            }
         }
 
         return is_array($result) ? $result : array();
@@ -239,21 +258,27 @@ class Connection
     {
         global $APPLICATION;
 
-        if (strlen($host) <= 0)
+        if ($host == '') {
             return '';
+        }
 
-        if (!Loader::includeModule("socialservices"))
+        if (!Loader::includeModule("socialservices")) {
             return '';
+        }
 
         $result = '';
         $appId = self::getAppID();
 
-        if (strlen($appId) > 0) {
-            $result = $host . 'apconnect/?client_id=' . urlencode($appId) . '&preset=ap&state=' . urlencode(http_build_query(array(
-                    'check_key' => \CSocServAuthManager::GetUniqueKey(),
-                    'admin' => 1,
-                    'backurl' => $APPLICATION->GetCurPageParam(),
-                )));
+        if ($appId <> '') {
+            $result = $host . 'apconnect/?client_id=' . urlencode($appId) . '&preset=ap&state=' . urlencode(
+                    http_build_query(
+                        array(
+                            'check_key' => \CSocServAuthManager::GetUniqueKey(),
+                            'admin' => 1,
+                            'backurl' => $APPLICATION->GetCurPageParam(),
+                        )
+                    )
+                );
         }
 
         return $result;
@@ -265,19 +290,26 @@ class Connection
      */
     private static function getUrlNet()
     {
-        if (!Loader::includeModule("socialservices"))
+        if (!Loader::includeModule("socialservices")) {
             return '';
+        }
 
         global $APPLICATION;
         $appId = self::getAppID();
         $result = '';
 
-        if (strlen($appId) > 0) {
-            $result = \CBitrix24NetOAuthInterface::NET_URL . '/oauth/select/?preset=ap&client_id=' . urlencode($appId) . '&state=' . urlencode(http_build_query(array(
-                    'check_key' => \CSocServAuthManager::GetUniqueKey(),
-                    'admin' => 1,
-                    'backurl' => $APPLICATION->GetCurPageParam('', array('apaction', 'apID')),
-                )));
+        if ($appId <> '') {
+            $result = \CBitrix24NetOAuthInterface::NET_URL . '/oauth/select/?preset=ap&client_id=' . urlencode(
+                    $appId
+                ) . '&state=' . urlencode(
+                    http_build_query(
+                        array(
+                            'check_key' => \CSocServAuthManager::GetUniqueKey(),
+                            'admin' => 1,
+                            'backurl' => $APPLICATION->GetCurPageParam('', array('apaction', 'apID')),
+                        )
+                    )
+                );
         }
 
         return $result;
@@ -289,14 +321,16 @@ class Connection
      */
     private static function getHostsList()
     {
-        if (!Loader::includeModule('socialservices'))
+        if (!Loader::includeModule('socialservices')) {
             return array();
+        }
 
         $result = array();
         $query = \CBitrix24NetTransport::init();
 
-        if ($query)
+        if ($query) {
             $result = $query->call('admin.profile.list', array());
+        }
 
         return !empty($result['result']) && is_array($result['result']) ? $result['result'] : array();
     }
@@ -313,8 +347,9 @@ class Connection
         } else {
             $domain = self::getDomain();
 
-            if (strlen($domain) <= 0)
+            if ($domain == '') {
                 return '';
+            }
 
             $result = 'https://' . htmlspecialcharsbx($domain) . '/settings/openlines/'; //default for b24 cloud
         }
@@ -348,8 +383,9 @@ class Connection
 
     private static function getDataFromRest($method, $pathToData, $defaultPath = '')
     {
-        if (!Loader::includeModule('socialservices'))
+        if (!Loader::includeModule('socialservices')) {
             return '';
+        }
 
         $result = '';
 
@@ -368,14 +404,16 @@ class Connection
             }
         }
 
-        if (is_array($result))
+        if (is_array($result)) {
             return $result;
+        }
 
-        if (strlen($result) <= 0) {
+        if ($result == '') {
             $domain = self::getDomain();
 
-            if (strlen($domain) <= 0)
+            if ($domain == '') {
                 return '';
+            }
 
             $result = 'https://' . htmlspecialcharsbx($domain) . $defaultPath; //default for b24 cloud
         }

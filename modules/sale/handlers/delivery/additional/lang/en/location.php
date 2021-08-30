@@ -1,4 +1,5 @@
 <?
+
 $MESS["SALE_DLVRS_ADDL_LOCATIONS_ERROR"] = "Cannot get locations file";
 $MESS["SALE_DLVRS_ADDL_LOCATIONS_ERROR_TMP"] = "Cannot save reference locations to temporary table";
 $MESS["SALE_DLVRS_ADDL_LOCATIONS_ERROR_SID"] = "Cannot get the delivery service ID";

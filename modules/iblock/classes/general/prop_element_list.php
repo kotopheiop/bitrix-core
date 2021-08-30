@@ -25,32 +25,39 @@ class CIBlockPropertyElementList
             "PrepareSettings" => array(__CLASS__, "PrepareSettings"),
             "GetSettingsHTML" => array(__CLASS__, "GetSettingsHTML"),
             "GetExtendedValue" => array(__CLASS__, "GetExtendedValue"),
+            'GetUIEntityEditorProperty' => array(__CLASS__, 'GetUIEntityEditorProperty'),
         );
     }
 
     public static function PrepareSettings($arProperty)
     {
         $size = 0;
-        if (is_array($arProperty["USER_TYPE_SETTINGS"]))
+        if (is_array($arProperty["USER_TYPE_SETTINGS"])) {
             $size = intval($arProperty["USER_TYPE_SETTINGS"]["size"]);
-        if ($size <= 0)
+        }
+        if ($size <= 0) {
             $size = 1;
+        }
 
         $width = 0;
-        if (is_array($arProperty["USER_TYPE_SETTINGS"]))
+        if (is_array($arProperty["USER_TYPE_SETTINGS"])) {
             $width = intval($arProperty["USER_TYPE_SETTINGS"]["width"]);
-        if ($width <= 0)
+        }
+        if ($width <= 0) {
             $width = 0;
+        }
 
-        if (is_array($arProperty["USER_TYPE_SETTINGS"]) && $arProperty["USER_TYPE_SETTINGS"]["group"] === "Y")
+        if (is_array($arProperty["USER_TYPE_SETTINGS"]) && $arProperty["USER_TYPE_SETTINGS"]["group"] === "Y") {
             $group = "Y";
-        else
+        } else {
             $group = "N";
+        }
 
-        if (is_array($arProperty["USER_TYPE_SETTINGS"]) && $arProperty["USER_TYPE_SETTINGS"]["multiple"] === "Y")
+        if (is_array($arProperty["USER_TYPE_SETTINGS"]) && $arProperty["USER_TYPE_SETTINGS"]["multiple"] === "Y") {
             $multiple = "Y";
-        else
+        } else {
             $multiple = "N";
+        }
 
         return array(
             "size" => $size,
@@ -97,22 +104,27 @@ class CIBlockPropertyElementList
     public static function GetPropertyFieldHtml($arProperty, $value, $strHTMLControlName)
     {
         $settings = CIBlockPropertyElementList::PrepareSettings($arProperty);
-        if ($settings["size"] > 1)
+        if ($settings["size"] > 1) {
             $size = ' size="' . $settings["size"] . '"';
-        else
+        } else {
             $size = '';
+        }
 
-        if ($settings["width"] > 0)
+        if ($settings["width"] > 0) {
             $width = ' style="width:' . $settings["width"] . 'px"';
-        else
+        } else {
             $width = '';
+        }
 
         $bWasSelect = false;
         $options = CIBlockPropertyElementList::GetOptionsHtml($arProperty, array($value["VALUE"]), $bWasSelect);
 
         $html = '<select name="' . $strHTMLControlName["VALUE"] . '"' . $size . $width . '>';
-        if ($arProperty["IS_REQUIRED"] != "Y")
-            $html .= '<option value=""' . (!$bWasSelect ? ' selected' : '') . '>' . Loc::getMessage("IBLOCK_PROP_ELEMENT_LIST_NO_VALUE") . '</option>';
+        if ($arProperty["IS_REQUIRED"] != "Y") {
+            $html .= '<option value=""' . (!$bWasSelect ? ' selected' : '') . '>' . Loc::getMessage(
+                    "IBLOCK_PROP_ELEMENT_LIST_NO_VALUE"
+                ) . '</option>';
+        }
         $html .= $options;
         $html .= '</select>';
         return $html;
@@ -124,28 +136,32 @@ class CIBlockPropertyElementList
         $values = array();
         if (is_array($value)) {
             foreach ($value as $property_value_id => $arValue) {
-                if (is_array($arValue))
+                if (is_array($arValue)) {
                     $values[$property_value_id] = $arValue["VALUE"];
-                else
+                } else {
                     $values[$property_value_id] = $arValue;
+                }
 
                 if (preg_match("/^n(\\d+)$/", $property_value_id, $match)) {
-                    if ($match[1] > $max_n)
+                    if ($match[1] > $max_n) {
                         $max_n = intval($match[1]);
+                    }
                 }
             }
         }
 
         $settings = CIBlockPropertyElementList::PrepareSettings($arProperty);
-        if ($settings["size"] > 1)
+        if ($settings["size"] > 1) {
             $size = ' size="' . $settings["size"] . '"';
-        else
+        } else {
             $size = '';
+        }
 
-        if ($settings["width"] > 0)
+        if ($settings["width"] > 0) {
             $width = ' style="width:' . $settings["width"] . 'px"';
-        else
+        } else {
             $width = '';
+        }
 
         if ($settings["multiple"] == "Y") {
             $bWasSelect = false;
@@ -153,17 +169,23 @@ class CIBlockPropertyElementList
 
             $html = '<input type="hidden" name="' . $strHTMLControlName["VALUE"] . '[]" value="">';
             $html .= '<select multiple name="' . $strHTMLControlName["VALUE"] . '[]"' . $size . $width . '>';
-            if ($arProperty["IS_REQUIRED"] != "Y")
-                $html .= '<option value=""' . (!$bWasSelect ? ' selected' : '') . '>' . Loc::getMessage("IBLOCK_PROP_ELEMENT_LIST_NO_VALUE") . '</option>';
+            if ($arProperty["IS_REQUIRED"] != "Y") {
+                $html .= '<option value=""' . (!$bWasSelect ? ' selected' : '') . '>' . Loc::getMessage(
+                        "IBLOCK_PROP_ELEMENT_LIST_NO_VALUE"
+                    ) . '</option>';
+            }
             $html .= $options;
             $html .= '</select>';
         } else {
-            if (end($values) != "" || substr(key($values), 0, 1) != "n")
+            if (end($values) != "" || mb_substr(key($values), 0, 1) != "n") {
                 $values["n" . ($max_n + 1)] = "";
+            }
 
             $name = $strHTMLControlName["VALUE"] . "VALUE";
 
-            $html = '<table cellpadding="0" cellspacing="0" border="0" class="nopadding" width="100%" id="tb' . md5($name) . '">';
+            $html = '<table cellpadding="0" cellspacing="0" border="0" class="nopadding" width="100%" id="tb' . md5(
+                    $name
+                ) . '">';
             foreach ($values as $property_value_id => $value) {
                 $html .= '<tr><td>';
 
@@ -171,7 +193,9 @@ class CIBlockPropertyElementList
                 $options = CIBlockPropertyElementList::GetOptionsHtml($arProperty, array($value), $bWasSelect);
 
                 $html .= '<select name="' . $strHTMLControlName["VALUE"] . '[' . $property_value_id . '][VALUE]"' . $size . $width . '>';
-                $html .= '<option value=""' . (!$bWasSelect ? ' selected' : '') . '>' . Loc::getMessage("IBLOCK_PROP_ELEMENT_LIST_NO_VALUE") . '</option>';
+                $html .= '<option value=""' . (!$bWasSelect ? ' selected' : '') . '>' . Loc::getMessage(
+                        "IBLOCK_PROP_ELEMENT_LIST_NO_VALUE"
+                    ) . '</option>';
                 $html .= $options;
                 $html .= '</select>';
 
@@ -179,7 +203,9 @@ class CIBlockPropertyElementList
             }
             $html .= '</table>';
 
-            $html .= '<input type="button" value="' . Loc::getMessage("IBLOCK_PROP_ELEMENT_LIST_ADD") . '" onClick="BX.IBlock.Tools.addNewRow(\'tb' . md5($name) . '\', -1)">';
+            $html .= '<input type="button" value="' . Loc::getMessage(
+                    "IBLOCK_PROP_ELEMENT_LIST_ADD"
+                ) . '" onClick="BX.IBlock.Tools.addNewRow(\'tb' . md5($name) . '\', -1)">';
         }
         return $html;
     }
@@ -190,27 +216,32 @@ class CIBlockPropertyElementList
         $lAdmin->InitFilter(array($strHTMLControlName["VALUE"]));
         $filterValue = $GLOBALS[$strHTMLControlName["VALUE"]];
 
-        if (isset($filterValue) && is_array($filterValue))
+        if (isset($filterValue) && is_array($filterValue)) {
             $values = $filterValue;
-        else
+        } else {
             $values = array();
+        }
 
         $settings = CIBlockPropertyElementList::PrepareSettings($arProperty);
-        if ($settings["size"] > 1)
+        if ($settings["size"] > 1) {
             $size = ' size="' . $settings["size"] . '"';
-        else
+        } else {
             $size = '';
+        }
 
-        if ($settings["width"] > 0)
+        if ($settings["width"] > 0) {
             $width = ' style="width:' . $settings["width"] . 'px"';
-        else
+        } else {
             $width = '';
+        }
 
         $bWasSelect = false;
         $options = CIBlockPropertyElementList::GetOptionsHtml($arProperty, $values, $bWasSelect);
 
         $html = '<select multiple name="' . $strHTMLControlName["VALUE"] . '[]"' . $size . $width . '>';
-        $html .= '<option value=""' . (!$bWasSelect ? ' selected' : '') . '>' . Loc::getMessage("IBLOCK_PROP_ELEMENT_LIST_ANY_VALUE") . '</option>';
+        $html .= '<option value=""' . (!$bWasSelect ? ' selected' : '') . '>' . Loc::getMessage(
+                "IBLOCK_PROP_ELEMENT_LIST_ANY_VALUE"
+            ) . '</option>';
         $html .= $options;
         $html .= '</select>';
         return $html;
@@ -255,7 +286,6 @@ class CIBlockPropertyElementList
             foreach ($arElements as $arItem) {
                 $items[$arItem["ID"]] = $arItem["NAME"];
             }
-
         } else {
             foreach (CIBlockPropertyElementList::GetElements($arProperty["LINK_IBLOCK_ID"]) as $arItem) {
                 $items[$arItem["ID"]] = $arItem["NAME"];
@@ -298,8 +328,9 @@ class CIBlockPropertyElementList
             if (!isset($cache[$arValue['VALUE']])) {
                 $arFilter = [];
                 $intIBlockID = (int)$arProperty['LINK_IBLOCK_ID'];
-                if ($intIBlockID > 0)
+                if ($intIBlockID > 0) {
                     $arFilter['IBLOCK_ID'] = $intIBlockID;
+                }
                 $arFilter['ID'] = $arValue['VALUE'];
                 if ($viewMode === '') {
                     $arFilter['ACTIVE'] = 'Y';
@@ -351,7 +382,10 @@ class CIBlockPropertyElementList
             }
 
             foreach ($arTree as $arSection) {
-                $options .= '<optgroup label="' . str_repeat(" . ", $arSection["DEPTH_LEVEL"] - 1) . $arSection["NAME"] . '">';
+                $options .= '<optgroup label="' . str_repeat(
+                        " . ",
+                        $arSection["DEPTH_LEVEL"] - 1
+                    ) . $arSection["NAME"] . '">';
                 if (isset($arSection["E"])) {
                     foreach ($arSection["E"] as $arItem) {
                         $options .= '<option value="' . $arItem["ID"] . '"';
@@ -372,7 +406,6 @@ class CIBlockPropertyElementList
                 }
                 $options .= '>' . $arItem["NAME"] . '</option>';
             }
-
         } else {
             foreach (CIBlockPropertyElementList::GetElements($arProperty["LINK_IBLOCK_ID"]) as $arItem) {
                 $options .= '<option value="' . $arItem["ID"] . '"';
@@ -397,7 +430,7 @@ class CIBlockPropertyElementList
     public static function GetExtendedValue($arProperty, $value)
     {
         $html = self::GetPublicViewHTML($arProperty, $value, array('MODE' => 'SIMPLE_TEXT'));
-        if (strlen($html)) {
+        if ($html <> '') {
             $text = htmlspecialcharsback($html);
             return array(
                 'VALUE' => $text,
@@ -431,8 +464,9 @@ class CIBlockPropertyElementList
                     "ID" => "ASC",
                 );
                 $rsItems = CIBlockElement::GetList($arOrder, $arFilter, false, false, $arSelect);
-                while ($arItem = $rsItems->GetNext())
+                while ($arItem = $rsItems->GetNext()) {
                     $cache[$IBLOCK_ID][] = $arItem;
+                }
             }
         }
         return $cache[$IBLOCK_ID];
@@ -460,10 +494,31 @@ class CIBlockPropertyElementList
                     "LEFT_MARGIN" => "ASC",
                 );
                 $rsItems = CIBlockSection::GetList($arOrder, $arFilter, false, $arSelect);
-                while ($arItem = $rsItems->GetNext())
+                while ($arItem = $rsItems->GetNext()) {
                     $cache[$IBLOCK_ID][$arItem["ID"]] = $arItem;
+                }
             }
         }
         return $cache[$IBLOCK_ID];
+    }
+
+    public static function GetUIEntityEditorProperty($settings, $value)
+    {
+        $items = [];
+        foreach (CIBlockPropertyElementList::GetElements($settings['IBLOCK_ID']) as $element) {
+            $items[] = [
+                'NAME' => $element['NAME'],
+                'VALUE' => $element['ID'],
+                'ID' => $element['ID'],
+            ];
+        }
+        return [
+            'type' => ($settings['MULTIPLE'] === 'Y') ? 'multilist' : 'list',
+            'data' => [
+                'isProductProperty' => true,
+                'enableEmptyItem' => true,
+                'items' => $items
+            ]
+        ];
     }
 }

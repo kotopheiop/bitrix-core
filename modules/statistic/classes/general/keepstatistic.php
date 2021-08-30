@@ -1,4 +1,4 @@
-<?
+<?php
 
 class CKeepStatistics
 {
@@ -27,23 +27,37 @@ class CKeepStatistics
                         break;
                     }
                 }
-                if ($skipMode == "groups")
+                if ($skipMode == "groups") {
                     break;
+                }
             //else
             //	continue checking
             case "ranges":
-                if ($skipMode == "both" && $GO)
-                    break;//in case group check failed
+                if ($skipMode == "both" && $GO) {
+                    break;
+                }//in case group check failed
                 $GO = true;
                 if (preg_match("/^.*?(\d+)\.(\d+)\.(\d+)\.(\d+)[\s-]*/", $_SERVER["REMOTE_ADDR"], $arIPAdress)) {
                     $arSkipIPRanges = explode("\n", COption::GetOptionString("statistic", "SKIP_STATISTIC_IP_RANGES"));
                     foreach ($arSkipIPRanges as $key => $value) {
-                        if (preg_match("/^.*?(\d+)\.(\d+)\.(\d+)\.(\d+)[\s-]*(\d+)\.(\d+)\.(\d+)\.(\d+)/", $value, $arIPRange)) {
+                        if (preg_match(
+                            "/^.*?(\d+)\.(\d+)\.(\d+)\.(\d+)[\s-]*(\d+)\.(\d+)\.(\d+)\.(\d+)/",
+                            $value,
+                            $arIPRange
+                        )) {
                             if (
-                                intval($arIPAdress[1]) >= intval($arIPRange[1]) && intval($arIPAdress[1]) <= intval($arIPRange[5]) &&
-                                intval($arIPAdress[2]) >= intval($arIPRange[2]) && intval($arIPAdress[2]) <= intval($arIPRange[6]) &&
-                                intval($arIPAdress[3]) >= intval($arIPRange[3]) && intval($arIPAdress[3]) <= intval($arIPRange[7]) &&
-                                intval($arIPAdress[4]) >= intval($arIPRange[4]) && intval($arIPAdress[4]) <= intval($arIPRange[8])
+                                intval($arIPAdress[1]) >= intval($arIPRange[1]) && intval($arIPAdress[1]) <= intval(
+                                    $arIPRange[5]
+                                ) &&
+                                intval($arIPAdress[2]) >= intval($arIPRange[2]) && intval($arIPAdress[2]) <= intval(
+                                    $arIPRange[6]
+                                ) &&
+                                intval($arIPAdress[3]) >= intval($arIPRange[3]) && intval($arIPAdress[3]) <= intval(
+                                    $arIPRange[7]
+                                ) &&
+                                intval($arIPAdress[4]) >= intval($arIPRange[4]) && intval($arIPAdress[4]) <= intval(
+                                    $arIPRange[8]
+                                )
                             ) {
                                 $GO = false;
                                 break;
@@ -60,18 +74,22 @@ class CKeepStatistics
     /////////////////////////////
     public static function Keep($HANDLE_CALL = false)
     {
-
         __SetNoKeepStatistics();
         __GoogleAd();
 
         $GO = true;
-        if (defined("STOP_STATISTICS")) $GO = false;
-        if ($HANDLE_CALL) $GO = true;
+        if (defined("STOP_STATISTICS")) {
+            $GO = false;
+        }
+        if ($HANDLE_CALL) {
+            $GO = true;
+        }
 
         if ($GO && $_SESSION["SESS_NO_KEEP_STATISTIC"] != "Y" && !defined("NO_KEEP_STATISTIC")) {
             $GLOBALS["DB"]->StartUsingMasterOnly();
-            if (CStatistics::CheckSkip())
+            if (CStatistics::CheckSkip()) {
                 CStatistics::ReallyKeep();
+            }
             $GLOBALS["DB"]->StopUsingMasterOnly();
         }
     }
@@ -82,11 +100,14 @@ class CKeepStatistics
         $DB = CDatabase::GetModuleConnection('statistic');
 
         $SITE_ID = "";
-        if (defined("ADMIN_SECTION") && ADMIN_SECTION === true) $sql_site = "null";
-        elseif (defined("SITE_ID")) {
+        if (defined("ADMIN_SECTION") && ADMIN_SECTION === true) {
+            $sql_site = "null";
+        } elseif (defined("SITE_ID")) {
             $sql_site = "'" . $DB->ForSql(SITE_ID, 2) . "'";
             $SITE_ID = SITE_ID;
-        } else $sql_site = "null";
+        } else {
+            $sql_site = "null";
+        }
 
         $ADV_NA = COption::GetOptionString("statistic", "ADV_NA");
         __SetReferer("referer1", "REFERER1_SYN");
@@ -101,7 +122,9 @@ class CKeepStatistics
         $stmp = time();
         $hour = date("G", $stmp); // 0..23
         $weekday = date("w", $stmp); // 0..6
-        if ($weekday == 0) $weekday = 7;
+        if ($weekday == 0) {
+            $weekday = 7;
+        }
         $month = date("n", $stmp); // 1..12
 
         if ($STOP_SAVE_STATISTIC != "N" or $STOP != "Y") {
@@ -116,9 +139,13 @@ class CKeepStatistics
             $DB_now = $DB->GetNowFunction(); // save function for use in sql
             $DB_now_date = $DB->GetNowDate(); // save function for use in sql
             $STOP_LIST_ID = intval($STOP_LIST_ID);
-            if ($ERROR_404 == "Y") init_get_params($APPLICATION->GetCurUri());
+            if ($ERROR_404 == "Y") {
+                init_get_params($APPLICATION->GetCurUri());
+            }
 
-            $IS_USER_AUTHORIZED = (intval($_SESSION["SESS_LAST_USER_ID"]) > 0 && is_object($USER) && $USER->IsAuthorized()) ? "Y" : "N";
+            $IS_USER_AUTHORIZED = (intval($_SESSION["SESS_LAST_USER_ID"]) > 0 && is_object(
+                    $USER
+                ) && $USER->IsAuthorized()) ? "Y" : "N";
 
             stat_session_register("SESS_SEARCHER_ID");
             stat_session_register("SESS_SEARCHER_NAME");
@@ -162,12 +189,13 @@ class CKeepStatistics
 						WHERE ID = '" . intval($_SESSION["SESS_SEARCHER_ID"]) . "'
 					";
                     $z = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-                    if (!$z->Fetch())
+                    if (!$z->Fetch()) {
                         unset($_SESSION["SESS_SEARCHER_ID"]);
+                    }
                 }
 
                 // We did not check for searcher
-                if (strlen($_SESSION["SESS_SEARCHER_ID"]) <= 0) {
+                if ($_SESSION["SESS_SEARCHER_ID"] == '') {
                     // is it searcher hit?
                     $strSql = "
 						SELECT
@@ -177,7 +205,11 @@ class CKeepStatistics
 						WHERE
 							ACTIVE = 'Y'
 						and " . $DB->Length("USER_AGENT") . ">0
-						and upper('" . $DB->ForSql($_SERVER["HTTP_USER_AGENT"], 500) . "') like " . $DB->Concat("'%'", "upper(USER_AGENT)", "'%'") . "
+						and upper('" . $DB->ForSql($_SERVER["HTTP_USER_AGENT"], 500) . "') like " . $DB->Concat(
+                            "'%'",
+                            "upper(USER_AGENT)",
+                            "'%'"
+                        ) . "
 						ORDER BY " . $DB->Length("USER_AGENT") . " desc, ID
 						";
 
@@ -207,7 +239,15 @@ class CKeepStatistics
                         "DATE_LAST" => $DB_now,
                         "TOTAL_HITS" => "TOTAL_HITS + 1"
                     );
-                    $rows = $DB->Update("b_stat_searcher_day", $arFields, "WHERE SEARCHER_ID='" . $_SESSION["SESS_SEARCHER_ID"] . "' and DATE_STAT=" . $DB_now_date, "File: " . __FILE__ . "<br>Line: " . __LINE__, false, false, false);
+                    $rows = $DB->Update(
+                        "b_stat_searcher_day",
+                        $arFields,
+                        "WHERE SEARCHER_ID='" . $_SESSION["SESS_SEARCHER_ID"] . "' and DATE_STAT=" . $DB_now_date,
+                        "File: " . __FILE__ . "<br>Line: " . __LINE__,
+                        false,
+                        false,
+                        false
+                    );
                     // there is no stat for the day yet
                     if (intval($rows) <= 0) {
                         // add it
@@ -234,7 +274,9 @@ class CKeepStatistics
 
                     // save indexed page if neccessary
                     if ($_SESSION["SESS_SEARCHER_SAVE_STATISTIC"] == "Y") {
-                        $sql_HIT_KEEP_DAYS = (strlen($_SESSION["SESS_SEARCHER_HIT_KEEP_DAYS"]) > 0) ? intval($_SESSION["SESS_SEARCHER_HIT_KEEP_DAYS"]) : "null";
+                        $sql_HIT_KEEP_DAYS = ($_SESSION["SESS_SEARCHER_HIT_KEEP_DAYS"] <> '') ? intval(
+                            $_SESSION["SESS_SEARCHER_HIT_KEEP_DAYS"]
+                        ) : "null";
                         $arFields = Array(
                             "DATE_HIT" => $DB_now,
                             "SEARCHER_ID" => intval($_SESSION["SESS_SEARCHER_ID"]),
@@ -245,14 +287,17 @@ class CKeepStatistics
                             "HIT_KEEP_DAYS" => $sql_HIT_KEEP_DAYS,
                             "SITE_ID" => $sql_site
                         );
-                        $id = $DB->Insert("b_stat_searcher_hit", $arFields, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+                        $id = $DB->Insert(
+                            "b_stat_searcher_hit",
+                            $arFields,
+                            "File: " . __FILE__ . "<br>Line: " . __LINE__
+                        );
                         if ($ERROR_404 == "N") {
                             CStatistics::Set404("b_stat_searcher_hit", "ID = " . intval($id), array("URL_404" => "Y"));
                         }
                     }
                 } else // it is not searcher
                 {
-
                     /************************************************
                      * Visitor section
                      ************************************************/
@@ -275,7 +320,7 @@ class CKeepStatistics
                      * Country detection
                      ************************************************/
 
-                    if (strlen($_SESSION["SESS_COUNTRY_ID"]) <= 0) {
+                    if ($_SESSION["SESS_COUNTRY_ID"] == '') {
                         $obCity = new CCity;
                         $_SESSION["SESS_COUNTRY_ID"] = $obCity->GetCountryCode();
                         $_SESSION["SESS_CITY_ID"] = $obCity->GetCityID();
@@ -300,7 +345,9 @@ class CKeepStatistics
                     $arGuest = CStatistics::Set_Guest();
 
                     // Setup default advertising campaign
-                    if ($ADV_NA == "Y" && intval($_SESSION["SESS_ADV_ID"]) <= 0 && intval($_SESSION["SESS_LAST_ADV_ID"]) <= 0) {
+                    if ($ADV_NA == "Y" && intval($_SESSION["SESS_ADV_ID"]) <= 0 && intval(
+                            $_SESSION["SESS_LAST_ADV_ID"]
+                        ) <= 0) {
                         $_SESSION["referer1"] = COption::GetOptionString("statistic", "AVD_NA_REFERER1");
                         $_SESSION["referer2"] = COption::GetOptionString("statistic", "AVD_NA_REFERER2");
                         CStatistics::Set_Adv();
@@ -326,12 +373,19 @@ class CKeepStatistics
                             "IP_LAST_NUMBER" => $REMOTE_ADDR_NUMBER,
                             "HITS" => "HITS + 1",
                         );
-                        $rows = $DB->Update("b_stat_session", $arFields, "WHERE ID='" . $_SESSION["SESS_SESSION_ID"] . "'", "File: " . __FILE__ . "<br>Line: " . __LINE__);
+                        $rows = $DB->Update(
+                            "b_stat_session",
+                            $arFields,
+                            "WHERE ID='" . $_SESSION["SESS_SESSION_ID"] . "'",
+                            "File: " . __FILE__ . "<br>Line: " . __LINE__
+                        );
                         // was cleaned up
                         if (intval($rows) <= 0) {
                             // store as new
                             $_SESSION["SESS_SESSION_ID"] = 0;
-                            if ($ADV_NA == "Y" && intval($_SESSION["SESS_ADV_ID"]) <= 0 && intval($_SESSION["SESS_LAST_ADV_ID"]) <= 0) {
+                            if ($ADV_NA == "Y" && intval($_SESSION["SESS_ADV_ID"]) <= 0 && intval(
+                                    $_SESSION["SESS_LAST_ADV_ID"]
+                                ) <= 0) {
                                 $_SESSION["referer1"] = COption::GetOptionString("statistic", "AVD_NA_REFERER1");
                                 $_SESSION["referer2"] = COption::GetOptionString("statistic", "AVD_NA_REFERER2");
                             }
@@ -343,7 +397,7 @@ class CKeepStatistics
                     // it is new session
                     if ($_SESSION["SESS_SESSION_ID"] <= 0) {
                         $SESSION_NEW = "Y";
-
+                        $sessionId = \Bitrix\Main\Application::getInstance()->getKernelSession()->getId();
                         // save session data
                         $arFields = Array(
                             "GUEST_ID" => intval($_SESSION["SESS_GUEST_ID"]),
@@ -363,7 +417,7 @@ class CKeepStatistics
                             "IP_FIRST_NUMBER" => "'" . $DB->ForSql($REMOTE_ADDR_NUMBER) . "'",
                             "IP_LAST" => "'" . $DB->ForSql($_SERVER["REMOTE_ADDR"], 15) . "'",
                             "IP_LAST_NUMBER" => "'" . $DB->ForSql($REMOTE_ADDR_NUMBER) . "'",
-                            "PHPSESSID" => "'" . $DB->ForSql(session_id(), 255) . "'",
+                            "PHPSESSID" => "'" . $DB->ForSql($sessionId, 255) . "'",
                             "STOP_LIST_ID" => "'" . $DB->ForSql($STOP_LIST_ID) . "'",
                             "COUNTRY_ID" => "'" . $DB->ForSql($_SESSION["SESS_COUNTRY_ID"], 2) . "'",
                             "CITY_ID" => $_SESSION["SESS_CITY_ID"] > 0 ? intval($_SESSION["SESS_CITY_ID"]) : "null",
@@ -390,7 +444,7 @@ class CKeepStatistics
 
                         // look for the same IP?
                         $day_host_counter = 1;
-                        $day_host_counter_site = strlen($SITE_ID) > 0 ? 1 : 0;
+                        $day_host_counter_site = $SITE_ID <> '' ? 1 : 0;
                         $strSql = "
 							SELECT S.FIRST_SITE_ID
 							FROM b_stat_session S
@@ -406,10 +460,16 @@ class CKeepStatistics
                             }
                         }
 
-                        $_SESSION["SESS_SESSION_ID"] = intval($DB->Insert("b_stat_session", $arFields, "File: " . __FILE__ . "<br>Line: " . __LINE__));
+                        $_SESSION["SESS_SESSION_ID"] = intval(
+                            $DB->Insert("b_stat_session", $arFields, "File: " . __FILE__ . "<br>Line: " . __LINE__)
+                        );
 
                         if ($ERROR_404 == "N") {
-                            CStatistics::Set404("b_stat_session", "ID = " . $_SESSION["SESS_SESSION_ID"], array("URL_TO_404" => "Y", "URL_LAST_404" => "Y"));
+                            CStatistics::Set404(
+                                "b_stat_session",
+                                "ID = " . $_SESSION["SESS_SESSION_ID"],
+                                array("URL_TO_404" => "Y", "URL_LAST_404" => "Y")
+                            );
                         }
 
                         $day_guest_counter = 0;
@@ -467,7 +527,7 @@ class CKeepStatistics
                         }
 
                         // site is not defined
-                        if (strlen($SITE_ID) > 0) {
+                        if ($SITE_ID <> '') {
                             // ��������� ������� "�� ����" ��� �������� �����
                             $arFields = Array(
                                 "SESSIONS" => 1,
@@ -500,7 +560,7 @@ class CKeepStatistics
                         }
 
                         // ���� ������ ���������� ��
-                        if (strlen($_SESSION["SESS_COUNTRY_ID"]) > 0) {
+                        if ($_SESSION["SESS_COUNTRY_ID"] <> '') {
                             $arFields = Array(
                                 "SESSIONS" => 1,
                                 "NEW_GUESTS" => $new_guest_counter,
@@ -522,7 +582,9 @@ class CKeepStatistics
                             "LAST_SESSION_ID" => $_SESSION["SESS_SESSION_ID"],
                             "LAST_USER_AGENT" => "'" . $DB->ForSql($_SERVER["HTTP_USER_AGENT"], 500) . "'",
                             "LAST_COUNTRY_ID" => "'" . $DB->ForSql($_SESSION["SESS_COUNTRY_ID"], 2) . "'",
-                            "LAST_CITY_ID" => $_SESSION["SESS_CITY_ID"] > 0 ? intval($_SESSION["SESS_CITY_ID"]) : "null",
+                            "LAST_CITY_ID" => $_SESSION["SESS_CITY_ID"] > 0 ? intval(
+                                $_SESSION["SESS_CITY_ID"]
+                            ) : "null",
                         );
                         //
                         if ($obCity) {
@@ -544,9 +606,18 @@ class CKeepStatistics
                             $arFields["LAST_REFERER2"] = "'" . $DB->ForSql($arGuest["last_referer2"], 255) . "'";
                         }
 
-                        if ($_SESSION["SESS_GUEST_NEW"] == "Y")
+                        if ($_SESSION["SESS_GUEST_NEW"] == "Y") {
                             $arFields["FIRST_SESSION_ID"] = $_SESSION["SESS_SESSION_ID"];
-                        $rows = $DB->Update("b_stat_guest", $arFields, "WHERE ID=" . intval($_SESSION["SESS_GUEST_ID"]), "File: " . __FILE__ . "<br>Line: " . __LINE__, false, false, false);
+                        }
+                        $rows = $DB->Update(
+                            "b_stat_guest",
+                            $arFields,
+                            "WHERE ID=" . intval($_SESSION["SESS_GUEST_ID"]),
+                            "File: " . __FILE__ . "<br>Line: " . __LINE__,
+                            false,
+                            false,
+                            false
+                        );
 
                         // ��������� ��������� ��������
                         if (intval($_SESSION["SESS_ADV_ID"]) > 0 || intval($_SESSION["SESS_LAST_ADV_ID"]) > 0) {
@@ -559,19 +630,30 @@ class CKeepStatistics
                         if (
                             $SAVE_REFERERS != "N"
                             && __GetReferringSite($PROT, $SN, $SN_WithoutPort, $PAGE_FROM)
-                            && strlen($SN) > 0
+                            && $SN <> ''
                             && $SN != $_SERVER["HTTP_HOST"]
                         ) {
-                            $REFERER_LIST_ID = CStatistics::GetRefererListID($PROT, $SN, $PAGE_FROM, $CURRENT_URI, $ERROR_404, $sql_site);
+                            $REFERER_LIST_ID = CStatistics::GetRefererListID(
+                                $PROT,
+                                $SN,
+                                $PAGE_FROM,
+                                $CURRENT_URI,
+                                $ERROR_404,
+                                $sql_site
+                            );
 
                             /************************************************
                              * Search phrases
                              ************************************************/
 
-                            if (substr($SN, 0, 4) == "www.")
-                                $sql = "('" . $DB->ForSql(substr($SN, 4), 255) . "' like P.DOMAIN or '" . $DB->ForSql($SN, 255) . "' like P.DOMAIN)";
-                            else
+                            if (mb_substr($SN, 0, 4) == "www.") {
+                                $sql = "('" . $DB->ForSql(
+                                        mb_substr($SN, 4),
+                                        255
+                                    ) . "' like P.DOMAIN or '" . $DB->ForSql($SN, 255) . "' like P.DOMAIN)";
+                            } else {
                                 $sql = "'" . $DB->ForSql($SN, 255) . "' like P.DOMAIN";
+                            }
                             $strSql = "
 								SELECT
 									S.ID,
@@ -592,8 +674,8 @@ class CKeepStatistics
                                 $_SESSION["FROM_SEARCHER_ID"] = $qr["ID"];
                                 $FROM_SEARCHER_NAME = $qr["NAME"];
                                 $FROM_SEARCHER_PHRASE = "";
-                                if (strlen($qr["VARIABLE"]) > 0) {
-                                    $page = substr($PAGE_FROM, strpos($PAGE_FROM, "?") + 1);
+                                if ($qr["VARIABLE"] <> '') {
+                                    $page = mb_substr($PAGE_FROM, mb_strpos($PAGE_FROM, "?") + 1);
                                     $bIsUTF8 = is_utf8_url($page);
                                     parse_str($page, $arr);
                                     $arrVar = explode(",", $qr["VARIABLE"]);
@@ -601,28 +683,31 @@ class CKeepStatistics
                                         $var = trim($var);
                                         $phrase = $arr[$var];
 
-                                        if (get_magic_quotes_gpc())
-                                            $phrase = stripslashes($phrase);
-
                                         if ($bIsUTF8) {
-                                            $phrase_temp = trim($APPLICATION->ConvertCharset($phrase, "utf-8", LANG_CHARSET));
-                                            if (strlen($phrase_temp))
+                                            $phrase_temp = trim(
+                                                $APPLICATION->ConvertCharset($phrase, "utf-8", LANG_CHARSET)
+                                            );
+                                            if ($phrase_temp <> '') {
                                                 $phrase = $phrase_temp;
-                                        } elseif (strlen($qr["CHAR_SET"]) > 0) {
-                                            $phrase_temp = trim($APPLICATION->ConvertCharset($phrase, $qr["CHAR_SET"], LANG_CHARSET));
-                                            if (strlen($phrase_temp))
+                                            }
+                                        } elseif ($qr["CHAR_SET"] <> '') {
+                                            $phrase_temp = trim(
+                                                $APPLICATION->ConvertCharset($phrase, $qr["CHAR_SET"], LANG_CHARSET)
+                                            );
+                                            if ($phrase_temp <> '') {
                                                 $phrase = $phrase_temp;
+                                            }
                                         }
 
                                         $phrase = trim($phrase);
-                                        if (strlen($phrase)) {
-                                            $FROM_SEARCHER_PHRASE .= (strlen($FROM_SEARCHER_PHRASE) > 0) ? " / " . $phrase : $phrase;
+                                        if ($phrase <> '') {
+                                            $FROM_SEARCHER_PHRASE .= ($FROM_SEARCHER_PHRASE <> '') ? " / " . $phrase : $phrase;
                                         }
                                     }
                                 }
                                 //echo "FROM_SEARCHER_PHRASE = ".$FROM_SEARCHER_PHRASE."<br>\n";
                                 // ���� �������� ��������� �����, �� ������� �� � ����
-                                if (strlen($FROM_SEARCHER_PHRASE) > 0) {
+                                if ($FROM_SEARCHER_PHRASE <> '') {
                                     $arFields = Array(
                                         "DATE_HIT" => $DB_now,
                                         "SEARCHER_ID" => intval($_SESSION["FROM_SEARCHER_ID"]),
@@ -634,9 +719,17 @@ class CKeepStatistics
                                         "SESSION_ID" => $_SESSION["SESS_SESSION_ID"],
                                         "SITE_ID" => $sql_site,
                                     );
-                                    $id = $DB->Insert("b_stat_phrase_list", $arFields, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+                                    $id = $DB->Insert(
+                                        "b_stat_phrase_list",
+                                        $arFields,
+                                        "File: " . __FILE__ . "<br>Line: " . __LINE__
+                                    );
                                     if ($ERROR_404 == "N") {
-                                        CStatistics::Set404("b_stat_phrase_list", "ID = " . intval($id), array("URL_TO_404" => "Y"));
+                                        CStatistics::Set404(
+                                            "b_stat_phrase_list",
+                                            "ID = " . intval($id),
+                                            array("URL_TO_404" => "Y")
+                                        );
                                     }
 
                                     // �������� ��������� ����� � ������
@@ -645,8 +738,15 @@ class CKeepStatistics
                                     // �������� ������� ���� � ��������� �������
                                     $_SESSION["SESS_FROM_SEARCHERS"][] = $_SESSION["FROM_SEARCHER_ID"];
                                     $arFields = Array("PHRASES" => "PHRASES + 1");
-                                    $rows = $DB->Update("b_stat_searcher", $arFields, "WHERE ID=" . intval($_SESSION["FROM_SEARCHER_ID"]), "File: " . __FILE__ . "<br>Line: " . __LINE__, false, false, false);
-
+                                    $rows = $DB->Update(
+                                        "b_stat_searcher",
+                                        $arFields,
+                                        "WHERE ID=" . intval($_SESSION["FROM_SEARCHER_ID"]),
+                                        "File: " . __FILE__ . "<br>Line: " . __LINE__,
+                                        false,
+                                        false,
+                                        false
+                                    );
                                 }
                             }
                         }
@@ -668,7 +768,10 @@ class CKeepStatistics
                                 "USER_AUTH" => "'" . $IS_USER_AUTHORIZED . "'",
                                 "URL" => "'" . $DB->ForSql($CURRENT_URI, 2000) . "'",
                                 "URL_404" => "'" . $ERROR_404 . "'",
-                                "URL_FROM" => "'" . $DB->ForSql(isset($_SERVER["HTTP_REFERER"]) ? $_SERVER["HTTP_REFERER"] : "", 2000) . "'",
+                                "URL_FROM" => "'" . $DB->ForSql(
+                                        isset($_SERVER["HTTP_REFERER"]) ? $_SERVER["HTTP_REFERER"] : "",
+                                        2000
+                                    ) . "'",
                                 "IP" => "'" . $DB->ForSql($_SERVER["REMOTE_ADDR"], 15) . "'",
                                 "METHOD" => "'" . $DB->ForSql($_SERVER["REQUEST_METHOD"], 10) . "'",
                                 "COOKIES" => "'" . $DB->ForSql(GetCookieString(), 2000) . "'",
@@ -678,7 +781,9 @@ class CKeepStatistics
                                 "CITY_ID" => $_SESSION["SESS_CITY_ID"] > 0 ? intval($_SESSION["SESS_CITY_ID"]) : "null",
                                 "SITE_ID" => $sql_site,
                             );
-                            self::$HIT_ID = intval($DB->Insert("b_stat_hit", $arFields, "File: " . __FILE__ . "<br>Line: " . __LINE__));
+                            self::$HIT_ID = intval(
+                                $DB->Insert("b_stat_hit", $arFields, "File: " . __FILE__ . "<br>Line: " . __LINE__)
+                            );
                             if ($ERROR_404 == "N") {
                                 CStatistics::Set404("b_stat_hit", "ID = " . self::$HIT_ID, array("URL_404" => "Y"));
                             }
@@ -729,7 +834,7 @@ class CKeepStatistics
                         }
 
                         // ���� ���� ��������� ��
-                        if (strlen($SITE_ID) > 0) {
+                        if ($SITE_ID <> '') {
                             // ��������� ������� "�� ����"
                             $arFields = Array(
                                 "HITS" => 1,
@@ -766,15 +871,17 @@ class CKeepStatistics
                          * ���� �� �����
                          ************************************************/
 
-                        if ($SAVE_PATH_DATA != "N")
+                        if ($SAVE_PATH_DATA != "N") {
                             CStatistics::SavePathData($SITE_ID, $CURRENT_PAGE, $ERROR_404);
+                        }
 
                         /************************************************
                          * ��������� �������� � �������
                          ************************************************/
 
-                        if ($SAVE_VISITS != "N")
+                        if ($SAVE_VISITS != "N") {
                             CStatistics::SaveVisits($sql_site, $SESSION_NEW, $CURRENT_DIR, $CURRENT_PAGE, $ERROR_404);
+                        }
 
                         // ��������� ������
                         $arFields = Array(
@@ -785,11 +892,27 @@ class CKeepStatistics
                             "DATE_LAST" => $DB_now,
                             "LAST_SITE_ID" => $sql_site
                         );
-                        if ($SESSION_NEW == "Y") $arFields["FIRST_HIT_ID"] = self::$HIT_ID;
-                        if ($FAVORITES == "Y") $arFields["FAVORITES"] = "'Y'";
-                        $DB->Update("b_stat_session", $arFields, "WHERE ID=" . $_SESSION["SESS_SESSION_ID"], "File: " . __FILE__ . "<br>Line: " . __LINE__, false, false, false);
+                        if ($SESSION_NEW == "Y") {
+                            $arFields["FIRST_HIT_ID"] = self::$HIT_ID;
+                        }
+                        if ($FAVORITES == "Y") {
+                            $arFields["FAVORITES"] = "'Y'";
+                        }
+                        $DB->Update(
+                            "b_stat_session",
+                            $arFields,
+                            "WHERE ID=" . $_SESSION["SESS_SESSION_ID"],
+                            "File: " . __FILE__ . "<br>Line: " . __LINE__,
+                            false,
+                            false,
+                            false
+                        );
                         if ($ERROR_404 == "N") {
-                            CStatistics::Set404("b_stat_session", "ID = " . $_SESSION["SESS_SESSION_ID"], array("URL_LAST_404" => "Y"));
+                            CStatistics::Set404(
+                                "b_stat_session",
+                                "ID = " . $_SESSION["SESS_SESSION_ID"],
+                                array("URL_LAST_404" => "Y")
+                            );
                         }
 
                         // ��������� �����
@@ -807,10 +930,24 @@ class CKeepStatistics
                             "LAST_LANGUAGE" => "'" . $DB->ForSql($_SERVER["HTTP_ACCEPT_LANGUAGE"], 255) . "'",
                             "LAST_SITE_ID" => $sql_site
                         );
-                        if ($FAVORITES == "Y") $arFields["FAVORITES"] = "'Y'";
-                        $DB->Update("b_stat_guest", $arFields, "WHERE ID=" . intval($_SESSION["SESS_GUEST_ID"]), "File: " . __FILE__ . "<br>Line: " . __LINE__, false, false, false);
+                        if ($FAVORITES == "Y") {
+                            $arFields["FAVORITES"] = "'Y'";
+                        }
+                        $DB->Update(
+                            "b_stat_guest",
+                            $arFields,
+                            "WHERE ID=" . intval($_SESSION["SESS_GUEST_ID"]),
+                            "File: " . __FILE__ . "<br>Line: " . __LINE__,
+                            false,
+                            false,
+                            false
+                        );
                         if ($ERROR_404 == "N") {
-                            CStatistics::Set404("b_stat_guest", "ID = " . intval($_SESSION["SESS_GUEST_ID"]), array("LAST_URL_LAST_404" => "Y"));
+                            CStatistics::Set404(
+                                "b_stat_guest",
+                                "ID = " . intval($_SESSION["SESS_GUEST_ID"]),
+                                array("LAST_URL_LAST_404" => "Y")
+                            );
                         }
 
                         // ��������� ������ ��������� ��������
@@ -825,11 +962,29 @@ class CKeepStatistics
                                 $arFields["FAVORITES"] = "FAVORITES + 1";
                                 $favorite = 1;
                             }
-                            $DB->Update("b_stat_adv", $arFields, "WHERE ID=" . intval($_SESSION["SESS_ADV_ID"]), "File: " . __FILE__ . "<br>Line: " . __LINE__, false, false, false);
+                            $DB->Update(
+                                "b_stat_adv",
+                                $arFields,
+                                "WHERE ID=" . intval($_SESSION["SESS_ADV_ID"]),
+                                "File: " . __FILE__ . "<br>Line: " . __LINE__,
+                                false,
+                                false,
+                                false
+                            );
 
                             // ��������� ������� ����� �� ����
                             $arFields = Array("HITS" => "HITS+1", "FAVORITES" => "FAVORITES + " . intval($favorite));
-                            $rows = $DB->Update("b_stat_adv_day", $arFields, "WHERE ADV_ID=" . intval($_SESSION["SESS_ADV_ID"]) . " and DATE_STAT=" . $DB_now_date, "File: " . __FILE__ . "<br>Line: " . __LINE__, false, false, false);
+                            $rows = $DB->Update(
+                                "b_stat_adv_day",
+                                $arFields,
+                                "WHERE ADV_ID=" . intval(
+                                    $_SESSION["SESS_ADV_ID"]
+                                ) . " and DATE_STAT=" . $DB_now_date,
+                                "File: " . __FILE__ . "<br>Line: " . __LINE__,
+                                false,
+                                false,
+                                false
+                            );
                             // ���� ��� ��� ��
                             if (intval($rows) <= 0) {
                                 // ��������� ���
@@ -853,11 +1008,32 @@ class CKeepStatistics
                                 $arFields["FAVORITES_BACK"] = "FAVORITES_BACK + 1";
                                 $favorite = 1;
                             }
-                            $DB->Update("b_stat_adv", $arFields, "WHERE ID=" . intval($_SESSION["SESS_LAST_ADV_ID"]), "File: " . __FILE__ . "<br>Line: " . __LINE__, false, false, false);
+                            $DB->Update(
+                                "b_stat_adv",
+                                $arFields,
+                                "WHERE ID=" . intval($_SESSION["SESS_LAST_ADV_ID"]),
+                                "File: " . __FILE__ . "<br>Line: " . __LINE__,
+                                false,
+                                false,
+                                false
+                            );
 
-                            $arFields = Array("HITS_BACK" => "HITS_BACK+1", "FAVORITES_BACK" => "FAVORITES_BACK + " . intval($favorite));
+                            $arFields = Array(
+                                "HITS_BACK" => "HITS_BACK+1",
+                                "FAVORITES_BACK" => "FAVORITES_BACK + " . intval($favorite)
+                            );
                             // ��������� ������� ����� �� ����
-                            $rows = $DB->Update("b_stat_adv_day", $arFields, "WHERE ADV_ID=" . intval($_SESSION["SESS_LAST_ADV_ID"]) . " and DATE_STAT=" . $DB_now_date, "File: " . __FILE__ . "<br>Line: " . __LINE__, false, false, false);
+                            $rows = $DB->Update(
+                                "b_stat_adv_day",
+                                $arFields,
+                                "WHERE ADV_ID=" . intval(
+                                    $_SESSION["SESS_LAST_ADV_ID"]
+                                ) . " and DATE_STAT=" . $DB_now_date,
+                                "File: " . __FILE__ . "<br>Line: " . __LINE__,
+                                false,
+                                false,
+                                false
+                            );
                             // ���� ��� ��� ��
                             if (intval($rows) <= 0) {
                                 // ��������� ���
@@ -874,13 +1050,14 @@ class CKeepStatistics
                         // ������������ �������
                         if (defined("GENERATE_EVENT") && GENERATE_EVENT == "Y") {
                             global $event1, $event2, $event3, $goto, $money, $currency, $site_id;
-                            if (strlen($site_id) <= 0)
+                            if ($site_id == '') {
                                 $site_id = false;
+                            }
                             CStatistics::Set_Event($event1, $event2, $event3, $goto, $money, $currency, $site_id);
                         }
 
                         // ����������� ������� ����� � ������
-                        if (strlen($_SESSION["SESS_COUNTRY_ID"]) > 0) {
+                        if ($_SESSION["SESS_COUNTRY_ID"] <> '') {
                             CStatistics::UpdateCountry($_SESSION["SESS_COUNTRY_ID"], Array("HITS" => 1));
                         }
 
@@ -898,16 +1075,33 @@ class CKeepStatistics
                             $_SESSION["SESS_FROM_SEARCHERS"] = array_unique($_SESSION["SESS_FROM_SEARCHERS"]);
                             if (count($_SESSION["SESS_FROM_SEARCHERS"]) > 0) {
                                 $str = "0";
-                                foreach ($_SESSION["SESS_FROM_SEARCHERS"] as $value)
+                                foreach ($_SESSION["SESS_FROM_SEARCHERS"] as $value) {
                                     $str .= ", " . intval($value);
-                                $DB->Update("b_stat_searcher", $arFields, "WHERE ID in ($str)", "File: " . __FILE__ . "<br>Line: " . __LINE__, false, false, false);
+                                }
+                                $DB->Update(
+                                    "b_stat_searcher",
+                                    $arFields,
+                                    "WHERE ID in ($str)",
+                                    "File: " . __FILE__ . "<br>Line: " . __LINE__,
+                                    false,
+                                    false,
+                                    false
+                                );
                             }
                         }
 
                         if (isset($_SESSION["SESS_REFERER_ID"]) && intval($_SESSION["SESS_REFERER_ID"]) > 0) {
                             // ��������� �����������
                             $arFields = Array("HITS" => "HITS+1");
-                            $DB->Update("b_stat_referer", $arFields, "WHERE ID=" . intval($_SESSION["SESS_REFERER_ID"]), "File: " . __FILE__ . "<br>Line: " . __LINE__, false, false, false);
+                            $DB->Update(
+                                "b_stat_referer",
+                                $arFields,
+                                "WHERE ID=" . intval($_SESSION["SESS_REFERER_ID"]),
+                                "File: " . __FILE__ . "<br>Line: " . __LINE__,
+                                false,
+                                false,
+                                false
+                            );
                         }
                     }
 
@@ -946,7 +1140,10 @@ class CKeepStatistics
             // ���� �� ������ select �� ������� b_stat_session_data ��
             if ($SESSION_DATA_ID) {
                 $arrSTAT_SESSION = stat_session_register(true);
-                $sess_data_for_db = (strtolower($DB->type) == "oracle") ? "'" . $DB->ForSql(serialize($arrSTAT_SESSION), 2000) . "'" : "'" . $DB->ForSql(serialize($arrSTAT_SESSION)) . "'";
+                $sess_data_for_db = ($DB->type == "ORACLE") ? "'" . $DB->ForSql(
+                        serialize($arrSTAT_SESSION),
+                        2000
+                    ) . "'" : "'" . $DB->ForSql(serialize($arrSTAT_SESSION)) . "'";
                 // ���� � ���������� ����� select'� ���� ������� ������ ��
                 if ((intval($SESSION_DATA_ID) > 0) && ($SESSION_DATA_ID !== true)) {
                     // ��������� ��
@@ -956,7 +1153,15 @@ class CKeepStatistics
                         "SESS_SESSION_ID" => intval($_SESSION["SESS_SESSION_ID"]),
                         "SESSION_DATA" => $sess_data_for_db
                     );
-                    $DB->Update("b_stat_session_data", $arFields, "WHERE ID = " . intval($SESSION_DATA_ID), "File: " . __FILE__ . "<br>Line: " . __LINE__, false, false, false);
+                    $DB->Update(
+                        "b_stat_session_data",
+                        $arFields,
+                        "WHERE ID = " . intval($SESSION_DATA_ID),
+                        "File: " . __FILE__ . "<br>Line: " . __LINE__,
+                        false,
+                        false,
+                        false
+                    );
                 } else {
                     // ����� ��������� ��� ������
                     $arFields = array(
@@ -974,18 +1179,20 @@ class CKeepStatistics
         if ($STOP == "Y") {
             $z = CLanguage::GetByID($STOP_MESSAGE_LID);
             $zr = $z->Fetch();
-            $charset = (strlen($zr["CHARSET"]) > 0) ? $zr["CHARSET"] : "windows-1251";
+            $charset = ($zr["CHARSET"] <> '') ? $zr["CHARSET"] : "windows-1251";
 
             //We have URL with no MESSAGE
-            if ((strlen($STOP_REDIRECT_URL) > 0) && (strlen($STOP_MESSAGE) <= 0)) {//So just do redirect
+            if (($STOP_REDIRECT_URL <> '') && ($STOP_MESSAGE == '')) {//So just do redirect
                 LocalRedirect($STOP_REDIRECT_URL, true);
             } //We have some to say
-            elseif (strlen($STOP_MESSAGE) > 0) {
+            elseif ($STOP_MESSAGE <> '') {
                 $STOP_MESSAGE .= " [" . $STOP_LIST_ID . "]";
                 echo '<html>
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=' . $charset . '">
-		' . (strlen($STOP_REDIRECT_URL) > 0 ? '<meta http-equiv="Refresh" content="3;URL=' . htmlspecialcharsbx($STOP_REDIRECT_URL) . '">' : '') . '
+		' . ($STOP_REDIRECT_URL <> '' ? '<meta http-equiv="Refresh" content="3;URL=' . htmlspecialcharsbx(
+                            $STOP_REDIRECT_URL
+                        ) . '">' : '') . '
 	</head>
 	<body>
 		<div align="center"><h3>' . $STOP_MESSAGE . '</h3></div>
@@ -1008,10 +1215,11 @@ class CKeepStatistics
                     // restore session data from b_stat_session_data
                     $z = CStatistics::GetSessionDataByMD5(get_guest_md5());
                     if ($zr = $z->Fetch()) {
-                        $arrSESSION_DATA = unserialize($zr["SESSION_DATA"]);
+                        $arrSESSION_DATA = unserialize($zr["SESSION_DATA"], ['allowed_classes' => false]);
                         if (is_array($arrSESSION_DATA)) {
-                            foreach ($arrSESSION_DATA as $key => $value)
+                            foreach ($arrSESSION_DATA as $key => $value) {
                                 $_SESSION[$key] = $value;
+                            }
                         }
                         return intval($zr["ID"]); //Guest was found
                     }
@@ -1034,7 +1242,19 @@ class CKeepStatistics
         }
         $DB->Update("b_stat_country", $ar, "WHERE ID='" . $COUNTRY_ID . "'", "", false, false, false);
 
-        $rows = $DB->Update("b_stat_country_day", $ar, "WHERE COUNTRY_ID='" . $COUNTRY_ID . "' and  " . CStatistics::DBDateCompare("DATE_STAT", $DATE, $DATE_FORMAT), "", false, false, false);
+        $rows = $DB->Update(
+            "b_stat_country_day",
+            $ar,
+            "WHERE COUNTRY_ID='" . $COUNTRY_ID . "' and  " . CStatistics::DBDateCompare(
+                "DATE_STAT",
+                $DATE,
+                $DATE_FORMAT
+            ),
+            "",
+            false,
+            false,
+            false
+        );
         if (intval($rows) <= 0 && $SIGN == "+") {
             $ar = array();
             foreach ($arFields as $name => $value) {
@@ -1046,7 +1266,14 @@ class CKeepStatistics
         } elseif (intval($rows) > 1) // ���� �������� ����� ������ ��� ��
         {
             // ������ ������
-            $rs = $DB->Query("SELECT ID FROM b_stat_country_day WHERE COUNTRY_ID='" . $COUNTRY_ID . "' and  " . CStatistics::DBDateCompare("DATE_STAT", $DATE, $DATE_FORMAT) . " ORDER BY ID", false);
+            $rs = $DB->Query(
+                "SELECT ID FROM b_stat_country_day WHERE COUNTRY_ID='" . $COUNTRY_ID . "' and  " . CStatistics::DBDateCompare(
+                    "DATE_STAT",
+                    $DATE,
+                    $DATE_FORMAT
+                ) . " ORDER BY ID",
+                false
+            );
             $ar = $rs->Fetch();
             while ($ar = $rs->Fetch()) {
                 $DB->Query("DELETE FROM b_stat_country_day WHERE ID = " . $ar["ID"], false);
@@ -1065,7 +1292,19 @@ class CKeepStatistics
         }
         $DB->Update("b_stat_city", $ar, "WHERE ID = " . $CITY_ID, "", false, false, false);
 
-        $rows = $DB->Update("b_stat_city_day", $ar, "WHERE CITY_ID = " . $CITY_ID . " and " . CStatistics::DBDateCompare("DATE_STAT", $DATE, $DATE_FORMAT), "", false, false, false);
+        $rows = $DB->Update(
+            "b_stat_city_day",
+            $ar,
+            "WHERE CITY_ID = " . $CITY_ID . " and " . CStatistics::DBDateCompare(
+                "DATE_STAT",
+                $DATE,
+                $DATE_FORMAT
+            ),
+            "",
+            false,
+            false,
+            false
+        );
         if (intval($rows) <= 0 && $SIGN == "+") {
             $ar = array();
             foreach ($arFields as $name => $value) {
@@ -1077,7 +1316,14 @@ class CKeepStatistics
         } elseif (intval($rows) > 1) // ���� �������� ����� ������ ��� ��
         {
             // ������ ������
-            $rs = $DB->Query("SELECT ID FROM b_stat_city_day WHERE CITY_ID = " . $CITY_ID . " and " . CStatistics::DBDateCompare("DATE_STAT", $DATE, $DATE_FORMAT) . " ORDER BY ID", false);
+            $rs = $DB->Query(
+                "SELECT ID FROM b_stat_city_day WHERE CITY_ID = " . $CITY_ID . " and " . CStatistics::DBDateCompare(
+                    "DATE_STAT",
+                    $DATE,
+                    $DATE_FORMAT
+                ) . " ORDER BY ID",
+                false
+            );
             $ar = $rs->Fetch();
             while ($ar = $rs->Fetch()) {
                 $DB->Query("DELETE FROM b_stat_city_day WHERE ID = " . $ar["ID"], false);
@@ -1092,27 +1338,34 @@ class CKeepStatistics
         $DB_now_date = $DB->GetNowDate();
         $STEPS = intval(COption::GetOptionString("statistic", "MAX_PATH_STEPS"));
 
-        if ($_SESSION["SESS_LAST_PAGE"] == $CURRENT_PAGE)
+        if ($_SESSION["SESS_LAST_PAGE"] == $CURRENT_PAGE) {
             return;
+        }
 
         $COUNTER_ABNORMAL = 0; // ������� ������������ ������� ��� ������ �� ������� ���� ��� ��������� HTTP_REFERER
 
         // ������� ����������� ��������
-        if (strlen($_SERVER["HTTP_REFERER"]) <= 0) {
-            if (strlen($_SESSION["SESS_LAST_PAGE"]) > 0) $COUNTER_ABNORMAL = 1;
+        if ($_SERVER["HTTP_REFERER"] == '') {
+            if ($_SESSION["SESS_LAST_PAGE"] <> '') {
+                $COUNTER_ABNORMAL = 1;
+            }
             $PATH_REFERER = __GetFullReferer($_SESSION["SESS_LAST_PAGE"]);
-        } else $PATH_REFERER = __GetFullReferer();
+        } else {
+            $PATH_REFERER = __GetFullReferer();
+        }
 
-        if ($PATH_REFERER == $CURRENT_PAGE)
+        if ($PATH_REFERER == $CURRENT_PAGE) {
             return;
+        }
 
         // ������� �� ���� ������ �� ����������� ����: ID ����, ����� ������� � �.�.
-        if (strlen($PATH_REFERER) > 0) {
+        if ($PATH_REFERER <> '') {
             $where1 = " and C.PATH_LAST_PAGE = '" . $DB->ForSql($PATH_REFERER, 255) . "'";
         } else {
             $where1 = " and (C.PATH_LAST_PAGE is null or " . $DB->Length("C.PATH_LAST_PAGE") . "<=0)";
         }
-        $strSql = CStatistics::DBTopSql("
+        $strSql = CStatistics::DBTopSql(
+            "
 			SELECT /*TOP*/
 				C.ID as CACHE_ID,
 				C.PATH_ID,
@@ -1130,7 +1383,9 @@ class CKeepStatistics
 			$where1
 			ORDER BY
 				C.ID desc
-			", 1);
+			",
+            1
+        );
 
         $rsPREV_PATH = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
         $arPREV_PATH = $rsPREV_PATH->Fetch();
@@ -1140,7 +1395,7 @@ class CKeepStatistics
 
         // ���������� ���������� ����������� ������� ����
         $CURRENT_PATH_ID = GetStatPathID($CURRENT_PAGE, $arPREV_PATH["PATH_ID"]);
-        $tmp_SITE_ID = (strlen($SITE_ID) > 0) ? "[" . $SITE_ID . "] " : "";
+        $tmp_SITE_ID = ($SITE_ID <> '') ? "[" . $SITE_ID . "] " : "";
         $CURRENT_PATH_PAGES_404 = $arPREV_PATH["PATH_PAGES"] . $tmp_SITE_ID . "ERROR_404: " . $CURRENT_PAGE . "\n";
 
         if ($ERROR_404 == "Y") {
@@ -1148,18 +1403,19 @@ class CKeepStatistics
         } else {
             $CURRENT_PATH_PAGES = $arPREV_PATH["PATH_PAGES"] . $tmp_SITE_ID . $CURRENT_PAGE . "\n";
 
-            if (strtolower($DB->type) == "oracle")
-                $arrUpdate404_1["PATH_PAGES"] = substr($CURRENT_PATH_PAGES_404, 0, 2000);
-            elseif (strtolower($DB->type) == "mssql")
-                $arrUpdate404_1["PATH_PAGES"] = substr($CURRENT_PATH_PAGES_404, 0, 7000);
-            else
+            if ($DB->type == "ORACLE") {
+                $arrUpdate404_1["PATH_PAGES"] = mb_substr($CURRENT_PATH_PAGES_404, 0, 2000);
+            } elseif ($DB->type == "MSSQL") {
+                $arrUpdate404_1["PATH_PAGES"] = mb_substr($CURRENT_PATH_PAGES_404, 0, 7000);
+            } else {
                 $arrUpdate404_1["PATH_PAGES"] = $CURRENT_PATH_PAGES_404;
+            }
 
             $arrUpdate404_2["PAGES"] = $arrUpdate404_1["PATH_PAGES"];
         }
 
         $CURRENT_PATH_STEPS = intval($arPREV_PATH["PATH_STEPS"]) + 1;
-        if (strlen($arPREV_PATH["PATH_FIRST_PAGE"]) > 0) {
+        if ($arPREV_PATH["PATH_FIRST_PAGE"] <> '') {
             $FIRST_PAGE = $arPREV_PATH["PATH_FIRST_PAGE"];
             $FIRST_PAGE_SITE_ID = $arPREV_PATH["PATH_FIRST_PAGE_SITE_ID"];
             $FIRST_PAGE_404 = ($arPREV_PATH["PATH_FIRST_PAGE_404"] == "Y") ? "Y" : "N";
@@ -1174,16 +1430,17 @@ class CKeepStatistics
             }
         }
 
-        if (strtolower($DB->type) == "oracle")
+        if ($DB->type == "ORACLE") {
             $sql_CURRENT_PATH_PAGES = $DB->ForSql($CURRENT_PATH_PAGES, 2000);
-        elseif (strtolower($DB->type) == "mssql")
+        } elseif ($DB->type == "MSSQL") {
             $sql_CURRENT_PATH_PAGES = $DB->ForSql($CURRENT_PATH_PAGES, 7000);
-        else
+        } else {
             $sql_CURRENT_PATH_PAGES = $DB->ForSql($CURRENT_PATH_PAGES);
+        }
 
-        $sql_FIRST_PAGE_SITE_ID = strlen($FIRST_PAGE_SITE_ID) > 0 ? "'" . $DB->ForSql($FIRST_PAGE_SITE_ID, 2) . "'" : "null";
+        $sql_FIRST_PAGE_SITE_ID = $FIRST_PAGE_SITE_ID <> '' ? "'" . $DB->ForSql($FIRST_PAGE_SITE_ID, 2) . "'" : "null";
 
-        $sql_LAST_PAGE_SITE_ID = strlen($SITE_ID) > 0 ? "'" . $DB->ForSql($SITE_ID, 2) . "'" : "null";
+        $sql_LAST_PAGE_SITE_ID = $SITE_ID <> '' ? "'" . $DB->ForSql($SITE_ID, 2) . "'" : "null";
 
         // ������� ������ ���� � ���
         $arFields = array(
@@ -1213,10 +1470,18 @@ class CKeepStatistics
             "COUNTER_FULL_PATH" => "COUNTER_FULL_PATH + 1",
             "COUNTER_ABNORMAL" => "COUNTER_ABNORMAL + " . intval($COUNTER_ABNORMAL),
         );
-        $rows = $DB->Update("b_stat_path", $arFields, "WHERE PATH_ID='" . $CURRENT_PATH_ID . "' and DATE_STAT=" . $DB_now_date, "File: " . __FILE__ . "<br>Line: " . __LINE__, false, false, false);
+        $rows = $DB->Update(
+            "b_stat_path",
+            $arFields,
+            "WHERE PATH_ID='" . $CURRENT_PATH_ID . "' and DATE_STAT=" . $DB_now_date,
+            "File: " . __FILE__ . "<br>Line: " . __LINE__,
+            false,
+            false,
+            false
+        );
 
         if (intval($rows) <= 0) {
-            $sql_PARENT_PATH_ID = (strlen($arPREV_PATH["PATH_ID"]) > 0) ? $arPREV_PATH["PATH_ID"] : "null";
+            $sql_PARENT_PATH_ID = ($arPREV_PATH["PATH_ID"] <> '') ? $arPREV_PATH["PATH_ID"] : "null";
             $arFields = array(
                 "PATH_ID" => intval($CURRENT_PATH_ID),
                 "PARENT_PATH_ID" => $sql_PARENT_PATH_ID,
@@ -1246,11 +1511,27 @@ class CKeepStatistics
         if ($arPREV_PATH["IS_LAST_PAGE"] == "Y") {
             // ������� ������� �������� ����� ��� ���������� ��������
             $arFields = array("COUNTER_FULL_PATH" => "COUNTER_FULL_PATH - 1");
-            $DB->Update("b_stat_path", $arFields, "WHERE PATH_ID='" . $arPREV_PATH["PATH_ID"] . "' and DATE_STAT=" . $DB_now_date, "File: " . __FILE__ . "<br>Line: " . __LINE__, false, false, false);
+            $DB->Update(
+                "b_stat_path",
+                $arFields,
+                "WHERE PATH_ID='" . $arPREV_PATH["PATH_ID"] . "' and DATE_STAT=" . $DB_now_date,
+                "File: " . __FILE__ . "<br>Line: " . __LINE__,
+                false,
+                false,
+                false
+            );
 
             // ������� ���� ���� ��� ���������� �������� - ��������� �������� � ����
             $arFields = array("IS_LAST_PAGE" => "'N'");
-            $DB->Update("b_stat_path_cache", $arFields, "WHERE ID='" . $arPREV_PATH["CACHE_ID"] . "'", "File: " . __FILE__ . "<br>Line: " . __LINE__, false, false, false);
+            $DB->Update(
+                "b_stat_path_cache",
+                $arFields,
+                "WHERE ID='" . $arPREV_PATH["CACHE_ID"] . "'",
+                "File: " . __FILE__ . "<br>Line: " . __LINE__,
+                false,
+                false,
+                false
+            );
         }
 
         // ����������� ������� ���� � ������ � ��������� ���������
@@ -1276,10 +1557,21 @@ class CKeepStatistics
             $sql_COUNTER_BACK = 1;
             $sql_COUNTER_FULL_PATH_BACK = 1;
             $ADV_BACK = "Y";
-        } else
-            return; //ADV_ID == 0
+        } else {
+            return;
+        } //ADV_ID == 0
 
-        $rows = $DB->Update("b_stat_path_adv", $arFields, "WHERE ADV_ID=" . intval($ADV_ID) . " and PATH_ID='" . $CURRENT_PATH_ID . "' and DATE_STAT=" . $DB_now_date, "File: " . __FILE__ . "<br>Line: " . __LINE__, false, false, false);
+        $rows = $DB->Update(
+            "b_stat_path_adv",
+            $arFields,
+            "WHERE ADV_ID=" . intval(
+                $ADV_ID
+            ) . " and PATH_ID='" . $CURRENT_PATH_ID . "' and DATE_STAT=" . $DB_now_date,
+            "File: " . __FILE__ . "<br>Line: " . __LINE__,
+            false,
+            false,
+            false
+        );
         if (intval($rows) <= 0) {
             $arFields = array(
                 "ADV_ID" => intval($ADV_ID),
@@ -1298,10 +1590,26 @@ class CKeepStatistics
         if ($arPREV_PATH["IS_LAST_PAGE"] == "Y") {
             if ($ADV_BACK == "N") {
                 $arFields = array("COUNTER_FULL_PATH" => "COUNTER_FULL_PATH - 1");
-                $DB->Update("b_stat_path_adv", $arFields, "WHERE ADV_ID='" . $ADV_ID . "' and PATH_ID='" . $arPREV_PATH["PATH_ID"] . "' and DATE_STAT=" . $DB_now_date, "File: " . __FILE__ . "<br>Line: " . __LINE__, false, false, false);
+                $DB->Update(
+                    "b_stat_path_adv",
+                    $arFields,
+                    "WHERE ADV_ID='" . $ADV_ID . "' and PATH_ID='" . $arPREV_PATH["PATH_ID"] . "' and DATE_STAT=" . $DB_now_date,
+                    "File: " . __FILE__ . "<br>Line: " . __LINE__,
+                    false,
+                    false,
+                    false
+                );
             } elseif ($ADV_BACK == "Y") {
                 $arFields = array("COUNTER_FULL_PATH_BACK" => "COUNTER_FULL_PATH_BACK - 1");
-                $DB->Update("b_stat_path_adv", $arFields, "WHERE ADV_ID='" . $ADV_ID . "' and PATH_ID='" . $arPREV_PATH["PATH_ID"] . "' and DATE_STAT=" . $DB_now_date, "File: " . __FILE__ . "<br>Line: " . __LINE__, false, false, false);
+                $DB->Update(
+                    "b_stat_path_adv",
+                    $arFields,
+                    "WHERE ADV_ID='" . $ADV_ID . "' and PATH_ID='" . $arPREV_PATH["PATH_ID"] . "' and DATE_STAT=" . $DB_now_date,
+                    "File: " . __FILE__ . "<br>Line: " . __LINE__,
+                    false,
+                    false,
+                    false
+                );
             }
         }
     }
@@ -1311,7 +1619,7 @@ class CKeepStatistics
         $DB = CDatabase::GetModuleConnection('statistic');
         $DB_now_date = $DB->GetNowDate();
         $enter_counter = ($SESSION_NEW == "Y") ? 1 : 0;
-        if (strlen($CURRENT_DIR) > 0 && strlen($CURRENT_PAGE) > 0) {
+        if ($CURRENT_DIR <> '' && $CURRENT_PAGE <> '') {
             $LAST_DIR_ID = intval($_SESSION["SESS_LAST_DIR_ID"]);
             $LAST_PAGE_ID = intval($_SESSION["SESS_LAST_PAGE_ID"]);
             $CURRENT_DIR_ID = 0;
@@ -1335,11 +1643,18 @@ class CKeepStatistics
 
                 $rsID = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
                 while ($arID = $rsID->Fetch()) {
-                    if ($arID["DIR"] == "Y") $CURRENT_DIR_ID = $arID["ID"];
-                    elseif ($arID["DIR"] == "N") $CURRENT_PAGE_ID = $arID["ID"];
+                    if ($arID["DIR"] == "Y") {
+                        $CURRENT_DIR_ID = $arID["ID"];
+                    } elseif ($arID["DIR"] == "N") {
+                        $CURRENT_PAGE_ID = $arID["ID"];
+                    }
                 }
-                if ($CURRENT_DIR_ID != $LAST_DIR_ID) $exit_dir_counter = 1;
-                if ($CURRENT_PAGE_ID != $LAST_PAGE_ID) $exit_page_counter = 1;
+                if ($CURRENT_DIR_ID != $LAST_DIR_ID) {
+                    $exit_dir_counter = 1;
+                }
+                if ($CURRENT_PAGE_ID != $LAST_PAGE_ID) {
+                    $exit_page_counter = 1;
+                }
             } else {
                 $CURRENT_DIR_ID = $LAST_DIR_ID;
                 $CURRENT_PAGE_ID = $LAST_PAGE_ID;
@@ -1352,20 +1667,37 @@ class CKeepStatistics
             } elseif (intval($_SESSION["SESS_LAST_ADV_ID"]) > 0) {
                 $ADV_ID = intval($_SESSION["SESS_LAST_ADV_ID"]);
                 $bADV_BACK = true;
-            } else
+            } else {
                 $ADV_ID = 0;
+            }
 
             // ��������� ������
             if ($LAST_DIR_ID > 0 && $exit_dir_counter > 0) {
                 $arFields = array("EXIT_COUNTER" => "EXIT_COUNTER - 1");
-                $DB->Update("b_stat_page", $arFields, "WHERE ID = '" . $LAST_DIR_ID . "'", "File: " . __FILE__ . "<br>Line: " . __LINE__, false, false, false);
+                $DB->Update(
+                    "b_stat_page",
+                    $arFields,
+                    "WHERE ID = '" . $LAST_DIR_ID . "'",
+                    "File: " . __FILE__ . "<br>Line: " . __LINE__,
+                    false,
+                    false,
+                    false
+                );
                 if ($ADV_ID > 0) {
                     if ($bADV_BACK) {
                         $arFields = array(
                             "EXIT_COUNTER_BACK" => "EXIT_COUNTER_BACK - 1"
                         );
                     }
-                    $DB->Update("b_stat_page_adv", $arFields, "WHERE PAGE_ID = '" . $LAST_DIR_ID . "' and ADV_ID=" . $ADV_ID, "File: " . __FILE__ . "<br>Line: " . __LINE__, false, false, false);
+                    $DB->Update(
+                        "b_stat_page_adv",
+                        $arFields,
+                        "WHERE PAGE_ID = '" . $LAST_DIR_ID . "' and ADV_ID=" . $ADV_ID,
+                        "File: " . __FILE__ . "<br>Line: " . __LINE__,
+                        false,
+                        false,
+                        false
+                    );
                 }
             }
 
@@ -1376,7 +1708,15 @@ class CKeepStatistics
                     "EXIT_COUNTER" => "EXIT_COUNTER + " . $exit_dir_counter,
                     "ENTER_COUNTER" => "ENTER_COUNTER + " . $enter_counter
                 );
-                $DB->Update("b_stat_page", $arFields, "WHERE ID = '" . $CURRENT_DIR_ID . "'", "File: " . __FILE__ . "<br>Line: " . __LINE__, false, false, false);
+                $DB->Update(
+                    "b_stat_page",
+                    $arFields,
+                    "WHERE ID = '" . $CURRENT_DIR_ID . "'",
+                    "File: " . __FILE__ . "<br>Line: " . __LINE__,
+                    false,
+                    false,
+                    false
+                );
                 if ($ADV_ID > 0) {
                     if ($bADV_BACK) {
                         $arFields = Array(
@@ -1385,7 +1725,15 @@ class CKeepStatistics
                             "ENTER_COUNTER_BACK" => "ENTER_COUNTER_BACK + " . $enter_counter
                         );
                     }
-                    $adv_rows_dir = $DB->Update("b_stat_page_adv", $arFields, "WHERE PAGE_ID = '" . $CURRENT_DIR_ID . "' and ADV_ID = " . $ADV_ID, "File: " . __FILE__ . "<br>Line: " . __LINE__, false, false, false);
+                    $adv_rows_dir = $DB->Update(
+                        "b_stat_page_adv",
+                        $arFields,
+                        "WHERE PAGE_ID = '" . $CURRENT_DIR_ID . "' and ADV_ID = " . $ADV_ID,
+                        "File: " . __FILE__ . "<br>Line: " . __LINE__,
+                        false,
+                        false,
+                        false
+                    );
                 }
             } else {
                 $arFields = Array(
@@ -1430,14 +1778,30 @@ class CKeepStatistics
             // ������� ��������
             if ($LAST_PAGE_ID > 0 && $exit_page_counter > 0) {
                 $arFields = array("EXIT_COUNTER" => "EXIT_COUNTER - 1");
-                $DB->Update("b_stat_page", $arFields, "WHERE ID = '" . $LAST_PAGE_ID . "'", "File: " . __FILE__ . "<br>Line: " . __LINE__, false, false, false);
+                $DB->Update(
+                    "b_stat_page",
+                    $arFields,
+                    "WHERE ID = '" . $LAST_PAGE_ID . "'",
+                    "File: " . __FILE__ . "<br>Line: " . __LINE__,
+                    false,
+                    false,
+                    false
+                );
                 if ($ADV_ID > 0) {
                     if ($bADV_BACK) {
                         $arFields = array(
                             "EXIT_COUNTER_BACK" => "EXIT_COUNTER_BACK - 1"
                         );
                     }
-                    $DB->Update("b_stat_page_adv", $arFields, "WHERE PAGE_ID = '" . $LAST_PAGE_ID . "' and ADV_ID=" . $ADV_ID, "File: " . __FILE__ . "<br>Line: " . __LINE__, false, false, false);
+                    $DB->Update(
+                        "b_stat_page_adv",
+                        $arFields,
+                        "WHERE PAGE_ID = '" . $LAST_PAGE_ID . "' and ADV_ID=" . $ADV_ID,
+                        "File: " . __FILE__ . "<br>Line: " . __LINE__,
+                        false,
+                        false,
+                        false
+                    );
                 }
             }
 
@@ -1449,7 +1813,15 @@ class CKeepStatistics
                     "ENTER_COUNTER" => "ENTER_COUNTER + " . $enter_counter,
                     "URL_404" => "'" . $ERROR_404 . "'"
                 );
-                $DB->Update("b_stat_page", $arFields, "WHERE ID = '" . $CURRENT_PAGE_ID . "'", "File: " . __FILE__ . "<br>Line: " . __LINE__, false, false, false);
+                $DB->Update(
+                    "b_stat_page",
+                    $arFields,
+                    "WHERE ID = '" . $CURRENT_PAGE_ID . "'",
+                    "File: " . __FILE__ . "<br>Line: " . __LINE__,
+                    false,
+                    false,
+                    false
+                );
                 if ($ERROR_404 == "N") {
                     CStatistics::Set404("b_stat_page", "ID = " . intval($CURRENT_PAGE_ID), array("URL_404" => "Y"));
                 }
@@ -1463,7 +1835,15 @@ class CKeepStatistics
                         );
                     }
                     unset($arFields["URL_404"]);
-                    $adv_rows_page = $DB->Update("b_stat_page_adv", $arFields, "WHERE PAGE_ID = '" . $CURRENT_PAGE_ID . "' and ADV_ID = " . $ADV_ID, "File: " . __FILE__ . "<br>Line: " . __LINE__, false, false, false);
+                    $adv_rows_page = $DB->Update(
+                        "b_stat_page_adv",
+                        $arFields,
+                        "WHERE PAGE_ID = '" . $CURRENT_PAGE_ID . "' and ADV_ID = " . $ADV_ID,
+                        "File: " . __FILE__ . "<br>Line: " . __LINE__,
+                        false,
+                        false,
+                        false
+                    );
                 }
             } else {
                 $arFields = Array(
@@ -1507,11 +1887,15 @@ class CKeepStatistics
         $DB_now = $DB->GetNowFunction();
 
         // ID of the referer
-        $rsReferer = $DB->Query("
+        $rsReferer = $DB->Query(
+            "
 			SELECT ID
 			FROM b_stat_referer
 			WHERE SITE_NAME = '" . $DB->ForSql($SN, 255) . "'
-		", false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+		",
+            false,
+            "File: " . __FILE__ . "<br>Line: " . __LINE__
+        );
         $arReferer = $rsReferer->Fetch();
 
         if ($arReferer) {
@@ -1520,7 +1904,10 @@ class CKeepStatistics
                 "b_stat_referer",
                 array("SESSIONS" => "SESSIONS + 1"),
                 "WHERE ID=" . $arReferer["ID"],
-                "File: " . __FILE__ . "<br>Line: " . __LINE__, false, false, false
+                "File: " . __FILE__ . "<br>Line: " . __LINE__,
+                false,
+                false,
+                false
             );
             $_SESSION["SESS_REFERER_ID"] = intval($arReferer["ID"]);
         } else {
@@ -1531,7 +1918,9 @@ class CKeepStatistics
                 "SITE_NAME" => "'" . $DB->ForSql($SN, 255) . "'",
                 "SESSIONS" => 1,
             );
-            $_SESSION["SESS_REFERER_ID"] = intval($DB->Insert("b_stat_referer", $arFields, "File: " . __FILE__ . "<br>Line: " . __LINE__));
+            $_SESSION["SESS_REFERER_ID"] = intval(
+                $DB->Insert("b_stat_referer", $arFields, "File: " . __FILE__ . "<br>Line: " . __LINE__)
+            );
         }
 
         // save referring fact to database
@@ -1548,7 +1937,9 @@ class CKeepStatistics
             "SITE_ID" => $sql_site,
         );
 
-        $REFERER_LIST_ID = intval($DB->Insert("b_stat_referer_list", $arFields, "File: " . __FILE__ . "<br>Line: " . __LINE__));
+        $REFERER_LIST_ID = intval(
+            $DB->Insert("b_stat_referer_list", $arFields, "File: " . __FILE__ . "<br>Line: " . __LINE__)
+        );
         if ($ERROR_404 == "N") {
             CStatistics::Set404("b_stat_referer_list", "ID = " . $REFERER_LIST_ID, array("URL_TO_404" => "Y"));
         }
@@ -1556,5 +1947,3 @@ class CKeepStatistics
         return $REFERER_LIST_ID;
     }
 }
-
-?>

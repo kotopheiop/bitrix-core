@@ -34,7 +34,7 @@ class SearchContent extends Stepper
     {
         $lastId = Option::get('landing', self::OPTION_CODE, 0);
         $scopes = Option::get('landing', self::OPTION_CODE_SCOPES, '');
-        $scopes = unserialize($scopes);
+        $scopes = unserialize($scopes, ['allowed_classes' => false]);
         $finished = true;
 
         \Bitrix\Landing\Rights::setGlobalOff();
@@ -53,37 +53,41 @@ class SearchContent extends Stepper
         }
 
         // calculate count of records, which we need
-        $res = LandingTable::getList([
-            'select' => [
-                new \Bitrix\Main\Entity\ExpressionField(
-                    'CNT', 'COUNT(*)'
-                )
-            ],
-            'filter' => [
-                '=DELETED' => ['Y', 'N'],
-                '=SITE.DELETED' => ['Y', 'N']
+        $res = LandingTable::getList(
+            [
+                'select' => [
+                    new \Bitrix\Main\Entity\ExpressionField(
+                        'CNT', 'COUNT(*)'
+                    )
+                ],
+                'filter' => [
+                    '=DELETED' => ['Y', 'N'],
+                    '=SITE.DELETED' => ['Y', 'N']
+                ]
             ]
-        ]);
+        );
         if ($row = $res->fetch()) {
             $result['count'] = $row['CNT'];
         }
 
         // one group for update
-        $res = LandingTable::getList([
-            'select' => [
-                'ID',
-                'SITE_TYPE' => 'SITE.TYPE'
-            ],
-            'filter' => [
-                '>ID' => $lastId,
-                '=DELETED' => ['Y', 'N'],
-                '=SITE.DELETED' => ['Y', 'N']
-            ],
-            'order' => [
-                'ID' => 'ASC'
-            ],
-            'limit' => 20
-        ]);
+        $res = LandingTable::getList(
+            [
+                'select' => [
+                    'ID',
+                    'SITE_TYPE' => 'SITE.TYPE'
+                ],
+                'filter' => [
+                    '>ID' => $lastId,
+                    '=DELETED' => ['Y', 'N'],
+                    '=SITE.DELETED' => ['Y', 'N']
+                ],
+                'order' => [
+                    'ID' => 'ASC'
+                ],
+                'limit' => 20
+            ]
+        );
         while ($row = $res->fetch()) {
             $finished = false;
             $lastId = $row['ID'];

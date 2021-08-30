@@ -22,7 +22,10 @@ class CIBlockPropertySequence
             "GetAdminFilterHTML" => array(__CLASS__, "GetPublicFilterHTML"),
             "GetPublicFilterHTML" => array(__CLASS__, "GetPublicFilterHTML"),
             "AddFilterFields" => array(__CLASS__, "AddFilterFields"),
-            "GetUIFilterProperty" => array(__CLASS__, "GetUIFilterProperty")
+            "GetUIFilterProperty" => array(__CLASS__, "GetUIFilterProperty"),
+            'GetUIEntityEditorProperty' => array(__CLASS__, 'GetUIEntityEditorProperty'),
+            'GetUIEntityEditorPropertyEditHtml' => array(__CLASS__, 'GetUIEntityEditorPropertyEditHtml'),
+            'GetUIEntityEditorPropertyViewHtml' => array(__CLASS__, 'GetUIEntityEditorPropertyViewHtml'),
         );
     }
 
@@ -81,11 +84,12 @@ class CIBlockPropertySequence
             $current_value = $seq->GetNext();
         }
 
-        if (is_array($arProperty["USER_TYPE_SETTINGS"]) && $arProperty["USER_TYPE_SETTINGS"]["write"] === "Y")
+        if (is_array($arProperty["USER_TYPE_SETTINGS"]) && $arProperty["USER_TYPE_SETTINGS"]["write"] === "Y") {
             return '<input type="text" size="5" name="' . $strHTMLControlName["VALUE"] . '" value="' . $current_value . '">';
-        else
+        } else {
             return '<input disabled type="text" size="5" name="' . $strHTMLControlName["VALUE"] . '" value="' . $current_value . '">' .
                 '<input type="hidden" size="5" name="' . $strHTMLControlName["VALUE"] . '" value="' . $current_value . '">';
+        }
     }
 
     public static function PrepareSettings($arProperty)
@@ -101,10 +105,11 @@ class CIBlockPropertySequence
             $seq->SetNext($arProperty["USER_TYPE_SETTINGS"]["current_value"]);
         }
 
-        if (is_array($arProperty["USER_TYPE_SETTINGS"]) && $arProperty["USER_TYPE_SETTINGS"]["write"] === "Y")
+        if (is_array($arProperty["USER_TYPE_SETTINGS"]) && $arProperty["USER_TYPE_SETTINGS"]["write"] === "Y") {
             $strWritable = "Y";
-        else
+        } else {
             $strWritable = "N";
+        }
 
         $arProperty['USER_TYPE_SETTINGS'] = array(
             "write" => $strWritable,
@@ -118,10 +123,11 @@ class CIBlockPropertySequence
             "HIDE" => array("SEARCHABLE", "WITH_DESCRIPTION", "ROW_COUNT", "COL_COUNT", "DEFAULT_VALUE")
         );
 
-        if (is_array($arProperty["USER_TYPE_SETTINGS"]) && $arProperty["USER_TYPE_SETTINGS"]["write"] === "Y")
+        if (is_array($arProperty["USER_TYPE_SETTINGS"]) && $arProperty["USER_TYPE_SETTINGS"]["write"] === "Y") {
             $bWritable = true;
-        else
+        } else {
             $bWritable = false;
+        }
 
         $html = '
 			<tr valign="top">
@@ -168,5 +174,34 @@ class CIBlockPropertySequence
             "more" => ">",
             "less" => "<"
         );
+    }
+
+    public static function GetUIEntityEditorProperty($settings, $value)
+    {
+        return [
+            'type' => 'custom',
+        ];
+    }
+
+    public static function GetUIEntityEditorPropertyEditHtml(array $params = []): string
+    {
+        $settings = $params['SETTINGS'] ?? [];
+        $value = $params['VALUE'] ?? '';
+        $paramsHTMLControl = [
+            'MODE' => 'iblock_element_admin',
+            'VALUE' => $params['FIELD_NAME'] ?? '',
+        ];
+        return self::GetPropertyFieldHtml($settings, $value, $paramsHTMLControl);
+    }
+
+    public static function GetUIEntityEditorPropertyViewHtml(array $params = []): string
+    {
+        $settings = $params['SETTINGS'] ?? [];
+        $value = $params['VALUE'] ?? '';
+        $paramsHTMLControl = [
+            'MODE' => 'iblock_element_admin',
+            'VALUE' => $params['FIELD_NAME'] ?? '',
+        ];
+        return self::GetPropertyFieldHtml($settings, $value, $paramsHTMLControl);
     }
 }

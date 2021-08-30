@@ -6,6 +6,7 @@ use Bitrix\Main\Text\Encoding;
 use Bitrix\Main\Error;
 use \Bitrix\Main\Engine\Response;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Json;
 
 Loc::loadMessages(__FILE__);
 
@@ -19,9 +20,12 @@ class ResourceBookingAjax extends \Bitrix\Main\Engine\Controller
         return [
             'getFillFormData' => [
                 '-prefilters' => [
-                    \Bitrix\Main\Engine\ActionFilter\Authentication::class
-                    //\Bitrix\Main\Engine\ActionFilter\Csrf::class
-                ]
+                    \Bitrix\Main\Engine\ActionFilter\Authentication::class,
+                    \Bitrix\Main\Engine\ActionFilter\Csrf::class
+                ],
+                '+postfilters' => [
+                    new \Bitrix\Main\Engine\ActionFilter\Cors()
+                ],
             ]
         ];
     }
@@ -30,25 +34,22 @@ class ResourceBookingAjax extends \Bitrix\Main\Engine\Controller
     {
         $request = $this->getRequest();
 
-        return \CCalendarPlanner::prepareData(array(
-            'user_id' => \CCalendar::getCurUserId(),
-            'codes' => $request->getPost('codes'),
-            'resources' => $request->getPost('resources'),
-            'date_from' => \CCalendar::date(\CCalendar::timestamp($request->getPost('from')), false),
-            'date_to' => \CCalendar::date(\CCalendar::timestamp($request->getPost('to')), false),
-            'timezone' => \CCalendar::getUserTimezoneName(\CCalendar::getCurUserId()),
-            'skipEntryList' => $request->getPost('currentEventList')
-        ));
+        return \CCalendarPlanner::prepareData(
+            array(
+                'user_id' => \CCalendar::getCurUserId(),
+                'codes' => $request->getPost('codes'),
+                'resources' => $request->getPost('resources'),
+                'date_from' => \CCalendar::date(\CCalendar::timestamp($request->getPost('from')), false),
+                'date_to' => \CCalendar::date(\CCalendar::timestamp($request->getPost('to')), false),
+                'timezone' => \CCalendar::getUserTimezoneName(\CCalendar::getCurUserId()),
+                'skipEntryList' => $request->getPost('currentEventList')
+            )
+        );
     }
 
     public function getDefaultUserfieldSettingsAction()
     {
         return \Bitrix\Calendar\UserField\ResourceBooking::prepareSettings();
-    }
-
-    public function initB24LimitationAction()
-    {
-        return \Bitrix\Calendar\UserField\ResourceBooking::getB24LimitationPopupParams();
     }
 
     public function getBitrix24LimitationAction()
@@ -71,14 +72,24 @@ class ResourceBookingAjax extends \Bitrix\Main\Engine\Controller
     public function getFieldParamsAction()
     {
         $request = $this->getRequest();
-        return \Bitrix\Calendar\UserField\ResourceBooking::getUserFieldByFieldName($request['fieldname'], $request['selectedUsers']);
+        return \Bitrix\Calendar\UserField\ResourceBooking::getUserFieldByFieldName(
+            $request['fieldname'],
+            $request['selectedUsers']
+        );
     }
 
     public function getFillFormDataAction()
     {
         $request = $this->getRequest();
+        $settingsData = $request['settingsData'];
+
+        if (is_string($settingsData) && $settingsData) {
+            $settingsData = Encoding::convertEncoding($settingsData, SITE_CHARSET, 'UTF-8');
+            $settingsData = Json::decode($settingsData);
+        }
+
         return \Bitrix\Calendar\UserField\ResourceBooking::getFillFormData(
-            $request['settingsData'],
+            $settingsData,
             [
                 'fieldName' => $request['fieldName'],
                 'from' => $request['from'],

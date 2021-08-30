@@ -63,7 +63,7 @@ class OrderTable extends Entity\DataManager
                 'data_type' => 'string',
                 'required' => false,
                 'serialized' => true,
-                'title' => Loc::getMessage('TRADING_PLATFORM_ORDER_ENTITY_EXTERNAL_ORDER_LINES_FIELD'),
+                'title' => Loc::getMessage('TRADING_PLATFORM_ORDER_ENTITY_PARAMS_FIELD'),
             ),
             'TRADING_PLATFORM_ID' => array(
                 'data_type' => 'integer',
@@ -78,7 +78,8 @@ class OrderTable extends Entity\DataManager
             'XML_ID' => array(
                 'data_type' => 'string',
                 'title' => 'XML_ID',
-            ),);
+            ),
+        );
     }
 
     public static function validateExternalOrderId()
@@ -92,8 +93,9 @@ class OrderTable extends Entity\DataManager
     {
         $orderId = (int)$orderId;
 
-        if ($orderId <= 0)
+        if ($orderId <= 0) {
             return false;
+        }
 
         $con = \Bitrix\Main\Application::getConnection();
         $con->queryExecute("DELETE FROM b_sale_tp_order WHERE ORDER_ID=" . $orderId);

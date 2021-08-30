@@ -16,17 +16,22 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
 require_once($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/prolog.php");
 
 if (!defined('NOT_CHECK_PERMISSIONS') || NOT_CHECK_PERMISSIONS !== true) {
-    if (!$USER->CanDoOperation('view_other_settings'))
+    if (!$USER->CanDoOperation('view_other_settings')) {
         $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+    }
 }
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/classes/general/checklist.php");
-include($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/lang/" . LANG . "/admin/checklist.php");
-$APPLICATION->AddHeadString('
+
+\Bitrix\Main\Localization\Loc::loadMessages(__DIR__ . "/checklist.php");
+
+$APPLICATION->AddHeadString(
+    '
 	<style type="text/css">
 		p,ul,li{font-size:100%!important;}
 	</style>
-');
+'
+);
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
 CJSCore::Init(Array('popup'));
@@ -42,14 +47,16 @@ if ($_REQUEST["TEST_ID"] && $arPoints[$_REQUEST["TEST_ID"]]) {
     $arPosition = 0;
     foreach ($arPoints as $k => $v) {
         $arPosition++;
-        if ($k == $arTestID)
+        if ($k == $arTestID) {
             break;
+        }
     }
     $arTotal = count($arPoints);
-    if (strlen($arPoints[$arTestID]["STATE"]["COMMENTS"]["SYSTEM"]["DETAIL"]) > 0)
+    if ($arPoints[$arTestID]["STATE"]["COMMENTS"]["SYSTEM"]["DETAIL"] <> '') {
         $display = "inline-block";
-    else
+    } else {
         $display = "none";
+    }
     $display_result = (!empty($arPoints[$arTestID]["STATE"]["COMMENTS"]["SYSTEM"]) ? "block" : "none");
     $APPLICATION->RestartBuffer(); ?>
 
@@ -57,8 +64,18 @@ if ($_REQUEST["TEST_ID"] && $arPoints[$_REQUEST["TEST_ID"]]) {
     <?
 
     $aTabs = array(
-        array("DIV" => "edit1", "TAB" => GetMessage("CL_TAB_TEST"), "ICON" => "checklist_detail", "TITLE" => GetMessage("CL_TEST_NAME") . ': ' . $arPoints[$arTestID]["NAME"] . '&nbsp;(' . $htmlTestID . ')'),
-        array("DIV" => "edit2", "TAB" => GetMessage("CL_TAB_DESC"), "ICON" => "checklist_detail", "TITLE" => GetMessage('CL_TAB_DESC')),
+        array(
+            "DIV" => "edit1",
+            "TAB" => GetMessage("CL_TAB_TEST"),
+            "ICON" => "checklist_detail",
+            "TITLE" => GetMessage("CL_TEST_NAME") . ': ' . $arPoints[$arTestID]["NAME"] . '&nbsp;(' . $htmlTestID . ')'
+        ),
+        array(
+            "DIV" => "edit2",
+            "TAB" => GetMessage("CL_TAB_DESC"),
+            "ICON" => "checklist_detail",
+            "TITLE" => GetMessage('CL_TAB_DESC')
+        ),
     );
     $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
@@ -75,15 +92,20 @@ if ($_REQUEST["TEST_ID"] && $arPoints[$_REQUEST["TEST_ID"]]) {
             <div><span class="checklist-popup-test-link" onclick="ShowDetailComment()"
                        id="show_detail_link"><?= GetMessage("CL_MORE_DETAILS"); ?></span></div>
             <div style="display:none" id="detail_system_comment_<?= $htmlTestID; ?>">
-                <div class="checklist-system-textarea"><?= preg_replace("/\r\n|\r|\n/", '<br>', $arPoints[$arTestID]["STATE"]["COMMENTS"]["SYSTEM"]["DETAIL"]); ?></div>
+                <div class="checklist-system-textarea"><?= preg_replace(
+                        "/\r\n|\r|\n/",
+                        '<br>',
+                        $arPoints[$arTestID]["STATE"]["COMMENTS"]["SYSTEM"]["DETAIL"]
+                    ); ?></div>
             </div>
         </div>
     </div>
     <? if ($arPoints[$arTestID]["AUTO"] == "Y"):?>
         <div class="checklist-popup-start-test-block checklist-popup-name-test">
             <a id="bx_start_button_detail" onclick="StartPointAutoCheck()" class="adm-btn adm-btn-green adm-btn">
-                <span class="checklist-button-cont"
-                      style="color: #ffffff; font-weight: bold"><?= GetMessage("CL_AUTOTEST_START"); ?></span>
+                <span class="checklist-button-cont" style="color: #ffffff; font-weight: bold"><?= GetMessage(
+                        "CL_AUTOTEST_START"
+                    ); ?></span>
             </a>
             <span id="bx_per_point_done" class="checklist-popup-start-test-text"></span>
         </div>
@@ -96,12 +118,16 @@ if ($_REQUEST["TEST_ID"] && $arPoints[$_REQUEST["TEST_ID"]]) {
                 <div OnClick="BX('performer_comment_edit_area').style.display ='block'; this.style.display='none';BX('performer_comment').focus();"
                      OnMouseOver="BX.addClass(this,'checklist-form-textar');BX.removeClass(this,'checklist-form-textar-non-active');"
                      OnMouseOut="BX.addClass(this,'checklist-form-textar-non-active');BX.removeClass(this,'checklist-form-textar');"
-                     id="performer_comment_area"
-                     class="checklist-form-textar-non-active"><?= preg_replace("/\r\n|\r|\n/", '<br>', htmlspecialcharsbx($arPoints[$arTestID]["STATE"]["COMMENTS"]["PERFOMER"])); ?></div>
+                     id="performer_comment_area" class="checklist-form-textar-non-active"><?= preg_replace(
+                        "/\r\n|\r|\n/",
+                        '<br>',
+                        htmlspecialcharsbx($arPoints[$arTestID]["STATE"]["COMMENTS"]["PERFOMER"])
+                    ); ?></div>
                 <div id="performer_comment_edit_area" style="display:none;"><textarea id="performer_comment"
                                                                                       OnBlur="SaveStatus(); BX('performer_comment_area').style.display ='block';BX('performer_comment_edit_area').style.display='none';CopyText(this,BX('performer_comment_area'));"
-                                                                                      class="checklist-form-textar"><?= htmlspecialcharsbx($arPoints[$arTestID]["STATE"]["COMMENTS"]["PERFOMER"]) ?></textarea>
-                </div>
+                                                                                      class="checklist-form-textar"><?= htmlspecialcharsbx(
+                            $arPoints[$arTestID]["STATE"]["COMMENTS"]["PERFOMER"]
+                        ) ?></textarea></div>
             </div>
         </div>
     </div>
@@ -110,7 +136,9 @@ if ($_REQUEST["TEST_ID"] && $arPoints[$_REQUEST["TEST_ID"]]) {
         <div class="checklist-popup-tes-status-wrap" id="checklist-popup-tes-status">
 								<span class="checklist-popup-tes-status"><span
                                             class="checklist-popup-tes-waiting-l"></span><span
-                                            class="checklist-popup-tes-waiting-c"><?= GetMessage("CL_W_STATUS"); ?></span><span
+                                            class="checklist-popup-tes-waiting-c"><?= GetMessage(
+                                            "CL_W_STATUS"
+                                        ); ?></span><span
                                             class="checklist-popup-tes-waiting-r"></span><input
                                             name="checklist-form-radio" type="radio" value="W" id="W_status"/></span>
             <span
@@ -276,7 +304,9 @@ if ($_REQUEST["TEST_ID"] && $arPoints[$_REQUEST["TEST_ID"]]) {
         }
 
         function ShowPopupDetail(_this) {
-            ShowStatusAlert(_this.id, '<?=GetMessageJS("CL_MORE_DETAILS_INF");?>', true, "checklist-alert-comment-detail");
+            ShowStatusAlert(_this.id, '<?=GetMessageJS(
+                "CL_MORE_DETAILS_INF"
+            );?>', true, "checklist-alert-comment-detail");
         }
 
         function SaveStatus(_this) {
@@ -306,7 +336,8 @@ if ($_REQUEST["TEST_ID"] && $arPoints[$_REQUEST["TEST_ID"]]) {
             var query_str = "ACTION=update&STATUS=" + status + "&TEST_ID=" + testID + "&COMMENTS=Y" + "&perfomer_comment=" + BX("performer_comment").value + "&lang=<?=LANG;?>";
             if (_this)
                 query_str += "&CAN_SHOW_CP_MESSAGE=Y";
-            BX.ajax.post("/bitrix/admin/checklist.php?bxpublic=Y&<?=bitrix_sessid_get()?>", query_str, TestResultSimple);
+            BX.ajax.post("/bitrix/admin/checklist.php?bxpublic=Y&<?=bitrix_sessid_get(
+            )?>", query_str, TestResultSimple);
         }
 
         function StartPointAutoCheck() {
@@ -353,8 +384,11 @@ if ($_REQUEST["TEST_ID"] && $arPoints[$_REQUEST["TEST_ID"]]) {
                         step = 0;
                         test_is_run = false;
                     } else if (json_data.IN_PROGRESS == "Y") {
-                        BX("bx_per_point_done").innerHTML = '<?=GetMessageJS("CL_PERCENT_LIVE")?>' + " " + json_data.PERCENT + "%";
-                        BX.ajax.post("/bitrix/admin/checklist.php", "ACTION=update&autotest=Y&bxpublic=Y&TEST_ID=" + testID + "&STEP=" + (++step) + "&lang=<?=LANG;?>&<?=bitrix_sessid_get()?>", callback);
+                        BX("bx_per_point_done").innerHTML = '<?=GetMessageJS(
+                            "CL_PERCENT_LIVE"
+                        )?>' + " " + json_data.PERCENT + "%";
+                        BX.ajax.post("/bitrix/admin/checklist.php", "ACTION=update&autotest=Y&bxpublic=Y&TEST_ID=" + testID + "&STEP=" + (++step) + "&lang=<?=LANG;?>&<?=bitrix_sessid_get(
+                        )?>", callback);
                     } else {
                         loadButton("bx_start_button_detail");
                         step = 0;
@@ -379,7 +413,8 @@ if ($_REQUEST["TEST_ID"] && $arPoints[$_REQUEST["TEST_ID"]]) {
             stoptest = false;
             buttonText = BX.findChild(BX("bx_start_button_detail"), {className: 'checklist-button-cont'}, true, false);
             buttonText.innerHTML = '<?=GetMessageJS("CL_END_TEST");?>';
-            BX.ajax.post("/bitrix/admin/checklist.php", "ACTION=update&autotest=Y&bxpublic=Y&TEST_ID=" + testID + "&STEP=" + step + "&lang=<?=LANG;?>&<?=bitrix_sessid_get()?>", callback);
+            BX.ajax.post("/bitrix/admin/checklist.php", "ACTION=update&autotest=Y&bxpublic=Y&TEST_ID=" + testID + "&STEP=" + step + "&lang=<?=LANG;?>&<?=bitrix_sessid_get(
+            )?>", callback);
         }
 
         function Move(action) {
@@ -392,7 +427,8 @@ if ($_REQUEST["TEST_ID"] && $arPoints[$_REQUEST["TEST_ID"]]) {
             Dialog.hideNotify();
             ShowWaitWindow();
             BX.ajax.post(
-                "/bitrix/admin/checklist_detail.php?TEST_ID=" + arStates["POINTS"][current].TEST_ID + "&lang=<?=LANG;?>&bxpublic=Y&<?=bitrix_sessid_get()?>",
+                "/bitrix/admin/checklist_detail.php?TEST_ID=" + arStates["POINTS"][current].TEST_ID + "&lang=<?=LANG;?>&bxpublic=Y&<?=bitrix_sessid_get(
+                )?>",
                 data,
                 function (data) {
                     ReCalc(current);

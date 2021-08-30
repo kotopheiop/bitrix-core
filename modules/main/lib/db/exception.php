@@ -20,10 +20,11 @@ class Exception extends \Bitrix\Main\SystemException
      */
     public function __construct($message = "", $databaseMessage = "", \Exception $previous = null)
     {
-        if (($message != "") && ($databaseMessage != ""))
+        if (($message != "") && ($databaseMessage != "")) {
             $message .= ": " . $databaseMessage;
-        elseif (($message == "") && ($databaseMessage != ""))
+        } elseif (($message == "") && ($databaseMessage != "")) {
             $message = $databaseMessage;
+        }
 
         $this->databaseMessage = $databaseMessage;
 

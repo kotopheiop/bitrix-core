@@ -24,54 +24,68 @@ final class MigrationProcess extends Location\Util\Process
     {
         parent::__construct();
 
-        $this->addStage(array(
-            'PERCENT' => 10,
-            'CODE' => 'CREATE_TYPES',
-            'CALLBACK' => 'stageCreateTypes'
-        ));
+        $this->addStage(
+            array(
+                'PERCENT' => 10,
+                'CODE' => 'CREATE_TYPES',
+                'CALLBACK' => 'stageCreateTypes'
+            )
+        );
 
-        $this->addStage(array(
-            'PERCENT' => 30,
-            'CODE' => 'CONVERT_TREE',
-            'CALLBACK' => 'stageConvertTree'
-        ));
+        $this->addStage(
+            array(
+                'PERCENT' => 30,
+                'CODE' => 'CONVERT_TREE',
+                'CALLBACK' => 'stageConvertTree'
+            )
+        );
 
-        $this->addStage(array(
-            'PERCENT' => 50,
-            'CODE' => 'CONVERT_ZONES',
-            'CALLBACK' => 'stageConvertZones'
-        ));
+        $this->addStage(
+            array(
+                'PERCENT' => 50,
+                'CODE' => 'CONVERT_ZONES',
+                'CALLBACK' => 'stageConvertZones'
+            )
+        );
 
-        $this->addStage(array(
-            'PERCENT' => 70,
-            'CODE' => 'CONVERT_LINKS',
-            'CALLBACK' => 'stageConvertLinks'
-        ));
+        $this->addStage(
+            array(
+                'PERCENT' => 70,
+                'CODE' => 'CONVERT_LINKS',
+                'CALLBACK' => 'stageConvertLinks'
+            )
+        );
 
-        $this->addStage(array(
-            'PERCENT' => 90,
-            'STEP_SIZE' => 1,
-            'CODE' => 'COPY_DEFAULT_LOCATIONS',
-            'CALLBACK' => 'stageCopyDefaultLocations'
-        ));
+        $this->addStage(
+            array(
+                'PERCENT' => 90,
+                'STEP_SIZE' => 1,
+                'CODE' => 'COPY_DEFAULT_LOCATIONS',
+                'CALLBACK' => 'stageCopyDefaultLocations'
+            )
+        );
 
-        $this->addStage(array(
-            'PERCENT' => 100,
-            'STEP_SIZE' => 1,
-            'CODE' => 'COPY_ZIP_CODES',
-            'CALLBACK' => 'stageCopyZipCodes'
-        ));
+        $this->addStage(
+            array(
+                'PERCENT' => 100,
+                'STEP_SIZE' => 1,
+                'CODE' => 'COPY_ZIP_CODES',
+                'CALLBACK' => 'stageCopyZipCodes'
+            )
+        );
     }
 
     public function onBeforePerformIteration()
     {
-        if (\CSaleLocation::isLocationProMigrated())
+        if (\CSaleLocation::isLocationProMigrated()) {
             throw new Main\SystemException('Already migrated');
+        }
 
-        if (!isset($this->data['migrator_data']))
+        if (!isset($this->data['migrator_data'])) {
             $this->migrator = new CUpdaterLocationPro();
-        else
-            $this->migrator = unserialize($this->data['migrator_data']);
+        } else {
+            $this->migrator = unserialize($this->data['migrator_data'], ['allowed_classes' => false]);
+        }
     }
 
     public function onAfterPerformIteration()

@@ -52,7 +52,10 @@ class Bitrix extends Engine implements IEngine
     {
         if ($this->authInterface === null) {
             if (Loader::includeModule('socialservices')) {
-                $this->authInterface = new \CBitrixSeoOAuthInterface($this->engine['CLIENT_ID'], $this->engine['CLIENT_SECRET']);
+                $this->authInterface = new \CBitrixSeoOAuthInterface(
+                    $this->engine['CLIENT_ID'],
+                    $this->engine['CLIENT_SECRET']
+                );
             }
         }
 

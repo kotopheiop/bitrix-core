@@ -17,7 +17,7 @@ use Bitrix\Sale\Delivery\Requests;
 Loc::loadMessages(__FILE__);
 
 /* Inputs for deliveries */
-require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/lib/delivery/inputs.php");
+require_once __DIR__ . '/../inputs.php';
 
 /**
  * Class Base (abstract)
@@ -41,6 +41,7 @@ abstract class Base
     protected $trackingClass = "";
     /** @var Requests\HandlerBase */
     protected $deliveryRequestHandler = null;
+
     protected $extraServices = array();
     protected $trackingParams = array();
     protected $allowEditShipment = array();
@@ -65,62 +66,80 @@ abstract class Base
     {
         $initParams = $this->prepareFieldsForUsing($initParams);
 
-        if (isset($initParams["PARENT_ID"]))
+        if (isset($initParams["PARENT_ID"])) {
             $this->parentId = $initParams["PARENT_ID"];
-        else
+        } else {
             $this->parentId = 0;
+        }
 
-        if (!isset($initParams["ACTIVE"]))
+        if (!isset($initParams["ACTIVE"])) {
             $initParams["ACTIVE"] = "N";
+        }
 
-        if (!isset($initParams["NAME"]))
+        if (!isset($initParams["NAME"])) {
             $initParams["NAME"] = "";
+        }
 
-        if (!isset($initParams["CONFIG"]) || !is_array($initParams["CONFIG"]))
+        if (!isset($initParams["CONFIG"]) || !is_array($initParams["CONFIG"])) {
             $initParams["CONFIG"] = array();
+        }
 
-        if (!is_array($initParams["CONFIG"]))
+        if (!is_array($initParams["CONFIG"])) {
             throw new \Bitrix\Main\ArgumentTypeException("CONFIG", "array");
+        }
 
         $this->active = $initParams["ACTIVE"] == "Y";
         $this->name = $initParams["NAME"];
         $this->config = $initParams["CONFIG"];
 
-        if (isset($initParams["ID"]))
+        if (isset($initParams["ID"])) {
             $this->id = $initParams["ID"];
+        }
 
-        if (isset($initParams["DESCRIPTION"]))
+        if (isset($initParams["DESCRIPTION"])) {
             $this->description = $initParams["DESCRIPTION"];
+        }
 
-        if (isset($initParams["CODE"]))
+        if (isset($initParams["CODE"])) {
             $this->code = $initParams["CODE"];
+        }
 
-        if (isset($initParams["SORT"]))
+        if (isset($initParams["SORT"])) {
             $this->sort = $initParams["SORT"];
+        }
 
-        if (isset($initParams["LOGOTIP"]))
+        if (isset($initParams["LOGOTIP"])) {
             $this->logotip = $initParams["LOGOTIP"];
+        }
 
-        if (isset($initParams["CURRENCY"]))
+        if (isset($initParams["CURRENCY"])) {
             $this->currency = $initParams["CURRENCY"];
+        }
 
-        if (isset($initParams["ALLOW_EDIT_SHIPMENT"]))
+        if (isset($initParams["ALLOW_EDIT_SHIPMENT"])) {
             $this->allowEditShipment = $initParams["ALLOW_EDIT_SHIPMENT"];
+        }
 
-        if (isset($initParams["VAT_ID"]))
+        if (isset($initParams["VAT_ID"])) {
             $this->vatId = intval($initParams["VAT_ID"]);
+        }
 
-        if (isset($initParams["RESTRICTED"]))
+        if (isset($initParams["RESTRICTED"])) {
             $this->restricted = $initParams["RESTRICTED"];
+        }
 
         $this->trackingParams = is_array($initParams["TRACKING_PARAMS"]) ? $initParams["TRACKING_PARAMS"] : array();
 
-        if (isset($initParams["EXTRA_SERVICES"]))
-            $this->extraServices = new \Bitrix\Sale\Delivery\ExtraServices\Manager($initParams["EXTRA_SERVICES"], $this->currency);
-        elseif ($this->id > 0)
+        if (isset($initParams["EXTRA_SERVICES"])) {
+            $this->extraServices = new \Bitrix\Sale\Delivery\ExtraServices\Manager(
+                $initParams["EXTRA_SERVICES"],
+                $this->currency
+            );
+        } elseif ($this->id > 0) {
             $this->extraServices = new \Bitrix\Sale\Delivery\ExtraServices\Manager($this->id, $this->currency);
-        else
+        } else {
             $this->extraServices = new \Bitrix\Sale\Delivery\ExtraServices\Manager(array(), $this->currency);
+        }
     }
 
     /**
@@ -129,26 +148,33 @@ abstract class Base
      * @param array $extraServices .
      * @return \Bitrix\Sale\Delivery\CalculationResult
      */
-    public function calculate(\Bitrix\Sale\Shipment $shipment = null, $extraServices = array()) // null for compability with old configurable services api
+    public function calculate(
+        \Bitrix\Sale\Shipment $shipment = null,
+        $extraServices = array()
+    ) // null for compability with old configurable services api
     {
         if ($shipment && !$shipment->getCollection()) {
             $result = new Delivery\CalculationResult();
-            $result->addError(new Error('\Bitrix\Sale\Delivery\Services\Base::calculate() can\'t calculate empty shipment!'));
+            $result->addError(
+                new Error('\Bitrix\Sale\Delivery\Services\Base::calculate() can\'t calculate empty shipment!')
+            );
             return $result;
         }
 
         $result = $this->calculateConcrete($shipment);
 
         if ($shipment) {
-            if (empty($extraServices))
+            if (empty($extraServices)) {
                 $extraServices = $shipment->getExtraServices();
+            }
 
             $this->extraServices->setValues($extraServices);
             $this->extraServices->setOperationCurrency($shipment->getCurrency());
             $extraServicePrice = $this->extraServices->getTotalCostShipment($shipment);
 
-            if (floatval($extraServicePrice) > 0)
+            if (floatval($extraServicePrice) > 0) {
                 $result->setExtraServicesPrice($extraServicePrice);
+            }
         }
 
         $eventParams = array(
@@ -163,13 +189,15 @@ abstract class Base
 
         if (is_array($resultList) && !empty($resultList)) {
             foreach ($resultList as &$eventResult) {
-                if ($eventResult->getType() != EventResult::SUCCESS)
+                if ($eventResult->getType() != EventResult::SUCCESS) {
                     continue;
+                }
 
                 $params = $eventResult->getParameters();
 
-                if (isset($params["RESULT"]))
+                if (isset($params["RESULT"])) {
                     $result = $params["RESULT"];
+                }
             }
         }
 
@@ -204,11 +232,13 @@ abstract class Base
             /** @var  \Bitrix\Sale\BasketItem $basketItem */
             $basketItem = $shipmentItem->getBasketItem();
 
-            if (!$basketItem)
+            if (!$basketItem) {
                 continue;
+            }
 
-            if ($basketItem->isBundleChild())
+            if ($basketItem->isBundleChild()) {
                 continue;
+            }
 
             $result += $basketItem->getPrice();
         }
@@ -235,6 +265,14 @@ abstract class Base
     }
 
     /**
+     * @return float|null
+     */
+    public static function getDefaultVatRate(): ?float
+    {
+        return null;
+    }
+
+    /**
      * @param \Bitrix\Sale\Shipment $shipment .
      * @return Delivery\CalculationResult
      */
@@ -245,7 +283,8 @@ abstract class Base
                 new Error(
                     Loc::getMessage('SALE_DLVR_BASE_DELIVERY_PRICE_CALC_ERROR'),
                     'DELIVERY_CALCULATION'
-                ));
+                )
+            );
     }
 
     /**
@@ -260,25 +299,33 @@ abstract class Base
 
         foreach ($structure as $key1 => $rParams) {
             foreach ($rParams["ITEMS"] as $key2 => $iParams) {
-                if ($iParams["TYPE"] == "DELIVERY_SECTION")
+                if ($iParams["TYPE"] == "DELIVERY_SECTION") {
                     continue;
+                }
 
-                $errors = \Bitrix\Sale\Internals\Input\Manager::getRequiredError($iParams, $fields["CONFIG"][$key1][$key2]);
+                $errors = \Bitrix\Sale\Internals\Input\Manager::getRequiredError(
+                    $iParams,
+                    $fields["CONFIG"][$key1][$key2]
+                );
 
                 if (empty($errors)) {
                     $errors = \Bitrix\Sale\Internals\Input\Manager::getError($iParams, $fields["CONFIG"][$key1][$key2]);
                 }
 
                 if (!empty($errors)) {
-                    $strError .= Loc::getMessage("SALE_DLVR_BASE_FIELD") . " \"" . $iParams["NAME"] . "\": " . implode("<br>\n", $errors) . "<br>\n";
+                    $strError .= Loc::getMessage("SALE_DLVR_BASE_FIELD") . " \"" . $iParams["NAME"] . "\": " . implode(
+                            "<br>\n",
+                            $errors
+                        ) . "<br>\n";
                 }
             }
         }
 
-        if ($strError != "")
+        if ($strError != "") {
             throw new SystemException($strError);
+        }
 
-        if (strpos($fields['CLASS_NAME'], '\\') !== 0) {
+        if (mb_strpos($fields['CLASS_NAME'], '\\') !== 0) {
             $fields['CLASS_NAME'] = '\\' . $fields['CLASS_NAME'];
         }
 
@@ -302,22 +349,28 @@ abstract class Base
      */
     protected function glueValuesToConfig(array $confStructure, $confValues = array())
     {
-        if (!is_array($confValues))
+        if (!is_array($confValues)) {
             $confValues = array();
+        }
 
         if (isset($confStructure["ITEMS"]) && is_array($confStructure["ITEMS"])) {
             $confStructure["ITEMS"] = $this->glueValuesToConfig($confStructure["ITEMS"], $confValues);
         } else {
             foreach ($confStructure as $itemKey => $itemParams) {
-                if (isset($confStructure[$itemKey]["VALUE"]))
+                if (isset($confStructure[$itemKey]["VALUE"])) {
                     continue;
+                }
 
-                if (isset($itemParams["ITEMS"]) && is_array($itemParams["ITEMS"]))
-                    $confStructure[$itemKey]["ITEMS"] = $this->glueValuesToConfig($itemParams["ITEMS"], $confValues[$itemKey]);
-                elseif (isset($confValues[$itemKey]))
+                if (isset($itemParams["ITEMS"]) && is_array($itemParams["ITEMS"])) {
+                    $confStructure[$itemKey]["ITEMS"] = $this->glueValuesToConfig(
+                        $itemParams["ITEMS"],
+                        $confValues[$itemKey]
+                    );
+                } elseif (isset($confValues[$itemKey])) {
                     $confStructure[$itemKey]["VALUE"] = $confValues[$itemKey];
-                elseif (!isset($itemParams["VALUE"]) && isset($itemParams["DEFAULT"]))
+                } elseif (!isset($itemParams["VALUE"]) && isset($itemParams["DEFAULT"])) {
                     $confStructure[$itemKey]["VALUE"] = $itemParams["DEFAULT"];
+                }
             }
         }
 
@@ -332,11 +385,16 @@ abstract class Base
     {
         $configStructure = $this->getConfigStructure();
 
-        if (!is_array($configStructure))
+        if (!is_array($configStructure)) {
             throw new SystemException ("Method getConfigStructure() must return an array!");
+        }
 
-        foreach ($configStructure as $key => $configSection)
-            $configStructure[$key] = $this->glueValuesToConfig($configSection, isset($this->config[$key]) ? $this->config[$key] : array());
+        foreach ($configStructure as $key => $configSection) {
+            $configStructure[$key] = $this->glueValuesToConfig(
+                $configSection,
+                isset($this->config[$key]) ? $this->config[$key] : array()
+            );
+        }
 
         return $configStructure;
     }
@@ -445,8 +503,9 @@ abstract class Base
     {
         $result = $this->name;
 
-        if ($parent = $this->getParentService())
+        if ($parent = $this->getParentService()) {
             $result = $parent->getName() . " (" . $result . ")";
+        }
 
         return $result;
     }
@@ -477,8 +536,9 @@ abstract class Base
     {
         $result = null;
 
-        if (intval($this->parentId) > 0)
+        if (intval($this->parentId) > 0) {
             $result = Manager::getObjectById($this->parentId);
+        }
 
         return $result;
     }
@@ -498,7 +558,6 @@ abstract class Base
     public function getEmbeddedExtraServicesList()
     {
         return array();
-
         /*
         exapmple for concrete handlers
         return array(
@@ -521,6 +580,15 @@ abstract class Base
     public static function whetherAdminExtraServicesShow()
     {
         return self::$whetherAdminExtraServicesShow;
+    }
+
+    /**
+     * @param array $fields
+     * @return \Bitrix\Main\Result
+     */
+    public static function onBeforeAdd(array &$fields = array()): \Bitrix\Main\Result
+    {
+        return new \Bitrix\Main\Result();
     }
 
     /**
@@ -559,6 +627,18 @@ abstract class Base
     public function isCompatible(Shipment $shipment)
     {
         return true;
+    }
+
+    /**
+     * Returns array of extra service ids available for the specified shipment
+     * OR null in case all extra services are available
+     *
+     * @param Shipment $shipment
+     * @return array|null
+     */
+    public function getCompatibleExtraServiceIds(Shipment $shipment): ?array
+    {
+        return null;
     }
 
     /**
@@ -812,24 +892,17 @@ abstract class Base
     }
 
     /**
+     * Checks if handler is compatible
+     *
      * @return bool
-     * @throws \Bitrix\Main\LoaderException
      */
     public static function isHandlerCompatible()
     {
-        $result = true;
-
-        //Only configurable are fully compatible with all languages
-        if (ModuleManager::isModuleInstalled('bitrix24')
-            && Loader::includeModule('bitrix24')
-            && method_exists('CBitrix24', 'getLicensePrefix')) {
-            $languageId = \CBitrix24::getLicensePrefix();
-
-            if (!in_array($languageId, ['ru', 'kz', 'by', 'ua'])) {
-                $result = false;
-            }
-        }
-
-        return $result;
+        // Actually only configurable are fully compatible with all languages
+        return in_array(
+            \Bitrix\Sale\Delivery\Helper::getPortalZone(),
+            ['', 'ru', 'kz', 'by', 'ua'],
+            true
+        );
     }
 }

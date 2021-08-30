@@ -21,6 +21,16 @@ class PublicAction
     const REST_SCOPE_CLOUD = 'landing_cloud';
 
     /**
+     * Code indicating used blocks in REST statistics.
+     */
+    public const REST_USAGE_TYPE_BLOCK = 'blocks';
+
+    /**
+     * Code indicating used pages in REST statistics.
+     */
+    public const REST_USAGE_TYPE_PAGE = 'pages';
+
+    /**
      * REST application.
      * @var array
      */
@@ -53,11 +63,13 @@ class PublicAction
         $info = array();
 
         // if action exist and is callable
-        if ($action && strpos($action, '::')) {
+        if ($action && mb_strpos($action, '::')) {
+            $actionOriginal = $action;
             $action = self::getNamespacePublicClasses() . '\\' . $action;
             if (is_callable(explode('::', $action))) {
                 list($class, $method) = explode('::', $action);
                 $info = array(
+                    'action' => $actionOriginal,
                     'class' => $class,
                     'method' => $method,
                     'params_init' => array(),
@@ -119,7 +131,9 @@ class PublicAction
 
         if (!$isRest && (!defined('BX_UTF') || BX_UTF !== true)) {
             $data = Manager::getApplication()->convertCharsetArray(
-                $data, 'UTF-8', SITE_CHARSET
+                $data,
+                'UTF-8',
+                SITE_CHARSET
             );
         }
 
@@ -132,82 +146,108 @@ class PublicAction
                 Loc::getMessage('LANDING_ACCESS_DENIED2')
             );
         } // tmp flag for compatibility
-        else if (
-            ModuleManager::isModuleInstalled('bitrix24') &&
-            Manager::getOption('temp_permission_admin_only') &&
-            !\CBitrix24::isPortalAdmin(Manager::getUserId())
-        ) {
-            $error->addError(
-                'ACCESS_DENIED',
-                Loc::getMessage('LANDING_ACCESS_DENIED2')
-            );
-        } // check common permission
-        else if (
-        !Rights::hasAdditionalRight(
-            Rights::ADDITIONAL_RIGHTS['menu24']
-        )
-        ) {
-            $error->addError(
-                'ACCESS_DENIED',
-                Loc::getMessage('LANDING_ACCESS_DENIED2')
-            );
-        } // if method::action exist in PublicAction, call it
-        elseif (($action = self::getMethodInfo($action, $data))) {
-            if (!$isRest && !check_bitrix_sessid()) {
+        else {
+            if (
+                ModuleManager::isModuleInstalled('bitrix24') &&
+                Manager::getOption('temp_permission_admin_only') &&
+                !\CBitrix24::isPortalAdmin(Manager::getUserId())
+            ) {
                 $error->addError(
-                    'SESSION_EXPIRED',
-                    Loc::getMessage('LANDING_SESSION_EXPIRED')
+                    'ACCESS_DENIED',
+                    Loc::getMessage('LANDING_ACCESS_DENIED2')
                 );
-            }
-            if (!empty($action['params_missing'])) {
-                $error->addError(
-                    'MISSING_PARAMS',
-                    Loc::getMessage('LANDING_MISSING_PARAMS', array(
-                        '#MISSING#' => implode(', ', $action['params_missing'])
-                    ))
-                );
-            }
-            if (method_exists($action['class'], 'init')) {
-                $result = call_user_func_array(
-                    array($action['class'], 'init'),
-                    []
-                );
-                if (!$result->isSuccess()) {
-                    $error->copyError($result->getError());
-                }
-            }
-            // all right - execute
-            if ($error->isEmpty()) {
-                try {
-                    $result = call_user_func_array(
-                        array($action['class'], $action['method']),
-                        $action['params_init']
+            } // check common permission
+            else {
+                if (
+                !Rights::hasAdditionalRight(
+                    Rights::ADDITIONAL_RIGHTS['menu24'],
+                    null,
+                    true
+                )
+                ) {
+                    $error->addError(
+                        'ACCESS_DENIED',
+                        Loc::getMessage('LANDING_ACCESS_DENIED2')
                     );
-                    // answer
-                    if ($result === null)// void is accepted as success
-                    {
-                        return array(
-                            'type' => 'success',
-                            'result' => true
+                } // if method::action exist in PublicAction, call it
+                elseif (($action = self::getMethodInfo($action, $data))) {
+                    if (!$isRest && !check_bitrix_sessid()) {
+                        $error->addError(
+                            'SESSION_EXPIRED',
+                            Loc::getMessage('LANDING_SESSION_EXPIRED')
                         );
-                    } else if ($result->isSuccess()) {
-                        return array(
-                            'type' => 'success',
-                            'result' => $result->getResult()
-                        );
-                    } else {
-                        $error->copyError($result->getError());
                     }
-                } catch (\TypeError $e) {
-                    $error->addError(
-                        'TYPE_ERROR',
-                        $e->getMessage()
-                    );
-                } catch (\Exception $e) {
-                    $error->addError(
-                        'SYSTEM_ERROR',
-                        $e->getMessage()
-                    );
+                    if (!empty($action['params_missing'])) {
+                        $error->addError(
+                            'MISSING_PARAMS',
+                            Loc::getMessage(
+                                'LANDING_MISSING_PARAMS',
+                                array(
+                                    '#MISSING#' => implode(', ', $action['params_missing'])
+                                )
+                            )
+                        );
+                    }
+                    if (method_exists($action['class'], 'init')) {
+                        $result = call_user_func_array(
+                            array($action['class'], 'init'),
+                            []
+                        );
+                        if (!$result->isSuccess()) {
+                            $error->copyError($result->getError());
+                        }
+                    }
+                    // all right - execute
+                    if ($error->isEmpty()) {
+                        try {
+                            $result = call_user_func_array(
+                                array($action['class'], $action['method']),
+                                $action['params_init']
+                            );
+                            // answer
+                            if ($result === null)// void is accepted as success
+                            {
+                                return array(
+                                    'type' => 'success',
+                                    'result' => true
+                                );
+                            } else {
+                                if ($result->isSuccess()) {
+                                    $restResult = $result->getResult();
+                                    $event = new \Bitrix\Main\Event(
+                                        'landing', 'onSuccessRest', [
+                                        'result' => $restResult,
+                                        'action' => $action
+                                    ]
+                                    );
+                                    $event->send();
+                                    foreach ($event->getResults() as $eventResult) {
+                                        if (($modified = $eventResult->getModified())) {
+                                            if (isset($modified['result'])) {
+                                                $restResult = $modified['result'];
+                                            }
+                                        }
+                                    }
+                                    return array(
+                                        'type' => 'success',
+                                        'result' => $restResult
+                                    );
+                                } else {
+                                    $error->copyError($result->getError());
+                                }
+                            }
+                        } catch (\TypeError $e) {
+                            $error->addError(
+                                'TYPE_ERROR',
+                                $e->getMessage()
+                            );
+                        } catch (\Exception $e) {
+                            $error->addError(
+                                'SYSTEM_ERROR',
+                                $e->getMessage()
+                            );
+                        }
+                    }
                 }
             }
         }
@@ -219,10 +259,18 @@ class PublicAction
                 'error_description' => $error->getMessage()
             );
         }
-        return array(
-            'type' => 'error',
-            'result' => $errors
-        );
+        if (!$isRest) {
+            return [
+                'sessid' => bitrix_sessid(),
+                'type' => 'error',
+                'result' => $errors
+            ];
+        } else {
+            return [
+                'type' => 'error',
+                'result' => $errors
+            ];
+        }
     }
 
     /**
@@ -285,29 +333,31 @@ class PublicAction
 
             return $result;
         } // or single command
-        else if (
-            $request->offsetExists('action') &&
-            $request->offsetExists('data') &&
-            is_array($request->get('data'))
-        ) {
-            $data = $request->get('data');
-            // additional site id detect
-            if ($request->offsetExists('site_id')) {
-                $data['siteId'] = $request->get('site_id');
-            }
-            if ($files) {
-                foreach ($files as $code => $file) {
-                    $data[$code] = $file;
+        else {
+            if (
+                $request->offsetExists('action') &&
+                $request->offsetExists('data') &&
+                is_array($request->get('data'))
+            ) {
+                $data = $request->get('data');
+                // additional site id detect
+                if ($request->offsetExists('site_id')) {
+                    $data['siteId'] = $request->get('site_id');
                 }
+                if ($files) {
+                    foreach ($files as $code => $file) {
+                        $data[$code] = $file;
+                    }
+                }
+                $rawData = $postlist->getRaw('data');
+                if (isset($rawData['data'])) {
+                    self::$rawData = $rawData['data'];
+                }
+                return self::actionProcessing(
+                    $request->get('action'),
+                    $data
+                );
             }
-            $rawData = $postlist->getRaw('data');
-            if (isset($rawData['data'])) {
-                self::$rawData = $rawData['data'];
-            }
-            return self::actionProcessing(
-                $request->get('action'),
-                $data
-            );
         }
 
         return null;
@@ -328,7 +378,15 @@ class PublicAction
 
             $classes = array(
                 self::REST_SCOPE_DEFAULT => array(
-                    'block', 'site', 'landing', 'repo', 'template', 'demos', 'role', 'syspage'
+                    'block',
+                    'site',
+                    'landing',
+                    'repo',
+                    'template',
+                    'demos',
+                    'role',
+                    'syspage',
+                    'chat'
                 ),
                 self::REST_SCOPE_CLOUD => array(
                     'cloud'
@@ -345,10 +403,11 @@ class PublicAction
                         $static = $method->getStaticVariables();
                         if (!isset($static['internal']) || !$static['internal']) {
                             $command = $scope . '.' .
-                                strtolower($className) . '.' .
-                                strtolower($method->getName());
+                                mb_strtolower($className) . '.' .
+                                mb_strtolower($method->getName());
                             $restMethods[$scope][$command] = array(
-                                __CLASS__, 'restGateway'
+                                __CLASS__,
+                                'restGateway'
                             );
                         }
                     }
@@ -376,7 +435,7 @@ class PublicAction
         self::$restApp = AppTable::getByClientId($server->getClientId());
         // prepare method and call action
         $method = $server->getMethod();
-        $method = substr($method, strpos($method, '.') + 1);// delete module-prefix
+        $method = mb_substr($method, mb_strpos($method, '.') + 1);// delete module-prefix
         $method = preg_replace('/\./', '\\', $method, substr_count($method, '.') - 1);
         $method = str_replace('.', '::', $method);
         $result = self::actionProcessing(
@@ -435,7 +494,7 @@ class PublicAction
 
         if ($app = AppTable::getByClientId($parameters['ID'])) {
             $stat = self::getRestStat(true);
-            if (isset($stat['blocks'][$app['CODE']])) {
+            if (isset($stat[self::REST_USAGE_TYPE_BLOCK][$app['CODE']])) {
                 $eventResult = new \Bitrix\Main\EventResult(
                     \Bitrix\Main\EventResult::ERROR,
                     new \Bitrix\Main\Error(
@@ -445,16 +504,18 @@ class PublicAction
                 );
 
                 return $eventResult;
-            } else if (isset($stat['pages'][$app['CODE']])) {
-                $eventResult = new \Bitrix\Main\EventResult(
-                    \Bitrix\Main\EventResult::ERROR,
-                    new \Bitrix\Main\Error(
-                        Loc::getMessage('LANDING_REST_DELETE_EXIST_PAGES'),
-                        'LANDING_EXISTS_PAGES'
-                    )
-                );
+            } else {
+                if (isset($stat[self::REST_USAGE_TYPE_PAGE][$app['CODE']])) {
+                    $eventResult = new \Bitrix\Main\EventResult(
+                        \Bitrix\Main\EventResult::ERROR,
+                        new \Bitrix\Main\Error(
+                            Loc::getMessage('LANDING_REST_DELETE_EXIST_PAGES'),
+                            'LANDING_EXISTS_PAGES'
+                        )
+                    );
 
-                return $eventResult;
+                    return $eventResult;
+                }
             }
         }
     }
@@ -463,126 +524,154 @@ class PublicAction
      * Gets stat data of using rest app.
      * @param bool $humanFormat Gets data in human format.
      * @param bool $onlyActive Gets data only in active states.
+     * @param array $additionalFilter Additional filter array.
      * @return array
      */
-    public static function getRestStat($humanFormat = false, $onlyActive = true)
+    public static function getRestStat($humanFormat = false, $onlyActive = true, array $additionalFilter = [])
     {
         $blockCnt = [];
         $fullStat = [
-            'blocks' => [],
-            'pages' => []
+            self::REST_USAGE_TYPE_BLOCK => [],
+            self::REST_USAGE_TYPE_PAGE => []
         ];
         $activeValues = $onlyActive ? 'Y' : ['Y', 'N'];
+        $filter = [
+            'CODE' => 'repo_%',
+            '=DELETED' => 'N',
+            '=PUBLIC' => $activeValues,
+            '=LANDING.ACTIVE' => $activeValues,
+            '=LANDING.SITE.ACTIVE' => $activeValues
+        ];
+
+        if (isset($additionalFilter['SITE_ID'])) {
+            $filter['LANDING.SITE_ID'] = $additionalFilter['SITE_ID'];
+        }
 
         Rights::setOff();
 
         // gets all partners active block, placed on pages
-        $res = Internals\BlockTable::getList([
-            'select' => [
-                'CODE', 'CNT'
-            ],
-            'filter' => [
-                'CODE' => 'repo_%',
-                '=DELETED' => 'N',
-                '=PUBLIC' => $activeValues,
-                '=LANDING.ACTIVE' => $activeValues,
-                '=LANDING.SITE.ACTIVE' => $activeValues
-            ],
-            'group' => [
-                'CODE'
-            ],
-            'runtime' => [
-                new \Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(*)')
-            ]
-        ]);
-        while ($row = $res->fetch()) {
-            $blockCnt[substr($row['CODE'], 5)] = $row['CNT'];
-        }
-
-        // gets apps for this blocks
-        $res = Repo::getList([
-            'select' => [
-                'ID', 'APP_CODE'
-            ],
-            'filter' => [
-                'ID' => array_keys($blockCnt)
-            ]
-        ]);
-        while ($row = $res->fetch()) {
-            if (!isset($fullStat['blocks'][$row['APP_CODE']])) {
-                $fullStat['blocks'][$row['APP_CODE']] = 0;
-            }
-            $fullStat['blocks'][$row['APP_CODE']] += $blockCnt[$row['ID']];
-        }
-        unset($blockCnt);
-
-        // gets all demo catalog
-        $demos = [];
-        $res = Demos::getList([
-            'select' => [
-                'APP_CODE', 'XML_ID'
-            ]
-        ]);
-        while ($row = $res->fetch()) {
-            $demos[$row['APP_CODE'] . '.' . $row['XML_ID']] = $row;
-        }
-
-        // gets all partners active pages by demo catalog
-        if ($demos) {
-            $res = Landing::getList([
+        $res = Internals\BlockTable::getList(
+            [
                 'select' => [
-                    'INITIATOR_APP_CODE', 'CNT'
+                    'CODE',
+                    'CNT'
                 ],
-                'filter' => [
-                    '=DELETED' => 'N',
-                    '=ACTIVE' => $activeValues,
-                    '=SITE.ACTIVE' => $activeValues,
-                    '=INITIATOR_APP_CODE' => array_keys($demos)
+                'filter' => $filter,
+                'group' => [
+                    'CODE'
                 ],
                 'runtime' => [
                     new \Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(*)')
                 ]
-            ]);
+            ]
+        );
+        while ($row = $res->fetch()) {
+            $blockCnt[mb_substr($row['CODE'], 5)] = $row['CNT'];
+        }
+
+        // gets apps for this blocks
+        $res = Repo::getList(
+            [
+                'select' => [
+                    'ID',
+                    'APP_CODE'
+                ],
+                'filter' => [
+                    'ID' => array_keys($blockCnt)
+                ]
+            ]
+        );
+        while ($row = $res->fetch()) {
+            if (!$row['APP_CODE']) {
+                continue;
+            }
+            if (!isset($fullStat[self::REST_USAGE_TYPE_BLOCK][$row['APP_CODE']])) {
+                $fullStat[self::REST_USAGE_TYPE_BLOCK][$row['APP_CODE']] = 0;
+            }
+            $fullStat[self::REST_USAGE_TYPE_BLOCK][$row['APP_CODE']] += $blockCnt[$row['ID']];
+        }
+        unset($blockCnt);
+
+        // gets all demo catalog
+        $demosCodes = [];
+        $res = Demos::getList(
+            [
+                'select' => [
+                    'APP_CODE'
+                ],
+                'group' => [
+                    'APP_CODE'
+                ]
+            ]
+        );
+        while ($row = $res->fetch()) {
+            $demosCodes[] = $row['APP_CODE'];
+        }
+
+        // gets all partners active pages by demo catalog
+        if ($demosCodes) {
+            $filter = [
+                '=DELETED' => 'N',
+                '=ACTIVE' => $activeValues,
+                '=SITE.ACTIVE' => $activeValues,
+                '=INITIATOR_APP_CODE' => $demosCodes
+            ];
+            if (isset($additionalFilter['SITE_ID'])) {
+                $filter['SITE_ID'] = $additionalFilter['SITE_ID'];
+            }
+            $res = Landing::getList(
+                [
+                    'select' => [
+                        'INITIATOR_APP_CODE',
+                        'CNT'
+                    ],
+                    'filter' => $filter,
+                    'runtime' => [
+                        new \Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(*)')
+                    ]
+                ]
+            );
             while ($row = $res->fetch()) {
-                $appCode = $demos[$row['INITIATOR_APP_CODE']]['APP_CODE'];
-                if (!isset($fullStat['pages'][$appCode])) {
-                    $fullStat['pages'][$appCode] = 0;
+                $appCode = $row['INITIATOR_APP_CODE'];
+                if (!isset($fullStat[self::REST_USAGE_TYPE_PAGE][$appCode])) {
+                    $fullStat[self::REST_USAGE_TYPE_PAGE][$appCode] = 0;
                 }
-                $fullStat['pages'][$appCode] += $row['CNT'];
+                $fullStat[self::REST_USAGE_TYPE_PAGE][$appCode] += $row['CNT'];
             }
         }
 
-        // gets client id for apps
-        if (
-            !$humanFormat &&
-            \Bitrix\Main\Loader::includeModule('rest')
-        ) {
+        // get client id for apps
+        if (!$humanFormat && \Bitrix\Main\Loader::includeModule('rest')) {
             $appsCode = array_merge(
-                array_keys($fullStat['blocks']),
-                array_keys($fullStat['pages'])
+                array_keys($fullStat[self::REST_USAGE_TYPE_BLOCK]),
+                array_keys($fullStat[self::REST_USAGE_TYPE_PAGE])
             );
             if ($appsCode) {
                 $appsCode = array_unique($appsCode);
-                $res = AppTable::getList([
-                    'select' => [
-                        'CLIENT_ID', 'CODE'
-                    ],
-                    'filter' => [
-                        '=CODE' => $appsCode
+                $res = AppTable::getList(
+                    [
+                        'select' => [
+                            'CLIENT_ID',
+                            'CODE'
+                        ],
+                        'filter' => [
+                            '=CODE' => $appsCode
+                        ]
                     ]
-                ]);
+                );
                 while ($row = $res->fetch()) {
                     foreach ($fullStat as $code => &$stat) {
                         if (isset($stat[$row['CODE']])) {
                             $stat[$row['CLIENT_ID']] = $stat[$row['CODE']];
-                            unset($stat[$row['CODE']]);
+                            if ($row['CLIENT_ID'] !== $row['CODE']) {
+                                unset($stat[$row['CODE']]);
+                            }
                         }
                     }
-                    unset($code, $stat);
+                    unset($stat);
                 }
             }
         }
-        unset($demos, $res, $row);
 
         Rights::setOn();
 

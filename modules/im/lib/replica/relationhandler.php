@@ -47,13 +47,15 @@ if (Loader::includeModule('replica')) {
                 isset($newRecord["MESSAGE_TYPE"])
                 && $newRecord["MESSAGE_TYPE"] === "S"
             ) {
-                $chatList = \Bitrix\Im\Model\RelationTable::getList(array(
-                    "filter" => array(
-                        "=USER_ID" => $newRecord["USER_ID"],
-                        "=CHAT_ID" => $newRecord["CHAT_ID"],
-                        "=MESSAGE_TYPE" => "S",
-                    ),
-                ));
+                $chatList = \Bitrix\Im\Model\RelationTable::getList(
+                    array(
+                        "filter" => array(
+                            "=USER_ID" => $newRecord["USER_ID"],
+                            "=CHAT_ID" => $newRecord["CHAT_ID"],
+                            "=MESSAGE_TYPE" => "S",
+                        ),
+                    )
+                );
                 $oldRecord = $chatList->fetch();
                 if ($oldRecord) {
                     return $oldRecord;
@@ -71,10 +73,11 @@ if (Loader::includeModule('replica')) {
          */
         public function beforeLogUpdate(array $record)
         {
-            if ($record["MESSAGE_TYPE"] === "S")
+            if ($record["MESSAGE_TYPE"] === "S") {
                 return false;
-            else
+            } else {
                 return true;
+            }
         }
 
         /**
@@ -110,26 +113,31 @@ if (Loader::includeModule('replica')) {
                 $newLastRead = $newRecord["LAST_READ"] instanceof \Bitrix\Main\Type\DateTime ? $newRecord["LAST_READ"] : false;
                 if ($oldLastRead < $newLastRead) {
                     if (\Bitrix\Main\Loader::includeModule('pull')) {
-                        $relationList = \Bitrix\IM\Model\RelationTable::getList(array(
-                            "select" => array("ID", "USER_ID"),
-                            "filter" => array(
-                                "=CHAT_ID" => $newRecord["CHAT_ID"],
-                                "!=USER_ID" => $newRecord["USER_ID"],
-                            ),
-                        ));
-                        if ($relation = $relationList->fetch()) {
-                            \Bitrix\Pull\Event::add($relation['USER_ID'], Array(
-                                'module_id' => 'im',
-                                'command' => 'readMessageOpponent',
-                                'expiry' => 3600,
-                                'params' => Array(
-                                    'dialogId' => intval($newRecord['USER_ID']),
-                                    'chatId' => intval($newRecord['CHAT_ID']),
-                                    'userId' => intval($newRecord['USER_ID']),
-                                    'chatMessageStatus' => ''
+                        $relationList = \Bitrix\Im\Model\RelationTable::getList(
+                            array(
+                                "select" => array("ID", "USER_ID"),
+                                "filter" => array(
+                                    "=CHAT_ID" => $newRecord["CHAT_ID"],
+                                    "!=USER_ID" => $newRecord["USER_ID"],
                                 ),
-                                'extra' => \Bitrix\Im\Common::getPullExtra()
-                            ));
+                            )
+                        );
+                        if ($relation = $relationList->fetch()) {
+                            \Bitrix\Pull\Event::add(
+                                $relation['USER_ID'],
+                                Array(
+                                    'module_id' => 'im',
+                                    'command' => 'readMessageOpponent',
+                                    'expiry' => 3600,
+                                    'params' => Array(
+                                        'dialogId' => intval($newRecord['USER_ID']),
+                                        'chatId' => intval($newRecord['CHAT_ID']),
+                                        'userId' => intval($newRecord['USER_ID']),
+                                        'chatMessageStatus' => ''
+                                    ),
+                                    'extra' => \Bitrix\Im\Common::getPullExtra()
+                                )
+                            );
                         }
                     }
                 }

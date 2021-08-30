@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/catalog/prolog.php");
 
@@ -6,8 +7,9 @@ $selfFolderUrl = $adminPage->getSelfFolderUrl();
 $listUrl = $selfFolderUrl . "cat_vat_admin.php?lang=" . LANGUAGE_ID;
 $listUrl = $adminSidePanelHelper->editUrlToPublicPage($listUrl);
 
-if (!($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_vat')))
+if (!($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_vat'))) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 CModule::IncludeModule("catalog");
 $bReadOnly = !$USER->CanDoOperation('catalog_vat');
 
@@ -20,7 +22,7 @@ $bVarsFromForm = false;
 
 $ID = intval($ID);
 
-if ('POST' == $_SERVER['REQUEST_METHOD'] && strlen($Update) > 0 && !$bReadOnly && check_bitrix_sessid()) {
+if ('POST' == $_SERVER['REQUEST_METHOD'] && $Update <> '' && !$bReadOnly && check_bitrix_sessid()) {
     $adminSidePanelHelper->decodeUriComponent();
 
     $DB->StartTransaction();
@@ -42,7 +44,7 @@ if ('POST' == $_SERVER['REQUEST_METHOD'] && strlen($Update) > 0 && !$bReadOnly &
     if ($res) {
         $DB->Commit();
         $adminSidePanelHelper->sendSuccessResponse("base", array("ID" => $ID));
-        if (strlen($apply) <= 0) {
+        if ($apply == '') {
             $adminSidePanelHelper->localRedirect($listUrl);
             LocalRedirect($listUrl);
         } else {
@@ -51,10 +53,13 @@ if ('POST' == $_SERVER['REQUEST_METHOD'] && strlen($Update) > 0 && !$bReadOnly &
             LocalRedirect($applyUrl);
         }
     } else {
-        if ($ex = $APPLICATION->GetException())
+        if ($ex = $APPLICATION->GetException()) {
             $errorMessage .= $ex->GetString();
-        else
-            $errorMessage .= (0 < $ID ? str_replace('#ID#', $ID, GetMessage('CVAT_ERR_UPDATE')) : GetMessage('CVAT_ERR_ADD'));
+        } else {
+            $errorMessage .= (0 < $ID ? str_replace('#ID#', $ID, GetMessage('CVAT_ERR_UPDATE')) : GetMessage(
+                'CVAT_ERR_ADD'
+            ));
+        }
         $bVarsFromForm = true;
         $DB->Rollback();
 
@@ -62,10 +67,11 @@ if ('POST' == $_SERVER['REQUEST_METHOD'] && strlen($Update) > 0 && !$bReadOnly &
     }
 }
 
-if ($ID > 0)
+if ($ID > 0) {
     $APPLICATION->SetTitle(str_replace("#ID#", $ID, GetMessage("CVAT_TITLE_UPDATE")));
-else
+} else {
     $APPLICATION->SetTitle(GetMessage("CVAT_TITLE_ADD"));
+}
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
@@ -74,12 +80,14 @@ $str_ACTIVE = "Y";
 if ($ID > 0) {
     $dbResult = CCatalogVAT::GetByID($ID);
 
-    if (!$dbResult->ExtractFields("str_"))
+    if (!$dbResult->ExtractFields("str_")) {
         $ID = 0;
+    }
 }
 
-if ($bVarsFromForm)
+if ($bVarsFromForm) {
     $DB->InitTableVarsForEdit("b_catalog_vat", "", "str_");
+}
 
 ?>
 
@@ -101,7 +109,8 @@ if ($ID > 0 && !$bReadOnly) {
         "ICON" => "btn_new",
         "LINK" => $addUrl
     );
-    $deleteUrl = $selfFolderUrl . "cat_vat_admin.php?action=delete&ID[]=" . $ID . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get() . "#tb";
+    $deleteUrl = $selfFolderUrl . "cat_vat_admin.php?action=delete&ID[]=" . $ID . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get(
+        ) . "#tb";
     $buttonAction = "LINK";
     if ($adminSidePanelHelper->isPublicFrame()) {
         $deleteUrl = $adminSidePanelHelper->editUrlToPublicPage($deleteUrl);
@@ -110,7 +119,9 @@ if ($ID > 0 && !$bReadOnly) {
     $aMenu[] = array(
         "TEXT" => GetMessage("CVAT_DELETE"),
         "ICON" => "btn_delete",
-        $buttonAction => "javascript:if(confirm('" . GetMessageJS("CVAT_DELETE_CONFIRM") . "')) top.window.location.href='" . $deleteUrl . "';",
+        $buttonAction => "javascript:if(confirm('" . GetMessageJS(
+                "CVAT_DELETE_CONFIRM"
+            ) . "')) top.window.location.href='" . $deleteUrl . "';",
         "WARNING" => "Y"
     );
 }
@@ -132,7 +143,12 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
 
         <?
         $aTabs = array(
-            array("DIV" => "edit1", "TAB" => GetMessage("CVAT_TAB"), "ICON" => "catalog", "TITLE" => GetMessage("CVAT_TAB_DESCR")),
+            array(
+                "DIV" => "edit1",
+                "TAB" => GetMessage("CVAT_TAB"),
+                "ICON" => "catalog",
+                "TITLE" => GetMessage("CVAT_TAB_DESCR")
+            ),
         );
 
         $tabControl = new CAdminTabControl("tabControl", $aTabs);

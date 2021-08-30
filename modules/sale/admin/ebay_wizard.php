@@ -15,50 +15,61 @@ namespace {
 
     if (!CModule::IncludeModule('sale')) {
         require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
-        CAdminMessage::ShowMessage(array(
-            "MESSAGE" => Loc::getMessage('SALE_EBAY_W_ERROR'),
-            "DETAILS" => Loc::getMessage('SALE_EBAY_W_SALE_NOT_INSTALLED'),
-            "HTML" => true,
-            "TYPE" => "ERROR"
-        ));
+        CAdminMessage::ShowMessage(
+            array(
+                "MESSAGE" => Loc::getMessage('SALE_EBAY_W_ERROR'),
+                "DETAILS" => Loc::getMessage('SALE_EBAY_W_SALE_NOT_INSTALLED'),
+                "HTML" => true,
+                "TYPE" => "ERROR"
+            )
+        );
 
         require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_admin.php");
         return;
     }
 
-    if ($APPLICATION->GetGroupRight("sale") < "W")
+    if ($APPLICATION->GetGroupRight("sale") < "W") {
         $APPLICATION->AuthForm(Loc::getMessage("SALE_ACCESS_DENIED"));
+    }
 
     $ebay = Ebay::getInstance();
 
-    if (!$ebay->isActive())
-        LocalRedirect("/bitrix/admin/sale_ebay_general.php?lang=" . LANG . "&back_url=" . urlencode($APPLICATION->GetCurPageParam()));
+    if (!$ebay->isActive()) {
+        LocalRedirect(
+            "/bitrix/admin/sale_ebay_general.php?lang=" . LANG . "&back_url=" . urlencode(
+                $APPLICATION->GetCurPageParam()
+            )
+        );
+    }
 
     $step = !empty($_REQUEST['STEP']) ? intval($_REQUEST['STEP']) : 0;
 
-    if (!empty($_REQUEST['NEXT_STEP']))
+    if (!empty($_REQUEST['NEXT_STEP'])) {
         $step++;
-    elseif (!empty($_REQUEST['PREV_STEP']))
+    } elseif (!empty($_REQUEST['PREV_STEP'])) {
         $step--;
+    }
 
     $siteList = array();
     $defaultSite = '';
 
-    $rsSites = CSite::GetList($by = "sort", $order = "asc", Array("ACTIVE" => "Y"));
+    $rsSites = CSite::GetList("sort", "asc", Array("ACTIVE" => "Y"));
 
     while ($arRes = $rsSites->Fetch()) {
         $siteList[$arRes['ID']] = $arRes['NAME'];
 
-        if ($arRes["DEF"] == "Y")
+        if ($arRes["DEF"] == "Y") {
             $defaultSite = $arRes['ID'];
+        }
     }
 
-    if (!empty($_REQUEST["SITE_ID_SELECTED"]) && array_key_exists($_REQUEST["SITE_ID_SELECTED"], $siteList))
+    if (!empty($_REQUEST["SITE_ID_SELECTED"]) && array_key_exists($_REQUEST["SITE_ID_SELECTED"], $siteList)) {
         $siteId = $_REQUEST["SITE_ID_SELECTED"];
-    elseif (!empty($_REQUEST["SITE_ID"]) && array_key_exists($_REQUEST["SITE_ID"], $siteList))
+    } elseif (!empty($_REQUEST["SITE_ID"]) && array_key_exists($_REQUEST["SITE_ID"], $siteList)) {
         $siteId = $_REQUEST["SITE_ID"];
-    else
+    } else {
         $siteId = $defaultSite;
+    }
 
     $stepClassesList = array(
         'StepWelcome',
@@ -98,8 +109,9 @@ namespace {
             /** @var Wizard\Step $wizardPrevStep */
             $className = '\Bitrix\Sale\TradingPlatform\Ebay\Wizard\\' . $stepClassesList[$step - 1];
 
-            if (!is_array($settings[$siteId]))
+            if (!is_array($settings[$siteId])) {
                 $settings[$siteId] = array();
+            }
 
             $settings[$siteId] = array_replace_recursive(
                 $settings[$siteId],
@@ -174,7 +186,8 @@ namespace {
                                          style="width: 100px; height: 67px;">
                                 </td>
                                 <td style="vertical-align: middle; text-align: left;">
-                                    <span style="font-weight: bold; font-size: 16px;"><?= $wizardStep->getName(); ?></span>
+                                    <span style="font-weight: bold; font-size: 16px;"><?= $wizardStep->getName(
+                                        ); ?></span>
                                 </td>
                             </tr>
                             <tr>
@@ -203,8 +216,9 @@ namespace {
                         )
                     ):?>
                         <input type="submit"
-                               value="<?= ($step <= 0) ? Loc::getMessage('SALE_EBAY_W_START_SETTING') : Loc::getMessage('SALE_EBAY_W_FURTHER') . ' -->' ?>"
-                               class="adm-btn-save" name="NEXT_STEP">
+                               value="<?= ($step <= 0) ? Loc::getMessage('SALE_EBAY_W_START_SETTING') : Loc::getMessage(
+                                       'SALE_EBAY_W_FURTHER'
+                                   ) . ' -->' ?>" class="adm-btn-save" name="NEXT_STEP">
                     <?endif; ?>
                 </form>
             </td>
@@ -226,7 +240,8 @@ namespace {
                                 <? if ($prevStepCompleted):?>
                                     <a href="<?= $APPLICATION->GetCurPageParam(
                                         'lang=' . LANGUAGE_ID . '&STEP=' . $classStep . '&SITE_ID=' . $siteId,
-                                        array('STEP', 'lang', 'SITE_ID', 'CLEAN_CACHE'))
+                                        array('STEP', 'lang', 'SITE_ID', 'CLEAN_CACHE')
+                                    )
                                     ?>">
                                         <?= htmlspecialcharsbx($fullClassName::getName()) ?>
                                     </a>
@@ -234,13 +249,19 @@ namespace {
                                     <?= htmlspecialcharsbx($fullClassName::getName()) ?>
                                 <?endif ?>
                             </div>
-                            <? $prevStepCompleted = $prevStepCompleted && (!$fullClassName::mustBeCompletedBeforeNext() || ($fullClassName::mustBeCompletedBeforeNext() && $fullClassName::isSucceed($siteId, $settings))); ?>
+                            <? $prevStepCompleted = $prevStepCompleted && (!$fullClassName::mustBeCompletedBeforeNext(
+                                    ) || ($fullClassName::mustBeCompletedBeforeNext() && $fullClassName::isSucceed(
+                                            $siteId,
+                                            $settings
+                                        ))); ?>
                         <?endforeach; ?>
                     </div>
                 </div>
                 <br><input type="button" value="<?= Loc::getMessage('SALE_EBAY_W_CLEAN_CACHE') ?>" class="adm-btn-save"
-                           name="CLEAN_CACHE_BUTT"
-                           onclick="window.location.href='<?= $APPLICATION->GetCurPageParam('lang=' . LANGUAGE_ID . '&STEP=' . $step . '&SITE_ID=' . $siteId . '&CLEAN_CACHE=Y', array('SITE_ID', 'STEP', 'lang', 'CLEAN_CACHE')) ?>';">
+                           name="CLEAN_CACHE_BUTT" onclick="window.location.href='<?= $APPLICATION->GetCurPageParam(
+                    'lang=' . LANGUAGE_ID . '&STEP=' . $step . '&SITE_ID=' . $siteId . '&CLEAN_CACHE=Y',
+                    array('SITE_ID', 'STEP', 'lang', 'CLEAN_CACHE')
+                ) ?>';">
             </td>
         </tr>
     </table>
@@ -314,14 +335,17 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard {
          */
         public function getAdminMessage()
         {
-            if (empty(self::$errors))
+            if (empty(self::$errors)) {
                 return null;
+            }
 
-            return new \CAdminMessage(array(
-                "TYPE" => "ERROR",
-                "MESSAGE" => implode("<br>\n", self::$errors),
-                "HTML" => true
-            ));
+            return new \CAdminMessage(
+                array(
+                    "TYPE" => "ERROR",
+                    "MESSAGE" => implode("<br>\n", self::$errors),
+                    "HTML" => true
+                )
+            );
         }
 
         public function save()
@@ -329,8 +353,9 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard {
             $ebay = \Bitrix\Sale\TradingPlatform\Ebay\Ebay::getInstance();
             $settings = $ebay->getSettings();
 
-            if (!is_array($settings[$this->siteId]))
+            if (!is_array($settings[$this->siteId])) {
                 $settings[$this->siteId] = array();
+            }
 
             $settings[$this->siteId] = array_replace_recursive(
                 $settings[$this->siteId],
@@ -349,24 +374,28 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard {
         {
             $result = "";
 
-            if (!empty($ebaySettings[$siteId]["SFTP_LOGIN"]) && strlen(($ebaySettings[$siteId]["SFTP_LOGIN"])) > 0)
+            if (!empty($ebaySettings[$siteId]["SFTP_LOGIN"]) && ($ebaySettings[$siteId]["SFTP_LOGIN"]) <> '') {
                 $result = $ebaySettings[$siteId]["SFTP_LOGIN"];
+            }
 
             return $result;
         }
 
         protected static function getUserInfo($siteId, array $ebaySettings)
         {
-            if (strlen($siteId) <= 0 || empty($ebaySettings))
+            if ($siteId == '' || empty($ebaySettings)) {
                 return array();
+            }
 
-            if (empty($ebaySettings[$siteId]["API"]["AUTH_TOKEN"]))
+            if (empty($ebaySettings[$siteId]["API"]["AUTH_TOKEN"])) {
                 return array();
+            }
 
             $userId = self::getUserId($siteId, $ebaySettings);
 
-            if (strlen($userId) <= 0)
+            if ($userId == '') {
                 return array();
+            }
 
             $cacheManager = \Bitrix\Main\Application::getInstance()->getManagedCache();
             $ttl = 86400;
@@ -375,14 +404,16 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard {
             if (Step::$useCache && $cacheManager->read($ttl, $cacheId)) {
                 $result = $cacheManager->get($cacheId);
             } else {
-                if (!Step::$useCache)
+                if (!Step::$useCache) {
                     $cacheManager->clean($cacheId);
+                }
 
                 $ebay = \Bitrix\Sale\TradingPlatform\Ebay\Ebay::getInstance();
                 $settings = $ebay->getSettings();
 
-                if (empty($settings[$siteId]["API"]["AUTH_TOKEN"]))
+                if (empty($settings[$siteId]["API"]["AUTH_TOKEN"])) {
                     return array();
+                }
 
                 $data = '<?xml version="1.0" encoding="utf-8"?>
 					<GetUserRequest xmlns="urn:ebay:apis:eBLBaseComponents">
@@ -392,9 +423,11 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard {
 					<UserID>' . $userId . '</UserID>
 					</GetUserRequest>';
 
-                $caller = new Caller(array(
-                    "URL" => \Bitrix\Sale\TradingPlatform\Ebay\Ebay::getApiUrl()
-                ));
+                $caller = new Caller(
+                    array(
+                        "URL" => \Bitrix\Sale\TradingPlatform\Ebay\Ebay::getApiUrl()
+                    )
+                );
 
                 $xmpRes = $caller->sendRequest("GetUser", $data);
                 $result = Xml2Array::convert($xmpRes);
@@ -404,18 +437,21 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard {
             if (!empty($result['Errors']) && empty(self::$errors[__METHOD__])) {
                 $errorMessage = '';
 
-                if (!empty($result['Errors']['LongMessage']))
+                if (!empty($result['Errors']['LongMessage'])) {
                     $errorMessage .= htmlspecialcharsbx($result['Errors']['LongMessage']);
-                elseif (!empty($result['Errors']['ShortMessage']))
+                } elseif (!empty($result['Errors']['ShortMessage'])) {
                     $errorMessage .= htmlspecialcharsbx($result['Errors']['ShortMessage']);
+                }
 
-                if (!empty($result['Errors']['ErrorCode']))
+                if (!empty($result['Errors']['ErrorCode'])) {
                     $errorMessage .= ' (ErrorCode: ' . htmlspecialcharsbx($result['Errors']['ErrorCode']) . ')';
+                }
 
-                if (!empty($errorMessage))
+                if (!empty($errorMessage)) {
                     self::$errors[__METHOD__] = $errorMessage;
-                else
+                } else {
                     self::$errors[__METHOD__] = Loc::getMessage('SALE_EBAY_W_USER_INFO_ERROR');
+                }
             }
 
             return $result;
@@ -423,8 +459,9 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard {
 
         protected static function getPolicyInfo($siteId, $ebaySettings)
         {
-            if (strlen($siteId) <= 0 || empty($ebaySettings[$siteId]["API"]["AUTH_TOKEN"]))
+            if ($siteId == '' || empty($ebaySettings[$siteId]["API"]["AUTH_TOKEN"])) {
                 return array();
+            }
 
             $cacheManager = \Bitrix\Main\Application::getInstance()->getManagedCache();
             $ttl = 86400;
@@ -433,10 +470,14 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard {
             if (Step::$useCache && $cacheManager->read($ttl, $cacheId)) {
                 $result = $cacheManager->get($cacheId);
             } else {
-                if (!Step::$useCache)
+                if (!Step::$useCache) {
                     $cacheManager->clean($cacheId);
+                }
 
-                $policy = new \Bitrix\Sale\TradingPlatform\Ebay\Policy($ebaySettings[$siteId]["API"]["AUTH_TOKEN"], $siteId);
+                $policy = new \Bitrix\Sale\TradingPlatform\Ebay\Policy(
+                    $ebaySettings[$siteId]["API"]["AUTH_TOKEN"],
+                    $siteId
+                );
                 $result = $policy->getItemsList();
                 $cacheManager->set($cacheId, $result);
             }
@@ -479,13 +520,16 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard {
 
         public function getHtml()
         {
-            $logLevel = !empty($this->ebaySettings[$this->siteId]["LOG_LEVEL"]) ? htmlspecialcharsbx($this->ebaySettings[$this->siteId]["LOG_LEVEL"]) : Logger::LOG_LEVEL_ERROR;
+            $logLevel = !empty($this->ebaySettings[$this->siteId]["LOG_LEVEL"]) ? htmlspecialcharsbx(
+                $this->ebaySettings[$this->siteId]["LOG_LEVEL"]
+            ) : Logger::LOG_LEVEL_ERROR;
 
 
-            if (!empty($this->ebaySettings[$this->siteId]["EMAIL_ERRORS"]))
+            if (!empty($this->ebaySettings[$this->siteId]["EMAIL_ERRORS"])) {
                 $notificationEmail = htmlspecialcharsbx($this->ebaySettings[$this->siteId]["EMAIL_ERRORS"]);
-            else
+            } else {
                 $notificationEmail = Option::get("sale", "order_email", "");
+            }
 
             $domainName = "";
 
@@ -494,14 +538,16 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard {
             } else {
                 $dbRes = \Bitrix\Main\SiteTable::getById($this->siteId);
 
-                if ($site = $dbRes->fetch())
+                if ($site = $dbRes->fetch()) {
                     $domainName = $site["SERVER_NAME"];
+                }
 
-                if (strlen($domainName) <= 0) {
-                    if (defined("SITE_SERVER_NAME") && strlen(SITE_SERVER_NAME) > 0)
+                if ($domainName == '') {
+                    if (defined("SITE_SERVER_NAME") && SITE_SERVER_NAME <> '') {
                         $domainName = SITE_SERVER_NAME;
-                    else
+                    } else {
                         $domainName = \COption::GetOptionString("main", "server_name", "www.bitrixsoft.com");
+                    }
                 }
             }
 
@@ -509,7 +555,10 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard {
 
             return
                 '<table>' .
-                '<tr><td>' . Loc::getMessage('SALE_EBAY_W_STEP_SITE_CHOOSE') . ':</td><td>' . \CLang::SelectBox("SITE_ID_SELECTED", $this->siteId) .
+                '<tr><td>' . Loc::getMessage('SALE_EBAY_W_STEP_SITE_CHOOSE') . ':</td><td>' . \CLang::SelectBox(
+                    "SITE_ID_SELECTED",
+                    $this->siteId
+                ) .
                 '<input type="hidden" name="EBAY_SETTINGS[LOG_LEVEL]" value="' . $logLevel . '">' .
                 '<input type="hidden" name="EBAY_SETTINGS[DOMAIN_NAME]" value="' . $domainName . '">' .
                 '<input type="hidden" name="EBAY_SETTINGS[API][SITE_ID]" value="215">' .
@@ -549,10 +598,13 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard {
             $result = '';
 
             foreach (Helper::getPersonTypesList($this->siteId) as $ptId => $ptName) {
-                if ($result == '' && intval($personTypeId) <= 0)
+                if ($result == '' && intval($personTypeId) <= 0) {
                     $personTypeId = $ptId;
+                }
 
-                $result .= '<option value="' . $ptId . '"' . ($personTypeId == $ptId ? " selected" : "") . '>' . htmlspecialcharsbx($ptName) . '</option>';
+                $result .= '<option value="' . $ptId . '"' . ($personTypeId == $ptId ? " selected" : "") . '>' . htmlspecialcharsbx(
+                        $ptName
+                    ) . '</option>';
             }
 
             $result =
@@ -580,8 +632,9 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard {
             foreach (\Bitrix\Sale\TradingPlatform\Ebay\Helper::getEbayOrderStatuses() as $ebayStatus) {
                 $value = isset($this->ebaySettings[$this->siteId]["STATUS_MAP"][$ebayStatus]) ? $this->ebaySettings[$this->siteId]["STATUS_MAP"][$ebayStatus] : '';
 
-                if (strlen($value) <= 0 && !empty($defaultValues[$ebayStatus]))
+                if ($value == '' && !empty($defaultValues[$ebayStatus])) {
                     $value = $defaultValues[$ebayStatus];
+                }
 
                 $result .= '<input type="hidden" name="EBAY_SETTINGS[STATUS_MAP][' . $ebayStatus . ']" value="' . $value . '">';
             }
@@ -594,8 +647,9 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard {
 
         protected function createPropsMapHtml($personTypeId)
         {
-            if (intval($personTypeId) <= 0)
+            if (intval($personTypeId) <= 0) {
                 return "";
+            }
 
             $result = "";
             $requiredOrderProperties = Helper::getRequiredOrderProps();
@@ -647,14 +701,19 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard {
         public function getHtml()
         {
             return Loc::getMessage('SALE_EBAY_W_STEP_ACCOUNT_SET') . ': ' .
-                '<input type="text" name="EBAY_SETTINGS[SFTP_LOGIN]" size="25" maxlength="255" value="' . (isset($this->ebaySettings[$this->siteId]["SFTP_LOGIN"]) ? htmlspecialcharsbx($this->ebaySettings[$this->siteId]["SFTP_LOGIN"]) : "") . '">' .
+                '<input type="text" name="EBAY_SETTINGS[SFTP_LOGIN]" size="25" maxlength="255" value="' . (isset($this->ebaySettings[$this->siteId]["SFTP_LOGIN"]) ? htmlspecialcharsbx(
+                    $this->ebaySettings[$this->siteId]["SFTP_LOGIN"]
+                ) : "") . '">' .
                 '<br><br><hr><br>' .
-                Loc::getMessage('SALE_EBAY_W_STEP_ACCOUNT_REGISTER', array(
-                    '#R1#' => '<a href="https://reg.ebay.com/reg/FullReg?firstname=&lastname=&userid=&email=&countryId=168&ru=http%3A%2F%2Fwww.ebay.com" target="blank">',
-                    '#R2#' => '</a>',
-                    '#I1#' => '<a href="http://pages.ebay.com/ru/ru-ru/kak-prodavat-na-ebay-spravka/registratsiya-prodavtsa.html" target="blank">',
-                    '#I2#' => '</a>'
-                ));
+                Loc::getMessage(
+                    'SALE_EBAY_W_STEP_ACCOUNT_REGISTER',
+                    array(
+                        '#R1#' => '<a href="https://reg.ebay.com/reg/FullReg?firstname=&lastname=&userid=&email=&countryId=168&ru=http%3A%2F%2Fwww.ebay.com" target="blank">',
+                        '#R2#' => '</a>',
+                        '#I1#' => '<a href="http://pages.ebay.com/ru/ru-ru/kak-prodavat-na-ebay-spravka/registratsiya-prodavtsa.html" target="blank">',
+                        '#I2#' => '</a>'
+                    )
+                );
         }
 
         public static function mustBeCompletedBeforeNext()
@@ -669,7 +728,7 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard {
 
         public static function isSucceed($siteId, array $ebaySettings)
         {
-            return (!empty($ebaySettings[$siteId]["SFTP_LOGIN"]) && strlen(($ebaySettings[$siteId]["SFTP_LOGIN"])) > 0);
+            return (!empty($ebaySettings[$siteId]["SFTP_LOGIN"]) && ($ebaySettings[$siteId]["SFTP_LOGIN"]) <> '');
         }
 
         public function save()
@@ -688,10 +747,14 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard {
 
         public function getHtml()
         {
-            $token = isset($this->ebaySettings[$this->siteId]["API"]["AUTH_TOKEN"]) ? htmlspecialcharsbx($this->ebaySettings[$this->siteId]["API"]["AUTH_TOKEN"]) : "";
+            $token = isset($this->ebaySettings[$this->siteId]["API"]["AUTH_TOKEN"]) ? htmlspecialcharsbx(
+                $this->ebaySettings[$this->siteId]["API"]["AUTH_TOKEN"]
+            ) : "";
 
             return '<p>' . Loc::getMessage('SALE_EBAY_W_STEP_TOKEN_DESCR') . '</p>' .
-                '<input type="button" value="' . Loc::getMessage('SALE_EBAY_W_STEP_TOKEN_GET') . '" onclick="window.open(\'' . Ebay::getApiTokenUrl() . '\', \'gettingToken\');">
+                '<input type="button" value="' . Loc::getMessage(
+                    'SALE_EBAY_W_STEP_TOKEN_GET'
+                ) . '" onclick="window.open(\'' . Ebay::getApiTokenUrl() . '\', \'gettingToken\');">
 				<br><br><textarea id="SALE_EBAY_SETTINGS_API_TOKEN" name="EBAY_SETTINGS[API][AUTH_TOKEN]" cols="70" rows="15" readonly>' .
                 $token .
                 '</textarea>
@@ -715,7 +778,7 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard {
 
         public static function isSucceed($siteId, array $ebaySettings)
         {
-            return (!empty($ebaySettings[$siteId]["API"]["AUTH_TOKEN"]) && strlen(($ebaySettings[$siteId]["API"]["AUTH_TOKEN"])) > 0);
+            return (!empty($ebaySettings[$siteId]["API"]["AUTH_TOKEN"]) && ($ebaySettings[$siteId]["API"]["AUTH_TOKEN"]) <> '');
         }
     }
 
@@ -740,18 +803,27 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard {
             $isActive = !empty($data["User"]["PayPalAccountStatus"]) && $data["User"]["PayPalAccountStatus"] == "Active";
 
             $result =
-                self::getLampHtml($isActive) . ($isActive ? Loc::getMessage('SALE_EBAY_W_STEP_ACTIVE') : Loc::getMessage('SALE_EBAY_W_STEP_NOT_ACTIVE')) . '<br>' .
-                self::getLampHtml($isVerified) . ($isVerified ? Loc::getMessage('SALE_EBAY_W_STEP_VERIFIED') : Loc::getMessage('SALE_EBAY_W_STEP_NOT_VERIFIED')) . '<br>' .
-                self::getLampHtml($isBusiness) . ($isBusiness ? Loc::getMessage('SALE_EBAY_W_STEP_CORPORATE') : Loc::getMessage('SALE_EBAY_W_STEP_NOT_CORPORATE')) . '<br>' .
+                self::getLampHtml($isActive) . ($isActive ? Loc::getMessage(
+                    'SALE_EBAY_W_STEP_ACTIVE'
+                ) : Loc::getMessage('SALE_EBAY_W_STEP_NOT_ACTIVE')) . '<br>' .
+                self::getLampHtml($isVerified) . ($isVerified ? Loc::getMessage(
+                    'SALE_EBAY_W_STEP_VERIFIED'
+                ) : Loc::getMessage('SALE_EBAY_W_STEP_NOT_VERIFIED')) . '<br>' .
+                self::getLampHtml($isBusiness) . ($isBusiness ? Loc::getMessage(
+                    'SALE_EBAY_W_STEP_CORPORATE'
+                ) : Loc::getMessage('SALE_EBAY_W_STEP_NOT_CORPORATE')) . '<br>' .
                 '<br><br><hr><br>' .
-                Loc::getMessage('SALE_EBAY_W_STEP_REGISTER_PP', array(
-                    '#R1#' => '<a href="https://www.paypal.com/ru/signup/account" target="blank">',
-                    '#R2#' => '</a>',
-                    '#I1#' => '<a href="http://p.ebaystatic.com/aw/ru/pdf/PP-signup_flow-v7-(no-CC).pdf" target="blank">',
-                    '#I2#' => '</a>',
-                    '#S1#' => '<a href="https://www.paypal.com/selfhelp/contact/call" target="blank">',
-                    '#S2#' => '</a>'
-                ));
+                Loc::getMessage(
+                    'SALE_EBAY_W_STEP_REGISTER_PP',
+                    array(
+                        '#R1#' => '<a href="https://www.paypal.com/ru/signup/account" target="blank">',
+                        '#R2#' => '</a>',
+                        '#I1#' => '<a href="http://p.ebaystatic.com/aw/ru/pdf/PP-signup_flow-v7-(no-CC).pdf" target="blank">',
+                        '#I2#' => '</a>',
+                        '#S1#' => '<a href="https://www.paypal.com/selfhelp/contact/call" target="blank">',
+                        '#S2#' => '</a>'
+                    )
+                );
 
             return $result;
         }
@@ -765,14 +837,17 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard {
         {
             $data = self::getUserInfo($siteId, $ebaySettings);
 
-            if (empty($data["User"]["PayPalAccountLevel"]) || $data["User"]["PayPalAccountLevel"] != "Verified")
+            if (empty($data["User"]["PayPalAccountLevel"]) || $data["User"]["PayPalAccountLevel"] != "Verified") {
                 return false;
+            }
 
-            if (empty($data["User"]["PayPalAccountType"]) || $data["User"]["PayPalAccountType"] != "Business")
+            if (empty($data["User"]["PayPalAccountType"]) || $data["User"]["PayPalAccountType"] != "Business") {
                 return false;
+            }
 
-            if (empty($data["User"]["PayPalAccountStatus"]) || $data["User"]["PayPalAccountStatus"] != "Active")
+            if (empty($data["User"]["PayPalAccountStatus"]) || $data["User"]["PayPalAccountStatus"] != "Active") {
                 return false;
+            }
 
             return true;
         }
@@ -797,14 +872,21 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard {
             $isConfirmed = $this->isSucceed($this->siteId, $this->ebaySettings);
 
             return
-                self::getLampHtml($isConfirmed) . ' ' . Loc::getMessage('SALE_EBAY_W_STEP_CONTACTS_DETAILS') . ' ' . ($isConfirmed ? Loc::getMessage('SALE_EBAY_W_STEP_CONFIRMED') : Loc::getMessage('SALE_EBAY_W_STEP_CONFIRMED')) . '.' .
+                self::getLampHtml($isConfirmed) . ' ' . Loc::getMessage(
+                    'SALE_EBAY_W_STEP_CONTACTS_DETAILS'
+                ) . ' ' . ($isConfirmed ? Loc::getMessage('SALE_EBAY_W_STEP_CONFIRMED') : Loc::getMessage(
+                    'SALE_EBAY_W_STEP_CONFIRMED'
+                )) . '.' .
                 '<br><br><hr><br>' .
-                Loc::getMessage('SALE_EBAY_W_STEP_CONFIRMED_DETAIL', array(
-                    '#C1#' => '<a href="http://scgi.ebay.com/ws/eBayISAPI.dll?SellerSignin2&clientapptype=7" target="blank">',
-                    '#C2#' => '</a>',
-                    '#I1#' => '<a href="http://pages.ebay.com/ru/ru-ru/kak-prodavat-na-ebay-spravka/podtverjdeniye-dannih.html" target="blank">',
-                    '#I2#' => '</a>'
-                )) . '.';
+                Loc::getMessage(
+                    'SALE_EBAY_W_STEP_CONFIRMED_DETAIL',
+                    array(
+                        '#C1#' => '<a href="http://scgi.ebay.com/ws/eBayISAPI.dll?SellerSignin2&clientapptype=7" target="blank">',
+                        '#C2#' => '</a>',
+                        '#I1#' => '<a href="http://pages.ebay.com/ru/ru-ru/kak-prodavat-na-ebay-spravka/podtverjdeniye-dannih.html" target="blank">',
+                        '#I2#' => '</a>'
+                    )
+                ) . '.';
         }
 
         public static function hasState()
@@ -831,12 +913,19 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard {
             $succeed = $this->isSucceed($this->siteId, $this->ebaySettings);
 
             return
-                self::getLampHtml($succeed) . '&nbsp;' . Loc::getMessage('SALE_EBAY_W_STEP_PP_ACCOUNT') . ' ' . ($succeed ? Loc::getMessage('SALE_EBAY_W_STEP_LINKED') : Loc::getMessage('SALE_EBAY_W_STEP_NOT_LINKED')) . "." .
+                self::getLampHtml($succeed) . '&nbsp;' . Loc::getMessage(
+                    'SALE_EBAY_W_STEP_PP_ACCOUNT'
+                ) . ' ' . ($succeed ? Loc::getMessage('SALE_EBAY_W_STEP_LINKED') : Loc::getMessage(
+                    'SALE_EBAY_W_STEP_NOT_LINKED'
+                )) . "." .
                 '<br><br><hr><br>' .
-                Loc::getMessage('SALE_EBAY_W_STEP_EBAY_PP_LINK_DESCR', array(
-                    '#I1#' => '<a href="http://pages.ebay.com/ru/ru-ru/kak-prodavat-na-ebay-spravka/privyazka-akkaunt-paypal-ebay.html" target="blank">',
-                    '#I2#' => '</a>'
-                )) . '.';
+                Loc::getMessage(
+                    'SALE_EBAY_W_STEP_EBAY_PP_LINK_DESCR',
+                    array(
+                        '#I1#' => '<a href="http://pages.ebay.com/ru/ru-ru/kak-prodavat-na-ebay-spravka/privyazka-akkaunt-paypal-ebay.html" target="blank">',
+                        '#I2#' => '</a>'
+                    )
+                ) . '.';
         }
 
         public static function hasState()
@@ -872,14 +961,21 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard {
             $succeed = $this->isSucceed($this->siteId, $this->ebaySettings);
 
             return
-                self::getLampHtml($succeed) . ' ' . Loc::getMessage('SALE_EBAY_W_STEP_EBAY_ACCOUNT') . ' ' . ($succeed ? Loc::getMessage('SALE_EBAY_W_STEP_EBAY_ACCOUNT_CONFIRMED') : Loc::getMessage('SALE_EBAY_W_STEP_EBAY_ACCOUNT_NOT_CONFIRMED')) . '.' .
+                self::getLampHtml($succeed) . ' ' . Loc::getMessage(
+                    'SALE_EBAY_W_STEP_EBAY_ACCOUNT'
+                ) . ' ' . ($succeed ? Loc::getMessage('SALE_EBAY_W_STEP_EBAY_ACCOUNT_CONFIRMED') : Loc::getMessage(
+                    'SALE_EBAY_W_STEP_EBAY_ACCOUNT_NOT_CONFIRMED'
+                )) . '.' .
                 '<br><br><hr><br>' .
-                Loc::getMessage('SALE_EBAY_W_STEP_EBAY_ACCOUNT_DESCR', array(
-                    '#C1#' => '<a href="https://ocsnext.ebay.com/ocs/reghome" target="blank">',
-                    '#C2#' => '</a>',
-                    '#I1#' => '<a href="http://pages.ebay.com/ru/ru-ru/kak-prodavat-na-ebay-spravka/podtverjdenie-uchetnoy-zapisi.html" target="blank">',
-                    '#I2#' => '</a>'
-                )) . '.';
+                Loc::getMessage(
+                    'SALE_EBAY_W_STEP_EBAY_ACCOUNT_DESCR',
+                    array(
+                        '#C1#' => '<a href="https://ocsnext.ebay.com/ocs/reghome" target="blank">',
+                        '#C2#' => '</a>',
+                        '#I1#' => '<a href="http://pages.ebay.com/ru/ru-ru/kak-prodavat-na-ebay-spravka/podtverjdenie-uchetnoy-zapisi.html" target="blank">',
+                        '#I2#' => '</a>'
+                    )
+                ) . '.';
         }
 
         public static function hasState()
@@ -900,7 +996,6 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard {
             }
 
             return $result;
-
         }
     }
 
@@ -919,16 +1014,31 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard {
             $isShipments = !empty($data["shippingPolicyProfile"]);
 
             return
-                self::getLampHtml($isPayments) . ' ' . Loc::getMessage('SALE_EBAY_W_STEP_POLICY_PAY') . ' ' . ($isPayments ? Loc::getMessage('SALE_EBAY_W_STEP_POLICY_CREATED') : Loc::getMessage('SALE_EBAY_W_STEP_POLICY_NOT_CREATED')) . '.<br>' .
-                self::getLampHtml($isReturns) . ' ' . Loc::getMessage('SALE_EBAY_W_STEP_POLICY_RETURN') . ' ' . ($isReturns ? Loc::getMessage('SALE_EBAY_W_STEP_POLICY_CREATED') : Loc::getMessage('SALE_EBAY_W_STEP_POLICY_NOT_CREATED')) . '.<br>' .
-                self::getLampHtml($isShipments) . ' ' . Loc::getMessage('SALE_EBAY_W_STEP_POLICY_SHIPMENT') . ' ' . ($isShipments ? Loc::getMessage('SALE_EBAY_W_STEP_POLICY_CREATED') : Loc::getMessage('SALE_EBAY_W_STEP_POLICY_NOT_CREATED')) . '.<br>' .
+                self::getLampHtml($isPayments) . ' ' . Loc::getMessage(
+                    'SALE_EBAY_W_STEP_POLICY_PAY'
+                ) . ' ' . ($isPayments ? Loc::getMessage('SALE_EBAY_W_STEP_POLICY_CREATED') : Loc::getMessage(
+                    'SALE_EBAY_W_STEP_POLICY_NOT_CREATED'
+                )) . '.<br>' .
+                self::getLampHtml($isReturns) . ' ' . Loc::getMessage(
+                    'SALE_EBAY_W_STEP_POLICY_RETURN'
+                ) . ' ' . ($isReturns ? Loc::getMessage('SALE_EBAY_W_STEP_POLICY_CREATED') : Loc::getMessage(
+                    'SALE_EBAY_W_STEP_POLICY_NOT_CREATED'
+                )) . '.<br>' .
+                self::getLampHtml($isShipments) . ' ' . Loc::getMessage(
+                    'SALE_EBAY_W_STEP_POLICY_SHIPMENT'
+                ) . ' ' . ($isShipments ? Loc::getMessage('SALE_EBAY_W_STEP_POLICY_CREATED') : Loc::getMessage(
+                    'SALE_EBAY_W_STEP_POLICY_NOT_CREATED'
+                )) . '.<br>' .
                 '<br><br><hr><br>' .
-                Loc::getMessage('SALE_EBAY_W_STEP_POLICY_DESCR', array(
-                    '#P1#' => '<a href="http://www.bizpolicy.ebay.ru/businesspolicy/manage?totalPages=1" target="blank">',
-                    '#P2#' => '</a>',
-                    '#I1#' => '<a href="http://pages.ebay.com/ru/ru-ru/kak-prodavat-na-ebay-spravka/politiki.html" target="blank">',
-                    '#I2#' => '</a>'
-                )) . '.';
+                Loc::getMessage(
+                    'SALE_EBAY_W_STEP_POLICY_DESCR',
+                    array(
+                        '#P1#' => '<a href="http://www.bizpolicy.ebay.ru/businesspolicy/manage?totalPages=1" target="blank">',
+                        '#P2#' => '</a>',
+                        '#I1#' => '<a href="http://pages.ebay.com/ru/ru-ru/kak-prodavat-na-ebay-spravka/politiki.html" target="blank">',
+                        '#I2#' => '</a>'
+                    )
+                ) . '.';
         }
 
         public static function hasState()
@@ -945,14 +1055,17 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard {
         {
             $data = self::getPolicyInfo($siteId, $ebaySettings);
 
-            if (empty($data["returnPolicyProfileList"]))
+            if (empty($data["returnPolicyProfileList"])) {
                 return false;
+            }
 
-            if (empty($data["paymentProfileList"]))
+            if (empty($data["paymentProfileList"])) {
                 return false;
+            }
 
-            if (empty($data["shippingPolicyProfile"]))
+            if (empty($data["shippingPolicyProfile"])) {
                 return false;
+            }
 
             return true;
         }
@@ -967,32 +1080,58 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard {
 
         public function getHtml()
         {
-            $policy = new \Bitrix\Sale\TradingPlatform\Ebay\Policy($this->ebaySettings[$this->siteId]["API"]["AUTH_TOKEN"], $this->siteId);
+            $policy = new \Bitrix\Sale\TradingPlatform\Ebay\Policy(
+                $this->ebaySettings[$this->siteId]["API"]["AUTH_TOKEN"], $this->siteId
+            );
             $hiddenPolicyFields = "";
             $result = '<tr><td>' . Loc::getMessage('SALE_EBAY_W_STEP_DEFAULT_POLICY_R') . ': </td><td>';
             $result .= '<select name="EBAY_SETTINGS[POLICY][RETURN][DEFAULT]">';
 
-            foreach ($policy->getPoliciesNames(\Bitrix\Sale\TradingPlatform\Ebay\Policy::TYPE_RETURN) as $policyId => $policyName) {
-                $result .= '<option value="' . htmlspecialcharsbx($policyId) . '"' . (isset($this->ebaySettings[$this->siteId]["POLICY"]["RETURN"]["DEFAULT"]) && $this->ebaySettings[$this->siteId]["POLICY"]["RETURN"]["DEFAULT"] == $policyId ? " selected" : "") . '>' . $policyName . '</option>';
-                $hiddenPolicyFields .= '<input type="hidden" name="EBAY_SETTINGS[POLICY][RETURN][LIST][' . $policyId . ']" value="' . htmlspecialcharsbx($policyName) . '">';
+            foreach (
+                $policy->getPoliciesNames(
+                    \Bitrix\Sale\TradingPlatform\Ebay\Policy::TYPE_RETURN
+                ) as $policyId => $policyName
+            ) {
+                $result .= '<option value="' . htmlspecialcharsbx(
+                        $policyId
+                    ) . '"' . (isset($this->ebaySettings[$this->siteId]["POLICY"]["RETURN"]["DEFAULT"]) && $this->ebaySettings[$this->siteId]["POLICY"]["RETURN"]["DEFAULT"] == $policyId ? " selected" : "") . '>' . $policyName . '</option>';
+                $hiddenPolicyFields .= '<input type="hidden" name="EBAY_SETTINGS[POLICY][RETURN][LIST][' . $policyId . ']" value="' . htmlspecialcharsbx(
+                        $policyName
+                    ) . '">';
             }
 
             $result .= '</select></td></tr>';
             $result .= '<tr><td>' . Loc::getMessage('SALE_EBAY_W_STEP_DEFAULT_POLICY_S') . ': </td><td>';
             $result .= '<select name="EBAY_SETTINGS[POLICY][SHIPPING][DEFAULT]">';
 
-            foreach ($policy->getPoliciesNames(\Bitrix\Sale\TradingPlatform\Ebay\Policy::TYPE_SHIPPING) as $policyId => $policyName) {
-                $result .= '<option value="' . htmlspecialcharsbx($policyId) . '"' . (isset($this->ebaySettings[$this->siteId]["POLICY"]["SHIPPING"]["DEFAULT"]) && $this->ebaySettings[$this->siteId]["POLICY"]["SHIPPING"]["DEFAULT"] == $policyId ? " selected" : "") . '>' . $policyName . '</option>';
-                $hiddenPolicyFields .= '<input type="hidden" name="EBAY_SETTINGS[POLICY][SHIPPING][LIST][' . $policyId . ']" value="' . htmlspecialcharsbx($policyName) . '">';
+            foreach (
+                $policy->getPoliciesNames(
+                    \Bitrix\Sale\TradingPlatform\Ebay\Policy::TYPE_SHIPPING
+                ) as $policyId => $policyName
+            ) {
+                $result .= '<option value="' . htmlspecialcharsbx(
+                        $policyId
+                    ) . '"' . (isset($this->ebaySettings[$this->siteId]["POLICY"]["SHIPPING"]["DEFAULT"]) && $this->ebaySettings[$this->siteId]["POLICY"]["SHIPPING"]["DEFAULT"] == $policyId ? " selected" : "") . '>' . $policyName . '</option>';
+                $hiddenPolicyFields .= '<input type="hidden" name="EBAY_SETTINGS[POLICY][SHIPPING][LIST][' . $policyId . ']" value="' . htmlspecialcharsbx(
+                        $policyName
+                    ) . '">';
             }
 
             $result .= '</select></td></tr>';
             $result .= '<tr><td>' . Loc::getMessage('SALE_EBAY_W_STEP_DEFAULT_POLICY_P') . ': </td><td>';
             $result .= '<select name="EBAY_SETTINGS[POLICY][PAYMENT][DEFAULT]">';
 
-            foreach ($policy->getPoliciesNames(\Bitrix\Sale\TradingPlatform\Ebay\Policy::TYPE_PAYMENT) as $policyId => $policyName) {
-                $result .= '<option value="' . htmlspecialcharsbx($policyId) . '"' . (isset($this->ebaySettings[$this->siteId]["POLICY"]["PAYMENT"]["DEFAULT"]) && $this->ebaySettings[$this->siteId]["POLICY"]["PAYMENT"]["DEFAULT"] == $policyId ? " selected" : "") . '>' . $policyName . '</option>';
-                $hiddenPolicyFields .= '<input type="hidden" name="EBAY_SETTINGS[POLICY][PAYMENT][LIST][' . $policyId . ']" value="' . htmlspecialcharsbx($policyName) . '">';
+            foreach (
+                $policy->getPoliciesNames(
+                    \Bitrix\Sale\TradingPlatform\Ebay\Policy::TYPE_PAYMENT
+                ) as $policyId => $policyName
+            ) {
+                $result .= '<option value="' . htmlspecialcharsbx(
+                        $policyId
+                    ) . '"' . (isset($this->ebaySettings[$this->siteId]["POLICY"]["PAYMENT"]["DEFAULT"]) && $this->ebaySettings[$this->siteId]["POLICY"]["PAYMENT"]["DEFAULT"] == $policyId ? " selected" : "") . '>' . $policyName . '</option>';
+                $hiddenPolicyFields .= '<input type="hidden" name="EBAY_SETTINGS[POLICY][PAYMENT][LIST][' . $policyId . ']" value="' . htmlspecialcharsbx(
+                        $policyName
+                    ) . '">';
             }
 
             $result .= '</select></td></tr>';
@@ -1037,10 +1176,15 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard {
             if (empty($this->ebaySettings[$this->siteId]["PERSON_TYPE"])) {
                 return
                     self::getLampHtml(false) .
-                    Loc::getMessage('SALE_EBAY_W_STEP_PAY_LINK_BEFORE', array(
-                        '#A1#' => '<a href="' . $APPLICATION->GetCurPageParam('lang=' . LANGUAGE_ID . '&STEP=' . $stepClassesList['StepPersonType']) . '">',
-                        '#A2#' => '</a>'
-                    ));
+                    Loc::getMessage(
+                        'SALE_EBAY_W_STEP_PAY_LINK_BEFORE',
+                        array(
+                            '#A1#' => '<a href="' . $APPLICATION->GetCurPageParam(
+                                    'lang=' . LANGUAGE_ID . '&STEP=' . $stepClassesList['StepPersonType']
+                                ) . '">',
+                            '#A2#' => '</a>'
+                        )
+                    );
             }
 
             $result = '';
@@ -1050,7 +1194,10 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard {
                 foreach ($details->getListPayments() as $paymentOption => $paymentDescription) {
                     $result .= '
 					<tr>
-						<td>' . Loc::getMessage('SALE_EBAY_W_STEP_PAY_LINK_SITE', array('#PAYMENT_DESCRIPTION#' => $paymentDescription)) . ':</td>
+						<td>' . Loc::getMessage(
+                            'SALE_EBAY_W_STEP_PAY_LINK_SITE',
+                            array('#PAYMENT_DESCRIPTION#' => $paymentDescription)
+                        ) . ':</td>
 						<td>' .
                         Helper::makeSelectorFromPaySystems(
                             "EBAY_SETTINGS[MAPS][PAYMENT][" . $paymentOption . "]",
@@ -1076,7 +1223,9 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard {
 
         public static function isSucceed($siteId, array $ebaySettings)
         {
-            return !empty($ebaySettings[$siteId]["MAPS"]["PAYMENT"]) && is_array($ebaySettings[$siteId]["MAPS"]["PAYMENT"]);
+            return !empty($ebaySettings[$siteId]["MAPS"]["PAYMENT"]) && is_array(
+                    $ebaySettings[$siteId]["MAPS"]["PAYMENT"]
+                );
         }
     }
 
@@ -1129,7 +1278,9 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard {
 
         public static function isSucceed($siteId, array $ebaySettings)
         {
-            return !empty($ebaySettings[$siteId]["MAPS"]["SHIPMENT"]) && is_array($ebaySettings[$siteId]["MAPS"]["SHIPMENT"]);
+            return !empty($ebaySettings[$siteId]["MAPS"]["SHIPMENT"]) && is_array(
+                    $ebaySettings[$siteId]["MAPS"]["SHIPMENT"]
+                );
         }
     }
 
@@ -1147,9 +1298,15 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard {
             $sftpTokenExp = !empty($this->ebaySettings[$this->siteId]["SFTP_TOKEN_EXP"]) ? $this->ebaySettings[$this->siteId]["SFTP_TOKEN_EXP"] : "";
 
             return
-                self::getLampHtml(strlen($sftpToken) > 0) . ' ' . Loc::getMessage('SALE_EBAY_W_STEP_MIP_MIP') . ' ' . (strlen($sftpToken) > 0 ? Loc::getMessage('SALE_EBAY_W_STEP_MIP_CONNECTED') : Loc::getMessage('SALE_EBAY_W_STEP_MIP_NOT_CONNECTED')) . '.<br>' .
+                self::getLampHtml($sftpToken <> '') . ' ' . Loc::getMessage(
+                    'SALE_EBAY_W_STEP_MIP_MIP'
+                ) . ' ' . ($sftpToken <> '' ? Loc::getMessage('SALE_EBAY_W_STEP_MIP_CONNECTED') : Loc::getMessage(
+                    'SALE_EBAY_W_STEP_MIP_NOT_CONNECTED'
+                )) . '.<br>' .
                 '<br><br><hr><br>' .
-                '<input type="button" value="' . Loc::getMessage('SALE_EBAY_W_STEP_MIP_TO_CONNECT') . '" onclick="window.open(\'' . Ebay::getSftpTokenUrl($sftpLogin) . '\', \'gettingOAuthToken\');">' .
+                '<input type="button" value="' . Loc::getMessage(
+                    'SALE_EBAY_W_STEP_MIP_TO_CONNECT'
+                ) . '" onclick="window.open(\'' . Ebay::getSftpTokenUrl($sftpLogin) . '\', \'gettingOAuthToken\');">' .
                 '<input type="hidden" id="SALE_EBAY_SETTINGS_SFTP_TOKEN" name="EBAY_SETTINGS[SFTP_PASS]" value="' . $sftpToken . '">' .
                 '<input type="hidden" id="SALE_EBAY_SETTINGS_SFTP_TOKEN_EXP" name="EBAY_SETTINGS[SFTP_TOKEN_EXP]" value="' . $sftpTokenExp . '">' .
                 '<p>' . Loc::getMessage('SALE_EBAY_W_STEP_MIP_DESCR') . '</p>' .
@@ -1188,9 +1345,14 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard {
             $succeed = $this->isSucceed($this->siteId, $this->ebaySettings);
 
             return
-                self::getLampHtml($succeed) . ($succeed ? Loc::getMessage('SALE_EBAY_W_STEP_IMPORT_LOADED', array('#COUNT#' => self::getCategoriesCount())) : Loc::getMessage('SALE_EBAY_W_STEP_IMPORT_NOT_LOADED')) . '.' .
+                self::getLampHtml($succeed) . ($succeed ? Loc::getMessage(
+                    'SALE_EBAY_W_STEP_IMPORT_LOADED',
+                    array('#COUNT#' => self::getCategoriesCount())
+                ) : Loc::getMessage('SALE_EBAY_W_STEP_IMPORT_NOT_LOADED')) . '.' .
                 '<br><br><hr><br>' .
-                '<input type="button" value="' . Loc::getMessage('SALE_EBAY_W_STEP_IMPORT_TO_LOAD') . '" onclick="BX.Sale.EbayAdmin.refreshCategoriesData(\'' . $this->siteId . '\')">' .
+                '<input type="button" value="' . Loc::getMessage(
+                    'SALE_EBAY_W_STEP_IMPORT_TO_LOAD'
+                ) . '" onclick="BX.Sale.EbayAdmin.refreshCategoriesData(\'' . $this->siteId . '\')">' .
                 '<br><br>' . Loc::getMessage('SALE_EBAY_W_STEP_IMPORT_DESCR');
         }
 
@@ -1203,18 +1365,22 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard {
         {
             static $result = null;
 
-            if ($result !== null)
+            if ($result !== null) {
                 return $result;
+            }
 
-            $res = \Bitrix\Sale\TradingPlatform\Ebay\CategoryTable::getList(array(
-                "select" => array("CNT"),
-                "runtime" => array(
-                    new \Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(1)')
+            $res = \Bitrix\Sale\TradingPlatform\Ebay\CategoryTable::getList(
+                array(
+                    "select" => array("CNT"),
+                    "runtime" => array(
+                        new \Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(1)')
+                    )
                 )
-            ));
+            );
 
-            if ($cat = $res->fetch())
+            if ($cat = $res->fetch()) {
                 $result = $cat["CNT"];
+            }
 
             return $result;
         }
@@ -1236,8 +1402,11 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard {
         {
             $result = '<div id="SALE_EBAY_IBLOCK_CHOOSE">';
 
-            if (!is_array($this->ebaySettings[$this->siteId]["IBLOCK_ID"]) || !isset($this->ebaySettings[$this->siteId]["IBLOCK_ID"]))
+            if (!is_array(
+                    $this->ebaySettings[$this->siteId]["IBLOCK_ID"]
+                ) || !isset($this->ebaySettings[$this->siteId]["IBLOCK_ID"])) {
                 $this->ebaySettings[$this->siteId]["IBLOCK_ID"] = array();
+            }
 
             $this->ebaySettings[$this->siteId]["IBLOCK_ID"][] = "";
 
@@ -1270,7 +1439,9 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard {
             }
 
             $result .= '</div>' .
-                '<input type="button" value="' . Loc::getMessage('SALE_EBAY_W_STEP_CATALOG_ADD') . '" onclick="BX.Sale.EbayAdmin.addIblockSelect();" style="margin-top: 10px;">' .
+                '<input type="button" value="' . Loc::getMessage(
+                    'SALE_EBAY_W_STEP_CATALOG_ADD'
+                ) . '" onclick="BX.Sale.EbayAdmin.addIblockSelect();" style="margin-top: 10px;">' .
                 '<br><br><hr><br>' . Loc::getMessage('SALE_EBAY_W_STEP_CATALOG_DESCR') . '.';
 
             return $result;
@@ -1282,9 +1453,11 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard {
             $settings = $ebay->getSettings();
 
             foreach (array('IBLOCK_ID', 'IBLOCK_TYPE_ID', 'MORE_PHOTO_PROP') as $param) {
-                foreach ($this->ebaySettings[$this->siteId][$param] as $key => $value)
-                    if (strlen($value) <= 0)
+                foreach ($this->ebaySettings[$this->siteId][$param] as $key => $value) {
+                    if ($value == '') {
                         unset($this->ebaySettings[$this->siteId][$param][$key]);
+                    }
+                }
 
                 $settings[$this->siteId][$param] = $this->ebaySettings[$this->siteId][$param];
             }
@@ -1318,12 +1491,17 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard {
             $succeed = $this->isSucceed($this->siteId, $this->ebaySettings);
 
             return
-                self::getLampHtml($succeed) . Loc::getMessage('SALE_EBAY_W_STEP_CATEGORIES_COUNT') . ': ' . self::getMappedCount($this->siteId, $this->ebaySettings) . '.' .
+                self::getLampHtml($succeed) . Loc::getMessage(
+                    'SALE_EBAY_W_STEP_CATEGORIES_COUNT'
+                ) . ': ' . self::getMappedCount($this->siteId, $this->ebaySettings) . '.' .
                 '<br><br><hr><br>' .
-                Loc::getMessage('SALE_EBAY_W_STEP_CATEGORIES_DESCR', array(
-                    '#M1#' => '<a href="sale_ebay_general.php?lang=' . LANGUAGE_ID . '&SITE_ID=' . $this->siteId . '">',
-                    '#M2#' => '</a>'
-                ));
+                Loc::getMessage(
+                    'SALE_EBAY_W_STEP_CATEGORIES_DESCR',
+                    array(
+                        '#M1#' => '<a href="sale_ebay_general.php?lang=' . LANGUAGE_ID . '&SITE_ID=' . $this->siteId . '">',
+                        '#M2#' => '</a>'
+                    )
+                );
         }
 
         public static function hasState()
@@ -1335,28 +1513,33 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard {
         {
             static $result = array();
 
-            if (isset($result[$siteId]))
+            if (isset($result[$siteId])) {
                 return $result[$siteId];
+            }
 
             $result[$siteId] = 0;
 
-            if (empty($ebaySettings[$siteId]['IBLOCK_ID']) || !is_array($ebaySettings[$siteId]['IBLOCK_ID']))
+            if (empty($ebaySettings[$siteId]['IBLOCK_ID']) || !is_array($ebaySettings[$siteId]['IBLOCK_ID'])) {
                 return 0;
+            }
 
             foreach ($ebaySettings[$siteId]['IBLOCK_ID'] as $ib) {
                 $entityId = \Bitrix\Sale\TradingPlatform\Ebay\MapHelper::getCategoryEntityId($ib);
-                $mapRes = \Bitrix\Sale\TradingPlatform\MapTable::getList(array(
-                    'filter' => array(
-                        '=ENTITY_ID' => $entityId
-                    ),
-                    "select" => array("CNT"),
-                    "runtime" => array(
-                        new \Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(1)')
+                $mapRes = \Bitrix\Sale\TradingPlatform\MapTable::getList(
+                    array(
+                        'filter' => array(
+                            '=ENTITY_ID' => $entityId
+                        ),
+                        "select" => array("CNT"),
+                        "runtime" => array(
+                            new \Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(1)')
+                        )
                     )
-                ));
+                );
 
-                if ($map = $mapRes->fetch())
+                if ($map = $mapRes->fetch()) {
                     $result[$siteId] += $map["CNT"];
+                }
             }
 
             return $result[$siteId];
@@ -1378,7 +1561,11 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard {
         public function getHtml()
         {
             $exchangeStarted = $this->isSucceed($this->siteId, $this->ebaySettings);
-            $result = self::getLampHtml($exchangeStarted) . Loc::getMessage('SALE_EBAY_W_STEP_EXCHANGE_DATA') . ' ' . ($exchangeStarted ? Loc::getMessage('SALE_EBAY_W_STEP_EXCHANGE_STARTED') : Loc::getMessage('SALE_EBAY_W_STEP_EXCHANGE_NOT_STARTED')) . '.';
+            $result = self::getLampHtml($exchangeStarted) . Loc::getMessage(
+                    'SALE_EBAY_W_STEP_EXCHANGE_DATA'
+                ) . ' ' . ($exchangeStarted ? Loc::getMessage('SALE_EBAY_W_STEP_EXCHANGE_STARTED') : Loc::getMessage(
+                    'SALE_EBAY_W_STEP_EXCHANGE_NOT_STARTED'
+                )) . '.';
 
             if (!$exchangeStarted) {
                 $result .= '<br><br><hr><br>' . Loc::getMessage('SALE_EBAY_W_STEP_EXCHANGE_DESCR') . '.';
@@ -1386,8 +1573,12 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard {
 
                 foreach (array("PRODUCT", "INVENTORY", "ORDER") as $feedType) //"IMAGE
                 {
-                    $result .= '<input type="hidden" name="EBAY_SETTINGS[FEEDS][' . $feedType . '][INTERVAL]" value="' . (isset($this->ebaySettings[$this->siteId]["FEEDS"][$feedType]["INTERVAL"]) ? htmlspecialcharsbx($this->ebaySettings[$this->siteId]["FEEDS"][$feedType]["INTERVAL"]) : $defaultFeedIntervals[$feedType]) . '">' .
-                        '<input type="hidden" name="EBAY_SETTINGS[FEEDS][' . $feedType . '][AGENT_ID]" value="' . (isset($this->ebaySettings[$this->siteId]["FEEDS"][$feedType]["AGENT_ID"]) ? htmlspecialcharsbx($this->ebaySettings[$this->siteId]["FEEDS"][$feedType]["AGENT_ID"]) : 0) . '">';
+                    $result .= '<input type="hidden" name="EBAY_SETTINGS[FEEDS][' . $feedType . '][INTERVAL]" value="' . (isset($this->ebaySettings[$this->siteId]["FEEDS"][$feedType]["INTERVAL"]) ? htmlspecialcharsbx(
+                            $this->ebaySettings[$this->siteId]["FEEDS"][$feedType]["INTERVAL"]
+                        ) : $defaultFeedIntervals[$feedType]) . '">' .
+                        '<input type="hidden" name="EBAY_SETTINGS[FEEDS][' . $feedType . '][AGENT_ID]" value="' . (isset($this->ebaySettings[$this->siteId]["FEEDS"][$feedType]["AGENT_ID"]) ? htmlspecialcharsbx(
+                            $this->ebaySettings[$this->siteId]["FEEDS"][$feedType]["AGENT_ID"]
+                        ) : 0) . '">';
                 }
             }
 

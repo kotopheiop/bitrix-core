@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 \Bitrix\Main\Loader::includeModule('sale');
@@ -7,15 +8,16 @@ $publicMode = $adminPage->publicMode;
 $selfFolderUrl = $adminPage->getSelfFolderUrl();
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions < "W")
+if ($saleModulePermissions < "W") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/prolog.php");
 
 $sTableID = "tbl_sale_tax_exempt";
 
-$oSort = new CAdminSorting($sTableID, "ID", "asc");
+$oSort = new CAdminUiSorting($sTableID, "ID", "asc");
 
 $lAdmin = new CAdminUiList($sTableID, $oSort);
 
@@ -30,13 +32,25 @@ $dbResultList->NavStart();
 
 $lAdmin->SetNavigationParams($dbResultList, array("BASE_LINK" => $selfFolderUrl . "sale_tax_exempt.php"));
 
-$lAdmin->AddHeaders(array(
-    array("id" => "ID", "content" => GetMessage("TAX_ID"), "sort" => "id", "default" => true),
-    array("id" => "TIMESTAMP_X", "content" => GetMessage("TAX_TIMESTAMP"), "sort" => "timestamp_x", "default" => true),
-    array("id" => "NAME", "content" => GetMessage("EXEMPT_NAME"), "sort" => "name", "default" => true),
-    array("id" => "DESCRIPTION", "content" => GetMessage("EXEMPT_DESCR"), "sort" => "description", "default" => true),
-    array("id" => "COUNT", "content" => GetMessage("EXEMPT_COUNT"), "sort" => "", "default" => true),
-));
+$lAdmin->AddHeaders(
+    array(
+        array("id" => "ID", "content" => GetMessage("TAX_ID"), "sort" => "id", "default" => true),
+        array(
+            "id" => "TIMESTAMP_X",
+            "content" => GetMessage("TAX_TIMESTAMP"),
+            "sort" => "timestamp_x",
+            "default" => true
+        ),
+        array("id" => "NAME", "content" => GetMessage("EXEMPT_NAME"), "sort" => "name", "default" => true),
+        array(
+            "id" => "DESCRIPTION",
+            "content" => GetMessage("EXEMPT_DESCR"),
+            "sort" => "description",
+            "default" => true
+        ),
+        array("id" => "COUNT", "content" => GetMessage("EXEMPT_COUNT"), "sort" => "", "default" => true),
+    )
+);
 
 $arVisibleColumns = $lAdmin->GetVisibleHeaderColumns();
 
@@ -61,16 +75,18 @@ while ($arGroup = $dbResultList->NavNext(false)) {
         $dbRes = CSaleTax::GetExemptList(Array("GROUP_ID" => $arGroup["ID"]));
         while ($arRes = $dbRes->Fetch()) {
             if ($arTax = CSaleTax::GetByID($arRes["TAX_ID"])) {
-                if (strlen($fieldShow) > 0)
+                if ($fieldShow <> '') {
                     $fieldShow .= ", ";
+                }
 
                 $fieldShow .= "<a href=\"/bitrix/admin/sale_tax_edit.php?ID=" . $arRes["TAX_ID"] . "&lang=" .
                     LANGUAGE_ID . "\">" . htmlspecialcharsbx($arTax["NAME"]) . "</a>";
             }
         }
     }
-    if (strlen($fieldShow) <= 0)
+    if ($fieldShow == '') {
         $fieldShow = "&nbsp;";
+    }
     $row->AddField("COUNT", $fieldShow);
 
     $arActions = array();

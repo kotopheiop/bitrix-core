@@ -22,7 +22,7 @@ final class BasketBuilderRest extends BasketBuilder
 
     public static function isBasketItemNew($basketCode)
     {
-        return (strpos($basketCode, 'n') === 0);
+        return (mb_strpos($basketCode, 'n') === 0);
     }
     // �������������� ������������ �����,
     // ��� ��������� ������� �.�. � ������� �� �������������� ������ � �������� � ������� ���������� �����
@@ -39,11 +39,13 @@ final class BasketBuilderRest extends BasketBuilder
     public function itemsDataPreparation()
     {
         foreach ($this->formData["PRODUCT"] as $basketCode => $productData) {
-            if ($productData["IS_SET_ITEM"] == "Y")
+            if ($productData["IS_SET_ITEM"] == "Y") {
                 continue;
+            }
 
-            if (!isset($productData["PROPS"]) || !is_array($productData["PROPS"]))
+            if (!isset($productData["PROPS"]) || !is_array($productData["PROPS"])) {
                 $productData["PROPS"] = array();
+            }
 
             if (self::isBasketItemNew($basketCode) == true) {
                 $item = $this->createItem($basketCode, $productData);
@@ -52,7 +54,9 @@ final class BasketBuilderRest extends BasketBuilder
                 $item = $this->getItemFromBasket($basketCode, $productData);
 
                 if (is_null($item)) {
-                    $this->builder->getErrorsContainer()->addError(new Error('basketItem - is not exists [' . $basketCode . ']'));
+                    $this->builder->getErrorsContainer()->addError(
+                        new Error('basketItem - is not exists [' . $basketCode . ']')
+                    );
                     throw new BuildingException();
                 }
             }
@@ -65,8 +69,9 @@ final class BasketBuilderRest extends BasketBuilder
                 /** @var \Bitrix\Sale\BasketPropertiesCollection $property */
                 $property = $item->getPropertyCollection();
 
-                if (!$property->isPropertyAlreadyExists($productData["PROPS"]))
+                if (!$property->isPropertyAlreadyExists($productData["PROPS"])) {
                     $property->setProperty($productData["PROPS"]);
+                }
             }
         }
 

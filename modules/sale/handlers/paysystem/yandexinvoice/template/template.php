@@ -1,6 +1,8 @@
 <?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
     die();
+}
 
 use \Bitrix\Main\Localization\Loc;
 
@@ -14,8 +16,11 @@ foreach ($_POST as $key => $value) {
         foreach ($value as $k1 => $v1) {
             if (is_array($v1)) {
                 foreach ($v1 as $k2 => $v2) {
-                    if (!is_array($v2))
-                        $post[htmlspecialcharsbx($key) . "[" . htmlspecialcharsbx($k1) . "][" . htmlspecialcharsbx($k2) . "]"] = htmlspecialcharsbx($v2);
+                    if (!is_array($v2)) {
+                        $post[htmlspecialcharsbx($key) . "[" . htmlspecialcharsbx($k1) . "][" . htmlspecialcharsbx(
+                            $k2
+                        ) . "]"] = htmlspecialcharsbx($v2);
+                    }
                 }
             } else {
                 $post[htmlspecialcharsbx($key) . "[" . htmlspecialcharsbx($k1) . "]"] = htmlspecialcharsbx($v1);
@@ -40,6 +45,6 @@ foreach ($_POST as $key => $value) {
         <input type="text" class="form-control " name="phone" value="<?= $params['BUYER_PERSON_COMPANY_PHONE'] ?>">
     </div>
 
-    <input type="submit" class="btn btn-primary pl-4 pr-4" name="send"
+    <input type="submit" class="btn btn-lg btn-success pl-4 pr-4" style="border-radius: 32px;" name="send"
            value="<?= Loc::getMessage('SALE_HPS_YANDEX_INVOICE_SEND'); ?>">
 </form>

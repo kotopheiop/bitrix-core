@@ -1,8 +1,11 @@
 <?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 /** @var CMain $APPLICATION */
 $STAT_RIGHT = $APPLICATION->GetGroupRight("statistic");
-if ($STAT_RIGHT == "D") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($STAT_RIGHT == "D") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 
@@ -22,11 +25,16 @@ $filter = new CAdminFilter(
 );
 
 $FilterArr = Array(
-    "find", "find_type",
-    "find_id", "find_id_exact_match",
-    "find_referer1", "find_referer1_exact_match",
-    "find_referer2", "find_referer2_exact_match",
-    "find_description", "find_description_exact_match",
+    "find",
+    "find_type",
+    "find_id",
+    "find_id_exact_match",
+    "find_referer1",
+    "find_referer1_exact_match",
+    "find_referer2",
+    "find_referer2_exact_match",
+    "find_description",
+    "find_description_exact_match",
 );
 
 $lAdmin->InitFilter($FilterArr);
@@ -42,8 +50,9 @@ $arFilter = Array(
     "DESCRIPTION_EXACT_MATCH" => $find_description_exact_match,
 );
 
+global $by, $order;
 
-$rsData = CAdv::GetSimpleList($by, $order, $arFilter, $is_filtered);
+$rsData = CAdv::GetSimpleList($by, $order, $arFilter);
 $rsData = new CAdminResult($rsData, $sTableID);
 $rsData->NavStart();
 
@@ -54,14 +63,22 @@ $arHeaders = Array();
 $arHeaders[] = array("id" => "ID", "content" => "ID", "sort" => "s_id", "default" => true,);
 $arHeaders[] = array("id" => "REFERER1", "content" => "referer1", "sort" => "s_referer1", "default" => true,);
 $arHeaders[] = array("id" => "REFERER2", "content" => "referer2", "sort" => "s_referer2", "default" => true,);
-$arHeaders[] = array("id" => "DESCRIPTION", "content" => GetMessage("STAT_DESCRIPTION"), "sort" => "s_description", "default" => true,);
+$arHeaders[] = array(
+    "id" => "DESCRIPTION",
+    "content" => GetMessage("STAT_DESCRIPTION"),
+    "sort" => "s_description",
+    "default" => true,
+);
 
 $lAdmin->AddHeaders($arHeaders);
 
 while ($arRes = $rsData->NavNext(true, "f_")) {
     $row =& $lAdmin->AddRow($f_ID, $arRes);
 
-    $row->AddViewField("REFERER1", $f_REFERER1 . '<input type="hidden" name="ADV_NAME[' . $f_ID . ']" id="ADV_NAME[' . $f_ID . ']" value="' . $f_REFERER1 . " [" . $f_ID . ']">');
+    $row->AddViewField(
+        "REFERER1",
+        $f_REFERER1 . '<input type="hidden" name="ADV_NAME[' . $f_ID . ']" id="ADV_NAME[' . $f_ID . ']" value="' . $f_REFERER1 . " [" . $f_ID . ']">'
+    );
 }
 
 $lAdmin->AddFooter(
@@ -71,18 +88,19 @@ $lAdmin->AddFooter(
     )
 );
 
-$lAdmin->AddGroupActionTable(Array(
-    "select" => array(
-        "action" => "setTargetValue(0, '" . addslashes($field) . "')",
-        "value" => "select",
-        "type" => "button",
-        "name" => GetMessage("STAT_SELECT"),
+$lAdmin->AddGroupActionTable(
+    Array(
+        "select" => array(
+            "action" => "setTargetValue(0, '" . addslashes($field) . "')",
+            "value" => "select",
+            "type" => "button",
+            "name" => GetMessage("STAT_SELECT"),
+        ),
     ),
-), array("disable_action_target" => true));
+    array("disable_action_target" => true)
+);
 
 $lAdmin->CheckListMode();
-//$rs = CAdv::GetSimpleList($by, $order, $arFilter, $is_filtered);
-
 
 $APPLICATION->SetTitle(GetMessage("STAT_TITLE"));
 
@@ -126,20 +144,23 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_popup_a
         <tr>
             <td>referer1:</td>
             <td><input type="text" name="find_referer1" size="35"
-                       value="<? echo htmlspecialcharsbx($find_referer1) ?>"><?= ShowExactMatchCheckbox("find_referer1") ?>
-                &nbsp;<?= ShowFilterLogicHelp() ?></td>
+                       value="<? echo htmlspecialcharsbx($find_referer1) ?>"><?= ShowExactMatchCheckbox(
+                    "find_referer1"
+                ) ?>&nbsp;<?= ShowFilterLogicHelp() ?></td>
         </tr>
         <tr>
             <td>referer2:</td>
             <td><input type="text" name="find_referer2" size="35"
-                       value="<? echo htmlspecialcharsbx($find_referer2) ?>"><?= ShowExactMatchCheckbox("find_referer2") ?>
-                &nbsp;<?= ShowFilterLogicHelp() ?></td>
+                       value="<? echo htmlspecialcharsbx($find_referer2) ?>"><?= ShowExactMatchCheckbox(
+                    "find_referer2"
+                ) ?>&nbsp;<?= ShowFilterLogicHelp() ?></td>
         </tr>
         <tr>
             <td><?= GetMessage("STAT_DESCRIPTION") ?>:</td>
             <td><input type="text" name="find_description" size="35"
-                       value="<? echo htmlspecialcharsbx($find_description) ?>"><?= ShowExactMatchCheckbox("find_description") ?>
-                &nbsp;<?= ShowFilterLogicHelp() ?></td>
+                       value="<? echo htmlspecialcharsbx($find_description) ?>"><?= ShowExactMatchCheckbox(
+                    "find_description"
+                ) ?>&nbsp;<?= ShowFilterLogicHelp() ?></td>
         </tr>
 
 

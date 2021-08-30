@@ -1,5 +1,8 @@
 <?php
 
+use Bitrix\Main;
+use Bitrix\Main\Security;
+
 class CTempFile
 {
     private static $is_exit_function_registered = false;
@@ -29,12 +32,13 @@ class CTempFile
         while (true) {
             $i++;
 
-            if ($file_name == '/')
-                $dir_add = md5(mt_rand());
-            elseif ($i < 25)
-                $dir_add = substr(md5(mt_rand()), 0, 3);
-            else
-                $dir_add = md5(mt_rand());
+            if ($file_name == '/') {
+                $dir_add = Security\Random::getString(32);
+            } elseif ($i < 25) {
+                $dir_add = substr(Security\Random::getString(32), 0, 3);
+            } else {
+                $dir_add = Security\Random::getString(32);
+            }
 
             $temp_path = $dir_name . "/" . $dir_add . $file_name;
 
@@ -55,25 +59,34 @@ class CTempFile
 
     public static function GetDirectoryName($hours_to_keep_files = 0, $subdir = "")
     {
-        if ($hours_to_keep_files <= 0)
+        if ($hours_to_keep_files <= 0) {
             return self::GetFileName('');
+        }
 
         if ($subdir === "") {
             $dir_name = self::GetAbsoluteRoot() . '/BXTEMP-' . date('Y-m-d/H/', time() + 3600 * $hours_to_keep_files);
             $i = 0;
             while (true) {
                 $i++;
-                $dir_add = md5(mt_rand());
+                $dir_add = Security\Random::getString(32);
                 $temp_path = $dir_name . $dir_add . "/";
 
-                if (!file_exists($temp_path))
+                if (!file_exists($temp_path)) {
                     break;
+                }
             }
         } else //Fixed name during the session
         {
-            $subdir = implode("/", (is_array($subdir) ? $subdir : array($subdir, bitrix_sessid()))) . "/";
-            while (strpos($subdir, "//") !== false)
+            $localStorage = Main\Application::getInstance()->getLocalSession('userSessionData');
+            if (!isset($localStorage['tempFileToken'])) {
+                $localStorage->set('tempFileToken', Security\Random::getString(32));
+            }
+            $token = $localStorage->get('tempFileToken');
+
+            $subdir = implode("/", (is_array($subdir) ? $subdir : array($subdir, $token))) . "/";
+            while (strpos($subdir, "//") !== false) {
                 $subdir = str_replace("//", "/", $subdir);
+            }
             $bFound = false;
             for ($i = $hours_to_keep_files - 1; $i > 0; $i--) {
                 $dir_name = self::GetAbsoluteRoot() . '/BXTEMP-' . date('Y-m-d/H/', time() + 3600 * $i);
@@ -85,7 +98,10 @@ class CTempFile
             }
 
             if (!$bFound) {
-                $dir_name = self::GetAbsoluteRoot() . '/BXTEMP-' . date('Y-m-d/H/', time() + 3600 * $hours_to_keep_files);
+                $dir_name = self::GetAbsoluteRoot() . '/BXTEMP-' . date(
+                        'Y-m-d/H/',
+                        time() + 3600 * $hours_to_keep_files
+                    );
                 $temp_path = $dir_name . $subdir;
             }
         }
@@ -111,8 +127,8 @@ class CTempFile
                     @rmdir($temp_dir);
                 } //Clean whole temporary directory from CTempFile::GetFileName('');
                 elseif (
-                    substr($temp_path, -1) == '/'
-                    && strpos($temp_path, "BXTEMP") === false
+                    mb_substr($temp_path, -1) == '/'
+                    && mb_strpos($temp_path, "BXTEMP") === false
                     && is_dir($temp_path)
                 ) {
                     CTempFile::_absolute_path_recursive_delete($temp_path);
@@ -127,8 +143,9 @@ class CTempFile
         if (file_exists($dir_name)) {
             if ($handle = opendir($dir_name)) {
                 while (($day_files_dir = readdir($handle)) !== false) {
-                    if ($day_files_dir == '.' || $day_files_dir == '..')
+                    if ($day_files_dir == '.' || $day_files_dir == '..') {
                         continue;
+                    }
                     if (preg_match("/^BXTEMP-(.*?)\$/", $day_files_dir) && is_dir($dir_name . $day_files_dir)) {
                         CTempFile::_process_directory($dir_name, $day_files_dir);
                     }
@@ -147,10 +164,12 @@ class CTempFile
             if ($hour_handle = opendir($dir_name . $day_files_dir)) {
                 $this_hour_name = date('H');
                 while (($hour_files_dir = readdir($hour_handle)) !== false) {
-                    if ($hour_files_dir == '.' || $hour_files_dir == '..')
+                    if ($hour_files_dir == '.' || $hour_files_dir == '..') {
                         continue;
-                    if ($hour_files_dir < $this_hour_name)
+                    }
+                    if ($hour_files_dir < $this_hour_name) {
                         CTempFile::_absolute_path_recursive_delete($dir_name . $day_files_dir . '/' . $hour_files_dir);
+                    }
                 }
             }
         }
@@ -158,28 +177,33 @@ class CTempFile
 
     private static function _absolute_path_recursive_delete($path)
     {
-        if (strlen($path) == 0 || $path == '/')
+        if ($path == '' || $path == '/') {
             return false;
+        }
 
         $f = true;
         if (is_file($path) || is_link($path)) {
-            if (@unlink($path))
+            if (@unlink($path)) {
                 return true;
+            }
             return false;
         } elseif (is_dir($path)) {
             if ($handle = opendir($path)) {
                 while (($file = readdir($handle)) !== false) {
-                    if ($file == "." || $file == "..")
+                    if ($file == "." || $file == "..") {
                         continue;
+                    }
 
-                    if (!CTempFile::_absolute_path_recursive_delete($path . "/" . $file))
+                    if (!CTempFile::_absolute_path_recursive_delete($path . "/" . $file)) {
                         $f = false;
+                    }
                 }
                 closedir($handle);
             }
             $r = @rmdir($path);
-            if (!$r)
+            if (!$r) {
                 return false;
+            }
             return $f;
         }
         return false;

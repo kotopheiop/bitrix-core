@@ -20,8 +20,9 @@ abstract class CBPCompositeActivity
     {
         parent::ReInitialize();
         /** @var CBPActivity $activity */
-        foreach ($this->arActivities as $activity)
+        foreach ($this->arActivities as $activity) {
             $activity->ReInitialize();
+        }
     }
 
     public function CollectNestedActivities()
@@ -33,8 +34,9 @@ abstract class CBPCompositeActivity
     {
         parent::FixUpParentChildRelationship($nestedActivity);
 
-        if (!is_array($this->arActivities))
+        if (!is_array($this->arActivities)) {
             $this->arActivities = array();
+        }
 
         $this->arActivities[] = $nestedActivity;
     }
@@ -46,24 +48,28 @@ abstract class CBPCompositeActivity
 
     public function Initialize()
     {
-        foreach ($this->arActivities as $activity)
+        foreach ($this->arActivities as $activity) {
             $this->workflow->InitializeActivity($activity);
+        }
     }
 
     public function Finalize()
     {
-        foreach ($this->arActivities as $activity)
+        foreach ($this->arActivities as $activity) {
             $this->workflow->FinalizeActivity($activity);
+        }
     }
 
     public function HandleFault(Exception $exception)
     {
-        if (!$exception)
+        if (!$exception) {
             throw new Exception("exception");
+        }
 
         $status = $this->Cancel();
-        if ($status == CBPActivityExecutionStatus::Canceling)
+        if ($status == CBPActivityExecutionStatus::Canceling) {
             return CBPActivityExecutionStatus::Faulting;
+        }
 
         return $status;
     }

@@ -2,6 +2,11 @@
 
 namespace Bitrix\Landing;
 
+use Bitrix\Main\Loader;
+use Bitrix\Landing\Internals\BlockTable;
+use Bitrix\Crm\WebForm;
+use Bitrix\Landing\Subtype;
+
 class Agent
 {
     /**
@@ -21,8 +26,10 @@ class Agent
         foreach ($params as $value) {
             if (is_int($value)) {
                 $funcName .= $value . ',';
-            } else if (is_string($value)) {
-                $funcName .= '\'' . $value . '\'' . ',';
+            } else {
+                if (is_string($value)) {
+                    $funcName .= '\'' . $value . '\'' . ',';
+                }
             }
         }
         $funcName = trim($funcName, ',');
@@ -69,50 +76,26 @@ class Agent
 
         $date = new \Bitrix\Main\Type\DateTime;
         $date->add('-' . $days . ' days');
-        $folders = [];
 
         // first delete landings
-        $res = Landing::getList([
-            'select' => [
-                'ID', 'FOLDER'
-            ],
-            'filter' => [
-                [
-                    'LOGIC' => 'OR',
-                    [
-                        '=DELETED' => 'Y',
-                        '<DATE_MODIFY' => $date
-                    ],
-                    [
-                        '=SITE.DELETED' => 'Y',
-                        '<SITE.DATE_MODIFY' => $date
-                    ]
-                ],
-                '=DELETED' => ['Y', 'N'],
-                '=SITE.DELETED' => ['Y', 'N'],
-                'CHECK_PERMISSIONS' => 'N'
-            ],
-            'order' => [
-                'DATE_MODIFY' => 'desc'
-            ]
-        ]);
-        while ($row = $res->fetch()) {
-            if ($row['FOLDER'] == 'Y') {
-                $folders[] = $row['ID'];
-                continue;
-            }
-            $resDel = Landing::delete($row['ID'], true);
-            $resDel->isSuccess();// for trigger
-        }
-
-        // delete from folders
-        if ($folders) {
-            $res = Landing::getList([
+        $res = Landing::getList(
+            [
                 'select' => [
-                    'ID'
+                    'ID',
+                    'FOLDER_ID'
                 ],
                 'filter' => [
-                    'FOLDER_ID' => $folders,
+                    [
+                        'LOGIC' => 'OR',
+                        [
+                            '=DELETED' => 'Y',
+                            '<DATE_MODIFY' => $date
+                        ],
+                        [
+                            '=SITE.DELETED' => 'Y',
+                            '<SITE.DATE_MODIFY' => $date
+                        ]
+                    ],
                     '=DELETED' => ['Y', 'N'],
                     '=SITE.DELETED' => ['Y', 'N'],
                     'CHECK_PERMISSIONS' => 'N'
@@ -120,30 +103,52 @@ class Agent
                 'order' => [
                     'DATE_MODIFY' => 'desc'
                 ]
-            ]);
-            while ($row = $res->fetch()) {
-                array_unshift($folders, $row['ID']);
+            ]
+        );
+        while ($row = $res->fetch()) {
+            if ($row['FOLDER_ID']) {
+                Landing::update(
+                    $row['ID'],
+                    [
+                        'FOLDER_ID' => 0
+                    ]
+                );
             }
-            foreach ($folders as $folderId) {
-                $resDel = Landing::delete($folderId, true);
+            // sub pages
+            $resSub = Landing::getList(
+                [
+                    'select' => [
+                        'ID'
+                    ],
+                    'filter' => [
+                        'FOLDER_ID' => $row['ID']
+                    ]
+                ]
+            );
+            while ($rowSub = $resSub->fetch()) {
+                $resDel = Landing::delete($rowSub['ID'], true);
                 $resDel->isSuccess();// for trigger
             }
+            $resDel = Landing::delete($row['ID'], true);
+            $resDel->isSuccess();// for trigger
         }
 
         // then delete sites
-        $res = Site::getList([
-            'select' => [
-                'ID'
-            ],
-            'filter' => [
-                '=DELETED' => 'Y',
-                '<DATE_MODIFY' => $date,
-                'CHECK_PERMISSIONS' => 'N'
-            ],
-            'order' => [
-                'DATE_MODIFY' => 'desc'
+        $res = Site::getList(
+            [
+                'select' => [
+                    'ID'
+                ],
+                'filter' => [
+                    '=DELETED' => 'Y',
+                    '<DATE_MODIFY' => $date,
+                    'CHECK_PERMISSIONS' => 'N'
+                ],
+                'order' => [
+                    'DATE_MODIFY' => 'desc'
+                ]
             ]
-        ]);
+        );
         while ($row = $res->fetch()) {
             $resDel = Site::delete($row['ID']);
             $resDel->isSuccess();// for trigger
@@ -166,5 +171,69 @@ class Agent
         File::deleteFinal($count);
 
         return __CLASS__ . '::' . __FUNCTION__ . '(' . $count . ');';
+    }
+
+    /**
+     * Send used rest statistic.
+     * @return string
+     */
+    public static function sendRestStatistic(): string
+    {
+        if (
+            \Bitrix\Main\Loader::includeModule('rest')
+            && is_callable(['\Bitrix\Rest\UsageStatTable', 'logLanding'])
+        ) {
+            $statCode = [
+                \Bitrix\Landing\PublicAction::REST_USAGE_TYPE_BLOCK => 'LANDING_BLOCK',
+                \Bitrix\Landing\PublicAction::REST_USAGE_TYPE_PAGE => 'LANDING_PAGE',
+            ];
+            $data = PublicAction::getRestStat(false, true);
+            foreach ($data as $type => $stat) {
+                if ($statCode[$type]) {
+                    foreach ($stat as $clientId => $count) {
+                        \Bitrix\Rest\UsageStatTable::logLanding($clientId, $statCode[$type], $count);
+                    }
+                }
+            }
+            \Bitrix\Rest\UsageStatTable::finalize();
+        }
+
+        return __CLASS__ . '::' . __FUNCTION__ . '();';
+    }
+
+    /**
+     * Tmp agent for rebuild form's blocks.
+     * @param int $lastLid Last item id.
+     * @return string
+     */
+    public static function repairFormUrls(int $lastLid = 0): string
+    {
+        if (Loader::includeModule('crm')) {
+            $formQuery = WebForm\Internals\LandingTable::query()
+                ->addSelect('FORM_ID')
+                ->addSelect('LANDING_ID')
+                ->addOrder('LANDING_ID')
+                ->setLimit(50)
+                ->where('LANDING_ID', '>', $lastLid)
+                ->exec();
+            $lastLid = 0;
+            while ($form = $formQuery->fetch()) {
+                $blocksQuery = BlockTable::query()
+                    ->addSelect('ID')
+                    ->where('LID', $form['LANDING_ID'])
+                    ->where('CODE', '66.90.form_new_default')
+                    ->exec();
+                while ($block = $blocksQuery->fetch()) {
+                    Subtype\Form::setFormIdToBlock($block['ID'], $form['FORM_ID']);
+                }
+                $lastLid = (int)$form['LANDING_ID'];
+            }
+
+            if ($lastLid > 0) {
+                return __CLASS__ . '::' . __FUNCTION__ . '(' . $lastLid . ');';
+            }
+        }
+
+        return '';
     }
 }

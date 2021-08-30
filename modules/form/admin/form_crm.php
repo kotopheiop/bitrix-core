@@ -1,11 +1,13 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/form/prolog.php");
 
 $FORM_RIGHT = $APPLICATION->GetGroupRight("form");
 
-if ($FORM_RIGHT <= "D")
+if ($FORM_RIGHT <= "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 CModule::IncludeModule('form');
 
@@ -20,7 +22,7 @@ if (check_bitrix_sessid()) {
 
             if ($CRM_ID > 0) {
                 $arAuth = null;
-                if (strlen($_REQUEST['LOGIN']) > 0 && strlen($_REQUEST['PASSWORD']) > 0) {
+                if ($_REQUEST['LOGIN'] <> '' && $_REQUEST['PASSWORD'] <> '') {
                     $arAuth = array('LOGIN' => $_REQUEST['LOGIN'], 'PASSWORD' => $_REQUEST['PASSWORD']);
                 }
 
@@ -32,7 +34,9 @@ if (check_bitrix_sessid()) {
                 }
 
                 if (is_array($arFields) && count($arFields) > 0) {
-                    $result = '{"result":"ok","fields":' . CUtil::PhpToJsObject($arFields) . (is_array($arAuth) ? ',"auth_hash":"' . $authHash . '"' : '') . '}';
+                    $result = '{"result":"ok","fields":' . CUtil::PhpToJsObject($arFields) . (is_array(
+                            $arAuth
+                        ) ? ',"auth_hash":"' . $authHash . '"' : '') . '}';
                 } else {
                     $res = $link->GetLastResult();
                     if ($res) {

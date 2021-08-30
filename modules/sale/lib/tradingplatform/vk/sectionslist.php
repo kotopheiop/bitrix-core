@@ -148,7 +148,13 @@ class SectionsList
                 $filter,
                 true,
                 array(
-                    "IBLOCK_ID", "IBLOCK_SECTION_ID", "ID", "DEPTH_LEVEL", "NAME", "LEFT_MARGIN", "RIGHT_MARGIN",
+                    "IBLOCK_ID",
+                    "IBLOCK_SECTION_ID",
+                    "ID",
+                    "DEPTH_LEVEL",
+                    "NAME",
+                    "LEFT_MARGIN",
+                    "RIGHT_MARGIN",
                     "ELEMENT_CNT",
                 )
             );
@@ -183,10 +189,12 @@ class SectionsList
             $iblockIds = $this->getMappedIblocks();
         } else {
             if (Loader::includeModule('catalog')) {
-                $iterator = \Bitrix\Catalog\CatalogIblockTable::getList([
-                    'select' => ['IBLOCK_ID'],
-                    'filter' => ['=PRODUCT_IBLOCK_ID' => 0],
-                ]);
+                $iterator = \Bitrix\Catalog\CatalogIblockTable::getList(
+                    [
+                        'select' => ['IBLOCK_ID'],
+                        'filter' => ['=PRODUCT_IBLOCK_ID' => 0],
+                    ]
+                );
                 while ($row = $iterator->fetch()) {
                     $iblockIds[$row['IBLOCK_ID']] = $row['IBLOCK_ID'];
                 }
@@ -336,12 +344,14 @@ class SectionsList
 
     public function getMultiSectionsToProduct($pdoructsIds)
     {
-        $sections = SectionElementTable::getList(array(
-            "filter" => array(
-                "IBLOCK_ELEMENT_ID" => $pdoructsIds,
-                "ADDITIONAL_PROPERTY_ID" => null,
-            ),
-        ));
+        $sections = SectionElementTable::getList(
+            array(
+                "filter" => array(
+                    "IBLOCK_ELEMENT_ID" => $pdoructsIds,
+                    "ADDITIONAL_PROPERTY_ID" => null,
+                ),
+            )
+        );
 
         $result = array();
         while ($section = $sections->fetch()) {
@@ -381,9 +391,13 @@ class SectionsList
                 $items = '';
                 foreach ($currAlbum["ITEMS"] as $currSection) {
                     $items .= '<div style = "margin-bottom:4px;">' . $currSection["NAME"];
-                    $items .= ' <i>(' . Loc::getMessage("VK_EXPORT_MAP__ELEMENT_CNT_2") . ': ' . $currSection["ELEMENT_CNT"] . ')</i>';
+                    $items .= ' <i>(' . Loc::getMessage(
+                            "VK_EXPORT_MAP__ELEMENT_CNT_2"
+                        ) . ': ' . $currSection["ELEMENT_CNT"] . ')</i>';
                     $items .= isset($currSection["SECTION_URL"]) ?
-                        ' <a href="' . $currSection["SECTION_URL"] . '">' . Loc::getMessage("VK_EXPORT_MAP__SECTION_SETTINGS") . '</a> ' :
+                        ' <a href="' . $currSection["SECTION_URL"] . '">' . Loc::getMessage(
+                            "VK_EXPORT_MAP__SECTION_SETTINGS"
+                        ) . '</a> ' :
                         '';
                     $items .= '</div>';
                 }
@@ -444,7 +458,9 @@ class SectionsList
                 if (array_key_exists($sectionUnformatted["TO_ALBUM"], $this->mappedAlbums)) {
                     $albumVkId = $this->mappedAlbums[$sectionUnformatted["TO_ALBUM"]]["ALBUM_VK_ID"];
                     $sectionsFormatted[$sectionUnformatted["TO_ALBUM"]]["ALBUM_VK_ID"] = $albumVkId;
-                    $sectionsFormatted[$sectionUnformatted["TO_ALBUM"]]["ALBUM_VK_URL"] = $this->createVkAlbumLink($albumVkId);
+                    $sectionsFormatted[$sectionUnformatted["TO_ALBUM"]]["ALBUM_VK_URL"] = $this->createVkAlbumLink(
+                        $albumVkId
+                    );
                 }
             }
 
@@ -544,9 +560,13 @@ class SectionsList
     {
         $sectionTabControlName = 'form_section_' . $iblockId . '_active_tab';
 
-        return \CAllIBlock::GetAdminSectionEditLink($iblockId, $sectionId, array(
-            $sectionTabControlName => "SALE_TRADING_PLATFORM_edit_trading_platforms",
-        ));
+        return \CAllIBlock::GetAdminSectionEditLink(
+            $iblockId,
+            $sectionId,
+            array(
+                $sectionTabControlName => "SALE_TRADING_PLATFORM_edit_trading_platforms",
+            )
+        );
     }
 
 
@@ -606,7 +626,7 @@ class SectionsList
             $iblock = \CIBlock::GetByID($iblockId)->GetNext();
 
             $result .= '<option disabled value="-1">' .
-                strtoupper(is_array($iblock) ? $iblock["NAME"] : $iblockId) .
+                mb_strtoupper(is_array($iblock) ? $iblock["NAME"] : $iblockId) .
                 '</option>';
 
 //			create ITEMS for current iblock
@@ -748,7 +768,6 @@ class SectionsList
         }
 
         return $params;
-
     }
 
     /**

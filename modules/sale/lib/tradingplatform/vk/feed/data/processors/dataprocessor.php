@@ -14,7 +14,7 @@ abstract class DataProcessor
     protected $vkGroupId;
     protected $exportId;
 
-    abstract public function process($data, Timer $timer = NULL);
+    abstract public function process($data, Timer $timer = null);
 
     /**
      * DataProcessor constructor.
@@ -24,10 +24,11 @@ abstract class DataProcessor
     {
         self::$vk = Vk::getInstance();
 
-        if (!isset($exportId) || strlen($exportId) <= 0)
+        if (!isset($exportId) || $exportId == '') {
             throw new ArgumentNullException("EXPORT_ID");
-        else
+        } else {
             $this->exportId = $exportId;
+        }
 
         $this->vkGroupId = self::$vk->getGroupId($this->exportId);
         $this->api = self::$vk->getApi($this->exportId);

@@ -6,26 +6,33 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Blog\Item\Permissions;
+use Bitrix\Main\ModuleManager;
+use Bitrix\Main\Web\Json;
+use Bitrix\Socialnetwork\ComponentHelper;
+use Bitrix\Main\ArgumentException;
 
-class BlogPost extends \Bitrix\Main\Engine\Controller
+class BlogPost extends \Bitrix\Socialnetwork\Controller\Base
 {
     public function getDataAction(array $params = [])
     {
-        global $APPLICATION;
-
-        $postId = (isset($params['postId']) ? intval($params['postId']) : 0);
+        $postId = (isset($params['postId']) ? (int)$params['postId'] : 0);
         $public = (isset($params['public']) ? $params['public'] : 'N');
         $mobile = (isset($params['mobile']) ? $params['mobile'] : 'N');
         $groupReadOnly = (isset($params['groupReadOnly']) ? $params['groupReadOnly'] : 'N');
         $pathToPost = (isset($params['pathToPost']) ? $params['pathToPost'] : '');
-        $voteId = (isset($params['voteId']) ? intval($params['voteId']) : 0);
+        $voteId = (isset($params['voteId']) ? (int)$params['voteId'] : 0);
         $checkModeration = (isset($params['checkModeration']) ? $params['checkModeration'] : 'N');
 
         $currentUserId = $this->getCurrentUser()->getId();
-        $currentModuleAdmin = \CSocNetUser::isCurrentUserModuleAdmin(SITE_ID, ($mobile != 'Y'));
+        $currentModuleAdmin = \CSocNetUser::isCurrentUserModuleAdmin(SITE_ID, false);
 
         if ($postId <= 0) {
-            $this->addError(new Error(Loc::getMessage('SONET_CONTROLLER_LIVEFEED_BLOGPOST_EMPTY'), 'SONET_CONTROLLER_LIVEFEED_BLOGPOST_EMPTY'));
+            $this->addError(
+                new Error(
+                    Loc::getMessage('SONET_CONTROLLER_LIVEFEED_BLOGPOST_EMPTY'),
+                    'SONET_CONTROLLER_LIVEFEED_BLOGPOST_EMPTY'
+                )
+            );
             return null;
         }
 
@@ -34,7 +41,12 @@ class BlogPost extends \Bitrix\Main\Engine\Controller
             || !Loader::includeModule('socialnetwork')
             || !($postItem = \Bitrix\Blog\Item\Post::getById($postId))
         ) {
-            $this->addError(new Error(Loc::getMessage('SONET_CONTROLLER_LIVEFEED_BLOGPOST_NOT_FOUND'), 'SONET_CONTROLLER_LIVEFEED_BLOGPOST_NOT_FOUND'));
+            $this->addError(
+                new Error(
+                    Loc::getMessage('SONET_CONTROLLER_LIVEFEED_BLOGPOST_NOT_FOUND'),
+                    'SONET_CONTROLLER_LIVEFEED_BLOGPOST_NOT_FOUND'
+                )
+            );
             return null;
         }
 
@@ -46,7 +58,7 @@ class BlogPost extends \Bitrix\Main\Engine\Controller
 
         if (
             $postFields['PUBLISH_STATUS'] == BLOG_PUBLISH_STATUS_READY
-            && $checkModeration == 'Y'
+            && $checkModeration === 'Y'
         ) {
             $postSocnetPermsList = \CBlogPost::getSocNetPerms($postId);
             if (
@@ -56,9 +68,28 @@ class BlogPost extends \Bitrix\Main\Engine\Controller
                 $groupIdList = array_keys($postSocnetPermsList['SG']);
                 foreach ($groupIdList as $groupId) {
                     if (
-                        \CSocNetFeaturesPerms::canPerformOperation($currentUserId, SONET_ENTITY_GROUP, $groupId, 'blog', 'full_post', $currentModuleAdmin)
-                        || \CSocNetFeaturesPerms::canPerformOperation($currentUserId, SONET_ENTITY_GROUP, $groupId, 'blog', 'write_post')
-                        || \CSocNetFeaturesPerms::canPerformOperation($currentUserId, SONET_ENTITY_GROUP, $groupId, 'blog', 'moderate_post')
+                        \CSocNetFeaturesPerms::canPerformOperation(
+                            $currentUserId,
+                            SONET_ENTITY_GROUP,
+                            $groupId,
+                            'blog',
+                            'full_post',
+                            $currentModuleAdmin
+                        )
+                        || \CSocNetFeaturesPerms::canPerformOperation(
+                            $currentUserId,
+                            SONET_ENTITY_GROUP,
+                            $groupId,
+                            'blog',
+                            'write_post'
+                        )
+                        || \CSocNetFeaturesPerms::canPerformOperation(
+                            $currentUserId,
+                            SONET_ENTITY_GROUP,
+                            $groupId,
+                            'blog',
+                            'moderate_post'
+                        )
                     ) {
                         $allowModerate = true;
                         break;
@@ -84,7 +115,7 @@ class BlogPost extends \Bitrix\Main\Engine\Controller
             && \CExtranet::isExtranetSite(SITE_ID)
         ) {
             $filter["SITE_ID"] = SITE_ID;
-        } elseif ($public != 'Y') {
+        } elseif ($public !== 'Y') {
             $filter["SITE_ID"] = [SITE_ID, false];
         }
 
@@ -93,30 +124,34 @@ class BlogPost extends \Bitrix\Main\Engine\Controller
             $filter,
             false,
             false,
-            ['ID', 'FAVORITES_USER_ID']
+            ['ID', 'FAVORITES_USER_ID', 'PINNED_USER_ID'],
+            ['USE_PINNED' => 'Y']
         );
 
         if ($logEntry = $res->fetch()) {
-            $logId = intval($logEntry['ID']);
-            $logFavoritesUserId = intval($logEntry['FAVORITES_USER_ID']);
+            $logId = (int)$logEntry['ID'];
+            $logFavoritesUserId = (int)$logEntry['FAVORITES_USER_ID'];
+            $logPinnedUserId = (int)$logEntry['PINNED_USER_ID'];
         }
 
         if ($postFields["AUTHOR_ID"] == $currentUserId) {
             $perms = Permissions::FULL;
         } else {
-            if (!$logId) {
-                $perms = Permissions::DENY;
-            } elseif (
+            if (
                 $currentModuleAdmin
-                || $APPLICATION->getGroupRight('blog') >= 'W'
+                || \CMain::getGroupRight('blog') >= 'W'
             ) {
                 $perms = Permissions::FULL;
+            } elseif (!$logId) {
+                $perms = Permissions::DENY;
             } else {
-                $permsResult = $postItem->getSonetPerms([
-                    'PUBLIC' => ($public == 'Y'),
-                    'CHECK_FULL_PERMS' => true,
-                    'LOG_ID' => $logId
-                ]);
+                $permsResult = $postItem->getSonetPerms(
+                    [
+                        'PUBLIC' => ($public === 'Y'),
+                        'CHECK_FULL_PERMS' => true,
+                        'LOG_ID' => $logId
+                    ]
+                );
                 $perms = $permsResult['PERM'];
                 $groupReadOnly = (
                 $permsResult['PERM'] <= \Bitrix\Blog\Item\Permissions::READ
@@ -127,11 +162,13 @@ class BlogPost extends \Bitrix\Main\Engine\Controller
             }
         }
 
-        $shareForbidden = \Bitrix\Socialnetwork\ComponentHelper::getBlogPostLimitedViewStatus(array(
-            'logId' => $logId,
-            'postId' => $postId,
-            'authorId' => $postFields['AUTHOR_ID']
-        ));
+        $shareForbidden = ComponentHelper::getBlogPostLimitedViewStatus(
+            array(
+                'logId' => $logId,
+                'postId' => $postId,
+                'authorId' => $postFields['AUTHOR_ID']
+            )
+        );
 
         $postUrl = \CComponentEngine::makePathFromTemplate(
             $pathToPost,
@@ -159,11 +196,318 @@ class BlogPost extends \Bitrix\Main\Engine\Controller
             'isShareForbidden' => ($shareForbidden ? 'Y' : 'N'),
             'logId' => $logId,
             'logFavoritesUserId' => $logFavoritesUserId,
-            'authorId' => intval($postFields['AUTHOR_ID']),
+            'logPinnedUserId' => $logPinnedUserId,
+            'authorId' => (int)$postFields['AUTHOR_ID'],
             'urlToPost' => $postUrl,
             'urlToVoteExport' => $voteExportUrl,
-            'allowModerate' => ($allowModerate ? 'Y' : 'N')
+            'allowModerate' => ($allowModerate ? 'Y' : 'N'),
+            'backgroundCode' => $postFields['BACKGROUND_CODE']
         ];
+    }
+
+    public function shareAction(array $params = [])
+    {
+        $postId = (isset($params['postId']) ? (int)$params['postId'] : 0);
+        $destCodesList = ($params['DEST_CODES'] ?? []);
+        $destData = ($params['DEST_DATA'] ?? []);
+        $invitedUserName = ($params['INVITED_USER_NAME'] ?? []);
+        $invitedUserLastName = ($params['INVITED_USER_LAST_NAME'] ?? []);
+        $invitedUserCrmEntity = ($params['INVITED_USER_CRM_ENTITY'] ?? []);
+        $invitedUserCreateCrmContact = ($params['INVITED_USER_CREATE_CRM_CONTACT'] ?? []);
+        $readOnly = (isset($params['readOnly']) && $params['readOnly'] === 'Y');
+        $pathToUser = ($params['pathToUser'] ?? '');
+        $pathToPost = ($params['pathToPost'] ?? '');
+        $currentUserId = $this->getCurrentUser()->getId();
+
+        $data = [
+            'ALLOW_EMAIL_INVITATION' => (
+                ModuleManager::isModuleInstalled('mail')
+                && ModuleManager::isModuleInstalled('intranet')
+                && (
+                    !Loader::includeModule('bitrix24')
+                    || \CBitrix24::isEmailConfirmed()
+                )
+            )
+        ];
+
+        if ($postId <= 0) {
+            $this->addError(
+                new Error(
+                    Loc::getMessage('SONET_CONTROLLER_LIVEFEED_BLOGPOST_EMPTY'),
+                    'SONET_CONTROLLER_LIVEFEED_BLOGPOST_EMPTY'
+                )
+            );
+            return null;
+        }
+
+        if (
+            !Loader::includeModule('blog')
+            || !($postItem = \Bitrix\Blog\Item\Post::getById($postId))
+        ) {
+            $this->addError(
+                new Error(
+                    Loc::getMessage('SONET_CONTROLLER_LIVEFEED_BLOGPOST_NOT_FOUND'),
+                    'SONET_CONTROLLER_LIVEFEED_BLOGPOST_NOT_FOUND'
+                )
+            );
+            return null;
+        }
+
+        $currentUserPerm = \Bitrix\Socialnetwork\Item\Helper::getBlogPostPerm(
+            [
+                'USER_ID' => $currentUserId,
+                'POST_ID' => $postId
+            ]
+        );
+
+        if ($currentUserPerm <= Permissions::DENY) {
+            $this->addError(
+                new Error(
+                    Loc::getMessage('SONET_CONTROLLER_LIVEFEED_BLOGPOST_NOT_FOUND'),
+                    'SONET_CONTROLLER_LIVEFEED_BLOGPOST_NOT_FOUND'
+                )
+            );
+            return null;
+        }
+
+        $postFields = $postItem->getFields();
+
+        $perms2update = [];
+        $sonetPermsListOld = \CBlogPost::getSocNetPerms($postId);
+        foreach ($sonetPermsListOld as $type => $val) {
+            foreach ($val as $id => $values) {
+                if ($type !== 'U') {
+                    $perms2update[] = $type . $id;
+                } else {
+                    $perms2update[] = (
+                    in_array('US' . $id, $values)
+                        ? 'UA'
+                        : $type . $id
+                    );
+                }
+            }
+        }
+
+        $newRightsList = [];
+
+        $sonetPermsListNew = [
+            'UA' => [],
+            'U' => [],
+            'UE' => [],
+            'SG' => [],
+            'DR' => []
+        ];
+
+        if (!empty($destData)) {
+            try {
+                $entitites = Json::decode($destData);
+                if (!empty($entitites)) {
+                    $destCodesList = \Bitrix\Main\UI\EntitySelector\Converter::convertToFinderCodes($entitites);
+                }
+            } catch (ArgumentException $e) {
+            }
+        }
+
+        foreach ($destCodesList as $destCode) {
+            if ($destCode === 'UA') {
+                $sonetPermsListNew['UA'][] = 'UA';
+            } elseif (preg_match('/^UE(.+)$/i', $destCode, $matches)) {
+                $sonetPermsListNew['UE'][] = $matches[1];
+            } elseif (preg_match('/^U(\d+)$/i', $destCode, $matches)) {
+                $sonetPermsListNew['U'][] = 'U' . $matches[1];
+            } elseif (preg_match('/^SG(\d+)$/i', $destCode, $matches)) {
+                $sonetPermsListNew['SG'][] = 'SG' . $matches[1];
+            } elseif (preg_match('/^DR(\d+)$/i', $destCode, $matches)) {
+                $sonetPermsListNew['DR'][] = 'DR' . $matches[1];
+            }
+        }
+
+        $HTTPPost = [
+            'SONET_PERMS' => $sonetPermsListNew,
+            'INVITED_USER_NAME' => $invitedUserName,
+            'INVITED_USER_LAST_NAME' => $invitedUserLastName,
+            'INVITED_USER_CRM_ENTITY' => $invitedUserCrmEntity,
+            'INVITED_USER_CREATE_CRM_CONTACT' => $invitedUserCreateCrmContact
+        ];
+        ComponentHelper::processBlogPostNewMailUser($HTTPPost, $data);
+        $sonetPermsListNew = $HTTPPost['SONET_PERMS'];
+
+        $currentAdmin = \CSocNetUser::isCurrentUserModuleAdmin();
+        $canPublish = true;
+
+        foreach ($sonetPermsListNew as $type => $val) {
+            foreach ($val as $id => $code) {
+                if (in_array($type, ['U', 'SG', 'DR', 'CRMCONTACT'])) {
+                    if (!in_array($code, $perms2update)) {
+                        if ($type === 'SG') {
+                            $sonetGroupId = (int)str_replace("SG", "", $code);
+
+                            $canPublish = (
+                                $currentAdmin
+                                || \CSocNetFeaturesPerms::canPerformOperation(
+                                    $currentUserId,
+                                    SONET_ENTITY_GROUP,
+                                    $sonetGroupId,
+                                    'blog',
+                                    'write_post'
+                                )
+                                || \CSocNetFeaturesPerms::canPerformOperation(
+                                    $currentUserId,
+                                    SONET_ENTITY_GROUP,
+                                    $sonetGroupId,
+                                    'blog',
+                                    'moderate_post'
+                                )
+                                || \CSocNetFeaturesPerms::canPerformOperation(
+                                    $currentUserId,
+                                    SONET_ENTITY_GROUP,
+                                    $sonetGroupId,
+                                    'blog',
+                                    'full_post'
+                                )
+                            );
+
+                            if (!$canPublish) {
+                                break;
+                            }
+                        }
+
+                        $perms2update[] = $code;
+                        $newRightsList[] = $code;
+                    }
+                } elseif ($type === 'UA') {
+                    if (!in_array('UA', $perms2update)) {
+                        $perms2update[] = 'UA';
+                        $newRightsList[] = 'UA';
+                    }
+                }
+            }
+
+            if (!$canPublish) {
+                break;
+            }
+        }
+
+        if (
+            !empty($newRightsList)
+            && $canPublish
+        ) {
+            ComponentHelper::processBlogPostShare(
+                [
+                    'POST_ID' => $postId,
+                    'BLOG_ID' => $postFields['BLOG_ID'],
+                    'SITE_ID' => SITE_ID,
+                    'SONET_RIGHTS' => $perms2update,
+                    'NEW_RIGHTS' => $newRightsList,
+                    'USER_ID' => $currentUserId
+                ],
+                [
+                    'MENTION' => 'N',
+                    'LIVE' => 'Y',
+                    'CAN_USER_COMMENT' => (!$readOnly ? 'Y' : 'N'),
+                    'PATH_TO_USER' => $pathToUser,
+                    'PATH_TO_POST' => $pathToPost,
+                ]
+            );
+        } elseif (!$canPublish) {
+            $this->addError(
+                new Error(
+                    Loc::getMessage('SONET_CONTROLLER_LIVEFEED_BLOGPOST_SHARE_PREMODERATION'),
+                    'SONET_CONTROLLER_LIVEFEED_BLOGPOST_SHARE_PREMODERATION'
+                )
+            );
+            return null;
+        }
+    }
+
+    public function addAction(array $params = [])
+    {
+        global $APPLICATION;
+
+        $warnings = [];
+
+        try {
+            $postId = \Bitrix\Socialnetwork\Item\Helper::addBlogPost($params, $this->getScope(), $resultFields);
+            if ($postId <= 0) {
+                if (
+                    is_array($resultFields)
+                    && !empty($resultFields['ERROR_MESSAGE_PUBLIC'])
+                ) {
+                    $this->addError(
+                        new Error(
+                            $resultFields['ERROR_MESSAGE_PUBLIC'], 0, [
+                            'public' => 'Y'
+                        ]
+                        )
+                    );
+                    return null;
+                }
+
+                $e = $APPLICATION->getException();
+                throw new \Exception($e ? $e->getString() : 'Cannot add blog post');
+            }
+
+            if (
+                is_array($resultFields)
+                && !empty($resultFields['WARNING_MESSAGE_PUBLIC'])
+            ) {
+                $warnings[] = $resultFields['WARNING_MESSAGE_PUBLIC'];
+            }
+        } catch (\Exception $e) {
+            $this->addError(new Error($e->getMessage(), $e->getCode()));
+            return null;
+        }
+
+        return [
+            'id' => $postId,
+            'warnings' => $warnings
+        ];
+    }
+
+    public function updateAction($id = 0, array $params = [])
+    {
+        global $APPLICATION;
+
+        try {
+            $params['POST_ID'] = $id;
+            $postId = \Bitrix\Socialnetwork\Item\Helper::updateBlogPost($params, $this->getScope(), $resultFields);
+            if ($postId <= 0) {
+                if (
+                    is_array($resultFields)
+                    && !empty($resultFields['ERROR_MESSAGE_PUBLIC'])
+                ) {
+                    $this->addError(
+                        new Error(
+                            $resultFields['ERROR_MESSAGE_PUBLIC'], 0, [
+                            'public' => 'Y'
+                        ]
+                        )
+                    );
+                    return null;
+                }
+
+                $e = $APPLICATION->getException();
+                throw new \Exception($e ? $e->getString() : 'Cannot update blog post');
+            }
+        } catch (\Exception $e) {
+            $this->addError(new Error($e->getMessage(), $e->getCode()));
+            return null;
+        }
+
+        return [
+            'id' => $postId
+        ];
+    }
+
+    public function getBlogPostMobileFullDataAction(array $params = [])
+    {
+        if (!Loader::includeModule('mobile')) {
+            $this->addError(
+                new Error('Mobile module not installed', 'SONET_CONTROLLER_LIVEFEED_MOBILE_MODULE_NOT_INSTALLED')
+            );
+            return null;
+        }
+        return \Bitrix\Mobile\Livefeed\Helper::getBlogPostFullData($params);
     }
 }
 

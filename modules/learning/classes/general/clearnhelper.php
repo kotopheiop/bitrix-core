@@ -33,20 +33,16 @@ class CLearnHelper
     public static function PatchLessonContentLinks($strContent, $contextCourseId = false)
     {
         static $arCourseLinksPatterns = array(
-            '?COURSE_ID={SELF}"',
-            '?COURSE_ID={SELF}\'',
-            '?COURSE_ID={SELF}&',
-            '&COURSE_ID={SELF}"',
-            '&COURSE_ID={SELF}\'',
-            '&COURSE_ID={SELF}&'
+            '{SELF}'
         );
 
         $argsCheck = is_string($strContent)
             && ($contextCourseId !== false)
             && ($contextCourseId > 0);
 
-        if (!$argsCheck)
+        if (!$argsCheck) {
             return ($strContent);
+        }
 
         $arCourseResolvedLinks = str_replace(
             '{SELF}',
@@ -70,8 +66,9 @@ class CLearnHelper
     public static function FireEvent($eventName, $eventParams)
     {
         $events = GetModuleEvents('learning', $eventName);
-        while ($arEvent = $events->Fetch())
+        while ($arEvent = $events->Fetch()) {
             ExecuteModuleEventEx($arEvent, array($eventParams));
+        }
     }
 
 
@@ -121,7 +118,8 @@ class CLearnHelper
         ) {
             throw new LearnException (
                 '$parentLessonId must be strictly castable to integer',
-                LearnException::EXC_ERR_ALL_PARAMS);
+                LearnException::EXC_ERR_ALL_PARAMS
+            );
         }
 
         if ($DBType === 'oracle') {
@@ -136,7 +134,11 @@ class CLearnHelper
         } elseif (($DBType === 'mysql') || ($DBType === 'mssql')) {
             // MySQL & MSSQL supports "WHERE IN(...)" clause for more than 10 000 elements
 
-            $oTree = CLearnLesson::GetTree($parentLessonId, array('EDGE_SORT' => 'ASC'), array('CHECK_PERMISSIONS' => 'N'));
+            $oTree = CLearnLesson::GetTree(
+                $parentLessonId,
+                array('EDGE_SORT' => 'ASC'),
+                array('CHECK_PERMISSIONS' => 'N')
+            );
             $arChildLessonsIds = $oTree->GetLessonsIdListInTree();    // parent lesson id isn't included
 
             // We need escape data for SQL
@@ -145,8 +147,9 @@ class CLearnHelper
             $sqlChildLessonsIdsList = implode(', ', $arChildLessonsIdsEscaped);
 
             // No childs => nothing must be selected
-            if (strlen($sqlChildLessonsIdsList) == 0)
-                $sqlChildLessonsIdsList = 'NULL';        // NULL != any value. NULL != NULL too.
+            if ($sqlChildLessonsIdsList == '') {
+                $sqlChildLessonsIdsList = 'NULL';
+            }        // NULL != any value. NULL != NULL too.
 
             return ($sqlChildLessonsIdsList);
         }
@@ -159,56 +162,57 @@ class CLearnHelper
      */
     public static function MkOperationFilter($key)
     {
-        if (substr($key, 0, 1) == "=") //Identical
+        if (mb_substr($key, 0, 1) == "=") //Identical
         {
-            $key = substr($key, 1);
+            $key = mb_substr($key, 1);
             $cOperationType = "I";
-        } elseif (substr($key, 0, 2) == "!=") //not Identical
+        } elseif (mb_substr($key, 0, 2) == "!=") //not Identical
         {
-            $key = substr($key, 2);
+            $key = mb_substr($key, 2);
             $cOperationType = "NI";
-        } elseif (substr($key, 0, 1) == "%") //substring
+        } elseif (mb_substr($key, 0, 1) == "%") //substring
         {
-            $key = substr($key, 1);
+            $key = mb_substr($key, 1);
             $cOperationType = "S";
-        } elseif (substr($key, 0, 2) == "!%") //not substring
+        } elseif (mb_substr($key, 0, 2) == "!%") //not substring
         {
-            $key = substr($key, 2);
+            $key = mb_substr($key, 2);
             $cOperationType = "NS";
-        } elseif (substr($key, 0, 1) == "?") //logical
+        } elseif (mb_substr($key, 0, 1) == "?") //logical
         {
-            $key = substr($key, 1);
+            $key = mb_substr($key, 1);
             $cOperationType = "?";
-        } elseif (substr($key, 0, 2) == "><") //between
+        } elseif (mb_substr($key, 0, 2) == "><") //between
         {
-            $key = substr($key, 2);
+            $key = mb_substr($key, 2);
             $cOperationType = "B";
-        } elseif (substr($key, 0, 3) == "!><") //not between
+        } elseif (mb_substr($key, 0, 3) == "!><") //not between
         {
-            $key = substr($key, 3);
+            $key = mb_substr($key, 3);
             $cOperationType = "NB";
-        } elseif (substr($key, 0, 2) == ">=") //greater or equal
+        } elseif (mb_substr($key, 0, 2) == ">=") //greater or equal
         {
-            $key = substr($key, 2);
+            $key = mb_substr($key, 2);
             $cOperationType = "GE";
-        } elseif (substr($key, 0, 1) == ">")  //greater
+        } elseif (mb_substr($key, 0, 1) == ">")  //greater
         {
-            $key = substr($key, 1);
+            $key = mb_substr($key, 1);
             $cOperationType = "G";
-        } elseif (substr($key, 0, 2) == "<=")  //less or equal
+        } elseif (mb_substr($key, 0, 2) == "<=")  //less or equal
         {
-            $key = substr($key, 2);
+            $key = mb_substr($key, 2);
             $cOperationType = "LE";
-        } elseif (substr($key, 0, 1) == "<")  //less
+        } elseif (mb_substr($key, 0, 1) == "<")  //less
         {
-            $key = substr($key, 1);
+            $key = mb_substr($key, 1);
             $cOperationType = "L";
-        } elseif (substr($key, 0, 1) == "!") // not field LIKE val
+        } elseif (mb_substr($key, 0, 1) == "!") // not field LIKE val
         {
-            $key = substr($key, 1);
+            $key = mb_substr($key, 1);
             $cOperationType = "N";
-        } else
-            $cOperationType = "E";    // field LIKE val
+        } else {
+            $cOperationType = "E";
+        }    // field LIKE val
 
         return Array("FIELD" => $key, "OPERATION" => $cOperationType);
     }
@@ -219,29 +223,33 @@ class CLearnHelper
     public static function FilterCreate($fname, $vals, $type, &$bFullJoin, $cOperationType = false, $bSkipEmpty = true)
     {
         global $DB;
-        if (!is_array($vals))
+        if (!is_array($vals)) {
             $vals = Array($vals);
-
-        if (count($vals) < 1)
-            return "";
-
-        if (is_bool($cOperationType)) {
-            if ($cOperationType === true)
-                $cOperationType = "N";
-            else
-                $cOperationType = "E";
         }
 
-        if ($cOperationType == "G")
+        if (count($vals) < 1) {
+            return "";
+        }
+
+        if (is_bool($cOperationType)) {
+            if ($cOperationType === true) {
+                $cOperationType = "N";
+            } else {
+                $cOperationType = "E";
+            }
+        }
+
+        if ($cOperationType == "G") {
             $strOperation = ">";
-        elseif ($cOperationType == "GE")
+        } elseif ($cOperationType == "GE") {
             $strOperation = ">=";
-        elseif ($cOperationType == "LE")
+        } elseif ($cOperationType == "LE") {
             $strOperation = "<=";
-        elseif ($cOperationType == "L")
+        } elseif ($cOperationType == "L") {
             $strOperation = "<";
-        else
+        } else {
             $strOperation = "=";
+        }
 
         $bFullJoin = false;
         $bWasLeftJoin = false;
@@ -250,68 +258,86 @@ class CLearnHelper
         for ($i = 0; $i < count($vals); $i++) {
             $val = $vals[$i];
 
-            if (!$bSkipEmpty || strlen($val) > 0 || (is_bool($val) && $val === false)) {
+            if (!$bSkipEmpty || (string)$val <> '' || (is_bool($val) && $val === false)) {
                 switch ($type) {
                     case "string_equal":
-                        if (strlen($val) <= 0)
+                        if ((string)$val == '') {
                             $res[] =
                                 ($cOperationType == "N" ? "NOT" : "") .
                                 "(" .
                                 $fname . " IS NULL OR " . $DB->Length($fname) .
                                 "<=0)";
-                        else
+                        } else {
                             $res[] =
                                 "(" .
                                 ($cOperationType == "N" ? " " . $fname . " IS NULL OR NOT (" : "") .
-                                CCourse::_Upper($fname) . $strOperation . CCourse::_Upper("'" . $DB->ForSql($val) . "'") .
+                                CCourse::_Upper($fname) . $strOperation . CCourse::_Upper(
+                                    "'" . $DB->ForSql($val) . "'"
+                                ) .
                                 ($cOperationType == "N" ? ")" : "") .
                                 ")";
+                        }
                         break;
                     case "string":
                         if ($cOperationType == "?") {
-                            if (strlen($val) > 0)
+                            if ((string)$val <> '') {
                                 $res[] = GetFilterQuery($fname, $val, "Y", array(), "N");
-                        } elseif (strlen($val) <= 0) {
-                            $res[] = ($cOperationType == "N" ? "NOT" : "") . "(" . $fname . " IS NULL OR " . $DB->Length($fname) . "<=0)";
+                            }
+                        } elseif ((string)$val == '') {
+                            $res[] = ($cOperationType == "N" ? "NOT" : "") . "(" . $fname . " IS NULL OR " . $DB->Length(
+                                    $fname
+                                ) . "<=0)";
                         } else {
-                            if ($strOperation == "=")
+                            if ($strOperation == "=") {
                                 $res[] =
                                     "(" .
                                     ($cOperationType == "N" ? " " . $fname . " IS NULL OR NOT (" : "") .
-                                    (strtoupper($DB->type) == "ORACLE" ? CCourse::_Upper($fname) . " LIKE " . CCourse::_Upper("'" . $DB->ForSqlLike($val) . "'") . " ESCAPE '\\'" : $fname . " " . ($strOperation == "=" ? "LIKE" : $strOperation) . " '" . $DB->ForSqlLike($val) . "'") .
+                                    ($DB->type == "ORACLE" ? CCourse::_Upper($fname) . " LIKE " . CCourse::_Upper(
+                                            "'" . $DB->ForSqlLike($val) . "'"
+                                        ) . " ESCAPE '\\'" : $fname . " " . ($strOperation == "=" ? "LIKE" : $strOperation) . " '" . $DB->ForSqlLike(
+                                            $val
+                                        ) . "'") .
                                     ($cOperationType == "N" ? ")" : "") .
                                     ")";
-                            else
+                            } else {
                                 $res[] =
                                     "(" .
                                     ($cOperationType == "N" ? " " . $fname . " IS NULL OR NOT (" : "") .
-                                    (strtoupper($DB->type) == "ORACLE" ? CCourse::_Upper($fname) .
-                                        " " . $strOperation . " " . CCourse::_Upper("'" . $DB->ForSql($val) . "'") . " " : $fname . " " . $strOperation . " '" . $DB->ForSql($val) . "'") .
+                                    ($DB->type == "ORACLE" ? CCourse::_Upper($fname) .
+                                        " " . $strOperation . " " . CCourse::_Upper(
+                                            "'" . $DB->ForSql($val) . "'"
+                                        ) . " " : $fname . " " . $strOperation . " '" . $DB->ForSql($val) . "'") .
                                     ($cOperationType == "N" ? ")" : "") .
                                     ")";
+                            }
                         }
                         break;
                     case "date":
-                        if (strlen($val) <= 0)
+                        if ((string)$val == '') {
                             $res[] = ($cOperationType == "N" ? "NOT" : "") . "(" . $fname . " IS NULL)";
-                        else
+                        } else {
                             $res[] =
                                 "(" .
                                 ($cOperationType == "N" ? " " . $fname . " IS NULL OR NOT (" : "") .
-                                $fname . " " . $strOperation . " " . $DB->CharToDateFunction($DB->ForSql($val), "FULL") .
+                                $fname . " " . $strOperation . " " . $DB->CharToDateFunction(
+                                    $DB->ForSql($val),
+                                    "FULL"
+                                ) .
                                 ($cOperationType == "N" ? ")" : "") .
                                 ")";
+                        }
                         break;
                     case "number":
-                        if (strlen($val) <= 0)
+                        if ((string)$val == '') {
                             $res[] = ($cOperationType == "N" ? "NOT" : "") . "(" . $fname . " IS NULL)";
-                        else
+                        } else {
                             $res[] =
                                 "(" .
                                 ($cOperationType == "N" ? " " . $fname . " IS NULL OR NOT (" : "") .
                                 $fname . " " . $strOperation . " '" . DoubleVal($val) .
                                 ($cOperationType == "N" ? "')" : "'") .
                                 ")";
+                        }
                         break;
                     /*
                     case "number_above":
@@ -324,26 +350,30 @@ class CLearnHelper
                 }
 
                 // INNER JOIN in this case
-                if (strlen($val) > 0 && $cOperationType != "N")
+                if ((string)$val <> '' && $cOperationType != "N") {
                     $bFullJoin = true;
-                else
+                } else {
                     $bWasLeftJoin = true;
+                }
             }
         }
 
         $strResult = "";
         for ($i = 0; $i < count($res); $i++) {
-            if ($i > 0)
+            if ($i > 0) {
                 $strResult .= ($cOperationType == "N" ? " AND " : " OR ");
+            }
             $strResult .= $res[$i];
         }
 
-        if (count($res) > 1)
+        if (count($res) > 1) {
             $strResult = "(" . $strResult . ")";
+        }
 
 
-        if ($bFullJoin && $bWasLeftJoin && $cOperationType != "N")
+        if ($bFullJoin && $bWasLeftJoin && $cOperationType != "N") {
             $bFullJoin = false;
+        }
 
         return $strResult;
     }
@@ -354,10 +384,11 @@ class CLearnHelper
      */
     public static function isUpdatedToGraph()
     {
-        if (self::getUpdatedToGraphStatus() === self::GRAPH_STATUS_UPDATED_TO_GRAPH)
+        if (self::getUpdatedToGraphStatus() === self::GRAPH_STATUS_UPDATED_TO_GRAPH) {
             return true;
-        else
+        } else {
             return false;
+        }
     }
 
     /**
@@ -371,8 +402,13 @@ class CLearnHelper
     {
         $description = '';
 
-        $isSaved = COption::SetOptionString(self::MODULE_ID, self::OPTION_ID,
-            $status, $description, self::SITE_ID);
+        $isSaved = COption::SetOptionString(
+            self::MODULE_ID,
+            self::OPTION_ID,
+            $status,
+            $description,
+            self::SITE_ID
+        );
 
         return ($isSaved);
     }
@@ -385,7 +421,6 @@ class CLearnHelper
      */
     public static function getUpdatedToGraphStatus()
     {
-
         $rc = COption::GetOptionString(self::MODULE_ID, self::OPTION_ID, self::DEFAULT_VALUE, self::SITE_ID);
 
         // status wasn't set yet (we must determine, is our tables updated to graph or not)
@@ -401,8 +436,11 @@ class CLearnHelper
         );
 
         if (!in_array($rc, $allowed_statuses, true)) {
-            AddMessage2Log('Invalid COption ~CLearnHelper::isUpdatedToGraph();: `'
-                . $rc . '`;', 'learning');
+            AddMessage2Log(
+                'Invalid COption ~CLearnHelper::isUpdatedToGraph();: `'
+                . $rc . '`;',
+                'learning'
+            );
 
             $rc = self::GRAPH_STATUS_UNDEFINED;
         }
@@ -413,7 +451,6 @@ class CLearnHelper
 
     public static function IsBaseFilenameSafe($filename)
     {
-
         $isUnSafe = IsFileUnsafe($filename)
             || HasScriptExtension($filename)
             || (!(preg_match("#^[^\\\/:*?\"\'~%<>|]+$#is", $filename) > 0));
@@ -422,44 +459,50 @@ class CLearnHelper
     }
 
 
-    public static function CopyDirFiles($path_from, $path_to, $ReWrite = True, $Recursive = False)
+    public static function CopyDirFiles($path_from, $path_to, $ReWrite = true, $Recursive = false)
     {
-        if (strpos($path_to . "/", $path_from . "/") === 0 || realpath($path_to) === realpath($path_from))
+        if (mb_strpos($path_to . "/", $path_from . "/") === 0 || realpath($path_to) === realpath($path_from)) {
             return false;
+        }
 
         if (is_dir($path_from)) {
             CheckDirPath($path_to . "/");
         } elseif (is_file($path_from)) {
             $p = bxstrrpos($path_to, "/");
-            $path_to_dir = substr($path_to, 0, $p);
+            $path_to_dir = mb_substr($path_to, 0, $p);
             CheckDirPath($path_to_dir . "/");
 
-            if (file_exists($path_to) && !$ReWrite)
-                return False;
+            if (file_exists($path_to) && !$ReWrite) {
+                return false;
+            }
 
             @copy($path_from, $path_to);
-            if (is_file($path_to))
+            if (is_file($path_to)) {
                 @chmod($path_to, BX_FILE_PERMISSIONS);
+            }
 
-            return True;
+            return true;
         } else {
-            return True;
+            return true;
         }
 
         if ($handle = @opendir($path_from)) {
             while (($file = readdir($handle)) !== false) {
-                if ($file == "." || $file == "..")
+                if ($file == "." || $file == "..") {
                     continue;
+                }
 
                 // skip files with non-safe names
-                if (!CLearnHelper::IsBaseFilenameSafe($file))
+                if (!CLearnHelper::IsBaseFilenameSafe($file)) {
                     continue;
+                }
 
                 if (is_dir($path_from . "/" . $file) && $Recursive) {
                     self::CopyDirFiles($path_from . "/" . $file, $path_to . "/" . $file, $ReWrite, $Recursive);
                 } elseif (is_file($path_from . "/" . $file)) {
-                    if (file_exists($path_to . "/" . $file) && !$ReWrite)
+                    if (file_exists($path_to . "/" . $file) && !$ReWrite) {
                         continue;
+                    }
 
                     @copy($path_from . "/" . $file, $path_to . "/" . $file);
                     @chmod($path_to . "/" . $file, BX_FILE_PERMISSIONS);

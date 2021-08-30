@@ -145,6 +145,7 @@
             padding-right: 0;
             padding-bottom: 0;
             padding-left: 0;
+            word-break: break-word;
         }
 
         .bxBlockContentBlockText {
@@ -159,12 +160,13 @@
             text-align: right;
             vertical-align: middle;
             font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            word-break: break-word;
         }
 
         .bxBlockContentLine {
             border: none;
             height: 2px;
-            background: #d3d3d3;
+            background-color: #d3d3d3;
             margin: 10px 0;
             display: block;
         }

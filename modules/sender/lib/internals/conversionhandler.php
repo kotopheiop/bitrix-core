@@ -40,18 +40,22 @@ class ConversionHandler
     public static function onSetDayContextAttributes(DayContext $context)
     {
         $id = null;
-        if (isset($_SESSION[self::CLICK_PARAM_NAME]))
+        if (isset($_SESSION[self::CLICK_PARAM_NAME])) {
             $id = $_SESSION[self::CLICK_PARAM_NAME];
+        }
 
-        if (!is_numeric($id) || $id <= 0)
+        if (!is_numeric($id) || $id <= 0) {
             return;
+        }
 
-        $recipientDb = PostingRecipientTable::getList(array(
-            'select' => array('MAILING_CHAIN_ID' => 'POSTING.MAILING_CHAIN_ID'),
-            'filter' => array(
-                'ID' => $id
+        $recipientDb = PostingRecipientTable::getList(
+            array(
+                'select' => array('MAILING_CHAIN_ID' => 'POSTING.MAILING_CHAIN_ID'),
+                'filter' => array(
+                    'ID' => $id
+                )
             )
-        ));
+        );
         if ($recipient = $recipientDb->fetch()) {
             $context->setAttribute('sender_chain_source', $recipient['MAILING_CHAIN_ID']);
         }
@@ -73,16 +77,18 @@ class ConversionHandler
                     if ($list) {
                         $filter['=ID'] = $list;
 
-                        $itemDb = MailingChainTable::getList(array(
-                            'select' => array(
-                                'ID',
-                                'TITLE',
-                            ),
-                            'filter' => $filter,
-                        ));
+                        $itemDb = MailingChainTable::getList(
+                            array(
+                                'select' => array(
+                                    'ID',
+                                    'TITLE',
+                                ),
+                                'filter' => $filter,
+                            )
+                        );
 
                         while ($item = $itemDb->fetch()) {
-                            if (strlen($item['ID']) <= 0) {
+                            if ($item['ID'] == '') {
                                 continue;
                             }
 

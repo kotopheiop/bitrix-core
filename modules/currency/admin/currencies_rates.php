@@ -8,7 +8,9 @@ use Bitrix\Main,
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/currency/prolog.php");
 $CURRENCY_RIGHT = $APPLICATION->GetGroupRight("currency");
-if ($CURRENCY_RIGHT == "D") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($CURRENCY_RIGHT == "D") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 Loader::includeModule('currency');
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/currency/currencies_rates.php");
 
@@ -35,10 +37,12 @@ $adminFilter = new CAdminFilter(
 );
 
 $filter = array();
-if (!empty($filter_currency))
+if (!empty($filter_currency)) {
     $filter['=CURRENCY'] = $filter_currency;
-if (!empty($filter_base_currency))
+}
+if (!empty($filter_base_currency)) {
     $filter["=BASE_CURRENCY"] = $filter_base_currency;
+}
 if (!empty($filter_period_from)) {
     try {
         $filter['>=DATE_RATE'] = new Main\Type\Date($filter_period_from);
@@ -58,15 +62,18 @@ $orderConvert = array(
     'CURR' => 'CURRENCY',
     'DATE' => 'DATE_RATE'
 );
-if (!isset($by))
+if (!isset($by)) {
     $by = 'DATE_RATE';
-$by = strtoupper($by);
-if (isset($orderConvert[$by]))
+}
+$by = mb_strtoupper($by);
+if (isset($orderConvert[$by])) {
     $by = $orderConvert[$by];
+}
 
-if (!isset($order))
+if (!isset($order)) {
     $order = 'DESC';
-$order = strtoupper($order);
+}
+$order = mb_strtoupper($order);
 $rateOrder = array($by => $order);
 
 if ($CURRENCY_RIGHT == "W" && $adminList->EditAction()) {
@@ -74,16 +81,21 @@ if ($CURRENCY_RIGHT == "W" && $adminList->EditAction()) {
     foreach ($FIELDS as $ID => $arFields) {
         $ID = (int)$ID;
 
-        if (!$adminList->IsUpdated($ID))
+        if (!$adminList->IsUpdated($ID)) {
             continue;
+        }
 
         $arCurR = CCurrencyRates::GetByID($ID);
         $arFields["CURRENCY"] = $arCurR["CURRENCY"];
 
         $res = CCurrencyRates::Update($ID, $arFields);
         if (!$res) {
-            if ($e = $APPLICATION->GetException())
-                $adminList->AddUpdateError(GetMessage("SAVE_ERROR") . $ID . ": " . str_replace("<br>", " ", $e->GetString()), $ID);
+            if ($e = $APPLICATION->GetException()) {
+                $adminList->AddUpdateError(
+                    GetMessage("SAVE_ERROR") . $ID . ": " . str_replace("<br>", " ", $e->GetString()),
+                    $ID
+                );
+            }
         }
     }
 }
@@ -91,20 +103,24 @@ if ($CURRENCY_RIGHT == "W" && $adminList->EditAction()) {
 if ($CURRENCY_RIGHT == "W" && $arID = $adminList->GroupAction()) {
     if ($_REQUEST['action_target'] == 'selected') {
         $arID = array();
-        $rateIterator = Currency\CurrencyRateTable::getList(array(
-            'select' => array('ID'),
-            'filter' => $filter,
-            'order' => $rateOrder
-        ));
-        while ($rate = $rateIterator->fetch())
+        $rateIterator = Currency\CurrencyRateTable::getList(
+            array(
+                'select' => array('ID'),
+                'filter' => $filter,
+                'order' => $rateOrder
+            )
+        );
+        while ($rate = $rateIterator->fetch()) {
             $arID[] = (int)$rate['ID'];
+        }
         unset($rate, $rateIterator);
     }
 
     foreach ($arID as $ID) {
         $ID = (int)($ID);
-        if ($ID <= 0)
+        if ($ID <= 0) {
             continue;
+        }
 
         switch ($_REQUEST['action']) {
             case "delete":
@@ -150,8 +166,9 @@ if ($usePageNavigation) {
     $totalCount = (int)$totalCount['CNT'];
     if ($totalCount > 0) {
         $totalPages = ceil($totalCount / $navyParams['SIZEN']);
-        if ($navyParams['PAGEN'] > $totalPages)
+        if ($navyParams['PAGEN'] > $totalPages) {
             $navyParams['PAGEN'] = $totalPages;
+        }
         $getListParams['limit'] = $navyParams['SIZEN'];
         $getListParams['offset'] = $navyParams['SIZEN'] * ($navyParams['PAGEN'] - 1);
     } else {
@@ -212,17 +229,28 @@ $arHeaders[] = array(
 $adminList->AddHeaders($arHeaders);
 
 while ($rate = $rateIterator->Fetch()) {
-    $editUrl = "/bitrix/admin/currency_rate_edit.php?ID=" . $rate['ID'] . "&lang=" . LANGUAGE_ID . GetFilterParams("filter_");
+    $editUrl = "/bitrix/admin/currency_rate_edit.php?ID=" . $rate['ID'] . "&lang=" . LANGUAGE_ID . GetFilterParams(
+            "filter_"
+        );
     $row = &$adminList->AddRow($rate['ID'], $rate, $editUrl, GetMessage('CURRENCY_RATES_A_EDIT'));
 
-    $row->AddViewField('ID', '<a href="' . $editUrl . '" title="' . GetMessage('CURRENCY_RATES_A_EDIT_TITLE') . '">' . $rate['ID'] . '</a>');
+    $row->AddViewField(
+        'ID',
+        '<a href="' . $editUrl . '" title="' . GetMessage(
+            'CURRENCY_RATES_A_EDIT_TITLE'
+        ) . '">' . $rate['ID'] . '</a>'
+    );
     $row->AddViewField(
         'CURRENCY',
-        (isset($currencyList[$rate['CURRENCY']]) ? $currencyList[$rate['CURRENCY']] : htmlspecialcharsbx($rate['CURRENCY']))
+        (isset($currencyList[$rate['CURRENCY']]) ? $currencyList[$rate['CURRENCY']] : htmlspecialcharsbx(
+            $rate['CURRENCY']
+        ))
     );
     $row->AddViewField(
         'BASE_CURRENCY',
-        (isset($currencyList[$rate['BASE_CURRENCY']]) ? $currencyList[$rate['BASE_CURRENCY']] : htmlspecialcharsbx($rate['BASE_CURRENCY']))
+        (isset($currencyList[$rate['BASE_CURRENCY']]) ? $currencyList[$rate['BASE_CURRENCY']] : htmlspecialcharsbx(
+            $rate['BASE_CURRENCY']
+        ))
     );
     $row->AddCalendarField('DATE_RATE');
 
@@ -243,7 +271,10 @@ while ($rate = $rateIterator->Fetch()) {
         $arActions[] = array(
             "ICON" => "delete",
             "TEXT" => GetMessage("MAIN_ADMIN_MENU_DELETE"),
-            "ACTION" => "if(confirm('" . GetMessage('CONFIRM_DEL_MESSAGE') . "')) " . $adminList->ActionDoGroup($rate['ID'], "delete")
+            "ACTION" => "if(confirm('" . GetMessage('CONFIRM_DEL_MESSAGE') . "')) " . $adminList->ActionDoGroup(
+                    $rate['ID'],
+                    "delete"
+                )
         );
     }
 
@@ -260,9 +291,11 @@ $adminList->AddFooter(
 );
 
 if ($CURRENCY_RIGHT == "W") {
-    $adminList->AddGroupActionTable(Array(
-        "delete" => GetMessage("MAIN_ADMIN_LIST_DELETE"),
-    ));
+    $adminList->AddGroupActionTable(
+        Array(
+            "delete" => GetMessage("MAIN_ADMIN_LIST_DELETE"),
+        )
+    );
 }
 
 $aContext = array(
@@ -286,26 +319,49 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
         <tr>
             <td><? echo GetMessage("curr_rates_date1") ?>:</td>
             <td>
-                <? echo CalendarPeriod("filter_period_from", $filter_period_from, "filter_period_to", $filter_period_to, "find_form", "Y") ?>
+                <? echo CalendarPeriod(
+                    "filter_period_from",
+                    $filter_period_from,
+                    "filter_period_to",
+                    $filter_period_to,
+                    "find_form",
+                    "Y"
+                ) ?>
             </td>
         </tr>
         <tr>
             <td><? echo GetMessage("curr_rates_curr1") ?>:</td>
             <td>
-                <? echo CCurrency::SelectBox("filter_currency", $filter_currency, GetMessage("curr_rates_all"), true, "", "") ?>
+                <? echo CCurrency::SelectBox(
+                    "filter_currency",
+                    $filter_currency,
+                    GetMessage("curr_rates_all"),
+                    true,
+                    "",
+                    ""
+                ) ?>
             </td>
         </tr>
         <tr>
             <td><? echo GetMessage("BX_CURRENCY_RATE_BASE_CURRENCY"); ?>:</td>
             <td>
-                <? echo CCurrency::SelectBox("filter_base_currency", (isset($filter_base_currency) ? $filter_base_currency : ''), GetMessage("curr_rates_all"), true, "", "") ?>
+                <? echo CCurrency::SelectBox(
+                    "filter_base_currency",
+                    (isset($filter_base_currency) ? $filter_base_currency : ''),
+                    GetMessage("curr_rates_all"),
+                    true,
+                    "",
+                    ""
+                ) ?>
             </td>
         </tr>
-        <? $adminFilter->Buttons(array(
-            "table_id" => $adminListTableID,
-            "url" => $APPLICATION->GetCurPage(),
-            "form" => "find_form"
-        ));
+        <? $adminFilter->Buttons(
+            array(
+                "table_id" => $adminListTableID,
+                "url" => $APPLICATION->GetCurPage(),
+                "form" => "find_form"
+            )
+        );
         $adminFilter->End(); ?>
     </form>
 <? $adminList->DisplayList();

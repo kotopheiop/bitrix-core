@@ -1,13 +1,15 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 if (!CModule::IncludeModule('learning')) {
     require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php'); // second system's prolog
 
-    if (IsModuleInstalled('learning') && defined('LEARNING_FAILED_TO_LOAD_REASON'))
+    if (IsModuleInstalled('learning') && defined('LEARNING_FAILED_TO_LOAD_REASON')) {
         echo LEARNING_FAILED_TO_LOAD_REASON;
-    else
+    } else {
         CAdminMessage::ShowMessage(GetMessage('LEARNING_MODULE_NOT_FOUND'));
+    }
 
     require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin.php');    // system's epilog
     exit();
@@ -65,11 +67,12 @@ if ($ATTEMPT_ID > 0) {
 if ($lAdmin->EditAction()) // save from the list
 {
     foreach ($FIELDS as $ID => $arFields) {
-        if (!$lAdmin->IsUpdated($ID))
+        if (!$lAdmin->IsUpdated($ID)) {
             continue;
+        }
 
         $DB->StartTransaction();
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
         $ob = new CTestResult;
         if (!$ob->Update($ID, $arFields)) {
@@ -88,13 +91,15 @@ if ($lAdmin->EditAction()) // save from the list
 if ($arID = $lAdmin->GroupAction()) {
     if ($_REQUEST['action_target'] == 'selected') {
         $rsData = CTestResult::GetList(Array($by => $order), $arFilter);
-        while ($arRes = $rsData->Fetch())
+        while ($arRes = $rsData->Fetch()) {
             $arID[] = $arRes['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
 
         $ID = intval($ID);
         switch ($_REQUEST['action']) {
@@ -124,32 +129,50 @@ $lAdmin->NavText($rsData->GetNavPrint(GetMessage("LEARNING_ADMIN_RESULTS")));
 
 
 // list header
-$lAdmin->AddHeaders(array(
-    array("id" => "ID", "content" => "ID", "sort" => "id", "default" => true),
-    array("id" => "QUESTION_NAME", "content" => GetMessage('LEARNING_ADMIN_QUESTION_NAME'), "sort" => "question_name", "default" => true),
-    //array("id"=>"ANSWER_NAME", "content"=>GetMessage('LEARNING_ADMIN_ANSWER_NAME'),"sort"=>"answer_name", "default"=>true),
-    array("id" => "ANSWERED", "content" => GetMessage('LEARNING_ADMIN_ANSWERED'), "sort" => "answered", "default" => true),
-    array("id" => "CORRECT", "content" => GetMessage('LEARNING_ADMIN_CORRECT'), "sort" => "correct", "default" => true),
-    array("id" => "POINT", "content" => GetMessage('LEARNING_ADMIN_POINT'), "sort" => "point", "default" => true),
-    array("id" => "RESPONSE_TEXT", "content" => GetMessage('LEARNING_ADMIN_USER_RESPONSE_TEXT'), "default" => true),
-    array("id" => "CORRECT_REQUIRED", "content" => GetMessage('LEARNING_CORRECT_REQUIRED'), "default" => false),
-));
+$lAdmin->AddHeaders(
+    array(
+        array("id" => "ID", "content" => "ID", "sort" => "id", "default" => true),
+        array(
+            "id" => "QUESTION_NAME",
+            "content" => GetMessage('LEARNING_ADMIN_QUESTION_NAME'),
+            "sort" => "question_name",
+            "default" => true
+        ),
+        //array("id"=>"ANSWER_NAME", "content"=>GetMessage('LEARNING_ADMIN_ANSWER_NAME'),"sort"=>"answer_name", "default"=>true),
+        array(
+            "id" => "ANSWERED",
+            "content" => GetMessage('LEARNING_ADMIN_ANSWERED'),
+            "sort" => "answered",
+            "default" => true
+        ),
+        array(
+            "id" => "CORRECT",
+            "content" => GetMessage('LEARNING_ADMIN_CORRECT'),
+            "sort" => "correct",
+            "default" => true
+        ),
+        array("id" => "POINT", "content" => GetMessage('LEARNING_ADMIN_POINT'), "sort" => "point", "default" => true),
+        array("id" => "RESPONSE_TEXT", "content" => GetMessage('LEARNING_ADMIN_USER_RESPONSE_TEXT'), "default" => true),
+        array("id" => "CORRECT_REQUIRED", "content" => GetMessage('LEARNING_CORRECT_REQUIRED'), "default" => false),
+    )
+);
 
 // building list
 while ($arRes = $rsData->NavNext(true, "f_")) {
     $arRes['RESPONSE_TEXT'] = '';
     $result = CLQuestion::GetByID($arRes['QUESTION_ID']);
     $arData = $result->Fetch();
-    if ($arData['QUESTION_TYPE'] === 'T')
-        $arRes['RESPONSE_TEXT'] = $arRes['RESPONSE'];
-    elseif (!empty($arRes['RESPONSE'])) {
+    if ($arData['QUESTION_TYPE'] === 'T') {
+        $arRes['RESPONSE_TEXT'] = htmlspecialcharsbx($arRes['RESPONSE']);
+    } elseif (!empty($arRes['RESPONSE'])) {
         $arResponseIDs = explode(',', $arRes['RESPONSE']);
         foreach ($arResponseIDs as $responseID) {
             $rsResponse = CLAnswer::GetByID((int)$responseID);
             $arResponseData = $rsResponse->GetNext();
 
-            if (strlen($arRes['RESPONSE_TEXT']) > 0)
+            if ($arRes['RESPONSE_TEXT'] <> '') {
                 $arRes['RESPONSE_TEXT'] .= '<hr>';
+            }
 
             $arRes['RESPONSE_TEXT'] .= $arResponseData['ANSWER'];
         }
@@ -175,7 +198,10 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
 
     $row->AddViewField('RESPONSE_TEXT', $arRes['RESPONSE_TEXT']);
 
-    $row->AddViewField("CORRECT_REQUIRED", $arData["CORRECT_REQUIRED"] === "Y" ? GetMessage("LEARNING_YES") : GetMessage("LEARNING_NO"));
+    $row->AddViewField(
+        "CORRECT_REQUIRED",
+        $arData["CORRECT_REQUIRED"] === "Y" ? GetMessage("LEARNING_YES") : GetMessage("LEARNING_NO")
+    );
 
     $arActions = Array();
 
@@ -183,7 +209,12 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
         "ICON" => "edit",
         "DEFAULT" => "Y",
         "TEXT" => GetMessage("MAIN_ADMIN_MENU_EDIT"),
-        "ACTION" => $lAdmin->ActionRedirect("learn_test_result_edit.php?lang=" . LANG . "&ID=" . $f_ID . "&ATTEMPT_ID=" . $ATTEMPT_ID . GetFilterParams("filter_", false))
+        "ACTION" => $lAdmin->ActionRedirect(
+            "learn_test_result_edit.php?lang=" . LANG . "&ID=" . $f_ID . "&ATTEMPT_ID=" . $ATTEMPT_ID . GetFilterParams(
+                "filter_",
+                false
+            )
+        )
     );
 
 
@@ -192,10 +223,14 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
     $arActions[] = array(
         "ICON" => "delete",
         "TEXT" => GetMessage("MAIN_ADMIN_MENU_DELETE"),
-        "ACTION" => "if(confirm('" . GetMessageJS('LEARNING_CONFIRM_DEL_MESSAGE') . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete", "ATTEMPT_ID=" . $ATTEMPT_ID));
+        "ACTION" => "if(confirm('" . GetMessageJS('LEARNING_CONFIRM_DEL_MESSAGE') . "')) " . $lAdmin->ActionDoGroup(
+                $f_ID,
+                "delete",
+                "ATTEMPT_ID=" . $ATTEMPT_ID
+            )
+    );
 
     $row->AddActions($arActions);
-
 }
 
 // list footer
@@ -206,9 +241,11 @@ $lAdmin->AddFooter(
     )
 );
 
-$lAdmin->AddGroupActionTable(Array(
-    "delete" => GetMessage("MAIN_ADMIN_LIST_DELETE"),
-));
+$lAdmin->AddGroupActionTable(
+    Array(
+        "delete" => GetMessage("MAIN_ADMIN_LIST_DELETE"),
+    )
+);
 
 $adminChain->AddItem(array("TEXT" => GetMessage("LEARNING_ADMIN_RESULTS"), "LINK" => ""));
 
@@ -217,10 +254,15 @@ $lAdmin->AddAdminContextMenu(Array());
 $lAdmin->CheckListMode();
 
 
-$APPLICATION->SetTitle(GetMessage("LEARNING_ADMIN_TITLE") . ($arAttempt ? ": " . $arAttempt["~TEST_NAME"] . ": " . $arAttempt["~USER_NAME"] : ""));
+$APPLICATION->SetTitle(
+    GetMessage(
+        "LEARNING_ADMIN_TITLE"
+    ) . ($arAttempt ? ": " . $arAttempt["~TEST_NAME"] . ": " . $arAttempt["~USER_NAME"] : "")
+);
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
-if (defined("LEARNING_ADMIN_ACCESS_DENIED"))
+if (defined("LEARNING_ADMIN_ACCESS_DENIED")) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"), false);
+}
 
 $filter = new CAdminFilter(
     $sTableID . "_filter",
@@ -254,8 +296,16 @@ $filter = new CAdminFilter(
             <td><?= GetMessage("LEARNING_ADMIN_ANSWERED") ?>:</td>
             <td>
                 <?
-                $arr = array("reference" => array(GetMessage("LEARNING_YES"), GetMessage("LEARNING_NO")), "reference_id" => array("Y", "N"));
-                echo SelectBoxFromArray("filter_answered", $arr, htmlspecialcharsex($filter_answered), GetMessage('LEARNING_ALL'));
+                $arr = array(
+                    "reference" => array(GetMessage("LEARNING_YES"), GetMessage("LEARNING_NO")),
+                    "reference_id" => array("Y", "N")
+                );
+                echo SelectBoxFromArray(
+                    "filter_answered",
+                    $arr,
+                    htmlspecialcharsex($filter_answered),
+                    GetMessage('LEARNING_ALL')
+                );
                 ?>
             </td>
         </tr>
@@ -264,16 +314,27 @@ $filter = new CAdminFilter(
             <td><?= GetMessage("LEARNING_ADMIN_CORRECT") ?>:</td>
             <td>
                 <?
-                $arr = array("reference" => array(GetMessage("LEARNING_YES"), GetMessage("LEARNING_NO")), "reference_id" => array("Y", "N"));
-                echo SelectBoxFromArray("filter_correct", $arr, htmlspecialcharsex($filter_correct), GetMessage('LEARNING_ALL'));
+                $arr = array(
+                    "reference" => array(GetMessage("LEARNING_YES"), GetMessage("LEARNING_NO")),
+                    "reference_id" => array("Y", "N")
+                );
+                echo SelectBoxFromArray(
+                    "filter_correct",
+                    $arr,
+                    htmlspecialcharsex($filter_correct),
+                    GetMessage('LEARNING_ALL')
+                );
                 ?>
             </td>
         </tr>
 
         <?
-        $filter->Buttons(array(
+        $filter->Buttons(
+            array(
                 "table_id" => $sTableID,
-                "url" => $APPLICATION->GetCurPage() . "?ATTEMPT_ID=" . $ATTEMPT_ID . GetFilterParams("filter_", false), "form" => "form1")
+                "url" => $APPLICATION->GetCurPage() . "?ATTEMPT_ID=" . $ATTEMPT_ID . GetFilterParams("filter_", false),
+                "form" => "form1"
+            )
         );
         $filter->End(); ?>
     </form>

@@ -1,5 +1,6 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();?><!DOCTYPE HTML PUBLIC
-        "-//W3C//DTD HTML 4.0 Transitional//EN">
+<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+}?><!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
 <html>
 <head>
     <title>������ ����� WebMoney</title>
@@ -7,12 +8,12 @@
 </head>
 <body bgColor="#ffffff">
 <?
-$ORDER_ID = IntVal($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["ID"]);
-if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($_POST["SendAdditionalInfo"]) > 0) {
+$ORDER_ID = intval($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["ID"]);
+if ($_SERVER["REQUEST_METHOD"] == "POST" && $_POST["SendAdditionalInfo"] <> '') {
     $strSql =
         "UPDATE b_sale_order SET " .
         "	ADDITIONAL_INFO = '������������� � ������� WebMoney: " . $DB->ForSql($_POST["WEBMONEY_ID"], 150) . "' " .
-        "WHERE ID=" . $ORDER_ID . " AND USER_ID=" . IntVal($USER->GetID()) . " AND PAYED<>'Y'";
+        "WHERE ID=" . $ORDER_ID . " AND USER_ID=" . intval($USER->GetID()) . " AND PAYED<>'Y'";
     $DB->Query($strSql);
     ?>
     <font class="text"><font color="#006600"><b>�������, ��� ������������� �������. �� ������ ������� ������
@@ -20,11 +21,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($_POST["SendAdditionalInfo"])
     <?
 }
 ?>
-<p><font class="tablebodytext"><b>���� � <?= $ORDER_ID ?>
-            �� <?= htmlspecialcharsbx($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["DATE_INSERT"]) ?></b></font></p>
+<p><font class="tablebodytext"><b>���� � <?= $ORDER_ID ?> �� <?= htmlspecialcharsbx(
+                $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["DATE_INSERT"]
+            ) ?></b></font></p>
 <p>
-    ����� � ������:
-    <b><? echo SaleFormatCurrency($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["SHOULD_PAY"], $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"]) ?></b>
+    ����� � ������: <b><? echo SaleFormatCurrency(
+            $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["SHOULD_PAY"],
+            $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"]
+        ) ?></b>
     </font></p>
 
 <form method="POST" action="">

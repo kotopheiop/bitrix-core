@@ -1,4 +1,5 @@
 <?
+
 $pathJS = '/bitrix/js/main/core';
 $pathCSS = '/bitrix/js/main/core/css';
 $pathCSSPanel = '/bitrix/panel/main';
@@ -6,6 +7,7 @@ $pathLang = BX_ROOT . '/modules/main';
 //WARNING: Don't use CUserOptions here! CJSCore::Init can be called from php_interface/init.php where no $USER exists
 
 $amChartsPath = '/bitrix/js/main/amcharts/3.21/';
+$amCharts4Path = '/bitrix/js/main/amcharts/4.8.5/';
 
 $arJSCoreConfig = array(
     'ajax' => array(
@@ -23,7 +25,11 @@ $arJSCoreConfig = array(
         'lang' => $pathLang . '/js_core_admin_interface.php',
         'css' => $pathCSSPanel . '/admin-public.css',
         'rel' => array('ajax', 'popup', 'window', 'date', 'fx'),
-        'lang_additional' => array('TITLE_PREFIX' => CUtil::JSEscape(COption::GetOptionString("main", "site_name", $_SERVER["SERVER_NAME"])) . " - ")
+        'lang_additional' => array(
+            'TITLE_PREFIX' => CUtil::JSEscape(
+                    COption::GetOptionString("main", "site_name", $_SERVER["SERVER_NAME"])
+                ) . " - "
+        )
     ),
     "admin_login" => array(
         'js' => $pathJS . "/core_admin_login.js",
@@ -33,7 +39,7 @@ $arJSCoreConfig = array(
     'autosave' => array(
         'js' => $pathJS . '/core_autosave.js',
         'lang' => $pathLang . '/js_core_autosave.php',
-        'rel' => array('ajax'),
+        'rel' => array('ajax', 'main.pageobject'),
     ),
     'fx' => array(
         'js' => $pathJS . '/core_fx.js',
@@ -64,7 +70,13 @@ $arJSCoreConfig = array(
         'js' => $pathJS . '/core_tooltip.js',
         'css' => $pathCSS . '/core_tooltip.css',
         'rel' => array('ajax', 'ui.tooltip'),
-        'lang_additional' => array('TOOLTIP_ENABLED' => (IsModuleInstalled("socialnetwork") && COption::GetOptionString("socialnetwork", "allow_tooltip", "Y") == "Y" ? "Y" : "N")),
+        'lang_additional' => array(
+            'TOOLTIP_ENABLED' => (IsModuleInstalled("socialnetwork") && COption::GetOptionString(
+                "socialnetwork",
+                "allow_tooltip",
+                "Y"
+            ) == "Y" ? "Y" : "N")
+        ),
     ),
     'translit' => array(
         'js' => $pathJS . '/core_translit.js',
@@ -88,7 +100,8 @@ $arJSCoreConfig = array(
         'js' => $pathJS . '/core_window.js',
         //'css' => $pathCSS.'/core_window.css',
         'css' => $pathCSSPanel . '/popup.css',
-        'rel' => array('ajax'),
+        'rel' => array('ajax', 'main.pageobject'),
+        'lang' => $pathLang . '/js_core.php',
     ),
     'access' => array(
         'js' => $pathJS . '/core_access.js',
@@ -106,7 +119,9 @@ $arJSCoreConfig = array(
         'lang' => $pathLang . '/js_core_user.php',
         'rel' => array('date'),
         'lang_additional' => array(
-            'LIMIT_ONLINE' => method_exists('CUser', 'GetSecondsForLimitOnline') ? CUser::GetSecondsForLimitOnline() : 1440 // we use this condition because has a fatal error while running updater "main 17.5.0" witch calling the OnAfterEpilog event.
+            'LIMIT_ONLINE' => method_exists('CUser', 'GetSecondsForLimitOnline') ? CUser::GetSecondsForLimitOnline(
+            ) : 1440
+            // we use this condition because has a fatal error while running updater "main 17.5.0" witch calling the OnAfterEpilog event.
         ),
     ),
     'date' => array(
@@ -166,11 +181,9 @@ $arJSCoreConfig = array(
         'lang' => $pathLang . '/js_site_speed.php',
         'rel' => array('amcharts_serial', 'ajax', "date")
     ),
-    'qrcode' => array(
-        'js' => array(
-            '/bitrix/js/main/qrcode/qrcode.js'
-        )
-    ),
+    'qrcode' => [
+        'rel' => ['main.qrcode']
+    ],
     'fileinput' => array(
         'js' => $pathJS . '/core_fileinput.js',
         'css' => $pathCSS . '/core_fileinput.css',
@@ -262,7 +275,7 @@ $arJSCoreConfig = array(
             '/bitrix/js/main/sidepanel/slider.js'
         ),
         'css' => '/bitrix/js/main/sidepanel/css/sidepanel.css',
-        'rel' => array('ajax', 'fx'),
+        'rel' => array('ajax', 'fx', 'main.pageobject', 'clipboard'),
         'lang' => $pathLang . '/js/sidepanel.php',
         'bundle_js' => 'sidepanel',
         'bundle_css' => 'sidepanel'
@@ -298,7 +311,8 @@ $arJSCoreConfig = array(
             return array(
                 'lang_additional' => array(
                     'UF_SITE_TPL' => $templateId,
-                    'UF_SITE_TPL_SIGN' => \Bitrix\Main\UserField\Dispatcher::instance()->getSignatureManager()->getSignature($templateId),
+                    'UF_SITE_TPL_SIGN' => \Bitrix\Main\UserField\Dispatcher::instance()->getSignatureManager(
+                    )->getSignature($templateId),
                 ),
             );
         }
@@ -422,6 +436,31 @@ $arJSCoreConfig = array(
         'rel' => array('amcharts'),
         'skip_core' => true,
     ),
+    'amcharts4_core' => array(
+        'js' => [
+            $amCharts4Path . 'core.js',
+            $amCharts4Path . 'init.js',
+        ],
+        'skip_core' => true,
+    ),
+    'amcharts4' => array(
+        'js' => [
+            $amCharts4Path . 'charts.js',
+        ],
+        'skip_core' => true,
+        'rel' => array('amcharts4_core')
+    ),
+    'amcharts4_theme_animated' => array(
+        'js' => [
+            $amCharts4Path . 'themes/animated.js',
+        ],
+        'skip_core' => true,
+        'rel' => array('amcharts4_core')
+    ),
+    'amcharts4_maps' => array(
+        'js' => $amCharts4Path . 'maps.js',
+        'skip_core' => true,
+    ),
     'lamejs' => array(
         'js' => '/bitrix/js/main/recorder/recorder.js'
     ),
@@ -430,6 +469,8 @@ $arJSCoreConfig = array(
 \Bitrix\Main\Page\Asset::getInstance()->addJsKernelInfo(
     'main',
     array(
+        '/bitrix/js/main/pageobject/pageobject.js',
+        '/bitrix/js/main/core/core.js',
         '/bitrix/js/main/core/core_tooltip.js',
         '/bitrix/js/main/date/main.date.js',
         '/bitrix/js/main/core/core_date.js',
@@ -450,7 +491,6 @@ $arJSCoreConfig = array(
 \Bitrix\Main\Page\Asset::getInstance()->addCssKernelInfo(
     'main',
     array(
-        '/bitrix/js/main/core/css/core.css',
         '/bitrix/js/main/core/css/core_tooltip.css',
         '/bitrix/js/main/core/css/core_date.css',
         '/bitrix/js/main/core/css/core_uf.css'

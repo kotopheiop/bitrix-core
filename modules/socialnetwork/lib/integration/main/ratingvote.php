@@ -18,12 +18,14 @@ class RatingVote
     public static function onGetRatingContentOwner($params)
     {
         if (intval($params['ENTITY_ID']) && $params['ENTITY_TYPE_ID'] == 'LOG_COMMENT') {
-            $res = LogCommentTable::getList(array(
-                'filter' => array(
-                    'ID' => $params['ENTITY_ID']
-                ),
-                'select' => array('USER_ID')
-            ));
+            $res = LogCommentTable::getList(
+                array(
+                    'filter' => array(
+                        'ID' => $params['ENTITY_ID']
+                    ),
+                    'select' => array('USER_ID')
+                )
+            );
             if (
                 ($logCommentFields = $res->fetch())
                 && intval($logCommentFields['USER_ID']) > 0
@@ -34,7 +36,4 @@ class RatingVote
 
         return false;
     }
-
 }
-
-?>

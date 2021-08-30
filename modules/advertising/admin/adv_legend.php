@@ -1,9 +1,12 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/tools.php");
 include($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/advertising/colors.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/img.php");
 
-if (function_exists("FormDecode")) FormDecode();
+if (function_exists("FormDecode")) {
+    FormDecode();
+}
 UnQuoteAll();
 
 // ������� �����������
@@ -13,7 +16,8 @@ $dec = ReColor($color);
 $color = ImageColorAllocate($ImageHendle, $dec[0], $dec[1], $dec[2]);
 if ($dash == "Y") {
     $style = array(
-        $color, $color,
+        $color,
+        $color,
         IMG_COLOR_TRANSPARENT,
         IMG_COLOR_TRANSPARENT,
         IMG_COLOR_TRANSPARENT

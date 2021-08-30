@@ -68,8 +68,9 @@ class Context
 
     public function getEnvironment()
     {
-        if ($this->env === null)
+        if ($this->env === null) {
             $this->env = new Environment($this->params["env"]);
+        }
         return $this->env;
     }
 
@@ -131,8 +132,9 @@ class Context
      */
     public function getCulture()
     {
-        if ($this->culture === null)
+        if ($this->culture === null) {
             $this->culture = new Context\Culture();
+        }
         return $this->culture;
     }
 

@@ -1,5 +1,6 @@
 <?
 /** @global CDatabase $DB */
+
 /** @global CUser $USER */
 
 /** @global CMain $APPLICATION */
@@ -10,8 +11,9 @@ use Bitrix\Catalog;
 define('NO_AGENT_CHECK', true);
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/catalog/prolog.php");
-if (!($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_discount')))
+if (!($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_discount'))) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 Main\Loader::includeModule('catalog');
 $bReadOnly = !$USER->CanDoOperation('catalog_discount');
 
@@ -56,7 +58,12 @@ $boolMulti = (isset($_REQUEST['MULTI']) && 'Y' == $_REQUEST['MULTI']);
 
 if (!$boolMulti) {
     $aTabs = array(
-        array("DIV" => "sub_edit1", "TAB" => GetMessage("CDEN_TAB_DISCOUNT"), "ICON" => "catalog", "TITLE" => GetMessage("CDEN_TAB_DISCOUNT_DESCR")),
+        array(
+            "DIV" => "sub_edit1",
+            "TAB" => GetMessage("CDEN_TAB_DISCOUNT"),
+            "ICON" => "catalog",
+            "TITLE" => GetMessage("CDEN_TAB_DISCOUNT_DESCR")
+        ),
     );
 } else {
     $aTabs = array(
@@ -105,10 +112,13 @@ if (!$bReadOnly && $_SERVER['REQUEST_METHOD'] == "POST" && !empty($_POST['Update
         }
 
         if (!$res) {
-            if ($ex = $APPLICATION->GetException())
+            if ($ex = $APPLICATION->GetException()) {
                 $errorMessage .= $ex->GetString() . "<br>";
-            else
-                $errorMessage .= (0 < $ID ? str_replace('#ID#', $ID, GetMessage('DSC_CPN_ERR_UPDATE')) : GetMessage('DSC_CPN_ERR_ADD')) . "<br>";
+            } else {
+                $errorMessage .= (0 < $ID ? str_replace('#ID#', $ID, GetMessage('DSC_CPN_ERR_UPDATE')) : GetMessage(
+                        'DSC_CPN_ERR_ADD'
+                    )) . "<br>";
+            }
             $bVarsFromForm = true;
             $DB->Rollback();
         } else {
@@ -151,10 +161,11 @@ if (!$bReadOnly && $_SERVER['REQUEST_METHOD'] == "POST" && !empty($_POST['Update
                 );
                 $cRes = ($CID > 0);
                 if (!$cRes) {
-                    if ($ex = $APPLICATION->GetException())
+                    if ($ex = $APPLICATION->GetException()) {
                         $errorMessage .= $ex->GetString() . "<br>";
-                    else
+                    } else {
                         $errorMessage .= GetMessage('BT_CAT_DISCOUNT_EDIT_ERR_COUPON_ADD') . "<br>";
+                    }
                     $bVarsFromForm = true;
                     break;
                 }
@@ -247,13 +258,16 @@ if (!$boolMulti) {
     <input type="hidden" name="MULTI" value="<? echo($boolMulti ? 'Y' : 'N'); ?>">
     <input type="hidden" name="TMP_ID" value="<? echo htmlspecialcharsbx($strSubTMP_ID) ?>"><?
     $tabControl->EndEpilogContent();
-    $tabControl->Begin(array(
-        "FORM_ACTION" => '/bitrix/admin/cat_subcoupon_edit.php?lang=' . LANGUAGE_ID,
-    ));
+    $tabControl->Begin(
+        array(
+            "FORM_ACTION" => '/bitrix/admin/cat_subcoupon_edit.php?lang=' . LANGUAGE_ID,
+        )
+    );
 
     $tabControl->BeginNextFormTab();
-    if ($ID > 0)
+    if ($ID > 0) {
         $tabControl->AddViewField('ID', 'ID:', $ID, false);
+    }
     $tabControl->AddCheckBoxField("ACTIVE", GetMessage("DSC_ACTIVE") . ":", false, "Y", $arCoupon['ACTIVE'] == "Y");
     $tabControl->BeginCustomField('ONE_TIME', GetMessage('DSC_COUPON_TYPE') . ':', true);
     ?>
@@ -271,7 +285,8 @@ if (!$boolMulti) {
             </select>
         </td>
     </tr><?
-    $tabControl->EndCustomField('ONE_TIME',
+    $tabControl->EndCustomField(
+        'ONE_TIME',
         '<input type="hidden" name="ONE_TIME" value="' . htmlspecialcharsbx($arCoupon['ONE_TIME']) . '">'
     );
     $tabControl->BeginCustomField('COUPON', GetMessage("DSC_CPN_CODE") . ':', true);
@@ -284,19 +299,26 @@ if (!$boolMulti) {
             <input type="button" value="<? echo GetMessage("DSC_CPN_GEN") ?>" id="COUPON_GENERATE">
         </td>
     </tr><?
-    $tabControl->EndCustomField('COUPON',
+    $tabControl->EndCustomField(
+        'COUPON',
         '<input type="hidden" name="COUPON" value="' . htmlspecialcharsbx($arCoupon['COUPON']) . '">'
     );
     $tabControl->AddCalendarField('DATE_APPLY', GetMessage("DDSC_CPN_DATE") . ':', $arCoupon['DATE_APPLY']);
-    $tabControl->AddTextField("DESCRIPTION", GetMessage("DSC_CPN_DESCRIPTION") . ':', htmlspecialcharsbx($arCoupon['DESCRIPTION']), array("cols" => 50, 'rows' => 6));
+    $tabControl->AddTextField(
+        "DESCRIPTION",
+        GetMessage("DSC_CPN_DESCRIPTION") . ':',
+        htmlspecialcharsbx($arCoupon['DESCRIPTION']),
+        array("cols" => 50, 'rows' => 6)
+    );
 
     $tabControl->Buttons(false, '');
 
     $tabControl->Show();
 
     echo BeginNote();
-    ?><span class="required"
-            style="vertical-align: super; font-size: smaller;">1</span> <? echo GetMessage('DSC_CPN_ONE_ORDER_NOTE');
+    ?><span class="required" style="vertical-align: super; font-size: smaller;">1</span> <? echo GetMessage(
+        'DSC_CPN_ONE_ORDER_NOTE'
+    );
     echo EndNote();
     ?>
     <script type="text/javascript">
@@ -397,9 +419,11 @@ if (!$boolMulti) {
     <input type="hidden" name="MULTI" value="<? echo($boolMulti ? 'Y' : 'N'); ?>">
     <input type="hidden" name="TMP_ID" value="<? echo htmlspecialcharsbx($strSubTMP_ID) ?>"><?
     $tabControl->EndEpilogContent();
-    $tabControl->Begin(array(
-        "FORM_ACTION" => '/bitrix/admin/cat_subcoupon_edit.php?lang=' . urlencode(LANGUAGE_ID),
-    ));
+    $tabControl->Begin(
+        array(
+            "FORM_ACTION" => '/bitrix/admin/cat_subcoupon_edit.php?lang=' . urlencode(LANGUAGE_ID),
+        )
+    );
 
     $tabControl->BeginNextFormTab();
     $tabControl->BeginCustomField('ONE_TIME', GetMessage('DSC_COUPON_TYPE') . ':', true);
@@ -418,17 +442,25 @@ if (!$boolMulti) {
             </select>
         </td>
     </tr><?
-    $tabControl->EndCustomField('ONE_TIME',
+    $tabControl->EndCustomField(
+        'ONE_TIME',
         '<input type="hidden" name="ONE_TIME" value="' . htmlspecialcharsbx($arCoupon['ONE_TIME']) . '">'
     );
-    $tabControl->AddEditField("COUNT", GetMessage('BT_CAT_DISC_SUBCOUPON_FIELD_COUNT') . ':', true, array(), $arCoupon['COUNT']);
+    $tabControl->AddEditField(
+        "COUNT",
+        GetMessage('BT_CAT_DISC_SUBCOUPON_FIELD_COUNT') . ':',
+        true,
+        array(),
+        $arCoupon['COUNT']
+    );
     $tabControl->Buttons(false, '');
 
     $tabControl->Show();
 
     echo BeginNote();
-    ?><span class="required"
-            style="vertical-align: super; font-size: smaller;">1</span> <? echo GetMessage('DSC_CPN_ONE_ORDER_NOTE');
+    ?><span class="required" style="vertical-align: super; font-size: smaller;">1</span> <? echo GetMessage(
+        'DSC_CPN_ONE_ORDER_NOTE'
+    );
     echo EndNote();
     ?>
     <script type="text/javascript">

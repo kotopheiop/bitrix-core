@@ -1,9 +1,11 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/classes/general/update_client_partner.php");
 
-if (!$USER->CanDoOperation('install_updates'))
+if (!$USER->CanDoOperation('install_updates')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 
 IncludeModuleLangFile(__FILE__);
@@ -22,8 +24,9 @@ $arModules = CUpdateClientPartner::SearchModulesEx(
 
 $arModule = null;
 if (is_array($arModules["MODULE"])) {
-    foreach ($arModules["MODULE"] as $module)
+    foreach ($arModules["MODULE"] as $module) {
         $arModule = $module["@"];
+    }
 }
 
 if ($arModule == null) {
@@ -33,8 +36,12 @@ if ($arModule == null) {
     CAdminMessage::ShowMessage(GetMessage("USMP_NO_MODULE") . ". ");
 } else {
     if ($_SERVER["REQUEST_METHOD"] == "POST" && $_POST["action"] == "load" && check_bitrix_sessid()) {
-        if (CUpdateClientPartner::LoadModuleNoDemand($arModule["ID"], $errorMessage, "Y", false))
-            LocalRedirect("/bitrix/admin/module_admin.php?lang=" . LANG . "&id=" . $arModule["ID"] . "&" . bitrix_sessid_get() . "&install=Y");
+        if (CUpdateClientPartner::LoadModuleNoDemand($arModule["ID"], $errorMessage, "Y", false)) {
+            LocalRedirect(
+                "/bitrix/admin/module_admin.php?lang=" . LANG . "&id=" . $arModule["ID"] . "&" . bitrix_sessid_get(
+                ) . "&install=Y"
+            );
+        }
     }
 
     require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
@@ -53,8 +60,9 @@ if ($arModule == null) {
 
     $arCurrentModules = CUpdateClientPartner::GetCurrentModules($errorMessage);
 
-    if (strlen($errorMessage) > 0)
+    if ($errorMessage <> '') {
         CAdminMessage::ShowMessage($errorMessage);
+    }
     ?>
     <form method="post" name="task_form1" action="update_system_market_detail.php">
         <input type="hidden" name="action" value="load">
@@ -63,7 +71,12 @@ if ($arModule == null) {
         <?
 
         $aTabs = array(
-            array("DIV" => "edit1", "TAB" => GetMessage("USMP_TAB_1"), "ICON" => "", "TITLE" => str_replace("#NAME#", $arModule["NAME"], GetMessage("USMP_TAB_2")))
+            array(
+                "DIV" => "edit1",
+                "TAB" => GetMessage("USMP_TAB_1"),
+                "ICON" => "",
+                "TITLE" => str_replace("#NAME#", $arModule["NAME"], GetMessage("USMP_TAB_2"))
+            )
         );
 
         $tabControl = new CAdminTabControl("tabControl", $aTabs, true, true);
@@ -77,8 +90,9 @@ if ($arModule == null) {
         </tr>
         <tr>
             <td align="right" valign="top" width="40%"><?= GetMessage("USMP_LOAD") ?>:</td>
-            <td width="60%"
-                valign="top"><?= array_key_exists($arModule["ID"], $arCurrentModules) ? GetMessage("USMP_YES") : GetMessage("USMP_NO") ?></td>
+            <td width="60%" valign="top"><?= array_key_exists($arModule["ID"], $arCurrentModules) ? GetMessage(
+                    "USMP_YES"
+                ) : GetMessage("USMP_NO") ?></td>
         </tr>
         <tr>
             <td align="right" valign="top" width="40%"><?= GetMessage("USMP_NAME") ?>:</td>
@@ -88,7 +102,7 @@ if ($arModule == null) {
             <td align="right" valign="top" width="40%"><?= GetMessage("USMP_DESCR") ?>:</td>
             <td width="60%" valign="top"><?= nl2br($arModule["DESCRIPTION"]) ?></td>
         </tr>
-        <? if (strlen($arModule["IMAGE"]) > 0):?>
+        <? if ($arModule["IMAGE"] <> ''):?>
             <tr>
                 <td align="right" valign="top" width="40%"><?= GetMessage("USMP_IMAGE") ?>:</td>
                 <td width="60%" valign="top">
@@ -120,10 +134,15 @@ if ($arModule == null) {
         <?
         $tabControl->Buttons();
         ?>
-        <input type="submit" name="laction"
-               value="<?= GetMessage("USMP_DO_LOAD") ?>"<?= array_key_exists($arModule["ID"], $arCurrentModules) ? " disabled" : "" ?>/>
+        <input type="submit" name="laction" value="<?= GetMessage("USMP_DO_LOAD") ?>"<?= array_key_exists(
+            $arModule["ID"],
+            $arCurrentModules
+        ) ? " disabled" : "" ?>/>
         <input type="button" name="caction" value="<?= GetMessage("USMP_DO_CANCEL") ?>"
-               onclick="window.location='update_system_market.php?lang=<?= LANG ?>&<?= GetFilterParams("filter_", false) ?>'"/>
+               onclick="window.location='update_system_market.php?lang=<?= LANG ?>&<?= GetFilterParams(
+                   "filter_",
+                   false
+               ) ?>'"/>
         <?
         $tabControl->End();
         ?>

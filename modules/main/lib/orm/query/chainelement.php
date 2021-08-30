@@ -166,7 +166,12 @@ class ChainElement
     public function getSqlDefinition()
     {
         if (is_array($this->value) || $this->value instanceof Reference || $this->value instanceof Entity) {
-            throw new SystemException('Unknown value');
+            throw new SystemException(
+                sprintf(
+                    'There is no SQL definition for Entity `%s`, please use a scalar field',
+                    $this->getAliasFragment()
+                )
+            );
         }
 
         $helper = $this->value->getEntity()->getConnection()->getSqlHelper();
@@ -226,7 +231,8 @@ class ChainElement
         } elseif ($this->value instanceof Entity) {
             echo get_class($this->value) . ' ' . $this->value->getFullName();
         } elseif (is_array($this->value)) {
-            echo '(' . get_class($this->value[0]) . ', ' . get_class($this->value[1]) . ' ' . $this->value[1]->getName() . ')';
+            echo '(' . get_class($this->value[0]) . ', ' . get_class($this->value[1]) . ' ' . $this->value[1]->getName(
+                ) . ')';
         }
 
         echo ' ' . json_encode($this->parameters);

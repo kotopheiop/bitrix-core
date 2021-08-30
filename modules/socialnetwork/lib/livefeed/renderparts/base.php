@@ -27,7 +27,6 @@ abstract class Base
 
     public function getBBCodeText()
     {
-
     }
 
 }

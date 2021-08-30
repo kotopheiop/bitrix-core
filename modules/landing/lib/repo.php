@@ -70,33 +70,58 @@ class Repo extends \Bitrix\Landing\Internals\BaseTable
         $items = array();
         $siteId = Manager::getMainSiteId();
         $siteTemplateId = Manager::getTemplateId($siteId);
+        $langPortal = LANGUAGE_ID;
+        if (in_array($langPortal, ['ru', 'kz', 'by'])) {
+            $langPortal = 'ru';
+        }
 
-        $res = self::getList(array(
-            'select' => array(
-                'ID', 'NAME', 'DATE_CREATE', 'DESCRIPTION',
-                'SECTIONS', 'PREVIEW', 'APP_CODE',
-                new \Bitrix\Main\Entity\ExpressionField(
-                    'DATE_CREATE_TIMESTAMP',
-                    'UNIX_TIMESTAMP(DATE_CREATE)'
+        $res = self::getList(
+            array(
+                'select' => array(
+                    'ID',
+                    'NAME',
+                    'DATE_CREATE',
+                    'DESCRIPTION',
+                    'SECTIONS',
+                    'PREVIEW',
+                    'APP_CODE',
+                    'MANIFEST',
+                    new \Bitrix\Main\Entity\ExpressionField(
+                        'DATE_CREATE_TIMESTAMP',
+                        'UNIX_TIMESTAMP(DATE_CREATE)'
+                    )
+                ),
+                'filter' => array(
+                    '=ACTIVE' => 'Y',
+                    Manager::isTemplateIdSystem($siteTemplateId)
+                        ? array(
+                        'LOGIC' => 'OR',
+                        ['=SITE_TEMPLATE_ID' => $siteTemplateId],
+                        ['=SITE_TEMPLATE_ID' => false]
+                    )
+                        : array(
+                        ['=SITE_TEMPLATE_ID' => $siteTemplateId]
+                    )
+                ),
+                'order' => array(
+                    'ID' => 'DESC'
                 )
-            ),
-            'filter' => array(
-                '=ACTIVE' => 'Y',
-                Manager::isTemplateIdSystem($siteTemplateId)
-                    ? array(
-                    'LOGIC' => 'OR',
-                    ['=SITE_TEMPLATE_ID' => $siteTemplateId],
-                    ['=SITE_TEMPLATE_ID' => false]
-                )
-                    : array(
-                    ['=SITE_TEMPLATE_ID' => $siteTemplateId]
-                )
-            ),
-            'order' => array(
-                'ID' => 'DESC'
             )
-        ));
+        );
         while ($row = $res->fetch()) {
+            $manifest = unserialize($row['MANIFEST'], ['allowed_classes' => false]);
+            if (isset($manifest['lang'][$langPortal][$row['NAME']])) {
+                $row['NAME'] = $manifest['lang'][$langPortal][$row['NAME']];
+            } else {
+                if (
+                    isset($manifest['lang_original']) &&
+                    $manifest['lang_original'] != $langPortal &&
+                    $manifest['lang']['en'][$row['NAME']]
+                ) {
+                    $row['NAME'] = $manifest['lang']['en'][$row['NAME']];
+                }
+            }
+
             $items['repo_' . $row['ID']] = array(
                 'id' => null,
                 'name' => $row['NAME'],
@@ -126,7 +151,7 @@ class Repo extends \Bitrix\Landing\Internals\BaseTable
         if (!isset($manifest[$id])) {
             $manifest[$id] = array();
             if (($block = self::getById($id)->fetch())) {
-                $manifestLocal = unserialize($block['MANIFEST']);
+                $manifestLocal = unserialize($block['MANIFEST'], ['allowed_classes' => false]);
                 if (!is_array($manifestLocal)) {
                     $manifestLocal = array();
                 }
@@ -165,11 +190,13 @@ class Repo extends \Bitrix\Landing\Internals\BaseTable
      */
     public static function getById($id)
     {
-        return parent::getList(array(
-            'filter' => array(
-                'ID' => $id
+        return parent::getList(
+            array(
+                'filter' => array(
+                    'ID' => $id
+                )
             )
-        ));
+        );
     }
 
     /**
@@ -181,14 +208,16 @@ class Repo extends \Bitrix\Landing\Internals\BaseTable
     {
         $codeToDelete = array();
         // delete blocks from repo
-        $res = self::getList(array(
-            'select' => array(
-                'ID'
-            ),
-            'filter' => array(
-                '=APP_CODE' => $code
+        $res = self::getList(
+            array(
+                'select' => array(
+                    'ID'
+                ),
+                'filter' => array(
+                    '=APP_CODE' => $code
+                )
             )
-        ));
+        );
         while ($row = $res->fetch()) {
             self::delete($row['ID']);
             $codeToDelete[] = 'repo_' . $row['ID'];
@@ -214,14 +243,17 @@ class Repo extends \Bitrix\Landing\Internals\BaseTable
 
         if ($id) {
             // get app codes from repo first
-            $res = self::getList(array(
-                'select' => array(
-                    'ID', 'APP_CODE'
-                ),
-                'filter' => array(
-                    'ID' => array_keys($id)
+            $res = self::getList(
+                array(
+                    'select' => array(
+                        'ID',
+                        'APP_CODE'
+                    ),
+                    'filter' => array(
+                        'ID' => array_keys($id)
+                    )
                 )
-            ));
+            );
             while ($row = $res->fetch()) {
                 if ($row['APP_CODE']) {
                     $id[$row['ID']] = $row['APP_CODE'];
@@ -257,11 +289,13 @@ class Repo extends \Bitrix\Landing\Internals\BaseTable
         $apps = array();
 
         if ($code && \Bitrix\Main\Loader::includeModule('rest')) {
-            $res = AppTable::getList(array(
-                'filter' => array(
-                    '=CODE' => $code
+            $res = AppTable::getList(
+                array(
+                    'filter' => array(
+                        '=CODE' => $code
+                    )
                 )
-            ));
+            );
             while ($row = $res->fetch()) {
                 $row['APP_STATUS'] = AppTable::getAppStatusInfo($row, '');
                 $apps[$row['CODE']] = array(

@@ -1,18 +1,22 @@
 <?
+
+use Bitrix\Main\Loader;
+
 define("ADMIN_MODULE_NAME", "perfmon");
 define("PERFMON_STOP", true);
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 /** @global CMain $APPLICATION */
 /** @global CDatabase $DB */
 /** @global CUser $USER */
-require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/perfmon/include.php");
+Loader::includeModule('perfmon');
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/perfmon/prolog.php");
 
 IncludeModuleLangFile(__FILE__);
 
 $RIGHT = $APPLICATION->GetGroupRight("perfmon");
-if (!$USER->IsAdmin() || ($RIGHT < "W"))
+if (!$USER->IsAdmin() || ($RIGHT < "W")) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && ($_REQUEST["clear"] != "") && check_bitrix_sessid()) {
     CPerfomanceComponent::Clear();
@@ -29,10 +33,12 @@ $APPLICATION->SetTitle(GetMessage("PERFMON_CLEAR_TITLE"));
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
 if ($_SESSION["PERFMON_CLEAR_MESSAGE"]) {
-    $message = new CAdminMessage(array(
-        "MESSAGE" => $_SESSION["PERFMON_CLEAR_MESSAGE"],
-        "TYPE" => "OK",
-    ));
+    $message = new CAdminMessage(
+        array(
+            "MESSAGE" => $_SESSION["PERFMON_CLEAR_MESSAGE"],
+            "TYPE" => "OK",
+        )
+    );
     echo $message->Show();
     unset($_SESSION["PERFMON_CLEAR_MESSAGE"]);
 }

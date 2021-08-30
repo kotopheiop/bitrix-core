@@ -49,20 +49,24 @@ class SiteCurrencyTable extends Main\Entity\DataManager
     public static function getCurrency($siteId)
     {
         $siteId = (string)$siteId;
-        if ($siteId == '')
+        if ($siteId == '') {
             return false;
+        }
         if (empty(self::$cache)) {
             $managed = Application::getInstance()->getManagedCache();
             $key = self::getTableName();
 
-            if ($managed->read(3600, $key))
+            if ($managed->read(3600, $key)) {
                 self::$cache = $managed->get($key);
-            else {
-                $result = self::getList(array(
-                    'select' => array('*')
-                ));
-                while ($row = $result->fetch())
+            } else {
+                $result = self::getList(
+                    array(
+                        'select' => array('*')
+                    )
+                );
+                while ($row = $result->fetch()) {
                     self::$cache[$row['LID']] = $row;
+                }
                 unset($row, $result);
                 $managed->set($key, self::$cache);
             }
@@ -79,7 +83,10 @@ class SiteCurrencyTable extends Main\Entity\DataManager
     public static function getSiteCurrency($siteId)
     {
         $siteData = self::getCurrency($siteId);
-        return (!empty($siteData['CURRENCY']) ? $siteData['CURRENCY'] : (string)Main\Config\Option::get('sale', 'default_currency'));
+        return (!empty($siteData['CURRENCY']) ? $siteData['CURRENCY'] : (string)Main\Config\Option::get(
+            'sale',
+            'default_currency'
+        ));
     }
 
     public static function onAfterAdd(Main\Entity\Event $event)

@@ -1,5 +1,6 @@
 <?
 /******************************************************************************/
+
 /* UPS Delivery Handler. Tarifification files can be found at http://ups.com  */
 /* Delete ups/*.php files if you change tarification csv files                */
 /******************************************************************************/
@@ -12,7 +13,7 @@ define('DELIVERY_UPS_EXPORT_PHP_FILE', 'ups/export.php');
 
 class CDeliveryUPS
 {
-    function Init()
+    public static function Init()
     {
         if (\Bitrix\Main\Loader::includeModule('currency') && $arCurrency = CCurrency::GetByID('RUR')) {
             $base_currency = 'RUR';
@@ -59,7 +60,7 @@ class CDeliveryUPS
         );
     }
 
-    function GetConfig()
+    public static function GetConfig()
     {
         $arConfig = array(
             "CONFIG_GROUPS" => array(
@@ -85,7 +86,7 @@ class CDeliveryUPS
         return $arConfig;
     }
 
-    function GetSettings($strSettings)
+    public static function GetSettings($strSettings)
     {
         list($zones_path, $export_path) = explode(";", $strSettings);
 
@@ -95,19 +96,21 @@ class CDeliveryUPS
         );
     }
 
-    function SetSettings($arSettings)
+    public static function SetSettings($arSettings)
     {
         return $arSettings["zones_csv"] . ";" . $arSettings["export_csv"];
     }
 
-    function __parseZonesFile($file)
+    public static function __parseZonesFile($file)
     {
         $arResult = array();
 
         $fp = fopen($_SERVER["DOCUMENT_ROOT"] . $file, "r");
         while ($data = fgetcsv($fp, 1000, ",")) {
-            if (count($data >= 9) && strlen($data[1]) == 2) {
-                if (substr($data[2], -3) == " EU") $data[2] = substr($data[2], 0, -3);
+            if (count($data >= 9) && mb_strlen($data[1]) == 2) {
+                if (mb_substr($data[2], -3) == " EU") {
+                    $data[2] = mb_substr($data[2], 0, -3);
+                }
 
                 $arResult[$data[1]] = array(
                     $data[2],
@@ -126,7 +129,12 @@ class CDeliveryUPS
             fwrite($fp, '$arUPSZones = array(' . "\r\n");
 
             foreach ($arResult as $key => $arRow) {
-                fwrite($fp, '"' . $key . '" => array("' . $arRow[0] . '", ' . intval($arRow[1]) . ', ' . intval($arRow[2]) . '),' . "\r\n");
+                fwrite(
+                    $fp,
+                    '"' . $key . '" => array("' . $arRow[0] . '", ' . intval($arRow[1]) . ', ' . intval(
+                        $arRow[2]
+                    ) . '),' . "\r\n"
+                );
             }
 
             fwrite($fp, ');' . "\r\n");
@@ -137,7 +145,7 @@ class CDeliveryUPS
         return $arResult;
     }
 
-    function __parseExportFile($file)
+    public static function __parseExportFile($file)
     {
         $arResult = array();
 
@@ -147,14 +155,15 @@ class CDeliveryUPS
         $bSkip = true;
         $arResult = array();
         while ($data = fgetcsv($fp, 1000, ",")) {
-            if (stristr($data[0], "service option")) {
-                if (stristr($data[1], "express saver"))
+            if (mb_stristr($data[0], "service option")) {
+                if (mb_stristr($data[1], "express saver")) {
                     $current_profile = "express_saver";
-                else
+                } else {
                     $current_profile = "express";
+                }
 
                 $arResult[$current_profile] = array();
-            } elseif (stristr($data[1], 'weight')) {
+            } elseif (mb_stristr($data[1], 'weight')) {
                 if ($check == 0) {
                     $bSkip = true;
                     $check++;
@@ -163,8 +172,9 @@ class CDeliveryUPS
                     $check = 0;
                 }
             } elseif (count($data) == 10) {
-                if ($bSkip) continue;
-                else {
+                if ($bSkip) {
+                    continue;
+                } else {
                     foreach ($data as $key => $value) {
                         $value = trim($value);
                         $value = str_replace(".", '', $value);
@@ -228,50 +238,73 @@ class CDeliveryUPS
         return $arFinalResult;
     }
 
-    function __GetZones($file)
+    public static function __GetZones($file)
     {
         static $arUPSZones;
 
-        if (is_array($arUPSZones)) return $arUPSZones;
+        if (is_array($arUPSZones)) {
+            return $arUPSZones;
+        }
 
-        if (file_exists(dirname(__FILE__) . "/" . DELIVERY_UPS_ZONES_PHP_FILE))
+        if (file_exists(dirname(__FILE__) . "/" . DELIVERY_UPS_ZONES_PHP_FILE)) {
             require(DELIVERY_UPS_ZONES_PHP_FILE);
+        }
 
-        if (!is_array($arUPSZones) || count($arUPSZones) <= 0)
+        if (!is_array($arUPSZones) || count($arUPSZones) <= 0) {
             $arUPSZones = CDeliveryUPS::__parseZonesFile($file);
+        }
 
         return $arUPSZones;
     }
 
-    function __GetExport($file)
+    public static function __GetExport($file)
     {
         static $arUPSExport;
 
-        if (is_array($arUPSExport)) return $arUPSExport;
+        if (is_array($arUPSExport)) {
+            return $arUPSExport;
+        }
 
-        if (file_exists(dirname(__FILE__) . "/" . DELIVERY_UPS_EXPORT_PHP_FILE))
+        if (file_exists(dirname(__FILE__) . "/" . DELIVERY_UPS_EXPORT_PHP_FILE)) {
             require(DELIVERY_UPS_EXPORT_PHP_FILE);
+        }
 
-        if (!is_array($arUPSExport) || count($arUPSExport) <= 0)
+        if (!is_array($arUPSExport) || count($arUPSExport) <= 0) {
             $arUPSExport = CDeliveryUPS::__parseExportFile($file);
+        }
 
         return $arUPSExport;
     }
 
 
-    function __GetLocation(&$arLocation, $arConfig)
+    public static function __GetLocation(&$arLocation, $arConfig)
     {
         $zones_file = $arConfig["zones_csv"]["VALUE"];
         $arZones = CDeliveryUPS::__GetZones($zones_file);
 
         foreach ($arZones as $country_id => $arZone) {
             if (
-                ($arLocation["COUNTRY_NAME_ORIG"] && stristr($arZone[0], $arLocation["COUNTRY_NAME_ORIG"]) !== false)
-                || ($arLocation["COUNTRY_SHORT_NAME"] && stristr($arZone[0], $arLocation["COUNTRY_SHORT_NAME"]) !== false)
-                || ($arLocation["COUNTRY_NAME_LANG"] && stristr($arZone[0], $arLocation["COUNTRY_NAME_LANG"]) !== false)
-                || ($arLocation["COUNTRY_NAME_ORIG"] && stristr($arLocation["COUNTRY_NAME_ORIG"], $arZone[0]) !== false)
-                || ($arLocation["COUNTRY_SHORT_NAME"] && stristr($arLocation["COUNTRY_SHORT_NAME"], $arZone[0]) !== false)
-                || ($arLocation["COUNTRY_NAME_LANG"] && stristr($arLocation["COUNTRY_NAME_LANG"], $arZone[0]) !== false)
+                ($arLocation["COUNTRY_NAME_ORIG"] && mb_stristr($arZone[0], $arLocation["COUNTRY_NAME_ORIG"]) !== false)
+                || ($arLocation["COUNTRY_SHORT_NAME"] && mb_stristr(
+                        $arZone[0],
+                        $arLocation["COUNTRY_SHORT_NAME"]
+                    ) !== false)
+                || ($arLocation["COUNTRY_NAME_LANG"] && mb_stristr(
+                        $arZone[0],
+                        $arLocation["COUNTRY_NAME_LANG"]
+                    ) !== false)
+                || ($arLocation["COUNTRY_NAME_ORIG"] && mb_stristr(
+                        $arLocation["COUNTRY_NAME_ORIG"],
+                        $arZone[0]
+                    ) !== false)
+                || ($arLocation["COUNTRY_SHORT_NAME"] && mb_stristr(
+                        $arLocation["COUNTRY_SHORT_NAME"],
+                        $arZone[0]
+                    ) !== false)
+                || ($arLocation["COUNTRY_NAME_LANG"] && mb_stristr(
+                        $arLocation["COUNTRY_NAME_LANG"],
+                        $arZone[0]
+                    ) !== false)
             ) {
                 $arLocation["COUNTRY_SID"] = $country_id;
                 break;
@@ -280,7 +313,7 @@ class CDeliveryUPS
     }
 
 
-    function Calculate($profile, $arConfig, $arOrder, $STEP, $TEMP = false)
+    public static function Calculate($profile, $arConfig, $arOrder, $STEP, $TEMP = false)
     {
         $arOrder["WEIGHT"] = CSaleMeasure::Convert($arOrder["WEIGHT"], "G", "KG");
 
@@ -288,8 +321,9 @@ class CDeliveryUPS
 
         if (LANGUAGE_ID !== 'en') {
             $arCountry = CSaleLocation::GetCountryLangByID($arLocationTo['COUNTRY_ID'], 'en');
-            if (false !== $arCountry)
+            if (false !== $arCountry) {
                 $arLocationTo['COUNTRY_NAME_LANG'] = $arCountry['NAME'];
+            }
         }
 
         CDeliveryUPS::__GetLocation($arLocationTo, $arConfig);
@@ -299,7 +333,8 @@ class CDeliveryUPS
 
         reset($arPriceTable);
         do {
-            list($key, $arZoneTable) = each($arPriceTable[$profile]);
+            $key = key($arPriceTable[$profile]);
+            next($arPriceTable[$profile]);
         } while ($key && (doubleval($arOrder["WEIGHT"]) > doubleval($key)));
 
         $zone = $arZones[$arLocationTo["COUNTRY_SID"]][$profile == "express_saver" ? 1 : 2];
@@ -313,37 +348,42 @@ class CDeliveryUPS
     }
 
 
-    function Compability($arOrder, $arConfig)
+    public static function Compability($arOrder, $arConfig)
     {
-        if (intval($arOrder["LOCATION_FROM"]) <= 0)
+        if (intval($arOrder["LOCATION_FROM"]) <= 0) {
             return array();
+        }
 
         $arLocationFrom = CSaleLocation::GetByID($arOrder["LOCATION_FROM"]);
         $arLocationTo = CSaleLocation::GetByID($arOrder["LOCATION_TO"]);
 
-        if ($arLocationFrom["COUNTRY_ID"] == $arLocationTo["COUNTRY_ID"])
+        if ($arLocationFrom["COUNTRY_ID"] == $arLocationTo["COUNTRY_ID"]) {
             return array();
+        }
 
         if (LANGUAGE_ID !== 'en') {
             $arCountry = CSaleLocation::GetCountryLangByID($arLocationTo['COUNTRY_ID'], 'en');
-            if (false !== $arCountry)
+            if (false !== $arCountry) {
                 $arLocationTo['COUNTRY_NAME_LANG'] = $arCountry['NAME'];
+            }
         }
 
         CDeliveryUPS::__GetLocation($arLocationTo, $arConfig);
 
-        if (strlen($arLocationTo["COUNTRY_SID"]) <= 0)
+        if ($arLocationTo["COUNTRY_SID"] == '') {
             return array();
+        }
 
         $zones_file = $arConfig["zones_csv"]["VALUE"];
         $arZones = CDeliveryUPS::__GetZones($zones_file);
 
         $arZoneTo = $arZones[$arLocationTo["COUNTRY_SID"]];
 
-        if (intval($arZoneTo[1]) > 0)
+        if (intval($arZoneTo[1]) > 0) {
             return array("express", "express_saver");
-        else
+        } else {
             return array("express");
+        }
     }
 }
 

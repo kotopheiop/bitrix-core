@@ -71,7 +71,6 @@ class QuerySelectorEngine extends QueryEngine
                     //throw new \Bitrix\Main\NotSupportedException('Not supported instruction ' . $instruction['code']);
                     return array();
             }
-
         }
 
         if (count($filter) <= 0) {
@@ -138,9 +137,9 @@ class QuerySelectorEngine extends QueryEngine
         $list = explode('=', $string);
 
         if (isset($list[1])) {
-            $operation = substr($list[0], -1);
+            $operation = mb_substr($list[0], -1);
             if (in_array($operation, $operations)) {
-                $result['name'] = trim(substr($list[0], 0, -1));
+                $result['name'] = trim(mb_substr($list[0], 0, -1));
                 $result['operation'] = $operation;
             } else {
                 $result['name'] = trim($list[0]);
@@ -165,13 +164,13 @@ class QuerySelectorEngine extends QueryEngine
         $path = array();
 
         $string = trim($string);
-        $length = strlen($string);
+        $length = mb_strlen($string);
 
         $i = 0;
         while ($i < $length) {
             $operator = '';
 
-            $char = substr($string, $i, 1);
+            $char = mb_substr($string, $i, 1);
             switch ($char) {
                 case '#':
                     $operator = self::PATH_CODE_ATTR;
@@ -247,17 +246,17 @@ class QuerySelectorEngine extends QueryEngine
         $escapeNext = false;
 
         while (++$i < $length) {
-            $char = substr($string, $i, 1);
+            $char = mb_substr($string, $i, 1);
             if ($char === '\\') {
                 if ($escapeNext) {
-                    $buffer = substr($buffer, 0, -1);
+                    $buffer = mb_substr($buffer, 0, -1);
                     $escapeNext = false;
                 } else {
                     $escapeNext = true;
                 }
             } elseif (in_array($char, $dividers)) {
                 if ($escapeNext) {
-                    $buffer = substr($buffer, 0, -1);
+                    $buffer = mb_substr($buffer, 0, -1);
                     $escapeNext = false;
                 } else {
                     break;

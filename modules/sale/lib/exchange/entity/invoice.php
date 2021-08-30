@@ -35,7 +35,11 @@ class Invoice extends OrderImport
      */
     protected function createEntity(array $fileds)
     {
-        return \Bitrix\Crm\Invoice\Invoice::create($this->settings->getSiteId(), $fileds['USER_ID'], $this->settings->getCurrency());
+        return \Bitrix\Crm\Invoice\Invoice::create(
+            $this->settings->getSiteId(),
+            $fileds['USER_ID'],
+            $this->settings->getCurrency()
+        );
     }
 
     /**
@@ -60,8 +64,9 @@ class Invoice extends OrderImport
      */
     public static function resolveEntityTypeId(Entity $order)
     {
-        if (!($order instanceof Order))
+        if (!($order instanceof Order)) {
             throw new ArgumentException("Entity must be instanceof Order");
+        }
 
         return EntityType::INVOICE;
     }

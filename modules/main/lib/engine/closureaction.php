@@ -31,10 +31,12 @@ final class ClosureAction extends Action
             $this->binder = AutoWire\Binder::buildForFunction($this->callable)
                 ->setSourcesParametersToMap($controller->getSourceParametersList())
                 ->setAutoWiredParameters(
-                    array_filter(array_merge(
-                        [$controller->getPrimaryAutoWiredParameter()],
-                        $controller->getAutoWiredParameters()
-                    ))
+                    array_filter(
+                        array_merge(
+                            [$controller->getPrimaryAutoWiredParameter()],
+                            $controller->getAutoWiredParameters()
+                        )
+                    )
                 );
         }
 

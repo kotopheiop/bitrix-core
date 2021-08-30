@@ -1,7 +1,8 @@
-<?
+<?php
 
-use Bitrix\Main\Localization\Loc,
-    Bitrix\Highloadblock as HL;
+use Bitrix\Highloadblock as HL;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Text\HtmlFilter;
 
 Loc::loadMessages(__FILE__);
 
@@ -34,7 +35,8 @@ class CIBlockPropertyDirectory
             'GetSettingsHTML' => array(__CLASS__, 'GetSettingsHTML'),
             'GetPropertyFieldHtml' => array(__CLASS__, 'GetPropertyFieldHtml'),
             'PrepareSettings' => array(__CLASS__, 'PrepareSettings'),
-            'GetOptionsData' => array(__CLASS__, 'GetOptionsData'), //TODO: remove this row after iblock 19.0.0 will be stabled
+            'GetOptionsData' => array(__CLASS__, 'GetOptionsData'),
+            //TODO: remove this row after iblock 19.0.0 will be stabled
             'GetAdminListViewHTML' => array(__CLASS__, 'GetAdminListViewHTML'),
             'GetPublicViewHTML' => array(__CLASS__, 'GetPublicViewHTML'),
             'GetPublicEditHTML' => array(__CLASS__, 'GetPublicEditHTML'),
@@ -43,7 +45,10 @@ class CIBlockPropertyDirectory
             'GetExtendedValue' => array(__CLASS__, 'GetExtendedValue'),
             'GetSearchContent' => array(__CLASS__, 'GetSearchContent'),
             'AddFilterFields' => array(__CLASS__, 'AddFilterFields'),
-            'GetUIFilterProperty' => array(__CLASS__, 'GetUIFilterProperty')
+            'GetUIFilterProperty' => array(__CLASS__, 'GetUIFilterProperty'),
+            'GetUIEntityEditorProperty' => array(__CLASS__, 'GetUIEntityEditorProperty'),
+            'GetUIEntityEditorPropertyEditHtml' => array(__CLASS__, 'GetUIEntityEditorPropertyEditHtml'),
+            'GetUIEntityEditorPropertyViewHtml' => array(__CLASS__, 'GetUIEntityEditorPropertyViewHtml'),
         );
     }
 
@@ -64,24 +69,29 @@ class CIBlockPropertyDirectory
         if (!empty($arProperty["USER_TYPE_SETTINGS"]) && is_array($arProperty["USER_TYPE_SETTINGS"])) {
             if (isset($arProperty["USER_TYPE_SETTINGS"]["size"])) {
                 $size = (int)$arProperty["USER_TYPE_SETTINGS"]["size"];
-                if ($size <= 0)
+                if ($size <= 0) {
                     $size = 1;
+                }
             }
 
             if (isset($arProperty["USER_TYPE_SETTINGS"]["width"])) {
                 $width = (int)$arProperty["USER_TYPE_SETTINGS"]["width"];
-                if ($width < 0)
+                if ($width < 0) {
                     $width = 0;
+                }
             }
 
-            if (isset($arProperty["USER_TYPE_SETTINGS"]["group"]) && $arProperty["USER_TYPE_SETTINGS"]["group"] === "Y")
+            if (isset($arProperty["USER_TYPE_SETTINGS"]["group"]) && $arProperty["USER_TYPE_SETTINGS"]["group"] === "Y") {
                 $group = "Y";
+            }
 
-            if (isset($arProperty["USER_TYPE_SETTINGS"]["multiple"]) && $arProperty["USER_TYPE_SETTINGS"]["multiple"] === "Y")
+            if (isset($arProperty["USER_TYPE_SETTINGS"]["multiple"]) && $arProperty["USER_TYPE_SETTINGS"]["multiple"] === "Y") {
                 $multiple = "Y";
+            }
 
-            if (isset($arProperty["USER_TYPE_SETTINGS"]["TABLE_NAME"]))
+            if (isset($arProperty["USER_TYPE_SETTINGS"]["TABLE_NAME"])) {
                 $directoryTableName = (string)$arProperty["USER_TYPE_SETTINGS"]['TABLE_NAME'];
+            }
         }
 
         $extendedSettings = false;
@@ -94,21 +104,25 @@ class CIBlockPropertyDirectory
         );
         $defaultValue = '';
         if ($directoryTableName !== '') {
-            $iterator = HL\HighloadBlockTable::getList([
-                'select' => ['ID'],
-                'filter' => ['=TABLE_NAME' => $directoryTableName]
-            ]);
+            $iterator = HL\HighloadBlockTable::getList(
+                [
+                    'select' => ['ID'],
+                    'filter' => ['=TABLE_NAME' => $directoryTableName]
+                ]
+            );
             $row = $iterator->fetch();
             if (!empty($row)) {
                 $defaultValue = self::getDefaultXmlId($row['ID']);
-                if ($defaultValue !== null)
+                if ($defaultValue !== null) {
                     $extendedSettings = true;
+                }
             }
             unset($row, $iterator);
         }
 
-        if (!$extendedSettings)
+        if (!$extendedSettings) {
             return $result;
+        }
 
         $arProperty['USER_TYPE_SETTINGS'] = $result;
         $arProperty['DEFAULT_VALUE'] = $defaultValue;
@@ -127,24 +141,30 @@ class CIBlockPropertyDirectory
     public static function GetSettingsHTML($arProperty, $strHTMLControlName, &$arPropertyFields)
     {
         $iblockID = 0;
-        if (isset($arProperty['IBLOCK_ID']))
+        if (isset($arProperty['IBLOCK_ID'])) {
             $iblockID = (int)$arProperty['IBLOCK_ID'];
+        }
         CJSCore::Init(array('translit'));
         $settings = static::PrepareSettings($arProperty);
-        if (isset($settings['USER_TYPE_SETTINGS']))
+        if (isset($settings['USER_TYPE_SETTINGS'])) {
             $settings = $settings['USER_TYPE_SETTINGS'];
+        }
         $arPropertyFields = array(
             'HIDE' => ['ROW_COUNT', 'COL_COUNT', 'MULTIPLE_CNT', 'DEFAULT_VALUE', 'WITH_DESCRIPTION'],
             'SET' => ['DEFAULT_VALUE' => '']
         );
 
         $directory = [];
-        $cellOption = '<option value="-1"' . ('' == $settings["TABLE_NAME"] ? ' selected' : '') . '>' . Loc::getMessage('HIBLOCK_PROP_DIRECTORY_NEW_DIRECTORY') . '</option>';
+        $cellOption = '<option value="-1"' . ('' == $settings["TABLE_NAME"] ? ' selected' : '') . '>' . Loc::getMessage(
+                'HIBLOCK_PROP_DIRECTORY_NEW_DIRECTORY'
+            ) . '</option>';
 
-        $rsData = HL\HighloadBlockTable::getList(array(
-            'select' => array('*', 'NAME_LANG' => 'LANG.NAME'),
-            'order' => array('NAME_LANG' => 'ASC', 'NAME' => 'ASC')
-        ));
+        $rsData = HL\HighloadBlockTable::getList(
+            array(
+                'select' => array('*', 'NAME_LANG' => 'LANG.NAME'),
+                'order' => array('NAME_LANG' => 'ASC', 'NAME' => 'ASC')
+            )
+        );
         while ($arData = $rsData->fetch()) {
             if ($settings['TABLE_NAME'] == $arData['TABLE_NAME']) {
                 $directory = $arData;
@@ -153,15 +173,18 @@ class CIBlockPropertyDirectory
             $arData['NAME_LANG'] = (string)$arData['NAME_LANG'];
             $hlblockTitle = ($arData['NAME_LANG'] != '' ? $arData['NAME_LANG'] : $arData['NAME']) . ' (' . $arData["TABLE_NAME"] . ')';
             $selected = ($settings["TABLE_NAME"] == $arData['TABLE_NAME']) ? ' selected' : '';
-            $cellOption .= '<option ' . $selected . ' value="' . htmlspecialcharsbx($arData["TABLE_NAME"]) . '">' . htmlspecialcharsbx($hlblockTitle) . '</option>';
+            $cellOption .= '<option ' . $selected . ' value="' . htmlspecialcharsbx(
+                    $arData["TABLE_NAME"]
+                ) . '">' . htmlspecialcharsbx($hlblockTitle) . '</option>';
             unset($hlblockTitle);
         }
         unset($arData, $rsData);
 
         if (!empty($directory)) {
             $defaultValue = self::getDefaultXmlId($directory);
-            if ($defaultValue !== null)
+            if ($defaultValue !== null) {
                 $arPropertyFields['SET']['DEFAULT_VALUE'] = $defaultValue;
+            }
             unset($defaultValue);
         }
         unset($directory);
@@ -184,7 +207,9 @@ class CIBlockPropertyDirectory
         $emptyDefaultValue = '';
         if ($multiple == 'N') {
             $emptyDefaultValue = '<tr id="hlbl_property_tr_empty">' .
-                '<td colspan="6" style="text-align: center;">' . Loc::getMessage('HIBLOCK_PROP_DIRECTORY_EMPTY_DEFAULT_VALUE') . '</td>' .
+                '<td colspan="6" style="text-align: center;">' . Loc::getMessage(
+                    'HIBLOCK_PROP_DIRECTORY_EMPTY_DEFAULT_VALUE'
+                ) . '</td>' .
                 '<td style="text-align:center;">' .
                 '<input type="radio" name="PROPERTY_VALUES_DEF" id="PROPERTY_VALUES_DEF_EMPTY" value="-1" checked="checked">' .
                 '<td colspan="2">&nbsp;</td>' .
@@ -447,11 +472,17 @@ HIBSELECT;
                     $options = ' selected';
                     $selectedValue = true;
                 }
-                $cellOption .= '<option ' . $options . ' value="' . htmlspecialcharsbx($data['UF_XML_ID']) . '">' . htmlspecialcharsEx($data["UF_NAME"] . ' [' . $data["ID"]) . ']</option>';
+                $cellOption .= '<option ' . $options . ' value="' . htmlspecialcharsbx(
+                        $data['UF_XML_ID']
+                    ) . '">' . htmlspecialcharsEx($data["UF_NAME"] . ' [' . $data["ID"]) . ']</option>';
             }
-            $defaultOption = '<option value=""' . ($selectedValue ? '' : ' selected') . '>' . Loc::getMessage('HIBLOCK_PROP_DIRECTORY_EMPTY_VALUE') . '</option>';
+            $defaultOption = '<option value=""' . ($selectedValue ? '' : ' selected') . '>' . Loc::getMessage(
+                    'HIBLOCK_PROP_DIRECTORY_EMPTY_VALUE'
+                ) . '</option>';
         } else {
-            $cellOption = '<option value="" selected>' . Loc::getMessage('HIBLOCK_PROP_DIRECTORY_EMPTY_VALUE') . '</option>';
+            $cellOption = '<option value="" selected>' . Loc::getMessage(
+                    'HIBLOCK_PROP_DIRECTORY_EMPTY_VALUE'
+                ) . '</option>';
         }
         return $defaultOption . $cellOption;
     }
@@ -491,18 +522,22 @@ HIBSELECT;
      */
     public static function GetExtendedValue($arProperty, $value)
     {
-        if (!isset($value['VALUE']))
+        if (!isset($value['VALUE'])) {
             return false;
+        }
 
-        if (is_array($value['VALUE']) && count($value['VALUE']) == 0)
+        if (is_array($value['VALUE']) && count($value['VALUE']) == 0) {
             return false;
+        }
 
-        if (empty($arProperty['USER_TYPE_SETTINGS']['TABLE_NAME']))
+        if (empty($arProperty['USER_TYPE_SETTINGS']['TABLE_NAME'])) {
             return false;
+        }
 
         $tableName = $arProperty['USER_TYPE_SETTINGS']['TABLE_NAME'];
-        if (!isset(self::$arItemCache[$tableName]))
+        if (!isset(self::$arItemCache[$tableName])) {
             self::$arItemCache[$tableName] = array();
+        }
 
         if (is_array($value['VALUE']) || !isset(self::$arItemCache[$tableName][$value['VALUE']])) {
             $data = self::getEntityFieldsByFilter(
@@ -556,8 +591,7 @@ HIBSELECT;
         $arProperty,
         $value,
         /** @noinspection PhpUnusedParameterInspection */ $strHTMLControlName
-    )
-    {
+    ) {
         $dataValue = self::GetExtendedValue($arProperty, $value);
         if ($dataValue) {
             return htmlspecialcharsbx($dataValue['UF_NAME']);
@@ -577,12 +611,13 @@ HIBSELECT;
     {
         $dataValue = self::GetExtendedValue($arProperty, $value);
         if ($dataValue) {
-            if (isset($strHTMLControlName['MODE']) && 'CSV_EXPORT' == $strHTMLControlName['MODE'])
+            if (isset($strHTMLControlName['MODE']) && 'CSV_EXPORT' == $strHTMLControlName['MODE']) {
                 return $dataValue['UF_XML_ID'];
-            elseif (isset($strHTMLControlName['MODE']) && ('SIMPLE_TEXT' == $strHTMLControlName['MODE'] || 'ELEMENT_TEMPLATE' == $strHTMLControlName['MODE']))
+            } elseif (isset($strHTMLControlName['MODE']) && ('SIMPLE_TEXT' == $strHTMLControlName['MODE'] || 'ELEMENT_TEMPLATE' == $strHTMLControlName['MODE'])) {
                 return $dataValue['UF_NAME'];
-            else
+            } else {
                 return htmlspecialcharsbx($dataValue['UF_NAME']);
+            }
         }
         return '';
     }
@@ -600,10 +635,11 @@ HIBSELECT;
         $lAdmin->InitFilter(array($strHTMLControlName["VALUE"]));
         $filterValue = $GLOBALS[$strHTMLControlName["VALUE"]];
 
-        if (isset($filterValue) && is_array($filterValue))
+        if (isset($filterValue) && is_array($filterValue)) {
             $values = $filterValue;
-        else
+        } else {
             $values = array();
+        }
 
         $settings = CIBlockPropertyDirectory::PrepareSettings($arProperty);
         $size = ($settings["size"] > 1 ? ' size="' . $settings["size"] . '"' : '');
@@ -628,14 +664,14 @@ HIBSELECT;
         $arProperty,
         $value,
         /** @noinspection PhpUnusedParameterInspection */ $strHTMLControlName
-    )
-    {
+    ) {
         $dataValue = self::GetExtendedValue($arProperty, $value);
         if ($dataValue) {
-            if (isset($dataValue['UF_NAME']))
+            if (isset($dataValue['UF_NAME'])) {
                 return $dataValue['UF_NAME'];
-            else
+            } else {
                 return $dataValue['UF_XML_ID'];
+            }
         }
         return '';
     }
@@ -654,17 +690,23 @@ HIBSELECT;
         $filtered = false;
         $values = array();
 
-        if (isset($_REQUEST[$strHTMLControlName["VALUE"]]))
-            $values = (is_array($_REQUEST[$strHTMLControlName["VALUE"]]) ? $_REQUEST[$strHTMLControlName["VALUE"]] : array($_REQUEST[$strHTMLControlName["VALUE"]]));
-        elseif (isset($GLOBALS[$strHTMLControlName["VALUE"]]))
-            $values = (is_array($GLOBALS[$strHTMLControlName["VALUE"]]) ? $GLOBALS[$strHTMLControlName["VALUE"]] : array($GLOBALS[$strHTMLControlName["VALUE"]]));
+        if (isset($_REQUEST[$strHTMLControlName["VALUE"]])) {
+            $values = (is_array(
+                $_REQUEST[$strHTMLControlName["VALUE"]]
+            ) ? $_REQUEST[$strHTMLControlName["VALUE"]] : array($_REQUEST[$strHTMLControlName["VALUE"]]));
+        } elseif (isset($GLOBALS[$strHTMLControlName["VALUE"]])) {
+            $values = (is_array(
+                $GLOBALS[$strHTMLControlName["VALUE"]]
+            ) ? $GLOBALS[$strHTMLControlName["VALUE"]] : array($GLOBALS[$strHTMLControlName["VALUE"]]));
+        }
 
         if (!empty($values)) {
             $clearValues = array();
             foreach ($values as $oneValue) {
                 $oneValue = (string)$oneValue;
-                if ($oneValue != '')
+                if ($oneValue != '') {
                     $clearValues[] = $oneValue;
+                }
             }
             $values = $clearValues;
             unset($oneValue, $clearValues);
@@ -684,9 +726,10 @@ HIBSELECT;
     public static function createHighloadTableName($name)
     {
         $name = trim((string)$name);
-        if ($name == '')
+        if ($name == '') {
             return false;
-        $name = substr(self::TABLE_PREFIX . $name, 0, 30);
+        }
+        $name = mb_substr(self::TABLE_PREFIX . $name, 0, 30);
         return $name;
     }
 
@@ -718,8 +761,9 @@ HIBSELECT;
     {
         $arResult = array();
         $tableName = (string)$tableName;
-        if (!is_array($listDescr))
+        if (!is_array($listDescr)) {
             $listDescr = array();
+        }
         if (!empty($tableName)) {
             if (!isset(self::$hlblockCache[$tableName])) {
                 self::$hlblockCache[$tableName] = HL\HighloadBlockTable::getList(
@@ -736,16 +780,19 @@ HIBSELECT;
                     self::$directoryMap[$tableName] = $entity->getFields();
                     unset($entity);
                 }
-                if (!isset(self::$directoryMap[$tableName]['UF_XML_ID']))
+                if (!isset(self::$directoryMap[$tableName]['UF_XML_ID'])) {
                     return $arResult;
+                }
                 $entityDataClass = self::$hlblockClassNameCache[$tableName];
 
                 $nameExist = isset(self::$directoryMap[$tableName]['UF_NAME']);
-                if (!$nameExist)
+                if (!$nameExist) {
                     $listDescr['select'] = array('UF_XML_ID', 'ID');
+                }
                 $fileExists = isset(self::$directoryMap[$tableName]['UF_FILE']);
-                if ($fileExists)
+                if ($fileExists) {
                     $listDescr['select'][] = 'UF_FILE';
+                }
 
                 $sortExist = isset(self::$directoryMap[$tableName]['UF_SORT']);
                 $listDescr['order'] = array();
@@ -753,16 +800,18 @@ HIBSELECT;
                     $listDescr['order']['UF_SORT'] = 'ASC';
                     $listDescr['select'][] = 'UF_SORT';
                 }
-                if ($nameExist)
+                if ($nameExist) {
                     $listDescr['order']['UF_NAME'] = 'ASC';
-                else
+                } else {
                     $listDescr['order']['UF_XML_ID'] = 'ASC';
+                }
                 $listDescr['order']['ID'] = 'ASC';
                 /** @var \Bitrix\Main\DB\Result $rsData */
                 $rsData = $entityDataClass::getList($listDescr);
                 while ($arData = $rsData->fetch()) {
-                    if (!$nameExist)
+                    if (!$nameExist) {
                         $arData['UF_NAME'] = $arData['UF_XML_ID'];
+                    }
                     $arData['SORT'] = ($sortExist ? $arData['UF_SORT'] : $arData['ID']);
                     $arResult[] = $arData;
                 }
@@ -777,20 +826,23 @@ HIBSELECT;
         $result = [];
         if (!is_array($value)) {
             $value = (string)$value;
-            if ($value !== '')
+            if ($value !== '') {
                 $result[] = $value;
+            }
         } else {
             if (!empty($value)) {
                 foreach ($value as $row) {
                     $oneValue = '';
                     if (is_array($row)) {
-                        if (isset($row['VALUE']))
+                        if (isset($row['VALUE'])) {
                             $oneValue = (string)$row['VALUE'];
+                        }
                     } else {
                         $oneValue = (string)$row;
                     }
-                    if ($oneValue !== '')
+                    if ($oneValue !== '') {
                         $result[] = $oneValue;
+                    }
                 }
                 unset($oneValue, $row);
             }
@@ -825,20 +877,299 @@ HIBSELECT;
             }
             $order['ID'] = 'ASC';
 
-            $iterator = $entityClassName::getList([
-                'select' => $select,
-                'filter' => ['=UF_DEF' => 1],
-                'order' => $order,
-                'limit' => 1
-            ]);
+            $iterator = $entityClassName::getList(
+                [
+                    'select' => $select,
+                    'filter' => ['=UF_DEF' => 1],
+                    'order' => $order,
+                    'limit' => 1
+                ]
+            );
             $row = $iterator->fetch();
-            if (!empty($row))
+            if (!empty($row)) {
                 $result = $row['UF_XML_ID'];
+            }
             unset($row, $iterator);
             unset($entityClassName);
         }
         unset($fields, $entity);
 
         return $result;
+    }
+
+    private static function getEntityFieldsForTable($hlTableName)
+    {
+        if (!isset(self::$arFullCache[$hlTableName])) {
+            self::$arFullCache[$hlTableName] = static::getEntityFieldsByFilter(
+                $hlTableName,
+                [
+                    'select' => ['UF_XML_ID', 'UF_NAME', 'ID']
+                ]
+            );
+        }
+
+        return self::$arFullCache[$hlTableName];
+    }
+
+    public static function GetUIEntityEditorProperty($settings, $value): ?array
+    {
+        $hlTableName = (string)($settings['USER_TYPE_SETTINGS']['TABLE_NAME'] ?? '');
+
+        if ($hlTableName === '') {
+            return null;
+        }
+
+        $gridMode = ($settings['GRID_MODE'] ?? false) === true;
+        $hasImages = false;
+        $items = [];
+
+        foreach (static::getEntityFieldsForTable($hlTableName) as $data) {
+            $item = [
+                'NAME' => $data['UF_NAME'] ?? '',
+                'TEXT' => $data['UF_NAME'] ?? '',
+                'VALUE' => $data['UF_XML_ID'],
+                'DESCRIPTION' => $data['UF_DESCRIPTION'] ?? '',
+            ];
+
+            if (isset($data['UF_FILE']) && (int)$data['UF_FILE'] >= 0) {
+                $hasImages = true;
+                $item['IMAGE'] = $data['UF_FILE'];
+            }
+
+            if ($hasImages) {
+                $image = \CFile::GetFileArray($data['UF_FILE']) ?: null;
+                $item['IMAGE_SRC'] = $image['SRC'];
+                if ($image) {
+                    if ($settings['MULTIPLE'] === 'Y') {
+                        $item['HTML'] = "<span class=\"catalog-multi-list-dictionary-select-icon\" style=\"background-image:url('{$image['SRC']}');\"></span> " . htmlspecialcharsbx(
+                                $item['NAME']
+                            );
+                    } else {
+                        $item['NAME'] = "<span class=\"catalog-list-dictionary-select-icon\" style=\"background-image:url('{$image['SRC']}');\"></span> " . htmlspecialcharsbx(
+                                $item['NAME']
+                            );
+                    }
+                } else {
+                    if ($settings['MULTIPLE'] !== 'Y') {
+                        $item['NAME'] = htmlspecialcharsbx($item['NAME']);
+                    }
+                }
+            }
+
+            $items[] = $item;
+        }
+
+        if ($settings['MULTIPLE'] === 'Y') {
+            $type = 'multilist';
+        } elseif ($hasImages && $gridMode) {
+            $type = 'custom';
+        } else {
+            $type = 'list';
+        }
+
+        return [
+            'type' => $type,
+            'data' => [
+                'userType' => 'directory',
+                'isHtml' => $hasImages,
+                'items' => $items,
+                'enableEmptyItem' => $settings['IS_REQUIRED'] === 'N',
+            ],
+        ];
+    }
+
+    public static function GetUIEntityEditorPropertyEditHtml(array $params = []): string
+    {
+        $settings = $params['SETTINGS'] ?? [];
+        $hlTableName = (string)($settings['USER_TYPE_SETTINGS']['TABLE_NAME'] ?? '');
+
+        if ($hlTableName === '') {
+            return '';
+        }
+
+        $propertyId = $settings['ID'];
+        $popupId = 'directory_popup_' . CUtil::JSEscape($propertyId);
+
+        $inputHtml = '';
+        $labelHtml = '';
+        $selectedHtml = '';
+
+        $entityFields = static::getEntityFieldsForTable($hlTableName);
+
+        if ($settings['IS_REQUIRED'] === 'N') {
+            array_unshift(
+                $entityFields,
+                [
+                    'UF_XML_ID' => '0',
+                    'UF_NAME' => Loc::getMessage('HIBLOCK_PROP_DIRECTORY_EMPTY_GRID_VALUE'),
+                ]
+            );
+        }
+
+        $checkedXmlId = null;
+
+        foreach ($entityFields as $field) {
+            if ($field['UF_XML_ID'] === $params['VALUE']) {
+                $checkedXmlId = $field['UF_XML_ID'];
+                break;
+            }
+        }
+
+        if (!$checkedXmlId && !empty($entityFields)) {
+            $checkedXmlId = reset($entityFields)['UF_XML_ID'];
+        }
+
+        foreach ($entityFields as $field) {
+            $checked = $field['UF_XML_ID'] === $checkedXmlId;
+            $name = HtmlFilter::encode($field['UF_NAME']);
+            $xmlId = HtmlFilter::encode($field['UF_XML_ID']);
+
+            $image = null;
+            if (!empty($field['UF_FILE'])) {
+                $image = \CFile::GetFileArray($field['UF_FILE']) ?: null;
+            }
+
+            if ($checked) {
+                if (!empty($image['SRC'])) {
+                    $selectedHtml .= "<span class=\"catalog-productcard-select-btn-color-icon\" style=\"background-image:url('{$image['SRC']}');\"></span>";
+                }
+
+                $selectedHtml .= " <span class=\"catalog-productcard-select-param-text\">{$name}</span>";
+            }
+
+            $inputName = $params['FIELD_NAME'] . '_' . $params['ELEMENT_ID'];
+            $inputId = $params['FIELD_NAME'] . '_' . $xmlId . '_' . $params['ELEMENT_ID'];
+            $checkedValue = $checked ? 'checked="checked"' : '';
+            $inputHtml .= "<input style=\"display: none;\" type=\"radio\" name=\"$inputName\" id=\"$inputId\" value=\"$xmlId\" $checkedValue />";
+
+            $class = $checked ? ' selected' : '';
+            $imageHtml = '';
+
+            if (!empty($image['SRC'])) {
+                $imageHtml .= "<span class=\"catalog-productcard-select-btn-color-icon\" style=\"background-image:url('{$image['SRC']}');\"></span>";
+            }
+
+            $html = <<<LABEL
+<li class="catalog-productcard-popup-select-item$class">
+	<label for="$inputId" data-role="label_$xmlId" class="catalog-productcard-popup-select-label"
+		onclick="selectDropDownItem(event, this, '$popupId')">
+		$imageHtml <span class="catalog-productcard-popup-select-text">$name</span>
+	</label>
+</li>		
+LABEL;
+            $labelHtml .= $html;
+        }
+
+        if ($selectedHtml === '') {
+            $selectedHtml = Loc::getMessage('HIBLOCK_PROP_DIRECTORY_EMPTY_GRID_VALUE');
+        }
+
+        return <<<HTML
+<div class="catalog-productcard-select">
+	<div class="catalog-productcard-select-container">
+		<div class="catalog-productcard-select-block" onclick="showDropDownPopup(event, this, '$popupId')">
+			<div class="catalog-productcard-select-text fix" data-role="currentOption">
+				$selectedHtml
+			</div>
+			<div class="catalog-productcard-select-arrow"></div>
+			$inputHtml
+			<div class="catalog-productcard-popup-select" data-role="dropdownContent" style="display: none">
+				<ul class="catalog-productcard-popup-select-inner" data-propertyId="$propertyId">$labelHtml</ul>
+			</div>
+		</div>
+	</div>
+</div>
+<script>
+	if (!window.showDropDownPopup)
+	{
+		window.showDropDownPopup = function(event, element, popupId)
+		{
+			var popup = BX.Main.PopupManager.getPopupById("prop_directory_" + popupId);
+			if (popup)
+			{
+				popup.close();
+				return;
+			}
+			
+			var contentNode = BX.clone(element.querySelector('[data-role="dropdownContent"]'));	
+			var items = contentNode.querySelectorAll('label');
+			for (var i in items)
+			{
+				if (items.hasOwnProperty(i))
+				{
+					var input = document.getElementById(items[i].getAttribute('for'));
+					if (BX.type.isDomNode(input) && input.checked)
+					{
+						BX.addClass(items[i].parentNode, 'selected');							
+					}
+					else
+					{
+						BX.removeClass(items[i].parentNode, 'selected');								
+					}
+				}
+			}
+			
+			popup = BX.Main.PopupManager.create(
+				"prop_directory_" + popupId,
+				element,
+				{
+					cacheable: false,
+					autoHide: true,
+					offsetLeft: 0,
+					padding: 0,
+					offsetTop: 3,
+					minWidth: 400,
+					overlay: false,
+					draggable: {restrict: true},
+					closeByEsc: true,
+					content: contentNode
+				}
+			);
+			popup.show();
+		};
+	}
+	
+	if (!window.selectDropDownItem)
+	{
+		window.selectDropDownItem = function(event, element, popupId)
+		{
+			var popup = BX.Main.PopupManager.getPopupById("prop_directory_" + popupId);
+			if (popup)
+			{
+				var currentOption = popup.bindElement.querySelector('[data-role="currentOption"]');
+				currentOption.innerHTML = element.innerHTML;
+			}
+		};
+	}
+</script>
+HTML;
+    }
+
+    public static function GetUIEntityEditorPropertyViewHtml(array $params = []): string
+    {
+        $settings = $params['SETTINGS'] ?? [];
+        $value = ['VALUE' => $params['VALUE'] ?? ''];
+
+        $viewHtml = '';
+
+        $dataValue = static::getExtendedValue($settings, $value);
+        if ($dataValue) {
+            $viewHtml .= '<div class="brandblock-block-wrapper">';
+
+            if (!empty($dataValue['UF_FILE'])) {
+                $image = \CFile::GetFileArray($dataValue['UF_FILE']);
+                if ($image) {
+                    $viewHtml .= '<span class="brandblock-block" style="background-image:url(\'';
+                    $viewHtml .= $image['SRC'];
+                    $viewHtml .= '\');"></span>';
+                }
+            }
+
+            $viewHtml .= htmlspecialcharsbx($dataValue['UF_NAME']);
+            $viewHtml .= '</div>';
+        }
+
+
+        return $viewHtml;
     }
 }

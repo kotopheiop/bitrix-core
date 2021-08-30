@@ -72,30 +72,54 @@ class Storage
     {
         $connection = \Bitrix\Main\Application::getConnection();
 
-        $connection->createTable($this->getTableName(), array(
-            "SECTION_ID" => new \Bitrix\Main\Entity\IntegerField("SECTION_ID", array(
-                'required' => true,
-            )),
-            "ELEMENT_ID" => new \Bitrix\Main\Entity\IntegerField("ELEMENT_ID", array(
-                'required' => true,
-            )),
-            "FACET_ID" => new \Bitrix\Main\Entity\IntegerField("FACET_ID", array(
-                'required' => true,
-            )),
-            "VALUE" => new \Bitrix\Main\Entity\IntegerField("VALUE", array(
-                'required' => true,
-            )),
-            "VALUE_NUM" => new \Bitrix\Main\Entity\FloatField("VALUE_NUM", array(
-                'required' => true,
-            )),
-            "INCLUDE_SUBSECTIONS" => new \Bitrix\Main\Entity\BooleanField("INCLUDE_SUBSECTIONS", array(
-                'required' => true,
-                'values' => array(0, 1),
-            )),
-        ), array("SECTION_ID", "FACET_ID", "VALUE", "VALUE_NUM", "ELEMENT_ID"));
+        $connection->createTable(
+            $this->getTableName(),
+            array(
+                "SECTION_ID" => new \Bitrix\Main\Entity\IntegerField(
+                    "SECTION_ID", array(
+                    'required' => true,
+                )
+                ),
+                "ELEMENT_ID" => new \Bitrix\Main\Entity\IntegerField(
+                    "ELEMENT_ID", array(
+                    'required' => true,
+                )
+                ),
+                "FACET_ID" => new \Bitrix\Main\Entity\IntegerField(
+                    "FACET_ID", array(
+                    'required' => true,
+                )
+                ),
+                "VALUE" => new \Bitrix\Main\Entity\IntegerField(
+                    "VALUE", array(
+                    'required' => true,
+                )
+                ),
+                "VALUE_NUM" => new \Bitrix\Main\Entity\FloatField(
+                    "VALUE_NUM", array(
+                    'required' => true,
+                )
+                ),
+                "INCLUDE_SUBSECTIONS" => new \Bitrix\Main\Entity\BooleanField(
+                    "INCLUDE_SUBSECTIONS", array(
+                    'required' => true,
+                    'values' => array(0, 1),
+                )
+                ),
+            ),
+            array("SECTION_ID", "FACET_ID", "VALUE", "VALUE_NUM", "ELEMENT_ID")
+        );
 
-        $connection->createIndex($this->getTableName(), 'IX_' . $this->getTableName() . '_0', array("SECTION_ID", "FACET_ID", "VALUE_NUM", "VALUE", "ELEMENT_ID"));
-        $connection->createIndex($this->getTableName(), 'IX_' . $this->getTableName() . '_1', array("ELEMENT_ID", "SECTION_ID", "FACET_ID"));
+        $connection->createIndex(
+            $this->getTableName(),
+            'IX_' . $this->getTableName() . '_0',
+            array("SECTION_ID", "FACET_ID", "VALUE_NUM", "VALUE", "ELEMENT_ID")
+        );
+        $connection->createIndex(
+            $this->getTableName(),
+            'IX_' . $this->getTableName() . '_1',
+            array("ELEMENT_ID", "SECTION_ID", "FACET_ID")
+        );
 
         self::$exists[$this->iblockId] = true;
     }
@@ -146,7 +170,8 @@ class Storage
         $connection = \Bitrix\Main\Application::getConnection();
 
         try {
-            $connection->query("
+            $connection->query(
+                "
 				INSERT INTO " . $this->getTableName() . " (
 					SECTION_ID
 					,ELEMENT_ID
@@ -162,9 +187,74 @@ class Storage
 					," . doubleval($valueNum) . "
 					," . ($includeSubsections > 0 ? 1 : 0) . "
 				)
-			");
+			"
+            );
         } catch (\Bitrix\Main\DB\SqlException $e) {
             return false;
+        }
+
+        return true;
+    }
+
+    protected $insertBuffer = array();
+    protected $insertLength = 0;
+    protected $insertMax = 1024000;
+
+    /**
+     * Adds index entry to an queue for batch add.
+     *
+     * @param integer $sectionId Identifier of the element section.
+     * @param integer $elementId Identifier of the element.
+     * @param integer $facetId Identifier of the property/price.
+     * @param integer $value Dictionary value or 0.
+     * @param float $valueNum Value of an numeric property or price.
+     * @param boolean $includeSubsections If section has parent or direct element connection.
+     *
+     * @return boolean
+     */
+    public function queueIndexEntry($sectionId, $elementId, $facetId, $value, $valueNum, $includeSubsections)
+    {
+        $connection = \Bitrix\Main\Application::getConnection();
+        $sqlHelper = $connection->getSqlHelper();
+
+        $values = "("
+            . intval($sectionId) . ","
+            . intval($elementId) . ","
+            . intval($facetId) . ","
+            . intval($value) . ","
+            . doubleval($valueNum) . ","
+            . ($includeSubsections > 0 ? 1 : 0)
+            . ")";
+        $this->insertBuffer[] = $values;
+        $this->insertLength += mb_strlen($values);
+        if ($this->insertLength > $this->insertMax) {
+            return $this->flushIndexEntries();
+        }
+
+        return true;
+    }
+
+    /**
+     * Writes all index entries from the queue to the database.
+     *
+     * @return boolean
+     */
+    public function flushIndexEntries()
+    {
+        $connection = \Bitrix\Main\Application::getConnection();
+        if ($this->insertBuffer) {
+            try {
+                $insertQuery = "
+					INSERT INTO " . $this->getTableName() . "
+					(SECTION_ID ,ELEMENT_ID ,FACET_ID ,VALUE ,VALUE_NUM ,INCLUDE_SUBSECTIONS)
+					VALUES " . implode(',', $this->insertBuffer) . "
+				";
+                $connection->query($insertQuery);
+                $this->insertBuffer = array();
+                $this->insertLength = 0;
+            } catch (\Bitrix\Main\DB\SqlException $e) {
+                return false;
+            }
         }
 
         return true;

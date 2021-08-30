@@ -46,7 +46,7 @@ final class Analyzer
     public function isContainGiftAction(array $discount)
     {
         if (isset($discount['ACTIONS']) && is_string($discount['ACTIONS'])) {
-            return strpos($discount['ACTIONS'], \CSaleActionGiftCtrlGroup::getControlID()) !== false;
+            return mb_strpos($discount['ACTIONS'], \CSaleActionGiftCtrlGroup::getControlID()) !== false;
         } elseif (isset($discount['ACTIONS_LIST']['CHILDREN']) && is_array($discount['ACTIONS_LIST']['CHILDREN'])) {
             foreach ($discount['ACTIONS_LIST']['CHILDREN'] as $child) {
                 if (
@@ -111,10 +111,12 @@ final class Analyzer
     {
         $query = DiscountTable::query();
         $query->setSelect(array('ID'));
-        $query->setFilter(array(
-            '=ACTIVE' => 'Y',
-            '!EXECUTE_MODE' => DiscountTable::EXECUTE_MODE_SEPARATELY,
-        ));
+        $query->setFilter(
+            array(
+                '=ACTIVE' => 'Y',
+                '!EXECUTE_MODE' => DiscountTable::EXECUTE_MODE_SEPARATELY,
+            )
+        );
         $query->setLimit(1);
 
         return !(bool)$query->exec()->fetch() && !$this->isThereCustomDiscountModules();
@@ -124,9 +126,11 @@ final class Analyzer
     {
         $query = DiscountModuleTable::query();
         $query->setSelect(array('ID'));
-        $query->setFilter(array(
-            '!@MODULE_ID' => $this->internalModules,
-        ));
+        $query->setFilter(
+            array(
+                '!@MODULE_ID' => $this->internalModules,
+            )
+        );
         $query->setLimit(1);
 
         return (bool)$query->exec()->fetch();
@@ -171,13 +175,16 @@ final class Analyzer
     private function tryToFindAppliedCondition(array $discount)
     {
         if (isset($discount['ACTIONS']) && is_string($discount['ACTIONS'])) {
-            return strpos($discount['ACTIONS'], \CSaleActionCondCtrlBasketFields::CONTROL_ID_APPLIED_DISCOUNT) !== false;
+            return mb_strpos(
+                    $discount['ACTIONS'],
+                    \CSaleActionCondCtrlBasketFields::CONTROL_ID_APPLIED_DISCOUNT
+                ) !== false;
         }
 
         if (isset($discount['ACTIONS_LIST'])) {
             $asString = serialize($discount['ACTIONS_LIST']);
             if ($asString) {
-                return strpos($asString, \CSaleActionCondCtrlBasketFields::CONTROL_ID_APPLIED_DISCOUNT) !== false;
+                return mb_strpos($asString, \CSaleActionCondCtrlBasketFields::CONTROL_ID_APPLIED_DISCOUNT) !== false;
             }
         }
 

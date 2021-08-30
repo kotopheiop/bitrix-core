@@ -12,21 +12,28 @@ class CSaleDiscount extends CAllSaleDiscount
      * @param array $arSelectFields
      * @return bool|CDBResult|mixed
      */
-    public static function GetList($arOrder = array(), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
-    {
+    public static function GetList(
+        $arOrder = array(),
+        $arFilter = array(),
+        $arGroupBy = false,
+        $arNavStartParams = false,
+        $arSelectFields = array()
+    ) {
         global $DB;
 
         if (!is_array($arOrder) && !is_array($arFilter)) {
             $arOrder = (string)($arOrder);
             $arFilter = (string)($arFilter);
-            if ($arOrder !== '' && $arFilter !== '')
+            if ($arOrder !== '' && $arFilter !== '') {
                 $arOrder = array($arOrder => $arFilter);
-            else
+            } else {
                 $arOrder = array();
-            if (is_array($arGroupBy))
+            }
+            if (is_array($arGroupBy)) {
                 $arFilter = $arGroupBy;
-            else
+            } else {
                 $arFilter = array();
+            }
             if (isset($arFilter["PRICE"])) {
                 $valTmp = $arFilter["PRICE"];
                 unset($arFilter["PRICE"]);
@@ -42,8 +49,16 @@ class CSaleDiscount extends CAllSaleDiscount
             "LID" => array("FIELD" => "D.LID", "TYPE" => "string"),
             "SITE_ID" => array("FIELD" => "D.LID", "TYPE" => "string"),
             "NAME" => array("FIELD" => "D.NAME", "TYPE" => "string"),
-            "PRICE_FROM" => array("FIELD" => "D.PRICE_FROM", "TYPE" => "double", "WHERE" => array("CSaleDiscount", "PrepareCurrency4Where")),
-            "PRICE_TO" => array("FIELD" => "D.PRICE_TO", "TYPE" => "double", "WHERE" => array("CSaleDiscount", "PrepareCurrency4Where")),
+            "PRICE_FROM" => array(
+                "FIELD" => "D.PRICE_FROM",
+                "TYPE" => "double",
+                "WHERE" => array("CSaleDiscount", "PrepareCurrency4Where")
+            ),
+            "PRICE_TO" => array(
+                "FIELD" => "D.PRICE_TO",
+                "TYPE" => "double",
+                "WHERE" => array("CSaleDiscount", "PrepareCurrency4Where")
+            ),
             "CURRENCY" => array("FIELD" => "D.CURRENCY", "TYPE" => "string"),
             "DISCOUNT_VALUE" => array("FIELD" => "D.DISCOUNT_VALUE", "TYPE" => "double"),
             "DISCOUNT_TYPE" => array("FIELD" => "D.DISCOUNT_TYPE", "TYPE" => "char"),
@@ -65,13 +80,54 @@ class CSaleDiscount extends CAllSaleDiscount
             "ACTIONS" => array("FIELD" => "D.ACTIONS", "TYPE" => "string"),
             "PRESET_ID" => array("FIELD" => "D.PRESET_ID", "TYPE" => "string"),
             "USE_COUPONS" => array("FIELD" => "D.USE_COUPONS", "TYPE" => "char"),
-            "USER_GROUPS" => array("FIELD" => "DG.GROUP_ID", "TYPE" => "int", "FROM" => "LEFT JOIN b_sale_discount_group DG ON (D.ID = DG.DISCOUNT_ID)")
+            "USER_GROUPS" => array(
+                "FIELD" => "DG.GROUP_ID",
+                "TYPE" => "int",
+                "FROM" => "LEFT JOIN b_sale_discount_group DG ON (D.ID = DG.DISCOUNT_ID)"
+            )
         );
 
-        if (empty($arSelectFields))
-            $arSelectFields = array('ID', 'LID', 'SITE_ID', 'PRICE_FROM', 'PRICE_TO', 'CURRENCY', 'DISCOUNT_VALUE', 'DISCOUNT_TYPE', 'ACTIVE', 'SORT', 'ACTIVE_FROM', 'ACTIVE_TO', 'PRIORITY', 'LAST_DISCOUNT', 'LAST_LEVEL_DISCOUNT', 'VERSION', 'NAME');
-        elseif (is_array($arSelectFields) && in_array('*', $arSelectFields))
-            $arSelectFields = array('ID', 'LID', 'SITE_ID', 'PRICE_FROM', 'PRICE_TO', 'CURRENCY', 'DISCOUNT_VALUE', 'DISCOUNT_TYPE', 'ACTIVE', 'SORT', 'ACTIVE_FROM', 'ACTIVE_TO', 'PRIORITY', 'LAST_DISCOUNT', 'LAST_LEVEL_DISCOUNT', 'VERSION', 'NAME');
+        if (empty($arSelectFields)) {
+            $arSelectFields = array(
+                'ID',
+                'LID',
+                'SITE_ID',
+                'PRICE_FROM',
+                'PRICE_TO',
+                'CURRENCY',
+                'DISCOUNT_VALUE',
+                'DISCOUNT_TYPE',
+                'ACTIVE',
+                'SORT',
+                'ACTIVE_FROM',
+                'ACTIVE_TO',
+                'PRIORITY',
+                'LAST_DISCOUNT',
+                'LAST_LEVEL_DISCOUNT',
+                'VERSION',
+                'NAME'
+            );
+        } elseif (is_array($arSelectFields) && in_array('*', $arSelectFields)) {
+            $arSelectFields = array(
+                'ID',
+                'LID',
+                'SITE_ID',
+                'PRICE_FROM',
+                'PRICE_TO',
+                'CURRENCY',
+                'DISCOUNT_VALUE',
+                'DISCOUNT_TYPE',
+                'ACTIVE',
+                'SORT',
+                'ACTIVE_FROM',
+                'ACTIVE_TO',
+                'PRIORITY',
+                'LAST_DISCOUNT',
+                'LAST_LEVEL_DISCOUNT',
+                'VERSION',
+                'NAME'
+            );
+        }
 
         $arSqls = CSaleOrder::PrepareSql($arFields, $arOrder, $arFilter, $arGroupBy, $arSelectFields);
 
@@ -79,25 +135,31 @@ class CSaleDiscount extends CAllSaleDiscount
 
         if (empty($arGroupBy) && is_array($arGroupBy)) {
             $strSql = "select " . $arSqls["SELECT"] . " from b_sale_discount D " . $arSqls["FROM"];
-            if (!empty($arSqls["WHERE"]))
+            if (!empty($arSqls["WHERE"])) {
                 $strSql .= " where " . $arSqls["WHERE"];
-            if (!empty($arSqls["GROUPBY"]))
+            }
+            if (!empty($arSqls["GROUPBY"])) {
                 $strSql .= " group by " . $arSqls["GROUPBY"];
+            }
 
             $dbRes = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-            if ($arRes = $dbRes->Fetch())
+            if ($arRes = $dbRes->Fetch()) {
                 return $arRes["CNT"];
-            else
+            } else {
                 return false;
+            }
         }
 
         $strSql = "select " . $arSqls["SELECT"] . " from b_sale_discount D " . $arSqls["FROM"];
-        if (!empty($arSqls["WHERE"]))
+        if (!empty($arSqls["WHERE"])) {
             $strSql .= " where " . $arSqls["WHERE"];
-        if (!empty($arSqls["GROUPBY"]))
+        }
+        if (!empty($arSqls["GROUPBY"])) {
             $strSql .= " group by " . $arSqls["GROUPBY"];
-        if (!empty($arSqls["ORDERBY"]))
+        }
+        if (!empty($arSqls["ORDERBY"])) {
             $strSql .= " order by " . $arSqls["ORDERBY"];
+        }
 
         $intTopCount = 0;
         $boolNavStartParams = (!empty($arNavStartParams) && is_array($arNavStartParams));
@@ -106,16 +168,19 @@ class CSaleDiscount extends CAllSaleDiscount
         }
         if ($boolNavStartParams && $intTopCount <= 0) {
             $strSql_tmp = "select COUNT('x') as CNT from b_sale_discount D " . $arSqls["FROM"];
-            if (!empty($arSqls["WHERE"]))
+            if (!empty($arSqls["WHERE"])) {
                 $strSql_tmp .= " where " . $arSqls["WHERE"];
-            if (!empty($arSqls["GROUPBY"]))
+            }
+            if (!empty($arSqls["GROUPBY"])) {
                 $strSql_tmp .= " group by " . $arSqls["GROUPBY"];
+            }
 
             $dbRes = $DB->Query($strSql_tmp, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             $cnt = 0;
             if (empty($arSqls["GROUPBY"])) {
-                if ($arRes = $dbRes->Fetch())
+                if ($arRes = $dbRes->Fetch()) {
                     $cnt = $arRes["CNT"];
+                }
             } else {
                 $cnt = $dbRes->SelectedRowsCount();
             }
@@ -141,8 +206,13 @@ class CSaleDiscount extends CAllSaleDiscount
      * @param array $arSelectFields
      * @return bool|CDBResult|mixed
      */
-    public static function GetDiscountGroupList($arOrder = array(), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
-    {
+    public static function GetDiscountGroupList(
+        $arOrder = array(),
+        $arFilter = array(),
+        $arGroupBy = false,
+        $arNavStartParams = false,
+        $arSelectFields = array()
+    ) {
         global $DB;
 
         $arFields = array(
@@ -157,25 +227,31 @@ class CSaleDiscount extends CAllSaleDiscount
 
         if (empty($arGroupBy) && is_array($arGroupBy)) {
             $strSql = "select " . $arSqls["SELECT"] . " from b_sale_discount_group DG " . $arSqls["FROM"];
-            if (!empty($arSqls["WHERE"]))
+            if (!empty($arSqls["WHERE"])) {
                 $strSql .= " where " . $arSqls["WHERE"];
-            if (!empty($arSqls["GROUPBY"]))
+            }
+            if (!empty($arSqls["GROUPBY"])) {
                 $strSql .= " group by " . $arSqls["GROUPBY"];
+            }
 
             $dbRes = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-            if ($arRes = $dbRes->Fetch())
+            if ($arRes = $dbRes->Fetch()) {
                 return $arRes["CNT"];
-            else
+            } else {
                 return false;
+            }
         }
 
         $strSql = "select " . $arSqls["SELECT"] . " from b_sale_discount_group DG " . $arSqls["FROM"];
-        if (!empty($arSqls["WHERE"]))
+        if (!empty($arSqls["WHERE"])) {
             $strSql .= " where " . $arSqls["WHERE"];
-        if (!empty($arSqls["GROUPBY"]))
+        }
+        if (!empty($arSqls["GROUPBY"])) {
             $strSql .= " group by " . $arSqls["GROUPBY"];
-        if (!empty($arSqls["ORDERBY"]))
+        }
+        if (!empty($arSqls["ORDERBY"])) {
             $strSql .= " order by " . $arSqls["ORDERBY"];
+        }
 
         $intTopCount = 0;
         $boolNavStartParams = (!empty($arNavStartParams) && is_array($arNavStartParams));
@@ -184,16 +260,19 @@ class CSaleDiscount extends CAllSaleDiscount
         }
         if ($boolNavStartParams && 0 >= $intTopCount) {
             $strSql_tmp = "select COUNT('x') as CNT from b_sale_discount_group DG " . $arSqls["FROM"];
-            if (!empty($arSqls["WHERE"]))
+            if (!empty($arSqls["WHERE"])) {
                 $strSql_tmp .= " where " . $arSqls["WHERE"];
-            if (!empty($arSqls["GROUPBY"]))
+            }
+            if (!empty($arSqls["GROUPBY"])) {
                 $strSql_tmp .= " group by " . $arSqls["GROUPBY"];
+            }
 
             $dbRes = $DB->Query($strSql_tmp, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             $cnt = 0;
             if (empty($arSqls["GROUPBY"])) {
-                if ($arRes = $dbRes->Fetch())
+                if ($arRes = $dbRes->Fetch()) {
                     $cnt = $arRes["CNT"];
+                }
             } else {
                 $cnt = $dbRes->SelectedRowsCount();
             }

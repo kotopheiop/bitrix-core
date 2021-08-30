@@ -25,8 +25,9 @@ class Currency extends Base\Restriction
      */
     public static function check($params, array $restrictionParams, $serviceId = 0)
     {
-        if (isset($restrictionParams) && is_array($restrictionParams['CURRENCY']))
+        if (isset($restrictionParams) && is_array($restrictionParams['CURRENCY'])) {
             return in_array($params, $restrictionParams['CURRENCY']);
+        }
 
         return true;
     }
@@ -81,8 +82,9 @@ class Currency extends Base\Restriction
             $psCurrency = $paySystem->getCurrency();
 
             $options = array();
-            foreach ($psCurrency as $code)
+            foreach ($psCurrency as $code) {
                 $options[$code] = (isset($currencyList[$code])) ? $currencyList[$code] : $code;
+            }
 
             if ($options) {
                 return array(

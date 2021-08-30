@@ -11,7 +11,6 @@ namespace Bitrix\Sender\Connector;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
 use Bitrix\Main\Web\Json;
-
 use Bitrix\Sender\Integration;
 
 /**
@@ -108,7 +107,6 @@ class Manager
                                 } else {
                                     $fieldsTmp[$moduleId][$code][$num][$fieldName][] = $fieldValue;
                                 }
-
                             }
                         }
                     } else {
@@ -116,7 +114,6 @@ class Manager
                             try {
                                 $field = Json::decode($field);
                             } catch (\Exception $exception) {
-
                             }
                         } else {
                             $field = null;
@@ -134,7 +131,7 @@ class Manager
             }
 
             foreach ($settings as $code => $items) {
-                foreach ($items as $fields) {
+                foreach ($items as $filter => $fields) {
                     if (!is_array($result)) {
                         $result = array();
                     }
@@ -143,6 +140,7 @@ class Manager
                         'MODULE_ID' => $moduleId,
                         'CODE' => $code,
                         'FIELDS' => $fields,
+                        'FILTER_ID' => $moduleId . "_" . $code . "_" . $filter,
                     );
                 }
             }
@@ -230,13 +228,22 @@ class Manager
                         continue;
                     }
 
-                    $connectorCode = call_user_func(array($connectorClassName, 'getCode'));
-                    if ($moduleConnectorFilter && !in_array($connectorCode, $moduleConnectorFilter[$eventResult->getModuleId()])) {
+                    /**
+                     * @var \Bitrix\Sender\Connector $connectorInstance
+                     */
+                    $connectorInstance = new $connectorClassName;
+
+                    $connectorCode = $connectorInstance->getCode();
+                    if ($moduleConnectorFilter && !in_array(
+                            $connectorCode,
+                            $moduleConnectorFilter[$eventResult->getModuleId()]
+                        )) {
                         continue;
                     }
 
-                    $connectorName = call_user_func(array($connectorClassName, 'getName'));
-                    $connectorRequireConfigure = call_user_func(array($connectorClassName, 'requireConfigure'));
+                    $connectorName = $connectorInstance->getName();
+                    $connectorRequireConfigure = $connectorInstance->requireConfigure();
+
                     $resultList[] = array(
                         'MODULE_ID' => $eventResult->getModuleId(),
                         'CLASS_NAME' => $connectorClassName,
@@ -248,8 +255,9 @@ class Manager
             }
         }
 
-        if (!empty($resultList))
+        if (!empty($resultList)) {
             usort($resultList, array(__CLASS__, 'sort'));
+        }
 
         return $resultList;
     }
@@ -263,8 +271,9 @@ class Manager
      */
     public static function sort($a, $b)
     {
-        if ($a['NAME'] == $b['NAME'])
+        if ($a['NAME'] == $b['NAME']) {
             return 0;
+        }
 
         return ($a['NAME'] < $b['NAME']) ? -1 : 1;
     }

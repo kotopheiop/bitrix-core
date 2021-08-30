@@ -7,22 +7,25 @@ class CWikiUtils
     static function getRightsLinks($arPage)
     {
         global $arParams, $APPLICATION;
-        if (!is_array($arPage))
+        if (!is_array($arPage)) {
             $arPage = array($arPage);
+        }
 
         $arLinks = array();
         $arParams['ELEMENT_NAME'] = htmlspecialcharsback($arParams['ELEMENT_NAME']);
         $arParams['ELEMENT_NAME'] = rawurlencode($arParams['ELEMENT_NAME']);
 
-        if (in_array('categories', $arPage))
+        if (in_array('categories', $arPage)) {
             return array();
+        }
 
         if (in_array('article', $arPage) && !in_array('add', $arPage)) {
             $arLinks['article'] = array(
                 'NAME' => GetMessage('PAGE_ARTICLE'),
                 'TITLE' => GetMessage('PAGE_ARTICLE_TITLE'),
                 'CURRENT' => in_array('article', $arPage),
-                'LINK' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_POST'],
+                'LINK' => CComponentEngine::MakePathFromTemplate(
+                    $arParams['PATH_TO_POST'],
                     array(
                         'wiki_name' => $arParams['ELEMENT_NAME'],
                         'group_id' => CWikiSocnet::$iSocNetId
@@ -36,14 +39,18 @@ class CWikiUtils
 
         if (self::IsWriteable() &&
             ((!in_array('history', $arPage) || in_array('history_diff', $arPage)) &&
-                (!in_array('add', $arPage) && !in_array('edit', $arPage) && !in_array('delete', $arPage) && !in_array('rename', $arPage)))) {
+                (!in_array('add', $arPage) && !in_array('edit', $arPage) && !in_array('delete', $arPage) && !in_array(
+                        'rename',
+                        $arPage
+                    )))) {
             if (IsModuleInstalled('bizproc')) {
                 $arLinks['history'] = array(
                     'NAME' => GetMessage('PAGE_HISTORY'),
                     'TITLE' => GetMessage('PAGE_HISTORY_TITLE'),
                     'CURRENT' => in_array('history', $arPage),
                     'LINK' => CHTTP::urlAddParams(
-                        CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_HISTORY'],
+                        CComponentEngine::MakePathFromTemplate(
+                            $arParams['PATH_TO_HISTORY'],
                             array(
                                 'wiki_name' => $arParams['ELEMENT_NAME'],
                                 'group_id' => CWikiSocnet::$iSocNetId
@@ -64,7 +71,8 @@ class CWikiUtils
                 'TITLE' => GetMessage('PAGE_DISCUSSION_TITLE'),
                 'CURRENT' => in_array('discussion', $arPage),
                 'LINK' => CHTTP::urlAddParams(
-                    CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_DISCUSSION'],
+                    CComponentEngine::MakePathFromTemplate(
+                        $arParams['PATH_TO_DISCUSSION'],
                         array(
                             'wiki_name' => $arParams['ELEMENT_NAME'],
                             'group_id' => CWikiSocnet::$iSocNetId
@@ -84,7 +92,8 @@ class CWikiUtils
                 'TITLE' => GetMessage('PAGE_ADD_TITLE'),
                 'CURRENT' => in_array('add', $arPage),
                 'LINK' => CHTTP::urlAddParams(
-                    CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_POST_EDIT'],
+                    CComponentEngine::MakePathFromTemplate(
+                        $arParams['PATH_TO_POST_EDIT'],
                         array(
                             'wiki_name' => GetMessage('WIKI_NEW_PAGE_TITLE'),
                             'group_id' => CWikiSocnet::$iSocNetId
@@ -103,7 +112,8 @@ class CWikiUtils
                     'TITLE' => GetMessage('PAGE_EDIT_TITLE'),
                     'CURRENT' => in_array('edit', $arPage),
                     'LINK' => CHTTP::urlAddParams(
-                        CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_POST_EDIT'],
+                        CComponentEngine::MakePathFromTemplate(
+                            $arParams['PATH_TO_POST_EDIT'],
                             array(
                                 'wiki_name' => $arParams['ELEMENT_NAME'],
                                 'group_id' => CWikiSocnet::$iSocNetId
@@ -119,7 +129,8 @@ class CWikiUtils
                 $url = $APPLICATION->GetPopupLink(
                     array(
                         'URL' => CHTTP::urlAddParams(
-                            CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_POST_EDIT'],
+                            CComponentEngine::MakePathFromTemplate(
+                                $arParams['PATH_TO_POST_EDIT'],
                                 array(
                                     'wiki_name' => rawurlencode($arParams['ELEMENT_NAME']),
                                     'group_id' => CWikiSocnet::$iSocNetId
@@ -148,7 +159,8 @@ class CWikiUtils
                     $url = $APPLICATION->GetPopupLink(
                         array(
                             'URL' => CHTTP::urlAddParams(
-                                CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_POST_EDIT'],
+                                CComponentEngine::MakePathFromTemplate(
+                                    $arParams['PATH_TO_POST_EDIT'],
                                     array(
                                         'wiki_name' => $arParams['ELEMENT_ID'],
                                         'group_id' => CWikiSocnet::$iSocNetId
@@ -175,8 +187,6 @@ class CWikiUtils
                     );
                 }
             }
-
-
             /**    $arLinks['access'] = array(
              * 'NAME' => GetMessage('PAGE_ACCESS'),
              * 'TITLE' => GetMessage('PAGE_ACCESS_TITLE'),
@@ -211,11 +221,13 @@ class CWikiUtils
 
     static function isAllowHTML()
     {
-        if (COption::GetOptionString('wiki', 'allow_html', 'Y') == 'N')
+        if (COption::GetOptionString('wiki', 'allow_html', 'Y') == 'N') {
             return false;
+        }
 
-        if (!$GLOBALS['USER']->IsAuthorized())
+        if (!$GLOBALS['USER']->IsAuthorized()) {
             return false;
+        }
 
         return true;
     }
@@ -229,16 +241,25 @@ class CWikiUtils
     {
         global $APPLICATION, $USER, $arParams;
 
-        if ($USER->IsAdmin())
+        if ($USER->IsAdmin()) {
             return true;
+        }
 
         if (CWikiSocnet::IsSocNet()) {
             $arSonetGroup = CSocNetGroup::GetByID(CWikiSocnet::$iSocNetId);
-            if ($arSonetGroup && CSocNetUser::IsCurrentUserModuleAdmin($arSonetGroup['SITE_ID']))
+            if ($arSonetGroup && CSocNetUser::IsCurrentUserModuleAdmin($arSonetGroup['SITE_ID'])) {
                 return true;
+            }
 
-            if (!CSocNetFeaturesPerms::CanPerformOperation($USER->GetID(), SONET_ENTITY_GROUP, CWikiSocnet::$iSocNetId, 'wiki', $access))
+            if (!CSocNetFeaturesPerms::CanPerformOperation(
+                $USER->GetID(),
+                SONET_ENTITY_GROUP,
+                CWikiSocnet::$iSocNetId,
+                'wiki',
+                $access
+            )) {
                 return false;
+            }
 
             return true;
         } else {
@@ -276,10 +297,12 @@ class CWikiUtils
                 unset($arSplit[0]);
                 $SERVICE_NAME = implode(':', $arSplit);
                 return $SERVICE_PAGE;
-            } else
+            } else {
                 return '';
-        } else
+            }
+        } else {
             return '';
+        }
     }
 
     static function IsCategoryPage($NAME, &$CATEGORY_NAME)
@@ -292,7 +315,11 @@ class CWikiUtils
     {
         static $groupSiteList = array();
 
-        $arFields['NAME'] = preg_replace('/^category:/i' . BX_UTF_PCRE_MODIFIER, GetMessage('CATEGORY_NAME') . ':', $arFields['NAME']);
+        $arFields['NAME'] = preg_replace(
+            '/^category:/i' . BX_UTF_PCRE_MODIFIER,
+            GetMessage('CATEGORY_NAME') . ':',
+            $arFields['NAME']
+        );
         $CWikiParser = new CWikiParser();
         $arFields['BODY'] = $CWikiParser->parseForSearch($arFields['BODY']);
 
@@ -313,7 +340,11 @@ class CWikiUtils
                 $url = $arFields['SITE_ID'][$siteId];
 
                 if (!empty($url)) {
-                    $url = str_replace(COption::getOptionString("socialnetwork", "workgroups_page", "/workgroups/", $siteId), "#GROUPS_PATH#", $url);
+                    $url = str_replace(
+                        COption::getOptionString("socialnetwork", "workgroups_page", "/workgroups/", $siteId),
+                        "#GROUPS_PATH#",
+                        $url
+                    );
                 }
             }
 
@@ -345,7 +376,16 @@ class CWikiUtils
 
                 if ($extranetGroup) {
                     foreach ($siteIdList as $siteId) {
-                        $arFields['SITE_ID'][$siteId] = str_replace("#GROUPS_PATH#", COption::getOptionString("socialnetwork", "workgroups_page", "/workgroups/", $siteId), $url);
+                        $arFields['SITE_ID'][$siteId] = str_replace(
+                            "#GROUPS_PATH#",
+                            COption::getOptionString(
+                                "socialnetwork",
+                                "workgroups_page",
+                                "/workgroups/",
+                                $siteId
+                            ),
+                            $url
+                        );
                     }
                 }
             }
@@ -358,8 +398,9 @@ class CWikiUtils
     {
         global $USER;
 
-        if (empty($nameTemplate))
+        if (empty($nameTemplate)) {
             $nameTemplate = CSite::GetNameFormat(false);
+        }
 
         if (!empty($arUserData)) {
             $userLogin = isset($arUserData['USER_LOGIN']) ? $arUserData['USER_LOGIN'] : $arUserData['LOGIN'];
@@ -373,7 +414,15 @@ class CWikiUtils
             $userSName = $USER->GetSecondName();
         }
 
-        $userLogin = CUser::FormatName($nameTemplate, array("NAME" => $userFName, "LAST_NAME" => $userLName, "SECOND_NAME" => $userSName, "LOGIN" => $userLogin));
+        $userLogin = CUser::FormatName(
+            $nameTemplate,
+            array(
+                "NAME" => $userFName,
+                "LAST_NAME" => $userLName,
+                "SECOND_NAME" => $userSName,
+                "LOGIN" => $userLogin
+            )
+        );
 
         return $userLogin;
     }
@@ -381,10 +430,12 @@ class CWikiUtils
     static function htmlspecialcharsback($str, $end = true)
     {
         $str = rawurldecode($str);
-        while (strpos($str, '&amp;') !== false)
+        while (mb_strpos($str, '&amp;') !== false) {
             $str = self::htmlspecialchars_decode($str);
-        if ($end)
+        }
+        if ($end) {
             $str = self::htmlspecialchars_decode($str);
+        }
         return $str;
     }
 
@@ -405,30 +456,38 @@ class CWikiUtils
      */
     static function SetCommentPath($forumID, $rightPath, $urlRewriterPath)
     {
-        if (!$forumID || !CModule::IncludeModule('forum') || !$rightPath || !$urlRewriterPath)
+        if (!$forumID || !CModule::IncludeModule('forum') || !$rightPath || !$urlRewriterPath) {
             return false;
+        }
 
-        $arRewriter = CUrlRewriter::GetList(array("PATH" => $urlRewriterPath));        //http://jabber.bx/view.php?id=25340
+        $arRewriter = CUrlRewriter::GetList(
+            array("PATH" => $urlRewriterPath)
+        );        //http://jabber.bx/view.php?id=25340
 
-        if (!is_array($arRewriter) || empty($arRewriter))
+        if (!is_array($arRewriter) || empty($arRewriter)) {
             return false;
+        }
 
         $rewriteCondition = str_replace(array("#", "^"), "", $arRewriter[0]["CONDITION"]);
         $rightCommentsPath = $rewriteCondition . $rightPath;
 
         $arActualCommentsPath = CWikiUtils::GetCommentPath($forumID);
 
-        if (!is_array($arActualCommentsPath))
+        if (!is_array($arActualCommentsPath)) {
             return false;
+        }
 
         $arUpdateForum = array();
 
-        foreach ($arActualCommentsPath as $site => $path)
-            if ($path != $rightCommentsPath)
+        foreach ($arActualCommentsPath as $site => $path) {
+            if ($path != $rightCommentsPath) {
                 $arUpdateForum["SITES"][$site] = $rightCommentsPath;
+            }
+        }
 
-        if (!empty($arUpdateForum))
+        if (!empty($arUpdateForum)) {
             CForumNew::Update($forumID, $arUpdateForum);
+        }
 
         return true;
     }
@@ -443,29 +502,37 @@ class CWikiUtils
     {
         $arForumPath = array();
 
-        if (!$forumID || !CModule::IncludeModule('forum'))
+        if (!$forumID || !CModule::IncludeModule('forum')) {
             return false;
+        }
 
         $arSites = CForumNew::GetSites($forumID);
 
-        if (!is_array($arSites))
+        if (!is_array($arSites)) {
             return false;
+        }
 
-        foreach ($arSites as $siteID => $forumUrl)
+        foreach ($arSites as $siteID => $forumUrl) {
             $arForumPath[$siteID] = $forumUrl;
+        }
 
         return $arForumPath;
     }
 
     static function UnlocalizeCategoryName($categoryName)
     {
-        return preg_replace('/^' . GetMessage('CATEGORY_NAME') . ':/i' . BX_UTF_PCRE_MODIFIER, 'category:', $categoryName);
+        return preg_replace(
+            '/^' . GetMessage('CATEGORY_NAME') . ':/i' . BX_UTF_PCRE_MODIFIER,
+            'category:',
+            $categoryName
+        );
     }
 
     static function GetTagsAsLinks($arTags)
     {
-        if (!is_array($arTags) || empty($arTags))
+        if (!is_array($arTags) || empty($arTags)) {
             return "";
+        }
 
         $strRet = "";
         $_i = 1;
@@ -476,8 +543,9 @@ class CWikiUtils
                 $strRet .= $arTag['NAME'];
             endif;
 
-            if ($_i < count($arTags))
+            if ($_i < count($arTags)) {
                 $strRet .= ' | ';
+            }
             $_i++;
         }
 
@@ -489,8 +557,9 @@ class CWikiUtils
         $result = false;
         $sCatName = '';
 
-        if (CWikiUtils::IsCategoryPage($name, $sCatName))
+        if (CWikiUtils::IsCategoryPage($name, $sCatName)) {
             $result = self::isVirtualCategoryExist($sCatName);
+        }
 
         return $result;
     }
@@ -505,8 +574,9 @@ class CWikiUtils
             $categories = new CWikiCategories;
             $rsHandlers = GetModuleEvents("wiki", "OnCategoryListCreate");
 
-            while ($arHandler = $rsHandlers->Fetch())
+            while ($arHandler = $rsHandlers->Fetch()) {
                 ExecuteModuleEventEx($arHandler, array(&$categories, ''));
+            }
 
             $arCats = $categories->GetItems();
 

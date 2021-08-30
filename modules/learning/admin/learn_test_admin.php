@@ -1,13 +1,15 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 if (!CModule::IncludeModule('learning')) {
     require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php'); // second system's prolog
 
-    if (IsModuleInstalled('learning') && defined('LEARNING_FAILED_TO_LOAD_REASON'))
+    if (IsModuleInstalled('learning') && defined('LEARNING_FAILED_TO_LOAD_REASON')) {
         echo LEARNING_FAILED_TO_LOAD_REASON;
-    else
+    } else {
         CAdminMessage::ShowMessage(GetMessage('LEARNING_MODULE_NOT_FOUND'));
+    }
 
     require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin.php');    // system's epilog
     exit();
@@ -30,10 +32,12 @@ try {
         if (($linkedLessonId !== false)
             && $oAccess->IsLessonAccessible($linkedLessonId, CLearnAccess::OP_LESSON_READ)) {
             $bBadCourse = false;
-        } else
+        } else {
             $bBadCourse = true;
-    } else
+        }
+    } else {
         $bBadCourse = true;
+    }
 } catch (Exception $e) {
     $bBadCourse = true;
 }
@@ -41,8 +45,9 @@ try {
 
 $isReadOnly = true;
 try {
-    if ($oAccess->IsLessonAccessible($linkedLessonId, CLearnAccess::OP_LESSON_WRITE))
+    if ($oAccess->IsLessonAccessible($linkedLessonId, CLearnAccess::OP_LESSON_WRITE)) {
         $isReadOnly = false;
+    }
 } catch (Exception $e) {
     $isReadOnly = true;
 }
@@ -94,8 +99,9 @@ if (!$isReadOnly && $lAdmin->EditAction()) // save from the list
     foreach ($FIELDS as $ID => $arFields) {
         $ID = intval($ID);
 
-        if (!$lAdmin->IsUpdated($ID))
+        if (!$lAdmin->IsUpdated($ID)) {
             continue;
+        }
 
         $DB->StartTransaction();
         $ob = new CTest;
@@ -114,14 +120,16 @@ if (!$isReadOnly && $lAdmin->EditAction()) // save from the list
 if (!$isReadOnly && ($arID = $lAdmin->GroupAction())) {
     if ($_REQUEST['action_target'] == 'selected') {
         $rsData = CTest::GetList(Array($by => $order), $arFilter);
-        while ($arRes = $rsData->Fetch())
+        while ($arRes = $rsData->Fetch()) {
             $arID[] = $arRes['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
-        $ID = IntVal($ID);
+        }
+        $ID = intval($ID);
 
         switch ($_REQUEST['action']) {
             case "delete":
@@ -138,15 +146,18 @@ if (!$isReadOnly && ($arID = $lAdmin->GroupAction())) {
             case "deactivate":
                 $ch = new CTest;
                 $arFields = Array("ACTIVE" => ($_REQUEST['action'] == "activate" ? "Y" : "N"));
-                if (!$ch->Update($ID, $arFields))
-                    if ($e = $APPLICATION->GetException())
+                if (!$ch->Update($ID, $arFields)) {
+                    if ($e = $APPLICATION->GetException()) {
                         $lAdmin->AddGroupError(GetMessage("SAVE_ERROR") . $ID . ": " . $e->GetString(), $ID);
+                    }
+                }
                 break;
         }
     }
 
-    if (isset($return_url) && strlen($return_url) > 0 && check_bitrix_sessid())
+    if (isset($return_url) && $return_url <> '' && check_bitrix_sessid()) {
         LocalRedirect($return_url);
+    }
 }
 
 
@@ -160,14 +171,26 @@ $lAdmin->NavText($rsData->GetNavPrint(GetMessage("LEARNING_TESTS")));
 
 
 // list header
-$lAdmin->AddHeaders(array(
-    array("id" => "ID", "content" => "ID", "sort" => "id", "default" => true),
-    array("id" => "TIMESTAMP_X", "content" => GetMessage('LEARNING_COURSE_ADM_DATECH'), "sort" => "timestamp_x", "default" => true),
-    array("id" => "NAME", "content" => GetMessage('LEARNING_NAME'), "sort" => "name", "default" => true),
-    array("id" => "SORT", "content" => GetMessage('LEARNING_COURSE_ADM_SORT'), "sort" => "sort", "default" => true),
-    array("id" => "ACTIVE", "content" => GetMessage('LEARNING_COURSE_ADM_ACT'), "sort" => "active", "default" => true),
-    array("id" => "TESTS_STATS", "content" => GetMessage('LEARNING_TEST_ADM_STATS'), "default" => true),
-));
+$lAdmin->AddHeaders(
+    array(
+        array("id" => "ID", "content" => "ID", "sort" => "id", "default" => true),
+        array(
+            "id" => "TIMESTAMP_X",
+            "content" => GetMessage('LEARNING_COURSE_ADM_DATECH'),
+            "sort" => "timestamp_x",
+            "default" => true
+        ),
+        array("id" => "NAME", "content" => GetMessage('LEARNING_NAME'), "sort" => "name", "default" => true),
+        array("id" => "SORT", "content" => GetMessage('LEARNING_COURSE_ADM_SORT'), "sort" => "sort", "default" => true),
+        array(
+            "id" => "ACTIVE",
+            "content" => GetMessage('LEARNING_COURSE_ADM_ACT'),
+            "sort" => "active",
+            "default" => true
+        ),
+        array("id" => "TESTS_STATS", "content" => GetMessage('LEARNING_TEST_ADM_STATS'), "default" => true),
+    )
+);
 
 // building list
 while ($arRes = $rsData->NavNext(true, "f_")) {
@@ -187,7 +210,8 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
     }
 
     $attemptUrl = "learn_attempt_admin.php?lang=" . LANG . "&filter_test_id=" . $f_ID . "&set_filter=Y&&filter_status=F";
-    $row->AddViewField("TESTS_STATS",
+    $row->AddViewField(
+        "TESTS_STATS",
         $index .
         ' (<a href="' . $attemptUrl . '&filter_completed=Y">' . $arStat["CORRECT_CNT"] . '</a> /
 		<a href="' . $attemptUrl . '">' . $arStat["ALL_CNT"] . '</a>)'
@@ -196,8 +220,9 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
     $arActions = array();
 
     $editActionText = GetMessage("MAIN_ADMIN_MENU_OPEN");
-    if (!$isReadOnly)
+    if (!$isReadOnly) {
         $editActionText = GetMessage("MAIN_ADMIN_MENU_EDIT");
+    }
 
     $editUrl = "learn_test_edit.php?lang=" . LANG
         . "&COURSE_ID=" . $COURSE_ID
@@ -221,11 +246,15 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
         $arActions[] = array(
             "ICON" => "delete",
             "TEXT" => GetMessage("MAIN_ADMIN_MENU_DELETE"),
-            "ACTION" => "if(confirm('" . GetMessageJS('LEARNING_CONFIRM_DEL_MESSAGE') . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete", 'COURSE_ID=' . $COURSE_ID));
+            "ACTION" => "if(confirm('" . GetMessageJS('LEARNING_CONFIRM_DEL_MESSAGE') . "')) " . $lAdmin->ActionDoGroup(
+                    $f_ID,
+                    "delete",
+                    'COURSE_ID=' . $COURSE_ID
+                )
+        );
     }
 
     $row->AddActions($arActions);
-
 }
 
 // list footer
@@ -238,7 +267,8 @@ $lAdmin->AddFooter(
 
 if (!$isReadOnly) {
     // group actions buttons
-    $lAdmin->AddGroupActionTable(Array(
+    $lAdmin->AddGroupActionTable(
+        Array(
             "activate" => GetMessage("MAIN_ADMIN_LIST_ACTIVATE"),
             "deactivate" => GetMessage("MAIN_ADMIN_LIST_DEACTIVATE"),
             "delete" => GetMessage("MAIN_ADMIN_LIST_DELETE"),
@@ -282,7 +312,8 @@ $filter = new CAdminFilter(
         <tr>
             <td align="right"><? echo GetMessage("LEARNING_NAME") ?>:</td>
             <td align="left">
-                <input type="text" name="filter_name" value="<? echo htmlspecialcharsex($filter_name) ?>" size="47">&nbsp;<?= ShowFilterLogicHelp() ?>
+                <input type="text" name="filter_name" value="<? echo htmlspecialcharsex($filter_name) ?>" size="47">&nbsp;<?= ShowFilterLogicHelp(
+                ) ?>
             </td>
         </tr>
 
@@ -291,8 +322,12 @@ $filter = new CAdminFilter(
             <td>
                 <select name="filter_active">
                     <option value=""><?= htmlspecialcharsex(GetMessage('LEARNING_ALL')) ?></option>
-                    <option value="Y"<? if ($filter_active == "Y") echo " selected" ?>><?= htmlspecialcharsex(GetMessage("LEARNING_YES")) ?></option>
-                    <option value="N"<? if ($filter_active == "N") echo " selected" ?>><?= htmlspecialcharsex(GetMessage("LEARNING_NO")) ?></option>
+                    <option value="Y"<? if ($filter_active == "Y") echo " selected" ?>><?= htmlspecialcharsex(
+                            GetMessage("LEARNING_YES")
+                        ) ?></option>
+                    <option value="N"<? if ($filter_active == "N") echo " selected" ?>><?= htmlspecialcharsex(
+                            GetMessage("LEARNING_NO")
+                        ) ?></option>
                 </select>
             </td>
         </tr>

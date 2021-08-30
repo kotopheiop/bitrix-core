@@ -21,7 +21,6 @@ class BlockContent
 
     public function __construct()
     {
-
     }
 
     public function add($type, $place, $value)

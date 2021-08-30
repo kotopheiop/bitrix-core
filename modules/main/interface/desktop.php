@@ -1,12 +1,14 @@
 <?
+
 require_once(dirname(__FILE__) . "/../include/prolog_admin_before.php");
 IncludeModuleLangFile(__FILE__);
 
 $adminPage->Init();
 $adminMenu->Init($adminPage->aModules);
 
-if (empty($adminMenu->aGlobalMenu))
+if (empty($adminMenu->aGlobalMenu)) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/" . ADMIN_THEME_ID . "/index.css");
 

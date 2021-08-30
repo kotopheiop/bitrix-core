@@ -119,13 +119,19 @@ class PieDiagram extends Base
         $whatWillCalculateField = $reportHandler->getFormElement('calculate');
         if ($whatWillCalculateField) {
             $labelField = $reportHandler->getWidgetHandler()->getFormElement('label');
-            $labelField->addJsEventListener($whatWillCalculateField, $whatWillCalculateField::JS_EVENT_ON_CHANGE, array(
-                'class' => 'BX.Report.VisualConstructor.FieldEventHandlers.Title',
-                'action' => 'whatWillCalculateChange',
-            ));
-            $whatWillCalculateField->addAssets(array(
-                'js' => array('/bitrix/js/report/js/visualconstructor/fields/reporttitle.js')
-            ));
+            $labelField->addJsEventListener(
+                $whatWillCalculateField,
+                $whatWillCalculateField::JS_EVENT_ON_CHANGE,
+                array(
+                    'class' => 'BX.Report.VisualConstructor.FieldEventHandlers.Title',
+                    'action' => 'whatWillCalculateChange',
+                )
+            );
+            $whatWillCalculateField->addAssets(
+                array(
+                    'js' => array('/bitrix/js/report/js/visualconstructor/fields/reporttitle.js')
+                )
+            );
         }
 
         $removeFormElement = $reportHandler->getFormElementByDataAttribute('role', 'report-remove-button');

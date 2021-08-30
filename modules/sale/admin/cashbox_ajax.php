@@ -2,6 +2,7 @@
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Application;
+use Bitrix\Main\Loader;
 use Bitrix\Sale\Cashbox;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\Order;
@@ -45,8 +46,9 @@ if ($arResult["ERROR"] === '' && $saleModulePermissions >= "W" && check_bitrix_s
             $cashboxId = ($request->get('cashboxId') !== null) ? intval($request->get('cashboxId')) : 0;
             $sort = ($request->get('sort') !== null) ? intval($request->get('sort')) : 100;
 
-            if (!$className)
+            if (!$className) {
                 throw new \Bitrix\Main\ArgumentNullException("className");
+            }
 
             Cashbox\Restrictions\Manager::getClassesList();
             $paramsStructure = $className::getParamsStructure($cashboxId);
@@ -56,8 +58,12 @@ if ($arResult["ERROR"] === '' && $saleModulePermissions >= "W" && check_bitrix_s
 
             foreach ($paramsStructure as $name => $param) {
                 $paramsField .= "<tr>" .
-                    "<td>" . (strlen($param["LABEL"]) > 0 ? $param["LABEL"] . ": " : "") . "</td>" .
-                    "<td>" . \Bitrix\Sale\Internals\Input\Manager::getEditHtml("RESTRICTION[" . $name . "]", $param, (isset($params[$name]) ? $params[$name] : null)) . "</td>" .
+                    "<td>" . ($param["LABEL"] <> '' ? $param["LABEL"] . ": " : "") . "</td>" .
+                    "<td>" . \Bitrix\Sale\Internals\Input\Manager::getEditHtml(
+                        "RESTRICTION[" . $name . "]",
+                        $param,
+                        (isset($params[$name]) ? $params[$name] : null)
+                    ) . "</td>" .
                     "</tr>";
             }
 
@@ -79,20 +85,26 @@ if ($arResult["ERROR"] === '' && $saleModulePermissions >= "W" && check_bitrix_s
             $cashboxId = ($request->get('cashboxId') !== null) ? (int)$request->get('cashboxId') : 0;
             $restrictionId = ($request->get('restrictionId') !== null) ? (int)$request->get('restrictionId') : 0;
 
-            if (!class_exists($className))
+            if (!class_exists($className)) {
                 throw new \Bitrix\Main\ArgumentNullException("className");
+            }
 
-            if (!$cashboxId)
+            if (!$cashboxId) {
                 throw new \Bitrix\Main\ArgumentNullException("cashboxId");
+            }
 
             foreach ($className::getParamsStructure() as $key => $rParams) {
                 $errors = \Bitrix\Sale\Internals\Input\Manager::getError($rParams, $params[$key]);
-                if (!empty($errors))
-                    $arResult["ERROR"] .= Loc::getMessage('SALE_CASHBOX_ERROR_FIELD') . ': "' . $rParams["LABEL"] . '" ' . implode("\n", $errors) . "\n";
+                if (!empty($errors)) {
+                    $arResult["ERROR"] .= Loc::getMessage(
+                            'SALE_CASHBOX_ERROR_FIELD'
+                        ) . ': "' . $rParams["LABEL"] . '" ' . implode("\n", $errors) . "\n";
+                }
             }
 
-            if (!$params)
+            if (!$params) {
                 $arResult["ERROR"] = Loc::getMessage('SALE_CASHBOX_ERROR_PARAMS');
+            }
 
             if ($arResult["ERROR"] == '') {
                 $fields = array(
@@ -105,8 +117,9 @@ if ($arResult["ERROR"] === '' && $saleModulePermissions >= "W" && check_bitrix_s
                 /** @var \Bitrix\Sale\Result $res */
                 $res = $className::save($fields, $restrictionId);
 
-                if (!$res->isSuccess())
+                if (!$res->isSuccess()) {
                     $arResult["ERROR"] .= implode(".", $res->getErrorMessages());
+                }
                 $arResult["HTML"] = getRestrictionHtml($cashboxId);
             }
 
@@ -117,8 +130,9 @@ if ($arResult["ERROR"] === '' && $saleModulePermissions >= "W" && check_bitrix_s
             $restrictionId = ($request->get('restrictionId') !== null) ? (int)$request->get('restrictionId') : 0;
             $cashboxId = ($request->get('cashboxId') !== null) ? (int)$request->get('cashboxId') : 0;
 
-            if (!$restrictionId)
+            if (!$restrictionId) {
                 throw new \Bitrix\Main\ArgumentNullException('restrictionId');
+            }
 
             $dbRes = Cashbox\Restrictions\Manager::getById($restrictionId);
 
@@ -126,8 +140,9 @@ if ($arResult["ERROR"] === '' && $saleModulePermissions >= "W" && check_bitrix_s
                 /** @var \Bitrix\Sale\Result $res */
                 $res = $fields["CLASS_NAME"]::delete($restrictionId, $cashboxId);
 
-                if (!$res->isSuccess())
+                if (!$res->isSuccess()) {
                     $arResult["ERROR"] .= implode(".", $res->getErrorMessages());
+                }
             } else {
                 $arResult["ERROR"] .= "Can't find restriction with id: " . $restrictionId;
             }
@@ -138,10 +153,39 @@ if ($arResult["ERROR"] === '' && $saleModulePermissions >= "W" && check_bitrix_s
         case "generate_link":
             $arResult["LINK"] = Cashbox\Manager::getConnectionLink();
             break;
+        case "test_connect":
+            $cashboxId = $request->get('cashboxId') ? (int)$request->get('cashboxId') : 0;
+
+            $cashbox = Cashbox\Manager::getObjectById($cashboxId);
+            if ($cashbox && $cashbox instanceof Cashbox\ITestConnection) {
+                $result = $cashbox->testConnection();
+                if ($result->isSuccess()) {
+                    $arResult['STATUS'] = 'OK';
+                } else {
+                    $arResult['STATUS'] = implode("\n", $result->getErrorMessages());
+                }
+            }
+
+            break;
         case "reload_settings":
-            $cashbox = array('HANDLER' => $request->get('handler'), 'KKM_ID' => $request->get('kkmId'));
+            $cashbox = [
+                'HANDLER' => $request->get('handler'),
+                'KKM_ID' => $request->get('kkmId'),
+                'SETTINGS' => [
+                    "REST" => [
+                        'REST_CODE' => $request->get('restCode')
+                    ]
+                ]
+            ];
+            /** @var Cashbox\Cashbox $handler */
             $handler = $cashbox['HANDLER'];
-            if (class_exists($handler)) {
+            if (is_subclass_of($handler, Cashbox\Cashbox::class)) {
+                if ($handler === '\\' . Cashbox\CashboxOrangeData::class) {
+                    $arResult['OFD'] = '\\' . Cashbox\TaxcomOfd::class;
+                }
+
+                $arResult['HANDLER_CODE'] = $handler::getCode();
+
                 ob_start();
                 require_once($_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/sale/admin/cashbox_settings.php");
                 $arResult["HTML"] = ob_get_contents();
@@ -149,21 +193,26 @@ if ($arResult["ERROR"] === '' && $saleModulePermissions >= "W" && check_bitrix_s
 
                 $arResult['GENERAL_REQUIRED_FIELDS'] = $handler::getGeneralRequiredFields();
 
-                $kkmList = $cashbox['HANDLER']::getSupportedKkmModels();
+                $kkmList = $handler::getSupportedKkmModels();
                 if ($kkmList) {
                     $requiredClass = '';
-                    if (isset($arResult['GENERAL_REQUIRED_FIELDS']['KKM_ID']))
+                    if (isset($arResult['GENERAL_REQUIRED_FIELDS']['KKM_ID'])) {
                         $requiredClass = 'class="adm-required-field"';
+                    }
 
                     $arResult["MODEL_HTML"] = '<tr id="tr_KKM_ID">
-							<td width="40%" class="adm-detail-content-cell-l"><span ' . $requiredClass . '>' . Loc::getMessage("SALE_CASHBOX_KKM_ID") . '</span>:</td>
+							<td width="40%" class="adm-detail-content-cell-l"><span ' . $requiredClass . '>' . Loc::getMessage(
+                            "SALE_CASHBOX_KKM_ID"
+                        ) . '</span>:</td>
 							<td width="60%" class="adm-detail-content-cell-r">
 								<select name="KKM_ID" id="KKM_ID" onchange="BX.Sale.Cashbox.reloadSettings()">
 									<option value="">' . Loc::getMessage('SALE_CASHBOX_KKM_NO_CHOOSE') . '</option>';
 
                     foreach ($kkmList as $code => $kkm) {
                         $selected = ($code === $cashbox['KKM_ID']) ? 'selected' : '';
-                        $arResult["MODEL_HTML"] .= '<option value="' . $code . '" ' . $selected . '>' . htmlspecialcharsbx($kkm['NAME']) . '</option>';
+                        $arResult["MODEL_HTML"] .= '<option value="' . $code . '" ' . $selected . '>' . htmlspecialcharsbx(
+                                $kkm['NAME']
+                            ) . '</option>';
                     }
 
                     $arResult["MODEL_HTML"] .= '</select></td></tr>';
@@ -199,7 +248,10 @@ if ($arResult["ERROR"] === '' && $saleModulePermissions >= "W" && check_bitrix_s
                 $userCompanyList = \Bitrix\Sale\Services\Company\Manager::getUserCompanyList($userId);
 
                 if ($saleModulePermissions == 'P') {
-                    if ($order->getUserId() !== $userId && !in_array($order->getField("COMPANY_ID"), $userCompanyList)) {
+                    if ($order->getUserId() !== $userId && !in_array(
+                            $order->getField("COMPANY_ID"),
+                            $userCompanyList
+                        )) {
                         $arResult["ERROR"] = "Error! Access denied";
                         break;
                     }
@@ -218,8 +270,9 @@ if ($arResult["ERROR"] === '' && $saleModulePermissions >= "W" && check_bitrix_s
                     $shipmentCollection = $order->getShipmentCollection();
                     /** @var \Bitrix\Sale\Shipment $shipment */
                     foreach ($shipmentCollection as $shipment) {
-                        if ($shipment->isSystem())
+                        if ($shipment->isSystem()) {
                             continue;
+                        }
 
                         $arResult['SHIPMENTS'][] = array(
                             'ID' => $shipment->getId(),
@@ -252,21 +305,30 @@ if ($arResult["ERROR"] === '' && $saleModulePermissions >= "W" && check_bitrix_s
                 $userCompanyList = \Bitrix\Sale\Services\Company\Manager::getUserCompanyList($userId);
 
                 if ($saleModulePermissions == 'P') {
-                    if ($order->getUserId() !== $userId && !in_array($order->getField("COMPANY_ID"), $userCompanyList)) {
+                    if ($order->getUserId() !== $userId && !in_array(
+                            $order->getField("COMPANY_ID"),
+                            $userCompanyList
+                        )) {
                         $arResult["ERROR"] = "Error! Access denied";
                         break;
                     }
                 }
 
-                $typeList = Cashbox\CheckManager::getCheckTypeMap();
-                /** @var Cashbox\Check $typeClass */
-                foreach ($typeList as $id => $typeClass) {
+                $checkList = Cashbox\CheckManager::getSalesCheckList();
+
+                /** @var Cashbox\Check $check */
+                foreach ($checkList as $check) {
                     if (
-                        $typeClass::getSupportedEntityType() === $entityType ||
-                        $typeClass::getSupportedEntityType() === Cashbox\Check::SUPPORTED_ENTITY_TYPE_ALL
+                        class_exists($check) &&
+                        (
+                            $check::getSupportedEntityType() === $entityType ||
+                            $check::getSupportedEntityType() === Cashbox\Check::SUPPORTED_ENTITY_TYPE_ALL
+                        )
                     ) {
-                        if (class_exists($typeClass))
-                            $arResult['CHECK_TYPES'][] = array("ID" => $id, "NAME" => $typeClass::getName());
+                        $arResult['CHECK_TYPES'][] = [
+                            "ID" => $check::getType(),
+                            "NAME" => $check::getName()
+                        ];
                     }
                 }
 
@@ -354,8 +416,9 @@ if ($arResult["ERROR"] === '' && $saleModulePermissions >= "W" && check_bitrix_s
             }
 
             $addResult = Cashbox\CheckManager::addByType($entities, $typeId, $relatedEntities);
-            if (!$addResult->isSuccess())
+            if (!$addResult->isSuccess()) {
                 $arResult["ERROR"] = implode("\n", $addResult->getErrorMessages());
+            }
 
             break;
         default:
@@ -363,27 +426,31 @@ if ($arResult["ERROR"] === '' && $saleModulePermissions >= "W" && check_bitrix_s
             break;
     }
 } else {
-    if ($request->get('mode') == 'settings')
+    if ($request->get('mode') == 'settings') {
         getRestrictionHtml($request->get('ID'));
-    elseif (strlen($arResult["ERROR"]) <= 0)
+    } elseif ($arResult["ERROR"] == '') {
         $arResult["ERROR"] = "Error! Access denied";
+    }
 }
 
-if (strlen($arResult["ERROR"]) > 0)
+if ($arResult["ERROR"] <> '') {
     $arResult["RESULT"] = "ERROR";
-else
+} else {
     $arResult["RESULT"] = "OK";
+}
 
-if (strtolower(SITE_CHARSET) != 'utf-8')
+if (mb_strtolower(SITE_CHARSET) != 'utf-8') {
     $arResult = $APPLICATION->ConvertCharsetArray($arResult, SITE_CHARSET, 'utf-8');
+}
 
 header('Content-Type: application/json');
 die(json_encode($arResult));
 
 function getRestrictionHtml($cashboxId)
 {
-    if (intval($cashboxId) <= 0)
+    if (intval($cashboxId) <= 0) {
         throw new \Bitrix\Main\ArgumentNullException("cashboxId");
+    }
 
     $_REQUEST['table_id'] = 'table_cashbox_restrictions';
     $_REQUEST['admin_history'] = 'Y';

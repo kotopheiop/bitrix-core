@@ -34,14 +34,16 @@ class AudienceVkontakte extends Audience
 
     public function add(array $data)
     {
-        $response = $this->getRequest()->send(array(
-            'methodName' => 'retargeting.audience.add',
-            'parameters' => array(
-                'accountId' => $this->accountId,
-                'name' => $data['NAME'],
-                'description' => ''
+        $response = $this->getRequest()->send(
+            array(
+                'methodName' => 'retargeting.audience.add',
+                'parameters' => array(
+                    'accountId' => $this->accountId,
+                    'name' => $data['NAME'],
+                    'description' => ''
+                )
             )
-        ));
+        );
 
         $responseData = $response->getData();
         if (isset($responseData['id'])) {
@@ -67,15 +69,16 @@ class AudienceVkontakte extends Audience
 
     public function importContacts($audienceId, array $contacts = array(), array $options)
     {
-
-        return $this->getRequest()->send(array(
-            'methodName' => 'retargeting.audience.contacts.add',
-            'parameters' => array(
-                'accountId' => $this->accountId,
-                'audienceId' => $audienceId,
-                'contacts' => $this->prepareContacts($contacts)
+        return $this->getRequest()->send(
+            array(
+                'methodName' => 'retargeting.audience.contacts.add',
+                'parameters' => array(
+                    'accountId' => $this->accountId,
+                    'audienceId' => $audienceId,
+                    'contacts' => $this->prepareContacts($contacts)
+                )
             )
-        ));
+        );
     }
 
     public function removeContacts($audienceId, array $contacts = array(), array $options)
@@ -86,12 +89,14 @@ class AudienceVkontakte extends Audience
 
     public function getList()
     {
-        return $this->getRequest()->send(array(
-            'methodName' => 'retargeting.audience.list',
-            'parameters' => array(
-                'accountId' => $this->accountId
+        return $this->getRequest()->send(
+            array(
+                'methodName' => 'retargeting.audience.list',
+                'parameters' => array(
+                    'accountId' => $this->accountId
+                )
             )
-        ));
+        );
     }
 
     public static function isSupportAddAudience()
@@ -113,13 +118,15 @@ class AudienceVkontakte extends Audience
 
     public function createLookalike($sourceAudienceId, array $options)
     {
-        $result = $this->getRequest()->send(array(
-            'methodName' => 'retargeting.audience.lookalike.request.add',
-            'parameters' => array(
-                'accountId' => $this->accountId,
-                'audienceId' => $sourceAudienceId,
+        $result = $this->getRequest()->send(
+            array(
+                'methodName' => 'retargeting.audience.lookalike.request.add',
+                'parameters' => array(
+                    'accountId' => $this->accountId,
+                    'audienceId' => $sourceAudienceId,
+                )
             )
-        ));
+        );
         if (!$result->isSuccess()) {
             return $result;
         }
@@ -157,19 +164,22 @@ class AudienceVkontakte extends Audience
         $audience = new static($accountId);
         $audience->setService($service);
 
-        $result = $audience->getRequest()->send(array(
-            'methodName' => 'retargeting.audience.lookalike.request.get',
-            'parameters' => array(
-                'accountId' => $accountId,
-                'requestId' => $audienceRequestId,
+        $result = $audience->getRequest()->send(
+            array(
+                'methodName' => 'retargeting.audience.lookalike.request.get',
+                'parameters' => array(
+                    'accountId' => $accountId,
+                    'requestId' => $audienceRequestId,
+                )
             )
-        ));
+        );
         if (!$result->isSuccess()) {
             return '';
         }
 
         $data = $result->getData();
-        $audienceRequest = array_filter($data['items'],
+        $audienceRequest = array_filter(
+            $data['items'],
             function ($item) use ($audienceRequestId) {
                 return $audienceRequestId == $item['id'];
             }
@@ -187,14 +197,16 @@ class AudienceVkontakte extends Audience
         }
         if ($audienceRequest['status'] == 'search_done') // processing complete
         {
-            $audience->getRequest()->send(array(
-                'methodName' => 'retargeting.audience.lookalike.add',
-                'parameters' => array(
-                    'accountId' => $accountId,
-                    'requestId' => $audienceRequestId,
-                    'level' => $audienceSize
+            $audience->getRequest()->send(
+                array(
+                    'methodName' => 'retargeting.audience.lookalike.add',
+                    'parameters' => array(
+                        'accountId' => $accountId,
+                        'requestId' => $audienceRequestId,
+                        'level' => $audienceSize
+                    )
                 )
-            ));
+            );
         }
         return '';
     }

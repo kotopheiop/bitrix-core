@@ -8,13 +8,13 @@
 
 namespace Bitrix\Sender\Integration\Crm;
 
-use Bitrix\Main\Loader;
-use Bitrix\Main\Localization\Loc;
-
-use Bitrix\Crm\Requisite;
+use Bitrix\Crm\CompanyAddress;
+use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\Format;
-use Bitrix\Crm\EntityAddress;
+use Bitrix\Crm\Requisite;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
@@ -71,12 +71,14 @@ class CompanyCard
 
         // get requisites
         $req = new EntityRequisite;
-        $res = $req->getList(array(
-            'filter' => array(
-                '=ENTITY_TYPE_ID' => \CCrmOwnerType::Company,
-                '=ENTITY_ID' => $myCompanyId
+        $res = $req->getList(
+            array(
+                'filter' => array(
+                    '=ENTITY_TYPE_ID' => \CCrmOwnerType::Company,
+                    '=ENTITY_ID' => $myCompanyId
+                )
             )
-        ));
+        );
         $data = $res->fetch();
         if (!$data) {
             return null;
@@ -85,7 +87,7 @@ class CompanyCard
         // prepare requisites
         $result = array();
         foreach ($data as $key => $value) {
-            if (substr($key, 0, 3) == 'RQ_') {
+            if (mb_substr($key, 0, 3) == 'RQ_') {
                 $result[$key] = $value;
             }
         }
@@ -103,7 +105,7 @@ class CompanyCard
         // get address requisites
         $addresses = EntityRequisite::getAddresses($data['ID']);
         $addressTypes = array(
-            EntityAddress::Registered
+            EntityAddressType::Registered
         );
 
         $address = null;
@@ -118,9 +120,7 @@ class CompanyCard
         }
 
         if ($address && is_array($address)) {
-            $address = Format\EntityAddressFormatter::format($address, array(
-                'SEPARATOR' => Format\AddressSeparator::Comma
-            ));
+            $address = Format\AddressFormatter::getSingleInstance()->formatTextComma($address);
         } else {
             // get address from entity fields
             $address = \CCrmCompany::getByID($myCompanyId, false);
@@ -128,15 +128,14 @@ class CompanyCard
                 $address = array();
             }
             if ($address['REG_ADDRESS']) {
-                $addressTypeId = EntityAddress::Registered;
+                $addressTypeId = EntityAddressType::Registered;
             } else {
-                $addressTypeId = EntityAddress::Primary;
+                $addressTypeId = EntityAddressType::Primary;
             }
 
-            $address = Format\CompanyAddressFormatter::format($address, array(
-                'SEPARATOR' => Format\AddressSeparator::Comma,
-                'TYPE_ID' => $addressTypeId
-            ));
+            $address = Format\AddressFormatter::getSingleInstance()->formatTextComma(
+                CompanyAddress::mapEntityFields($address, ['TYPE_ID' => $addressTypeId])
+            );
         }
 
         $result['COMPANY_ADDRESS'] = $address;

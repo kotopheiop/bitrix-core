@@ -1,18 +1,22 @@
 <?
+
+use Bitrix\Main\Loader;
+
 define("ADMIN_MODULE_NAME", "perfmon");
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 /** @global CMain $APPLICATION */
 /** @global CDatabase $DB */
 /** @global CUser $USER */
-require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/perfmon/include.php");
+Loader::includeModule('perfmon');
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/perfmon/prolog.php");
 
 IncludeModuleLangFile(__FILE__);
 
 $RIGHT = $APPLICATION->GetGroupRight("perfmon");
-if ($RIGHT == "D")
+if ($RIGHT == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $data = array(
     "tuning" => array(
@@ -55,7 +59,7 @@ $data["tuning"]["ITEMS"][] = array(
 
 
 $open_basedir = ini_get('open_basedir');
-$is_ok = strlen($open_basedir) <= 0;
+$is_ok = $open_basedir == '';
 $data["tuning"]["ITEMS"][] = array(
     "PARAMETER" => "open_basedir",
     "IS_OK" => $is_ok,
@@ -97,8 +101,9 @@ if (!$allAccelerators) {
         if ($accel->IsWorking()) {
             $workingAccel = $accel;
             $arRecommendations = $accel->GetRecommendations();
-            foreach ($arRecommendations as $i => $ar)
+            foreach ($arRecommendations as $i => $ar) {
                 $data["tuning"]["ITEMS"][] = $ar;
+            }
             break;
         }
     }
@@ -106,8 +111,9 @@ if (!$allAccelerators) {
     if ($workingAccel === null) {
         foreach ($allAccelerators as $accel) {
             $arRecommendations = $accel->GetRecommendations();
-            foreach ($arRecommendations as $i => $ar)
+            foreach ($arRecommendations as $i => $ar) {
                 $data["tuning"]["ITEMS"][] = $ar;
+            }
         }
     }
 }
@@ -122,8 +128,9 @@ foreach ($data as $i => $arTable) {
     $lAdmin = new CAdminList($sTableID . $i);
 
     $lAdmin->BeginPrologContent();
-    if (array_key_exists("TITLE", $arTable))
+    if (array_key_exists("TITLE", $arTable)) {
         echo "<h4>" . $arTable["TITLE"] . "</h4>\n";
+    }
     $lAdmin->EndPrologContent();
 
     $lAdmin->AddHeaders($arTable["HEADERS"]);
@@ -148,6 +155,8 @@ foreach ($data as $i => $arTable) {
     $lAdmin->DisplayList();
 }
 
-echo BeginNote(), "<a href=\"phpinfo.php?test_var1=AAA&amp;test_var2=BBB\">" . GetMessage("PERFMON_PHP_SETTINGS") . "</a>", EndNote();
+echo BeginNote(), "<a href=\"phpinfo.php?test_var1=AAA&amp;test_var2=BBB\">" . GetMessage(
+        "PERFMON_PHP_SETTINGS"
+    ) . "</a>", EndNote();
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_admin.php");
 ?>

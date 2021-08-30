@@ -1,4 +1,5 @@
-<?
+<?php
+
 IncludeModuleLangFile(__FILE__);
 
 class CList
@@ -22,18 +23,20 @@ class CList
     function is_readonly($field_id)
     {
         $obField = $this->fields->GetByID($field_id);
-        if (is_object($obField))
+        if (is_object($obField)) {
             return $obField->IsReadonly();
-        else
+        } else {
             return false;
+        }
     }
 
     function GetFields()
     {
         $arFields = array();
 
-        foreach ($this->fields->GetFields() as $FIELD_ID)
+        foreach ($this->fields->GetFields() as $FIELD_ID) {
             $arFields[$FIELD_ID] = $this->fields->GetArrayByID($FIELD_ID);
+        }
 
         return $arFields;
     }
@@ -46,9 +49,11 @@ class CList
     function GetAvailableTypes($ID = "")
     {
         $arTypeNames = CListFieldTypeList::GetTypesNames();
-        foreach ($this->fields->GetFields() as $FIELD_ID)
-            if ($FIELD_ID != $ID)
+        foreach ($this->fields->GetFields() as $FIELD_ID) {
+            if ($FIELD_ID != $ID) {
                 unset($arTypeNames[$FIELD_ID]);
+            }
+        }
         return $arTypeNames;
     }
 
@@ -83,7 +88,7 @@ class CList
         foreach ($list as $id => $arEnum) {
             if (is_array($arEnum)) {
                 $value = trim($arEnum["VALUE"], " \t\n\r");
-                if (strlen($value)) {
+                if ((string)$value <> '') {
                     $dbEnum = CIBlockPropertyEnum::GetByID($id);
                     if (is_array($dbEnum)) {
                         $def = isset($arEnum["DEF"]) ? $arEnum["DEF"] : $dbEnum["DEF"];
@@ -121,16 +126,23 @@ class CList
         }
 
         if ($urlCache[$this->iblock_id]) {
-            if ($urlCache[$this->iblock_id]["URL"] != $url)
-                $DB->Query("UPDATE b_lists_url SET URL = '" . $DB->ForSQL($url) . "' WHERE IBLOCK_ID = " . $this->iblock_id);
+            if ($urlCache[$this->iblock_id]["URL"] != $url) {
+                $DB->Query(
+                    "UPDATE b_lists_url SET URL = '" . $DB->ForSQL($url) . "' WHERE IBLOCK_ID = " . $this->iblock_id
+                );
+            }
         } else {
-            $DB->Query("INSERT INTO b_lists_url (IBLOCK_ID, URL) values (" . $this->iblock_id . ", '" . $DB->ForSQL($url) . "')");
+            $DB->Query(
+                "INSERT INTO b_lists_url (IBLOCK_ID, URL) values (" . $this->iblock_id . ", '" . $DB->ForSQL(
+                    $url
+                ) . "')"
+            );
         }
 
         $urlCache[$this->iblock_id] = array("URL" => $url);
     }
 
-    function OnGetDocumentAdminPage($arElement)
+    public static function OnGetDocumentAdminPage($arElement)
     {
         $url = self::getUrlByIblockId($arElement["IBLOCK_ID"]);
         if ($url != "") {
@@ -143,18 +155,17 @@ class CList
         return "";
     }
 
-    function OnSearchGetURL($arFields)
+    public static function OnSearchGetURL($arFields)
     {
-
         if (
             $arFields["MODULE_ID"] === "iblock"
             && $arFields["ITEM_ID"] > 0
-            && substr($arFields["URL"], 0, 1) === "="
+            && mb_substr($arFields["URL"], 0, 1) === "="
         ) {
             $url = self::getUrlByIblockId($arFields["PARAM2"]);
             if ($url != "") {
                 $arElement = array();
-                parse_str(substr($arFields["URL"], 1), $arElement);
+                parse_str(mb_substr($arFields["URL"], 1), $arElement);
 
                 return str_replace(
                     array("#section_id#", "#element_id#"),
@@ -167,7 +178,7 @@ class CList
         return $arFields["URL"];
     }
 
-    function getUrlByIblockId($IBLOCK_ID)
+    public static function getUrlByIblockId($IBLOCK_ID)
     {
         global $DB;
         static $cache = array();
@@ -178,11 +189,10 @@ class CList
             $cache[$IBLOCK_ID] = $rs->Fetch();
         }
 
-        if ($cache[$IBLOCK_ID])
+        if ($cache[$IBLOCK_ID]) {
             return $cache[$IBLOCK_ID]["URL"];
-        else
+        } else {
             return "";
+        }
     }
 }
-
-?>

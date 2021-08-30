@@ -193,11 +193,14 @@ class EnumOptions extends \Protobuf\AbstractMessage
     public static function fromArray(array $values)
     {
         $message = new self();
-        $values = array_merge([
-            'allow_alias' => null,
-            'deprecated' => false,
-            'uninterpreted_option' => []
-        ], $values);
+        $values = array_merge(
+            [
+                'allow_alias' => null,
+                'deprecated' => false,
+                'uninterpreted_option' => []
+            ],
+            $values
+        );
 
         $message->setAllowAlias($values['allow_alias']);
         $message->setDeprecated($values['deprecated']);
@@ -214,31 +217,39 @@ class EnumOptions extends \Protobuf\AbstractMessage
      */
     public static function descriptor()
     {
-        return \google\protobuf\DescriptorProto::fromArray([
-            'name' => 'EnumOptions',
-            'field' => [
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 2,
-                    'name' => 'allow_alias',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_BOOL(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 3,
-                    'name' => 'deprecated',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_BOOL(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
-                    'default_value' => false
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 999,
-                    'name' => 'uninterpreted_option',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_MESSAGE(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_REPEATED(),
-                    'type_name' => '.google.protobuf.UninterpretedOption'
-                ]),
-            ],
-        ]);
+        return \google\protobuf\DescriptorProto::fromArray(
+            [
+                'name' => 'EnumOptions',
+                'field' => [
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 2,
+                            'name' => 'allow_alias',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_BOOL(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 3,
+                            'name' => 'deprecated',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_BOOL(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
+                            'default_value' => false
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 999,
+                            'name' => 'uninterpreted_option',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_MESSAGE(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_REPEATED(),
+                            'type_name' => '.google.protobuf.UninterpretedOption'
+                        ]
+                    ),
+                ],
+            ]
+        );
     }
 
     /**
@@ -304,7 +315,6 @@ class EnumOptions extends \Protobuf\AbstractMessage
             : null;
 
         while ($limit === null || $stream->tell() < $limit) {
-
             if ($stream->eof()) {
                 break;
             }
@@ -369,7 +379,6 @@ class EnumOptions extends \Protobuf\AbstractMessage
             $unknown = new \Protobuf\Unknown($tag, $wire, $data);
 
             $this->unknownFieldSet->add($unknown);
-
         }
     }
 
@@ -424,7 +433,9 @@ class EnumOptions extends \Protobuf\AbstractMessage
     public function merge(\Protobuf\Message $message)
     {
         if (!$message instanceof \google\protobuf\EnumOptions) {
-            throw new \InvalidArgumentException(sprintf('Argument 1 passed to %s must be a %s, %s given', __METHOD__, __CLASS__, get_class($message)));
+            throw new \InvalidArgumentException(
+                sprintf('Argument 1 passed to %s must be a %s, %s given', __METHOD__, __CLASS__, get_class($message))
+            );
         }
 
         $this->allow_alias = ($message->allow_alias !== null) ? $message->allow_alias : $this->allow_alias;

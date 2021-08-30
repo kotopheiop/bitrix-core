@@ -1,4 +1,5 @@
 <?php
+
 require_once($_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 /**
@@ -50,11 +51,13 @@ try {
     $clientCurrency = current($clientsSettings);
     $clientCurrency = Loc::getMessage('SEO_YANDEX_CURRENCY__' . $clientCurrency['Currency']);
 } catch (Engine\YandexDirectException $e) {
-    $seoproxyAuthError = new CAdminMessage(array(
-        "TYPE" => "ERROR",
-        "MESSAGE" => Loc::getMessage('SEO_YANDEX_SEOPROXY_AUTH_ERROR'),
-        "DETAILS" => $e->getMessage(),
-    ));
+    $seoproxyAuthError = new CAdminMessage(
+        array(
+            "TYPE" => "ERROR",
+            "MESSAGE" => Loc::getMessage('SEO_YANDEX_SEOPROXY_AUTH_ERROR'),
+            "DETAILS" => $e->getMessage(),
+        )
+    );
 }
 
 $bReadOnly = $bNeedAuth;
@@ -77,26 +80,35 @@ if ($ID > 0) {
     $dbRes = Adv\YandexCampaignTable::getByPrimary($ID);
     $campaign = $dbRes->fetch();
     if ($campaign) {
-        $campaign['SETTINGS']['StartDate'] = ConvertTimeStamp(MakeTimeStamp($campaign['SETTINGS']['StartDate'], "YYYY-MM-DD"));
+        $campaign['SETTINGS']['StartDate'] = ConvertTimeStamp(
+            MakeTimeStamp($campaign['SETTINGS']['StartDate'], "YYYY-MM-DD")
+        );
         $campaign['SETTINGS']['EmailNotification']['SendWarn'] = $campaign['SETTINGS']['EmailNotification']['SendWarn'] != Engine\YandexDirect::BOOL_NO;
 
         if ($campaign['OWNER_ID'] != $currentUser['id']) {
             $bReadOnly = true;
             $bAllowUpdate = false;
 
-            $message = new CAdminMessage(array(
-                "TYPE" => "ERROR",
-                "MESSAGE" => Loc::getMessage('SEO_CAMPAIGN_WRONG_OWNER', array("#USERINFO#" => "(" . $campaign["OWNER_ID"] . ") " . $campaign["OWNER_NAME"]))
-            ));
+            $message = new CAdminMessage(
+                array(
+                    "TYPE" => "ERROR",
+                    "MESSAGE" => Loc::getMessage(
+                        'SEO_CAMPAIGN_WRONG_OWNER',
+                        array("#USERINFO#" => "(" . $campaign["OWNER_ID"] . ") " . $campaign["OWNER_NAME"])
+                    )
+                )
+            );
         }
     } else {
         require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
-        $message = new CAdminMessage(array(
-            "TYPE" => "ERROR",
-            "DETAILS" => Loc::getMessage("SEO_ERROR_NO_CAMPAIGN"),
-            "HTML" => true
-        ));
+        $message = new CAdminMessage(
+            array(
+                "TYPE" => "ERROR",
+                "DETAILS" => Loc::getMessage("SEO_ERROR_NO_CAMPAIGN"),
+                "HTML" => true
+            )
+        );
         echo $message->Show();
 
         require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_admin.php");
@@ -130,26 +142,33 @@ if ($bShowStats) {
     $oSort = new \CAdminSorting($tableID, "BANNER_CTR", "desc");
     $statsAdminList = new \CAdminList($tableID, $oSort);
 
-    $campaignStats = Adv\YandexStatTable::getList(array(
-        'order' => array($by => $order),
-        'group' => array("BANNER_ID", "CURRENCY"),
-        'filter' => array(
-            "=CAMPAIGN_ID" => $campaign['ID'],
-            ">=DATE_DAY" => $statsDateStart,
-            "<DATE_DAY" => $statsDateFinish,
-        ),
-        'select' => array(
-            "BANNER_ID", "CURRENCY",
-            "BANNER_NAME" => "BANNER.NAME", "BANNER_XML_ID" => "BANNER.XML_ID",
-            "BANNER_SUM", "BANNER_SHOWS", "BANNER_CLICKS", "BANNER_CTR",
-        ),
-        "runtime" => array(
-            new Main\Entity\ExpressionField('BANNER_SUM', 'SUM(SUM)'),
-            new Main\Entity\ExpressionField('BANNER_SHOWS', 'SUM(SHOWS)'),
-            new Main\Entity\ExpressionField('BANNER_CLICKS', 'SUM(CLICKS)'),
-            new Main\Entity\ExpressionField('BANNER_CTR', '100*SUM(CLICKS)/SUM(SHOWS)'),
-        ),
-    ));
+    $campaignStats = Adv\YandexStatTable::getList(
+        array(
+            'order' => array($by => $order),
+            'group' => array("BANNER_ID", "CURRENCY"),
+            'filter' => array(
+                "=CAMPAIGN_ID" => $campaign['ID'],
+                ">=DATE_DAY" => $statsDateStart,
+                "<DATE_DAY" => $statsDateFinish,
+            ),
+            'select' => array(
+                "BANNER_ID",
+                "CURRENCY",
+                "BANNER_NAME" => "BANNER.NAME",
+                "BANNER_XML_ID" => "BANNER.XML_ID",
+                "BANNER_SUM",
+                "BANNER_SHOWS",
+                "BANNER_CLICKS",
+                "BANNER_CTR",
+            ),
+            "runtime" => array(
+                new Main\Entity\ExpressionField('BANNER_SUM', 'SUM(SUM)'),
+                new Main\Entity\ExpressionField('BANNER_SHOWS', 'SUM(SHOWS)'),
+                new Main\Entity\ExpressionField('BANNER_CLICKS', 'SUM(CLICKS)'),
+                new Main\Entity\ExpressionField('BANNER_CTR', '100*SUM(CLICKS)/SUM(SHOWS)'),
+            ),
+        )
+    );
 
     $data = new \CAdminResult($campaignStats, $tableID);
     $data->NavStart();
@@ -169,19 +188,59 @@ if ($bShowStats) {
 
     $arHeaders = array(
         array("id" => "ID", "content" => Loc::getMessage("SEO_BANNER_ID"), "sort" => "BANNER_ID", "default" => true),
-        array("id" => "NAME", "content" => Loc::getMessage('SEO_BANNER_NAME'), "sort" => "BANNER_NAME", "default" => true),
-        array("id" => "XML_ID", "content" => Loc::getMessage('SEO_BANNER_XML_ID'), "sort" => "BANNER_XML_ID", "default" => true),
-        array("id" => "BANNER_SUM", "content" => Loc::getMessage('SEO_YANDEX_STATS_GRAPH_AXIS_SUM') . ', ' . $currency, "sort" => "BANNER_SUM", "default" => true, "align" => "right"),
-        array("id" => "BANNER_SHOWS", "content" => Loc::getMessage('SEO_YANDEX_STATS_GRAPH_AXIS_SHOWS'), "sort" => "BANNER_SHOWS", "default" => true, "align" => "right"),
-        array("id" => "BANNER_CLICKS", "content" => Loc::getMessage('SEO_YANDEX_STATS_GRAPH_AXIS_CLICKS'), "sort" => "BANNER_CLICKS", "default" => true, "align" => "right"),
-        array("id" => "BANNER_CTR", "content" => Loc::getMessage('SEO_FORECAST_CTR'), "sort" => "BANNER_CTR", "default" => true, "align" => "right"),
+        array(
+            "id" => "NAME",
+            "content" => Loc::getMessage('SEO_BANNER_NAME'),
+            "sort" => "BANNER_NAME",
+            "default" => true
+        ),
+        array(
+            "id" => "XML_ID",
+            "content" => Loc::getMessage('SEO_BANNER_XML_ID'),
+            "sort" => "BANNER_XML_ID",
+            "default" => true
+        ),
+        array(
+            "id" => "BANNER_SUM",
+            "content" => Loc::getMessage('SEO_YANDEX_STATS_GRAPH_AXIS_SUM') . ', ' . $currency,
+            "sort" => "BANNER_SUM",
+            "default" => true,
+            "align" => "right"
+        ),
+        array(
+            "id" => "BANNER_SHOWS",
+            "content" => Loc::getMessage('SEO_YANDEX_STATS_GRAPH_AXIS_SHOWS'),
+            "sort" => "BANNER_SHOWS",
+            "default" => true,
+            "align" => "right"
+        ),
+        array(
+            "id" => "BANNER_CLICKS",
+            "content" => Loc::getMessage('SEO_YANDEX_STATS_GRAPH_AXIS_CLICKS'),
+            "sort" => "BANNER_CLICKS",
+            "default" => true,
+            "align" => "right"
+        ),
+        array(
+            "id" => "BANNER_CTR",
+            "content" => Loc::getMessage('SEO_FORECAST_CTR'),
+            "sort" => "BANNER_CTR",
+            "default" => true,
+            "align" => "right"
+        ),
     );
 
     if ($bShowOrderStats) {
         $arHeaders = array_merge(
             array_slice($arHeaders, 0, 3),
             array(
-                array("id" => "BANNER_SUM_ORDER", "content" => Loc::getMessage('SEO_YANDEX_STATS_SUM_ORDER'), /*"sort" => "BANNER_SUM", */ "default" => true, "align" => "right"),
+                array(
+                    "id" => "BANNER_SUM_ORDER",
+                    "content" => Loc::getMessage('SEO_YANDEX_STATS_SUM_ORDER'),
+                    /*"sort" => "BANNER_SUM", */
+                    "default" => true,
+                    "align" => "right"
+                ),
             ),
             array_slice($arHeaders, 3)
         );
@@ -190,23 +249,25 @@ if ($bShowStats) {
     $statsAdminList->AddHeaders($arHeaders);
 
     if (count($statsBanners) > 0) {
-        $dbRes = Adv\OrderTable::getList(array(
-            'filter' => array(
-                '@BANNER_ID' => array_keys($statsBanners),
-                '=CAMPAIGN_ID' => $campaign['ID'],
-                '=PROCESSED' => Adv\OrderTable::PROCESSED,
-                ">=TIMESTAMP_X" => $statsDateStart,
-                "<TIMESTAMP_X" => $statsDateFinish,
+        $dbRes = Adv\OrderTable::getList(
+            array(
+                'filter' => array(
+                    '@BANNER_ID' => array_keys($statsBanners),
+                    '=CAMPAIGN_ID' => $campaign['ID'],
+                    '=PROCESSED' => Adv\OrderTable::PROCESSED,
+                    ">=TIMESTAMP_X" => $statsDateStart,
+                    "<TIMESTAMP_X" => $statsDateFinish,
 
-            ),
-            'group' => array(
-                'BANNER_ID'
-            ),
-            'select' => array('BANNER_ID', 'BANNER_SUM'),
-            'runtime' => array(
-                new Main\Entity\ExpressionField('BANNER_SUM', 'SUM(SUM)'),
-            ),
-        ));
+                ),
+                'group' => array(
+                    'BANNER_ID'
+                ),
+                'select' => array('BANNER_ID', 'BANNER_SUM'),
+                'runtime' => array(
+                    new Main\Entity\ExpressionField('BANNER_SUM', 'SUM(SUM)'),
+                ),
+            )
+        );
         while ($realSale = $dbRes->fetch()) {
             $statsBanners[$realSale['BANNER_ID']]['BANNER_SUM_ORDER'] = $realSale['BANNER_SUM'];
         }
@@ -214,19 +275,40 @@ if ($bShowStats) {
         foreach ($statsBanners as $banner) {
             $editUrl = "seo_search_yandex_direct_banner_edit.php?lang=" . LANGUAGE_ID . "&campaign=" . $campaign['ID'] . "&ID=" . $banner["BANNER_ID"];
 
-            $row = &$statsAdminList->AddRow($banner["BANNER_ID"], $banner, $editUrl, Loc::getMessage("SEO_BANNER_EDIT_TITLE", array(
-                "#ID#" => $banner["BANNER_ID"],
-                "#XML_ID#" => $banner["BANNER_XML_ID"],
-            )));
+            $row = &$statsAdminList->AddRow(
+                $banner["BANNER_ID"],
+                $banner,
+                $editUrl,
+                Loc::getMessage(
+                    "SEO_BANNER_EDIT_TITLE",
+                    array(
+                        "#ID#" => $banner["BANNER_ID"],
+                        "#XML_ID#" => $banner["BANNER_XML_ID"],
+                    )
+                )
+            );
 
             $row->AddViewField("ID", $banner['BANNER_ID']);
-            $row->AddField("NAME", '<a href="' . Converter::getHtmlConverter()->encode($editUrl) . '" title="' . Loc::getMessage("SEO_BANNER_EDIT_TITLE", array(
-                    "#ID#" => $banner["BANNER_ID"],
-                    "#XML_ID#" => $banner["BANNER_XML_ID"],
-                )) . '">' . Converter::getHtmlConverter()->encode($banner['BANNER_NAME']) . '</a>');
+            $row->AddField(
+                "NAME",
+                '<a href="' . Converter::getHtmlConverter()->encode($editUrl) . '" title="' . Loc::getMessage(
+                    "SEO_BANNER_EDIT_TITLE",
+                    array(
+                        "#ID#" => $banner["BANNER_ID"],
+                        "#XML_ID#" => $banner["BANNER_XML_ID"],
+                    )
+                ) . '">' . Converter::getHtmlConverter()->encode($banner['BANNER_NAME']) . '</a>'
+            );
 
 
-            $row->AddViewField('XML_ID', '<a href="https://direct.yandex.ru/registered/main.pl?cmd=showCampMultiEdit&bids=' . $banner['BANNER_XML_ID'] . '&cid=' . $campaign['XML_ID'] . '" target="_blank" title="' . Converter::getHtmlConverter()->encode(Loc::getMessage('SEO_CAMPAIGN_EDIT_EXTERNAL')) . '">' . Loc::getMessage('SEO_YANDEX_DIRECT_LINK_TPL', array('#XML_ID#' => $banner['BANNER_XML_ID'])) . '</a>');
+            $row->AddViewField(
+                'XML_ID',
+                '<a href="https://direct.yandex.ru/registered/main.pl?cmd=showCampMultiEdit&bids=' . $banner['BANNER_XML_ID'] . '&cid=' . $campaign['XML_ID'] . '" target="_blank" title="' . Converter::getHtmlConverter(
+                )->encode(Loc::getMessage('SEO_CAMPAIGN_EDIT_EXTERNAL')) . '">' . Loc::getMessage(
+                    'SEO_YANDEX_DIRECT_LINK_TPL',
+                    array('#XML_ID#' => $banner['BANNER_XML_ID'])
+                ) . '</a>'
+            );
 
 
             $row->AddViewField("BANNER_SUM", number_format($banner['BANNER_SUM'], 2, '.', ' '));
@@ -235,7 +317,14 @@ if ($bShowStats) {
             $row->AddViewField("BANNER_CLICKS", $banner['BANNER_CLICKS']);
             $row->AddViewField("BANNER_CTR", number_format($banner['BANNER_CTR'], 2, '.', ' '));
             if ($bShowOrderStats) {
-                $row->AddViewField("BANNER_SUM_ORDER", \CCurrencyLang::CurrencyFormat(doubleval($banner['BANNER_SUM_ORDER']), \Bitrix\Currency\CurrencyManager::getBaseCurrency(), true));
+                $row->AddViewField(
+                    "BANNER_SUM_ORDER",
+                    \CCurrencyLang::CurrencyFormat(
+                        doubleval($banner['BANNER_SUM_ORDER']),
+                        \Bitrix\Currency\CurrencyManager::getBaseCurrency(),
+                        true
+                    )
+                );
             }
         }
     }
@@ -274,12 +363,17 @@ if (!$bReadOnly) {
     if (!in_array($campaign["SETTINGS"]['Strategy']['StrategyName'], Adv\YandexCampaignTable::$supportedStrategy)) {
         $bReadOnly = true;
 
-        $message = new CAdminMessage(array(
-            "TYPE" => "ERROR",
-            "MESSAGE" => Loc::getMessage("SEO_CAMPAIGN_STRATEGY_NOT_SUPPORTED", array(
-                "#STRATEGY#" => $strategyTitle,
-            ))
-        ));
+        $message = new CAdminMessage(
+            array(
+                "TYPE" => "ERROR",
+                "MESSAGE" => Loc::getMessage(
+                    "SEO_CAMPAIGN_STRATEGY_NOT_SUPPORTED",
+                    array(
+                        "#STRATEGY#" => $strategyTitle,
+                    )
+                )
+            )
+        );
     }
 }
 
@@ -337,7 +431,10 @@ if ($request->isPost() && ($request["save"] <> '' || $request["apply"] <> '') &&
     if ($result->isSuccess()) {
         $ID = $result->getId();
         if ($request["apply"] <> '') {
-            LocalRedirect('/bitrix/admin/seo_search_yandex_direct_edit.php?lang=' . LANGUAGE_ID . '&ID=' . $ID . '&' . $tabControl->ActiveTabParam());
+            LocalRedirect(
+                '/bitrix/admin/seo_search_yandex_direct_edit.php?lang=' . LANGUAGE_ID . '&ID=' . $ID . '&' . $tabControl->ActiveTabParam(
+                )
+            );
         } else {
             if ($back_url == '') {
                 LocalRedirect("/bitrix/admin/seo_search_yandex_direct.php?lang=" . LANGUAGE_ID);
@@ -350,11 +447,13 @@ if ($request->isPost() && ($request["save"] <> '' || $request["apply"] <> '') &&
         $campaignFields["XML_ID"] = $campaign["XML_ID"];
         $campaign = $campaignFields;
 
-        $message = new CAdminMessage(array(
-            "TYPE" => "ERROR",
-            "MESSAGE" => Loc::getMessage('SEO_CAMPAIGN_ERROR'),
-            "DETAILS" => implode('<br>', $result->getErrorMessages()),
-        ));
+        $message = new CAdminMessage(
+            array(
+                "TYPE" => "ERROR",
+                "MESSAGE" => Loc::getMessage('SEO_CAMPAIGN_ERROR'),
+                "DETAILS" => implode('<br>', $result->getErrorMessages()),
+            )
+        );
     }
 }
 
@@ -364,10 +463,13 @@ $campaign['SETTINGS']['MinusKeywords'] = $campaign['SETTINGS']['MinusKeywords'] 
 
 $APPLICATION->SetTitle(
     $ID > 0
-        ? Loc::getMessage("SEO_CAMPAIGN_EDIT_TITLE", array(
-        "#ID#" => $ID,
-        "#XML_ID#" => $campaign["XML_ID"],
-    ))
+        ? Loc::getMessage(
+        "SEO_CAMPAIGN_EDIT_TITLE",
+        array(
+            "#ID#" => $ID,
+            "#XML_ID#" => $campaign["XML_ID"],
+        )
+    )
         : Loc::getMessage("SEO_CAMPAIGN_NEW_TITLE")
 );
 
@@ -406,7 +508,8 @@ if ($ID > 0) {
         $aMenu[] = array(
             "TEXT" => Loc::getMessage("MAIN_DELETE"),
             "ICON" => "btn_delete",
-            "LINK" => "seo_search_yandex_direct.php?lang=" . LANGUAGE_ID . "&ID=" . $ID . "&action=delete&" . bitrix_sessid_get()
+            "LINK" => "seo_search_yandex_direct.php?lang=" . LANGUAGE_ID . "&ID=" . $ID . "&action=delete&" . bitrix_sessid_get(
+                )
         );
     }
 }
@@ -415,14 +518,16 @@ if (!defined('BX_PUBLIC_MODE') || !BX_PUBLIC_MODE) {
     require_once("tab/seo_search_yandex_direct_auth.php");
 }
 
-if (isset($seoproxyAuthError))
+if (isset($seoproxyAuthError)) {
     echo $seoproxyAuthError->Show();
+}
 
 $context = new CAdminContextMenu($aMenu);
 $context->Show();
 
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 
 ?>
     <form method="POST" action="<? echo $APPLICATION->GetCurPage() ?>?lang=<?= LANGUAGE_ID ?>&amp;ID=<?= $ID ?>"
@@ -462,7 +567,9 @@ if ($message)
                     if ($bAllowUpdate) {
                         ?>
                         &nbsp;&nbsp;<a href="javascript:void(0)"
-                                       onclick="updateCampaign(this, '<?= $ID ?>')"><?= Loc::getMessage("SEO_CAMPAIGN_LIST_UPDATE"); ?></a>
+                                       onclick="updateCampaign(this, '<?= $ID ?>')"><?= Loc::getMessage(
+                                "SEO_CAMPAIGN_LIST_UPDATE"
+                            ); ?></a>
                         <?
                     }
                     ?>
@@ -475,37 +582,49 @@ if ($message)
         <tr class="adm-detail-required-field">
             <td width="40%"><?= Loc::getMessage("SEO_CAMPAIGN_NAME") ?>:</td>
             <td width="60%"><? if (!$bReadOnly): ?><input type="text" name="SETTINGS[Name]"
-                                                          value="<?= Converter::getHtmlConverter()->encode($campaign['SETTINGS']['Name']); ?>"
-                                                          size="53"
-                                                          maxlength="255"><? else: ?><?= Converter::getHtmlConverter()->encode($campaign['SETTINGS']['Name']); ?><?endif; ?>
-            </td>
+                                                          value="<?= Converter::getHtmlConverter()->encode(
+                                                              $campaign['SETTINGS']['Name']
+                                                          ); ?>" size="53"
+                                                          maxlength="255"><? else: ?><?= Converter::getHtmlConverter(
+                )->encode($campaign['SETTINGS']['Name']); ?><?endif; ?></td>
         </tr>
         <tr class="adm-detail-required-field">
             <td><?= Loc::getMessage("SEO_CAMPAIGN_FIO") ?>:</td>
             <td><? if (!$bReadOnly): ?><input type="text" name="SETTINGS[FIO]"
-                                              value="<?= Converter::getHtmlConverter()->encode($campaign['SETTINGS']['FIO']); ?>"
-                                              size="53"
-                                              maxlength="255"><? else: ?><?= Converter::getHtmlConverter()->encode($campaign['SETTINGS']['FIO']); ?><?endif; ?>
-            </td>
+                                              value="<?= Converter::getHtmlConverter()->encode(
+                                                  $campaign['SETTINGS']['FIO']
+                                              ); ?>" size="53"
+                                              maxlength="255"><? else: ?><?= Converter::getHtmlConverter()->encode(
+                    $campaign['SETTINGS']['FIO']
+                ); ?><?endif; ?></td>
         </tr>
 
         <tr class="adm-detail-required-field">
             <td><?= Loc::getMessage("SEO_CAMPAIGN_START_DATE") ?>:</td>
-            <td><? if (!$bReadOnly): ?><?= CalendarDate("SETTINGS[StartDate]", $campaign['SETTINGS']['StartDate']) ?><? else: ?><?= Converter::getHtmlConverter()->encode($campaign['SETTINGS']['StartDate']); ?><?endif; ?></td>
+            <td><? if (!$bReadOnly): ?><?= CalendarDate(
+                    "SETTINGS[StartDate]",
+                    $campaign['SETTINGS']['StartDate']
+                ) ?><? else: ?><?= Converter::getHtmlConverter()->encode(
+                    $campaign['SETTINGS']['StartDate']
+                ); ?><?endif; ?></td>
         </tr>
 
         <tr class="adm-detail-required-field">
             <td>
                 <?= Loc::getMessage("SEO_CAMPAIGN_EMAIL") ?>:
-                <div style="font-weight: normal; font-size: 11px; margin-top: 5px; color: gray;"><?= Loc::getMessage('SEO_CAMPAIGN_EMAIL_HINT') ?></div>
+                <div style="font-weight: normal; font-size: 11px; margin-top: 5px; color: gray;"><?= Loc::getMessage(
+                        'SEO_CAMPAIGN_EMAIL_HINT'
+                    ) ?></div>
             </td>
             <td valign="top"><? if (!$bReadOnly): ?><input type="text" name="SETTINGS[EmailNotification][Email]"
-                                                           value="<?= Converter::getHtmlConverter()->encode($campaign['SETTINGS']['EmailNotification']['Email']); ?>"
-                                                           size="42"
-                                                           maxlength="255"><? else: ?><?= Converter::getHtmlConverter()->encode($campaign['SETTINGS']['EmailNotification']['Email']); ?><?endif; ?>
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="javascript:void(0)"
-                                                 onclick="BX.toggle(BX('seo_email_details'));"><?= Loc::getMessage('SEO_CAMPAIGN_EMAIL_SETTINGS') ?></a>
-            </td>
+                                                           value="<?= Converter::getHtmlConverter()->encode(
+                                                               $campaign['SETTINGS']['EmailNotification']['Email']
+                                                           ); ?>" size="42"
+                                                           maxlength="255"><? else: ?><?= Converter::getHtmlConverter(
+                )->encode($campaign['SETTINGS']['EmailNotification']['Email']); ?><?endif; ?>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a
+                        href="javascript:void(0)" onclick="BX.toggle(BX('seo_email_details'));"><?= Loc::getMessage(
+                        'SEO_CAMPAIGN_EMAIL_SETTINGS'
+                    ) ?></a></td>
         </tr>
         <?
         // email settings subtable
@@ -518,13 +637,17 @@ if ($message)
                             <td colspan="2"><b><?= Loc::getMessage('SEO_CAMPAIGN_EMAIL_SETTINGS_TITLE') ?></b></td>
                         </tr>
                         <tr>
-                            <td width="50%"
-                                align="right"><?= Loc::getMessage("SEO_CAMPAIGN_EMAIL_MONEY_WARNING_VALUE") ?></td>
+                            <td width="50%" align="right"><?= Loc::getMessage(
+                                    "SEO_CAMPAIGN_EMAIL_MONEY_WARNING_VALUE"
+                                ) ?></td>
                             <td width="50%"><? if (!$bReadOnly): ?><input type="text"
                                                                           name="SETTINGS[EmailNotification][MoneyWarningValue]"
-                                                                          value="<?= intval($campaign["SETTINGS"]["EmailNotification"]["MoneyWarningValue"]) ?>"
-                                                                          size="3" maxlength="2">&nbsp;<? else: ?>
-                                    <b><?= intval($campaign["SETTINGS"]["EmailNotification"]["MoneyWarningValue"]) ?></b><?endif; ?><?= Loc::getMessage('SEO_CAMPAIGN_EMAIL_MONEY_WARNING_VALUE_HINT') ?>
+                                                                          value="<?= intval(
+                                                                              $campaign["SETTINGS"]["EmailNotification"]["MoneyWarningValue"]
+                                                                          ) ?>" size="3" maxlength="2">&nbsp;<? else: ?>
+                                    <b><?= intval(
+                                    $campaign["SETTINGS"]["EmailNotification"]["MoneyWarningValue"]
+                                ) ?></b><?endif; ?><?= Loc::getMessage('SEO_CAMPAIGN_EMAIL_MONEY_WARNING_VALUE_HINT') ?>
                             </td>
                         </tr>
                         <?
@@ -536,9 +659,10 @@ if ($message)
                                             type="checkbox" name="SETTINGS[EmailNotification][SendWarn]" value="Y"
                                             id="seo_sendwarn" <?= $campaign["SETTINGS"]["EmailNotification"]["SendWarn"] ? ' checked="checked"' : '' ?>
                                             onclick="BX('seo_warn_interval').disabled=!this.checked;">&nbsp;<label
-                                            for="seo_sendwarn"><?= Loc::getMessage("SEO_CAMPAIGN_EMAIL_MONEY_WARN_PLACE_INTERVAL") ?></label>&nbsp;<select
-                                            name="SETTINGS[EmailNotification][WarnPlaceInterval]"
-                                            id="seo_warn_interval"<?= $campaign["SETTINGS"]["EmailNotification"]["SendWarn"] ? '' : ' disabled="disabled"' ?>>
+                                            for="seo_sendwarn"><?= Loc::getMessage(
+                                            "SEO_CAMPAIGN_EMAIL_MONEY_WARN_PLACE_INTERVAL"
+                                        ) ?></label>&nbsp;<select name="SETTINGS[EmailNotification][WarnPlaceInterval]"
+                                                                  id="seo_warn_interval"<?= $campaign["SETTINGS"]["EmailNotification"]["SendWarn"] ? '' : ' disabled="disabled"' ?>>
                                         <?
                                         $v = intval($campaign["SETTINGS"]["EmailNotification"]["WarnPlaceInterval"]);
                                         foreach (Adv\YandexCampaignTable::$allowedWarnPlaceIntervalValues as $value):
@@ -549,8 +673,9 @@ if ($message)
                                         endforeach;
                                         ?>
 
-                                    </select>&nbsp;<?= Loc::getMessage('SEO_CAMPAIGN_EMAIL_MONEY_WARN_PLACE_INTERVAL_HINT') ?>
-                                </td>
+                                    </select>&nbsp;<?= Loc::getMessage(
+                                        'SEO_CAMPAIGN_EMAIL_MONEY_WARN_PLACE_INTERVAL_HINT'
+                                    ) ?></td>
                             </tr>
                         <?
                         elseif ($campaign["SETTINGS"]["EmailNotification"]["SendWarn"]):
@@ -559,8 +684,11 @@ if ($message)
                             <tr>
                                 <td align="right"><?= Loc::getMessage("SEO_CAMPAIGN_EMAIL_SENDWARN") ?></td>
                                 <td><?= Loc::getMessage("SEO_CAMPAIGN_EMAIL_MONEY_WARN_PLACE_INTERVAL") ?>
-                                    &nbsp;<b><?= intval($campaign["SETTINGS"]["EmailNotification"]["WarnPlaceInterval"]) ?></b>&nbsp;<?= Loc::getMessage('SEO_CAMPAIGN_EMAIL_MONEY_WARN_PLACE_INTERVAL_HINT') ?>
-                                </td>
+                                    &nbsp;<b><?= intval(
+                                            $campaign["SETTINGS"]["EmailNotification"]["WarnPlaceInterval"]
+                                        ) ?></b>&nbsp;<?= Loc::getMessage(
+                                        'SEO_CAMPAIGN_EMAIL_MONEY_WARN_PLACE_INTERVAL_HINT'
+                                    ) ?></td>
                             </tr>
 
                         <?
@@ -582,7 +710,9 @@ if ($message)
                 else:
                     ?>
                     <textarea id="minus_text" style="width: 99%;" rows="3"
-                              name="SETTINGS[MinusKeywords]"><?= Converter::getHtmlConverter()->encode($campaign["SETTINGS"]["MinusKeywords"]) ?></textarea>
+                              name="SETTINGS[MinusKeywords]"><?= Converter::getHtmlConverter()->encode(
+                            $campaign["SETTINGS"]["MinusKeywords"]
+                        ) ?></textarea>
                 <?
                 endif;
                 ?>
@@ -597,7 +727,10 @@ if ($message)
             <td width="40%" valign="top"><?= Loc::getMessage("SEO_CAMPAIGN_STRATEGY") ?>:</td>
             <td width="60%">
                 <?
-                $strategyKey = array_search($campaign["SETTINGS"]["Strategy"]["StrategyName"], Adv\YandexCampaignTable::$supportedStrategy);
+                $strategyKey = array_search(
+                    $campaign["SETTINGS"]["Strategy"]["StrategyName"],
+                    Adv\YandexCampaignTable::$supportedStrategy
+                );
 
                 if (!$bReadOnly):
                     foreach (Adv\YandexCampaignTable::$supportedStrategy as $key => $strategy):
@@ -663,9 +796,9 @@ if ($message)
                     ?>
                     <tr>
                         <td><?= Converter::getHtmlConverter()->encode($param); ?></td>
-                        <td>
-                            <b><?= Converter::getHtmlConverter()->encode($campaign['SETTINGS']['Strategy'][$param]) ?></b>
-                        </td>
+                        <td><b><?= Converter::getHtmlConverter()->encode(
+                                    $campaign['SETTINGS']['Strategy'][$param]
+                                ) ?></b></td>
                     </tr>
                     <?
                 }
@@ -682,27 +815,30 @@ if ($message)
                 <td colspan="3"><?= Loc::getMessage('SEO_YANDEX_STATS_GENERAL'); ?></td>
             </tr>
             <tr>
-                <td width="50%"
-                    colspan="2"><? ShowJSHint(Loc::getMessage('SEO_CAMPAIGN_SUM_HINT')) ?> <?= Loc::getMessage('SEO_CAMPAIGN_SUM') ?>
-                    , <?= $clientCurrency ?>:
+                <td width="50%" colspan="2"><? ShowJSHint(
+                        Loc::getMessage('SEO_CAMPAIGN_SUM_HINT')
+                    ) ?> <?= Loc::getMessage('SEO_CAMPAIGN_SUM') ?>, <?= $clientCurrency ?>:
                 </td>
                 <td width="50%"><?= doubleval($campaign['SETTINGS']['Sum']); ?></td>
             </tr>
             <tr>
-                <td colspan="2"><? ShowJSHint(Loc::getMessage('SEO_CAMPAIGN_REST_HINT')) ?> <?= Loc::getMessage('SEO_CAMPAIGN_REST') ?>
-                    , <?= $clientCurrency ?>:
+                <td colspan="2"><? ShowJSHint(Loc::getMessage('SEO_CAMPAIGN_REST_HINT')) ?> <?= Loc::getMessage(
+                        'SEO_CAMPAIGN_REST'
+                    ) ?>, <?= $clientCurrency ?>:
                 </td>
                 <td><?= doubleval($campaign['SETTINGS']['Rest']); ?></td>
             </tr>
             <tr>
-                <td colspan="2"><? ShowJSHint(Loc::getMessage('SEO_CAMPAIGN_SHOWS_HINT')) ?> <?= Loc::getMessage('SEO_CAMPAIGN_SHOWS') ?>
-                    :
+                <td colspan="2"><? ShowJSHint(Loc::getMessage('SEO_CAMPAIGN_SHOWS_HINT')) ?> <?= Loc::getMessage(
+                        'SEO_CAMPAIGN_SHOWS'
+                    ) ?>:
                 </td>
                 <td><?= doubleval($campaign['SETTINGS']['Shows']); ?></td>
             </tr>
             <tr>
-                <td colspan="2"><? ShowJSHint(Loc::getMessage('SEO_CAMPAIGN_CLICKS_HINT')) ?> <?= Loc::getMessage('SEO_CAMPAIGN_CLICKS') ?>
-                    :
+                <td colspan="2"><? ShowJSHint(Loc::getMessage('SEO_CAMPAIGN_CLICKS_HINT')) ?> <?= Loc::getMessage(
+                        'SEO_CAMPAIGN_CLICKS'
+                    ) ?>:
                 </td>
                 <td><?= doubleval($campaign['SETTINGS']['Clicks']); ?></td>
             </tr>
@@ -767,12 +903,18 @@ if ($message)
 				<option value="interval"><?= Loc::getMessage('SEO_YANDEX_STATS_GRAPH_INTERVAL') ?></option>
 				<option value="week_ago"><?= Loc::getMessage('SEO_YANDEX_STATS_GRAPH_WEEK') ?></option>
 				<option value="month_ago"><?= Loc::getMessage('SEO_YANDEX_STATS_GRAPH_MONTH') ?></option>
-			</select>&nbsp;<span
-                        id="seo_graph_interval"><?= CalendarDate("date_from", $statsDateStart->toString(), 'form1', "4") ?>&nbsp;&hellip;<?= CalendarDate("date_to", $statsDateFinish->toString(), 'form1', "4") ?></span></span>&nbsp;&nbsp;<input
+			</select>&nbsp;<span id="seo_graph_interval"><?= CalendarDate(
+                        "date_from",
+                        $statsDateStart->toString(),
+                        'form1',
+                        "4"
+                    ) ?>&nbsp;&hellip;<?= CalendarDate("date_to", $statsDateFinish->toString(), 'form1', "4") ?></span></span>&nbsp;&nbsp;<input
                                 type="button" value="<?= Loc::getMessage('SEO_YANDEX_STATS_PERIOD_APPLY') ?>"
                                 onclick="loadGraphData()" id="stats_loading_button" name="template_preview"><span
                                 id="stats_wait" class="loading-message-text"
-                                style="display: none; margin-top: 5px;"><?= Loc::getMessage('SEO_YANDEX_STATS_WAIT') ?></span>
+                                style="display: none; margin-top: 5px;"><?= Loc::getMessage(
+                                'SEO_YANDEX_STATS_WAIT'
+                            ) ?></span>
                     </td>
                 </tr>
                 <tr>
@@ -823,7 +965,9 @@ if ($message)
                                 window.yandexChart.validateData();
 
                                 if (data.length > 0) {
-                                    yandexAxis['sum'].title = "<?=Loc::getMessage('SEO_YANDEX_STATS_GRAPH_AXIS_SUM')?>, " + (data[0].CURRENCY || '<?=$clientCurrency?>');
+                                    yandexAxis['sum'].title = "<?=Loc::getMessage(
+                                        'SEO_YANDEX_STATS_GRAPH_AXIS_SUM'
+                                    )?>, " + (data[0].CURRENCY || '<?=$clientCurrency?>');
 
                                     if (currentGraph == 'sum') {
                                         BX.defer(setGraph)(currentGraph);
@@ -862,7 +1006,9 @@ if ($message)
                                     function (res) {
                                         if (!!res.session) {
                                             BX.defer(loadGraphData)(res.session);
-                                            BX('stats_wait').innerHTML = '<?=Loc::getMessage('SEO_YANDEX_STATS_WAIT')?>: ' + Math.floor(100 - (res.left / res.amount) * 100) + '%';
+                                            BX('stats_wait').innerHTML = '<?=Loc::getMessage(
+                                                'SEO_YANDEX_STATS_WAIT'
+                                            )?>: ' + Math.floor(100 - (res.left / res.amount) * 100) + '%';
                                         } else if (!!res.data) {
                                             setData(res.data);
 
@@ -901,19 +1047,37 @@ if ($message)
 
                             var yandexGraphs = {
                                 sum: [
-                                    getGraph('yandex_sum', 'SUM', '<?=Loc::getMessage('SEO_YANDEX_STATS_GRAPH_TITLE_SUM')?>'),
-                                    getGraph('yandex_sum_search', 'SUM_SEARCH', '<?=Loc::getMessage('SEO_YANDEX_STATS_GRAPH_TITLE_SUM_SEARCH')?>'),
-                                    getGraph('yandex_sum_context', 'SUM_CONTEXT', '<?=Loc::getMessage('SEO_YANDEX_STATS_GRAPH_TITLE_SUM_CONTEXT')?>'),
+                                    getGraph('yandex_sum', 'SUM', '<?=Loc::getMessage(
+                                        'SEO_YANDEX_STATS_GRAPH_TITLE_SUM'
+                                    )?>'),
+                                    getGraph('yandex_sum_search', 'SUM_SEARCH', '<?=Loc::getMessage(
+                                        'SEO_YANDEX_STATS_GRAPH_TITLE_SUM_SEARCH'
+                                    )?>'),
+                                    getGraph('yandex_sum_context', 'SUM_CONTEXT', '<?=Loc::getMessage(
+                                        'SEO_YANDEX_STATS_GRAPH_TITLE_SUM_CONTEXT'
+                                    )?>'),
                                 ],
                                 shows: [
-                                    getGraph('yandex_show', 'SHOWS', '<?=Loc::getMessage('SEO_YANDEX_STATS_GRAPH_TITLE_SHOWS')?>'),
-                                    getGraph('yandex_shows_search', 'SHOWS_SEARCH', '<?=Loc::getMessage('SEO_YANDEX_STATS_GRAPH_TITLE_SHOWS_SEARCH')?>'),
-                                    getGraph('yandex_show_context', 'SHOWS_CONTEXT', '<?=Loc::getMessage('SEO_YANDEX_STATS_GRAPH_TITLE_SHOWS_CONTEXT')?>'),
+                                    getGraph('yandex_show', 'SHOWS', '<?=Loc::getMessage(
+                                        'SEO_YANDEX_STATS_GRAPH_TITLE_SHOWS'
+                                    )?>'),
+                                    getGraph('yandex_shows_search', 'SHOWS_SEARCH', '<?=Loc::getMessage(
+                                        'SEO_YANDEX_STATS_GRAPH_TITLE_SHOWS_SEARCH'
+                                    )?>'),
+                                    getGraph('yandex_show_context', 'SHOWS_CONTEXT', '<?=Loc::getMessage(
+                                        'SEO_YANDEX_STATS_GRAPH_TITLE_SHOWS_CONTEXT'
+                                    )?>'),
                                 ],
                                 clicks: [
-                                    getGraph('yandex_clicks', 'CLICKS', '<?=Loc::getMessage('SEO_YANDEX_STATS_GRAPH_TITLE_CLICKS')?>'),
-                                    getGraph('yandex_clicks_search', 'CLICKS_SEARCH', '<?=Loc::getMessage('SEO_YANDEX_STATS_GRAPH_TITLE_CLICKS_SEARCH')?>'),
-                                    getGraph('yandex_clicks_context', 'CLICKS_CONTEXT', '<?=Loc::getMessage('SEO_YANDEX_STATS_GRAPH_TITLE_CLICKS_CONTEXT')?>'),
+                                    getGraph('yandex_clicks', 'CLICKS', '<?=Loc::getMessage(
+                                        'SEO_YANDEX_STATS_GRAPH_TITLE_CLICKS'
+                                    )?>'),
+                                    getGraph('yandex_clicks_search', 'CLICKS_SEARCH', '<?=Loc::getMessage(
+                                        'SEO_YANDEX_STATS_GRAPH_TITLE_CLICKS_SEARCH'
+                                    )?>'),
+                                    getGraph('yandex_clicks_context', 'CLICKS_CONTEXT', '<?=Loc::getMessage(
+                                        'SEO_YANDEX_STATS_GRAPH_TITLE_CLICKS_CONTEXT'
+                                    )?>'),
                                 ]
                             };
 
@@ -1017,9 +1181,11 @@ if ($message)
 
         $tabControl->EndTab();
         if (!$bReadOnly) {
-            $tabControl->Buttons(array(
-                "back_url" => $back_url ? $back_url : "seo_search_yandex_direct.php?lang=" . LANGUAGE_ID,
-            ));
+            $tabControl->Buttons(
+                array(
+                    "back_url" => $back_url ? $back_url : "seo_search_yandex_direct.php?lang=" . LANGUAGE_ID,
+                )
+            );
         }
         $tabControl->End();
 

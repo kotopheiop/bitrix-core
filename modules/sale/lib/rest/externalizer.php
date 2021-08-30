@@ -59,8 +59,9 @@ class Externalizer extends ModificationFieldsBase
         ksort($data);
 
         foreach ($data as $k => &$item) {
-            if (is_array($item))
+            if (is_array($item)) {
                 $item = $this->multiSortKeysArray($item);
+            }
         }
 
         return $data;

@@ -1,9 +1,11 @@
 <?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 /** @var CMain $APPLICATION */
 $STAT_RIGHT = $APPLICATION->GetGroupRight("statistic");
-if ($STAT_RIGHT == "D")
+if ($STAT_RIGHT == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 
@@ -42,55 +44,70 @@ $arFilter = Array(
 );
 
 $cData = new CStatEventType;
-$rsData = $cData->GetSimpleList($by, $order, $arFilter, $is_filtered);
+$rsData = $cData->GetSimpleList('', '', $arFilter);
 $rsData = new CAdminResult($rsData, $sTableID);
 $rsData->NavStart();
 $lAdmin->NavText($rsData->GetNavPrint(GetMessage("STAT_EVENT_TYPE_PAGES")));
 
 $arHeaders = array(
-    array("id" => "ID",
+    array(
+        "id" => "ID",
         "content" => "ID",
         "sort" => "s_id",
         "default" => true,
     ),
-    array("id" => "EVENT1",
+    array(
+        "id" => "EVENT1",
         "content" => "event1",
         "sort" => "s_event1",
         "default" => true,
     ),
-    array("id" => "EVENT2",
+    array(
+        "id" => "EVENT2",
         "content" => "event2",
         "sort" => "s_event2",
         "default" => true,
     ),
-    array("id" => "NAME",
+    array(
+        "id" => "NAME",
         "content" => GetMessage("STAT_NAME"),
         "sort" => "s_name",
         "default" => true,
     ),
-    array("id" => "DESCRIPTION",
+    array(
+        "id" => "DESCRIPTION",
         "content" => GetMessage("STAT_DESCRIPTION"),
         "sort" => "s_description",
         "default" => true,
     ),
 );
-if ($target_control == "text")
+if ($target_control == "text") {
     $arHeaders[] =
-        array("id" => "SELECT_BUTTON",
+        array(
+            "id" => "SELECT_BUTTON",
             "content" => "&nbsp;",
             "sort" => "",
             "default" => true,
         );
+}
 
 $lAdmin->AddHeaders($arHeaders);
 
 while ($arRes = $rsData->NavNext(true, "f_")):
     $row =& $lAdmin->AddRow($f_ID, $arRes);
-    $row->AddViewField("EVENT1", $f_EVENT1 . '<input type="hidden" name="EVENT_NAME[' . $f_ID . ']" id="EVENT_NAME[' . $f_ID . ']" value="' . $f_EVENT . " [" . $f_ID . ']">');
+    $row->AddViewField(
+        "EVENT1",
+        $f_EVENT1 . '<input type="hidden" name="EVENT_NAME[' . $f_ID . ']" id="EVENT_NAME[' . $f_ID . ']" value="' . $f_EVENT . " [" . $f_ID . ']">'
+    );
 
     $id = CUtil::JSEscape($f_ID . ($full_name == "Y" ? " (" . $f_EVENT1 . " / " . $f_EVENT2 . ")" : ""));
     $fld = CUtil::JSEscape($field);
-    $row->AddViewField("SELECT_BUTTON", "<a href=\"" . htmlspecialcharsbx("javascript:setTargetValue('" . $id . "', '" . $fld . "');") . "\" title=\"" . GetMessage("STAT_CHOOSE_TITLE") . "\">" . GetMessage("STAT_CHOOSE") . "</a>");
+    $row->AddViewField(
+        "SELECT_BUTTON",
+        "<a href=\"" . htmlspecialcharsbx(
+            "javascript:setTargetValue('" . $id . "', '" . $fld . "');"
+        ) . "\" title=\"" . GetMessage("STAT_CHOOSE_TITLE") . "\">" . GetMessage("STAT_CHOOSE") . "</a>"
+    );
 
     if ($target_control == "text") {
         $arActions = array(
@@ -118,15 +135,18 @@ $arFooter[] = array(
 $lAdmin->AddFooter($arFooter);
 
 if ($target_control != "text") {
-    $lAdmin->AddGroupActionTable(array(
+    $lAdmin->AddGroupActionTable(
         array(
-            "action" => "setTargetValue(0, '" . CUtil::JSEscape($field) . "')",
-            "value" => "select",
-            "type" => "button",
-            "title" => GetMessage("STAT_SELECT_TITLE"),
-            "name" => GetMessage("STAT_SELECT"),
-        )
-    ), array("disable_action_target" => true));
+            array(
+                "action" => "setTargetValue(0, '" . CUtil::JSEscape($field) . "')",
+                "value" => "select",
+                "type" => "button",
+                "title" => GetMessage("STAT_SELECT_TITLE"),
+                "name" => GetMessage("STAT_SELECT"),
+            )
+        ),
+        array("disable_action_target" => true)
+    );
 }
 $lAdmin->CheckListMode();
 
@@ -242,8 +262,9 @@ $oFilter = new CAdminFilter($sTableID . "_filter", $arFilterDropDown);
         <tr>
             <td><? echo GetMessage("STAT_DESCRIPTION") ?></td>
             <td><input type="text" name="find_description" size="47"
-                       value="<? echo htmlspecialcharsbx($find_description) ?>"><?= ShowExactMatchCheckbox("find_description") ?>
-                &nbsp;<?= ShowFilterLogicHelp() ?></td>
+                       value="<? echo htmlspecialcharsbx($find_description) ?>"><?= ShowExactMatchCheckbox(
+                    "find_description"
+                ) ?>&nbsp;<?= ShowFilterLogicHelp() ?></td>
         </tr>
         <?
         $oFilter->Buttons(array("table_id" => $sTableID, "url" => $APPLICATION->GetCurPage(), "form" => "find_form"));

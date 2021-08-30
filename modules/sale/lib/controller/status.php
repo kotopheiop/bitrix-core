@@ -21,9 +21,11 @@ class Status extends Controller
     public function getFieldsAction()
     {
         $entity = new \Bitrix\Sale\Rest\Entity\Status();
-        return ['STATUS' => $entity->prepareFieldInfos(
-            $entity->getFields()
-        )];
+        return [
+            'STATUS' => $entity->prepareFieldInfos(
+                $entity->getFields()
+            )
+        ];
     }
 
     public function addAction($fields)
@@ -73,11 +75,15 @@ class Status extends Controller
     {
         $r = $this->exists($id);
         if ($r->isSuccess()) {
-            if (in_array($id, [
-                \Bitrix\Sale\OrderStatus::getInitialStatus(),
-                \Bitrix\Sale\OrderStatus::getFinalStatus(),
-                \Bitrix\Sale\DeliveryStatus::getInitialStatus(),
-                \Bitrix\Sale\DeliveryStatus::getFinalStatus()])) {
+            if (in_array(
+                $id,
+                [
+                    \Bitrix\Sale\OrderStatus::getInitialStatus(),
+                    \Bitrix\Sale\OrderStatus::getFinalStatus(),
+                    \Bitrix\Sale\DeliveryStatus::getInitialStatus(),
+                    \Bitrix\Sale\DeliveryStatus::getFinalStatus()
+                ]
+            )) {
                 $r->addError(new Error('delete status type loced', 201350000002));
             }
 
@@ -120,11 +126,13 @@ class Status extends Controller
             ]
         )->fetchAll();
 
-        return new Page('STATUSES', $items, function () use ($filter) {
+        return new Page(
+            'STATUSES', $items, function () use ($filter) {
             return count(
                 \Bitrix\Sale\Internals\StatusTable::getList(['filter' => $filter])->fetchAll()
             );
-        });
+        }
+        );
     }
 
     //endregion
@@ -146,16 +154,19 @@ class Status extends Controller
     {
         $r = new Result();
 
-        if (!in_array($fields['TYPE'], [
-            \Bitrix\Sale\OrderStatus::TYPE,
-            \Bitrix\Sale\DeliveryStatus::TYPE
-        ])) {
+        if (!in_array(
+            $fields['TYPE'],
+            [
+                \Bitrix\Sale\OrderStatus::TYPE,
+                \Bitrix\Sale\DeliveryStatus::TYPE
+            ]
+        )) {
             $r->addError(new Error(Loc::getMessage('CONTROLLER_ERROR_STATUS_TYPE_OUT_OF_RANGE'), 201350000003));
         }
 
         if (trim($fields['ID']) == '') {
             $r->addError(new Error(Loc::getMessage('CONTROLLER_ERROR_STATUS_TYPE_ID_EMPTY'), 201350000004));
-        } elseif (strlen($fields['ID']) > 2) {
+        } elseif (mb_strlen($fields['ID']) > 2) {
             $r->addError(new Error(Loc::getMessage('CONTROLLER_ERROR_STATUS_TYPE_STRLEN'), 201350000005));
         }
 
@@ -174,20 +185,28 @@ class Status extends Controller
 
                 if ($status['TYPE'] != $fields['TYPE']) {
                     if ($status['TYPE'] == \Bitrix\Sale\OrderStatus::TYPE) {
-                        if (\Bitrix\Sale\Internals\OrderTable::getList([
-                            'select' => ['ID'],
-                            'filter' => ['STATUS_ID' => $status['ID']],
-                            'limit' => 1
-                        ])->fetch()) {
-                            $r->addError(new Error(Loc::getMessage('CONTROLLER_ERROR_STATUS_TYPE_ORDER_EXISTS'), 201350000007));
+                        if (\Bitrix\Sale\Internals\OrderTable::getList(
+                            [
+                                'select' => ['ID'],
+                                'filter' => ['STATUS_ID' => $status['ID']],
+                                'limit' => 1
+                            ]
+                        )->fetch()) {
+                            $r->addError(
+                                new Error(Loc::getMessage('CONTROLLER_ERROR_STATUS_TYPE_ORDER_EXISTS'), 201350000007)
+                            );
                         }
                     } else {
-                        if (\Bitrix\Sale\Internals\ShipmentTable::getList([
-                            'select' => ['ID'],
-                            'filter' => ['STATUS_ID' => $status['ID']],
-                            'limit' => 1
-                        ])->fetch()) {
-                            $r->addError(new Error(Loc::getMessage('CONTROLLER_ERROR_STATUS_TYPE_SHIPMENT_EXISTS'), 201350000008));
+                        if (\Bitrix\Sale\Internals\ShipmentTable::getList(
+                            [
+                                'select' => ['ID'],
+                                'filter' => ['STATUS_ID' => $status['ID']],
+                                'limit' => 1
+                            ]
+                        )->fetch()) {
+                            $r->addError(
+                                new Error(Loc::getMessage('CONTROLLER_ERROR_STATUS_TYPE_SHIPMENT_EXISTS'), 201350000008)
+                            );
                         }
                     }
                 }
@@ -228,8 +247,9 @@ class Status extends Controller
     protected function exists($id)
     {
         $r = new Result();
-        if (isset($this->get($id)['ID']) == false)
+        if (isset($this->get($id)['ID']) == false) {
             $r->addError(new Error('status is not exists', 201340400001));
+        }
 
         return $r;
     }

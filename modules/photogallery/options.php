@@ -5,41 +5,50 @@ if ($RIGHTS > "D"):
     $counter = 0;
     $bVarsFromForm = false;
 
-    $arSights = @unserialize(COption::GetOptionString("photogallery", "pictures"));
-    if (!is_array($arSights))
+    $arSights = @unserialize(COption::GetOptionString("photogallery", "pictures"), ['allowed_classes' => false]);
+    if (!is_array($arSights)) {
         $arSights = array();
+    }
 
     $arLangs = array();
-    $db_res = CLanguage::GetList($by, $order, array());
-    while ($res = $db_res->Fetch())
+    $db_res = CLanguage::GetList();
+    while ($res = $db_res->Fetch()) {
         $arLangs[$res["LID"]] = $res;
+    }
     //*****************************************************************************************************************
     if ($REQUEST_METHOD == "POST" && ($save != "" || $apply != "") && ($RIGHTS >= "W") && check_bitrix_sessid()) {
         $arSights = array();
         if (is_array($_REQUEST["CODE"])) {
             foreach ($_REQUEST["CODE"] as $key => $val) {
-                $val = strToLower(trim($val));
-                if (preg_match("/[0-9]/", substr($val, 0, 1), $matches))
+                $val = mb_strtolower(trim($val));
+                if (preg_match("/[0-9]/", mb_substr($val, 0, 1), $matches)) {
                     continue;
+                }
 
-                if (!empty($val) && intVal($_REQUEST["SIZE"][$key]) > 0 && ($_REQUEST["DROP"][$key] != "Y")) {
+                if (!empty($val) && intval($_REQUEST["SIZE"][$key]) > 0 && ($_REQUEST["DROP"][$key] != "Y")) {
                     $_REQUEST["SIGHTS"][$key] = (empty($_REQUEST["SIGHTS"][$key]) ? $val : $_REQUEST["SIGHTS"][$key]);
                     $arSights[] = array(
-                        "size" => intVal($_REQUEST["SIZE"][$key]),
-                        "quality" => (intVal($_REQUEST["QUALITY"][$key]) <= 0 ? 95 : intVal($_REQUEST["QUALITY"][$key])),
+                        "size" => intval($_REQUEST["SIZE"][$key]),
+                        "quality" => (intval($_REQUEST["QUALITY"][$key]) <= 0 ? 95 : intval(
+                            $_REQUEST["QUALITY"][$key]
+                        )),
                         "title" => $_REQUEST["SIGHTS"][$key],
-                        "code" => $val);
+                        "code" => $val
+                    );
                 }
             }
         }
         COption::SetOptionString("photogallery", "pictures", serialize($arSights));
 
-        if ($apply != "")
-            LocalRedirect("/bitrix/admin/settings.php?&lang=" . LANG . "&back_url=" . urlencode($back_url) . "&mid=photogallery");
-        elseif ($back_url)
+        if ($apply != "") {
+            LocalRedirect(
+                "/bitrix/admin/settings.php?&lang=" . LANG . "&back_url=" . urlencode($back_url) . "&mid=photogallery"
+            );
+        } elseif ($back_url) {
             LocalRedirect($back_url);
-        else
+        } else {
             LocalRedirect("/bitrix/admin/settings.php?lang=" . LANG);
+        }
     }
     //*****************************************************************************************************************
     ?>
@@ -48,7 +57,13 @@ if ($RIGHTS > "D"):
     <input type="hidden" name="back_url" value="<?= htmlspecialcharsbx($back_url) ?>"/>
     <?= bitrix_sessid_post() ?><?
 
-    $aTabs = array(array("DIV" => "edit1", "TAB" => GetMessage("MAIN_TAB_SET"), "TITLE" => GetMessage("MAIN_TAB_TITLE_SET")));
+    $aTabs = array(
+        array(
+            "DIV" => "edit1",
+            "TAB" => GetMessage("MAIN_TAB_SET"),
+            "TITLE" => GetMessage("MAIN_TAB_TITLE_SET")
+        )
+    );
     $tabControl = new CAdminTabControl("tabControl", $aTabs);
     $tabControl->Begin();
     $tabControl->BeginNextTab();
@@ -64,8 +79,9 @@ if ($RIGHTS > "D"):
             $file_exist = false;
             if ($handle) {
                 while ($file = readdir($handle)) {
-                    if ($file == "." || $file == ".." || !is_file($path . $file))
+                    if ($file == "." || $file == ".." || !is_file($path . $file)) {
                         continue;
+                    }
                     $file_exist = true;
                     ?><?= $file ?><br/><?
                 }
@@ -74,7 +90,9 @@ if ($RIGHTS > "D"):
                 ?><?= GetMessage("P_FONT_IS_NOT_EXISTS") ?><br/><?
             }
             ?>
-            <a href="/bitrix/admin/fileman_file_upload.php?path=/bitrix/modules/photogallery/fonts/"><?= GetMessage("P_UPLOAD") ?></a>
+            <a href="/bitrix/admin/fileman_file_upload.php?path=/bitrix/modules/photogallery/fonts/"><?= GetMessage(
+                    "P_UPLOAD"
+                ) ?></a>
         </td>
     </tr>
 
@@ -115,18 +133,23 @@ endfor;
     $tabControl->Buttons(
         array(
             "disabled" => $RIGHTS < "W",
-            "back_url" => (empty($back_url) ? "settings.php?lang=" . LANG : $back_url)));
+            "back_url" => (empty($back_url) ? "settings.php?lang=" . LANG : $back_url)
+        )
+    );
     $tabControl->End();
     ?></form>
     <?= BeginNote(); ?>
     <?= str_replace(
     array(
         "#FILEMAN_ADMIN#",
-        "#FILEMAN_FILE_UPLOAD#"),
+        "#FILEMAN_FILE_UPLOAD#"
+    ),
     array(
         "/bitrix/admin/fileman_admin.php?site=&path=/bitrix/modules/photogallery/fonts/",
-        "/bitrix/admin/fileman_file_upload.php?path=/bitrix/modules/photogallery/fonts/"),
-    Getmessage("P_FONTS_NOTE")) ?>
+        "/bitrix/admin/fileman_file_upload.php?path=/bitrix/modules/photogallery/fonts/"
+    ),
+    Getmessage("P_FONTS_NOTE")
+) ?>
 
     <?= EndNote(); ?>
     <? /*

@@ -12,11 +12,13 @@ class LiveId extends Mail\Helper\OAuth
     {
         $this->oauthEntity = new LiveIdInterface;
 
-        $this->oauthEntity->addScope(array(
-            'wl.emails',
-            'wl.imap',
-            'wl.offline_access',
-        ));
+        $this->oauthEntity->addScope(
+            array(
+                'wl.emails',
+                'wl.imap',
+                'wl.offline_access',
+            )
+        );
     }
 
     protected function check()
@@ -94,7 +96,7 @@ if (Main\Loader::includeModule('socialservices')) {
             if (!empty($result)) {
                 try {
                     $result = \Bitrix\Main\Web\Json::decode($result);
-                } catch (Exception $e) {
+                } catch (\Exception $e) {
                     $result = null;
                 }
             }

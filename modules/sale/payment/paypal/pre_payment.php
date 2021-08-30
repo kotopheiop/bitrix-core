@@ -1,4 +1,6 @@
-<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die(); ?><?
+<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+} ?><?
 
 use Bitrix\Sale\Order;
 
@@ -30,31 +32,39 @@ class CSalePaySystemPrePayment
         $this->testMode = (CSalePaySystemAction::GetParamValue("PS_IS_TEST") == "Y");
         $this->notifyUrl = CSalePaySystemAction::GetParamValue("PAYPAL_NOTIFY_URL");
 
-        if (strlen($this->currency) <= 0)
+        if ($this->currency == '') {
             $this->currency = CSaleLang::GetLangCurrency(SITE_ID);
+        }
 
-        if ($this->testMode)
+        if ($this->testMode) {
             $this->domain = "sandbox.";
-        if (strlen($_REQUEST["token"]) > 0)
+        }
+        if ($_REQUEST["token"] <> '') {
             $this->token = $_REQUEST["token"];
-        if (strlen($_REQUEST["PayerID"]) > 0)
+        }
+        if ($_REQUEST["PayerID"] <> '') {
             $this->payerId = $_REQUEST["PayerID"];
+        }
         $this->version = "98.0";
 
         $dbSite = CSite::GetByID(SITE_ID);
         $arSite = $dbSite->Fetch();
         $this->serverName = $arSite["SERVER_NAME"];
-        if (strLen($this->serverName) <= 0) {
-            if (defined("SITE_SERVER_NAME") && strlen(SITE_SERVER_NAME) > 0)
+        if ($this->serverName == '') {
+            if (defined("SITE_SERVER_NAME") && SITE_SERVER_NAME <> '') {
                 $this->serverName = SITE_SERVER_NAME;
-            else
+            } else {
                 $this->serverName = COption::GetOptionString("main", "server_name", "www.bitrixsoft.com");
+            }
         }
 
         $this->serverName = (CMain::IsHTTPS() ? "https" : "http") . "://" . $this->serverName;
 
-        if (strlen($this->username) <= 0 || strlen($this->username) <= 0 || strlen($this->username) <= 0) {
-            $GLOBALS["APPLICATION"]->ThrowException("CSalePaySystempaypal: init error", "CSalePaySystempaypal_init_error");
+        if ($this->username == '' || $this->username == '' || $this->username == '') {
+            $GLOBALS["APPLICATION"]->ThrowException(
+                "CSalePaySystempaypal: init error",
+                "CSalePaySystempaypal_init_error"
+            );
             return false;
         }
         return true;
@@ -62,13 +72,16 @@ class CSalePaySystemPrePayment
 
     function BasketButtonShow()
     {
-        if (LANGUAGE_ID == "ru")
+        if (LANGUAGE_ID == "ru") {
             $imgSrc = "//www.1c-bitrix.ru/download/sale/paypal.jpg";
-        elseif (LANGUAGE_ID == "de")
+        } elseif (LANGUAGE_ID == "de") {
             $imgSrc = "//www.paypal.com/de_DE/i/btn/btn_xpressCheckout.gif";
-        else
+        } else {
             $imgSrc = "//www.paypal.com/en_US/i/btn/btn_xpressCheckout.gif";
-        return "<input name=\"paypalbutton\" style=\"padding-top:7px;\" type=\"image\" src=\"" . $imgSrc . "\" value=\"" . GetMessage("PPL_BUTTON") . "\" onclick='var cp=BX(\"coupon\"); if (cp) cp.disabled=true;'>";
+        }
+        return "<input name=\"paypalbutton\" style=\"padding-top:7px;\" type=\"image\" src=\"" . $imgSrc . "\" value=\"" . GetMessage(
+                "PPL_BUTTON"
+            ) . "\" onclick='var cp=BX(\"coupon\"); if (cp) cp.disabled=true;'>";
     }
 
     function BasketButtonAction($orderData = array())
@@ -86,7 +99,10 @@ class CSalePaySystemPrePayment
                 "PAYMENTREQUEST_0_AMT" => number_format($orderData["AMOUNT"], 2, ".", ""),
                 "PAYMENTREQUEST_0_CURRENCYCODE" => $this->currency,
                 "RETURNURL" => $this->serverName . $orderData["PATH_TO_ORDER"],
-                "CANCELURL" => $this->serverName . $APPLICATION->GetCurPageParam("paypal=Y&paypal_error=Y", array("paypal", "paypal_error")),
+                "CANCELURL" => $this->serverName . $APPLICATION->GetCurPageParam(
+                        "paypal=Y&paypal_error=Y",
+                        array("paypal", "paypal_error")
+                    ),
                 "PAYMENTREQUEST_0_PAYMENTACTION" => "Authorization",
                 "PAYMENTREQUEST_0_DESC" => "Order payment for " . $this->serverName,
                 "LOCALECODE" => ToUpper(LANGUAGE_ID),
@@ -96,29 +112,40 @@ class CSalePaySystemPrePayment
             if (!empty($orderData["BASKET_ITEMS"])) {
                 $arFields["PAYMENTREQUEST_0_ITEMAMT"] = number_format($orderData["AMOUNT"], 2, ".", "");
                 foreach ($orderData["BASKET_ITEMS"] as $k => $val) {
-                    $arFields["L_PAYMENTREQUEST_0_NAME" . $k] = $APPLICATION->ConvertCharset($val["NAME"], SITE_CHARSET, "utf-8");
+                    $arFields["L_PAYMENTREQUEST_0_NAME" . $k] = $APPLICATION->ConvertCharset(
+                        $val["NAME"],
+                        SITE_CHARSET,
+                        "utf-8"
+                    );
                     $arFields["L_PAYMENTREQUEST_0_AMT" . $k] = number_format($val["PRICE"], 2, ".", "");
                     $arFields["L_PAYMENTREQUEST_0_QTY" . $k] = $val["QUANTITY"];
                 }
             }
 
-            $arFields["RETURNURL"] .= ((strpos($arFields["RETURNURL"], "?") === false) ? "?" : "&") . "paypal=Y";
+            $arFields["RETURNURL"] .= ((mb_strpos($arFields["RETURNURL"], "?") === false) ? "?" : "&") . "paypal=Y";
 
             $ht = new \Bitrix\Main\Web\HttpClient(array("version" => "1.1"));
             if ($res = @$ht->post($url, $arFields)) {
                 $result = $this->parseResult($res);
 
-                if (strlen($result["TOKEN"]) > 0) {
+                if ($result["TOKEN"] <> '') {
                     $url = "https://www." . $this->domain . "paypal.com/webscr?cmd=_express-checkout&token=" . $result["TOKEN"];
-                    if ($orderData["ORDER_REQUEST"] == "Y")
+                    if ($orderData["ORDER_REQUEST"] == "Y") {
                         return $url;
+                    }
                     LocalRedirect($url);
                 } else {
-                    $GLOBALS["APPLICATION"]->ThrowException($result['L_SHORTMESSAGE0'] . ' : ' . $result['L_LONGMESSAGE0'], "CSalePaySystemPrePayment_action_error");
+                    $GLOBALS["APPLICATION"]->ThrowException(
+                        $result['L_SHORTMESSAGE0'] . ' : ' . $result['L_LONGMESSAGE0'],
+                        "CSalePaySystemPrePayment_action_error"
+                    );
                     return false;
                 }
             } else {
-                $GLOBALS["APPLICATION"]->ThrowException(GetMessage("PPL_ERROR"), "CSalePaySystemPrePayment_action_error");
+                $GLOBALS["APPLICATION"]->ThrowException(
+                    GetMessage("PPL_ERROR"),
+                    "CSalePaySystemPrePayment_action_error"
+                );
                 return false;
             }
         }
@@ -134,15 +161,17 @@ class CSalePaySystemPrePayment
 			<input type=\"hidden\" name=\"PayerID\" value=\"" . htmlspecialcharsbx($this->payerId) . "\">
 		";
 
-        if (strlen($this->token) > 0)
+        if ($this->token <> '') {
             $result .= "<span style='color: green'>" . GetMessage("PPL_PREAUTH_TEXT") . "<br /><br /></span>";
+        }
         return $result;
     }
 
     function isAction()
     {
-        if ($_REQUEST["paypal"] == "Y" && strlen($this->token) > 0)
+        if ($_REQUEST["paypal"] == "Y" && $this->token <> '') {
             return true;
+        }
         return false;
     }
 
@@ -155,16 +184,20 @@ class CSalePaySystemPrePayment
         foreach ($res1 as $res2) {
             list($key, $val) = explode("=", $res2);
             $keyarray[urldecode($key)] = urldecode($val);
-            if (strlen($this->encoding) > 0)
-                $keyarray[urldecode($key)] = $APPLICATION->ConvertCharset($keyarray[urldecode($key)], $this->encoding, SITE_CHARSET);
+            if ($this->encoding <> '') {
+                $keyarray[urldecode($key)] = $APPLICATION->ConvertCharset(
+                    $keyarray[urldecode($key)],
+                    $this->encoding,
+                    SITE_CHARSET
+                );
+            }
         }
         return $keyarray;
-
     }
 
     function getProps()
     {
-        if (strlen($this->token) > 0) {
+        if ($this->token <> '') {
             $url = "https://api-3t." . $this->domain . "paypal.com/nvp";
             $arFields = array(
                 "METHOD" => "GetExpressCheckoutDetails",
@@ -199,7 +232,7 @@ class CSalePaySystemPrePayment
 
     function payOrder($orderData = array())
     {
-        if (strlen($this->token) > 0) {
+        if ($this->token <> '') {
             global $APPLICATION;
             $url = "https://api-3t." . $this->domain . "paypal.com/nvp";
             $arFields = array(
@@ -215,7 +248,10 @@ class CSalePaySystemPrePayment
             $ht = new \Bitrix\Main\Web\HttpClient(array("version" => "1.1"));
             if ($res = $ht->post($url, $arFields)) {
                 $result = $this->parseResult($res);
-                if ($result["ACK"] == "Success" && in_array($result["CHECKOUTSTATUS"], array("PaymentActionNotInitiated"))) {
+                if ($result["ACK"] == "Success" && in_array(
+                        $result["CHECKOUTSTATUS"],
+                        array("PaymentActionNotInitiated")
+                    )) {
                     $arFields["METHOD"] = "DoExpressCheckoutPayment";
                     $arFields["PAYERID"] = $this->payerId;
                     $arFields["PAYMENTACTION"] = "Sale";
@@ -232,27 +268,61 @@ class CSalePaySystemPrePayment
                     $orderProps = $this->getProps();
 
                     if (!empty($orderProps)) {
-                        $arFields["PAYMENTREQUEST_0_SHIPTONAME"] = $APPLICATION->ConvertCharset($orderProps["PP_SOURCE"]["PAYMENTREQUEST_0_SHIPTONAME"], SITE_CHARSET, "utf-8");
-                        $arFields["PAYMENTREQUEST_0_SHIPTOSTREET"] = $APPLICATION->ConvertCharset($orderProps["PP_SOURCE"]["PAYMENTREQUEST_0_SHIPTOSTREET"], SITE_CHARSET, "utf-8");
-                        $arFields["PAYMENTREQUEST_0_SHIPTOSTREET2"] = $APPLICATION->ConvertCharset($orderProps["PP_SOURCE"]["PAYMENTREQUEST_0_SHIPTOSTREET2"], SITE_CHARSET, "utf-8");
-                        $arFields["PAYMENTREQUEST_0_SHIPTOCITY"] = $APPLICATION->ConvertCharset($orderProps["PP_SOURCE"]["PAYMENTREQUEST_0_SHIPTOCITY"], SITE_CHARSET, "utf-8");
-                        $arFields["PAYMENTREQUEST_0_SHIPTOSTATE"] = $APPLICATION->ConvertCharset($orderProps["PP_SOURCE"]["PAYMENTREQUEST_0_SHIPTOSTATE"], SITE_CHARSET, "utf-8");
+                        $arFields["PAYMENTREQUEST_0_SHIPTONAME"] = $APPLICATION->ConvertCharset(
+                            $orderProps["PP_SOURCE"]["PAYMENTREQUEST_0_SHIPTONAME"],
+                            SITE_CHARSET,
+                            "utf-8"
+                        );
+                        $arFields["PAYMENTREQUEST_0_SHIPTOSTREET"] = $APPLICATION->ConvertCharset(
+                            $orderProps["PP_SOURCE"]["PAYMENTREQUEST_0_SHIPTOSTREET"],
+                            SITE_CHARSET,
+                            "utf-8"
+                        );
+                        $arFields["PAYMENTREQUEST_0_SHIPTOSTREET2"] = $APPLICATION->ConvertCharset(
+                            $orderProps["PP_SOURCE"]["PAYMENTREQUEST_0_SHIPTOSTREET2"],
+                            SITE_CHARSET,
+                            "utf-8"
+                        );
+                        $arFields["PAYMENTREQUEST_0_SHIPTOCITY"] = $APPLICATION->ConvertCharset(
+                            $orderProps["PP_SOURCE"]["PAYMENTREQUEST_0_SHIPTOCITY"],
+                            SITE_CHARSET,
+                            "utf-8"
+                        );
+                        $arFields["PAYMENTREQUEST_0_SHIPTOSTATE"] = $APPLICATION->ConvertCharset(
+                            $orderProps["PP_SOURCE"]["PAYMENTREQUEST_0_SHIPTOSTATE"],
+                            SITE_CHARSET,
+                            "utf-8"
+                        );
                         $arFields["PAYMENTREQUEST_0_SHIPTOZIP"] = $orderProps["PP_SOURCE"]["PAYMENTREQUEST_0_SHIPTOZIP"];
-                        $arFields["PAYMENTREQUEST_0_SHIPTOCOUNTRYCODE"] = $APPLICATION->ConvertCharset($orderProps["PP_SOURCE"]["PAYMENTREQUEST_0_SHIPTOCOUNTRYCODE"], SITE_CHARSET, "utf-8");
+                        $arFields["PAYMENTREQUEST_0_SHIPTOCOUNTRYCODE"] = $APPLICATION->ConvertCharset(
+                            $orderProps["PP_SOURCE"]["PAYMENTREQUEST_0_SHIPTOCOUNTRYCODE"],
+                            SITE_CHARSET,
+                            "utf-8"
+                        );
                     }
 
                     if (!empty($orderData["BASKET_ITEMS"])) {
-                        $arFields["PAYMENTREQUEST_0_ITEMAMT"] = number_format($this->orderAmount - $this->deliveryAmount, 2, ".", "");
+                        $arFields["PAYMENTREQUEST_0_ITEMAMT"] = number_format(
+                            $this->orderAmount - $this->deliveryAmount,
+                            2,
+                            ".",
+                            ""
+                        );
                         foreach ($orderData["BASKET_ITEMS"] as $k => $val) {
-                            $arFields["L_PAYMENTREQUEST_0_NAME" . $k] = $APPLICATION->ConvertCharset($val["NAME"], SITE_CHARSET, "utf-8");
+                            $arFields["L_PAYMENTREQUEST_0_NAME" . $k] = $APPLICATION->ConvertCharset(
+                                $val["NAME"],
+                                SITE_CHARSET,
+                                "utf-8"
+                            );
                             $arFields["L_PAYMENTREQUEST_0_AMT" . $k] = number_format($val["PRICE"], 2, ".", "");
                             $arFields["L_PAYMENTREQUEST_0_QTY" . $k] = $val["QUANTITY"];
                             $arFields["L_PAYMENTREQUEST_0_NUMBER" . $k] = $val["PRODUCT_ID"];
                         }
                     }
 
-                    if (strlen($this->notifyUrl) > 0)
+                    if ($this->notifyUrl <> '') {
                         $arFields["PAYMENTREQUEST_0_NOTIFYURL"] = $this->notifyUrl;
+                    }
 
                     if ($res2 = $ht->Post($url, $arFields)) {
                         $result2 = $this->parseResult($res2);
@@ -261,7 +331,10 @@ class CSalePaySystemPrePayment
                         $order = Order::load($this->orderId);
                         $payment = $order->getPaymentCollection()->getItemById($this->paymentId);
 
-                        if ($result2["ACK"] == "Success" && in_array($result2["PAYMENTINFO_0_PAYMENTSTATUS"], array("Completed"))) {
+                        if ($result2["ACK"] == "Success" && in_array(
+                                $result2["PAYMENTINFO_0_PAYMENTSTATUS"],
+                                array("Completed")
+                            )) {
                             $payment->setField('PAID', 'Y');
                             $strPS_STATUS_MESSAGE = "";
                             $strPS_STATUS_MESSAGE .= "Name: " . $result["FIRSTNAME"] . " " . $result["LASTNAME"] . "; ";
@@ -306,8 +379,9 @@ class CSalePaySystemPrePayment
                         }
 
                         $result = $payment->setFields($arOrderFields);
-                        if ($result->isSuccess())
+                        if ($result->isSuccess()) {
                             $order->save();
+                        }
                     }
                 }
             }

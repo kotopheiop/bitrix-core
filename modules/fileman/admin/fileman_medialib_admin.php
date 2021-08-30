@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/fileman/prolog.php");
 
@@ -8,8 +9,9 @@ $APPLICATION->AddHeadScript('/bitrix/js/fileman/medialib/core_admin.js');
 IncludeModuleLangFile(__FILE__);
 CModule::IncludeModule("fileman");
 
-if (!CMedialib::CanDoOperation('medialib_view_collection', 0))
+if (!CMedialib::CanDoOperation('medialib_view_collection', 0)) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 /***********  MAIN PAGE **********/
 $APPLICATION->SetTitle(GetMessage("ML_MEDIALIB"));
@@ -26,7 +28,9 @@ $arMLTypes = CMedialib::GetTypes();
 $curTypeInd = 0;
 $curType = false;
 
-if (isset($_REQUEST['type']) && intVal($_REQUEST['type']) > 0) // && check_bitrix_sessid() http://jabber.bx/view.php?id=28997 commit
+if (isset($_REQUEST['type']) && intval(
+        $_REQUEST['type']
+    ) > 0) // && check_bitrix_sessid() http://jabber.bx/view.php?id=28997 commit
 {
     for ($i = 0, $l = count($arMLTypes); $i < $l; $i++) {
         if ($arMLTypes[$i]['id'] == $_REQUEST['type']) {
@@ -63,19 +67,21 @@ $arTypeCols = array();
 for ($i = 0, $l = count($arCols); $i < $l; $i++) {
     $type = $arCols[$i]['ML_TYPE'];
 
-    if ($curType === false || $curType['id'] == $type || ($curType['code'] == "image" && $curType['system'] && !$type))
+    if ($curType === false || $curType['id'] == $type || ($curType['code'] == "image" && $curType['system'] && !$type)) {
         $arTypeCols[] = $arCols[$i];
+    }
 }
 
 $aContext = Array();
 $bCols = count($arTypeCols) > 0;
-if (($bCols && $exParams['arCountPerm']['new_col'] > 0) || CMedialib::CanDoOperation('medialib_new_collection', 0))
+if (($bCols && $exParams['arCountPerm']['new_col'] > 0) || CMedialib::CanDoOperation('medialib_new_collection', 0)) {
     $aContext[] = Array(
         "TEXT" => GetMessage("FM_ML_NEW_COLLECTION"),
         "ICON" => "btn_new_collection",
         "LINK" => "javascript: void(0);",
         "TITLE" => GetMessage("FM_ML_NEW_COLLECTION_TITLE")
     );
+}
 
 if ($bCols && $exParams['arCountPerm']['new_item'] > 0) {
     $aContext[] = Array(
@@ -88,7 +94,8 @@ if ($bCols && $exParams['arCountPerm']['new_item'] > 0) {
     $aContext[] = Array(
         "TEXT" => GetMessage("FM_ML_MASS_UPLOAD"),
         "ICON" => "btn_mass_upl",
-        "LINK" => "fileman_medialib_upload.php?lang=" . LANGUAGE_ID . "&type=" . $curType['id'] . "&" . bitrix_sessid_get(),
+        "LINK" => "fileman_medialib_upload.php?lang=" . LANGUAGE_ID . "&type=" . $curType['id'] . "&" . bitrix_sessid_get(
+            ),
         "TITLE" => GetMessage("FM_ML_MASS_UPLOAD_TITLE")
     );
 }
@@ -96,7 +103,9 @@ if ($bCols && $exParams['arCountPerm']['new_item'] > 0) {
 $aContext[] = array(
     "HTML" => '<div class="bxml-search-controll"><span>' . GetMessage('FM_ML_SEARCH') . ':</span>' .
         '<input type="text" id="ml_search_input" size="25" />' .
-        '<input type="button"  style="margin-left:3px;" id="ml_search_button" value="' . GetMessage('FM_ML_SEARCH_BUT') . '" title="' . GetMessage('FM_ML_SEARCH_BUT_TITLE') . '" />' .
+        '<input type="button"  style="margin-left:3px;" id="ml_search_button" value="' . GetMessage(
+            'FM_ML_SEARCH_BUT'
+        ) . '" title="' . GetMessage('FM_ML_SEARCH_BUT_TITLE') . '" />' .
         '</div>'
 );
 
@@ -107,8 +116,9 @@ $aContext[] = array(
 //	"TITLE" => GetMessage("FM_ML_TAGS_CLOUD_TITLE")
 //);
 
-if (count($aContext) > 0)
+if (count($aContext) > 0) {
     $aContext[] = Array("NEWBAR" => true);
+}
 
 if (($bCols && $exParams['arCountPerm']['access'] > 0) || CMedialib::CanDoOperation('medialib_access', 0)) {
     $aContext[] = Array(
@@ -123,7 +133,8 @@ if ($USER->CanDoOperation('fileman_view_all_settings')) {
     $aContext[] = Array(
         "TEXT" => GetMessage("FM_ML_MANAGE_TYPES"),
         //"ICON" => "btn_type_config",
-        "LINK" => "/bitrix/admin/settings.php?mid=fileman&tabControl_active_tab=edit5&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get(),
+        "LINK" => "/bitrix/admin/settings.php?mid=fileman&tabControl_active_tab=edit5&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get(
+            ),
         "TITLE" => GetMessage("FM_ML_MANAGE_TYPES_TITLE")
     );
 }
@@ -141,8 +152,12 @@ if (count($aContext) > 0) {
 
     BX.ready(function () {
             BX.loadScript([
-                    "/bitrix/js/fileman/medialib/common.js?v=<?=@filemtime($_SERVER['DOCUMENT_ROOT'] . '/bitrix/js/fileman/medialib/common.js')?>",
-                    "/bitrix/js/fileman/medialib/core_admin.js?v=<?=@filemtime($_SERVER['DOCUMENT_ROOT'] . '/bitrix/js/fileman/medialib/core_admin.js')?>"
+                    "/bitrix/js/fileman/medialib/common.js?v=<?=@filemtime(
+                        $_SERVER['DOCUMENT_ROOT'] . '/bitrix/js/fileman/medialib/common.js'
+                    )?>",
+                    "/bitrix/js/fileman/medialib/core_admin.js?v=<?=@filemtime(
+                        $_SERVER['DOCUMENT_ROOT'] . '/bitrix/js/fileman/medialib/core_admin.js'
+                    )?>"
                 ],
                 function () {
                     setTimeout(function () {
@@ -160,9 +175,11 @@ if (count($aContext) > 0) {
                                     del_item: '<?= CMedialib::CanDoOperation('medialib_del_item', 0)?>',
                                     access: '<?= CMedialib::CanDoOperation('medialib_access', 0)?>'
                                 },
-                                curColl: <?= isset($_REQUEST['cur_col']) ? intVal($_REQUEST['cur_col']) : 0?>,
+                                curColl: <?= isset($_REQUEST['cur_col']) ? intval($_REQUEST['cur_col']) : 0?>,
                                 bCanUpload: <?= $USER->CanDoOperation('fileman_upload_files') ? 'true' : 'false'?>,
-                                bCanViewStructure: <?= $USER->CanDoOperation('fileman_view_file_structure') ? 'true' : 'false'?>,
+                                bCanViewStructure: <?= $USER->CanDoOperation(
+                                    'fileman_view_file_structure'
+                                ) ? 'true' : 'false'?>,
                                 strExt: "<?= htmlspecialcharsEx(CMedialib::GetMediaExtentions())?>",
                                 lang: "<?= LANGUAGE_ID?>",
                                 Types: <?= CUtil::PhpToJSObject($arMLTypes)?>,
@@ -192,7 +209,8 @@ if (count($aContext) > 0) {
                                 var col_id = window.oBXMLAdmin.SelectedColId;
                                 if (!col_id || !window.oBXMLAdmin.oCollections[col_id])
                                     col_id = '';
-                                window.location = "fileman_medialib_upload.php?lang=<?= LANGUAGE_ID ?>&type=<?= $curType['id'] ?>&<?= bitrix_sessid_get() ?>&col_id=" + col_id;
+                                window.location = "fileman_medialib_upload.php?lang=<?= LANGUAGE_ID ?>&type=<?= $curType['id'] ?>&<?= bitrix_sessid_get(
+                                ) ?>&col_id=" + col_id;
                                 return false;
                             };
                     }, 50);
@@ -242,7 +260,10 @@ if (count($aContext) > 0) {
 <? if ($bCols): ?>
     <br/>
     <table class="multiaction"
-           style="display:<?= (CMedialib::CanDoOperation('medialib_del_item', 0) || CMedialib::CanDoOperation('medialib_del_collection', 0)) ? 'block' : 'none' ?>">
+           style="display:<?= (CMedialib::CanDoOperation('medialib_del_item', 0) || CMedialib::CanDoOperation(
+                   'medialib_del_collection',
+                   0
+               )) ? 'block' : 'none' ?>">
         <tr class="top">
             <td class="left">
                 <div class="empty"/>
@@ -266,8 +287,9 @@ if (count($aContext) > 0) {
                                    title="<?= GetMessage('ML_FOR_ALL_TITLE') ?>"/>
                         </td>
                         <td>
-                            <label for="ml_action_target"
-                                   title="<?= GetMessage('ML_FOR_ALL_TITLE') ?>"><?= GetMessage('ML_FOR_ALL') ?></label>
+                            <label for="ml_action_target" title="<?= GetMessage('ML_FOR_ALL_TITLE') ?>"><?= GetMessage(
+                                    'ML_FOR_ALL'
+                                ) ?></label>
                         </td>
                         <td>
                             <div class="separator"/>
@@ -298,7 +320,7 @@ if (count($aContext) > 0) {
     </table>
 <? endif; ?>
 
-<div class="bxml-subdialog-cont">
+<div id="bxml-subdialog-cont" class="bxml-subdialog-cont">
     <?
     CMedialib::BuildAddCollectionDialog($Params);
     CMedialib::BuildAddItemDialog($Params);

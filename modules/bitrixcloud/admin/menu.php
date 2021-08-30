@@ -1,4 +1,5 @@
 <?php
+
 IncludeModuleLangFile(__FILE__);
 /** @global CUser $USER */
 $menu = array(

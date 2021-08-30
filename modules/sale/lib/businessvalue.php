@@ -56,9 +56,15 @@ final class BusinessValue
 
             $providerInstance = $provider->getBusinessValueProviderInstance($mapping);
         } else {
-            if ($personTypeId <= 0)
+            if ($personTypeId <= 0) {
                 $personTypeId = null;
-            $mapping = self::getMapping($codeKey, $consumerKey, $personTypeId, array('GET_VALUE' => array('PROPERTY' => 'BY_ID')));
+            }
+            $mapping = self::getMapping(
+                $codeKey,
+                $consumerKey,
+                $personTypeId,
+                array('GET_VALUE' => array('PROPERTY' => 'BY_ID'))
+            );
         }
 
         if (isset(self::$redefinedFields[$mapping['PROVIDER_KEY']][$mapping['PROVIDER_VALUE']])) {
@@ -66,21 +72,7 @@ final class BusinessValue
         }
 
         if ($mapping['PROVIDER_KEY'] && $mapping['PROVIDER_VALUE']) {
-            switch ($mapping['PROVIDER_KEY']) {
-                case 'VALUE':
-                case 'INPUT':
-                    $value = $mapping['PROVIDER_VALUE'];
-                    break;
-
-                default:
-                    if (($providers = self::getProviders())
-                        && ($provider = $providers[$mapping['PROVIDER_KEY']])
-                        && is_array($provider)
-                        && is_callable($provider['GET_INSTANCE_VALUE'])
-                        && ($v = call_user_func($provider['GET_INSTANCE_VALUE'], $providerInstance, $mapping['PROVIDER_VALUE'], $personTypeId))) {
-                        $value = $v;
-                    }
-            }
+            $value = self::getValueFromMapping($mapping, $providerInstance, $personTypeId);
         }
 
         return $value;
@@ -129,12 +121,13 @@ final class BusinessValue
             $mapping = $consumerCodePersonMapping[$consumerKey][$codeKeyUp][$personTypeId];
         } else {
             if ($match & self::MATCH_COMMON) {
-                if ($personTypeId && isset($consumerCodePersonMapping[$consumerKey][$codeKeyUp]['']))
+                if ($personTypeId && isset($consumerCodePersonMapping[$consumerKey][$codeKeyUp][''])) {
                     $mapping = $consumerCodePersonMapping[$consumerKey][$codeKeyUp][''];
-                elseif ($consumerKey && isset($consumerCodePersonMapping[''][$codeKeyUp][$personTypeId]))
+                } elseif ($consumerKey && isset($consumerCodePersonMapping[''][$codeKeyUp][$personTypeId])) {
                     $mapping = $consumerCodePersonMapping[''][$codeKeyUp][$personTypeId];
-                elseif ($consumerKey && $personTypeId && isset($consumerCodePersonMapping[''][$codeKeyUp]['']))
+                } elseif ($consumerKey && $personTypeId && isset($consumerCodePersonMapping[''][$codeKeyUp][''])) {
                     $mapping = $consumerCodePersonMapping[''][$codeKeyUp][''];
+                }
             }
 
             if (!$mapping && $match & self::MATCH_DEFAULT && ($consumers = self::getConsumers())) {
@@ -154,7 +147,8 @@ final class BusinessValue
             && $mapping['PROVIDER_VALUE']
             && ($providers = BusinessValue::getProviders())
             && is_callable($providers['PROPERTY']['GET_VALUE'])) {
-            $mapping['PROVIDER_VALUE'] = call_user_func($providers['PROPERTY']['GET_VALUE'],
+            $mapping['PROVIDER_VALUE'] = call_user_func(
+                $providers['PROPERTY']['GET_VALUE'],
                 $mapping['PROVIDER_VALUE'],
                 $personTypeId,
                 isset($options['GET_VALUE']['PROPERTY']) ? $options['GET_VALUE']['PROPERTY'] : null,
@@ -177,14 +171,17 @@ final class BusinessValue
     public static function setMapping($codeKey, $consumerKey, $personTypeId, array $mapping, $withCommon = false)
     {
         $codeKey = ToUpper($codeKey);
-        if (!$consumerKey || $consumerKey === BusinessValueTable::COMMON_CONSUMER_KEY)
+        if (!$consumerKey || $consumerKey === BusinessValueTable::COMMON_CONSUMER_KEY) {
             $consumerKey = null;
+        }
 
-        if (!$personTypeId || $personTypeId === BusinessValueTable::COMMON_PERSON_TYPE_ID)
+        if (!$personTypeId || $personTypeId === BusinessValueTable::COMMON_PERSON_TYPE_ID) {
             $personTypeId = null;
+        }
 
-        if (!array_key_exists('PROVIDER_KEY', $mapping) || !array_key_exists('PROVIDER_VALUE', $mapping))
+        if (!array_key_exists('PROVIDER_KEY', $mapping) || !array_key_exists('PROVIDER_VALUE', $mapping)) {
             $mapping = array();
+        }
 
         $primary = array(
             'CODE_KEY' => $codeKey,
@@ -200,8 +197,9 @@ final class BusinessValue
                 $savedMapping = $consumerCodePersonMapping[$consumerKey][$codeKey][$personTypeId];
 
                 if (!($mapping['PROVIDER_KEY'] == $savedMapping['PROVIDER_KEY']
-                    && $mapping['PROVIDER_VALUE'] == $savedMapping['PROVIDER_VALUE']))
+                    && $mapping['PROVIDER_VALUE'] == $savedMapping['PROVIDER_VALUE'])) {
                     $result = BusinessValueTable::update($primary, $mapping);
+                }
             } else {
                 $result = BusinessValueTable::delete($primary);
             }
@@ -221,10 +219,11 @@ final class BusinessValue
 
         if (isset($result)) {
             if ($result->isSuccess()) {
-                if ($mapping)
+                if ($mapping) {
                     self::$consumerCodePersonMapping[$consumerKey][$codeKey][$personTypeId] = $mapping;
-                else
+                } else {
                     unset(self::$consumerCodePersonMapping[$consumerKey][$codeKey][$personTypeId]);
+                }
             }
         } else {
             $result = new \Bitrix\Main\Entity\Result;
@@ -274,22 +273,26 @@ final class BusinessValue
             \CFile::Delete($mapping['PROVIDER_VALUE']);
         }
 
-        BusinessValueTable::delete([
-            'CONSUMER_KEY' => $consumerKey,
-            'CODE_KEY' => $code,
-            'PERSON_TYPE_ID' => $personTypeId,
-        ]);
+        BusinessValueTable::delete(
+            [
+                'CONSUMER_KEY' => $consumerKey,
+                'CODE_KEY' => $code,
+                'PERSON_TYPE_ID' => $personTypeId,
+            ]
+        );
     }
 
     /** @internal do not use! */
     public static function getConsumerCodePersonMapping()
     {
         if (!self::$consumerCodePersonMapping) {
-            $result = BusinessValueTable::getList(array(
-                'select' => array('CODE_KEY', 'CONSUMER_KEY', 'PERSON_TYPE_ID', 'PROVIDER_KEY', 'PROVIDER_VALUE'),
-                // !!! if filter is set, than setMapping must evaluate personTypeId's for codes, otherwise it will throw duplicate error!!!
-                //'filter' => array('=PERSON_TYPE_ID' => array_merge(array(BusinessValueTable::COMMON_PERSON_TYPE_ID), array_keys(self::getPersonTypes())),
-            ));
+            $result = BusinessValueTable::getList(
+                array(
+                    'select' => array('CODE_KEY', 'CONSUMER_KEY', 'PERSON_TYPE_ID', 'PROVIDER_KEY', 'PROVIDER_VALUE'),
+                    // !!! if filter is set, than setMapping must evaluate personTypeId's for codes, otherwise it will throw duplicate error!!!
+                    //'filter' => array('=PERSON_TYPE_ID' => array_merge(array(BusinessValueTable::COMMON_PERSON_TYPE_ID), array_keys(self::getPersonTypes())),
+                )
+            );
 
             while ($row = $result->fetch()) {
                 $row['CODE_KEY'] = ToUpper($row['CODE_KEY']);
@@ -320,8 +323,9 @@ final class BusinessValue
             if (is_array($result)) {
                 foreach ($result as $providerKey => $provider) {
                     if ($providerKey && is_array($provider)) {
-                        if (isset($providers[$providerKey]))
+                        if (isset($providers[$providerKey])) {
                             throw new SystemException('duplicate provider key ' . $providerKey);
+                        }
 
                         $providers[$providerKey] = $provider;
                     }
@@ -350,7 +354,12 @@ final class BusinessValue
 
             self::$consumers[''] =& self::$commonConsumer;
 
-            foreach (EventManager::getInstance()->findEventHandlers('sale', 'OnGetBusinessValueConsumers') as $handler) {
+            foreach (
+                EventManager::getInstance()->findEventHandlers(
+                    'sale',
+                    'OnGetBusinessValueConsumers'
+                ) as $handler
+            ) {
 //				// TODO remove
 //				if (! ($handler['TO_NAME'] == 'Bitrix\Sale\BusinessValueHandlers::getConsumers'
 ////					|| $handler['TO_NAME'] == 'Bitrix\Sale\BusinessValueConsumer1C::getConsumers'
@@ -385,8 +394,9 @@ final class BusinessValue
 
     private static function addConsumerByRef($consumerKey, array &$consumer) // by ref!
     {
-        if (isset(self::$consumers[$consumerKey]) || $consumerKey == BusinessValueTable::COMMON_CONSUMER_KEY)
+        if (isset(self::$consumers[$consumerKey]) || $consumerKey == BusinessValueTable::COMMON_CONSUMER_KEY) {
             throw new SystemException('duplicate consumer key ' . $consumerKey);
+        }
 
 //		// TODO remove hack to paysytem
 //		if (substr($consumerKey, 0, 10) == 'PAYSYSTEM_')
@@ -398,14 +408,17 @@ final class BusinessValue
             foreach ($consumer['CODES'] as $codeKey => $code) {
                 if ($codeKey && is_array($code) && !$code['NOT_COMMON']) {
                     if ($c =& $codes[$codeKey]) {
-                        if (!$c['GROUP'] && $code['GROUP'])
+                        if (!$c['GROUP'] && $code['GROUP']) {
                             $c['GROUP'] = $code['GROUP'];
+                        }
 
-                        if (!isset($c['SORT']) && isset($code['SORT']))
+                        if (!isset($c['SORT']) && isset($code['SORT'])) {
                             $c['SORT'] = $code['SORT'];
+                        }
 
-                        if (!is_array($c['DEFAULT']) && is_array($code['DEFAULT']))
+                        if (!is_array($c['DEFAULT']) && is_array($code['DEFAULT'])) {
                             $c['DEFAULT'] = $code['DEFAULT'];
+                        }
 
                         if (is_array($code['DOMAINS'])) {
                             $c['DOMAINS'] = is_array($c['DOMAINS'])
@@ -413,8 +426,9 @@ final class BusinessValue
                                 : $code['DOMAINS'];
                         }
 
-                        if (!is_array($code['PROVIDERS']))
+                        if (!is_array($code['PROVIDERS'])) {
                             $code['PROVIDERS'] = $consumer['PROVIDERS'];
+                        }
 
                         if (is_array($code['PROVIDERS'])) {
                             $c['PROVIDERS'] = is_array($c['PROVIDERS'])
@@ -444,11 +458,13 @@ final class BusinessValue
 
     public static function addConsumer($consumerKey, array $consumer)
     {
-        if (!$consumerKey)
+        if (!$consumerKey) {
             throw new SystemException('Empty consumer key!');
+        }
 
-        if (!is_array($consumer))
+        if (!is_array($consumer)) {
             throw new SystemException('Invalid consumer!');
+        }
 
         self::getConsumers(); // preload consumers
         self::addConsumerByRef($consumerKey, $consumer);
@@ -456,32 +472,38 @@ final class BusinessValue
 
     public static function changeConsumer($consumerKey, array $consumer)
     {
-        if (!$consumerKey)
+        if (!$consumerKey) {
             throw new SystemException('Empty consumer key!');
+        }
 
         self::getConsumers(); // preload consumers
 
-        if (!isset(self::$consumers[$consumerKey]))
+        if (!isset(self::$consumers[$consumerKey])) {
             throw new SystemException('There is no consumer "' . $consumerKey . '" to change!');
+        }
 
         self::$consumers[$consumerKey] = $consumer;
     }
 
     public static function changeConsumerKey($fromConsumerKey, $toConsumerKey)
     {
-        if (!($fromConsumerKey && $toConsumerKey))
+        if (!($fromConsumerKey && $toConsumerKey)) {
             throw new SystemException('Empty consumer key!');
+        }
 
-        if ($fromConsumerKey == $toConsumerKey)
+        if ($fromConsumerKey == $toConsumerKey) {
             return;
+        }
 
         self::getConsumers(); // preload consumers
 
-        if (!isset(self::$consumers[$fromConsumerKey]))
+        if (!isset(self::$consumers[$fromConsumerKey])) {
             throw new SystemException('There is no consumer "' . $fromConsumerKey . '" to change key!');
+        }
 
-        if (isset(self::$consumers[$toConsumerKey]))
+        if (isset(self::$consumers[$toConsumerKey])) {
             throw new SystemException('Cannot change to consumer key "' . $toConsumerKey . '", as it already exists!');
+        }
 
         // TODO change common consumer code['CONSUMERS']
         self::$consumers[$toConsumerKey] = &self::$consumers[$fromConsumerKey]; // by ref!
@@ -532,26 +554,35 @@ final class BusinessValue
 
         if ($resetAllPersonTypes !== null) {
             $allPersonTypes = $resetAllPersonTypes;
-            $personTypes = array_filter($allPersonTypes, function ($i) {
-                return $i['DOMAIN'];
-            });
+            $personTypes = array_filter(
+                $allPersonTypes,
+                function ($i) {
+                    return $i['DOMAIN'];
+                }
+            );
         } elseif (!$allPersonTypes) {
-            $dbRes = Internals\PersonTypeTable::getList([
-                'select' => [
-                    'ID', 'NAME', 'LID', 'ACTIVE', 'ENTITY_REGISTRY_TYPE',
-                    'DOMAIN' => 'BIZVAL.DOMAIN',
-                    'PT_SITE' => 'PERSON_TYPE_SITE.SITE_ID'
-                ],
-                'order' => ['SORT', 'NAME'],
-                'runtime' => [
-                    new \Bitrix\Main\Entity\ReferenceField(
-                        'BIZVAL',
-                        'Bitrix\Sale\Internals\BusinessValuePersonDomainTable',
-                        ['=this.ID' => 'ref.PERSON_TYPE_ID'],
-                        ['join_type' => 'LEFT']
-                    ),
-                ],
-            ]);
+            $dbRes = Internals\PersonTypeTable::getList(
+                [
+                    'select' => [
+                        'ID',
+                        'NAME',
+                        'LID',
+                        'ACTIVE',
+                        'ENTITY_REGISTRY_TYPE',
+                        'DOMAIN' => 'BIZVAL.DOMAIN',
+                        'PT_SITE' => 'PERSON_TYPE_SITE.SITE_ID'
+                    ],
+                    'order' => ['SORT', 'NAME'],
+                    'runtime' => [
+                        new \Bitrix\Main\Entity\ReferenceField(
+                            'BIZVAL',
+                            'Bitrix\Sale\Internals\BusinessValuePersonDomainTable',
+                            ['=this.ID' => 'ref.PERSON_TYPE_ID'],
+                            ['join_type' => 'LEFT']
+                        ),
+                    ],
+                ]
+            );
 
             $result = array();
             while ($row = $dbRes->fetch()) {
@@ -568,12 +599,129 @@ final class BusinessValue
 
                 $allPersonTypes[$item['ID']] = $item;
 
-                if ($item['DOMAIN'])
+                if ($item['DOMAIN']) {
                     $personTypes[$item['ID']] = $item;
+                }
             }
         }
 
         return $all ? $allPersonTypes : $personTypes;
+    }
+
+    /**
+     * @param $codeKey
+     * @param array $oldMapping
+     * @param array $newMapping
+     * @param null $consumerKey
+     * @param null $personTypeId
+     * @return \Bitrix\Main\Entity\Result
+     * @throws SystemException
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     */
+    public static function updateMapping(
+        $codeKey,
+        array $oldMapping,
+        array $newMapping,
+        $consumerKey = null,
+        $personTypeId = null
+    ): \Bitrix\Main\Entity\Result {
+        if (!isset($oldMapping['PROVIDER_KEY'], $oldMapping['PROVIDER_VALUE'])) {
+            throw new \Bitrix\Main\ArgumentException(
+                "Parameters \$oldMapping['PROVIDER_KEY'] and \$oldMapping['PROVIDER_VALUE'] are required.", 'oldMapping'
+            );
+        }
+
+        $result = new \Bitrix\Main\Entity\Result();
+
+        $filter = [
+            'CODE_KEY' => $codeKey,
+            'PROVIDER_KEY' => $oldMapping['PROVIDER_KEY'],
+            'PROVIDER_VALUE' => $oldMapping['PROVIDER_VALUE'],
+        ];
+
+        if ($consumerKey) {
+            $filter['CONSUMER_KEY'] = $consumerKey;
+        }
+
+        if ($personTypeId) {
+            $filter['PERSON_TYPE_ID'] = $personTypeId;
+        }
+
+        $businessValueResult = BusinessValueTable::getList(
+            array(
+                'select' => ['CONSUMER_KEY', 'PERSON_TYPE_ID'],
+                'filter' => $filter,
+            )
+        );
+
+        while ($item = $businessValueResult->fetch()) {
+            $setMappingResult = self::setMapping($codeKey, $item['CONSUMER_KEY'], $item['PERSON_TYPE_ID'], $newMapping);
+            if (!$setMappingResult->isSuccess()) {
+                $result->addErrors($setMappingResult->getErrors());
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param string $consumerName
+     * @param string $code
+     * @return string[]
+     */
+    public static function getValuesByCode(string $consumerName, string $code)
+    {
+        $result = [];
+
+        $consumerCodePersonMapping = self::getConsumerCodePersonMapping();
+        if (isset($consumerCodePersonMapping[''][$code])) {
+            $consumerValues = $consumerCodePersonMapping[''][$code];
+            foreach ($consumerValues as $values) {
+                if ($values['PROVIDER_KEY'] && $values['PROVIDER_VALUE']) {
+                    $result[] = self::getValueFromMapping($values);
+                }
+            }
+        }
+
+        $consumerValues = $consumerCodePersonMapping[$consumerName][$code] ?? [];
+        foreach ($consumerValues as $values) {
+            if ($values['PROVIDER_KEY'] && $values['PROVIDER_VALUE']) {
+                $result[] = self::getValueFromMapping($values);
+            }
+        }
+
+        return array_unique($result);
+    }
+
+    private static function getValueFromMapping(array $mapping, $providerInstance = null, $personTypeId = null)
+    {
+        $value = null;
+
+        switch ($mapping['PROVIDER_KEY']) {
+            case 'VALUE':
+            case 'INPUT':
+                $value = $mapping['PROVIDER_VALUE'];
+                break;
+
+            default:
+                if (
+                    ($providers = self::getProviders())
+                    && ($provider = $providers[$mapping['PROVIDER_KEY']])
+                    && \is_array($provider)
+                    && \is_callable($provider['GET_INSTANCE_VALUE'])
+                    && ($v = \call_user_func(
+                        $provider['GET_INSTANCE_VALUE'],
+                        $providerInstance,
+                        $mapping['PROVIDER_VALUE'],
+                        $personTypeId
+                    ))
+                ) {
+                    $value = $v;
+                }
+        }
+
+        return $value;
     }
 
     // DEPRECATED API //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -595,8 +743,9 @@ class BusinessValueHandlers
     public static function getProviders()
     {
         static $providers = array();
-        if ($providers)
+        if ($providers) {
             return $providers;
+        }
 
         $providers = array(
             'VALUE' => array(
@@ -606,29 +755,51 @@ class BusinessValueHandlers
             'COMPANY' => array(
                 'NAME' => Loc::getMessage('BIZVAL_PROVIDER_COMPANY'),
                 'SORT' => 600,
-                'FIELDS' => call_user_func(function () {
-                    $data = array(
-                        'ID' => array('GROUP' => 'ENTITY', 'NAME' => Loc::getMessage('BIZVAL_CODE_COMPANY_ID')),
-                        'NAME' => array('GROUP' => 'ENTITY', 'NAME' => Loc::getMessage('BIZVAL_CODE_NAME')),
-                        'LOCATION_ID' => array('GROUP' => 'ENTITY', 'NAME' => Loc::getMessage('BIZVAL_CODE_LOCATION')),
-                        'CODE' => array('GROUP' => 'ENTITY', 'NAME' => Loc::getMessage('BIZVAL_CODE_CODE')),
-                        'XML_ID' => array('GROUP' => 'ENTITY', 'NAME' => Loc::getMessage('BIZVAL_CODE_XML_ID')),
-                        'ACTIVE' => array('GROUP' => 'ENTITY', 'NAME' => Loc::getMessage('BIZVAL_CODE_ACTIVE')),
-                        'DATE_CREATE' => array('GROUP' => 'ENTITY', 'NAME' => Loc::getMessage('BIZVAL_CODE_DATE_CREATE')),
-                        'DATE_MODIFY' => array('GROUP' => 'ENTITY', 'NAME' => Loc::getMessage('BIZVAL_CODE_DATE_MODIFY')),
-                        'CREATED_BY' => array('GROUP' => 'ENTITY', 'NAME' => Loc::getMessage('BIZVAL_CODE_CREATED_BY')),
-                        'MODIFIED_BY' => array('GROUP' => 'ENTITY', 'NAME' => Loc::getMessage('BIZVAL_CODE_MODIFIED_BY')),
-                        'ADDRESS' => array('GROUP' => 'ENTITY', 'NAME' => Loc::getMessage('BIZVAL_CODE_ADDRESS')),
-                    );
+                'FIELDS' => call_user_func(
+                    function () {
+                        $data = array(
+                            'ID' => array('GROUP' => 'ENTITY', 'NAME' => Loc::getMessage('BIZVAL_CODE_COMPANY_ID')),
+                            'NAME' => array('GROUP' => 'ENTITY', 'NAME' => Loc::getMessage('BIZVAL_CODE_NAME')),
+                            'LOCATION_ID' => array(
+                                'GROUP' => 'ENTITY',
+                                'NAME' => Loc::getMessage('BIZVAL_CODE_LOCATION')
+                            ),
+                            'CODE' => array('GROUP' => 'ENTITY', 'NAME' => Loc::getMessage('BIZVAL_CODE_CODE')),
+                            'XML_ID' => array('GROUP' => 'ENTITY', 'NAME' => Loc::getMessage('BIZVAL_CODE_XML_ID')),
+                            'ACTIVE' => array('GROUP' => 'ENTITY', 'NAME' => Loc::getMessage('BIZVAL_CODE_ACTIVE')),
+                            'DATE_CREATE' => array(
+                                'GROUP' => 'ENTITY',
+                                'NAME' => Loc::getMessage('BIZVAL_CODE_DATE_CREATE')
+                            ),
+                            'DATE_MODIFY' => array(
+                                'GROUP' => 'ENTITY',
+                                'NAME' => Loc::getMessage('BIZVAL_CODE_DATE_MODIFY')
+                            ),
+                            'CREATED_BY' => array(
+                                'GROUP' => 'ENTITY',
+                                'NAME' => Loc::getMessage('BIZVAL_CODE_CREATED_BY')
+                            ),
+                            'MODIFIED_BY' => array(
+                                'GROUP' => 'ENTITY',
+                                'NAME' => Loc::getMessage('BIZVAL_CODE_MODIFIED_BY')
+                            ),
+                            'ADDRESS' => array('GROUP' => 'ENTITY', 'NAME' => Loc::getMessage('BIZVAL_CODE_ADDRESS')),
+                        );
 
-                    global $USER_FIELD_MANAGER;
-                    $result = $USER_FIELD_MANAGER->GetUserFields(Internals\CompanyTable::getUfId(), null, LANGUAGE_ID);
+                        global $USER_FIELD_MANAGER;
+                        $result = $USER_FIELD_MANAGER->GetUserFields(
+                            Internals\CompanyTable::getUfId(),
+                            null,
+                            LANGUAGE_ID
+                        );
 
-                    foreach ($result as $name => $row)
-                        $data[$name] = array('NAME' => $row['EDIT_FORM_LABEL'] ?: $name, 'GROUP' => 'UF');
+                        foreach ($result as $name => $row) {
+                            $data[$name] = array('NAME' => $row['EDIT_FORM_LABEL'] ?: $name, 'GROUP' => 'UF');
+                        }
 
-                    return $data;
-                }),
+                        return $data;
+                    }
+                ),
                 'FIELDS_GROUPS' => array(
                     'ENTITY' => array('NAME' => Loc::getMessage('BIZVAL_GROUP_CODE_COMPANY_ENTITY')),
                     'UF' => array('NAME' => Loc::getMessage('BIZVAL_GROUP_CODE_COMPANY_UF')),
@@ -636,12 +807,17 @@ class BusinessValueHandlers
                 'GET_INSTANCE_VALUE' => function ($providerInstance, $providerValue, $personTypeId) {
                     $value = null;
 
-                    if ($providerInstance === null)
+                    if ($providerInstance === null) {
                         return $value;
+                    }
 
-                    if (substr($providerValue, 0, 3) == 'UF_') {
+                    if (mb_substr($providerValue, 0, 3) == 'UF_') {
                         global $USER_FIELD_MANAGER;
-                        $value = $USER_FIELD_MANAGER->GetUserFieldValue(Internals\CompanyTable::getUfId(), $providerValue, $providerInstance) ?: null;
+                        $value = $USER_FIELD_MANAGER->GetUserFieldValue(
+                            Internals\CompanyTable::getUfId(),
+                            $providerValue,
+                            $providerInstance
+                        ) ?: null;
                     } elseif ($company = Internals\CompanyTable::getById($providerInstance)->fetch()) {
                         $value = $company[$providerValue];
                     }
@@ -674,7 +850,11 @@ class BusinessValueHandlers
                             'DELIVERY_ID' => array('NAME' => Loc::getMessage('BIZVAL_CODE_ORDER_DELIVERY_ID')),
                             'TAX_VALUE' => array('NAME' => Loc::getMessage('BIZVAL_CODE_ORDER_TAX')),
                             'COMMENTS' => array('NAME' => Loc::getMessage('BIZVAL_CODE_ORDER_COMMENTS')),
-                            'USER_DESCRIPTION' => array('NAME' => Loc::getMessage('BIZVAL_CODE_ORDER_USER_DESCRIPTION')),
+                            'USER_DESCRIPTION' => array(
+                                'NAME' => Loc::getMessage(
+                                    'BIZVAL_CODE_ORDER_USER_DESCRIPTION'
+                                )
+                            ),
                         ),
                         'GET_INSTANCE_VALUE' => function ($providerInstance, $providerValue, $personTypeId) {
                             $value = null;
@@ -682,11 +862,13 @@ class BusinessValueHandlers
                             if ($providerInstance instanceof Order) {
                                 if ($providerValue == 'DATE_INSERT_DATE') {
                                     $value = new Date($providerInstance->getField('DATE_INSERT'));
-                                } else if ($providerValue == 'DATE_BILL_DATE') // for crm compatibility
-                                {
-                                    $value = new Date($providerInstance->getField('DATE_BILL'));
                                 } else {
-                                    $value = $providerInstance->getField($providerValue);
+                                    if ($providerValue == 'DATE_BILL_DATE') // for crm compatibility
+                                    {
+                                        $value = new Date($providerInstance->getField('DATE_BILL'));
+                                    } else {
+                                        $value = $providerInstance->getField($providerValue);
+                                    }
                                 }
                             }
 
@@ -698,7 +880,11 @@ class BusinessValueHandlers
                         $result['FIELDS']['ORDER_TOPIC'] = ['NAME' => Loc::getMessage('BIZVAL_CODE_ORDER_ORDER_TOPIC')];
                         $result['FIELDS']['PRICE'] = ['NAME' => Loc::getMessage('BIZVAL_CODE_ORDER_PRICE')];
                         $result['FIELDS']['DATE_BILL'] = ['NAME' => Loc::getMessage('BIZVAL_CODE_ORDER_DATE_BILL')];
-                        $result['FIELDS']['DATE_BILL_DATE'] = ['NAME' => Loc::getMessage('BIZVAL_CODE_ORDER_DATE_BILL_DATE')];
+                        $result['FIELDS']['DATE_BILL_DATE'] = [
+                            'NAME' => Loc::getMessage(
+                                'BIZVAL_CODE_ORDER_DATE_BILL_DATE'
+                            )
+                        ];
                     }
 
                     return $result;
@@ -715,31 +901,52 @@ class BusinessValueHandlers
                     'LAST_NAME' => array('NAME' => Loc::getMessage('BIZVAL_CODE_LAST_NAME'), 'GROUP' => 'CLIENT'),
                     'EMAIL' => array('NAME' => Loc::getMessage('BIZVAL_CODE_EMAIL'), 'GROUP' => 'CLIENT'),
                     'LID' => array('NAME' => Loc::getMessage('BIZVAL_CODE_SITE_ID'), 'GROUP' => 'CLIENT'),
-                    'PERSONAL_PROFESSION' => array('NAME' => Loc::getMessage('BIZVAL_CODE_JOB_PROFESSION'), 'GROUP' => 'CLIENT'),
+                    'PERSONAL_PROFESSION' => array(
+                        'NAME' => Loc::getMessage('BIZVAL_CODE_JOB_PROFESSION'),
+                        'GROUP' => 'CLIENT'
+                    ),
                     'PERSONAL_WWW' => array('NAME' => Loc::getMessage('BIZVAL_CODE_WEBSITE'), 'GROUP' => 'CLIENT'),
                     'PERSONAL_ICQ' => array('NAME' => Loc::getMessage('BIZVAL_CODE_ICQ'), 'GROUP' => 'CLIENT'),
                     'PERSONAL_GENDER' => array('NAME' => Loc::getMessage('BIZVAL_CODE_GENDER'), 'GROUP' => 'CLIENT'),
                     'PERSONAL_FAX' => array('NAME' => Loc::getMessage('BIZVAL_CODE_FAX'), 'GROUP' => 'CLIENT'),
                     'PERSONAL_MOBILE' => array('NAME' => Loc::getMessage('BIZVAL_CODE_PHONE'), 'GROUP' => 'CLIENT'),
                     'PERSONAL_STREET' => array('NAME' => Loc::getMessage('BIZVAL_CODE_ADDRESS'), 'GROUP' => 'CLIENT'),
-                    'PERSONAL_MAILBOX' => array('NAME' => Loc::getMessage('BIZVAL_CODE_POSTAL_ADDRESS'), 'GROUP' => 'CLIENT'),
+                    'PERSONAL_MAILBOX' => array(
+                        'NAME' => Loc::getMessage('BIZVAL_CODE_POSTAL_ADDRESS'),
+                        'GROUP' => 'CLIENT'
+                    ),
                     'PERSONAL_CITY' => array('NAME' => Loc::getMessage('BIZVAL_CODE_CITY'), 'GROUP' => 'CLIENT'),
                     'PERSONAL_STATE' => array('NAME' => Loc::getMessage('BIZVAL_CODE_REGION'), 'GROUP' => 'CLIENT'),
                     'PERSONAL_ZIP' => array('NAME' => Loc::getMessage('BIZVAL_CODE_ZIP'), 'GROUP' => 'CLIENT'),
                     'PERSONAL_COUNTRY' => array('NAME' => Loc::getMessage('BIZVAL_CODE_COUNTRY'), 'GROUP' => 'CLIENT'),
                     'PERSONAL_NOTES' => array('NAME' => Loc::getMessage('BIZVAL_CODE_NOTES'), 'GROUP' => 'CLIENT'),
                     'WORK_COMPANY' => array('NAME' => Loc::getMessage('BIZVAL_CODE_NAME'), 'GROUP' => 'CLIENT_COMPANY'),
-                    'WORK_DEPARTMENT' => array('NAME' => Loc::getMessage('BIZVAL_CODE_JOB_DEPARTMENT'), 'GROUP' => 'CLIENT_COMPANY'),
-                    'WORK_POSITION' => array('NAME' => Loc::getMessage('BIZVAL_CODE_JOB_POSITION'), 'GROUP' => 'CLIENT_COMPANY'),
+                    'WORK_DEPARTMENT' => array(
+                        'NAME' => Loc::getMessage('BIZVAL_CODE_JOB_DEPARTMENT'),
+                        'GROUP' => 'CLIENT_COMPANY'
+                    ),
+                    'WORK_POSITION' => array(
+                        'NAME' => Loc::getMessage('BIZVAL_CODE_JOB_POSITION'),
+                        'GROUP' => 'CLIENT_COMPANY'
+                    ),
                     'WORK_WWW' => array('NAME' => Loc::getMessage('BIZVAL_CODE_WEBSITE'), 'GROUP' => 'CLIENT_COMPANY'),
                     'WORK_PHONE' => array('NAME' => Loc::getMessage('BIZVAL_CODE_PHONE'), 'GROUP' => 'CLIENT_COMPANY'),
                     'WORK_FAX' => array('NAME' => Loc::getMessage('BIZVAL_CODE_FAX'), 'GROUP' => 'CLIENT_COMPANY'),
-                    'WORK_STREET' => array('NAME' => Loc::getMessage('BIZVAL_CODE_ADDRESS'), 'GROUP' => 'CLIENT_COMPANY'),
-                    'WORK_MAILBOX' => array('NAME' => Loc::getMessage('BIZVAL_CODE_POSTAL_ADDRESS'), 'GROUP' => 'CLIENT_COMPANY'),
+                    'WORK_STREET' => array(
+                        'NAME' => Loc::getMessage('BIZVAL_CODE_ADDRESS'),
+                        'GROUP' => 'CLIENT_COMPANY'
+                    ),
+                    'WORK_MAILBOX' => array(
+                        'NAME' => Loc::getMessage('BIZVAL_CODE_POSTAL_ADDRESS'),
+                        'GROUP' => 'CLIENT_COMPANY'
+                    ),
                     'WORK_CITY' => array('NAME' => Loc::getMessage('BIZVAL_CODE_CITY'), 'GROUP' => 'CLIENT_COMPANY'),
                     'WORK_STATE' => array('NAME' => Loc::getMessage('BIZVAL_CODE_REGION'), 'GROUP' => 'CLIENT_COMPANY'),
                     'WORK_ZIP' => array('NAME' => Loc::getMessage('BIZVAL_CODE_ZIP'), 'GROUP' => 'CLIENT_COMPANY'),
-                    'WORK_COUNTRY' => array('NAME' => Loc::getMessage('BIZVAL_CODE_COUNTRY'), 'GROUP' => 'CLIENT_COMPANY'),
+                    'WORK_COUNTRY' => array(
+                        'NAME' => Loc::getMessage('BIZVAL_CODE_COUNTRY'),
+                        'GROUP' => 'CLIENT_COMPANY'
+                    ),
                 ),
                 'FIELDS_GROUPS' => array(
                     'CLIENT' => array('NAME' => Loc::getMessage('BIZVAL_GROUP_CODE_CLIENT')),
@@ -783,10 +990,11 @@ class BusinessValueHandlers
                     $value = null;
 
                     if ($providerInstance instanceof Payment) {
-                        if ($providerValue == 'DATE_BILL_DATE')
+                        if ($providerValue == 'DATE_BILL_DATE') {
                             $value = new Date($providerInstance->getField('DATE_BILL'));
-                        else
+                        } else {
                             $value = $providerInstance->getField($providerValue);
+                        }
                     }
                     return $value;
                 },
@@ -798,12 +1006,24 @@ class BusinessValueHandlers
                     'STATUS_ID' => array('NAME' => Loc::getMessage('BIZVAL_CODE_SHIPMENT_STATUS_ID')),
                     'PRICE_DELIVERY' => array('NAME' => Loc::getMessage('BIZVAL_CODE_SHIPMENT_PRICE_DELIVERY')),
                     'ALLOW_DELIVERY' => array('NAME' => Loc::getMessage('BIZVAL_CODE_SHIPMENT_ALLOW_DELIVERY')),
-                    'DATE_ALLOW_DELIVERY' => array('NAME' => Loc::getMessage('BIZVAL_CODE_SHIPMENT_DATE_ALLOW_DELIVERY')),
-                    'EMP_ALLOW_DELIVERY_ID' => array('NAME' => Loc::getMessage('BIZVAL_CODE_SHIPMENT_EMP_ALLOW_DELIVERY_ID')),
+                    'DATE_ALLOW_DELIVERY' => array(
+                        'NAME' => Loc::getMessage(
+                            'BIZVAL_CODE_SHIPMENT_DATE_ALLOW_DELIVERY'
+                        )
+                    ),
+                    'EMP_ALLOW_DELIVERY_ID' => array(
+                        'NAME' => Loc::getMessage(
+                            'BIZVAL_CODE_SHIPMENT_EMP_ALLOW_DELIVERY_ID'
+                        )
+                    ),
                     'DEDUCTED' => array('NAME' => Loc::getMessage('BIZVAL_CODE_SHIPMENT_DEDUCTED')),
                     'DATE_DEDUCTED' => array('NAME' => Loc::getMessage('BIZVAL_CODE_SHIPMENT_DATE_DEDUCTED')),
                     'EMP_DEDUCTED_ID' => array('NAME' => Loc::getMessage('BIZVAL_CODE_SHIPMENT_EMP_DEDUCTED_ID')),
-                    'REASON_UNDO_DEDUCTED' => array('NAME' => Loc::getMessage('BIZVAL_CODE_SHIPMENT_REASON_UNDO_DEDUCTED')),
+                    'REASON_UNDO_DEDUCTED' => array(
+                        'NAME' => Loc::getMessage(
+                            'BIZVAL_CODE_SHIPMENT_REASON_UNDO_DEDUCTED'
+                        )
+                    ),
                     'DELIVERY_ID' => array('NAME' => Loc::getMessage('BIZVAL_CODE_SHIPMENT_DELIVERY_ID')),
                     'DELIVERY_DOC_NUM' => array('NAME' => Loc::getMessage('BIZVAL_CODE_SHIPMENT_DELIVERY_DOC_NUM')),
                     'DELIVERY_DOC_DATE' => array('NAME' => Loc::getMessage('BIZVAL_CODE_SHIPMENT_DELIVERY_DOC_DATE')),
@@ -823,8 +1043,9 @@ class BusinessValueHandlers
                 'GET_INSTANCE_VALUE' => function ($providerInstance, $providerValue, $personTypeId) {
                     $value = null;
 
-                    if ($providerInstance instanceof Shipment)
+                    if ($providerInstance instanceof Shipment) {
                         $value = $providerInstance->getField($providerValue);
+                    }
 
                     return $value;
                 },
@@ -840,14 +1061,16 @@ class BusinessValueHandlers
 
                         $fields[$registryType] = [];
 
-                        $result = Internals\OrderPropsTable::getList(array(
-                            'select' => array('ID', 'NAME', 'PERSON_TYPE_ID', 'TYPE', 'CODE'),
-                            'filter' => array(
-                                '=PERSON_TYPE_ID' => array_keys(BusinessValue::getPersonTypes()),
-                                '=ENTITY_REGISTRY_TYPE' => $registryType
-                            ),
-                            'order' => array('PERSON_TYPE_ID', 'SORT'),
-                        ));
+                        $result = Internals\OrderPropsTable::getList(
+                            array(
+                                'select' => array('ID', 'NAME', 'PERSON_TYPE_ID', 'TYPE', 'CODE'),
+                                'filter' => array(
+                                    '=PERSON_TYPE_ID' => array_keys(BusinessValue::getPersonTypes()),
+                                    '=ENTITY_REGISTRY_TYPE' => $registryType
+                                ),
+                                'order' => array('PERSON_TYPE_ID', 'SORT'),
+                            )
+                        );
 
                         while ($row = $result->fetch()) {
                             $id = $row['ID'];
@@ -900,14 +1123,23 @@ class BusinessValueHandlers
                         'NAME' => Loc::getMessage('BIZVAL_PROVIDER_PROPERTY'),
                         'SORT' => 300,
                         'FIELDS' => call_user_func($getFields, Registry::REGISTRY_TYPE_ORDER),
-                        'FIELDS_GROUPS' => array_map(function ($i) {
-                            return array('NAME' => $i['TITLE']);
-                        }, BusinessValue::getPersonTypes()),
-                        'GET_VALUE' => function ($providerValue, $personTypeId, $options, $provider) use ($parseId, $getFields) {
-                            list ($propertyCode, $propertyId, $locationField) = call_user_func($parseId, $providerValue);
+                        'FIELDS_GROUPS' => array_map(
+                            function ($i) {
+                                return array('NAME' => $i['TITLE']);
+                            },
+                            BusinessValue::getPersonTypes()
+                        ),
+                        'GET_VALUE' => function ($providerValue, $personTypeId, $options, $provider) use (
+                            $parseId,
+                            $getFields
+                        ) {
+                            list ($propertyCode, $propertyId, $locationField) = call_user_func(
+                                $parseId,
+                                $providerValue
+                            );
 
                             // for crm invoice compatibility
-                            if (method_exists($provider, 'getRegistryType')) {
+                            if ($provider && method_exists($provider, 'getRegistryType')) {
                                 $registry = $provider::getRegistryType();
                             } else {
                                 $registry = Registry::REGISTRY_TYPE_ORDER;
@@ -932,11 +1164,16 @@ class BusinessValueHandlers
 
                             return $providerValue;
                         },
-                        'GET_INSTANCE_VALUE' => function ($providerInstance, $providerValue, $personTypeId) use ($parseId) {
+                        'GET_INSTANCE_VALUE' => function ($providerInstance, $providerValue, $personTypeId) use (
+                            $parseId
+                        ) {
                             $value = null;
 
                             if ($providerInstance instanceof Order) {
-                                list ($propertyCode, $propertyId, $locationField) = call_user_func($parseId, $providerValue);
+                                list ($propertyCode, $propertyId, $locationField) = call_user_func(
+                                    $parseId,
+                                    $providerValue
+                                );
 
                                 /** @var PropertyValue $property */
                                 foreach ($providerInstance->getPropertyCollection() as $property) {
@@ -958,14 +1195,17 @@ class BusinessValueHandlers
                                                         $filter['=PARENTS.TYPE.CODE'] = $locationField;
                                                         $limit = 1;
                                                     }
-                                                    $row = \Bitrix\Sale\Location\LocationTable::getList(array(
-                                                        'select' => array('LOCATION_NAME' => 'PARENTS.NAME.NAME'),
-                                                        'filter' => $filter,
-                                                        'limit' => $limit,
-                                                    ));
+                                                    $row = \Bitrix\Sale\Location\LocationTable::getList(
+                                                        array(
+                                                            'select' => array('LOCATION_NAME' => 'PARENTS.NAME.NAME'),
+                                                            'filter' => $filter,
+                                                            'limit' => $limit,
+                                                        )
+                                                    );
                                                     $locations = array();
-                                                    while ($location = $row->fetch())
+                                                    while ($location = $row->fetch()) {
                                                         $locations[] = $location['LOCATION_NAME'];
+                                                    }
 
                                                     $value = (count($locations) > 0) ? implode('-', $locations) : null;
                                                 } elseif ($propertyField['TYPE'] == "ENUM") {
@@ -974,11 +1214,13 @@ class BusinessValueHandlers
                                                     if (is_array($multipleValues) && count($multipleValues) > 0) {
                                                         $value = [];
                                                         foreach ($multipleValues as $v) {
-                                                            if (isset($propertyField['OPTIONS'][$v]))
+                                                            if (isset($propertyField['OPTIONS'][$v])) {
                                                                 $value[] = $propertyField['OPTIONS'][$v];
+                                                            }
                                                         }
-                                                    } else
+                                                    } else {
                                                         $value = $propertyField['OPTIONS'][$property->getValue()];
+                                                    }
                                                 }
                                             }
                                             break;
@@ -1055,11 +1297,17 @@ class BusinessValueHandlers
             'CONSUMER_PAYSYS' => array('NAME' => Loc::getMessage('BIZVAL_GROUP_CONSUMER_PAYSYS'), 'SORT' => 100),
             'CODE_PAYSYS' => array('NAME' => Loc::getMessage('BIZVAL_GROUP_CONSUMER_PAYSYS'), 'SORT' => 100),
             'BUYER_PERSON' => array('NAME' => Loc::getMessage('BIZVAL_GROUP_BUYER_PERSON'), 'SORT' => 300),
-            'BUYER_PERSON_COMPANY' => array('NAME' => Loc::getMessage('BIZVAL_GROUP_BUYER_PERSON_COMPANY'), 'SORT' => 305),
+            'BUYER_PERSON_COMPANY' => array(
+                'NAME' => Loc::getMessage('BIZVAL_GROUP_BUYER_PERSON_COMPANY'),
+                'SORT' => 305
+            ),
             'BUYER_COMPANY' => array('NAME' => Loc::getMessage('BIZVAL_GROUP_BUYER_COMPANY'), 'SORT' => 310),
             '1C_REKV' => array('NAME' => Loc::getMessage('BIZVAL_GROUP_1C_REKV'), 'SORT' => 320),
             'SELLER_PERSON' => array('NAME' => Loc::getMessage('BIZVAL_GROUP_SELLER_PERSON'), 'SORT' => 400),
-            'SELLER_PERSON_COMPANY' => array('NAME' => Loc::getMessage('BIZVAL_GROUP_SELLER_PERSON_COMPANY'), 'SORT' => 405),
+            'SELLER_PERSON_COMPANY' => array(
+                'NAME' => Loc::getMessage('BIZVAL_GROUP_SELLER_PERSON_COMPANY'),
+                'SORT' => 405
+            ),
             'SELLER_COMPANY' => array('NAME' => Loc::getMessage('BIZVAL_GROUP_SELLER_PERSON'), 'SORT' => 410),
         );
     }
@@ -1069,10 +1317,22 @@ call_user_func(
     function () {
         $eventManager = EventManager::getInstance();
 //		$eventManager->addEventHandler('sale', 'OnGetBusinessValueProviders', array(__NAMESPACE__.'\BusinessValueHandlers', 'getProviders'));
-        $eventManager->addEventHandler('sale', 'OnGetBusinessValueConsumers', array(__NAMESPACE__ . '\BusinessValueHandlers', 'getConsumers'));
-        $eventManager->addEventHandler('sale', 'OnGetBusinessValueGroups', array(__NAMESPACE__ . '\BusinessValueHandlers', 'getGroups'));
+        $eventManager->addEventHandler(
+            'sale',
+            'OnGetBusinessValueConsumers',
+            array(__NAMESPACE__ . '\BusinessValueHandlers', 'getConsumers')
+        );
+        $eventManager->addEventHandler(
+            'sale',
+            'OnGetBusinessValueGroups',
+            array(__NAMESPACE__ . '\BusinessValueHandlers', 'getGroups')
+        );
 
-        $eventManager->addEventHandler('sale', 'OnGetBusinessValueConsumers', array(__NAMESPACE__ . '\BusinessValueConsumer1C', 'getConsumers'));
+        $eventManager->addEventHandler(
+            'sale',
+            'OnGetBusinessValueConsumers',
+            array(__NAMESPACE__ . '\BusinessValueConsumer1C', 'getConsumers')
+        );
     }
 );
 
@@ -1084,7 +1344,16 @@ class BusinessValueConsumer1C
     const CONSUMER_KEY = '1C';
 
     private static $codes, $personMaxIndex;
-    private static $systemProviderKeys = array('', 'VALUE', 'USER', 'ORDER', 'PROPERTY', 'COMPANY', 'PAYMENT', 'SHIPMENT');
+    private static $systemProviderKeys = array(
+        '',
+        'VALUE',
+        'USER',
+        'ORDER',
+        'PROPERTY',
+        'COMPANY',
+        'PAYMENT',
+        'SHIPMENT'
+    );
     private static $rekvProviderKeys = array('VALUE', 'USER', 'ORDER', 'PROPERTY', 'COMPANY', 'PAYMENT', 'SHIPMENT');
 
     private static $codeNameInput = array('TYPE' => 'STRING', 'SIZE' => 40, 'MAXLENGTH' => 50);
@@ -1095,91 +1364,506 @@ class BusinessValueConsumer1C
         if (!$consumers) {
             self::$codes = array(
                 // !!! Make sure these codes are in sync with system codes in CSaleExport !!!
-                'BUYER_PERSON_NAME' => array('NAME' => Loc::getMessage('BIZVAL_CODE_NAME'), 'SORT' => 100, 'GROUP' => 'BUYER_PERSON', 'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)),
-                'BUYER_PERSON_NAME_FIRST' => array('NAME' => Loc::getMessage('BIZVAL_CODE_FIRST_NAME'), 'SORT' => 200, 'GROUP' => 'BUYER_PERSON', 'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)),
-                'BUYER_PERSON_NAME_SECOND' => array('NAME' => Loc::getMessage('BIZVAL_CODE_SECOND_NAME'), 'SORT' => 300, 'GROUP' => 'BUYER_PERSON', 'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)),
-                'BUYER_PERSON_NAME_LAST' => array('NAME' => Loc::getMessage('BIZVAL_CODE_LAST_NAME'), 'SORT' => 400, 'GROUP' => 'BUYER_PERSON', 'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)),
-                'BUYER_PERSON_NAME_AGENT' => array('NAME' => Loc::getMessage('BIZVAL_CODE_AGENT_NAME'), 'SORT' => 500, 'GROUP' => 'BUYER_PERSON', 'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)),
-                'BUYER_PERSON_NAME_CONTACT' => array('NAME' => Loc::getMessage('BIZVAL_CODE_CONTACT_NAME'), 'SORT' => 600, 'GROUP' => 'BUYER_PERSON', 'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)),
-                'BUYER_PERSON_BIRTHDAY' => array('NAME' => Loc::getMessage('BIZVAL_CODE_BIRTHDAY'), 'SORT' => 700, 'GROUP' => 'BUYER_PERSON', 'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)),
-                'BUYER_PERSON_GENDER' => array('NAME' => Loc::getMessage('BIZVAL_CODE_GENDER'), 'SORT' => 800, 'GROUP' => 'BUYER_PERSON', 'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)),
-                'BUYER_PERSON_INN' => array('NAME' => Loc::getMessage('BIZVAL_CODE_INN'), 'SORT' => 900, 'GROUP' => 'BUYER_PERSON', 'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)),
-                'BUYER_PERSON_KPP' => array('NAME' => Loc::getMessage('BIZVAL_CODE_KPP'), 'SORT' => 1000, 'GROUP' => 'BUYER_PERSON', 'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)),
-                'BUYER_PERSON_ADDRESS' => array('NAME' => Loc::getMessage('BIZVAL_CODE_ADDRESS'), 'SORT' => 1100, 'GROUP' => 'BUYER_PERSON', 'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)),
-                'BUYER_PERSON_ZIP' => array('NAME' => Loc::getMessage('BIZVAL_CODE_ZIP'), 'SORT' => 1200, 'GROUP' => 'BUYER_PERSON', 'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)),
-                'BUYER_PERSON_COUNTRY' => array('NAME' => Loc::getMessage('BIZVAL_CODE_COUNTRY'), 'SORT' => 1300, 'GROUP' => 'BUYER_PERSON', 'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)),
-                'BUYER_PERSON_REGION' => array('NAME' => Loc::getMessage('BIZVAL_CODE_REGION'), 'SORT' => 1400, 'GROUP' => 'BUYER_PERSON', 'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)),
-                'BUYER_PERSON_STATE' => array('NAME' => Loc::getMessage('BIZVAL_CODE_DISTRICT'), 'SORT' => 1500, 'GROUP' => 'BUYER_PERSON', 'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)),
-                'BUYER_PERSON_TOWN' => array('NAME' => Loc::getMessage('BIZVAL_CODE_LOCALITY'), 'SORT' => 1600, 'GROUP' => 'BUYER_PERSON', 'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)),
-                'BUYER_PERSON_CITY' => array('NAME' => Loc::getMessage('BIZVAL_CODE_CITY'), 'SORT' => 1700, 'GROUP' => 'BUYER_PERSON', 'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)),
-                'BUYER_PERSON_STREET' => array('NAME' => Loc::getMessage('BIZVAL_CODE_STREET'), 'SORT' => 1800, 'GROUP' => 'BUYER_PERSON', 'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)),
-                'BUYER_PERSON_HOUSING' => array('NAME' => Loc::getMessage('BIZVAL_CODE_HOUSING'), 'SORT' => 1900, 'GROUP' => 'BUYER_PERSON', 'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)),
-                'BUYER_PERSON_BUILDING' => array('NAME' => Loc::getMessage('BIZVAL_CODE_BUILDING'), 'SORT' => 2000, 'GROUP' => 'BUYER_PERSON', 'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)),
-                'BUYER_PERSON_APARTMENT' => array('NAME' => Loc::getMessage('BIZVAL_CODE_APARTMENT'), 'SORT' => 2100, 'GROUP' => 'BUYER_PERSON', 'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)),
-                'BUYER_PERSON_PHONE' => array('NAME' => Loc::getMessage('BIZVAL_CODE_PHONE'), 'SORT' => 2200, 'GROUP' => 'BUYER_PERSON', 'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)),
-                'BUYER_PERSON_NOTES' => array('NAME' => Loc::getMessage('BIZVAL_CODE_NOTES'), 'SORT' => 2250, 'GROUP' => 'BUYER_PERSON', 'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)),
-                'BUYER_PERSON_EMAIL' => array('NAME' => Loc::getMessage('BIZVAL_CODE_EMAIL'), 'SORT' => 2300, 'GROUP' => 'BUYER_PERSON', 'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)),
-                'BUYER_PERSON_F_ADDRESS_FULL' => array('NAME' => Loc::getMessage('BIZVAL_CODE_F_ADDRESS_FULL'), 'SORT' => 2400, 'GROUP' => 'BUYER_PERSON', 'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)),
-                'BUYER_PERSON_F_INDEX' => array('NAME' => Loc::getMessage('BIZVAL_CODE_F_INDEX'), 'SORT' => 2500, 'GROUP' => 'BUYER_PERSON', 'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)),
-                'BUYER_PERSON_F_COUNTRY' => array('NAME' => Loc::getMessage('BIZVAL_CODE_F_COUNTRY'), 'SORT' => 2600, 'GROUP' => 'BUYER_PERSON', 'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)),
-                'BUYER_PERSON_F_REGION' => array('NAME' => Loc::getMessage('BIZVAL_CODE_F_REGION'), 'SORT' => 2700, 'GROUP' => 'BUYER_PERSON', 'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)),
-                'BUYER_PERSON_F_STATE' => array('NAME' => Loc::getMessage('BIZVAL_CODE_F_STATE'), 'SORT' => 2800, 'GROUP' => 'BUYER_PERSON', 'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)),
-                'BUYER_PERSON_F_TOWN' => array('NAME' => Loc::getMessage('BIZVAL_CODE_F_TOWN'), 'SORT' => 2900, 'GROUP' => 'BUYER_PERSON', 'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)),
-                'BUYER_PERSON_F_CITY' => array('NAME' => Loc::getMessage('BIZVAL_CODE_F_CITY'), 'SORT' => 3000, 'GROUP' => 'BUYER_PERSON', 'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)),
-                'BUYER_PERSON_F_STREET' => array('NAME' => Loc::getMessage('BIZVAL_CODE_F_STREET'), 'SORT' => 3100, 'GROUP' => 'BUYER_PERSON', 'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)),
-                'BUYER_PERSON_F_BUILDING' => array('NAME' => Loc::getMessage('BIZVAL_CODE_F_BUILDING'), 'SORT' => 3200, 'GROUP' => 'BUYER_PERSON', 'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)),
-                'BUYER_PERSON_F_HOUSE' => array('NAME' => Loc::getMessage('BIZVAL_CODE_F_HOUSE'), 'SORT' => 3300, 'GROUP' => 'BUYER_PERSON', 'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)),
-                'BUYER_PERSON_F_FLAT' => array('NAME' => Loc::getMessage('BIZVAL_CODE_F_FLAT'), 'SORT' => 3400, 'GROUP' => 'BUYER_PERSON', 'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)),
-                'BUYER_COMPANY_NAME' => array('NAME' => Loc::getMessage('BIZVAL_CODE_NAME'), 'SORT' => 100, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_NAME_AGENT' => array('NAME' => Loc::getMessage('BIZVAL_CODE_AGENT_NAME'), 'SORT' => 200, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_NAME_CONTACT' => array('NAME' => Loc::getMessage('BIZVAL_CODE_CONTACT_NAME'), 'SORT' => 300, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_INN' => array('NAME' => Loc::getMessage('BIZVAL_CODE_INN'), 'SORT' => 400, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_KPP' => array('NAME' => Loc::getMessage('BIZVAL_CODE_KPP'), 'SORT' => 500, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_EGRPO' => array('NAME' => Loc::getMessage('BIZVAL_CODE_EGRPO'), 'SORT' => 600, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_OKVED' => array('NAME' => Loc::getMessage('BIZVAL_CODE_OKVED'), 'SORT' => 700, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_OKDP' => array('NAME' => Loc::getMessage('BIZVAL_CODE_OKDP'), 'SORT' => 800, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_OKOPF' => array('NAME' => Loc::getMessage('BIZVAL_CODE_OKOPF'), 'SORT' => 900, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_OKFC' => array('NAME' => Loc::getMessage('BIZVAL_CODE_OKFC'), 'SORT' => 1000, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_OKPO' => array('NAME' => Loc::getMessage('BIZVAL_CODE_OKPO'), 'SORT' => 1100, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_BANK_ACCOUNT' => array('NAME' => Loc::getMessage('BIZVAL_CODE_BANK_ACCOUNT'), 'SORT' => 1200, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
+                'BUYER_PERSON_NAME' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_NAME'),
+                    'SORT' => 100,
+                    'GROUP' => 'BUYER_PERSON',
+                    'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)
+                ),
+                'BUYER_PERSON_NAME_FIRST' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_FIRST_NAME'),
+                    'SORT' => 200,
+                    'GROUP' => 'BUYER_PERSON',
+                    'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)
+                ),
+                'BUYER_PERSON_NAME_SECOND' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_SECOND_NAME'),
+                    'SORT' => 300,
+                    'GROUP' => 'BUYER_PERSON',
+                    'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)
+                ),
+                'BUYER_PERSON_NAME_LAST' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_LAST_NAME'),
+                    'SORT' => 400,
+                    'GROUP' => 'BUYER_PERSON',
+                    'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)
+                ),
+                'BUYER_PERSON_NAME_AGENT' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_AGENT_NAME'),
+                    'SORT' => 500,
+                    'GROUP' => 'BUYER_PERSON',
+                    'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)
+                ),
+                'BUYER_PERSON_NAME_CONTACT' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_CONTACT_NAME'),
+                    'SORT' => 600,
+                    'GROUP' => 'BUYER_PERSON',
+                    'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)
+                ),
+                'BUYER_PERSON_BIRTHDAY' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_BIRTHDAY'),
+                    'SORT' => 700,
+                    'GROUP' => 'BUYER_PERSON',
+                    'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)
+                ),
+                'BUYER_PERSON_GENDER' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_GENDER'),
+                    'SORT' => 800,
+                    'GROUP' => 'BUYER_PERSON',
+                    'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)
+                ),
+                'BUYER_PERSON_INN' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_INN'),
+                    'SORT' => 900,
+                    'GROUP' => 'BUYER_PERSON',
+                    'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)
+                ),
+                'BUYER_PERSON_KPP' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_KPP'),
+                    'SORT' => 1000,
+                    'GROUP' => 'BUYER_PERSON',
+                    'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)
+                ),
+                'BUYER_PERSON_ADDRESS' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_ADDRESS'),
+                    'SORT' => 1100,
+                    'GROUP' => 'BUYER_PERSON',
+                    'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)
+                ),
+                'BUYER_PERSON_ZIP' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_ZIP'),
+                    'SORT' => 1200,
+                    'GROUP' => 'BUYER_PERSON',
+                    'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)
+                ),
+                'BUYER_PERSON_COUNTRY' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_COUNTRY'),
+                    'SORT' => 1300,
+                    'GROUP' => 'BUYER_PERSON',
+                    'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)
+                ),
+                'BUYER_PERSON_REGION' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_REGION'),
+                    'SORT' => 1400,
+                    'GROUP' => 'BUYER_PERSON',
+                    'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)
+                ),
+                'BUYER_PERSON_STATE' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_DISTRICT'),
+                    'SORT' => 1500,
+                    'GROUP' => 'BUYER_PERSON',
+                    'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)
+                ),
+                'BUYER_PERSON_TOWN' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_LOCALITY'),
+                    'SORT' => 1600,
+                    'GROUP' => 'BUYER_PERSON',
+                    'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)
+                ),
+                'BUYER_PERSON_CITY' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_CITY'),
+                    'SORT' => 1700,
+                    'GROUP' => 'BUYER_PERSON',
+                    'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)
+                ),
+                'BUYER_PERSON_STREET' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_STREET'),
+                    'SORT' => 1800,
+                    'GROUP' => 'BUYER_PERSON',
+                    'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)
+                ),
+                'BUYER_PERSON_HOUSING' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_HOUSING'),
+                    'SORT' => 1900,
+                    'GROUP' => 'BUYER_PERSON',
+                    'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)
+                ),
+                'BUYER_PERSON_BUILDING' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_BUILDING'),
+                    'SORT' => 2000,
+                    'GROUP' => 'BUYER_PERSON',
+                    'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)
+                ),
+                'BUYER_PERSON_APARTMENT' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_APARTMENT'),
+                    'SORT' => 2100,
+                    'GROUP' => 'BUYER_PERSON',
+                    'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)
+                ),
+                'BUYER_PERSON_PHONE' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_PHONE'),
+                    'SORT' => 2200,
+                    'GROUP' => 'BUYER_PERSON',
+                    'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)
+                ),
+                'BUYER_PERSON_NOTES' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_NOTES'),
+                    'SORT' => 2250,
+                    'GROUP' => 'BUYER_PERSON',
+                    'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)
+                ),
+                'BUYER_PERSON_EMAIL' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_EMAIL'),
+                    'SORT' => 2300,
+                    'GROUP' => 'BUYER_PERSON',
+                    'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)
+                ),
+                'BUYER_PERSON_F_ADDRESS_FULL' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_F_ADDRESS_FULL'),
+                    'SORT' => 2400,
+                    'GROUP' => 'BUYER_PERSON',
+                    'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)
+                ),
+                'BUYER_PERSON_F_INDEX' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_F_INDEX'),
+                    'SORT' => 2500,
+                    'GROUP' => 'BUYER_PERSON',
+                    'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)
+                ),
+                'BUYER_PERSON_F_COUNTRY' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_F_COUNTRY'),
+                    'SORT' => 2600,
+                    'GROUP' => 'BUYER_PERSON',
+                    'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)
+                ),
+                'BUYER_PERSON_F_REGION' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_F_REGION'),
+                    'SORT' => 2700,
+                    'GROUP' => 'BUYER_PERSON',
+                    'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)
+                ),
+                'BUYER_PERSON_F_STATE' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_F_STATE'),
+                    'SORT' => 2800,
+                    'GROUP' => 'BUYER_PERSON',
+                    'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)
+                ),
+                'BUYER_PERSON_F_TOWN' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_F_TOWN'),
+                    'SORT' => 2900,
+                    'GROUP' => 'BUYER_PERSON',
+                    'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)
+                ),
+                'BUYER_PERSON_F_CITY' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_F_CITY'),
+                    'SORT' => 3000,
+                    'GROUP' => 'BUYER_PERSON',
+                    'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)
+                ),
+                'BUYER_PERSON_F_STREET' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_F_STREET'),
+                    'SORT' => 3100,
+                    'GROUP' => 'BUYER_PERSON',
+                    'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)
+                ),
+                'BUYER_PERSON_F_BUILDING' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_F_BUILDING'),
+                    'SORT' => 3200,
+                    'GROUP' => 'BUYER_PERSON',
+                    'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)
+                ),
+                'BUYER_PERSON_F_HOUSE' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_F_HOUSE'),
+                    'SORT' => 3300,
+                    'GROUP' => 'BUYER_PERSON',
+                    'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)
+                ),
+                'BUYER_PERSON_F_FLAT' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_F_FLAT'),
+                    'SORT' => 3400,
+                    'GROUP' => 'BUYER_PERSON',
+                    'DOMAINS' => array(BusinessValue::INDIVIDUAL_DOMAIN)
+                ),
+                'BUYER_COMPANY_NAME' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_NAME'),
+                    'SORT' => 100,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_NAME_AGENT' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_AGENT_NAME'),
+                    'SORT' => 200,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_NAME_CONTACT' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_CONTACT_NAME'),
+                    'SORT' => 300,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_INN' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_INN'),
+                    'SORT' => 400,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_KPP' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_KPP'),
+                    'SORT' => 500,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_EGRPO' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_EGRPO'),
+                    'SORT' => 600,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_OKVED' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_OKVED'),
+                    'SORT' => 700,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_OKDP' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_OKDP'),
+                    'SORT' => 800,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_OKOPF' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_OKOPF'),
+                    'SORT' => 900,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_OKFC' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_OKFC'),
+                    'SORT' => 1000,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_OKPO' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_OKPO'),
+                    'SORT' => 1100,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_BANK_ACCOUNT' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_BANK_ACCOUNT'),
+                    'SORT' => 1200,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
 
-                'BUYER_COMPANY_BANK_NAME' => array('NAME' => Loc::getMessage('BIZVAL_CODE_BANK_NAME'), 'SORT' => 1201, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_BANK_BIK' => array('NAME' => Loc::getMessage('BIZVAL_CODE_BANK_BIK'), 'SORT' => 1202, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_BANK_ADDRESS_FULL' => array('NAME' => Loc::getMessage('BIZVAL_CODE_BANK_ADDRESS_FULL'), 'SORT' => 1203, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_BANK_INDEX' => array('NAME' => Loc::getMessage('BIZVAL_CODE_BANK_INDEX'), 'SORT' => 1204, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_BANK_COUNTRY' => array('NAME' => Loc::getMessage('BIZVAL_CODE_BANK_COUNTRY'), 'SORT' => 1205, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_BANK_REGION' => array('NAME' => Loc::getMessage('BIZVAL_CODE_BANK_REGION'), 'SORT' => 1206, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_BANK_STATE' => array('NAME' => Loc::getMessage('BIZVAL_CODE_BANK_STATE'), 'SORT' => 1207, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_BANK_TOWN' => array('NAME' => Loc::getMessage('BIZVAL_CODE_BANK_TOWN'), 'SORT' => 1208, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_BANK_CITY' => array('NAME' => Loc::getMessage('BIZVAL_CODE_BANK_CITY'), 'SORT' => 1209, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_BANK_STREET' => array('NAME' => Loc::getMessage('BIZVAL_CODE_BANK_STREET'), 'SORT' => 1210, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_BANK_BUILDING' => array('NAME' => Loc::getMessage('BIZVAL_CODE_BANK_BUILDING'), 'SORT' => 1211, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_BANK_HOUSE' => array('NAME' => Loc::getMessage('BIZVAL_CODE_BANK_HOUSE'), 'SORT' => 1212, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
+                'BUYER_COMPANY_BANK_NAME' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_BANK_NAME'),
+                    'SORT' => 1201,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_BANK_BIK' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_BANK_BIK'),
+                    'SORT' => 1202,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_BANK_ADDRESS_FULL' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_BANK_ADDRESS_FULL'),
+                    'SORT' => 1203,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_BANK_INDEX' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_BANK_INDEX'),
+                    'SORT' => 1204,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_BANK_COUNTRY' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_BANK_COUNTRY'),
+                    'SORT' => 1205,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_BANK_REGION' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_BANK_REGION'),
+                    'SORT' => 1206,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_BANK_STATE' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_BANK_STATE'),
+                    'SORT' => 1207,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_BANK_TOWN' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_BANK_TOWN'),
+                    'SORT' => 1208,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_BANK_CITY' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_BANK_CITY'),
+                    'SORT' => 1209,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_BANK_STREET' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_BANK_STREET'),
+                    'SORT' => 1210,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_BANK_BUILDING' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_BANK_BUILDING'),
+                    'SORT' => 1211,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_BANK_HOUSE' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_BANK_HOUSE'),
+                    'SORT' => 1212,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
 
-                'BUYER_COMPANY_ADDRESS' => array('NAME' => Loc::getMessage('BIZVAL_CODE_ADDRESS'), 'SORT' => 1300, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_ZIP' => array('NAME' => Loc::getMessage('BIZVAL_CODE_ZIP'), 'SORT' => 1400, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_COUNTRY' => array('NAME' => Loc::getMessage('BIZVAL_CODE_COUNTRY'), 'SORT' => 1500, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_REGION' => array('NAME' => Loc::getMessage('BIZVAL_CODE_REGION'), 'SORT' => 1600, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_STATE' => array('NAME' => Loc::getMessage('BIZVAL_CODE_DISTRICT'), 'SORT' => 1700, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_TOWN' => array('NAME' => Loc::getMessage('BIZVAL_CODE_LOCALITY'), 'SORT' => 1800, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_CITY' => array('NAME' => Loc::getMessage('BIZVAL_CODE_CITY'), 'SORT' => 1900, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_STREET' => array('NAME' => Loc::getMessage('BIZVAL_CODE_STREET'), 'SORT' => 2000, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_HOUSING' => array('NAME' => Loc::getMessage('BIZVAL_CODE_HOUSING'), 'SORT' => 2100, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_BUILDING' => array('NAME' => Loc::getMessage('BIZVAL_CODE_BUILDING'), 'SORT' => 2200, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_APARTMENT' => array('NAME' => Loc::getMessage('BIZVAL_CODE_APARTMENT'), 'SORT' => 2300, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_PHONE' => array('NAME' => Loc::getMessage('BIZVAL_CODE_PHONE'), 'SORT' => 2400, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_EMAIL' => array('NAME' => Loc::getMessage('BIZVAL_CODE_EMAIL'), 'SORT' => 2500, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_F_ADDRESS_FULL' => array('NAME' => Loc::getMessage('BIZVAL_CODE_F_ADDRESS_FULL'), 'SORT' => 2600, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_F_INDEX' => array('NAME' => Loc::getMessage('BIZVAL_CODE_F_INDEX'), 'SORT' => 2700, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_F_COUNTRY' => array('NAME' => Loc::getMessage('BIZVAL_CODE_F_COUNTRY'), 'SORT' => 2800, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_F_REGION' => array('NAME' => Loc::getMessage('BIZVAL_CODE_F_REGION'), 'SORT' => 2900, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_F_STATE' => array('NAME' => Loc::getMessage('BIZVAL_CODE_F_STATE'), 'SORT' => 3000, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_F_TOWN' => array('NAME' => Loc::getMessage('BIZVAL_CODE_F_TOWN'), 'SORT' => 3100, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_F_CITY' => array('NAME' => Loc::getMessage('BIZVAL_CODE_F_CITY'), 'SORT' => 3200, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_F_STREET' => array('NAME' => Loc::getMessage('BIZVAL_CODE_F_STREET'), 'SORT' => 3300, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_F_BUILDING' => array('NAME' => Loc::getMessage('BIZVAL_CODE_F_BUILDING'), 'SORT' => 3400, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_F_HOUSE' => array('NAME' => Loc::getMessage('BIZVAL_CODE_F_HOUSE'), 'SORT' => 3500, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
-                'BUYER_COMPANY_F_FLAT' => array('NAME' => Loc::getMessage('BIZVAL_CODE_F_FLAT'), 'SORT' => 3600, 'GROUP' => 'BUYER_COMPANY', 'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)),
+                'BUYER_COMPANY_ADDRESS' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_ADDRESS'),
+                    'SORT' => 1300,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_ZIP' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_ZIP'),
+                    'SORT' => 1400,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_COUNTRY' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_COUNTRY'),
+                    'SORT' => 1500,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_REGION' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_REGION'),
+                    'SORT' => 1600,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_STATE' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_DISTRICT'),
+                    'SORT' => 1700,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_TOWN' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_LOCALITY'),
+                    'SORT' => 1800,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_CITY' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_CITY'),
+                    'SORT' => 1900,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_STREET' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_STREET'),
+                    'SORT' => 2000,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_HOUSING' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_HOUSING'),
+                    'SORT' => 2100,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_BUILDING' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_BUILDING'),
+                    'SORT' => 2200,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_APARTMENT' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_APARTMENT'),
+                    'SORT' => 2300,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_PHONE' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_PHONE'),
+                    'SORT' => 2400,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_EMAIL' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_EMAIL'),
+                    'SORT' => 2500,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_F_ADDRESS_FULL' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_F_ADDRESS_FULL'),
+                    'SORT' => 2600,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_F_INDEX' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_F_INDEX'),
+                    'SORT' => 2700,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_F_COUNTRY' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_F_COUNTRY'),
+                    'SORT' => 2800,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_F_REGION' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_F_REGION'),
+                    'SORT' => 2900,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_F_STATE' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_F_STATE'),
+                    'SORT' => 3000,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_F_TOWN' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_F_TOWN'),
+                    'SORT' => 3100,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_F_CITY' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_F_CITY'),
+                    'SORT' => 3200,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_F_STREET' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_F_STREET'),
+                    'SORT' => 3300,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_F_BUILDING' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_F_BUILDING'),
+                    'SORT' => 3400,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_F_HOUSE' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_F_HOUSE'),
+                    'SORT' => 3500,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
+                'BUYER_COMPANY_F_FLAT' => array(
+                    'NAME' => Loc::getMessage('BIZVAL_CODE_F_FLAT'),
+                    'SORT' => 3600,
+                    'GROUP' => 'BUYER_COMPANY',
+                    'DOMAINS' => array(BusinessValue::ENTITY_DOMAIN)
+                ),
 
             );
 
@@ -1191,10 +1875,15 @@ class BusinessValueConsumer1C
                 $personTypeId = $row['PERSON_TYPE_ID'];
                 $codeIndex = $row['CODE_INDEX'];
 
-                if (self::$personMaxIndex[$personTypeId] < $codeIndex)
+                if (self::$personMaxIndex[$personTypeId] < $codeIndex) {
                     self::$personMaxIndex[$personTypeId] = $codeIndex;
+                }
 
-                self::$codes[self::getRekvCodeKey($personTypeId, $codeIndex)] = self::getRekvCode($personTypeId, $codeIndex, $row['NAME']);
+                self::$codes[self::getRekvCodeKey($personTypeId, $codeIndex)] = self::getRekvCode(
+                    $personTypeId,
+                    $codeIndex,
+                    $row['NAME']
+                );
             }
 
             self::$codes['1C_REKV_##PERSON_TYPE_ID##_##CODE_INDEX##'] = array(
@@ -1243,10 +1932,11 @@ class BusinessValueConsumer1C
         $error = array();
 
         if (!($code = self::$codes[$codeKey]) || isset($code['CODE_INDEX'])) {
-            if ($e = Internals\Input\Manager::getError(self::$codeNameInput, $mapping['NAME']))
+            if ($e = Internals\Input\Manager::getError(self::$codeNameInput, $mapping['NAME'])) {
                 $error['NAME'] = $e;
-            else
+            } else {
                 $mapping['NAME'] = Internals\Input\Manager::getValue(self::$codeNameInput, $mapping['NAME']);
+            }
 
             $providerKeys = self::$rekvProviderKeys;
         } else {
@@ -1278,14 +1968,17 @@ class BusinessValueConsumer1C
                             )
                         );
 
-                        if ($result->isSuccess())
+                        if ($result->isSuccess()) {
                             $code['NAME'] = $mapping['NAME'];
+                        }
                     }
                 } else {
-                    $result = Internals\BusinessValueCode1CTable::delete(array(
-                        'PERSON_TYPE_ID' => $code['PERSON_TYPE_ID'],
-                        'CODE_INDEX' => $code['CODE_INDEX'],
-                    ));
+                    $result = Internals\BusinessValueCode1CTable::delete(
+                        array(
+                            'PERSON_TYPE_ID' => $code['PERSON_TYPE_ID'],
+                            'CODE_INDEX' => $code['CODE_INDEX'],
+                        )
+                    );
 
                     if ($result->isSuccess()) {
                         unset(self::$codes[$codeKey]);
@@ -1296,11 +1989,13 @@ class BusinessValueConsumer1C
                 $codeIndex = isset(self::$personMaxIndex[$personTypeId]) ? self::$personMaxIndex[$personTypeId] + 1 : 0;
 
                 if ($mapping && $mapping['NAME'] && $codeKey == self::getRekvCodeKey($personTypeId, $codeIndex)) {
-                    $result = Internals\BusinessValueCode1CTable::add(array(
-                        'PERSON_TYPE_ID' => $personTypeId,
-                        'CODE_INDEX' => $codeIndex,
-                        'NAME' => $mapping['NAME'],
-                    ));
+                    $result = Internals\BusinessValueCode1CTable::add(
+                        array(
+                            'PERSON_TYPE_ID' => $personTypeId,
+                            'CODE_INDEX' => $codeIndex,
+                            'NAME' => $mapping['NAME'],
+                        )
+                    );
 
                     if ($result->isSuccess()) {
                         self::$personMaxIndex[$personTypeId] = $codeIndex;
@@ -1367,8 +2062,9 @@ class BusinessValueConsumer1C
 
                 ?>
                 <td>
-                    <a href="#"
-                       onclick="bizvalAdd1CRekv(this, '<?= $personTypeId ?>', '<?= \CUtil::JSEscape(htmlspecialcharsbx($newMappingHTML)) ?>'); return false;">
+                    <a href="#" onclick="bizvalAdd1CRekv(this, '<?= $personTypeId ?>', '<?= \CUtil::JSEscape(
+                        htmlspecialcharsbx($newMappingHTML)
+                    ) ?>'); return false;">
                         <?= Loc::getMessage('BIZVAL_CODE_1C_REKV_ADD') ?>
                     </a>
                 </td>
@@ -1377,12 +2073,17 @@ class BusinessValueConsumer1C
             } elseif (isset($code['CODE_INDEX'])) // rekv code
             {
                 ?>
-                <td><?= Internals\Input\Manager::getEditHtml($inputNamePrefix . '[NAME]', self::$codeNameInput, $code['NAME'] ?: $codeKey) ?></td>
+                <td><?= Internals\Input\Manager::getEditHtml(
+                        $inputNamePrefix . '[NAME]',
+                        self::$codeNameInput,
+                        $code['NAME'] ?: $codeKey
+                    ) ?></td>
                 <td>
                     <?
 
-                    if ($personTypeId)
+                    if ($personTypeId) {
                         $commonProviderInput = BusinessValueControl::getProviderInput('', self::$rekvProviderKeys);
+                    }
 
                     BusinessValueControl::renderMapping(
                         $mappings,
@@ -1403,8 +2104,9 @@ class BusinessValueConsumer1C
                 <td>
                     <?
 
-                    if ($personTypeId)
+                    if ($personTypeId) {
                         $commonProviderInput = BusinessValueControl::getProviderInput('', self::$systemProviderKeys);
+                    }
 
                     $hideCode = BusinessValueControl::renderMapping(
                         $mappings,

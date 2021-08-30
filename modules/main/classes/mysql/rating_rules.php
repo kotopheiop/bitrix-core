@@ -1,23 +1,26 @@
-<?
+<?php
+
 require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/classes/general/rating_rules.php");
+
 IncludeModuleLangFile(__FILE__);
 
 class CRatingRulesMain extends CAllRatingRulesMain
 {
-    function err_mess()
+    public static function err_mess()
     {
         return "<br>Class: CRatingRulesMain<br>File: " . __FILE__;
     }
 
-    function voteCheck($arConfigs)
+    public static function voteCheck($arConfigs)
     {
         global $DB;
 
         $err_mess = "File: " . __FILE__ . "<br>Function: voteCheck<br>Line: ";
 
         $ratingId = CRatings::GetAuthorityRating();
-        if ($ratingId == 0)
+        if ($ratingId == 0) {
             return true;
+        }
 
         // 1. UPDATE OLD VOTE (< 90 day)
         $strSql = "
@@ -27,7 +30,9 @@ class CRatingRulesMain extends CAllRatingRulesMain
 				ACTIVE = 'N',
 				USER_ID = 0
 			WHERE 
-				ENTITY_TYPE_ID = 'USER' and CREATED < DATE_SUB(NOW(), INTERVAL " . intval($arConfigs['CONDITION_CONFIG']['VOTE']['VOTE_LIMIT']) . " DAY)
+				ENTITY_TYPE_ID = 'USER' and CREATED < DATE_SUB(NOW(), INTERVAL " . intval(
+                $arConfigs['CONDITION_CONFIG']['VOTE']['VOTE_LIMIT']
+            ) . " DAY)
 		";
         $DB->Query($strSql, false, $err_mess . __LINE__);
 
@@ -40,15 +45,22 @@ class CRatingRulesMain extends CAllRatingRulesMain
                 $communitySize = COption::GetOptionString("main", "rating_community_size", 1);
                 $communityAuthority = COption::GetOptionString("main", "rating_community_authority", 1);
                 $voteWeight = COption::GetOptionString("main", "rating_vote_weight", 1);
-                $sValue = "($communitySize*(RR.VOTE_WEIGHT/" . round($voteWeight, 4) . ")/" . round($communityAuthority) . ") as VALUE";
+                $sValue = "($communitySize*(RR.VOTE_WEIGHT/" . round($voteWeight, 4) . ")/" . round(
+                        $communityAuthority
+                    ) . ") as VALUE";
 
                 $ratingId = CRatings::GetAuthorityRating();
-                $sRatingUser = "LEFT JOIN b_rating_user RR ON RR.RATING_ID = " . intval($ratingId) . " AND RR.ENTITY_ID = RV.USER_ID";
-            } else
+                $sRatingUser = "LEFT JOIN b_rating_user RR ON RR.RATING_ID = " . intval(
+                        $ratingId
+                    ) . " AND RR.ENTITY_ID = RV.USER_ID";
+            } else {
                 $sValue = "1 as VALUE";
+            }
         } else {
             $ratingId = CRatings::GetAuthorityRating();
-            $sRatingUser = "LEFT JOIN b_rating_user RR ON RR.RATING_ID = " . intval($ratingId) . " AND RR.ENTITY_ID = RV.USER_ID";
+            $sRatingUser = "LEFT JOIN b_rating_user RR ON RR.RATING_ID = " . intval(
+                    $ratingId
+                ) . " AND RR.ENTITY_ID = RV.USER_ID";
             $sValue = "RR.VOTE_WEIGHT as VALUE";
         }
 
@@ -74,10 +86,18 @@ class CRatingRulesMain extends CAllRatingRulesMain
 			GROUP BY RV.USER_ID, RV.OWNER_ID
 			HAVING 
 				SUM(case
-					when RV.ENTITY_TYPE_ID = 'FORUM_TOPIC' then " . floatval($arConfigs['CONDITION_CONFIG']['VOTE']['VOTE_FORUM_TOPIC']) . "
-					when RV.ENTITY_TYPE_ID = 'FORUM_POST' then " . floatval($arConfigs['CONDITION_CONFIG']['VOTE']['VOTE_FORUM_POST']) . "
-					when RV.ENTITY_TYPE_ID = 'BLOG_POST' then " . floatval($arConfigs['CONDITION_CONFIG']['VOTE']['VOTE_BLOG_POST']) . "
-					when RV.ENTITY_TYPE_ID = 'BLOG_COMMENT' then " . floatval($arConfigs['CONDITION_CONFIG']['VOTE']['VOTE_BLOG_COMMENT']) . "
+					when RV.ENTITY_TYPE_ID = 'FORUM_TOPIC' then " . floatval(
+                $arConfigs['CONDITION_CONFIG']['VOTE']['VOTE_FORUM_TOPIC']
+            ) . "
+					when RV.ENTITY_TYPE_ID = 'FORUM_POST' then " . floatval(
+                $arConfigs['CONDITION_CONFIG']['VOTE']['VOTE_FORUM_POST']
+            ) . "
+					when RV.ENTITY_TYPE_ID = 'BLOG_POST' then " . floatval(
+                $arConfigs['CONDITION_CONFIG']['VOTE']['VOTE_BLOG_POST']
+            ) . "
+					when RV.ENTITY_TYPE_ID = 'BLOG_COMMENT' then " . floatval(
+                $arConfigs['CONDITION_CONFIG']['VOTE']['VOTE_BLOG_COMMENT']
+            ) . "
 				else 0 end) >= " . floatval($arConfigs['CONDITION_CONFIG']['VOTE']['VOTE_RESULT']) . "
 		";
         $DB->Query($strSql, false, $err_mess . __LINE__);
@@ -154,10 +174,10 @@ class CRatingRulesMain extends CAllRatingRulesMain
         $DB->Query($strSql, false, $err_mess . __LINE__);
 
         // 7 DELETE OLD POST
-        $strSql = "DELETE FROM b_rating_vote WHERE ENTITY_TYPE_ID = 'USER' and CREATED < DATE_SUB(NOW(), INTERVAL " . intval($arConfigs['CONDITION_CONFIG']['VOTE']['VOTE_LIMIT']) . " DAY)";
+        $strSql = "DELETE FROM b_rating_vote WHERE ENTITY_TYPE_ID = 'USER' and CREATED < DATE_SUB(NOW(), INTERVAL " . intval(
+                $arConfigs['CONDITION_CONFIG']['VOTE']['VOTE_LIMIT']
+            ) . " DAY)";
         $DB->Query($strSql, false, $err_mess . __LINE__);
         return true;
     }
 }
-
-?>

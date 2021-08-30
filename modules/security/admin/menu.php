@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/security/prolog.php");
 
@@ -190,8 +191,11 @@ if (LANGUAGE_ID == "ru" && $USER->IsAdmin() && !IsModuleInstalled("intranet")) {
     $aMenu = $aMenu1;
 }
 
-if ((isset($aMenu["items"]) && count($aMenu["items"]) > 0) || (isset($aMenu[0]["items"]) && count($aMenu[0]["items"]) > 0))
+if ((isset($aMenu["items"]) && count($aMenu["items"]) > 0) || (isset($aMenu[0]["items"]) && count(
+            $aMenu[0]["items"]
+        ) > 0)) {
     return $aMenu;
-else
+} else {
     return false;
+}
 ?>

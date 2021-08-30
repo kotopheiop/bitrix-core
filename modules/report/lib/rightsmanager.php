@@ -31,8 +31,9 @@ class RightsManager
             $listEntity = $this->getGroupsAndDepartments();
             foreach ($listSharing as $sharingRow) {
                 if (in_array($sharingRow['ENTITY'], $listEntity)) {
-                    if ($this->compareAccess($sharingRow['RIGHTS'], self::ACCESS_READ) >= 0)
+                    if ($this->compareAccess($sharingRow['RIGHTS'], self::ACCESS_READ) >= 0) {
                         return true;
+                    }
                 }
             }
             return false;
@@ -52,8 +53,9 @@ class RightsManager
             $listEntity = $this->getGroupsAndDepartments();
             foreach ($listSharing as $sharingRow) {
                 if (in_array($sharingRow['ENTITY'], $listEntity)) {
-                    if ($this->compareAccess($sharingRow['RIGHTS'], self::ACCESS_EDIT) >= 0)
+                    if ($this->compareAccess($sharingRow['RIGHTS'], self::ACCESS_EDIT) >= 0) {
                         return true;
+                    }
                 }
             }
             return false;
@@ -102,29 +104,34 @@ class RightsManager
             $userObject = \CUser::getByID($this->userId);
             if ($userData = $userObject->fetch()) {
                 if (Loader::includeModule('socialnetwork')) {
-                    $queryObject = UserToGroupTable::getList(array(
-                        'select' => array('GROUP_ID'),
-                        'filter' => array(
-                            'USER_ID' => $userData['ID'],
-                            'ROLE' => array(
-                                UserToGroupTable::ROLE_USER,
-                                UserToGroupTable::ROLE_MODERATOR,
-                                UserToGroupTable::ROLE_OWNER
+                    $queryObject = UserToGroupTable::getList(
+                        array(
+                            'select' => array('GROUP_ID'),
+                            'filter' => array(
+                                'USER_ID' => $userData['ID'],
+                                'ROLE' => array(
+                                    UserToGroupTable::ROLE_USER,
+                                    UserToGroupTable::ROLE_MODERATOR,
+                                    UserToGroupTable::ROLE_OWNER
+                                )
                             )
                         )
-                    ));
-                    while ($groupData = $queryObject->fetch())
+                    );
+                    while ($groupData = $queryObject->fetch()) {
                         $listEntity[] = Sharing::CODE_SOCNET_GROUP . $groupData['GROUP_ID'];
+                    }
                 }
 
                 if (!empty($userData['UF_DEPARTMENT'])) {
                     $parentDepartmentList = array();
-                    foreach ($userData['UF_DEPARTMENT'] as $departmentId)
+                    foreach ($userData['UF_DEPARTMENT'] as $departmentId) {
                         $parentDepartmentList[] = \CIntranetUtils::getIBlockTopSection($departmentId);
+                    }
 
                     $childrenDepartmentList = \CIntranetUtils::getIBlockSectionChildren($parentDepartmentList);
-                    foreach ($childrenDepartmentList as $departmentId)
+                    foreach ($childrenDepartmentList as $departmentId) {
                         $listEntity[] = Sharing::CODE_DEPARTMENT . $departmentId;
+                    }
                 }
             }
             $CACHE_MANAGER->startTagCache($cacheDir);
@@ -142,12 +149,14 @@ class RightsManager
         $reportId = intval($reportId);
 
         $hasReport = ReportTable::getCount(
-            array('=ID' => $reportId, '=CREATED_BY' => $this->userId));
+            array('=ID' => $reportId, '=CREATED_BY' => $this->userId)
+        );
 
-        if ($hasReport)
+        if ($hasReport) {
             return true;
-        else
+        } else {
             return false;
+        }
     }
 
     /**
@@ -192,8 +201,9 @@ class RightsManager
                 $access2Pos = -1;
         }
 
-        if ($access1Pos == $access2Pos)
+        if ($access1Pos == $access2Pos) {
             return 0;
+        }
 
         return $access1Pos > $access2Pos ? 1 : -1;
     }

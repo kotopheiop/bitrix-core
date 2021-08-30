@@ -45,8 +45,9 @@ final class LocationTable extends Tree
     {
         $code = Assert::expectStringNotNull($code, '$code');
 
-        if (!is_array($parameters))
+        if (!is_array($parameters)) {
             $parameters = array();
+        }
 
         $parameters['filter']['=CODE'] = $code;
         $parameters['limit'] = 1;
@@ -61,28 +62,32 @@ final class LocationTable extends Tree
         foreach (static::getEntity()->getFields() as $field) {
             $error = false;
 
-            if ($field->getName() == 'LATITUDE' && strlen($data['LATITUDE'])) {
+            if ($field->getName() == 'LATITUDE' && mb_strlen($data['LATITUDE'])) {
                 // latitude is set in data and not empty, it must lay between -90 and 90
-                if (!is_numeric($data['LATITUDE']))
+                if (!is_numeric($data['LATITUDE'])) {
                     $error = Loc::getMessage('SALE_LOCATION_LOCATION_ENTITY_LATITUDE_TYPE_ERROR');
-                elseif (($latitude = floatval($data['LATITUDE'])) && ($latitude < -90 || $latitude > 90))
+                } elseif (($latitude = floatval($data['LATITUDE'])) && ($latitude < -90 || $latitude > 90)) {
                     $error = Loc::getMessage('SALE_LOCATION_LOCATION_ENTITY_LATITUDE_RANGE_ERROR');
+                }
             }
 
-            if ($field->getName() == 'LONGITUDE' && strlen($data['LONGITUDE'])) {
+            if ($field->getName() == 'LONGITUDE' && mb_strlen($data['LONGITUDE'])) {
                 // longitude is set in data and not empty, it must lay between -180 and 180
-                if (!is_numeric($data['LONGITUDE']))
+                if (!is_numeric($data['LONGITUDE'])) {
                     $error = Loc::getMessage('SALE_LOCATION_LOCATION_ENTITY_LONGITUDE_TYPE_ERROR');
-                elseif (($longitude = floatval($data['LONGITUDE'])) && ($longitude < -180 || $longitude > 180))
+                } elseif (($longitude = floatval($data['LONGITUDE'])) && ($longitude < -180 || $longitude > 180)) {
                     $error = Loc::getMessage('SALE_LOCATION_LOCATION_ENTITY_LONGITUDE_RANGE_ERROR');
+                }
             }
 
             if ($error !== false) {
-                $result->addError(new Entity\FieldError(
-                    $field,
-                    $error,
-                    Entity\FieldError::INVALID_VALUE
-                ));
+                $result->addError(
+                    new Entity\FieldError(
+                        $field,
+                        $error,
+                        Entity\FieldError::INVALID_VALUE
+                    )
+                );
             }
         }
     }
@@ -131,8 +136,9 @@ final class LocationTable extends Tree
         }
 
         // force code to lowercase
-        if (isset($data['CODE']))
+        if (isset($data['CODE'])) {
             $data['CODE'] = ToLower($data['CODE']);
+        }
 
         // you are not allowed to modify tree data over LocationTable::add()
         self::applyRestrictions($data);
@@ -145,15 +151,18 @@ final class LocationTable extends Tree
             $primary = $addResult->getId();
 
             // external
-            if (isset($external))
+            if (isset($external)) {
                 ExternalTable::addMultipleForOwner($primary, $external);
+            }
 
             // names
-            if (isset($name))
+            if (isset($name)) {
                 Name\LocationTable::addMultipleForOwner($primary, $name);
+            }
 
-            if (intval($data['TYPE_ID']) > 0 && $resetLegacy)
+            if (intval($data['TYPE_ID']) > 0 && $resetLegacy) {
                 self::resetLegacy(intval($data['TYPE_ID']));
+            }
 
             Search\Finder::setIndexInvalid();
             $GLOBALS['CACHE_MANAGER']->ClearByTag('sale-location-data');
@@ -165,8 +174,9 @@ final class LocationTable extends Tree
     protected static function resetLegacy($typeId)
     {
         $type = TypeTable::getList(array('filter' => array('=ID' => $typeId), 'select' => array('CODE')))->fetch();
-        if (strlen($type['CODE']) && in_array($type['CODE'], array('COUNTRY', 'REGION', 'CITY')))
+        if (mb_strlen($type['CODE']) && in_array($type['CODE'], array('COUNTRY', 'REGION', 'CITY'))) {
             static::resetLegacyPath();
+        }
     }
 
     public static function update($primary, array $data)
@@ -217,8 +227,9 @@ final class LocationTable extends Tree
         }
 
         // force code to lowercase
-        if (isset($data['CODE']))
+        if (isset($data['CODE'])) {
             $data['CODE'] = ToLower($data['CODE']);
+        }
 
         // you are not allowed to modify tree data over LocationTable::update()
         self::applyRestrictions($data);
@@ -228,20 +239,24 @@ final class LocationTable extends Tree
         // update connected data
         if ($updResult->isSuccess()) {
             // external
-            if (isset($external))
+            if (isset($external)) {
                 ExternalTable::updateMultipleForOwner($primary, $external);
+            }
 
             // names
-            if (isset($name))
+            if (isset($name)) {
                 Name\LocationTable::updateMultipleForOwner($primary, $name);
+            }
 
-            if ($resetLegacy && (intval($data['TYPE_ID']) > 0 || isset($data['PARENT_ID'])))
+            if ($resetLegacy && (intval($data['TYPE_ID']) > 0 || isset($data['PARENT_ID']))) {
                 self::resetLegacy(intval($data['TYPE_ID']));
+            }
 
             $GLOBALS['CACHE_MANAGER']->ClearByTag('sale-location-data');
 
-            if (isset($name) || isset($data['PARENT_ID']))
+            if (isset($name) || isset($data['PARENT_ID'])) {
                 Search\Finder::setIndexInvalid();
+            }
         }
 
         return $updResult;
@@ -275,8 +290,9 @@ final class LocationTable extends Tree
             ExternalTable::deleteMultipleByParentRangeSql($rangeSql);
         }
 
-        if ($resetLegacy)
+        if ($resetLegacy) {
             $data = static::getList(array('filter' => array('=ID' => $primary), 'select' => array('TYPE_ID')))->fetch();
+        }
 
         $delResult = parent::deleteExtended($primary, $additional);
 
@@ -286,9 +302,12 @@ final class LocationTable extends Tree
             ExternalTable::deleteMultipleForOwner($primary);
 
             if ($resetLegacy && intval($data['TYPE_ID'])) {
-                $type = TypeTable::getList(array('filter' => array('=ID' => $data['TYPE_ID']), 'select' => array('CODE')))->fetch();
-                if (strlen($type['CODE']) && in_array($type['CODE'], array('COUNTRY', 'REGION', 'CITY')))
+                $type = TypeTable::getList(
+                    array('filter' => array('=ID' => $data['TYPE_ID']), 'select' => array('CODE'))
+                )->fetch();
+                if (mb_strlen($type['CODE']) && in_array($type['CODE'], array('COUNTRY', 'REGION', 'CITY'))) {
                     static::resetLegacyPath();
+                }
             }
 
             $GLOBALS['CACHE_MANAGER']->ClearByTag('sale-location-data');
@@ -307,8 +326,9 @@ final class LocationTable extends Tree
     {
         $primary = Assert::expectIntegerPositive($primary, '$primary');
 
-        if (!is_array($parameters) || empty($parameters))
+        if (!is_array($parameters) || empty($parameters)) {
             $parameters = array();
+        }
 
         $parameters['filter']['LOCATION_ID'] = $primary;
 
@@ -330,15 +350,23 @@ final class LocationTable extends Tree
         return self::getPathToNodeByCondition(array('=CODE' => $code), $parameters, $behaviour);
     }
 
-    public static function checkNodeIsParentOfNode($primary, $childPrimary, $behaviour = array('ACCEPT_CODE' => false, 'CHECK_DIRECT' => false))
-    {
-        if (!$behaviour['ACCEPT_CODE'])
+    public static function checkNodeIsParentOfNode(
+        $primary,
+        $childPrimary,
+        $behaviour = array('ACCEPT_CODE' => false, 'CHECK_DIRECT' => false)
+    ) {
+        if (!$behaviour['ACCEPT_CODE']) {
             return static::checkNodeIsParentOfNodeById($primary, $childPrimary, $behaviour);
+        }
 
         $primary = Assert::expectStringNotNull($primary, '$primary');
         $childPrimary = Assert::expectStringNotNull($childPrimary, '$childPrimary');
 
-        return static::checkNodeIsParentOfNodeByFilters(array('=CODE' => $primary), array('=CODE' => $childPrimary), $behaviour);
+        return static::checkNodeIsParentOfNodeByFilters(
+            array('=CODE' => $primary),
+            array('=CODE' => $childPrimary),
+            $behaviour
+        );
     }
 
     public static function resetLegacyPath()
@@ -347,55 +375,111 @@ final class LocationTable extends Tree
         $locTable = static::getTableName();
 
         $types = array();
-        $res = TypeTable::getList(array(
-            'filter' => array('CODE' => array('COUNTRY', 'REGION', 'CITY')),
-            'select' => array('ID', 'CODE')
-        ));
-        while ($item = $res->fetch())
+        $res = TypeTable::getList(
+            array(
+                'filter' => array('CODE' => array('COUNTRY', 'REGION', 'CITY')),
+                'select' => array('ID', 'CODE')
+            )
+        );
+        while ($item = $res->fetch()) {
             $types[$item['CODE']] = $item['ID'];
+        }
 
         if (!empty($types)) {
-            if (!$dbConnection->isTableExists('b_sale_loc_rebind'))
-                $dbConnection->query("create table b_sale_loc_rebind (TARGET_ID " . Helper::getSqlForDataType('int') . ", LOCATION_ID " . Helper::getSqlForDataType('int') . ")");
-            else
+            if (!$dbConnection->isTableExists('b_sale_loc_rebind')) {
+                $dbConnection->query(
+                    "create table b_sale_loc_rebind (TARGET_ID " . Helper::getSqlForDataType(
+                        'int'
+                    ) . ", LOCATION_ID " . Helper::getSqlForDataType('int') . ")"
+                );
+            } else {
                 $dbConnection->query("truncate table b_sale_loc_rebind");
+            }
 
             $sqlWhere = array();
-            foreach ($types as $code => $id)
+            foreach ($types as $code => $id) {
                 $sqlWhere[] = "'" . intval($id) . "'";
+            }
 
-            $dbConnection->query("update " . $locTable . " set COUNTRY_ID = NULL, REGION_ID = NULL, CITY_ID = NULL where TYPE_ID in (" . implode(', ', $sqlWhere) . ")");
+            $dbConnection->query(
+                "update " . $locTable . " set COUNTRY_ID = NULL, REGION_ID = NULL, CITY_ID = NULL where TYPE_ID in (" . implode(
+                    ', ',
+                    $sqlWhere
+                ) . ")"
+            );
 
             if (intval($types['REGION']) && intval($types['COUNTRY'])) {
                 // countries for regions
-                $dbConnection->query("insert into b_sale_loc_rebind (TARGET_ID, LOCATION_ID) select A.ID as ONE, B.ID as TWO from " . $locTable . " A inner join " . $locTable . " B on A.TYPE_ID = '" . intval($types['REGION']) . "' and B.TYPE_ID = '" . intval($types['COUNTRY']) . "' and B.LEFT_MARGIN <= A.LEFT_MARGIN and B.RIGHT_MARGIN >= A.RIGHT_MARGIN");
-                Helper::mergeTables($locTable, 'b_sale_loc_rebind', array('COUNTRY_ID' => 'LOCATION_ID'), array('ID' => 'TARGET_ID'));
+                $dbConnection->query(
+                    "insert into b_sale_loc_rebind (TARGET_ID, LOCATION_ID) select A.ID as ONE, B.ID as TWO from " . $locTable . " A inner join " . $locTable . " B on A.TYPE_ID = '" . intval(
+                        $types['REGION']
+                    ) . "' and B.TYPE_ID = '" . intval(
+                        $types['COUNTRY']
+                    ) . "' and B.LEFT_MARGIN <= A.LEFT_MARGIN and B.RIGHT_MARGIN >= A.RIGHT_MARGIN"
+                );
+                Helper::mergeTables(
+                    $locTable,
+                    'b_sale_loc_rebind',
+                    array('COUNTRY_ID' => 'LOCATION_ID'),
+                    array('ID' => 'TARGET_ID')
+                );
                 $dbConnection->query("truncate table b_sale_loc_rebind");
             }
 
             if (intval($types['REGION']) && intval($types['CITY'])) {
                 // regions for cities
-                $dbConnection->query("insert into b_sale_loc_rebind (TARGET_ID, LOCATION_ID) select A.ID as ONE, B.ID as TWO from " . $locTable . " A inner join " . $locTable . " B on A.TYPE_ID = '" . intval($types['CITY']) . "' and B.TYPE_ID = '" . intval($types['REGION']) . "' and B.LEFT_MARGIN <= A.LEFT_MARGIN and B.RIGHT_MARGIN >= A.RIGHT_MARGIN");
-                Helper::mergeTables($locTable, 'b_sale_loc_rebind', array('REGION_ID' => 'LOCATION_ID'), array('ID' => 'TARGET_ID'));
+                $dbConnection->query(
+                    "insert into b_sale_loc_rebind (TARGET_ID, LOCATION_ID) select A.ID as ONE, B.ID as TWO from " . $locTable . " A inner join " . $locTable . " B on A.TYPE_ID = '" . intval(
+                        $types['CITY']
+                    ) . "' and B.TYPE_ID = '" . intval(
+                        $types['REGION']
+                    ) . "' and B.LEFT_MARGIN <= A.LEFT_MARGIN and B.RIGHT_MARGIN >= A.RIGHT_MARGIN"
+                );
+                Helper::mergeTables(
+                    $locTable,
+                    'b_sale_loc_rebind',
+                    array('REGION_ID' => 'LOCATION_ID'),
+                    array('ID' => 'TARGET_ID')
+                );
                 $dbConnection->query("truncate table b_sale_loc_rebind");
             }
 
             if (intval($types['COUNTRY']) && intval($types['CITY'])) {
                 // countries for cities
-                $dbConnection->query("insert into b_sale_loc_rebind (TARGET_ID, LOCATION_ID) select A.ID as ONE, B.ID as TWO from " . $locTable . " A inner join " . $locTable . " B on A.TYPE_ID = '" . intval($types['CITY']) . "' and B.TYPE_ID = '" . intval($types['COUNTRY']) . "' and B.LEFT_MARGIN <= A.LEFT_MARGIN and B.RIGHT_MARGIN >= A.RIGHT_MARGIN");
-                Helper::mergeTables($locTable, 'b_sale_loc_rebind', array('COUNTRY_ID' => 'LOCATION_ID'), array('ID' => 'TARGET_ID'));
+                $dbConnection->query(
+                    "insert into b_sale_loc_rebind (TARGET_ID, LOCATION_ID) select A.ID as ONE, B.ID as TWO from " . $locTable . " A inner join " . $locTable . " B on A.TYPE_ID = '" . intval(
+                        $types['CITY']
+                    ) . "' and B.TYPE_ID = '" . intval(
+                        $types['COUNTRY']
+                    ) . "' and B.LEFT_MARGIN <= A.LEFT_MARGIN and B.RIGHT_MARGIN >= A.RIGHT_MARGIN"
+                );
+                Helper::mergeTables(
+                    $locTable,
+                    'b_sale_loc_rebind',
+                    array('COUNTRY_ID' => 'LOCATION_ID'),
+                    array('ID' => 'TARGET_ID')
+                );
             }
 
             Helper::dropTable('b_sale_loc_rebind');
 
-            if (intval($types['COUNTRY']))
-                $dbConnection->query("update " . $locTable . " set COUNTRY_ID = ID where TYPE_ID = '" . intval($types['COUNTRY']) . "'");
+            if (intval($types['COUNTRY'])) {
+                $dbConnection->query(
+                    "update " . $locTable . " set COUNTRY_ID = ID where TYPE_ID = '" . intval($types['COUNTRY']) . "'"
+                );
+            }
 
-            if (intval($types['REGION']))
-                $dbConnection->query("update " . $locTable . " set REGION_ID = ID where TYPE_ID = '" . intval($types['REGION']) . "'");
+            if (intval($types['REGION'])) {
+                $dbConnection->query(
+                    "update " . $locTable . " set REGION_ID = ID where TYPE_ID = '" . intval($types['REGION']) . "'"
+                );
+            }
 
-            if (intval($types['CITY']))
-                $dbConnection->query("update " . $locTable . " set CITY_ID = ID where TYPE_ID = '" . intval($types['CITY']) . "'");
+            if (intval($types['CITY'])) {
+                $dbConnection->query(
+                    "update " . $locTable . " set CITY_ID = ID where TYPE_ID = '" . intval($types['CITY']) . "'"
+                );
+            }
         }
     }
 

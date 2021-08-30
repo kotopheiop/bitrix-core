@@ -1,13 +1,15 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 if (!CModule::IncludeModule('learning')) {
     require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php'); // second system's prolog
 
-    if (IsModuleInstalled('learning') && defined('LEARNING_FAILED_TO_LOAD_REASON'))
+    if (IsModuleInstalled('learning') && defined('LEARNING_FAILED_TO_LOAD_REASON')) {
         echo LEARNING_FAILED_TO_LOAD_REASON;
-    else
+    } else {
         CAdminMessage::ShowMessage(GetMessage('LEARNING_MODULE_NOT_FOUND'));
+    }
 
     require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin.php');    // system's epilog
     exit();
@@ -40,8 +42,9 @@ if (!$bBadAttempt) {
                 | CLearnAccess::OP_LESSON_WRITE
         )
     );
-    if (!$r->ExtractFields("str_"))
+    if (!$r->ExtractFields("str_")) {
         $bBadAttempt = true;
+    }
 
     $ar = $r->Fetch();
 }
@@ -79,7 +82,7 @@ $aTabs[] = $USER_FIELD_MANAGER->EditFormTab("LEARN_ATTEMPT");
 
 $tabControl = new CAdminForm("attemptTabControl", $aTabs);
 
-if (!$bBadAttempt && $_SERVER["REQUEST_METHOD"] == "POST" && strlen($Update) > 0 && check_bitrix_sessid()) {
+if (!$bBadAttempt && $_SERVER["REQUEST_METHOD"] == "POST" && $Update <> '' && check_bitrix_sessid()) {
     $ta = new CTestAttempt;
 
     $arFields = Array(
@@ -95,19 +98,25 @@ if (!$bBadAttempt && $_SERVER["REQUEST_METHOD"] == "POST" && strlen($Update) > 0
     $res = $ta->Update($ID, $arFields);
 
     if (!$res) {
-        if ($e = $APPLICATION->GetException())
+        if ($e = $APPLICATION->GetException()) {
             $message = new CAdminMessage(GetMessage("LEARNING_ERROR"), $e);
+        }
 
         $bVarsFromForm = true;
     } else {
-        if (strlen($apply) <= 0) {
-            if (strlen($return_url) > 0)
+        if ($apply == '') {
+            if ($return_url <> '') {
                 LocalRedirect($return_url);
-            else
+            } else {
                 LocalRedirect("/bitrix/admin/learn_attempt_admin.php?lang=" . LANG . GetFilterParams("filter_", false));
+            }
         }
 
-        LocalRedirect("/bitrix/admin/learn_attempt_edit.php?ID=" . $ID . "&tabControl_active_tab=" . urlencode($tabControl_active_tab) . GetFilterParams("filter_", false));
+        LocalRedirect(
+            "/bitrix/admin/learn_attempt_edit.php?ID=" . $ID . "&tabControl_active_tab=" . urlencode(
+                $tabControl_active_tab
+            ) . GetFilterParams("filter_", false)
+        );
     }
 }
 
@@ -120,8 +129,9 @@ if ($bVarsFromForm) {
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 
 $aContext = array(
     array(
@@ -137,9 +147,11 @@ if ($ID > 0) {
     $aContext[] = array(
         "ICON" => "btn_delete",
         "TEXT" => GetMessage("MAIN_ADMIN_MENU_DELETE"),
-        "LINK" => "javascript:if(confirm('" . GetMessage("LEARNING_CONFIRM_DEL_MESSAGE") . "'))window.location='learn_attempt_admin.php?lang=" . LANG . "&action=delete&ID=" . $ID . "&lang=" . LANG . "&" . bitrix_sessid_get() . urlencode(GetFilterParams("filter_", false)) . "';",
+        "LINK" => "javascript:if(confirm('" . GetMessage(
+                "LEARNING_CONFIRM_DEL_MESSAGE"
+            ) . "'))window.location='learn_attempt_admin.php?lang=" . LANG . "&action=delete&ID=" . $ID . "&lang=" . LANG . "&" . bitrix_sessid_get(
+            ) . urlencode(GetFilterParams("filter_", false)) . "';",
     );
-
 }
 
 $context = new CAdminContextMenu($aContext);
@@ -162,8 +174,9 @@ $context->Show();
     <tr>
         <td width="50%"><?php echo $tabControl->GetCustomLabelHTML() ?>:</td>
         <td width="50%">
-            [<a href="user_edit.php?lang=<?php echo LANG ?>&ID=<?php echo $str_USER_ID ?>"
-                title="<?php echo GetMessage("LEARNING_CHANGE_USER_PROFILE") ?>"><?php echo $str_USER_ID ?></a>] <?php echo $str_USER_NAME ?>
+            [<a href="user_edit.php?lang=<?php echo LANG ?>&ID=<?php echo $str_USER_ID ?>" title="<?php echo GetMessage(
+                "LEARNING_CHANGE_USER_PROFILE"
+            ) ?>"><?php echo $str_USER_ID ?></a>] <?php echo $str_USER_NAME ?>
         </td>
     </tr>
 <?php $tabControl->EndCustomField("TEST_USER"); ?>

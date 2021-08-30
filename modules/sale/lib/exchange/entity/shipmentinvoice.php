@@ -51,8 +51,9 @@ class ShipmentInvoice extends ShipmentImport
      */
     public static function resolveEntityTypeId(Entity $shipment)
     {
-        if (!($shipment instanceof Shipment))
+        if (!($shipment instanceof Shipment)) {
             throw new ArgumentException("Entity must be instanceof Shipment");
+        }
 
         return EntityType::INVOICE_SHIPMENT;
     }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Bitrix vars
  * @global CUser $USER
@@ -7,7 +8,9 @@
  * @global array $currentUser
  * @global Bitrix\Seo\Engine\YandexDirect $engine
  */
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+}
 
 use Bitrix\Main\Context;
 use Bitrix\Main\Localization\Loc;
@@ -39,8 +42,9 @@ if (!Service::isRegistered()) {
         <div id="auth_result" class="seo-auth-result">
             <b><?= Loc::getMessage('SEO_AUTH_CURRENT') ?>:</b>
             <div style="width: 300px; padding: 10px 0 0 0;">
-                <?= Converter::getHtmlConverter()->encode($currentUser['real_name'] . ' (' . $currentUser['display_name'] . ')') ?>
-                <br/>
+                <?= Converter::getHtmlConverter()->encode(
+                    $currentUser['real_name'] . ' (' . $currentUser['display_name'] . ')'
+                ) ?><br/>
                 <a href="javascript:void(0)" onclick="makeNewAuth()"><?= Loc::getMessage('SEO_AUTH_CANCEL') ?></a>
                 <div style="clear: both;"></div>
             </div>

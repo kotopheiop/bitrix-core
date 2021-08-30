@@ -1,4 +1,5 @@
 <?
+
 $MESS["SALE_HANDLERS_DISCOUNTPRESET_ORDERAMOUNT_NAME"] = "Order products for \$\"N\" to get a discount";
 $MESS["SALE_HANDLERS_DISCOUNTPRESET_ORDERAMOUNT_DESCRIPTION"] = "Order products for \$\"N\" to get a discount";
 $MESS["SALE_HANDLERS_DISCOUNTPRESET_ORDERAMOUNT_ORDER_AMOUNT"] = "Order total";

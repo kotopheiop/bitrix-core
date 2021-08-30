@@ -40,7 +40,11 @@ class ImportCriterionBase
     public static function getCurrent($entityTypeId, $entity)
     {
         if (!Exchange\EntityType::IsDefined($entityTypeId)) {
-            throw new Main\ArgumentOutOfRangeException('Is not defined', Exchange\EntityType::FIRST, Exchange\EntityType::LAST);
+            throw new Main\ArgumentOutOfRangeException(
+                'Is not defined',
+                Exchange\EntityType::FIRST,
+                Exchange\EntityType::LAST
+            );
         }
 
         /** @var ImportCriterionBase $criterion */
@@ -85,7 +89,7 @@ class ImportCriterionOneCCml2 extends ImportCriterionBase
         }
 
         if (($entity->getField('VERSION_1C') != $fields['VERSION_1C']) ||
-            (strlen($entity->getField('VERSION_1C')) <= 0 || strlen($fields['VERSION_1C']) <= 0)
+            ($entity->getField('VERSION_1C') == '' || $fields['VERSION_1C'] == '')
         ) {
             return true;
         }
@@ -136,7 +140,9 @@ class CriterionOrder extends ImportCriterionOneCCml2
      */
     public function equalsBasketItemDiscount(Sale\BasketItem $basketItem, array $fields)
     {
-        if ($fields['DISCOUNT']['PRICE'] != $basketItem->getDiscountPrice() && intval($fields['DISCOUNT']['PRICE']) > 0) {
+        if ($fields['DISCOUNT']['PRICE'] != $basketItem->getDiscountPrice() && intval(
+                $fields['DISCOUNT']['PRICE']
+            ) > 0) {
             return true;
         }
 
@@ -149,8 +155,9 @@ class CriterionOrder extends ImportCriterionOneCCml2
      */
     public function setEntity($entity = null)
     {
-        if (!empty($entity) && !($entity instanceof Sale\Order))
+        if (!empty($entity) && !($entity instanceof Sale\Order)) {
             throw new Main\ArgumentException("Entity must be instanceof Order");
+        }
 
         parent::setEntity($entity);
     }
@@ -165,8 +172,9 @@ class CriterionShipment extends ImportCriterionOneCCml2
      */
     public function setEntity($entity = null)
     {
-        if (!empty($entity) && !($entity instanceof Sale\Shipment))
+        if (!empty($entity) && !($entity instanceof Sale\Shipment)) {
             throw new Main\ArgumentException("Entity must be instanceof Shipment");
+        }
 
         parent::setEntity($entity);
     }
@@ -222,12 +230,14 @@ class CriterionShipment extends ImportCriterionOneCCml2
             $bBasketItemsMatch = false;
         } else {
             foreach ($basketItemsIndexList as $basketId => $quantity) {
-                if (isset($fieldsItemsIndexList[$basketId]) && $fieldsItemsIndexList[$basketId] == $quantity)
+                if (isset($fieldsItemsIndexList[$basketId]) && $fieldsItemsIndexList[$basketId] == $quantity) {
                     unset($fieldsItemsIndexList[$basketId]);
+                }
             }
 
-            if (count($fieldsItemsIndexList) > 0)
+            if (count($fieldsItemsIndexList) > 0) {
                 $bBasketItemsMatch = false;
+            }
         }
 
         $itemDeliveryService = $shipmentImport::getFieldsDeliveryService($fields);
@@ -264,8 +274,9 @@ class CriterionPayment extends ImportCriterionOneCCml2
      */
     public function setEntity($entity = null)
     {
-        if (!empty($entity) && !($entity instanceof Sale\Payment))
+        if (!empty($entity) && !($entity instanceof Sale\Payment)) {
             throw new Main\ArgumentException("Entity must be instanceof Payment");
+        }
 
         parent::setEntity($entity);
     }
@@ -311,7 +322,7 @@ class CriterionProfile extends ImportCriterionOneCCml2
         }
 
         if (($entity->getField('USER_PROFILE_VERSION') != $fields['VERSION_1C']) ||
-            (strlen($entity->getField('USER_PROFILE_VERSION')) <= 0 || strlen($fields['VERSION_1C']) <= 0)
+            ($entity->getField('USER_PROFILE_VERSION') == '' || $fields['VERSION_1C'] == '')
         ) {
             return true;
         }
@@ -325,8 +336,9 @@ class CriterionProfile extends ImportCriterionOneCCml2
      */
     public function setEntity($entity = null)
     {
-        if (!empty($entity) && !($entity instanceof Exchange\ProfileImport))
+        if (!empty($entity) && !($entity instanceof Exchange\ProfileImport)) {
             throw new Main\ArgumentException("Entity must be instanceof ProfileImport");
+        }
 
         parent::setEntity($entity);
     }

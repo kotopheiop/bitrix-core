@@ -6,17 +6,19 @@ class CPerfomanceHistory
     {
         global $DB;
 
-        if (!is_array($arOrder))
+        if (!is_array($arOrder)) {
             $arOrder = array();
-        if (count($arOrder) < 1)
+        }
+        if (count($arOrder) < 1) {
             $arOrder = array(
                 "ID" => "DESC",
             );
+        }
 
         $arQueryOrder = array();
         foreach ($arOrder as $strColumn => $strDirection) {
-            $strColumn = strtoupper($strColumn);
-            $strDirection = strtoupper($strDirection) == "ASC" ? "ASC" : "DESC";
+            $strColumn = mb_strtoupper($strColumn);
+            $strDirection = mb_strtoupper($strDirection) == "ASC" ? "ASC" : "DESC";
             switch ($strColumn) {
                 case "ID":
                     $arQueryOrder[$strColumn] = $strColumn . " " . $strDirection;
@@ -43,8 +45,9 @@ class CPerfomanceHistory
 			FROM
 				b_perf_history h
 		";
-        if (!is_array($arFilter))
+        if (!is_array($arFilter)) {
             $arFilter = array();
+        }
         if ($strQueryWhere = $obQueryWhere->GetQuery($arFilter)) {
             $strSql .= "
 				WHERE

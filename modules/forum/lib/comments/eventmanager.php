@@ -11,7 +11,11 @@ class EventManager
         if (IsModuleInstalled("iblock")) {
             AddEventHandler("forum", "onAfterMessageAdd", array(__CLASS__, "updateIBlockPropertyAfterAddingMessage"));
             AddEventHandler("forum", "onMessageModerate", array(__CLASS__, "updateIBlockProperty"));
-            AddEventHandler("forum", "onAfterMessageDelete", array(__CLASS__, "updateIBlockPropertyAfterDeletingMessage"));
+            AddEventHandler(
+                "forum",
+                "onAfterMessageDelete",
+                array(__CLASS__, "updateIBlockPropertyAfterDeletingMessage")
+            );
         }
         AddEventHandler("forum", "onMessageIsIndexed", array(__CLASS__, "onMessageIsIndexed"));
     }
@@ -34,13 +38,27 @@ class EventManager
     {
         if ($ID > 0 && $arMessage["PARAM1"] != "IB" && IsModuleInstalled("iblock")) {
             $arTopic = (empty($arTopic) ? \CForumTopic::GetByID($arMessage["TOPIC_ID"]) : $arTopic);
-            if (!empty($arTopic) && $arTopic["XML_ID"] == "IBLOCK_" . $arMessage["PARAM2"] && \CModule::IncludeModule("iblock")) {
-                \CIBlockElement::SetPropertyValuesEx($arMessage["PARAM2"], 0, array(
-                    "FORUM_MESSAGE_CNT" => array(
-                        "VALUE" => \CForumMessage::GetList(array(), array("TOPIC_ID" => $arMessage["TOPIC_ID"], "APPROVED" => "Y", "!PARAM1" => "IB"), true),
-                        "DESCRIPTION" => "",
+            if (!empty($arTopic) && $arTopic["XML_ID"] == "IBLOCK_" . $arMessage["PARAM2"] && \CModule::IncludeModule(
+                    "iblock"
+                )) {
+                \CIBlockElement::SetPropertyValuesEx(
+                    $arMessage["PARAM2"],
+                    0,
+                    array(
+                        "FORUM_MESSAGE_CNT" => array(
+                            "VALUE" => \CForumMessage::GetList(
+                                array(),
+                                array(
+                                    "TOPIC_ID" => $arMessage["TOPIC_ID"],
+                                    "APPROVED" => "Y",
+                                    "!PARAM1" => "IB"
+                                ),
+                                true
+                            ),
+                            "DESCRIPTION" => "",
+                        )
                     )
-                ));
+                );
             }
         }
     }
@@ -54,8 +72,9 @@ class EventManager
      */
     public static function onMessageIsIndexed($id, array $message, array &$index)
     {
-        if (!empty($message["PARAM1"]) && !empty($message["PARAM2"]))
+        if (!empty($message["PARAM1"]) && !empty($message["PARAM2"])) {
             return false;
+        }
 
         if (isset($message["XML_ID"]) && !empty($message["XML_ID"])) {
             if (
@@ -68,8 +87,9 @@ class EventManager
                     array($protoEntity["className"], "onmessageisindexed"),
                     array($id, $message, &$index)
                 );
-                if ($b === false)
+                if ($b === false) {
                     return false;
+                }
             }
         }
         return true;

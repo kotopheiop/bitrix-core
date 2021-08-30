@@ -1,9 +1,10 @@
 <?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/classes/general/stoplist.php");
 
 class CStoplist extends CAllStopList
 {
-    public static function GetList(&$by, &$order, $arFilter = Array(), &$is_filtered)
+    public static function GetList($by = 's_id', $order = 'desc', $arFilter = [])
     {
         $err_mess = "File: " . __FILE__ . "<br>Line: ";
         $DB = CDatabase::GetModuleConnection('statistic');
@@ -11,11 +12,13 @@ class CStoplist extends CAllStopList
         if (is_array($arFilter)) {
             foreach ($arFilter as $key => $val) {
                 if (is_array($val)) {
-                    if (count($val) <= 0)
+                    if (count($val) <= 0) {
                         continue;
+                    }
                 } else {
-                    if ((strlen($val) <= 0) || ($val === "NOT_REF"))
+                    if (((string)$val == '') || ($val === "NOT_REF")) {
                         continue;
+                    }
                 }
                 $match_value_set = array_key_exists($key . "_EXACT_MATCH", $arFilter);
                 $key = strtoupper($key);
@@ -25,20 +28,30 @@ class CStoplist extends CAllStopList
                         $arSqlSearch[] = GetFilterQuery("S.ID", $val, $match);
                         break;
                     case "DATE_START_1":
-                        if (CheckDateTime($val))
+                        if (CheckDateTime($val)) {
                             $arSqlSearch[] = "S.DATE_START >= " . $DB->CharToDateFunction($val, "SHORT");
+                        }
                         break;
                     case "DATE_START_2":
-                        if (CheckDateTime($val))
-                            $arSqlSearch[] = "S.DATE_START < " . CStatistics::DBDateAdd($DB->CharToDateFunction($val, "SHORT"), 1);
+                        if (CheckDateTime($val)) {
+                            $arSqlSearch[] = "S.DATE_START < " . CStatistics::DBDateAdd(
+                                    $DB->CharToDateFunction($val, "SHORT"),
+                                    1
+                                );
+                        }
                         break;
                     case "DATE_END_1":
-                        if (CheckDateTime($val))
+                        if (CheckDateTime($val)) {
                             $arSqlSearch[] = "S.DATE_END >= " . $DB->CharToDateFunction($val, "SHORT");
+                        }
                         break;
                     case "DATE_END_2":
-                        if (CheckDateTime($val))
-                            $arSqlSearch[] = "S.DATE_END < " . CStatistics::DBDateAdd($DB->CharToDateFunction($val, "SHORT"), 1);
+                        if (CheckDateTime($val)) {
+                            $arSqlSearch[] = "S.DATE_END < " . CStatistics::DBDateAdd(
+                                    $DB->CharToDateFunction($val, "SHORT"),
+                                    1
+                                );
+                        }
                         break;
                     case "ACTIVE":
                     case "SAVE_STATISTIC":
@@ -53,7 +66,12 @@ class CStoplist extends CAllStopList
                         break;
                     case "URL_FROM":
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "Y" && $match_value_set) ? "N" : "Y";
-                        $arSqlSearch[] = GetFilterQuery("S.URL_FROM", $val, $match, array("/", "\\", ".", "?", "#", ":"));
+                        $arSqlSearch[] = GetFilterQuery(
+                            "S.URL_FROM",
+                            $val,
+                            $match,
+                            array("/", "\\", ".", "?", "#", ":")
+                        );
                         break;
                     case "USER_AGENT":
                     case "MESSAGE":
@@ -67,10 +85,17 @@ class CStoplist extends CAllStopList
                         break;
                     case "URL_REDIRECT":
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "Y" && $match_value_set) ? "N" : "Y";
-                        $arSqlSearch[] = GetFilterQuery("S.URL_REDIRECT", $val, $match, array("/", "\\", ".", "?", "#", ":"));
+                        $arSqlSearch[] = GetFilterQuery(
+                            "S.URL_REDIRECT",
+                            $val,
+                            $match,
+                            array("/", "\\", ".", "?", "#", ":")
+                        );
                         break;
                     case "SITE_ID":
-                        if (is_array($val)) $val = implode(" | ", $val);
+                        if (is_array($val)) {
+                            $val = implode(" | ", $val);
+                        }
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "N" && $match_value_set) ? "Y" : "N";
                         $arSqlSearch[] = GetFilterQuery("S.SITE_ID", $val, $match);
                         break;
@@ -78,32 +103,32 @@ class CStoplist extends CAllStopList
             }
         }
 
-        if ($order != "asc")
+        if ($order != "asc") {
             $order = "desc";
+        }
 
-        if ($by == "s_id")
+        if ($by == "s_id") {
             $strSqlOrder = "ORDER BY S.ID $order";
-        elseif ($by == "s_date_start")
+        } elseif ($by == "s_date_start") {
             $strSqlOrder = "ORDER BY S.DATE_START $order";
-        elseif ($by == "s_site_id")
+        } elseif ($by == "s_site_id") {
             $strSqlOrder = "ORDER BY S.SITE_ID $order";
-        elseif ($by == "s_date_end")
+        } elseif ($by == "s_date_end") {
             $strSqlOrder = "ORDER BY S.DATE_END $order";
-        elseif ($by == "s_active")
+        } elseif ($by == "s_active") {
             $strSqlOrder = "ORDER BY S.ACTIVE $order";
-        elseif ($by == "s_save_statistic")
+        } elseif ($by == "s_save_statistic") {
             $strSqlOrder = "ORDER BY S.SAVE_STATISTIC $order";
-        elseif ($by == "s_ip")
+        } elseif ($by == "s_ip") {
             $strSqlOrder = "ORDER BY S.IP_1 $order, S.IP_2 $order, S.IP_3 $order, S.IP_4 $order";
-        elseif ($by == "s_mask")
+        } elseif ($by == "s_mask") {
             $strSqlOrder = "ORDER BY S.MASK_1 $order, S.MASK_2 $order, S.MASK_3 $order, S.MASK_4 $order";
-        elseif ($by == "s_url_to")
+        } elseif ($by == "s_url_to") {
             $strSqlOrder = "ORDER BY S.URL_TO $order";
-        elseif ($by == "s_url_from")
+        } elseif ($by == "s_url_from") {
             $strSqlOrder = "ORDER BY S.URL_FROM $order";
-        else {
+        } else {
             $strSqlOrder = "ORDER BY S.ID $order";
-            $by = "s_id";
         }
 
         $strSqlSearch = GetFilterSqlSearch($arSqlSearch);
@@ -133,7 +158,7 @@ class CStoplist extends CAllStopList
 			";
 
         $res = $DB->Query($strSql, false, $err_mess . __LINE__);
-        $is_filtered = (IsFiltered($strSqlSearch));
+
         return $res;
     }
 
@@ -159,8 +184,9 @@ class CStoplist extends CAllStopList
                 $user_agent = trim($_SERVER["HTTP_USER_AGENT"]);
                 $url_from = isset($_SERVER["HTTP_REFERER"]) ? $_SERVER["HTTP_REFERER"] : "";
                 $url_to = __GetFullRequestUri();
-                if (defined("SITE_ID"))
+                if (defined("SITE_ID")) {
                     $site_id = SITE_ID;
+                }
             } elseif (is_array($arParams)) {
                 $ip = explode(".", $arParams["IP"]);
                 $user_agent = trim($arParams["USER_AGENT"]);
@@ -169,12 +195,15 @@ class CStoplist extends CAllStopList
                 $site_id = $arParams["SITE_ID"];
             }
 
-            $user_agent_len = strlen($user_agent);
+            $user_agent_len = mb_strlen($user_agent);
             $user_agent = $DB->ForSql($user_agent, 500);
             $url_from = $DB->ForSql($url_from, 2000);
             $url_to = $DB->ForSql($url_to, 2000);
-            if (strlen($site_id) > 0) {
-                $site_where = "and (SITE_ID = '" . $DB->ForSql($site_id, 2) . "' or SITE_ID is null or length(SITE_ID)<=0)";
+            if ($site_id <> '') {
+                $site_where = "and (SITE_ID = '" . $DB->ForSql(
+                        $site_id,
+                        2
+                    ) . "' or SITE_ID is null or length(SITE_ID)<=0)";
             }
 
             $strSql = "
@@ -245,10 +274,11 @@ class CStoplist extends CAllStopList
             }
             return false;
         } else {
-            if ($zr)
+            if ($zr) {
                 return intval($zr["ID"]);
-            else
+            } else {
                 return false;
+            }
         }
     }
 }

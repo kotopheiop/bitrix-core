@@ -48,8 +48,9 @@ class OrderArchiveCollection
     private function fillItemsData()
     {
         $idList = $this->getItemIds();
-        if (empty($idList))
+        if (empty($idList)) {
             return;
+        }
 
         $idListChunks = array_chunk($idList, 999);
         foreach ($idListChunks as $idOrdersList) {
@@ -288,17 +289,19 @@ class OrderArchiveCollection
     {
         $couponList = [];
 
-        $couponsIterator = Internals\OrderCouponsTable::getList(array(
-            'select' => array(
-                '*',
-                'MODULE_ID' => 'ORDER_DISCOUNT.MODULE_ID',
-                'DISCOUNT_ID' => 'ORDER_DISCOUNT.DISCOUNT_ID',
-                'DISCOUNT_NAME' => 'ORDER_DISCOUNT.NAME',
-                'DISCOUNT_DESCR' => 'ORDER_DISCOUNT.ACTIONS_DESCR',
-            ),
-            'filter' => array('=ORDER_ID' => $orderIds),
-            'order' => array('ID' => 'ASC')
-        ));
+        $couponsIterator = Internals\OrderCouponsTable::getList(
+            array(
+                'select' => array(
+                    '*',
+                    'MODULE_ID' => 'ORDER_DISCOUNT.MODULE_ID',
+                    'DISCOUNT_ID' => 'ORDER_DISCOUNT.DISCOUNT_ID',
+                    'DISCOUNT_NAME' => 'ORDER_DISCOUNT.NAME',
+                    'DISCOUNT_DESCR' => 'ORDER_DISCOUNT.ACTIONS_DESCR',
+                ),
+                'filter' => array('=ORDER_ID' => $orderIds),
+                'order' => array('ID' => 'ASC')
+            )
+        );
 
         while ($coupon = $couponsIterator->fetch()) {
             foreach ($coupon['DISCOUNT_DESCR'] as $discountDescriptionArray) {
@@ -328,11 +331,13 @@ class OrderArchiveCollection
         $discountList =
         $rulesList = [];
 
-        $ruleIterator = Internals\OrderRulesTable::getList(array(
-            'filter' => array('=ORDER_ID' => $orderIds),
-            'order' => array('ID' => 'ASC'),
-            'select' => ['*', 'RULE_DESCR' => 'DESCR.DESCR', 'RULE_DESCR_ID' => 'DESCR.ID']
-        ));
+        $ruleIterator = Internals\OrderRulesTable::getList(
+            array(
+                'filter' => array('=ORDER_ID' => $orderIds),
+                'order' => array('ID' => 'ASC'),
+                'select' => ['*', 'RULE_DESCR' => 'DESCR.DESCR', 'RULE_DESCR_ID' => 'DESCR.ID']
+            )
+        );
 
         while ($rule = $ruleIterator->fetch()) {
             $discountList[] = $rule['ORDER_DISCOUNT_ID'];
@@ -342,9 +347,11 @@ class OrderArchiveCollection
         $discountList = array_unique($discountList);
 
         if (!empty($discountList)) {
-            $discountIterator = Internals\OrderDiscountTable::getList(array(
-                'filter' => array('@ID' => $discountList),
-            ));
+            $discountIterator = Internals\OrderDiscountTable::getList(
+                array(
+                    'filter' => array('@ID' => $discountList),
+                )
+            );
 
             while ($discount = $discountIterator->fetch()) {
                 $discountList[$discount['ID']] = $discount;
@@ -366,8 +373,9 @@ class OrderArchiveCollection
      */
     public function deleteItem($index)
     {
-        if (!isset($this->collection[$index]))
+        if (!isset($this->collection[$index])) {
             throw new Main\ArgumentOutOfRangeException("Collection item index wrong");
+        }
 
         unset($this->collection[$index]);
     }

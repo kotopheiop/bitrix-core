@@ -1,25 +1,61 @@
 <?php
+
 global $STEMMING_RU_VOWELS;
 $STEMMING_RU_VOWELS = "���������";
 global $STEMMING_RU_PERFECTIVE_GERUND;
 $STEMMING_RU_PERFECTIVE_GERUND = "/(������|������|������|������|����|����|����|����|��|��|��|��)$/" . BX_UTF_PCRE_MODIFIER;
 
-$STEMMING_RU_ADJECTIVE = array("��" => 2, "��" => 2, "��" => 2, "��" => 2, "���" => 3, "���" => 3, "��" => 2, "��" => 2, "��" => 2, "��" => 2, "��" => 2, "��" => 2, "��" => 2, "��" => 2, "���" => 2, "���" => 3, "���" => 3, "���" => 3, "��" => 2, "��" => 2, "��" => 2, "��" => 2, "��" => 2, "��" => 2, "��" => 2, "��" => 2);
+$STEMMING_RU_ADJECTIVE = array(
+    "��" => 2,
+    "��" => 2,
+    "��" => 2,
+    "��" => 2,
+    "���" => 3,
+    "���" => 3,
+    "��" => 2,
+    "��" => 2,
+    "��" => 2,
+    "��" => 2,
+    "��" => 2,
+    "��" => 2,
+    "��" => 2,
+    "��" => 2,
+    "���" => 2,
+    "���" => 3,
+    "���" => 3,
+    "���" => 3,
+    "��" => 2,
+    "��" => 2,
+    "��" => 2,
+    "��" => 2,
+    "��" => 2,
+    "��" => 2,
+    "��" => 2,
+    "��" => 2
+);
 $STEMMING_RU_PARTICIPLE_GR1 = array("��" => 2, "��" => 2, "��" => 2, "��" => 2, "�" => 1);
 $STEMMING_RU_PARTICIPLE_GR2 = array("���" => 3, "���" => 3, "���" => 3);
 $STEMMING_RU_ADJECTIVAL_GR1 = array();
 $STEMMING_RU_ADJECTIVAL_GR2 = array();
 foreach ($STEMMING_RU_ADJECTIVE as $i => $il) {
-    foreach ($STEMMING_RU_PARTICIPLE_GR1 as $j => $jl) $STEMMING_RU_ADJECTIVAL_GR1[$j . $i] = $jl + $il;
-    foreach ($STEMMING_RU_PARTICIPLE_GR2 as $j => $jl) $STEMMING_RU_ADJECTIVAL_GR2[$j . $i] = $jl + $il;
+    foreach ($STEMMING_RU_PARTICIPLE_GR1 as $j => $jl) {
+        $STEMMING_RU_ADJECTIVAL_GR1[$j . $i] = $jl + $il;
+    }
+    foreach ($STEMMING_RU_PARTICIPLE_GR2 as $j => $jl) {
+        $STEMMING_RU_ADJECTIVAL_GR2[$j . $i] = $jl + $il;
+    }
 }
 global $STEMMING_RU_ADJECTIVAL1;
 arsort($STEMMING_RU_ADJECTIVAL_GR1);
-$STEMMING_RU_ADJECTIVAL1 = "/([��])(" . implode("|", array_keys($STEMMING_RU_ADJECTIVAL_GR1)) . ")$/" . BX_UTF_PCRE_MODIFIER;
+$STEMMING_RU_ADJECTIVAL1 = "/([��])(" . implode(
+        "|",
+        array_keys($STEMMING_RU_ADJECTIVAL_GR1)
+    ) . ")$/" . BX_UTF_PCRE_MODIFIER;
 
 global $STEMMING_RU_ADJECTIVAL2;
-foreach ($STEMMING_RU_ADJECTIVE as $i => $il)
+foreach ($STEMMING_RU_ADJECTIVE as $i => $il) {
     $STEMMING_RU_ADJECTIVAL_GR2[$i] = $il;
+}
 arsort($STEMMING_RU_ADJECTIVAL_GR2);
 $STEMMING_RU_ADJECTIVAL2 = "/(" . implode("|", array_keys($STEMMING_RU_ADJECTIVAL_GR2)) . ")$/" . BX_UTF_PCRE_MODIFIER;
 
@@ -37,38 +73,106 @@ function stemming_letter_ru()
 
 function stemming_ru_sort($a, $b)
 {
-    $al = strlen($a);
-    $bl = strlen($b);
-    if ($al == $bl)
+    $al = mb_strlen($a);
+    $bl = mb_strlen($b);
+    if ($al == $bl) {
         return 0;
-    elseif ($al < $bl)
+    } elseif ($al < $bl) {
         return 1;
-    else
+    } else {
         return -1;
+    }
 }
 
 function stemming_stop_ru($sWord)
 {
-    if (strlen($sWord) < 2)
+    if (mb_strlen($sWord) < 2) {
         return false;
+    }
     static $stop_list = false;
     if (!$stop_list) {
         $stop_list = array(
-            "QUOTE" => 0, "HTTP" => 0, "WWW" => 0, "RU" => 0, "IMG" => 0, "GIF" => 0, "���" => 0, "��" => 0, "���" => 0,
-            "���" => 0, "���" => 0, "���" => 0, "��" => 0, "���" => 0, "���" => 0, "��" => 0, "���" => 0, "��" => 0,
-            "���" => 0, "���" => 0, "��" => 0, "��" => 0, "���" => 0, "���" => 0, "��" => 0, "��" => 0, "��" => 0,
-            "��" => 0, "���" => 0, "��" => 0, "��" => 0, "���" => 0, "����" => 0, "���" => 0, "��" => 0, "���" => 0,
-            "���" => 0, "���" => 0, "��" => 0, "��" => 0, "��" => 0, "���" => 0, "��" => 0, "���" => 0, "��" => 0,
-            "��" => 0, "��" => 0, "��" => 0, "��" => 0, "��" => 0, "����" => 0, "��" => 0, "���" => 0, "���" => 0,
-            "���" => 0, "���" => 0, "���" => 0, "���" => 0, "���" => 0, "���" => 0, "���" => 0, "��" => 0, "���" => 0,
-            "�����" => 0, "���" => 0, "��" => 0, "��" => 0, "���" => 0, "���" => 0, "���" => 0, "���" => 0, "����" => 0,
-            "��" => 0, "����" => 0,
+            "QUOTE" => 0,
+            "HTTP" => 0,
+            "WWW" => 0,
+            "RU" => 0,
+            "IMG" => 0,
+            "GIF" => 0,
+            "���" => 0,
+            "��" => 0,
+            "���" => 0,
+            "���" => 0,
+            "���" => 0,
+            "���" => 0,
+            "��" => 0,
+            "���" => 0,
+            "���" => 0,
+            "��" => 0,
+            "���" => 0,
+            "��" => 0,
+            "���" => 0,
+            "���" => 0,
+            "��" => 0,
+            "��" => 0,
+            "���" => 0,
+            "���" => 0,
+            "��" => 0,
+            "��" => 0,
+            "��" => 0,
+            "��" => 0,
+            "���" => 0,
+            "��" => 0,
+            "��" => 0,
+            "���" => 0,
+            "����" => 0,
+            "���" => 0,
+            "��" => 0,
+            "���" => 0,
+            "���" => 0,
+            "���" => 0,
+            "��" => 0,
+            "��" => 0,
+            "��" => 0,
+            "���" => 0,
+            "��" => 0,
+            "���" => 0,
+            "��" => 0,
+            "��" => 0,
+            "��" => 0,
+            "��" => 0,
+            "��" => 0,
+            "��" => 0,
+            "����" => 0,
+            "��" => 0,
+            "���" => 0,
+            "���" => 0,
+            "���" => 0,
+            "���" => 0,
+            "���" => 0,
+            "���" => 0,
+            "���" => 0,
+            "���" => 0,
+            "���" => 0,
+            "��" => 0,
+            "���" => 0,
+            "�����" => 0,
+            "���" => 0,
+            "��" => 0,
+            "��" => 0,
+            "���" => 0,
+            "���" => 0,
+            "���" => 0,
+            "���" => 0,
+            "����" => 0,
+            "��" => 0,
+            "����" => 0,
         );
         if (defined("STEMMING_STOP_RU")) {
             foreach (explode(",", STEMMING_STOP_RU) as $word) {
                 $word = trim($word);
-                if (strlen($word) > 0)
+                if ($word <> '') {
                     $stop_list[$word] = 0;
+                }
             }
         }
     }
@@ -105,8 +209,9 @@ function stemming_ru($word, $flags = 0)
         "������" => "�����",
         "�����" => "�����",
     );
-    if (isset($STEMMING_RU_EX[$word]))
+    if (isset($STEMMING_RU_EX[$word])) {
         return $word;
+    }
 
     //HERE IS AN ATTEMPT TO STEM RUSSIAN SECOND NAMES BEGINS
     //http://www.gramma.ru/SPR/?id=2.8
@@ -115,14 +220,14 @@ function stemming_ru($word, $flags = 0)
             return array(
                 stemming_ru($word . "�"),
                 stemming_ru($word),
-                stemming_ru(substr($word, 0, -2)),
+                stemming_ru(mb_substr($word, 0, -2)),
             );
         }
         $found = array();
         if (preg_match("/(��|��)(�|�|��|�)$/", $word, $found)) {
             return array(
                 stemming_ru($word),
-                stemming_ru(substr($word, 0, -strlen($found[2]))),
+                stemming_ru(mb_substr($word, 0, -mb_strlen($found[2]))),
             );
         }
     }
@@ -150,10 +255,10 @@ function stemming_ru($word, $flags = 0)
             case "��":
             case "����":
             case "������":
-                $rv = substr($rv, 0, 1 - strlen($found[0]));
+                $rv = mb_substr($rv, 0, 1 - mb_strlen($found[0]));
                 break;
             default:
-                $rv = substr($rv, 0, -strlen($found[0]));
+                $rv = mb_substr($rv, 0, -mb_strlen($found[0]));
         }
     }
     //Otherwise try and remove a REFLEXIVE ending, and then search in turn for
@@ -164,51 +269,60 @@ function stemming_ru($word, $flags = 0)
     else {
         $rv = preg_replace("/(��|��)$/" . BX_UTF_PCRE_MODIFIER, "", $rv);
         //ADJECTIVAL
-        if (preg_match($STEMMING_RU_ADJECTIVAL1, $rv, $found))
-            $rv = substr($rv, 0, -strlen($found[2]));
-        elseif (preg_match($STEMMING_RU_ADJECTIVAL2, $rv, $found))
-            $rv = substr($rv, 0, -strlen($found[0]));
-        elseif (preg_match($STEMMING_RU_VERB1, $rv, $found))
-            $rv = substr($rv, 0, -strlen($found[2]));
-        elseif (preg_match($STEMMING_RU_VERB2, $rv, $found))
-            $rv = substr($rv, 0, -strlen($found[0]));
-        else
+        if (preg_match($STEMMING_RU_ADJECTIVAL1, $rv, $found)) {
+            $rv = mb_substr($rv, 0, -mb_strlen($found[2]));
+        } elseif (preg_match($STEMMING_RU_ADJECTIVAL2, $rv, $found)) {
+            $rv = mb_substr($rv, 0, -mb_strlen($found[0]));
+        } elseif (preg_match($STEMMING_RU_VERB1, $rv, $found)) {
+            $rv = mb_substr($rv, 0, -mb_strlen($found[2]));
+        } elseif (preg_match($STEMMING_RU_VERB2, $rv, $found)) {
+            $rv = mb_substr($rv, 0, -mb_strlen($found[0]));
+        } else {
             $rv = preg_replace($STEMMING_RU_NOUN, "", $rv);
+        }
     }
 
     //Step 2: If the word ends with � (i), remove it.
-    if (substr($rv, -1) == "�")
-        $rv = substr($rv, 0, -1);
+    if (mb_substr($rv, -1) == "�") {
+        $rv = mb_substr($rv, 0, -1);
+    }
     //Step 3: Search for a DERIVATIONAL ending in R2 (i.e. the entire ending must lie in R2), and if one is found, remove it.
     //R1 is the region after the first non-vowel following a vowel, or the end of the word if there is no such non-vowel.
     if (preg_match("/(����|���)$/" . BX_UTF_PCRE_MODIFIER, $rv)) {
         $R1 = 0;
-        $rv_len = strlen($rv);
-        while (($R1 < $rv_len) && (strpos($STEMMING_RU_VOWELS, substr($rv, $R1, 1)) !== false))
+        $rv_len = mb_strlen($rv);
+        while (($R1 < $rv_len) && (mb_strpos($STEMMING_RU_VOWELS, mb_substr($rv, $R1, 1)) !== false)) {
             $R1++;
-        if ($R1 < $rv_len)
+        }
+        if ($R1 < $rv_len) {
             $R1++;
+        }
         //R2 is the region after the first non-vowel following a vowel in R1, or the end of the word if there is no such non-vowel.
         $R2 = $R1;
-        while (($R2 < $rv_len) && (strpos($STEMMING_RU_VOWELS, substr($rv, $R2, 1)) === false))
+        while (($R2 < $rv_len) && (mb_strpos($STEMMING_RU_VOWELS, mb_substr($rv, $R2, 1)) === false)) {
             $R2++;
-        while (($R2 < $rv_len) && (strpos($STEMMING_RU_VOWELS, substr($rv, $R2, 1)) !== false))
+        }
+        while (($R2 < $rv_len) && (mb_strpos($STEMMING_RU_VOWELS, mb_substr($rv, $R2, 1)) !== false)) {
             $R2++;
-        if ($R2 < $rv_len)
+        }
+        if ($R2 < $rv_len) {
             $R2++;
+        }
         //"����", "���"
-        if ((substr($rv, -4) == "����") && ($rv_len >= ($R2 + 4)))
-            $rv = substr($rv, 0, $rv_len - 4);
-        elseif ((substr($rv, -3) == "���") && ($rv_len >= ($R2 + 3)))
-            $rv = substr($rv, 0, $rv_len - 3);
+        if ((mb_substr($rv, -4) == "����") && ($rv_len >= ($R2 + 4))) {
+            $rv = mb_substr($rv, 0, $rv_len - 4);
+        } elseif ((mb_substr($rv, -3) == "���") && ($rv_len >= ($R2 + 3))) {
+            $rv = mb_substr($rv, 0, $rv_len - 3);
+        }
     }
     //Step 4: (1) Undouble � (n), or, (2) if the word ends with a SUPERLATIVE ending, remove it and undouble � (n), or (3) if the word ends � (') (soft sign) remove it.
     $rv = preg_replace("/(����|���)$/" . BX_UTF_PCRE_MODIFIER, "", $rv);
     $r = preg_replace("/��$/" . BX_UTF_PCRE_MODIFIER, "�", $rv);
-    if ($r == $rv)
+    if ($r == $rv) {
         $rv = preg_replace("/�$/" . BX_UTF_PCRE_MODIFIER, "", $rv);
-    else
+    } else {
         $rv = $r;
+    }
 
     return $word . $rv;
 }

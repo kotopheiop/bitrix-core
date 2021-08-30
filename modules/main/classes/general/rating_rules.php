@@ -1,10 +1,11 @@
-<?
+<?php
+
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/classes/general/rating_rules.php");
 
 class CAllRatingRulesMain
 {
     // return configs
-    function OnGetRatingRuleConfigs()
+    public static function OnGetRatingRuleConfigs()
     {
         $arConfigs["USER"]["CONDITION_CONFIG"][] = array(
             "ID" => 'RATING',
@@ -32,8 +33,10 @@ class CAllRatingRulesMain
                     "NAME" => GetMessage('PP_USER_CONDITION_RATING_RATING_CONDITION'),
                     "DEFAULT" => '1',
                     "DEFAULT_INPUT" => '500',
-                    "PARAMS" => array('1' => GetMessage('PP_USER_CONDITION_RATING_RATING_CONDITION_1'),
-                        '2' => GetMessage('PP_USER_CONDITION_RATING_RATING_CONDITION_2')),
+                    "PARAMS" => array(
+                        '1' => GetMessage('PP_USER_CONDITION_RATING_RATING_CONDITION_1'),
+                        '2' => GetMessage('PP_USER_CONDITION_RATING_RATING_CONDITION_2')
+                    ),
                 ),
             )
         );
@@ -71,7 +74,9 @@ class CAllRatingRulesMain
         $arConfigs["USER"]["CONDITION_CONFIG"][] = array(
             "ID" => 'AUTHORITY',
             "NAME" => GetMessage('PP_USER_CONDITION_AUTHORITY_NAME'),
-            "DESC" => (COption::GetOptionString("main", "rating_weight_type", "auto") == "auto" ? GetMessage('PP_USER_CONDITION_AUTHORITY_AUTO_DESC') : GetMessage('PP_USER_CONDITION_AUTHORITY_DESC')),
+            "DESC" => (COption::GetOptionString("main", "rating_weight_type", "auto") == "auto" ? GetMessage(
+                'PP_USER_CONDITION_AUTHORITY_AUTO_DESC'
+            ) : GetMessage('PP_USER_CONDITION_AUTHORITY_DESC')),
             "REFRESH_TIME" => '3600',
             "CLASS" => 'CRatingRulesMain',
             "METHOD" => 'ratingCheck',
@@ -80,11 +85,15 @@ class CAllRatingRulesMain
                     "TYPE" => 'SELECT_ARRAY_WITH_INPUT',
                     "ID" => 'RATING_CONDITION',
                     "ID_INPUT" => 'RATING_VALUE',
-                    "NAME" => (COption::GetOptionString("main", "rating_weight_type", "auto") == "auto" ? GetMessage('PP_USER_CONDITION_AUTHORITY_RATING_CONDITION_AUTO') : GetMessage('PP_USER_CONDITION_AUTHORITY_RATING_CONDITION')),
+                    "NAME" => (COption::GetOptionString("main", "rating_weight_type", "auto") == "auto" ? GetMessage(
+                        'PP_USER_CONDITION_AUTHORITY_RATING_CONDITION_AUTO'
+                    ) : GetMessage('PP_USER_CONDITION_AUTHORITY_RATING_CONDITION')),
                     "DEFAULT" => '1',
                     "DEFAULT_INPUT" => '1',
-                    "PARAMS" => array('1' => GetMessage('PP_USER_CONDITION_RATING_RATING_CONDITION_1'),
-                        '2' => GetMessage('PP_USER_CONDITION_RATING_RATING_CONDITION_2')),
+                    "PARAMS" => array(
+                        '1' => GetMessage('PP_USER_CONDITION_RATING_RATING_CONDITION_1'),
+                        '2' => GetMessage('PP_USER_CONDITION_RATING_RATING_CONDITION_2')
+                    ),
                 ),
             )
         );
@@ -92,7 +101,9 @@ class CAllRatingRulesMain
         $arConfigs["USER"]["CONDITION_CONFIG"][] = array(
             "ID" => 'AUTHORITY_INTERVAL',
             "NAME" => GetMessage('PP_USER_CONDITION_AUTHORITY_INTERVAL_NAME'),
-            "DESC" => (COption::GetOptionString("main", "rating_weight_type", "auto") == "auto" ? GetMessage('PP_USER_CONDITION_AUTHORITY_INTERVAL_AUTO_DESC') : GetMessage('PP_USER_CONDITION_AUTHORITY_INTERVAL_DESC')),
+            "DESC" => (COption::GetOptionString("main", "rating_weight_type", "auto") == "auto" ? GetMessage(
+                'PP_USER_CONDITION_AUTHORITY_INTERVAL_AUTO_DESC'
+            ) : GetMessage('PP_USER_CONDITION_AUTHORITY_INTERVAL_DESC')),
             "REFRESH_TIME" => '3600',
             "CLASS" => 'CRatingRulesMain',
             "METHOD" => 'ratingCheckInterval',
@@ -101,7 +112,9 @@ class CAllRatingRulesMain
                     "TYPE" => 'INPUT_INTERVAL',
                     "ID" => 'RATING_VALUE_FROM',
                     "ID_2" => 'RATING_VALUE_TO',
-                    "NAME" => (COption::GetOptionString("main", "rating_weight_type", "auto") == "auto" ? GetMessage('PP_USER_CONDITION_AUTHORITY_INTERVAL_AUTO') : GetMessage('PP_USER_CONDITION_AUTHORITY_INTERVAL')),
+                    "NAME" => (COption::GetOptionString("main", "rating_weight_type", "auto") == "auto" ? GetMessage(
+                        'PP_USER_CONDITION_AUTHORITY_INTERVAL_AUTO'
+                    ) : GetMessage('PP_USER_CONDITION_AUTHORITY_INTERVAL')),
                     "DEFAULT" => '0',
                     "DEFAULT_2" => '10',
                 ),
@@ -242,19 +255,19 @@ class CAllRatingRulesMain
         return $arConfigs;
     }
 
-    function ratingCheck($arConfigs)
+    public static function ratingCheck($arConfigs)
     {
         global $DB;
         $err_mess = "File: " . __FILE__ . "<br>Function: ratingCheck<br>Line: ";
 
-        $ruleId = IntVal($arConfigs['ID']);
+        $ruleId = intval($arConfigs['ID']);
         if (isset($arConfigs['CONDITION_CONFIG']['RATING'])) {
-            $ratingValue = IntVal($arConfigs['CONDITION_CONFIG']['RATING']['RATING_VALUE']);
+            $ratingValue = intval($arConfigs['CONDITION_CONFIG']['RATING']['RATING_VALUE']);
             $ratingCondition = ($arConfigs['CONDITION_CONFIG']['RATING']['RATING_CONDITION'] == 1 ? '>=' : '<');
-            $ratingId = IntVal($arConfigs['CONDITION_CONFIG']['RATING']['RATING_ID']);
+            $ratingId = intval($arConfigs['CONDITION_CONFIG']['RATING']['RATING_ID']);
         } else {
             $ratingVoteWeight = COption::GetOptionString("main", "rating_vote_weight", 1);
-            $ratingValue = IntVal($arConfigs['CONDITION_CONFIG']['AUTHORITY']['RATING_VALUE']) * $ratingVoteWeight;
+            $ratingValue = intval($arConfigs['CONDITION_CONFIG']['AUTHORITY']['RATING_VALUE']) * $ratingVoteWeight;
             $ratingCondition = ($arConfigs['CONDITION_CONFIG']['AUTHORITY']['RATING_CONDITION'] == 1 ? '>=' : '<');
             $ratingId = CRatings::GetAuthorityRating();
         }
@@ -273,20 +286,24 @@ class CAllRatingRulesMain
         return true;
     }
 
-    function ratingCheckInterval($arConfigs)
+    public static function ratingCheckInterval($arConfigs)
     {
         global $DB;
         $err_mess = "File: " . __FILE__ . "<br>Function: ratingCheckInterval<br>Line: ";
 
-        $ruleId = IntVal($arConfigs['ID']);
+        $ruleId = intval($arConfigs['ID']);
         if (isset($arConfigs['CONDITION_CONFIG']['RATING_INTERVAL'])) {
-            $ratingValueFrom = IntVal($arConfigs['CONDITION_CONFIG']['RATING_INTERVAL']['RATING_VALUE_FROM']);
-            $ratingValueTo = IntVal($arConfigs['CONDITION_CONFIG']['RATING_INTERVAL']['RATING_VALUE_TO']);
-            $ratingId = IntVal($arConfigs['CONDITION_CONFIG']['RATING_INTERVAL']['RATING_ID']);
+            $ratingValueFrom = intval($arConfigs['CONDITION_CONFIG']['RATING_INTERVAL']['RATING_VALUE_FROM']);
+            $ratingValueTo = intval($arConfigs['CONDITION_CONFIG']['RATING_INTERVAL']['RATING_VALUE_TO']);
+            $ratingId = intval($arConfigs['CONDITION_CONFIG']['RATING_INTERVAL']['RATING_ID']);
         } else {
             $ratingVoteWeight = COption::GetOptionString("main", "rating_vote_weight", 1);
-            $ratingValueFrom = IntVal($arConfigs['CONDITION_CONFIG']['AUTHORITY_INTERVAL']['RATING_VALUE_FROM']) * $ratingVoteWeight;
-            $ratingValueTo = IntVal($arConfigs['CONDITION_CONFIG']['AUTHORITY_INTERVAL']['RATING_VALUE_TO']) * $ratingVoteWeight;
+            $ratingValueFrom = intval(
+                    $arConfigs['CONDITION_CONFIG']['AUTHORITY_INTERVAL']['RATING_VALUE_FROM']
+                ) * $ratingVoteWeight;
+            $ratingValueTo = intval(
+                    $arConfigs['CONDITION_CONFIG']['AUTHORITY_INTERVAL']['RATING_VALUE_TO']
+                ) * $ratingVoteWeight;
             $ratingId = CRatings::GetAuthorityRating();
         }
 
@@ -304,13 +321,13 @@ class CAllRatingRulesMain
         return true;
     }
 
-    function addToGroup($arConfigs)
+    public static function addToGroup($arConfigs)
     {
         global $DB;
         $err_mess = "File: " . __FILE__ . "<br>Function: addToGroup<br>Line: ";
 
-        $ruleId = IntVal(IntVal($arConfigs['ID']));
-        $groupId = IntVal($arConfigs['ACTION_CONFIG']['ADD_TO_GROUP']['GROUP_ID']);
+        $ruleId = intval(IntVal($arConfigs['ID']));
+        $groupId = intval($arConfigs['ACTION_CONFIG']['ADD_TO_GROUP']['GROUP_ID']);
         $entityTypeId = $DB->ForSql($arConfigs['ENTITY_TYPE_ID']);
 
         // add a group to all users who do not, but you need to add it
@@ -333,13 +350,13 @@ class CAllRatingRulesMain
         return true;
     }
 
-    function removeFromGroup($arConfigs)
+    public static function removeFromGroup($arConfigs)
     {
         global $DB;
         $err_mess = "File: " . __FILE__ . "<br>Function: addToGroup<br>Line: ";
 
-        $ruleId = IntVal(IntVal($arConfigs['ID']));
-        $groupId = IntVal($arConfigs['ACTION_CONFIG']['REMOVE_FROM_GROUP']['GROUP_ID']);
+        $ruleId = intval(IntVal($arConfigs['ID']));
+        $groupId = intval($arConfigs['ACTION_CONFIG']['REMOVE_FROM_GROUP']['GROUP_ID']);
         $entityTypeId = $DB->ForSql($arConfigs['ENTITY_TYPE_ID']);
 
         // remove the group from all users who it is, but you need to remove it
@@ -354,10 +371,14 @@ class CAllRatingRulesMain
 					and prv.APPLIED = 'N'";
         $res = $DB->Query($strSql, false, $err_mess . __LINE__);
         $arDelete = array();
-        while ($row = $res->Fetch())
+        while ($row = $res->Fetch()) {
             $arDelete[] = $row['ENTITY_ID'];
+        }
         if (!empty($arDelete)) {
-            $strSql = "DELETE FROM b_user_group WHERE GROUP_ID = $groupId and USER_ID IN (" . implode(',', $arDelete) . ")";
+            $strSql = "DELETE FROM b_user_group WHERE GROUP_ID = $groupId and USER_ID IN (" . implode(
+                    ',',
+                    $arDelete
+                ) . ")";
             $DB->Query($strSql, false, $err_mess . __LINE__);
         }
 
@@ -366,24 +387,27 @@ class CAllRatingRulesMain
         return true;
     }
 
-    function GetUfList()
+    public static function GetUfList()
     {
         $arFields = array();
         $rsData = CUserTypeEntity::GetList(array(), array('ENTITY_ID' => 'USER', 'LANG' => LANG));
         while ($arRes = $rsData->Fetch()) {
-            if ($arRes['MULTIPLE'] == 'N' && in_array($arRes['USER_TYPE_ID'], array('integer', 'string_formatted', 'string', 'double')))
+            if ($arRes['MULTIPLE'] == 'N' && in_array(
+                    $arRes['USER_TYPE_ID'],
+                    array('integer', 'string_formatted', 'string', 'double')
+                )) {
                 $arFields[$arRes['FIELD_NAME']] = empty($arRes['LIST_FILTER_LABEL']) ? $arRes['FIELD_NAME'] : $arRes['LIST_FILTER_LABEL'] . ' (' . $arRes['FIELD_NAME'] . ')';
+            }
         }
         return $arFields;
-
     }
 
-    function changeUF($arConfigs)
+    public static function changeUF($arConfigs)
     {
         global $DB;
         $err_mess = "File: " . __FILE__ . "<br>Function: changeUF<br>Line: ";
 
-        $ruleId = IntVal(IntVal($arConfigs['ID']));
+        $ruleId = intval(IntVal($arConfigs['ID']));
         $entityTypeId = $DB->ForSql($arConfigs['ENTITY_TYPE_ID']);
         $userFieldId = $DB->ForSql($arConfigs['ACTION_CONFIG']['CHANGE_UF']['UF_ID']);
         $userFieldValue = $DB->ForSql($arConfigs['ACTION_CONFIG']['CHANGE_UF']['UF_VALUE']);
@@ -420,17 +444,18 @@ class CAllRatingRulesMain
     }
 
     // return support object
-    function OnGetRatingRuleObjects()
+    public static function OnGetRatingRuleObjects()
     {
         $arRatingRulesConfigs = CRatingRulesMain::OnGetRatingRuleConfigs();
-        foreach ($arRatingRulesConfigs as $SupportType => $value)
+        foreach ($arRatingRulesConfigs as $SupportType => $value) {
             $arSupportType[] = $SupportType;
+        }
 
         return $arSupportType;
     }
 
     // check the value which relate to the module
-    function OnAfterAddRatingRule($ID, $arFields)
+    public static function OnAfterAddRatingRule($ID, $arFields)
     {
         $arFields = CRatingRulesMain::__CheckFields($arFields['ENTITY_TYPE_ID'], $arFields);
 
@@ -438,7 +463,7 @@ class CAllRatingRulesMain
     }
 
     // check the value which relate to the module
-    function OnAfterUpdateRatingRule($ID, $arFields)
+    public static function OnAfterUpdateRatingRule($ID, $arFields)
     {
         $arFields = CRatingRulesMain::__CheckFields($arFields['ENTITY_TYPE_ID'], $arFields);
 
@@ -446,61 +471,91 @@ class CAllRatingRulesMain
     }
 
     // check input values, if value does not validate, set the default value
-    function __CheckFields($entityId, $arConfigs)
+    public static function __CheckFields($entityId, $arConfigs)
     {
         $arDefaultConfig = CRatingRulesMain::__AssembleConfigDefault($entityId);
 
         if ($entityId == "USER") {
             if (isset($arConfigs['CONDITION_CONFIG']['RATING'])) {
-                if (!preg_match('/^\d{1,11}$/', $arConfigs['CONDITION_CONFIG']['RATING']['RATING_ID']))
+                if (!preg_match('/^\d{1,11}$/', $arConfigs['CONDITION_CONFIG']['RATING']['RATING_ID'])) {
                     $arConfigs['CONDITION_CONFIG']['RATING']['RATING_ID'] = $arDefaultConfig['CONDITION_CONFIG']['RATING']['RATING_ID']['DEFAULT'];
-                if (!in_array($arConfigs['CONDITION_CONFIG']['RATING']['RATING_CONDITION'], array(1, 2)))
+                }
+                if (!in_array($arConfigs['CONDITION_CONFIG']['RATING']['RATING_CONDITION'], array(1, 2))) {
                     $arConfigs['CONDITION_CONFIG']['RATING']['RATING_CONDITION'] = $arDefaultConfig['CONDITION_CONFIG']['RATING']['RATING_CONDITION']['DEFAULT'];
-                if (!preg_match('/^\d{1,11}$/', $arConfigs['CONDITION_CONFIG']['RATING']['RATING_VALUE']))
+                }
+                if (!preg_match('/^\d{1,11}$/', $arConfigs['CONDITION_CONFIG']['RATING']['RATING_VALUE'])) {
                     $arConfigs['CONDITION_CONFIG']['RATING']['RATING_VALUE'] = $arDefaultConfig['CONDITION_CONFIG']['RATING']['RATING_CONDITION']['DEFAULT_INPUT'];
+                }
             }
             if (isset($arConfigs['CONDITION_CONFIG']['RATING_INTERVAL'])) {
-                if (!preg_match('/^\d{1,11}$/', $arConfigs['CONDITION_CONFIG']['RATING_INTERVAL']['RATING_ID']))
+                if (!preg_match('/^\d{1,11}$/', $arConfigs['CONDITION_CONFIG']['RATING_INTERVAL']['RATING_ID'])) {
                     $arConfigs['CONDITION_CONFIG']['RATING_INTERVAL']['RATING_ID'] = $arDefaultConfig['CONDITION_CONFIG']['RATING_INTERVAL']['RATING_ID']['DEFAULT'];
-                if (!preg_match('/^\d{1,11}$/', $arConfigs['CONDITION_CONFIG']['RATING_INTERVAL']['RATING_VALUE_FROM']))
+                }
+                if (!preg_match(
+                    '/^\d{1,11}$/',
+                    $arConfigs['CONDITION_CONFIG']['RATING_INTERVAL']['RATING_VALUE_FROM']
+                )) {
                     $arConfigs['CONDITION_CONFIG']['RATING_INTERVAL']['RATING_VALUE_FROM'] = $arDefaultConfig['CONDITION_CONFIG']['RATING_INTERVAL']['RATING_VALUE_FROM']['DEFAULT'];
-                if (!preg_match('/^\d{1,11}$/', $arConfigs['CONDITION_CONFIG']['RATING_INTERVAL']['RATING_VALUE_TO']))
+                }
+                if (!preg_match('/^\d{1,11}$/', $arConfigs['CONDITION_CONFIG']['RATING_INTERVAL']['RATING_VALUE_TO'])) {
                     $arConfigs['CONDITION_CONFIG']['RATING_INTERVAL']['RATING_VALUE_TO'] = $arDefaultConfig['CONDITION_CONFIG']['RATING_INTERVAL']['RATING_VALUE_FROM']['DEFAULT_2'];
+                }
             }
             if (isset($arConfigs['CONDITION_CONFIG']['AUTHORITY'])) {
-                if (!in_array($arConfigs['CONDITION_CONFIG']['AUTHORITY']['RATING_CONDITION'], array(1, 2)))
+                if (!in_array($arConfigs['CONDITION_CONFIG']['AUTHORITY']['RATING_CONDITION'], array(1, 2))) {
                     $arConfigs['CONDITION_CONFIG']['AUTHORITY']['RATING_CONDITION'] = $arDefaultConfig['CONDITION_CONFIG']['AUTHORITY']['RATING_CONDITION']['DEFAULT'];
-                if (!preg_match('/^\d{1,11}$/', $arConfigs['CONDITION_CONFIG']['AUTHORITY']['RATING_VALUE']))
+                }
+                if (!preg_match('/^\d{1,11}$/', $arConfigs['CONDITION_CONFIG']['AUTHORITY']['RATING_VALUE'])) {
                     $arConfigs['CONDITION_CONFIG']['AUTHORITY']['RATING_VALUE'] = $arDefaultConfig['CONDITION_CONFIG']['AUTHORITY']['RATING_CONDITION']['DEFAULT_INPUT'];
+                }
             }
             if (isset($arConfigs['CONDITION_CONFIG']['AUTHORITY_INTERVAL'])) {
-                if (!preg_match('/^\d{1,11}$/', $arConfigs['CONDITION_CONFIG']['AUTHORITY_INTERVAL']['RATING_VALUE_FROM']))
+                if (!preg_match(
+                    '/^\d{1,11}$/',
+                    $arConfigs['CONDITION_CONFIG']['AUTHORITY_INTERVAL']['RATING_VALUE_FROM']
+                )) {
                     $arConfigs['CONDITION_CONFIG']['AUTHORITY_INTERVAL']['RATING_VALUE_FROM'] = $arDefaultConfig['CONDITION_CONFIG']['AUTHORITY_INTERVAL']['RATING_VALUE_FROM']['DEFAULT'];
-                if (!preg_match('/^\d{1,11}$/', $arConfigs['CONDITION_CONFIG']['AUTHORITY_INTERVAL']['RATING_VALUE_TO']))
+                }
+                if (!preg_match(
+                    '/^\d{1,11}$/',
+                    $arConfigs['CONDITION_CONFIG']['AUTHORITY_INTERVAL']['RATING_VALUE_TO']
+                )) {
                     $arConfigs['CONDITION_CONFIG']['AUTHORITY_INTERVAL']['RATING_VALUE_TO'] = $arDefaultConfig['CONDITION_CONFIG']['AUTHORITY_INTERVAL']['RATING_VALUE_FROM']['DEFAULT_2'];
+                }
             }
             if (isset($arConfigs['CONDITION_CONFIG']['VOTE'])) {
-                if (!preg_match('/^\d{1,3}$/', $arConfigs['CONDITION_CONFIG']['VOTE']['VOTE_LIMIT']))
+                if (!preg_match('/^\d{1,3}$/', $arConfigs['CONDITION_CONFIG']['VOTE']['VOTE_LIMIT'])) {
                     $arConfigs['CONDITION_CONFIG']['VOTE']['VOTE_LIMIT'] = $arDefaultConfig['CONDITION_CONFIG']['VOTE']['VOTE_LIMIT']['DEFAULT'];
-                if (!preg_match('/^\d{1,7}\.?\d{0,4}$/', $arConfigs['CONDITION_CONFIG']['VOTE']['VOTE_RESULT']) || $arConfigs['CONDITION_CONFIG']['VOTE']['VOTE_RESULT'] < 0)
+                }
+                if (!preg_match(
+                        '/^\d{1,7}\.?\d{0,4}$/',
+                        $arConfigs['CONDITION_CONFIG']['VOTE']['VOTE_RESULT']
+                    ) || $arConfigs['CONDITION_CONFIG']['VOTE']['VOTE_RESULT'] < 0) {
                     $arConfigs['CONDITION_CONFIG']['VOTE']['VOTE_RESULT'] = $arDefaultConfig['CONDITION_CONFIG']['VOTE']['VOTE_RESULT']['DEFAULT'];
-                if (!preg_match('/^\d{1,7}\.?\d{0,4}$/', $arConfigs['CONDITION_CONFIG']['VOTE']['VOTE_FORUM_TOPIC']))
+                }
+                if (!preg_match('/^\d{1,7}\.?\d{0,4}$/', $arConfigs['CONDITION_CONFIG']['VOTE']['VOTE_FORUM_TOPIC'])) {
                     $arConfigs['CONDITION_CONFIG']['VOTE']['VOTE_FORUM_TOPIC'] = $arDefaultConfig['CONDITION_CONFIG']['VOTE']['VOTE_FORUM_TOPIC']['DEFAULT'];
-                if (!preg_match('/^\d{1,7}\.?\d{0,4}$/', $arConfigs['CONDITION_CONFIG']['VOTE']['VOTE_FORUM_POST']))
+                }
+                if (!preg_match('/^\d{1,7}\.?\d{0,4}$/', $arConfigs['CONDITION_CONFIG']['VOTE']['VOTE_FORUM_POST'])) {
                     $arConfigs['CONDITION_CONFIG']['VOTE']['VOTE_FORUM_POST'] = $arDefaultConfig['CONDITION_CONFIG']['VOTE']['VOTE_FORUM_POST']['DEFAULT'];
-                if (!preg_match('/^\d{1,7}\.?\d{0,4}$/', $arConfigs['CONDITION_CONFIG']['VOTE']['VOTE_BLOG_POST']))
+                }
+                if (!preg_match('/^\d{1,7}\.?\d{0,4}$/', $arConfigs['CONDITION_CONFIG']['VOTE']['VOTE_BLOG_POST'])) {
                     $arConfigs['CONDITION_CONFIG']['VOTE']['VOTE_BLOG_POST'] = $arDefaultConfig['CONDITION_CONFIG']['VOTE']['VOTE_BLOG_POST']['DEFAULT'];
-                if (!preg_match('/^\d{1,7}\.?\d{0,4}$/', $arConfigs['CONDITION_CONFIG']['VOTE']['VOTE_BLOG_COMMENT']))
+                }
+                if (!preg_match('/^\d{1,7}\.?\d{0,4}$/', $arConfigs['CONDITION_CONFIG']['VOTE']['VOTE_BLOG_COMMENT'])) {
                     $arConfigs['CONDITION_CONFIG']['VOTE']['VOTE_BLOG_COMMENT'] = $arDefaultConfig['CONDITION_CONFIG']['VOTE']['VOTE_BLOG_COMMENT']['DEFAULT'];
+                }
             }
             if (isset($arConfigs['ACTION_CONFIG']['CHANGE_GROUP'])) {
-                if (!preg_match('/^\d{1,11}$/', $arConfigs['ACTION_CONFIG']['CHANGE_GROUP']['GROUP_ID']))
+                if (!preg_match('/^\d{1,11}$/', $arConfigs['ACTION_CONFIG']['CHANGE_GROUP']['GROUP_ID'])) {
                     $arConfigs['ACTION_CONFIG']['CHANGE_GROUP']['GROUP_ID'] = $arDefaultConfig['ACTION_CONFIG']['CHANGE_GROUP']['GROUP_ID']['DEFAULT'];
+                }
             }
 
             if (isset($arConfigs['ACTION_CONFIG']['CHANGE_UF'])) {
-                if (!preg_match('/^[0-9A-Z_]+$/', $arConfigs['ACTION_CONFIG']['CHANGE_UF']['UF_ID']))
+                if (!preg_match('/^[0-9A-Z_]+$/', $arConfigs['ACTION_CONFIG']['CHANGE_UF']['UF_ID'])) {
                     $arConfigs['ACTION_CONFIG']['CHANGE_UF']['UF_ID'] = $arDefaultConfig['ACTION_CONFIG']['CHANGE_UF']['UF_ID']['DEFAULT'];
+                }
             }
         }
 
@@ -508,31 +563,36 @@ class CAllRatingRulesMain
     }
 
     // assemble config default value
-    function __AssembleConfigDefault($objectType = null)
+    public static function __AssembleConfigDefault($objectType = null)
     {
         $arConfigs = array();
         $arRatingRuleConfigs = CRatingRulesMain::OnGetRatingRuleConfigs();
         if (is_null($objectType)) {
-            foreach ($arRatingRuleConfigs as $OBJ_TYPE => $TYPE_VALUE)
-                foreach ($TYPE_VALUE as $RULE_TYPE => $RULE_VALUE)
-                    foreach ($RULE_VALUE as $VALUE_CONFIG)
+            foreach ($arRatingRuleConfigs as $OBJ_TYPE => $TYPE_VALUE) {
+                foreach ($TYPE_VALUE as $RULE_TYPE => $RULE_VALUE) {
+                    foreach ($RULE_VALUE as $VALUE_CONFIG) {
                         foreach ($VALUE_CONFIG['FIELDS'] as $VALUE_FIELDS) {
                             $arConfigs[$OBJ_TYPE][$RULE_TYPE][$VALUE_CONFIG['ID']][$VALUE_FIELDS['ID']]['DEFAULT'] = $VALUE_FIELDS['DEFAULT'];
-                            if (isset($arConfigs[$OBJ_TYPE][$RULE_TYPE][$VALUE_CONFIG['ID']][$VALUE_FIELDS['ID']]['DEFAULT_INPUT']))
+                            if (isset($arConfigs[$OBJ_TYPE][$RULE_TYPE][$VALUE_CONFIG['ID']][$VALUE_FIELDS['ID']]['DEFAULT_INPUT'])) {
                                 $arConfigs[$OBJ_TYPE][$RULE_TYPE][$VALUE_CONFIG['ID']][$VALUE_FIELDS['ID']]['DEFAULT_INPUT'] = $VALUE_FIELDS['DEFAULT_INPUT'];
+                            }
                         }
+                    }
+                }
+            }
         } else {
-            foreach ($arRatingRuleConfigs[$objectType] as $RULE_TYPE => $RULE_VALUE)
-                foreach ($RULE_VALUE as $VALUE_CONFIG)
+            foreach ($arRatingRuleConfigs[$objectType] as $RULE_TYPE => $RULE_VALUE) {
+                foreach ($RULE_VALUE as $VALUE_CONFIG) {
                     foreach ($VALUE_CONFIG['FIELDS'] as $VALUE_FIELDS) {
                         $arConfigs[$RULE_TYPE][$VALUE_CONFIG['ID']][$VALUE_FIELDS['ID']]['DEFAULT'] = $VALUE_FIELDS['DEFAULT'];
-                        if (isset($arConfigs[$RULE_TYPE][$VALUE_CONFIG['ID']][$VALUE_FIELDS['ID']]['DEFAULT_INPUT']))
+                        if (isset($arConfigs[$RULE_TYPE][$VALUE_CONFIG['ID']][$VALUE_FIELDS['ID']]['DEFAULT_INPUT'])) {
                             $arConfigs[$RULE_TYPE][$VALUE_CONFIG['ID']][$VALUE_FIELDS['ID']]['DEFAULT_INPUT'] = $VALUE_FIELDS['DEFAULT_INPUT'];
+                        }
                     }
+                }
+            }
         }
 
         return $arConfigs;
     }
 }
-
-?>

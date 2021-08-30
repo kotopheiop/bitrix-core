@@ -44,7 +44,6 @@ class NumberField extends AbstractField
                 $opMore = '>=';
                 $opLess = '<=';
                 break;
-
         }
 
         if (is_numeric($data['from'])) {

@@ -72,7 +72,8 @@ class NumeratorRequestManager
             $nextNumber = $sequenceConfig['nextNumberForSequence'];
             if (is_numeric($nextNumber)) {
                 $sequence = NumeratorTable::query()
-                    ->registerRuntimeField('',
+                    ->registerRuntimeField(
+                        '',
                         new ReferenceField(
                             'ref',
                             NumeratorSequenceTable::class,
@@ -89,7 +90,11 @@ class NumeratorRequestManager
                 if ($sequence && count($sequence) == 1) {
                     $numerator = Numerator::load($id);
                     if ($numerator) {
-                        $res = $numerator->setNextSequentialNumber($nextNumber, $sequence[0]['NEXT_NUMBER'], $sequence[0]['TEXT_KEY']);
+                        $res = $numerator->setNextSequentialNumber(
+                            $nextNumber,
+                            $sequence[0]['NEXT_NUMBER'],
+                            $sequence[0]['TEXT_KEY']
+                        );
                         if (!$res->isSuccess()) {
                             $errors = $res->getErrors();
                             return $result->addError($errors[0]);

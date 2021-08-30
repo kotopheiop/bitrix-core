@@ -10,8 +10,9 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
 require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/sale/prolog.php');
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions < "W")
+if ($saleModulePermissions < "W") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 Main\Loader::includeModule('sale');
 
@@ -30,8 +31,9 @@ try {
     if (isset($_REQUEST['AJAX_MODE'])) {
         $data = array();
 
-        if ($_REQUEST['step'] == 0)
+        if ($_REQUEST['step'] == 0) {
             $migration->reset();
+        }
 
         try {
             $data['PERCENT'] = $migration->performStage();
@@ -42,11 +44,16 @@ try {
         }
 
         header('Content-Type: application/x-javascript; charset=' . LANG_CHARSET);
-        print(CUtil::PhpToJSObject(array(
-            'result' => $result,
-            'errors' => $errors,
-            'data' => $data
-        ), false, false, true));
+        print(CUtil::PhpToJSObject(
+            array(
+                'result' => $result,
+                'errors' => $errors,
+                'data' => $data
+            ),
+            false,
+            false,
+            true
+        ));
 
         die();
     }
@@ -89,15 +96,21 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
 
         <div class="bx-ui-loc-m-progressbar">
             <?
-            CAdminMessage::ShowMessage(array(
-                "TYPE" => "PROGRESS",
-                "DETAILS" => '#PROGRESS_BAR#' .
-                    '<div class="adm-loc-m-statusbar">' . Loc::getMessage('SALE_LOCATION_MIGRATION_STATUS') . ': <span class="bx-ui-loc-m-loader"></span>&nbsp;<span class="bx-ui-loc-m-status-text">' . Loc::getMessage('SALE_LOCATION_STAGE_INITIAL') . '</span></div>',
-                "HTML" => true,
-                "PROGRESS_TOTAL" => 100,
-                "PROGRESS_VALUE" => 0,
-                "PROGRESS_TEMPLATE" => '<span class="bx-ui-loc-m-percents">#PROGRESS_VALUE#</span>%'
-            ));
+            CAdminMessage::ShowMessage(
+                array(
+                    "TYPE" => "PROGRESS",
+                    "DETAILS" => '#PROGRESS_BAR#' .
+                        '<div class="adm-loc-m-statusbar">' . Loc::getMessage(
+                            'SALE_LOCATION_MIGRATION_STATUS'
+                        ) . ': <span class="bx-ui-loc-m-loader"></span>&nbsp;<span class="bx-ui-loc-m-status-text">' . Loc::getMessage(
+                            'SALE_LOCATION_STAGE_INITIAL'
+                        ) . '</span></div>',
+                    "HTML" => true,
+                    "PROGRESS_TOTAL" => 100,
+                    "PROGRESS_VALUE" => 0,
+                    "PROGRESS_TEMPLATE" => '<span class="bx-ui-loc-m-percents">#PROGRESS_VALUE#</span>%'
+                )
+            );
             ?>
         </div>
 
@@ -310,27 +323,34 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
 
         <?if(!CSaleLocation::isLocationProMigrated()):?>
 
-        new BX.locationMigration(<?=CUtil::PhpToJSObject(array(
+        new BX.locationMigration(<?=CUtil::PhpToJSObject(
+            array(
 
-            // common
-            'url' => Helper::getMigrationUrl(),
-            'scope' => 'location-migration',
-            'ajaxFlag' => 'AJAX_MODE',
-            'redirectTo' => LocationHelper::getListUrl(0),
+                // common
+                'url' => Helper::getMigrationUrl(),
+                'scope' => 'location-migration',
+                'ajaxFlag' => 'AJAX_MODE',
+                'redirectTo' => LocationHelper::getListUrl(0),
 
-            'messages' => array(
-                'error_occured' => Loc::getMessage('SALE_LOCATION_MIGRATION_ERROR'),
+                'messages' => array(
+                    'error_occured' => Loc::getMessage('SALE_LOCATION_MIGRATION_ERROR'),
 
-                'stage_CREATE_TYPES' => Loc::getMessage('SALE_LOCATION_MIGRATION_STAGE_CREATE_TYPES'),
-                'stage_CONVERT_TREE' => Loc::getMessage('SALE_LOCATION_MIGRATION_STAGE_CONVERT_TREE'),
-                'stage_CONVERT_ZONES' => Loc::getMessage('SALE_LOCATION_MIGRATION_STAGE_CONVERT_ZONES'),
-                'stage_CONVERT_LINKS' => Loc::getMessage('SALE_LOCATION_MIGRATION_STAGE_CONVERT_LINKS'),
-                'stage_COPY_DEFAULT_LOCATIONS' => Loc::getMessage('SALE_LOCATION_MIGRATION_STAGE_COPY_DEFAULT_LOCATIONS'),
-                'stage_COPY_ZIP_CODES' => Loc::getMessage('SALE_LOCATION_MIGRATION_STAGE_COPY_ZIP_CODES'),
-                'stage_COMPLETE' => Loc::getMessage('SALE_LOCATION_MIGRATION_STAGE_COMPLETE'),
-            )
+                    'stage_CREATE_TYPES' => Loc::getMessage('SALE_LOCATION_MIGRATION_STAGE_CREATE_TYPES'),
+                    'stage_CONVERT_TREE' => Loc::getMessage('SALE_LOCATION_MIGRATION_STAGE_CONVERT_TREE'),
+                    'stage_CONVERT_ZONES' => Loc::getMessage('SALE_LOCATION_MIGRATION_STAGE_CONVERT_ZONES'),
+                    'stage_CONVERT_LINKS' => Loc::getMessage('SALE_LOCATION_MIGRATION_STAGE_CONVERT_LINKS'),
+                    'stage_COPY_DEFAULT_LOCATIONS' => Loc::getMessage(
+                        'SALE_LOCATION_MIGRATION_STAGE_COPY_DEFAULT_LOCATIONS'
+                    ),
+                    'stage_COPY_ZIP_CODES' => Loc::getMessage('SALE_LOCATION_MIGRATION_STAGE_COPY_ZIP_CODES'),
+                    'stage_COMPLETE' => Loc::getMessage('SALE_LOCATION_MIGRATION_STAGE_COMPLETE'),
+                )
 
-        ), false, false, true)?>);
+            ),
+            false,
+            false,
+            true
+        )?>);
 
         <?endif?>
 

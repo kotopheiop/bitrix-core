@@ -15,8 +15,9 @@ class Extranet
 
     public static function getGroup($params, $userId = null)
     {
-        if (!self::checkModules())
+        if (!self::checkModules()) {
             return false;
+        }
 
         $params = is_array($params) ? $params : [];
 
@@ -84,8 +85,9 @@ class Extranet
             array("ID", "USER_ID", "GROUP_ID")
         );
         while ($row = $db->GetNext(true, false)) {
-            if ($row["USER_ID"] == $userId || !isset($groups['SG' . $row['GROUP_ID']]))
+            if ($row["USER_ID"] == $userId || !isset($groups['SG' . $row['GROUP_ID']])) {
                 continue;
+            }
 
             $groups['SG' . $row['GROUP_ID']]['USERS'][] = $row["USER_ID"];
         }

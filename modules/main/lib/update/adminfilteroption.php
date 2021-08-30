@@ -38,8 +38,9 @@ class AdminFilterOption extends Stepper
     public static function setFilterToConvert($filterId, $tableId, array $ratioFields)
     {
         $listFilter = Option::get(self::$moduleId, "listFilterToConvert", "");
-        if ($listFilter !== "")
-            $listFilter = unserialize($listFilter);
+        if ($listFilter !== "") {
+            $listFilter = unserialize($listFilter, ['allowed_classes' => false]);
+        }
         $listFilter = is_array($listFilter) ? $listFilter : array();
         if (!array_key_exists($filterId, $listFilter)) {
             $listFilter[$filterId] = array(
@@ -54,8 +55,9 @@ class AdminFilterOption extends Stepper
     public function execute(array &$option)
     {
         $listFilter = Option::get(self::$moduleId, "listFilterToConvert", "");
-        if ($listFilter !== "")
-            $listFilter = unserialize($listFilter);
+        if ($listFilter !== "") {
+            $listFilter = unserialize($listFilter, ['allowed_classes' => false]);
+        }
         $listFilter = is_array($listFilter) ? $listFilter : array();
         if (empty($listFilter)) {
             Option::delete(self::$moduleId, array("name" => "listFilterToConvert"));
@@ -67,16 +69,21 @@ class AdminFilterOption extends Stepper
         $sqlHelper = $connection->getSqlHelper();
 
         foreach ($listFilter as $filterId => $filter) {
-            $queryObject = $connection->query("SELECT * FROM `b_filters` WHERE `FILTER_ID` = '" . $sqlHelper->forSql(
-                    $filterId) . "' ORDER BY ID ASC LIMIT " . $this->limit . " OFFSET " . $filter["offset"]);
+            $queryObject = $connection->query(
+                "SELECT * FROM `b_filters` WHERE `FILTER_ID` = '" . $sqlHelper->forSql(
+                    $filterId
+                ) . "' ORDER BY ID ASC LIMIT " . $this->limit . " OFFSET " . $filter["offset"]
+            );
             $selectedRowsCount = $queryObject->getSelectedRowsCount();
             while ($oldFilter = $queryObject->fetch()) {
                 $filters = array();
                 $listNewPresetName = [];
-                $oldFields = unserialize($oldFilter["FIELDS"]);
+                $oldFields = unserialize($oldFilter["FIELDS"], ['allowed_classes' => false]);
                 if (is_array($oldFields)) {
                     list($newFields, $newRows) = $this->convertOldFieldsToNewFields(
-                        $oldFields, $filter["ratioFields"]);
+                        $oldFields,
+                        $filter["ratioFields"]
+                    );
                     $presetId = "filter_" . (time() + (int)$oldFilter["ID"]);
                     $filters[$presetId] = array(
                         "name" => $oldFilter["NAME"],
@@ -97,21 +104,29 @@ class AdminFilterOption extends Stepper
 					`NAME` = '" . $sqlHelper->forSql($filter["tableId"]) . "'"
                 );
                 if ($optionCurrentFilter = $queryOptionCurrentFilter->fetch()) {
-                    $optionCurrentFilterValue = unserialize($optionCurrentFilter["VALUE"]);
+                    $optionCurrentFilterValue = unserialize(
+                        $optionCurrentFilter["VALUE"],
+                        ['allowed_classes' => false]
+                    );
                     if (is_array($optionCurrentFilterValue)) {
                         if (!empty($optionCurrentFilterValue["filters"])) {
                             // This is a check whether presets exist with that name.
                             foreach ($optionCurrentFilterValue["filters"] as $currentFilter) {
                                 $name = (!empty($currentFilter["name"]) ? $currentFilter["name"] : "");
-                                $listNewPresetName = array_filter($listNewPresetName, function ($oldName) use ($name) {
-                                    return ($oldName !== $name);
-                                });
+                                $listNewPresetName = array_filter(
+                                    $listNewPresetName,
+                                    function ($oldName) use ($name) {
+                                        return ($oldName !== $name);
+                                    }
+                                );
                             }
 
                             $filters = array_intersect_key($filters, $listNewPresetName);
 
                             $optionCurrentFilterValue["filters"] = array_merge(
-                                $optionCurrentFilterValue["filters"], $filters);
+                                $optionCurrentFilterValue["filters"],
+                                $filters
+                            );
                             $optionCurrentFilterValue["update_default_presets"] = true;
 
                             $connection->query(
@@ -130,7 +145,9 @@ class AdminFilterOption extends Stepper
                         "INSERT INTO `b_user_option` 
 						(`ID`, `USER_ID`, `CATEGORY`, `NAME`, `VALUE`, `COMMON`) VALUES 
 						(NULL, '" . $sqlHelper->forSql($oldFilter["USER_ID"]) . "', 'main.ui.filter', '" .
-                        $sqlHelper->forSql($filter["tableId"]) . "', '" . $sqlHelper->forSql(serialize($optionNewFilter)) .
+                        $sqlHelper->forSql($filter["tableId"]) . "', '" . $sqlHelper->forSql(
+                            serialize($optionNewFilter)
+                        ) .
                         "', '" . $sqlHelper->forSql($oldFilter["COMMON"]) . "')"
                     );
                 }
@@ -160,30 +177,31 @@ class AdminFilterOption extends Stepper
         $newRows = [];
         foreach ($oldFields as $fieldId => $field) {
             if ($field["hidden"] !== "false" || (array_key_exists($fieldId, $ratioFields) &&
-                    array_key_exists($ratioFields[$fieldId], $newFields)))
+                    array_key_exists($ratioFields[$fieldId], $newFields))) {
                 continue;
+            }
 
             if (preg_match("/_FILTER_PERIOD/", $fieldId, $matches, PREG_OFFSET_CAPTURE)) {
                 $searchResult = current($matches);
                 $oldDateType = $field["value"];
-                $dateFieldId = substr($fieldId, 0, $searchResult[1]);
+                $dateFieldId = mb_substr($fieldId, 0, $searchResult[1]);
                 $dateValue = array_key_exists($dateFieldId . "_FILTER_DIRECTION", $oldFields) ?
                     $oldFields[$dateFieldId . "_FILTER_DIRECTION"]["value"] : "";
                 $newDateType = $this->getNewDateType($oldDateType, $dateValue);
 
                 $custom = false;
-                if (substr($dateFieldId, -2) == "_1") {
+                if (mb_substr($dateFieldId, -2) == "_1") {
                     $custom = true;
-                    $fieldId = substr($dateFieldId, 0, strlen($dateFieldId) - 2);
+                    $fieldId = mb_substr($dateFieldId, 0, mb_strlen($dateFieldId) - 2);
                 } else {
                     $fieldId = $dateFieldId;
                 }
 
                 if (!$custom) {
-                    if ((substr($fieldId, -5) == "_from")) {
-                        $fieldId = substr($fieldId, 0, strlen($fieldId) - 5);
-                    } elseif ((substr($fieldId, -3) == "_to")) {
-                        $fieldId = substr($fieldId, 0, strlen($fieldId) - 3);
+                    if ((mb_substr($fieldId, -5) == "_from")) {
+                        $fieldId = mb_substr($fieldId, 0, mb_strlen($fieldId) - 5);
+                    } elseif ((mb_substr($fieldId, -3) == "_to")) {
+                        $fieldId = mb_substr($fieldId, 0, mb_strlen($fieldId) - 3);
                     }
                 }
 
@@ -206,8 +224,8 @@ class AdminFilterOption extends Stepper
                 $newFields[$ratioFields[$fieldId] . "_month"] = "";
                 $newFields[$ratioFields[$fieldId] . "_quarter"] = "";
                 $newFields[$ratioFields[$fieldId] . "_year"] = "";
-            } elseif (substr($fieldId, -2) === "_1") {
-                $fieldId = substr($fieldId, 0, strlen($fieldId) - 2);
+            } elseif (mb_substr($fieldId, -2) === "_1") {
+                $fieldId = mb_substr($fieldId, 0, mb_strlen($fieldId) - 2);
                 if (array_key_exists($fieldId, $ratioFields) && array_key_exists($fieldId . "_2", $oldFields) &&
                     !array_key_exists($fieldId . "_FILTER_PERIOD", $oldFields)) {
                     $newFields[$ratioFields[$fieldId] . "_numsel"] = "range";
@@ -219,8 +237,8 @@ class AdminFilterOption extends Stepper
                 $newFields[$ratioFields[$fieldId] . "_numsel"] = "exact";
                 $newFields[$ratioFields[$fieldId] . "_from"] = $field["value"];
                 $newFields[$ratioFields[$fieldId] . "_to"] = $field["value"];
-            } elseif (substr($fieldId, -6) === "_start") {
-                $fieldId = substr($fieldId, 0, strlen($fieldId) - 6);
+            } elseif (mb_substr($fieldId, -6) === "_start") {
+                $fieldId = mb_substr($fieldId, 0, mb_strlen($fieldId) - 6);
                 if (array_key_exists($fieldId, $ratioFields) && array_key_exists($fieldId . "_end", $oldFields) &&
                     !array_key_exists($fieldId . "_FILTER_PERIOD", $oldFields)) {
                     $newFields[$ratioFields[$fieldId] . "_numsel"] = "range";
@@ -228,10 +246,10 @@ class AdminFilterOption extends Stepper
                     $newFields[$ratioFields[$fieldId] . "_end"] = $oldFields[$fieldId . "_end"]["value"];
                 }
             } elseif ((bool)strtotime($field["value"])) {
-                if ((substr($fieldId, -5) == "_from")) {
-                    $fieldId = substr($fieldId, 0, strlen($fieldId) - 5);
-                } elseif ((substr($fieldId, -3) == "_to")) {
-                    $fieldId = substr($fieldId, 0, strlen($fieldId) - 3);
+                if ((mb_substr($fieldId, -5) == "_from")) {
+                    $fieldId = mb_substr($fieldId, 0, mb_strlen($fieldId) - 5);
+                } elseif ((mb_substr($fieldId, -3) == "_to")) {
+                    $fieldId = mb_substr($fieldId, 0, mb_strlen($fieldId) - 3);
                 }
                 $from = "";
                 $to = "";
@@ -248,13 +266,16 @@ class AdminFilterOption extends Stepper
                     $newFields[$ratioFields[$fieldId] . "_quarter"] = "";
                     $newFields[$ratioFields[$fieldId] . "_year"] = "";
                 }
-            } elseif (substr($fieldId, -5) == "_from" && !array_key_exists($fieldId . "_FILTER_DIRECTION", $oldFields)) {
-                $fieldId = substr($fieldId, 0, strlen($fieldId) - 5);
+            } elseif (mb_substr($fieldId, -5) == "_from" && !array_key_exists(
+                    $fieldId . "_FILTER_DIRECTION",
+                    $oldFields
+                )) {
+                $fieldId = mb_substr($fieldId, 0, mb_strlen($fieldId) - 5);
                 $rangeType = (($oldFields[$fieldId . "_from"] === $oldFields[$fieldId . "_to"]) ? "exact" : "range");
                 $newFields[$ratioFields[$fieldId] . "_numsel"] = $rangeType;
                 $newFields[$ratioFields[$fieldId] . "_from"] = $field["value"];
-            } elseif (substr($fieldId, -3) == "_to") {
-                $fieldId = substr($fieldId, 0, strlen($fieldId) - 3);
+            } elseif (mb_substr($fieldId, -3) == "_to") {
+                $fieldId = mb_substr($fieldId, 0, mb_strlen($fieldId) - 3);
                 if (!array_key_exists($fieldId . "_from" . "_FILTER_DIRECTION", $oldFields)) {
                     $rangeType = (($oldFields[$fieldId . "_from"] === $oldFields[$fieldId . "_to"]) ? "exact" : "range");
                     $newFields[$ratioFields[$fieldId] . "_numsel"] = $rangeType;

@@ -55,22 +55,6 @@ class Twilio extends Sender\BaseConfigurable
         return is_array($from) ? $from : array();
     }
 
-    public function getDefaultFrom()
-    {
-        $fromList = $this->getFromList();
-        if (count($fromList) > 0) {
-            return $fromList[0]['id'];
-        }
-        return null;
-    }
-
-    public function setDefaultFrom($from)
-    {
-        //$from = (string)$from;
-        //$this->setOption('default_from', $from);
-        return $this;
-    }
-
     public function register(array $fields)
     {
         $sid = (string)$fields['account_sid'];
@@ -78,13 +62,18 @@ class Twilio extends Sender\BaseConfigurable
 
         $result = $this->callExternalMethod(
             HttpClient::HTTP_GET,
-            'Accounts/' . $sid, array(), $sid, $token
+            'Accounts/' . $sid,
+            array(),
+            $sid,
+            $token
         );
         if ($result->isSuccess()) {
             $data = $result->getData();
 
             if ($data['status'] !== 'active') {
-                $result->addError(new Error(Loc::getMessage('MESSAGESERVICE_SENDER_SMS_TWILIO_ERROR_ACCOUNT_INACTIVE')));
+                $result->addError(
+                    new Error(Loc::getMessage('MESSAGESERVICE_SENDER_SMS_TWILIO_ERROR_ACCOUNT_INACTIVE'))
+                );
             } else {
                 $this->setOption('account_sid', $sid);
                 $this->setOption('account_token', $token);
@@ -129,7 +118,7 @@ class Twilio extends Sender\BaseConfigurable
             $params['From'] = $this->getDefaultFrom();
         }
 
-        if (is_string($params['From']) && strlen($params['From']) === 34) //unique id of the Messaging Service
+        if (is_string($params['From']) && mb_strlen($params['From']) === 34) //unique id of the Messaging Service
         {
             $params['MessagingServiceSid'] = $params['From'];
             unset($params['From']);
@@ -176,10 +165,14 @@ class Twilio extends Sender\BaseConfigurable
             $resultData = $apiResult->getData();
             $result->setStatusCode($resultData['status']);
             $result->setStatusText($resultData['status']);
-            if (in_array($resultData['status'],
-                array('accepted', 'queued', 'sending', 'sent', 'delivered', 'undelivered', 'failed'))) {
+            if (in_array(
+                $resultData['status'],
+                array('accepted', 'queued', 'sending', 'sent', 'delivered', 'undelivered', 'failed')
+            )) {
                 $result->setStatusText(
-                    Loc::getMessage('MESSAGESERVICE_SENDER_SMS_TWILIO_MESSAGE_STATUS_' . strtoupper($resultData['status']))
+                    Loc::getMessage(
+                        'MESSAGESERVICE_SENDER_SMS_TWILIO_MESSAGE_STATUS_' . mb_strtoupper($resultData['status'])
+                    )
                 );
             }
         }
@@ -230,11 +223,13 @@ class Twilio extends Sender\BaseConfigurable
     {
         $url = 'https://api.twilio.com/2010-04-01/' . $apiMethod . '.json';
 
-        $httpClient = new HttpClient(array(
-            "socketTimeout" => 10,
-            "streamTimeout" => 30,
-            "waitResponse" => true,
-        ));
+        $httpClient = new HttpClient(
+            array(
+                "socketTimeout" => 10,
+                "streamTimeout" => 30,
+                "waitResponse" => true,
+            )
+        );
         $httpClient->setHeader('User-Agent', 'Bitrix24');
         $httpClient->setCharset('UTF-8');
 

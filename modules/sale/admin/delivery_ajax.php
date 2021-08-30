@@ -22,14 +22,15 @@ Loc::loadMessages(__FILE__);
 
 $arResult = array("ERROR" => "");
 
-if (!\Bitrix\Main\Loader::includeModule('sale'))
+if (!\Bitrix\Main\Loader::includeModule('sale')) {
     $arResult["ERROR"] = "Error! Can't include module \"Sale\"";
+}
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/lib/delivery/inputs.php");
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
 
-if (strlen($arResult["ERROR"]) <= 0 && $saleModulePermissions >= "W" && check_bitrix_sessid()) {
+if ($arResult["ERROR"] == '' && $saleModulePermissions >= "W" && check_bitrix_sessid()) {
     $action = isset($_REQUEST['action']) ? trim($_REQUEST['action']) : '';
 
     switch ($action) {
@@ -53,8 +54,9 @@ if (strlen($arResult["ERROR"]) <= 0 && $saleModulePermissions >= "W" && check_bi
             $sort = isset($_REQUEST['sort']) ? intval($_REQUEST['sort']) : 100;
 
             /** @var \Bitrix\Sale\Delivery\Restrictions\Base $className */
-            if (!$className)
+            if (!$className) {
                 throw new \Bitrix\Main\ArgumentNullException("className");
+            }
 
             Restrictions\Manager::getClassesList();
             $paramsStructure = $className::getParamsStructure($deliveryId);
@@ -65,8 +67,12 @@ if (strlen($arResult["ERROR"]) <= 0 && $saleModulePermissions >= "W" && check_bi
 
             foreach ($paramsStructure as $name => $param) {
                 $paramsField .= "<tr>" .
-                    "<td valign=\"top\" style=\"padding-right:20px;\">" . (strlen($param["LABEL"]) > 0 ? $param["LABEL"] . ": " : "") . "</td>" .
-                    "<td>" . \Bitrix\Sale\Internals\Input\Manager::getEditHtml("RESTRICTION[" . $name . "]", $param, (isset($params[$name]) ? $params[$name] : null)) . "</td>" .
+                    "<td valign=\"top\" style=\"padding-right:20px;\">" . ($param["LABEL"] <> '' ? $param["LABEL"] . ": " : "") . "</td>" .
+                    "<td>" . \Bitrix\Sale\Internals\Input\Manager::getEditHtml(
+                        "RESTRICTION[" . $name . "]",
+                        $param,
+                        (isset($params[$name]) ? $params[$name] : null)
+                    ) . "</td>" .
                     "</tr>";
             }
 
@@ -75,11 +81,13 @@ if (strlen($arResult["ERROR"]) <= 0 && $saleModulePermissions >= "W" && check_bi
                 '<td><input type="text" name="SORT" value="' . $sort . '"></td>' .
                 '</tr>';
 
-            if (strlen($className::getClassDescription()) > 0)
+            if ($className::getClassDescription() <> '') {
                 $paramsField .= '<tr>' .
                     '<td>' . Loc::getMessage("SALE_DA_DESCR") . ':</td>' .
-                    '<td><div class="adm-sale-delivery-restriction-descr">' . $className::getClassDescription() . '</div></td>' .
+                    '<td><div class="adm-sale-delivery-restriction-descr">' . $className::getClassDescription(
+                    ) . '</div></td>' .
                     '</tr>';
+            }
 
             $arResult["RESTRICTION_HTML"] = $paramsField . "</table>";
             break;
@@ -91,25 +99,32 @@ if (strlen($arResult["ERROR"]) <= 0 && $saleModulePermissions >= "W" && check_bi
             $deliveryId = isset($_REQUEST['deliveryId']) ? intval($_REQUEST['deliveryId']) : 0;
             $restrictionId = isset($_REQUEST['restrictionId']) ? intval($_REQUEST['restrictionId']) : 0;
 
-            if (!$className)
+            if (!$className) {
                 throw new \Bitrix\Main\ArgumentNullException("className");
+            }
 
-            if (!$deliveryId)
+            if (!$deliveryId) {
                 throw new \Bitrix\Main\ArgumentNullException("deliveryId");
+            }
 
             Restrictions\Manager::getClassesList();
 
             /** @var \Bitrix\Sale\Delivery\Restrictions\Base $className */
 
             if (!is_subclass_of($className, 'Bitrix\Sale\Services\Base\Restriction')) {
-                throw new \Bitrix\Main\SystemException($className . ' is not a child of Bitrix\Sale\Services\Base\Restriction' . ' (' . get_parent_class($className) . ')');
+                throw new \Bitrix\Main\SystemException(
+                    $className . ' is not a child of Bitrix\Sale\Services\Base\Restriction' . ' (' . get_parent_class(
+                        $className
+                    ) . ')'
+                );
             }
 
             foreach ($className::getParamsStructure() as $key => $rParams) {
                 $errors = \Bitrix\Sale\Internals\Input\Manager::getError($rParams, $params[$key]);
 
-                if (!empty($errors))
+                if (!empty($errors)) {
                     $arResult["ERROR"] = "Field: \"" . $rParams["LABEL"] . "\" " . implode("<br>", $errors) . "<br>\n";
+                }
             }
 
             $fields = array(
@@ -121,8 +136,9 @@ if (strlen($arResult["ERROR"]) <= 0 && $saleModulePermissions >= "W" && check_bi
 
             $res = $className::save($fields, $restrictionId);
 
-            if (!$res->isSuccess())
+            if (!$res->isSuccess()) {
                 $arResult["ERROR"] .= implode(".", $res->getErrorMessages());
+            }
 
             $arResult["HTML"] = getRestrictionHtml($deliveryId);
 
@@ -132,16 +148,18 @@ if (strlen($arResult["ERROR"]) <= 0 && $saleModulePermissions >= "W" && check_bi
             $restrictionId = isset($_REQUEST['restrictionId']) ? intval($_REQUEST['restrictionId']) : 0;
             $deliveryId = isset($_REQUEST['deliveryId']) ? intval($_REQUEST['deliveryId']) : 0;
 
-            if (!$restrictionId)
+            if (!$restrictionId) {
                 throw new \Bitrix\Main\ArgumentNullException('restrictionId');
+            }
 
             $dbRes = \Bitrix\Sale\Internals\ServiceRestrictionTable::getById($restrictionId);
             Restrictions\Manager::getClassesList();
             if ($fields = $dbRes->fetch()) {
                 $res = $fields["CLASS_NAME"]::delete($restrictionId, $deliveryId);
 
-                if (!$res->isSuccess())
+                if (!$res->isSuccess()) {
                     $arResult["ERROR"] .= implode(".", $res->getErrorMessages());
+                }
             } else {
                 $arResult["ERROR"] .= "Can't find restriction with id: " . $restrictionId;
             }
@@ -155,25 +173,29 @@ if (strlen($arResult["ERROR"]) <= 0 && $saleModulePermissions >= "W" && check_bi
             break;
     }
 } else {
-    if (strlen($arResult["ERROR"]) <= 0)
+    if ($arResult["ERROR"] == '') {
         $arResult["ERROR"] = "Error! Access denied";
+    }
 }
 
-if (strlen($arResult["ERROR"]) > 0)
+if ($arResult["ERROR"] <> '') {
     $arResult["RESULT"] = "ERROR";
-else
+} else {
     $arResult["RESULT"] = "OK";
+}
 
-if (strtolower(SITE_CHARSET) != 'utf-8')
+if (mb_strtolower(SITE_CHARSET) != 'utf-8') {
     $arResult = $APPLICATION->ConvertCharsetArray($arResult, SITE_CHARSET, 'utf-8');
+}
 
 header('Content-Type: application/json');
 die(json_encode($arResult));
 
 function getRestrictionHtml($deliveryId)
 {
-    if (intval($deliveryId) <= 0)
+    if (intval($deliveryId) <= 0) {
         throw new \Bitrix\Main\ArgumentNullException("deliveryId");
+    }
 
     $_REQUEST['table_id'] = 'table_delivery_restrictions';
     $_REQUEST['admin_history'] = 'Y';

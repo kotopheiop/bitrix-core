@@ -68,9 +68,8 @@ class Network
             }
         }
 
-        global $USER;
-        if (Loader::includeModule('replica')) {
-            if (is_object($USER) && $USER->GetID() > 0 && \Bitrix\Replica\Client\User::getGuid($USER->GetID()) === false) {
+        if (Loader::includeModule('socialservices')) {
+            if (\CSocServAuthManager::GetAuthorizedServiceId() !== \CSocServBitrix24Net::ID) {
                 return false;
             }
         } else {
@@ -89,22 +88,30 @@ class Network
      */
     public function setEnable($enable = true)
     {
-        if ($this->isOptionEnabled() && $enable)
+        if ($this->isOptionEnabled() && $enable) {
             return true;
+        }
 
-        if (!$this->isOptionEnabled() && !$enable)
+        if (!$this->isOptionEnabled() && !$enable) {
             return true;
+        }
 
         $query = \CBitrix24NetPortalTransport::init();
         if (!$query) {
-            $this->errorCollection[] = new Error(Loc::getMessage('B24NET_SOCSERV_TRANSPORT_ERROR'), self::ERROR_SOCSERV_TRANSPORT);
+            $this->errorCollection[] = new Error(
+                Loc::getMessage('B24NET_SOCSERV_TRANSPORT_ERROR'),
+                self::ERROR_SOCSERV_TRANSPORT
+            );
             return false;
         }
 
-        $queryResult = $query->call('feature.enable', array(
-            'FEATURE' => 'replica',
-            'STATUS' => (bool)$enable,
-        ));
+        $queryResult = $query->call(
+            'feature.enable',
+            array(
+                'FEATURE' => 'replica',
+                'STATUS' => (bool)$enable,
+            )
+        );
 
         Option::set('socialservices', 'network_enable', $enable ? 'Y' : 'N');
 
@@ -122,25 +129,37 @@ class Network
     public function searchUser($search)
     {
         if (!$this->isEnabled()) {
-            $this->errorCollection[] = new Error(Loc::getMessage('B24NET_NETWORK_IN_NOT_ENABLED'), self::ERROR_NETWORK_IN_NOT_ENABLED);
+            $this->errorCollection[] = new Error(
+                Loc::getMessage('B24NET_NETWORK_IN_NOT_ENABLED'),
+                self::ERROR_NETWORK_IN_NOT_ENABLED
+            );
             return null;
         }
 
         $search = trim($search);
-        if (strlen($search) < 3) {
-            $this->errorCollection[] = new Error(Loc::getMessage('B24NET_SEARCH_STRING_TO_SHORT'), self::ERROR_SEARCH_STRING_TO_SHORT);
+        if (mb_strlen($search) < 3) {
+            $this->errorCollection[] = new Error(
+                Loc::getMessage('B24NET_SEARCH_STRING_TO_SHORT'),
+                self::ERROR_SEARCH_STRING_TO_SHORT
+            );
             return null;
         }
 
         $query = \CBitrix24NetPortalTransport::init();
         if (!$query) {
-            $this->errorCollection[] = new Error(Loc::getMessage('B24NET_SOCSERV_TRANSPORT_ERROR'), self::ERROR_SOCSERV_TRANSPORT);
+            $this->errorCollection[] = new Error(
+                Loc::getMessage('B24NET_SOCSERV_TRANSPORT_ERROR'),
+                self::ERROR_SOCSERV_TRANSPORT
+            );
             return null;
         }
 
-        $queryResult = $query->call('profile.search', array(
-            'QUERY' => $search
-        ));
+        $queryResult = $query->call(
+            'profile.search',
+            array(
+                'QUERY' => $search
+            )
+        );
 
         $result = Array();
         foreach ($queryResult['result'] as $user) {
@@ -157,11 +176,14 @@ class Network
     {
         $query = \CBitrix24NetPortalTransport::init();
         if ($query) {
-            $query->call('profile.send', array(
-                'TYPE' => 'mobile_application_link',
-                'PHONE' => $phone,
-                'LANGUAGE_ID' => $language_id,
-            ));
+            $query->call(
+                'profile.send',
+                array(
+                    'TYPE' => 'mobile_application_link',
+                    'PHONE' => $phone,
+                    'LANGUAGE_ID' => $language_id,
+                )
+            );
         }
     }
 
@@ -187,25 +209,37 @@ class Network
     public function getUsers($networkIds, $lastSearch = '')
     {
         if (!$this->isEnabled()) {
-            $this->errorCollection[] = new Error(Loc::getMessage('B24NET_NETWORK_IN_NOT_ENABLED'), self::ERROR_NETWORK_IN_NOT_ENABLED);
+            $this->errorCollection[] = new Error(
+                Loc::getMessage('B24NET_NETWORK_IN_NOT_ENABLED'),
+                self::ERROR_NETWORK_IN_NOT_ENABLED
+            );
             return null;
         }
 
         $query = \CBitrix24NetPortalTransport::init();
         if (!$query) {
-            $this->errorCollection[] = new Error(Loc::getMessage('B24NET_SOCSERV_TRANSPORT_ERROR'), self::ERROR_SOCSERV_TRANSPORT);
+            $this->errorCollection[] = new Error(
+                Loc::getMessage('B24NET_SOCSERV_TRANSPORT_ERROR'),
+                self::ERROR_SOCSERV_TRANSPORT
+            );
             return null;
         }
 
         if (!is_array($networkIds) || empty($networkIds)) {
-            $this->errorCollection[] = new Error(Loc::getMessage('B24NET_ERROR_INCORRECT_PARAMS'), self::ERROR_INCORRECT_PARAMS);
+            $this->errorCollection[] = new Error(
+                Loc::getMessage('B24NET_ERROR_INCORRECT_PARAMS'),
+                self::ERROR_INCORRECT_PARAMS
+            );
             return null;
         }
 
-        $queryResult = $query->call('profile.search', array(
-            'ID' => array_values($networkIds),
-            'QUERY' => trim($lastSearch)
-        ));
+        $queryResult = $query->call(
+            'profile.search',
+            array(
+                'ID' => array_values($networkIds),
+                'QUERY' => trim($lastSearch)
+            )
+        );
 
         $result = null;
         foreach ($queryResult['result'] as $user) {
@@ -216,7 +250,10 @@ class Network
         }
 
         if (!$result) {
-            $this->errorCollection[] = new Error(Loc::getMessage('B24NET_SEARCH_USER_NOT_FOUND'), self::ERROR_SEARCH_USER_NOT_FOUND);
+            $this->errorCollection[] = new Error(
+                Loc::getMessage('B24NET_SEARCH_USER_NOT_FOUND'),
+                self::ERROR_SEARCH_USER_NOT_FOUND
+            );
             return null;
         }
 
@@ -288,7 +325,9 @@ class Network
      */
     public function addUser($params)
     {
-        $password = md5($params['XML_ID'] . '|' . $params['CLIENT_DOMAIN'] . '|' . rand(1000, 9999) . '|' . time() . '|' . uniqid());
+        $password = md5(
+            $params['XML_ID'] . '|' . $params['CLIENT_DOMAIN'] . '|' . rand(1000, 9999) . '|' . time() . '|' . uniqid()
+        );
         $photo = \CFile::MakeFileArray($params['PERSONAL_PHOTO_ORIGINAL']);
         $groups = Array();
 
@@ -323,7 +362,11 @@ class Network
             return false;
         }
 
-        $event = new Event("socialservices", "OnAfterRegisterUserByNetwork", array($userId, $params['NETWORK_USER_ID'], $params['CLIENT_DOMAIN']));
+        $event = new Event(
+            "socialservices",
+            "OnAfterRegisterUserByNetwork",
+            array($userId, $params['NETWORK_USER_ID'], $params['CLIENT_DOMAIN'])
+        );
         $event->send();
 
         return $userId;
@@ -366,19 +409,22 @@ class Network
      */
     public static function getUsersId($networkIds)
     {
-        if (!is_array($networkIds))
+        if (!is_array($networkIds)) {
             return null;
+        }
 
         $searchArray = Array();
         foreach ($networkIds as $networkId) {
-            $searchArray[] = substr($networkId, 0, 1) . intval(substr($networkId, 1)) . "|%";
+            $searchArray[] = mb_substr($networkId, 0, 1) . intval(mb_substr($networkId, 1)) . "|%";
         }
 
-        $result = \Bitrix\Main\UserTable::getList(Array(
-            'select' => Array('ID', 'WORK_PHONE', 'PERSONAL_PHONE', 'PERSONAL_MOBILE', 'UF_PHONE_INNER', 'XML_ID'),
-            'filter' => Array('=%XML_ID' => $searchArray, '=EXTERNAL_AUTH_ID' => self::EXTERNAL_AUTH_ID),
-            'order' => 'ID'
-        ));
+        $result = \Bitrix\Main\UserTable::getList(
+            Array(
+                'select' => Array('ID', 'WORK_PHONE', 'PERSONAL_PHONE', 'PERSONAL_MOBILE', 'UF_PHONE_INNER', 'XML_ID'),
+                'filter' => Array('=%XML_ID' => $searchArray, '=EXTERNAL_AUTH_ID' => self::EXTERNAL_AUTH_ID),
+                'order' => 'ID'
+            )
+        );
 
         $users = Array();
         while ($user = $result->fetch()) {
@@ -403,10 +449,12 @@ class Network
         if (empty($params['NAME'])) {
             if (!empty($params['PUBLIC_NAME'])) {
                 $params['NAME'] = $params['PUBLIC_NAME'];
-            } else if (!empty($params['EMAIL'])) {
-                $params['NAME'] = $params['EMAIL'];
             } else {
-                return false;
+                if (!empty($params['EMAIL'])) {
+                    $params['NAME'] = $params['EMAIL'];
+                } else {
+                    return false;
+                }
             }
         }
 
@@ -438,12 +486,14 @@ class Network
         global $USER;
         if (static::getAdminPopupSession()) // duplicated check, just to be clear
         {
-            $dbRes = UserTable::getList(array(
-                'filter' => array(
-                    '=USER_ID' => $USER->GetID(),
-                    '=EXTERNAL_AUTH_ID' => \CSocServBitrix24Net::ID
+            $dbRes = UserTable::getList(
+                array(
+                    'filter' => array(
+                        '=USER_ID' => $USER->GetID(),
+                        '=EXTERNAL_AUTH_ID' => \CSocServBitrix24Net::ID
+                    )
                 )
-            ));
+            );
             if (!$dbRes->fetch()) {
                 static::initAdminPopup($params);
             } else {
@@ -455,20 +505,23 @@ class Network
     public static function initAdminPopup(array $params = array())
     {
         $option = static::getShowOptions();
-        \CJSCore::registerExt("socialservices_admin", array(
-            'js' => "/bitrix/js/socialservices/ss_admin.js",
-            'css' => "/bitrix/js/socialservices/css/ss_admin.css",
-            'rel' => array("ajax", "window"),
-            'lang_additional' => array(
-                "SS_NETWORK_DISPLAY" => $params["SHOW"] ? "Y" : "N",
-                "SS_NETWORK_URL" => static::getAuthUrl("popup", array("admin")),
-                "SS_NETWORK_POPUP_TITLE" => Loc::getMessage('B24NET_POPUP_TITLE'),
-                "SS_NETWORK_POPUP_CONNECT" => Loc::getMessage('B24NET_POPUP_CONNECT'),
-                "SS_NETWORK_POPUP_TEXT" => Loc::getMessage('B24NET_POPUP_TEXT'),
-                "SS_NETWORK_POPUP_DONTSHOW" => Loc::getMessage('B24NET_POPUP_DONTSHOW'),
-                "SS_NETWORK_POPUP_COUNT" => $option["showcount"],
+        \CJSCore::registerExt(
+            "socialservices_admin",
+            array(
+                'js' => "/bitrix/js/socialservices/ss_admin.js",
+                'css' => "/bitrix/js/socialservices/css/ss_admin.css",
+                'rel' => array("ajax", "window"),
+                'lang_additional' => array(
+                    "SS_NETWORK_DISPLAY" => $params["SHOW"] ? "Y" : "N",
+                    "SS_NETWORK_URL" => static::getAuthUrl("popup", array("admin")),
+                    "SS_NETWORK_POPUP_TITLE" => Loc::getMessage('B24NET_POPUP_TITLE'),
+                    "SS_NETWORK_POPUP_CONNECT" => Loc::getMessage('B24NET_POPUP_CONNECT'),
+                    "SS_NETWORK_POPUP_TEXT" => Loc::getMessage('B24NET_POPUP_TEXT'),
+                    "SS_NETWORK_POPUP_DONTSHOW" => Loc::getMessage('B24NET_POPUP_DONTSHOW'),
+                    "SS_NETWORK_POPUP_COUNT" => $option["showcount"],
+                )
             )
-        ));
+        );
         \CJSCore::init(array("socialservices_admin"));
     }
 
@@ -512,7 +565,8 @@ class Network
     {
         global $USER;
 
-        $result = !isset($_SESSION[static::ADMIN_SESSION_KEY]) || $_SESSION[static::ADMIN_SESSION_KEY] !== $USER->GetID();
+        $result = !isset($_SESSION[static::ADMIN_SESSION_KEY]) || $_SESSION[static::ADMIN_SESSION_KEY] !== $USER->GetID(
+            );
         if ($result) {
             $option = static::getShowOptions();
             $result = $option["dontshow"] !== "Y";
@@ -531,7 +585,11 @@ class Network
         }
 
         if (isset($settings["REGISTER_CONFIRM"])) {
-            Option::set("socialservices", "new_user_registration_confirm", $settings["REGISTER_CONFIRM"] == "Y" ? "Y" : "N");
+            Option::set(
+                "socialservices",
+                "new_user_registration_confirm",
+                $settings["REGISTER_CONFIRM"] == "Y" ? "Y" : "N"
+            );
         }
 
         if (isset($settings["REGISTER_WHITELIST"])) {
@@ -555,7 +613,16 @@ class Network
         return array(
             "REGISTER" => Option::get("socialservices", "new_user_registration_network", "N"),
             "REGISTER_CONFIRM" => Option::get("socialservices", "new_user_registration_confirm", "N"),
-            "REGISTER_WHITELIST" => implode(';', unserialize(Option::get("socialservices", "new_user_registration_whitelist", serialize(array())))),
+            "REGISTER_WHITELIST" => implode(
+                ';',
+                unserialize(
+                    Option::get(
+                        "socialservices",
+                        "new_user_registration_whitelist",
+                        serialize(array())
+                    )
+                )
+            ),
             "REGISTER_TEXT" => Option::get("socialservices", "new_user_registration_text", ""),
             "REGISTER_SECRET" => Option::get("socialservices", "new_user_registration_secret", ""),
         );
@@ -567,11 +634,16 @@ class Network
         if ($query) {
             $options = static::getRegisterSettings();
 
-            $query->call("portal.option.set", array('options' => array(
-                'REGISTER' => $options["REGISTER"] === "Y",
-                'REGISTER_TEXT' => $options["REGISTER_TEXT"],
-                "REGISTER_SECRET" => $options["REGISTER_SECRET"],
-            )));
+            $query->call(
+                "portal.option.set",
+                array(
+                    'options' => array(
+                        'REGISTER' => $options["REGISTER"] === "Y",
+                        'REGISTER_TEXT' => $options["REGISTER_TEXT"],
+                        "REGISTER_SECRET" => $options["REGISTER_SECRET"],
+                    )
+                )
+            );
         }
     }
 

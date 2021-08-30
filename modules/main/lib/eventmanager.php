@@ -54,8 +54,8 @@ class EventManager
             "TO_NAME" => $this->formatEventName(array("CALLBACK" => $callback)),
         );
 
-        $fromModuleId = strtoupper($fromModuleId);
-        $eventType = strtoupper($eventType);
+        $fromModuleId = mb_strtoupper($fromModuleId);
+        $eventType = mb_strtoupper($eventType);
 
         if (!isset($this->handlers[$fromModuleId]) || !is_array($this->handlers[$fromModuleId])) {
             $this->handlers[$fromModuleId] = array();
@@ -104,8 +104,8 @@ class EventManager
 
     public function removeEventHandler($fromModuleId, $eventType, $iEventHandlerKey)
     {
-        $fromModuleId = strtoupper($fromModuleId);
-        $eventType = strtoupper($eventType);
+        $fromModuleId = mb_strtoupper($fromModuleId);
+        $eventType = mb_strtoupper($eventType);
 
         if (is_array($this->handlers[$fromModuleId][$eventType])) {
             if (isset($this->handlers[$fromModuleId][$eventType][$iEventHandlerKey])) {
@@ -117,9 +117,18 @@ class EventManager
         return false;
     }
 
-    public function unRegisterEventHandler($fromModuleId, $eventType, $toModuleId, $toClass = "", $toMethod = "", $toPath = "", $toMethodArg = array())
-    {
-        $toMethodArg = ((!is_array($toMethodArg) || is_array($toMethodArg) && empty($toMethodArg)) ? "" : serialize($toMethodArg));
+    public function unRegisterEventHandler(
+        $fromModuleId,
+        $eventType,
+        $toModuleId,
+        $toClass = "",
+        $toMethod = "",
+        $toPath = "",
+        $toMethodArg = array()
+    ) {
+        $toMethodArg = ((!is_array($toMethodArg) || is_array($toMethodArg) && empty($toMethodArg)) ? "" : serialize(
+            $toMethodArg
+        ));
 
         $con = Application::getConnection();
         $sqlHelper = $con->getSqlHelper();
@@ -129,33 +138,92 @@ class EventManager
             "WHERE FROM_MODULE_ID='" . $sqlHelper->forSql($fromModuleId) . "'" .
             "	AND MESSAGE_ID='" . $sqlHelper->forSql($eventType) . "' " .
             "	AND TO_MODULE_ID='" . $sqlHelper->forSql($toModuleId) . "' " .
-            (($toClass != "") ? " AND TO_CLASS='" . $sqlHelper->forSql($toClass) . "' " : " AND (TO_CLASS='' OR TO_CLASS IS NULL) ") .
-            (($toMethod != "") ? " AND TO_METHOD='" . $sqlHelper->forSql($toMethod) . "'" : " AND (TO_METHOD='' OR TO_METHOD IS NULL) ") .
-            (($toPath != "" && $toPath !== 1/*controller disconnect correction*/) ? " AND TO_PATH='" . $sqlHelper->forSql($toPath) . "'" : " AND (TO_PATH='' OR TO_PATH IS NULL) ") .
-            (($toMethodArg != "") ? " AND TO_METHOD_ARG='" . $sqlHelper->forSql($toMethodArg) . "'" : " AND (TO_METHOD_ARG='' OR TO_METHOD_ARG IS NULL) ");
+            (($toClass != "") ? " AND TO_CLASS='" . $sqlHelper->forSql(
+                    $toClass
+                ) . "' " : " AND (TO_CLASS='' OR TO_CLASS IS NULL) ") .
+            (($toMethod != "") ? " AND TO_METHOD='" . $sqlHelper->forSql(
+                    $toMethod
+                ) . "'" : " AND (TO_METHOD='' OR TO_METHOD IS NULL) ") .
+            (($toPath != "" && $toPath !== 1/*controller disconnect correction*/) ? " AND TO_PATH='" . $sqlHelper->forSql(
+                    $toPath
+                ) . "'" : " AND (TO_PATH='' OR TO_PATH IS NULL) ") .
+            (($toMethodArg != "") ? " AND TO_METHOD_ARG='" . $sqlHelper->forSql(
+                    $toMethodArg
+                ) . "'" : " AND (TO_METHOD_ARG='' OR TO_METHOD_ARG IS NULL) ");
 
         $con->queryExecute($strSql);
 
         $this->clearLoadedHandlers();
     }
 
-    public function registerEventHandler($fromModuleId, $eventType, $toModuleId, $toClass = "", $toMethod = "", $sort = 100, $toPath = "", $toMethodArg = array())
-    {
-        $this->registerEventHandlerInternal($fromModuleId, $eventType, $toModuleId, $toClass, $toMethod, $sort, $toPath, $toMethodArg, 2);
+    public function registerEventHandler(
+        $fromModuleId,
+        $eventType,
+        $toModuleId,
+        $toClass = "",
+        $toMethod = "",
+        $sort = 100,
+        $toPath = "",
+        $toMethodArg = array()
+    ) {
+        $this->registerEventHandlerInternal(
+            $fromModuleId,
+            $eventType,
+            $toModuleId,
+            $toClass,
+            $toMethod,
+            $sort,
+            $toPath,
+            $toMethodArg,
+            2
+        );
     }
 
-    public function registerEventHandlerCompatible($fromModuleId, $eventType, $toModuleId, $toClass = "", $toMethod = "", $sort = 100, $toPath = "", $toMethodArg = array())
-    {
-        $this->registerEventHandlerInternal($fromModuleId, $eventType, $toModuleId, $toClass, $toMethod, $sort, $toPath, $toMethodArg, 1);
+    public function registerEventHandlerCompatible(
+        $fromModuleId,
+        $eventType,
+        $toModuleId,
+        $toClass = "",
+        $toMethod = "",
+        $sort = 100,
+        $toPath = "",
+        $toMethodArg = array()
+    ) {
+        $this->registerEventHandlerInternal(
+            $fromModuleId,
+            $eventType,
+            $toModuleId,
+            $toClass,
+            $toMethod,
+            $sort,
+            $toPath,
+            $toMethodArg,
+            1
+        );
     }
 
-    protected function registerEventHandlerInternal($fromModuleId, $eventType, $toModuleId, $toClass, $toMethod, $sort, $toPath, $toMethodArg, $version)
-    {
-        $toMethodArg = ((!is_array($toMethodArg) || is_array($toMethodArg) && empty($toMethodArg)) ? "" : serialize($toMethodArg));
+    protected function registerEventHandlerInternal(
+        $fromModuleId,
+        $eventType,
+        $toModuleId,
+        $toClass,
+        $toMethod,
+        $sort,
+        $toPath,
+        $toMethodArg,
+        $version
+    ) {
+        $toMethodArg = ((!is_array($toMethodArg) || is_array($toMethodArg) && empty($toMethodArg)) ? "" : serialize(
+            $toMethodArg
+        ));
         $sort = intval($sort);
         $version = intval($version);
 
-        $uniqueID = md5(strtolower($fromModuleId . '.' . $eventType . '.' . $toModuleId . '.' . $toPath . '.' . $toClass . '.' . $toMethod . '.' . $toMethodArg . '.' . $version));
+        $uniqueID = md5(
+            mb_strtolower(
+                $fromModuleId . '.' . $eventType . '.' . $toModuleId . '.' . $toPath . '.' . $toClass . '.' . $toMethod . '.' . $toMethodArg . '.' . $version
+            )
+        );
 
         $con = Application::getConnection();
         $sqlHelper = $con->getSqlHelper();
@@ -183,7 +251,9 @@ class EventManager
         $strName = '';
         if (isset($arEvent["CALLBACK"])) {
             if (is_array($arEvent["CALLBACK"])) {
-                $strName .= (is_object($arEvent["CALLBACK"][0]) ? get_class($arEvent["CALLBACK"][0]) : $arEvent["CALLBACK"][0]) . '::' . $arEvent["CALLBACK"][1];
+                $strName .= (is_object($arEvent["CALLBACK"][0]) ? get_class(
+                        $arEvent["CALLBACK"][0]
+                    ) : $arEvent["CALLBACK"][0]) . '::' . $arEvent["CALLBACK"][1];
             } elseif (is_callable($arEvent["CALLBACK"])) {
                 $strName .= "callable";
             } else {
@@ -207,13 +277,15 @@ class EventManager
             $arEvents = array();
 
             $con = Application::getConnection();
-            $rs = $con->query("
+            $rs = $con->query(
+                "
 				SELECT FROM_MODULE_ID, MESSAGE_ID, SORT, TO_MODULE_ID, TO_PATH,
 					TO_CLASS, TO_METHOD, TO_METHOD_ARG, VERSION
 				FROM b_module_to_module m2m
 					INNER JOIN b_module m ON (m2m.TO_MODULE_ID = m.ID)
 				ORDER BY SORT
-			");
+			"
+            );
             while ($ar = $rs->fetch()) {
                 $ar['TO_NAME'] = $this->formatEventName(
                     array(
@@ -222,10 +294,10 @@ class EventManager
                         "TO_METHOD" => $ar["TO_METHOD"]
                     )
                 );
-                $ar["~FROM_MODULE_ID"] = strtoupper($ar["FROM_MODULE_ID"]);
-                $ar["~MESSAGE_ID"] = strtoupper($ar["MESSAGE_ID"]);
-                if (strlen($ar["TO_METHOD_ARG"]) > 0) {
-                    $ar["TO_METHOD_ARG"] = unserialize($ar["TO_METHOD_ARG"]);
+                $ar["~FROM_MODULE_ID"] = mb_strtoupper($ar["FROM_MODULE_ID"]);
+                $ar["~MESSAGE_ID"] = mb_strtoupper($ar["MESSAGE_ID"]);
+                if ($ar["TO_METHOD_ARG"] <> '') {
+                    $ar["TO_METHOD_ARG"] = unserialize($ar["TO_METHOD_ARG"], ['allowed_classes' => false]);
                 } else {
                     $ar["TO_METHOD_ARG"] = array();
                 }
@@ -299,8 +371,8 @@ class EventManager
             $this->loadEventHandlers();
         }
 
-        $eventModuleId = strtoupper($eventModuleId);
-        $eventType = strtoupper($eventType);
+        $eventModuleId = mb_strtoupper($eventModuleId);
+        $eventType = mb_strtoupper($eventType);
 
         if (!isset($this->handlers[$eventModuleId]) || !isset($this->handlers[$eventModuleId][$eventType])) {
             return array();
@@ -347,14 +419,18 @@ class EventManager
                 if (($path = Loader::getLocal($path)) !== false) {
                     $includeResult = include_once($path);
                 }
-            } elseif (isset($handler["FULL_PATH"]) && !empty($handler["FULL_PATH"]) && IO\File::isFileExists($handler["FULL_PATH"])) {
+            } elseif (isset($handler["FULL_PATH"]) && !empty($handler["FULL_PATH"]) && IO\File::isFileExists(
+                    $handler["FULL_PATH"]
+                )) {
                 $includeResult = include_once($handler["FULL_PATH"]);
             }
 
             $event->addDebugInfo($result);
 
             if ($result) {
-                if (isset($handler["TO_METHOD_ARG"]) && is_array($handler["TO_METHOD_ARG"]) && !empty($handler["TO_METHOD_ARG"])) {
+                if (isset($handler["TO_METHOD_ARG"]) && is_array(
+                        $handler["TO_METHOD_ARG"]
+                    ) && !empty($handler["TO_METHOD_ARG"])) {
                     $args = $handler["TO_METHOD_ARG"];
                 } else {
                     $args = array();
@@ -369,7 +445,9 @@ class EventManager
                 $callback = null;
                 if (isset($handler["CALLBACK"])) {
                     $callback = $handler["CALLBACK"];
-                } elseif (!empty($handler["TO_CLASS"]) && !empty($handler["TO_METHOD"]) && class_exists($handler["TO_CLASS"])) {
+                } elseif (!empty($handler["TO_CLASS"]) && !empty($handler["TO_METHOD"]) && class_exists(
+                        $handler["TO_CLASS"]
+                    )) {
                     $callback = array($handler["TO_CLASS"], $handler["TO_METHOD"]);
                 }
 

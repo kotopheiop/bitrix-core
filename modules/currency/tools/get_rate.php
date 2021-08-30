@@ -34,14 +34,18 @@ if (!check_bitrix_sessid()) {
         $baseCurrency = '';
         $date = '';
         $currency = '';
-        if (isset($_REQUEST['BASE_CURRENCY']))
+        if (isset($_REQUEST['BASE_CURRENCY'])) {
             $baseCurrency = (string)$_REQUEST['BASE_CURRENCY'];
-        if ($baseCurrency == '')
+        }
+        if ($baseCurrency == '') {
             $baseCurrency = Currency\CurrencyManager::getBaseCurrency();
-        if (isset($_REQUEST['DATE_RATE']))
+        }
+        if (isset($_REQUEST['DATE_RATE'])) {
             $date = (string)$_REQUEST['DATE_RATE'];
-        if (isset($_REQUEST['CURRENCY']))
+        }
+        if (isset($_REQUEST['CURRENCY'])) {
             $currency = (string)$_REQUEST['CURRENCY'];
+        }
 
         if ($baseCurrency == '') {
             $result['STATUS'] = 'ERROR';
@@ -56,15 +60,33 @@ if (!check_bitrix_sessid()) {
             $url = '';
             switch ($baseCurrency) {
                 case 'UAH':
-                    $url = 'https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange/?date=' . $DB->FormatDate($date, CLang::GetDateFormat('SHORT', LANGUAGE_ID), 'YMD');
+                    $url = 'https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange/?date=' . $DB->FormatDate(
+                            $date,
+                            CLang::GetDateFormat('SHORT', LANGUAGE_ID),
+                            'YMD'
+                        );
                     break;
                 case 'BYR':
                 case 'BYN':
-                    $url = 'http://www.nbrb.by/Services/XmlExRates.aspx?ondate=' . $DB->FormatDate($date, CLang::GetDateFormat('SHORT', LANGUAGE_ID), 'Y-M-D');
+                    $url = 'http://www.nbrb.by/Services/XmlExRates.aspx?ondate=' . $DB->FormatDate(
+                            $date,
+                            CLang::GetDateFormat(
+                                'SHORT',
+                                LANGUAGE_ID
+                            ),
+                            'Y-M-D'
+                        );
                     break;
                 case 'RUB':
                 case 'RUR':
-                    $url = 'https://www.cbr.ru/scripts/XML_daily.asp?date_req=' . $DB->FormatDate($date, CLang::GetDateFormat('SHORT', LANGUAGE_ID), 'D.M.Y');
+                    $url = 'https://www.cbr.ru/scripts/XML_daily.asp?date_req=' . $DB->FormatDate(
+                            $date,
+                            CLang::GetDateFormat(
+                                'SHORT',
+                                LANGUAGE_ID
+                            ),
+                            'D.M.Y'
+                        );
                     break;
             }
             $http = new Main\Web\HttpClient();
@@ -82,19 +104,21 @@ if (!check_bitrix_sessid()) {
 
             $objXML = new CDataXML();
             $res = $objXML->LoadString($data);
-            if ($res !== false)
+            if ($res !== false) {
                 $data = $objXML->GetArray();
-            else
+            } else {
                 $data = false;
+            }
 
             if (!empty($data) && is_array($data)) {
                 switch ($baseCurrency) {
                     case 'UAH':
-                        if (!empty($data["exchange"]["#"]['currency']) && is_array($data["exchange"]["#"]['currency'])) {
+                        if (!empty($data["exchange"]["#"]['currency']) && is_array(
+                                $data["exchange"]["#"]['currency']
+                            )) {
                             $currencyList = $data['exchange']['#']['currency'];
                             foreach ($currencyList as $currencyRate) {
                                 if ($currencyRate['#']['cc'][0]['#'] == $currency) {
-
                                     $result['STATUS'] = 'OK';
                                     $result['RATE_CNT'] = 1;
                                     $result['RATE'] = (float)str_replace(",", ".", $currencyRate['#']['rate'][0]['#']);
@@ -106,7 +130,9 @@ if (!check_bitrix_sessid()) {
                         break;
                     case 'BYR':
                     case 'BYN':
-                        if (!empty($data["DailyExRates"]["#"]["Currency"]) && is_array($data["DailyExRates"]["#"]["Currency"])) {
+                        if (!empty($data["DailyExRates"]["#"]["Currency"]) && is_array(
+                                $data["DailyExRates"]["#"]["Currency"]
+                            )) {
                             $currencyList = $data['DailyExRates']['#']['Currency'];
                             foreach ($currencyList as $currencyRate) {
                                 if ($currencyRate["#"]["CharCode"][0]["#"] == $currency) {

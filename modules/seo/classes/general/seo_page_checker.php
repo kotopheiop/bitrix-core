@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 use Bitrix\Main\Web\HttpClient;
@@ -33,14 +34,15 @@ class CSeoPageChecker
     var $errorString = '';
     var $bSearch = false;
 
-    function CSeoPageChecker($site, $url, $get = true, $check_errors = true)
+    public function __construct($site, $url, $get = true, $check_errors = true)
     {
         global $APPLICATION;
 
-        if (CModule::IncludeModule('search'))
+        if (CModule::IncludeModule('search')) {
             $this->bSearch = true;
-        else
-            $APPLICATION->ThrowException(GetMessage('SEO_ERROR_NO_SEARCH')); // don't return false or set bError!
+        } else {
+            $APPLICATION->ThrowException(GetMessage('SEO_ERROR_NO_SEARCH'));
+        } // don't return false or set bError!
 
         $this->__bCheckErrors = $check_errors;
 
@@ -51,24 +53,29 @@ class CSeoPageChecker
             $this->__lang = $arRes['LANGUAGE_ID'];
             $this->__server_name = $arRes['SERVER_NAME'];
 
-            if (strlen($this->__server_name) <= 0)
+            if ($this->__server_name == '') {
                 $this->__server_name = COption::GetOptionString('main', 'server_name', '');
+            }
 
-            if (strlen($this->__server_name) > 0) {
+            if ($this->__server_name <> '') {
                 $this->__url = (CMain::IsHTTPS() ? "https://" : "http://")
-                    . CBXPunycode::ToASCII($this->__server_name, $e = null)
+                    . CBXPunycode::ToASCII($this->__server_name, $e)
                     . $url;
 
-                if (!$get || $this->GetHTTPData())
+                if (!$get || $this->GetHTTPData()) {
                     return true;
+                }
 
-                if ($this->bError && strlen($this->errorString) > 0)
+                if ($this->bError && $this->errorString <> '') {
                     $APPLICATION->ThrowException($this->errorString);
+                }
 
                 return false;
             } else {
                 $this->bError = true;
-                $APPLICATION->ThrowException(str_replace('#SITE_ID#', $this->__site, GetMessage('SEO_ERROR_NO_SERVER_NAME')));
+                $APPLICATION->ThrowException(
+                    str_replace('#SITE_ID#', $this->__site, GetMessage('SEO_ERROR_NO_SERVER_NAME'))
+                );
                 return false;
             }
         }
@@ -88,8 +95,9 @@ class CSeoPageChecker
 
             foreach ($headers as $header) {
                 $currHeader = array();
-                foreach ($header['values'] as $value)
+                foreach ($header['values'] as $value) {
                     $currHeader[] = $value;
+                }
                 $currHeader = implode(", ", $currHeader);
                 $this->__result_headers[$header["name"]] = $currHeader;
             }
@@ -100,8 +108,9 @@ class CSeoPageChecker
             $this->bError = false;
             return true;
         }
-        if ($errors = $this->__getter->getError())
+        if ($errors = $this->__getter->getError()) {
             $this->errorString = implode(', ', $errors);
+        }
         unset($this->__getter);
         $this->bError = true;
 
@@ -111,19 +120,23 @@ class CSeoPageChecker
     function __prepareText($text)
     {
         $res = array();
-        if ($this->bSearch)
+        if ($this->bSearch) {
             $res = stemming(CSearch::KillTags($text), $this->__lang);
-        else
+        } else {
             $res = array();
+        }
 
         return $res;
     }
 
     function _PrepareData()
     {
-        if ($this->pcre_backtrack_limit === false)
+        if ($this->pcre_backtrack_limit === false) {
             $this->pcre_backtrack_limit = intval(ini_get("pcre.backtrack_limit"));
-        $text_len = function_exists('mb_strlen') ? mb_strlen($this->__result_data, 'latin1') : strlen($this->__result_data);
+        }
+        $text_len = function_exists('mb_strlen') ? mb_strlen($this->__result_data, 'latin1') : mb_strlen(
+            $this->__result_data
+        );
         $text_len++;
         if ($this->pcre_backtrack_limit > 0 && $this->pcre_backtrack_limit < $text_len) {
             @ini_set("pcre.backtrack_limit", $text_len);
@@ -141,7 +154,14 @@ class CSeoPageChecker
             );
         }
 
-        $this->__index = array('TOTAL' => array(), 'BOLD' => array(), 'ITALIC' => array(), 'LINK' => array(), 'DESCRIPTION' => array(), 'KEYWORDS' => array());
+        $this->__index = array(
+            'TOTAL' => array(),
+            'BOLD' => array(),
+            'ITALIC' => array(),
+            'LINK' => array(),
+            'DESCRIPTION' => array(),
+            'KEYWORDS' => array()
+        );
 
         // replace all images on their not empty ALT or TITLE attributes
         $this->__result_data = preg_replace('/<img[^>]*(alt|title)=\"([^\"]*)\".*?>/is', '\\2', $this->__result_data);
@@ -187,14 +207,18 @@ class CSeoPageChecker
             $this->__index['LINK_EXTERNAL'] = array();
 
             foreach ($arRes[2] as $key => $attrs) {
-                if (false !== strpos($attrs, 'rel="nofollow"'))
+                if (false !== mb_strpos($attrs, 'rel="nofollow"')) {
                     $this->__result_extended['NOFOLLOW'][] = $arRes[0][$key];
-                if (false !== ($pos = strpos($attrs, 'href="'))) {
-                    $pos1 = strpos($attrs, '"', $pos + 6);
-                    $url = substr($attrs, $pos, $pos1 - $pos);
+                }
+                if (false !== ($pos = mb_strpos($attrs, 'href="'))) {
+                    $pos1 = mb_strpos($attrs, '"', $pos + 6);
+                    $url = mb_substr($attrs, $pos, $pos1 - $pos);
 
                     if ($this->IsOuterUrl($url)) {
-                        $this->__index['LINK_EXTERNAL'] = array_merge($this->__index['LINK_EXTERNAL'], $this->__prepareText($arRes[3][$key]));
+                        $this->__index['LINK_EXTERNAL'] = array_merge(
+                            $this->__index['LINK_EXTERNAL'],
+                            $this->__prepareText($arRes[3][$key])
+                        );
                         $this->__result_extended['LINK_EXTERNAL'][] = $arRes[0][$key];
                     }
                 }
@@ -211,7 +235,6 @@ class CSeoPageChecker
                     )
                 );
             }
-
         }
 
         // get meta description words index
@@ -273,20 +296,23 @@ class CSeoPageChecker
 
         if ($this->__bCheckErrors) {
             foreach (GetModuleEvents('seo', 'onPageCheck', true) as $arEvent) {
-                if (!ExecuteModuleEventEx($arEvent, array(
-                        'QUERY' => array(
-                            'URL' => $this->__url,
-                            'LANG' => $this->__lang,
-                            'SERVER_NAME' => $this->__server_name,
-                            'SITE' => $this->__site,
-                        ),
-                        'DATA' => array(
-                            'HEADERS' => $this->__result_headers,
-                            'BODY' => $this->__result_data,
-                        ),
-                        'META' => $this->__result_meta,
-                        'INDEX' => $this->__index,
-                    )) && ($ex = $GLOBALS['APPLICATION']->GetException())) {
+                if (!ExecuteModuleEventEx(
+                        $arEvent,
+                        array(
+                            array(
+                                'URL' => $this->__url,
+                                'LANG' => $this->__lang,
+                                'SERVER_NAME' => $this->__server_name,
+                                'SITE' => $this->__site,
+                            ),
+                            array(
+                                'HEADERS' => $this->__result_headers,
+                                'BODY' => $this->__result_data,
+                            ),
+                            $this->__result_meta,
+                            $this->__index,
+                        )
+                    ) && ($ex = $GLOBALS['APPLICATION']->GetException())) {
                     $this->__result_errors[] = array(
                         'CODE' => $ex->GetId(),
                         'TYPE' => 'NOTE',
@@ -299,8 +325,9 @@ class CSeoPageChecker
 
     function _GetContrast($word)
     {
-        if (null == $this->__index_total_len)
+        if (null == $this->__index_total_len) {
             $this->__index_total_len = array_sum($this->__index['TOTAL']);
+        }
 
         $logDocLength = log($this->__index_total_len < 20 ? 20 : $this->__index_total_len);
 
@@ -311,15 +338,19 @@ class CSeoPageChecker
 
     function GetStatistics()
     {
-        if (!is_array($this->__index))
+        if (!is_array($this->__index)) {
             return false;
+        }
 
-        if (null == $this->__index_total_len)
+        if (null == $this->__index_total_len) {
             $this->__index_total_len = array_sum($this->__index['TOTAL']);
+        }
 
         return array(
             'URL' => $this->__url,
-            'TOTAL_LENGTH' => function_exists('mb_strlen') ? mb_strlen($this->__result_data, 'latin1') : strlen($this->__result_data),
+            'TOTAL_LENGTH' => function_exists('mb_strlen') ? mb_strlen($this->__result_data, 'latin1') : mb_strlen(
+                $this->__result_data
+            ),
             'TOTAL_WORDS_COUNT' => $this->__index_total_len ? $this->__index_total_len : '-',
             'UNIQUE_WORDS_COUNT' => $this->__index_total_len ? count($this->__index['TOTAL']) : '-',
             'META_KEYWORDS' => $this->__result_meta['KEYWORDS'],
@@ -334,8 +365,9 @@ class CSeoPageChecker
 
     function CheckKeyword($keyword, $bStemmed = false)
     {
-        if (!is_array($this->__index))
+        if (!is_array($this->__index)) {
             return false;
+        }
 
         if (is_array($keyword)) {
             $arResult = array();
@@ -346,11 +378,13 @@ class CSeoPageChecker
             return $arResult;
         }
 
-        if (!$bStemmed && $this->bSearch)
+        if (!$bStemmed && $this->bSearch) {
             $keyword = stemming($keyword, $this->__lang);
+        }
 
-        if (is_array($keyword))
+        if (is_array($keyword)) {
             return $this->CheckKeyword($keyword, true);
+        }
 
         $arResult = array(
             'TOTAL' => intval($this->__index['TOTAL'][$keyword]),
@@ -385,7 +419,13 @@ class CSeoPageChecker
                 $arResult[] = array(
                     'CODE' => $arError['CODE'],
                     'TYPE' => $arError['TYPE'],
-                    'TEXT' => isset($arError['TEXT']) ? $arError['TEXT'] : str_replace(array_keys($arError['DETAIL']), array_values($arError['DETAIL']), GetMessage($arError['CODE'] . '_ERROR')),
+                    'TEXT' => isset($arError['TEXT']) ? $arError['TEXT'] : str_replace(
+                        array_keys($arError['DETAIL']),
+                        array_values($arError['DETAIL']),
+                        GetMessage(
+                            $arError['CODE'] . '_ERROR'
+                        )
+                    ),
                 );
             }
         }
@@ -395,41 +435,51 @@ class CSeoPageChecker
 
     function IsOuterUrl($url)
     {
-        if (strncmp($url, '#', 1) === 0) return false;
-        if (strncmp($url, 'mailto:', 7) === 0) return false;
-        if (strncmp($url, 'javascript:', 11) === 0) return false;
+        if (strncmp($url, '#', 1) === 0) {
+            return false;
+        }
+        if (strncmp($url, 'mailto:', 7) === 0) {
+            return false;
+        }
+        if (strncmp($url, 'javascript:', 11) === 0) {
+            return false;
+        }
 
-        $pos = strpos($url, '://');
-        if ($pos === false) return false;
+        $pos = mb_strpos($url, '://');
+        if ($pos === false) {
+            return false;
+        }
 
         static $arDomainNames = null;
 
         if (null == $arDomainNames) {
             $arDomainNames = array($_SERVER['SERVER_NAME']);
 
-            $dbRes = CSite::GetList($by = 'sort', $order = 'asc', array('ACTIVE' => 'Y'));
+            $dbRes = CSite::GetList('sort', 'asc', array('ACTIVE' => 'Y'));
             while ($arSite = $dbRes->Fetch()) {
-                if ($arSite['DOMAINS'])
+                if ($arSite['DOMAINS']) {
                     $arDomainNames = array_merge($arDomainNames, explode("\r\n", $arSite['DOMAINS']));
+                }
             }
 
             $arDomainNames = array_values(array_unique($arDomainNames));
         }
 
-        $url = substr($url, $pos + 3);
-        $pos = strpos($url, '/');
+        $url = mb_substr($url, $pos + 3);
+        $pos = mb_strpos($url, '/');
 
         if ($pos === false) {
-            $pos = strlen($url);
+            $pos = mb_strlen($url);
         }
 
-        $domain = substr($url, 0, $pos);
-        if (substr($domain, 0, 4) == 'www.') {
-            $domain = substr($domain, 4);
+        $domain = mb_substr($url, 0, $pos);
+        if (mb_substr($domain, 0, 4) == 'www.') {
+            $domain = mb_substr($domain, 4);
         }
 
-        if ($domain)
+        if ($domain) {
             return !in_array($domain, $arDomainNames);
+        }
 
         return false;
     }

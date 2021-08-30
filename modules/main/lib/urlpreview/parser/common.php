@@ -22,29 +22,31 @@ class Common extends Parser
      */
     public function handle(HtmlDocument $document)
     {
-        if (strlen($document->getTitle()) == 0) {
+        if ($document->getTitle() == '') {
             $document->setTitle($this->getTitle($document));
         }
 
-        if (strlen($document->getDescription()) == 0) {
+        if ($document->getDescription() == '') {
             $document->setDescription($document->getMetaContent('description'));
         }
 
         $this->imgElements = $document->extractElementAttributes('img');
-        if (strlen($document->getImage()) == 0) {
+        if ($document->getImage() == '') {
             $image = $this->getImage($document);
-            if (strlen($image) > 0) {
+            if ($image <> '') {
                 $document->setImage($image);
             } else {
                 $imageCandidates = $this->getImageCandidates();
                 if (count($imageCandidates) === 1) {
                     $document->setImage($imageCandidates[0]);
-                } else if (count($imageCandidates) > 1) {
-                    $document->setExtraField('IMAGES', $imageCandidates);
+                } else {
+                    if (count($imageCandidates) > 1) {
+                        $document->setExtraField('IMAGES', $imageCandidates);
+                    }
                 }
             }
         }
-        if (strlen($document->getExtraField('VIDEO')) == 0) {
+        if ($document->getExtraField('VIDEO') == '') {
             preg_match_all("/<video.+?<\/video>/mis", $document->getHtml(), $videoTags);
             foreach ($videoTags[0] as $videoTag) {
                 $videoInfo = $this->getVideoInfo($videoTag);
@@ -65,7 +67,7 @@ class Common extends Parser
     protected function getTitle(HtmlDocument $document)
     {
         $title = $document->getMetaContent('title');
-        if (strlen($title) > 0) {
+        if ($title <> '') {
             return $title;
         }
 
@@ -80,7 +82,7 @@ class Common extends Parser
     protected function getImage(HtmlDocument $document)
     {
         $result = $document->getLinkHref('image_src');
-        if (strlen($result) > 0) {
+        if ($result <> '') {
             return $result;
         }
 
@@ -125,8 +127,14 @@ class Common extends Parser
         foreach (array_keys($result) as $imageDimension) {
             if (isset($imageAttributes[$imageDimension])) {
                 $result[$imageDimension] = $imageAttributes[$imageDimension];
-            } else if (isset($imageAttributes['style']) && preg_match('/' . $imageDimension . ':\s*(\d+?)px/', $imageAttributes['style'], $matches)) {
-                $result[$imageDimension] = $matches[1];
+            } else {
+                if (isset($imageAttributes['style']) && preg_match(
+                        '/' . $imageDimension . ':\s*(\d+?)px/',
+                        $imageAttributes['style'],
+                        $matches
+                    )) {
+                    $result[$imageDimension] = $matches[1];
+                }
             }
         }
         return $result;
@@ -191,7 +199,11 @@ class Common extends Parser
         }
 
         static $validTypes = array(
-            'video/mp4', 'video/x-flv', 'video/webm', 'video/ogg', 'video/quicktime'
+            'video/mp4',
+            'video/x-flv',
+            'video/webm',
+            'video/ogg',
+            'video/quicktime'
         );
 
         return in_array($type, $validTypes);

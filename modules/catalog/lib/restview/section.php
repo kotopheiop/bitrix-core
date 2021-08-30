@@ -67,11 +67,13 @@ final class Section extends Base
 
         $error = [];
 
-        if (count($error) > 0)
+        if (count($error) > 0) {
             $r->addError(new Error('Required select fields: ' . implode(', ', $error)));
+        }
 
-        if (!isset($arguments['filter']['IBLOCK_ID']))
+        if (!isset($arguments['filter']['IBLOCK_ID'])) {
             $r->addError(new Error('Required filter fields: iblockId'));
+        }
 
         return $r;
     }

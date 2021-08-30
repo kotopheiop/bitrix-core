@@ -21,13 +21,17 @@ class EventOfflineQuery extends Query
 
         $update = $helper->prepareUpdate($this->entity->getDBTableName(), array('PROCESS_ID' => $processId));
 
-        $queryParts = array_filter(array(
-            'UPDATE' => $this->quoteTableSource($this->entity->getDBTableName()) . ' ' . $helper->quote($this->getInitAlias()),
-            'SET' => $update[0],
-            'WHERE' => $sqlWhere,
-            'ORDER BY' => $sqlOrder,
-            'LIMIT' => $this->getLimit(), // we cannot use getTopSql here
-        ));
+        $queryParts = array_filter(
+            array(
+                'UPDATE' => $this->quoteTableSource($this->entity->getDBTableName()) . ' ' . $helper->quote(
+                        $this->getInitAlias()
+                    ),
+                'SET' => $update[0],
+                'WHERE' => $sqlWhere,
+                'ORDER BY' => $sqlOrder,
+                'LIMIT' => $this->getLimit(), // we cannot use getTopSql here
+            )
+        );
 
         foreach ($queryParts as $k => &$v) {
             $v = $k . ' ' . $v;

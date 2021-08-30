@@ -21,7 +21,7 @@ class TypeHelper extends NameHelper
      * Function returns class name for an attached entity
      * @return string Entity class name
      */
-    public function getEntityRoadMap()
+    public static function getEntityRoadMap()
     {
         return array(
             'main' => array(
@@ -46,11 +46,14 @@ class TypeHelper extends NameHelper
         static $types;
 
         if ($types == null) {
-            $res = \Bitrix\Sale\Location\TypeTable::getList(array(
-                'select' => array(
-                    'ID', 'CODE'
+            $res = \Bitrix\Sale\Location\TypeTable::getList(
+                array(
+                    'select' => array(
+                        'ID',
+                        'CODE'
+                    )
                 )
-            ));
+            );
 
             $types = array();
             while ($item = $res->Fetch()) {
@@ -64,28 +67,32 @@ class TypeHelper extends NameHelper
 
     public static function getTypes($params = array('LANGUAGE_ID' => LANGUAGE_ID))
     {
-        if (!is_array($params))
+        if (!is_array($params)) {
             $params = array();
+        }
 
-        if (!isset($params['LANGUAGE_ID']))
+        if (!isset($params['LANGUAGE_ID'])) {
             $params['LANGUAGE_ID'] = LANGUAGE_ID;
+        }
 
         $result = array();
 
         $lang = ToLower($params['LANGUAGE_ID']);
         $langMapped = static::mapLanguage($lang);
 
-        $res = \Bitrix\Sale\Location\TypeTable::getList(array(
-            'select' => array(
-                '*',
-                'TNAME' => 'NAME.NAME',
-                'TLANGUAGE_ID' => 'NAME.LANGUAGE_ID'
-            ),
-            'order' => array(
-                'SORT' => 'asc',
-                'NAME.NAME' => 'asc'
+        $res = \Bitrix\Sale\Location\TypeTable::getList(
+            array(
+                'select' => array(
+                    '*',
+                    'TNAME' => 'NAME.NAME',
+                    'TLANGUAGE_ID' => 'NAME.LANGUAGE_ID'
+                ),
+                'order' => array(
+                    'SORT' => 'asc',
+                    'NAME.NAME' => 'asc'
+                )
             )
-        ));
+        );
         while ($item = $res->fetch()) {
             if (!isset($result[$item['CODE']])) {
                 $result[$item['CODE']] = array(
@@ -102,10 +109,11 @@ class TypeHelper extends NameHelper
             if ((string)$data['NAME'][$lang] != '') {
                 $name = $data['NAME'][$lang];
             } else {
-                if ((string)$data['NAME'][$langMapped] != '')
+                if ((string)$data['NAME'][$langMapped] != '') {
                     $name = $data['NAME'][$langMapped];
-                else
+                } else {
                     $name = $data['NAME']['en'];
+                }
             }
 
             $data['NAME_CURRENT'] = $name;

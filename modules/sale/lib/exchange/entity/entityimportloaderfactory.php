@@ -50,7 +50,9 @@ class EntityImportLoaderFactory
             $entityTypeID === EntityType::INVOICE_PAYMENT_CARD_TRANSACTION) {
             return new PaymentInvoiceImportLoader();
         } else {
-            throw new Main\NotSupportedException("Entity type: '" . EntityType::ResolveName($entityTypeID) . "' is not supported in current context");
+            throw new Main\NotSupportedException(
+                "Entity type: '" . EntityType::ResolveName($entityTypeID) . "' is not supported in current context"
+            );
         }
     }
 }

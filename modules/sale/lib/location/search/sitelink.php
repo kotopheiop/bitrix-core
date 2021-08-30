@@ -34,8 +34,9 @@ final class SiteLinkTable extends Entity\DataManager
     {
         static $tableExists;
 
-        if ($tableExists === null)
+        if ($tableExists === null) {
             $tableExists = Main\HttpApplication::getConnection()->isTableExists(static::getTableName());
+        }
 
         return $tableExists;
     }

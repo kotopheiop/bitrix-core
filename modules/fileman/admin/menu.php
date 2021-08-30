@@ -1,23 +1,34 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
-if (!method_exists($USER, "CanDoOperation"))
+if (!method_exists($USER, "CanDoOperation")) {
     return false;
+}
 
 if ($USER->CanDoOperation('fileman_view_file_structure')) {
     if (!function_exists("__fileman_mnu_gen")) {
         function __fileman_fmnu_fldr_cmp($a, $b)
         {
-            return strcmp(strtoupper($a["sSectionName"]), strtoupper($b["sSectionName"]));
+            return strcmp(mb_strtoupper($a["sSectionName"]), mb_strtoupper($b["sSectionName"]));
         }
 
-        function __fileman_mnu_gen($bLogical, $bFullList, $site, $path, $sShowOnly, $arSiteDirs = Array(), $bCountOnly = false, $arSitesDR_ = Array(), $siteList = Array())
-        {
+        function __fileman_mnu_gen(
+            $bLogical,
+            $bFullList,
+            $site,
+            $path,
+            $sShowOnly,
+            $arSiteDirs = Array(),
+            $bCountOnly = false,
+            $arSitesDR_ = Array(),
+            $siteList = Array()
+        ) {
             global $APPLICATION, $USER, $DB, $MESS;
             global $__tmppath;
             global $_fileman_menu_dist_dr;
             $aMenu = Array();
             if (count($siteList) <= 0) {
-                $dbSitesList = CSite::GetList($b = "lendir", $o = "desc");
+                $dbSitesList = CSite::GetList("lendir", "desc");
                 $siteList = array();
                 while ($arSite = $dbSitesList->GetNext()) {
                     if ($arSite['DOC_ROOT'] == CSite::GetSiteDocRoot($site) || $arSite['DOC_ROOT'] == '') {
@@ -34,8 +45,9 @@ if ($USER->CanDoOperation('fileman_view_file_structure')) {
 
             $io = CBXVirtualIo::GetInstance();
 
-            if (!$bCountOnly && substr($sShowOnly, 0, strlen($path)) != $path)
+            if (!$bCountOnly && mb_substr($sShowOnly, 0, mb_strlen($path)) != $path) {
                 return Array();
+            }
 
             $arFldrs = Array();
             $DOC_ROOT = CSite::GetSiteDocRoot($site);
@@ -44,30 +56,41 @@ if ($USER->CanDoOperation('fileman_view_file_structure')) {
             $dir = $io->GetDirectory($DOC_ROOT . $path);
             $arChildren = $dir->GetChildren();
             foreach ($arChildren as $child) {
-                if (!$child->IsDirectory())
+                if (!$child->IsDirectory()) {
                     continue;
+                }
 
                 $file = $child->GetName();
-                if ($bLogical && $arSiteDirs[$path . '/' . $file])
+                if ($bLogical && $arSiteDirs[$path . '/' . $file]) {
                     continue;
+                }
 
-                if (!$bCountOnly && !$bFullList && $sShowOnly != $path && substr($sShowOnly, 0, strlen($path . '/' . $file)) != $path . '/' . $file)
+                if (!$bCountOnly && !$bFullList && $sShowOnly != $path && mb_substr(
+                        $sShowOnly,
+                        0,
+                        mb_strlen($path . '/' . $file)
+                    ) != $path . '/' . $file) {
                     continue;
+                }
 
                 if (!$USER->CanDoFileOperation('fm_view_file', Array($site, $path . "/" . $file)) ||
-                    !$USER->CanDoFileOperation('fm_view_listing', Array($site, $path . "/" . $file)))
+                    !$USER->CanDoFileOperation('fm_view_listing', Array($site, $path . "/" . $file))) {
                     continue;
+                }
 
                 if ($bLogical) {
-                    if (!$io->FileExists($DOC_ROOT . $path . "/" . $file . "/.section.php"))
+                    if (!$io->FileExists($DOC_ROOT . $path . "/" . $file . "/.section.php")) {
                         continue;
+                    }
 
                     $sSectionName = "";
                     include($io->GetPhysicalName($DOC_ROOT . $path . "/" . $file . "/.section.php"));
-                    if (strlen($sSectionName) <= 0)
+                    if ($sSectionName == '') {
                         $sSectionName = GetMessage("FILEMAN_MNU_WN");
-                } else
+                    }
+                } else {
                     $sSectionName = $file;
+                }
 
                 $arFldrs[] = Array("sSectionName" => $sSectionName, "file" => $file);
             }
@@ -77,21 +100,33 @@ if ($USER->CanDoOperation('fileman_view_file_structure')) {
             for ($i = 0, $l = count($arFldrs); $i < $l; $i++) {
                 extract($arFldrs[$i]);
 
-                if ($bCountOnly)
+                if ($bCountOnly) {
                     return Array('');
+                }
 
                 $dynamic = true;
                 for ($ii = 0, $ll = count($siteList); $ii < $ll; $ii++) {
                     $dir = trim($siteList[$ii]["DIR"], "/");
-                    if (substr(trim($path . '/' . $file, "/"), 0, strlen($dir)) == $dir) {
+                    if (mb_substr(trim($path . '/' . $file, "/"), 0, mb_strlen($dir)) == $dir) {
                         $site_ = $siteList[$ii]["ID"];
                         break;
                     }
                 }
                 if (!$bCheckFolders && ($sShowOnly == $path || $bFullList)) {
-                    $items = __fileman_mnu_gen($bLogical, $bFullList, $site, $path . '/' . $file, '', $arSiteDirs, true, $arSitesDR_, $siteList);
-                    if (count($items) <= 0)
+                    $items = __fileman_mnu_gen(
+                        $bLogical,
+                        $bFullList,
+                        $site,
+                        $path . '/' . $file,
+                        '',
+                        $arSiteDirs,
+                        true,
+                        $arSitesDR_,
+                        $siteList
+                    );
+                    if (count($items) <= 0) {
                         $dynamic = false;
+                    }
                 }
 
                 $addUrl = "path=" . urlencode($path . '/' . $file);
@@ -101,8 +136,9 @@ if ($USER->CanDoOperation('fileman_view_file_structure')) {
                     if (count($arSitesDR_) > 1) {
                         $site_ = $site;
                         foreach ($arSitesDR_ as $k => $s) {
-                            if ($k == substr($DOC_ROOT . $path . '/' . $file, 0, strlen($k)))
+                            if ($k == mb_substr($DOC_ROOT . $path . '/' . $file, 0, mb_strlen($k))) {
                                 $site_ = $s;
+                            }
                         }
                     }
                 }
@@ -125,8 +161,9 @@ if ($USER->CanDoOperation('fileman_view_file_structure')) {
                     $more_urls[] = "fileman_file_edit.php";
                 }
 
-                if ($bCheckFolders)
+                if ($bCheckFolders) {
                     $dynamic = __check_folder($site, $path . '/' . $file);
+                }
 
                 $aMenu[] =
                     array(
@@ -139,7 +176,17 @@ if ($USER->CanDoOperation('fileman_view_file_structure')) {
                         "more_url" => $more_urls,
                         "items_id" => ($bLogical ? "menu_fileman_site_" . $site . "_" . $path . "/" . $file : "menu_fileman_file_" . $site . "_" . $path . "/" . $file),
                         "title" => htmlspecialcharsex($sSectionName . " (" . $path . '/' . $file . ")"),
-                        "items" => $bCheckFolders ? array() : __fileman_mnu_gen($bLogical, $bFullList, $site, $path . '/' . $file, $sShowOnly, $arSiteDirs, false, $arSitesDR_, $siteList)
+                        "items" => $bCheckFolders ? array() : __fileman_mnu_gen(
+                            $bLogical,
+                            $bFullList,
+                            $site,
+                            $path . '/' . $file,
+                            $sShowOnly,
+                            $arSiteDirs,
+                            false,
+                            $arSitesDR_,
+                            $siteList
+                        )
                     );
             }
             return $aMenu;
@@ -154,8 +201,9 @@ if ($USER->CanDoOperation('fileman_view_file_structure')) {
             $dir = $io->GetDirectory($DOC_ROOT . $path);
             $arChildren = $dir->GetChildren();
             foreach ($arChildren as $child) {
-                if (!$child->IsDirectory())
+                if (!$child->IsDirectory()) {
                     continue;
+                }
 
                 return true;
             }
@@ -168,13 +216,24 @@ if ($USER->CanDoOperation('fileman_view_file_structure')) {
             $bFullList = false;
             $site = $_REQUEST['site'];
 
-            if (method_exists($oMenu, "IsSectionActive") && $oMenu->IsSectionActive("menu_fileman_site_" . $arSites["ID"] . "_"))
+            if (method_exists($oMenu, "IsSectionActive") && $oMenu->IsSectionActive(
+                    "menu_fileman_site_" . $arSites["ID"] . "_"
+                )) {
                 $sShowOnly = rtrim($arSites["DIR"], "/");
+            }
             if (isset($_REQUEST['admin_mnu_menu_id'])) {
-                if ($_REQUEST['admin_mnu_menu_id'] == "menu_fileman_site_" . $arSites["ID"] . "_")
+                if ($_REQUEST['admin_mnu_menu_id'] == "menu_fileman_site_" . $arSites["ID"] . "_") {
                     $sShowOnly = rtrim($arSites["DIR"], "/");
-                elseif (substr($_REQUEST['admin_mnu_menu_id'], 0, strlen("menu_fileman_site_" . $arSites["ID"] . "_")) == "menu_fileman_site_" . $arSites["ID"] . "_")
-                    $sShowOnly = substr($_REQUEST['admin_mnu_menu_id'], strlen("menu_fileman_site_" . $arSites["ID"] . "_"));
+                } elseif (mb_substr(
+                        $_REQUEST['admin_mnu_menu_id'],
+                        0,
+                        mb_strlen("menu_fileman_site_" . $arSites["ID"] . "_")
+                    ) == "menu_fileman_site_" . $arSites["ID"] . "_") {
+                    $sShowOnly = mb_substr(
+                        $_REQUEST['admin_mnu_menu_id'],
+                        mb_strlen("menu_fileman_site_" . $arSites["ID"] . "_")
+                    );
+                }
             } elseif (isset($_REQUEST['path'])) {
                 if ($arSites["ID"] == $site) {
                     $sShowOnly = rtrim($_REQUEST['path'], "/");
@@ -185,11 +244,15 @@ if ($USER->CanDoOperation('fileman_view_file_structure')) {
 
             return array(
                 "text" => $arSites["NAME"],
-                "url" => "fileman_admin.php?lang=" . LANG . '&site=' . $arSites["ID"] . '&logical=Y&path=' . urlencode($arSites["DIR"]),
+                "url" => "fileman_admin.php?lang=" . LANG . '&site=' . $arSites["ID"] . '&logical=Y&path=' . urlencode(
+                        $arSites["DIR"]
+                    ),
                 "dynamic" => true,
                 "module_id" => "fileman",
                 "more_url" => array(
-                    "fileman_admin.php?lang=" . LANG . '&site=' . $arSites["ID"] . '&logical=Y&path=' . urlencode($arSites["DIR"]),
+                    "fileman_admin.php?lang=" . LANG . '&site=' . $arSites["ID"] . '&logical=Y&path=' . urlencode(
+                        $arSites["DIR"]
+                    ),
                     "fileman_access.php?site=" . $arSites["ID"] . '&logical=Y',
                     "fileman_admin.php?logical=Y&site=" . $arSites["ID"],
                     "fileman_file_download.php?site=" . $arSites["ID"] . '&logical=Y',
@@ -204,7 +267,14 @@ if ($USER->CanDoOperation('fileman_view_file_structure')) {
                 ),
                 "items_id" => "menu_fileman_site_" . $arSites["ID"] . "_",
                 "title" => GetMessage("FILEMAN_MNU_STRUC") . ": " . $arSites["NAME"],
-                "items" => ($sShowOnly !== false ? __fileman_mnu_gen(true, $bFullList, $arSites["ID"], $SITE_DIR, $sShowOnly, $arSiteDirs) : Array()),
+                "items" => ($sShowOnly !== false ? __fileman_mnu_gen(
+                    true,
+                    $bFullList,
+                    $arSites["ID"],
+                    $SITE_DIR,
+                    $sShowOnly,
+                    $arSiteDirs
+                ) : Array()),
             );
         }
     }
@@ -218,8 +288,9 @@ if ($USER->CanDoOperation('fileman_view_file_structure')) {
         case "/bitrix/admin/fileman_file_edit.php":
         case "/bitrix/admin/fileman_file_view.php":
         case "/bitrix/admin/fileman_html_edit.php":
-            if ($_REQUEST['path'] && $_REQUEST['new'] != 'y')
+            if ($_REQUEST['path'] && $_REQUEST['new'] != 'y') {
                 $__tmppath = dirname($_REQUEST['path']);
+            }
             break;
     }
 
@@ -249,21 +320,23 @@ if ($USER->CanDoOperation('fileman_view_file_structure')) {
     $arSites = Array();
     $arSitesDR = Array();
     $arSitesDR_ = Array();
-    $dbSitesList = CSite::GetList($b = "SORT", $o = "asc");
+    $dbSitesList = CSite::GetList();
     while ($arSites = $dbSitesList->GetNext()) {
         $arSite[] = $arSites;
         $arSiteDirs[rtrim($arSites["DIR"], "/")] = true;
         $arSitesDR_[$arSites["ABS_DOC_ROOT"] . rtrim($arSites["DIR"], "/")] = $arSites["ID"];
-        if (!isset($arSitesDR[$arSites["ABS_DOC_ROOT"]]))
+        if (!isset($arSitesDR[$arSites["ABS_DOC_ROOT"]])) {
             $arSitesDR[$arSites["ABS_DOC_ROOT"]] = $arSites["ID"];
+        }
     }
 
     $_fileman_menu_dist_dr = (count($arSitesDR) > 1);
     $hide_physical_struc = COption::GetOptionString("fileman", "hide_physical_struc", false);
     $site_count = count($arSite);
 
-    for ($i = 0; $i < $site_count; $i++)
+    for ($i = 0; $i < $site_count; $i++) {
         $aMenu["items"][] = __add_site_logical_structure($arSite[$i], $this, $hide_physical_struc);
+    }
 
     if (!$hide_physical_struc) {
         $addUrl = "path=" . urlencode($path . '/' . $file);
@@ -271,13 +344,24 @@ if ($USER->CanDoOperation('fileman_view_file_structure')) {
             $arSMenu = Array();
             foreach ($arSitesDR as $k => $site_id) {
                 $sShowOnly = false;
-                if (method_exists($this, "IsSectionActive") && $this->IsSectionActive("menu_fileman_file_" . $site_id . "_"))
+                if (method_exists($this, "IsSectionActive") && $this->IsSectionActive(
+                        "menu_fileman_file_" . $site_id . "_"
+                    )) {
                     $sShowOnly = "";
+                }
                 if (isset($_REQUEST['admin_mnu_menu_id'])) {
-                    if ($_REQUEST['admin_mnu_menu_id'] == "menu_fileman_file_" . $site_id . "_")
+                    if ($_REQUEST['admin_mnu_menu_id'] == "menu_fileman_file_" . $site_id . "_") {
                         $sShowOnly = "";
-                    elseif (substr($_REQUEST['admin_mnu_menu_id'], 0, strlen("menu_fileman_file_" . $site_id . "_")) == "menu_fileman_file_" . $site_id . "_")
-                        $sShowOnly = substr($_REQUEST['admin_mnu_menu_id'], strlen("menu_fileman_file_" . $site_id . "_"));
+                    } elseif (mb_substr(
+                            $_REQUEST['admin_mnu_menu_id'],
+                            0,
+                            mb_strlen("menu_fileman_file_" . $site_id . "_")
+                        ) == "menu_fileman_file_" . $site_id . "_") {
+                        $sShowOnly = mb_substr(
+                            $_REQUEST['admin_mnu_menu_id'],
+                            mb_strlen("menu_fileman_file_" . $site_id . "_")
+                        );
+                    }
                 } elseif (isset($_REQUEST['path'])) {
                     if ($k == CSite::GetSiteDocRoot($site)) {
                         $sShowOnly = rtrim($_REQUEST['path'], "/");
@@ -286,7 +370,7 @@ if ($USER->CanDoOperation('fileman_view_file_structure')) {
                 }
                 $maxl = 60;
                 $arSMenu[] = array(
-                    "text" => (strlen($k) <= $maxl ? $k : substr($k, 0, 3) . '...' . substr($k, -($maxl - 6))),
+                    "text" => (mb_strlen($k) <= $maxl ? $k : mb_substr($k, 0, 3) . '...' . mb_substr($k, -($maxl - 6))),
                     "url" => "fileman_admin.php?lang=" . LANG . '&site=' . $site_id . '&' . $addUrl,
                     "more_url" => array(
                         "fileman_access.php?site=" . $site_id . '&' . $addUrl,
@@ -307,7 +391,13 @@ if ($USER->CanDoOperation('fileman_view_file_structure')) {
                     "page_icon" => "fileman_menu_page_icon_sections",
                     "module_id" => "fileman",
                     "title" => $k,
-                    "items" => ($sShowOnly !== false ? __fileman_mnu_gen(false, $bFullList, $site_id, "", $sShowOnly) : Array())
+                    "items" => ($sShowOnly !== false ? __fileman_mnu_gen(
+                        false,
+                        $bFullList,
+                        $site_id,
+                        "",
+                        $sShowOnly
+                    ) : Array())
                 );
             }
 
@@ -332,14 +422,22 @@ if ($USER->CanDoOperation('fileman_view_file_structure')) {
                 "items" => $arSMenu
             );
         } else {
-            list($dr, $site_id) = each($arSitesDR);
+            $site_id = current($arSitesDR);
 
             $sShowOnly = false;
             if (isset($_REQUEST['admin_mnu_menu_id'])) {
-                if ($_REQUEST['admin_mnu_menu_id'] == "menu_fileman_file_" . $site_id . "_")
+                if ($_REQUEST['admin_mnu_menu_id'] == "menu_fileman_file_" . $site_id . "_") {
                     $sShowOnly = "";
-                elseif (substr($_REQUEST['admin_mnu_menu_id'], 0, strlen("menu_fileman_file_" . $site_id . "_")) == "menu_fileman_file_" . $site_id . "_")
-                    $sShowOnly = substr($_REQUEST['admin_mnu_menu_id'], strlen("menu_fileman_file_" . $site_id . "_"));
+                } elseif (mb_substr(
+                        $_REQUEST['admin_mnu_menu_id'],
+                        0,
+                        mb_strlen("menu_fileman_file_" . $site_id . "_")
+                    ) == "menu_fileman_file_" . $site_id . "_") {
+                    $sShowOnly = mb_substr(
+                        $_REQUEST['admin_mnu_menu_id'],
+                        mb_strlen("menu_fileman_file_" . $site_id . "_")
+                    );
+                }
             } elseif (isset($_REQUEST['path'])) {
                 $sShowOnly = rtrim($_REQUEST['path'], "/");
                 $bFullList = true;
@@ -366,13 +464,24 @@ if ($USER->CanDoOperation('fileman_view_file_structure')) {
                     "fileman_newfolder.php?" . $addUrl
                 ),
                 "title" => GetMessage("FILEMAN_MNU_F_AND_F_TITLE"),
-                "items" => ($sShowOnly !== false ? __fileman_mnu_gen(false, $bFullList, $site_id, "", $sShowOnly, Array(), false, $arSitesDR_) : Array()),
+                "items" => ($sShowOnly !== false ? __fileman_mnu_gen(
+                    false,
+                    $bFullList,
+                    $site_id,
+                    "",
+                    $sShowOnly,
+                    Array(),
+                    false,
+                    $arSitesDR_
+                ) : Array()),
             );
         }
     }
 }
 
-if (COption::GetOptionString('fileman', "use_medialib", "Y") != "N" && CModule::IncludeModule("fileman") && CMedialib::CanDoOperation('medialib_view_collection', 0, false, true)) {
+if (COption::GetOptionString('fileman', "use_medialib", "Y") != "N" && CModule::IncludeModule(
+        "fileman"
+    ) && CMedialib::CanDoOperation('medialib_view_collection', 0, false, true)) {
     if (!is_array($aMenu)) {
         $aMenu = array(
             "parent_menu" => "global_menu_content",

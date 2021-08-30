@@ -14,31 +14,37 @@ class CAllCurrencyRates
 
         $arMsg = array();
 
-        if ('UPDATE' != $ACTION && 'ADD' != $ACTION)
+        if ('UPDATE' != $ACTION && 'ADD' != $ACTION) {
             return false;
-        if (array_key_exists('ID', $arFields))
+        }
+        if (array_key_exists('ID', $arFields)) {
             unset($arFields['ID']);
+        }
 
-        if ('UPDATE' == $ACTION && 0 >= intval($ID))
+        if ('UPDATE' == $ACTION && 0 >= intval($ID)) {
             $arMsg[] = array('id' => 'ID', 'text' => GetMessage('BT_MOD_CURR_ERR_RATE_ID_BAD'));
+        }
 
-        if (!isset($arFields["CURRENCY"]))
+        if (!isset($arFields["CURRENCY"])) {
             $arMsg[] = array('id' => 'CURRENCY', 'text' => GetMessage('BT_MOD_CURR_ERR_RATE_CURRENCY_ABSENT'));
-        else
-            $arFields["CURRENCY"] = substr($arFields["CURRENCY"], 0, 3);
+        } else {
+            $arFields["CURRENCY"] = mb_substr($arFields["CURRENCY"], 0, 3);
+        }
 
-        if (empty($arFields['DATE_RATE']))
+        if (empty($arFields['DATE_RATE'])) {
             $arMsg[] = array('id' => 'DATE_RATE', 'text' => GetMessage('BT_MOD_CURR_ERR_RATE_DATE_ABSENT'));
-        elseif (!$DB->IsDate($arFields['DATE_RATE']))
+        } elseif (!$DB->IsDate($arFields['DATE_RATE'])) {
             $arMsg[] = array('id' => 'DATE_RATE', 'text' => GetMessage('BT_MOD_CURR_ERR_RATE_DATE_FORMAT_BAD'));
+        }
 
         if (is_set($arFields, 'RATE_CNT') || 'ADD' == $ACTION) {
             if (!isset($arFields['RATE_CNT'])) {
                 $arMsg[] = array('id' => 'RATE_CNT', 'text' => GetMessage('BT_MOD_CURR_ERR_RATE_RATE_CNT_ABSENT'));
             } else {
                 $arFields['RATE_CNT'] = (int)$arFields['RATE_CNT'];
-                if ($arFields['RATE_CNT'] <= 0)
+                if ($arFields['RATE_CNT'] <= 0) {
                     $arMsg[] = array('id' => 'RATE_CNT', 'text' => GetMessage('BT_MOD_CURR_ERR_RATE_RATE_CNT_BAD'));
+                }
             }
         }
         if (is_set($arFields['RATE']) || 'ADD' == $ACTION) {
@@ -55,8 +61,11 @@ class CAllCurrencyRates
             if ($arFields['CURRENCY'] == Currency\CurrencyManager::getBaseCurrency()) {
                 $arMsg[] = array('id' => 'CURRENCY', 'text' => GetMessage('BT_MOD_CURR_ERR_RATE_FOR_BASE_CURRENCY'));
             } else {
-                if (!isset($arFields['BASE_CURRENCY']) || !Currency\CurrencyManager::checkCurrencyID($arFields['BASE_CURRENCY']))
+                if (!isset($arFields['BASE_CURRENCY']) || !Currency\CurrencyManager::checkCurrencyID(
+                        $arFields['BASE_CURRENCY']
+                    )) {
                     $arFields['BASE_CURRENCY'] = Currency\CurrencyManager::getBaseCurrency();
+                }
             }
             if ($arFields['CURRENCY'] == $arFields['BASE_CURRENCY']) {
                 $arMsg[] = array('id' => 'CURRENCY', 'text' => GetMessage('BT_MOD_CURR_ERR_RATE_FOR_SELF_CURRENCY'));
@@ -82,15 +91,19 @@ class CAllCurrencyRates
         $arMsg = array();
 
         foreach (GetModuleEvents("currency", "OnBeforeCurrencyRateAdd", true) as $arEvent) {
-            if (ExecuteModuleEventEx($arEvent, array(&$arFields)) === false)
+            if (ExecuteModuleEventEx($arEvent, array(&$arFields)) === false) {
                 return false;
+            }
         }
 
-        if (!CCurrencyRates::CheckFields("ADD", $arFields))
+        if (!CCurrencyRates::CheckFields("ADD", $arFields)) {
             return false;
+        }
 
-        $db_result = $DB->Query("SELECT 'x' FROM b_catalog_currency_rate WHERE CURRENCY = '" . $DB->ForSql($arFields["CURRENCY"]) . "' " .
-            "	AND DATE_RATE = " . $DB->CharToDateFunction($DB->ForSql($arFields["DATE_RATE"]), "SHORT"));
+        $db_result = $DB->Query(
+            "SELECT 'x' FROM b_catalog_currency_rate WHERE CURRENCY = '" . $DB->ForSql($arFields["CURRENCY"]) . "' " .
+            "	AND DATE_RATE = " . $DB->CharToDateFunction($DB->ForSql($arFields["DATE_RATE"]), "SHORT")
+        );
         if ($db_result->Fetch()) {
             $arMsg[] = array("id" => "DATE_RATE", "text" => GetMessage("ERROR_ADD_REC2"));
             $e = new CAdminException($arMsg);
@@ -99,12 +112,14 @@ class CAllCurrencyRates
         } else {
             $stackCacheManager->Clear("currency_rate");
 
-            $isMsSql = strtolower($DB->type) == 'mssql';
-            if ($isMsSql)
+            $isMsSql = $DB->type == 'MSSQL';
+            if ($isMsSql) {
                 CTimeZone::Disable();
+            }
             $ID = $DB->Add("b_catalog_currency_rate", $arFields);
-            if ($isMsSql)
+            if ($isMsSql) {
                 CTimeZone::Enable();
+            }
             unset($isMsSql);
 
             Currency\CurrencyManager::updateBaseRates($arFields['CURRENCY']);
@@ -112,8 +127,9 @@ class CAllCurrencyRates
             Currency\CurrencyRateTable::getEntity()->cleanCache();
             self::$currentCache = array();
 
-            foreach (GetModuleEvents("currency", "OnCurrencyRateAdd", true) as $arEvent)
+            foreach (GetModuleEvents("currency", "OnCurrencyRateAdd", true) as $arEvent) {
                 ExecuteModuleEventEx($arEvent, array($ID, $arFields));
+            }
 
             return $ID;
         }
@@ -127,32 +143,42 @@ class CAllCurrencyRates
         global $stackCacheManager;
 
         $ID = (int)$ID;
-        if ($ID <= 0)
+        if ($ID <= 0) {
             return false;
+        }
         $arMsg = array();
 
         foreach (GetModuleEvents("currency", "OnBeforeCurrencyRateUpdate", true) as $arEvent) {
-            if (ExecuteModuleEventEx($arEvent, array($ID, &$arFields)) === false)
+            if (ExecuteModuleEventEx($arEvent, array($ID, &$arFields)) === false) {
                 return false;
+            }
         }
 
-        if (!CCurrencyRates::CheckFields("UPDATE", $arFields, $ID))
+        if (!CCurrencyRates::CheckFields("UPDATE", $arFields, $ID)) {
             return false;
+        }
 
-        $db_result = $DB->Query("SELECT 'x' FROM b_catalog_currency_rate WHERE CURRENCY = '" . $DB->ForSql($arFields["CURRENCY"]) . "' " .
-            "	AND DATE_RATE = " . $DB->CharToDateFunction($DB->ForSql($arFields["DATE_RATE"]), "SHORT") . " AND ID<>" . $ID . " ");
+        $db_result = $DB->Query(
+            "SELECT 'x' FROM b_catalog_currency_rate WHERE CURRENCY = '" . $DB->ForSql($arFields["CURRENCY"]) . "' " .
+            "	AND DATE_RATE = " . $DB->CharToDateFunction(
+                $DB->ForSql($arFields["DATE_RATE"]),
+                "SHORT"
+            ) . " AND ID<>" . $ID . " "
+        );
         if ($db_result->Fetch()) {
             $arMsg[] = array("id" => "DATE_RATE", "text" => GetMessage("ERROR_ADD_REC2"));
             $e = new CAdminException($arMsg);
             $APPLICATION->ThrowException($e);
             return false;
         } else {
-            $isMsSql = strtolower($DB->type) == 'mssql';
-            if ($isMsSql)
+            $isMsSql = $DB->type == 'MSSQL';
+            if ($isMsSql) {
                 CTimeZone::Disable();
+            }
             $strUpdate = $DB->PrepareUpdate("b_catalog_currency_rate", $arFields);
-            if ($isMsSql)
+            if ($isMsSql) {
                 CTimeZone::Enable();
+            }
             unset($isMsql);
 
             if (!empty($strUpdate)) {
@@ -165,8 +191,9 @@ class CAllCurrencyRates
                 Currency\CurrencyRateTable::getEntity()->cleanCache();
                 self::$currentCache = array();
             }
-            foreach (GetModuleEvents("currency", "OnCurrencyRateUpdate", true) as $arEvent)
+            foreach (GetModuleEvents("currency", "OnCurrencyRateUpdate", true) as $arEvent) {
                 ExecuteModuleEventEx($arEvent, array($ID, $arFields));
+            }
         }
         return true;
     }
@@ -180,12 +207,14 @@ class CAllCurrencyRates
 
         $ID = (int)$ID;
 
-        if ($ID <= 0)
+        if ($ID <= 0) {
             return false;
+        }
 
         foreach (GetModuleEvents("currency", "OnBeforeCurrencyRateDelete", true) as $arEvent) {
-            if (ExecuteModuleEventEx($arEvent, array($ID)) === false)
+            if (ExecuteModuleEventEx($arEvent, array($ID)) === false) {
                 return false;
+            }
         }
 
         $arFields = CCurrencyRates::GetByID($ID);
@@ -205,8 +234,9 @@ class CAllCurrencyRates
         Currency\CurrencyRateTable::getEntity()->cleanCache();
         self::$currentCache = array();
 
-        foreach (GetModuleEvents("currency", "OnCurrencyRateDelete", true) as $arEvent)
+        foreach (GetModuleEvents("currency", "OnCurrencyRateDelete", true) as $arEvent) {
             ExecuteModuleEventEx($arEvent, array($ID));
+        }
 
         return true;
     }
@@ -216,75 +246,90 @@ class CAllCurrencyRates
         global $DB;
 
         $ID = (int)$ID;
-        if ($ID <= 0)
+        if ($ID <= 0) {
             return false;
-        $strSql = "SELECT C.*, " . $DB->DateToCharFunction("C.DATE_RATE", "SHORT") . " as DATE_RATE FROM b_catalog_currency_rate C WHERE ID = " . $ID;
+        }
+        $strSql = "SELECT C.*, " . $DB->DateToCharFunction(
+                "C.DATE_RATE",
+                "SHORT"
+            ) . " as DATE_RATE FROM b_catalog_currency_rate C WHERE ID = " . $ID;
         $db_res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 
-        if ($res = $db_res->Fetch())
+        if ($res = $db_res->Fetch()) {
             return $res;
+        }
 
         return false;
     }
 
-    public static function GetList(&$by, &$order, $arFilter = array())
+    public static function GetList($by = 'date', $order = 'asc', $arFilter = [])
     {
         global $DB;
 
-        $mysqlEdition = strtolower($DB->type) === 'mysql';
+        $mysqlEdition = $DB->type === 'MYSQL';
         $arSqlSearch = array();
 
-        if (!is_array($arFilter))
+        if (!is_array($arFilter)) {
             $filter_keys = array();
-        else
+        } else {
             $filter_keys = array_keys($arFilter);
+        }
 
         for ($i = 0, $intCount = count($filter_keys); $i < $intCount; $i++) {
             $val = (string)$DB->ForSql($arFilter[$filter_keys[$i]]);
-            if ($val === '')
+            if ($val === '') {
                 continue;
+            }
 
             $key = $filter_keys[$i];
             if ($key[0] == "!") {
                 $key = substr($key, 1);
                 $bInvert = true;
-            } else
+            } else {
                 $bInvert = false;
+            }
 
             switch (strtoupper($key)) {
                 case "CURRENCY":
                     $arSqlSearch[] = "C.CURRENCY = '" . $val . "'";
                     break;
                 case "DATE_RATE":
-                    $arSqlSearch[] = "(C.DATE_RATE " . ($bInvert ? "<" : ">=") . " " . ($mysqlEdition ? "CAST(" : "") . $DB->CharToDateFunction($DB->ForSql($val), "SHORT") . ($mysqlEdition ? " AS DATE)" : "") . ($bInvert ? "" : " OR C.DATE_RATE IS NULL") . ")";
+                    $arSqlSearch[] = "(C.DATE_RATE " . ($bInvert ? "<" : ">=") . " " . ($mysqlEdition ? "CAST(" : "") . $DB->CharToDateFunction(
+                            $DB->ForSql($val),
+                            "SHORT"
+                        ) . ($mysqlEdition ? " AS DATE)" : "") . ($bInvert ? "" : " OR C.DATE_RATE IS NULL") . ")";
                     break;
             }
         }
 
         $strSqlSearch = "";
         for ($i = 0, $intCount = count($arSqlSearch); $i < $intCount; $i++) {
-            if ($i > 0)
+            if ($i > 0) {
                 $strSqlSearch .= " AND ";
-            else
+            } else {
                 $strSqlSearch = " WHERE ";
+            }
 
             $strSqlSearch .= " (" . $arSqlSearch[$i] . ") ";
         }
 
-        $strSql = "SELECT C.ID, C.CURRENCY, C.RATE_CNT, C.RATE, " . $DB->DateToCharFunction("C.DATE_RATE", "SHORT") . " as DATE_RATE FROM b_catalog_currency_rate C " .
+        $strSql = "SELECT C.ID, C.CURRENCY, C.RATE_CNT, C.RATE, " . $DB->DateToCharFunction(
+                "C.DATE_RATE",
+                "SHORT"
+            ) . " as DATE_RATE FROM b_catalog_currency_rate C " .
             $strSqlSearch;
 
-        if (strtolower($by) == "curr") $strSqlOrder = " ORDER BY C.CURRENCY ";
-        elseif (strtolower($by) == "rate") $strSqlOrder = " ORDER BY C.RATE ";
-        else {
+        if (strtolower($by) == "curr") {
+            $strSqlOrder = " ORDER BY C.CURRENCY ";
+        } elseif (strtolower($by) == "rate") {
+            $strSqlOrder = " ORDER BY C.RATE ";
+        } else {
             $strSqlOrder = " ORDER BY C.DATE_RATE ";
-            $by = "date";
         }
 
-        if (strtolower($order) == "desc")
+        if (strtolower($order) == "desc") {
             $strSqlOrder .= " desc ";
-        else
-            $order = "asc";
+        }
 
         $strSql .= $strSqlOrder;
         $res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
@@ -324,20 +369,24 @@ class CAllCurrencyRates
 
         $curFrom = (string)$curFrom;
         $curTo = (string)$curTo;
-        if ($curFrom === '' || $curTo === '')
+        if ($curFrom === '' || $curTo === '') {
             return 0;
-        if ($curFrom == $curTo)
+        }
+        if ($curFrom == $curTo) {
             return 1;
+        }
 
         $valDate = (string)$valDate;
-        if ($valDate === '')
+        if ($valDate === '') {
             $valDate = date("Y-m-d");
+        }
         list($dpYear, $dpMonth, $dpDay) = explode("-", $valDate, 3);
         $dpDay += 1;
-        if ($dpYear < 2038 && $dpYear > 1970)
+        if ($dpYear < 2038 && $dpYear > 1970) {
             $valDate = date("Y-m-d", mktime(0, 0, 0, $dpMonth, $dpDay, $dpYear));
-        else
+        } else {
             $valDate = date("Y-m-d");
+        }
 
         $curFromRate = 0;
         $curFromRateCnt = 0;
@@ -364,8 +413,9 @@ class CAllCurrencyRates
             }
         } else {
             $cacheTime = CURRENCY_CACHE_DEFAULT_TIME;
-            if (defined("CURRENCY_CACHE_TIME"))
+            if (defined("CURRENCY_CACHE_TIME")) {
                 $cacheTime = (int)CURRENCY_CACHE_TIME;
+            }
 
             $cacheKey = 'C_R_' . $valDate . '_' . $curFrom . '_' . $curTo;
 
@@ -410,8 +460,9 @@ class CAllCurrencyRates
             $curToRateCnt = $arResult["curToRateCnt"];
         }
 
-        if ($curFromRate == 0 || $curToRateCnt == 0 || $curToRate == 0 || $curFromRateCnt == 0)
+        if ($curFromRate == 0 || $curToRateCnt == 0 || $curToRate == 0 || $curFromRateCnt == 0) {
             return 0;
+        }
 
         return $curFromRate * $curToRateCnt / $curToRate / $curFromRateCnt;
     }

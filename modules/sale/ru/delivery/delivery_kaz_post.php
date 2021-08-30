@@ -1,4 +1,5 @@
 <?
+
 /********************************************************************************
  * Delivery services for Kazakhstan's Post Service (http://www.kazpost.kz/)
  * http://www.kazpost.kz/downloads/urlic/%D0%A2%D0%B0%D1%80%D0%B8%D1%84%D1%8B%20%D0%BD%D0%B0%20%D1%83%D1%81%D0%BB%D1%83%D0%B3%D1%83%20%D0%9F%D0%B5%D1%80%D0%B5%D1%81%D1%8B%D0%BB%D0%BA%D0%B0%20%D0%BF%D0%BE%D1%81%D1%8B%D0%BB%D0%BE%D0%BA%20%D0%B2%20%D0%BF%D1%80%D0%B5%D0%B4%D0%B5%D0%BB%D0%B0%D1%85%20%D0%A0%D0%9A%20%D0%B4%D0%BB%D1%8F%20%D0%B4%D0%B8%D1%81%D1%82%D0%B0%D0%BD%D1%86%D0%B8%D0%BE%D0%BD%D0%BD%D1%8B%D1%85%20%D0%BA%D0%BE%D0%BC%D0%BF%D0%B0%D0%BD%D0%B8%D0%B9%20%D0%B8%20%D0%B8%D0%BD%D1%82%D0%B5%D1%80%D0%BD%D0%B5%D1%82%20%D0%BC%D0%B0%D0%B3%D0%B0%D0%B7%D0%B8%D0%BD%D0%BE%D0%B2.xlsx
@@ -19,7 +20,7 @@ class CDeliveryKazPost
     private static $TARIF_DEFAULT = 1;
     private static $TARIF_DESCR = 2;
 
-    function Init()
+    public static function Init()
     {
         self::$TARIFS = array(
             "BASE" => array(
@@ -37,8 +38,12 @@ class CDeliveryKazPost
             /* Basic description */
             'SID' => 'kaz_post',
             'NAME' => GetMessage('SALE_DH_KP_NAME'),
-            'DESCRIPTION' => GetMessage('SALE_DH_KP_DESCR') . ' <a href="http://www.kazpost.kz">http://www.kazpost.kz</a>',
-            'DESCRIPTION_INNER' => GetMessage('SALE_DH_KP_DESCR') . ' <a href="http://www.kazpost.kz">http://www.kazpost.kz</a>',
+            'DESCRIPTION' => GetMessage(
+                    'SALE_DH_KP_DESCR'
+                ) . ' <a href="http://www.kazpost.kz">http://www.kazpost.kz</a>',
+            'DESCRIPTION_INNER' => GetMessage(
+                    'SALE_DH_KP_DESCR'
+                ) . ' <a href="http://www.kazpost.kz">http://www.kazpost.kz</a>',
             'BASE_CURRENCY' => 'KZT',
             'HANDLER' => __FILE__,
             /* Handler methods */
@@ -64,7 +69,7 @@ class CDeliveryKazPost
         );
     }
 
-    function GetConfig()
+    public static function GetConfig()
     {
         $arConfig = array(
             'CONFIG_GROUPS' => array(
@@ -74,8 +79,9 @@ class CDeliveryKazPost
 
         $aviableBoxes = self::getAviableBoxes();
 
-        foreach ($aviableBoxes as $boxId => $arBox)
+        foreach ($aviableBoxes as $boxId => $arBox) {
             CSaleDeliveryHelper::makeBoxConfig($boxId, $arBox, 'distant_inner', $arConfig);
+        }
 
         $arConfig['CONFIG']['tarif_section_1'] = array(
             'TYPE' => 'SECTION',
@@ -112,31 +118,33 @@ class CDeliveryKazPost
         return $arConfig;
     }
 
-    function GetSettings($strSettings)
+    public static function GetSettings($strSettings)
     {
-        return unserialize($strSettings);
+        return unserialize($strSettings, ['allowed_classes' => false]);
     }
 
-    function SetSettings($arSettings)
+    public static function SetSettings($arSettings)
     {
         foreach ($arSettings as $key => $value) {
-            if (strlen($value) > 0)
+            if ($value <> '') {
                 $arSettings[$key] = $value;
-            else
+            } else {
                 unset($arSettings[$key]);
+            }
         }
 
         return serialize($arSettings);
     }
 
-    function Calculate($profile, $arConfig, $arOrder, $STEP, $TEMP = false)
+    public static function Calculate($profile, $arConfig, $arOrder, $STEP, $TEMP = false)
     {
         $arPacks = CSaleDeliveryHelper::getBoxesFromConfig($profile, $arConfig);
 
         $arPackagesParams = CSaleDeliveryHelper::getRequiredPacks(
             $arOrder["ITEMS"],
             $arPacks,
-            self::$MAX_WEIGHT);
+            self::$MAX_WEIGHT
+        );
 
         $packageCount = count($arPackagesParams);
 
@@ -153,8 +161,15 @@ class CDeliveryKazPost
         $arShopLocation = CSaleHelper::getLocationByIdHitCached($shopLocationId);
         $arLocationTo = CSaleHelper::getLocationByIdHitCached($arOrder['LOCATION_TO']);
 
-        foreach ($arPackagesParams as $arPackage)
-            $totalPrice += self::calculatePackPrice($arPackage, $profile, $arConfig, $arShopLocation['REGION_ID'], $arLocationTo['REGION_ID']);
+        foreach ($arPackagesParams as $arPackage) {
+            $totalPrice += self::calculatePackPrice(
+                $arPackage,
+                $profile,
+                $arConfig,
+                $arShopLocation['REGION_ID'],
+                $arLocationTo['REGION_ID']
+            );
+        }
 
         $arResult = array(
             'RESULT' => 'OK',
@@ -164,7 +179,7 @@ class CDeliveryKazPost
         return $arResult;
     }
 
-    function Compability($arOrder, $arConfig)
+    public static function Compability($arOrder, $arConfig)
     {
         $result = array();
 
@@ -200,17 +215,25 @@ class CDeliveryKazPost
         $arDebug = array();
         $basePrice = $totalPrice = 0;
 
-        if ($regionIdFrom == $regionIdTo)
+        if ($regionIdFrom == $regionIdTo) {
             $tarifGroup = 'CAPITAL';
-        else
+        } else {
             $tarifGroup = 'BASE';
+        }
 
-        $basePrice = floatval(self::getConfValue($arConfig, 'TARIF_' . self::$TARIFS[$tarifGroup]['WEIGHT_LESS_1000'][self::$TARIF_IDX]));
+        $basePrice = floatval(
+            self::getConfValue($arConfig, 'TARIF_' . self::$TARIFS[$tarifGroup]['WEIGHT_LESS_1000'][self::$TARIF_IDX])
+        );
         $arDebug[] = 'Base Price less 1000 g: ' . $basePrice;
 
         if ($arPackage['WEIGHT'] > self::$BASE_WEIGHT) {
             $addWeight = ceil(($arPackage['WEIGHT'] - self::$BASE_WEIGHT) / 500);
-            $addPrice = floatval(self::getConfValue($arConfig, 'TARIF_' . self::$TARIFS[$tarifGroup]['WEIGHT_MORE_1000'][self::$TARIF_IDX]));
+            $addPrice = floatval(
+                self::getConfValue(
+                    $arConfig,
+                    'TARIF_' . self::$TARIFS[$tarifGroup]['WEIGHT_MORE_1000'][self::$TARIF_IDX]
+                )
+            );
             $arDebug[] = 'Price for additional weight more than 1000 g: ' . $addWeight * $addPrice;
             $basePrice += $addWeight * $addPrice;
         }

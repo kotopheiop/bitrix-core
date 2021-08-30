@@ -41,23 +41,31 @@ class Agent
     {
         $limit = Option::get("socialservices", "encrypt_tokens_step_limit", 500);
         $lastEncryptedUserId = Option::get("socialservices", "last_encrypted_user_id", 0);
-        $users = UserTable::getList([
-            'order' => ['ID' => 'ASC'],
-            'select' => [
-                'ID', 'OATOKEN', 'OASECRET', 'REFRESH_TOKEN'
-            ],
-            'filter' => ['>ID' => $lastEncryptedUserId],
-            'limit' => $limit
-        ]);
+        $users = UserTable::getList(
+            [
+                'order' => ['ID' => 'ASC'],
+                'select' => [
+                    'ID',
+                    'OATOKEN',
+                    'OASECRET',
+                    'REFRESH_TOKEN'
+                ],
+                'filter' => ['>ID' => $lastEncryptedUserId],
+                'limit' => $limit
+            ]
+        );
         $found = 0;
         while ($user = $users->fetch()) {
             $found++;
 
-            UserTable::update($user['ID'], [
-                'OATOKEN' => $user['OATOKEN'],
-                'OASECRET' => $user['OASECRET'],
-                'REFRESH_TOKEN' => $user['REFRESH_TOKEN'],
-            ]);
+            UserTable::update(
+                $user['ID'],
+                [
+                    'OATOKEN' => $user['OATOKEN'],
+                    'OASECRET' => $user['OASECRET'],
+                    'REFRESH_TOKEN' => $user['REFRESH_TOKEN'],
+                ]
+            );
 
             $lastEncryptedUserId = $user['ID'];
         }

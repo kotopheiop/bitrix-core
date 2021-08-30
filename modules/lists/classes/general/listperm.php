@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 class CListPermissions
@@ -24,18 +25,25 @@ class CListPermissions
     {
         if ($socnet_group_id > 0 && CModule::IncludeModule('socialnetwork')) {
             if (CSocNetFeatures::IsActiveFeature(SONET_ENTITY_GROUP, $socnet_group_id, "group_lists")) {
-                if ($iblock_id !== false)
-                    return CListPermissions::_socnet_check($USER, $iblock_type_id, $iblock_id, intval($socnet_group_id));
-                else
+                if ($iblock_id !== false) {
+                    return CListPermissions::_socnet_check(
+                        $USER,
+                        $iblock_type_id,
+                        $iblock_id,
+                        intval($socnet_group_id)
+                    );
+                } else {
                     return CListPermissions::_socnet_type_check($USER, $iblock_type_id, $socnet_group_id);
+                }
             } else {
                 return CListPermissions::LISTS_FOR_SONET_GROUP_DISABLED;
             }
         } else {
-            if ($iblock_id !== false)
+            if ($iblock_id !== false) {
                 return CListPermissions::_lists_check($USER, $iblock_type_id, $iblock_id);
-            else
+            } else {
                 return CListPermissions::_lists_type_check($USER, $iblock_type_id);
+            }
         }
     }
 
@@ -49,16 +57,19 @@ class CListPermissions
     static protected function _socnet_check($USER, $iblock_type_id, $iblock_id, $socnet_group_id)
     {
         $type_check = CListPermissions::_socnet_type_check($USER, $iblock_type_id, $socnet_group_id);
-        if ($type_check < 0)
+        if ($type_check < 0) {
             return $type_check;
+        }
 
         $iblock_check = CListPermissions::_iblock_check($iblock_type_id, $iblock_id);
-        if ($iblock_check < 0)
+        if ($iblock_check < 0) {
             return $iblock_check;
+        }
 
         $iblock_socnet_group_id = CIBlock::GetArrayByID($iblock_id, "SOCNET_GROUP_ID");
-        if ($iblock_socnet_group_id != $socnet_group_id)
+        if ($iblock_socnet_group_id != $socnet_group_id) {
             return CListPermissions::ACCESS_DENIED;
+        }
 
         $socnet_role = CSocNetUserToGroup::GetUserRole($USER->GetID(), $socnet_group_id);
 
@@ -66,18 +77,27 @@ class CListPermissions
             $socnet_role = "A";
         }
 
-        if ($socnet_role !== "A" && CIBlock::GetArrayByID($iblock_id, "RIGHTS_MODE") === "E")
+        if ($socnet_role !== "A" && CIBlock::GetArrayByID($iblock_id, "RIGHTS_MODE") === "E") {
             return '';
+        }
 
         static $roles = array("A", "E", "K", "T");
         if (!in_array($socnet_role, $roles)) {
-            if ($USER->IsAuthorized())
+            if ($USER->IsAuthorized()) {
                 $socnet_role = "L";
-            else
+            } else {
                 $socnet_role = "N";
+            }
         }
 
-        if (!CSocNetFeaturesPerms::CanPerformOperation($USER->GetID(), SONET_ENTITY_GROUP, $socnet_group_id, "group_lists", "write", CSocNetUser::IsCurrentUserModuleAdmin())) {
+        if (!CSocNetFeaturesPerms::CanPerformOperation(
+            $USER->GetID(),
+            SONET_ENTITY_GROUP,
+            $socnet_group_id,
+            "group_lists",
+            "write",
+            CSocNetUser::IsCurrentUserModuleAdmin()
+        )) {
             return "D";
         } else {
             $arSocnetPerm = CLists::GetSocnetPermission($iblock_id);
@@ -102,7 +122,14 @@ class CListPermissions
 
             if (
                 $socnet_role == "A"
-                && CSocNetFeaturesPerms::CanPerformOperation($USER->GetID(), SONET_ENTITY_GROUP, $socnet_group_id, "group_lists", "write", CSocNetUser::IsCurrentUserModuleAdmin())
+                && CSocNetFeaturesPerms::CanPerformOperation(
+                    $USER->GetID(),
+                    SONET_ENTITY_GROUP,
+                    $socnet_group_id,
+                    "group_lists",
+                    "write",
+                    CSocNetUser::IsCurrentUserModuleAdmin()
+                )
             ) {
                 return CListPermissions::IS_ADMIN;
             } else {
@@ -121,12 +148,14 @@ class CListPermissions
     static protected function _lists_type_check($USER, $iblockTypeId)
     {
         $listsPermission = CLists::GetPermission($iblockTypeId);
-        if (!is_array($listsPermission) || !count($listsPermission))
+        if (!is_array($listsPermission) || !count($listsPermission)) {
             return CListPermissions::ACCESS_DENIED;
+        }
 
         $userGroups = $USER->GetUserGroupArray();
-        if (count(array_intersect($listsPermission, $userGroups)) > 0)
+        if (count(array_intersect($listsPermission, $userGroups)) > 0) {
             return CListPermissions::IS_ADMIN;
+        }
 
         return CListPermissions::CAN_READ;
     }
@@ -140,16 +169,19 @@ class CListPermissions
     static protected function _lists_check($USER, $iblock_type_id, $iblock_id)
     {
         $iblock_check = CListPermissions::_iblock_check($iblock_type_id, $iblock_id);
-        if ($iblock_check < 0)
+        if ($iblock_check < 0) {
             return $iblock_check;
+        }
 
         $arListsPerm = CLists::GetPermission($iblock_type_id);
-        if (!count($arListsPerm))
+        if (!count($arListsPerm)) {
             return CListPermissions::ACCESS_DENIED;
+        }
 
         $arUSER_GROUPS = $USER->GetUserGroupArray();
-        if (count(array_intersect($arListsPerm, $arUSER_GROUPS)) > 0)
+        if (count(array_intersect($arListsPerm, $arUSER_GROUPS)) > 0) {
             return CListPermissions::IS_ADMIN;
+        }
 
         return CIBlock::GetPermission($iblock_id);
     }
@@ -164,10 +196,11 @@ class CListPermissions
         $iblock_id = intval($iblock_id);
         if ($iblock_id > 0) {
             $iblock_type = CIBlock::GetArrayByID($iblock_id, "IBLOCK_TYPE_ID");
-            if ($iblock_type_id === $iblock_type)
+            if ($iblock_type_id === $iblock_type) {
                 return 0;
-            else
+            } else {
                 return CListPermissions::WRONG_IBLOCK;
+            }
         } else {
             return CListPermissions::WRONG_IBLOCK;
         }
@@ -185,9 +218,9 @@ class CListPermissions
                 preg_match("/^G(\\d)\$/", $arRight["GROUP_CODE"], $match)
                 && is_array($arListsPerm)
                 && in_array($match[1], $arListsPerm)
-            )
+            ) {
                 $arResult[$RIGHT_ID] = $arRight;
-            else {
+            } else {
                 //2) protect groups with iblock_% operations
                 $arOperations = CTask::GetOperations($arRight['TASK_ID'], true);
                 foreach ($arOperations as $operation) {
@@ -206,9 +239,9 @@ class CListPermissions
                 preg_match("/^G(\\d)\$/", $arRight["GROUP_CODE"], $match)
                 && is_array($arListsPerm)
                 && in_array($match[1], $arListsPerm)
-            )
+            ) {
                 unset($POST[$RIGHT_ID]);
-            else {
+            } else {
                 //2) protect groups with iblock_% operations
                 $arOperations = CTask::GetOperations($arRight['TASK_ID'], true);
                 foreach ($arOperations as $operation) {
@@ -223,8 +256,9 @@ class CListPermissions
         //3) Join POST to result
         foreach ($POST as $RIGHT_ID => $arRight) {
             foreach ($arResult as $RIGHT_ID2 => $arRight2) {
-                if ($arRight["GROUP_CODE"] == $arRight2["GROUP_CODE"])
+                if ($arRight["GROUP_CODE"] == $arRight2["GROUP_CODE"]) {
                     unset($arResult[$RIGHT_ID2]);
+                }
             }
             $arResult[$RIGHT_ID] = $arRight;
         }
@@ -238,20 +272,21 @@ class CListPermissions
      */
     public static function CheckFieldId($iblock_id, $field_id)
     {
-        if ($field_id === "DETAIL_PICTURE")
+        if ($field_id === "DETAIL_PICTURE") {
             return true;
-        elseif ($field_id === "PREVIEW_PICTURE")
+        } elseif ($field_id === "PREVIEW_PICTURE") {
             return true;
-        elseif ($field_id === "PICTURE")
+        } elseif ($field_id === "PICTURE") {
             return true;
-        elseif ($iblock_id <= 0)
+        } elseif ($iblock_id <= 0) {
             return false;
-        elseif (!preg_match("/^PROPERTY_(.+)\$/", $field_id, $match))
+        } elseif (!preg_match("/^PROPERTY_(.+)\$/", $field_id, $match)) {
             return false;
-        else {
+        } else {
             $db_prop = CIBlockProperty::GetPropertyArray($match[1], $iblock_id);
-            if (is_array($db_prop) && $db_prop["PROPERTY_TYPE"] === "F")
+            if (is_array($db_prop) && $db_prop["PROPERTY_TYPE"] === "F") {
                 return true;
+            }
         }
         return false;
     }

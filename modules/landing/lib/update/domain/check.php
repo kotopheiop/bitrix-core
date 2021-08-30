@@ -33,24 +33,29 @@ class Check extends Stepper
         $forUpdate = [];
 
         // gets all domains by condition
-        $resDomain = \Bitrix\Landing\Domain::getList([
-            'select' => [
-                'ID', 'DOMAIN'
-            ],
-            'order' => [
-                'ID' => 'asc'
-            ]
-        ]);
-        while ($domain = $resDomain->fetch()) {
-            $resSite = \Bitrix\Landing\Site::getList([
+        $resDomain = \Bitrix\Landing\Domain::getList(
+            [
                 'select' => [
-                    'ID'
+                    'ID',
+                    'DOMAIN'
                 ],
-                'filter' => [
-                    'DOMAIN_ID' => $domain['ID'],
-                    'CHECK_PERMISSIONS' => 'N'
+                'order' => [
+                    'ID' => 'asc'
                 ]
-            ]);
+            ]
+        );
+        while ($domain = $resDomain->fetch()) {
+            $resSite = \Bitrix\Landing\Site::getList(
+                [
+                    'select' => [
+                        'ID'
+                    ],
+                    'filter' => [
+                        'DOMAIN_ID' => $domain['ID'],
+                        'CHECK_PERMISSIONS' => 'N'
+                    ]
+                ]
+            );
             if (!$resSite->fetch()) {
                 $result['count']++;
                 if ($domain['ID'] > $lastId) {

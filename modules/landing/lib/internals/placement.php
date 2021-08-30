@@ -25,43 +25,61 @@ class PlacementTable extends Entity\DataManager
     public static function getMap()
     {
         return array(
-            'ID' => new Entity\IntegerField('ID', array(
+            'ID' => new Entity\IntegerField(
+                'ID', array(
                 'primary' => true,
                 'autocomplete' => true,
                 'title' => 'ID'
-            )),
-            'APP_ID' => new Entity\IntegerField('APP_ID', array(
+            )
+            ),
+            'APP_ID' => new Entity\IntegerField(
+                'APP_ID', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_APP_ID'),
                 'required' => true
-            )),
-            'PLACEMENT' => new Entity\StringField('PLACEMENT', array(
+            )
+            ),
+            'PLACEMENT' => new Entity\StringField(
+                'PLACEMENT', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_PLACEMENT'),
                 'required' => true
-            )),
-            'PLACEMENT_HANDLER' => new Entity\StringField('PLACEMENT_HANDLER', array(
+            )
+            ),
+            'PLACEMENT_HANDLER' => new Entity\StringField(
+                'PLACEMENT_HANDLER', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_PLACEMENT_HANDLER'),
                 'required' => true
-            )),
-            'TITLE' => new Entity\StringField('TITLE', array(
+            )
+            ),
+            'TITLE' => new Entity\StringField(
+                'TITLE', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_PLC_TITLE'),
                 'required' => true
-            )),
-            'CREATED_BY_ID' => new Entity\IntegerField('CREATED_BY_ID', array(
+            )
+            ),
+            'CREATED_BY_ID' => new Entity\IntegerField(
+                'CREATED_BY_ID', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_CREATED_BY_ID'),
                 'required' => true
-            )),
-            'MODIFIED_BY_ID' => new Entity\IntegerField('MODIFIED_BY_ID', array(
+            )
+            ),
+            'MODIFIED_BY_ID' => new Entity\IntegerField(
+                'MODIFIED_BY_ID', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_MODIFIED_BY_ID'),
                 'required' => true
-            )),
-            'DATE_CREATE' => new Entity\DatetimeField('DATE_CREATE', array(
+            )
+            ),
+            'DATE_CREATE' => new Entity\DatetimeField(
+                'DATE_CREATE', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_DATE_CREATE'),
                 'required' => true
-            )),
-            'DATE_MODIFY' => new Entity\DatetimeField('DATE_MODIFY', array(
+            )
+            ),
+            'DATE_MODIFY' => new Entity\DatetimeField(
+                'DATE_MODIFY', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_DATE_MODIFY'),
                 'required' => true
-            ))
+            )
+            )
         );
     }
 }

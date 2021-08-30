@@ -1,4 +1,5 @@
 <?
+
 $subscribe_default_option = array(
     "allow_anonymous" => "Y",
     "show_auth_links" => "Y",

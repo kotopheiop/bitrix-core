@@ -53,8 +53,9 @@ class Pool
         $result = new Result();
 
         $docs = static::getDocs($code);
-        if (!$docs)
+        if (!$docs) {
             return $result;
+        }
 
         $result = CheckManager::addChecks($docs);
 

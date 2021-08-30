@@ -37,22 +37,25 @@ class Site
 
     public function getLanguage()
     {
-        if (isset($this->fields["LANGUAGE_ID"]))
+        if (isset($this->fields["LANGUAGE_ID"])) {
             return $this->fields["LANGUAGE_ID"];
+        }
         throw new Main\ObjectPropertyException("language");
     }
 
     public function getDocRoot()
     {
-        if (isset($this->fields["DOC_ROOT"]))
+        if (isset($this->fields["DOC_ROOT"])) {
             return $this->fields["DOC_ROOT"];
+        }
         throw new Main\ObjectPropertyException("docRoot");
     }
 
     public function getId()
     {
-        if (isset($this->fields["ID"]))
+        if (isset($this->fields["ID"])) {
             return $this->fields["ID"];
+        }
         throw new Main\ObjectPropertyException("id");
     }
 }

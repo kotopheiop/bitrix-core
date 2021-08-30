@@ -49,7 +49,8 @@ class Package
     protected $processTime = array( // Time limits
         "max" => 30,
         "start" => 0,
-        "current" => 0);
+        "current" => 0
+    );
 
     /**
      * Package constructor.
@@ -61,31 +62,29 @@ class Package
      */
     public function __construct($path, $CID, $index)
     {
-        if (!is_string($path))
+        if (!is_string($path)) {
             throw new ArgumentNullException("path");
+        }
         $this->path = $path;
-        if (!is_string($CID))
-            throw new ArgumentNullException("CID");
-        else if (strpos($CID, "/") !== false)
-            throw new ArgumentException("CID contains forbidden symbol /");
-        $this->CID = $CID;
+        $this->setCid($CID);
         $this->cidLog = new Log($this->path . $this->getCid() . ".log");
-
-        if (!is_string($index))
-            throw new ArgumentNullException("packageIndex");
-        $this->index = $index;
+        $this->setIndex($index);
 
         $this->request = Context::getCurrent()->getRequest();
-        if (!$this->request->isPost())
+        if (!$this->request->isPost()) {
             throw new NotImplementedException("File uploader support only POST method.");
+        }
 
         $post = Context::getCurrent()->getRequest()->getPostList()->toArray();
         $post = $post[Uploader::INFO_NAME];
+        if (!preg_match("/^([0-9]+)$/", $post["filesCount"])) {
+            throw new ArgumentException("The value filesCount must be an integer", "packageIndex");
+        }
         $this->log = new Log($this->path . $this->getIndex() . ".package");
         if (!isset($this->log["CID"])) {
-            $this->log["CID"] = $this->CID;
+            $this->log["CID"] = $this->getCid();
             $this->log["pIndex"] = $this->getIndex();
-            $this->log["filesCount"] = $post["filesCount"];
+            $this->log["filesCount"] = intval($post["filesCount"]);
             $this->log["files"] = array();
         }
 
@@ -95,6 +94,18 @@ class Package
         set_time_limit(0);
 
         return $this;
+    }
+
+    protected function setIndex($index)
+    {
+        if (!is_string($index)) {
+            throw new ArgumentNullException("packageIndex");
+        }
+        if (!preg_match("/^pIndex([0-9]+)$/", $index)) {
+            throw new ArgumentException("Index must be a string like '^pIndex([0-9]+)$'", "packageIndex");
+        }
+
+        $this->index = $index;
     }
 
     /**
@@ -112,8 +123,9 @@ class Package
      */
     public function getCidLog($key = null)
     {
-        if (is_null($key))
+        if (is_null($key)) {
             return $this->cidLog->getLog();
+        }
         $log = $this->cidLog->getLog();
         return $log[$key];
     }
@@ -124,8 +136,9 @@ class Package
      */
     public function getLog($key = null)
     {
-        if (is_null($key))
+        if (is_null($key)) {
             return $this->log->getLog();
+        }
         $log = $this->log->getLog();
         return $log[$key];
     }
@@ -137,6 +150,18 @@ class Package
     public function getFile($id)
     {
         return $this->files[$id];
+    }
+
+    protected function setCid($CID)
+    {
+        if (!is_string($CID)) {
+            throw new ArgumentNullException("CID");
+        } else {
+            if (mb_strpos($CID, "/") !== false) {
+                throw new ArgumentException("CID contains a forbidden symbol /");
+            }
+        }
+        $this->CID = preg_replace("/[^a-z0-9_\\-.]/i", "_", $CID);
     }
 
     /**
@@ -165,8 +190,9 @@ class Package
         $params = array_change_key_case($params, CASE_LOWER);
         try {
             if (array_key_exists("cloud", $params) && $params["cloud"] === true &&
-                (\CUtil::Unformat(ini_get("upload_max_filesize")) / 1024 / 1024) >= 5)
+                (\CUtil::Unformat(ini_get("upload_max_filesize")) / 1024 / 1024) >= 5) {
                 $this->storage = new CloudStorage($params);
+            }
         } catch (\Exception $e) {
         }
         if (!($this->storage instanceof Storable)) {
@@ -210,16 +236,14 @@ class Package
      */
     protected static function unescape($data)
     {
-        global $APPLICATION;
-
         if (is_array($data)) {
             $res = array();
             foreach ($data as $k => $v) {
-                $k = $APPLICATION->ConvertCharset(\CHTTP::urnDecode($k), "UTF-8", LANG_CHARSET);
+                $k = \Bitrix\Main\Text\Encoding::convertEncoding(\CHTTP::urnDecode($k), "UTF-8", LANG_CHARSET);
                 $res[$k] = self::unescape($v);
             }
         } else {
-            $res = $APPLICATION->ConvertCharset(\CHTTP::urnDecode($data), "UTF-8", LANG_CHARSET);
+            $res = \Bitrix\Main\Text\Encoding::convertEncoding(\CHTTP::urnDecode($data), "UTF-8", LANG_CHARSET);
         }
 
         return $res;
@@ -241,8 +265,9 @@ class Package
             $post["filesCount"] == $this->log["filesCount"] &&
             is_array($postFiles) &&
             !empty($postFiles))
-        )
+        ) {
             return array();
+        }
 
         $files = Context::getCurrent()->getRequest()->getFileList()->toArray();
         $files = self::unescape($files[Uploader::FILE_NAME]);
@@ -255,8 +280,12 @@ class Package
                 $this->cidLog["executeStatus"] = "executed";
 
                 foreach (GetModuleEvents(Uploader::EVENT_NAME, $eventName, true) as $event) {
-                    if (ExecuteModuleEventEx($event, array(&$this->log, &$this->cidLog, &$unescapedPost, &$files, &$error)) === false)
+                    if (ExecuteModuleEventEx(
+                            $event,
+                            array(&$this->log, &$this->cidLog, &$unescapedPost, &$files, &$error)
+                        ) === false) {
                         throw new NotImplementedException($error);
+                    }
                 }
                 $eventName = "onPackageIsStarted";
             } else {
@@ -265,8 +294,12 @@ class Package
 
             $this->log["executeStatus"] = "executed";
             foreach (GetModuleEvents(Uploader::EVENT_NAME, $eventName, true) as $event) {
-                if (ExecuteModuleEventEx($event, array(&$this->log, &$this->cidLog, &$unescapedPost, &$files, &$error)) === false)
+                if (ExecuteModuleEventEx(
+                        $event,
+                        array(&$this->log, &$this->cidLog, &$unescapedPost, &$files, &$error)
+                    ) === false) {
                     throw new NotImplementedException($error);
+                }
             }
         }
 
@@ -293,10 +326,13 @@ class Package
                              *  "type" => "image/jpg"
                              * );
                              */
-                            $filesRaw[] = array_merge($f, array(
-                                "id" => $fileID,
-                                "code" => $serviceName
-                            ));
+                            $filesRaw[] = array_merge(
+                                $f,
+                                array(
+                                    "id" => $fileID,
+                                    "code" => $serviceName
+                                )
+                            );
                         }
                     }
                 }
@@ -335,32 +371,47 @@ class Package
         if ($fileRaw = reset($filesRaw)) {
             $this->log["uploadStatus"] = "inprogress";
             do {
-                if (!array_key_exists($fileRaw["id"], $postFiles))
+                if (!array_key_exists($fileRaw["id"], $postFiles)) {
                     continue;
-                if (!$this->checkTime())
+                }
+                if (!$this->checkTime()) {
                     break;
+                }
                 if (!array_key_exists($fileRaw["id"], $filesOnThisPack)) {
-                    $file = new File($this, array(
-                            "id" => $fileRaw["id"],
-                            "name" => $postFiles[$fileRaw["id"]]["name"],
-                            "type" => $postFiles[$fileRaw["id"]]["type"],
-                            "size" => $postFiles[$fileRaw["id"]]["size"]
-                        ) + (is_array($postFiles[$fileRaw["id"]]) ? $postFiles[$fileRaw["id"]] : []));
+                    $file = new File(
+                        $this, array(
+                                 "id" => $fileRaw["id"],
+                                 "name" => $postFiles[$fileRaw["id"]]["name"],
+                                 "type" => $postFiles[$fileRaw["id"]]["type"],
+                                 "size" => $postFiles[$fileRaw["id"]]["size"]
+                             ) + (is_array($postFiles[$fileRaw["id"]]) ? $postFiles[$fileRaw["id"]] : [])
+                    );
                     if (isset($fileRaw["restored"])) {
-                        if ($file->isExecuted())
+                        if ($file->isExecuted()) {
                             $file->setExecuteStatus("none");
+                        }
                         $fileRaw = $file->getFile("default");
-                        if (empty($fileRaw) || !is_array($fileRaw))
-                            $file->addError(new Error(\Bitrix\Main\Localization\Loc::getMessage("BXU_FileIsNotRestored"), "BXU350.0"));
+                        if (empty($fileRaw) || !is_array($fileRaw)) {
+                            $file->addError(
+                                new Error(
+                                    \Bitrix\Main\Localization\Loc::getMessage("BXU_FileIsNotRestored"), "BXU350.0"
+                                )
+                            );
+                        }
                     }
                     $filesOnThisPack[$fileRaw["id"]] = $file;
                 }
                 /* @var File $file */
                 $file = $filesOnThisPack[$fileRaw["id"]];
-                if ($file->hasError())
+                if ($file->hasError()) {
                     continue;
+                }
                 $result = File::checkFile($fileRaw, $file, $fileLimits + array("path" => $this->getPath()));
-                if ($result->isSuccess() && ($result = $file->saveFile($fileRaw, $this->getStorage(), $this->getCopies())) && $result->isSuccess() &&
+                if ($result->isSuccess() && ($result = $file->saveFile(
+                        $fileRaw,
+                        $this->getStorage(),
+                        $this->getCopies()
+                    )) && $result->isSuccess() &&
                     $post["type"] != "brief" &&
                     $file->isUploaded() &&
                     !$file->isExecuted()
@@ -369,18 +420,25 @@ class Package
                     $fileArray = $file->toArray();
                     foreach (GetModuleEvents(Uploader::EVENT_NAME, "onFileIsUploaded", true) as $event) {
                         $error = "";
-                        if (!ExecuteModuleEventEx($event, array($file->getHash(), &$fileArray,
-                            &$this->log,
-                            &$this->cidLog,
-                            &$error))) {
+                        if (!ExecuteModuleEventEx(
+                            $event,
+                            array(
+                                $file->getHash(),
+                                &$fileArray,
+                                &$this->log,
+                                &$this->cidLog,
+                                &$error
+                            )
+                        )) {
                             $result->addError(new Error($error, "BXU350.1"));
                             break;
                         }
                     }
                     $file->fromArray($fileArray);
                 }
-                if (!$result->isSuccess())
+                if (!$result->isSuccess()) {
                     $file->addError($result->getErrorCollection()->current());
+                }
             } while ($fileRaw = next($filesRaw));
         }
 
@@ -388,7 +446,8 @@ class Package
         /* @var File $file */
         foreach ($filesOnThisPack as $file) {
             $response[$file->getId()] = $file->toArray();
-            $filesFromLog[$file->getId()] = $response[$file->getId()]["status"] = $file->isUploaded() ? "uploaded" : "inprogress";
+            $filesFromLog[$file->getId()] = $response[$file->getId()]["status"] = $file->isUploaded(
+            ) ? "uploaded" : "inprogress";
             if ($file->hasError()) {
                 $response[$file->getId()]["status"] = "error";
                 $response[$file->getId()]["error"] = $file->getErrorMessage();
@@ -400,8 +459,9 @@ class Package
         $declaredFiles = (int)$this->log["filesCount"];
 
         $cnt = 0;
-        foreach ($filesFromLog as $status)
+        foreach ($filesFromLog as $status) {
             $cnt += ($status == "uploaded" || $status == "error" ? 1 : 0);
+        }
 
         if ($declaredFiles > 0 && $declaredFiles == $cnt) {
             if ($post["type"] != "brief") // If it is IE8
@@ -409,8 +469,12 @@ class Package
                 $this->log["uploadStatus"] = "uploaded";
                 $error = "";
                 foreach (GetModuleEvents(Uploader::EVENT_NAME, "onPackageIsFinished", true) as $event) {
-                    if (ExecuteModuleEventEx($event, array(&$this->log, &$this->cidLog, &$unescapedPost, &$response, &$error)) === false)
+                    if (ExecuteModuleEventEx(
+                            $event,
+                            array(&$this->log, &$this->cidLog, &$unescapedPost, &$response, &$error)
+                        ) === false) {
                         throw new NotImplementedException($error);
+                    }
                 }
             }
         }
@@ -442,10 +506,11 @@ class Package
         $res = is_array($res) ? $res : array();
         $res2 = is_array($res2) ? $res2 : array();
         foreach ($res2 as $key => $val) {
-            if (array_key_exists($key, $res) && is_array($val))
+            if (array_key_exists($key, $res) && is_array($val)) {
                 $res[$key] = self::merge($res[$key], $val);
-            else
+            } else {
                 $res[$key] = $val;
+            }
         }
         return $res;
     }

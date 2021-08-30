@@ -37,8 +37,8 @@ class OrderPropsRelationTable extends Main\Entity\DataManager
             ),
             'ENTITY_TYPE' => array(
                 'primary' => true,
-                'data_type' => 'boolean',
-                'values' => array('P', 'D'),
+                'data_type' => 'string',
+                'values' => array('P', 'D', 'L'),
             ),
 
             'lPROPERTY' => array(
@@ -54,5 +54,40 @@ class OrderPropsRelationTable extends Main\Entity\DataManager
         return array(
             new Main\Entity\Validator\Length(1, 35),
         );
+    }
+
+    public static function getRelationsByPropertyIdList(array $propertyIds): array
+    {
+        static $relations = [];
+
+        $diff = array_diff($propertyIds, array_keys($relations));
+        if ($diff) {
+            $dbRes = static::getList(
+                [
+                    'select' => ['PROPERTY_ID', 'ENTITY_ID', 'ENTITY_TYPE'],
+                    'filter' => ['@PROPERTY_ID' => $diff]
+                ]
+            );
+
+            while ($data = $dbRes->fetch()) {
+                $relations[$data['PROPERTY_ID']][] = [
+                    'ENTITY_ID' => $data['ENTITY_ID'],
+                    'ENTITY_TYPE' => $data['ENTITY_TYPE']
+                ];
+            }
+
+            foreach ($diff as $id) {
+                $relations[$id] = $relations[$id] ?? [];
+            }
+        }
+
+        return array_intersect_key($relations, array_fill_keys($propertyIds, true));
+    }
+
+    public static function getRelationsByPropertyId($propertyId): array
+    {
+        $relations = static::getRelationsByPropertyIdList([$propertyId]);
+
+        return $relations[$propertyId];
     }
 }

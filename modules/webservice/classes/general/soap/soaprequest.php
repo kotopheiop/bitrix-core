@@ -17,13 +17,13 @@ class CSOAPRequest extends CSOAPEnvelope
     /// Contains the request parameters
     var $Parameters = array();
 
-    function CSOAPRequest($name = "", $namespace = "", $parameters = array())
+    public function __construct($name = "", $namespace = "", $parameters = array())
     {
         $this->Name = $name;
         $this->Namespace = $namespace;
 
         // call the parents constructor
-        $this->CSOAPEnvelope();
+        parent::__construct();
 
         foreach ($parameters as $name => $value) {
             $this->addParameter($name, $value);
@@ -42,7 +42,7 @@ class CSOAPRequest extends CSOAPEnvelope
 
     function GetSOAPAction($separator = '/')
     {
-        if ($this->Namespace[strlen($this->Namespace) - 1] != $separator) {
+        if ($this->Namespace[mb_strlen($this->Namespace) - 1] != $separator) {
             return $this->Namespace . $separator . $this->Name;
         }
         return $this->Namespace . $this->Name;
@@ -79,8 +79,9 @@ class CSOAPRequest extends CSOAPEnvelope
         $header = new CXMLCreator("soap:Header");
         $root->addChild($header);
 
-        foreach ($this->Headers as $hx)
+        foreach ($this->Headers as $hx) {
             $header->addChild($hx);
+        }
 
         // add the body
         $body = new CXMLCreator("soap:Body");
@@ -99,8 +100,9 @@ class CSOAPRequest extends CSOAPEnvelope
             unset($param);
             $param = CXMLCreator::encodeValueLight($parameter, $value);
 
-            if ($param == false)
+            if ($param == false) {
                 ShowError("Error enconding data for payload");
+            }
             $request->addChild($param);
         }
 

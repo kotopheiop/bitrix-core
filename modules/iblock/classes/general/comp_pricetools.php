@@ -29,14 +29,16 @@ class CIBlockPriceTools
     {
         global $USER;
         $arCatalogPrices = array();
-        if (self::$catalogIncluded === null)
+        if (self::$catalogIncluded === null) {
             self::$catalogIncluded = Loader::includeModule('catalog');
+        }
         if (self::$catalogIncluded) {
             $arCatalogGroupCodesFilter = array();
             foreach ($arPriceCode as $value) {
                 $t_value = trim($value);
-                if ('' != $t_value)
+                if ('' != $t_value) {
                     $arCatalogGroupCodesFilter[$value] = true;
+                }
             }
             $arCatalogGroupsFilter = array();
             $arCatalogGroups = CCatalogGroup::GetListArray();
@@ -52,25 +54,33 @@ class CIBlockPriceTools
                         "TITLE" => htmlspecialcharsbx($value["NAME_LANG"]),
                         "~TITLE" => $value["NAME_LANG"],
                         "SELECT" => "CATALOG_GROUP_" . $value["ID"],
-                        "SELECT_EXTENDED" => array("PRICE_" . $value["ID"], "CURRENCY_" . $value["ID"], "SCALED_PRICE_" . $value["ID"])
+                        "SELECT_EXTENDED" => array(
+                            "PRICE_" . $value["ID"],
+                            "CURRENCY_" . $value["ID"],
+                            "SCALED_PRICE_" . $value["ID"]
+                        )
                     );
                 }
             }
             $userGroups = array(2);
-            if (isset($USER) && $USER instanceof CUser)
+            if (isset($USER) && $USER instanceof CUser) {
                 $userGroups = $USER->GetUserGroupArray();
+            }
             $arPriceGroups = CCatalogGroup::GetGroupsPerms($userGroups, $arCatalogGroupsFilter);
             foreach ($arCatalogPrices as $name => $value) {
                 $arCatalogPrices[$name]["CAN_VIEW"] = in_array($value["ID"], $arPriceGroups["view"]);
                 $arCatalogPrices[$name]["CAN_BUY"] = in_array($value["ID"], $arPriceGroups["buy"]);
             }
         } else {
-            $rsProperties = CIBlockProperty::GetList(array(), array(
-                "IBLOCK_ID" => $IBLOCK_ID,
-                "CHECK_PERMISSIONS" => "N",
-                "PROPERTY_TYPE" => "N",
-                "MULTIPLE" => "N"
-            ));
+            $rsProperties = CIBlockProperty::GetList(
+                array(),
+                array(
+                    "IBLOCK_ID" => $IBLOCK_ID,
+                    "CHECK_PERMISSIONS" => "N",
+                    "PROPERTY_TYPE" => "N",
+                    "MULTIPLE" => "N"
+                )
+            );
             while ($arProperty = $rsProperties->Fetch()) {
                 if (in_array($arProperty["CODE"], $arPriceCode)) {
                     $arCatalogPrices[$arProperty["CODE"]] = array(
@@ -99,16 +109,19 @@ class CIBlockPriceTools
     public static function GetAllowCatalogPrices($arPriceTypes)
     {
         $arResult = array();
-        if (empty($arPriceTypes) || !is_array($arPriceTypes))
+        if (empty($arPriceTypes) || !is_array($arPriceTypes)) {
             return $arResult;
+        }
 
         foreach ($arPriceTypes as $arOnePriceType) {
-            if ($arOnePriceType['CAN_VIEW'] || $arOnePriceType['CAN_BUY'])
+            if ($arOnePriceType['CAN_VIEW'] || $arOnePriceType['CAN_BUY']) {
                 $arResult[] = (int)$arOnePriceType['ID'];
+            }
         }
         unset($arOnePriceType);
-        if (!empty($arResult))
+        if (!empty($arResult)) {
             Main\Type\Collection::normalizeArrayValuesByInt($arResult, true);
+        }
         return $arResult;
     }
 
@@ -116,19 +129,23 @@ class CIBlockPriceTools
     {
         $result = false;
 
-        if (!is_array($arUserGroups))
+        if (!is_array($arUserGroups)) {
             return $result;
+        }
         Main\Type\Collection::normalizeArrayValuesByInt($arUserGroups, true);
-        if (empty($arUserGroups))
+        if (empty($arUserGroups)) {
             return $result;
+        }
 
-        if ($siteId === false)
+        if ($siteId === false) {
             $siteId = SITE_ID;
+        }
 
         if (\Bitrix\Main\Config\Option::get('sale', 'use_sale_discount_only') === 'Y') {
             self::$needDiscountCache = false;
-            if (self::$saleIncluded === null)
+            if (self::$saleIncluded === null) {
                 self::$saleIncluded = Loader::includeModule('sale');
+            }
             if (self::$saleIncluded) {
                 $cache = Sale\Discount\RuntimeCache\DiscountCache::getInstance();
                 $ids = $cache->getDiscountIds($arUserGroups);
@@ -147,14 +164,17 @@ class CIBlockPriceTools
             return $result;
         }
 
-        if (self::$catalogIncluded === null)
+        if (self::$catalogIncluded === null) {
             self::$catalogIncluded = Loader::includeModule('catalog');
+        }
         if (self::$catalogIncluded) {
-            if (!is_array($arCatalogGroups))
+            if (!is_array($arCatalogGroups)) {
                 return $result;
+            }
             Main\Type\Collection::normalizeArrayValuesByInt($arUserGroups, true);
-            if (empty($arUserGroups))
+            if (empty($arUserGroups)) {
                 return $result;
+            }
 
             $arRestFilter = array(
                 'PRICE_TYPES' => $arCatalogGroups,
@@ -165,7 +185,11 @@ class CIBlockPriceTools
             $arDiscountResult = array();
             if (empty($arRest) || (array_key_exists('DISCOUNTS', $arRest) && empty($arRest['DISCOUNTS']))) {
                 foreach ($arCatalogGroups as $intOneGroupID) {
-                    $strCacheKey = CCatalogDiscount::GetDiscountFilterCacheKey(array($intOneGroupID), $arUserGroups, false);
+                    $strCacheKey = CCatalogDiscount::GetDiscountFilterCacheKey(
+                        array($intOneGroupID),
+                        $arUserGroups,
+                        false
+                    );
                     $arDiscountFilter[$strCacheKey] = array();
                 }
                 unset($intOneGroupID);
@@ -173,10 +197,24 @@ class CIBlockPriceTools
                 $arResultDiscountList = array();
 
                 $select = array(
-                    'ID', 'TYPE', 'SITE_ID', 'ACTIVE', 'ACTIVE_FROM', 'ACTIVE_TO',
-                    'RENEWAL', 'NAME', 'SORT', 'MAX_DISCOUNT', 'VALUE_TYPE', 'VALUE', 'CURRENCY',
-                    'PRIORITY', 'LAST_DISCOUNT',
-                    'USE_COUPONS', 'UNPACK', 'CONDITIONS'
+                    'ID',
+                    'TYPE',
+                    'SITE_ID',
+                    'ACTIVE',
+                    'ACTIVE_FROM',
+                    'ACTIVE_TO',
+                    'RENEWAL',
+                    'NAME',
+                    'SORT',
+                    'MAX_DISCOUNT',
+                    'VALUE_TYPE',
+                    'VALUE',
+                    'CURRENCY',
+                    'PRIORITY',
+                    'LAST_DISCOUNT',
+                    'USE_COUPONS',
+                    'UNPACK',
+                    'CONDITIONS'
                 );
                 $currentDatetime = new Main\Type\DateTime();
                 $discountRows = array_chunk($arRest['DISCOUNTS'], 500);
@@ -199,19 +237,23 @@ class CIBlockPriceTools
                         '=RENEWAL' => 'N',
                     );
                     CTimeZone::Disable();
-                    $iterator = Catalog\DiscountTable::getList(array(
-                        'select' => $select,
-                        'filter' => $discountFilter
-                    ));
+                    $iterator = Catalog\DiscountTable::getList(
+                        array(
+                            'select' => $select,
+                            'filter' => $discountFilter
+                        )
+                    );
                     while ($row = $iterator->fetch()) {
                         $row['ID'] = (int)$row['ID'];
                         $row['HANDLERS'] = array();
                         $row['MODULE_ID'] = 'catalog';
                         $row['TYPE'] = (int)$row['TYPE'];
-                        if ($row['ACTIVE_FROM'] instanceof Main\Type\DateTime)
+                        if ($row['ACTIVE_FROM'] instanceof Main\Type\DateTime) {
                             $row['ACTIVE_FROM'] = $row['ACTIVE_FROM']->toString();
-                        if ($row['ACTIVE_TO'] instanceof Main\Type\DateTime)
+                        }
+                        if ($row['ACTIVE_TO'] instanceof Main\Type\DateTime) {
                             $row['ACTIVE_TO'] = $row['ACTIVE_TO']->toString();
+                        }
                         $row['COUPON_ACTIVE'] = '';
                         $row['COUPON'] = '';
                         $row['COUPON_ONE_TIME'] = null;
@@ -223,14 +265,22 @@ class CIBlockPriceTools
                 unset($pageIds, $discountRows);
 
                 foreach ($arCatalogGroups as $intOneGroupID) {
-                    $strCacheKey = CCatalogDiscount::GetDiscountFilterCacheKey(array($intOneGroupID), $arUserGroups, false);
+                    $strCacheKey = CCatalogDiscount::GetDiscountFilterCacheKey(
+                        array($intOneGroupID),
+                        $arUserGroups,
+                        false
+                    );
                     $arDiscountDetailList = array();
                     $arDiscountList = array();
                     foreach ($arRest['RESTRICTIONS'] as $intDiscountID => $arDiscountRest) {
-                        if (empty($arDiscountRest['PRICE_TYPE']) || array_key_exists($intOneGroupID, $arDiscountRest['PRICE_TYPE'])) {
+                        if (empty($arDiscountRest['PRICE_TYPE']) || array_key_exists(
+                                $intOneGroupID,
+                                $arDiscountRest['PRICE_TYPE']
+                            )) {
                             $arDiscountList[] = $intDiscountID;
-                            if (isset($arResultDiscountList[$intDiscountID]))
+                            if (isset($arResultDiscountList[$intDiscountID])) {
                                 $arDiscountDetailList[] = $arResultDiscountList[$intDiscountID];
+                            }
                         }
                     }
                     sort($arDiscountList);
@@ -250,36 +300,40 @@ class CIBlockPriceTools
 
     public static function GetItemPrices(
         /** @noinspection PhpUnusedParameterInspection */ $IBLOCK_ID,
-                                                          $arCatalogPrices,
-                                                          $arItem, $bVATInclude = true,
-                                                          $arCurrencyParams = array(),
-                                                          $USER_ID = 0,
-                                                          $LID = SITE_ID
-    )
-    {
+        $arCatalogPrices,
+        $arItem,
+        $bVATInclude = true,
+        $arCurrencyParams = array(),
+        $USER_ID = 0,
+        $LID = SITE_ID
+    ) {
         $arPrices = array();
 
-        if (empty($arCatalogPrices) || !is_array($arCatalogPrices))
+        if (empty($arCatalogPrices) || !is_array($arCatalogPrices)) {
             return $arPrices;
+        }
 
         global $USER;
         static $arCurUserGroups = array();
         static $strBaseCurrency = '';
 
-        if (self::$catalogIncluded === null)
+        if (self::$catalogIncluded === null) {
             self::$catalogIncluded = Loader::includeModule('catalog');
+        }
         if (self::$catalogIncluded) {
             $existUser = (isset($USER) && $USER instanceof CUser);
             $USER_ID = (int)$USER_ID;
             $intUserID = ($USER_ID > 0 ? $USER_ID : 0);
-            if ($intUserID == 0 && $existUser)
+            if ($intUserID == 0 && $existUser) {
                 $intUserID = (int)$USER->GetID();
+            }
             if (!isset($arCurUserGroups[$intUserID])) {
                 $arUserGroups = array(2);
-                if ($intUserID > 0)
+                if ($intUserID > 0) {
                     $arUserGroups = CUser::GetUserGroup($intUserID);
-                elseif ($existUser)
+                } elseif ($existUser) {
                     $arUserGroups = $USER->GetUserGroupArray();
+                }
                 Main\Type\Collection::normalizeArrayValuesByInt($arUserGroups);
                 $arCurUserGroups[$intUserID] = $arUserGroups;
                 unset($arUserGroups);
@@ -292,8 +346,9 @@ class CIBlockPriceTools
                 $boolConvert = true;
                 $resultCurrency = $arCurrencyParams['CURRENCY_ID'];
             }
-            if (!$boolConvert && '' == $strBaseCurrency)
+            if (!$boolConvert && '' == $strBaseCurrency) {
                 $strBaseCurrency = Currency\CurrencyManager::getBaseCurrency();
+            }
 
             $percentVat = $arItem['CATALOG_VAT'] * 0.01;
             $percentPriceWithVat = 1 + $arItem['CATALOG_VAT'] * 0.01;
@@ -310,13 +365,15 @@ class CIBlockPriceTools
                     !$value['CAN_VIEW']
                     || !isset($arItem[$catalogPriceValue])
                     || $arItem[$catalogPriceValue] == ''
-                )
+                ) {
                     continue;
+                }
 
                 $arItem[$catalogPriceValue] = (float)$arItem[$catalogPriceValue];
                 // get final price with VAT included.
-                if ($arItem['CATALOG_VAT_INCLUDED'] != 'Y')
+                if ($arItem['CATALOG_VAT_INCLUDED'] != 'Y') {
                     $arItem[$catalogPriceValue] *= $percentPriceWithVat;
+                }
 
                 $originalCurrency = $arItem[$catalogCurrencyValue];
                 $calculateCurrency = $arItem[$catalogCurrencyValue];
@@ -324,7 +381,11 @@ class CIBlockPriceTools
                 $cnangeCurrency = ($boolConvert && $resultCurrency != $calculateCurrency);
                 if ($cnangeCurrency) {
                     $calculateCurrency = $resultCurrency;
-                    $calculatePrice = CCurrencyRates::ConvertCurrency($calculatePrice, $originalCurrency, $resultCurrency);
+                    $calculatePrice = CCurrencyRates::ConvertCurrency(
+                        $calculatePrice,
+                        $originalCurrency,
+                        $resultCurrency
+                    );
                 }
 
                 // so discounts will include VAT
@@ -346,17 +407,23 @@ class CIBlockPriceTools
                     $discounts
                 );
                 unset($discounts);
-                if ($discountPrice === false)
+                if ($discountPrice === false) {
                     continue;
+                }
 
                 $originalPriceWithVat = $arItem[$catalogPriceValue];
                 $priceWithVat = $calculatePrice;
                 $discountPriceWithVat = $discountPrice;
 
-                if ($cnangeCurrency)
-                    $originalDiscountPrice = CCurrencyRates::ConvertCurrency($discountPrice, $calculateCurrency, $arItem[$catalogCurrencyValue]);
-                else
+                if ($cnangeCurrency) {
+                    $originalDiscountPrice = CCurrencyRates::ConvertCurrency(
+                        $discountPrice,
+                        $calculateCurrency,
+                        $arItem[$catalogCurrencyValue]
+                    );
+                } else {
                     $originalDiscountPrice = $discountPrice;
+                }
                 $originalDiscountPriceWithVat = $originalDiscountPrice;
 
                 $arItem[$catalogPriceValue] /= $percentPriceWithVat;
@@ -369,7 +436,11 @@ class CIBlockPriceTools
                 $originalDiscountVatValue = $originalDiscountPriceWithVat - $originalDiscountPrice;
                 $discountVatValue = $discountPriceWithVat - $discountPrice;
 
-                $roundPriceWithVat = Catalog\Product\Price::roundPrice($value['ID'], $discountPriceWithVat, $calculateCurrency);
+                $roundPriceWithVat = Catalog\Product\Price::roundPrice(
+                    $value['ID'],
+                    $discountPriceWithVat,
+                    $calculateCurrency
+                );
                 $roundPrice = Catalog\Product\Price::roundPrice($value['ID'], $discountPrice, $calculateCurrency);
 
                 $priceResult = array(
@@ -383,13 +454,25 @@ class CIBlockPriceTools
                     'PRINT_VATRATE_VALUE' => CCurrencyLang::CurrencyFormat($vatValue, $calculateCurrency, true),
 
                     'DISCOUNT_VALUE_NOVAT' => $discountPrice,
-                    'PRINT_DISCOUNT_VALUE_NOVAT' => CCurrencyLang::CurrencyFormat($discountPrice, $calculateCurrency, true),
+                    'PRINT_DISCOUNT_VALUE_NOVAT' => CCurrencyLang::CurrencyFormat(
+                        $discountPrice,
+                        $calculateCurrency,
+                        true
+                    ),
 
                     'DISCOUNT_VALUE_VAT' => $discountPriceWithVat,
-                    'PRINT_DISCOUNT_VALUE_VAT' => CCurrencyLang::CurrencyFormat($discountPriceWithVat, $calculateCurrency, true),
+                    'PRINT_DISCOUNT_VALUE_VAT' => CCurrencyLang::CurrencyFormat(
+                        $discountPriceWithVat,
+                        $calculateCurrency,
+                        true
+                    ),
 
                     'DISCOUNT_VATRATE_VALUE' => $discountVatValue,
-                    'PRINT_DISCOUNT_VATRATE_VALUE' => CCurrencyLang::CurrencyFormat($discountVatValue, $calculateCurrency, true),
+                    'PRINT_DISCOUNT_VATRATE_VALUE' => CCurrencyLang::CurrencyFormat(
+                        $discountVatValue,
+                        $calculateCurrency,
+                        true
+                    ),
 
                     'CURRENCY' => $calculateCurrency,
 
@@ -443,7 +526,10 @@ class CIBlockPriceTools
                     $priceResult['DISCOUNT_DIFF_PERCENT'] = 0;
                 } else {
                     $priceResult['DISCOUNT_DIFF'] = $priceResult['VALUE'] - $priceResult['DISCOUNT_VALUE'];
-                    $priceResult['DISCOUNT_DIFF_PERCENT'] = roundEx(100 * $priceResult['DISCOUNT_DIFF'] / $priceResult['VALUE'], 0);
+                    $priceResult['DISCOUNT_DIFF_PERCENT'] = roundEx(
+                        100 * $priceResult['DISCOUNT_DIFF'] / $priceResult['VALUE'],
+                        0
+                    );
                 }
                 $priceResult['PRINT_DISCOUNT_DIFF'] = CCurrencyLang::CurrencyFormat(
                     $priceResult['DISCOUNT_DIFF'],
@@ -454,14 +540,22 @@ class CIBlockPriceTools
                 if ($boolStartMin) {
                     $dblMinPrice = ($boolConvert || ($calculateCurrency == $strMinCurrency)
                         ? $priceResult['DISCOUNT_VALUE']
-                        : CCurrencyRates::ConvertCurrency($priceResult['DISCOUNT_VALUE'], $calculateCurrency, $strMinCurrency)
+                        : CCurrencyRates::ConvertCurrency(
+                            $priceResult['DISCOUNT_VALUE'],
+                            $calculateCurrency,
+                            $strMinCurrency
+                        )
                     );
                     $strMinCode = $key;
                     $boolStartMin = false;
                 } else {
                     $dblComparePrice = ($boolConvert || ($calculateCurrency == $strMinCurrency)
                         ? $priceResult['DISCOUNT_VALUE']
-                        : CCurrencyRates::ConvertCurrency($priceResult['DISCOUNT_VALUE'], $calculateCurrency, $strMinCurrency)
+                        : CCurrencyRates::ConvertCurrency(
+                            $priceResult['DISCOUNT_VALUE'],
+                            $calculateCurrency,
+                            $strMinCurrency
+                        )
                     );
                     if ($dblMinPrice > $dblComparePrice) {
                         $dblMinPrice = $dblComparePrice;
@@ -474,8 +568,9 @@ class CIBlockPriceTools
                 $arPrices[$key] = $priceResult;
                 unset($priceResult);
             }
-            if ($strMinCode != '')
+            if ($strMinCode != '') {
                 $arPrices[$strMinCode]['MIN_PRICE'] = 'Y';
+            }
             CCatalogDiscountSave::Enable();
 
             unset($percentPriceWithVat);
@@ -485,8 +580,9 @@ class CIBlockPriceTools
             $boolStartMin = true;
             $dblMinPrice = 0;
             foreach ($arCatalogPrices as $key => $value) {
-                if (!$value['CAN_VIEW'])
+                if (!$value['CAN_VIEW']) {
                     continue;
+                }
 
                 $dblValue = round(doubleval($arItem["PROPERTY_" . $value["ID"] . "_VALUE"]), 2);
                 if ($boolStartMin) {
@@ -515,8 +611,9 @@ class CIBlockPriceTools
                     'PRICE_ID' => $value['ID']
                 );
             }
-            if ($strMinCode != '')
+            if ($strMinCode != '') {
                 $arPrices[$strMinCode]['MIN_PRICE'] = 'Y';
+            }
         }
         return $arPrices;
     }
@@ -529,28 +626,32 @@ class CIBlockPriceTools
      */
     public static function CanBuy(
         /** @noinspection PhpUnusedParameterInspection */ $IBLOCK_ID,
-                                                          $arCatalogPrices,
-                                                          $arItem
-    )
-    {
-        if (isset($arItem['ACTIVE']) && $arItem['ACTIVE'] === 'N')
+        $arCatalogPrices,
+        $arItem
+    ) {
+        if (isset($arItem['ACTIVE']) && $arItem['ACTIVE'] === 'N') {
             return false;
+        }
 
-        if (isset($arItem['CATALOG_AVAILABLE']) && $arItem['CATALOG_AVAILABLE'] === 'N')
+        if (isset($arItem['CATALOG_AVAILABLE']) && $arItem['CATALOG_AVAILABLE'] === 'N') {
             return false;
-        if (isset($arItem['AVAILABLE']) && $arItem['AVAILABLE'] === 'N')
+        }
+        if (isset($arItem['AVAILABLE']) && $arItem['AVAILABLE'] === 'N') {
             return false;
+        }
 
         if (!empty($arItem["PRICE_MATRIX"]) && is_array($arItem["PRICE_MATRIX"])) {
             return $arItem["PRICE_MATRIX"]["AVAILABLE"] == "Y";
         } else {
-            if (empty($arCatalogPrices) || !is_array($arCatalogPrices))
+            if (empty($arCatalogPrices) || !is_array($arCatalogPrices)) {
                 return false;
+            }
 
             foreach ($arCatalogPrices as $arPrice) {
                 //if ($arPrice["CAN_BUY"] && isset($arItem["CATALOG_PRICE_".$arPrice["ID"]]) && $arItem["CATALOG_PRICE_".$arPrice["ID"]] !== null)
-                if ($arPrice["CAN_BUY"] && isset($arItem["CATALOG_PRICE_" . $arPrice["ID"]]))
+                if ($arPrice["CAN_BUY"] && isset($arItem["CATALOG_PRICE_" . $arPrice["ID"]])) {
                     return true;
+                }
             }
         }
         return false;
@@ -561,8 +662,7 @@ class CIBlockPriceTools
         /** @noinspection PhpUnusedParameterInspection */ $ELEMENT_ID,
         $arPropertiesList,
         $arPropertiesValues
-    )
-    {
+    ) {
         static $cache = array();
         static $userTypeList = array();
         $propertyTypeSupport = array(
@@ -581,8 +681,9 @@ class CIBlockPriceTools
 
         $result = array();
         foreach ($arPropertiesList as $pid) {
-            if (preg_match("/[^A-Za-z0-9_]/", $pid) || !isset($arPropertiesValues[$pid]))
+            if (preg_match("/[^A-Za-z0-9_]/", $pid) || !isset($arPropertiesValues[$pid])) {
                 continue;
+            }
             $prop = $arPropertiesValues[$pid];
             $prop['ID'] = (int)$prop['ID'];
             if (!isset($propertyTypeSupport[$prop['MULTIPLE']][$prop['PROPERTY_TYPE']])) {
@@ -610,18 +711,22 @@ class CIBlockPriceTools
                 if ($userTypeProp) {
                     $countValues = 0;
                     foreach ($prop["VALUE"] as $value) {
-                        if (!is_scalar($value))
+                        if (!is_scalar($value)) {
                             continue;
+                        }
                         $value = (string)$value;
-                        $displayValue = (string)call_user_func_array($userType,
+                        $displayValue = (string)call_user_func_array(
+                            $userType,
                             array(
                                 $prop,
                                 array('VALUE' => $value),
                                 array(array('MODE' => 'SIMPLE_TEXT'))
-                            ));
+                            )
+                        );
                         if ('' !== $displayValue) {
-                            if ($productProp["SELECTED"] === false)
+                            if ($productProp["SELECTED"] === false) {
                                 $productProp["SELECTED"] = $value;
+                            }
                             $productProp["VALUES"][$value] = htmlspecialcharsbx($displayValue);
                             $emptyValues = false;
                             $countValues++;
@@ -634,12 +739,14 @@ class CIBlockPriceTools
                         case "N":
                             $countValues = 0;
                             foreach ($prop["VALUE"] as $value) {
-                                if (!is_scalar($value))
+                                if (!is_scalar($value)) {
                                     continue;
+                                }
                                 $value = (string)$value;
                                 if ($value !== '') {
-                                    if ($productProp["SELECTED"] === false)
+                                    if ($productProp["SELECTED"] === false) {
                                         $productProp["SELECTED"] = $value;
+                                    }
                                     $productProp["VALUES"][$value] = $value;
                                     $emptyValues = false;
                                     $countValues++;
@@ -651,8 +758,9 @@ class CIBlockPriceTools
                             $ar = array();
                             foreach ($prop["VALUE"] as $value) {
                                 $value = (int)$value;
-                                if ($value > 0)
+                                if ($value > 0) {
                                     $ar[] = $value;
+                                }
                             }
                             if (!empty($ar)) {
                                 $countValues = 0;
@@ -664,8 +772,9 @@ class CIBlockPriceTools
                                 );
                                 while ($arSection = $rsSections->GetNext()) {
                                     $arSection["ID"] = (int)$arSection["ID"];
-                                    if ($productProp["SELECTED"] === false)
+                                    if ($productProp["SELECTED"] === false) {
                                         $productProp["SELECTED"] = $arSection["ID"];
+                                    }
                                     $productProp["VALUES"][$arSection["ID"]] = $arSection["NAME"];
                                     $emptyValues = false;
                                     $countValues++;
@@ -677,8 +786,9 @@ class CIBlockPriceTools
                             $ar = array();
                             foreach ($prop["VALUE"] as $value) {
                                 $value = (int)$value;
-                                if ($value > 0)
+                                if ($value > 0) {
                                     $ar[] = $value;
+                                }
                             }
                             if (!empty($ar)) {
                                 $countValues = 0;
@@ -691,8 +801,9 @@ class CIBlockPriceTools
                                 );
                                 while ($arElement = $rsElements->GetNext()) {
                                     $arElement['ID'] = (int)$arElement['ID'];
-                                    if ($productProp["SELECTED"] === false)
+                                    if ($productProp["SELECTED"] === false) {
                                         $productProp["SELECTED"] = $arElement["ID"];
+                                    }
                                     $productProp["VALUES"][$arElement["ID"]] = $arElement["NAME"];
                                     $emptyValues = false;
                                     $countValues++;
@@ -704,8 +815,9 @@ class CIBlockPriceTools
                             $countValues = 0;
                             foreach ($prop["VALUE"] as $i => $value) {
                                 $prop["VALUE_ENUM_ID"][$i] = (int)$prop["VALUE_ENUM_ID"][$i];
-                                if ($productProp["SELECTED"] === false)
+                                if ($productProp["SELECTED"] === false) {
                                     $productProp["SELECTED"] = $prop["VALUE_ENUM_ID"][$i];
+                                }
                                 $productProp["VALUES"][$prop["VALUE_ENUM_ID"][$i]] = $value;
                                 $emptyValues = false;
                                 $countValues++;
@@ -729,8 +841,9 @@ class CIBlockPriceTools
                                 while ($arEnum = $rsEnum->GetNext()) {
                                     $arEnum["ID"] = (int)$arEnum["ID"];
                                     $productProp["VALUES"][$arEnum["ID"]] = $arEnum["VALUE"];
-                                    if ($arEnum["DEF"] == "Y")
+                                    if ($arEnum["DEF"] == "Y") {
                                         $productProp["SELECTED"] = $arEnum["ID"];
+                                    }
                                     $emptyValues = false;
                                 }
                                 if (!$emptyValues) {
@@ -755,13 +868,15 @@ class CIBlockPriceTools
                                     $rsElements = CIBlockElement::GetList(
                                         array("NAME" => "ASC", "SORT" => "ASC"),
                                         array("IBLOCK_ID" => $prop["LINK_IBLOCK_ID"], "ACTIVE" => "Y"),
-                                        false, false,
+                                        false,
+                                        false,
                                         array("ID", "NAME")
                                     );
                                     while ($arElement = $rsElements->GetNext()) {
                                         $arElement['ID'] = (int)$arElement['ID'];
-                                        if ($productProp["SELECTED"] === false)
+                                        if ($productProp["SELECTED"] === false) {
                                             $productProp["SELECTED"] = $arElement["ID"];
+                                        }
                                         $productProp["VALUES"][$arElement["ID"]] = $arElement["NAME"];
                                         $emptyValues = false;
                                     }
@@ -815,12 +930,17 @@ class CIBlockPriceTools
     }
 
     /*
-    Checks arPropertiesValues against DB values
-    returns array on success
-    or number on fail (may be used for debug)
-    */
-    public static function CheckProductProperties($iblockID, $elementID, $propertiesList, $propertiesValues, $enablePartialList = false)
-    {
+	Checks arPropertiesValues against DB values
+	returns array on success
+	or number on fail (may be used for debug)
+	*/
+    public static function CheckProductProperties(
+        $iblockID,
+        $elementID,
+        $propertiesList,
+        $propertiesValues,
+        $enablePartialList = false
+    ) {
         $propertyTypeSupport = array(
             'Y' => array(
                 'N' => true,
@@ -836,25 +956,30 @@ class CIBlockPriceTools
         );
         $iblockID = (int)$iblockID;
         $elementID = (int)$elementID;
-        if (0 >= $iblockID || 0 >= $elementID)
+        if (0 >= $iblockID || 0 >= $elementID) {
             return 6;
+        }
         $enablePartialList = (true === $enablePartialList);
         $sortIndex = 1;
         $result = array();
-        if (!is_array($propertiesList))
+        if (!is_array($propertiesList)) {
             $propertiesList = array();
-        if (empty($propertiesList))
+        }
+        if (empty($propertiesList)) {
             return $result;
+        }
         $checkProps = array_fill_keys($propertiesList, true);
         $propCodes = $checkProps;
         $existProps = array();
         $rsProps = CIBlockElement::GetProperty($iblockID, $elementID, 'sort', 'asc', array());
         while ($oneProp = $rsProps->Fetch()) {
-            if (!isset($propCodes[$oneProp['CODE']]) && !isset($propCodes[$oneProp['ID']]))
+            if (!isset($propCodes[$oneProp['CODE']]) && !isset($propCodes[$oneProp['ID']])) {
                 continue;
+            }
             $propID = (isset($propCodes[$oneProp['CODE']]) ? $oneProp['CODE'] : $oneProp['ID']);
-            if (!isset($checkProps[$propID]))
+            if (!isset($checkProps[$propID])) {
                 continue;
+            }
 
             if (!isset($propertyTypeSupport[$oneProp['MULTIPLE']][$oneProp['PROPERTY_TYPE']])) {
                 return ($oneProp['MULTIPLE'] == 'Y' ? 2 : 3);
@@ -871,13 +996,15 @@ class CIBlockPriceTools
                 return 1;
             }
 
-            if (!is_scalar($propertiesValues[$propID]))
+            if (!is_scalar($propertiesValues[$propID])) {
                 return 5;
+            }
 
             $propertiesValues[$propID] = (string)$propertiesValues[$propID];
             $existValue = ('' != $propertiesValues[$propID]);
-            if (!$existValue)
+            if (!$existValue) {
                 return 1;
+            }
 
             $userTypeProp = false;
             $userType = null;
@@ -892,12 +1019,14 @@ class CIBlockPriceTools
             if ($oneProp["MULTIPLE"] == "Y") {
                 if ($userTypeProp) {
                     if ($oneProp["VALUE"] == $propertiesValues[$propID]) {
-                        $displayValue = (string)call_user_func_array($userType,
+                        $displayValue = (string)call_user_func_array(
+                            $userType,
                             array(
                                 $oneProp,
                                 array('VALUE' => $oneProp['VALUE']),
                                 array('MODE' => 'SIMPLE_TEXT')
-                            ));
+                            )
+                        );
                         $result[] = array(
                             "NAME" => $oneProp["NAME"],
                             "CODE" => $propID,
@@ -963,7 +1092,11 @@ class CIBlockPriceTools
                             if ($oneProp["VALUE"] == $propertiesValues[$propID]) {
                                 $rsEnum = CIBlockPropertyEnum::GetList(
                                     array(),
-                                    array("ID" => $propertiesValues[$propID], "IBLOCK_ID" => $iblockID, "PROPERTY_ID" => $oneProp['ID'])
+                                    array(
+                                        "ID" => $propertiesValues[$propID],
+                                        "IBLOCK_ID" => $iblockID,
+                                        "PROPERTY_ID" => $oneProp['ID']
+                                    )
                                 );
                                 if ($arEnum = $rsEnum->Fetch()) {
                                     $result[] = array(
@@ -984,7 +1117,11 @@ class CIBlockPriceTools
                         if (0 < (int)$propertiesValues[$propID]) {
                             $rsEnum = CIBlockPropertyEnum::GetList(
                                 array(),
-                                array("ID" => $propertiesValues[$propID], "IBLOCK_ID" => $iblockID, "PROPERTY_ID" => $oneProp['ID'])
+                                array(
+                                    "ID" => $propertiesValues[$propID],
+                                    "IBLOCK_ID" => $iblockID,
+                                    "PROPERTY_ID" => $oneProp['ID']
+                                )
                             );
                             if ($arEnum = $rsEnum->Fetch()) {
                                 $result[] = array(
@@ -1024,14 +1161,16 @@ class CIBlockPriceTools
         if ($enablePartialList && !empty($checkProps)) {
             $nonExistProps = array_keys($checkProps);
             foreach ($nonExistProps as &$oneCode) {
-                if (!isset($existProps[$oneCode]))
+                if (!isset($existProps[$oneCode])) {
                     unset($checkProps[$oneCode]);
+                }
             }
             unset($oneCode);
         }
 
-        if (!empty($checkProps))
+        if (!empty($checkProps)) {
             return 4;
+        }
 
         return $result;
     }
@@ -1041,8 +1180,9 @@ class CIBlockPriceTools
         $arResult = false;
         $IBLOCK_ID = (int)$IBLOCK_ID;
         if (0 < $IBLOCK_ID) {
-            if (self::$catalogIncluded === null)
+            if (self::$catalogIncluded === null) {
                 self::$catalogIncluded = Loader::includeModule('catalog');
+            }
             if (self::$catalogIncluded) {
                 $arCatalog = CCatalogSku::GetInfoByProductIBlock($IBLOCK_ID);
                 if (!empty($arCatalog) && is_array($arCatalog)) {
@@ -1063,8 +1203,9 @@ class CIBlockPriceTools
 
         $iblockID = (int)$iblockID;
         $offerID = (int)$offerID;
-        if (0 >= $iblockID || 0 >= $offerID)
+        if (0 >= $iblockID || 0 >= $offerID) {
             return $result;
+        }
 
         $skuPropsList = array();
         if (!empty($skuTreeProps)) {
@@ -1073,7 +1214,7 @@ class CIBlockPriceTools
             } else {
                 $skuTreeProps = base64_decode((string)$skuTreeProps);
                 if (false !== $skuTreeProps && CheckSerializedData($skuTreeProps)) {
-                    $skuPropsList = unserialize($skuTreeProps);
+                    $skuPropsList = unserialize($skuTreeProps, ['allowed_classes' => false]);
                     if (!is_array($skuPropsList)) {
                         $skuPropsList = array();
                     }
@@ -1087,20 +1228,23 @@ class CIBlockPriceTools
         if (!empty($skuPropsList)) {
             $propertiesList = array_unique(array_merge($propertiesList, $skuPropsList));
         }
-        if (empty($propertiesList))
+        if (empty($propertiesList)) {
             return $result;
+        }
         $propCodes = array_fill_keys($propertiesList, true);
 
-        if (self::$catalogIncluded === null)
+        if (self::$catalogIncluded === null) {
             self::$catalogIncluded = Loader::includeModule('catalog');
+        }
         if (self::$catalogIncluded) {
             $iblockInfo = CCatalogSku::GetInfoByProductIBlock($iblockID);
             if (empty($iblockInfo)) {
                 $iblockInfo = CCatalogSku::GetInfoByOfferIBlock($iblockID);
             }
         }
-        if (empty($iblockInfo))
+        if (empty($iblockInfo)) {
             return $result;
+        }
 
         $sortIndex = 1;
         $rsProps = CIBlockElement::GetProperty(
@@ -1111,8 +1255,9 @@ class CIBlockPriceTools
         );
 
         while ($oneProp = $rsProps->Fetch()) {
-            if (!isset($propCodes[$oneProp['CODE']]) && !isset($propCodes[$oneProp['ID']]))
+            if (!isset($propCodes[$oneProp['CODE']]) && !isset($propCodes[$oneProp['ID']])) {
                 continue;
+            }
             $propID = (isset($propCodes[$oneProp['CODE']]) ? $oneProp['CODE'] : $oneProp['ID']);
 
             $userTypeProp = false;
@@ -1126,12 +1271,14 @@ class CIBlockPriceTools
             }
 
             if ($userTypeProp) {
-                $displayValue = (string)call_user_func_array($userType,
+                $displayValue = (string)call_user_func_array(
+                    $userType,
                     array(
                         $oneProp,
                         array('VALUE' => $oneProp['VALUE']),
                         array('MODE' => 'SIMPLE_TEXT')
-                    ));
+                    )
+                );
                 $result[] = array(
                     "NAME" => $oneProp["NAME"],
                     "CODE" => $propID,
@@ -1196,8 +1343,19 @@ class CIBlockPriceTools
         return $result;
     }
 
-    public static function GetOffersArray($arFilter, $arElementID, $arOrder, $arSelectFields, $arSelectProperties, $limit, $arPrices, $vat_include, $arCurrencyParams = array(), $USER_ID = 0, $LID = SITE_ID)
-    {
+    public static function GetOffersArray(
+        $arFilter,
+        $arElementID,
+        $arOrder,
+        $arSelectFields,
+        $arSelectProperties,
+        $limit,
+        $arPrices,
+        $vat_include,
+        $arCurrencyParams = array(),
+        $USER_ID = 0,
+        $LID = SITE_ID
+    ) {
         global $USER;
 
         $arResult = array();
@@ -1209,16 +1367,20 @@ class CIBlockPriceTools
         $IBLOCK_ID = 0;
 
         if (!empty($arFilter) && is_array($arFilter)) {
-            if (isset($arFilter['IBLOCK_ID']))
+            if (isset($arFilter['IBLOCK_ID'])) {
                 $IBLOCK_ID = $arFilter['IBLOCK_ID'];
-            if (isset($arFilter['HIDE_NOT_AVAILABLE']))
+            }
+            if (isset($arFilter['HIDE_NOT_AVAILABLE'])) {
                 $boolHideNotAvailable = ($arFilter['HIDE_NOT_AVAILABLE'] === 'Y');
-            if (isset($arFilter['CHECK_PERMISSIONS']))
+            }
+            if (isset($arFilter['CHECK_PERMISSIONS'])) {
                 $boolCheckPermissions = ($arFilter['CHECK_PERMISSIONS'] === 'Y');
+            }
             if (isset($arFilter['SHOW_PRICE_COUNT'])) {
                 $showPriceCount = (int)$arFilter['SHOW_PRICE_COUNT'];
-                if ($showPriceCount <= 0)
+                if ($showPriceCount <= 0) {
                     $showPriceCount = false;
+                }
             }
 
             if (isset($arFilter['CUSTOM_FILTER'])) {
@@ -1238,10 +1400,11 @@ class CIBlockPriceTools
                 } else {
                     $USER_ID = (int)$USER_ID;
                     $userGroups = array(2);
-                    if ($USER_ID > 0)
+                    if ($USER_ID > 0) {
                         $userGroups = CUser::GetUserGroup($USER_ID);
-                    elseif (isset($USER) && $USER instanceof CUser)
+                    } elseif (isset($USER) && $USER instanceof CUser) {
                         $userGroups = $USER->GetUserGroupArray();
+                    }
                     self::$needDiscountCache = CIBlockPriceTools::SetCatalogDiscountCache($pricesAllow, $userGroups);
                     unset($userGroups);
                 }
@@ -1254,11 +1417,13 @@ class CIBlockPriceTools
             $arDefaultMeasure = CCatalogMeasure::getDefaultMeasure(true, true);
 
             $limit = (int)$limit;
-            if (0 > $limit)
+            if (0 > $limit) {
                 $limit = 0;
+            }
 
-            if (!isset($arOrder["ID"]))
+            if (!isset($arOrder["ID"])) {
                 $arOrder["ID"] = "DESC";
+            }
 
             $intOfferIBlockID = $arOffersIBlock["OFFERS_IBLOCK_ID"];
 
@@ -1268,17 +1433,21 @@ class CIBlockPriceTools
             $propertyList = array();
             if (!empty($arSelectProperties)) {
                 $selectProperties = array_fill_keys($arSelectProperties, true);
-                $propertyIterator = Iblock\PropertyTable::getList(array(
-                    'select' => array('ID', 'CODE'),
-                    'filter' => array('=IBLOCK_ID' => $intOfferIBlockID, '=ACTIVE' => 'Y'),
-                    'order' => array('SORT' => 'ASC', 'ID' => 'ASC')
-                ));
+                $propertyIterator = Iblock\PropertyTable::getList(
+                    array(
+                        'select' => array('ID', 'CODE'),
+                        'filter' => array('=IBLOCK_ID' => $intOfferIBlockID, '=ACTIVE' => 'Y'),
+                        'order' => array('SORT' => 'ASC', 'ID' => 'ASC')
+                    )
+                );
                 while ($property = $propertyIterator->fetch()) {
                     $code = (string)$property['CODE'];
-                    if ($code == '')
+                    if ($code == '') {
                         $code = $property['ID'];
-                    if (!isset($selectProperties[$code]))
+                    }
+                    if (!isset($selectProperties[$code])) {
                         continue;
+                    }
                     $propertyList[] = $code;
                     unset($code);
                 }
@@ -1297,8 +1466,9 @@ class CIBlockPriceTools
                 $arFilter[] = $customFilter;
             }
 
-            if ($boolHideNotAvailable)
+            if ($boolHideNotAvailable) {
                 $arFilter['CATALOG_AVAILABLE'] = 'Y';
+            }
             if ($boolCheckPermissions) {
                 $arFilter['CHECK_PERMISSIONS'] = "Y";
                 $arFilter['MIN_PERMISSION'] = "R";
@@ -1313,8 +1483,9 @@ class CIBlockPriceTools
             //if(!$arParams["USE_PRICE_COUNT"])
             {
                 foreach ($arPrices as $value) {
-                    if (!$value['CAN_VIEW'] && !$value['CAN_BUY'])
+                    if (!$value['CAN_VIEW'] && !$value['CAN_BUY']) {
                         continue;
+                    }
                     $arSelect[$value["SELECT"]] = 1;
                     if ($showPriceCount !== false) {
                         $arFilter['CATALOG_SHOP_QUANTITY_' . $value['ID']] = $showPriceCount;
@@ -1323,24 +1494,28 @@ class CIBlockPriceTools
             }
 
             if (!empty($arSelectFields)) {
-                foreach ($arSelectFields as $code)
-                    $arSelect[$code] = 1; //mark to select
+                foreach ($arSelectFields as $code) {
+                    $arSelect[$code] = 1;
+                } //mark to select
                 unset($code);
             }
             $checkFields = array();
             foreach (array_keys($arOrder) as $code) {
-                $code = strtoupper($code);
+                $code = mb_strtoupper($code);
                 $arSelect[$code] = 1;
-                if ($code == 'ID' || $code == 'CATALOG_AVAILABLE')
+                if ($code == 'ID' || $code == 'CATALOG_AVAILABLE') {
                     continue;
+                }
                 $checkFields[] = $code;
             }
             unset($code);
 
-            if (!isset($arSelect['PREVIEW_PICTURE']))
+            if (!isset($arSelect['PREVIEW_PICTURE'])) {
                 $arSelect['PREVIEW_PICTURE'] = 1;
-            if (!isset($arSelect['DETAIL_PICTURE']))
+            }
+            if (!isset($arSelect['DETAIL_PICTURE'])) {
                 $arSelect['DETAIL_PICTURE'] = 1;
+            }
 
             $arOfferIDs = array();
             $arMeasureMap = array();
@@ -1355,19 +1530,22 @@ class CIBlockPriceTools
                 //No more than limit offers per element
                 if ($limit > 0) {
                     $arOffersPerElement[$element_id]++;
-                    if ($arOffersPerElement[$element_id] > $limit)
+                    if ($arOffersPerElement[$element_id] > $limit) {
                         continue;
+                    }
                 }
 
                 if ($element_id > 0) {
                     $arOffer['SORT_HASH'] = 'ID';
                     if (!empty($checkFields)) {
                         $checkValues = '';
-                        foreach ($checkFields as $code)
+                        foreach ($checkFields as $code) {
                             $checkValues .= (isset($arOffer[$code]) ? $arOffer[$code] : '') . '|';
+                        }
                         unset($code);
-                        if ($checkValues != '')
+                        if ($checkValues != '') {
                             $arOffer['SORT_HASH'] = md5($checkValues);
+                        }
                         unset($checkValues);
                     }
                     $arOffer["LINK_ELEMENT_ID"] = $element_id;
@@ -1386,14 +1564,17 @@ class CIBlockPriceTools
                     $arOffer['CATALOG_MEASURE_NAME'] = $arDefaultMeasure['SYMBOL_RUS'];
                     $arOffer['~CATALOG_MEASURE_NAME'] = $arDefaultMeasure['SYMBOL_RUS'];
                     $arOffer["CATALOG_MEASURE_RATIO"] = 1;
-                    if (!isset($arOffer['CATALOG_MEASURE']))
+                    if (!isset($arOffer['CATALOG_MEASURE'])) {
                         $arOffer['CATALOG_MEASURE'] = 0;
+                    }
                     $arOffer['CATALOG_MEASURE'] = (int)$arOffer['CATALOG_MEASURE'];
-                    if (0 > $arOffer['CATALOG_MEASURE'])
+                    if (0 > $arOffer['CATALOG_MEASURE']) {
                         $arOffer['CATALOG_MEASURE'] = 0;
+                    }
                     if (0 < $arOffer['CATALOG_MEASURE']) {
-                        if (!isset($arMeasureMap[$arOffer['CATALOG_MEASURE']]))
+                        if (!isset($arMeasureMap[$arOffer['CATALOG_MEASURE']])) {
                             $arMeasureMap[$arOffer['CATALOG_MEASURE']] = array();
+                        }
                         $arMeasureMap[$arOffer['CATALOG_MEASURE']][] = $intKey;
                     }
 
@@ -1424,10 +1605,11 @@ class CIBlockPriceTools
                         $intRatio = (int)$arRatio['RATIO'];
                         $dblRatio = (float)$arRatio['RATIO'];
                         $mxRatio = ($dblRatio > $intRatio ? $dblRatio : $intRatio);
-                        if (CATALOG_VALUE_EPSILON > abs($mxRatio))
+                        if (CATALOG_VALUE_EPSILON > abs($mxRatio)) {
                             $mxRatio = 1;
-                        elseif (0 > $mxRatio)
+                        } elseif (0 > $mxRatio) {
                             $mxRatio = 1;
+                        }
                         $arOffersLink[$arRatio['PRODUCT_ID']]['CATALOG_MEASURE_RATIO'] = $mxRatio;
                     }
                 }
@@ -1435,21 +1617,31 @@ class CIBlockPriceTools
                 if (!empty($propertyList)) {
                     CIBlockElement::GetPropertyValuesArray($arOffersLink, $intOfferIBlockID, $arFilter);
                     foreach ($arResult as &$arOffer) {
-                        if (self::$needDiscountCache)
+                        if (self::$needDiscountCache) {
                             CCatalogDiscount::SetProductPropertiesCache($arOffer['ID'], $arOffer["PROPERTIES"]);
-                        if (\Bitrix\Main\Config\Option::get('sale', 'use_sale_discount_only') === 'Y')
-                            Catalog\Discount\DiscountManager::setProductPropertiesCache($arOffer['ID'], $arOffer["PROPERTIES"]);
+                        }
+                        if (\Bitrix\Main\Config\Option::get('sale', 'use_sale_discount_only') === 'Y') {
+                            Catalog\Discount\DiscountManager::setProductPropertiesCache(
+                                $arOffer['ID'],
+                                $arOffer["PROPERTIES"]
+                            );
+                        }
 
                         foreach ($propertyList as $pid) {
-                            if (!isset($arOffer["PROPERTIES"][$pid]))
+                            if (!isset($arOffer["PROPERTIES"][$pid])) {
                                 continue;
+                            }
                             $prop = &$arOffer["PROPERTIES"][$pid];
                             $boolArr = is_array($prop["VALUE"]);
                             if (
                                 ($boolArr && !empty($prop["VALUE"])) ||
                                 (!$boolArr && (string)$prop["VALUE"] !== '')
                             ) {
-                                $arOffer["DISPLAY_PROPERTIES"][$pid] = CIBlockFormatProperties::GetDisplayValue($arOffer, $prop, "catalog_out");
+                                $arOffer["DISPLAY_PROPERTIES"][$pid] = CIBlockFormatProperties::GetDisplayValue(
+                                    $arOffer,
+                                    $prop,
+                                    "catalog_out"
+                                );
                             }
                             unset($boolArr, $prop);
                         }
@@ -1469,17 +1661,24 @@ class CIBlockPriceTools
                 }
                 if (self::$needDiscountCache) {
                     CCatalogDiscount::SetProductSectionsCache($arOfferIDs);
-                    CCatalogDiscount::SetDiscountProductCache($arOfferIDs, array('IBLOCK_ID' => $intOfferIBlockID, 'GET_BY_ID' => 'Y'));
+                    CCatalogDiscount::SetDiscountProductCache(
+                        $arOfferIDs,
+                        array(
+                            'IBLOCK_ID' => $intOfferIBlockID,
+                            'GET_BY_ID' => 'Y'
+                        )
+                    );
                 }
                 if (\Bitrix\Main\Config\Option::get('sale', 'use_sale_discount_only') === 'Y') {
                     $pricesAllow = CIBlockPriceTools::GetAllowCatalogPrices($arPrices);
                     if (!empty($pricesAllow)) {
                         $USER_ID = (int)$USER_ID;
                         $userGroups = array(2);
-                        if ($USER_ID > 0)
+                        if ($USER_ID > 0) {
                             $userGroups = CUser::GetUserGroup($USER_ID);
-                        elseif (isset($USER) && $USER instanceof CUser)
+                        } elseif (isset($USER) && $USER instanceof CUser) {
                             $userGroups = $USER->GetUserGroupArray();
+                        }
                         Catalog\Discount\DiscountManager::preloadPriceData($arOfferIDs, $pricesAllow);
                         Catalog\Discount\DiscountManager::preloadProductDataToExtendOrder($arOfferIDs, $userGroups);
                         unset($userGroups);
@@ -1493,7 +1692,15 @@ class CIBlockPriceTools
                         : (int)$arOffer['CATALOG_QUANTITY']
                     );
                     $arOffer['MIN_PRICE'] = false;
-                    $arOffer["PRICES"] = CIBlockPriceTools::GetItemPrices($arOffersIBlock["OFFERS_IBLOCK_ID"], $arPrices, $arOffer, $vat_include, $arCurrencyParams, $USER_ID, $LID);
+                    $arOffer["PRICES"] = CIBlockPriceTools::GetItemPrices(
+                        $arOffersIBlock["OFFERS_IBLOCK_ID"],
+                        $arPrices,
+                        $arOffer,
+                        $vat_include,
+                        $arCurrencyParams,
+                        $USER_ID,
+                        $LID
+                    );
                     if (!empty($arOffer["PRICES"])) {
                         foreach ($arOffer['PRICES'] as &$arOnePrice) {
                             if ($arOnePrice['MIN_PRICE'] == 'Y') {
@@ -1503,10 +1710,15 @@ class CIBlockPriceTools
                         }
                         unset($arOnePrice);
                     }
-                    $arOffer["CAN_BUY"] = CIBlockPriceTools::CanBuy($arOffersIBlock["OFFERS_IBLOCK_ID"], $arPrices, $arOffer);
+                    $arOffer["CAN_BUY"] = CIBlockPriceTools::CanBuy(
+                        $arOffersIBlock["OFFERS_IBLOCK_ID"],
+                        $arPrices,
+                        $arOffer
+                    );
                 }
-                if (isset($arOffer))
+                if (isset($arOffer)) {
                     unset($arOffer);
+                }
             }
             if (!empty($arMeasureMap)) {
                 $rsMeasures = CCatalogMeasure::getList(
@@ -1541,8 +1753,9 @@ class CIBlockPriceTools
      */
     public static function GetDefaultMeasure()
     {
-        if (self::$catalogIncluded === null)
+        if (self::$catalogIncluded === null) {
             self::$catalogIncluded = Loader::includeModule('catalog');
+        }
         return (self::$catalogIncluded ? array() : CCatalogMeasure::getDefaultMeasure(true, true));
     }
 
@@ -1580,10 +1793,17 @@ class CIBlockPriceTools
                 if ($item['MIN_PRICE']['VALUE'] == $item['MIN_PRICE']['DISCOUNT_VALUE']) {
                     $item['RATIO_PRICE']['DISCOUNT_DIFF'] = 0;
                     $item['RATIO_PRICE']['DISCOUNT_DIFF_PERCENT'] = 0;
-                    $item['RATIO_PRICE']['PRINT_DISCOUNT_DIFF'] = CCurrencyLang::CurrencyFormat(0, $item['RATIO_PRICE']['CURRENCY'], true);
+                    $item['RATIO_PRICE']['PRINT_DISCOUNT_DIFF'] = CCurrencyLang::CurrencyFormat(
+                        0,
+                        $item['RATIO_PRICE']['CURRENCY'],
+                        true
+                    );
                 } else {
                     $item['RATIO_PRICE']['DISCOUNT_DIFF'] = $item['RATIO_PRICE']['VALUE'] - $item['RATIO_PRICE']['DISCOUNT_VALUE'];
-                    $item['RATIO_PRICE']['DISCOUNT_DIFF_PERCENT'] = roundEx(100 * $item['RATIO_PRICE']['DISCOUNT_DIFF'] / $item['RATIO_PRICE']['VALUE'], 0);
+                    $item['RATIO_PRICE']['DISCOUNT_DIFF_PERCENT'] = roundEx(
+                        100 * $item['RATIO_PRICE']['DISCOUNT_DIFF'] / $item['RATIO_PRICE']['VALUE'],
+                        0
+                    );
                     $item['RATIO_PRICE']['PRINT_DISCOUNT_DIFF'] = CCurrencyLang::CurrencyFormat(
                         $item['RATIO_PRICE']['DISCOUNT_DIFF'],
                         $item['RATIO_PRICE']['CURRENCY'],
@@ -1600,25 +1820,33 @@ class CIBlockPriceTools
 
     public static function checkPropDirectory(&$property, $getPropInfo = false)
     {
-        if (empty($property) || !is_array($property))
+        if (empty($property) || !is_array($property)) {
             return false;
-        if (!isset($property['USER_TYPE_SETTINGS']['TABLE_NAME']) || empty($property['USER_TYPE_SETTINGS']['TABLE_NAME']))
+        }
+        if (!isset($property['USER_TYPE_SETTINGS']['TABLE_NAME']) || empty($property['USER_TYPE_SETTINGS']['TABLE_NAME'])) {
             return false;
-        if (self::$highLoadInclude === null)
+        }
+        if (self::$highLoadInclude === null) {
             self::$highLoadInclude = Loader::includeModule('highloadblock');
-        if (!self::$highLoadInclude)
+        }
+        if (!self::$highLoadInclude) {
             return false;
+        }
 
-        $highBlock = HighloadBlockTable::getList(array(
-            'filter' => array('=TABLE_NAME' => $property['USER_TYPE_SETTINGS']['TABLE_NAME'])
-        ))->fetch();
-        if (!isset($highBlock['ID']))
+        $highBlock = HighloadBlockTable::getList(
+            array(
+                'filter' => array('=TABLE_NAME' => $property['USER_TYPE_SETTINGS']['TABLE_NAME'])
+            )
+        )->fetch();
+        if (!isset($highBlock['ID'])) {
             return false;
+        }
 
         $entity = HighloadBlockTable::compileEntity($highBlock);
         $fieldsList = $entity->getFields();
-        if (empty($fieldsList))
+        if (empty($fieldsList)) {
             return false;
+        }
 
         $requireFields = array(
             'ID',
@@ -1626,8 +1854,9 @@ class CIBlockPriceTools
             'UF_NAME',
         );
         foreach ($requireFields as &$fieldCode) {
-            if (!isset($fieldsList[$fieldCode]) || empty($fieldsList[$fieldCode]))
+            if (!isset($fieldsList[$fieldCode]) || empty($fieldsList[$fieldCode])) {
                 return false;
+            }
         }
         unset($fieldCode);
         if ($getPropInfo) {
@@ -1640,8 +1869,9 @@ class CIBlockPriceTools
     public static function getTreeProperties($skuInfo, $propertiesCodes, $defaultFields = array())
     {
         if (isset($defaultFields['PICT']) && is_array($defaultFields['PICT'])) {
-            if (!isset($defaultFields['PICT']['ID']))
+            if (!isset($defaultFields['PICT']['ID'])) {
                 $defaultFields['PICT']['ID'] = 0;
+            }
         }
 
         $requireFields = array(
@@ -1651,77 +1881,110 @@ class CIBlockPriceTools
         );
 
         $result = array();
-        if (empty($skuInfo))
+        if (empty($skuInfo)) {
             return $result;
+        }
         if (!is_array($skuInfo)) {
             $skuInfo = (int)$skuInfo;
-            if ($skuInfo <= 0)
+            if ($skuInfo <= 0) {
                 return $result;
-            if (self::$catalogIncluded === null)
+            }
+            if (self::$catalogIncluded === null) {
                 self::$catalogIncluded = Loader::includeModule('catalog');
-            if (!self::$catalogIncluded)
+            }
+            if (!self::$catalogIncluded) {
                 return $result;
+            }
             $skuInfo = CCatalogSku::GetInfoByProductIBlock($skuInfo);
-            if (empty($skuInfo))
+            if (empty($skuInfo)) {
                 return $result;
+            }
         }
-        if (empty($propertiesCodes) || !is_array($propertiesCodes))
+        if (empty($propertiesCodes) || !is_array($propertiesCodes)) {
             return $result;
+        }
 
         $showMode = '';
 
-        $propertyIterator = Iblock\PropertyTable::getList(array(
-            'select' => array(
-                'ID', 'IBLOCK_ID', 'CODE', 'NAME', 'SORT', 'LINK_IBLOCK_ID', 'PROPERTY_TYPE', 'USER_TYPE', 'USER_TYPE_SETTINGS'
-            ),
-            'filter' => array(
-                '=IBLOCK_ID' => $skuInfo['IBLOCK_ID'],
-                '=PROPERTY_TYPE' => array(
-                    Iblock\PropertyTable::TYPE_LIST,
-                    Iblock\PropertyTable::TYPE_ELEMENT,
-                    Iblock\PropertyTable::TYPE_STRING
+        $propertyIterator = Iblock\PropertyTable::getList(
+            array(
+                'select' => array(
+                    'ID',
+                    'IBLOCK_ID',
+                    'CODE',
+                    'NAME',
+                    'SORT',
+                    'LINK_IBLOCK_ID',
+                    'PROPERTY_TYPE',
+                    'USER_TYPE',
+                    'USER_TYPE_SETTINGS'
                 ),
-                '=ACTIVE' => 'Y', '=MULTIPLE' => 'N'
-            ),
-            'order' => array(
-                'SORT' => 'ASC', 'ID' => 'ASC'
+                'filter' => array(
+                    '=IBLOCK_ID' => $skuInfo['IBLOCK_ID'],
+                    '=PROPERTY_TYPE' => array(
+                        Iblock\PropertyTable::TYPE_LIST,
+                        Iblock\PropertyTable::TYPE_ELEMENT,
+                        Iblock\PropertyTable::TYPE_STRING
+                    ),
+                    '=ACTIVE' => 'Y',
+                    '=MULTIPLE' => 'N'
+                ),
+                'order' => array(
+                    'SORT' => 'ASC',
+                    'ID' => 'ASC'
+                )
             )
-        ));
+        );
         while ($propInfo = $propertyIterator->fetch()) {
             $propInfo['ID'] = (int)$propInfo['ID'];
-            if ($propInfo['ID'] == $skuInfo['SKU_PROPERTY_ID'])
+            if ($propInfo['ID'] == $skuInfo['SKU_PROPERTY_ID']) {
                 continue;
+            }
             $propInfo['CODE'] = (string)$propInfo['CODE'];
-            if ($propInfo['CODE'] === '')
+            if ($propInfo['CODE'] === '') {
                 $propInfo['CODE'] = $propInfo['ID'];
-            if (!in_array($propInfo['CODE'], $propertiesCodes))
+            }
+            if (!in_array($propInfo['CODE'], $propertiesCodes)) {
                 continue;
+            }
             $propInfo['SORT'] = (int)$propInfo['SORT'];
             $propInfo['USER_TYPE'] = (string)$propInfo['USER_TYPE'];
             if ($propInfo['PROPERTY_TYPE'] == Iblock\PropertyTable::TYPE_STRING) {
-                if ('directory' != $propInfo['USER_TYPE'])
+                if ('directory' != $propInfo['USER_TYPE']) {
                     continue;
+                }
                 $propInfo['USER_TYPE_SETTINGS'] = (string)$propInfo['USER_TYPE_SETTINGS'];
-                if ($propInfo['USER_TYPE_SETTINGS'] == '')
+                if ($propInfo['USER_TYPE_SETTINGS'] == '') {
                     continue;
-                $propInfo['USER_TYPE_SETTINGS'] = unserialize($propInfo['USER_TYPE_SETTINGS']);
-                if (!isset($propInfo['USER_TYPE_SETTINGS']['TABLE_NAME']) || empty($propInfo['USER_TYPE_SETTINGS']['TABLE_NAME']))
+                }
+                $propInfo['USER_TYPE_SETTINGS'] = unserialize(
+                    $propInfo['USER_TYPE_SETTINGS'],
+                    ['allowed_classes' => false]
+                );
+                if (!isset($propInfo['USER_TYPE_SETTINGS']['TABLE_NAME']) || empty($propInfo['USER_TYPE_SETTINGS']['TABLE_NAME'])) {
                     continue;
-                if (self::$highLoadInclude === null)
+                }
+                if (self::$highLoadInclude === null) {
                     self::$highLoadInclude = Loader::includeModule('highloadblock');
-                if (!self::$highLoadInclude)
+                }
+                if (!self::$highLoadInclude) {
                     continue;
+                }
 
-                $highBlock = HighloadBlockTable::getList(array(
-                    'filter' => array('=TABLE_NAME' => $propInfo['USER_TYPE_SETTINGS']['TABLE_NAME'])
-                ))->fetch();
-                if (!isset($highBlock['ID']))
+                $highBlock = HighloadBlockTable::getList(
+                    array(
+                        'filter' => array('=TABLE_NAME' => $propInfo['USER_TYPE_SETTINGS']['TABLE_NAME'])
+                    )
+                )->fetch();
+                if (!isset($highBlock['ID'])) {
                     continue;
+                }
 
                 $entity = HighloadBlockTable::compileEntity($highBlock);
                 $fieldsList = $entity->getFields();
-                if (empty($fieldsList))
+                if (empty($fieldsList)) {
                     continue;
+                }
 
                 $flag = true;
                 foreach ($requireFields as $fieldCode) {
@@ -1731,8 +1994,9 @@ class CIBlockPriceTools
                     }
                 }
                 unset($fieldCode);
-                if (!$flag)
+                if (!$flag) {
                     continue;
+                }
                 $propInfo['USER_TYPE_SETTINGS']['FIELDS_MAP'] = $fieldsList;
                 $propInfo['USER_TYPE_SETTINGS']['ENTITY'] = $entity;
             }
@@ -1764,8 +2028,9 @@ class CIBlockPriceTools
                 )
             );
             if ($showMode == 'PICT') {
-                if (isset($defaultFields['PICT']))
+                if (isset($defaultFields['PICT'])) {
                     $treeProp['DEFAULT_VALUES']['PICT'] = $defaultFields['PICT'];
+                }
             }
             if (isset($defaultFields['NAME'])) {
                 $treeProp['DEFAULT_VALUES']['NAME'] = $defaultFields['NAME'];
@@ -1782,24 +2047,30 @@ class CIBlockPriceTools
             $useFilterValues = !empty($propNeedValues) && is_array($propNeedValues);
             foreach ($propList as $oneProperty) {
                 if (isset($oneProperty['DEFAULT_VALUES']['PICT']) && is_array($oneProperty['DEFAULT_VALUES']['PICT'])) {
-                    if (!isset($oneProperty['DEFAULT_VALUES']['PICT']['ID']))
+                    if (!isset($oneProperty['DEFAULT_VALUES']['PICT']['ID'])) {
                         $oneProperty['DEFAULT_VALUES']['PICT']['ID'] = 0;
+                    }
                 }
                 $values = array();
                 $valuesExist = false;
                 $pictMode = ('PICT' == $oneProperty['SHOW_MODE']);
-                $needValuesExist = !empty($propNeedValues[$oneProperty['ID']]) && is_array($propNeedValues[$oneProperty['ID']]);
-                if ($useFilterValues && !$needValuesExist)
+                $needValuesExist = !empty($propNeedValues[$oneProperty['ID']]) && is_array(
+                        $propNeedValues[$oneProperty['ID']]
+                    );
+                if ($useFilterValues && !$needValuesExist) {
                     continue;
+                }
                 switch ($oneProperty['PROPERTY_TYPE']) {
                     case Iblock\PropertyTable::TYPE_LIST:
                         if ($needValuesExist) {
                             foreach (array_chunk($propNeedValues[$oneProperty['ID']], 500) as $pageIds) {
-                                $iterator = Iblock\PropertyEnumerationTable::getList(array(
-                                    'select' => array('ID', 'VALUE', 'SORT'),
-                                    'filter' => array('=PROPERTY_ID' => $oneProperty['ID'], '@ID' => $pageIds),
-                                    'order' => array('SORT' => 'ASC', 'VALUE' => 'ASC')
-                                ));
+                                $iterator = Iblock\PropertyEnumerationTable::getList(
+                                    array(
+                                        'select' => array('ID', 'VALUE', 'SORT'),
+                                        'filter' => array('=PROPERTY_ID' => $oneProperty['ID'], '@ID' => $pageIds),
+                                        'order' => array('SORT' => 'ASC', 'VALUE' => 'ASC')
+                                    )
+                                );
                                 while ($row = $iterator->fetch()) {
                                     $row['ID'] = (int)$row['ID'];
                                     $values[$row['ID']] = array(
@@ -1814,11 +2085,13 @@ class CIBlockPriceTools
                             }
                             unset($pageIds);
                         } else {
-                            $iterator = Iblock\PropertyEnumerationTable::getList(array(
-                                'select' => array('ID', 'VALUE', 'SORT'),
-                                'filter' => array('=PROPERTY_ID' => $oneProperty['ID']),
-                                'order' => array('SORT' => 'ASC', 'VALUE' => 'ASC')
-                            ));
+                            $iterator = Iblock\PropertyEnumerationTable::getList(
+                                array(
+                                    'select' => array('ID', 'VALUE', 'SORT'),
+                                    'filter' => array('=PROPERTY_ID' => $oneProperty['ID']),
+                                    'order' => array('SORT' => 'ASC', 'VALUE' => 'ASC')
+                                )
+                            );
                             while ($row = $iterator->fetch()) {
                                 $row['ID'] = (int)$row['ID'];
                                 $values[$row['ID']] = array(
@@ -1841,14 +2114,19 @@ class CIBlockPriceTools
                         break;
                     case Iblock\PropertyTable::TYPE_ELEMENT:
                         $selectFields = array('ID', 'NAME');
-                        if ($pictMode)
+                        if ($pictMode) {
                             $selectFields[] = 'PREVIEW_PICTURE';
+                        }
 
                         if ($needValuesExist) {
                             foreach (array_chunk($propNeedValues[$oneProperty['ID']], 500) as $pageIds) {
                                 $iterator = CIBlockElement::GetList(
                                     array('SORT' => 'ASC', 'NAME' => 'ASC'),
-                                    array('ID' => $pageIds, 'IBLOCK_ID' => $oneProperty['LINK_IBLOCK_ID'], 'ACTIVE' => 'Y'),
+                                    array(
+                                        'ID' => $pageIds,
+                                        'IBLOCK_ID' => $oneProperty['LINK_IBLOCK_ID'],
+                                        'ACTIVE' => 'Y'
+                                    ),
                                     false,
                                     false,
                                     $selectFields
@@ -1867,8 +2145,9 @@ class CIBlockPriceTools
                                                 );
                                             }
                                         }
-                                        if (empty($row['PICT']))
+                                        if (empty($row['PICT'])) {
                                             $row['PICT'] = $oneProperty['DEFAULT_VALUES']['PICT'];
+                                        }
                                     }
                                     $row['ID'] = (int)$row['ID'];
                                     $values[$row['ID']] = array(
@@ -1904,8 +2183,9 @@ class CIBlockPriceTools
                                             );
                                         }
                                     }
-                                    if (empty($row['PICT']))
+                                    if (empty($row['PICT'])) {
                                         $row['PICT'] = $oneProperty['DEFAULT_VALUES']['PICT'];
+                                    }
                                 }
                                 $row['ID'] = (int)$row['ID'];
                                 $values[$row['ID']] = array(
@@ -1927,17 +2207,20 @@ class CIBlockPriceTools
                         );
                         break;
                     case Iblock\PropertyTable::TYPE_STRING:
-                        if (self::$highLoadInclude === null)
+                        if (self::$highLoadInclude === null) {
                             self::$highLoadInclude = Loader::includeModule('highloadblock');
-                        if (!self::$highLoadInclude)
+                        }
+                        if (!self::$highLoadInclude) {
                             continue 2;
+                        }
                         $xmlMap = array();
                         $sortExist = isset($oneProperty['USER_TYPE_SETTINGS']['FIELDS_MAP']['UF_SORT']);
 
                         $directorySelect = array('ID', 'UF_NAME', 'UF_XML_ID');
                         $directoryOrder = array();
-                        if ($pictMode)
+                        if ($pictMode) {
                             $directorySelect[] = 'UF_FILE';
+                        }
                         if ($sortExist) {
                             $directorySelect[] = 'UF_SORT';
                             $directoryOrder['UF_SORT'] = 'ASC';
@@ -1947,8 +2230,9 @@ class CIBlockPriceTools
 
                         /** @var Main\Entity\Base $entity */
                         $entity = $oneProperty['USER_TYPE_SETTINGS']['ENTITY'];
-                        if (!($entity instanceof Main\Entity\Base))
+                        if (!($entity instanceof Main\Entity\Base)) {
                             continue 2;
+                        }
                         $entityDataClass = $entity->getDataClass();
                         $entityGetList = array(
                             'select' => $directorySelect,
@@ -1976,8 +2260,9 @@ class CIBlockPriceTools
                                                 );
                                             }
                                         }
-                                        if (empty($row['PICT']))
+                                        if (empty($row['PICT'])) {
                                             $row['PICT'] = $oneProperty['DEFAULT_VALUES']['PICT'];
+                                        }
                                     }
                                     $values[$row['ID']] = array(
                                         'ID' => $row['ID'],
@@ -2011,8 +2296,9 @@ class CIBlockPriceTools
                                             );
                                         }
                                     }
-                                    if (empty($row['PICT']))
+                                    if (empty($row['PICT'])) {
                                         $row['PICT'] = $oneProperty['DEFAULT_VALUES']['PICT'];
+                                    }
                                 }
                                 $values[$row['ID']] = array(
                                     'ID' => $row['ID'],
@@ -2034,12 +2320,14 @@ class CIBlockPriceTools
                             'XML_ID' => '',
                             'PICT' => ($pictMode ? $oneProperty['DEFAULT_VALUES']['PICT'] : false)
                         );
-                        if ($valuesExist)
+                        if ($valuesExist) {
                             $oneProperty['XML_MAP'] = $xmlMap;
+                        }
                         break;
                 }
-                if (!$valuesExist)
+                if (!$valuesExist) {
                     continue;
+                }
                 $oneProperty['VALUES'] = $values;
                 $oneProperty['VALUES_COUNT'] = count($values);
 
@@ -2059,10 +2347,12 @@ class CIBlockPriceTools
             $doubles = array();
             foreach ($offers as $oneOffer) {
                 $oneOffer['ID'] = (int)$oneOffer['ID'];
-                if (isset($doubles[$oneOffer['ID']]))
+                if (isset($doubles[$oneOffer['ID']])) {
                     continue;
-                if (!$oneOffer['CAN_BUY'])
+                }
+                if (!$oneOffer['CAN_BUY']) {
                     continue;
+                }
 
                 CIBlockPriceTools::setRatioMinPrice($oneOffer, $replaceMinPrice);
 
@@ -2074,13 +2364,21 @@ class CIBlockPriceTools
                 if (empty($result)) {
                     $minPrice = ($oneOffer['MIN_PRICE']['CURRENCY'] == $currency
                         ? $oneOffer['MIN_PRICE']['DISCOUNT_VALUE']
-                        : CCurrencyRates::ConvertCurrency($oneOffer['MIN_PRICE']['DISCOUNT_VALUE'], $oneOffer['MIN_PRICE']['CURRENCY'], $currency)
+                        : CCurrencyRates::ConvertCurrency(
+                            $oneOffer['MIN_PRICE']['DISCOUNT_VALUE'],
+                            $oneOffer['MIN_PRICE']['CURRENCY'],
+                            $currency
+                        )
                     );
                     $result = $oneOffer['MIN_PRICE'];
                 } else {
                     $comparePrice = ($oneOffer['MIN_PRICE']['CURRENCY'] == $currency
                         ? $oneOffer['MIN_PRICE']['DISCOUNT_VALUE']
-                        : CCurrencyRates::ConvertCurrency($oneOffer['MIN_PRICE']['DISCOUNT_VALUE'], $oneOffer['MIN_PRICE']['CURRENCY'], $currency)
+                        : CCurrencyRates::ConvertCurrency(
+                            $oneOffer['MIN_PRICE']['DISCOUNT_VALUE'],
+                            $oneOffer['MIN_PRICE']['CURRENCY'],
+                            $currency
+                        )
                     );
                     if ($minPrice > $comparePrice) {
                         $minPrice = $comparePrice;
@@ -2103,8 +2401,9 @@ class CIBlockPriceTools
 
         if (!empty($item) && is_array($item)) {
             if (!empty($item['PREVIEW_PICTURE'])) {
-                if (!is_array($item['PREVIEW_PICTURE']))
+                if (!is_array($item['PREVIEW_PICTURE'])) {
                     $item['PREVIEW_PICTURE'] = CFile::GetFileArray($item['PREVIEW_PICTURE']);
+                }
                 if (isset($item['PREVIEW_PICTURE']['ID'])) {
                     $result['PICT'] = array(
                         'ID' => (int)$item['PREVIEW_PICTURE']['ID'],
@@ -2116,8 +2415,9 @@ class CIBlockPriceTools
             }
             if (!empty($item['DETAIL_PICTURE'])) {
                 $keyPict = (empty($result['PICT']) ? 'PICT' : 'SECOND_PICT');
-                if (!is_array($item['DETAIL_PICTURE']))
+                if (!is_array($item['DETAIL_PICTURE'])) {
                     $item['DETAIL_PICTURE'] = CFile::GetFileArray($item['DETAIL_PICTURE']);
+                }
                 if (isset($item['DETAIL_PICTURE']['ID'])) {
                     $result[$keyPict] = array(
                         'ID' => (int)$item['DETAIL_PICTURE']['ID'],
@@ -2150,15 +2450,18 @@ class CIBlockPriceTools
                                 'WIDTH' => (int)$oneFileValue['WIDTH'],
                                 'HEIGHT' => (int)$oneFileValue['HEIGHT']
                             );
-                            if ('SECOND_PICT' == $keyPict)
+                            if ('SECOND_PICT' == $keyPict) {
                                 break;
+                            }
                         }
-                        if (isset($oneFileValue))
+                        if (isset($oneFileValue)) {
                             unset($oneFileValue);
+                        }
                     } else {
                         $propValues = $item['PROPERTIES'][$propertyCode]['VALUE'];
-                        if (!is_array($propValues))
+                        if (!is_array($propValues)) {
                             $propValues = array($propValues);
+                        }
                         foreach ($propValues as $oneValue) {
                             $oneFileValue = CFile::GetFileArray($oneValue);
                             if (isset($oneFileValue['ID'])) {
@@ -2169,12 +2472,14 @@ class CIBlockPriceTools
                                     'WIDTH' => (int)$oneFileValue['WIDTH'],
                                     'HEIGHT' => (int)$oneFileValue['HEIGHT']
                                 );
-                                if ('SECOND_PICT' == $keyPict)
+                                if ('SECOND_PICT' == $keyPict) {
                                     break;
+                                }
                             }
                         }
-                        if (isset($oneValue))
+                        if (isset($oneValue)) {
                             unset($oneValue);
+                        }
                     }
                 }
             }
@@ -2221,12 +2526,14 @@ class CIBlockPriceTools
                                 'HEIGHT' => (int)$oneFileValue['HEIGHT']
                             );
                         }
-                        if (isset($oneFileValue))
+                        if (isset($oneFileValue)) {
                             unset($oneFileValue);
+                        }
                     } else {
                         $propValues = $item['PROPERTIES'][$propertyCode]['VALUE'];
-                        if (!is_array($propValues))
+                        if (!is_array($propValues)) {
                             $propValues = array($propValues);
+                        }
 
                         foreach ($propValues as $oneValue) {
                             $oneFileValue = CFile::GetFileArray($oneValue);
@@ -2239,15 +2546,17 @@ class CIBlockPriceTools
                                 );
                             }
                         }
-                        if (isset($oneValue))
+                        if (isset($oneValue)) {
                             unset($oneValue);
+                        }
                     }
                 }
             }
             if ($addDetailToSlider || empty($result)) {
                 if (!empty($item['DETAIL_PICTURE'])) {
-                    if (!is_array($item['DETAIL_PICTURE']))
+                    if (!is_array($item['DETAIL_PICTURE'])) {
                         $item['DETAIL_PICTURE'] = CFile::GetFileArray($item['DETAIL_PICTURE']);
+                    }
                     if (isset($item['DETAIL_PICTURE']['ID'])) {
                         array_unshift(
                             $result,
@@ -2336,12 +2645,14 @@ class CIBlockPriceTools
     public static function clearProperties(&$properties, $clearCodes)
     {
         if (!empty($properties) && is_array($properties) && !empty($clearCodes)) {
-            if (!is_array($clearCodes))
+            if (!is_array($clearCodes)) {
                 $clearCodes = array($clearCodes);
+            }
 
             foreach ($clearCodes as $oneCode) {
-                if (isset($properties[$oneCode]))
+                if (isset($properties[$oneCode])) {
                     unset($properties[$oneCode]);
+                }
             }
             unset($oneCode);
         }
@@ -2350,8 +2661,9 @@ class CIBlockPriceTools
 
     public static function getMinPriceFromList($priceList)
     {
-        if (empty($priceList) || !is_array($priceList))
+        if (empty($priceList) || !is_array($priceList)) {
             return false;
+        }
         $result = false;
         foreach ($priceList as $price) {
             if (isset($price['MIN_PRICE']) && $price['MIN_PRICE'] == 'Y') {

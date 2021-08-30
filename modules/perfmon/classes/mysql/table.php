@@ -5,10 +5,11 @@ class CPerfomanceTableList extends CDBResult
     public static function GetList($bFull = true)
     {
         global $DB;
-        if ($bFull)
+        if ($bFull) {
             $rsTables = $DB->Query("show table status");
-        else
+        } else {
             $rsTables = $DB->Query("show tables from " . CPerfomanceTable::escapeTable($DB->DBName));
+        }
         return new CPerfomanceTableList($rsTables);
     }
 
@@ -17,20 +18,21 @@ class CPerfomanceTableList extends CDBResult
         global $DB;
         $ar = parent::Fetch();
         if ($ar) {
-            if (isset($ar["Tables_in_" . $DB->DBName]))
+            if (isset($ar["Tables_in_" . $DB->DBName])) {
                 $ar = array(
                     "TABLE_NAME" => $ar["Tables_in_" . $DB->DBName],
                     "ENGINE_TYPE" => "",
                     "NUM_ROWS" => "",
                     "BYTES" => "",
                 );
-            else
+            } else {
                 $ar = array(
                     "TABLE_NAME" => $ar["Name"],
                     "ENGINE_TYPE" => $ar["Comment"] === "VIEW" ? "VIEW" : $ar["Engine"],
                     "NUM_ROWS" => $ar["Rows"],
                     "BYTES" => $ar["Data_length"],
                 );
+            }
         }
         return $ar;
     }
@@ -48,10 +50,12 @@ class CPerfomanceTable extends CAllPerfomanceTable
     {
         global $DB;
 
-        if ($TABLE_NAME === false)
+        if ($TABLE_NAME === false) {
             $TABLE_NAME = $this->TABLE_NAME;
-        if (strlen($TABLE_NAME) <= 0)
+        }
+        if ($TABLE_NAME == '') {
             return false;
+        }
 
         $TABLE_NAME = trim($TABLE_NAME, "`");
 
@@ -59,10 +63,11 @@ class CPerfomanceTable extends CAllPerfomanceTable
 			SHOW TABLES LIKE '" . $DB->ForSQL($TABLE_NAME) . "'
 		";
         $rs = $DB->Query($strSql);
-        if ($rs->Fetch())
+        if ($rs->Fetch()) {
             return true;
-        else
+        } else {
             return false;
+        }
     }
 
     function GetIndexes($TABLE_NAME = false)
@@ -70,10 +75,12 @@ class CPerfomanceTable extends CAllPerfomanceTable
         global $DB;
         static $cache = array();
 
-        if ($TABLE_NAME === false)
+        if ($TABLE_NAME === false) {
             $TABLE_NAME = $this->TABLE_NAME;
-        if (strlen($TABLE_NAME) <= 0)
+        }
+        if ($TABLE_NAME == '') {
             return array();
+        }
 
         $TABLE_NAME = trim($TABLE_NAME, "`");
 
@@ -97,10 +104,12 @@ class CPerfomanceTable extends CAllPerfomanceTable
         global $DB;
         static $cache = array();
 
-        if ($TABLE_NAME === false)
+        if ($TABLE_NAME === false) {
             $TABLE_NAME = $this->TABLE_NAME;
-        if (strlen($TABLE_NAME) <= 0)
+        }
+        if ($TABLE_NAME == '') {
             return array();
+        }
 
         $TABLE_NAME = trim($TABLE_NAME, "`");
 
@@ -110,8 +119,9 @@ class CPerfomanceTable extends CAllPerfomanceTable
             $rsInd = $DB->Query($strSql, true);
             if ($rsInd) {
                 while ($arInd = $rsInd->Fetch()) {
-                    if (!$arInd["Non_unique"])
+                    if (!$arInd["Non_unique"]) {
                         $arResult[$arInd["Key_name"]][$arInd["Seq_in_index"]] = $arInd["Column_name"];
+                    }
                 }
             }
             $cache[$TABLE_NAME] = $arResult;
@@ -124,10 +134,12 @@ class CPerfomanceTable extends CAllPerfomanceTable
     {
         static $cache = array();
 
-        if ($TABLE_NAME === false)
+        if ($TABLE_NAME === false) {
             $TABLE_NAME = $this->TABLE_NAME;
-        if (strlen($TABLE_NAME) <= 0)
+        }
+        if ($TABLE_NAME == '') {
             return false;
+        }
 
         $TABLE_NAME = trim($TABLE_NAME, "`");
 
@@ -144,10 +156,11 @@ class CPerfomanceTable extends CAllPerfomanceTable
                 if (preg_match("/^(varchar|char|varbinary)\\((\\d+)\\)/", $ar["Type"], $match)) {
                     $ar["DATA_TYPE"] = "string";
                     $ar["DATA_LENGTH"] = $match[2];
-                    if ($match[2] == 1 && ($ar["Default"] === "N" || $ar["Default"] === "Y"))
+                    if ($match[2] == 1 && ($ar["Default"] === "N" || $ar["Default"] === "Y")) {
                         $ar["ORM_DATA_TYPE"] = "boolean";
-                    else
+                    } else {
                         $ar["ORM_DATA_TYPE"] = "string";
+                    }
                 } elseif (preg_match("/^(varchar|char)/", $ar["Type"])) {
                     $ar["DATA_TYPE"] = "string";
                     $ar["ORM_DATA_TYPE"] = "string";
@@ -187,10 +200,11 @@ class CPerfomanceTable extends CAllPerfomanceTable
             $cache[$TABLE_NAME] = array($arResult, $arResultExt);
         }
 
-        if ($bExtended)
+        if ($bExtended) {
             return $cache[$TABLE_NAME][1];
-        else
+        } else {
             return $cache[$TABLE_NAME][0];
+        }
     }
 
     public static function escapeColumn($column)

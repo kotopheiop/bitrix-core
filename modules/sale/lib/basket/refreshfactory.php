@@ -24,8 +24,11 @@ class RefreshFactory
 
     public static function createSingle($basketItemCode)
     {
-        return static::create(self::TYPE_SINGLE, array(
-            'BASKET_ITEM_CODE' => $basketItemCode
-        ));
+        return static::create(
+            self::TYPE_SINGLE,
+            array(
+                'BASKET_ITEM_CODE' => $basketItemCode
+            )
+        );
     }
 }

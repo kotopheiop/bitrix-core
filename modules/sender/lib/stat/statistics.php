@@ -10,17 +10,16 @@ namespace Bitrix\Sender\Stat;
 
 use Bitrix\Main\Context;
 use Bitrix\Main\Entity\ExpressionField;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\UserTable;
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Sender\MailingChainTable;
-use Bitrix\Sender\PostingTable;
-use Bitrix\Sender\PostingClickTable;
-use Bitrix\Sender\MailingSubscriptionTable;
-use Bitrix\Sender\Entity;
-use Bitrix\Sender\Message;
-
 use Bitrix\Main\Web\Uri;
+use Bitrix\Sender\Entity;
+use Bitrix\Sender\MailingChainTable;
+use Bitrix\Sender\MailingSubscriptionTable;
+use Bitrix\Sender\Message;
+use Bitrix\Sender\PostingClickTable;
+use Bitrix\Sender\PostingTable;
 
 Loc::loadMessages(__FILE__);
 
@@ -64,7 +63,6 @@ class Statistics
         } else {
             $this->filter = new Filter();
         }
-
     }
 
     /**
@@ -164,11 +162,18 @@ class Statistics
             );
             $list = $this->filter->getNames();
             foreach ($list as $name) {
-                if (!isset($userOptionFilters[$name]) || !$userOptionFilters[$name]) {
+                if (
+                    !isset($userOptionFilters[$name])
+                    || !$userOptionFilters[$name]
+                    || !$this->checkFilterValue($userOptionFilters[$name])
+                ) {
                     continue;
                 }
-                $this->filter->set($name, (string)$userOptionFilters[$name]);
-                $isFilterSet = true;
+                try {
+                    $this->filter->set($name, (string)$userOptionFilters[$name]);
+                    $isFilterSet = true;
+                } catch (\Exception $e) {
+                }
             }
         }
 
@@ -177,6 +182,12 @@ class Statistics
         }
 
         return $this;
+    }
+
+    private function checkFilterValue($filter)
+    {
+        return $filter === null
+            || is_scalar($filter);
     }
 
     protected function saveFilterToUserOption()
@@ -238,7 +249,11 @@ class Statistics
     protected static function formatNumber($number, $num = 1)
     {
         $formatted = number_format($number, $num, '.', ' ');
-        $formatted = substr($formatted, -($num + 1)) == '.' . str_repeat('0', $num) ? substr($formatted, 0, -2) : $formatted;
+        $formatted = mb_substr($formatted, -($num + 1)) == '.' . str_repeat('0', $num) ? mb_substr(
+            $formatted,
+            0,
+            -2
+        ) : $formatted;
         return $formatted;
     }
 
@@ -312,13 +327,15 @@ class Statistics
         $select = array_keys($select);
         $select[] = 'DATE';
         $select[] = 'CNT';
-        $listDb = PostingTable::getList(array(
-            'select' => $select,
-            'filter' => $filter,
-            'runtime' => $runtime,
-            'order' => array('DATE' => 'ASC'),
-            'cache' => array('ttl' => $this->getCacheTtl(), 'cache_joins' => true)
-        ));
+        $listDb = PostingTable::getList(
+            array(
+                'select' => $select,
+                'filter' => $filter,
+                'runtime' => $runtime,
+                'order' => array('DATE' => 'ASC'),
+                'cache' => array('ttl' => $this->getCacheTtl(), 'cache_joins' => true)
+            )
+        );
         while ($item = $listDb->fetch()) {
             $date = null;
             foreach ($item as $name => $value) {
@@ -352,7 +369,6 @@ class Statistics
         }
 
         return $list;
-
     }
 
     /**
@@ -380,12 +396,14 @@ class Statistics
         foreach ($select as $alias => $fieldName) {
             $runtime[] = new ExpressionField($alias, 'SUM(%s)', $fieldName);
         }
-        $listDb = PostingTable::getList(array(
-            'select' => array_keys($select),
-            'filter' => $filter,
-            'runtime' => $runtime,
-            'cache' => array('ttl' => $this->getCacheTtl(), 'cache_joins' => true)
-        ));
+        $listDb = PostingTable::getList(
+            array(
+                'select' => array_keys($select),
+                'filter' => $filter,
+                'runtime' => $runtime,
+                'cache' => array('ttl' => $this->getCacheTtl(), 'cache_joins' => true)
+            )
+        );
         while ($item = $listDb->fetch()) {
             $list = array_merge($list, $this->createListFromItem($item));
         }
@@ -413,7 +431,7 @@ class Statistics
     {
         $list = [];
         foreach ($item as $name => $value) {
-            if (substr($name, 0, 4) == 'SEND') {
+            if (mb_substr($name, 0, 4) == 'SEND') {
                 $base = $item['SEND_ALL'];
             } else {
                 $base = $item['SEND_SUCCESS'];
@@ -474,18 +492,20 @@ class Statistics
     public function getClickLinks($limit = 15)
     {
         $list = array();
-        $clickDb = PostingClickTable::getList(array(
-            'select' => array('URL', 'CNT'),
-            'filter' => array(
-                '=POSTING_ID' => $this->filter->get('postingId'),
-            ),
-            'runtime' => array(
-                new ExpressionField('CNT', 'COUNT(%s)', 'ID'),
-            ),
-            'group' => array('URL'),
-            'order' => array('CNT' => 'DESC'),
-            'limit' => $limit
-        ));
+        $clickDb = PostingClickTable::getList(
+            array(
+                'select' => array('URL', 'CNT'),
+                'filter' => array(
+                    '=POSTING_ID' => $this->filter->get('postingId'),
+                ),
+                'runtime' => array(
+                    new ExpressionField('CNT', 'COUNT(%s)', 'ID'),
+                ),
+                'group' => array('URL'),
+                'order' => array('CNT' => 'DESC'),
+                'limit' => $limit
+            )
+        );
         while ($click = $clickDb->fetch()) {
             $list[] = $click;
         }
@@ -539,20 +559,22 @@ class Statistics
                 'CNT' => 0,
                 'CNT_DISPLAY' => 0,
                 'DAY_HOUR' => $i,
-                'DAY_HOUR_DISPLAY' => (strlen($i) == 1 ? '0' : '') . $i . ':00',
+                'DAY_HOUR_DISPLAY' => (mb_strlen($i) == 1 ? '0' : '') . $i . ':00',
             );
         }
 
         $filter = $this->getMappedFilter();
-        $readDb = PostingTable::getList(array(
-            'select' => array('DAY_HOUR', 'CNT'),
-            'filter' => $filter,
-            'runtime' => array(
-                new ExpressionField('CNT', 'COUNT(%s)', 'POSTING_READ.ID'),
-                new ExpressionField('DAY_HOUR', 'HOUR(%s)', 'POSTING_READ.DATE_INSERT'),
-            ),
-            'order' => array('DAY_HOUR' => 'ASC'),
-        ));
+        $readDb = PostingTable::getList(
+            array(
+                'select' => array('DAY_HOUR', 'CNT'),
+                'filter' => $filter,
+                'runtime' => array(
+                    new ExpressionField('CNT', 'COUNT(%s)', 'POSTING_READ.ID'),
+                    new ExpressionField('DAY_HOUR', 'HOUR(%s)', 'POSTING_READ.DATE_INSERT'),
+                ),
+                'order' => array('DAY_HOUR' => 'ASC'),
+            )
+        );
         while ($read = $readDb->fetch()) {
             $read['DAY_HOUR'] = intval($read['DAY_HOUR']);
             if (array_key_exists($read['DAY_HOUR'], $list)) {
@@ -591,8 +613,10 @@ class Statistics
             $j = $i + 1;
             if ($j > $len) {
                 $j = 0;
-            } else if ($j < 0) {
-                $j = 23;
+            } else {
+                if ($j < 0) {
+                    $j = 23;
+                }
             }
             $weight = $timeList[$i]['CNT'] + $timeList[$j]['CNT'];
             $weightList[$i] = $weight;
@@ -600,13 +624,15 @@ class Statistics
 
         $deliveryTime = 0;
         if ($chainId) {
-            $listDb = PostingTable::getList(array(
-                'select' => array('COUNT_SEND_ALL'),
-                'filter' => array(
-                    '=MAILING_CHAIN_ID' => $chainId
-                ),
-                'order' => array('DATE_CREATE' => 'DESC'),
-            ));
+            $listDb = PostingTable::getList(
+                array(
+                    'select' => array('COUNT_SEND_ALL'),
+                    'filter' => array(
+                        '=MAILING_CHAIN_ID' => $chainId
+                    ),
+                    'order' => array('DATE_CREATE' => 'DESC'),
+                )
+            );
             if ($item = $listDb->fetch()) {
                 $deliveryTime = intval($item['COUNT_SEND_ALL'] * 1 / 10 * 1 / 3600);
             }
@@ -620,8 +646,10 @@ class Statistics
             $i -= $deliveryTime;
             if ($i >= $len) {
                 $i = $i - $len;
-            } else if ($i < 0) {
-                $i = $len + $i;
+            } else {
+                if ($i < 0) {
+                    $i = $len + $i;
+                }
             }
             $timeList[$i]['DELIVERY_TIME'] = $deliveryTime;
             return $timeList[$i];
@@ -639,23 +667,25 @@ class Statistics
     public function getChainList($limit = 20)
     {
         $filter = $this->getMappedFilter();
-        $listDb = PostingTable::getList(array(
-            'select' => array(
-                'MAX_DATE_SENT',
-                'CHAIN_ID' => 'MAILING_CHAIN_ID',
-                'TITLE' => 'MAILING_CHAIN.TITLE',
-                'MAILING_ID',
-                'MAILING_NAME' => 'MAILING.NAME',
-            ),
-            'filter' => $filter,
-            'runtime' => array(
-                new ExpressionField('MAX_DATE_SENT', 'MAX(%s)', 'DATE_SENT'),
-            ),
-            //'group' => array('CHAIN_ID', 'TITLE', 'SUBJECT', 'MAILING_ID', 'MAILING_NAME'),
-            'order' => array('MAX_DATE_SENT' => 'DESC'),
-            'limit' => $limit,
-            'cache' => array('ttl' => $this->getCacheTtl(), 'cache_joins' => true)
-        ));
+        $listDb = PostingTable::getList(
+            array(
+                'select' => array(
+                    'MAX_DATE_SENT',
+                    'CHAIN_ID' => 'MAILING_CHAIN_ID',
+                    'TITLE' => 'MAILING_CHAIN.TITLE',
+                    'MAILING_ID',
+                    'MAILING_NAME' => 'MAILING.NAME',
+                ),
+                'filter' => $filter,
+                'runtime' => array(
+                    new ExpressionField('MAX_DATE_SENT', 'MAX(%s)', 'DATE_SENT'),
+                ),
+                //'group' => array('CHAIN_ID', 'TITLE', 'SUBJECT', 'MAILING_ID', 'MAILING_NAME'),
+                'order' => array('MAX_DATE_SENT' => 'DESC'),
+                'limit' => $limit,
+                'cache' => array('ttl' => $this->getCacheTtl(), 'cache_joins' => true)
+            )
+        );
         $list = array();
         while ($item = $listDb->fetch()) {
             $dateSentFormatted = '';
@@ -731,14 +761,16 @@ class Statistics
      */
     protected function getAuthorList()
     {
-        $listDb = MailingChainTable::getList(array(
-            'select' => ['CREATED_BY', 'MAX_DATE_INSERT'],
-            'group' => ['CREATED_BY'],
-            'runtime' => [new ExpressionField('MAX_DATE_INSERT', 'MAX(%s)', 'DATE_INSERT'),],
-            'limit' => 100,
-            'order' => ['MAX_DATE_INSERT' => 'DESC'],
-            'cache' => ['ttl' => $this->getCacheTtl(), 'cache_joins' => true]
-        ));
+        $listDb = MailingChainTable::getList(
+            array(
+                'select' => ['CREATED_BY', 'MAX_DATE_INSERT'],
+                'group' => ['CREATED_BY'],
+                'runtime' => [new ExpressionField('MAX_DATE_INSERT', 'MAX(%s)', 'DATE_INSERT'),],
+                'limit' => 100,
+                'order' => ['MAX_DATE_INSERT' => 'DESC'],
+                'cache' => ['ttl' => $this->getCacheTtl(), 'cache_joins' => true]
+            )
+        );
         $userList = array();
         while ($item = $listDb->fetch()) {
             if (!$item['CREATED_BY']) {
@@ -763,18 +795,20 @@ class Statistics
             );
         }
 
-        $listDb = UserTable::getList(array(
-            'select' => array(
-                'ID',
-                'TITLE',
-                'NAME',
-                'SECOND_NAME',
-                'LAST_NAME',
-                'LOGIN',
-            ),
-            'filter' => array('=ID' => $userList),
-            'order' => array('NAME' => 'ASC')
-        ));
+        $listDb = UserTable::getList(
+            array(
+                'select' => array(
+                    'ID',
+                    'TITLE',
+                    'NAME',
+                    'SECOND_NAME',
+                    'LAST_NAME',
+                    'LOGIN',
+                ),
+                'filter' => array('=ID' => $userList),
+                'order' => array('NAME' => 'ASC')
+            )
+        );
         while ($item = $listDb->fetch()) {
             $name = \CUser::formatName(\CSite::getNameFormat(true), $item, true, true);
             $list[] = array(

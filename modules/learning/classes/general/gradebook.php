@@ -5,19 +5,20 @@ class CAllGradeBook
     public static function LessonIdByGradeBookId($certId)
     {
         $rc = CGradeBook::GetByID($certId);
-        if ($rc === false)
+        if ($rc === false) {
             throw new LearnException('', LearnException::EXC_ERR_ALL_GIVEUP);
+        }
 
         $row = $rc->Fetch();
 
-        if (!isset($row['LINKED_LESSON_ID']))
+        if (!isset($row['LINKED_LESSON_ID'])) {
             throw new LearnException('', LearnException::EXC_ERR_ALL_GIVEUP);
+        }
 
         return ((int)$row['LINKED_LESSON_ID']);
     }
 
-
-    function CheckFields(&$arFields, $ID = false)
+    public static function CheckFields(&$arFields, $ID = false)
     {
         global $DB, $APPLICATION;
 
@@ -44,22 +45,28 @@ class CAllGradeBook
         }
 
         if (is_set($arFields, "STUDENT_ID") && is_set($arFields, "TEST_ID")) {
-            $res = CGradeBook::GetList(Array(), Array("STUDENT_ID" => $arFields["STUDENT_ID"], "TEST_ID" => $arFields["TEST_ID"]));
+            $res = CGradeBook::GetList(
+                Array(),
+                Array("STUDENT_ID" => $arFields["STUDENT_ID"], "TEST_ID" => $arFields["TEST_ID"])
+            );
             if ($res->Fetch()) {
-                $APPLICATION->ThrowException(GetMessage("LEARNING_BAD_GRADEBOOK_DUPLICATE"), "ERROR_GRADEBOOK_DUPLICATE");
+                $APPLICATION->ThrowException(
+                    GetMessage("LEARNING_BAD_GRADEBOOK_DUPLICATE"),
+                    "ERROR_GRADEBOOK_DUPLICATE"
+                );
                 return false;
             }
         }
 
 
-        if (is_set($arFields, "COMPLETED") && $arFields["COMPLETED"] != "Y")
+        if (is_set($arFields, "COMPLETED") && $arFields["COMPLETED"] != "Y") {
             $arFields["COMPLETED"] = "N";
+        }
 
         return true;
     }
 
-
-    function Add($arFields)
+    public static function Add($arFields)
     {
         global $DB;
 
@@ -74,13 +81,14 @@ class CAllGradeBook
         return false;
     }
 
-
-    function Update($ID, $arFields)
+    public static function Update($ID, $arFields)
     {
         global $DB;
 
         $ID = intval($ID);
-        if ($ID < 1) return false;
+        if ($ID < 1) {
+            return false;
+        }
 
         if (CGradeBook::CheckFields($arFields, $ID)) {
             unset($arFields["ID"]);
@@ -99,38 +107,48 @@ class CAllGradeBook
         return false;
     }
 
-
-    function Delete($ID)
+    public static function Delete($ID)
     {
         global $DB;
 
         $ID = intval($ID);
-        if ($ID < 1) return false;
+        if ($ID < 1) {
+            return false;
+        }
 
         $strSql = "SELECT TEST_ID, STUDENT_ID FROM b_learn_gradebook WHERE ID = " . $ID;
         $res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-        if (!$arGBook = $res->Fetch())
+        if (!$arGBook = $res->Fetch()) {
             return false;
+        }
 
-        $attempts = CTestAttempt::GetList(Array(), Array("TEST_ID" => $arGBook["TEST_ID"], "STUDENT_ID" => $arGBook["STUDENT_ID"]));
+        $attempts = CTestAttempt::GetList(
+            Array(),
+            Array(
+                "TEST_ID" => $arGBook["TEST_ID"],
+                "STUDENT_ID" => $arGBook["STUDENT_ID"]
+            )
+        );
         while ($arAttempt = $attempts->Fetch()) {
-            if (!CTestAttempt::Delete($arAttempt["ID"]))
+            if (!CTestAttempt::Delete($arAttempt["ID"])) {
                 return false;
+            }
         }
 
         $strSql = "DELETE FROM b_learn_gradebook WHERE ID = " . $ID;
 
-        if (!$DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__))
+        if (!$DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__)) {
             return false;
+        }
 
         return true;
     }
 
-
-    function GetFilter($arFilter)
+    public static function GetFilter($arFilter)
     {
-        if (!is_array($arFilter))
+        if (!is_array($arFilter)) {
             $arFilter = Array();
+        }
 
         $arSqlSearch = Array();
 
@@ -139,7 +157,7 @@ class CAllGradeBook
             $key = $res["FIELD"];
             $cOperationType = $res["OPERATION"];
 
-            $key = strtoupper($key);
+            $key = mb_strtoupper($key);
 
             switch ($key) {
                 case "ID":
@@ -147,60 +165,89 @@ class CAllGradeBook
                 case "TEST_ID":
                 case "RESULT":
                 case "MAX_RESULT":
-                    $arSqlSearch[] = CLearnHelper::FilterCreate("G." . $key, $val, "number", $bFullJoin, $cOperationType);
+                    $arSqlSearch[] = CLearnHelper::FilterCreate(
+                        "G." . $key,
+                        $val,
+                        "number",
+                        $bFullJoin,
+                        $cOperationType
+                    );
                     break;
                 case "COMPLETED":
-                    $arSqlSearch[] = CLearnHelper::FilterCreate("G." . $key, $val, "string_equal", $bFullJoin, $cOperationType);
+                    $arSqlSearch[] = CLearnHelper::FilterCreate(
+                        "G." . $key,
+                        $val,
+                        "string_equal",
+                        $bFullJoin,
+                        $cOperationType
+                    );
                     break;
                 case "USER":
                     $arSqlSearch[] = GetFilterQuery("U.ID, U.LOGIN, U.NAME, U.LAST_NAME", $val);
                     break;
                 case "USER_LOGIN":
-                    $arSqlSearch[] = CLearnHelper::FilterCreate("U.LOGIN", $val, "string_equal", $bFullJoin, $cOperationType);
+                    $arSqlSearch[] = CLearnHelper::FilterCreate(
+                        "U.LOGIN",
+                        $val,
+                        "string_equal",
+                        $bFullJoin,
+                        $cOperationType
+                    );
                     break;
 
                 case "USER_NAME":
-                    $arSqlSearch[] = CLearnHelper::FilterCreate("U.NAME", $val, "string_equal", $bFullJoin, $cOperationType);
+                    $arSqlSearch[] = CLearnHelper::FilterCreate(
+                        "U.NAME",
+                        $val,
+                        "string_equal",
+                        $bFullJoin,
+                        $cOperationType
+                    );
                     break;
 
                 case "USER_LAST_NAME":
-                    $arSqlSearch[] = CLearnHelper::FilterCreate("U.LAST_NAME", $val, "string_equal", $bFullJoin, $cOperationType);
+                    $arSqlSearch[] = CLearnHelper::FilterCreate(
+                        "U.LAST_NAME",
+                        $val,
+                        "string_equal",
+                        $bFullJoin,
+                        $cOperationType
+                    );
                     break;
             }
-
         }
 
         return $arSqlSearch;
     }
 
-
-    function GetByID($ID)
+    public static function GetByID($ID)
     {
         return CGradeBook::GetList(Array(), Array("ID" => $ID));
     }
 
-
-    function RecountAttempts($STUDENT_ID, $TEST_ID)
+    public static function RecountAttempts($STUDENT_ID, $TEST_ID)
     {
         global $DB;
 
         $STUDENT_ID = intval($STUDENT_ID);
         $TEST_ID = intval($TEST_ID);
 
-        if ($TEST_ID < 1 || $STUDENT_ID < 1)
+        if ($TEST_ID < 1 || $STUDENT_ID < 1) {
             return false;
+        }
 
         $strSql = "SELECT ID FROM b_learn_gradebook G WHERE STUDENT_ID = '" . $STUDENT_ID . "' AND TEST_ID = '" . $TEST_ID . "' ";
         $res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
         if (!$arG = $res->Fetch()) {
-
-            $ID = CGradeBook::Add(Array(
-                "STUDENT_ID" => $STUDENT_ID,
-                "TEST_ID" => $TEST_ID,
-                "RESULT" => "0",
-                "MAX_RESULT" => "0",
-                "COMPLETED" => "N"
-            ));
+            $ID = CGradeBook::Add(
+                Array(
+                    "STUDENT_ID" => $STUDENT_ID,
+                    "TEST_ID" => $TEST_ID,
+                    "RESULT" => "0",
+                    "MAX_RESULT" => "0",
+                    "COMPLETED" => "N"
+                )
+            );
 
             return ($ID > 0);
         }
@@ -216,24 +263,32 @@ class CAllGradeBook
         if (intval($res->SelectedRowsCount()) == 0) {
             $strSql = "DELETE FROM b_learn_gradebook WHERE ID = " . $arG["ID"];
 
-            if (!$DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__))
+            if (!$DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__)) {
                 return false;
+            }
 
             return true;
         }
 
-        if (!$ar = $res->Fetch())
+        if (!$ar = $res->Fetch()) {
             return false;
+        }
 
-        $strSql = "UPDATE b_learn_gradebook SET ATTEMPTS = '" . intval($res->SelectedRowsCount()) . "', COMPLETED = '" . $ar["COMPLETED"] . "', RESULT = '" . intval($ar["SCORE"]) . "' , MAX_RESULT = '" . intval($ar["MAX_SCORE"]) . "' WHERE STUDENT_ID = '" . $STUDENT_ID . "' AND TEST_ID = '" . $TEST_ID . "' ";
-        if (!$DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__))
+        $strSql = "UPDATE b_learn_gradebook SET ATTEMPTS = '" . intval(
+                $res->SelectedRowsCount()
+            ) . "', COMPLETED = '" . $ar["COMPLETED"] . "', RESULT = '" . intval(
+                $ar["SCORE"]
+            ) . "' , MAX_RESULT = '" . intval(
+                $ar["MAX_SCORE"]
+            ) . "' WHERE STUDENT_ID = '" . $STUDENT_ID . "' AND TEST_ID = '" . $TEST_ID . "' ";
+        if (!$DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__)) {
             return false;
+        }
 
         return true;
     }
 
-
-    function GetExtraAttempts($STUDENT_ID, $TEST_ID)
+    public static function GetExtraAttempts($STUDENT_ID, $TEST_ID)
     {
         global $DB;
 
@@ -249,8 +304,7 @@ class CAllGradeBook
         }
     }
 
-
-    function AddExtraAttempts($STUDENT_ID, $TEST_ID, $COUNT = 1)
+    public static function AddExtraAttempts($STUDENT_ID, $TEST_ID, $COUNT = 1)
     {
         global $DB;
 
@@ -261,23 +315,25 @@ class CAllGradeBook
         $strSql = "SELECT ID, EXTRA_ATTEMPTS FROM b_learn_gradebook WHERE STUDENT_ID = " . $STUDENT_ID . " AND TEST_ID = " . $TEST_ID . "";
         $rs = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
         if (!($ar = $rs->Fetch())) {
-            $ID = CGradeBook::Add(Array(
-                "STUDENT_ID" => $STUDENT_ID,
-                "TEST_ID" => $TEST_ID,
-                "RESULT" => "0",
-                "MAX_RESULT" => "0",
-                "COMPLETED" => "N",
-                "EXTRA_ATTEMPTS" => $COUNT
-            ));
+            $ID = CGradeBook::Add(
+                Array(
+                    "STUDENT_ID" => $STUDENT_ID,
+                    "TEST_ID" => $TEST_ID,
+                    "RESULT" => "0",
+                    "MAX_RESULT" => "0",
+                    "COMPLETED" => "N",
+                    "EXTRA_ATTEMPTS" => $COUNT
+                )
+            );
 
             return ($ID > 0);
         } else {
             $strSql = "UPDATE b_learn_gradebook SET EXTRA_ATTEMPTS = " . ($ar["EXTRA_ATTEMPTS"] + $COUNT) . " WHERE ID = " . $ar["ID"];
-            if (!$DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__))
+            if (!$DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__)) {
                 return false;
+            }
         }
     }
-
 
     public static function GetList($arOrder = array(), $arFilter = array(), $arNavParams = array())
     {
@@ -287,79 +343,100 @@ class CAllGradeBook
         $arSqlSearch = array_filter(CGradeBook::GetFilter($arFilter));
 
         $strSqlSearch = '';
-        if (!empty($arSqlSearch))
+        if (!empty($arSqlSearch)) {
             $strSqlSearch .= implode(' AND ', $arSqlSearch);
+        }
 
         //Sites
         $SqlSearchLang = "''";
         if (array_key_exists("SITE_ID", $arFilter)) {
             $arLID = Array();
 
-            if (is_array($arFilter["SITE_ID"]))
+            if (is_array($arFilter["SITE_ID"])) {
                 $arLID = $arFilter["SITE_ID"];
-            else {
-                if (strlen($arFilter["SITE_ID"]) > 0)
+            } else {
+                if ($arFilter["SITE_ID"] <> '') {
                     $arLID[] = $arFilter["SITE_ID"];
+                }
             }
 
-            foreach ($arLID as $v)
+            foreach ($arLID as $v) {
                 $SqlSearchLang .= ", '" . $DB->ForSql($v, 2) . "'";
+            }
         }
 
         $strSqlFrom = static::__getSqlFromClause($SqlSearchLang);
 
-        if ($oPermParser->IsNeedCheckPerm())
+        if ($oPermParser->IsNeedCheckPerm()) {
             $strSqlFrom .= " AND TUL.ID IN (" . $oPermParser->SQLForAccessibleLessons() . ") ";
+        }
 
-        if ($strSqlSearch !== '')
+        if ($strSqlSearch !== '') {
             $strSqlFrom .= ' AND ' . $strSqlSearch;
+        }
 
         $strSql =
             "SELECT G.*, T.NAME as TEST_NAME, T.COURSE_ID as COURSE_ID,
 		T.APPROVED as TEST_APPROVED,
 		(T.ATTEMPT_LIMIT + G.EXTRA_ATTEMPTS) AS ATTEMPT_LIMIT, TUL.NAME as COURSE_NAME,
 		C.LINKED_LESSON_ID AS LINKED_LESSON_ID, " .
-            $DB->Concat("'('", 'U.LOGIN', "') '", "CASE WHEN U.NAME IS NULL THEN '' ELSE U.NAME END", "' '", "CASE WHEN U.LAST_NAME IS NULL THEN '' ELSE U.LAST_NAME END") . " as USER_NAME, U.ID as USER_ID " .
+            $DB->Concat(
+                "'('",
+                'U.LOGIN',
+                "') '",
+                "CASE WHEN U.NAME IS NULL THEN '' ELSE U.NAME END",
+                "' '",
+                "CASE WHEN U.LAST_NAME IS NULL THEN '' ELSE U.LAST_NAME END"
+            ) . " as USER_NAME, U.ID as USER_ID " .
             $strSqlFrom;
 
-        if (!is_array($arOrder))
+        if (!is_array($arOrder)) {
             $arOrder = array();
+        }
+
+        $arSqlOrder = [];
 
         foreach ($arOrder as $by => $order) {
-            $by = strtolower($by);
-            $order = strtolower($order);
-            if ($order != "asc")
+            $by = mb_strtolower($by);
+            $order = mb_strtolower($order);
+            if ($order != "asc") {
                 $order = "desc";
+            }
 
-            if ($by == "id")
+            if ($by == "id") {
                 $arSqlOrder[] = " G.ID " . $order . " ";
-            elseif ($by == "student_id")
+            } elseif ($by == "student_id") {
                 $arSqlOrder[] = " G.STUDENT_ID " . $order . " ";
-            elseif ($by == "test_id")
+            } elseif ($by == "test_id") {
                 $arSqlOrder[] = " G.TEST_ID " . $order . " ";
-            elseif ($by == "completed")
+            } elseif ($by == "completed") {
                 $arSqlOrder[] = " G.COMPLETED " . $order . " ";
-            elseif ($by == "result")
+            } elseif ($by == "result") {
                 $arSqlOrder[] = " G.RESULT " . $order . " ";
-            elseif ($by == "max_result")
+            } elseif ($by == "max_result") {
                 $arSqlOrder[] = " G.MAX_RESULT " . $order . " ";
-            elseif ($by == "user_name")
+            } elseif ($by == "user_name") {
                 $arSqlOrder[] = " USER_NAME " . $order . " ";
-            elseif ($by == "test_name")
+            } elseif ($by == "test_name") {
                 $arSqlOrder[] = " TEST_NAME " . $order . " ";
-            else
+            } else {
                 $arSqlOrder[] = " G.ID " . $order . " ";
+            }
         }
 
         $strSqlOrder = "";
         DelDuplicateSort($arSqlOrder);
-        for ($i = 0, $len = count($arSqlOrder); $i < $len; $i++) {
-            if ($i == 0)
-                $strSqlOrder = " ORDER BY ";
-            else
-                $strSqlOrder .= ",";
 
-            $strSqlOrder .= $arSqlOrder[$i];
+        if (!empty($arSqlOrder)) {
+            for ($i = 0, $len = count($arSqlOrder); $i < $len; $i++) {
+                if ($i == 0) {
+                    $strSqlOrder = " ORDER BY ";
+                } else {
+                    $strSqlOrder .= ",";
+                }
+
+                $strSqlOrder .= $arSqlOrder[$i];
+            }
         }
 
         $strSql .= $strSqlOrder;
@@ -374,12 +451,12 @@ class CAllGradeBook
                 $res = new CDBResult();
                 $res->NavQuery($strSql, $res_cnt['C'], $arNavParams);
             }
-        } else
+        } else {
             $res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+        }
 
         return $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
     }
-
 
     /**
      * This function is for internal use only.
@@ -414,7 +491,7 @@ class CAllGradeBook
 							END
 					)
 				) " .
-            (strlen($SqlSearchLang) <= 2 ? "" :
+            (mb_strlen($SqlSearchLang) <= 2 ? "" :
                 "AND
 					EXISTS
 					(	SELECT 'x' FROM b_learn_course_site CS

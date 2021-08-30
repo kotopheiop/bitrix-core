@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 class CSubscriptionGeneral
@@ -14,8 +15,9 @@ class CSubscriptionGeneral
         if (is_array($arFilter)) {
             foreach ($arFilter as $key => $val) {
                 if (!is_array($val)) {
-                    if ((strlen($val) <= 0) || ($val === "NOT_REF"))
+                    if (((string)$val == '') || ($val === "NOT_REF")) {
                         continue;
+                    }
                 }
                 switch (strtoupper($key)) {
                     case "ID":
@@ -57,9 +59,10 @@ class CSubscriptionGeneral
                     case "RUBRIC":
                     case "RUBRIC_MULTI":
                     case "DISTRIBUTION":
-                        if (is_array($val))
+                        if (is_array($val)) {
                             $val = implode(" | ", $val);
-                        if (strlen($val) > 0) {
+                        }
+                        if ($val <> '') {
                             $from1 = " INNER JOIN b_subscription_rubric SR ON (SR.SUBSCRIPTION_ID=S.ID) ";
                             $arSqlSearch[] = GetFilterQuery("SR.LIST_RUBRIC_ID", $val, "N");
                         } else {
@@ -73,8 +76,8 @@ class CSubscriptionGeneral
 
         $arOrder = array();
         foreach ($aSort as $by => $ord) {
-            $by = strtoupper($by);
-            $ord = (strtoupper($ord) <> "ASC" ? "DESC" : "ASC");
+            $by = mb_strtoupper($by);
+            $ord = (mb_strtoupper($ord) <> "ASC" ? "DESC" : "ASC");
             switch ($by) {
                 case "ID":
                     $arOrder[$by] = "S.ID " . $ord;
@@ -108,11 +111,11 @@ class CSubscriptionGeneral
                     break;
             }
         }
-        if (count($arOrder) <= 0)
+        if (count($arOrder) <= 0) {
             $arOrder["ID"] = "S.ID DESC";
+        }
 
         if (is_array($arNavStartParams)) {
-
             $strSql = "
 				SELECT count(" . ($from1 <> "" ? "DISTINCT S.ID" : "'x'") . ") as C
 				FROM
@@ -201,8 +204,9 @@ class CSubscriptionGeneral
         $aSubscrRub = array();
         if ($ID > 0) {
             $subscr_rub = CSubscription::GetRubricList($ID);
-            while ($subscr_rub_arr = $subscr_rub->Fetch())
+            while ($subscr_rub_arr = $subscr_rub->Fetch()) {
                 $aSubscrRub[] = $subscr_rub_arr["ID"];
+            }
         }
         return $aSubscrRub;
     }
@@ -213,11 +217,12 @@ class CSubscriptionGeneral
         global $USER;
         $email_cookie = COption::GetOptionString("main", "cookie_name", "BITRIX_SM") . "_SUBSCR_EMAIL";
 
-        $subscr_EMAIL = (strlen($_COOKIE[$email_cookie]) > 0 ? $_COOKIE[$email_cookie] : $USER->GetParam("EMAIL"));
+        $subscr_EMAIL = ($_COOKIE[$email_cookie] <> '' ? $_COOKIE[$email_cookie] : $USER->GetParam("EMAIL"));
         if ($subscr_EMAIL <> "") {
             $subscr = CSubscription::GetByEmail($subscr_EMAIL, intval($USER->GetID()));
-            if (($subscr_arr = $subscr->Fetch()))
+            if (($subscr_arr = $subscr->Fetch())) {
                 return $subscr_arr;
+            }
         }
         return array("ID" => 0, "EMAIL" => "");
     }
@@ -253,9 +258,17 @@ class CSubscriptionGeneral
 
         $DB->StartTransaction();
 
-        $res = $DB->Query("DELETE FROM b_subscription_rubric WHERE SUBSCRIPTION_ID='" . $ID . "'", false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+        $res = $DB->Query(
+            "DELETE FROM b_subscription_rubric WHERE SUBSCRIPTION_ID='" . $ID . "'",
+            false,
+            "File: " . __FILE__ . "<br>Line: " . __LINE__
+        );
         if ($res) {
-            $res = $DB->Query("DELETE FROM b_subscription WHERE ID='" . $ID . "' ", false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+            $res = $DB->Query(
+                "DELETE FROM b_subscription WHERE ID='" . $ID . "' ",
+                false,
+                "File: " . __FILE__ . "<br>Line: " . __LINE__
+            );
         }
 
         if ($res) {
@@ -283,10 +296,11 @@ class CSubscriptionGeneral
             $arFields["ID"] = $ID;
         }
 
-        if ($ID > 0)
+        if ($ID > 0) {
             $db_events = GetModuleEvents("subscribe", "OnStartSubscriptionUpdate", true);
-        else
+        } else {
             $db_events = GetModuleEvents("subscribe", "OnStartSubscriptionAdd", true);
+        }
 
         foreach ($db_events as $arEvent) {
             if (ExecuteModuleEventEx($arEvent, array(&$arFields, $SITE_ID)) === false) {
@@ -296,28 +310,35 @@ class CSubscriptionGeneral
 
 
         if (is_set($arFields, "EMAIL")) {
-            if (strlen($arFields["EMAIL"]) == 0 || !check_email($arFields["EMAIL"]))
+            if ($arFields["EMAIL"] == '' || !check_email($arFields["EMAIL"])) {
                 $aMsg[] = array("id" => "EMAIL", "text" => GetMessage("class_subscr_addr"));
-            else {
+            } else {
                 $res = $this->GetByEmail($arFields["EMAIL"], intval($arFields["USER_ID"]));
                 $ar = $res->Fetch();
-                if ($ar && ($ar["ID"] <> intval($ID)))
+                if ($ar && ($ar["ID"] <> intval($ID))) {
                     $aMsg[] = array("id" => "EMAIL", "text" => GetMessage("class_subscr_addr2"));
+                }
             }
         }
 
         if (is_set($arFields, "USER_ID")) {
             if (intval($arFields["USER_ID"]) > 0) {
-                $res = $DB->Query("SELECT 'x' FROM b_user WHERE ID = " . intval($arFields["USER_ID"]), false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-                if (!$res->Fetch())
+                $res = $DB->Query(
+                    "SELECT 'x' FROM b_user WHERE ID = " . intval($arFields["USER_ID"]),
+                    false,
+                    "File: " . __FILE__ . "<br>Line: " . __LINE__
+                );
+                if (!$res->Fetch()) {
                     $aMsg[] = array("id" => "USER_ID", "text" => GetMessage("class_subscr_user"));
+                }
             }
         }
 
-        if ($ID > 0)
+        if ($ID > 0) {
             $db_events = GetModuleEvents("subscribe", "OnBeforeSubscriptionUpdate", true);
-        else
+        } else {
             $db_events = GetModuleEvents("subscribe", "OnBeforeSubscriptionAdd", true);
+        }
 
         foreach ($db_events as $arEvent) {
             if (ExecuteModuleEventEx($arEvent, array(&$arFields, $SITE_ID)) === false) {
@@ -373,9 +394,11 @@ class CSubscriptionGeneral
             }
 
             $sID = "0";
-            if (is_array($aRubric))
-                foreach ($aRubric as $rub)
+            if (is_array($aRubric)) {
+                foreach ($aRubric as $rub) {
                     $sID .= "," . intval($rub);
+                }
+            }
 
             $strSql = "
 				INSERT INTO b_subscription_rubric (SUBSCRIPTION_ID, LIST_RUBRIC_ID)
@@ -386,12 +409,18 @@ class CSubscriptionGeneral
 			";
             $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
         } else {
-            $DB->Query("DELETE FROM b_subscription_rubric WHERE SUBSCRIPTION_ID='" . $ID . "'", false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+            $DB->Query(
+                "DELETE FROM b_subscription_rubric WHERE SUBSCRIPTION_ID='" . $ID . "'",
+                false,
+                "File: " . __FILE__ . "<br>Line: " . __LINE__
+            );
 
             $sID = "0";
-            if (is_array($aRubric))
-                foreach ($aRubric as $rub)
+            if (is_array($aRubric)) {
+                foreach ($aRubric as $rub) {
                     $sID .= "," . intval($rub);
+                }
+            }
 
             $strSql = "
 				INSERT INTO b_subscription_rubric (SUBSCRIPTION_ID, LIST_RUBRIC_ID)
@@ -408,11 +437,13 @@ class CSubscriptionGeneral
     {
         global $DB;
 
-        if (!$this->CheckFields($arFields, 0, $SITE_ID))
+        if (!$this->CheckFields($arFields, 0, $SITE_ID)) {
             return false;
+        }
 
-        if (array_key_exists("USER_ID", $arFields) && (intval($arFields["USER_ID"]) <= 0))
+        if (array_key_exists("USER_ID", $arFields) && (intval($arFields["USER_ID"]) <= 0)) {
             $arFields["USER_ID"] = false;
+        }
 
         $arFields["CONFIRM_CODE"] = randString(8);
         $arFields["~DATE_INSERT"] = $DB->CurrentTimeFunction();
@@ -421,13 +452,15 @@ class CSubscriptionGeneral
         $ID = $DB->Add("b_subscription", $arFields);
 
         if ($ID > 0) {
-            if (is_set($arFields, "ALL_SITES") && $arFields["ALL_SITES"] == "Y")
+            if (is_set($arFields, "ALL_SITES") && $arFields["ALL_SITES"] == "Y") {
                 $this->UpdateRubrics($ID, $arFields["RUB_ID"]);
-            else
+            } else {
                 $this->UpdateRubrics($ID, $arFields["RUB_ID"], $SITE_ID);
+            }
 
-            if ($arFields["SEND_CONFIRM"] <> "N")
+            if ($arFields["SEND_CONFIRM"] <> "N") {
                 $this->ConfirmEvent($ID, $SITE_ID);
+            }
         }
 
         return $ID;
@@ -440,11 +473,13 @@ class CSubscriptionGeneral
         $ID = intval($ID);
         $this->LAST_MESSAGE = "";
 
-        if (!$this->CheckFields($arFields, $ID, $SITE_ID))
+        if (!$this->CheckFields($arFields, $ID, $SITE_ID)) {
             return false;
+        }
 
-        if (array_key_exists("USER_ID", $arFields) && (intval($arFields["USER_ID"]) <= 0))
+        if (array_key_exists("USER_ID", $arFields) && (intval($arFields["USER_ID"]) <= 0)) {
             $arFields["USER_ID"] = false;
+        }
 
         //Check whether email changed. If changed, we must to generate new confirm code.
         $strSql =
@@ -459,9 +494,9 @@ class CSubscriptionGeneral
 
         $CONFIRM_CODE = $arFields["CONFIRM_CODE"];
         unset($arFields["CONFIRM_CODE"]);
-        if (!is_set($arFields, "EMAIL") || strtoupper($db_check_arr["EMAIL"]) == strtoupper($arFields["EMAIL"])) {
+        if (!is_set($arFields, "EMAIL") || mb_strtoupper($db_check_arr["EMAIL"]) == mb_strtoupper($arFields["EMAIL"])) {
             //the same email - check confirm code
-            if (strlen($CONFIRM_CODE) > 0 && $db_check_arr["CONFIRMED"] <> "Y") {
+            if ($CONFIRM_CODE <> '' && $db_check_arr["CONFIRMED"] <> "Y") {
                 if ($CONFIRM_CODE == $db_check_arr["CONFIRM_CODE"]) {
                     //let's confirm the subscription
                     $arFields["CONFIRMED"] = "Y";
@@ -474,33 +509,36 @@ class CSubscriptionGeneral
         } else {
             //new email - new confirm code
             $arFields["CONFIRM_CODE"] = randString(8);
-            if ($arFields["CONFIRMED"] <> "Y")
+            if ($arFields["CONFIRMED"] <> "Y") {
                 $arFields["CONFIRMED"] = "N";
+            }
         }
 
         $strUpdate = $DB->PrepareUpdate("b_subscription", $arFields);
-        if (strlen($strUpdate) > 0) {
+        if ($strUpdate <> '') {
             $strSql =
                 "UPDATE b_subscription SET " .
                 $strUpdate . ", " .
                 "	DATE_UPDATE=" . $DB->GetNowFunction() . " " .
-                (strlen($arFields["CONFIRM_CODE"]) > 0 ? "," .
+                ($arFields["CONFIRM_CODE"] <> '' ? "," .
                     "	DATE_CONFIRM=" . $DB->GetNowFunction() . " "
                     : "") .
                 "WHERE ID=" . $ID;
-            if (!$DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__))
+            if (!$DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__)) {
                 return false;
+            }
         }
 
         //subscription categories
         if (is_set($arFields, "RUB_ID")) {
-            if (is_set($arFields, "ALL_SITES") && $arFields["ALL_SITES"] == "Y")
+            if (is_set($arFields, "ALL_SITES") && $arFields["ALL_SITES"] == "Y") {
                 $this->UpdateRubrics($ID, $arFields["RUB_ID"]);
-            else
+            } else {
                 $this->UpdateRubrics($ID, $arFields["RUB_ID"], $SITE_ID);
+            }
         }
         //send confirmation code if needed
-        if ($arFields["SEND_CONFIRM"] <> "N" && strlen($arFields["CONFIRM_CODE"]) > 0) {
+        if ($arFields["SEND_CONFIRM"] <> "N" && $arFields["CONFIRM_CODE"] <> '') {
             $this->ConfirmEvent($ID, $SITE_ID);
             $this->LAST_MESSAGE = "SENT";
         }
@@ -518,10 +556,11 @@ class CSubscriptionGeneral
         if ($subscr_arr = $subscr->Fetch()) {
             if (!array_key_exists($SITE_ID, $SITE_DIR_CACHE)) {
                 $db_lang = CLang::GetByID($SITE_ID);
-                if ($ar_lang = $db_lang->Fetch())
+                if ($ar_lang = $db_lang->Fetch()) {
                     $SITE_DIR_CACHE[$SITE_ID] = $ar_lang["DIR"];
-                else
+                } else {
                     $SITE_DIR_CACHE[$SITE_ID] = LANG_DIR;
+                }
             }
 
             $subscr_arr["USER_NAME"] = "";
@@ -604,18 +643,28 @@ class CSubscriptionGeneral
         $strSql = "SELECT ID FROM b_subscription WHERE USER_ID = " . $user_id;
         $res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
         $arIn = array();
-        while ($res_arr = $res->Fetch())
+        while ($res_arr = $res->Fetch()) {
             $arIn[] = intval($res_arr["ID"]);
+        }
 
         if (count($arIn) > 0) {
             $sIn = implode(",", $arIn);
             if (
-                $DB->Query("DELETE FROM b_subscription_rubric WHERE SUBSCRIPTION_ID IN (" . $sIn . ")", false, "File: " . __FILE__ . "<br>Line: " . __LINE__) &&
-                $DB->Query("DELETE FROM b_subscription WHERE ID IN (" . $sIn . ")", false, "File: " . __FILE__ . "<br>Line: " . __LINE__)
-            )
+                $DB->Query(
+                    "DELETE FROM b_subscription_rubric WHERE SUBSCRIPTION_ID IN (" . $sIn . ")",
+                    false,
+                    "File: " . __FILE__ . "<br>Line: " . __LINE__
+                ) &&
+                $DB->Query(
+                    "DELETE FROM b_subscription WHERE ID IN (" . $sIn . ")",
+                    false,
+                    "File: " . __FILE__ . "<br>Line: " . __LINE__
+                )
+            ) {
                 return true;
-            else
+            } else {
                 return false;
+            }
         } else {
             return true;
         }
@@ -630,8 +679,9 @@ class CSubscriptionGeneral
         if ($user_id > 0) {
             $strSql = "SELECT ID FROM b_subscription WHERE USER_ID=" . $user_id;
             $res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-            while ($res_arr = $res->Fetch())
+            while ($res_arr = $res->Fetch()) {
                 $_SESSION["SESS_SUBSCR_AUTH"][$res_arr["ID"]] = "NO";
+            }
         }
         return true;
     }

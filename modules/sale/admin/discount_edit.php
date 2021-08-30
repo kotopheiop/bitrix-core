@@ -14,8 +14,9 @@ $listUrl = $adminSidePanelHelper->editUrlToPublicPage($listUrl);
 
 $saleModulePermissions = $APPLICATION->GetGroupRight('sale');
 $readOnly = ($saleModulePermissions < 'W');
-if ($readOnly)
+if ($readOnly) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $enableDiscountConstructor = Sale\Config\Feature::isDiscountConstructorEnabled();
 
@@ -36,11 +37,36 @@ if (!Main\Loader::includeModule('catalog')) {
 }
 
 $tabList = array(
-    array('DIV' => 'edit1', 'ICON' => 'sale', 'TAB' => GetMessage("BT_SALE_DISCOUNT_EDIT_TAB_NAME_COMMON"), 'TITLE' => GetMessage("BT_SALE_DISCOUNT_EDIT_TAB_TITLE_COMMON")),
-    array('DIV' => 'edit3', 'ICON' => 'sale', 'TAB' => GetMessage("BT_SALE_DISCOUNT_EDIT_TAB_NAME_ACTIONS"), 'TITLE' => GetMessage("BT_CAT_DISCOUNT_EDIT_TAB_TITLE_ACTIONS")),
-    array('DIV' => 'edit2', 'ICON' => 'sale', 'TAB' => GetMessage("BT_SALE_DISCOUNT_EDIT_TAB_NAME_GROUPS"), 'TITLE' => GetMessage("BT_SALE_DISCOUNT_EDIT_TAB_TITLE_GROUPS")),
-    array('DIV' => 'edit5', 'ICON' => 'sale', 'TAB' => GetMessage('BX_SALE_DISCOUNT_EDIT_TAB_NAME_COUPONS'), 'TITLE' => GetMessage('BX_SALE_DISCOUNT_EDIT_TAB_TITLE_COUPONS')),
-    array('DIV' => 'edit4', 'ICON' => 'sale', 'TAB' => GetMessage("BT_SALE_DISCOUNT_EDIT_TAB_NAME_MISC"), 'TITLE' => GetMessage("BT_SALE_DISCOUNT_EDIT_TAB_TITLE_MISC")),
+    array(
+        'DIV' => 'edit1',
+        'ICON' => 'sale',
+        'TAB' => GetMessage("BT_SALE_DISCOUNT_EDIT_TAB_NAME_COMMON"),
+        'TITLE' => GetMessage("BT_SALE_DISCOUNT_EDIT_TAB_TITLE_COMMON")
+    ),
+    array(
+        'DIV' => 'edit3',
+        'ICON' => 'sale',
+        'TAB' => GetMessage("BT_SALE_DISCOUNT_EDIT_TAB_NAME_ACTIONS"),
+        'TITLE' => GetMessage("BT_CAT_DISCOUNT_EDIT_TAB_TITLE_ACTIONS")
+    ),
+    array(
+        'DIV' => 'edit2',
+        'ICON' => 'sale',
+        'TAB' => GetMessage("BT_SALE_DISCOUNT_EDIT_TAB_NAME_GROUPS"),
+        'TITLE' => GetMessage("BT_SALE_DISCOUNT_EDIT_TAB_TITLE_GROUPS")
+    ),
+    array(
+        'DIV' => 'edit5',
+        'ICON' => 'sale',
+        'TAB' => GetMessage('BX_SALE_DISCOUNT_EDIT_TAB_NAME_COUPONS'),
+        'TITLE' => GetMessage('BX_SALE_DISCOUNT_EDIT_TAB_TITLE_COUPONS')
+    ),
+    array(
+        'DIV' => 'edit4',
+        'ICON' => 'sale',
+        'TAB' => GetMessage("BT_SALE_DISCOUNT_EDIT_TAB_NAME_MISC"),
+        'TITLE' => GetMessage("BT_SALE_DISCOUNT_EDIT_TAB_TITLE_MISC")
+    ),
 );
 
 $control = new CAdminForm("sale_discount", $tabList);
@@ -56,8 +82,9 @@ $discountID = 0;
 $copy = false;
 if (isset($_REQUEST['ID'])) {
     $discountID = (int)$_REQUEST['ID'];
-    if ($discountID < 0)
+    if ($discountID < 0) {
         $discountID = 0;
+    }
 }
 if ($discountID > 0) {
     $copy = (isset($_REQUEST['action']) && (string)$_REQUEST['action'] == 'copy');
@@ -71,10 +98,12 @@ if ($adminSidePanelHelper->isPublicSidePanel()
 ) {
     $discountGroupsToShow = \Bitrix\Crm\Order\BuyerGroup::getPublicList();
 } else {
-    $discountGroupsToShow = Main\GroupTable::getList(array(
-        'select' => array('ID', 'NAME'),
-        'order' => array('C_SORT' => 'ASC', 'ID' => 'ASC')
-    ))->fetchAll();
+    $discountGroupsToShow = Main\GroupTable::getList(
+        array(
+            'select' => array('ID', 'NAME'),
+            'order' => array('C_SORT' => 'ASC', 'ID' => 'ASC')
+        )
+    )->fetchAll();
 }
 
 $arFields = array();
@@ -89,10 +118,12 @@ if (
         case 'getUserName':
             $userId = (int)$_POST['USER_ID'];
             $APPLICATION->RestartBuffer();
-            echo Main\Web\Json::encode(array(
-                'userId' => $userId,
-                'name' => \Bitrix\Sale\Helpers\Admin\OrderEdit::getUserName($userId),
-            ));
+            echo Main\Web\Json::encode(
+                array(
+                    'userId' => $userId,
+                    'name' => \Bitrix\Sale\Helpers\Admin\OrderEdit::getUserName($userId),
+                )
+            );
             CMain::FinalActions();
             die;
 
@@ -113,22 +144,35 @@ if (
 
     $obCond3 = new CSaleCondTree();
 
-    $boolCond = $obCond3->Init(BT_COND_MODE_PARSE, BT_COND_BUILD_SALE, array('INIT_CONTROLS' => array(
-        'SITE_ID' => $_POST['LID'],
-        'CURRENCY' => CSaleLang::GetLangCurrency($_POST['LID']),
-    )));
+    $boolCond = $obCond3->Init(
+        BT_COND_MODE_PARSE,
+        BT_COND_BUILD_SALE,
+        array(
+            'INIT_CONTROLS' => array(
+                'SITE_ID' => $_POST['LID'],
+                'CURRENCY' => CSaleLang::GetLangCurrency($_POST['LID']),
+            )
+        )
+    );
     if (!$boolCond) {
-        if ($ex = $APPLICATION->GetException())
+        if ($ex = $APPLICATION->GetException()) {
             $errors[] = $ex->GetString();
-        else
-            $errors[] = (0 < $discountID ? str_replace('#ID#', $discountID, GetMessage('BT_SALE_DISCOUNT_EDIT_ERR_UPDATE')) : GetMessage('BT_SALE_DISCOUNT_EDIT_ERR_ADD'));
+        } else {
+            $errors[] = (0 < $discountID ? str_replace(
+                '#ID#',
+                $discountID,
+                GetMessage('BT_SALE_DISCOUNT_EDIT_ERR_UPDATE')
+            ) : GetMessage('BT_SALE_DISCOUNT_EDIT_ERR_ADD'));
+        }
     } else {
         $boolCond = false;
         if (array_key_exists('CONDITIONS', $_POST) && array_key_exists('CONDITIONS_CHECK', $_POST)) {
-            if (is_string($_POST['CONDITIONS']) && is_string($_POST['CONDITIONS_CHECK']) && md5($_POST['CONDITIONS']) == $_POST['CONDITIONS_CHECK']) {
+            if (is_string($_POST['CONDITIONS']) && is_string($_POST['CONDITIONS_CHECK']) && md5(
+                    $_POST['CONDITIONS']
+                ) == $_POST['CONDITIONS_CHECK']) {
                 $CONDITIONS = base64_decode($_POST['CONDITIONS']);
                 if (CheckSerializedData($CONDITIONS)) {
-                    $CONDITIONS = unserialize($CONDITIONS);
+                    $CONDITIONS = unserialize($CONDITIONS, ['allowed_classes' => false]);
                     $boolCond = true;
                 } else {
                     $boolCondParseError = true;
@@ -136,35 +180,55 @@ if (
             }
         }
 
-        if (!$boolCond)
+        if (!$boolCond) {
             $CONDITIONS = $obCond3->Parse();
+        }
         if (empty($CONDITIONS)) {
-            if ($ex = $APPLICATION->GetException())
+            if ($ex = $APPLICATION->GetException()) {
                 $errors[] = $ex->GetString();
-            else
-                $errors[] = (0 < $discountID ? str_replace('#ID#', $discountID, GetMessage('BT_SALE_DISCOUNT_EDIT_ERR_UPDATE')) : GetMessage('BT_SALE_DISCOUNT_EDIT_ERR_ADD'));
+            } else {
+                $errors[] = (0 < $discountID ? str_replace(
+                    '#ID#',
+                    $discountID,
+                    GetMessage('BT_SALE_DISCOUNT_EDIT_ERR_UPDATE')
+                ) : GetMessage('BT_SALE_DISCOUNT_EDIT_ERR_ADD'));
+            }
             $boolCondParseError = true;
         }
     }
 
     $obAct3 = new CSaleActionTree();
 
-    $boolAct = $obAct3->Init(BT_COND_MODE_PARSE, BT_COND_BUILD_SALE_ACTIONS, array('PREFIX' => 'actrl', 'INIT_CONTROLS' => array(
-        'SITE_ID' => $_POST['LID'],
-        'CURRENCY' => CSaleLang::GetLangCurrency($_POST['LID']),
-    )));
+    $boolAct = $obAct3->Init(
+        BT_COND_MODE_PARSE,
+        BT_COND_BUILD_SALE_ACTIONS,
+        array(
+            'PREFIX' => 'actrl',
+            'INIT_CONTROLS' => array(
+                'SITE_ID' => $_POST['LID'],
+                'CURRENCY' => CSaleLang::GetLangCurrency($_POST['LID']),
+            )
+        )
+    );
     if (!$boolAct) {
-        if ($ex = $APPLICATION->GetException())
+        if ($ex = $APPLICATION->GetException()) {
             $errors[] = $ex->GetString();
-        else
-            $errors[] = (0 < $discountID ? str_replace('#ID#', $discountID, GetMessage('BT_SALE_DISCOUNT_EDIT_ERR_UPDATE')) : GetMessage('BT_SALE_DISCOUNT_EDIT_ERR_ADD'));
+        } else {
+            $errors[] = (0 < $discountID ? str_replace(
+                '#ID#',
+                $discountID,
+                GetMessage('BT_SALE_DISCOUNT_EDIT_ERR_UPDATE')
+            ) : GetMessage('BT_SALE_DISCOUNT_EDIT_ERR_ADD'));
+        }
     } else {
         $boolAct = false;
         if (array_key_exists('ACTIONS', $_POST) && array_key_exists('ACTIONS_CHECK', $_POST)) {
-            if (is_string($_POST['ACTIONS']) && is_string($_POST['ACTIONS_CHECK']) && md5($_POST['ACTIONS']) == $_POST['ACTIONS_CHECK']) {
+            if (is_string($_POST['ACTIONS']) && is_string($_POST['ACTIONS_CHECK']) && md5(
+                    $_POST['ACTIONS']
+                ) == $_POST['ACTIONS_CHECK']) {
                 $ACTIONS = base64_decode($_POST['ACTIONS']);
                 if (CheckSerializedData($ACTIONS)) {
-                    $ACTIONS = unserialize($ACTIONS);
+                    $ACTIONS = unserialize($ACTIONS, ['allowed_classes' => false]);
                     $boolAct = true;
                 } else {
                     $boolActParseError = true;
@@ -172,13 +236,19 @@ if (
             }
         }
 
-        if (!$boolAct)
+        if (!$boolAct) {
             $ACTIONS = $obAct3->Parse();
+        }
         if (empty($ACTIONS)) {
-            if ($ex = $APPLICATION->GetException())
+            if ($ex = $APPLICATION->GetException()) {
                 $errors[] = $ex->GetString();
-            else
-                $errors[] = (0 < $discountID ? str_replace('#ID#', $discountID, GetMessage('BT_SALE_DISCOUNT_EDIT_ERR_UPDATE')) : GetMessage('BT_SALE_DISCOUNT_EDIT_ERR_ADD'));
+            } else {
+                $errors[] = (0 < $discountID ? str_replace(
+                    '#ID#',
+                    $discountID,
+                    GetMessage('BT_SALE_DISCOUNT_EDIT_ERR_UPDATE')
+                ) : GetMessage('BT_SALE_DISCOUNT_EDIT_ERR_ADD'));
+            }
             $boolActParseError = true;
         }
     }
@@ -194,7 +264,13 @@ if (
     ) {
         $discountGroupList = [];
 
-        $rsDiscountGroups = CSaleDiscount::GetDiscountGroupList([], ['DISCOUNT_ID' => $discountID], false, false, ['GROUP_ID']);
+        $rsDiscountGroups = CSaleDiscount::GetDiscountGroupList(
+            [],
+            ['DISCOUNT_ID' => $discountID],
+            false,
+            false,
+            ['GROUP_ID']
+        );
         while ($arDiscountGroup = $rsDiscountGroups->Fetch()) {
             $discountGroupList[] = (int)$arDiscountGroup['GROUP_ID'];
         }
@@ -213,7 +289,10 @@ if (
         "SORT" => (array_key_exists('SORT', $_POST) ? $_POST['SORT'] : 500),
         "PRIORITY" => (array_key_exists('PRIORITY', $_POST) ? $_POST['PRIORITY'] : ''),
         "LAST_DISCOUNT" => (array_key_exists('LAST_DISCOUNT', $_POST) && 'N' == $_POST['LAST_DISCOUNT'] ? 'N' : 'Y'),
-        "LAST_LEVEL_DISCOUNT" => (array_key_exists('LAST_LEVEL_DISCOUNT', $_POST) && 'N' == $_POST['LAST_LEVEL_DISCOUNT'] ? 'N' : 'Y'),
+        "LAST_LEVEL_DISCOUNT" => (array_key_exists(
+            'LAST_LEVEL_DISCOUNT',
+            $_POST
+        ) && 'N' == $_POST['LAST_LEVEL_DISCOUNT'] ? 'N' : 'Y'),
         "XML_ID" => (array_key_exists('XML_ID', $_POST) ? $_POST['XML_ID'] : ''),
         'CONDITIONS' => $CONDITIONS,
         'ACTIONS' => $ACTIONS,
@@ -250,7 +329,10 @@ if (
             }
             $couponsResult = Sale\Internals\DiscountCouponTable::checkPacket($couponsFields, ($discountID <= 0));
             if (!$couponsResult->isSuccess(true)) {
-                $errors = (empty($errors) ? $couponsResult->getErrorMessages() : array_merge($errors, $couponsResult->getErrorMessages()));
+                $errors = (empty($errors) ? $couponsResult->getErrorMessages() : array_merge(
+                    $errors,
+                    $couponsResult->getErrorMessages()
+                ));
             }
             unset($couponsResult);
             $additionalFields['COUPON'] = $couponsFields;
@@ -263,19 +345,21 @@ if (
             $arFields['PRESET_ID'] = null;
             $arFields['PREDICTIONS'] = null;
             if (!CSaleDiscount::Update($discountID, $arFields)) {
-                if ($ex = $APPLICATION->GetException())
+                if ($ex = $APPLICATION->GetException()) {
                     $errors[] = $ex->GetString();
-                else
+                } else {
                     $errors[] = str_replace('#ID#', $discountID, GetMessage('BT_SALE_DISCOUNT_EDIT_ERR_UPDATE'));
+                }
             }
         } else {
             unset($arFields['PRESET_ID'], $arFields['PREDICTIONS'], $arFields['PREDICTIONS_APP']);
             $discountID = (int)CSaleDiscount::Add($arFields);
             if ($discountID <= 0) {
-                if ($ex = $APPLICATION->GetException())
+                if ($ex = $APPLICATION->GetException()) {
                     $errors[] = $ex->GetString();
-                else
+                } else {
                     $errors[] = GetMessage('BT_SALE_DISCOUNT_EDIT_ERR_ADD');
+                }
             } else {
                 if ($couponsAdd) {
                     $couponsFields['DISCOUNT_ID'] = $discountID;
@@ -298,7 +382,8 @@ if (
             $adminSidePanelHelper->localRedirect($listUrl);
             LocalRedirect($listUrl);
         } else {
-            $applyUrl = $selfFolderUrl . "sale_discount_edit.php?lang=" . LANGUAGE_ID . "&ID=" . $discountID . '&' . $control->ActiveTabParam();
+            $applyUrl = $selfFolderUrl . "sale_discount_edit.php?lang=" . LANGUAGE_ID . "&ID=" . $discountID . '&' . $control->ActiveTabParam(
+                );
             $applyUrl = $adminSidePanelHelper->setDefaultQueryParams($applyUrl);
             LocalRedirect($applyUrl);
         }
@@ -307,10 +392,11 @@ if (
     }
 }
 
-if ($discountID > 0 && !$copy)
+if ($discountID > 0 && !$copy) {
     $APPLICATION->SetTitle(GetMessage('BT_SALE_DISCOUNT_EDIT_MESS_UPDATE_DISCOUNT', array('#ID#' => $discountID)));
-else
+} else {
     $APPLICATION->SetTitle(GetMessage('BT_SALE_DISCOUNT_EDIT_MESS_ADD_DISCOUNT'));
+}
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
@@ -332,10 +418,12 @@ $defaultValues = array(
     'ACTIONS' => '',
     'PRESET_ID' => null,
 );
-if (isset($_REQUEST['LID']))
+if (isset($_REQUEST['LID'])) {
     $defaultValues['LID'] = trim($_REQUEST['LID']);
-if ('' == $defaultValues['LID'])
+}
+if ('' == $defaultValues['LID']) {
     $defaultValues['LID'] = 's1';
+}
 
 $defaultCoupons = array(
     'COUPON_ADD' => 'N',
@@ -359,7 +447,13 @@ if (!($arDiscount = $rsDiscounts->Fetch())) {
     $discountID = 0;
     $arDiscount = $defaultValues;
 } else {
-    $rsDiscountGroups = CSaleDiscount::GetDiscountGroupList(array(), array('DISCOUNT_ID' => $discountID), false, false, array('GROUP_ID'));
+    $rsDiscountGroups = CSaleDiscount::GetDiscountGroupList(
+        array(),
+        array('DISCOUNT_ID' => $discountID),
+        false,
+        false,
+        array('GROUP_ID')
+    );
     while ($arDiscountGroup = $rsDiscountGroups->Fetch()) {
         $arDiscountGroupList[] = (int)$arDiscountGroup['GROUP_ID'];
     }
@@ -377,18 +471,21 @@ if (!empty($errors)) {
         $mxTempo = $arDiscount['CONDITIONS'];
         $mxTempo2 = $arDiscount['ACTIONS'];
         $arDiscount = $arFields;
-        if ($boolCondParseError)
+        if ($boolCondParseError) {
             $arDiscount['CONDITIONS'] = $mxTempo;
-        if ($boolActParseError)
+        }
+        if ($boolActParseError) {
             $arDiscount['ACTIONS'] = $mxTempo2;
+        }
         unset($mxTempo);
         unset($mxTempo2);
     } else {
         $arDiscount = $arFields;
     }
     $arDiscountGroupList = $arFields['USER_GROUPS'];
-    if (isset($additionalFields))
+    if (isset($additionalFields)) {
         $coupons = array_merge($coupons, $additionalFields);
+    }
 }
 
 $contextMenuItems = array(
@@ -403,8 +500,9 @@ if ($discountID > 0 && $saleModulePermissions == 'W') {
     if (!$copy) {
         $addUrl = $selfFolderUrl . "sale_discount_edit.php?lang=" . LANGUAGE_ID;
         $addUrl = $adminSidePanelHelper->editUrlToPublicPage($addUrl);
-        if (!$adminSidePanelHelper->isPublicFrame())
+        if (!$adminSidePanelHelper->isPublicFrame()) {
             $addUrl = $adminSidePanelHelper->setDefaultQueryParams($addUrl);
+        }
         $contextMenuItems[] = array(
             "TEXT" => GetMessage("BT_SALE_DISCOUNT_EDIT_MESS_NEW_DISCOUNT"),
             "LINK" => $addUrl,
@@ -412,14 +510,16 @@ if ($discountID > 0 && $saleModulePermissions == 'W') {
         );
         $copyUrl = $selfFolderUrl . "sale_discount_edit.php?lang=" . LANGUAGE_ID . "&ID=" . $discountID . "&action=copy";
         $copyUrl = $adminSidePanelHelper->editUrlToPublicPage($copyUrl);
-        if (!$adminSidePanelHelper->isPublicFrame())
+        if (!$adminSidePanelHelper->isPublicFrame()) {
             $copyUrl = $adminSidePanelHelper->setDefaultQueryParams($copyUrl);
+        }
         $contextMenuItems[] = array(
             "TEXT" => GetMessage("BT_SALE_DISCOUNT_EDIT_MESS_COPY_DISCOUNT"),
             "LINK" => $copyUrl,
             "ICON" => "btn_copy",
         );
-        $deleteUrl = $selfFolderUrl . "sale_discount.php?action=delete&ID[]=" . $discountID . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get();
+        $deleteUrl = $selfFolderUrl . "sale_discount.php?action=delete&ID[]=" . $discountID . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get(
+            );
         $buttonAction = "LINK";
         if ($adminSidePanelHelper->isPublicFrame()) {
             $deleteUrl = $adminSidePanelHelper->editUrlToPublicPage($deleteUrl);
@@ -427,7 +527,9 @@ if ($discountID > 0 && $saleModulePermissions == 'W') {
         }
         $contextMenuItems[] = array(
             "TEXT" => GetMessage("BT_SALE_DISCOUNT_EDIT_MESS_DELETE_DISCOUNT"),
-            $buttonAction => "javascript:if(confirm('" . GetMessageJS("BT_SALE_DISCOUNT_EDIT_MESS_DELETE_DISCOUNT_CONFIRM") . "')) top.window.location.href='" . $deleteUrl . "';",
+            $buttonAction => "javascript:if(confirm('" . GetMessageJS(
+                    "BT_SALE_DISCOUNT_EDIT_MESS_DELETE_DISCOUNT_CONFIRM"
+                ) . "')) top.window.location.href='" . $deleteUrl . "';",
             "WARNING" => "Y",
             "ICON" => "btn_delete"
         );
@@ -455,26 +557,33 @@ $hintPath = '/bitrix/images/sale/discount/';
 $hintLastDiscountImageName = $hintPath . 'hint_last_discount_' . LANGUAGE_ID . '.png';
 $hintSizes = '';
 if (!$io->FileExists($_SERVER['DOCUMENT_ROOT'] . $hintLastDiscountImageName)) {
-    $hintLastDiscountImageName = $hintPath . 'hint_last_discount_' . Main\Localization\Loc::getDefaultLang(LANGUAGE_ID) . '.png';
-    if (!$io->FileExists($_SERVER['DOCUMENT_ROOT'] . $hintLastDiscountImageName))
+    $hintLastDiscountImageName = $hintPath . 'hint_last_discount_' . Main\Localization\Loc::getDefaultLang(
+            LANGUAGE_ID
+        ) . '.png';
+    if (!$io->FileExists($_SERVER['DOCUMENT_ROOT'] . $hintLastDiscountImageName)) {
         $hintLastDiscountImageName = '';
+    }
 }
 if ($hintLastDiscountImageName !== '') {
     $imgSizes = getimagesize($io->GetPhysicalName($_SERVER['DOCUMENT_ROOT'] . $hintLastDiscountImageName));
-    if (!empty($imgSizes))
+    if (!empty($imgSizes)) {
         $hintSizes = $imgSizes[3];
+    }
     unset($imgSizes);
 }
 
 $arSiteList = array();
-$siteIterator = Main\SiteTable::getList(array(
-    'select' => array('LID', 'NAME', 'SORT'),
-    'order' => array('SORT' => 'ASC')
-));
+$siteIterator = Main\SiteTable::getList(
+    array(
+        'select' => array('LID', 'NAME', 'SORT'),
+        'order' => array('SORT' => 'ASC')
+    )
+);
 while ($site = $siteIterator->fetch()) {
     $saleSite = (string)Main\Config\Option::get('sale', 'SHOP_SITE_' . $site['LID']);
-    if ($site['LID'] == $saleSite || $site['LID'] == $arDiscount['LID'])
+    if ($site['LID'] == $saleSite || $site['LID'] == $arDiscount['LID']) {
         $arSiteList[$site['LID']] = '(' . $site['LID'] . ') ' . $site['NAME'];
+    }
 }
 unset($site, $siteIterator);
 
@@ -497,19 +606,27 @@ $formActionUrl = $selfFolderUrl . 'sale_discount_edit.php?lang=' . LANGUAGE_ID;
 $formActionUrl = $adminSidePanelHelper->setDefaultQueryParams($formActionUrl);
 $control->Begin(array("FORM_ACTION" => $formActionUrl));
 $control->BeginNextFormTab();
-if ($discountID > 0 && !$copy)
+if ($discountID > 0 && !$copy) {
     $control->AddViewField('ID', 'ID:', $discountID, false);
+}
 $control->AddCheckBoxField("ACTIVE", GetMessage("SDEN_ACTIVE") . ":", false, "Y", $arDiscount['ACTIVE'] == "Y");
 $control->AddDropDownField("LID", GetMessage('SDEN_SITE') . ':', true, $arSiteList, $arDiscount['LID']);
-$control->AddEditField("NAME", GetMessage("BT_SALE_DISCOUNT_EDIT_FIELDS_NAME") . ":", false, array("size" => 50, "maxlength" => 255), htmlspecialcharsbx($arDiscount['NAME']));
+$control->AddEditField(
+    "NAME",
+    GetMessage("BT_SALE_DISCOUNT_EDIT_FIELDS_NAME") . ":",
+    false,
+    array("size" => 50, "maxlength" => 255),
+    htmlspecialcharsbx($arDiscount['NAME'])
+);
 $control->BeginCustomField("PERIOD", GetMessage('SDEN_PERIOD') . ":", false);
 ?>
     <tr id="tr_PERIOD">
         <td width="40%"><? echo $control->GetCustomLabelHTML(); ?></td>
         <td width="60%"><?
             $periodValue = '';
-            if ('' != $arDiscount['ACTIVE_FROM'] || '' != $arDiscount['ACTIVE_TO'])
+            if ('' != $arDiscount['ACTIVE_FROM'] || '' != $arDiscount['ACTIVE_TO']) {
                 $periodValue = CAdminCalendar::PERIOD_INTERVAL;
+            }
 
             echo CAdminCalendar::CalendarPeriodCustom(
                 'ACTIVE_FROM',
@@ -527,7 +644,8 @@ $control->BeginCustomField("PERIOD", GetMessage('SDEN_PERIOD') . ":", false);
             );
             ?></td>
     </tr><?
-$control->EndCustomField("PERIOD",
+$control->EndCustomField(
+    "PERIOD",
     '<input type="hidden" name="ACTIVE_FROM" value="' . htmlspecialcharsbx($arDiscount['ACTIVE_FROM']) . '">' .
     '<input type="hidden" name="ACTIVE_TO" value="' . htmlspecialcharsbx($arDiscount['ACTIVE_FROM']) . '">'
 );
@@ -542,7 +660,8 @@ $control->BeginCustomField('PRIORITY', GetMessage("BT_SALE_DISCOUNT_EDIT_FIELDS_
                    value="<? echo intval($arDiscount['PRIORITY']); ?>">
         </td>
     </tr><?
-$control->EndCustomField("PRIORITY",
+$control->EndCustomField(
+    "PRIORITY",
     '<input type="hidden" name="PRIORITY" value="' . intval($arDiscount['PRIORITY']) . '">'
 );
 $control->BeginCustomField('SORT', GetMessage("BT_SALE_DISCOUNT_EDIT_FIELDS_SORT_2") . ':', false);
@@ -554,10 +673,15 @@ $control->BeginCustomField('SORT', GetMessage("BT_SALE_DISCOUNT_EDIT_FIELDS_SORT
             <input type="text" name="SORT" size="20" maxlength="20" value="<? echo intval($arDiscount['SORT']); ?>">
         </td>
     </tr><?
-$control->EndCustomField("SORT",
+$control->EndCustomField(
+    "SORT",
     '<input type="hidden" name="SORT" value="' . intval($arDiscount['SORT']) . '">'
 );
-$control->BeginCustomField("LAST_LEVEL_DISCOUNT", GetMessage('BT_SALE_DISCOUNT_EDIT_FIELDS_LAST_LEVEL_DISCOUNT') . ":", false);
+$control->BeginCustomField(
+    "LAST_LEVEL_DISCOUNT",
+    GetMessage('BT_SALE_DISCOUNT_EDIT_FIELDS_LAST_LEVEL_DISCOUNT') . ":",
+    false
+);
 ?>
     <tr id="tr_LAST_LEVEL_DISCOUNT">
         <td width="40%"><span id="tr_HELP_notice3"></span>&nbsp;<? echo $control->GetCustomLabelHTML(); ?>
@@ -568,8 +692,11 @@ $control->BeginCustomField("LAST_LEVEL_DISCOUNT", GetMessage('BT_SALE_DISCOUNT_E
                    name="LAST_LEVEL_DISCOUNT" <? echo('Y' == $arDiscount['LAST_LEVEL_DISCOUNT'] ? 'checked' : ''); ?>>
         </td>
     </tr><?
-$control->EndCustomField("LAST_LEVEL_DISCOUNT",
-    '<input type="hidden" name="LAST_LEVEL_DISCOUNT" value="' . htmlspecialcharsbx($arDiscount['LAST_LEVEL_DISCOUNT']) . '">'
+$control->EndCustomField(
+    "LAST_LEVEL_DISCOUNT",
+    '<input type="hidden" name="LAST_LEVEL_DISCOUNT" value="' . htmlspecialcharsbx(
+        $arDiscount['LAST_LEVEL_DISCOUNT']
+    ) . '">'
 );
 $control->BeginCustomField("LAST_DISCOUNT", GetMessage('BT_SALE_DISCOUNT_EDIT_FIELDS_LAST_DISCOUNT') . ":", false);
 ?>
@@ -582,7 +709,8 @@ $control->BeginCustomField("LAST_DISCOUNT", GetMessage('BT_SALE_DISCOUNT_EDIT_FI
                    name="LAST_DISCOUNT" <? echo('Y' == $arDiscount['LAST_DISCOUNT'] ? 'checked' : ''); ?>>
         </td>
     </tr><?
-$control->EndCustomField("LAST_DISCOUNT",
+$control->EndCustomField(
+    "LAST_DISCOUNT",
     '<input type="hidden" name="LAST_DISCOUNT" value="' . htmlspecialcharsbx($arDiscount['LAST_DISCOUNT']) . '">'
 );
 $control->BeginNextFormTab();
@@ -593,10 +721,11 @@ $control->BeginCustomField("ACTIONS", GetMessage('BT_SALE_DISCOUNT_EDIT_FIELDS_A
         <td valign="top" colspan="2">
             <div id="tree_actions" style="position: relative; z-index: 1;"></div><?
             if (!is_array($arDiscount['ACTIONS'])) {
-                if (CheckSerializedData($arDiscount['ACTIONS']))
-                    $arDiscount['ACTIONS'] = unserialize($arDiscount['ACTIONS']);
-                else
+                if (CheckSerializedData($arDiscount['ACTIONS'])) {
+                    $arDiscount['ACTIONS'] = unserialize($arDiscount['ACTIONS'], ['allowed_classes' => false]);
+                } else {
                     $arDiscount['ACTIONS'] = '';
+                }
             }
             $arCondParams = array(
                 'FORM_NAME' => 'sale_discount_form',
@@ -611,8 +740,9 @@ $control->BeginCustomField("ACTIONS", GetMessage('BT_SALE_DISCOUNT_EDIT_FIELDS_A
             $obAct = new CSaleActionTree();
             $boolAct = $obAct->Init(BT_COND_MODE_DEFAULT, BT_COND_BUILD_SALE_ACTIONS, $arCondParams);
             if (!$boolAct) {
-                if ($ex = $APPLICATION->GetException())
+                if ($ex = $APPLICATION->GetException()) {
                     echo $ex->GetString() . "<br>";
+                }
             } else {
                 $obAct->Show($arDiscount['ACTIONS']);
             }
@@ -620,7 +750,8 @@ $control->BeginCustomField("ACTIONS", GetMessage('BT_SALE_DISCOUNT_EDIT_FIELDS_A
     </tr><?
 $strApp = base64_encode(serialize($arDiscount['ACTIONS']));
 
-$control->EndCustomField('ACTIONS',
+$control->EndCustomField(
+    'ACTIONS',
     '<input type="hidden" name="ACTIONS" value="' . htmlspecialcharsbx($strApp) . '">' .
     '<input type="hidden" name="ACTIONS_CHECK" value="' . htmlspecialcharsbx(md5($strApp)) . '">'
 );
@@ -631,10 +762,11 @@ $control->BeginCustomField("CONDITIONS", GetMessage('BT_SALE_DISCOUNT_EDIT_FIELD
         <td valign="top" colspan="2">
             <div id="tree" style="position: relative; z-index: 1;"></div><?
             if (!is_array($arDiscount['CONDITIONS'])) {
-                if (CheckSerializedData($arDiscount['CONDITIONS']))
-                    $arDiscount['CONDITIONS'] = unserialize($arDiscount['CONDITIONS']);
-                else
+                if (CheckSerializedData($arDiscount['CONDITIONS'])) {
+                    $arDiscount['CONDITIONS'] = unserialize($arDiscount['CONDITIONS'], ['allowed_classes' => false]);
+                } else {
                     $arDiscount['CONDITIONS'] = '';
+                }
             }
             $arCondParams = array(
                 'FORM_NAME' => 'sale_discount_form',
@@ -648,15 +780,17 @@ $control->BeginCustomField("CONDITIONS", GetMessage('BT_SALE_DISCOUNT_EDIT_FIELD
             $obCond = new CSaleCondTree();
             $boolCond = $obCond->Init(BT_COND_MODE_DEFAULT, BT_COND_BUILD_SALE, $arCondParams);
             if (!$boolCond) {
-                if ($ex = $APPLICATION->GetException())
+                if ($ex = $APPLICATION->GetException()) {
                     echo $ex->GetString() . "<br>";
+                }
             } else {
                 $obCond->Show($arDiscount['CONDITIONS']);
             }
             ?></td>
     </tr><?
 $strCond = base64_encode(serialize($arDiscount['CONDITIONS']));
-$control->EndCustomField('CONDITIONS',
+$control->EndCustomField(
+    'CONDITIONS',
     '<input type="hidden" name="CONDITIONS" value="' . htmlspecialcharsbx($strCond) . '">' .
     '<input type="hidden" name="CONDITIONS_CHECK" value="' . htmlspecialcharsbx(md5($strCond)) . '">'
 );
@@ -686,15 +820,18 @@ $control->BeginCustomField('USER_GROUPS', GetMessage('BT_SALE_DISCOUNT_EDIT_FIEL
 if ($discountID > 0 && !empty($arDiscountGroupList)) {
     $arHidden = array();
     foreach ($arDiscountGroupList as &$value) {
-        if (0 < intval($value))
+        if (0 < intval($value)) {
             $arHidden[] = '<input type="hidden" name="USER_GROUPS[]" value="' . intval($value) . '">';
+        }
     }
-    if (isset($value))
+    if (isset($value)) {
         unset($value);
+    }
     $strHidden = implode('', $arHidden);
 }
-if ($strHidden == '')
+if ($strHidden == '') {
     $strHidden = '<input type="hidden" name="USER_GROUPS[]" value="">';
+}
 $control->EndCustomField('USER_GROUPS', $strHidden);
 $control->BeginNextFormTab();
 $control->BeginCustomField('COUPONS', GetMessage('BX_SALE_DISCOUNT_EDIT_FIELDS_COUPONS'), false);
@@ -727,16 +864,23 @@ if ($discountID > 0 && !$copy) {
         <td width="40%"><? echo GetMessage('BX_SALE_DISCOUNT_EDIT_FIELDS_COUPON_PERIOD'); ?></td>
         <td width="60%"><?
             $periodValue = '';
-            $activeFrom = ($coupons['COUPON']['ACTIVE_FROM'] instanceof Main\Type\DateTime ? $coupons['COUPON']['ACTIVE_FROM']->toString() : '');
-            $activeTo = ($coupons['COUPON']['ACTIVE_TO'] instanceof Main\Type\DateTime ? $coupons['COUPON']['ACTIVE_TO']->toString() : '');
-            if ($activeFrom != '' || $activeTo != '')
+            $activeFrom = ($coupons['COUPON']['ACTIVE_FROM'] instanceof Main\Type\DateTime ? $coupons['COUPON']['ACTIVE_FROM']->toString(
+            ) : '');
+            $activeTo = ($coupons['COUPON']['ACTIVE_TO'] instanceof Main\Type\DateTime ? $coupons['COUPON']['ACTIVE_TO']->toString(
+            ) : '');
+            if ($activeFrom != '' || $activeTo != '') {
                 $periodValue = CAdminCalendar::PERIOD_INTERVAL;
+            }
 
             $calendar = new CAdminCalendar;
             echo $calendar->CalendarPeriodCustom(
-                'COUPON[ACTIVE_FROM]', 'COUPON[ACTIVE_TO]',
-                $activeFrom, $activeTo,
-                true, 19, true,
+                'COUPON[ACTIVE_FROM]',
+                'COUPON[ACTIVE_TO]',
+                $activeFrom,
+                $activeTo,
+                true,
+                19,
+                true,
                 array(
                     CAdminCalendar::PERIOD_EMPTY => GetMessage('BX_SALE_DISCOUNT_COUPON_PERIOD_EMPTY'),
                     CAdminCalendar::PERIOD_INTERVAL => GetMessage('BX_SALE_DISCOUNT_COUPON_PERIOD_INTERVAL')
@@ -754,7 +898,9 @@ if ($discountID > 0 && !$copy) {
                 foreach ($couponTypes as $type => $title) {
                     ?>
                     <option
-                    value="<? echo $type; ?>" <? echo($type == $coupons['COUPON']['TYPE'] ? 'selected' : ''); ?>><? echo htmlspecialcharsEx($title); ?></option><?
+                    value="<? echo $type; ?>" <? echo($type == $coupons['COUPON']['TYPE'] ? 'selected' : ''); ?>><? echo htmlspecialcharsEx(
+                        $title
+                    ); ?></option><?
                 }
                 ?></select>
         </td>
@@ -767,7 +913,13 @@ if ($discountID > 0 && !$copy) {
 }
 $control->EndCustomField('COUPONS');
 $control->BeginNextFormTab();
-$control->AddEditField("XML_ID", GetMessage("BT_SALE_DISCOUNT_EDIT_FIELDS_XML_ID") . ":", false, array("size" => 50, "maxlength" => 255), htmlspecialcharsbx($arDiscount['XML_ID']));
+$control->AddEditField(
+    "XML_ID",
+    GetMessage("BT_SALE_DISCOUNT_EDIT_FIELDS_XML_ID") . ":",
+    false,
+    array("size" => 50, "maxlength" => 255),
+    htmlspecialcharsbx($arDiscount['XML_ID'])
+);
 
 $control->Buttons(array("disabled" => ($saleModulePermissions < "W"), "back_url" => $listUrl));
 $control->Show();

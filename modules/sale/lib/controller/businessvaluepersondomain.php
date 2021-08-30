@@ -16,9 +16,11 @@ class BusinessValuePersonDomain extends Controller
     public function getFieldsAction()
     {
         $entity = new \Bitrix\Sale\Rest\Entity\BusinessValuePersonDomain();
-        return ['BUSINESS_VALUE_PERSON_DOMAIN' => $entity->prepareFieldInfos(
-            $entity->getFields()
-        )];
+        return [
+            'BUSINESS_VALUE_PERSON_DOMAIN' => $entity->prepareFieldInfos(
+                $entity->getFields()
+            )
+        ];
     }
 
     public function listAction($select = [], $filter = [], $order = [], PageNavigation $pageNavigation)
@@ -36,11 +38,13 @@ class BusinessValuePersonDomain extends Controller
             ]
         )->fetchAll();
 
-        return new Page('BUSINESS_VALUE_PERSON_DOMAINS', $items, function () use ($filter) {
+        return new Page(
+            'BUSINESS_VALUE_PERSON_DOMAINS', $items, function () use ($filter) {
             return count(
                 BusinessValuePersonDomainTable::getList(['filter' => $filter])->fetchAll()
             );
-        });
+        }
+        );
     }
 
     public function addAction(array $fields)
@@ -57,10 +61,12 @@ class BusinessValuePersonDomain extends Controller
             if ($r->isSuccess()) {
                 $result->addError(new Error('Duplicate entry for key [personTypeId]', 201450000001));
             } else {
-                BusinessValuePersonDomainTable::add(array(
-                    'PERSON_TYPE_ID' => $personTypeId,
-                    'DOMAIN' => $domain,
-                ));
+                BusinessValuePersonDomainTable::add(
+                    array(
+                        'PERSON_TYPE_ID' => $personTypeId,
+                        'DOMAIN' => $domain,
+                    )
+                );
             }
         } else {
             $result->addErrors($r->getErrors());
@@ -68,10 +74,14 @@ class BusinessValuePersonDomain extends Controller
 
         if ($result->isSuccess()) {
             return [
-                'BUSINESS_VALUE_PERSON_DOMAIN' => BusinessValuePersonDomainTable::getList(['filter' => [
-                    'PERSON_TYPE_ID' => $personTypeId,
-                    'DOMAIN' => $domain
-                ]])->fetchAll()[0]
+                'BUSINESS_VALUE_PERSON_DOMAIN' => BusinessValuePersonDomainTable::getList(
+                    [
+                        'filter' => [
+                            'PERSON_TYPE_ID' => $personTypeId,
+                            'DOMAIN' => $domain
+                        ]
+                    ]
+                )->fetchAll()[0]
             ];
         } else {
             $this->addErrors($result->getErrors());
@@ -96,9 +106,11 @@ class BusinessValuePersonDomain extends Controller
     {
         $r = $this->exists($personTypeId);
         if ($r->isSuccess()) {
-            \Bitrix\Sale\Internals\BusinessValuePersonDomainTable::delete([
-                'PERSON_TYPE_ID' => $personTypeId
-            ]);
+            \Bitrix\Sale\Internals\BusinessValuePersonDomainTable::delete(
+                [
+                    'PERSON_TYPE_ID' => $personTypeId
+                ]
+            );
         }
 
         if ($r->isSuccess()) {
@@ -114,12 +126,16 @@ class BusinessValuePersonDomain extends Controller
         $r = $this->checkFields($fields);
 
         if ($r->isSuccess()) {
-            $r = $this->existsByFilter([
-                'PERSON_TYPE_ID' => $fields['PERSON_TYPE_ID'],
-                'DOMAIN' => $fields['DOMAIN']
-            ]);
+            $r = $this->existsByFilter(
+                [
+                    'PERSON_TYPE_ID' => $fields['PERSON_TYPE_ID'],
+                    'DOMAIN' => $fields['DOMAIN']
+                ]
+            );
             if ($r->isSuccess()) {
-                $r = BusinessValuePersonDomainTable::delete(['PERSON_TYPE_ID' => $fields['PERSON_TYPE_ID'], 'DOMAIN' => $fields['DOMAIN']]);
+                $r = BusinessValuePersonDomainTable::delete(
+                    ['PERSON_TYPE_ID' => $fields['PERSON_TYPE_ID'], 'DOMAIN' => $fields['DOMAIN']]
+                );
             }
         }
 
@@ -142,8 +158,9 @@ class BusinessValuePersonDomain extends Controller
     protected function personTypeExists($id)
     {
         $r = new Result();
-        if ($this->getPersonType($id)['ID'] <= 0)
+        if ($this->getPersonType($id)['ID'] <= 0) {
             $r->addError(new Error('person type is not exists', 201440400002));
+        }
 
         return $r;
     }
@@ -157,8 +174,9 @@ class BusinessValuePersonDomain extends Controller
     protected function exists($personTypeId)
     {
         $r = new Result();
-        if ($this->get($personTypeId)['PERSON_TYPE_ID'] <= 0)
+        if ($this->get($personTypeId)['PERSON_TYPE_ID'] <= 0) {
             $r->addError(new Error('business value person domain is not exists', 201440400001));
+        }
 
         return $r;
     }
@@ -167,9 +185,12 @@ class BusinessValuePersonDomain extends Controller
     {
         $r = new Result();
 
-        $row = BusinessValuePersonDomainTable::getList(['filter' => ['PERSON_TYPE_ID' => $filter['PERSON_TYPE_ID'], 'DOMAIN' => $filter['DOMAIN']]])->fetchAll();
-        if (isset($row[0]['PERSON_TYPE_ID']) == false)
+        $row = BusinessValuePersonDomainTable::getList(
+            ['filter' => ['PERSON_TYPE_ID' => $filter['PERSON_TYPE_ID'], 'DOMAIN' => $filter['DOMAIN']]]
+        )->fetchAll();
+        if (isset($row[0]['PERSON_TYPE_ID']) == false) {
             $r->addError(new Error('business value person domain is not exists', 201440400003));
+        }
 
         return $r;
     }
@@ -178,11 +199,13 @@ class BusinessValuePersonDomain extends Controller
     {
         $r = new Result();
 
-        if (isset($fields['PERSON_TYPE_ID']) == false && $fields['PERSON_TYPE_ID'] <> '')
+        if (isset($fields['PERSON_TYPE_ID']) == false && $fields['PERSON_TYPE_ID'] <> '') {
             $r->addError(new Error('personTypeId - parametrs is empty', 201450000002));
+        }
 
-        if (isset($fields['DOMAIN']) == false && $fields['DOMAIN'] <> '')
+        if (isset($fields['DOMAIN']) == false && $fields['DOMAIN'] <> '') {
             $r->addError(new Error('domian - parametrs is empty', 201450000003));
+        }
 
         return $r;
     }

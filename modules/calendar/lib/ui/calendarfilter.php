@@ -37,8 +37,9 @@ class CalendarFilter
     {
         if (!static::$filterId) {
             static::$filterId = 'calendar-filter';
-            if ($type == 'user' && $ownerId == $userId)
+            if ($type == 'user' && $ownerId == $userId) {
                 static::$filterId = 'calendar-filter-personal';
+            }
         }
 
         return static::$filterId;
@@ -111,8 +112,8 @@ class CalendarFilter
             } elseif ($key == 'ATTENDEES' || $key == 'CREATED_BY') {
                 $userList = array();
                 foreach ($value as $code) {
-                    if (substr($code, 0, 1) == 'U') {
-                        $userList[] = intVal(substr($code, 1));
+                    if (mb_substr($code, 0, 1) == 'U') {
+                        $userList[] = intval(mb_substr($code, 1));
                     }
                 }
                 $result['fields'][$key] = $userList;

@@ -76,10 +76,11 @@ class RestClient
             return $result;
         }
 
-        if (!is_array($additionalParams))
+        if (!is_array($additionalParams)) {
             $additionalParams = array();
-        else
+        } else {
             $additionalParams = Encoding::convertEncodingArray($additionalParams, LANG_CHARSET, "utf-8");
+        }
 
         $additionalParams['version'] = $this->version;
         $additionalParams['client_id'] = $this->accessSettings['client_id'];
@@ -104,36 +105,49 @@ class RestClient
         }
 
         if (!is_array($answer)) {
-            $result->addError(new Error(Loc::getMessage('SALE_SRV_BASE_REST_ANSWER_ERROR') . ' ' . $this->getServiceHost() . '. (Status: "' . $http->getStatus() . '", Result: "' . $postResult . '")', static::ERROR_SERVICE_UNAVAILABLE));
+            $result->addError(
+                new Error(
+                    Loc::getMessage('SALE_SRV_BASE_REST_ANSWER_ERROR') . ' ' . $this->getServiceHost(
+                    ) . '. (Status: "' . $http->getStatus() . '", Result: "' . $postResult . '")',
+                    static::ERROR_SERVICE_UNAVAILABLE
+                )
+            );
             $this->setLastUnSuccessCallInfo();
             return $result;
         }
 
-        if (self::getLastUnSuccessCount() > 0)
+        if (self::getLastUnSuccessCount() > 0) {
             $this->setLastUnSuccessCallInfo(true);
+        }
 
         if (array_key_exists('error', $answer)) {
             if ($answer['error'] === 'verification_needed') {
                 if ($licenseCheck) {
-                    $result->addError(new Error($answer['error'] . ". " . $answer['error_description'], self::ERROR_WRONG_LICENSE));
+                    $result->addError(
+                        new Error($answer['error'] . ". " . $answer['error_description'], self::ERROR_WRONG_LICENSE)
+                    );
                     return $result;
                 } else {
                     return $this->call($methodName, $additionalParams, true);
                 }
-            } else if (($answer['error'] === 'ACCESS_DENIED' || $answer['error'] === 'Invalid client' || $answer['error'] === 'NO_AUTH_FOUND')
-                && !$clearAccessSettings) {
-                return $this->call($methodName, $additionalParams, true, true);
+            } else {
+                if (($answer['error'] === 'ACCESS_DENIED' || $answer['error'] === 'Invalid client' || $answer['error'] === 'NO_AUTH_FOUND')
+                    && !$clearAccessSettings) {
+                    return $this->call($methodName, $additionalParams, true, true);
+                }
             }
 
             $result->addError(new Error($answer['error'] . ". " . $answer['error_description']));
             return $result;
         }
 
-        if ($answer['result'] == false)
+        if ($answer['result'] == false) {
             $result->addError(new Error('Nothing found', static::ERROR_NOTHING_FOUND));
+        }
 
-        if (is_array($answer['result']))
+        if (is_array($answer['result'])) {
             $result->addData($answer['result']);
+        }
 
         return $result;
     }
@@ -144,10 +158,11 @@ class RestClient
      */
     public function getServiceHost()
     {
-        if (!defined('SALE_SRVS_RESTCLIENT_SRV_HOST'))
+        if (!defined('SALE_SRVS_RESTCLIENT_SRV_HOST')) {
             $result = $this->serviceHost;
-        else
+        } else {
             $result = SALE_SRVS_RESTCLIENT_SRV_HOST;
+        }
 
         return $result;
     }
@@ -187,15 +202,16 @@ class RestClient
 
         try {
             $jsonResult = Json::decode($postResult);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $result->addError(new Error($e->getMessage()));
             return $result;
         }
 
-        if ($jsonResult["error"])
+        if ($jsonResult["error"]) {
             $result->addError(new Error($jsonResult["error"], static::ERROR_WRONG_LICENSE));
-        else
+        } else {
             $result->addData($jsonResult);
+        }
 
         return $result;
     }
@@ -234,12 +250,13 @@ class RestClient
         $accessSettings = Option::get('sale', static::SERVICE_ACCESS_OPTION);
 
         if ($accessSettings != '') {
-            $accessSettings = unserialize($accessSettings);
+            $accessSettings = unserialize($accessSettings, ['allowed_classes' => false]);
 
-            if ($accessSettings)
+            if ($accessSettings) {
                 return $accessSettings;
-            else
+            } else {
                 $this->clearAccessSettings();
+            }
         }
 
         /** @var Result $result */
@@ -295,8 +312,9 @@ class RestClient
     {
         $result = Option::get('sale', static::UNSUCCESSFUL_CALL_OPTION, "");
 
-        if (strlen($result) > 0)
-            $result = unserialize($result);
+        if ($result <> '') {
+            $result = unserialize($result, ['allowed_classes' => false]);
+        }
 
         return is_array($result) ? $result : array();
     }
@@ -308,8 +326,9 @@ class RestClient
     {
         static $alreadySetted = false;
 
-        if ($alreadySetted && !$reset)
+        if ($alreadySetted && !$reset) {
             return;
+        }
 
         $data = "";
 
@@ -317,10 +336,12 @@ class RestClient
             $alreadySetted = true;
             $last = static::getLastUnSuccessCallInfo();
 
-            $data = serialize(array(
-                'COUNT' => intval($last['COUNT']) > 0 ? intval($last['COUNT']) + 1 : 1,
-                'TIMESTAMP' => time()
-            ));
+            $data = serialize(
+                array(
+                    'COUNT' => intval($last['COUNT']) > 0 ? intval($last['COUNT']) + 1 : 1,
+                    'TIMESTAMP' => time()
+                )
+            );
         }
 
         Option::set('sale', static::UNSUCCESSFUL_CALL_OPTION, $data);
@@ -335,14 +356,17 @@ class RestClient
     {
         $last = static::getLastUnSuccessCallInfo();
 
-        if (empty($last))
+        if (empty($last)) {
             return true;
+        }
 
-        if (time() - intval($last['TIMESTAMP']) >= self::UNSUCCESSFUL_CALL_WAIT_INTERVAL)
+        if (time() - intval($last['TIMESTAMP']) >= self::UNSUCCESSFUL_CALL_WAIT_INTERVAL) {
             return true;
+        }
 
-        if (intval($last['COUNT']) <= self::UNSUCCESSFUL_CALL_TRYINGS)
+        if (intval($last['COUNT']) <= self::UNSUCCESSFUL_CALL_TRYINGS) {
             return true;
+        }
 
         return false;
     }

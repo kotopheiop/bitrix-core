@@ -19,8 +19,9 @@ class OrderDiscount extends OrderDiscountBase
     public static function deleteByOrder($order)
     {
         $order = (int)$order;
-        if ($order <= 0)
+        if ($order <= 0) {
             return;
+        }
         Internals\OrderRulesTable::clearByOrder($order);
         Internals\OrderDiscountDataTable::clearByOrder($order);
         Internals\OrderRoundTable::clearByOrder($order);
@@ -45,8 +46,9 @@ class OrderDiscount extends OrderDiscountBase
      */
     protected static function validateCoupon(array $fields)
     {
-        if ($fields['TYPE'] == Internals\DiscountCouponTable::TYPE_ARCHIVED)
-            return new Result();;
+        if ($fields['TYPE'] == Internals\DiscountCouponTable::TYPE_ARCHIVED) {
+            return new Result();
+        };
 
         return parent::validateCoupon($fields);
     }
@@ -265,10 +267,12 @@ class OrderDiscount extends OrderDiscountBase
      */
     protected static function getResultIterator(array $parameters)
     {
-        if (!isset($parameters['select']))
+        if (!isset($parameters['select'])) {
             $parameters['select'] = ['*', 'RULE_DESCR' => 'DESCR.DESCR', 'RULE_DESCR_ID' => 'DESCR.ID'];
-        if (!isset($parameters['order']))
+        }
+        if (!isset($parameters['order'])) {
             $parameters['order'] = ['ID' => 'ASC'];
+        }
         return Internals\OrderRulesTable::getList($parameters);
     }
 
@@ -429,8 +433,9 @@ class OrderDiscount extends OrderDiscountBase
      */
     protected static function getRoundResultIterator(array $parameters)
     {
-        if (empty($parameters['select']))
+        if (empty($parameters['select'])) {
             $parameters['select'] = ['*'];
+        }
         return Internals\OrderRoundTable::getList($parameters);
     }
 

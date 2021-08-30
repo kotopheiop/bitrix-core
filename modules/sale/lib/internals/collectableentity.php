@@ -92,8 +92,9 @@ abstract class CollectableEntity
     public function isStartField($isMeaningfulField = false)
     {
         $parent = $this->getCollection();
-        if ($parent == null)
+        if ($parent == null) {
             return false;
+        }
 
         return $parent->isStartField($isMeaningfulField);
     }
@@ -104,8 +105,9 @@ abstract class CollectableEntity
     public function clearStartField()
     {
         $parent = $this->getCollection();
-        if ($parent == null)
+        if ($parent == null) {
             return false;
+        }
 
         return $parent->clearStartField();
     }
@@ -116,8 +118,9 @@ abstract class CollectableEntity
     public function hasMeaningfulField()
     {
         $parent = $this->getCollection();
-        if ($parent == null)
+        if ($parent == null) {
             return false;
+        }
 
         return $parent->hasMeaningfulField();
     }
@@ -152,8 +155,9 @@ abstract class CollectableEntity
     public function isMathActionOnly()
     {
         $parent = $this->getCollection();
-        if ($parent == null)
+        if ($parent == null) {
             return false;
+        }
 
         return $parent->isMathActionOnly();
     }

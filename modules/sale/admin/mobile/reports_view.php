@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . '/bitrix/modules/mobileapp/include/prolog_admin_mobile_before.php');
 require_once($_SERVER["DOCUMENT_ROOT"] . '/bitrix/modules/mobileapp/include/prolog_admin_mobile_after.php');
 
@@ -7,17 +8,17 @@ $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
 if ($saleModulePermissions <= "D") {
     echo GetMessage("ACCESS_DENIED");
 } else {
-
     IncludeModuleLangFile(__FILE__);
 
     // <editor-fold desc="--------- Server processing ---------">
     require($_SERVER["DOCUMENT_ROOT"] . '/bitrix/modules/sale/admin/report_view_prepdata.php');
     // </editor-fold>
 
-    if (isset($_REQUEST["rep_templ"]))
+    if (isset($_REQUEST["rep_templ"])) {
         $reportTemplate = $_REQUEST["rep_templ"];
-    else
+    } else {
         $reportTemplate = "admin_mobile_encl";
+    }
 
     $APPLICATION->IncludeComponent(
         'bitrix:report.view',

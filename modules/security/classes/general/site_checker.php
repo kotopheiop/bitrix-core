@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 class CSecuritySiteChecker
@@ -47,19 +48,23 @@ class CSecuritySiteChecker
     public function startTesting($pParams = array())
     {
         $testName = $this->getCurrentTestName();
-        if (!$testName)
+        if (!$testName) {
             return false;
-        if (!is_callable($testName, "check"))
+        }
+        if (!is_callable($testName, "check")) {
             return false;
+        }
 
         $test = new $testName;
-        if (!($test instanceof CSecurityBaseTest))
+        if (!($test instanceof CSecurityBaseTest)) {
             return false;
+        }
 
         try {
             $testParams = $this->makeParamsForTest($testName, $pParams);
-            if ($this->isCheckRequirementsNeeded)
+            if ($this->isCheckRequirementsNeeded) {
                 $test->checkRequirements($testParams);
+            }
 
             $result = $test->check($testParams);
         } catch (CSecurityRequirementsException $exception) {
@@ -73,8 +78,9 @@ class CSecuritySiteChecker
         if ($result) {
             if (!isset($result["in_progress"]) || !$result["in_progress"]) {
                 $this->finalizeLastTest();
-                if (isset($result["timeout"]))
+                if (isset($result["timeout"])) {
                     $result["timeout"] = 0;
+                }
             }
         }
         return $result;
@@ -128,7 +134,10 @@ class CSecuritySiteChecker
         /** @global CDataBase $DB */
         global $DB;
 
-        $sqlQuery = "SELECT RESULTS, " . $DB->DateToCharFunction("TEST_DATE", "SHORT") . " TEST_DATE FROM " . self::$tableName;
+        $sqlQuery = "SELECT RESULTS, " . $DB->DateToCharFunction(
+                "TEST_DATE",
+                "SHORT"
+            ) . " TEST_DATE FROM " . self::$tableName;
         if (is_array($pFilter) && !empty($pFilter)) {
             $sqlWhereQuery = array();
             foreach ($pFilter as $key => $value) {
@@ -155,8 +164,9 @@ class CSecuritySiteChecker
      */
     public static function addResults($pResults)
     {
-        if (!isset($pResults) || !is_array($pResults))
+        if (!isset($pResults) || !is_array($pResults)) {
             return false;
+        }
 
         /** @global CDataBase $DB */
         global $DB;
@@ -193,7 +203,7 @@ class CSecuritySiteChecker
                 $result = $dbResults->fetch();
                 if ($result && isset($result["RESULTS"])) {
                     if (checkSerializedData($result["RESULTS"])) {
-                        $lastResult["results"] = unserialize($result["RESULTS"]);
+                        $lastResult["results"] = unserialize($result["RESULTS"], ['allowed_classes' => false]);
                     }
                 }
                 if ($result && isset($result["TEST_DATE"])) {
@@ -279,7 +289,6 @@ class CSecuritySiteChecker
      */
     public function isAnyCheckingExists()
     {
-
     }
 
     /**
@@ -324,8 +333,9 @@ class CSecuritySiteChecker
 
         $criticalResultsCount = 0;
         foreach ($results as $result) {
-            if (isset($result["critical"]) && $result["critical"] === CSecurityCriticalLevel::HIGHT)
+            if (isset($result["critical"]) && $result["critical"] === CSecurityCriticalLevel::HIGHT) {
                 $criticalResultsCount++;
+            }
         }
 
         return $criticalResultsCount;
@@ -338,11 +348,13 @@ class CSecuritySiteChecker
     {
         /** @global CUser $USER */
         global $USER;
-        if (!$USER->isAdmin())
+        if (!$USER->isAdmin()) {
             return false;
+        }
 
-        if (!self::isNewTestNeeded())
+        if (!self::isNewTestNeeded()) {
             return false;
+        }
 
         try {
             $adminUrl = self::ADMIN_PAGE_URL . "?lang=" . LANGUAGE_ID;
@@ -360,7 +372,6 @@ class CSecuritySiteChecker
                 "HTML" => $htmlText,
                 "FOOTER" => '<a href="' . $adminUrl . '">' . GetMessage("SEC_CHECKER_INFORMER_LINK") . '</a>'
             );
-
         } catch (Exception $e) {
             $WAFAIParams = array(
                 "TITLE" => GetMessage("SEC_CHECKER_INFORMER_TITLE") . " - " . GetMessage("top_panel_ai_title_err"),

@@ -1,4 +1,5 @@
 <?
+
 global $MESS;
 
 $MESS["PPL_INFO"] = "PayPal's service builds on the existing financial infrastructure of bank accounts and credit cards and utilizes the world's most advanced proprietary fraud prevention systems to create a safe, global, real-time payment solution.";

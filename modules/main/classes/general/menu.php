@@ -36,10 +36,10 @@ class CMenu
         global $USER;
         if (
             $this->debug !== false
-            && $_SESSION["SESS_SHOW_INCLUDE_TIME_EXEC"] == "Y"
+            && \Bitrix\Main\Application::getInstance()->getKernelSession()["SESS_SHOW_INCLUDE_TIME_EXEC"] == "Y"
             && (
                 $USER->IsAdmin()
-                || $_SESSION["SHOW_SQL_STAT"] == "Y"
+                || \Bitrix\Main\Application::getInstance()->getKernelSession()["SHOW_SQL_STAT"] == "Y"
             )
         ) {
             $this->debug = new CDebugInfo(false);
@@ -50,10 +50,11 @@ class CMenu
 
         $aMenuLinks = array();
         $bFounded = false;
-        if ($template === false)
+        if ($template === false) {
             $sMenuTemplate = '';
-        else
+        } else {
             $sMenuTemplate = $template;
+        }
 
         $InitDir = str_replace("\\", "/", $InitDir);
         $Dir = $InitDir;
@@ -63,13 +64,15 @@ class CMenu
             $site_dir = SITE_DIR;
         } elseif (array_key_exists("site", $_REQUEST) && $_REQUEST["site"] <> '') {
             $rsSites = CSite::GetByID($_REQUEST["site"]);
-            if ($arSite = $rsSites->Fetch())
+            if ($arSite = $rsSites->Fetch()) {
                 $site_dir = $arSite["DIR"];
+            }
         }
 
         while ($Dir <> '') {
-            if ($site_dir !== false && (strlen(trim($Dir, "/")) < strlen(trim($site_dir, "/"))))
+            if ($site_dir !== false && (mb_strlen(trim($Dir, "/")) < mb_strlen(trim($site_dir, "/")))) {
                 break;
+            }
 
             $Dir = rtrim($Dir, "/");
             $menu_file_name = $io->CombinePath($_SERVER["DOCUMENT_ROOT"], $Dir, "." . $this->type . ".menu.php");
@@ -83,29 +86,37 @@ class CMenu
                 break;
             }
 
-            if ($Dir == "")
+            if ($Dir == "") {
                 break;
+            }
 
             $pos = bxstrrpos($Dir, "/");
-            if ($pos === false || $onlyCurrentDir == true)
+            if ($pos === false || $onlyCurrentDir == true) {
                 break;
+            }
 
-            $Dir = substr($Dir, 0, $pos + 1);
+            $Dir = mb_substr($Dir, 0, $pos + 1);
         }
 
         if ($bMenuExt) {
             $Dir = $InitDir;
             while ($Dir <> '') {
-                if ($site_dir !== false && (strlen(trim($Dir, "/")) < strlen(trim($site_dir, "/"))))
+                if ($site_dir !== false && (mb_strlen(trim($Dir, "/")) < mb_strlen(trim($site_dir, "/")))) {
                     break;
+                }
 
                 $Dir = rtrim($Dir, "/");
-                $menu_file_name = $io->CombinePath($_SERVER["DOCUMENT_ROOT"], $Dir, "." . $this->type . ".menu_ext.php");
+                $menu_file_name = $io->CombinePath(
+                    $_SERVER["DOCUMENT_ROOT"],
+                    $Dir,
+                    "." . $this->type . ".menu_ext.php"
+                );
 
                 if ($io->FileExists($menu_file_name)) {
                     include($io->GetPhysicalName($menu_file_name));
-                    if (!$bFounded)
+                    if (!$bFounded) {
                         $this->MenuDir = $Dir . "/";
+                    }
 
                     $this->MenuExtDir = $Dir . "/";
                     $this->arMenu = $aMenuLinks;
@@ -114,14 +125,16 @@ class CMenu
                     break;
                 }
 
-                if ($Dir == "")
+                if ($Dir == "") {
                     break;
+                }
 
                 $pos = bxstrrpos($Dir, "/");
-                if ($pos === false || $onlyCurrentDir == true)
+                if ($pos === false || $onlyCurrentDir == true) {
                     break;
+                }
 
-                $Dir = substr($Dir, 0, $pos + 1);
+                $Dir = mb_substr($Dir, 0, $pos + 1);
             }
         }
 
@@ -130,8 +143,9 @@ class CMenu
 
     function RecalcMenu($bMultiSelect = false, $bCheckSelected = true)
     {
-        if ($this->bMenuCalc !== false)
+        if ($this->bMenuCalc !== false) {
             return true;
+        }
 
         /**
          * @global CAllMain $APPLICATION
@@ -149,13 +163,17 @@ class CMenu
 
         $this->bMenuCalc = true;
 
-        if (strlen($this->template) > 0 && file_exists($_SERVER["DOCUMENT_ROOT"] . $this->template)) {
+        if ($this->template <> '' && file_exists($_SERVER["DOCUMENT_ROOT"] . $this->template)) {
             $this->MenuTemplate = $_SERVER["DOCUMENT_ROOT"] . $this->template;
         } else {
-            if (defined("SITE_TEMPLATE_PATH") && file_exists($_SERVER["DOCUMENT_ROOT"] . SITE_TEMPLATE_PATH . "/" . $this->type . ".menu_template.php")) {
+            if (defined("SITE_TEMPLATE_PATH") && file_exists(
+                    $_SERVER["DOCUMENT_ROOT"] . SITE_TEMPLATE_PATH . "/" . $this->type . ".menu_template.php"
+                )) {
                 $this->template = SITE_TEMPLATE_PATH . "/" . $this->type . ".menu_template.php";
                 $this->MenuTemplate = $_SERVER["DOCUMENT_ROOT"] . $this->template;
-            } elseif (file_exists($_SERVER["DOCUMENT_ROOT"] . BX_PERSONAL_ROOT . "/php_interface/" . LANG . "/" . $this->type . ".menu_template.php")) {
+            } elseif (file_exists(
+                $_SERVER["DOCUMENT_ROOT"] . BX_PERSONAL_ROOT . "/php_interface/" . LANG . "/" . $this->type . ".menu_template.php"
+            )) {
                 $this->template = BX_PERSONAL_ROOT . "/php_interface/" . LANG . "/" . $this->type . ".menu_template.php";
                 $this->MenuTemplate = $_SERVER["DOCUMENT_ROOT"] . $this->template;
             } else {
@@ -209,13 +227,15 @@ class CMenu
 
             //Calculate menu items stack for iblock items only
             if ($this->MenuExtDir <> '' && is_array($PARAMS) && isset($PARAMS["FROM_IBLOCK"])) {
-                if ($previousDepthLevel == -1)
+                if ($previousDepthLevel == -1) {
                     $previousDepthLevel = $PARAMS["DEPTH_LEVEL"];
+                }
 
                 if ($PARAMS["DEPTH_LEVEL"] > $previousDepthLevel) {
                     //Deeper into sections tree
-                    if ($iMenuItem > 0)
+                    if ($iMenuItem > 0) {
                         $arParents[] = array("INDEX" => $iMenuItem - 1, "DEPTH_LEVEL" => $PARAMS["DEPTH_LEVEL"]);
+                    }
                 } else {
                     //Unwind parents stack
                     while (
@@ -235,33 +255,38 @@ class CMenu
 
             if (count($MenuItem) > 4) {
                 $CONDITION = $MenuItem[4];
-                if ($CONDITION <> '' && (!eval("return " . $CONDITION . ";")))
+                if ($CONDITION <> '' && (!eval("return " . $CONDITION . ";"))) {
                     $bSkipMenuItem = true;
+                }
             }
 
-            if (!$bSkipMenuItem)
+            if (!$bSkipMenuItem) {
                 $ITEM_INDEX++;
+            }
 
-            if (($pos = strpos($LINK, "?")) !== false)
+            if (($pos = mb_strpos($LINK, "?")) !== false) {
                 $ITEM_TYPE = "U";
-            elseif (substr($LINK, -1) == "/")
+            } elseif (mb_substr($LINK, -1) == "/") {
                 $ITEM_TYPE = "D";
-            else
+            } else {
                 $ITEM_TYPE = "P";
+            }
 
             $SELECTED = false;
 
             if ($bCached) {
                 $all_links = $arMenuCache[$iMenuItem]["LINKS"];
-                if (!is_array($all_links))
+                if (!is_array($all_links)) {
                     $all_links = array();
+                }
             } else {
                 $all_links = array();
                 if (is_array($ADDITIONAL_LINKS)) {
                     foreach ($ADDITIONAL_LINKS as $link) {
                         $tested_link = trim(Rel2Abs($this->MenuDir, $link));
-                        if (strlen($tested_link) > 0)
+                        if ($tested_link <> '') {
                             $all_links[] = $tested_link;
+                        }
                     }
                 }
                 $all_links[] = $LINK;
@@ -273,27 +298,34 @@ class CMenu
             } else {
                 if (!$bSkipMenuItem && $bCheckSelected) {
                     foreach ($all_links as $tested_link) {
-                        if ($tested_link == '')
+                        if ($tested_link == '') {
                             continue;
+                        }
 
                         $SELECTED = self::IsItemSelected($tested_link, $cur_page, $cur_page_no_index);
-                        if ($SELECTED)
+                        if ($SELECTED) {
                             break;
+                        }
                     }
                 }
 
-                if ($bCached)
+                if ($bCached) {
                     $PERMISSION = $arMenuCache[$iMenuItem]["PERM"];
-                else
-                    $arMenuCache[$iMenuItem]["PERM"] = $PERMISSION = $APPLICATION->GetFileAccessPermission(GetFileFromURL($LINK), $arUserRights);
+                } else {
+                    $arMenuCache[$iMenuItem]["PERM"] = $PERMISSION = $APPLICATION->GetFileAccessPermission(
+                        GetFileFromURL($LINK),
+                        $arUserRights
+                    );
+                }
             }
 
             if ($SELECTED && !$bMultiSelect) {
                 /** @noinspection PhpUndefinedVariableInspection */
-                $new_len = strlen($tested_link);
+                $new_len = mb_strlen($tested_link);
                 if ($new_len > $cur_selected_len) {
-                    if ($cur_selected !== -1)
+                    if ($cur_selected !== -1) {
                         $result[$cur_selected]['SELECTED'] = false;
+                    }
 
                     $cur_selected = count($result);
                     $cur_selected_len = $new_len;
@@ -314,8 +346,9 @@ class CMenu
                     if (
                         is_array($result[$parentIndex]["PARAMS"])
                         && isset($result[$parentIndex]["PARAMS"]["FROM_IBLOCK"])
-                    )
+                    ) {
                         $result[$parentIndex]["SELECTED"] = true;
+                    }
                 }
             }
 
@@ -350,23 +383,24 @@ class CMenu
         //"/admin/"
         //"/admin/index.php"
         //"/admin/index.php?module=mail"
-        if (strpos($cur_page, $tested_link) === 0 || strpos($cur_page_no_index, $tested_link) === 0)
+        if (mb_strpos($cur_page, $tested_link) === 0 || mb_strpos($cur_page_no_index, $tested_link) === 0) {
             return true;
+        }
 
-        if (($pos = strpos($tested_link, "?")) !== false) {
-            if (($s = substr($tested_link, 0, $pos)) == $cur_page || $s == $cur_page_no_index) {
-                $params = explode("&", substr($tested_link, $pos + 1));
+        if (($pos = mb_strpos($tested_link, "?")) !== false) {
+            if (($s = mb_substr($tested_link, 0, $pos)) == $cur_page || $s == $cur_page_no_index) {
+                $params = explode("&", mb_substr($tested_link, $pos + 1));
                 $bOK = true;
                 foreach ($params as $param) {
-                    $eqpos = strpos($param, "=");
+                    $eqpos = mb_strpos($param, "=");
                     $varvalue = "";
                     if ($eqpos === false) {
                         $varname = $param;
                     } elseif ($eqpos == 0) {
                         continue;
                     } else {
-                        $varname = substr($param, 0, $eqpos);
-                        $varvalue = urldecode(substr($param, $eqpos + 1));
+                        $varname = mb_substr($param, 0, $eqpos);
+                        $varvalue = urldecode(mb_substr($param, $eqpos + 1));
                     }
 
                     $globvarvalue = (isset($GLOBALS[$varname]) ? $GLOBALS[$varname] : "");
@@ -376,8 +410,9 @@ class CMenu
                     }
                 }
 
-                if ($bOK)
+                if ($bOK) {
                     return true;
+                }
             }
         }
         return false;
@@ -391,8 +426,9 @@ class CMenu
          */
         global $USER, $DB, $APPLICATION; // must be!
 
-        if (!$this->RecalcMenu())
+        if (!$this->RecalcMenu()) {
             return false;
+        }
 
         // $arMENU - menu array copy
         // $arMENU_LINK - reference to menu array
@@ -414,14 +450,18 @@ class CMenu
             $templ_perm = $APPLICATION->GetFileAccessPermission($this->template);
             if ($menu_perm >= "W") {
                 $arIcons[] = array(
-                    "URL" => "/bitrix/admin/fileman_menu_edit.php?lang=" . LANGUAGE_ID . "&site=" . SITE_ID . "&back_url=" . urlencode($_SERVER["REQUEST_URI"]) . "&path=" . urlencode($this->MenuDir) . "&name=" . $this->type,
+                    "URL" => "/bitrix/admin/fileman_menu_edit.php?lang=" . LANGUAGE_ID . "&site=" . SITE_ID . "&back_url=" . urlencode(
+                            $_SERVER["REQUEST_URI"]
+                        ) . "&path=" . urlencode($this->MenuDir) . "&name=" . $this->type,
                     "ICON" => "menu-edit",
                     "TITLE" => GetMessage("MAIN_MENU_EDIT")
                 );
             }
             if ($templ_perm >= "W" && $USER->IsAdmin()) {
                 $arIcons[] = array(
-                    "URL" => "/bitrix/admin/fileman_file_edit.php?lang=" . LANGUAGE_ID . "&site=" . SITE_ID . "&back_url=" . urlencode($_SERVER["REQUEST_URI"]) . "&full_src=Y&path=" . urlencode($this->template),
+                    "URL" => "/bitrix/admin/fileman_file_edit.php?lang=" . LANGUAGE_ID . "&site=" . SITE_ID . "&back_url=" . urlencode(
+                            $_SERVER["REQUEST_URI"]
+                        ) . "&full_src=Y&path=" . urlencode($this->template),
                     "ICON" => "menu-template",
                     "TITLE" => GetMessage("MAIN_MENU_TEMPLATE_EDIT")
                 );
@@ -432,11 +472,13 @@ class CMenu
             }
         }
 
-        if ($this->debug)
+        if ($this->debug) {
             $result .= $this->debug->Output($sMenuFile, $sMenuFile);
+        }
 
-        if ($bShowButtons)
+        if ($bShowButtons) {
             $result .= $APPLICATION->IncludeStringAfter($arIcons);
+        }
 
         return $result;
     }
@@ -450,8 +492,9 @@ class CMenu
          */
         global $USER, $DB, $APPLICATION; // must be!
 
-        if (!$this->RecalcMenu())
+        if (!$this->RecalcMenu()) {
             return false;
+        }
 
         // $arMENU - menu array copy
         // $arMENU_LINK - reference to menu array
@@ -483,8 +526,9 @@ class CMenu
 
             include($this->MenuTemplate);
 
-            if ($ITEM_INDEX == 0)
+            if ($ITEM_INDEX == 0) {
                 $sMenuPrologTmp = $sMenuProlog;
+            }
             $result .= $sMenuBody;
         }
 
@@ -498,7 +542,9 @@ class CMenu
             $templ_perm = $APPLICATION->GetFileAccessPermission($this->template);
             if ($menu_perm >= "W") {
                 $arIcons[] = array(
-                    "URL" => "/bitrix/admin/fileman_menu_edit.php?lang=" . LANGUAGE_ID . "&site=" . SITE_ID . "&back_url=" . urlencode($_SERVER["REQUEST_URI"]) . "&path=" . urlencode($this->MenuDir) . "&name=" . $this->type,
+                    "URL" => "/bitrix/admin/fileman_menu_edit.php?lang=" . LANGUAGE_ID . "&site=" . SITE_ID . "&back_url=" . urlencode(
+                            $_SERVER["REQUEST_URI"]
+                        ) . "&path=" . urlencode($this->MenuDir) . "&name=" . $this->type,
                     "ICON" => "menu-edit",
                     "TITLE" => GetMessage("MAIN_MENU_EDIT")
                 );
@@ -506,7 +552,9 @@ class CMenu
 
             if ($templ_perm >= "W" && $USER->IsAdmin()) {
                 $arIcons[] = array(
-                    "URL" => "/bitrix/admin/fileman_file_edit.php?lang=" . LANGUAGE_ID . "&site=" . SITE_ID . "&back_url=" . urlencode($_SERVER["REQUEST_URI"]) . "&full_src=Y&path=" . urlencode($this->template),
+                    "URL" => "/bitrix/admin/fileman_file_edit.php?lang=" . LANGUAGE_ID . "&site=" . SITE_ID . "&back_url=" . urlencode(
+                            $_SERVER["REQUEST_URI"]
+                        ) . "&full_src=Y&path=" . urlencode($this->template),
                     "ICON" => "menu-template",
                     "TITLE" => GetMessage("MAIN_MENU_TEMPLATE_EDIT")
                 );
@@ -518,11 +566,13 @@ class CMenu
             }
         }
 
-        if ($this->debug)
+        if ($this->debug) {
             $result .= $this->debug->Output($sMenuFile, $sMenuFile);
+        }
 
-        if ($bShowButtons)
+        if ($bShowButtons) {
             $result .= $APPLICATION->IncludeStringAfter($arIcons);
+        }
 
         return $result;
     }
@@ -534,26 +584,33 @@ class CMenuCustom
 
     function AddItem($type = "left", $arItem = array())
     {
-        if (count($arItem) <= 0)
+        if (count($arItem) <= 0) {
             return;
+        }
 
-        if (!array_key_exists("TEXT", $arItem) || strlen(trim($arItem["TEXT"])) <= 0)
+        if (!array_key_exists("TEXT", $arItem) || trim($arItem["TEXT"]) == '') {
             return;
+        }
 
-        if (!array_key_exists("LINK", $arItem) || strlen(trim($arItem["LINK"])) <= 0)
+        if (!array_key_exists("LINK", $arItem) || trim($arItem["LINK"]) == '') {
             $arItem["LINK"] = "";
+        }
 
-        if (!array_key_exists("SELECTED", $arItem))
+        if (!array_key_exists("SELECTED", $arItem)) {
             $arItem["SELECTED"] = false;
+        }
 
-        if (!array_key_exists("PERMISSION", $arItem))
+        if (!array_key_exists("PERMISSION", $arItem)) {
             $arItem["PERMISSION"] = "R";
+        }
 
-        if (!array_key_exists("DEPTH_LEVEL", $arItem))
+        if (!array_key_exists("DEPTH_LEVEL", $arItem)) {
             $arItem["DEPTH_LEVEL"] = 1;
+        }
 
-        if (!array_key_exists("IS_PARENT", $arItem))
+        if (!array_key_exists("IS_PARENT", $arItem)) {
             $arItem["IS_PARENT"] = false;
+        }
 
         $this->arItems[$type][] = array(
             "TEXT" => $arItem["TEXT"],
@@ -568,10 +625,11 @@ class CMenuCustom
 
     function GetItems($type = "left")
     {
-        if (array_key_exists($type, $this->arItems))
+        if (array_key_exists($type, $this->arItems)) {
             return $this->arItems[$type];
-        else
+        } else {
             return false;
+        }
     }
 
 }

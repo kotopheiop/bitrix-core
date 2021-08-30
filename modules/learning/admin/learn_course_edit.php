@@ -1,13 +1,15 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 if (!CModule::IncludeModule('learning')) {
     require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php'); // second system's prolog
 
-    if (IsModuleInstalled('learning') && defined('LEARNING_FAILED_TO_LOAD_REASON'))
+    if (IsModuleInstalled('learning') && defined('LEARNING_FAILED_TO_LOAD_REASON')) {
         echo LEARNING_FAILED_TO_LOAD_REASON;
-    else
+    } else {
         CAdminMessage::ShowMessage(GetMessage('LEARNING_MODULE_NOT_FOUND'));
+    }
 
     require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin.php');    // system's epilog
     exit();
@@ -44,9 +46,9 @@ if ($COURSE_ID !== 0) {
         $Perm = 'D';
     }
 } else {
-    if ($oAccess->IsBaseAccess(CLearnAccess::OP_LESSON_CREATE))
+    if ($oAccess->IsBaseAccess(CLearnAccess::OP_LESSON_CREATE)) {
         $Perm = 'X';
-    else {
+    } else {
         $APPLICATION->SetTitle(GetMessage('LEARNING_ACCESS_D'));
         require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
@@ -54,7 +56,9 @@ if ($COURSE_ID !== 0) {
             array(
                 "ICON" => "btn_list",
                 "TEXT" => GetMessage("LEARNING_BACK_TO_ADMIN"),
-                "LINK" => "learn_unilesson_admin.php?lang=" . LANG . '&PARENT_LESSON_ID=-1' . GetFilterParams("filter_"),
+                "LINK" => "learn_unilesson_admin.php?lang=" . LANG . '&PARENT_LESSON_ID=-1' . GetFilterParams(
+                        "filter_"
+                    ),
                 "TITLE" => GetMessage("LEARNING_BACK_TO_ADMIN")
             ),
         );
@@ -70,11 +74,26 @@ if ($COURSE_ID !== 0) {
 
 
 $aTabs = array(
-    array("DIV" => "edit1", "TAB" => GetMessage("LEARNING_ADMIN_TAB1"), "ICON" => "main_user_edit", "TITLE" => GetMessage("LEARNING_ADMIN_TAB1_EX")),
+    array(
+        "DIV" => "edit1",
+        "TAB" => GetMessage("LEARNING_ADMIN_TAB1"),
+        "ICON" => "main_user_edit",
+        "TITLE" => GetMessage("LEARNING_ADMIN_TAB1_EX")
+    ),
 
-    array("DIV" => "edit2", "TAB" => GetMessage("LEARNING_ADMIN_TAB3"), "ICON" => "main_user_edit", "TITLE" => GetMessage("LEARNING_ADMIN_TAB3_EX")),
+    array(
+        "DIV" => "edit2",
+        "TAB" => GetMessage("LEARNING_ADMIN_TAB3"),
+        "ICON" => "main_user_edit",
+        "TITLE" => GetMessage("LEARNING_ADMIN_TAB3_EX")
+    ),
 
-    array("DIV" => "edit3", "TAB" => GetMessage("LEARNING_ADMIN_TAB4"), "ICON" => "main_user_edit", "TITLE" => GetMessage("LEARNING_ADMIN_TAB4_EX")),
+    array(
+        "DIV" => "edit3",
+        "TAB" => GetMessage("LEARNING_ADMIN_TAB4"),
+        "ICON" => "main_user_edit",
+        "TITLE" => GetMessage("LEARNING_ADMIN_TAB4_EX")
+    ),
 );
 
 if (($COURSE_ID > 0) && ($linkedLessonId = CCourse::CourseGetLinkedLesson($COURSE_ID))) {
@@ -83,8 +102,9 @@ if (($COURSE_ID > 0) && ($linkedLessonId = CCourse::CourseGetLinkedLesson($COURS
     $arOPathes_cnt = count($arOPathes);
 
     $tabName = GetMessage("LEARNING_ADMIN_TAB5");
-    if ($arOPathes_cnt > 1)
+    if ($arOPathes_cnt > 1) {
         $tabName .= ' (' . $arOPathes_cnt . ')';
+    }
 
     $aTabs[] = array(
         "DIV" => "edit4",
@@ -95,13 +115,18 @@ if (($COURSE_ID > 0) && ($linkedLessonId = CCourse::CourseGetLinkedLesson($COURS
 }
 
 
-$aTabs[] = array("DIV" => "edit5", "ICON" => "main_user_edit", "TAB" => GetMessage("LEARNING_PERMISSIONS"), "TITLE" => GetMessage("LEARNING_PERMISSIONS"));
+$aTabs[] = array(
+    "DIV" => "edit5",
+    "ICON" => "main_user_edit",
+    "TAB" => GetMessage("LEARNING_PERMISSIONS"),
+    "TITLE" => GetMessage("LEARNING_PERMISSIONS")
+);
 $aTabs[] = $USER_FIELD_MANAGER->EditFormTab('LEARNING_LESSONS');
 
 $tabControl = new CAdminForm("courseTabControl", $aTabs, true, $bDenyAutosave);
 
 
-if (($_SERVER["REQUEST_METHOD"] == "POST") && ($Perm >= "X") && (strlen($_POST["Update"]) > 0) && check_bitrix_sessid()) {
+if (($_SERVER["REQUEST_METHOD"] == "POST") && ($Perm >= "X") && ($_POST["Update"] <> '') && check_bitrix_sessid()) {
     $course = new CCourse;
 
     $arPREVIEW_PICTURE = $_FILES["PREVIEW_PICTURE"];
@@ -161,20 +186,25 @@ if (($_SERVER["REQUEST_METHOD"] == "POST") && ($Perm >= "X") && (strlen($_POST["
             ) {
                 // Process permissions
                 $arPostedRights = array();
-                if (is_array($_POST['LESSON_RIGHTS']))
+                if (is_array($_POST['LESSON_RIGHTS'])) {
                     $arPostedRights = $_POST['LESSON_RIGHTS'];
+                }
 
                 $arAccessSymbols = array();
                 $arTaskIds = array();
                 foreach ($arPostedRights as $key => $arData) {
-                    if (isset($arData['GROUP_CODE']))
+                    if (isset($arData['GROUP_CODE'])) {
                         $arAccessSymbols[] = $arData['GROUP_CODE'];
-                    elseif (isset($arData['TASK_ID']))
+                    } elseif (isset($arData['TASK_ID'])) {
                         $arTaskIds[] = $arData['TASK_ID'];
+                    }
                 }
 
-                if (count($arAccessSymbols) !== count($arTaskIds))
-                    throw new LearnException('', LearnException::EXC_ERR_ALL_LOGIC | LearnException::EXC_ERR_ALL_GIVEUP);
+                if (count($arAccessSymbols) !== count($arTaskIds)) {
+                    throw new LearnException(
+                        '', LearnException::EXC_ERR_ALL_LOGIC | LearnException::EXC_ERR_ALL_GIVEUP
+                    );
+                }
 
                 $arPermPairs = array();
 
@@ -197,44 +227,51 @@ if (($_SERVER["REQUEST_METHOD"] == "POST") && ($Perm >= "X") && (strlen($_POST["
 
     if (!$res) {
         //$strWarning .= $course->LAST_ERROR."<br>";
-        if ($e = $APPLICATION->GetException())
+        if ($e = $APPLICATION->GetException()) {
             $message = new CAdminMessage(GetMessage("LEARNING_ERROR"), $e);
+        }
         $bVarsFromForm = true;
     } else {
-        if (isset($_GET['PROPOSE_RETURN_LESSON_PATH']))
+        if (isset($_GET['PROPOSE_RETURN_LESSON_PATH'])) {
             $returnPath = '&LESSON_PATH=' . htmlspecialcharsbx($_GET['PROPOSE_RETURN_LESSON_PATH']);
-        else
+        } else {
             $returnPath = '&PARENT_LESSON_ID=-1';
+        }
 
         if (!$bVarsFromForm) {
-            if (strlen($apply) <= 0) {
-                if (strlen($return_url) > 0) {
-                    if (strpos($return_url, "#COURSE_ID#") !== false) {
+            if ($apply == '') {
+                if ($return_url <> '') {
+                    if (mb_strpos($return_url, "#COURSE_ID#") !== false) {
                         $return_url = str_replace("#COURSE_ID#", $COURSE_ID, $return_url);
                     }
                     LocalRedirect($return_url);
                 } else {
-                    LocalRedirect("/bitrix/admin/learn_unilesson_admin.php?lang=" . LANG
+                    LocalRedirect(
+                        "/bitrix/admin/learn_unilesson_admin.php?lang=" . LANG
                         . $returnPath
-                        . GetFilterParams("filter_", false));
+                        . GetFilterParams("filter_", false)
+                    );
                 }
             }
 
-            LocalRedirect("/bitrix/admin/learn_course_edit.php?lang=" . LANG
+            LocalRedirect(
+                "/bitrix/admin/learn_course_edit.php?lang=" . LANG
                 . $returnPath
                 . "&COURSE_ID=" . $COURSE_ID
                 . "&" . $tabControl->ActiveTabParam()
-                . GetFilterParams("filter_", false));
+                . GetFilterParams("filter_", false)
+            );
         }
     }
 
     unset ($course);
 }
 
-if ($COURSE_ID > 0)
+if ($COURSE_ID > 0) {
     $APPLICATION->SetTitle(str_replace("#ID#", $COURSE_ID, GetMessage("LEARNING_EDIT_TITLE2")));
-else
+} else {
     $APPLICATION->SetTitle(GetMessage("LEARNING_EDIT_TITLE1"));
+}
 
 //Defaults
 $str_ACTIVE = "Y";
@@ -255,7 +292,9 @@ if ($COURSE_ID > 0) {
             array(
                 "ICON" => "btn_list",
                 "TEXT" => GetMessage("LEARNING_BACK_TO_ADMIN"),
-                "LINK" => "learn_unilesson_admin.php?lang=" . LANG . '&PARENT_LESSON_ID=-1' . GetFilterParams("filter_"),
+                "LINK" => "learn_unilesson_admin.php?lang=" . LANG . '&PARENT_LESSON_ID=-1' . GetFilterParams(
+                        "filter_"
+                    ),
                 "TITLE" => GetMessage("LEARNING_BACK_TO_ADMIN")
             ),
         );
@@ -274,8 +313,9 @@ if (($res === false) || (!$res->ExtractFields("str_"))) {
 } else {
     $str_SITE_ID = Array();
     $db_SITE_ID = CCourse::GetSite($COURSE_ID);
-    while ($ar_SITE_ID = $db_SITE_ID->Fetch())
+    while ($ar_SITE_ID = $db_SITE_ID->Fetch()) {
         $str_SITE_ID[] = $ar_SITE_ID["LID"];
+    }
 }
 
 require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admin_after.php");
@@ -288,19 +328,36 @@ if ($bVarsFromForm) {
      * was:
      * $DB->InitTableVarsForEdit("b_learn_course", "", "str_");
      */
-    $arVarsOnForm = array('COURSE_ID', 'TIMESTAMP_X', 'ACTIVE_FROM', 'ACTIVE_TO',
-        'ACTIVE', 'CODE', 'NAME', 'SORT', 'RATING', 'RATING_TYPE',
-        'PREVIEW_TEXT', 'PREVIEW_TEXT_TYPE', 'PREVIEW_PICTURE',
-        'DETAIL_TEXT', 'DETAIL_TEXT_TYPE', 'DETAIL_PICTURE',
-        'DESCRIPTION', 'SCORM', 'LAUNCH');
+    $arVarsOnForm = array(
+        'COURSE_ID',
+        'TIMESTAMP_X',
+        'ACTIVE_FROM',
+        'ACTIVE_TO',
+        'ACTIVE',
+        'CODE',
+        'NAME',
+        'SORT',
+        'RATING',
+        'RATING_TYPE',
+        'PREVIEW_TEXT',
+        'PREVIEW_TEXT_TYPE',
+        'PREVIEW_PICTURE',
+        'DETAIL_TEXT',
+        'DETAIL_TEXT_TYPE',
+        'DETAIL_PICTURE',
+        'DESCRIPTION',
+        'SCORM',
+        'LAUNCH'
+    );
 
     foreach ($arVarsOnForm as $k => $varName) {
-        if (!is_array(${$varName}))
+        if (!is_array(${$varName})) {
             ${'str_' . $varName} = htmlspecialcharsbx(${$varName});
-        else {
+        } else {
             $tmp = array();
-            foreach (${$varName} as $key => $value)
+            foreach (${$varName} as $key => $value) {
                 $tmp[$key] = htmlspecialcharsbx($value);
+            }
 
             ${'str_' . $varName} = $tmp;
             unset ($tmp);
@@ -348,7 +405,6 @@ if ($Perm >= "X" && $COURSE_ID > 0) {
                 . "&" . bitrix_sessid_get() . urlencode(GetFilterParams("filter_", false)) . "';",
         );
     }
-
 }
 
 $context = new CAdminContextMenu($aContext);
@@ -375,8 +431,9 @@ if (COption::GetOptionString("learning", "use_htmledit", "Y") == "Y" && CModule:
     echo '</div>';
 }
 
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 
 if ($Perm >= "G"):?>
 
@@ -385,8 +442,8 @@ if ($Perm >= "G"):?>
     <? echo GetFilterHiddens("filter_"); ?>
     <input type="hidden" name="Update" value="Y">
     <input type="hidden" name="COURSE_ID" value="<? echo $COURSE_ID ?>">
-    <?php if (strlen($return_url) > 0): ?><input type="hidden" name="return_url"
-                                                 value="<?= htmlspecialcharsbx($return_url) ?>"><?endif ?>
+    <?php if ($return_url <> ''): ?><input type="hidden" name="return_url"
+                                           value="<?= htmlspecialcharsbx($return_url) ?>"><?endif ?>
     <?php
     $tabControl->EndEpilogContent();
     $tabControl->Begin();
@@ -444,7 +501,17 @@ if ($Perm >= "G"):?>
     <tr>
         <td><? echo $tabControl->GetCustomLabelHTML() ?>):</td>
         <td>
-            <? echo CalendarPeriod("ACTIVE_FROM", $str_ACTIVE_FROM, "ACTIVE_TO", $str_ACTIVE_TO, "courseTabControl", "N", "", "", "19") ?>
+            <? echo CalendarPeriod(
+                "ACTIVE_FROM",
+                $str_ACTIVE_FROM,
+                "ACTIVE_TO",
+                $str_ACTIVE_TO,
+                "courseTabControl",
+                "N",
+                "",
+                "",
+                "19"
+            ) ?>
         </td>
     </tr>
     <?php $tabControl->EndCustomField("ACTIVE_PERIOD"); ?>
@@ -494,7 +561,13 @@ if ($Perm >= "G"):?>
     <?php $tabControl->EndCustomField("RATING"); ?>
     <?php $tabControl->BeginCustomField("RATING_TYPE", GetMessage("LEARNING_RATING_TYPE"), false);
     $arRatingType['reference_id'] = Array("", "like", "like_graphic", "standart_text", "standart");
-    $arRatingType['reference'] = Array(GetMessage("LEARNING_RATING_TYPE_CONFIG"), GetMessage("LEARNING_RATING_TYPE_LIKE"), GetMessage("LEARNING_RATING_TYPE_LIKE_GRAPHIC"), GetMessage("LEARNING_RATING_TYPE_STANDART_TEXT"), GetMessage("LEARNING_RATING_TYPE_STANDART"));
+    $arRatingType['reference'] = Array(
+        GetMessage("LEARNING_RATING_TYPE_CONFIG"),
+        GetMessage("LEARNING_RATING_TYPE_LIKE"),
+        GetMessage("LEARNING_RATING_TYPE_LIKE_GRAPHIC"),
+        GetMessage("LEARNING_RATING_TYPE_STANDART_TEXT"),
+        GetMessage("LEARNING_RATING_TYPE_STANDART")
+    );
     ?>
     <tr>
         <td><? echo $tabControl->GetCustomLabelHTML() ?>:</td>
@@ -523,7 +596,11 @@ if ($Perm >= "G"):?>
                     false,
                     true,
                     false,
-                    array('toolbarConfig' => CFileman::GetEditorToolbarConfig("learning_" . (defined('BX_PUBLIC_MODE') && BX_PUBLIC_MODE == 1 ? 'public' : 'admin')))
+                    array(
+                        'toolbarConfig' => CFileman::GetEditorToolbarConfig(
+                            "learning_" . (defined('BX_PUBLIC_MODE') && BX_PUBLIC_MODE == 1 ? 'public' : 'admin')
+                        )
+                    )
                 ); ?>
             </td>
         </tr>
@@ -532,9 +609,12 @@ if ($Perm >= "G"):?>
             <td align="center"><? echo GetMessage("LEARNING_DESC_TYPE") ?>:</td>
             <td>
                 <input type="radio" name="PREVIEW_TEXT_TYPE"
-                       value="text"<? if ($str_PREVIEW_TEXT_TYPE != "html") echo " checked" ?>> <? echo GetMessage("LEARNING_DESC_TYPE_TEXT") ?>
-                / <input type="radio" name="PREVIEW_TEXT_TYPE"
-                         value="html"<? if ($str_PREVIEW_TEXT_TYPE == "html") echo " checked" ?>> <? echo GetMessage("LEARNING_DESC_TYPE_HTML") ?>
+                       value="text"<? if ($str_PREVIEW_TEXT_TYPE != "html") echo " checked" ?>> <? echo GetMessage(
+                    "LEARNING_DESC_TYPE_TEXT"
+                ) ?> / <input type="radio" name="PREVIEW_TEXT_TYPE"
+                              value="html"<? if ($str_PREVIEW_TEXT_TYPE == "html") echo " checked" ?>> <? echo GetMessage(
+                    "LEARNING_DESC_TYPE_HTML"
+                ) ?>
             </td>
         </tr>
         <tr>
@@ -580,7 +660,11 @@ if ($Perm >= "G"):?>
                     false,
                     true,
                     false,
-                    array('toolbarConfig' => CFileman::GetEditorToolbarConfig("learning_" . (defined('BX_PUBLIC_MODE') && BX_PUBLIC_MODE == 1 ? 'public' : 'admin')))
+                    array(
+                        'toolbarConfig' => CFileman::GetEditorToolbarConfig(
+                            "learning_" . (defined('BX_PUBLIC_MODE') && BX_PUBLIC_MODE == 1 ? 'public' : 'admin')
+                        )
+                    )
                 ); ?>
             </td>
         </tr>
@@ -589,9 +673,13 @@ if ($Perm >= "G"):?>
             <td align="center"><? echo GetMessage("LEARNING_DESC_TYPE") ?>:</td>
             <td>
                 <input type="radio" name="DETAIL_TEXT_TYPE"
-                       value="text"<? if ($str_DETAIL_TEXT_TYPE != "html") echo " checked" ?>> <? echo GetMessage("LEARNING_DESC_TYPE_TEXT") ?>
+                       value="text"<? if ($str_DETAIL_TEXT_TYPE != "html") echo " checked" ?>> <? echo GetMessage(
+                    "LEARNING_DESC_TYPE_TEXT"
+                ) ?>
                 <input type="radio" name="DETAIL_TEXT_TYPE"
-                       value="html"<? if ($str_DETAIL_TEXT_TYPE == "html") echo " checked" ?>> <? echo GetMessage("LEARNING_DESC_TYPE_HTML") ?>
+                       value="html"<? if ($str_DETAIL_TEXT_TYPE == "html") echo " checked" ?>> <? echo GetMessage(
+                    "LEARNING_DESC_TYPE_HTML"
+                ) ?>
             </td>
         </tr>
         <tr>
@@ -630,26 +718,29 @@ if ($Perm >= "G"):?>
 
         CLearnRenderRightsEdit::RenderLessonRightsTab($USER->GetID(), 'LESSON_RIGHTS', $linkedLessonId, $readOnly);
     } else {
-        if ($oAccess->IsBaseAccess(CLearnAccess::OP_LESSON_MANAGE_RIGHTS))
+        if ($oAccess->IsBaseAccess(CLearnAccess::OP_LESSON_MANAGE_RIGHTS)) {
             $readOnly = false;
-        else
+        } else {
             $readOnly = true;
+        }
 
         CLearnRenderRightsEdit::RenderLessonRightsTab($USER->GetID(), 'LESSON_RIGHTS', 0, $readOnly);
     }
     $tabControl->EndCustomField("__GESGSTR");
 
-    if ($Perm < 'X')
+    if ($Perm < 'X') {
         $isBtnsDisabled = true;
-    else
+    } else {
         $isBtnsDisabled = false;
+    }
 
     $tabControl->BeginNextFormTab();
     $tabControl->BeginCustomField("UFS", '', false);
-    if ($linkedLessonId)
+    if ($linkedLessonId) {
         $USER_FIELD_MANAGER->EditFormShowTab('LEARNING_LESSONS', $bVarsFromForm, $linkedLessonId);
-    else
+    } else {
         $USER_FIELD_MANAGER->EditFormShowTab('LEARNING_LESSONS', $bVarsFromForm, 0);
+    }
     $tabControl->EndCustomField("UFS");
 
     $tabControl->Buttons(

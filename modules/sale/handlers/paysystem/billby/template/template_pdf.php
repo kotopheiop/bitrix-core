@@ -1,4 +1,6 @@
-<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die(); ?><?
+<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+} ?><?
 
 use Bitrix\Main\Localization\Loc;
 
@@ -6,8 +8,9 @@ Loc::loadMessages(__FILE__);
 
 $arPaySysAction["ENCODING"] = "";
 
-if (!CSalePdf::isPdfAvailable())
+if (!CSalePdf::isPdfAvailable()) {
     die();
+}
 
 $blank = ($_REQUEST['BLANK'] == 'Y');
 
@@ -85,15 +88,17 @@ if ($params['BILLBY_HEADER_SHOW'] == 'Y') {
         $sellerInfoName = '';
         if ($params["SELLER_COMPANY_NAME"]) {
             $sellerInfoName .= $params["SELLER_COMPANY_NAME"];
-            if (!empty($sellerInfoName))
+            if (!empty($sellerInfoName)) {
                 $sellerInfoRows[] = $sellerInfoName;
+            }
         }
         unset($sellerInfoName);
         $sellerInfoTaxId = '';
         if ($params['SELLER_COMPANY_INN']) {
             $sellerInfoTaxId .= Loc::getMessage('SALE_HPS_BILLBY_INN') . ': ' . $params['SELLER_COMPANY_INN'];
-            if (!empty($sellerInfoTaxId))
+            if (!empty($sellerInfoTaxId)) {
                 $sellerInfoRows[] = $sellerInfoTaxId;
+            }
         }
         unset($sellerInfoTaxId);
         $sellerInfoBank = '';
@@ -103,10 +108,11 @@ if ($params['BILLBY_HEADER_SHOW'] == 'Y') {
             $sellerBankCity = '';
             if ($params["SELLER_COMPANY_BANK_CITY"]) {
                 $sellerBankCity = $params["SELLER_COMPANY_BANK_CITY"];
-                if (is_array($sellerBankCity))
+                if (is_array($sellerBankCity)) {
                     $sellerBankCity = implode(', ', $sellerBankCity);
-                else
+                } else {
                     $sellerBankCity = str_replace(array("\r\n", "\n", "\r"), ', ', strval($sellerBankCity));
+                }
             }
             $sellerBank = sprintf(
                 "%s %s",
@@ -124,47 +130,56 @@ if ($params['BILLBY_HEADER_SHOW'] == 'Y') {
         }
         if (!empty($sellerRs)) {
             $sellerRsPrefix = Loc::getMessage('SALE_HPS_BILLBY_SELLER_ACC_ABBR');
-            if (!empty($sellerRsPrefix))
+            if (!empty($sellerRsPrefix)) {
                 $sellerRs = $sellerRsPrefix . ' ' . $sellerRs;
+            }
             unset($sellerRsPrefix);
             $sellerInfoBank .= $sellerRs;
         }
         unset($sellerRs);
         if (!empty($sellerBank)) {
-            if (!empty($sellerInfoBank))
+            if (!empty($sellerInfoBank)) {
                 $sellerInfoBank .= ', ';
+            }
             $sellerInfoBank .= $sellerBank;
         }
         unset($sellerBank);
         if (!empty($params['SELLER_COMPANY_BANK_BIC'])) {
-            if (!empty($sellerInfoBank))
+            if (!empty($sellerInfoBank)) {
                 $sellerInfoBank .= ', ';
+            }
             $sellerInfoBank .=
                 Loc::getMessage('SALE_HPS_BILLBY_SELLER_BANK_BIK') . ' ' . $params['SELLER_COMPANY_BANK_BIC'];
         }
-        if (!empty($sellerInfoBank))
+        if (!empty($sellerInfoBank)) {
             $sellerInfoRows[] = $sellerInfoBank;
+        }
         unset($sellerInfoBank);
         $sellerInfoAddr = '';
         if ($params['SELLER_COMPANY_ADDRESS']) {
             $sellerAddr = $params['SELLER_COMPANY_ADDRESS'];
-            if (is_array($sellerAddr))
+            if (is_array($sellerAddr)) {
                 $sellerAddr = implode(', ', $sellerAddr);
-            else
+            } else {
                 $sellerAddr = str_replace(array("\r\n", "\n", "\r"), ', ', strval($sellerAddr));
-            if (!empty($sellerAddr))
+            }
+            if (!empty($sellerAddr)) {
                 $sellerInfoAddr .= Loc::getMessage('SALE_HPS_BILLBY_ADDR_TITLE') . ': ' . $sellerAddr;
+            }
         }
         if ($params["SELLER_COMPANY_PHONE"]) {
-            if (!empty($sellerInfoAddr))
+            if (!empty($sellerInfoAddr)) {
                 $sellerInfoAddr .= ', ';
+            }
             $phoneTitle = Loc::getMessage('SALE_HPS_BILLBY_PHONE_TITLE');
-            if (!empty($phoneTitle))
+            if (!empty($phoneTitle)) {
                 $sellerInfoAddr .= $phoneTitle . ' ';
+            }
             $sellerInfoAddr .= $params["SELLER_COMPANY_PHONE"];
         }
-        if (!empty($sellerInfoAddr))
+        if (!empty($sellerInfoAddr)) {
             $sellerInfoRows[] = $sellerInfoAddr;
+        }
         unset($sellerInfoAddr);
         // endregion Seller info
 
@@ -189,18 +204,28 @@ if ($params['BILLBY_HEADER']) {
     if ($dateValue instanceof \Bitrix\Main\Type\Date || $dateValue instanceof \Bitrix\Main\Type\DateTime) {
         $dateValue = ToLower(FormatDate('d F Y', $dateValue->getTimestamp()));
         $yearPostfix = Loc::getMessage('SALE_HPS_BILLBY_YEAR_POSTFIX');
-        if (!empty($yearPostfix))
+        if (!empty($yearPostfix)) {
             $dateValue .= $yearPostfix;
+        }
         unset($yearPostfix);
-    } else if (is_string($dateValue)) {
-        $timeStampValue = MakeTimeStamp($dateValue);
-        if ($timeStampValue !== false)
-            $dateValue = ToLower(FormatDate('d F Y', $timeStampValue));
-        unset($timeStampValue);
+    } else {
+        if (is_string($dateValue)) {
+            $timeStampValue = MakeTimeStamp($dateValue);
+            if ($timeStampValue !== false) {
+                $dateValue = ToLower(FormatDate('d F Y', $timeStampValue));
+            }
+            unset($timeStampValue);
+        }
     }
     $pdf->SetFont($fontFamily, 'B', $fontSize * 1.6);
     $billNo_tmp = CSalePdf::prepareToPdf(
-        $params['BILLBY_HEADER'] . ' ' . Loc::getMessage('SALE_HPS_BILLBY_SELLER_TITLE', array('#PAYMENT_NUM#' => $params["ACCOUNT_NUMBER"], '#PAYMENT_DATE#' => $dateValue))
+        $params['BILLBY_HEADER'] . ' ' . Loc::getMessage(
+            'SALE_HPS_BILLBY_SELLER_TITLE',
+            array(
+                '#PAYMENT_NUM#' => $params["ACCOUNT_NUMBER"],
+                '#PAYMENT_DATE#' => $dateValue
+            )
+        )
     );
 
     $billNo_width = $pdf->GetStringWidth($billNo_tmp);
@@ -216,8 +241,23 @@ if ($params["BILLBY_ORDER_SUBJECT"]) {
 
 if ($params["PAYMENT_DATE_PAY_BEFORE"]) {
     $pdf->Cell($width / 2 - $billNo_width / 2 - 2, $lineHeight, '');
-    $pdf->MultiCell(0, $lineHeight, CSalePdf::prepareToPdf(
-        Loc::getMessage('SALE_HPS_BILLBY_SELLER_DATE_END', array('#PAYMENT_DATE_END#' => ConvertDateTime($params["PAYMENT_DATE_PAY_BEFORE"], FORMAT_DATE) ?: $params["PAYMENT_DATE_PAY_BEFORE"]))), 0, 'L');
+    $pdf->MultiCell(
+        0,
+        $lineHeight,
+        CSalePdf::prepareToPdf(
+            Loc::getMessage(
+                'SALE_HPS_BILLBY_SELLER_DATE_END',
+                array(
+                    '#PAYMENT_DATE_END#' => ConvertDateTime(
+                        $params["PAYMENT_DATE_PAY_BEFORE"],
+                        FORMAT_DATE
+                    ) ?: $params["PAYMENT_DATE_PAY_BEFORE"]
+                )
+            )
+        ),
+        0,
+        'L'
+    );
 }
 
 $pdf->Ln();
@@ -231,18 +271,21 @@ if ($params['BILLBY_PAYER_SHOW'] == 'Y') {
     }
     $buyerInfoName = Loc::getMessage('SALE_HPS_BILLBY_BUYER_TITLE') . ':';
     if ($params["BUYER_PERSON_COMPANY_NAME"]) {
-        if (!empty($buyerInfoName))
+        if (!empty($buyerInfoName)) {
             $buyerInfoName .= ' ';
+        }
         $buyerInfoName .= $params["BUYER_PERSON_COMPANY_NAME"];
     }
-    if (!empty($buyerInfoName))
+    if (!empty($buyerInfoName)) {
         $buyerInfoRows[] = $buyerInfoName;
+    }
     unset($buyerInfoName);
     $buyerInfoTaxId = '';
     if ($params['BUYER_PERSON_COMPANY_INN']) {
         $buyerInfoTaxId .= Loc::getMessage('SALE_HPS_BILLBY_INN') . ': ' . $params['BUYER_PERSON_COMPANY_INN'];
-        if (!empty($buyerInfoTaxId))
+        if (!empty($buyerInfoTaxId)) {
             $buyerInfoRows[] = $buyerInfoTaxId;
+        }
     }
     unset($buyerInfoTaxId);
     $buyerInfoBank = '';
@@ -252,10 +295,11 @@ if ($params['BILLBY_PAYER_SHOW'] == 'Y') {
         $buyerBankCity = '';
         if ($params["BUYER_PERSON_COMPANY_BANK_CITY"]) {
             $buyerBankCity = $params["BUYER_PERSON_COMPANY_BANK_CITY"];
-            if (is_array($buyerBankCity))
+            if (is_array($buyerBankCity)) {
                 $buyerBankCity = implode(', ', $buyerBankCity);
-            else
+            } else {
                 $buyerBankCity = str_replace(array("\r\n", "\n", "\r"), ', ', strval($buyerBankCity));
+            }
         }
         $buyerBank = sprintf(
             "%s %s",
@@ -273,59 +317,73 @@ if ($params['BILLBY_PAYER_SHOW'] == 'Y') {
     }
     if (!empty($buyerRs)) {
         $buyerRsPrefix = Loc::getMessage('SALE_HPS_BILLBY_SELLER_ACC_ABBR');
-        if (!empty($buyerRsPrefix))
+        if (!empty($buyerRsPrefix)) {
             $buyerRs = $buyerRsPrefix . ' ' . $buyerRs;
+        }
         unset($buyerRsPrefix);
         $buyerInfoBank .= $buyerRs;
     }
     unset($buyerRs);
     if (!empty($buyerBank)) {
-        if (!empty($buyerInfoBank))
+        if (!empty($buyerInfoBank)) {
             $buyerInfoBank .= ', ';
+        }
         $buyerInfoBank .= $buyerBank;
     }
     unset($buyerBank);
     if (!empty($params['BUYER_PERSON_COMPANY_BANK_BIC'])) {
-        if (!empty($buyerInfoBank))
+        if (!empty($buyerInfoBank)) {
             $buyerInfoBank .= ', ';
-        $buyerInfoBank .= Loc::getMessage('SALE_HPS_BILLBY_SELLER_BANK_BIK') . ' ' . $params['BUYER_PERSON_COMPANY_BANK_BIC'];
+        }
+        $buyerInfoBank .= Loc::getMessage(
+                'SALE_HPS_BILLBY_SELLER_BANK_BIK'
+            ) . ' ' . $params['BUYER_PERSON_COMPANY_BANK_BIC'];
     }
-    if (!empty($buyerInfoBank))
+    if (!empty($buyerInfoBank)) {
         $buyerInfoRows[] = $buyerInfoBank;
+    }
     unset($buyerInfoBank);
     $buyerInfoAddr = '';
     if ($params['BUYER_PERSON_COMPANY_ADDRESS']) {
         $buyerAddr = $params['BUYER_PERSON_COMPANY_ADDRESS'];
-        if (is_array($buyerAddr))
+        if (is_array($buyerAddr)) {
             $buyerAddr = implode(', ', $buyerAddr);
-        else
+        } else {
             $buyerAddr = str_replace(array("\r\n", "\n", "\r"), ', ', strval($buyerAddr));
-        if (!empty($buyerAddr))
+        }
+        if (!empty($buyerAddr)) {
             $buyerInfoAddr .= Loc::getMessage('SALE_HPS_BILLBY_ADDR_TITLE') . ': ' . $buyerAddr;
+        }
     }
     if ($params["BUYER_PERSON_COMPANY_PHONE"]) {
-        if (!empty($buyerInfoAddr))
+        if (!empty($buyerInfoAddr)) {
             $buyerInfoAddr .= ', ';
+        }
         $phoneTitle = Loc::getMessage('SALE_HPS_BILLBY_PHONE_TITLE');
-        if (!empty($phoneTitle))
+        if (!empty($phoneTitle)) {
             $buyerInfoAddr .= $phoneTitle . ' ';
+        }
         $buyerInfoAddr .= $params["BUYER_PERSON_COMPANY_PHONE"];
     }
     if ($params["BUYER_PERSON_COMPANY_FAX"]) {
-        if (!empty($buyerInfoAddr))
+        if (!empty($buyerInfoAddr)) {
             $buyerInfoAddr .= ', ';
+        }
         $phoneTitle = Loc::getMessage('SALE_HPS_BILLBY_FAX_TITLE');
-        if (!empty($phoneTitle))
+        if (!empty($phoneTitle)) {
             $buyerInfoAddr .= $phoneTitle . ' ';
+        }
         $buyerInfoAddr .= $params["BUYER_PERSON_COMPANY_FAX"];
     }
     if ($params["BUYER_PERSON_COMPANY_NAME_CONTACT"]) {
-        if (!empty($buyerInfoAddr))
+        if (!empty($buyerInfoAddr)) {
             $buyerInfoAddr .= ', ';
+        }
         $buyerInfoAddr .= $params["BUYER_PERSON_COMPANY_NAME_CONTACT"];
     }
-    if (!empty($buyerInfoAddr))
+    if (!empty($buyerInfoAddr)) {
         $buyerInfoRows[] = $buyerInfoAddr;
+    }
     unset($buyerInfoAddr);
     // endregion Buyer info
 
@@ -353,14 +411,17 @@ $currency = strip_tags($currency);
 
 // Precision
 $currencyFormat = CCurrencyLang::GetFormatDescription($params['CURRENCY']);
-if ($currencyFormat === false)
+if ($currencyFormat === false) {
     $currencyFormat = CCurrencyLang::GetDefaultValues();
+}
 $currencyPrecision = (int)$currencyFormat['DECIMALS'];
-if ($currencyPrecision <= 0)
+if ($currencyPrecision <= 0) {
     $currencyPrecision = 2;
+}
 $salePrecision = (int)Bitrix\Main\Config\Option::get('sale', 'value_precision', 2);
-if ($salePrecision <= 0)
+if ($salePrecision <= 0) {
     $salePrecision = 2;
+}
 $salePrecision = min($salePrecision, SALE_VALUE_PRECISION);
 $precision = min($salePrecision, $currencyPrecision);
 
@@ -388,9 +449,12 @@ if ($params['USER_COLUMNS']) {
     }
 }
 
-uasort($arCols, function ($a, $b) {
-    return ($a['SORT'] < $b['SORT']) ? -1 : 1;
-});
+uasort(
+    $arCols,
+    function ($a, $b) {
+        return ($a['SORT'] < $b['SORT']) ? -1 : 1;
+    }
+);
 $arColumnKeys = array_keys($arCols);
 $columnCount = count($arColumnKeys);
 
@@ -413,10 +477,13 @@ if (count($params['BASKET_ITEMS']) > 0) {
 
     foreach ($params['BASKET_ITEMS'] as $basketItem) {
         $productName = $basketItem["NAME"];
-        if ($productName == "OrderDelivery")
+        if ($productName == "OrderDelivery") {
             $productName = Loc::getMessage('SALE_HPS_BILLBY_DELIVERY');
-        else if ($productName == "OrderDiscount")
-            $productName = Loc::getMessage('SALE_HPS_BILLBY_DISCOUNT');
+        } else {
+            if ($productName == "OrderDiscount") {
+                $productName = Loc::getMessage('SALE_HPS_BILLBY_DISCOUNT');
+            }
+        }
 
         if ($basketItem['IS_VAT_IN_PRICE']) {
             $basketItemTotal = doubleval($basketItem['PRICE'] * $basketItem['QUANTITY']);
@@ -457,11 +524,17 @@ if (count($params['BASKET_ITEMS']) > 0) {
                     $arCols[$columnId]['IS_DIGIT'] = true;
                     break;
                 case 'MEASURE':
-                    $data = CSalePdf::prepareToPdf($basketItem["MEASURE_NAME"] ? $basketItem["MEASURE_NAME"] : Loc::getMessage('SALE_HPS_BILLBY_BASKET_MEASURE_DEFAULT'));
+                    $data = CSalePdf::prepareToPdf(
+                        $basketItem["MEASURE_NAME"] ? $basketItem["MEASURE_NAME"] : Loc::getMessage(
+                            'SALE_HPS_BILLBY_BASKET_MEASURE_DEFAULT'
+                        )
+                    );
                     $arCols[$columnId]['IS_DIGIT'] = true;
                     break;
                 case 'PRICE':
-                    $data = CSalePdf::prepareToPdf(SaleFormatCurrency($basketItem['PRICE'], $basketItem['CURRENCY'], true));
+                    $data = CSalePdf::prepareToPdf(
+                        SaleFormatCurrency($basketItem['PRICE'], $basketItem['CURRENCY'], true)
+                    );
                     $arCols[$columnId]['IS_DIGIT'] = true;
                     break;
                 case 'SUM':
@@ -469,17 +542,21 @@ if (count($params['BASKET_ITEMS']) > 0) {
                     $arCols[$columnId]['IS_DIGIT'] = true;
                     break;
                 case 'VAT_RATE':
-                    if ($basketItem['VAT_RATE'] == 0.0)
+                    if ($basketItem['VAT_RATE'] == 0.0) {
                         $data = CSalePdf::prepareToPdf(Loc::getMessage('SALE_HPS_BILLBY_TOTAL_VAT_RATE_NO'));
-                    else
+                    } else {
                         $data = CSalePdf::prepareToPdf(roundEx($basketItem['VAT_RATE'] * 100, $precision) . "%");
+                    }
                     $arCols[$columnId]['IS_DIGIT'] = true;
                     break;
                 case 'VAT_SUM':
-                    if ($basketItem['VAT_RATE'] == 0.0)
+                    if ($basketItem['VAT_RATE'] == 0.0) {
                         $data = CSalePdf::prepareToPdf(Loc::getMessage('SALE_HPS_BILLBY_TOTAL_VAT_SUM_NO'));
-                    else
-                        $data = CSalePdf::prepareToPdf(SaleFormatCurrency($basketItemVatSum, $basketItem['CURRENCY'], true));
+                    } else {
+                        $data = CSalePdf::prepareToPdf(
+                            SaleFormatCurrency($basketItemVatSum, $basketItem['CURRENCY'], true)
+                        );
+                    }
                     $arCols[$columnId]['IS_DIGIT'] = true;
                     break;
                 case 'TOTAL':
@@ -488,23 +565,28 @@ if (count($params['BASKET_ITEMS']) > 0) {
                     break;
                 default:
                     if (preg_match('/[^0-9 ,\.]/', $basketItem[$columnId]) === 0) {
-                        if (!array_key_exists('IS_DIGIT', $arCols[$columnId]))
+                        if (!array_key_exists('IS_DIGIT', $arCols[$columnId])) {
                             $arCols[$columnId]['IS_DIGIT'] = true;
+                        }
                     } else {
                         $arCols[$columnId]['IS_DIGIT'] = false;
                     }
                     $data = ($basketItem[$columnId]) ? CSalePdf::prepareToPdf($basketItem[$columnId]) : '';
             }
-            if ($data !== null)
+            if ($data !== null) {
                 $arCells[$n][$columnId] = $data;
+            }
         }
 
         $arProps[$n] = array();
         foreach ($basketItem['PROPS'] as $basketPropertyItem) {
-            if ($basketPropertyItem['CODE'] == 'CATALOG.XML_ID' || $basketPropertyItem['CODE'] == 'PRODUCT.XML_ID')
+            if ($basketPropertyItem['CODE'] == 'CATALOG.XML_ID' || $basketPropertyItem['CODE'] == 'PRODUCT.XML_ID') {
                 continue;
+            }
 
-            $arProps[$n][] = $pdf::prepareToPdf(sprintf("%s: %s", $basketPropertyItem["NAME"], $basketPropertyItem["VALUE"]));
+            $arProps[$n][] = $pdf::prepareToPdf(
+                sprintf("%s: %s", $basketPropertyItem["NAME"], $basketPropertyItem["VALUE"])
+            );
         }
 
         $sum += roundEx(doubleval($basketItem['PRICE'] * $basketItem['QUANTITY']), $precision);
@@ -516,8 +598,9 @@ if (count($params['BASKET_ITEMS']) > 0) {
 
     if ($params['DELIVERY_PRICE'] > 0) {
         $sDeliveryItem = Loc::getMessage('SALE_HPS_BILLBY_DELIVERY');
-        if ($params['DELIVERY_NAME'])
+        if ($params['DELIVERY_NAME']) {
             $sDeliveryItem .= sprintf(" (%s)", $params['DELIVERY_NAME']);
+        }
 
         $basketItemTotal = $params['DELIVERY_PRICE'];
 
@@ -550,7 +633,9 @@ if (count($params['BASKET_ITEMS']) > 0) {
                     $arCols[$columnId]['IS_DIGIT'] = true;
                     break;
                 case 'PRICE':
-                    $data = CSalePdf::prepareToPdf(SaleFormatCurrency($params['DELIVERY_PRICE'], $params['CURRENCY'], true));
+                    $data = CSalePdf::prepareToPdf(
+                        SaleFormatCurrency($params['DELIVERY_PRICE'], $params['CURRENCY'], true)
+                    );
                     $arCols[$columnId]['IS_DIGIT'] = true;
                     break;
                 case 'SUM':
@@ -558,17 +643,21 @@ if (count($params['BASKET_ITEMS']) > 0) {
                     $arCols[$columnId]['IS_DIGIT'] = true;
                     break;
                 case 'VAT_RATE':
-                    if ($vat == 0.0)
+                    if ($vat == 0.0) {
                         $data = CSalePdf::prepareToPdf(Loc::getMessage('SALE_HPS_BILLBY_TOTAL_VAT_RATE_NO'));
-                    else
+                    } else {
                         $data = CSalePdf::prepareToPdf(roundEx($vat * 100, $precision) . "%");
+                    }
                     $arCols[$columnId]['IS_DIGIT'] = true;
                     break;
                 case 'VAT_SUM':
-                    if ($vat == 0.0)
+                    if ($vat == 0.0) {
                         $data = CSalePdf::prepareToPdf(Loc::getMessage('SALE_HPS_BILLBY_TOTAL_VAT_SUM_NO'));
-                    else
-                        $data = CSalePdf::prepareToPdf(SaleFormatCurrency($basketItemVatSum, $params['CURRENCY'], true));
+                    } else {
+                        $data = CSalePdf::prepareToPdf(
+                            SaleFormatCurrency($basketItemVatSum, $params['CURRENCY'], true)
+                        );
+                    }
                     $arCols[$columnId]['IS_DIGIT'] = true;
                     break;
                 case 'TOTAL':
@@ -578,8 +667,9 @@ if (count($params['BASKET_ITEMS']) > 0) {
                 default:
                     $data = '';
             }
-            if ($data !== null)
+            if ($data !== null) {
                 $arCells[$n][$columnId] = $data;
+            }
         }
 
         $sum += roundEx(doubleval($params['DELIVERY_PRICE']), $precision);
@@ -607,10 +697,11 @@ if (count($params['BASKET_ITEMS']) > 0) {
                     $isDigit = true;
                     break;
                 case 'VAT_SUM':
-                    if ($totalVatSum == 0.0)
+                    if ($totalVatSum == 0.0) {
                         $value = CSalePdf::prepareToPdf(Loc::getMessage('SALE_HPS_BILLBY_TOTAL_VAT_SUM_NO'));
-                    else
+                    } else {
                         $value = CSalePdf::prepareToPdf(SaleFormatCurrency($totalVatSum, $params['CURRENCY'], true));
+                    }
                     $isDigit = true;
                     break;
                 case 'TOTAL':
@@ -620,21 +711,28 @@ if (count($params['BASKET_ITEMS']) > 0) {
                 default:
                     $skip = true;
             }
-            if (!$skip)
+            if (!$skip) {
                 $totalRowValues[$colNum] = array('value' => $value, 'isDigit' => $isDigit);
+            }
         }
         unset($skip, $value, $isDigit);
         $totalTitleColIndex = (empty($totalRowValues) ? 0 : (int)min(array_keys($totalRowValues))) - 1;
-        if ($totalTitleColIndex >= 0)
-            $totalRowValues[$totalTitleColIndex] = array('value' => CSalePdf::prepareToPdf(Loc::getMessage('SALE_HPS_BILLBY_TOTAL_SUM')));
+        if ($totalTitleColIndex >= 0) {
+            $totalRowValues[$totalTitleColIndex] = array(
+                'value' => CSalePdf::prepareToPdf(
+                    Loc::getMessage('SALE_HPS_BILLBY_TOTAL_SUM')
+                )
+            );
+        }
         if (!empty($totalRowValues)) {
             $showTotalRow = true;
             $arCells[++$n] = array();
             for ($i = 0; $i < $columnCount; $i++) {
                 if (isset($totalRowValues[$i])) {
                     $arCells[$n][$arColumnKeys[$i]] = $totalRowValues[$i]['value'];
-                    if (isset($totalRowValues[$i]['isDigit']))
+                    if (isset($totalRowValues[$i]['isDigit'])) {
                         $arCols[$arColumnKeys[$i]]['IS_DIGIT'] = $totalRowValues[$i]['isDigit'];
+                    }
                 } else {
                     $arCells[$n][$arColumnKeys[$i]] = null;
                 }
@@ -649,16 +747,24 @@ if (count($params['BASKET_ITEMS']) > 0) {
                 if (isset($tax['CODE']) && $tax['CODE'] !== 'VAT') {
                     $totalRowIsLast = false;
                     $arCells[++$n] = array();
-                    for ($i = 0; $i < $columnCount; $i++)
+                    for ($i = 0; $i < $columnCount; $i++) {
                         $arCells[$n][$arColumnKeys[$i]] = null;
+                    }
 
-                    $arCells[$n][$arColumnKeys[$columnCount - 2]] = CSalePdf::prepareToPdf(sprintf(
-                        "%s%s%s:",
-                        ($tax["IS_IN_PRICE"] == "Y") ? Loc::getMessage('SALE_HPS_BILLBY_INCLUDING') : "",
-                        $tax["TAX_NAME"],
-                        ($vat <= 0 && $tax["IS_PERCENT"] == "Y") ? sprintf(' (%s%%)', roundEx($tax["VALUE"], $precision)) : ""
-                    ));
-                    $arCells[$n][$arColumnKeys[$columnCount - 1]] = CSalePdf::prepareToPdf(SaleFormatCurrency($tax["VALUE_MONEY"], $params['CURRENCY'], true));
+                    $arCells[$n][$arColumnKeys[$columnCount - 2]] = CSalePdf::prepareToPdf(
+                        sprintf(
+                            "%s%s%s:",
+                            ($tax["IS_IN_PRICE"] == "Y") ? Loc::getMessage('SALE_HPS_BILLBY_INCLUDING') : "",
+                            $tax["TAX_NAME"],
+                            ($vat <= 0 && $tax["IS_PERCENT"] == "Y") ? sprintf(
+                                ' (%s%%)',
+                                roundEx($tax["VALUE"], $precision)
+                            ) : ""
+                        )
+                    );
+                    $arCells[$n][$arColumnKeys[$columnCount - 1]] = CSalePdf::prepareToPdf(
+                        SaleFormatCurrency($tax["VALUE_MONEY"], $params['CURRENCY'], true)
+                    );
                 }
             }
         }
@@ -666,37 +772,60 @@ if (count($params['BASKET_ITEMS']) > 0) {
         if ($params['SUM_PAID'] > 0) {
             $totalRowIsLast = false;
             $arCells[++$n] = array();
-            for ($i = 0; $i < $columnCount; $i++)
+            for ($i = 0; $i < $columnCount; $i++) {
                 $arCells[$n][$arColumnKeys[$i]] = null;
+            }
 
-            $arCells[$n][$arColumnKeys[$columnCount - 2]] = CSalePdf::prepareToPdf(Loc::getMessage('SALE_HPS_BILLBY_TOTAL_PAID'));
-            $arCells[$n][$arColumnKeys[$columnCount - 1]] = CSalePdf::prepareToPdf(SaleFormatCurrency($params['SUM_PAID'], $params['CURRENCY'], true));
+            $arCells[$n][$arColumnKeys[$columnCount - 2]] = CSalePdf::prepareToPdf(
+                Loc::getMessage('SALE_HPS_BILLBY_TOTAL_PAID')
+            );
+            $arCells[$n][$arColumnKeys[$columnCount - 1]] = CSalePdf::prepareToPdf(
+                SaleFormatCurrency($params['SUM_PAID'], $params['CURRENCY'], true)
+            );
         }
 
         if ($params['DISCOUNT_PRICE'] > 0) {
             $totalRowIsLast = false;
             $arCells[++$n] = array();
-            for ($i = 0; $i < $columnCount; $i++)
+            for ($i = 0; $i < $columnCount; $i++) {
                 $arCells[$n][$arColumnKeys[$i]] = null;
+            }
 
-            $arCells[$n][$arColumnKeys[$columnCount - 2]] = CSalePdf::prepareToPdf(Loc::getMessage('SALE_HPS_BILLBY_TOTAL_DISCOUNT'));
-            $arCells[$n][$arColumnKeys[$columnCount - 1]] = CSalePdf::prepareToPdf(SaleFormatCurrency($params['DISCOUNT_PRICE'], $params['CURRENCY'], true));
+            $arCells[$n][$arColumnKeys[$columnCount - 2]] = CSalePdf::prepareToPdf(
+                Loc::getMessage('SALE_HPS_BILLBY_TOTAL_DISCOUNT')
+            );
+            $arCells[$n][$arColumnKeys[$columnCount - 1]] = CSalePdf::prepareToPdf(
+                SaleFormatCurrency($params['DISCOUNT_PRICE'], $params['CURRENCY'], true)
+            );
         }
 
         if (!$totalRowIsLast) {
-            $arCells[$totalRowIndex][$arColumnKeys[$totalTitleColIndex]] = CSalePdf::prepareToPdf(Loc::getMessage('SALE_HPS_BILLBY_SUBTOTAL'));
+            $arCells[$totalRowIndex][$arColumnKeys[$totalTitleColIndex]] = CSalePdf::prepareToPdf(
+                Loc::getMessage('SALE_HPS_BILLBY_SUBTOTAL')
+            );
 
             $arCells[++$n] = array();
-            for ($i = 0; $i < $columnCount; $i++)
+            for ($i = 0; $i < $columnCount; $i++) {
                 $arCells[$n][$arColumnKeys[$i]] = null;
+            }
 
-            $arCells[$n][$arColumnKeys[$columnCount - 2]] = CSalePdf::prepareToPdf(Loc::getMessage('SALE_HPS_BILLBY_TOTAL_SUM'));
-            $arCells[$n][$arColumnKeys[$columnCount - 1]] = CSalePdf::prepareToPdf(SaleFormatCurrency($params['SUM'], $params['CURRENCY'], true));
+            $arCells[$n][$arColumnKeys[$columnCount - 2]] = CSalePdf::prepareToPdf(
+                Loc::getMessage('SALE_HPS_BILLBY_TOTAL_SUM')
+            );
+            $arCells[$n][$arColumnKeys[$columnCount - 1]] = CSalePdf::prepareToPdf(
+                SaleFormatCurrency($params['SUM'], $params['CURRENCY'], true)
+            );
         }
     }
 
     $pdf->SetFont($fontFamily, 'B', $fontSize);
-    $rowsInfo = $pdf->calculateRowsWidth($arCols, $arCells, $totalRowIndex > 0 ? $totalRowIndex : $cntBasketItem, $width, 3);
+    $rowsInfo = $pdf->calculateRowsWidth(
+        $arCols,
+        $arCells,
+        $totalRowIndex > 0 ? $totalRowIndex : $cntBasketItem,
+        $width,
+        3
+    );
     $pdf->SetFont($fontFamily, '', $fontSize);
     $arRowsWidth = $rowsInfo['ROWS_WIDTH'];
     $arRowsContentWidth = $rowsInfo['ROWS_CONTENT_WIDTH'];
@@ -712,8 +841,9 @@ do {
         list($string, $arCols[$columnId]['NAME']) = $pdf->splitString($column['NAME'], $arRowsWidth[$columnId]);
         $pdf->Cell($arRowsWidth[$columnId], $lineHeight, $string, 0, 0, 'C');
 
-        if ($arCols[$columnId]['NAME'])
+        if ($arCols[$columnId]['NAME']) {
             $newLine = true;
+        }
 
         $i = array_search($columnId, $arColumnKeys);
         ${"x" . ($i + 1)} = $pdf->GetX();
@@ -760,21 +890,31 @@ for ($n = 1; $n <= $rowsCnt; $n++) {
         $newLine = false;
         foreach ($arCols as $columnId => $column) {
             $string = '';
-            if (!is_null($arCells[$n][$columnId]))
-                list($string, $arCells[$n][$columnId]) = $pdf->splitString($arCells[$n][$columnId], $arRowsContentWidth_tmp[$columnId]);
+            if (!is_null($arCells[$n][$columnId])) {
+                list($string, $arCells[$n][$columnId]) = $pdf->splitString(
+                    $arCells[$n][$columnId],
+                    $arRowsContentWidth_tmp[$columnId]
+                );
+            }
 
             $rowWidth = $arRowsWidth_tmp[$columnId];
 
-            if (in_array($columnId, array('QUANTITY', 'MEASURE', 'PRICE', 'SUM', 'VAT_RATE', 'VAT_SUM', 'TOTAL'), true)) {
+            if (in_array(
+                $columnId,
+                array('QUANTITY', 'MEASURE', 'PRICE', 'SUM', 'VAT_RATE', 'VAT_SUM', 'TOTAL'),
+                true
+            )) {
                 if (!is_null($arCells[$n][$columnId])) {
                     $pdf->Cell($rowWidth, $lineHeight, $string, 0, 0, 'R');
                 }
             } elseif ($columnId == 'NUMBER') {
-                if (!is_null($arCells[$n][$columnId]))
+                if (!is_null($arCells[$n][$columnId])) {
                     $pdf->Cell($rowWidth, $lineHeight, ($l == 0) ? $string : '', 0, 0, 'C');
+                }
             } elseif ($columnId == 'NAME') {
-                if (!is_null($arCells[$n][$columnId]))
+                if (!is_null($arCells[$n][$columnId])) {
                     $pdf->Cell($rowWidth, $lineHeight, $string, 0, 0, ($n > $cntBasketItem) ? 'R' : '');
+                }
             } else {
                 if (!is_null($arCells[$n][$columnId])) {
                     $pdf->Cell($rowWidth, $lineHeight, $string, 0, 0, ($n > $cntBasketItem) ? 'R' : 'L');
@@ -786,8 +926,9 @@ for ($n = 1; $n <= $rowsCnt; $n++) {
                 ${'x' . ($pos + 1)} = $pdf->GetX();
             }
 
-            if ($arCells[$n][$columnId])
+            if ($arCells[$n][$columnId]) {
                 $newLine = true;
+            }
         }
 
         $pdf->Ln();
@@ -802,12 +943,14 @@ for ($n = 1; $n <= $rowsCnt; $n++) {
                 $line = 0;
                 foreach ($arCols as $columnId => $caption) {
                     $i++;
-                    if ($i == $columnCount)
+                    if ($i == $columnCount) {
                         $line = 1;
-                    if ($columnId == 'NAME')
+                    }
+                    if ($columnId == 'NAME') {
                         $pdf->Cell($arRowsWidth_tmp[$columnId], 12, $property, 0, $line);
-                    else
+                    } else {
                         $pdf->Cell($arRowsWidth_tmp[$columnId], 12, '', 0, $line);
+                    }
                 }
             }
         }
@@ -815,8 +958,9 @@ for ($n = 1; $n <= $rowsCnt; $n++) {
 
     $y5 = $pdf->GetY();
 
-    if ($y0 > $y5)
+    if ($y0 > $y5) {
         $y0 = $margin['top'];
+    }
 
     $startIndex = ($n > $cntBasketItem) ? (($showTotalRow && $n === $totalRowIndex) ? ($totalTitleColIndex >= 0 ? $totalTitleColIndex + 1 : 0) : $columnCount - 1) : 0;
     for ($i = $startIndex; $i <= $columnCount; $i++) {
@@ -834,10 +978,11 @@ if ($params['BILLBY_TOTAL_SHOW'] == 'Y') {
 
     $pdf->Ln(5);
     $text = Loc::getMessage('SALE_HPS_BILLBY_TOTAL_VAT') . ': ';
-    if ($inWords)
+    if ($inWords) {
         $text .= Number2Word_Rus(roundEx($totalVatSum, $precision), "Y", $params['CURRENCY']);
-    else
+    } else {
         $text .= SaleFormatCurrency(roundEx($totalVatSum, $precision), $params['CURRENCY'], false);
+    }
     unset($totalVatSum);
     if (!empty($text)) {
         $text = CSalePdf::prepareToPdf($text);
@@ -850,10 +995,11 @@ if ($params['BILLBY_TOTAL_SHOW'] == 'Y') {
     $pdf->Ln($lineHeight);
 
     $text = Loc::getMessage('SALE_HPS_BILLBY_TOTAL_SUM_WITH_VAT') . ': ';
-    if ($inWords)
+    if ($inWords) {
         $text .= Number2Word_Rus($totalSumWithVat, "Y", $params['CURRENCY']);
-    else
+    } else {
         $text .= SaleFormatCurrency($totalSumWithVat, $params['CURRENCY'], false);
+    }
 
     if (!empty($text)) {
         $text = CSalePdf::prepareToPdf($text);
@@ -873,19 +1019,37 @@ if ($params["BILLBY_COMMENT1"] || $params["BILLBY_COMMENT2"]) {
     $pdf->SetFont($fontFamily, '', $fontSize);
 
     if ($params["BILLBY_COMMENT1"]) {
-        $pdf->Write($lineHeight, HTMLToTxt(preg_replace(
-            array('#</div>\s*<div[^>]*>#i', '#</?div>#i'), array('<br>', '<br>'),
-            CSalePdf::prepareToPdf($params["BILLBY_COMMENT1"])
-        ), '', array(), 0));
+        $pdf->Write(
+            $lineHeight,
+            HTMLToTxt(
+                preg_replace(
+                    array('#</div>\s*<div[^>]*>#i', '#</?div>#i'),
+                    array('<br>', '<br>'),
+                    CSalePdf::prepareToPdf($params["BILLBY_COMMENT1"])
+                ),
+                '',
+                array(),
+                0
+            )
+        );
         $pdf->Ln();
         $pdf->Ln();
     }
 
     if ($params["BILLBY_COMMENT2"]) {
-        $pdf->Write($lineHeight, HTMLToTxt(preg_replace(
-            array('#</div>\s*<div[^>]*>#i', '#</?div>#i'), array('<br>', '<br>'),
-            CSalePdf::prepareToPdf($params["BILLBY_COMMENT2"])
-        ), '', array(), 0));
+        $pdf->Write(
+            $lineHeight,
+            HTMLToTxt(
+                preg_replace(
+                    array('#</div>\s*<div[^>]*>#i', '#</?div>#i'),
+                    array('<br>', '<br>'),
+                    CSalePdf::prepareToPdf($params["BILLBY_COMMENT2"])
+                ),
+                '',
+                array(),
+                0
+            )
+        );
         $pdf->Ln();
         $pdf->Ln();
     }
@@ -907,13 +1071,16 @@ if ($params['BILLBY_SIGN_SHOW'] == 'Y') {
                     $stampWidth = $ratio * $stampWidth;
                 }
 
-                if ($pdf->GetY() + $stampHeight > $pageHeight)
+                if ($pdf->GetY() + $stampHeight > $pageHeight) {
                     $pdf->AddPage();
+                }
 
                 $pdf->Image(
                     $params['BILLBY_PATH_TO_STAMP'],
-                    $margin['left'] + 40, $pdf->GetY(),
-                    $stampWidth, $stampHeight
+                    $margin['left'] + 40,
+                    $pdf->GetY(),
+                    $stampWidth,
+                    $stampHeight
                 );
             }
         }
@@ -937,8 +1104,9 @@ if ($params['BILLBY_SIGN_SHOW'] == 'Y') {
         }
 
         $sellerDirPos = CSalePdf::prepareToPdf($params["SELLER_COMPANY_DIRECTOR_POSITION"]);
-        if ($isDirSign && $pdf->GetStringWidth($sellerDirPos) <= 160)
+        if ($isDirSign && $pdf->GetStringWidth($sellerDirPos) <= 160) {
             $pdf->SetY($pdf->GetY() + max($signHeight, $lineHeight * 2) - $lineHeight);
+        }
 
         $pdf->SetFont($fontFamily, 'B', $fontSize);
         $pdf->MultiCell(150, $lineHeight, $sellerDirPos, 0, 'L');
@@ -948,8 +1116,10 @@ if ($params['BILLBY_SIGN_SHOW'] == 'Y') {
         if ($isDirSign) {
             $pdf->Image(
                 $params['SELLER_COMPANY_DIR_SIGN'],
-                $pdf->GetX() + 80 - $signWidth / 2, $pdf->GetY() - $signHeight + $lineHeight,
-                $signWidth, $signHeight
+                $pdf->GetX() + 80 - $signWidth / 2,
+                $pdf->GetY() - $signHeight + $lineHeight,
+                $signWidth,
+                $signHeight
             );
         }
 
@@ -957,8 +1127,9 @@ if ($params['BILLBY_SIGN_SHOW'] == 'Y') {
         $pdf->Cell(160, $lineHeight, '');
         $x2 = $pdf->GetX();
 
-        if ($params["SELLER_COMPANY_DIRECTOR_NAME"])
+        if ($params["SELLER_COMPANY_DIRECTOR_NAME"]) {
             $pdf->Write($lineHeight, CSalePdf::prepareToPdf('(' . $params["SELLER_COMPANY_DIRECTOR_NAME"] . ')'));
+        }
         $pdf->Ln();
 
         $y2 = $pdf->GetY();
@@ -982,8 +1153,9 @@ if ($params['BILLBY_SIGN_SHOW'] == 'Y') {
         }
 
         $sellerAccPos = CSalePdf::prepareToPdf($params["SELLER_COMPANY_ACCOUNTANT_POSITION"]);
-        if ($isAccSign && $pdf->GetStringWidth($sellerAccPos) <= 160)
+        if ($isAccSign && $pdf->GetStringWidth($sellerAccPos) <= 160) {
             $pdf->SetY($pdf->GetY() + max($signHeight, $lineHeight * 2) - $lineHeight);
+        }
         $pdf->SetFont($fontFamily, 'B', $fontSize);
         $pdf->MultiCell(150, $lineHeight, $sellerAccPos, 0, 'L');
         $pdf->SetFont($fontFamily, '', $fontSize);
@@ -992,8 +1164,10 @@ if ($params['BILLBY_SIGN_SHOW'] == 'Y') {
         if ($isAccSign) {
             $pdf->Image(
                 $params['SELLER_COMPANY_ACC_SIGN'],
-                $pdf->GetX() + 80 - $signWidth / 2, $pdf->GetY() - $signHeight + $lineHeight,
-                $signWidth, $signHeight
+                $pdf->GetX() + 80 - $signWidth / 2,
+                $pdf->GetY() - $signHeight + $lineHeight,
+                $signWidth,
+                $signHeight
             );
         }
 
@@ -1001,8 +1175,9 @@ if ($params['BILLBY_SIGN_SHOW'] == 'Y') {
         $pdf->Cell(($params["SELLER_COMPANY_DIRECTOR_NAME"]) ? $x2 - $x1 : 160, $lineHeight, '');
         $x2 = $pdf->GetX();
 
-        if ($params["SELLER_COMPANY_ACCOUNTANT_NAME"])
+        if ($params["SELLER_COMPANY_ACCOUNTANT_NAME"]) {
             $pdf->Write($lineHeight, CSalePdf::prepareToPdf('(' . $params["SELLER_COMPANY_ACCOUNTANT_NAME"] . ')'));
+        }
         $pdf->Ln();
 
         $y2 = $pdf->GetY();
@@ -1011,19 +1186,59 @@ if ($params['BILLBY_SIGN_SHOW'] == 'Y') {
 }
 
 $dest = 'I';
-if ($_REQUEST['GET_CONTENT'] == 'Y')
+if ($_REQUEST['GET_CONTENT'] == 'Y') {
     $dest = 'S';
-else if ($_REQUEST['DOWNLOAD'] == 'Y')
-    $dest = 'D';
+} else {
+    if ($_REQUEST['DOWNLOAD'] == 'Y') {
+        $dest = 'D';
+    }
+}
 
 $fileName = sprintf(
     'Schet No %s ot %s.pdf',
     str_replace(
         array(
-            chr(0), chr(1), chr(2), chr(3), chr(4), chr(5), chr(6), chr(7), chr(8), chr(9), chr(10), chr(11),
-            chr(12), chr(13), chr(14), chr(15), chr(16), chr(17), chr(18), chr(19), chr(20), chr(21), chr(22),
-            chr(23), chr(24), chr(25), chr(26), chr(27), chr(28), chr(29), chr(30), chr(31),
-            '"', '*', '/', ':', '<', '>', '?', '\\', '|'
+            chr(0),
+            chr(1),
+            chr(2),
+            chr(3),
+            chr(4),
+            chr(5),
+            chr(6),
+            chr(7),
+            chr(8),
+            chr(9),
+            chr(10),
+            chr(11),
+            chr(12),
+            chr(13),
+            chr(14),
+            chr(15),
+            chr(16),
+            chr(17),
+            chr(18),
+            chr(19),
+            chr(20),
+            chr(21),
+            chr(22),
+            chr(23),
+            chr(24),
+            chr(25),
+            chr(26),
+            chr(27),
+            chr(28),
+            chr(29),
+            chr(30),
+            chr(31),
+            '"',
+            '*',
+            '/',
+            ':',
+            '<',
+            '>',
+            '?',
+            '\\',
+            '|'
         ),
         '_',
         strval($params["ACCOUNT_NUMBER"])

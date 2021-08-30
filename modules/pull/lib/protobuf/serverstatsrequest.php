@@ -59,8 +59,11 @@ class ServerStatsRequest extends \Protobuf\AbstractMessage
     public static function fromArray(array $values)
     {
         $message = new self();
-        $values = array_merge([
-        ], $values);
+        $values = array_merge(
+            [
+            ],
+            $values
+        );
 
         return $message;
     }
@@ -70,9 +73,11 @@ class ServerStatsRequest extends \Protobuf\AbstractMessage
      */
     public static function descriptor()
     {
-        return \google\protobuf\DescriptorProto::fromArray([
-            'name' => 'ServerStatsRequest',
-        ]);
+        return \google\protobuf\DescriptorProto::fromArray(
+            [
+                'name' => 'ServerStatsRequest',
+            ]
+        );
     }
 
     /**
@@ -120,7 +125,6 @@ class ServerStatsRequest extends \Protobuf\AbstractMessage
             : null;
 
         while ($limit === null || $stream->tell() < $limit) {
-
             if ($stream->eof()) {
                 break;
             }
@@ -150,7 +154,6 @@ class ServerStatsRequest extends \Protobuf\AbstractMessage
             $unknown = new \Protobuf\Unknown($tag, $wire, $data);
 
             $this->unknownFieldSet->add($unknown);
-
         }
     }
 
@@ -182,7 +185,9 @@ class ServerStatsRequest extends \Protobuf\AbstractMessage
     public function merge(\Protobuf\Message $message)
     {
         if (!$message instanceof \Bitrix\Pull\Protobuf\ServerStatsRequest) {
-            throw new \InvalidArgumentException(sprintf('Argument 1 passed to %s must be a %s, %s given', __METHOD__, __CLASS__, get_class($message)));
+            throw new \InvalidArgumentException(
+                sprintf('Argument 1 passed to %s must be a %s, %s given', __METHOD__, __CLASS__, get_class($message))
+            );
         }
     }
 

@@ -1,11 +1,13 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 \Bitrix\Main\Loader::includeModule('sale');
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions < "W")
+if ($saleModulePermissions < "W") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/prolog.php");
@@ -30,14 +32,30 @@ $lAdmin->InitFilter($arFilterFields);
 
 $arFilter = array();
 
-if (strlen($filter_lang) > 0 && $filter_lang != "NOT_REF") $arFilter["LID"] = Trim($filter_lang);
-if (IntVal($filter_weight_from) > 0) $arFilter["+>=WEIGHT_TO"] = IntVal($filter_weight_from);
-if (IntVal($filter_weight_to) > 0) $arFilter["+<=WEIGHT_FROM"] = IntVal($filter_weight_to);
-if (DoubleVal($filter_order_price_from) > 0) $arFilter["+>=ORDER_PRICE_TO"] = DoubleVal($filter_order_price_from);
-if (DoubleVal($filter_order_price_to) > 0) $arFilter["+<=ORDER_PRICE_FROM"] = DoubleVal($filter_order_price_to);
-if (strlen($filter_order_currency) > 0) $arFilter["ORDER_CURRENCY"] = Trim($filter_order_currency);
-if (strlen($filter_active) > 0) $arFilter["ACTIVE"] = Trim($filter_active);
-if (IntVal($filter_location) > 0) $arFilter["LOCATION"] = IntVal($filter_location);
+if ($filter_lang <> '' && $filter_lang != "NOT_REF") {
+    $arFilter["LID"] = Trim($filter_lang);
+}
+if (intval($filter_weight_from) > 0) {
+    $arFilter["+>=WEIGHT_TO"] = intval($filter_weight_from);
+}
+if (intval($filter_weight_to) > 0) {
+    $arFilter["+<=WEIGHT_FROM"] = intval($filter_weight_to);
+}
+if (DoubleVal($filter_order_price_from) > 0) {
+    $arFilter["+>=ORDER_PRICE_TO"] = DoubleVal($filter_order_price_from);
+}
+if (DoubleVal($filter_order_price_to) > 0) {
+    $arFilter["+<=ORDER_PRICE_FROM"] = DoubleVal($filter_order_price_to);
+}
+if ($filter_order_currency <> '') {
+    $arFilter["ORDER_CURRENCY"] = Trim($filter_order_currency);
+}
+if ($filter_active <> '') {
+    $arFilter["ACTIVE"] = Trim($filter_active);
+}
+if (intval($filter_location) > 0) {
+    $arFilter["LOCATION"] = intval($filter_location);
+}
 
 
 if (($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "W") {
@@ -50,13 +68,15 @@ if (($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "W") {
             false,
             array("ID")
         );
-        while ($arResult = $dbResultList->Fetch())
+        while ($arResult = $dbResultList->Fetch()) {
             $arID[] = $arResult['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
 
         switch ($_REQUEST['action']) {
             case "delete":
@@ -67,10 +87,11 @@ if (($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "W") {
                 if (!CSaleDelivery::Delete($ID)) {
                     $DB->Rollback();
 
-                    if ($ex = $APPLICATION->GetException())
+                    if ($ex = $APPLICATION->GetException()) {
                         $lAdmin->AddGroupError($ex->GetString(), $ID);
-                    else
+                    } else {
                         $lAdmin->AddGroupError(GetMessage("SDAN_ERROR_DELETE"), $ID);
+                    }
                 }
 
                 $DB->Commit();
@@ -85,10 +106,11 @@ if (($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "W") {
                 );
 
                 if (!CSaleDelivery::Update($ID, $arFields)) {
-                    if ($ex = $APPLICATION->GetException())
+                    if ($ex = $APPLICATION->GetException()) {
                         $lAdmin->AddGroupError($ex->GetString(), $ID);
-                    else
+                    } else {
                         $lAdmin->AddGroupError(GetMessage("SDAN_ERROR_UPDATE"), $ID);
+                    }
                 }
 
                 break;
@@ -109,38 +131,49 @@ $dbResultList->NavStart();
 
 $lAdmin->NavText($dbResultList->GetNavPrint(GetMessage("SALE_PRLIST")));
 
-$lAdmin->AddHeaders(array(
-    array("id" => "ID", "content" => "ID", "sort" => "ID", "default" => true),
-    array("id" => "NAME", "content" => GetMessage("SALE_NAME"), "sort" => "NAME", "default" => true),
-    array("id" => "LID", "content" => GetMessage('SALE_LID'), "sort" => "LID", "default" => true),
-    array("id" => "WEIGHT", "content" => GetMessage("SALE_WEIGHT"), "sort" => "", "default" => true),
-    array("id" => "ORDER_PRICE", "content" => GetMessage("SALE_ORDER_PRICE"), "sort" => "", "default" => true),
-    array("id" => "SORT", "content" => GetMessage("SALE_SORT"), "sort" => "SORT", "default" => true),
-    array("id" => "ACTIVE", "content" => GetMessage("SALE_ACTIVE"), "sort" => "ACTIVE", "default" => true),
-    array("id" => "PRICE", "content" => GetMessage("SALE_PRICE"), "sort" => "PRICE", "default" => true),
-));
+$lAdmin->AddHeaders(
+    array(
+        array("id" => "ID", "content" => "ID", "sort" => "ID", "default" => true),
+        array("id" => "NAME", "content" => GetMessage("SALE_NAME"), "sort" => "NAME", "default" => true),
+        array("id" => "LID", "content" => GetMessage('SALE_LID'), "sort" => "LID", "default" => true),
+        array("id" => "WEIGHT", "content" => GetMessage("SALE_WEIGHT"), "sort" => "", "default" => true),
+        array("id" => "ORDER_PRICE", "content" => GetMessage("SALE_ORDER_PRICE"), "sort" => "", "default" => true),
+        array("id" => "SORT", "content" => GetMessage("SALE_SORT"), "sort" => "SORT", "default" => true),
+        array("id" => "ACTIVE", "content" => GetMessage("SALE_ACTIVE"), "sort" => "ACTIVE", "default" => true),
+        array("id" => "PRICE", "content" => GetMessage("SALE_PRICE"), "sort" => "PRICE", "default" => true),
+    )
+);
 
 $arVisibleColumns = $lAdmin->GetVisibleHeaderColumns();
 
 while ($arCCard = $dbResultList->NavNext(true, "f_")) {
-    $row =& $lAdmin->AddRow($f_ID, $arCCard, "sale_delivery_edit.php?ID=" . $f_ID . "&lang=" . LANG, GetMessage("SALE_EDIT_DESCR"));
+    $row =& $lAdmin->AddRow(
+        $f_ID,
+        $arCCard,
+        "sale_delivery_edit.php?ID=" . $f_ID . "&lang=" . LANG,
+        GetMessage("SALE_EDIT_DESCR")
+    );
 
     $row->AddField("ID", "<a href=\"sale_delivery_edit.php?ID=" . $f_ID . "&lang=" . LANG . "\">" . $f_ID . "</a>");
     $row->AddField("NAME", $f_NAME);
     $row->AddField("LID", $f_LID);
 
     $fieldValue = "";
-    if (IntVal($f_WEIGHT_FROM) > 0)
+    if (intval($f_WEIGHT_FROM) > 0) {
         $fieldValue .= " " . GetMessage("SALE_FROM") . " " . $f_WEIGHT_FROM;
-    if (IntVal($f_WEIGHT_TO) > 0)
+    }
+    if (intval($f_WEIGHT_TO) > 0) {
         $fieldValue .= " " . GetMessage("SALE_TO") . " " . $f_WEIGHT_TO;
+    }
     $row->AddField("WEIGHT", $fieldValue);
 
     $fieldValue = "";
-    if (DoubleVal($f_ORDER_PRICE_FROM) > 0)
+    if (DoubleVal($f_ORDER_PRICE_FROM) > 0) {
         $fieldValue .= " " . GetMessage("SALE_FROM") . " " . SaleFormatCurrency($f_ORDER_PRICE_FROM, $f_ORDER_CURRENCY);
-    if (DoubleVal($f_ORDER_PRICE_TO) > 0)
+    }
+    if (DoubleVal($f_ORDER_PRICE_TO) > 0) {
         $fieldValue .= " " . GetMessage("SALE_TO") . " " . SaleFormatCurrency($f_ORDER_PRICE_TO, $f_ORDER_CURRENCY);
+    }
     $row->AddField("ORDER_PRICE", $fieldValue);
 
     $row->AddField("SORT", $f_SORT);
@@ -148,10 +181,22 @@ while ($arCCard = $dbResultList->NavNext(true, "f_")) {
     $row->AddField("PRICE", SaleFormatCurrency($f_PRICE, $f_CURRENCY));
 
     $arActions = Array();
-    $arActions[] = array("ICON" => "edit", "TEXT" => GetMessage("SALE_EDIT_DESCR"), "ACTION" => $lAdmin->ActionRedirect("sale_delivery_edit.php?ID=" . $f_ID . "&lang=" . LANG), "DEFAULT" => true);
+    $arActions[] = array(
+        "ICON" => "edit",
+        "TEXT" => GetMessage("SALE_EDIT_DESCR"),
+        "ACTION" => $lAdmin->ActionRedirect("sale_delivery_edit.php?ID=" . $f_ID . "&lang=" . LANG),
+        "DEFAULT" => true
+    );
     if ($saleModulePermissions >= "W") {
         $arActions[] = array("SEPARATOR" => true);
-        $arActions[] = array("ICON" => "delete", "TEXT" => GetMessage("SALE_DELETE_DESCR"), "ACTION" => "if(confirm('" . GetMessage('SALE_CONFIRM_DEL_MESSAGE') . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete"));
+        $arActions[] = array(
+            "ICON" => "delete",
+            "TEXT" => GetMessage("SALE_DELETE_DESCR"),
+            "ACTION" => "if(confirm('" . GetMessage('SALE_CONFIRM_DEL_MESSAGE') . "')) " . $lAdmin->ActionDoGroup(
+                    $f_ID,
+                    "delete"
+                )
+        );
     }
 
     $row->AddActions($arActions);
@@ -232,19 +277,23 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
 
                     <div style="width: 100%; margin-left: 12px">
 
-                        <? $APPLICATION->IncludeComponent("bitrix:sale.location.selector.search", "", array(
-                            "ID" => $filter_location,
-                            "CODE" => "",
-                            "INPUT_NAME" => 'filter_location',
-                            "PROVIDE_LINK_BY" => "id",
-                            "SHOW_ADMIN_CONTROLS" => 'N',
-                            "SELECT_WHEN_SINGLE" => 'N',
-                            "FILTER_BY_SITE" => 'N',
-                            "SHOW_DEFAULT_LOCATIONS" => 'N',
-                            "SEARCH_BY_PRIMARY" => 'Y',
-                            "INITIALIZE_BY_GLOBAL_EVENT" => 'onAdminFilterInited', // this allows js logic to be initialized after admin filter
-                            "GLOBAL_EVENT_SCOPE" => 'window'
-                        ),
+                        <? $APPLICATION->IncludeComponent(
+                            "bitrix:sale.location.selector.search",
+                            "",
+                            array(
+                                "ID" => $filter_location,
+                                "CODE" => "",
+                                "INPUT_NAME" => 'filter_location',
+                                "PROVIDE_LINK_BY" => "id",
+                                "SHOW_ADMIN_CONTROLS" => 'N',
+                                "SELECT_WHEN_SINGLE" => 'N',
+                                "FILTER_BY_SITE" => 'N',
+                                "SHOW_DEFAULT_LOCATIONS" => 'N',
+                                "SEARCH_BY_PRIMARY" => 'Y',
+                                "INITIALIZE_BY_GLOBAL_EVENT" => 'onAdminFilterInited',
+                                // this allows js logic to be initialized after admin filter
+                                "GLOBAL_EVENT_SCOPE" => 'window'
+                            ),
                             false
                         ); ?>
 
@@ -260,9 +309,17 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
                 <? else: ?>
                     <select name="filter_location">
                         <option value=""><? echo GetMessage("SALE_ALL") ?></option>
-                        <? $db_vars = CSaleLocation::GetList(Array("SORT" => "ASC", "COUNTRY_NAME_LANG" => "ASC", "CITY_NAME_LANG" => "ASC"), array(), LANG) ?>
+                        <? $db_vars = CSaleLocation::GetList(
+                            Array("SORT" => "ASC", "COUNTRY_NAME_LANG" => "ASC", "CITY_NAME_LANG" => "ASC"),
+                            array(),
+                            LANG
+                        ) ?>
                         <? while ($vars = $db_vars->Fetch()): ?>
-                            <option value="<? echo $vars["ID"] ?>"<? if (IntVal($vars["ID"]) == IntVal($filter_location)) echo " selected" ?>><? echo htmlspecialcharsbx($vars["COUNTRY_NAME"] . " - " . $vars["CITY_NAME"]) ?></option>
+                            <option value="<? echo $vars["ID"] ?>"<? if (intval($vars["ID"]) == intval(
+                                    $filter_location
+                                )) echo " selected" ?>><? echo htmlspecialcharsbx(
+                                    $vars["COUNTRY_NAME"] . " - " . $vars["CITY_NAME"]
+                                ) ?></option>
                         <? endwhile; ?>
                     </select>
                 <? endif ?>
@@ -276,7 +333,7 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
                     var arLang = new Array();
                     var arCurr = new Array();
                     <?
-                    $db_extras = CLang::GetList(($b = "name"), ($o = "asc"));
+                    $db_extras = CLang::GetList("name", "asc");
                     $i = 0;
                     while ($extras = $db_extras->Fetch()) {
                         echo "arLang[" . $i . "]='" . $extras["LID"] . "';";
@@ -345,8 +402,12 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
             <td>
                 <select name="filter_active">
                     <option value=""><? echo GetMessage("SALE_ALL") ?></option>
-                    <option value="Y"<? if ($filter_active == "Y") echo " selected" ?>><? echo GetMessage("SALE_YES") ?></option>
-                    <option value="N"<? if ($filter_active == "N") echo " selected" ?>><? echo GetMessage("SALE_NO") ?></option>
+                    <option value="Y"<? if ($filter_active == "Y") echo " selected" ?>><? echo GetMessage(
+                            "SALE_YES"
+                        ) ?></option>
+                    <option value="N"<? if ($filter_active == "N") echo " selected" ?>><? echo GetMessage(
+                            "SALE_NO"
+                        ) ?></option>
                 </select>
             </td>
         </tr>

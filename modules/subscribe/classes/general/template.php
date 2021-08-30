@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 class CPostingTemplate
@@ -11,7 +12,7 @@ class CPostingTemplate
         $io = CBXVirtualIo::GetInstance();
         $arTemplates = array();
 
-        $dir = substr(getLocalPath("php_interface/subscribe/templates", BX_PERSONAL_ROOT), 1); //cut leading slash
+        $dir = mb_substr(getLocalPath("php_interface/subscribe/templates", BX_PERSONAL_ROOT), 1); //cut leading slash
         $abs_dir = $_SERVER["DOCUMENT_ROOT"] . "/" . $dir;
         if ($io->DirectoryExists($abs_dir)) {
             $d = $io->GetDirectory($abs_dir);
@@ -29,18 +30,21 @@ class CPostingTemplate
     {
         global $MESS;
 
-        if (!CPostingTemplate::IsExists($path))
+        if (!CPostingTemplate::IsExists($path)) {
             return false;
+        }
 
         $arTemplate = array();
 
         $strFileName = $_SERVER["DOCUMENT_ROOT"] . "/" . $path . "/lang/" . LANGUAGE_ID . "/description.php";
-        if (file_exists($strFileName))
+        if (file_exists($strFileName)) {
             include($strFileName);
+        }
 
         $strFileName = $_SERVER["DOCUMENT_ROOT"] . "/" . $path . "/description.php";
-        if (file_exists($strFileName))
+        if (file_exists($strFileName)) {
             include($strFileName);
+        }
 
         $arTemplate["PATH"] = $path;
         return $arTemplate;
@@ -50,14 +54,14 @@ class CPostingTemplate
     {
         $io = CBXVirtualIo::GetInstance();
 
-        $dir = substr(getLocalPath("php_interface/subscribe/templates", BX_PERSONAL_ROOT), 1);
-        if (strpos($path, $dir . "/") === 0) {
-            $template = substr($path, strlen($dir) + 1);
+        $dir = mb_substr(getLocalPath("php_interface/subscribe/templates", BX_PERSONAL_ROOT), 1);
+        if (mb_strpos($path, $dir . "/") === 0) {
+            $template = mb_substr($path, mb_strlen($dir) + 1);
             if (
-                strpos($template, "\0") !== false
-                || strpos($template, "\\") !== false
-                || strpos($template, "/") !== false
-                || strpos($template, "..") !== false
+                mb_strpos($template, "\0") !== false
+                || mb_strpos($template, "\\") !== false
+                || mb_strpos($template, "/") !== false
+                || mb_strpos($template, "..") !== false
             ) {
                 return false;
             }
@@ -74,43 +78,54 @@ class CPostingTemplate
         $time_of_exec = false;
         $result = "";
         while (($arRubric = $rubrics->Fetch()) && $time_of_exec === false) {
-            if ($arRubric["LAST_EXECUTED"] == '')
+            if ($arRubric["LAST_EXECUTED"] == '') {
                 continue;
+            }
 
-            $last_executed = MakeTimeStamp(ConvertDateTime($arRubric["LAST_EXECUTED"], "DD.MM.YYYY HH:MI:SS"), "DD.MM.YYYY HH:MI:SS");
+            $last_executed = MakeTimeStamp(
+                ConvertDateTime($arRubric["LAST_EXECUTED"], "DD.MM.YYYY HH:MI:SS"),
+                "DD.MM.YYYY HH:MI:SS"
+            );
 
-            if ($last_executed <= 0)
+            if ($last_executed <= 0) {
                 continue;
+            }
 
             //parse schedule
             $arDoM = CPostingTemplate::ParseDaysOfMonth($arRubric["DAYS_OF_MONTH"]);
             $arDoW = CPostingTemplate::ParseDaysOfWeek($arRubric["DAYS_OF_WEEK"]);
             $arToD = CPostingTemplate::ParseTimesOfDay($arRubric["TIMES_OF_DAY"]);
-            if ($arToD)
+            if ($arToD) {
                 sort($arToD, SORT_NUMERIC);
+            }
             //sdate = truncate(last_execute)
             $arSDate = localtime($last_executed);
             $sdate = mktime(0, 0, 0, $arSDate[4] + 1, $arSDate[3], $arSDate[5] + 1900);
             while ($sdate < $current_time && $time_of_exec === false) {
                 $arSDate = localtime($sdate);
-                if ($arSDate[6] == 0) $arSDate[6] = 7;
+                if ($arSDate[6] == 0) {
+                    $arSDate[6] = 7;
+                }
                 //determine if date is good for execution
                 if ($arDoM) {
                     $flag = array_search($arSDate[3], $arDoM);
-                    if ($arDoW)
+                    if ($arDoW) {
                         $flag = array_search($arSDate[6], $arDoW);
-                } elseif ($arDoW)
+                    }
+                } elseif ($arDoW) {
                     $flag = array_search($arSDate[6], $arDoW);
-                else
+                } else {
                     $flag = false;
+                }
 
-                if ($flag !== false && $arToD)
+                if ($flag !== false && $arToD) {
                     foreach ($arToD as $intToD) {
                         if ($sdate + $intToD > $last_executed && $sdate + $intToD <= $current_time) {
                             $time_of_exec = $sdate + $intToD;
                             break;
                         }
                     }
+                }
                 $sdate = mktime(0, 0, 0, date("m", $sdate), date("d", $sdate) + 1, date("Y", $sdate));//next day
             }
             if ($time_of_exec !== false) {
@@ -127,7 +142,9 @@ class CPostingTemplate
     public static function AddPosting($arRubric)
     {
         global $DB, $USER, $MESS;
-        if (!is_object($USER)) $USER = new CUser;
+        if (!is_object($USER)) {
+            $USER = new CUser;
+        }
         //Include language file for template.php
         $rsSite = CSite::GetByID($arRubric["SITE_ID"]);
         $arSite = $rsSite->Fetch();
@@ -138,8 +155,9 @@ class CPostingTemplate
         $arFields = false;
         if (CPostingTemplate::IsExists($arRubric["TEMPLATE"])) {
             $strFileName = $_SERVER["DOCUMENT_ROOT"] . "/" . $arRubric["TEMPLATE"] . "/lang/" . $arSite["LANGUAGE_ID"] . "/template.php";
-            if (file_exists($strFileName))
+            if (file_exists($strFileName)) {
                 include($strFileName);
+            }
             //Execute template
             $strFileName = $_SERVER["DOCUMENT_ROOT"] . "/" . $arRubric["TEMPLATE"] . "/template.php";
             if (file_exists($strFileName)) {
@@ -160,18 +178,30 @@ class CPostingTemplate
             $ID = $cPosting->Add($arFields);
             if ($ID) {
                 if (array_key_exists("FILES", $arFields)) {
-                    foreach ($arFields["FILES"] as $arFile)
+                    foreach ($arFields["FILES"] as $arFile) {
                         $cPosting->SaveFile($ID, $arFile);
+                    }
                 }
                 if (!array_key_exists("DO_NOT_SEND", $arFields) || $arFields["DO_NOT_SEND"] != "Y") {
                     $cPosting->ChangeStatus($ID, "P");
-                    if (COption::GetOptionString("subscribe", "subscribe_auto_method") !== "cron")
-                        CAgent::AddAgent("CPosting::AutoSend(" . $ID . ",true,\"" . $arRubric["LID"] . "\");", "subscribe", "N", 0, $arRubric["END_TIME"], "Y", $arRubric["END_TIME"]);
+                    if (COption::GetOptionString("subscribe", "subscribe_auto_method") !== "cron") {
+                        CAgent::AddAgent(
+                            "CPosting::AutoSend(" . $ID . ",true,\"" . $arRubric["LID"] . "\");",
+                            "subscribe",
+                            "N",
+                            0,
+                            $arRubric["END_TIME"],
+                            "Y",
+                            $arRubric["END_TIME"]
+                        );
+                    }
                 }
             }
         }
         //Update last execution time mark
-        $strSql = "UPDATE b_list_rubric SET LAST_EXECUTED=" . $DB->CharToDateFunction($arRubric["END_TIME"]) . " WHERE ID=" . intval($arRubric["ID"]);
+        $strSql = "UPDATE b_list_rubric SET LAST_EXECUTED=" . $DB->CharToDateFunction(
+                $arRubric["END_TIME"]
+            ) . " WHERE ID=" . intval($arRubric["ID"]);
         $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
         return $ID;
     }
@@ -179,33 +209,41 @@ class CPostingTemplate
     public static function ParseDaysOfMonth($strDaysOfMonth)
     {
         $arResult = array();
-        if (strlen($strDaysOfMonth) > 0) {
+        if ($strDaysOfMonth <> '') {
             $arDoM = explode(",", $strDaysOfMonth);
             $arFound = array();
             foreach ($arDoM as $strDoM) {
                 if (preg_match("/^(\d{1,2})$/", trim($strDoM), $arFound)) {
-                    if (intval($arFound[1]) < 1 || intval($arFound[1]) > 31)
+                    if (intval($arFound[1]) < 1 || intval($arFound[1]) > 31) {
                         return false;
-                    else
+                    } else {
                         $arResult[] = intval($arFound[1]);
+                    }
                 } elseif (preg_match("/^(\d{1,2})-(\d{1,2})$/", trim($strDoM), $arFound)) {
-                    if (intval($arFound[1]) < 1 || intval($arFound[1]) > 31 || intval($arFound[2]) < 1 || intval($arFound[2]) > 31 || intval($arFound[1]) >= intval($arFound[2]))
+                    if (intval($arFound[1]) < 1 || intval($arFound[1]) > 31 || intval($arFound[2]) < 1 || intval(
+                            $arFound[2]
+                        ) > 31 || intval($arFound[1]) >= intval($arFound[2])) {
                         return false;
-                    else
-                        for ($i = intval($arFound[1]); $i <= intval($arFound[2]); $i++)
+                    } else {
+                        for ($i = intval($arFound[1]); $i <= intval($arFound[2]); $i++) {
                             $arResult[] = intval($i);
-                } else
+                        }
+                    }
+                } else {
                     return false;
+                }
             }
-        } else
+        } else {
             return false;
+        }
         return $arResult;
     }
 
     public static function ParseDaysOfWeek($strDaysOfWeek)
     {
-        if (strlen($strDaysOfWeek) <= 0)
+        if ($strDaysOfWeek == '') {
             return false;
+        }
 
         $arResult = array();
 
@@ -228,8 +266,9 @@ class CPostingTemplate
 
     public static function ParseTimesOfDay($strTimesOfDay)
     {
-        if (strlen($strTimesOfDay) <= 0)
+        if ($strTimesOfDay == '') {
             return false;
+        }
 
         $arResult = array();
 

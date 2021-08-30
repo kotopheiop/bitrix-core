@@ -97,8 +97,9 @@ class GroupAction
     public function get(string $code, array $params = [])
     {
         $code = trim($code);
-        if ($code === '' || !isset($this->actionHandlers[$code]))
+        if ($code === '' || !isset($this->actionHandlers[$code])) {
             return null;
+        }
 
         $method = 'action' . $this->actionHandlers[$code] . 'Panel';
         if (is_callable([$this, $method])) {
@@ -115,8 +116,9 @@ class GroupAction
     public function getRequest(string $code)
     {
         $code = trim($code);
-        if ($code === '' || !isset($this->actionHandlers[$code]))
+        if ($code === '' || !isset($this->actionHandlers[$code])) {
             return null;
+        }
 
         $method = 'action' . $this->actionHandlers[$code] . 'Request';
         if (is_callable([$this, $method])) {
@@ -139,10 +141,12 @@ class GroupAction
      */
     protected function initConfig()
     {
-        $iterator = Iblock\IblockTable::getList([
-            'select' => ['ID', 'SECTION_CHOOSER', 'SECTIONS' => 'TYPE.SECTIONS'],
-            'filter' => ['=ID' => $this->iblockId]
-        ]);
+        $iterator = Iblock\IblockTable::getList(
+            [
+                'select' => ['ID', 'SECTION_CHOOSER', 'SECTIONS' => 'TYPE.SECTIONS'],
+                'filter' => ['=ID' => $this->iblockId]
+            ]
+        );
         $row = $iterator->fetch();
         if (!empty($row)) {
             $this->iblockConfig['SECTIONS'] = $row['SECTIONS'];
@@ -643,8 +647,9 @@ class GroupAction
      */
     protected function actionElementWorkflowStatusPanel(array $params = [])
     {
-        if (!Loader::includeModule('workflow'))
+        if (!Loader::includeModule('workflow')) {
             return null;
+        }
 
         $name = (isset($params['NAME']) && $params['NAME'] != ''
             ? $params['NAME']
@@ -660,8 +665,9 @@ class GroupAction
             ];
         }
         unset($row, $iterator);
-        if (empty($statusList))
+        if (empty($statusList)) {
             return null;
+        }
 
         $data = [];
         $data[] = [

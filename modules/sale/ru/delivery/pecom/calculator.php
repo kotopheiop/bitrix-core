@@ -37,11 +37,13 @@ class Calculator
         $jsonInfo = $this->send($params);
         $arInfo = json_decode($jsonInfo, true);
 
-        if (isset($arInfo["auto"]))
+        if (isset($arInfo["auto"])) {
             $arResult[] = "auto";
+        }
 
-        if (isset($arInfo["avia"]))
+        if (isset($arInfo["avia"])) {
             $arResult[] = "avia";
+        }
 
         return $arResult;
     }
@@ -56,8 +58,6 @@ class Calculator
             $strParams = $this->createCalcParams();
             $jsonInfo = $this->send($strParams);
             $result = $this->parseCalcResult($jsonInfo);
-
-
         } catch (\Exception $e) {
             $result = array(
                 'RESULT' => 'ERROR',
@@ -74,24 +74,35 @@ class Calculator
         $arInfo = json_decode($jsonInfo, true);
 
         if (is_array($arInfo) && !empty($arInfo)) {
-            if (strtolower(SITE_CHARSET) != 'utf-8')
+            if (mb_strtolower(SITE_CHARSET) != 'utf-8') {
                 $arInfo = \Bitrix\Main\Text\Encoding::convertEncodingArray($arInfo, 'UTF-8', SITE_CHARSET);
+            }
 
             if (isset($arInfo[$this->profileId][2])) {
                 $price = 0;
 
                 $price += intval($arInfo[$this->profileId][2]);
 
-                if (isset($arInfo["take"][2]) && \CDeliveryPecom::isConfCheckedVal($this->arConfig, 'SERVICE_TAKE_ENABLED'))
+                if (isset($arInfo["take"][2]) && \CDeliveryPecom::isConfCheckedVal(
+                        $this->arConfig,
+                        'SERVICE_TAKE_ENABLED'
+                    )) {
                     $price += intval($arInfo["take"][2]);
+                }
 
 
-                if (isset($arInfo["deliver"][2]) && \CDeliveryPecom::isConfCheckedVal($this->arConfig, 'SERVICE_DELIVERY_ENABLED'))
+                if (isset($arInfo["deliver"][2]) && \CDeliveryPecom::isConfCheckedVal(
+                        $this->arConfig,
+                        'SERVICE_DELIVERY_ENABLED'
+                    )) {
                     $price += intval($arInfo["deliver"][2]);
+                }
 
-                foreach ($arInfo as $key => $value)
-                    if (substr($key, 0, 3) == "ADD")
+                foreach ($arInfo as $key => $value) {
+                    if (mb_substr($key, 0, 3) == "ADD") {
                         $price += intval($arInfo[$key][2]);
+                    }
+                }
 
                 $arResult = array(
                     'RESULT' => 'OK',
@@ -101,26 +112,30 @@ class Calculator
 
                 $period = "";
 
-                if ($this->profileId == "auto" && !empty($arInfo["periods"]))
+                if ($this->profileId == "auto" && !empty($arInfo["periods"])) {
                     $period = $arInfo["periods"];
-                elseif ($this->profileId == "avia" && !empty($arInfo["aperiods"]))
+                } elseif ($this->profileId == "avia" && !empty($arInfo["aperiods"])) {
                     $period = $arInfo["aperiods"];
+                }
 
-                if (strlen($period) > 0) {
-                    $pos = strpos($period, ':');
+                if ($period <> '') {
+                    $pos = mb_strpos($period, ':');
 
                     if ($pos !== false) {
                         $CBXSanitizer = new \CBXSanitizer;
                         $CBXSanitizer->DelAllTags();
-                        $arResult["TRANSIT"] = " (" . GetMessage("SALE_DH_PECOM_PERIOD_DAYS") . ") " . $CBXSanitizer->SanitizeHtml(substr($period, $pos + 1));
+                        $arResult["TRANSIT"] = " (" . GetMessage(
+                                "SALE_DH_PECOM_PERIOD_DAYS"
+                            ) . ") " . $CBXSanitizer->SanitizeHtml(mb_substr($period, $pos + 1));
                     }
                 }
             } else {
                 if (isset($arInfo["error"])) {
                     $error = implode("<br>", $arInfo["error"]);
 
-                    if (strtolower(SITE_CHARSET) != 'utf-8')
+                    if (mb_strtolower(SITE_CHARSET) != 'utf-8') {
                         $error = $APPLICATION->ConvertCharset($error, 'utf-8', SITE_CHARSET);
+                    }
                 } else {
                     $error = GetMessage("SALE_DH_PECOM_ERROR");
                 }
@@ -142,32 +157,37 @@ class Calculator
 
     protected static function send($strParams)
     {
-        $http = new \Bitrix\Main\Web\HttpClient(array(
-            "version" => "1.1",
-            "socketTimeout" => 30,
-            "streamTimeout" => 30,
-            "redirect" => true,
-            "redirectMax" => 5,
-            "disableSslVerification" => true
-        ));
+        $http = new \Bitrix\Main\Web\HttpClient(
+            array(
+                "version" => "1.1",
+                "socketTimeout" => 30,
+                "streamTimeout" => 30,
+                "redirect" => true,
+                "redirectMax" => 5,
+                "disableSslVerification" => true
+            )
+        );
 
-        $jsnData = $http->get("https://calc.pecom.ru/bitrix/components/pecom/calc/ajax.php?" . $strParams);
+        $jsnData = $http->get("http://calc.pecom.ru/bitrix/components/pecom/calc/ajax.php?" . $strParams);
 
         $errors = $http->getError();
 
         if (!$jsnData && !empty($errors)) {
             $strError = "";
 
-            foreach ($errors as $errorCode => $errMes)
+            foreach ($errors as $errorCode => $errMes) {
                 $strError .= $errorCode . ": " . $errMes;
+            }
 
-            \CEventLog::Add(array(
-                "SEVERITY" => "ERROR",
-                "AUDIT_TYPE_ID" => "SALE_DELIVERY",
-                "MODULE_ID" => "sale",
-                "ITEM_ID" => "PECOM_CALCULATOR_SEND",
-                "DESCRIPTION" => $strError,
-            ));
+            \CEventLog::Add(
+                array(
+                    "SEVERITY" => "ERROR",
+                    "AUDIT_TYPE_ID" => "SALE_DELIVERY",
+                    "MODULE_ID" => "sale",
+                    "ITEM_ID" => "PECOM_CALCULATOR_SEND",
+                    "DESCRIPTION" => $strError,
+                )
+            );
         }
 
 
@@ -208,14 +228,16 @@ class Calculator
 
     protected function createCalcParams()
     {
-        if (!isset($this->arOrder["WEIGHT"]))
+        if (!isset($this->arOrder["WEIGHT"])) {
             throw new \Exception(GetMessage("SALE_DH_PECOM_EXCPT_WEIGHT"));
+        }
 
         $locationTo = "";
         $arLocation = Adapter::mapLocation($this->arOrder["LOCATION_TO"]);
 
-        if (empty($arLocation))
+        if (empty($arLocation)) {
             throw new \Exception(GetMessage("SALE_DH_PECOM_EXCPT_EMPTY_LOCATION"));
+        }
 
         if (count($arLocation) > 1 && isset($this->arOrder["EXTRA_PARAMS"]["location"])) {
             $locationTo = $this->arOrder["EXTRA_PARAMS"]["location"];
@@ -227,8 +249,9 @@ class Calculator
             $locationTo = key($arLocation);
         }
 
-        if (!isset($this->arOrder["ITEMS"]) || !is_array($this->arOrder["ITEMS"]) || empty($this->arOrder["ITEMS"]))
+        if (!isset($this->arOrder["ITEMS"]) || !is_array($this->arOrder["ITEMS"]) || empty($this->arOrder["ITEMS"])) {
             throw new \Exception(GetMessage("SALE_DH_PECOM_EXCPT_EMPTY_ITEMS"));
+        }
 
         $measureCoeff = 1000;
         $itemsStr = "";
@@ -240,7 +263,8 @@ class Calculator
         $arPackagesParams = \CSaleDeliveryHelper::getRequiredPacks(
             $this->arOrder["ITEMS"],
             $arPacks,
-            0);
+            0
+        );
 
         $this->packsCount = count($arPackagesParams);
 
@@ -255,11 +279,13 @@ class Calculator
                 || $lenght > \CDeliveryPecom::$EXTRA_DIMENSIONS_SIZE
                 || $height > \CDeliveryPecom::$EXTRA_DIMENSIONS_SIZE
                 || $item["WEIGHT"] > \CDeliveryPecom::$EXTRA_DEMENSIONS_WEIGHT
-            )
+            ) {
                 $loadingRange = false;
+            }
 
-            if (strlen($itemsStr) > 0)
+            if ($itemsStr <> '') {
                 $itemsStr .= '&';
+            }
 
             $itemsStr .= 'places[' . $i . '][]=' . strval($width) .
                 '&places[' . $i . '][]=' . strval($lenght) .
@@ -267,28 +293,57 @@ class Calculator
                 '&places[' . $i . '][]=' . strval($volume) .
                 '&places[' . $i . '][]=' . strval($item["WEIGHT"] / 1000) .
                 '&places[' . $i . '][]=' . ($loadingRange ? '1' : '0') .
-                '&places[' . $i . '][]=' . ($rigidPacking && \CDeliveryPecom::getConfValue($this->arConfig, 'SERVICE_OTHER_RIGID_PAYER') == \CDeliveryPecom::$PAYER_BUYER ? '1' : '0');
+                '&places[' . $i . '][]=' . ($rigidPacking && \CDeliveryPecom::getConfValue(
+                    $this->arConfig,
+                    'SERVICE_OTHER_RIGID_PAYER'
+                ) == \CDeliveryPecom::$PAYER_BUYER ? '1' : '0');
         }
 
-        if (\CDeliveryPecom::isConfCheckedVal($this->arConfig, 'SERVICE_OTHER_PLOMBIR_ENABLE') && \CDeliveryPecom::getConfValue($this->arConfig, 'SERVICE_OTHER_PLOMBIR_PAYER') == \CDeliveryPecom::$PAYER_BUYER)
+        if (\CDeliveryPecom::isConfCheckedVal(
+                $this->arConfig,
+                'SERVICE_OTHER_PLOMBIR_ENABLE'
+            ) && \CDeliveryPecom::getConfValue(
+                $this->arConfig,
+                'SERVICE_OTHER_PLOMBIR_PAYER'
+            ) == \CDeliveryPecom::$PAYER_BUYER) {
             $plombir = strval(intval(\CDeliveryPecom::getConfValue($this->arConfig, 'SERVICE_OTHER_PLOMBIR_COUNT')));
-        else
+        } else {
             $plombir = "0";
+        }
 
-        if (\CDeliveryPecom::isConfCheckedVal($this->arConfig, 'SERVICE_OTHER_INSURANCE') && \CDeliveryPecom::getConfValue($this->arConfig, 'SERVICE_OTHER_INSURANCE_PAYER') == \CDeliveryPecom::$PAYER_BUYER)
+        if (\CDeliveryPecom::isConfCheckedVal(
+                $this->arConfig,
+                'SERVICE_OTHER_INSURANCE'
+            ) && \CDeliveryPecom::getConfValue(
+                $this->arConfig,
+                'SERVICE_OTHER_INSURANCE_PAYER'
+            ) == \CDeliveryPecom::$PAYER_BUYER) {
             $insurance = strval($this->arOrder["PRICE"]);
-        else
+        } else {
             $insurance = "0";
+        }
 
         $result = $itemsStr .
             '&take[town]=' . $this->arConfig["CITY_DELIVERY"]["VALUE"] .
-            '&take[tent]=' . (\CDeliveryPecom::isConfCheckedVal($this->arConfig, 'SERVICE_TAKE_ENABLED') && \CDeliveryPecom::isConfCheckedVal($this->arConfig, 'SERVICE_TAKE_TENT_ENABLED') ? '1' : '0') .
-            '&take[gidro]=' . (\CDeliveryPecom::isConfCheckedVal($this->arConfig, 'SERVICE_TAKE_ENABLED') && \CDeliveryPecom::isConfCheckedVal($this->arConfig, 'SERVICE_TAKE_HYDRO_ENABLED') ? '1' : '0') .
+            '&take[tent]=' . (\CDeliveryPecom::isConfCheckedVal(
+                $this->arConfig,
+                'SERVICE_TAKE_ENABLED'
+            ) && \CDeliveryPecom::isConfCheckedVal($this->arConfig, 'SERVICE_TAKE_TENT_ENABLED') ? '1' : '0') .
+            '&take[gidro]=' . (\CDeliveryPecom::isConfCheckedVal(
+                $this->arConfig,
+                'SERVICE_TAKE_ENABLED'
+            ) && \CDeliveryPecom::isConfCheckedVal($this->arConfig, 'SERVICE_TAKE_HYDRO_ENABLED') ? '1' : '0') .
             '&take[speed]=0' .
             '&take[moscow]=0' .
             '&deliver[town]=' . $locationTo .
-            '&deliver[tent]=' . (\CDeliveryPecom::isConfCheckedVal($this->arConfig, 'SERVICE_DELIVERY_ENABLED') && \CDeliveryPecom::isConfCheckedVal($this->arConfig, 'SERVICE_DELIVERY_TENT_ENABLED') ? '1' : '0') .
-            '&delideliver[gidro]=' . (\CDeliveryPecom::isConfCheckedVal($this->arConfig, 'SERVICE_DELIVERY_ENABLED') && \CDeliveryPecom::isConfCheckedVal($this->arConfig, 'SERVICE_DELIVERY_HYDRO_ENABLED') ? '1' : '0') .
+            '&deliver[tent]=' . (\CDeliveryPecom::isConfCheckedVal(
+                $this->arConfig,
+                'SERVICE_DELIVERY_ENABLED'
+            ) && \CDeliveryPecom::isConfCheckedVal($this->arConfig, 'SERVICE_DELIVERY_TENT_ENABLED') ? '1' : '0') .
+            '&delideliver[gidro]=' . (\CDeliveryPecom::isConfCheckedVal(
+                $this->arConfig,
+                'SERVICE_DELIVERY_ENABLED'
+            ) && \CDeliveryPecom::isConfCheckedVal($this->arConfig, 'SERVICE_DELIVERY_HYDRO_ENABLED') ? '1' : '0') .
             '&deliver[speed]=0' .
             '&deliver[moscow]=0' .
             '&plombir=' . $plombir .

@@ -1,4 +1,5 @@
 <?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 use Bitrix\Main\Web\Json;
@@ -14,49 +15,60 @@ header('Content-Type: application/json', true);
 
 $request = Bitrix\Main\Context::getCurrent()->getRequest();
 
-if (isset($request['user']))
+if (isset($request['user'])) {
     $userId = (int)$request['user'];
-else
+} else {
     $userId = (int)$USER->getId();
+}
 
 if (!CModule::IncludeModule('security')) {
-    response(array(
-        'status' => 'error',
-        'error' => 'SECURITY_NOT_INSTALLED'
-    ));
+    response(
+        array(
+            'status' => 'error',
+            'error' => 'SECURITY_NOT_INSTALLED'
+        )
+    );
 }
 
 if (!$request->isPost()) {
-    response(array(
-        'status' => 'error',
-        'error' => 'INVALID_METHOD'
-    ));
+    response(
+        array(
+            'status' => 'error',
+            'error' => 'INVALID_METHOD'
+        )
+    );
 }
 
 if (!check_bitrix_sessid()) {
-    response(array(
-        'status' => 'error',
-        'error' => 'INVALID_SESSID'
-    ));
+    response(
+        array(
+            'status' => 'error',
+            'error' => 'INVALID_SESSID'
+        )
+    );
 }
 
 if (
     !$userId
     || ($userId != $USER->getId() && !$USER->CanDoOperation('security_edit_user_otp'))
 ) {
-    response(array(
-        'status' => 'error',
-        'error' => 'PERMISSIONS_CHECKING_ERROR'
-    ));
+    response(
+        array(
+            'status' => 'error',
+            'error' => 'PERMISSIONS_CHECKING_ERROR'
+        )
+    );
 }
 
 
 switch ($request->getPost('action')) {
     case 'get_vew_params':
-        response(array(
-            'status' => 'ok',
-            'data' => getViewParams($userId, $request->getPost('type'))
-        ));
+        response(
+            array(
+                'status' => 'ok',
+                'data' => getViewParams($userId, $request->getPost('type'))
+            )
+        );
         break;
 
     case 'check_activate':
@@ -110,10 +122,12 @@ switch ($request->getPost('action')) {
         break;
 
     default:
-        response(array(
-            'status' => 'error',
-            'error' => 'ACTION_NOT_FOUND'
-        ));
+        response(
+            array(
+                'status' => 'error',
+                'error' => 'ACTION_NOT_FOUND'
+            )
+        );
 }
 
 function response($result)
@@ -126,8 +140,9 @@ function getViewParams($userId, $type = null)
 {
     $otp = Otp::getByUser($userId);
     $otp->regenerate();
-    if ($type)
+    if ($type) {
         $otp->setType($type);
+    }
 
     $result = array();
     $result['secret'] = $otp->getHexSecret();
@@ -253,10 +268,12 @@ function activate($userId)
 
 function getRecoveryCodes($userId, $isRegenerationAllowed = false)
 {
-    $codes = RecoveryCodesTable::getList(array(
-        'select' => array('CODE', 'USED', 'USING_DATE'),
-        'filter' => array('=USER_ID' => $userId)
-    ));
+    $codes = RecoveryCodesTable::getList(
+        array(
+            'select' => array('CODE', 'USED', 'USING_DATE'),
+            'filter' => array('=USER_ID' => $userId)
+        )
+    );
 
     $normalizedCodes = array();
     while (($code = $codes->fetch())) {
@@ -269,19 +286,21 @@ function getRecoveryCodes($userId, $isRegenerationAllowed = false)
         );
     }
 
-    if (empty($normalizedCodes) && $isRegenerationAllowed)
+    if (empty($normalizedCodes) && $isRegenerationAllowed) {
         return regenerateRecoveryCodes($userId);
-    else
+    } else {
         return array(
             'status' => 'ok',
             'codes' => $normalizedCodes
         );
+    }
 }
 
 function regenerateRecoveryCodes($userId)
 {
-    if (!Otp::getByUser($userId)->isActivated())
+    if (!Otp::getByUser($userId)->isActivated()) {
         ShowError('OTP inactive');
+    }
 
     CUserOptions::SetOption('security', 'recovery_codes_generated', time());
     RecoveryCodesTable::regenerateCodes($userId);

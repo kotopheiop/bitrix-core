@@ -29,8 +29,9 @@ class Container
         foreach ($this->availableVertexes as $vId => $v) {
             $box->move($v);
 
-            if (!$this->isVertexSuitable($box))
+            if (!$this->isVertexSuitable($box)) {
                 continue;
+            }
 
             $this->boxes[] = $box;
             unset($this->availableVertexes[$vId]);
@@ -43,14 +44,16 @@ class Container
 
     public function addBoxToVertex(array $boxDims, $vertexIdx)
     {
-        if (!isset($this->availableVertexes[$vertexIdx]))
+        if (!isset($this->availableVertexes[$vertexIdx])) {
             throw new SystemException('No such vertex');
+        }
 
         $box = new Box($boxDims);
         $box->move($this->availableVertexes[$vertexIdx]);
 
-        if (!$this->isVertexSuitable($box))
+        if (!$this->isVertexSuitable($box)) {
             return false;
+        }
 
         $this->boxes[] = $box;
         unset($this->availableVertexes[$vertexIdx]);
@@ -99,8 +102,9 @@ class Container
     {
         $result = array();
 
-        foreach ($this->boxes as $box)
+        foreach ($this->boxes as $box) {
             $result[] = clone $box;
+        }
 
         return $result;
     }
@@ -141,8 +145,9 @@ class Container
         $v1 = $box1->getVertexes();
         $v2 = $box2->getVertexes();
 
-        for ($i = 0; $i < 3; $i++)
+        for ($i = 0; $i < 3; $i++) {
             $result = $result && self::isEdgesIntersects($v1[0][$i], $v1[1][$i], $v2[0][$i], $v2[1][$i]);
+        }
 
         return $result;
     }
@@ -165,22 +170,26 @@ class Container
      */
     public function getFilledDimensions()
     {
-        if (empty($this->boxes))
+        if (empty($this->boxes)) {
             return (array(0, 0, 0));
+        }
 
         $maxX = $maxY = $maxZ = 0;
 
         foreach ($this->boxes as $box) {
             $v = $box->getVertexes();
 
-            if ($maxX < $v[1][0])
+            if ($maxX < $v[1][0]) {
                 $maxX = $v[1][0];
+            }
 
-            if ($maxY < $v[1][1])
+            if ($maxY < $v[1][1]) {
                 $maxY = $v[1][1];
+            }
 
-            if ($maxZ < $v[1][2])
+            if ($maxZ < $v[1][2]) {
                 $maxZ = $v[1][2];
+            }
         }
 
         return array($maxX, $maxY, $maxZ);
@@ -207,8 +216,9 @@ class Container
         $d1 = self::calculateDistance($p1, $zero);
         $d2 = self::calculateDistance($p2, $zero);
 
-        if ($d1 == $d2)
+        if ($d1 == $d2) {
             return 0;
+        }
 
         return ($d1 < $d2) ? -1 : 1;
     }

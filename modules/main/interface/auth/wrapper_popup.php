@@ -1,5 +1,8 @@
 <?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+}
 
 switch ($_REQUEST['bxsender']):
 
@@ -10,8 +13,9 @@ switch ($_REQUEST['bxsender']):
     case 'core_window_cdialog':
     case 'core_window_cadmindialog':
         ?>
-        <script type="text/javascript"
-                bxrunfirst="true">top.BX.WindowManager.Get().Authorize(<?=CUtil::PhpToJsObject($arAuthResult)?>)</script>
+        <script type="text/javascript" bxrunfirst="true">top.BX.WindowManager.Get().Authorize(<?=CUtil::PhpToJsObject(
+                $arAuthResult
+            )?>)</script>
         <?
         break;
 
@@ -49,7 +53,9 @@ switch ($_REQUEST['bxsender']):
     case 'fileman_html_editor':
         ?>
         <script type="text/javascript" bxrunfirst="true">
-            top.BX.onCustomEvent(top, 'OnHtmlEditorRequestAuthFailure', ['<?= CUtil::JSEscape($_REQUEST['bxeditor'])?>', <?=CUtil::PhpToJsObject($arAuthResult)?>]);
+            top.BX.onCustomEvent(top, 'OnHtmlEditorRequestAuthFailure', ['<?= CUtil::JSEscape(
+                $_REQUEST['bxeditor']
+            )?>', <?=CUtil::PhpToJsObject($arAuthResult)?>]);
         </script>
         <?
         break;
@@ -85,7 +91,9 @@ switch ($_REQUEST['bxsender']):
                 <div class="bx-core-popup-auth-field">
                     <input type="checkbox" class="adm-designed-checkbox" id="USER_REMEMBER" name="USER_REMEMBER"
                            value="Y">
-                    <label for="USER_REMEMBER" class="adm-designed-checkbox-label"></label><label for="USER_REMEMBER">&nbsp;<?= GetMessage("AUTH_REMEMBER_ME") ?></label>
+                    <label for="USER_REMEMBER" class="adm-designed-checkbox-label"></label><label for="USER_REMEMBER">&nbsp;<?= GetMessage(
+                            "AUTH_REMEMBER_ME"
+                        ) ?></label>
                 </div>
             <?
             endif;

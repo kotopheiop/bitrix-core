@@ -4,6 +4,7 @@ namespace Bitrix\MessageService;
 
 use \Bitrix\Main\Loader;
 use \Bitrix\Rest\AppTable;
+use Bitrix\Rest\HandlerHelper;
 use \Bitrix\Rest\RestException;
 use \Bitrix\Rest\AccessException;
 
@@ -28,13 +29,15 @@ class RestService extends \IRestService
 
     public static function onRestServiceBuildDescription()
     {
-        return array(static::SCOPE => array(
-            'messageservice.sender.add' => array(__CLASS__, 'addSender'),
-            'messageservice.sender.delete' => array(__CLASS__, 'deleteSender'),
-            'messageservice.sender.list' => array(__CLASS__, 'getSenderList'),
+        return array(
+            static::SCOPE => array(
+                'messageservice.sender.add' => array(__CLASS__, 'addSender'),
+                'messageservice.sender.delete' => array(__CLASS__, 'deleteSender'),
+                'messageservice.sender.list' => array(__CLASS__, 'getSenderList'),
 
-            'messageservice.message.status.update' => array(__CLASS__, 'updateMessageStatus'),
-        ));
+                'messageservice.message.status.update' => array(__CLASS__, 'updateMessageStatus'),
+            )
+        );
     }
 
     /**
@@ -44,22 +47,27 @@ class RestService extends \IRestService
     public static function onRestAppDelete(array $fields)
     {
         $fields = array_change_key_case($fields, CASE_UPPER);
-        if (empty($fields['APP_ID']))
+        if (empty($fields['APP_ID'])) {
             return;
+        }
 
-        if (!Loader::includeModule('rest'))
+        if (!Loader::includeModule('rest')) {
             return;
+        }
 
         $dbRes = AppTable::getById($fields['APP_ID']);
         $app = $dbRes->fetch();
 
-        if (!$app)
+        if (!$app) {
             return;
+        }
 
-        $iterator = Internal\Entity\RestAppTable::getList(array(
-            'select' => array('ID'),
-            'filter' => array('=APP_ID' => $app['CLIENT_ID'])
-        ));
+        $iterator = Internal\Entity\RestAppTable::getList(
+            array(
+                'select' => array('ID'),
+                'filter' => array('=APP_ID' => $app['CLIENT_ID'])
+            )
+        );
 
         while ($row = $iterator->fetch()) {
             Internal\Entity\RestAppTable::delete($row['ID']);
@@ -97,13 +105,15 @@ class RestService extends \IRestService
 
         $params['APP_ID'] = $server->getClientId();
 
-        $iterator = Internal\Entity\RestAppTable::getList(array(
-            'select' => array('ID'),
-            'filter' => array(
-                '=APP_ID' => $params['APP_ID'],
-                '=CODE' => $params['CODE']
+        $iterator = Internal\Entity\RestAppTable::getList(
+            array(
+                'select' => array('ID'),
+                'filter' => array(
+                    '=APP_ID' => $params['APP_ID'],
+                    '=CODE' => $params['CODE']
+                )
             )
-        ));
+        );
         $result = $iterator->fetch();
         if ($result) {
             throw new RestException('Sender already installed!', self::ERROR_SENDER_ALREADY_INSTALLED);
@@ -118,11 +128,22 @@ class RestService extends \IRestService
         $params['AUTHOR_ID'] = $USER->getId();
         $result = Internal\Entity\RestAppTable::add($params);
 
-        if ($result->getErrors())
+        if ($result->getErrors()) {
             throw new RestException('Sender save error!', self::ERROR_SENDER_ADD_FAILURE);
+        }
 
         $senderLang['APP_ID'] = $result->getId();
         static::addSenderLang($senderLang, $server->getClientId());
+
+        $app = \Bitrix\Rest\AppTable::getByClientId($params['APP_ID']);
+        if ($app['CODE']) {
+            AddEventToStatFile(
+                'messageservice',
+                'addProvider' . $params['TYPE'],
+                uniqid($app['CODE'], true),
+                $app['CODE']
+            );
+        }
 
         return true;
     }
@@ -145,13 +166,15 @@ class RestService extends \IRestService
         self::validateSenderCode($params['CODE']);
         $params['APP_ID'] = $server->getClientId();
 
-        $iterator = Internal\Entity\RestAppTable::getList(array(
-            'select' => array('ID'),
-            'filter' => array(
-                '=APP_ID' => $params['APP_ID'],
-                '=CODE' => $params['CODE']
+        $iterator = Internal\Entity\RestAppTable::getList(
+            array(
+                'select' => array('ID'),
+                'filter' => array(
+                    '=APP_ID' => $params['APP_ID'],
+                    '=CODE' => $params['CODE']
+                )
             )
-        ));
+        );
         $result = $iterator->fetch();
         if (!$result) {
             throw new RestException('Sender not found!', self::ERROR_SENDER_NOT_FOUND);
@@ -177,12 +200,14 @@ class RestService extends \IRestService
         }
 
         self::checkAdminPermissions();
-        $iterator = Internal\Entity\RestAppTable::getList(array(
-            'select' => array('CODE'),
-            'filter' => array(
-                '=APP_ID' => $server->getClientId()
+        $iterator = Internal\Entity\RestAppTable::getList(
+            array(
+                'select' => array('CODE'),
+                'filter' => array(
+                    '=APP_ID' => $server->getClientId()
+                )
             )
-        ));
+        );
 
         $result = array();
         while ($row = $iterator->fetch()) {
@@ -218,14 +243,16 @@ class RestService extends \IRestService
             throw new RestException('Message status incorrect!', self::ERROR_MESSAGE_STATUS_INCORRECT);
         }
 
-        $message = Internal\Entity\MessageTable::getList(array(
-            'select' => array('ID', 'AUTHOR_ID', 'STATUS_ID'),
-            'filter' => array(
-                '=SENDER_ID' => 'rest',
-                '=MESSAGE_FROM' => $server->getClientId() . '|' . $params['CODE'],
-                '=EXTERNAL_ID' => $params['MESSAGE_ID']
+        $message = Internal\Entity\MessageTable::getList(
+            array(
+                'select' => array('ID', 'AUTHOR_ID', 'STATUS_ID'),
+                'filter' => array(
+                    '=SENDER_ID' => 'rest',
+                    '=MESSAGE_FROM' => $server->getClientId() . '|' . $params['CODE'],
+                    '=EXTERNAL_ID' => $params['MESSAGE_ID']
+                )
             )
-        ))->fetch();
+        )->fetch();
 
         if (!$message) {
             throw new RestException('Message not found!', self::ERROR_MESSAGE_NOT_FOUND);
@@ -244,9 +271,11 @@ class RestService extends \IRestService
         }
 
         Internal\Entity\MessageTable::update($message['ID'], array('STATUS_ID' => $statusId));
-        Integration\Pull::onMessagesUpdate(array(
-            array('ID' => $message['ID'], 'STATUS_ID' => $statusId)
-        ));
+        Integration\Pull::onMessagesUpdate(
+            array(
+                array('ID' => $message['ID'], 'STATUS_ID' => $statusId)
+            )
+        );
 
         return true;
     }
@@ -273,69 +302,38 @@ class RestService extends \IRestService
 
     private static function validateSender($data, $server)
     {
-        if (!is_array($data) || empty($data))
+        if (!is_array($data) || empty($data)) {
             throw new RestException('Empty data!', self::ERROR_SENDER_VALIDATION_FAILURE);
+        }
 
         static::validateSenderCode($data['CODE']);
         static::validateSenderHandler($data['HANDLER'], $server);
-        if (empty($data['NAME']))
+        if (empty($data['NAME'])) {
             throw new RestException('Empty sender NAME!', self::ERROR_SENDER_VALIDATION_FAILURE);
+        }
 
-        if (empty($data['TYPE']))
+        if (empty($data['TYPE'])) {
             throw new RestException('Empty sender message TYPE!', self::ERROR_SENDER_VALIDATION_FAILURE);
+        }
 
-        if (!in_array($data['TYPE'], array('SMS'), true))
+        if (!in_array($data['TYPE'], array('SMS'), true)) {
             throw new RestException('Unknown sender message TYPE!', self::ERROR_SENDER_VALIDATION_FAILURE);
+        }
     }
 
     private static function validateSenderCode($code)
     {
-        if (empty($code))
+        if (empty($code)) {
             throw new RestException('Empty sender code!', self::ERROR_SENDER_VALIDATION_FAILURE);
-        if (!preg_match('#^[a-z0-9\.\-_]+$#i', $code))
+        }
+        if (!preg_match('#^[a-z0-9\.\-_]+$#i', $code)) {
             throw new RestException('Wrong sender code!', self::ERROR_SENDER_VALIDATION_FAILURE);
+        }
     }
 
     private static function validateSenderHandler($handler, $server)
     {
-        $handlerData = parse_url($handler);
-
-        if (is_array($handlerData)
-            && strlen($handlerData['host']) > 0
-            && strpos($handlerData['host'], '.') > 0
-        ) {
-            if ($handlerData['scheme'] == 'http' || $handlerData['scheme'] == 'https') {
-                $host = $handlerData['host'];
-                $app = self::getApp($server);
-                if (strlen($app['URL']) > 0) {
-                    $urls = array($app['URL']);
-
-                    if (strlen($app['URL_DEMO']) > 0) {
-                        $urls[] = $app['URL_DEMO'];
-                    }
-                    if (strlen($app['URL_INSTALL']) > 0) {
-                        $urls[] = $app['URL_INSTALL'];
-                    }
-
-                    $found = false;
-                    foreach ($urls as $url) {
-                        $a = parse_url($url);
-                        if ($host == $a['host'] || $a['host'] == 'localhost') {
-                            $found = true;
-                            break;
-                        }
-                    }
-
-                    if (!$found) {
-                        throw new RestException('Handler URL host doesn\'t match application url', self::ERROR_HANDLER_URL_MATCH);
-                    }
-                }
-            } else {
-                throw new RestException('Unsupported event handler protocol', self::ERROR_UNSUPPORTED_PROTOCOL);
-            }
-        } else {
-            throw new RestException('Wrong handler URL', self::ERROR_WRONG_HANDLER_URL);
-        }
+        HandlerHelper::checkCallback($handler);
     }
 
     /**
@@ -375,9 +373,9 @@ class RestService extends \IRestService
             );
         } else {
             foreach ($langFields['NAME'] as $langId => $langName) {
-                $langData[strtolower($langId)] = array(
+                $langData[mb_strtolower($langId)] = array(
                     'APP_ID' => $langFields['APP_ID'],
-                    'LANGUAGE_ID' => strtolower($langId),
+                    'LANGUAGE_ID' => mb_strtolower($langId),
                     'NAME' => $langFields['NAME'][$langId],
                     'DESCRIPTION' => is_array($langFields['DESCRIPTION']) && isset($langFields['DESCRIPTION'][$langId])
                         ? (string)$langFields['DESCRIPTION'][$langId] : null
@@ -388,7 +386,9 @@ class RestService extends \IRestService
                         'APP_ID' => $langFields['APP_ID'],
                         'LANGUAGE_ID' => '**',
                         'NAME' => $langFields['NAME'][$langId],
-                        'DESCRIPTION' => is_array($langFields['DESCRIPTION']) && isset($langFields['DESCRIPTION'][$langId])
+                        'DESCRIPTION' => is_array(
+                            $langFields['DESCRIPTION']
+                        ) && isset($langFields['DESCRIPTION'][$langId])
                             ? (string)$langFields['DESCRIPTION'][$langId] : null
                     );
                 }
@@ -422,15 +422,17 @@ class RestService extends \IRestService
             '**' => $app['APP_NAME'] ? $app['APP_NAME'] : $app['CODE']
         );
 
-        $orm = \Bitrix\Rest\AppLangTable::getList(array(
-            'filter' => array(
-                '=APP_ID' => $app['ID']
-            ),
-            'select' => array('LANGUAGE_ID', 'MENU_NAME')
-        ));
+        $orm = \Bitrix\Rest\AppLangTable::getList(
+            array(
+                'filter' => array(
+                    '=APP_ID' => $app['ID']
+                ),
+                'select' => array('LANGUAGE_ID', 'MENU_NAME')
+            )
+        );
 
         while ($row = $orm->fetch()) {
-            $result[strtolower($row['LANGUAGE_ID'])] = $row['MENU_NAME'];
+            $result[mb_strtolower($row['LANGUAGE_ID'])] = $row['MENU_NAME'];
         }
 
         if (isset($result[LANGUAGE_ID])) {

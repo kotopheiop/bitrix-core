@@ -1,22 +1,24 @@
 <?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/socialservices/classes/general/authmanager.php");
 
 /**
  * Class CSocServAuthDB
  * @deprecated Use \Bitrix\Socialservices\UserTable
  */
-class CSocServAuthDB
-    extends CSocServAuth
+class CSocServAuthDB extends CSocServAuth
 {
     public static function Add($arFields)
     {
         global $DB;
-        if (!self::CheckFields('ADD', $arFields))
+        if (!self::CheckFields('ADD', $arFields)) {
             return false;
+        }
 
         $arDbFields = $arFields;
-        if (static::hasEncryptedFields(array_keys($arDbFields)))
+        if (static::hasEncryptedFields(array_keys($arDbFields))) {
             static::encryptFields($arDbFields);
+        }
 
         $arInsert = $DB->PrepareInsert("b_socialservices_user", $arDbFields);
         $strSql =
@@ -35,18 +37,44 @@ class CSocServAuthDB
         $obCache->Clean($cache_id, $cache_dir);
 
         $arFields['ID'] = $lastId;
-        foreach (GetModuleEvents("socialservices", "OnAfterSocServUserAdd", true) as $arEvent)
+        foreach (GetModuleEvents("socialservices", "OnAfterSocServUserAdd", true) as $arEvent) {
             ExecuteModuleEventEx($arEvent, array(&$arFields));
+        }
 
         return $lastId;
     }
 
-    public static function GetList($arOrder = array(), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
-    {
+    public static function GetList(
+        $arOrder = array(),
+        $arFilter = array(),
+        $arGroupBy = false,
+        $arNavStartParams = false,
+        $arSelectFields = array()
+    ) {
         global $DB;
-        if (count($arSelectFields) <= 0)
-            $arSelectFields = array("ID", "LOGIN", "NAME", "LAST_NAME", "EMAIL", "PERSONAL_PHOTO",
-                "EXTERNAL_AUTH_ID", "USER_ID", "XML_ID", "CAN_DELETE", "PERSONAL_WWW", "PERMISSIONS", "OATOKEN", "OASECRET", "REFRESH_TOKEN", "ACTIVE", "SEND_ACTIVITY", "OATOKEN_EXPIRES", "INITIALIZED");
+        if (count($arSelectFields) <= 0) {
+            $arSelectFields = array(
+                "ID",
+                "LOGIN",
+                "NAME",
+                "LAST_NAME",
+                "EMAIL",
+                "PERSONAL_PHOTO",
+                "EXTERNAL_AUTH_ID",
+                "USER_ID",
+                "XML_ID",
+                "CAN_DELETE",
+                "PERSONAL_WWW",
+                "PERMISSIONS",
+                "OATOKEN",
+                "OASECRET",
+                "REFRESH_TOKEN",
+                "ACTIVE",
+                "SEND_ACTIVITY",
+                "OATOKEN_EXPIRES",
+                "INITIALIZED"
+            );
+        }
 
         $arFields = array(
             "ID" => array("FIELD" => "SU.ID", "TYPE" => "int"),
@@ -68,7 +96,11 @@ class CSocServAuthDB
             "SITE_ID" => array("FIELD" => "SU.SITE_ID", "TYPE" => "string"),
             "OATOKEN_EXPIRES" => array("FIELD" => "SU.OATOKEN_EXPIRES", "TYPE" => "int"),
             "INITIALIZED" => array("FIELD" => "SU.INITIALIZED", "TYPE" => "char"),
-            "ACTIVE" => array("FIELD" => "BU.ACTIVE", "TYPE" => "char", "FROM" => "INNER JOIN b_user BU ON (SU.USER_ID = BU.ID)"),
+            "ACTIVE" => array(
+                "FIELD" => "BU.ACTIVE",
+                "TYPE" => "char",
+                "FROM" => "INNER JOIN b_user BU ON (SU.USER_ID = BU.ID)"
+            ),
         );
         $arSqls = CGroup::PrepareSql($arFields, $arOrder, $arFilter, $arGroupBy, $arSelectFields);
         $arSqls["SELECT"] = str_replace("%%_DISTINCT_%%", "", $arSqls["SELECT"]);
@@ -78,43 +110,52 @@ class CSocServAuthDB
                 "SELECT " . $arSqls["SELECT"] . " " .
                 "FROM b_socialservices_user SU " .
                 "	" . $arSqls["FROM"] . " ";
-            if (strlen($arSqls["WHERE"]) > 0)
+            if ($arSqls["WHERE"] <> '') {
                 $strSql .= "WHERE " . $arSqls["WHERE"] . " ";
-            if (strlen($arSqls["GROUPBY"]) > 0)
+            }
+            if ($arSqls["GROUPBY"] <> '') {
                 $strSql .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
+            }
 
             $dbRes = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-            if ($arRes = $dbRes->Fetch())
+            if ($arRes = $dbRes->Fetch()) {
                 return $arRes["CNT"];
-            else
+            } else {
                 return false;
+            }
         }
 
         $strSql =
             "SELECT " . $arSqls["SELECT"] . " " .
             "FROM b_socialservices_user SU " .
             "	" . $arSqls["FROM"] . " ";
-        if (strlen($arSqls["WHERE"]) > 0)
+        if ($arSqls["WHERE"] <> '') {
             $strSql .= "WHERE " . $arSqls["WHERE"] . " ";
-        if (strlen($arSqls["GROUPBY"]) > 0)
+        }
+        if ($arSqls["GROUPBY"] <> '') {
             $strSql .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
-        if (strlen($arSqls["ORDERBY"]) > 0)
+        }
+        if ($arSqls["ORDERBY"] <> '') {
             $strSql .= "ORDER BY " . $arSqls["ORDERBY"] . " ";
+        }
         if (is_array($arNavStartParams) && intval($arNavStartParams["nTopCount"]) <= 0) {
             $strSql_tmp =
                 "SELECT COUNT('x') as CNT " .
                 "FROM b_socialservices_user SU " .
                 "	" . $arSqls["FROM"] . " ";
-            if (strlen($arSqls["WHERE"]) > 0)
+            if ($arSqls["WHERE"] <> '') {
                 $strSql_tmp .= "WHERE " . $arSqls["WHERE"] . " ";
-            if (strlen($arSqls["GROUPBY"]) > 0)
+            }
+            if ($arSqls["GROUPBY"] <> '') {
                 $strSql_tmp .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
+            }
 
             $dbRes = $DB->Query($strSql_tmp, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             $cnt = 0;
-            if (strlen($arSqls["GROUPBY"]) <= 0) {
-                if ($arRes = $dbRes->Fetch())
+            if ($arSqls["GROUPBY"] == '') {
+                if ($arRes = $dbRes->Fetch()) {
                     $cnt = $arRes["CNT"];
+                }
             } else {
                 $cnt = $dbRes->SelectedRowsCount();
             }
@@ -130,8 +171,9 @@ class CSocServAuthDB
             $dbRes = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
         }
 
-        if (static::hasEncryptedFields($arSelectFields))
+        if (static::hasEncryptedFields($arSelectFields)) {
             static::decryptDbRes($dbRes);
+        }
 
         return $dbRes;
     }
@@ -141,14 +183,17 @@ class CSocServAuthDB
         $cryptoField = new \Bitrix\Socialservices\EncryptedToken\CryptoField('OATOKEN');
         $result = [];
         while ($data = $dbRes->Fetch()) {
-            if (array_key_exists('OATOKEN', $data))
+            if (array_key_exists('OATOKEN', $data)) {
                 $data['OATOKEN'] = $cryptoField->decrypt($data['OATOKEN']);
+            }
 
-            if (array_key_exists('OASECRET', $data))
+            if (array_key_exists('OASECRET', $data)) {
                 $data['OASECRET'] = $cryptoField->decrypt($data['OASECRET']);
+            }
 
-            if (array_key_exists('REFRESH_TOKEN', $data))
+            if (array_key_exists('REFRESH_TOKEN', $data)) {
                 $data['REFRESH_TOKEN'] = $cryptoField->decrypt($data['REFRESH_TOKEN']);
+            }
 
             $result[] = $data;
         }
@@ -159,7 +204,7 @@ class CSocServAuthDB
 
 class CSocServMessage extends CSocServAllMessage
 {
-    function CleanUp()
+    public static function CleanUp()
     {
         global $DB;
 
@@ -169,11 +214,12 @@ class CSocServMessage extends CSocServAllMessage
         return "CSocServMessage::CleanUp();";
     }
 
-    static function Add($arFields)
+    public static function Add($arFields)
     {
         global $DB;
-        if (!self::CheckFields('ADD', $arFields))
+        if (!self::CheckFields('ADD', $arFields)) {
             return false;
+        }
 
         $arInsert = $DB->PrepareInsert("b_socialservices_message", $arFields);
         $strSql =
@@ -193,11 +239,25 @@ class CSocServMessage extends CSocServAllMessage
         return $lastId;
     }
 
-    function GetList($arOrder = array(), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
-    {
+    public static function GetList(
+        $arOrder = array(),
+        $arFilter = array(),
+        $arGroupBy = false,
+        $arNavStartParams = false,
+        $arSelectFields = array()
+    ) {
         global $DB;
-        if (count($arSelectFields) <= 0)
-            $arSelectFields = array("ID", "USER_ID", "SOCSERV_USER_ID", "PROVIDER", "MESSAGE", "INSERT_DATE", "SUCCES_SENT");
+        if (count($arSelectFields) <= 0) {
+            $arSelectFields = array(
+                "ID",
+                "USER_ID",
+                "SOCSERV_USER_ID",
+                "PROVIDER",
+                "MESSAGE",
+                "INSERT_DATE",
+                "SUCCES_SENT"
+            );
+        }
         $arFields = array(
             "ID" => array("FIELD" => "SM.ID", "TYPE" => "int"),
             "USER_ID" => array("FIELD" => "SM.USER_ID", "TYPE" => "int"),
@@ -215,43 +275,52 @@ class CSocServMessage extends CSocServAllMessage
                 "SELECT " . $arSqls["SELECT"] . " " .
                 "FROM b_socialservices_message SM " .
                 "	" . $arSqls["FROM"] . " ";
-            if (strlen($arSqls["WHERE"]) > 0)
+            if ($arSqls["WHERE"] <> '') {
                 $strSql .= "WHERE " . $arSqls["WHERE"] . " ";
-            if (strlen($arSqls["GROUPBY"]) > 0)
+            }
+            if ($arSqls["GROUPBY"] <> '') {
                 $strSql .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
+            }
 
             $dbRes = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-            if ($arRes = $dbRes->Fetch())
+            if ($arRes = $dbRes->Fetch()) {
                 return $arRes["CNT"];
-            else
+            } else {
                 return false;
+            }
         }
 
         $strSql =
             "SELECT " . $arSqls["SELECT"] . " " .
             "FROM b_socialservices_message SM " .
             "	" . $arSqls["FROM"] . " ";
-        if (strlen($arSqls["WHERE"]) > 0)
+        if ($arSqls["WHERE"] <> '') {
             $strSql .= "WHERE " . $arSqls["WHERE"] . " ";
-        if (strlen($arSqls["GROUPBY"]) > 0)
+        }
+        if ($arSqls["GROUPBY"] <> '') {
             $strSql .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
-        if (strlen($arSqls["ORDERBY"]) > 0)
+        }
+        if ($arSqls["ORDERBY"] <> '') {
             $strSql .= "ORDER BY " . $arSqls["ORDERBY"] . " ";
+        }
         if (is_array($arNavStartParams) && intval($arNavStartParams["nTopCount"]) <= 0) {
             $strSql_tmp =
                 "SELECT COUNT('x') as CNT " .
                 "FROM b_socialservices_message SM " .
                 "	" . $arSqls["FROM"] . " ";
-            if (strlen($arSqls["WHERE"]) > 0)
+            if ($arSqls["WHERE"] <> '') {
                 $strSql_tmp .= "WHERE " . $arSqls["WHERE"] . " ";
-            if (strlen($arSqls["GROUPBY"]) > 0)
+            }
+            if ($arSqls["GROUPBY"] <> '') {
                 $strSql_tmp .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
+            }
 
             $dbRes = $DB->Query($strSql_tmp, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             $cnt = 0;
-            if (strlen($arSqls["GROUPBY"]) <= 0) {
-                if ($arRes = $dbRes->Fetch())
+            if ($arSqls["GROUPBY"] == '') {
+                if ($arRes = $dbRes->Fetch()) {
                     $cnt = $arRes["CNT"];
+                }
             } else {
                 $cnt = $dbRes->SelectedRowsCount();
             }

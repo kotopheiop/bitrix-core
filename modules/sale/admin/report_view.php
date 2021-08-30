@@ -1,12 +1,14 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/prolog.php");
 
 \Bitrix\Main\Loader::includeModule('sale');
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions <= "D")
+if ($saleModulePermissions <= "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 
@@ -49,7 +51,9 @@ if (!$fCriticalError) {
 
 // Page header
 $rep_title = GetMessage("SALE_REPORT_VIEW_TITLE");
-if (isset($arParams['TITLE']) && !empty($arParams['TITLE'])) $rep_title .= ' "' . $arParams['TITLE'] . '"';
+if (isset($arParams['TITLE']) && !empty($arParams['TITLE'])) {
+    $rep_title .= ' "' . $arParams['TITLE'] . '"';
+}
 $APPLICATION->SetTitle($rep_title);
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
@@ -133,8 +137,12 @@ if (!$fCriticalError) {
 											<select class="adm-select" id="%ID%" name="%NAME%" caller="true">
 												<!--<option value=""><? /*=GetMessage('REPORT_IGNORE_FILTER_VALUE')*/
                                                 ?></option>-->
-												<? foreach (CBaseSaleReportHelper::getSiteList() as $kID => $vSiteName): ?>
-                                                    <option value="<?= htmlspecialcharsbx($kID) ?>"><?= htmlspecialcharsbx($vSiteName) ?></option>
+												<? foreach (
+                                                    CBaseSaleReportHelper::getSiteList() as $kID => $vSiteName
+                                                ): ?>
+                                                    <option value="<?= htmlspecialcharsbx(
+                                                        $kID
+                                                    ) ?>"><?= htmlspecialcharsbx($vSiteName) ?></option>
                                                 <? endforeach; ?>
 											</select>
 										</span>
@@ -151,9 +159,13 @@ if (!$fCriticalError) {
                         <div class="adm-filter-box-sizing">
 										<span class="adm-select-wrap">
 											<select class="adm-select" id="%ID%" name="%NAME%" caller="true">
-												<option value=""><?= GetMessage('REPORT_IGNORE_FILTER_VALUE') ?></option>
+												<option value=""><?= GetMessage(
+                                                        'REPORT_IGNORE_FILTER_VALUE'
+                                                    ) ?></option>
 												<? foreach (CBaseSaleReportHelper::getGenders() as $kID => $vName): ?>
-                                                    <option value="<?= htmlspecialcharsbx($kID) ?>"><?= htmlspecialcharsbx($vName) ?></option>
+                                                    <option value="<?= htmlspecialcharsbx(
+                                                        $kID
+                                                    ) ?>"><?= htmlspecialcharsbx($vName) ?></option>
                                                 <? endforeach; ?>
 											</select>
 										</span>
@@ -171,11 +183,15 @@ if (!$fCriticalError) {
 										<span class="adm-select-wrap">
 											<select class="adm-select sale-report-site-dependent" id="%ID%"
                                                     name="%NAME%" caller="true" tid="PersonType">
-												<option value=""><?= GetMessage('REPORT_IGNORE_FILTER_VALUE') ?></option>
+												<option value=""><?= GetMessage(
+                                                        'REPORT_IGNORE_FILTER_VALUE'
+                                                    ) ?></option>
 												<? $siteId = CBaseSaleReportHelper::getDefaultSiteId(); ?>
                                                 <? foreach (CBaseSaleReportHelper::getPersonTypes() as $kID => $v): ?>
                                                     <? if ($v['LID'] === $siteId): ?>
-                                                        <option value="<?= htmlspecialcharsbx($kID) ?>"><?= htmlspecialcharsbx($v['NAME']) ?></option>
+                                                        <option value="<?= htmlspecialcharsbx(
+                                                            $kID
+                                                        ) ?>"><?= htmlspecialcharsbx($v['NAME']) ?></option>
                                                     <? endif; ?>
                                                 <? endforeach; ?>
 											</select>
@@ -195,11 +211,15 @@ if (!$fCriticalError) {
 										<span class="adm-select-wrap">
 											<select class="adm-select sale-report-site-dependent" id="%ID%"
                                                     name="%NAME%" caller="true" tid="PersonType">
-												<option value=""><?= GetMessage('REPORT_IGNORE_FILTER_VALUE') ?></option>
+												<option value=""><?= GetMessage(
+                                                        'REPORT_IGNORE_FILTER_VALUE'
+                                                    ) ?></option>
 												<? $siteId = CBaseSaleReportHelper::getDefaultSiteId(); ?>
                                                 <? foreach (CBaseSaleReportHelper::getPersonTypes() as $kID => $v): ?>
                                                     <? if ($v['LID'] === $siteId): ?>
-                                                        <option value="<?= htmlspecialcharsbx($kID) ?>"><?= htmlspecialcharsbx($v['NAME']) ?></option>
+                                                        <option value="<?= htmlspecialcharsbx(
+                                                            $kID
+                                                        ) ?>"><?= htmlspecialcharsbx($v['NAME']) ?></option>
                                                     <? endif; ?>
                                                 <? endforeach; ?>
 											</select>
@@ -219,11 +239,15 @@ if (!$fCriticalError) {
 										<span class="adm-select-wrap">
 											<select class="adm-select sale-report-site-dependent" id="%ID%"
                                                     name="%NAME%" caller="true" tid="PersonType">
-												<option value=""><?= GetMessage('REPORT_IGNORE_FILTER_VALUE') ?></option>
+												<option value=""><?= GetMessage(
+                                                        'REPORT_IGNORE_FILTER_VALUE'
+                                                    ) ?></option>
 												<? $siteId = CBaseSaleReportHelper::getDefaultSiteId(); ?>
                                                 <? foreach (CBaseSaleReportHelper::getPersonTypes() as $kID => $v): ?>
                                                     <? if ($v['LID'] === $siteId): ?>
-                                                        <option value="<?= htmlspecialcharsbx($kID) ?>"><?= htmlspecialcharsbx($v['NAME']) ?></option>
+                                                        <option value="<?= htmlspecialcharsbx(
+                                                            $kID
+                                                        ) ?>"><?= htmlspecialcharsbx($v['NAME']) ?></option>
                                                     <? endif; ?>
                                                 <? endforeach; ?>
 											</select>
@@ -242,9 +266,15 @@ if (!$fCriticalError) {
                         <div class="adm-filter-box-sizing">
 										<span class="adm-select-wrap">
 											<select class="adm-select" id="%ID%" name="%NAME%" caller="true">
-												<option value=""><?= GetMessage('REPORT_IGNORE_FILTER_VALUE') ?></option>
-												<? foreach (CBaseSaleReportHelper::getStatusList() as $kID => $vStatusName): ?>
-                                                    <option value="<?= htmlspecialcharsbx($kID) ?>"><?= htmlspecialcharsbx($vStatusName) ?></option>
+												<option value=""><?= GetMessage(
+                                                        'REPORT_IGNORE_FILTER_VALUE'
+                                                    ) ?></option>
+												<? foreach (
+                                                    CBaseSaleReportHelper::getStatusList() as $kID => $vStatusName
+                                                ): ?>
+                                                    <option value="<?= htmlspecialcharsbx(
+                                                        $kID
+                                                    ) ?>"><?= htmlspecialcharsbx($vStatusName) ?></option>
                                                 <? endforeach; ?>
 											</select>
 										</span>
@@ -282,7 +312,8 @@ if (!$fCriticalError) {
                         }
                         if (arFilterTypes.length > 0) {
                             BX.showWait();
-                            url = '/bitrix/admin/sale_report_view.php?lang=<?=LANGUAGE_ID?>&ID=<?=$ID?>&<?=bitrix_sessid_get()?>' +
+                            url = '/bitrix/admin/sale_report_view.php?lang=<?=LANGUAGE_ID?>&ID=<?=$ID?>&<?=bitrix_sessid_get(
+                                )?>' +
                                 '&REPORT_AJAX=Y&F_SALE_SITE=' + siteSelect.value;
                             BX.ajax.post(url, {'filterTypes': arFilterTypes}, fProcessAjaxResult);
                         }
@@ -513,10 +544,13 @@ if (!$fCriticalError) {
 										<span class="adm-select-wrap-multiple">
 											<select class="adm-select-multiple" id="%ID%" name="%NAME%" caller="true"
                                                     multiple="multiple" size="5">
-												<option value=""
-                                                        selected="selected"><?= GetMessage('REPORT_IGNORE_FILTER_VALUE') ?></option>
+												<option value="" selected="selected"><?= GetMessage(
+                                                        'REPORT_IGNORE_FILTER_VALUE'
+                                                    ) ?></option>
 												<? foreach (CBaseSaleReportHelper::getProductStores() as $k => $v): ?>
-                                                    <option value="<?= htmlspecialcharsbx($k) ?>"><?= htmlspecialcharsbx($v) ?></option>
+                                                    <option value="<?= htmlspecialcharsbx(
+                                                        $k
+                                                    ) ?>"><?= htmlspecialcharsbx($v) ?></option>
                                                 <? endforeach; ?>
 											</select>
 										</span>

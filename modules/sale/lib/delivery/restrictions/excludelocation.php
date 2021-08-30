@@ -65,25 +65,34 @@ class ExcludeLocation extends ByLocation
      */
     public static function filterServicesArray(Shipment $shipment, array $restrictionFields)
     {
-        if (empty($restrictionFields))
+        if (empty($restrictionFields)) {
             return array();
+        }
 
         $shpLocCode = self::extractParams($shipment);
 
         //if location not defined in shipment
-        if (strlen($shpLocCode) < 0)
+        if ($shpLocCode === '') {
             return array_keys($restrictionFields);
+        }
 
-        $res = LocationTable::getList(array(
-            'filter' => array('=CODE' => $shpLocCode),
-            'select' => array('CODE', 'LEFT_MARGIN', 'RIGHT_MARGIN')
-        ));
+        $res = LocationTable::getList(
+            array(
+                'filter' => array('=CODE' => $shpLocCode),
+                'select' => array('CODE', 'LEFT_MARGIN', 'RIGHT_MARGIN')
+            )
+        );
 
         //if location doesn't exists
-        if (!$shpLocParams = $res->fetch())
+        if (!$shpLocParams = $res->fetch()) {
             return array_keys($restrictionFields);
+        }
 
-        $srvLocCodesCompat = static::getLocationsCompat($restrictionFields, $shpLocParams['LEFT_MARGIN'], $shpLocParams['RIGHT_MARGIN']);
+        $srvLocCodesCompat = static::getLocationsCompat(
+            $restrictionFields,
+            $shpLocParams['LEFT_MARGIN'],
+            $shpLocParams['RIGHT_MARGIN']
+        );
 
         foreach ($srvLocCodesCompat as $locCode => $deliveries) {
             foreach ($deliveries as $deliveryId) {

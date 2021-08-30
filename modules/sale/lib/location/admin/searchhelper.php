@@ -39,10 +39,17 @@ final class SearchHelper
         $reindexUrl = Helper::getReindexUrl();
         global $adminSidePanelHelper;
         $reindexUrl = $adminSidePanelHelper->editUrlToPublicPage($reindexUrl);
-        $params = array('MESSAGE' => Loc::getMessage(
-            'SALE_LOCATION_ADMIN_SEARCH_HELPER_ENTITY_INVALID_SINDEX',
-            array('#ANCHOR_INDEX_RESTORE#' => '<a href="' . $reindexUrl . '" target="_blank">', "#ANCHOR_END#" => '</a>')
-        ), 'type' => 'ERROR', 'HTML' => true);
+        $params = array(
+            'MESSAGE' => Loc::getMessage(
+                'SALE_LOCATION_ADMIN_SEARCH_HELPER_ENTITY_INVALID_SINDEX',
+                array(
+                    '#ANCHOR_INDEX_RESTORE#' => '<a href="' . $reindexUrl . '" target="_blank">',
+                    "#ANCHOR_END#" => '</a>'
+                )
+            ),
+            'type' => 'ERROR',
+            'HTML' => true
+        );
         if (defined('PUBLIC_MODE') && PUBLIC_MODE == 1) {
             $params["SKIP_PUBLIC_MODE"] = true;
         }
@@ -69,10 +76,17 @@ final class SearchHelper
         $importUrl = Helper::getImportUrl();
         global $adminSidePanelHelper;
         $importUrl = $adminSidePanelHelper->editUrlToPublicPage($importUrl);
-        $params = array('MESSAGE' => Loc::getMessage(
-            'SALE_LOCATION_ADMIN_SEARCH_HELPER_ENTITY_INVALID_DBINDEX',
-            array('#ANCHOR_INDEX_RESTORE#' => '<a href="' . $importUrl . '" target="_blank">', "#ANCHOR_END#" => '</a>')
-        ), 'type' => 'ERROR', 'HTML' => true);
+        $params = array(
+            'MESSAGE' => Loc::getMessage(
+                'SALE_LOCATION_ADMIN_SEARCH_HELPER_ENTITY_INVALID_DBINDEX',
+                array(
+                    '#ANCHOR_INDEX_RESTORE#' => '<a href="' . $importUrl . '" target="_blank">',
+                    "#ANCHOR_END#" => '</a>'
+                )
+            ),
+            'type' => 'ERROR',
+            'HTML' => true
+        );
         if (defined('PUBLIC_MODE') && PUBLIC_MODE == 1) {
             $params["SKIP_PUBLIC_MODE"] = true;
         }
@@ -81,8 +95,9 @@ final class SearchHelper
 
     public static function checkIndexesValid()
     {
-        if (!Finder::checkIndexValid())
+        if (!Finder::checkIndexValid()) {
             static::showSearchNotification();
+        }
 
         $cnt = static::getCounter();
 
@@ -96,19 +111,23 @@ final class SearchHelper
                         break;
                     }
                 }
-            } else
+            } else {
                 $allOk = false;
+            }
 
-            if ($allOk)
+            if ($allOk) {
                 static::setIndexValid();
-            else
+            } else {
                 static::setIndexInvalid();
+            }
 
             static::setCounter(0);
-        } else
+        } else {
             static::setCounter($cnt + 1);
+        }
 
-        if (!static::checkIndexValid())
+        if (!static::checkIndexValid()) {
             static::showDBIndexNotification();
+        }
     }
 }

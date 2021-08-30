@@ -2,11 +2,13 @@
 
 namespace Bitrix\Main;
 
+use Bitrix\Main\DI\ServiceLocator;
+
 /**
  * Class Loader loads required files, classes and modules. It is the only class which is included directly.
  * @package Bitrix\Main
  */
-final class Loader
+class Loader
 {
     /**
      * Can be used to prevent loading all modules except main and fileman
@@ -16,21 +18,17 @@ final class Loader
     const BITRIX_HOLDER = "bitrix";
     const LOCAL_HOLDER = "local";
 
-    private static $safeModeModules = array("main", "fileman");
-
-    private static $arLoadedModules = array("main" => true);
-    private static $arSemiloadedModules = array();
-    private static $arLoadedModulesHolders = array("main" => self::BITRIX_HOLDER);
-    private static $arSharewareModules = array();
-
-    /** @var array Additional autoload handlers */
-    private static $additionalHandlers = [];
+    protected static $safeModeModules = ["main" => true, "fileman" => true];
+    protected static $loadedModules = ["main" => true];
+    protected static $semiloadedModules = [];
+    protected static $modulesHolders = ["main" => self::BITRIX_HOLDER];
+    protected static $sharewareModules = [];
 
     /**
      * Custom autoload paths.
-     * @var array [namespace => path]
+     * @var array [namespace => [ [path1, depth1], [path2, depth2] ]
      */
-    private static $customNamespaces = [];
+    protected static $namespaces = [];
 
     /**
      * Returned by includeSharewareModule() if module is not found
@@ -49,20 +47,20 @@ final class Loader
      */
     const MODULE_DEMO_EXPIRED = 3;
 
-    private static $arAutoLoadClasses = array();
-
-    private static $isAutoLoadOn = true;
+    protected static $autoLoadClasses = [];
 
     /**
      * @var bool Controls throwing exception by requireModule method
      */
-    private static $requireThrowException = true;
+    protected static $requireThrowException = true;
 
+    /** @deprecated */
     const ALPHA_LOWER = "qwertyuioplkjhgfdsazxcvbnm";
+    /** @deprecated */
     const ALPHA_UPPER = "QWERTYUIOPLKJHGFDSAZXCVBNM";
 
     /**
-     * Includes module by its name
+     * Includes a module by its name.
      *
      * @param string $moduleName Name of the included module
      * @return bool Returns true if module was included successfully, otherwise returns false
@@ -70,49 +68,78 @@ final class Loader
      */
     public static function includeModule($moduleName)
     {
-        if (!is_string($moduleName) || $moduleName == "")
+        if (!is_string($moduleName) || $moduleName == "") {
             throw new LoaderException("Empty module name");
-        if (preg_match("#[^a-zA-Z0-9._]#", $moduleName))
+        }
+        if (preg_match("#[^a-zA-Z0-9._]#", $moduleName)) {
             throw new LoaderException(sprintf("Module name '%s' is not correct", $moduleName));
+        }
 
-        $moduleName = strtr($moduleName, static::ALPHA_UPPER, static::ALPHA_LOWER);
+        $moduleName = strtolower($moduleName);
 
         if (self::SAFE_MODE) {
-            if (!in_array($moduleName, self::$safeModeModules))
+            if (!isset(self::$safeModeModules[$moduleName])) {
                 return false;
+            }
         }
 
-        if (isset(self::$arLoadedModules[$moduleName]))
-            return self::$arLoadedModules[$moduleName];
+        if (isset(self::$loadedModules[$moduleName])) {
+            return self::$loadedModules[$moduleName];
+        }
 
-        if (isset(self::$arSemiloadedModules[$moduleName]))
+        if (isset(self::$semiloadedModules[$moduleName])) {
             trigger_error("Module '" . $moduleName . "' is in loading progress", E_USER_WARNING);
+        }
 
         $arInstalledModules = ModuleManager::getInstalledModules();
-        if (!isset($arInstalledModules[$moduleName]))
-            return self::$arLoadedModules[$moduleName] = false;
-
-        $documentRoot = static::getDocumentRoot();
-
-        $moduleHolder = self::LOCAL_HOLDER;
-        $pathToInclude = $documentRoot . "/" . $moduleHolder . "/modules/" . $moduleName . "/include.php";
-        if (!file_exists($pathToInclude)) {
-            $moduleHolder = self::BITRIX_HOLDER;
-            $pathToInclude = $documentRoot . "/" . $moduleHolder . "/modules/" . $moduleName . "/include.php";
-            if (!file_exists($pathToInclude))
-                return self::$arLoadedModules[$moduleName] = false;
+        if (!isset($arInstalledModules[$moduleName])) {
+            return (self::$loadedModules[$moduleName] = false);
         }
 
-        self::$arLoadedModulesHolders[$moduleName] = $moduleHolder;
-        self::$arSemiloadedModules[$moduleName] = true;
+        $documentRoot = self::getDocumentRoot();
 
-        $res = self::includeModuleInternal($pathToInclude);
+        $moduleHolder = self::LOCAL_HOLDER;
+        $pathToInclude = $documentRoot . "/" . $moduleHolder . "/modules/" . $moduleName;
+        if (!file_exists($pathToInclude)) {
+            $moduleHolder = self::BITRIX_HOLDER;
+            $pathToInclude = $documentRoot . "/" . $moduleHolder . "/modules/" . $moduleName;
+            if (!file_exists($pathToInclude)) {
+                return (self::$loadedModules[$moduleName] = false);
+            }
+        }
 
-        unset(self::$arSemiloadedModules[$moduleName]);
-        if ($res === false)
-            return self::$arLoadedModules[$moduleName] = false;
+        //register a PSR-4 base folder for the module
+        if (strpos($moduleName, ".") !== false) {
+            //partner's module
+            $baseName = str_replace(".", "\\", ucwords($moduleName, "."));
+        } else {
+            //bitrix's module
+            $baseName = "Bitrix\\" . ucfirst($moduleName);
+        }
+        self::registerNamespace($baseName, $documentRoot . "/" . $moduleHolder . "/modules/" . $moduleName . "/lib");
 
-        return self::$arLoadedModules[$moduleName] = true;
+        self::$modulesHolders[$moduleName] = $moduleHolder;
+
+        $res = true;
+        if (file_exists($pathToInclude . "/include.php")) {
+            //recursion control
+            self::$semiloadedModules[$moduleName] = true;
+
+            $res = self::includeModuleInternal($pathToInclude . "/include.php");
+
+            unset(self::$semiloadedModules[$moduleName]);
+        }
+
+        self::$loadedModules[$moduleName] = ($res !== false);
+
+        if (self::$loadedModules[$moduleName] == false) {
+            //unregister the namespace if "include" fails
+            self::unregisterNamespace($baseName);
+        } else {
+            ServiceLocator::getInstance()->registerByModuleSettings($moduleName);
+        }
+
+        return self::$loadedModules[$moduleName];
     }
 
     /**
@@ -125,9 +152,9 @@ final class Loader
      */
     public static function requireModule($moduleName)
     {
-        $included = static::includeModule($moduleName);
+        $included = self::includeModule($moduleName);
 
-        if (!$included && static::$requireThrowException) {
+        if (!$included && self::$requireThrowException) {
             throw new LoaderException("Required module `{$moduleName}` was not found");
         }
 
@@ -152,38 +179,41 @@ final class Loader
      */
     public static function includeSharewareModule($moduleName)
     {
-        if (isset(self::$arSharewareModules[$moduleName]))
-            return self::$arSharewareModules[$moduleName];
-
-        $moduleNameTmp = str_replace(".", "_", $moduleName);
-
-        if (self::includeModule($moduleName)) {
-            if (defined($moduleNameTmp . "_DEMO") && constant($moduleNameTmp . "_DEMO") == "Y")
-                self::$arSharewareModules[$moduleName] = self::MODULE_DEMO;
-            else
-                self::$arSharewareModules[$moduleName] = self::MODULE_INSTALLED;
-
-            return self::$arSharewareModules[$moduleName];
+        if (isset(self::$sharewareModules[$moduleName])) {
+            return self::$sharewareModules[$moduleName];
         }
 
-        if (defined($moduleNameTmp . "_DEMO") && constant($moduleNameTmp . "_DEMO") == "Y")
-            return self::$arSharewareModules[$moduleName] = self::MODULE_DEMO_EXPIRED;
+        $module = str_replace(".", "_", $moduleName);
 
-        return self::$arSharewareModules[$moduleName] = self::MODULE_NOT_FOUND;
+        if (self::includeModule($moduleName)) {
+            if (defined($module . "_DEMO") && constant($module . "_DEMO") == "Y") {
+                self::$sharewareModules[$moduleName] = self::MODULE_DEMO;
+            } else {
+                self::$sharewareModules[$moduleName] = self::MODULE_INSTALLED;
+            }
+
+            return self::$sharewareModules[$moduleName];
+        }
+
+        if (defined($module . "_DEMO") && constant($module . "_DEMO") == "Y") {
+            return (self::$sharewareModules[$moduleName] = self::MODULE_DEMO_EXPIRED);
+        }
+
+        return (self::$sharewareModules[$moduleName] = self::MODULE_NOT_FOUND);
     }
 
     public static function clearModuleCache($moduleName)
     {
-        if (!is_string($moduleName) || $moduleName == "")
+        if (!is_string($moduleName) || $moduleName == "") {
             throw new LoaderException("Empty module name");
-
-        if ($moduleName !== "main") {
-            unset(static::$arLoadedModules[$moduleName]);
-            unset(static::$arLoadedModulesHolders[$moduleName]);
         }
 
-        if (isset(static::$arSharewareModules[$moduleName]))
-            unset(static::$arSharewareModules[$moduleName]);
+        if ($moduleName !== "main") {
+            unset(self::$loadedModules[$moduleName]);
+            unset(self::$modulesHolders[$moduleName]);
+        }
+
+        unset(self::$sharewareModules[$moduleName]);
     }
 
     /**
@@ -194,14 +224,10 @@ final class Loader
     public static function getDocumentRoot()
     {
         static $documentRoot = null;
-        if ($documentRoot === null)
+        if ($documentRoot === null) {
             $documentRoot = rtrim($_SERVER["DOCUMENT_ROOT"], "/\\");
+        }
         return $documentRoot;
-    }
-
-    public static function switchAutoLoad($value = true)
-    {
-        static::$isAutoLoadOn = $value;
     }
 
     /**
@@ -210,114 +236,191 @@ final class Loader
      * It is not necessary to register rarely used classes. They can be found and loaded dynamically.
      *
      * @param string $moduleName Name of the module. Can be null if classes are not part of any module
-     * @param array $arClasses Array of classes with class names as keys and paths as values.
+     * @param array $classes Array of classes with class names as keys and paths as values.
      * @throws LoaderException
      */
-    public static function registerAutoLoadClasses($moduleName, array $arClasses)
+    public static function registerAutoLoadClasses($moduleName, array $classes)
     {
-        if (empty($arClasses))
+        if (empty($classes)) {
             return;
-
+        }
         if (($moduleName !== null) && empty($moduleName)) {
             throw new LoaderException(sprintf("Module name '%s' is not correct", $moduleName));
         }
 
-        if (!static::$isAutoLoadOn) {
-            if (!is_null($moduleName) && !isset(static::$arLoadedModulesHolders[$moduleName]))
-                throw new LoaderException(sprintf("Holder of module '%s' is not found", $moduleName));
+        foreach ($classes as $class => $file) {
+            $class = ltrim($class, "\\");
+            $class = strtolower($class);
 
-            $documentRoot = static::getDocumentRoot();
-
-            if (!is_null($moduleName)) {
-                foreach ($arClasses as $value) {
-                    if (file_exists($documentRoot . "/" . self::$arLoadedModulesHolders[$moduleName] . "/modules/" . $moduleName . "/" . $value))
-                        require_once($documentRoot . "/" . self::$arLoadedModulesHolders[$moduleName] . "/modules/" . $moduleName . "/" . $value);
-                }
-            } else {
-                foreach ($arClasses as $value) {
-                    if (($includePath = self::getLocal($value, $documentRoot)) !== false)
-                        require_once($includePath);
-                }
-            }
-        } else {
-            foreach ($arClasses as $key => $value) {
-                $class = ltrim($key, "\\");
-                self::$arAutoLoadClasses[strtr($class, static::ALPHA_UPPER, static::ALPHA_LOWER)] = array(
-                    "module" => $moduleName,
-                    "file" => $value
-                );
-            }
+            self::$autoLoadClasses[$class] = [
+                "module" => $moduleName,
+                "file" => $file,
+            ];
         }
     }
 
     /**
      * Registers namespaces with custom paths.
-     * e.g. ('Bitrix\Main\Dev', 'main', 'dev/lib')
+     * e.g. ('Bitrix\Main\Dev', '/home/bitrix/web/site/bitrix/modules/main/dev/lib')
      *
-     * @param string $namespace
-     * @param string $module
-     * @param string $path
+     * @param string $namespace A namespace prefix.
+     * @param string $path An absolute path.
      */
-    public static function registerNamespace($namespace, $module, $path)
+    public static function registerNamespace($namespace, $path)
     {
-        $namespace = rtrim($namespace, '\\');
-        $path = rtrim($path, '/\\');
+        $namespace = trim($namespace, "\\") . "\\";
+        $namespace = strtolower($namespace);
 
-        $path = static::getDocumentRoot() . "/" . static::$arLoadedModulesHolders[$module] . "/modules/" . $module . '/' . $path;
+        $path = rtrim($path, "/\\");
+        $depth = substr_count(rtrim($namespace, "\\"), "\\");
 
-        static::$customNamespaces[$namespace] = $path;
-    }
-
-    public static function registerHandler(callable $handler)
-    {
-        static::$additionalHandlers[] = $handler;
-    }
-
-    public static function isAutoLoadClassRegistered($className)
-    {
-        $className = trim(ltrim($className, "\\"));
-        if ($className == '')
-            return false;
-
-        $className = strtr($className, static::ALPHA_UPPER, static::ALPHA_LOWER);
-
-        return isset(self::$arAutoLoadClasses[$className]);
+        self::$namespaces[$namespace][] = [
+            "path" => $path,
+            "depth" => $depth,
+        ];
     }
 
     /**
-     * \Bitrix\Main\IO\File -> /main/lib/io/file.php
-     * \Bitrix\IBlock\Type -> /iblock/lib/type.php
-     * \Bitrix\IBlock\Section\Type -> /iblock/lib/section/type.php
-     * \QSoft\Catalog\Tools\File -> /qsoft.catalog/lib/tools/file.php
+     * Unregisters a namespace.
+     * @param string $namespace
+     */
+    public static function unregisterNamespace($namespace)
+    {
+        $namespace = trim($namespace, "\\") . "\\";
+        $namespace = strtolower($namespace);
+
+        unset(self::$namespaces[$namespace]);
+    }
+
+    /**
+     * Registers an additional autoload handler.
+     * @param callable $handler
+     */
+    public static function registerHandler(callable $handler)
+    {
+        \spl_autoload_register($handler);
+    }
+
+    /**
+     * PSR-4 compatible autoloader.
+     * https://www.php-fig.org/psr/psr-4/
      *
      * @param $className
      */
     public static function autoLoad($className)
     {
-        $file = ltrim($className, "\\");    // fix web env
-        $file = strtr($file, static::ALPHA_UPPER, static::ALPHA_LOWER);
+        // fix web env
+        $className = ltrim($className, "\\");
+
+        $classLower = strtolower($className);
 
         static $documentRoot = null;
-        if ($documentRoot === null)
-            $documentRoot = static::getDocumentRoot();
+        if ($documentRoot === null) {
+            $documentRoot = self::getDocumentRoot();
+        }
 
-        if (isset(self::$arAutoLoadClasses[$file])) {
-            $pathInfo = self::$arAutoLoadClasses[$file];
+        //optimization via direct paths
+        if (isset(self::$autoLoadClasses[$classLower])) {
+            $pathInfo = self::$autoLoadClasses[$classLower];
             if ($pathInfo["module"] != "") {
-                $m = $pathInfo["module"];
-                $h = isset(self::$arLoadedModulesHolders[$m]) ? self::$arLoadedModulesHolders[$m] : 'bitrix';
-                include_once($documentRoot . "/" . $h . "/modules/" . $m . "/" . $pathInfo["file"]);
+                $module = $pathInfo["module"];
+                $holder = (isset(self::$modulesHolders[$module]) ? self::$modulesHolders[$module] : self::BITRIX_HOLDER);
+
+                $filePath = (defined('REPOSITORY_ROOT'))
+                    ? REPOSITORY_ROOT
+                    : "{$documentRoot}/{$holder}/modules";
+
+                $filePath .= '/' . $module . "/" . $pathInfo["file"];
+
+                require_once($filePath);
             } else {
                 require_once($documentRoot . $pathInfo["file"]);
             }
-
-            if (class_exists($className)) {
-                return;
-            }
+            return;
         }
 
-        if (preg_match("#[^\\\\/a-zA-Z0-9_]#", $file))
+        if (preg_match("#[^\\\\/a-zA-Z0-9_]#", $className)) {
             return;
+        }
+
+        $tryFiles = [
+            [
+                "real" => $className,
+                "lower" => $classLower,
+            ]
+        ];
+
+        if (substr($classLower, -5) == "table") {
+            // old *Table stored in reserved files
+            $tryFiles[] = [
+                "real" => substr($className, 0, -5),
+                "lower" => substr($classLower, 0, -5),
+            ];
+        }
+
+        foreach ($tryFiles as $classInfo) {
+            $classParts = explode("\\", $classInfo["lower"]);
+
+            //remove class name
+            array_pop($classParts);
+
+            while (!empty($classParts)) {
+                //go from the end
+                $namespace = implode("\\", $classParts) . "\\";
+
+                if (isset(self::$namespaces[$namespace])) {
+                    //found
+                    foreach (self::$namespaces[$namespace] as $namespaceLocation) {
+                        $depth = $namespaceLocation["depth"];
+                        $path = $namespaceLocation["path"];
+
+                        $fileParts = explode("\\", $classInfo["real"]);
+
+                        for ($i = 0; $i <= $depth; $i++) {
+                            array_shift($fileParts);
+                        }
+
+                        $classPath = implode("/", $fileParts);
+
+                        $classPathLower = strtolower($classPath);
+
+                        // final path lower case
+                        $filePath = $path . '/' . $classPathLower . ".php";
+
+                        if (file_exists($filePath)) {
+                            require_once($filePath);
+                            break 3;
+                        }
+
+                        // final path original case
+                        $filePath = $path . '/' . $classPath . ".php";
+
+                        if (file_exists($filePath)) {
+                            require_once($filePath);
+                            break 3;
+                        }
+                    }
+                }
+
+                //try the shorter namespace
+                array_pop($classParts);
+            }
+        }
+    }
+
+    /**
+     * @param $className
+     *
+     * @throws LoaderException
+     */
+    public static function requireClass($className)
+    {
+        $file = ltrim($className, "\\");    // fix web env
+        $file = strtolower($file);
+
+        if (preg_match("#[^\\\\/a-zA-Z0-9_]#", $file)) {
+            return;
+        }
 
         $tryFiles = [$file];
 
@@ -333,12 +436,14 @@ final class Loader
             if ($arFile[0] === "bitrix") {
                 array_shift($arFile);
 
-                if (empty($arFile))
+                if (empty($arFile)) {
                     break;
+                }
 
                 $module = array_shift($arFile);
-                if ($module == null || empty($arFile))
+                if ($module == null || empty($arFile)) {
                     break;
+                }
             } else {
                 $module1 = array_shift($arFile);
                 $module2 = array_shift($arFile);
@@ -350,68 +455,40 @@ final class Loader
                 $module = $module1 . "." . $module2;
             }
 
-            if (!isset(self::$arLoadedModulesHolders[$module]))
-                break;
-
-            $filePath = $documentRoot . "/" . self::$arLoadedModulesHolders[$module] . "/modules/" . $module . "/lib/" . implode("/", $arFile) . ".php";
-
-            if (file_exists($filePath)) {
-                require_once $filePath;
-                break;
-            } else {
-                // try namespaces with custom path
-                foreach (static::$customNamespaces as $namespace => $namespacePath) {
-                    if (strpos($className, $namespace) === 0) {
-                        // found
-                        $fileParts = explode("/", $file);
-
-                        // cut base namespace
-                        for ($i = 0; $i <= substr_count($namespace, '\\'); $i++) {
-                            array_shift($fileParts);
-                        }
-
-                        // final path
-                        $filePath = $namespacePath . '/' . implode("/", $fileParts) . ".php";
-
-                        if (file_exists($filePath)) {
-                            require_once $filePath;
-                            break 2;
-                        }
-                    }
-                }
+            if (!self::includeModule($module)) {
+                throw new LoaderException(
+                    sprintf(
+                        "There is no `%s` class, module `%s` is unavailable",
+                        $className,
+                        $module
+                    )
+                );
             }
         }
 
-        // still not found, check additional handlers
-        if (!class_exists($className) && !empty(static::$additionalHandlers)) {
-            foreach (static::$additionalHandlers as $handler) {
-                call_user_func($handler, $className);
-
-                if (class_exists($className)) {
-                    break;
-                }
-            }
-        }
+        self::autoLoad($className);
     }
 
     /**
      * Checks if file exists in /local or /bitrix directories
      *
      * @param string $path File path relative to /local/ or /bitrix/
-     * @param string $root Server document root, default static::getDocumentRoot()
+     * @param string|null $root Server document root, default self::getDocumentRoot()
      * @return string|bool Returns combined path or false if the file does not exist in both dirs
      */
     public static function getLocal($path, $root = null)
     {
-        if ($root === null)
-            $root = static::getDocumentRoot();
+        if ($root === null) {
+            $root = self::getDocumentRoot();
+        }
 
-        if (file_exists($root . "/local/" . $path))
+        if (file_exists($root . "/local/" . $path)) {
             return $root . "/local/" . $path;
-        elseif (file_exists($root . "/bitrix/" . $path))
+        } elseif (file_exists($root . "/bitrix/" . $path)) {
             return $root . "/bitrix/" . $path;
-        else
+        } else {
             return false;
+        }
     }
 
     /**
@@ -423,11 +500,12 @@ final class Loader
      */
     public static function getPersonal($path)
     {
-        $root = static::getDocumentRoot();
-        $personal = isset($_SERVER["BX_PERSONAL_ROOT"]) ? $_SERVER["BX_PERSONAL_ROOT"] : "";
+        $root = self::getDocumentRoot();
+        $personal = (isset($_SERVER["BX_PERSONAL_ROOT"]) ? $_SERVER["BX_PERSONAL_ROOT"] : "");
 
-        if (!empty($personal) && file_exists($root . $personal . "/" . $path))
+        if ($personal <> '' && file_exists($root . $personal . "/" . $path)) {
             return $root . $personal . "/" . $path;
+        }
 
         return self::getLocal($path, $root);
     }
@@ -449,19 +527,4 @@ class LoaderException extends \Exception
     {
         parent::__construct($message, $code, $previous);
     }
-}
-
-if (!function_exists("__autoload")) {
-    if (function_exists('spl_autoload_register')) {
-        \spl_autoload_register([Loader::class, 'autoLoad']);
-    } else {
-        function __autoload($className)
-        {
-            Loader::autoLoad($className);
-        }
-    }
-
-    Loader::switchAutoLoad(true);
-} else {
-    Loader::switchAutoLoad(false);
 }

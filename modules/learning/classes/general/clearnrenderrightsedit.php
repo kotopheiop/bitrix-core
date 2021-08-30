@@ -16,12 +16,14 @@ class CLearnRenderRightsEdit
         $arBaseRights = $oAccess->GetBasePermissions();
 
         // is it base permissions request?
-        if ($lessonId === false)
+        if ($lessonId === false) {
             $arActualRights = $arBaseRights;
-        elseif ($lessonId == 0)    // is new lesson?
+        } elseif ($lessonId == 0)    // is new lesson?
+        {
             $arActualRights = array();
-        else
+        } else {
             $arActualRights = $oAccess->GetLessonPermissions($lessonId);
+        }
 
         CLearnRenderRightsEdit::LearningShowRights(
             $lessonId,        // expected (bool)false for base rights
@@ -36,17 +38,28 @@ class CLearnRenderRightsEdit
     }
 
 
-    protected static function LearningShowRights($lessonId, $variable_name, $arBaseRights, $arPossibleRights, $arActualRights, $arSelected = array(), $arHighLight = array(), $readOnly)
-    {
+    protected static function LearningShowRights(
+        $lessonId,
+        $variable_name,
+        $arBaseRights,
+        $arPossibleRights,
+        $arActualRights,
+        $arSelected = array(),
+        $arHighLight = array(),
+        $readOnly
+    ) {
         $js_var_name = preg_replace("/[^a-zA-Z0-9_]/", "_", $variable_name);
         $html_var_name = htmlspecialcharsbx($variable_name);
 
         $sSelect = '<select name="' . $html_var_name . '[][TASK_ID]" style="vertical-align:middle">';
         foreach ($arPossibleRights as $taskId => $arRightsData) {
             $selected = '';
-            if (strtoupper($arRightsData['name']) === 'LEARNING_LESSON_ACCESS_DENIED')
+            if (mb_strtoupper($arRightsData['name']) === 'LEARNING_LESSON_ACCESS_DENIED') {
                 $selected = ' selected="selected" ';
-            $sSelect .= '<option value="' . (int)$taskId . '" ' . $selected . '>' . htmlspecialcharsex($arRightsData['name_human']) . '</option>';
+            }
+            $sSelect .= '<option value="' . (int)$taskId . '" ' . $selected . '>' . htmlspecialcharsex(
+                    $arRightsData['name_human']
+                ) . '</option>';
         }
         $sSelect .= '</select>';
 
@@ -81,12 +94,14 @@ class CLearnRenderRightsEdit
                         $arBaseNames = $access->GetNames(array_keys($arBaseRights));
 
                         foreach ($arBaseRights as $symbol => $taskId) {
-                            if ($taskId <= 0)
+                            if ($taskId <= 0) {
                                 continue;
+                            }
                             ?>
                             <tr valign="top">
-                                <td align="right"><? echo htmlspecialcharsex($arBaseNames[$symbol]['provider'] . ' ' . $arBaseNames[$symbol]['name']) ?>
-                                    :&nbsp;
+                                <td align="right"><? echo htmlspecialcharsex(
+                                        $arBaseNames[$symbol]['provider'] . ' ' . $arBaseNames[$symbol]['name']
+                                    ) ?>:&nbsp;
                                 </td>
                                 <td align="left">
                                     <?php echo htmlspecialcharsex(CLearnAccess::GetNameForTask($taskId)); ?>
@@ -98,8 +113,9 @@ class CLearnRenderRightsEdit
 
                     $arNames = $access->GetNames(array_keys($arActualRights));
                     foreach ($arActualRights as $symbol => $taskId) {
-                        if ($taskId <= 0)
+                        if ($taskId <= 0) {
                             continue;
+                        }
                         ?>
                         <tr valign="top">
                             <td align="right">
@@ -112,10 +128,13 @@ class CLearnRenderRightsEdit
                               class="access-delete"
                               style="position:relative; top:1px; margin-right:3px;"
                         ></span><?php
-                                    if (strlen($arNames[$symbol]['provider']))
-                                        echo htmlspecialcharsex($arNames[$symbol]['provider'] . ' ' . $arNames[$symbol]['name']);
-                                    else
+                                    if ($arNames[$symbol]['provider'] <> '') {
+                                        echo htmlspecialcharsex(
+                                            $arNames[$symbol]['provider'] . ' ' . $arNames[$symbol]['name']
+                                        );
+                                    } else {
                                         echo htmlspecialcharsex($arNames[$symbol]['name']);
+                                    }
                                     ?>:&nbsp;
                                 </div>
                             </td>
@@ -133,7 +152,11 @@ class CLearnRenderRightsEdit
                                             <?php
                                             foreach ($arPossibleRights as $id => $arRightsData) {
                                                 ?>
-                                                <option value="<?php echo (int)$id; ?>" <?php if ($id == $taskId) echo "selected"; ?>><?php echo htmlspecialcharsex(CLearnAccess::GetNameForTask($id)); ?></option>
+                                                <option value="<?php echo (int)$id; ?>" <?php if ($id == $taskId) {
+                                                    echo "selected";
+                                                } ?>><?php echo htmlspecialcharsex(
+                                                        CLearnAccess::GetNameForTask($id)
+                                                    ); ?></option>
                                                 <?php
                                             }
                                             ?>

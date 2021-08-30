@@ -2,12 +2,12 @@
 
 namespace Bitrix\Sale\Helpers\Admin;
 
+use Bitrix\Catalog;
 use Bitrix\Iblock\PropertyTable;
 use Bitrix\Main\ArgumentNullException;
-use Bitrix\Sale\Fuser;
 use Bitrix\Sale;
+use Bitrix\Sale\Fuser;
 use Bitrix\Sale\Provider;
-use Bitrix\Catalog;
 
 /**
  * Class Product
@@ -31,6 +31,8 @@ class Product
 
     private $resultData = array();
 
+    private $useSliderCard = null;
+
     /**
      * @param array $productsIds
      * @param $siteId
@@ -42,20 +44,24 @@ class Product
      */
     public static function getData(array $productsIds, $siteId, array $columnsList = array(), $tmpId = "")
     {
-        if (empty($productsIds))
+        if (empty($productsIds)) {
             return array();
+        }
 
-        if (!\Bitrix\Main\Loader::includeModule('iblock'))
+        if (!\Bitrix\Main\Loader::includeModule('iblock')) {
             return array();
+        }
 
-        if (!\Bitrix\Main\Loader::includeModule('catalog'))
+        if (!\Bitrix\Main\Loader::includeModule('catalog')) {
             return array();
+        }
 
         $product = new self($productsIds, $siteId, $columnsList, $tmpId);
         $product->fillIblockData();
 
-        if (count($product->resultData) <= 0)
+        if (count($product->resultData) <= 0) {
             return array();
+        }
 
         $product->fillCatalogData();
         $product->completeResultData();
@@ -74,11 +80,13 @@ class Product
      */
     public static function getProviderData(array $productsData, $siteId, $userId = null, array &$errors = array())
     {
-        if (empty($productsData))
+        if (empty($productsData)) {
             return array();
+        }
 
-        if (strlen($siteId) <= 0)
+        if ($siteId == '') {
             return array();
+        }
 
         $context = array(
             'SITE_ID' => $siteId
@@ -123,6 +131,9 @@ class Product
     private function __construct(array $productsIds, $siteId, array $columnsList = array(), $tmpId = "")
     {
         $this->columnsList = $columnsList;
+        if (!in_array('PROPERTY_MORE_PHOTO', $columnsList, true)) {
+            $this->columnsList[] = 'PROPERTY_MORE_PHOTO';
+        }
         $this->productsIds = $productsIds;
         $this->siteId = $siteId;
         $this->tmpId = $tmpId;
@@ -133,12 +144,15 @@ class Product
                 "PRODUCT_PROVIDER_CLASS" => 'CCatalogProductProvider'
             )
         );
+
+        $this->useSliderCard = Catalog\Config\State::isProductCardSliderEnabled();
     }
 
     private function getResultData()
     {
-        if ($this->resultData === null)
+        if ($this->resultData === null) {
             throw new ArgumentNullException('this->resultData must be set earlier!');
+        }
 
         return $this->resultData;
     }
@@ -148,26 +162,39 @@ class Product
         $this->catalogData = array();
         $this->measuresIds = array();
 
-        if (empty($this->iblockData))
+        if (empty($this->iblockData)) {
             return;
+        }
 
         $setIds = array();
 
-        $res = Catalog\ProductTable::getList(array(
-            'select' => array(
-                'ID', 'TYPE',
-                'AVAILABLE', 'QUANTITY', 'QUANTITY_TRACE', 'CAN_BUY_ZERO',
-                'WEIGHT', 'WIDTH', 'LENGTH', 'HEIGHT',
-                'MEASURE', 'BARCODE_MULTI', 'VAT_ID'
-            ),
-            'filter' => array('@ID' => array_keys($this->iblockData))
-        ));
+        $res = Catalog\ProductTable::getList(
+            array(
+                'select' => array(
+                    'ID',
+                    'TYPE',
+                    'AVAILABLE',
+                    'QUANTITY',
+                    'QUANTITY_TRACE',
+                    'CAN_BUY_ZERO',
+                    'WEIGHT',
+                    'WIDTH',
+                    'LENGTH',
+                    'HEIGHT',
+                    'MEASURE',
+                    'BARCODE_MULTI',
+                    'VAT_ID'
+                ),
+                'filter' => array('@ID' => array_keys($this->iblockData))
+            )
+        );
         while ($row = $res->fetch()) {
             $this->catalogData[$row['ID']] = $row;
             $this->measuresIds[] = $row['MEASURE'];
 
-            if ($row['TYPE'] == Catalog\ProductTable::TYPE_SET)
+            if ($row['TYPE'] == Catalog\ProductTable::TYPE_SET) {
                 $setIds[] = $row['ID'];
+            }
 
             if (isset($this->resultData[$row['ID']])) {
                 $this->resultData[$row['ID']]['DIMENSIONS'] = serialize(
@@ -188,34 +215,40 @@ class Product
             }
         }
 
-        if (!empty($setIds))
+        if (!empty($setIds)) {
             $this->fillSetInfo($setIds);
+        }
     }
 
     private function fillSetInfo($setIds)
     {
-        if (!$this->provider)
+        if (!$this->provider) {
             return;
+        }
 
-        if (!method_exists($this->provider, 'GetSetItems'))
+        if (!method_exists($this->provider, 'GetSetItems')) {
             return;
+        }
 
         $provider = $this->provider;
         $childrenParent = array();
         $itemsIds = array();
         $items = array();
 
-        if ($this->tmpId == "")
+        if ($this->tmpId == "") {
             $this->tmpId = randString(7);
+        }
 
         foreach ($setIds as $id) {
-            if ($this->catalogData[$id]["TYPE"] != \CCatalogProduct::TYPE_SET)
+            if ($this->catalogData[$id]["TYPE"] != \CCatalogProduct::TYPE_SET) {
                 continue;
+            }
 
             $arSets = $provider::GetSetItems($id, \CSaleBasket::TYPE_SET);
 
-            if (empty($arSets))
+            if (empty($arSets)) {
                 continue;
+            }
 
             foreach ($arSets as $arSetData) {
                 foreach ($arSetData["ITEMS"] as $setItem) {
@@ -235,11 +268,13 @@ class Product
                     $arSetItemParams["PROVIDER_DATA"] = serialize($setItem);
                     $items[$id][$setItem["PRODUCT_ID"]] = $arSetItemParams;
 
-                    if (!in_array($setItem["PRODUCT_ID"], $itemsIds))
+                    if (!in_array($setItem["PRODUCT_ID"], $itemsIds)) {
                         $itemsIds[] = $setItem["PRODUCT_ID"];
+                    }
 
-                    if (!is_array($childrenParent[$setItem["PRODUCT_ID"]]))
+                    if (!is_array($childrenParent[$setItem["PRODUCT_ID"]])) {
                         $childrenParent[$setItem["PRODUCT_ID"]] = array();
+                    }
 
                     $childrenParent[$setItem["PRODUCT_ID"]][] = $id;
                 }
@@ -248,21 +283,29 @@ class Product
             $tmpData = self::getData($itemsIds, $this->siteId, $this->columnsList, $this->tmpId);
 
             foreach ($childrenParent as $childId => $childData) {
-                if (!is_array($childData))
+                if (!is_array($childData)) {
                     continue;
+                }
 
-                if (empty($tmpData[$childId]))
+                if (empty($tmpData[$childId])) {
                     continue;
+                }
 
                 foreach ($childData as $productId) {
-                    if (empty($items[$productId][$childId]))
+                    if (empty($items[$productId][$childId])) {
                         continue;
+                    }
 
-                    foreach ($this->resultData[$productId]['SET_ITEMS'] as $set)
-                        if ($set['OFFER_ID'] == $childId)
+                    foreach ($this->resultData[$productId]['SET_ITEMS'] as $set) {
+                        if ($set['OFFER_ID'] == $childId) {
                             continue(2);
+                        }
+                    }
 
-                    $this->resultData[$productId]['SET_ITEMS'][] = array_merge($tmpData[$childId], $items[$productId][$childId]);
+                    $this->resultData[$productId]['SET_ITEMS'][] = array_merge(
+                        $tmpData[$childId],
+                        $items[$productId][$childId]
+                    );
                     $this->resultData[$productId]["IS_SET_PARENT"] = empty($this->resultData[$productId]["SET_ITEMS"]) ? 'N' : 'Y';
                     $this->resultData[$productId]["OLD_PARENT_ID"] = empty($this->resultData[$productId]["SET_ITEMS"]) ? '' : $productId . "_tmp" . $this->tmpId;
                     $this->resultData[$productId]["PRODUCT_TYPE"] = empty($this->resultData[$productId]["SET_ITEMS"]) ? "" : \CSaleBasket::TYPE_SET;
@@ -273,75 +316,105 @@ class Product
 
     private function fillIblockData()
     {
-        $select = array("ID", "NAME", "IBLOCK_ID", "IBLOCK_SECTION_ID", "DETAIL_PICTURE", "PREVIEW_PICTURE", "XML_ID", "IBLOCK_EXTERNAL_ID");
+        $select = array(
+            "ID",
+            "NAME",
+            "IBLOCK_ID",
+            "IBLOCK_SECTION_ID",
+            "DETAIL_PICTURE",
+            "PREVIEW_PICTURE",
+            "XML_ID",
+            "IBLOCK_EXTERNAL_ID"
+        );
         $blockedFields = array(
             'QUANTITY' => true,
             'AVAILABLE' => true,
             'PRICE' => true
         );
         foreach ($this->columnsList as $field) {
-            if (isset($blockedFields[$field]))
+            if (isset($blockedFields[$field])) {
                 continue;
+            }
             $select[] = $field;
         }
 
         if (!empty($this->productsIds)) {
             $parentList = \CCatalogSku::getProductList($this->productsIds);
-            if (!is_array($parentList))
+            if (!is_array($parentList)) {
                 $parentList = array();
+            }
+            $simpleProducts = array();
             foreach ($this->productsIds as $id) {
-                $this->resultData[$id] = array();
                 if (isset($parentList[$id])) {
                     $info = $parentList[$id];
 
-                    $this->resultData[$id]["OFFERS_IBLOCK_ID"] = $info["OFFER_IBLOCK_ID"];
-                    $this->resultData[$id]["IBLOCK_ID"] = $info["IBLOCK_ID"];
-                    $this->resultData[$id]["PRODUCT_ID"] = $info["ID"];
+                    $this->resultData[$id] = array(
+                        "PRODUCT_ID" => $info["ID"],
+                        "IBLOCK_ID" => $info["IBLOCK_ID"],
+                        "OFFERS_IBLOCK_ID" => $info["OFFER_IBLOCK_ID"]
+                    );
                     $this->parentsIds[] = $info["ID"];
 
-                    if (!isset($this->groupByIblock[$info['OFFER_IBLOCK_ID']]))
+                    if (!isset($this->groupByIblock[$info['OFFER_IBLOCK_ID']])) {
                         $this->groupByIblock[$info['OFFER_IBLOCK_ID']] = array();
+                    }
 
                     $this->groupByIblock[$info['OFFER_IBLOCK_ID']][] = $id;
 
-                    if (!isset($this->groupByIblock[$info['IBLOCK_ID']]))
+                    if (!isset($this->groupByIblock[$info['IBLOCK_ID']])) {
                         $this->groupByIblock[$info['IBLOCK_ID']] = array();
+                    }
 
                     $this->groupByIblock[$info['IBLOCK_ID']][] = $info["ID"];
 
                     unset($info);
                 } else {
-                    if (isset($this->resultData[$id]["IBLOCK_ID"]) && (int)$this->resultData[$id]["IBLOCK_ID"] > 0) {
-                        if (!isset($this->groupByIblock[$this->resultData[$id]["IBLOCK_ID"]]))
-                            $this->groupByIblock[$this->resultData[$id]["IBLOCK_ID"]] = array();
-
-                        $this->groupByIblock[$this->resultData[$id]["IBLOCK_ID"]][] = $id;
-                    }
-
-                    $this->resultData[$id]["PRODUCT_ID"] = $id;
-                    $this->resultData[$id]["OFFERS_IBLOCK_ID"] = 0;
+                    $simpleProducts[$id] = $id;
                 }
             }
             unset($id);
             unset($parentList);
+
+            if (!empty($simpleProducts)) {
+                $simpleIblock = \CIBlockElement::GetIBlockByIDList($simpleProducts);
+                foreach ($simpleIblock as $id => $iblockId) {
+                    $this->resultData[$id] = array(
+                        "PRODUCT_ID" => $id,
+                        "IBLOCK_ID" => $iblockId,
+                        "OFFERS_IBLOCK_ID" => 0
+                    );
+
+                    if (!isset($this->groupByIblock[$iblockId])) {
+                        $this->groupByIblock[$iblockId] = array();
+                    }
+
+                    $this->groupByIblock[$iblockId][] = $id;
+                }
+                unset($id, $iblockId, $simpleIblock);
+            }
+            unset($simpleProducts);
         }
 
         $this->iblockData = array();
         $ppData = getProductProps(array_merge($this->productsIds, $this->parentsIds), $select);
 
         foreach ($ppData as $id => $fields) {
-            if (empty($ppData[$id]))
+            if (empty($ppData[$id])) {
                 continue;
+            }
 
-            foreach ($fields as $k => $v)
-                if (substr($k, 0, 1) == '~')
-                    $fields[substr($k, 1)] = $v;
+            foreach ($fields as $k => $v) {
+                if (mb_substr($k, 0, 1) == '~') {
+                    $fields[mb_substr($k, 1)] = $v;
+                }
+            }
 
             $this->iblockData[$id] = $ppData[$id];
             $this->iblockData[$id]["PRODUCT_PROPS_VALUES"] = $this->createProductPropsValues($id);
 
-            if (!in_array($id, $this->productsIds))
+            if (!in_array($id, $this->productsIds)) {
                 continue;
+            }
 
             $this->resultData[$id] = array_merge(
                 $this->resultData[$id],
@@ -349,7 +422,9 @@ class Product
                     $this->iblockData[$id],
                     array_flip(
                         $this->columnsList
-                    )));
+                    )
+                )
+            );
 
             $this->resultData[$id]["OFFER_ID"] = $id;
             $this->resultData[$id]["NAME"] = $fields["NAME"];
@@ -382,8 +457,9 @@ class Product
 
     private function completeResultData()
     {
-        if (empty($this->resultData))
+        if (empty($this->resultData)) {
             return;
+        }
 
         foreach ($this->resultData as $productId => $productData) {
             $this->resultData[$productId]['PROPERTIES'] = array();
@@ -398,14 +474,16 @@ class Product
                 if (is_array($parentData['PRODUCT_PROPS_VALUES'])) {
                     foreach ($parentData['PRODUCT_PROPS_VALUES'] as $fieldId => $fieldValue) {
                         if (!isset($productData['PRODUCT_PROPS_VALUES'][$fieldId])
-                            || (isset($productData['PRODUCT_PROPS_VALUES'][$fieldId]) && is_null($productData['PRODUCT_PROPS_VALUES'][$fieldId]))
+                            || (isset($productData['PRODUCT_PROPS_VALUES'][$fieldId]) && is_null(
+                                    $productData['PRODUCT_PROPS_VALUES'][$fieldId]
+                                ))
                         ) {
                             $this->resultData[$productId]["PRODUCT_PROPS_VALUES"][$fieldId] = $fieldValue;
                         }
                     }
                 }
 
-                if (strpos($this->iblockData[$productId]["XML_ID"], '#') === false) {
+                if (mb_strpos($this->iblockData[$productId]["XML_ID"], '#') === false) {
                     $parentXmlId = strval($parentData['XML_ID']);
                     $this->resultData[$productId]['PRODUCT_XML_ID'] = $parentXmlId . '#' . $this->iblockData[$productId]['XML_ID'];
                 }
@@ -427,8 +505,9 @@ class Product
 
     private function fillPropsData()
     {
-        if (empty($this->resultData))
+        if (empty($this->resultData)) {
             return;
+        }
 
         foreach ($this->groupByIblock as $iblockId => $elIds) {
             $exists = false;
@@ -440,8 +519,9 @@ class Product
             }
             if ($exists) {
                 $basketProperties = Catalog\Product\PropertyCatalogFeature::getBasketPropertyCodes($iblockId);
-                if (empty($basketProperties))
+                if (empty($basketProperties)) {
                     continue;
+                }
                 \CIBlockElement::GetPropertyValuesArray(
                     $this->resultData,
                     $iblockId,
@@ -454,9 +534,15 @@ class Product
                     ),
                     array(
                         'PROPERTY_FIELDS' => array(
-                            'ID', 'IBLOCK_ID', 'NAME', 'CODE', 'PROPERTY_TYPE',
-                            'MULTIPLE', 'LINK_IBLOCK_ID',
-                            'USER_TYPE', 'USER_TYPE_SETTINGS'
+                            'ID',
+                            'IBLOCK_ID',
+                            'NAME',
+                            'CODE',
+                            'PROPERTY_TYPE',
+                            'MULTIPLE',
+                            'LINK_IBLOCK_ID',
+                            'USER_TYPE',
+                            'USER_TYPE_SETTINGS'
                         )
                     )
                 );
@@ -468,7 +554,7 @@ class Product
                 $props = $this->formatProps($elData['PROPERTIES']);
                 unset($this->resultData[$elId]['PROPERTIES']);
 
-                if (strlen($elData["CATALOG_XML_ID"]) > 0) {
+                if ($elData["CATALOG_XML_ID"] <> '') {
                     $props[] = array(
                         "ID" => 0,
                         "NAME" => "Catalog XML_ID",
@@ -477,7 +563,7 @@ class Product
                     );
                 }
 
-                if (strlen($elData["PRODUCT_XML_ID"]) > 0) {
+                if ($elData["PRODUCT_XML_ID"] <> '') {
                     $props[] = array(
                         "ID" => 0,
                         "NAME" => "Product XML_ID",
@@ -486,8 +572,9 @@ class Product
                     );
                 }
 
-                if (empty($props))
+                if (empty($props)) {
                     continue;
+                }
 
                 $this->resultData[$elId]['PROPS'] = $props;
             }
@@ -497,20 +584,24 @@ class Product
     //creators
     private static function formatProps(array $properties)
     {
-        if (empty($properties))
+        if (empty($properties)) {
             return array();
+        }
 
         $result = array();
 
         foreach ($properties as $prop) {
-            if ($prop['XML_ID'] == 'CML2_LINK' || $prop['PROPERTY_TYPE'] == 'F')
+            if ($prop['XML_ID'] == 'CML2_LINK' || $prop['PROPERTY_TYPE'] == 'F') {
                 continue;
+            }
 
-            if (is_array($prop["VALUE"]) && empty($prop["VALUE"]))
+            if (is_array($prop["VALUE"]) && empty($prop["VALUE"])) {
                 continue;
+            }
 
-            if (!is_array($prop["VALUE"]) && strlen($prop["VALUE"]) <= 0)
+            if (!is_array($prop["VALUE"]) && $prop["VALUE"] == '') {
                 continue;
+            }
 
             $displayProperty = \CIBlockFormatProperties::GetDisplayValue(array(), $prop, '');
 
@@ -520,15 +611,17 @@ class Product
                 if (!empty($displayProperty['LINK_ELEMENT_VALUE'])) {
                     $mxValues = array();
 
-                    foreach ($displayProperty['LINK_ELEMENT_VALUE'] as $arTempo)
+                    foreach ($displayProperty['LINK_ELEMENT_VALUE'] as $arTempo) {
                         $mxValues[] = $arTempo['NAME'] . ' [' . $arTempo['ID'] . ']';
+                    }
                 }
             } elseif ('G' == $prop['PROPERTY_TYPE']) {
                 if (!empty($displayProperty['LINK_SECTION_VALUE'])) {
                     $mxValues = array();
 
-                    foreach ($displayProperty['LINK_SECTION_VALUE'] as $arTempo)
+                    foreach ($displayProperty['LINK_SECTION_VALUE'] as $arTempo) {
                         $mxValues[] = $arTempo['NAME'] . ' [' . $arTempo['ID'] . ']';
+                    }
                 }
             }
             if (empty($mxValues)) {
@@ -548,18 +641,23 @@ class Product
 
     private function createProductPropsValues($productId)
     {
-        if (intval($productId) <= 0)
+        if (intval($productId) <= 0) {
             return array();
+        }
 
         $result = array();
         $fields = $this->iblockData[$productId];
 
         foreach ($fields as $fieldId => $fieldValue) {
-            if (strncmp($fieldId, 'PROPERTY_', 9) == 0 && substr($fieldId, -6) == "_VALUE") {
+            if (strncmp($fieldId, 'PROPERTY_', 9) == 0 && mb_substr($fieldId, -6) == "_VALUE") {
                 $propertyInfo = $this->getPropertyInfo(str_replace("_VALUE", "", $fieldId));
-                $code = strlen($propertyInfo['CODE']) > 0 ? $propertyInfo['CODE'] : $propertyInfo['ID'];
+                $code = $propertyInfo['CODE'] <> '' ? $propertyInfo['CODE'] : $propertyInfo['ID'];
                 $keyResult = 'PROPERTY_' . $code . '_VALUE';
-                $result[$keyResult] = self::getIblockPropInfo($fieldValue, $propertyInfo, array("WIDTH" => 90, "HEIGHT" => 90));
+                $result[$keyResult] = self::getIblockPropInfo(
+                    $fieldValue,
+                    $propertyInfo,
+                    array("WIDTH" => 90, "HEIGHT" => 90)
+                );
             }
         }
 
@@ -573,28 +671,32 @@ class Product
         $codes = array();
 
         foreach ($this->columnsList as $column) {
-            if (strncmp($column, 'PROPERTY_', 9) != 0)
+            if (strncmp($column, 'PROPERTY_', 9) != 0) {
                 continue;
+            }
 
-            $propertyCode = substr($column, 9);
+            $propertyCode = mb_substr($column, 9);
 
-            if ($propertyCode == '')
+            if ($propertyCode == '') {
                 continue;
+            }
 
             $codes[] = $propertyCode;
         }
 
-        $dbRes = PropertyTable::getList(array(
-            'filter' => array(
-                'LOGIC' => 'OR',
-                "=CODE" => $codes,
-                "=ID" => $codes
+        $dbRes = PropertyTable::getList(
+            array(
+                'filter' => array(
+                    'LOGIC' => 'OR',
+                    "=CODE" => $codes,
+                    "=ID" => $codes
+                )
             )
-        ));
+        );
 
         while ($propData = $dbRes->fetch()) {
-            $code = strlen($propData['CODE']) > 0 ? $propData['CODE'] : $propData['ID'];
-            $result['PROPERTY_' . strtoupper($code)] = $propData;
+            $code = $propData['CODE'] <> '' ? $propData['CODE'] : $propData['ID'];
+            $result['PROPERTY_' . mb_strtoupper($code)] = $propData;
         }
 
         return $result;
@@ -604,60 +706,83 @@ class Product
     {
         static $propsInfo = null;
 
-        if ($propsInfo === null)
+        if ($propsInfo === null) {
             $propsInfo = $this->preparePropertyInfo();
+        }
 
         return isset($propsInfo[$fieldId]) ? $propsInfo[$fieldId] : array();
     }
 
     private function createImageUrl($productId)
     {
-        $imgCode = '';
         $imgUrl = '';
 
-        $productData = $this->iblockData[$productId];
+        $imgCode = $this->getImageId($this->iblockData[$productId]);
 
-        if ($productData["PREVIEW_PICTURE"] > 0)
-            $imgCode = $productData["PREVIEW_PICTURE"];
-        elseif ($productData["DETAIL_PICTURE"] > 0)
-            $imgCode = $productData["DETAIL_PICTURE"];
-
-        if ($imgCode == "" && $this->isOffer($this->resultData[$productId])) {
+        if ($imgCode == 0 && $this->isOffer($this->resultData[$productId])) {
             if (!empty($this->iblockData[$this->resultData[$productId]['PRODUCT_ID']])) {
-                $parentData = $this->iblockData[$this->resultData[$productId]['PRODUCT_ID']];
-
-                if ($parentData["PREVIEW_PICTURE"] > 0)
-                    $imgCode = $parentData["PREVIEW_PICTURE"];
-                elseif ($parentData["DETAIL_PICTURE"] > 0)
-                    $imgCode = $parentData["DETAIL_PICTURE"];
+                $imgCode = $this->getImageId($this->iblockData[$this->resultData[$productId]['PRODUCT_ID']]);
             }
         }
 
         if ($imgCode > 0) {
             $arFile = \CFile::GetFileArray($imgCode);
-            $arImgProduct = \CFile::ResizeImageGet($arFile, array('width' => 80, 'height' => 80), BX_RESIZE_IMAGE_PROPORTIONAL, false, false);
+            $arImgProduct = \CFile::ResizeImageGet(
+                $arFile,
+                array('width' => 80, 'height' => 80),
+                BX_RESIZE_IMAGE_PROPORTIONAL,
+                false,
+                false
+            );
 
-            if (is_array($arImgProduct))
+            if (is_array($arImgProduct)) {
                 $imgUrl = $arImgProduct["src"];
+            }
         }
 
         return $imgUrl;
     }
 
+    private function getImageId(array $product): int
+    {
+        $fieldImage = 0;
+        if (isset($product['PREVIEW_PICTURE']) && (int)$product['PREVIEW_PICTURE'] > 0) {
+            $fieldImage = (int)$product['PREVIEW_PICTURE'];
+        } elseif (isset($product['DETAIL_PICTURE']) && (int)$product['DETAIL_PICTURE'] > 0) {
+            $fieldImage = (int)$product['DETAIL_PICTURE'];
+        }
+
+        $propertyImage = 0;
+        if (isset($product['PROPERTY_MORE_PHOTO_VALUE']) && (int)$product['PROPERTY_MORE_PHOTO_VALUE'] > 0) {
+            $propertyImage = (int)$product['PROPERTY_MORE_PHOTO_VALUE'];
+        }
+
+        if ($this->useSliderCard) {
+            $result = ($propertyImage > 0 ? $propertyImage : $fieldImage);
+        } else {
+            $result = ($fieldImage > 0 ? $fieldImage : $propertyImage);
+        }
+        unset($propertyImage, $fieldImage);
+
+        return $result;
+    }
 
     private static function createEditPageUrl(array $productData)
     {
-
-        if (intval($productData['IBLOCK_ID']) <= 0 || intval($productData['ID']) <= 0)
+        if (intval($productData['IBLOCK_ID']) <= 0 || intval($productData['ID']) <= 0) {
             return '';
+        }
 
         $result = \CIBlock::GetAdminElementEditLink(
             intval($productData['IBLOCK_ID']),
             intval($productData['ID']),
             array(
-                "find_section_section" => (intval($productData['IBLOCK_SECTION_ID']) > 0 ? intval($productData['IBLOCK_SECTION_ID']) : null),
+                "find_section_section" => (intval($productData['IBLOCK_SECTION_ID']) > 0 ? intval(
+                    $productData['IBLOCK_SECTION_ID']
+                ) : null),
                 'WF' => 'Y'
-            ));
+            )
+        );
 
         return $result;
     }
@@ -678,18 +803,21 @@ class Product
             array("ID", "CODE", "SYMBOL_RUS", "SYMBOL_INTL")
         );
 
-        while ($measure = $dbRes->Fetch())
+        while ($measure = $dbRes->Fetch()) {
             $measures[$measure['ID']] = $measure;
+        }
 
         foreach ($this->catalogData as $productId => $productFields) {
-            if (!isset($this->resultData[$productId]))
+            if (!isset($this->resultData[$productId])) {
                 continue;
+            }
 
             $this->resultData[$productId]["MEASURE_TEXT"] = $defaultMeasureText;
             $this->resultData[$productId]["MEASURE_CODE"] = $defaultMeasureCode;
 
-            if (empty($measures[$productFields['MEASURE']]) || !is_array($measures[$productFields['MEASURE']]))
+            if (empty($measures[$productFields['MEASURE']]) || !is_array($measures[$productFields['MEASURE']])) {
                 continue;
+            }
 
             $measure = $measures[$productFields['MEASURE']];
 
@@ -702,31 +830,37 @@ class Product
         $needToSet = array_diff_key($this->resultData, array_flip($settedIds));
 
         foreach ($needToSet as $productId => $fields) {
-            if (!isset($fields['MEASURE_CODE']))
+            if (!isset($fields['MEASURE_CODE'])) {
                 $this->resultData[$productId]['MEASURE_CODE'] = $defaultMeasureCode;
+            }
 
-            if (!empty($fields['MEASURE_TEXT']))
+            if (!empty($fields['MEASURE_TEXT'])) {
                 $this->resultData[$productId]["MEASURE_TEXT"] = $defaultMeasureText;
+            }
         }
     }
 
     private function fillMeasuresRatio()
     {
-        $dbRes = \Bitrix\Catalog\MeasureRatioTable::getList(array(
-            'select' => array('*'),
-            'filter' => array("@PRODUCT_ID" => array_keys($this->resultData), '=IS_DEFAULT' => 'Y')
-        ));
+        $dbRes = \Bitrix\Catalog\MeasureRatioTable::getList(
+            array(
+                'select' => array('*'),
+                'filter' => array("@PRODUCT_ID" => array_keys($this->resultData), '=IS_DEFAULT' => 'Y')
+            )
+        );
 
         while ($ratio = $dbRes->fetch()) {
-            if (!isset($this->resultData[$ratio['PRODUCT_ID']]))
+            if (!isset($this->resultData[$ratio['PRODUCT_ID']])) {
                 continue;
+            }
 
             $this->resultData[$ratio['PRODUCT_ID']]['MEASURE_RATIO'] = $ratio["RATIO"];
         }
 
         foreach ($this->resultData as $productId => $fields) {
-            if (!isset($fields['MEASURE_RATIO']))
+            if (!isset($fields['MEASURE_RATIO'])) {
                 $this->resultData[$productId]['MEASURE_RATIO'] = 1;
+            }
         }
     }
 
@@ -734,80 +868,106 @@ class Product
     {
         $result = array();
 
-        if (!$this->provider)
+        if (!$this->provider) {
             return array();
+        }
 
         $productProvider = $this->provider;
 
-        if ($this->storesCount === null)
+        if ($this->storesCount === null) {
             $this->storesCount = $productProvider::GetStoresCount(array("SITE_ID" => $this->siteId));
+        }
 
-        if (intval($this->storesCount <= 0))
+        if (intval($this->storesCount <= 0)) {
             return array();
+        }
 
         $stores = $productProvider::GetProductStores(array("PRODUCT_ID" => $productId, "SITE_ID" => $this->siteId));
 
-        if ($stores)
+        if ($stores) {
             $result = $stores;
+        }
 
         return $result;
     }
 
-    private static function getIblockPropInfo($value, $propData, $arSize = array("WIDTH" => 90, "HEIGHT" => 90), $orderId = 0)
-    {
+    private static function getIblockPropInfo(
+        $value,
+        $propData,
+        $arSize = array("WIDTH" => 90, "HEIGHT" => 90),
+        $orderId = 0
+    ) {
         $res = "";
 
         if ($propData["MULTIPLE"] == "Y") {
             $arVal = array();
             if (!is_array($value)) {
-                if (strpos($value, ",") !== false)
+                if (mb_strpos($value, ",") !== false) {
                     $arVal = explode(",", $value);
-                else
+                } else {
                     $arVal[] = $value;
-            } else
+                }
+            } else {
                 $arVal = $value;
+            }
 
             if (count($arVal) > 0) {
                 foreach ($arVal as $key => $val) {
                     if ($propData["PROPERTY_TYPE"] == "F") {
-                        if (strlen($res) > 0)
+                        if ($res <> '') {
                             $res .= "<br/> " . self::showImageOrDownloadLink(trim($val), $orderId, $arSize);
-                        else
+                        } else {
                             $res = self::showImageOrDownloadLink(trim($val), $orderId, $arSize);
+                        }
                     } else {
-                        if (strlen($res) > 0)
+                        if ($res <> '') {
                             $res .= ", " . $val;
-                        else
+                        } else {
                             $res = $val;
+                        }
                     }
                 }
             }
         } else {
-            if ($propData["PROPERTY_TYPE"] == "F")
+            if ($propData["PROPERTY_TYPE"] == "F") {
                 $res = self::showImageOrDownloadLink($value, $orderId, $arSize);
-            elseif ($propData["PROPERTY_TYPE"] == "S" && $propData["USER_TYPE"] == "HTML" && isset($value["TEXT"]))
+            } elseif ($propData["PROPERTY_TYPE"] == "S" && $propData["USER_TYPE"] == "HTML" && isset($value["TEXT"])) {
                 $res = $value["TEXT"];
-            else
+            } else {
                 $res = $value;
+            }
         }
 
-        if (strlen($res) == 0)
+        if ($res == '') {
             $res = null;
+        }
 
         return $res;
     }
 
-    private static function showImageOrDownloadLink($fileId, $orderId = 0, $arSize = array("WIDTH" => 90, "HEIGHT" => 90))
-    {
+    private static function showImageOrDownloadLink(
+        $fileId,
+        $orderId = 0,
+        $arSize = array("WIDTH" => 90, "HEIGHT" => 90)
+    ) {
         $resultHTML = "";
         $arFile = \CFile::GetFileArray($fileId);
 
         if ($arFile) {
             $isImage = \CFile::IsImage($arFile["FILE_NAME"], $arFile["CONTENT_TYPE"]);
-            if ($isImage)
-                $resultHTML = \CFile::ShowImage($arFile["ID"], $arSize["WIDTH"], $arSize["HEIGHT"], "border=0", "", true);
-            else
-                $resultHTML = "<a href=\"sale_order_detail.php?ID=" . $orderId . "&download=Y&file_id=" . $arFile["ID"] . "&" . bitrix_sessid_get() . "\">" . $arFile["ORIGINAL_NAME"] . "</a>";
+            if ($isImage) {
+                $resultHTML = \CFile::ShowImage(
+                    $arFile["ID"],
+                    $arSize["WIDTH"],
+                    $arSize["HEIGHT"],
+                    "border=0",
+                    "",
+                    true
+                );
+            } else {
+                $resultHTML = "<a href=\"sale_order_detail.php?ID=" . $orderId . "&download=Y&file_id=" . $arFile["ID"] . "&" . bitrix_sessid_get(
+                    ) . "\">" . $arFile["ORIGINAL_NAME"] . "</a>";
+            }
         }
 
         return $resultHTML;

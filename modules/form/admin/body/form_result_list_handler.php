@@ -1,38 +1,49 @@
 <?
-require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/form/include.php");
+
+use Bitrix\Main\Loader;
+
+Loader::includeModule('form');
+
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/form/admin/form_result_list.php");
 $err_mess = "File: " . __FILE__ . "<br>Line: ";
 
-/***************************************************************************
- * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
- ***************************************************************************/
-
-function CheckFilter() // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½
+function CheckFilter()
 {
     global $strError, $MESS, $arrFORM_FILTER;
     global $find_date_create_1, $find_date_create_2;
     $str = "";
     CheckFilterDates($find_date_create_1, $find_date_create_2, $date1_wrong, $date2_wrong, $date2_less);
-    if ($date1_wrong == "Y") $str .= GetMessage("FORM_WRONG_DATE_CREATE_FROM") . "<br>";
-    if ($date2_wrong == "Y") $str .= GetMessage("FORM_WRONG_DATE_CREATE_TO") . "<br>";
-    if ($date2_less == "Y") $str .= GetMessage("FORM_FROM_TILL_DATE_CREATE") . "<br>";
+    if ($date1_wrong == "Y") {
+        $str .= GetMessage("FORM_WRONG_DATE_CREATE_FROM") . "<br>";
+    }
+    if ($date2_wrong == "Y") {
+        $str .= GetMessage("FORM_WRONG_DATE_CREATE_TO") . "<br>";
+    }
+    if ($date2_less == "Y") {
+        $str .= GetMessage("FORM_FROM_TILL_DATE_CREATE") . "<br>";
+    }
 
     if (is_array($arrFORM_FILTER)) {
         reset($arrFORM_FILTER);
         foreach ($arrFORM_FILTER as $arrF) {
             if (is_array($arrF)) {
                 foreach ($arrF as $arr) {
-                    $title = ($arr["TITLE_TYPE"] == "html") ? strip_tags(htmlspecialcharsback($arr["TITLE"])) : $arr["TITLE"];
+                    $title = ($arr["TITLE_TYPE"] == "html") ? strip_tags(
+                        htmlspecialcharsback($arr["TITLE"])
+                    ) : $arr["TITLE"];
                     if ($arr["FILTER_TYPE"] == "date") {
                         $date1 = $_GET["find_" . $arr["FID"] . "_1"];
                         $date2 = $_GET["find_" . $arr["FID"] . "_2"];
                         CheckFilterDates($date1, $date2, $date1_wrong, $date2_wrong, $date2_less);
-                        if ($date1_wrong == "Y")
+                        if ($date1_wrong == "Y") {
                             $str .= str_replace("#TITLE#", $title, GetMessage("FORM_WRONG_DATE1")) . "<br>";
-                        if ($date2_wrong == "Y")
+                        }
+                        if ($date2_wrong == "Y") {
                             $str .= str_replace("#TITLE#", $title, GetMessage("FORM_WRONG_DATE2")) . "<br>";
-                        if ($date2_less == "Y")
+                        }
+                        if ($date2_less == "Y") {
                             $str .= str_replace("#TITLE#", $title, GetMessage("FORM_DATE2_LESS")) . "<br>";
+                        }
                     }
                     if ($arr["FILTER_TYPE"] == "integer") {
                         $int1 = intval($_GET["find_" . $arr["FID"] . "_1"]);
@@ -46,26 +57,39 @@ function CheckFilter() // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï
         }
     }
     $strError .= $str;
-    if (strlen($str) > 0) return false; else return true;
+    if ($str <> '') {
+        return false;
+    } else {
+        return true;
+    }
 }
 
-/***************************************************************************
- * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ GET | POST
- ****************************************************************************/
-if ($FORM_ID > 0 && $WEB_FORM_ID <= 0) $WEB_FORM_ID = $FORM_ID;
-if ($WEB_FORM_ID > 0 && $FORM_ID <= 0) $FORM_ID = $WEB_FORM_ID;
+if ($FORM_ID > 0 && $WEB_FORM_ID <= 0) {
+    $WEB_FORM_ID = $FORM_ID;
+}
+if ($WEB_FORM_ID > 0 && $FORM_ID <= 0) {
+    $FORM_ID = $WEB_FORM_ID;
+}
 
 $USER_ID = $USER->GetID();
 
 $F_RIGHT = CForm::GetPermission($WEB_FORM_ID);
-if ($F_RIGHT < 15) $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($F_RIGHT < 15) {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
-if (is_array($ARR_RESULT) && count($ARR_RESULT) > 0 && strlen($delete) > 0 && (check_bitrix_sessid() || defined("FORM_NOT_CHECK_SESSID"))) {
-    foreach ($ARR_RESULT as $rid) CFormResult::Delete($rid);
+if (is_array($ARR_RESULT) && count($ARR_RESULT) > 0 && $delete <> '' && (check_bitrix_sessid() || defined(
+            "FORM_NOT_CHECK_SESSID"
+        ))) {
+    foreach ($ARR_RESULT as $rid) {
+        CFormResult::Delete($rid);
+    }
 }
 
 $del_id = intval($del_id);
-if ($del_id > 0 && (check_bitrix_sessid() || defined("FORM_NOT_CHECK_SESSID"))) CFormResult::Delete($del_id);
+if ($del_id > 0 && (check_bitrix_sessid() || defined("FORM_NOT_CHECK_SESSID"))) {
+    CFormResult::Delete($del_id);
+}
 
 $FilterArr = Array(
     "find_id",
@@ -100,12 +124,19 @@ while ($zr = $z->Fetch()) {
     } elseif ($zr["FILTER_TYPE"] == "text") {
         $FilterArr[] = $fname;
         $FilterArr[] = $fname . "_exact_match";
-    } else $FilterArr[] = $fname;
+    } else {
+        $FilterArr[] = $fname;
+    }
 }
 $sess_filter = "FORM_RESULT_LIST_" . $WEB_FORM_NAME;
-if (strlen($set_filter) > 0) InitFilterEx($FilterArr, $sess_filter, "set");
-else InitFilterEx($FilterArr, $sess_filter, "get");
-if (strlen($del_filter) > 0) DelFilterEx($FilterArr, $sess_filter);
+if ($set_filter <> '') {
+    InitFilterEx($FilterArr, $sess_filter, "set");
+} else {
+    InitFilterEx($FilterArr, $sess_filter, "get");
+}
+if ($del_filter <> '') {
+    DelFilterEx($FilterArr, $sess_filter);
+}
 
 InitBVar($find_id_exact_match);
 InitBVar($find_status_id_exact_match);
@@ -143,31 +174,31 @@ if (CheckFilter()) {
                     $arFilter[$arr["FID"]] = ${"find_" . $arr["FID"]};
                     $exact_match = (${"find_" . $arr["FID"] . "_exact_match"} == "Y") ? "Y" : "N";
                     $arFilter[$arr["FID"] . "_exact_match"] = $exact_match;
-                } else $arFilter[$arr["FID"]] = ${"find_" . $arr["FID"]};
+                } else {
+                    $arFilter[$arr["FID"]] = ${"find_" . $arr["FID"]};
+                }
             }
         }
     }
 }
 
-// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½"
-if (strlen($save) > 0 && $REQUEST_METHOD == "POST" && (check_bitrix_sessid() || defined("FORM_NOT_CHECK_SESSID"))) {
-    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+if ($save <> '' && $_SERVER['REQUEST_METHOD'] == "POST" && (check_bitrix_sessid() || defined(
+            "FORM_NOT_CHECK_SESSID"
+        ))) {
     if (isset($RESULT_ID) && is_array($RESULT_ID)) {
         foreach ($RESULT_ID as $rid) {
             $rid = intval($rid);
             $var_STATUS_PREV = "STATUS_PREV_" . $rid;
             $var_STATUS = "STATUS_" . $rid;
-            if (intval($$var_STATUS) > 0 && $$var_STATUS_PREV != $$var_STATUS) {
-                CFormResult::SetStatus($rid, $$var_STATUS);
+            if (intval(${$var_STATUS}) > 0 && ${$var_STATUS_PREV} != ${$var_STATUS}) {
+                CFormResult::SetStatus($rid, ${$var_STATUS});
             }
         }
     }
 }
-//echo "<pre>"; print_r($_REQUEST); echo "</pre>";
-//echo "<pre>"; print_r($arFilter); echo "</pre>";
-$result = CFormResult::GetList($WEB_FORM_ID, $by, $order, $arFilter, $is_filtered);
+
+$result = CFormResult::GetList($WEB_FORM_ID, '', '', $arFilter);
 
 $HELP_FILE_ACCESS = $APPLICATION->GetFileAccessPermission("/bitrix/modules/form/help/" . LANGUAGE_ID . "/index.php");
 $MODULE_RIGHT = $APPLICATION->GetGroupRight("form");
 $MAIN_RIGHT = $APPLICATION->GetGroupRight("main");
-?>

@@ -94,9 +94,15 @@ class Reference extends Relation
         $remoteObjectClass = $this->getRefEntity()->getObjectClass();
 
         if ($value !== null && !($value instanceof $remoteObjectClass)) {
-            $result->addError(new Error(sprintf(
-                'Expected instance of `%s`, got `%s` instead', $remoteObjectClass, get_class($value)
-            )));
+            $result->addError(
+                new Error(
+                    sprintf(
+                        'Expected instance of `%s`, got `%s` instead',
+                        $remoteObjectClass,
+                        get_class($value)
+                    )
+                )
+            );
         }
 
         return parent::validateValue($value, $primary, $row, $result);

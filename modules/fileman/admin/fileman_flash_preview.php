@@ -1,25 +1,26 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/fileman/prolog.php");
 
-if (!$USER->CanDoOperation('fileman_view_file_structure'))
+if (!$USER->CanDoOperation('fileman_view_file_structure')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/fileman/include.php");
 
-if (CModule::IncludeModule("compression"))
-    CCompress::Disable2048Spaces();
-
 if (isset($_GET['path'])) {
     $flashExtensions = array("swf", "spl");
-    $extension = GetFileExtension(strtolower($path));
+    $extension = GetFileExtension(mb_strtolower($path));
 
-    if (!in_array($extension, $flashExtensions))
+    if (!in_array($extension, $flashExtensions)) {
         return false;
+    }
 
     $site = CFileMan::__CheckSite($site);
-    if (!$site)
+    if (!$site) {
         $site = CSite::GetSiteByFullPath($_SERVER["DOCUMENT_ROOT"] . $path);
+    }
 
     $io = CBXVirtualIo::GetInstance();
 

@@ -13,8 +13,9 @@ require_once(dirname(__FILE__) . "/../include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/prolog.php");
 define("HELP_FILE", "settings/sms_template_admin.php");
 
-if (!$USER->CanDoOperation('edit_other_settings') && !$USER->CanDoOperation('view_other_settings'))
+if (!$USER->CanDoOperation('edit_other_settings') && !$USER->CanDoOperation('view_other_settings')) {
     $APPLICATION->AuthForm(Loc::getMessage("ACCESS_DENIED"));
+}
 
 $isAdmin = $USER->CanDoOperation('edit_other_settings');
 
@@ -85,8 +86,9 @@ if ($find <> '' && $find_type == "message" || $find_message <> '') {
 
 if ($adminList->EditAction() && $isAdmin) {
     foreach ($request["FIELDS"] as $ID => $arFields) {
-        if (!$adminList->IsUpdated($ID))
+        if (!$adminList->IsUpdated($ID)) {
             continue;
+        }
 
         $result = TemplateTable::update($ID, $arFields);
         if (!$result->isSuccess()) {
@@ -99,13 +101,15 @@ if (($arID = $adminList->GroupAction()) && $isAdmin) {
     if ($request['action_target'] == 'selected') {
         $arID = array();
         $data = TemplateTable::getList(["filter" => $filter]);
-        while ($temlate = $data->fetch())
+        while ($temlate = $data->fetch()) {
             $arID[] = $temlate['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (intval($ID) <= 0)
+        if (intval($ID) <= 0) {
             continue;
+        }
 
         switch ($request['action_button']) {
             case "delete":
@@ -120,25 +124,27 @@ if (($arID = $adminList->GroupAction()) && $isAdmin) {
 
 $APPLICATION->SetTitle(Loc::getMessage("sms_template_admin_title"));
 
-$sortBy = strtoupper($sorting->getField());
+$sortBy = mb_strtoupper($sorting->getField());
 if (!TemplateTable::getEntity()->hasField($sortBy)) {
     $sortBy = "ID";
 }
 
-$sortOrder = strtoupper($sorting->getOrder());
+$sortOrder = mb_strtoupper($sorting->getOrder());
 if ($sortOrder <> "ASC") {
     $sortOrder = "DESC";
 }
 
 $nav = new \Bitrix\Main\UI\AdminPageNavigation("nav-sms-template");
 
-$templatesList = TemplateTable::getList([
-    'filter' => $filter,
-    'order' => [$sortBy => $sortOrder],
-    'count_total' => true,
-    'offset' => $nav->getOffset(),
-    'limit' => $nav->getLimit(),
-]);
+$templatesList = TemplateTable::getList(
+    [
+        'filter' => $filter,
+        'order' => [$sortBy => $sortOrder],
+        'count_total' => true,
+        'offset' => $nav->getOffset(),
+        'limit' => $nav->getLimit(),
+    ]
+);
 
 $nav->setRecordCount($templatesList->getCount());
 
@@ -147,33 +153,54 @@ $adminList->setNavigation($nav, Loc::getMessage("sms_template_admin_nav"));
 $entity = TemplateTable::getEntity();
 $fields = $entity->getFields();
 
-$adminList->AddHeaders(array(
-    array("id" => "ID", "content" => "ID", "sort" => "ID", "default" => true),
-    array("id" => "EVENT_NAME", "content" => $fields["EVENT_NAME"]->getTitle(), "sort" => "EVENT_NAME", "default" => true),
-    array("id" => "ACTIVE", "content" => $fields["ACTIVE"]->getTitle(), "sort" => "ACTIVE", "default" => true),
-    array("id" => "SENDER", "content" => $fields["SENDER"]->getTitle(), "sort" => "SENDER", "default" => true),
-    array("id" => "RECEIVER", "content" => $fields["RECEIVER"]->getTitle(), "sort" => "RECEIVER", "default" => true),
-    array("id" => "SITES", "content" => Loc::getMessage("sms_template_admin_sites"), "default" => false),
-    array("id" => "LANGUAGE_ID", "content" => $fields["LANGUAGE_ID"]->getTitle(), "sort" => "LANGUAGE_ID", "default" => false),
-    array("id" => "MESSAGE", "content" => $fields["MESSAGE"]->getTitle(), "default" => false),
-));
+$adminList->AddHeaders(
+    array(
+        array("id" => "ID", "content" => "ID", "sort" => "ID", "default" => true),
+        array(
+            "id" => "EVENT_NAME",
+            "content" => $fields["EVENT_NAME"]->getTitle(),
+            "sort" => "EVENT_NAME",
+            "default" => true
+        ),
+        array("id" => "ACTIVE", "content" => $fields["ACTIVE"]->getTitle(), "sort" => "ACTIVE", "default" => true),
+        array("id" => "SENDER", "content" => $fields["SENDER"]->getTitle(), "sort" => "SENDER", "default" => true),
+        array(
+            "id" => "RECEIVER",
+            "content" => $fields["RECEIVER"]->getTitle(),
+            "sort" => "RECEIVER",
+            "default" => true
+        ),
+        array("id" => "SITES", "content" => Loc::getMessage("sms_template_admin_sites"), "default" => false),
+        array(
+            "id" => "LANGUAGE_ID",
+            "content" => $fields["LANGUAGE_ID"]->getTitle(),
+            "sort" => "LANGUAGE_ID",
+            "default" => false
+        ),
+        array("id" => "MESSAGE", "content" => $fields["MESSAGE"]->getTitle(), "default" => false),
+    )
+);
 
 $eventTypes = array();
-$eventTypeDb = EventTypeTable::getList(array(
-    "select" => array('EVENT_NAME', 'NAME'),
-    "filter" => array('=LID' => LANGUAGE_ID, "=EVENT_TYPE" => EventTypeTable::TYPE_SMS),
-    "order" => array('NAME' => 'ASC')
-));
+$eventTypeDb = EventTypeTable::getList(
+    array(
+        "select" => array('EVENT_NAME', 'NAME'),
+        "filter" => array('=LID' => LANGUAGE_ID, "=EVENT_TYPE" => EventTypeTable::TYPE_SMS),
+        "order" => array('NAME' => 'ASC')
+    )
+);
 while ($eventType = $eventTypeDb->fetch()) {
     $eventTypes[$eventType["EVENT_NAME"]] = $eventType["NAME"] . ' [' . $eventType["EVENT_NAME"] . ']';
 }
 
 $langOptions = array("" => "");
-$languages = Main\Localization\LanguageTable::getList(array(
-    "select" => array('LID', 'NAME'),
-    "filter" => array("=ACTIVE" => "Y"),
-    "order" => array("SORT" => "ASC", "NAME" => "ASC")
-));
+$languages = Main\Localization\LanguageTable::getList(
+    array(
+        "select" => array('LID', 'NAME'),
+        "filter" => array("=ACTIVE" => "Y"),
+        "order" => array("SORT" => "ASC", "NAME" => "ASC")
+    )
+);
 while ($language = $languages->fetch()) {
     $langOptions[$language["LID"]] = $language["NAME"];
 }
@@ -181,9 +208,19 @@ while ($language = $languages->fetch()) {
 while ($template = $templatesList->fetchObject()) {
     $id = $template->getId();
 
-    $row = &$adminList->AddRow($id, $template->collectValues(), "sms_template_edit.php?ID=" . $id . "&lang=" . LANGUAGE_ID, Loc::getMessage("sms_template_admin_edit"));
+    $row = &$adminList->AddRow(
+        $id,
+        $template->collectValues(),
+        "sms_template_edit.php?ID=" . $id . "&lang=" . LANGUAGE_ID,
+        Loc::getMessage("sms_template_admin_edit")
+    );
 
-    $row->AddViewField("ID", '<a href="sms_template_edit.php?ID=' . $id . '&amp;lang=' . LANGUAGE_ID . '" title="' . Loc::getMessage("sms_template_admin_edit") . '">' . $id . '</a>');
+    $row->AddViewField(
+        "ID",
+        '<a href="sms_template_edit.php?ID=' . $id . '&amp;lang=' . LANGUAGE_ID . '" title="' . Loc::getMessage(
+            "sms_template_admin_edit"
+        ) . '">' . $id . '</a>'
+    );
     $row->AddSelectField("EVENT_NAME", $eventTypes);
     $row->AddCheckField("ACTIVE");
     $row->AddInputField("SENDER");
@@ -195,19 +232,35 @@ while ($template = $templatesList->fetchObject()) {
     $row->AddViewField("SITES", implode(", ", $template->getSites()->getLidList()));
 
     $arActions = array();
-    $arActions[] = array("ICON" => "edit", "TEXT" => Loc::getMessage("sms_template_admin_edit1"), "ACTION" => $adminList->ActionRedirect("sms_template_edit.php?ID=" . $id));
+    $arActions[] = array(
+        "ICON" => "edit",
+        "TEXT" => Loc::getMessage("sms_template_admin_edit1"),
+        "ACTION" => $adminList->ActionRedirect("sms_template_edit.php?ID=" . $id)
+    );
     if ($isAdmin) {
-        $arActions[] = array("ICON" => "copy", "TEXT" => Loc::getMessage("sms_template_admin_copy"), "ACTION" => $adminList->ActionRedirect("sms_template_edit.php?COPY_ID=" . $id));
+        $arActions[] = array(
+            "ICON" => "copy",
+            "TEXT" => Loc::getMessage("sms_template_admin_copy"),
+            "ACTION" => $adminList->ActionRedirect("sms_template_edit.php?COPY_ID=" . $id)
+        );
         $arActions[] = array("SEPARATOR" => true);
-        $arActions[] = array("ICON" => "delete", "TEXT" => Loc::getMessage("sms_template_admin_del"), "ACTION" => "if(confirm('" . Loc::getMessage("sms_template_admin_del_conf") . "')) " . $adminList->ActionDoGroup($id, "delete"));
+        $arActions[] = array(
+            "ICON" => "delete",
+            "TEXT" => Loc::getMessage("sms_template_admin_del"),
+            "ACTION" => "if(confirm('" . Loc::getMessage(
+                    "sms_template_admin_del_conf"
+                ) . "')) " . $adminList->ActionDoGroup($id, "delete")
+        );
     }
 
     $row->AddActions($arActions);
 }
 
-$adminList->AddGroupActionTable(array(
-    "delete" => true,
-));
+$adminList->AddGroupActionTable(
+    array(
+        "delete" => true,
+    )
+);
 
 $aContext = array(
     array(
@@ -247,9 +300,15 @@ require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admi
                 <input type="text" size="25" name="find" value="<? echo htmlspecialcharsbx($find) ?>"
                        title="<?= Loc::getMessage("F_SEARCH_TITLE") ?>">
                 <select name="find_type">
-                    <option value="message"<? if ($find_type == "message") echo " selected" ?>><? echo Loc::getMessage("sms_template_admin_message") ?></option>
-                    <option value="sender"<? if ($find_type == "sender") echo " selected" ?>><? echo Loc::getMessage("sms_template_admin_sender") ?></option>
-                    <option value="receiver"<? if ($find_type == "receiver") echo " selected" ?>><? echo Loc::getMessage("sms_template_admin_receiver") ?></option>
+                    <option value="message"<? if ($find_type == "message") echo " selected" ?>><? echo Loc::getMessage(
+                            "sms_template_admin_message"
+                        ) ?></option>
+                    <option value="sender"<? if ($find_type == "sender") echo " selected" ?>><? echo Loc::getMessage(
+                            "sms_template_admin_sender"
+                        ) ?></option>
+                    <option value="receiver"<? if ($find_type == "receiver") echo " selected" ?>><? echo Loc::getMessage(
+                            "sms_template_admin_receiver"
+                        ) ?></option>
                 </select>
             </td>
         </tr>
@@ -264,7 +323,9 @@ require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admi
                 <select name="find_event_name_id">
                     <option value=""><? echo Loc::getMessage("sms_template_admin_all") ?></option>
                     <? foreach ($eventTypes as $eventName => $name): ?>
-                        <option value="<?= Main\Text\HtmlFilter::encode($eventName) ?>"<? if ($find_event_name_id == $eventName) echo " selected" ?>>
+                        <option value="<?= Main\Text\HtmlFilter::encode(
+                            $eventName
+                        ) ?>"<? if ($find_event_name_id == $eventName) echo " selected" ?>>
                             <?= Main\Text\HtmlFilter::encode($name) ?>
                         </option>
                     <? endforeach ?>
@@ -276,9 +337,11 @@ require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admi
             <td><select name="find_site">
                     <option value=""><? echo Loc::getMessage("sms_template_admin_all") ?></option>
                     <?
-                    $l = CLang::GetList($by = "sort", $order = "asc");
+                    $l = CLang::GetList();
                     while (($l_arr = $l->Fetch())) {
-                        echo '<option value="' . $l_arr["LID"] . '" ' . ($l_arr["LID"] == $find_site ? 'selected' : '') . '>[' . $l_arr["LID"] . ']&nbsp;' . Main\Text\HtmlFilter::encode($l_arr["NAME"]) . '</option>' . "\n";
+                        echo '<option value="' . $l_arr["LID"] . '" ' . ($l_arr["LID"] == $find_site ? 'selected' : '') . '>[' . $l_arr["LID"] . ']&nbsp;' . Main\Text\HtmlFilter::encode(
+                                $l_arr["NAME"]
+                            ) . '</option>' . "\n";
                     }
                     ?>
                 </select>
@@ -304,10 +367,18 @@ require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admi
             <td><?= $fields["ACTIVE"]->getTitle() ?>:</td>
             <td><?
                 $arr = array(
-                    "reference" => [Loc::getMessage("sms_template_admin_yes"), Loc::getMessage("sms_template_admin_no")],
+                    "reference" => [
+                        Loc::getMessage("sms_template_admin_yes"),
+                        Loc::getMessage("sms_template_admin_no")
+                    ],
                     "reference_id" => ["Y", "N"]
                 );
-                echo SelectBoxFromArray("find_active", $arr, htmlspecialcharsbx($find_active), Loc::getMessage("sms_template_admin_all"));
+                echo SelectBoxFromArray(
+                    "find_active",
+                    $arr,
+                    htmlspecialcharsbx($find_active),
+                    Loc::getMessage("sms_template_admin_all")
+                );
                 ?></td>
         </tr>
         <tr>

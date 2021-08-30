@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/support/prolog.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/support/include.php");
@@ -9,7 +10,9 @@ $bDemo = (CTicket::IsDemo()) ? "Y" : "N";
 $bAdmin = (CTicket::IsAdmin()) ? "Y" : "N";
 $strError = null;
 
-if ($bAdmin != "Y" && $bDemo != "Y") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($bAdmin != "Y" && $bDemo != "Y") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/support/include.php");
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/support/admin/ticket_message_edit.php");
@@ -32,10 +35,13 @@ function CheckFields() // �������� �� ������� 
 
     if ($max_size > 0 && is_array($arrFILES) && count($arrFILES) > 0) {
         $i = 0;
-        while (list($key, $arFILE) = each($arrFILES)) {
+        foreach ($arrFILES as $key => $arFILE) {
             $i++;
             if (intval($arFILE["size"]) > $max_size) {
-                $arMsg[] = array("id" => "FILE_" . $i, "text" => str_replace("#FILE_NAME#", $arFILE["name"], GetMessage("SUP_MAX_FILE_SIZE_EXCEEDING")));
+                $arMsg[] = array(
+                    "id" => "FILE_" . $i,
+                    "text" => str_replace("#FILE_NAME#", $arFILE["name"], GetMessage("SUP_MAX_FILE_SIZE_EXCEEDING"))
+                );
                 //$str .= str_replace("#FILE_NAME#", $arFILE["name"], GetMessage("SUP_MAX_FILE_SIZE_EXCEEDING"))."<br>";
             }
         }
@@ -53,9 +59,15 @@ function CheckFields() // �������� �� ������� 
 /***************************************************************************
  * ��������� GET | POST
  ***************************************************************************/
-$TICKET_LIST_URL = strlen($TICKET_LIST_URL) > 0 ? CUtil::AddSlashes(htmlspecialcharsbx((substr($TICKET_LIST_URL, 0, 4) == 'http' ? '' : '/') . $TICKET_LIST_URL)) : "ticket_list.php";
-$TICKET_EDIT_URL = strlen($TICKET_EDIT_URL) > 0 ? CUtil::AddSlashes(htmlspecialcharsbx((substr($TICKET_EDIT_URL, 0, 4) == 'http' ? '' : '/') . $TICKET_EDIT_URL)) : "ticket_edit.php";
-$TICKET_MESSAGE_EDIT_URL = strlen($TICKET_MESSAGE_EDIT_URL) > 0 ? CUtil::AddSlashes(htmlspecialcharsbx((substr($TICKET_MESSAGE_EDIT_URL, 0, 4) == 'http' ? '' : '/') . $TICKET_MESSAGE_EDIT_URL)) : "ticket_message_edit.php";
+$TICKET_LIST_URL = $TICKET_LIST_URL <> '' ? CUtil::AddSlashes(
+    htmlspecialcharsbx((mb_substr($TICKET_LIST_URL, 0, 4) == 'http' ? '' : '/') . $TICKET_LIST_URL)
+) : "ticket_list.php";
+$TICKET_EDIT_URL = $TICKET_EDIT_URL <> '' ? CUtil::AddSlashes(
+    htmlspecialcharsbx((mb_substr($TICKET_EDIT_URL, 0, 4) == 'http' ? '' : '/') . $TICKET_EDIT_URL)
+) : "ticket_edit.php";
+$TICKET_MESSAGE_EDIT_URL = $TICKET_MESSAGE_EDIT_URL <> '' ? CUtil::AddSlashes(
+    htmlspecialcharsbx((mb_substr($TICKET_MESSAGE_EDIT_URL, 0, 4) == 'http' ? '' : '/') . $TICKET_MESSAGE_EDIT_URL)
+) : "ticket_message_edit.php";
 
 $arFiles = array();
 $ID = intval($ID);
@@ -64,12 +76,12 @@ $rsTicket = CTicket::GetByID($TICKET_ID, LANGUAGE_ID, "Y", "N", "N");
 if ($arTicket = $rsTicket->Fetch()) {
     CTicket::UpdateOnline($ID, $USER->GetID());
 
-    if ($rsFiles = CTicket::GetFileList($v1 = "s_id", $v2 = "asc", array("MESSAGE_ID" => $ID))) :
+    if ($rsFiles = CTicket::GetFileList("s_id", "asc", array("MESSAGE_ID" => $ID))) :
         while ($arFile = $rsFiles->Fetch()) :
             $name = $arFile["ORIGINAL_NAME"];
-            if (strlen($arFile["EXTENSION_SUFFIX"]) > 0) :
-                $suffix_length = strlen($arFile["EXTENSION_SUFFIX"]);
-                $name = substr($name, 0, strlen($name) - $suffix_length);
+            if ($arFile["EXTENSION_SUFFIX"] <> '') :
+                $suffix_length = mb_strlen($arFile["EXTENSION_SUFFIX"]);
+                $name = mb_substr($name, 0, mb_strlen($name) - $suffix_length);
             endif;
             $arFile["NAME"] = $name;
             $arFiles[] = $arFile;
@@ -77,26 +89,29 @@ if ($arTicket = $rsTicket->Fetch()) {
     endif;
 
     // ���� ���� ������ ������ "save" �� ������� ��������
-    if ((strlen($save) > 0 || strlen($apply) > 0) && $REQUEST_METHOD == "POST" && $bAdmin == "Y" && $ID > 0 && $TICKET_ID > 0 && check_bitrix_sessid()) {
+    if (($save <> '' || $apply <> '') && $REQUEST_METHOD == "POST" && $bAdmin == "Y" && $ID > 0 && $TICKET_ID > 0 && check_bitrix_sessid(
+        )) {
         $DB->PrepareFields("b_ticket_message");
         $arrFILES = array();
         if (is_array($arFiles) && count($arFiles) > 0) {
             reset($arFiles);
             foreach ($arFiles as $arFile) {
                 $key = "EXIST_FILE_" . $arFile["ID"];
-                $arF = $HTTP_POST_FILES[$key];
+                $arF = $_FILES[$key];
                 $arF["MODULE_ID"] = "support";
                 $arF["old_file"] = $arFile["ID"];
                 $arF["del"] = ${$key . "_del"};
-                if ($arF["del"] == "Y" || strlen($arF["name"]) > 0) $arrFILES[] = $arF;
+                if ($arF["del"] == "Y" || $arF["name"] <> '') {
+                    $arrFILES[] = $arF;
+                }
             }
         }
 
-        if (is_array($HTTP_POST_FILES) && count($HTTP_POST_FILES) > 0) {
-            while (list($key, $arF) = each($HTTP_POST_FILES)) {
-                if (strlen($arF["name"]) > 0) {
+        if (is_array($_FILES) && count($_FILES) > 0) {
+            foreach ($_FILES as $key => $arF) {
+                if ($arF["name"] <> '') {
                     $arF["MODULE_ID"] = "support";
-                    if (strpos($key, "NEW_FILE") !== false) {
+                    if (mb_strpos($key, "NEW_FILE") !== false) {
                         $arrFILES[] = $arF;
                     }
                 }
@@ -125,19 +140,27 @@ if ($arTicket = $rsTicket->Fetch()) {
                 "FILES" => $arrFILES
             );
 
-            if ($IS_LOG == "Y") unset($arFields["TASK_TIME"]);
+            if ($IS_LOG == "Y") {
+                unset($arFields["TASK_TIME"]);
+            }
 
             CTicket::UpdateMessage($ID, $arFields);
             //CTicket::UpdateLastParams2($TICKET_ID);
             CTicket::UpdateLastParamsN($TICKET_ID, array("EVENT" => array(CTicket::UPDATE)), true, true);
 
             if (!$strError) {
-                if (strlen($save) > 0) LocalRedirect($TICKET_EDIT_URL . "?lang=" . LANGUAGE_ID . "&ID=" . $TICKET_ID);
-                elseif (strlen($apply) > 0) LocalRedirect($TICKET_MESSAGE_EDIT_URL . "?ID=" . $ID . "&TICKET_ID=" . $TICKET_ID . "&lang=" . LANGUAGE_ID);
+                if ($save <> '') {
+                    LocalRedirect($TICKET_EDIT_URL . "?lang=" . LANGUAGE_ID . "&ID=" . $TICKET_ID);
+                } elseif ($apply <> '') {
+                    LocalRedirect(
+                        $TICKET_MESSAGE_EDIT_URL . "?ID=" . $ID . "&TICKET_ID=" . $TICKET_ID . "&lang=" . LANGUAGE_ID
+                    );
+                }
             }
         } else {
-            if ($e = $APPLICATION->GetException())
+            if ($e = $APPLICATION->GetException()) {
                 $strError = new CAdminMessage(GetMessage("SUP_ERROR"), $e);
+            }
         }
     }
 
@@ -148,12 +171,12 @@ if ($arTicket = $rsTicket->Fetch()) {
         $strError = new CAdminMessage(GetMessage("SUP_MESSAGE_NOT_FOUND"), $e);
     } else {
         $arFiles = array();
-        if ($rsFiles = CTicket::GetFileList($v1 = "s_id", $v2 = "asc", array("MESSAGE_ID" => $ID))) :
+        if ($rsFiles = CTicket::GetFileList("s_id", "asc", array("MESSAGE_ID" => $ID))) :
             while ($arFile = $rsFiles->Fetch()) :
                 $name = $arFile["ORIGINAL_NAME"];
-                if (strlen($arFile["EXTENSION_SUFFIX"]) > 0) :
-                    $suffix_length = strlen($arFile["EXTENSION_SUFFIX"]);
-                    $name = substr($name, 0, strlen($name) - $suffix_length);
+                if ($arFile["EXTENSION_SUFFIX"] <> '') :
+                    $suffix_length = mb_strlen($arFile["EXTENSION_SUFFIX"]);
+                    $name = mb_substr($name, 0, mb_strlen($name) - $suffix_length);
                 endif;
                 $arFile["NAME"] = $name;
                 $arFiles[] = $arFile;
@@ -161,8 +184,9 @@ if ($arTicket = $rsTicket->Fetch()) {
         endif;
     }
 
-    if ($strError)
+    if ($strError) {
         $DB->InitTableVarsForEdit("b_ticket_message", "", "str_");
+    }
 
     $str_OWNER_USER_ID = intval($str_OWNER_USER_ID) > 0 ? intval($str_OWNER_USER_ID) : "";
 
@@ -172,7 +196,10 @@ if ($arTicket = $rsTicket->Fetch()) {
 }
 if ($ADD_PUBLIC_CHAIN == "Y" || !isset($ADD_PUBLIC_CHAIN)) {
     $APPLICATION->AddChainItem(GetMessage("SUP_TICKETS_LIST"), $TICKET_LIST_URL);
-    $APPLICATION->AddChainItem(str_replace("#TID#", $TICKET_ID, GetMessage("SUP_TICKET_EDIT")), $TICKET_EDIT_URL . "?ID=" . $TICKET_ID);
+    $APPLICATION->AddChainItem(
+        str_replace("#TID#", $TICKET_ID, GetMessage("SUP_TICKET_EDIT")),
+        $TICKET_EDIT_URL . "?ID=" . $TICKET_ID
+    );
 }
 $is_ie = IsIE();
 $is_ie = true;
@@ -190,7 +217,10 @@ if (intval($arTicket["MESSAGES"]) > 1) {
     $aMenu[] = array("SEPARATOR" => "Y");
     $aMenu[] = array(
         "TEXT" => GetMessage("SUP_DELETE_MESSAGE"),
-        "LINK" => "javascript:if(confirm('" . GetMessage("SUP_DELETE_MESSAGE_CONFIRM") . "')) window.location='/bitrix/admin/ticket_edit.php?ID=" . $TICKET_ID . "&mdel_id=" . $ID . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get() . "&set_default=Y';",
+        "LINK" => "javascript:if(confirm('" . GetMessage(
+                "SUP_DELETE_MESSAGE_CONFIRM"
+            ) . "')) window.location='/bitrix/admin/ticket_edit.php?ID=" . $TICKET_ID . "&mdel_id=" . $ID . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get(
+            ) . "&set_default=Y';",
         "WARNING" => "Y"
     );
 }
@@ -203,8 +233,9 @@ $context->Show();
 
 //echo ShowError($strError);
 //echo ShowNote($strNote);
-if ($strError)
+if ($strError) {
     echo $strError->Show();
+}
 /***************************************************************************
  * HTML �����
  ****************************************************************************/
@@ -219,7 +250,10 @@ if ($strError)
         <input type="hidden" name="lang" value="<?= LANGUAGE_ID ?>">
         <?
         $aTabs = array();
-        $aTabs[] = array("DIV" => "edit1", "TAB" => GetMessage("SUP_EDIT_ALT"), "ICON" => "ticket_edit",
+        $aTabs[] = array(
+            "DIV" => "edit1",
+            "TAB" => GetMessage("SUP_EDIT_ALT"),
+            "ICON" => "ticket_edit",
             "TITLE" => $APPLICATION->GetTitle()
         );
         $tabControl = new CAdminTabControl("tabControl", $aTabs);
@@ -246,7 +280,13 @@ if ($strError)
         <tr valign="middle">
             <td width="20%" nowrap><?= GetMessage("SUP_SOURCE") . " / " . GetMessage("SUP_FROM") ?></td>
             <td width="80%" nowrap><?
-                echo SelectBox("SOURCE_ID", CTicket::GetRefBookValues("SR", $arTicket["LID"]), "< web >", $str_SOURCE_ID, "OnChange=SelectSource() ");
+                echo SelectBox(
+                    "SOURCE_ID",
+                    CTicket::GetRefBookValues("SR", $arTicket["LID"]),
+                    "< web >",
+                    $str_SOURCE_ID,
+                    "OnChange=SelectSource() "
+                );
                 ?>&nbsp;<input type="text" size="12" name="OWNER_SID" id="OWNER_SID"
                                value="<?= $str_OWNER_SID ?>"><? echo FindUserID("OWNER_USER_ID", $str_OWNER_USER_ID) ?>
             </td>
@@ -259,11 +299,13 @@ if ($strError)
         <tr valign="top">
             <td width="20%"><?= GetMessage("SUP_CREATE") ?></td>
             <td align="left" width="80%"><?= $str_DATE_CREATE ?>&nbsp;&nbsp;&nbsp;<?
-                if (strlen($str_CREATED_MODULE_NAME) <= 0 || $str_CREATED_MODULE_NAME == "support") :
+                if ($str_CREATED_MODULE_NAME == '' || $str_CREATED_MODULE_NAME == "support") :
                     ?>[<a title="<?= GetMessage("SUP_USER_PROFILE") ?>"
                           href="/bitrix/admin/user_edit.php?lang=<?= LANG ?>&ID=<?= $str_CREATED_USER_ID ?>"><? echo $str_CREATED_USER_ID ?></a>] (<?= $str_CREATED_LOGIN ?>) <?= $str_CREATED_NAME ?><?
                     if (intval($str_CREATED_GUEST_ID) > 0 && CModule::IncludeModule("statistic")) :
-                        echo " [<a title='" . GetMessage("SUP_GUEST_ID") . "'  href='/bitrix/admin/guest_list.php?lang=" . LANG . "&find_id=" . $str_CREATED_GUEST_ID . "&find_id_exact_match=Y&set_filter=Y' >" . $str_CREATED_GUEST_ID . "</a>]";
+                        echo " [<a title='" . GetMessage(
+                                "SUP_GUEST_ID"
+                            ) . "'  href='/bitrix/admin/guest_list.php?lang=" . LANG . "&find_id=" . $str_CREATED_GUEST_ID . "&find_id_exact_match=Y&set_filter=Y' >" . $str_CREATED_GUEST_ID . "</a>]";
                     endif;
                 else :
                     echo $str_CREATED_MODULE_NAME;
@@ -279,7 +321,9 @@ if ($strError)
                           href="/bitrix/admin/user_edit.php?lang=<?= LANG ?>&ID=<? echo $str_MODIFIED_USER_ID ?>"><?= $str_MODIFIED_USER_ID ?></a>]
                     (<?= $str_MODIFIED_LOGIN ?>) <?= $str_MODIFIED_NAME ?><?
                     if (intval($str_MODIFIED_GUEST_ID) > 0 && CModule::IncludeModule("statistic")) :
-                        echo " [<a title='" . GetMessage("SUP_GUEST_ID") . "'  href='/bitrix/admin/guest_list.php?lang=" . LANG . "&find_id=" . $str_MODIFIED_GUEST_ID . "&find_id_exact_match=Y&set_filter=Y'>" . $str_MODIFIED_GUEST_ID . "</a>]";
+                        echo " [<a title='" . GetMessage(
+                                "SUP_GUEST_ID"
+                            ) . "'  href='/bitrix/admin/guest_list.php?lang=" . LANG . "&find_id=" . $str_MODIFIED_GUEST_ID . "&find_id_exact_match=Y&set_filter=Y'>" . $str_MODIFIED_GUEST_ID . "</a>]";
                     endif;
                     ?></td>
             </tr>
@@ -298,7 +342,8 @@ if ($strError)
                     ),
                     "reference_id" => array(
                         "N",
-                        "Y")
+                        "Y"
+                    )
                 );
                 echo SelectBoxFromArray("IS_SPAM", $arr, htmlspecialcharsbx($str_IS_SPAM), " ");
                 ?></td>
@@ -306,7 +351,15 @@ if ($strError)
 
         <tr valign="top">
             <td valign="top"><?= GetMessage("CHANGE_STATUS") ?>:</td>
-            <td valign="top"><? echo InputType("checkbox", "NOT_CHANGE_STATUS", "Y", $str_NOT_CHANGE_STATUS, false, "", "id=\"NOT_CHANGE_STATUS\"") ?></td>
+            <td valign="top"><? echo InputType(
+                    "checkbox",
+                    "NOT_CHANGE_STATUS",
+                    "Y",
+                    $str_NOT_CHANGE_STATUS,
+                    false,
+                    "",
+                    "id=\"NOT_CHANGE_STATUS\""
+                ) ?></td>
         </tr>
 
         <tr valign="top">
@@ -340,8 +393,9 @@ if ($strError)
                             <tr>
                                 <td><?
                                     ?><a title="<?= GetMessage("SUP_VIEW_ALT") ?>" target="_blank"
-                                         href="/bitrix/tools/ticket_show_file.php?hash=<? echo $arFile["HASH"] ?>&lang=<?= LANG ?>"><? echo htmlspecialcharsbx($arFile["NAME"]) ?></a>
-                                    (<?
+                                         href="/bitrix/tools/ticket_show_file.php?hash=<? echo $arFile["HASH"] ?>&lang=<?= LANG ?>"><? echo htmlspecialcharsbx(
+                                            $arFile["NAME"]
+                                        ) ?></a> (<?
                                     /*$a = array("b", "kb", "mb", "gb");
                                     $pos = 0;
                                     $size = $arFile["FILE_SIZE"];
@@ -349,8 +403,10 @@ if ($strError)
                                     echo round($size,2)." ".$a[$pos];*/
                                     echo CFile::FormatSize($arFile["FILE_SIZE"]);
                                     ?>)&nbsp;&nbsp;[&nbsp;<a
-                                            href="/bitrix/tools/ticket_show_file.php?hash=<? echo $arFile["HASH"] ?>&lang=<?= LANG ?>&action=download"><? echo GetMessage("SUP_DOWNLOAD") ?></a>&nbsp;]&nbsp;&nbsp;<?= GetMessage("SUP_DELETE") ?>
-                                    :<input type="checkbox" name="EXIST_FILE_<?= $arFile["ID"] ?>_del" value="Y"></td>
+                                            href="/bitrix/tools/ticket_show_file.php?hash=<? echo $arFile["HASH"] ?>&lang=<?= LANG ?>&action=download"><? echo GetMessage(
+                                            "SUP_DOWNLOAD"
+                                        ) ?></a>&nbsp;]&nbsp;&nbsp;<?= GetMessage("SUP_DELETE") ?>:<input
+                                            type="checkbox" name="EXIST_FILE_<?= $arFile["ID"] ?>_del" value="Y"></td>
                             </tr>
                             <tr>
                                 <td><input name="EXIST_FILE_<?= $arFile["ID"] ?>" size="30" type="file"></td>

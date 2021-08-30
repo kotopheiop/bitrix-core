@@ -31,8 +31,9 @@ class ReservedProductCleaner extends Stepper
         if ($days_ago > 0) {
             global $USER;
 
-            if (!is_object($USER))
+            if (!is_object($USER)) {
                 $USER = new \CUser;
+            }
 
             $date = new DateTime();
             $parameters = [
@@ -94,10 +95,13 @@ class ReservedProductCleaner extends Stepper
                             $oldErrorText .= (strval($oldErrorText) != '' ? "\n" : "") . $error;
                         }
 
-                        Sale\Internals\OrderTable::update($order->getId(), array(
-                            "MARKED" => "Y",
-                            "REASON_MARKED" => $oldErrorText
-                        ));
+                        Sale\Internals\OrderTable::update(
+                            $order->getId(),
+                            array(
+                                "MARKED" => "Y",
+                                "REASON_MARKED" => $oldErrorText
+                            )
+                        );
                     }
                 }
             }

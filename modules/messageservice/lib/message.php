@@ -56,18 +56,24 @@ class Message
                 $message->setSender($sender);
             }
         }
-        if (isset($fields['TYPE']))
+        if (isset($fields['TYPE'])) {
             $message->setType($fields['TYPE']);
-        if (isset($fields['AUTHOR_ID']))
+        }
+        if (isset($fields['AUTHOR_ID'])) {
             $message->setAuthorId($fields['AUTHOR_ID']);
-        if (isset($fields['MESSAGE_FROM']))
+        }
+        if (isset($fields['MESSAGE_FROM'])) {
             $message->setFrom($fields['MESSAGE_FROM']);
-        if (isset($fields['MESSAGE_TO']))
+        }
+        if (isset($fields['MESSAGE_TO'])) {
             $message->setTo($fields['MESSAGE_TO']);
-        if (isset($fields['MESSAGE_HEADERS']))
+        }
+        if (isset($fields['MESSAGE_HEADERS'])) {
             $message->setHeaders($fields['MESSAGE_HEADERS']);
-        if (isset($fields['MESSAGE_BODY']))
+        }
+        if (isset($fields['MESSAGE_BODY'])) {
             $message->setBody($fields['MESSAGE_BODY']);
+        }
 
         return $message;
     }
@@ -137,15 +143,17 @@ class Message
         $sender = $this->getSender();
         $headers = $this->getHeaders();
 
-        $result = Internal\Entity\MessageTable::add(array(
-            'TYPE' => $this->getType(),
-            'SENDER_ID' => $sender->getId(),
-            'AUTHOR_ID' => $this->getAuthorId(),
-            'MESSAGE_FROM' => $this->getFrom(),
-            'MESSAGE_TO' => $this->getTo(),
-            'MESSAGE_HEADERS' => count($headers) > 0 ? $headers : null,
-            'MESSAGE_BODY' => $this->getBody(),
-        ));
+        $result = Internal\Entity\MessageTable::add(
+            array(
+                'TYPE' => $this->getType(),
+                'SENDER_ID' => $sender->getId(),
+                'AUTHOR_ID' => $this->getAuthorId(),
+                'MESSAGE_FROM' => $this->getFrom(),
+                'MESSAGE_TO' => $this->getTo(),
+                'MESSAGE_HEADERS' => count($headers) > 0 ? $headers : null,
+                'MESSAGE_BODY' => $this->getBody(),
+            )
+        );
 
         return $result;
     }

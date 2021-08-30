@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 use Bitrix\Main,
@@ -16,8 +17,9 @@ Loader::includeModule('sale');
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/prolog.php");
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
 
-if ($saleModulePermissions == "D")
+if ($saleModulePermissions == "D") {
     $APPLICATION->AuthForm(Loc::getMessage("ACCESS_DENIED"));
+}
 
 $statusesList = \Bitrix\Sale\OrderStatus::getStatusesUserCanDoOperations($USER->GetID(), array('delete'));
 
@@ -36,8 +38,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["archive"] == "Y" && check
     $timeLimit = null;
     $filter = array();
 
-    if (isset($_REQUEST["site_id"]) && $_REQUEST["site_id"] != "")
+    if (isset($_REQUEST["site_id"]) && $_REQUEST["site_id"] != "") {
         $nextStep["SITE_ID"] = $_REQUEST["site_id"];
+    }
 
     if (isset($_POST['archive_status_id'])) {
         $filter["STATUS_ID"] = array();
@@ -48,14 +51,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["archive"] == "Y" && check
         }
     }
 
-    if (strlen($_POST['archive_payed']))
+    if ($_POST['archive_payed'] <> '') {
         $filter["=PAYED"] = $_POST['archive_payed'];
+    }
 
-    if (strlen($_POST['archive_canceled']))
+    if ($_POST['archive_canceled'] <> '') {
         $filter["=CANCELED"] = $_POST['archive_canceled'];
+    }
 
-    if (strlen($_POST['archive_deducted']))
+    if ($_POST['archive_deducted'] <> '') {
         $filter["=DEDUCTED"] = $_POST['archive_deducted'];
+    }
 
     if (isset($_POST['archive_site'])) {
         foreach ($_POST['archive_site'] as $key => $site) {
@@ -104,18 +110,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["archive"] == "Y" && check
 
     $count = (int)$dataResult['count'];
 
-    if (strlen($_POST['countArchived'])) {
+    if ($_POST['countArchived'] <> '') {
         $count += (int)$_POST['countArchived'];
     }
 
     if ($resultArchiving->isSuccess() && $dataResult['count'] > 0) {
-        CAdminMessage::ShowMessage(array(
-            "MESSAGE" => Loc::getMessage("ARCHIVE_IN_PROGRESS"),
-            "DETAILS" => Loc::getMessage("ARCHIVE_TOTAL") . " <b>" . $count . "</b><br>
-			<a id=\"continue_href\" onclick=\"ContinueArchive(" . $count . "); return false;\" href=\"" . htmlspecialcharsbx("sale_archive.php?continue=Y&lang=" . urlencode(LANGUAGE_ID)) . "\">" . Loc::getMessage("SEARCH_REINDEX_NEXT_STEP") . "</a>",
-            "HTML" => true,
-            "TYPE" => "PROGRESS",
-        ));
+        CAdminMessage::ShowMessage(
+            array(
+                "MESSAGE" => Loc::getMessage("ARCHIVE_IN_PROGRESS"),
+                "DETAILS" => Loc::getMessage("ARCHIVE_TOTAL") . " <b>" . $count . "</b><br>
+			<a id=\"continue_href\" onclick=\"ContinueArchive(" . $count . "); return false;\" href=\"" . htmlspecialcharsbx(
+                        "sale_archive.php?continue=Y&lang=" . urlencode(LANGUAGE_ID)
+                    ) . "\">" . Loc::getMessage("SEARCH_REINDEX_NEXT_STEP") . "</a>",
+                "HTML" => true,
+                "TYPE" => "PROGRESS",
+            )
+        );
         ?>
         <script>
             CloseWaitWindow();
@@ -124,19 +134,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["archive"] == "Y" && check
         </script>
         <?
     } else {
-        CAdminMessage::ShowMessage(array(
-            "MESSAGE" => Loc::getMessage("ARCHIVE_COMPLETE"),
-            "DETAILS" => Loc::getMessage("ARCHIVE_TOTAL") . " <b>" . $count . "</b>",
-            "HTML" => true,
-            "TYPE" => "OK",
-        ));
+        CAdminMessage::ShowMessage(
+            array(
+                "MESSAGE" => Loc::getMessage("ARCHIVE_COMPLETE"),
+                "DETAILS" => Loc::getMessage("ARCHIVE_TOTAL") . " <b>" . $count . "</b>",
+                "HTML" => true,
+                "TYPE" => "OK",
+            )
+        );
         if (!$resultArchiving->isSuccess()) {
             $errorList = $resultArchiving->getErrorMessages();
             foreach ($errorList as $error) {
-                CAdminMessage::ShowMessage(array(
-                    "MESSAGE" => $error,
-                    "TYPE" => "ERROR",
-                ));
+                CAdminMessage::ShowMessage(
+                    array(
+                        "MESSAGE" => $error,
+                        "TYPE" => "ERROR",
+                    )
+                );
             }
         }
     }
@@ -247,7 +261,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["archive"] == "Y" && check
         $tabControl->BeginNextTab();
         $filterValues = Option::get('sale', 'archive_params');
 
-        $filterValues = unserialize($filterValues);
+        $filterValues = unserialize($filterValues, ['allowed_classes' => false]);
 
         $countExecutionOrders = Option::get('sale', 'archive_time_limit', false);
         if (!$countExecutionOrders) {
@@ -269,9 +283,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["archive"] == "Y" && check
         if ($saleModulePermissions >= "W") {
             ?>
             <tr>
-                <td valign="top"><label
-                            for="archive_blocked_order_accept"><? echo Loc::getMessage("ARCHIVE_BLOCKED_ORDER_ACCEPT") ?>
-                        :</label></td>
+                <td valign="top"><label for="archive_blocked_order_accept"><? echo Loc::getMessage(
+                            "ARCHIVE_BLOCKED_ORDER_ACCEPT"
+                        ) ?>:</label></td>
                 <td>
                     <input type="checkbox" name="archive_blocked_order_accept" id="archive_blocked_order_accept"
                            value="Y" <? if (Option::get("sale", "archive_blocked_order") === "Y") echo "checked" ?>>
@@ -326,14 +340,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["archive"] == "Y" && check
                     $allStatusNames = \Bitrix\Sale\OrderStatus::getAllStatusesNames();
 
                     foreach ($statusesList as $statusCode) {
-                        if (!$statusName = $allStatusNames[$statusCode])
+                        if (!$statusName = $allStatusNames[$statusCode]) {
                             continue;
+                        }
                         ?>
                         <option
                                 value="<?= htmlspecialcharsbx($statusCode) ?>"
                             <?
                             if (
-                                (is_array($filterValues['STATUS_ID']) && in_array($statusCode, $filterValues['STATUS_ID']))
+                                (is_array($filterValues['STATUS_ID']) && in_array(
+                                        $statusCode,
+                                        $filterValues['STATUS_ID']
+                                    ))
                                 || empty($filterValues['STATUS_ID'])
                             )
                                 echo " selected"
@@ -354,8 +372,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["archive"] == "Y" && check
             <td>
                 <select name="archive_payed" id="ORDER_ARCHIVE_PAYED">
                     <option value="" selected><? echo Loc::getMessage("ARCHIVE_ALL") ?></option>
-                    <option value="Y"<? if ($filterValues['=PAYED'] == "Y") echo " selected" ?>><? echo Loc::getMessage("ARCHIVE_YES") ?></option>
-                    <option value="N"<? if ($filterValues['=PAYED'] == 'N') echo " selected" ?>><? echo Loc::getMessage("ARCHIVE_NO") ?></option>
+                    <option value="Y"<? if ($filterValues['=PAYED'] == "Y") echo " selected" ?>><? echo Loc::getMessage(
+                            "ARCHIVE_YES"
+                        ) ?></option>
+                    <option value="N"<? if ($filterValues['=PAYED'] == 'N') echo " selected" ?>><? echo Loc::getMessage(
+                            "ARCHIVE_NO"
+                        ) ?></option>
                 </select>
             </td>
         </tr>
@@ -366,8 +388,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["archive"] == "Y" && check
             <td>
                 <select name="archive_canceled" id="ORDER_ARCHIVE_CANCELED">
                     <option value="" selected><? echo Loc::getMessage("ARCHIVE_ALL") ?></option>
-                    <option value="Y"<? if ($filterValues['=CANCELED'] == "Y") echo " selected" ?>><? echo Loc::getMessage("ARCHIVE_YES") ?></option>
-                    <option value="N"<? if ($filterValues['=CANCELED'] == 'N') echo " selected" ?>><? echo Loc::getMessage("ARCHIVE_NO") ?></option>
+                    <option value="Y"<? if ($filterValues['=CANCELED'] == "Y") echo " selected" ?>><? echo Loc::getMessage(
+                            "ARCHIVE_YES"
+                        ) ?></option>
+                    <option value="N"<? if ($filterValues['=CANCELED'] == 'N') echo " selected" ?>><? echo Loc::getMessage(
+                            "ARCHIVE_NO"
+                        ) ?></option>
                 </select>
             </td>
         </tr>
@@ -378,8 +404,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["archive"] == "Y" && check
             <td>
                 <select name="archive_deducted" id="ORDER_ARCHIVE_DEDUCTED">
                     <option value="" selected><? echo Loc::getMessage("ARCHIVE_ALL") ?></option>
-                    <option value="Y"<? if ($filterValues['=DEDUCTED'] == "Y") echo " selected" ?>><? echo Loc::getMessage("ARCHIVE_YES") ?></option>
-                    <option value="N"<? if ($filterValues['=DEDUCTED'] == 'N') echo " selected" ?>><? echo Loc::getMessage("ARCHIVE_NO") ?></option>
+                    <option value="Y"<? if ($filterValues['=DEDUCTED'] == "Y") echo " selected" ?>><? echo Loc::getMessage(
+                            "ARCHIVE_YES"
+                        ) ?></option>
+                    <option value="N"<? if ($filterValues['=DEDUCTED'] == 'N') echo " selected" ?>><? echo Loc::getMessage(
+                            "ARCHIVE_NO"
+                        ) ?></option>
                 </select>
             </td>
         </tr>

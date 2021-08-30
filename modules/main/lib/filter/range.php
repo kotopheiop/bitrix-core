@@ -20,7 +20,6 @@ class Range
             $filter["$operation{$name}"] = $value;
         }
         unset($filter["{$name}_from"]);
-
     }
 
     public static function prepareTo(array &$filter, $name, $value)
@@ -37,6 +36,5 @@ class Range
             $filter["$operation{$name}"] = $value;
         }
         unset($filter["{$name}_to"]);
-
     }
 }

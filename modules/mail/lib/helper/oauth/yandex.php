@@ -27,7 +27,10 @@ class Yandex extends Mail\Helper\OAuth
             'first_name' => $userData['first_name'],
             'last_name' => $userData['last_name'],
             'full_name' => $userData['real_name'],
-            'image' => sprintf('https://avatars.yandex.net/get-yapic/%s/islands-middle', $userData['default_avatar_id']),
+            'image' => sprintf(
+                'https://avatars.yandex.net/get-yapic/%s/islands-middle',
+                $userData['default_avatar_id']
+            ),
             //'error' => $data['error']['message'],
         );
     }

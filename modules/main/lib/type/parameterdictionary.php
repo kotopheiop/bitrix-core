@@ -14,8 +14,9 @@ class ParameterDictionary
 
     protected function setValuesNoDemand(array $values)
     {
-        if ($this->arRawValues === null)
+        if ($this->arRawValues === null) {
             $this->arRawValues = $this->values;
+        }
         $this->values = $values;
     }
 
@@ -28,11 +29,13 @@ class ParameterDictionary
     public function getRaw($name)
     {
         if ($this->arRawValues === null) {
-            if (isset($this->values[$name]) || array_key_exists($name, $this->values))
+            if (isset($this->values[$name]) || array_key_exists($name, $this->values)) {
                 return $this->values[$name];
+            }
         } else {
-            if (isset($this->arRawValues[$name]) || array_key_exists($name, $this->arRawValues))
+            if (isset($this->arRawValues[$name]) || array_key_exists($name, $this->arRawValues)) {
                 return $this->arRawValues[$name];
+            }
         }
 
         return null;

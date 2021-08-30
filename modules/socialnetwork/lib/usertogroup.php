@@ -89,7 +89,13 @@ class UserToGroupTable extends Entity\DataManager
             ),
             'ROLE' => array(
                 'data_type' => 'enum',
-                'values' => array(self::ROLE_OWNER, self::ROLE_MODERATOR, self::ROLE_USER, self::ROLE_BAN, self::ROLE_REQUEST),
+                'values' => array(
+                    self::ROLE_OWNER,
+                    self::ROLE_MODERATOR,
+                    self::ROLE_USER,
+                    self::ROLE_BAN,
+                    self::ROLE_REQUEST
+                ),
             ),
             'AUTO_MEMBER' => array(
                 'data_type' => 'boolean',

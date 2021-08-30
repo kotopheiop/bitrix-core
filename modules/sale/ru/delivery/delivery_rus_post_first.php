@@ -1,4 +1,5 @@
 <?
+
 /********************************************************************************
  * Delivery services for Russian Post Service (http://www.russianpost.ru/)
  * "First class" service.
@@ -9,7 +10,10 @@ CModule::IncludeModule('sale');
 
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"] . '/bitrix/modules/sale/delivery/delivery_rus_post_first.php');
 
-define('DELIVERY_RPF_CSV_PATH', $_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/sale/ru/delivery/rus_post_first'); //where we can found csv files
+define(
+    'DELIVERY_RPF_CSV_PATH',
+    $_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/sale/ru/delivery/rus_post_first'
+); //where we can found csv files
 
 class CDeliveryRusPostFirst
 {
@@ -28,7 +32,7 @@ class CDeliveryRusPostFirst
     private static $TARIF_DESCR = 1;
 
     /* Standard mandatory delivery services functions */
-    function Init()
+    public static function Init()
     {
         self::$TARIFS = array(
             'WEIGHT_LESS_100' => array(6, GetMessage('SALE_DH_RPF_WRP_LESS_100')),
@@ -46,8 +50,12 @@ class CDeliveryRusPostFirst
             /* Basic description */
             'SID' => 'rus_post_first',
             'NAME' => GetMessage('SALE_DH_RPF_NAME'),
-            'DESCRIPTION' => GetMessage('SALE_DH_RPF_DESCR') . ' <a href="http://www.russianpost.ru/rp/servise/ru/home/postuslug/1class">http://www.russianpost.ru/rp/servise/ru/home/postuslug/1class</a>',
-            'DESCRIPTION_INNER' => GetMessage('SALE_DH_RPF_DESCR') . ' <a href="http://www.russianpost.ru/rp/servise/ru/home/postuslug/1class">http://www.russianpost.ru/rp/servise/ru/home/postuslug/1class</a>',
+            'DESCRIPTION' => GetMessage(
+                    'SALE_DH_RPF_DESCR'
+                ) . ' <a href="http://www.russianpost.ru/rp/servise/ru/home/postuslug/1class">http://www.russianpost.ru/rp/servise/ru/home/postuslug/1class</a>',
+            'DESCRIPTION_INNER' => GetMessage(
+                    'SALE_DH_RPF_DESCR'
+                ) . ' <a href="http://www.russianpost.ru/rp/servise/ru/home/postuslug/1class">http://www.russianpost.ru/rp/servise/ru/home/postuslug/1class</a>',
             'BASE_CURRENCY' => 'RUB',
             'HANDLER' => __FILE__,
 
@@ -78,13 +86,14 @@ class CDeliveryRusPostFirst
         );
     }
 
-    function GetConfig($siteId = false)
+    public static function GetConfig($siteId = false)
     {
         $shopLocationId = CSaleHelper::getShopLocationId($siteId);
         $arShopLocation = CSaleHelper::getLocationByIdHitCached($shopLocationId);
 
-        if (!$arShopLocation)
+        if (!$arShopLocation) {
             $arShopLocation = array();
+        }
 
         $shopPrevLocationId = COption::GetOptionString('sale', 'delivery_rus_post_first_prev_loc', 0);
 
@@ -102,8 +111,9 @@ class CDeliveryRusPostFirst
 
         $aviableBoxes = self::getAviableBoxes();
 
-        foreach ($aviableBoxes as $boxId => $arBox)
+        foreach ($aviableBoxes as $boxId => $arBox) {
             CSaleDeliveryHelper::makeBoxConfig($boxId, $arBox, 'wrapper', $arConfig);
+        }
 
         $arConfig['CONFIG']['tarif_section_1'] = array(
             'TYPE' => 'SECTION',
@@ -115,7 +125,9 @@ class CDeliveryRusPostFirst
             'TYPE' => 'CUSTOM',
             'TITLE' => GetMessage('SALE_DH_RPF_SET_DEFAULT_TARIF'),
             'GROUP' => 'wrapper',
-            'DEFAULT' => '<a href="javascript:void(0);" onclick="BX.Sale.Delivery.resetRusPostTarifSettings();">' . GetMessage('SALE_DH_RPF_SET_DEFAULT_TARIF_SET') . '</a>'
+            'DEFAULT' => '<a href="javascript:void(0);" onclick="BX.Sale.Delivery.resetRusPostTarifSettings();">' . GetMessage(
+                    'SALE_DH_RPF_SET_DEFAULT_TARIF_SET'
+                ) . '</a>'
         );
 
         $arTarifs = CSaleHelper::getOptionOrImportValues(
@@ -164,63 +176,78 @@ class CDeliveryRusPostFirst
         return $arConfig;
     }
 
-    function GetSettings($strSettings)
+    public static function GetSettings($strSettings)
     {
-        $result = unserialize($strSettings);
+        $result = unserialize($strSettings, ['allowed_classes' => false]);
 
-        if (isset($result['RESET_TARIF_SETTINGS']))
+        if (isset($result['RESET_TARIF_SETTINGS'])) {
             unset($result['RESET_TARIF_SETTINGS']);
+        }
 
         if (isset($_REQUEST["RESET_TARIF_SETTINGS"]) && $_REQUEST["RESET_TARIF_SETTINGS"] == "Y" && !isset($_REQUEST["apply"])) {
             COption::RemoveOption('sale', 'delivery_rus_post_first_tarifs');
 
-            foreach ($result as $key => $value)
-                if (substr($key, 0, 6) == 'TARIF_' || substr($key, 0, 8) == 'service_')
+            foreach ($result as $key => $value) {
+                if (mb_substr($key, 0, 6) == 'TARIF_' || mb_substr($key, 0, 8) == 'service_') {
                     unset($result[$key]);
+                }
+            }
         }
 
         return $result;
     }
 
-    function SetSettings($arSettings)
+    public static function SetSettings($arSettings)
     {
-        if (isset($arSettings['RESET_TARIF_SETTINGS']))
+        if (isset($arSettings['RESET_TARIF_SETTINGS'])) {
             unset($arSettings['RESET_TARIF_SETTINGS']);
+        }
 
         foreach ($arSettings as $key => $value) {
-            if (strlen($value) > 0)
+            if ($value <> '') {
                 $arSettings[$key] = $value;
-            else
+            } else {
                 unset($arSettings[$key]);
+            }
         }
 
         return serialize($arSettings);
     }
 
-    function GetFeatures($arConfig)
+    public static function GetFeatures($arConfig)
     {
         $arResult = array();
 
-        if ($arConfig["service_" . array_shift(array_values(self::$SERVICES["NOTIFICATION_SIMPLE"])) . "_enabled"]["VALUE"] == "Y")
+        if ($arConfig["service_" . array_shift(
+                array_values(self::$SERVICES["NOTIFICATION_SIMPLE"])
+            ) . "_enabled"]["VALUE"] == "Y") {
             $arResult[GetMessage("SALE_DH_RPF_SMPL_NTF")] = GetMessage("SALE_DH_RPF_FEATURE_ENABLED");
+        }
 
-        if ($arConfig["service_" . array_shift(array_values(self::$SERVICES["NOTIFICATION_REG"])) . "_enabled"]["VALUE"] == "Y")
+        if ($arConfig["service_" . array_shift(
+                array_values(self::$SERVICES["NOTIFICATION_REG"])
+            ) . "_enabled"]["VALUE"] == "Y") {
             $arResult[GetMessage("SALE_DH_RPF_RGST_NTF")] = GetMessage("SALE_DH_RPF_FEATURE_ENABLED");
+        }
 
-        if ($arConfig["service_" . array_shift(array_values(self::$SERVICES["DECLARED_VALUE"])) . "_enabled"]["VALUE"] == "Y")
+        if ($arConfig["service_" . array_shift(
+                array_values(self::$SERVICES["DECLARED_VALUE"])
+            ) . "_enabled"]["VALUE"] == "Y") {
             $arResult[GetMessage("SALE_DH_RPF_FEATURE_VALUE")] = GetMessage("SALE_DH_RPF_FEATURE_ENABLED");
+        }
 
         return $arResult;
     }
 
-    function Calculate($profile, $arConfig, $arOrder, $STEP, $TEMP = false)
+    public static function Calculate($profile, $arConfig, $arOrder, $STEP, $TEMP = false)
     {
         $arPacks = CSaleDeliveryHelper::getBoxesFromConfig($profile, $arConfig);
 
         $arPackagesParams = CSaleDeliveryHelper::getRequiredPacks(
             $arOrder["ITEMS"],
             $arPacks,
-            self::$MAX_WEIGHT);
+            self::$MAX_WEIGHT
+        );
 
         $packageCount = count($arPackagesParams);
 
@@ -234,8 +261,9 @@ class CDeliveryRusPostFirst
         $totalPrice = 0;
         $arLocationTo = CSaleHelper::getLocationByIdHitCached($arOrder['LOCATION_TO']);
 
-        foreach ($arPackagesParams as $arPackage)
+        foreach ($arPackagesParams as $arPackage) {
             $totalPrice += self::calculatePackPrice($arPackage, $profile, $arConfig, $arLocationTo);
+        }
 
         $arResult = array(
             'RESULT' => 'OK',
@@ -245,7 +273,7 @@ class CDeliveryRusPostFirst
         return $arResult;
     }
 
-    function Compability($arOrder, $arConfig)
+    public static function Compability($arOrder, $arConfig)
     {
         $result = array();
 
@@ -265,15 +293,17 @@ class CDeliveryRusPostFirst
 
     public static function getTarifNumFromCsv(array $arShopLocation)
     {
-        if (empty($arShopLocation) || !isset($arShopLocation["REGION_ID"]) || !isset($arShopLocation['REGION_NAME_LANG']))
+        if (empty($arShopLocation) || !isset($arShopLocation["REGION_ID"]) || !isset($arShopLocation['REGION_NAME_LANG'])) {
             return false;
+        }
 
         $regionCodeFromCode = $regionCodeFromName = "";
 
         $dbRes = \Bitrix\Sale\Location\LocationTable::getById($arShopLocation["REGION_ID"]);
 
-        if ($locReg = $dbRes->fetch())
+        if ($locReg = $dbRes->fetch()) {
             $regionCodeFromCode = $locReg["CODE"];
+        }
 
         $regionCodeFromName = self::getRegionCodeByOldName($arShopLocation['REGION_NAME_LANG']);
 
@@ -283,8 +313,8 @@ class CDeliveryRusPostFirst
 
         while ($arRes = $csvFile->Fetch()) {
             if (
-                (strlen($regionCodeFromCode) > 0 && in_array($regionCodeFromCode, $arRes))
-                || (strlen($regionCodeFromName) > 0 && in_array($regionCodeFromName, $arRes))
+                ($regionCodeFromCode <> '' && in_array($regionCodeFromCode, $arRes))
+                || ($regionCodeFromName <> '' && in_array($regionCodeFromName, $arRes))
             ) {
                 $tarifNumber = $arRes[$COL_TARIF_NUM];
                 break;
@@ -295,13 +325,15 @@ class CDeliveryRusPostFirst
 
     public static function getTarifsByRegionFromCsv(array $arShopLocation)
     {
-        if (empty($arShopLocation))
+        if (empty($arShopLocation)) {
             return false;
+        }
 
         $tarifNumber = self::getTarifNumFromCsv($arShopLocation);
 
-        if ($tarifNumber === false)
+        if ($tarifNumber === false) {
             return false;
+        }
 
         $csvFile = CSaleHelper::getCsvObject(DELIVERY_RPF_CSV_PATH . '/tarif_data.csv');
         $COL_TARIF_ITEMS = 0;
@@ -309,8 +341,9 @@ class CDeliveryRusPostFirst
         $arRes = $csvFile->Fetch();
 
         while ($arRes = $csvFile->Fetch()) {
-            if (!isset($arRes[$tarifNumber]))
+            if (!isset($arRes[$tarifNumber])) {
                 break;
+            }
 
             $arTarifs[$arRes[$COL_TARIF_ITEMS]] = $arRes[$tarifNumber];
         }
@@ -346,22 +379,37 @@ class CDeliveryRusPostFirst
     {
         $arDebug = array();
         $totalPrice = 0;
-        $declaredValue = self::isConfCheckedVal($arConfig, 'service_' . self::$SERVICES['DECLARED_VALUE'][self::$TARIF_IDX] . '_enabled');
+        $declaredValue = self::isConfCheckedVal(
+            $arConfig,
+            'service_' . self::$SERVICES['DECLARED_VALUE'][self::$TARIF_IDX] . '_enabled'
+        );
 
         //2. Wrapper
         //2.1, 2.2  declared value, weight less 100 gramm
 
-        if ($declaredValue && floatval($arConfig['TARIF_' . self::$TARIFS['WEIGHT_LESS_100_DECLARED_VALUE'][self::$TARIF_IDX]]['VALUE']) > 0)
-            $basePrice = floatval(self::getConfValue($arConfig, 'TARIF_' . self::$TARIFS['WEIGHT_LESS_100_DECLARED_VALUE'][self::$TARIF_IDX]));
-        else
-            $basePrice = floatval(self::getConfValue($arConfig, 'TARIF_' . self::$TARIFS['WEIGHT_LESS_100'][self::$TARIF_IDX]));
+        if ($declaredValue && floatval(
+                $arConfig['TARIF_' . self::$TARIFS['WEIGHT_LESS_100_DECLARED_VALUE'][self::$TARIF_IDX]]['VALUE']
+            ) > 0) {
+            $basePrice = floatval(
+                self::getConfValue(
+                    $arConfig,
+                    'TARIF_' . self::$TARIFS['WEIGHT_LESS_100_DECLARED_VALUE'][self::$TARIF_IDX]
+                )
+            );
+        } else {
+            $basePrice = floatval(
+                self::getConfValue($arConfig, 'TARIF_' . self::$TARIFS['WEIGHT_LESS_100'][self::$TARIF_IDX])
+            );
+        }
 
         $arDebug[] = 'Base Price less 100 g: ' . $basePrice;
 
         // 2.3 weight more than 100 g
         if ($arPackage['WEIGHT'] > self::$BASE_WEIGHT) {
             $addWeight = ceil($arPackage['WEIGHT'] / self::$BASE_WEIGHT - 1);
-            $addPrice = floatval(self::getConfValue($arConfig, 'TARIF_' . self::$TARIFS['WEIGHT_MORE_100'][self::$TARIF_IDX]));
+            $addPrice = floatval(
+                self::getConfValue($arConfig, 'TARIF_' . self::$TARIFS['WEIGHT_MORE_100'][self::$TARIF_IDX])
+            );
             $arDebug[] = 'Price for additional weight more than 100 g: ' . $addPrice;
             $basePrice += $addWeight * $addPrice;
         }
@@ -370,16 +418,32 @@ class CDeliveryRusPostFirst
 
         // 3.1 simple notification
         $snPrice = 0;
-        if (self::isConfCheckedVal($arConfig, 'service_' . self::$SERVICES['NOTIFICATION_SIMPLE'][self::$TARIF_IDX] . '_enabled')) {
-            $snPrice = floatval(self::getConfValue($arConfig, 'service_' . self::$SERVICES['NOTIFICATION_SIMPLE'][self::$TARIF_IDX] . '_value'));
+        if (self::isConfCheckedVal(
+            $arConfig,
+            'service_' . self::$SERVICES['NOTIFICATION_SIMPLE'][self::$TARIF_IDX] . '_enabled'
+        )) {
+            $snPrice = floatval(
+                self::getConfValue(
+                    $arConfig,
+                    'service_' . self::$SERVICES['NOTIFICATION_SIMPLE'][self::$TARIF_IDX] . '_value'
+                )
+            );
             $arDebug[] = 'Simple notification: ' . $snPrice;
             $totalPrice += $snPrice;
         }
 
         // 3.2. registered notification
         $rnPrice = 0;
-        if (self::isConfCheckedVal($arConfig, 'service_' . self::$SERVICES['NOTIFICATION_REG'][self::$TARIF_IDX] . '_enabled')) {
-            $rnPrice = floatval(self::getConfValue($arConfig, 'service_' . self::$SERVICES['NOTIFICATION_REG'][self::$TARIF_IDX] . '_value'));
+        if (self::isConfCheckedVal(
+            $arConfig,
+            'service_' . self::$SERVICES['NOTIFICATION_REG'][self::$TARIF_IDX] . '_enabled'
+        )) {
+            $rnPrice = floatval(
+                self::getConfValue(
+                    $arConfig,
+                    'service_' . self::$SERVICES['NOTIFICATION_REG'][self::$TARIF_IDX] . '_value'
+                )
+            );
             $arDebug[] = 'Registered notification: ' . $rnPrice;
             $totalPrice += $rnPrice;
         }
@@ -387,7 +451,12 @@ class CDeliveryRusPostFirst
         // 4. Service "declared value"
         $dvPrice = 0;
         if ($declaredValue) {
-            $dvTarif = floatval(self::getConfValue($arConfig, 'service_' . self::$SERVICES['DECLARED_VALUE'][self::$TARIF_IDX] . '_value'));
+            $dvTarif = floatval(
+                self::getConfValue(
+                    $arConfig,
+                    'service_' . self::$SERVICES['DECLARED_VALUE'][self::$TARIF_IDX] . '_value'
+                )
+            );
             $dvPrice += ($arPackage['PRICE']) * $dvTarif;
             $arDebug[] = 'Declared value: ' . $dvPrice;
             $totalPrice += $dvPrice;
@@ -399,8 +468,9 @@ class CDeliveryRusPostFirst
 
     protected static function getRegionCodeByOldName($regionLangName)
     {
-        if (strlen($regionLangName) <= 0)
+        if ($regionLangName == '') {
             return "";
+        }
 
         static $data = array();
 
@@ -412,7 +482,7 @@ class CDeliveryRusPostFirst
         return isset($data[$regionLangName]) ? $data[$regionLangName] : "";
     }
 
-    public function getAdminMessage()
+    public static function getAdminMessage()
     {
         return array(
             'MESSAGE' => GetMessage(

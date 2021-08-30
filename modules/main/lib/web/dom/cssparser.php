@@ -85,7 +85,10 @@ class CssParser
         $styleList = array();
         $declarationBlock = trim($declarationBlock);
         if ($declarationBlock) {
+            // fix image urls in data:URL format with base64 encoding
+            $declarationBlock = str_replace(';base64', '__base64', $declarationBlock);
             foreach (explode(";", $declarationBlock) as $declaration) {
+                $declaration = str_replace('__base64', ';base64', $declaration);
                 $declaration = trim($declaration);
                 if (!$declaration) {
                     continue;
@@ -137,19 +140,24 @@ class CssParser
     {
         foreach ($styleList as $k => $v) {
             $styleList[$k]['SORT'] = static::getSelectorSort($v['SELECTOR']);
+            $styleList[$k]['SORT'][] = $k;
         }
 
-        usort($styleList, function ($a, $b) {
-            $a = $a['SORT'];
-            $b = $b['SORT'];
-            for ($i = 0; $i < 3; $i++) {
-                if ($a[$i] !== $b[$i]) {
-                    return $a[$i] < $b[$i] ? -1 : 1;
-                }
-            }
+        usort(
+            $styleList,
+            function ($first, $second) {
+                $a = $first['SORT'];
+                $b = $second['SORT'];
 
-            return 1; // last class have more priority
-        });
+                for ($i = 0; $i < 4; $i++) {
+                    if ($a[$i] !== $b[$i]) {
+                        return $a[$i] < $b[$i] ? -1 : 1;
+                    }
+                }
+
+                return -1; // last class have more priority
+            }
+        );
 
         foreach ($styleList as $k => $v) {
             unset($styleList[$k]['SORT']);

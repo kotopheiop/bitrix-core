@@ -16,7 +16,22 @@ class CBitrixRestEntity extends IRestService
     const ERROR_UNSUPPORTED_PROPERTY_TYPE = 'ERROR_UNSUPPORTED_PROPERTY_TYPE';
     const ERROR_UNSUPPORTED_PROPERTY_TYPE_CHANGE = 'ERROR_UNSUPPORTED_PROPERTY_TYPE_CHANGE';
 
-    private static $arAllowedOperations = array('', '!', '<', '<=', '>', '>=', '><', '!><', '?', '=', '!=', '%', '!%', '');
+    private static $arAllowedOperations = array(
+        '',
+        '!',
+        '<',
+        '<=',
+        '>',
+        '>=',
+        '><',
+        '!><',
+        '?',
+        '=',
+        '!=',
+        '%',
+        '!%',
+        ''
+    );
 
     public static function OnRestServiceBuildDescription()
     {
@@ -249,7 +264,25 @@ class CBitrixRestEntity extends IRestService
                     $arSort,
                     $arFilter,
                     false,
-                    array('ID', 'IBLOCK_ID', 'CODE', 'TIMESTAMP_X', 'DATE_CREATE', 'CREATED_BY', 'MODIFIED_BY', 'ACTIVE', 'SORT', 'NAME', 'PICTURE', 'DETAIL_PICTURE', 'DESCRIPTION', 'LEFT_MARGIN', 'RIGHT_MARGIN', 'DEPTH_LEVEL', 'IBLOCK_SECTION_ID'),
+                    array(
+                        'ID',
+                        'IBLOCK_ID',
+                        'CODE',
+                        'TIMESTAMP_X',
+                        'DATE_CREATE',
+                        'CREATED_BY',
+                        'MODIFIED_BY',
+                        'ACTIVE',
+                        'SORT',
+                        'NAME',
+                        'PICTURE',
+                        'DETAIL_PICTURE',
+                        'DESCRIPTION',
+                        'LEFT_MARGIN',
+                        'RIGHT_MARGIN',
+                        'DEPTH_LEVEL',
+                        'IBLOCK_SECTION_ID'
+                    ),
                     self::getNavData($n)
                 );
 
@@ -261,11 +294,13 @@ class CBitrixRestEntity extends IRestService
                     $res['TIMESTAMP_X'] = CRestUtil::ConvertDateTime($res['TIMESTAMP_X']);
                     $res['DATE_CREATE'] = CRestUtil::ConvertDateTime($res['DATE_CREATE']);
 
-                    if ($res['PICTURE'] > 0)
+                    if ($res['PICTURE'] > 0) {
                         $res['PICTURE'] = self::getFile($res['PICTURE']);
+                    }
 
-                    if ($res['DETAIL_PICTURE'] > 0)
+                    if ($res['DETAIL_PICTURE'] > 0) {
                         $res['DETAIL_PICTURE'] = self::getFile($res['DETAIL_PICTURE']);
+                    }
 
                     unset($res['IBLOCK_ID']);
                     unset($res['IBLOCK_SECTION_ID']);
@@ -317,10 +352,15 @@ class CBitrixRestEntity extends IRestService
                 $arIBlock = self::getIBlock(self::getEntityIBlockCode($params['ENTITY'], $server));
                 if ($arIBlock) {
                     if (\CIBlockRights::UserHasRightTo($arIBlock['ID'], $arIBlock['ID'], 'section_edit')) {
-                        $dbRes = \CIBlockSection::GetList(array(), array(
-                            'ID' => $params['ID'],
-                            'IBLOCK_ID' => $arIBlock['ID']
-                        ), false, array('ID'));
+                        $dbRes = \CIBlockSection::GetList(
+                            array(),
+                            array(
+                                'ID' => $params['ID'],
+                                'IBLOCK_ID' => $arIBlock['ID']
+                            ),
+                            false,
+                            array('ID')
+                        );
                         $arRes = $dbRes->Fetch();
 
                         if ($arRes) {
@@ -358,10 +398,15 @@ class CBitrixRestEntity extends IRestService
                 $arIBlock = self::getIBlock(self::getEntityIBlockCode($params['ENTITY'], $server));
                 if ($arIBlock) {
                     if (\CIBlockRights::UserHasRightTo($arIBlock['ID'], $arIBlock['ID'], 'section_delete')) {
-                        $dbRes = \CIBlockSection::GetList(array(), array(
-                            'ID' => $params['ID'],
-                            'IBLOCK_ID' => $arIBlock['ID']
-                        ), false, array('ID'));
+                        $dbRes = \CIBlockSection::GetList(
+                            array(),
+                            array(
+                                'ID' => $params['ID'],
+                                'IBLOCK_ID' => $arIBlock['ID']
+                            ),
+                            false,
+                            array('ID')
+                        );
                         $arRes = $dbRes->Fetch();
                         if ($arRes) {
                             if (!\CIBlockSection::Delete($params['ID'])) {
@@ -414,7 +459,25 @@ class CBitrixRestEntity extends IRestService
                     $arFilter,
                     false,
                     self::getNavData($n),
-                    array('ID', 'IBLOCK_ID', 'TIMESTAMP_X', 'MODIFIED_BY', 'DATE_CREATE', 'CREATED_BY', 'ACTIVE', 'DATE_ACTIVE_FROM', 'DATE_ACTIVE_TO', 'SORT', 'NAME', 'PREVIEW_PICTURE', 'PREVIEW_TEXT', 'DETAIL_PICTURE', 'DETAIL_TEXT', 'CODE', 'IBLOCK_SECTION_ID')
+                    array(
+                        'ID',
+                        'IBLOCK_ID',
+                        'TIMESTAMP_X',
+                        'MODIFIED_BY',
+                        'DATE_CREATE',
+                        'CREATED_BY',
+                        'ACTIVE',
+                        'DATE_ACTIVE_FROM',
+                        'DATE_ACTIVE_TO',
+                        'SORT',
+                        'NAME',
+                        'PREVIEW_PICTURE',
+                        'PREVIEW_TEXT',
+                        'DETAIL_PICTURE',
+                        'DETAIL_TEXT',
+                        'CODE',
+                        'IBLOCK_SECTION_ID'
+                    )
                 );
 
                 $result = array();
@@ -450,11 +513,13 @@ class CBitrixRestEntity extends IRestService
                     $res['TIMESTAMP_X'] = CRestUtil::ConvertDateTime($res['TIMESTAMP_X']);
                     $res['DATE_CREATE'] = CRestUtil::ConvertDateTime($res['DATE_CREATE']);
 
-                    if ($res['PREVIEW_PICTURE'] > 0)
+                    if ($res['PREVIEW_PICTURE'] > 0) {
                         $res['PREVIEW_PICTURE'] = self::getFile($res['PREVIEW_PICTURE']);
+                    }
 
-                    if ($res['DETAIL_PICTURE'] > 0)
+                    if ($res['DETAIL_PICTURE'] > 0) {
                         $res['DETAIL_PICTURE'] = self::getFile($res['DETAIL_PICTURE']);
+                    }
 
                     unset($res['IBLOCK_ID']);
                     unset($res['IBLOCK_SECTION_ID']);
@@ -509,10 +574,16 @@ class CBitrixRestEntity extends IRestService
                 $arIBlock = self::getIBlock(self::getEntityIBlockCode($params['ENTITY'], $server));
                 if ($arIBlock) {
                     if (\CIBlockRights::UserHasRightTo($arIBlock['ID'], $arIBlock['ID'], 'element_edit')) {
-                        $dbRes = \CIBlockElement::GetList(array(), array(
-                            'ID' => $params['ID'],
-                            'IBLOCK_ID' => $arIBlock['ID']
-                        ), false, false, array('ID'));
+                        $dbRes = \CIBlockElement::GetList(
+                            array(),
+                            array(
+                                'ID' => $params['ID'],
+                                'IBLOCK_ID' => $arIBlock['ID']
+                            ),
+                            false,
+                            false,
+                            array('ID')
+                        );
                         $arRes = $dbRes->Fetch();
 
                         if ($arRes) {
@@ -569,10 +640,13 @@ class CBitrixRestEntity extends IRestService
                 $arIBlock = self::getIBlock(self::getEntityIBlockCode($params['ENTITY'], $server));
                 if ($arIBlock) {
                     if (\CIBlockRights::UserHasRightTo($arIBlock['ID'], $arIBlock['ID'], 'element_delete')) {
-                        $dbRes = \CIBlockElement::GetList(array(), array(
-                            'ID' => $params['ID'],
-                            'IBLOCK_ID' => $arIBlock['ID']
-                        ));
+                        $dbRes = \CIBlockElement::GetList(
+                            array(),
+                            array(
+                                'ID' => $params['ID'],
+                                'IBLOCK_ID' => $arIBlock['ID']
+                            )
+                        );
                         $arRes = $dbRes->Fetch();
                         if ($arRes) {
                             if (!\CIBlockElement::Delete($params['ID'])) {
@@ -683,7 +757,10 @@ class CBitrixRestEntity extends IRestService
 
                         if (isset($params['PROPERTY_NEW']) && $params['PROPERTY_NEW'] != $params['PROPERTY']) {
                             if (self::checkItemProperty($params['PROPERTY_NEW'], $params['ENTITY'], $server)) {
-                                throw new RestException ('Property ' . $params['PROPERTY_NEW'] . ' already exists', self::ERROR_PROPERTY_ALREADY_EXISTS);
+                                throw new RestException (
+                                    'Property ' . $params['PROPERTY_NEW'] . ' already exists',
+                                    self::ERROR_PROPERTY_ALREADY_EXISTS
+                                );
                             }
 
                             $arPropFields["CODE"] = $params['PROPERTY_NEW'];
@@ -755,10 +832,13 @@ class CBitrixRestEntity extends IRestService
     public static function Clean($appId)
     {
         if (CModule::IncludeModule('iblock')) {
-            $dbRes = \CIBlock::GetList(array(), array(
-                'TYPE' => self::getIBlockType(),
-                'CODE' => self::ENTITY_IBLOCK_CODE_PREFIX . "_" . $appId . '%'
-            ));
+            $dbRes = \CIBlock::GetList(
+                array(),
+                array(
+                    'TYPE' => self::getIBlockType(),
+                    'CODE' => self::ENTITY_IBLOCK_CODE_PREFIX . "_" . $appId . '%'
+                )
+            );
             while ($arRes = $dbRes->Fetch()) {
                 \CIBlock::Delete($arRes['ID']);
             }
@@ -806,10 +886,13 @@ class CBitrixRestEntity extends IRestService
 
     protected static function getIBlock($code, $bSkipCheck = false)
     {
-        $dbRes = \CIBlock::GetList(array(), array(
-            'TYPE' => self::getIBlockType(),
-            'CODE' => $code
-        ));
+        $dbRes = \CIBlock::GetList(
+            array(),
+            array(
+                'TYPE' => self::getIBlockType(),
+                'CODE' => $code
+            )
+        );
 
         $arRes = $dbRes->Fetch();
         if (!$arRes && !$bSkipCheck) {
@@ -822,10 +905,13 @@ class CBitrixRestEntity extends IRestService
 
     protected static function getIBlocks($server)
     {
-        return \CIBlock::GetList(array(), array(
-            'TYPE' => self::getIBlockType(),
-            'CODE' => self::getEntityIBlockCode('%', $server)
-        ));
+        return \CIBlock::GetList(
+            array(),
+            array(
+                'TYPE' => self::getIBlockType(),
+                'CODE' => self::getEntityIBlockCode('%', $server)
+            )
+        );
     }
 
     protected static function getItemProperty($property, $entity, $server)
@@ -849,7 +935,7 @@ class CBitrixRestEntity extends IRestService
         if (isset($params['ENTITY'])) {
             $params['ENTITY'] = preg_replace('/[^a-zA-Z0-9_]/i', '', trim(strval($params['ENTITY'])));
 
-            if (strlen($params['ENTITY']) <= 0) {
+            if ($params['ENTITY'] == '') {
                 throw new \Bitrix\Main\ArgumentNullException("ENTITY");
             }
 
@@ -911,18 +997,20 @@ class CBitrixRestEntity extends IRestService
 
     protected static function checkEntity($entity, $server)
     {
-        if (self::getIBlock(self::getEntityIBlockCode($entity, $server)))
+        if (self::getIBlock(self::getEntityIBlockCode($entity, $server))) {
             return true;
-        else
+        } else {
             return false;
+        }
     }
 
     protected static function checkItemProperty($property, $entity, $server)
     {
-        if (self::getItemProperty($property, $entity, $server))
+        if (self::getItemProperty($property, $entity, $server)) {
             return true;
-        else
+        } else {
             return false;
+        }
     }
 
     protected static function parseEntity($iblock, \CRestServer $server)
@@ -933,8 +1021,8 @@ class CBitrixRestEntity extends IRestService
 
         $str = self::ENTITY_IBLOCK_CODE_PREFIX . "_" . $server->getClientId() . "_";
 
-        if (substr($iblock, 0, strlen($str)) === $str) {
-            return substr($iblock, strlen($str));
+        if (mb_substr($iblock, 0, mb_strlen($str)) === $str) {
+            return mb_substr($iblock, mb_strlen($str));
         } else {
             return false;
         }
@@ -1006,8 +1094,9 @@ class CBitrixRestEntity extends IRestService
                     break;
 
                 default:
-                    if (!preg_match('/[^a-zA-Z0-9_]/', $key))
+                    if (!preg_match('/[^a-zA-Z0-9_]/', $key)) {
                         $arItemFields[$key] = $param;
+                    }
                     break;
             }
         }
@@ -1048,8 +1137,9 @@ class CBitrixRestEntity extends IRestService
                     break;
 
                 default:
-                    if (!preg_match('/[^a-zA-Z0-9_]/', $key))
+                    if (!preg_match('/[^a-zA-Z0-9_]/', $key)) {
                         $arSectionFields[$key] = $param;
+                    }
                     break;
             }
         }
@@ -1093,8 +1183,9 @@ class CBitrixRestEntity extends IRestService
                                 break;
 
                             case 'LOGIC':
-                                if ($bChangeLogic)
+                                if ($bChangeLogic) {
                                     unset($arFilter[$key]);
+                                }
                                 break;
 
                             default:

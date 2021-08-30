@@ -3,8 +3,9 @@
  * @var $APPLICATION CMain
  */
 $forumPermissions = $APPLICATION->GetGroupRight("forum");
-if ($forumPermissions == "D")
+if ($forumPermissions == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/forum/prolog.php");
 \Bitrix\Main\Loader::includeModule("forum");
 IncludeModuleLangFile(__FILE__);
@@ -12,26 +13,30 @@ IncludeModuleLangFile(__FILE__);
 $request = \Bitrix\Main\Context::getCurrent()->getRequest();
 //region Default values
 $sysLangs = [];
-$dbRes = CLanguage::GetList($by = "sort", $order = "desc", ["ACTIVE" => "Y"]);
+$dbRes = CLanguage::GetList("sort", "desc", ["ACTIVE" => "Y"]);
 while ($res = $dbRes->Fetch()) {
     $sysLangs[$res["LID"]] = htmlspecialcharsbx($res["NAME"]);
 }
 $groups = [["ID" => 0, "NAME" => "..."]];
-$dbRes = \Bitrix\Forum\GroupTable::getList([
-    "select" => ["ID", "SORT", "PARENT_ID", "NAME" => "LANG.NAME"],
-    "order" => ["LEFT_MARGIN" => "ASC", "SORT" => "ASC"],
-    "filter" => ["LANG.LID" => LANGUAGE_ID]
-]);
+$dbRes = \Bitrix\Forum\GroupTable::getList(
+    [
+        "select" => ["ID", "SORT", "PARENT_ID", "NAME" => "LANG.NAME"],
+        "order" => ["LEFT_MARGIN" => "ASC", "SORT" => "ASC"],
+        "filter" => ["LANG.LID" => LANGUAGE_ID]
+    ]
+);
 while ($res = $dbRes->fetch()) {
     $groups[$res["ID"]] = $res;
 }
 
 $ID = intval($request->isPost() ? $request->getPost("ID") : $request->getQuery("ID"));
 $gid = ($ID > 0 ? $ID : intval($request->getQuery("COPY_ID")));
-if ($gid > 0 && ($dbRes = \Bitrix\Forum\GroupTable::getList([
-        "select" => ["ID", "SORT", "PARENT_ID", "LANG_" => "LANG.*"],
-        "filter" => ["ID" => $gid]
-    ])) && ($group = $dbRes->fetch()) && $group) {
+if ($gid > 0 && ($dbRes = \Bitrix\Forum\GroupTable::getList(
+        [
+            "select" => ["ID", "SORT", "PARENT_ID", "LANG_" => "LANG.*"],
+            "filter" => ["ID" => $gid]
+        ]
+    )) && ($group = $dbRes->fetch()) && $group) {
     $fields = [
         "ID" => $ID,
         "SORT" => $group["SORT"],
@@ -80,62 +85,101 @@ if (
         $fields["LANG"][$lid] = array(
             "LID" => $lid,
             "NAME" => $data["LANG"][$lid]["NAME"],
-            "DESCRIPTION" => $data["LANG"][$lid]["DESCRIPTION"]);
+            "DESCRIPTION" => $data["LANG"][$lid]["DESCRIPTION"]
+        );
     }
 
     if (!CForumGroup::CheckFields(($ID > 0 ? "UPDATE" : "ADD"), $fields, ($ID > 0 ? $ID : false))) {
         $arError[] = array(
             "code" => "error_checkfields",
-            "title" => GetMessage("ERROR_ADD_GROUP_BAD_FIELDS"));
-    } else if ($ID > 0 && !CForumGroup::CanUserUpdateGroup($ID, $USER->GetUserGroupArray())) {
-        $arError[] = array(
-            "code" => "not_right_for_edit",
-            "title" => GetMessage("ERROR_EDIT_GROUP_NOT_RIGHT"));
-    } else if ($ID > 0 && (CForumGroup::Update($ID, $fields) != $ID)) {
-        $arError[] = array(
-            "code" => "not_edit",
-            "title" => GetMessage("ERROR_EDIT_GROUP"));
-    } else if ($ID <= 0 && !CForumGroup::CanUserAddGroup($USER->GetUserGroupArray())) {
-        $arError[] = array(
-            "code" => "not_right_for_add",
-            "title" => GetMessage("ERROR_ADD_GROUP_NOT_RIGHT"));
-    } else if ($ID <= 0 && ($ID = intval(CForumGroup::Add($fields))) && $ID <= 0) {
-        $arError[] = array(
-            "code" => "not_add",
-            "title" => GetMessage("ERROR_ADD_GROUP"));
+            "title" => GetMessage("ERROR_ADD_GROUP_BAD_FIELDS")
+        );
     } else {
-        BXClearCache(true, "bitrix/forum/group/");
-        LocalRedirect((array_key_exists("save", $_POST) ? "forum_group.php?" : "forum_group_edit.php?ID=" . $ID . "&") . "lang=" . LANG . GetFilterParams("filter_", false));
+        if ($ID > 0 && !CForumGroup::CanUserUpdateGroup($ID, $USER->GetUserGroupArray())) {
+            $arError[] = array(
+                "code" => "not_right_for_edit",
+                "title" => GetMessage("ERROR_EDIT_GROUP_NOT_RIGHT")
+            );
+        } else {
+            if ($ID > 0 && (CForumGroup::Update($ID, $fields) != $ID)) {
+                $arError[] = array(
+                    "code" => "not_edit",
+                    "title" => GetMessage("ERROR_EDIT_GROUP")
+                );
+            } else {
+                if ($ID <= 0 && !CForumGroup::CanUserAddGroup($USER->GetUserGroupArray())) {
+                    $arError[] = array(
+                        "code" => "not_right_for_add",
+                        "title" => GetMessage("ERROR_ADD_GROUP_NOT_RIGHT")
+                    );
+                } else {
+                    if ($ID <= 0 && ($ID = intval(CForumGroup::Add($fields))) && $ID <= 0) {
+                        $arError[] = array(
+                            "code" => "not_add",
+                            "title" => GetMessage("ERROR_ADD_GROUP")
+                        );
+                    } else {
+                        BXClearCache(true, "bitrix/forum/group/");
+                        LocalRedirect(
+                            (array_key_exists(
+                                "save",
+                                $_POST
+                            ) ? "forum_group.php?" : "forum_group_edit.php?ID=" . $ID . "&") . "lang=" . LANG . GetFilterParams(
+                                "filter_",
+                                false
+                            )
+                        );
+                    }
+                }
+            }
+        }
     }
 }
 //endregion
 
-$APPLICATION->SetTitle($ID > 0 ? str_replace("#ID#", $ID, GetMessage("FORUM_EDIT_RECORD")) : GetMessage("FORUM_NEW_RECORD"));
+$APPLICATION->SetTitle(
+    $ID > 0 ? str_replace("#ID#", $ID, GetMessage("FORUM_EDIT_RECORD")) : GetMessage("FORUM_NEW_RECORD")
+);
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
 /*********************************************************************/
 /********************  BODY  *****************************************/
 /*********************************************************************/
 //region menu
-$aMenu = [[
-    "TEXT" => GetMessage("FGN_2FLIST"),
-    "LINK" => "/bitrix/admin/forum_group.php?lang=" . LANG . "&" . GetFilterParams("filter_", false),
-    "ICON" => "btn_list"]];
+$aMenu = [
+    [
+        "TEXT" => GetMessage("FGN_2FLIST"),
+        "LINK" => "/bitrix/admin/forum_group.php?lang=" . LANG . "&" . GetFilterParams("filter_", false),
+        "ICON" => "btn_list"
+    ]
+];
 
 if ($ID > 0 && $forumPermissions == "W") {
     $aMenu[] = ["SEPARATOR" => "Y"];
     $aMenu[] = [
         "TEXT" => GetMessage("FGN_NEW_GROUP"),
-        "LINK" => "/bitrix/admin/forum_group_edit.php?PARENT_ID=" . $ID . "&lang=" . LANG . "&" . GetFilterParams("filter_", false),
-        "ICON" => "btn_new"];
+        "LINK" => "/bitrix/admin/forum_group_edit.php?PARENT_ID=" . $ID . "&lang=" . LANG . "&" . GetFilterParams(
+                "filter_",
+                false
+            ),
+        "ICON" => "btn_new"
+    ];
     $aMenu[] = [
         "TEXT" => GetMessage("FGN_COPY_GROUP"),
-        "LINK" => "/bitrix/admin/forum_group_edit.php?" . ($ID > 0 ? "COPY_ID=" . $ID . "&" : "") . "lang=" . LANG . "&" . GetFilterParams("filter_", false),
-        "ICON" => "btn_copy"];
+        "LINK" => "/bitrix/admin/forum_group_edit.php?" . ($ID > 0 ? "COPY_ID=" . $ID . "&" : "") . "lang=" . LANG . "&" . GetFilterParams(
+                "filter_",
+                false
+            ),
+        "ICON" => "btn_copy"
+    ];
     $aMenu[] = [
         "TEXT" => GetMessage("FGN_DELETE_GROUP"),
-        "LINK" => "javascript:if(confirm('" . GetMessage("FGN_DELETE_GROUP_CONFIRM") . "')) window.location='/bitrix/admin/forum_group.php?action=delete&ID[]=" . $ID . "&lang=" . LANG . "&" . bitrix_sessid_get() . "#tb';",
-        "ICON" => "btn_delete"];
+        "LINK" => "javascript:if(confirm('" . GetMessage(
+                "FGN_DELETE_GROUP_CONFIRM"
+            ) . "')) window.location='/bitrix/admin/forum_group.php?action=delete&ID[]=" . $ID . "&lang=" . LANG . "&" . bitrix_sessid_get(
+            ) . "#tb';",
+        "ICON" => "btn_delete"
+    ];
 }
 (new CAdminContextMenu($aMenu))->Show();
 //endregion
@@ -153,7 +197,17 @@ if (!empty($arError)) {
         <input type="hidden" name="ID" value="<? echo $ID ?>">
         <?= bitrix_sessid_post() ?>
         <?
-        $tabControl = new CAdminTabControl("tabControl", [["DIV" => "edit1", "TAB" => GetMessage("FGN_TAB_GROUP"), "ICON" => "forum", "TITLE" => GetMessage("FGN_TAB_GROUP_DESCR")]]);
+        $tabControl = new CAdminTabControl(
+            "tabControl",
+            [
+                [
+                    "DIV" => "edit1",
+                    "TAB" => GetMessage("FGN_TAB_GROUP"),
+                    "ICON" => "forum",
+                    "TITLE" => GetMessage("FGN_TAB_GROUP_DESCR")
+                ]
+            ]
+        );
         $tabControl->Begin();
         $tabControl->BeginNextTab();
         if ($ID > 0):?>
@@ -176,15 +230,20 @@ if (!empty($arError)) {
                     {
                         ?> disabled="disabled" <?
                     }
-                        ?>value="<?= $res["ID"] ?>" <?= ($res["ID"] == $fields["PARENT_ID"] ? "selected" : "") ?>><?= str_pad("", ($res["DEPTH_LEVEL"] - 1), ".") ?><?= $res["NAME"] ?></option><?
+                        ?>value="<?= $res["ID"] ?>" <?= ($res["ID"] == $fields["PARENT_ID"] ? "selected" : "") ?>><?= str_pad(
+                        "",
+                        ($res["DEPTH_LEVEL"] - 1),
+                        "."
+                    ) ?><?= $res["NAME"] ?></option><?
                     }
                     ?></select>
             </td>
         </tr>
         <?
         foreach ($fields["LANG"] as $lid => $res) {
-            if (!array_key_exists($lid, $sysLangs))
+            if (!array_key_exists($lid, $sysLangs)) {
                 continue;
+            }
             ?>
             <tr class="heading">
                 <td colspan="2">[<?= htmlspecialcharsbx($lid) ?>] <?= htmlspecialcharsbx($sysLangs[$lid]) ?></td>

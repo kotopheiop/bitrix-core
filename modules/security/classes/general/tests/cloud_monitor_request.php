@@ -26,8 +26,9 @@ class CSecurityCloudMonitorRequest
 
     public function __construct($action, $protocolVersion, $token = "")
     {
-        if (!in_array($action, self::$validActions))
+        if (!in_array($action, self::$validActions)) {
             return null;
+        }
 
         $this->checkingToken = $token;
         $this->response = $this->receiveData($action);
@@ -61,8 +62,9 @@ class CSecurityCloudMonitorRequest
     public function receiveData($action)
     {
         $payload = $this->getPayload($action, false);
-        if (!$payload)
+        if (!$payload) {
             return false;
+        }
 
         $response = self::sendRequest($payload);
         if (!$response) {
@@ -139,8 +141,9 @@ class CSecurityCloudMonitorRequest
      */
     protected function getPayload($action = "check", $collectInformation = true)
     {
-        if (!in_array($action, self::$validActions))
+        if (!in_array($action, self::$validActions)) {
             return false;
+        }
 
         $payload = array(
             "action" => $action,
@@ -169,8 +172,9 @@ class CSecurityCloudMonitorRequest
         /** @global CMain $APPLICATION */
         global $APPLICATION;
         $result = json_decode($response, true);
-        if (!defined("BX_UTF"))
+        if (!defined("BX_UTF")) {
             $result = $APPLICATION->ConvertCharsetArray($result, "UTF-8", LANG_CHARSET);
+        }
 
         return $result;
     }
@@ -206,10 +210,12 @@ class CSecurityCloudMonitorRequest
         $targetHost = static::getServiceHost();
         // Trusted host *must* have a valid SSL certificate
         $skipSslValidation = !in_array($targetHost, static::$trustedHosts, true);
-        $httpClient = new \Bitrix\Main\Web\HttpClient(array(
-            'disableSslVerification' => $skipSslValidation,
-            'streamTimeout' => static::TIMEOUT
-        ));
+        $httpClient = new \Bitrix\Main\Web\HttpClient(
+            array(
+                'disableSslVerification' => $skipSslValidation,
+                'streamTimeout' => static::TIMEOUT
+            )
+        );
 
         $response = $httpClient->post(self::buildCheckerUrl($targetHost), $payload);
         if ($response && $httpClient->getStatus() == 200) {
@@ -262,7 +268,7 @@ class CSecurityCloudMonitorRequest
         $sheme = (CMain::IsHTTPS() ? "https" : "http") . "://";
         $serverPort = self::getServerPort();
         $url = self::getDomainName();
-        $url .= ($serverPort && strpos($url, ":") === false) ? ":" . $serverPort : "";
+        $url .= ($serverPort && mb_strpos($url, ":") === false) ? ":" . $serverPort : "";
         return $sheme . $url;
     }
 
@@ -272,10 +278,11 @@ class CSecurityCloudMonitorRequest
      */
     protected static function getServerPort()
     {
-        if ($_SERVER["SERVER_PORT"] && !in_array($_SERVER["SERVER_PORT"], array(80, 443)))
+        if ($_SERVER["SERVER_PORT"] && !in_array($_SERVER["SERVER_PORT"], array(80, 443))) {
             return $_SERVER["SERVER_PORT"];
-        else
+        } else {
             return false;
+        }
     }
 
     /**

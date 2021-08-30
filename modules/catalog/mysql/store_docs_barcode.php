@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/catalog/general/store_docs_barcode.php");
 
 class CCatalogStoreDocsBarcode
@@ -8,32 +9,43 @@ class CCatalogStoreDocsBarcode
     {
         global $DB;
 
-        foreach (GetModuleEvents("catalog", "OnBeforeCatalogStoreDocsBarcodeAdd", true) as $arEvent)
-            if (ExecuteModuleEventEx($arEvent, array(&$arFields)) === false)
+        foreach (GetModuleEvents("catalog", "OnBeforeCatalogStoreDocsBarcodeAdd", true) as $arEvent) {
+            if (ExecuteModuleEventEx($arEvent, array(&$arFields)) === false) {
                 return false;
+            }
+        }
 
-        if (!self::checkFields('ADD', $arFields))
+        if (!self::checkFields('ADD', $arFields)) {
             return false;
+        }
 
         $arInsert = $DB->PrepareInsert("b_catalog_docs_barcode", $arFields);
         $strSql = "INSERT INTO b_catalog_docs_barcode (" . $arInsert[0] . ") VALUES(" . $arInsert[1] . ")";
 
         $res = $DB->Query($strSql, true, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-        if (!$res)
+        if (!$res) {
             return false;
+        }
         $lastId = intval($DB->LastID());
 
-        foreach (GetModuleEvents("catalog", "OnCatalogStoreDocsBarcodeAdd", true) as $arEvent)
+        foreach (GetModuleEvents("catalog", "OnCatalogStoreDocsBarcodeAdd", true) as $arEvent) {
             ExecuteModuleEventEx($arEvent, array($lastId, $arFields));
+        }
 
         return $lastId;
     }
 
-    static function getList($arOrder = array(), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
-    {
+    static function getList(
+        $arOrder = array(),
+        $arFilter = array(),
+        $arGroupBy = false,
+        $arNavStartParams = false,
+        $arSelectFields = array()
+    ) {
         global $DB;
-        if (empty($arSelectFields))
+        if (empty($arSelectFields)) {
             $arSelectFields = array("ID", "DOC_ELEMENT_ID", "BARCODE");
+        }
 
         $arFields = array(
             "ID" => array("FIELD" => "DB.ID", "TYPE" => "int"),
@@ -45,24 +57,30 @@ class CCatalogStoreDocsBarcode
 
         if (empty($arGroupBy) && is_array($arGroupBy)) {
             $strSql = "SELECT " . $arSqls["SELECT"] . " FROM b_catalog_docs_barcode DB " . $arSqls["FROM"];
-            if (!empty($arSqls["WHERE"]))
+            if (!empty($arSqls["WHERE"])) {
                 $strSql .= " WHERE " . $arSqls["WHERE"];
-            if (!empty($arSqls["GROUPBY"]))
+            }
+            if (!empty($arSqls["GROUPBY"])) {
                 $strSql .= " GROUP BY " . $arSqls["GROUPBY"];
+            }
 
             $dbRes = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-            if ($arRes = $dbRes->Fetch())
+            if ($arRes = $dbRes->Fetch()) {
                 return $arRes["CNT"];
-            else
+            } else {
                 return false;
+            }
         }
         $strSql = "SELECT " . $arSqls["SELECT"] . " FROM b_catalog_docs_barcode DB " . $arSqls["FROM"];
-        if (!empty($arSqls["WHERE"]))
+        if (!empty($arSqls["WHERE"])) {
             $strSql .= " WHERE " . $arSqls["WHERE"];
-        if (!empty($arSqls["GROUPBY"]))
+        }
+        if (!empty($arSqls["GROUPBY"])) {
             $strSql .= " GROUP BY " . $arSqls["GROUPBY"];
-        if (!empty($arSqls["ORDERBY"]))
+        }
+        if (!empty($arSqls["ORDERBY"])) {
             $strSql .= " ORDER BY " . $arSqls["ORDERBY"];
+        }
 
         $intTopCount = 0;
         $boolNavStartParams = (!empty($arNavStartParams) && is_array($arNavStartParams));
@@ -71,16 +89,19 @@ class CCatalogStoreDocsBarcode
         }
         if ($boolNavStartParams && 0 >= $intTopCount) {
             $strSql_tmp = "SELECT COUNT('x') as CNT FROM b_catalog_docs_barcode DB " . $arSqls["FROM"];
-            if (!empty($arSqls["WHERE"]))
+            if (!empty($arSqls["WHERE"])) {
                 $strSql_tmp .= " WHERE " . $arSqls["WHERE"];
-            if (!empty($arSqls["GROUPBY"]))
+            }
+            if (!empty($arSqls["GROUPBY"])) {
                 $strSql_tmp .= " GROUP BY " . $arSqls["GROUPBY"];
+            }
 
             $dbRes = $DB->Query($strSql_tmp, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             $cnt = 0;
             if (empty($arSqls["GROUPBY"])) {
-                if ($arRes = $dbRes->Fetch())
+                if ($arRes = $dbRes->Fetch()) {
                     $cnt = $arRes["CNT"];
+                }
             } else {
                 $cnt = $dbRes->SelectedRowsCount();
             }

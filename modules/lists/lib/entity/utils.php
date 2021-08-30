@@ -16,10 +16,13 @@ class Utils
         if ($params["IBLOCK_ID"]) {
             return (int)$params["IBLOCK_ID"];
         } elseif ($params["IBLOCK_CODE"]) {
-            $queryObject = \CIBlock::getList([], [
-                "CHECK_PERMISSIONS" => "N",
-                "=CODE" => $params["IBLOCK_CODE"]
-            ]);
+            $queryObject = \CIBlock::getList(
+                [],
+                [
+                    "CHECK_PERMISSIONS" => "N",
+                    "=CODE" => $params["IBLOCK_CODE"]
+                ]
+            );
             if ($iblock = $queryObject->fetch()) {
                 return (int)$iblock["ID"];
             }
@@ -40,11 +43,17 @@ class Utils
         if ($params["ELEMENT_ID"]) {
             return (int)$params["ELEMENT_ID"];
         } elseif ($params["ELEMENT_CODE"]) {
-            $queryObject = \CIBlockElement::getList([], [
-                "IBLOCK_ID" => Utils::getIblockId($params),
-                "CHECK_PERMISSIONS" => "N",
-                "CODE" => $params["ELEMENT_CODE"]
-            ], false, false, ["ID"]);
+            $queryObject = \CIBlockElement::getList(
+                [],
+                [
+                    "IBLOCK_ID" => Utils::getIblockId($params),
+                    "CHECK_PERMISSIONS" => "N",
+                    "CODE" => $params["ELEMENT_CODE"]
+                ],
+                false,
+                false,
+                ["ID"]
+            );
             if ($element = $queryObject->fetch()) {
                 return (int)$element["ID"];
             }
@@ -65,10 +74,16 @@ class Utils
         if ($params["SECTION_ID"]) {
             return (int)$params["SECTION_ID"];
         } elseif ($params["SECTION_CODE"]) {
-            $queryObject = \CIBlockSection::getList([], [
-                "CHECK_PERMISSIONS" => "N",
-                "CODE" => $params["SECTION_CODE"]
-            ], false, false, ["ID"]);
+            $queryObject = \CIBlockSection::getList(
+                [],
+                [
+                    "CHECK_PERMISSIONS" => "N",
+                    "CODE" => $params["SECTION_CODE"]
+                ],
+                false,
+                false,
+                ["ID"]
+            );
             if ($section = $queryObject->fetch()) {
                 return (int)$section["ID"];
             }

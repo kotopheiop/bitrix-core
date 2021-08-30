@@ -100,11 +100,19 @@ final class WorkflowEntity extends Entity
                     if (!$this->hasAccess && Loader::includeModule("iblock")) {
                         $documentId = \CBPStateService::GetStateDocumentId($workflowId);
                         $elementQuery = \CIBlockElement::getList(
-                            array(), array("ID" => $documentId[2]), false, false, array("IBLOCK_ID"));
+                            array(),
+                            array("ID" => $documentId[2]),
+                            false,
+                            false,
+                            array("IBLOCK_ID")
+                        );
                         $element = $elementQuery->fetch();
                         if ($element['IBLOCK_ID']) {
                             $this->hasAccess = \CIBlockElementRights::userHasRightTo(
-                                $element["IBLOCK_ID"], $documentId[2], "element_read");
+                                $element["IBLOCK_ID"],
+                                $documentId[2],
+                                "element_read"
+                            );
                         }
                     }
                 }

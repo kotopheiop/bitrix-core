@@ -24,16 +24,20 @@ class CCatalogTools
 
     public static function updatePropertyFeaturesBitrix24Agent()
     {
-        if (!Main\ModuleManager::isModuleInstalled('bitrix24'))
+        if (!Main\ModuleManager::isModuleInstalled('bitrix24')) {
             return '';
+        }
         Main\Config\Option::set('iblock', 'property_features_enabled', 'Y', '');
-        if (Iblock\Model\PropertyFeature::isPropertyFeaturesExist())
+        if (Iblock\Model\PropertyFeature::isPropertyFeaturesExist()) {
             return '';
-        if (!Loader::includeModule('crm'))
+        }
+        if (!Loader::includeModule('crm')) {
             return '';
+        }
         $catalogId = \CCrmCatalog::GetDefaultID();
-        if ($catalogId == 0)
+        if ($catalogId == 0) {
             return '';
+        }
 
         $catalogProperties = [
             'ARTNUMBER' => [
@@ -74,10 +78,12 @@ class CCatalogTools
             ]
         ];
 
-        $iterator = Iblock\PropertyTable::getList([
-            'select' => ['ID', 'CODE'],
-            'filter' => ['=IBLOCK_ID' => $catalogId, '@CODE' => array_keys($catalogProperties)]
-        ]);
+        $iterator = Iblock\PropertyTable::getList(
+            [
+                'select' => ['ID', 'CODE'],
+                'filter' => ['=IBLOCK_ID' => $catalogId, '@CODE' => array_keys($catalogProperties)]
+            ]
+        );
         while ($row = $iterator->fetch()) {
             $result = Iblock\Model\PropertyFeature::setFeatures(
                 $row['ID'],
@@ -88,8 +94,9 @@ class CCatalogTools
         unset($catalogProperties);
 
         $sku = \CCatalogSku::GetInfoByProductIBlock($catalogId);
-        if (empty($sku))
+        if (empty($sku)) {
             return '';
+        }
 
         $offerProperties = [
             'ARTNUMBER' => [
@@ -147,10 +154,12 @@ class CCatalogTools
             ]
         ];
 
-        $iterator = Iblock\PropertyTable::getList([
-            'select' => ['ID', 'CODE'],
-            'filter' => ['=IBLOCK_ID' => $sku['IBLOCK_ID'], '@CODE' => array_keys($offerProperties)]
-        ]);
+        $iterator = Iblock\PropertyTable::getList(
+            [
+                'select' => ['ID', 'CODE'],
+                'filter' => ['=IBLOCK_ID' => $sku['IBLOCK_ID'], '@CODE' => array_keys($offerProperties)]
+            ]
+        );
         while ($row = $iterator->fetch()) {
             $result = Iblock\Model\PropertyFeature::setFeatures(
                 $row['ID'],

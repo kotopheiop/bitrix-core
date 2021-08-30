@@ -9,8 +9,9 @@
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions < "W")
+if ($saleModulePermissions < "W") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 \Bitrix\Main\Loader::includeModule('sale');
 
@@ -18,8 +19,9 @@ IncludeModuleLangFile(__FILE__);
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/prolog.php");
 
 /// redirect to newer version
-if (CSaleLocation::isLocationProEnabled())
+if (CSaleLocation::isLocationProEnabled()) {
     LocalRedirect('/bitrix/admin/sale_location_node_list.php?id=0');
+}
 
 $sTableID = "tbl_sale_location";
 
@@ -37,14 +39,18 @@ $lAdmin->InitFilter($arFilterFields);
 
 $arFilter = array();
 
-if (strlen($filter_country_name) > 0 && $filter_country_name != "%" && $filter_country_name != "%%")
+if ($filter_country_name <> '' && $filter_country_name != "%" && $filter_country_name != "%%") {
     $arFilter["COUNTRY"] = Trim($filter_country_name);
-if (strlen($filter_region_name) > 0 && $filter_region_name != "%" && $filter_region_name != "%%")
+}
+if ($filter_region_name <> '' && $filter_region_name != "%" && $filter_region_name != "%%") {
     $arFilter["REGION"] = Trim($filter_region_name);
-if (strlen($filter_city_name) > 0 && $filter_city_name != "%" && $filter_city_name != "%%")
+}
+if ($filter_city_name <> '' && $filter_city_name != "%" && $filter_city_name != "%%") {
     $arFilter["CITY"] = Trim($filter_city_name);
-if (IntVal($filter_country) > 0)
-    $arFilter["COUNTRY_ID"] = IntVal($filter_country);
+}
+if (intval($filter_country) > 0) {
+    $arFilter["COUNTRY_ID"] = intval($filter_country);
+}
 $arFilter["LID"] = LANGUAGE_ID;
 
 if (($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "W") {
@@ -57,13 +63,15 @@ if (($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "W") {
             false,
             array("ID")
         );
-        while ($arResult = $dbResultList->Fetch())
+        while ($arResult = $dbResultList->Fetch()) {
             $arID[] = $arResult['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
 
         switch ($_REQUEST['action']) {
             case "delete":
@@ -74,10 +82,11 @@ if (($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "W") {
                 if (!CSaleLocation::Delete($ID)) {
                     $DB->Rollback();
 
-                    if ($ex = $APPLICATION->GetException())
+                    if ($ex = $APPLICATION->GetException()) {
                         $lAdmin->AddGroupError($ex->GetString(), $ID);
-                    else
+                    } else {
                         $lAdmin->AddGroupError(GetMessage("ERROR_DELETING"), $ID);
+                    }
                 }
 
                 $DB->Commit();
@@ -99,13 +108,25 @@ $dbResultList->NavStart();
 
 $lAdmin->NavText($dbResultList->GetNavPrint(GetMessage("SALE_PRLIST")));
 
-$lAdmin->AddHeaders(array(
-    array("id" => "ID", "content" => "ID", "sort" => "ID", "default" => true),
-    array("id" => "COUNTRY_NAME", "content" => GetMessage("SALE_COUNTRY"), "sort" => "COUNTRY_NAME", "default" => true),
-    array("id" => "REGION_NAME", "content" => GetMessage("SALE_REGION"), "sort" => "REGION_NAME", "default" => true),
-    array("id" => "CITY_NAME", "content" => GetMessage("SALE_CITY"), "sort" => "CITY_NAME", "default" => true),
-    array("id" => "SORT", "content" => GetMessage("SALE_SORT"), "sort" => "SORT", "default" => true),
-));
+$lAdmin->AddHeaders(
+    array(
+        array("id" => "ID", "content" => "ID", "sort" => "ID", "default" => true),
+        array(
+            "id" => "COUNTRY_NAME",
+            "content" => GetMessage("SALE_COUNTRY"),
+            "sort" => "COUNTRY_NAME",
+            "default" => true
+        ),
+        array(
+            "id" => "REGION_NAME",
+            "content" => GetMessage("SALE_REGION"),
+            "sort" => "REGION_NAME",
+            "default" => true
+        ),
+        array("id" => "CITY_NAME", "content" => GetMessage("SALE_CITY"), "sort" => "CITY_NAME", "default" => true),
+        array("id" => "SORT", "content" => GetMessage("SALE_SORT"), "sort" => "SORT", "default" => true),
+    )
+);
 
 $arVisibleColumns = $lAdmin->GetVisibleHeaderColumns();
 
@@ -113,17 +134,41 @@ while ($arLocation = $dbResultList->NavNext(true, "f_")) {
     $editUrl = "sale_location_edit.php?ID=" . $f_ID . "&lang=" . LANG . GetFilterParams("filter_");
     $row =& $lAdmin->AddRow($f_ID, $arLocation, $editUrl, GetMessage("SALE_EDIT_DESCR"));
 
-    $row->AddField("ID", "<b><a href='" . $editUrl . "' title='" . GetMessage("SALE_EDIT_DESCR") . "'>" . $f_ID . "</a>");
-    $row->AddField("COUNTRY_NAME", $f_COUNTRY_NAME_ORIG . (((string)$f_COUNTRY_NAME != "") ? " <small>[" . $f_COUNTRY_NAME . "]</small>" : ""));
-    $row->AddField("REGION_NAME", $f_REGION_NAME_ORIG . ((IntVal($f_REGION_ID) > 0) ? " <small>[" . $f_REGION_NAME . "]</small>" : ""));
-    $row->AddField("CITY_NAME", $f_CITY_NAME_ORIG . ((IntVal($f_CITY_ID) > 0) ? " <small>[" . $f_CITY_NAME . "]</small>" : ""));
+    $row->AddField(
+        "ID",
+        "<b><a href='" . $editUrl . "' title='" . GetMessage("SALE_EDIT_DESCR") . "'>" . $f_ID . "</a>"
+    );
+    $row->AddField(
+        "COUNTRY_NAME",
+        $f_COUNTRY_NAME_ORIG . (((string)$f_COUNTRY_NAME != "") ? " <small>[" . $f_COUNTRY_NAME . "]</small>" : "")
+    );
+    $row->AddField(
+        "REGION_NAME",
+        $f_REGION_NAME_ORIG . ((intval($f_REGION_ID) > 0) ? " <small>[" . $f_REGION_NAME . "]</small>" : "")
+    );
+    $row->AddField(
+        "CITY_NAME",
+        $f_CITY_NAME_ORIG . ((intval($f_CITY_ID) > 0) ? " <small>[" . $f_CITY_NAME . "]</small>" : "")
+    );
     $row->AddField("SORT", $f_SORT);
 
     $arActions = Array();
-    $arActions[] = array("ICON" => "edit", "TEXT" => GetMessage("SALE_EDIT_DESCR"), "ACTION" => $lAdmin->ActionRedirect($editUrl), "DEFAULT" => true);
+    $arActions[] = array(
+        "ICON" => "edit",
+        "TEXT" => GetMessage("SALE_EDIT_DESCR"),
+        "ACTION" => $lAdmin->ActionRedirect($editUrl),
+        "DEFAULT" => true
+    );
     if ($saleModulePermissions >= "W") {
         $arActions[] = array("SEPARATOR" => true);
-        $arActions[] = array("ICON" => "delete", "TEXT" => GetMessage("SALE_DELETE_DESCR"), "ACTION" => "if(confirm('" . GetMessage('SALE_CONFIRM_DEL_MESSAGE') . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete"));
+        $arActions[] = array(
+            "ICON" => "delete",
+            "TEXT" => GetMessage("SALE_DELETE_DESCR"),
+            "ACTION" => "if(confirm('" . GetMessage('SALE_CONFIRM_DEL_MESSAGE') . "')) " . $lAdmin->ActionDoGroup(
+                    $f_ID,
+                    "delete"
+                )
+        );
     }
 
     $row->AddActions($arActions);
@@ -203,8 +248,13 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
                     $db_contList = CSaleLocation::GetCountryList(Array("NAME_LANG" => "ASC"), Array(), LANG);
                     while ($arContList = $db_contList->Fetch()) {
                         ?>
-                        <option value="<? echo $arContList["ID"] ?>"<? if (IntVal($arContList["ID"]) == IntVal($filter_country)) echo " selected"; ?>><? echo htmlspecialcharsbx($arContList["NAME"]) ?>
-                        [<? echo htmlspecialcharsbx($arContList["NAME_LANG"]) ?>]</option><?
+                        <option value="<? echo $arContList["ID"] ?>"<? if (intval($arContList["ID"]) == intval(
+                                $filter_country
+                            )) {
+                            echo " selected";
+                        } ?>><? echo htmlspecialcharsbx($arContList["NAME"]) ?> [<? echo htmlspecialcharsbx(
+                            $arContList["NAME_LANG"]
+                        ) ?>]</option><?
                     }
                     ?>
                 </select>
@@ -214,8 +264,8 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
             <td><? echo GetMessage("SALE_F_COUNTRY") ?>:</td>
             <td>
                 <input type="text" name="filter_country_name"
-                       value="<? echo htmlspecialcharsbx($filter_country_name) ?>"
-                       size="30"><?= ShowFilterLogicHelp() ?>
+                       value="<? echo htmlspecialcharsbx($filter_country_name) ?>" size="30"><?= ShowFilterLogicHelp(
+                ) ?>
             </td>
         </tr>
         <tr>

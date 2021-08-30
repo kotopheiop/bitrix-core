@@ -100,7 +100,13 @@ class Dashboard extends Model
      */
     public static function getDefaultBoardWithEverythingByBoardKey($boardKey, $createIfNotExist = true)
     {
-        $with = array('rows', 'rows.widgets', 'rows.widgets.configurations', 'rows.widgets.reports', 'rows.widgets.reports.configurations');
+        $with = array(
+            'rows',
+            'rows.widgets',
+            'rows.widgets.configurations',
+            'rows.widgets.reports',
+            'rows.widgets.reports.configurations'
+        );
         $filter = Query::filter();
         $filter->where('BOARD_KEY', $boardKey);
         $filter->logic('and');
@@ -147,7 +153,13 @@ class Dashboard extends Model
 
         $userId = $USER->getId();
 
-        $with = array('rows', 'rows.widgets', 'rows.widgets.configurations', 'rows.widgets.reports', 'rows.widgets.reports.configurations');
+        $with = array(
+            'rows',
+            'rows.widgets',
+            'rows.widgets.configurations',
+            'rows.widgets.reports',
+            'rows.widgets.reports.configurations'
+        );
         $filter = Query::filter();
         $filter->where('BOARD_KEY', $boardKey);
         $filter->logic('and');
@@ -239,10 +251,12 @@ class Dashboard extends Model
      */
     public static function loadByBoardKeyAndUserId($boardKey, $userId)
     {
-        return static::load(array(
-            '=BOARD_KEY' => $boardKey,
-            '=USER_ID' => $userId
-        ));
+        return static::load(
+            array(
+                '=BOARD_KEY' => $boardKey,
+                '=USER_ID' => $userId
+            )
+        );
     }
 
     /**
@@ -255,9 +269,11 @@ class Dashboard extends Model
     {
         $filter = Query::filter();
         $filter->where('BOARD_KEY', $boardKey);
-        return static::getModelList(array(
-            'filter' => $filter
-        ));
+        return static::getModelList(
+            array(
+                'filter' => $filter
+            )
+        );
     }
 
     /**

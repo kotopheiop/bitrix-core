@@ -1,4 +1,5 @@
 <?
+
 if (!defined('CALL_AJAX_INIT')) {
     define("CALL_AJAX_INIT", true);
     define("PUBLIC_AJAX_MODE", true);
@@ -24,33 +25,43 @@ if (intval($USER->GetID()) <= 0) {
 if (check_bitrix_sessid()) {
     $errorMessage = "";
     if ($_POST['COMMAND'] == 'signaling') {
-        \Bitrix\Pull\Event::add(intval($_POST['USER_ID']), Array(
-            'module_id' => 'ycp',
-            'command' => 'call',
-            'params' => Array(
-                'senderId' => $USER->GetID(),
-                'command' => 'signaling',
-                'peer' => $_POST['PEER'],
-            ),
-        ));
+        \Bitrix\Pull\Event::add(
+            intval($_POST['USER_ID']),
+            Array(
+                'module_id' => 'ycp',
+                'command' => 'call',
+                'params' => Array(
+                    'senderId' => $USER->GetID(),
+                    'command' => 'signaling',
+                    'peer' => $_POST['PEER'],
+                ),
+            )
+        );
     } else {
-        \Bitrix\Pull\Event::add(intval($_POST['USER_ID']), Array(
-            'module_id' => 'ycp',
-            'command' => 'call',
-            'params' => Array(
-                'senderId' => $USER->GetID(),
-                'command' => $_POST['COMMAND']
-            ),
-        ));
+        \Bitrix\Pull\Event::add(
+            intval($_POST['USER_ID']),
+            Array(
+                'module_id' => 'ycp',
+                'command' => 'call',
+                'params' => Array(
+                    'senderId' => $USER->GetID(),
+                    'command' => $_POST['COMMAND']
+                ),
+            )
+        );
     }
-    echo CUtil::PhpToJsObject(Array(
-        'ERROR' => ''
-    ));
+    echo CUtil::PhpToJsObject(
+        Array(
+            'ERROR' => ''
+        )
+    );
 } else {
-    echo CUtil::PhpToJsObject(Array(
-        'BITRIX_SESSID' => bitrix_sessid(),
-        'ERROR' => 'SESSION_ERROR'
-    ));
+    echo CUtil::PhpToJsObject(
+        Array(
+            'BITRIX_SESSID' => bitrix_sessid(),
+            'ERROR' => 'SESSION_ERROR'
+        )
+    );
 }
 CMain::FinalActions();
 die();

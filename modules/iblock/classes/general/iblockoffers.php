@@ -8,8 +8,9 @@ class CAllIBlockOffersTmp
 
         $intProductIBlockID = (int)$intProductIBlockID;
         $intOffersIBlockID = (int)$intOffersIBlockID;
-        if ($intProductIBlockID <= 0 || $intOffersIBlockID <= 0)
+        if ($intProductIBlockID <= 0 || $intOffersIBlockID <= 0) {
             return false;
+        }
         $arFields = array(
             'PRODUCT_IBLOCK_ID' => $intProductIBlockID,
             'OFFERS_IBLOCK_ID' => $intOffersIBlockID,
@@ -22,10 +23,12 @@ class CAllIBlockOffersTmp
         global $DB;
 
         $ID = (int)$ID;
-        if ($ID <= 0)
+        if ($ID <= 0) {
             return false;
-        if (!$DB->Query("DELETE FROM b_iblock_offers_tmp WHERE ID=" . $ID))
+        }
+        if (!$DB->Query("DELETE FROM b_iblock_offers_tmp WHERE ID=" . $ID)) {
             return false;
+        }
         return true;
     }
 

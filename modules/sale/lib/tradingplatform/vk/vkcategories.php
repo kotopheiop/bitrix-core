@@ -73,10 +73,11 @@ class VkCategories
             )
         );
 
-        if ($agent = $dbRes->Fetch())
+        if ($agent = $dbRes->Fetch()) {
             return $agent;
-        else
+        } else {
             return false;
+        }
     }
 
 
@@ -95,8 +96,9 @@ class VkCategories
             )
         );
 
-        if ($agent = $dbRes->Fetch())
+        if ($agent = $dbRes->Fetch()) {
             \CAgent::Delete($agent["ID"]);
+        }
     }
 
 
@@ -144,7 +146,7 @@ class VkCategories
     public function getList($isTree = true)
     {
         $cacheManager = Application::getInstance()->getManagedCache();
-        $result = NULL;
+        $result = null;
 
         if ($cacheManager->read(self::CACHE_TTL, self::createCacheId())) {
             $result = $cacheManager->get(self::createCacheId());
@@ -254,21 +256,24 @@ class VkCategories
      * @param string $defaultItemText - if set - rename first element. Default - 'Check category'
      * @return string
      */
-    public function getVkCategorySelector($catVkSelected = NULL, $defaultItemText = '')
+    public function getVkCategorySelector($catVkSelected = null, $defaultItemText = '')
     {
         $vkCategory = $this->getList();
 
 //		todo: why upper case dont work?
-        $defaultItemText = strlen($defaultItemText) > 0 ? $defaultItemText : Loc::getMessage("SALE_CATALOG_CHANGE_VK_CATEGORY");
+        $defaultItemText = $defaultItemText <> '' ? $defaultItemText : Loc::getMessage(
+            "SALE_CATALOG_CHANGE_VK_CATEGORY"
+        );
         $strSelect = '<option value="-1">[' . $defaultItemText . ']</option>';
 
         foreach ($vkCategory as $vkTreeItem) {
-            $strSelect .= '<option disabled value="0">' . strtoupper($vkTreeItem["NAME"]) . '</option>';
+            $strSelect .= '<option disabled value="0">' . mb_strtoupper($vkTreeItem["NAME"]) . '</option>';
 
             foreach ($vkTreeItem["ITEMS"] as $sectionItem) {
                 $selected = '';
-                if ($catVkSelected && ($sectionItem["ID"] == $catVkSelected))
+                if ($catVkSelected && ($sectionItem["ID"] == $catVkSelected)) {
                     $selected = " selected";
+                }
 
                 $strSelect .= '<option' . $selected . ' value="' . $sectionItem["ID"] . '">- ' . $sectionItem["NAME"] . '</option>';
             }
@@ -288,6 +293,8 @@ class VkCategories
     {
         if (self::updateDataToCache($exportId)) {
             return self::createAgentName($exportId);
-        } else return '';
+        } else {
+            return '';
+        }
     }
 }

@@ -3,8 +3,9 @@
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions == "D")
+if ($saleModulePermissions == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 \Bitrix\Main\Loader::includeModule('sale');
 
@@ -42,11 +43,21 @@ $lAdmin->InitFilter($arFilterFields);
 
 $arFilter = array();
 
-if (IntVal($filter_affiliate_id) > 0) $arFilter["AFFILIATE_ID"] = IntVal($filter_affiliate_id);
-if (strlen($filter_user) > 0) $arFilter["%USER_USER"] = $filter_user;
-if (strlen($filter_currency) > 0) $arFilter["CURRENCY"] = $filter_currency;
-if (strlen($filter_transact_date_from) > 0) $arFilter[">=TRANSACT_DATE"] = Trim($filter_transact_date_from);
-if (strlen($filter_transact_date_to) > 0) $arFilter["<=TRANSACT_DATE"] = Trim($filter_transact_date_to);
+if (intval($filter_affiliate_id) > 0) {
+    $arFilter["AFFILIATE_ID"] = intval($filter_affiliate_id);
+}
+if ($filter_user <> '') {
+    $arFilter["%USER_USER"] = $filter_user;
+}
+if ($filter_currency <> '') {
+    $arFilter["CURRENCY"] = $filter_currency;
+}
+if ($filter_transact_date_from <> '') {
+    $arFilter[">=TRANSACT_DATE"] = Trim($filter_transact_date_from);
+}
+if ($filter_transact_date_to <> '') {
+    $arFilter["<=TRANSACT_DATE"] = Trim($filter_transact_date_to);
+}
 
 
 $dbTransactList = CSaleAffiliateTransact::GetList(
@@ -54,7 +65,22 @@ $dbTransactList = CSaleAffiliateTransact::GetList(
     $arFilter,
     false,
     array("nPageSize" => CAdminResult::GetNavSize($sTableID)),
-    array("ID", "AFFILIATE_ID", "TIMESTAMP_X", "TRANSACT_DATE", "AMOUNT", "CURRENCY", "DEBIT", "DESCRIPTION", "EMPLOYEE_ID", "AFFILIATE_SITE_ID", "USER_LOGIN", "USER_NAME", "USER_LAST_NAME", "USER_EMAIL")
+    array(
+        "ID",
+        "AFFILIATE_ID",
+        "TIMESTAMP_X",
+        "TRANSACT_DATE",
+        "AMOUNT",
+        "CURRENCY",
+        "DEBIT",
+        "DESCRIPTION",
+        "EMPLOYEE_ID",
+        "AFFILIATE_SITE_ID",
+        "USER_LOGIN",
+        "USER_NAME",
+        "USER_LAST_NAME",
+        "USER_EMAIL"
+    )
 );
 
 $dbTransactList = new CAdminResult($dbTransactList, $sTableID);
@@ -62,14 +88,26 @@ $dbTransactList->NavStart();
 
 $lAdmin->NavText($dbTransactList->GetNavPrint(GetMessage("STA_NAV")));
 
-$lAdmin->AddHeaders(array(
-    array("id" => "ID", "content" => "ID", "sort" => "ID", "default" => true),
-    array("id" => "TRANSACT_DATE", "content" => GetMessage("SAT2_TRANSACT_DATE"), "sort" => "TRANSACT_DATE", "default" => true),
-    array("id" => "AFFILIATE_ID", "content" => GetMessage("SAT2_AFFILIATE"), "sort" => "AFFILIATE_ID", "default" => true),
-    array("id" => "AMOUNT", "content" => GetMessage("SAT2_SUM"), "sort" => "AMOUNT", "default" => true),
-    array("id" => "TYPE", "content" => GetMessage("SAT2_TYPE"), "sort" => "DESCRIPTION", "default" => true),
-    array("id" => "DESCR", "content" => GetMessage("SAT2_DESCR"), "sort" => "", "default" => true),
-));
+$lAdmin->AddHeaders(
+    array(
+        array("id" => "ID", "content" => "ID", "sort" => "ID", "default" => true),
+        array(
+            "id" => "TRANSACT_DATE",
+            "content" => GetMessage("SAT2_TRANSACT_DATE"),
+            "sort" => "TRANSACT_DATE",
+            "default" => true
+        ),
+        array(
+            "id" => "AFFILIATE_ID",
+            "content" => GetMessage("SAT2_AFFILIATE"),
+            "sort" => "AFFILIATE_ID",
+            "default" => true
+        ),
+        array("id" => "AMOUNT", "content" => GetMessage("SAT2_SUM"), "sort" => "AMOUNT", "default" => true),
+        array("id" => "TYPE", "content" => GetMessage("SAT2_TYPE"), "sort" => "DESCRIPTION", "default" => true),
+        array("id" => "DESCR", "content" => GetMessage("SAT2_DESCR"), "sort" => "", "default" => true),
+    )
+);
 
 $arVisibleColumns = $lAdmin->GetVisibleHeaderColumns();
 
@@ -79,32 +117,52 @@ while ($arTransact = $dbTransactList->NavNext(true, "f_")) {
     $row->AddField("ID", $f_ID);
     $row->AddField("TRANSACT_DATE", $f_TRANSACT_DATE);
 
-    $fieldValue = "[<a href=\"/bitrix/admin/sale_affiliate_edit.php?ID=" . $f_AFFILIATE_ID . "&lang=" . LANG . "\" title=\"" . GetMessage("SAT2_AFF_PROFILE") . "\">" . $f_AFFILIATE_ID . "</a>] ";
-    $fieldValue .= htmlspecialcharsEx($arTransact["USER_NAME"] . ((strlen($arTransact["USER_NAME"]) <= 0 || strlen($arTransact["USER_LAST_NAME"]) <= 0) ? "" : " ") . $arTransact["USER_LAST_NAME"]) . "<br>";
+    $fieldValue = "[<a href=\"/bitrix/admin/sale_affiliate_edit.php?ID=" . $f_AFFILIATE_ID . "&lang=" . LANG . "\" title=\"" . GetMessage(
+            "SAT2_AFF_PROFILE"
+        ) . "\">" . $f_AFFILIATE_ID . "</a>] ";
+    $fieldValue .= htmlspecialcharsEx(
+            $arTransact["USER_NAME"] . (($arTransact["USER_NAME"] == '' || $arTransact["USER_LAST_NAME"] == '') ? "" : " ") . $arTransact["USER_LAST_NAME"]
+        ) . "<br>";
     $fieldValue .= htmlspecialcharsEx($arTransact["AFFILIATE_SITE_ID"]) . "&nbsp;&nbsp;&nbsp; ";
     $fieldValue .= htmlspecialcharsEx($arTransact["USER_LOGIN"]) . "&nbsp;&nbsp;&nbsp; ";
-    $fieldValue .= "<a href=\"mailto:" . htmlspecialcharsbx($arTransact["USER_EMAIL"]) . "\" title=\"" . GetMessage("SAT2_MAIL") . "\">" . htmlspecialcharsEx($arTransact["USER_EMAIL"]) . "</a>";
+    $fieldValue .= "<a href=\"mailto:" . htmlspecialcharsbx($arTransact["USER_EMAIL"]) . "\" title=\"" . GetMessage(
+            "SAT2_MAIL"
+        ) . "\">" . htmlspecialcharsEx($arTransact["USER_EMAIL"]) . "</a>";
     $row->AddField("AFFILIATE_ID", $fieldValue);
 
-    $row->AddField("AMOUNT", (($arTransact["DEBIT"] == "Y") ? "+" : "-") . SaleFormatCurrency($arTransact["AMOUNT"], $arTransact["CURRENCY"]) . "<br><small>" . (($arTransact["DEBIT"] == "Y") ? GetMessage("SAT2_TO_ACCT") : GetMessage("SAT2_FROM_ACCT")) . "</small>");
+    $row->AddField(
+        "AMOUNT",
+        (($arTransact["DEBIT"] == "Y") ? "+" : "-") . SaleFormatCurrency(
+            $arTransact["AMOUNT"],
+            $arTransact["CURRENCY"]
+        ) . "<br><small>" . (($arTransact["DEBIT"] == "Y") ? GetMessage("SAT2_TO_ACCT") : GetMessage(
+            "SAT2_FROM_ACCT"
+        )) . "</small>"
+    );
 
-    if (array_key_exists($arTransact["DESCRIPTION"], $arTransactTypes))
+    if (array_key_exists($arTransact["DESCRIPTION"], $arTransactTypes)) {
         $fieldValue = htmlspecialcharsEx($arTransactTypes[$arTransact["DESCRIPTION"]]);
-    else
+    } else {
         $fieldValue = htmlspecialcharsEx($arTransact["DESCRIPTION"]);
+    }
     $row->AddField("TYPE", $fieldValue);
 
     $fieldValue = "&nbsp;";
     if (in_array("DESCR", $arVisibleColumns)) {
         $fieldValue .= "<small>";
-        if (IntVal($arTransact["EMPLOYEE_ID"]) > 0) {
+        if (intval($arTransact["EMPLOYEE_ID"]) > 0) {
             if (!isset($LOCAL_TRANS_USER_CACHE[$arTransact["EMPLOYEE_ID"]])
                 || !is_array($LOCAL_TRANS_USER_CACHE[$arTransact["EMPLOYEE_ID"]])) {
                 $dbUser = CUser::GetByID($arTransact["EMPLOYEE_ID"]);
-                if ($arUser = $dbUser->Fetch())
-                    $LOCAL_TRANS_USER_CACHE[$arTransact["EMPLOYEE_ID"]] = htmlspecialcharsEx($arUser["NAME"] . ((strlen($arUser["NAME"]) <= 0 || strlen($arUser["LAST_NAME"]) <= 0) ? "" : " ") . $arUser["LAST_NAME"] . " (" . $arUser["LOGIN"] . ")");
+                if ($arUser = $dbUser->Fetch()) {
+                    $LOCAL_TRANS_USER_CACHE[$arTransact["EMPLOYEE_ID"]] = htmlspecialcharsEx(
+                        $arUser["NAME"] . (($arUser["NAME"] == '' || $arUser["LAST_NAME"] == '') ? "" : " ") . $arUser["LAST_NAME"] . " (" . $arUser["LOGIN"] . ")"
+                    );
+                }
             }
-            $fieldValue .= "[<a href=\"/bitrix/admin/user_edit.php?ID=" . $arTransact["EMPLOYEE_ID"] . "&lang=" . LANG . "\" title=\"" . GetMessage("SAT2_USER_PROFILE") . "\">" . $arTransact["EMPLOYEE_ID"] . "</a>] ";
+            $fieldValue .= "[<a href=\"/bitrix/admin/user_edit.php?ID=" . $arTransact["EMPLOYEE_ID"] . "&lang=" . LANG . "\" title=\"" . GetMessage(
+                    "SAT2_USER_PROFILE"
+                ) . "\">" . $arTransact["EMPLOYEE_ID"] . "</a>] ";
             $fieldValue .= $LOCAL_TRANS_USER_CACHE[$arTransact["EMPLOYEE_ID"]];
         }
         $fieldValue .= "</small>";
@@ -165,7 +223,9 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
                         if (val != "NA")
                             document.getElementById('div_affiliate_name').innerHTML = val;
                         else
-                            document.getElementById('div_affiliate_name').innerHTML = '<?= GetMessage("SAT2_NO_AFFILIATE") ?>';
+                            document.getElementById('div_affiliate_name').innerHTML = '<?= GetMessage(
+                                "SAT2_NO_AFFILIATE"
+                            ) ?>';
                     }
 
                     var affiliateID = '';
@@ -174,7 +234,9 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
                         if (affiliateID != document.find_form.filter_affiliate_id.value) {
                             affiliateID = document.find_form.filter_affiliate_id.value;
                             if (affiliateID != '' && !isNaN(parseInt(affiliateID, 10))) {
-                                document.getElementById('div_affiliate_name').innerHTML = '<i><?= GetMessage("SAT2_WAIT") ?></i>';
+                                document.getElementById('div_affiliate_name').innerHTML = '<i><?= GetMessage(
+                                    "SAT2_WAIT"
+                                ) ?></i>';
                                 window.frames["hiddenframe_affiliate"].location.replace('/bitrix/admin/sale_affiliate_get.php?ID=' + affiliateID + '&func_name=SetAffiliateName');
                             } else
                                 document.getElementById('div_affiliate_name').innerHTML = '';
@@ -197,13 +259,20 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
         <tr>
             <td nowrap><? echo GetMessage("SAT2_DATE_TRANSACT") ?></td>
             <td>
-                <? echo CalendarPeriod("filter_transact_date_from", $filter_transact_date_from, "filter_transact_date_to", $filter_transact_date_to, "bfilter", "Y") ?>
+                <? echo CalendarPeriod(
+                    "filter_transact_date_from",
+                    $filter_transact_date_from,
+                    "filter_transact_date_to",
+                    $filter_transact_date_to,
+                    "bfilter",
+                    "Y"
+                ) ?>
             </td>
         </tr>
         <tr>
             <td><? echo GetMessage("SAT2_CURRENCY1") ?></td>
             <td>
-                <?= CCurrency::SelectBox("filter_currency", $filter_currency, GetMessage("SAT2_ALL"), True, "", ""); ?>
+                <?= CCurrency::SelectBox("filter_currency", $filter_currency, GetMessage("SAT2_ALL"), true, "", ""); ?>
             </td>
         </tr>
         <?

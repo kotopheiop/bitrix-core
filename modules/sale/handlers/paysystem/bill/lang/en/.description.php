@@ -1,4 +1,5 @@
 <?
+
 $MESS["SALE_HPS_BILL_TITLE"] = "Invoice (Russian)";
 $MESS["SALE_HPS_BILL_DATE"] = "Order date";
 $MESS["SALE_HPS_BILL_DATE_DESC"] = "Date when the order was created";

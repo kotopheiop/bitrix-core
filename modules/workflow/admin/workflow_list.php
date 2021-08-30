@@ -1,4 +1,5 @@
 <?
+
 /*
 ##############################################
 # Bitrix: SiteManager                        #
@@ -10,15 +11,19 @@
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/workflow/prolog.php");
 $WORKFLOW_RIGHT = $APPLICATION->GetGroupRight("workflow");
-if ($WORKFLOW_RIGHT == "D") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($WORKFLOW_RIGHT == "D") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/workflow/include.php");
 IncludeModuleLangFile(__FILE__);
 $err_mess = "File: " . __FILE__ . "<br>Line: ";
 
 
-$rs = CSite::GetList(($b = "sort"), ($o = "asc"));
-while ($ar = $rs->Fetch()) $arrSites[$ar["ID"]] = $ar;
+$rs = CSite::GetList();
+while ($ar = $rs->Fetch()) {
+    $arrSites[$ar["ID"]] = $ar;
+}
 
 $sTableID = "t_workflow_list";
 $oSort = new CAdminSorting($sTableID, "s_date_modify", "desc");// sort init
@@ -79,14 +84,14 @@ $arFilter = Array(
     "DATE_MODIFY_1" => $find_modify_1,
     "DATE_MODIFY_2" => $find_modify_2,
     //"MODIFIED_BY"		=> ($find_type == "modified_by" && strlen($find)>0 ? $find:$find_modified_by),
-    "MODIFIED_USER_ID" => ($find_type == "modified_by" && strlen($find) > 0 ? $find : $find_modified_user_id),
+    "MODIFIED_USER_ID" => ($find_type == "modified_by" && $find <> '' ? $find : $find_modified_user_id),
     "LOCK_STATUS" => $find_lock_status,
     "STATUS" => $find_status,
     "STATUS_ID" => $find_status_id,
     "FILENAME" => $find_filename,
     "SITE_ID" => $find_site_id,
-    "TITLE" => ($find_type == "title" && strlen($find) > 0 ? $find : $find_title),
-    "BODY" => ($find_type == "body" && strlen($find) > 0 ? $find : $find_body),
+    "TITLE" => ($find_type == "title" && $find <> '' ? $find : $find_title),
+    "BODY" => ($find_type == "body" && $find <> '' ? $find : $find_body),
     "ID_EXACT_MATCH" => $find_id_exact_match,
     "MODIFIED_USER_ID_EXACT_MATCH" => $find_modified_user_id_exact_match,
     "FILENAME_EXACT_MATCH" => $find_filename_exact_match,
@@ -100,8 +105,9 @@ if ($WORKFLOW_RIGHT > "R" && $lAdmin->EditAction()) // list action handlers
     foreach ($FIELDS as $ID => $arFields) {
         $ID = intval($ID);
 
-        if (!$lAdmin->IsUpdated($ID))
+        if (!$lAdmin->IsUpdated($ID)) {
             continue;
+        }
 
         if (CWorkflow::IsAllowEdit($ID, $locked_by, $date_lock)) {
             CWorkflow::SetStatus($ID, $arFields["STATUS_ID"], $FIELDS_OLD[$ID]["STATUS_ID"]);
@@ -125,15 +131,17 @@ if ($WORKFLOW_RIGHT > "R" && $lAdmin->EditAction()) // list action handlers
 
 if ($WORKFLOW_RIGHT > "R" && $arID = $lAdmin->GroupAction()) {
     if ($_REQUEST['action_target'] == 'selected') {
-        $rsData = CWorkflow::GetList($by, $order, $arFilter, $is_filtered);
-        while ($arRes = $rsData->Fetch())
+        $rsData = CWorkflow::GetList('', '', $arFilter);
+        while ($arRes = $rsData->Fetch()) {
             $arID[] = $arRes['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        $ID = IntVal($ID);
-        if ($ID <= 0)
+        $ID = intval($ID);
+        if ($ID <= 0) {
             continue;
+        }
 
         switch ($_REQUEST['action']) {
             case "delete":
@@ -161,7 +169,9 @@ if ($WORKFLOW_RIGHT > "R" && $arID = $lAdmin->GroupAction()) {
     }
 }
 
-$rsData = CWorkflow::GetList($by, $order, $arFilter, $is_filtered);
+global $by, $order;
+
+$rsData = CWorkflow::GetList($by, $order, $arFilter);
 $rsData = new CAdminResult($rsData, $sTableID);
 $rsData->NavStart(50);
 
@@ -171,14 +181,39 @@ $lAdmin->NavText($rsData->GetNavPrint(GetMessage("FLOW_PAGES")));
 $arHeaders = Array();
 $arHeaders[] = Array("id" => "ID", "content" => "ID", "default" => false, "sort" => "s_id");
 
-$arHeaders[] = Array("id" => "LOCK_STATUS", "content" => GetMessage("FLOW_LOCK_STATUS"), "default" => true, "sort" => "s_lock_status");
-$arHeaders[] = Array("id" => "DATE_MODIFY", "content" => GetMessage("FLOW_DATE_MODIFY"), "default" => true, "sort" => "s_date_modify");
-$arHeaders[] = Array("id" => "MODIFIED_BY", "content" => GetMessage("FLOW_MODIFIED_BY"), "default" => true, "sort" => "s_modified_by");
+$arHeaders[] = Array(
+    "id" => "LOCK_STATUS",
+    "content" => GetMessage("FLOW_LOCK_STATUS"),
+    "default" => true,
+    "sort" => "s_lock_status"
+);
+$arHeaders[] = Array(
+    "id" => "DATE_MODIFY",
+    "content" => GetMessage("FLOW_DATE_MODIFY"),
+    "default" => true,
+    "sort" => "s_date_modify"
+);
+$arHeaders[] = Array(
+    "id" => "MODIFIED_BY",
+    "content" => GetMessage("FLOW_MODIFIED_BY"),
+    "default" => true,
+    "sort" => "s_modified_by"
+);
 
 $arHeaders[] = Array("id" => "TITLE", "content" => GetMessage("FLOW_TITLE"), "default" => true, "sort" => "s_title");
-$arHeaders[] = Array("id" => "FILENAME", "content" => GetMessage("FLOW_FILENAME"), "default" => true, "sort" => "s_filename");
+$arHeaders[] = Array(
+    "id" => "FILENAME",
+    "content" => GetMessage("FLOW_FILENAME"),
+    "default" => true,
+    "sort" => "s_filename"
+);
 
-$arHeaders[] = Array("id" => "STATUS_ID", "content" => GetMessage("FLOW_STATUS"), "default" => true, "sort" => "s_status");
+$arHeaders[] = Array(
+    "id" => "STATUS_ID",
+    "content" => GetMessage("FLOW_STATUS"),
+    "default" => true,
+    "sort" => "s_status"
+);
 $arHeaders[] = Array("id" => "SITE_ID", "content" => GetMessage("FLOW_SITE"), "default" => true, "sort" => "s_site_id");
 
 $lAdmin->AddHeaders($arHeaders);
@@ -186,19 +221,21 @@ $lAdmin->AddHeaders($arHeaders);
 
 $arStatus = Array();
 $res = CWorkflowStatus::GetDropDownList();
-while ($ar = $res->Fetch())
+while ($ar = $res->Fetch()) {
     $arStatus[$ar["REFERENCE_ID"]] = $ar["REFERENCE"];
+}
 
 // list fill
 while ($arRes = $rsData->NavNext(true, "f_")) {
     $row =& $lAdmin->AddRow($f_ID, $arRes);
 
-    if ($f_LOCK_STATUS == "green")
+    if ($f_LOCK_STATUS == "green") {
         $lamp_alt = GetMessage("FLOW_GREEN_ALT");
-    elseif ($f_LOCK_STATUS == "yellow")
+    } elseif ($f_LOCK_STATUS == "yellow") {
         $lamp_alt = GetMessage("FLOW_YELLOW_ALT");
-    else
+    } else {
         $lamp_alt = GetMessage("FLOW_RED_ALT");
+    }
 
     $str = '<div class="lamp-' . $f_LOCK_STATUS . '" title="' . $lamp_alt . '"></div>';
 
@@ -218,7 +255,10 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
             $arActions[] = array(
                 "ICON" => "unlock",
                 "TEXT" => GetMessage("FLOW_UNLOCK"),
-                "ACTION" => "if(confirm('" . GetMessage('FLOW_UNLOCK_CONFIRM') . "')) " . $lAdmin->ActionDoGroup($f_ID, "unlock")
+                "ACTION" => "if(confirm('" . GetMessage('FLOW_UNLOCK_CONFIRM') . "')) " . $lAdmin->ActionDoGroup(
+                        $f_ID,
+                        "unlock"
+                    )
             );
 
             $arActions[] = Array("SEPARATOR" => true);
@@ -232,8 +272,6 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
             "TEXT" => GetMessage("FLOW_EDIT"),
             "ACTION" => $lAdmin->ActionRedirect("workflow_edit.php?lang=" . LANG . "&ID=" . $f_ID)
         );
-
-
     } else {
         $arActions[] = array(
             "ICON" => "view",
@@ -246,20 +284,26 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
         $arActions[] = array(
             "ICON" => "view",
             "TEXT" => GetMessage("FLOW_PREVIEW"),
-            "ACTION" => $lAdmin->ActionRedirect("workflow_preview.php?lang=" . LANG . "&ID=" . $f_ID . "&" . bitrix_sessid_get())
+            "ACTION" => $lAdmin->ActionRedirect(
+                "workflow_preview.php?lang=" . LANG . "&ID=" . $f_ID . "&" . bitrix_sessid_get()
+            )
         );
     }
 
     $arActions[] = array(
         "ICON" => "view",
         "TEXT" => GetMessage("FLOW_HISTORY"),
-        "ACTION" => $lAdmin->ActionRedirect("workflow_history_list.php?lang=" . LANG . "&find_document_id=" . $f_ID . "&find_document_id_exact_match=Y&set_filter=Y")
+        "ACTION" => $lAdmin->ActionRedirect(
+            "workflow_history_list.php?lang=" . LANG . "&find_document_id=" . $f_ID . "&find_document_id_exact_match=Y&set_filter=Y"
+        )
     );
 
     $arActions[] = array(
         "ICON" => "view",
         "TEXT" => GetMessage("FLOW_HISTORY_FILE"),
-        "ACTION" => $lAdmin->ActionRedirect("workflow_history_list.php?lang=" . LANG . "&find_filename=" . $f_FILENAME . "&find_filename_exact_match=Y&set_filter=Y")
+        "ACTION" => $lAdmin->ActionRedirect(
+            "workflow_history_list.php?lang=" . LANG . "&find_filename=" . $f_FILENAME . "&find_filename_exact_match=Y&set_filter=Y"
+        )
     );
 
     if ($f_LOCK_STATUS != "red" && $WORKFLOW_RIGHT > "R") {
@@ -268,7 +312,10 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
         $arActions[] = array(
             "ICON" => "delete",
             "TEXT" => GetMessage("FLOW_DELETE"),
-            "ACTION" => "if(confirm('" . GetMessage('FLOW_DELETE_CONFIRM') . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete")
+            "ACTION" => "if(confirm('" . GetMessage('FLOW_DELETE_CONFIRM') . "')) " . $lAdmin->ActionDoGroup(
+                    $f_ID,
+                    "delete"
+                )
         );
     }
 
@@ -287,7 +334,8 @@ if ($WORKFLOW_RIGHT > "R") {
 }
 
 // action buttons
-$lAdmin->AddGroupActionTable(Array(
+$lAdmin->AddGroupActionTable(
+    Array(
         "unlock" => GetMessage("FLOW_UNLOCK_S"),
         "delete" => GetMessage("MAIN_ADMIN_LIST_DELETE"),
     )
@@ -319,9 +367,15 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
             <input type="text" size="25" name="find" value="<? echo htmlspecialcharsbx($find) ?>"
                    title="<?= GetMessage("MAIN_FIND_TITLE") ?>">
             <select name="find_type">
-                <option value="title"<? if ($find_type == "title") echo " selected" ?>><?= GetMessage('FLOW_F_TITLE') ?></option>
-                <option value="body"<? if ($find_type == "body") echo " selected" ?>><?= GetMessage('FLOW_F_BODY') ?></option>
-                <option value="modified_by"<? if ($find_type == "modified_by") echo " selected" ?>><?= GetMessage('FLOW_F_MODIFIED_BY') ?></option>
+                <option value="title"<? if ($find_type == "title") echo " selected" ?>><?= GetMessage(
+                        'FLOW_F_TITLE'
+                    ) ?></option>
+                <option value="body"<? if ($find_type == "body") echo " selected" ?>><?= GetMessage(
+                        'FLOW_F_BODY'
+                    ) ?></option>
+                <option value="modified_by"<? if ($find_type == "modified_by") echo " selected" ?>><?= GetMessage(
+                        'FLOW_F_MODIFIED_BY'
+                    ) ?></option>
             </select>
         </td>
     </tr>
@@ -339,24 +393,39 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
                 "reference" => array(
                     GetMessage("FLOW_RED"),
                     GetMessage("FLOW_YELLOW"),
-                    GetMessage("FLOW_GREEN")),
+                    GetMessage("FLOW_GREEN")
+                ),
                 "reference_id" => array(
                     "red",
                     "yellow",
-                    "green"));
-            echo SelectBoxFromArray("find_lock_status", $arr, htmlspecialcharsbx($find_lock_status), GetMessage("MAIN_ALL"));
+                    "green"
+                )
+            );
+            echo SelectBoxFromArray(
+                "find_lock_status",
+                $arr,
+                htmlspecialcharsbx($find_lock_status),
+                GetMessage("MAIN_ALL")
+            );
             ?></td>
     </tr>
     <tr>
         <td><? echo GetMessage("FLOW_F_DATE_MODIFY") . ":" ?></td>
-        <td><? echo CalendarPeriod("find_modify_1", $find_modify_1, "find_modify_2", $find_modify_2, "form1", "Y") ?></td>
+        <td><? echo CalendarPeriod(
+                "find_modify_1",
+                $find_modify_1,
+                "find_modify_2",
+                $find_modify_2,
+                "form1",
+                "Y"
+            ) ?></td>
     </tr>
     <tr>
         <td><?= GetMessage("FLOW_F_MODIFIED_BY") ?>:</td>
         <td><input type="text" name="find_modified_user_id"
-                   value="<? echo htmlspecialcharsbx($find_modified_user_id) ?>"
-                   size="47"><?= ShowExactMatchCheckbox("find_modified_user_id") ?>&nbsp;<?= ShowFilterLogicHelp() ?>
-        </td>
+                   value="<? echo htmlspecialcharsbx($find_modified_user_id) ?>" size="47"><?= ShowExactMatchCheckbox(
+                "find_modified_user_id"
+            ) ?>&nbsp;<?= ShowFilterLogicHelp() ?></td>
     </tr>
     <tr>
         <td><? echo GetMessage("FLOW_LIST_SITE") ?>:</td>
@@ -381,7 +450,12 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
         <td><?= GetMessage("FLOW_F_STATUS") ?>:</td>
         <td><input type="text" name="find_status" value="<? echo htmlspecialcharsbx($find_status) ?>"
                    size="47"><?= ShowExactMatchCheckbox("find_status") ?>&nbsp;<?= ShowFilterLogicHelp() ?><br><?
-            echo SelectBox("find_status_id", CWorkflowStatus::GetDropDownList(), GetMessage("MAIN_ALL"), htmlspecialcharsbx($find_status_id));
+            echo SelectBox(
+                "find_status_id",
+                CWorkflowStatus::GetDropDownList(),
+                GetMessage("MAIN_ALL"),
+                htmlspecialcharsbx($find_status_id)
+            );
             ?></td>
     </tr>
     <?= ShowLogicRadioBtn() ?>

@@ -3,10 +3,28 @@
 
 if (CModule::IncludeModule("forum")) {
     $arLogComments = array();
-    $dbLog = CSocNetLog::GetList(array("LOG_DATE" => "ASC"), array("EVENT_ID" => "forum"), false, false, array("ID", "ENTITY_TYPE", "ENTITY_ID", "LOG_DATE", "MESSAGE", "TEXT_MESSAGE", "URL", "SOURCE_ID", "PARAMS", "USER_ID"));
+    $dbLog = CSocNetLog::GetList(
+        array("LOG_DATE" => "ASC"),
+        array("EVENT_ID" => "forum"),
+        false,
+        false,
+        array(
+            "ID",
+            "ENTITY_TYPE",
+            "ENTITY_ID",
+            "LOG_DATE",
+            "MESSAGE",
+            "TEXT_MESSAGE",
+            "URL",
+            "SOURCE_ID",
+            "PARAMS",
+            "USER_ID"
+        )
+    );
     while ($arLog = $dbLog->Fetch()) {
-        if ($arLog["PARAMS"] == "type=M")
+        if ($arLog["PARAMS"] == "type=M") {
             $arLogComments[] = $arLog;
+        }
     }
 
     $CacheTopicLogTmpID = array();
@@ -16,9 +34,9 @@ if (CModule::IncludeModule("forum")) {
 
             $arForumMessage = CForumMessage::GetByID($arLogComment["SOURCE_ID"]);
             if ($arForumMessage) {
-                if (array_key_exists($arForumMessage["TOPIC_ID"], $CacheTopicLogTmpID))
+                if (array_key_exists($arForumMessage["TOPIC_ID"], $CacheTopicLogTmpID)) {
                     $log_tmp_id = $CacheTopicLogTmpID[$arForumMessage["TOPIC_ID"]];
-                else {
+                } else {
                     $dbForumMessage = CForumMessage::GetList(
                         array("ID" => "ASC"),
                         array("TOPIC_ID" => $arForumMessage["TOPIC_ID"]),
@@ -39,8 +57,9 @@ if (CModule::IncludeModule("forum")) {
                         );
                         if ($arLog = $dbLog->Fetch()) {
                             $log_tmp_id = $arLog["TMP_ID"];
-                            if (intval($log_tmp_id) > 0)
+                            if (intval($log_tmp_id) > 0) {
                                 CSocNetLog::Update($arLog["ID"], array("PARAMS" => ""));
+                            }
                             $CacheTopicLogTmpID[$arForumMessage["TOPIC_ID"]] = $log_tmp_id;
                         }
                     }
@@ -71,9 +90,26 @@ if (CModule::IncludeModule("forum")) {
 // convert blog
 if (CModule::IncludeModule("blog")) {
     $arLogComments = array();
-    $dbLog = CSocNetLog::GetList(array("LOG_DATE" => "ASC"), array("EVENT_ID" => "blog_comment"), false, false, array("ID", "ENTITY_TYPE", "ENTITY_ID", "LOG_DATE", "MESSAGE", "TEXT_MESSAGE", "URL", "SOURCE_ID", "USER_ID"));
-    while ($arLog = $dbLog->Fetch())
+    $dbLog = CSocNetLog::GetList(
+        array("LOG_DATE" => "ASC"),
+        array("EVENT_ID" => "blog_comment"),
+        false,
+        false,
+        array(
+            "ID",
+            "ENTITY_TYPE",
+            "ENTITY_ID",
+            "LOG_DATE",
+            "MESSAGE",
+            "TEXT_MESSAGE",
+            "URL",
+            "SOURCE_ID",
+            "USER_ID"
+        )
+    );
+    while ($arLog = $dbLog->Fetch()) {
         $arLogComments[] = $arLog;
+    }
 
     foreach ($arLogComments as $arLogComment) {
         if (intval($arLogComment["SOURCE_ID"]) > 0) {
@@ -90,8 +126,9 @@ if (CModule::IncludeModule("blog")) {
                     array("nTopCount" => 1),
                     array("ID", "TMP_ID")
                 );
-                if ($arLog = $dbLog->Fetch())
+                if ($arLog = $dbLog->Fetch()) {
                     $log_tmp_id = $arLog["TMP_ID"];
+                }
             }
 
             if (intval($log_tmp_id) > 0) {
@@ -115,9 +152,26 @@ if (CModule::IncludeModule("blog")) {
     }
 }
 
-$dbLog = CSocNetLog::GetList(array("LOG_DATE" => "ASC"), array("COMMENTS_COUNT" => false), false, false, array("ID", "ENTITY_TYPE", "ENTITY_ID", "LOG_DATE", "MESSAGE", "TEXT_MESSAGE", "URL", "SOURCE_ID", "USER_ID"));
-while ($arLog = $dbLog->Fetch())
+$dbLog = CSocNetLog::GetList(
+    array("LOG_DATE" => "ASC"),
+    array("COMMENTS_COUNT" => false),
+    false,
+    false,
+    array(
+        "ID",
+        "ENTITY_TYPE",
+        "ENTITY_ID",
+        "LOG_DATE",
+        "MESSAGE",
+        "TEXT_MESSAGE",
+        "URL",
+        "SOURCE_ID",
+        "USER_ID"
+    )
+);
+while ($arLog = $dbLog->Fetch()) {
     CSocNetLog::Update($arLog["ID"], array("LOG_UPDATE" => $arLog["LOG_DATE"]));
+}
 
 if (IsModuleInstalled("intranet")) {
     $dbResult = CSocNetEventUserView::GetList(
@@ -150,6 +204,17 @@ if (IsModuleInstalled("intranet")) {
     }
 }
 
-$GLOBALS["DB"]->Query("UPDATE b_sonet_log SET LOG_UPDATE = " . CDatabase::IsNull("(SELECT MAX(LOG_DATE) FROM b_sonet_log_comment LC WHERE LC.LOG_ID=b_sonet_log.TMP_ID)", CDatabase::CurrentTimeFunction()), false, $err_mess . __LINE__);
-$GLOBALS["DB"]->Query("UPDATE b_sonet_log SET LOG_UPDATE = LOG_DATE WHERE NOT EXISTS (SELECT LC.ID FROM b_sonet_log_comment LC WHERE LC.LOG_ID = b_sonet_log.TMP_ID)", false, $err_mess . __LINE__);
+$GLOBALS["DB"]->Query(
+    "UPDATE b_sonet_log SET LOG_UPDATE = " . $GLOBALS["DB"]->IsNull(
+        "(SELECT MAX(LOG_DATE) FROM b_sonet_log_comment LC WHERE LC.LOG_ID=b_sonet_log.TMP_ID)",
+        CDatabase::CurrentTimeFunction()
+    ),
+    false,
+    $err_mess . __LINE__
+);
+$GLOBALS["DB"]->Query(
+    "UPDATE b_sonet_log SET LOG_UPDATE = LOG_DATE WHERE NOT EXISTS (SELECT LC.ID FROM b_sonet_log_comment LC WHERE LC.LOG_ID = b_sonet_log.TMP_ID)",
+    false,
+    $err_mess . __LINE__
+);
 ?>

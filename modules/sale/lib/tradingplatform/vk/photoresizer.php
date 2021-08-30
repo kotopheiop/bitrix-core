@@ -29,9 +29,9 @@ class PhotoResizer
      * @param string $domain - old param. May be empty
      * @return string
      */
-    protected function buildPictureUrl($src, $domain = '')
+    protected static function buildPictureUrl($src, $domain = '')
     {
-        if (strlen($domain) == 0) {
+        if ($domain == '') {
 //			get different variants of domain URL, because in diff site some variants not work
             $server = Application::getInstance()->getContext()->getServer();
             if ($host = $server->getHttpHost()) {
@@ -45,7 +45,7 @@ class PhotoResizer
 
         $protocol = \CMain::IsHTTPS() ? "https://" : "http://";
         // relative path by '/'
-        if (substr($src, 0, 1) == "/") {
+        if (mb_substr($src, 0, 1) == "/") {
             $strFile = $protocol . $domain . implode("/", array_map("rawurlencode", explode("/", $src)));
         } // full path
         elseif (preg_match("/^(http|https):\\/\\/(.*?)\\/(.*)\$/", $src, $match)) {
@@ -57,7 +57,6 @@ class PhotoResizer
 
         return $strFile;
     }
-
 
     public static function sortPhotoArray($photos, $type)
     {
@@ -101,7 +100,6 @@ class PhotoResizer
         return $sortedPhotos;
     }
 
-
     /**
      * Check photo sizes by type of converter
      *
@@ -112,8 +110,9 @@ class PhotoResizer
     public static function checkPhotos($photos, $type)
     {
 //		check empty photos
-        if (!$photos)
-            return NULL;
+        if (!$photos) {
+            return null;
+        }
 
         $result = array();
 
@@ -143,8 +142,9 @@ class PhotoResizer
                     'RATIO_H' => Vk::MAX_ALBUM_RATIO_H,
                 );
 //				CONVERT photo-id format if needed
-                if (!is_array($photos))
+                if (!is_array($photos)) {
                     $photos = array($photos => array("PHOTO_BX_ID" => $photos));
+                }
                 break;
 
             default:
@@ -180,7 +180,6 @@ class PhotoResizer
         return $result;
     }
 
-
     /**
      * Check sizes and filesize of one photo.
      * Return only check passed photos
@@ -189,12 +188,13 @@ class PhotoResizer
      * @param $sizesLimits
      * @return mixed
      */
-    private function checkPhoto($photoId, $sizesLimits)
+    private static function checkPhoto($photoId, $sizesLimits)
     {
         $photoParams = \CFile::GetFileArray($photoId);
 //		check bad files
-        if (!$photoParams)
+        if (!$photoParams) {
             return false;
+        }
         $photoSrc = $photoParams["SRC"];
         $photoUrl = self::buildPictureUrl($photoParams["SRC"]);
         $needResize = self::RESIZE_NO;
@@ -233,7 +233,10 @@ class PhotoResizer
         if ($needResize) {
             switch ($needResize) {
                 case self::RESIZE_UP:
-                    $multiplier = max($sizesLimits['MIN_WIDTH'] / $photoParams['WIDTH'], $sizesLimits['MIN_HEIGHT'] / $photoParams['HEIGHT']);
+                    $multiplier = max(
+                        $sizesLimits['MIN_WIDTH'] / $photoParams['WIDTH'],
+                        $sizesLimits['MIN_HEIGHT'] / $photoParams['HEIGHT']
+                    );
                     $newWidth = ceil($photoParams['WIDTH'] * $multiplier);
                     $newHeight = ceil($photoParams['HEIGHT'] * $multiplier);
                     break;
@@ -318,24 +321,36 @@ class PhotoResizer
      * @param bool $jpgQuality
      * @return bool|mixed
      */
-    public static function ResizeImageGet($file, $arSize, $resizeType = BX_RESIZE_IMAGE_PROPORTIONAL, $bInitSizes = false, $arFilters = false, $bImmediate = false, $jpgQuality = false)
-    {
+    public static function ResizeImageGet(
+        $file,
+        $arSize,
+        $resizeType = BX_RESIZE_IMAGE_PROPORTIONAL,
+        $bInitSizes = false,
+        $arFilters = false,
+        $bImmediate = false,
+        $jpgQuality = false
+    ) {
         if (!is_array($file) && intval($file) > 0) {
             $file = \CFile::GetFileArray($file);
         }
 
-        if (!is_array($file) || !array_key_exists("FILE_NAME", $file) || strlen($file["FILE_NAME"]) <= 0)
+        if (!is_array($file) || !array_key_exists("FILE_NAME", $file) || $file["FILE_NAME"] == '') {
             return false;
+        }
 
-        if ($resizeType !== BX_RESIZE_IMAGE_EXACT && $resizeType !== BX_RESIZE_IMAGE_PROPORTIONAL_ALT)
+        if ($resizeType !== BX_RESIZE_IMAGE_EXACT && $resizeType !== BX_RESIZE_IMAGE_PROPORTIONAL_ALT) {
             $resizeType = BX_RESIZE_IMAGE_PROPORTIONAL;
+        }
 
-        if (!is_array($arSize))
+        if (!is_array($arSize)) {
             $arSize = array();
-        if (!array_key_exists("width", $arSize) || intval($arSize["width"]) <= 0)
+        }
+        if (!array_key_exists("width", $arSize) || intval($arSize["width"]) <= 0) {
             $arSize["width"] = 0;
-        if (!array_key_exists("height", $arSize) || intval($arSize["height"]) <= 0)
+        }
+        if (!array_key_exists("height", $arSize) || intval($arSize["height"]) <= 0) {
             $arSize["height"] = 0;
+        }
         $arSize["width"] = intval($arSize["width"]);
         $arSize["height"] = intval($arSize["height"]);
 
@@ -368,11 +383,14 @@ class PhotoResizer
         }
 
         $io = \CBXVirtualIo::GetInstance();
-        $cacheImageFile = "/" . $uploadDirName . "/resize_cache/" . $file["SUBDIR"] . "/" . $arSize["width"] . "_" . $arSize["height"] . "_" . $resizeType . (is_array($arFilters) ? md5(serialize($arFilters)) : "") . "/" . $file["FILE_NAME"];
+        $cacheImageFile = "/" . $uploadDirName . "/resize_cache/" . $file["SUBDIR"] . "/" . $arSize["width"] . "_" . $arSize["height"] . "_" . $resizeType . (is_array(
+                $arFilters
+            ) ? md5(serialize($arFilters)) : "") . "/" . $file["FILE_NAME"];
 
         $cacheImageFileCheck = $cacheImageFile;
-        if ($file["CONTENT_TYPE"] == "image/bmp")
+        if ($file["CONTENT_TYPE"] == "image/bmp") {
             $cacheImageFileCheck .= ".jpg";
+        }
 
         static $cache = array();
         $cache_id = $cacheImageFileCheck;
@@ -388,49 +406,71 @@ class PhotoResizer
             /****************************** QUOTA ******************************/
 
             if ($bDiskQuota) {
-                if (!is_array($arFilters))
+                if (!is_array($arFilters)) {
                     $arFilters = array(
                         array("name" => "sharpen", "precision" => 15),
                     );
+                }
 
                 $sourceImageFile = $_SERVER["DOCUMENT_ROOT"] . $imageFile;
                 $cacheImageFileTmp = $_SERVER["DOCUMENT_ROOT"] . $cacheImageFile;
                 $bNeedResize = true;
-                $callbackData = NULL;
+                $callbackData = null;
 
                 foreach (GetModuleEvents("main", "OnBeforeResizeImage", true) as $arEvent) {
-                    if (ExecuteModuleEventEx($arEvent, array(
-                        $file,
-                        array($arSize, $resizeType, array(), false, $arFilters, $bImmediate),
-                        &$callbackData,
-                        &$bNeedResize,
-                        &$sourceImageFile,
-                        &$cacheImageFileTmp,
-                    )))
+                    if (ExecuteModuleEventEx(
+                        $arEvent,
+                        array(
+                            $file,
+                            array($arSize, $resizeType, array(), false, $arFilters, $bImmediate),
+                            &$callbackData,
+                            &$bNeedResize,
+                            &$sourceImageFile,
+                            &$cacheImageFileTmp,
+                        )
+                    )) {
                         break;
+                    }
                 }
 
-                if ($bNeedResize && self::ResizeImageFile($sourceImageFile, $cacheImageFileTmp, $arSize, $resizeType, array(), $jpgQuality, $arFilters)) {
-                    $cacheImageFile = substr($cacheImageFileTmp, strlen($_SERVER["DOCUMENT_ROOT"]));
+                if ($bNeedResize && self::ResizeImageFile(
+                        $sourceImageFile,
+                        $cacheImageFileTmp,
+                        $arSize,
+                        $resizeType,
+                        array(),
+                        $jpgQuality,
+                        $arFilters
+                    )) {
+                    $cacheImageFile = mb_substr($cacheImageFileTmp, mb_strlen($_SERVER["DOCUMENT_ROOT"]));
 
                     /****************************** QUOTA ******************************/
-                    if (\COption::GetOptionInt("main", "disk_space") > 0)
-                        \CDiskQuota::UpdateDiskQuota("file", filesize($io->GetPhysicalName($cacheImageFileTmp)), "insert");
+                    if (\COption::GetOptionInt("main", "disk_space") > 0) {
+                        \CDiskQuota::UpdateDiskQuota(
+                            "file",
+                            filesize($io->GetPhysicalName($cacheImageFileTmp)),
+                            "insert"
+                        );
+                    }
                     /****************************** QUOTA ******************************/
                 } else {
                     $cacheImageFile = $imageFile;
                 }
 
                 foreach (GetModuleEvents("main", "OnAfterResizeImage", true) as $arEvent) {
-                    if (ExecuteModuleEventEx($arEvent, array(
-                        $file,
-                        array($arSize, $resizeType, array(), false, $arFilters),
-                        &$callbackData,
-                        &$cacheImageFile,
-                        &$cacheImageFileTmp,
-                        &$arImageSize,
-                    )))
+                    if (ExecuteModuleEventEx(
+                        $arEvent,
+                        array(
+                            $file,
+                            array($arSize, $resizeType, array(), false, $arFilters),
+                            &$callbackData,
+                            &$cacheImageFile,
+                            &$cacheImageFileTmp,
+                            &$arImageSize,
+                        )
+                    )) {
                         break;
+                    }
                 }
             } else {
                 $cacheImageFile = $imageFile;
@@ -468,24 +508,36 @@ class PhotoResizer
      * @param bool $arFilters
      * @return bool
      */
-    private static function ResizeImageFile($sourceFile, &$destinationFile, $arSize, $resizeType = BX_RESIZE_IMAGE_PROPORTIONAL, $arWaterMark = array(), $jpgQuality = false, $arFilters = false)
-    {
+    private static function ResizeImageFile(
+        $sourceFile,
+        &$destinationFile,
+        $arSize,
+        $resizeType = BX_RESIZE_IMAGE_PROPORTIONAL,
+        $arWaterMark = array(),
+        $jpgQuality = false,
+        $arFilters = false
+    ) {
         $io = \CBXVirtualIo::GetInstance();
 
-        if (!$io->FileExists($sourceFile))
+        if (!$io->FileExists($sourceFile)) {
             return false;
+        }
 
         $bNeedCreatePicture = false;
 
-        if ($resizeType !== BX_RESIZE_IMAGE_EXACT && $resizeType !== BX_RESIZE_IMAGE_PROPORTIONAL_ALT)
+        if ($resizeType !== BX_RESIZE_IMAGE_EXACT && $resizeType !== BX_RESIZE_IMAGE_PROPORTIONAL_ALT) {
             $resizeType = BX_RESIZE_IMAGE_PROPORTIONAL;
+        }
 
-        if (!is_array($arSize))
+        if (!is_array($arSize)) {
             $arSize = array();
-        if (!array_key_exists("width", $arSize) || intval($arSize["width"]) <= 0)
+        }
+        if (!array_key_exists("width", $arSize) || intval($arSize["width"]) <= 0) {
             $arSize["width"] = 0;
-        if (!array_key_exists("height", $arSize) || intval($arSize["height"]) <= 0)
+        }
+        if (!array_key_exists("height", $arSize) || intval($arSize["height"]) <= 0) {
             $arSize["height"] = 0;
+        }
         $arSize["width"] = intval($arSize["width"]);
         $arSize["height"] = intval($arSize["height"]);
 
@@ -493,8 +545,9 @@ class PhotoResizer
         $arDestinationSize = array("x" => 0, "y" => 0, "width" => 0, "height" => 0);
 
         $arSourceFileSizeTmp = \CFile::GetImageSize($sourceFile);
-        if (!in_array($arSourceFileSizeTmp[2], array(IMAGETYPE_PNG, IMAGETYPE_JPEG, IMAGETYPE_GIF, IMAGETYPE_BMP)))
+        if (!in_array($arSourceFileSizeTmp[2], array(IMAGETYPE_PNG, IMAGETYPE_JPEG, IMAGETYPE_GIF, IMAGETYPE_BMP))) {
             return false;
+        }
 
         $orientation = 0;
         if ($arSourceFileSizeTmp[2] == IMAGETYPE_JPEG) {
@@ -510,9 +563,6 @@ class PhotoResizer
             }
         }
 
-        if (\CFile::isEnabledTrackingResizeImage()) {
-            header("X-Bitrix-Resize-Image: {$arSize["width"]}_{$arSize["height"]}_{$resizeType}");
-        }
 //		imagemagick was be here. I delete them to simplification
 
         if ($io->Copy($sourceFile, $destinationFile)) {
@@ -539,10 +589,12 @@ class PhotoResizer
                     if ($orientation > 1) {
                         $properlyOriented = \CFile::ImageHandleOrientation($orientation, $sourceImage);
 
-                        if ($jpgQuality === false)
+                        if ($jpgQuality === false) {
                             $jpgQuality = intval(\COption::GetOptionString('main', 'image_resize_quality', '95'));
-                        if ($jpgQuality <= 0 || $jpgQuality > 100)
+                        }
+                        if ($jpgQuality <= 0 || $jpgQuality > 100) {
                             $jpgQuality = 95;
+                        }
 
                         if ($properlyOriented) {
                             imagejpeg($properlyOriented, $io->GetPhysicalName($destinationFile), $jpgQuality);
@@ -562,19 +614,43 @@ class PhotoResizer
                     $arSize["height"] = $sourceImageHeight;
                 }
 
-                self::ScaleImage($sourceImageWidth, $sourceImageHeight, $arSize, $resizeType, $bNeedCreatePicture, $arSourceSize, $arDestinationSize);
+                self::ScaleImage(
+                    $sourceImageWidth,
+                    $sourceImageHeight,
+                    $arSize,
+                    $resizeType,
+                    $bNeedCreatePicture,
+                    $arSourceSize,
+                    $arDestinationSize
+                );
 
                 if ($bNeedCreatePicture) {
                     if (\CFile::IsGD2()) {
                         $picture = imagecreatetruecolor($arDestinationSize["width"], $arDestinationSize["height"]);
                         if ($arSourceFileSizeTmp[2] == IMAGETYPE_PNG) {
                             $transparentcolor = imagecolorallocatealpha($picture, 0, 0, 0, 127);
-                            imagefilledrectangle($picture, 0, 0, $arDestinationSize["width"], $arDestinationSize["height"], $transparentcolor);
+                            imagefilledrectangle(
+                                $picture,
+                                0,
+                                0,
+                                $arDestinationSize["width"],
+                                $arDestinationSize["height"],
+                                $transparentcolor
+                            );
 
                             imagealphablending($picture, false);
-                            imagecopyresampled($picture, $sourceImage,
-                                0, 0, $arSourceSize["x"], $arSourceSize["y"],
-                                $arDestinationSize["width"], $arDestinationSize["height"], $arSourceSize["width"], $arSourceSize["height"]);
+                            imagecopyresampled(
+                                $picture,
+                                $sourceImage,
+                                0,
+                                0,
+                                $arSourceSize["x"],
+                                $arSourceSize["y"],
+                                $arDestinationSize["width"],
+                                $arDestinationSize["height"],
+                                $arSourceSize["width"],
+                                $arSourceSize["height"]
+                            );
                             imagealphablending($picture, true);
                         } elseif ($arSourceFileSizeTmp[2] == IMAGETYPE_GIF) {
                             imagepalettecopy($picture, $sourceImage);
@@ -583,32 +659,72 @@ class PhotoResizer
                             $transparentcolor = imagecolortransparent($sourceImage);
                             if ($transparentcolor >= 0 && $transparentcolor < imagecolorstotal($sourceImage)) {
                                 $RGB = imagecolorsforindex($sourceImage, $transparentcolor);
-                                $transparentcolor = imagecolorallocate($picture, $RGB["red"], $RGB["green"], $RGB["blue"]);
+                                $transparentcolor = imagecolorallocate(
+                                    $picture,
+                                    $RGB["red"],
+                                    $RGB["green"],
+                                    $RGB["blue"]
+                                );
                                 imagecolortransparent($picture, $transparentcolor);
-                                imagefilledrectangle($picture, 0, 0, $arDestinationSize["width"], $arDestinationSize["height"], $transparentcolor);
+                                imagefilledrectangle(
+                                    $picture,
+                                    0,
+                                    0,
+                                    $arDestinationSize["width"],
+                                    $arDestinationSize["height"],
+                                    $transparentcolor
+                                );
                             }
 
-                            imagecopyresampled($picture, $sourceImage,
-                                0, 0, $arSourceSize["x"], $arSourceSize["y"],
-                                $arDestinationSize["width"], $arDestinationSize["height"], $arSourceSize["width"], $arSourceSize["height"]);
+                            imagecopyresampled(
+                                $picture,
+                                $sourceImage,
+                                0,
+                                0,
+                                $arSourceSize["x"],
+                                $arSourceSize["y"],
+                                $arDestinationSize["width"],
+                                $arDestinationSize["height"],
+                                $arSourceSize["width"],
+                                $arSourceSize["height"]
+                            );
                         } else {
-                            imagecopyresampled($picture, $sourceImage,
-                                0, 0, $arSourceSize["x"], $arSourceSize["y"],
-                                $arDestinationSize["width"], $arDestinationSize["height"], $arSourceSize["width"], $arSourceSize["height"]);
+                            imagecopyresampled(
+                                $picture,
+                                $sourceImage,
+                                0,
+                                0,
+                                $arSourceSize["x"],
+                                $arSourceSize["y"],
+                                $arDestinationSize["width"],
+                                $arDestinationSize["height"],
+                                $arSourceSize["width"],
+                                $arSourceSize["height"]
+                            );
                         }
                     } else {
                         $picture = imagecreate($arDestinationSize["width"], $arDestinationSize["height"]);
-                        imagecopyresized($picture, $sourceImage,
-                            0, 0, $arSourceSize["x"], $arSourceSize["y"],
-                            $arDestinationSize["width"], $arDestinationSize["height"], $arSourceSize["width"], $arSourceSize["height"]);
+                        imagecopyresized(
+                            $picture,
+                            $sourceImage,
+                            0,
+                            0,
+                            $arSourceSize["x"],
+                            $arSourceSize["y"],
+                            $arDestinationSize["width"],
+                            $arDestinationSize["height"],
+                            $arSourceSize["width"],
+                            $arSourceSize["height"]
+                        );
                     }
                 } else {
                     $picture = $sourceImage;
                 }
 
                 if (is_array($arFilters)) {
-                    foreach ($arFilters as $arFilter)
+                    foreach ($arFilters as $arFilter) {
                         $bNeedCreatePicture |= \CFile::ApplyImageFilter($picture, $arFilter, $bHasAlpha);
+                    }
                 }
 
                 if (is_array($arWaterMark)) {
@@ -617,8 +733,9 @@ class PhotoResizer
                 }
 
                 if ($bNeedCreatePicture) {
-                    if ($io->FileExists($destinationFile))
+                    if ($io->FileExists($destinationFile)) {
                         $io->Delete($destinationFile);
+                    }
                     switch ($arSourceFileSizeTmp[2]) {
                         case IMAGETYPE_GIF:
                             imagegif($picture, $io->GetPhysicalName($destinationFile));
@@ -629,12 +746,15 @@ class PhotoResizer
                             imagepng($picture, $io->GetPhysicalName($destinationFile));
                             break;
                         default:
-                            if ($arSourceFileSizeTmp[2] == IMAGETYPE_BMP)
+                            if ($arSourceFileSizeTmp[2] == IMAGETYPE_BMP) {
                                 $destinationFile .= ".jpg";
-                            if ($jpgQuality === false)
+                            }
+                            if ($jpgQuality === false) {
                                 $jpgQuality = intval(\COption::GetOptionString('main', 'image_resize_quality', '95'));
-                            if ($jpgQuality <= 0 || $jpgQuality > 100)
+                            }
+                            if ($jpgQuality <= 0 || $jpgQuality > 100) {
                                 $jpgQuality = 95;
+                            }
                             imagejpeg($picture, $io->GetPhysicalName($destinationFile), $jpgQuality);
                             break;
                     }
@@ -648,7 +768,6 @@ class PhotoResizer
         return false;
     }
 
-
     /**
      * Overwrite system ScaleImage. Need for increase images
      *
@@ -660,14 +779,24 @@ class PhotoResizer
      * @param $arSourceSize
      * @param $arDestinationSize
      */
-    private static function ScaleImage($sourceImageWidth, $sourceImageHeight, $arSize, $resizeType, &$bNeedCreatePicture, &$arSourceSize, &$arDestinationSize)
-    {
-        if (!is_array($arSize))
+    private static function ScaleImage(
+        $sourceImageWidth,
+        $sourceImageHeight,
+        $arSize,
+        $resizeType,
+        &$bNeedCreatePicture,
+        &$arSourceSize,
+        &$arDestinationSize
+    ) {
+        if (!is_array($arSize)) {
             $arSize = array();
-        if (!array_key_exists("width", $arSize) || intval($arSize["width"]) <= 0)
+        }
+        if (!array_key_exists("width", $arSize) || intval($arSize["width"]) <= 0) {
             $arSize["width"] = 0;
-        if (!array_key_exists("height", $arSize) || intval($arSize["height"]) <= 0)
+        }
+        if (!array_key_exists("height", $arSize) || intval($arSize["height"]) <= 0) {
             $arSize["height"] = 0;
+        }
         $arSize["width"] = intval($arSize["width"]);
         $arSize["height"] = intval($arSize["height"]);
 
@@ -722,7 +851,12 @@ class PhotoResizer
                 }
             } else {
                 $arSourceSize = array("x" => 0, "y" => 0, "width" => $sourceImageWidth, "height" => $sourceImageHeight);
-                $arDestinationSize = array("x" => 0, "y" => 0, "width" => $sourceImageWidth, "height" => $sourceImageHeight);
+                $arDestinationSize = array(
+                    "x" => 0,
+                    "y" => 0,
+                    "width" => $sourceImageWidth,
+                    "height" => $sourceImageHeight
+                );
             }
         }
     }

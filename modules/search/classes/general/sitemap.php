@@ -1,4 +1,5 @@
 <?php
+
 IncludeModuleLangFile(__FILE__);
 
 class CAllSiteMap extends CDBResult
@@ -47,26 +48,38 @@ class CAllSiteMap extends CDBResult
             $end_of_execution = 0;
         }
 
-        if (is_array($arOptions) && ($arOptions["FORUM_TOPICS_ONLY"] == "Y"))
+        if (is_array($arOptions) && ($arOptions["FORUM_TOPICS_ONLY"] == "Y")) {
             $bForumTopicsOnly = CModule::IncludeModule("forum");
-        else
+        } else {
             $bForumTopicsOnly = false;
+        }
 
-        if (is_array($arOptions) && ($arOptions["BLOG_NO_COMMENTS"] == "Y"))
+        if (is_array($arOptions) && ($arOptions["BLOG_NO_COMMENTS"] == "Y")) {
             $bBlogNoComments = CModule::IncludeModule("blog");
-        else
+        } else {
             $bBlogNoComments = false;
+        }
 
-        if (is_array($arOptions) && ($arOptions["USE_HTTPS"] == "Y"))
+        if (is_array($arOptions) && ($arOptions["USE_HTTPS"] == "Y")) {
             $strProto = "https://";
-        else
+        } else {
             $strProto = "http://";
+        }
 
         $rsSite = CSite::GetByID($site_id);
         if ($arSite = $rsSite->Fetch()) {
             $SERVER_NAME = trim($arSite["SERVER_NAME"]);
-            if (strlen($SERVER_NAME) <= 0) {
-                $this->m_error = GetMessage("SEARCH_ERROR_SERVER_NAME", array("#SITE_ID#" => '<a href="site_edit.php?LID=' . urlencode($site_id) . '&lang=' . urlencode(LANGUAGE_ID) . '">' . htmlspecialcharsbx($site_id) . '</a>')) . "<br>";
+            if ($SERVER_NAME == '') {
+                $this->m_error = GetMessage(
+                        "SEARCH_ERROR_SERVER_NAME",
+                        array(
+                            "#SITE_ID#" => '<a href="site_edit.php?LID=' . urlencode(
+                                    $site_id
+                                ) . '&lang=' . urlencode(LANGUAGE_ID) . '">' . htmlspecialcharsbx(
+                                    $site_id
+                                ) . '</a>'
+                        )
+                    ) . "<br>";
                 return false;
             }
             //Cache events
@@ -82,21 +95,33 @@ class CAllSiteMap extends CDBResult
                 $e = fopen($arSite["ABS_DOC_ROOT"] . $arSite["DIR"] . "sitemap_errors.xml", "a");
             }
             if (!$e) {
-                $this->m_error = GetMessage("SEARCH_ERROR_OPEN_FILE") . " " . $arSite["ABS_DOC_ROOT"] . $arSite["DIR"] . "sitemap_errors.xml" . "<br>";
+                $this->m_error = GetMessage(
+                        "SEARCH_ERROR_OPEN_FILE"
+                    ) . " " . $arSite["ABS_DOC_ROOT"] . $arSite["DIR"] . "sitemap_errors.xml" . "<br>";
                 return false;
             }
             //Open current sitemap file
             if ($NS["FILE_SIZE"] == 0) {
-                $f = fopen($arSite["ABS_DOC_ROOT"] . $arSite["DIR"] . "sitemap_" . sprintf("%03d", $NS["FILE_ID"]) . ".xml", "w");
+                $f = fopen(
+                    $arSite["ABS_DOC_ROOT"] . $arSite["DIR"] . "sitemap_" . sprintf("%03d", $NS["FILE_ID"]) . ".xml",
+                    "w"
+                );
                 $strBegin = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<urlset xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.sitemaps.org/schemas/sitemap/0.9\" xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n";
                 fwrite($f, $strBegin);
-                $NS["FILE_SIZE"] += strlen($strBegin);
-
+                $NS["FILE_SIZE"] += mb_strlen($strBegin);
             } else {
-                $f = fopen($arSite["ABS_DOC_ROOT"] . $arSite["DIR"] . "sitemap_" . sprintf("%03d", $NS["FILE_ID"]) . ".xml", "a");
+                $f = fopen(
+                    $arSite["ABS_DOC_ROOT"] . $arSite["DIR"] . "sitemap_" . sprintf("%03d", $NS["FILE_ID"]) . ".xml",
+                    "a"
+                );
             }
             if (!$f) {
-                $this->m_error = GetMessage("SEARCH_ERROR_OPEN_FILE") . " " . $arSite["ABS_DOC_ROOT"] . $arSite["DIR"] . "sitemap_" . sprintf("%03d", $NS["FILE_ID"]) . ".xml" . "<br>";
+                $this->m_error = GetMessage(
+                        "SEARCH_ERROR_OPEN_FILE"
+                    ) . " " . $arSite["ABS_DOC_ROOT"] . $arSite["DIR"] . "sitemap_" . sprintf(
+                        "%03d",
+                        $NS["FILE_ID"]
+                    ) . ".xml" . "<br>";
                 return false;
             }
 
@@ -106,8 +131,9 @@ class CAllSiteMap extends CDBResult
             while (!$bFileIsFull && $ar = $this->Fetch()) {
                 $record_limit--;
                 $NS["ID"] = $ar["ID"];
-                if (strlen($ar["URL"]) < 1)
+                if (mb_strlen($ar["URL"]) < 1) {
                     continue;
+                }
 
                 if ($bForumTopicsOnly && ($ar["MODULE_ID"] == "forum")) {
                     //Forum topic ID
@@ -115,35 +141,43 @@ class CAllSiteMap extends CDBResult
                     if ($NS["PARAM2"] < $PARAM2) {
                         $NS["PARAM2"] = $PARAM2;
                         $arTopic = CForumTopic::GetByIDEx($PARAM2);
-                        if ($arTopic)
+                        if ($arTopic) {
                             $ar["FULL_DATE_CHANGE"] = $arTopic["LAST_POST_DATE"];
+                        }
                     } else {
                         continue;
                     }
                 }
 
                 if ($bBlogNoComments && ($ar["MODULE_ID"] == "blog")) {
-                    if (substr($ar["ITEM_ID"], 0, 1) === "C")
+                    if (mb_substr($ar["ITEM_ID"], 0, 1) === "C") {
                         continue;
+                    }
                 }
 
-                if (preg_match("/^[a-z]+:\\/\\//", $ar["URL"]))
+                if (preg_match("/^[a-z]+:\\/\\//", $ar["URL"])) {
                     $strURL = $ar["URL"];
-                else
+                } else {
                     $strURL = $strProto . $ar["SERVER_NAME"] . $ar["URL"];
+                }
                 $strURL = $this->LocationEncode($this->URLEncode($strURL, "UTF-8"));
 
-                $strTime = $this->TimeEncode(MakeTimeStamp(ConvertDateTime($ar["FULL_DATE_CHANGE"], "DD.MM.YYYY HH:MI:SS"), "DD.MM.YYYY HH:MI:SS"));
+                $strTime = $this->TimeEncode(
+                    MakeTimeStamp(
+                        ConvertDateTime($ar["FULL_DATE_CHANGE"], "DD.MM.YYYY HH:MI:SS"),
+                        "DD.MM.YYYY HH:MI:SS"
+                    )
+                );
 
                 $strToWrite = "\t<url>\n\t\t<loc>" . $strURL . "</loc>\n\t\t<lastmod>" . $strTime . "</lastmod>\n\t</url>\n";
 
-                if (strlen($strURL) > 2048) {
+                if (mb_strlen($strURL) > 2048) {
                     fwrite($e, $strToWrite);
                     $NS["ERROR_CNT"]++;
                 } else {
                     fwrite($f, $strToWrite);
                     $NS["CNT"]++;
-                    $NS["FILE_SIZE"] += strlen($strToWrite);
+                    $NS["FILE_SIZE"] += mb_strlen($strToWrite);
                     $NS["FILE_URL_CNT"]++;
                 }
                 //Next File on file size or url count limit
@@ -182,7 +216,9 @@ class CAllSiteMap extends CDBResult
             //WRITE INDEX FILE HERE
             $f = fopen($arSite["ABS_DOC_ROOT"] . $arSite["DIR"] . "sitemap_index.xml", "w");
             if (!$f) {
-                $this->m_error = GetMessage("SEARCH_ERROR_OPEN_FILE") . " " . $arSite["ABS_DOC_ROOT"] . $arSite["DIR"] . "sitemap_index.xml" . "<br>";
+                $this->m_error = GetMessage(
+                        "SEARCH_ERROR_OPEN_FILE"
+                    ) . " " . $arSite["ABS_DOC_ROOT"] . $arSite["DIR"] . "sitemap_index.xml" . "<br>";
                 return false;
             }
             $strBegin = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<sitemapindex xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.sitemaps.org/schemas/sitemap/0.9\" xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n";
@@ -190,7 +226,13 @@ class CAllSiteMap extends CDBResult
             for ($i = 0; $i <= $NS["FILE_ID"]; $i++) {
                 $strFile = $arSite["DIR"] . "sitemap_" . sprintf("%03d", $i) . ".xml";
                 $strTime = $this->TimeEncode(filemtime($arSite["ABS_DOC_ROOT"] . $strFile));
-                fwrite($f, "\t<sitemap>\n\t\t<loc>" . $this->URLEncode($strProto . $arSite["SERVER_NAME"] . $strFile, "UTF-8") . "</loc>\n\t\t<lastmod>" . $strTime . "</lastmod>\n\t</sitemap>\n");
+                fwrite(
+                    $f,
+                    "\t<sitemap>\n\t\t<loc>" . $this->URLEncode(
+                        $strProto . $arSite["SERVER_NAME"] . $strFile,
+                        "UTF-8"
+                    ) . "</loc>\n\t\t<lastmod>" . $strTime . "</lastmod>\n\t</sitemap>\n"
+                );
             }
             fwrite($f, "</sitemapindex>\n");
             fclose($f);
@@ -210,12 +252,14 @@ class CAllSiteMap extends CDBResult
 
         $r = parent::Fetch();
         if ($r) {
-            if (strlen($r["SITE_URL"]) > 0)
+            if ($r["SITE_URL"] <> '') {
                 $r["URL"] = $r["SITE_URL"];
+            }
 
-            if (substr($r["URL"], 0, 1) == "=") {
-                foreach ($this->m_events as $arEvent)
+            if (mb_substr($r["URL"], 0, 1) == "=") {
+                foreach ($this->m_events as $arEvent) {
                     $r["URL"] = ExecuteModuleEventEx($arEvent, array($r));
+                }
             }
             $r["URL"] = str_replace(
                 array("#LANG#", "#SITE_DIR#", "#SERVER_NAME#"),
@@ -224,15 +268,17 @@ class CAllSiteMap extends CDBResult
             );
             $r["URL"] = preg_replace("'(?<!:)/+'s", "/", $r["URL"]);
             if (defined("BX_DISABLE_INDEX_PAGE") && BX_DISABLE_INDEX_PAGE) {
-                if (!$index)
+                if (!$index) {
                     $index = "#/(" . str_replace(" ", "|", preg_quote(implode(" ", GetDirIndexArray()), "#")) . ")$#";
+                }
                 $r["URL"] = preg_replace($index, "/", $r["URL"]);
             }
 
             //Remove anchor otherwise Google will ignore this link
-            $p = strpos($r["URL"], "#");
-            if ($p !== false)
-                $r["URL"] = substr($r["URL"], 0, $p);
+            $p = mb_strpos($r["URL"], "#");
+            if ($p !== false) {
+                $r["URL"] = mb_substr($r["URL"], 0, $p);
+            }
         }
         return $r;
     }
@@ -250,7 +296,9 @@ class CAllSiteMap extends CDBResult
                     $converter = CBXPunycode::GetConverter();
                     $strEncodedURL .= $converter->Encode($part_of_url);
                 } else {
-                    $strEncodedURL .= urlencode($APPLICATION->ConvertCharset(urldecode($part_of_url), LANG_CHARSET, $charset));
+                    $strEncodedURL .= urlencode(
+                        $APPLICATION->ConvertCharset(urldecode($part_of_url), LANG_CHARSET, $charset)
+                    );
                 }
             }
         }

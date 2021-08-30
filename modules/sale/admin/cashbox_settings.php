@@ -6,8 +6,9 @@ namespace Bitrix\Sale\Cashbox\AdminPage\Settings {
     use Bitrix\Sale\Internals\Input;
     use Bitrix\Sale\Cashbox;
 
-    if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+    if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
         die();
+    }
 
     require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/lib/cashbox/inputs/file.php");
     require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/lib/delivery/inputs.php");
@@ -15,8 +16,9 @@ namespace Bitrix\Sale\Cashbox\AdminPage\Settings {
     global $APPLICATION;
 
     $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-    if ($saleModulePermissions < "W")
+    if ($saleModulePermissions < "W") {
         $APPLICATION->AuthForm(Loc::getMessage("SALE_ACCESS_DENIED"));
+    }
 
     Loc::loadMessages(__FILE__);
 
@@ -27,7 +29,14 @@ namespace Bitrix\Sale\Cashbox\AdminPage\Settings {
         $handler = $cashbox['HANDLER'];
         $cashboxSettings = $cashbox['SETTINGS'];
         if (class_exists($handler)) {
-            $settings = $handler::getSettings($cashbox['KKM_ID']);
+            $settings = [];
+            $isRestHandler = $handler === '\Bitrix\Sale\Cashbox\CashboxRest';
+            if ($isRestHandler) {
+                $restCode = $cashboxSettings['REST']['REST_CODE'];
+                $settings = Cashbox\CashboxRest::getConfigStructure($restCode);
+            } else {
+                $settings = $handler::getSettings($cashbox['KKM_ID']);
+            }
 
             if ($settings) {
                 foreach ($settings as $group => $block) {
@@ -40,8 +49,9 @@ namespace Bitrix\Sale\Cashbox\AdminPage\Settings {
                     }
 
                     $className = 'adm-detail-content-cell-l';
-                    if (isset($block['REQUIRED']) && $block['REQUIRED'] === 'Y')
+                    if (isset($block['REQUIRED']) && $block['REQUIRED'] === 'Y') {
                         $className .= ' adm-required-field';
+                    }
 
                     foreach ($block['ITEMS'] as $code => $item) {
                         $itemClassName = $className;
@@ -52,26 +62,35 @@ namespace Bitrix\Sale\Cashbox\AdminPage\Settings {
                         }
 
                         $value = null;
-                        if (isset($cashboxSettings[$group][$code]))
+                        if (isset($cashboxSettings[$group][$code])) {
                             $value = $cashboxSettings[$group][$code];
+                        }
 
                         if ($handler === '\Bitrix\Sale\Cashbox\CashboxBitrix' && $group === 'PAYMENT_TYPE') {
                             /* hack is for difference between real values of payment cashbox's settings and user view (diff is '-1') */
-                            if ($value === null)
+                            if ($value === null) {
                                 $value = $item['VALUE'];
+                            }
 
                             $value++;
                         }
 
-                        $result .= '<td width="45%" class="' . $itemClassName . '">' . htmlspecialcharsbx($item['LABEL']) . ':</td><td width="55%" valign="top" class="adm-detail-content-cell-r">' . Input\Manager::getEditHtml('SETTINGS[' . $group . '][' . $code . ']', $item, $value) . '</td></tr>';
+                        $result .= '<td width="45%" class="' . $itemClassName . '">' . htmlspecialcharsbx(
+                                $item['LABEL']
+                            ) . ':</td><td width="55%" valign="top" class="adm-detail-content-cell-r">' . Input\Manager::getEditHtml(
+                                'SETTINGS[' . $group . '][' . $code . ']',
+                                $item,
+                                $value
+                            ) . '</td></tr>';
                     }
                 }
             }
         }
     }
 
-    if ($result === '')
+    if ($result === '') {
         $result = '<tr><td colspan="2">' . Loc::getMessage('SALE_CASHBOX_NO_SETTINGS') . '</td></tr>';
+    }
 
     echo $result;
 }

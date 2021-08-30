@@ -110,8 +110,8 @@ class Responder
             }
         }
 
-        $queryPos = strpos($_SERVER["REQUEST_URI"], "?");
-        $requestUri = $queryPos === false ? $_SERVER["REQUEST_URI"] : substr($_SERVER["REQUEST_URI"], 0, $queryPos);
+        $queryPos = mb_strpos($_SERVER["REQUEST_URI"], "?");
+        $requestUri = $queryPos === false ? $_SERVER["REQUEST_URI"] : mb_substr($_SERVER["REQUEST_URI"], 0, $queryPos);
 
         //Checks excluded masks
         if (isset($compositeOptions["~EXCLUDE_MASK"]) && is_array($compositeOptions["~EXCLUDE_MASK"])) {
@@ -210,9 +210,9 @@ class Responder
             //compression support
             $compress = "";
             if ($compositeOptions["COMPRESS"] && isset($_SERVER["HTTP_ACCEPT_ENCODING"])) {
-                if (strpos($_SERVER["HTTP_ACCEPT_ENCODING"], "x-gzip") !== false) {
+                if (mb_strpos($_SERVER["HTTP_ACCEPT_ENCODING"], "x-gzip") !== false) {
                     $compress = "x-gzip";
-                } elseif (strpos($_SERVER["HTTP_ACCEPT_ENCODING"], "gzip") !== false) {
+                } elseif (mb_strpos($_SERVER["HTTP_ACCEPT_ENCODING"], "gzip") !== false) {
                     $compress = "gzip";
                 }
             }
@@ -280,7 +280,7 @@ class Responder
      */
     private static function setStatus($status)
     {
-        $bCgi = (stristr(php_sapi_name(), "cgi") !== false);
+        $bCgi = (mb_stristr(php_sapi_name(), "cgi") !== false);
         $bFastCgi = ($bCgi && (array_key_exists("FCGI_ROLE", $_SERVER) || array_key_exists("FCGI_ROLE", $_ENV)));
         if ($bCgi && !$bFastCgi) {
             header("Status: " . $status);
@@ -296,8 +296,8 @@ class Responder
         }
 
         $queryString = "";
-        if (isset($_SERVER["REQUEST_URI"]) && ($position = strpos($_SERVER["REQUEST_URI"], "?")) !== false) {
-            $queryString = substr($_SERVER["REQUEST_URI"], $position + 1);
+        if (isset($_SERVER["REQUEST_URI"]) && ($position = mb_strpos($_SERVER["REQUEST_URI"], "?")) !== false) {
+            $queryString = mb_substr($_SERVER["REQUEST_URI"], $position + 1);
             $queryString = Helper::removeIgnoredParams($queryString);
         }
 
@@ -714,7 +714,10 @@ final class FileResponse extends AbstractResponse
         if ($this->contents === null) {
             $this->contents = file_get_contents($this->cacheFile);
             if ($this->contents !== false &&
-                (strlen($this->contents) < 2500 || !preg_match("/^[a-f0-9]{32}$/", substr($this->contents, -35, 32)))
+                (mb_strlen($this->contents) < 2500 || !preg_match(
+                        "/^[a-f0-9]{32}$/",
+                        mb_substr($this->contents, -35, 32)
+                    ))
             ) {
                 $this->contents = false;
             }
@@ -734,7 +737,6 @@ final class FileResponse extends AbstractResponse
         }
 
         return $this->lastModified;
-
     }
 
     public function getEtag()
@@ -751,10 +753,10 @@ final class FileResponse extends AbstractResponse
     public function getContentType()
     {
         $contents = $this->getContents();
-        $head = strpos($contents, "</head>");
+        $head = mb_strpos($contents, "</head>");
         $meta = "#<meta.*?charset\\s*=\\s*(?:[\"']?)([^\"'>]+)#im";
 
-        if ($head !== false && preg_match($meta, substr($contents, 0, $head), $match)) {
+        if ($head !== false && preg_match($meta, mb_substr($contents, 0, $head), $match)) {
             return "text/html; charset=" . $match[1];
         }
 

@@ -26,8 +26,9 @@ class Product extends DataConverter
      */
     public function __construct($exportId)
     {
-        if (!isset($exportId) || strlen($exportId) <= 0)
+        if (!isset($exportId) || $exportId == '') {
             throw new ArgumentNullException("EXPORT_ID");
+        }
 
         $this->exportId = $exportId;
         $this->sectionsList = new Vk\SectionsList($this->exportId);
@@ -60,11 +61,13 @@ class Product extends DataConverter
             foreach ($data["OFFERS"] as $offer) {
                 $resultOffer = $this->getItemDataOffersOffer($offer);
 
-                if (!empty($resultOffer["PHOTOS"]))
+                if (!empty($resultOffer["PHOTOS"])) {
                     $this->result["PHOTOS_OFFERS"] += $resultOffer["PHOTOS"];
+                }
 
-                if (!empty($resultOffer["PHOTOS_FOR_VK"]))
+                if (!empty($resultOffer["PHOTOS_FOR_VK"])) {
                     $this->result["PHOTOS_OFFERS_FOR_VK"] += $resultOffer["PHOTOS_FOR_VK"];
+                }
 
                 $offersConverted[] = $resultOffer;
             }
@@ -76,12 +79,15 @@ class Product extends DataConverter
         if (!$this->result["PRICE"]) {
             $logger->addError('PRODUCT_EMPTY_PRICE', $data["ID"]);
 
-            return NULL;
+            return null;
         }
 
 //		if exist offers descriptions - add title for them
-        if (strlen($offersDescription) > 0)
-            $this->result["description"] .= "\n\n" . Loc::getMessage("SALE_VK_PRODUCT_VARIANTS") . "\n" . $offersDescription;
+        if ($offersDescription <> '') {
+            $this->result["description"] .= "\n\n" . Loc::getMessage(
+                    "SALE_VK_PRODUCT_VARIANTS"
+                ) . "\n" . $offersDescription;
+        }
 
 //		sorted photos array in right order
 //		todo: move this operation in Photoresizer
@@ -92,7 +98,7 @@ class Product extends DataConverter
         if (empty($photosChecked)) {
             $logger->addError("PRODUCT_WRONG_PHOTOS", $data["ID"]);
 
-            return NULL;
+            return null;
         }
 
         $this->result["PHOTO_MAIN_BX_ID"] = $photosChecked["PHOTO_MAIN_BX_ID"];
@@ -100,10 +106,12 @@ class Product extends DataConverter
         $this->result["PHOTOS"] = $photosChecked["PHOTOS"];
 
 //		add item to log, if image was be resized
-        if ($photosChecked['RESIZE_UP'])
+        if ($photosChecked['RESIZE_UP']) {
             $logger->addError('PRODUCT_PHOTOS_RESIZE_UP', $data["ID"]);
-        if ($photosChecked['RESIZE_DOWN'])
+        }
+        if ($photosChecked['RESIZE_DOWN']) {
             $logger->addError('PRODUCT_PHOTOS_RESIZE_DOWN', $data["ID"]);
+        }
 
 
 //		cleaing DESCRIPTION
@@ -130,7 +138,7 @@ class Product extends DataConverter
      * @param Vk\Logger|NULL $logger
      * @return string
      */
-    private function validateName($name, Vk\Logger $logger = NULL)
+    private function validateName($name, Vk\Logger $logger = null)
     {
         $newName = $name;
 
@@ -159,16 +167,16 @@ class Product extends DataConverter
      * @param Vk\Logger|NULL $logger
      * @return string
      */
-    private function validateDescription($desc, Vk\Logger $logger = NULL)
+    private function validateDescription($desc, Vk\Logger $logger = null)
     {
         $newDesc = $desc;
 
-        if (strlen($desc) < self::DESCRIPTION_LENGHT_MIN) {
+        if (mb_strlen($desc) < self::DESCRIPTION_LENGHT_MIN) {
             $newDesc = $this->result['NAME'] . ': ' . $desc;
-            if (strlen($newDesc) < self::DESCRIPTION_LENGHT_MIN) {
+            if (mb_strlen($newDesc) < self::DESCRIPTION_LENGHT_MIN) {
                 $newDesc = self::mb_str_pad($newDesc, self::DESCRIPTION_LENGHT_MIN, self::PAD_STRING);
 //				ending space trim fix
-                if ($newDesc[strlen($newDesc) - 1] == ' ') {
+                if ($newDesc[mb_strlen($newDesc) - 1] == ' ') {
                     $newDesc .= self::PAD_STRING;
                 }
                 if ($logger) {
@@ -177,8 +185,8 @@ class Product extends DataConverter
             }
         }
 
-        if (strlen($newDesc) > self::DESCRIPTION_LENGHT_MAX) {
-            $newDesc = substr($newDesc, 0, self::DESCRIPTION_LENGHT_MAX) . '...';
+        if (mb_strlen($newDesc) > self::DESCRIPTION_LENGHT_MAX) {
+            $newDesc = mb_substr($newDesc, 0, self::DESCRIPTION_LENGHT_MAX) . '...';
         }
 
         return $newDesc;
@@ -202,12 +210,14 @@ class Product extends DataConverter
         foreach ($offers as $offer) {
             if ($offer['PRICE']) {
 //				if not set main price - get them from SKU prices
-                if ($mainPrice == 0)
+                if ($mainPrice == 0) {
                     $mainPrice = $offer['PRICE'];
+                }
 
 //				add price to SKU descriptions only of prices is different
-                if ($offer['PRICE'] != $mainPrice)
+                if ($offer['PRICE'] != $mainPrice) {
                     $needSkuPriceDescription = true;
+                }
 
                 $mainPrice = ($mainPrice != 0) ? min($offer['PRICE'], $mainPrice) : $offer['PRICE'];
             }
@@ -217,7 +227,9 @@ class Product extends DataConverter
         $offersDescription = '';
         if ($needSkuPriceDescription) {
             foreach ($offers as $offer) {
-                $offersDescription .= $offer["DESCRIPTION_PROPERTIES"] . " - " . Loc::getMessage("SALE_VK_PRODUCT_PRICE") . " " . $offer['PRICE'] . " " . Loc::getMessage("SALE_VK_PRODUCT_CURRENCY") . "\n";
+                $offersDescription .= $offer["DESCRIPTION_PROPERTIES"] . " - " . Loc::getMessage(
+                        "SALE_VK_PRODUCT_PRICE"
+                    ) . " " . $offer['PRICE'] . " " . Loc::getMessage("SALE_VK_PRODUCT_CURRENCY") . "\n";
             }
         } else {
             foreach ($offers as $offer) {
@@ -239,20 +251,25 @@ class Product extends DataConverter
     private function sortPhotosArray()
     {
         $newPhotos = array();
-        if (isset($this->result['PHOTOS_FOR_VK']) && !empty($this->result['PHOTOS_FOR_VK']))
+        if (isset($this->result['PHOTOS_FOR_VK']) && !empty($this->result['PHOTOS_FOR_VK'])) {
             $newPhotos += $this->result['PHOTOS_FOR_VK'];
+        }
 
-        if (isset($this->result['PHOTOS_OFFERS_FOR_VK']) && !empty($this->result['PHOTOS_OFFERS_FOR_VK']))
+        if (isset($this->result['PHOTOS_OFFERS_FOR_VK']) && !empty($this->result['PHOTOS_OFFERS_FOR_VK'])) {
             $newPhotos += $this->result['PHOTOS_OFFERS_FOR_VK'];
+        }
 
-        if (isset($this->result['PHOTO_MAIN']) && !empty($this->result['PHOTO_MAIN']))
+        if (isset($this->result['PHOTO_MAIN']) && !empty($this->result['PHOTO_MAIN'])) {
             $newPhotos += $this->result['PHOTO_MAIN'];
+        }
 
-        if (isset($this->result['PHOTOS']) && !empty($this->result['PHOTOS']))
+        if (isset($this->result['PHOTOS']) && !empty($this->result['PHOTOS'])) {
             $newPhotos += $this->result['PHOTOS'];
+        }
 
-        if (isset($this->result['PHOTOS_OFFERS']) && !empty($this->result['PHOTOS_OFFERS']))
+        if (isset($this->result['PHOTOS_OFFERS']) && !empty($this->result['PHOTOS_OFFERS'])) {
             $newPhotos += $this->result['PHOTOS_OFFERS'];
+        }
 
 //		delete wasted photos
         unset(
@@ -287,14 +304,17 @@ class Product extends DataConverter
                 if ($data["PROPERTIES"][$prop]["USER_TYPE"] == 'directory') {
                     if (\CModule::IncludeModule('highloadblock')) {
 //						get ID for hl-block
-                        $resHlBlocks = HighloadBlockTable::getList(array(
-                            'filter' => array('=TABLE_NAME' => $data["PROPERTIES"][$prop]["USER_TYPE_SETTINGS"]["TABLE_NAME"]),
-                        ));
+                        $resHlBlocks = HighloadBlockTable::getList(
+                            array(
+                                'filter' => array('=TABLE_NAME' => $data["PROPERTIES"][$prop]["USER_TYPE_SETTINGS"]["TABLE_NAME"]),
+                            )
+                        );
                         $hlBlockItemId = $resHlBlocks->fetch();
                         $hlBlockItemId = $hlBlockItemId['ID'];
 //						HL directory may not exist in some strange situations
-                        if (!$hlBlockItemId)
+                        if (!$hlBlockItemId) {
                             continue;
+                        }
 
 //						get entity class for current hl
                         $hlBlock = HighloadBlockTable::getById($hlBlockItemId)->fetch();
@@ -302,36 +322,42 @@ class Product extends DataConverter
                         $strEntityDataClass = $hlEntity->getDataClass();
 
 //						get value for current hl
-                        $resData = $strEntityDataClass::getList(array(
-                            'select' => array('ID', 'UF_NAME'),
-                            'filter' => array('=UF_XML_ID' => $propValue),
-                        ));
+                        $resData = $strEntityDataClass::getList(
+                            array(
+                                'select' => array('ID', 'UF_NAME'),
+                                'filter' => array('=UF_XML_ID' => $propValue),
+                            )
+                        );
                         $propValue = $resData->fetch();
                         $propValue = $propValue['UF_NAME'];
                     }
                 }
 
-                if (is_array($propValue))
+                if (is_array($propValue)) {
                     $propValue = implode(', ', $propValue);
+                }
 
                 $propertyDescriptions[] = $data["PROPERTIES"][$prop]["NAME"] . ": " . $propValue;
             }
         }
-        if (!empty($propertyDescriptions))
+        if (!empty($propertyDescriptions)) {
             $result["DESCRIPTION_PROPERTIES"] = implode("; ", $propertyDescriptions);
+        }
 
 //		adding MAIN DESCRIPTION
-        $description = strip_tags(strlen($data["~DETAIL_TEXT"]) > 0 ? $data["~DETAIL_TEXT"] : $data["~PREVIEW_TEXT"]);
-        if ($description)
+        $description = strip_tags($data["~DETAIL_TEXT"] <> '' ? $data["~DETAIL_TEXT"] : $data["~PREVIEW_TEXT"]);
+        if ($description) {
             $result["DESCRIPTION"] .= $description;
+        }
 
 //		adding PRICE. Ib desc we adding prices later
         $result['PRICE'] = $data["PRICES"]["MIN_RUB"];
 
 //		adding PHOTOS
-        $photoId = (strlen($data["DETAIL_PICTURE"]) > 0) ? $data["DETAIL_PICTURE"] : $data["PREVIEW_PICTURE"];
-        if ($photoId)
+        $photoId = ($data["DETAIL_PICTURE"] <> '') ? $data["DETAIL_PICTURE"] : $data["PREVIEW_PICTURE"];
+        if ($photoId) {
             $result["PHOTOS"] = array($photoId => array("PHOTO_BX_ID" => $photoId));
+        }
 
 //		adding special VK photos
         $vkPhotosKey = 'PHOTOS_FOR_VK_' . $data["IBLOCK_ID"];
@@ -368,18 +394,19 @@ class Product extends DataConverter
 //		todo: DELETED should depended by AVAILABLE
         $result["deleted"] = 0;
         $result["PRICE"] = $data["PRICES"]["MIN_RUB"];    // price converted in roubles
-        $result["description"] = strlen($data["~DETAIL_TEXT"]) > 0 ? $data["~DETAIL_TEXT"] : $data["~PREVIEW_TEXT"];
+        $result["description"] = $data["~DETAIL_TEXT"] <> '' ? $data["~DETAIL_TEXT"] : $data["~PREVIEW_TEXT"];
         $result["description"] = trim(preg_replace('/\s{2,}/', "\n", $result["description"]));
 //		get main photo from preview or detail
-        $photoMainBxId = strlen($data["DETAIL_PICTURE"]) > 0 ? $data["DETAIL_PICTURE"] : $data["PREVIEW_PICTURE"];
-        $photoMainUrl = strlen($data["DETAIL_PICTURE_URL"]) > 0 ? $data["DETAIL_PICTURE_URL"] : $data["PREVIEW_PICTURE_URL"];
-        if ($photoMainBxId && $photoMainUrl)
+        $photoMainBxId = $data["DETAIL_PICTURE"] <> '' ? $data["DETAIL_PICTURE"] : $data["PREVIEW_PICTURE"];
+        $photoMainUrl = $data["DETAIL_PICTURE_URL"] <> '' ? $data["DETAIL_PICTURE_URL"] : $data["PREVIEW_PICTURE_URL"];
+        if ($photoMainBxId && $photoMainUrl) {
             $result["PHOTO_MAIN"] = array(
                 $photoMainBxId => array(
                     "PHOTO_BX_ID" => $photoMainBxId,
                     "PHOTO_URL" => $photoMainUrl,
                 ),
             );
+        }
 
 //		adding MORE PHOTOS to the all_photos array/ Later we will checked sizes
         if (isset($data["PROPERTIES"]["MORE_PHOTO"]["VALUE"]) &&

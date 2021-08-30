@@ -3,8 +3,10 @@
 namespace Bitrix\Main\Data;
 
 
+use Bitrix\Main\Data\LocalStorage;
+
 class CacheEngineXCache
-    implements ICacheEngine, ICacheEngineStat
+    implements ICacheEngine, ICacheEngineStat, LocalStorage\Storage\CacheEngineInterface
 {
     private $sid = "BX";
     //cache stats
@@ -172,15 +174,17 @@ class CacheEngineXCache
     public function clean($baseDir, $initDir = false, $filename = false)
     {
         $key = false;
-        if (strlen($filename)) {
+        if ($filename <> '') {
             $baseDirVersion = xcache_get($this->sid . $baseDir);
-            if ($baseDirVersion === null)
+            if ($baseDirVersion === null) {
                 return;
+            }
 
             if ($initDir !== false) {
                 $initDirVersion = xcache_get($baseDirVersion . "|" . $initDir);
-                if ($initDirVersion === null)
+                if ($initDirVersion === null) {
                     return;
+                }
             } else {
                 $initDirVersion = "";
             }
@@ -188,10 +192,11 @@ class CacheEngineXCache
             $key = $baseDirVersion . "|" . $initDirVersion . "|" . $filename;
             xcache_unset($key);
         } else {
-            if (strlen($initDir)) {
+            if ($initDir <> '') {
                 $baseDirVersion = xcache_get($this->sid . $baseDir);
-                if ($baseDirVersion === null)
+                if ($baseDirVersion === null) {
                     return;
+                }
 
                 xcache_unset($baseDirVersion . "|" . $initDir);
             } else {
@@ -215,13 +220,15 @@ class CacheEngineXCache
     public function read(&$allVars, $baseDir, $initDir, $filename, $TTL)
     {
         $baseDirVersion = xcache_get($this->sid . $baseDir);
-        if ($baseDirVersion === null)
+        if ($baseDirVersion === null) {
             return false;
+        }
 
         if ($initDir !== false) {
             $initDirVersion = xcache_get($baseDirVersion . "|" . $initDir);
-            if ($initDirVersion === null)
+            if ($initDirVersion === null) {
                 return false;
+            }
         } else {
             $initDirVersion = "";
         }
@@ -238,7 +245,7 @@ class CacheEngineXCache
                 }
             }
 
-            $this->read = strlen($allVars);
+            $this->read = mb_strlen($allVars);
             $allVars = unserialize($allVars);
         }
 
@@ -261,23 +268,25 @@ class CacheEngineXCache
         $baseDirVersion = xcache_get($this->sid . $baseDir);
         if ($baseDirVersion === null) {
             $baseDirVersion = md5(mt_rand());
-            if (!xcache_set($this->sid . $baseDir, $baseDirVersion))
+            if (!xcache_set($this->sid . $baseDir, $baseDirVersion)) {
                 return;
+            }
         }
 
         if ($initDir !== false) {
             $initDirVersion = xcache_get($baseDirVersion . "|" . $initDir);
             if ($initDirVersion === null) {
                 $initDirVersion = md5(mt_rand());
-                if (!xcache_set($baseDirVersion . "|" . $initDir, $initDirVersion))
+                if (!xcache_set($baseDirVersion . "|" . $initDir, $initDirVersion)) {
                     return;
+                }
             }
         } else {
             $initDirVersion = "";
         }
 
         $allVars = serialize($allVars);
-        $this->written = strlen($allVars);
+        $this->written = mb_strlen($allVars);
 
         $key = $baseDirVersion . "|" . $initDirVersion . "|" . $filename;
         xcache_set($key, $allVars, intval($TTL) * $this->ttlMultiplier);

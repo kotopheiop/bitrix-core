@@ -23,63 +23,76 @@ final class ReindexProcess extends Location\Util\Process
 
     public function __construct($options)
     {
-        $this->addStage(array(
-            'PERCENT' => 5,
-            'CODE' => 'CLEANUP',
-            'CALLBACK' => 'stageCleanup'
-        ));
+        $this->addStage(
+            array(
+                'PERCENT' => 5,
+                'CODE' => 'CLEANUP',
+                'CALLBACK' => 'stageCleanup'
+            )
+        );
 
-        $this->addStage(array(
-            'PERCENT' => 10,
-            'CODE' => 'CREATE_DICTIONARY',
-            'CALLBACK' => 'stageCreateDictionary',
-            'SUBPERCENT_CALLBACK' => 'getSubpercentForStageCreateDictionary',
-            'ON_BEFORE_CALLBACK' => 'stageCreateDictionaryBefore',
-            'ON_AFTER_CALLBACK' => 'stageCreateDictionaryAfter',
-            'TYPE' => static::CALLBACK_TYPE_QUOTA
-        ));
+        $this->addStage(
+            array(
+                'PERCENT' => 10,
+                'CODE' => 'CREATE_DICTIONARY',
+                'CALLBACK' => 'stageCreateDictionary',
+                'SUBPERCENT_CALLBACK' => 'getSubpercentForStageCreateDictionary',
+                'ON_BEFORE_CALLBACK' => 'stageCreateDictionaryBefore',
+                'ON_AFTER_CALLBACK' => 'stageCreateDictionaryAfter',
+                'TYPE' => static::CALLBACK_TYPE_QUOTA
+            )
+        );
 
-        $this->addStage(array(
-            'PERCENT' => 20,
-            'CODE' => 'RESORT_DICTIONARY',
-            'CALLBACK' => 'stageResortDictionary',
-            'SUBPERCENT_CALLBACK' => 'getSubpercentForStageResortDictionary',
-            'ON_BEFORE_CALLBACK' => 'stageResortDictionaryBefore',
-            'ON_AFTER_CALLBACK' => 'stageResortDictionaryAfter',
-            'TYPE' => static::CALLBACK_TYPE_QUOTA
-        ));
+        $this->addStage(
+            array(
+                'PERCENT' => 20,
+                'CODE' => 'RESORT_DICTIONARY',
+                'CALLBACK' => 'stageResortDictionary',
+                'SUBPERCENT_CALLBACK' => 'getSubpercentForStageResortDictionary',
+                'ON_BEFORE_CALLBACK' => 'stageResortDictionaryBefore',
+                'ON_AFTER_CALLBACK' => 'stageResortDictionaryAfter',
+                'TYPE' => static::CALLBACK_TYPE_QUOTA
+            )
+        );
 
-        $this->addStage(array(
-            'PERCENT' => 80,
-            'CODE' => 'CREATE_SEARCH_INDEX',
-            'CALLBACK' => 'stageCreateSearchIndex',
-            'SUBPERCENT_CALLBACK' => 'getSubpercentForStageCreateSearchIndex',
-            'ON_BEFORE_CALLBACK' => 'stageCreateSearchIndexBefore',
-            'ON_AFTER_CALLBACK' => 'stageCreateSearchIndexAfter',
-            'TYPE' => static::CALLBACK_TYPE_QUOTA
-        ));
+        $this->addStage(
+            array(
+                'PERCENT' => 80,
+                'CODE' => 'CREATE_SEARCH_INDEX',
+                'CALLBACK' => 'stageCreateSearchIndex',
+                'SUBPERCENT_CALLBACK' => 'getSubpercentForStageCreateSearchIndex',
+                'ON_BEFORE_CALLBACK' => 'stageCreateSearchIndexBefore',
+                'ON_AFTER_CALLBACK' => 'stageCreateSearchIndexAfter',
+                'TYPE' => static::CALLBACK_TYPE_QUOTA
+            )
+        );
 
-        $this->addStage(array(
-            'PERCENT' => 90,
-            'CODE' => 'CREATE_SITE2LOCATION_INDEX',
-            'CALLBACK' => 'stageCreateSite2LocationIndex',
-            'SUBPERCENT_CALLBACK' => 'getSubpercentForCreateSite2LocationIndex'
-        ));
+        $this->addStage(
+            array(
+                'PERCENT' => 90,
+                'CODE' => 'CREATE_SITE2LOCATION_INDEX',
+                'CALLBACK' => 'stageCreateSite2LocationIndex',
+                'SUBPERCENT_CALLBACK' => 'getSubpercentForCreateSite2LocationIndex'
+            )
+        );
 
-        $this->addStage(array(
-            'PERCENT' => 100,
-            'CODE' => 'RESTORE_DB_INDEXES',
-            'CALLBACK' => 'stageRestoreDBIndexes',
-            'SUBPERCENT_CALLBACK' => 'getSubpercentForRestoreDBIndexes'
-        ));
+        $this->addStage(
+            array(
+                'PERCENT' => 100,
+                'CODE' => 'RESTORE_DB_INDEXES',
+                'CALLBACK' => 'stageRestoreDBIndexes',
+                'SUBPERCENT_CALLBACK' => 'getSubpercentForRestoreDBIndexes'
+            )
+        );
 
         parent::__construct($options);
     }
 
     public function onAfterPerformIteration()
     {
-        if ($this->getPercent() == 100)
+        if ($this->getPercent() == 100) {
             Finder::setIndexValid();
+        }
     }
 
     /////////////////////////////////////
@@ -101,12 +114,17 @@ final class ReindexProcess extends Location\Util\Process
     protected function stageCreateDictionaryBefore()
     {
         if (!isset($this->data['WORD_TABLE_INSTANCE_SERIALIZED'])) {
-            $instance = new WordTable(array(
-                'TYPES' => Finder::getIndexedTypes(),
-                'LANGS' => Finder::getIndexedLanguages()
-            ));
+            $instance = new WordTable(
+                array(
+                    'TYPES' => Finder::getIndexedTypes(),
+                    'LANGS' => Finder::getIndexedLanguages()
+                )
+            );
         } else {
-            $instance = unserialize($this->data['WORD_TABLE_INSTANCE_SERIALIZED']);
+            $instance = unserialize(
+                $this->data['WORD_TABLE_INSTANCE_SERIALIZED'],
+                ['allowed_classes' => [WordTable::class]]
+            );
         }
 
         $this->wordInstance = $instance;
@@ -131,13 +149,17 @@ final class ReindexProcess extends Location\Util\Process
     protected function getSubpercentForStageCreateDictionary()
     {
         if (!isset($this->data['LOC_NAMES_2_INDEX_COUNT'])) {
-            $item = Location\Name\LocationTable::getList(array(
-                'select' => array('CNT'),
-                'filter' => WordTable::getFilterForInitData(array(
-                    'TYPES' => Finder::getIndexedTypes(),
-                    'LANGS' => Finder::getIndexedLanguages()
-                ))
-            ))->fetch();
+            $item = Location\Name\LocationTable::getList(
+                array(
+                    'select' => array('CNT'),
+                    'filter' => WordTable::getFilterForInitData(
+                        array(
+                            'TYPES' => Finder::getIndexedTypes(),
+                            'LANGS' => Finder::getIndexedLanguages()
+                        )
+                    )
+                )
+            )->fetch();
 
             $this->data['LOC_NAMES_2_INDEX_COUNT'] = intval($item['CNT']);
         }
@@ -150,12 +172,18 @@ final class ReindexProcess extends Location\Util\Process
     protected function stageResortDictionaryBefore()
     {
         if (!isset($this->data['WORD_TABLE_INSTANCE_SERIALIZED'])) {
-            $instance = new WordTable(array(
-                'TYPES' => Finder::getIndexedTypes(),
-                'LANGS' => Finder::getIndexedLanguages()
-            ));
-        } else
-            $instance = unserialize($this->data['WORD_TABLE_INSTANCE_SERIALIZED']);
+            $instance = new WordTable(
+                array(
+                    'TYPES' => Finder::getIndexedTypes(),
+                    'LANGS' => Finder::getIndexedLanguages()
+                )
+            );
+        } else {
+            $instance = unserialize(
+                $this->data['WORD_TABLE_INSTANCE_SERIALIZED'],
+                ['allowed_classes' => [WordTable::class]]
+            );
+        }
 
         $this->wordInstance = $instance;
     }
@@ -169,8 +197,9 @@ final class ReindexProcess extends Location\Util\Process
 
         $allDone = $this->wordInstance->resort();
 
-        if ($allDone)
+        if ($allDone) {
             $this->wordInstance->mergeResort();
+        }
 
         return $allDone;
     }
@@ -183,13 +212,16 @@ final class ReindexProcess extends Location\Util\Process
 
     protected function getSubpercentForStageResortDictionary()
     {
-        if ($this->getStep() == 0)
+        if ($this->getStep() == 0) {
             $this->data['OFFSET'] = 0;
+        }
 
         if (!isset($this->data['DICTIONARY_SIZE'])) {
-            $item = WordTable::getList(array(
-                'select' => array('CNT')
-            ))->fetch();
+            $item = WordTable::getList(
+                array(
+                    'select' => array('CNT')
+                )
+            )->fetch();
 
             $this->data['DICTIONARY_SIZE'] = intval($item['CNT']);
         }
@@ -202,11 +234,17 @@ final class ReindexProcess extends Location\Util\Process
     protected function stageCreateSearchIndexBefore()
     {
         if (!isset($this->data['CHAIN_TABLE_INSTANCE_SERIALIZED'])) {
-            $instance = new ChainTable(array(
-                'TYPES' => Finder::getIndexedTypes()
-            ));
-        } else
-            $instance = unserialize($this->data['CHAIN_TABLE_INSTANCE_SERIALIZED']);
+            $instance = new ChainTable(
+                array(
+                    'TYPES' => Finder::getIndexedTypes()
+                )
+            );
+        } else {
+            $instance = unserialize(
+                $this->data['CHAIN_TABLE_INSTANCE_SERIALIZED'],
+                ['allowed_classes' => [ChainTable::class]]
+            );
+        }
 
         $this->chainInstance = $instance;
     }
@@ -224,16 +262,19 @@ final class ReindexProcess extends Location\Util\Process
 
     protected function getSubpercentForStageCreateSearchIndex()
     {
-        if ($this->getStep() == 0)
+        if ($this->getStep() == 0) {
             $this->data['OFFSET'] = 0;
+        }
 
         if (!isset($this->data['INDEX_LOCATION_COUNT'])) {
-            $item = Location\LocationTable::getList(array(
-                'select' => array(
-                    'CNT'
-                ),
-                'filter' => ChainTable::getFilterForInitData(array('TYPES' => Finder::getIndexedTypes()))
-            ))->fetch();
+            $item = Location\LocationTable::getList(
+                array(
+                    'select' => array(
+                        'CNT'
+                    ),
+                    'filter' => ChainTable::getFilterForInitData(array('TYPES' => Finder::getIndexedTypes()))
+                )
+            )->fetch();
 
             $this->data['INDEX_LOCATION_COUNT'] = intval($item['CNT']);
         }
@@ -259,17 +300,19 @@ final class ReindexProcess extends Location\Util\Process
     {
         $step = $this->getStep();
 
-        if ($step == 0)
+        if ($step == 0) {
             WordTable::createIndex();
-        elseif ($step == 1)
+        } elseif ($step == 1) {
             ChainTable::createIndex();
-        elseif ($step == 2)
+        } elseif ($step == 2) {
             SiteLinkTable::createIndex();
+        }
 
-        if ($step >= 2)
+        if ($step >= 2) {
             $this->nextStage();
-        else
+        } else {
             $this->nextStep();
+        }
     }
 
     protected function getSubpercentForRestoreDBIndexes()
@@ -279,9 +322,9 @@ final class ReindexProcess extends Location\Util\Process
 
         $indexCount = 3;
 
-        if ($step >= $indexCount)
+        if ($step >= $indexCount) {
             return $pRange;
-        else {
+        } else {
             return round($pRange * ($step / $indexCount));
         }
     }

@@ -57,10 +57,13 @@ class Anonymity
      */
     public static function isUserVoteVisible(bool $userValue, int $voteValue)
     {
-        if ($voteValue === self::ANONYMOUSLY)
+        if ($voteValue === self::ANONYMOUSLY) {
             return false;
-        else if ($voteValue === self::PUBLICLY)
-            return true;
+        } else {
+            if ($voteValue === self::PUBLICLY) {
+                return true;
+            }
+        }
         return $userValue !== false;
     }
 
@@ -71,6 +74,5 @@ class Anonymity
 
     public static function validate($value)
     {
-
     }
 }

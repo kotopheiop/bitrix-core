@@ -68,8 +68,9 @@ final class CalendarEntity extends Entity
         // not index yet because I do not have API from Calendar
         return false;
 
-        if (!empty($message["PARAM1"]) || !empty($message["PARAM2"]))
+        if (!empty($message["PARAM1"]) || !empty($message["PARAM2"])) {
             return false;
+        }
 
         if (
             preg_match("/" . self::getXmlIdPrefix() . "(\\d+)(*.?)/", $message["XML_ID"], $matches) &&

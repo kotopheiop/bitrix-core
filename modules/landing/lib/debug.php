@@ -25,12 +25,14 @@ class Debug
         if (is_array($itemDesc)) {
             $itemDesc = print_r($itemDesc, true);
         }
-        \CEventLog::add([
-            'SEVERITY' => 'NOTICE',
-            'AUDIT_TYPE_ID' => $typeId,
-            'MODULE_ID' => 'landing',
-            'ITEM_ID' => $itemId,
-            'DESCRIPTION' => $itemDesc
-        ]);
+        \CEventLog::add(
+            [
+                'SEVERITY' => 'NOTICE',
+                'AUDIT_TYPE_ID' => $typeId,
+                'MODULE_ID' => 'landing',
+                'ITEM_ID' => $itemId,
+                'DESCRIPTION' => $itemDesc
+            ]
+        );
     }
 }

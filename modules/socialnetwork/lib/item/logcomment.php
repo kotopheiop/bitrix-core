@@ -30,10 +30,12 @@ class LogComment
             } else {
                 $select = array('*');
 
-                $res = LogCommentTable::getList(array(
-                    'filter' => array('=ID' => $logCommentId),
-                    'select' => $select
-                ));
+                $res = LogCommentTable::getList(
+                    array(
+                        'filter' => array('=ID' => $logCommentId),
+                        'select' => $select
+                    )
+                );
                 if ($fields = $res->fetch()) {
                     $logCommentFields = $fields;
 

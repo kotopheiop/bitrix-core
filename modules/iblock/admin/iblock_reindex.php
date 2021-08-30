@@ -9,22 +9,26 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/iblock/prolog.php");
 IncludeModuleLangFile(__FILE__);
 
 $IBLOCK_ID = (isset($_GET['IBLOCK_ID']) ? (int)$_GET['IBLOCK_ID'] : 0);
-if (!CIBlockRights::UserHasRightTo($IBLOCK_ID, $IBLOCK_ID, "iblock_edit"))
+if (!CIBlockRights::UserHasRightTo($IBLOCK_ID, $IBLOCK_ID, "iblock_edit")) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $max_execution_time = (isset($_REQUEST['max_execution_time']) ? (int)$_REQUEST['max_execution_time'] : 0);
-if ($max_execution_time <= 0)
+if ($max_execution_time <= 0) {
     $max_execution_time = 20;
+}
 
 $res = false;
 $iblockDropDown = array();
 $iblockFilter = array('=PROPERTY_INDEX' => 'I');
 if (Loader::includeModule('catalog')) {
     $OfferIblocks = array();
-    $offersIterator = \Bitrix\Catalog\CatalogIblockTable::getList(array(
-        'select' => array('IBLOCK_ID'),
-        'filter' => array('!PRODUCT_IBLOCK_ID' => 0)
-    ));
+    $offersIterator = \Bitrix\Catalog\CatalogIblockTable::getList(
+        array(
+            'select' => array('IBLOCK_ID'),
+            'filter' => array('!PRODUCT_IBLOCK_ID' => 0)
+        )
+    );
     while ($offer = $offersIterator->fetch()) {
         $OfferIblocks[] = (int)$offer['IBLOCK_ID'];
     }
@@ -34,13 +38,17 @@ if (Loader::includeModule('catalog')) {
     }
     unset($offersIterator, $OfferIblocks);
 }
-$iblockList = \Bitrix\Iblock\IblockTable::getList(array(
-    'select' => array('ID', 'NAME', 'ACTIVE'),
-    'filter' => $iblockFilter,
-    'order' => array('ID' => 'asc', 'NAME' => 'asc'),
-));
+$iblockList = \Bitrix\Iblock\IblockTable::getList(
+    array(
+        'select' => array('ID', 'NAME', 'ACTIVE'),
+        'filter' => $iblockFilter,
+        'order' => array('ID' => 'asc', 'NAME' => 'asc'),
+    )
+);
 while ($iblockInfo = $iblockList->fetch()) {
-    $iblockDropDown[$iblockInfo['ID']] = '[' . $iblockInfo['ID'] . '] ' . $iblockInfo['NAME'] . ($iblockInfo['ACTIVE'] == 'N' ? ' (' . GetMessage('IBLOCK_REINDEX_DEACTIVE') . ')' : '');
+    $iblockDropDown[$iblockInfo['ID']] = '[' . $iblockInfo['ID'] . '] ' . $iblockInfo['NAME'] . ($iblockInfo['ACTIVE'] == 'N' ? ' (' . GetMessage(
+                'IBLOCK_REINDEX_DEACTIVE'
+            ) . ')' : '');
 }
 unset($iblockInfo, $iblockList);
 
@@ -49,16 +57,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Reindex"] == "Y") {
     require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_js.php");
 
     if (empty($iblockDropDown)) {
-        $message = new CAdminMessage(array(
-            "MESSAGE" => GetMessage("IBLOCK_REINDEX_COMPLETE"),
-            "DETAILS" => GetMessage("IBLOCK_REINDEX_TOTAL_COMPLETE"),
-            "HTML" => true,
-            "TYPE" => "OK",
-        ));
+        $message = new CAdminMessage(
+            array(
+                "MESSAGE" => GetMessage("IBLOCK_REINDEX_COMPLETE"),
+                "DETAILS" => GetMessage("IBLOCK_REINDEX_TOTAL_COMPLETE"),
+                "HTML" => true,
+                "TYPE" => "OK",
+            )
+        );
         echo $message->Show();
     } else {
-        if (!isset($iblockDropDown[$IBLOCK_ID]))
+        if (!isset($iblockDropDown[$IBLOCK_ID])) {
             $IBLOCK_ID = key($iblockDropDown);
+        }
 
         $index = \Bitrix\Iblock\PropertyIndex\Manager::createIndexer($IBLOCK_ID);
 
@@ -83,14 +94,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Reindex"] == "Y") {
             $NS[$IBLOCK_ID]["CNT"] += $res;
             $NS[$IBLOCK_ID]["LAST_ID"] = $index->getLastElementId();
 
-            $message = new CAdminMessage(array(
-                "MESSAGE" => GetMessage("IBLOCK_REINDEX_IN_PROGRESS"),
-                "DETAILS" => GetMessage("IBLOCK_REINDEX_TOTAL") . " <span id=\"some_left\"><b>" . $NS[$IBLOCK_ID]["CNT"] . "</b></span><br>#PROGRESS_BAR#",
-                "HTML" => true,
-                "TYPE" => "PROGRESS",
-                "PROGRESS_TOTAL" => $NS[$IBLOCK_ID]["TOTAL"],
-                "PROGRESS_VALUE" => $NS[$IBLOCK_ID]["CNT"],
-            ));
+            $message = new CAdminMessage(
+                array(
+                    "MESSAGE" => GetMessage("IBLOCK_REINDEX_IN_PROGRESS"),
+                    "DETAILS" => GetMessage(
+                            "IBLOCK_REINDEX_TOTAL"
+                        ) . " <span id=\"some_left\"><b>" . $NS[$IBLOCK_ID]["CNT"] . "</b></span><br>#PROGRESS_BAR#",
+                    "HTML" => true,
+                    "TYPE" => "PROGRESS",
+                    "PROGRESS_TOTAL" => $NS[$IBLOCK_ID]["TOTAL"],
+                    "PROGRESS_VALUE" => $NS[$IBLOCK_ID]["CNT"],
+                )
+            );
             echo $message->Show();
             ?>
             <script type="text/javascript">
@@ -105,17 +120,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Reindex"] == "Y") {
             CIBlock::clearIblockTagCache($IBLOCK_ID);
             unset($iblockDropDown[$IBLOCK_ID]);
 
-            if (empty($iblockDropDown) || $NS['iblock'] > 0)
+            if (empty($iblockDropDown) || $NS['iblock'] > 0) {
                 $mess = GetMessage("IBLOCK_REINDEX_TOTAL") . " <b>" . $NS[$IBLOCK_ID]["CNT"] . "</b>";
-            else
-                $mess = GetMessage("IBLOCK_REINDEX_TOTAL") . " <span id=\"some_left\"><b>" . $NS[$IBLOCK_ID]["CNT"] . "</b></span>";
+            } else {
+                $mess = GetMessage(
+                        "IBLOCK_REINDEX_TOTAL"
+                    ) . " <span id=\"some_left\"><b>" . $NS[$IBLOCK_ID]["CNT"] . "</b></span>";
+            }
 
-            $message = new CAdminMessage(array(
-                "MESSAGE" => GetMessage("IBLOCK_REINDEX_COMPLETE"),
-                "DETAILS" => $mess,
-                "HTML" => true,
-                "TYPE" => "OK",
-            ));
+            $message = new CAdminMessage(
+                array(
+                    "MESSAGE" => GetMessage("IBLOCK_REINDEX_COMPLETE"),
+                    "DETAILS" => $mess,
+                    "HTML" => true,
+                    "TYPE" => "OK",
+                )
+            );
             echo $message->Show();
             ?>
             <script type="text/javascript">
@@ -138,11 +158,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Reindex"] == "Y") {
 } elseif (empty($iblockDropDown)) {
     $APPLICATION->SetTitle(GetMessage("IBLOCK_REINDEX_TITLE"));
     require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
-    $message = new CAdminMessage(array(
-        "DETAILS" => GetMessage("IBLOCK_REINDEX_TOTAL_COMPLETE"),
-        "HTML" => true,
-        "TYPE" => "OK",
-    ));
+    $message = new CAdminMessage(
+        array(
+            "DETAILS" => GetMessage("IBLOCK_REINDEX_TOTAL_COMPLETE"),
+            "HTML" => true,
+            "TYPE" => "OK",
+        )
+    );
     echo $message->Show();
     $aMenu = array(
         array(
@@ -256,8 +278,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Reindex"] == "Y") {
                     <option value=""><? echo GetMessage('MAIN_ALL') ?></option>
                     <? foreach ($iblockDropDown as $key => $value) {
                         ?>
-                        <option
-                        value="<? echo htmlspecialcharsbx($key) ?>" <? if ($_GET['IBLOCK_ID'] == $key) echo 'selected="selected"'; ?>><? echo htmlspecialcharsEx($value) ?></option><?
+                        <option value="<? echo htmlspecialcharsbx($key) ?>" <? if ($_GET['IBLOCK_ID'] == $key) {
+                            echo 'selected="selected"';
+                        } ?>><? echo htmlspecialcharsEx($value) ?></option><?
                     } ?>
                 </select></td>
         </tr>

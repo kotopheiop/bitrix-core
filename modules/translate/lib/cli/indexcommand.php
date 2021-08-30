@@ -27,15 +27,17 @@ class IndexCommand extends Console\Command\Command
             // the "--help" option
             ->setHelp('This system command builds search index of localization language files.')
             ->setDefinition(
-                new Console\Input\InputDefinition(array(
-                    new Console\Input\InputOption(
-                        'path',
-                        'p',
-                        Console\Input\InputArgument::OPTIONAL,
-                        'Path to look through.',
-                        '/bitrix/modules'
+                new Console\Input\InputDefinition(
+                    array(
+                        new Console\Input\InputOption(
+                            'path',
+                            'p',
+                            Console\Input\InputArgument::OPTIONAL,
+                            'Path to look through.',
+                            '/bitrix/modules'
+                        )
                     )
-                ))
+                )
             );
     }
 
@@ -59,9 +61,11 @@ class IndexCommand extends Console\Command\Command
             $output->writeln("Indexing path: {$path}");
         }
 
-        $filt = new Translate\Filter([
-            'path' => $path
-        ]);
+        $filt = new Translate\Filter(
+            [
+                'path' => $path
+            ]
+        );
 
         //-----------------
         // lang folders
@@ -141,7 +145,12 @@ class IndexCommand extends Console\Command\Command
 
             $memoryAfter = memory_get_usage();
             $memoryDiff = $memoryAfter - $memoryBefore;
-            $output->writeln('Memory usage: ' . (round($memoryAfter / 1024 / 1024, 1)) . 'M (+' . (round($memoryDiff / 1024 / 1024, 1)) . 'M)');
+            $output->writeln(
+                'Memory usage: ' . (round($memoryAfter / 1024 / 1024, 1)) . 'M (+' . (round(
+                    $memoryDiff / 1024 / 1024,
+                    1
+                )) . 'M)'
+            );
             $output->writeln('Memory peak usage: ' . (round(memory_get_peak_usage() / 1024 / 1024, 1)) . 'M');
         }
 

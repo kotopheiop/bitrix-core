@@ -16,14 +16,17 @@ $request = Bitrix\Main\Context::getCurrent()->getRequest();
 $userId = (int)($request['user'] ?: $USER->getId());
 $userOtp = Otp::getByUser($userId);
 
-if (!CModule::includeModule('security'))
+if (!CModule::includeModule('security')) {
     ShowError('Security module not installed');
+}
 
-if (!$userOtp->isActivated())
+if (!$userOtp->isActivated()) {
     ShowError('OTP inactive');
+}
 
-if (!Otp::isRecoveryCodesEnabled())
+if (!Otp::isRecoveryCodesEnabled()) {
     ShowError('OTP Recovery codes are disabled');
+}
 
 if (
     !$userId
@@ -44,17 +47,19 @@ if (isset($request['action']) && $request['action'] === 'download') {
     header('Content-Type: text/plain', true);
     header('Content-Disposition: attachment; filename="recovery_codes.txt"');
     header('Content-Transfer-Encoding: binary');
-    header(sprintf('Content-Length: %d', strlen($response)));
+    header(sprintf('Content-Length: %d', mb_strlen($response)));
     echo $response;
     die;
 }
 
 function getRecoveryCodes($userId)
 {
-    $codes = RecoveryCodesTable::getList(array(
-        'select' => array('CODE'),
-        'filter' => array('=USER_ID' => $userId, '=USED' => 'N')
-    ));
+    $codes = RecoveryCodesTable::getList(
+        array(
+            'select' => array('CODE'),
+            'filter' => array('=USER_ID' => $userId, '=USED' => 'N')
+        )
+    );
 
     $normalizedCodes = array();
     while (($code = $codes->fetch())) {
@@ -69,8 +74,9 @@ $issuer = $userOtp->getIssuer();
 $label = $userOtp->getLabel();
 
 $createdDate = CUserOptions::GetOption('security', 'recovery_codes_generated', null);
-if ($createdDate)
+if ($createdDate) {
     $createdDate = FormatDate('FULL', $createdDate);
+}
 ?>
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
 <html>
@@ -121,18 +127,27 @@ if ($createdDate)
     <?= getMessage('SEC_OTP_RECOVERY_TITLE') ?>
 </h3>
 <p>
-    <?= getMessage('SEC_OTP_RECOVERY_ISSUER', array(
-        '#ISSUER#' => htmlspecialcharsbx($issuer)
-    )) ?>
+    <?= getMessage(
+        'SEC_OTP_RECOVERY_ISSUER',
+        array(
+            '#ISSUER#' => htmlspecialcharsbx($issuer)
+        )
+    ) ?>
     <br/>
-    <?= getMessage('SEC_OTP_RECOVERY_LOGIN', array(
-        '#LOGIN#' => htmlspecialcharsbx($label)
-    )) ?>
+    <?= getMessage(
+        'SEC_OTP_RECOVERY_LOGIN',
+        array(
+            '#LOGIN#' => htmlspecialcharsbx($label)
+        )
+    ) ?>
     <? if ($createdDate): ?>
         <br/>
-        <?= getMessage('SEC_OTP_RECOVERY_CREATED', array(
-            '#DATE#' => htmlspecialcharsbx($createdDate)
-        )) ?>
+        <?= getMessage(
+            'SEC_OTP_RECOVERY_CREATED',
+            array(
+                '#DATE#' => htmlspecialcharsbx($createdDate)
+            )
+        ) ?>
     <? endif ?>
 <ol>
     <? foreach ($codes as $code): ?>

@@ -1,11 +1,14 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/subscribe/include.php");
 
 IncludeModuleLangFile(__FILE__);
 
 $POST_RIGHT = $APPLICATION->GetGroupRight("subscribe");
-if ($POST_RIGHT == "D") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($POST_RIGHT == "D") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $APPLICATION->SetTitle(GetMessage("post_title"));
 
@@ -41,18 +44,24 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_popup_a
                         </div>
                     </div>
                     <?
-                    if (!is_array($RUB_ID))
+                    if (!is_array($RUB_ID)) {
                         $RUB_ID = array();
+                    }
                     $aRub = array();
-                    $rub = CRubric::GetList(array("LID" => "ASC", "SORT" => "ASC", "NAME" => "ASC"), array("ACTIVE" => "Y"));
+                    $rub = CRubric::GetList(
+                        array("LID" => "ASC", "SORT" => "ASC", "NAME" => "ASC"),
+                        array("ACTIVE" => "Y")
+                    );
                     while ($ar = $rub->GetNext()):
                         $aRub[] = $ar["ID"];
                         ?>
                         <div class="adm-list-item">
                             <div class="adm-list-control"><input type="checkbox" id="RUB_ID_<? echo $ar["ID"] ?>"
                                                                  name="RUB_ID[]"
-                                                                 value="<? echo $ar["ID"] ?>"<? if (in_array($ar["ID"], $RUB_ID)) echo " checked" ?>
-                                                                 OnClick="CheckAll('RUB_ID')"></div>
+                                                                 value="<? echo $ar["ID"] ?>"<? if (in_array(
+                                    $ar["ID"],
+                                    $RUB_ID
+                                )) echo " checked" ?> OnClick="CheckAll('RUB_ID')"></div>
                             <div class="adm-list-label"><label
                                         for="RUB_ID_<? echo $ar["ID"] ?>"><? echo "[" . $ar["LID"] . "] " . $ar["NAME"] ?></label>
                             </div>
@@ -65,8 +74,12 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_popup_a
             <td><? echo GetMessage("post_format") ?></td>
             <td>
                 <select name="SUBSCR_FORMAT">
-                    <option value=""<? if ($SUBSCR_FORMAT == "") echo " selected" ?>><? echo GetMessage("post_format_any") ?></option>
-                    <option value="text"<? if ($SUBSCR_FORMAT == "text") echo " selected" ?>><? echo GetMessage("post_format_text") ?></option>
+                    <option value=""<? if ($SUBSCR_FORMAT == "") echo " selected" ?>><? echo GetMessage(
+                            "post_format_any"
+                        ) ?></option>
+                    <option value="text"<? if ($SUBSCR_FORMAT == "text") echo " selected" ?>><? echo GetMessage(
+                            "post_format_text"
+                        ) ?></option>
                     <option value="html"<? if ($SUBSCR_FORMAT == "html") echo " selected" ?>>HTML</option>
                 </select>
             </td>
@@ -85,18 +98,21 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_popup_a
                         </div>
                     </div>
                     <?
-                    if (!is_array($GROUP_ID))
+                    if (!is_array($GROUP_ID)) {
                         $GROUP_ID = array();
+                    }
                     $aGroup = array();
-                    $group = CGroup::GetList(($by = "sort"), ($order = "asc"));
+                    $group = CGroup::GetList();
                     while ($ar = $group->GetNext()):
                         $aGroup[] = $ar["ID"];
                         ?>
                         <div class="adm-list-item">
                             <div class="adm-list-control"><input type="checkbox" id="GROUP_ID_<? echo $ar["ID"] ?>"
                                                                  name="GROUP_ID[]"
-                                                                 value="<? echo $ar["ID"] ?>"<? if (in_array($ar["ID"], $GROUP_ID)) echo " checked" ?>
-                                                                 OnClick="CheckAll('GROUP_ID')"></div>
+                                                                 value="<? echo $ar["ID"] ?>"<? if (in_array(
+                                    $ar["ID"],
+                                    $GROUP_ID
+                                )) echo " checked" ?> OnClick="CheckAll('GROUP_ID')"></div>
                             <div class="adm-list-label"><label
                                         for="GROUP_ID_<? echo $ar["ID"] ?>"><? echo $ar["NAME"] ?>&nbsp;[<a
                                             target="_blank"
@@ -131,21 +147,31 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_popup_a
         /*subscribers*/
         $subscr = CSubscription::GetList(
             array("ID" => "ASC"),
-            array("RUBRIC_MULTI" => $RUB_ID, "CONFIRMED" => "Y", "ACTIVE" => "Y", "FORMAT" => $SUBSCR_FORMAT, "EMAIL" => $EMAIL_FILTER)
+            array(
+                "RUBRIC_MULTI" => $RUB_ID,
+                "CONFIRMED" => "Y",
+                "ACTIVE" => "Y",
+                "FORMAT" => $SUBSCR_FORMAT,
+                "EMAIL" => $EMAIL_FILTER
+            )
         );
-        while ($subscr_arr = $subscr->Fetch())
+        while ($subscr_arr = $subscr->Fetch()) {
             $aEmail[$subscr_arr["EMAIL"]] = 1;
+        }
 
         /*users by groups*/
         if (is_array($GROUP_ID) && count($GROUP_ID) > 0) {
             $arFilter = array("ACTIVE" => "Y", "EMAIL" => $EMAIL_FILTER);
-            if (!in_array(2, $GROUP_ID))
+            if (!in_array(2, $GROUP_ID)) {
                 $arFilter["GROUP_MULTI"] = $GROUP_ID;
+            }
 
-            $user = CUser::GetList(($b = "id"), ($o = "asc"), $arFilter);
-            while ($user_arr = $user->Fetch())
-                if (strlen($user_arr["EMAIL"]) > 0)
+            $user = CUser::GetList("id", "asc", $arFilter);
+            while ($user_arr = $user->Fetch()) {
+                if ($user_arr["EMAIL"] <> '') {
                     $aEmail[$user_arr["EMAIL"]] = 1;
+                }
+            }
         }
 
         $aEmail = array_keys($aEmail);
@@ -169,7 +195,10 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_popup_a
                 d.getElementById('RUB_ID_<?echo $id?>').checked = <?echo(in_array($id, $RUB_ID) ? "true" : "false")?>;
                 <?endforeach?>
                 <?foreach($aGroup as $id):?>
-                d.getElementById('GROUP_ID_<?echo $id?>').checked = <?echo(in_array($id, $GROUP_ID) ? "true" : "false")?>;
+                d.getElementById('GROUP_ID_<?echo $id?>').checked = <?echo(in_array(
+                    $id,
+                    $GROUP_ID
+                ) ? "true" : "false")?>;
                 <?endforeach?>
                 window.opener.CheckAll('RUB_ID');
                 window.opener.CheckAll('GROUP_ID');

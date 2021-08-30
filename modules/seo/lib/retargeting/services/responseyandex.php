@@ -34,8 +34,10 @@ class ResponseYandex extends Response
 
         if (isset($parsed[$endpointParts[0]])) {
             $this->setData($parsed[$endpointParts[0]]);
-        } else if (!isset($parsed['errors'])) {
-            $this->setData($parsed);
+        } else {
+            if (!isset($parsed['errors'])) {
+                $this->setData($parsed);
+            }
         }
     }
 }

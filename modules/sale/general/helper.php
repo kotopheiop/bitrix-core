@@ -1,12 +1,14 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 class CSaleHelper
 {
     public static function IsAssociativeArray($ar)
     {
-        if (count($ar) <= 0)
+        if (count($ar) <= 0) {
             return false;
+        }
 
         $fl = false;
 
@@ -62,13 +64,15 @@ class CSaleHelper
     {
         $arField["VALUE"] = CSaleDeliveryHelper::getConfValue($arField);
         $resultHtml = '';
-        $name = htmlspecialcharsbx($fieldName . (strlen($fieldId) > 0 ? '[' . $fieldId . ']' : ''));
+        $name = htmlspecialcharsbx($fieldName . ($fieldId <> '' ? '[' . $fieldId . ']' : ''));
 
-        if (isset($arField['PRE_TEXT']))
+        if (isset($arField['PRE_TEXT'])) {
             $resultHtml = $arField['PRE_TEXT'] . ' ';
+        }
 
-        if (isset($arField['BLOCK_HIDEABLE']))
+        if (isset($arField['BLOCK_HIDEABLE'])) {
             $resultHtml .= '<a href="javascript:void(0);" style="border-bottom: 1px dashed; text-decoration: none;">';
+        }
 
         switch ($arField["TYPE"]) {
             case "TEXT_RO":  //read only text
@@ -85,8 +89,11 @@ class CSaleHelper
                     'value="Y" ' .
                     ($arField["VALUE"] == "Y" ? "checked=\"checked\"" : "");
 
-                if (isset($arField['HIDE_BY_NAMES']) && is_array($arField['HIDE_BY_NAMES']))
-                    $resultHtml .= 'onclick="hideFormElementsByNames(this, ' . CUtil::PhpToJSObject($arField['HIDE_BY_NAMES']) . ');"';
+                if (isset($arField['HIDE_BY_NAMES']) && is_array($arField['HIDE_BY_NAMES'])) {
+                    $resultHtml .= 'onclick="hideFormElementsByNames(this, ' . CUtil::PhpToJSObject(
+                            $arField['HIDE_BY_NAMES']
+                        ) . ');"';
+                }
 
                 $resultHtml .= '/>';
 
@@ -110,7 +117,9 @@ class CSaleHelper
 
                 foreach ($arField["VALUES"] as $value => $title) {
                     $resultHtml .= '<input type="radio"
-										id="hc_' . htmlspecialcharsbx($fieldId) . '_' . htmlspecialcharsbx($value) . '"' .
+										id="hc_' . htmlspecialcharsbx($fieldId) . '_' . htmlspecialcharsbx(
+                            $value
+                        ) . '"' .
                         'name="' . $name . '" ' .
                         'value="' . htmlspecialcharsbx($value) . '"' .
                         ($value == $arField["VALUE"] ? " checked=\"checked\"" : "") . ' />' .
@@ -133,8 +142,9 @@ class CSaleHelper
 
                 $resultHtml .= '<select name="' . $name . '" ';
 
-                if (isset($arField['ONCHANGE']))
+                if (isset($arField['ONCHANGE'])) {
                     $resultHtml .= ' onchange = "' . $arField['ONCHANGE'] . '"';
+                }
 
                 $resultHtml .= '>';
 
@@ -153,12 +163,13 @@ class CSaleHelper
             case "MULTISELECT":
                 $resultHtml .= '<select name="' . $name . '" multiple="multiple">';
 
-                foreach ($arField["VALUES"] as $value => $title)
+                foreach ($arField["VALUES"] as $value => $title) {
                     $resultHtml .= '<option ' .
                         'value="' . htmlspecialcharsbx($value) . '"' .
                         (in_array($value, $arField["VALUE"]) ? " selected=\"selected\"" : "") . '>' .
                         htmlspecialcharsbx($title) .
                         '</option>';
+                }
 
                 $resultHtml .= '</select>';
                 break;
@@ -183,8 +194,9 @@ class CSaleHelper
                     '/>';
         }
 
-        if (isset($arField['BLOCK_HIDEABLE']))
+        if (isset($arField['BLOCK_HIDEABLE'])) {
             $resultHtml .= '</a>';
+        }
 
         if (isset($arField['POST_TEXT'])):
             $resultHtml .= ' ' . $arField['POST_TEXT'];
@@ -223,20 +235,30 @@ class CSaleHelper
             case "TEXT_CENTERED":
                 $wrapHtml .= '<tr';
 
-                if (isset($arConfig["BLOCK_HIDEABLE"]))
-                    $wrapHtml .= ' onclick="BX.Sale.PaySystem.toggleNextSiblings(this,' . intval($arConfig["BLOCK_LENGTH"]) . ');" class="ps-admin-hide" ';
+                if (isset($arConfig["BLOCK_HIDEABLE"])) {
+                    $wrapHtml .= ' onclick="BX.Sale.PaySystem.toggleNextSiblings(this,' . intval(
+                            $arConfig["BLOCK_LENGTH"]
+                        ) . ');" class="ps-admin-hide" ';
+                }
 
                 $wrapHtml .= '><td style="text-align: center; font-weight: bold;' . $tdStyle . '" colspan="2">' . $controlHtml;
 
-                if (isset($arConfig["BLOCK_DELETABLE"]))
-                    $wrapHtml .= '&nbsp;&nbsp;<a href="javascript:void(0);" onclick="BX.Sale.PaySystem.deleteObjectAndNextSiblings(this,' . intval($arConfig["BLOCK_LENGTH"]) . ',2);" style="border-bottom: 1px dashed; text-decoration: none;">' . GetMessage("SALE_HELPER_DELETE") . '</a>';
+                if (isset($arConfig["BLOCK_DELETABLE"])) {
+                    $wrapHtml .= '&nbsp;&nbsp;<a href="javascript:void(0);" onclick="BX.Sale.PaySystem.deleteObjectAndNextSiblings(this,' . intval(
+                            $arConfig["BLOCK_LENGTH"]
+                        ) . ',2);" style="border-bottom: 1px dashed; text-decoration: none;">' . GetMessage(
+                            "SALE_HELPER_DELETE"
+                        ) . '</a>';
+                }
 
                 $wrapHtml .= '</td></tr>';
                 break;
 
             default:
                 $wrapHtml .= '<tr>' .
-                    '<td style="' . $tdStyle . '" class="field-name"' . (($arConfig["TYPE"] == "MULTISELECT") ? ' valign="top"' : '') . ' width="40%" align="right">' . htmlspecialcharsbx($arConfig["TITLE"]) . ':</td>' .
+                    '<td style="' . $tdStyle . '" class="field-name"' . (($arConfig["TYPE"] == "MULTISELECT") ? ' valign="top"' : '') . ' width="40%" align="right">' . htmlspecialcharsbx(
+                        $arConfig["TITLE"]
+                    ) . ':</td>' .
                     '<td style="' . $tdStyle . '" valign="top" width="60%">' .
                     $controlHtml .
                     '</td>' .
@@ -246,13 +268,17 @@ class CSaleHelper
         return $wrapHtml;
     }
 
-    public static function getOptionOrImportValues($optName, $importFuncName = false, $arFuncParams = array(), $siteId = "")
-    {
+    public static function getOptionOrImportValues(
+        $optName,
+        $importFuncName = false,
+        $arFuncParams = array(),
+        $siteId = ""
+    ) {
         $arResult = array();
 
-        if (strlen(trim($optName)) >= 0) {
+        if (trim($optName) !== '') {
             $optValue = COption::GetOptionString('sale', $optName, '', $siteId);
-            $arOptValue = unserialize($optValue);
+            $arOptValue = unserialize($optValue, ['allowed_classes' => false]);
 
             if (empty($arOptValue)) {
                 if ($importFuncName !== false && is_callable($importFuncName)) {
@@ -272,8 +298,9 @@ class CSaleHelper
         $loc_diff = COption::GetOptionString('sale', 'ADDRESS_different_set', 'N');
 
         if ($loc_diff == "Y" && ($siteId !== false || defined(SITE_ID))) {
-            if ($siteId === false)
+            if ($siteId === false) {
                 $siteId = SITE_ID;
+            }
 
             $locId = COption::GetOptionString('sale', 'location', '', $siteId);
             $locZip = COption::GetOptionString('sale', 'location_zip', '', $siteId);
@@ -281,10 +308,11 @@ class CSaleHelper
             $locId = COption::GetOptionString('sale', 'location', '');
             $locZip = COption::GetOptionString('sale', 'location_zip', '');
 
-            if (strlen($locId) <= 0) {
+            if ($locId == '') {
                 static $defSite = null;
-                if (!isset($defSite))
+                if (!isset($defSite)) {
                     $defSite = CSite::GetDefSite();
+                }
 
                 if ($defSite) {
                     $locId = COption::GetOptionString('sale', 'location', '', $defSite);
@@ -296,8 +324,9 @@ class CSaleHelper
         if ((string)$locId != '') {
             $location = self::getLocationByIdHitCached($locId);
 
-            if (intval($location['ID']))
+            if (intval($location['ID'])) {
                 $locId = $location['ID'];
+            }
         }
 
         return array(
@@ -313,8 +342,9 @@ class CSaleHelper
         if (!isset($shopLocationId[$siteId])) {
             $locParams = self::getShopLocationParams($siteId);
 
-            if (isset($locParams['ID']) && strlen($locParams['ID']) > 0)
+            if (isset($locParams['ID']) && $locParams['ID'] <> '') {
                 $shopLocationId[$siteId] = $locParams['ID'];
+            }
         }
 
         return $shopLocationId[$siteId];
@@ -324,11 +354,12 @@ class CSaleHelper
     {
         static $shopLocationZip = '';
 
-        if (strlen($shopLocationZip) <= 0) {
+        if ($shopLocationZip == '') {
             $locParams = self::getShopLocationParams();
 
-            if (isset($locParams['ZIP']) && strlen($locParams['ZIP']) > 0)
+            if (isset($locParams['ZIP']) && $locParams['ZIP'] <> '') {
                 $shopLocationZip = strval($locParams['ZIP']);
+            }
         }
 
         return $shopLocationZip;
@@ -341,8 +372,9 @@ class CSaleHelper
         if (empty($shopLocation)) {
             $shopLocationId = self::getShopLocationId($siteId);
 
-            if (intval($shopLocationId) > 0)
+            if (intval($shopLocationId) > 0) {
                 $shopLocation = CSaleLocation::GetByID($shopLocationId);
+            }
         }
 
         return $shopLocation;
@@ -373,10 +405,18 @@ class CSaleHelper
         $arFile = CFile::GetFileArray($fileId);
         if ($arFile) {
             $is_image = CFile::IsImage($arFile["FILE_NAME"], $arFile["CONTENT_TYPE"]);
-            if ($is_image)
-                $resultHTML = CFile::ShowImage($arFile["ID"], $arSize["WIDTH"], $arSize["HEIGHT"], "border=0", $arFile["SRC"], true);
-            else
+            if ($is_image) {
+                $resultHTML = CFile::ShowImage(
+                    $arFile["ID"],
+                    $arSize["WIDTH"],
+                    $arSize["HEIGHT"],
+                    "border=0",
+                    $arFile["SRC"],
+                    true
+                );
+            } else {
                 $resultHTML = '<a href="' . $arFile["SRC"] . '">' . $arFile["ORIGINAL_NAME"] . '</a>';
+            }
         }
         return $resultHTML;
     }
@@ -388,33 +428,38 @@ class CSaleHelper
         if ($propData["MULTIPLE"] == "Y") {
             $arVal = array();
             if (!is_array($value)) {
-                if (strpos($value, ",") !== false)
+                if (mb_strpos($value, ",") !== false) {
                     $arVal = explode(",", $value);
-                else
+                } else {
                     $arVal[] = $value;
-            } else
+                }
+            } else {
                 $arVal = $value;
+            }
 
             if (count($arVal) > 0) {
                 foreach ($arVal as $key => $val) {
                     if ($propData["PROPERTY_TYPE"] == "F") {
-                        if (strlen($res) > 0)
+                        if ($res <> '') {
                             $res .= "<br/> " . CSaleHelper::getFileInfo(trim($val), $arSize);
-                        else
+                        } else {
                             $res = CSaleHelper::getFileInfo(trim($val), $arSize);
+                        }
                     } else {
-                        if (strlen($res) > 0)
+                        if ($res <> '') {
                             $res .= ", " . $val;
-                        else
+                        } else {
                             $res = $val;
+                        }
                     }
                 }
             }
         } else {
-            if ($propData["PROPERTY_TYPE"] == "F")
+            if ($propData["PROPERTY_TYPE"] == "F") {
                 $res = CSaleHelper::getFileInfo($value, $arSize);
-            else
+            } else {
                 $res = $value;
+            }
         }
 
         return $res;
@@ -424,8 +469,9 @@ class CSaleHelper
     {
         static $result = array();
 
-        if (!isset($result[$id]))
+        if (!isset($result[$id])) {
             $result[$id] = CSaleLocation::GetByIDForLegacyDelivery($id);
+        }
 
         return $result[$id];
     }

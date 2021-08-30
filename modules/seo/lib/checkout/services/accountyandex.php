@@ -12,6 +12,7 @@ Loc::loadMessages(__FILE__);
 
 /**
  * Class AccountYandex
+ * @deprecated
  * @package Bitrix\Seo\Checkout\Services
  */
 class AccountYandex extends BaseApiObject
@@ -49,7 +50,9 @@ class AccountYandex extends BaseApiObject
             $request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
             $host = $request->isHttps() ? 'https' : 'http';
 
-            $this->callbackEventUrl = new Web\Uri($host . '://' . $request->getHttpHost() . '/bitrix/tools/sale_ps_result.php');
+            $this->callbackEventUrl = new Web\Uri(
+                $host . '://' . $request->getHttpHost() . '/bitrix/tools/sale_ps_result.php'
+            );
         }
 
         return $this->callbackEventUrl;
@@ -70,19 +73,21 @@ class AccountYandex extends BaseApiObject
      */
     public function getProfile()
     {
-        $token = $this->getRequest()->getAuthAdapter()->getToken();
-        $response = $this->getRequest()->getClient()->get('https://login.yandex.ru/info?format=json&oauth_token=' . $token);
+        $response = $this->getRequest()->send(
+            [
+                'methodName' => 'profile.info',
+                'parameters' => []
+            ]
+        );
 
-        if ($response) {
-            $response = Web\Json::decode($response);
-            if (is_array($response)) {
-                return [
-                    'ID' => $response['id'],
-                    'NAME' => $response['login'],
-                    'LINK' => '',
-                    'PICTURE' => 'https://avatars.mds.yandex.net/get-yapic/0/0-0/islands-50',
-                ];
-            }
+        $response = $response->getData();
+        if (\is_array($response)) {
+            return [
+                'ID' => $response['id'],
+                'NAME' => $response['login'],
+                'LINK' => '',
+                'PICTURE' => '',
+            ];
         }
 
         return null;
@@ -108,17 +113,21 @@ class AccountYandex extends BaseApiObject
         $callbackUrl = $this->getCallbackEventUrl();
         if (!$this->isHttps($callbackUrl)) {
             $response = Response::create(self::TYPE_CODE);
-            $response->addError(new \Bitrix\Main\Error(Loc::getMessage('SEO_CHECKOUT_SERVICE_ACCOUNT_YANDEX_ERROR_SCHEME_CALLBACK_URL')));
+            $response->addError(
+                new \Bitrix\Main\Error(Loc::getMessage('SEO_CHECKOUT_SERVICE_ACCOUNT_YANDEX_ERROR_SCHEME_CALLBACK_URL'))
+            );
             return $response;
         }
 
-        $response = $this->getRequest()->send([
-            'methodName' => 'webhook.register',
-            'parameters' => [
-                'EVENT' => 'payment.succeeded',
-                'URL' => $callbackUrl->getUri(),
+        $response = $this->getRequest()->send(
+            [
+                'methodName' => 'webhook.register',
+                'parameters' => [
+                    'EVENT' => 'payment.succeeded',
+                    'URL' => $callbackUrl->getUri(),
+                ]
             ]
-        ]);
+        );
 
         return $response;
     }
@@ -132,17 +141,21 @@ class AccountYandex extends BaseApiObject
         $callbackUrl = $this->getCallbackEventUrl();
         if (!$this->isHttps($callbackUrl)) {
             $response = Response::create(self::TYPE_CODE);
-            $response->addError(new \Bitrix\Main\Error(Loc::getMessage('SEO_CHECKOUT_SERVICE_ACCOUNT_YANDEX_ERROR_SCHEME_CALLBACK_URL')));
+            $response->addError(
+                new \Bitrix\Main\Error(Loc::getMessage('SEO_CHECKOUT_SERVICE_ACCOUNT_YANDEX_ERROR_SCHEME_CALLBACK_URL'))
+            );
             return $response;
         }
 
-        $response = $this->getRequest()->send([
-            'methodName' => 'webhook.register',
-            'parameters' => [
-                'EVENT' => 'payment.canceled',
-                'URL' => $callbackUrl->getUri(),
+        $response = $this->getRequest()->send(
+            [
+                'methodName' => 'webhook.register',
+                'parameters' => [
+                    'EVENT' => 'payment.canceled',
+                    'URL' => $callbackUrl->getUri(),
+                ]
             ]
-        ]);
+        );
 
         return $response;
     }
@@ -156,17 +169,21 @@ class AccountYandex extends BaseApiObject
         $callbackUrl = $this->getCallbackEventUrl();
         if (!$this->isHttps($callbackUrl)) {
             $response = Response::create(self::TYPE_CODE);
-            $response->addError(new \Bitrix\Main\Error(Loc::getMessage('SEO_CHECKOUT_SERVICE_ACCOUNT_YANDEX_ERROR_SCHEME_CALLBACK_URL')));
+            $response->addError(
+                new \Bitrix\Main\Error(Loc::getMessage('SEO_CHECKOUT_SERVICE_ACCOUNT_YANDEX_ERROR_SCHEME_CALLBACK_URL'))
+            );
             return $response;
         }
 
-        $response = $this->getRequest()->send([
-            'methodName' => 'webhook.register',
-            'parameters' => [
-                'EVENT' => 'refund.succeeded',
-                'URL' => $callbackUrl->getUri(),
+        $response = $this->getRequest()->send(
+            [
+                'methodName' => 'webhook.register',
+                'parameters' => [
+                    'EVENT' => 'refund.succeeded',
+                    'URL' => $callbackUrl->getUri(),
+                ]
             ]
-        ]);
+        );
 
         return $response;
     }
@@ -177,12 +194,14 @@ class AccountYandex extends BaseApiObject
      */
     public function removeWebhook($id)
     {
-        $response = $this->getRequest()->send([
-            'methodName' => 'webhook.remove',
-            'parameters' => [
-                'ID' => $id,
+        $response = $this->getRequest()->send(
+            [
+                'methodName' => 'webhook.remove',
+                'parameters' => [
+                    'ID' => $id,
+                ]
             ]
-        ]);
+        );
 
         return $response;
     }
@@ -193,10 +212,12 @@ class AccountYandex extends BaseApiObject
      */
     public function getWebhookList()
     {
-        $response = $this->getRequest()->send([
-            'methodName' => 'webhook.list',
-            'parameters' => []
-        ]);
+        $response = $this->getRequest()->send(
+            [
+                'methodName' => 'webhook.list',
+                'parameters' => []
+            ]
+        );
 
         return $response;
     }
@@ -207,10 +228,12 @@ class AccountYandex extends BaseApiObject
      */
     public function getShopInfo()
     {
-        $response = $this->getRequest()->send([
-            'methodName' => 'shop.info',
-            'parameters' => []
-        ]);
+        $response = $this->getRequest()->send(
+            [
+                'methodName' => 'shop.info',
+                'parameters' => []
+            ]
+        );
 
         return $response;
     }

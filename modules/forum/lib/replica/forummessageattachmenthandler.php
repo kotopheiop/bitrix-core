@@ -54,7 +54,8 @@ if (Loader::includeModule('replica')) {
                 array(
                     "ID" => $messageId,
                 ),
-                false, 0,
+                false,
+                0,
                 array("SELECT" => array("UF_FORUM_MESSAGE_DOC"))
             );
             $messageInfo = $messageList->fetch();
@@ -95,8 +96,10 @@ if (Loader::includeModule('replica')) {
 
             if ($this->replaceGuidsWithFiles($fields)) {
                 $update = $sqlHelper->prepareUpdate("b_forum_message", $fields);
-                if (strlen($update[0]) > 0) {
-                    $sql = "UPDATE " . $sqlHelper->quote("b_forum_message") . " SET " . $update[0] . " WHERE ID = " . $messId;
+                if ($update[0] <> '') {
+                    $sql = "UPDATE " . $sqlHelper->quote(
+                            "b_forum_message"
+                        ) . " SET " . $update[0] . " WHERE ID = " . $messId;
                     $connection->query($sql);
 
                     if (\Bitrix\Main\Loader::includeModule('socialnetwork')) {
@@ -135,7 +138,10 @@ if (Loader::includeModule('replica')) {
                             );
 
                             $ufFileID = array();
-                            $dbAddedMessageFiles = \CForumFiles::GetList(array("ID" => "ASC"), array("MESSAGE_ID" => $messId));
+                            $dbAddedMessageFiles = \CForumFiles::GetList(
+                                array("ID" => "ASC"),
+                                array("MESSAGE_ID" => $messId)
+                            );
                             while ($arAddedMessageFiles = $dbAddedMessageFiles->Fetch()) {
                                 $ufFileID[] = $arAddedMessageFiles["FILE_ID"];
                             }
@@ -144,7 +150,12 @@ if (Loader::includeModule('replica')) {
                                 $arFieldsForSocnet["UF_SONET_COM_FILE"] = $ufFileID;
                             }
 
-                            $ufDocID = $GLOBALS["USER_FIELD_MANAGER"]->GetUserFieldValue("FORUM_MESSAGE", "UF_FORUM_MESSAGE_DOC", intval($messId), LANGUAGE_ID);
+                            $ufDocID = $GLOBALS["USER_FIELD_MANAGER"]->GetUserFieldValue(
+                                "FORUM_MESSAGE",
+                                "UF_FORUM_MESSAGE_DOC",
+                                intval($messId),
+                                LANGUAGE_ID
+                            );
                             if ($ufDocID) {
                                 $arFieldsForSocnet["UF_SONET_COM_DOC"] = $ufDocID;
                             }

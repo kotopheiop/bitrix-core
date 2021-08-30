@@ -36,7 +36,8 @@ class Helper
             $cacheId = "SaleHandlersDeliveryAdditionalRusPost" .
                 $deliveryId .
                 "ShippingPoints" .
-                md5(serialize($deliveryService->getConfigValues())
+                md5(
+                    serialize($deliveryService->getConfigValues())
                 );
 
             $cacheManager = \Bitrix\Main\Application::getInstance()->getManagedCache();
@@ -84,7 +85,9 @@ class Helper
         }
 
         if (get_class($deliveryRequest) != 'Sale\Handlers\Delivery\Additional\DeliveryRequests\RusPost\Handler') {
-            $result->addError(new Error('Can\t obtain class Sale\Handlers\Delivery\Additional\DeliveryRequests\RusPost\Handler'));
+            $result->addError(
+                new Error('Can\t obtain class Sale\Handlers\Delivery\Additional\DeliveryRequests\RusPost\Handler')
+            );
             return $result;
         }
 

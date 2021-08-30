@@ -22,8 +22,9 @@ class Department
         $managers = self::getManagers($departments);
         foreach ($managers as $departmentId => $users) {
             foreach ($users as $uid) {
-                if ($userId == $uid)
+                if ($userId == $uid) {
                     continue;
+                }
 
                 $list[$uid] = $uid;
             }
@@ -32,8 +33,9 @@ class Department
         $employees = self::getEmployees($departments);
         foreach ($employees as $departmentId => $users) {
             foreach ($users as $uid) {
-                if ($userId == $uid)
+                if ($userId == $uid) {
                     continue;
+                }
 
                 $list[$uid] = $uid;
             }
@@ -44,8 +46,9 @@ class Department
             $managers = self::getManagers(null);
             foreach ($managers as $departmentId => $users) {
                 foreach ($users as $uid) {
-                    if ($userId == $uid)
+                    if ($userId == $uid) {
                         continue;
+                    }
 
                     $list[$uid] = $uid;
                 }
@@ -97,7 +100,9 @@ class Department
             }
             if ($options['USER_DATA'] == 'Y') {
                 $userData = \Bitrix\Im\User::getInstance($department['MANAGER_USER_ID']);
-                $department['MANAGER_USER_DATA'] = $options['JSON'] == 'Y' ? $userData->getArray(Array('JSON' => 'Y')) : $userData;
+                $department['MANAGER_USER_DATA'] = $options['JSON'] == 'Y' ? $userData->getArray(
+                    Array('JSON' => 'Y')
+                ) : $userData;
             }
 
             $result[$key] = $options['JSON'] == 'Y' ? array_change_key_case($department, CASE_LOWER) : $department;
@@ -127,7 +132,7 @@ class Department
         $limit = isset($options['LIST']['LIMIT']) ? intval($options['LIST']['LIMIT']) : 50;
         $offset = isset($options['LIST']['OFFSET']) ? intval($options['LIST']['OFFSET']) : 0;
 
-        if (isset($options['FILTER']['SEARCH']) && strlen($options['FILTER']['SEARCH']) > 1) {
+        if (isset($options['FILTER']['SEARCH']) && mb_strlen($options['FILTER']['SEARCH']) > 1) {
             $count = 0;
             $breakAfterDigit = $offset === 0 ? $offset : false;
 
@@ -135,8 +140,8 @@ class Department
             foreach ($list as $key => $department) {
                 $checkField = ToLower($department['FULL_NAME']);
                 if (
-                    strpos($checkField, $options['FILTER']['SEARCH']) !== 0
-                    && strpos($checkField, ' ' . $options['FILTER']['SEARCH']) === false
+                    mb_strpos($checkField, $options['FILTER']['SEARCH']) !== 0
+                    && mb_strpos($checkField, ' ' . $options['FILTER']['SEARCH']) === false
                 ) {
                     unset($list[$key]);
                 }
@@ -160,7 +165,9 @@ class Department
             foreach ($list as $key => $department) {
                 if ($options['USER_DATA'] == 'Y') {
                     $userData = \Bitrix\Im\User::getInstance($department['MANAGER_USER_ID']);
-                    $department['MANAGER_USER_DATA'] = $options['JSON'] == 'Y' ? $userData->getArray(Array('JSON' => 'Y')) : $userData;
+                    $department['MANAGER_USER_DATA'] = $options['JSON'] == 'Y' ? $userData->getArray(
+                        Array('JSON' => 'Y')
+                    ) : $userData;
                 }
 
                 $list[$key] = $options['JSON'] == 'Y' ? array_change_key_case($department, CASE_LOWER) : $department;
@@ -187,14 +194,18 @@ class Department
 
         $managers = Array();
         foreach ($list as $department) {
-            if ($department['MANAGER_USER_ID'] <= 0)
+            if ($department['MANAGER_USER_ID'] <= 0) {
                 continue;
+            }
 
-            if (is_array($ids) && !in_array($department['ID'], $ids))
+            if (is_array($ids) && !in_array($department['ID'], $ids)) {
                 continue;
+            }
 
             if ($options['USER_DATA'] == 'Y') {
-                $managers[$department['ID']][] = \Bitrix\Im\User::getInstance($department['MANAGER_USER_ID'])->getArray($userOptions);
+                $managers[$department['ID']][] = \Bitrix\Im\User::getInstance($department['MANAGER_USER_ID'])->getArray(
+                    $userOptions
+                );
             } else {
                 $managers[$department['ID']][] = $department['MANAGER_USER_ID'];
             }
@@ -216,8 +227,9 @@ class Department
 
         $result = Array();
         foreach ($structure['DATA'] as $department) {
-            if (is_array($ids) && !in_array($department['ID'], $ids))
+            if (is_array($ids) && !in_array($department['ID'], $ids)) {
                 continue;
+            }
 
             if (!is_array($department['EMPLOYEES'])) {
                 $result[$department['ID']] = Array();
@@ -245,8 +257,9 @@ class Department
 
         $employees = Array();
         foreach ($list as $departmentId => $users) {
-            if (is_array($ids) && !in_array($departmentId, $ids))
+            if (is_array($ids) && !in_array($departmentId, $ids)) {
                 continue;
+            }
 
             foreach ($users as $employeeId) {
                 if ($options['USER_DATA'] == 'Y') {

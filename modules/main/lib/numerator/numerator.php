@@ -95,7 +95,10 @@ class Numerator
                 $settings['settingsWords'][$class::getType()] = $class::getTemplateWordsSettings();
             }
         }
-        $settings['settingsWords'] = array_merge_recursive($settings['settingsWords'], static::getUserDefinedTemplateWords($numeratorType));
+        $settings['settingsWords'] = array_merge_recursive(
+            $settings['settingsWords'],
+            static::getUserDefinedTemplateWords($numeratorType)
+        );
 
         return $settings;
     }
@@ -297,12 +300,15 @@ class Numerator
     public function save()
     {
         $settingsToStore = $this->getSettings();
-        $result = NumeratorTable::saveNumerator($this->id, [
-            'NAME' => $this->name,
-            'TEMPLATE' => $this->template,
-            'TYPE' => $this->type ? $this->type : static::NUMERATOR_DEFAULT_TYPE,
-            'SETTINGS' => $settingsToStore,
-        ]);
+        $result = NumeratorTable::saveNumerator(
+            $this->id,
+            [
+                'NAME' => $this->name,
+                'TEMPLATE' => $this->template,
+                'TYPE' => $this->type ? $this->type : static::NUMERATOR_DEFAULT_TYPE,
+                'SETTINGS' => $settingsToStore,
+            ]
+        );
         if ($result->isSuccess()) {
             $this->id = $result->getId();
         }
@@ -319,7 +325,14 @@ class Numerator
         foreach ($this->generators as $numberGenerator) {
             if ($numberGenerator instanceof UserConfigurable) {
                 /** @var UserConfigurable $numberGenerator */
-                $settingsToStore = array_merge($settingsToStore, [$this->getTypeOfGenerator($numberGenerator) => $numberGenerator->getConfig(),]);
+                $settingsToStore = array_merge(
+                    $settingsToStore,
+                    [
+                        $this->getTypeOfGenerator(
+                            $numberGenerator
+                        ) => $numberGenerator->getConfig(),
+                    ]
+                );
             }
         }
         return $settingsToStore;
@@ -574,7 +587,7 @@ class Numerator
         $generatorTypes = [];
         foreach ($this->getTypeToTemplateWords() as $type => $words) {
             foreach ($words as $word) {
-                if (stripos($this->template, $word) !== false) {
+                if (mb_stripos($this->template, $word) !== false) {
                     $generatorTypes[$type] = 1;
                 }
             }

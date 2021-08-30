@@ -1,4 +1,5 @@
 <?
+
 /*
 ##############################################
 # Bitrix: SiteManager                        #
@@ -11,7 +12,9 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
 require_once($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/mail/prolog.php");
 
 $MOD_RIGHT = $APPLICATION->GetGroupRight("mail");
-if ($MOD_RIGHT < "R") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($MOD_RIGHT < "R") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 IncludeModuleLangFile(__FILE__);
 Bitrix\Main\Loader::includeModule('mail');
 
@@ -62,10 +65,13 @@ $arFilter = array(
     "SERVER" => $find_server,
     "ACTIVE" => $find_active
 );
-if ($find_user_type == 'user')
+if ($find_user_type == 'user') {
     $arFilter['!USER_ID'] = 0;
-else if ($find_user_type == 'admin')
-    $arFilter['USER_ID'] = 0;
+} else {
+    if ($find_user_type == 'admin') {
+        $arFilter['USER_ID'] = 0;
+    }
+}
 
 
 if ($MOD_RIGHT == "W" && $lAdmin->EditAction()) //ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
@@ -73,8 +79,9 @@ if ($MOD_RIGHT == "W" && $lAdmin->EditAction()) //ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï
     foreach ($FIELDS as $ID => $arFields) {
         $ID = intval($ID);
 
-        if (!$lAdmin->IsUpdated($ID))
+        if (!$lAdmin->IsUpdated($ID)) {
             continue;
+        }
 
         $DB->StartTransaction();
         if (!CMailBox::Update($ID, $arFields)) {
@@ -91,14 +98,16 @@ if ($MOD_RIGHT == "W" && $lAdmin->EditAction()) //ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï
 if ($MOD_RIGHT == "W" && $arID = $lAdmin->GroupAction()) {
     if ($_REQUEST['action_target'] == 'selected') {
         $rsData = CMailBox::GetList(Array($by => $order), $arFilter);
-        while ($arRes = $rsData->Fetch())
+        while ($arRes = $rsData->Fetch()) {
             $arID[] = $arRes['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
-        $ID = IntVal($ID);
+        }
+        $ID = intval($ID);
 
         switch ($_REQUEST['action']) {
             case "delete":
@@ -115,9 +124,11 @@ if ($MOD_RIGHT == "W" && $arID = $lAdmin->GroupAction()) {
             case "deactivate":
 
                 $arFields = Array("ACTIVE" => ($_REQUEST['action'] == "activate" ? "Y" : "N"));
-                if (!CMailBox::Update($ID, $arFields))
-                    if ($e = $APPLICATION->GetException())
+                if (!CMailBox::Update($ID, $arFields)) {
+                    if ($e = $APPLICATION->GetException()) {
                         $lAdmin->AddGroupError(GetMessage("SAVE_ERROR") . $ID . ": " . $e->GetString(), $ID);
+                    }
+                }
                 break;
         }
     }
@@ -133,12 +144,32 @@ $lAdmin->NavText($rsData->GetNavPrint(GetMessage("MAIL_MBOX_ADM_NAVIGATION")));
 
 $arHeaders = Array();
 
-$arHeaders[] = Array("id" => "NAME", "content" => GetMessage("MAIL_MBOX_ADM_NAME"), "default" => true, "sort" => "name");
-$arHeaders[] = Array("id" => "ACTIVE", "content" => GetMessage("MAIL_MBOX_ADM_ACT"), "default" => true, "sort" => "active");
+$arHeaders[] = Array(
+    "id" => "NAME",
+    "content" => GetMessage("MAIL_MBOX_ADM_NAME"),
+    "default" => true,
+    "sort" => "name"
+);
+$arHeaders[] = Array(
+    "id" => "ACTIVE",
+    "content" => GetMessage("MAIL_MBOX_ADM_ACT"),
+    "default" => true,
+    "sort" => "active"
+);
 $arHeaders[] = Array("id" => "SERVER", "content" => GetMessage("MAIL_MBOX_ADR"), "default" => true, "sort" => "server");
-$arHeaders[] = Array("id" => "SERVER_TYPE", "content" => GetMessage("MAIL_MBOX_ADM_TYPE"), "default" => true, "sort" => "server_type");
+$arHeaders[] = Array(
+    "id" => "SERVER_TYPE",
+    "content" => GetMessage("MAIL_MBOX_ADM_TYPE"),
+    "default" => true,
+    "sort" => "server_type"
+);
 $arHeaders[] = Array("id" => "LID", "content" => GetMessage("MAIL_MBOX_ADM_LANG"), "default" => true, "sort" => "lang");
-$arHeaders[] = Array("id" => "TIMESTAMP_X", "content" => GetMessage("MAIL_MBOX_ADM_DATECH"), "default" => true, "sort" => "timestamp_x");
+$arHeaders[] = Array(
+    "id" => "TIMESTAMP_X",
+    "content" => GetMessage("MAIL_MBOX_ADM_DATECH"),
+    "default" => true,
+    "sort" => "timestamp_x"
+);
 $arHeaders[] = Array("id" => "ID", "content" => "ID", "default" => true, "sort" => "id");
 
 $lAdmin->AddHeaders($arHeaders);
@@ -165,7 +196,9 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
         $arActions[] = array(
             "ICON" => "list",
             "TEXT" => GetMessage("MAIL_MBOX_ADM_RULES_LINK") . " (" . intval($res["CNT"]) . ")",
-            "ACTION" => $lAdmin->ActionRedirect("mail_filter_admin.php?set_filter=Y&find_mailbox_id=" . $f_ID . "&lang=" . LANG)
+            "ACTION" => $lAdmin->ActionRedirect(
+                "mail_filter_admin.php?set_filter=Y&find_mailbox_id=" . $f_ID . "&lang=" . LANG
+            )
         );
 
         $arActions[] = array(
@@ -187,8 +220,12 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
 
         $arActions[] = array(
             "ICON" => "list",
-            "TEXT" => GetMessage("MAIL_MBOX_ADM_MESSAGES") . " (" . intval($res["CNT_NEW"]) . " / " . intval($res["CNT"]) . ")",
-            "ACTION" => $lAdmin->ActionRedirect("mail_message_admin.php?set_filter=Y&find_mailbox_id=" . $f_ID . "&lang=" . LANG)
+            "TEXT" => GetMessage("MAIL_MBOX_ADM_MESSAGES") . " (" . intval($res["CNT_NEW"]) . " / " . intval(
+                    $res["CNT"]
+                ) . ")",
+            "ACTION" => $lAdmin->ActionRedirect(
+                "mail_message_admin.php?set_filter=Y&find_mailbox_id=" . $f_ID . "&lang=" . LANG
+            )
         );
 
         $arActions[] = array("SEPARATOR" => true);
@@ -207,11 +244,13 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
         $arActions[] = array(
             "ICON" => "delete",
             "TEXT" => GetMessage("MAIL_MBOX_ADM_DELETE"),
-            "ACTION" => "if(confirm('" . GetMessage('MAIL_MBOX_ADM_DEL_CONFIRM') . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete"),
+            "ACTION" => "if(confirm('" . GetMessage('MAIL_MBOX_ADM_DEL_CONFIRM') . "')) " . $lAdmin->ActionDoGroup(
+                    $f_ID,
+                    "delete"
+                ),
         );
     }
     $row->AddActions($arActions);
-
 }
 
 // "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½" ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
@@ -224,7 +263,8 @@ $lAdmin->AddFooter(
 
 if ($MOD_RIGHT == "W") {
     // ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
-    $lAdmin->AddGroupActionTable(Array(
+    $lAdmin->AddGroupActionTable(
+        Array(
             "activate" => GetMessage("MAIN_ADMIN_LIST_ACTIVATE"),
             "deactivate" => GetMessage("MAIN_ADMIN_LIST_DEACTIVATE"),
             "delete" => GetMessage("MAIN_ADMIN_LIST_DELETE"),
@@ -274,7 +314,12 @@ require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admi
         <td nowrap><? echo GetMessage("MAIL_MBOX_ADM_FILT_TYPE") ?></td>
         <td nowrap><?
             $arr = array("reference" => array("POP3", "SMTP"), "reference_id" => array("pop3", "smtp"));
-            echo SelectBoxFromArray("find_server_type", $arr, htmlspecialcharsbx($find_server_type), GetMessage("MAIL_MBOX_ADM_FILT_ANY"));
+            echo SelectBoxFromArray(
+                "find_server_type",
+                $arr,
+                htmlspecialcharsbx($find_server_type),
+                GetMessage("MAIL_MBOX_ADM_FILT_ANY")
+            );
             ?></td>
     </tr>
 
@@ -296,15 +341,28 @@ require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admi
             'reference' => array(GetMessage('MAIL_MBOX_ADM_USER_TYPE_USER'), GetMessage('MAIL_MBOX_ADM_USER_TYPE_ADM')),
             'reference_id' => array('user', 'admin')
         );
-        echo SelectBoxFromArray('find_user_type', $arr, htmlspecialcharsbx($find_user_type), GetMessage('MAIL_MBOX_ADM_FILT_ANY'));
+        echo SelectBoxFromArray(
+            'find_user_type',
+            $arr,
+            htmlspecialcharsbx($find_user_type),
+            GetMessage('MAIL_MBOX_ADM_FILT_ANY')
+        );
         ?></td>
     </tr>
 
     <tr>
         <td nowrap><? echo GetMessage("MAIL_MBOX_ADM_FILT_ACT") ?>:</td>
         <td nowrap><?
-            $arr = array("reference" => array(GetMessage("MAIN_YES"), GetMessage("MAIN_NO")), "reference_id" => array("Y", "N"));
-            echo SelectBoxFromArray("find_active", $arr, htmlspecialcharsbx($find_active), GetMessage("MAIL_MBOX_ADM_FILT_ANY"));
+            $arr = array(
+                "reference" => array(GetMessage("MAIN_YES"), GetMessage("MAIN_NO")),
+                "reference_id" => array("Y", "N")
+            );
+            echo SelectBoxFromArray(
+                "find_active",
+                $arr,
+                htmlspecialcharsbx($find_active),
+                GetMessage("MAIL_MBOX_ADM_FILT_ANY")
+            );
             ?></td>
     </tr>
 
@@ -315,7 +373,7 @@ require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admi
                 <option value=""><? echo GetMessage("MAIL_MBOX_ADM_FILT_ANY") ?></option>
                 <?
                 ClearVars("l_");
-                $l = CLang::GetList($b = "sort", $o = "asc", Array("VISIBLE" => "Y"));
+                $l = CLang::GetList('', '', Array("VISIBLE" => "Y"));
                 while ($l->ExtractFields("l_")):
                     ?>
                     <option value="<? echo $l_LID ?>"<? if ($find_lid == $l_LID) echo " selected" ?>><? echo $l_NAME ?></option><?

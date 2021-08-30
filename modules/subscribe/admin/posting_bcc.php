@@ -1,11 +1,14 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/subscribe/include.php");
 
 IncludeModuleLangFile(__FILE__);
 
 $POST_RIGHT = $APPLICATION->GetGroupRight("subscribe");
-if ($POST_RIGHT == "D") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($POST_RIGHT == "D") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $ID = intval($_GET["ID"]);
 
@@ -21,23 +24,26 @@ $FilterArr = Array(
 
 $lAdmin->InitFilter($FilterArr);
 
-if ($find_status_id != "N")
+if ($find_status_id != "N") {
     $find_status_id = "E";
+}
 
 if (($arEMAIL = $lAdmin->GroupAction()) && $POST_RIGHT == "W") {
     $arSubscr = array();
     $rsData = CPosting::GetEmailsByStatus($ID, $find_status_id);
-    while ($arRes = $rsData->Fetch())
+    while ($arRes = $rsData->Fetch()) {
         $arSubscr[$arRes['EMAIL']] = $arRes["SUBSCRIPTION_ID"];
+    }
 
     if ($_REQUEST['action_target'] == 'selected') {
         $arEMAIL = array_keys($arSubscr);
     }
 
     foreach ($arEMAIL as $EMAIL) {
-        $SUBSCR_ID = IntVal($arSubscr[$EMAIL]);
-        if ($SUBSCR_ID <= 0)
+        $SUBSCR_ID = intval($arSubscr[$EMAIL]);
+        if ($SUBSCR_ID <= 0) {
             continue;
+        }
 
         switch ($_REQUEST['action']) {
             case "sudelete":
@@ -51,25 +57,27 @@ if (($arEMAIL = $lAdmin->GroupAction()) && $POST_RIGHT == "W") {
     }
 }
 
-$lAdmin->AddHeaders(array(
+$lAdmin->AddHeaders(
     array(
-        "id" => "EMAIL",
-        "content" => GetMessage("POST_EMAIL"),
-        "default" => true,
-    ),
-    array(
-        "id" => "SUBSCRIPTION_ID",
-        "content" => GetMessage("POST_SUBSCRIPTION_ID"),
-        "default" => true,
-        "align" => "right",
-    ),
-    array(
-        "id" => "USER_ID",
-        "content" => GetMessage("POST_USER_ID"),
-        "default" => true,
-        "align" => "right",
-    ),
-));
+        array(
+            "id" => "EMAIL",
+            "content" => GetMessage("POST_EMAIL"),
+            "default" => true,
+        ),
+        array(
+            "id" => "SUBSCRIPTION_ID",
+            "content" => GetMessage("POST_SUBSCRIPTION_ID"),
+            "default" => true,
+            "align" => "right",
+        ),
+        array(
+            "id" => "USER_ID",
+            "content" => GetMessage("POST_USER_ID"),
+            "default" => true,
+            "align" => "right",
+        ),
+    )
+);
 
 $cData = new CPosting;
 $rsData = $cData->GetEmailsByStatus($ID, $find_status_id);
@@ -82,15 +90,28 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
     if ($f_SUBSCRIPTION_ID > 0) {
         $rs = CSubscription::GetByID($f_SUBSCRIPTION_ID);
         $ar = $rs->Fetch();
-        if (!$ar)
+        if (!$ar) {
             $row->AddViewField("SUBSCRIPTION_ID", $f_SUBSCRIPTION_ID . ' (' . GetMessage("POST_SUBSCR_DELETED") . ')');
-        elseif ($ar["ACTIVE"] == "N")
-            $row->AddViewField("SUBSCRIPTION_ID", '<a target="_blank" href="subscr_edit.php?lang=' . LANGUAGE_ID . '&amp;ID=' . $f_SUBSCRIPTION_ID . '">' . $f_SUBSCRIPTION_ID . '</a> (' . GetMessage("POST_SUBSCR_INACTIVE") . ')');
-        else
-            $row->AddViewField("SUBSCRIPTION_ID", '<a target="_blank" href="subscr_edit.php?lang=' . LANGUAGE_ID . '&amp;ID=' . $f_SUBSCRIPTION_ID . '">' . $f_SUBSCRIPTION_ID . '</a>');
+        } elseif ($ar["ACTIVE"] == "N") {
+            $row->AddViewField(
+                "SUBSCRIPTION_ID",
+                '<a target="_blank" href="subscr_edit.php?lang=' . LANGUAGE_ID . '&amp;ID=' . $f_SUBSCRIPTION_ID . '">' . $f_SUBSCRIPTION_ID . '</a> (' . GetMessage(
+                    "POST_SUBSCR_INACTIVE"
+                ) . ')'
+            );
+        } else {
+            $row->AddViewField(
+                "SUBSCRIPTION_ID",
+                '<a target="_blank" href="subscr_edit.php?lang=' . LANGUAGE_ID . '&amp;ID=' . $f_SUBSCRIPTION_ID . '">' . $f_SUBSCRIPTION_ID . '</a>'
+            );
+        }
     }
-    if ($f_USER_ID > 0)
-        $row->AddViewField("USER_ID", '<a target="_blank" href="user_edit.php?lang=' . LANGUAGE_ID . '&amp;ID=' . $f_USER_ID . '">' . $f_USER_ID . '</a>');
+    if ($f_USER_ID > 0) {
+        $row->AddViewField(
+            "USER_ID",
+            '<a target="_blank" href="user_edit.php?lang=' . LANGUAGE_ID . '&amp;ID=' . $f_USER_ID . '">' . $f_USER_ID . '</a>'
+        );
+    }
 }
 
 $lAdmin->AddFooter(
@@ -99,10 +120,12 @@ $lAdmin->AddFooter(
         array("counter" => true, "title" => GetMessage("MAIN_ADMIN_LIST_CHECKED"), "value" => "0"),
     )
 );
-$lAdmin->AddGroupActionTable(Array(
-    "inactive" => GetMessage("POST_GROUP_ACTION_INACTIVE"),
-    "sudelete" => GetMessage("POST_GROUP_ACTION_DELETE"),
-));
+$lAdmin->AddGroupActionTable(
+    Array(
+        "inactive" => GetMessage("POST_GROUP_ACTION_INACTIVE"),
+        "sudelete" => GetMessage("POST_GROUP_ACTION_DELETE"),
+    )
+);
 
 $lAdmin->CheckListMode();
 

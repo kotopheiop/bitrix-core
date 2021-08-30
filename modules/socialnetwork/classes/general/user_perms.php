@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 class CAllSocNetUserPerms
@@ -10,12 +11,12 @@ class CAllSocNetUserPerms
     {
         global $DB, $arSocNetUserOperations, $arSocNetAllowedRelationsType;
 
-        if ($ACTION != "ADD" && IntVal($ID) <= 0) {
+        if ($ACTION != "ADD" && intval($ID) <= 0) {
             $GLOBALS["APPLICATION"]->ThrowException("System error 870164", "ERROR");
             return false;
         }
 
-        if ((is_set($arFields, "USER_ID") || $ACTION == "ADD") && IntVal($arFields["USER_ID"]) <= 0) {
+        if ((is_set($arFields, "USER_ID") || $ACTION == "ADD") && intval($arFields["USER_ID"]) <= 0) {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_GB_EMPTY_USER_ID"), "EMPTY_USER_ID");
             return false;
         } elseif (is_set($arFields, "USER_ID")) {
@@ -26,19 +27,31 @@ class CAllSocNetUserPerms
             }
         }
 
-        if ((is_set($arFields, "OPERATION_ID") || $ACTION == "ADD") && strlen($arFields["OPERATION_ID"]) <= 0) {
+        if ((is_set($arFields, "OPERATION_ID") || $ACTION == "ADD") && $arFields["OPERATION_ID"] == '') {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_GG_EMPTY_OPERATION_ID"), "EMPTY_OPERATION_ID");
             return false;
-        } elseif (is_set($arFields, "OPERATION_ID") && !array_key_exists($arFields["OPERATION_ID"], $arSocNetUserOperations)) {
-            $GLOBALS["APPLICATION"]->ThrowException(str_replace("#ID#", $arFields["OPERATION_ID"], GetMessage("SONET_GG_ERROR_NO_OPERATION_ID")), "ERROR_NO_OPERATION_ID");
+        } elseif (is_set($arFields, "OPERATION_ID") && !array_key_exists(
+                $arFields["OPERATION_ID"],
+                $arSocNetUserOperations
+            )) {
+            $GLOBALS["APPLICATION"]->ThrowException(
+                str_replace("#ID#", $arFields["OPERATION_ID"], GetMessage("SONET_GG_ERROR_NO_OPERATION_ID")),
+                "ERROR_NO_OPERATION_ID"
+            );
             return false;
         }
 
-        if ((is_set($arFields, "RELATION_TYPE") || $ACTION == "ADD") && strlen($arFields["RELATION_TYPE"]) <= 0) {
+        if ((is_set($arFields, "RELATION_TYPE") || $ACTION == "ADD") && $arFields["RELATION_TYPE"] == '') {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_GG_EMPTY_RELATION_TYPE"), "EMPTY_RELATION_TYPE");
             return false;
-        } elseif (is_set($arFields, "RELATION_TYPE") && !in_array($arFields["RELATION_TYPE"], $arSocNetAllowedRelationsType)) {
-            $GLOBALS["APPLICATION"]->ThrowException(str_replace("#ID#", $arFields["RELATION_TYPE"], GetMessage("SONET_GG_ERROR_NO_RELATION_TYPE")), "ERROR_NO_RELATION_TYPE");
+        } elseif (is_set($arFields, "RELATION_TYPE") && !in_array(
+                $arFields["RELATION_TYPE"],
+                $arSocNetAllowedRelationsType
+            )) {
+            $GLOBALS["APPLICATION"]->ThrowException(
+                str_replace("#ID#", $arFields["RELATION_TYPE"], GetMessage("SONET_GG_ERROR_NO_RELATION_TYPE")),
+                "ERROR_NO_RELATION_TYPE"
+            );
             return false;
         } elseif (
             is_set($arFields, "RELATION_TYPE")
@@ -47,21 +60,23 @@ class CAllSocNetUserPerms
             $arFields["RELATION_TYPE"] = SONET_RELATIONS_TYPE_FRIENDS;
         }
 
-        return True;
+        return true;
     }
 
     public static function Delete($ID)
     {
         global $DB;
 
-        if (!CSocNetGroup::__ValidateID($ID))
+        if (!CSocNetGroup::__ValidateID($ID)) {
             return false;
+        }
 
-        $ID = IntVal($ID);
-        $bSuccess = True;
+        $ID = intval($ID);
+        $bSuccess = true;
 
-        if ($bSuccess)
+        if ($bSuccess) {
             $bSuccess = $DB->Query("DELETE FROM b_sonet_user_perms WHERE ID = " . $ID . "", true);
+        }
 
         return $bSuccess;
     }
@@ -70,14 +85,16 @@ class CAllSocNetUserPerms
     {
         global $DB;
 
-        if (!CSocNetGroup::__ValidateID($userID))
+        if (!CSocNetGroup::__ValidateID($userID)) {
             return false;
+        }
 
-        $userID = IntVal($userID);
-        $bSuccess = True;
+        $userID = intval($userID);
+        $bSuccess = true;
 
-        if ($bSuccess)
+        if ($bSuccess) {
             $bSuccess = $DB->Query("DELETE FROM b_sonet_user_perms WHERE USER_ID = " . $userID . "", true);
+        }
 
         return $bSuccess;
     }
@@ -86,27 +103,29 @@ class CAllSocNetUserPerms
     {
         global $DB;
 
-        if (!CSocNetGroup::__ValidateID($ID))
+        if (!CSocNetGroup::__ValidateID($ID)) {
             return false;
+        }
 
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
         $arFields1 = \Bitrix\Socialnetwork\Util::getEqualityFields($arFields);
 
-        if (!CSocNetUserPerms::CheckFields("UPDATE", $arFields, $ID))
+        if (!CSocNetUserPerms::CheckFields("UPDATE", $arFields, $ID)) {
             return false;
+        }
 
         $strUpdate = $DB->PrepareUpdate("b_sonet_user_perms", $arFields);
         \Bitrix\Socialnetwork\Util::processEqualityFieldsToUpdate($arFields1, $strUpdate);
 
-        if (strlen($strUpdate) > 0) {
+        if ($strUpdate <> '') {
             $strSql =
                 "UPDATE b_sonet_user_perms SET " .
                 "	" . $strUpdate . " " .
                 "WHERE ID = " . $ID . " ";
-            $DB->Query($strSql, False, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+            $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
         } else {
-            $ID = False;
+            $ID = false;
         }
 
         return $ID;
@@ -119,17 +138,18 @@ class CAllSocNetUserPerms
     {
         global $DB;
 
-        if (!CSocNetGroup::__ValidateID($ID))
+        if (!CSocNetGroup::__ValidateID($ID)) {
             return false;
+        }
 
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
         $dbResult = CSocNetUserPerms::GetList(Array(), Array("ID" => $ID));
         if ($arResult = $dbResult->GetNext()) {
             return $arResult;
         }
 
-        return False;
+        return false;
     }
 
     /***************************************/
@@ -143,18 +163,21 @@ class CAllSocNetUserPerms
         if (
             is_array($userID)
             && !$arCachedUserPerms
-        )
+        ) {
             $arCachedUserPerms = array();
-
-        if (!is_array($userID)) {
-            $userID = IntVal($userID);
-            if ($userID <= 0)
-                return false;
         }
 
-        $operation = StrToLower(Trim($operation));
-        if (!array_key_exists($operation, $arSocNetUserOperations))
+        if (!is_array($userID)) {
+            $userID = intval($userID);
+            if ($userID <= 0) {
+                return false;
+            }
+        }
+
+        $operation = mb_strtolower(Trim($operation));
+        if (!array_key_exists($operation, $arSocNetUserOperations)) {
             return false;
+        }
 
         $arUserPerms = array();
         if (
@@ -162,25 +185,27 @@ class CAllSocNetUserPerms
             && isset($GLOBALS["SONET_USER_PERMS_" . $userID])
             && is_array($GLOBALS["SONET_USER_PERMS_" . $userID])
             && !array_key_exists("SONET_USER_PERMS_" . $userID, $_REQUEST)
-        )
+        ) {
             $arUserPerms = $GLOBALS["SONET_USER_PERMS_" . $userID];
-        elseif (
+        } elseif (
             !is_array($userID)
             && isset($arCachedUserPerms[$userID])
             && is_array($arCachedUserPerms[$userID])
             && !array_key_exists("SONET_USER_PERMS_" . $userID, $_REQUEST)
-        )
+        ) {
             $arUserPerms = $arCachedUserPerms[$userID];
-        else {
+        } else {
             $dbResult = CSocNetUserPerms::GetList(Array(), Array("USER_ID" => $userID));
             while ($arResult = $dbResult->Fetch()) {
-                if (!is_array($userID))
+                if (!is_array($userID)) {
                     $arUserPerms[$arResult["OPERATION_ID"]] = $arResult["RELATION_TYPE"];
-                else
+                } else {
                     $arCachedUserPerms[$arResult["USER_ID"]][$arResult["OPERATION_ID"]] = $arResult["RELATION_TYPE"];
+                }
             }
-            if (!is_array($userID))
+            if (!is_array($userID)) {
                 $GLOBALS["SONET_USER_PERMS_" . $userID] = $arUserPerms;
+            }
         }
 
         if (!is_array($userID)) {
@@ -196,9 +221,11 @@ class CAllSocNetUserPerms
 
             return $toUserOperationPerms;
         } else {
-            foreach ($userID as $user_id_tmp)
-                if (!array_key_exists($user_id_tmp, $arCachedUserPerms))
+            foreach ($userID as $user_id_tmp) {
+                if (!array_key_exists($user_id_tmp, $arCachedUserPerms)) {
                     $arCachedUserPerms[$user_id_tmp] = array();
+                }
+            }
 
             return true;
         }
@@ -208,34 +235,42 @@ class CAllSocNetUserPerms
     {
         global $arSocNetUserOperations;
 
-        $fromUserID = IntVal($fromUserID);
-        $toUserID = IntVal($toUserID);
-        if ($toUserID <= 0)
+        $fromUserID = intval($fromUserID);
+        $toUserID = intval($toUserID);
+        if ($toUserID <= 0) {
             return false;
-        $operation = StrToLower(Trim($operation));
-        if (!array_key_exists($operation, $arSocNetUserOperations))
+        }
+        $operation = mb_strtolower(Trim($operation));
+        if (!array_key_exists($operation, $arSocNetUserOperations)) {
             return false;
+        }
 
 // use no profile private permission restrictions at the extranet site
-        if (CModule::IncludeModule('extranet') && CExtranet::IsExtranetSite())
+        if (CModule::IncludeModule('extranet') && CExtranet::IsExtranetSite()) {
             return true;
+        }
 
-        if ($bCurrentUserIsAdmin)
+        if ($bCurrentUserIsAdmin) {
             return true;
-        if ($fromUserID == $toUserID)
+        }
+        if ($fromUserID == $toUserID) {
             return true;
+        }
 
         $usersRelation = CSocNetUserRelations::GetRelation($fromUserID, $toUserID);
 
-        if ($usersRelation == SONET_RELATIONS_BAN && !IsModuleInstalled("im"))
+        if ($usersRelation == SONET_RELATIONS_BAN && !IsModuleInstalled("im")) {
             return false;
+        }
 
         $toUserOperationPerms = CSocNetUserPerms::GetOperationPerms($toUserID, $operation);
 
-        if ($toUserOperationPerms == SONET_RELATIONS_TYPE_NONE)
+        if ($toUserOperationPerms == SONET_RELATIONS_TYPE_NONE) {
             return false;
-        if ($toUserOperationPerms == SONET_RELATIONS_TYPE_ALL)
+        }
+        if ($toUserOperationPerms == SONET_RELATIONS_TYPE_ALL) {
             return true;
+        }
 
         if ($toUserOperationPerms == SONET_RELATIONS_TYPE_AUTHORIZED) {
             return ($fromUserID > 0);
@@ -257,8 +292,8 @@ class CAllSocNetUserPerms
 
         $arReturn = array();
 
-        $currentUserID = IntVal($currentUserID);
-        $userID = IntVal($userID);
+        $currentUserID = intval($currentUserID);
+        $userID = intval($userID);
 
         if ($userID <= 0) {
             return false;
@@ -271,7 +306,12 @@ class CAllSocNetUserPerms
             $arReturn["Operations"]["modifyuser"] = false;
             $arReturn["Operations"]["viewcontacts"] = false;
             foreach ($arSocNetUserOperations as $operation => $defPerm) {
-                $arReturn["Operations"][$operation] = CSocNetUserPerms::CanPerformOperation($currentUserID, $userID, $operation, false);
+                $arReturn["Operations"][$operation] = CSocNetUserPerms::CanPerformOperation(
+                    $currentUserID,
+                    $userID,
+                    $operation,
+                    false
+                );
             }
         } else {
             $arReturn["IsCurrentUser"] = ($currentUserID == $userID);
@@ -298,7 +338,12 @@ class CAllSocNetUserPerms
                     : true
                 );
                 foreach ($arSocNetUserOperations as $operation => $defPerm) {
-                    $arReturn["Operations"][$operation] = CSocNetUserPerms::CanPerformOperation($currentUserID, $userID, $operation, false);
+                    $arReturn["Operations"][$operation] = CSocNetUserPerms::CanPerformOperation(
+                        $currentUserID,
+                        $userID,
+                        $operation,
+                        false
+                    );
                 }
             }
 
@@ -311,7 +356,9 @@ class CAllSocNetUserPerms
                 $USER->CanDoOperation('edit_all_users')
                 || (
                     $USER->CanDoOperation('edit_subordinate_users')
-                    && count(array_diff(CUser::GetUserGroup($userID), CSocNetTools::GetSubordinateGroups($currentUserID))) <= 0
+                    && count(
+                        array_diff(CUser::GetUserGroup($userID), CSocNetTools::GetSubordinateGroups($currentUserID))
+                    ) <= 0
                 )
             ) {
                 $arReturn["Operations"]["modifyuser_main"] = true;
@@ -323,7 +370,7 @@ class CAllSocNetUserPerms
 
     public static function SetPerm($userID, $feature, $perm)
     {
-        $userID = IntVal($userID);
+        $userID = intval($userID);
         $feature = Trim($feature);
         $perm = Trim($perm);
 
@@ -338,22 +385,28 @@ class CAllSocNetUserPerms
             array("ID")
         );
 
-        if ($arResult = $dbResult->Fetch())
+        if ($arResult = $dbResult->Fetch()) {
             $r = CSocNetUserPerms::Update($arResult["ID"], array("RELATION_TYPE" => $perm));
-        else
-            $r = CSocNetUserPerms::Add(array("USER_ID" => $userID, "OPERATION_ID" => $feature, "RELATION_TYPE" => $perm));
+        } else {
+            $r = CSocNetUserPerms::Add(
+                array("USER_ID" => $userID, "OPERATION_ID" => $feature, "RELATION_TYPE" => $perm)
+            );
+        }
 
         if (!$r) {
             $errorMessage = "";
-            if ($e = $GLOBALS["APPLICATION"]->GetException())
+            if ($e = $GLOBALS["APPLICATION"]->GetException()) {
                 $errorMessage = $e->GetString();
-            if (StrLen($errorMessage) <= 0)
+            }
+            if ($errorMessage == '') {
                 $errorMessage = GetMessage("SONET_GF_ERROR_SET") . ".";
+            }
 
             $GLOBALS["APPLICATION"]->ThrowException($errorMessage, "ERROR_SET_RECORD");
             return false;
-        } elseif ($feature == "viewprofile")
+        } elseif ($feature == "viewprofile") {
             unset($GLOBALS["SONET_USER_PERMS_" . $userID]);
+        }
 
         return $r;
     }

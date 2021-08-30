@@ -56,10 +56,11 @@ class CSecurityXSSDetectVariables
      */
     protected function pushValue($name, $value, $containsQuote = false)
     {
-        if ($containsQuote)
+        if ($containsQuote) {
             $this->searchValuesWithQuotes[] = array("name" => $name, "value" => $value);
-        else
+        } else {
             $this->searchValuesWithoutQuotes[] = array("name" => $name, "value" => $value);
+        }
 
         return true;
     }
@@ -70,8 +71,9 @@ class CSecurityXSSDetectVariables
      */
     protected function parseVariable($name, $value)
     {
-        if (!$value)
+        if (!$value) {
             return;
+        }
 
         if (preg_match("/[^\\\](((\\\)(\\\))*+')+/s", " " . $value)) {
             $encodedValue = htmlspecialcharsbx($value);
@@ -117,8 +119,9 @@ class CSecurityXSSDetectVariables
      */
     protected function lazyParseVariables()
     {
-        if ($this->parsed)
+        if ($this->parsed) {
             return;
+        }
 
         $this->parsed = true;
         foreach ($this->originalValues as $name => $value) {

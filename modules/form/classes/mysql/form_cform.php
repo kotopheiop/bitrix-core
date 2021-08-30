@@ -1,7 +1,4 @@
-<?
-/***************************************
- * Web-form
- ***************************************/
+<?php
 
 class CForm extends CAllForm
 {
@@ -12,31 +9,40 @@ class CForm extends CAllForm
         return "<br>Module: " . $module_id . " (" . $arModuleVersion["VERSION"] . ")<br>Class: CForm<br>File: " . __FILE__;
     }
 
-    // ������ ���-����
-    public static function GetList(&$by, &$order, $arFilter = Array(), &$is_filtered, $min_permission = 10)
-    {
+    public static function GetList(
+        $by = 's_sort',
+        $order = 'asc',
+        $arFilter = [],
+        $is_filtered = null,
+        $min_permission = 10
+    ) {
         $err_mess = (CForm::err_mess()) . "<br>Function: GetList<br>Line: ";
         global $DB, $USER, $strError;
         $min_permission = intval($min_permission);
 
         $arSqlSearch = Array();
-        $strSqlSearch = "";
         if (is_array($arFilter)) {
-            if (strlen($arFilter["SID"]) > 0) $arFilter["VARNAME"] = $arFilter["SID"];
-            elseif (strlen($arFilter["VARNAME"]) > 0) $arFilter["SID"] = $arFilter["VARNAME"];
+            if ($arFilter["SID"] <> '') {
+                $arFilter["VARNAME"] = $arFilter["SID"];
+            } elseif ($arFilter["VARNAME"] <> '') {
+                $arFilter["SID"] = $arFilter["VARNAME"];
+            }
 
             $filter_keys = array_keys($arFilter);
-            for ($i = 0; $i < count($filter_keys); $i++) {
+            $keyCount = count($filter_keys);
+            for ($i = 0; $i < $keyCount; $i++) {
                 $key = $filter_keys[$i];
                 $val = $arFilter[$filter_keys[$i]];
                 if (is_array($val)) {
-                    if (count($val) <= 0)
+                    if (empty($val)) {
                         continue;
+                    }
                 } else {
-                    if ((strlen($val) <= 0) || ($val === "NOT_REF"))
+                    if ((string)$val == '' || $val === "NOT_REF") {
                         continue;
+                    }
                 }
-                $match_value_set = (in_array($key . "_EXACT_MATCH", $filter_keys)) ? true : false;
+                $match_value_set = (in_array($key . "_EXACT_MATCH", $filter_keys));
                 $key = strtoupper($key);
                 switch ($key) {
                     case "ID":
@@ -50,7 +56,9 @@ class CForm extends CAllForm
                         $arSqlSearch[] = GetFilterQuery("F." . $key, $val, $match);
                         break;
                     case "SITE":
-                        if (is_array($val)) $val = implode(" | ", $val);
+                        if (is_array($val)) {
+                            $val = implode(" | ", $val);
+                        }
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "N" && $match_value_set) ? "Y" : "N";
                         $arSqlSearch[] = GetFilterQuery("FS.SITE_ID", $val, $match);
                         $left_join = "LEFT JOIN b_form_2_site FS ON (F.ID = FS.FORM_ID)";
@@ -59,22 +67,23 @@ class CForm extends CAllForm
             }
         }
 
-        if ($by == "s_id") $strSqlOrder = "ORDER BY F.ID";
-        elseif ($by == "s_c_sort" || $by == "s_sort") $strSqlOrder = "ORDER BY F.C_SORT";
-        elseif ($by == "s_name") $strSqlOrder = "ORDER BY F.NAME";
-        elseif ($by == "s_varname" || $by == "s_sid") $strSqlOrder = "ORDER BY F.SID";
-        else {
-            $by = "s_sort";
+        if ($by == "s_id") {
+            $strSqlOrder = "ORDER BY F.ID";
+        } elseif ($by == "s_c_sort" || $by == "s_sort") {
+            $strSqlOrder = "ORDER BY F.C_SORT";
+        } elseif ($by == "s_name") {
+            $strSqlOrder = "ORDER BY F.NAME";
+        } elseif ($by == "s_varname" || $by == "s_sid") {
+            $strSqlOrder = "ORDER BY F.SID";
+        } else {
             $strSqlOrder = "ORDER BY F.C_SORT";
         }
+
         if ($order != "desc") {
             $strSqlOrder .= " asc ";
-            $order = "asc";
         } else {
             $strSqlOrder .= " desc ";
-            $order = "desc";
         }
-
 
         $strSqlSearch = GetFilterSqlSearch($arSqlSearch);
         if (CForm::IsAdmin()) {
@@ -101,7 +110,9 @@ class CForm extends CAllForm
 				";
         } else {
             $arGroups = $USER->GetUserGroupArray();
-            if (!is_array($arGroups)) $arGroups[] = 2;
+            if (!is_array($arGroups)) {
+                $arGroups[] = 2;
+            }
             $groups = implode(",", $arGroups);
             $def_permission = COption::GetOptionInt("form", "FORM_DEFAULT_PERMISSION", 10);
             $strSql = "
@@ -138,9 +149,9 @@ class CForm extends CAllForm
 				$strSqlOrder
 				";
         }
-        //echo "<pre>".$strSql."</pre>";
+
         $res = $DB->Query($strSql, false, $err_mess . __LINE__);
-        $is_filtered = (IsFiltered($strSqlSearch));
+
         return $res;
     }
 
@@ -169,7 +180,7 @@ class CForm extends CAllForm
 			GROUP BY
 				F.ID
 			";
-        //echo "<pre>".$strSql."</pre>";
+
         $res = $DB->Query($strSql, false, $err_mess . __LINE__);
         return $res;
     }
@@ -186,11 +197,12 @@ class CForm extends CAllForm
 			WHERE
 				$where
 			";
-        //echo "<pre>".$strSql."</pre>";
+
         $res = $DB->Query($strSql, false, $err_mess . __LINE__);
-        if ($arRes = $res->Fetch()) return $arRes["FT"];
-        else return "";
+        if ($arRes = $res->Fetch()) {
+            return $arRes["FT"];
+        } else {
+            return "";
+        }
     }
 }
-
-?>

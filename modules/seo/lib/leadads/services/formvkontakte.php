@@ -2,15 +2,14 @@
 
 namespace Bitrix\Seo\LeadAds\Services;
 
-use Bitrix\Main\Error;
 use Bitrix\Main\Context;
+use Bitrix\Main\Error;
 use Bitrix\Main\Security\Random;
 use Bitrix\Main\Text\Encoding;
 use Bitrix\Main\Web\Json;
-
 use Bitrix\Seo\LeadAds;
-use Bitrix\Seo\WebHook;
 use Bitrix\Seo\Retargeting;
+use Bitrix\Seo\WebHook;
 
 /**
  * Class FormVkontakte
@@ -35,11 +34,13 @@ class FormVkontakte extends LeadAds\Form
 
     protected function getAuthParameters()
     {
-        $row = LeadAds\Internals\CallbackSubscriptionTable::getRow([
-            'filter' => [
-                '=TYPE' => static::TYPE_CODE,
+        $row = LeadAds\Internals\CallbackSubscriptionTable::getRow(
+            [
+                'filter' => [
+                    '=TYPE' => static::TYPE_CODE,
+                ]
             ]
-        ]);
+        );
 
         return [
             'URL_PARAMETERS' => ['group_ids' => $row['GROUP_ID']]
@@ -124,8 +125,8 @@ class FormVkontakte extends LeadAds\Form
                 'name' => self::encodeString($data['NAME'], 100),
                 'title' => self::encodeString($data['TITLE'] ?: ' ', 60),
                 'description' => self::encodeString($data['DESCRIPTION'] ?: ' ', 600),
-                'policy_link_url' => substr($privacyPolicy, 0, 200),
-                'site_link_url' => substr($data['SUCCESS_URL'], 0, 200),
+                'policy_link_url' => mb_substr($privacyPolicy, 0, 200),
+                'site_link_url' => mb_substr($data['SUCCESS_URL'], 0, 200),
                 'questions' => Json::encode($questions)
             )
         );
@@ -180,12 +181,14 @@ class FormVkontakte extends LeadAds\Form
 
     protected function addCallbackServer($secretKey, Retargeting\Response $response)
     {
-        $row = LeadAds\Internals\CallbackSubscriptionTable::getRow([
-            'filter' => [
-                '=TYPE' => static::TYPE_CODE,
-                '=GROUP_ID' => $this->accountId
+        $row = LeadAds\Internals\CallbackSubscriptionTable::getRow(
+            [
+                'filter' => [
+                    '=TYPE' => static::TYPE_CODE,
+                    '=GROUP_ID' => $this->accountId
+                ]
             ]
-        ]);
+        );
         if (!$row) {
             return null;
         }
@@ -194,19 +197,21 @@ class FormVkontakte extends LeadAds\Form
             return $row['CALLBACK_SERVER_ID'];
         }
 
-        $serverResponse = $this->getRequest()->send([
-            'method' => 'POST',
-            'endpoint' => 'groups.addCallbackServer',
-            'fields' => [
-                'access_token' => $this->getGroupAuthAdapter()->getToken(),
-                'group_id' => $this->accountId,
-                'url' => 'https://cloud-adv.bitrix.info/register/index.php?' // untitled.php?test=1
-                    . '&code=' . LeadAds\Service::getEngineCode(static::TYPE_CODE)
-                    . '&action=web_hook',
-                'title' => 'Bitrix24 CRM',
-                'secret_key' => $secretKey,
+        $serverResponse = $this->getRequest()->send(
+            [
+                'method' => 'POST',
+                'endpoint' => 'groups.addCallbackServer',
+                'fields' => [
+                    'access_token' => $this->getGroupAuthAdapter()->getToken(),
+                    'group_id' => $this->accountId,
+                    'url' => 'https://cloud-adv.bitrix.info/register/index.php?' // untitled.php?test=1
+                        . '&code=' . LeadAds\Service::getEngineCode(static::TYPE_CODE)
+                        . '&action=web_hook',
+                    'title' => 'Bitrix24 CRM',
+                    'secret_key' => $secretKey,
+                ]
             ]
-        ]);
+        );
         $responseData = $serverResponse->getData();
         $serverId = empty($responseData['server_id']) ? null : $responseData['server_id'];
         if ($serverId) {
@@ -227,55 +232,63 @@ class FormVkontakte extends LeadAds\Form
 
     protected function deleteCallbackServer($groupId)
     {
-        $row = LeadAds\Internals\CallbackSubscriptionTable::getRow([
-            'filter' => [
-                '=TYPE' => static::TYPE_CODE,
-                '=GROUP_ID' => $groupId
+        $row = LeadAds\Internals\CallbackSubscriptionTable::getRow(
+            [
+                'filter' => [
+                    '=TYPE' => static::TYPE_CODE,
+                    '=GROUP_ID' => $groupId
+                ]
             ]
-        ]);
+        );
         if (!$row || empty($row['CALLBACK_SERVER_ID'])) {
             return;
         }
 
-        $this->getRequest()->send([
-            'method' => 'POST',
-            'endpoint' => 'groups.deleteCallbackServer',
-            'fields' => [
-                'access_token' => $this->getGroupAuthAdapter()->getToken(),
-                'group_id' => $groupId,
-                'server_id' => $row['CALLBACK_SERVER_ID'],
+        $this->getRequest()->send(
+            [
+                'method' => 'POST',
+                'endpoint' => 'groups.deleteCallbackServer',
+                'fields' => [
+                    'access_token' => $this->getGroupAuthAdapter()->getToken(),
+                    'group_id' => $groupId,
+                    'server_id' => $row['CALLBACK_SERVER_ID'],
+                ]
             ]
-        ]);
+        );
 
         return;
     }
 
     protected function getCallbackConfirmationCode()
     {
-        $response = $this->getRequest()->send([
-            'method' => 'POST',
-            'endpoint' => 'groups.getCallbackConfirmationCode',
-            'fields' => [
-                'access_token' => $this->getGroupAuthAdapter()->getToken(),
-                'group_id' => $this->accountId,
+        $response = $this->getRequest()->send(
+            [
+                'method' => 'POST',
+                'endpoint' => 'groups.getCallbackConfirmationCode',
+                'fields' => [
+                    'access_token' => $this->getGroupAuthAdapter()->getToken(),
+                    'group_id' => $this->accountId,
+                ]
             ]
-        ]);
+        );
         $responseData = $response->getData();
         return empty($responseData['code']) ? null : $responseData['code'];
     }
 
     protected function setCallbackSettings($serverId, $catchLeads = true)
     {
-        $response = $this->getRequest()->send([
-            'method' => 'POST',
-            'endpoint' => 'groups.setCallbackSettings',
-            'fields' => [
-                'access_token' => $this->getGroupAuthAdapter()->getToken(),
-                'group_id' => $this->accountId,
-                'server_id' => $serverId,
-                'lead_forms_new' => $catchLeads ? 1 : 0,
+        $response = $this->getRequest()->send(
+            [
+                'method' => 'POST',
+                'endpoint' => 'groups.setCallbackSettings',
+                'fields' => [
+                    'access_token' => $this->getGroupAuthAdapter()->getToken(),
+                    'group_id' => $this->accountId,
+                    'server_id' => $serverId,
+                    'lead_forms_new' => $catchLeads ? 1 : 0,
+                ]
             ]
-        ]);
+        );
         $responseData = $response->getData();
         return $responseData ? true : false;
     }
@@ -288,18 +301,20 @@ class FormVkontakte extends LeadAds\Form
             'UTF-8'
         );
 
-        return substr($text, 0, $length);
+        return mb_substr($text, 0, $length);
     }
 
     protected function subscribeAppToPageEvents($pageAccessToken)
     {
-        $response = $this->getRequest()->send(array(
-            'method' => 'POST',
-            'endpoint' => $this->accountId . '/subscribed_apps',
-            'fields' => array(
-                'access_token' => $pageAccessToken
+        $response = $this->getRequest()->send(
+            array(
+                'method' => 'POST',
+                'endpoint' => $this->accountId . '/subscribed_apps',
+                'fields' => array(
+                    'access_token' => $pageAccessToken
+                )
             )
-        ));
+        );
         return $response->isSuccess();
     }
 
@@ -327,11 +342,11 @@ class FormVkontakte extends LeadAds\Form
         $result->setId($item->getLeadId());
         foreach ($item->getAnswers() as $key => $values) {
             foreach ($values as $index => $value) {
-                if (strpos($value, static::$fieldKeyPrefix) !== 0) {
+                if (mb_strpos($value, static::$fieldKeyPrefix) !== 0) {
                     continue;
                 }
 
-                $values[$index] = substr($value, strlen(static::$fieldKeyPrefix));
+                $values[$index] = mb_substr($value, mb_strlen(static::$fieldKeyPrefix));
             }
 
             $fieldName = $mapper->getCrmName($key);

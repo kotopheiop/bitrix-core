@@ -53,13 +53,17 @@ if (Loader::includeModule('sender')) {
             $active = $this->getFieldValue('ACTIVE', null);
 
             $filter = array();
-            if ($groupId)
+            if ($groupId) {
                 $filter['GROUP_ID'] = $groupId;
+            }
 
-            if (strlen($dateRegister) > 0) {
+            if ($dateRegister <> '') {
                 if (\Bitrix\Main\Type\Date::isCorrect($dateRegister)) {
                     $dateRegister = new \Bitrix\Main\Type\Date($dateRegister);
-                    $filter['><USER.DATE_REGISTER'] = array($dateRegister->toString(), $dateRegister->add('1 DAY')->toString());
+                    $filter['><USER.DATE_REGISTER'] = array(
+                        $dateRegister->toString(),
+                        $dateRegister->add('1 DAY')->toString()
+                    );
                 } else {
                     $result = new \CDBResult();
                     $result->InitFromArray(array());
@@ -67,17 +71,20 @@ if (Loader::includeModule('sender')) {
                 }
             }
 
-            if ($active == 'Y')
+            if ($active == 'Y') {
                 $filter['USER.ACTIVE'] = $active;
-            elseif ($active == 'N')
+            } elseif ($active == 'N') {
                 $filter['USER.ACTIVE'] = $active;
+            }
 
-            $userDb = \Bitrix\Main\UserGroupTable::getList(array(
-                'select' => array('NAME' => 'USER.NAME', 'EMAIL' => 'USER.EMAIL', 'USER_ID'),
-                'filter' => $filter,
-                'group' => array('NAME', 'EMAIL', 'USER_ID'),
-                'order' => array('USER_ID' => 'ASC'),
-            ));
+            $userDb = \Bitrix\Main\UserGroupTable::getList(
+                array(
+                    'select' => array('NAME' => 'USER.NAME', 'EMAIL' => 'USER.EMAIL', 'USER_ID'),
+                    'filter' => $filter,
+                    'group' => array('NAME', 'EMAIL', 'USER_ID'),
+                    'order' => array('USER_ID' => 'ASC'),
+                )
+            );
 
             return new \CDBResult($userDb);
         }
@@ -89,11 +96,13 @@ if (Loader::includeModule('sender')) {
         public function getForm()
         {
             $groupInput = '<select name="' . $this->getFieldName('GROUP_ID') . '">';
-            $groupDb = \Bitrix\Main\GroupTable::getList(array(
-                'select' => array('ID', 'NAME',),
-                'filter' => array('!=ID' => 2),
-                'order' => array('C_SORT' => 'ASC', 'NAME' => 'ASC')
-            ));
+            $groupDb = \Bitrix\Main\GroupTable::getList(
+                array(
+                    'select' => array('ID', 'NAME',),
+                    'filter' => array('!=ID' => 2),
+                    'order' => array('C_SORT' => 'ASC', 'NAME' => 'ASC')
+                )
+            );
             while ($group = $groupDb->fetch()) {
                 $inputSelected = ($group['ID'] == $this->getFieldValue('GROUP_ID') ? 'selected' : '');
                 $groupInput .= '<option value="' . $group['ID'] . '" ' . $inputSelected . '>';

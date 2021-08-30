@@ -35,15 +35,16 @@ class CAdminFileDialog
             $rootPath = CSite::GetSiteDocRoot($arConfig['site']);
 
             while (!$io->DirectoryExists($rootPath . $path)) {
-                $rpos = strrpos($path, '/');
+                $rpos = mb_strrpos($path, '/');
                 if ($rpos === false || $rpos < 1) {
                     $path = '/';
                     break;
                 }
-                $path = rtrim(substr($path, 0, $rpos), "/\\");
+                $path = rtrim(mb_substr($path, 0, $rpos), "/\\");
             }
-            if (!$path || $path == '')
+            if (!$path || $path == '') {
                 $path = '/';
+            }
             $arConfig['path'] = $path;
 
             $functionError = "";
@@ -51,33 +52,53 @@ class CAdminFileDialog
                 $functionError .= GetMessage("BX_FD_NO_EVENT") . ". ";
             } else {
                 $arConfig['event'] = preg_replace("/[^a-zA-Z0-9_]/i", "", $arConfig['event']);
-                if (strlen($arConfig['event']) <= 0)
+                if ($arConfig['event'] == '') {
                     $functionError .= GetMessage("BX_FD_NO_EVENT") . ". ";
+                }
             }
 
             if (!isset($arConfig['arResultDest']) || !is_array($arConfig['arResultDest'])) {
                 $functionError .= GetMessage("BX_FD_NO_RETURN_PRM") . ". ";
             } else {
-                if (isset($arConfig['arResultDest']["FUNCTION_NAME"]) && strlen($arConfig['arResultDest']["FUNCTION_NAME"]) > 0) {
-                    $arConfig['arResultDest']["FUNCTION_NAME"] = preg_replace("/[^a-zA-Z0-9_]/i", "", $arConfig['arResultDest']["FUNCTION_NAME"]);
-                    if (strlen($arConfig['arResultDest']["FUNCTION_NAME"]) <= 0)
+                if (isset($arConfig['arResultDest']["FUNCTION_NAME"]) && $arConfig['arResultDest']["FUNCTION_NAME"] <> '') {
+                    $arConfig['arResultDest']["FUNCTION_NAME"] = preg_replace(
+                        "/[^a-zA-Z0-9_]/i",
+                        "",
+                        $arConfig['arResultDest']["FUNCTION_NAME"]
+                    );
+                    if ($arConfig['arResultDest']["FUNCTION_NAME"] == '') {
                         $functionError .= GetMessage("BX_FD_NO_RETURN_FNC") . ". ";
-                    else
+                    } else {
                         $resultDest = "FUNCTION";
-                } elseif (isset($arConfig['arResultDest']["FORM_NAME"]) && strlen($arConfig['arResultDest']["FORM_NAME"]) > 0
-                    && isset($arConfig['arResultDest']["FORM_ELEMENT_NAME"]) && strlen($arConfig['arResultDest']["FORM_ELEMENT_NAME"]) > 0) {
-                    $arConfig['arResultDest']["FORM_NAME"] = preg_replace("/[^a-zA-Z0-9_]/i", "", $arConfig['arResultDest']["FORM_NAME"]);
-                    $arConfig['arResultDest']["FORM_ELEMENT_NAME"] = preg_replace("/[^a-zA-Z0-9_]/i", "", $arConfig['arResultDest']["FORM_ELEMENT_NAME"]);
-                    if (strlen($arConfig['arResultDest']["FORM_NAME"]) <= 0 || strlen($arConfig['arResultDest']["FORM_ELEMENT_NAME"]) <= 0)
+                    }
+                } elseif (isset($arConfig['arResultDest']["FORM_NAME"]) && $arConfig['arResultDest']["FORM_NAME"] <> ''
+                    && isset($arConfig['arResultDest']["FORM_ELEMENT_NAME"]) && $arConfig['arResultDest']["FORM_ELEMENT_NAME"] <> '') {
+                    $arConfig['arResultDest']["FORM_NAME"] = preg_replace(
+                        "/[^a-zA-Z0-9_]/i",
+                        "",
+                        $arConfig['arResultDest']["FORM_NAME"]
+                    );
+                    $arConfig['arResultDest']["FORM_ELEMENT_NAME"] = preg_replace(
+                        "/[^a-zA-Z0-9_]/i",
+                        "",
+                        $arConfig['arResultDest']["FORM_ELEMENT_NAME"]
+                    );
+                    if ($arConfig['arResultDest']["FORM_NAME"] == '' || $arConfig['arResultDest']["FORM_ELEMENT_NAME"] == '') {
                         $functionError .= GetMessage("BX_FD_NO_RETURN_FRM") . ". ";
-                    else
+                    } else {
                         $resultDest = "FORM";
-                } elseif (isset($arConfig['arResultDest']["ELEMENT_ID"]) && strlen($arConfig['arResultDest']["ELEMENT_ID"]) > 0) {
-                    $arConfig['arResultDest']["ELEMENT_ID"] = preg_replace("/[^a-zA-Z0-9_]/i", "", $arConfig['arResultDest']["ELEMENT_ID"]);
-                    if (strlen($arConfig['arResultDest']["ELEMENT_ID"]) <= 0)
+                    }
+                } elseif (isset($arConfig['arResultDest']["ELEMENT_ID"]) && $arConfig['arResultDest']["ELEMENT_ID"] <> '') {
+                    $arConfig['arResultDest']["ELEMENT_ID"] = preg_replace(
+                        "/[^a-zA-Z0-9_]/i",
+                        "",
+                        $arConfig['arResultDest']["ELEMENT_ID"]
+                    );
+                    if ($arConfig['arResultDest']["ELEMENT_ID"] == '') {
                         $functionError .= GetMessage("BX_FD_NO_RETURN_ID") . ". ";
-                    else
+                    } else {
                         $resultDest = "ID";
+                    }
                 } else {
                     $functionError .= GetMessage("BX_FD_BAD_RETURN") . ". ";
                 }
@@ -86,7 +107,7 @@ class CAdminFileDialog
             $functionError = GetMessage("BX_FD_NO_FILEMAN");
         }
 
-        if (strlen($functionError) <= 0) {
+        if ($functionError == '') {
             ?>
             <script>
                 var mess_SESS_EXPIRED = '<?=GetMessageJS('BX_FD_ERROR') . ': ' . GetMessageJS('BX_FD_SESS_EXPIRED')?>';
@@ -120,15 +141,18 @@ class CAdminFileDialog
                     else
                     {
                     $res = explode(";", $fd_config);
-                    if ($res[0])
+                    if ($res[0]) {
                         $arConfig['site'] = $res[0];
-                    if ($res[1])
+                    }
+                    if ($res[1]) {
                         $arConfig['path'] = rtrim($res[1], " /\\");
+                    }
 
                     $rootPath = CSite::GetSiteDocRoot($arConfig['site']);
 
-                    if (!$io->DirectoryExists($rootPath . $arConfig['path']))
+                    if (!$io->DirectoryExists($rootPath . $arConfig['path'])) {
                         $arConfig['path'] = '/';
+                    }
                     ?>
                     UserConfig =
                         {
@@ -164,7 +188,11 @@ class CAdminFileDialog
                             saveConfig: <?= $arConfig['saveConfig'] !== false ? 'true' : 'false';?>,
                             sessid: "<?=bitrix_sessid()?>",
                             checkChildren: true,
-                            genThumb: <?= COption::GetOptionString("fileman", "file_dialog_gen_thumb", "Y") == 'Y' ? 'true' : 'false';?>,
+                            genThumb: <?= COption::GetOptionString(
+                                "fileman",
+                                "file_dialog_gen_thumb",
+                                "Y"
+                            ) == 'Y' ? 'true' : 'false';?>,
                             zIndex: <?= CUtil::JSEscape($arConfig['zIndex'])?>
                         };
 
@@ -190,8 +218,9 @@ class CAdminFileDialog
                         foreach (CCloudStorageBucket::GetAllBuckets() as $arBucket) {
                             if ($arBucket["ACTIVE"] == "Y") {
                                 $obBucket = new CCloudStorageBucket($arBucket["ID"]);
-                                if ($obBucket->Init())
+                                if ($obBucket->Init()) {
                                     $arBuckets[$arBucket["BUCKET"]] = rtrim($obBucket->GetFileSRC("/"), "/");
+                                }
                             }
                         }
                     }
@@ -215,12 +244,18 @@ class CAdminFileDialog
                         name = full;
 
                     <?if ($resultDest == "FUNCTION"): ?>
-                    <?= CUtil::JSEscape($arConfig['arResultDest']["FUNCTION_NAME"]) . "(filename, path, site, title || '', menu || '');"?>
+                    <?= CUtil::JSEscape(
+                    $arConfig['arResultDest']["FUNCTION_NAME"]
+                ) . "(filename, path, site, title || '', menu || '');"?>
                     <?elseif($resultDest == "FORM"): ?>
                     document
-                .<?= CUtil::JSEscape($arConfig['arResultDest']["FORM_NAME"])?>.<?= CUtil::JSEscape($arConfig['arResultDest']["FORM_ELEMENT_NAME"])?>.
+                .<?= CUtil::JSEscape($arConfig['arResultDest']["FORM_NAME"])?>.<?= CUtil::JSEscape(
+                    $arConfig['arResultDest']["FORM_ELEMENT_NAME"]
+                )?>.
                     value = full;
-                    BX.fireEvent(document.<?= CUtil::JSEscape($arConfig['arResultDest']["FORM_NAME"])?>.<?= CUtil::JSEscape($arConfig['arResultDest']["FORM_ELEMENT_NAME"])?>, 'change');
+                    BX.fireEvent(document.<?= CUtil::JSEscape(
+                        $arConfig['arResultDest']["FORM_NAME"]
+                    )?>.<?= CUtil::JSEscape($arConfig['arResultDest']["FORM_ELEMENT_NAME"])?>, 'change');
                     <?elseif($resultDest == "ID"): ?>
                     BX('<?= CUtil::JSEscape($arConfig['arResultDest']["ELEMENT_ID"])?>').value = full;
                     BX.fireEvent(BX('<?= CUtil::JSEscape($arConfig['arResultDest']["ELEMENT_ID"])?>'), 'change');
@@ -241,7 +276,9 @@ class CAdminFileDialog
             ?>
             if (window.jsUtils)
             {
-            jsUtils.addEvent(window, 'load', function(){jsUtils.loadJSFile('<?= CUtil::GetAdditionalFileURL("/bitrix/js/main/file_dialog.js") ?>');}, false);
+            jsUtils.addEvent(window, 'load', function(){jsUtils.loadJSFile('<?= CUtil::GetAdditionalFileURL(
+                "/bitrix/js/main/file_dialog.js"
+            ) ?>');}, false);
             }
             <?
         }
@@ -253,7 +290,7 @@ class CAdminFileDialog
         $bCloudsBrowse = is_object($USER) && $USER->CanDoOperation('clouds_browse') && $Params["operation"] === "O";
 
         $arSites = Array();
-        $dbSitesList = CSite::GetList($b = "SORT", $o = "asc");
+        $dbSitesList = CSite::GetList();
         $arSitesPP = Array();
         while ($arSite = $dbSitesList->GetNext()) {
             $arSites[$arSite["ID"]] = $arSite["NAME"] ? $arSite["NAME"] : $arSite["ID"];
@@ -282,15 +319,18 @@ class CAdminFileDialog
 
         $Params['arSites'] = $arSites;
         $Params['arSitesPP'] = $arSitesPP;
-        $Params['site'] = ($Params['site'] && isset($arSites[$Params['site']])) ? $Params['site'] : key($arSites); // Secure site var
+        $Params['site'] = ($Params['site'] && isset($arSites[$Params['site']])) ? $Params['site'] : key(
+            $arSites
+        ); // Secure site var
 
-        if (!in_array(strtolower($Params['lang']), array('en', 'ru'))) // Secure lang var
+        if (!in_array(mb_strtolower($Params['lang']), array('en', 'ru'))) // Secure lang var
         {
             $res = CLanguage::GetByID($Params['lang']);
-            if ($lang = $res->Fetch())
+            if ($lang = $res->Fetch()) {
                 $Params['lang'] = $lang['ID'];
-            else
+            } else {
                 $Params['lang'] = 'en';
+            }
         }
 
         if ($Params['bAddToMenu']) {
@@ -309,32 +349,39 @@ class CAdminFileDialog
         global $APPLICATION;
 
         echo '<script>';
-        if ($Params['bAddToMenu'])
+        if ($Params['bAddToMenu']) {
             self::GetMenuTypes($Params['site'], $Params['path'], true);
+        }
 
-        if ($Params['loadRecursively'])
-            self::GetItemsRecursively(array(
-                'path' => $Params['path'],
-                'site' => $Params['site'],
-                'bCheckEmpty' => true,
-                'getFiles' => $Params['getFiles'],
-                'loadRoot' => $Params['loadRoot'],
-                'bThrowException' => true,
-                'operation' => $Params['operation'],
-            ));
-        else
-            self::GetItems(array(
-                'path' => $Params['path'],
-                'site' => $Params['site'],
-                'bCheckEmpty' => true,
-                'getFiles' => $Params['getFiles'],
-                'operation' => $Params['operation'],
-            ));
+        if ($Params['loadRecursively']) {
+            self::GetItemsRecursively(
+                array(
+                    'path' => $Params['path'],
+                    'site' => $Params['site'],
+                    'bCheckEmpty' => true,
+                    'getFiles' => $Params['getFiles'],
+                    'loadRoot' => $Params['loadRoot'],
+                    'bThrowException' => true,
+                    'operation' => $Params['operation'],
+                )
+            );
+        } else {
+            self::GetItems(
+                array(
+                    'path' => $Params['path'],
+                    'site' => $Params['site'],
+                    'bCheckEmpty' => true,
+                    'getFiles' => $Params['getFiles'],
+                    'operation' => $Params['operation'],
+                )
+            );
+        }
 
-        if ($e = $APPLICATION->GetException())
+        if ($e = $APPLICATION->GetException()) {
             echo 'window.action_warning = "' . addslashes($e->GetString()) . '";';
-        else
+        } else {
             echo 'window.load_items_correct = true;';
+        }
 
         echo '</script>';
     }
@@ -344,7 +391,12 @@ class CAdminFileDialog
         $arSites = $Params['arSites'];
         if (count($arSites) > 1) // Site selector
         {
-            $u = new CAdminPopup("fd_site_list", "fd_site_list", $Params['arSitesPP'], array('zIndex' => 3520, 'dxShadow' => 0));
+            $u = new CAdminPopup(
+                "fd_site_list",
+                "fd_site_list",
+                $Params['arSitesPP'],
+                array('zIndex' => 3520, 'dxShadow' => 0)
+            );
             $u->Show();
         }
         ?>
@@ -360,9 +412,9 @@ class CAdminFileDialog
                                             <div id="__bx_site_selector"
                                                  bxvalue="<?= htmlspecialcharsbx($Params['site']) ?>"
                                                  onclick="oBXDialogControls.SiteSelectorOnClick(this);"
-                                                 class="site_selector_div">
-                                                <span><?= htmlspecialcharsbx($Params['site']) ?></span><span
-                                                        class="fd_iconkit site_selector_div_arrow">&nbsp;&nbsp;</span>
+                                                 class="site_selector_div"><span><?= htmlspecialcharsbx(
+                                                        $Params['site']
+                                                    ) ?></span><span class="fd_iconkit site_selector_div_arrow">&nbsp;&nbsp;</span>
                                             </div>
                                         </td>
                                     <?endif; ?>
@@ -389,11 +441,28 @@ class CAdminFileDialog
                                              onclick="oBXDialogControls.RefreshOnclick();"/>
                                         <?
                                         $arViews = Array(
-                                            Array("ID" => 'list', "TEXT" => GetMessage("FD_VIEW_LIST"), "ONCLICK" => "oBXDialogControls.ViewSelector.OnChange('list')"),
-                                            Array("ID" => 'detail', "TEXT" => GetMessage("FD_VIEW_DETAIL"), "ONCLICK" => "oBXDialogControls.ViewSelector.OnChange('detail')"),
-                                            Array("ID" => 'preview', "TEXT" => GetMessage("FD_VIEW_PREVIEW"), "ONCLICK" => "oBXDialogControls.ViewSelector.OnChange('preview')")
+                                            Array(
+                                                "ID" => 'list',
+                                                "TEXT" => GetMessage("FD_VIEW_LIST"),
+                                                "ONCLICK" => "oBXDialogControls.ViewSelector.OnChange('list')"
+                                            ),
+                                            Array(
+                                                "ID" => 'detail',
+                                                "TEXT" => GetMessage("FD_VIEW_DETAIL"),
+                                                "ONCLICK" => "oBXDialogControls.ViewSelector.OnChange('detail')"
+                                            ),
+                                            Array(
+                                                "ID" => 'preview',
+                                                "TEXT" => GetMessage("FD_VIEW_PREVIEW"),
+                                                "ONCLICK" => "oBXDialogControls.ViewSelector.OnChange('preview')"
+                                            )
                                         );
-                                        $u = new CAdminPopup("fd_view_list", "fd_view_list", $arViews, array('zIndex' => 2500, 'dxShadow' => 0));
+                                        $u = new CAdminPopup(
+                                            "fd_view_list",
+                                            "fd_view_list",
+                                            $arViews,
+                                            array('zIndex' => 2500, 'dxShadow' => 0)
+                                        );
                                         $u->Show();
                                         ?>
                                         <img onclick="oBXDialogControls.ViewSelector.OnClick();"
@@ -475,9 +544,9 @@ class CAdminFileDialog
                                                             <tr>
                                                                 <td><input type="checkbox" id="__bx_fd_add_to_menu">
                                                                 </td>
-                                                                <td>
-                                                                    <label for="__bx_fd_add_to_menu"><?= GetMessage("FD_ADD_PAGE_2_MENU") ?></label>
-                                                                </td>
+                                                                <td><label for="__bx_fd_add_to_menu"><?= GetMessage(
+                                                                            "FD_ADD_PAGE_2_MENU"
+                                                                        ) ?></label></td>
                                                             </tr>
                                                         </table>
                                                     </td>
@@ -522,7 +591,9 @@ class CAdminFileDialog
                                     <td style="height:310px !important; vertical-align:top !important;">
                                         <table id="add2menuTable" class="bxfd-add-2-menu-tbl">
                                             <tr>
-                                                <td style="width:200px !important; text-align:right !important;"><?= GetMessage("FD_FILE_NAME") ?></td>
+                                                <td style="width:200px !important; text-align:right !important;"><?= GetMessage(
+                                                        "FD_FILE_NAME"
+                                                    ) ?></td>
                                                 <td style="width:250px !important;" id="__bx_fd_file_name"></td>
                                             </tr>
                                             <tr>
@@ -533,21 +604,34 @@ class CAdminFileDialog
                                                 <td align="right"><?= GetMessage("FD_MENU_TYPE") ?></td>
                                                 <td>
                                                     <select id="__bx_fd_menutype" name="menutype">
-                                                        <? for ($i = 0, $n = count($Params['arMenuTypes']); $i < $n; $i++): ?>
-                                                            <option value="<?= htmlspecialcharsbx($Params['arMenuTypes'][$i]['key']) ?>"><?= htmlspecialcharsbx($Params['arMenuTypes'][$i]['title']) ?></option>
+                                                        <? for (
+                                                            $i = 0, $n = count(
+                                                                $Params['arMenuTypes']
+                                                            ); $i < $n; $i++
+                                                        ): ?>
+                                                            <option value="<?= htmlspecialcharsbx(
+                                                                $Params['arMenuTypes'][$i]['key']
+                                                            ) ?>"><?= htmlspecialcharsbx(
+                                                                    $Params['arMenuTypes'][$i]['title']
+                                                                ) ?></option>
                                                         <? endfor; ?>
                                                     </select>
                                                 </td>
                                             </tr>
                                             <tr id="e0">
-                                                <td style="vertical-align:top !important; text-align:right !important;"><?= GetMessage("FD_MENU_POINT") ?></td>
+                                                <td style="vertical-align:top !important; text-align:right !important;"><?= GetMessage(
+                                                        "FD_MENU_POINT"
+                                                    ) ?></td>
                                                 <td>
                                                     <input type="radio" name="itemtype" id="__bx_fd_itemtype_n"
                                                            value="n" checked> <label
-                                                            for="__bx_fd_itemtype_n"><?= GetMessage("FD_ADD_NEW") ?></label><br>
+                                                            for="__bx_fd_itemtype_n"><?= GetMessage(
+                                                            "FD_ADD_NEW"
+                                                        ) ?></label><br>
                                                     <input type="radio" name="itemtype" id="__bx_fd_itemtype_e"
-                                                           value="e"> <label
-                                                            for="__bx_fd_itemtype_e"><?= GetMessage("FD_ATTACH_2_EXISTENT") ?></label>
+                                                           value="e"> <label for="__bx_fd_itemtype_e"><?= GetMessage(
+                                                            "FD_ATTACH_2_EXISTENT"
+                                                        ) ?></label>
                                                 </td>
                                             </tr>
                                             <tr id="__bx_fd_e1">
@@ -558,11 +642,18 @@ class CAdminFileDialog
                                                 <td align="right"><?= GetMessage("FD_ATTACH_BEFORE") ?></td>
                                                 <td>
                                                     <select name="newppos" id="__bx_fd_newppos">
-                                                        <? for ($i = 0, $n = count($Params['menuItems']); $i < $n; $i++): ?>
-                                                            <option value="<?= $i + 1 ?>"><?= htmlspecialcharsbx($Params['menuItems'][$i]) ?></option>
+                                                        <? for (
+                                                            $i = 0, $n = count(
+                                                                $Params['menuItems']
+                                                            ); $i < $n; $i++
+                                                        ): ?>
+                                                            <option value="<?= $i + 1 ?>"><?= htmlspecialcharsbx(
+                                                                    $Params['menuItems'][$i]
+                                                                ) ?></option>
                                                         <?endfor; ?>
-                                                        <option value="0"
-                                                                selected="selected"><?= GetMessage("FD_LAST_POINT") ?></option>
+                                                        <option value="0" selected="selected"><?= GetMessage(
+                                                                "FD_LAST_POINT"
+                                                            ) ?></option>
                                                     </select>
                                                 </td>
                                             </tr>
@@ -571,7 +662,9 @@ class CAdminFileDialog
                                                 <td>
                                                     <select name="menuitem" id="__bx_fd_menuitem">
                                                         <? for ($i = 0; $i < $n; $i++): ?>
-                                                            <option value="<?= $i + 1 ?>"><?= htmlspecialcharsbx($Params['menuItems'][$i]) ?></option>
+                                                            <option value="<?= $i + 1 ?>"><?= htmlspecialcharsbx(
+                                                                    $Params['menuItems'][$i]
+                                                                ) ?></option>
                                                         <?endfor; ?>
                                                     </select>
                                                 </td>
@@ -623,22 +716,26 @@ class CAdminFileDialog
             if (!window.arFDMenuTypes)
                 arFDMenuTypes = {};
             <?
-            if ($Params['arMenuTypesScript'])
+            if ($Params['arMenuTypesScript']) {
                 echo $Params['arMenuTypesScript'];
+            }
 
-            self::GetItemsRecursively(array(
-                'path' => $Params['path'],
-                'site' => $Params['site'],
-                'bCheckEmpty' => true,
-                'getFiles' => $Params['getFiles'],
-                'loadRoot' => true,
-                'bFindCorrectPath' => true,
-                'bThrowException' => false,
-                'operation' => $Params['operation'],
-            ));
+            self::GetItemsRecursively(
+                array(
+                    'path' => $Params['path'],
+                    'site' => $Params['site'],
+                    'bCheckEmpty' => true,
+                    'getFiles' => $Params['getFiles'],
+                    'loadRoot' => true,
+                    'bFindCorrectPath' => true,
+                    'bThrowException' => false,
+                    'operation' => $Params['operation'],
+                )
+            );
 
-            if ($e = $APPLICATION->GetException())
+            if ($e = $APPLICATION->GetException()) {
                 echo 'alert("' . CUtil::JSEscape($e->GetString()) . '");';
+            }
             ?>
 
             // Sites array
@@ -683,13 +780,17 @@ class CAdminFileDialog
 
             // Append CSS
             if (!window.fd_styles_link || !window.fd_styles_link.parentNode)
-                window.fd_styles_link = jsUtils.loadCSSFile("<?=$fd_css_src . '?v=' . @filemtime($_SERVER['DOCUMENT_ROOT'] . $fd_css_src)?>");
+                window.fd_styles_link = jsUtils.loadCSSFile("<?=$fd_css_src . '?v=' . @filemtime(
+                    $_SERVER['DOCUMENT_ROOT'] . $fd_css_src
+                )?>");
 
             // Append file with File Dialog engine
             if (window.BXDialogTree)
                 OnLoad();
             else
-                BX.loadScript("<?=$fd_engine_js_src . '?v=' . @filemtime($_SERVER['DOCUMENT_ROOT'] . $fd_engine_js_src)?>", OnLoad);
+                BX.loadScript("<?=$fd_engine_js_src . '?v=' . @filemtime(
+                    $_SERVER['DOCUMENT_ROOT'] . $fd_engine_js_src
+                )?>", OnLoad);
 
         </script>
         <?
@@ -762,8 +863,9 @@ class CAdminFileDialog
 
         foreach ($armt as $key => $title) {
             $menuname = $path . "." . $key . ".menu.php";
-            if (!$USER->CanDoFileOperation('fm_view_file', Array($site, $menuname)))
+            if (!$USER->CanDoFileOperation('fm_view_file', Array($site, $menuname))) {
                 continue;
+            }
 
             $arItems = Array();
 
@@ -775,8 +877,9 @@ class CAdminFileDialog
                 $arItems[] = htmlspecialcharsbx($aMenuLinksItem[0]);
             }
             $arAllItems[$key] = $arItems;
-            if ($strSelected == "")
+            if ($strSelected == "") {
                 $strSelected = $key;
+            }
             $arMenuTypes[] = array('key' => $key, 'title' => $title . " [" . $key . "]");
         }
 
@@ -792,13 +895,17 @@ class CAdminFileDialog
             $arItems = $arAllItems[$arTypes[$i]];
             $strItems .= "[";
             for ($j = 0; $j < count($arItems); $j++) {
-                if ($j > 0) $strItems .= ",";
+                if ($j > 0) {
+                    $strItems .= ",";
+                }
                 $strItems .= "'" . CUtil::JSEscape($arItems[$j]) . "'";
             }
             $strItems .= "]";
         }
 
-        $scriptRes = "\n" . 'arFDMenuTypes["' . CUtil::JSEscape($path) . '"] = {types: [' . $strTypes . '], items: [' . $strItems . ']};' . "\n";
+        $scriptRes = "\n" . 'arFDMenuTypes["' . CUtil::JSEscape(
+                $path
+            ) . '"] = {types: [' . $strTypes . '], items: [' . $strItems . ']};' . "\n";
 
         if ($bEchoResult) {
             echo $scriptRes;
@@ -817,35 +924,51 @@ class CAdminFileDialog
             $genTmb = COption::GetOptionString("fileman", "file_dialog_gen_thumb", "Y") == 'Y';
         }
 
-        if (strlen($Params["site"]) > 2) {
+        if (mb_strlen($Params["site"]) > 2) {
             if (!$USER->CanDoOperation('clouds_browse')) {
-                $APPLICATION->ThrowException(GetMessage('BX_FD_ERROR') . ': ' . GetMessage('BX_FD_ACCESS_DENIED'), 'access_denied');
+                $APPLICATION->ThrowException(
+                    GetMessage('BX_FD_ERROR') . ': ' . GetMessage('BX_FD_ACCESS_DENIED'),
+                    'access_denied'
+                );
                 return;
             }
 
             if ($Params['operation'] !== 'O') {
-                $APPLICATION->ThrowException(GetMessage('BX_FD_ERROR') . ': ' . GetMessage('BX_FD_PATH_CORRUPT') . ' [clouds 04]', 'path_corrupt');
+                $APPLICATION->ThrowException(
+                    GetMessage('BX_FD_ERROR') . ': ' . GetMessage('BX_FD_PATH_CORRUPT') . ' [clouds 04]',
+                    'path_corrupt'
+                );
                 return;
             }
 
             if (!CModule::IncludeModule('clouds')) {
-                $APPLICATION->ThrowException(GetMessage('BX_FD_ERROR') . ': ' . GetMessage('BX_FD_PATH_CORRUPT') . ' [clouds 01]', 'path_corrupt');
+                $APPLICATION->ThrowException(
+                    GetMessage('BX_FD_ERROR') . ': ' . GetMessage('BX_FD_PATH_CORRUPT') . ' [clouds 01]',
+                    'path_corrupt'
+                );
                 return;
             }
 
             $obBucket = null;
             foreach (CCloudStorageBucket::GetAllBuckets() as $arBucket) {
-                if ($arBucket["ACTIVE"] == "Y" && $arBucket["BUCKET"] === $Params["site"])
+                if ($arBucket["ACTIVE"] == "Y" && $arBucket["BUCKET"] === $Params["site"]) {
                     $obBucket = new CCloudStorageBucket($arBucket["ID"]);
+                }
             }
 
             if (!$obBucket) {
-                $APPLICATION->ThrowException(GetMessage('BX_FD_ERROR') . ': ' . GetMessage('BX_FD_PATH_CORRUPT') . ' [clouds 02]', 'path_corrupt');
+                $APPLICATION->ThrowException(
+                    GetMessage('BX_FD_ERROR') . ': ' . GetMessage('BX_FD_PATH_CORRUPT') . ' [clouds 02]',
+                    'path_corrupt'
+                );
                 return;
             }
 
             if (!$obBucket->Init()) {
-                $APPLICATION->ThrowException(GetMessage('BX_FD_ERROR') . ': ' . GetMessage('BX_FD_PATH_CORRUPT') . ' [clouds 03]', 'path_corrupt');
+                $APPLICATION->ThrowException(
+                    GetMessage('BX_FD_ERROR') . ': ' . GetMessage('BX_FD_PATH_CORRUPT') . ' [clouds 03]',
+                    'path_corrupt'
+                );
                 return;
             }
 
@@ -855,7 +978,10 @@ class CAdminFileDialog
 
             $arFiles = $obBucket->ListFiles($path);
             if (!is_array($arFiles)) {
-                $APPLICATION->ThrowException(GetMessage('BX_FD_ERROR') . ': ' . GetMessage('BX_FD_PATH_CORRUPT') . ' [clouds 05]', 'path_corrupt');
+                $APPLICATION->ThrowException(
+                    GetMessage('BX_FD_ERROR') . ': ' . GetMessage('BX_FD_PATH_CORRUPT') . ' [clouds 05]',
+                    'path_corrupt'
+                );
                 return;
             }
             ?>
@@ -913,11 +1039,19 @@ class CAdminFileDialog
         $bCheckEmpty = $Params['bCheckEmpty'];
 
         $rootPath = CSite::GetSiteDocRoot($site);
-        if (!$io->FileExists($rootPath . $path) && !$io->DirectoryExists($rootPath . $path) && $Params['bThrowException'] === true) {
-            $APPLICATION->ThrowException(GetMessage('BX_FD_ERROR') . ': ' . GetMessage('BX_FD_PATH_CORRUPT'), 'path_corrupt');
+        if (!$io->FileExists($rootPath . $path) && !$io->DirectoryExists(
+                $rootPath . $path
+            ) && $Params['bThrowException'] === true) {
+            $APPLICATION->ThrowException(
+                GetMessage('BX_FD_ERROR') . ': ' . GetMessage('BX_FD_PATH_CORRUPT'),
+                'path_corrupt'
+            );
             return;
         } elseif (!$USER->CanDoFileOperation('fm_view_listing', array($site, $path))) {
-            $APPLICATION->ThrowException(GetMessage('BX_FD_ERROR') . ': ' . GetMessage('BX_FD_ACCESS_DENIED'), 'access_denied');
+            $APPLICATION->ThrowException(
+                GetMessage('BX_FD_ERROR') . ': ' . GetMessage('BX_FD_ACCESS_DENIED'),
+                'access_denied'
+            );
             return;
         }
 
@@ -935,8 +1069,9 @@ class CAdminFileDialog
             $path_i = str_replace("//", "/", $path_i);
             $arPath_i = Array($site, $path_i);
 
-            if (!$USER->CanDoFileOperation('fm_view_listing', $arPath_i))
+            if (!$USER->CanDoFileOperation('fm_view_listing', $arPath_i)) {
                 continue;
+            }
             $ind++;
 
             $empty = true;
@@ -945,8 +1080,9 @@ class CAdminFileDialog
                 $dirTmp = $io->GetDirectory($rootPath . $path . '/' . $name);
                 $arDirTmpChildren = $dirTmp->GetChildren();
                 foreach ($arDirTmpChildren as $child) {
-                    if (!$child->IsDirectory())
+                    if (!$child->IsDirectory()) {
                         continue;
+                    }
                     $empty = false;
                     break;
                 }
@@ -976,8 +1112,9 @@ class CAdminFileDialog
                 $path_i = str_replace("//", "/", $path_i);
                 $arPath_i = Array($site, $path_i);
 
-                if (!$USER->CanDoFileOperation('fm_view_file', $arPath_i))
+                if (!$USER->CanDoFileOperation('fm_view_file', $arPath_i)) {
                     continue;
+                }
                 $ind++;
 
                 $perm_del = $USER->CanDoFileOperation('fm_delete_file', $arPath_i) ? 'true' : 'false';
@@ -985,7 +1122,7 @@ class CAdminFileDialog
 
                 $imageAddProps = '';
                 if ($genTmb) {
-                    $ext = strtolower(GetFileExtension($name));
+                    $ext = mb_strtolower(GetFileExtension($name));
                     if (in_array($ext, array('gif', 'jpg', 'jpeg', 'png', 'jpe', 'bmp'))) // It is image
                     {
                         $upload_dir = COption::GetOptionString("main", "upload_dir", "upload");
@@ -993,10 +1130,16 @@ class CAdminFileDialog
                         $destinationFile = $rootPath . $tmbPath;
                         if (!file_exists($destinationFile)) {
                             $sourceFile = $File['PATH'];
-                            if (CFile::ResizeImageFile($sourceFile, $destinationFile, array('width' => 140, 'height' => 110)))
+                            if (CFile::ResizeImageFile(
+                                $sourceFile,
+                                $destinationFile,
+                                array('width' => 140, 'height' => 110)
+                            )) {
                                 $imageAddProps = ",\n" . 'tmb_src : \'' . CUtil::JSEscape($tmbPath) . '\'';
-                        } else
+                            }
+                        } else {
                             $imageAddProps = ",\n" . 'tmb_src : \'' . CUtil::JSEscape($tmbPath) . '\'';
+                        }
                     }
                 }
                 ?>
@@ -1033,7 +1176,10 @@ class CAdminFileDialog
 
         if (!$io->FileExists($rootPath . $path) && !$io->DirectoryExists($rootPath . $path)) {
             if ($Params['bThrowException'] === true) {
-                $APPLICATION->ThrowException(GetMessage('BX_FD_ERROR') . ': ' . GetMessage('BX_FD_PATH_CORRUPT'), 'path_corrupt');
+                $APPLICATION->ThrowException(
+                    GetMessage('BX_FD_ERROR') . ': ' . GetMessage('BX_FD_PATH_CORRUPT'),
+                    'path_corrupt'
+                );
                 return;
             }
             $path = '/';
@@ -1077,18 +1223,22 @@ class CAdminFileDialog
             if (!$USER->CanDoFileOperation('fm_create_new_folder', $arPath)) {
                 $strWarning = GetMessage("ACCESS_DENIED");
             } elseif (!$io->DirectoryExists($abs_path)) {
-                $strWarning = GetMessage("FD_FOLDER_NOT_FOUND", array('#PATH#' => addslashes(htmlspecialcharsbx($path))));
+                $strWarning = GetMessage(
+                    "FD_FOLDER_NOT_FOUND",
+                    array('#PATH#' => addslashes(htmlspecialcharsbx($path)))
+                );
             } else {
-                if (strlen($dirname) > 0 && ($mess = self::CheckFileName($dirname)) !== true) {
+                if ($dirname <> '' && ($mess = self::CheckFileName($dirname)) !== true) {
                     $strWarning = $mess;
-                } elseif (strlen($dirname) <= 0) {
+                } elseif ($dirname == '') {
                     $strWarning = GetMessage("FD_NEWFOLDER_ENTER_NAME");
                 } else {
                     $pathto = Rel2Abs($path, $dirname);
-                    if ($io->DirectoryExists($DOC_ROOT . $pathto))
+                    if ($io->DirectoryExists($DOC_ROOT . $pathto)) {
                         $strWarning = GetMessage("FD_NEWFOLDER_EXISTS");
-                    else
+                    } else {
                         $strWarning = CFileMan::CreateDir(Array($site, $pathto));
+                    }
                 }
             }
         } else {
@@ -1097,8 +1247,17 @@ class CAdminFileDialog
 
         self::EchoActionStatus($strWarning);
 
-        if ($strWarning == '')
-            self::LoadItems(array('path' => $path, 'site' => $site, 'bAddToMenu' => $Params['bAddToMenu'], 'loadRecursively' => false, 'getFiles' => $Params['getFiles']));
+        if ($strWarning == '') {
+            self::LoadItems(
+                array(
+                    'path' => $path,
+                    'site' => $site,
+                    'bAddToMenu' => $Params['bAddToMenu'],
+                    'loadRecursively' => false,
+                    'getFiles' => $Params['getFiles']
+                )
+            );
+        }
     }
 
     public static function Remove($Params)
@@ -1119,18 +1278,27 @@ class CAdminFileDialog
             $strWarning = '';
 
             $type = false;
-            if ($io->DirectoryExists($abs_path))
+            if ($io->DirectoryExists($abs_path)) {
                 $type = 'folder';
-            if ($io->FileExists($abs_path))
+            }
+            if ($io->FileExists($abs_path)) {
                 $type = 'file';
+            }
 
             //Check access to folder or file
             if (!$type) // Not found
-                $strWarning = GetMessage("FD_ELEMENT_NOT_FOUND", array('#PATH#' => addslashes(htmlspecialcharsbx($path))));
-            elseif (!$USER->CanDoFileOperation('fm_delete_' . $type, $arPath)) // Access denied
+            {
+                $strWarning = GetMessage(
+                    "FD_ELEMENT_NOT_FOUND",
+                    array('#PATH#' => addslashes(htmlspecialcharsbx($path)))
+                );
+            } elseif (!$USER->CanDoFileOperation('fm_delete_' . $type, $arPath)) // Access denied
+            {
                 $strWarning = GetMessage("ACCESS_DENIED");
-            else // Ok, delete it!
+            } else // Ok, delete it!
+            {
                 $strWarning = CFileMan::DeleteEx($path);
+            }
         } else {
             $strWarning = GetMessage("BX_FD_NO_FILEMAN");
         }
@@ -1139,8 +1307,16 @@ class CAdminFileDialog
 
         if ($strWarning == '') {
             // get parent dir path and load content
-            $parPath = substr($path, 0, strrpos($path, '/'));
-            self::LoadItems(array('path' => $parPath, 'site' => $site, 'bAddToMenu' => $Params['bAddToMenu'], 'loadRecursively' => false, 'getFiles' => $Params['getFiles']));
+            $parPath = mb_substr($path, 0, mb_strrpos($path, '/'));
+            self::LoadItems(
+                array(
+                    'path' => $parPath,
+                    'site' => $site,
+                    'bAddToMenu' => $Params['bAddToMenu'],
+                    'loadRecursively' => false,
+                    'getFiles' => $Params['getFiles']
+                )
+            );
         }
     }
 
@@ -1170,18 +1346,20 @@ class CAdminFileDialog
             $strWarning = '';
 
             $type = false;
-            if ($io->DirectoryExists($oldAbsPath))
+            if ($io->DirectoryExists($oldAbsPath)) {
                 $type = 'folder';
-            if ($io->FileExists($oldAbsPath))
+            }
+            if ($io->FileExists($oldAbsPath)) {
                 $type = 'file';
+            }
 
             if (
                 $type == 'file' &&
                 !$USER->CanDoOperation('edit_php') &&
                 (
-                    substr($oldName, 0, 1) == "."
+                    mb_substr($oldName, 0, 1) == "."
                     ||
-                    substr($name, 0, 1) == "."
+                    mb_substr($name, 0, 1) == "."
                     ||
                     (
                         HasScriptExtension($oldName) &&
@@ -1195,20 +1373,29 @@ class CAdminFileDialog
                 )
             ) {
                 $strWarning = GetMessage("ACCESS_DENIED");
-            } elseif (!$type)
-                $strWarning = GetMessage("FD_ELEMENT_NOT_FOUND", array('#PATH#' => addslashes(htmlspecialcharsbx($path))));
-            elseif (!$USER->CanDoFileOperation('fm_rename_' . $type, $arPath1) || !$USER->CanDoFileOperation('fm_rename_' . $type, $arPath2))
+            } elseif (!$type) {
+                $strWarning = GetMessage(
+                    "FD_ELEMENT_NOT_FOUND",
+                    array('#PATH#' => addslashes(htmlspecialcharsbx($path)))
+                );
+            } elseif (!$USER->CanDoFileOperation('fm_rename_' . $type, $arPath1) || !$USER->CanDoFileOperation(
+                    'fm_rename_' . $type,
+                    $arPath2
+                )) {
                 $strWarning = GetMessage("ACCESS_DENIED");
-            else {
-                if (strlen($name) > 0 && ($mess = self::CheckFileName($name)) !== true)
+            } else {
+                if ($name <> '' && ($mess = self::CheckFileName($name)) !== true) {
                     $strWarning = $mess;
-                else if (strlen($name) <= 0)
-                    $strWarning = GetMessage("FD_ELEMENT_ENTER_NAME");
-                else {
-                    if ($io->FileExists($DOC_ROOT . $newPath) || $io->DirectoryExists($DOC_ROOT . $newPath))
-                        $strWarning = GetMessage("FD_ELEMENT_EXISTS");
-                    elseif (!$io->Rename($oldAbsPath, $newAbsPath))
-                        $strWarning = GetMessage("FD_RENAME_ERROR");
+                } else {
+                    if ($name == '') {
+                        $strWarning = GetMessage("FD_ELEMENT_ENTER_NAME");
+                    } else {
+                        if ($io->FileExists($DOC_ROOT . $newPath) || $io->DirectoryExists($DOC_ROOT . $newPath)) {
+                            $strWarning = GetMessage("FD_ELEMENT_EXISTS");
+                        } elseif (!$io->Rename($oldAbsPath, $newAbsPath)) {
+                            $strWarning = GetMessage("FD_RENAME_ERROR");
+                        }
+                    }
                 }
             }
         } else {
@@ -1217,15 +1404,25 @@ class CAdminFileDialog
 
         self::EchoActionStatus($strWarning);
 
-        if ($strWarning == '')
-            self::LoadItems(array('path' => $path, 'site' => $site, 'bAddToMenu' => $Params['bAddToMenu'], 'loadRecursively' => false, 'getFiles' => $Params['getFiles']));
+        if ($strWarning == '') {
+            self::LoadItems(
+                array(
+                    'path' => $path,
+                    'site' => $site,
+                    'bAddToMenu' => $Params['bAddToMenu'],
+                    'loadRecursively' => false,
+                    'getFiles' => $Params['getFiles']
+                )
+            );
+        }
     }
 
     public static function CheckFileName($str)
     {
         $io = CBXVirtualIo::GetInstance();
-        if (!$io->ValidateFilenameString($str))
+        if (!$io->ValidateFilenameString($str)) {
             return GetMessage("FD_INCORRECT_NAME");
+        }
         return true;
     }
 
@@ -1252,7 +1449,13 @@ class CAdminFileDialog
         $Params['sort'] = in_array($Params['sort'], array('size', 'type', 'date')) ? $Params['sort'] : 'name';
         $Params['sort_order'] = ($Params['sort_order'] == 'asc') ? 'asc' : 'des';
 
-        CUserOptions::SetOption("fileman", "file_dialog_config", addslashes($Params['site'] . ';' . $Params['path'] . ';' . $Params['view'] . ';' . $Params['sort'] . ';' . $Params['sort_order']));
+        CUserOptions::SetOption(
+            "fileman",
+            "file_dialog_config",
+            addslashes(
+                $Params['site'] . ';' . $Params['path'] . ';' . $Params['view'] . ';' . $Params['sort'] . ';' . $Params['sort_order']
+            )
+        );
     }
 
     public static function PreviewFlash($Params)
@@ -1260,19 +1463,18 @@ class CAdminFileDialog
         if (CModule::IncludeModule("fileman")) {
             global $APPLICATION, $USER;
 
-            if (CModule::IncludeModule("compression"))
-                CCompress::Disable2048Spaces();
-
             $path = $Params['path'];
             $path = CFileMan::SecurePathVar($path);
             $path = Rel2Abs("/", $path);
             $arPath = Array($Params['site'], $path);
 
-            if (!$USER->CanDoFileOperation('fm_view_file', $arPath))
+            if (!$USER->CanDoFileOperation('fm_view_file', $arPath)) {
                 $path = '';
+            }
 
-            if ($path == "")
+            if ($path == "") {
                 return;
+            }
 
             $APPLICATION->RestartBuffer();
             ?>
@@ -1327,9 +1529,9 @@ class CAdminFileDialog
                             <tr>
                                 <td><input id="_bx_fd_upload_and_open" value="Y" type="checkbox" name="upload_and_open"
                                            checked="checked"></td>
-                                <td>
-                                    <label for="_bx_fd_upload_and_open"> <?= GetMessage("FD_UPLOAD_AND_OPEN"); ?></label>
-                                </td>
+                                <td><label for="_bx_fd_upload_and_open"> <?= GetMessage(
+                                            "FD_UPLOAD_AND_OPEN"
+                                        ); ?></label></td>
                             </tr>
                         </table>
                     </td>
@@ -1361,7 +1563,7 @@ class CAdminFileDialog
 
         $io = CBXVirtualIo::GetInstance();
 
-        if (isset($F["tmp_name"]) && strlen($F["tmp_name"]) > 0 && strlen($F["name"]) > 0 || is_uploaded_file($F["tmp_name"])) {
+        if (isset($F["tmp_name"]) && $F["tmp_name"] <> '' && $F["name"] <> '' || is_uploaded_file($F["tmp_name"])) {
             global $APPLICATION, $USER;
             $strWarning = '';
             $filename = $Params['filename'];
@@ -1370,18 +1572,24 @@ class CAdminFileDialog
             $upload_and_open = $Params['upload_and_open'];
             $rootPath = CSite::GetSiteDocRoot($site);
 
-            if ($filename == '')
+            if ($filename == '') {
                 $filename = $F["name"];
+            }
 
             $pathto = Rel2Abs($path, $filename);
 
-            if (strlen($filename) > 0 && ($mess = self::CheckFileName($filename)) !== true)
+            if ($filename <> '' && ($mess = self::CheckFileName($filename)) !== true) {
                 $strWarning = $mess;
+            }
 
             if ($strWarning == '') {
                 $fn = $io->ExtractNameFromPath($pathto);
                 if ($USER->CanDoFileOperation('fm_upload_file', array($site, $pathto)) &&
-                    ($USER->IsAdmin() || (!HasScriptExtension($fn) && substr($fn, 0, 1) != "." && $io->ValidateFilenameString($fn)))
+                    ($USER->IsAdmin() || (!HasScriptExtension($fn) && mb_substr(
+                                $fn,
+                                0,
+                                1
+                            ) != "." && $io->ValidateFilenameString($fn)))
                 ) {
                     if (!$io->FileExists($rootPath . $pathto) || $_REQUEST["rewrite"] == "Y") {
                         //************************** Quota **************************//
@@ -1390,8 +1598,9 @@ class CAdminFileDialog
                         if (COption::GetOptionInt("main", "disk_space") > 0) {
                             $bQuota = false;
                             $quota = new CDiskQuota();
-                            if ($quota->checkDiskQuota(array("FILE_SIZE" => filesize($F["tmp_name"]))))
+                            if ($quota->checkDiskQuota(array("FILE_SIZE" => filesize($F["tmp_name"])))) {
                                 $bQuota = true;
+                            }
                         }
                         //************************** Quota **************************//
                         if ($bQuota) {
@@ -1399,8 +1608,9 @@ class CAdminFileDialog
                             $flTmp = $io->GetFile($rootPath . $pathto);
                             $flTmp->MarkWritable();
 
-                            if (COption::GetOptionInt("main", "disk_space") > 0)
+                            if (COption::GetOptionInt("main", "disk_space") > 0) {
                                 CDiskQuota::updateDiskQuota("file", $flTmp->GetFileSize(), "copy");
+                            }
 
                             $buffer = 'setTimeout(function(){parent.oBXDialogControls.Uploader.OnAfterUpload("' . $filename . '", ' . ($upload_and_open == "Y" ? 'true' : 'false') . ');}, 50);';
                         } else {
@@ -1417,8 +1627,9 @@ class CAdminFileDialog
             $strWarning = GetMessage("FD_LOAD_ERROR_ALERT");
         }
 
-        if ($strWarning <> '')
+        if ($strWarning <> '') {
             $buffer = 'alert("' . addslashes(htmlspecialcharsex($strWarning)) . '");';
+        }
 
         return '<script>' . $buffer . '</script>';
     }

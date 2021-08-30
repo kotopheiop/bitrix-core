@@ -79,7 +79,9 @@ class ImportCsv
         self::$enabledLanguages = Translate\Config::getEnabledLanguages();
 
         foreach (self::$enabledLanguages as $languageId) {
-            self::$sourceEncoding[$languageId] = strtolower(Main\Localization\Translation::getSourceEncoding($languageId));
+            self::$sourceEncoding[$languageId] = mb_strtolower(
+                Main\Localization\Translation::getSourceEncoding($languageId)
+            );
         }
 
         parent::__construct($name, $controller, $config);
@@ -202,13 +204,17 @@ class ImportCsv
                     if ($key == '') {
                         $rowErrors[] = Loc::getMessage('TR_IMPORT_ERROR_PHRASE_CODE_ABSENT');
                     }
-                    $this->addError(new Main\Error(Loc::getMessage(
-                        'TR_IMPORT_ERROR_LINE_FILE_EXT',
-                        [
-                            '#LINE#' => ($this->seekLine + 1),
-                            '#ERROR#' => implode('; ', $rowErrors)
-                        ]
-                    )));
+                    $this->addError(
+                        new Main\Error(
+                            Loc::getMessage(
+                                'TR_IMPORT_ERROR_LINE_FILE_EXT',
+                                [
+                                    '#LINE#' => ($currentLine + 1),
+                                    '#ERROR#' => implode('; ', $rowErrors)
+                                ]
+                            )
+                        )
+                    );
 
                     continue;
                 }
@@ -224,8 +230,7 @@ class ImportCsv
                     }
 
                     $langIndex = $this->columnList[$languageId];
-                    if (!isset($csvRow[$langIndex]) || empty($csvRow[$langIndex])) {
-                        //$rowErrors[] = Loc::getMessage('TR_IMPORT_ERROR_ROW_LANG_ABSENT', ['#LANG#' => $languageId]);
+                    if (!isset($csvRow[$langIndex]) || (empty($csvRow[$langIndex]) && $csvRow[$langIndex] !== '0')) {
                         continue;
                     }
 
@@ -234,20 +239,14 @@ class ImportCsv
                     $encodingOut = self::$sourceEncoding[$languageId];
 
                     if (!empty($this->encodingIn) && $this->encodingIn !== $encodingOut) {
-                        $errorMessage = '';
-                        $phrase = Main\Text\Encoding::convertEncoding($phrase, $this->encodingIn, $encodingOut, $errorMessage);
-
-                        if (!$phrase && !empty($errorMessage)) {
-                            $rowErrors[] = $errorMessage;
-                            continue;
-                        }
+                        $phrase = Main\Text\Encoding::convertEncoding($phrase, $this->encodingIn, $encodingOut);
                     }
 
                     $checked = true;
                     if ($encodingOut === 'utf-8') {
                         $validPhrase = preg_replace("/[^\x01-\x7F]/", '', $phrase);// remove ASCII characters
                         if ($validPhrase !== $phrase) {
-                            $checked = Main\Text\Encoding::detectUtf8($phrase);
+                            $checked = Translate\Text\StringHelper::validateUtf8OctetSequences($phrase);
                         }
                         unset($validPhrase);
                     }
@@ -255,22 +254,29 @@ class ImportCsv
                     if ($checked) {
                         $phraseList[$filePath][$languageId][$key] = $phrase;
                     } else {
-                        $rowErrors[] = Loc::getMessage('TR_IMPORT_ERROR_NO_VALID_UTF8_PHRASE', ['#LANG#' => $languageId]);
+                        $rowErrors[] = Loc::getMessage(
+                            'TR_IMPORT_ERROR_NO_VALID_UTF8_PHRASE',
+                            ['#LANG#' => $languageId]
+                        );
                     }
 
                     unset($checked, $phrase);
                 }
 
                 if (!empty($rowErrors)) {
-                    $this->addError(new Main\Error(Loc::getMessage(
-                        'TR_IMPORT_ERROR_LINE_FILE_BIG',
-                        [
-                            '#LINE#' => ($this->seekLine + 1),
-                            '#FILENAME#' => $filePath,
-                            '#PHRASE#' => $key,
-                            '#ERROR#' => implode('; ', $rowErrors),
-                        ]
-                    )));
+                    $this->addError(
+                        new Main\Error(
+                            Loc::getMessage(
+                                'TR_IMPORT_ERROR_LINE_FILE_BIG',
+                                [
+                                    '#LINE#' => ($currentLine + 1),
+                                    '#FILENAME#' => $filePath,
+                                    '#PHRASE#' => $key,
+                                    '#ERROR#' => implode('; ', $rowErrors),
+                                ]
+                            )
+                        )
+                    );
                 }
                 unset($rowErrors);
 
@@ -280,7 +286,7 @@ class ImportCsv
                 }
             }
 
-            if ($csvRow === false) {
+            if ($csvRow === null) {
                 $hasFinishedReading = true;
             }
             unset($csvRow);
@@ -289,7 +295,9 @@ class ImportCsv
 
             foreach ($phraseList as $filePath => $translationList) {
                 if (Translate\IO\Path::isLangDir($filePath, true) !== true) {
-                    $this->addError(new Main\Error(Loc::getMessage('TR_IMPORT_ERROR_FILE_NOT_LANG', array('#FILE#' => $filePath))));
+                    $this->addError(
+                        new Main\Error(Loc::getMessage('TR_IMPORT_ERROR_FILE_NOT_LANG', array('#FILE#' => $filePath)))
+                    );
                     continue;
                 }
 
@@ -303,7 +311,9 @@ class ImportCsv
                     $langFilePath = Translate\IO\Path::replaceLangId($filePath, $languageId);
 
                     if (\Rel2Abs('/', $langFilePath) !== $langFilePath) {
-                        $this->addError(new Main\Error(Loc::getMessage('TR_IMPORT_ERROR_BAD_FILEPATH', ['#FILE#' => $filePath])));
+                        $this->addError(
+                            new Main\Error(Loc::getMessage('TR_IMPORT_ERROR_BAD_FILEPATH', ['#FILE#' => $filePath]))
+                        );
                         break;
                     }
 
@@ -314,8 +324,16 @@ class ImportCsv
                     $langFile->setLangId($languageId);
                     $langFile->setOperatingEncoding(self::$sourceEncoding[$languageId]);
 
-                    if (!$langFile->load() && $langFile->hasErrors()) {
-                        $this->addErrors($langFile->getErrors());
+                    if (!$langFile->loadTokens()) {
+                        if (!$langFile->load() && $langFile->hasErrors()) {
+                            foreach ($langFile->getErrors() as $error) {
+                                if ($error->getCode() !== 'EMPTY_CONTENT') {
+                                    $this->addError($error);
+                                }
+                            }
+                        }
+                    }
+                    if (count($this->getErrors()) > 0) {
                         continue;
                     }
 
@@ -326,7 +344,7 @@ class ImportCsv
                         switch ($this->updateMethod) {
                             // import only new messages
                             case Translate\Controller\Import\Csv::METHOD_ADD_ONLY:
-                                if (!isset($langFile[$key]) || empty($langFile[$key])) {
+                                if (!isset($langFile[$key]) || (empty($langFile[$key]) && $langFile[$key] !== '0')) {
                                     $langFile[$key] = $phrase;
                                     $hasDataToUpdate = true;
                                     $this->importedPhraseCount++;
@@ -358,9 +376,11 @@ class ImportCsv
                         // backup
                         if ($langFile->isExists() && Translate\Config::needToBackUpFiles()) {
                             if (!$langFile->backup()) {
-                                $this->addError(new Main\Error(
-                                    Loc::getMessage('TR_IMPORT_ERROR_CREATE_BACKUP', ['#FILE#' => $langFilePath])
-                                ));
+                                $this->addError(
+                                    new Main\Error(
+                                        Loc::getMessage('TR_IMPORT_ERROR_CREATE_BACKUP', ['#FILE#' => $langFilePath])
+                                    )
+                                );
                             }
                         }
 
@@ -379,13 +399,17 @@ class ImportCsv
                             }
                         } catch (Main\IO\IoException $exception) {
                             if (!$langFile->isExists()) {
-                                $this->addError(new Main\Error(
-                                    Loc::getMessage('TR_IMPORT_ERROR_WRITE_CREATE', ['#FILE#' => $langFilePath])
-                                ));
+                                $this->addError(
+                                    new Main\Error(
+                                        Loc::getMessage('TR_IMPORT_ERROR_WRITE_CREATE', ['#FILE#' => $langFilePath])
+                                    )
+                                );
                             } else {
-                                $this->addError(new Main\Error(
-                                    Loc::getMessage('TR_IMPORT_ERROR_WRITE_UPDATE', ['#FILE#' => $langFilePath])
-                                ));
+                                $this->addError(
+                                    new Main\Error(
+                                        Loc::getMessage('TR_IMPORT_ERROR_WRITE_UPDATE', ['#FILE#' => $langFilePath])
+                                    )
+                                );
                             }
                         }
                     }

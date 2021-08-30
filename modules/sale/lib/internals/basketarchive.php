@@ -152,10 +152,12 @@ class BasketArchiveTable extends Main\Entity\DataManager
         $result = parent::add($data);
 
         if ($result->isSuccess()) {
-            BasketArchivePackedTable::add(array(
-                "BASKET_ARCHIVE_ID" => $result->getId(),
-                "BASKET_DATA" => $basketData
-            ));
+            BasketArchivePackedTable::add(
+                array(
+                    "BASKET_ARCHIVE_ID" => $result->getId(),
+                    "BASKET_DATA" => $basketData
+                )
+            );
         }
 
         return $result;

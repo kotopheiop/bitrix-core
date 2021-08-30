@@ -46,14 +46,16 @@ class Janus
             $request['body']['bitrate'] = $config['bitrate'];
         }
         $result = $this->query($request, self::PLUGIN_VIDEOROOM);
-        if (!$result->isSuccess())
+        if (!$result->isSuccess()) {
             return $result;
+        }
 
         $response = $result->getData();
-        if ($response['plugindata']['data']['videoroom'] === 'created')
+        if ($response['plugindata']['data']['videoroom'] === 'created') {
             return $response['plugindata']['data']['room'];
-        else
+        } else {
             return false;
+        }
     }
 
     /**
@@ -71,10 +73,11 @@ class Janus
         }
         $response = $result->getData();
 
-        if ($response['data']['id'])
+        if ($response['data']['id']) {
             $this->sessionId = (string)$response['data']['id'];
-        else
+        } else {
             $result->addError(new Error('Session id is not found in gateway response'));
+        }
 
         return $result;
     }
@@ -99,15 +102,17 @@ class Janus
         );
         $result = $this->query($request);
 
-        if (!$result->isSuccess())
+        if (!$result->isSuccess()) {
             return $result;
+        }
 
         $response = $result->getData();
 
-        if ($response['data']['id'])
+        if ($response['data']['id']) {
             $this->pluginEndpoints[$pluginName] = (string)$response['data']['id'];
-        else
+        } else {
             $result->addError(new Error('Session id is not found in gateway response'));
+        }
 
         return $result;
     }
@@ -149,11 +154,13 @@ class Janus
         $result = new Result();
         $encodedRequest = Json::encode($request);
 
-        $httpClient = new HttpClient(array(
-            "socketTimeout" => 5,
-            "streamTimeout" => 5,
-            "disableSslVerification" => true
-        ));
+        $httpClient = new HttpClient(
+            array(
+                "socketTimeout" => 5,
+                "streamTimeout" => 5,
+                "disableSslVerification" => true
+            )
+        );
 
         $httpClient->setHeader('User-Agent', self::USER_AGENT, true);
         $httpClient->query('POST', $endpoint, $encodedRequest);

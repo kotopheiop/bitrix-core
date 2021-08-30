@@ -61,7 +61,6 @@ class TransferProviderCompatibility extends TransferProviderBase
         }
 
         if (!empty($tryShipmentItemList)) {
-
             $reservedQuantityList = array();
 
             $r = Sale\Provider::tryShipmentItemList($tryShipmentItemList);
@@ -154,7 +153,6 @@ class TransferProviderCompatibility extends TransferProviderBase
             if (!empty($data) && is_array($data)) {
                 $needShipmentItemList = $data;
             }
-
         }
 
         if (!empty($needShipmentItemList)) {
@@ -205,7 +203,6 @@ class TransferProviderCompatibility extends TransferProviderBase
                 $shipmentItem->setFieldNoDemand('RESERVED_QUANTITY', $reservedQuantityList[$shipmentItemIndex]);
             }
         }
-
     }
 
     /**
@@ -270,7 +267,6 @@ class TransferProviderCompatibility extends TransferProviderBase
                     } elseif ($needReserved === null) {
                         $needReserved = $reserved;
                     }
-
                 }
             }
 
@@ -552,7 +548,18 @@ class TransferProviderCompatibility extends TransferProviderBase
             $providerName = $reflect->getName();
         }
 
-        return Sale\Provider::getProductDataByList($products, $providerName, array('PRICE', 'QUANTITY', 'CHECK_DISCOUNT', 'AVAILABLE_QUANTITY', 'COUPONS'), $this->getContext());
+        return Sale\Provider::getProductDataByList(
+            $products,
+            $providerName,
+            array(
+                'PRICE',
+                'QUANTITY',
+                'CHECK_DISCOUNT',
+                'AVAILABLE_QUANTITY',
+                'COUPONS'
+            ),
+            $this->getContext()
+        );
     }
 
     /**
@@ -598,7 +605,6 @@ class TransferProviderCompatibility extends TransferProviderBase
             foreach ($productOrderList[$productId] as $order) {
                 $resultList[$productId] = false;
                 if (!empty($productData['SHIPMENT_ITEM_LIST'])) {
-
                     $quantityList = array();
 
                     if (isset($productData['QUANTITY_LIST'])) {
@@ -609,7 +615,6 @@ class TransferProviderCompatibility extends TransferProviderBase
                      * @var Sale\ShipmentItem $shipmentItem
                      */
                     foreach ($productData['SHIPMENT_ITEM_LIST'] as $shipmentIndex => $shipmentItem) {
-
                         /** @var Sale\ShipmentItemCollection $shipmentItemCollection */
                         $shipmentItemCollection = $shipmentItem->getCollection();
                         if (!$shipmentItemCollection) {
@@ -650,9 +655,7 @@ class TransferProviderCompatibility extends TransferProviderBase
                         }
                     }
                 }
-
             }
-
         }
 
 
@@ -695,7 +698,6 @@ class TransferProviderCompatibility extends TransferProviderBase
                             'SITE_ID' => $order->getSiteId(),
                         );
                     }
-
                 }
             } else {
                 $hash = $USER->getId() . "|" . SITE_ID;
@@ -715,10 +717,8 @@ class TransferProviderCompatibility extends TransferProviderBase
                     if (array_key_exists($productId, $resultData)) {
                         $resultList[$productId] = $resultData[$productId];
                     }
-
                 }
             }
-
         }
 
 
@@ -760,7 +760,6 @@ class TransferProviderCompatibility extends TransferProviderBase
                             'SITE_ID' => $order->getSiteId(),
                         );
                     }
-
                 }
             } else {
                 $hash = SITE_ID;
@@ -779,10 +778,8 @@ class TransferProviderCompatibility extends TransferProviderBase
                     if (array_key_exists($productId, $resultData)) {
                         $resultList[$productId] = $resultData[$productId];
                     }
-
                 }
             }
-
         }
 
         if (!empty($resultList)) {
@@ -866,7 +863,6 @@ class TransferProviderCompatibility extends TransferProviderBase
                             'USER_ID' => $order->getUserId(),
                         );
                     }
-
                 }
             } else {
                 $hash = $USER->getId();
@@ -888,7 +884,6 @@ class TransferProviderCompatibility extends TransferProviderBase
                     }
                 }
             }
-
         }
 
 

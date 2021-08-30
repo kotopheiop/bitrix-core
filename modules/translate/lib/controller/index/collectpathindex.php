@@ -70,13 +70,10 @@ class CollectPathIndex
 
         if ($this->isNewProcess) {
             $languages = $this->controller->getRequest()->get('languages');
-            if (!empty($languages) && $this->languages !== 'all') {
-                $languages = explode(',', $languages);
-                if (is_array($languages)) {
-                    $languages = array_intersect($languages, Translate\Config::getEnabledLanguages());
-                    if (!empty($languages)) {
-                        $this->languages = $languages;
-                    }
+            if (is_array($languages) && !in_array('all', $languages)) {
+                $languages = array_intersect($languages, Translate\Config::getEnabledLanguages());
+                if (!empty($languages)) {
+                    $this->languages = $languages;
                 }
             }
 

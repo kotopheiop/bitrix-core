@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 define("BP_EI_DIRECTION_EXPORT", 0);
@@ -41,8 +42,13 @@ class CAllBPWorkflowTemplateLoader
         return self::$instance;
     }
 
-    public static function GetList($arOrder = array("ID" => "DESC"), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
-    {
+    public static function GetList(
+        $arOrder = array("ID" => "DESC"),
+        $arFilter = array(),
+        $arGroupBy = false,
+        $arNavStartParams = false,
+        $arSelectFields = array()
+    ) {
         $loader = CBPWorkflowTemplateLoader::GetLoader();
         return $loader->GetTemplatesList($arOrder, $arFilter, $arGroupBy, $arNavStartParams, $arSelectFields);
     }
@@ -50,12 +56,14 @@ class CAllBPWorkflowTemplateLoader
     public static function checkTemplateActivities(array $template)
     {
         foreach ($template as $activity) {
-            if (!CBPActivity::IncludeActivityFile($activity['Type']))
+            if (!CBPActivity::IncludeActivityFile($activity['Type'])) {
                 return false;
+            }
             if (!empty($activity['Children'])) {
                 $childResult = static::checkTemplateActivities($activity['Children']);
-                if (!$childResult)
+                if (!$childResult) {
                     return false;
+                }
             }
         }
 
@@ -72,7 +80,11 @@ class CAllBPWorkflowTemplateLoader
 
         $pref = '';
         if (isset($arActivity["Properties"]) && isset($arActivity["Properties"]["Title"])) {
-            $pref = str_replace("#TITLE#", $arActivity["Properties"]["Title"], GetMessage("BPWTL_ERROR_MESSAGE_PREFIX")) . " ";
+            $pref = str_replace(
+                    "#TITLE#",
+                    $arActivity["Properties"]["Title"],
+                    GetMessage("BPWTL_ERROR_MESSAGE_PREFIX")
+                ) . " ";
         }
 
         foreach ($errors as $i => $e) {
@@ -108,8 +120,9 @@ class CAllBPWorkflowTemplateLoader
         $updateMode = ($id > 0 ? true : false);
         $addMode = !$updateMode;
 
-        if ($addMode && !is_set($arFields, "DOCUMENT_TYPE"))
+        if ($addMode && !is_set($arFields, "DOCUMENT_TYPE")) {
             throw new CBPArgumentNullException("DOCUMENT_TYPE");
+        }
 
         if (is_set($arFields, "DOCUMENT_TYPE")) {
             $arDocumentType = CBPHelper::ParseDocumentId($arFields["DOCUMENT_TYPE"]);
@@ -125,12 +138,14 @@ class CAllBPWorkflowTemplateLoader
 
         if (is_set($arFields, "NAME") || $addMode) {
             $arFields["NAME"] = trim($arFields["NAME"]);
-            if (strlen($arFields["NAME"]) <= 0)
+            if ($arFields["NAME"] == '') {
                 throw new CBPArgumentNullException("NAME");
+            }
         }
 
-        if ($addMode && !is_set($arFields, "TEMPLATE"))
+        if ($addMode && !is_set($arFields, "TEMPLATE")) {
             throw new CBPArgumentNullException("TEMPLATE");
+        }
 
         if (is_set($arFields, "TEMPLATE")) {
             if (!is_array($arFields["TEMPLATE"])) {
@@ -140,17 +155,22 @@ class CAllBPWorkflowTemplateLoader
 
                 if (!$systemImport) {
                     if (array_key_exists("MODIFIER_USER", $arFields)) {
-                        if (is_object($arFields["MODIFIER_USER"]) && is_a($arFields["MODIFIER_USER"], "CBPWorkflowTemplateUser"))
+                        if (is_object($arFields["MODIFIER_USER"]) && is_a(
+                                $arFields["MODIFIER_USER"],
+                                "CBPWorkflowTemplateUser"
+                            )) {
                             $userTmp = $arFields["MODIFIER_USER"];
-                        else
+                        } else {
                             $userTmp = new CBPWorkflowTemplateUser($arFields["MODIFIER_USER"]);
+                        }
                     } else {
                         $userTmp = new CBPWorkflowTemplateUser();
                     }
 
                     $errors = array();
-                    foreach ($arFields["TEMPLATE"] as $v)
+                    foreach ($arFields["TEMPLATE"] as $v) {
                         $errors = array_merge($errors, $this->ValidateTemplate($v, $userTmp));
+                    }
 
                     if (count($errors) > 0) {
                         $messages = array();
@@ -170,21 +190,28 @@ class CAllBPWorkflowTemplateLoader
                 if ($arFields[$field] == null) {
                     $arFields[$field] = false;
                 } elseif (is_array($arFields[$field])) {
-                    if (count($arFields[$field]) > 0)
+                    if (count($arFields[$field]) > 0) {
                         $arFields[$field] = $this->GetSerializedForm($arFields[$field]);
-                    else
+                    } else {
                         $arFields[$field] = false;
+                    }
                 } else {
                     throw new CBPArgumentTypeException($field);
                 }
             }
         }
 
-        if (is_set($arFields, "ACTIVE") && $arFields["ACTIVE"] != 'N')
+        if (is_set($arFields, "ACTIVE") && $arFields["ACTIVE"] != 'N') {
             $arFields["ACTIVE"] = 'Y';
+        }
 
-        if (is_set($arFields, "IS_MODIFIED") && $arFields["IS_MODIFIED"] != 'N')
+        if (is_set($arFields, "IS_SYSTEM") && $arFields["IS_SYSTEM"] != 'Y') {
+            $arFields["IS_SYSTEM"] = 'N';
+        }
+
+        if (is_set($arFields, "IS_MODIFIED") && $arFields["IS_MODIFIED"] != 'N') {
             $arFields["IS_MODIFIED"] = 'Y';
+        }
 
         unset($arFields["MODIFIED"]);
     }
@@ -198,8 +225,9 @@ class CAllBPWorkflowTemplateLoader
     public static function Update($id, $arFields, $systemImport = false)
     {
         $loader = CBPWorkflowTemplateLoader::GetLoader();
-        if (isset($arFields['TEMPLATE']) && !$systemImport)
+        if (isset($arFields['TEMPLATE']) && !$systemImport) {
             $arFields['IS_MODIFIED'] = 'Y';
+        }
         $returnId = $loader->UpdateTemplate($id, $arFields, $systemImport);
         self::cleanTemplateCache($returnId);
         return $returnId;
@@ -208,8 +236,9 @@ class CAllBPWorkflowTemplateLoader
     private function GetSerializedForm($arTemplate)
     {
         $buffer = serialize($arTemplate);
-        if ($this->useGZipCompression)
+        if ($this->useGZipCompression) {
             $buffer = gzcompress($buffer, 9);
+        }
         return $buffer;
     }
 
@@ -231,8 +260,9 @@ class CAllBPWorkflowTemplateLoader
         global $DB;
 
         $id = intval($id);
-        if ($id <= 0)
+        if ($id <= 0) {
             throw new Exception("id");
+        }
 
         $dbResult = $DB->Query(
             "SELECT COUNT('x') as CNT " .
@@ -259,21 +289,30 @@ class CAllBPWorkflowTemplateLoader
     public function LoadWorkflow($workflowTemplateId)
     {
         $workflowTemplateId = intval($workflowTemplateId);
-        if ($workflowTemplateId <= 0)
+        if ($workflowTemplateId <= 0) {
             throw new CBPArgumentOutOfRangeException("workflowTemplateId", $workflowTemplateId);
+        }
 
-        $dbTemplatesList = $this->GetTemplatesList(array(), array("ID" => $workflowTemplateId), false, false, array("TEMPLATE", "VARIABLES", "PARAMETERS"));
+        $dbTemplatesList = $this->GetTemplatesList(
+            array(),
+            array("ID" => $workflowTemplateId),
+            false,
+            false,
+            array("TEMPLATE", "VARIABLES", "PARAMETERS")
+        );
         $arTemplatesListItem = $dbTemplatesList->Fetch();
 
-        if (!$arTemplatesListItem)
+        if (!$arTemplatesListItem) {
             throw new Exception(str_replace("#ID#", $workflowTemplateId, GetMessage("BPCGWTL_INVALID_WF_ID")));
+        }
 
         $arWorkflowTemplate = $arTemplatesListItem["TEMPLATE"];
         $workflowVariablesTypes = $arTemplatesListItem["VARIABLES"];
         $workflowParametersTypes = $arTemplatesListItem["PARAMETERS"];
 
-        if (!is_array($arWorkflowTemplate) || count($arWorkflowTemplate) <= 0)
+        if (!is_array($arWorkflowTemplate) || count($arWorkflowTemplate) <= 0) {
             throw new Exception(str_replace("#ID#", $workflowTemplateId, GetMessage("BPCGWTL_EMPTY_TEMPLATE")));
+        }
 
         $arActivityNames = array();
         $rootActivity = $this->ParceWorkflowTemplate($arWorkflowTemplate, $arActivityNames, null);
@@ -283,24 +322,29 @@ class CAllBPWorkflowTemplateLoader
 
     private function ParceWorkflowTemplate($arWorkflowTemplate, &$arActivityNames, CBPActivity $parentActivity = null)
     {
-        if (!is_array($arWorkflowTemplate))
+        if (!is_array($arWorkflowTemplate)) {
             throw new CBPArgumentOutOfRangeException("arWorkflowTemplate");
+        }
 
         foreach ($arWorkflowTemplate as $activityFormatted) {
-            if (in_array($activityFormatted["Name"], $arActivityNames))
+            if (in_array($activityFormatted["Name"], $arActivityNames)) {
                 throw new Exception("DuplicateActivityName");
+            }
 
             $arActivityNames[] = $activityFormatted["Name"];
             $activity = $this->CreateActivity($activityFormatted["Type"], $activityFormatted["Name"]);
-            if ($activity == null)
+            if ($activity == null) {
                 throw new Exception("Activity is not found.");
+            }
 
             $activity->InitializeFromArray($activityFormatted["Properties"]);
-            if ($parentActivity)
+            if ($parentActivity) {
                 $parentActivity->FixUpParentChildRelationship($activity);
+            }
 
-            if ($activityFormatted["Children"])
+            if ($activityFormatted["Children"]) {
                 $this->ParceWorkflowTemplate($activityFormatted["Children"], $arActivityNames, $activity);
+            }
         }
 
         return $activity;
@@ -308,23 +352,27 @@ class CAllBPWorkflowTemplateLoader
 
     private function CreateActivity($activityCode, $activityName)
     {
-        if (CBPActivity::IncludeActivityFile($activityCode))
+        if (CBPActivity::IncludeActivityFile($activityCode)) {
             return CBPActivity::CreateInstance($activityCode, $activityName);
-        else
+        } else {
             throw new Exception('Activity is not found.');
+        }
     }
 
     public static function GetStatesOfTemplate($arWorkflowTemplate)
     {
-        if (!is_array($arWorkflowTemplate))
+        if (!is_array($arWorkflowTemplate)) {
             throw new CBPArgumentTypeException("arWorkflowTemplate", "array");
+        }
 
-        if (!is_array($arWorkflowTemplate[0]))
+        if (!is_array($arWorkflowTemplate[0])) {
             throw new CBPArgumentTypeException("arWorkflowTemplate");
+        }
 
         $arStates = array();
-        foreach ($arWorkflowTemplate[0]["Children"] as $state)
-            $arStates[$state["Name"]] = (strlen($state["Properties"]["Title"]) > 0 ? $state["Properties"]["Title"] : $state["Name"]);
+        foreach ($arWorkflowTemplate[0]["Children"] as $state) {
+            $arStates[$state["Name"]] = ($state["Properties"]["Title"] <> '' ? $state["Properties"]["Title"] : $state["Name"]);
+        }
 
         return $arStates;
     }
@@ -333,12 +381,14 @@ class CAllBPWorkflowTemplateLoader
     {
         $arResult = array();
 
-        if ($arWorkflowTemplate["Type"] == "SetStateActivity")
+        if ($arWorkflowTemplate["Type"] == "SetStateActivity") {
             $arResult[] = $arWorkflowTemplate["Properties"]["TargetStateName"];
+        }
 
         if (is_array($arWorkflowTemplate["Children"])) {
-            foreach ($arWorkflowTemplate["Children"] as $key => $value)
+            foreach ($arWorkflowTemplate["Children"] as $key => $value) {
                 $arResult = $arResult + self::FindSetStateActivities($arWorkflowTemplate["Children"][$key]);
+            }
         }
 
         return $arResult;
@@ -346,21 +396,25 @@ class CAllBPWorkflowTemplateLoader
 
     public static function GetTransfersOfState($arWorkflowTemplate, $stateName)
     {
-        if (!is_array($arWorkflowTemplate))
+        if (!is_array($arWorkflowTemplate)) {
             throw new CBPArgumentTypeException("arWorkflowTemplate", "array");
+        }
 
-        if (!is_array($arWorkflowTemplate[0]))
+        if (!is_array($arWorkflowTemplate[0])) {
             throw new CBPArgumentTypeException("arWorkflowTemplate");
+        }
 
         $stateName = trim($stateName);
-        if (strlen($stateName) <= 0)
+        if ($stateName == '') {
             throw new CBPArgumentNullException("stateName");
+        }
 
         $arTransfers = array();
         foreach ($arWorkflowTemplate[0]["Children"] as $state) {
             if ($stateName == $state["Name"]) {
-                foreach ($state["Children"] as $event)
+                foreach ($state["Children"] as $event) {
                     $arTransfers[$event["Name"]] = self::FindSetStateActivities($event);
+                }
 
                 break;
             }
@@ -372,8 +426,9 @@ class CAllBPWorkflowTemplateLoader
     private static function ParseDocumentTypeStates($arTemplatesListItem)
     {
         $arWorkflowTemplate = $arTemplatesListItem["TEMPLATE"];
-        if (!is_array($arWorkflowTemplate))
+        if (!is_array($arWorkflowTemplate)) {
             throw new CBPArgumentTypeException("arTemplatesListItem");
+        }
 
         $result = array(
             "ID" => "",
@@ -389,14 +444,13 @@ class CAllBPWorkflowTemplateLoader
         );
 
         $type = "CBP" . $arWorkflowTemplate[0]["Type"];
-        $bStateMachine = false;
-        while (strlen($type) > 0) {
-            if ($type == "CBPStateMachineWorkflowActivity") {
-                $bStateMachine = true;
-                break;
-            }
-            $type = get_parent_class($type);
-        }
+        $bStateMachine = (
+            $type === CBPStateMachineWorkflowActivity::class
+            || (
+                class_exists($type)
+                && is_subclass_of($type, CBPStateMachineWorkflowActivity::class)
+            )
+        );
 
         if ($bStateMachine) {
             //if (strlen($stateName) <= 0)
@@ -435,7 +489,11 @@ class CAllBPWorkflowTemplateLoader
         if (is_array($result["STATE_PERMISSIONS"])) {
             $arKeys = array_keys($result["STATE_PERMISSIONS"]);
             foreach ($arKeys as $key) {
-                $ar = self::ExtractValuesFromVariables($result["STATE_PERMISSIONS"][$key], $arTemplatesListItem["VARIABLES"], $arTemplatesListItem["CONSTANTS"]);
+                $ar = self::ExtractValuesFromVariables(
+                    $result["STATE_PERMISSIONS"][$key],
+                    $arTemplatesListItem["VARIABLES"],
+                    $arTemplatesListItem["CONSTANTS"]
+                );
                 $result["STATE_PERMISSIONS"][$key] = CBPHelper::MakeArrayFlat($ar);
             }
         }
@@ -445,23 +503,27 @@ class CAllBPWorkflowTemplateLoader
 
     private static function ExtractValuesFromVariables($ar, $variables, $constants = array())
     {
-        if (is_string($ar) && preg_match(CBPActivity::ValuePattern, $ar, $arMatches))
+        if (is_string($ar) && preg_match(CBPActivity::ValuePattern, $ar, $arMatches)) {
             $ar = array($arMatches['object'], $arMatches['field']);
+        }
 
         if (is_array($ar)) {
             if (!CBPHelper::IsAssociativeArray($ar)) {
                 if (count($ar) == 2 && ($ar[0] == 'Variable' || $ar[0] == 'Constant' || $ar[0] == 'Template')) {
-                    if ($ar[0] == 'Variable' && is_array($variables) && array_key_exists($ar[1], $variables))
+                    if ($ar[0] == 'Variable' && is_array($variables) && array_key_exists($ar[1], $variables)) {
                         return array($variables[$ar[1]]["Default"]);
-                    if ($ar[0] == 'Constant' && is_array($constants) && array_key_exists($ar[1], $constants))
+                    }
+                    if ($ar[0] == 'Constant' && is_array($constants) && array_key_exists($ar[1], $constants)) {
                         return array($constants[$ar[1]]["Default"]);
+                    }
 
                     return array();
                 }
 
                 $arResult = array();
-                foreach ($ar as $ar1)
+                foreach ($ar as $ar1) {
                     $arResult[] = self::ExtractValuesFromVariables($ar1, $variables, $constants);
+                }
 
                 return $arResult;
             }
@@ -479,8 +541,9 @@ class CAllBPWorkflowTemplateLoader
 
         if (!isset(static::$typesStates[$cacheKey])) {
             $result = array();
-            if ($autoExecute >= 0)
+            if ($autoExecute >= 0) {
                 $arFilter["AUTO_EXECUTE"] = $autoExecute;
+            }
             $arFilter["ACTIVE"] = "Y";
 
             $dbTemplatesList = self::GetList(
@@ -490,8 +553,9 @@ class CAllBPWorkflowTemplateLoader
                 false,
                 array('ID', 'NAME', 'DESCRIPTION', 'TEMPLATE', 'PARAMETERS', 'VARIABLES', 'CONSTANTS')
             );
-            while ($arTemplatesListItem = $dbTemplatesList->Fetch())
+            while ($arTemplatesListItem = $dbTemplatesList->Fetch()) {
                 $result[$arTemplatesListItem["ID"]] = self::ParseDocumentTypeStates($arTemplatesListItem);
+            }
 
             static::$typesStates[$cacheKey] = $result;
         }
@@ -501,8 +565,9 @@ class CAllBPWorkflowTemplateLoader
     public static function GetTemplateState($workflowTemplateId, $stateName = "")
     {
         $workflowTemplateId = intval($workflowTemplateId);
-        if ($workflowTemplateId <= 0)
+        if ($workflowTemplateId <= 0) {
             throw new CBPArgumentOutOfRangeException("workflowTemplateId", $workflowTemplateId);
+        }
 
         $result = null;
 
@@ -513,10 +578,11 @@ class CAllBPWorkflowTemplateLoader
             false,
             array('ID', 'NAME', 'DESCRIPTION', 'TEMPLATE', 'PARAMETERS', 'VARIABLES', 'CONSTANTS')
         );
-        if ($arTemplatesListItem = $dbTemplatesList->Fetch())
+        if ($arTemplatesListItem = $dbTemplatesList->Fetch()) {
             $result = self::ParseDocumentTypeStates($arTemplatesListItem);
-        else
+        } else {
             throw new Exception(str_replace("#ID#", $workflowTemplateId, GetMessage("BPCGWTL_INVALID_WF_ID")));
+        }
 
         return $result;
     }
@@ -526,7 +592,10 @@ class CAllBPWorkflowTemplateLoader
         $userId = 0;
         $dbTemplatesList = self::GetList(
             [],
-            ['ID' => (int)$workflowTemplateId], false, false, ['USER_ID']
+            ['ID' => (int)$workflowTemplateId],
+            false,
+            false,
+            ['USER_ID']
         );
         if ($row = $dbTemplatesList->Fetch()) {
             $userId = (int)$row['USER_ID'];
@@ -538,8 +607,9 @@ class CAllBPWorkflowTemplateLoader
     public static function getTemplateConstants($workflowTemplateId)
     {
         $workflowTemplateId = (int)$workflowTemplateId;
-        if ($workflowTemplateId <= 0)
+        if ($workflowTemplateId <= 0) {
             throw new CBPArgumentOutOfRangeException("workflowTemplateId", $workflowTemplateId);
+        }
 
         if (!isset(self::$workflowConstants[$workflowTemplateId])) {
             $cache = \Bitrix\Main\Application::getInstance()->getManagedCache();
@@ -557,9 +627,9 @@ class CAllBPWorkflowTemplateLoader
                 if ($row = $iterator->fetch()) {
                     self::$workflowConstants[$workflowTemplateId] = (array)$row['CONSTANTS'];
                     $cache->set($cacheTag, self::$workflowConstants[$workflowTemplateId]);
-                } else
+                } else {
                     self::$workflowConstants[$workflowTemplateId] = array();
-
+                }
             }
         }
 
@@ -592,8 +662,9 @@ class CAllBPWorkflowTemplateLoader
         $arErrors = array();
         $arWorkflowParameters = array();
 
-        if (count($arTemplateParameters) <= 0)
+        if (count($arTemplateParameters) <= 0) {
             return array();
+        }
 
         $runtime = CBPRuntime::GetRuntime();
         $runtime->StartRuntime();
@@ -610,7 +681,9 @@ class CAllBPWorkflowTemplateLoader
                 $arErrorsTmp
             );
 
-            if (CBPHelper::getBool($arParameter['Required']) && CBPHelper::isEmptyValue($arWorkflowParameters[$parameterKey])) {
+            if (CBPHelper::getBool($arParameter['Required']) && CBPHelper::isEmptyValue(
+                    $arWorkflowParameters[$parameterKey]
+                )) {
                 $arErrorsTmp[] = array(
                     "code" => "RequiredValue",
                     "message" => str_replace("#NAME#", $arParameter["Name"], GetMessage("BPCGWTL_INVALID8")),
@@ -630,8 +703,9 @@ class CAllBPWorkflowTemplateLoader
 
         $arFilter = array("DOCUMENT_TYPE" => $documentType);
         $autoExecute = intval($autoExecute);
-        if ($autoExecute >= 0)
+        if ($autoExecute >= 0) {
             $arFilter["AUTO_EXECUTE"] = $autoExecute;
+        }
 
         $dbTemplatesList = self::GetList(
             array(),
@@ -655,12 +729,14 @@ class CAllBPWorkflowTemplateLoader
     public static function &FindActivityByName(&$arWorkflowTemplate, $activityName)
     {
         foreach ($arWorkflowTemplate as $key => $value) {
-            if ($value["Name"] == $activityName)
+            if ($value["Name"] == $activityName) {
                 return $arWorkflowTemplate[$key];
+            }
 
             if (is_array($value["Children"])) {
-                if ($res = &self::FindActivityByName($arWorkflowTemplate[$key]["Children"], $activityName))
+                if ($res = &self::FindActivityByName($arWorkflowTemplate[$key]["Children"], $activityName)) {
                     return $res;
+                }
             }
         }
         return null;
@@ -671,12 +747,14 @@ class CAllBPWorkflowTemplateLoader
         foreach ($arWorkflowTemplate as $key => $value) {
             if (is_array($value["Children"])) {
                 for ($i = 0, $s = sizeof($value['Children']); $i < $s; $i++) {
-                    if ($value["Children"][$i]["Name"] == $activityName)
+                    if ($value["Children"][$i]["Name"] == $activityName) {
                         return $arWorkflowTemplate[$key];
+                    }
                 }
 
-                if ($res = &self::FindParentActivityByName($arWorkflowTemplate[$key]["Children"], $activityName))
+                if ($res = &self::FindParentActivityByName($arWorkflowTemplate[$key]["Children"], $activityName)) {
                     return $res;
+                }
             }
         }
         return null;
@@ -700,12 +778,14 @@ class CAllBPWorkflowTemplateLoader
     private static function WalkThroughWorkflowTemplate(&$arWorkflowTemplate, $callback, $user)
     {
         foreach ($arWorkflowTemplate as $key => $value) {
-            if (!call_user_func_array($callback, array($value, $user)))
+            if (!call_user_func_array($callback, array($value, $user))) {
                 return false;
+            }
 
             if (is_array($value["Children"])) {
-                if (!self::WalkThroughWorkflowTemplate($arWorkflowTemplate[$key]["Children"], $callback, $user))
+                if (!self::WalkThroughWorkflowTemplate($arWorkflowTemplate[$key]["Children"], $callback, $user)) {
                     return false;
+                }
             }
         }
         return true;
@@ -713,11 +793,16 @@ class CAllBPWorkflowTemplateLoader
 
     private static function ImportTemplateChecker($arActivity, $user)
     {
-        $arErrors = CBPActivity::CallStaticMethod($arActivity["Type"], "ValidateProperties", array($arActivity["Properties"], $user));
+        $arErrors = CBPActivity::CallStaticMethod(
+            $arActivity["Type"],
+            "ValidateProperties",
+            array($arActivity["Properties"], $user)
+        );
         if (count($arErrors) > 0) {
             $m = "";
-            foreach ($arErrors as $er)
+            foreach ($arErrors as $er) {
                 $m .= $er["message"] . ". ";
+            }
 
             throw new Exception($m);
 
@@ -727,12 +812,16 @@ class CAllBPWorkflowTemplateLoader
         return true;
     }
 
-    public static function ImportTemplate($id, $documentType, $autoExecute, $name, $description, $datum, $systemCode = null, $systemImport = false)
-    {
-        $id = intval($id);
-        if ($id <= 0)
-            $id = 0;
-
+    public static function ImportTemplate(
+        $id,
+        $documentType,
+        $autoExecute,
+        $name,
+        $description,
+        $datum,
+        $systemCode = null,
+        $systemImport = false
+    ) {
         $packer = new \Bitrix\Bizproc\Workflow\Template\Packer\Bpt();
         $unpackResult = $packer->unpack($datum);
 
@@ -741,10 +830,43 @@ class CAllBPWorkflowTemplateLoader
         }
 
         $templateFields = $unpackResult->getTpl()->collectValues();
+        $templateFields['DOCUMENT_FIELDS'] = $unpackResult->getDocumentFields();
+
+        return self::importTemplateFromArray(
+            $id,
+            $documentType,
+            $autoExecute,
+            $name,
+            $description,
+            $templateFields,
+            $systemCode,
+            $systemImport
+        );
+    }
+
+    public static function importTemplateFromArray(
+        $id,
+        $documentType,
+        $autoExecute,
+        $name,
+        $description,
+        $templateFields,
+        $systemCode = null,
+        $systemImport = false
+    ) {
+        $id = intval($id);
+        if ($id <= 0) {
+            $id = 0;
+        }
 
         if (!$systemImport) {
-            if (!self::WalkThroughWorkflowTemplate($templateFields["TEMPLATE"], array("CBPWorkflowTemplateLoader", "ImportTemplateChecker"), new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser)))
+            if (!self::WalkThroughWorkflowTemplate(
+                $templateFields["TEMPLATE"],
+                array("CBPWorkflowTemplateLoader", "ImportTemplateChecker"),
+                new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser)
+            )) {
                 return false;
+            }
         } elseif ($id > 0 && !empty($templateFields["CONSTANTS"])) {
             $userConstants = self::getTemplateConstants($id);
             if (!empty($userConstants)) {
@@ -768,32 +890,34 @@ class CAllBPWorkflowTemplateLoader
             "USER_ID" => $systemImport ? 1 : $GLOBALS["USER"]->GetID(),
             "MODIFIER_USER" => new CBPWorkflowTemplateUser($systemImport ? 1 : CBPWorkflowTemplateUser::CurrentUser),
         );
-        if (!is_null($systemCode))
+        if (!is_null($systemCode)) {
             $templateData["SYSTEM_CODE"] = $systemCode;
-        if ($id <= 0)
+        }
+        if ($id <= 0) {
             $templateData['ACTIVE'] = 'Y';
+        }
 
-        if ($id > 0)
+        if ($id > 0) {
             self::Update($id, $templateData, $systemImport);
-        else
+        } else {
             $id = self::Add($templateData, $systemImport);
+        }
 
-        $documentFields = $unpackResult->getDocumentFields();
-        if ($documentFields) {
+        if ($templateFields['DOCUMENT_FIELDS']) {
             $documentService = CBPRuntime::GetRuntime(true)->getDocumentService();
             $currentDocumentFields = $documentService->GetDocumentFields($documentType, true);
 
-            \Bitrix\Main\Type\Collection::sortByColumn($documentFields, "sort");
-            $len = strlen("_PRINTABLE");
+            \Bitrix\Main\Type\Collection::sortByColumn($templateFields['DOCUMENT_FIELDS'], "sort");
+            $len = mb_strlen("_PRINTABLE");
 
-            foreach ($documentFields as $code => $field) {
+            foreach ($templateFields['DOCUMENT_FIELDS'] as $code => $field) {
                 //skip printable
-                if (strtoupper(substr($code, -$len)) == "_PRINTABLE") {
+                if (mb_strtoupper(mb_substr($code, -$len)) == "_PRINTABLE") {
                     continue;
                 }
 
                 //skip references
-                if (strpos($code, '.') !== false) {
+                if (mb_strpos($code, '.') !== false) {
                     continue;
                 }
 
@@ -806,8 +930,9 @@ class CAllBPWorkflowTemplateLoader
                 );
 
                 if (is_array($field["Options"]) && count($field["Options"]) > 0) {
-                    foreach ($field["Options"] as $k => $v)
+                    foreach ($field["Options"] as $k => $v) {
                         $documentField["options"] .= "[" . $k . "]" . $v . "\n";
+                    }
                 }
 
                 unset($field["Name"], $field["Type"], $field["Multiple"], $field["Required"], $field["Options"]);
@@ -824,20 +949,48 @@ class CAllBPWorkflowTemplateLoader
         return $id;
     }
 
-    public function GetTemplatesList($arOrder = array("ID" => "DESC"), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
-    {
+    public function GetTemplatesList(
+        $arOrder = array("ID" => "DESC"),
+        $arFilter = array(),
+        $arGroupBy = false,
+        $arNavStartParams = false,
+        $arSelectFields = array()
+    ) {
         global $DB;
 
-        if (count($arSelectFields) <= 0)
-            $arSelectFields = array("ID", "MODULE_ID", "ENTITY", "DOCUMENT_TYPE", "DOCUMENT_STATUS", "AUTO_EXECUTE", "NAME", "DESCRIPTION", "TEMPLATE", "PARAMETERS", "VARIABLES", "CONSTANTS", "MODIFIED", "USER_ID", "ACTIVE", "IS_MODIFIED");
+        if (count($arSelectFields) <= 0) {
+            $arSelectFields = [
+                "ID",
+                "MODULE_ID",
+                "ENTITY",
+                "DOCUMENT_TYPE",
+                "DOCUMENT_STATUS",
+                "AUTO_EXECUTE",
+                "NAME",
+                "DESCRIPTION",
+                "TEMPLATE",
+                "PARAMETERS",
+                "VARIABLES",
+                "CONSTANTS",
+                "MODIFIED",
+                "USER_ID",
+                "ACTIVE",
+                "IS_MODIFIED",
+                "IS_SYSTEM",
+                'SORT'
+            ];
+        }
 
         if (count(array_intersect($arSelectFields, array("MODULE_ID", "ENTITY", "DOCUMENT_TYPE"))) > 0) {
-            if (!in_array("MODULE_ID", $arSelectFields))
+            if (!in_array("MODULE_ID", $arSelectFields)) {
                 $arSelectFields[] = "MODULE_ID";
-            if (!in_array("ENTITY", $arSelectFields))
+            }
+            if (!in_array("ENTITY", $arSelectFields)) {
                 $arSelectFields[] = "ENTITY";
-            if (!in_array("DOCUMENT_TYPE", $arSelectFields))
+            }
+            if (!in_array("DOCUMENT_TYPE", $arSelectFields)) {
                 $arSelectFields[] = "DOCUMENT_TYPE";
+            }
         }
 
         if (array_key_exists("DOCUMENT_TYPE", $arFilter)) {
@@ -850,20 +1003,21 @@ class CAllBPWorkflowTemplateLoader
         if (array_key_exists("AUTO_EXECUTE", $arFilter)) {
             $arFilter["AUTO_EXECUTE"] = intval($arFilter["AUTO_EXECUTE"]);
 
-            if ($arFilter["AUTO_EXECUTE"] == CBPDocumentEventType::None)
+            if ($arFilter["AUTO_EXECUTE"] == CBPDocumentEventType::None) {
                 $arFilter["AUTO_EXECUTE"] = 0;
-            elseif ($arFilter["AUTO_EXECUTE"] == CBPDocumentEventType::Create)
+            } elseif ($arFilter["AUTO_EXECUTE"] == CBPDocumentEventType::Create) {
                 $arFilter["AUTO_EXECUTE"] = array(1, 3, 5, 7);
-            elseif ($arFilter["AUTO_EXECUTE"] == CBPDocumentEventType::Edit)
+            } elseif ($arFilter["AUTO_EXECUTE"] == CBPDocumentEventType::Edit) {
                 $arFilter["AUTO_EXECUTE"] = array(2, 3, 6, 7);
-            elseif ($arFilter["AUTO_EXECUTE"] == CBPDocumentEventType::Delete)
+            } elseif ($arFilter["AUTO_EXECUTE"] == CBPDocumentEventType::Delete) {
                 $arFilter["AUTO_EXECUTE"] = array(4, 5, 6, 7);
-            elseif ($arFilter["AUTO_EXECUTE"] == CBPDocumentEventType::Automation)
+            } elseif ($arFilter["AUTO_EXECUTE"] == CBPDocumentEventType::Automation) {
                 $arFilter["AUTO_EXECUTE"] = 8;
-            elseif ($arFilter["AUTO_EXECUTE"] == CBPDocumentEventType::Script)
+            } elseif ($arFilter["AUTO_EXECUTE"] == CBPDocumentEventType::Script) {
                 $arFilter["AUTO_EXECUTE"] = 32;
-            else
+            } else {
                 $arFilter["AUTO_EXECUTE"] = array(-1);
+            }
         }
 
         static $arFields = array(
@@ -884,11 +1038,29 @@ class CAllBPWorkflowTemplateLoader
             "SYSTEM_CODE" => Array("FIELD" => "T.SYSTEM_CODE", "TYPE" => "string"),
             "ACTIVE" => Array("FIELD" => "T.ACTIVE", "TYPE" => "string"),
             "IS_MODIFIED" => Array("FIELD" => "T.IS_MODIFIED", "TYPE" => "string"),
+            "IS_SYSTEM" => Array("FIELD" => "T.IS_SYSTEM", "TYPE" => "string"),
+            "SORT" => Array("FIELD" => "T.SORT", "TYPE" => "int"),
 
-            "USER_NAME" => Array("FIELD" => "U.NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_user U ON (T.USER_ID = U.ID)"),
-            "USER_LAST_NAME" => Array("FIELD" => "U.LAST_NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_user U ON (T.USER_ID = U.ID)"),
-            "USER_SECOND_NAME" => Array("FIELD" => "U.SECOND_NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_user U ON (T.USER_ID = U.ID)"),
-            "USER_LOGIN" => Array("FIELD" => "U.LOGIN", "TYPE" => "string", "FROM" => "LEFT JOIN b_user U ON (T.USER_ID = U.ID)"),
+            "USER_NAME" => Array(
+                "FIELD" => "U.NAME",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_user U ON (T.USER_ID = U.ID)"
+            ),
+            "USER_LAST_NAME" => Array(
+                "FIELD" => "U.LAST_NAME",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_user U ON (T.USER_ID = U.ID)"
+            ),
+            "USER_SECOND_NAME" => Array(
+                "FIELD" => "U.SECOND_NAME",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_user U ON (T.USER_ID = U.ID)"
+            ),
+            "USER_LOGIN" => Array(
+                "FIELD" => "U.LOGIN",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_user U ON (T.USER_ID = U.ID)"
+            ),
         );
 
         $arSqls = CBPHelper::PrepareSql($arFields, $arOrder, $arFilter, $arGroupBy, $arSelectFields);
@@ -900,48 +1072,57 @@ class CAllBPWorkflowTemplateLoader
                 "SELECT " . $arSqls["SELECT"] . " " .
                 "FROM b_bp_workflow_template T " .
                 "	" . $arSqls["FROM"] . " ";
-            if (strlen($arSqls["WHERE"]) > 0)
+            if ($arSqls["WHERE"] <> '') {
                 $strSql .= "WHERE " . $arSqls["WHERE"] . " ";
-            if (strlen($arSqls["GROUPBY"]) > 0)
+            }
+            if ($arSqls["GROUPBY"] <> '') {
                 $strSql .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
+            }
 
             //echo "!1!=".htmlspecialcharsbx($strSql)."<br>";
 
             $dbRes = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-            if ($arRes = $dbRes->Fetch())
+            if ($arRes = $dbRes->Fetch()) {
                 return $arRes["CNT"];
-            else
-                return False;
+            } else {
+                return false;
+            }
         }
 
         $strSql =
             "SELECT " . $arSqls["SELECT"] . " " .
             "FROM b_bp_workflow_template T " .
             "	" . $arSqls["FROM"] . " ";
-        if (strlen($arSqls["WHERE"]) > 0)
+        if ($arSqls["WHERE"] <> '') {
             $strSql .= "WHERE " . $arSqls["WHERE"] . " ";
-        if (strlen($arSqls["GROUPBY"]) > 0)
+        }
+        if ($arSqls["GROUPBY"] <> '') {
             $strSql .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
-        if (strlen($arSqls["ORDERBY"]) > 0)
+        }
+        if ($arSqls["ORDERBY"] <> '') {
             $strSql .= "ORDER BY " . $arSqls["ORDERBY"] . " ";
+        }
 
-        if (is_array($arNavStartParams) && IntVal($arNavStartParams["nTopCount"]) <= 0) {
+        if (is_array($arNavStartParams) && intval($arNavStartParams["nTopCount"]) <= 0) {
             $strSql_tmp =
                 "SELECT COUNT('x') as CNT " .
                 "FROM b_bp_workflow_template T " .
                 "	" . $arSqls["FROM"] . " ";
-            if (strlen($arSqls["WHERE"]) > 0)
+            if ($arSqls["WHERE"] <> '') {
                 $strSql_tmp .= "WHERE " . $arSqls["WHERE"] . " ";
-            if (strlen($arSqls["GROUPBY"]) > 0)
+            }
+            if ($arSqls["GROUPBY"] <> '') {
                 $strSql_tmp .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
+            }
 
             //echo "!2.1!=".htmlspecialcharsbx($strSql_tmp)."<br>";
 
             $dbRes = $DB->Query($strSql_tmp, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             $cnt = 0;
-            if (strlen($arSqls["GROUPBY"]) <= 0) {
-                if ($arRes = $dbRes->Fetch())
+            if ($arSqls["GROUPBY"] == '') {
+                if ($arRes = $dbRes->Fetch()) {
                     $cnt = $arRes["CNT"];
+                }
             } else {
                 $cnt = $dbRes->SelectedRowsCount();
             }
@@ -949,8 +1130,9 @@ class CAllBPWorkflowTemplateLoader
             $dbRes = new CDBResult();
             $dbRes->NavQuery($strSql, $cnt, $arNavStartParams);
         } else {
-            if (is_array($arNavStartParams) && IntVal($arNavStartParams["nTopCount"]) > 0)
+            if (is_array($arNavStartParams) && intval($arNavStartParams["nTopCount"]) > 0) {
                 $strSql .= "LIMIT " . intval($arNavStartParams["nTopCount"]);
+            }
 
             //echo "!3!=".htmlspecialcharsbx($strSql)."<br>";
 
@@ -972,7 +1154,7 @@ class CAllBPWorkflowTemplateLoader
         $strSql =
             "INSERT INTO b_bp_workflow_template (" . $arInsert[0] . ", MODIFIED) " .
             "VALUES(" . $arInsert[1] . ", " . $DB->CurrentTimeFunction() . ")";
-        $DB->Query($strSql, False, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+        $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 
         return intval($DB->LastID());
     }
@@ -982,8 +1164,9 @@ class CAllBPWorkflowTemplateLoader
         global $DB;
 
         $id = intval($id);
-        if ($id <= 0)
+        if ($id <= 0) {
             throw new CBPArgumentNullException("id");
+        }
 
         self::ParseFields($arFields, $id, $systemImport);
 
@@ -994,7 +1177,7 @@ class CAllBPWorkflowTemplateLoader
             "	" . $strUpdate . ", " .
             "	MODIFIED = " . $DB->CurrentTimeFunction() . " " .
             "WHERE ID = " . intval($id) . " ";
-        $DB->Query($strSql, False, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+        $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 
         return $id;
     }
@@ -1021,21 +1204,23 @@ class CBPWorkflowTemplateResult extends CDBResult
     public function __construct($res, $useGZipCompression)
     {
         $this->useGZipCompression = $useGZipCompression;
-        parent::CDBResult($res);
+        parent::__construct($res);
     }
 
     private function GetFromSerializedForm($value)
     {
-        if (strlen($value) > 0) {
+        if ($value <> '') {
             if ($this->useGZipCompression) {
                 $value1 = @gzuncompress($value);
-                if ($value1 !== false)
+                if ($value1 !== false) {
                     $value = $value1;
+                }
             }
 
-            $value = unserialize($value);
-            if (!is_array($value))
+            $value = unserialize($value, ['allowed_classes' => false]);
+            if (!is_array($value)) {
                 $value = array();
+            }
         } else {
             $value = array();
         }
@@ -1115,12 +1300,22 @@ class CBPWorkflowTemplateUser
 
     public function isAdmin()
     {
-        return $this->isAdmin;
+        return ($this->isAdmin || self::isBpAdmin($this->userId));
     }
 
     public function getFullName()
     {
         return $this->fullName;
+    }
+
+    private static function isBpAdmin(int $userId): bool
+    {
+        static $ids;
+        if ($ids === null) {
+            $idsString = \Bitrix\Main\Config\Option::get('bizproc', 'wtu_admins');
+            $ids = array_map('intval', explode(',', $idsString));
+        }
+        return $userId && in_array($userId, $ids, true);
     }
 }
 

@@ -43,12 +43,14 @@ if (Loader::includeModule('sender')) {
             $rows = array();
 
             if (!empty($userProducts)) {
-                $result = \Bitrix\Main\UserTable::getList(array(
-                    'select' => array('USER_ID' => 'ID', 'NAME', 'EMAIL'),
-                    'filter' => array(
-                        '=ID' => array_keys($userProducts)
+                $result = \Bitrix\Main\UserTable::getList(
+                    array(
+                        'select' => array('USER_ID' => 'ID', 'NAME', 'EMAIL'),
+                        'filter' => array(
+                            '=ID' => array_keys($userProducts)
+                        )
                     )
-                ));
+                );
 
                 while ($row = $result->fetch()) {
                     $row['PRODUCTS'] = $userProducts[$row['USER_ID']];
@@ -77,7 +79,9 @@ if (Loader::includeModule('sender')) {
             $html = '<div id="send_bigdata_pcons_list_%CONNECTOR_NUM%" style="margin-bottom: 20px">';
 
             // dummy for events
-            $html .= '<input type="hidden" id="send_bigdata_changeform_dummy_%CONNECTOR_NUM%" name="' . $this->getFieldName('RND') . '" value="">';
+            $html .= '<input type="hidden" id="send_bigdata_changeform_dummy_%CONNECTOR_NUM%" name="' . $this->getFieldName(
+                    'RND'
+                ) . '" value="">';
 
             $html .= '</div>';
 
@@ -122,16 +126,22 @@ if (Loader::includeModule('sender')) {
 	
 						obPopupWin.setTitleBar({
 							content: BX.create(
-								'span', {html: '<b>' + '" . \CUtil::JSEscape(Loc::getMessage('SALE_BIGDATA_TARGET_CONNECTOR_SELECT_LIMIT_TITLE')) . "' + '</b>', 'props': {'className': 'access-title-bar'}}
+								'span', {html: '<b>' + '" . \CUtil::JSEscape(
+                    Loc::getMessage('SALE_BIGDATA_TARGET_CONNECTOR_SELECT_LIMIT_TITLE')
+                ) . "' + '</b>', 'props': {'className': 'access-title-bar'}}
 							)
 						});
 	
-						var msg = '" . \CUtil::JSEscape(Loc::getMessage('SALE_BIGDATA_TARGET_CONNECTOR_SELECT_LIMIT_MSG')) . "';
+						var msg = '" . \CUtil::JSEscape(
+                    Loc::getMessage('SALE_BIGDATA_TARGET_CONNECTOR_SELECT_LIMIT_MSG')
+                ) . "';
 						msg = msg.replace('#LIMIT#', limit);
 	
 						obPopupWin.setContent(msg);
 						obPopupWin.setButtons([new BX.PopupWindowButton({
-							text: '" . \CUtil::JSEscape(Loc::getMessage('SALE_BIGDATA_TARGET_CONNECTOR_SELECT_LIMIT_CLOSE')) . "',
+							text: '" . \CUtil::JSEscape(
+                    Loc::getMessage('SALE_BIGDATA_TARGET_CONNECTOR_SELECT_LIMIT_CLOSE')
+                ) . "',
 							events: {click: function(){
 								this.popupWindow.close();
 							}}
@@ -148,7 +158,9 @@ if (Loader::includeModule('sender')) {
 					var title = e.name + ' (' + e.id + ') ';
 	
 					itemElement.id = 'send_bigdata_pcons_list_%CONNECTOR_NUM%_e'+e.id;
-					itemElement.innerHTML = title + ' [ <a href=\"#\" onclick=\"deleteProduct_%CONNECTOR_NUM%('+e.id+'); return false;\">'+'" . \CUtil::JSEscape(Loc::getMessage('SALE_BIGDATA_TARGET_CONNECTOR_SELECT_DEL')) . "'+'</a> ]';
+					itemElement.innerHTML = title + ' [ <a href=\"#\" onclick=\"deleteProduct_%CONNECTOR_NUM%('+e.id+'); return false;\">'+'" . \CUtil::JSEscape(
+                    Loc::getMessage('SALE_BIGDATA_TARGET_CONNECTOR_SELECT_DEL')
+                ) . "'+'</a> ]';
 					itemElement.innerHTML += '<input type=\"hidden\" name=\"'+fieldName+'\" value=\"'+e.id+'\"> ';
 	
 					BX('send_bigdata_pcons_list_%CONNECTOR_NUM%').appendChild(itemElement);
@@ -174,17 +186,21 @@ if (Loader::includeModule('sender')) {
 				}
 			</script>
 	
-			<button onclick='AddProductSearch_%CONNECTOR_NUM%(); return false;'>" . htmlspecialcharsbx(Loc::getMessage('SALE_BIGDATA_TARGET_CONNECTOR_SELECT_TITLE')) . "</button>
+			<button onclick='AddProductSearch_%CONNECTOR_NUM%(); return false;'>" . htmlspecialcharsbx(
+                    Loc::getMessage('SALE_BIGDATA_TARGET_CONNECTOR_SELECT_TITLE')
+                ) . "</button>
 			";
 
             if ($this->getFieldValue('PRODUCTS')) {
                 // select titles
                 $titles = array();
 
-                $result = \Bitrix\Iblock\ElementTable::getList(array(
-                    'select' => array('ID', 'NAME'),
-                    'filter' => array('=ID' => $this->getFieldValue('PRODUCTS'))
-                ));
+                $result = \Bitrix\Iblock\ElementTable::getList(
+                    array(
+                        'select' => array('ID', 'NAME'),
+                        'filter' => array('=ID' => $this->getFieldValue('PRODUCTS'))
+                    )
+                );
 
                 while ($row = $result->fetch()) {
                     $titles[(int)$row['ID']] = $row['NAME'];
@@ -194,10 +210,12 @@ if (Loader::includeModule('sender')) {
                 $html .= "<script>" . PHP_EOL;
 
                 foreach ($this->getFieldValue('PRODUCTS') as $productId) {
-                    $html .= 'catchProduct_%CONNECTOR_NUM%(' . \CUtil::PhpToJSObject(array(
-                            'id' => $productId,
-                            'name' => $titles[(int)$productId]
-                        )) . ');' . PHP_EOL;
+                    $html .= 'catchProduct_%CONNECTOR_NUM%(' . \CUtil::PhpToJSObject(
+                            array(
+                                'id' => $productId,
+                                'name' => $titles[(int)$productId]
+                            )
+                        ) . ');' . PHP_EOL;
                 }
 
 

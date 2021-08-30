@@ -8,8 +8,9 @@ $publicMode = $adminPage->publicMode;
 $selfFolderUrl = $adminPage->getSelfFolderUrl();
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions < "W")
+if ($saleModulePermissions < "W") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 ClearVars("l_");
 
@@ -18,7 +19,7 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/prolog.php");
 
 $sTableID = "tbl_sale_tax_rate";
 
-$oSort = new CAdminSorting($sTableID, "ID", "asc");
+$oSort = new CAdminUiSorting($sTableID, "ID", "asc");
 $lAdmin = new CAdminUiList($sTableID, $oSort);
 
 $listTax = array();
@@ -27,7 +28,7 @@ while ($taxData = $taxQueryObject->NavNext(false)) {
     $listTax[$taxData["ID"]] = $taxData["NAME"] . " (" . $taxData["LID"] . ")";
 }
 $listSites = array();
-$sitesQueryObject = CSite::GetList($bySite = "sort", $orderSite = "asc", array("ACTIVE" => "Y"));
+$sitesQueryObject = CSite::GetList("sort", "asc", array("ACTIVE" => "Y"));
 while ($site = $sitesQueryObject->fetch()) {
     $listSites[$site["LID"]] = "[" . $site["LID"] . "] " . $site["NAME"];
 }
@@ -38,20 +39,25 @@ while ($personType = $personTypeQueryObject->fetch()) {
 }
 
 ob_start();
-$APPLICATION->IncludeComponent("bitrix:sale.location.selector.search", "", array(
-    "ID" => "LOCATION",
-    "CODE" => "",
-    "INPUT_NAME" => "LOCATION",
-    "PROVIDE_LINK_BY" => "id",
-    "SHOW_ADMIN_CONTROLS" => "N",
-    "SELECT_WHEN_SINGLE" => "N",
-    "FILTER_BY_SITE" => "N",
-    "SHOW_DEFAULT_LOCATIONS" => "N",
-    "SEARCH_BY_PRIMARY" => "Y",
-    "INITIALIZE_BY_GLOBAL_EVENT" => "onAdminFilterInited",
-    "GLOBAL_EVENT_SCOPE" => "window",
-    "UI_FILTER" => true
-), false);
+$APPLICATION->IncludeComponent(
+    "bitrix:sale.location.selector.search",
+    "",
+    array(
+        "ID" => "LOCATION",
+        "CODE" => "",
+        "INPUT_NAME" => "LOCATION",
+        "PROVIDE_LINK_BY" => "id",
+        "SHOW_ADMIN_CONTROLS" => "N",
+        "SELECT_WHEN_SINGLE" => "N",
+        "FILTER_BY_SITE" => "N",
+        "SHOW_DEFAULT_LOCATIONS" => "N",
+        "SEARCH_BY_PRIMARY" => "Y",
+        "INITIALIZE_BY_GLOBAL_EVENT" => "onAdminFilterInited",
+        "GLOBAL_EVENT_SCOPE" => "window",
+        "UI_FILTER" => true
+    ),
+    false
+);
 $locationInput = ob_get_clean();
 
 $filterFields = array(
@@ -103,13 +109,15 @@ if (($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "W") {
             array($by => $order),
             $arFilter
         );
-        while ($arResult = $dbResultList->Fetch())
+        while ($arResult = $dbResultList->Fetch()) {
             $arID[] = $arResult['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
 
         switch ($_REQUEST['action']) {
             case "delete":
@@ -120,10 +128,11 @@ if (($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "W") {
                 if (!CSaleTaxRate::Delete($ID)) {
                     $DB->Rollback();
 
-                    if ($ex = $APPLICATION->GetException())
+                    if ($ex = $APPLICATION->GetException()) {
                         $lAdmin->AddGroupError($ex->GetString(), $ID);
-                    else
+                    } else {
                         $lAdmin->AddGroupError(GetMessage("SALE_DELETE_ERROR"), $ID);
+                    }
                 }
 
                 $DB->Commit();
@@ -138,10 +147,11 @@ if (($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "W") {
                 );
 
                 if (!CSaleTaxRate::Update($ID, $arFields)) {
-                    if ($ex = $APPLICATION->GetException())
+                    if ($ex = $APPLICATION->GetException()) {
                         $lAdmin->AddGroupError($ex->GetString(), $ID);
-                    else
+                    } else {
                         $lAdmin->AddGroupError(GetMessage("ERROR_EDIT_TAX_RATE"), $ID);
+                    }
                 }
 
                 break;
@@ -163,16 +173,44 @@ $dbResultList->NavStart();
 
 $lAdmin->SetNavigationParams($dbResultList, array("BASE_LINK" => $selfFolderUrl . "sale_tax_rate.php"));
 
-$lAdmin->AddHeaders(array(
-    array("id" => "ID", "content" => "ID", "sort" => "ID", "default" => true),
-    array("id" => "ACTIVE", "content" => GetMessage("RATE_ACTIVE"), "sort" => "ACTIVE", "default" => true, "align" => "center",),
-    array("id" => "TIMESTAMP_X", "content" => GetMessage("TAX_TIMESTAMP"), "sort" => "TIMESTAMP_X", "default" => true),
-    array("id" => "NAME", "content" => GetMessage("TAX_NAME"), "sort" => "NAME", "default" => true),
-    array("id" => "PERSON_TYPE_ID", "content" => GetMessage("RATE_PERSON_TYPE"), "sort" => "PERSON_TYPE_ID", "default" => true),
-    array("id" => "VALUE", "content" => GetMessage("RATE_VALUE"), "sort" => "", "default" => true),
-    array("id" => "IS_IN_PRICE", "content" => GetMessage("RATE_IS_INPRICE"), "sort" => "IS_IN_PRICE", "default" => true),
-    array("id" => "APPLY_ORDER", "content" => GetMessage("RATE_APPLY_ORDER"), "sort" => "APPLY_ORDER", "default" => true),
-));
+$lAdmin->AddHeaders(
+    array(
+        array("id" => "ID", "content" => "ID", "sort" => "ID", "default" => true),
+        array(
+            "id" => "ACTIVE",
+            "content" => GetMessage("RATE_ACTIVE"),
+            "sort" => "ACTIVE",
+            "default" => true,
+            "align" => "center",
+        ),
+        array(
+            "id" => "TIMESTAMP_X",
+            "content" => GetMessage("TAX_TIMESTAMP"),
+            "sort" => "TIMESTAMP_X",
+            "default" => true
+        ),
+        array("id" => "NAME", "content" => GetMessage("TAX_NAME"), "sort" => "NAME", "default" => true),
+        array(
+            "id" => "PERSON_TYPE_ID",
+            "content" => GetMessage("RATE_PERSON_TYPE"),
+            "sort" => "PERSON_TYPE_ID",
+            "default" => true
+        ),
+        array("id" => "VALUE", "content" => GetMessage("RATE_VALUE"), "sort" => "", "default" => true),
+        array(
+            "id" => "IS_IN_PRICE",
+            "content" => GetMessage("RATE_IS_INPRICE"),
+            "sort" => "IS_IN_PRICE",
+            "default" => true
+        ),
+        array(
+            "id" => "APPLY_ORDER",
+            "content" => GetMessage("RATE_APPLY_ORDER"),
+            "sort" => "APPLY_ORDER",
+            "default" => true
+        ),
+    )
+);
 
 $arVisibleColumns = $lAdmin->GetVisibleHeaderColumns();
 
@@ -197,21 +235,28 @@ while ($arTaxRate = $dbResultList->NavNext(false)) {
 
     $row->AddField("TIMESTAMP_X", $arTaxRate["TIMESTAMP_X"]);
 
-    $fieldShow = '<a href="' . $editUrl . '" title="' . GetMessage('TAX_EDIT_DESCR') . '">' . htmlspecialcharsbx($arTaxRate["NAME"]) . '</a> (' . $arTaxRate["LID"] . ')';
+    $fieldShow = '<a href="' . $editUrl . '" title="' . GetMessage('TAX_EDIT_DESCR') . '">' . htmlspecialcharsbx(
+            $arTaxRate["NAME"]
+        ) . '</a> (' . $arTaxRate["LID"] . ')';
     $row->AddField("NAME", $fieldShow);
 
     $fieldShow = "";
     if (in_array("PERSON_TYPE_ID", $arVisibleColumns)) {
-        if (IntVal($arTaxRate["PERSON_TYPE_ID"]) > 0) {
+        if (intval($arTaxRate["PERSON_TYPE_ID"]) > 0) {
             $arPerType = $arPersonTypeList[$arTaxRate["PERSON_TYPE_ID"]];
-            $fieldShow .= "[" . $arPerType["ID"] . "] " . $arPerType["NAME"] . " (" . htmlspecialcharsEx($arPerType["LID"]) . ")";
+            $fieldShow .= "[" . $arPerType["ID"] . "] " . $arPerType["NAME"] . " (" . htmlspecialcharsEx(
+                    $arPerType["LID"]
+                ) . ")";
         } else {
             $fieldShow .= "&nbsp;";
         }
     }
     $row->AddField("PERSON_TYPE_ID", $fieldShow);
 
-    $row->AddField("VALUE", $arTaxRate["VALUE"] . (($arTaxRate["IS_PERCENT"] == "Y") ? "%" : " " . $arTaxRate["CURRENCY"]));
+    $row->AddField(
+        "VALUE",
+        $arTaxRate["VALUE"] . (($arTaxRate["IS_PERCENT"] == "Y") ? "%" : " " . $arTaxRate["CURRENCY"])
+    );
     $row->AddField("IS_IN_PRICE", ($arTaxRate["IS_IN_PRICE"] == "Y") ? GetMessage("RATE_YES") : GetMessage("RATE_NET"));
     $row->AddField("APPLY_ORDER", $arTaxRate["APPLY_ORDER"]);
 
@@ -226,7 +271,10 @@ while ($arTaxRate = $dbResultList->NavNext(false)) {
         $arActions[] = array(
             "ICON" => "delete",
             "TEXT" => GetMessage("RATE_DELETE_DESCR"),
-            "ACTION" => "if(confirm('" . GetMessage('TAX_RATE_DEL_CONF') . "')) " . $lAdmin->ActionDoGroup($arTaxRate["ID"], "delete")
+            "ACTION" => "if(confirm('" . GetMessage('TAX_RATE_DEL_CONF') . "')) " . $lAdmin->ActionDoGroup(
+                    $arTaxRate["ID"],
+                    "delete"
+                )
         );
     }
 

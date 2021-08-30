@@ -1,5 +1,6 @@
 <?
 /** @global CUser $USER */
+
 /** @global CMain $APPLICATION */
 
 /** @global array $FIELDS */
@@ -10,12 +11,14 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Iblock;
 use Bitrix\Catalog;
 
-if (!defined('B_ADMIN_IBLOCK_CATALOGS') || B_ADMIN_IBLOCK_CATALOGS != 1 || !defined('B_ADMIN_IBLOCK_CATALOGS_LIST'))
+if (!defined('B_ADMIN_IBLOCK_CATALOGS') || B_ADMIN_IBLOCK_CATALOGS != 1 || !defined('B_ADMIN_IBLOCK_CATALOGS_LIST')) {
     return;
+}
 
 $prologAbsent = (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true);
-if (B_ADMIN_IBLOCK_CATALOGS_LIST === false && $prologAbsent)
+if (B_ADMIN_IBLOCK_CATALOGS_LIST === false && $prologAbsent) {
     return;
+}
 
 if ($prologAbsent) {
     require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_before.php');
@@ -28,8 +31,9 @@ if ($prologAbsent) {
 $catalogsAjaxPath = '/bitrix/tools/catalog/iblock_catalog_list.php?lang=' . LANGUAGE_ID;
 $saleRecurring = CBXFeatures::IsFeatureEnabled('SaleRecurring');
 
-if (isset($_REQUEST['mode']) && ($_REQUEST['mode'] == 'list' || $_REQUEST['mode'] == 'frame'))
+if (isset($_REQUEST['mode']) && ($_REQUEST['mode'] == 'list' || $_REQUEST['mode'] == 'frame')) {
     CFile::DisableJSFunction(true);
+}
 
 require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/iblock/classes/general/subelement.php');
 
@@ -44,10 +48,12 @@ $adminList->setDialogParams(array('from_module' => 'catalog'));
 $adminList->setDialogButtons(array());
 unset($hideFields);
 
-if (!isset($by))
+if (!isset($by)) {
     $by = 'ID';
-if (!isset($order))
+}
+if (!isset($order)) {
     $order = 'ASC';
+}
 
 $filter = array();
 $filterFields = array();
@@ -55,11 +61,9 @@ $filterFields = array();
 $adminList->InitFilter($filterFields);
 
 if (!$readOnly && $adminList->EditAction()) {
-
 }
 
 if (!$readOnly && ($listID = $adminList->GroupAction())) {
-
 }
 
 $headerList = array();
@@ -149,8 +153,9 @@ $adminList->AddHeaders($headerList);
 $hiddenSelectFields = array(
     'PRODUCT_IBLOCK_ID' => 'CATALOG_IBLOCK.PRODUCT_IBLOCK_ID'
 );
-if (!$saleRecurring)
+if (!$saleRecurring) {
     $hiddenSelectFields['SUBSCRIPTION'] = 'CATALOG_IBLOCK.SUBSCRIPTION';
+}
 
 $selectFields = array_fill_keys($adminList->GetVisibleHeaderColumns(), true);
 $selectFields['ID'] = true;
@@ -163,18 +168,23 @@ $catalogEditUrl = '/bitrix/tools/catalog/iblock_catalog_edit.php?lang=' . LANGUA
 
 $vatList = array(0 => Loc::getMessage('CATALOG_ADM_IBLOCK_CATALOG_MESS_NOT_SELECT'));
 if ($selectFieldsMap['VAT_ID']) {
-    $vatIterator = Catalog\VatTable::getList(array(
-        'select' => array('ID', 'NAME', 'SORT'),
-        'order' => array('SORT' => 'ASC', 'ID' => 'ASC')
-    ));
-    while ($vat = $vatIterator->fetch())
+    $vatIterator = Catalog\VatTable::getList(
+        array(
+            'select' => array('ID', 'NAME', 'SORT'),
+            'order' => array('SORT' => 'ASC', 'ID' => 'ASC')
+        )
+    );
+    while ($vat = $vatIterator->fetch()) {
         $vatList[$vat['ID']] = $vat['NAME'];
+    }
     unset($vat, $vatIterator);
 }
 
 $usePageNavigation = true;
 $navyParams = array();
-$navyParams = CDBResult::GetNavParams(CAdminResult::GetNavSize($adminListTableID, array('nPageSize' => 20, 'sNavID' => $adminList->GetListUrl(true))));
+$navyParams = CDBResult::GetNavParams(
+    CAdminResult::GetNavSize($adminListTableID, array('nPageSize' => 20, 'sNavID' => $adminList->GetListUrl(true)))
+);
 if ($navyParams['SHOW_ALL']) {
     $usePageNavigation = false;
 } else {
@@ -185,16 +195,19 @@ if ($navyParams['SHOW_ALL']) {
 $select = array();
 $selectFields = array_keys($selectFields);
 foreach ($selectFields as &$fieldName) {
-    if (isset($headerList[$fieldName]['external']))
+    if (isset($headerList[$fieldName]['external'])) {
         continue;
-    if (!isset($headerList[$fieldName]['field']))
+    }
+    if (!isset($headerList[$fieldName]['field'])) {
         $select[] = $fieldName;
-    else
+    } else {
         $select[$fieldName] = $headerList[$fieldName]['field'];
+    }
 }
 unset($fieldName, $selectFields);
-foreach ($hiddenSelectFields as $alias => $field)
+foreach ($hiddenSelectFields as $alias => $field) {
     $select[$alias] = $field;
+}
 unset($alias, $field);
 
 $getListParams = array(
@@ -229,8 +242,9 @@ if ($usePageNavigation) {
     $totalCount = (int)$totalCount['CNT'];
     if ($totalCount > 0) {
         $totalPages = ceil($totalCount / $navyParams['SIZEN']);
-        if ($navyParams['PAGEN'] > $totalPages)
+        if ($navyParams['PAGEN'] > $totalPages) {
             $navyParams['PAGEN'] = $totalPages;
+        }
         $getListParams['limit'] = $navyParams['SIZEN'];
         $getListParams['offset'] = $navyParams['SIZEN'] * ($navyParams['PAGEN'] - 1);
     } else {
@@ -240,7 +254,11 @@ if ($usePageNavigation) {
     }
 }
 
-$catalogIterator = new CAdminSubResult(Iblock\IblockTable::getList($getListParams), $adminListTableID, $adminList->GetListUrl(true));
+$catalogIterator = new CAdminSubResult(
+    Iblock\IblockTable::getList($getListParams),
+    $adminListTableID,
+    $adminList->GetListUrl(true)
+);
 if ($usePageNavigation) {
     $catalogIterator->NavStart($getListParams['limit'], $navyParams['SHOW_ALL'], $navyParams['PAGEN']);
     $catalogIterator->NavRecordCount = $totalCount;
@@ -258,10 +276,11 @@ while ($catalog = $catalogIterator->Fetch()) {
     $catalog['ID'] = (int)$catalog['ID'];
     $catalog['IS_CATALOG'] = ((int)$catalog['IS_CATALOG'] > 0 ? 'Y' : 'N');
     $catalog['SKU_IBLOCK'] = (int)$catalog['SKU_IBLOCK'];
-    if ($catalog['SKU_IBLOCK'] > 0)
+    if ($catalog['SKU_IBLOCK'] > 0) {
         $skuList[$catalog['SKU_IBLOCK']] = $catalog['ID'];
-    else
+    } else {
         $catalog['SKU_IBLOCK'] = '';
+    }
     $iblockList[] = $catalog['ID'];
 
     $urlEdit = $catalogEditUrl . $catalog['ID'];
@@ -275,41 +294,58 @@ while ($catalog = $catalogIterator->Fetch()) {
 
     $alert = '';
     $alertMessages = array();
-    if (!$saleRecurring && $catalog['SUBSCRIPTION'] == 'Y')
+    if (!$saleRecurring && $catalog['SUBSCRIPTION'] == 'Y') {
         $alertMessages[] = Loc::getMessage('CATALOG_ADM_IBLOCK_CATALOG_ALERT_SUBSCRIPTION_FEATURE');
-    if ($catalog['SUBSCRIPTION'] == 'Y' && $catalog['SKU_IBLOCK'] > 0)
+    }
+    if ($catalog['SUBSCRIPTION'] == 'Y' && $catalog['SKU_IBLOCK'] > 0) {
         $alertMessages[] = Loc::getMessage('CATALOG_ADM_IBLOCK_CATALOG_ALERT_SUBSCRIPTION_WITH_SKU');
-    if (!empty($alertMessages))
+    }
+    if (!empty($alertMessages)) {
         $alert = '<span class="row-alert" title="' . htmlspecialcharsbx(implode(' ', $alertMessages)) . '"></span>';
+    }
     $row->AddViewField('ID', $alert . $catalog['ID']);
     unset($alertMessages, $alert);
 
-    if ($selectFieldsMap['NAME'])
+    if ($selectFieldsMap['NAME']) {
         $row->AddViewField('NAME', $catalog['NAME']);
-    if ($selectFieldsMap['IBLOCK_TYPE_ID'])
+    }
+    if ($selectFieldsMap['IBLOCK_TYPE_ID']) {
         $row->AddViewField('IBLOCK_TYPE_ID', $catalog['IBLOCK_TYPE_ID']);
-    if ($selectFieldsMap['SORT'])
+    }
+    if ($selectFieldsMap['SORT']) {
         $row->AddViewField('SORT', $catalog['SORT']);
+    }
 
-    if ($selectFieldsMap['ACTIVE'])
+    if ($selectFieldsMap['ACTIVE']) {
         $row->AddCheckField('ACTIVE', false);
-    if ($selectFieldsMap['IS_CATALOG'])
+    }
+    if ($selectFieldsMap['IS_CATALOG']) {
         $row->AddCheckField('IS_CATALOG', false);
+    }
 
     if ($catalog['IS_CATALOG'] == 'Y') {
-        if ($saleRecurring && $selectFieldsMap['SUBSCRIPTION'])
+        if ($saleRecurring && $selectFieldsMap['SUBSCRIPTION']) {
             $row->AddCheckField('SUBSCRIPTION', false);
-        if ($selectFieldsMap['YANDEX_EXPORT'])
+        }
+        if ($selectFieldsMap['YANDEX_EXPORT']) {
             $row->AddCheckField('YANDEX_EXPORT', false);
-        if ($selectFieldsMap['VAT_ID'])
-            $row->AddViewField('VAT_ID', (isset($vatList[$catalog['VAT_ID']]) ? $vatList[$catalog['VAT_ID']] : $vatList[0]));
+        }
+        if ($selectFieldsMap['VAT_ID']) {
+            $row->AddViewField(
+                'VAT_ID',
+                (isset($vatList[$catalog['VAT_ID']]) ? $vatList[$catalog['VAT_ID']] : $vatList[0])
+            );
+        }
     } else {
-        if ($saleRecurring && $selectFieldsMap['SUBSCRIPTION'])
+        if ($saleRecurring && $selectFieldsMap['SUBSCRIPTION']) {
             $row->AddViewField('SUBSCRIPTION', '');
-        if ($selectFieldsMap['YANDEX_EXPORT'])
+        }
+        if ($selectFieldsMap['YANDEX_EXPORT']) {
             $row->AddViewField('YANDEX_EXPORT', '');
-        if ($selectFieldsMap['VAT_ID'])
+        }
+        if ($selectFieldsMap['VAT_ID']) {
             $row->AddViewField('VAT_ID', '');
+        }
     }
 
     $actions = array();
@@ -320,36 +356,42 @@ while ($catalog = $catalogIterator->Fetch()) {
         'DEFAULT' => true
     );
     if (!$readOnly) {
-
     }
     $row->AddActions($actions);
     unset($actions);
 }
-if (isset($row))
+if (isset($row)) {
     unset($row);
+}
 
 if (!empty($rowList)) {
     if ($selectFieldsMap['IBLOCK_SITES']) {
         $siteList = array();
-        $sitesIterator = Iblock\IblockSiteTable::getList(array(
-            'select' => array('IBLOCK_ID', 'SITE_ID'),
-            'filter' => array('@IBLOCK_ID' => $iblockList)
-        ));
+        $sitesIterator = Iblock\IblockSiteTable::getList(
+            array(
+                'select' => array('IBLOCK_ID', 'SITE_ID'),
+                'filter' => array('@IBLOCK_ID' => $iblockList)
+            )
+        );
         while ($site = $sitesIterator->fetch()) {
-            if (!isset($siteList[$site['IBLOCK_ID']]))
+            if (!isset($siteList[$site['IBLOCK_ID']])) {
                 $siteList[$site['IBLOCK_ID']] = array();
+            }
             $siteList[$site['IBLOCK_ID']][] = $site['SITE_ID'];
         }
         unset($site, $sitesIterator);
-        foreach ($siteList as $iblock => $sites)
+        foreach ($siteList as $iblock => $sites) {
             $rowList[$iblock]->AddViewField('IBLOCK_SITES', implode(' ', $sites));
+        }
         unset($iblock, $sites);
     }
     if ($selectFieldsMap['SKU_IBLOCK'] && !empty($skuList)) {
-        $iblocksIterator = Iblock\IblockTable::getList(array(
-            'select' => array('ID', 'NAME'),
-            'filter' => array('@ID' => array_keys($skuList))
-        ));
+        $iblocksIterator = Iblock\IblockTable::getList(
+            array(
+                'select' => array('ID', 'NAME'),
+                'filter' => array('@ID' => array_keys($skuList))
+            )
+        );
         while ($iblock = $iblocksIterator->fetch()) {
             $parentIblock = $skuList[$iblock['ID']];
             $rowList[$parentIblock]->AddViewField('SKU_IBLOCK', '[' . $iblock['ID'] . '] ' . $iblock['NAME']);
@@ -385,5 +427,6 @@ $adminList->CheckListMode();
 
 $adminList->DisplayList(B_ADMIN_IBLOCK_CATALOGS_LIST);
 
-if ($prologAbsent)
+if ($prologAbsent) {
     require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_popup_admin.php');
+}

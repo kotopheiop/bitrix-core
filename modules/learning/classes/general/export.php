@@ -20,7 +20,7 @@ class CCoursePackage
     private $replacingResId;
 
     // 2012-04-18 Checked/modified for compatibility with new data model
-    function CCoursePackage($COURSE_ID)
+    public function __construct($COURSE_ID)
     {
         global $DB;
         $this->ID = intval($COURSE_ID);
@@ -41,11 +41,12 @@ class CCoursePackage
         }
 
         //Define charset
-        if (strlen($charset) <= 0) {
-            if (defined("SITE_CHARSET") && strlen(SITE_CHARSET) > 0)
+        if ($charset == '') {
+            if (defined("SITE_CHARSET") && SITE_CHARSET <> '') {
                 $charset = SITE_CHARSET;
-            else
+            } else {
                 $charset = "windows-1251";
+            }
         }
         $this->charset = $charset;
 
@@ -64,22 +65,29 @@ class CCoursePackage
         while ($arRes = $res->Fetch()) {
             $r = ++$this->RefID;
             $this->arItems[$r] = $this->_CreateContent("TES", $arRes, $r);
-            $this->strItems .= '<item identifier="TES' . $r . '" identifierref="RES' . $r . '"><title>' . htmlspecialcharsbx($arRes["NAME"]) . '</title>';
+            $this->strItems .= '<item identifier="TES' . $r . '" identifierref="RES' . $r . '"><title>' . htmlspecialcharsbx(
+                    $arRes["NAME"]
+                ) . '</title>';
 
             $marksRes = $DB->Query(
                 "SELECT * FROM b_learn_test_mark WHERE TEST_ID = '" . (string)((int)$arRes['ID']) . "'",
-                false, "File: " . __FILE__ . "<br>Line: " . __LINE__
+                false,
+                "File: " . __FILE__ . "<br>Line: " . __LINE__
             );
             while ($arMarksRes = $marksRes->Fetch()) {
                 $r = ++$this->RefID;
                 $this->arItems[$r] = $this->CreateTMK($arMarksRes, $r);
                 $this->strItems .= '<item identifier="TMK' . $r . '" identifierref="RES' . $r . '">'
-                    . '<title>' . htmlspecialcharsbx($arMarksRes['MARK'] . ' (' . $arMarksRes['DESCRIPTION'] . ')') . '</title>'
+                    . '<title>' . htmlspecialcharsbx(
+                        $arMarksRes['MARK'] . ' (' . $arMarksRes['DESCRIPTION'] . ')'
+                    ) . '</title>'
                     . '</item>';
             }
 
             $this->strItems .= '</item>';
-            $this->strResourses .= '<resource identifier="RES' . $r . '" type="webcontent" href="res' . $r . '.xml">' . $this->_GetResourceFiles($r) . '</resource>';
+            $this->strResourses .= '<resource identifier="RES' . $r . '" type="webcontent" href="res' . $r . '.xml">' . $this->_GetResourceFiles(
+                    $r
+                ) . '</resource>';
         }
     }
 
@@ -87,12 +95,14 @@ class CCoursePackage
     // 2012-04-18 Checked/modified for compatibility with new data model
     function CreatePackage($PACKAGE_DIR)
     {
-        if (strlen($this->LAST_ERROR) > 0)
+        if ($this->LAST_ERROR <> '') {
             return false;
+        }
 
         //Add last slash
-        if (substr($PACKAGE_DIR, -1, 1) != "/")
+        if (mb_substr($PACKAGE_DIR, -1, 1) != "/") {
             $PACKAGE_DIR .= "/";
+        }
 
         $path = $_SERVER["DOCUMENT_ROOT"] . $PACKAGE_DIR;
 
@@ -122,8 +132,9 @@ class CCoursePackage
             foreach ($arFiles as $arFile) {
                 if (array_key_exists("DB", $arFile)) {
                     $arTempFile = CFile::MakeFileArray($arFile["DB"]);
-                    if ($arTempFile && isset($arTempFile["tmp_name"]))
+                    if ($arTempFile && isset($arTempFile["tmp_name"])) {
                         @copy($arTempFile["tmp_name"], $dbres_path . $arFile["ID"]);
+                    }
                 } else {
                     @copy($_SERVER["DOCUMENT_ROOT"] . $arFile["SRC"], $res_path . $arFile["ID"]);
                 }
@@ -139,8 +150,9 @@ class CCoursePackage
     {
         global $DB;
 
-        if (strlen($this->LAST_ERROR) > 0)
+        if ($this->LAST_ERROR <> '') {
             return false;
+        }
 
         $this->createQuestionItems($this->arCourse["LESSON_ID"]);
 
@@ -148,12 +160,16 @@ class CCoursePackage
         $strManifest .= '<manifest xmlns="http://www.imsproject.org/xsd/imscp_rootv1p1p2" identifier="toc1">';
         //<Organization>
         $strManifest .= '<organizations default="man1"><organization identifier="man1" structure="hierarchical">';
-        $strManifest .= '<item identifier="COR1" identifierref="RES1" parameters=""><title>' . htmlspecialcharsbx($this->arCourse["NAME"]) . '</title>';
+        $strManifest .= '<item identifier="COR1" identifierref="RES1" parameters=""><title>' . htmlspecialcharsbx(
+                $this->arCourse["NAME"]
+            ) . '</title>';
         $strManifest .= $this->strItems;
         $strManifest .= '</item>';
         $strManifest .= '</organization></organizations>';
         //<Resource>
-        $strManifest .= '<resources><resource identifier="RES1" type="webcontent" href="res1.xml">' . $this->_GetResourceFiles(1) . '</resource>';
+        $strManifest .= '<resources><resource identifier="RES1" type="webcontent" href="res1.xml">' . $this->_GetResourceFiles(
+                1
+            ) . '</resource>';
         $strManifest .= $this->strResourses;
         $strManifest .= '</resources>';
         $strManifest .= '</manifest>';
@@ -176,26 +192,33 @@ class CCoursePackage
         while ($arRes = $res->Fetch()) {
             $arRes['ID'] = $arRes['LESSON_ID'];        // for compatibility
 
-            if ($arRes['IS_CHILDS'] == '1')
+            if ($arRes['IS_CHILDS'] == '1') {
                 $itemType = 'CHA';
-            else
+            } else {
                 $itemType = 'LES';
+            }
 
-            if (CLearnLesson::IsPublishProhibited($arRes['LESSON_ID'], $parentLessonId))
+            if (CLearnLesson::IsPublishProhibited($arRes['LESSON_ID'], $parentLessonId)) {
                 $arRes['META_PUBLISH_PROHIBITED'] = 'Y';
-            else
+            } else {
                 $arRes['META_PUBLISH_PROHIBITED'] = 'N';
+            }
 
             $r = ++$this->RefID;
             $this->arItems[$r] = $this->_CreateContent($itemType, $arRes, $r);
-            $this->strItems .= '<item identifier="' . $itemType . $r . '" identifierref="RES' . $r . '"><title>' . htmlspecialcharsbx($arRes["NAME"]) . '</title>';
-            $this->strResourses .= '<resource identifier="RES' . $r . '" type="webcontent" href="res' . $r . '.xml">' . $this->_GetResourceFiles($r) . '</resource>';
+            $this->strItems .= '<item identifier="' . $itemType . $r . '" identifierref="RES' . $r . '"><title>' . htmlspecialcharsbx(
+                    $arRes["NAME"]
+                ) . '</title>';
+            $this->strResourses .= '<resource identifier="RES' . $r . '" type="webcontent" href="res' . $r . '.xml">' . $this->_GetResourceFiles(
+                    $r
+                ) . '</resource>';
 
             $this->createQuestionItems($arRes["ID"]);
 
             // Load content recursively for chapters
-            if ($arRes['IS_CHILDS'] == '1')
+            if ($arRes['IS_CHILDS'] == '1') {
                 $this->_GetCourseContent($arRes["ID"], $DEPTH_LEVEL + 1);
+            }
 
             $this->strItems .= "</item>";
         }
@@ -210,17 +233,18 @@ class CCoursePackage
 
         foreach ($this->arCourse as $key => $val) {
             $strDelayed = '';
-            $key = strtolower($key);
+            $key = mb_strtolower($key);
 
-            if ($key === 'site_id')
+            if ($key === 'site_id') {
                 continue;
+            }
 
             $str .= "<" . $key . ">";
-            if (in_array($key, $this->arDraftFields) && strlen($val) > 0) {
+            if (in_array($key, $this->arDraftFields) && $val <> '') {
                 $str .= "<![CDATA[" . $this->_ReplaceImages($val, 1) . "]]>";
-            } elseif (in_array($key, $this->arDate) && strlen($val) > 0) {
+            } elseif (in_array($key, $this->arDate) && $val <> '') {
                 $str .= MakeTimeStamp($val);
-            } elseif (in_array($key, $this->arPicture) && strlen($val) > 0) {
+            } elseif (in_array($key, $this->arPicture) && $val <> '') {
                 $src = CFile::GetPath($val);
                 $ext = GetFileExtension($src);
                 $this->arResources[1][] = Array("DB" => $val, "SRC" => $src, "ID" => $val . "." . $ext);
@@ -249,12 +273,15 @@ class CCoursePackage
     {
         $str = "";
 
-        if (is_set($this->arResources, $res_id))
-            foreach ($this->arResources[$res_id] as $arFile)
-                if (is_set($arFile, "DB"))
+        if (is_set($this->arResources, $res_id)) {
+            foreach ($this->arResources[$res_id] as $arFile) {
+                if (is_set($arFile, "DB")) {
                     $str .= '<file href="dbresources/' . $arFile["ID"] . '" />';
-                else
+                } else {
                     $str .= '<file href="resources/res' . $res_id . '/' . $arFile["ID"] . '" />';
+                }
+            }
+        }
         return $str;
     }
 
@@ -267,15 +294,16 @@ class CCoursePackage
         foreach ($arParams as $key => $val) {
             $strDelayed = '';
 
-            $key = strtolower($key);
+            $key = mb_strtolower($key);
 
-            if ($key === 'site_id')
+            if ($key === 'site_id') {
                 continue;
+            }
 
             $str .= "<" . $key . ">";
-            if (in_array($key, $this->arDraftFields) && strlen($val) > 0) {
+            if (in_array($key, $this->arDraftFields) && $val <> '') {
                 $str .= "<![CDATA[" . $this->_ReplaceImages($val, $res_id) . "]]>";
-            } elseif (in_array($key, $this->arPicture) && strlen($val) > 0) {
+            } elseif (in_array($key, $this->arPicture) && $val <> '') {
                 $src = CFile::GetPath($val);
                 $ext = GetFileExtension($src);
                 $this->arResources[$res_id][] = Array("DB" => $val, "SRC" => $src, "ID" => $val . "." . $ext);
@@ -287,7 +315,7 @@ class CCoursePackage
                         . htmlspecialcharsbx($arFileData['DESCRIPTION'])
                         . '</' . $key . '_description' . '>';
                 }
-            } elseif (in_array($key, $this->arDate) && strlen($val) > 0) {
+            } elseif (in_array($key, $this->arDate) && $val <> '') {
                 $str .= MakeTimeStamp($val);
             } else {
                 $str .= htmlspecialcharsbx($val);
@@ -311,7 +339,9 @@ class CCoursePackage
 
             $res_id = 1;
             $this->arResources[$this->replacingResId][] = array("SRC" => $src, "ID" => $uid . "." . $dest);
-            return stripslashes($matches[1] . $matches[2] . "cid:resources/res" . $this->replacingResId . "/" . $uid . "." . $dest . $matches[4] . $matches[5]);
+            return stripslashes(
+                $matches[1] . $matches[2] . "cid:resources/res" . $this->replacingResId . "/" . $uid . "." . $dest . $matches[4] . $matches[5]
+            );
         }
         return stripslashes($matches[0]);
     }
@@ -320,7 +350,11 @@ class CCoursePackage
     function _ReplaceImages($text, $res_id)
     {
         $this->replacingResId = $res_id;
-        return preg_replace_callback("/(<.+?src\\s*=\\s*)([\"']?)(.*?)(\\2)(.*?>)/is", array($this, "_replace_img"), $text);
+        return preg_replace_callback(
+            "/(<.+?src\\s*=\\s*)([\"']?)(.*?)(\\2)(.*?>)/is",
+            array($this, "_replace_img"),
+            $text
+        );
     }
 
     private function createQuestionItems($lessonId)
@@ -332,8 +366,12 @@ class CCoursePackage
         while ($arQRes = $q->Fetch()) {
             $r = ++$this->RefID;
             $this->arItems[$r] = $this->CreateQTI($arQRes, $r);
-            $this->strItems .= '<item identifier="QUE' . $r . '" identifierref="RES' . $r . '"><title>' . htmlspecialcharsbx($arQRes["NAME"]) . '</title></item>';
-            $this->strResourses .= '<resource identifier="RES' . $r . '" type="imsqti_xmlv1p1" href="res' . $r . '.xml">' . $this->_GetResourceFiles($r) . '</resource>';
+            $this->strItems .= '<item identifier="QUE' . $r . '" identifierref="RES' . $r . '"><title>' . htmlspecialcharsbx(
+                    $arQRes["NAME"]
+                ) . '</title></item>';
+            $this->strResourses .= '<resource identifier="RES' . $r . '" type="imsqti_xmlv1p1" href="res' . $r . '.xml">' . $this->_GetResourceFiles(
+                    $r
+                ) . '</resource>';
         }
     }
 
@@ -342,8 +380,9 @@ class CCoursePackage
     {
         global $DB;
 
-        if (strlen($this->LAST_ERROR) > 0)
+        if ($this->LAST_ERROR <> '') {
             return false;
+        }
 
         $str = "<" . "?xml version=\"1.0\" encoding=\"" . $this->charset . "\"?" . ">\n";
         $str .= "<questestinterop>";
@@ -386,9 +425,12 @@ class CCoursePackage
 
         $cond = "";
         while ($arAnwer = $res->Fetch()) {
-            if ($arAnwer["CORRECT"] == "Y")
+            if ($arAnwer["CORRECT"] == "Y") {
                 $cond .= '<varequal respident="LID' . $res_id . '">ANS' . $arAnwer["ID"] . '</varequal>';
-            $str .= '<response_label ident="ANS' . $arAnwer["ID"] . '"><material><mattext>' . htmlspecialcharsbx($arAnwer["ANSWER"]) . '</mattext></material></response_label>';
+            }
+            $str .= '<response_label ident="ANS' . $arAnwer["ID"] . '"><material><mattext>' . htmlspecialcharsbx(
+                    $arAnwer["ANSWER"]
+                ) . '</mattext></material></response_label>';
         }
 
 
@@ -400,7 +442,7 @@ class CCoursePackage
 
         $str .= "<bitrix>";
         $str .= "<description>";
-        if (strlen($arParams["DESCRIPTION"]) > 0) {
+        if ($arParams["DESCRIPTION"] <> '') {
             $str .= "<![CDATA[" . $this->_ReplaceImages($arParams["DESCRIPTION"], $res_id) . "]]>";
         }
         $str .= "</description>";

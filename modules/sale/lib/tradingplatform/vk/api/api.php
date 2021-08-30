@@ -18,7 +18,7 @@ Loc::loadMessages(__FILE__);
  */
 class Api
 {
-    private $accessToken = NULL;
+    private $accessToken = null;
     public static $apiUrl = 'https://api.vk.com/method/';
     public static $apiVersion = "5.52";
     private $exportId;
@@ -61,7 +61,7 @@ class Api
         $responseStr = $http->post($url, $params);
 
         if (!is_string($responseStr)) {
-            return NULL;
+            return null;
         }
 
         $this->response = Json::decode($responseStr);
@@ -93,7 +93,9 @@ class Api
             );
             $logger->addError($this->response["error"]["error_code"], $method);
 
-            throw new Vk\ExecuteException("VK_critical_execution_error " . $this->response["error"]["error_code"] . " in method " . $method);
+            throw new Vk\ExecuteException(
+                "VK_critical_execution_error " . $this->response["error"]["error_code"] . " in method " . $method
+            );
         }
 
 //		EXECUTE errors can be fatal or not critical
@@ -102,14 +104,17 @@ class Api
             foreach ($this->response["execute_errors"] as $er) {
                 $logger->addLog(
                     'Execute error in method ' . $method,
-                    array('ERROR' => $er["error_code"] . ' (' . $er["method"] . ') - ' . $er["error_msg"], "PARAMS" => $params,
-                        "RESPONSE" => $this->response)
+                    array(
+                        'ERROR' => $er["error_code"] . ' (' . $er["method"] . ') - ' . $er["error_msg"],
+                        "PARAMS" => $params,
+                        "RESPONSE" => $this->response
+                    )
                 );
                 $logger->addError($er["error_code"]);
             }
         }
 
-        return NULL;
+        return null;
     }
 
 

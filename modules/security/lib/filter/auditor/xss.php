@@ -38,8 +38,9 @@ class Xss
      */
     public function process($value)
     {
-        if (!preg_match('#[(){}\[\]=+&%<>]?#', $value))
+        if (!preg_match('#[(){}\[\]=+&%<>]?#', $value)) {
             return false;
+        }
 
         $this->initializeFilters();
         $this->setFilteredValue('');
@@ -52,8 +53,9 @@ class Xss
         while ($last != $current) {
             $last = $current;
             foreach ($this->filters as $searchChar => $filters) {
-                if ($searchChar && strpos($current, $searchChar) === false)
+                if ($searchChar && mb_strpos($current, $searchChar) === false) {
                     continue;
+                }
 
                 $current = preg_replace($filters['search'], $filters['replace'], $current);
             }
@@ -233,12 +235,14 @@ class Xss
      */
     protected function processWhiteList($value, $action = 'store')
     {
-        if (!is_string($value) || !$value)
+        if (!is_string($value) || !$value) {
             return '';
+        }
 
         $this->initializeWhiteList();
-        if (!isset($this->whiteList[$action]))
+        if (!isset($this->whiteList[$action])) {
             return $value;
+        }
 
         $result = preg_replace($this->whiteList[$action]['match'], $this->whiteList[$action]['replacement'], $value);
 

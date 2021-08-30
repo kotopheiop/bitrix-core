@@ -14,8 +14,9 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/sale/prolog.php');
 
 Loc::loadMessages(__FILE__);
 
-if ($APPLICATION->GetGroupRight("sale") < "W")
+if ($APPLICATION->GetGroupRight("sale") < "W") {
     $APPLICATION->AuthForm(Loc::getMessage('SALE_MODULE_ACCES_DENIED'));
+}
 
 #####################################
 #### Data prepare
@@ -47,7 +48,9 @@ try {
     // order, select and filter for the list
     $adminResult = Helper::getList(Helper::proxyListRequest('list'), $sTableID);
     $adminResult->NavStart();
-    $lAdmin->NavText($adminResult->GetNavPrint(Loc::getMessage('SALE_LOCATION_L_PAGES'), true)); // do not relocate the call relative to DisplayList(), or you`ll catch a strange nav bar disapper bug
+    $lAdmin->NavText(
+        $adminResult->GetNavPrint(Loc::getMessage('SALE_LOCATION_L_PAGES'), true)
+    ); // do not relocate the call relative to DisplayList(), or you`ll catch a strange nav bar disapper bug
 } catch (Main\SystemException $e) {
     $code = $e->getCode();
     $fatal = $e->getMessage() . (!empty($code) ? ' (' . $code . ')' : '');
@@ -59,8 +62,9 @@ try {
 
 if (empty($fatal)) {
     $headers = array();
-    foreach ($columns as $code => $fld)
+    foreach ($columns as $code => $fld) {
         $headers[] = array("id" => $code, "content" => $fld['title'], "sort" => $code, "default" => true);
+    }
 
     $lAdmin->AddHeaders($headers);
     while ($elem = $adminResult->NavNext(true, "f_")) {
@@ -79,14 +83,25 @@ if (empty($fatal)) {
         $row =& $lAdmin->AddRow($elem['SITE_ID'], $elem, $editUrl, Loc::getMessage('SALE_LOCATION_L_EDIT_ITEM'));
 
         foreach ($columns as $code => $fld) {
-            if ($code == 'SITE_NAME')
-                $row->AddViewField($code, '<a href="' . $editUrl . '" title="' . Loc::getMessage('SALE_LOCATION_L_EDIT_ITEM') . '">' . htmlspecialcharsbx($elem['NAME'] . ' (' . $elem['SITE_ID'] . ')') . '</a>');
-            else
+            if ($code == 'SITE_NAME') {
+                $row->AddViewField(
+                    $code,
+                    '<a href="' . $editUrl . '" title="' . Loc::getMessage(
+                        'SALE_LOCATION_L_EDIT_ITEM'
+                    ) . '">' . htmlspecialcharsbx($elem['NAME'] . ' (' . $elem['SITE_ID'] . ')') . '</a>'
+                );
+            } else {
                 $row->AddViewField($code, $elem[$code]);
+            }
         }
 
         $arActions = array();
-        $arActions[] = array("ICON" => "edit", "TEXT" => Loc::getMessage('SALE_LOCATION_L_EDIT_ITEM'), "ACTION" => $lAdmin->ActionRedirect($editUrl), "DEFAULT" => true);
+        $arActions[] = array(
+            "ICON" => "edit",
+            "TEXT" => Loc::getMessage('SALE_LOCATION_L_EDIT_ITEM'),
+            "ACTION" => $lAdmin->ActionRedirect($editUrl),
+            "DEFAULT" => true
+        );
 
         $row->AddActions($arActions);
     }
@@ -94,7 +109,6 @@ if (empty($fatal)) {
 
     $lAdmin->AddAdminContextMenu(array());
     $lAdmin->CheckListMode();
-
 } // empty($fatal)
 ?>
 
@@ -109,11 +123,13 @@ if (empty($fatal)) {
 ?>
 
 <? //temporal code?>
-<? if (!CSaleLocation::locationProCheckEnabled()) require($DOCUMENT_ROOT . "/bitrix/modules/main/include/epilog_admin.php"); ?>
+<? if (!CSaleLocation::locationProCheckEnabled()) {
+    require($DOCUMENT_ROOT . "/bitrix/modules/main/include/epilog_admin.php");
+} ?>
 
 <? SearchHelper::checkIndexesValid(); ?>
 
-<? if (strlen($fatal)): ?>
+<? if ($fatal <> ''): ?>
 
     <div class="error-message">
         <? CAdminMessage::ShowMessage(array('MESSAGE' => $fatal, 'type' => 'ERROR')) ?>

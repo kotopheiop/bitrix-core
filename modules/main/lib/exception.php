@@ -78,16 +78,34 @@ class ArgumentOutOfRangeException extends ArgumentException
      */
     public function __construct($parameter, $lowerLimit = null, $upperLimit = null, \Exception $previous = null)
     {
-        if (is_array($lowerLimit))
-            $message = sprintf("The value of an argument '%s' is outside the allowable range of values: %s", $parameter, implode(", ", $lowerLimit));
-        elseif (($lowerLimit !== null) && ($upperLimit !== null))
-            $message = sprintf("The value of an argument '%s' is outside the allowable range of values: from %s to %s", $parameter, $lowerLimit, $upperLimit);
-        elseif (($lowerLimit === null) && ($upperLimit !== null))
-            $message = sprintf("The value of an argument '%s' is outside the allowable range of values: not greater than %s", $parameter, $upperLimit);
-        elseif (($lowerLimit !== null) && ($upperLimit === null))
-            $message = sprintf("The value of an argument '%s' is outside the allowable range of values: not less than %s", $parameter, $lowerLimit);
-        else
+        if (is_array($lowerLimit)) {
+            $message = sprintf(
+                "The value of an argument '%s' is outside the allowable range of values: %s",
+                $parameter,
+                implode(", ", $lowerLimit)
+            );
+        } elseif (($lowerLimit !== null) && ($upperLimit !== null)) {
+            $message = sprintf(
+                "The value of an argument '%s' is outside the allowable range of values: from %s to %s",
+                $parameter,
+                $lowerLimit,
+                $upperLimit
+            );
+        } elseif (($lowerLimit === null) && ($upperLimit !== null)) {
+            $message = sprintf(
+                "The value of an argument '%s' is outside the allowable range of values: not greater than %s",
+                $parameter,
+                $upperLimit
+            );
+        } elseif (($lowerLimit !== null) && ($upperLimit === null)) {
+            $message = sprintf(
+                "The value of an argument '%s' is outside the allowable range of values: not less than %s",
+                $parameter,
+                $lowerLimit
+            );
+        } else {
             $message = sprintf("The value of an argument '%s' is outside the allowable range of values", $parameter);
+        }
 
         $this->lowerLimit = $lowerLimit;
         $this->upperLimit = $upperLimit;
@@ -123,10 +141,11 @@ class ArgumentTypeException extends ArgumentException
      */
     public function __construct($parameter, $requiredType = "", \Exception $previous = null)
     {
-        if (!empty($requiredType))
+        if (!empty($requiredType)) {
             $message = sprintf("The value of an argument '%s' must be of type %s", $parameter, $requiredType);
-        else
+        } else {
             $message = sprintf("The value of an argument '%s' has an invalid type", $parameter);
+        }
 
         $this->requiredType = $requiredType;
 

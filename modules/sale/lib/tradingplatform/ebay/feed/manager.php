@@ -83,11 +83,13 @@ class Manager
                 break;
 
             case 'ORDER':
-                $feepParams["DATA_SOURCE"] = new Data\Sources\Order(array(
-                    "FEED_TYPE" => "order",
-                    "SCHEMA_FILE_NAME" => "Order.xsd",
-                    "SITE_ID" => $siteId
-                ));
+                $feepParams["DATA_SOURCE"] = new Data\Sources\Order(
+                    array(
+                        "FEED_TYPE" => "order",
+                        "SCHEMA_FILE_NAME" => "Order.xsd",
+                        "SITE_ID" => $siteId
+                    )
+                );
                 $feepParams["DATA_CONVERTER"] = new Data\Converters\Order;
                 $feepParams["DATA_PROCESSOR"] = new Data\Processors\Order(array("SITE_ID" => $siteId));
                 break;
@@ -111,25 +113,29 @@ class Manager
                 break;
 
             case 'PROCESS_RESULT':
-                $feepParams["DATA_SOURCE"] = new Data\Sources\Results(array(
-                    "SITE_ID" => $siteId,
-                    "REMOTE_PATH_TMPL" => "/store/##FEED_TYPE##/log/##UPLOAD_DATE##",
-                    "FILTER" => array(
-                        "PROCESSING_REQUEST_ID" => ""
+                $feepParams["DATA_SOURCE"] = new Data\Sources\Results(
+                    array(
+                        "SITE_ID" => $siteId,
+                        "REMOTE_PATH_TMPL" => "/store/##FEED_TYPE##/log/##UPLOAD_DATE##",
+                        "FILTER" => array(
+                            "PROCESSING_REQUEST_ID" => ""
+                        )
                     )
-                ));
+                );
                 $feepParams["DATA_CONVERTER"] = new Data\Converters\ProcessResult;
                 $feepParams["DATA_PROCESSOR"] = new Data\Processors\ProcessResult;
                 break;
 
             case 'RESULTS':
-                $feepParams["DATA_SOURCE"] = new Data\Sources\Results(array(
-                    "SITE_ID" => $siteId,
-                    "REMOTE_PATH_TMPL" => "/store/##FEED_TYPE##/output/##UPLOAD_DATE##",
-                    "FILTER" => array(
-                        "RESULTS" => ""
+                $feepParams["DATA_SOURCE"] = new Data\Sources\Results(
+                    array(
+                        "SITE_ID" => $siteId,
+                        "REMOTE_PATH_TMPL" => "/store/##FEED_TYPE##/output/##UPLOAD_DATE##",
+                        "FILTER" => array(
+                            "RESULTS" => ""
+                        )
                     )
-                ));
+                );
                 $feepParams["DATA_CONVERTER"] = new Data\Converters\Results;
                 $feepParams["DATA_PROCESSOR"] = new Data\Processors\Results(array("SITE_ID" => $siteId));;
                 break;
@@ -140,7 +146,13 @@ class Manager
         }
 
         $feed = new Feed($feepParams);
-        Ebay::log(Logger::LOG_LEVEL_DEBUG, "EBAY_FEED_CREATED", $feedType, "Feed: " . $feedType . ", site: " . $siteId, $siteId);
+        Ebay::log(
+            Logger::LOG_LEVEL_DEBUG,
+            "EBAY_FEED_CREATED",
+            $feedType,
+            "Feed: " . $feedType . ", site: " . $siteId,
+            $siteId
+        );
         return $feed;
     }
 } 

@@ -2,8 +2,12 @@
 
 class CAdminSaleList extends CAdminList
 {
-    public function AddAdminContextMenu($aContext = array(), $bShowExcel = true, $bShowSettings = true, $additionalMenu = array())
-    {
+    public function AddAdminContextMenu(
+        $aContext = array(),
+        $bShowExcel = true,
+        $bShowSettings = true,
+        $additionalMenu = array()
+    ) {
         /** @global CMain $APPLICATION */
         global $APPLICATION;
 
@@ -36,7 +40,8 @@ class CAdminSaleList extends CAdminList
             $aAdditionalMenu = array_merge($aAdditionalMenu, $additionalMenu);
         }
 
-        if (count($aContext) > 0 || count($aAdditionalMenu) > 0)
+        if (count($aContext) > 0 || count($aAdditionalMenu) > 0) {
             $this->context = new CAdminContextMenuList($aContext, $aAdditionalMenu);
+        }
     }
 }

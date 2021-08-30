@@ -4,8 +4,9 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
 require_once($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/mail/prolog.php");
 
 $MOD_RIGHT = $APPLICATION->GetGroupRight("mail");
-if ($MOD_RIGHT < "R")
+if ($MOD_RIGHT < "R") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 Bitrix\Main\Loader::includeModule('mail');
@@ -43,17 +44,18 @@ $lAdmin->InitFilter($arFilterFields);
 $arFilter = array(
     "ID" => $find_id,
     "=SITE_ID" => $find_site_id,
-    "ACTIVE" => strtoupper($find_active),
-    "NAME" => strtoupper($find_name),
-    "SERVER" => strtoupper($find_server)
+    "ACTIVE" => mb_strtoupper($find_active),
+    "NAME" => mb_strtoupper($find_name),
+    "SERVER" => mb_strtoupper($find_server)
 );
 
 if ($MOD_RIGHT == "W" && $lAdmin->EditAction()) {
     foreach ($FIELDS as $ID => $arFields) {
         $ID = intval($ID);
 
-        if (!$lAdmin->IsUpdated($ID))
+        if (!$lAdmin->IsUpdated($ID)) {
             continue;
+        }
 
         $DB->StartTransaction();
         if (!Bitrix\Mail\MailServicesTable::update($ID, $arFields)) {
@@ -67,14 +69,18 @@ if ($MOD_RIGHT == "W" && $lAdmin->EditAction()) {
 
 if ($MOD_RIGHT == "W" && $arID = $lAdmin->GroupAction()) {
     if ($_REQUEST['action_target'] == 'selected') {
-        $rsData = Bitrix\Mail\MailServicesTable::getList(array('filter' => array_filter($arFilter), 'order' => array(strtoupper($by) => $order)));
-        while (($arRes = $rsData->fetch()) !== false)
+        $rsData = Bitrix\Mail\MailServicesTable::getList(
+            array('filter' => array_filter($arFilter), 'order' => array(mb_strtoupper($by) => $order))
+        );
+        while (($arRes = $rsData->fetch()) !== false) {
             $arID[] = $arRes['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
         $ID = intval($ID);
 
         switch ($_REQUEST['action']) {
@@ -92,15 +98,19 @@ if ($MOD_RIGHT == "W" && $arID = $lAdmin->GroupAction()) {
             case "deactivate":
 
                 $arFields = array('ACTIVE' => $_REQUEST['action'] == 'activate' ? 'Y' : 'N');
-                if (!Bitrix\Mail\MailServicesTable::update($ID, $arFields))
-                    if ($e = $APPLICATION->GetException())
+                if (!Bitrix\Mail\MailServicesTable::update($ID, $arFields)) {
+                    if ($e = $APPLICATION->GetException()) {
                         $lAdmin->AddGroupError(GetMessage('SAVE_ERROR') . $ID . ": " . $e->GetString(), $ID);
+                    }
+                }
                 break;
         }
     }
 }
 
-$rsData = Bitrix\Mail\MailServicesTable::getList(array('filter' => array_filter($arFilter), 'order' => array(strtoupper($by) => $order)));
+$rsData = Bitrix\Mail\MailServicesTable::getList(
+    array('filter' => array_filter($arFilter), 'order' => array(mb_strtoupper($by) => $order))
+);
 $rsData = new CAdminResult($rsData, $sTableID);
 $rsData->NavStart();
 
@@ -108,10 +118,30 @@ $lAdmin->NavText($rsData->GetNavPrint(GetMessage("MAIL_MSERVICE_ADM_TITLE")));
 
 $arHeaders = Array();
 
-$arHeaders[] = array('id' => 'NAME', 'content' => GetMessage('MAIL_MSERVICE_ADM_NAME'), 'default' => true, 'sort' => 'name');
-$arHeaders[] = array('id' => 'ACTIVE', 'content' => GetMessage('MAIL_MSERVICE_ADM_ACTIVE'), 'default' => true, 'sort' => 'active');
-$arHeaders[] = array('id' => 'SERVER', 'content' => GetMessage('MAIL_MSERVICE_ADM_SERVER'), 'default' => true, 'sort' => 'server');
-$arHeaders[] = array('id' => 'SERVICE_TYPE', 'content' => GetMessage('MAIL_MSERVICE_ADM_TYPE'), 'default' => true, 'sort' => 'service_type');
+$arHeaders[] = array(
+    'id' => 'NAME',
+    'content' => GetMessage('MAIL_MSERVICE_ADM_NAME'),
+    'default' => true,
+    'sort' => 'name'
+);
+$arHeaders[] = array(
+    'id' => 'ACTIVE',
+    'content' => GetMessage('MAIL_MSERVICE_ADM_ACTIVE'),
+    'default' => true,
+    'sort' => 'active'
+);
+$arHeaders[] = array(
+    'id' => 'SERVER',
+    'content' => GetMessage('MAIL_MSERVICE_ADM_SERVER'),
+    'default' => true,
+    'sort' => 'server'
+);
+$arHeaders[] = array(
+    'id' => 'SERVICE_TYPE',
+    'content' => GetMessage('MAIL_MSERVICE_ADM_TYPE'),
+    'default' => true,
+    'sort' => 'service_type'
+);
 $arHeaders[] = array('id' => 'ID', 'content' => 'ID', 'default' => true, 'sort' => 'id');
 
 $lAdmin->AddHeaders($arHeaders);
@@ -136,24 +166,30 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
         $arActions[] = array(
             "ICON" => "delete",
             "TEXT" => GetMessage("MAIL_MSERVICE_ADM_DELETE"),
-            "ACTION" => "if (confirm('" . GetMessage('MAIL_MSERVICE_ADM_DELETE_CONFIRM') . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete"),
+            "ACTION" => "if (confirm('" . GetMessage(
+                    'MAIL_MSERVICE_ADM_DELETE_CONFIRM'
+                ) . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete"),
         );
     }
 
     $row->AddActions($arActions);
 }
 
-$lAdmin->AddFooter(array(
-    array("title" => GetMessage("MAIN_ADMIN_LIST_SELECTED"), "value" => $rsData->SelectedRowsCount()),
-    array("counter" => true, "title" => GetMessage("MAIN_ADMIN_LIST_CHECKED"), "value" => "0"),
-));
+$lAdmin->AddFooter(
+    array(
+        array("title" => GetMessage("MAIN_ADMIN_LIST_SELECTED"), "value" => $rsData->SelectedRowsCount()),
+        array("counter" => true, "title" => GetMessage("MAIN_ADMIN_LIST_CHECKED"), "value" => "0"),
+    )
+);
 
 if ($MOD_RIGHT == "W") {
-    $lAdmin->AddGroupActionTable(array(
-        "activate" => GetMessage("MAIN_ADMIN_LIST_ACTIVATE"),
-        "deactivate" => GetMessage("MAIN_ADMIN_LIST_DEACTIVATE"),
-        "delete" => GetMessage("MAIN_ADMIN_LIST_DELETE"),
-    ));
+    $lAdmin->AddGroupActionTable(
+        array(
+            "activate" => GetMessage("MAIN_ADMIN_LIST_ACTIVATE"),
+            "deactivate" => GetMessage("MAIN_ADMIN_LIST_DEACTIVATE"),
+            "delete" => GetMessage("MAIN_ADMIN_LIST_DELETE"),
+        )
+    );
 }
 
 $aContext = array(
@@ -185,7 +221,9 @@ require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admi
         <td nowrap>
             <select name="find_site_id">
                 <option value=""><?= GetMessage("MAIL_MSERVICE_ADM_FILT_ANY"); ?></option>
-                <? $result = Bitrix\Main\SiteTable::getList(array('filter' => array('ACTIVE' => 'Y'), 'order' => array('SORT' => 'ASC'))); ?>
+                <? $result = Bitrix\Main\SiteTable::getList(
+                    array('filter' => array('ACTIVE' => 'Y'), 'order' => array('SORT' => 'ASC'))
+                ); ?>
                 <? while (($site = $result->fetch()) !== false): ?>
                     <option value="<?= $site['LID'] ?>"<? if ($find_site_id == $site['LID']): ?> selected<? endif ?>><?= $site['NAME'] ?></option>
                 <? endwhile ?>
@@ -195,8 +233,16 @@ require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admi
     <tr>
         <td nowrap><?= GetMessage("MAIL_MSERVICE_ADM_ACTIVE"); ?>:</td>
         <td nowrap>
-            <? $arr = array("reference" => array(GetMessage("MAIN_YES"), GetMessage("MAIN_NO")), "reference_id" => array("Y", "N")); ?>
-            <?= SelectBoxFromArray("find_active", $arr, htmlspecialcharsbx($find_active), GetMessage("MAIL_MSERVICE_ADM_FILT_ANY")); ?>
+            <? $arr = array(
+                "reference" => array(GetMessage("MAIN_YES"), GetMessage("MAIN_NO")),
+                "reference_id" => array("Y", "N")
+            ); ?>
+            <?= SelectBoxFromArray(
+                "find_active",
+                $arr,
+                htmlspecialcharsbx($find_active),
+                GetMessage("MAIL_MSERVICE_ADM_FILT_ANY")
+            ); ?>
         </td>
     </tr>
     <tr>

@@ -1,4 +1,5 @@
 <?
+
 define("NO_KEEP_STATISTIC", true);
 define("NOT_CHECK_PERMISSIONS", true);
 

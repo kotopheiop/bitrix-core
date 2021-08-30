@@ -1,15 +1,18 @@
 <?
+
 define("ADMIN_MODULE_NAME", "bitrixcloud");
-if (isset($_REQUEST["referer"]) && $_REQUEST["referer"] === "monitoring")
+if (isset($_REQUEST["referer"]) && $_REQUEST["referer"] === "monitoring") {
     define("NOT_CHECK_PERMISSIONS", true);
+}
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 IncludeModuleLangFile(__FILE__);
 
 /* @global CMain $APPLICATION */
 /* @global CUser $USER */
 
-if (!CModule::IncludeModule("bitrixcloud"))
+if (!CModule::IncludeModule("bitrixcloud")) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 if ($_REQUEST["referer"] === "monitoring") {
     CBitrixCloudMonitoringResult::setExpirationTime(0);
@@ -17,8 +20,9 @@ if ($_REQUEST["referer"] === "monitoring") {
     die();
 }
 
-if (!$USER->CanDoOperation("bitrixcloud_monitoring"))
+if (!$USER->CanDoOperation("bitrixcloud_monitoring")) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $strError = "";
 $arNotes = array();
@@ -46,13 +50,15 @@ $arHeaders = array(
 try {
     if ($arID = $lAdmin->GroupAction()) {
         foreach ($arID as $ID) {
-            if (strlen($ID) <= 0)
+            if ($ID == '') {
                 continue;
+            }
             switch ($_REQUEST['action']) {
                 case "delete":
                     $strError = $monitoring->stopMonitoring($ID);
-                    if ($strError !== "")
+                    if ($strError !== "") {
                         $lAdmin->AddUpdateError($strError, $ID);
+                    }
                     break;
             }
         }
@@ -105,10 +111,11 @@ while ($arRes = $rsData->GetNext()) {
         }
 
         $result = explode("/", $test_http_response_time->getUptime());
-        if ($result[0] > 0 && $result[1] > 0)
+        if ($result[0] > 0 && $result[1] > 0) {
             $resultText = round($result[0] / $result[1] * 100, 2) . "%";
-        else
+        } else {
             $resultText = GetMessage("BCL_MONITORING_NO_DATA");
+        }
 
         $html .= '<tr>';
         $html .= '<td width="50%" align="right">' . GetMessage("BCL_MONITORING_RESPONSE_TIME") . ':</td>';
@@ -117,25 +124,32 @@ while ($arRes = $rsData->GetNext()) {
 
         if ($result[1] > 0) {
             $failTime = ($result[1] - $result[0]);
-            $resultText = FormatDate(array(
-                "s" => "sdiff",
-                "i" => "idiff",
-                "H" => "Hdiff",
-            ), time() - $failTime);
+            $resultText = FormatDate(
+                array(
+                    "s" => "sdiff",
+                    "i" => "idiff",
+                    "H" => "Hdiff",
+                ),
+                time() - $failTime
+            );
             $html .= '<tr>';
             $html .= '<td width="50%" align="right">' . GetMessage("BCL_MONITORING_FAILED_PERIOD") . '</td>';
-            if ($failTime > 0)
+            if ($failTime > 0) {
                 $html .= '<td align="left" style="color:red">' . $resultText . '</td>';
-            else
+            } else {
                 $html .= '<td align="left">' . GetMessage("MAIN_NO") . '</td>';
+            }
             $html .= '</tr>';
 
-            $resultText = FormatDate(array(
-                "s" => "sdiff",
-                "i" => "idiff",
-                "H" => "Hdiff",
-                "-" => "ddiff",
-            ), time() - $result[1]);
+            $resultText = FormatDate(
+                array(
+                    "s" => "sdiff",
+                    "i" => "idiff",
+                    "H" => "Hdiff",
+                    "-" => "ddiff",
+                ),
+                time() - $result[1]
+            );
             $html .= '<tr>';
             $html .= '<td width="50%" align="right">' . GetMessage("BCL_MONITORING_PERIOD") . '</td>';
             $html .= '<td align="left">' . $resultText . '</td>';
@@ -159,7 +173,9 @@ while ($arRes = $rsData->GetNext()) {
                 $c = count($arNotes);
                 $arNotes[] = GetMessage("BCL_MONITORING_DOMAIN_REGISTRATION_NOTE");
             }
-            $resultText = GetMessage("BCL_MONITORING_NO_DATA_AVAILABLE") . '<span class="required"><sup>' . ($c + 1) . '</sup></span>';
+            $resultText = GetMessage(
+                    "BCL_MONITORING_NO_DATA_AVAILABLE"
+                ) . '<span class="required"><sup>' . ($c + 1) . '</sup></span>';
         } elseif ($result === "-" || $result < 1) {
             $resultText = GetMessage("BCL_MONITORING_NO_DATA");
         } else {
@@ -182,10 +198,11 @@ while ($arRes = $rsData->GetNext()) {
         }
 
         $result = $test_lic->getResult();
-        if ($result === "-" || $result < 1)
+        if ($result === "-" || $result < 1) {
             $resultText = GetMessage("BCL_MONITORING_NO_DATA");
-        else
+        } else {
             $resultText = FormatDate("ddiff", time(), $result) . " (" . FormatDate("SHORT", $result) . ")";
+        }
 
         $html .= '<tr>';
         $html .= '<td width="50%" align="right">' . GetMessage("BCL_MONITORING_LICENSE") . '</td>';
@@ -203,10 +220,11 @@ while ($arRes = $rsData->GetNext()) {
         }
 
         $result = $test_ssl_cert_validity->getResult();
-        if ($result === "-" || $result < 1)
+        if ($result === "-" || $result < 1) {
             $resultText = GetMessage("BCL_MONITORING_NO_DATA");
-        else
+        } else {
             $resultText = FormatDate("ddiff", time(), $result) . " (" . FormatDate("SHORT", $result) . ")";
+        }
 
         $html .= '<tr>';
         $html .= '<td width="50%" align="right">' . GetMessage("BCL_MONITORING_SSL") . '</td>';
@@ -224,7 +242,9 @@ while ($arRes = $rsData->GetNext()) {
             "ICON" => "edit",
             "DEFAULT" => true,
             "TEXT" => GetMessage("BCL_MONITORING_EDIT"),
-            "ACTION" => $lAdmin->ActionRedirect("bitrixcloud_monitoring_edit.php?domain=" . urlencode($arRes["DOMAIN"])),
+            "ACTION" => $lAdmin->ActionRedirect(
+                "bitrixcloud_monitoring_edit.php?domain=" . urlencode($arRes["DOMAIN"])
+            ),
         ),
         array(
             "SEPARATOR" => "Y",
@@ -232,7 +252,10 @@ while ($arRes = $rsData->GetNext()) {
         array(
             "ICON" => "delete",
             "TEXT" => GetMessage("BCL_MONITORING_DELETE"),
-            "ACTION" => "if(confirm('" . GetMessage("BCL_MONITORING_DELETE_CONF") . "')) " . $lAdmin->ActionDoGroup($arRes["DOMAIN"], "delete"),
+            "ACTION" => "if(confirm('" . GetMessage("BCL_MONITORING_DELETE_CONF") . "')) " . $lAdmin->ActionDoGroup(
+                    $arRes["DOMAIN"],
+                    "delete"
+                ),
         ),
     );
     $row->AddActions($arActions);
@@ -270,14 +293,16 @@ if (!empty($localDomains)) {
 
 $lAdmin->CheckListMode();
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
-if ($strError)
+if ($strError) {
     CAdminMessage::ShowMessage($strError);
+}
 
 $lAdmin->DisplayList();
 if (!empty($arNotes)) {
     echo BeginNote();
-    foreach ($arNotes as $i => $note)
+    foreach ($arNotes as $i => $note) {
         echo '<span class="required"><sup>' . ($i + 1) . '</sup></span>', $note, '<br>';
+    }
     echo EndNote();
 }
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_admin.php");

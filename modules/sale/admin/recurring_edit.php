@@ -1,10 +1,12 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/prolog.php");
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions == "D")
+if ($saleModulePermissions == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 \Bitrix\Main\Loader::includeModule('sale');
 
@@ -24,10 +26,10 @@ $bVarsFromForm = false;
 
 ClearVars();
 
-$ID = IntVal($ID);
+$ID = intval($ID);
 
 $simpleForm = COption::GetOptionString("sale", "lock_catalog", "Y");
-$bSimpleForm = (($simpleForm == "Y") ? True : False);
+$bSimpleForm = (($simpleForm == "Y") ? true : false);
 
 if ($bSimpleForm) {
     if ($ID > 0) {
@@ -35,59 +37,65 @@ if ($bSimpleForm) {
             if ($arRecurring["MODULE"] != "catalog"
                 || $arRecurring["CALLBACK_FUNC"] != "CatalogRecurringCallback"
                 || $arRecurring["PRODUCT_PROVIDER_CLASS"] != "CCatalogProductProvider") {
-                $bSimpleForm = False;
+                $bSimpleForm = false;
             }
         }
     }
 }
 
-if ($REQUEST_METHOD == "POST" && strlen($Update) > 0 && $saleModulePermissions >= "U" && check_bitrix_sessid()) {
+if ($REQUEST_METHOD == "POST" && $Update <> '' && $saleModulePermissions >= "U" && check_bitrix_sessid()) {
     $adminSidePanelHelper->decodeUriComponent();
 
-    if ($ID <= 0 && $saleModulePermissions < "W")
+    if ($ID <= 0 && $saleModulePermissions < "W") {
         $errorMessage .= GetMessage("SRE_NO_PERMS2ADD") . ".<br>";
+    }
 
     $NEXT_DATE = Trim($NEXT_DATE);
-    if (strlen($NEXT_DATE) <= 0)
+    if ($NEXT_DATE == '') {
         $errorMessage .= GetMessage("SRE_EMPTY_NEXT") . ".<br>";
+    }
 
     if ($saleModulePermissions >= "W") {
-        $USER_ID = IntVal($USER_ID);
-        if ($USER_ID <= 0)
+        $USER_ID = intval($USER_ID);
+        if ($USER_ID <= 0) {
             $errorMessage .= GetMessage("SRE_EMPTY_USER") . ".<br>";
+        }
 
         $MODULE = Trim($MODULE);
-        if (strlen($MODULE) <= 0)
+        if ($MODULE == '') {
             $errorMessage .= GetMessage("SRE_EMPTY_MODULE") . ".<br>";
+        }
 
-        $PRODUCT_ID = IntVal($PRODUCT_ID);
-        if ($PRODUCT_ID <= 0)
+        $PRODUCT_ID = intval($PRODUCT_ID);
+        if ($PRODUCT_ID <= 0) {
             $errorMessage .= GetMessage("SRE_EMPTY_PRODUCT") . ".<br>";
+        }
 
         $CALLBACK_FUNC = Trim($CALLBACK_FUNC);
         $PRODUCT_PROVIDER_CLASS = Trim($PRODUCT_PROVIDER_CLASS);
 
-        if (!(strlen($CALLBACK_FUNC) > 0 || strlen($PRODUCT_PROVIDER_CLASS) > 0)) {
+        if (!($CALLBACK_FUNC <> '' || $PRODUCT_PROVIDER_CLASS <> '')) {
             $errorMessage .= GetMessage("SRE_EMPTY_CALLBACK") . ".<br>";
         }
     }
 
-    $ORDER_ID = IntVal($ORDER_ID);
-    if ($ORDER_ID <= 0)
+    $ORDER_ID = intval($ORDER_ID);
+    if ($ORDER_ID <= 0) {
         $errorMessage .= GetMessage("SRE_EMPTY_BASE_ORDER") . ".<br>";
+    }
 
-    if (strlen($errorMessage) <= 0) {
+    if ($errorMessage == '') {
         $CANCELED = (($CANCELED == "Y") ? "Y" : "N");
         $PRIOR_DATE = Trim($PRIOR_DATE);
-        $REMAINING_ATTEMPTS = IntVal($REMAINING_ATTEMPTS);
+        $REMAINING_ATTEMPTS = intval($REMAINING_ATTEMPTS);
         $SUCCESS_PAYMENT = (($SUCCESS_PAYMENT == "Y") ? "Y" : "N");
 
         $arFields = array(
             "CANCELED" => $CANCELED,
-            "PRIOR_DATE" => ((strlen($PRIOR_DATE) > 0) ? $PRIOR_DATE : False),
+            "PRIOR_DATE" => (($PRIOR_DATE <> '') ? $PRIOR_DATE : false),
             "NEXT_DATE" => $NEXT_DATE,
-            "DESCRIPTION" => ((strlen($DESCRIPTION) > 0) ? $DESCRIPTION : False),
-            "CANCELED_REASON" => ((strlen($CANCELED_REASON) > 0) ? $CANCELED_REASON : False),
+            "DESCRIPTION" => (($DESCRIPTION <> '') ? $DESCRIPTION : false),
+            "CANCELED_REASON" => (($CANCELED_REASON <> '') ? $CANCELED_REASON : false),
             "ORDER_ID" => $ORDER_ID,
             "REMAINING_ATTEMPTS" => $REMAINING_ATTEMPTS,
             "SUCCESS_PAYMENT" => $SUCCESS_PAYMENT
@@ -111,15 +119,19 @@ if ($REQUEST_METHOD == "POST" && strlen($Update) > 0 && $saleModulePermissions >
 
         if (!$res) {
             $bVarsFromForm = true;
-            if ($ex = $APPLICATION->GetException())
+            if ($ex = $APPLICATION->GetException()) {
                 $errorMessage .= $ex->GetString() . ".<br>";
-            else
+            } else {
                 $errorMessage .= GetMessage("SRE_ERROR_SAVING") . ".<br>";
+            }
             $adminSidePanelHelper->sendJsonErrorResponse($errorMessage);
         } else {
             $adminSidePanelHelper->sendSuccessResponse("base", array("ID" => $ID));
-            if (strlen($apply) <= 0)
-                LocalRedirect("/bitrix/admin/sale_recurring_admin.php?lang=" . LANGUAGE_ID . GetFilterParams("filter_", false));
+            if ($apply == '') {
+                LocalRedirect(
+                    "/bitrix/admin/sale_recurring_admin.php?lang=" . LANGUAGE_ID . GetFilterParams("filter_", false)
+                );
+            }
         }
     } else {
         $adminSidePanelHelper->sendJsonErrorResponse($errorMessage);
@@ -129,10 +141,11 @@ if ($REQUEST_METHOD == "POST" && strlen($Update) > 0 && $saleModulePermissions >
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/prolog.php");
 
-if ($ID > 0)
+if ($ID > 0) {
     $APPLICATION->SetTitle(GetMessage("SRE_TITLE_UPDATE"));
-else
+} else {
     $APPLICATION->SetTitle(GetMessage("SRE_TITLE_ADD"));
+}
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
@@ -142,19 +155,48 @@ $dbRecurring = CSaleRecurring::GetList(
     array("ID" => $ID),
     false,
     false,
-    array("ID", "USER_ID", "MODULE", "PRODUCT_ID", "PRODUCT_NAME", "PRODUCT_URL", "PRODUCT_PRICE_ID", "RECUR_SCHEME_TYPE", "RECUR_SCHEME_LENGTH", "WITHOUT_ORDER", "PRICE", "CURRENCY", "ORDER_ID", "CANCELED", "CALLBACK_FUNC", "PRODUCT_PROVIDER_CLASS", "DESCRIPTION", "TIMESTAMP_X", "PRIOR_DATE", "NEXT_DATE", "REMAINING_ATTEMPTS", "SUCCESS_PAYMENT", "USER_LOGIN", "USER_NAME", "USER_LAST_NAME", "CANCELED_REASON")
+    array(
+        "ID",
+        "USER_ID",
+        "MODULE",
+        "PRODUCT_ID",
+        "PRODUCT_NAME",
+        "PRODUCT_URL",
+        "PRODUCT_PRICE_ID",
+        "RECUR_SCHEME_TYPE",
+        "RECUR_SCHEME_LENGTH",
+        "WITHOUT_ORDER",
+        "PRICE",
+        "CURRENCY",
+        "ORDER_ID",
+        "CANCELED",
+        "CALLBACK_FUNC",
+        "PRODUCT_PROVIDER_CLASS",
+        "DESCRIPTION",
+        "TIMESTAMP_X",
+        "PRIOR_DATE",
+        "NEXT_DATE",
+        "REMAINING_ATTEMPTS",
+        "SUCCESS_PAYMENT",
+        "USER_LOGIN",
+        "USER_NAME",
+        "USER_LAST_NAME",
+        "CANCELED_REASON"
+    )
 );
 if (!$dbRecurring->ExtractFields("str_")) {
-    if ($saleModulePermissions < "W")
+    if ($saleModulePermissions < "W") {
         $errorMessage .= GetMessage("SRE_NO_PERMS2ADD") . ".<br>";
+    }
     $ID = 0;
     $str_CANCELED = "N";
     $str_REMAINING_ATTEMPTS = (Defined("SALE_PROC_REC_ATTEMPTS") ? SALE_PROC_REC_ATTEMPTS : 3);
     $str_SUCCESS_PAYMENT = "Y";
 }
 
-if ($bVarsFromForm)
+if ($bVarsFromForm) {
     $DB->InitTableVarsForEdit("b_sale_recurring", "", "str_");
+}
 
 $aMenu = array(
     array(
@@ -177,7 +219,10 @@ if ($ID > 0 && $saleModulePermissions >= "U") {
         $aMenu[] = array(
             "TEXT" => GetMessage("SREN_DELETE_RECURR"),
             "ICON" => "btn_delete",
-            "LINK" => "javascript:if(confirm('" . GetMessageJS("SREN_DELETE_RECURR_CONFIRM") . "')) window.location='/bitrix/admin/sale_recurring_admin.php?ID=" . $ID . "&action=delete&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get() . "#tb';",
+            "LINK" => "javascript:if(confirm('" . GetMessageJS(
+                    "SREN_DELETE_RECURR_CONFIRM"
+                ) . "')) window.location='/bitrix/admin/sale_recurring_admin.php?ID=" . $ID . "&action=delete&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get(
+                ) . "#tb';",
             "WARNING" => "Y"
         );
     }
@@ -185,8 +230,11 @@ if ($ID > 0 && $saleModulePermissions >= "U") {
 $context = new CAdminContextMenu($aMenu);
 $context->Show();
 
-if (strlen($errorMessage) > 0)
-    echo CAdminMessage::ShowMessage(Array("DETAILS" => $errorMessage, "TYPE" => "ERROR", "MESSAGE" => GetMessage("SRE_ERROR"), "HTML" => true)); ?>
+if ($errorMessage <> '') {
+    echo CAdminMessage::ShowMessage(
+        Array("DETAILS" => $errorMessage, "TYPE" => "ERROR", "MESSAGE" => GetMessage("SRE_ERROR"), "HTML" => true)
+    );
+} ?>
 
     <form method="POST" action="<? echo $APPLICATION->GetCurPage() ?>?" name="frecurring_edit">
         <? echo GetFilterHiddens("filter_"); ?>
@@ -196,7 +244,12 @@ if (strlen($errorMessage) > 0)
         <? echo bitrix_sessid_post();
 
         $aTabs = array(
-            array("DIV" => "edit1", "TAB" => GetMessage("SREN_TAB_RECURR"), "ICON" => "sale", "TITLE" => GetMessage("SREN_TAB_RECURR_DESCR"))
+            array(
+                "DIV" => "edit1",
+                "TAB" => GetMessage("SREN_TAB_RECURR"),
+                "ICON" => "sale",
+                "TITLE" => GetMessage("SREN_TAB_RECURR_DESCR")
+            )
         );
 
         $tabControl = new CAdminTabControl("tabControl", $aTabs);
@@ -217,8 +270,11 @@ if (strlen($errorMessage) > 0)
             <td width="40%"><? echo GetMessage("SRE_USER1") ?></td>
             <td width="60%"><?
                 $user_name = "";
-                if ($ID > 0 && $str_USER_ID > 0)
-                    $user_name = "[<a title=\"" . GetMessage("SRE_USER_PROFILE") . "\" href=\"/bitrix/admin/user_edit.php?lang=" . LANGUAGE_ID . "&ID=" . $str_USER_ID . "\">" . $str_USER_ID . "</a>] (" . $str_USER_LOGIN . ") " . $str_USER_NAME . " " . $str_USER_LAST_NAME;
+                if ($ID > 0 && $str_USER_ID > 0) {
+                    $user_name = "[<a title=\"" . GetMessage(
+                            "SRE_USER_PROFILE"
+                        ) . "\" href=\"/bitrix/admin/user_edit.php?lang=" . LANGUAGE_ID . "&ID=" . $str_USER_ID . "\">" . $str_USER_ID . "</a>] (" . $str_USER_LOGIN . ") " . $str_USER_NAME . " " . $str_USER_LAST_NAME;
+                }
 
                 if ($saleModulePermissions >= "W"):
                     echo FindUserID("USER_ID", $str_USER_ID, $user_name, "frecurring_edit");
@@ -275,7 +331,9 @@ if (strlen($errorMessage) > 0)
                         $dbModuleList = CModule::GetList();
                         while ($arModuleList = $dbModuleList->Fetch()) {
                             ?>
-                            <option value="<?= $arModuleList["ID"] ?>"<? if ($str_MODULE == $arModuleList["ID"]) echo " selected"; ?>><?= htmlspecialcharsEx($arModuleList["ID"]) ?></option><?
+                            <option value="<?= $arModuleList["ID"] ?>"<? if ($str_MODULE == $arModuleList["ID"]) {
+                                echo " selected";
+                            } ?>><?= htmlspecialcharsEx($arModuleList["ID"]) ?></option><?
                         }
                         ?>
                     </select>

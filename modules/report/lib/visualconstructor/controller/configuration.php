@@ -59,11 +59,18 @@ class Configuration extends Base
             }
 
             $reportHandler = Report::buildReportHandlerForWidget($reportHandlerClassName, $widget, true);
-            $colorFieldValue = !empty($params['colorFieldValue']) ? $params['colorFieldValue'] : $reportHandler->getView()->getReportDefaultColor($existReportCount + 1);
+            $colorFieldValue = !empty($params['colorFieldValue']) ? $params['colorFieldValue'] : $reportHandler->getView(
+            )->getReportDefaultColor($existReportCount + 1);
 
             $reportHandler->getFormElement('color')->setValue($colorFieldValue);
-            $reportHandler->getFormElement('head_container_start')->addInlineStyle('background-color', $colorFieldValue);
-            $reportHandler->getFormElement('main_container_start')->addInlineStyle('background-color', $colorFieldValue . '5f');
+            $reportHandler->getFormElement('head_container_start')->addInlineStyle(
+                'background-color',
+                $colorFieldValue
+            );
+            $reportHandler->getFormElement('main_container_start')->addInlineStyle(
+                'background-color',
+                $colorFieldValue . '5f'
+            );
             $componentParams['REPORT_HANDLER'] = $reportHandler;
             return new Component($componentName, $templateName, $componentParams);
         }
@@ -122,7 +129,6 @@ class Configuration extends Base
         }
         $this->addError(new Error('No widget with this id'));
         return false;
-
     }
 
 }

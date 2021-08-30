@@ -27,16 +27,18 @@ class UrlPreview
         $result = [];
         $landingId = intval($landingId);
 
-        $res = Landing::getList([
-            'select' => [
-                'ID',
-                'TITLE',
-                '=SITE_TYPE' => 'SITE.TYPE'
-            ],
-            'filter' => [
-                'ID' => $landingId
+        $res = Landing::getList(
+            [
+                'select' => [
+                    'ID',
+                    'TITLE',
+                    '=SITE_TYPE' => 'SITE.TYPE'
+                ],
+                'filter' => [
+                    'ID' => $landingId
+                ]
             ]
-        ]);
+        );
         if ($row = $res->fetch()) {
             $landing = Landing::createInstance(0);
             $row['URL'] = $landing->getPublicUrl($landingId);
@@ -50,10 +52,12 @@ class UrlPreview
                 if (isset($hookData['METAOG']['DESCRIPTION'])) {
                     $row['DESCRIPTION'] = $hookData['METAOG']['DESCRIPTION'];
                 }
-            } else if (isset($hookData['METAMAIN']['TITLE'])) {
-                $row['TITLE'] = $hookData['METAMAIN']['TITLE'];
-                if (isset($hookData['METAMAIN']['DESCRIPTION'])) {
-                    $row['DESCRIPTION'] = $hookData['METAMAIN']['DESCRIPTION'];
+            } else {
+                if (isset($hookData['METAMAIN']['TITLE'])) {
+                    $row['TITLE'] = $hookData['METAMAIN']['TITLE'];
+                    if (isset($hookData['METAMAIN']['DESCRIPTION'])) {
+                        $row['DESCRIPTION'] = $hookData['METAMAIN']['DESCRIPTION'];
+                    }
                 }
             }
             if (isset($hookData['METAOG']['IMAGE'])) {
@@ -103,8 +107,10 @@ class UrlPreview
         if (isset($urlParts[1]) && isset($urlParts[2])) {
             $folderCode = $urlParts[1];
             $pageCode = $urlParts[2];
-        } else if (isset($urlParts[1])) {
-            $pageCode = $urlParts[1];
+        } else {
+            if (isset($urlParts[1])) {
+                $pageCode = $urlParts[1];
+            }
         }
 
         // fill filter
@@ -114,14 +120,16 @@ class UrlPreview
             $filter['=CODE'] = $pageCode;
         } else // try get index page of site
         {
-            $res = Site::getList([
-                'select' => [
-                    'LANDING_ID_INDEX'
-                ],
-                'filter' => [
-                    '=CODE' => $siteCode
+            $res = Site::getList(
+                [
+                    'select' => [
+                        'LANDING_ID_INDEX'
+                    ],
+                    'filter' => [
+                        '=CODE' => $siteCode
+                    ]
                 ]
-            ]);
+            );
             if ($row = $res->fetch()) {
                 $id = $row['LANDING_ID_INDEX'];
             }
@@ -149,13 +157,15 @@ class UrlPreview
             return $id;
         }
 
-        $res = Landing::getList([
-            'select' => [
-                'ID'
-            ],
-            'filter' => $filter,
-            'runtime' => $runtime
-        ]);
+        $res = Landing::getList(
+            [
+                'select' => [
+                    'ID'
+                ],
+                'filter' => $filter,
+                'runtime' => $runtime
+            ]
+        );
         if ($row = $res->fetch()) {
             $id = $row['ID'];
         }
@@ -220,12 +230,16 @@ class UrlPreview
             $params['siteCode'] = $params['folderCode'];
             $params['folderCode'] = $params['pageCode'];
             $params['pageCode'] = $params['additionalCode'];
-        } else if (isset($params['folderCode'])) {
-            $params['siteCode'] = $params['folderCode'];
-            unset($params['folderCode']);
-        } else if (isset($params['pageCode'])) {
-            $params['siteCode'] = $params['pageCode'];
-            unset($params['pageCode']);
+        } else {
+            if (isset($params['folderCode'])) {
+                $params['siteCode'] = $params['folderCode'];
+                unset($params['folderCode']);
+            } else {
+                if (isset($params['pageCode'])) {
+                    $params['siteCode'] = $params['pageCode'];
+                    unset($params['pageCode']);
+                }
+            }
         }
     }
 
@@ -287,12 +301,14 @@ class UrlPreview
             $preview = self::getPreview($landingId);
             if ($preview) {
                 $attach = new \CIMMessageParamAttach(1, '#E30000');
-                $attach->addLink([
-                    'NAME' => $preview['TITLE'],
-                    'DESC' => $preview['DESCRIPTION'],
-                    'LINK' => $preview['URL'],
-                    'PREVIEW' => $preview['PICTURE']
-                ]);
+                $attach->addLink(
+                    [
+                        'NAME' => $preview['TITLE'],
+                        'DESC' => $preview['DESCRIPTION'],
+                        'LINK' => $preview['URL'],
+                        'PREVIEW' => $preview['PICTURE']
+                    ]
+                );
                 return $attach;
             }
         }

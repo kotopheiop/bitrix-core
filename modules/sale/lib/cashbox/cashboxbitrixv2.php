@@ -42,8 +42,9 @@ class CashboxBitrixV2 extends CashboxBitrix
 
         $phone = \NormalizePhone($data['client_phone']);
         if (is_string($phone)) {
-            if ($phone[0] === '7')
+            if ($phone[0] === '7') {
                 $phone = '+' . $phone;
+            }
         } else {
             $phone = '';
         }
@@ -85,8 +86,9 @@ class CashboxBitrixV2 extends CashboxBitrix
             }
 
             $position = [
+                'type' => 'position',
                 'name' => $item['name'],
-                'price' => (float)$item['base_price'],
+                'price' => (float)$item['price'],
                 'quantity' => $item['quantity'],
                 'amount' => (float)$item['sum'],
                 'paymentMethod' => $checkTypeMap[$check::getType()],
@@ -95,6 +97,14 @@ class CashboxBitrixV2 extends CashboxBitrix
                     'type' => $this->mapVatValue($check::getType(), $vat)
                 ],
             ];
+
+            if (isset($item['supplier_info'])) {
+                $position['supplierInfo'] = [
+                    'phones' => $item['supplier_info']['phones'],
+                    'name' => $item['supplier_info']['name'],
+                    'vatin' => $item['supplier_info']['inn']
+                ];
+            }
 
             if (isset($item['nomenclature_code'])) {
                 $position['nomenclatureCode'] = base64_encode($item['nomenclature_code']);
@@ -146,6 +156,18 @@ class CashboxBitrixV2 extends CashboxBitrix
             Check::PAYMENT_OBJECT_JOB => 'job',
             Check::PAYMENT_OBJECT_EXCISE => 'excise',
             Check::PAYMENT_OBJECT_PAYMENT => 'payment',
+            Check::PAYMENT_OBJECT_GAMBLING_BET => 'gamblingBet',
+            Check::PAYMENT_OBJECT_GAMBLING_PRIZE => 'gamblingPrize',
+            Check::PAYMENT_OBJECT_LOTTERY => 'lottery',
+            Check::PAYMENT_OBJECT_LOTTERY_PRIZE => 'lotteryPrize',
+            Check::PAYMENT_OBJECT_INTELLECTUAL_ACTIVITY => 'intellectualActivity',
+            Check::PAYMENT_OBJECT_AGENT_COMMISSION => 'agentCommission',
+            Check::PAYMENT_OBJECT_COMPOSITE => 'composite',
+            Check::PAYMENT_OBJECT_ANOTHER => 'another',
+            Check::PAYMENT_OBJECT_PROPERTY_RIGHT => 'proprietaryLaw',
+            Check::PAYMENT_OBJECT_NON_OPERATING_GAIN => 'nonOperatingIncome',
+            Check::PAYMENT_OBJECT_SALES_TAX => 'merchantTax',
+            Check::PAYMENT_OBJECT_RESORT_FEE => 'resortFee',
         ];
     }
 
@@ -173,6 +195,8 @@ class CashboxBitrixV2 extends CashboxBitrix
             CreditCheck::getType() => 'credit',
             CreditReturnCheck::getType() => 'credit',
             CreditPaymentCheck::getType() => 'creditPayment',
+            CreditPaymentReturnCashCheck::getType() => 'creditPayment',
+            CreditPaymentReturnCheck::getType() => 'creditPayment',
             PrepaymentCheck::getType() => 'prepayment',
             PrepaymentReturnCheck::getType() => 'prepayment',
             PrepaymentReturnCashCheck::getType() => 'prepayment',

@@ -20,10 +20,11 @@ $bVarsFromForm = false;
 $IBLOCK_ID = intval($_REQUEST["IBLOCK_ID"]);
 
 $arIBlock = CIBlock::GetArrayByID($IBLOCK_ID);
-if ($arIBlock)
+if ($arIBlock) {
     $bBadBlock = !CIBlockRights::UserHasRightTo($IBLOCK_ID, $IBLOCK_ID, "iblock_edit");
-else
+} else {
     $bBadBlock = true;
+}
 
 if ($bBadBlock) {
     require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
@@ -51,16 +52,19 @@ $tabControl = new CAdminForm("form_catalog_edit_" . $IBLOCK_ID, $aTabs);
 if (
     $_SERVER["REQUEST_METHOD"] == "POST"
     && (
-        (isset($_REQUEST["save"]) && strlen($_REQUEST["save"]) > 0)
-        || (isset($_REQUEST["apply"]) && strlen($_REQUEST["apply"]) > 0)
+        (isset($_REQUEST["save"]) && $_REQUEST["save"] <> '')
+        || (isset($_REQUEST["apply"]) && $_REQUEST["apply"] <> '')
     )
     && check_bitrix_sessid()
 ) {
     if ($_POST["NAME"] != $arIBlock["NAME"]) {
         $ib = new CIBlock;
-        $res = $ib->Update($IBLOCK_ID, array(
-            "NAME" => $_POST["NAME"],
-        ));
+        $res = $ib->Update(
+            $IBLOCK_ID,
+            array(
+                "NAME" => $_POST["NAME"],
+            )
+        );
         if (!$res) {
             $strWarning .= $ib->LAST_ERROR . "<br>";
             $bVarsFromForm = true;
@@ -69,9 +73,12 @@ if (
 
     if ($arIBlock["SECTION_PROPERTY"] != "Y") {
         $ib = new CIBlock;
-        $res = $ib->Update($IBLOCK_ID, array(
-            "SECTION_PROPERTY" => "Y",
-        ));
+        $res = $ib->Update(
+            $IBLOCK_ID,
+            array(
+                "SECTION_PROPERTY" => "Y",
+            )
+        );
         if (!$res) {
             $strWarning .= $ib->LAST_ERROR . "<br>";
             $bVarsFromForm = true;
@@ -82,9 +89,12 @@ if (
 
     if (is_array($arCatalog) && CIBlock::GetArrayByID($arCatalog["IBLOCK_ID"], "SECTION_PROPERTY") != "Y") {
         $ib = new CIBlock;
-        $res = $ib->Update($arCatalog["IBLOCK_ID"], array(
-            "SECTION_PROPERTY" => "Y",
-        ));
+        $res = $ib->Update(
+            $arCatalog["IBLOCK_ID"],
+            array(
+                "SECTION_PROPERTY" => "Y",
+            )
+        );
         if (!$res) {
             $strWarning .= $ib->LAST_ERROR . "<br>";
             $bVarsFromForm = true;
@@ -108,19 +118,26 @@ if (
                     $filterHint = $TextParser->SanitizeHtml($filterHint);
                 }
 
-                CIBlockSectionPropertyLink::Set(0, $p["ID"], array(
-                    "SMART_FILTER" => $_POST["SECTION_PROPERTY"][$p["ID"]]["SMART_FILTER"],
-                    "DISPLAY_TYPE" => $_POST["SECTION_PROPERTY"][$p["ID"]]["DISPLAY_TYPE"],
-                    "DISPLAY_EXPANDED" => $_POST["SECTION_PROPERTY"][$p["ID"]]["DISPLAY_EXPANDED"],
-                    "FILTER_HINT" => $filterHint,
-                ));
+                CIBlockSectionPropertyLink::Set(
+                    0,
+                    $p["ID"],
+                    array(
+                        "SMART_FILTER" => $_POST["SECTION_PROPERTY"][$p["ID"]]["SMART_FILTER"],
+                        "DISPLAY_TYPE" => $_POST["SECTION_PROPERTY"][$p["ID"]]["DISPLAY_TYPE"],
+                        "DISPLAY_EXPANDED" => $_POST["SECTION_PROPERTY"][$p["ID"]]["DISPLAY_EXPANDED"],
+                        "FILTER_HINT" => $filterHint,
+                    )
+                );
             } else {
                 CIBlockSectionPropertyLink::Delete(0, $p["ID"]);
             }
         }
 
         if (is_array($arCatalog)) {
-            $props = CIBlockProperty::GetList(array(), array("IBLOCK_ID" => $arCatalog["IBLOCK_ID"], "CHECK_PERMISSIONS" => "N"));
+            $props = CIBlockProperty::GetList(
+                array(),
+                array("IBLOCK_ID" => $arCatalog["IBLOCK_ID"], "CHECK_PERMISSIONS" => "N")
+            );
             while ($p = $props->Fetch()) {
                 if (
                     isset($_POST["SECTION_PROPERTY"])
@@ -133,38 +150,45 @@ if (
                         $filterHint = $TextParser->SanitizeHtml($filterHint);
                     }
 
-                    CIBlockSectionPropertyLink::Set(0, $p["ID"], array(
-                        "SMART_FILTER" => $_POST["SECTION_PROPERTY"][$p["ID"]]["SMART_FILTER"],
-                        "DISPLAY_TYPE" => $_POST["SECTION_PROPERTY"][$p["ID"]]["DISPLAY_TYPE"],
-                        "DISPLAY_EXPANDED" => $_POST["SECTION_PROPERTY"][$p["ID"]]["DISPLAY_EXPANDED"],
-                        "IBLOCK_ID" => $IBLOCK_ID,
-                        "FILTER_HINT" => $filterHint,
-                    ));
+                    CIBlockSectionPropertyLink::Set(
+                        0,
+                        $p["ID"],
+                        array(
+                            "SMART_FILTER" => $_POST["SECTION_PROPERTY"][$p["ID"]]["SMART_FILTER"],
+                            "DISPLAY_TYPE" => $_POST["SECTION_PROPERTY"][$p["ID"]]["DISPLAY_TYPE"],
+                            "DISPLAY_EXPANDED" => $_POST["SECTION_PROPERTY"][$p["ID"]]["DISPLAY_EXPANDED"],
+                            "IBLOCK_ID" => $IBLOCK_ID,
+                            "FILTER_HINT" => $filterHint,
+                        )
+                    );
                 } else {
                     CIBlockSectionPropertyLink::Delete(0, $p["ID"]);
                 }
             }
         }
 
-        $redirectUrl = $selfFolderUrl . "cat_catalog_edit.php?lang=" . LANGUAGE_ID . "&IBLOCK_ID=" . $IBLOCK_ID . "&" . $tabControl->ActiveTabParam();
-        $adminSidePanelHelper->reloadPage($redirectUrl, (strlen($_REQUEST["apply"]) > 0 ? "apply" : "save"));
+        $redirectUrl = $selfFolderUrl . "cat_catalog_edit.php?lang=" . LANGUAGE_ID . "&IBLOCK_ID=" . $IBLOCK_ID . "&" . $tabControl->ActiveTabParam(
+            );
+        $adminSidePanelHelper->reloadPage($redirectUrl, ($_REQUEST["apply"] <> '' ? "apply" : "save"));
         $redirectUrl = $adminSidePanelHelper->setDefaultQueryParams($redirectUrl);
         LocalRedirect($redirectUrl);
     }
 }
 
 ClearVars("str_");
-if ($bVarsFromForm)
+if ($bVarsFromForm) {
     $str_NAME = $_POST["NAME"];
-else
+} else {
     $str_NAME = $arIBlock["NAME"];
+}
 
 $APPLICATION->SetTitle(GetMessage("CAT_CEDIT_EDIT_TITLE", array("#IBLOCK_NAME#" => $arIBlock["NAME"])));
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
-if ($strWarning)
+if ($strWarning) {
     CAdminMessage::ShowOldStyleError($strWarning . "<br>");
+}
 
 $tabControl->BeginEpilogContent();
 echo bitrix_sessid_post();
@@ -175,7 +199,13 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
 $tabControl->Begin(array("FORM_ACTION" => $actionUrl));
 
 $tabControl->BeginNextFormTab();
-$tabControl->AddEditField("NAME", GetMessage("IBLOCK_FIELD_NAME") . ":", true, array("size" => 50, "maxlength" => 255), $str_NAME);
+$tabControl->AddEditField(
+    "NAME",
+    GetMessage("IBLOCK_FIELD_NAME") . ":",
+    true,
+    array("size" => 50, "maxlength" => 255),
+    $str_NAME
+);
 
 
 $tabControl->BeginNextFormTab();
@@ -186,6 +216,7 @@ $editor = new CEditorPopupControl();
     <tr colspan="2">
         <td style="text-align: center;">
             <?
+            echo $editor->getEditorHtml();
             ?>
             <table class="internal" id="table_SECTION_PROPERTY">
                 <tr class="heading">
@@ -198,25 +229,34 @@ $editor = new CEditorPopupControl();
                     <td><? echo GetMessage("CAT_CEDIT_PROP_TABLE_ACTION"); ?></td>
                 </tr>
                 <?
-                if (CIBlockRights::UserHasRightTo($IBLOCK_ID, $IBLOCK_ID, "iblock_edit"))
+                if (CIBlockRights::UserHasRightTo($IBLOCK_ID, $IBLOCK_ID, "iblock_edit")) {
                     $arShadow = $arHidden = array(
                         -1 => GetMessage("CAT_CEDIT_PROP_SELECT_CHOOSE"),
                         0 => GetMessage("CAT_CEDIT_PROP_SELECT_CREATE"),
                     );
-                else
+                } else {
                     $arShadow = $arHidden = array(
                         -1 => GetMessage("CAT_CEDIT_PROP_SELECT_CHOOSE"),
                     );
+                }
 
                 $arPropLinks = CIBlockSectionPropertyLink::GetArray($arIBlock["ID"], 0);
-                $rsProps = CIBlockProperty::GetList(array("SORT" => "ASC", 'ID' => 'ASC'), array("IBLOCK_ID" => $arIBlock["ID"], "CHECK_PERMISSIONS" => "N", "ACTIVE" => "Y"));
+                $rsProps = CIBlockProperty::GetList(
+                    array("SORT" => "ASC", 'ID' => 'ASC'),
+                    array(
+                        "IBLOCK_ID" => $arIBlock["ID"],
+                        "CHECK_PERMISSIONS" => "N",
+                        "ACTIVE" => "Y"
+                    )
+                );
                 $rows = 0;
                 while ($arProp = $rsProps->Fetch()):
                     if (isset($arPropLinks[$arProp["ID"]])) {
                         $rows++;
                         $arLink = $arPropLinks[$arProp["ID"]];
-                        if ($arLink["INHERITED"] == "N")
+                        if ($arLink["INHERITED"] == "N") {
                             $arShadow[$arProp["ID"]] = $arProp["NAME"];
+                        }
                     } else {
                         $arLink = false;
                         $arHidden[$arProp["ID"]] = $arProp["NAME"];
@@ -224,7 +264,9 @@ $editor = new CEditorPopupControl();
                     }
                     $fileProperty = $arProp['PROPERTY_TYPE'] == PropertyTable::TYPE_FILE;
                     ?>
-                    <tr id="tr_SECTION_PROPERTY_<? echo $arProp["ID"] ?>" <? if (!is_array($arLink)) echo 'style="display:none"'; ?>>
+                    <tr id="tr_SECTION_PROPERTY_<? echo $arProp["ID"] ?>" <? if (!is_array($arLink)) {
+                        echo 'style="display:none"';
+                    } ?>>
                         <td style="text-align: left;">
                             <? if (!is_array($arLink) || $arLink["INHERITED"] == "N"):?>
                                 <input type="hidden" name="SECTION_PROPERTY[<? echo $arProp["ID"] ?>][SHOW]"
@@ -234,48 +276,69 @@ $editor = new CEditorPopupControl();
                             <? echo htmlspecialcharsbx($arProp["NAME"]) ?>
                         </td>
                         <td style="text-align: left;"><?
-                            if ($arProp['PROPERTY_TYPE'] == "S" && !$arProp['USER_TYPE'])
+                            if ($arProp['PROPERTY_TYPE'] == "S" && !$arProp['USER_TYPE']) {
                                 echo GetMessage("IBLOCK_PROP_S");
-                            elseif ($arProp['PROPERTY_TYPE'] == "N" && !$arProp['USER_TYPE'])
+                            } elseif ($arProp['PROPERTY_TYPE'] == "N" && !$arProp['USER_TYPE']) {
                                 echo GetMessage("IBLOCK_PROP_N");
-                            elseif ($arProp['PROPERTY_TYPE'] == "L" && !$arProp['USER_TYPE'])
+                            } elseif ($arProp['PROPERTY_TYPE'] == "L" && !$arProp['USER_TYPE']) {
                                 echo GetMessage("IBLOCK_PROP_L");
-                            elseif ($arProp['PROPERTY_TYPE'] == "F" && !$arProp['USER_TYPE'])
+                            } elseif ($arProp['PROPERTY_TYPE'] == "F" && !$arProp['USER_TYPE']) {
                                 echo GetMessage("IBLOCK_PROP_F");
-                            elseif ($arProp['PROPERTY_TYPE'] == "G" && !$arProp['USER_TYPE'])
+                            } elseif ($arProp['PROPERTY_TYPE'] == "G" && !$arProp['USER_TYPE']) {
                                 echo GetMessage("IBLOCK_PROP_G");
-                            elseif ($arProp['PROPERTY_TYPE'] == "E" && !$arProp['USER_TYPE'])
+                            } elseif ($arProp['PROPERTY_TYPE'] == "E" && !$arProp['USER_TYPE']) {
                                 echo GetMessage("IBLOCK_PROP_E");
-                            elseif ($arProp['USER_TYPE'] && is_array($ar = CIBlockProperty::GetUserType($arProp['USER_TYPE'])))
+                            } elseif ($arProp['USER_TYPE'] && is_array(
+                                    $ar = CIBlockProperty::GetUserType($arProp['USER_TYPE'])
+                                )) {
                                 echo htmlspecialcharsbx($ar["DESCRIPTION"]);
-                            else
+                            } else {
                                 echo GetMessage("IBLOCK_PROP_S");
+                            }
                             ?></td>
                         <td style="text-align:center"><?
-                            echo '<input type="checkbox" value="Y" ' . ((is_array($arLink) && $arLink["INHERITED"] == "Y") || $fileProperty ? 'disabled="disabled"' : '') . ' name="SECTION_PROPERTY[' . $arProp['ID'] . '][SMART_FILTER]" ' . ($arLink["SMART_FILTER"] == "Y" ? 'checked="checked"' : '') . '>';
+                            echo '<input type="checkbox" value="Y" ' . ((is_array(
+                                        $arLink
+                                    ) && $arLink["INHERITED"] == "Y") || $fileProperty ? 'disabled="disabled"' : '') . ' name="SECTION_PROPERTY[' . $arProp['ID'] . '][SMART_FILTER]" ' . ($arLink["SMART_FILTER"] == "Y" ? 'checked="checked"' : '') . '>';
                             ?></td>
                         <td style="text-align: left;">
                             <?
-                            $displayTypes = CIBlockSectionPropertyLink::getDisplayTypes($arProp["PROPERTY_TYPE"], $arProp["USER_TYPE"]);
+                            $displayTypes = CIBlockSectionPropertyLink::getDisplayTypes(
+                                $arProp["PROPERTY_TYPE"],
+                                $arProp["USER_TYPE"]
+                            );
                             if ($displayTypes) {
-                                echo SelectBoxFromArray('SECTION_PROPERTY[' . $arProp['ID'] . '][DISPLAY_TYPE]', array(
-                                    "REFERENCE_ID" => array_keys($displayTypes),
-                                    "REFERENCE" => array_values($displayTypes),
-                                ), $arLink["DISPLAY_TYPE"], '', '');
+                                echo SelectBoxFromArray(
+                                    'SECTION_PROPERTY[' . $arProp['ID'] . '][DISPLAY_TYPE]',
+                                    array(
+                                        "REFERENCE_ID" => array_keys($displayTypes),
+                                        "REFERENCE" => array_values($displayTypes),
+                                    ),
+                                    $arLink["DISPLAY_TYPE"],
+                                    '',
+                                    ''
+                                );
                             } else {
                                 echo '&nbsp;';
                             }
                             ?>
                         </td>
                         <td style="text-align:center"><?
-                            echo '<input type="checkbox" value="Y" ' . ((is_array($arLink) && $arLink["INHERITED"] == "Y") || $fileProperty ? 'disabled="disabled"' : '') . ' name="SECTION_PROPERTY[' . $arProp['ID'] . '][DISPLAY_EXPANDED]" ' . ($arLink["DISPLAY_EXPANDED"] == "Y" ? 'checked="checked"' : '') . '>';
+                            echo '<input type="checkbox" value="Y" ' . ((is_array(
+                                        $arLink
+                                    ) && $arLink["INHERITED"] == "Y") || $fileProperty ? 'disabled="disabled"' : '') . ' name="SECTION_PROPERTY[' . $arProp['ID'] . '][DISPLAY_EXPANDED]" ' . ($arLink["DISPLAY_EXPANDED"] == "Y" ? 'checked="checked"' : '') . '>';
                             ?></td>
                         <td>
                             <?
                             if ($fileProperty) {
                                 echo '&nbsp;';
                             } elseif (!is_array($arLink) || $arLink["INHERITED"] == "N") {
-                                echo $editor->getControlHtml('SECTION_PROPERTY[' . $arProp['ID'] . '][FILTER_HINT]', $arLink['FILTER_HINT'], 255);
+                                $filterHint = (is_array($arLink) ? (string)$arLink['FILTER_HINT'] : '');
+                                echo $editor->getControlHtml(
+                                    'SECTION_PROPERTY[' . $arProp['ID'] . '][FILTER_HINT]',
+                                    $filterHint,
+                                    255
+                                );
                             } elseif ($arLink['FILTER_HINT'] <> '') {
                                 echo CTextParser::closeTags($arLink['FILTER_HINT']);
                             } else {
@@ -283,10 +346,13 @@ $editor = new CEditorPopupControl();
                             }
                             ?></td>
                         <td style="text-align: left;"><?
-                            if (!is_array($arLink) || $arLink["INHERITED"] == "N")
-                                echo '<a class="bx-action-href" href="javascript:deleteSectionProperty(' . $arProp['ID'] . ', \'select_SECTION_PROPERTY\', \'shadow_SECTION_PROPERTY\', \'table_SECTION_PROPERTY\')">' . GetMessage("CAT_CEDIT_PROP_TABLE_ACTION_HIDE") . '</a>';
-                            else
+                            if (!is_array($arLink) || $arLink["INHERITED"] == "N") {
+                                echo '<a class="bx-action-href" href="javascript:deleteSectionProperty(' . $arProp['ID'] . ', \'select_SECTION_PROPERTY\', \'shadow_SECTION_PROPERTY\', \'table_SECTION_PROPERTY\')">' . GetMessage(
+                                        "CAT_CEDIT_PROP_TABLE_ACTION_HIDE"
+                                    ) . '</a>';
+                            } else {
                                 echo '&nbsp;';
+                            }
                             ?></td>
                     </tr>
                 <? endwhile ?>
@@ -412,9 +478,13 @@ $editor = new CEditorPopupControl();
                         row.cells[4].style.textAlign = 'center';
                         row.cells[4].align = 'center';
                         row.cells[4].innerHTML = '<input type="checkbox" value="Y" name="SECTION_PROPERTY[' + id + '][DISPLAY_EXPANDED]">';
-                        row.cells[5].innerHTML = '<?echo CUtil::JSEscape($editor->getControlHtml('SECTION_PROPERTY[#ID#][FILTER_HINT]', '', 255))?>'.replace('#ID#', id);
+                        row.cells[5].innerHTML = '<?echo CUtil::JSEscape(
+                            $editor->getControlHtml('SECTION_PROPERTY[#ID#][FILTER_HINT]', '', 255)
+                        )?>'.replace('#ID#', id);
                         row.cells[6].align = 'left';
-                        row.cells[6].innerHTML = '<a href="javascript:deleteSectionProperty(' + id + ', \'' + target_select_id + '\', \'' + target_shadow_id + '\', \'' + target_id + '\')"><?echo GetMessageJS("CAT_CEDIT_PROP_TABLE_ACTION_HIDE")?></a>';
+                        row.cells[6].innerHTML = '<a href="javascript:deleteSectionProperty(' + id + ', \'' + target_select_id + '\', \'' + target_shadow_id + '\', \'' + target_id + '\')"><?echo GetMessageJS(
+                            "CAT_CEDIT_PROP_TABLE_ACTION_HIDE"
+                        )?></a>';
                         var shadow = BX(target_shadow_id);
                         if (shadow)
                             jsSelectUtils.addNewOption(shadow, id, name);
@@ -442,8 +512,9 @@ $editor = new CEditorPopupControl();
     </tr>
 <?
 $arCatalog = false;
-if (CModule::IncludeModule("catalog"))
+if (CModule::IncludeModule("catalog")) {
     $arCatalog = CCatalogSku::GetInfoByProductIBlock($IBLOCK_ID);
+}
 
 if (is_array($arCatalog)) {
     $arPropLinks = CIBlockSectionPropertyLink::GetArray($arCatalog["IBLOCK_ID"], 0);
@@ -464,35 +535,41 @@ if (is_array($arCatalog)) {
                     <td><? echo GetMessage("CAT_CEDIT_PROP_TABLE_ACTION"); ?></td>
                 </tr>
                 <?
-                if (CIBlockRights::UserHasRightTo($arCatalog["IBLOCK_ID"], $arCatalog["IBLOCK_ID"], "iblock_edit"))
+                if (CIBlockRights::UserHasRightTo($arCatalog["IBLOCK_ID"], $arCatalog["IBLOCK_ID"], "iblock_edit")) {
                     $arShadow = $arHidden = array(
                         -1 => GetMessage("CAT_CEDIT_PROP_SELECT_CHOOSE"),
                         0 => GetMessage("CAT_CEDIT_PROP_SELECT_CREATE"),
                     );
-                else
+                } else {
                     $arShadow = $arHidden = array(
                         -1 => GetMessage("CAT_CEDIT_PROP_SELECT_CHOOSE"),
                     );
+                }
 
-                $rsProps = CIBlockProperty::GetList(array(
-                    "SORT" => "ASC",
-                    'ID' => 'ASC',
-                ), array(
-                    "IBLOCK_ID" => $arCatalog["IBLOCK_ID"],
-                    "CHECK_PERMISSIONS" => "N",
-                    "ACTIVE" => "Y",
-                ));
+                $rsProps = CIBlockProperty::GetList(
+                    array(
+                        "SORT" => "ASC",
+                        'ID' => 'ASC',
+                    ),
+                    array(
+                        "IBLOCK_ID" => $arCatalog["IBLOCK_ID"],
+                        "CHECK_PERMISSIONS" => "N",
+                        "ACTIVE" => "Y",
+                    )
+                );
                 $rows = 0;
                 while ($arProp = $rsProps->Fetch()):
 
-                    if ($arProp["ID"] == $arCatalog["SKU_PROPERTY_ID"])
+                    if ($arProp["ID"] == $arCatalog["SKU_PROPERTY_ID"]) {
                         continue;
+                    }
 
                     if (isset($arPropLinks[$arProp["ID"]])) {
                         $rows++;
                         $arLink = $arPropLinks[$arProp["ID"]];
-                        if ($arLink["INHERITED"] == "N")
+                        if ($arLink["INHERITED"] == "N") {
                             $arShadow[$arProp["ID"]] = $arProp["NAME"];
+                        }
                     } else {
                         $arLink = false;
                         $arHidden[$arProp["ID"]] = $arProp["NAME"];
@@ -500,7 +577,9 @@ if (is_array($arCatalog)) {
                     }
                     $fileProperty = $arProp['PROPERTY_TYPE'] == PropertyTable::TYPE_FILE;
                     ?>
-                    <tr id="tr_SECTION_PROPERTY_<? echo $arProp["ID"] ?>" <? if (!is_array($arLink)) echo 'style="display:none"'; ?>>
+                    <tr id="tr_SECTION_PROPERTY_<? echo $arProp["ID"] ?>" <? if (!is_array($arLink)) {
+                        echo 'style="display:none"';
+                    } ?>>
                         <td style="text-align: left;">
                             <? if (!is_array($arLink) || $arLink["INHERITED"] == "N"):?>
                                 <input type="hidden" name="SECTION_PROPERTY[<? echo $arProp["ID"] ?>][SHOW]"
@@ -510,48 +589,69 @@ if (is_array($arCatalog)) {
                             <? echo htmlspecialcharsbx($arProp["NAME"]) ?>
                         </td>
                         <td style="text-align: left;"><?
-                            if ($arProp['PROPERTY_TYPE'] == "S" && !$arProp['USER_TYPE'])
+                            if ($arProp['PROPERTY_TYPE'] == "S" && !$arProp['USER_TYPE']) {
                                 echo GetMessage("IBLOCK_PROP_S");
-                            elseif ($arProp['PROPERTY_TYPE'] == "N" && !$arProp['USER_TYPE'])
+                            } elseif ($arProp['PROPERTY_TYPE'] == "N" && !$arProp['USER_TYPE']) {
                                 echo GetMessage("IBLOCK_PROP_N");
-                            elseif ($arProp['PROPERTY_TYPE'] == "L" && !$arProp['USER_TYPE'])
+                            } elseif ($arProp['PROPERTY_TYPE'] == "L" && !$arProp['USER_TYPE']) {
                                 echo GetMessage("IBLOCK_PROP_L");
-                            elseif ($arProp['PROPERTY_TYPE'] == "F" && !$arProp['USER_TYPE'])
+                            } elseif ($arProp['PROPERTY_TYPE'] == "F" && !$arProp['USER_TYPE']) {
                                 echo GetMessage("IBLOCK_PROP_F");
-                            elseif ($arProp['PROPERTY_TYPE'] == "G" && !$arProp['USER_TYPE'])
+                            } elseif ($arProp['PROPERTY_TYPE'] == "G" && !$arProp['USER_TYPE']) {
                                 echo GetMessage("IBLOCK_PROP_G");
-                            elseif ($arProp['PROPERTY_TYPE'] == "E" && !$arProp['USER_TYPE'])
+                            } elseif ($arProp['PROPERTY_TYPE'] == "E" && !$arProp['USER_TYPE']) {
                                 echo GetMessage("IBLOCK_PROP_E");
-                            elseif ($arProp['USER_TYPE'] && is_array($ar = CIBlockProperty::GetUserType($arProp['USER_TYPE'])))
+                            } elseif ($arProp['USER_TYPE'] && is_array(
+                                    $ar = CIBlockProperty::GetUserType($arProp['USER_TYPE'])
+                                )) {
                                 echo htmlspecialcharsbx($ar["DESCRIPTION"]);
-                            else
+                            } else {
                                 echo GetMessage("IBLOCK_PROP_S");
+                            }
                             ?></td>
                         <td style="text-align:center"><?
-                            echo '<input type="checkbox" value="Y" ' . ((is_array($arLink) && $arLink["INHERITED"] == "Y") || $fileProperty ? 'disabled="disabled"' : '') . ' name="SECTION_PROPERTY[' . $arProp['ID'] . '][SMART_FILTER]" ' . ($arLink["SMART_FILTER"] == "Y" ? 'checked="checked"' : '') . '>';
+                            echo '<input type="checkbox" value="Y" ' . ((is_array(
+                                        $arLink
+                                    ) && $arLink["INHERITED"] == "Y") || $fileProperty ? 'disabled="disabled"' : '') . ' name="SECTION_PROPERTY[' . $arProp['ID'] . '][SMART_FILTER]" ' . ($arLink["SMART_FILTER"] == "Y" ? 'checked="checked"' : '') . '>';
                             ?></td>
                         <td style="text-align: left;">
                             <?
-                            $displayTypes = CIBlockSectionPropertyLink::getDisplayTypes($arProp["PROPERTY_TYPE"], $arProp["USER_TYPE"]);
+                            $displayTypes = CIBlockSectionPropertyLink::getDisplayTypes(
+                                $arProp["PROPERTY_TYPE"],
+                                $arProp["USER_TYPE"]
+                            );
                             if ($displayTypes) {
-                                echo SelectBoxFromArray('SECTION_PROPERTY[' . $arProp['ID'] . '][DISPLAY_TYPE]', array(
-                                    "REFERENCE_ID" => array_keys($displayTypes),
-                                    "REFERENCE" => array_values($displayTypes),
-                                ), $arLink["DISPLAY_TYPE"], '', '');
+                                echo SelectBoxFromArray(
+                                    'SECTION_PROPERTY[' . $arProp['ID'] . '][DISPLAY_TYPE]',
+                                    array(
+                                        "REFERENCE_ID" => array_keys($displayTypes),
+                                        "REFERENCE" => array_values($displayTypes),
+                                    ),
+                                    $arLink["DISPLAY_TYPE"],
+                                    '',
+                                    ''
+                                );
                             } else {
                                 echo '&nbsp;';
                             }
                             ?>
                         </td>
                         <td style="text-align:center"><?
-                            echo '<input type="checkbox" value="Y" ' . ((is_array($arLink) && $arLink["INHERITED"] == "Y") || $fileProperty ? 'disabled="disabled"' : '') . ' name="SECTION_PROPERTY[' . $arProp['ID'] . '][DISPLAY_EXPANDED]" ' . ($arLink["DISPLAY_EXPANDED"] == "Y" ? 'checked="checked"' : '') . '>';
+                            echo '<input type="checkbox" value="Y" ' . ((is_array(
+                                        $arLink
+                                    ) && $arLink["INHERITED"] == "Y") || $fileProperty ? 'disabled="disabled"' : '') . ' name="SECTION_PROPERTY[' . $arProp['ID'] . '][DISPLAY_EXPANDED]" ' . ($arLink["DISPLAY_EXPANDED"] == "Y" ? 'checked="checked"' : '') . '>';
                             ?></td>
                         <td>
                             <?
                             if ($fileProperty) {
                                 echo '&nbsp;';
                             } elseif (!is_array($arLink) || $arLink["INHERITED"] == "N") {
-                                echo $editor->getControlHtml('SECTION_PROPERTY[' . $arProp['ID'] . '][FILTER_HINT]', $arLink['FILTER_HINT'], 255);
+                                $filterHint = (is_array($arLink) ? (string)$arLink['FILTER_HINT'] : '');
+                                echo $editor->getControlHtml(
+                                    'SECTION_PROPERTY[' . $arProp['ID'] . '][FILTER_HINT]',
+                                    $filterHint,
+                                    255
+                                );
                             } elseif ($arLink['FILTER_HINT'] <> '') {
                                 echo CTextParser::closeTags($arLink['FILTER_HINT']);
                             } else {
@@ -559,10 +659,13 @@ if (is_array($arCatalog)) {
                             }
                             ?></td>
                         <td style="text-align: left;"><?
-                            if (!is_array($arLink) || $arLink["INHERITED"] == "N")
-                                echo '<a class="bx-action-href" href="javascript:deleteSectionProperty(' . $arProp['ID'] . ', \'select_SKU_SECTION_PROPERTY\', \'shadow_SKU_SECTION_PROPERTY\', \'table_SKU_SECTION_PROPERTY\')">' . GetMessage("CAT_CEDIT_PROP_TABLE_ACTION_HIDE") . '</a>';
-                            else
+                            if (!is_array($arLink) || $arLink["INHERITED"] == "N") {
+                                echo '<a class="bx-action-href" href="javascript:deleteSectionProperty(' . $arProp['ID'] . ', \'select_SKU_SECTION_PROPERTY\', \'shadow_SKU_SECTION_PROPERTY\', \'table_SKU_SECTION_PROPERTY\')">' . GetMessage(
+                                        "CAT_CEDIT_PROP_TABLE_ACTION_HIDE"
+                                    ) . '</a>';
+                            } else {
                                 echo '&nbsp;';
+                            }
                             ?></td>
                     </tr>
                 <?endwhile ?>
@@ -599,5 +702,6 @@ if (is_array($arCatalog)) {
 <?
 $tabControl->EndCustomField("SECTION_PROPERTY", '');
 $tabControl->Buttons(array("ajaxMode" => false, "disabled" => false));
+$tabControl->SetShowSettings(false);
 $tabControl->Show();
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_admin.php");

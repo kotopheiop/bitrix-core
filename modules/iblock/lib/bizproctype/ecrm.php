@@ -18,8 +18,9 @@ if (Loader::requireModule('bizproc')) {
          */
         public static function formatValueMultiple(FieldType $fieldType, $value, $format = 'printable')
         {
-            if (!is_array($value) || is_array($value) && \CBPHelper::isAssociativeArray($value))
+            if (!is_array($value) || is_array($value) && \CBPHelper::isAssociativeArray($value)) {
                 $value = array($value);
+            }
 
             self::$formatSeparator = static::getFormatSeparator($format);
 
@@ -41,11 +42,15 @@ if (Loader::requireModule('bizproc')) {
         {
             $property = static::getUserType($fieldType);
             $property['IBLOCK_ID'] = self::getIblockId($fieldType);
-            if (empty($property['USER_TYPE_SETTINGS']))
+            if (empty($property['USER_TYPE_SETTINGS'])) {
                 $property['USER_TYPE_SETTINGS'] = $fieldType->getOptions();
+            }
 
             if (array_key_exists('GetValuePrintable', $property)) {
-                return call_user_func_array($property['GetValuePrintable'], array($property, $value, self::$formatSeparator));
+                return call_user_func_array(
+                    $property['GetValuePrintable'],
+                    array($property, $value, self::$formatSeparator)
+                );
             } else {
                 return '';
             }
@@ -60,13 +65,20 @@ if (Loader::requireModule('bizproc')) {
         public static function renderControlOptions(FieldType $fieldType, $callbackFunctionName, $value)
         {
             $property = static::getUserType($fieldType);
-            if (empty($property['USER_TYPE_SETTINGS']))
+            if (empty($property['USER_TYPE_SETTINGS'])) {
                 $property['USER_TYPE_SETTINGS'] = $fieldType->getOptions();
+            }
 
             if (array_key_exists('GetSettingsHTML', $property)) {
                 $fieldData = array();
-                return call_user_func_array($property['GetSettingsHTML'], array($property,
-                    array('USE_BP' => true, 'CALLBACK_FUNCTION' => $callbackFunctionName, 'NAME' => 'ENTITY'), &$fieldData));
+                return call_user_func_array(
+                    $property['GetSettingsHTML'],
+                    array(
+                        $property,
+                        array('USE_BP' => true, 'CALLBACK_FUNCTION' => $callbackFunctionName, 'NAME' => 'ENTITY'),
+                        &$fieldData
+                    )
+                );
             } else {
                 return '';
             }
@@ -80,8 +92,13 @@ if (Loader::requireModule('bizproc')) {
          * @param int $renderMode Control render mode.
          * @return string
          */
-        public static function renderControlSingle(FieldType $fieldType, array $field, $value, $allowSelection, $renderMode)
-        {
+        public static function renderControlSingle(
+            FieldType $fieldType,
+            array $field,
+            $value,
+            $allowSelection,
+            $renderMode
+        ) {
             return static::renderControlMultiple($fieldType, $field, $value, $allowSelection, $renderMode);
         }
 
@@ -93,22 +110,30 @@ if (Loader::requireModule('bizproc')) {
          * @param int $renderMode Control render mode.
          * @return string
          */
-        public static function renderControlMultiple(FieldType $fieldType, array $field, $value, $allowSelection, $renderMode)
-        {
+        public static function renderControlMultiple(
+            FieldType $fieldType,
+            array $field,
+            $value,
+            $allowSelection,
+            $renderMode
+        ) {
             $selectorValue = null;
             $typeValue = array();
-            if (!is_array($value) || is_array($value) && \CBPHelper::isAssociativeArray($value))
+            if (!is_array($value) || is_array($value) && \CBPHelper::isAssociativeArray($value)) {
                 $value = array($value);
+            }
 
             foreach ($value as $v) {
-                if (\CBPActivity::isExpression($v))
+                if (\CBPActivity::isExpression($v)) {
                     $selectorValue = $v;
-                else
+                } else {
                     $typeValue[] = $v;
+                }
             }
             // need to show at least one control
-            if (empty($typeValue))
+            if (empty($typeValue)) {
                 $typeValue[] = null;
+            }
 
             $property = static::getUserType($fieldType);
 

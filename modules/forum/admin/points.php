@@ -1,10 +1,12 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 \Bitrix\Main\Loader::includeModule("forum");
 
 $forumModulePermissions = $APPLICATION->GetGroupRight("forum");
-if ($forumModulePermissions == "D")
+if ($forumModulePermissions == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/forum/prolog.php");
@@ -24,16 +26,18 @@ $arFilter = array();
 if ($lAdmin->EditAction() && $forumModulePermissions >= "W") {
     foreach ($FIELDS as $ID => $arFields) {
         $DB->StartTransaction();
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
-        if (!$lAdmin->IsUpdated($ID))
+        if (!$lAdmin->IsUpdated($ID)) {
             continue;
+        }
 
         if (!CForumPoints::Update($ID, $arFields)) {
-            if ($ex = $APPLICATION->GetException())
+            if ($ex = $APPLICATION->GetException()) {
                 $lAdmin->AddUpdateError($ex->GetString(), $ID);
-            else
+            } else {
                 $lAdmin->AddUpdateError(GetMessage("FPAN_UPDATE_ERROR"), $ID);
+            }
 
             $DB->Rollback();
         }
@@ -50,13 +54,15 @@ if (($arID = $lAdmin->GroupAction()) && $forumModulePermissions >= "W") {
             array($by => $order),
             $arFilter
         );
-        while ($arResult = $dbResultList->Fetch())
+        while ($arResult = $dbResultList->Fetch()) {
             $arID[] = $arResult['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
 
         switch ($_REQUEST['action']) {
             case "delete":
@@ -68,10 +74,11 @@ if (($arID = $lAdmin->GroupAction()) && $forumModulePermissions >= "W") {
                 if (!CForumPoints::Delete($ID)) {
                     $DB->Rollback();
 
-                    if ($ex = $APPLICATION->GetException())
+                    if ($ex = $APPLICATION->GetException()) {
                         $lAdmin->AddGroupError($ex->GetString(), $ID);
-                    else
+                    } else {
                         $lAdmin->AddGroupError(GetMessage("FORUM_P_ERROR_DEL"), $ID);
+                    }
                 }
 
                 $DB->Commit();
@@ -98,11 +105,31 @@ $arHeaders = array(
     array("id" => "NAME", "content" => GetMessage('FORUM_P_NAME'), "sort" => "", "default" => true)
 );
 if (COption::GetOptionString("forum", "SHOW_VOTES", "Y") == "Y") {
-    $arHeaders[] = array("id" => "MIN_POINTS", "content" => GetMessage("FORUM_P_MIN_POINTS"), "sort" => "MIN_POINTS", "default" => true, "align" => "right");
-    $arHeaders[] = array("id" => "VOTES", "content" => GetMessage("FORUM_P_VOTES"), "sort" => "VOTES", "default" => true, "align" => "right");
+    $arHeaders[] = array(
+        "id" => "MIN_POINTS",
+        "content" => GetMessage("FORUM_P_MIN_POINTS"),
+        "sort" => "MIN_POINTS",
+        "default" => true,
+        "align" => "right"
+    );
+    $arHeaders[] = array(
+        "id" => "VOTES",
+        "content" => GetMessage("FORUM_P_VOTES"),
+        "sort" => "VOTES",
+        "default" => true,
+        "align" => "right"
+    );
 } else {
     $sRatingWeightType = COption::GetOptionString("main", "rating_weight_type", "auto");
-    $arHeaders[] = array("id" => "MIN_POINTS", "content" => $sRatingWeightType == 'auto' ? GetMessage("FORUM_P_RATING_VOTES") : GetMessage("FORUM_P_RATING_VALUE"), "sort" => "MIN_POINTS", "default" => true, "align" => "right");
+    $arHeaders[] = array(
+        "id" => "MIN_POINTS",
+        "content" => $sRatingWeightType == 'auto' ? GetMessage("FORUM_P_RATING_VOTES") : GetMessage(
+            "FORUM_P_RATING_VALUE"
+        ),
+        "sort" => "MIN_POINTS",
+        "default" => true,
+        "align" => "right"
+    );
 }
 $lAdmin->AddHeaders($arHeaders);
 
@@ -118,18 +145,39 @@ while ($arForum = $dbResultList->NavNext(true, "f_")) {
     if (in_array("NAME", $arVisibleColumns)) {
         $arPointsLang = CForumPoints::GetLangByID($f_ID, LANG);
         $fieldShow = htmlspecialcharsbx($arPointsLang["NAME"]);
-        $row->AddViewField("NAME", '<a title="' . GetMessage("FORUM_P_EDIT_DESC") . '" href="' . "forum_points_edit.php?ID=" . $f_ID . "&lang=" . LANG . "&" . GetFilterParams("filter_") . '">' . $fieldShow . '</a>');
+        $row->AddViewField(
+            "NAME",
+            '<a title="' . GetMessage(
+                "FORUM_P_EDIT_DESC"
+            ) . '" href="' . "forum_points_edit.php?ID=" . $f_ID . "&lang=" . LANG . "&" . GetFilterParams(
+                "filter_"
+            ) . '">' . $fieldShow . '</a>'
+        );
     }
 
     $row->AddInputField("VOTES", array("size" => "4"));
 
     $arActions = Array();
     if ($forumModulePermissions >= "R") {
-        $arActions[] = array("ICON" => "edit", "TEXT" => GetMessage("FORUM_P_EDIT_DESC"), "ACTION" => $lAdmin->ActionRedirect("forum_points_edit.php?ID=" . $f_ID . "&lang=" . LANG . "&" . GetFilterParams("filter_", false) . ""), "DEFAULT" => true);
+        $arActions[] = array(
+            "ICON" => "edit",
+            "TEXT" => GetMessage("FORUM_P_EDIT_DESC"),
+            "ACTION" => $lAdmin->ActionRedirect(
+                "forum_points_edit.php?ID=" . $f_ID . "&lang=" . LANG . "&" . GetFilterParams("filter_", false) . ""
+            ),
+            "DEFAULT" => true
+        );
     }
     if ($forumModulePermissions >= "W") {
         $arActions[] = array("SEPARATOR" => true);
-        $arActions[] = array("ICON" => "delete", "TEXT" => GetMessage("FORUM_P_DELETE_DESC"), "ACTION" => "if(confirm('" . GetMessage('FORUM_P_DELETE_CONF') . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete"));
+        $arActions[] = array(
+            "ICON" => "delete",
+            "TEXT" => GetMessage("FORUM_P_DELETE_DESC"),
+            "ACTION" => "if(confirm('" . GetMessage('FORUM_P_DELETE_CONF') . "')) " . $lAdmin->ActionDoGroup(
+                    $f_ID,
+                    "delete"
+                )
+        );
     }
 
     $row->AddActions($arActions);

@@ -22,25 +22,30 @@ class Speed extends \Bitrix\Landing\Hook\Page
     {
         $helpUrl = Help::getHelpUrl('SPEED');
 
-        return array(
-            'ASSETS' => new Field\Text('ASSETS', array()),
-            'USE_LAZY' => new Field\Checkbox('USE_LAZY', array(
-                'title' => Loc::getMessage('LANDING_HOOK_SPEED_USE_LAZY'),
-            )),
-            'USE_WEBPACK' => new Field\Checkbox('USE_WEBPACK', array(
-                'title' => ($mess = Loc::getMessage('LANDING_HOOK_SPEED_USE_WEBPACK2'))
-                    ? $mess
-                    : Loc::getMessage('LANDING_HOOK_SPEED_USE_WEBPACK'),
-                'help' => $helpUrl
-                    ? '<a href="' . $helpUrl . '" target="_blank">' .
-                    Loc::getMessage('LANDING_HOOK_SPEED_HELP') .
-                    '</a>'
-                    : '',
-            )),
-            'USE_WEBP' => new Field\Checkbox('USE_WEBP', array(
-                'title' => Loc::getMessage('LANDING_HOOK_SPEED_USE_WEBP'),
-            )),
-        );
+        return [
+            'ASSETS' => new Field\Text('ASSETS', []),
+            'USE_LAZY' => new Field\Checkbox(
+                'USE_LAZY',
+                ['title' => Loc::getMessage('LANDING_HOOK_SPEED_USE_LAZY_NEW')]
+            ),
+            'USE_WEBPACK' => new Field\Checkbox(
+                'USE_WEBPACK',
+                [
+                    'title' => ($mess = Loc::getMessage('LANDING_HOOK_SPEED_USE_WEBPACK2'))
+                        ? $mess
+                        : Loc::getMessage('LANDING_HOOK_SPEED_USE_WEBPACK'),
+                    'help' => $helpUrl
+                        ? '<a href="' . $helpUrl . '" target="_blank">' .
+                        Loc::getMessage('LANDING_HOOK_SPEED_HELP') .
+                        '</a>'
+                        : '',
+                ]
+            ),
+            'USE_WEBP' => new Field\Checkbox(
+                'USE_WEBP',
+                ['title' => Loc::getMessage('LANDING_HOOK_SPEED_USE_WEBP')]
+            ),
+        ];
     }
 
     /**
@@ -63,12 +68,11 @@ class Speed extends \Bitrix\Landing\Hook\Page
         if (!is_array($data)) {
             $data = [$data];
         }
-
         if (
-            $this->fields[$field] &&
-            ($hookData = $this->fields[$field]->getValue())
+            $this->fields[$field]
+            && ($hookData = $this->fields[$field]->getValue())
         ) {
-            $mergedData = array_unique(array_merge(unserialize($hookData), $data));
+            $mergedData = array_unique(array_merge(unserialize($hookData, ['allowed_classes' => false]), $data));
         } else {
             $mergedData = $data;
         }
@@ -93,42 +97,41 @@ class Speed extends \Bitrix\Landing\Hook\Page
         return true;
     }
 
-
     /**
      * Exec hook.
      * @return void
      */
-    public function exec()
+    public function exec(): void
     {
         if (Landing::getEditMode()) {
-            $this->disableSpeedConversions();
+            $this->disableWebpack();
         } else {
-            $this->computeWebpackActivity();
-            $this->computeLazyloadActivity();
+            $this->execWebpack();
+            $this->execLazyLoad();
         }
     }
 
-    protected function disableSpeedConversions()
+    protected function disableWebpack(): void
     {
         $assets = Assets\Manager::getInstance();
         $assets->setStandartMode();
     }
 
-    protected function computeWebpackActivity()
+    protected function execWebpack(): void
     {
         $assets = Assets\Manager::getInstance();
-        if ($this->fields['USE_WEBPACK']->getValue() == 'Y') {
+        if ($this->fields['USE_WEBPACK']->getValue() !== 'N') {
             $assets->setWebpackMode();
         } else {
             $assets->setStandartMode();
         }
     }
 
-    protected function computeLazyloadActivity()
+    protected function execLazyLoad(): void
     {
-        if ($this->fields['USE_LAZY']->getValue() == 'Y') {
+        if ($this->fields['USE_LAZY']->getValue() !== 'N') {
             $assets = Assets\Manager::getInstance();
-            $assets->addAsset(self::LAZYLOAD_EXTENSION_NAME);
+            $assets->addAsset(self::LAZYLOAD_EXTENSION_NAME, Assets\Location::LOCATION_BEFORE_ALL);
         }
     }
 }

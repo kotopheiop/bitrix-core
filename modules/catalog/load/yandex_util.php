@@ -1,4 +1,5 @@
 <?
+
 define("STOP_STATISTICS", true);
 define("BX_SECURITY_SHOW_MESSAGE", true);
 define('NO_AGENT_CHECK', true);
@@ -35,7 +36,9 @@ if (check_bitrix_sessid()) {
                     if ($row["RIGHT_MARGIN"] - $row["LEFT_MARGIN"] > 1) {
                         ?>window.parent.Tree[<?= $row["ID"]; ?>] = [];<?
                     }
-                    ?>window.parent.Tree[<?= $row["IBLOCK_SECTION_ID"]; ?>][<?= $row["ID"]; ?>]=Array('<? echo CUtil::JSEscape(htmlspecialcharsbx($row["NAME"])); ?>', '');<?
+                    ?>window.parent.Tree[<?= $row["IBLOCK_SECTION_ID"]; ?>][<?= $row["ID"]; ?>]=Array('<? echo CUtil::JSEscape(
+                        htmlspecialcharsbx($row["NAME"])
+                    ); ?>', '');<?
                 }
             }
         }

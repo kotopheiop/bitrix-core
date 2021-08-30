@@ -35,9 +35,12 @@ class Proxy
         }
 
         if (is_array($allowedHosts)) {
-            $this->allowedHosts = array_filter($allowedHosts, function ($item) {
-                return is_string($item) && !empty($item);
-            });
+            $this->allowedHosts = array_filter(
+                $allowedHosts,
+                function ($item) {
+                    return is_string($item) && !empty($item);
+                }
+            );
         }
 
         $this->uri = new Uri($url);
@@ -106,7 +109,7 @@ class Proxy
         if ($hosts === null) {
             $hosts = Option::get('main', 'imageeditor_proxy_white_list', []);
             if (is_string($hosts)) {
-                $hosts = unserialize($hosts);
+                $hosts = unserialize($hosts, ['allowed_classes' => false]);
             }
         }
 

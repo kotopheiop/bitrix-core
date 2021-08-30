@@ -32,12 +32,14 @@ class CAllCatalogDiscountCoupon
     {
         global $DB, $APPLICATION, $USER;
 
-        $ACTION = strtoupper($ACTION);
-        if ('UPDATE' != $ACTION && 'ADD' != $ACTION)
+        $ACTION = mb_strtoupper($ACTION);
+        if ('UPDATE' != $ACTION && 'ADD' != $ACTION) {
             return false;
+        }
 
-        if (self::$existCouponsManager === null)
+        if (self::$existCouponsManager === null) {
             self::initCouponManager();
+        }
 
         $clearFields = array(
             'ID',
@@ -49,12 +51,14 @@ class CAllCatalogDiscountCoupon
             '~MODIFIED_BY',
             '~CREATED_BY'
         );
-        if ($ACTION == 'UPDATE')
+        if ($ACTION == 'UPDATE') {
             $clearFields[] = 'CREATED_BY';
+        }
 
         foreach ($clearFields as &$fieldName) {
-            if (array_key_exists($fieldName, $arFields))
+            if (array_key_exists($fieldName, $arFields)) {
                 unset($arFields[$fieldName]);
+            }
         }
         unset($fieldName, $clearFields);
 
@@ -63,12 +67,12 @@ class CAllCatalogDiscountCoupon
             return false;
         }
 
-        if ((is_set($arFields, "COUPON") || $ACTION == "ADD") && strlen($arFields["COUPON"]) <= 0) {
+        if ((is_set($arFields, "COUPON") || $ACTION == "ADD") && $arFields["COUPON"] == '') {
             $APPLICATION->ThrowException(Loc::getMessage("KGDC_EMPTY_COUPON"), "EMPTY_COUPON");
             return false;
         } elseif (is_set($arFields, "COUPON")) {
             $currentId = ($ACTION == 'UPDATE' ? $ID : 0);
-            $arFields['COUPON'] = substr($arFields['COUPON'], 0, 32);
+            $arFields['COUPON'] = mb_substr($arFields['COUPON'], 0, 32);
             if (self::$existCouponsManager) {
                 $existCoupon = DiscountCouponsManager::isExist($arFields['COUPON']);
                 if (!empty($existCoupon)) {
@@ -78,10 +82,12 @@ class CAllCatalogDiscountCoupon
                     }
                 }
             } else {
-                $couponIterator = Catalog\DiscountCouponTable::getList(array(
-                    'select' => array('ID', 'COUPON'),
-                    'filter' => array('=COUPON' => $arFields['COUPON'])
-                ));
+                $couponIterator = Catalog\DiscountCouponTable::getList(
+                    array(
+                        'select' => array('ID', 'COUPON'),
+                        'filter' => array('=COUPON' => $arFields['COUPON'])
+                    )
+                );
                 if ($existCoupon = $couponIterator->fetch()) {
                     if ($currentId != (int)$existCoupon['ID']) {
                         $APPLICATION->ThrowException(Loc::getMessage("KGDC_DUPLICATE_COUPON"), "DUPLICATE_COUPON");
@@ -91,29 +97,43 @@ class CAllCatalogDiscountCoupon
             }
         }
 
-        if ((is_set($arFields, "ACTIVE") || $ACTION == "ADD") && $arFields["ACTIVE"] != "N")
+        if ((is_set($arFields, "ACTIVE") || $ACTION == "ADD") && $arFields["ACTIVE"] != "N") {
             $arFields["ACTIVE"] = "Y";
-        if ((is_set($arFields, "ONE_TIME") || $ACTION == "ADD") && !in_array($arFields["ONE_TIME"], Catalog\DiscountCouponTable::getCouponTypes()))
+        }
+        if ((is_set($arFields, "ONE_TIME") || $ACTION == "ADD") && !in_array(
+                $arFields["ONE_TIME"],
+                Catalog\DiscountCouponTable::getCouponTypes()
+            )) {
             $arFields["ONE_TIME"] = self::TYPE_ONE_TIME;
+        }
 
-        if ((is_set($arFields, "DATE_APPLY") || $ACTION == "ADD") && (!$DB->IsDate($arFields["DATE_APPLY"], false, SITE_ID, "FULL")))
+        if ((is_set($arFields, "DATE_APPLY") || $ACTION == "ADD") && (!$DB->IsDate(
+                $arFields["DATE_APPLY"],
+                false,
+                SITE_ID,
+                "FULL"
+            ))) {
             $arFields["DATE_APPLY"] = false;
+        }
 
         $intUserID = 0;
         $boolUserExist = CCatalog::IsUserExists();
-        if ($boolUserExist)
+        if ($boolUserExist) {
             $intUserID = (int)$USER->GetID();
+        }
         $strDateFunction = $DB->GetNowFunction();
         $arFields['~TIMESTAMP_X'] = $strDateFunction;
         if ($boolUserExist) {
-            if (!array_key_exists('MODIFIED_BY', $arFields) || intval($arFields["MODIFIED_BY"]) <= 0)
+            if (!array_key_exists('MODIFIED_BY', $arFields) || intval($arFields["MODIFIED_BY"]) <= 0) {
                 $arFields["MODIFIED_BY"] = $intUserID;
+            }
         }
         if ('ADD' == $ACTION) {
             $arFields['~DATE_CREATE'] = $strDateFunction;
             if ($boolUserExist) {
-                if (!array_key_exists('CREATED_BY', $arFields) || intval($arFields["CREATED_BY"]) <= 0)
+                if (!array_key_exists('CREATED_BY', $arFields) || intval($arFields["CREATED_BY"]) <= 0) {
                     $arFields["CREATED_BY"] = $intUserID;
+                }
             }
         }
 
@@ -131,8 +151,9 @@ class CAllCatalogDiscountCoupon
     public static function DeleteByDiscountID($ID, $bAffectDataFile = true)
     {
         $ID = (int)$ID;
-        if ($ID <= 0)
+        if ($ID <= 0) {
             return false;
+        }
         Catalog\DiscountCouponTable::deleteByDiscount($ID);
         return true;
     }
@@ -146,8 +167,9 @@ class CAllCatalogDiscountCoupon
      */
     public static function SetCoupon($coupon)
     {
-        if (self::$existCouponsManager === null)
+        if (self::$existCouponsManager === null) {
             self::initCouponManager();
+        }
 
         if (self::$existCouponsManager) {
             if (DiscountCouponsManager::usedByClient()) {
@@ -156,19 +178,24 @@ class CAllCatalogDiscountCoupon
             return false;
         } else {
             $coupon = trim((string)$coupon);
-            if ($coupon === '')
+            if ($coupon === '') {
                 return false;
+            }
 
-            if (!isset($_SESSION['CATALOG_USER_COUPONS']) || !is_array($_SESSION['CATALOG_USER_COUPONS']))
+            if (!isset($_SESSION['CATALOG_USER_COUPONS']) || !is_array($_SESSION['CATALOG_USER_COUPONS'])) {
                 $_SESSION['CATALOG_USER_COUPONS'] = array();
+            }
 
-            $couponIterator = Catalog\DiscountCouponTable::getList(array(
-                'select' => array('ID', 'COUPON'),
-                'filter' => array('=COUPON' => $coupon, '=ACTIVE' => 'Y')
-            ));
+            $couponIterator = Catalog\DiscountCouponTable::getList(
+                array(
+                    'select' => array('ID', 'COUPON'),
+                    'filter' => array('=COUPON' => $coupon, '=ACTIVE' => 'Y')
+                )
+            );
             if ($existCoupon = $couponIterator->fetch()) {
-                if (!in_array($existCoupon['COUPON'], $_SESSION['CATALOG_USER_COUPONS']))
+                if (!in_array($existCoupon['COUPON'], $_SESSION['CATALOG_USER_COUPONS'])) {
                     $_SESSION['CATALOG_USER_COUPONS'][] = $existCoupon['COUPON'];
+                }
                 return true;
             }
         }
@@ -181,8 +208,9 @@ class CAllCatalogDiscountCoupon
      */
     public static function GetCoupons()
     {
-        if (self::$existCouponsManager === null)
+        if (self::$existCouponsManager === null) {
             self::initCouponManager();
+        }
 
         if (self::$existCouponsManager) {
             if (DiscountCouponsManager::usedByClient()) {
@@ -190,8 +218,9 @@ class CAllCatalogDiscountCoupon
             }
             return array();
         } else {
-            if (!isset($_SESSION['CATALOG_USER_COUPONS']) || !is_array($_SESSION['CATALOG_USER_COUPONS']))
+            if (!isset($_SESSION['CATALOG_USER_COUPONS']) || !is_array($_SESSION['CATALOG_USER_COUPONS'])) {
                 $_SESSION['CATALOG_USER_COUPONS'] = array();
+            }
             return $_SESSION["CATALOG_USER_COUPONS"];
         }
     }
@@ -205,8 +234,9 @@ class CAllCatalogDiscountCoupon
      */
     public static function EraseCoupon($strCoupon)
     {
-        if (self::$existCouponsManager === null)
+        if (self::$existCouponsManager === null) {
             self::initCouponManager();
+        }
         if (self::$existCouponsManager) {
             if (DiscountCouponsManager::usedByClient()) {
                 return DiscountCouponsManager::delete($strCoupon);
@@ -214,8 +244,9 @@ class CAllCatalogDiscountCoupon
             return false;
         } else {
             $strCoupon = trim((string)$strCoupon);
-            if (empty($strCoupon))
+            if (empty($strCoupon)) {
                 return false;
+            }
 
             if (!isset($_SESSION['CATALOG_USER_COUPONS']) || !is_array($_SESSION['CATALOG_USER_COUPONS'])) {
                 $_SESSION['CATALOG_USER_COUPONS'] = array();
@@ -235,12 +266,14 @@ class CAllCatalogDiscountCoupon
      */
     public static function ClearCoupon()
     {
-        if (self::$existCouponsManager === null)
+        if (self::$existCouponsManager === null) {
             self::initCouponManager();
+        }
 
         if (self::$existCouponsManager) {
-            if (DiscountCouponsManager::usedByClient())
+            if (DiscountCouponsManager::usedByClient()) {
                 DiscountCouponsManager::clear(true);
+            }
         } else {
             $_SESSION['CATALOG_USER_COUPONS'] = array();
         }
@@ -258,8 +291,9 @@ class CAllCatalogDiscountCoupon
     {
         $intUserID = (int)$intUserID;
         if ($intUserID >= 0) {
-            if (self::$existCouponsManager === null)
+            if (self::$existCouponsManager === null) {
                 self::initCouponManager();
+            }
             if (self::$existCouponsManager) {
                 if (DiscountCouponsManager::usedByManager() && DiscountCouponsManager::getUserId() == $intUserID) {
                     return DiscountCouponsManager::add($strCoupon);
@@ -267,21 +301,29 @@ class CAllCatalogDiscountCoupon
                 return false;
             } else {
                 $strCoupon = trim((string)$strCoupon);
-                if (empty($strCoupon))
+                if (empty($strCoupon)) {
                     return false;
+                }
 
-                if (!isset($_SESSION['CATALOG_MANAGE_COUPONS']) || !is_array($_SESSION['CATALOG_MANAGE_COUPONS']))
+                if (!isset($_SESSION['CATALOG_MANAGE_COUPONS']) || !is_array($_SESSION['CATALOG_MANAGE_COUPONS'])) {
                     $_SESSION['CATALOG_MANAGE_COUPONS'] = array();
-                if (!isset($_SESSION['CATALOG_MANAGE_COUPONS'][$intUserID]) || !is_array($_SESSION['CATALOG_MANAGE_COUPONS'][$intUserID]))
+                }
+                if (!isset($_SESSION['CATALOG_MANAGE_COUPONS'][$intUserID]) || !is_array(
+                        $_SESSION['CATALOG_MANAGE_COUPONS'][$intUserID]
+                    )) {
                     $_SESSION['CATALOG_MANAGE_COUPONS'][$intUserID] = array();
+                }
 
-                $couponIterator = Catalog\DiscountCouponTable::getList(array(
-                    'select' => array('ID', 'COUPON'),
-                    'filter' => array('=COUPON' => $strCoupon, '=ACTIVE' => 'Y')
-                ));
+                $couponIterator = Catalog\DiscountCouponTable::getList(
+                    array(
+                        'select' => array('ID', 'COUPON'),
+                        'filter' => array('=COUPON' => $strCoupon, '=ACTIVE' => 'Y')
+                    )
+                );
                 if ($existCoupon = $couponIterator->fetch()) {
-                    if (!in_array($existCoupon['COUPON'], $_SESSION['CATALOG_MANAGE_COUPONS'][$intUserID]))
+                    if (!in_array($existCoupon['COUPON'], $_SESSION['CATALOG_MANAGE_COUPONS'][$intUserID])) {
                         $_SESSION['CATALOG_MANAGE_COUPONS'][$intUserID][] = $existCoupon['COUPON'];
+                    }
 
                     return true;
                 }
@@ -301,18 +343,23 @@ class CAllCatalogDiscountCoupon
     {
         $intUserID = (int)$intUserID;
         if ($intUserID >= 0) {
-            if (self::$existCouponsManager === null)
+            if (self::$existCouponsManager === null) {
                 self::initCouponManager();
+            }
             if (self::$existCouponsManager) {
                 if (DiscountCouponsManager::usedByManager() && DiscountCouponsManager::getUserId() == $intUserID) {
                     return DiscountCouponsManager::get(false, array('MODULE' => 'catalog'), true);
                 }
                 return false;
             } else {
-                if (!isset($_SESSION['CATALOG_MANAGE_COUPONS']) || !is_array($_SESSION['CATALOG_MANAGE_COUPONS']))
+                if (!isset($_SESSION['CATALOG_MANAGE_COUPONS']) || !is_array($_SESSION['CATALOG_MANAGE_COUPONS'])) {
                     $_SESSION['CATALOG_MANAGE_COUPONS'] = array();
-                if (!isset($_SESSION['CATALOG_MANAGE_COUPONS'][$intUserID]) || !is_array($_SESSION['CATALOG_MANAGE_COUPONS'][$intUserID]))
+                }
+                if (!isset($_SESSION['CATALOG_MANAGE_COUPONS'][$intUserID]) || !is_array(
+                        $_SESSION['CATALOG_MANAGE_COUPONS'][$intUserID]
+                    )) {
                     $_SESSION['CATALOG_MANAGE_COUPONS'][$intUserID] = array();
+                }
 
                 return $_SESSION['CATALOG_MANAGE_COUPONS'][$intUserID];
             }
@@ -332,8 +379,9 @@ class CAllCatalogDiscountCoupon
     {
         $intUserID = (int)$intUserID;
         if ($intUserID >= 0) {
-            if (self::$existCouponsManager === null)
+            if (self::$existCouponsManager === null) {
                 self::initCouponManager();
+            }
             if (self::$existCouponsManager) {
                 if (DiscountCouponsManager::usedByManager() && DiscountCouponsManager::getUserId() == $intUserID) {
                     return DiscountCouponsManager::delete($strCoupon);
@@ -341,12 +389,17 @@ class CAllCatalogDiscountCoupon
                 return false;
             } else {
                 $strCoupon = trim((string)$strCoupon);
-                if (empty($strCoupon))
+                if (empty($strCoupon)) {
                     return false;
-                if (!isset($_SESSION['CATALOG_MANAGE_COUPONS']) || !is_array($_SESSION['CATALOG_MANAGE_COUPONS']))
+                }
+                if (!isset($_SESSION['CATALOG_MANAGE_COUPONS']) || !is_array($_SESSION['CATALOG_MANAGE_COUPONS'])) {
                     return false;
-                if (!isset($_SESSION['CATALOG_MANAGE_COUPONS'][$intUserID]) || !is_array($_SESSION['CATALOG_MANAGE_COUPONS'][$intUserID]))
+                }
+                if (!isset($_SESSION['CATALOG_MANAGE_COUPONS'][$intUserID]) || !is_array(
+                        $_SESSION['CATALOG_MANAGE_COUPONS'][$intUserID]
+                    )) {
                     return false;
+                }
                 $key = array_search($strCoupon, $_SESSION['CATALOG_MANAGE_COUPONS'][$intUserID]);
                 if ($key !== false) {
                     unset($_SESSION['CATALOG_MANAGE_COUPONS'][$intUserID][$key]);
@@ -368,16 +421,18 @@ class CAllCatalogDiscountCoupon
     {
         $intUserID = (int)$intUserID;
         if ($intUserID >= 0) {
-            if (self::$existCouponsManager === null)
+            if (self::$existCouponsManager === null) {
                 self::initCouponManager();
+            }
             if (self::$existCouponsManager) {
                 if (DiscountCouponsManager::usedByManager() && DiscountCouponsManager::getUserId() == $intUserID) {
                     return DiscountCouponsManager::clear(true);
                 }
                 return false;
             } else {
-                if (!isset($_SESSION['CATALOG_MANAGE_COUPONS']) || !is_array($_SESSION['CATALOG_MANAGE_COUPONS']))
+                if (!isset($_SESSION['CATALOG_MANAGE_COUPONS']) || !is_array($_SESSION['CATALOG_MANAGE_COUPONS'])) {
                     $_SESSION['CATALOG_MANAGE_COUPONS'] = array();
+                }
                 $_SESSION['CATALOG_MANAGE_COUPONS'][$intUserID] = array();
                 return true;
             }
@@ -403,17 +458,20 @@ class CAllCatalogDiscountCoupon
             || (is_array($arModules) && in_array('catalog', $arModules))
         ) {
             if (!empty($arCoupons)) {
-                if (!is_array($arCoupons))
+                if (!is_array($arCoupons)) {
                     $arCoupons = array($arCoupons);
+                }
                 $intUserID = (int)$intUserID;
 
-                if (self::$existCouponsManager === null)
+                if (self::$existCouponsManager === null) {
                     self::initCouponManager();
+                }
                 if (self::$existCouponsManager) {
                     if ($intUserID == DiscountCouponsManager::getUserId()) {
                         foreach ($arCoupons as &$coupon) {
-                            if (DiscountCouponsManager::add($coupon))
+                            if (DiscountCouponsManager::add($coupon)) {
                                 $boolResult = true;
+                            }
                         }
                         unset($coupon);
                         return $boolResult;
@@ -423,17 +481,20 @@ class CAllCatalogDiscountCoupon
                     if ($intUserID > 0) {
                         $boolCurrentUser = ($USER->IsAuthorized() && $intUserID == $USER->GetID());
                         foreach ($arCoupons as &$strOneCoupon) {
-                            if (self::SetCouponByManage($intUserID, $strOneCoupon))
+                            if (self::SetCouponByManage($intUserID, $strOneCoupon)) {
                                 $boolResult = true;
-                            if ($boolCurrentUser)
+                            }
+                            if ($boolCurrentUser) {
                                 self::SetCoupon($strOneCoupon);
+                            }
                         }
                         unset($strOneCoupon);
                     } elseif (0 == $intUserID && !$USER->IsAuthorized()) {
                         foreach ($arCoupons as &$strOneCoupon) {
                             $couponResult = self::SetCoupon($strOneCoupon);
-                            if ($couponResult)
+                            if ($couponResult) {
                                 $boolResult = true;
+                            }
                         }
                         unset($strOneCoupon);
                     }
@@ -463,17 +524,20 @@ class CAllCatalogDiscountCoupon
             || (is_array($arModules) && in_array('catalog', $arModules))
         ) {
             if (!empty($arCoupons)) {
-                if (!is_array($arCoupons))
+                if (!is_array($arCoupons)) {
                     $arCoupons = array($arCoupons);
+                }
                 $intUserID = (int)$intUserID;
 
-                if (self::$existCouponsManager === null)
+                if (self::$existCouponsManager === null) {
                     self::initCouponManager();
+                }
                 if (self::$existCouponsManager) {
                     if ($intUserID == DiscountCouponsManager::getUserId()) {
                         foreach ($arCoupons as &$coupon) {
-                            if (DiscountCouponsManager::delete($coupon))
+                            if (DiscountCouponsManager::delete($coupon)) {
                                 $boolResult = true;
+                            }
                         }
                         unset($coupon);
                         return $boolResult;
@@ -483,16 +547,19 @@ class CAllCatalogDiscountCoupon
                     if ($intUserID > 0) {
                         $boolCurrentUser = ($USER->IsAuthorized() && $intUserID == $USER->GetID());
                         foreach ($arCoupons as &$strOneCoupon) {
-                            if (self::EraseCouponByManage($intUserID, $strOneCoupon))
+                            if (self::EraseCouponByManage($intUserID, $strOneCoupon)) {
                                 $boolResult = true;
-                            if ($boolCurrentUser)
+                            }
+                            if ($boolCurrentUser) {
                                 self::EraseCoupon($strOneCoupon);
+                            }
                         }
                         unset($strOneCoupon);
                     } elseif (0 == $intUserID && !$USER->IsAuthorized()) {
                         foreach ($arCoupons as &$strOneCoupon) {
-                            if (self::EraseCoupon($strOneCoupon))
+                            if (self::EraseCoupon($strOneCoupon)) {
                                 $boolResult = true;
+                            }
                         }
                         unset($strOneCoupon);
                     }
@@ -519,8 +586,9 @@ class CAllCatalogDiscountCoupon
             || (is_array($arModules) && in_array('catalog', $arModules))
         ) {
             $intUserID = (int)$intUserID;
-            if (self::$existCouponsManager === null)
+            if (self::$existCouponsManager === null) {
                 self::initCouponManager();
+            }
             if (self::$existCouponsManager) {
                 if ($intUserID == DiscountCouponsManager::getUserId()) {
                     return DiscountCouponsManager::clear(true);
@@ -530,8 +598,9 @@ class CAllCatalogDiscountCoupon
                 if (0 < $intUserID) {
                     $boolCurrentUser = ($USER->IsAuthorized() && $intUserID == $USER->GetID());
                     $boolResult = self::ClearCouponsByManage($intUserID);
-                    if ($boolCurrentUser)
+                    if ($boolCurrentUser) {
                         self::ClearCoupon();
+                    }
                 } elseif (0 == $intUserID && !$USER->IsAuthorized()) {
                     self::ClearCoupon();
                 }
@@ -554,7 +623,10 @@ class CAllCatalogDiscountCoupon
 
     protected static function initCouponManager()
     {
-        if (self::$existCouponsManager === null)
-            self::$existCouponsManager = Main\ModuleManager::isModuleInstalled('sale') && Main\Loader::includeModule('sale');
+        if (self::$existCouponsManager === null) {
+            self::$existCouponsManager = Main\ModuleManager::isModuleInstalled('sale') && Main\Loader::includeModule(
+                    'sale'
+                );
+        }
     }
 }

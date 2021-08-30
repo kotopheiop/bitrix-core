@@ -26,7 +26,9 @@ class OrderShipmentStatus
 				<table border="0" cellspacing="0" cellpadding="0" width="100%" class="adm-detail-content-table edit-table ">
 					<tbody>
 						<tr>
-							<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage('SALE_ORDER_SHIPMENT_STATUS') . ':</td>
+							<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_STATUS'
+            ) . ':</td>
 							<td class="adm-detail-content-cell-r">' .
             \Bitrix\Sale\Helpers\Admin\OrderEdit::makeSelectHtml(
                 "SHIPMENT[" . $index . "][STATUS_ID]",

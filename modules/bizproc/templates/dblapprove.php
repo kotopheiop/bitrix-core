@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 $arFields = Array(
@@ -84,7 +85,10 @@ $arFields = Array(
                                     'Properties' =>
                                         Array(
                                             'MailSubject' => GetMessage("BP_DBLA_MAIL2_SUBJ"),
-                                            'MailText' => CBPDocument::_ReplaceTaskURL(GetMessage("BP_DBLA_MAIL2_TEXT"), $documentType),
+                                            'MailText' => CBPDocument::_ReplaceTaskURL(
+                                                GetMessage("BP_DBLA_MAIL2_TEXT"),
+                                                $documentType
+                                            ),
                                             'MailMessageType' => 'plain',
                                             'MailCharset' => LANG_CHARSET,
                                             'MailUserFrom' => '',
@@ -130,7 +134,10 @@ $arFields = Array(
                                                             'MailUserFrom' => '',
                                                             'MailUserFromArray' => Array('user_1'),
                                                             'MailUserTo' => '',
-                                                            'MailUserToArray' => Array(Array('Template', 'Voters2'), 'author'),
+                                                            'MailUserToArray' => Array(
+                                                                Array('Template', 'Voters2'),
+                                                                'author'
+                                                            ),
                                                             'Title' => GetMessage("BP_DBLA_M")
                                                         )
                                                 ),
@@ -150,7 +157,8 @@ $arFields = Array(
                                                         Array(
                                                             'Title' => GetMessage("BP_DBLA_PUB_TITLE")
                                                         )
-                                                ))
+                                                )
+                                            )
                                         ),
                                         Array(
                                             'Type' => 'SequenceActivity',
@@ -172,7 +180,10 @@ $arFields = Array(
                                                             'MailUserFrom' => '',
                                                             'MailUserFromArray' => Array('user_1'),
                                                             'MailUserTo' => '',
-                                                            'MailUserToArray' => Array(Array('Template', 'Voters2'), 'author'),
+                                                            'MailUserToArray' => Array(
+                                                                Array('Template', 'Voters2'),
+                                                                'author'
+                                                            ),
                                                             'Title' => GetMessage("BP_DBLA_M")
                                                         )
                                                 ),
@@ -184,9 +195,12 @@ $arFields = Array(
                                                             'TargetStateTitle' => GetMessage("BP_DBLA_NAPP_DRAFT"),
                                                             'Title' => GetMessage("BP_DBLA_NAPP_DRAFT_S")
                                                         )
-                                                ))
-                                        ))
-                                ))
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            )
                         ),
                         Array(
                             'Type' => 'SequenceActivity',
@@ -220,10 +234,14 @@ $arFields = Array(
                                             'TargetStateTitle' => GetMessage("BP_DBLA_NAPP_DRAFT"),
                                             'Title' => GetMessage("BP_DBLA_NAPP_DRAFT_S")
                                         )
-                                ))
-                        ))
-                ))
-        )),
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        )
+    ),
     'PARAMETERS' =>
         Array(
             'Voters1' =>

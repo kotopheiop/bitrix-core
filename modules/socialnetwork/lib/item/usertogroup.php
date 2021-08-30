@@ -41,7 +41,10 @@ class UserToGroup
 
         $userId = (isset($params['USER_ID']) ? intval($params['USER_ID']) : false);
         $groupId = (isset($params['GROUP_ID']) ? intval($params['GROUP_ID']) : false);
-        $value = (isset($params['VALUE']) && in_array($params['VALUE'], WorkgroupTable::getAutoMembershipValuesAll()) ? $params['VALUE'] : "Y");
+        $value = (isset($params['VALUE']) && in_array(
+            $params['VALUE'],
+            WorkgroupTable::getAutoMembershipValuesAll()
+        ) ? $params['VALUE'] : "Y");
         $notyfy = (isset($params['NOTIFY']) && $params['NOTIFY'] == "N" ? $params['NOTIFY'] : "Y");
 
         if (
@@ -57,7 +60,10 @@ class UserToGroup
                 'AUTO_MEMBER' => $value,
                 'USER_ID' => $userId,
                 'GROUP_ID' => $groupId,
-                'ROLE' => (isset($params['ROLE']) && in_array($params['ROLE'], UserToGroupTable::getRolesAll()) ? $params['ROLE'] : UserToGroupTable::ROLE_USER),
+                'ROLE' => (isset($params['ROLE']) && in_array(
+                    $params['ROLE'],
+                    UserToGroupTable::getRolesAll()
+                ) ? $params['ROLE'] : UserToGroupTable::ROLE_USER),
                 'INITIATED_BY_TYPE' => UserToGroupTable::INITIATED_BY_GROUP,
                 'INITIATED_BY_USER_ID' => $currentUserId,
                 "=DATE_CREATE" => $helper->getCurrentDateTimeFunction(),
@@ -73,17 +79,22 @@ class UserToGroup
                 && $groupId
                 && $value == 'Y'
             ) {
-                self::notifyAutoMembership(array(
-                    'GROUP_ID' => $groupId,
-                    'USER_ID' => $userId,
-                    'RELATION_ID' => $relationId
-                ));
+                self::notifyAutoMembership(
+                    array(
+                        'GROUP_ID' => $groupId,
+                        'USER_ID' => $userId,
+                        'RELATION_ID' => $relationId
+                    )
+                );
 
-                self::addInfoToChat(array(
-                    'group_id' => $groupId,
-                    'user_id' => $userId,
-                    'action' => self::CHAT_ACTION_IN
-                ));
+                self::addInfoToChat(
+                    array(
+                        'group_id' => $groupId,
+                        'user_id' => $userId,
+                        'action' => self::CHAT_ACTION_IN,
+                        'role' => $addFields['ROLE']
+                    )
+                );
             }
         }
     }
@@ -95,7 +106,10 @@ class UserToGroup
         $relationId = (isset($params['RELATION_ID']) ? intval($params['RELATION_ID']) : false);
         $userId = (isset($params['USER_ID']) ? intval($params['USER_ID']) : false);
         $groupId = (isset($params['GROUP_ID']) ? intval($params['GROUP_ID']) : false);
-        $value = (isset($params['VALUE']) && in_array($params['VALUE'], WorkgroupTable::getAutoMembershipValuesAll()) ? $params['VALUE'] : 'Y');
+        $value = (isset($params['VALUE']) && in_array(
+            $params['VALUE'],
+            WorkgroupTable::getAutoMembershipValuesAll()
+        ) ? $params['VALUE'] : 'Y');
         $notyfy = (isset($params['NOTIFY']) && $params['NOTIFY'] == "N" ? $params['NOTIFY'] : "Y");
 
         if (intval($relationId) > 0) {
@@ -122,17 +136,22 @@ class UserToGroup
                 && $groupId
                 && $value == 'Y'
             ) {
-                self::notifyAutoMembership(array(
-                    'GROUP_ID' => $groupId,
-                    'USER_ID' => $userId,
-                    'RELATION_ID' => $relationId
-                ));
+                self::notifyAutoMembership(
+                    array(
+                        'GROUP_ID' => $groupId,
+                        'USER_ID' => $userId,
+                        'RELATION_ID' => $relationId
+                    )
+                );
 
-                self::addInfoToChat(array(
-                    'group_id' => $groupId,
-                    'user_id' => $userId,
-                    'action' => self::CHAT_ACTION_IN
-                ));
+                self::addInfoToChat(
+                    array(
+                        'group_id' => $groupId,
+                        'user_id' => $userId,
+                        'action' => self::CHAT_ACTION_IN,
+                        'role' => (isset($params['ROLE']) ? isset($params['ROLE']) : false)
+                    )
+                );
             }
         }
     }
@@ -151,9 +170,11 @@ class UserToGroup
         ) {
             $groupItem = \Bitrix\Socialnetwork\Item\Workgroup::getById($groupId);
             $groupFields = $groupItem->getFields();
-            $groupUrlData = $groupItem->getGroupUrlData(array(
-                'USER_ID' => $userId
-            ));
+            $groupUrlData = $groupItem->getGroupUrlData(
+                array(
+                    'USER_ID' => $userId
+                )
+            );
 
             $messageFields = array(
                 "MESSAGE_TYPE" => IM_MESSAGE_SYSTEM,
@@ -163,11 +184,18 @@ class UserToGroup
                 "NOTIFY_MODULE" => "socialnetwork",
                 "NOTIFY_EVENT" => "invite_group",
                 "NOTIFY_TAG" => "SOCNET|INVITE_GROUP|" . $userId . "|" . $relationId,
-                "NOTIFY_MESSAGE" => Loc::getMessage(($groupItem->isProject() ? "SOCIALNETWORK_ITEM_USERTOGROUP_AUTO_MEMBER_ADD_IM_PROJECT" : "SOCIALNETWORK_ITEM_USERTOGROUP_AUTO_MEMBER_ADD_IM"), array(
-                        "#GROUP_NAME#" => "<a href=\"" . $groupUrlData['DOMAIN'] . $groupUrlData['URL'] . "\" class=\"bx-notifier-item-action\">" . htmlspecialcharsEx($groupFields["NAME"]) . "</a>"
+                "NOTIFY_MESSAGE" => Loc::getMessage(
+                    ($groupItem->isProject(
+                    ) ? "SOCIALNETWORK_ITEM_USERTOGROUP_AUTO_MEMBER_ADD_IM_PROJECT" : "SOCIALNETWORK_ITEM_USERTOGROUP_AUTO_MEMBER_ADD_IM"),
+                    array(
+                        "#GROUP_NAME#" => "<a href=\"" . $groupUrlData['DOMAIN'] . $groupUrlData['URL'] . "\" class=\"bx-notifier-item-action\">" . htmlspecialcharsEx(
+                                $groupFields["NAME"]
+                            ) . "</a>"
                     )
                 ),
-                "NOTIFY_MESSAGE_OUT" => Loc::getMessage("SOCIALNETWORK_ITEM_USERTOGROUP_AUTO_MEMBER_ADD_IM", array(
+                "NOTIFY_MESSAGE_OUT" => Loc::getMessage(
+                        "SOCIALNETWORK_ITEM_USERTOGROUP_AUTO_MEMBER_ADD_IM",
+                        array(
                             "#GROUP_NAME#" => htmlspecialcharsEx($groupFields["NAME"])
                         )
                     ) . " (" . $groupUrlData['SERVER_NAME'] . $groupUrlData['URL'] . ")"
@@ -201,7 +229,10 @@ class UserToGroup
         }
 
         if (Loader::includeModule('intranet')) {
-            $deparmentIdList = array_merge($deparmentIdList, \CIntranetUtils::getSubordinateDepartments($fields['ID'], false));
+            $deparmentIdList = array_merge(
+                $deparmentIdList,
+                \CIntranetUtils::getSubordinateDepartments($fields['ID'], false)
+            );
         }
 
         $deparmentIdList = array_unique($deparmentIdList);
@@ -214,11 +245,13 @@ class UserToGroup
             $groupList = self::getConnectedGroups($deparmentIdList);
             if (!empty($groupList)) {
                 foreach ($groupList as $groupId) {
-                    self::addRelationAutoMembership(array(
-                        'USER_ID' => $fields['ID'],
-                        'GROUP_ID' => $groupId,
-                        'NOTIFY' => 'N'
-                    ));
+                    self::addRelationAutoMembership(
+                        array(
+                            'USER_ID' => $fields['ID'],
+                            'GROUP_ID' => $groupId,
+                            'NOTIFY' => 'N'
+                        )
+                    );
                 }
             }
         }
@@ -237,12 +270,14 @@ class UserToGroup
             && Loader::includeModule('iblock')
         ) {
             $oldGroupList = $oldGroupAutoList = $newGroupList = array();
-            $res = UserToGroupTable::getList([
-                'filter' => [
-                    'USER_ID' => intval($userFields['ID'])
-                ],
-                'select' => ['GROUP_ID', 'AUTO_MEMBER']
-            ]);
+            $res = UserToGroupTable::getList(
+                [
+                    'filter' => [
+                        'USER_ID' => intval($userFields['ID'])
+                    ],
+                    'select' => ['GROUP_ID', 'AUTO_MEMBER']
+                ]
+            );
             while ($relation = $res->fetch()) {
                 $oldGroupList[] = $relation['GROUP_ID'];
                 if ($relation['AUTO_MEMBER'] == 'Y') {
@@ -260,13 +295,18 @@ class UserToGroup
             }
 
             $departmentList = (
-            !is_array($userFields['UF_DEPARTMENT']) || empty($userFields['UF_DEPARTMENT']) || intval($userFields['UF_DEPARTMENT'][0]) <= 0
+            !is_array($userFields['UF_DEPARTMENT']) || empty($userFields['UF_DEPARTMENT']) || intval(
+                $userFields['UF_DEPARTMENT'][0]
+            ) <= 0
                 ? []
                 : $userFields['UF_DEPARTMENT']
             );
 
             if (Loader::includeModule('intranet')) {
-                $departmentList = array_merge($departmentList, \CIntranetUtils::getSubordinateDepartments($userFields['ID'], false));
+                $departmentList = array_merge(
+                    $departmentList,
+                    \CIntranetUtils::getSubordinateDepartments($userFields['ID'], false)
+                );
             }
             $departmentList = array_unique($departmentList);
 
@@ -278,15 +318,21 @@ class UserToGroup
             $groupListMinus = array_diff($groupListMinus, $groupListPlus);
 
             if (!empty($groupListMinus)) {
-                $res = UserToGroupTable::getList(array(
-                    'filter' => array(
-                        '=USER_ID' => intval($userFields["ID"]),
-                        '@GROUP_ID' => $groupListMinus,
-                        '@ROLE' => array(UserToGroupTable::ROLE_OWNER, UserToGroupTable::ROLE_MODERATOR, UserToGroupTable::ROLE_USER),
-                        'AUTO_MEMBER' => 'Y'
-                    ),
-                    'select' => array('ID')
-                ));
+                $res = UserToGroupTable::getList(
+                    array(
+                        'filter' => array(
+                            '=USER_ID' => intval($userFields["ID"]),
+                            '@GROUP_ID' => $groupListMinus,
+                            '@ROLE' => array(
+                                UserToGroupTable::ROLE_OWNER,
+                                UserToGroupTable::ROLE_MODERATOR,
+                                UserToGroupTable::ROLE_USER
+                            ),
+                            'AUTO_MEMBER' => 'Y'
+                        ),
+                        'select' => array('ID')
+                    )
+                );
                 while ($relation = $res->fetch()) {
                     \CSocNetUserToGroup::delete($relation['ID']);
                 }
@@ -294,14 +340,20 @@ class UserToGroup
 
             $changeList = $addList = $noChangeList = $setAutoList = array();
             if (!empty($groupListPlus)) {
-                $res = UserToGroupTable::getList(array(
-                    'filter' => array(
-                        '=USER_ID' => intval($userFields["ID"]),
-                        '@GROUP_ID' => $groupListPlus,
-                        '@ROLE' => array(UserToGroupTable::ROLE_OWNER, UserToGroupTable::ROLE_MODERATOR, UserToGroupTable::ROLE_USER),
-                    ),
-                    'select' => array('ID', 'GROUP_ID', 'AUTO_MEMBER')
-                ));
+                $res = UserToGroupTable::getList(
+                    array(
+                        'filter' => array(
+                            '=USER_ID' => intval($userFields["ID"]),
+                            '@GROUP_ID' => $groupListPlus,
+                            '@ROLE' => array(
+                                UserToGroupTable::ROLE_OWNER,
+                                UserToGroupTable::ROLE_MODERATOR,
+                                UserToGroupTable::ROLE_USER
+                            ),
+                        ),
+                        'select' => array('ID', 'GROUP_ID', 'AUTO_MEMBER')
+                    )
+                );
                 while ($relation = $res->fetch()) {
                     if (
                         $relation['AUTO_MEMBER'] == 'Y'
@@ -311,14 +363,16 @@ class UserToGroup
                     } else // UserToGroupTable::ROLE_MODERATOR, UserToGroupTable::ROLE_USER, AUTO_MEMBER = 'N'
                     {
                         $noChangeList[] = $relation['GROUP_ID'];
-                        UserToGroup::changeRelationAutoMembership(array(
-                            'RELATION_ID' => intval($relation['ID']),
-                            'USER_ID' => intval($userFields["ID"]),
-                            'GROUP_ID' => intval($relation['GROUP_ID']),
-                            'ROLE' => $relation['ROLE'],
-                            'VALUE' => 'Y',
-                            'NOTIFY' => 'N'
-                        ));
+                        UserToGroup::changeRelationAutoMembership(
+                            array(
+                                'RELATION_ID' => intval($relation['ID']),
+                                'USER_ID' => intval($userFields["ID"]),
+                                'GROUP_ID' => intval($relation['GROUP_ID']),
+                                'ROLE' => $relation['ROLE'],
+                                'VALUE' => 'Y',
+                                'NOTIFY' => 'N'
+                            )
+                        );
                     }
                 }
 
@@ -326,35 +380,41 @@ class UserToGroup
             }
 
             if (!empty($groupListPlus)) {
-                $res = UserToGroupTable::getList(array(
-                    'filter' => array(
-                        '=USER_ID' => intval($userFields["ID"]),
-                        '@GROUP_ID' => $groupListPlus,
-                        '@ROLE' => array(UserToGroupTable::ROLE_REQUEST, UserToGroupTable::ROLE_BAN),
-                        'AUTO_MEMBER' => 'N'
-                    ),
-                    'select' => array('ID', 'USER_ID', 'GROUP_ID')
-                ));
+                $res = UserToGroupTable::getList(
+                    array(
+                        'filter' => array(
+                            '=USER_ID' => intval($userFields["ID"]),
+                            '@GROUP_ID' => $groupListPlus,
+                            '@ROLE' => array(UserToGroupTable::ROLE_REQUEST, UserToGroupTable::ROLE_BAN),
+                            'AUTO_MEMBER' => 'N'
+                        ),
+                        'select' => array('ID', 'USER_ID', 'GROUP_ID')
+                    )
+                );
                 while ($relation = $res->fetch()) {
                     $changeList[] = intval($relation['GROUP_ID']);
-                    UserToGroup::changeRelationAutoMembership(array(
-                        'RELATION_ID' => intval($relation['ID']),
-                        'USER_ID' => intval($relation['USER_ID']),
-                        'GROUP_ID' => intval($relation['GROUP_ID']),
-                        'ROLE' => UserToGroupTable::ROLE_USER,
-                        'VALUE' => 'Y'
-                    ));
+                    UserToGroup::changeRelationAutoMembership(
+                        array(
+                            'RELATION_ID' => intval($relation['ID']),
+                            'USER_ID' => intval($relation['USER_ID']),
+                            'GROUP_ID' => intval($relation['GROUP_ID']),
+                            'ROLE' => UserToGroupTable::ROLE_USER,
+                            'VALUE' => 'Y'
+                        )
+                    );
                 }
                 $addList = array_diff($groupListPlus, $changeList);
             }
 
             foreach ($addList as $addGroupId) {
-                UserToGroup::addRelationAutoMembership(array(
-                    'USER_ID' => intval($userFields["ID"]),
-                    'GROUP_ID' => $addGroupId,
-                    'ROLE' => UserToGroupTable::ROLE_USER,
-                    'VALUE' => 'Y'
-                ));
+                UserToGroup::addRelationAutoMembership(
+                    array(
+                        'USER_ID' => intval($userFields["ID"]),
+                        'GROUP_ID' => $addGroupId,
+                        'ROLE' => UserToGroupTable::ROLE_USER,
+                        'VALUE' => 'Y'
+                    )
+                );
             }
         }
     }
@@ -391,12 +451,14 @@ class UserToGroup
             $userDepartmentList = array_unique($userDepartmentList);
 
             if (!empty($userDepartmentList)) {
-                $res = WorkgroupTable::getList(array(
-                    'filter' => array(
-                        '@UF_SG_DEPT' => $userDepartmentList
-                    ),
-                    'select' => array('ID')
-                ));
+                $res = WorkgroupTable::getList(
+                    array(
+                        'filter' => array(
+                            '@UF_SG_DEPT' => $userDepartmentList
+                        ),
+                        'select' => array('ID')
+                    )
+                );
                 while ($group = $res->fetch()) {
                     if (intval($group['ID']) > 0) {
                         $result[] = intval($group['ID']);
@@ -435,15 +497,19 @@ class UserToGroup
 
         $groupId = intval($params['group_id']);
         $userId = intval($params['user_id']);
+        $role = (isset($params['role']) ? $params['role'] : false);
+
         $sendMessage = (
             !isset($params['sendMessage'])
             || $params['sendMessage']
         );
 
-        $chatData = Integration\Im\Chat\Workgroup::getChatData(array(
-            'group_id' => $groupId,
-            'skipAvailabilityCheck' => true
-        ));
+        $chatData = Integration\Im\Chat\Workgroup::getChatData(
+            array(
+                'group_id' => $groupId,
+                'skipAvailabilityCheck' => true
+            )
+        );
 
         if (
             empty($chatData)
@@ -486,14 +552,29 @@ class UserToGroup
         switch ($params['action']) {
             case self::CHAT_ACTION_IN:
                 if ($chat->addUser($chatId, $userId, false, true, true)) {
-                    $chatMessage = str_replace('#USER_NAME#', $userName, Loc::getMessage("SOCIALNETWORK_ITEM_USERTOGROUP_CHAT_USER_ADD" . $projectSuffix . $genderSuffix));
+                    if (in_array($role, [UserToGroupTable::ROLE_USER])) {
+                        \Bitrix\Im\Chat::mute($chatId, true, $userId);
+                    }
+                    $chatMessage = str_replace(
+                        '#USER_NAME#',
+                        $userName,
+                        Loc::getMessage(
+                            "SOCIALNETWORK_ITEM_USERTOGROUP_CHAT_USER_ADD" . $projectSuffix . $genderSuffix
+                        )
+                    );
                 } else {
                     $sendMessage = false;
                 }
                 break;
             case self::CHAT_ACTION_OUT:
                 if ($chat->deleteUser($chatId, $userId, false, true)) {
-                    $chatMessage = str_replace('#USER_NAME#', $userName, Loc::getMessage("SOCIALNETWORK_ITEM_USERTOGROUP_CHAT_USER_DELETE" . $projectSuffix . $genderSuffix));
+                    $chatMessage = str_replace(
+                        '#USER_NAME#',
+                        $userName,
+                        Loc::getMessage(
+                            "SOCIALNETWORK_ITEM_USERTOGROUP_CHAT_USER_DELETE" . $projectSuffix . $genderSuffix
+                        )
+                    );
                 } else {
                     $sendMessage = false;
                 }
@@ -511,20 +592,25 @@ class UserToGroup
                 "PUSH" => "N"
             );
 
-            $availableChatData = Integration\Im\Chat\Workgroup::getChatData(array(
-                'group_id' => $groupId
-            ));
+            $availableChatData = Integration\Im\Chat\Workgroup::getChatData(
+                array(
+                    'group_id' => $groupId
+                )
+            );
 
             if (
                 !empty($availableChatData)
                 && !empty($availableChatData[$groupId])
                 && intval($availableChatData[$groupId]) > 0
             ) {
-                return \CIMChat::addMessage(array_merge(
-                    $chatMessageFields, array(
-                        "TO_CHAT_ID" => $chatId
+                return \CIMChat::addMessage(
+                    array_merge(
+                        $chatMessageFields,
+                        array(
+                            "TO_CHAT_ID" => $chatId
+                        )
                     )
-                ));
+                );
             }
         } else {
             return true;
@@ -578,13 +664,15 @@ class UserToGroup
 
         $ownerRelationIdList = $memberRelationIdList = $otherRelationIdList = array();
 
-        $resRelation = UserToGroupTable::getList(array(
-            'filter' => array(
-                'GROUP_ID' => $groupId,
-                '@USER_ID' => $userIdList
-            ),
-            'select' => array('ID', 'USER_ID', 'ROLE')
-        ));
+        $resRelation = UserToGroupTable::getList(
+            array(
+                'filter' => array(
+                    'GROUP_ID' => $groupId,
+                    '@USER_ID' => $userIdList
+                ),
+                'select' => array('ID', 'USER_ID', 'ROLE')
+            )
+        );
         while ($relation = $resRelation->fetch()) {
             if ($relation['ROLE'] == UserToGroupTable::ROLE_USER) {
                 $memberRelationIdList[$relation['USER_ID']] = $relation['ID'];
@@ -597,7 +685,12 @@ class UserToGroup
         }
 
         if (!empty($memberRelationIdList)) {
-            \CSocNetUserToGroup::transferMember2Moderator($currentUserId, $groupId, $memberRelationIdList, \CSocNetUser::isCurrentUserModuleAdmin());
+            \CSocNetUserToGroup::transferMember2Moderator(
+                $currentUserId,
+                $groupId,
+                $memberRelationIdList,
+                \CSocNetUser::isCurrentUserModuleAdmin()
+            );
         }
 
         foreach ($userIdList as $userId) {
@@ -606,30 +699,37 @@ class UserToGroup
                 && !array_key_exists($userId, $ownerRelationIdList)
             ) {
                 if (array_key_exists($userId, $otherRelationIdList)) {
-                    $relationId = \CSocNetUserToGroup::update($otherRelationIdList[$userId], array(
-                        "ROLE" => UserToGroupTable::ROLE_MODERATOR,
-                        "=DATE_UPDATE" => $DB->currentTimeFunction(),
-                    ));
+                    $relationId = \CSocNetUserToGroup::update(
+                        $otherRelationIdList[$userId],
+                        array(
+                            "ROLE" => UserToGroupTable::ROLE_MODERATOR,
+                            "=DATE_UPDATE" => $DB->currentTimeFunction(),
+                        )
+                    );
                 } else {
-                    $relationId = \CSocNetUserToGroup::add(array(
-                        "USER_ID" => $userId,
-                        "GROUP_ID" => $groupId,
-                        "ROLE" => UserToGroupTable::ROLE_MODERATOR,
-                        "=DATE_CREATE" => $DB->currentTimeFunction(),
-                        "=DATE_UPDATE" => $DB->currentTimeFunction(),
-                        "MESSAGE" => "",
-                        "INITIATED_BY_TYPE" => UserToGroupTable::INITIATED_BY_GROUP,
-                        "INITIATED_BY_USER_ID" => $currentUserId,
-                        "SEND_MAIL" => "N"
-                    ));
+                    $relationId = \CSocNetUserToGroup::add(
+                        array(
+                            "USER_ID" => $userId,
+                            "GROUP_ID" => $groupId,
+                            "ROLE" => UserToGroupTable::ROLE_MODERATOR,
+                            "=DATE_CREATE" => $DB->currentTimeFunction(),
+                            "=DATE_UPDATE" => $DB->currentTimeFunction(),
+                            "MESSAGE" => "",
+                            "INITIATED_BY_TYPE" => UserToGroupTable::INITIATED_BY_GROUP,
+                            "INITIATED_BY_USER_ID" => $currentUserId,
+                            "SEND_MAIL" => "N"
+                        )
+                    );
                 }
 
                 if ($relationId) {
-                    \CSocNetUserToGroup::notifyModeratorAdded(array(
-                        'userId' => $currentUserId,
-                        'groupId' => $groupId,
-                        'relationId' => $relationId
-                    ));
+                    \CSocNetUserToGroup::notifyModeratorAdded(
+                        array(
+                            'userId' => $currentUserId,
+                            'groupId' => $groupId,
+                            'relationId' => $relationId
+                        )
+                    );
                 }
             }
         }

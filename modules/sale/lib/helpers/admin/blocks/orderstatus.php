@@ -39,13 +39,13 @@ class OrderStatus
 			<table border="0" cellspacing="0" cellpadding="0" width="100%" class="adm-detail-content-table edit-table">
 				<tbody>
 					<tr>
-						<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage("SALE_ORDER_STATUS_CREATED") . ':</td>
+						<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage(
+                "SALE_ORDER_STATUS_CREATED"
+            ) . ':</td>
 						<td class="adm-detail-content-cell-r">
 							<div>' .
             $data["DATE_INSERT"] .
-            '&nbsp;<a href="/bitrix/admin/user_edit.php?lang=' . LANGUAGE_ID . '&ID=' . $data["CREATOR_USER_ID"] . '">' .
-            htmlspecialcharsbx($data["CREATOR_USER_NAME"]) .
-            '</a>
+            '&nbsp;' . static::renderCreatorLink($data) . '
 							</div>
 						</td>
 					</tr>
@@ -78,7 +78,7 @@ class OrderStatus
 				</tr>';
         }
 
-        if (strlen($data['SOURCE_NAME']) > 0) {
+        if ($data['SOURCE_NAME'] <> '') {
             $result .= '<tr>' .
                 '<td class="adm-detail-content-cell-l">' . Loc::getMessage("SALE_ORDER_STATUS_SOURCE") . ':</td>' .
                 '<td class="adm-detail-content-cell-r">' . htmlspecialcharsbx($data['SOURCE_NAME']) . '</td>' .
@@ -90,8 +90,9 @@ class OrderStatus
             "id" => "STATUS_ID"
         );
 
-        if ($orderLocked)
+        if ($orderLocked) {
             $attr["disabled"] = "disabled";
+        }
 
         $result .= '<tr>
 						<td class="adm-detail-content-cell-l">' . Loc::getMessage("SALE_ORDER_STATUS") . ':</td>
@@ -107,10 +108,13 @@ class OrderStatus
         if ($showSaveButton && !$orderLocked) {
             $result .= '
 				&nbsp;
-				<span id="save_status_button" class="adm-btn" onclick="BX.Sale.Admin.OrderEditPage.onSaveStatusButton(\'' . $order->getId() . '\',\'STATUS_ID\');">
+				<span id="save_status_button" class="adm-btn" onclick="BX.Sale.Admin.OrderEditPage.onSaveStatusButton(\'' . $order->getId(
+                ) . '\',\'STATUS_ID\');">
 					' . Loc::getMessage("SALE_ORDER_STATUS_SAVE") . '
 				</span>
-				<span id="save_status_result_ok" class="adm-sale-green-check-mark" style="display:none;" title="' . Loc::getMessage('SALE_ORDER_STATUS_CHANGED_SUCCESS') . '"></span>
+				<span id="save_status_result_ok" class="adm-sale-green-check-mark" style="display:none;" title="' . Loc::getMessage(
+                    'SALE_ORDER_STATUS_CHANGED_SUCCESS'
+                ) . '"></span>
 				';
         }
 
@@ -118,22 +122,31 @@ class OrderStatus
 			</tr>';
 
         if (\Bitrix\Sale\Helpers\Order::isAllowGuestView($order)) {
-            $result .= '<tr><td class="adm-detail-content-cell-l">' . Loc::getMessage("SALE_ORDER_GUEST_VIEW") . ':</td><td class="adm-detail-content-cell-r">';
+            $result .= '<tr><td class="adm-detail-content-cell-l">' . Loc::getMessage(
+                    "SALE_ORDER_GUEST_VIEW"
+                ) . ':</td><td class="adm-detail-content-cell-r">';
 
             $publicLink = \Bitrix\Sale\Helpers\Order::getPublicLink($order);
             if (empty($publicLink)) {
                 $result .= Loc::getMessage("SALE_ORDER_WRONG_GUEST_PATH", array("#LANGUAGE_ID#" => LANGUAGE_ID));
             } else {
                 $result .= "<a href='{$publicLink}' target='_blank'>" .
-                    Loc::getMessage("SALE_ORDER_GUEST_PATH", array('#ID#' => $order->getId(), "#ACCOUNT_NUMBER#" => $order->getField('ACCOUNT_NUMBER'))) .
+                    Loc::getMessage(
+                        "SALE_ORDER_GUEST_PATH",
+                        array(
+                            '#ID#' => $order->getId(),
+                            "#ACCOUNT_NUMBER#" => $order->getField('ACCOUNT_NUMBER')
+                        )
+                    ) .
                     "</a>";
             }
 
             $result .= '</td></tr>';
         }
 
-        if ($showCancel && $allowCancel)
+        if ($showCancel && $allowCancel) {
             $result .= self::getCancelBlockHtml($order, $data, $orderLocked);
+        }
 
         $result .= '</tbody>
 			</table>
@@ -151,16 +164,19 @@ class OrderStatus
 				<div class="adm-s-select-popup-element-selected" id="sale-adm-status-cancel-blocktext">
 					<div class="adm-s-select-popup-element-selected-bad">
 						<span>' . Loc::getMessage("SALE_ORDER_STATUS_CANCELED") . '</span>
-						' . $order->getField('DATE_CANCELED') . '
-						<a href="/bitrix/admin/user_edit.php?lang=' . LANGUAGE_ID . '&ID=' . $order->getField("EMP_CANCELED_ID") . '">' .
-                htmlspecialcharsbx($data["EMP_CANCELED_NAME"]) .
-                '</a>
+						' . $order->getField('DATE_CANCELED') .
+                static::renderUserCanceledLink(
+                    [
+                        'EMP_CANCELED_ID' => $order->getField("EMP_CANCELED_ID"),
+                        'EMP_CANCELED_NAME' => $data["EMP_CANCELED_NAME"]
+                    ]
+                ) . '
 					</div>
 				</div>';
         } else {
             $text = '
 				<div class="adm-s-select-popup-element-selected" style="text-align:center;" id="sale-adm-status-cancel-blocktext">
-					<a href="javascript:void(0);" onclick="BX.Sale.Admin.OrderEditPage.toggleCancelDialog();">
+					<a href="javascript:void(0);" onclick="' . static::getJsObjName() . '.toggleCancelDialog();">
 						' . Loc::getMessage("SALE_ORDER_STATUS_CANCELING") . '
 					</a>
 				</div>';
@@ -171,15 +187,20 @@ class OrderStatus
         if (!\CSaleYMHandler::isOrderFromYandex($order->getId())) {
             $reasonHtml = '
 				<div class="adm-s-select-popup-modal-title">' . Loc::getMessage("SALE_ORDER_STATUS_COMMENT") . '</div>
-				<textarea style="width:400px;min-height:100px;" name="FORM_REASON_CANCELED" id="FORM_REASON_CANCELED"' . ($isCanceled ? ' disabled' : '') . '>' . (strlen($reasonCanceled) > 0 ? htmlspecialcharsbx($reasonCanceled) : '') . '</textarea>
+				<textarea style="width:400px;min-height:100px;" name="FORM_REASON_CANCELED" id="FORM_REASON_CANCELED"' . ($isCanceled ? ' disabled' : '') . '>' . ($reasonCanceled <> '' ? htmlspecialcharsbx(
+                    $reasonCanceled
+                ) : '') . '</textarea>
 			';
         } else {
             $reasonHtml = '
 				<div class="adm-s-select-popup-modal-title">' . Loc::getMessage("SALE_ORDER_STATUS_CANCELING_REASON") . '</div>
 				<select name="FORM_REASON_CANCELED" style="max-width: 400px;" id="FORM_REASON_CANCELED" class="adm-bus-select"' . ($isCanceled ? ' disabled' : '') . '>';
 
-            foreach (\CSaleYMHandler::getOrderSubstatuses() as $statusId => $statusName)
-                $reasonHtml .= '<option value="' . $statusId . '"' . ($statusId == $reasonCanceled ? " selected" : "") . '>' . htmlspecialcharsbx($statusName) . '</option>';
+            foreach (\CSaleYMHandler::getOrderSubstatuses() as $statusId => $statusName) {
+                $reasonHtml .= '<option value="' . $statusId . '"' . ($statusId == $reasonCanceled ? " selected" : "") . '>' . htmlspecialcharsbx(
+                        $statusName
+                    ) . '</option>';
+            }
 
             $reasonHtml .= '</select>';
         }
@@ -190,17 +211,24 @@ class OrderStatus
 				<td class="adm-detail-content-cell-r">
 					<div class="adm-s-select-popup-box">
 						<div class="adm-s-select-popup-container">' .
-            ($orderLocked ? '' : '<div class="adm-s-select-popup-element-selected-control" onclick="BX.Sale.Admin.OrderEditPage.toggleCancelDialog();"></div>') .
+            ($orderLocked ? '' : '<div class="adm-s-select-popup-element-selected-control" onclick="' . static::getJsObjName(
+                ) . '.toggleCancelDialog();"></div>') .
             $text .
             '</div>
 						<div class="adm-s-select-popup-modal /*active*/" id="sale-adm-status-cancel-dialog">
 							<div class="adm-s-select-popup-modal-content">
 								' . $reasonHtml . '
-								<div class="adm-s-select-popup-modal-desc">' . Loc::getMessage("SALE_ORDER_STATUS_USER_CAN_VIEW") . '</div>
-								<span class="adm-btn" id="sale-adm-status-cancel-dialog-btn" onclick="BX.Sale.Admin.OrderEditPage.onCancelStatusButton(\'' . $order->getId() . '\',\'' . $data["CANCELED"] . '\');">
-									' . ($data["CANCELED"] == "N" ? Loc::getMessage("SALE_ORDER_STATUS_CANCEL") : Loc::getMessage("SALE_ORDER_STATUS_CANCEL_CANCEL")) . '
+								<div class="adm-s-select-popup-modal-desc">' . Loc::getMessage(
+                "SALE_ORDER_STATUS_USER_CAN_VIEW"
+            ) . '</div>
+								<span class="adm-btn" id="sale-adm-status-cancel-dialog-btn" onclick="' . static::getJsObjName(
+            ) . '.onCancelStatusButton(\'' . $order->getId() . '\',\'' . $data["CANCELED"] . '\');">
+									' . ($data["CANCELED"] == "N" ? Loc::getMessage(
+                "SALE_ORDER_STATUS_CANCEL"
+            ) : Loc::getMessage("SALE_ORDER_STATUS_CANCEL_CANCEL")) . '
 								</span>
-								<span class="adm-s-select-popup-modal-close" onclick="BX.Sale.Admin.OrderEditPage.toggleCancelDialog();">' . Loc::getMessage("SALE_ORDER_STATUS_TOGGLE") . '</span>
+								<span class="adm-s-select-popup-modal-close" onclick="' . static::getJsObjName(
+            ) . '.toggleCancelDialog();">' . Loc::getMessage("SALE_ORDER_STATUS_TOGGLE") . '</span>
 							</div>
 						</div>
 					</div>
@@ -213,19 +241,22 @@ class OrderStatus
         static $users = array();
 
         $userId = intval($userId);
-        if ($userId <= 0)
+        if ($userId <= 0) {
             return array("ID" => 0, "NAME" => "", "LOGIN" => "");
+        }
 
-        if (isset($users[$userId]))
+        if (isset($users[$userId])) {
             return $users[$userId];
+        }
 
-        $dbRes = \CUser::GetList(($by = "id"), ($byOrder = "asc"), array("ID" => $userId), array("FIELDS" => array("ID", "NAME", "LOGIN")));
+        $dbRes = \CUser::GetList("id", "asc", array("ID" => $userId), array("FIELDS" => array("ID", "NAME", "LOGIN")));
         $user = $dbRes->Fetch();
 
-        if ($user)
+        if ($user) {
             $users[$userId] = $user;
-        else
+        } else {
             $user = array("ID" => 0, "NAME" => "", "LOGIN" => "");
+        }
 
         return $user;
     }
@@ -237,33 +268,40 @@ class OrderStatus
         if ($result === null) {
             $creator = static::getUserInfo($order->getField("CREATED_BY"));
 
-            if (strlen($order->getField("CREATED_BY")) > 0)
+            if ($order->getField("CREATED_BY") <> '') {
                 $creatorName = OrderEdit::getUserName($order->getField("CREATED_BY"), $order->getSiteId());
-            else
+            } else {
                 $creatorName = "";
+            }
 
-            if (strlen($order->getField("EMP_CANCELED_ID")) > 0)
+            if ($order->getField("EMP_CANCELED_ID") <> '') {
                 $cancelerName = OrderEdit::getUserName($order->getField("EMP_CANCELED_ID"), $order->getSiteId());
-            else
+            } else {
                 $cancelerName = "";
+            }
 
             $sourceName = "";
 
-            if (strlen($order->getField('XML_ID')) > 0) {
-                $dbRes = OrderTable::getList(array(
-                    'filter' => array(
-                        'ORDER_ID' => $order->getId()
-                    ),
-                    'select' => array('SOURCE_NAME' => 'TRADING_PLATFORM.NAME')
-                ));
+            if ($order->getField('XML_ID') <> '') {
+                $dbRes = OrderTable::getList(
+                    array(
+                        'filter' => array(
+                            'ORDER_ID' => $order->getId()
+                        ),
+                        'select' => array('SOURCE_NAME' => 'TRADING_PLATFORM.NAME')
+                    )
+                );
 
-                if ($tpOrder = $dbRes->fetch())
+                if ($tpOrder = $dbRes->fetch()) {
                     $sourceName = $tpOrder['SOURCE_NAME'];
+                }
             }
 
             $result = array(
                 "DATE_INSERT" => ($order->getDateInsert() instanceof Date) ? $order->getDateInsert()->toString() : '',
-                "DATE_UPDATE" => ($order->getField('DATE_UPDATE') instanceof Date) ? $order->getField('DATE_UPDATE')->toString() : '',
+                "DATE_UPDATE" => ($order->getField('DATE_UPDATE') instanceof Date) ? $order->getField(
+                    'DATE_UPDATE'
+                )->toString() : '',
                 "CREATOR_USER_NAME" => $creatorName,
                 "CREATOR_USER_ID" => $creator["ID"],
                 "STATUS_ID" => $order->getField('STATUS_ID'),
@@ -298,9 +336,16 @@ class OrderStatus
 
     public static function getScripts(Order $order, $userId)
     {
-        $langPhrases = array("SALE_ORDER_STATUS_SAVE", "SALE_ORDER_STATUS_CANCEL", "SALE_ORDER_STATUS_CHANGE_ERROR",
-            "SALE_ORDER_STATUS_CANCEL_ERROR", "SALE_ORDER_STATUS_CANCEL_CANCEL", "SALE_ORDER_STATUS_CHANGED_SUCCESS",
-            "SALE_ORDER_STATUS_CANCELED", "SALE_ORDER_STATUS_CANCELING");
+        $langPhrases = array(
+            "SALE_ORDER_STATUS_SAVE",
+            "SALE_ORDER_STATUS_CANCEL",
+            "SALE_ORDER_STATUS_CHANGE_ERROR",
+            "SALE_ORDER_STATUS_CANCEL_ERROR",
+            "SALE_ORDER_STATUS_CANCEL_CANCEL",
+            "SALE_ORDER_STATUS_CHANGED_SUCCESS",
+            "SALE_ORDER_STATUS_CANCELED",
+            "SALE_ORDER_STATUS_CANCELING"
+        );
 
         $result = '
 			<script type="text/javascript">
@@ -311,11 +356,16 @@ class OrderStatus
 							context: this
 						}
 					});
-					BX.Sale.Admin.OrderEditPage.statusesNames = ' . \CUtil::PhpToJSObject(self::getStatusesList($userId, $order->getField('STATUS_ID'))) . ';
-					BX.Sale.Admin.OrderEditPage.callFieldsUpdaters(' . \CUtil::PhpToJSObject(self::prepareData($order)) . ');';
+					BX.Sale.Admin.OrderEditPage.statusesNames = ' . \CUtil::PhpToJSObject(
+                self::getStatusesList($userId, $order->getField('STATUS_ID'))
+            ) . ';
+					BX.Sale.Admin.OrderEditPage.callFieldsUpdaters(' . \CUtil::PhpToJSObject(
+                self::prepareData($order)
+            ) . ');';
 
-        foreach ($langPhrases as $phrase)
+        foreach ($langPhrases as $phrase) {
             $result .= ' BX.message({' . $phrase . ': "' . \CUtil::JSEscape(Loc::getMessage($phrase)) . '"});';
+        }
 
         $result .= '});	</script>';
         return $result;
@@ -323,22 +373,26 @@ class OrderStatus
 
     public static function getStatusesList($userId, $orderStatus = false)
     {
-        if ($orderStatus === false)
+        if ($orderStatus === false) {
             $orderStatus = \Bitrix\Sale\OrderStatus::getInitialStatus();
+        }
 
         $result = \Bitrix\Sale\OrderStatus::getAllowedUserStatuses($userId, $orderStatus);
 
         if (empty($result[$orderStatus])) {
-            $dbRes = \Bitrix\Sale\Internals\StatusTable::getList(array(
-                'select' => array('ID', 'NAME' => 'Bitrix\Sale\Internals\StatusLangTable:STATUS.NAME'),
-                'filter' => array(
-                    '=Bitrix\Sale\Internals\StatusLangTable:STATUS.LID' => LANGUAGE_ID,
-                    '=ID' => $orderStatus
+            $dbRes = \Bitrix\Sale\Internals\StatusTable::getList(
+                array(
+                    'select' => array('ID', 'NAME' => 'Bitrix\Sale\Internals\StatusLangTable:STATUS.NAME'),
+                    'filter' => array(
+                        '=Bitrix\Sale\Internals\StatusLangTable:STATUS.LID' => LANGUAGE_ID,
+                        '=ID' => $orderStatus
+                    )
                 )
-            ));
+            );
 
-            if ($status = $dbRes->fetch())
+            if ($status = $dbRes->fetch()) {
                 $result = array($orderStatus => $status['NAME']) + $result;
+            }
         }
 
         return $result;
@@ -368,5 +422,24 @@ class OrderStatus
 					</tr>
 				</tbody>
 			</table>';
+    }
+
+    protected static function renderCreatorLink($data)
+    {
+        return '<a href="/bitrix/admin/user_edit.php?lang=' . LANGUAGE_ID . '&ID=' . $data["CREATOR_USER_ID"] . '">' . htmlspecialcharsbx(
+                $data["CREATOR_USER_NAME"]
+            ) . '</a>';
+    }
+
+    protected static function renderUserCanceledLink($data)
+    {
+        return '<a href="/bitrix/admin/user_edit.php?lang=' . LANGUAGE_ID . '&ID=' . $data["EMP_CANCELED_ID"] . '">' . htmlspecialcharsbx(
+                $data["EMP_CANCELED_NAME"]
+            ) . '</a>';
+    }
+
+    protected static function getJsObjName()
+    {
+        return 'BX.Sale.Admin.OrderEditPage';
     }
 }

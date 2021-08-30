@@ -27,8 +27,6 @@ class CZip implements IBXArchive
 
     const ReadBlockSize = 2048;
 
-    private static $bMbstring = false;
-
     public function __construct($pzipname)
     {
         $this->io = CBXVirtualIo::GetInstance();
@@ -38,9 +36,6 @@ class CZip implements IBXArchive
         $this->arPackedFilesData = array();
         $this->_errorReset();
         $this->fileSystemEncoding = $this->_getfileSystemEncoding();
-        self::$bMbstring = extension_loaded("mbstring");
-
-        return;
     }
 
     /**
@@ -59,15 +54,18 @@ class CZip implements IBXArchive
         $zipfile_tmp = $zipname_tmp = '';
 
         $isNewArchive = true;
-        if ($startFile != "" && is_file($this->io->GetPhysicalName($this->zipname)))
+        if ($startFile != "" && is_file($this->io->GetPhysicalName($this->zipname))) {
             $isNewArchive = false;
+        }
 
         if ($isNewArchive) {
-            if (!$this->_openFile("wb"))
+            if (!$this->_openFile("wb")) {
                 return false;
+            }
         } else {
-            if (!$this->_openFile("rb"))
+            if (!$this->_openFile("rb")) {
                 return false;
+            }
 
             // read the central directory
             if (($res = $this->_readEndCentralDir($arCentralDirInfo)) != 1) {
@@ -81,7 +79,14 @@ class CZip implements IBXArchive
             $zipname_tmp = GetDirPath($this->zipname) . uniqid('ziparc') . '.tmp';
             if (($zipfile_tmp = @fopen($this->io->GetPhysicalName($zipname_tmp), 'wb')) == 0) {
                 $this->_closeFile();
-                $this->_errorLog("ERR_READ_TMP", str_replace("#FILE_NAME#", removeDocRoot($zipname_tmp), GetMessage("MAIN_ZIP_ERR_READ_TMP")));
+                $this->_errorLog(
+                    "ERR_READ_TMP",
+                    str_replace(
+                        "#FILE_NAME#",
+                        removeDocRoot($zipname_tmp),
+                        GetMessage("MAIN_ZIP_ERR_READ_TMP")
+                    )
+                );
                 return $this->arErrors;
             }
 
@@ -108,12 +113,14 @@ class CZip implements IBXArchive
         $arFileList = &$this->_parseFileParams($arFileList);
 
         $arConvertedFileList = array();
-        foreach ($arFileList as $fullpath)
+        foreach ($arFileList as $fullpath) {
             $arConvertedFileList[] = $this->io->GetPhysicalName($fullpath);
+        }
 
         $packRes = null;
-        if (is_array($arFileList) && count($arFileList) > 0)
+        if (is_array($arFileList) && count($arFileList) > 0) {
             $packRes = $this->_processFiles($arConvertedFileList, $this->add_path, $this->remove_path);
+        }
 
         if ($isNewArchive) {
             //writing Central Directory
@@ -141,7 +148,6 @@ class CZip implements IBXArchive
                 unset($this->arHeaders);
                 return $res;
             }
-
         } else {
             //save the offset of the central dir
             $offset = @ftell($this->zipfile);
@@ -178,7 +184,12 @@ class CZip implements IBXArchive
             $size = @ftell($this->zipfile) - $offset;
 
             //make central directory footer
-            if (($res = $this->_writeCentralHeader($counter + $arCentralDirInfo['entries'], $size, $offset, $zip_comment)) != 1) {
+            if (($res = $this->_writeCentralHeader(
+                    $counter + $arCentralDirInfo['entries'],
+                    $size,
+                    $offset,
+                    $zip_comment
+                )) != 1) {
                 //clear file list
                 unset($this->arHeaders);
                 return $res;
@@ -197,10 +208,11 @@ class CZip implements IBXArchive
             $this->_renameTmpFile($zipname_tmp, $this->zipname);
         }
 
-        if ($isNewArchive && ($res === false))
+        if ($isNewArchive && ($res === false)) {
             $this->_cleanFile();
-        else
+        } else {
             $this->_closeFile();
+        }
 
         //if packing is not completed, remember last file
         if ($packRes === 'continue') {
@@ -233,23 +245,29 @@ class CZip implements IBXArchive
             return false;
         }
 
-        if (!is_array($arFileList) || count($arFileList) <= 0)
+        if (!is_array($arFileList) || count($arFileList) <= 0) {
             return true;
+        }
 
         $j = -1;
 
-        if (!isset($this->tempres))
+        if (!isset($this->tempres)) {
             $this->tempres = "started";
+        }
 
         //files and directory scan
         while ($j++ < count($arFileList) && ($this->tempres === "started")) {
             $filename = $arFileList[$j];
 
-            if (strlen($filename) <= 0)
+            if ($filename == '') {
                 continue;
+            }
 
             if (!file_exists($filename)) {
-                $this->arErrors[] = array("ERR_NO_FILE", str_replace("#FILE_NAME#", $filename, GetMessage("MAIN_ZIP_ERR_NO_FILE")));
+                $this->arErrors[] = array(
+                    "ERR_NO_FILE",
+                    str_replace("#FILE_NAME#", $filename, GetMessage("MAIN_ZIP_ERR_NO_FILE"))
+                );
                 continue;
             }
 
@@ -258,7 +276,7 @@ class CZip implements IBXArchive
                 $filename = str_replace("//", "/", $filename);
 
                 //jumping to startFile, if it's specified
-                if (strlen($this->startFile) != 0) {
+                if ($this->startFile <> '') {
                     if ($filename != $this->startFile) {
                         //don't pack - jump to the next file
                         continue;
@@ -271,12 +289,20 @@ class CZip implements IBXArchive
 
                 //check product permissions
                 if ($this->checkBXPermissions) {
-                    if (!CBXArchive::HasAccess($filename, true))
+                    if (!CBXArchive::HasAccess($filename, true)) {
                         continue;
+                    }
                 }
 
                 if ($this->_haveTime()) {
-                    if (!$this->_addFile($filename, $arFileHeaders, $this->add_path, $this->remove_path, array(), $arP)) {
+                    if (!$this->_addFile(
+                        $filename,
+                        $arFileHeaders,
+                        $this->add_path,
+                        $this->remove_path,
+                        array(),
+                        $arP
+                    )) {
                         //$arErrors is filled in the _addFile method
                         $this->tempres = false;
                     } else {
@@ -291,22 +317,27 @@ class CZip implements IBXArchive
             } //if directory
             else {
                 if (!($handle = opendir($filename))) {
-                    $this->arErrors[] = array("ERR_DIR_OPEN_FAIL", str_replace("#DIR_NAME#", $filename, GetMessage("MAIN_ZIP_ERR_DIR_OPEN_FAIL")));
+                    $this->arErrors[] = array(
+                        "ERR_DIR_OPEN_FAIL",
+                        str_replace("#DIR_NAME#", $filename, GetMessage("MAIN_ZIP_ERR_DIR_OPEN_FAIL"))
+                    );
                     continue;
                 }
 
                 if ($this->checkBXPermissions) {
-                    if (!CBXArchive::HasAccess($filename, false))
+                    if (!CBXArchive::HasAccess($filename, false)) {
                         continue;
+                    }
                 }
 
                 while (false !== ($dir = readdir($handle))) {
                     if ($dir != "." && $dir != "..") {
                         $arFileList_tmp = array();
-                        if ($filename != ".")
+                        if ($filename != ".") {
                             $arFileList_tmp[] = $filename . '/' . $dir;
-                        else
+                        } else {
                             $arFileList_tmp[] = $dir;
+                        }
 
                         $this->_processFiles($arFileList_tmp, $addPath, $removePath);
                     }
@@ -358,10 +389,12 @@ class CZip implements IBXArchive
         if ($result === 0) {
             return false;
         } //if there was no error, but we didn't extract any file ($this->replaceExistentFile = false)
-        else if ($result == array()) {
-            return true;
-        } else {
-            return $result;
+        else {
+            if ($result == array()) {
+                return true;
+            } else {
+                return $result;
+            }
         }
     }
 
@@ -372,23 +405,29 @@ class CZip implements IBXArchive
      */
     public function SetOptions($arOptions)
     {
-        if (array_key_exists("COMPRESS", $arOptions))
+        if (array_key_exists("COMPRESS", $arOptions)) {
             $this->compress = $arOptions["COMPRESS"] === true;
+        }
 
-        if (array_key_exists("ADD_PATH", $arOptions))
+        if (array_key_exists("ADD_PATH", $arOptions)) {
             $this->add_path = $this->io->GetPhysicalName(str_replace("\\", "/", strval($arOptions["ADD_PATH"])));
+        }
 
-        if (array_key_exists("REMOVE_PATH", $arOptions))
+        if (array_key_exists("REMOVE_PATH", $arOptions)) {
             $this->remove_path = $this->io->GetPhysicalName(str_replace("\\", "/", strval($arOptions["REMOVE_PATH"])));
+        }
 
-        if (array_key_exists("STEP_TIME", $arOptions))
+        if (array_key_exists("STEP_TIME", $arOptions)) {
             $this->step_time = floatval($arOptions["STEP_TIME"]);
+        }
 
-        if (array_key_exists("UNPACK_REPLACE", $arOptions))
+        if (array_key_exists("UNPACK_REPLACE", $arOptions)) {
             $this->replaceExistentFiles = $arOptions["UNPACK_REPLACE"] === true;
+        }
 
-        if (array_key_exists("CHECK_PERMISSIONS", $arOptions))
+        if (array_key_exists("CHECK_PERMISSIONS", $arOptions)) {
             $this->checkBXPermissions = $arOptions["CHECK_PERMISSIONS"] === true;
+        }
     }
 
     /**
@@ -428,26 +467,33 @@ class CZip implements IBXArchive
     {
         $this->_errorReset();
 
-        if ($arParams === 0)
+        if ($arParams === 0) {
             $arParams = array();
+        }
 
-        if ($this->_checkParams($arParams,
-                array('no_compression' => false,
+        if ($this->_checkParams(
+                $arParams,
+                array(
+                    'no_compression' => false,
                     'add_path' => "",
                     'remove_path' => "",
-                    'remove_all_path' => false)) != 1) {
+                    'remove_all_path' => false
+                )
+            ) != 1) {
             return 0;
         }
 
         $arResultList = array();
         if (is_array($arFileList)) {
             $res = $this->_createArchive($arFileList, $arResultList, $arParams);
-        } else if (is_string($arFileList)) {
-            $arTmpList = explode(",", $arFileList);
-            $res = $this->_createArchive($arTmpList, $arResultList, $arParams);
         } else {
-            $this->_errorLog("ERR_PARAM", GetMessage("MAIN_ZIP_ERR_PARAM"));
-            $res = "ERR_PARAM";
+            if (is_string($arFileList)) {
+                $arTmpList = explode(",", $arFileList);
+                $res = $this->_createArchive($arTmpList, $arResultList, $arParams);
+            } else {
+                $this->_errorLog("ERR_PARAM", GetMessage("MAIN_ZIP_ERR_PARAM"));
+                $res = "ERR_PARAM";
+            }
         }
 
         if ($res != 1) {
@@ -467,28 +513,35 @@ class CZip implements IBXArchive
     {
         $this->_errorReset();
 
-        if ($arParams === 0)
+        if ($arParams === 0) {
             $arParams = array();
+        }
 
-        if ($this->_checkParams($arParams,
-                array('no_compression' => false,
+        if ($this->_checkParams(
+                $arParams,
+                array(
+                    'no_compression' => false,
                     'add_path' => '',
                     'remove_path' => '',
                     'remove_all_path' => false,
                     'callback_pre_add' => '',
-                    'callback_post_add' => '')) != 1) {
+                    'callback_post_add' => ''
+                )
+            ) != 1) {
             return 0;
         }
 
         $arResultList = array();
         if (is_array($arFileList)) {
             $res = $this->_addData($arFileList, $arResultList, $arParams);
-        } else if (is_string($arFileList)) {
-            $arTmpList = explode(",", $arFileList);
-            $res = $this->_addData($arTmpList, $arResultList, $arParams);
         } else {
-            $this->_errorLog("ERR_PARAM_LIST", GetMessage("MAIN_ZIP_ERR_PARAM_LIST"));
-            $res = "ERR_PARAM_LIST";
+            if (is_string($arFileList)) {
+                $arTmpList = explode(",", $arFileList);
+                $res = $this->_addData($arTmpList, $arResultList, $arParams);
+            } else {
+                $this->_errorLog("ERR_PARAM_LIST", GetMessage("MAIN_ZIP_ERR_PARAM_LIST"));
+                $res = "ERR_PARAM_LIST";
+            }
         }
 
         if ($res != 1) {
@@ -506,8 +559,9 @@ class CZip implements IBXArchive
     {
         $this->_errorReset();
 
-        if (!$this->_checkFormat())
+        if (!$this->_checkFormat()) {
             return (0);
+        }
 
         $arTmpList = array();
         if ($this->_getFileList($arTmpList) != 1) {
@@ -527,14 +581,18 @@ class CZip implements IBXArchive
     {
         $this->_errorReset();
 
-        if (!$this->_checkFormat())
+        if (!$this->_checkFormat()) {
             return (0);
+        }
 
-        if ($arParams === 0)
+        if ($arParams === 0) {
             $arParams = array();
+        }
 
-        if ($this->_checkParams($arParams,
-                array('extract_as_string' => false,
+        if ($this->_checkParams(
+                $arParams,
+                array(
+                    'extract_as_string' => false,
                     'add_path' => '',
                     'remove_path' => '',
                     'remove_all_path' => false,
@@ -543,7 +601,9 @@ class CZip implements IBXArchive
                     'set_chmod' => 0,
                     'by_name' => '',
                     'by_index' => '',
-                    'by_preg' => '')) != 1) {
+                    'by_preg' => ''
+                )
+            ) != 1) {
             return 0;
         }
 
@@ -565,11 +625,13 @@ class CZip implements IBXArchive
     {
         $this->_errorReset();
 
-        if (!$this->_checkFormat())
+        if (!$this->_checkFormat()) {
             return (0);
+        }
 
-        if ($this->_checkParams($arParams, array('by_name' => '', 'by_index' => '', 'by_preg' => '')) != 1)
+        if ($this->_checkParams($arParams, array('by_name' => '', 'by_index' => '', 'by_preg' => '')) != 1) {
             return 0;
+        }
 
         //at least one rule should be set
         if (($arParams['by_name'] == '') && ($arParams['by_index'] == '') && ($arParams['by_preg'] == '')) {
@@ -594,8 +656,9 @@ class CZip implements IBXArchive
     {
         $this->_errorReset();
 
-        if (!$this->_checkFormat())
+        if (!$this->_checkFormat()) {
             return (0);
+        }
 
         $arProperties = array();
         $arProperties['comment'] = '';
@@ -604,14 +667,22 @@ class CZip implements IBXArchive
 
         if (@is_file($this->io->GetPhysicalName($this->zipname))) {
             if (($this->zipfile = @fopen($this->io->GetPhysicalName($this->zipname), 'rb')) == 0) {
-                $this->_errorLog("ERR_READ", str_replace("#FILE_NAME#", removeDocRoot($this->zipname), GetMessage("MAIN_ZIP_ERR_READ")));
+                $this->_errorLog(
+                    "ERR_READ",
+                    str_replace(
+                        "#FILE_NAME#",
+                        removeDocRoot($this->zipname),
+                        GetMessage("MAIN_ZIP_ERR_READ")
+                    )
+                );
                 return 0;
             }
 
             //read central directory info
             $arCentralDirInfo = array();
-            if (($res = $this->_readEndCentralDir($arCentralDirInfo)) != 1)
+            if (($res = $this->_readEndCentralDir($arCentralDirInfo)) != 1) {
                 return 0;
+            }
 
             $this->_closeFile();
 
@@ -631,12 +702,22 @@ class CZip implements IBXArchive
         $this->_errorReset();
 
         if (!is_file($this->io->GetPhysicalName($this->zipname))) {
-            $this->_errorLog("ERR_MISSING_FILE", str_replace("#FILE_NAME#", removeDocRoot($this->zipname), GetMessage("MAIN_ZIP_ERR_MISSING_FILE")));
+            $this->_errorLog(
+                "ERR_MISSING_FILE",
+                str_replace(
+                    "#FILE_NAME#",
+                    removeDocRoot($this->zipname),
+                    GetMessage("MAIN_ZIP_ERR_MISSING_FILE")
+                )
+            );
             return (false);
         }
 
         if (!is_readable($this->io->GetPhysicalName($this->zipname))) {
-            $this->_errorLog("ERR_READ", str_replace("#FILE_NAME#", removeDocRoot($this->zipname), GetMessage("MAIN_ZIP_ERR_READ")));
+            $this->_errorLog(
+                "ERR_READ",
+                str_replace("#FILE_NAME#", removeDocRoot($this->zipname), GetMessage("MAIN_ZIP_ERR_READ"))
+            );
             return (false);
         }
 
@@ -650,8 +731,9 @@ class CZip implements IBXArchive
         $removeDir = $arParams['remove_path'];
         $removeAllDir = $arParams['remove_all_path'];
 
-        if (($res = $this->_openFile('wb')) != 1)
+        if (($res = $this->_openFile('wb')) != 1) {
             return $res;
+        }
 
         $res = $this->_addList($arFilesList, $arResultList, $addDir, $removeDir, $removeAllDir, $arParams);
 
@@ -666,13 +748,16 @@ class CZip implements IBXArchive
         $removeDir = $arParams['remove_path'];
         $removeAllDir = $arParams['remove_all_path'];
 
-        if ((!is_file($this->io->GetPhysicalName($this->zipname))) || (filesize($this->io->GetPhysicalName($this->zipname)) == 0)) {
+        if ((!is_file($this->io->GetPhysicalName($this->zipname))) || (filesize(
+                    $this->io->GetPhysicalName($this->zipname)
+                ) == 0)) {
             $res = $this->_createArchive($arFilesList, $arResultList, $arParams);
             return $res;
         }
 
-        if (($res = $this->_openFile('rb')) != 1)
+        if (($res = $this->_openFile('rb')) != 1) {
             return $res;
+        }
 
         $arCentralDirInfo = array();
         if (($res = $this->_readEndCentralDir($arCentralDirInfo)) != 1) {
@@ -686,7 +771,14 @@ class CZip implements IBXArchive
 
         if (($zipfile_tmp = @fopen($this->io->GetPhysicalName($zipname_tmp), 'wb')) == 0) {
             $this->_closeFile();
-            $this->_errorLog("ERR_READ_TMP", str_replace("#FILE_NAME#", removeDocRoot($zipname_tmp), GetMessage("MAIN_ZIP_ERR_READ_TMP")));
+            $this->_errorLog(
+                "ERR_READ_TMP",
+                str_replace(
+                    "#FILE_NAME#",
+                    removeDocRoot($zipname_tmp),
+                    GetMessage("MAIN_ZIP_ERR_READ_TMP")
+                )
+            );
             return $this->arErrors;
         }
 
@@ -707,9 +799,14 @@ class CZip implements IBXArchive
         $zipfile_tmp = $tmp_id;
 
         $arHeaders = array();
-        if (($res = $this->_addFileList($arFilesList, $arHeaders,
-                $addDir, $removeDir,
-                $removeAllDir, $arParams)) != 1) {
+        if (($res = $this->_addFileList(
+                $arFilesList,
+                $arHeaders,
+                $addDir,
+                $removeDir,
+                $removeAllDir,
+                $arParams
+            )) != 1) {
             fclose($zipfile_tmp);
             $this->_closeFile();
             @unlink($this->io->GetPhysicalName($zipname_tmp));
@@ -751,7 +848,12 @@ class CZip implements IBXArchive
         $size = @ftell($this->zipfile) - $offset;
 
         //make central dir footer
-        if (($res = $this->_writeCentralHeader($counter + $arCentralDirInfo['entries'], $size, $offset, $zip_comment)) != 1) {
+        if (($res = $this->_writeCentralHeader(
+                $counter + $arCentralDirInfo['entries'],
+                $size,
+                $offset,
+                $zip_comment
+            )) != 1) {
             //reset files list
             unset($arHeaders);
             return $res;
@@ -776,14 +878,28 @@ class CZip implements IBXArchive
         $res = 1;
 
         if ($this->zipfile != 0) {
-            $this->_errorLog("ERR_OPEN", str_replace("#FILE_NAME#", removeDocRoot($this->zipname), GetMessage("MAIN_ZIP_ERR_READ_OPEN")));
+            $this->_errorLog(
+                "ERR_OPEN",
+                str_replace(
+                    "#FILE_NAME#",
+                    removeDocRoot($this->zipname),
+                    GetMessage("MAIN_ZIP_ERR_READ_OPEN")
+                )
+            );
             return $this->arErrors;
         }
 
         $this->_checkDirPath($this->zipname);
 
         if (($this->zipfile = @fopen($this->io->GetPhysicalName($this->zipname), $mode)) == 0) {
-            $this->_errorLog("ERR_READ_MODE", str_replace(array("#FILE_NAME#", "#MODE#"), array(removeDocRoot($this->zipname), $mode), GetMessage("MAIN_ZIP_ERR_READ_MODE")));
+            $this->_errorLog(
+                "ERR_READ_MODE",
+                str_replace(
+                    array("#FILE_NAME#", "#MODE#"),
+                    array(removeDocRoot($this->zipname), $mode),
+                    GetMessage("MAIN_ZIP_ERR_READ_MODE")
+                )
+            );
             return $this->arErrors;
         }
 
@@ -793,8 +909,9 @@ class CZip implements IBXArchive
     private function _closeFile()
     {
         $res = 1;
-        if ($this->zipfile != 0)
+        if ($this->zipfile != 0) {
             @fclose($this->zipfile);
+        }
         $this->zipfile = 0;
         return $res;
     }
@@ -802,7 +919,14 @@ class CZip implements IBXArchive
     private function _addList($arFilesList, &$arResultList, $addDir, $removeDir, $removeAllDir, &$arParams)
     {
         $arHeaders = array();
-        if (($res = $this->_addFileList($arFilesList, $arHeaders, $addDir, $removeDir, $removeAllDir, $arParams)) != 1) {
+        if (($res = $this->_addFileList(
+                $arFilesList,
+                $arHeaders,
+                $addDir,
+                $removeDir,
+                $removeAllDir,
+                $arParams
+            )) != 1) {
             return $res;
         }
 
@@ -850,11 +974,20 @@ class CZip implements IBXArchive
             }
 
             if (!file_exists($this->io->GetPhysicalName($filename))) {
-                $this->_errorLog("ERR_MISSING_FILE", str_replace("#FILE_NAME#", removeDocRoot($filename), GetMessage("MAIN_ZIP_ERR_MISSING_FILE")));
+                $this->_errorLog(
+                    "ERR_MISSING_FILE",
+                    str_replace(
+                        "#FILE_NAME#",
+                        removeDocRoot($filename),
+                        GetMessage("MAIN_ZIP_ERR_MISSING_FILE")
+                    )
+                );
                 return $this->arErrors;
             }
 
-            if ((is_file($this->io->GetPhysicalName($filename))) || ((is_dir($this->io->GetPhysicalName($filename))) && !$removeAllDir)) {
+            if ((is_file($this->io->GetPhysicalName($filename))) || ((is_dir(
+                        $this->io->GetPhysicalName($filename)
+                    )) && !$removeAllDir)) {
                 if (($res = $this->_addFile($filename, $header, $addDir, $removeDir, $removeAllDir, $arParams)) != 1) {
                     return $res;
                 }
@@ -879,7 +1012,14 @@ class CZip implements IBXArchive
                     }
 
                     if (is_file($this->io->GetPhysicalName($path . $hitem))) {
-                        if (($res = $this->_addFile($path . $hitem, $header, $addDir, $removeDir, $removeAllDir, $arParams)) != 1) {
+                        if (($res = $this->_addFile(
+                                $path . $hitem,
+                                $header,
+                                $addDir,
+                                $removeDir,
+                                $removeAllDir,
+                                $arParams
+                            )) != 1) {
                             return $res;
                         }
                         //save file info
@@ -888,7 +1028,14 @@ class CZip implements IBXArchive
                         //should be ana array as a parameter
                         $arTmpList[0] = $path . $hitem;
 
-                        $res = $this->_addFileList($arTmpList, $arResultList, $addDir, $removeDir, $removeAllDir, $arParams);
+                        $res = $this->_addFileList(
+                            $arTmpList,
+                            $arResultList,
+                            $addDir,
+                            $removeDir,
+                            $removeAllDir,
+                            $arParams
+                        );
                         $count = sizeof($arResultList);
                     }
                 }
@@ -918,34 +1065,35 @@ class CZip implements IBXArchive
         //remove the path
         if ($removeAllDir) {
             $storedFilename = basename($filename);
-        } else if ($removeDir != "") {
-
-            if (substr($removeDir, -1) != '/') {
-                $removeDir .= "/";
-            }
-
-            if ((substr($filename, 0, 2) == "./") || (substr($removeDir, 0, 2) == "./")) {
-                if ((substr($filename, 0, 2) == "./") && (substr($removeDir, 0, 2) != "./")) {
-                    $removeDir = "./" . $removeDir;
+        } else {
+            if ($removeDir != "") {
+                if (mb_substr($removeDir, -1) != '/') {
+                    $removeDir .= "/";
                 }
-                if ((substr($filename, 0, 2) != "./") && (substr($removeDir, 0, 2) == "./")) {
-                    $removeDir = substr($removeDir, 2);
+
+                if ((mb_substr($filename, 0, 2) == "./") || (mb_substr($removeDir, 0, 2) == "./")) {
+                    if ((mb_substr($filename, 0, 2) == "./") && (mb_substr($removeDir, 0, 2) != "./")) {
+                        $removeDir = "./" . $removeDir;
+                    }
+                    if ((mb_substr($filename, 0, 2) != "./") && (mb_substr($removeDir, 0, 2) == "./")) {
+                        $removeDir = mb_substr($removeDir, 2);
+                    }
                 }
-            }
 
-            $incl = $this->_containsPath($removeDir, $filename);
+                $incl = $this->_containsPath($removeDir, $filename);
 
-            if ($incl > 0) {
-                if ($incl == 2) {
-                    $storedFilename = "";
-                } else {
-                    $storedFilename = substr($filename, strlen($removeDir));
+                if ($incl > 0) {
+                    if ($incl == 2) {
+                        $storedFilename = "";
+                    } else {
+                        $storedFilename = mb_substr($filename, mb_strlen($removeDir));
+                    }
                 }
             }
         }
 
         if ($addDir != "") {
-            if (substr($addDir, -1) == "/") {
+            if (mb_substr($addDir, -1) == "/") {
                 $storedFilename = $addDir . $storedFilename;
             } else {
                 $storedFilename = $addDir . "/" . $storedFilename;
@@ -966,8 +1114,14 @@ class CZip implements IBXArchive
         $arHeader['external'] = (is_file($filename) ? 0xFE49FFE0 : 0x41FF0010);
         $arHeader['extra'] = '';
         $arHeader['extra_len'] = 0;
-        $arHeader['filename'] = \Bitrix\Main\Text\Encoding::convertEncoding($filename, $this->fileSystemEncoding, "cp866");
-        $arHeader['filename_len'] = self::$bMbstring ? mb_strlen(\Bitrix\Main\Text\Encoding::convertEncoding($filename, $this->fileSystemEncoding, "cp866"), "latin1") : strlen(\Bitrix\Main\Text\Encoding::convertEncoding($filename, $this->fileSystemEncoding, "cp866"));
+        $arHeader['filename'] = \Bitrix\Main\Text\Encoding::convertEncoding(
+            $filename,
+            $this->fileSystemEncoding,
+            "cp866"
+        );
+        $arHeader['filename_len'] = strlen(
+            \Bitrix\Main\Text\Encoding::convertEncoding($filename, $this->fileSystemEncoding, "cp866")
+        );
         $arHeader['flag'] = 0;
         $arHeader['index'] = -1;
         $arHeader['internal'] = 0;
@@ -975,7 +1129,11 @@ class CZip implements IBXArchive
         $arHeader['offset'] = 0;
         $arHeader['size'] = filesize($filename);
         $arHeader['status'] = 'ok';
-        $arHeader['stored_filename'] = \Bitrix\Main\Text\Encoding::convertEncoding($storedFilename, $this->fileSystemEncoding, "cp866");
+        $arHeader['stored_filename'] = \Bitrix\Main\Text\Encoding::convertEncoding(
+            $storedFilename,
+            $this->fileSystemEncoding,
+            "cp866"
+        );
         $arHeader['version'] = 20;
         $arHeader['version_extracted'] = 10;
 
@@ -1005,7 +1163,7 @@ class CZip implements IBXArchive
         }
 
         //check path length
-        if (strlen($arHeader['stored_filename']) > 0xFF) {
+        if (mb_strlen($arHeader['stored_filename']) > 0xFF) {
             $arHeader['status'] = 'filename_too_long';
         }
 
@@ -1014,7 +1172,14 @@ class CZip implements IBXArchive
             if (is_file($filename)) {
                 //reading source
                 if (($file = @fopen($filename, "rb")) == 0) {
-                    $this->_errorLog("ERR_READ", str_replace("#FILE_NAME#", removeDocRoot($filename), GetMessage("MAIN_ZIP_ERR_READ")));
+                    $this->_errorLog(
+                        "ERR_READ",
+                        str_replace(
+                            "#FILE_NAME#",
+                            removeDocRoot($filename),
+                            GetMessage("MAIN_ZIP_ERR_READ")
+                        )
+                    );
                     return $this->arErrors;
                 }
 
@@ -1032,7 +1197,7 @@ class CZip implements IBXArchive
                 }
 
                 //set header params
-                $arHeader['compressed_size'] = self::$bMbstring ? mb_strlen($compressedContent, "latin1") : strlen($compressedContent);
+                $arHeader['compressed_size'] = strlen($compressedContent);
                 $arHeader['compression'] = 8;
 
                 //generate header
@@ -1056,8 +1221,9 @@ class CZip implements IBXArchive
                 $arHeader['external'] = 0x41FF0010;
 
                 //generate header
-                if (($res = $this->_writeFileHeader($arHeader)) != 1)
+                if (($res = $this->_writeFileHeader($arHeader)) != 1) {
                     return $res;
+                }
             }
         }
 
@@ -1070,8 +1236,9 @@ class CZip implements IBXArchive
             //callback call
             eval('$res = ' . $arParams['callback_post_add'] . '(\'callback_post_add\', $arLocalHeader);');
 
-            if ($res == 0)
-                $res = 1; //ignored
+            if ($res == 0) {
+                $res = 1;
+            } //ignored
         }
 
         return $res;
@@ -1094,7 +1261,8 @@ class CZip implements IBXArchive
         // $arHeader["stored_filename"] = "12345678.gif";
 
         //pack data
-        $binary_data = pack("VvvvvvVVVvv",
+        $binary_data = pack(
+            "VvvvvvVVVvv",
             0x04034b50,
             $arHeader['version'],
             $arHeader['flag'],
@@ -1104,7 +1272,7 @@ class CZip implements IBXArchive
             $arHeader['crc'],
             $arHeader['compressed_size'],
             $arHeader['size'],
-            self::$bMbstring ? mb_strlen($arHeader['stored_filename'], 'latin1') : strlen($arHeader['stored_filename']),
+            strlen($arHeader['stored_filename']),
             $arHeader['extra_len']
         );
 
@@ -1112,10 +1280,12 @@ class CZip implements IBXArchive
         fputs($this->zipfile, $binary_data, 30);
 
         //write the variable fields
-        if (strlen($arHeader['stored_filename']) != 0)
-            fputs($this->zipfile, $arHeader['stored_filename'], (self::$bMbstring ? mb_strlen($arHeader['stored_filename'], 'latin1') : strlen($arHeader['stored_filename'])));
-        if ($arHeader['extra_len'] != 0)
+        if ($arHeader['stored_filename'] <> '') {
+            fputs($this->zipfile, $arHeader['stored_filename'], strlen($arHeader['stored_filename']));
+        }
+        if ($arHeader['extra_len'] != 0) {
             fputs($this->zipfile, $arHeader['extra'], $arHeader['extra_len']);
+        }
 
         return $res;
     }
@@ -1132,7 +1302,8 @@ class CZip implements IBXArchive
         $mdate = (($date['year'] - 1980) << 9) + ($date['mon'] << 5) + $date['mday'];
 
         //pack data
-        $binary_data = pack("VvvvvvvVVVvvvvvVV",
+        $binary_data = pack(
+            "VvvvvvvVVVvvvvvVV",
             0x02014b50,
             $arHeader['version'],
             $arHeader['version_extracted'],
@@ -1143,20 +1314,21 @@ class CZip implements IBXArchive
             $arHeader['crc'],
             $arHeader['compressed_size'],
             $arHeader['size'],
-            self::$bMbstring ? mb_strlen($arHeader['stored_filename'], 'latin1') : strlen($arHeader['stored_filename']),
+            strlen($arHeader['stored_filename']),
             $arHeader['extra_len'],
             $arHeader['comment_len'],
             $arHeader['disk'],
             $arHeader['internal'],
             $arHeader['external'],
-            $arHeader['offset']);
+            $arHeader['offset']
+        );
 
         //write 42 byt4es of the header in the zip file
         fputs($this->zipfile, $binary_data, 46);
 
         //variable fields
-        if (strlen($arHeader['stored_filename']) != 0) {
-            fputs($this->zipfile, $arHeader['stored_filename'], (self::$bMbstring ? mb_strlen($arHeader['stored_filename'], 'latin1') : strlen($arHeader['stored_filename'])));
+        if ($arHeader['stored_filename'] <> '') {
+            fputs($this->zipfile, $arHeader['stored_filename'], strlen($arHeader['stored_filename']));
         }
         if ($arHeader['extra_len'] != 0) {
             fputs($this->zipfile, $arHeader['extra'], $arHeader['extra_len']);
@@ -1173,14 +1345,25 @@ class CZip implements IBXArchive
         $res = 1;
 
         //packed data
-        $binary_data = pack("VvvvvVVv", 0x06054b50, 0, 0, $entriesNumber, $entriesNumber, $blockSize, $offset, strlen($comment));
+        $binary_data = pack(
+            "VvvvvVVv",
+            0x06054b50,
+            0,
+            0,
+            $entriesNumber,
+            $entriesNumber,
+            $blockSize,
+            $offset,
+            mb_strlen($comment)
+        );
 
         //22 bytes of the header in the zip file
         fputs($this->zipfile, $binary_data, 22);
 
         //variable fields
-        if (strlen($comment) != 0)
-            fputs($this->zipfile, $comment, strlen($comment));
+        if ($comment <> '') {
+            fputs($this->zipfile, $comment, mb_strlen($comment));
+        }
 
         return $res;
     }
@@ -1188,14 +1371,18 @@ class CZip implements IBXArchive
     private function _getFileList(&$arFilesList)
     {
         if (($this->zipfile = @fopen($this->io->GetPhysicalName($this->zipname), 'rb')) == 0) {
-            $this->_errorLog("ERR_READ", str_replace("#FILE_NAME#", removeDocRoot($this->zipname), GetMessage("MAIN_ZIP_ERR_READ")));
+            $this->_errorLog(
+                "ERR_READ",
+                str_replace("#FILE_NAME#", removeDocRoot($this->zipname), GetMessage("MAIN_ZIP_ERR_READ"))
+            );
             return $this->arErrors;
         }
 
         //get central directory information
         $arCentralDirInfo = array();
-        if (($res = $this->_readEndCentralDir($arCentralDirInfo)) != 1)
+        if (($res = $this->_readEndCentralDir($arCentralDirInfo)) != 1) {
             return $res;
+        }
 
         //go the the beginning of the central directory
         @rewind($this->zipfile);
@@ -1248,25 +1435,30 @@ class CZip implements IBXArchive
         $removeAllPath = $arParams['remove_all_path'];
 
         //path checking
-        if (($path == "") || ((substr($path, 0, 1) != "/") && (substr($path, 0, 3) != "../") && (substr($path, 1, 2) != ":/"))) {
+        if (($path == "") || ((mb_substr($path, 0, 1) != "/") && (mb_substr($path, 0, 3) != "../") && (mb_substr(
+                        $path,
+                        1,
+                        2
+                    ) != ":/"))) {
             $path = "./" . $path;
         }
 
         //reduce the path last (and duplicated) '/'
         if (($path != "./") && ($path != "/")) {
             // checking path end '/'
-            while (substr($path, -1) == "/") {
-                $path = substr($path, 0, strlen($path) - 1);
+            while (mb_substr($path, -1) == "/") {
+                $path = mb_substr($path, 0, mb_strlen($path) - 1);
             }
         }
 
         //path should end with the /
-        if (($removePath != "") && (substr($removePath, -1) != '/')) {
+        if (($removePath != "") && (mb_substr($removePath, -1) != '/')) {
             $removePath .= '/';
         }
 
-        if (($res = $this->_openFile('rb')) != 1)
+        if (($res = $this->_openFile('rb')) != 1) {
             return $res;
+        }
 
         //reading central directory informations
         $arCentralDirInfo = array();
@@ -1306,49 +1498,59 @@ class CZip implements IBXArchive
             $extract = false;
 
             //look for the specific extract rules
-            if ((isset($arParams['by_name'])) && ($arParams['by_name'] != 0)) {
+            if ((isset($arParams['by_name'])) && is_array($arParams['by_name'])) {
                 //is filename in the list
-                for ($j = 0; ($j < sizeof($arParams['by_name'])) && (!$extract); $j++) {
+                $count = count($arParams['by_name']);
+                for ($j = 0; $j < $count && !$extract; $j++) {
                     //is directory
-                    if (substr($arParams['by_name'][$j], -1) == "/") {
+                    if (mb_substr($arParams['by_name'][$j], -1) == "/") {
                         //is dir in the filename path
-                        if ((strlen($header['stored_filename']) > strlen($arParams['by_name'][$j]))
-                            && (substr($header['stored_filename'], 0, strlen($arParams['by_name'][$j])) == $arParams['by_name'][$j])) {
+                        if ((mb_strlen($header['stored_filename']) > mb_strlen($arParams['by_name'][$j]))
+                            && (mb_substr(
+                                    $header['stored_filename'],
+                                    0,
+                                    mb_strlen($arParams['by_name'][$j])
+                                ) == $arParams['by_name'][$j])) {
                             $extract = true;
                         }
-                    } else if ($header['stored_filename'] == $arParams['by_name'][$j]) {
-                        $extract = true;
-                    }
-                }
-            } else if ((isset($arParams['by_preg'])) && ($arParams['by_preg'] != "")) {
-                //extract by preg rule
-                if (preg_match($arParams['by_preg'], $header['stored_filename'])) {
-                    $extract = true;
-                }
-            } else if ((isset($arParams['by_index'])) && ($arParams['by_index'] != 0)) {
-                //extract by index rule (if index is in the list)
-                for ($j = $j_start; ($j < sizeof($arParams['by_index'])) && (!$extract); $j++) {
-                    if (($i >= $arParams['by_index'][$j]['start']) && ($i <= $arParams['by_index'][$j]['end'])) {
-                        $extract = true;
-                    }
-
-                    if ($i >= $arParams['by_index'][$j]['end']) {
-                        $j_start = $j + 1;
-                    }
-
-                    if ($arParams['by_index'][$j]['start'] > $i) {
-                        break;
+                    } else {
+                        if ($header['stored_filename'] == $arParams['by_name'][$j]) {
+                            $extract = true;
+                        }
                     }
                 }
             } else {
-                $extract = true;
+                if ((isset($arParams['by_preg'])) && ($arParams['by_preg'] != "")) {
+                    //extract by preg rule
+                    if (preg_match($arParams['by_preg'], $header['stored_filename'])) {
+                        $extract = true;
+                    }
+                } else {
+                    if ((isset($arParams['by_index'])) && is_array($arParams['by_index'])) {
+                        //extract by index rule (if index is in the list)
+                        for ($j = $j_start, $n = count($arParams['by_index']); $j < $n && !$extract; $j++) {
+                            if (($i >= $arParams['by_index'][$j]['start']) && ($i <= $arParams['by_index'][$j]['end'])) {
+                                $extract = true;
+                            }
+
+                            if ($i >= $arParams['by_index'][$j]['end']) {
+                                $j_start = $j + 1;
+                            }
+
+                            if ($arParams['by_index'][$j]['start'] > $i) {
+                                break;
+                            }
+                        }
+                    } else {
+                        $extract = true;
+                    }
+                }
             }
 
             // extract file
             if ($extract) {
                 @rewind($this->zipfile);
                 if (@fseek($this->zipfile, $header['offset'])) {
-
                     $this->_closeFile();
                     $this->_errorLog("ERR_INVALID_ARCHIVE_ZIP", GetMessage("MAIN_ZIP_ERR_INVALID_ARCHIVE_ZIP"));
                     return $this->arErrors;
@@ -1392,12 +1594,21 @@ class CZip implements IBXArchive
 
     private function _extractFile(&$arEntry, $path, $removePath, $removeAllPath, &$arParams)
     {
-        if (($res = $this->_readFileHeader($header)) != 1)
+        if (($res = $this->_readFileHeader($header)) != 1) {
             return $res;
+        }
         //to be checked: file header should be coherent with $arEntry info
 
-        $arEntry["filename"] = \Bitrix\Main\Text\Encoding::convertEncoding($arEntry["filename"], "cp866", $this->fileSystemEncoding);
-        $arEntry["stored_filename"] = \Bitrix\Main\Text\Encoding::convertEncoding($arEntry["stored_filename"], "cp866", $this->fileSystemEncoding);
+        $arEntry["filename"] = \Bitrix\Main\Text\Encoding::convertEncoding(
+            $arEntry["filename"],
+            "cp866",
+            $this->fileSystemEncoding
+        );
+        $arEntry["stored_filename"] = \Bitrix\Main\Text\Encoding::convertEncoding(
+            $arEntry["stored_filename"],
+            "cp866",
+            $this->fileSystemEncoding
+        );
 
         //protecting against ../ etc in file path
         //only absolute path should be in the $arEntry
@@ -1406,23 +1617,26 @@ class CZip implements IBXArchive
 
         if ($removeAllPath == true) {
             $arEntry['filename'] = basename($arEntry['filename']);
-        } else if ($removePath != "") {
-            if ($this->_containsPath($removePath, $arEntry['filename']) == 2) {
-                //change file status
-                $arEntry['status'] = "filtered";
-                return $res;
-            }
+        } else {
+            if ($removePath != "") {
+                if ($this->_containsPath($removePath, $arEntry['filename']) == 2) {
+                    //change file status
+                    $arEntry['status'] = "filtered";
+                    return $res;
+                }
 
-            $removePath_size = strlen($removePath);
-            if (substr($arEntry['filename'], 0, $removePath_size) == $removePath) {
-                //remove path
-                $arEntry['filename'] = substr($arEntry['filename'], $removePath_size);
+                $removePath_size = mb_strlen($removePath);
+                if (mb_substr($arEntry['filename'], 0, $removePath_size) == $removePath) {
+                    //remove path
+                    $arEntry['filename'] = mb_substr($arEntry['filename'], $removePath_size);
+                }
             }
         }
 
         //making absolute path to the extracted file out of filename stored in the zip header and passed extracting path
-        if ($path != '')
+        if ($path != '') {
             $arEntry['filename'] = $path . "/" . $arEntry['filename'];
+        }
 
         //pre-extract callback
         if ((isset($arParams['callback_pre_extract']))
@@ -1459,22 +1673,36 @@ class CZip implements IBXArchive
                 if (file_exists($arEntry['filename'])) {
                     if (is_dir($arEntry['filename'])) {
                         $arEntry['status'] = "already_a_directory";
-                    } else if (!is_writeable($arEntry['filename'])) {
-                        $arEntry['status'] = "write_protected";
-                    } else if ((filemtime($arEntry['filename']) > $arEntry['mtime']) && (!$this->replaceExistentFiles)) {
-                        $arEntry['status'] = "newer_exist";
+                    } else {
+                        if (!is_writeable($arEntry['filename'])) {
+                            $arEntry['status'] = "write_protected";
+                        } else {
+                            if ((filemtime(
+                                        $arEntry['filename']
+                                    ) > $arEntry['mtime']) && (!$this->replaceExistentFiles)) {
+                                $arEntry['status'] = "newer_exist";
+                            }
+                        }
                     }
                 } else {
                     //check the directory availability and create it if necessary
-                    if ((($arEntry['external'] & 0x00000010) == 0x00000010) || (substr($arEntry['filename'], -1) == '/')) {
+                    if ((($arEntry['external'] & 0x00000010) == 0x00000010) || (mb_substr(
+                                $arEntry['filename'],
+                                -1
+                            ) == '/')) {
                         $checkDir = $arEntry['filename'];
-                    } else if (!strstr($arEntry['filename'], "/")) {
-                        $checkDir = "";
                     } else {
-                        $checkDir = dirname($arEntry['filename']);
+                        if (!mb_strstr($arEntry['filename'], "/")) {
+                            $checkDir = "";
+                        } else {
+                            $checkDir = dirname($arEntry['filename']);
+                        }
                     }
 
-                    if (($res = $this->_checkDir($checkDir, (($arEntry['external'] & 0x00000010) == 0x00000010))) != 1) {
+                    if (($res = $this->_checkDir(
+                            $checkDir,
+                            (($arEntry['external'] & 0x00000010) == 0x00000010)
+                        )) != 1) {
                         //change file status
                         $arEntry['status'] = "path_creation_fail";
 
@@ -1554,8 +1782,9 @@ class CZip implements IBXArchive
     {
         //reading file header
         $header = array();
-        if (($res = $this->_readFileHeader($header)) != 1)
+        if (($res = $this->_readFileHeader($header)) != 1) {
             return $res;
+        }
 
         //to be checked: file header should be coherent with the $arEntry info
 
@@ -1595,24 +1824,31 @@ class CZip implements IBXArchive
         $binary_data = fread($this->zipfile, 26);
 
         //look for invalid block size
-        if ((self::$bMbstring ? mb_strlen($binary_data, "latin1") : strlen($binary_data)) != 26) {
+        if (strlen($binary_data) != 26) {
             $arHeader['filename'] = "";
             $arHeader['status'] = "invalid_header";
 
-            $this->_errorLog("ERR_BAD_BLOCK_SIZE", str_replace("#BLOCK_SIZE#", $binary_data, GetMessage("MAIN_ZIP_ERR_BLOCK_SIZE")));
+            $this->_errorLog(
+                "ERR_BAD_BLOCK_SIZE",
+                str_replace("#BLOCK_SIZE#", $binary_data, GetMessage("MAIN_ZIP_ERR_BLOCK_SIZE"))
+            );
             return $this->arErrors;
         }
 
         //extract values
-        $data = unpack('vversion/vflag/vcompression/vmtime/vmdate/Vcrc/Vcompressed_size/Vsize/vfilename_len/vextra_len', $binary_data);
+        $data = unpack(
+            'vversion/vflag/vcompression/vmtime/vmdate/Vcrc/Vcompressed_size/Vsize/vfilename_len/vextra_len',
+            $binary_data
+        );
 
         $arHeader['filename'] = fread($this->zipfile, $data['filename_len']);
 
         //extra fields
-        if ($data['extra_len'] != 0)
+        if ($data['extra_len'] != 0) {
             $arHeader['extra'] = fread($this->zipfile, $data['extra_len']);
-        else
+        } else {
             $arHeader['extra'] = '';
+        }
 
         //extract properties
         $arHeader['compression'] = $data['compression'];
@@ -1638,7 +1874,6 @@ class CZip implements IBXArchive
 
             //unix date format
             $arHeader['mtime'] = mktime($hour, $min, $sec, $month, $day, $year);
-
         } else {
             $arHeader['mtime'] = time();
         }
@@ -1669,34 +1904,43 @@ class CZip implements IBXArchive
         $binary_data = fread($this->zipfile, 42);
 
         //if block size is not valid
-        if ((self::$bMbstring ? mb_strlen($binary_data, "latin1") : strlen($binary_data)) != 42) {
+        if (strlen($binary_data) != 42) {
             $arHeader['filename'] = "";
             $arHeader['status'] = "invalid_header";
 
-            $this->_errorLog("ERR_BAD_BLOCK_SIZE", str_replace("#SIZE#", $binary_data, GetMessage("MAIN_ZIP_ERR_BLOCK_SIZE")));
+            $this->_errorLog(
+                "ERR_BAD_BLOCK_SIZE",
+                str_replace("#SIZE#", $binary_data, GetMessage("MAIN_ZIP_ERR_BLOCK_SIZE"))
+            );
             return $this->arErrors;
         }
 
         //extract values
-        $arHeader = unpack('vversion/vversion_extracted/vflag/vcompression/vmtime/vmdate/Vcrc/Vcompressed_size/Vsize/vfilename_len/vextra_len/vcomment_len/vdisk/vinternal/Vexternal/Voffset', $binary_data);
+        $arHeader = unpack(
+            'vversion/vversion_extracted/vflag/vcompression/vmtime/vmdate/Vcrc/Vcompressed_size/Vsize/vfilename_len/vextra_len/vcomment_len/vdisk/vinternal/Vexternal/Voffset',
+            $binary_data
+        );
 
         //getting filename
-        if ($arHeader['filename_len'] != 0)
+        if ($arHeader['filename_len'] != 0) {
             $arHeader['filename'] = fread($this->zipfile, $arHeader['filename_len']);
-        else
+        } else {
             $arHeader['filename'] = '';
+        }
 
         //getting extra
-        if ($arHeader['extra_len'] != 0)
+        if ($arHeader['extra_len'] != 0) {
             $arHeader['extra'] = fread($this->zipfile, $arHeader['extra_len']);
-        else
+        } else {
             $arHeader['extra'] = '';
+        }
 
         //getting comments
-        if ($arHeader['comment_len'] != 0)
+        if ($arHeader['comment_len'] != 0) {
             $arHeader['comment'] = fread($this->zipfile, $arHeader['comment_len']);
-        else
+        } else {
             $arHeader['comment'] = '';
+        }
 
         //extracting properties
 
@@ -1725,7 +1969,7 @@ class CZip implements IBXArchive
         $arHeader['status'] = 'ok';
 
         //is directory?
-        if (substr($arHeader['filename'], -1) == '/') {
+        if (mb_substr($arHeader['filename'], -1) == '/') {
             $arHeader['external'] = 0x41FF0010;
         }
 
@@ -1741,7 +1985,14 @@ class CZip implements IBXArchive
         @fseek($this->zipfile, $size);
 
         if (@ftell($this->zipfile) != $size) {
-            $this->_errorLog("ERR_ARC_END", str_replace("#FILE_NAME#", removeDocRoot($this->zipname), GetMessage("MAIN_ZIP_ERR_ARC_END")));
+            $this->_errorLog(
+                "ERR_ARC_END",
+                str_replace(
+                    "#FILE_NAME#",
+                    removeDocRoot($this->zipname),
+                    GetMessage("MAIN_ZIP_ERR_ARC_END")
+                )
+            );
             return $this->arErrors;
         }
 
@@ -1753,7 +2004,14 @@ class CZip implements IBXArchive
             @fseek($this->zipfile, $size - 22);
 
             if (($pos = @ftell($this->zipfile)) != ($size - 22)) {
-                $this->_errorLog("ERR_ARC_MID", str_replace("#FILE_NAME#", removeDocRoot($this->zipname), GetMessage("MAIN_ZIP_ERR_ARC_MID")));
+                $this->_errorLog(
+                    "ERR_ARC_MID",
+                    str_replace(
+                        "#FILE_NAME#",
+                        removeDocRoot($this->zipname),
+                        GetMessage("MAIN_ZIP_ERR_ARC_MID")
+                    )
+                );
                 return $this->arErrors;
             }
 
@@ -1762,8 +2020,9 @@ class CZip implements IBXArchive
             $data = unpack('Vid', $binary_data);
 
             //signature check
-            if ($data['id'] == 0x06054b50)
+            if ($data['id'] == 0x06054b50) {
                 $isFound = 1;
+            }
 
             $pos = ftell($this->zipfile);
         }
@@ -1772,13 +2031,21 @@ class CZip implements IBXArchive
         if (!$isFound) {
             $maxSize = 65557; // 0xFFFF + 22;
 
-            if ($maxSize > $size)
+            if ($maxSize > $size) {
                 $maxSize = $size;
+            }
 
             @fseek($this->zipfile, $size - $maxSize);
 
             if (@ftell($this->zipfile) != ($size - $maxSize)) {
-                $this->_errorLog("ERR_ARC_MID", str_replace("#FILE_NAME#", removeDocRoot($this->zipname), GetMessage("MAIN_ZIP_ERR_ARC_MID")));
+                $this->_errorLog(
+                    "ERR_ARC_MID",
+                    str_replace(
+                        "#FILE_NAME#",
+                        removeDocRoot($this->zipname),
+                        GetMessage("MAIN_ZIP_ERR_ARC_MID")
+                    )
+                );
                 return $this->arErrors;
             }
 
@@ -1812,8 +2079,11 @@ class CZip implements IBXArchive
         $binary_data = fread($this->zipfile, 18);
 
         //if block size is not valid
-        if ((self::$bMbstring ? mb_strlen($binary_data, "latin1") : strlen($binary_data)) != 18) {
-            $this->_errorLog("ERR_ARC_END_SIZE", str_replace("#SIZE#", strlen($binary_data), GetMessage("MAIN_ZIP_ERR_ARC_END_SIZE")));
+        if (strlen($binary_data) != 18) {
+            $this->_errorLog(
+                "ERR_ARC_END_SIZE",
+                str_replace("#SIZE#", mb_strlen($binary_data), GetMessage("MAIN_ZIP_ERR_ARC_END_SIZE"))
+            );
             return $this->arErrors;
         }
 
@@ -1827,10 +2097,11 @@ class CZip implements IBXArchive
         }
 
         //reading comments
-        if ($data['comment_size'] != 0)
+        if ($data['comment_size'] != 0) {
             $arCentralDir['comment'] = fread($this->zipfile, $data['comment_size']);
-        else
+        } else {
             $arCentralDir['comment'] = '';
+        }
 
         $arCentralDir['entries'] = $data['entries'];
         $arCentralDir['disk_entries'] = $data['disk_entries'];
@@ -1847,8 +2118,9 @@ class CZip implements IBXArchive
         $arCentralDirInfo = array();
         $arHeaders = array();
 
-        if (($res = $this->_openFile('rb')) != 1)
+        if (($res = $this->_openFile('rb')) != 1) {
             return $res;
+        }
 
         if (($res = $this->_readEndCentralDir($arCentralDirInfo)) != 1) {
             $this->_closeFile();
@@ -1887,13 +2159,19 @@ class CZip implements IBXArchive
             $isFound = false;
 
             //name rule
-            if ((isset($arParams['by_name'])) && ($arParams['by_name'] != 0)) {
+            if ((isset($arParams['by_name'])) && is_array($arParams['by_name'])) {
                 //if the filename is in the list
-                for ($j = 0; ($j < sizeof($arParams['by_name'])) && (!$isFound); $j++) {
-                    if (substr($arParams['by_name'][$j], -1) == "/") {
+                for ($j = 0, $n = count($arParams['by_name']); $j < $n && !$isFound; $j++) {
+                    if (mb_substr($arParams['by_name'][$j], -1) == "/") {
                         //if the directory is in the filename path
-                        if ((strlen($arHeaders[$extractedCounter]['stored_filename']) > strlen($arParams['by_name'][$j]))
-                            && (substr($arHeaders[$extractedCounter]['stored_filename'], 0, strlen($arParams['by_name'][$j])) == $arParams['by_name'][$j])) {
+                        if ((mb_strlen($arHeaders[$extractedCounter]['stored_filename']) > mb_strlen(
+                                    $arParams['by_name'][$j]
+                                ))
+                            && (mb_substr(
+                                    $arHeaders[$extractedCounter]['stored_filename'],
+                                    0,
+                                    mb_strlen($arParams['by_name'][$j])
+                                ) == $arParams['by_name'][$j])) {
                             $isFound = true;
                         } elseif ((($arHeaders[$extractedCounter]['external'] & 0x00000010) == 0x00000010) /* Indicates a folder */
                             && ($arHeaders[$extractedCounter]['stored_filename'] . '/' == $arParams['by_name'][$j])) {
@@ -1904,31 +2182,36 @@ class CZip implements IBXArchive
                         $isFound = true;
                     }
                 }
-            } else if ((isset($arParams['by_preg'])) && ($arParams['by_preg'] != "")) {
-                if (preg_match($arParams['by_preg'], $arHeaders[$extractedCounter]['stored_filename'])) {
-                    $isFound = true;
-                }
-            } else if ((isset($arParams['by_index'])) && ($arParams['by_index'] != 0)) {
-                //index rule: if index is in the list
-                for ($j = $j_start; ($j < sizeof($arParams['by_index'])) && (!$isFound); $j++) {
-                    if (($i >= $arParams['by_index'][$j]['start'])
-                        && ($i <= $arParams['by_index'][$j]['end'])) {
+            } else {
+                if ((isset($arParams['by_preg'])) && ($arParams['by_preg'] != "")) {
+                    if (preg_match($arParams['by_preg'], $arHeaders[$extractedCounter]['stored_filename'])) {
                         $isFound = true;
                     }
-                    if ($i >= $arParams['by_index'][$j]['end']) {
-                        $j_start = $j + 1;
-                    }
-                    if ($arParams['by_index'][$j]['start'] > $i) {
-                        break;
+                } else {
+                    if ((isset($arParams['by_index'])) && is_array($arParams['by_index'])) {
+                        //index rule: if index is in the list
+                        for ($j = $j_start, $n = count($arParams['by_index']); $j < $n && !$isFound; $j++) {
+                            if (($i >= $arParams['by_index'][$j]['start'])
+                                && ($i <= $arParams['by_index'][$j]['end'])) {
+                                $isFound = true;
+                            }
+                            if ($i >= $arParams['by_index'][$j]['end']) {
+                                $j_start = $j + 1;
+                            }
+                            if ($arParams['by_index'][$j]['start'] > $i) {
+                                break;
+                            }
+                        }
                     }
                 }
             }
 
             //delete?
-            if ($isFound)
+            if ($isFound) {
                 unset($arHeaders[$extractedCounter]);
-            else
+            } else {
                 $extractedCounter++;
+            }
         }
 
         //if something should be deleted
@@ -2036,12 +2319,14 @@ class CZip implements IBXArchive
         $res = 1;
 
         //remove '/' at the end
-        if (($isDir) && (substr($dir, -1) == '/'))
-            $dir = substr($dir, 0, strlen($dir) - 1);
+        if (($isDir) && (mb_substr($dir, -1) == '/')) {
+            $dir = mb_substr($dir, 0, mb_strlen($dir) - 1);
+        }
 
         //check if dir is available
-        if ((is_dir($dir)) || ($dir == ""))
+        if ((is_dir($dir)) || ($dir == "")) {
             return 1;
+        }
 
         //get parent directory
         $parentDir = dirname($dir);
@@ -2057,7 +2342,10 @@ class CZip implements IBXArchive
 
         //creating a directory
         if (!@mkdir($dir, 0777)) {
-            $this->_errorLog("ERR_DIR_CREATE_FAIL", str_replace("#DIR_NAME#", $dir, GetMessage("MAIN_ZIP_ERR_DIR_CREATE_FAIL")));
+            $this->_errorLog(
+                "ERR_DIR_CREATE_FAIL",
+                str_replace("#DIR_NAME#", $dir, GetMessage("MAIN_ZIP_ERR_DIR_CREATE_FAIL"))
+            );
             return $this->arErrors;
         }
 
@@ -2072,7 +2360,7 @@ class CZip implements IBXArchive
         }
 
         //all params should be valid
-        for (reset($arParams); list($key) = each($arParams);) {
+        foreach ($arParams as $key => $dummy) {
             if (!isset($arDefaultValues[$key])) {
                 $this->_errorLog("ERR_PARAM_KEY", str_replace("#KEY#", $key, GetMessage("MAIN_ZIP_ERR_PARAM_KEY")));
                 return $this->arErrors;
@@ -2080,7 +2368,7 @@ class CZip implements IBXArchive
         }
 
         //set default values
-        for (reset($arDefaultValues); list($key) = each($arDefaultValues);) {
+        foreach ($arDefaultValues as $key => $dummy) {
             if (!isset($arParams[$key])) {
                 $arParams[$key] = $arDefaultValues[$key];
             }
@@ -2094,7 +2382,14 @@ class CZip implements IBXArchive
 
             if ((isset($arParams[$key])) && ($arParams[$key] != '')) {
                 if (!function_exists($arParams[$key])) {
-                    $this->_errorLog("ERR_PARAM_CALLBACK", str_replace(array("#CALLBACK#", "#PARAM_NAME#"), array($arParams[$key], $key), GetMessage("MAIN_ZIP_ERR_PARAM_CALLBACK")));
+                    $this->_errorLog(
+                        "ERR_PARAM_CALLBACK",
+                        str_replace(
+                            array("#CALLBACK#", "#PARAM_NAME#"),
+                            array($arParams[$key], $key),
+                            GetMessage("MAIN_ZIP_ERR_PARAM_CALLBACK")
+                        )
+                    );
                     return $this->arErrors;
                 }
             }
@@ -2126,13 +2421,17 @@ class CZip implements IBXArchive
                 //is current path
                 if ($arTmpList[$i] == ".") {
                     //just ignore. the first $i should be = 0, but no check is done
-                } else if ($arTmpList[$i] == "..") {
-                    //ignore this and ignore the $i-1
-                    $i--;
-                } else if (($arTmpList[$i] == "") && ($i != (sizeof($arTmpList) - 1)) && ($i != 0)) {
-                    //ignore only the double '//' in path, but not the first and last '/'
                 } else {
-                    $res = $arTmpList[$i] . ($i != (sizeof($arTmpList) - 1) ? "/" . $res : "");
+                    if ($arTmpList[$i] == "..") {
+                        //ignore this and ignore the $i-1
+                        $i--;
+                    } else {
+                        if (($arTmpList[$i] == "") && ($i != (sizeof($arTmpList) - 1)) && ($i != 0)) {
+                            //ignore only the double '//' in path, but not the first and last '/'
+                        } else {
+                            $res = $arTmpList[$i] . ($i != (sizeof($arTmpList) - 1) ? "/" . $res : "");
+                        }
+                    }
                 }
             }
         }
@@ -2189,9 +2488,11 @@ class CZip implements IBXArchive
             if (($i >= $arTmpDirListSize) && ($j >= $arTmpPathListSize)) {
                 //exactly the same
                 $res = 2;
-            } else if ($i < $arTmpDirListSize) {
-                //path is shorter than the dir
-                $res = 0;
+            } else {
+                if ($i < $arTmpDirListSize) {
+                    //path is shorter than the dir
+                    $res = 0;
+                }
             }
         }
 
@@ -2209,26 +2510,32 @@ class CZip implements IBXArchive
                 @fwrite($dest, $buffer, $length);
                 $blockSize -= $length;
             }
-        } else if ($mode == 1) {
-            while ($blockSize != 0) {
-                $length = ($blockSize < self::ReadBlockSize ? $blockSize : self::ReadBlockSize);
-                $buffer = @gzread($source, $length);
-                @fwrite($dest, $buffer, $length);
-                $blockSize -= $length;
-            }
-        } else if ($mode == 2) {
-            while ($blockSize != 0) {
-                $length = ($blockSize < self::ReadBlockSize ? $blockSize : self::ReadBlockSize);
-                $buffer = @fread($source, $length);
-                @gzwrite($dest, $buffer, $length);
-                $blockSize -= $length;
-            }
-        } else if ($mode == 3) {
-            while ($blockSize != 0) {
-                $length = ($blockSize < self::ReadBlockSize ? $blockSize : self::ReadBlockSize);
-                $buffer = @gzread($source, $length);
-                @gzwrite($dest, $buffer, $length);
-                $blockSize -= $length;
+        } else {
+            if ($mode == 1) {
+                while ($blockSize != 0) {
+                    $length = ($blockSize < self::ReadBlockSize ? $blockSize : self::ReadBlockSize);
+                    $buffer = @gzread($source, $length);
+                    @fwrite($dest, $buffer, $length);
+                    $blockSize -= $length;
+                }
+            } else {
+                if ($mode == 2) {
+                    while ($blockSize != 0) {
+                        $length = ($blockSize < self::ReadBlockSize ? $blockSize : self::ReadBlockSize);
+                        $buffer = @fread($source, $length);
+                        @gzwrite($dest, $buffer, $length);
+                        $blockSize -= $length;
+                    }
+                } else {
+                    if ($mode == 3) {
+                        while ($blockSize != 0) {
+                            $length = ($blockSize < self::ReadBlockSize ? $blockSize : self::ReadBlockSize);
+                            $buffer = @gzread($source, $length);
+                            @gzwrite($dest, $buffer, $length);
+                            $blockSize -= $length;
+                        }
+                    }
+                }
             }
         }
 
@@ -2242,8 +2549,10 @@ class CZip implements IBXArchive
         if (!@rename($this->io->GetPhysicalName($source), $this->io->GetPhysicalName($dest))) {
             if (!@copy($this->io->GetPhysicalName($source), $this->io->GetPhysicalName($dest))) {
                 $res = 0;
-            } else if (!@unlink($this->io->GetPhysicalName($source))) {
-                $res = 0;
+            } else {
+                if (!@unlink($this->io->GetPhysicalName($source))) {
+                    $res = 0;
+                }
             }
         }
 
@@ -2252,14 +2561,14 @@ class CZip implements IBXArchive
 
     private function _convertWinPath($path, $removeDiskLetter = true)
     {
-        if (stristr(php_uname(), 'windows')) {
+        if (mb_stristr(php_uname(), 'windows')) {
             //disk letter?
-            if (($removeDiskLetter) && (($position = strpos($path, ':')) != false)) {
-                $path = substr($path, $position + 1);
+            if (($removeDiskLetter) && (($position = mb_strpos($path, ':')) != false)) {
+                $path = mb_substr($path, $position + 1);
             }
 
             //change windows directory separator
-            if ((strpos($path, '\\') > 0) || (substr($path, 0, 1) == '\\')) {
+            if ((mb_strpos($path, '\\') > 0) || (mb_substr($path, 0, 1) == '\\')) {
                 $path = strtr($path, '\\', '/');
             }
         }
@@ -2269,12 +2578,14 @@ class CZip implements IBXArchive
 
     private function &_parseFileParams(&$arFileList)
     {
-        if (isset($arFileList) && is_array($arFileList))
+        if (isset($arFileList) && is_array($arFileList)) {
             return $arFileList;
+        }
 
-        if (isset($arFileList) && strlen($arFileList) > 0) {
-            if (strpos($arFileList, "\"") === 0)
+        if (isset($arFileList) && $arFileList <> '') {
+            if (mb_strpos($arFileList, "\"") === 0) {
                 return array(trim($arFileList, "\""));
+            }
             return explode(" ", $arFileList);
         }
 
@@ -2293,28 +2604,30 @@ class CZip implements IBXArchive
         $path = str_replace(array("\\", "//"), "/", $path);
 
         //remove file name
-        if (substr($path, -1) != "/") {
-            $p = strrpos($path, "/");
-            $path = substr($path, 0, $p);
+        if (mb_substr($path, -1) != "/") {
+            $p = mb_strrpos($path, "/");
+            $path = mb_substr($path, 0, $p);
         }
 
         $path = rtrim($path, "/");
 
-        if (!file_exists($this->io->GetPhysicalName($path)))
+        if (!file_exists($this->io->GetPhysicalName($path))) {
             return mkdir($this->io->GetPhysicalName($path), BX_DIR_PERMISSIONS, true);
-        else
+        } else {
             return is_dir($this->io->GetPhysicalName($path));
+        }
     }
 
     private function _getfileSystemEncoding()
     {
-        $fileSystemEncoding = strtolower(defined("BX_FILE_SYSTEM_ENCODING") ? BX_FILE_SYSTEM_ENCODING : "");
+        $fileSystemEncoding = mb_strtolower(defined("BX_FILE_SYSTEM_ENCODING") ? BX_FILE_SYSTEM_ENCODING : "");
 
         if (empty($fileSystemEncoding)) {
-            if (strtoupper(substr(PHP_OS, 0, 3)) === "WIN")
+            if (mb_strtoupper(mb_substr(PHP_OS, 0, 3)) === "WIN") {
                 $fileSystemEncoding = "windows-1251";
-            else
+            } else {
                 $fileSystemEncoding = "utf-8";
+            }
         }
 
         return $fileSystemEncoding;

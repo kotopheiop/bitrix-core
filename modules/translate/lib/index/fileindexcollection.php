@@ -52,10 +52,12 @@ class FileIndexCollection
             $relPath = '/' . trim($filter->path, '/');
             $relPath = Translate\IO\Path::replaceLangId($relPath, '#LANG_ID#');
 
-            $topPathRes = Index\Internals\PathIndexTable::getList([
-                'select' => ['ID'],
-                'filter' => ['=PATH' => $relPath]
-            ]);
+            $topPathRes = Index\Internals\PathIndexTable::getList(
+                [
+                    'select' => ['ID'],
+                    'filter' => ['=PATH' => $relPath]
+                ]
+            );
             if (!($topPath = $topPathRes->fetch())) {
                 return 0;
             }
@@ -85,8 +87,11 @@ class FileIndexCollection
      *
      * @return int
      */
-    public function collect(Translate\Filter $filter = null, Translate\Controller\ITimeLimit $timer = null, Translate\Filter $seek = null)
-    {
+    public function collect(
+        Translate\Filter $filter = null,
+        Translate\Controller\ITimeLimit $timer = null,
+        Translate\Filter $seek = null
+    ) {
         self::configure();
 
         if (isset($filter, $filter->path)) {
@@ -104,10 +109,12 @@ class FileIndexCollection
         }
 
 
-        $topPathRes = Index\Internals\PathIndexTable::getList([
-            'select' => ['ID'],
-            'filter' => ['=PATH' => $relPath]
-        ]);
+        $topPathRes = Index\Internals\PathIndexTable::getList(
+            [
+                'select' => ['ID'],
+                'filter' => ['=PATH' => $relPath]
+            ]
+        );
         if (!($topPath = $topPathRes->fetch())) {
             return 0;
         }
@@ -124,12 +131,14 @@ class FileIndexCollection
         }
 
         // path list
-        $pathListRes = Index\Internals\PathIndexTable::getList([
-            'select' => ['ID', 'PATH'],
-            'filter' => $pathFilter,
-            'order' => ['ID' => 'ASC'],
-            //todo: add limit here
-        ]);
+        $pathListRes = Index\Internals\PathIndexTable::getList(
+            [
+                'select' => ['ID', 'PATH'],
+                'filter' => $pathFilter,
+                'order' => ['ID' => 'ASC'],
+                //todo: add limit here
+            ]
+        );
 
         $processedItemCount = 0;
 
@@ -148,13 +157,15 @@ class FileIndexCollection
                 break;
             }
 
-            $indexFileCacheRes = Index\Internals\FileIndexTable::getList([
-                'select' => ['ID', 'PATH_ID', 'LANG_ID'],
-                'filter' => [
-                    '=PATH_ID' => $pathIdPortion,
-                    '=LANG_ID' => $this->checkLanguages,
+            $indexFileCacheRes = Index\Internals\FileIndexTable::getList(
+                [
+                    'select' => ['ID', 'PATH_ID', 'LANG_ID'],
+                    'filter' => [
+                        '=PATH_ID' => $pathIdPortion,
+                        '=LANG_ID' => $this->checkLanguages,
+                    ]
                 ]
-            ]);
+            );
             $indexFileCache = array();
             while ($indexFile = $indexFileCacheRes->fetch()) {
                 if (!isset($indexFileCache[(int)$indexFile['PATH_ID']])) {

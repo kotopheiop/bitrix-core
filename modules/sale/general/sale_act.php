@@ -4,8 +4,9 @@ use Bitrix\Main\Loader,
     Bitrix\Main\Localization\Loc,
     Bitrix\Sale;
 
-if (!Loader::includeModule('catalog'))
+if (!Loader::includeModule('catalog')) {
     return;
+}
 
 Loc::loadMessages(__FILE__);
 
@@ -54,8 +55,9 @@ class CSaleDiscountActionApply
      */
     public static function setManualMode(&$order)
     {
-        if (empty($order) || empty($order['ID']))
+        if (empty($order) || empty($order['ID'])) {
             return;
+        }
         Sale\Discount\Actions::setUseMode(
             Sale\Discount\Actions::MODE_MANUAL,
             array(
@@ -77,8 +79,9 @@ class CSaleDiscountActionApply
      */
     public static function clearManualMode(&$order)
     {
-        if (empty($order) || !is_array($order))
+        if (empty($order) || !is_array($order)) {
             return;
+        }
         Sale\Discount\Actions::setUseMode(Sale\Discount\Actions::MODE_CALCULATE);
     }
 
@@ -107,10 +110,14 @@ class CSaleDiscountActionApply
      */
     public static function fillBasketApplied(&$order, $basket)
     {
-        if (empty($order) || empty($order['ID']) || empty($order['BASKET_ITEMS']) || !is_array($order['BASKET_ITEMS']))
+        if (empty($order) || empty($order['ID']) || empty($order['BASKET_ITEMS']) || !is_array(
+                $order['BASKET_ITEMS']
+            )) {
             return;
-        if (empty($basket) || !is_array($basket))
+        }
+        if (empty($basket) || !is_array($basket)) {
             return;
+        }
         $founded = false;
         foreach ($basket as $itemId => $value) {
             foreach ($order['BASKET_ITEMS'] as &$basketRow) {
@@ -124,9 +131,9 @@ class CSaleDiscountActionApply
             unset($basketRow);
         }
         unset($value, $itemId);
-        if ($founded)
-            /* @noinspection PhpDeprecationInspection */
+        if ($founded) /* @noinspection PhpDeprecationInspection */ {
             self::setManualMode($order);
+        }
     }
 
     /**
@@ -139,13 +146,16 @@ class CSaleDiscountActionApply
      */
     public static function clearBasketApplied(&$order)
     {
-        if (empty($order) || empty($order['ID']) || empty($order['BASKET_ITEMS']) || !is_array($order['BASKET_ITEMS']))
+        if (empty($order) || empty($order['ID']) || empty($order['BASKET_ITEMS']) || !is_array(
+                $order['BASKET_ITEMS']
+            )) {
             return;
+        }
         foreach ($order['BASKET_ITEMS'] as &$basketRow) {
             /* @noinspection PhpDeprecationInspection */
-            if (array_key_exists(self::BASKET_APPLIED_FIELD, $basketRow))
-                /* @noinspection PhpDeprecationInspection */
+            if (array_key_exists(self::BASKET_APPLIED_FIELD, $basketRow)) /* @noinspection PhpDeprecationInspection */ {
                 unset($basketRow[self::BASKET_APPLIED_FIELD]);
+            }
         }
         unset($basketRow);
     }
@@ -183,8 +193,9 @@ class CSaleDiscountActionApply
             'VALUE' => $value,
             'UNIT' => $unit,
         );
-        if ($extMode)
+        if ($extMode) {
             $params['MAX_BOUND'] = 'Y';
+        }
         Sale\Discount\Actions::applyToDelivery(
             $order,
             $params
@@ -236,10 +247,12 @@ class CSaleActionCtrl extends CGlobalCondCtrl
 {
     public static function GetConditionShow($arParams)
     {
-        if (!isset($arParams['ID']))
+        if (!isset($arParams['ID'])) {
             return false;
-        if ($arParams['ID'] != static::GetControlID())
+        }
+        if ($arParams['ID'] != static::GetControlID()) {
             return false;
+        }
         $arControl = array(
             'ID' => $arParams['ID'],
             'ATOMS' => static::GetAtomsEx(false, true),
@@ -250,10 +263,12 @@ class CSaleActionCtrl extends CGlobalCondCtrl
 
     public static function Parse($arOneCondition)
     {
-        if (!isset($arOneCondition['controlId']))
+        if (!isset($arOneCondition['controlId'])) {
             return false;
-        if ($arOneCondition['controlId'] != static::GetControlID())
+        }
+        if ($arOneCondition['controlId'] != static::GetControlID()) {
             return false;
+        }
         $arControl = array(
             'ID' => $arOneCondition['controlId'],
             'ATOMS' => static::GetAtomsEx(false, true),
@@ -411,8 +426,9 @@ class CSaleActionCtrlGroup extends CGlobalCondCtrlGroup
 
     public static function Generate($arOneCondition, $arParams, $arControl, $arSubs = false)
     {
-        if (!empty($arSubs) && is_array($arSubs))
+        if (!empty($arSubs) && is_array($arSubs)) {
             return 'function (&' . $arParams['ORDER'] . '){' . implode('; ', $arSubs) . ';};';
+        }
         return '';
     }
 }
@@ -446,8 +462,9 @@ class CSaleActionGiftCtrlGroup extends CSaleActionCtrlGroup
             foreach ($arAtomList as &$arOneAtom) {
                 $arOneAtom = $arOneAtom['JS'];
             }
-            if (isset($arOneAtom))
+            if (isset($arOneAtom)) {
                 unset($arOneAtom);
+            }
         }
 
         return $arAtomList;
@@ -502,7 +519,10 @@ class CSaleActionGiftCtrlGroup extends CSaleActionCtrlGroup
         if (!isset($arSubs) || !is_array($arSubs) || empty($arSubs)) {
             $boolError = true;
         } else {
-            $mxResult = '\Bitrix\Sale\Discount\Actions::applySimpleGift(' . $arParams['ORDER'] . ', ' . implode('; ', $arSubs) . ');';
+            $mxResult = '\Bitrix\Sale\Discount\Actions::applySimpleGift(' . $arParams['ORDER'] . ', ' . implode(
+                    '; ',
+                    $arSubs
+                ) . ');';
         }
         return $mxResult;
     }
@@ -516,7 +536,7 @@ class CSaleActionGiftCtrlGroup extends CSaleActionCtrlGroup
         if (
             (empty($fields['ACTIONS_LIST']) || !is_array($fields['ACTIONS_LIST']))
             && CheckSerializedData($fields['ACTIONS'])) {
-            $actions = unserialize($fields['ACTIONS']);
+            $actions = unserialize($fields['ACTIONS'], ['allowed_classes' => false]);
         } else {
             $actions = $fields['ACTIONS_LIST'];
         }
@@ -574,10 +594,12 @@ class CSaleActionCtrlAction extends CGlobalCondCtrlGroup
 {
     public static function GetConditionShow($arParams)
     {
-        if (!isset($arParams['ID']))
+        if (!isset($arParams['ID'])) {
             return false;
-        if ($arParams['ID'] != static::GetControlID())
+        }
+        if ($arParams['ID'] != static::GetControlID()) {
             return false;
+        }
         $arControl = array(
             'ID' => $arParams['ID'],
             'ATOMS' => static::GetAtomsEx(false, true)
@@ -588,10 +610,12 @@ class CSaleActionCtrlAction extends CGlobalCondCtrlGroup
 
     public static function Parse($arOneCondition)
     {
-        if (!isset($arOneCondition['controlId']))
+        if (!isset($arOneCondition['controlId'])) {
             return false;
-        if ($arOneCondition['controlId'] != static::GetControlID())
+        }
+        if ($arOneCondition['controlId'] != static::GetControlID()) {
             return false;
+        }
         $arControl = array(
             'ID' => $arOneCondition['controlId'],
             'ATOMS' => static::GetAtomsEx(false, true)
@@ -753,8 +777,9 @@ class CSaleActionCtrlDelivery extends CSaleActionCtrl
             foreach ($arAtomList as &$arOneAtom) {
                 $arOneAtom = $arOneAtom['JS'];
             }
-            if (isset($arOneAtom))
+            if (isset($arOneAtom)) {
                 unset($arOneAtom);
+            }
         }
 
         return $arAtomList;
@@ -785,10 +810,14 @@ class CSaleActionCtrlDelivery extends CSaleActionCtrl
                 'VALUE' => ($arOneCondition['Type'] == 'Extra' ? $arOneCondition['Value'] : -$arOneCondition['Value']),
                 'UNIT' => ($arOneCondition['Unit'] == 'Cur' ? Sale\Discount\Actions::VALUE_TYPE_FIX : Sale\Discount\Actions::VALUE_TYPE_PERCENT)
             );
-            if ($arOneCondition['Type'] == 'DiscountZero' && $arOneCondition['Unit'] == 'Cur')
+            if ($arOneCondition['Type'] == 'DiscountZero' && $arOneCondition['Unit'] == 'Cur') {
                 $actionParams['MAX_BOUND'] = 'Y';
+            }
 
-            $mxResult = '\Bitrix\Sale\Discount\Actions::applyToDelivery(' . $arParams['ORDER'] . ', ' . var_export($actionParams, true) . ')';
+            $mxResult = '\Bitrix\Sale\Discount\Actions::applyToDelivery(' . $arParams['ORDER'] . ', ' . var_export(
+                    $actionParams,
+                    true
+                ) . ')';
             unset($actionParams);
         }
 
@@ -854,8 +883,12 @@ class CSaleActionGift extends CSaleActionCtrl
                     'name' => 'extra',
                     'type' => 'select',
                     'values' => array(
-                        Sale\Discount\Actions::GIFT_SELECT_TYPE_ONE => Loc::getMessage('BT_SALE_ACT_GIFT_SELECT_TYPE_SELECT_ONE'),
-                        Sale\Discount\Actions::GIFT_SELECT_TYPE_ALL => Loc::getMessage('BT_SALE_ACT_GIFT_SELECT_TYPE_SELECT_ALL'),
+                        Sale\Discount\Actions::GIFT_SELECT_TYPE_ONE => Loc::getMessage(
+                            'BT_SALE_ACT_GIFT_SELECT_TYPE_SELECT_ONE'
+                        ),
+                        Sale\Discount\Actions::GIFT_SELECT_TYPE_ALL => Loc::getMessage(
+                            'BT_SALE_ACT_GIFT_SELECT_TYPE_SELECT_ALL'
+                        ),
                     ),
                     'defaultText' => Loc::getMessage('BT_SALE_ACT_GIFT_SELECT_TYPE_SELECT_DEF'),
                     'defaultValue' => 'one',
@@ -905,8 +938,9 @@ class CSaleActionGift extends CSaleActionCtrl
             foreach ($arAtomList as &$arOneAtom) {
                 $arOneAtom = $arOneAtom['JS'];
             }
-            if (isset($arOneAtom))
+            if (isset($arOneAtom)) {
                 unset($arOneAtom);
+            }
         }
 
         return $arAtomList;
@@ -949,7 +983,7 @@ class CSaleActionGift extends CSaleActionCtrl
         if (
             (empty($fields['ACTIONS_LIST']) || !is_array($fields['ACTIONS_LIST']))
             && CheckSerializedData($fields['ACTIONS'])) {
-            $actions = unserialize($fields['ACTIONS']);
+            $actions = unserialize($fields['ACTIONS'], ['allowed_classes' => false]);
         } else {
             $actions = $fields['ACTIONS_LIST'];
         }
@@ -960,7 +994,8 @@ class CSaleActionGift extends CSaleActionCtrl
 
         $result = null;
         foreach ($actions['CHILDREN'] as $child) {
-            if (isset($child['CLASS_ID']) && isset($child['DATA']) && $child['CLASS_ID'] === CSaleActionGift::GetControlID()) {
+            if (isset($child['CLASS_ID']) && isset($child['DATA']) && $child['CLASS_ID'] === CSaleActionGift::GetControlID(
+                )) {
                 $result[] = $child['DATA'];
             }
         }
@@ -1064,16 +1099,22 @@ class CSaleActionCtrlBasketGroup extends CSaleActionCtrlAction
         }
 
         $result = parent::CheckAtoms($arOneCondition, $arParams, $arControl, $boolShow);
-        if ($result === false)
+        if ($result === false) {
             return false;
+        }
         if ($boolShow) {
             if ($result['values']['Unit'] === self::VALUE_UNIT_SUMM && !empty($result['values']['Max'])) {
                 $result['err_cond'] = 'Y';
                 $result['fatal_err_cond'] = 'Y';
-                if (!isset($result['err_cond_mess']))
-                    $result['err_cond_mess'] = Loc::getMessage('BT_SALE_ACT_MAX_DISCOUNT_ON_GROUP_BASKET_ERROR_CONDITION');
-                else
-                    $result['err_cond_mess'] .= '. ' . Loc::getMessage('BT_SALE_ACT_MAX_DISCOUNT_ON_GROUP_BASKET_ERROR_CONDITION');
+                if (!isset($result['err_cond_mess'])) {
+                    $result['err_cond_mess'] = Loc::getMessage(
+                        'BT_SALE_ACT_MAX_DISCOUNT_ON_GROUP_BASKET_ERROR_CONDITION'
+                    );
+                } else {
+                    $result['err_cond_mess'] .= '. ' . Loc::getMessage(
+                            'BT_SALE_ACT_MAX_DISCOUNT_ON_GROUP_BASKET_ERROR_CONDITION'
+                        );
+                }
             }
             return $result;
         } else {
@@ -1083,8 +1124,9 @@ class CSaleActionCtrlBasketGroup extends CSaleActionCtrlAction
 
     public static function GetConditionShow($arParams)
     {
-        if (!isset($arParams['DATA']['True']))
+        if (!isset($arParams['DATA']['True'])) {
             $arParams['DATA']['True'] = 'True';
+        }
 
         return parent::GetConditionShow($arParams);
     }
@@ -1264,8 +1306,9 @@ class CSaleActionCtrlBasketGroup extends CSaleActionCtrlAction
         );
 
         if (!$boolEx) {
-            foreach ($arAtomList as &$arOneAtom)
+            foreach ($arAtomList as &$arOneAtom) {
                 $arOneAtom = $arOneAtom['JS'];
+            }
             unset($arOneAtom);
         }
 
@@ -1278,13 +1321,15 @@ class CSaleActionCtrlBasketGroup extends CSaleActionCtrlAction
         $boolError = false;
 
         //TODO: remove this after refactoring control
-        if (!isset($arOneCondition['Max']))
+        if (!isset($arOneCondition['Max'])) {
             $arOneCondition['Max'] = 0;
+        }
 
         foreach (static::GetAtomsEx(false, false) as $atom) {
             //TODO: add full check (type, list values, etc)
-            if (!isset($arOneCondition[$atom['id']]))
+            if (!isset($arOneCondition[$atom['id']])) {
                 $boolError = true;
+            }
         }
         unset($atom);
 
@@ -1365,16 +1410,23 @@ class CSaleActionCtrlBasketGroup extends CSaleActionCtrlAction
                 }
 
                 $commandLine = $itemPrefix . implode($logic . $itemPrefix, $arSubs);
-                if ($prefix != '')
+                if ($prefix != '') {
                     $commandLine = $prefix . '(' . $commandLine . ')';
+                }
 
                 $mxResult = $filter . '=function($row){';
                 $mxResult .= 'return (' . $commandLine . ');';
                 $mxResult .= '};';
-                $mxResult .= '\Bitrix\Sale\Discount\Actions::applyToBasket(' . $arParams['ORDER'] . ', ' . var_export($discountParams, true) . ', ' . $filter . ');';
+                $mxResult .= '\Bitrix\Sale\Discount\Actions::applyToBasket(' . $arParams['ORDER'] . ', ' . var_export(
+                        $discountParams,
+                        true
+                    ) . ', ' . $filter . ');';
                 unset($filter);
             } else {
-                $mxResult = '\Bitrix\Sale\Discount\Actions::applyToBasket(' . $arParams['ORDER'] . ', ' . var_export($discountParams, true) . ', "");';
+                $mxResult = '\Bitrix\Sale\Discount\Actions::applyToBasket(' . $arParams['ORDER'] . ', ' . var_export(
+                        $discountParams,
+                        true
+                    ) . ', "");';
             }
             unset($discountParams, $unit);
         }
@@ -1445,8 +1497,9 @@ class CSaleActionCondCtrlBasketFields extends CSaleCondCtrlBasketFields
     {
         $arControlList = CSaleCondCtrlBasketFields::GetControls(false);
         foreach ($arControlList as &$control) {
-            if ($control['ID'] !== \CSaleCondCtrlBasketItemConditions::ENTITY_BASKET_POSITION_ACTION_APPLIED)
+            if ($control['ID'] !== \CSaleCondCtrlBasketItemConditions::ENTITY_BASKET_POSITION_ACTION_APPLIED) {
                 $control['EXECUTE_MODULE'] = 'sale';
+            }
         }
         unset($control);
         return static::searchControl($arControlList, $strControlID);
@@ -1476,12 +1529,15 @@ class CSaleActionTree extends CGlobalCondTree
 
     public function Init($mode, $event, $params = array())
     {
-        if (!isset($params['SYSTEM_MESSAGES']) || !is_array($params['SYSTEM_MESSAGES']))
+        if (!isset($params['SYSTEM_MESSAGES']) || !is_array($params['SYSTEM_MESSAGES'])) {
             $params['SYSTEM_MESSAGES'] = [];
-        if (!isset($params['SYSTEM_MESSAGES']['SELECT_CONTROL']))
+        }
+        if (!isset($params['SYSTEM_MESSAGES']['SELECT_CONTROL'])) {
             $params['SYSTEM_MESSAGES']['SELECT_CONTROL'] = Loc::getMessage('BT_SALE_ACT_GROUP_SELECT_CONTROL');
-        if (!isset($params['SYSTEM_MESSAGES']['ADD_CONTROL']))
+        }
+        if (!isset($params['SYSTEM_MESSAGES']['ADD_CONTROL'])) {
             $params['SYSTEM_MESSAGES']['ADD_CONTROL'] = Loc::getMessage('BT_SALE_ACT_GROUP_ADD_CONTROL');
+        }
 
         return parent::Init($mode, $event, $params);
     }
@@ -1531,17 +1587,23 @@ class CSaleActionTree extends CGlobalCondTree
         if ($boolFirst) {
             $arParams['ROW_NUM'] = $intRowNum;
             if (!empty($arLevel['CLASS_ID'])) {
+                $defaultBlock = $this->GetDefaultConditions();
+                if ($arLevel['CLASS_ID'] !== $defaultBlock['CLASS_ID']) {
+                    return false;
+                }
                 if (isset($this->arControlList[$arLevel['CLASS_ID']])) {
                     $arOneControl = $this->arControlList[$arLevel['CLASS_ID']];
                     if ($arOneControl['GROUP'] == 'Y') {
                         $arSubParams = $arParams;
                         $arSubParams['FUNC_ID'] .= '_' . $intRowNum;
                         $arSubEval = $this->GenerateLevel($arLevel['CHILDREN'], $arSubParams);
-                        if ($arSubEval === false || !is_array($arSubEval))
+                        if ($arSubEval === false || !is_array($arSubEval)) {
                             return false;
+                        }
                         $arGroupParams = $arParams;
                         $arGroupParams['FUNC_ID'] .= '_' . $intRowNum;
-                        $mxEval = call_user_func_array($arOneControl['Generate'],
+                        $mxEval = call_user_func_array(
+                            $arOneControl['Generate'],
                             array($arLevel['DATA'], $arGroupParams, $arLevel['CLASS_ID'], $arSubEval)
                         );
                         if (is_array($mxEval)) {
@@ -1553,7 +1615,8 @@ class CSaleActionTree extends CGlobalCondTree
                             $strEval = $mxEval;
                         }
                     } else {
-                        $strEval = call_user_func_array($arOneControl['Generate'],
+                        $strEval = call_user_func_array(
+                            $arOneControl['Generate'],
                             array($arLevel['DATA'], $arParams, $arLevel['CLASS_ID'])
                         );
                     }
@@ -1574,11 +1637,13 @@ class CSaleActionTree extends CGlobalCondTree
                             $arSubParams = $arParams;
                             $arSubParams['FUNC_ID'] .= '_' . $intRowNum;
                             $arSubEval = $this->GenerateLevel($arOneCondition['CHILDREN'], $arSubParams);
-                            if ($arSubEval === false || !is_array($arSubEval))
+                            if ($arSubEval === false || !is_array($arSubEval)) {
                                 return false;
+                            }
                             $arGroupParams = $arParams;
                             $arGroupParams['FUNC_ID'] .= '_' . $intRowNum;
-                            $mxEval = call_user_func_array($arOneControl['Generate'],
+                            $mxEval = call_user_func_array(
+                                $arOneControl['Generate'],
                                 array($arOneCondition['DATA'], $arGroupParams, $arOneCondition['CLASS_ID'], $arSubEval)
                             );
                             if (is_array($mxEval)) {
@@ -1590,7 +1655,8 @@ class CSaleActionTree extends CGlobalCondTree
                                 $strEval = $mxEval;
                             }
                         } else {
-                            $strEval = call_user_func_array($arOneControl['Generate'],
+                            $strEval = call_user_func_array(
+                                $arOneControl['Generate'],
                                 array($arOneCondition['DATA'], $arParams, $arOneCondition['CLASS_ID'])
                             );
                         }
@@ -1600,9 +1666,15 @@ class CSaleActionTree extends CGlobalCondTree
                         $arResult[] = $strEval;
 
                         if (!empty($mxEval['OVERWRITE_CONTROL']) && is_array($mxEval['OVERWRITE_CONTROL'])) {
-                            $arOneControl = array_merge($arOneControl, array_intersect_key($mxEval['OVERWRITE_CONTROL'], array(
-                                'EXECUTE_MODULE' => true,
-                            )));
+                            $arOneControl = array_merge(
+                                $arOneControl,
+                                array_intersect_key(
+                                    $mxEval['OVERWRITE_CONTROL'],
+                                    array(
+                                        'EXECUTE_MODULE' => true,
+                                    )
+                                )
+                            );
                         }
 
                         $this->fillUsedData($arOneControl);
@@ -1615,12 +1687,14 @@ class CSaleActionTree extends CGlobalCondTree
 
         if (!empty($arResult)) {
             foreach ($arResult as $key => $value) {
-                if ($value == '' || $value == '()')
+                if ($value == '' || $value == '()') {
                     unset($arResult[$key]);
+                }
             }
         }
-        if (!empty($arResult))
+        if (!empty($arResult)) {
             $arResult = array_values($arResult);
+        }
 
         return $arResult;
     }
@@ -1633,7 +1707,8 @@ class CSaleActionTree extends CGlobalCondTree
     protected function fillUsedData(&$control)
     {
         parent::fillUsedData($control);
-        if (!empty($control['EXECUTE_MODULE']))
+        if (!empty($control['EXECUTE_MODULE'])) {
             $this->executeModule[$control['EXECUTE_MODULE']] = true;
+        }
     }
 }

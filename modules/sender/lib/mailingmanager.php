@@ -8,12 +8,12 @@
 
 namespace Bitrix\Sender;
 
+use Bitrix\Main;
 use Bitrix\Main\DB\Exception;
 use Bitrix\Main\Type;
-
+use Bitrix\Sender\Dispatch\MethodSchedule;
 use Bitrix\Sender\Entity;
 use Bitrix\Sender\Internals\Model;
-use Bitrix\Sender\Dispatch\MethodSchedule;
 
 class MailingManager
 {
@@ -63,11 +63,33 @@ class MailingManager
         (new Runtime\ReiteratedJob())->actualize();
     }
 
+    protected static function checkOnBeforeChainSend($letterId)
+    {
+        $event = new Main\Event('sender', 'onBeforeChainSend', ['LETTER_ID' => $letterId]);
+        $event->send();
+        foreach ($event->getResults() as $eventResult) {
+            if (
+                $eventResult->getType() === Main\EventResult::ERROR
+                || $eventResult->getParameters()
+                && isset($eventResult->getParameters()['ALLOW_SEND'])
+                && $eventResult->getParameters()['ALLOW_SEND'] === false
+            ) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     /**
      * Send letter.
      *
      * @param integer $letterId Letter ID.
+     *
      * @return string
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      */
     public static function chainSend($letterId)
     {
@@ -80,10 +102,18 @@ class MailingManager
                 $letter = Model\LetterTable::getRowById($letterId);
             }
         }
-        if (!$letter || $letter['STATUS'] !== Model\LetterTable::STATUS_SEND) {
+        if (!$letter || !in_array(
+                $letter['STATUS'],
+                [
+                    Model\LetterTable::STATUS_SEND
+                ]
+            )) {
             return "";
         }
 
+        if (!static::checkOnBeforeChainSend($letterId)) {
+            return Runtime\SenderJob::getAgentName($letterId);
+        }
 
         $postingSendStatus = '';
         if (!empty($letter['POSTING_ID'])) {
@@ -100,7 +130,18 @@ class MailingManager
         }
 
         if (!empty(static::$error) || $postingSendStatus === PostingManager::SEND_RESULT_CONTINUE) {
-            return static::getAgentName($letterId);
+            return Runtime\SenderJob::getAgentName($letterId);
+        }
+
+
+        if ($postingSendStatus === PostingManager::SEND_RESULT_WAIT) {
+            Model\LetterTable::update($letterId, array('STATUS' => Model\LetterTable::STATUS_WAIT));
+            return "";
+        }
+
+
+        if ($postingSendStatus === PostingManager::SEND_RESULT_WAITING_RECIPIENT) {
+            return Runtime\SenderJob::getAgentName($letterId);
         }
 
         if ($letter['REITERATE'] !== 'Y') {
@@ -110,15 +151,17 @@ class MailingManager
 
         $isNeedUpdate = true;
         if ($letter['IS_TRIGGER'] == 'Y') {
-            $postingDb = PostingTable::getList(array(
-                'select' => array('ID', 'DATE_CREATE'),
-                'filter' => array(
-                    'STATUS' => PostingTable::STATUS_NEW,
-                    'MAILING_CHAIN_ID' => $letter['ID']
-                ),
-                'order' => array('DATE_CREATE' => 'ASC'),
-                'limit' => 1
-            ));
+            $postingDb = PostingTable::getList(
+                array(
+                    'select' => array('ID', 'DATE_CREATE'),
+                    'filter' => array(
+                        'STATUS' => PostingTable::STATUS_NEW,
+                        'MAILING_CHAIN_ID' => $letter['ID']
+                    ),
+                    'order' => array('DATE_CREATE' => 'ASC'),
+                    'limit' => 1
+                )
+            );
             if ($posting = $postingDb->fetch()) {
                 $dateCreate = $posting['DATE_CREATE'];
                 /** @var Type\DateTime $dateCreate |null */
@@ -148,21 +191,31 @@ class MailingManager
     }
 
     /**
+     *
      * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
      */
     public static function checkSend()
     {
-        if (\COption::GetOptionString("sender", "auto_method") !== 'cron')
+        if (\COption::GetOptionString("sender", "auto_method") !== 'cron') {
             return;
+        }
 
-        $mailingChainDb = MailingChainTable::getList(array(
-            'select' => array('ID'),
-            'filter' => array(
-                '=STATUS' => array(MailingChainTable::STATUS_SEND, MailingChainTable::STATUS_PLAN),
-                '=MAILING.ACTIVE' => 'Y',
-                '<=AUTO_SEND_TIME' => new Type\DateTime(),
+        $mailingChainDb = MailingChainTable::getList(
+            array(
+                'select' => array('ID'),
+                'filter' => array(
+                    '=STATUS' => array(
+                        MailingChainTable::STATUS_SEND,
+                        MailingChainTable::STATUS_PLAN,
+                    ),
+                    '=MAILING.ACTIVE' => 'Y',
+                    '<=AUTO_SEND_TIME' => new Type\DateTime(),
+                )
             )
-        ));
+        );
+
         while ($mailingChain = $mailingChainDb->fetch()) {
             static::chainSend($mailingChain['ID']);
         }
@@ -190,19 +243,25 @@ class MailingManager
         $dateTomorrow = Type\Date::createFromPhp($dateTomorrow->setTime(0, 0, 0))->add('1 DAY');
         $arDateFilter = array($dateToday, $dateTomorrow);
 
-        $chainDb = MailingChainTable::getList(array(
-            'select' => array(
-                'ID', 'LAST_EXECUTED', 'POSTING_ID',
-                'DAYS_OF_MONTH', 'DAYS_OF_WEEK', 'TIMES_OF_DAY'
-            ),
-            'filter' => array(
-                '=REITERATE' => 'Y',
-                '=MAILING.ACTIVE' => 'Y',
-                '=IS_TRIGGER' => 'N',
-                '=STATUS' => MailingChainTable::STATUS_WAIT,
-                //'!><LAST_EXECUTED' => $arDateFilter,
+        $chainDb = MailingChainTable::getList(
+            array(
+                'select' => array(
+                    'ID',
+                    'LAST_EXECUTED',
+                    'POSTING_ID',
+                    'DAYS_OF_MONTH',
+                    'DAYS_OF_WEEK',
+                    'TIMES_OF_DAY'
+                ),
+                'filter' => array(
+                    '=REITERATE' => 'Y',
+                    '=MAILING.ACTIVE' => 'Y',
+                    '=IS_TRIGGER' => 'N',
+                    '=STATUS' => MailingChainTable::STATUS_WAIT,
+                    //'!><LAST_EXECUTED' => $arDateFilter,
+                )
             )
-        ));
+        );
         while ($arMailingChain = $chainDb->fetch()) {
             $lastExecuted = $arMailingChain['LAST_EXECUTED'];
             /* @var \Bitrix\Main\Type\DateTime $lastExecuted */
@@ -221,13 +280,15 @@ class MailingManager
             if ($timeOfExecute) {
                 $arUpdateMailChain = array('LAST_EXECUTED' => $datetimeToday);
 
-                $postingDb = PostingTable::getList(array(
-                    'select' => array('ID'),
-                    'filter' => array(
-                        '=MAILING_CHAIN_ID' => $arMailingChain['ID'],
-                        '><DATE_CREATE' => $arDateFilter
+                $postingDb = PostingTable::getList(
+                    array(
+                        'select' => array('ID'),
+                        'filter' => array(
+                            '=MAILING_CHAIN_ID' => $arMailingChain['ID'],
+                            '><DATE_CREATE' => $arDateFilter
+                        )
                     )
-                ));
+                );
                 $arPosting = $postingDb->fetch();
                 if (!$arPosting) {
                     $postingId = MailingChainTable::initPosting($arMailingChain['ID']);
@@ -241,7 +302,6 @@ class MailingManager
                     $arUpdateMailChain['STATUS'] = MailingChainTable::STATUS_SEND;
                     $arUpdateMailChain['AUTO_SEND_TIME'] = Type\DateTime::createFromPhp($timeOfExecute);
                 }
-
 
                 Model\LetterTable::update($arMailingChain['ID'], $arUpdateMailChain);
             }
@@ -265,14 +325,16 @@ class MailingManager
         $arDay = MethodSchedule::parseDaysOfMonth($daysOfMonth);
         $arWeek = MethodSchedule::parseDaysOfWeek($dayOfWeek);
         $arTime = MethodSchedule::parseTimesOfDay($timesOfDay);
-        if (!$arTime)
+        if (!$arTime) {
             $arTime = array(0, 0);
+        }
 
         $day = $date->format('j');
         $week = $date->format('N');
 
-        if ((!$arDay || in_array($day, $arDay)) && (!$arWeek || in_array($week, $arWeek)))
+        if ((!$arDay || in_array($day, $arDay)) && (!$arWeek || in_array($week, $arWeek))) {
             $timeOfExecute = $date->setTime($arTime[0], $arTime[1]);
+        }
 
         return $timeOfExecute;
     }

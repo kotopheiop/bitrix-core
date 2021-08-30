@@ -1,4 +1,5 @@
-<?
+<?php
+
 IncludeModuleLangFile(__FILE__);
 
 class CAllSocNetUser
@@ -11,8 +12,8 @@ class CAllSocNetUser
             return false;
         }
 
-        $ID = IntVal($ID);
-        $bSuccess = True;
+        $ID = intval($ID);
+        $bSuccess = true;
 
         if (!CSocNetGroup::DeleteNoDemand($ID)) {
             if ($ex = $APPLICATION->GetException()) {
@@ -86,7 +87,6 @@ class CAllSocNetUser
             for ($i = 0; $i < $cnt; $i++) {
                 CSocNetGroup::SetStat($arGroups[$i]);
             }
-
         }
     }
 
@@ -94,8 +94,9 @@ class CAllSocNetUser
     {
         global $USER;
 
-        if (!$USER->IsAuthorized())
+        if (!$USER->IsAuthorized()) {
             return;
+        }
 
         CUser::SetLastActivityDate($USER->GetID(), true);
     }
@@ -138,9 +139,10 @@ class CAllSocNetUser
 
     public static function IsOnLine($userID)
     {
-        $userID = IntVal($userID);
-        if ($userID <= 0)
+        $userID = intval($userID);
+        if ($userID <= 0) {
             return false;
+        }
 
         return CUser::IsOnLine($userID); // TODO change to use CUser::GetOnlineStatus see more in docs.bx
     }
@@ -159,26 +161,65 @@ class CAllSocNetUser
     {
         global $APPLICATION, $USER;
 
-        if (!is_object($USER) || !$USER->IsAuthorized())
-            return false;
+        static $cache = [];
 
-        if ($bUseSession && !isset($_SESSION["SONET_ADMIN"]))
+        if (!is_object($USER) || !$USER->IsAuthorized()) {
             return false;
-
-        if ($USER->isAdmin())
-            return true;
-
-        if (is_array($site_id)) {
-            foreach ($site_id as $site_id_tmp) {
-                $modulePerms = $APPLICATION->GetGroupRight("socialnetwork", false, "Y", "Y", array($site_id_tmp, false));
-                if ($modulePerms >= "W")
-                    return true;
-            }
-            return false;
-        } else {
-            $modulePerms = $APPLICATION->GetGroupRight("socialnetwork", false, "Y", "Y", ($site_id ? array($site_id, false) : false));
-            return ($modulePerms >= "W");
         }
+
+        $result = $USER->isAdmin();
+
+        if (!$result) {
+            $cacheKey = 'false';
+            if (is_array($site_id)) {
+                $cacheKey = serialize($cacheKey);
+            } elseif ($site_id) {
+                $cacheKey = $site_id;
+            } else {
+                $cacheKey = 'false';
+            }
+
+            if (isset($cache[$cacheKey])) {
+                $result = $cache[$cacheKey];
+            } else {
+                if (is_array($site_id)) {
+                    foreach ($site_id as $site_id_tmp) {
+                        $modulePerms = $APPLICATION->GetGroupRight(
+                            "socialnetwork",
+                            false,
+                            "Y",
+                            "Y",
+                            array($site_id_tmp, false)
+                        );
+                        if ($modulePerms >= "W") {
+                            $result = true;
+                            break;
+                        }
+                    }
+                } else {
+                    $modulePerms = $APPLICATION->GetGroupRight(
+                        "socialnetwork",
+                        false,
+                        "Y",
+                        "Y",
+                        ($site_id ? array($site_id, false) : false)
+                    );
+                    $result = ($modulePerms >= "W");
+                }
+
+                $cache[$cacheKey] = $result;
+            }
+        }
+
+        $result = (
+            $result
+            && (
+                !$bUseSession
+                || isset($_SESSION["SONET_ADMIN"])
+            )
+        );
+
+        return $result;
     }
 
     public static function IsUserModuleAdmin($userID, $site_id = SITE_ID)
@@ -210,11 +251,13 @@ class CAllSocNetUser
         $login = Trim($login);
 
         $formatName = $name;
-        if (StrLen($formatName) > 0 && StrLen($lastName) > 0)
+        if ($formatName <> '' && $lastName <> '') {
             $formatName .= " ";
+        }
         $formatName .= $lastName;
-        if (StrLen($formatName) <= 0)
+        if ($formatName == '') {
             $formatName = $login;
+        }
 
         return $formatName;
     }
@@ -226,20 +269,24 @@ class CAllSocNetUser
         $secondName = Trim($secondName);
         $login = Trim($login);
         $email = Trim($email);
-        $id = IntVal($id);
+        $id = intval($id);
 
         $formatName = $name;
-        if (StrLen($formatName) > 0 && StrLen($secondName) > 0)
+        if ($formatName <> '' && $secondName <> '') {
             $formatName .= " ";
+        }
         $formatName .= $secondName;
-        if (StrLen($formatName) > 0 && StrLen($lastName) > 0)
+        if ($formatName <> '' && $lastName <> '') {
             $formatName .= " ";
+        }
         $formatName .= $lastName;
-        if (StrLen($formatName) <= 0)
+        if ($formatName == '') {
             $formatName = $login;
+        }
 
-        if (StrLen($email) > 0)
+        if ($email <> '') {
             $formatName .= " &lt;" . $email . "&gt;";
+        }
         $formatName .= " [" . $id . "]";
 
         return $formatName;
@@ -248,17 +295,20 @@ class CAllSocNetUser
     public static function SearchUser($user, $bIntranet = false)
     {
         $user = Trim($user);
-        if (StrLen($user) <= 0)
+        if ($user == '') {
             return false;
+        }
 
         $userID = 0;
-        if ($user . "|" == IntVal($user) . "|")
-            $userID = IntVal($user);
+        if ($user . "|" == intval($user) . "|") {
+            $userID = intval($user);
+        }
 
         if ($userID <= 0) {
             $arMatches = array();
-            if (preg_match("#\[(\d+)\]#i", $user, $arMatches))
-                $userID = IntVal($arMatches[1]);
+            if (preg_match("#\[(\d+)\]#i", $user, $arMatches)) {
+                $userID = intval($arMatches[1]);
+            }
         }
 
 
@@ -267,8 +317,8 @@ class CAllSocNetUser
             $arFilter = array("ID_EQUAL_EXACT" => $userID);
 
             $dbUsers = CUser::GetList(
-                ($by = "LAST_NAME"),
-                ($order = "asc"),
+                "LAST_NAME",
+                "asc",
                 $arFilter,
                 array(
                     "NAV_PARAMS" => false,
@@ -278,7 +328,6 @@ class CAllSocNetUser
             $email = "";
             $arMatches = array();
             if (preg_match("#<(.+?)>#i", $user, $arMatches)) {
-
                 if (check_email($arMatches[1])) {
                     $email = $arMatches[1];
                     $user = Trim(Str_Replace("<" . $email . ">", "", $user));
@@ -289,19 +338,20 @@ class CAllSocNetUser
             $arUserTmp = Explode(" ", $user);
             foreach ($arUserTmp as $s) {
                 $s = Trim($s);
-                if (StrLen($s) > 0)
+                if ($s <> '') {
                     $arUser[] = $s;
+                }
             }
 
             if (
                 count($arUser) <= 0
-                && strlen($email) > 0
+                && $email <> ''
             ) {
                 $arFilter = array(
                     "ACTIVE" => "Y",
                     "EMAIL" => $email,
                 );
-                $dbUsers = CUser::GetList(($by = "id"), ($order = "asc"), $arFilter);
+                $dbUsers = CUser::GetList("id", "asc", $arFilter);
             } else {
                 $dbUsers = CUser::SearchUserByName($arUser, $email);
             }
@@ -328,15 +378,16 @@ class CAllSocNetUser
 
     public static function GetByID($ID)
     {
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
         $dbUser = CUser::GetByID($ID);
         if ($arUser = $dbUser->GetNext()) {
             $arUser["NAME_FORMATTED"] = CUser::FormatName(CSite::GetNameFormat(false), $arUser);
             $arUser["~NAME_FORMATTED"] = htmlspecialcharsback($arUser["NAME_FORMATTED"]);
             return $arUser;
-        } else
+        } else {
             return false;
+        }
     }
 
     public static function GetFields($bAdditional = false)
@@ -399,12 +450,18 @@ class CAllSocNetUser
 
         if (IsModuleInstalled("forum")) {
             $arRes["FORUM_SHOW_NAME"] = GetMessage("SONET_UP1_FORUM_PREFIX") . GetMessage("SONET_UP1_FORUM_SHOW_NAME");
-            $arRes["FORUM_DESCRIPTION"] = GetMessage("SONET_UP1_FORUM_PREFIX") . GetMessage("SONET_UP1_FORUM_DESCRIPTION");
+            $arRes["FORUM_DESCRIPTION"] = GetMessage("SONET_UP1_FORUM_PREFIX") . GetMessage(
+                    "SONET_UP1_FORUM_DESCRIPTION"
+                );
             $arRes["FORUM_INTERESTS"] = GetMessage("SONET_UP1_FORUM_PREFIX") . GetMessage("SONET_UP1_FORUM_INTERESTS");
             $arRes["FORUM_SIGNATURE"] = GetMessage("SONET_UP1_FORUM_PREFIX") . GetMessage("SONET_UP1_FORUM_SIGNATURE");
             $arRes["FORUM_AVATAR"] = GetMessage("SONET_UP1_FORUM_PREFIX") . GetMessage("SONET_UP1_FORUM_AVATAR");
-            $arRes["FORUM_HIDE_FROM_ONLINE"] = GetMessage("SONET_UP1_FORUM_PREFIX") . GetMessage("SONET_UP1_FORUM_HIDE_FROM_ONLINE");
-            $arRes["FORUM_SUBSC_GET_MY_MESSAGE"] = GetMessage("SONET_UP1_FORUM_PREFIX") . GetMessage("SONET_UP1_FORUM_SUBSC_GET_MY_MESSAGE");
+            $arRes["FORUM_HIDE_FROM_ONLINE"] = GetMessage("SONET_UP1_FORUM_PREFIX") . GetMessage(
+                    "SONET_UP1_FORUM_HIDE_FROM_ONLINE"
+                );
+            $arRes["FORUM_SUBSC_GET_MY_MESSAGE"] = GetMessage("SONET_UP1_FORUM_PREFIX") . GetMessage(
+                    "SONET_UP1_FORUM_SUBSC_GET_MY_MESSAGE"
+                );
         }
 
         if (IsModuleInstalled("blog")) {
@@ -429,23 +486,23 @@ class CAllSocNetUser
 
         if (
             !is_array($arUser)
-            && intval($arUser) > 0
+            && (int)$arUser > 0
         ) {
-            $dbUser = CUser::GetByID(intval($arUser));
-            $arUser = $dbUser->Fetch();
+            $dbUser = \CUser::getById((int)$arUser);
+            $arUser = $dbUser->fetch();
         }
 
         if (
             !is_array($arUser)
             || !isset($arUser["ID"])
-            || intval($arUser["ID"]) <= 0
+            || (int)$arUser["ID"] <= 0
         ) {
             return false;
         }
 
         if (
-            $currentUserId == $USER->GetId()
-            && self::IsCurrentUserModuleAdmin()
+            (int)$currentUserId === (int)$USER->GetId()
+            && self::isCurrentUserModuleAdmin()
         ) {
             return true;
         }
@@ -459,7 +516,7 @@ class CAllSocNetUser
         foreach (GetModuleEvents("socialnetwork", "OnGetProfileView", true) as $arEvent) {
             if (IsModuleInstalled($arEvent["TO_MODULE_ID"])) {
                 $bFound = true;
-                if (ExecuteModuleEventEx($arEvent, Array($currentUserId, $arUser, $siteId, $arContext, false)) === true) {
+                if (ExecuteModuleEventEx($arEvent, [$currentUserId, $arUser, $siteId, $arContext, false]) === true) {
                     return true;
                 }
             }
@@ -475,15 +532,15 @@ class CAllSocNetUser
         }
 
         if (
-            intval($currentUserId) <= 0
+            (int)$currentUserId <= 0
             || !isset($arContext)
             || !isset($arContext["ENTITY_TYPE"])
             || !in_array($arContext["ENTITY_TYPE"], array("LOG_ENTRY"))
             || !isset($arContext["ENTITY_ID"])
-            || intval($arContext["ENTITY_ID"]) <= 0
+            || (int)$arContext["ENTITY_ID"] <= 0
             || !is_array($arUser)
             || !isset($arUser["ID"])
-            || intval($arUser["ID"]) <= 0
+            || (int)$arUser["ID"] <= 0
         ) {
             return false;
         }
@@ -579,13 +636,15 @@ class CAllSocNetUser
                     ) {
                         $arDepartmentUserId = array();
 
-                        $rsDepartmentUserId = \Bitrix\Intranet\Util::getDepartmentEmployees(array(
-                            'DEPARTMENTS' => $arDepartmentId,
-                            'RECURSIVE' => 'Y',
-                            'ACTIVE' => 'Y',
-                            'CONFIRMED' => 'Y',
-                            'SELECT' => array('ID')
-                        ));
+                        $rsDepartmentUserId = \Bitrix\Intranet\Util::getDepartmentEmployees(
+                            array(
+                                'DEPARTMENTS' => $arDepartmentId,
+                                'RECURSIVE' => 'Y',
+                                'ACTIVE' => 'Y',
+                                'CONFIRMED' => 'Y',
+                                'SELECT' => array('ID')
+                            )
+                        );
 
                         while ($arUser = $rsDepartmentUserId->Fetch()) {
                             $arDepartmentUserId[] = $arUser["ID"];
@@ -626,5 +685,3 @@ class CAllSocNetUser
         return false;
     }
 }
-
-?>

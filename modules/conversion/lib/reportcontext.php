@@ -12,11 +12,13 @@ final class ReportContext extends Internals\BaseContext
 {
     public function unsetAttribute($name, $value = null)
     {
-        if (!is_string($name))
+        if (!is_string($name)) {
             throw new ArgumentTypeException('name', 'string');
+        }
 
-        if ($this->id !== null)
+        if ($this->id !== null) {
             throw new SystemException('Cannot modify existent context!');
+        }
 
         unset($this->attributes[$name]);
     }
@@ -192,10 +194,14 @@ final class ReportContext extends Internals\BaseContext
 
     static private function setAttributeFilter(Query $query, $field, $name, $value = null)
     {
-        $query->registerRuntimeField(null, new ReferenceField($field, Internals\ContextAttributeTable::getEntity(),
-            array('=this.CONTEXT_ID' => 'ref.CONTEXT_ID'),
-            array('join_type' => 'INNER')
-        ));
+        $query->registerRuntimeField(
+            null,
+            new ReferenceField(
+                $field, Internals\ContextAttributeTable::getEntity(),
+                array('=this.CONTEXT_ID' => 'ref.CONTEXT_ID'),
+                array('join_type' => 'INNER')
+            )
+        );
 
         $query->addFilter("=$field.NAME", $name);
 
@@ -223,15 +229,17 @@ final class ReportContext extends Internals\BaseContext
         $splitNames = array();
 
         if ($split = $parameters['split']) {
-            if (!is_array($split))
+            if (!is_array($split)) {
                 throw new ArgumentTypeException('parameters[split]', 'array');
+            }
 
             foreach ($split as $name => $value) {
                 switch ($name) {
                     case 'ATTRIBUTE_NAME':
 
-                        if (!is_string($value))
+                        if (!is_string($value)) {
                             throw new ArgumentTypeException('parameters[split][ATTRIBUTE_NAME]', 'string');
+                        }
 
                         self::setAttributeFilter($query, 'split_attribute', $value);
                         $query->addGroup('split_attribute.VALUE');
@@ -279,7 +287,11 @@ final class ReportContext extends Internals\BaseContext
 
         $filter['=NAME'] = RateManager::getRatesCounters($rateTypes);
 
-        return self::getRatesRecursive($rateTypes, $this->getCounters($parameters), ($s = $parameters['split']) ? count($s) : 0);
+        return self::getRatesRecursive(
+            $rateTypes,
+            $this->getCounters($parameters),
+            ($s = $parameters['split']) ? count($s) : 0
+        );
     }
 
     static private function getRatesRecursive(array $rateTypes, array $counters, $level)

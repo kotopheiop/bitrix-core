@@ -8,11 +8,10 @@
 
 namespace Bitrix\Sender\Message;
 
-use Bitrix\Main\SiteTable;
 use Bitrix\Main\ArgumentException;
-
-use Bitrix\Sender\Transport;
+use Bitrix\Main\SiteTable;
 use Bitrix\Sender\Integration;
+use Bitrix\Sender\Transport;
 
 /**
  * Class Adapter
@@ -130,7 +129,9 @@ class Adapter implements iBase
             return $this->transport;
         }
 
-        $transportCode = $this->configuration->get('TRANSPORT_CODE') ?: current($this->message->getSupportedTransports());
+        $transportCode = $this->configuration->get('TRANSPORT_CODE') ?: current(
+            $this->message->getSupportedTransports()
+        );
         //$transportConfigId = $this->configuration->get('TRANSPORT_CONFIGURATION_ID');
         $this->transport = Transport\Adapter::create($transportCode);
         $this->transport->saveConfiguration($this->getConfiguration());
@@ -327,7 +328,7 @@ class Adapter implements iBase
             $to[] = (string)$value;
         }
 
-        return str_replace($from, $to, $content);
+        return Integration\Sender\Mail\TransportMail::replaceTemplate(str_replace($from, $to, $content));
     }
 
     /**
@@ -552,10 +553,12 @@ class Adapter implements iBase
         }
 
         $this->siteData = array();
-        $siteDb = SiteTable::getList(array(
-            'select' => array('LID', 'SERVER_NAME', 'NAME', 'CHARSET' => 'CULTURE.CHARSET'),
-            'filter' => array('=LID' => $id ?: SITE_ID)
-        ));
+        $siteDb = SiteTable::getList(
+            array(
+                'select' => array('LID', 'SERVER_NAME', 'NAME', 'CHARSET' => 'CULTURE.CHARSET'),
+                'filter' => array('=LID' => $id ?: SITE_ID)
+            )
+        );
         if ($site = $siteDb->fetch()) {
             $site['SITE_NAME'] = $site['NAME'];
             unset($site['NAME']);
@@ -573,6 +576,16 @@ class Adapter implements iBase
     public function isAds()
     {
         return $this->message instanceof iAds;
+    }
+
+    /**
+     * Is ads.
+     *
+     * @return bool
+     */
+    public function isMarketing()
+    {
+        return $this->message instanceof iMarketing;
     }
 
     /**
@@ -669,8 +682,15 @@ class Adapter implements iBase
     {
         if ($this->message instanceof iBeforeAfter) {
             return $this->message->onAfterEnd();
-
         }
         return new \Bitrix\Main\Result();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getEntityCode()
+    {
+        return $this->message->getEntityCode();
     }
 }

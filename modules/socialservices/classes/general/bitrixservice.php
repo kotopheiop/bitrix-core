@@ -92,15 +92,19 @@ class CBitrixServiceTransport
             try {
                 $res = $this->prepareAnswer($result);
             } catch (\Bitrix\Main\ArgumentException $e) {
-
             }
 
             if ($res) {
-                if (!$licenseCheck && is_array($res) && isset($res['error']) && $res['error'] === 'verification_needed') {
+                if (!$licenseCheck && is_array(
+                        $res
+                    ) && isset($res['error']) && $res['error'] === 'verification_needed') {
                     return $this->call($methodName, $additionalParams, true);
                 }
             } else {
-                AddMessage2Log('Strange answer from Bitrix Service! ' . $this->serviceHost . static::SERVICE_URL . $methodName . ": " . $http->getStatus() . ' ' . $result);
+                AddMessage2Log(
+                    'Strange answer from Bitrix Service! ' . $this->serviceHost . static::SERVICE_URL . $methodName . ": " . $http->getStatus(
+                    ) . ' ' . $result
+                );
             }
 
             return $res;

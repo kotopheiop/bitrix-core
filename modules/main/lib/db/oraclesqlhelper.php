@@ -49,7 +49,7 @@ class OracleSqlHelper extends SqlHelper
      */
     public function quote($identifier)
     {
-        return parent::quote(strtoupper($identifier));
+        return parent::quote(mb_strtoupper($identifier));
     }
 
     /**
@@ -72,16 +72,18 @@ class OracleSqlHelper extends SqlHelper
      */
     function forSql($value, $maxLength = 0)
     {
-        if ($maxLength <= 0 || $maxLength > 2000)
+        if ($maxLength <= 0 || $maxLength > 2000) {
             $maxLength = 2000;
+        }
 
-        $value = substr($value, 0, $maxLength);
+        $value = mb_substr($value, 0, $maxLength);
 
         if (\Bitrix\Main\Application::isUtfMode()) {
             // From http://w3.org/International/questions/qa-forms-utf-8.html
             // This one can crash php with segmentation fault on large input data (over 20K)
             // https://bugs.php.net/bug.php?id=60423
-            if (preg_match_all('%(
+            if (preg_match_all(
+                '%(
 				[\x00-\x7E]                        # ASCII
 				|[\xC2-\xDF][\x80-\xBF]            # non-overlong 2-byte
 				|\xE0[\xA0-\xBF][\x80-\xBF]        # excluding overlongs
@@ -90,10 +92,14 @@ class OracleSqlHelper extends SqlHelper
 				|\xF0[\x90-\xBF][\x80-\xBF]{2}     # planes 1-3
 				|[\xF1-\xF3][\x80-\xBF]{3}         # planes 4-15
 				|\xF4[\x80-\x8F][\x80-\xBF]{2}     # plane 16
-			)+%x', $value, $match))
+			)+%x',
+                $value,
+                $match
+            )) {
                 $value = implode(' ', $match[0]);
-            else
-                return ''; //There is no valid utf at all
+            } else {
+                return '';
+            } //There is no valid utf at all
         }
 
         return str_replace("'", "''", $value);
@@ -184,7 +190,7 @@ class OracleSqlHelper extends SqlHelper
         $format = str_replace("HH", "HH24", $format);
         $format = str_replace("GG", "HH24", $format);
 
-        if (strpos($format, 'HH24') === false) {
+        if (mb_strpos($format, 'HH24') === false) {
             $format = str_replace("H", "HH", $format);
         }
 
@@ -192,9 +198,9 @@ class OracleSqlHelper extends SqlHelper
 
         $format = str_replace("MI", "II", $format);
 
-        if (strpos($format, 'MMMM') !== false) {
+        if (mb_strpos($format, 'MMMM') !== false) {
             $format = str_replace("MMMM", "MONTH", $format);
-        } elseif (strpos($format, 'MM') === false) {
+        } elseif (mb_strpos($format, 'MM') === false) {
             $format = str_replace("M", "MON", $format);
         }
 
@@ -223,8 +229,9 @@ class OracleSqlHelper extends SqlHelper
     {
         $str = "";
         $ar = func_get_args();
-        if (is_array($ar))
+        if (is_array($ar)) {
             $str .= implode(" || ", $ar);
+        }
         return $str;
     }
 
@@ -360,7 +367,7 @@ class OracleSqlHelper extends SqlHelper
     public function convertFromDbDateTime($value)
     {
         if ($value !== null) {
-            if (strlen($value) == 19) {
+            if (mb_strlen($value) == 19) {
                 //preferable format: NLS_DATE_FORMAT='YYYY-MM-DD HH24:MI:SS'
                 $value = new Type\DateTime($value, "Y-m-d H:i:s");
             } else {
@@ -439,7 +446,7 @@ class OracleSqlHelper extends SqlHelper
     public function convertFromDbString($value, $length = null)
     {
         if ($value !== null) {
-            if ((strlen($value) == 19) && preg_match("#^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$#", $value)) {
+            if ((mb_strlen($value) == 19) && preg_match("#^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$#", $value)) {
                 return new Type\DateTime($value, "Y-m-d H:i:s");
             }
         }
@@ -497,7 +504,7 @@ class OracleSqlHelper extends SqlHelper
             if (preg_match('/^[0-9]+$/', $values[0]) && preg_match('/^[0-9]+$/', $values[1])) {
                 return 'number(1)';
             } else {
-                return 'varchar2(' . max(strlen($values[0]), strlen($values[1])) . ' char)';
+                return 'varchar2(' . max(mb_strlen($values[0]), mb_strlen($values[1])) . ' char)';
             }
         } elseif ($field instanceof ORM\Fields\EnumField) {
             return 'varchar2(' . max(array_map('strlen', $field->getValues())) . ' char)';
@@ -589,8 +596,9 @@ class OracleSqlHelper extends SqlHelper
         $offset = intval($offset);
         $limit = intval($limit);
 
-        if ($offset > 0 && $limit <= 0)
+        if ($offset > 0 && $limit <= 0) {
             throw new \Bitrix\Main\ArgumentException("Limit must be set if offset is set");
+        }
 
         if ($limit > 0) {
             //The first row selected has a ROWNUM of 1, the second has 2, and so on
@@ -654,7 +662,10 @@ class OracleSqlHelper extends SqlHelper
         foreach ($tableFields as $columnName => $tableField) {
             $quotedName = $this->quote($columnName);
             if (in_array($columnName, $primaryFields)) {
-                $sourceSelectColumns[] = $this->convertToDb($insertFields[$columnName], $tableField) . " AS " . $quotedName;
+                $sourceSelectColumns[] = $this->convertToDb(
+                        $insertFields[$columnName],
+                        $tableField
+                    ) . " AS " . $quotedName;
                 if ($insertFields[$columnName] === null) {
                     //can't just compare NULLs
                     $targetConnectColumns[] = "(source." . $quotedName . " IS NULL AND target." . $quotedName . " IS NULL)";
@@ -664,7 +675,10 @@ class OracleSqlHelper extends SqlHelper
             }
 
             if (isset($updateFields[$columnName]) || array_key_exists($columnName, $updateFields)) {
-                $updateColumns[] = "target." . $quotedName . ' = ' . $this->convertToDb($updateFields[$columnName], $tableField);
+                $updateColumns[] = "target." . $quotedName . ' = ' . $this->convertToDb(
+                        $updateFields[$columnName],
+                        $tableField
+                    );
             }
         }
 

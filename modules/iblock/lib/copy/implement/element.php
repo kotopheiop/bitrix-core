@@ -53,11 +53,14 @@ class Element extends CopyImplementer
         if ($element = $queryObject->fetch()) {
             $fields = $element;
             $propertyValuesObject = \CIblockElement::getPropertyValues(
-                $element["IBLOCK_ID"], ["ID" => $entityId]);
+                $element["IBLOCK_ID"],
+                ["ID" => $entityId]
+            );
             while ($propertyValues = $propertyValuesObject->fetch()) {
                 foreach ($propertyValues as $propertyId => $propertyValue) {
-                    if ($propertyId == "IBLOCK_ELEMENT_ID")
+                    if ($propertyId == "IBLOCK_ELEMENT_ID") {
                         continue;
+                    }
                     $fields["PROPERTY_" . $propertyId] = $propertyValue;
                 }
             }
@@ -80,10 +83,13 @@ class Element extends CopyImplementer
         ];
 
         foreach ($inputFields as $fieldId => $fieldValue) {
-            if (substr($fieldId, 0, 9) == "PROPERTY_") {
-                $propertyId = substr($fieldId, strlen("PROPERTY_"));
+            if (mb_substr($fieldId, 0, 9) == "PROPERTY_") {
+                $propertyId = mb_substr($fieldId, mb_strlen("PROPERTY_"));
                 $fields["PROPERTY_VALUES"][$propertyId] = $this->getPropertyFieldValue(
-                    $container, $fieldId, $fieldValue);
+                    $container,
+                    $fieldId,
+                    $fieldValue
+                );
             } else {
                 $fields[$fieldId] = $this->getFieldValue($fieldId, $fieldValue);
             }
@@ -136,7 +142,7 @@ class Element extends CopyImplementer
 
     private function getPropertyFieldValue(Container $container, $fieldId, $fieldValue)
     {
-        $propertyId = substr($fieldId, strlen("PROPERTY_"));
+        $propertyId = mb_substr($fieldId, mb_strlen("PROPERTY_"));
         $fieldValue = (is_array($fieldValue) ? $fieldValue : [$fieldValue]);
 
         $queryObject = \CIBlockProperty::getList([], ["ID" => $propertyId]);
@@ -180,9 +186,12 @@ class Element extends CopyImplementer
 
     private function getFileValue(array $fieldValue)
     {
-        array_walk($fieldValue, function (&$value) {
-            $value = ["VALUE" => \CFile::makeFileArray($value)];
-        });
+        array_walk(
+            $fieldValue,
+            function (&$value) {
+                $value = ["VALUE" => \CFile::makeFileArray($value)];
+            }
+        );
         return $fieldValue;
     }
 
@@ -195,7 +204,7 @@ class Element extends CopyImplementer
 
         if ($enumRatio) {
             foreach ($inputValue as $value) {
-                if (array_key_exists($value, $enumRatio)) {
+                if ($value && array_key_exists($value, $enumRatio)) {
                     $values[] = $enumRatio[$value];
                 }
             }
@@ -209,8 +218,9 @@ class Element extends CopyImplementer
         $values = [];
         foreach ($inputValue as $key => $value) {
             if (is_array($value)) {
-                foreach ($value as $k => $v)
+                foreach ($value as $k => $v) {
                     $values[$k]["VALUE"] = $v;
+                }
             } else {
                 $values[$key]["VALUE"] = $value;
             }
@@ -220,11 +230,14 @@ class Element extends CopyImplementer
 
     private function getIntegerValue(array $fieldValue)
     {
-        array_walk($fieldValue, function (&$value) {
-            $value = [
-                "VALUE" => ($value === false ? "" : floatval(str_replace(" ", "", str_replace(",", ".", $value))))
-            ];
-        });
+        array_walk(
+            $fieldValue,
+            function (&$value) {
+                $value = [
+                    "VALUE" => ($value === false ? "" : floatval(str_replace(" ", "", str_replace(",", ".", $value))))
+                ];
+            }
+        );
         return $fieldValue;
     }
 

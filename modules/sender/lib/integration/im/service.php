@@ -25,7 +25,9 @@ class Service
      */
     public static function canUse()
     {
-        if (!Loader::includeModule('im') || !Loader::includeModule('imopenlines') || !Loader::includeModule('imconnector')) {
+        if (!Loader::includeModule('im') || !Loader::includeModule('imopenlines') || !Loader::includeModule(
+                'imconnector'
+            )) {
             return false;
         } else {
             return true;
@@ -64,9 +66,11 @@ class Service
             return false;
         }
 
-        $result = ImOpenLines\Im::addMessagesNewsletter(array(
-            $to => array('MESSAGE' => $text, 'SYSTEM' => 'Y')
-        ));
+        $result = ImOpenLines\Im::addMessagesNewsletter(
+            array(
+                $to => array('MESSAGE' => $text, 'SYSTEM' => 'Y')
+            )
+        );
 
         return isset($result[$to]) ? (bool)$result[$to] : false;
     }

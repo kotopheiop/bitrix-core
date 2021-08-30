@@ -1,4 +1,5 @@
 <?
+
 $module_id = "security";
 CModule::IncludeModule($module_id);
 
@@ -31,8 +32,16 @@ if ($canRead || $canWrite) :
         array("security_event_userinfo_format", GetMessage("SEC_OPTIONS_EVENT_USERINFO_FORMAT"), array("text", 60), 2),
         array("security_event_db_active", GetMessage("SEC_OPTIONS_EVENT_DB_ACTIVE"), array("checkbox")),
         array("security_event_syslog_active", GetMessage("SEC_OPTIONS_EVENT_SYSLOG_ACTIVE"), array("checkbox")),
-        array("security_event_syslog_facility", GetMessage("SEC_OPTIONS_EVENT_SYSLOG_FACILITY"), array("selectbox", $arSyslogFacilities)),
-        array("security_event_syslog_priority", GetMessage("SEC_OPTIONS_EVENT_SYSLOG_PRIORITY"), array("selectbox", $arSyslogPriorities)),
+        array(
+            "security_event_syslog_facility",
+            GetMessage("SEC_OPTIONS_EVENT_SYSLOG_FACILITY"),
+            array("selectbox", $arSyslogFacilities)
+        ),
+        array(
+            "security_event_syslog_priority",
+            GetMessage("SEC_OPTIONS_EVENT_SYSLOG_PRIORITY"),
+            array("selectbox", $arSyslogPriorities)
+        ),
         array("security_event_file_active", GetMessage("SEC_OPTIONS_EVENT_FILE_ACTIVE"), array("checkbox")),
         array("security_event_file_path", GetMessage("SEC_OPTIONS_EVENT_FILE_PATH"), array("text", 45), 3),
     );
@@ -55,21 +64,24 @@ if ($canRead || $canWrite) :
     }
     $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
-    if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Update"] . $_REQUEST["Apply"] . $_REQUEST["RestoreDefaults"] != "" && $canWrite && check_bitrix_sessid()) {
-
+    if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Update"] . $_REQUEST["Apply"] . $_REQUEST["RestoreDefaults"] != "" && $canWrite && check_bitrix_sessid(
+        )) {
         if ($_REQUEST["RestoreDefaults"] != "") {
             COption::RemoveOption($module_id);
+            CSecurityRedirect::ReSeed();
         } else {
             foreach ($arAllOptions as $arOption) {
                 $name = $arOption[0];
                 $val = trim($_REQUEST[$name], " \t\n\r");
 
                 $type = $arOption[2][0];
-                if ($type === 'heading')
+                if ($type === 'heading') {
                     continue;
+                }
 
-                if ($type === 'checkbox' && $val != 'Y')
+                if ($type === 'checkbox' && $val != 'Y') {
                     $val = 'N';
+                }
 
                 COption::SetOptionString($module_id, $name, $val, $arOption[1]);
             }
@@ -83,19 +95,29 @@ if ($canRead || $canWrite) :
         }
 
         if ($_REQUEST["back_url_settings"] != "") {
-            if ($_REQUEST["Update"] != "")
+            if ($_REQUEST["Update"] != "") {
                 LocalRedirect($_REQUEST["back_url_settings"]);
+            }
 
             $returnUrl = $_GET["return_url"] ? urlencode($_GET["return_url"]) : "";
-            LocalRedirect($APPLICATION->GetCurPage() . "?mid=" . urlencode($module_id) . "&lang=" . urlencode(LANGUAGE_ID) . "&back_url_settings=" . $returnUrl . "&" . $tabControl->ActiveTabParam());
+            LocalRedirect(
+                $APPLICATION->GetCurPage() . "?mid=" . urlencode($module_id) . "&lang=" . urlencode(
+                    LANGUAGE_ID
+                ) . "&back_url_settings=" . $returnUrl . "&" . $tabControl->ActiveTabParam()
+            );
         } else {
-            LocalRedirect($APPLICATION->GetCurPage() . "?mid=" . urlencode($module_id) . "&lang=" . urlencode(LANGUAGE_ID) . "&" . $tabControl->ActiveTabParam());
+            LocalRedirect(
+                $APPLICATION->GetCurPage() . "?mid=" . urlencode($module_id) . "&lang=" . urlencode(
+                    LANGUAGE_ID
+                ) . "&" . $tabControl->ActiveTabParam()
+            );
         }
     }
 
     $message = CSecurityIPRule::CheckAntiFile(true);
-    if ($message)
+    if ($message) {
         echo $message->Show();
+    }
 
     $availableMessagePlaceholders = CSecurityEventMessageFormatter::getAvailableMessagePlaceholders();
     $availableUserInfoPlaceholders = CSecurityEventMessageFormatter::getAvailableUserInfoPlaceholders();
@@ -127,8 +149,9 @@ if ($canRead || $canWrite) :
                 <td width="60%">
                     <? if ($type[0] == "checkbox"):?>
                         <input type="checkbox" name="<? echo htmlspecialcharsbx($arOption[0]) ?>"
-                               id="<? echo htmlspecialcharsbx($arOption[0]) ?>"
-                               value="Y"<? if ($val == "Y") echo " checked"; ?>>
+                               id="<? echo htmlspecialcharsbx($arOption[0]) ?>" value="Y"<? if ($val == "Y") {
+                            echo " checked";
+                        } ?>>
                     <? elseif ($type[0] == "text"):?>
                         <input type="text" size="<? echo $type[1] ?>" maxlength="255"
                                value="<? echo htmlspecialcharsbx($val) ?>"
@@ -137,7 +160,9 @@ if ($canRead || $canWrite) :
                     <? elseif ($type[0] == "textarea"):?>
                         <textarea rows="<? echo $type[1] ?>" cols="<? echo $type[2] ?>"
                                   name="<? echo htmlspecialcharsbx($arOption[0]) ?>"
-                                  id="<? echo htmlspecialcharsbx($arOption[0]) ?>"><? echo htmlspecialcharsbx($val) ?></textarea>
+                                  id="<? echo htmlspecialcharsbx($arOption[0]) ?>"><? echo htmlspecialcharsbx(
+                                $val
+                            ) ?></textarea>
                     <? elseif ($type[0] == "selectbox"):
                         echo SelectBoxFromArray($arOption[0], $type[1], $val);
                     endif ?>
@@ -154,8 +179,9 @@ if ($canRead || $canWrite) :
                     <? foreach ($availableMessagePlaceholders
 
                     as $placeholder): ?>
-                <div style="margin-left: 20px;"><?= $placeholder ?>
-                    - <?= getMessage("SEC_OPTIONS_EVENT_MESSAGE_PLACEHOLDER_" . str_replace("#", "", $placeholder)) ?></div>
+                <div style="margin-left: 20px;"><?= $placeholder ?> - <?= getMessage(
+                        "SEC_OPTIONS_EVENT_MESSAGE_PLACEHOLDER_" . str_replace("#", "", $placeholder)
+                    ) ?></div>
             <? endforeach ?>
                 </p>
                 <p>
@@ -164,8 +190,9 @@ if ($canRead || $canWrite) :
                     <? foreach ($availableUserInfoPlaceholders
 
                     as $placeholder): ?>
-                <div style="margin-left: 20px;"><?= $placeholder ?>
-                    - <?= getMessage("SEC_OPTIONS_EVENT_USERINFO_PLACEHOLDER_" . str_replace("#", "", $placeholder)) ?></div>
+                <div style="margin-left: 20px;"><?= $placeholder ?> - <?= getMessage(
+                        "SEC_OPTIONS_EVENT_USERINFO_PLACEHOLDER_" . str_replace("#", "", $placeholder)
+                    ) ?></div>
             <? endforeach ?>
                 </p>
                 <p>
@@ -191,14 +218,17 @@ if ($canRead || $canWrite) :
             <input <? if (!$canWrite) echo "disabled" ?> type="button" name="Cancel"
                                                          value="<?= GetMessage("MAIN_OPT_CANCEL") ?>"
                                                          title="<?= GetMessage("MAIN_OPT_CANCEL_TITLE") ?>"
-                                                         onclick="window.location='<? echo htmlspecialcharsbx(CUtil::addslashes($_REQUEST["back_url_settings"])) ?>'">
+                                                         onclick="window.location='<? echo htmlspecialcharsbx(
+                                                             CUtil::addslashes($_REQUEST["back_url_settings"])
+                                                         ) ?>'">
             <input type="hidden" name="back_url_settings"
                    value="<?= htmlspecialcharsbx($_REQUEST["back_url_settings"]) ?>">
         <? endif ?>
         <input <? if (!$canWrite) echo "disabled" ?> type="submit" name="RestoreDefaults"
                                                      title="<? echo GetMessage("MAIN_HINT_RESTORE_DEFAULTS") ?>"
-                                                     onclick="return confirm('<? echo AddSlashes(GetMessage("MAIN_HINT_RESTORE_DEFAULTS_WARNING")) ?>')"
-                                                     value="<? echo GetMessage("MAIN_RESTORE_DEFAULTS") ?>">
+                                                     onclick="return confirm('<? echo AddSlashes(
+                                                         GetMessage("MAIN_HINT_RESTORE_DEFAULTS_WARNING")
+                                                     ) ?>')" value="<? echo GetMessage("MAIN_RESTORE_DEFAULTS") ?>">
         <?= bitrix_sessid_post(); ?>
         <? $tabControl->End(); ?>
     </form>

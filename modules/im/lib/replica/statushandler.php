@@ -38,15 +38,17 @@ if (Loader::includeModule('replica')) {
         public function afterInsertTrigger(array $newRecord)
         {
             if ($newRecord["USER_ID"] && \CIMStatus::Enable()) {
-                \CPullStack::AddShared(Array(
-                    'module_id' => 'online',
-                    'command' => 'user_status',
-                    'expiry' => 120,
-                    'params' => array(
-                        "USER_ID" => $newRecord["USER_ID"],
-                        "STATUS" => $newRecord["STATUS"],
-                    ),
-                ));
+                \CPullStack::AddShared(
+                    Array(
+                        'module_id' => 'online',
+                        'command' => 'user_status',
+                        'expiry' => 120,
+                        'params' => array(
+                            "USER_ID" => $newRecord["USER_ID"],
+                            "STATUS" => $newRecord["STATUS"],
+                        ),
+                    )
+                );
             }
         }
 
@@ -62,15 +64,17 @@ if (Loader::includeModule('replica')) {
         {
             if ($oldRecord["STATUS"] !== $newRecord["STATUS"]) {
                 if (\CIMStatus::Enable()) {
-                    \CPullStack::AddShared(Array(
-                        'module_id' => 'online',
-                        'command' => 'user_status',
-                        'expiry' => 120,
-                        'params' => array(
-                            "USER_ID" => $newRecord["USER_ID"],
-                            "STATUS" => $newRecord["STATUS"],
-                        ),
-                    ));
+                    \CPullStack::AddShared(
+                        Array(
+                            'module_id' => 'online',
+                            'command' => 'user_status',
+                            'expiry' => 120,
+                            'params' => array(
+                                "USER_ID" => $newRecord["USER_ID"],
+                                "STATUS" => $newRecord["STATUS"],
+                            ),
+                        )
+                    );
                 }
             }
         }
@@ -101,7 +105,9 @@ if (Loader::includeModule('replica')) {
                                 "guid" => $guid,
                                 "nodes" => $map[$guid],
                                 "ts" => time(),
-                                "ip" => \Bitrix\Main\Application::getInstance()->getContext()->getServer()->get('REMOTE_ADDR'),
+                                "ip" => \Bitrix\Main\Application::getInstance()->getContext()->getServer()->get(
+                                    'REMOTE_ADDR'
+                                ),
                             );
                             \Bitrix\Replica\Log\Client::getInstance()->write($map[$guid], $event);
                         }
@@ -256,7 +262,6 @@ if (Loader::includeModule('replica')) {
                 "ip" => \Bitrix\Main\Application::getInstance()->getContext()->getServer()->get('REMOTE_ADDR'),
             );
             \Bitrix\Replica\Log\Client::getInstance()->write(array($targetNode), $event);
-
         }
 
         /**

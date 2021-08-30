@@ -1,9 +1,11 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 $blogModulePermissions = $APPLICATION->GetGroupRight("blog");
-if ($blogModulePermissions < "R")
+if ($blogModulePermissions < "R") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/blog/include.php");
 IncludeModuleLangFile(__FILE__);
@@ -11,9 +13,9 @@ IncludeModuleLangFile(__FILE__);
 $errorMessage = "";
 $bVarsFromForm = false;
 
-$ID = IntVal($ID);
+$ID = intval($ID);
 
-if ($REQUEST_METHOD == "POST" && strlen($Update) > 0 && $blogModulePermissions >= "W" && check_bitrix_sessid()) {
+if ($REQUEST_METHOD == "POST" && $Update <> '' && $blogModulePermissions >= "W" && check_bitrix_sessid()) {
     $arFields = array(
         "NAME" => $NAME,
         "SITE_ID" => $SITE_ID,
@@ -23,32 +25,35 @@ if ($REQUEST_METHOD == "POST" && strlen($Update) > 0 && $blogModulePermissions >
         $arBlogGroup = CBlogGroup::GetByID($ID);
 
         if (!CBlogGroup::Update($ID, $arFields)) {
-            if ($ex = $APPLICATION->GetException())
+            if ($ex = $APPLICATION->GetException()) {
                 $errorMessage .= $ex->GetString() . ". ";
-            else
+            } else {
                 $errorMessage .= GetMessage("BLGE_ERROR_SAVING") . ". ";
+            }
         }
     } else {
         $ID = CBlogGroup::Add($arFields);
-        $ID = IntVal($ID);
+        $ID = intval($ID);
         if ($ID <= 0) {
-            if ($ex = $APPLICATION->GetException())
+            if ($ex = $APPLICATION->GetException()) {
                 $errorMessage .= $ex->GetString() . ". ";
-            else
+            } else {
                 $errorMessage .= GetMessage("BLGE_ERROR_SAVING") . ". ";
+            }
         }
     }
 
-    if (strlen($errorMessage) <= 0) {
+    if ($errorMessage == '') {
         $arBlogGroupTmp = CBlogGroup::GetByID($ID);
-        BXClearCache(True, "/" . $arBlogGroupTmp["SITE_ID"] . "/blog/");
+        BXClearCache(true, "/" . $arBlogGroupTmp["SITE_ID"] . "/blog/");
         if (!empty($arBlogGroup)) {
-            BXClearCache(True, "/" . $arBlogGroup["SITE_ID"] . "/blog/");
+            BXClearCache(true, "/" . $arBlogGroup["SITE_ID"] . "/blog/");
         }
 
 
-        if (strlen($apply) <= 0)
+        if ($apply == '') {
             LocalRedirect("/bitrix/admin/blog_group.php?lang=" . LANG . "&" . GetFilterParams("filter_", false));
+        }
     } else {
         $bVarsFromForm = true;
     }
@@ -56,10 +61,11 @@ if ($REQUEST_METHOD == "POST" && strlen($Update) > 0 && $blogModulePermissions >
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/blog/prolog.php");
 
-if ($ID > 0)
+if ($ID > 0) {
     $APPLICATION->SetTitle(GetMessage("BLGE_UPDATING"));
-else
+} else {
     $APPLICATION->SetTitle(GetMessage("BLGE_ADDING"));
+}
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
@@ -69,8 +75,9 @@ $str_SITE_ID = "";
 if ($ID > 0) {
     $arGroup = CBlogGroup::GetByID($ID);
     if (!$arGroup) {
-        if ($blogModulePermissions < "W")
+        if ($blogModulePermissions < "W") {
             $errorMessage .= GetMessage("BLGE_NO_PERMS2ADD") . ". ";
+        }
         $ID = 0;
     } else {
         $str_NAME = htmlspecialcharsbx($arGroup["NAME"]);
@@ -78,8 +85,9 @@ if ($ID > 0) {
     }
 }
 
-if ($bVarsFromForm)
+if ($bVarsFromForm) {
     $DB->InitTableVarsForEdit("b_blog_group", "", "str_");
+}
 ?>
 
 <?
@@ -103,7 +111,10 @@ if ($ID > 0 && $blogModulePermissions >= "W") {
     $aMenu[] = array(
         "TEXT" => GetMessage("BLGE_DELETE_GROUP"),
         "ICON" => "btn_delete",
-        "LINK" => "javascript:if(confirm('" . GetMessage("BLGE_DELETE_GROUP_CONFIRM") . "')) window.location='/bitrix/admin/blog_group.php?ID=" . $ID . "&action=delete&lang=" . LANG . "&" . bitrix_sessid_get() . "#tb';",
+        "LINK" => "javascript:if(confirm('" . GetMessage(
+                "BLGE_DELETE_GROUP_CONFIRM"
+            ) . "')) window.location='/bitrix/admin/blog_group.php?ID=" . $ID . "&action=delete&lang=" . LANG . "&" . bitrix_sessid_get(
+            ) . "#tb';",
         "WARNING" => "Y"
     );
 }
@@ -122,7 +133,12 @@ $context->Show();
 
         <?
         $aTabs = array(
-            array("DIV" => "edit1", "TAB" => GetMessage("BLGE_TAB_GROUP"), "ICON" => "blog", "TITLE" => GetMessage("BLGE_TAB_GROUP_DESCR"))
+            array(
+                "DIV" => "edit1",
+                "TAB" => GetMessage("BLGE_TAB_GROUP"),
+                "ICON" => "blog",
+                "TITLE" => GetMessage("BLGE_TAB_GROUP_DESCR")
+            )
         );
 
         $tabControl = new CAdminTabControl("tabControl", $aTabs);

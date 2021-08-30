@@ -25,12 +25,14 @@ class CCatalogMeasureAll
     {
         global $APPLICATION;
 
-        $action = strtoupper($action);
-        if ($action != 'ADD' && $action != 'UPDATE')
+        $action = mb_strtoupper($action);
+        if ($action != 'ADD' && $action != 'UPDATE') {
             return false;
+        }
         $id = (int)$id;
-        if ($action == 'UPDATE' && $id <= 0)
+        if ($action == 'UPDATE' && $id <= 0) {
             return false;
+        }
 
         if (!isset($arFields['SYMBOL']) && isset($arFields['SYMBOL_RUS'])) {
             $arFields['SYMBOL'] = $arFields['SYMBOL_RUS'];
@@ -63,13 +65,21 @@ class CCatalogMeasureAll
         $cnt = 0;
         switch ($action) {
             case 'ADD':
-                if (!isset($arFields['CODE']))
+                if (!isset($arFields['CODE'])) {
                     return false;
+                }
                 $cnt = CCatalogMeasure::getList(array(), array("CODE" => $arFields['CODE']), array());
                 break;
             case 'UPDATE':
-                if (isset($arFields['CODE']))
-                    $cnt = CCatalogMeasure::getList(array(), array("CODE" => $arFields['CODE'], '!ID' => $id), array(), false, array('ID'));
+                if (isset($arFields['CODE'])) {
+                    $cnt = CCatalogMeasure::getList(
+                        array(),
+                        array("CODE" => $arFields['CODE'], '!ID' => $id),
+                        array(),
+                        false,
+                        array('ID')
+                    );
+                }
                 break;
         }
         if ($cnt > 0) {
@@ -79,16 +89,20 @@ class CCatalogMeasureAll
 
         if (isset($arFields["IS_DEFAULT"]) && $arFields["IS_DEFAULT"] == 'Y') {
             $filter = array('=IS_DEFAULT' => 'Y');
-            if ($action == 'UPDATE')
+            if ($action == 'UPDATE') {
                 $filter['!=ID'] = $id;
-            $iterator = Catalog\MeasureTable::getList(array(
-                'select' => array('ID'),
-                'filter' => $filter
-            ));
+            }
+            $iterator = Catalog\MeasureTable::getList(
+                array(
+                    'select' => array('ID'),
+                    'filter' => $filter
+                )
+            );
             while ($row = $iterator->fetch()) {
                 $result = Catalog\MeasureTable::update((int)$row['ID'], array('IS_DEFAULT' => 'N'));
-                if (!$result->isSuccess())
+                if (!$result->isSuccess()) {
                     return false;
+                }
             }
             unset($result, $row, $iterator);
         }
@@ -105,19 +119,22 @@ class CCatalogMeasureAll
      */
     public static function add($arFields)
     {
-        if (!static::checkFields('ADD', $arFields))
+        if (!static::checkFields('ADD', $arFields)) {
             return false;
+        }
 
-        if (empty($arFields))
+        if (empty($arFields)) {
             return false;
+        }
 
         $id = false;
         $result = Catalog\MeasureTable::add($arFields);
         $success = $result->isSuccess();
-        if (!$success)
+        if (!$success) {
             self::convertErrors($result);
-        else
+        } else {
             $id = (int)$result->getId();
+        }
         unset($success, $result);
 
         return $id;
@@ -134,18 +151,22 @@ class CCatalogMeasureAll
     public static function update($id, $arFields)
     {
         $id = (int)$id;
-        if ($id <= 0)
+        if ($id <= 0) {
             return false;
-        if (!static::checkFields('UPDATE', $arFields, $id))
+        }
+        if (!static::checkFields('UPDATE', $arFields, $id)) {
             return false;
+        }
 
-        if (empty($arFields))
+        if (empty($arFields)) {
             return $id;
+        }
 
         $result = Catalog\MeasureTable::update($id, $arFields);
         $success = $result->isSuccess();
-        if (!$success)
+        if (!$success) {
             self::convertErrors($result);
+        }
         unset($result);
 
         return ($success ? $id : false);
@@ -161,13 +182,15 @@ class CCatalogMeasureAll
     public static function delete($id)
     {
         $id = (int)$id;
-        if ($id <= 0)
+        if ($id <= 0) {
             return false;
+        }
 
         $result = Catalog\MeasureTable::delete($id);
         $success = $result->isSuccess();
-        if (!$success)
+        if (!$success) {
             self::convertErrors($result);
+        }
         unset($result);
 
         return $success;
@@ -208,7 +231,9 @@ class CCatalogMeasureAll
         }
         if (self::$defaultMeasure === null) {
             if ($getStub) {
-                $defaultMeasureDescription = CCatalogMeasureClassifier::getMeasureInfoByCode(self::DEFAULT_MEASURE_CODE);
+                $defaultMeasureDescription = CCatalogMeasureClassifier::getMeasureInfoByCode(
+                    self::DEFAULT_MEASURE_CODE
+                );
                 if ($defaultMeasureDescription !== null) {
                     self::$defaultMeasure = array(
                         'ID' => 0,
@@ -241,8 +266,9 @@ class CCatalogMeasureAll
         global $APPLICATION;
 
         $oldMessages = array();
-        foreach ($result->getErrorMessages() as $errorText)
+        foreach ($result->getErrorMessages() as $errorText) {
             $oldMessages[] = array('text' => $errorText);
+        }
         unset($errorText);
 
         if (!empty($oldMessages)) {

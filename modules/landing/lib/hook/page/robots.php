@@ -16,10 +16,13 @@ class Robots extends \Bitrix\Landing\Hook\Page
     protected function getMap()
     {
         return array(
-            'USE' => new Field\Checkbox('USE', array(
+            'USE' => new Field\Checkbox(
+                'USE', array(
                 'title' => Loc::getMessage('LANDING_HOOK_ROBOTS_USE')
-            )),
-            'CONTENT' => new Field\Textarea('CONTENT', array(
+            )
+            ),
+            'CONTENT' => new Field\Textarea(
+                'CONTENT', array(
                 'title' => Loc::getMessage('LANDING_HOOK_ROBOTS_CONTENT'),
                 'placeholder' => 'User-agent: Google
 Allow: /folder1/
@@ -28,7 +31,8 @@ Host: www.site.com
 
 User-agent: *
 Disallow: /document.php'
-            ))
+            )
+            )
         );
     }
 

@@ -9,8 +9,9 @@ use \Bitrix\Main\Localization\Loc,
 
 require_once(dirname(__FILE__) . "/../include/prolog_admin_before.php");
 
-if (!$USER->CanDoOperation('edit_other_settings'))
+if (!$USER->CanDoOperation('edit_other_settings')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 Loc::loadMessages(__FILE__);
 
@@ -20,8 +21,9 @@ $errMess = null;
 
 $handler = GeoIp\Manager::getHandlerByClassName($className);
 
-if (!$handler)
+if (!$handler) {
     LocalRedirect(!empty($_REQUEST["back_url"]) ? $_REQUEST["back_url"] : 'geoip_handlers_list.php?lang=' . LANG);
+}
 
 if ($_SERVER['REQUEST_METHOD'] == "POST" && ($_POST['save'] <> "" || $_POST['apply'] <> "") && check_bitrix_sessid()) {
     $fields = array(
@@ -40,14 +42,22 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && ($_POST['save'] <> "" || $_POST['app
     if ($res->isSuccess()) {
         $id = $res->getId();
 
-        if (isset($_POST['apply']))
-            LocalRedirect("geoip_handler_edit.php?lang=" . LANG . "&ID=" . $id . "&CLASS_NAME=" . urlencode($className));
-        else
-            LocalRedirect(!empty($_REQUEST["back_url"]) ? $_REQUEST["back_url"] : 'geoip_handlers_list.php?lang=' . LANG);
+        if (isset($_POST['apply'])) {
+            LocalRedirect(
+                "geoip_handler_edit.php?lang=" . LANG . "&ID=" . $id . "&CLASS_NAME=" . urlencode($className)
+            );
+        } else {
+            LocalRedirect(
+                !empty($_REQUEST["back_url"]) ? $_REQUEST["back_url"] : 'geoip_handlers_list.php?lang=' . LANG
+            );
+        }
     } else {
         $errMess = new CAdminMessage(
-            implode("\n<br>", $res->getErrorMessages()
-            ));
+            implode(
+                "\n<br>",
+                $res->getErrorMessages()
+            )
+        );
     }
 }
 
@@ -69,7 +79,10 @@ if ($id > 0) {
     $menu[] = array(
         "TEXT" => Loc::getMessage('GEOIP_EDIT_DELETE'),
         "TITLE" => Loc::getMessage('GEOIP_EDIT_DELETE_T'),
-        "LINK" => "javascript:if(confirm('" . GetMessage("GEOIP_EDIT_DELETE_CONFIRM") . "')) window.location='geoip_handlers_list.php?ID=" . $id . "&action=delete&lang=" . LANG . "&" . bitrix_sessid_get() . "';",
+        "LINK" => "javascript:if(confirm('" . GetMessage(
+                "GEOIP_EDIT_DELETE_CONFIRM"
+            ) . "')) window.location='geoip_handlers_list.php?ID=" . $id . "&action=delete&lang=" . LANG . "&" . bitrix_sessid_get(
+            ) . "';",
         "ICON" => "btn_delete",
     );
 }
@@ -77,12 +90,21 @@ if ($id > 0) {
 $context = new CAdminContextMenu($menu);
 $context->Show();
 
-if ($errMess)
+if ($errMess) {
     echo $errMess->Show();
+}
 
 $aTabs = array(
-    array("DIV" => "edit1", "TAB" => Loc::getMessage('GEOIP_EDIT_MAIN_SETTINGS'), "TITLE" => Loc::getMessage('GEOIP_EDIT_MAIN_SETTINGS_T')),
-    array("DIV" => "edit2", "TAB" => Loc::getMessage('GEOIP_EDIT_SPECIFIC_SETTINGS'), "TITLE" => Loc::getMessage('GEOIP_EDIT_SPECIFIC_SETTINGS_T')),
+    array(
+        "DIV" => "edit1",
+        "TAB" => Loc::getMessage('GEOIP_EDIT_MAIN_SETTINGS'),
+        "TITLE" => Loc::getMessage('GEOIP_EDIT_MAIN_SETTINGS_T')
+    ),
+    array(
+        "DIV" => "edit2",
+        "TAB" => Loc::getMessage('GEOIP_EDIT_SPECIFIC_SETTINGS'),
+        "TITLE" => Loc::getMessage('GEOIP_EDIT_SPECIFIC_SETTINGS_T')
+    ),
 );
 
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
@@ -200,9 +222,11 @@ $tabControl = new CAdminTabControl("tabControl", $aTabs);
             </tr>
         <?endif; ?>
         <?
-        $tabControl->Buttons(array(
-            "back_url" => "geoip_handlers_list.php?lang=" . LANG,
-        ));
+        $tabControl->Buttons(
+            array(
+                "back_url" => "geoip_handlers_list.php?lang=" . LANG,
+            )
+        );
         $tabControl->End();
         ?>
     </form>

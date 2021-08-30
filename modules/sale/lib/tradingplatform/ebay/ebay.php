@@ -57,10 +57,18 @@ class Ebay extends Platform
      */
     public function setActive()
     {
-        if ($this->isActive())
+        if ($this->isActive()) {
             return true;
+        }
 
-        RegisterModuleDependences("sale", "OnSaleDeductOrder", "sale", '\Bitrix\Sale\TradingPlatform\Ebay\Helper', "onSaleDeductOrder", 100);
+        RegisterModuleDependences(
+            "sale",
+            "OnSaleDeductOrder",
+            "sale",
+            '\Bitrix\Sale\TradingPlatform\Ebay\Helper',
+            "onSaleDeductOrder",
+            100
+        );
         return parent::setActive();
     }
 
@@ -70,10 +78,18 @@ class Ebay extends Platform
      */
     public function unsetActive()
     {
-        if (!$this->isActive())
+        if (!$this->isActive()) {
             return true;
+        }
 
-        UnRegisterModuleDependences("sale", "OnSaleDeductOrder", "sale", '\Bitrix\Sale\TradingPlatform\Ebay\Helper', "onSaleDeductOrder", 100);
+        UnRegisterModuleDependences(
+            "sale",
+            "OnSaleDeductOrder",
+            "sale",
+            '\Bitrix\Sale\TradingPlatform\Ebay\Helper',
+            "onSaleDeductOrder",
+            100
+        );
         return parent::unsetActive();
     }
 
@@ -83,22 +99,32 @@ class Ebay extends Platform
      */
     public function install()
     {
-        RegisterModuleDependences('main', 'OnEventLogGetAuditTypes', 'sale', '\Bitrix\Sale\TradingPlatform\Ebay\Helper', 'OnEventLogGetAuditTypes');
+        RegisterModuleDependences(
+            'main',
+            'OnEventLogGetAuditTypes',
+            'sale',
+            '\Bitrix\Sale\TradingPlatform\Ebay\Helper',
+            'OnEventLogGetAuditTypes'
+        );
 
-        $tptAddRes = \Bitrix\Sale\TradingPlatformTable::add(array(
-            "CODE" => $this->getCode(),
-            "ACTIVE" => "N",
-            "NAME" => Loc::getMessage("SALE_EBAY_NAME"),
-            "DESCRIPTION" => Loc::getMessage("SALE_EBAY_DESCRIPTION"),
-            "CATALOG_SECTION_TAB_CLASS_NAME" => '\Bitrix\Sale\TradingPlatform\Ebay\CatalogSectionTabHandler',
-            "CLASS" => '\Bitrix\Sale\TradingPlatform\Ebay\Ebay'
-        ));
+        $tptAddRes = \Bitrix\Sale\TradingPlatformTable::add(
+            array(
+                "CODE" => $this->getCode(),
+                "ACTIVE" => "N",
+                "NAME" => Loc::getMessage("SALE_EBAY_NAME"),
+                "DESCRIPTION" => Loc::getMessage("SALE_EBAY_DESCRIPTION"),
+                "CATALOG_SECTION_TAB_CLASS_NAME" => '\Bitrix\Sale\TradingPlatform\Ebay\CatalogSectionTabHandler',
+                "CLASS" => '\Bitrix\Sale\TradingPlatform\Ebay\Ebay'
+            )
+        );
 
         $ebay = Ebay::getInstance();
-        $catMapEntRes = \Bitrix\Sale\TradingPlatform\MapEntityTable::add(array(
-            "TRADING_PLATFORM_ID" => $ebay->getId(),
-            "CODE" => "CATEGORY"
-        ));
+        $catMapEntRes = \Bitrix\Sale\TradingPlatform\MapEntityTable::add(
+            array(
+                "TRADING_PLATFORM_ID" => $ebay->getId(),
+                "CODE" => "CATEGORY"
+            )
+        );
 
         $eventRes = Helper::installEvents();
         $fsRes = Helper::createFeedFileStructure();
@@ -118,8 +144,9 @@ class Ebay extends Platform
      */
     public function sendErrorMail($type, $details, $siteId)
     {
-        if (!isset($this->settings[$siteId]["EMAIL_ERRORS"]) || strlen($this->settings[$siteId]["EMAIL_ERRORS"]) <= 0)
+        if (!isset($this->settings[$siteId]["EMAIL_ERRORS"]) || $this->settings[$siteId]["EMAIL_ERRORS"] == '') {
             return false;
+        }
 
         $loggerTypes = Helper::OnEventLogGetAuditTypes();
         $errorType = isset($loggerTypes[$type]) ? $loggerTypes[$type] : $type;
@@ -158,8 +185,9 @@ class Ebay extends Platform
             }
         }
 
-        if ($level == Logger::LOG_LEVEL_ERROR)
+        if ($level == Logger::LOG_LEVEL_ERROR) {
             $ebay->sendErrorMail($type, $description, $siteId);
+        }
 
         return $ebay->addLogRecord($level, $type, $itemId, $description);
     }
@@ -180,8 +208,9 @@ class Ebay extends Platform
             if (isset($map[$additional['DELIVERY_ID']])) {
                 $deliveryName = $map[$additional['DELIVERY_ID']];
 
-                if (substr($deliveryName, 0, 3) == "RU_")
-                    $deliveryName = substr($deliveryName, 3);
+                if (mb_substr($deliveryName, 0, 3) == "RU_") {
+                    $deliveryName = mb_substr($deliveryName, 3);
+                }
             }
         }
 

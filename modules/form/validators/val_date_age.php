@@ -1,22 +1,30 @@
-<?
+<?php
+
 IncludeModuleLangFile(__FILE__);
 
 class CFormValidatorDateAge
 {
-    function GetDescription()
+    public static function GetDescription()
     {
         return array(
-            "NAME" => "date_age", // unique validator string ID
-            "DESCRIPTION" => GetMessage('FORM_VALIDATOR_VAL_DATE_AGE_DESCRIPTION'), // validator description
-            "TYPES" => array("date"), //  list of types validator can be applied.
-            "SETTINGS" => array("CFormValidatorDateAge", "GetSettings"), // method returning array of validator settings, optional
-            "CONVERT_TO_DB" => array("CFormValidatorDateAge", "ToDB"), // method, processing validator settings to string to put to db, optional
-            "CONVERT_FROM_DB" => array("CFormValidatorDateAge", "FromDB"), // method, processing validator settings from string from db, optional
-            "HANDLER" => array("CFormValidatorDateAge", "DoValidate") // main validation method
+            "NAME" => "date_age",
+            // unique validator string ID
+            "DESCRIPTION" => GetMessage('FORM_VALIDATOR_VAL_DATE_AGE_DESCRIPTION'),
+            // validator description
+            "TYPES" => array("date"),
+            //  list of types validator can be applied.
+            "SETTINGS" => array("CFormValidatorDateAge", "GetSettings"),
+            // method returning array of validator settings, optional
+            "CONVERT_TO_DB" => array("CFormValidatorDateAge", "ToDB"),
+            // method, processing validator settings to string to put to db, optional
+            "CONVERT_FROM_DB" => array("CFormValidatorDateAge", "FromDB"),
+            // method, processing validator settings from string from db, optional
+            "HANDLER" => array("CFormValidatorDateAge", "DoValidate")
+            // main validation method
         );
     }
 
-    function GetSettings()
+    public static function GetSettings()
     {
         return array(
             "AGE_FROM" => array(
@@ -33,7 +41,7 @@ class CFormValidatorDateAge
         );
     }
 
-    function ToDB($arParams)
+    public static function ToDB($arParams)
     {
         $arParams["AGE_FROM"] = intval($arParams["AGE_FROM"]);
         $arParams["AGE_TO"] = intval($arParams["AGE_TO"]);
@@ -47,17 +55,19 @@ class CFormValidatorDateAge
         return serialize($arParams);
     }
 
-    function FromDB($strParams)
+    public static function FromDB($strParams)
     {
-        return unserialize($strParams);
+        return unserialize($strParams, ['allowed_classes' => false]);
     }
 
-    function DoValidate($arParams, $arQuestion, $arAnswers, $arValues)
+    public static function DoValidate($arParams, $arQuestion, $arAnswers, $arValues)
     {
         global $APPLICATION;
 
         foreach ($arValues as $value) {
-            if (strlen($value) <= 0) continue;
+            if ($value == '') {
+                continue;
+            }
 
             // prepare check numbers
             $arValueCheck = ParseDateTime($value);
@@ -65,13 +75,13 @@ class CFormValidatorDateAge
             $currentCheckSum = date("Y") + date("n") / 12 + date("j") / 365;
 
             // check minimum age
-            if (strlen($arParams["AGE_TO"]) > 0 && $valueCheckSum < $currentCheckSum - $arParams["AGE_TO"]) {
+            if ($arParams["AGE_TO"] <> '' && $valueCheckSum < $currentCheckSum - $arParams["AGE_TO"]) {
                 $APPLICATION->ThrowException(GetMessage("FORM_VALIDATOR_VAL_DATE_AGE_ERROR_MORE"));
                 return false;
             }
 
             // check minimum age
-            if (strlen($arParams["AGE_FROM"]) > 0 && $valueCheckSum > $currentCheckSum - $arParams["AGE_FROM"]) {
+            if ($arParams["AGE_FROM"] <> '' && $valueCheckSum > $currentCheckSum - $arParams["AGE_FROM"]) {
                 $APPLICATION->ThrowException(GetMessage("FORM_VALIDATOR_VAL_DATE_AGE_ERROR_LESS"));
                 return false;
             }
@@ -82,4 +92,3 @@ class CFormValidatorDateAge
 }
 
 AddEventHandler("form", "onFormValidatorBuildList", array("CFormValidatorDateAge", "GetDescription"));
-?>

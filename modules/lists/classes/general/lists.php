@@ -1,4 +1,4 @@
-<?
+<?php
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
@@ -21,23 +21,29 @@ class CLists
 
     private static $featuresCache = array();
 
-    function SetPermission($iblock_type_id, $arGroups)
+    public static function SetPermission($iblock_type_id, $arGroups)
     {
         global $DB, $CACHE_MANAGER;
 
         $grp = array();
         foreach ($arGroups as $group_id) {
             $group_id = intval($group_id);
-            if ($group_id)
+            if ($group_id) {
                 $grp[$group_id] = $group_id;
+            }
         }
 
-        $DB->Query("
+        $DB->Query(
+            "
 			delete from b_lists_permission
 			where IBLOCK_TYPE_ID = '" . $DB->ForSQL($iblock_type_id) . "'
-		", false, "FILE: " . __FILE__ . "<br> LINE: " . __LINE__);
+		",
+            false,
+            "FILE: " . __FILE__ . "<br> LINE: " . __LINE__
+        );
         if (count($grp)) {
-            $DB->Query("
+            $DB->Query(
+                "
 				insert into b_lists_permission
 				select ibt.ID, ug.ID
 				from
@@ -46,11 +52,15 @@ class CLists
 				where
 					ibt.ID =  '" . $DB->ForSQL($iblock_type_id) . "'
 					and ug.ID in (" . implode(", ", $grp) . ")
-			", false, "FILE: " . __FILE__ . "<br> LINE: " . __LINE__);
+			",
+                false,
+                "FILE: " . __FILE__ . "<br> LINE: " . __LINE__
+            );
         }
 
-        if (CACHED_b_lists_permission !== false)
+        if (CACHED_b_lists_permission !== false) {
             $CACHE_MANAGER->Clean("b_lists_permission");
+        }
     }
 
     public static function GetPermission($iblock_type_id = false)
@@ -59,27 +69,35 @@ class CLists
 
         $arResult = false;
         if (CACHED_b_lists_permission !== false) {
-            if ($CACHE_MANAGER->Read(CACHED_b_lists_permission, "b_lists_permission"))
+            if ($CACHE_MANAGER->Read(CACHED_b_lists_permission, "b_lists_permission")) {
                 $arResult = $CACHE_MANAGER->Get("b_lists_permission");
+            }
         }
 
         if ($arResult === false) {
             $arResult = array();
-            $res = $DB->Query("select IBLOCK_TYPE_ID, GROUP_ID from b_lists_permission", false, "FILE: " . __FILE__ . "<br> LINE: " . __LINE__);
-            while ($ar = $res->Fetch())
+            $res = $DB->Query(
+                "select IBLOCK_TYPE_ID, GROUP_ID from b_lists_permission",
+                false,
+                "FILE: " . __FILE__ . "<br> LINE: " . __LINE__
+            );
+            while ($ar = $res->Fetch()) {
                 $arResult[$ar["IBLOCK_TYPE_ID"]][] = $ar["GROUP_ID"];
+            }
 
-            if (CACHED_b_lists_permission !== false)
+            if (CACHED_b_lists_permission !== false) {
                 $CACHE_MANAGER->Set("b_lists_permission", $arResult);
+            }
         }
 
-        if ($iblock_type_id === false)
+        if ($iblock_type_id === false) {
             return $arResult;
-        else
+        } else {
             return $arResult[$iblock_type_id];
+        }
     }
 
-    function GetDefaultSocnetPermission()
+    public static function GetDefaultSocnetPermission()
     {
         return array(
             "A" => "X", //Group owner
@@ -92,34 +110,45 @@ class CLists
         );
     }
 
-    function SetSocnetPermission($iblock_id, $arRoles)
+    public static function SetSocnetPermission($iblock_id, $arRoles)
     {
         global $DB, $CACHE_MANAGER;
         $iblock_id = intval($iblock_id);
 
         $arToDB = CLists::GetDefaultSocnetPermission();
-        foreach ($arToDB as $role => $permission)
-            if (isset($arRoles[$role]))
-                $arToDB[$role] = substr($arRoles[$role], 0, 1);
+        foreach ($arToDB as $role => $permission) {
+            if (isset($arRoles[$role])) {
+                $arToDB[$role] = mb_substr($arRoles[$role], 0, 1);
+            }
+        }
         $arToDB["A"] = "X"; //Group owner always in charge
         $arToDB["T"] = "D"; //Banned
         $arToDB["Z"] = "D"; //and Request never get to list
 
-        $DB->Query("
+        $DB->Query(
+            "
 			delete from b_lists_socnet_group
 			where IBLOCK_ID = " . $iblock_id . "
-		", false, "FILE: " . __FILE__ . "<br> LINE: " . __LINE__);
+		",
+            false,
+            "FILE: " . __FILE__ . "<br> LINE: " . __LINE__
+        );
         foreach ($arToDB as $role => $permission) {
-            $DB->Query("
+            $DB->Query(
+                "
 				insert into b_lists_socnet_group
 				(IBLOCK_ID, SOCNET_ROLE, PERMISSION)
 				values
 				(" . $iblock_id . ", '" . $role . "', '" . $permission . "')
-			", false, "FILE: " . __FILE__ . "<br> LINE: " . __LINE__);
+			",
+                false,
+                "FILE: " . __FILE__ . "<br> LINE: " . __LINE__
+            );
         }
 
-        if (CACHED_b_lists_permission !== false)
+        if (CACHED_b_lists_permission !== false) {
             $CACHE_MANAGER->Clean("b_lists_perm" . $iblock_id);
+        }
     }
 
     public static function GetSocnetPermission($iblock_id)
@@ -137,24 +166,34 @@ class CLists
                 if ($CACHE_MANAGER->Read(CACHED_b_lists_permission, $cache_id)) {
                     $arCache[$iblock_id] = $CACHE_MANAGER->Get($cache_id);
                 } else {
-                    $res = $DB->Query("
+                    $res = $DB->Query(
+                        "
 						select SOCNET_ROLE, PERMISSION
 						from b_lists_socnet_group
 						where IBLOCK_ID=" . $iblock_id . "
-					", false, "FILE: " . __FILE__ . "<br> LINE: " . __LINE__);
-                    while ($ar = $res->Fetch())
+					",
+                        false,
+                        "FILE: " . __FILE__ . "<br> LINE: " . __LINE__
+                    );
+                    while ($ar = $res->Fetch()) {
                         $arCache[$iblock_id][$ar["SOCNET_ROLE"]] = $ar["PERMISSION"];
+                    }
 
                     $CACHE_MANAGER->Set($cache_id, $arCache[$iblock_id]);
                 }
             } else {
-                $res = $DB->Query("
+                $res = $DB->Query(
+                    "
 					select SOCNET_ROLE, PERMISSION
 					from b_lists_socnet_group
 					where IBLOCK_ID=" . $iblock_id . "
-				", false, "FILE: " . __FILE__ . "<br> LINE: " . __LINE__);
-                while ($ar = $res->Fetch())
+				",
+                    false,
+                    "FILE: " . __FILE__ . "<br> LINE: " . __LINE__
+                );
+                while ($ar = $res->Fetch()) {
                     $arCache[$iblock_id][$ar["SOCNET_ROLE"]] = $ar["PERMISSION"];
+                }
             }
 
             $arCache[$iblock_id]["A"] = "X"; //Group owner always in charge
@@ -165,7 +204,7 @@ class CLists
         return $arCache[$iblock_id];
     }
 
-    function GetIBlockPermission($iblock_id, $user_id)
+    public static function GetIBlockPermission($iblock_id, $user_id)
     {
         global $USER;
 
@@ -178,14 +217,16 @@ class CLists
                 $arListsPerm = CLists::GetPermission($arIBlock["IBLOCK_TYPE_ID"]);
                 if (count($arListsPerm)) {
                     //User groups
-                    if ($user_id == $USER->GetID())
+                    if ($user_id == $USER->GetID()) {
                         $arUserGroups = $USER->GetUserGroupArray();
-                    else
+                    } else {
                         $arUserGroups = $USER->GetUserGroup($user_id);
+                    }
 
                     //One of lists admins
-                    if (count(array_intersect($arListsPerm, $arUserGroups)))
+                    if (count(array_intersect($arListsPerm, $arUserGroups))) {
                         $Permission = "X";
+                    }
                 }
             }
         }
@@ -202,10 +243,11 @@ class CLists
         return $Permission;
     }
 
-    function GetIBlockTypes($language_id = false)
+    public static function GetIBlockTypes($language_id = false)
     {
         global $DB;
-        $res = $DB->Query("
+        $res = $DB->Query(
+            "
 			SELECT IBLOCK_TYPE_ID, NAME
 			FROM b_iblock_type_lang
 			WHERE
@@ -215,11 +257,14 @@ class CLists
 					FROM b_lists_permission
 					WHERE b_lists_permission.IBLOCK_TYPE_ID = b_iblock_type_lang.IBLOCK_TYPE_ID
 				)
-		", false, "FILE: " . __FILE__ . "<br> LINE: " . __LINE__);
+		",
+            false,
+            "FILE: " . __FILE__ . "<br> LINE: " . __LINE__
+        );
         return $res;
     }
 
-    function GetIBlocks($iblock_type_id, $check_permissions, $socnet_group_id = false)
+    public static function GetIBlocks($iblock_type_id, $check_permissions, $socnet_group_id = false)
     {
         $arOrder = array(
             "SORT" => "ASC",
@@ -232,8 +277,9 @@ class CLists
             "TYPE" => $iblock_type_id,
             "CHECK_PERMISSIONS" => ($check_permissions ? "Y" : "N"), //This cancels iblock permissions for trusted users
         );
-        if ($socnet_group_id > 0)
+        if ($socnet_group_id > 0) {
             $arFilter["=SOCNET_GROUP_ID"] = $socnet_group_id;
+        }
 
         $arResult = array();
         $rsIBlocks = CIBlock::GetList($arOrder, $arFilter);
@@ -243,13 +289,21 @@ class CLists
         return $arResult;
     }
 
-    function OnIBlockDelete($iblock_id)
+    public static function OnIBlockDelete($iblock_id)
     {
         global $DB, $CACHE_MANAGER;
         $iblock_id = intval($iblock_id);
 
-        $DB->Query("delete from b_lists_url where IBLOCK_ID=" . $iblock_id, false, "FILE: " . __FILE__ . "<br> LINE: " . __LINE__);
-        $DB->Query("delete from b_lists_socnet_group where IBLOCK_ID=" . $iblock_id, false, "FILE: " . __FILE__ . "<br> LINE: " . __LINE__);
+        $DB->Query(
+            "delete from b_lists_url where IBLOCK_ID=" . $iblock_id,
+            false,
+            "FILE: " . __FILE__ . "<br> LINE: " . __LINE__
+        );
+        $DB->Query(
+            "delete from b_lists_socnet_group where IBLOCK_ID=" . $iblock_id,
+            false,
+            "FILE: " . __FILE__ . "<br> LINE: " . __LINE__
+        );
         $CACHE_MANAGER->Clean("b_lists_perm" . $iblock_id);
 
         CListFieldList::DeleteFields($iblock_id);
@@ -264,13 +318,14 @@ class CLists
         }
     }
 
-    function OnAfterIBlockDelete($iblock_id)
+    public static function OnAfterIBlockDelete($iblock_id)
     {
-        if (CModule::includeModule('bizproc') && CBPRuntime::isFeatureEnabled())
+        if (CModule::includeModule('bizproc')) {
             BizProcDocument::deleteDataIblock($iblock_id);
+        }
     }
 
-    function IsEnabledSocnet()
+    public static function IsEnabledSocnet()
     {
         $bActive = false;
         foreach (GetModuleEvents("socialnetwork", "OnFillSocNetFeaturesList", true) as $arEvent) {
@@ -285,48 +340,100 @@ class CLists
         return $bActive;
     }
 
-    function EnableSocnet($bActive = false)
+    public static function EnableSocnet($bActive = false)
     {
         if ($bActive) {
             if (!CLists::IsEnabledSocnet()) {
-                RegisterModuleDependences("socialnetwork", "OnFillSocNetFeaturesList", "lists", "CListsSocnet", "OnFillSocNetFeaturesList");
-                RegisterModuleDependences("socialnetwork", "OnFillSocNetMenu", "lists", "CListsSocnet", "OnFillSocNetMenu");
-                RegisterModuleDependences("socialnetwork", "OnParseSocNetComponentPath", "lists", "CListsSocnet", "OnParseSocNetComponentPath");
-                RegisterModuleDependences("socialnetwork", "OnInitSocNetComponentVariables", "lists", "CListsSocnet", "OnInitSocNetComponentVariables");
+                RegisterModuleDependences(
+                    "socialnetwork",
+                    "OnFillSocNetFeaturesList",
+                    "lists",
+                    "CListsSocnet",
+                    "OnFillSocNetFeaturesList"
+                );
+                RegisterModuleDependences(
+                    "socialnetwork",
+                    "OnFillSocNetMenu",
+                    "lists",
+                    "CListsSocnet",
+                    "OnFillSocNetMenu"
+                );
+                RegisterModuleDependences(
+                    "socialnetwork",
+                    "OnParseSocNetComponentPath",
+                    "lists",
+                    "CListsSocnet",
+                    "OnParseSocNetComponentPath"
+                );
+                RegisterModuleDependences(
+                    "socialnetwork",
+                    "OnInitSocNetComponentVariables",
+                    "lists",
+                    "CListsSocnet",
+                    "OnInitSocNetComponentVariables"
+                );
             }
         } else {
             if (CLists::IsEnabledSocnet()) {
-                UnRegisterModuleDependences("socialnetwork", "OnFillSocNetFeaturesList", "lists", "CListsSocnet", "OnFillSocNetFeaturesList");
-                UnRegisterModuleDependences("socialnetwork", "OnFillSocNetMenu", "lists", "CListsSocnet", "OnFillSocNetMenu");
-                UnRegisterModuleDependences("socialnetwork", "OnParseSocNetComponentPath", "lists", "CListsSocnet", "OnParseSocNetComponentPath");
-                UnRegisterModuleDependences("socialnetwork", "OnInitSocNetComponentVariables", "lists", "CListsSocnet", "OnInitSocNetComponentVariables");
+                UnRegisterModuleDependences(
+                    "socialnetwork",
+                    "OnFillSocNetFeaturesList",
+                    "lists",
+                    "CListsSocnet",
+                    "OnFillSocNetFeaturesList"
+                );
+                UnRegisterModuleDependences(
+                    "socialnetwork",
+                    "OnFillSocNetMenu",
+                    "lists",
+                    "CListsSocnet",
+                    "OnFillSocNetMenu"
+                );
+                UnRegisterModuleDependences(
+                    "socialnetwork",
+                    "OnParseSocNetComponentPath",
+                    "lists",
+                    "CListsSocnet",
+                    "OnParseSocNetComponentPath"
+                );
+                UnRegisterModuleDependences(
+                    "socialnetwork",
+                    "OnInitSocNetComponentVariables",
+                    "lists",
+                    "CListsSocnet",
+                    "OnInitSocNetComponentVariables"
+                );
             }
         }
     }
 
-    function OnSharepointCreateProperty($arInputFields)
+    public static function OnSharepointCreateProperty($arInputFields)
     {
         global $DB;
         $iblock_id = intval($arInputFields["IBLOCK_ID"]);
         if ($iblock_id > 0) {
             //Check if there is at list one field defined for given iblock
-            $rsFields = $DB->Query("
+            $rsFields = $DB->Query(
+                "
 				SELECT * FROM b_lists_field
 				WHERE IBLOCK_ID = " . $iblock_id . "
 				ORDER BY SORT ASC
-			", false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+			",
+                false,
+                "File: " . __FILE__ . "<br>Line: " . __LINE__
+            );
             if ($rsFields->Fetch()) {
-
                 $arNewFields = array(
                     "SORT" => 500,
                     "NAME" => $arInputFields["SP_FIELD"],
                 );
 
-                if (substr($arInputFields["FIELD_ID"], 0, 9) == "PROPERTY_") {
-                    $arNewFields["ID"] = substr($arInputFields["FIELD_ID"], 9);
+                if (mb_substr($arInputFields["FIELD_ID"], 0, 9) == "PROPERTY_") {
+                    $arNewFields["ID"] = mb_substr($arInputFields["FIELD_ID"], 9);
                     $arNewFields["TYPE"] = "S";
-                } else
+                } else {
                     $arNewFields["TYPE"] = $arInputFields["FIELD_ID"];
+                }
 
                 //Publish property on the list
                 $obList = new CList($iblock_id);
@@ -335,7 +442,7 @@ class CLists
         }
     }
 
-    function OnSharepointCheckAccess($iblock_id)
+    public static function OnSharepointCheckAccess($iblock_id)
     {
         global $USER;
         $arIBlock = CIBlock::GetArrayByID($iblock_id);
@@ -349,10 +456,11 @@ class CLists
                 //User groups
                 $arUserGroups = $USER->GetUserGroupArray();
                 //One of lists admins
-                if (count(array_intersect($arListsPerm, $arUserGroups)))
+                if (count(array_intersect($arListsPerm, $arUserGroups))) {
                     return true;
-                else
+                } else {
                     return false;
+                }
             }
         }
     }
@@ -367,11 +475,16 @@ class CLists
         $resultData = $resultQuery->fetch();
 
         if ($resultData) {
-            if ($resultData["LIVE_FEED"] != $checked)
+            if ($resultData["LIVE_FEED"] != $checked) {
                 $DB->Query("UPDATE b_lists_url SET LIVE_FEED = '" . $checked . "' WHERE IBLOCK_ID = " . $iblockId);
+            }
         } else {
             $url = '/' . $iblockId . '/element/#section_id#/#element_id#/';
-            $DB->Query("INSERT INTO b_lists_url (IBLOCK_ID, URL, LIVE_FEED) values (" . $iblockId . ", '" . $DB->ForSQL($url) . "', " . $checked . ")");
+            $DB->Query(
+                "INSERT INTO b_lists_url (IBLOCK_ID, URL, LIVE_FEED) values (" . $iblockId . ", '" . $DB->ForSQL(
+                    $url
+                ) . "', " . $checked . ")"
+            );
         }
     }
 
@@ -383,10 +496,11 @@ class CLists
         $resultQuery = $DB->Query("SELECT LIVE_FEED FROM b_lists_url WHERE IBLOCK_ID = " . $iblockId);
         $resultData = $resultQuery->fetch();
 
-        if ($resultData)
+        if ($resultData) {
             return $resultData["LIVE_FEED"];
-        else
+        } else {
             return "";
+        }
     }
 
     public static function getCountProcessesUser($userId, $iblockTypeId)
@@ -403,8 +517,9 @@ class CLists
 
     public static function generateMnemonicCode($integerCode = 0)
     {
-        if (!$integerCode)
+        if (!$integerCode) {
             $integerCode = time();
+        }
 
         $code = '';
         for ($i = 1; $integerCode >= 0 && $i < 10; $i++) {
@@ -414,7 +529,7 @@ class CLists
         return $code;
     }
 
-    public function OnAfterIBlockElementDelete($fields)
+    public static function OnAfterIBlockElementDelete($fields)
     {
         if (CModule::includeModule('bizproc') && CBPRuntime::isFeatureEnabled()) {
             $errors = array();
@@ -426,7 +541,9 @@ class CLists
                 $iblockType = $iblock["IBLOCK_TYPE_ID"];
             }
 
-            $states = CBPStateService::getDocumentStates(BizprocDocument::getDocumentComplexId($iblockType, $fields['ID']));
+            $states = CBPStateService::getDocumentStates(
+                BizprocDocument::getDocumentComplexId($iblockType, $fields['ID'])
+            );
             $listWorkflowId = array();
             foreach ($states as $workflowId => $state) {
                 $listWorkflowId[] = $workflowId;
@@ -438,7 +555,12 @@ class CLists
         }
 
         $propertyQuery = CIBlockElement::getProperty(
-            $fields['IBLOCK_ID'], $fields['ID'], 'sort', 'asc', array('ACTIVE' => 'Y'));
+            $fields['IBLOCK_ID'],
+            $fields['ID'],
+            'sort',
+            'asc',
+            array('ACTIVE' => 'Y')
+        );
         while ($property = $propertyQuery->fetch()) {
             $userType = \CIBlockProperty::getUserType($property['USER_TYPE']);
             if (array_key_exists('DeleteAllAttachedFiles', $userType)) {
@@ -492,8 +614,9 @@ class CLists
 
             if (!empty($errors)) {
                 $stringError = '';
-                foreach ($errors as $error)
+                foreach ($errors as $error) {
                     $stringError .= $error['message'];
+                }
                 $listError[] = array('id' => 'stopBizproc', 'text' => $stringError);
             }
         } else {
@@ -509,8 +632,9 @@ class CLists
 
             if (!empty($errors)) {
                 $stringError = '';
-                foreach ($errors as $error)
+                foreach ($errors as $error) {
                     $stringError .= $error['message'];
+                }
                 $listError[] = array('id' => 'stopBizproc', 'text' => $stringError);
             } else {
                 CBPTaskService::deleteByWorkflow($workflowId);
@@ -625,8 +749,9 @@ class CLists
             if (!empty($iblock['SOCNET_GROUP_ID'])) {
                 $socnetPerm = self::getSocnetPermission($iblockId);
                 foreach ($socnetPerm as $role => $permission) {
-                    if ($permission > "W")
+                    if ($permission > "W") {
                         $permission = "W";
+                    }
                     switch ($role) {
                         case "A":
                         case "E":
@@ -656,20 +781,21 @@ class CLists
             } else {
                 $groupPermissions = CIBlock::getGroupPermissions($iblockId);
                 foreach ($groupPermissions as $groupId => $permission) {
-                    if ($permission > 'W')
+                    if ($permission > 'W') {
                         $rights['n' . ($i++)] = array(
                             'GROUP_CODE' => 'G' . $groupId,
                             'IS_INHERITED' => 'N',
                             'TASK_ID' => CIBlockRights::letterToTask($permission),
                         );
+                    }
                 }
             }
-
         }
         $iblock['RIGHTS'] = $rights;
         $resultIblock = $iblockObject->update($copyIblockId, $iblock);
-        if (!$resultIblock)
+        if (!$resultIblock) {
             $errors[] = Loc::getMessage('LISTS_COPY_IBLOCK_ERROR_SET_RIGHT');
+        }
 
         /* Add fields */
         $listObject = new CList($iblockId);
@@ -703,33 +829,43 @@ class CLists
 
                 $copyFields['CODE'] = $field['CODE'];
                 $copyFields['LINK_IBLOCK_ID'] = $field['LINK_IBLOCK_ID'];
-                if (!empty($field['PROPERTY_USER_TYPE']['USER_TYPE']))
+                if (!empty($field['PROPERTY_USER_TYPE']['USER_TYPE'])) {
                     $copyFields['USER_TYPE'] = $field['PROPERTY_USER_TYPE']['USER_TYPE'];
-                if (!empty($field['ROW_COUNT']))
+                }
+                if (!empty($field['ROW_COUNT'])) {
                     $copyFields['ROW_COUNT'] = $field['ROW_COUNT'];
-                if (!empty($field['COL_COUNT']))
+                }
+                if (!empty($field['COL_COUNT'])) {
                     $copyFields['COL_COUNT'] = $field['COL_COUNT'];
-                if (!empty($field['USER_TYPE_SETTINGS']))
+                }
+                if (!empty($field['USER_TYPE_SETTINGS'])) {
                     $copyFields['USER_TYPE_SETTINGS'] = $field['USER_TYPE_SETTINGS'];
+                }
             }
 
             if ($fieldId == 'NAME') {
                 $resultUpdateField = $copyListObject->updateField("NAME", $copyFields);
-                if ($resultUpdateField)
+                if ($resultUpdateField) {
                     $copyListObject->save();
-                else
-                    $errors[] = Loc::getMessage('LISTS_COPY_IBLOCK_ERROR_ADD_FIELD',
-                        array('#field#' => $field['NAME']));
+                } else {
+                    $errors[] = Loc::getMessage(
+                        'LISTS_COPY_IBLOCK_ERROR_ADD_FIELD',
+                        array('#field#' => $field['NAME'])
+                    );
+                }
 
                 continue;
             }
 
             $copyFieldId = $copyListObject->addField($copyFields);
-            if ($copyFieldId)
+            if ($copyFieldId) {
                 $copyListObject->save();
-            else
-                $errors[] = Loc::getMessage('LISTS_COPY_IBLOCK_ERROR_ADD_FIELD',
-                    array('#field#' => $field['NAME']));
+            } else {
+                $errors[] = Loc::getMessage(
+                    'LISTS_COPY_IBLOCK_ERROR_ADD_FIELD',
+                    array('#field#' => $field['NAME'])
+                );
+            }
         }
 
         /* Copy Workflow Template */
@@ -738,17 +874,28 @@ class CLists
         return $copyIblockId;
     }
 
-    public static function checkChangedFields($iblockId, $elementId, array $select, array $elementFields, array $elementProperty)
-    {
+    public static function checkChangedFields(
+        $iblockId,
+        $elementId,
+        array $select,
+        array $elementFields,
+        array $elementProperty
+    ) {
         $changedFields = array();
         /* We get the new data element. */
         $elementNewData = array();
         $elementQuery = CIBlockElement::getList(
-            array(), array('IBLOCK_ID' => $iblockId, '=ID' => $elementId), false, false, $select);
+            array(),
+            array('IBLOCK_ID' => $iblockId, '=ID' => $elementId),
+            false,
+            false,
+            $select
+        );
         $elementObject = $elementQuery->getNextElement();
 
-        if (is_object($elementObject))
+        if (is_object($elementObject)) {
             $elementNewData = $elementObject->getFields();
+        }
 
         $elementOldData = $elementFields;
         unset($elementNewData["TIMESTAMP_X"]);
@@ -789,15 +936,17 @@ class CLists
         $listOldFieldIdToDelete = array();
         $differences = array_diff_key($elementNewData, $elementOldData);
         foreach (array_keys($differences) as $fieldId) {
-            if ($fieldId[0] === '~')
+            if ($fieldId[0] === '~') {
                 continue;
+            }
             $changedFields[] = $fieldId;
             $listNewFieldIdToDelete["FIELD"][] = $fieldId;
         }
         $differences = array_diff_key($elementOldData, $elementNewData);
         foreach (array_keys($differences) as $fieldId) {
-            if ($fieldId[0] === '~')
+            if ($fieldId[0] === '~') {
                 continue;
+            }
             $changedFields[] = $fieldId;
             $listOldFieldIdToDelete["FIELD"][] = $fieldId;
         }
@@ -809,10 +958,11 @@ class CLists
         foreach (array_keys($differences) as $fieldId) {
             $listNewFieldIdToDelete["PROPERTY"][] = $fieldId;
 
-            if (!empty($elementNewData["PROPERTY_VALUES"][$fieldId]["CODE"]))
+            if (!empty($elementNewData["PROPERTY_VALUES"][$fieldId]["CODE"])) {
                 $fieldId = "PROPERTY_" . $elementNewData["PROPERTY_VALUES"][$fieldId]["CODE"];
-            else
+            } else {
                 $fieldId = "PROPERTY_" . $fieldId;
+            }
             $changedFields[] = $fieldId;
         }
         $differences = array_diff_key(
@@ -822,28 +972,35 @@ class CLists
         foreach (array_keys($differences) as $fieldId) {
             $listOldFieldIdToDelete["PROPERTY"][] = $fieldId;
 
-            if (!empty($elementOldData["PROPERTY_VALUES"][$fieldId]["CODE"]))
+            if (!empty($elementOldData["PROPERTY_VALUES"][$fieldId]["CODE"])) {
                 $fieldId = "PROPERTY_" . $elementOldData["PROPERTY_VALUES"][$fieldId]["CODE"];
-            else
+            } else {
                 $fieldId = "PROPERTY_" . $fieldId;
+            }
             $changedFields[] = $fieldId;
         }
 
         foreach ($listNewFieldIdToDelete as $typeField => $listField) {
-            if ($typeField == "FIELD")
-                foreach ($listField as $fieldId)
+            if ($typeField == "FIELD") {
+                foreach ($listField as $fieldId) {
                     unset($elementNewData[$fieldId]);
-            elseif ($typeField == "PROPERTY")
-                foreach ($listField as $fieldId)
+                }
+            } elseif ($typeField == "PROPERTY") {
+                foreach ($listField as $fieldId) {
                     unset($elementNewData["PROPERTY_VALUES"][$fieldId]);
+                }
+            }
         }
         foreach ($listOldFieldIdToDelete as $typeField => $listField) {
-            if ($typeField == "FIELD")
-                foreach ($listField as $fieldId)
+            if ($typeField == "FIELD") {
+                foreach ($listField as $fieldId) {
                     unset($elementOldData[$fieldId]);
-            elseif ($typeField == "PROPERTY")
-                foreach ($listField as $fieldId)
+                }
+            } elseif ($typeField == "PROPERTY") {
+                foreach ($listField as $fieldId) {
                     unset($elementOldData["PROPERTY_VALUES"][$fieldId]);
+                }
+            }
         }
 
         /* Preparing arrays to compare */
@@ -853,10 +1010,11 @@ class CLists
                 unset($elementNewData[$fieldId]);
             } elseif ($fieldId == "PROPERTY_VALUES") {
                 foreach ($fieldValue as $propertyId => $propertyData) {
-                    if (!empty($propertyData["CODE"]))
+                    if (!empty($propertyData["CODE"])) {
                         $elementNewData["PROPERTY_" . $propertyData["CODE"]] = $propertyData["VALUES_LIST"];
-                    else
+                    } else {
                         $elementNewData["PROPERTY_" . $propertyData["ID"]] = $propertyData["VALUES_LIST"];
+                    }
 
                     unset($elementNewData["PROPERTY_VALUES"][$propertyId]);
                 }
@@ -868,10 +1026,11 @@ class CLists
                 unset($elementOldData[$fieldId]);
             } elseif ($fieldId == "PROPERTY_VALUES") {
                 foreach ($fieldValue as $propertyId => $propertyData) {
-                    if (!empty($propertyData["CODE"]))
+                    if (!empty($propertyData["CODE"])) {
                         $elementOldData["PROPERTY_" . $propertyData["CODE"]] = $propertyData["VALUES_LIST"];
-                    else
+                    } else {
                         $elementOldData["PROPERTY_" . $propertyData["ID"]] = $propertyData["VALUES_LIST"];
+                    }
 
                     unset($elementOldData["PROPERTY_VALUES"][$propertyId]);
                 }
@@ -885,27 +1044,33 @@ class CLists
                 if (is_array(current($fieldValue))) {
                     $firstValues = array();
                     $secondValues = array();
-                    foreach ($fieldValue as $values)
+                    foreach ($fieldValue as $values) {
                         $firstValues = $values;
-                    foreach ($elementOldData[$fieldName] as $values)
+                    }
+                    foreach ($elementOldData[$fieldName] as $values) {
                         $secondValues = $values;
+                    }
 
                     if (array_key_exists("TEXT", $firstValues)) {
                         $differences = array_diff($firstValues, $secondValues);
-                        if (!empty($differences))
+                        if (!empty($differences)) {
                             $changedFields[] = $fieldName;
+                        }
                     } else {
-                        if (count($firstValues) != count($secondValues))
+                        if (count($firstValues) != count($secondValues)) {
                             $changedFields[] = $fieldName;
+                        }
                     }
                 } else {
                     $differences = array_diff($fieldValue, $elementOldData[$fieldName]);
-                    if (!empty($differences))
+                    if (!empty($differences)) {
                         $changedFields[] = $fieldName;
+                    }
                 }
             } else {
-                if (strcmp((string)$fieldValue, (string)$elementOldData[$fieldName]) !== 0)
+                if (strcmp((string)$fieldValue, (string)$elementOldData[$fieldName]) !== 0) {
                     $changedFields[] = $fieldName;
+                }
             }
         }
 
@@ -916,8 +1081,12 @@ class CLists
     {
         global $DB;
         $iblockId = intval($iblockId);
-        $DB->Query("delete from b_lists_url where IBLOCK_ID="
-            . $iblockId, false, "FILE: " . __FILE__ . "<br> LINE: " . __LINE__);
+        $DB->Query(
+            "delete from b_lists_url where IBLOCK_ID="
+            . $iblockId,
+            false,
+            "FILE: " . __FILE__ . "<br> LINE: " . __LINE__
+        );
     }
 
     /**
@@ -937,8 +1106,8 @@ class CLists
         }
 
         $cacheTime = defined('BX_COMP_MANAGED_CACHE') ? 3153600 : 3600 * 4;
-        $cacheId = 'lists-crm-attached-' . strtolower($entityType);
-        $cacheDir = '/lists/crm/attached/' . strtolower($entityType) . '/';
+        $cacheId = 'lists-crm-attached-' . mb_strtolower($entityType);
+        $cacheDir = '/lists/crm/attached/' . mb_strtolower($entityType) . '/';
         $cache = new CPHPCache;
         if ($cache->initCache($cacheTime, $cacheId, $cacheDir)) {
             $listIblock = $cache->getVars();
@@ -946,17 +1115,23 @@ class CLists
             $cache->startDataCache();
             $listIblock = array();
             $listProperty = array();
-            $propertyObject = Bitrix\Iblock\PropertyTable::getList(array(
-                'select' => array('ID', 'IBLOCK_ID', 'USER_TYPE_SETTINGS'),
-                'filter' => array(
-                    '=ACTIVE' => 'Y',
-                    '=USER_TYPE' => 'ECrm',
+            $propertyObject = Bitrix\Iblock\PropertyTable::getList(
+                array(
+                    'select' => array('ID', 'IBLOCK_ID', 'USER_TYPE_SETTINGS'),
+                    'filter' => array(
+                        '=ACTIVE' => 'Y',
+                        '=USER_TYPE' => 'ECrm',
+                    )
                 )
-            ));
+            );
             while ($property = $propertyObject->fetch()) {
-                $property['USER_TYPE_SETTINGS'] = unserialize($property['USER_TYPE_SETTINGS']);
-                if (empty($property['USER_TYPE_SETTINGS']['VISIBLE']))
+                $property['USER_TYPE_SETTINGS'] = unserialize(
+                    $property['USER_TYPE_SETTINGS'],
+                    ['allowed_classes' => false]
+                );
+                if (empty($property['USER_TYPE_SETTINGS']['VISIBLE'])) {
                     $property['USER_TYPE_SETTINGS']['VISIBLE'] = 'Y';
+                }
                 if ($property['USER_TYPE_SETTINGS']['VISIBLE'] == 'Y'
                     && !empty($property['USER_TYPE_SETTINGS'][$entityType])) {
                     if ($property['USER_TYPE_SETTINGS'][$entityType] == 'Y') {
@@ -967,10 +1142,12 @@ class CLists
             $isListsFeatureEnabled = self::isFeatureEnabled("lists");
             $isProcessesFeatureEnabled = self::isFeatureEnabled("lists_processes");
             foreach ($listProperty as $iblockId => $listPropertyId) {
-                $iblockObject = Bitrix\Iblock\IblockTable::getList(array(
-                    'select' => array('ID', 'NAME', 'IBLOCK_TYPE_ID'),
-                    'filter' => array('=ACTIVE' => 'Y', '=ID' => $iblockId)
-                ));
+                $iblockObject = Bitrix\Iblock\IblockTable::getList(
+                    array(
+                        'select' => array('ID', 'NAME', 'IBLOCK_TYPE_ID'),
+                        'filter' => array('=ACTIVE' => 'Y', '=ID' => $iblockId)
+                    )
+                );
                 if ($iblock = $iblockObject->fetch()) {
                     switch ($iblock['IBLOCK_TYPE_ID']) {
                         case "CRM_PRODUCT_CATALOG":
@@ -1006,65 +1183,28 @@ class CLists
 
     public static function OnAfterIBlockPropertyAdd($fields)
     {
-        if (!empty($fields['USER_TYPE']) && $fields['USER_TYPE'] == 'ECrm') {
-            if (!empty($fields['USER_TYPE_SETTINGS'])) {
-                if (!is_array($fields['USER_TYPE_SETTINGS']))
-                    $fields['USER_TYPE_SETTINGS'] = unserialize($fields['USER_TYPE_SETTINGS']);
-                if (is_array($fields['USER_TYPE_SETTINGS'])) {
-                    foreach ($fields['USER_TYPE_SETTINGS'] as $entityType => $marker) {
-                        if ($marker == 'Y')
-                            self::deleteListsCache('/lists/crm/attached/' . strtolower($entityType) . '/');
-                    }
-                }
-            } else {
-                self::deleteListsCache('/lists/crm/attached/');
-            }
-        }
+        self::deleteCacheToECrmProperty($fields);
     }
 
     public static function OnAfterIBlockPropertyUpdate($fields)
     {
-        if (!empty($fields['USER_TYPE']) && $fields['USER_TYPE'] == 'ECrm') {
-            if (!empty($fields['USER_TYPE_SETTINGS'])) {
-                if (!is_array($fields['USER_TYPE_SETTINGS']))
-                    $fields['USER_TYPE_SETTINGS'] = unserialize($fields['USER_TYPE_SETTINGS']);
-                if (is_array($fields['USER_TYPE_SETTINGS'])) {
-                    foreach ($fields['USER_TYPE_SETTINGS'] as $entityType => $marker) {
-                        if ($marker == 'Y')
-                            self::deleteListsCache('/lists/crm/attached/' . strtolower($entityType) . '/');
-                    }
-                }
-            } else {
-                self::deleteListsCache('/lists/crm/attached/');
-            }
-        }
+        self::deleteCacheToECrmProperty($fields);
     }
 
     public static function OnAfterIBlockPropertyDelete($fields)
     {
-        if (!empty($fields['USER_TYPE']) && $fields['USER_TYPE'] == 'ECrm') {
-            if (!empty($fields['USER_TYPE_SETTINGS'])) {
-                if (!is_array($fields['USER_TYPE_SETTINGS']))
-                    $fields['USER_TYPE_SETTINGS'] = unserialize($fields['USER_TYPE_SETTINGS']);
-                if (is_array($fields['USER_TYPE_SETTINGS'])) {
-                    foreach ($fields['USER_TYPE_SETTINGS'] as $entityType => $marker) {
-                        if ($marker == 'Y')
-                            self::deleteListsCache('/lists/crm/attached/' . strtolower($entityType) . '/');
-                    }
-                }
-            } else {
-                self::deleteListsCache('/lists/crm/attached/');
-            }
-        }
+        self::deleteCacheToECrmProperty($fields);
     }
 
     public static function getChildSection($baseSectionId, array $listSection, array &$listChildSection)
     {
         $baseSectionId = intval($baseSectionId);
-        if (!$baseSectionId)
+        if (!$baseSectionId) {
             return;
-        if (!in_array($baseSectionId, $listChildSection))
+        }
+        if (!in_array($baseSectionId, $listChildSection)) {
             $listChildSection[] = $baseSectionId;
+        }
 
         foreach ($listSection as $sectionId => $section) {
             if ($section['PARENT_ID'] == $baseSectionId) {
@@ -1076,8 +1216,9 @@ class CLists
 
     public static function isAssociativeArray($array)
     {
-        if (!is_array($array) || empty($array))
+        if (!is_array($array) || empty($array)) {
             return false;
+        }
         return array_keys($array) !== range(0, count($array) - 1);
     }
 
@@ -1122,9 +1263,10 @@ class CLists
     public static function runRebuildSeachableContent($iblockId)
     {
         $rebuildedData = Option::get("lists", "rebuild_seachable_content");
-        $rebuildedData = unserialize($rebuildedData);
-        if (!is_array($rebuildedData))
+        $rebuildedData = unserialize($rebuildedData, ['allowed_classes' => false]);
+        if (!is_array($rebuildedData)) {
             $rebuildedData = array();
+        }
         if (!isset($rebuildedData[$iblockId])) {
             return '';
         }
@@ -1156,8 +1298,11 @@ class CLists
     public static function rebuildSeachableContent($iblockId, $limit = 100, $offset = 0)
     {
         $iblockId = intval($iblockId);
-        if (!$iblockId)
-            throw new ArgumentException(Loc::getMessage("LISTS_REQUIRED_PARAMETER", array("#parameter#" => "iblockId")));
+        if (!$iblockId) {
+            throw new ArgumentException(
+                Loc::getMessage("LISTS_REQUIRED_PARAMETER", array("#parameter#" => "iblockId"))
+            );
+        }
 
         $connection = Application::getInstance()->getConnection();
         $iblockId = $connection->getSqlHelper()->forSql($iblockId);
@@ -1168,8 +1313,9 @@ class CLists
         $listElement = $queryObject->fetchAll();
         $rebuildedElementCount = $queryObject->getSelectedRowsCount();
         $listElementId = array();
-        foreach ($listElement as $element)
+        foreach ($listElement as $element) {
             $listElementId[] = $element['ID'];
+        }
 
         $listElementValue = !empty($listElementId) ? self::getListElementValue($iblockId, $listElementId) : array();
 
@@ -1199,11 +1345,15 @@ class CLists
     {
         $iblockId = intval($iblockId);
         if (!$iblockId) {
-            throw new ArgumentException(Loc::getMessage("LISTS_REQUIRED_PARAMETER", array("#parameter#" => "iblockId")));
+            throw new ArgumentException(
+                Loc::getMessage("LISTS_REQUIRED_PARAMETER", array("#parameter#" => "iblockId"))
+            );
         }
         $elementId = intval($elementId);
         if (!$elementId) {
-            throw new ArgumentException(Loc::getMessage("LISTS_REQUIRED_PARAMETER", array("#parameter#" => "elementId")));
+            throw new ArgumentException(
+                Loc::getMessage("LISTS_REQUIRED_PARAMETER", array("#parameter#" => "elementId"))
+            );
         }
 
         $elementValue = self::getListElementValue($iblockId, $elementId);
@@ -1224,22 +1374,32 @@ class CLists
         $iblockId = intval($iblockId);
         $listElementValue = array();
         $listObject = new CList($iblockId);
-        $queryObject = CIBlockElement::getList(array(), array("IBLOCK_ID" => $iblockId,
-            "=ID" => $listElementId), false, false, array('*'));
+        $queryObject = CIBlockElement::getList(
+            array(),
+            array(
+                "IBLOCK_ID" => $iblockId,
+                "=ID" => $listElementId
+            ),
+            false,
+            false,
+            array('*')
+        );
         while ($queryResult = $queryObject->getNextElement()) {
             $element = $queryResult->getFields();
             if (is_array($element)) {
                 foreach ($element as $fieldId => $fieldValue) {
-                    if (!$listObject->is_field($fieldId))
+                    if (!$listObject->is_field($fieldId)) {
                         continue;
+                    }
                     $listElementValue[$element["ID"]][$fieldId] = $element[$fieldId];
                 }
                 $query = CIblockElement::getPropertyValues($iblockId, array("ID" => $element["ID"]));
                 if ($propertyValues = $query->fetch()) {
                     $listElementValue[$element["ID"]]["PROPERTY_VALUES"] = array();
                     foreach ($propertyValues as $id => $values) {
-                        if ($id == "IBLOCK_ELEMENT_ID")
+                        if ($id == "IBLOCK_ELEMENT_ID") {
                             continue;
+                        }
                         $listElementValue[$element["ID"]]["PROPERTY_VALUES"][$id] = $values;
                     }
                 }
@@ -1294,16 +1454,18 @@ class CLists
             }
         }
         if (!empty($fields["PREVIEW_TEXT"])) {
-            if (isset($fields["PREVIEW_TEXT_TYPE"]) && $fields["PREVIEW_TEXT_TYPE"] == "html")
+            if (isset($fields["PREVIEW_TEXT_TYPE"]) && $fields["PREVIEW_TEXT_TYPE"] == "html") {
                 $searchableContent .= "\r\n" . HTMLToTxt($fields["PREVIEW_TEXT"]);
-            else
+            } else {
                 $searchableContent .= "\r\n" . $fields["PREVIEW_TEXT"];
+            }
         }
         if (!empty($fields["DETAIL_TEXT"])) {
-            if (isset($fields["DETAIL_TEXT_TYPE"]) && $fields["DETAIL_TEXT_TYPE"] == "html")
+            if (isset($fields["DETAIL_TEXT_TYPE"]) && $fields["DETAIL_TEXT_TYPE"] == "html") {
                 $searchableContent .= "\r\n" . HTMLToTxt($fields["DETAIL_TEXT"]);
-            else
+            } else {
                 $searchableContent .= "\r\n" . $fields["DETAIL_TEXT"];
+            }
         }
         if (!empty($fields["PROPERTY_VALUES"]) && is_array($fields["PROPERTY_VALUES"])) {
             $searchableContent .= self::createSeachableContentForProperty($fields);
@@ -1321,30 +1483,36 @@ class CLists
         global $DB;
         $properties = array();
         foreach ($fields["PROPERTY_VALUES"] as $propertyId => $valueData) {
-            if (!$valueData)
+            if (!$valueData) {
                 continue;
+            }
             $properties[$propertyId] = array();
             if (is_array($valueData)) {
                 foreach ($valueData as $valueId => $value) {
-                    if (is_object($value))
+                    if (is_object($value)) {
                         continue;
+                    }
                     if (isset($value["VALUE"])) {
                         if (is_array($value["VALUE"])) {
-                            if (!empty($value["VALUE"]))
+                            if (!empty($value["VALUE"])) {
                                 $properties[$propertyId][] = $value["VALUE"];
+                            }
                         } else {
-                            if (strlen($value["VALUE"]) > 0)
+                            if ($value["VALUE"] <> '') {
                                 $properties[$propertyId][] = $value["VALUE"];
+                            }
                         }
                     } else {
                         if (is_array($value)) {
                             foreach ($value as $v) {
-                                if (strlen($v) > 0)
+                                if ($v <> '') {
                                     $properties[$propertyId][] = $v;
+                                }
                             }
                         } else {
-                            if (strlen($value) > 0)
+                            if ($value <> '') {
                                 $properties[$propertyId][] = $value;
+                            }
                         }
                     }
                 }
@@ -1361,12 +1529,15 @@ class CLists
                         case "DateTime":
                         {
                             $format = "FULL";
-                            if ($property["USER_TYPE"] == "Date")
+                            if ($property["USER_TYPE"] == "Date") {
                                 $format = "SHORT";
+                            }
                             foreach ($properties[$propertyId] as $value) {
                                 try {
                                     $date = new Bitrix\Main\Type\DateTime($value);
-                                    $propertyValues[] = $date->format($DB->dateFormatToPHP(CSite::getDateFormat($format)));
+                                    $propertyValues[] = $date->format(
+                                        $DB->dateFormatToPHP(CSite::getDateFormat($format))
+                                    );
                                 } catch (Exception $ex) {
                                     $propertyValues[] = $value;
                                 }
@@ -1377,15 +1548,17 @@ class CLists
                         {
                             foreach ($properties[$propertyId] as $value) {
                                 if (is_string($value)) {
-                                    $unserialize = unserialize($value);
-                                    if ($unserialize)
+                                    $unserialize = unserialize($value, ['allowed_classes' => false]);
+                                    if ($unserialize) {
                                         $value = $unserialize;
+                                    }
                                 }
-                                if (is_array($value) && strlen(trim($value["TEXT"])) > 0) {
+                                if (is_array($value) && trim($value["TEXT"]) <> '') {
                                     if (isset($value["TYPE"])) {
-                                        $value["TYPE"] = strtoupper($value["TYPE"]);
-                                        if ($value["TYPE"] == "HTML")
+                                        $value["TYPE"] = mb_strtoupper($value["TYPE"]);
+                                        if ($value["TYPE"] == "HTML") {
                                             $propertyValues[] = HTMLToTxt($value["TEXT"]);
+                                        }
                                     }
                                 }
                             }
@@ -1394,10 +1567,16 @@ class CLists
                         case "EList":
                         {
                             if (!empty($properties[$propertyId])) {
-                                $queryObject = CIBlockElement::getList(array(), array("ID" => $properties[$propertyId]),
-                                    false, false, array('NAME'));
-                                while ($element = $queryObject->getNext())
+                                $queryObject = CIBlockElement::getList(
+                                    array(),
+                                    array("ID" => $properties[$propertyId]),
+                                    false,
+                                    false,
+                                    array('NAME')
+                                );
+                                while ($element = $queryObject->getNext()) {
                                     $propertyValues[] = $element["~NAME"];
+                                }
                             }
                             break;
                         }
@@ -1409,8 +1588,9 @@ class CLists
                         }
                         case "Sequence":
                         {
-                            foreach ($properties[$propertyId] as $value)
+                            foreach ($properties[$propertyId] as $value) {
                                 $propertyValues[] = intval($value);
+                            }
                             break;
                         }
                         case "ECrm":
@@ -1440,8 +1620,9 @@ class CLists
                             foreach ($properties[$propertyId] as $value) {
                                 $user = new CUser();
                                 $userDetails = $user->getByID($value)->fetch();
-                                if (is_array($userDetails))
+                                if (is_array($userDetails)) {
                                     $propertyValues[] = CUser::formatName($siteNameFormat, $userDetails, true, false);
+                                }
                             }
                             break;
                         }
@@ -1449,23 +1630,27 @@ class CLists
                         {
                             if (Loader::includeModule("disk")) {
                                 foreach ($properties[$propertyId] as $value) {
-                                    if (!is_array($value))
+                                    if (!is_array($value)) {
                                         $value = array($value);
+                                    }
                                     foreach ($value as $v) {
-                                        if (empty($v))
+                                        if (empty($v)) {
                                             continue;
+                                        }
                                         list($type, $realId) = FileUserType::detectType($v);
                                         if ($type == FileUserType::TYPE_ALREADY_ATTACHED) {
                                             $attachedModel = AttachedObject::loadById($realId);
                                             if ($attachedModel) {
                                                 $file = $attachedModel->getFile();
-                                                if ($file)
+                                                if ($file) {
                                                     $propertyValues[] = $file->getName();
+                                                }
                                             }
                                         } else {
                                             $fileModel = File::loadById($realId, array('STORAGE'));
-                                            if ($fileModel)
+                                            if ($fileModel) {
                                                 $propertyValues[] = $fileModel->getName();
+                                            }
                                         }
                                     }
                                 }
@@ -1489,8 +1674,9 @@ class CLists
                         {
                             $queryObject = CIBlockProperty::getPropertyEnum($propertyId);
                             while ($propertyEnum = $queryObject->fetch()) {
-                                if (in_array($propertyEnum["ID"], $properties[$propertyId]))
+                                if (in_array($propertyEnum["ID"], $properties[$propertyId])) {
                                     $propertyValues[] = $propertyEnum["VALUE"];
+                                }
                             }
                             break;
                         }
@@ -1506,27 +1692,35 @@ class CLists
                                     }
                                 } else {
                                     $fileData = CFile::getFileArray($value);
-                                    if ($fileData)
+                                    if ($fileData) {
                                         $propertyValues[] = $fileData["FILE_NAME"];
+                                    }
                                 }
                             }
                             if (!empty($fields["ID"]) && !empty($listPropertyIdForGetExtraValue)) {
-                                $query = CIblockElement::getPropertyValues($property["IBLOCK_ID"],
-                                    array("ID" => $fields["ID"]), false, array("ID" => $listPropertyIdForGetExtraValue));
+                                $query = CIblockElement::getPropertyValues(
+                                    $property["IBLOCK_ID"],
+                                    array("ID" => $fields["ID"]),
+                                    false,
+                                    array("ID" => $listPropertyIdForGetExtraValue)
+                                );
                                 if ($listExtraPropertyValues = $query->fetch()) {
                                     foreach ($listExtraPropertyValues as $id => $extraPropertyValues) {
-                                        if ($id == "IBLOCK_ELEMENT_ID")
+                                        if ($id == "IBLOCK_ELEMENT_ID") {
                                             continue;
+                                        }
                                         if (is_array($extraPropertyValues)) {
                                             foreach ($extraPropertyValues as $extraPropertyValue) {
                                                 $fileData = CFile::getFileArray($extraPropertyValue);
-                                                if ($fileData)
+                                                if ($fileData) {
                                                     $propertyValues[] = $fileData["FILE_NAME"];
+                                                }
                                             }
                                         } else {
                                             $fileData = CFile::getFileArray($extraPropertyValues);
-                                            if ($fileData)
+                                            if ($fileData) {
                                                 $propertyValues[] = $fileData["FILE_NAME"];
+                                            }
                                         }
                                     }
                                 }
@@ -1536,27 +1730,39 @@ class CLists
                         case "G":
                         {
                             if (!empty($properties[$propertyId])) {
-                                $queryObject = CIBlockSection::getList(array(),
-                                    array("=ID" => $properties[$propertyId]), false, array("NAME"));
-                                while ($section = $queryObject->getNext())
+                                $queryObject = CIBlockSection::getList(
+                                    array(),
+                                    array("=ID" => $properties[$propertyId]),
+                                    false,
+                                    array("NAME")
+                                );
+                                while ($section = $queryObject->getNext()) {
                                     $propertyValues[] = $section["~NAME"];
+                                }
                             }
                             break;
                         }
                         case "E":
                         {
                             if (!empty($properties[$propertyId])) {
-                                $queryObject = CIBlockElement::getList(array(), array("ID" => $properties[$propertyId]),
-                                    false, false, array('NAME'));
-                                while ($element = $queryObject->getNext())
+                                $queryObject = CIBlockElement::getList(
+                                    array(),
+                                    array("ID" => $properties[$propertyId]),
+                                    false,
+                                    false,
+                                    array('NAME')
+                                );
+                                while ($element = $queryObject->getNext()) {
                                     $propertyValues[] = $element["~NAME"];
+                                }
                             }
                             break;
                         }
                     }
                 }
-                foreach ($propertyValues as $propertyValue)
+                foreach ($propertyValues as $propertyValue) {
                     $searchableContent .= "\r\n" . $propertyValue;
+                }
             }
         }
 
@@ -1576,7 +1782,9 @@ class CLists
     {
         $iblockId = intval($iblockId);
         if (!$iblockId) {
-            throw new ArgumentException(Loc::getMessage("LISTS_REQUIRED_PARAMETER", array("#parameter#" => "iblockId")));
+            throw new ArgumentException(
+                Loc::getMessage("LISTS_REQUIRED_PARAMETER", array("#parameter#" => "iblockId"))
+            );
         }
 
         $connection = Application::getInstance()->getConnection();
@@ -1589,16 +1797,19 @@ class CLists
 
     public static function isFeatureEnabled($featureName = '')
     {
-        if (!CModule::IncludeModule("bitrix24"))
+        if (!CModule::IncludeModule("bitrix24")) {
             return true;
+        }
 
         $featureName = (string)$featureName;
 
-        if ($featureName === "")
+        if ($featureName === "") {
             $featureName = "lists_processes";
+        }
 
-        if (!isset(static::$featuresCache[$featureName]))
+        if (!isset(static::$featuresCache[$featureName])) {
             static::$featuresCache[$featureName] = \Bitrix\Bitrix24\Feature::isFeatureEnabled($featureName);
+        }
 
         return static::$featuresCache[$featureName];
     }
@@ -1628,7 +1839,7 @@ class CLists
     public static function isEnabledLockFeature($iblockId)
     {
         $optionData = Option::get("lists", "iblock_lock_feature");
-        $iblockIdsWithLockFeature = unserialize($optionData);
+        $iblockIdsWithLockFeature = unserialize($optionData, ['allowed_classes' => false]);
         if (!is_array($iblockIdsWithLockFeature)) {
             $iblockIdsWithLockFeature = [];
         }
@@ -1638,12 +1849,33 @@ class CLists
     public static function deleteLockFeatureOption(int $iblockId)
     {
         $option = Option::get("lists", "iblock_lock_feature");
-        $iblockIdsWithLockFeature = ($option !== "" ? unserialize($option) : []);
+        $iblockIdsWithLockFeature = ($option !== "" ? unserialize($option, ['allowed_classes' => false]) : []);
         if (isset($iblockIdsWithLockFeature[$iblockId])) {
             unset($iblockIdsWithLockFeature[$iblockId]);
             Option::set("lists", "iblock_lock_feature", serialize($iblockIdsWithLockFeature));
         }
     }
-}
 
-?>
+    private static function deleteCacheToECrmProperty($fields): void
+    {
+        if (!empty($fields['USER_TYPE']) && $fields['USER_TYPE'] == 'ECrm') {
+            if (!empty($fields['USER_TYPE_SETTINGS'])) {
+                if (!is_array($fields['USER_TYPE_SETTINGS'])) {
+                    $fields['USER_TYPE_SETTINGS'] = unserialize(
+                        $fields['USER_TYPE_SETTINGS'],
+                        ['allowed_classes' => false]
+                    );
+                }
+                if (is_array($fields['USER_TYPE_SETTINGS'])) {
+                    foreach ($fields['USER_TYPE_SETTINGS'] as $entityType => $marker) {
+                        if ($marker == 'Y') {
+                            self::deleteListsCache('/lists/crm/attached/' . mb_strtolower($entityType) . '/');
+                        }
+                    }
+                }
+            } else {
+                self::deleteListsCache('/lists/crm/attached/');
+            }
+        }
+    }
+}

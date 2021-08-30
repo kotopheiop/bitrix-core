@@ -19,8 +19,9 @@ class GeoIp
         $fields = array();
         $geoData = self::getData($ip, $lang);
 
-        if ($geoData)
+        if ($geoData) {
             $fields = self::getLocationFields($geoData, $lang);
+        }
 
         return intval($fields['ID']) > 0 ? intval($fields['ID']) : 0;
     }
@@ -35,10 +36,11 @@ class GeoIp
         $fields = array();
         $geoData = self::getData($ip, $lang);
 
-        if ($geoData)
+        if ($geoData) {
             $fields = self::getLocationFields($geoData, $lang);
+        }
 
-        return strlen($fields['CODE']) > 0 ? $fields['CODE'] : '';
+        return $fields['CODE'] <> '' ? $fields['CODE'] : '';
     }
 
     /**
@@ -50,10 +52,11 @@ class GeoIp
     {
         $data = self::getData($ip, $lang);
 
-        if (!$data)
+        if (!$data) {
             $result = '';
-        else
-            $result = strlen($data->getGeoData()->zipCode) > 0 ? $data->getGeoData()->zipCode : '';
+        } else {
+            $result = $data->getGeoData()->zipCode <> '' ? $data->getGeoData()->zipCode : '';
+        }
 
         return $result;
     }
@@ -86,13 +89,15 @@ class GeoIp
             return [];
         }
 
-        $res = LocationTable::getList([
-            'filter' => [
-                '=NAME.NAME_UPPER' => ToUpper($geoData->cityName),
-                '=NAME.LANGUAGE_ID' => $lang
-            ],
-            'select' => ['ID', 'CODE', 'LEFT_MARGIN', 'RIGHT_MARGIN']
-        ]);
+        $res = LocationTable::getList(
+            [
+                'filter' => [
+                    '=NAME.NAME_UPPER' => ToUpper($geoData->cityName),
+                    '=NAME.LANGUAGE_ID' => $lang
+                ],
+                'select' => ['ID', 'CODE', 'LEFT_MARGIN', 'RIGHT_MARGIN']
+            ]
+        );
 
         $locations = [];
 
@@ -146,7 +151,9 @@ class GeoIp
                 'NAME.LANGUAGE_ID' => $lang,
             ],
             'select' => [
-                'ID', 'LEFT_MARGIN', 'RIGHT_MARGIN',
+                'ID',
+                'LEFT_MARGIN',
+                'RIGHT_MARGIN',
                 'LOCATION_NAME_UPPER' => 'NAME.NAME_UPPER'
             ]
         ];
@@ -247,11 +254,11 @@ class GeoIp
      */
     protected static function isNormalizedNamesMatched($name, $country, $region, $subregion)
     {
-        if (strlen($name) <= 0) {
+        if ($name == '') {
             return true;
         }
 
-        if (strlen($country) <= 0 && strlen($region) <= 0 && strlen($subregion) <= 0) {
+        if ($country == '' && $region == '' && $subregion == '') {
             return true;
         }
 

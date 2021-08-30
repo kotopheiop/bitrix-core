@@ -1,4 +1,5 @@
-<?
+<?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/socialnetwork/classes/general/user.php");
 
 class CSocNetUser extends CAllSocNetUser
@@ -8,20 +9,21 @@ class CSocNetUser extends CAllSocNetUser
         global $DB;
 
         $searchString = Trim($searchString);
-        //if (StrLen($searchString) <= 0)
-        //	return false;
 
-        $groupId = IntVal($groupId);
-        $numberOfUsers = IntVal($numberOfUsers);
-        if ($numberOfUsers <= 0)
+        $groupId = intval($groupId);
+        $numberOfUsers = intval($numberOfUsers);
+        if ($numberOfUsers <= 0) {
             $numberOfUsers = 10;
+        }
 
         $searchPattern = "'" . $DB->ForSql($searchString) . "%'";
 
         $strSqlFrom = "";
         $strSqlWhere = "";
         if ($groupId > 0) {
-            $strSqlFrom = " INNER JOIN b_sonet_user2group UG ON (U.ID = UG.USER_ID AND UG.ROLE <= '" . $DB->ForSql(SONET_ROLES_USER) . "') ";
+            $strSqlFrom = " INNER JOIN b_sonet_user2group UG ON (U.ID = UG.USER_ID AND UG.ROLE <= '" . $DB->ForSql(
+                    SONET_ROLES_USER
+                ) . "') ";
             $strSqlWhere = " AND UG.GROUP_ID = " . $groupId . " ";
         }
 

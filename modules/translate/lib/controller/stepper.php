@@ -40,10 +40,12 @@ trait Stepper
     protected function onBeforeRun()
     {
         if ($this instanceof IProcessParameters) {
-            $this->keepField(array(
-                'processedItems',
-                'totalItems',
-            ));
+            $this->keepField(
+                array(
+                    'processedItems',
+                    'totalItems',
+                )
+            );
 
             /** @var Main\Engine\Action $this */
             $this->processToken = $this->getController()->getRequest()->get('PROCESS_TOKEN');

@@ -131,8 +131,13 @@ class ShipmentItemStoreCollection extends Internals\EntityCollection
      * @throws Main\ArgumentOutOfRangeException
      * @throws Main\NotImplementedException
      */
-    public function onShipmentItemModify($action, ShipmentItem $shipmentItem, $name = null, $oldValue = null, $value = null)
-    {
+    public function onShipmentItemModify(
+        $action,
+        ShipmentItem $shipmentItem,
+        $name = null,
+        $oldValue = null,
+        $value = null
+    ) {
         if ($action !== EventActions::UPDATE) {
             return new Result();
         }
@@ -155,15 +160,17 @@ class ShipmentItemStoreCollection extends Internals\EntityCollection
      */
     protected function syncQuantityAfterModify(ShipmentItem $shipmentItem, $oldValue = null, $value = null)
     {
-        if (!($basketItem = $shipmentItem->getBasketItem()) || $basketItem->getId() == 0)
+        if (!($basketItem = $shipmentItem->getBasketItem()) || $basketItem->getId() == 0) {
             return new Result();
+        }
 
         $result = new Result();
 
         $deltaQuantity = $value - $oldValue;
 
-        if ($deltaQuantity >= 0)
+        if ($deltaQuantity >= 0) {
             return $result;
+        }
 
         $barcodeList = array();
         /** @var ShipmentItemStore $shipmentItemStore */
@@ -201,8 +208,9 @@ class ShipmentItemStoreCollection extends Internals\EntityCollection
             /** @var ShipmentItemStore $barcodeItem */
             $barcodeItem = reset($barcodeList);
 
-            if ($barcodeItem->getQuantity() < $oldValue)
+            if ($barcodeItem->getQuantity() < $oldValue) {
                 return new Result();
+            }
 
             /** @var Result $r */
             $r = $barcodeItem->setField(
@@ -260,7 +268,8 @@ class ShipmentItemStoreCollection extends Internals\EntityCollection
             ||
             $itemStoreQuantity > (float)$shipmentItem->getQuantity()
         ) {
-            $result->addError(new Main\Error(
+            $result->addError(
+                new Main\Error(
                     Loc::getMessage(
                         'SALE_SHIPMENT_ITEM_STORE_QUANTITY_LARGER_ALLOWED',
                         ['#PRODUCT_NAME#' => $this->getShipmentItem()->getBasketItem()->getField('NAME')]
@@ -381,8 +390,9 @@ class ShipmentItemStoreCollection extends Internals\EntityCollection
                     } elseif ($barcode['QUANTITY'] < $oldBarcode['QUANTITY']) {
                         /** @var ShipmentItemStore $item */
                         $item = $this->getItemById($oldBarcode['ID']);
-                        if ($item)
+                        if ($item) {
                             $item->setField('QUANTITY', $barcode['QUANTITY']);
+                        }
                     } else {
                         $plusList[$barcodeValue] = array(
                             'ID' => $barcode['ID'],
@@ -394,8 +404,9 @@ class ShipmentItemStoreCollection extends Internals\EntityCollection
         }
 
         foreach ($plusList as $barcode) {
-            if ($barcode['ID'] <= 0)
+            if ($barcode['ID'] <= 0) {
                 continue;
+            }
 
             $item = $this->getItemById($barcode['ID']);
             if ($item) {
@@ -422,8 +433,9 @@ class ShipmentItemStoreCollection extends Internals\EntityCollection
         foreach ($values['BARCODE_INFO'] as $barcodeDat) {
             $storeId = $barcodeDat['STORE_ID'];
 
-            if (!isset($barcodeDat['BARCODE']) || !is_array($barcodeDat['BARCODE']))
+            if (!isset($barcodeDat['BARCODE']) || !is_array($barcodeDat['BARCODE'])) {
                 continue;
+            }
 
             if (count($barcodeDat['BARCODE']) > 1) {
                 $quantity = floatval($barcodeDat['QUANTITY'] / count($barcodeDat['BARCODE']));
@@ -432,8 +444,9 @@ class ShipmentItemStoreCollection extends Internals\EntityCollection
             }
 
             foreach ($barcodeDat['BARCODE'] as $barcode) {
-                if (!isset($result[$storeId]))
+                if (!isset($result[$storeId])) {
                     $result[$storeId] = array();
+                }
 
                 $result[$storeId][$barcode['VALUE']] = array(
                     "QUANTITY" => $quantity,

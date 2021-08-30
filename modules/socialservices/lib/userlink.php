@@ -5,6 +5,22 @@ namespace Bitrix\Socialservices;
 use \Bitrix\Main\Entity\DataManager;
 use \Bitrix\Socialservices\UserTable as SocservUserTable;
 
+/**
+ * Class UserLinkTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_UserLink_Query query()
+ * @method static EO_UserLink_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_UserLink_Result getById($id)
+ * @method static EO_UserLink_Result getList(array $parameters = array())
+ * @method static EO_UserLink_Entity getEntity()
+ * @method static \Bitrix\Socialservices\EO_UserLink createObject($setDefaultValues = true)
+ * @method static \Bitrix\Socialservices\EO_UserLink_Collection createCollection()
+ * @method static \Bitrix\Socialservices\EO_UserLink wakeUpObject($row)
+ * @method static \Bitrix\Socialservices\EO_UserLink_Collection wakeUpCollection($rows)
+ */
 class UserLinkTable extends DataManager
 {
     public static function getFilePath()
@@ -69,22 +85,26 @@ class UserLinkTable extends DataManager
     public static function deleteBySocserv($userId, $socservProfileId)
     {
         $connection = \Bitrix\Main\Application::getConnection();
-        $query = $connection->query("
+        $query = $connection->query(
+            "
 DELETE
 FROM " . self::getTableName() . "
 WHERE USER_ID='" . intval($userId) . "' AND SOCSERV_USER_ID='" . intval($socservProfileId) . "'
-");
+"
+        );
     }
 
     public static function compareUserLinks($userId, $socservUserId, $links)
     {
-        $dbRes = static::getList(array(
-            'filter' => array(
-                //'USER_ID' => $userId, // link USER_ID doesn't update with socserv_user
-                '=SOCSERV_USER_ID' => $socservUserId,
-            ),
-            'select' => array('ID', 'LINK_UID')
-        ));
+        $dbRes = static::getList(
+            array(
+                'filter' => array(
+                    //'USER_ID' => $userId, // link USER_ID doesn't update with socserv_user
+                    '=SOCSERV_USER_ID' => $socservUserId,
+                ),
+                'select' => array('ID', 'LINK_UID')
+            )
+        );
 
         $currentList = array();
         while ($linkInfo = $dbRes->fetch()) {
@@ -103,15 +123,17 @@ WHERE USER_ID='" . intval($userId) . "' AND SOCSERV_USER_ID='" . intval($socserv
         }
 
         foreach ($links as $link) {
-            static::add(array(
-                'USER_ID' => $userId,
-                'SOCSERV_USER_ID' => $socservUserId,
-                'LINK_USER_ID' => null, // !!!!!!
-                'LINK_UID' => $link['uid'],
-                'LINK_NAME' => $link['first_name'],
-                'LINK_LAST_NAME' => $link['last_name'],
-                'LINK_PICTURE' => $link['picture'],
-            ));
+            static::add(
+                array(
+                    'USER_ID' => $userId,
+                    'SOCSERV_USER_ID' => $socservUserId,
+                    'LINK_USER_ID' => null, // !!!!!!
+                    'LINK_UID' => $link['uid'],
+                    'LINK_NAME' => $link['first_name'],
+                    'LINK_LAST_NAME' => $link['last_name'],
+                    'LINK_PICTURE' => $link['picture'],
+                )
+            );
         }
     }
 

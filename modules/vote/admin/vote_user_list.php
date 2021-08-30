@@ -13,7 +13,9 @@ $lAdmin = new CAdminList($sTableID, $oSort);
 ClearVars();
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/vote/prolog.php");
 $VOTE_RIGHT = $APPLICATION->GetGroupRight("vote");
-if ($VOTE_RIGHT == "D") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($VOTE_RIGHT == "D") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/vote/include.php");
 
@@ -26,7 +28,9 @@ $err_mess = "File: " . __FILE__ . "<br>Line: ";
 function CheckFilter()
 {
     global $message, $lAdmin, $arFilterFields;
-    foreach ($arFilterFields as $s) global $$s;
+    foreach ($arFilterFields as $s) {
+        global $$s;
+    }
     $bGotErr = false;
 
     $find_date_start_1 = trim($find_date_start_1);
@@ -34,41 +38,45 @@ function CheckFilter()
     $find_date_end_1 = trim($find_date_end_1);
     $find_date_end_2 = trim($find_date_end_2);
 
-    if (strlen($find_date_start_1) > 0 || strlen($find_date_start_2) > 0) {
+    if ($find_date_start_1 <> '' || $find_date_start_2 <> '') {
         $date_start_1_stm = MkDateTime(ConvertDateTime($find_date_start_1, "D.M.Y"), "d.m.Y");
         $date_start_2_stm = MkDateTime(ConvertDateTime($find_date_start_2, "D.M.Y") . " 23:59:59", "d.m.Y H:i:s");
-        if (!$date_start_1_stm && strlen(trim($find_date_start_1)) > 0) {
+        if (!$date_start_1_stm && trim($find_date_start_1) <> '') {
             $bGotErr = true;
             $lAdmin->AddUpdateError(GetMessage("VOTE_WRONG_START_DATE_FROM"));
         }
-        if (!$date_start_2_stm && strlen(trim($find_date_start_2)) > 0) {
+        if (!$date_start_2_stm && trim($find_date_start_2) <> '') {
             $bGotErr = true;
             $lAdmin->AddUpdateError(GetMessage("VOTE_WRONG_START_DATE_TILL"));
         }
-        if (!$bGotErr && $date_start_2_stm <= $date_start_1_stm && strlen($date_start_2_stm) > 0) {
+        if (!$bGotErr && $date_start_2_stm <= $date_start_1_stm && $date_start_2_stm <> '') {
             $bGotErr = true;
             $lAdmin->AddUpdateError(GetMessage("VOTE_WRONG_START_FROM_TILL"));
         }
     }
 
-    if (strlen($find_date_end_1) > 0 || strlen($find_date_end_2) > 0) {
+    if ($find_date_end_1 <> '' || $find_date_end_2 <> '') {
         $date_end_1_stm = MkDateTime(ConvertDateTime($find_date_end_1, "D.M.Y"), "d.m.Y");
         $date_end_2_stm = MkDateTime(ConvertDateTime($find_date_end_2, "D.M.Y") . " 23:59:59", "d.m.Y H:i:s");
-        if (!$date_end_1_stm && strlen(trim($find_date_end_1)) > 0) {
+        if (!$date_end_1_stm && trim($find_date_end_1) <> '') {
             $bGotErr = true;
             $lAdmin->AddUpdateError(GetMessage("VOTE_WRONG_END_DATE_FROM"));
         }
-        if (!$date_end_2_stm && strlen(trim($find_date_end_2)) > 0) {
+        if (!$date_end_2_stm && trim($find_date_end_2) <> '') {
             $bGotErr = true;
             $lAdmin->AddUpdateError(GetMessage("VOTE_WRONG_END_DATE_TILL"));
         }
-        if ($bGotErr && $date_end_2_stm <= $date_end_1_stm && strlen($date_end_2_stm) > 0) {
+        if ($bGotErr && $date_end_2_stm <= $date_end_1_stm && $date_end_2_stm <> '') {
             $bGotErr = true;
             $lAdmin->AddUpdateError(GetMessage("VOTE_WRONG_END_FROM_TILL"));
         }
     }
 
-    if ($bGotErr) return false; else return true;
+    if ($bGotErr) {
+        return false;
+    } else {
+        return true;
+    }
 }
 
 /********************************************************************
@@ -127,14 +135,16 @@ if (CheckFilter()) {
 if (($arID = $lAdmin->GroupAction()) && $VOTE_RIGHT == "W" && check_bitrix_sessid()) {
     if ($_REQUEST['action_target'] == 'selected') {
         $arID = Array();
-        $rsData = CVoteUser::GetList($by, $order, $arFilter, $is_filtered);
-        while ($arRes = $rsData->Fetch())
+        $rsData = CVoteUser::GetList('', '', $arFilter);
+        while ($arRes = $rsData->Fetch()) {
             $arID[] = $arRes['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
         $ID = intval($ID);
         switch ($_REQUEST['action']) {
             case "delete":
@@ -150,36 +160,75 @@ if (($arID = $lAdmin->GroupAction()) && $VOTE_RIGHT == "W" && check_bitrix_sessi
     }
 }
 
-$rsData = CVoteUser::GetList($by, $order, $arFilter, $is_filtered);
+global $by, $order;
+
+$rsData = CVoteUser::GetList($by, $order, $arFilter);
 $rsData = new CAdminResult($rsData, $sTableID);
 $rsData->NavStart();
 
 $lAdmin->NavText($rsData->GetNavPrint(GetMessage("VOTE_PAGES")));
 
-$lAdmin->AddHeaders(array(
-    array("id" => "ID", "content" => "ID", "sort" => "s_id", "default" => true),
-    array("id" => "DATE_FIRST", "content" => GetMessage("VOTE_DATE_START"), "sort" => "s_date_start", "default" => true),
-    array("id" => "DATE_LAST", "content" => GetMessage("VOTE_DATE_END"), "sort" => "s_date_end", "default" => true),
-    array("id" => "AUTH_USER_ID", "content" => GetMessage("VOTE_USER"), "sort" => "s_user", "default" => true),
-    (CModule::IncludeModule("statistic") ? array("id" => "STAT_GUEST_ID", "content" => GetMessage("VOTE_VISITOR"), "sort" => "s_stat_guest_id", "default" => true) : null),
-    array("id" => "LAST_IP", "content" => "IP", "sort" => "s_ip", "default" => true),
-    array("id" => "COUNTER", "content" => GetMessage("VOTE_COUNTER"), "sort" => "s_counter", "default" => true, "align" => "right"),
-));
+$lAdmin->AddHeaders(
+    array(
+        array("id" => "ID", "content" => "ID", "sort" => "s_id", "default" => true),
+        array(
+            "id" => "DATE_FIRST",
+            "content" => GetMessage("VOTE_DATE_START"),
+            "sort" => "s_date_start",
+            "default" => true
+        ),
+        array("id" => "DATE_LAST", "content" => GetMessage("VOTE_DATE_END"), "sort" => "s_date_end", "default" => true),
+        array("id" => "AUTH_USER_ID", "content" => GetMessage("VOTE_USER"), "sort" => "s_user", "default" => true),
+        (CModule::IncludeModule("statistic") ? array(
+            "id" => "STAT_GUEST_ID",
+            "content" => GetMessage("VOTE_VISITOR"),
+            "sort" => "s_stat_guest_id",
+            "default" => true
+        ) : null),
+        array("id" => "LAST_IP", "content" => "IP", "sort" => "s_ip", "default" => true),
+        array(
+            "id" => "COUNTER",
+            "content" => GetMessage("VOTE_COUNTER"),
+            "sort" => "s_counter",
+            "default" => true,
+            "align" => "right"
+        ),
+    )
+);
 
 $nameFormat = CSite::GetNameFormat(false);
 while ($res = $rsData->getNext()) {
     $row =& $lAdmin->AddRow($res["ID"], $res);
 
-    if ($res["AUTH_USER_ID"] > 0)
-        $txt = "[<a title=\"" . GetMessage("VOTE_EDIT_USER") . "\" href=\"user_admin.php?lang=" . LANGUAGE_ID . "&ID={$res["AUTH_USER_ID"]}&apply_filter=Y\">{$res["AUTH_USER_ID"]}</a>] " . CUser::FormatName($nameFormat, $res, true, false);
-    else
+    if ($res["AUTH_USER_ID"] > 0) {
+        $txt = "[<a title=\"" . GetMessage(
+                "VOTE_EDIT_USER"
+            ) . "\" href=\"user_admin.php?lang=" . LANGUAGE_ID . "&ID={$res["AUTH_USER_ID"]}&apply_filter=Y\">{$res["AUTH_USER_ID"]}</a>] " . CUser::FormatName(
+                $nameFormat,
+                $res,
+                true,
+                false
+            );
+    } else {
         $txt = GetMessage("VOTE_NOT_AUTHORIZED");
+    }
     $row->AddViewField("AUTH_USER_ID", $txt);
 
-    if ($res["STAT_GUEST_ID"] > 0)
-        $row->AddViewField("STAT_GUEST_ID", "[<a title=\"" . GetMessage("VOTE_GUEST_USER_INFO") . "\" href=\"guest_list.php?lang=" . LANGUAGE_ID . "&find_id={$res["STAT_GUEST_ID"]}&set_filter=Y\">{$res["STAT_GUEST_ID"]}</a>]");
+    if ($res["STAT_GUEST_ID"] > 0) {
+        $row->AddViewField(
+            "STAT_GUEST_ID",
+            "[<a title=\"" . GetMessage(
+                "VOTE_GUEST_USER_INFO"
+            ) . "\" href=\"guest_list.php?lang=" . LANGUAGE_ID . "&find_id={$res["STAT_GUEST_ID"]}&set_filter=Y\">{$res["STAT_GUEST_ID"]}</a>]"
+        );
+    }
 
-    $row->AddViewField("COUNTER", "<a title=\"" . GetMessage("VOTE_USER_VOTES") . "\" href=\"vote_user_votes.php?find_vote_user_id={$res["ID"]}&lang=" . LANGUAGE_ID . "&set_filter=Y\">{$res["COUNTER"]}</a>");
+    $row->AddViewField(
+        "COUNTER",
+        "<a title=\"" . GetMessage(
+            "VOTE_USER_VOTES"
+        ) . "\" href=\"vote_user_votes.php?find_vote_user_id={$res["ID"]}&lang=" . LANGUAGE_ID . "&set_filter=Y\">{$res["COUNTER"]}</a>"
+    );
 
     if ($VOTE_RIGHT == "W") {
         $row->AddActions(
@@ -187,7 +236,10 @@ while ($res = $rsData->getNext()) {
                 array(
                     "ICON" => "delete",
                     "TEXT" => GetMessage("MAIN_ADMIN_MENU_DELETE"),
-                    "ACTION" => "if(confirm('" . GetMessage("VOTE_CONFIRM_DEL") . "')) window.location='vote_user_list.php?lang=" . LANGUAGE_ID . "&action=delete&ID={$res["ID"]}&" . bitrix_sessid_get() . "'"
+                    "ACTION" => "if(confirm('" . GetMessage(
+                            "VOTE_CONFIRM_DEL"
+                        ) . "')) window.location='vote_user_list.php?lang=" . LANGUAGE_ID . "&action=delete&ID={$res["ID"]}&" . bitrix_sessid_get(
+                        ) . "'"
                 )
             )
         );
@@ -208,11 +260,13 @@ $lAdmin->AddFooter(
     )
 );
 
-if ($VOTE_RIGHT == "W")
-    $lAdmin->AddGroupActionTable(Array(
+if ($VOTE_RIGHT == "W") {
+    $lAdmin->AddGroupActionTable(
+        Array(
             "delete" => GetMessage("VOTE_DELETE"),
         )
     );
+}
 
 $lAdmin->AddAdminContextMenu(array());
 
@@ -245,50 +299,114 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
         <tr>
             <td><b><? echo GetMessage("VOTE_F_USER") ?></b></td>
             <td><input type="text" name="find_user" size="47"
-                       value="<? echo htmlspecialcharsbx($find_user) ?>"><?= InputType("checkbox", "find_user_exact_match", "Y", $find_user_exact_match, false, "", "title='" . GetMessage("VOTE_EXACT_MATCH") . "'") ?>
-                &nbsp;<?= ShowFilterLogicHelp() ?></td>
+                       value="<? echo htmlspecialcharsbx($find_user) ?>"><?= InputType(
+                    "checkbox",
+                    "find_user_exact_match",
+                    "Y",
+                    $find_user_exact_match,
+                    false,
+                    "",
+                    "title='" . GetMessage(
+                        "VOTE_EXACT_MATCH"
+                    ) . "'"
+                ) ?>&nbsp;<?= ShowFilterLogicHelp() ?></td>
         </tr>
         <tr>
             <td>ID:</td>
             <td><input type="text" name="find_id" size="47"
-                       value="<? echo htmlspecialcharsbx($find_id) ?>"><?= InputType("checkbox", "find_id_exact_match", "Y", $find_id_exact_match, false, "", "title='" . GetMessage("VOTE_EXACT_MATCH") . "'") ?>
-                &nbsp;<?= ShowFilterLogicHelp() ?></td>
+                       value="<? echo htmlspecialcharsbx($find_id) ?>"><?= InputType(
+                    "checkbox",
+                    "find_id_exact_match",
+                    "Y",
+                    $find_id_exact_match,
+                    false,
+                    "",
+                    "title='" . GetMessage(
+                        "VOTE_EXACT_MATCH"
+                    ) . "'"
+                ) ?>&nbsp;<?= ShowFilterLogicHelp() ?></td>
         </tr>
         <tr>
             <td nowrap><? echo GetMessage("VOTE_F_DATE_START") . ":" ?></td>
-            <td nowrap><? echo CalendarPeriod("find_date_start_1", htmlspecialcharsbx($find_date_start_1), "find_date_start_2", htmlspecialcharsbx($find_date_start_2), "form1", "Y") ?></td>
+            <td nowrap><? echo CalendarPeriod(
+                    "find_date_start_1",
+                    htmlspecialcharsbx($find_date_start_1),
+                    "find_date_start_2",
+                    htmlspecialcharsbx($find_date_start_2),
+                    "form1",
+                    "Y"
+                ) ?></td>
         </tr>
         <tr>
             <td nowrap><? echo GetMessage("VOTE_F_DATE_END") . ":" ?></td>
-            <td nowrap><? echo CalendarPeriod("find_date_end_1", htmlspecialcharsbx($find_date_end_1), "find_date_end_2", htmlspecialcharsbx($find_date_end_2), "form1", "Y") ?></td>
+            <td nowrap><? echo CalendarPeriod(
+                    "find_date_end_1",
+                    htmlspecialcharsbx($find_date_end_1),
+                    "find_date_end_2",
+                    htmlspecialcharsbx($find_date_end_2),
+                    "form1",
+                    "Y"
+                ) ?></td>
         </tr>
         <tr>
             <td><? echo GetMessage("VOTE_F_GUEST_ID") ?></td>
             <td><input type="text" name="find_guest" size="47"
-                       value="<? echo htmlspecialcharsbx($find_guest) ?>"><?= InputType("checkbox", "find_guest_exact_match", "Y", $find_guest_exact_match, false, "", "title='" . GetMessage("VOTE_EXACT_MATCH") . "'") ?>
-                &nbsp;<?= ShowFilterLogicHelp() ?></td>
+                       value="<? echo htmlspecialcharsbx($find_guest) ?>"><?= InputType(
+                    "checkbox",
+                    "find_guest_exact_match",
+                    "Y",
+                    $find_guest_exact_match,
+                    false,
+                    "",
+                    "title='" . GetMessage(
+                        "VOTE_EXACT_MATCH"
+                    ) . "'"
+                ) ?>&nbsp;<?= ShowFilterLogicHelp() ?></td>
         </tr>
         <tr>
             <td><?= GetMessage("VOTE_F_IP") ?></td>
             <td><input type="text" name="find_ip" size="47"
-                       value="<? echo htmlspecialcharsbx($find_ip) ?>"><?= InputType("checkbox", "find_ip_exact_match", "Y", $find_ip_exact_match, false, "", "title='" . GetMessage("VOTE_EXACT_MATCH") . "'") ?>
-                &nbsp;<?= ShowFilterLogicHelp() ?></td>
+                       value="<? echo htmlspecialcharsbx($find_ip) ?>"><?= InputType(
+                    "checkbox",
+                    "find_ip_exact_match",
+                    "Y",
+                    $find_ip_exact_match,
+                    false,
+                    "",
+                    "title='" . GetMessage(
+                        "VOTE_EXACT_MATCH"
+                    ) . "'"
+                ) ?>&nbsp;<?= ShowFilterLogicHelp() ?></td>
         </tr>
         <tr>
             <td nowrap><? echo GetMessage("VOTE_F_COUNTER") ?></td>
             <td nowrap><input type="text" name="find_counter_1" value="<?= htmlspecialcharsbx($find_counter_1) ?>"
                               size="10"><? echo "&nbsp;" . GetMessage("VOTE_TILL") . "&nbsp;" ?><input type="text"
                                                                                                        name="find_counter_2"
-                                                                                                       value="<?= htmlspecialcharsbx($find_counter_2) ?>"
-                                                                                                       size="10"></td>
+                                                                                                       value="<?= htmlspecialcharsbx(
+                                                                                                           $find_counter_2
+                                                                                                       ) ?>" size="10">
+            </td>
         </tr>
         <tr>
             <td nowrap><? echo GetMessage("VOTE_F_VOTE") ?></td>
             <td nowrap><input type="text" name="find_vote" size="47"
-                              value="<? echo htmlspecialcharsbx($find_vote) ?>"><?= InputType("checkbox", "find_vote_exact_match", "Y", $find_vote_exact_match, false, "", "title='" . GetMessage("VOTE_EXACT_MATCH") . "'") ?>
-                &nbsp;<?= ShowFilterLogicHelp() ?>
-                <br><? echo SelectBox("find_vote_id", CVote::GetDropDownList(), GetMessage("VOTE_ALL"), htmlspecialcharsbx($find_vote_id)); ?>
-            </td>
+                              value="<? echo htmlspecialcharsbx($find_vote) ?>"><?= InputType(
+                    "checkbox",
+                    "find_vote_exact_match",
+                    "Y",
+                    $find_vote_exact_match,
+                    false,
+                    "",
+                    "title='" . GetMessage(
+                        "VOTE_EXACT_MATCH"
+                    ) . "'"
+                ) ?>&nbsp;<?= ShowFilterLogicHelp() ?><br><? echo SelectBox(
+                    "find_vote_id",
+                    CVote::GetDropDownList(),
+                    GetMessage("VOTE_ALL"),
+                    htmlspecialcharsbx($find_vote_id)
+                ); ?></td>
         </tr>
         <?
         $oFilter->Buttons(array("table_id" => $sTableID, "url" => $APPLICATION->GetCurPage(), "form" => "form1"));

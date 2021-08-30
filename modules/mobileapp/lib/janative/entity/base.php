@@ -35,8 +35,9 @@ abstract class Base
             foreach ($langs as $lang) {
                 if ($lang->isDirectory()) {
                     $langFile = new File($lang->getPath() . "/{$this->baseFileName}.php");
-                    if ($langFile->isExists())
+                    if ($langFile->isExists()) {
                         $dates[] = $langFile->getModificationTime();
+                    }
                 }
             }
         }
@@ -84,8 +85,9 @@ abstract class Base
             $list = include($file->getPath());
 
             if (is_array($list)) {
-                if (array_key_exists("extensions", $list))
+                if (array_key_exists("extensions", $list)) {
                     $list = $list["extensions"];
+                }
             }
         }
 
@@ -93,7 +95,9 @@ abstract class Base
             $list,
             function ($result, $ext) {
                 return array_merge($result, Base::expandDependency($ext));
-            }, []);
+            },
+            []
+        );
 
         return $list;
     }
@@ -109,7 +113,7 @@ abstract class Base
         $relativeExtDir = $ext;
         $result = [];
 
-        if (strpos($ext, "*") == (strlen($ext) - 1)) {
+        if (mb_strpos($ext, "*") == (mb_strlen($ext) - 1)) {
             $relativeExtDir = str_replace(["/*", "*"], "", $ext);
             $findChildren = true;
         }
@@ -132,9 +136,12 @@ abstract class Base
                 }
             }
 
-            $result = array_map(function ($path) use ($absolutePath, $relativeExtDir) {
-                return str_replace([$absolutePath, "/extension.js"], [$relativeExtDir, ""], $path);
-            }, $result);
+            $result = array_map(
+                function ($path) use ($absolutePath, $relativeExtDir) {
+                    return str_replace([$absolutePath, "/extension.js"], [$relativeExtDir, ""], $path);
+                },
+                $result
+            );
         }
 
         $rootExtension = new File($absolutePath . '/extension.js');
@@ -150,7 +157,10 @@ abstract class Base
     {
         $langPhrases = $this->getLangMessages();
         if (count($langPhrases) > 0) {
-            $jsonLangMessages = Utils::jsonEncode($langPhrases, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE);
+            $jsonLangMessages = Utils::jsonEncode(
+                $langPhrases,
+                JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE
+            );
             return <<<JS
 BX.message($jsonLangMessages);
 JS;

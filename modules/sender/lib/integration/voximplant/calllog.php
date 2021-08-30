@@ -58,14 +58,16 @@ class CallLogTable extends Entity\DataManager
      */
     public static function removeByCallId($callId = null)
     {
-        $list = static::getList(array(
-            'select' => array('CALL_ID'),
-            'filter' => array(
-                'LOGIC' => 'OR',
-                '=CALL_ID' => $callId,
-                '<DATE_INSERT' => static::getFilterCurrentDate(),
+        $list = static::getList(
+            array(
+                'select' => array('CALL_ID'),
+                'filter' => array(
+                    'LOGIC' => 'OR',
+                    '=CALL_ID' => $callId,
+                    '<DATE_INSERT' => static::getFilterCurrentDate(),
+                )
             )
-        ));
+        );
         foreach ($list as $item) {
             static::delete(array('CALL_ID' => $item['CALL_ID']));
         }

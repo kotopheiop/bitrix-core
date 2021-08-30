@@ -2,6 +2,8 @@
 
 namespace Bitrix\Im\Model;
 
+use Bitrix\Im\Internals\Query;
+use Bitrix\Main\Application;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Localization\Loc;
 
@@ -32,7 +34,20 @@ Loc::loadMessages(__FILE__);
  * </ul>
  *
  * @package Bitrix\Im
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Relation_Query query()
+ * @method static EO_Relation_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Relation_Result getById($id)
+ * @method static EO_Relation_Result getList(array $parameters = array())
+ * @method static EO_Relation_Entity getEntity()
+ * @method static \Bitrix\Im\Model\EO_Relation createObject($setDefaultValues = true)
+ * @method static \Bitrix\Im\Model\EO_Relation_Collection createCollection()
+ * @method static \Bitrix\Im\Model\EO_Relation wakeUpObject($row)
+ * @method static \Bitrix\Im\Model\EO_Relation_Collection wakeUpCollection($rows)
+ */
 class RelationTable extends Entity\DataManager
 {
     /**
@@ -126,6 +141,10 @@ class RelationTable extends Entity\DataManager
                 'data_type' => 'integer',
                 'default_value' => 0,
             ),
+            'START_COUNTER' => array(
+                'data_type' => 'integer',
+                'default_value' => 0,
+            ),
             'CHAT' => array(
                 'data_type' => 'Bitrix\Im\Model\ChatTable',
                 'reference' => array('=this.CHAT_ID' => 'ref.ID'),
@@ -185,6 +204,26 @@ class RelationTable extends Entity\DataManager
 
         return $result;
     }
-}
 
-class_alias("Bitrix\\Im\\Model\\RelationTable", "Bitrix\\Im\\RelationTable", false);
+    public static function deleteBatch(array $filter, $limit = 0): int
+    {
+        $tableName = static::getTableName();
+        $connection = Application::getConnection();
+        $sqlHelper = $connection->getSqlHelper();
+
+        $query = new Query(static::getEntity());
+        $query->setFilter($filter);
+        $query->getQuery();
+
+        $alias = $sqlHelper->quote($query->getInitAlias()) . '.';
+        $where = str_replace($alias, '', $query->getWhere());
+
+        $sql = 'DELETE FROM ' . $tableName . ' WHERE ' . $where;
+        if ($limit > 0) {
+            $sql .= ' LIMIT ' . $limit;
+        }
+
+        $connection->queryExecute($sql);
+        return $connection->getAffectedRowsCount();
+    }
+}

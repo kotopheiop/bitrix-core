@@ -1,62 +1,80 @@
-<?
+<?php
+
 IncludeModuleLangFile(__FILE__);
+
 $GLOBALS["BLOG_USER_GROUP_PERMS"] = Array();
 
 class CAllBlogUserGroupPerms
 {
     /*************** ADD, UPDATE, DELETE *****************/
-    function CheckFields($ACTION, &$arFields, $ID = 0)
+    public static function CheckFields($ACTION, &$arFields, $ID = 0)
     {
-        if ((is_set($arFields, "BLOG_ID") || $ACTION == "ADD") && IntVal($arFields["BLOG_ID"]) <= 0) {
+        if ((is_set($arFields, "BLOG_ID") || $ACTION == "ADD") && intval($arFields["BLOG_ID"]) <= 0) {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("BLG_GUGP_EMPTY_BLOG_ID"), "EMPTY_BLOG_ID");
             return false;
         } elseif (is_set($arFields, "BLOG_ID")) {
             $arResult = CBlog::GetByID($arFields["BLOG_ID"]);
             if (!$arResult) {
-                $GLOBALS["APPLICATION"]->ThrowException(str_replace("#ID#", $arFields["BLOG_ID"], GetMessage("BLG_GUGP_ERROR_NO_BLOG")), "ERROR_NO_BLOG");
+                $GLOBALS["APPLICATION"]->ThrowException(
+                    str_replace("#ID#", $arFields["BLOG_ID"], GetMessage("BLG_GUGP_ERROR_NO_BLOG")),
+                    "ERROR_NO_BLOG"
+                );
                 return false;
             }
         }
 
-        if ((is_set($arFields, "USER_GROUP_ID") || $ACTION == "ADD") && IntVal($arFields["USER_GROUP_ID"]) <= 0) {
+        if ((is_set($arFields, "USER_GROUP_ID") || $ACTION == "ADD") && intval($arFields["USER_GROUP_ID"]) <= 0) {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("BLG_GUGP_EMPTY_USER_GROUP_ID"), "EMPTY_USER_GROUP_ID");
             return false;
         } elseif (is_set($arFields, "USER_GROUP_ID")) {
             $arResult = CBlogUserGroup::GetByID($arFields["USER_GROUP_ID"]);
             if (!$arResult) {
-                $GLOBALS["APPLICATION"]->ThrowException(str_replace("#ID#", $arFields["USER_GROUP_ID"], GetMessage("BLG_GUGP_ERROR_NO_USER_GROUP")), "ERROR_NO_USER_GROUP");
+                $GLOBALS["APPLICATION"]->ThrowException(
+                    str_replace("#ID#", $arFields["USER_GROUP_ID"], GetMessage("BLG_GUGP_ERROR_NO_USER_GROUP")),
+                    "ERROR_NO_USER_GROUP"
+                );
                 return false;
             }
         }
 
-        if ((is_set($arFields, "PERMS_TYPE") || $ACTION == "ADD") && $arFields["PERMS_TYPE"] != BLOG_PERMS_POST && $arFields["PERMS_TYPE"] != BLOG_PERMS_COMMENT) {
+        if ((is_set(
+                    $arFields,
+                    "PERMS_TYPE"
+                ) || $ACTION == "ADD") && $arFields["PERMS_TYPE"] != BLOG_PERMS_POST && $arFields["PERMS_TYPE"] != BLOG_PERMS_COMMENT) {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("BLG_GUGP_EMPTY_PERMS_TYPE"), "EMPTY_PERMS_TYPE");
             return false;
         }
 
-        if ((is_set($arFields, "PERMS") || $ACTION == "ADD") && strlen($arFields["PERMS"]) <= 0) {
+        if ((is_set($arFields, "PERMS") || $ACTION == "ADD") && $arFields["PERMS"] == '') {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("BLG_GUGP_EMPTY_PERMS"), "EMPTY_PERMS");
             return false;
         } elseif (is_set($arFields, "PERMS")) {
             $arAvailPerms = array_keys($GLOBALS["AR_BLOG_PERMS"]);
             if (!in_array($arFields["PERMS"], $arAvailPerms)) {
-                $GLOBALS["APPLICATION"]->ThrowException(str_replace("#ID#", $arFields["PERMS"], GetMessage("BLG_GUGP_ERROR_NO_PERMS")), "ERROR_NO_PERMS");
+                $GLOBALS["APPLICATION"]->ThrowException(
+                    str_replace("#ID#", $arFields["PERMS"], GetMessage("BLG_GUGP_ERROR_NO_PERMS")),
+                    "ERROR_NO_PERMS"
+                );
                 return false;
             }
         }
 
-        if ((is_set($arFields, "AUTOSET") || $ACTION == "ADD") && $arFields["AUTOSET"] != "Y" && $arFields["AUTOSET"] != "N")
+        if ((is_set(
+                    $arFields,
+                    "AUTOSET"
+                ) || $ACTION == "ADD") && $arFields["AUTOSET"] != "Y" && $arFields["AUTOSET"] != "N") {
             $arFields["AUTOSET"] = "N";
+        }
 
-        return True;
+        return true;
     }
 
-    function __AutoSetPerms($ID)
+    public static function __AutoSetPerms($ID)
     {
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
         $arGroupPerms = CBlogUserGroupPerms::GetByID($ID);
-        if (IntVal($arGroupPerms["POST_ID"]) == 0) {
+        if (intval($arGroupPerms["POST_ID"]) == 0) {
             $dbBlogPosts = CBlogPost::GetList(
                 array(),
                 array("BLOG_ID" => $arGroupPerms["BLOG_ID"]),
@@ -105,10 +123,10 @@ class CAllBlogUserGroupPerms
     {
         global $DB;
 
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
         $arGroupPerms = CBlogUserGroupPerms::GetByID($ID);
-        if (IntVal($arGroupPerms["POST_ID"]) == 0) {
+        if (intval($arGroupPerms["POST_ID"]) == 0) {
             $dbResult = CBlogUserGroupPerms::GetList(
                 array(),
                 array(
@@ -122,8 +140,9 @@ class CAllBlogUserGroupPerms
                 false,
                 array("ID")
             );
-            while ($arResult = $dbResult->Fetch())
+            while ($arResult = $dbResult->Fetch()) {
                 CBlogUserGroupPerms::Delete($arResult["ID"]);
+            }
         }
 
         unset($GLOBALS["BLOG_USER_GROUP_PERMS"]["BLOG_USER_GROUP_PERMS_CACHE_" . $ID]);
@@ -132,13 +151,15 @@ class CAllBlogUserGroupPerms
     }
 
     //*************** SELECT *********************/
-    function GetByID($ID)
+    public static function GetByID($ID)
     {
         global $DB;
 
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
-        if (isset($GLOBALS["BLOG_USER_GROUP_PERMS"]["BLOG_USER_GROUP_PERMS_CACHE_" . $ID]) && is_array($GLOBALS["BLOG_USER_GROUP_PERMS"]["BLOG_USER_GROUP_PERMS_CACHE_" . $ID]) && is_set($GLOBALS["BLOG_USER_GROUP_PERMS"]["BLOG_USER_GROUP_PERMS_CACHE_" . $ID], "ID")) {
+        if (isset($GLOBALS["BLOG_USER_GROUP_PERMS"]["BLOG_USER_GROUP_PERMS_CACHE_" . $ID]) && is_array(
+                $GLOBALS["BLOG_USER_GROUP_PERMS"]["BLOG_USER_GROUP_PERMS_CACHE_" . $ID]
+            ) && is_set($GLOBALS["BLOG_USER_GROUP_PERMS"]["BLOG_USER_GROUP_PERMS_CACHE_" . $ID], "ID")) {
             return $GLOBALS["BLOG_USER_GROUP_PERMS"]["BLOG_USER_GROUP_PERMS_CACHE_" . $ID];
         } else {
             $strSql =
@@ -146,15 +167,13 @@ class CAllBlogUserGroupPerms
                 "	GP.PERMS, GP.AUTOSET " .
                 "FROM b_blog_user_group_perms GP " .
                 "WHERE GP.ID = " . $ID . "";
-            $dbResult = $DB->Query($strSql, False, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+            $dbResult = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             if ($arResult = $dbResult->Fetch()) {
                 $GLOBALS["BLOG_USER_GROUP_PERMS"]["BLOG_USER_GROUP_PERMS_CACHE_" . $ID] = $arResult;
                 return $arResult;
             }
         }
 
-        return False;
+        return false;
     }
 }
-
-?>

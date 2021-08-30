@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 class CSocServVKontakte extends CSocServAuth
@@ -6,14 +7,19 @@ class CSocServVKontakte extends CSocServAuth
     const ID = "VKontakte";
     const CONTROLLER_URL = "https://www.bitrix24.ru/controller";
 
-    protected $entityOAuth = NULL;
+    protected $entityOAuth = null;
 
     public function GetSettings()
     {
         return array(
             array("vkontakte_appid", GetMessage("socserv_vk_id"), "", Array("text", 40)),
             array("vkontakte_appsecret", GetMessage("socserv_vk_key"), "", Array("text", 40)),
-            array("note" => GetMessage("socserv_vk_sett_note1", array('#URL#' => $this->getEntityOAuth()->GetRedirectURI()))),
+            array(
+                "note" => GetMessage(
+                    "socserv_vk_sett_note1",
+                    array('#URL#' => $this->getEntityOAuth()->GetRedirectURI())
+                )
+            ),
         );
     }
 
@@ -22,10 +28,17 @@ class CSocServVKontakte extends CSocServAuth
         $url = $this->getUrl($arParams);
 
         $phrase = ($arParams["FOR_INTRANET"]) ? GetMessage("socserv_vk_note_intranet") : GetMessage("socserv_vk_note");
-        if ($arParams["FOR_INTRANET"])
-            return array("ON_CLICK" => 'onclick="BX.util.popup(\'' . htmlspecialcharsbx(CUtil::JSEscape($url)) . '\', 660, 425)"');
+        if ($arParams["FOR_INTRANET"]) {
+            return array(
+                "ON_CLICK" => 'onclick="BX.util.popup(\'' . htmlspecialcharsbx(
+                        CUtil::JSEscape($url)
+                    ) . '\', 660, 425)"'
+            );
+        }
 
-        return '<a href="javascript:void(0)" onclick="BX.util.popup(\'' . htmlspecialcharsbx(CUtil::JSEscape($url)) . '\', 660, 425)" class="bx-ss-button vkontakte-button"></a><span class="bx-spacer"></span><span>' . $phrase . '</span>';
+        return '<a href="javascript:void(0)" onclick="BX.util.popup(\'' . htmlspecialcharsbx(
+                CUtil::JSEscape($url)
+            ) . '\', 660, 425)" class="bx-ss-button vkontakte-button"></a><span class="bx-spacer"></span><span>' . $phrase . '</span>';
     }
 
     public function GetOnClickJs($arParams)
@@ -44,7 +57,12 @@ class CSocServVKontakte extends CSocServAuth
             $redirect_uri = self::CONTROLLER_URL . "/redirect.php";
             // error, but this code is not working at all
             $state = \CHTTP::URN2URI("/bitrix/tools/oauth/liveid.php") . "?state=";
-            $backurl = urlencode($APPLICATION->GetCurPageParam('check_key=' . $_SESSION["UNIQUE_KEY"], array("logout", "auth_service_error", "auth_service_id", "backurl")));
+            $backurl = urlencode(
+                $APPLICATION->GetCurPageParam(
+                    'check_key=' . $_SESSION["UNIQUE_KEY"],
+                    array("logout", "auth_service_error", "auth_service_id", "backurl")
+                )
+            );
             $state .= urlencode(urlencode("backurl=" . $backurl));
         } else {
             $backurl = $APPLICATION->GetCurPageParam(
@@ -52,9 +70,10 @@ class CSocServVKontakte extends CSocServAuth
                 array("logout", "auth_service_error", "auth_service_id", "backurl")
             );
 
-            $state = 'site_id=' . SITE_ID . '&backurl=' . urlencode($backurl) . (isset($arParams['BACKURL']) ? '&redirect_url=' . urlencode($arParams['BACKURL']) : '');
+            $state = 'site_id=' . SITE_ID . '&backurl=' . urlencode(
+                    $backurl
+                ) . (isset($arParams['BACKURL']) ? '&redirect_url=' . urlencode($arParams['BACKURL']) : '');
             $redirect_uri = $this->getEntityOAuth()->GetRedirectURI();
-
         }
 
         return $this->getEntityOAuth()->GetAuthUrl($redirect_uri, $state);
@@ -86,10 +105,11 @@ class CSocServVKontakte extends CSocServAuth
         }
 
         if (isset($arVkUser['response']['0']['sex']) && $arVkUser['response']['0']['sex'] != '') {
-            if ($arVkUser['response']['0']['sex'] == '2')
+            if ($arVkUser['response']['0']['sex'] == '2') {
                 $gender = 'M';
-            elseif ($arVkUser['response']['0']['sex'] == '1')
+            } elseif ($arVkUser['response']['0']['sex'] == '1') {
                 $gender = 'F';
+            }
         }
 
         $arFields = array(
@@ -104,7 +124,9 @@ class CSocServVKontakte extends CSocServAuth
             'OATOKEN_EXPIRES' => $this->entityOAuth->getAccessTokenExpires(),
         );
 
-        if (isset($arVkUser['response']['0']['photo_max_orig']) && self::CheckPhotoURI($arVkUser['response']['0']['photo_max_orig'])) {
+        if (isset($arVkUser['response']['0']['photo_max_orig']) && self::CheckPhotoURI(
+                $arVkUser['response']['0']['photo_max_orig']
+            )) {
             if (!$short) {
                 $arPic = CFile::MakeFileArray($arVkUser['response']['0']['photo_max_orig']);
                 if ($arPic) {
@@ -120,7 +142,7 @@ class CSocServVKontakte extends CSocServAuth
 
             $arFields["PERSONAL_WWW"] = self::getProfileUrl($arVkUser['response']['0']['id']);
 
-            if (strlen(SITE_ID) > 0) {
+            if (SITE_ID <> '') {
                 $arFields["SITE_ID"] = SITE_ID;
             }
         }
@@ -134,10 +156,11 @@ class CSocServVKontakte extends CSocServAuth
         $bSuccess = SOCSERV_AUTHORISATION_ERROR;
 
         if ((isset($_REQUEST["code"]) && $_REQUEST["code"] <> '') && CSocServAuthManager::CheckUniqueKey()) {
-            if (IsModuleInstalled('bitrix24') && defined('BX24_HOST_NAME'))
+            if (IsModuleInstalled('bitrix24') && defined('BX24_HOST_NAME')) {
                 $redirect_uri = self::CONTROLLER_URL . "/redirect.php";
-            else
+            } else {
                 $redirect_uri = $this->getEntityOAuth()->GetRedirectURI();
+            }
 
             $this->entityOAuth = $this->getEntityOAuth($_REQUEST['code']);
             if ($this->entityOAuth->GetAccessToken($redirect_uri) !== false) {
@@ -150,7 +173,17 @@ class CSocServVKontakte extends CSocServAuth
         }
 
         $url = ($GLOBALS["APPLICATION"]->GetCurDir() == "/login/") ? "" : $GLOBALS["APPLICATION"]->GetCurDir();
-        $aRemove = array("logout", "auth_service_error", "auth_service_id", "code", "error_reason", "error", "error_description", "check_key", "current_fieldset");
+        $aRemove = array(
+            "logout",
+            "auth_service_error",
+            "auth_service_id",
+            "code",
+            "error_reason",
+            "error",
+            "error_description",
+            "check_key",
+            "current_fieldset"
+        );
 
 
         if (isset($_REQUEST['backurl']) || isset($_REQUEST['redirect_url'])) {
@@ -161,7 +194,7 @@ class CSocServVKontakte extends CSocServAuth
 
             foreach ($arUrlQuery as $key => $value) {
                 foreach ($aRemove as $param) {
-                    if (strpos($value, $param . "=") === 0) {
+                    if (mb_strpos($value, $param . "=") === 0) {
                         unset($arUrlQuery[$key]);
                         break;
                     }
@@ -174,10 +207,13 @@ class CSocServVKontakte extends CSocServAuth
             $url = (preg_match("/\?/", $url)) ? $url . '&' : $url . '?';
             $url .= 'auth_service_id=' . self::ID . '&auth_service_error=' . $bSuccess;
         } elseif ($bSuccess !== true) {
-            $url = (isset($urlPath)) ? $urlPath . '?auth_service_id=' . self::ID . '&auth_service_error=' . $bSuccess : $GLOBALS['APPLICATION']->GetCurPageParam(('auth_service_id=' . self::ID . '&auth_service_error=' . $bSuccess), $aRemove);
+            $url = (isset($urlPath)) ? $urlPath . '?auth_service_id=' . self::ID . '&auth_service_error=' . $bSuccess : $GLOBALS['APPLICATION']->GetCurPageParam(
+                ('auth_service_id=' . self::ID . '&auth_service_error=' . $bSuccess),
+                $aRemove
+            );
         }
 
-        if (CModule::IncludeModule("socialnetwork") && strpos($url, "current_fieldset=") === false) {
+        if (CModule::IncludeModule("socialnetwork") && mb_strpos($url, "current_fieldset=") === false) {
             $url = (preg_match("/\?/", $url)) ? $url . "&current_fieldset=SOCSERV" : $url . "?current_fieldset=SOCSERV";
         }
 
@@ -200,10 +236,11 @@ window.close();
 
     public function getFriendsList($limit, &$next)
     {
-        if (IsModuleInstalled('bitrix24') && defined('BX24_HOST_NAME'))
+        if (IsModuleInstalled('bitrix24') && defined('BX24_HOST_NAME')) {
             $redirect_uri = self::CONTROLLER_URL . "/redirect.php";
-        else
+        } else {
             $redirect_uri = $this->getEntityOAuth()->GetRedirectURI();
+        }
 
         $vk = $this->getEntityOAuth();
         if ($vk->GetAccessToken($redirect_uri) !== false) {
@@ -226,10 +263,11 @@ window.close();
     {
         $vk = $this->getEntityOAuth();
 
-        if (IsModuleInstalled('bitrix24') && defined('BX24_HOST_NAME'))
+        if (IsModuleInstalled('bitrix24') && defined('BX24_HOST_NAME')) {
             $redirect_uri = self::CONTROLLER_URL . "/redirect.php";
-        else
+        } else {
             $redirect_uri = $this->getEntityOAuth()->GetRedirectURI();
+        }
 
         if ($vk->GetAccessToken($redirect_uri) !== false) {
             $res = $vk->sendMessage($uid, $message);
@@ -248,12 +286,15 @@ class CVKontakteOAuthInterface extends CSocServOAuthTransport
 {
     const SERVICE_ID = "VKontakte";
 
+    // https://vk.com/dev/constant_version_updates
     const AUTH_URL = "https://oauth.vk.com/authorize";
     const TOKEN_URL = "https://oauth.vk.com/access_token";
     const CONTACTS_URL = "https://api.vk.com/method/users.get";
     const FRIENDS_URL = "https://api.vk.com/method/friends.get";
     const MESSAGE_URL = "https://api.vk.com/method/messages.send";
     const APP_URL = "https://api.vk.com/method/apps.get";
+    // https://vk.com/dev/versions
+    const API_VERSION = "5.107";
 
     protected $userID = false;
     protected $userEmail = false;
@@ -312,10 +353,12 @@ class CVKontakteOAuthInterface extends CSocServOAuthTransport
             "redirect_uri" => $redirect_uri,
         );
 
-        $h = new \Bitrix\Main\Web\HttpClient(array(
-            "socketTimeout" => $this->httpTimeout,
-            "streamTimeout" => $this->httpTimeout,
-        ));
+        $h = new \Bitrix\Main\Web\HttpClient(
+            array(
+                "socketTimeout" => $this->httpTimeout,
+                "streamTimeout" => $this->httpTimeout,
+            )
+        );
 
         $result = $h->post(self::TOKEN_URL, $query);
 
@@ -326,7 +369,7 @@ class CVKontakteOAuthInterface extends CSocServOAuthTransport
         }
 
         foreach ($arResult as $key => $value) {
-            if (strpos($key, 'access_token_') === 0) {
+            if (mb_strpos($key, 'access_token_') === 0) {
                 $this->access_token = $value;
                 $this->userID = null;
                 $this->userEmail = null;
@@ -355,13 +398,19 @@ class CVKontakteOAuthInterface extends CSocServOAuthTransport
             return false;
         }
 
-        $h = new \Bitrix\Main\Web\HttpClient(array(
-            "socketTimeout" => $this->httpTimeout,
-            "streamTimeout" => $this->httpTimeout,
-        ));
+        $h = new \Bitrix\Main\Web\HttpClient(
+            array(
+                "socketTimeout" => $this->httpTimeout,
+                "streamTimeout" => $this->httpTimeout,
+            )
+        );
 
 
-        $result = $h->get(self::CONTACTS_URL . '?v=5.8&fields=uid,first_name,last_name,nickname,screen_name,sex,bdate,city,country,timezone,photo,photo_medium,photo_max_orig,photo_rec,email&access_token=' . urlencode($this->access_token));
+        $result = $h->get(
+            self::CONTACTS_URL . '?v=' . self::API_VERSION . '&fields=uid,first_name,last_name,nickname,screen_name,sex,bdate,city,country,timezone,photo,photo_medium,photo_max_orig,photo_rec,email&access_token=' . urlencode(
+                $this->access_token
+            )
+        );
 
         try {
             $result = \Bitrix\Main\Web\Json::decode($result);
@@ -374,13 +423,16 @@ class CVKontakteOAuthInterface extends CSocServOAuthTransport
 
     public function GetAppInfo()
     {
-        if ($this->access_token === false)
+        if ($this->access_token === false) {
             return false;
+        }
 
         $h = new \Bitrix\Main\Web\HttpClient();
         $h->setTimeout($this->httpTimeout);
 
-        $result = $h->get(self::APP_URL . '?v=5.8&fields=id&access_token=' . urlencode($this->access_token));
+        $result = $h->get(
+            self::APP_URL . '?v=' . self::API_VERSION . '&fields=id&access_token=' . urlencode($this->access_token)
+        );
 
         try {
             $result = \Bitrix\Main\Web\Json::decode($result);
@@ -388,7 +440,7 @@ class CVKontakteOAuthInterface extends CSocServOAuthTransport
             $result = array();
         }
 
-        return $result['response'];
+        return $result['response']['items'][0];
     }
 
     public function GetCurrentUserEmail()
@@ -402,7 +454,9 @@ class CVKontakteOAuthInterface extends CSocServOAuthTransport
             return false;
         }
 
-        $url = self::FRIENDS_URL . '?v=5.8&uids=' . $this->userID . '&fields=uid,first_name,last_name,nickname,screen_name,photo_200_orig,contacts,email&access_token=' . urlencode($this->access_token);
+        $url = self::FRIENDS_URL . '?v=' . self::API_VERSION . '&uids=' . $this->userID . '&fields=uid,first_name,last_name,nickname,screen_name,photo_200_orig,contacts,email&access_token=' . urlencode(
+                $this->access_token
+            );
 
         if ($limit > 0) {
             $url .= "&count=" . intval($limit) . "&offset=" . intval($next);

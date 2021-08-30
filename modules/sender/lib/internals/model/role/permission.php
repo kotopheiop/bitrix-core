@@ -5,6 +5,7 @@ namespace Bitrix\Sender\Internals\Model\Role;
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity;
+use Bitrix\Sender\Access\Role\Role;
 
 /**
  * Class PermissionTable
@@ -33,19 +34,27 @@ class PermissionTable extends Entity\DataManager
     public static function getMap()
     {
         return array(
-            'ID' => new Entity\IntegerField('ID', array(
+            'ID' => new Entity\IntegerField(
+                'ID', array(
                 'primary' => true,
                 'autocomplete' => true,
-            )),
-            'ROLE_ID' => new Entity\IntegerField('ROLE_ID', array(
+            )
+            ),
+            'ROLE_ID' => new Entity\IntegerField(
+                'ROLE_ID', array(
                 'required' => true,
-            )),
-            'ENTITY' => new Entity\StringField('ENTITY', array(
+            )
+            ),
+            'ENTITY' => new Entity\StringField(
+                'ENTITY', array(
                 'required' => true,
-            )),
-            'ACTION' => new Entity\StringField('ACTION', array(
+            )
+            ),
+            'ACTION' => new Entity\StringField(
+                'ACTION', array(
                 'required' => true,
-            )),
+            )
+            ),
             'PERMISSION' => new Entity\StringField('PERMISSION'),
             'ROLE_ACCESS' => new Entity\ReferenceField(
                 'ROLE_ACCESS',
@@ -54,8 +63,7 @@ class PermissionTable extends Entity\DataManager
                 array('join_type' => 'INNER')
             ),
             'ROLE' => new Entity\ReferenceField(
-                'ROLE',
-                'Bitrix\Sender\Internals\Model\Role\Role',
+                'ROLE', 'Bitrix\Sender\Access\Role\Role',
                 array('=this.ROLE_ID' => 'ref.ID'),
                 array('join_type' => 'INNER')
             ),

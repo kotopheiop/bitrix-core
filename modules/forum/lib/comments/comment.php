@@ -6,6 +6,7 @@ use Bitrix\Forum\Internals\Error\ErrorCollection;
 use Bitrix\Forum\MessageTable;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Web\Json;
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Forum\Internals\Error\Error;
 use \Bitrix\Main\Event;
@@ -21,6 +22,8 @@ class Comment extends BaseObject
     const ERROR_PARAMS_MESSAGE = 'params0006';
     const ERROR_PERMISSION = 'params0007';
     const ERROR_MESSAGE_IS_NULL = 'params0008';
+    const ERROR_PARAMS_TYPE = 'params0009';
+
 
     /* @var integer */
     private $id = 0;
@@ -39,7 +42,8 @@ class Comment extends BaseObject
             "USE_SMILES" => ($params["USE_SMILES"] == "Y" ? "Y" : "N"),
             "APPROVED" => $this->topic["APPROVED"],
             "XML_ID" => $this->getEntity()->getXmlId(),
-            "AUX" => isset($params["AUX"]) ? $params["AUX"] : 'N',
+            "AUX" => ($params["AUX"] ?? 'N'),
+            "AUX_DATA" => ($params["AUX_DATA"] ?? ''),
         );
         if (array_key_exists("POST_DATE", $params)) {
             $result["POST_DATE"] = $params["POST_DATE"];
@@ -48,19 +52,50 @@ class Comment extends BaseObject
             $result["SOURCE_ID"] = $params["SOURCE_ID"];
         }
         $errorCollection = new ErrorCollection();
-        if (strlen($result["POST_MESSAGE"]) <= 0)
+        if (isset($params["SERVICE_TYPE"])) {
+            if (!in_array($params["SERVICE_TYPE"], \Bitrix\Forum\Comments\Service\Manager::getTypesList())) {
+                $errorCollection->addOne(
+                    new Error(Loc::getMessage("FORUM_CM_ERR_TYPE_INCORRECT"), self::ERROR_PARAMS_TYPE)
+                );
+            } else {
+                $result["SERVICE_TYPE"] = $params["SERVICE_TYPE"];
+                if (!isset($params["SERVICE_DATA"])) {
+                    if (($result["SERVICE_TYPE"] === \Bitrix\Forum\Comments\Service\Manager::TYPE_TASK_INFO ||
+                            $result["SERVICE_TYPE"] === \Bitrix\Forum\Comments\Service\Manager::TYPE_TASK_CREATED)
+                        && JSon::decode($result["POST_MESSAGE"]) == $params["AUX_DATA"]) {
+                        $params["SERVICE_DATA"] = $result["POST_MESSAGE"];
+                        $result["POST_MESSAGE"] = "";
+                    } else {
+                        $params["SERVICE_DATA"] = Json::encode($params["AUX_DATA"] ?? []);
+                    }
+                }
+                $result["SERVICE_DATA"] = $params["SERVICE_DATA"];
+                if ($result["POST_MESSAGE"] == "" &&
+                    ($handler = \Bitrix\Forum\Comments\Service\Manager::find(
+                        ["SERVICE_TYPE" => $result["SERVICE_TYPE"]]
+                    ))) {
+                    $result["POST_MESSAGE"] = $handler->getText($result["SERVICE_DATA"]);
+                }
+            }
+        }
+        if ($result["POST_MESSAGE"] == '') {
             $errorCollection->addOne(new Error(Loc::getMessage("FORUM_CM_ERR_EMPTY_TEXT"), self::ERROR_PARAMS_MESSAGE));
+        }
 
-        if (strlen($result["AUTHOR_NAME"]) <= 0 && $result["AUTHOR_ID"] > 0)
+        if ($result["AUTHOR_NAME"] == '' && $result["AUTHOR_ID"] > 0) {
             $result["AUTHOR_NAME"] = self::getUserName($result["AUTHOR_ID"]);
-        if (strlen($result["AUTHOR_NAME"]) <= 0)
-            $errorCollection->addOne(new Error(Loc::getMessage("FORUM_CM_ERR_EMPTY_AUTHORS_NAME"), self::ERROR_PARAMS_MESSAGE));
+        }
+        if ($result["AUTHOR_NAME"] == '') {
+            $errorCollection->addOne(
+                new Error(Loc::getMessage("FORUM_CM_ERR_EMPTY_AUTHORS_NAME"), self::ERROR_PARAMS_MESSAGE)
+            );
+        }
 
         if (is_array($params["FILES"]) && in_array($this->forum["ALLOW_UPLOAD"], array("Y", "F", "A"))) {
             $result["FILES"] = array();
             foreach ($params["FILES"] as $key => $val) {
-                if (intval($val["FILE_ID"]) > 0) {
-                    $val["del"] = ($val["del"] == "Y" ? "Y" : "");
+                if (intval($val["FILE_ID"]) > 0 && $val["del"] !== "Y") {
+                    unset($val["del"]);
                 }
                 $result["FILES"][$key] = $val;
             }
@@ -73,24 +108,33 @@ class Comment extends BaseObject
             );
             if (!\CForumFiles::checkFields($result["FILES"], $res, "NOT_CHECK_DB")) {
                 $text = "File upload error.";
-                if (($ex = $this->getApplication()->getException()) && $ex)
+                if (($ex = $this->getApplication()->getException()) && $ex) {
                     $text = $ex->getString();
+                }
                 $errorCollection->addOne(new Error($text, self::ERROR_PARAMS_MESSAGE));
             }
         }
         if ($result["APPROVED"] != "N") {
-            $result["APPROVED"] = ($this->forum["MODERATION"] != "Y" || $this->getEntity()->canModerate($this->getUser()->getId())) ? "Y" : "N";
+            $result["APPROVED"] = ($this->forum["MODERATION"] != "Y" || $this->getEntity()->canModerate(
+                    $this->getUser()->getId()
+                )) ? "Y" : "N";
         }
-
         if ($errorCollection->hasErrors()) {
             $errorCollectionParam->add($errorCollection->toArray());
             return false;
-        } else {
-            global $USER_FIELD_MANAGER;
-            $USER_FIELD_MANAGER->editFormAddFields("FORUM_MESSAGE", $result);
-            $params = $result;
-            return true;
         }
+
+        global $USER_FIELD_MANAGER;
+        if ($result["SERVICE_TYPE"]) {
+            $fields = $USER_FIELD_MANAGER->getUserFields("FORUM_MESSAGE");
+            if (($ufData = array_intersect_key($params, $fields)) && !empty($ufData)) {
+                $USER_FIELD_MANAGER->editFormAddFields("FORUM_MESSAGE", $result, ["FORM" => $ufData]);
+            }
+        } else {
+            $USER_FIELD_MANAGER->editFormAddFields("FORUM_MESSAGE", $result);
+        }
+        $params = $result;
+        return true;
     }
 
     private function updateStatisticModule($messageId)
@@ -101,7 +145,8 @@ class Comment extends BaseObject
             $forumEvent3 = $this->forum["EVENT3"];
             if (empty($forumEvent3)) {
                 $site = (array)\CForumNew::getSites($this->forum["ID"]);
-                $forumEvent3 = \CForumNew::preparePath2Message((array_key_exists(SITE_ID, $site) ? $site[SITE_ID] : reset($site)),
+                $forumEvent3 = \CForumNew::preparePath2Message(
+                    (array_key_exists(SITE_ID, $site) ? $site[SITE_ID] : reset($site)),
                     array(
                         "FORUM_ID" => $this->forum["ID"],
                         "TOPIC_ID" => $this->topic["ID"],
@@ -120,12 +165,16 @@ class Comment extends BaseObject
      */
     public function add(array $params)
     {
-        $aux = (isset($params['AUX']) && $params['AUX'] == "Y");
+        $aux = (isset($params['AUX']) && $params['AUX'] === "Y");
+        $auxData = ($params['AUX_DATA'] ?? '');
 
         $params = array(
             "SOURCE_ID" => $params["SOURCE_ID"],
 
-            "POST_DATE" => array_key_exists("POST_DATE", $params) ? $params["POST_DATE"] : new \Bitrix\Main\Type\DateTime(),
+            "POST_DATE" => array_key_exists(
+                "POST_DATE",
+                $params
+            ) ? $params["POST_DATE"] : new \Bitrix\Main\Type\DateTime(),
             "POST_MESSAGE" => trim($params["POST_MESSAGE"]),
             "FILES" => $params["FILES"],
 
@@ -138,17 +187,43 @@ class Comment extends BaseObject
             "AUTHOR_REAL_IP" => "<no address>",
             "GUEST_ID" => $_SESSION["SESS_GUEST_ID"],
 
-            "AUX" => $params["AUX"]
+            "AUX" => $params["AUX"],
+            "AUX_DATA" => $auxData,
+            "SERVICE_TYPE" => ($params["SERVICE_TYPE"] ?? null),
+            "SERVICE_DATA" => ($params["SERVICE_DATA"] ?? null),
+
+            "UF_TASK_COMMENT_TYPE" => ($params["UF_TASK_COMMENT_TYPE"] ?? null),
+            'UF_FORUM_MES_URL_PRV' => ($params['UF_FORUM_MES_URL_PRV'] ?? null),
         );
 
         if ($this->prepareFields($params, $this->errorCollection)) {
             if ($realIp = \Bitrix\Main\Service\GeoIp\Manager::getRealIp()) {
                 $params["AUTHOR_IP"] = $realIp;
                 $params["AUTHOR_REAL_IP"] = $realIp;
-                if (\Bitrix\Main\Config\Option::get("forum", "FORUM_GETHOSTBYADDR", "N") == "Y") {
+                if (\Bitrix\Main\Config\Option::get('forum', 'FORUM_GETHOSTBYADDR', 'N') === "Y") {
                     $params["AUTHOR_REAL_IP"] = @gethostbyaddr($realIp);
                 }
             }
+
+            /***************** Events OnBeforeCommentAdd ******************/
+            $event = new Event(
+                "forum", "OnBeforeCommentAdd", [
+                $this->getEntity()->getType(),
+                $this->getEntity()->getId(),
+                $params
+            ]
+            );
+            $event->send($this);
+            if ($event->getResults()) {
+                foreach ($event->getResults() as $eventResult) {
+                    if ($eventResult->getType() != EventResult::SUCCESS) {
+                        $run = false;
+                        break;
+                    }
+                }
+            }
+            /***************** /Events *****************************************/
+
             $topic = \Bitrix\Forum\Topic::getById($params["TOPIC_ID"]);
             $result = \Bitrix\Forum\Message::create($topic, $params);
 
@@ -162,16 +237,22 @@ class Comment extends BaseObject
 
                 $this->setComment($mid);
 
-                if (!$aux) {
-                    $event = new Event("forum", "OnAfterCommentAdd", array(
-                            $this->getEntity()->getType(),
-                            $this->getEntity()->getId(),
-                            array(
-                                "TOPIC_ID" => $this->topic["ID"],
-                                "MESSAGE_ID" => $mid,
-                                "PARAMS" => $params,
-                                "MESSAGE" => $this->getComment()
-                            ))
+                if (
+                    !$aux // create task from livefeed
+                    || $auxData <> '' // tasks commentposter, add to livefeed
+                ) {
+                    $event = new Event(
+                        "forum", "OnAfterCommentAdd", array(
+                                   $this->getEntity()->getType(),
+                                   $this->getEntity()->getId(),
+                                   array(
+                                       "TOPIC_ID" => $this->topic["ID"],
+                                       "MESSAGE_ID" => $mid,
+                                       "PARAMS" => $params,
+                                       "MESSAGE" => $this->getComment(),
+                                       "AUX_DATA" => $auxData
+                                   )
+                               )
                     );
                     $event->send();
                 }
@@ -192,7 +273,9 @@ class Comment extends BaseObject
     {
         $paramsRaw = $params;
         if ($this->message === null) {
-            $this->errorCollection->addOne(new Error(Loc::getMessage("FORUM_CM_ERR_COMMENT_IS_LOST1"), self::ERROR_MESSAGE_IS_NULL));
+            $this->errorCollection->addOne(
+                new Error(Loc::getMessage("FORUM_CM_ERR_COMMENT_IS_LOST1"), self::ERROR_MESSAGE_IS_NULL)
+            );
         } else {
             $run = true;
             $fields = array(
@@ -220,69 +303,89 @@ class Comment extends BaseObject
             /***************** /Events *****************************************/
             if (!$run) {
                 $text = Loc::getMessage("ADDMESS_ERROR_EDIT_MESSAGE");
-                if (($str = $this->getApplication()->getException()) && $str)
+                if (($str = $this->getApplication()->getException()) && $str) {
                     $text = $str->getString();
+                }
                 $this->errorCollection->addOne(new Error($text, self::ERROR_PARAMS_MESSAGE));
-            } else if (($params = array(
-                    "POST_MESSAGE" => trim($params["POST_MESSAGE"]),
-                    "AUTHOR_ID" => $this->message["AUTHOR_ID"],
-                    "AUTHOR_NAME" => (array_key_exists("AUTHOR_NAME", $params) ? trim($params["AUTHOR_NAME"]) : $this->message["AUTHOR_NAME"]),
-                    "AUTHOR_EMAIL" => (array_key_exists("AUTHOR_EMAIL", $params) ? trim($params["AUTHOR_EMAIL"]) : $this->message["AUTHOR_EMAIL"]),
-                    "USE_SMILES" => $params["USE_SMILES"],
-                    "FILES" => $params["FILES"]
-                )) && $this->prepareFields($params, $this->errorCollection)) {
-                if (array_key_exists("POST_DATE", $paramsRaw)) {
-                    $params["POST_DATE"] = $paramsRaw["POST_DATE"];
-                }
-                if (array_key_exists("EDIT_REASON", $paramsRaw)) {
-                    $params += array(
-                        "EDITOR_ID" => $this->getUser()->getId(),
-                        "EDITOR_NAME" => trim($paramsRaw["EDITOR_NAME"]),
-                        "EDITOR_EMAIL" => trim($paramsRaw["EDITOR_EMAIL"]),
-                        "EDIT_REASON" => trim($paramsRaw["EDIT_REASON"]),
-                        "EDIT_DATE" => ""
-                    );
-                    if (strlen($params["EDITOR_NAME"]) <= 0)
-                        $params["EDITOR_NAME"] = ($params["EDITOR_ID"] > 0 ? self::getUserName($params["EDITOR_ID"]) : Loc::getMessage("GUEST"));
-                }
-                $result = \Bitrix\Forum\Message::getById($this->message["ID"])->edit($params);
-                if ($result->isSuccess()) {
-                    $mid = $this->message["ID"];
-                    if ($params["AUTHOR_ID"] != $this->getUser()->getId() || Option::get("forum", "LOGS", "Q") < "U") {
-                        $resLog = array();
-                        foreach ($paramsRaw as $key => $val) {
-                            if ($val == $this->message[$key])
-                                continue;
-                            else if ($key == "FILES")
-                                $resLog["FILES"] = GetMessage("F_ATTACH_IS_MODIFIED");
-                            else
-                                $resLog[$key] = array(
-                                    "before" => $this->message[$key],
-                                    "after" => $val
-                                );
-                        }
-                        if (!empty($resLog)) {
-                            $resLog["FORUM_ID"] = $this->forum["ID"];
-                            $resLog["TOPIC_ID"] = $this->topic["ID"];
-                            $resLog["TITLE"] = $this->topic["TITLE"];
-                            \CForumEventLog::log("message", "edit", $this->message["ID"], serialize($resLog));
+            } else {
+                if (($params = array(
+                        "POST_MESSAGE" => trim($params["POST_MESSAGE"]),
+                        "AUTHOR_ID" => $this->message["AUTHOR_ID"],
+                        "AUTHOR_NAME" => (array_key_exists("AUTHOR_NAME", $params) ? trim(
+                            $params["AUTHOR_NAME"]
+                        ) : $this->message["AUTHOR_NAME"]),
+                        "AUTHOR_EMAIL" => (array_key_exists("AUTHOR_EMAIL", $params) ? trim(
+                            $params["AUTHOR_EMAIL"]
+                        ) : $this->message["AUTHOR_EMAIL"]),
+                        "USE_SMILES" => $params["USE_SMILES"],
+                        "FILES" => $params["FILES"]
+                    )) && $this->prepareFields($params, $this->errorCollection)) {
+                    if (array_key_exists("POST_DATE", $paramsRaw)) {
+                        $params["POST_DATE"] = $paramsRaw["POST_DATE"];
+                    }
+                    if (array_key_exists("EDIT_REASON", $paramsRaw)) {
+                        $params += array(
+                            "EDITOR_ID" => $this->getUser()->getId(),
+                            "EDITOR_NAME" => trim($paramsRaw["EDITOR_NAME"]),
+                            "EDITOR_EMAIL" => trim($paramsRaw["EDITOR_EMAIL"]),
+                            "EDIT_REASON" => trim($paramsRaw["EDIT_REASON"]),
+                            "EDIT_DATE" => ""
+                        );
+                        if ($params["EDITOR_NAME"] == '') {
+                            $params["EDITOR_NAME"] = ($params["EDITOR_ID"] > 0 ? self::getUserName(
+                                $params["EDITOR_ID"]
+                            ) : Loc::getMessage("GUEST"));
                         }
                     }
-                    $this->updateStatisticModule($mid);
-                    \CForumMessage::sendMailMessage($mid, array(), false, "EDIT_FORUM_MESSAGE");
+                    $result = \Bitrix\Forum\Message::getById($this->message["ID"])->edit($params);
+                    if ($result->isSuccess()) {
+                        $mid = $this->message["ID"];
+                        unset($GLOBALS["FORUM_CACHE"]["MESSAGE"][$mid]);
+                        unset($GLOBALS["FORUM_CACHE"]["MESSAGE_FILTER"][$mid]);
 
-                    $this->setComment($mid);
-                    $fields["PARAMS"] = $params;
-                    /***************** Events OnCommentUpdate ************************/
-                    $event = new Event("forum", "OnCommentUpdate", $fields);
-                    $event->send();
-                    /***************** Events OnAfterCommentUpdate *******************/
-                    $event = new Event("forum", "OnAfterCommentUpdate", $fields);
-                    $event->send();
-                    /***************** /Events *****************************************/
-                    return $this->getComment();
+                        if ($params["AUTHOR_ID"] != $this->getUser()->getId() || Option::get(
+                                "forum",
+                                "LOGS",
+                                "Q"
+                            ) < "U") {
+                            $resLog = array();
+                            foreach ($paramsRaw as $key => $val) {
+                                if ($val == $this->message[$key]) {
+                                    continue;
+                                } else {
+                                    if ($key == "FILES") {
+                                        $resLog["FILES"] = GetMessage("F_ATTACH_IS_MODIFIED");
+                                    } else {
+                                        $resLog[$key] = array(
+                                            "before" => $this->message[$key],
+                                            "after" => $val
+                                        );
+                                    }
+                                }
+                            }
+                            if (!empty($resLog)) {
+                                $resLog["FORUM_ID"] = $this->forum["ID"];
+                                $resLog["TOPIC_ID"] = $this->topic["ID"];
+                                $resLog["TITLE"] = $this->topic["TITLE"];
+                                \CForumEventLog::log("message", "edit", $this->message["ID"], serialize($resLog));
+                            }
+                        }
+                        $this->updateStatisticModule($mid);
+                        \CForumMessage::sendMailMessage($mid, array(), false, "EDIT_FORUM_MESSAGE");
+
+                        $this->setComment($mid);
+                        $fields["PARAMS"] = $params;
+                        /***************** Events OnCommentUpdate ************************/
+                        $event = new Event("forum", "OnCommentUpdate", $fields);
+                        $event->send();
+                        /***************** Events OnAfterCommentUpdate *******************/
+                        $event = new Event("forum", "OnAfterCommentUpdate", $fields);
+                        $event->send();
+                        /***************** /Events *****************************************/
+                        return $this->getComment();
+                    }
+                    $this->errorCollection->addFromResult($result);
                 }
-                $this->errorCollection->addFromResult($result);
             }
         }
         return false;
@@ -291,7 +394,9 @@ class Comment extends BaseObject
     public function delete()
     {
         if ($this->message === null) {
-            $this->errorCollection->addOne(new Error(Loc::getMessage("FORUM_CM_ERR_COMMENT_IS_LOST2"), self::ERROR_MESSAGE_IS_NULL));
+            $this->errorCollection->addOne(
+                new Error(Loc::getMessage("FORUM_CM_ERR_COMMENT_IS_LOST2"), self::ERROR_MESSAGE_IS_NULL)
+            );
         } else {
             $run = true;
             $fields = array(
@@ -302,7 +407,8 @@ class Comment extends BaseObject
                     "MESSAGE_ID" => $this->message["ID"],
                     "MESSAGE" => $this->getComment(),
                     "ACTION" => "DEL"
-                ));
+                )
+            );
             /***************** Events OnBeforeCommentDelete ******************/
             $event = new Event("forum", "OnBeforeCommentDelete", $fields);
             $event->send($this);
@@ -316,7 +422,12 @@ class Comment extends BaseObject
             }
             /***************** /Events *****************************************/
             if ($run && \CForumMessage::delete($this->message["ID"])) {
-                \CForumEventLog::log("message", "delete", $this->message["ID"], serialize($this->message + array("TITLE" => $this->topic["TITLE"])));
+                \CForumEventLog::log(
+                    "message",
+                    "delete",
+                    $this->message["ID"],
+                    serialize($this->message + array("TITLE" => $this->topic["TITLE"]))
+                );
                 /***************** Events OnCommentDelete ************************/
                 $event = new Event("forum", "OnCommentDelete", $fields);
                 $event->send();
@@ -326,8 +437,9 @@ class Comment extends BaseObject
                 /***************** /Events *****************************************/
             } else {
                 $text = Loc::getMessage("FORUM_CM_ERR_DELETE");
-                if (($ex = $this->getApplication()->getException()) && $ex)
+                if (($ex = $this->getApplication()->getException()) && $ex) {
                     $text = $ex->getString();
+                }
                 $this->errorCollection->addOne(new Error($text, self::ERROR_PARAMS_MESSAGE));
             }
         }
@@ -337,7 +449,9 @@ class Comment extends BaseObject
     public function moderate($show)
     {
         if ($this->message === null) {
-            $this->errorCollection->addOne(new Error(Loc::getMessage("FORUM_CM_ERR_COMMENT_IS_LOST3"), self::ERROR_MESSAGE_IS_NULL));
+            $this->errorCollection->addOne(
+                new Error(Loc::getMessage("FORUM_CM_ERR_COMMENT_IS_LOST3"), self::ERROR_MESSAGE_IS_NULL)
+            );
         } else {
             $run = true;
             $fields = array(
@@ -349,7 +463,8 @@ class Comment extends BaseObject
                     "MESSAGE" => $this->getComment(),
                     "ACTION" => $show ? "SHOW" : "HIDE",
                     "PARAMS" => array("APPROVED" => ($show ? "Y" : "N"))
-                ));
+                )
+            );
             /***************** Events OnBeforeCommentModerate ****************/
             $event = new Event("forum", "OnBeforeCommentModerate", $fields);
             $event->send($this);
@@ -362,10 +477,17 @@ class Comment extends BaseObject
                 }
             }
             /***************** /Events *****************************************/
-            if ($run && $this->message["APPROVED"] == $fields[2]["PARAMS"]["APPROVED"] || ($mid = \CForumMessage::update($this->message["ID"], $fields[2]["PARAMS"])) > 0) {
+            if ($run && $this->message["APPROVED"] == $fields[2]["PARAMS"]["APPROVED"] || ($mid = \CForumMessage::update(
+                    $this->message["ID"],
+                    $fields[2]["PARAMS"]
+                )) > 0) {
                 $this->setComment($this->message["ID"]);
                 /***************** Event onMessageModerate ***********************/
-                $event = new Event("forum", "onMessageModerate", array($this->message["ID"], ($show ? "SHOW" : "HIDE"), $this->message, $this->topic));
+                $event = new Event(
+                    "forum",
+                    "onMessageModerate",
+                    array($this->message["ID"], ($show ? "SHOW" : "HIDE"), $this->message, $this->topic)
+                );
                 $event->send();
                 /***************** Events OnCommentModerate ************************/
                 $event = new Event("forum", "OnCommentModerate", $fields);
@@ -374,20 +496,29 @@ class Comment extends BaseObject
                 $event = new Event("forum", "OnAfterCommentUpdate", $fields); // It is not a mistake
                 $event->send();
                 /***************** /Events *****************************************/
-                $res = serialize(array(
-                    "ID" => $this->message["ID"],
-                    "AUTHOR_NAME" => $this->message["AUTHOR_NAME"],
-                    "POST_MESSAGE" => $this->message["POST_MESSAGE"],
-                    "TITLE" => $this->topic["TITLE"],
-                    "TOPIC_ID" => $this->topic["ID"],
-                    "FORUM_ID" => $this->topic["FORUM_ID"]));
-                \CForumMessage::sendMailMessage($this->message["ID"], array(), false, ($show ? "NEW_FORUM_MESSAGE" : "EDIT_FORUM_MESSAGE"));
+                $res = serialize(
+                    array(
+                        "ID" => $this->message["ID"],
+                        "AUTHOR_NAME" => $this->message["AUTHOR_NAME"],
+                        "POST_MESSAGE" => $this->message["POST_MESSAGE"],
+                        "TITLE" => $this->topic["TITLE"],
+                        "TOPIC_ID" => $this->topic["ID"],
+                        "FORUM_ID" => $this->topic["FORUM_ID"]
+                    )
+                );
+                \CForumMessage::sendMailMessage(
+                    $this->message["ID"],
+                    array(),
+                    false,
+                    ($show ? "NEW_FORUM_MESSAGE" : "EDIT_FORUM_MESSAGE")
+                );
                 \CForumEventLog::log("message", ($show ? "approve" : "unapprove"), $this->message["ID"], $res);
                 return $this->getComment();
             } else {
                 $text = Loc::getMessage("FORUM_CM_ERR_MODERATE");
-                if (($ex = $this->getApplication()->getException()) && $ex)
+                if (($ex = $this->getApplication()->getException()) && $ex) {
                     $text = $ex->getString();
+                }
                 $this->errorCollection->addOne(new Error($text, self::ERROR_PARAMS_MESSAGE));
             }
         }
@@ -398,7 +529,9 @@ class Comment extends BaseObject
     {
         $result = false;
         if ($this->message === null) {
-            $this->errorCollection->addOne(new Error(Loc::getMessage("FORUM_CM_ERR_COMMENT_IS_LOST4"), self::ERROR_MESSAGE_IS_NULL));
+            $this->errorCollection->addOne(
+                new Error(Loc::getMessage("FORUM_CM_ERR_COMMENT_IS_LOST4"), self::ERROR_MESSAGE_IS_NULL)
+            );
         } else {
             $result = ($this->getEntity()->canEdit($this->getUser()->getId()) || (
                     ((int)$this->message["AUTHOR_ID"] > 0) &&
@@ -453,7 +586,10 @@ class Comment extends BaseObject
     {
         $forum = $feed->getForum();
         $comment = new Comment($forum["ID"], $feed->getEntity()->getFullId(), $feed->getUser()->getId());
-        $comment->getEntity()->setPermission($feed->getUser()->getId(), $feed->getEntity()->getPermission($feed->getUser()->getId()));
+        $comment->getEntity()->setPermission(
+            $feed->getUser()->getId(),
+            $feed->getEntity()->getPermission($feed->getUser()->getId())
+        );
         $comment->setComment($id);
         return $comment;
     }
@@ -467,7 +603,10 @@ class Comment extends BaseObject
     {
         $forum = $feed->getForum();
         $comment = new Comment($forum["ID"], $feed->getEntity()->getFullId(), $feed->getUser()->getId());
-        $comment->getEntity()->setPermission($feed->getUser()->getId(), $feed->getEntity()->getPermission($feed->getUser()->getId()));
+        $comment->getEntity()->setPermission(
+            $feed->getUser()->getId(),
+            $feed->getEntity()->getPermission($feed->getUser()->getId())
+        );
         return $comment;
     }
 }

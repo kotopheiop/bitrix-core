@@ -1,5 +1,6 @@
 <?
 /** @global CMain $APPLICATION */
+
 /** @global CDatabase $DB */
 
 /** @global CUser $USER */
@@ -15,8 +16,9 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/iblock/prolog.php");
 IncludeModuleLangFile(__FILE__);
 
 $ID = (isset($_REQUEST['ID']) ? (int)$_REQUEST['ID'] : 0);
-if (!CIBlockRights::UserHasRightTo($ID, $ID, "iblock_edit"))
+if (!CIBlockRights::UserHasRightTo($ID, $ID, "iblock_edit")) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 Main\Page\Asset::getInstance()->addJs('/bitrix/js/iblock/iblock_edit.js');
 
@@ -114,7 +116,7 @@ function CheckIBlockTypeID($strIBlockTypeID, $strNewIBlockTypeID, $strNeedAdd)
                     'IN_RSS' => 'N',
                     'SORT' => 500,
                 );
-                $rsLanguages = CLanguage::GetList($by = "sort", $order = "desc", array('ACTIVE' => 'Y'));
+                $rsLanguages = CLanguage::GetList("sort", "desc", array('ACTIVE' => 'Y'));
                 while ($arLanguage = $rsLanguages->Fetch()) {
                     $arFields['LANG'][$arLanguage['LID']]['NAME'] = $strNewIBlockTypeID;
                 }
@@ -179,17 +181,22 @@ function GetPropertyInfo($strPrefix, $ID, $boolUnpack = true, $arHiddenPropField
     $boolUnpack = ($boolUnpack === true);
     $arResult = false;
 
-    if (!is_array($arHiddenPropFields))
+    if (!is_array($arHiddenPropFields)) {
         return $arResult;
+    }
 
-    if (isset($_POST[$strPrefix . $ID . '_NAME']) && (0 < strlen($_POST[$strPrefix . $ID . '_NAME'])) && isset($_POST[$strPrefix . $ID . '_PROPINFO'])) {
+    if (isset($_POST[$strPrefix . $ID . '_NAME']) && ($_POST[$strPrefix . $ID . '_NAME'] <> '') && isset($_POST[$strPrefix . $ID . '_PROPINFO'])) {
         $strEncodePropInfo = $_POST[$strPrefix . $ID . '_PROPINFO'];
         $strPropInfo = base64_decode($strEncodePropInfo);
         if (CheckSerializedData($strPropInfo)) {
             $arResult = array(
-                'ID' => (isset($_POST[$strPrefix . $ID . '_ID']) && 0 < intval($_POST[$strPrefix . $ID . '_ID']) ? intval($_POST[$strPrefix . $ID . '_ID']) : 0),
+                'ID' => (isset($_POST[$strPrefix . $ID . '_ID']) && 0 < intval(
+                    $_POST[$strPrefix . $ID . '_ID']
+                ) ? intval($_POST[$strPrefix . $ID . '_ID']) : 0),
                 'NAME' => strval($_POST[$strPrefix . $ID . "_NAME"]),
-                'SORT' => (0 < intval($_POST[$strPrefix . $ID . "_SORT"]) ? intval($_POST[$strPrefix . $ID . "_SORT"]) : 500),
+                'SORT' => (0 < intval($_POST[$strPrefix . $ID . "_SORT"]) ? intval(
+                    $_POST[$strPrefix . $ID . "_SORT"]
+                ) : 500),
                 'CODE' => (isset($_POST[$strPrefix . $ID . "_CODE"]) ? strval($_POST[$strPrefix . $ID . "_CODE"]) : ''),
                 'MULTIPLE' => (isset($_POST[$strPrefix . $ID . "_MULTIPLE"]) && 'Y' == $_POST[$strPrefix . $ID . "_MULTIPLE"] ? 'Y' : 'N'),
                 'IS_REQUIRED' => (isset($_POST[$strPrefix . $ID . "_IS_REQUIRED"]) && 'Y' == $_POST[$strPrefix . $ID . "_IS_REQUIRED"] ? 'Y' : 'N'),
@@ -198,40 +205,49 @@ function GetPropertyInfo($strPrefix, $ID, $boolUnpack = true, $arHiddenPropField
             );
 
             if (isset($_POST[$strPrefix . $ID . "_PROPERTY_TYPE"])) {
-                if (false !== strpos($_POST[$strPrefix . $ID . "_PROPERTY_TYPE"], ":")) {
-                    list($arResult["PROPERTY_TYPE"], $arResult["USER_TYPE"]) = explode(':', $_POST[$strPrefix . $ID . "_PROPERTY_TYPE"], 2);
+                if (false !== mb_strpos($_POST[$strPrefix . $ID . "_PROPERTY_TYPE"], ":")) {
+                    list($arResult["PROPERTY_TYPE"], $arResult["USER_TYPE"]) = explode(
+                        ':',
+                        $_POST[$strPrefix . $ID . "_PROPERTY_TYPE"],
+                        2
+                    );
                 } else {
                     $arResult["PROPERTY_TYPE"] = $_POST[$strPrefix . $ID . "_PROPERTY_TYPE"];
                 }
             }
 
             if ($boolUnpack) {
-                $arPropInfo = unserialize($strPropInfo);
+                $arPropInfo = unserialize($strPropInfo, ['allowed_classes' => false]);
                 foreach ($arHiddenPropFields as &$strFieldKey) {
                     $arResult[$strFieldKey] = (isset($arPropInfo[$strFieldKey]) ? $arPropInfo[$strFieldKey] : $arDefPropInfo[$strFieldKey]);
                 }
                 $arResult['ROW_COUNT'] = (int)$arResult['ROW_COUNT'];
-                if (0 >= $arResult['ROW_COUNT'])
+                if (0 >= $arResult['ROW_COUNT']) {
                     $arResult['ROW_COUNT'] = $arDefPropInfo['ROW_COUNT'];
+                }
                 $arResult['COL_COUNT'] = (int)$arResult['COL_COUNT'];
-                if (0 >= $arResult['COL_COUNT'])
+                if (0 >= $arResult['COL_COUNT']) {
                     $arResult['COL_COUNT'] = $arDefPropInfo['COL_COUNT'];
+                }
                 $arResult['LINK_IBLOCK_ID'] = (int)$arResult['LINK_IBLOCK_ID'];
-                if (0 > $arResult['LINK_IBLOCK_ID'])
+                if (0 > $arResult['LINK_IBLOCK_ID']) {
                     $arResult['LINK_IBLOCK_ID'] = $arDefPropInfo['LINK_IBLOCK_ID'];
+                }
                 $arResult['WITH_DESCRIPTION'] = ('Y' == $arResult['WITH_DESCRIPTION'] ? 'Y' : 'N');
                 $arResult['FILTRABLE'] = ('Y' == $arResult['FILTRABLE'] ? 'Y' : 'N');
                 $arResult['SEARCHABLE'] = ('Y' == $arResult['SEARCHABLE'] ? 'Y' : 'N');
                 $arResult['SECTION_PROPERTY'] = ('N' == $arResult['SECTION_PROPERTY'] ? 'N' : 'Y');
                 $arResult['SMART_FILTER'] = ('Y' == $arResult['SMART_FILTER'] ? 'Y' : 'N');
-                $arResult['DISPLAY_TYPE'] = substr($arResult['DISPLAY_TYPE'], 0, 1);
+                $arResult['DISPLAY_TYPE'] = mb_substr($arResult['DISPLAY_TYPE'], 0, 1);
                 $arResult['DISPLAY_EXPANDED'] = ('Y' == $arResult['DISPLAY_EXPANDED'] ? 'Y' : 'N');
                 $arResult['MULTIPLE_CNT'] = (int)$arResult['MULTIPLE_CNT'];
-                if (0 >= $arResult['MULTIPLE_CNT'])
+                if (0 >= $arResult['MULTIPLE_CNT']) {
                     $arResult['MULTIPLE_CNT'] = $arDefPropInfo['MULTIPLE_CNT'];
+                }
                 $arResult['LIST_TYPE'] = ('C' == $arResult['LIST_TYPE'] ? 'C' : 'L');
-                if ('Y' != COption::GetOptionString("iblock", "show_xml_id", "N") && isset($arResult["XML_ID"]))
+                if ('Y' != COption::GetOptionString("iblock", "show_xml_id", "N") && isset($arResult["XML_ID"])) {
                     unset($arResult["XML_ID"]);
+                }
             } else {
                 $arResult['PROPINFO'] = $strEncodePropInfo;
             }
@@ -248,7 +264,11 @@ function CheckSKUProperty($ID, $SKUID)
     $ID = (int)$ID;
     $SKUID = (int)$SKUID;
     if ($ID > 0 && $SKUID > 0) {
-        $propertyId = CIBlockPropertyTools::createProperty($SKUID, CIBlockPropertyTools::CODE_SKU_LINK, array('LINK_IBLOCK_ID' => $ID));
+        $propertyId = CIBlockPropertyTools::createProperty(
+            $SKUID,
+            CIBlockPropertyTools::CODE_SKU_LINK,
+            array('LINK_IBLOCK_ID' => $ID)
+        );
         if ($propertyId) {
             $arResult = array(
                 'RESULT' => 'OK',
@@ -315,8 +335,9 @@ function __AddPropCellType($intOFPropID, $strPrefix, $arPropInfo)
     static $baseTypeList = null;
     static $arUserTypeList = null;
 
-    if ($baseTypeList === null)
+    if ($baseTypeList === null) {
         $baseTypeList = Iblock\Helpers\Admin\Property::getBaseTypeList(true);
+    }
     if ($arUserTypeList === null) {
         $arUserTypeList = CIBlockProperty::GetUserType();
         \Bitrix\Main\Type\Collection::sortByColumn($arUserTypeList, array('DESCRIPTION' => SORT_STRING));
@@ -333,7 +354,9 @@ if ($boolUserPropExist)
     foreach ($baseTypeList as $typeId => $typeTitle) {
         ?>
         <option
-        value="<?= $typeId; ?>" <?= ($arPropInfo['PROPERTY_TYPE'] == $typeId && !$arPropInfo['USER_TYPE'] ? ' selected' : ''); ?>><?= htmlspecialcharsbx($typeTitle); ?></option><?
+        value="<?= $typeId; ?>" <?= ($arPropInfo['PROPERTY_TYPE'] == $typeId && !$arPropInfo['USER_TYPE'] ? ' selected' : ''); ?>><?= htmlspecialcharsbx(
+            $typeTitle
+        ); ?></option><?
     }
     unset($typeTitle);
     unset($typeId);
@@ -345,8 +368,11 @@ if ($boolUserPropExist)
 }
     foreach ($arUserTypeList as $ar) {
         ?>
-        <option
-        value="<?= htmlspecialcharsbx($ar["PROPERTY_TYPE"] . ":" . $ar["USER_TYPE"]) ?>" <? if ($arPropInfo['PROPERTY_TYPE'] == $ar["PROPERTY_TYPE"] && $arPropInfo['USER_TYPE'] == $ar["USER_TYPE"]) echo " selected" ?>><?= htmlspecialcharsbx($ar["DESCRIPTION"]) ?></option>
+        <optionvalue="<?= htmlspecialcharsbx(
+            $ar["PROPERTY_TYPE"] . ":" . $ar["USER_TYPE"]
+        ) ?>" <? if ($arPropInfo['PROPERTY_TYPE'] == $ar["PROPERTY_TYPE"] && $arPropInfo['USER_TYPE'] == $ar["USER_TYPE"]) echo " selected" ?>><?= htmlspecialcharsbx(
+        $ar["DESCRIPTION"]
+    ) ?></option>
         <?
     }
 if ($boolUserPropExist)
@@ -367,8 +393,9 @@ function __AddPropCellActive($intOFPropID, $strPrefix, $arPropInfo)
              id="<? echo $strPrefix . $intOFPropID ?>_ACTIVE_N" value="N">
     <input type="checkbox" name="<? echo $strPrefix . $intOFPropID ?>_ACTIVE"
            id="<? echo $strPrefix . $intOFPropID ?>_ACTIVE_Y" value="Y"<?
-    if ($arPropInfo['ACTIVE'] == "Y") echo " checked"; ?>
-           title="<?= htmlspecialcharsbx(GetMessage("IB_E_PROP_ACTIVE_SHORT")); ?>"><?
+    if ($arPropInfo['ACTIVE'] == "Y") {
+        echo " checked";
+    } ?> title="<?= htmlspecialcharsbx(GetMessage("IB_E_PROP_ACTIVE_SHORT")); ?>"><?
     $strResult = ob_get_contents();
     ob_end_clean();
     return $strResult;
@@ -425,14 +452,17 @@ function __AddPropCellCode($intOFPropID, $strPrefix, $arPropInfo)
 
 function __AddPropCellDetail($intOFPropID, $strPrefix, $arPropInfo)
 {
-    return '<input type="button" title="' . GetMessage("IB_E_PROP_EDIT_TITLE") . '" name="' . $strPrefix . $intOFPropID . '_BTN" id="' . $strPrefix . $intOFPropID . '_BTN" value="..." data-propid="' . $intOFPropID . '">';
+    return '<input type="button" title="' . GetMessage(
+            "IB_E_PROP_EDIT_TITLE"
+        ) . '" name="' . $strPrefix . $intOFPropID . '_BTN" id="' . $strPrefix . $intOFPropID . '_BTN" value="..." data-propid="' . $intOFPropID . '">';
 }
 
 function __AddPropCellDelete($intOFPropID, $strPrefix, $arPropInfo)
 {
     $strResult = '&nbsp;';
-    if (isset($arPropInfo['SHOW_DEL']) && $arPropInfo['SHOW_DEL'] == 'Y')
+    if (isset($arPropInfo['SHOW_DEL']) && $arPropInfo['SHOW_DEL'] == 'Y') {
         $strResult = '<input type="checkbox" name="' . $strPrefix . $intOFPropID . '_DEL" id="' . $strPrefix . $intOFPropID . '_DEL" value="Y">';
+    }
     return $strResult;
 }
 
@@ -442,13 +472,29 @@ function __AddPropRow($intOFPropID, $strPrefix, $arPropInfo)
 	<td style="vertical-align:middle;">' . __AddPropCellID($intOFPropID, $strPrefix, $arPropInfo) . '</td>
 	<td>' . __AddPropCellName($intOFPropID, $strPrefix, $arPropInfo) . '</td>
 	<td>' . __AddPropCellType($intOFPropID, $strPrefix, $arPropInfo) . '</td>
-	<td style="text-align: center; vertical-align:middle;">' . __AddPropCellActive($intOFPropID, $strPrefix, $arPropInfo) . '</td>
-	<td style="text-align: center; vertical-align:middle;">' . __AddPropCellMulti($intOFPropID, $strPrefix, $arPropInfo) . '</td>
+	<td style="text-align: center; vertical-align:middle;">' . __AddPropCellActive(
+            $intOFPropID,
+            $strPrefix,
+            $arPropInfo
+        ) . '</td>
+	<td style="text-align: center; vertical-align:middle;">' . __AddPropCellMulti(
+            $intOFPropID,
+            $strPrefix,
+            $arPropInfo
+        ) . '</td>
 	<td style="text-align: center; vertical-align:middle;">' . __AddPropCellReq($intOFPropID, $strPrefix, $arPropInfo) . '</td>
 	<td>' . __AddPropCellSort($intOFPropID, $strPrefix, $arPropInfo) . '</td>
 	<td>' . __AddPropCellCode($intOFPropID, $strPrefix, $arPropInfo) . '</td>
-	<td style="text-align: center; vertical-align:middle;">' . __AddPropCellDetail($intOFPropID, $strPrefix, $arPropInfo) . '</td>
-	<td style="text-align: center; vertical-align:middle;">' . __AddPropCellDelete($intOFPropID, $strPrefix, $arPropInfo) . '</td>
+	<td style="text-align: center; vertical-align:middle;">' . __AddPropCellDetail(
+            $intOFPropID,
+            $strPrefix,
+            $arPropInfo
+        ) . '</td>
+	<td style="text-align: center; vertical-align:middle;">' . __AddPropCellDelete(
+            $intOFPropID,
+            $strPrefix,
+            $arPropInfo
+        ) . '</td>
 	</tr>';
     return $strResult;
 }
@@ -483,7 +529,7 @@ if ($arIBTYPE !== false):
         $_SERVER["REQUEST_METHOD"] == "POST"
         && check_bitrix_sessid()
         && CIBlockRights::UserHasRightTo($ID, $ID, "iblock_edit")
-        && strlen($_POST["Update"]) > 0
+        && $_POST["Update"] <> ''
         && !isset($_POST["propedit"])
     ) {
         $adminSidePanelHelper->decodeUriComponent();
@@ -494,11 +540,18 @@ if ($arIBTYPE !== false):
         $arPICTURE["del"] = ${"PICTURE_del"};
         $arPICTURE["MODULE_ID"] = "iblock";
 
-        if ($VERSION != 2) $VERSION = 1;
-        if ($RSS_ACTIVE != "Y") $RSS_ACTIVE = "N";
-        if ($RSS_FILE_ACTIVE != "Y") $RSS_FILE_ACTIVE = "N";
-        if ($RSS_YANDEX_ACTIVE != "Y") $RSS_YANDEX_ACTIVE = "N";
-        if (!strlen($API_CODE)) $API_CODE = false;
+        if ($VERSION != 2) {
+            $VERSION = 1;
+        }
+        if ($RSS_ACTIVE != "Y") {
+            $RSS_ACTIVE = "N";
+        }
+        if ($RSS_FILE_ACTIVE != "Y") {
+            $RSS_FILE_ACTIVE = "N";
+        }
+        if ($RSS_YANDEX_ACTIVE != "Y") {
+            $RSS_YANDEX_ACTIVE = "N";
+        }
 
         $ib = new CIBlock();
         $arFields = array(
@@ -506,6 +559,7 @@ if ($arIBTYPE !== false):
             "NAME" => $NAME,
             "CODE" => $CODE,
             "API_CODE" => $API_CODE,
+            "REST_ON" => $REST_ON,
             "LIST_PAGE_URL" => $LIST_PAGE_URL,
             "DETAIL_PAGE_URL" => $DETAIL_PAGE_URL,
             "CANONICAL_PAGE_URL" => $CANONICAL_PAGE_URL,
@@ -531,25 +585,6 @@ if ($arIBTYPE !== false):
             "ELEMENT_DELETE" => $ELEMENT_DELETE,
         );
 
-        // check API_CODE
-        if (strlen($API_CODE)) {
-            if (!preg_match('/^[a-z][a-z0-9]{0,49}$/i', $API_CODE)) {
-                $strWarning .= Loc::getMessage("IB_E_API_CODE_FORMAT_ERROR") . '<br>';
-                $bVarsFromForm = true;
-            } else {
-                // check for uniqueness
-                $count = Iblock\IblockTable::getCount(Main\ORM\Query\Query::filter()
-                    ->where('API_CODE', $API_CODE)
-                    ->whereNot('ID', $ID)
-                );
-
-                if ($count > 0) {
-                    $strWarning .= Loc::getMessage("IB_E_API_CODE_UNIQUE_ERROR") . '<br>';
-                    $bVarsFromForm = true;
-                }
-            }
-        }
-
         if ($arIBTYPE["SECTIONS"] == "Y") {
             $arFields["SECTION_PAGE_URL"] = $SECTION_PAGE_URL;
             $arFields["INDEX_SECTION"] = $INDEX_SECTION;
@@ -561,29 +596,34 @@ if ($arIBTYPE !== false):
             $arFields["SECTION_DELETE"] = $SECTION_DELETE;
         }
 
-        if (COption::GetOptionString("iblock", "show_xml_id", "N") == "Y" && is_set($_POST, "XML_ID"))
+        if (COption::GetOptionString("iblock", "show_xml_id", "N") == "Y" && is_set($_POST, "XML_ID")) {
             $arFields["XML_ID"] = $_POST["XML_ID"];
+        }
 
         if ($arIBTYPE["IN_RSS"] == "Y") {
-            $arFields = array_merge($arFields, array(
+            $arFields = array_merge(
+                $arFields,
+                array(
                     "RSS_ACTIVE" => $RSS_ACTIVE,
                     "RSS_FILE_ACTIVE" => $RSS_FILE_ACTIVE,
                     "RSS_YANDEX_ACTIVE" => $RSS_YANDEX_ACTIVE,
                     "RSS_FILE_LIMIT" => $RSS_FILE_LIMIT,
                     "RSS_FILE_DAYS" => $RSS_FILE_DAYS,
-                    "RSS_TTL" => $RSS_TTL)
+                    "RSS_TTL" => $RSS_TTL
+                )
             );
         }
 
         if (CIBlockRights::UserHasRightTo($ID, $ID, "iblock_rights_edit")) {
             $arFields["RIGHTS_MODE"] = $RIGHTS_MODE;
             if ($arFields["RIGHTS_MODE"] == "E") {
-                if (is_array($_POST["RIGHTS"]))
+                if (is_array($_POST["RIGHTS"])) {
                     $arFields["RIGHTS"] = CIBlockRights::Post2Array($_POST["RIGHTS"]);
-                elseif (is_array($_POST["GROUP"]))
+                } elseif (is_array($_POST["GROUP"])) {
                     $arFields["GROUP_ID"] = $_POST["GROUP"];
-                else
+                } else {
                     $arFields["RIGHTS"] = array();
+                }
             } else {
                 $arFields["GROUP_ID"] = $GROUP;
             }
@@ -614,8 +654,9 @@ if ($arIBTYPE !== false):
         $intPropCount = intval($_POST['IBLOCK_PROPERTY_COUNT']);
         for ($i = 0; $i < $intPropCount; $i++) {
             $arProperty = GetPropertyInfo($strPREFIX_IB_PROPERTY, 'n' . $i, true, $arHiddenPropFields);
-            if (!is_array($arProperty))
+            if (!is_array($arProperty)) {
                 continue;
+            }
             $res = $ibp->CheckFields($arProperty, false, true);
             if (!$res) {
                 $strWarning .= $ibp->LAST_ERROR . "<br>";
@@ -630,12 +671,14 @@ if ($arIBTYPE !== false):
         $arPropertyCodes = array();
         $bSectionProperty = false;
         foreach ($arProperties as $i => $arProperty) {
-            if ($arProperty["SECTION_PROPERTY"] === "N")
+            if ($arProperty["SECTION_PROPERTY"] === "N") {
                 $bSectionProperty = true;
-            if ($arProperty["SMART_FILTER"] === "Y")
+            }
+            if ($arProperty["SMART_FILTER"] === "Y") {
                 $bSectionProperty = true;
+            }
             if ('' != $arProperty['CODE']) {
-                $strPropertyCode = strtoupper($arProperty['CODE']);
+                $strPropertyCode = mb_strtoupper($arProperty['CODE']);
                 if (!isset($arProperty['DEL']) || $arProperty['DEL'] == 'N') {
                     if (isset($arPropertyCodes[$strPropertyCode])) {
                         $bDublicate = true;
@@ -646,21 +689,35 @@ if ($arIBTYPE !== false):
                 }
             }
         }
-        if ($bSectionProperty)
+        if ($bSectionProperty) {
             $arFields["SECTION_PROPERTY"] = "Y";
+        }
         unset($arPropertyCodes);
         if ($bDublicate) {
             $bVarsFromForm = true;
-            $strWarning .= GetMessage('IB_E_ERR_PROPERTY_CODE_DUBLICATE_EXT') . ' ' . implode(', ', array_keys($arDublicateCodes)) . '<br>';
+            $strWarning .= GetMessage('IB_E_ERR_PROPERTY_CODE_DUBLICATE_EXT') . ' ' . implode(
+                    ', ',
+                    array_keys(
+                        $arDublicateCodes
+                    )
+                ) . '<br>';
         }
         unset($arDublicateCodes);
         unset($bDublicate);
 
         if (is_array($_POST["IPROPERTY_TEMPLATES"])) {
-            $SECTION_PICTURE_FILE_NAME = \Bitrix\Iblock\Template\Helper::convertArrayToModifiers($_POST["IPROPERTY_TEMPLATES"]["SECTION_PICTURE_FILE_NAME"]);
-            $SECTION_DETAIL_PICTURE_FILE_NAME = \Bitrix\Iblock\Template\Helper::convertArrayToModifiers($_POST["IPROPERTY_TEMPLATES"]["SECTION_DETAIL_PICTURE_FILE_NAME"]);
-            $ELEMENT_PREVIEW_PICTURE_FILE_NAME = \Bitrix\Iblock\Template\Helper::convertArrayToModifiers($_POST["IPROPERTY_TEMPLATES"]["ELEMENT_PREVIEW_PICTURE_FILE_NAME"]);
-            $ELEMENT_DETAIL_PICTURE_FILE_NAME = \Bitrix\Iblock\Template\Helper::convertArrayToModifiers($_POST["IPROPERTY_TEMPLATES"]["ELEMENT_DETAIL_PICTURE_FILE_NAME"]);
+            $SECTION_PICTURE_FILE_NAME = \Bitrix\Iblock\Template\Helper::convertArrayToModifiers(
+                $_POST["IPROPERTY_TEMPLATES"]["SECTION_PICTURE_FILE_NAME"]
+            );
+            $SECTION_DETAIL_PICTURE_FILE_NAME = \Bitrix\Iblock\Template\Helper::convertArrayToModifiers(
+                $_POST["IPROPERTY_TEMPLATES"]["SECTION_DETAIL_PICTURE_FILE_NAME"]
+            );
+            $ELEMENT_PREVIEW_PICTURE_FILE_NAME = \Bitrix\Iblock\Template\Helper::convertArrayToModifiers(
+                $_POST["IPROPERTY_TEMPLATES"]["ELEMENT_PREVIEW_PICTURE_FILE_NAME"]
+            );
+            $ELEMENT_DETAIL_PICTURE_FILE_NAME = \Bitrix\Iblock\Template\Helper::convertArrayToModifiers(
+                $_POST["IPROPERTY_TEMPLATES"]["ELEMENT_DETAIL_PICTURE_FILE_NAME"]
+            );
 
             $arFields["IPROPERTY_TEMPLATES"] = array(
                 "SECTION_META_TITLE" => $_POST["IPROPERTY_TEMPLATES"]["SECTION_META_TITLE"]["TEMPLATE"],
@@ -692,7 +749,7 @@ if ($arIBTYPE !== false):
             $res_log["NAME"] = $NAME;
             if ($ID > 0) {
                 $res = $ib->Update($ID, $arFields);
-                if (COption::GetOptionString("iblock", "event_log_iblock", "N") === "Y" && $res)
+                if (COption::GetOptionString("iblock", "event_log_iblock", "N") === "Y" && $res) {
                     CEventLog::Log(
                         "IBLOCK",
                         "IBLOCK_EDIT",
@@ -700,11 +757,12 @@ if ($arIBTYPE !== false):
                         $ID,
                         serialize($res_log)
                     );
+                }
             } else {
                 $arFields["VERSION"] = $VERSION;
                 $ID = $ib->Add($arFields);
                 $res = ($ID > 0);
-                if (COption::GetOptionString("iblock", "event_log_iblock", "N") === "Y" && $res)
+                if (COption::GetOptionString("iblock", "event_log_iblock", "N") === "Y" && $res) {
                     CEventLog::Log(
                         "IBLOCK",
                         "IBLOCK_ADD",
@@ -712,6 +770,7 @@ if ($arIBTYPE !== false):
                         $ID,
                         serialize($res_log)
                     );
+                }
             }
 
             if (!$res) {
@@ -721,14 +780,28 @@ if ($arIBTYPE !== false):
                 // RSS agent creation
                 if ($RSS_FILE_ACTIVE == "Y") {
                     CAgent::RemoveAgent("CIBlockRSS::PreGenerateRSS(" . $ID . ", false);", "iblock");
-                    CAgent::AddAgent("CIBlockRSS::PreGenerateRSS(" . $ID . ", false);", "iblock", "N", IntVal($RSS_TTL) * 60 * 60, "", "Y");
+                    CAgent::AddAgent(
+                        "CIBlockRSS::PreGenerateRSS(" . $ID . ", false);",
+                        "iblock",
+                        "N",
+                        intval($RSS_TTL) * 60 * 60,
+                        "",
+                        "Y"
+                    );
                 } else {
                     CAgent::RemoveAgent("CIBlockRSS::PreGenerateRSS(" . $ID . ", false);", "iblock");
                 }
 
                 if ($RSS_YANDEX_ACTIVE == "Y") {
                     CAgent::RemoveAgent("CIBlockRSS::PreGenerateRSS(" . $ID . ", true);", "iblock");
-                    CAgent::AddAgent("CIBlockRSS::PreGenerateRSS(" . $ID . ", true);", "iblock", "N", IntVal($RSS_TTL) * 60 * 60, "", "Y");
+                    CAgent::AddAgent(
+                        "CIBlockRSS::PreGenerateRSS(" . $ID . ", true);",
+                        "iblock",
+                        "N",
+                        intval($RSS_TTL) * 60 * 60,
+                        "",
+                        "Y"
+                    );
                 } else {
                     CAgent::RemoveAgent("CIBlockRSS::PreGenerateRSS(" . $ID . ", true);", "iblock");
                 }
@@ -766,27 +839,34 @@ if ($arIBTYPE !== false):
                     }
                 }
                 \CIBlock::enableClearTagCache();
-                if (!$bVarsFromForm)
+                if (!$bVarsFromForm) {
                     \CIBlock::clearIblockTagCache($ID);
+                }
                 /*******************************************/
-
-                if (!CIBlockSectionPropertyLink::HasIBlockLinks($ID))
-                    CIBlockSectionPropertyLink::DeleteByIBlock($ID);
 
                 if (!$bVarsFromForm && $arIBTYPE["IN_RSS"] == "Y") {
                     CIBlockRSS::Delete($ID);
                     $arNodesRSS = CIBlockRSS::GetRSSNodes();
                     foreach ($arNodesRSS as $key => $val) {
-                        if (strlen(${"RSS_NODE_VALUE_" . $key}) > 0)
+                        if (${"RSS_NODE_VALUE_" . $key} <> '') {
                             CIBlockRSS::Add($ID, $val, ${"RSS_NODE_VALUE_" . $key});
+                        }
                     }
                 }
 
                 if (!$bVarsFromForm && !$bCreateRecord && $bBizproc) {
-                    $arWorkflowTemplates = CBPDocument::GetWorkflowTemplatesForDocumentType(array("iblock", "CIBlockDocument", "iblock_" . $ID));
+                    $arWorkflowTemplates = CBPDocument::GetWorkflowTemplatesForDocumentType(
+                        array("iblock", "CIBlockDocument", "iblock_" . $ID)
+                    );
                     foreach ($arWorkflowTemplates as $t) {
-                        $create_bizproc = (array_key_exists("create_bizproc_" . $t["ID"], $_REQUEST) && $_REQUEST["create_bizproc_" . $t["ID"]] == "Y");
-                        $edit_bizproc = (array_key_exists("edit_bizproc_" . $t["ID"], $_REQUEST) && $_REQUEST["edit_bizproc_" . $t["ID"]] == "Y");
+                        $create_bizproc = (array_key_exists(
+                                "create_bizproc_" . $t["ID"],
+                                $_REQUEST
+                            ) && $_REQUEST["create_bizproc_" . $t["ID"]] == "Y");
+                        $edit_bizproc = (array_key_exists(
+                                "edit_bizproc_" . $t["ID"],
+                                $_REQUEST
+                            ) && $_REQUEST["edit_bizproc_" . $t["ID"]] == "Y");
 
                         $create_bizproc1 = (($t["AUTO_EXECUTE"] & 1) != 0);
                         $edit_bizproc1 = (($t["AUTO_EXECUTE"] & 2) != 0);
@@ -839,8 +919,9 @@ if ($arIBTYPE !== false):
                     if (!$bVarsFromForm) {
                         $IS_CATALOG = ('Y' == $IS_CATALOG ? 'Y' : 'N');
                         $SUBSCRIPTION = ('Y' == $SUBSCRIPTION ? 'Y' : 'N');
-                        if (!(CBXFeatures::IsFeatureEnabled('SaleRecurring')))
+                        if (!(CBXFeatures::IsFeatureEnabled('SaleRecurring'))) {
                             $SUBSCRIPTION = 'N';
+                        }
                         $YANDEX_EXPORT = ('Y' == $YANDEX_EXPORT ? 'Y' : 'N');
                         $VAT_ID = (0 < intval($VAT_ID) ? intval($VAT_ID) : 0);
 
@@ -876,17 +957,20 @@ if ($arIBTYPE !== false):
                                 if ($IS_CATALOG == 'Y') {
                                     $boolFlag = $obCatalog->Add($arOffersFields);
                                 }
-                                if ($boolFlag && $arOffersFields['YANDEX_EXPORT'] == 'Y')
+                                if ($boolFlag && $arOffersFields['YANDEX_EXPORT'] == 'Y') {
                                     $boolNeedAgent = true;
+                                }
                             } else {
                                 if ($IS_CATALOG == 'Y' || $SUBSCRIPTION == 'Y') {
                                     $boolFlag = $obCatalog->Update($ID, $arOffersFields);
-                                    if ($boolFlag)
+                                    if ($boolFlag) {
                                         $boolNeedAgent = ($YANDEX_EXPORT != $arCatalog['YANDEX_EXPORT']);
+                                    }
                                 } elseif (('Y' != $IS_CATALOG) && ('Y' != $SUBSCRIPTION)) {
                                     $boolFlag = $obCatalog->Delete($ID);
-                                    if ($boolFlag)
+                                    if ($boolFlag) {
                                         $boolNeedAgent == ('Y' == $arCatalog['YANDEX_EXPORT']);
+                                    }
                                 }
                             }
                             if (!$boolFlag) {
@@ -902,7 +986,11 @@ if ($arIBTYPE !== false):
                                         $bVarsFromForm = true;
                                         $strWarning .= GetMessage('IB_E_OF_ERR_OFFERS_IS_ABSENT') . '<br>';
                                     } elseif (CATALOG_NEW_OFFERS_IBLOCK_NEED == $OF_IBLOCK_ID) {
-                                        $arCheckIBlockType = CheckIBlockTypeID($OF_IBLOCK_TYPE_ID, $OF_NEW_IBLOCK_TYPE_ID, $OF_CREATE_IBLOCK_TYPE_ID);
+                                        $arCheckIBlockType = CheckIBlockTypeID(
+                                            $OF_IBLOCK_TYPE_ID,
+                                            $OF_NEW_IBLOCK_TYPE_ID,
+                                            $OF_CREATE_IBLOCK_TYPE_ID
+                                        );
                                         if (!$arCheckIBlockType) {
                                             $bVarsFromForm = true;
                                             $strWarning .= GetMessage('IB_E_OF_ERR_IBLOCK_TYPE_UNKNOWN_ERR') . '<br>';
@@ -921,11 +1009,18 @@ if ($arIBTYPE !== false):
                                             $intCountOFProp = intval($OFFERS_PROPERTY_COUNT);
                                             $arOfPropList = array();
                                             for ($i = 0; $i < $intCountOFProp; $i++) {
-                                                $arOFProperty = GetPropertyInfo($strPREFIX_OF_PROPERTY, 'n' . $i, true, $arHiddenPropFields);
+                                                $arOFProperty = GetPropertyInfo(
+                                                    $strPREFIX_OF_PROPERTY,
+                                                    'n' . $i,
+                                                    true,
+                                                    $arHiddenPropFields
+                                                );
                                                 if (false !== $arOFProperty) {
                                                     $res = $ibp->CheckFields($arOFProperty, false, true);
                                                     if (!$res) {
-                                                        $strWarning .= GetMessage("IB_E_PROPERTY_ERROR") . ": " . $ibp->LAST_ERROR . "<br>";
+                                                        $strWarning .= GetMessage(
+                                                                "IB_E_PROPERTY_ERROR"
+                                                            ) . ": " . $ibp->LAST_ERROR . "<br>";
                                                         $bVarsFromForm = true;
                                                     }
                                                     $arOfPropList[] = $arOFProperty;
@@ -951,13 +1046,16 @@ if ($arIBTYPE !== false):
                                                 if (is_array($_POST["RIGHTS"])) {
                                                     $arOffersFields["RIGHTS"] = array();
                                                     $s_rights = new CIBlockRights($ID);
-                                                    foreach ($s_rights->GetRights() as $k => $v)
+                                                    foreach ($s_rights->GetRights() as $k => $v) {
                                                         $arOffersFields["RIGHTS"]["n" . $k] = $v;
+                                                    }
                                                 } elseif (is_array($_POST["GROUP"])) {
                                                     $arGroup = $_POST["GROUP"];
-                                                    foreach ($arGroup as &$value)
-                                                        if ('U' == $value)
+                                                    foreach ($arGroup as &$value) {
+                                                        if ('U' == $value) {
                                                             $value = 'W';
+                                                        }
+                                                    }
 
                                                     $arOffersFields["GROUP_ID"] = $arGroup;
                                                 } else {
@@ -965,21 +1063,26 @@ if ($arIBTYPE !== false):
                                                 }
                                             } else {
                                                 $arGroup = $GROUP;
-                                                foreach ($arGroup as &$value)
-                                                    if ('U' == $value)
+                                                foreach ($arGroup as &$value) {
+                                                    if ('U' == $value) {
                                                         $value = 'W';
+                                                    }
+                                                }
 
                                                 $arOffersFields["GROUP_ID"] = $arGroup;
                                             }
                                             $arLogFields = array();
                                             if (!empty($_REQUEST["FIELDS"])) {
                                                 foreach ($_REQUEST["FIELDS"] as $strLogField => $arOneLogField) {
-                                                    if (!preg_match("/^LOG_/", $strLogField)) continue;
+                                                    if (!preg_match("/^LOG_/", $strLogField)) {
+                                                        continue;
+                                                    }
                                                     $arLogFields[$strLogField] = $arOneLogField;
                                                 }
                                             }
-                                            if (!empty($arLogFields))
+                                            if (!empty($arLogFields)) {
                                                 $arOffersFields["FIELDS"] = $arLogFields;
+                                            }
 
                                             $obIBlock = new CIBlock();
                                             $mxOffersID = $obIBlock->Add($arOffersFields);
@@ -990,7 +1093,11 @@ if ($arIBTYPE !== false):
                                                 $res_log = array();
                                                 $res_log['NAME'] = $OF_IBLOCK_NAME;
                                                 $OF_IBLOCK_ID = $mxOffersID;
-                                                if (COption::GetOptionString("iblock", "event_log_iblock", "N") === "Y")
+                                                if (COption::GetOptionString(
+                                                        "iblock",
+                                                        "event_log_iblock",
+                                                        "N"
+                                                    ) === "Y") {
                                                     CEventLog::Log(
                                                         "IBLOCK",
                                                         "IBLOCK_ADD",
@@ -998,6 +1105,7 @@ if ($arIBTYPE !== false):
                                                         $OF_IBLOCK_ID,
                                                         serialize($res_log)
                                                     );
+                                                }
                                             }
                                         }
 
@@ -1014,7 +1122,11 @@ if ($arIBTYPE !== false):
                                             \CIBlock::enableClearTagCache();
                                         }
                                     } else {
-                                        if (CIBlockRights::UserHasRightTo($OF_IBLOCK_ID, $OF_IBLOCK_ID, "iblock_edit")) {
+                                        if (CIBlockRights::UserHasRightTo(
+                                            $OF_IBLOCK_ID,
+                                            $OF_IBLOCK_ID,
+                                            "iblock_edit"
+                                        )) {
                                             $arOffersFields = array();
                                             $arOffersFields['LID'] = $LID;
 
@@ -1024,13 +1136,16 @@ if ($arIBTYPE !== false):
                                                     if (is_array($_POST["RIGHTS"])) {
                                                         $arOffersFields["RIGHTS"] = array();
                                                         $s_rights = new CIBlockRights($ID);
-                                                        foreach ($s_rights->GetRights() as $k => $v)
+                                                        foreach ($s_rights->GetRights() as $k => $v) {
                                                             $arOffersFields["RIGHTS"]["n" . $k] = $v;
+                                                        }
                                                     } elseif (is_array($_POST["GROUP"])) {
                                                         $arGroup = $_POST["GROUP"];
-                                                        foreach ($arGroup as &$value)
-                                                            if ('U' == $value)
+                                                        foreach ($arGroup as &$value) {
+                                                            if ('U' == $value) {
                                                                 $value = 'W';
+                                                            }
+                                                        }
 
                                                         $arOffersFields["GROUP_ID"] = $arGroup;
                                                     } else {
@@ -1038,9 +1153,11 @@ if ($arIBTYPE !== false):
                                                     }
                                                 } else {
                                                     $arGroup = $GROUP;
-                                                    foreach ($arGroup as &$value)
-                                                        if ('U' == $value)
+                                                    foreach ($arGroup as &$value) {
+                                                        if ('U' == $value) {
                                                             $value = 'W';
+                                                        }
+                                                    }
 
                                                     $arOffersFields["GROUP_ID"] = $arGroup;
                                                 }
@@ -1048,7 +1165,9 @@ if ($arIBTYPE !== false):
                                             $arLogFields = array();
                                             if (!empty($_REQUEST["FIELDS"])) {
                                                 foreach ($_REQUEST["FIELDS"] as $strLogField => $arOneLogField) {
-                                                    if (!preg_match("/^LOG_/", $strLogField)) continue;
+                                                    if (!preg_match("/^LOG_/", $strLogField)) {
+                                                        continue;
+                                                    }
                                                     $arLogFields[$strLogField] = $arOneLogField;
                                                 }
                                             }
@@ -1068,7 +1187,11 @@ if ($arIBTYPE !== false):
                                             } else {
                                                 $res_log = array();
                                                 $res_log['NAME'] = CIBlock::GetArrayByID($OF_IBLOCK_ID, 'NAME');
-                                                if (COption::GetOptionString("iblock", "event_log_iblock", "N") === "Y")
+                                                if (COption::GetOptionString(
+                                                        "iblock",
+                                                        "event_log_iblock",
+                                                        "N"
+                                                    ) === "Y") {
                                                     CEventLog::Log(
                                                         "IBLOCK",
                                                         "IBLOCK_EDIT",
@@ -1076,9 +1199,14 @@ if ($arIBTYPE !== false):
                                                         $OF_IBLOCK_ID,
                                                         serialize($res_log)
                                                     );
+                                                }
                                             }
                                         } else {
-                                            $strWarning .= str_replace(array('#ID#'), array($OF_IBLOCK_ID), GetMessage('IB_E_RIGHTS_IBLOCK_ACCESS_DENIED')) . '<br>';
+                                            $strWarning .= str_replace(
+                                                    array('#ID#'),
+                                                    array($OF_IBLOCK_ID),
+                                                    GetMessage('IB_E_RIGHTS_IBLOCK_ACCESS_DENIED')
+                                                ) . '<br>';
                                             $bVarsFromForm = true;
                                         }
                                     }
@@ -1094,7 +1222,9 @@ if ($arIBTYPE !== false):
                                     }
 
                                     if (!$bVarsFromForm) {
-                                        if ((false !== $arCatalog) && (0 < intval($arCatalog['OFFERS_IBLOCK_ID'])) && ($arCatalog['OFFERS_IBLOCK_ID'] != $OF_IBLOCK_ID)) {
+                                        if ((false !== $arCatalog) && (0 < intval(
+                                                    $arCatalog['OFFERS_IBLOCK_ID']
+                                                )) && ($arCatalog['OFFERS_IBLOCK_ID'] != $OF_IBLOCK_ID)) {
                                             $boolFlag = $obCatalog->UnLinkSKUIBlock($ID);
                                         }
                                         if ((false === $arCatalog) || ($arCatalog['OFFERS_IBLOCK_ID'] != $OF_IBLOCK_ID)) {
@@ -1140,13 +1270,20 @@ if ($arIBTYPE !== false):
                 }
 
                 if (!$bVarsFromForm) {
+                    CIBlockSectionPropertyLink::CleanIBlockLinks($ID);
+                }
+
+                if (!$bVarsFromForm) {
                     if (
                         $bBizproc
                         && $_REQUEST['BIZ_PROC_ADD_DEFAULT_TEMPLATES'] == 'Y'
-                        && CBPDocument::GetNumberOfWorkflowTemplatesForDocumentType(array("iblock", "CIBlockDocument", "iblock_" . $ID)) <= 0
+                        && CBPDocument::GetNumberOfWorkflowTemplatesForDocumentType(
+                            array("iblock", "CIBlockDocument", "iblock_" . $ID)
+                        ) <= 0
                         && $arFields["BIZPROC"] == "Y"
-                    )
+                    ) {
                         CBPDocument::AddDefaultWorkflowTemplates(array("iblock", "CIBlockDocument", "iblock_" . $ID));
+                    }
 
                     $DB->Commit();
 
@@ -1157,22 +1294,42 @@ if ($arIBTYPE !== false):
                         if (isset($boolNeedAgent) && $boolNeedAgent == true) {
                             $intYandexExport = CCatalog::GetList(array(), array('YANDEX_EXPORT' => 'Y'), array());
                             CAgent::RemoveAgent("CCatalog::PreGenerateXML(\"yandex\");", "catalog");
-                            if (0 < $intYandexExport)
-                                CAgent::AddAgent("CCatalog::PreGenerateXML(\"yandex\");", "catalog", "N", IntVal(COption::GetOptionString("catalog", "yandex_xml_period", "24")) * 60 * 60, "", "Y");
+                            if (0 < $intYandexExport) {
+                                CAgent::AddAgent(
+                                    "CCatalog::PreGenerateXML(\"yandex\");",
+                                    "catalog",
+                                    "N",
+                                    intval(
+                                        COption::GetOptionString("catalog", "yandex_xml_period", "24")
+                                    ) * 60 * 60,
+                                    "",
+                                    "Y"
+                                );
+                            }
                         }
                     }
 
-                    $reloadUrl = "/bitrix/admin/iblock_edit.php?type=" . $type . "&tabControl_active_tab=" . urlencode($tabControl_active_tab) . "&lang=" . LANGUAGE_ID . "&ID=" . $ID . "&admin=" . ($_REQUEST["admin"] == "Y" ? "Y" : "N") . (strlen($_REQUEST["return_url"]) > 0 ? "&return_url=" . urlencode($_REQUEST["return_url"]) : "");
+                    $reloadUrl = "/bitrix/admin/iblock_edit.php?type=" . $type . "&tabControl_active_tab=" . urlencode(
+                            $tabControl_active_tab
+                        ) . "&lang=" . LANGUAGE_ID . "&ID=" . $ID . "&admin=" . ($_REQUEST["admin"] == "Y" ? "Y" : "N") . ($_REQUEST["return_url"] <> '' ? "&return_url=" . urlencode(
+                                $_REQUEST["return_url"]
+                            ) : "");
                     if ($adminSidePanelHelper->isAjaxRequest()) {
                         $reloadUrl .= "&IFRAME=Y&IFRAME_TYPE=SIDE_SLIDER";
-                        $adminSidePanelHelper->sendSuccessResponse("apply", array("ID" => $ID, "reloadUrl" => $reloadUrl));
+                        $adminSidePanelHelper->sendSuccessResponse(
+                            "apply",
+                            array("ID" => $ID, "reloadUrl" => $reloadUrl)
+                        );
                     } else {
                         $ob = new CAutoSave();
-                        if (strlen($apply) <= 0) {
-                            if (strlen($_REQUEST["return_url"]) > 0)
+                        if ($apply == '') {
+                            if ($_REQUEST["return_url"] <> '') {
                                 LocalRedirect($_REQUEST["return_url"]);
-                            else
-                                LocalRedirect("/bitrix/admin/iblock_admin.php?type=" . $type . "&lang=" . LANGUAGE_ID . "&admin=" . ($_REQUEST["admin"] == "Y" ? "Y" : "N"));
+                            } else {
+                                LocalRedirect(
+                                    "/bitrix/admin/iblock_admin.php?type=" . $type . "&lang=" . LANGUAGE_ID . "&admin=" . ($_REQUEST["admin"] == "Y" ? "Y" : "N")
+                                );
+                            }
                         }
                         LocalRedirect($reloadUrl);
                     }
@@ -1191,13 +1348,17 @@ if ($arIBTYPE !== false):
         && CIBlockRights::UserHasRightTo($ID, $ID, "iblock_edit")
     ) {
         $arErrorTmp = array();
-        CBPDocument::DeleteWorkflowTemplate($_REQUEST["delete_bizproc_template"], array("iblock", "CIBlockDocument", "iblock_" . $ID), $arErrorTmp);
-        if (count($arErrorTmp) > 0) {
-            foreach ($arErrorTmp as $e)
+        CBPDocument::DeleteWorkflowTemplate(
+            $_REQUEST["delete_bizproc_template"],
+            array("iblock", "CIBlockDocument", "iblock_" . $ID),
+            $arErrorTmp
+        );
+        if (!empty($arErrorTmp)) {
+            foreach ($arErrorTmp as $e) {
                 $strWarning .= $e["message"] . "<br />";
+            }
         } else {
             LocalRedirect($APPLICATION->GetCurPageParam("", Array("delete_bizproc_template", "sessid")));
-            die();
         }
     }
 
@@ -1206,10 +1367,11 @@ if ($arIBTYPE !== false):
     }
 
 
-    if ($ID > 0)
+    if ($ID > 0) {
         $APPLICATION->SetTitle(GetMessage("IB_E_EDIT_TITLE", array("#IBLOCK_TYPE#" => $arIBTYPE["NAME"])));
-    else
+    } else {
         $APPLICATION->SetTitle(GetMessage("IB_E_NEW_TITLE", array("#IBLOCK_TYPE#" => $arIBTYPE["NAME"])));
+    }
 
 
     ClearVars("str_");
@@ -1220,7 +1382,7 @@ if ($arIBTYPE !== false):
     $str_LIST_MODE = "";
     $str_INDEX_ELEMENT = "Y";
     $str_INDEX_SECTION = "Y";
-    $str_PROPERTY_FILE_TYPE = "jpg, gif, bmp, png, jpeg";
+    $str_PROPERTY_FILE_TYPE = "jpg, gif, bmp, png, jpeg, webp";
     $str_LIST_PAGE_URL = "#SITE_DIR#/" . $arIBTYPE["ID"] . "/index.php?ID=#IBLOCK_ID#";
     $str_SECTION_PAGE_URL = "#SITE_DIR#/" . $arIBTYPE["ID"] . "/list.php?SECTION_ID=#SECTION_ID#";
     $str_DETAIL_PAGE_URL = "#SITE_DIR#/" . $arIBTYPE["ID"] . "/detail.php?ID=#ELEMENT_ID#";
@@ -1269,15 +1431,24 @@ if ($arIBTYPE !== false):
 
         $str_LID = Array();
         $db_LID = CIBlock::GetSite($ID);
-        while ($ar_LID = $db_LID->Fetch())
+        while ($ar_LID = $db_LID->Fetch()) {
             $str_LID[] = $ar_LID["LID"];
+        }
 
         $ipropTemlates = new \Bitrix\Iblock\InheritedProperty\IblockTemplates($ID);
         $str_IPROPERTY_TEMPLATES = $ipropTemlates->findTemplates();
-        $str_IPROPERTY_TEMPLATES["SECTION_PICTURE_FILE_NAME"] = \Bitrix\Iblock\Template\Helper::convertModifiersToArray($str_IPROPERTY_TEMPLATES["SECTION_PICTURE_FILE_NAME"]);
-        $str_IPROPERTY_TEMPLATES["SECTION_DETAIL_PICTURE_FILE_NAME"] = \Bitrix\Iblock\Template\Helper::convertModifiersToArray($str_IPROPERTY_TEMPLATES["SECTION_DETAIL_PICTURE_FILE_NAME"]);
-        $str_IPROPERTY_TEMPLATES["ELEMENT_PREVIEW_PICTURE_FILE_NAME"] = \Bitrix\Iblock\Template\Helper::convertModifiersToArray($str_IPROPERTY_TEMPLATES["ELEMENT_PREVIEW_PICTURE_FILE_NAME"]);
-        $str_IPROPERTY_TEMPLATES["ELEMENT_DETAIL_PICTURE_FILE_NAME"] = \Bitrix\Iblock\Template\Helper::convertModifiersToArray($str_IPROPERTY_TEMPLATES["ELEMENT_DETAIL_PICTURE_FILE_NAME"]);
+        $str_IPROPERTY_TEMPLATES["SECTION_PICTURE_FILE_NAME"] = \Bitrix\Iblock\Template\Helper::convertModifiersToArray(
+            $str_IPROPERTY_TEMPLATES["SECTION_PICTURE_FILE_NAME"]
+        );
+        $str_IPROPERTY_TEMPLATES["SECTION_DETAIL_PICTURE_FILE_NAME"] = \Bitrix\Iblock\Template\Helper::convertModifiersToArray(
+            $str_IPROPERTY_TEMPLATES["SECTION_DETAIL_PICTURE_FILE_NAME"]
+        );
+        $str_IPROPERTY_TEMPLATES["ELEMENT_PREVIEW_PICTURE_FILE_NAME"] = \Bitrix\Iblock\Template\Helper::convertModifiersToArray(
+            $str_IPROPERTY_TEMPLATES["ELEMENT_PREVIEW_PICTURE_FILE_NAME"]
+        );
+        $str_IPROPERTY_TEMPLATES["ELEMENT_DETAIL_PICTURE_FILE_NAME"] = \Bitrix\Iblock\Template\Helper::convertModifiersToArray(
+            $str_IPROPERTY_TEMPLATES["ELEMENT_DETAIL_PICTURE_FILE_NAME"]
+        );
 
         if ($bCatalog) {
             $arCatalog = CCatalog::GetByIDExt($ID);
@@ -1331,10 +1502,12 @@ if ($arIBTYPE !== false):
 
         if ($bCatalog) {
             $DB->InitTableVarsForEdit("b_catalog_iblock", "", "str_");
-            if (isset($USED_SKU) && ('Y' == $USED_SKU || 'N' == $USED_SKU))
+            if (isset($USED_SKU) && ('Y' == $USED_SKU || 'N' == $USED_SKU)) {
                 $str_USED_SKU = ('Y' != $USED_SKU ? "N" : "Y");
-            if (isset($IS_CATALOG) && ('Y' == $IS_CATALOG || 'N' == $IS_CATALOG))
+            }
+            if (isset($IS_CATALOG) && ('Y' == $IS_CATALOG || 'N' == $IS_CATALOG)) {
                 $str_IS_CATALOG = ('Y' == $IS_CATALOG ? "Y" : "N");
+            }
             $str_CATALOG_TYPE = $CATALOG_TYPE;
 
             $str_OF_IBLOCK_ID = intval($OF_IBLOCK_ID);
@@ -1344,8 +1517,9 @@ if ($arIBTYPE !== false):
             $str_OF_NEW_IBLOCK_TYPE_ID = $OF_NEW_IBLOCK_TYPE_ID;
 
             $int_OFFERS_PROPERTY_COUNT = intval($OFFERS_PROPERTY_COUNT);
-            if (0 >= $int_OFFERS_PROPERTY_COUNT)
+            if (0 >= $int_OFFERS_PROPERTY_COUNT) {
                 $int_OFFERS_PROPERTY_COUNT = PROPERTY_EMPTY_ROW_SIZE;
+            }
 
             //$str_SKU_RIGHTS = ('Y' == $SKU_RIGHTS ? 'Y' : 'N');
             $str_SKU_RIGHTS = 'N';
@@ -1356,7 +1530,9 @@ if ($arIBTYPE !== false):
         $aMenu = array(
             array(
                 "TEXT" => GetMessage("IBLOCK_BACK_TO_ADMIN"),
-                "LINK" => '/bitrix/admin/iblock_admin.php?lang=' . LANGUAGE_ID . '&type=' . urlencode($type) . '&admin=' . ($_REQUEST["admin"] == "Y" ? "Y" : "N"),
+                "LINK" => '/bitrix/admin/iblock_admin.php?lang=' . LANGUAGE_ID . '&type=' . urlencode(
+                        $type
+                    ) . '&admin=' . ($_REQUEST["admin"] == "Y" ? "Y" : "N"),
                 "ICON" => "btn_list",
             )
         );
@@ -1373,12 +1549,22 @@ if ($arIBTYPE !== false):
 
         $u = new CAdminPopupEx(
             "mnu_SECTION_PAGE_URL",
-            CIBlockParameters::GetPathTemplateMenuItems("SECTION", "__SetUrlVar", "mnu_SECTION_PAGE_URL", "SECTION_PAGE_URL"),
+            CIBlockParameters::GetPathTemplateMenuItems(
+                "SECTION",
+                "__SetUrlVar",
+                "mnu_SECTION_PAGE_URL",
+                "SECTION_PAGE_URL"
+            ),
             array("zIndex" => 2000)
         );
         $u->Show();
 
-        $arItems = CIBlockParameters::GetPathTemplateMenuItems("DETAIL", "__SetUrlVar", "mnu_DETAIL_PAGE_URL", "DETAIL_PAGE_URL");
+        $arItems = CIBlockParameters::GetPathTemplateMenuItems(
+            "DETAIL",
+            "__SetUrlVar",
+            "mnu_DETAIL_PAGE_URL",
+            "DETAIL_PAGE_URL"
+        );
         if ($str_CATALOG_TYPE == 'O') {
             $arItems[] = array("SEPARATOR" => true);
             $arItems[] = array(
@@ -1394,18 +1580,29 @@ if ($arIBTYPE !== false):
         );
         $u->Show();
 
-        $arItems = CIBlockParameters::GetPathTemplateMenuItems("DETAIL", "__SetUrlVar", "mnu_CANONICAL_PAGE_URL", "CANONICAL_PAGE_URL");
+        $arItems = CIBlockParameters::GetPathTemplateMenuItems(
+            "DETAIL",
+            "__SetUrlVar",
+            "mnu_CANONICAL_PAGE_URL",
+            "CANONICAL_PAGE_URL"
+        );
         array_unshift($arItems, array("SEPARATOR" => true));
-        array_unshift($arItems, array(
-            "TEXT" => "https://",
-            "TITLE" => "",
-            "ONCLICK" => "__SetUrlVar('https://', 'mnu_CANONICAL_PAGE_URL', 'CANONICAL_PAGE_URL')",
-        ));
-        array_unshift($arItems, array(
-            "TEXT" => "http://",
-            "TITLE" => "",
-            "ONCLICK" => "__SetUrlVar('http://', 'mnu_CANONICAL_PAGE_URL', 'CANONICAL_PAGE_URL')",
-        ));
+        array_unshift(
+            $arItems,
+            array(
+                "TEXT" => "https://",
+                "TITLE" => "",
+                "ONCLICK" => "__SetUrlVar('https://', 'mnu_CANONICAL_PAGE_URL', 'CANONICAL_PAGE_URL')",
+            )
+        );
+        array_unshift(
+            $arItems,
+            array(
+                "TEXT" => "http://",
+                "TITLE" => "",
+                "ONCLICK" => "__SetUrlVar('http://', 'mnu_CANONICAL_PAGE_URL', 'CANONICAL_PAGE_URL')",
+            )
+        );
         $u = new CAdminPopupEx(
             "mnu_CANONICAL_PAGE_URL",
             $arItems,
@@ -1469,8 +1666,9 @@ if ($arIBTYPE !== false):
             ?>
         </script>
 
-        <form method="POST" name="frm" id="frm"
-              action="/bitrix/admin/iblock_edit.php?type=<? echo htmlspecialcharsbx($type) ?>&amp;lang=<? echo LANG ?>&amp;admin=<? echo($_REQUEST["admin"] == "Y" ? "Y" : "N") ?>"
+        <form method="POST" name="frm" id="frm" action="/bitrix/admin/iblock_edit.php?type=<? echo htmlspecialcharsbx(
+            $type
+        ) ?>&amp;lang=<? echo LANG ?>&amp;admin=<? echo($_REQUEST["admin"] == "Y" ? "Y" : "N") ?>"
               ENCTYPE="multipart/form-data">
             <?= bitrix_sessid_post() ?>
             <? echo GetFilterHiddens("find_"); ?>
@@ -1479,8 +1677,9 @@ if ($arIBTYPE !== false):
             <?endif ?>
             <input type="hidden" name="Update" value="Y">
             <input type="hidden" name="ID" value="<? echo $ID ?>">
-            <? if (strlen($_REQUEST["return_url"]) > 0):?><input type="hidden" name="return_url"
-                                                                 value="<?= htmlspecialcharsbx($_REQUEST["return_url"]) ?>"><?endif ?>
+            <? if ($_REQUEST["return_url"] <> ''):?><input type="hidden" name="return_url"value="<?= htmlspecialcharsbx(
+                $_REQUEST["return_url"]
+            ) ?>"><?endif ?>
             <? CAdminMessage::ShowOldStyleError($strWarning); ?>
             <?
             $bTab3 = ($arIBTYPE["IN_RSS"] == "Y");
@@ -1580,7 +1779,9 @@ if ($arIBTYPE !== false):
                         <input type="hidden" name="VERSION" value="<?= $str_VERSION ?>">
                         <? if ($str_VERSION == 1) echo GetMessage("IB_E_COMMON_STORAGE") ?>
                         <? if ($str_VERSION == 2) echo GetMessage("IB_E_SEPARATE_STORAGE") ?>
-                        <br><a href="/bitrix/admin/iblock_convert.php?lang=<?= LANGUAGE_ID; ?>&amp;IBLOCK_ID=<? echo $str_ID ?>"><?= $str_LAST_CONV_ELEMENT > 0 ? "<span class=\"required\">" . GetMessage("IB_E_CONVERT_CONTINUE") : GetMessage("IB_E_CONVERT_START") . "</span>" ?></a>
+                        <br><a href="/bitrix/admin/iblock_convert.php?lang=<?= LANGUAGE_ID; ?>&amp;IBLOCK_ID=<? echo $str_ID ?>"><?= $str_LAST_CONV_ELEMENT > 0 ? "<span class=\"required\">" . GetMessage(
+                                    "IB_E_CONVERT_CONTINUE"
+                                ) : GetMessage("IB_E_CONVERT_START") . "</span>" ?></a>
                     </td>
                 </tr>
                 <tr>
@@ -1592,11 +1793,13 @@ if ($arIBTYPE !== false):
                     <td width="40%" class="adm-detail-valign-top"><?= GetMessage("IB_E_PROPERTY_STORAGE") ?></td>
                     <td width="60%">
                         <label><input type="radio" name="VERSION"
-                                      value="1" <? if ($str_VERSION == 1) echo " checked" ?>><?= GetMessage("IB_E_COMMON_STORAGE") ?>
-                        </label><br>
+                                      value="1" <? if ($str_VERSION == 1) echo " checked" ?>><?= GetMessage(
+                                "IB_E_COMMON_STORAGE"
+                            ) ?></label><br>
                         <label><input type="radio" name="VERSION"
-                                      value="2" <? if ($str_VERSION == 2) echo " checked" ?>><?= GetMessage("IB_E_SEPARATE_STORAGE") ?>
-                        </label>
+                                      value="2" <? if ($str_VERSION == 2) echo " checked" ?>><?= GetMessage(
+                                "IB_E_SEPARATE_STORAGE"
+                            ) ?></label>
                     </td>
                 </tr>
             <? endif; ?>
@@ -1621,6 +1824,14 @@ if ($arIBTYPE !== false):
                     <input type="text" name="API_CODE" size="50" maxlength="50" value="<? echo $str_API_CODE ?>">
                 </td>
             </tr>
+            <tr>
+                <td><label for="REST_ON"><? echo GetMessage("IB_E_REST_ON") ?></label></td>
+                <td>
+                    <input type="hidden" name="REST_ON" value="N">
+                    <input type="checkbox" id="REST_ON" name="REST_ON"
+                           value="Y"<? if ($str_REST_ON == "Y") echo " checked" ?>>
+                </td>
+            </tr>
             <tr class="adm-detail-required-field">
                 <td class="adm-detail-valign-top"><? echo GetMessage("IB_E_SITES") ?></td>
                 <td>
@@ -1628,26 +1839,32 @@ if ($arIBTYPE !== false):
                     if ('O' == $str_CATALOG_TYPE) {
                         ?>
                         <div class="adm-list"><?
-                        $by = "sort";
-                        $order = "asc";
-                        $l = CLang::GetList($by, $order);
+                        $l = CLang::GetList();
                         $arLidValue = $str_LID;
-                        if (!is_array($arLidValue))
+                        if (!is_array($arLidValue)) {
                             $arLidValue = array($arLidValue);
+                        }
                         while ($l_arr = $l->Fetch()) {
                             ?>
                             <div class="adm-list-item">
                             <div class="adm-list-control"><input type="checkbox" name="LID_SHOW[]"
                                                                  value="<? echo htmlspecialcharsex($l_arr["LID"]); ?>"
                                                                  id="<? echo htmlspecialcharsex($l_arr["LID"]); ?>"
-                                                                 class="typecheckbox"<? echo(in_array($l_arr["LID"], $arLidValue) ? ' checked' : ''); ?>
-                                                                 disabled></div>
+                                                                 class="typecheckbox"<? echo(in_array(
+                                    $l_arr["LID"],
+                                    $arLidValue
+                                ) ? ' checked' : ''); ?> disabled></div>
                             <div class="adm-list-label"><label
-                                        for="<? echo htmlspecialcharsex($l_arr["LID"]); ?>">[<? echo htmlspecialcharsex($l_arr["LID"]); ?>
-                                    ]&nbsp;<? echo htmlspecialcharsex($l_arr["NAME"]); ?></label></div>
+                                        for="<? echo htmlspecialcharsex($l_arr["LID"]); ?>">[<? echo htmlspecialcharsex(
+                                        $l_arr["LID"]
+                                    ); ?>]&nbsp;<? echo htmlspecialcharsex($l_arr["NAME"]); ?></label></div>
                             </div><?
                         }
-                        echo "<br>" . str_replace('#LINK#', '/bitrix/admin/iblock_edit.php?type=' . $str_PRODUCT_IBLOCK_TYPE_ID . '&lang=' . LANGUAGE_ID . '&ID=' . $str_PRODUCT_IBLOCK_ID . '&admin=Y', GetMessage('IB_E_OF_SITES'));
+                        echo "<br>" . str_replace(
+                                '#LINK#',
+                                '/bitrix/admin/iblock_edit.php?type=' . $str_PRODUCT_IBLOCK_TYPE_ID . '&lang=' . LANGUAGE_ID . '&ID=' . $str_PRODUCT_IBLOCK_ID . '&admin=Y',
+                                GetMessage('IB_E_OF_SITES')
+                            );
 
                         foreach ($arLidValue as &$strLid) {
                             ?><input type="hidden" name="LID[]" value="<? echo htmlspecialcharsex($strLid); ?>"><?
@@ -1735,9 +1952,15 @@ if ($arIBTYPE !== false):
                     <td><? echo GetMessage("IB_E_WF_TYPE") ?></td>
                     <td>
                         <select name="WF_TYPE">
-                            <option value="N" <? if ($str_WORKFLOW != "Y" && $str_BIZPROC != "Y") echo "selected"; ?>><? echo GetMessage("IB_E_WF_TYPE_NONE") ?></option>
-                            <option value="WF" <? if ($str_WORKFLOW == "Y") echo "selected" ?>><? echo GetMessage("IB_E_WF_TYPE_WORKFLOW") ?></option>
-                            <option value="BP" <? if ($str_BIZPROC == "Y") echo "selected" ?>><? echo GetMessage("IB_E_WF_TYPE_BIZPROC") ?></option>
+                            <option value="N" <? if ($str_WORKFLOW != "Y" && $str_BIZPROC != "Y") {
+                                echo "selected";
+                            } ?>><? echo GetMessage("IB_E_WF_TYPE_NONE") ?></option>
+                            <option value="WF" <? if ($str_WORKFLOW == "Y") echo "selected" ?>><? echo GetMessage(
+                                    "IB_E_WF_TYPE_WORKFLOW"
+                                ) ?></option>
+                            <option value="BP" <? if ($str_BIZPROC == "Y") echo "selected" ?>><? echo GetMessage(
+                                    "IB_E_WF_TYPE_BIZPROC"
+                                ) ?></option>
                         </select>
                     </td>
                 </tr>
@@ -1764,9 +1987,15 @@ if ($arIBTYPE !== false):
                 <td><? echo GetMessage("IB_E_SECTION_CHOOSER") ?>:</td>
                 <td>
                     <select name="SECTION_CHOOSER">
-                        <option value="L"<? if ($str_SECTION_CHOOSER == "L") echo " selected" ?>><? echo GetMessage("IB_E_SECTION_CHOOSER_LIST") ?></option>
-                        <option value="D"<? if ($str_SECTION_CHOOSER == "D") echo " selected" ?>><? echo GetMessage("IB_E_SECTION_CHOOSER_DROPDOWNS") ?></option>
-                        <option value="P"<? if ($str_SECTION_CHOOSER == "P") echo " selected" ?>><? echo GetMessage("IB_E_SECTION_CHOOSER_POPUP") ?></option>
+                        <option value="L"<? if ($str_SECTION_CHOOSER == "L") echo " selected" ?>><? echo GetMessage(
+                                "IB_E_SECTION_CHOOSER_LIST"
+                            ) ?></option>
+                        <option value="D"<? if ($str_SECTION_CHOOSER == "D") echo " selected" ?>><? echo GetMessage(
+                                "IB_E_SECTION_CHOOSER_DROPDOWNS"
+                            ) ?></option>
+                        <option value="P"<? if ($str_SECTION_CHOOSER == "P") echo " selected" ?>><? echo GetMessage(
+                                "IB_E_SECTION_CHOOSER_POPUP"
+                            ) ?></option>
                     </select>
                 </td>
             </tr>
@@ -1775,8 +2004,12 @@ if ($arIBTYPE !== false):
                 <td>
                     <select name="LIST_MODE">
                         <option value=""><? echo GetMessage("IB_E_LIST_MODE_GLOBAL") ?></option>
-                        <option value="S"<? if ($str_LIST_MODE == "S") echo " selected" ?>><? echo GetMessage("IB_E_LIST_MODE_SECTIONS") ?></option>
-                        <option value="C"<? if ($str_LIST_MODE == "C") echo " selected" ?>><? echo GetMessage("IB_E_LIST_MODE_COMBINED") ?></option>
+                        <option value="S"<? if ($str_LIST_MODE == "S") echo " selected" ?>><? echo GetMessage(
+                                "IB_E_LIST_MODE_SECTIONS"
+                            ) ?></option>
+                        <option value="C"<? if ($str_LIST_MODE == "C") echo " selected" ?>><? echo GetMessage(
+                                "IB_E_LIST_MODE_COMBINED"
+                            ) ?></option>
                     </select>
                 </td>
             </tr>
@@ -1834,27 +2067,34 @@ if ($arIBTYPE !== false):
             <tr class="adm-detail-file-row">
                 <td class="adm-detail-valign-top"><? echo GetMessage("IB_E_PICTURE") ?></td>
                 <td>
-                    <? echo CFileInput::Show('PICTURE', $str_PICTURE, array(
-                        "IMAGE" => "Y",
-                        "PATH" => "Y",
-                        "FILE_SIZE" => "Y",
-                        "DIMENSIONS" => "Y",
-                        "IMAGE_POPUP" => "Y",
-                        "MAX_SIZE" => array(
-                            "W" => COption::GetOptionString("iblock", "detail_image_size"),
-                            "H" => COption::GetOptionString("iblock", "detail_image_size"),
+                    <? echo CFileInput::Show(
+                        'PICTURE',
+                        $str_PICTURE,
+                        array(
+                            "IMAGE" => "Y",
+                            "PATH" => "Y",
+                            "FILE_SIZE" => "Y",
+                            "DIMENSIONS" => "Y",
+                            "IMAGE_POPUP" => "Y",
+                            "MAX_SIZE" => array(
+                                "W" => COption::GetOptionString("iblock", "detail_image_size"),
+                                "H" => COption::GetOptionString("iblock", "detail_image_size"),
+                            ),
                         ),
-                    ), array(
-                        'upload' => true,
-                        'medialib' => false,
-                        'file_dialog' => false,
-                        'cloud' => false,
-                        'del' => true,
-                        'description' => false,
-                    )); ?>
+                        array(
+                            'upload' => true,
+                            'medialib' => false,
+                            'file_dialog' => false,
+                            'cloud' => false,
+                            'del' => true,
+                            'description' => false,
+                        )
+                    ); ?>
                 </td>
             </tr>
-            <? if (COption::GetOptionString("iblock", "use_htmledit", "Y") == "Y" && Loader::includeModule("fileman")):?>
+            <? if (COption::GetOptionString("iblock", "use_htmledit", "Y") == "Y" && Loader::includeModule(
+                    "fileman"
+                )):?>
                 <tr>
                     <td colspan="2" align="center">
                         <? CFileMan::AddHTMLEditorFrame(
@@ -1896,105 +2136,206 @@ if ($arIBTYPE !== false):
             </tr>
             <tr class="adm-detail-valign-top">
                 <td width="40%"><? echo GetMessage("IB_E_SEO_META_TITLE") ?></td>
-                <td width="60%"><? echo IBlockInheritedPropertyInput($ID, "SECTION_META_TITLE", $str_IPROPERTY_TEMPLATES, "S") ?></td>
+                <td width="60%"><? echo IBlockInheritedPropertyInput(
+                        $ID,
+                        "SECTION_META_TITLE",
+                        $str_IPROPERTY_TEMPLATES,
+                        "S"
+                    ) ?></td>
             </tr>
             <tr class="adm-detail-valign-top">
                 <td width="40%"><? echo GetMessage("IB_E_SEO_META_KEYWORDS") ?></td>
-                <td width="60%"><? echo IBlockInheritedPropertyInput($ID, "SECTION_META_KEYWORDS", $str_IPROPERTY_TEMPLATES, "S") ?></td>
+                <td width="60%"><? echo IBlockInheritedPropertyInput(
+                        $ID,
+                        "SECTION_META_KEYWORDS",
+                        $str_IPROPERTY_TEMPLATES,
+                        "S"
+                    ) ?></td>
             </tr>
             <tr class="adm-detail-valign-top">
                 <td width="40%"><? echo GetMessage("IB_E_SEO_META_DESCRIPTION") ?></td>
-                <td width="60%"><? echo IBlockInheritedPropertyInput($ID, "SECTION_META_DESCRIPTION", $str_IPROPERTY_TEMPLATES, "S") ?></td>
+                <td width="60%"><? echo IBlockInheritedPropertyInput(
+                        $ID,
+                        "SECTION_META_DESCRIPTION",
+                        $str_IPROPERTY_TEMPLATES,
+                        "S"
+                    ) ?></td>
             </tr>
             <tr class="adm-detail-valign-top">
                 <td width="40%"><? echo GetMessage("IB_E_SEO_SECTION_PAGE_TITLE") ?></td>
-                <td width="60%"><? echo IBlockInheritedPropertyInput($ID, "SECTION_PAGE_TITLE", $str_IPROPERTY_TEMPLATES, "S") ?></td>
+                <td width="60%"><? echo IBlockInheritedPropertyInput(
+                        $ID,
+                        "SECTION_PAGE_TITLE",
+                        $str_IPROPERTY_TEMPLATES,
+                        "S"
+                    ) ?></td>
             </tr>
             <tr class="heading">
                 <td colspan="2"><? echo GetMessage("IB_E_SEO_FOR_ELEMENTS") ?></td>
             </tr>
             <tr class="adm-detail-valign-top">
                 <td width="40%"><? echo GetMessage("IB_E_SEO_META_TITLE") ?></td>
-                <td width="60%"><? echo IBlockInheritedPropertyInput($ID, "ELEMENT_META_TITLE", $str_IPROPERTY_TEMPLATES, "E") ?></td>
+                <td width="60%"><? echo IBlockInheritedPropertyInput(
+                        $ID,
+                        "ELEMENT_META_TITLE",
+                        $str_IPROPERTY_TEMPLATES,
+                        "E"
+                    ) ?></td>
             </tr>
             <tr class="adm-detail-valign-top">
                 <td width="40%"><? echo GetMessage("IB_E_SEO_META_KEYWORDS") ?></td>
-                <td width="60%"><? echo IBlockInheritedPropertyInput($ID, "ELEMENT_META_KEYWORDS", $str_IPROPERTY_TEMPLATES, "E") ?></td>
+                <td width="60%"><? echo IBlockInheritedPropertyInput(
+                        $ID,
+                        "ELEMENT_META_KEYWORDS",
+                        $str_IPROPERTY_TEMPLATES,
+                        "E"
+                    ) ?></td>
             </tr>
             <tr class="adm-detail-valign-top">
                 <td width="40%"><? echo GetMessage("IB_E_SEO_META_DESCRIPTION") ?></td>
-                <td width="60%"><? echo IBlockInheritedPropertyInput($ID, "ELEMENT_META_DESCRIPTION", $str_IPROPERTY_TEMPLATES, "E") ?></td>
+                <td width="60%"><? echo IBlockInheritedPropertyInput(
+                        $ID,
+                        "ELEMENT_META_DESCRIPTION",
+                        $str_IPROPERTY_TEMPLATES,
+                        "E"
+                    ) ?></td>
             </tr>
             <tr class="adm-detail-valign-top">
                 <td width="40%"><? echo GetMessage("IB_E_SEO_PAGE_TITLE") ?></td>
-                <td width="60%"><? echo IBlockInheritedPropertyInput($ID, "ELEMENT_PAGE_TITLE", $str_IPROPERTY_TEMPLATES, "E") ?></td>
+                <td width="60%"><? echo IBlockInheritedPropertyInput(
+                        $ID,
+                        "ELEMENT_PAGE_TITLE",
+                        $str_IPROPERTY_TEMPLATES,
+                        "E"
+                    ) ?></td>
             </tr>
             <tr class="heading">
                 <td colspan="2"><? echo GetMessage("IB_E_SEO_FOR_SECTIONS_PICTURE") ?></td>
             </tr>
             <tr class="adm-detail-valign-top">
                 <td width="40%"><? echo GetMessage("IB_E_SEO_FILE_ALT") ?></td>
-                <td width="60%"><? echo IBlockInheritedPropertyInput($ID, "SECTION_PICTURE_FILE_ALT", $str_IPROPERTY_TEMPLATES, "S") ?></td>
+                <td width="60%"><? echo IBlockInheritedPropertyInput(
+                        $ID,
+                        "SECTION_PICTURE_FILE_ALT",
+                        $str_IPROPERTY_TEMPLATES,
+                        "S"
+                    ) ?></td>
             </tr>
             <tr class="adm-detail-valign-top">
                 <td width="40%"><? echo GetMessage("IB_E_SEO_FILE_TITLE") ?></td>
-                <td width="60%"><? echo IBlockInheritedPropertyInput($ID, "SECTION_PICTURE_FILE_TITLE", $str_IPROPERTY_TEMPLATES, "S") ?></td>
+                <td width="60%"><? echo IBlockInheritedPropertyInput(
+                        $ID,
+                        "SECTION_PICTURE_FILE_TITLE",
+                        $str_IPROPERTY_TEMPLATES,
+                        "S"
+                    ) ?></td>
             </tr>
             <tr class="adm-detail-valign-top">
                 <td width="40%"><? echo GetMessage("IB_E_SEO_FILE_NAME") ?></td>
-                <td width="60%"><? echo IBlockInheritedPropertyInput($ID, "SECTION_PICTURE_FILE_NAME", $str_IPROPERTY_TEMPLATES, "S") ?></td>
+                <td width="60%"><? echo IBlockInheritedPropertyInput(
+                        $ID,
+                        "SECTION_PICTURE_FILE_NAME",
+                        $str_IPROPERTY_TEMPLATES,
+                        "S"
+                    ) ?></td>
             </tr>
             <tr class="heading">
                 <td colspan="2"><? echo GetMessage("IB_E_SEO_FOR_SECTIONS_DETAIL_PICTURE") ?></td>
             </tr>
             <tr class="adm-detail-valign-top">
                 <td width="40%"><? echo GetMessage("IB_E_SEO_FILE_ALT") ?></td>
-                <td width="60%"><? echo IBlockInheritedPropertyInput($ID, "SECTION_DETAIL_PICTURE_FILE_ALT", $str_IPROPERTY_TEMPLATES, "S") ?></td>
+                <td width="60%"><? echo IBlockInheritedPropertyInput(
+                        $ID,
+                        "SECTION_DETAIL_PICTURE_FILE_ALT",
+                        $str_IPROPERTY_TEMPLATES,
+                        "S"
+                    ) ?></td>
             </tr>
             <tr class="adm-detail-valign-top">
                 <td width="40%"><? echo GetMessage("IB_E_SEO_FILE_TITLE") ?></td>
-                <td width="60%"><? echo IBlockInheritedPropertyInput($ID, "SECTION_DETAIL_PICTURE_FILE_TITLE", $str_IPROPERTY_TEMPLATES, "S") ?></td>
+                <td width="60%"><? echo IBlockInheritedPropertyInput(
+                        $ID,
+                        "SECTION_DETAIL_PICTURE_FILE_TITLE",
+                        $str_IPROPERTY_TEMPLATES,
+                        "S"
+                    ) ?></td>
             </tr>
             <tr class="adm-detail-valign-top">
                 <td width="40%"><? echo GetMessage("IB_E_SEO_FILE_NAME") ?></td>
-                <td width="60%"><? echo IBlockInheritedPropertyInput($ID, "SECTION_DETAIL_PICTURE_FILE_NAME", $str_IPROPERTY_TEMPLATES, "S") ?></td>
+                <td width="60%"><? echo IBlockInheritedPropertyInput(
+                        $ID,
+                        "SECTION_DETAIL_PICTURE_FILE_NAME",
+                        $str_IPROPERTY_TEMPLATES,
+                        "S"
+                    ) ?></td>
             </tr>
             <tr class="heading">
                 <td colspan="2"><? echo GetMessage("IB_E_SEO_FOR_ELEMENTS_PREVIEW_PICTURE") ?></td>
             </tr>
             <tr class="adm-detail-valign-top">
                 <td width="40%"><? echo GetMessage("IB_E_SEO_FILE_ALT") ?></td>
-                <td width="60%"><? echo IBlockInheritedPropertyInput($ID, "ELEMENT_PREVIEW_PICTURE_FILE_ALT", $str_IPROPERTY_TEMPLATES, "E") ?></td>
+                <td width="60%"><? echo IBlockInheritedPropertyInput(
+                        $ID,
+                        "ELEMENT_PREVIEW_PICTURE_FILE_ALT",
+                        $str_IPROPERTY_TEMPLATES,
+                        "E"
+                    ) ?></td>
             </tr>
             <tr class="adm-detail-valign-top">
                 <td width="40%"><? echo GetMessage("IB_E_SEO_FILE_TITLE") ?></td>
-                <td width="60%"><? echo IBlockInheritedPropertyInput($ID, "ELEMENT_PREVIEW_PICTURE_FILE_TITLE", $str_IPROPERTY_TEMPLATES, "E") ?></td>
+                <td width="60%"><? echo IBlockInheritedPropertyInput(
+                        $ID,
+                        "ELEMENT_PREVIEW_PICTURE_FILE_TITLE",
+                        $str_IPROPERTY_TEMPLATES,
+                        "E"
+                    ) ?></td>
             </tr>
             <tr class="adm-detail-valign-top">
                 <td width="40%"><? echo GetMessage("IB_E_SEO_FILE_NAME") ?></td>
-                <td width="60%"><? echo IBlockInheritedPropertyInput($ID, "ELEMENT_PREVIEW_PICTURE_FILE_NAME", $str_IPROPERTY_TEMPLATES, "E") ?></td>
+                <td width="60%"><? echo IBlockInheritedPropertyInput(
+                        $ID,
+                        "ELEMENT_PREVIEW_PICTURE_FILE_NAME",
+                        $str_IPROPERTY_TEMPLATES,
+                        "E"
+                    ) ?></td>
             </tr>
             <tr class="heading">
                 <td colspan="2"><? echo GetMessage("IB_E_SEO_FOR_ELEMENTS_DETAIL_PICTURE") ?></td>
             </tr>
             <tr class="adm-detail-valign-top">
                 <td width="40%"><? echo GetMessage("IB_E_SEO_FILE_ALT") ?></td>
-                <td width="60%"><? echo IBlockInheritedPropertyInput($ID, "ELEMENT_DETAIL_PICTURE_FILE_ALT", $str_IPROPERTY_TEMPLATES, "E") ?></td>
+                <td width="60%"><? echo IBlockInheritedPropertyInput(
+                        $ID,
+                        "ELEMENT_DETAIL_PICTURE_FILE_ALT",
+                        $str_IPROPERTY_TEMPLATES,
+                        "E"
+                    ) ?></td>
             </tr>
             <tr class="adm-detail-valign-top">
                 <td width="40%"><? echo GetMessage("IB_E_SEO_FILE_TITLE") ?></td>
-                <td width="60%"><? echo IBlockInheritedPropertyInput($ID, "ELEMENT_DETAIL_PICTURE_FILE_TITLE", $str_IPROPERTY_TEMPLATES, "E") ?></td>
+                <td width="60%"><? echo IBlockInheritedPropertyInput(
+                        $ID,
+                        "ELEMENT_DETAIL_PICTURE_FILE_TITLE",
+                        $str_IPROPERTY_TEMPLATES,
+                        "E"
+                    ) ?></td>
             </tr>
             <tr class="adm-detail-valign-top">
                 <td width="40%"><? echo GetMessage("IB_E_SEO_FILE_NAME") ?></td>
-                <td width="60%"><? echo IBlockInheritedPropertyInput($ID, "ELEMENT_DETAIL_PICTURE_FILE_NAME", $str_IPROPERTY_TEMPLATES, "E") ?></td>
+                <td width="60%"><? echo IBlockInheritedPropertyInput(
+                        $ID,
+                        "ELEMENT_DETAIL_PICTURE_FILE_NAME",
+                        $str_IPROPERTY_TEMPLATES,
+                        "E"
+                    ) ?></td>
             </tr>
             <tr class="heading">
                 <td colspan="2"><? echo GetMessage("IB_E_SEO_MANAGEMENT") ?></td>
             </tr>
             <tr>
-                <td width="40%"><label
-                            for="IPROPERTY_CLEAR_VALUES"><? echo GetMessage("IB_E_SEO_CLEAR_VALUES") ?></label></td>
+                <td width="40%"><label for="IPROPERTY_CLEAR_VALUES"><? echo GetMessage(
+                            "IB_E_SEO_CLEAR_VALUES"
+                        ) ?></label></td>
                 <td width="60%">
                     <input type="checkbox" id="IPROPERTY_CLEAR_VALUES" name="IPROPERTY_CLEAR_VALUES" value="Y"/>
                 </td>
@@ -2007,23 +2348,28 @@ if ($arIBTYPE !== false):
                     <table border="0" cellspacing="0" cellpadding="0" class="internal"
                            style="width:690px; margin: 0 auto;">
                         <tr class="heading">
-                            <td width="125"
-                                style="text-align: left !important;"><? echo GetMessage("IB_E_FIELD_NAME") ?></td>
+                            <td width="125" style="text-align: left !important;"><? echo GetMessage(
+                                    "IB_E_FIELD_NAME"
+                                ) ?></td>
                             <td width="40"><? echo GetMessage("IB_E_FIELD_IS_REQUIRED") ?></td>
-                            <td width="450"
-                                style="text-align: left !important;"><? echo GetMessage("IB_E_FIELD_DEFAULT_VALUE") ?></td>
+                            <td width="450" style="text-align: left !important;"><? echo GetMessage(
+                                    "IB_E_FIELD_DEFAULT_VALUE"
+                                ) ?></td>
                         </tr>
                         <?
-                        if ($bVarsFromForm)
+                        if ($bVarsFromForm) {
                             $arFields = $_REQUEST["FIELDS"];
-                        else
+                        } else {
                             $arFields = CIBlock::GetFields($ID);
+                        }
                         $arDefFields = CIBlock::GetFieldsDefaults();
                         foreach ($arDefFields as $FIELD_ID => $arField):
-                            if ($arField["VISIBLE"] == "N")
+                            if ($arField["VISIBLE"] == "N") {
                                 continue;
-                            if (preg_match("/^(SECTION_|LOG_)/", $FIELD_ID))
+                            }
+                            if (preg_match("/^(SECTION_|LOG_)/", $FIELD_ID)) {
                                 continue;
+                            }
                             ?>
                             <tr <?
                             if (
@@ -2032,8 +2378,9 @@ if ($arIBTYPE !== false):
                                 || $FIELD_ID === "DETAIL_PICTURE"
                                 || $FIELD_ID === "DETAIL_TEXT"
                                 || $FIELD_ID === "CODE"
-                            )
+                            ) {
                                 echo 'class="adm-detail-valign-top"';
+                            }
                             ?>>
                                 <td><? echo $arDefFields[$FIELD_ID]["NAME"] ?></td>
                                 <td style="text-align:center">
@@ -2063,39 +2410,55 @@ if ($arIBTYPE !== false):
                                         case "ACTIVE":
                                             ?>
                                             <select name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE]" height="1">
-                                                <option value="Y" <? if ($arFields[$FIELD_ID]["DEFAULT_VALUE"] === "Y") echo "selected" ?>><? echo GetMessage("MAIN_YES") ?></option>
-                                                <option value="N" <? if ($arFields[$FIELD_ID]["DEFAULT_VALUE"] === "N") echo "selected" ?>><? echo GetMessage("MAIN_NO") ?></option>
+                                                <option value="Y" <? if ($arFields[$FIELD_ID]["DEFAULT_VALUE"] === "Y") echo "selected" ?>><? echo GetMessage(
+                                                        "MAIN_YES"
+                                                    ) ?></option>
+                                                <option value="N" <? if ($arFields[$FIELD_ID]["DEFAULT_VALUE"] === "N") echo "selected" ?>><? echo GetMessage(
+                                                        "MAIN_NO"
+                                                    ) ?></option>
                                             </select>
                                             <?
                                             break;
                                         case "ACTIVE_FROM":
                                             ?>
                                             <select name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE]" height="1">
-                                                <option value="" <? if ($arFields[$FIELD_ID]["DEFAULT_VALUE"] === "") echo "selected" ?>><? echo GetMessage("IB_E_FIELD_ACTIVE_FROM_EMPTY") ?></option>
-                                                <option value="=now" <? if ($arFields[$FIELD_ID]["DEFAULT_VALUE"] === "=now") echo "selected" ?>><? echo GetMessage("IB_E_FIELD_ACTIVE_FROM_NOW") ?></option>
-                                                <option value="=today" <? if ($arFields[$FIELD_ID]["DEFAULT_VALUE"] === "=today") echo "selected" ?>><? echo GetMessage("IB_E_FIELD_ACTIVE_FROM_TODAY") ?></option>
+                                                <option value="" <? if ($arFields[$FIELD_ID]["DEFAULT_VALUE"] === "") echo "selected" ?>><? echo GetMessage(
+                                                        "IB_E_FIELD_ACTIVE_FROM_EMPTY"
+                                                    ) ?></option>
+                                                <option value="=now" <? if ($arFields[$FIELD_ID]["DEFAULT_VALUE"] === "=now") echo "selected" ?>><? echo GetMessage(
+                                                        "IB_E_FIELD_ACTIVE_FROM_NOW"
+                                                    ) ?></option>
+                                                <option value="=today" <? if ($arFields[$FIELD_ID]["DEFAULT_VALUE"] === "=today") echo "selected" ?>><? echo GetMessage(
+                                                        "IB_E_FIELD_ACTIVE_FROM_TODAY"
+                                                    ) ?></option>
                                             </select>
                                             <?
                                             break;
                                         case "ACTIVE_TO":
                                             ?>
-                                            <label for="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE]"><? echo GetMessage("IB_E_FIELD_ACTIVE_TO") ?></label>
+                                            <label for="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE]"><? echo GetMessage(
+                                                    "IB_E_FIELD_ACTIVE_TO"
+                                                ) ?></label>
                                             <input name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE]" type="text"
-                                                   value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]) ?>"
-                                                   size="5">
+                                                   value="<? echo htmlspecialcharsbx(
+                                                       $arFields[$FIELD_ID]["DEFAULT_VALUE"]
+                                                   ) ?>" size="5">
                                             <?
                                             break;
                                         case "NAME":
                                             ?>
                                             <input name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE]" type="text"
-                                                   value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]) ?>"
-                                                   size="60">
+                                                   value="<? echo htmlspecialcharsbx(
+                                                       $arFields[$FIELD_ID]["DEFAULT_VALUE"]
+                                                   ) ?>" size="60">
                                             <?
                                             break;
                                         case "SORT":
                                             ?>
                                             <input name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE]" type="hidden"
-                                                   value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]) ?>">
+                                                   value="<? echo htmlspecialcharsbx(
+                                                       $arFields[$FIELD_ID]["DEFAULT_VALUE"]
+                                                   ) ?>">
                                             <?
                                             break;
                                         case "DETAIL_TEXT_TYPE":
@@ -2126,15 +2489,18 @@ if ($arIBTYPE !== false):
                                                                 id="FIELDS[<? echo $FIELD_ID ?>_ALLOW_CHANGE][DEFAULT_VALUE]"
                                                                 name="FIELDS[<? echo $FIELD_ID ?>_ALLOW_CHANGE][DEFAULT_VALUE]"
                                                             <?
-                                                            if ($arFields[$FIELD_ID . "_ALLOW_CHANGE"]["DEFAULT_VALUE"] !== "N")
+                                                            if ($arFields[$FIELD_ID . "_ALLOW_CHANGE"]["DEFAULT_VALUE"] !== "N") {
                                                                 echo "checked";
+                                                            }
                                                             ?>
                                                         >
                                                     </div>
                                                     <div class="adm-list-label">
                                                         <label
                                                                 for="FIELDS[<? echo $FIELD_ID ?>_ALLOW_CHANGE][DEFAULT_VALUE]"
-                                                        ><? echo GetMessage("IB_E_FIELD_TEXT_TYPE_ALLOW_CHANGE") ?></label>
+                                                        ><? echo GetMessage(
+                                                                "IB_E_FIELD_TEXT_TYPE_ALLOW_CHANGE"
+                                                            ) ?></label>
                                                     </div>
                                                 </div>
                                             </div>
@@ -2144,7 +2510,9 @@ if ($arIBTYPE !== false):
                                         case "PREVIEW_TEXT":
                                             ?>
                                             <textarea name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE]" rows="5"
-                                                      cols="47"><? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]) ?></textarea>
+                                                      cols="47"><? echo htmlspecialcharsbx(
+                                                    $arFields[$FIELD_ID]["DEFAULT_VALUE"]
+                                                ) ?></textarea>
                                             <?
                                             break;
                                         case "PREVIEW_PICTURE":
@@ -2158,8 +2526,9 @@ if ($arIBTYPE !== false):
                                                                 id="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][FROM_DETAIL]"
                                                                 name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][FROM_DETAIL]"
                                                             <?
-                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["FROM_DETAIL"] === "Y")
+                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["FROM_DETAIL"] === "Y") {
                                                                 echo "checked";
+                                                            }
                                                             ?>
                                                                 onclick="
                                                                         BX('SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][UPDATE_WITH_DETAIL]').style.display =
@@ -2170,7 +2539,9 @@ if ($arIBTYPE !== false):
                                                     <div class="adm-list-label">
                                                         <label
                                                                 for="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][FROM_DETAIL]"
-                                                        ><? echo GetMessage("IB_E_FIELD_PREVIEW_PICTURE_FROM_DETAIL") ?></label>
+                                                        ><? echo GetMessage(
+                                                                "IB_E_FIELD_PREVIEW_PICTURE_FROM_DETAIL"
+                                                            ) ?></label>
                                                     </div>
                                                 </div>
                                                 <div class="adm-list-item"
@@ -2194,7 +2565,9 @@ if ($arIBTYPE !== false):
                                                     <div class="adm-list-label">
                                                         <label
                                                                 for="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][UPDATE_WITH_DETAIL]"
-                                                        ><? echo GetMessage("IB_E_FIELD_PREVIEW_PICTURE_UPDATE_WITH_DETAIL_EXT") ?></label>
+                                                        ><? echo GetMessage(
+                                                                "IB_E_FIELD_PREVIEW_PICTURE_UPDATE_WITH_DETAIL_EXT"
+                                                            ) ?></label>
                                                     </div>
                                                 </div>
                                                 <div class="adm-list-item">
@@ -2213,7 +2586,9 @@ if ($arIBTYPE !== false):
                                                     <div class="adm-list-label">
                                                         <label
                                                                 for="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][DELETE_WITH_DETAIL]"
-                                                        ><? echo GetMessage("IB_E_FIELD_PREVIEW_PICTURE_DELETE_WITH_DETAIL") ?></label>
+                                                        ><? echo GetMessage(
+                                                                "IB_E_FIELD_PREVIEW_PICTURE_DELETE_WITH_DETAIL"
+                                                            ) ?></label>
                                                     </div>
                                                 </div>
                                                 <div class="adm-list-item">
@@ -2224,8 +2599,9 @@ if ($arIBTYPE !== false):
                                                                 id="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][SCALE]"
                                                                 name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][SCALE]"
                                                             <?
-                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["SCALE"] === "Y")
+                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["SCALE"] === "Y") {
                                                                 echo "checked";
+                                                            }
                                                             ?>
                                                                 onclick="
                                                                         BX('SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WIDTH]').style.display =
@@ -2251,9 +2627,9 @@ if ($arIBTYPE !== false):
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_PICTURE_WIDTH") ?>:&nbsp;<input
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WIDTH]"
-                                                            type="text"
-                                                            value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WIDTH"]) ?>"
-                                                            size="7">
+                                                            type="text" value="<? echo htmlspecialcharsbx(
+                                                        $arFields[$FIELD_ID]["DEFAULT_VALUE"]["WIDTH"]
+                                                    ) ?>" size="7">
                                                 </div>
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][HEIGHT]"
@@ -2263,9 +2639,9 @@ if ($arIBTYPE !== false):
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_PICTURE_HEIGHT") ?>:&nbsp;<input
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][HEIGHT]"
-                                                            type="text"
-                                                            value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]["HEIGHT"]) ?>"
-                                                            size="7">
+                                                            type="text" value="<? echo htmlspecialcharsbx(
+                                                        $arFields[$FIELD_ID]["DEFAULT_VALUE"]["HEIGHT"]
+                                                    ) ?>" size="7">
                                                 </div>
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][IGNORE_ERRORS_DIV]"
@@ -2280,15 +2656,18 @@ if ($arIBTYPE !== false):
                                                                 id="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][IGNORE_ERRORS]"
                                                                 name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][IGNORE_ERRORS]"
                                                             <?
-                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["IGNORE_ERRORS"] === "Y")
+                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["IGNORE_ERRORS"] === "Y") {
                                                                 echo "checked";
+                                                            }
                                                             ?>
                                                         >
                                                     </div>
                                                     <div class="adm-list-label">
                                                         <label
                                                                 for="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][IGNORE_ERRORS]"
-                                                        ><? echo GetMessage("IB_E_FIELD_PICTURE_IGNORE_ERRORS") ?></label>
+                                                        ><? echo GetMessage(
+                                                                "IB_E_FIELD_PICTURE_IGNORE_ERRORS"
+                                                            ) ?></label>
                                                     </div>
                                                 </div>
                                                 <div class="adm-list-item"
@@ -2304,8 +2683,9 @@ if ($arIBTYPE !== false):
                                                                 id="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][METHOD]"
                                                                 name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][METHOD]"
                                                             <?
-                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["METHOD"] === "resample")
+                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["METHOD"] === "resample") {
                                                                 echo "checked";
+                                                            }
                                                             ?>
                                                         >
                                                     </div>
@@ -2327,7 +2707,9 @@ if ($arIBTYPE !== false):
                                                     ) ?>:&nbsp;<input
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][COMPRESSION]"
                                                             type="text"
-                                                            value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]["COMPRESSION"]) ?>"
+                                                            value="<? echo htmlspecialcharsbx(
+                                                                $arFields[$FIELD_ID]["DEFAULT_VALUE"]["COMPRESSION"]
+                                                            ) ?>"
                                                             style="width: 30px"
                                                     >
                                                 </div>
@@ -2339,8 +2721,9 @@ if ($arIBTYPE !== false):
                                                                 id="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_WATERMARK_FILE]"
                                                                 name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_WATERMARK_FILE]"
                                                             <?
-                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_FILE"] === "Y")
+                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_FILE"] === "Y") {
                                                                 echo "checked";
+                                                            }
                                                             ?>
                                                                 onclick="
                                                                         BX('SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_WATERMARK_FILE]').style.display =
@@ -2353,33 +2736,47 @@ if ($arIBTYPE !== false):
                                                     <div class="adm-list-label">
                                                         <label
                                                                 for="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_WATERMARK_FILE]"
-                                                        ><? echo GetMessage("IB_E_FIELD_PICTURE_USE_WATERMARK_FILE") ?></label>
+                                                        ><? echo GetMessage(
+                                                                "IB_E_FIELD_PICTURE_USE_WATERMARK_FILE"
+                                                            ) ?></label>
                                                     </div>
                                                 </div>
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_WATERMARK_FILE]"
                                                      style="padding-left:16px;display:<?
-                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_FILE"] === "Y") echo 'block'; else echo 'none';
+                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_FILE"] === "Y") {
+                                                         echo 'block';
+                                                     } else {
+                                                         echo 'none';
+                                                     }
                                                      ?>"
                                                 >
-                                                    <? CAdminFileDialog::ShowScript(array(
-                                                        "event" => "BtnClick" . $FIELD_ID,
-                                                        "arResultDest" => array("ELEMENT_ID" => "FIELDS_" . $FIELD_ID . "__DEFAULT_VALUE__WATERMARK_FILE_"),
-                                                        "arPath" => array("PATH" => GetDirPath(($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_FILE"]))),
-                                                        "select" => 'F',// F - file only, D - folder only
-                                                        "operation" => 'O',// O - open, S - save
-                                                        "showUploadTab" => true,
-                                                        "showAddToMenuTab" => false,
-                                                        "fileFilter" => 'jpg,jpeg,png,gif',
-                                                        "allowAllFiles" => false,
-                                                        "SaveConfig" => true,
-                                                    )); ?>
+                                                    <? CAdminFileDialog::ShowScript(
+                                                        array(
+                                                            "event" => "BtnClick" . $FIELD_ID,
+                                                            "arResultDest" => array("ELEMENT_ID" => "FIELDS_" . $FIELD_ID . "__DEFAULT_VALUE__WATERMARK_FILE_"),
+                                                            "arPath" => array(
+                                                                "PATH" => GetDirPath(
+                                                                    ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_FILE"])
+                                                                )
+                                                            ),
+                                                            "select" => 'F',// F - file only, D - folder only
+                                                            "operation" => 'O',// O - open, S - save
+                                                            "showUploadTab" => true,
+                                                            "showAddToMenuTab" => false,
+                                                            "fileFilter" => 'jpg,jpeg,png,gif,webp',
+                                                            "allowAllFiles" => false,
+                                                            "SaveConfig" => true,
+                                                        )
+                                                    ); ?>
                                                     <? echo GetMessage("IB_E_FIELD_PICTURE_WATERMARK_FILE") ?>
                                                     :&nbsp;<input
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_FILE]"
                                                             id="FIELDS_<? echo $FIELD_ID ?>__DEFAULT_VALUE__WATERMARK_FILE_"
                                                             type="text"
-                                                            value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_FILE"]) ?>"
+                                                            value="<? echo htmlspecialcharsbx(
+                                                                $arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_FILE"]
+                                                            ) ?>"
                                                             size="35"
                                                     >&nbsp;<input type="button" value="..."
                                                                   onClick="BtnClick<? echo $FIELD_ID ?>()">
@@ -2387,20 +2784,30 @@ if ($arIBTYPE !== false):
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_FILE_ALPHA]"
                                                      style="padding-left:16px;display:<?
-                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_FILE"] === "Y") echo 'block'; else echo 'none';
+                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_FILE"] === "Y") {
+                                                         echo 'block';
+                                                     } else {
+                                                         echo 'none';
+                                                     }
                                                      ?>"
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_PICTURE_WATERMARK_FILE_ALPHA") ?>:&nbsp;<input
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_FILE_ALPHA]"
                                                             type="text"
-                                                            value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_FILE_ALPHA"]) ?>"
+                                                            value="<? echo htmlspecialcharsbx(
+                                                                $arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_FILE_ALPHA"]
+                                                            ) ?>"
                                                             size="3"
                                                     >
                                                 </div>
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_FILE_POSITION]"
                                                      style="padding-left:16px;display:<?
-                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_FILE"] === "Y") echo 'block'; else echo 'none';
+                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_FILE"] === "Y") {
+                                                         echo 'block';
+                                                     } else {
+                                                         echo 'none';
+                                                     }
                                                      ?>"
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_PICTURE_WATERMARK_POSITION") ?>:&nbsp;<? echo SelectBox(
@@ -2418,8 +2825,9 @@ if ($arIBTYPE !== false):
                                                                 id="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_WATERMARK_TEXT]"
                                                                 name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_WATERMARK_TEXT]"
                                                             <?
-                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y")
+                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") {
                                                                 echo "checked";
+                                                            }
                                                             ?>
                                                                 onclick="
                                                                         BX('SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_WATERMARK_TEXT]').style.display =
@@ -2434,46 +2842,66 @@ if ($arIBTYPE !== false):
                                                     <div class="adm-list-label">
                                                         <label
                                                                 for="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_WATERMARK_TEXT]"
-                                                        ><? echo GetMessage("IB_E_FIELD_PICTURE_USE_WATERMARK_TEXT") ?></label>
+                                                        ><? echo GetMessage(
+                                                                "IB_E_FIELD_PICTURE_USE_WATERMARK_TEXT"
+                                                            ) ?></label>
                                                     </div>
                                                 </div>
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_WATERMARK_TEXT]"
                                                      style="padding-left:16px;display:<?
-                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") echo 'block'; else echo 'none';
+                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") {
+                                                         echo 'block';
+                                                     } else {
+                                                         echo 'none';
+                                                     }
                                                      ?>"
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_PICTURE_WATERMARK_TEXT") ?>
                                                     :&nbsp;<input
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_TEXT]"
                                                             type="text"
-                                                            value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_TEXT"]) ?>"
+                                                            value="<? echo htmlspecialcharsbx(
+                                                                $arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_TEXT"]
+                                                            ) ?>"
                                                             size="35"
                                                     >
-                                                    <? CAdminFileDialog::ShowScript(array(
-                                                        "event" => "BtnClickFont" . $FIELD_ID,
-                                                        "arResultDest" => array("ELEMENT_ID" => "FIELDS_" . $FIELD_ID . "__DEFAULT_VALUE__WATERMARK_TEXT_FONT_"),
-                                                        "arPath" => array("PATH" => GetDirPath(($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_TEXT_FONT"]))),
-                                                        "select" => 'F',// F - file only, D - folder only
-                                                        "operation" => 'O',// O - open, S - save
-                                                        "showUploadTab" => true,
-                                                        "showAddToMenuTab" => false,
-                                                        "fileFilter" => 'ttf',
-                                                        "allowAllFiles" => false,
-                                                        "SaveConfig" => true,
-                                                    )); ?>
+                                                    <? CAdminFileDialog::ShowScript(
+                                                        array(
+                                                            "event" => "BtnClickFont" . $FIELD_ID,
+                                                            "arResultDest" => array("ELEMENT_ID" => "FIELDS_" . $FIELD_ID . "__DEFAULT_VALUE__WATERMARK_TEXT_FONT_"),
+                                                            "arPath" => array(
+                                                                "PATH" => GetDirPath(
+                                                                    ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_TEXT_FONT"])
+                                                                )
+                                                            ),
+                                                            "select" => 'F',// F - file only, D - folder only
+                                                            "operation" => 'O',// O - open, S - save
+                                                            "showUploadTab" => true,
+                                                            "showAddToMenuTab" => false,
+                                                            "fileFilter" => 'ttf',
+                                                            "allowAllFiles" => false,
+                                                            "SaveConfig" => true,
+                                                        )
+                                                    ); ?>
                                                 </div>
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_TEXT_FONT]"
                                                      style="padding-left:16px;display:<?
-                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") echo 'block'; else echo 'none';
+                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") {
+                                                         echo 'block';
+                                                     } else {
+                                                         echo 'none';
+                                                     }
                                                      ?>"
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_PICTURE_WATERMARK_TEXT_FONT") ?>:&nbsp;<input
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_TEXT_FONT]"
                                                             id="FIELDS_<? echo $FIELD_ID ?>__DEFAULT_VALUE__WATERMARK_TEXT_FONT_"
                                                             type="text"
-                                                            value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_TEXT_FONT"]) ?>"
+                                                            value="<? echo htmlspecialcharsbx(
+                                                                $arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_TEXT_FONT"]
+                                                            ) ?>"
                                                             size="35">&nbsp;<input
                                                             type="button"
                                                             value="..."
@@ -2483,14 +2911,20 @@ if ($arIBTYPE !== false):
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_TEXT_COLOR]"
                                                      style="padding-left:16px;display:<?
-                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") echo 'block'; else echo 'none';
+                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") {
+                                                         echo 'block';
+                                                     } else {
+                                                         echo 'none';
+                                                     }
                                                      ?>"
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_PICTURE_WATERMARK_TEXT_COLOR") ?>:&nbsp;<input
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_TEXT_COLOR]"
                                                             id="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_TEXT_COLOR]"
                                                             type="text"
-                                                            value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_TEXT_COLOR"]) ?>"
+                                                            value="<? echo htmlspecialcharsbx(
+                                                                $arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_TEXT_COLOR"]
+                                                            ) ?>"
                                                             size="7"
                                                     >
                                                     <script>
@@ -2515,21 +2949,31 @@ if ($arIBTYPE !== false):
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_TEXT_SIZE]"
                                                      style="padding-left:16px;display:<?
-                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") echo 'block'; else echo 'none';
+                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") {
+                                                         echo 'block';
+                                                     } else {
+                                                         echo 'none';
+                                                     }
                                                      ?>"
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_PICTURE_WATERMARK_SIZE") ?>
                                                     :&nbsp;<input
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_TEXT_SIZE]"
                                                             type="text"
-                                                            value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_TEXT_SIZE"]) ?>"
+                                                            value="<? echo htmlspecialcharsbx(
+                                                                $arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_TEXT_SIZE"]
+                                                            ) ?>"
                                                             size="3"
                                                     >
                                                 </div>
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_TEXT_POSITION]"
                                                      style="padding-left:16px;display:<?
-                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") echo 'block'; else echo 'none';
+                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") {
+                                                         echo 'block';
+                                                     } else {
+                                                         echo 'none';
+                                                     }
                                                      ?>"
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_PICTURE_WATERMARK_POSITION") ?>:&nbsp;<? echo SelectBox(
@@ -2553,8 +2997,9 @@ if ($arIBTYPE !== false):
                                                                 id="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][SCALE]"
                                                                 name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][SCALE]"
                                                             <?
-                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["SCALE"] === "Y")
+                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["SCALE"] === "Y") {
                                                                 echo "checked";
+                                                            }
                                                             ?>
                                                                 onclick="
                                                                         BX('SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WIDTH]').style.display =
@@ -2580,9 +3025,9 @@ if ($arIBTYPE !== false):
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_PICTURE_WIDTH") ?>:&nbsp;<input
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WIDTH]"
-                                                            type="text"
-                                                            value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WIDTH"]) ?>"
-                                                            size="7">
+                                                            type="text" value="<? echo htmlspecialcharsbx(
+                                                        $arFields[$FIELD_ID]["DEFAULT_VALUE"]["WIDTH"]
+                                                    ) ?>" size="7">
                                                 </div>
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][HEIGHT]"
@@ -2592,9 +3037,9 @@ if ($arIBTYPE !== false):
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_PICTURE_HEIGHT") ?>:&nbsp;<input
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][HEIGHT]"
-                                                            type="text"
-                                                            value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]["HEIGHT"]) ?>"
-                                                            size="7">
+                                                            type="text" value="<? echo htmlspecialcharsbx(
+                                                        $arFields[$FIELD_ID]["DEFAULT_VALUE"]["HEIGHT"]
+                                                    ) ?>" size="7">
                                                 </div>
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][IGNORE_ERRORS_DIV]"
@@ -2609,15 +3054,18 @@ if ($arIBTYPE !== false):
                                                                 id="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][IGNORE_ERRORS]"
                                                                 name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][IGNORE_ERRORS]"
                                                             <?
-                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["IGNORE_ERRORS"] === "Y")
+                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["IGNORE_ERRORS"] === "Y") {
                                                                 echo "checked";
+                                                            }
                                                             ?>
                                                         >
                                                     </div>
                                                     <div class="adm-list-label">
                                                         <label
                                                                 for="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][IGNORE_ERRORS]"
-                                                        ><? echo GetMessage("IB_E_FIELD_PICTURE_IGNORE_ERRORS") ?></label>
+                                                        ><? echo GetMessage(
+                                                                "IB_E_FIELD_PICTURE_IGNORE_ERRORS"
+                                                            ) ?></label>
                                                     </div>
                                                 </div>
                                                 <div class="adm-list-item"
@@ -2633,8 +3081,9 @@ if ($arIBTYPE !== false):
                                                                 id="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][METHOD]"
                                                                 name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][METHOD]"
                                                             <?
-                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["METHOD"] === "resample")
+                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["METHOD"] === "resample") {
                                                                 echo "checked";
+                                                            }
                                                             ?>
                                                         >
                                                     </div>
@@ -2656,7 +3105,9 @@ if ($arIBTYPE !== false):
                                                     ) ?>:&nbsp;<input
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][COMPRESSION]"
                                                             type="text"
-                                                            value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]["COMPRESSION"]) ?>"
+                                                            value="<? echo htmlspecialcharsbx(
+                                                                $arFields[$FIELD_ID]["DEFAULT_VALUE"]["COMPRESSION"]
+                                                            ) ?>"
                                                             style="width: 30px"
                                                     >
                                                 </div>
@@ -2668,8 +3119,9 @@ if ($arIBTYPE !== false):
                                                                 id="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_WATERMARK_FILE]"
                                                                 name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_WATERMARK_FILE]"
                                                             <?
-                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_FILE"] === "Y")
+                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_FILE"] === "Y") {
                                                                 echo "checked";
+                                                            }
                                                             ?>
                                                                 onclick="
                                                                         BX('SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_WATERMARK_FILE]').style.display =
@@ -2682,33 +3134,47 @@ if ($arIBTYPE !== false):
                                                     <div class="adm-list-label">
                                                         <label
                                                                 for="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_WATERMARK_FILE]"
-                                                        ><? echo GetMessage("IB_E_FIELD_PICTURE_USE_WATERMARK_FILE") ?></label>
+                                                        ><? echo GetMessage(
+                                                                "IB_E_FIELD_PICTURE_USE_WATERMARK_FILE"
+                                                            ) ?></label>
                                                     </div>
                                                 </div>
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_WATERMARK_FILE]"
                                                      style="padding-left:16px;display:<?
-                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_FILE"] === "Y") echo 'block'; else echo 'none';
+                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_FILE"] === "Y") {
+                                                         echo 'block';
+                                                     } else {
+                                                         echo 'none';
+                                                     }
                                                      ?>"
                                                 >
-                                                    <? CAdminFileDialog::ShowScript(array(
-                                                        "event" => "BtnClick" . $FIELD_ID,
-                                                        "arResultDest" => array("ELEMENT_ID" => "FIELDS_" . $FIELD_ID . "__DEFAULT_VALUE__WATERMARK_FILE_"),
-                                                        "arPath" => array("PATH" => GetDirPath(($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_FILE"]))),
-                                                        "select" => 'F',// F - file only, D - folder only
-                                                        "operation" => 'O',// O - open, S - save
-                                                        "showUploadTab" => true,
-                                                        "showAddToMenuTab" => false,
-                                                        "fileFilter" => 'jpg,jpeg,png,gif',
-                                                        "allowAllFiles" => false,
-                                                        "SaveConfig" => true,
-                                                    )); ?>
+                                                    <? CAdminFileDialog::ShowScript(
+                                                        array(
+                                                            "event" => "BtnClick" . $FIELD_ID,
+                                                            "arResultDest" => array("ELEMENT_ID" => "FIELDS_" . $FIELD_ID . "__DEFAULT_VALUE__WATERMARK_FILE_"),
+                                                            "arPath" => array(
+                                                                "PATH" => GetDirPath(
+                                                                    ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_FILE"])
+                                                                )
+                                                            ),
+                                                            "select" => 'F',// F - file only, D - folder only
+                                                            "operation" => 'O',// O - open, S - save
+                                                            "showUploadTab" => true,
+                                                            "showAddToMenuTab" => false,
+                                                            "fileFilter" => 'jpg,jpeg,png,gif,webp',
+                                                            "allowAllFiles" => false,
+                                                            "SaveConfig" => true,
+                                                        )
+                                                    ); ?>
                                                     <? echo GetMessage("IB_E_FIELD_PICTURE_WATERMARK_FILE") ?>
                                                     :&nbsp;<input
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_FILE]"
                                                             id="FIELDS_<? echo $FIELD_ID ?>__DEFAULT_VALUE__WATERMARK_FILE_"
                                                             type="text"
-                                                            value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_FILE"]) ?>"
+                                                            value="<? echo htmlspecialcharsbx(
+                                                                $arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_FILE"]
+                                                            ) ?>"
                                                             size="35"
                                                     >&nbsp;<input type="button" value="..."
                                                                   onClick="BtnClick<? echo $FIELD_ID ?>()">
@@ -2716,20 +3182,30 @@ if ($arIBTYPE !== false):
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_FILE_ALPHA]"
                                                      style="padding-left:16px;display:<?
-                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_FILE"] === "Y") echo 'block'; else echo 'none';
+                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_FILE"] === "Y") {
+                                                         echo 'block';
+                                                     } else {
+                                                         echo 'none';
+                                                     }
                                                      ?>"
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_PICTURE_WATERMARK_FILE_ALPHA") ?>:&nbsp;<input
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_FILE_ALPHA]"
                                                             type="text"
-                                                            value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_FILE_ALPHA"]) ?>"
+                                                            value="<? echo htmlspecialcharsbx(
+                                                                $arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_FILE_ALPHA"]
+                                                            ) ?>"
                                                             size="3"
                                                     >
                                                 </div>
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_FILE_POSITION]"
                                                      style="padding-left:16px;display:<?
-                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_FILE"] === "Y") echo 'block'; else echo 'none';
+                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_FILE"] === "Y") {
+                                                         echo 'block';
+                                                     } else {
+                                                         echo 'none';
+                                                     }
                                                      ?>"
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_PICTURE_WATERMARK_POSITION") ?>:&nbsp;<? echo SelectBox(
@@ -2747,8 +3223,9 @@ if ($arIBTYPE !== false):
                                                                 id="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_WATERMARK_TEXT]"
                                                                 name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_WATERMARK_TEXT]"
                                                             <?
-                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y")
+                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") {
                                                                 echo "checked";
+                                                            }
                                                             ?>
                                                                 onclick="
                                                                         BX('SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_WATERMARK_TEXT]').style.display =
@@ -2763,46 +3240,66 @@ if ($arIBTYPE !== false):
                                                     <div class="adm-list-label">
                                                         <label
                                                                 for="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_WATERMARK_TEXT]"
-                                                        ><? echo GetMessage("IB_E_FIELD_PICTURE_USE_WATERMARK_TEXT") ?></label>
+                                                        ><? echo GetMessage(
+                                                                "IB_E_FIELD_PICTURE_USE_WATERMARK_TEXT"
+                                                            ) ?></label>
                                                     </div>
                                                 </div>
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_WATERMARK_TEXT]"
                                                      style="padding-left:16px;display:<?
-                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") echo 'block'; else echo 'none';
+                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") {
+                                                         echo 'block';
+                                                     } else {
+                                                         echo 'none';
+                                                     }
                                                      ?>"
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_PICTURE_WATERMARK_TEXT") ?>
                                                     :&nbsp;<input
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_TEXT]"
                                                             type="text"
-                                                            value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_TEXT"]) ?>"
+                                                            value="<? echo htmlspecialcharsbx(
+                                                                $arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_TEXT"]
+                                                            ) ?>"
                                                             size="35"
                                                     >
-                                                    <? CAdminFileDialog::ShowScript(array(
-                                                        "event" => "BtnClickFont" . $FIELD_ID,
-                                                        "arResultDest" => array("ELEMENT_ID" => "FIELDS_" . $FIELD_ID . "__DEFAULT_VALUE__WATERMARK_TEXT_FONT_"),
-                                                        "arPath" => array("PATH" => GetDirPath(($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_TEXT_FONT"]))),
-                                                        "select" => 'F',// F - file only, D - folder only
-                                                        "operation" => 'O',// O - open, S - save
-                                                        "showUploadTab" => true,
-                                                        "showAddToMenuTab" => false,
-                                                        "fileFilter" => 'ttf',
-                                                        "allowAllFiles" => false,
-                                                        "SaveConfig" => true,
-                                                    )); ?>
+                                                    <? CAdminFileDialog::ShowScript(
+                                                        array(
+                                                            "event" => "BtnClickFont" . $FIELD_ID,
+                                                            "arResultDest" => array("ELEMENT_ID" => "FIELDS_" . $FIELD_ID . "__DEFAULT_VALUE__WATERMARK_TEXT_FONT_"),
+                                                            "arPath" => array(
+                                                                "PATH" => GetDirPath(
+                                                                    ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_TEXT_FONT"])
+                                                                )
+                                                            ),
+                                                            "select" => 'F',// F - file only, D - folder only
+                                                            "operation" => 'O',// O - open, S - save
+                                                            "showUploadTab" => true,
+                                                            "showAddToMenuTab" => false,
+                                                            "fileFilter" => 'ttf',
+                                                            "allowAllFiles" => false,
+                                                            "SaveConfig" => true,
+                                                        )
+                                                    ); ?>
                                                 </div>
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_TEXT_FONT]"
                                                      style="padding-left:16px;display:<?
-                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") echo 'block'; else echo 'none';
+                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") {
+                                                         echo 'block';
+                                                     } else {
+                                                         echo 'none';
+                                                     }
                                                      ?>"
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_PICTURE_WATERMARK_TEXT_FONT") ?>:&nbsp;<input
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_TEXT_FONT]"
                                                             id="FIELDS_<? echo $FIELD_ID ?>__DEFAULT_VALUE__WATERMARK_TEXT_FONT_"
                                                             type="text"
-                                                            value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_TEXT_FONT"]) ?>"
+                                                            value="<? echo htmlspecialcharsbx(
+                                                                $arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_TEXT_FONT"]
+                                                            ) ?>"
                                                             size="35">&nbsp;<input
                                                             type="button"
                                                             value="..."
@@ -2812,14 +3309,20 @@ if ($arIBTYPE !== false):
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_TEXT_COLOR]"
                                                      style="padding-left:16px;display:<?
-                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") echo 'block'; else echo 'none';
+                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") {
+                                                         echo 'block';
+                                                     } else {
+                                                         echo 'none';
+                                                     }
                                                      ?>"
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_PICTURE_WATERMARK_TEXT_COLOR") ?>:&nbsp;<input
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_TEXT_COLOR]"
                                                             id="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_TEXT_COLOR]"
                                                             type="text"
-                                                            value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_TEXT_COLOR"]) ?>"
+                                                            value="<? echo htmlspecialcharsbx(
+                                                                $arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_TEXT_COLOR"]
+                                                            ) ?>"
                                                             size="7"
                                                     >
                                                     <script>
@@ -2844,21 +3347,31 @@ if ($arIBTYPE !== false):
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_TEXT_SIZE]"
                                                      style="padding-left:16px;display:<?
-                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") echo 'block'; else echo 'none';
+                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") {
+                                                         echo 'block';
+                                                     } else {
+                                                         echo 'none';
+                                                     }
                                                      ?>"
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_PICTURE_WATERMARK_SIZE") ?>
                                                     :&nbsp;<input
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_TEXT_SIZE]"
                                                             type="text"
-                                                            value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_TEXT_SIZE"]) ?>"
+                                                            value="<? echo htmlspecialcharsbx(
+                                                                $arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_TEXT_SIZE"]
+                                                            ) ?>"
                                                             size="3"
                                                     >
                                                 </div>
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_TEXT_POSITION]"
                                                      style="padding-left:16px;display:<?
-                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") echo 'block'; else echo 'none';
+                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") {
+                                                         echo 'block';
+                                                     } else {
+                                                         echo 'none';
+                                                     }
                                                      ?>"
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_PICTURE_WATERMARK_POSITION") ?>:&nbsp;<? echo SelectBox(
@@ -2882,8 +3395,9 @@ if ($arIBTYPE !== false):
                                                                 id="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][UNIQUE]"
                                                                 name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][UNIQUE]"
                                                             <?
-                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["UNIQUE"] === "Y")
+                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["UNIQUE"] === "Y") {
                                                                 echo "checked";
+                                                            }
                                                             ?>
                                                         >
                                                     </div>
@@ -2901,8 +3415,9 @@ if ($arIBTYPE !== false):
                                                                 id="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][TRANSLITERATION]"
                                                                 name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][TRANSLITERATION]"
                                                             <?
-                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["TRANSLITERATION"] === "Y")
+                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["TRANSLITERATION"] === "Y") {
                                                                 echo "checked";
+                                                            }
                                                             ?>
                                                                 onclick="
                                                                         BX('SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][TRANS_LEN]').style.display =
@@ -2924,25 +3439,37 @@ if ($arIBTYPE !== false):
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][TRANS_LEN]"
                                                      style="padding-left:16px;display:<?
-                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["TRANSLITERATION"] === "Y") echo 'block'; else echo 'none';
+                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["TRANSLITERATION"] === "Y") {
+                                                         echo 'block';
+                                                     } else {
+                                                         echo 'none';
+                                                     }
                                                      ?>"
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_TRANS_LEN") ?>:&nbsp;<input
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][TRANS_LEN]"
                                                             type="text"
-                                                            value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]["TRANS_LEN"]) ?>"
+                                                            value="<? echo htmlspecialcharsbx(
+                                                                $arFields[$FIELD_ID]["DEFAULT_VALUE"]["TRANS_LEN"]
+                                                            ) ?>"
                                                             size="3"
                                                     >
                                                 </div>
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][TRANS_CASE]"
                                                      style="padding-left:16px;display:<?
-                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["TRANSLITERATION"] === "Y") echo 'block'; else echo 'none';
+                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["TRANSLITERATION"] === "Y") {
+                                                         echo 'block';
+                                                     } else {
+                                                         echo 'none';
+                                                     }
                                                      ?>"
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_TRANS_CASE") ?>:&nbsp;<select
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][TRANS_CASE]">
-                                                        <option value=""><? echo GetMessage("IB_E_FIELD_TRANS_CASE_LEAVE") ?>
+                                                        <option value=""><? echo GetMessage(
+                                                                "IB_E_FIELD_TRANS_CASE_LEAVE"
+                                                            ) ?>
                                                         </option>
                                                         <option value="L" <? if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["TRANS_CASE"] === "L") echo "selected" ?>>
                                                             <? echo GetMessage("IB_E_FIELD_TRANS_CASE_LOWER") ?>
@@ -2955,26 +3482,38 @@ if ($arIBTYPE !== false):
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][TRANS_SPACE]"
                                                      style="padding-left:16px;display:<?
-                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["TRANSLITERATION"] === "Y") echo 'block'; else echo 'none';
+                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["TRANSLITERATION"] === "Y") {
+                                                         echo 'block';
+                                                     } else {
+                                                         echo 'none';
+                                                     }
                                                      ?>"
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_TRANS_SPACE") ?>&nbsp;<input
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][TRANS_SPACE]"
                                                             type="text"
-                                                            value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]["TRANS_SPACE"]) ?>"
+                                                            value="<? echo htmlspecialcharsbx(
+                                                                $arFields[$FIELD_ID]["DEFAULT_VALUE"]["TRANS_SPACE"]
+                                                            ) ?>"
                                                             size="2"
                                                     >
                                                 </div>
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][TRANS_OTHER]"
                                                      style="padding-left:16px;display:<?
-                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["TRANSLITERATION"] === "Y") echo 'block'; else echo 'none';
+                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["TRANSLITERATION"] === "Y") {
+                                                         echo 'block';
+                                                     } else {
+                                                         echo 'none';
+                                                     }
                                                      ?>"
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_TRANS_OTHER") ?>&nbsp;<input
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][TRANS_OTHER]"
                                                             type="text"
-                                                            value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]["TRANS_OTHER"]) ?>"
+                                                            value="<? echo htmlspecialcharsbx(
+                                                                $arFields[$FIELD_ID]["DEFAULT_VALUE"]["TRANS_OTHER"]
+                                                            ) ?>"
                                                             size="2"
                                                     >
                                                 </div>
@@ -2996,8 +3535,9 @@ if ($arIBTYPE !== false):
                                                                 id="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][TRANS_EAT]"
                                                                 name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][TRANS_EAT]"
                                                             <?
-                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["TRANS_EAT"] === "Y")
+                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["TRANS_EAT"] === "Y") {
                                                                 echo "checked";
+                                                            }
                                                             ?>
                                                         >
                                                     </div>
@@ -3020,15 +3560,18 @@ if ($arIBTYPE !== false):
                                                                 id="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_GOOGLE]"
                                                                 name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_GOOGLE]"
                                                             <?
-                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_GOOGLE"] === "Y")
+                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_GOOGLE"] === "Y") {
                                                                 echo "checked";
+                                                            }
                                                             ?>
                                                         >
                                                     </div>
                                                     <div class="adm-list-label">
                                                         <label
                                                                 for="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_GOOGLE]"
-                                                        ><? echo GetMessage("IB_E_FIELD_EL_TRANS_USE_SERVICE") ?></label>
+                                                        ><? echo GetMessage(
+                                                                "IB_E_FIELD_EL_TRANS_USE_SERVICE"
+                                                            ) ?></label>
                                                     </div>
                                                 </div>
                                             </div>
@@ -3083,11 +3626,17 @@ if ($arIBTYPE !== false):
                         $arPropList = array();
                         if (0 < $ID) {
                             $arPropLinks = CIBlockSectionPropertyLink::GetArray($ID, 0);
-                            $rsProps = CIBlockProperty::GetList(array("SORT" => "ASC", 'ID' => 'ASC'), array("IBLOCK_ID" => $ID, "CHECK_PERMISSIONS" => "N"));
+                            $rsProps = CIBlockProperty::GetList(
+                                array("SORT" => "ASC", 'ID' => 'ASC'),
+                                array("IBLOCK_ID" => $ID, "CHECK_PERMISSIONS" => "N")
+                            );
                             while ($arProp = $rsProps->Fetch()) {
                                 if ('L' == $arProp['PROPERTY_TYPE']) {
                                     $arProp['VALUES'] = array();
-                                    $rsLists = CIBlockProperty::GetPropertyEnum($arProp['ID'], array('SORT' => 'ASC', 'ID' => 'ASC'));
+                                    $rsLists = CIBlockProperty::GetPropertyEnum(
+                                        $arProp['ID'],
+                                        array('SORT' => 'ASC', 'ID' => 'ASC')
+                                    );
                                     while ($res = $rsLists->Fetch()) {
                                         $arProp['VALUES'][$res["ID"]] = array(
                                             'ID' => $res["ID"],
@@ -3100,10 +3649,12 @@ if ($arIBTYPE !== false):
                                 }
 
                                 $arProp['FEATURES'] = [];
-                                $iterator = Iblock\PropertyFeatureTable::getList([
-                                    'select' => ['ID', 'MODULE_ID', 'FEATURE_ID', 'IS_ENABLED'],
-                                    'filter' => ['=PROPERTY_ID' => $arProp['ID']]
-                                ]);
+                                $iterator = Iblock\PropertyFeatureTable::getList(
+                                    [
+                                        'select' => ['ID', 'MODULE_ID', 'FEATURE_ID', 'IS_ENABLED'],
+                                        'filter' => ['=PROPERTY_ID' => $arProp['ID']]
+                                    ]
+                                );
                                 while ($row = $iterator->fetch()) {
                                     $index = Iblock\Model\PropertyFeature::getIndex($row);
                                     $arProp['FEATURES'][$index] = $row;
@@ -3127,9 +3678,15 @@ if ($arIBTYPE !== false):
                                 ConvProp($arProp, $arHiddenPropFields);
                                 if ($bVarsFromForm) {
                                     $intPropID = $arProp['ID'];
-                                    $arTempo = GetPropertyInfo($strPREFIX_IB_PROPERTY, $intPropID, false, $arHiddenPropFields);
-                                    if (is_array($arTempo))
+                                    $arTempo = GetPropertyInfo(
+                                        $strPREFIX_IB_PROPERTY,
+                                        $intPropID,
+                                        false,
+                                        $arHiddenPropFields
+                                    );
+                                    if (is_array($arTempo)) {
                                         $arProp = $arTempo;
+                                    }
                                     $arProp['ID'] = $intPropID;
                                 }
                                 $arProp = ConvertToSafe($arProp, $arDisabledPropFields);
@@ -3138,8 +3695,9 @@ if ($arIBTYPE !== false):
                             }
                         }
                         $intPropCount = intval($_POST['IBLOCK_PROPERTY_COUNT']);
-                        if (0 >= $intPropCount)
+                        if (0 >= $intPropCount) {
                             $intPropCount = PROPERTY_EMPTY_ROW_SIZE;
+                        }
                         $intPropNumber = 0;
                         for ($i = 0; $i < $intPropCount; $i++) {
                             $arProp = GetPropertyInfo($strPREFIX_IB_PROPERTY, 'n' . $i, false, $arHiddenPropFields);
@@ -3178,22 +3736,28 @@ if ($arIBTYPE !== false):
                     <table border="0" cellspacing="0" cellpadding="0" class="internal"
                            style="width:690px; margin: 0 auto;">
                         <tr class="heading">
-                            <td width="125"
-                                style="text-align: left !important;"><? echo GetMessage("IB_E_SECTION_FIELD_NAME") ?></td>
+                            <td width="125" style="text-align: left !important;"><? echo GetMessage(
+                                    "IB_E_SECTION_FIELD_NAME"
+                                ) ?></td>
                             <td width="40"><? echo GetMessage("IB_E_SECTION_FIELD_IS_REQUIRED") ?></td>
-                            <td width="450"
-                                style="text-align: left !important;"><? echo GetMessage("IB_E_SECTION_FIELD_DEFAULT_VALUE") ?></td>
+                            <td width="450" style="text-align: left !important;"><? echo GetMessage(
+                                    "IB_E_SECTION_FIELD_DEFAULT_VALUE"
+                                ) ?></td>
                         </tr>
                         <?
-                        if ($bVarsFromForm)
+                        if ($bVarsFromForm) {
                             $arFields = $_REQUEST["FIELDS"];
-                        else
+                        } else {
                             $arFields = CIBlock::GetFields($ID);
+                        }
                         $arDefFields = CIBlock::GetFieldsDefaults();
                         foreach ($arDefFields as $FIELD_ID => $arField):
-                            if ($arField["VISIBLE"] == "N")
+                            if ($arField["VISIBLE"] == "N") {
                                 continue;
-                            if (!preg_match("/^SECTION_/", $FIELD_ID)) continue;
+                            }
+                            if (!preg_match("/^SECTION_/", $FIELD_ID)) {
+                                continue;
+                            }
                             ?>
                             <tr <?
                             if (
@@ -3201,8 +3765,9 @@ if ($arIBTYPE !== false):
                                 || $FIELD_ID === "SECTION_PICTURE"
                                 || $FIELD_ID === "SECTION_DETAIL_PICTURE"
                                 || $FIELD_ID === "SECTION_CODE"
-                            )
+                            ) {
                                 echo 'class="adm-detail-valign-top"';
+                            }
                             ?>>
                                 <td><? echo $arDefFields[$FIELD_ID]["NAME"] ?></td>
                                 <td style="text-align:center">
@@ -3216,8 +3781,9 @@ if ($arIBTYPE !== false):
                                         case "SECTION_NAME":
                                             ?>
                                             <input name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE]" type="text"
-                                                   value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]) ?>"
-                                                   size="60">
+                                                   value="<? echo htmlspecialcharsbx(
+                                                       $arFields[$FIELD_ID]["DEFAULT_VALUE"]
+                                                   ) ?>" size="60">
                                             <?
                                             break;
                                         case "SECTION_DESCRIPTION_TYPE":
@@ -3247,15 +3813,18 @@ if ($arIBTYPE !== false):
                                                                 id="FIELDS[<? echo $FIELD_ID ?>_ALLOW_CHANGE][DEFAULT_VALUE]"
                                                                 name="FIELDS[<? echo $FIELD_ID ?>_ALLOW_CHANGE][DEFAULT_VALUE]"
                                                             <?
-                                                            if ($arFields[$FIELD_ID . "_ALLOW_CHANGE"]["DEFAULT_VALUE"] !== "N")
+                                                            if ($arFields[$FIELD_ID . "_ALLOW_CHANGE"]["DEFAULT_VALUE"] !== "N") {
                                                                 echo "checked";
+                                                            }
                                                             ?>
                                                         >
                                                     </div>
                                                     <div class="adm-list-label">
                                                         <label
                                                                 for="FIELDS[<? echo $FIELD_ID ?>_ALLOW_CHANGE][DEFAULT_VALUE]"
-                                                        ><? echo GetMessage("IB_E_FIELD_TEXT_TYPE_ALLOW_CHANGE") ?></label>
+                                                        ><? echo GetMessage(
+                                                                "IB_E_FIELD_TEXT_TYPE_ALLOW_CHANGE"
+                                                            ) ?></label>
                                                     </div>
                                                 </div>
                                             </div>
@@ -3264,7 +3833,9 @@ if ($arIBTYPE !== false):
                                         case "SECTION_DESCRIPTION":
                                             ?>
                                             <textarea name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE]" rows="5"
-                                                      cols="47"><? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]) ?></textarea>
+                                                      cols="47"><? echo htmlspecialcharsbx(
+                                                    $arFields[$FIELD_ID]["DEFAULT_VALUE"]
+                                                ) ?></textarea>
                                             <?
                                             break;
                                         case "SECTION_PICTURE":
@@ -3278,8 +3849,9 @@ if ($arIBTYPE !== false):
                                                                 id="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][FROM_DETAIL]"
                                                                 name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][FROM_DETAIL]"
                                                             <?
-                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["FROM_DETAIL"] === "Y")
+                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["FROM_DETAIL"] === "Y") {
                                                                 echo "checked";
+                                                            }
                                                             ?>
                                                                 onclick="
                                                                         BX('SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][UPDATE_WITH_DETAIL]').style.display =
@@ -3290,7 +3862,9 @@ if ($arIBTYPE !== false):
                                                     <div class="adm-list-label">
                                                         <label
                                                                 for="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][FROM_DETAIL]"
-                                                        ><? echo GetMessage("IB_E_FIELD_PREVIEW_PICTURE_FROM_DETAIL") ?></label>
+                                                        ><? echo GetMessage(
+                                                                "IB_E_FIELD_PREVIEW_PICTURE_FROM_DETAIL"
+                                                            ) ?></label>
                                                     </div>
                                                 </div>
                                                 <div class="adm-list-item"
@@ -3314,7 +3888,9 @@ if ($arIBTYPE !== false):
                                                     <div class="adm-list-label">
                                                         <label
                                                                 for="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][UPDATE_WITH_DETAIL]"
-                                                        ><? echo GetMessage("IB_E_FIELD_PREVIEW_PICTURE_UPDATE_WITH_DETAIL_EXT") ?></label>
+                                                        ><? echo GetMessage(
+                                                                "IB_E_FIELD_PREVIEW_PICTURE_UPDATE_WITH_DETAIL_EXT"
+                                                            ) ?></label>
                                                     </div>
                                                 </div>
                                                 <div class="adm-list-item">
@@ -3333,7 +3909,9 @@ if ($arIBTYPE !== false):
                                                     <div class="adm-list-label">
                                                         <label
                                                                 for="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][DELETE_WITH_DETAIL]"
-                                                        ><? echo GetMessage("IB_E_FIELD_PREVIEW_PICTURE_DELETE_WITH_DETAIL") ?></label>
+                                                        ><? echo GetMessage(
+                                                                "IB_E_FIELD_PREVIEW_PICTURE_DELETE_WITH_DETAIL"
+                                                            ) ?></label>
                                                     </div>
                                                 </div>
                                                 <div class="adm-list-item">
@@ -3344,8 +3922,9 @@ if ($arIBTYPE !== false):
                                                                 id="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][SCALE]"
                                                                 name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][SCALE]"
                                                             <?
-                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["SCALE"] === "Y")
+                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["SCALE"] === "Y") {
                                                                 echo "checked";
+                                                            }
                                                             ?>
                                                                 onclick="
                                                                         BX('SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WIDTH]').style.display =
@@ -3371,9 +3950,9 @@ if ($arIBTYPE !== false):
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_PICTURE_WIDTH") ?>:&nbsp;<input
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WIDTH]"
-                                                            type="text"
-                                                            value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WIDTH"]) ?>"
-                                                            size="7">
+                                                            type="text" value="<? echo htmlspecialcharsbx(
+                                                        $arFields[$FIELD_ID]["DEFAULT_VALUE"]["WIDTH"]
+                                                    ) ?>" size="7">
                                                 </div>
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][HEIGHT]"
@@ -3383,9 +3962,9 @@ if ($arIBTYPE !== false):
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_PICTURE_HEIGHT") ?>:&nbsp;<input
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][HEIGHT]"
-                                                            type="text"
-                                                            value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]["HEIGHT"]) ?>"
-                                                            size="7">
+                                                            type="text" value="<? echo htmlspecialcharsbx(
+                                                        $arFields[$FIELD_ID]["DEFAULT_VALUE"]["HEIGHT"]
+                                                    ) ?>" size="7">
                                                 </div>
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][IGNORE_ERRORS_DIV]"
@@ -3400,15 +3979,18 @@ if ($arIBTYPE !== false):
                                                                 id="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][IGNORE_ERRORS]"
                                                                 name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][IGNORE_ERRORS]"
                                                             <?
-                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["IGNORE_ERRORS"] === "Y")
+                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["IGNORE_ERRORS"] === "Y") {
                                                                 echo "checked";
+                                                            }
                                                             ?>
                                                         >
                                                     </div>
                                                     <div class="adm-list-label">
                                                         <label
                                                                 for="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][IGNORE_ERRORS]"
-                                                        ><? echo GetMessage("IB_E_FIELD_PICTURE_IGNORE_ERRORS") ?></label>
+                                                        ><? echo GetMessage(
+                                                                "IB_E_FIELD_PICTURE_IGNORE_ERRORS"
+                                                            ) ?></label>
                                                     </div>
                                                 </div>
                                                 <div class="adm-list-item"
@@ -3424,8 +4006,9 @@ if ($arIBTYPE !== false):
                                                                 id="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][METHOD]"
                                                                 name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][METHOD]"
                                                             <?
-                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["METHOD"] === "resample")
+                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["METHOD"] === "resample") {
                                                                 echo "checked";
+                                                            }
                                                             ?>
                                                         >
                                                     </div>
@@ -3447,7 +4030,9 @@ if ($arIBTYPE !== false):
                                                     ) ?>:&nbsp;<input
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][COMPRESSION]"
                                                             type="text"
-                                                            value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]["COMPRESSION"]) ?>"
+                                                            value="<? echo htmlspecialcharsbx(
+                                                                $arFields[$FIELD_ID]["DEFAULT_VALUE"]["COMPRESSION"]
+                                                            ) ?>"
                                                             style="width: 30px"
                                                     >
                                                 </div>
@@ -3459,8 +4044,9 @@ if ($arIBTYPE !== false):
                                                                 id="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_WATERMARK_FILE]"
                                                                 name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_WATERMARK_FILE]"
                                                             <?
-                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_FILE"] === "Y")
+                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_FILE"] === "Y") {
                                                                 echo "checked";
+                                                            }
                                                             ?>
                                                                 onclick="
                                                                         BX('SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_WATERMARK_FILE]').style.display =
@@ -3473,33 +4059,47 @@ if ($arIBTYPE !== false):
                                                     <div class="adm-list-label">
                                                         <label
                                                                 for="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_WATERMARK_FILE]"
-                                                        ><? echo GetMessage("IB_E_FIELD_PICTURE_USE_WATERMARK_FILE") ?></label>
+                                                        ><? echo GetMessage(
+                                                                "IB_E_FIELD_PICTURE_USE_WATERMARK_FILE"
+                                                            ) ?></label>
                                                     </div>
                                                 </div>
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_WATERMARK_FILE]"
                                                      style="padding-left:16px;display:<?
-                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_FILE"] === "Y") echo 'block'; else echo 'none';
+                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_FILE"] === "Y") {
+                                                         echo 'block';
+                                                     } else {
+                                                         echo 'none';
+                                                     }
                                                      ?>"
                                                 >
-                                                    <? CAdminFileDialog::ShowScript(array(
-                                                        "event" => "BtnClick" . $FIELD_ID,
-                                                        "arResultDest" => array("ELEMENT_ID" => "FIELDS_" . $FIELD_ID . "__DEFAULT_VALUE__WATERMARK_FILE_"),
-                                                        "arPath" => array("PATH" => GetDirPath(($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_FILE"]))),
-                                                        "select" => 'F',// F - file only, D - folder only
-                                                        "operation" => 'O',// O - open, S - save
-                                                        "showUploadTab" => true,
-                                                        "showAddToMenuTab" => false,
-                                                        "fileFilter" => 'jpg,jpeg,png,gif',
-                                                        "allowAllFiles" => false,
-                                                        "SaveConfig" => true,
-                                                    )); ?>
+                                                    <? CAdminFileDialog::ShowScript(
+                                                        array(
+                                                            "event" => "BtnClick" . $FIELD_ID,
+                                                            "arResultDest" => array("ELEMENT_ID" => "FIELDS_" . $FIELD_ID . "__DEFAULT_VALUE__WATERMARK_FILE_"),
+                                                            "arPath" => array(
+                                                                "PATH" => GetDirPath(
+                                                                    ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_FILE"])
+                                                                )
+                                                            ),
+                                                            "select" => 'F',// F - file only, D - folder only
+                                                            "operation" => 'O',// O - open, S - save
+                                                            "showUploadTab" => true,
+                                                            "showAddToMenuTab" => false,
+                                                            "fileFilter" => 'jpg,jpeg,png,gif,webp',
+                                                            "allowAllFiles" => false,
+                                                            "SaveConfig" => true,
+                                                        )
+                                                    ); ?>
                                                     <? echo GetMessage("IB_E_FIELD_PICTURE_WATERMARK_FILE") ?>
                                                     :&nbsp;<input
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_FILE]"
                                                             id="FIELDS_<? echo $FIELD_ID ?>__DEFAULT_VALUE__WATERMARK_FILE_"
                                                             type="text"
-                                                            value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_FILE"]) ?>"
+                                                            value="<? echo htmlspecialcharsbx(
+                                                                $arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_FILE"]
+                                                            ) ?>"
                                                             size="35"
                                                     >&nbsp;<input type="button" value="..."
                                                                   onClick="BtnClick<? echo $FIELD_ID ?>()">
@@ -3507,20 +4107,30 @@ if ($arIBTYPE !== false):
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_FILE_ALPHA]"
                                                      style="padding-left:16px;display:<?
-                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_FILE"] === "Y") echo 'block'; else echo 'none';
+                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_FILE"] === "Y") {
+                                                         echo 'block';
+                                                     } else {
+                                                         echo 'none';
+                                                     }
                                                      ?>"
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_PICTURE_WATERMARK_FILE_ALPHA") ?>:&nbsp;<input
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_FILE_ALPHA]"
                                                             type="text"
-                                                            value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_FILE_ALPHA"]) ?>"
+                                                            value="<? echo htmlspecialcharsbx(
+                                                                $arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_FILE_ALPHA"]
+                                                            ) ?>"
                                                             size="3"
                                                     >
                                                 </div>
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_FILE_POSITION]"
                                                      style="padding-left:16px;display:<?
-                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_FILE"] === "Y") echo 'block'; else echo 'none';
+                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_FILE"] === "Y") {
+                                                         echo 'block';
+                                                     } else {
+                                                         echo 'none';
+                                                     }
                                                      ?>"
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_PICTURE_WATERMARK_POSITION") ?>:&nbsp;<? echo SelectBox(
@@ -3538,8 +4148,9 @@ if ($arIBTYPE !== false):
                                                                 id="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_WATERMARK_TEXT]"
                                                                 name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_WATERMARK_TEXT]"
                                                             <?
-                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y")
+                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") {
                                                                 echo "checked";
+                                                            }
                                                             ?>
                                                                 onclick="
                                                                         BX('SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_WATERMARK_TEXT]').style.display =
@@ -3554,46 +4165,66 @@ if ($arIBTYPE !== false):
                                                     <div class="adm-list-label">
                                                         <label
                                                                 for="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_WATERMARK_TEXT]"
-                                                        ><? echo GetMessage("IB_E_FIELD_PICTURE_USE_WATERMARK_TEXT") ?></label>
+                                                        ><? echo GetMessage(
+                                                                "IB_E_FIELD_PICTURE_USE_WATERMARK_TEXT"
+                                                            ) ?></label>
                                                     </div>
                                                 </div>
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_WATERMARK_TEXT]"
                                                      style="padding-left:16px;display:<?
-                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") echo 'block'; else echo 'none';
+                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") {
+                                                         echo 'block';
+                                                     } else {
+                                                         echo 'none';
+                                                     }
                                                      ?>"
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_PICTURE_WATERMARK_TEXT") ?>
                                                     :&nbsp;<input
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_TEXT]"
                                                             type="text"
-                                                            value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_TEXT"]) ?>"
+                                                            value="<? echo htmlspecialcharsbx(
+                                                                $arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_TEXT"]
+                                                            ) ?>"
                                                             size="35"
                                                     >
-                                                    <? CAdminFileDialog::ShowScript(array(
-                                                        "event" => "BtnClickFont" . $FIELD_ID,
-                                                        "arResultDest" => array("ELEMENT_ID" => "FIELDS_" . $FIELD_ID . "__DEFAULT_VALUE__WATERMARK_TEXT_FONT_"),
-                                                        "arPath" => array("PATH" => GetDirPath(($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_TEXT_FONT"]))),
-                                                        "select" => 'F',// F - file only, D - folder only
-                                                        "operation" => 'O',// O - open, S - save
-                                                        "showUploadTab" => true,
-                                                        "showAddToMenuTab" => false,
-                                                        "fileFilter" => 'ttf',
-                                                        "allowAllFiles" => false,
-                                                        "SaveConfig" => true,
-                                                    )); ?>
+                                                    <? CAdminFileDialog::ShowScript(
+                                                        array(
+                                                            "event" => "BtnClickFont" . $FIELD_ID,
+                                                            "arResultDest" => array("ELEMENT_ID" => "FIELDS_" . $FIELD_ID . "__DEFAULT_VALUE__WATERMARK_TEXT_FONT_"),
+                                                            "arPath" => array(
+                                                                "PATH" => GetDirPath(
+                                                                    ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_TEXT_FONT"])
+                                                                )
+                                                            ),
+                                                            "select" => 'F',// F - file only, D - folder only
+                                                            "operation" => 'O',// O - open, S - save
+                                                            "showUploadTab" => true,
+                                                            "showAddToMenuTab" => false,
+                                                            "fileFilter" => 'ttf',
+                                                            "allowAllFiles" => false,
+                                                            "SaveConfig" => true,
+                                                        )
+                                                    ); ?>
                                                 </div>
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_TEXT_FONT]"
                                                      style="padding-left:16px;display:<?
-                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") echo 'block'; else echo 'none';
+                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") {
+                                                         echo 'block';
+                                                     } else {
+                                                         echo 'none';
+                                                     }
                                                      ?>"
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_PICTURE_WATERMARK_TEXT_FONT") ?>:&nbsp;<input
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_TEXT_FONT]"
                                                             id="FIELDS_<? echo $FIELD_ID ?>__DEFAULT_VALUE__WATERMARK_TEXT_FONT_"
                                                             type="text"
-                                                            value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_TEXT_FONT"]) ?>"
+                                                            value="<? echo htmlspecialcharsbx(
+                                                                $arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_TEXT_FONT"]
+                                                            ) ?>"
                                                             size="35">&nbsp;<input
                                                             type="button"
                                                             value="..."
@@ -3603,14 +4234,20 @@ if ($arIBTYPE !== false):
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_TEXT_COLOR]"
                                                      style="padding-left:16px;display:<?
-                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") echo 'block'; else echo 'none';
+                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") {
+                                                         echo 'block';
+                                                     } else {
+                                                         echo 'none';
+                                                     }
                                                      ?>"
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_PICTURE_WATERMARK_TEXT_COLOR") ?>:&nbsp;<input
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_TEXT_COLOR]"
                                                             id="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_TEXT_COLOR]"
                                                             type="text"
-                                                            value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_TEXT_COLOR"]) ?>"
+                                                            value="<? echo htmlspecialcharsbx(
+                                                                $arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_TEXT_COLOR"]
+                                                            ) ?>"
                                                             size="7"
                                                     >
                                                     <script>
@@ -3635,21 +4272,31 @@ if ($arIBTYPE !== false):
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_TEXT_SIZE]"
                                                      style="padding-left:16px;display:<?
-                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") echo 'block'; else echo 'none';
+                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") {
+                                                         echo 'block';
+                                                     } else {
+                                                         echo 'none';
+                                                     }
                                                      ?>"
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_PICTURE_WATERMARK_SIZE") ?>
                                                     :&nbsp;<input
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_TEXT_SIZE]"
                                                             type="text"
-                                                            value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_TEXT_SIZE"]) ?>"
+                                                            value="<? echo htmlspecialcharsbx(
+                                                                $arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_TEXT_SIZE"]
+                                                            ) ?>"
                                                             size="3"
                                                     >
                                                 </div>
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_TEXT_POSITION]"
                                                      style="padding-left:16px;display:<?
-                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") echo 'block'; else echo 'none';
+                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") {
+                                                         echo 'block';
+                                                     } else {
+                                                         echo 'none';
+                                                     }
                                                      ?>"
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_PICTURE_WATERMARK_POSITION") ?>:&nbsp;<? echo SelectBox(
@@ -3673,8 +4320,9 @@ if ($arIBTYPE !== false):
                                                                 id="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][SCALE]"
                                                                 name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][SCALE]"
                                                             <?
-                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["SCALE"] === "Y")
+                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["SCALE"] === "Y") {
                                                                 echo "checked";
+                                                            }
                                                             ?>
                                                                 onclick="
                                                                         BX('SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WIDTH]').style.display =
@@ -3700,9 +4348,9 @@ if ($arIBTYPE !== false):
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_PICTURE_WIDTH") ?>:&nbsp;<input
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WIDTH]"
-                                                            type="text"
-                                                            value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WIDTH"]) ?>"
-                                                            size="7">
+                                                            type="text" value="<? echo htmlspecialcharsbx(
+                                                        $arFields[$FIELD_ID]["DEFAULT_VALUE"]["WIDTH"]
+                                                    ) ?>" size="7">
                                                 </div>
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][HEIGHT]"
@@ -3712,9 +4360,9 @@ if ($arIBTYPE !== false):
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_PICTURE_HEIGHT") ?>:&nbsp;<input
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][HEIGHT]"
-                                                            type="text"
-                                                            value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]["HEIGHT"]) ?>"
-                                                            size="7">
+                                                            type="text" value="<? echo htmlspecialcharsbx(
+                                                        $arFields[$FIELD_ID]["DEFAULT_VALUE"]["HEIGHT"]
+                                                    ) ?>" size="7">
                                                 </div>
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][IGNORE_ERRORS_DIV]"
@@ -3729,15 +4377,18 @@ if ($arIBTYPE !== false):
                                                                 id="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][IGNORE_ERRORS]"
                                                                 name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][IGNORE_ERRORS]"
                                                             <?
-                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["IGNORE_ERRORS"] === "Y")
+                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["IGNORE_ERRORS"] === "Y") {
                                                                 echo "checked";
+                                                            }
                                                             ?>
                                                         >
                                                     </div>
                                                     <div class="adm-list-label">
                                                         <label
                                                                 for="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][IGNORE_ERRORS]"
-                                                        ><? echo GetMessage("IB_E_FIELD_PICTURE_IGNORE_ERRORS") ?></label>
+                                                        ><? echo GetMessage(
+                                                                "IB_E_FIELD_PICTURE_IGNORE_ERRORS"
+                                                            ) ?></label>
                                                     </div>
                                                 </div>
                                                 <div class="adm-list-item"
@@ -3753,8 +4404,9 @@ if ($arIBTYPE !== false):
                                                                 id="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][METHOD]"
                                                                 name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][METHOD]"
                                                             <?
-                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["METHOD"] === "resample")
+                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["METHOD"] === "resample") {
                                                                 echo "checked";
+                                                            }
                                                             ?>
                                                         >
                                                     </div>
@@ -3776,7 +4428,9 @@ if ($arIBTYPE !== false):
                                                     ) ?>:&nbsp;<input
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][COMPRESSION]"
                                                             type="text"
-                                                            value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]["COMPRESSION"]) ?>"
+                                                            value="<? echo htmlspecialcharsbx(
+                                                                $arFields[$FIELD_ID]["DEFAULT_VALUE"]["COMPRESSION"]
+                                                            ) ?>"
                                                             style="width: 30px"
                                                     >
                                                 </div>
@@ -3788,8 +4442,9 @@ if ($arIBTYPE !== false):
                                                                 id="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_WATERMARK_FILE]"
                                                                 name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_WATERMARK_FILE]"
                                                             <?
-                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_FILE"] === "Y")
+                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_FILE"] === "Y") {
                                                                 echo "checked";
+                                                            }
                                                             ?>
                                                                 onclick="
                                                                         BX('SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_WATERMARK_FILE]').style.display =
@@ -3802,33 +4457,47 @@ if ($arIBTYPE !== false):
                                                     <div class="adm-list-label">
                                                         <label
                                                                 for="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_WATERMARK_FILE]"
-                                                        ><? echo GetMessage("IB_E_FIELD_PICTURE_USE_WATERMARK_FILE") ?></label>
+                                                        ><? echo GetMessage(
+                                                                "IB_E_FIELD_PICTURE_USE_WATERMARK_FILE"
+                                                            ) ?></label>
                                                     </div>
                                                 </div>
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_WATERMARK_FILE]"
                                                      style="padding-left:16px;display:<?
-                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_FILE"] === "Y") echo 'block'; else echo 'none';
+                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_FILE"] === "Y") {
+                                                         echo 'block';
+                                                     } else {
+                                                         echo 'none';
+                                                     }
                                                      ?>"
                                                 >
-                                                    <? CAdminFileDialog::ShowScript(array(
-                                                        "event" => "BtnClick" . $FIELD_ID,
-                                                        "arResultDest" => array("ELEMENT_ID" => "FIELDS_" . $FIELD_ID . "__DEFAULT_VALUE__WATERMARK_FILE_"),
-                                                        "arPath" => array("PATH" => GetDirPath(($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_FILE"]))),
-                                                        "select" => 'F',// F - file only, D - folder only
-                                                        "operation" => 'O',// O - open, S - save
-                                                        "showUploadTab" => true,
-                                                        "showAddToMenuTab" => false,
-                                                        "fileFilter" => 'jpg,jpeg,png,gif',
-                                                        "allowAllFiles" => false,
-                                                        "SaveConfig" => true,
-                                                    )); ?>
+                                                    <? CAdminFileDialog::ShowScript(
+                                                        array(
+                                                            "event" => "BtnClick" . $FIELD_ID,
+                                                            "arResultDest" => array("ELEMENT_ID" => "FIELDS_" . $FIELD_ID . "__DEFAULT_VALUE__WATERMARK_FILE_"),
+                                                            "arPath" => array(
+                                                                "PATH" => GetDirPath(
+                                                                    ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_FILE"])
+                                                                )
+                                                            ),
+                                                            "select" => 'F',// F - file only, D - folder only
+                                                            "operation" => 'O',// O - open, S - save
+                                                            "showUploadTab" => true,
+                                                            "showAddToMenuTab" => false,
+                                                            "fileFilter" => 'jpg,jpeg,png,gif,webp',
+                                                            "allowAllFiles" => false,
+                                                            "SaveConfig" => true,
+                                                        )
+                                                    ); ?>
                                                     <? echo GetMessage("IB_E_FIELD_PICTURE_WATERMARK_FILE") ?>
                                                     :&nbsp;<input
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_FILE]"
                                                             id="FIELDS_<? echo $FIELD_ID ?>__DEFAULT_VALUE__WATERMARK_FILE_"
                                                             type="text"
-                                                            value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_FILE"]) ?>"
+                                                            value="<? echo htmlspecialcharsbx(
+                                                                $arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_FILE"]
+                                                            ) ?>"
                                                             size="35"
                                                     >&nbsp;<input type="button" value="..."
                                                                   onClick="BtnClick<? echo $FIELD_ID ?>()">
@@ -3836,20 +4505,30 @@ if ($arIBTYPE !== false):
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_FILE_ALPHA]"
                                                      style="padding-left:16px;display:<?
-                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_FILE"] === "Y") echo 'block'; else echo 'none';
+                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_FILE"] === "Y") {
+                                                         echo 'block';
+                                                     } else {
+                                                         echo 'none';
+                                                     }
                                                      ?>"
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_PICTURE_WATERMARK_FILE_ALPHA") ?>:&nbsp;<input
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_FILE_ALPHA]"
                                                             type="text"
-                                                            value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_FILE_ALPHA"]) ?>"
+                                                            value="<? echo htmlspecialcharsbx(
+                                                                $arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_FILE_ALPHA"]
+                                                            ) ?>"
                                                             size="3"
                                                     >
                                                 </div>
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_FILE_POSITION]"
                                                      style="padding-left:16px;display:<?
-                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_FILE"] === "Y") echo 'block'; else echo 'none';
+                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_FILE"] === "Y") {
+                                                         echo 'block';
+                                                     } else {
+                                                         echo 'none';
+                                                     }
                                                      ?>"
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_PICTURE_WATERMARK_POSITION") ?>:&nbsp;<? echo SelectBox(
@@ -3867,8 +4546,9 @@ if ($arIBTYPE !== false):
                                                                 id="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_WATERMARK_TEXT]"
                                                                 name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_WATERMARK_TEXT]"
                                                             <?
-                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y")
+                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") {
                                                                 echo "checked";
+                                                            }
                                                             ?>
                                                                 onclick="
                                                                         BX('SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_WATERMARK_TEXT]').style.display =
@@ -3883,46 +4563,66 @@ if ($arIBTYPE !== false):
                                                     <div class="adm-list-label">
                                                         <label
                                                                 for="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_WATERMARK_TEXT]"
-                                                        ><? echo GetMessage("IB_E_FIELD_PICTURE_USE_WATERMARK_TEXT") ?></label>
+                                                        ><? echo GetMessage(
+                                                                "IB_E_FIELD_PICTURE_USE_WATERMARK_TEXT"
+                                                            ) ?></label>
                                                     </div>
                                                 </div>
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_WATERMARK_TEXT]"
                                                      style="padding-left:16px;display:<?
-                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") echo 'block'; else echo 'none';
+                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") {
+                                                         echo 'block';
+                                                     } else {
+                                                         echo 'none';
+                                                     }
                                                      ?>"
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_PICTURE_WATERMARK_TEXT") ?>
                                                     :&nbsp;<input
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_TEXT]"
                                                             type="text"
-                                                            value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_TEXT"]) ?>"
+                                                            value="<? echo htmlspecialcharsbx(
+                                                                $arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_TEXT"]
+                                                            ) ?>"
                                                             size="35"
                                                     >
-                                                    <? CAdminFileDialog::ShowScript(array(
-                                                        "event" => "BtnClickFont" . $FIELD_ID,
-                                                        "arResultDest" => array("ELEMENT_ID" => "FIELDS_" . $FIELD_ID . "__DEFAULT_VALUE__WATERMARK_TEXT_FONT_"),
-                                                        "arPath" => array("PATH" => GetDirPath(($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_TEXT_FONT"]))),
-                                                        "select" => 'F',// F - file only, D - folder only
-                                                        "operation" => 'O',// O - open, S - save
-                                                        "showUploadTab" => true,
-                                                        "showAddToMenuTab" => false,
-                                                        "fileFilter" => 'ttf',
-                                                        "allowAllFiles" => false,
-                                                        "SaveConfig" => true,
-                                                    )); ?>
+                                                    <? CAdminFileDialog::ShowScript(
+                                                        array(
+                                                            "event" => "BtnClickFont" . $FIELD_ID,
+                                                            "arResultDest" => array("ELEMENT_ID" => "FIELDS_" . $FIELD_ID . "__DEFAULT_VALUE__WATERMARK_TEXT_FONT_"),
+                                                            "arPath" => array(
+                                                                "PATH" => GetDirPath(
+                                                                    ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_TEXT_FONT"])
+                                                                )
+                                                            ),
+                                                            "select" => 'F',// F - file only, D - folder only
+                                                            "operation" => 'O',// O - open, S - save
+                                                            "showUploadTab" => true,
+                                                            "showAddToMenuTab" => false,
+                                                            "fileFilter" => 'ttf',
+                                                            "allowAllFiles" => false,
+                                                            "SaveConfig" => true,
+                                                        )
+                                                    ); ?>
                                                 </div>
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_TEXT_FONT]"
                                                      style="padding-left:16px;display:<?
-                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") echo 'block'; else echo 'none';
+                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") {
+                                                         echo 'block';
+                                                     } else {
+                                                         echo 'none';
+                                                     }
                                                      ?>"
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_PICTURE_WATERMARK_TEXT_FONT") ?>:&nbsp;<input
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_TEXT_FONT]"
                                                             id="FIELDS_<? echo $FIELD_ID ?>__DEFAULT_VALUE__WATERMARK_TEXT_FONT_"
                                                             type="text"
-                                                            value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_TEXT_FONT"]) ?>"
+                                                            value="<? echo htmlspecialcharsbx(
+                                                                $arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_TEXT_FONT"]
+                                                            ) ?>"
                                                             size="35">&nbsp;<input
                                                             type="button"
                                                             value="..."
@@ -3932,14 +4632,20 @@ if ($arIBTYPE !== false):
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_TEXT_COLOR]"
                                                      style="padding-left:16px;display:<?
-                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") echo 'block'; else echo 'none';
+                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") {
+                                                         echo 'block';
+                                                     } else {
+                                                         echo 'none';
+                                                     }
                                                      ?>"
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_PICTURE_WATERMARK_TEXT_COLOR") ?>:&nbsp;<input
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_TEXT_COLOR]"
                                                             id="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_TEXT_COLOR]"
                                                             type="text"
-                                                            value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_TEXT_COLOR"]) ?>"
+                                                            value="<? echo htmlspecialcharsbx(
+                                                                $arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_TEXT_COLOR"]
+                                                            ) ?>"
                                                             size="7"
                                                     >
                                                     <script>
@@ -3964,21 +4670,31 @@ if ($arIBTYPE !== false):
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_TEXT_SIZE]"
                                                      style="padding-left:16px;display:<?
-                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") echo 'block'; else echo 'none';
+                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") {
+                                                         echo 'block';
+                                                     } else {
+                                                         echo 'none';
+                                                     }
                                                      ?>"
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_PICTURE_WATERMARK_SIZE") ?>
                                                     :&nbsp;<input
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_TEXT_SIZE]"
                                                             type="text"
-                                                            value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_TEXT_SIZE"]) ?>"
+                                                            value="<? echo htmlspecialcharsbx(
+                                                                $arFields[$FIELD_ID]["DEFAULT_VALUE"]["WATERMARK_TEXT_SIZE"]
+                                                            ) ?>"
                                                             size="3"
                                                     >
                                                 </div>
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][WATERMARK_TEXT_POSITION]"
                                                      style="padding-left:16px;display:<?
-                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") echo 'block'; else echo 'none';
+                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_WATERMARK_TEXT"] === "Y") {
+                                                         echo 'block';
+                                                     } else {
+                                                         echo 'none';
+                                                     }
                                                      ?>"
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_PICTURE_WATERMARK_POSITION") ?>:&nbsp;<? echo SelectBox(
@@ -4002,8 +4718,9 @@ if ($arIBTYPE !== false):
                                                                 id="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][UNIQUE]"
                                                                 name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][UNIQUE]"
                                                             <?
-                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["UNIQUE"] === "Y")
+                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["UNIQUE"] === "Y") {
                                                                 echo "checked";
+                                                            }
                                                             ?>
                                                         >
                                                     </div>
@@ -4021,8 +4738,9 @@ if ($arIBTYPE !== false):
                                                                 id="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][TRANSLITERATION]"
                                                                 name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][TRANSLITERATION]"
                                                             <?
-                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["TRANSLITERATION"] === "Y")
+                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["TRANSLITERATION"] === "Y") {
                                                                 echo "checked";
+                                                            }
                                                             ?>
                                                                 onclick="
                                                                         BX('SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][TRANS_LEN]').style.display =
@@ -4044,25 +4762,37 @@ if ($arIBTYPE !== false):
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][TRANS_LEN]"
                                                      style="padding-left:16px;display:<?
-                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["TRANSLITERATION"] === "Y") echo 'block'; else echo 'none';
+                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["TRANSLITERATION"] === "Y") {
+                                                         echo 'block';
+                                                     } else {
+                                                         echo 'none';
+                                                     }
                                                      ?>"
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_TRANS_LEN") ?>:&nbsp;<input
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][TRANS_LEN]"
                                                             type="text"
-                                                            value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]["TRANS_LEN"]) ?>"
+                                                            value="<? echo htmlspecialcharsbx(
+                                                                $arFields[$FIELD_ID]["DEFAULT_VALUE"]["TRANS_LEN"]
+                                                            ) ?>"
                                                             size="3"
                                                     >
                                                 </div>
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][TRANS_CASE]"
                                                      style="padding-left:16px;display:<?
-                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["TRANSLITERATION"] === "Y") echo 'block'; else echo 'none';
+                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["TRANSLITERATION"] === "Y") {
+                                                         echo 'block';
+                                                     } else {
+                                                         echo 'none';
+                                                     }
                                                      ?>"
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_TRANS_CASE") ?>:&nbsp;<select
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][TRANS_CASE]">
-                                                        <option value=""><? echo GetMessage("IB_E_FIELD_TRANS_CASE_LEAVE") ?>
+                                                        <option value=""><? echo GetMessage(
+                                                                "IB_E_FIELD_TRANS_CASE_LEAVE"
+                                                            ) ?>
                                                         </option>
                                                         <option value="L" <? if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["TRANS_CASE"] === "L") echo "selected" ?>>
                                                             <? echo GetMessage("IB_E_FIELD_TRANS_CASE_LOWER") ?>
@@ -4075,26 +4805,38 @@ if ($arIBTYPE !== false):
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][TRANS_SPACE]"
                                                      style="padding-left:16px;display:<?
-                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["TRANSLITERATION"] === "Y") echo 'block'; else echo 'none';
+                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["TRANSLITERATION"] === "Y") {
+                                                         echo 'block';
+                                                     } else {
+                                                         echo 'none';
+                                                     }
                                                      ?>"
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_TRANS_SPACE") ?>&nbsp;<input
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][TRANS_SPACE]"
                                                             type="text"
-                                                            value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]["TRANS_SPACE"]) ?>"
+                                                            value="<? echo htmlspecialcharsbx(
+                                                                $arFields[$FIELD_ID]["DEFAULT_VALUE"]["TRANS_SPACE"]
+                                                            ) ?>"
                                                             size="2"
                                                     >
                                                 </div>
                                                 <div class="adm-list-item"
                                                      id="SETTINGS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][TRANS_OTHER]"
                                                      style="padding-left:16px;display:<?
-                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["TRANSLITERATION"] === "Y") echo 'block'; else echo 'none';
+                                                     if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["TRANSLITERATION"] === "Y") {
+                                                         echo 'block';
+                                                     } else {
+                                                         echo 'none';
+                                                     }
                                                      ?>"
                                                 >
                                                     <? echo GetMessage("IB_E_FIELD_TRANS_OTHER") ?>&nbsp;<input
                                                             name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][TRANS_OTHER]"
                                                             type="text"
-                                                            value="<? echo htmlspecialcharsbx($arFields[$FIELD_ID]["DEFAULT_VALUE"]["TRANS_OTHER"]) ?>"
+                                                            value="<? echo htmlspecialcharsbx(
+                                                                $arFields[$FIELD_ID]["DEFAULT_VALUE"]["TRANS_OTHER"]
+                                                            ) ?>"
                                                             size="2"
                                                     >
                                                 </div>
@@ -4116,8 +4858,9 @@ if ($arIBTYPE !== false):
                                                                 id="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][TRANS_EAT]"
                                                                 name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][TRANS_EAT]"
                                                             <?
-                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["TRANS_EAT"] === "Y")
+                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["TRANS_EAT"] === "Y") {
                                                                 echo "checked";
+                                                            }
                                                             ?>
                                                         >
                                                     </div>
@@ -4140,15 +4883,18 @@ if ($arIBTYPE !== false):
                                                                 id="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_GOOGLE]"
                                                                 name="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_GOOGLE]"
                                                             <?
-                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_GOOGLE"] === "Y")
+                                                            if ($arFields[$FIELD_ID]["DEFAULT_VALUE"]["USE_GOOGLE"] === "Y") {
                                                                 echo "checked";
+                                                            }
                                                             ?>
                                                         >
                                                     </div>
                                                     <div class="adm-list-label">
                                                         <label
                                                                 for="FIELDS[<? echo $FIELD_ID ?>][DEFAULT_VALUE][USE_GOOGLE]"
-                                                        ><? echo GetMessage("IB_E_FIELD_EL_TRANS_USE_SERVICE") ?></label>
+                                                        ><? echo GetMessage(
+                                                                "IB_E_FIELD_EL_TRANS_USE_SERVICE"
+                                                            ) ?></label>
                                                     </div>
                                                 </div>
                                             </div>
@@ -4227,11 +4973,12 @@ if ($arIBTYPE !== false):
                                 <td><? echo GetMessage("IB_E_RSS_TEMPL") ?></td>
                             </tr>
                             <?
-                            $arCurNodesRSS = CIBlockRSS::GetNodeList(IntVal($ID));
+                            $arCurNodesRSS = CIBlockRSS::GetNodeList(intval($ID));
                             $arNodesRSS = CIBlockRSS::GetRSSNodes();
                             foreach ($arNodesRSS as $key => $val):
-                                if ($bVarsFromForm)
+                                if ($bVarsFromForm) {
                                     $DB->InitTableVarsForEdit("b_iblock_rss", "RSS_", "str_RSS_", "_" . $key);
+                                }
                                 ?>
                                 <tr>
                                     <td>
@@ -4287,7 +5034,9 @@ if ($arIBTYPE !== false):
                         'SITE_ID' => $arIBlockSitesList[$arIBlock['ID']]['SITE_ID'],
                         'NAME' => htmlspecialcharsbx($arIBlock['NAME']),
                         'ACTIVE' => $arIBlock['ACTIVE'],
-                        'FULL_NAME' => '[' . $arIBlock['IBLOCK_TYPE_ID'] . '] ' . htmlspecialcharsbx($arIBlock['NAME']) . ' (' . $arIBlockSitesList[$arIBlock['ID']]['WITHOUT_LINKS'] . ')',
+                        'FULL_NAME' => '[' . $arIBlock['IBLOCK_TYPE_ID'] . '] ' . htmlspecialcharsbx(
+                                $arIBlock['NAME']
+                            ) . ' (' . $arIBlockSitesList[$arIBlock['ID']]['WITHOUT_LINKS'] . ')',
                         'IS_CATALOG' => 'N',
                         'SUBSCRIPTION' => 'N',
                         'YANDEX_EXPORT' => 'N',
@@ -4306,15 +5055,17 @@ if ($arIBTYPE !== false):
                         $arIBlockItem['PRODUCT_IBLOCK_ID'] = $ar_res1['PRODUCT_IBLOCK_ID'];
                         $arIBlockItem['SKU_PROPERTY_ID'] = $ar_res1['SKU_PROPERTY_ID'];
                         $arIBlockItem['OFFERS_IBLOCK_ID'] = 0;
-                        if (0 < $ar_res1['PRODUCT_IBLOCK_ID'])
+                        if (0 < $ar_res1['PRODUCT_IBLOCK_ID']) {
                             $arIBlockItem['IS_OFFERS'] = 'Y';
+                        }
                     }
 
                     $arIBlockFullInfo[$arIBlock['ID']] = $arIBlockItem;
                 }
                 foreach ($arIBlockFullInfo as $res) {
-                    if (0 < $res['PRODUCT_IBLOCK_ID'])
+                    if (0 < $res['PRODUCT_IBLOCK_ID']) {
                         $arIBlockFullInfo[$res['PRODUCT_IBLOCK_ID']]['OFFERS_IBLOCK_ID'] = $res['ID'];
+                    }
                 }
 
                 $tabControl->BeginNextTab();
@@ -4341,8 +5092,9 @@ if ($arIBTYPE !== false):
                     <td width="60%">
                         <input type="hidden" name="IS_CATALOG" id="IS_CATALOG_N" value="N">
                         <input type="checkbox" name="IS_CATALOG" id="IS_CATALOG_Y"
-                               value="Y"<? if ('Y' == $str_IS_CATALOG) echo " checked" ?><? if ('O' == $str_CATALOG_TYPE) echo ' disabled="disabled"'; ?>
-                               onclick="ib_checkFldActivity(0);">
+                               value="Y"<? if ('Y' == $str_IS_CATALOG) echo " checked" ?><? if ('O' == $str_CATALOG_TYPE) {
+                            echo ' disabled="disabled"';
+                        } ?> onclick="ib_checkFldActivity(0);">
                     </td>
                 </tr><?
                 if (CBXFeatures::IsFeatureEnabled('SaleRecurring')) {
@@ -4366,14 +5118,22 @@ if ($arIBTYPE !== false):
                     <td width="60%">
                         <input type="hidden" id="YANDEX_EXPORT_N" name="YANDEX_EXPORT" value="N">
                         <input type="checkbox" id="YANDEX_EXPORT_Y" name="YANDEX_EXPORT"
-                               value="Y"<? if ('Y' == $str_YANDEX_EXPORT) echo " checked" ?> <? if ('Y' != $str_IS_CATALOG) echo 'disabled="disabled"'; ?>>
+                               value="Y"<? if ('Y' == $str_YANDEX_EXPORT) echo " checked" ?> <? if ('Y' != $str_IS_CATALOG) {
+                            echo 'disabled="disabled"';
+                        } ?>>
                     </td>
                 </tr>
                 <tr>
                     <td width="40%"><label for="VAT_ID"><? echo GetMessage("IB_E_VAT_ID") ?></label></td>
                     <td width="60%"><?
                         $arVATRef = CatalogGetVATArray(array(), true);
-                        ?><?= SelectBoxFromArray('VAT_ID', $arVATRef, $str_VAT_ID, '', ('Y' != $str_IS_CATALOG ? 'disabled="disabled"' : '')); ?></td>
+                        ?><?= SelectBoxFromArray(
+                            'VAT_ID',
+                            $arVATRef,
+                            $str_VAT_ID,
+                            '',
+                            ('Y' != $str_IS_CATALOG ? 'disabled="disabled"' : '')
+                        ); ?></td>
                 </tr>
                 <tr class="heading">
                     <td colspan="2"><? echo GetMessage("IB_E_SKU_TITLE") ?></td>
@@ -4387,7 +5147,9 @@ if ($arIBTYPE !== false):
                 <tr>
                     <td width="40%"><? echo GetMessage("IB_E_IS_SKU") ?></td>
                     <td width="60%"><a
-                                href="/bitrix/admin/iblock_edit.php?type=<? echo $str_PRODUCT_IBLOCK_TYPE_ID; ?>&lang=<? echo LANGUAGE_ID; ?>&ID=<? echo $str_PRODUCT_IBLOCK_ID; ?>&admin=Y"><? echo htmlspecialcharsbx($str_PRODUCT_IBLOCK_NAME); ?></a>
+                                href="/bitrix/admin/iblock_edit.php?type=<? echo $str_PRODUCT_IBLOCK_TYPE_ID; ?>&lang=<? echo LANGUAGE_ID; ?>&ID=<? echo $str_PRODUCT_IBLOCK_ID; ?>&admin=Y"><? echo htmlspecialcharsbx(
+                                $str_PRODUCT_IBLOCK_NAME
+                            ); ?></a>
                         <input type="hidden" id="USED_SKU_N" name="USED_SKU" value="N"></td>
                 </tr>
                 <?
@@ -4413,8 +5175,12 @@ if ($arIBTYPE !== false):
                                     <td width="40%" class="field-name"><? echo GetMessage("IB_E_OF_IBLOCK_INFO") ?></td>
                                     <td width="60%"><select id="OF_IBLOCK_ID" name="OF_IBLOCK_ID" class="typeselect"
                                                             onchange="show_add_offers(this);">
-                                            <option value="0" <? echo(0 == $str_OF_IBLOCK_ID ? 'selected' : ''); ?>><? echo GetMessage('IB_E_OF_IBLOCK_EMPTY') ?></option>
-                                            <option value="<? echo CATALOG_NEW_OFFERS_IBLOCK_NEED; ?>" <? echo(CATALOG_NEW_OFFERS_IBLOCK_NEED == $str_OF_IBLOCK_ID ? 'selected' : ''); ?>><? echo GetMessage('IB_E_OF_IBLOCK_NEW') ?></option><?
+                                            <option value="0" <? echo(0 == $str_OF_IBLOCK_ID ? 'selected' : ''); ?>><? echo GetMessage(
+                                                    'IB_E_OF_IBLOCK_EMPTY'
+                                                ) ?></option>
+                                            <option value="<? echo CATALOG_NEW_OFFERS_IBLOCK_NEED; ?>" <? echo(CATALOG_NEW_OFFERS_IBLOCK_NEED == $str_OF_IBLOCK_ID ? 'selected' : ''); ?>><? echo GetMessage(
+                                                    'IB_E_OF_IBLOCK_NEW'
+                                                ) ?></option><?
                                             if (0 < $ID) {
                                                 // for new iblock only new offers
                                                 foreach ($arIBlockFullInfo as $value) {
@@ -4436,7 +5202,9 @@ if ($arIBTYPE !== false):
                                                     }
                                                     if ($boolAdd) {
                                                         ?>
-                                                        <option value="<? echo intval($value['ID']); ?>"<? echo($value['ID'] == $str_OF_IBLOCK_ID ? ' selected' : ''); ?>><? echo $value['FULL_NAME']; ?></option><?
+                                                        <option value="<? echo intval(
+                                                            $value['ID']
+                                                        ); ?>"<? echo($value['ID'] == $str_OF_IBLOCK_ID ? ' selected' : ''); ?>><? echo $value['FULL_NAME']; ?></option><?
                                                     }
                                                 }
                                             }
@@ -4472,30 +5240,43 @@ if ($arIBTYPE !== false):
                                         </td>
                                         <td style="text-align: left; width: 75%;"><input type="text"
                                                                                          name="OF_IBLOCK_NAME"
-                                                                                         value="<?= htmlspecialcharsbx($str_OF_IBLOCK_NAME); ?>"
-                                                                                         style="width: 100%;"/></td>
+                                                                                         value="<?= htmlspecialcharsbx(
+                                                                                             $str_OF_IBLOCK_NAME
+                                                                                         ); ?>" style="width: 100%;"/>
+                                        </td>
                                     </tr>
                                     <tr>
                                         <td style="text-align: left; width: 100%;" colspan="2" class="field-name"><input
                                                     type="radio" value="N" id="OF_CREATE_IBLOCK_TYPE_ID_N"
                                                     name="OF_CREATE_IBLOCK_TYPE_ID" <? echo('N' == $str_OF_CREATE_IBLOCK_TYPE_ID ? 'checked="checked"' : '') ?>
                                                     onclick="change_offers_ibtype(this);"><label
-                                                    for="CREATE_OFFERS_TYPE_N"><? echo GetMessage('IB_E_OF_PR_OLD_IBTYPE'); ?></label>
-                                        </td>
+                                                    for="CREATE_OFFERS_TYPE_N"><? echo GetMessage(
+                                                    'IB_E_OF_PR_OLD_IBTYPE'
+                                                ); ?></label></td>
                                     </tr>
                                     <tr>
                                         <td style="text-align: right; width: 25%;"
                                             class="field-name"><? echo GetMessage('IB_E_OF_PR_OFFERS_TYPE'); ?>:
                                         </td>
-                                        <td style="text-align: left; width: 75%;"><? echo SelectBoxFromArray('OF_IBLOCK_TYPE_ID', array('REFERENCE' => $arIBlockTypeNameList, 'REFERENCE_ID' => $arIBlockTypeIDList), $str_OF_IBLOCK_TYPE_ID, '', ('N' == $str_OF_CREATE_IBLOCK_TYPE_ID ? '' : 'disabled="disabled"')); ?></td>
+                                        <td style="text-align: left; width: 75%;"><? echo SelectBoxFromArray(
+                                                'OF_IBLOCK_TYPE_ID',
+                                                array(
+                                                    'REFERENCE' => $arIBlockTypeNameList,
+                                                    'REFERENCE_ID' => $arIBlockTypeIDList
+                                                ),
+                                                $str_OF_IBLOCK_TYPE_ID,
+                                                '',
+                                                ('N' == $str_OF_CREATE_IBLOCK_TYPE_ID ? '' : 'disabled="disabled"')
+                                            ); ?></td>
                                     </tr>
                                     <tr>
                                         <td style="text-align: left; width: 100%;" colspan="2" class="field-name"><input
                                                     type="radio" value="Y" id="OF_CREATE_IBLOCK_TYPE_ID_Y"
                                                     name="OF_CREATE_IBLOCK_TYPE_ID" <? echo('Y' == $str_OF_CREATE_IBLOCK_TYPE_ID ? 'checked="checked"' : '') ?>
                                                     onclick="change_offers_ibtype(this);"><label
-                                                    for="CREATE_OFFERS_TYPE_Y"><? echo GetMessage('IB_E_OF_PR_OFFERS_NEW_IBTYPE'); ?></label>
-                                        </td>
+                                                    for="CREATE_OFFERS_TYPE_Y"><? echo GetMessage(
+                                                    'IB_E_OF_PR_OFFERS_NEW_IBTYPE'
+                                                ); ?></label></td>
                                     </tr>
                                     <tr>
                                         <td style="text-align: right; width: 25%;"
@@ -4527,14 +5308,23 @@ if ($arIBTYPE !== false):
                                     <?
                                     $arOFPropList = array();
                                     if (0 < intval($str_OF_IBLOCK_ID)) {
-                                        $rsProps = CIBlock::GetProperties($str_OF_IBLOCK_ID, array("SORT" => "ASC", 'ID' => 'ASC'));
+                                        $rsProps = CIBlock::GetProperties(
+                                            $str_OF_IBLOCK_ID,
+                                            array("SORT" => "ASC", 'ID' => 'ASC')
+                                        );
                                         while ($arProp = $rsProps->Fetch()) {
                                             ConvProp($arProp, $arHiddenPropFields);
                                             if ($bVarsFromForm) {
                                                 $intPropID = $arProp['ID'];
-                                                $arTempo = GetPropertyInfo($strPREFIX_OF_PROPERTY, $intPropID, false, $arHiddenPropFields);
-                                                if (is_array($arTempo))
+                                                $arTempo = GetPropertyInfo(
+                                                    $strPREFIX_OF_PROPERTY,
+                                                    $intPropID,
+                                                    false,
+                                                    $arHiddenPropFields
+                                                );
+                                                if (is_array($arTempo)) {
                                                     $arProp = $arTempo;
+                                                }
                                                 $arProp['ID'] = $intPropID;
                                             }
                                             $arProp = ConvertToSafe($arProp, $arDisabledPropFields);
@@ -4544,11 +5334,17 @@ if ($arIBTYPE !== false):
                                     }
 
                                     $intPropCount = intval($_POST['OFFERS_PROPERTY_COUNT']);
-                                    if (0 >= $intPropCount)
+                                    if (0 >= $intPropCount) {
                                         $intPropCount = PROPERTY_EMPTY_ROW_SIZE;
+                                    }
                                     $intPropNumber = 0;
                                     for ($i = 0; $i < $intPropCount; $i++) {
-                                        $arProp = GetPropertyInfo($strPREFIX_OF_PROPERTY, 'n' . $i, false, $arHiddenPropFields);
+                                        $arProp = GetPropertyInfo(
+                                            $strPREFIX_OF_PROPERTY,
+                                            'n' . $i,
+                                            false,
+                                            $arHiddenPropFields
+                                        );
                                         if (is_array($arProp)) {
                                             $arProp = ConvertToSafe($arProp, $arDisabledPropFields);
                                             $arProp['ID'] = 'n' . $intPropNumber;
@@ -4672,12 +5468,14 @@ if ($arIBTYPE !== false):
                 </tr>
                 <? if ($str_RIGHTS_MODE === "E"):?>
                     <tr>
-                        <td width="40%" class="adm-detail-valign-top"><label
-                                    for="RIGHTS_MODE"><? echo GetMessage("IB_E_RIGHTS_MODE") ?></label></td>
+                        <td width="40%" class="adm-detail-valign-top"><label for="RIGHTS_MODE"><? echo GetMessage(
+                                    "IB_E_RIGHTS_MODE"
+                                ) ?></label></td>
                         <td width="60%">
                             <input type="hidden" name="RIGHTS_MODE" value="S">
                             <input type="checkbox" id="RIGHTS_MODE" name="RIGHTS_MODE" value="E"
-                                   checked="checked"><? echo BeginNote(), GetMessage("IB_E_RIGHTS_MODE_NOTE1"), EndNote() ?>
+                                   checked="checked"><? echo BeginNote(), GetMessage("IB_E_RIGHTS_MODE_NOTE1"), EndNote(
+                            ) ?>
                         </td>
                     </tr>
                     <?
@@ -4698,12 +5496,13 @@ if ($arIBTYPE !== false):
                     </tr>
                 <? else:?>
                     <tr>
-                        <td width="40%" class="adm-detail-valign-top"><label
-                                    for="RIGHTS_MODE"><? echo GetMessage("IB_E_RIGHTS_MODE") ?></label></td>
+                        <td width="40%" class="adm-detail-valign-top"><label for="RIGHTS_MODE"><? echo GetMessage(
+                                    "IB_E_RIGHTS_MODE"
+                                ) ?></label></td>
                         <td width="60%">
                             <input type="hidden" name="RIGHTS_MODE" value="S">
-                            <input type="checkbox" id="RIGHTS_MODE" name="RIGHTS_MODE"
-                                   value="E"><? echo BeginNote(), GetMessage("IB_E_RIGHTS_MODE_NOTE2"), EndNote() ?>
+                            <input type="checkbox" id="RIGHTS_MODE" name="RIGHTS_MODE" value="E"><? echo BeginNote(
+                            ), GetMessage("IB_E_RIGHTS_MODE_NOTE2"), EndNote() ?>
                         </td>
                     </tr>
                     <?
@@ -4714,7 +5513,8 @@ if ($arIBTYPE !== false):
                             "S" => GetMessage("IB_E_ACCESS_S"),
                             "U" => GetMessage("IB_E_ACCESS_U"),
                             "W" => GetMessage("IB_E_ACCESS_W"),
-                            "X" => GetMessage("IB_E_ACCESS_X"));
+                            "X" => GetMessage("IB_E_ACCESS_X")
+                        );
                     elseif ($bBizprocTab) :
                         $arPermType = array(
                             "D" => GetMessage("IB_E_ACCESS_D"),
@@ -4722,7 +5522,8 @@ if ($arIBTYPE !== false):
                             "S" => GetMessage("IB_E_ACCESS_S"),
                             "U" => GetMessage("IB_E_ACCESS_U2"),
                             "W" => GetMessage("IB_E_ACCESS_W"),
-                            "X" => GetMessage("IB_E_ACCESS_X"));
+                            "X" => GetMessage("IB_E_ACCESS_X")
+                        );
                     else :
                         $arPermType = array(
                             "D" => GetMessage("IB_E_ACCESS_D"),
@@ -4730,11 +5531,13 @@ if ($arIBTYPE !== false):
                             "S" => GetMessage("IB_E_ACCESS_S"),
                             "T" => GetMessage("IB_E_ACCESS_T"),
                             "W" => GetMessage("IB_E_ACCESS_W"),
-                            "X" => GetMessage("IB_E_ACCESS_X"));
+                            "X" => GetMessage("IB_E_ACCESS_X")
+                        );
                     endif;
                     $perm = CIBlock::GetGroupPermissions($ID);
-                    if (!array_key_exists(1, $perm))
+                    if (!array_key_exists(1, $perm)) {
                         $perm[1] = "X";
+                    }
                     ?>
                     <tr class="heading">
                         <td colspan="2"><? echo GetMessage("IB_E_DEFAULT_ACCESS_TITLE") ?></td>
@@ -4747,13 +5550,16 @@ if ($arIBTYPE !== false):
 
                             <select name="GROUP[2]" id="group_2">
                                 <?
-                                if ($bVarsFromForm)
+                                if ($bVarsFromForm) {
                                     $strSelected = $GROUP[2];
-                                else
+                                } else {
                                     $strSelected = $perm[2];
+                                }
                                 foreach ($arPermType as $key => $val):
                                     ?>
-                                    <option value="<? echo $key ?>"<? if ($strSelected == $key) echo " selected" ?>><? echo htmlspecialcharsex($val) ?></option>
+                                    <option value="<? echo $key ?>"<? if ($strSelected == $key) echo " selected" ?>><? echo htmlspecialcharsex(
+                                            $val
+                                        ) ?></option>
                                 <?endforeach ?>
                             </select>
 
@@ -4762,7 +5568,9 @@ if ($arIBTYPE !== false):
                                     var all = document.getElementById('group_2');
                                     var msg = document.getElementById(message);
                                     if (all && all.value >= control.value && control.value != '') {
-                                        if (msg) msg.innerHTML = '<?echo CUtil::JSEscape(GetMessage("IB_E_ACCESS_WARNING"))?>';
+                                        if (msg) msg.innerHTML = '<?echo CUtil::JSEscape(
+                                            GetMessage("IB_E_ACCESS_WARNING")
+                                        )?>';
                                     } else {
                                         if (msg) msg.innerHTML = '';
                                     }
@@ -4775,15 +5583,17 @@ if ($arIBTYPE !== false):
                         <td colspan="2"><? echo GetMessage("IB_E_GROUP_ACCESS_TITLE") ?></td>
                     </tr>
                     <?
-                    $groups = CGroup::GetList($by = "sort", $order = "asc", Array("ID" => "~2"));
+                    $groups = CGroup::GetList("sort", "asc", Array("ID" => "~2"));
                     while ($r = $groups->GetNext()):
-                        if ($bVarsFromForm)
+                        if ($bVarsFromForm) {
                             $strSelected = $GROUP[$r["ID"]];
-                        else
+                        } else {
                             $strSelected = $perm[$r["ID"]];
+                        }
 
-                        if ($strSelected == "U" && !$bWorkflow && !$bBizproc)
+                        if ($strSelected == "U" && !$bWorkflow && !$bBizproc) {
                             $strSelected = "R";
+                        }
 
                         if ($strSelected != "R" &&
                             $strSelected != "S" &&
@@ -4791,8 +5601,9 @@ if ($arIBTYPE !== false):
                             $strSelected != "U" &&
                             $strSelected != "W" &&
                             $strSelected != "X" &&
-                            $ID > 0 && !$bVarsFromForm)
+                            $ID > 0 && !$bVarsFromForm) {
                             $strSelected = "";
+                        }
                         ?>
                         <tr>
                             <td nowrap width="40%"><? echo $r["NAME"] ?> [<a class="tablebodylink"
@@ -4806,7 +5617,9 @@ if ($arIBTYPE !== false):
                                     <?
                                     foreach ($arPermType as $key => $val):
                                         ?>
-                                        <option value="<? echo $key ?>"<? if ($strSelected == $key) echo " selected" ?>><? echo htmlspecialcharsex($val) ?></option>
+                                        <option value="<? echo $key ?>"<? if ($strSelected == $key) echo " selected" ?>><? echo htmlspecialcharsex(
+                                                $val
+                                            ) ?></option>
                                     <?endforeach ?>
                                 </select>
                                 <span id="spn_group_<? echo $r["ID"] ?>"></span>
@@ -4819,8 +5632,9 @@ if ($arIBTYPE !== false):
             $tabControl->BeginNextTab();
             $arMessages = CIBlock::GetMessages($ID);
             if ($bVarsFromForm) {
-                foreach ($arMessages as $MESSAGE_ID => $MESSAGE_TEXT)
+                foreach ($arMessages as $MESSAGE_ID => $MESSAGE_TEXT) {
                     $arMessages[$MESSAGE_ID] = $_REQUEST[$MESSAGE_ID];
+                }
             }
             if ($arIBTYPE["SECTIONS"] == "Y"):?>
                 <tr>
@@ -4898,8 +5712,11 @@ if ($arIBTYPE !== false):
             if ($bBizprocTab):
                 $tabControl->BeginNextTab();
 
-                if (!isset($arWorkflowTemplates))
-                    $arWorkflowTemplates = CBPDocument::GetWorkflowTemplatesForDocumentType(array("iblock", "CIBlockDocument", "iblock_" . $ID));
+                if (!isset($arWorkflowTemplates)) {
+                    $arWorkflowTemplates = CBPDocument::GetWorkflowTemplatesForDocumentType(
+                        array("iblock", "CIBlockDocument", "iblock_" . $ID)
+                    );
+                }
                 ?>
                 <tr>
                     <td colspan="2">
@@ -4916,9 +5733,10 @@ if ($arIBTYPE !== false):
                                     <tr>
                                         <td>
                                             <? if (IsModuleInstalled("bizprocdesigner")):?>
-                                                <a href="/bitrix/admin/iblock_bizproc_workflow_edit.php?document_type=iblock_<?= $ID ?>&lang=<?= LANGUAGE_ID ?>&ID=<?= $arTemplate["ID"] ?>&back_url_list=<?= urlencode($APPLICATION->GetCurPageParam("", array())) ?>"
-                                                   target="_blank"><?= $arTemplate["NAME"] ?> [<?= $arTemplate["ID"] ?>
-                                                    ]</a>
+                                                <a href="/bitrix/admin/iblock_bizproc_workflow_edit.php?document_type=iblock_<?= $ID ?>&lang=<?= LANGUAGE_ID ?>&ID=<?= $arTemplate["ID"] ?>&back_url_list=<?= urlencode(
+                                                    $APPLICATION->GetCurPageParam("", array())
+                                                ) ?>" target="_blank"><?= $arTemplate["NAME"] ?>
+                                                    [<?= $arTemplate["ID"] ?>]</a>
                                             <? else:?>
                                                 <?= $arTemplate["NAME"] ?>
                                             <?endif ?>
@@ -4928,26 +5746,30 @@ if ($arIBTYPE !== false):
                                         </td>
                                         <td nowrap>
                                             <?
-                                            if ($bVarsFromForm)
+                                            if ($bVarsFromForm) {
                                                 $checked = $_REQUEST["create_bizproc_" . $arTemplate["ID"]] == "Y";
-                                            else
+                                            } else {
                                                 $checked = ($arTemplate["AUTO_EXECUTE"] & 1) != 0;
+                                            }
                                             ?>
                                             <label><input type="checkbox"
                                                           id="id_create_bizproc_<?= $arTemplate["ID"] ?>"
                                                           name="create_bizproc_<?= $arTemplate["ID"] ?>"
-                                                          value="Y"<? echo $checked ? " checked" : "" ?>><? echo GetMessage("IB_E_BP_AUTORUN_CREATE") ?>
-                                            </label><br/>
+                                                          value="Y"<? echo $checked ? " checked" : "" ?>><? echo GetMessage(
+                                                    "IB_E_BP_AUTORUN_CREATE"
+                                                ) ?></label><br/>
                                             <?
-                                            if ($bVarsFromForm)
+                                            if ($bVarsFromForm) {
                                                 $checked = $_REQUEST["edit_bizproc_" . $arTemplate["ID"]] == "Y";
-                                            else
+                                            } else {
                                                 $checked = ($arTemplate["AUTO_EXECUTE"] & 2) != 0;
+                                            }
                                             ?>
                                             <label><input type="checkbox" id="id_edit_bizproc_<?= $arTemplate["ID"] ?>"
                                                           name="edit_bizproc_<?= $arTemplate["ID"] ?>"
-                                                          value="Y"<? echo $checked ? " checked" : "" ?>><? echo GetMessage("IB_E_BP_AUTORUN_UPDATE") ?>
-                                            </label><br/>
+                                                          value="Y"<? echo $checked ? " checked" : "" ?>><? echo GetMessage(
+                                                    "IB_E_BP_AUTORUN_UPDATE"
+                                                ) ?></label><br/>
                                         </td>
                                     </tr>
                                     <?
@@ -4957,8 +5779,9 @@ if ($arIBTYPE !== false):
                             <br>
                         <?endif;
                         if (IsModuleInstalled("bizprocdesigner")):?>
-                            <a href="/bitrix/admin/iblock_bizproc_workflow_admin.php?document_type=iblock_<?= $ID ?>&lang=<?= LANGUAGE_ID ?>&back_url_list=<?= urlencode($APPLICATION->GetCurPageParam("", array())) ?>"
-                               target="_blank"><? echo GetMessage("IB_E_GOTO_BP") ?></a>
+                            <a href="/bitrix/admin/iblock_bizproc_workflow_admin.php?document_type=iblock_<?= $ID ?>&lang=<?= LANGUAGE_ID ?>&back_url_list=<?= urlencode(
+                                $APPLICATION->GetCurPageParam("", array())
+                            ) ?>" target="_blank"><? echo GetMessage("IB_E_GOTO_BP") ?></a>
                         <?endif ?>
                     </td>
                 </tr>
@@ -4966,20 +5789,24 @@ if ($arIBTYPE !== false):
             endif;
 
             $tabControl->BeginNextTab();
-            if ($bVarsFromForm)
+            if ($bVarsFromForm) {
                 $arFields = $_REQUEST["FIELDS"];
-            else
+            } else {
                 $arFields = CIBlock::GetFields($ID);
+            }
             $arDefFields = CIBlock::GetFieldsDefaults();
             foreach ($arDefFields as $FIELD_ID => $arField):
-                if ($arField["VISIBLE"] == "N")
+                if ($arField["VISIBLE"] == "N") {
                     continue;
-                if (!preg_match("/^LOG_/", $FIELD_ID))
+                }
+                if (!preg_match("/^LOG_/", $FIELD_ID)) {
                     continue;
+                }
                 ?>
                 <tr>
-                    <td width="40%"><label
-                                for="FIELDS[<? echo $FIELD_ID ?>][IS_REQUIRED]"><? echo GetMessage("IB_E_" . $FIELD_ID) ?></label>:
+                    <td width="40%"><label for="FIELDS[<? echo $FIELD_ID ?>][IS_REQUIRED]"><? echo GetMessage(
+                                "IB_E_" . $FIELD_ID
+                            ) ?></label>:
                     </td>
                     <td>
                         <input type="hidden" value="N" name="FIELDS[<? echo $FIELD_ID ?>][IS_REQUIRED]">
@@ -4990,10 +5817,14 @@ if ($arIBTYPE !== false):
             <?endforeach;
 
             $backUrl = '';
-            if (isset($_REQUEST['return_url']) && is_string($_REQUEST['return_url']))
+            if (isset($_REQUEST['return_url']) && is_string($_REQUEST['return_url'])) {
                 $backUrl = trim($_REQUEST['return_url']);
-            if ($backUrl === '')
-                $backUrl = 'iblock_admin.php?lang=' . LANGUAGE_ID . '&type=' . urlencode($type) . '&admin=' . ($_REQUEST["admin"] == "Y" ? "Y" : "N");
+            }
+            if ($backUrl === '') {
+                $backUrl = 'iblock_admin.php?lang=' . LANGUAGE_ID . '&type=' . urlencode(
+                        $type
+                    ) . '&admin=' . ($_REQUEST["admin"] == "Y" ? "Y" : "N");
+            }
             $tabControl->Buttons(array("disabled" => false, "back_url" => $backUrl));
             $tabControl->End();
             unset($backUrl);

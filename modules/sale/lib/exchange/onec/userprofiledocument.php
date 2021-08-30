@@ -13,7 +13,10 @@ class UserProfileDocument extends DocumentBase
      */
     protected static function getMessage()
     {
-        return Main\Localization\Loc::loadLanguageFile($_SERVER["DOCUMENT_ROOT"] . '/bitrix/modules/sale/general/export.php', self::CML_LANG_ID);
+        return Main\Localization\Loc::loadLanguageFile(
+            $_SERVER["DOCUMENT_ROOT"] . '/bitrix/modules/sale/general/export.php',
+            self::CML_LANG_ID
+        );
     }
 
     /**

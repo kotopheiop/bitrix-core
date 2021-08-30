@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 class CSpellchecker
@@ -44,7 +45,11 @@ class CSpellchecker
     private function checkDicPath()
     {
         global $USER;
-        $dics_path = $_SERVER["DOCUMENT_ROOT"] . COption::GetOptionString('fileman', "user_dics_path", "/bitrix/modules/fileman/u_dics");
+        $dics_path = $_SERVER["DOCUMENT_ROOT"] . COption::GetOptionString(
+                'fileman',
+                "user_dics_path",
+                "/bitrix/modules/fileman/u_dics"
+            );
 
         $custom_path = $dics_path . '/' . $this->lang;
 
@@ -62,7 +67,9 @@ class CSpellchecker
 
     function codeLetter($letter)
     {
-        return (in_array($letter, $this->letters) && $letter != '�' && $letter != '�' && $letter != '�') ? ord($letter) : 'def';
+        return (in_array($letter, $this->letters) && $letter != '�' && $letter != '�' && $letter != '�') ? ord(
+            $letter
+        ) : 'def';
     }
 
     function loadDic($letter)
@@ -71,10 +78,11 @@ class CSpellchecker
         if (is_readable($path)) {
             $dic = file($path);
             foreach ($dic as $dict_word) {
-                $this->dic[$letter][strtolower(trim($dict_word))] = $dict_word;
+                $this->dic[$letter][mb_strtolower(trim($dict_word))] = $dict_word;
             }
-        } else
+        } else {
             $this->dic[$letter] = array();
+        }
     }
 
     function checkWord($word)

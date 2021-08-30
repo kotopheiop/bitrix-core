@@ -44,49 +44,67 @@ class AppTable extends Entity\DataManager
     public static function getMap()
     {
         return array(
-            new Entity\StringField('CODE', array(
+            new Entity\StringField(
+                'CODE', array(
                 'primary' => true,
                 'validation' => array(__CLASS__, 'validateCode'),
                 'title' => Loc::getMessage('APP_ENTITY_CODE_FIELD'),
-            )),
-            new Entity\StringField('SHORT_NAME', array(
+            )
+            ),
+            new Entity\StringField(
+                'SHORT_NAME', array(
                 'validation' => array(__CLASS__, 'validateShortName'),
                 'title' => Loc::getMessage('APP_ENTITY_SHORT_NAME_FIELD'),
                 'default_value' => "AppName"
-            )),
-            new Entity\StringField('NAME', array(
+            )
+            ),
+            new Entity\StringField(
+                'NAME', array(
                 'validation' => array(__CLASS__, 'validateName'),
                 "require" => true,
                 'title' => Loc::getMessage('APP_ENTITY_NAME_FIELD'),
-            )),
-            new Entity\TextField('DESCRIPTION', array(
+            )
+            ),
+            new Entity\TextField(
+                'DESCRIPTION', array(
                 'default_value' => "App description placeholder",
                 'title' => Loc::getMessage('APP_ENTITY_DESCRIPTION_FIELD'),
-            )),
-            new Entity\TextField('FILES', array(
+            )
+            ),
+            new Entity\TextField(
+                'FILES', array(
                 'serialized' => true,
                 'default_value' => array(),
                 'title' => Loc::getMessage('APP_ENTITY_FILES_FIELD'),
-            )),
-            new Entity\TextField('LAUNCH_ICONS', array(
+            )
+            ),
+            new Entity\TextField(
+                'LAUNCH_ICONS', array(
                 'serialized' => true,
                 'default_value' => array(),
                 'title' => Loc::getMessage('APP_ENTITY_LAUNCH_ICONS_FIELD'),
-            )),
-            new Entity\TextField('LAUNCH_SCREENS', array(
+            )
+            ),
+            new Entity\TextField(
+                'LAUNCH_SCREENS', array(
                 'serialized' => true,
                 'default_value' => array(),
                 'title' => Loc::getMessage('APP_ENTITY_LAUNCH_SCREENS_FIELD'),
-            )),
-            new Entity\StringField('FOLDER', array(
+            )
+            ),
+            new Entity\StringField(
+                'FOLDER', array(
                 'validation' => array(__CLASS__, 'validateFolder'),
                 'require' => true,
                 'title' => Loc::getMessage('APP_ENTITY_FOLDER_FIELD'),
-            )),
-            new Entity\DatetimeField('DATE_CREATE', array(
+            )
+            ),
+            new Entity\DatetimeField(
+                'DATE_CREATE', array(
                 'default_value' => new \Bitrix\Main\Type\Date,
                 'title' => Loc::getMessage('APP_ENTITY_DATE_CREATE_FIELD'),
-            )),
+            )
+            ),
             new Entity\ReferenceField(
                 'CONFIG',
                 'Bitrix\MobileApp\Designer\ConfigTable',
@@ -145,13 +163,18 @@ class AppTable extends Entity\DataManager
         if ($result instanceof Entity\AddResult) {
             $entity = self::getEntity();
             if (!$data["CODE"]) {
-                $result->addError(new Entity\FieldError($entity->getField("CODE"), "Can not be empty!", FieldError::EMPTY_REQUIRED));
+                $result->addError(
+                    new Entity\FieldError($entity->getField("CODE"), "Can not be empty!", FieldError::EMPTY_REQUIRED)
+                );
             } elseif (!$data["FOLDER"]) {
-                $result->addError(new Entity\FieldError($entity->getField("FOLDER"), "Can not be empty!", FieldError::EMPTY_REQUIRED));
+                $result->addError(
+                    new Entity\FieldError($entity->getField("FOLDER"), "Can not be empty!", FieldError::EMPTY_REQUIRED)
+                );
             } elseif (!$data["NAME"]) {
-                $result->addError(new Entity\FieldError($entity->getField("NAME"), "Can not be empty!", FieldError::EMPTY_REQUIRED));
+                $result->addError(
+                    new Entity\FieldError($entity->getField("NAME"), "Can not be empty!", FieldError::EMPTY_REQUIRED)
+                );
             }
-
         }
     }
 

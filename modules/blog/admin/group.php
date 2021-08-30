@@ -1,10 +1,12 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/blog/include.php");
 
 $blogModulePermissions = $APPLICATION->GetGroupRight("blog");
-if ($blogModulePermissions < "R")
+if ($blogModulePermissions < "R") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/blog/prolog.php");
@@ -22,31 +24,35 @@ $arFilterFields = array(
 $lAdmin->InitFilter($arFilterFields);
 
 $arFilter = array();
-if (strlen($filter_site_id) > 0 && $filter_site_id != "NOT_REF")
+if ($filter_site_id <> '' && $filter_site_id != "NOT_REF") {
     $arFilter["SITE_ID"] = $filter_site_id;
-if (strlen($filter_name) > 0)
+}
+if ($filter_name <> '') {
     $arFilter["~NAME"] = "%" . $filter_name . "%";
+}
 
 if ($lAdmin->EditAction() && $blogModulePermissions >= "W") {
     foreach ($FIELDS as $ID => $arFields) {
         $DB->StartTransaction();
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
-        if (!$lAdmin->IsUpdated($ID))
+        if (!$lAdmin->IsUpdated($ID)) {
             continue;
+        }
 
         $arBlogGroupTmp = CBlogGroup::GetByID($ID);
         if (!CBlogGroup::Update($ID, $arFields)) {
-            if ($ex = $APPLICATION->GetException())
+            if ($ex = $APPLICATION->GetException()) {
                 $lAdmin->AddUpdateError($ex->GetString(), $ID);
-            else
+            } else {
                 $lAdmin->AddUpdateError(GetMessage("BLG_ERROR_UPDATE"), $ID);
+            }
 
             $DB->Rollback();
         }
 
-        BXClearCache(True, "/" . $arFields["SITE_ID"] . "/blog/");
-        BXClearCache(True, "/" . $arBlogGroupTmp["SITE_ID"] . "/blog/");
+        BXClearCache(true, "/" . $arFields["SITE_ID"] . "/blog/");
+        BXClearCache(true, "/" . $arBlogGroupTmp["SITE_ID"] . "/blog/");
 
         $DB->Commit();
     }
@@ -62,13 +68,15 @@ if (($arID = $lAdmin->GroupAction()) && $blogModulePermissions >= "W") {
             false,
             array("ID")
         );
-        while ($arResult = $dbResultList->Fetch())
+        while ($arResult = $dbResultList->Fetch()) {
             $arID[] = $arResult['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
 
         switch ($_REQUEST['action']) {
             case "delete":
@@ -80,13 +88,14 @@ if (($arID = $lAdmin->GroupAction()) && $blogModulePermissions >= "W") {
                 if (!CBlogGroup::Delete($ID)) {
                     $DB->Rollback();
 
-                    if ($ex = $APPLICATION->GetException())
+                    if ($ex = $APPLICATION->GetException()) {
                         $lAdmin->AddGroupError($ex->GetString(), $ID);
-                    else
+                    } else {
                         $lAdmin->AddGroupError(GetMessage("BLG_DELETE_ERROR"), $ID);
+                    }
                 }
 
-                BXClearCache(True, "/" . $arBlogGroupTmp["SITE_ID"] . "/blog/");
+                BXClearCache(true, "/" . $arBlogGroupTmp["SITE_ID"] . "/blog/");
 
                 $DB->Commit();
 
@@ -108,31 +117,53 @@ $dbResultList->NavStart();
 
 $lAdmin->NavText($dbResultList->GetNavPrint(GetMessage("BLG_GROUP_NAV")));
 
-$lAdmin->AddHeaders(array(
-    array("id" => "ID", "content" => "ID", "sort" => "ID", "default" => true),
-    array("id" => "NAME", "content" => GetMessage("BLG_GROUP_NAME"), "sort" => "NAME", "default" => true),
-    array("id" => "SITE_ID", "content" => GetMessage('BLG_GROUP_SITE_ID'), "sort" => "SITE_ID", "default" => true),
-));
+$lAdmin->AddHeaders(
+    array(
+        array("id" => "ID", "content" => "ID", "sort" => "ID", "default" => true),
+        array("id" => "NAME", "content" => GetMessage("BLG_GROUP_NAME"), "sort" => "NAME", "default" => true),
+        array("id" => "SITE_ID", "content" => GetMessage('BLG_GROUP_SITE_ID'), "sort" => "SITE_ID", "default" => true),
+    )
+);
 
 $arVisibleColumns = $lAdmin->GetVisibleHeaderColumns();
 
 $arSites = array();
-$dbSitesList = CSite::GetList(($b = "sort"), ($o = "asc"));
-while ($arSite = $dbSitesList->Fetch())
+$dbSitesList = CSite::GetList();
+while ($arSite = $dbSitesList->Fetch()) {
     $arSites[$arSite["LID"]] = "[" . $arSite["LID"] . "]&nbsp;" . $arSite["NAME"];
+}
 
 while ($arGroup = $dbResultList->NavNext(true, "f_")) {
     $row =& $lAdmin->AddRow($f_ID, $arGroup);
 
-    $row->AddField("ID", '<a href="/bitrix/admin/blog_group_edit.php?ID=' . $f_ID . '&lang=' . LANGUAGE_ID . '" title="' . GetMessage("BLG_UPDATE_ALT") . '">' . $f_ID . '</a>');
+    $row->AddField(
+        "ID",
+        '<a href="/bitrix/admin/blog_group_edit.php?ID=' . $f_ID . '&lang=' . LANGUAGE_ID . '" title="' . GetMessage(
+            "BLG_UPDATE_ALT"
+        ) . '">' . $f_ID . '</a>'
+    );
     $row->AddInputField("NAME", array("size" => "35"));
     $row->AddSelectField("SITE_ID", $arSites, array());
 
     $arActions = Array();
-    $arActions[] = array("ICON" => "edit", "TEXT" => GetMessage("BLG_UPDATE_ALT"), "ACTION" => $lAdmin->ActionRedirect("blog_group_edit.php?ID=" . $f_ID . "&lang=" . LANG . "&" . GetFilterParams("filter_") . ""), "DEFAULT" => true);
+    $arActions[] = array(
+        "ICON" => "edit",
+        "TEXT" => GetMessage("BLG_UPDATE_ALT"),
+        "ACTION" => $lAdmin->ActionRedirect(
+            "blog_group_edit.php?ID=" . $f_ID . "&lang=" . LANG . "&" . GetFilterParams("filter_") . ""
+        ),
+        "DEFAULT" => true
+    );
     if ($blogModulePermissions >= "U") {
         $arActions[] = array("SEPARATOR" => true);
-        $arActions[] = array("ICON" => "delete", "TEXT" => GetMessage("BLG_DELETE_ALT"), "ACTION" => "if(confirm('" . GetMessage('BLG_DELETE_CONF') . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete"));
+        $arActions[] = array(
+            "ICON" => "delete",
+            "TEXT" => GetMessage("BLG_DELETE_ALT"),
+            "ACTION" => "if(confirm('" . GetMessage('BLG_DELETE_CONF') . "')) " . $lAdmin->ActionDoGroup(
+                    $f_ID,
+                    "delete"
+                )
+        );
     }
 
     $row->AddActions($arActions);

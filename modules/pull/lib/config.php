@@ -11,8 +11,9 @@ class Config
 {
     public static function get($params = array())
     {
-        if (!\CPullOptions::GetQueueServerStatus())
+        if (!\CPullOptions::GetQueueServerStatus()) {
             return false;
+        }
 
         $userId = (int)$params['USER_ID'];
         if ($userId == 0) {
@@ -36,21 +37,28 @@ class Config
 
         $isSharedMode = \CPullOptions::IsServerShared();
         $serverConfig = Array(
-            'VERSION' => \CPullOptions::GetQueueServerVersion(),
+            'VERSION' => $isSharedMode ? \Bitrix\Pull\SharedServer\Config::getServerVersion(
+            ) : \CPullOptions::GetQueueServerVersion(),
             'SERVER_ENABLED' => \CPullOptions::GetQueueServerStatus(),
             'MODE' => \CPullOptions::GetQueueServerMode(),
-            'LONG_POLLING' => $isSharedMode ? \Bitrix\Pull\SharedServer\Config::getLongPollingUrl() : \CPullOptions::GetListenUrl(),
-            'LONG_POOLING_SECURE' => $isSharedMode ? \Bitrix\Pull\SharedServer\Config::getLongPollingUrl() : \CPullOptions::GetListenSecureUrl(),
+            'LONG_POLLING' => $isSharedMode ? \Bitrix\Pull\SharedServer\Config::getLongPollingUrl(
+            ) : \CPullOptions::GetListenUrl(),
+            'LONG_POOLING_SECURE' => $isSharedMode ? \Bitrix\Pull\SharedServer\Config::getLongPollingUrl(
+            ) : \CPullOptions::GetListenSecureUrl(),
             'WEBSOCKET_ENABLED' => $isSharedMode ? true : \CPullOptions::GetWebSocket(),
-            'WEBSOCKET' => $isSharedMode ? \Bitrix\Pull\SharedServer\Config::getWebSocketUrl() : \CPullOptions::GetWebSocketUrl(),
-            'WEBSOCKET_SECURE' => $isSharedMode ? \Bitrix\Pull\SharedServer\Config::getWebSocketUrl() : \CPullOptions::GetWebSocketSecureUrl(),
+            'WEBSOCKET' => $isSharedMode ? \Bitrix\Pull\SharedServer\Config::getWebSocketUrl(
+            ) : \CPullOptions::GetWebSocketUrl(),
+            'WEBSOCKET_SECURE' => $isSharedMode ? \Bitrix\Pull\SharedServer\Config::getWebSocketUrl(
+            ) : \CPullOptions::GetWebSocketSecureUrl(),
             'PUBLISH_ENABLED' => $isSharedMode ? true : \CPullOptions::GetPublishWebEnabled(),
-            'PUBLISH' => $isSharedMode ? \Bitrix\Pull\SharedServer\Config::getWebPublishUrl() : \CPullOptions::GetPublishWebUrl(),
-            'PUBLISH_SECURE' => $isSharedMode ? \Bitrix\Pull\SharedServer\Config::getWebPublishUrl() : \CPullOptions::GetPublishWebSecureUrl(),
+            'PUBLISH' => $isSharedMode ? \Bitrix\Pull\SharedServer\Config::getWebPublishUrl(
+            ) : \CPullOptions::GetPublishWebUrl(),
+            'PUBLISH_SECURE' => $isSharedMode ? \Bitrix\Pull\SharedServer\Config::getWebPublishUrl(
+            ) : \CPullOptions::GetPublishWebSecureUrl(),
             'CONFIG_TIMESTAMP' => \CPullOptions::GetConfigTimestamp(),
         );
         foreach ($serverConfig as $key => $value) {
-            if (is_string($value) && strpos($value, '#DOMAIN#') !== false) {
+            if (is_string($value) && mb_strpos($value, '#DOMAIN#') !== false) {
                 $serverConfig[$key] = str_replace('#DOMAIN#', $domain, $value);
             }
         }
@@ -91,12 +99,14 @@ class Config
             );
         }
 
+        $config['PUBLIC_CHANNELS'] = \Bitrix\Pull\Channel::getPublicIds(['JSON' => (bool)$params['JSON']]);
+
         if ($params['JSON']) {
             $result['server'] = array_change_key_case($config['SERVER'], CASE_LOWER);
             $result['api'] = array_change_key_case($config['API'], CASE_LOWER);
 
             foreach ($config['CHANNELS'] as $type => $channel) {
-                $type = strtolower($type);
+                $type = mb_strtolower($type);
                 $result['channels'][$type] = array_change_key_case($channel, CASE_LOWER);
                 $result['channels'][$type]['type'] = $type;
                 $result['channels'][$type]['start'] = date('c', $channel['START']);
@@ -107,11 +117,12 @@ class Config
                 $result['clientId'] = $config['CLIENT_ID'];
             }
 
+            $result['publicChannels'] = $config['PUBLIC_CHANNELS'];
+
             $config = $result;
         }
 
         return $config;
-
     }
 
     /**

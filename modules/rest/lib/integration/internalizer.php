@@ -55,20 +55,23 @@ final class Internalizer extends ModificationFieldsBase
         if ($name == 'list') {
             if (isset($arguments['select'])) {
                 $fields = $arguments['select'];
-                if (!empty($fields))
+                if (!empty($fields)) {
                     $arguments['select'] = $view->convertKeysToSnakeCaseSelect($fields);
+                }
             }
 
             if (isset($arguments['filter'])) {
                 $fields = $arguments['filter'];
-                if (!empty($fields))
+                if (!empty($fields)) {
                     $arguments['filter'] = $view->convertKeysToSnakeCaseFilter($fields);
+                }
             }
 
             if (isset($arguments['order'])) {
                 $fields = $arguments['order'];
-                if (!empty($fields))
+                if (!empty($fields)) {
                     $arguments['order'] = $view->convertKeysToSnakeCaseOrder($fields);
+                }
             }
         } elseif ($name == 'getfields') {
         } elseif ($name == 'get') {
@@ -77,8 +80,9 @@ final class Internalizer extends ModificationFieldsBase
             || $name == 'update') {
             if (isset($arguments['fields'])) {
                 $fields = $arguments['fields'];
-                if (!empty($fields))
+                if (!empty($fields)) {
                     $arguments['fields'] = $view->convertKeysToSnakeCaseFields($fields);
+                }
             }
         } else {
             $arguments = $view->convertKeysToSnakeCaseArguments($name, $arguments);
@@ -96,18 +100,22 @@ final class Internalizer extends ModificationFieldsBase
 
         if ($name == 'add') {
             $fields = $arguments['fields'];
-            if (!empty($fields))
+            if (!empty($fields)) {
                 $arguments['fields'] = $view->internalizeFieldsAdd($fields);
+            }
         } elseif ($name == 'update') {
             $fields = $arguments['fields'];
-            if (!empty($fields))
+            if (!empty($fields)) {
                 $arguments['fields'] = $view->internalizeFieldsUpdate($fields);
+            }
         } elseif ($name == 'list') {
-            $fields = $view->internalizeFieldsList([
-                'select' => $arguments['select'],
-                'filter' => $arguments['filter'],
-                'order' => $arguments['order'],
-            ]);
+            $fields = $view->internalizeFieldsList(
+                [
+                    'select' => $arguments['select'],
+                    'filter' => $arguments['filter'],
+                    'order' => $arguments['order'],
+                ]
+            );
 
             $arguments['select'] = $fields['select'];
             $arguments['filter'] = $fields['filter'];

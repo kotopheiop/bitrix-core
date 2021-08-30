@@ -1,17 +1,22 @@
 <?
+
 function Number2Word_Rus($source, $IS_MONEY = "Y", $currency = "")
 {
     $result = '';
 
     $IS_MONEY = ((string)($IS_MONEY) == 'Y' ? 'Y' : 'N');
     $currency = (string)$currency;
-    if ($currency == '' || $currency == 'RUR')
+    if ($currency == '' || $currency == 'RUR') {
         $currency = 'RUB';
-    else if ($currency == 'BYR')
-        $currency = 'BYN';
+    } else {
+        if ($currency == 'BYR') {
+            $currency = 'BYN';
+        }
+    }
     if ($IS_MONEY == 'Y') {
-        if ($currency != 'RUB' && $currency != 'UAH' && $currency != 'KZT' && $currency != 'BYN')
+        if ($currency != 'RUB' && $currency != 'UAH' && $currency != 'KZT' && $currency != 'BYN') {
             return $result;
+        }
     }
 
     $arNumericLang = array(
@@ -186,11 +191,11 @@ function Number2Word_Rus($source, $IS_MONEY = "Y", $currency = "")
             "8e" => "��� ",
             "9e" => "���'��� ",
             "1e." => "���� ������ ",
-            "2e." => "��� ����� ",
+            "2e." => "�� ����� ",
             "3e." => "��� ����� ",
             "4e." => "������ ����� ",
             "1e" => "���� ",
-            "2e" => "��� ",
+            "2e" => "�� ",
             "3e" => "��� ",
             "4e" => "������ ",
             "1et" => "���� ������ ",
@@ -292,24 +297,27 @@ function Number2Word_Rus($source, $IS_MONEY = "Y", $currency = "")
     // k - penny
     if ($IS_MONEY == "Y") {
         $source = (string)((float)$source);
-        $dotpos = strpos($source, ".");
+        $dotpos = mb_strpos($source, ".");
         if ($dotpos === false) {
             $ipart = $source;
             $fpart = '';
         } else {
-            $ipart = substr($source, 0, $dotpos);
-            $fpart = substr($source, $dotpos + 1);
-            if ($fpart === false)
+            $ipart = mb_substr($source, 0, $dotpos);
+            $fpart = mb_substr($source, $dotpos + 1);
+            if ($fpart === false) {
                 $fpart = '';
+            }
         };
-        if (strlen($fpart) > 2) {
-            $fpart = substr($fpart, 0, 2);
-            if ($fpart === false)
+        if (mb_strlen($fpart) > 2) {
+            $fpart = mb_substr($fpart, 0, 2);
+            if ($fpart === false) {
                 $fpart = '';
+            }
         }
-        $fillLen = 2 - strlen($fpart);
-        if ($fillLen > 0)
+        $fillLen = 2 - mb_strlen($fpart);
+        if ($fillLen > 0) {
             $fpart .= str_repeat('0', $fillLen);
+        }
         unset($fillLen);
     } else {
         $ipart = (string)((int)$source);
@@ -321,21 +329,30 @@ function Number2Word_Rus($source, $IS_MONEY = "Y", $currency = "")
     }
 
     $ipart1 = strrev($ipart);
-    $ipart1Len = strlen($ipart1);
+    $ipart1Len = mb_strlen($ipart1);
     $ipart = "";
     $i = 0;
     while ($i < $ipart1Len) {
-        $ipart_tmp = substr($ipart1, $i, 1);
+        $ipart_tmp = mb_substr($ipart1, $i, 1);
         // t - thousands; m - millions; b - billions;
         // e - units; d - scores; c - hundreds;
         if ($i % 3 == 0) {
-            if ($i == 0) $ipart_tmp .= "e";
-            elseif ($i == 3) $ipart_tmp .= "et";
-            elseif ($i == 6) $ipart_tmp .= "em";
-            elseif ($i == 9) $ipart_tmp .= "eb";
-            else $ipart_tmp .= "x";
-        } elseif ($i % 3 == 1) $ipart_tmp .= "d";
-        elseif ($i % 3 == 2) $ipart_tmp .= "c";
+            if ($i == 0) {
+                $ipart_tmp .= "e";
+            } elseif ($i == 3) {
+                $ipart_tmp .= "et";
+            } elseif ($i == 6) {
+                $ipart_tmp .= "em";
+            } elseif ($i == 9) {
+                $ipart_tmp .= "eb";
+            } else {
+                $ipart_tmp .= "x";
+            }
+        } elseif ($i % 3 == 1) {
+            $ipart_tmp .= "d";
+        } elseif ($i % 3 == 2) {
+            $ipart_tmp .= "c";
+        }
         $ipart = $ipart_tmp . $ipart;
         $i++;
     }
@@ -344,12 +361,14 @@ function Number2Word_Rus($source, $IS_MONEY = "Y", $currency = "")
         $result = $ipart . "." . $fpart . "k";
     } else {
         $result = $ipart;
-        if ($result == '')
+        if ($result == '') {
             $result = $arNumericLang[$currency]['zero'];
+        }
     }
 
-    if (substr($result, 0, 1) == ".")
+    if (mb_substr($result, 0, 1) == ".") {
         $result = $arNumericLang[$currency]['zero'] . " " . $result;
+    }
 
     $result = str_replace("0c0d0et", "", $result);
     $result = str_replace("0c0d0em", "", $result);
@@ -431,8 +450,9 @@ function Number2Word_Rus($source, $IS_MONEY = "Y", $currency = "")
     }
 
     if ($IS_MONEY == "Y") {
-        if (substr($result, 0, 1) == ".")
+        if (mb_substr($result, 0, 1) == ".") {
             $result = $arNumericLang[$currency]['zero'] . " " . $result;
+        }
 
         $result = str_replace(".", $arNumericLang[$currency]["."], $result);
     }
@@ -441,8 +461,9 @@ function Number2Word_Rus($source, $IS_MONEY = "Y", $currency = "")
     $result = str_replace("m", $arNumericLang[$currency]["m"], $result);
     $result = str_replace("b", $arNumericLang[$currency]["b"], $result);
 
-    if ($IS_MONEY == "Y")
+    if ($IS_MONEY == "Y") {
         $result = str_replace("k", $arNumericLang[$currency]["k"], $result);
+    }
 
-    return (ToUpper(substr($result, 0, 1)) . substr($result, 1));
+    return (ToUpper(mb_substr($result, 0, 1)) . mb_substr($result, 1));
 }

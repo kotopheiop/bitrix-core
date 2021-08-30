@@ -14,9 +14,11 @@ class PropertyVariant extends Controller
     public function getFieldsAction()
     {
         $entity = new \Bitrix\Sale\Rest\Entity\PropertyVariant();
-        return ['PROPERTY_VARIANT' => $entity->prepareFieldInfos(
-            $entity->getFields()
-        )];
+        return [
+            'PROPERTY_VARIANT' => $entity->prepareFieldInfos(
+                $entity->getFields()
+            )
+        ];
     }
 
     public function addAction(array $fields)
@@ -46,8 +48,9 @@ class PropertyVariant extends Controller
                 $this->addError(new Error($error->getMessage(), 201550000003));
             }
             return null;
-        } else
+        } else {
             return ['PROPERTY_VARIANT' => $this->get($variantId)];
+        }
     }
 
     public function updateAction($id, array $fields)
@@ -83,8 +86,9 @@ class PropertyVariant extends Controller
             if (!$variant->Delete($id)) {
                 if ($ex = self::getApplication()->GetException()) {
                     $r->addError(new Error($ex->GetString(), $ex->GetID()));
-                } else
+                } else {
                     $r->addError(new Error('variant delete error ', 201550000001));
+                }
             }
         }
 
@@ -117,19 +121,23 @@ class PropertyVariant extends Controller
         $order = empty($order) ? ['ID' => 'ASC'] : $order;
 
         $r = $orderPropsVariant->GetList($order, $filter, false, self::getNavData($start), $select);
-        while ($l = $r->fetch())
+        while ($l = $r->fetch()) {
             $result[] = $l;
+        }
 
-        return new Page('PROPERTY_VARIANTS', $result, function () use ($filter) {
+        return new Page(
+            'PROPERTY_VARIANTS', $result, function () use ($filter) {
             $orderPropsVariant = new \CSaleOrderPropsValue();
 
             $list = [];
             $r = $orderPropsVariant->GetList([], $filter);
-            while ($l = $r->fetch())
+            while ($l = $r->fetch()) {
                 $list[] = $l;
+            }
 
             return count($list);
-        });
+        }
+        );
     }
 
     //end region
@@ -144,8 +152,9 @@ class PropertyVariant extends Controller
     protected function exists($id)
     {
         $r = new Result();
-        if (isset($this->get($id)['ID']) == false)
+        if (isset($this->get($id)['ID']) == false) {
             $r->addError(new Error('property variant is not exists', 201540400001));
+        }
 
         return $r;
     }
@@ -154,14 +163,17 @@ class PropertyVariant extends Controller
     {
         $r = new Result();
 
-        $property = \Bitrix\Sale\Internals\OrderPropsTable::getRow([
-            'filter' => [
-                '=ID' => $id
+        $property = \Bitrix\Sale\Internals\OrderPropsTable::getRow(
+            [
+                'filter' => [
+                    '=ID' => $id
+                ]
             ]
-        ]);
+        );
 
-        if (is_null($property))
+        if (is_null($property)) {
             $r->addError(new Error('property id is not exists', 201550000005));
+        }
 
         return $r;
     }

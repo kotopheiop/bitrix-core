@@ -1,4 +1,5 @@
 <?php
+
 IncludeModuleLangFile(__FILE__);
 
 class CAllWorkflow
@@ -16,93 +17,131 @@ class CAllWorkflow
         $cur_dir = $APPLICATION->GetCurDir();
 
         // New page
-        $flow_link_new = CWorkFlow::GetEditLink(array(SITE_ID, rtrim(GetDirPath($cur_page), "/") . "/untitled.php"), $status_id, $status_title, "standart.php", LANGUAGE_ID, $cur_page_param);
-        $create_permission = $flow_link_new <> '' && $USER->CanDoFileOperation('fm_edit_in_workflow', array(SITE_ID, $cur_dir));
+        $flow_link_new = CWorkFlow::GetEditLink(
+            array(SITE_ID, rtrim(GetDirPath($cur_page), "/") . "/untitled.php"),
+            $status_id,
+            $status_title,
+            "standart.php",
+            LANGUAGE_ID,
+            $cur_page_param
+        );
+        $create_permission = $flow_link_new <> '' && $USER->CanDoFileOperation(
+                'fm_edit_in_workflow',
+                array(SITE_ID, $cur_dir)
+            );
         // Document history
-        $flow_link_hist = "/bitrix/admin/workflow_history_list.php?lang=" . LANGUAGE_ID . "&find_filename=" . urlencode($cur_page) . "&find_filename_exact_match=Y&set_filter=Y";
+        $flow_link_hist = "/bitrix/admin/workflow_history_list.php?lang=" . LANGUAGE_ID . "&find_filename=" . urlencode(
+                $cur_page
+            ) . "&find_filename_exact_match=Y&set_filter=Y";
         $history_permission = $USER->CanDoFileOperation('fm_edit_in_workflow', array(SITE_ID, $cur_page));
         // Current page
-        $flow_link_edit = CWorkFlow::GetEditLink(array(SITE_ID, $cur_page), $status_id, $status_title, "", LANGUAGE_ID, $cur_page_param);
+        $flow_link_edit = CWorkFlow::GetEditLink(
+            array(SITE_ID, $cur_page),
+            $status_id,
+            $status_title,
+            "",
+            LANGUAGE_ID,
+            $cur_page_param
+        );
         $edit_permission = $flow_link_edit <> '' && $history_permission;
 
         //Big button
         if ($edit_permission) {
-            $public_edit = $APPLICATION->GetPopupLink(array(
-                "URL" => $flow_link_edit . "&bxpublic=Y&from_module=workflow",
-                "PARAMS" => Array(
-                    "min_width" => 700,
-                    "min_height" => 400,
-                    'height' => 700,
-                    'width' => 400,
+            $public_edit = $APPLICATION->GetPopupLink(
+                array(
+                    "URL" => $flow_link_edit . "&bxpublic=Y&from_module=workflow",
+                    "PARAMS" => Array(
+                        "min_width" => 700,
+                        "min_height" => 400,
+                        'height' => 700,
+                        'width' => 400,
+                    )
                 )
-            ));
+            );
 
-            $APPLICATION->AddPanelButton(array(
-                "HREF" => "javascript:" . $public_edit,
-                "TYPE" => "BIG",
-                "ID" => "edit",
-                "ICON" => "bx-panel-edit-page-icon",
-                "ALT" => GetMessage("top_panel_edit_title"),
-                "TEXT" => GetMessage("top_panel_edit_new"),
-                "MAIN_SORT" => "200",
-                "SORT" => 10,
-                "MENU" => array(),
-                "HK_ID" => "top_panel_edit_new",
-                "RESORT_MENU" => true,
-                "HINT" => array(
-                    "TITLE" => GetMessage("top_panel_edit_new_tooltip_title"),
-                    "TEXT" => GetMessage("top_panel_edit_new_tooltip")
-                ),
-            ));
+            $APPLICATION->AddPanelButton(
+                array(
+                    "HREF" => "javascript:" . $public_edit,
+                    "TYPE" => "BIG",
+                    "ID" => "edit",
+                    "ICON" => "bx-panel-edit-page-icon",
+                    "ALT" => GetMessage("top_panel_edit_title"),
+                    "TEXT" => GetMessage("top_panel_edit_new"),
+                    "MAIN_SORT" => "200",
+                    "SORT" => 10,
+                    "MENU" => array(),
+                    "HK_ID" => "top_panel_edit_new",
+                    "RESORT_MENU" => true,
+                    "HINT" => array(
+                        "TITLE" => GetMessage("top_panel_edit_new_tooltip_title"),
+                        "TEXT" => GetMessage("top_panel_edit_new_tooltip")
+                    ),
+                )
+            );
         }
 
         // New page
         if ($create_permission) {
             $APPLICATION->AddPanelButtonMenu("create", array("SEPARATOR" => true, "SORT" => 49));
-            $APPLICATION->AddPanelButtonMenu("create", array(
-                "SRC" => "/bitrix/images/workflow/new_page.gif",
-                "TEXT" => GetMessage("FLOW_PANEL_CREATE_WITH_WF"),
-                "TITLE" => GetMessage("FLOW_PANEL_CREATE_ALT"),
-                "ACTION" => "jsUtils.Redirect([], '" . CUtil::JSEscape($flow_link_new) . "')",
-                "HK_ID" => "FLOW_PANEL_CREATE_WITH_WF",
-                "SORT" => 50
-            ));
+            $APPLICATION->AddPanelButtonMenu(
+                "create",
+                array(
+                    "SRC" => "/bitrix/images/workflow/new_page.gif",
+                    "TEXT" => GetMessage("FLOW_PANEL_CREATE_WITH_WF"),
+                    "TITLE" => GetMessage("FLOW_PANEL_CREATE_ALT"),
+                    "ACTION" => "jsUtils.Redirect([], '" . CUtil::JSEscape($flow_link_new) . "')",
+                    "HK_ID" => "FLOW_PANEL_CREATE_WITH_WF",
+                    "SORT" => 50
+                )
+            );
         }
 
-        if ($edit_permission || $history_permission)
+        if ($edit_permission || $history_permission) {
             $APPLICATION->AddPanelButtonMenu("edit", array("SEPARATOR" => true, "SORT" => 79));
+        }
 
         // Current page
         if ($edit_permission) {
-            $APPLICATION->AddPanelButtonMenu("edit", array(
-                "SRC" => "/bitrix/images/workflow/edit_flow_public.gif",
-                "TEXT" => GetMessage("FLOW_PANEL_EDIT_WITH_WF"),
-                "TITLE" => (intval($status_id) > 0 ? GetMessage("FLOW_CURRENT_STATUS") . " [$status_id] $status_title" : GetMessage("FLOW_PANEL_EDIT_ALT")),
-                "ACTION" => "jsUtils.Redirect([], '" . CUtil::JSEscape($flow_link_edit) . "')",
-                "HK_ID" => "FLOW_PANEL_EDIT_WITH_WF",
-                "SORT" => 80
-            ));
+            $APPLICATION->AddPanelButtonMenu(
+                "edit",
+                array(
+                    "SRC" => "/bitrix/images/workflow/edit_flow_public.gif",
+                    "TEXT" => GetMessage("FLOW_PANEL_EDIT_WITH_WF"),
+                    "TITLE" => (intval($status_id) > 0 ? GetMessage(
+                            "FLOW_CURRENT_STATUS"
+                        ) . " [$status_id] $status_title" : GetMessage("FLOW_PANEL_EDIT_ALT")),
+                    "ACTION" => "jsUtils.Redirect([], '" . CUtil::JSEscape($flow_link_edit) . "')",
+                    "HK_ID" => "FLOW_PANEL_EDIT_WITH_WF",
+                    "SORT" => 80
+                )
+            );
         }
 
         // Document history
         if ($history_permission) {
-            $flow_link_hist = "/bitrix/admin/workflow_history_list.php?lang=" . LANGUAGE_ID . "&find_filename=" . urlencode($cur_page) . "&find_filename_exact_match=Y&set_filter=Y";
-            $APPLICATION->AddPanelButtonMenu("edit", array(
-                "SRC" => "/bitrix/images/workflow/history.gif",
-                "TEXT" => GetMessage("FLOW_PANEL_HISTORY"),
-                "TITLE" => GetMessage("FLOW_PANEL_HISTORY_ALT"),
-                "ACTION" => "jsUtils.Redirect([], '" . CUtil::JSEscape($flow_link_hist) . "')",
-                "HK_ID" => "FLOW_PANEL_HISTORY",
-                "SORT" => 81
-            ));
+            $flow_link_hist = "/bitrix/admin/workflow_history_list.php?lang=" . LANGUAGE_ID . "&find_filename=" . urlencode(
+                    $cur_page
+                ) . "&find_filename_exact_match=Y&set_filter=Y";
+            $APPLICATION->AddPanelButtonMenu(
+                "edit",
+                array(
+                    "SRC" => "/bitrix/images/workflow/history.gif",
+                    "TEXT" => GetMessage("FLOW_PANEL_HISTORY"),
+                    "TITLE" => GetMessage("FLOW_PANEL_HISTORY_ALT"),
+                    "ACTION" => "jsUtils.Redirect([], '" . CUtil::JSEscape($flow_link_hist) . "')",
+                    "HK_ID" => "FLOW_PANEL_HISTORY",
+                    "SORT" => 81
+                )
+            );
         }
     }
 
     public static function OnChangeFile($path, $site)
     {
         global $BX_WORKFLOW_PUBLISHED_PATH, $BX_WORKFLOW_PUBLISHED_SITE;
-        if ($BX_WORKFLOW_PUBLISHED_PATH == $path && $BX_WORKFLOW_PUBLISHED_SITE == $site)
+        if ($BX_WORKFLOW_PUBLISHED_PATH == $path && $BX_WORKFLOW_PUBLISHED_SITE == $site) {
             return;
+        }
 
         global $DB, $USER, $APPLICATION;
         $HISTORY_SIMPLE_EDITING = COption::GetOptionString("workflow", "HISTORY_SIMPLE_EDITING", "N");
@@ -303,8 +342,9 @@ class CAllWorkflow
 						and OLD_STATUS_ID = $STATUS_ID
 				";
                 $z = $DB->Query($strSql, false, $err_mess . __LINE__);
-                while ($zr = $z->Fetch())
+                while ($zr = $z->Fetch()) {
                     $arBCC[$zr["EMAIL"]] = $zr["EMAIL"];
+                }
 
                 // gather all editors
                 // in case status have notifier flag
@@ -331,8 +371,9 @@ class CAllWorkflow
                     if (!array_key_exists($zr["EMAIL"], $arBCC)) {
                         $grp = array();
                         $rs = $USER->GetUserGroupList($zr["USER_ID"]);
-                        while ($ar = $rs->Fetch())
+                        while ($ar = $rs->Fetch()) {
                             $grp[] = $ar["GROUP_ID"];
+                        }
 
                         $arTasks = $APPLICATION->GetFileAccessPermission($dr["FILENAME"], $grp, true);
                         foreach ($arTasks as $task_id) {
@@ -347,13 +388,15 @@ class CAllWorkflow
 
                 unset($arBCC[$dr["EUSER_EMAIL"]]);
 
-                if (array_key_exists($dr["ENTERED_BY"], $arAdmin))
+                if (array_key_exists($dr["ENTERED_BY"], $arAdmin)) {
                     $dr["EUSER_NAME"] .= " (Admin)";
+                }
 
                 // it is not new doc
                 if ($OLD_STATUS_ID > 0) {
-                    if (array_key_exists($dr["MODIFIED_BY"], $arAdmin))
+                    if (array_key_exists($dr["MODIFIED_BY"], $arAdmin)) {
                         $dr["MUSER_NAME"] .= " (Admin)";
+                    }
                     $q = CWorkflowStatus::GetByID($OLD_STATUS_ID);
                     $qr = $q->Fetch();
                     // send change notification
@@ -407,7 +450,6 @@ class CAllWorkflow
                     CEvent::Send("WF_NEW_DOCUMENT", $dr["SITE_ID"], $arEventFields);
                 }
             }
-
         }
     }
 
@@ -417,7 +459,11 @@ class CAllWorkflow
         global $DB;
         CWorkflow::CleanUpFiles($DOCUMENT_ID);
         CWorkflow::CleanUpPreview($DOCUMENT_ID);
-        $DB->Query("DELETE FROM b_workflow_move WHERE DOCUMENT_ID=" . intval($DOCUMENT_ID), false, $err_mess . __LINE__);
+        $DB->Query(
+            "DELETE FROM b_workflow_move WHERE DOCUMENT_ID=" . intval($DOCUMENT_ID),
+            false,
+            $err_mess . __LINE__
+        );
         $DB->Query("DELETE FROM b_workflow_document WHERE ID=" . intval($DOCUMENT_ID), false, $err_mess . __LINE__);
     }
 
@@ -440,7 +486,6 @@ class CAllWorkflow
     // depending on it's status and lock
     public static function IsAllowEdit($DOCUMENT_ID, &$locked_by, &$date_lock, $CHECK_RIGHTS = "Y")
     {
-
         $DOCUMENT_ID = intval($DOCUMENT_ID);
         $LOCK_STATUS = CWorkflow::GetLockStatus($DOCUMENT_ID, $locked_by, $date_lock);
         if ($LOCK_STATUS == "red") {
@@ -483,12 +528,14 @@ class CAllWorkflow
         $err_mess = (CAllWorkflow::err_mess()) . "<br>Function: IsHaveEditRights<br>Line: ";
         global $DB, $USER;
 
-        if (CWorkflow::IsAdmin())
+        if (CWorkflow::IsAdmin()) {
             return true;
+        }
 
         $arGroups = $USER->GetUserGroupArray();
-        if (!is_array($arGroups) || count($arGroups) <= 0)
+        if (!is_array($arGroups) || count($arGroups) <= 0) {
             $arGroups = array(2);
+        }
 
         $strSql = "
 			SELECT
@@ -504,10 +551,11 @@ class CAllWorkflow
 		";
         $z = $DB->Query($strSql, false, $err_mess . __LINE__);
 
-        if ($zr = $z->Fetch())
+        if ($zr = $z->Fetch()) {
             return true;
-        else
+        } else {
             return false;
+        }
     }
 
     public static function UnLock($DOCUMENT_ID)
@@ -522,7 +570,12 @@ class CAllWorkflow
                 "DATE_LOCK" => "null",
                 "LOCKED_BY" => "null"
             );
-            $rows = $DB->Update("b_workflow_document", $arFields, "WHERE ID='" . $DOCUMENT_ID . "'", $err_mess . __LINE__);
+            $rows = $DB->Update(
+                "b_workflow_document",
+                $arFields,
+                "WHERE ID='" . $DOCUMENT_ID . "'",
+                $err_mess . __LINE__
+            );
             return intval($rows);
         }
         return false;
@@ -546,8 +599,14 @@ class CAllWorkflow
     }
 
     // return edit link depending on rights and status
-    public static function GetEditLink($FILENAME, &$status_id, &$status_title, $template = "", $lang = LANGUAGE_ID, $return_url = "")
-    {
+    public static function GetEditLink(
+        $FILENAME,
+        &$status_id,
+        &$status_title,
+        $template = "",
+        $lang = LANGUAGE_ID,
+        $return_url = ""
+    ) {
         global $USER;
 
         $link = '';
@@ -557,28 +616,37 @@ class CAllWorkflow
             //Check if user have access at least to one status
             if (!CWorkflow::IsAdmin()) {
                 $arGroups = $USER->GetUserGroupArray();
-                if (!is_array($arGroups))
+                if (!is_array($arGroups)) {
                     $arGroups = array(2);
+                }
                 $arFilter = array(
                     "GROUP_ID" => $arGroups,
                     "PERMISSION_TYPE_1" => 1,
                 );
-                $rsStatuses = CWorkflowStatus::GetList($by = "s_c_sort", $strOrder, $arFilter, $is_filtered, array("ID"));
-                if (!$rsStatuses->Fetch())
+                $rsStatuses = CWorkflowStatus::GetList("s_c_sort", "asc", $arFilter, null, array("ID"));
+                if (!$rsStatuses->Fetch()) {
                     return "";
+                }
             }
 
             $link = "/bitrix/admin/workflow_edit.php?lang=" . $lang . "&site=" . $SITE_ID . "&fname=" . $FILENAME;
-            if (strlen($template) > 0) $link .= "&template=" . urlencode($template);
-            if (strlen($return_url) > 0) $link .= "&return_url=" . urlencode($return_url);
+            if ($template <> '') {
+                $link .= "&template=" . urlencode($template);
+            }
+            if ($return_url <> '') {
+                $link .= "&return_url=" . urlencode($return_url);
+            }
             $z = CWorkflow::GetByFilename($FILENAME, $SITE_ID);
             if ($zr = $z->Fetch()) {
                 $status_id = $zr["STATUS_ID"];
                 $status_title = $zr["STATUS_TITLE"];
                 if ($status_id != 1) {
                     $DOCUMENT_ID = $zr["ID"];
-                    if (CWorkflow::IsHaveEditRights($DOCUMENT_ID)) $link .= "&ID=" . $DOCUMENT_ID;
-                    else return "";
+                    if (CWorkflow::IsHaveEditRights($DOCUMENT_ID)) {
+                        $link .= "&ID=" . $DOCUMENT_ID;
+                    } else {
+                        return "";
+                    }
                 }
             }
         }
@@ -588,10 +656,14 @@ class CAllWorkflow
     public static function DeleteHistory($ID)
     {
         global $DB;
-        $DB->Query("
+        $DB->Query(
+            "
 			DELETE FROM b_workflow_log
 			WHERE ID = " . intval($ID) . "
-		", false, CAllWorkflow::err_mess() . "<br>Function: DeleteHistory<br>Line: " . __LINE__);
+		",
+            false,
+            CAllWorkflow::err_mess() . "<br>Function: DeleteHistory<br>Line: " . __LINE__
+        );
     }
 
     public static function CleanUp()
@@ -618,8 +690,9 @@ class CAllWorkflow
             $strSql .= " and ID = " . $FILE_ID;
         }
         $z = $DB->Query($strSql, false, $err_mess . __LINE__);
-        while ($zr = $z->Fetch())
+        while ($zr = $z->Fetch()) {
             CWorkflow::DeleteFile($zr["TEMP_FILENAME"]);
+        }
     }
 
     public static function CleanUpPreview($DOCUMENT_ID = false)
@@ -649,8 +722,9 @@ class CAllWorkflow
 				";
         }
         $z = $DB->Query($strSql, false, $err_mess . __LINE__);
-        while ($zr = $z->Fetch())
+        while ($zr = $z->Fetch()) {
             CWorkflow::DeletePreview($zr["FILENAME"], $zr["SITE"]);
+        }
     }
 
     public static function DeletePreview($FILENAME, $site = false)
@@ -661,7 +735,9 @@ class CAllWorkflow
         $DB->Query($strSql, false, $err_mess . __LINE__);
         $DOC_ROOT = CSite::GetSiteDocRoot($site);
         $path = $DOC_ROOT . $FILENAME;
-        if (file_exists($path)) unlink($path);
+        if (file_exists($path)) {
+            unlink($path);
+        }
     }
 
     public static function DeleteFile($FILENAME)
@@ -671,7 +747,9 @@ class CAllWorkflow
         $strSql = "DELETE FROM b_workflow_file WHERE TEMP_FILENAME='" . $DB->ForSql($FILENAME, 255) . "'";
         $DB->Query($strSql, false, $err_mess . __LINE__);
         $temp_path = CWorkflow::GetTempDir() . $FILENAME;
-        if (file_exists($temp_path)) unlink($temp_path);
+        if (file_exists($temp_path)) {
+            unlink($temp_path);
+        }
     }
 
     public static function IsFilenameExists($FILENAME)
@@ -688,8 +766,9 @@ class CAllWorkflow
     {
         $ext = GetFileExtension($filename);
         $temp_file = md5($filename . uniqid(rand())) . "." . $ext;
-        while (CWorkflow::IsFilenameExists($temp_file))
+        while (CWorkflow::IsFilenameExists($temp_file)) {
             $temp_file = md5($filename . uniqid(rand())) . "." . $ext;
+        }
         return $temp_file;
     }
 
@@ -697,11 +776,15 @@ class CAllWorkflow
     {
         global $DB;
 
-        $z = $DB->Query("
+        $z = $DB->Query(
+            "
 			SELECT ID
 			FROM b_workflow_preview
 			WHERE FILENAME='" . $DB->ForSql($FILENAME, 255) . "'
-		", false, CAllWorkflow::err_mess() . "<br>Function: IsPreviewExists<br>Line: " . __LINE__);
+		",
+            false,
+            CAllWorkflow::err_mess() . "<br>Function: IsPreviewExists<br>Line: " . __LINE__
+        );
 
         $zr = $z->Fetch();
         return intval($zr["ID"]);
@@ -711,11 +794,15 @@ class CAllWorkflow
     {
         global $DB;
 
-        $z = $DB->Query("
+        $z = $DB->Query(
+            "
 			SELECT FILENAME
 			FROM b_workflow_document
 			WHERE ID = " . intval($DOCUMENT_ID) . "
-		", false, CAllWorkflow::err_mess() . "<br>Function: GetUniquePreview<br>Line: " . __LINE__);
+		",
+            false,
+            CAllWorkflow::err_mess() . "<br>Function: GetUniquePreview<br>Line: " . __LINE__
+        );
 
         $zr = $z->Fetch();
         if ($zr) {
@@ -760,7 +847,7 @@ class CAllWorkflow
             }
 
             // still good
-            if (strlen($strError) <= 0) {
+            if ($strError == '') {
                 // publish the document
                 $y = CWorkflow::GetByID($DOCUMENT_ID);
                 $yr = $y->Fetch();
@@ -771,7 +858,7 @@ class CAllWorkflow
                 ) {
                     // save file
                     $prolog = $yr["PROLOG"];
-                    if (strlen($prolog) > 0) {
+                    if ($prolog <> '') {
                         $title = $yr["TITLE"];
                         $prolog = SetPrologTitle($prolog, $title);
                     }
@@ -795,7 +882,7 @@ class CAllWorkflow
             }
         }
 
-        if (strlen($strError) <= 0) {
+        if ($strError == '') {
             // update db
             $arFields = array(
                 "DATE_MODIFY" => $DB->GetNowFunction(),
@@ -859,11 +946,13 @@ class CAllWorkflow
         $err_mess = (CAllWorkflow::err_mess()) . "<br>Function: GetFileContent<br>Line: ";
         global $DB, $APPLICATION, $USER;
         $did = intval($did);
+        $io = CBXVirtualIo::GetInstance();
+
         // check if executable
         if (
             $USER->IsAdmin()
             || (
-                CBXVirtualIoFileSystem::ValidatePathString($fname)
+                $io->ValidatePathString($fname)
                 && !HasScriptExtension($fname)
             )
         ) {
@@ -895,19 +984,22 @@ class CAllWorkflow
                         if ($ur = $u->Fetch()) {
                             // get it's contents
                             $path = CWorkflow::GetTempDir() . $ur["TEMP_FILENAME"];
-                            if (file_exists($path)) return $APPLICATION->GetFileContent($path);
+                            if (file_exists($path)) {
+                                return $APPLICATION->GetFileContent($path);
+                            }
                         } elseif (file_exists($path)) // it is already on disk
                         {
                             // get it's contents
-                            if ($USER->CanDoFileOperation('fm_view_file', Array($yr["SITE_ID"], $pathto)))
+                            if ($USER->CanDoFileOperation('fm_view_file', Array($yr["SITE_ID"], $pathto))) {
                                 return $APPLICATION->GetFileContent($path);
+                            }
                         }
                     }
                 }
             }
             $DOC_ROOT = CSite::GetSiteDocRoot($site);
             // new one
-            if (strlen($wf_path) > 0) {
+            if ($wf_path <> '') {
                 $pathto = Rel2Abs($wf_path, $fname);
                 $path = $DOC_ROOT . $pathto;
                 if (file_exists($path)) // it is already on disk
@@ -925,8 +1017,9 @@ class CAllWorkflow
             $path = $DOC_ROOT . $fname;
             if (file_exists($path)) {
                 // get it's contents
-                if ($USER->CanDoFileOperation('fm_view_file', Array($site, $fname)))
+                if ($USER->CanDoFileOperation('fm_view_file', Array($site, $fname))) {
                     return $APPLICATION->GetFileContent($path);
+                }
             }
         } // it is executable
         else {
@@ -937,12 +1030,14 @@ class CAllWorkflow
     public static function __CheckSite($site)
     {
         if ($site !== false) {
-            if (strlen($site) > 0) {
+            if ($site <> '') {
                 $res = CSite::GetByID($site);
-                if (!($arSite = $res->Fetch()))
+                if (!($arSite = $res->Fetch())) {
                     $site = false;
-            } else
+                }
+            } else {
                 $site = false;
+            }
         }
 
         return $site;

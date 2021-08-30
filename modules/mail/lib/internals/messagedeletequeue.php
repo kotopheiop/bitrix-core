@@ -24,11 +24,13 @@ class MessageDeleteQueueTable extends ORM\Data\DataManager
         $entity = static::getEntity();
         $connection = $entity->getConnection();
 
-        return $connection->query(sprintf(
-            'DELETE FROM %s WHERE %s',
-            $connection->getSqlHelper()->quote($entity->getDbTableName()),
-            ORM\Query\Query::buildFilterSql($entity, $filter)
-        ));
+        return $connection->query(
+            sprintf(
+                'DELETE FROM %s WHERE %s',
+                $connection->getSqlHelper()->quote($entity->getDbTableName()),
+                ORM\Query\Query::buildFilterSql($entity, $filter)
+            )
+        );
     }
 
     public static function getMap()

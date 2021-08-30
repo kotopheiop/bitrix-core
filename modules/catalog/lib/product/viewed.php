@@ -26,31 +26,40 @@ class Viewed
     {
         $sectionId = (int)$sectionId;
         $depth = (int)$depth;
-        if ($sectionId <= 0 || $depth <= 0)
+        if ($sectionId <= 0 || $depth <= 0) {
             return null;
-        $section = Iblock\SectionTable::getList(array(
-            'select' => array('ID', 'IBLOCK_ID', 'LEFT_MARGIN', 'RIGHT_MARGIN', 'DEPTH_LEVEL'),
-            'filter' => array('=ID' => $sectionId)
-        ))->fetch();
-        if (empty($section))
-            return null;
-        $section['DEPTH_LEVEL'] = (int)$section['DEPTH_LEVEL'];
-        if ($section['DEPTH_LEVEL'] < $depth)
-            return null;
-        if ($section['DEPTH_LEVEL'] == $depth)
-            return (int)$section['ID'];
-
-        $parentSection = Iblock\SectionTable::getList(array(
-            'select' => array('ID'),
-            'filter' => array(
-                '=IBLOCK_ID' => $section['IBLOCK_ID'],
-                '<=LEFT_MARGIN' => $section['LEFT_MARGIN'],
-                '>=RIGHT_MARGIN' => $section['RIGHT_MARGIN'],
-                '=DEPTH_LEVEL' => $depth
+        }
+        $section = Iblock\SectionTable::getList(
+            array(
+                'select' => array('ID', 'IBLOCK_ID', 'LEFT_MARGIN', 'RIGHT_MARGIN', 'DEPTH_LEVEL'),
+                'filter' => array('=ID' => $sectionId)
             )
-        ))->fetch();
-        if (!empty($parentSection))
+        )->fetch();
+        if (empty($section)) {
+            return null;
+        }
+        $section['DEPTH_LEVEL'] = (int)$section['DEPTH_LEVEL'];
+        if ($section['DEPTH_LEVEL'] < $depth) {
+            return null;
+        }
+        if ($section['DEPTH_LEVEL'] == $depth) {
+            return (int)$section['ID'];
+        }
+
+        $parentSection = Iblock\SectionTable::getList(
+            array(
+                'select' => array('ID'),
+                'filter' => array(
+                    '=IBLOCK_ID' => $section['IBLOCK_ID'],
+                    '<=LEFT_MARGIN' => $section['LEFT_MARGIN'],
+                    '>=RIGHT_MARGIN' => $section['RIGHT_MARGIN'],
+                    '=DEPTH_LEVEL' => $depth
+                )
+            )
+        )->fetch();
+        if (!empty($parentSection)) {
             return (int)$parentSection['ID'];
+        }
 
         return null;
     }

@@ -1,13 +1,15 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 if (!CModule::IncludeModule('learning')) {
     require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php'); // second system's prolog
 
-    if (IsModuleInstalled('learning') && defined('LEARNING_FAILED_TO_LOAD_REASON'))
+    if (IsModuleInstalled('learning') && defined('LEARNING_FAILED_TO_LOAD_REASON')) {
         echo LEARNING_FAILED_TO_LOAD_REASON;
-    else
+    } else {
         CAdminMessage::ShowMessage(GetMessage('LEARNING_MODULE_NOT_FOUND'));
+    }
 
     require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin.php');    // system's epilog
     exit();
@@ -43,8 +45,10 @@ $arFilterFields = array(
     "filter_course_title",
     "filter_course_lesson_id",
     "filter_sort",
-    "filter_active_from_from", "filter_active_from_to",
-    "filter_active_to_from", "filter_active_to_to"
+    "filter_active_from_from",
+    "filter_active_from_to",
+    "filter_active_to_from",
+    "filter_active_to_to"
 );
 
 $lAdmin->InitFilter($arFilterFields);// filter initializing
@@ -66,12 +70,14 @@ $arFilter = array(
 if ($lAdmin->EditAction()) // save from the list
 {
     foreach ($FIELDS as $ID => $arFields) {
-        if (!$lAdmin->IsUpdated($ID))
+        if (!$lAdmin->IsUpdated($ID)) {
             continue;
+        }
 
         if (!CLearningGroup::update((int)$ID, $arFields)) {
-            if ($e = $APPLICATION->GetException())
+            if ($e = $APPLICATION->GetException()) {
                 $lAdmin->AddUpdateError(GetMessage("SAVE_ERROR") . $ID . ": " . $e->GetString(), $ID);
+            }
         }
     }
 }
@@ -80,21 +86,24 @@ if ($lAdmin->EditAction()) // save from the list
 if ($arID = $lAdmin->GroupAction()) {
     if ($_REQUEST['action_target'] == 'selected') {
         $rsData = CLearningGroup::GetList(array($by => $order), $arFilter);
-        while ($arRes = $rsData->Fetch())
+        while ($arRes = $rsData->Fetch()) {
             $arID[] = $arRes['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
 
         $ID = intval($ID);
         switch ($_REQUEST['action']) {
             case "delete":
                 @set_time_limit(0);
 
-                if (!CLearningGroup::delete($ID))
+                if (!CLearningGroup::delete($ID)) {
                     $lAdmin->AddGroupError(GetMessage("LEARNING_DELETE_ERROR"), $ID);
+                }
                 break;
         }
     }
@@ -109,17 +118,59 @@ $rsData->NavStart();
 $lAdmin->NavText($rsData->GetNavPrint(GetMessage("LEARNING_ADMIN_RESULTS")));
 
 // list header
-$lAdmin->AddHeaders(array(
-    array("id" => "ID", "content" => "ID", "sort" => "id", "default" => true),
-    array("id" => "ACTIVE", "content" => GetMessage('LEARNING_ADMIN_GROUPS_ACTIVE'), "sort" => "active", "default" => true),
-    array("id" => "TITLE", "content" => GetMessage('LEARNING_ADMIN_GROUPS_TITLE'), "sort" => "title", "default" => true),
-    array("id" => "CODE", "content" => GetMessage('LEARNING_ADMIN_GROUPS_CODE'), "sort" => "code", "default" => true),
-    array("id" => "SORT", "content" => GetMessage('LEARNING_ADMIN_GROUPS_SORT'), "sort" => "sort", "default" => true),
-    array("id" => "ACTIVE_FROM", "content" => GetMessage('LEARNING_ADMIN_GROUPS_ACTIVE_FROM'), "sort" => "active_from", "default" => true),
-    array("id" => "ACTIVE_TO", "content" => GetMessage('LEARNING_ADMIN_GROUPS_ACTIVE_TO'), "sort" => "active_to", "default" => true),
-    array("id" => "COURSE_LESSON_ID", "content" => GetMessage('LEARNING_ADMIN_GROUPS_COURSE_LESSON_ID'), "sort" => "course_lesson_id", "default" => true),
-    array("id" => "COURSE_TITLE", "content" => GetMessage('LEARNING_ADMIN_GROUPS_COURSE_TITLE'), "sort" => "course_title", "default" => true)
-));
+$lAdmin->AddHeaders(
+    array(
+        array("id" => "ID", "content" => "ID", "sort" => "id", "default" => true),
+        array(
+            "id" => "ACTIVE",
+            "content" => GetMessage('LEARNING_ADMIN_GROUPS_ACTIVE'),
+            "sort" => "active",
+            "default" => true
+        ),
+        array(
+            "id" => "TITLE",
+            "content" => GetMessage('LEARNING_ADMIN_GROUPS_TITLE'),
+            "sort" => "title",
+            "default" => true
+        ),
+        array(
+            "id" => "CODE",
+            "content" => GetMessage('LEARNING_ADMIN_GROUPS_CODE'),
+            "sort" => "code",
+            "default" => true
+        ),
+        array(
+            "id" => "SORT",
+            "content" => GetMessage('LEARNING_ADMIN_GROUPS_SORT'),
+            "sort" => "sort",
+            "default" => true
+        ),
+        array(
+            "id" => "ACTIVE_FROM",
+            "content" => GetMessage('LEARNING_ADMIN_GROUPS_ACTIVE_FROM'),
+            "sort" => "active_from",
+            "default" => true
+        ),
+        array(
+            "id" => "ACTIVE_TO",
+            "content" => GetMessage('LEARNING_ADMIN_GROUPS_ACTIVE_TO'),
+            "sort" => "active_to",
+            "default" => true
+        ),
+        array(
+            "id" => "COURSE_LESSON_ID",
+            "content" => GetMessage('LEARNING_ADMIN_GROUPS_COURSE_LESSON_ID'),
+            "sort" => "course_lesson_id",
+            "default" => true
+        ),
+        array(
+            "id" => "COURSE_TITLE",
+            "content" => GetMessage('LEARNING_ADMIN_GROUPS_COURSE_TITLE'),
+            "sort" => "course_title",
+            "default" => true
+        )
+    )
+);
 
 // building list
 while ($arRes = $rsData->NavNext(true, "f_")) {
@@ -132,7 +183,12 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
         . '</a>'
     );
 
-    $row->AddField("ID", '<a href="/bitrix/admin/learn_group_edit.php?ID=' . $f_ID . '&lang=' . LANGUAGE_ID . '" title="' . GetMessage("MAIN_ADMIN_MENU_EDIT") . '">' . $f_ID . '</a>');
+    $row->AddField(
+        "ID",
+        '<a href="/bitrix/admin/learn_group_edit.php?ID=' . $f_ID . '&lang=' . LANGUAGE_ID . '" title="' . GetMessage(
+            "MAIN_ADMIN_MENU_EDIT"
+        ) . '">' . $f_ID . '</a>'
+    );
     $row->AddCheckField("ACTIVE");
     $row->AddInputField("TITLE", Array("size" => "20"));
     $row->AddInputField("CODE", Array("size" => "10"));
@@ -144,7 +200,9 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
         "ICON" => "edit",
         "DEFAULT" => "Y",
         "TEXT" => GetMessage("MAIN_ADMIN_MENU_EDIT"),
-        "ACTION" => $lAdmin->ActionRedirect("learn_group_edit.php?lang=" . LANG . "&ID=" . $f_ID . GetFilterParams("filter_"))
+        "ACTION" => $lAdmin->ActionRedirect(
+            "learn_group_edit.php?lang=" . LANG . "&ID=" . $f_ID . GetFilterParams("filter_")
+        )
     );
 
     $arActions[] = array("SEPARATOR" => true);
@@ -152,7 +210,12 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
     $arActions[] = array(
         "ICON" => "delete",
         "TEXT" => GetMessage("MAIN_ADMIN_MENU_DELETE"),
-        "ACTION" => "if(confirm('" . GetMessageJS('LEARNING_CONFIRM_DEL_MESSAGE') . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete", ""));
+        "ACTION" => "if(confirm('" . GetMessageJS('LEARNING_CONFIRM_DEL_MESSAGE') . "')) " . $lAdmin->ActionDoGroup(
+                $f_ID,
+                "delete",
+                ""
+            )
+    );
 
     $row->AddActions($arActions);
 }
@@ -165,28 +228,35 @@ $lAdmin->AddFooter(
     )
 );
 
-$lAdmin->AddGroupActionTable(Array(
-    "delete" => GetMessage("MAIN_ADMIN_LIST_DELETE"),
-));
+$lAdmin->AddGroupActionTable(
+    Array(
+        "delete" => GetMessage("MAIN_ADMIN_LIST_DELETE"),
+    )
+);
 
 $adminChain->AddItem(array("TEXT" => GetMessage("LEARNING_ADMIN_RESULTS"), "LINK" => ""));
 
-$lAdmin->AddAdminContextMenu(array(
+$lAdmin->AddAdminContextMenu(
     array(
-        'ICON' => 'btn_new',
-        'TEXT' => GetMessage('LEARNING_ADD'),
-        'LINK' => 'learn_group_edit.php?lang=' . LANG . GetFilterParams('filter_'),
-        'TITLE' => GetMessage('LEARNING_ADD_ALT')
+        array(
+            'ICON' => 'btn_new',
+            'TEXT' => GetMessage('LEARNING_ADD'),
+            'LINK' => 'learn_group_edit.php?lang=' . LANG . GetFilterParams('filter_'),
+            'TITLE' => GetMessage('LEARNING_ADD_ALT')
+        )
     )
-));
+);
 
 $lAdmin->CheckListMode();
 
 
-$APPLICATION->SetTitle(GetMessage("LEARNING_ADMIN_TITLE") . ($arGroup ? ": " . $arGroup["~TEST_NAME"] . ": " . $arGroup["~USER_NAME"] : ""));
+$APPLICATION->SetTitle(
+    GetMessage("LEARNING_ADMIN_TITLE") . ($arGroup ? ": " . $arGroup["~TEST_NAME"] . ": " . $arGroup["~USER_NAME"] : "")
+);
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
-if (defined("LEARNING_ADMIN_ACCESS_DENIED"))
+if (defined("LEARNING_ADMIN_ACCESS_DENIED")) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"), false);
+}
 ?>
 
     <form name="form1" method="GET" action="<? echo $APPLICATION->GetCurPage() ?>"
@@ -209,8 +279,16 @@ if (defined("LEARNING_ADMIN_ACCESS_DENIED"))
             <td><?= GetMessage("LEARNING_ADMIN_GROUPS_ACTIVE") ?>:</td>
             <td>
                 <?
-                $arr = array("reference" => array(GetMessage("LEARNING_YES"), GetMessage("LEARNING_NO")), "reference_id" => array("Y", "N"));
-                echo SelectBoxFromArray("filter_active", $arr, htmlspecialcharsex($filter_active), GetMessage('LEARNING_ALL'));
+                $arr = array(
+                    "reference" => array(GetMessage("LEARNING_YES"), GetMessage("LEARNING_NO")),
+                    "reference_id" => array("Y", "N")
+                );
+                echo SelectBoxFromArray(
+                    "filter_active",
+                    $arr,
+                    htmlspecialcharsex($filter_active),
+                    GetMessage('LEARNING_ALL')
+                );
                 ?>
             </td>
         </tr>
@@ -247,15 +325,33 @@ if (defined("LEARNING_ADMIN_ACCESS_DENIED"))
 
         <tr>
             <td><? echo GetMessage("LEARNING_ADMIN_GROUPS_ACTIVE_FROM") ?>:</td>
-            <td><? echo CalendarPeriod("filter_active_from_from", htmlspecialcharsex($filter_active_from_from), "filter_active_from_to", htmlspecialcharsex($filter_active_from_to), "filter_active_from") ?></td>
+            <td><? echo CalendarPeriod(
+                    "filter_active_from_from",
+                    htmlspecialcharsex($filter_active_from_from),
+                    "filter_active_from_to",
+                    htmlspecialcharsex($filter_active_from_to),
+                    "filter_active_from"
+                ) ?></td>
         </tr>
 
         <tr>
             <td><? echo GetMessage("LEARNING_ADMIN_GROUPS_ACTIVE_TO") ?>:</td>
-            <td><? echo CalendarPeriod("filter_active_to_from", htmlspecialcharsex($filter_active_to_from), "filter_active_to_to", htmlspecialcharsex($filter_active_to_to), "filter_active_to") ?></td>
+            <td><? echo CalendarPeriod(
+                    "filter_active_to_from",
+                    htmlspecialcharsex($filter_active_to_from),
+                    "filter_active_to_to",
+                    htmlspecialcharsex($filter_active_to_to),
+                    "filter_active_to"
+                ) ?></td>
         </tr>
 
-        <? $filter->Buttons(array("table_id" => $sTableID, "url" => $APPLICATION->GetCurPage() . "?" . GetFilterParams("filter_"), "form" => "form1"));
+        <? $filter->Buttons(
+            array(
+                "table_id" => $sTableID,
+                "url" => $APPLICATION->GetCurPage() . "?" . GetFilterParams("filter_"),
+                "form" => "form1"
+            )
+        );
         $filter->End(); ?>
     </form>
 

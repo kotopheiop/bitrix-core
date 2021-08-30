@@ -222,7 +222,8 @@ class Event extends BaseObject
     {
         $connection = Application::getInstance()->getConnection();
         if ($connection instanceof MysqlCommonConnection) {
-            $connection->executeSqlBatch(<<<SQL
+            $connection->executeSqlBatch(
+                <<<SQL
 UPDATE b_vote V SET V.COUNTER=(
 	SELECT COUNT(VE.ID) 
 	FROM b_vote_event VE 
@@ -245,8 +246,10 @@ UPDATE b_vote_user VU, b_vote_event VE SET VU.COUNTER=(
 WHERE VU.ID IN (SELECT VOTE_USER_ID FROM b_vote_event WHERE VOTE_ID={$voteId});
 SQL
             );
-        } else if ($connection instanceof MssqlConnection) {
-            $connection->executeSqlBatch(<<<SQL
+        } else {
+            if ($connection instanceof MssqlConnection) {
+                $connection->executeSqlBatch(
+                    <<<SQL
 UPDATE b_vote SET b_vote.COUNTER=E.COUNTER
 FROM (
 	SELECT COUNT(ID) COUNTER, VOTE_ID
@@ -285,9 +288,10 @@ FROM (
 WHERE b_vote_user.ID=E.VOTE_USER_ID AND b_vote_user.ID IN (SELECT VOTE_USER_ID FROM b_vote_event WHERE VOTE_ID={$voteId})
 GO
 SQL
-            );
-        } elseif ($connection instanceof OracleConnection) {
-            $connection->executeSqlBatch(<<<SQL
+                );
+            } elseif ($connection instanceof OracleConnection) {
+                $connection->executeSqlBatch(
+                    <<<SQL
 UPDATE b_vote V SET V.COUNTER=(
 	SELECT COUNT(VE.ID) 
 	FROM b_vote_event VE 
@@ -317,7 +321,8 @@ UPDATE b_vote_user VU SET VU.COUNTER=(
 WHERE VU.ID IN (SELECT VOTE_USER_ID FROM b_vote_event WHERE VOTE_ID={$voteId})
 /
 SQL
-            );
+                );
+            }
         }
     }
 
@@ -329,7 +334,8 @@ SQL
     {
         $connection = Application::getInstance()->getConnection();
         if ($connection instanceof MysqlCommonConnection) {
-            $connection->executeSqlBatch(<<<SQL
+            $connection->executeSqlBatch(
+                <<<SQL
 UPDATE b_vote_user U 
 	INNER JOIN (
 		SELECT count(ID) as COUNTER, VOTE_USER_ID
@@ -354,8 +360,10 @@ WHERE Q.VOTE_ID = {$voteId};
 
 SQL
             );
-        } else if ($connection instanceof MssqlConnection) {
-            $connection->executeSqlBatch(<<<SQL
+        } else {
+            if ($connection instanceof MssqlConnection) {
+                $connection->executeSqlBatch(
+                    <<<SQL
 UPDATE b_vote_user SET b_vote_user.COUNTER = (CASE WHEN b_vote_user.COUNTER - E.COUNTER > 0 THEN b_vote_user.COUNTER - E.COUNTER ELSE 0 END) 
 FROM (
 	SELECT count(ID) as COUNTER, VOTE_USER_ID
@@ -387,9 +395,10 @@ DELETE EA FROM b_vote_event_answer EA
 WHERE Q.VOTE_ID = {$voteId}
 GO
 SQL
-            );
-        } elseif ($connection instanceof OracleConnection) {
-            $connection->executeSqlBatch(<<<SQL
+                );
+            } elseif ($connection instanceof OracleConnection) {
+                $connection->executeSqlBatch(
+                    <<<SQL
 UPDATE b_vote_user U SET U.COUNTER = (
 	SELECT (CASE WHEN U.COUNTER - E.COUNTER > 0 THEN U.COUNTER - E.COUNTER ELSE 0 END)
 	FROM (
@@ -432,11 +441,13 @@ WHERE ANSWER_ID IN (
 )
 /
 SQL
-            );
-            /***************** Event OnVoteReset *******************************/
-            foreach (GetModuleEvents("vote", "onVoteReset", true) as $event)
-                ExecuteModuleEventEx($event, array($voteId));
-            /***************** /Event ******************************************/
+                );
+                /***************** Event OnVoteReset *******************************/
+                foreach (GetModuleEvents("vote", "onVoteReset", true) as $event) {
+                    ExecuteModuleEventEx($event, array($voteId));
+                }
+                /***************** /Event ******************************************/
+            }
         }
     }
 
@@ -446,14 +457,19 @@ SQL
      */
     public static function deleteEvent($eventId)
     {
-        if (!is_integer($eventId))
+        if (!is_integer($eventId)) {
             throw new ArgumentTypeException("event ID");
-        else if ($eventId <= 0)
-            throw new ArgumentNullException("event ID");
+        } else {
+            if ($eventId <= 0) {
+                throw new ArgumentNullException("event ID");
+            }
+        }
 
         self::setValid($eventId, "N");
         $connection = Application::getInstance()->getConnection();
-        $connection->queryExecute("DELETE FROM b_vote_event_answer WHERE EVENT_QUESTION_ID IN (SELECT VEQ.ID FROM b_vote_event_question VEQ WHERE VEQ.EVENT_ID={$eventId})");
+        $connection->queryExecute(
+            "DELETE FROM b_vote_event_answer WHERE EVENT_QUESTION_ID IN (SELECT VEQ.ID FROM b_vote_event_question VEQ WHERE VEQ.EVENT_ID={$eventId})"
+        );
         $connection->queryExecute("DELETE FROM b_vote_event_question WHERE EVENT_ID={$eventId}");
         $connection->queryExecute("DELETE FROM b_vote_event WHERE ID={$eventId}");
         return $connection->getAffectedRowsCount() > 0;
@@ -468,21 +484,28 @@ SQL
     {
         $valid = ($valid == "Y" ? "Y" : "N");
         $eventId = intval($eventId);
-        if ($eventId <= 0)
+        if ($eventId <= 0) {
             return false;
+        }
 
-        $dbRes = EventTable::getList(array(
-            'select' => array(
-                'V_' => '*',
-                'Q_' => 'QUESTION.*',
-                'A_' => 'QUESTION.ANSWER.*'),
-            'filter' => array(
-                'ID' => $eventId,
-                '!=VALID' => $valid),
-            'order' => array(
-                'ID' => 'ASC',
-                'QUESTION.ID' => 'ASC',
-                'QUESTION.ANSWER.ID' => 'ASC')));
+        $dbRes = EventTable::getList(
+            array(
+                'select' => array(
+                    'V_' => '*',
+                    'Q_' => 'QUESTION.*',
+                    'A_' => 'QUESTION.ANSWER.*'
+                ),
+                'filter' => array(
+                    'ID' => $eventId,
+                    '!=VALID' => $valid
+                ),
+                'order' => array(
+                    'ID' => 'ASC',
+                    'QUESTION.ID' => 'ASC',
+                    'QUESTION.ANSWER.ID' => 'ASC'
+                )
+            )
+        );
         if (($res = $dbRes->fetch()) && $res) {
             $questions = array();
             $answers = array();
@@ -508,7 +531,11 @@ SQL
 
     public static function getMessageFieldName($id, $questionId, $answerId)
     {
-        return str_replace(array("#ID#", "#QUESTION_ID#", "#ANSWER_ID#"), array($id, $questionId, $answerId), self::EVENT_FIELD_MESSAGE_TEMPLATE);
+        return str_replace(
+            array("#ID#", "#QUESTION_ID#", "#ANSWER_ID#"),
+            array($id, $questionId, $answerId),
+            self::EVENT_FIELD_MESSAGE_TEMPLATE
+        );
     }
 
     public static function getExtrasFieldName($id, $name)
@@ -537,10 +564,9 @@ SQL
             }
             if (array_key_exists("MESSAGE", $request[self::EVENT_FIELD_NAME][$id])) {
                 foreach ($request[self::EVENT_FIELD_NAME][$id]["MESSAGE"] as $qId => $answerIds) {
-
                     foreach ($answerIds as $answerId => $message) {
                         $message = trim($message);
-                        if (strlen($message) > 0) {
+                        if ($message <> '') {
                             $data["MESSAGE"][$qId] = is_array($data["MESSAGE"][$qId]) ? $data["MESSAGE"][$qId] : [];
                             $data["MESSAGE"][$qId][$answerId] = $message;
                         }
@@ -550,8 +576,9 @@ SQL
             if (array_key_exists("EXTRAS", $request[self::EVENT_FIELD_NAME][$id])) {
                 $data["EXTRAS"] = $request[self::EVENT_FIELD_NAME][$id]["EXTRAS"];
             }
-            if (!empty($data))
+            if (!empty($data)) {
                 return $data;
+            }
         }
         return null;
     }
@@ -569,10 +596,13 @@ SQL
         foreach ($questions as $questionId => $question) {
             if (array_key_exists($question["ID"], $data) && is_array($data[$question["ID"]])) {
                 $answers = array_intersect_key($data[$question["ID"]], $question["ANSWERS"]);
-                if ($question["FIELD_TYPE"] === QuestionTypes::COMPATIBILITY && array_key_exists($question["ID"], $message)) {
+                if ($question["FIELD_TYPE"] === QuestionTypes::COMPATIBILITY && array_key_exists(
+                        $question["ID"],
+                        $message
+                    )) {
                     foreach ($message[$question["ID"]] as $id => $value) {
                         $value = trim($value);
-                        if (strlen($value) > 0) {
+                        if ($value <> '') {
                             $answers[$id] = true;
                         }
                     }
@@ -601,22 +631,27 @@ SQL
                             $fields[$question["ID"]] = $res;
                         }
                     } //endregion
-                    else if ($question["FIELD_TYPE"] == QuestionTypes::RADIO ||
-                        $question["FIELD_TYPE"] == QuestionTypes::DROPDOWN) {
-                        $val = reset($answers);
-                        $fields[$question["ID"]] = array(
-                            key($answers) => $val
-                        );
-                    } else {
-                        $fields[$question["ID"]] = $answers;
+                    else {
+                        if ($question["FIELD_TYPE"] == QuestionTypes::RADIO ||
+                            $question["FIELD_TYPE"] == QuestionTypes::DROPDOWN) {
+                            $val = reset($answers);
+                            $fields[$question["ID"]] = array(
+                                key($answers) => $val
+                            );
+                        } else {
+                            $fields[$question["ID"]] = $answers;
+                        }
                     }
                     //region Check for message text from form
                     $res = $fields[$question["ID"]];
                     if (array_key_exists($question["ID"], $message)) {
-                        $message[$question["ID"]] = is_array($message[$question["ID"]]) ? $message[$question["ID"]] : [];
+                        $message[$question["ID"]] = is_array(
+                            $message[$question["ID"]]
+                        ) ? $message[$question["ID"]] : [];
                         foreach ($fields[$question["ID"]] as $id => $value) {
-                            if (array_key_exists($id, $message[$question["ID"]]))
+                            if (array_key_exists($id, $message[$question["ID"]])) {
                                 $fields[$question["ID"]][$id] = trim($message[$question["ID"]][$id]);
+                            }
                         }
                     }
                     if (empty($fields[$question["ID"]])) {
@@ -626,11 +661,16 @@ SQL
                 }
             }
             if (!array_key_exists($question["ID"], $fields) && $question['REQUIRED'] == 'Y') {
-                $this->errorCollection->add(array(new Error(Loc::getMessage("VOTE_REQUIRED_MISSING"), "QUESTION_" . $questionId)));
+                $this->errorCollection->add(
+                    array(new Error(Loc::getMessage("VOTE_REQUIRED_MISSING"), "QUESTION_" . $questionId))
+                );
             }
         }
-        if (empty($fields))
-            $this->errorCollection->add(array(new Error(Loc::getMessage("USER_VOTE_EMPTY"), "VOTE_" . $this->vote->getId())));
+        if (empty($fields)) {
+            $this->errorCollection->add(
+                array(new Error(Loc::getMessage("USER_VOTE_EMPTY"), "VOTE_" . $this->vote->getId()))
+            );
+        }
 
         return $fields;
     }
@@ -639,19 +679,27 @@ SQL
     {
         $this->errorCollection->clear();
         $fields = $this->check($ballot);
-        if (!$this->errorCollection->isEmpty())
+        if (!$this->errorCollection->isEmpty()) {
             return false;
+        }
         $eventFields = array(
             "VOTE_ID" => $this->vote->getId(),
             "VOTE_USER_ID" => $eventFields["VOTE_USER_ID"],
-            "DATE_VOTE" => (array_key_exists("DATE_VOTE", $eventFields) ? $eventFields["DATE_VOTE"] : new \Bitrix\Main\Type\DateTime()),
+            "DATE_VOTE" => (array_key_exists(
+                "DATE_VOTE",
+                $eventFields
+            ) ? $eventFields["DATE_VOTE"] : new \Bitrix\Main\Type\DateTime()),
             "STAT_SESSION_ID" => $eventFields["STAT_SESSION_ID"],
             "IP" => $eventFields["IP"],
             "VALID" => $eventFields["VALID"] ?: "Y",
             "VISIBLE" => ($eventFields["VISIBLE"] ?: "Y")
         );
-        if (array_key_exists("EXTRAS", $ballot) && is_array($ballot["EXTRAS"]) && array_key_exists("VISIBLE", $ballot["EXTRAS"]))
+        if (array_key_exists("EXTRAS", $ballot) && is_array($ballot["EXTRAS"]) && array_key_exists(
+                "VISIBLE",
+                $ballot["EXTRAS"]
+            )) {
             $eventFields["VISIBLE"] = ($ballot["EXTRAS"]["VISIBLE"] === "N" ? "N" : "Y");
+        }
 
         // Compatibility
         $sqlAnswers = array();
@@ -659,14 +707,17 @@ SQL
             foreach ($fieldsAnswer as $answerId => $value) {
                 $sqlAnswers[$questionId][$answerId] = array(
                     "ANSWER_ID" => $answerId,
-                    "MESSAGE" => is_string($value) ? substr($value, 0, 2000) : "");
+                    "MESSAGE" => is_string($value) ? mb_substr($value, 0, 2000) : ""
+                );
             }
         }
 
         /***************** Event onBeforeVoting ****************************/
         foreach (GetModuleEvents("vote", "onBeforeVoting", true) as $event) {
             if (ExecuteModuleEventEx($event, array(&$eventFields, &$sqlAnswers)) === false) {
-                $this->errorCollection->add(array(new Error("onBeforeVoting error", "VOTE_" . $eventFields["VOTE_ID"])));
+                $this->errorCollection->add(
+                    array(new Error("onBeforeVoting error", "VOTE_" . $eventFields["VOTE_ID"]))
+                );
                 return false;
             }
         }
@@ -675,16 +726,21 @@ SQL
             $ids = array();
             $answerIdsForCounter = array();
             foreach ($sqlAnswers as $questionId => $fieldsAnswer) {
-                if (($eventQId = EventQuestionTable::add(array("EVENT_ID" => $eventId, "QUESTION_ID" => $questionId))->getId()) && $eventQId > 0) {
+                if (($eventQId = EventQuestionTable::add(
+                        array("EVENT_ID" => $eventId, "QUESTION_ID" => $questionId)
+                    )->getId()) && $eventQId > 0) {
                     $ids[$questionId] = [
                         "EVENT_ID" => $eventQId,
                         "ANSWERS" => []
                     ];
                     foreach ($fieldsAnswer as $answerId => $res) {
-                        if (($eventAId = EventAnswerTable::add(array(
-                                "EVENT_QUESTION_ID" => $eventQId,
-                                "ANSWER_ID" => $res["ANSWER_ID"],
-                                "MESSAGE" => $res["MESSAGE"]))->getId()
+                        if (($eventAId = EventAnswerTable::add(
+                                array(
+                                    "EVENT_QUESTION_ID" => $eventQId,
+                                    "ANSWER_ID" => $res["ANSWER_ID"],
+                                    "MESSAGE" => $res["MESSAGE"]
+                                )
+                            )->getId()
                             ) && $eventAId > 0) {
                             $ids[$questionId]["ANSWERS"][$answerId] = [
                                 "EVENT_ID" => $eventAId,
@@ -709,17 +765,19 @@ SQL
                     AnswerTable::setCounter($answerIdsForCounter, true);
                 }
 
-                return new EventResult(array(
-                    "EVENT_ID" => $eventId,
-                    "VOTE_ID" => $eventFields["VOTE_ID"],
-                    "VOTE_USER_ID" => $eventFields["VOTE_USER_ID"],
-                    "DATE_VOTE" => $eventFields["DATE_VOTE"],
-                    "STAT_SESSION_ID" => $eventFields["SESS_SESSION_ID"],
-                    "IP" => $eventFields["IP"],
-                    "VISIBLE" => $eventFields["VISIBLE"],
-                    "VALID" => $eventFields["VALID"],
-                    "BALLOT" => $ids
-                ));
+                return new EventResult(
+                    array(
+                        "EVENT_ID" => $eventId,
+                        "VOTE_ID" => $eventFields["VOTE_ID"],
+                        "VOTE_USER_ID" => $eventFields["VOTE_USER_ID"],
+                        "DATE_VOTE" => $eventFields["DATE_VOTE"],
+                        "STAT_SESSION_ID" => $eventFields["SESS_SESSION_ID"],
+                        "IP" => $eventFields["IP"],
+                        "VISIBLE" => $eventFields["VISIBLE"],
+                        "VALID" => $eventFields["VALID"],
+                        "BALLOT" => $ids
+                    )
+                );
             }
             EventTable::delete($eventId);
         }

@@ -18,8 +18,12 @@ class WorkgroupSubject
             return false;
         }
 
-        $subjectId = (isset($params['subjectId']) && intval($params['subjectId']) > 0 ? intval($params['subjectId']) : false);
-        $groupSiteIdList = (isset($params['siteId']) && is_array($params['siteId']) && !empty($params['siteId']) ? $params['siteId'] : array());
+        $subjectId = (isset($params['subjectId']) && intval($params['subjectId']) > 0 ? intval(
+            $params['subjectId']
+        ) : false);
+        $groupSiteIdList = (isset($params['siteId']) && is_array(
+            $params['siteId']
+        ) && !empty($params['siteId']) ? $params['siteId'] : array());
 
         foreach ($groupSiteIdList as $key => $siteId) {
             if (empty($siteId)) {
@@ -36,12 +40,14 @@ class WorkgroupSubject
 
         $subjectSiteList = array();
 
-        $res = WorkgroupSubjectSiteTable::getList(array(
-            'filter' => array(
-                'SUBJECT_ID' => $subjectId
-            ),
-            'select' => array('SITE_ID')
-        ));
+        $res = WorkgroupSubjectSiteTable::getList(
+            array(
+                'filter' => array(
+                    'SUBJECT_ID' => $subjectId
+                ),
+                'select' => array('SITE_ID')
+            )
+        );
 
         while ($subjectSite = $res->fetch()) {
             $subjectSiteList[] = $subjectSite['SITE_ID'];
@@ -52,10 +58,12 @@ class WorkgroupSubject
 
         if (!empty($addSubjectSiteList)) {
             foreach ($addSubjectSiteList as $siteId) {
-                WorkgroupSubjectSiteTable::add(array(
-                    'SUBJECT_ID' => $subjectId,
-                    'SITE_ID' => $siteId
-                ));
+                WorkgroupSubjectSiteTable::add(
+                    array(
+                        'SUBJECT_ID' => $subjectId,
+                        'SITE_ID' => $siteId
+                    )
+                );
             }
         }
 

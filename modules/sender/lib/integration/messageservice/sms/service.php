@@ -101,15 +101,18 @@ class Service
             return false;
         }
 
-        $smsMessage = MessageService\Sender\SmsManager::createMessage(array(
-            'AUTHOR_ID' => $authorId,
-            'MESSAGE_TO' => $to,
-            'MESSAGE_BODY' => $text,
-            'MESSAGE_FROM' => $from,
-            'MESSAGE_HEADERS' => array(
-                'module_id' => 'sender'
-            )
-        ), $sender);
+        $smsMessage = MessageService\Sender\SmsManager::createMessage(
+            array(
+                'AUTHOR_ID' => $authorId,
+                'MESSAGE_TO' => $to,
+                'MESSAGE_BODY' => $text,
+                'MESSAGE_FROM' => $from,
+                'MESSAGE_HEADERS' => array(
+                    'module_id' => 'sender'
+                )
+            ),
+            $sender
+        );
 
         $sendResult = $smsMessage->sendDirectly();
         return $sendResult->isSuccess();

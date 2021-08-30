@@ -64,7 +64,7 @@ $adminList->initFilter($filterFields);
 
 function getFilterDate($date)
 {
-    if (!isset($date) || strlen(trim($date)) < 1) {
+    if (!isset($date) || mb_strlen(trim($date)) < 1) {
         return null;
     }
 
@@ -87,7 +87,7 @@ $filter = array(
 );
 
 foreach ($filter as $key => $value) {
-    if (!strlen(trim($value))) {
+    if (trim($value) == '') {
         unset($filter[$key]);
     }
 }
@@ -95,102 +95,106 @@ foreach ($filter as $key => $value) {
 $pageEntity = PageTable::getEntity();
 
 //Sorting
-$sortBy = strtoupper($sorting->getField());
+$sortBy = mb_strtoupper($sorting->getField());
 $sortBy = $pageEntity->hasField($sortBy) ? $sortBy : "ID";
-$sortOrder = strtoupper($sorting->getOrder());
+$sortOrder = mb_strtoupper($sorting->getOrder());
 $sortOrder = $sortOrder !== "DESC" ? "ASC" : "DESC";
 
 //Navigation
 $nav = new AdminPageNavigation("nav");
 
-$pageList = PageTable::getList(array(
-    "filter" => $filter,
-    "order" => array($sortBy => $sortOrder),
-    "count_total" => true,
-    "offset" => $nav->getOffset(),
-    "limit" => $nav->getLimit(),
-));
+$pageList = PageTable::getList(
+    array(
+        "filter" => $filter,
+        "order" => array($sortBy => $sortOrder),
+        "count_total" => true,
+        "offset" => $nav->getOffset(),
+        "limit" => $nav->getLimit(),
+    )
+);
 
 $nav->setRecordCount($pageList->getCount());
 
 $adminList->setNavigation($nav, Loc::getMessage("MAIN_COMPOSITE_PAGES_PAGES"));
-$adminList->addHeaders(array(
+$adminList->addHeaders(
     array(
-        "id" => "ID",
-        "content" => "ID",
-        "sort" => "ID",
-        "default" => true
-    ),
-    array(
-        "id" => "PAGE",
-        "content" => Loc::getMessage("MAIN_COMPOSITE_PAGES_PAGE"),
-        "sort" => "TITLE",
-        "default" => true
-    ),
-    array(
-        "id" => "CACHE_KEY",
-        "content" => $pageEntity->getField("CACHE_KEY")->getTitle(),
-    ),
-    array(
-        "id" => "HOST",
-        "content" => $pageEntity->getField("HOST")->getTitle(),
-        "sort" => "HOST",
-    ),
-    array(
-        "id" => "URI",
-        "content" => $pageEntity->getField("URI")->getTitle(),
-        "sort" => "URI",
-    ),
-    array(
-        "id" => "TITLE",
-        "content" => $pageEntity->getField("TITLE")->getTitle(),
-        "sort" => "TITLE",
-    ),
-    array(
-        "id" => "CREATED",
-        "content" => $pageEntity->getField("CREATED")->getTitle(),
-        "sort" => "CREATED",
-        "default" => true
-    ),
-    array(
-        "id" => "CHANGED",
-        "content" => $pageEntity->getField("CHANGED")->getTitle(),
-        "sort" => "CHANGED",
-        "default" => true
-    ),
-    array(
-        "id" => "LAST_VIEWED",
-        "content" => $pageEntity->getField("LAST_VIEWED")->getTitle(),
-        "sort" => "LAST_VIEWED",
-        "default" => true
-    ),
-    array(
-        "id" => "VIEWS",
-        "content" => $pageEntity->getField("VIEWS")->getTitle(),
-        "sort" => "VIEWS",
-        "default" => true
-    ),
-    array(
-        "id" => "REWRITES",
-        "content" => $pageEntity->getField("REWRITES")->getTitle(),
-        "sort" => "REWRITES",
-        "default" => true
-    ),
-    array(
-        "id" => "SIZE",
-        "content" => $pageEntity->getField("SIZE")->getTitle(),
-        "sort" => "SIZE",
-        "default" => true
-    ),
+        array(
+            "id" => "ID",
+            "content" => "ID",
+            "sort" => "ID",
+            "default" => true
+        ),
+        array(
+            "id" => "PAGE",
+            "content" => Loc::getMessage("MAIN_COMPOSITE_PAGES_PAGE"),
+            "sort" => "TITLE",
+            "default" => true
+        ),
+        array(
+            "id" => "CACHE_KEY",
+            "content" => $pageEntity->getField("CACHE_KEY")->getTitle(),
+        ),
+        array(
+            "id" => "HOST",
+            "content" => $pageEntity->getField("HOST")->getTitle(),
+            "sort" => "HOST",
+        ),
+        array(
+            "id" => "URI",
+            "content" => $pageEntity->getField("URI")->getTitle(),
+            "sort" => "URI",
+        ),
+        array(
+            "id" => "TITLE",
+            "content" => $pageEntity->getField("TITLE")->getTitle(),
+            "sort" => "TITLE",
+        ),
+        array(
+            "id" => "CREATED",
+            "content" => $pageEntity->getField("CREATED")->getTitle(),
+            "sort" => "CREATED",
+            "default" => true
+        ),
+        array(
+            "id" => "CHANGED",
+            "content" => $pageEntity->getField("CHANGED")->getTitle(),
+            "sort" => "CHANGED",
+            "default" => true
+        ),
+        array(
+            "id" => "LAST_VIEWED",
+            "content" => $pageEntity->getField("LAST_VIEWED")->getTitle(),
+            "sort" => "LAST_VIEWED",
+            "default" => true
+        ),
+        array(
+            "id" => "VIEWS",
+            "content" => $pageEntity->getField("VIEWS")->getTitle(),
+            "sort" => "VIEWS",
+            "default" => true
+        ),
+        array(
+            "id" => "REWRITES",
+            "content" => $pageEntity->getField("REWRITES")->getTitle(),
+            "sort" => "REWRITES",
+            "default" => true
+        ),
+        array(
+            "id" => "SIZE",
+            "content" => $pageEntity->getField("SIZE")->getTitle(),
+            "sort" => "SIZE",
+            "default" => true
+        ),
 
-));
+    )
+);
 
 while ($record = $pageList->fetch()) {
     $row = &$adminList->addRow($record["ID"], $record);
 
     $pageCell = '<a href="//%s" target="_blank">%s</a><br><span>%s</span>';
     $pageLink = htmlspecialcharsbx($record["HOST"] . $record["URI"]);
-    $title = strlen(trim($record["TITLE"])) ? $record["TITLE"] : $pageLink;
+    $title = trim($record["TITLE"]) <> '' ? $record["TITLE"] : $pageLink;
     $title = htmlspecialcharsbx($title, ENT_COMPAT, false);
 
     $row->addViewField("PAGE", sprintf($pageCell, $pageLink, $title, $pageLink));
@@ -311,11 +315,13 @@ require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admi
         </tr>
 
         <?
-        $filterControl->buttons(array(
-            "table_id" => $tableID,
-            "url" => $APPLICATION->getCurPage(),
-            "form" => "find_form",
-        ));
+        $filterControl->buttons(
+            array(
+                "table_id" => $tableID,
+                "url" => $APPLICATION->getCurPage(),
+                "form" => "find_form",
+            )
+        );
 
         $filterControl->end();
         ?>

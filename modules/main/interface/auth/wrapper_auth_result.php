@@ -1,4 +1,5 @@
 <?
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
     die();
 }
@@ -18,6 +19,10 @@ if ($inc_file === "otp") {
 
 if ($arAuthResult['CAPTCHA']) {
     $arAuthResult['CAPTCHA_CODE'] = $APPLICATION->CaptchaGetCode();
+}
+
+if (is_string($arAuthResult['MESSAGE'])) {
+    $arAuthResult['MESSAGE'] = str_replace('<br>', '', $arAuthResult['MESSAGE']);
 }
 
 if ($bOnHit):

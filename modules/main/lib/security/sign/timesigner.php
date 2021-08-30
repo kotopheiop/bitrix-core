@@ -129,17 +129,20 @@ class TimeSigner
     {
         $timedValue = $this->signer->unsign($signedValue, $salt);
 
-        if (strpos($signedValue, $timedValue) === false)
+        if (mb_strpos($signedValue, $timedValue) === false) {
             throw new BadSignatureException('Timestamp missing');
+        }
 
         list($value, $time) = $this->unpack($timedValue);
         $time = (int)$time;
 
-        if ($time <= 0)
+        if ($time <= 0) {
             throw new BadSignatureException(sprintf('Malformed timestamp %d', $time));
+        }
 
-        if ($time < time())
+        if ($time < time()) {
             throw new BadSignatureException(sprintf('Signature timestamp expired (%d < %d)', $time, time()));
+        }
 
         return $value;
     }
@@ -155,8 +158,9 @@ class TimeSigner
      */
     public function getSignature($value, $timestamp, $salt = null)
     {
-        if (!is_string($value))
+        if (!is_string($value)) {
             throw new ArgumentTypeException('value', 'string');
+        }
 
         $timedValue = $this->pack(array($value, $timestamp));
         return $this->signer->getSignature($timedValue, $salt);
@@ -192,19 +196,22 @@ class TimeSigner
      */
     protected function getTimeStamp($time)
     {
-        if (!is_string($time) && !is_int($time))
+        if (!is_string($time) && !is_int($time)) {
             throw new ArgumentTypeException('time');
+        }
 
         if (is_string($time) && !is_numeric($time)) {
             $timestamp = strtotime($time);
-            if (!$timestamp)
+            if (!$timestamp) {
                 throw new ArgumentException(sprintf('Invalid time "%s" format. See "Date and Time Formats"', $time));
+            }
         } else {
             $timestamp = (int)$time;
         }
 
-        if ($timestamp < time())
+        if ($timestamp < time()) {
             throw new ArgumentException(sprintf('Timestamp %d must be greater than now()', $timestamp));
+        }
 
         return $timestamp;
     }

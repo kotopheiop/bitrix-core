@@ -45,9 +45,14 @@ class Subscription
         $urlPage = Option::get('sender', 'sub_link');
         if ($urlPage == "") {
             $bitrixDirectory = Application::getInstance()->getPersonalRoot();
-            $result = $bitrixDirectory . '/tools/sender_sub_confirm.php?sender_subscription=confirm&tag=' . urlencode($tag);
+            $result = $bitrixDirectory . '/tools/sender_sub_confirm.php?sender_subscription=confirm&tag=' . urlencode(
+                    $tag
+                );
         } else {
-            $result = $urlPage . (strpos($urlPage, "?") === false ? "?" : "&") . 'sender_subscription=confirm&tag=' . urlencode($tag);
+            $result = $urlPage . (mb_strpos(
+                    $urlPage,
+                    "?"
+                ) === false ? "?" : "&") . 'sender_subscription=confirm&tag=' . urlencode($tag);
         }
 
         return $result;
@@ -81,58 +86,66 @@ class Subscription
 
             return $resultMailingList;
         }
-
-        if (!$data['RECIPIENT_ID']) {
-            return array();
+        $contactData = $contactId = null;
+        if ($data['RECIPIENT_ID'] && $recipient = PostingRecipientTable::getRowById(
+                array('ID' => $data['RECIPIENT_ID'])
+            )) {
+            if (isset($data['CONTACT_ID']) && $recipient['CONTACT_ID'] != $data['CONTACT_ID']) {
+                return [];
+            }
+            $contactData = ContactTable::getRowById($contactId = $recipient['CONTACT_ID']);
+        } elseif ($data['CONTACT_ID'] && $contactData = ContactTable::getRowById($data['CONTACT_ID'])) {
+            $contactId = $contactData['ID'];
+        } else {
+            return [];
         }
 
-        $recipient = PostingRecipientTable::getRowById(array('ID' => $data['RECIPIENT_ID']));
-        if (!$recipient || !$recipient['CONTACT_ID']) {
-            return array();
-        }
-        $contactId = $recipient['CONTACT_ID'];
-
-        $contactData = ContactTable::getRowById($contactId);
         if ($contactData && $contactData['BLACKLISTED'] === 'Y') {
-            return array();
+            return [];
         }
 
         $mailingUnsub = array();
-        $unSubDb = MailingSubscriptionTable::getUnSubscriptionList(array(
-            'select' => array('MAILING_ID'),
-            'filter' => array(
-                '=CONTACT.ID' => $contactId,
-                '=MAILING.SITE_ID' => $mailing['SITE_ID']
+        $unSubDb = MailingSubscriptionTable::getUnSubscriptionList(
+            array(
+                'select' => array('MAILING_ID'),
+                'filter' => array(
+                    '=CONTACT.ID' => $contactId,
+                    '=MAILING.SITE_ID' => $mailing['SITE_ID']
+                )
             )
-        ));
+        );
         while ($unSub = $unSubDb->fetch()) {
             $mailingUnsub[] = $unSub['MAILING_ID'];
         }
 
         $mailingList = array();
         // all receives mailings
-        $mailingDb = PostingRecipientTable::getList(array(
-            'select' => array('MAILING_ID' => 'POSTING.MAILING.ID'),
-            'filter' => array(
-                '=CONTACT_ID' => $contactId,
-                '=POSTING.MAILING.ACTIVE' => 'Y',
-                '=POSTING.MAILING.SITE_ID' => $mailing['SITE_ID']
-            ),
-            'group' => array('MAILING_ID')
-        ));
+        $mailingDb = PostingRecipientTable::getList(
+            array(
+                'select' => array('MAILING_ID' => 'POSTING.MAILING.ID'),
+                'filter' => array(
+                    '=CONTACT_ID' => $contactId,
+                    '=POSTING.MAILING.ACTIVE' => 'Y',
+                    '=POSTING.MAILING.SITE_ID' => $mailing['SITE_ID']
+                ),
+                'group' => array('MAILING_ID')
+            )
+        );
         while ($mailing = $mailingDb->fetch()) {
             $mailingList[] = $mailing['MAILING_ID'];
         }
 
         // all subscribed mailings
-        $mailingDb = MailingSubscriptionTable::getSubscriptionList(array(
-            'select' => array('MAILING_ID'),
-            'filter' => array(
-                '=CONTACT.ID' => $contactId,
-                '=MAILING.ACTIVE' => 'Y',
-                '=MAILING.SITE_ID' => $mailing['SITE_ID']
+        $mailingDb = MailingSubscriptionTable::getSubscriptionList(
+            array(
+                'select' => array('MAILING_ID'),
+                'filter' => array(
+                    '=CONTACT.ID' => $contactId,
+                    '=MAILING.ACTIVE' => 'Y',
+                    '=MAILING.SITE_ID' => $mailing['SITE_ID']
+                )
             )
-        ));
+        );
         while ($mailing = $mailingDb->fetch()) {
             $mailingList[] = $mailing['MAILING_ID'];
         }
@@ -164,10 +177,11 @@ class Subscription
     public static function onMailEventSubscriptionEnable($data)
     {
         $data['SUCCESS'] = static::subscribe($data);
-        if ($data['SUCCESS'])
+        if ($data['SUCCESS']) {
             $result = EventResult::SUCCESS;
-        else
+        } else {
             $result = EventResult::ERROR;
+        }
 
         return new EventResult($result, $data, static::MODULE_ID);
     }
@@ -181,10 +195,11 @@ class Subscription
     public static function onMailEventSubscriptionDisable($data)
     {
         $data['SUCCESS'] = static::unsubscribeRecipient($data);
-        if ($data['SUCCESS'])
+        if ($data['SUCCESS']) {
             $result = EventResult::SUCCESS;
-        else
+        } else {
             $result = EventResult::ERROR;
+        }
 
         return new EventResult($result, $data, static::MODULE_ID);
     }
@@ -201,42 +216,67 @@ class Subscription
 
         $data['ABUSE'] = isset($data['ABUSE']) ? (bool)$data['ABUSE'] : false;
         $data['ABUSE_TEXT'] = isset($data['ABUSE_TEXT']) ? $data['ABUSE_TEXT'] : null;
-
         $result = false;
-        $recipient = PostingRecipientTable::getList(array(
-            'select' => array(
-                'ID', 'CONTACT_ID', 'CONTACT_CODE' => 'CONTACT.CODE', 'CONTACT_TYPE_ID' => 'CONTACT.TYPE_ID',
-                'POSTING_ID', 'POSTING_MAILING_ID' => 'POSTING.MAILING_ID'
-            ),
-            'filter' => array('=ID' => $data['RECIPIENT_ID']),
-            'limit' => 1
-        ))->fetch();
-        if (!$recipient || !$recipient['CONTACT_ID']) {
+        $recipient = PostingRecipientTable::getRow(
+            [
+                'select' => [
+                    'ID',
+                    'CONTACT_ID',
+                    'CONTACT_CODE' => 'CONTACT.CODE',
+                    'CONTACT_TYPE_ID' => 'CONTACT.TYPE_ID',
+                    'POSTING_ID',
+                    'POSTING_MAILING_ID' => 'POSTING.MAILING_ID'
+                ],
+                'filter' => ['=ID' => $data['RECIPIENT_ID']]
+            ]
+        );
+        $recipient = ((!$recipient && $data['CONTACT_ID']) ? ContactTable::getRow(
+            [
+                'select' => [
+                    'CONTACT_ID' => 'ID',
+                    'CONTACT_TYPE_ID' => 'TYPE_ID',
+                    'CONTACT_CODE' => 'CODE'
+                ],
+                'filter' => ['=CONTACT_ID' => $data['CONTACT_ID']]
+            ]
+        ) : $recipient);
+        if
+        (
+            !$recipient ||
+            !$recipient['CONTACT_ID'] ||
+            ($data['CONTACT_ID'] ? $data['CONTACT_ID'] != $recipient['CONTACT_ID'] : false)
+        ) {
             return true;
         }
         $contactId = $recipient['CONTACT_ID'];
-
-        $mailingDb = MailingTable::getList(array(
-            'select' => array('ID'),
-            'filter' => array(
-                '=ID' => $data['UNSUBSCRIBE_LIST'],
+        $mailingDb = MailingTable::getList(
+            array(
+                'select' => array('ID'),
+                'filter' => array(
+                    '=ID' => $data['UNSUBSCRIBE_LIST'],
+                )
             )
-        ));
+        );
         while ($mailing = $mailingDb->fetch()) {
             $primary = null;
-            if ($recipient['POSTING_MAILING_ID'] == $mailing['ID']) {
+            if (
+                isset($recipient['POSTING_MAILING_ID'], $recipient['POSTING_ID'], $recipient['ID']) &&
+                $recipient['POSTING_MAILING_ID'] == $mailing['ID']
+            ) {
                 $primary = array(
                     'POSTING_ID' => $recipient['POSTING_ID'],
                     'RECIPIENT_ID' => $recipient['ID'],
                 );
             } else {
-                $mailingPostingDb = PostingRecipientTable::getList(array(
-                    'select' => array('RECIPIENT_ID' => 'ID', 'POSTING_ID'),
-                    'filter' => array(
-                        '=POSTING.MAILING_ID' => $mailing['ID'],
-                        '=CONTACT_ID' => $contactId
+                $mailingPostingDb = PostingRecipientTable::getList(
+                    array(
+                        'select' => array('RECIPIENT_ID' => 'ID', 'POSTING_ID'),
+                        'filter' => array(
+                            '=POSTING.MAILING_ID' => $mailing['ID'],
+                            '=CONTACT_ID' => $contactId
+                        )
                     )
-                ));
+                );
                 if ($mailingPosting = $mailingPostingDb->fetch()) {
                     $primary = $mailingPosting;
                 }
@@ -260,12 +300,14 @@ class Subscription
                         $event->send();
 
                         if ($data['ABUSE']) {
-                            AbuseTable::add(array(
-                                'TEXT' => $data['ABUSE_TEXT'],
-                                'CONTACT_ID' => $contactId,
-                                'CONTACT_CODE' => $recipient['CONTACT_CODE'],
-                                'CONTACT_TYPE_ID' => $recipient['CONTACT_TYPE_ID'],
-                            ))->isSuccess();
+                            AbuseTable::add(
+                                array(
+                                    'TEXT' => $data['ABUSE_TEXT'],
+                                    'CONTACT_ID' => $contactId,
+                                    'CONTACT_CODE' => $recipient['CONTACT_CODE'],
+                                    'CONTACT_TYPE_ID' => $recipient['CONTACT_TYPE_ID'],
+                                )
+                            )->isSuccess();
                         }
 
                         Integration\EventHandler::onAfterPostingRecipientUnsubscribe($eventData);
@@ -275,10 +317,12 @@ class Subscription
                 $result = true;
             }
 
-            MailingSubscriptionTable::addUnSubscription(array(
-                'MAILING_ID' => $mailing['ID'],
-                'CONTACT_ID' => $contactId
-            ));
+            MailingSubscriptionTable::addUnSubscription(
+                array(
+                    'MAILING_ID' => $mailing['ID'],
+                    'CONTACT_ID' => $contactId
+                )
+            );
 
             if ($contactId && $data['ABUSE']) {
                 ContactTable::update($contactId, array('BLACKLISTED' => 'Y'));
@@ -313,40 +357,47 @@ class Subscription
         }
 
         $mailingUnsub = array();
-        $unSubDb = MailingSubscriptionTable::getUnSubscriptionList(array(
-            'select' => array('MAILING_ID'),
-            'filter' => array(
-                '=CONTACT.EMAIL' => trim(strtolower($data['EMAIL'])),
-                '=MAILING.SITE_ID' => $mailing['SITE_ID']
+        $unSubDb = MailingSubscriptionTable::getUnSubscriptionList(
+            array(
+                'select' => array('MAILING_ID'),
+                'filter' => array(
+                    '=CONTACT.EMAIL' => trim(mb_strtolower($data['EMAIL'])),
+                    '=MAILING.SITE_ID' => $mailing['SITE_ID']
+                )
             )
-        ));
-        while ($unSub = $unSubDb->fetch())
+        );
+        while ($unSub = $unSubDb->fetch()) {
             $mailingUnsub[] = $unSub['MAILING_ID'];
+        }
 
         $mailingList = array();
         // all receives mailings
-        $receiveMailingDb = PostingRecipientTable::getList(array(
-            'select' => array('MAILING_ID' => 'POSTING.MAILING.ID'),
-            'filter' => array(
-                '=EMAIL' => trim(strtolower($data['EMAIL'])),
-                '=POSTING.MAILING.ACTIVE' => 'Y',
-                '=POSTING.MAILING.SITE_ID' => $mailing['SITE_ID']
-            ),
-            'group' => array('MAILING_ID')
-        ));
+        $receiveMailingDb = PostingRecipientTable::getList(
+            array(
+                'select' => array('MAILING_ID' => 'POSTING.MAILING.ID'),
+                'filter' => array(
+                    '=EMAIL' => trim(mb_strtolower($data['EMAIL'])),
+                    '=POSTING.MAILING.ACTIVE' => 'Y',
+                    '=POSTING.MAILING.SITE_ID' => $mailing['SITE_ID']
+                ),
+                'group' => array('MAILING_ID')
+            )
+        );
         while ($receiveMailing = $receiveMailingDb->fetch()) {
             $mailingList[] = $receiveMailing['MAILING_ID'];
         }
 
         // all subscribed mailings
-        $subscribedMailingDb = MailingSubscriptionTable::getSubscriptionList(array(
-            'select' => array('MAILING_ID'),
-            'filter' => array(
-                '=CONTACT.EMAIL' => trim(strtolower($data['EMAIL'])),
-                '=MAILING.ACTIVE' => 'Y',
-                '=MAILING.SITE_ID' => $mailing['SITE_ID']
+        $subscribedMailingDb = MailingSubscriptionTable::getSubscriptionList(
+            array(
+                'select' => array('MAILING_ID'),
+                'filter' => array(
+                    '=CONTACT.EMAIL' => trim(mb_strtolower($data['EMAIL'])),
+                    '=MAILING.ACTIVE' => 'Y',
+                    '=MAILING.SITE_ID' => $mailing['SITE_ID']
+                )
             )
-        ));
+        );
         while ($subscribedMailing = $subscribedMailingDb->fetch()) {
             $mailingList[] = $subscribedMailing['MAILING_ID'];
         }
@@ -397,31 +448,36 @@ class Subscription
     {
         $result = false;
 
-        if (isset($data['TEST']) && $data['TEST'] == 'Y')
+        if (isset($data['TEST']) && $data['TEST'] == 'Y') {
             return true;
+        }
 
         $data['ABUSE'] = isset($data['ABUSE']) ? (bool)$data['ABUSE'] : false;
         $data['ABUSE_TEXT'] = isset($data['ABUSE_TEXT']) ? $data['ABUSE_TEXT'] : null;
 
         $posting = null;
         if ($data['RECIPIENT_ID']) {
-            $postingDb = PostingRecipientTable::getList(array(
-                'select' => array('POSTING_ID', 'POSTING_MAILING_ID' => 'POSTING.MAILING_ID'),
-                'filter' => array(
-                    '=ID' => $data['RECIPIENT_ID'],
-                    '=CONTACT.CODE' => $data['EMAIL'],
-                    '=CONTACT.TYPE_ID' => Recipient\Type::EMAIL,
+            $postingDb = PostingRecipientTable::getList(
+                array(
+                    'select' => array('POSTING_ID', 'POSTING_MAILING_ID' => 'POSTING.MAILING_ID'),
+                    'filter' => array(
+                        '=ID' => $data['RECIPIENT_ID'],
+                        '=CONTACT.CODE' => $data['EMAIL'],
+                        '=CONTACT.TYPE_ID' => Recipient\Type::EMAIL,
+                    )
                 )
-            ));
+            );
             $posting = $postingDb->fetch();
         }
 
-        $mailingDb = MailingTable::getList(array(
-            'select' => array('ID'),
-            'filter' => array(
-                '=ID' => $data['UNSUBSCRIBE_LIST'],
+        $mailingDb = MailingTable::getList(
+            array(
+                'select' => array('ID'),
+                'filter' => array(
+                    '=ID' => $data['UNSUBSCRIBE_LIST'],
+                )
             )
-        ));
+        );
         while ($mailing = $mailingDb->fetch()) {
             $unsub = null;
 
@@ -432,15 +488,17 @@ class Subscription
                     'CONTACT_ID' => isset($data['CONTACT_ID']) ? (int)$data['CONTACT_ID'] : null,
                 );
             } else {
-                $mailingPostingDb = PostingRecipientTable::getList(array(
-                    'select' => array('RECIPIENT_ID' => 'ID', 'CONTACT_ID', 'POSTING_ID'),
-                    'filter' => array(
-                        '=POSTING.MAILING_ID' => $mailing['ID'],
-                        '=CONTACT.CODE' => $data['EMAIL'],
-                        '=CONTACT.TYPE_ID' => Recipient\Type::EMAIL,
-                    ),
-                    'limit' => 1
-                ));
+                $mailingPostingDb = PostingRecipientTable::getList(
+                    array(
+                        'select' => array('RECIPIENT_ID' => 'ID', 'CONTACT_ID', 'POSTING_ID'),
+                        'filter' => array(
+                            '=POSTING.MAILING_ID' => $mailing['ID'],
+                            '=CONTACT.CODE' => $data['EMAIL'],
+                            '=CONTACT.TYPE_ID' => Recipient\Type::EMAIL,
+                        ),
+                        'limit' => 1
+                    )
+                );
                 if ($mailingPosting = $mailingPostingDb->fetch()) {
                     $unsub = $mailingPosting;
                 }
@@ -468,12 +526,14 @@ class Subscription
                         $event->send();
 
                         if ($data['ABUSE']) {
-                            AbuseTable::add(array(
-                                'TEXT' => $data['ABUSE_TEXT'],
-                                'CONTACT_ID' => $unsub['CONTACT_ID'],
-                                'CONTACT_CODE' => $data['EMAIL'],
-                                'CONTACT_TYPE_ID' => Recipient\Type::EMAIL,
-                            ));
+                            AbuseTable::add(
+                                array(
+                                    'TEXT' => $data['ABUSE_TEXT'],
+                                    'CONTACT_ID' => $unsub['CONTACT_ID'],
+                                    'CONTACT_CODE' => $data['EMAIL'],
+                                    'CONTACT_TYPE_ID' => Recipient\Type::EMAIL,
+                                )
+                            );
                         }
 
                         Integration\EventHandler::onAfterPostingRecipientUnsubscribe($eventData);
@@ -486,7 +546,9 @@ class Subscription
             // add row to unsubscribe list
             $contactId = ContactTable::addIfNotExist(array('EMAIL' => $data['EMAIL']));
             if ($contactId) {
-                MailingSubscriptionTable::addUnSubscription(array('MAILING_ID' => $mailing['ID'], 'CONTACT_ID' => $contactId));
+                MailingSubscriptionTable::addUnSubscription(
+                    array('MAILING_ID' => $mailing['ID'], 'CONTACT_ID' => $contactId)
+                );
                 $result = true;
             }
         }
@@ -507,13 +569,15 @@ class Subscription
 
         $typeId = Recipient\Type::detect($code);
         $code = Recipient\Normalizer::normalize($code, $typeId);
-        $contact = ContactTable::getRow([
-            'select' => ['ID'],
-            'filter' => [
-                '=CODE' => $code,
-                '=TYPE_ID' => $typeId,
+        $contact = ContactTable::getRow(
+            [
+                'select' => ['ID'],
+                'filter' => [
+                    '=CODE' => $code,
+                    '=TYPE_ID' => $typeId,
+                ]
             ]
-        ]);
+        );
         if ($contact) {
             $contactId = $contact['ID'];
         } else {
@@ -525,9 +589,12 @@ class Subscription
 
         if (!empty($contactId)) {
             foreach ($mailingIdList as $mailingId) {
-                MailingSubscriptionTable::addSubscription(array(
-                    'MAILING_ID' => $mailingId, 'CONTACT_ID' => $contactId
-                ));
+                MailingSubscriptionTable::addSubscription(
+                    array(
+                        'MAILING_ID' => $mailingId,
+                        'CONTACT_ID' => $contactId
+                    )
+                );
             }
         }
 
@@ -543,21 +610,27 @@ class Subscription
     public static function getMailingList($params)
     {
         $filter = array("ACTIVE" => "Y", "IS_TRIGGER" => "N");
-        if (isset($params["SITE_ID"]))
+        if (isset($params["SITE_ID"])) {
             $filter["SITE_ID"] = $params["SITE_ID"];
-        if (isset($params["IS_PUBLIC"]))
+        }
+        if (isset($params["IS_PUBLIC"])) {
             $filter["IS_PUBLIC"] = $params["IS_PUBLIC"];
-        if (isset($params["ACTIVE"]))
+        }
+        if (isset($params["ACTIVE"])) {
             $filter["ACTIVE"] = $params["ACTIVE"];
-        if (isset($params["ID"]))
+        }
+        if (isset($params["ID"])) {
             $filter["ID"] = $params["ID"];
+        }
 
         $mailingList = array();
-        $mailingDb = MailingTable::getList(array(
-            'select' => array('ID', 'NAME', 'DESCRIPTION', 'IS_PUBLIC'),
-            'filter' => $filter,
-            'order' => array('SORT' => 'ASC', 'NAME' => 'ASC'),
-        ));
+        $mailingDb = MailingTable::getList(
+            array(
+                'select' => array('ID', 'NAME', 'DESCRIPTION', 'IS_PUBLIC'),
+                'filter' => $filter,
+                'order' => array('SORT' => 'ASC', 'NAME' => 'ASC'),
+            )
+        );
         while ($mailing = $mailingDb->fetch()) {
             $mailingList[] = $mailing;
         }
@@ -576,7 +649,9 @@ class Subscription
     public static function sendEventConfirm($email, array $mailingIdList, $siteId)
     {
         $mailingNameList = array();
-        $mailingDb = MailingTable::getList(array('select' => array('NAME'), 'filter' => array("IS_TRIGGER" => "N", 'ID' => $mailingIdList)));
+        $mailingDb = MailingTable::getList(
+            array('select' => array('NAME'), 'filter' => array("IS_TRIGGER" => "N", 'ID' => $mailingIdList))
+        );
         while ($mailing = $mailingDb->fetch()) {
             $mailingNameList[] = $mailing['NAME'];
         }
@@ -612,14 +687,16 @@ class Subscription
     public static function isUnsubscibed($mailingId, $code, $typeId = Recipient\Type::EMAIL)
     {
         $code = Recipient\Normalizer::normalize($code, $typeId);
-        $unSubDb = MailingSubscriptionTable::getUnSubscriptionList(array(
-            'select' => array('MAILING_ID'),
-            'filter' => array(
-                '=MAILING_ID' => $mailingId,
-                '=CONTACT.CODE' => $code,
-                '=CONTACT.TYPE_ID' => $typeId,
+        $unSubDb = MailingSubscriptionTable::getUnSubscriptionList(
+            array(
+                'select' => array('MAILING_ID'),
+                'filter' => array(
+                    '=MAILING_ID' => $mailingId,
+                    '=CONTACT.CODE' => $code,
+                    '=CONTACT.TYPE_ID' => $typeId,
+                )
             )
-        ));
+        );
         if ($unSubDb->fetch()) {
             return true;
         }

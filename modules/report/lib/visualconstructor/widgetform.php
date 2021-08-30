@@ -181,7 +181,6 @@ class WidgetForm extends Form
                 /** @var Fields\Base $configurationField */
                 foreach ($reportConfiguration['FIELDS'] as $configurationField) {
                     $container->addElement($configurationField);
-
                 }
 
                 $container->addElement($reportConfigurationsContainer->end());

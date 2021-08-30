@@ -27,10 +27,12 @@ class ConfigurationSettingTable extends DataManager
     public static function getMap()
     {
         return array(
-            new IntegerField('ID', array(
+            new IntegerField(
+                'ID', array(
                 'primary' => true,
                 'autocomplete' => true,
-            )),
+            )
+            ),
             new IntegerField('WEIGHT'),
             new StringField('GID'),
             new StringField('UKEY'),

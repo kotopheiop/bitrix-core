@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 class CBPArgumentException
@@ -23,8 +24,9 @@ class CBPArgumentNullException
 {
     public function __construct($paramName, $message = "")
     {
-        if (strlen($message) <= 0)
+        if ($message == '') {
             $message = str_replace("#PARAM#", htmlspecialcharsbx($paramName), GetMessage("BPCGERR_NULL_ARG"));
+        }
 
         parent::__construct($message, $paramName);
 
@@ -39,11 +41,16 @@ class CBPArgumentOutOfRangeException
 
     public function __construct($paramName, $actualValue = null, $message = "")
     {
-        if (strlen($message) <= 0) {
-            if ($actualValue === null)
+        if ($message == '') {
+            if ($actualValue === null) {
                 $message = str_replace("#PARAM#", htmlspecialcharsbx($paramName), GetMessage("BPCGERR_INVALID_ARG"));
-            else
-                $message = str_replace(array("#PARAM#", "#VALUE#"), array(htmlspecialcharsbx($paramName), htmlspecialcharsbx($actualValue)), GetMessage("BPCGERR_INVALID_ARG1"));
+            } else {
+                $message = str_replace(
+                    array("#PARAM#", "#VALUE#"),
+                    array(htmlspecialcharsbx($paramName), htmlspecialcharsbx($actualValue)),
+                    GetMessage("BPCGERR_INVALID_ARG1")
+                );
+            }
         }
 
         parent::__construct($message, $paramName);
@@ -65,11 +72,16 @@ class CBPArgumentTypeException
 
     public function __construct($paramName, $correctType = null, $message = "")
     {
-        if (strlen($message) <= 0) {
-            if ($correctType === null)
+        if ($message == '') {
+            if ($correctType === null) {
                 $message = str_replace("#PARAM#", htmlspecialcharsbx($paramName), GetMessage("BPCGERR_INVALID_TYPE"));
-            else
-                $message = str_replace(array("#PARAM#", "#VALUE#"), array(htmlspecialcharsbx($paramName), htmlspecialcharsbx($correctType)), GetMessage("BPCGERR_INVALID_TYPE1"));
+            } else {
+                $message = str_replace(
+                    array("#PARAM#", "#VALUE#"),
+                    array(htmlspecialcharsbx($paramName), htmlspecialcharsbx($correctType)),
+                    GetMessage("BPCGERR_INVALID_TYPE1")
+                );
+            }
         }
 
         parent::__construct($message, $paramName);

@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/subscribe/include.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/subscribe/prolog.php");
@@ -6,11 +7,17 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/subscribe/prolog.php")
 IncludeModuleLangFile(__FILE__);
 
 $POST_RIGHT = $APPLICATION->GetGroupRight("subscribe");
-if ($POST_RIGHT == "D")
+if ($POST_RIGHT == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $aTabs = array(
-    array("DIV" => "edit1", "TAB" => GetMessage("rub_test_tab"), "ICON" => "main_user_edit", "TITLE" => GetMessage("rub_test_tab_title")),
+    array(
+        "DIV" => "edit1",
+        "TAB" => GetMessage("rub_test_tab"),
+        "ICON" => "main_user_edit",
+        "TITLE" => GetMessage("rub_test_tab_title")
+    ),
 );
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
@@ -48,26 +55,32 @@ $arFieldDescriptions = array(
 if ($ID > 0) {
     global $DB;
     $rubric = CRubric::GetByID($ID);
-    if ($rubric)
+    if ($rubric) {
         $arRubric = $rubric->Fetch();
-    if (!$arRubric)
+    }
+    if (!$arRubric) {
         $arError[] = array("id" => "", "text" => GetMessage("rub_id_not_found"));
-    else {
-        if ($START_TIME == "")
+    } else {
+        if ($START_TIME == "") {
             $START_TIME = $arRubric["LAST_EXECUTED"];
-        if ($END_TIME == "")
+        }
+        if ($END_TIME == "") {
             $END_TIME = ConvertTimeStamp(time() + CTimeZone::GetOffset(), "FULL");
+        }
     }
 }
 
-if (strlen($Test) > 0 && $POST_RIGHT == "W" && check_bitrix_sessid()) {
-    if ($DB->IsDate($START_TIME, false, false, "FULL") !== true)
+if ($Test <> '' && $POST_RIGHT == "W" && check_bitrix_sessid()) {
+    if ($DB->IsDate($START_TIME, false, false, "FULL") !== true) {
         $arError[] = array("id" => "START_TIME", "text" => GetMessage("rub_wrong_stime"));
-    if ($DB->IsDate($END_TIME, false, false, "FULL") !== true)
+    }
+    if ($DB->IsDate($END_TIME, false, false, "FULL") !== true) {
         $arError[] = array("id" => "END_TIME", "text" => GetMessage("rub_wrong_etime"));
+    }
     $bTest = count($arError) == 0;
-} else
+} else {
     $bTest = false;
+}
 
 $APPLICATION->SetTitle(GetMessage("rub_title") . $ID);
 
@@ -97,7 +110,10 @@ if ($ID > 0) {
     $aMenu[] = array(
         "TEXT" => GetMessage("POST_DELETE"),
         "TITLE" => GetMessage("rubric_mnu_del"),
-        "LINK" => "javascript:if(confirm('" . GetMessage("rubric_mnu_del_conf") . "'))window.location='rubric_admin.php?ID=" . $ID . "&cf=delid&lang=" . LANG . "&" . bitrix_sessid_get() . "';",
+        "LINK" => "javascript:if(confirm('" . GetMessage(
+                "rubric_mnu_del_conf"
+            ) . "'))window.location='rubric_admin.php?ID=" . $ID . "&cf=delid&lang=" . LANG . "&" . bitrix_sessid_get(
+            ) . "';",
         "ICON" => "btn_delete",
     );
 }
@@ -183,8 +199,9 @@ if ($bTest):
         $rsSite = CSite::GetByID($arRubric["SITE_ID"]);
         $arSite = $rsSite->Fetch();
         $strFileName = $_SERVER["DOCUMENT_ROOT"] . "/" . $arRubric["TEMPLATE"] . "/lang/" . $arSite["LANGUAGE_ID"] . "/template.php";
-        if (file_exists($strFileName))
+        if (file_exists($strFileName)) {
             include($strFileName);
+        }
         //Execute template
         $strFileName = $_SERVER["DOCUMENT_ROOT"] . "/" . $arRubric["TEMPLATE"] . "/template.php";
         if (file_exists($strFileName)) {
@@ -193,8 +210,9 @@ if ($bTest):
             $strBody = ob_get_contents();
             ob_end_clean();
         }
-        if (!is_array($arFields))
+        if (!is_array($arFields)) {
             $arFields = array();
+        }
         ?>
         <script language="JavaScript">
             <!--
@@ -231,8 +249,9 @@ if ($bTest):
                     <tr>
                         <td align="left" width="20%" class="left"><? echo $arFieldDescriptions[$key] ?></td>
                         <td align="right" width="10%"><? echo htmlspecialcharsbx($key) ?></td>
-                        <td align="left" width="70%"
-                            class="right"><? echo strlen($value) ? htmlspecialcharsbx($value) : "&nbsp" ?></td>
+                        <td align="left" width="70%" class="right"><? echo $value <> '' ? htmlspecialcharsbx(
+                                $value
+                            ) : "&nbsp" ?></td>
                     </tr>
                 <? endforeach ?>
             </table>
@@ -270,15 +289,16 @@ if ($bTest):
                     </td>
                 </tr>
                 <? foreach ($arFields as $key => $value):
-                    if ($key == "FILES" && is_array($value))
+                    if ($key == "FILES" && is_array($value)) {
                         $value = "<pre>" . htmlspecialcharsbx(print_r($value, true)) . "</pre>";
-                    else
+                    } else {
                         $value = htmlspecialcharsbx(print_r($value, true));
+                    }
                     ?>
                     <tr>
                         <td align="left" width="20%" class="left"><? echo $arFieldDescriptions[$key] ?></td>
                         <td align="right" width="10%"><? echo htmlspecialcharsbx($key) ?></td>
-                        <td align="left" width="70%" class="right"><? echo strlen($value) ? $value : "&nbsp" ?></td>
+                        <td align="left" width="70%" class="right"><? echo $value <> '' ? $value : "&nbsp" ?></td>
                     </tr>
                 <? endforeach ?>
             </table>

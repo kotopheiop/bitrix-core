@@ -63,14 +63,16 @@ class MessageWebHook implements Message\iBase
     public function loadConfiguration($id = null)
     {
         $configuration = new Message\Configuration();
-        $configuration->setArrayOptions(array(
+        $configuration->setArrayOptions(
             array(
-                'type' => 'string',
-                'code' => 'URI',
-                'name' => Loc::getMessage('SENDER_INTEGRATION_WEBHOOK_MESSAGE_CONFIG_URI'),
-                'required' => true,
-            ),
-        ));
+                array(
+                    'type' => 'string',
+                    'code' => 'URI',
+                    'name' => Loc::getMessage('SENDER_INTEGRATION_WEBHOOK_MESSAGE_CONFIG_URI'),
+                    'required' => true,
+                ),
+            )
+        );
 
         return Entity\Message::create()
             ->setCode($this->getCode())

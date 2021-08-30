@@ -1,5 +1,8 @@
 <?
 
+/**
+ * @deprecated Use \Bitrix\Main\IO
+ */
 abstract class CBXVirtualFileBase
     implements IBXGetErrors
 {
@@ -41,6 +44,9 @@ abstract class CBXVirtualFileBase
     public abstract function GetLastAccessTime();
 }
 
+/**
+ * @deprecated Use \Bitrix\Main\IO
+ */
 abstract class CBXVirtualFile
     extends CBXVirtualFileBase
 {
@@ -74,6 +80,9 @@ abstract class CBXVirtualFile
     public abstract function ReadFile();
 }
 
+/**
+ * @deprecated Use \Bitrix\Main\IO
+ */
 abstract class CBXVirtualDirectory
     extends CBXVirtualFileBase
 {
@@ -89,5 +98,3 @@ abstract class CBXVirtualDirectory
 
     public abstract function Create();
 }
-
-?>

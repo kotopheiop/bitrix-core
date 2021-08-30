@@ -27,18 +27,21 @@ final class OrderDiscountMigrator
     public static function processing(array $order)
     {
         static $useBasePrice = null;
-        if ($useBasePrice === null)
+        if ($useBasePrice === null) {
             $useBasePrice = (string)Main\Config\Option::get('sale', 'get_discount_percent_from_base_price');
+        }
 
         $process = true;
         $result = new Sale\Result();
 
         if (empty($order['ID']) || (int)$order['ID'] <= 0) {
             $process = false;
-            $result->addError(new Main\Entity\EntityError(
-                Loc::getMessage('SALE_ORDER_DISCOUNT_MIGRATOR_ERR_EMPTY_ORDER_ID'),
-                self::ERROR_ID
-            ));
+            $result->addError(
+                new Main\Entity\EntityError(
+                    Loc::getMessage('SALE_ORDER_DISCOUNT_MIGRATOR_ERR_EMPTY_ORDER_ID'),
+                    self::ERROR_ID
+                )
+            );
         }
 
         $catalogOrder = false;
@@ -47,13 +50,23 @@ final class OrderDiscountMigrator
             $order['ID'] = (int)$order['ID'];
             $basePrices = array();
 
-            $basketIterator = Sale\Internals\BasketTable::getList(array(
-                'select' => array(
-                    'ID', 'DISCOUNT_COUPON', 'DISCOUNT_NAME', 'DISCOUNT_VALUE',
-                    'MODULE', 'PRICE', 'DISCOUNT_PRICE', 'CURRENCY', 'SET_PARENT_ID', 'TYPE'
-                ),
-                'filter' => array('=ORDER_ID' => $order['ID'])
-            ));
+            $basketIterator = Sale\Internals\BasketTable::getList(
+                array(
+                    'select' => array(
+                        'ID',
+                        'DISCOUNT_COUPON',
+                        'DISCOUNT_NAME',
+                        'DISCOUNT_VALUE',
+                        'MODULE',
+                        'PRICE',
+                        'DISCOUNT_PRICE',
+                        'CURRENCY',
+                        'SET_PARENT_ID',
+                        'TYPE'
+                    ),
+                    'filter' => array('=ORDER_ID' => $order['ID'])
+                )
+            );
             while ($basket = $basketIterator->fetch()) {
                 $basket['ID'] = (int)$basket['ID'];
                 $basket['MODULE'] = (string)$basket['MODULE'];
@@ -68,37 +81,44 @@ final class OrderDiscountMigrator
                     );
                 }
 
-                if ($basket['MODULE'] != 'catalog' || ($basket['DISCOUNT_NAME'] == '' && $basket['DISCOUNT_COUPON'] == ''))
+                if ($basket['MODULE'] != 'catalog' || ($basket['DISCOUNT_NAME'] == '' && $basket['DISCOUNT_COUPON'] == '')) {
                     continue;
-                if ($basket['SET_PARENT_ID'] > 0 && $basket['TYPE'] <= 0)
+                }
+                if ($basket['SET_PARENT_ID'] > 0 && $basket['TYPE'] <= 0) {
                     continue;
+                }
 
                 $catalogOrder = true;
                 $hash = md5($basket['DISCOUNT_NAME'] . '|' . $basket['DISCOUNT_COUPON']);
-                if (!isset($basketData[$hash]))
+                if (!isset($basketData[$hash])) {
                     $basketData[$hash] = array(
                         'DISCOUNT_NAME' => $basket['DISCOUNT_NAME'],
                         'DISCOUNT_COUPON' => $basket['DISCOUNT_COUPON'],
                         'ITEMS' => array()
                     );
+                }
                 $basketData[$hash]['ITEMS'][$basket['ID']] = $basket;
             }
             unset($basket, $basketIterator);
         }
 
         if ($process && $catalogOrder) {
-            Sale\OrderDiscount::setManagerConfig(array(
-                'CURRENCY' => $order['CURRENCY'],
-                'SITE_ID' => $order['LID'],
-                'USE_BASE_PRICE' => $useBasePrice
-            ));
+            Sale\OrderDiscount::setManagerConfig(
+                array(
+                    'CURRENCY' => $order['CURRENCY'],
+                    'SITE_ID' => $order['LID'],
+                    'USE_BASE_PRICE' => $useBasePrice
+                )
+            );
             foreach ($basketData as $row) {
                 if (!self::migrateDiscount($order['ID'], $row)) {
                     $process = false;
-                    $result->addError(new Main\Entity\EntityError(
-                        Loc::getMessage('SALE_ORDER_DISCOUNT_MIGRATOR_ERR_SAVE_MIGRATE_DISCOUNT'),
-                        self::ERROR_ID
-                    ));
+                    $result->addError(
+                        new Main\Entity\EntityError(
+                            Loc::getMessage('SALE_ORDER_DISCOUNT_MIGRATOR_ERR_SAVE_MIGRATE_DISCOUNT'),
+                            self::ERROR_ID
+                        )
+                    );
                     break;
                 }
             }
@@ -161,10 +181,12 @@ final class OrderDiscountMigrator
      */
     private static function migrateDiscount($orderId, array &$data)
     {
-        if (self::$catalogIncluded === null)
+        if (self::$catalogIncluded === null) {
             self::$catalogIncluded = Main\Loader::includeModule('catalog');
-        if (!self::$catalogIncluded)
+        }
+        if (!self::$catalogIncluded) {
             return false;
+        }
 
         $discountData = array(
             'COUPON' => '',
@@ -181,8 +203,9 @@ final class OrderDiscountMigrator
         }
         if ($data['DISCOUNT_COUPON'] != '') {
             $discountData['COUPON'] = $data['DISCOUNT_COUPON'];
-            if (!self::checkMigrateCoupon($discountData['COUPON']))
+            if (!self::checkMigrateCoupon($discountData['COUPON'])) {
                 return false;
+            }
 
             if ($discountData['DISCOUNT_ID'] == 0) {
                 $discountData['NAME'] = self::$migrateCouponsCache[$discountData['COUPON']]['DISCOUNT_NAME'];
@@ -192,20 +215,23 @@ final class OrderDiscountMigrator
                     self::$migrateCouponsCache[$discountData['COUPON']]['TYPE'] != Sale\Internals\DiscountCouponTable::TYPE_ARCHIVED
                     && self::$migrateCouponsCache[$discountData['COUPON']]['DISCOUNT_ID'] >= 0
                     && $discountData['DISCOUNT_ID'] != self::$migrateCouponsCache[$discountData['COUPON']]['DISCOUNT_ID']
-                )
+                ) {
                     $discountData['DISCOUNT_ID'] = 0;
+                }
             }
         }
         if ($discountData['DISCOUNT_ID'] == 0) {
-            if ($discountData['COUPON'] == '')
+            if ($discountData['COUPON'] == '') {
                 return false;
+            }
             self::createEmptyDiscount($discountData);
         } else {
             self::checkMigrateDiscount($discountData);
         }
         $saveResult = self::saveMigrateDiscount($discountData);
-        if (!$saveResult->isSuccess())
+        if (!$saveResult->isSuccess()) {
             return false;
+        }
 
         $migrateDiscountData = $saveResult->getData();
         unset($saveResult);
@@ -217,14 +243,17 @@ final class OrderDiscountMigrator
             $couponData['ORDER_ID'] = $orderId;
             $couponData['ORDER_DISCOUNT_ID'] = $migrateDiscountData['ORDER_DISCOUNT_ID'];
             $couponData['DATA']['DISCOUNT_ID'] = $migrateDiscountData['DISCOUNT_ID'];
-            if (array_key_exists('DISCOUNT_ID', $couponData))
+            if (array_key_exists('DISCOUNT_ID', $couponData)) {
                 unset($couponData['DISCOUNT_ID']);
-            if (array_key_exists('DISCOUNT_NAME', $couponData))
+            }
+            if (array_key_exists('DISCOUNT_NAME', $couponData)) {
                 unset($couponData['DISCOUNT_NAME']);
+            }
 
             $saveResult = Sale\OrderDiscount::saveCoupon($couponData);
-            if (!$saveResult->isSuccess())
+            if (!$saveResult->isSuccess()) {
                 return false;
+            }
             $migrateCoupon = $saveResult->getData();
             $orderCouponId = $migrateCoupon['ID'];
         }
@@ -236,7 +265,11 @@ final class OrderDiscountMigrator
                     $applyDescr['DESCR'] .= ' (' . $basketItem['DISCOUNT_VALUE'] . ')';
                 } else {
                     $valueData = array();
-                    if (preg_match('/^(|\+|-)(\d+|[.,]\d+|\d+[.,]\d+)\s?%$/', $basketItem['DISCOUNT_VALUE'], $valueData) == 1) {
+                    if (preg_match(
+                            '/^(|\+|-)(\d+|[.,]\d+|\d+[.,]\d+)\s?%$/',
+                            $basketItem['DISCOUNT_VALUE'],
+                            $valueData
+                        ) == 1) {
                         $applyDescr['RESULT_VALUE'] = (float)$basketItem['DISCOUNT_VALUE'];
                         $applyDescr['RESULT_UNIT'] = Sale\Discount\Formatter::VALUE_TYPE_PERCENT;
                     }
@@ -263,8 +296,9 @@ final class OrderDiscountMigrator
             if ($ruleResult->isSuccess()) {
                 $ruleDescr['RULE_ID'] = $ruleResult->getId();
                 $descrResult = Sale\Internals\OrderRulesDescrTable::add($ruleDescr);
-                if (!$descrResult->isSuccess())
+                if (!$descrResult->isSuccess()) {
                     return false;
+                }
             } else {
                 return false;
             }
@@ -285,25 +319,36 @@ final class OrderDiscountMigrator
      */
     private static function checkMigrateCoupon($coupon)
     {
-        if (self::$catalogIncluded === null)
+        if (self::$catalogIncluded === null) {
             self::$catalogIncluded = Main\Loader::includeModule('catalog');
-        if (!self::$catalogIncluded)
+        }
+        if (!self::$catalogIncluded) {
             return false;
+        }
 
         static $catalogCouponTypes = null;
-        if ($catalogCouponTypes === null)
+        if ($catalogCouponTypes === null) {
             $catalogCouponTypes = array(
                 Catalog\DiscountCouponTable::TYPE_ONE_ROW => Sale\Internals\DiscountCouponTable::TYPE_BASKET_ROW,
                 Catalog\DiscountCouponTable::TYPE_ONE_ORDER => Sale\Internals\DiscountCouponTable::TYPE_ONE_ORDER,
                 Catalog\DiscountCouponTable::TYPE_NO_LIMIT => Sale\Internals\DiscountCouponTable::TYPE_MULTI_ORDER
             );
+        }
 
         if (!isset(self::$migrateCouponsCache[$coupon])) {
             self::$migrateCouponsCache[$coupon] = false;
-            $couponIterator = Catalog\DiscountCouponTable::getList(array(
-                'select' => array('COUPON_ID' => 'ID', 'COUPON', 'TYPE', 'DISCOUNT_ID', 'DISCOUNT_NAME' => 'DISCOUNT.NAME'),
-                'filter' => array('=COUPON' => $coupon)
-            ));
+            $couponIterator = Catalog\DiscountCouponTable::getList(
+                array(
+                    'select' => array(
+                        'COUPON_ID' => 'ID',
+                        'COUPON',
+                        'TYPE',
+                        'DISCOUNT_ID',
+                        'DISCOUNT_NAME' => 'DISCOUNT.NAME'
+                    ),
+                    'filter' => array('=COUPON' => $coupon)
+                )
+            );
             $existCoupon = $couponIterator->fetch();
             unset($couponIterator);
             if (!empty($existCoupon)) {
@@ -412,8 +457,9 @@ final class OrderDiscountMigrator
             );
         }
         foreach ($replaceKeys as $key) {
-            if (array_key_exists($key, $discountData))
+            if (array_key_exists($key, $discountData)) {
                 unset($discountData[$key]);
+            }
         }
         unset($key);
         $discountData = array_merge($emptyFields, $discountData);
@@ -421,14 +467,16 @@ final class OrderDiscountMigrator
             $discountData[$key] = $value;
         }
         unset($key, $value);
-        if (empty($discountData['ACTIONS_DESCR']))
+        if (empty($discountData['ACTIONS_DESCR'])) {
             $discountData['ACTIONS_DESCR'] = array(
                 'BASKET' => array(
                     0 => ($accumulate ? $accumulateDescr : $discountDescr)
                 )
             );
-        if (!$accumulate)
+        }
+        if (!$accumulate) {
             $discountData['USE_COUPONS'] = ($discountData['COUPON'] != '' ? 'Y' : 'N');
+        }
     }
 
     /**
@@ -442,18 +490,22 @@ final class OrderDiscountMigrator
      */
     private static function checkMigrateDiscount(&$discountData)
     {
-        if (self::$catalogIncluded === null)
+        if (self::$catalogIncluded === null) {
             self::$catalogIncluded = Main\Loader::includeModule('catalog');
-        if (!self::$catalogIncluded)
+        }
+        if (!self::$catalogIncluded) {
             return;
+        }
 
         $coupon = $discountData['COUPON'];
         $hash = md5($discountData['DISCOUNT_ID'] . '|' . $discountData['NAME']);
         if (!isset(self::$catalogDiscountsCache[$hash])) {
-            $discountIterator = Catalog\DiscountTable::getList(array(
-                'select' => array('*'),
-                'filter' => array('=ID' => $discountData['DISCOUNT_ID'], '=NAME' => $discountData['NAME'])
-            ));
+            $discountIterator = Catalog\DiscountTable::getList(
+                array(
+                    'select' => array('*'),
+                    'filter' => array('=ID' => $discountData['DISCOUNT_ID'], '=NAME' => $discountData['NAME'])
+                )
+            );
             $existDiscount = $discountIterator->fetch();
             unset($discountIterator);
             if (!empty($existDiscount)) {
@@ -465,7 +517,8 @@ final class OrderDiscountMigrator
                     } else {
                         $existDiscount['COUPON'] = $discountData['COUPON'];
                         $discountData = Catalog\Discount\DiscountManager::prepareData(
-                            $existDiscount, Sale\OrderDiscount::getManagerConfig()
+                            $existDiscount,
+                            Sale\OrderDiscount::getManagerConfig()
                         );
                     }
                 }
@@ -497,31 +550,38 @@ final class OrderDiscountMigrator
         $fields = Sale\Internals\OrderDiscountTable::prepareDiscountData($discountData);
         if (empty($fields) || !is_array($fields)) {
             $process = false;
-            $result->addError(new Main\Entity\EntityError(
-                Loc::getMessage('SALE_ORDER_DISCOUNT_MIGRATOR_ERR_BAD_PREPARE_DISCOUNT'),
-                self::ERROR_ID
-            ));
+            $result->addError(
+                new Main\Entity\EntityError(
+                    Loc::getMessage('SALE_ORDER_DISCOUNT_MIGRATOR_ERR_BAD_PREPARE_DISCOUNT'),
+                    self::ERROR_ID
+                )
+            );
         }
 
         if ($process) {
             $hash = Sale\Internals\OrderDiscountTable::calculateHash($fields);
             if ($hash === false) {
                 $process = false;
-                $result->addError(new Main\Entity\EntityError(
-                    Loc::getMessage('SALE_ORDER_DISCOUNT_MIGRATOR_ERR_BAD_DISCOUNT_HASH'),
-                    self::ERROR_ID
-                ));
+                $result->addError(
+                    new Main\Entity\EntityError(
+                        Loc::getMessage('SALE_ORDER_DISCOUNT_MIGRATOR_ERR_BAD_DISCOUNT_HASH'),
+                        self::ERROR_ID
+                    )
+                );
             }
         }
 
         if ($process) {
             if (!isset(self::$migrateDiscountsCache[$hash])) {
-                $orderDiscountIterator = Sale\Internals\OrderDiscountTable::getList(array(
-                    'select' => array('*'),
-                    'filter' => array('=DISCOUNT_HASH' => $hash)
-                ));
-                if ($orderDiscount = $orderDiscountIterator->fetch())
+                $orderDiscountIterator = Sale\Internals\OrderDiscountTable::getList(
+                    array(
+                        'select' => array('*'),
+                        'filter' => array('=DISCOUNT_HASH' => $hash)
+                    )
+                );
+                if ($orderDiscount = $orderDiscountIterator->fetch()) {
                     self::$migrateDiscountsCache[$hash] = $orderDiscount;
+                }
                 unset($orderDiscount, $orderDiscountIterator);
             }
             if (!empty(self::$migrateDiscountsCache[$hash])) {
@@ -533,8 +593,9 @@ final class OrderDiscountMigrator
             } else {
                 $fields['DISCOUNT_HASH'] = $hash;
                 $fields['ACTIONS_DESCR'] = array();
-                if (isset($discountData['ACTIONS_DESCR']))
+                if (isset($discountData['ACTIONS_DESCR'])) {
                     $fields['ACTIONS_DESCR'] = $discountData['ACTIONS_DESCR'];
+                }
                 $tableResult = Sale\Internals\OrderDiscountTable::add($fields);
                 if ($tableResult->isSuccess()) {
                     $resultData = $fields;
@@ -559,10 +620,12 @@ final class OrderDiscountMigrator
                             Sale\Internals\OrderDiscountTable::clearList($resultData['ORDER_DISCOUNT_ID']);
                             $resultData = array();
                             $process = false;
-                            $result->addError(new Main\Entity\EntityError(
-                                Loc::getMessage('SALE_ORDER_DISCOUNT_MIGRATOR_ERR_SAVE_DISCOUNT_MODULES'),
-                                self::ERROR_ID
-                            ));
+                            $result->addError(
+                                new Main\Entity\EntityError(
+                                    Loc::getMessage('SALE_ORDER_DISCOUNT_MIGRATOR_ERR_SAVE_DISCOUNT_MODULES'),
+                                    self::ERROR_ID
+                                )
+                            );
                         }
                         unset($resultModule);
                     }
@@ -571,8 +634,9 @@ final class OrderDiscountMigrator
             }
         }
 
-        if ($process)
+        if ($process) {
             $result->setData($resultData);
+        }
         unset($resultData, $process);
 
         return $result;

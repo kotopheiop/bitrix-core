@@ -12,8 +12,9 @@ class ItemType
 
     public static function resolveByValue($value)
     {
-        if (strpos($value, '@') > 0)
+        if (mb_strpos($value, '@') > 0) {
             return ItemType::EMAIL;
+        }
 
         return ItemType::DOMAIN;
     }

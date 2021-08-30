@@ -78,17 +78,21 @@ class BlacklistTable extends Entity\DataManager
         if ($mailboxId > 0) {
             $DB->query(sprintf("DELETE FROM b_mail_blacklist WHERE MAILBOX_ID = %u", $mailboxId));
         } else {
-            $DB->query(sprintf("DELETE FROM b_mail_blacklist WHERE SITE_ID = '%s' AND MAILBOX_ID = 0", $DB->forSql($siteId)));
+            $DB->query(
+                sprintf("DELETE FROM b_mail_blacklist WHERE SITE_ID = '%s' AND MAILBOX_ID = 0", $DB->forSql($siteId))
+            );
         }
 
         if (!empty($list)) {
             foreach ($list as $item) {
-                static::add([
-                    'SITE_ID' => $siteId,
-                    'MAILBOX_ID' => $mailboxId,
-                    'ITEM_TYPE' => Blacklist\ItemType::resolveByValue($item),
-                    'ITEM_VALUE' => $item,
-                ]);
+                static::add(
+                    [
+                        'SITE_ID' => $siteId,
+                        'MAILBOX_ID' => $mailboxId,
+                        'ITEM_TYPE' => Blacklist\ItemType::resolveByValue($item),
+                        'ITEM_VALUE' => $item,
+                    ]
+                );
             }
         }
     }
@@ -184,13 +188,15 @@ class BlacklistTable extends Entity\DataManager
     {
         $entity = static::getEntity();
         $connection = $entity->getConnection();
-        return $connection->query(sprintf(
-            'DELETE FROM %s WHERE %s',
-            $connection->getSqlHelper()->quote($entity->getDbTableName()),
-            Query::buildFilterSql(
-                $entity,
-                $filter
+        return $connection->query(
+            sprintf(
+                'DELETE FROM %s WHERE %s',
+                $connection->getSqlHelper()->quote($entity->getDbTableName()),
+                Query::buildFilterSql(
+                    $entity,
+                    $filter
+                )
             )
-        ));
+        );
     }
 }

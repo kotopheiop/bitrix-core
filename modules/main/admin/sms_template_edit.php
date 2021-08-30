@@ -1,4 +1,5 @@
 <?
+
 /**
  * @global CUser $USER
  * @global CMain $APPLICATION
@@ -7,8 +8,9 @@ require_once(dirname(__FILE__) . "/../include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/prolog.php");
 define("HELP_FILE", "settings/sms_template_edit.php");
 
-if (!$USER->CanDoOperation('edit_other_settings') && !$USER->CanDoOperation('view_other_settings'))
+if (!$USER->CanDoOperation('edit_other_settings') && !$USER->CanDoOperation('view_other_settings')) {
     $APPLICATION->AuthForm(Loc::getMessage("ACCESS_DENIED"));
+}
 
 $isAdmin = $USER->CanDoOperation('edit_other_settings');
 
@@ -44,7 +46,12 @@ function fillTemplateFromPost(Main\Sms\Template $template)
 }
 
 $aTabs = array(
-    array("DIV" => "edit1", "TAB" => Loc::getMessage("sms_template_edit_tab"), "ICON" => "message_edit", "TITLE" => Loc::getMessage("sms_template_edit_tab_title")),
+    array(
+        "DIV" => "edit1",
+        "TAB" => Loc::getMessage("sms_template_edit_tab"),
+        "ICON" => "message_edit",
+        "TITLE" => Loc::getMessage("sms_template_edit_tab_title")
+    ),
 );
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
@@ -80,10 +87,14 @@ if ($request->isPost() && ($request["save"] <> '' || $request["apply"] <> '') &&
         }
 
         if ($result->isSuccess()) {
-            if ($request["save"] <> '')
+            if ($request["save"] <> '') {
                 LocalRedirect(BX_ROOT . "/admin/sms_template_admin.php?lang=" . LANGUAGE_ID);
-            else
-                LocalRedirect(BX_ROOT . "/admin/sms_template_edit.php?lang=" . LANGUAGE_ID . "&ID=" . $ID . "&" . $tabControl->ActiveTabParam());
+            } else {
+                LocalRedirect(
+                    BX_ROOT . "/admin/sms_template_edit.php?lang=" . LANGUAGE_ID . "&ID=" . $ID . "&" . $tabControl->ActiveTabParam(
+                    )
+                );
+            }
         } else {
             $errors = $result->getErrorMessages();
         }
@@ -106,7 +117,9 @@ if (!empty($errors)) {
     fillTemplateFromPost($template);
 }
 
-$APPLICATION->SetTitle(($ID > 0 ? Loc::getMessage("sms_template_edit_title") : Loc::getMessage("sms_template_edit_add")));
+$APPLICATION->SetTitle(
+    ($ID > 0 ? Loc::getMessage("sms_template_edit_title") : Loc::getMessage("sms_template_edit_add"))
+);
 
 require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admin_after.php");
 
@@ -136,7 +149,10 @@ if ($ID > 0 && $isAdmin) {
     );
     $aMenu[] = array(
         "TEXT" => Loc::getMessage("sms_template_edit_del"),
-        "LINK" => "javascript:if(confirm('" . CUtil::JSEscape(Loc::getMessage("sms_template_edit_del_conf")) . "')) window.location='sms_template_admin.php?ID=" . $ID . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get() . "&action_button=delete';",
+        "LINK" => "javascript:if(confirm('" . CUtil::JSEscape(
+                Loc::getMessage("sms_template_edit_del_conf")
+            ) . "')) window.location='sms_template_admin.php?ID=" . $ID . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get(
+            ) . "&action_button=delete';",
         "TITLE" => Loc::getMessage("sms_template_edit_del_title"),
         "ICON" => "btn_delete"
     );
@@ -179,13 +195,15 @@ if (!empty($errors)) {
             <td><?= $fields["EVENT_NAME"]->getTitle() ?>:</td>
             <td><?
                 $eventTypes = array();
-                $eventTypesDb = EventTypeTable::getList(array(
-                    'filter' => array(
-                        "=LID" => LANGUAGE_ID,
-                        "=EVENT_TYPE" => EventTypeTable::TYPE_SMS
-                    ),
-                    'order' => array("NAME" => "ASC"),
-                ));
+                $eventTypesDb = EventTypeTable::getList(
+                    array(
+                        'filter' => array(
+                            "=LID" => LANGUAGE_ID,
+                            "=EVENT_TYPE" => EventTypeTable::TYPE_SMS
+                        ),
+                        'order' => array("NAME" => "ASC"),
+                    )
+                );
                 while ($eventType = $eventTypesDb->fetch()) {
                     $eventTypes[$eventType["EVENT_NAME"]] = $eventType;
                 }
@@ -201,7 +219,11 @@ if (!empty($errors)) {
                     <select name="EVENT_NAME"
                             onchange="window.location='sms_template_edit.php?lang=<?= LANGUAGE_ID ?>&EVENT_NAME='+this[this.selectedIndex].value">
                         <? foreach ($eventTypes as $type):?>
-                            <option value="<?= HtmlFilter::encode($type["EVENT_NAME"]) ?>"<? if ($type["EVENT_NAME"] == $template->getEventName()) echo " selected"; ?>>
+                            <option value="<?= HtmlFilter::encode(
+                                $type["EVENT_NAME"]
+                            ) ?>"<? if ($type["EVENT_NAME"] == $template->getEventName()) {
+                                echo " selected";
+                            } ?>>
                                 <?= HtmlFilter::encode($type["NAME"] . " [" . $type["EVENT_NAME"] . "]") ?>
                             </option>
                         <?endforeach; ?>
@@ -211,8 +233,8 @@ if (!empty($errors)) {
         </tr>
         <tr>
             <td><label for="active"><?= $fields["ACTIVE"]->getTitle() ?>:</label></td>
-            <td><input type="checkbox" name="ACTIVE" id="active"
-                       value="Y"<? if ($template->getActive()) echo " checked" ?>></td>
+            <td><input type="checkbox" name="ACTIVE" id="active" value="Y"<? if ($template->getActive(
+                )) echo " checked" ?>></td>
         </tr>
         <tr class="adm-detail-required-field">
             <td class="adm-detail-valign-top"><? echo Loc::getMessage("sms_template_edit_sites") ?></td>
@@ -227,13 +249,16 @@ if (!empty($errors)) {
                 <select name="LANGUAGE_ID">
                     <option value=""><? echo Loc::getMessage("sms_template_edit_not_set") ?></option>
                     <?
-                    $languages = Main\Localization\LanguageTable::getList(array(
-                        "filter" => array("=ACTIVE" => "Y"),
-                        "order" => array("SORT" => "ASC", "NAME" => "ASC")
-                    ));
+                    $languages = Main\Localization\LanguageTable::getList(
+                        array(
+                            "filter" => array("=ACTIVE" => "Y"),
+                            "order" => array("SORT" => "ASC", "NAME" => "ASC")
+                        )
+                    );
                     ?>
                     <? while ($language = $languages->fetch()): ?>
-                        <option value="<?= $language["LID"] ?>"<? if ($template->getLanguageId() == $language["LID"]) echo " selected" ?>>
+                        <option value="<?= $language["LID"] ?>"<? if ($template->getLanguageId(
+                            ) == $language["LID"]) echo " selected" ?>>
                             <?= HtmlFilter::encode($language["NAME"]) ?>
                         </option>
                     <? endwhile ?>
@@ -258,8 +283,9 @@ if (!empty($errors)) {
         <tr>
             <td class="adm-detail-valign-top"><?= $fields["MESSAGE"]->getTitle() ?>:</td>
             <td><textarea name="MESSAGE" cols="40" rows="7"
-                          onfocus="window.bxCurrentControl=this"><?= HtmlFilter::encode($template->getMessage()) ?></textarea>
-            </td>
+                          onfocus="window.bxCurrentControl=this"><?= HtmlFilter::encode(
+                        $template->getMessage()
+                    ) ?></textarea></td>
         </tr>
         <?
         $defaultFields =
@@ -273,14 +299,22 @@ if (!empty($errors)) {
             $eventFields = reset($eventTypes)["DESCRIPTION"];
         }
         $allFields = HtmlFilter::encode(trim($eventFields) . "\r\n" . $defaultFields);
-        $allFields = preg_replace("/(#.+?#)/", '<a title="' . Loc::getMessage("sms_template_edit_insert") . '" href="javascript:PutString(\'\\1\')">\\1</a>', $allFields);
+        $allFields = preg_replace(
+            "/(#.+?#)/",
+            '<a title="' . Loc::getMessage(
+                "sms_template_edit_insert"
+            ) . '" href="javascript:PutString(\'\\1\')">\\1</a>',
+            $allFields
+        );
         ?>
         <tr>
             <td align="left" colspan="2"><b><? echo Loc::getMessage("sms_template_edit_fields") ?></b><br><br>
                 <?= nl2br($allFields); ?></td>
         </tr>
         <?
-        $tabControl->Buttons(array("disabled" => !$isAdmin, "back_url" => "sms_template_admin.php?lang=" . LANGUAGE_ID));
+        $tabControl->Buttons(
+            array("disabled" => !$isAdmin, "back_url" => "sms_template_admin.php?lang=" . LANGUAGE_ID)
+        );
         $tabControl->End();
         ?>
     </form>

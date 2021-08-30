@@ -171,9 +171,11 @@ class ContactTable extends Entity\DataManager
             if (!$isValid) {
                 $result->addError(new Entity\EntityError(Loc::getMessage('SENDER_ENTITY_CONTACT_VALID_CODE')));
             } else {
-                $result->modifyFields(array(
-                    'CODE' => Recipient\Normalizer::normalize($data['fields']['CODE'], $typeId)
-                ));
+                $result->modifyFields(
+                    array(
+                        'CODE' => Recipient\Normalizer::normalize($data['fields']['CODE'], $typeId)
+                    )
+                );
             }
         }
 
@@ -204,9 +206,11 @@ class ContactTable extends Entity\DataManager
             if (!$isValid) {
                 $result->addError(new Entity\EntityError(Loc::getMessage('SENDER_ENTITY_CONTACT_VALID_CODE')));
             } else {
-                $result->modifyFields(array(
-                    'CODE' => Recipient\Normalizer::normalize($data['fields']['CODE'], $typeId)
-                ));
+                $result->modifyFields(
+                    array(
+                        'CODE' => Recipient\Normalizer::normalize($data['fields']['CODE'], $typeId)
+                    )
+                );
             }
         }
 
@@ -249,14 +253,16 @@ class ContactTable extends Entity\DataManager
             unset($ar['LIST_CODE'], $ar['LIST_NAME']);
         }
 
-        $ar['EMAIL'] = strtolower($ar['EMAIL']);
-        $contactDb = ContactTable::getList(array(
-            'select' => array('ID'),
-            'filter' => array(
-                '=CODE' => $ar['EMAIL'],
-                '=TYPE_ID' => Recipient\Type::EMAIL
+        $ar['EMAIL'] = mb_strtolower($ar['EMAIL']);
+        $contactDb = ContactTable::getList(
+            array(
+                'select' => array('ID'),
+                'filter' => array(
+                    '=CODE' => $ar['EMAIL'],
+                    '=TYPE_ID' => Recipient\Type::EMAIL
+                )
             )
-        ));
+        );
         if ($contact = $contactDb->fetch()) {
             $id = $contact['ID'];
         } else {
@@ -265,8 +271,9 @@ class ContactTable extends Entity\DataManager
             unset($ar['EMAIL']);
 
             $resultAdd = static::add($ar);
-            if ($resultAdd->isSuccess())
+            if ($resultAdd->isSuccess()) {
                 $id = $resultAdd->getId();
+            }
         }
 
         if ($listId && $id) {
@@ -285,7 +292,9 @@ class ContactTable extends Entity\DataManager
     {
         $connectorList = Connector\Manager::getConnectorList();
         foreach ($connectorList as $connector) {
-            if ($connector->requireConfigure()) continue;
+            if ($connector->requireConfigure()) {
+                continue;
+            }
             static::addFromConnector($connector);
         }
     }
@@ -350,19 +359,23 @@ class ContactTable extends Entity\DataManager
                 }
 
                 $id = null;
-                $contactDb = ContactTable::getList(array(
-                    'select' => array('ID'),
-                    'filter' => array('EMAIL' => $row['EMAIL'])
-                ));
+                $contactDb = ContactTable::getList(
+                    array(
+                        'select' => array('ID'),
+                        'filter' => array('EMAIL' => $row['EMAIL'])
+                    )
+                );
                 if ($contactRow = $contactDb->fetch()) {
                     $id = $contactRow['ID'];
                     $countUpdated++;
                 } else {
-                    $resultAdd = static::add(array(
-                        'NAME' => $row['NAME'],
-                        'EMAIL' => $row['EMAIL'],
-                        'USER_ID' => $row['USER_ID']
-                    ));
+                    $resultAdd = static::add(
+                        array(
+                            'NAME' => $row['NAME'],
+                            'EMAIL' => $row['EMAIL'],
+                            'USER_ID' => $row['USER_ID']
+                        )
+                    );
                     if ($resultAdd->isSuccess()) {
                         $id = $resultAdd->getId();
                         $countAdded++;
@@ -371,9 +384,9 @@ class ContactTable extends Entity\DataManager
                     }
                 }
 
-                if ($id)
+                if ($id) {
                     ContactListTable::addIfNotExist($id, $listId);
-
+                }
             }
 
 
@@ -399,7 +412,9 @@ class ContactTable extends Entity\DataManager
             $countProgress = $countAll;
         } else {
             $countProgress = ($pageNumber - 1) * $dataDb->NavPageSize;
-            if (!$result || $countProgress > $countAll) $countProgress = $countAll;
+            if (!$result || $countProgress > $countAll) {
+                $countProgress = $countAll;
+            }
         }
 
         return array(

@@ -45,8 +45,9 @@ class FilterableDictionary
      */
     public function getRaw($name)
     {
-        if (isset($this->arRawValues[$name]) || array_key_exists($name, $this->arRawValues))
+        if (isset($this->arRawValues[$name]) || array_key_exists($name, $this->arRawValues)) {
             return $this->arRawValues[$name];
+        }
 
         return null;
     }
@@ -57,8 +58,13 @@ class FilterableDictionary
     public function offsetSet($offset, $value)
     {
         $this->values[$offset] = $this->arRawValues[$offset] = $value;
-        foreach ($this->arFilters as $filter)
-            $this->values[$offset] = $filter->filter($this->values[$offset], $this->name . "[" . $offset . "]", $this->values);
+        foreach ($this->arFilters as $filter) {
+            $this->values[$offset] = $filter->filter(
+                $this->values[$offset],
+                $this->name . "[" . $offset . "]",
+                $this->values
+            );
+        }
     }
 
     /**

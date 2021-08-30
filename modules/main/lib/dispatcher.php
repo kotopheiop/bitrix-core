@@ -18,10 +18,12 @@ final class Dispatcher
     public function initialize()
     {
         $LICENSE_KEY = '';
-        if (file_exists(($filename = Application::getDocumentRoot() . "/bitrix/license_key.php")))
+        if (file_exists(($filename = Application::getDocumentRoot() . "/bitrix/license_key.php"))) {
             include($filename);
-        if (empty($LICENSE_KEY))
+        }
+        if (empty($LICENSE_KEY)) {
             $LICENSE_KEY = 'DEMO';
+        }
 
         $this->licenseKey = $LICENSE_KEY;
 
@@ -32,8 +34,9 @@ final class Dispatcher
 
     public function getLicenseKey()
     {
-        if (!$this->isInitialized)
+        if (!$this->isInitialized) {
             throw new NotSupportedException();
+        }
 
         return $this->licenseKey;
     }

@@ -37,8 +37,9 @@ Class CIdeaManagmentNotify
 
     public function GetNotify($CustomNotifyClassName)
     {
-        if (class_exists($CustomNotifyClassName))
+        if (class_exists($CustomNotifyClassName)) {
             return new $CustomNotifyClassName($this);
+        }
 
         return false;
     }

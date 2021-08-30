@@ -97,15 +97,15 @@ class ArchiveEntry
         $fileArray = \CFile::MakeFileArray($filePath);
 
         if ($fileArray) {
-            return self::createFromFile([
-                'ID' => 0,
-                'ORIGINAL_NAME' => $fileArray['name'],
-                'FILE_SIZE' => $fileArray['size'],
-                'SRC' => substr(
-                    $fileArray['tmp_name'],
-                    strlen(self::getDocRoot())
-                ),
-            ], $name);
+            return self::createFromFile(
+                [
+                    'ID' => 0,
+                    'ORIGINAL_NAME' => $fileArray['name'],
+                    'FILE_SIZE' => $fileArray['size'],
+                    'SRC' => mb_substr($fileArray['tmp_name'], mb_strlen(self::getDocRoot())),
+                ],
+                $name
+            );
         }
 
         return null;
@@ -214,11 +214,14 @@ class ArchiveEntry
     {
         $result = '';
         $parts = preg_split(
-            "#(://|:\\d+/|/|\\?|=|&)#", $uri, -1, PREG_SPLIT_DELIM_CAPTURE
+            "#(://|:\\d+/|/|\\?|=|&)#",
+            $uri,
+            -1,
+            PREG_SPLIT_DELIM_CAPTURE
         );
 
         foreach ($parts as $i => $part) {
-            $part = self::getApplication()->convertCharset(
+            $part = Encoding::convertEncoding(
                 $part,
                 LANG_CHARSET,
                 'UTF-8'

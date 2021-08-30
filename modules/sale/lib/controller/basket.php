@@ -23,22 +23,28 @@ class Basket extends Controller
             BasketItem::class,
             'basket',
             function ($className, $id) {
-
-                $r = \Bitrix\Sale\Basket::getList([
-                    'select' => ['ORDER_ID'],
-                    'filter' => ['ID' => $id]
-                ]);
+                $r = \Bitrix\Sale\Basket::getList(
+                    [
+                        'select' => ['ORDER_ID'],
+                        'filter' => ['ID' => $id]
+                    ]
+                );
 
                 if ($row = $r->fetch()) {
                     $order = \Bitrix\Sale\Order::load($row['ORDER_ID']);
                     $basket = $order->getBasket()->getItemByBasketCode($id);
-                    if ($basket instanceof BasketItem)
+                    if ($basket instanceof BasketItem) {
                         return $basket;
+                    }
                 } else {
-                    $this->addError(new Error(Loc::getMessage('CONTROLLER_ERROR_BASEKT_NOT_EXISTS', ['#ID#' => $id]), 'BASEKT_NOT_EXISTS'));
+                    $this->addError(
+                        new Error(
+                            Loc::getMessage('CONTROLLER_ERROR_BASEKT_NOT_EXISTS', ['#ID#' => $id]),
+                            'BASEKT_NOT_EXISTS'
+                        )
+                    );
                 }
                 return null;
-
             }
         );
     }
@@ -49,19 +55,26 @@ class Basket extends Controller
             new \Bitrix\Main\Engine\AutoWire\Parameter(
                 BasketItem::class,
                 function ($className, $id) {
-
-                    $r = \Bitrix\Sale\Basket::getList([
-                        'select' => ['ORDER_ID'],
-                        'filter' => ['ID' => $id]
-                    ]);
+                    $r = \Bitrix\Sale\Basket::getList(
+                        [
+                            'select' => ['ORDER_ID'],
+                            'filter' => ['ID' => $id]
+                        ]
+                    );
 
                     if ($row = $r->fetch()) {
                         $order = \Bitrix\Sale\Order::load($row['ORDER_ID']);
                         $basket = $order->getBasket()->getItemByBasketCode($id);
-                        if ($basket instanceof BasketItem)
+                        if ($basket instanceof BasketItem) {
                             return $basket;
+                        }
                     } else {
-                        $this->addError(new Error(Loc::getMessage('CONTROLLER_ERROR_BASEKT_NOT_EXISTS', ['#ID#' => $id]), 'BASEKT_NOT_EXISTS'));
+                        $this->addError(
+                            new Error(
+                                Loc::getMessage('CONTROLLER_ERROR_BASEKT_NOT_EXISTS', ['#ID#' => $id]),
+                                'BASEKT_NOT_EXISTS'
+                            )
+                        );
                     }
                     return null;
                 }
@@ -73,9 +86,11 @@ class Basket extends Controller
     public function getFieldsAction()
     {
         $entity = new \Bitrix\Sale\Rest\Entity\Basket();
-        return ['ITEM' => $entity->prepareFieldInfos(
-            $entity->getFields()
-        )];
+        return [
+            'ITEM' => $entity->prepareFieldInfos(
+                $entity->getFields()
+            )
+        ];
     }
 
     public function modifyAction(array $fields)
@@ -102,17 +117,20 @@ class Basket extends Controller
 
     public function addAction(array $fields)
     {
-        if (isset($fields['BASKET_ITEMS']['ID']))
+        if (isset($fields['BASKET_ITEMS']['ID'])) {
             unset($fields['BASKET_ITEMS']['ID']);
+        }
 
         $data = $fields;
         unset($data['BASKET_ITEMS']);
         $data['BASKET_ITEMS'] = [$fields['BASKET_ITEMS']];
 
         $builder = $this->getBuilder(
-            new SettingsContainer([
-                'deleteBaketItemsIfNotExists' => false
-            ])
+            new SettingsContainer(
+                [
+                    'deleteBaketItemsIfNotExists' => false
+                ]
+            )
         );
         $builder->buildEntityBasket($data);
 
@@ -160,9 +178,11 @@ class Basket extends Controller
         ];
 
         $builder = $this->getBuilder(
-            new SettingsContainer([
-                'deleteBaketItemsIfNotExists' => false
-            ])
+            new SettingsContainer(
+                [
+                    'deleteBaketItemsIfNotExists' => false
+                ]
+            )
         );
 
         $builder->buildEntityBasket($data);
@@ -197,11 +217,13 @@ class Basket extends Controller
         $order = $basketCollection->getOrder();
 
         $r = $basket->delete();
-        if ($r->isSuccess())
+        if ($r->isSuccess()) {
             $r = $order->save();
+        }
 
-        if (!$r->isSuccess())
+        if (!$r->isSuccess()) {
             $this->addErrors($r->getErrors());
+        }
 
         return $r->isSuccess();
     }
@@ -221,11 +243,13 @@ class Basket extends Controller
             ]
         )->fetchAll();
 
-        return new Page('ITEMS', $items, function () use ($filter) {
+        return new Page(
+            'ITEMS', $items, function () use ($filter) {
             return count(
                 \Bitrix\Sale\Basket::getList(['filter' => $filter])->fetchAll()
             );
-        });
+        }
+        );
     }
 
     public function canBuyAction(BasketItem $basket)
@@ -343,13 +367,12 @@ class Basket extends Controller
             $r = Provider::checkProductBarcode($basket, $fields);
         }
 
-        if ($r)
+        if ($r) {
             return true;
-        else {
+        } else {
             $this->addError(new Error('', 'BARCODE_CHECK_FAILED'));
             return null;
         }
-
     }
 
     //endregion
@@ -387,16 +410,18 @@ class Basket extends Controller
 
                 $properties = isset($item['PROPERTIES']) ? $item['PROPERTIES'] : [];
                 foreach ($properties as &$property) {
-                    if (isset($property['BASKET_ID']))
+                    if (isset($property['BASKET_ID'])) {
                         unset($property['BASKET_ID']);
+                    }
                 }
 
                 $item['PROPS'] = $properties;
                 unset($item['PROPERTIES']);
 
                 $basketCode = isset($item['ID']) ? $item['ID'] : 'n' . ++$i;
-                if (isset($item['ID']))
+                if (isset($item['ID'])) {
                     unset($item['ID']);
+                }
 
                 $data[$basketCode] = $item;
             }

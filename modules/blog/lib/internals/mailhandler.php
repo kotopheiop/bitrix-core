@@ -34,7 +34,7 @@ final class MailHandler
         $attachments = $event->getParameter('attachments');
 
         if (
-            strlen($message) <= 0
+            $message == ''
             && count($attachments) > 0
         ) {
             $message = Loc::getMessage('BLOG_MAILHANDLER_ATTACHMENTS');
@@ -43,7 +43,7 @@ final class MailHandler
         if (
             $postId <= 0
             || $userId <= 0
-            || strlen($message) <= 0
+            || $message == ''
         ) {
             return false;
         }
@@ -77,12 +77,14 @@ final class MailHandler
             return false;
         }
 
-        if (!\Bitrix\Blog\Item\Comment::checkDuplicate(array(
-            'MESSAGE' => $message,
-            'BLOG_ID' => $blogPost["BLOG_ID"],
-            'POST_ID' => $postId,
-            'AUTHOR_ID' => $userId,
-        ))) {
+        if (!\Bitrix\Blog\Item\Comment::checkDuplicate(
+            array(
+                'MESSAGE' => $message,
+                'BLOG_ID' => $blogPost["BLOG_ID"],
+                'POST_ID' => $postId,
+                'AUTHOR_ID' => $userId,
+            )
+        )) {
             return false;
         }
 
@@ -96,7 +98,12 @@ final class MailHandler
         );
 
         if (!empty($siteId)) {
-            $fields["SEARCH_GROUP_ID"] = \Bitrix\Main\Config\Option::get("socialnetwork", "userbloggroup_id", false, $siteId);
+            $fields["SEARCH_GROUP_ID"] = \Bitrix\Main\Config\Option::get(
+                "socialnetwork",
+                "userbloggroup_id",
+                false,
+                $siteId
+            );
         }
 
         if ($perm == Permissions::PREMODERATE) {
@@ -139,16 +146,18 @@ final class MailHandler
         $commentId = \CBlogComment::add($fields);
 
         if ($commentId) {
-            \Bitrix\Blog\Item\Comment::actionsAfter(array(
-                'MESSAGE' => $message,
-                'BLOG_ID' => $blogPost["BLOG_ID"],
-                'BLOG_OWNER_ID' => $blogPost["BLOG_OWNER_ID"],
-                'POST_ID' => $postId,
-                'POST_TITLE' => htmlspecialcharsBack($blogPost["TITLE"]),
-                'POST_AUTHOR_ID' => $blogPost["AUTHOR_ID"],
-                'COMMENT_ID' => $commentId,
-                'AUTHOR_ID' => $userId,
-            ));
+            \Bitrix\Blog\Item\Comment::actionsAfter(
+                array(
+                    'MESSAGE' => $message,
+                    'BLOG_ID' => $blogPost["BLOG_ID"],
+                    'BLOG_OWNER_ID' => $blogPost["BLOG_OWNER_ID"],
+                    'POST_ID' => $postId,
+                    'POST_TITLE' => htmlspecialcharsBack($blogPost["TITLE"]),
+                    'POST_AUTHOR_ID' => $blogPost["AUTHOR_ID"],
+                    'COMMENT_ID' => $commentId,
+                    'AUTHOR_ID' => $userId,
+                )
+            );
         }
 
         return $commentId;
@@ -169,7 +178,7 @@ final class MailHandler
         $siteId = $event->getParameter('site_id');
 
         if (
-            strlen($message) <= 0
+            $message == ''
             && count($attachments) > 0
         ) {
             $message = Loc::getMessage('BLOG_MAILHANDLER_ATTACHMENTS');
@@ -177,8 +186,8 @@ final class MailHandler
 
         if (
             $userId <= 0
-            || strlen($message) <= 0
-            || strlen($siteId) <= 0
+            || $message == ''
+            || $siteId == ''
         ) {
             return false;
         }
@@ -190,12 +199,14 @@ final class MailHandler
         $pathToPost = Config\Option::get("socialnetwork", "userblogpost_page", '', $siteId);
         $postId = false;
 
-        $blog = Blog::getByUser(array(
-            "GROUP_ID" => Config\Option::get("socialnetwork", "userbloggroup_id", false, $siteId),
-            "SITE_ID" => $siteId,
-            "USER_ID" => $userId,
-            "CREATE" => "Y",
-        ));
+        $blog = Blog::getByUser(
+            array(
+                "GROUP_ID" => Config\Option::get("socialnetwork", "userbloggroup_id", false, $siteId),
+                "SITE_ID" => $siteId,
+                "USER_ID" => $userId,
+                "CREATE" => "Y",
+            )
+        );
 
         if ($blog) {
             $connection = \Bitrix\Main\Application::getConnection();
@@ -217,11 +228,24 @@ final class MailHandler
                 "SOCNET_RIGHTS" => array("U" . $userId)
             );
 
-            if (strlen($fields["TITLE"]) <= 0) {
+            if ($fields["TITLE"] == '') {
                 $fields["MICRO"] = "Y";
-                $fields["TITLE"] = preg_replace("/\[ATTACHMENT\s*=\s*[^\]]*\]/is" . BX_UTF_PCRE_MODIFIER, "", \blogTextParser::killAllTags($fields["DETAIL_TEXT"]));
-                $fields["TITLE"] = TruncateText(trim(preg_replace(array("/\n+/is" . BX_UTF_PCRE_MODIFIER, "/\s+/is" . BX_UTF_PCRE_MODIFIER), " ", $fields["TITLE"])), 100);
-                if (strlen($fields["TITLE"]) <= 0) {
+                $fields["TITLE"] = preg_replace(
+                    "/\[ATTACHMENT\s*=\s*[^\]]*\]/is" . BX_UTF_PCRE_MODIFIER,
+                    "",
+                    \blogTextParser::killAllTags($fields["DETAIL_TEXT"])
+                );
+                $fields["TITLE"] = TruncateText(
+                    trim(
+                        preg_replace(
+                            array("/\n+/is" . BX_UTF_PCRE_MODIFIER, "/\s+/is" . BX_UTF_PCRE_MODIFIER),
+                            " ",
+                            $fields["TITLE"]
+                        )
+                    ),
+                    100
+                );
+                if ($fields["TITLE"] == '') {
                     $fields["TITLE"] = Loc::getMessage("BLOG_MAILHANDLER_EMPTY_TITLE_PLACEHOLDER");
                 }
             }
@@ -283,29 +307,40 @@ final class MailHandler
                 \CBlogPost::notify($fields, $blog, $paramsNotify);
 
                 if (Loader::includeModule('im')) {
-                    $postUrl = \CComponentEngine::makePathFromTemplate($pathToPost, array(
-                        "post_id" => $postId,
-                        "user_id" => $userId
-                    ));
+                    $postUrl = \CComponentEngine::makePathFromTemplate(
+                        $pathToPost,
+                        array(
+                            "post_id" => $postId,
+                            "user_id" => $userId
+                        )
+                    );
 
                     $processedPathData = \CSocNetLogTools::processPath(array("POST_URL" => $postUrl), $userId, $siteId);
                     $serverName = $processedPathData["SERVER_NAME"];
                     $postUrl = $processedPathData["URLS"]["POST_URL"];
 
-                    \CIMNotify::add(array(
-                        "MESSAGE_TYPE" => IM_MESSAGE_SYSTEM,
-                        "NOTIFY_TYPE" => IM_NOTIFY_SYSTEM,
-                        "NOTIFY_MODULE" => "blog",
-                        "NOTIFY_EVENT" => "post_mail",
-                        "NOTIFY_TAG" => "BLOG|POST|" . $postId,
-                        "TO_USER_ID" => $userId,
-                        "NOTIFY_MESSAGE" => Loc::getMessage("BLOG_MAILHANDLER_NEW_POST", array(
-                            "#TITLE#" => "<a href=\"" . $postUrl . "\">" . $fields["TITLE"] . "</a>"
-                        )),
-                        "NOTIFY_MESSAGE_OUT" => Loc::getMessage("BLOG_MAILHANDLER_NEW_POST", array(
-                                "#TITLE#" => $fields["TITLE"]
-                            )) . ' ' . $serverName . $postUrl
-                    ));
+                    \CIMNotify::add(
+                        array(
+                            "MESSAGE_TYPE" => IM_MESSAGE_SYSTEM,
+                            "NOTIFY_TYPE" => IM_NOTIFY_SYSTEM,
+                            "NOTIFY_MODULE" => "blog",
+                            "NOTIFY_EVENT" => "post_mail",
+                            "NOTIFY_TAG" => "BLOG|POST|" . $postId,
+                            "TO_USER_ID" => $userId,
+                            "NOTIFY_MESSAGE" => Loc::getMessage(
+                                "BLOG_MAILHANDLER_NEW_POST",
+                                array(
+                                    "#TITLE#" => "<a href=\"" . $postUrl . "\">" . $fields["TITLE"] . "</a>"
+                                )
+                            ),
+                            "NOTIFY_MESSAGE_OUT" => Loc::getMessage(
+                                    "BLOG_MAILHANDLER_NEW_POST",
+                                    array(
+                                        "#TITLE#" => $fields["TITLE"]
+                                    )
+                                ) . ' ' . $serverName . $postUrl
+                        )
+                    );
                 }
             }
         }

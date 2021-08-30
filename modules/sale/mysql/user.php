@@ -1,4 +1,5 @@
-<?
+<?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/general/user.php");
 
 class CSaleUserAccount extends CAllSaleUserAccount
@@ -9,10 +10,13 @@ class CSaleUserAccount extends CAllSaleUserAccount
         global $DB;
 
         $ID = (int)$ID;
-        if ($ID <= 0)
+        if ($ID <= 0) {
             return false;
+        }
 
-        if (isset($GLOBALS["SALE_USER_ACCOUNT"]["SALE_USER_ACCOUNT_CACHE_" . $ID]) && is_array($GLOBALS["SALE_USER_ACCOUNT"]["SALE_USER_ACCOUNT_CACHE_" . $ID]) && is_set($GLOBALS["SALE_USER_ACCOUNT"]["SALE_USER_ACCOUNT_CACHE_" . $ID], "ID")) {
+        if (isset($GLOBALS["SALE_USER_ACCOUNT"]["SALE_USER_ACCOUNT_CACHE_" . $ID]) && is_array(
+                $GLOBALS["SALE_USER_ACCOUNT"]["SALE_USER_ACCOUNT_CACHE_" . $ID]
+            ) && is_set($GLOBALS["SALE_USER_ACCOUNT"]["SALE_USER_ACCOUNT_CACHE_" . $ID], "ID")) {
             return $GLOBALS["SALE_USER_ACCOUNT"]["SALE_USER_ACCOUNT_CACHE_" . $ID];
         } else {
             $strSql =
@@ -37,15 +41,19 @@ class CSaleUserAccount extends CAllSaleUserAccount
         global $DB;
 
         $userID = (int)$userID;
-        if ($userID <= 0)
+        if ($userID <= 0) {
             return false;
+        }
 
         $currency = trim($currency);
         $currency = preg_replace("#[\W]+#", "", $currency);
-        if ($currency == '')
+        if ($currency == '') {
             return false;
+        }
 
-        if (isset($GLOBALS["SALE_USER_ACCOUNT"]["SALE_USER_ACCOUNT_CACHE_" . $userID . "_" . $currency]) && is_array($GLOBALS["SALE_USER_ACCOUNT"]["SALE_USER_ACCOUNT_CACHE_" . $userID . "_" . $currency]) && is_set($GLOBALS["SALE_USER_ACCOUNT"]["SALE_USER_ACCOUNT_CACHE_" . $userID . "_" . $currency], "ID")) {
+        if (isset($GLOBALS["SALE_USER_ACCOUNT"]["SALE_USER_ACCOUNT_CACHE_" . $userID . "_" . $currency]) && is_array(
+                $GLOBALS["SALE_USER_ACCOUNT"]["SALE_USER_ACCOUNT_CACHE_" . $userID . "_" . $currency]
+            ) && is_set($GLOBALS["SALE_USER_ACCOUNT"]["SALE_USER_ACCOUNT_CACHE_" . $userID . "_" . $currency], "ID")) {
             return $GLOBALS["SALE_USER_ACCOUNT"]["SALE_USER_ACCOUNT_CACHE_" . $userID . "_" . $currency];
         } else {
             $strSql =
@@ -66,12 +74,27 @@ class CSaleUserAccount extends CAllSaleUserAccount
         return false;
     }
 
-    public static function GetList($arOrder = array(), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
-    {
+    public static function GetList(
+        $arOrder = array(),
+        $arFilter = array(),
+        $arGroupBy = false,
+        $arNavStartParams = false,
+        $arSelectFields = array()
+    ) {
         global $DB;
 
-        if (empty($arSelectFields))
-            $arSelectFields = array("ID", "USER_ID", "CURRENT_BUDGET", "CURRENCY", "LOCKED", "NOTES", "TIMESTAMP_X", "DATE_LOCKED");
+        if (empty($arSelectFields)) {
+            $arSelectFields = array(
+                "ID",
+                "USER_ID",
+                "CURRENT_BUDGET",
+                "CURRENCY",
+                "LOCKED",
+                "NOTES",
+                "TIMESTAMP_X",
+                "DATE_LOCKED"
+            );
+        }
 
         // FIELDS -->
         $arFields = array(
@@ -83,12 +106,37 @@ class CSaleUserAccount extends CAllSaleUserAccount
             "NOTES" => array("FIELD" => "UA.NOTES", "TYPE" => "string"),
             "TIMESTAMP_X" => array("FIELD" => "UA.TIMESTAMP_X", "TYPE" => "datetime"),
             "DATE_LOCKED" => array("FIELD" => "UA.DATE_LOCKED", "TYPE" => "datetime"),
-            "USER_LOGIN" => array("FIELD" => "U.LOGIN", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (UA.USER_ID = U.ID)"),
-            "USER_ACTIVE" => array("FIELD" => "U.ACTIVE", "TYPE" => "char", "FROM" => "INNER JOIN b_user U ON (UA.USER_ID = U.ID)"),
-            "USER_NAME" => array("FIELD" => "U.NAME", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (UA.USER_ID = U.ID)"),
-            "USER_LAST_NAME" => array("FIELD" => "U.LAST_NAME", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (UA.USER_ID = U.ID)"),
-            "USER_EMAIL" => array("FIELD" => "U.EMAIL", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (UA.USER_ID = U.ID)"),
-            "USER_USER" => array("FIELD" => "U.LOGIN,U.NAME,U.LAST_NAME,U.EMAIL,U.ID", "WHERE_ONLY" => "Y", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (UA.USER_ID = U.ID)")
+            "USER_LOGIN" => array(
+                "FIELD" => "U.LOGIN",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_user U ON (UA.USER_ID = U.ID)"
+            ),
+            "USER_ACTIVE" => array(
+                "FIELD" => "U.ACTIVE",
+                "TYPE" => "char",
+                "FROM" => "INNER JOIN b_user U ON (UA.USER_ID = U.ID)"
+            ),
+            "USER_NAME" => array(
+                "FIELD" => "U.NAME",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_user U ON (UA.USER_ID = U.ID)"
+            ),
+            "USER_LAST_NAME" => array(
+                "FIELD" => "U.LAST_NAME",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_user U ON (UA.USER_ID = U.ID)"
+            ),
+            "USER_EMAIL" => array(
+                "FIELD" => "U.EMAIL",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_user U ON (UA.USER_ID = U.ID)"
+            ),
+            "USER_USER" => array(
+                "FIELD" => "U.LOGIN,U.NAME,U.LAST_NAME,U.EMAIL,U.ID",
+                "WHERE_ONLY" => "Y",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_user U ON (UA.USER_ID = U.ID)"
+            )
         );
         // <-- FIELDS
 
@@ -101,48 +149,57 @@ class CSaleUserAccount extends CAllSaleUserAccount
                 "SELECT " . $arSqls["SELECT"] . " " .
                 "FROM b_sale_user_account UA " .
                 "	" . $arSqls["FROM"] . " ";
-            if (strlen($arSqls["WHERE"]) > 0)
+            if ($arSqls["WHERE"] <> '') {
                 $strSql .= "WHERE " . $arSqls["WHERE"] . " ";
-            if (strlen($arSqls["GROUPBY"]) > 0)
+            }
+            if ($arSqls["GROUPBY"] <> '') {
                 $strSql .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
+            }
 
             //echo "!1!=".htmlspecialcharsbx($strSql)."<br>";
 
             $dbRes = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-            if ($arRes = $dbRes->Fetch())
+            if ($arRes = $dbRes->Fetch()) {
                 return $arRes["CNT"];
-            else
+            } else {
                 return false;
+            }
         }
 
         $strSql =
             "SELECT " . $arSqls["SELECT"] . " " .
             "FROM b_sale_user_account UA " .
             "	" . $arSqls["FROM"] . " ";
-        if (strlen($arSqls["WHERE"]) > 0)
+        if ($arSqls["WHERE"] <> '') {
             $strSql .= "WHERE " . $arSqls["WHERE"] . " ";
-        if (strlen($arSqls["GROUPBY"]) > 0)
+        }
+        if ($arSqls["GROUPBY"] <> '') {
             $strSql .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
-        if (strlen($arSqls["ORDERBY"]) > 0)
+        }
+        if ($arSqls["ORDERBY"] <> '') {
             $strSql .= "ORDER BY " . $arSqls["ORDERBY"] . " ";
+        }
 
         if (is_array($arNavStartParams) && intval($arNavStartParams["nTopCount"]) <= 0) {
             $strSql_tmp =
                 "SELECT COUNT('x') as CNT " .
                 "FROM b_sale_user_account UA " .
                 "	" . $arSqls["FROM"] . " ";
-            if (strlen($arSqls["WHERE"]) > 0)
+            if ($arSqls["WHERE"] <> '') {
                 $strSql_tmp .= "WHERE " . $arSqls["WHERE"] . " ";
-            if (strlen($arSqls["GROUPBY"]) > 0)
+            }
+            if ($arSqls["GROUPBY"] <> '') {
                 $strSql_tmp .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
+            }
 
             //echo "!2.1!=".htmlspecialcharsbx($strSql_tmp)."<br>";
 
             $dbRes = $DB->Query($strSql_tmp, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             $cnt = 0;
-            if (strlen($arSqls["GROUPBY"]) <= 0) {
-                if ($arRes = $dbRes->Fetch())
+            if ($arSqls["GROUPBY"] == '') {
+                if ($arRes = $dbRes->Fetch()) {
                     $cnt = $arRes["CNT"];
+                }
             } else {
                 // FOR MYSQL!!! ANOTHER CODE FOR ORACLE
                 $cnt = $dbRes->SelectedRowsCount();
@@ -154,8 +211,9 @@ class CSaleUserAccount extends CAllSaleUserAccount
 
             $dbRes->NavQuery($strSql, $cnt, $arNavStartParams);
         } else {
-            if (is_array($arNavStartParams) && intval($arNavStartParams["nTopCount"]) > 0)
+            if (is_array($arNavStartParams) && intval($arNavStartParams["nTopCount"]) > 0) {
                 $strSql .= "LIMIT " . intval($arNavStartParams["nTopCount"]);
+            }
 
             //echo "!3!=".htmlspecialcharsbx($strSql)."<br>";
 
@@ -171,14 +229,15 @@ class CSaleUserAccount extends CAllSaleUserAccount
 
         $arFields1 = array();
         foreach ($arFields as $key => $value) {
-            if (substr($key, 0, 1) == "=") {
-                $arFields1[substr($key, 1)] = $value;
+            if (mb_substr($key, 0, 1) == "=") {
+                $arFields1[mb_substr($key, 1)] = $value;
                 unset($arFields[$key]);
             }
         }
 
-        if (!CSaleUserAccount::CheckFields("ADD", $arFields, 0))
+        if (!CSaleUserAccount::CheckFields("ADD", $arFields, 0)) {
             return false;
+        }
 
         $dbEvents = GetModuleEvents("sale", "OnBeforeUserAccountAdd");
         while ($arEvent = $dbEvents->Fetch()) {
@@ -190,9 +249,13 @@ class CSaleUserAccount extends CAllSaleUserAccount
         $arInsert = $DB->PrepareInsert("b_sale_user_account", $arFields);
 
         foreach ($arFields1 as $key => $value) {
-            if (strlen($arInsert[0]) > 0) $arInsert[0] .= ", ";
+            if ($arInsert[0] <> '') {
+                $arInsert[0] .= ", ";
+            }
             $arInsert[0] .= $key;
-            if (strlen($arInsert[1]) > 0) $arInsert[1] .= ", ";
+            if ($arInsert[1] <> '') {
+                $arInsert[1] .= ", ";
+            }
             $arInsert[1] .= $value;
         }
 
@@ -215,19 +278,21 @@ class CSaleUserAccount extends CAllSaleUserAccount
         global $DB;
 
         $ID = (int)$ID;
-        if ($ID <= 0)
+        if ($ID <= 0) {
             return false;
+        }
 
         $arFields1 = array();
         foreach ($arFields as $key => $value) {
-            if (substr($key, 0, 1) == "=") {
-                $arFields1[substr($key, 1)] = $value;
+            if (mb_substr($key, 0, 1) == "=") {
+                $arFields1[mb_substr($key, 1)] = $value;
                 unset($arFields[$key]);
             }
         }
 
-        if (!CSaleUserAccount::CheckFields("UPDATE", $arFields, $ID))
+        if (!CSaleUserAccount::CheckFields("UPDATE", $arFields, $ID)) {
             return false;
+        }
 
         $dbEvents = GetModuleEvents("sale", "OnBeforeUserAccountUpdate");
         while ($arEvent = $dbEvents->Fetch()) {
@@ -241,7 +306,9 @@ class CSaleUserAccount extends CAllSaleUserAccount
         $strUpdate = $DB->PrepareUpdate("b_sale_user_account", $arFields);
 
         foreach ($arFields1 as $key => $value) {
-            if (strlen($strUpdate) > 0) $strUpdate .= ", ";
+            if ($strUpdate <> '') {
+                $strUpdate .= ", ";
+            }
             $strUpdate .= $key . "=" . $value . " ";
         }
 

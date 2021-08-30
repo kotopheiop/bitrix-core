@@ -48,7 +48,7 @@ class AliasedQuery extends Query
 
     public function addAlias($alias, $field = null)
     {
-        if ($this->aliases[$alias]) {
+        if (($this->aliases[$alias] ?? false)) {
             throw new SystemException("`$alias` already added", 0, __FILE__, __LINE__);
         } elseif (!$field) {
             $this->aliases[$alias] = $alias;
@@ -188,25 +188,29 @@ final class CDBResult extends \CDBResult
             return null;
         }
 
-        if (isset($arNavStartParams["bDescPageNumbering"]))
+        if (isset($arNavStartParams["bDescPageNumbering"])) {
             $bDescPageNumbering = $arNavStartParams["bDescPageNumbering"];
-        else
+        } else {
             $bDescPageNumbering = false;
+        }
 
         $this->InitNavStartVars($arNavStartParams);
         $this->NavRecordCount = $cnt;
 
-        if ($this->NavShowAll)
+        if ($this->NavShowAll) {
             $this->NavPageSize = $this->NavRecordCount;
+        }
 
         //calculate total pages depend on rows count. start with 1
         $this->NavPageCount = ($this->NavPageSize > 0 ? floor($this->NavRecordCount / $this->NavPageSize) : 0);
         if ($bDescPageNumbering) {
             $makeweight = 0;
-            if ($this->NavPageSize > 0)
+            if ($this->NavPageSize > 0) {
                 $makeweight = ($this->NavRecordCount % $this->NavPageSize);
-            if ($this->NavPageCount == 0 && $makeweight > 0)
+            }
+            if ($this->NavPageCount == 0 && $makeweight > 0) {
                 $this->NavPageCount = 1;
+            }
 
             //page number to display
             $this->NavPageNomer =
@@ -225,24 +229,27 @@ final class CDBResult extends \CDBResult
 
             //rows to skip
             $NavFirstRecordShow = 0;
-            if ($this->NavPageNomer != $this->NavPageCount)
+            if ($this->NavPageNomer != $this->NavPageCount) {
                 $NavFirstRecordShow += $makeweight;
+            }
 
             $NavFirstRecordShow += ($this->NavPageCount - $this->NavPageNomer) * $this->NavPageSize;
             $NavLastRecordShow = $makeweight + ($this->NavPageCount - $this->NavPageNomer + 1) * $this->NavPageSize;
         } else {
-            if ($this->NavPageSize > 0 && ($this->NavRecordCount % $this->NavPageSize > 0))
+            if ($this->NavPageSize > 0 && ($this->NavRecordCount % $this->NavPageSize > 0)) {
                 $this->NavPageCount++;
+            }
 
             //calculate total pages depend on rows count. start with 1
-            if ($this->PAGEN >= 1 && $this->PAGEN <= $this->NavPageCount)
+            if ($this->PAGEN >= 1 && $this->PAGEN <= $this->NavPageCount) {
                 $this->NavPageNomer = $this->PAGEN;
-            elseif ($_SESSION[$this->SESS_PAGEN] >= 1 && $_SESSION[$this->SESS_PAGEN] <= $this->NavPageCount)
+            } elseif ($_SESSION[$this->SESS_PAGEN] >= 1 && $_SESSION[$this->SESS_PAGEN] <= $this->NavPageCount) {
                 $this->NavPageNomer = $_SESSION[$this->SESS_PAGEN];
-            elseif ($arNavStartParams["checkOutOfRange"] !== true)
+            } elseif ($arNavStartParams["checkOutOfRange"] !== true) {
                 $this->NavPageNomer = 1;
-            else
+            } else {
                 return null;
+            }
 
             //rows to skip
             $NavFirstRecordShow = $this->NavPageSize * ($this->NavPageNomer - 1);
@@ -250,8 +257,9 @@ final class CDBResult extends \CDBResult
         }
 
         $NavAdditionalRecords = 0;
-        if (is_set($arNavStartParams, "iNavAddRecords"))
+        if (is_set($arNavStartParams, "iNavAddRecords")) {
             $NavAdditionalRecords = $arNavStartParams["iNavAddRecords"];
+        }
 
         if (!$this->NavShowAll) {
             $query->setOffset($NavFirstRecordShow);
@@ -267,8 +275,9 @@ final class CDBResult extends \CDBResult
 //		$this->result = $res_tmp->result;
         $this->DB = $DB;
 
-        if ($this->SqlTraceIndex)
+        if ($this->SqlTraceIndex) {
             $start_time = microtime(true);
+        }
 
         $temp_arrray = array();
         $temp_arrray_add = array();
@@ -276,10 +285,13 @@ final class CDBResult extends \CDBResult
 
         while ($ar = $res_tmp->fetch()) {
             $tmp_cnt++;
-            if (intval($NavLastRecordShow - $NavFirstRecordShow) > 0 && $tmp_cnt > ($NavLastRecordShow - $NavFirstRecordShow))
+            if (intval(
+                    $NavLastRecordShow - $NavFirstRecordShow
+                ) > 0 && $tmp_cnt > ($NavLastRecordShow - $NavFirstRecordShow)) {
                 $temp_arrray_add[] = $ar;
-            else
+            } else {
                 $temp_arrray[] = $ar;
+            }
         }
 
         if ($this->SqlTraceIndex) {
@@ -309,9 +321,11 @@ final class CDBResult extends \CDBResult
 
     function Fetch()
     {
-        if ($row = parent::Fetch())
-            foreach ($this->fetchAdapters as $adapter)
+        if ($row = parent::Fetch()) {
+            foreach ($this->fetchAdapters as $adapter) {
                 $row = $adapter->adapt($row);
+            }
+        }
 
         return $row;
     }
@@ -380,7 +394,7 @@ class OrderQuery extends AliasedQuery
 
     public static function explodeFilterKey($key)
     {
-        preg_match('/^([!+*]{0,1})([<=>@%~]{0,2})(.*)$/', $key, $matches);
+        preg_match('/^([!+*]{0,1})([<=>@%~?]{0,2})(.*)$/', $key, $matches);
 
         return array(
             'modifier' => $matches[1], // can be ""
@@ -396,8 +410,9 @@ class OrderQuery extends AliasedQuery
         $operator = $keyMatch['operator'];
         $alias = $keyMatch['alias'];
 
-        if (!$name = $this->getAliasName($alias))
+        if (!$name = $this->getAliasName($alias)) {
             return $this;
+        }
 
         switch ($operator) {
             case  '':
@@ -418,11 +433,21 @@ class OrderQuery extends AliasedQuery
 
             case '!':
                 return $operator == '=' && $value
-                    ? $this->addFilter(null, array('LOGIC' => 'OR', array('!=' . $name => $value), array('=' . $name => '')))
+                    ? $this->addFilter(
+                        null,
+                        array('LOGIC' => 'OR', array('!=' . $name => $value), array('=' . $name => ''))
+                    )
                     : $this->addFilter($modifier . $operator . $name, $value);
 
             case '+':
-                return $this->addFilter(null, array('LOGIC' => 'OR', array($operator . $name => $value), array('=' . $name => '')));
+                return $this->addFilter(
+                    null,
+                    array(
+                        'LOGIC' => 'OR',
+                        array($operator . $name => $value),
+                        array('=' . $name => '')
+                    )
+                );
 
             default :
                 throw new SystemException("invalid modifier '$modifier'", 0, __FILE__, __LINE__);
@@ -513,10 +538,11 @@ class OrderQuery extends AliasedQuery
 
         foreach ($this->getSelect() as $k => $v) {
             if (is_numeric($k)) {
-                if ($v instanceof Field)
+                if ($v instanceof Field) {
                     $names[$v->getName()] = true;
-                else
+                } else {
                     throw new SystemException("invalid", 0, __FILE__, __LINE__);
+                }
             } else {
                 $names[$k] = true;
             }
@@ -574,10 +600,12 @@ class OrderPropertyValuesQuery extends OrderQuery
 
         if (!empty($locationIds)) {
             $locationMap = [];
-            $locationRaw = \Bitrix\Sale\Location\LocationTable::getList([
-                'filter' => ['=CODE' => $locationIds],
-                'select' => ['ID', 'CODE']
-            ]);
+            $locationRaw = \Bitrix\Sale\Location\LocationTable::getList(
+                [
+                    'filter' => ['=CODE' => $locationIds],
+                    'select' => ['ID', 'CODE']
+                ]
+            );
             while ($location = $locationRaw->fetch()) {
                 $locationMap[$location['CODE']] = $location['ID'];
             }
@@ -613,8 +641,9 @@ class OrderQueryLocation extends OrderQuery
 
     public function addLocationRuntimeField($fieldName, $ref = false)
     {
-        if ((string)$fieldName == '')
+        if ((string)$fieldName == '') {
             return false;
+        }
 
 
         $this->registerRuntimeField(
@@ -650,10 +679,12 @@ class OrderQueryLocation extends OrderQuery
             )
         );
 
-        $this->addAliases(array(
-            $fieldName . '_ORIG' => $fieldName,
-            'PROXY_' . $fieldName => 'PROXY_' . $fieldName . '_LINK'
-        ));
+        $this->addAliases(
+            array(
+                $fieldName . '_ORIG' => $fieldName,
+                'PROXY_' . $fieldName => 'PROXY_' . $fieldName . '_LINK'
+            )
+        );
 
         $this->locationFieldMap[$fieldName] = true;
     }
@@ -663,15 +694,17 @@ class OrderQueryLocation extends OrderQuery
         if ($asFilter) {
             $parsed = static::explodeFilterKey($field);
 
-            if ($this->locationFieldMap[$parsed['alias']])
+            if ($this->locationFieldMap[$parsed['alias']]) {
                 return $parsed['modifier'] . $parsed['operator'] . 'PROXY_' . $parsed['alias'];
-            else
+            } else {
                 return $field;
+            }
         } else {
-            if ($this->locationFieldMap[$field])
+            if ($this->locationFieldMap[$field]) {
                 return 'PROXY_' . $field;
-            else
+            } else {
                 return $field;
+            }
         }
     }
 }
@@ -686,7 +719,11 @@ final class Test
 
     static function run()
     {
-        foreach (glob($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/sale/lib/compatible/tests/*.test.php') as $filename) {
+        foreach (
+            glob(
+                $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/sale/lib/compatible/tests/*.test.php'
+            ) as $filename
+        ) {
             include $filename;
         }
     }

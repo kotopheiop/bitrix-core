@@ -1,9 +1,11 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/fileman/prolog.php");
 
-if (!$USER->CanDoOperation('fileman_admin_folders'))
+if (!$USER->CanDoOperation('fileman_admin_folders')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/fileman/include.php");
 include_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/fileman/classes/general/fileman_utils.php");
@@ -29,33 +31,40 @@ $arFiles = Array();
 $bSearch = isset($_REQUEST['search']) && $_REQUEST['search'] == 'Y';
 $searchSess = preg_replace("/[^a-z0-9]/i", "", $_REQUEST['ssess']);
 
-if (CFileMan::IsWindows())
+if (CFileMan::IsWindows()) {
     $strWarning .= GetMessage("FILEMAN_SA_WINDOWS_WARN") . "\n";
+}
 
 if (count($files) > 0) {
     for ($i = 0; $i < count($files); $i++) {
-        if (!$USER->CanDoFileOperation('fm_edit_permission', Array($site, $path . "/" . $files[$i])))
+        if (!$USER->CanDoFileOperation('fm_edit_permission', Array($site, $path . "/" . $files[$i]))) {
             $strWarning .= GetMessage("FILEMAN_ACCESS_TO_DENIED") . " \"" . $files[$i] . "\".\n";
-        elseif ($files[$i] != '.')
+        } elseif ($files[$i] != '.') {
             $arFiles[] = $files[$i];
+        }
     }
 } else {
     if ($bSearch) {
         $searchRes = CFilemanSearch::GetSearchResult($searchSess);
-        for ($i = 0, $l = count($searchRes); $i < $l; $i++)
+        for ($i = 0, $l = count($searchRes); $i < $l; $i++) {
             $arFiles[] = $searchRes[$i]['path'];
+        }
     } else {
         $arD = array();
         $arF = array();
 
         CFileMan::GetDirList(Array($site, $path), $arD, $arF, array("MIN_PERMISSION" => "X"), array(), "DF");
-        foreach ($arD as $dir)
-            if ($USER->CanDoFileOperation('fm_edit_permission', Array($site, $dir['ABS_PATH'])))
+        foreach ($arD as $dir) {
+            if ($USER->CanDoFileOperation('fm_edit_permission', Array($site, $dir['ABS_PATH']))) {
                 $arFiles[] = $dir["NAME"];
+            }
+        }
 
-        foreach ($arF as $file)
-            if ($USER->CanDoFileOperation('fm_edit_permission', Array($site, $file['ABS_PATH'])))
+        foreach ($arF as $file) {
+            if ($USER->CanDoFileOperation('fm_edit_permission', Array($site, $file['ABS_PATH']))) {
                 $arFiles[] = $file["NAME"];
+            }
+        }
     }
 }
 
@@ -71,48 +80,58 @@ for ($i = 0; $i < $filesCount; $i++) {
     $arFile["PATH"] = $bSearch ? $arFiles[$i] : $path . "/" . $arFiles[$i];
     $arFile["ABS_PATH"] = $documentRoot . $arFile["PATH"];
 
-    if (!$bFolderInList && $io->DirectoryExists($arFile["ABS_PATH"]))
+    if (!$bFolderInList && $io->DirectoryExists($arFile["ABS_PATH"])) {
         $bFolderInList = true;
+    }
 
     $arFile["PERM"] = CFileMan::GetUnixFilePermissions($arFile["ABS_PATH"]);
 
-    if ($currentValue === false)
+    if ($currentValue === false) {
         $currentValue = $arFile["PERM"][0];
+    }
 
-    if (!$bCurrentValueDiff && $currentValue != $arFile["PERM"][0])
+    if (!$bCurrentValueDiff && $currentValue != $arFile["PERM"][0]) {
         $bCurrentValueDiff = true;
+    }
 
     $arFilesEx[] = $arFile;
 }
 
-if ($REQUEST_METHOD == "POST" && $USER->CanDoOperation('fileman_admin_folders') && $_GET["fu_action"] == 'change_perms' && check_bitrix_sessid()) {
+if ($REQUEST_METHOD == "POST" && $USER->CanDoOperation(
+        'fileman_admin_folders'
+    ) && $_GET["fu_action"] == 'change_perms' && check_bitrix_sessid()) {
     CUtil::JSPostUnescape();
     $APPLICATION->RestartBuffer();
 
-    if (CFileMan::IsWindows())
+    if (CFileMan::IsWindows()) {
         $result_value = $_POST['readonly'] == "Y" ? '0' : '666';
-    else
-        $result_value = intVal($_POST['res_value']);
+    } else {
+        $result_value = intval($_POST['res_value']);
+    }
 
     $result_value = (int)"0" . $result_value;
     $oChmod = new CFilemanChmod;
 
-    $oChmod->Init(array(
-        'value' => $result_value,
-        'lastPath' => isset($_POST['last_path']) ? $_POST['last_path'] : false
-    ));
+    $oChmod->Init(
+        array(
+            'value' => $result_value,
+            'lastPath' => isset($_POST['last_path']) ? $_POST['last_path'] : false
+        )
+    );
 
     $bStoped = true;
     for ($i = 0; $i < $filesCount; $i++) {
         $arFile = $arFilesEx[$i];
         if ($io->DirectoryExists($arFile['ABS_PATH']) && $_POST['recurcive'] == "Y") {
-            $oDir = new CFilemanUtilDir($arFile['ABS_PATH'], array(
+            $oDir = new CFilemanUtilDir(
+                $arFile['ABS_PATH'], array(
                 'obj' => $oChmod,
                 'site' => $Params['site'],
                 'callBack' => "Chmod",
                 'checkBreak' => "CheckBreak",
                 'checkSubdirs' => true
-            ));
+            )
+            );
 
             $bSuccess = $oDir->Start();
             $bBreak = $oDir->bBreak;
@@ -122,15 +141,18 @@ if ($REQUEST_METHOD == "POST" && $USER->CanDoOperation('fileman_admin_folders') 
             $bBreak = $oChmod->CheckBreak();
             $bStoped = $i == $filesCount - 1; // Last iterration
 
-            if ($bBreak && !$bStoped)
+            if ($bBreak && !$bStoped) {
                 $nextPath = $arFilesEx[$i]['ABS_PATH'];
+            }
         }
 
-        if ($bStoped)
+        if ($bStoped) {
             $bBreak = false;
+        }
 
-        if ($bBreak)
+        if ($bBreak) {
             break;
+        }
 
         $oChmod->Chmod($arFile['ABS_PATH']);
     }
@@ -152,7 +174,9 @@ if ($REQUEST_METHOD == "POST" && $USER->CanDoOperation('fileman_admin_folders') 
     die();
 }
 
-$backToFolderUrl = "fileman_admin.php?" . $addUrl . "&site=" . $site . "&path=" . UrlEncode($path) . ($bSearch ? "&search=Y&ssess=" . $searchSess : "");
+$backToFolderUrl = "fileman_admin.php?" . $addUrl . "&site=" . $site . "&path=" . UrlEncode(
+        $path
+    ) . ($bSearch ? "&search=Y&ssess=" . $searchSess : "");
 
 if ($bSearch) {
     $adminChain->AddItem(array("TEXT" => GetMessage("FM_SA_SEARCH_RESULT"), "LINK" => $backToFolderUrl));
@@ -162,7 +186,7 @@ if ($bSearch) {
         $adminChain->AddItem(
             array(
                 "TEXT" => htmlspecialcharsex($chainLevel["TITLE"]),
-                "LINK" => ((strlen($chainLevel["LINK"]) > 0) ? $chainLevel["LINK"] : ""),
+                "LINK" => (($chainLevel["LINK"] <> '') ? $chainLevel["LINK"] : ""),
             )
         );
     }
@@ -172,10 +196,12 @@ $adminChain->AddItem(array("TEXT" => GetMessage("FILEMAN_SERV_ACCESS_TITLE"), "L
 $APPLICATION->SetTitle(GetMessage("FILEMAN_SERV_ACCESS_TITLE"));
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
-CFilemanUtils::InitScript(array(
-    'initServerAccess' => true,
-    'site' => $site
-));
+CFilemanUtils::InitScript(
+    array(
+        'initServerAccess' => true,
+        'site' => $site
+    )
+);
 
 $aMenu = array(
     array(
@@ -194,7 +220,12 @@ $context->Show();
 
     <?
     $aTabs = array(
-        array("DIV" => "edit1", "TAB" => GetMessage("FILEMAN_SA_TAB"), "ICON" => "fileman", "TITLE" => GetMessage("FILEMAN_SA_TAB_ALT"))
+        array(
+            "DIV" => "edit1",
+            "TAB" => GetMessage("FILEMAN_SA_TAB"),
+            "ICON" => "fileman",
+            "TITLE" => GetMessage("FILEMAN_SA_TAB_ALT")
+        )
     );
     $tabControl = new CAdminTabControl("tabControl", $aTabs);
     $tabControl->Begin();
@@ -227,7 +258,9 @@ $context->Show();
                 <? for ($i = 0, $l = count($arFilesEx); $i < $l; $i++): ?>
                     <?
                     if (CFileMan::IsWindows()) {
-                        $html = $arFilesEx[$i]["PERM"][0] == '444' ? GetMessage("FM_SA_WIN_READONLY") : GetMessage("FM_SA_WIN_FULL_ACCESS");
+                        $html = $arFilesEx[$i]["PERM"][0] == '444' ? GetMessage("FM_SA_WIN_READONLY") : GetMessage(
+                            "FM_SA_WIN_FULL_ACCESS"
+                        );
                         $title = $html;
                     } else {
                         $html = $arFilesEx[$i]["PERM"][0];
@@ -235,8 +268,9 @@ $context->Show();
                     }
                     ?>
                     <tr id="bxsp_file_row_<?= $i ?>">
-                        <td class="bxsp-filename">
-                            "<?= htmlspecialcharsbx($APPLICATION->UnJSEscape($arFilesEx[$i]["PATH"])) ?>"
+                        <td class="bxsp-filename">"<?= htmlspecialcharsbx(
+                                $APPLICATION->UnJSEscape($arFilesEx[$i]["PATH"])
+                            ) ?>"
                         </td>
                         <td class="bxsp-separator"> -</td>
                         <td class="bxsp-value" title="<?= $title ?>"><?= $html ?></td>
@@ -254,21 +288,24 @@ $context->Show();
                 <div class="bxfm-sperm-cont">
 			<? foreach (array('owner', 'group', 'public') as $k): ?>
                 <div class="bx-s-perm-gr">
-				<div class="bx-s-title"><?= GetMessage("FM_SA_" . strtoupper($k)) ?></div>
+				<div class="bx-s-title"><?= GetMessage("FM_SA_" . mb_strtoupper($k)) ?></div>
 				<table class="bxsp-tbl"><tr>
 					<td class="bxsp-inp-cell"><input id="bxsp_<?= $k ?>_read" type="checkbox" value="Y"/></td>
 					<td class="bxsp-label-cell"><label for="bxsp_<?= $k ?>_read"><?= GetMessage("FM_SA_READ") ?></label></td>
 
 					<td class="bxsp-inp-cell"><input id="bxsp_<?= $k ?>_write" type="checkbox" value="Y"/></td>
-					<td class="bxsp-label-cell"><label
-                                for="bxsp_<?= $k ?>_write"><?= GetMessage("FM_SA_WRITE") ?></label></td>
+					<td class="bxsp-label-cell"><label for="bxsp_<?= $k ?>_write"><?= GetMessage(
+                                "FM_SA_WRITE"
+                            ) ?></label></td>
 
 					<td class="bxsp-inp-cell"><input id="bxsp_<?= $k ?>_exec" type="checkbox" value="Y"/></td>
-					<td class="bxsp-label-cell"><label
-                                for="bxsp_<?= $k ?>_exec"><?= GetMessage("FM_SA_EXECUTE") ?> </label></td>
+					<td class="bxsp-label-cell"><label for="bxsp_<?= $k ?>_exec"><?= GetMessage(
+                                "FM_SA_EXECUTE"
+                            ) ?> </label></td>
 
-					<td style="padding: 0 6px 0 80px !important;"><label
-                                for="bxsp_<?= $k ?>_value"><?= GetMessage("FM_SA_VALUE") ?>: </label></td>
+					<td style="padding: 0 6px 0 80px !important;"><label for="bxsp_<?= $k ?>_value"><?= GetMessage(
+                                "FM_SA_VALUE"
+                            ) ?>: </label></td>
 					<td><input id="bxsp_<?= $k ?>_value" type="text" readonly="readonly" size="2"/></td>
 				</tr></table>
 			</div>
@@ -277,8 +314,9 @@ $context->Show();
 			<table class="bxsp-tbl-2">
 				<tr>
 					<td colSpan="2">
-						<label for="bxsp_res_value"
-                               style="font-weight: bold;"><?= GetMessage("FM_SA_RES_VALUE") ?>: </label>
+						<label for="bxsp_res_value" style="font-weight: bold;"><?= GetMessage(
+                                "FM_SA_RES_VALUE"
+                            ) ?>: </label>
 						<input id="bxsp_res_value" type="text" value="" size="4" name="result_value"/>
 					</td>
 				</tr>

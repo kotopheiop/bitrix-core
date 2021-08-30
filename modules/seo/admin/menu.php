@@ -73,14 +73,16 @@ if ($APPLICATION->GetGroupRight("seo") > "D") {
 
                     $engine = new Engine\YandexDirect();
 
-                    $dbRes = Adv\YandexCampaignTable::getList(array(
-                        'order' => array('NAME' => 'ASC'),
-                        'filter' => array(
-                            '=ENGINE_ID' => $engine->getId(),
-                            '=ACTIVE' => Adv\YandexCampaignTable::ACTIVE
-                        ),
-                        'select' => array('ID', 'NAME'),
-                    ));
+                    $dbRes = Adv\YandexCampaignTable::getList(
+                        array(
+                            'order' => array('NAME' => 'ASC'),
+                            'filter' => array(
+                                '=ENGINE_ID' => $engine->getId(),
+                                '=ACTIVE' => Adv\YandexCampaignTable::ACTIVE
+                            ),
+                            'select' => array('ID', 'NAME'),
+                        )
+                    );
 
                     while ($campaign = $dbRes->fetch()) {
                         if (
@@ -89,7 +91,8 @@ if ($APPLICATION->GetGroupRight("seo") > "D") {
                                 && $this->IsSectionActive("seo_search_adv_items/" . $campaign['ID'])
                             )
                             || (
-                                $GLOBALS["APPLICATION"]->GetCurPage() == '/bitrix/admin/seo_search_yandex_direct_banner_edit.php'
+                                $GLOBALS["APPLICATION"]->GetCurPage(
+                                ) == '/bitrix/admin/seo_search_yandex_direct_banner_edit.php'
                                 && $_REQUEST['campaign'] == $campaign['ID']
                             )) {
                             $yandexAdvCampaigns[$campaign['ID']] = count($yandexAdvItem['items']);
@@ -110,15 +113,17 @@ if ($APPLICATION->GetGroupRight("seo") > "D") {
                     }
 
                     if (count($yandexAdvCampaigns) > 0) {
-                        $dbRes = Adv\YandexBannerTable::getList(array(
-                            'order' => array('NAME' => 'ASC'),
-                            'filter' => array(
-                                '=ENGINE_ID' => $engine->getId(),
-                                '=CAMPAIGN_ID' => array_keys($yandexAdvCampaigns),
-                                '=ACTIVE' => Adv\YandexBannerTable::ACTIVE,
-                            ),
-                            'select' => array('ID', 'CAMPAIGN_ID', 'NAME'),
-                        ));
+                        $dbRes = Adv\YandexBannerTable::getList(
+                            array(
+                                'order' => array('NAME' => 'ASC'),
+                                'filter' => array(
+                                    '=ENGINE_ID' => $engine->getId(),
+                                    '=CAMPAIGN_ID' => array_keys($yandexAdvCampaigns),
+                                    '=ACTIVE' => Adv\YandexBannerTable::ACTIVE,
+                                ),
+                                'select' => array('ID', 'CAMPAIGN_ID', 'NAME'),
+                            )
+                        );
                         while ($banner = $dbRes->fetch()) {
                             $yandexAdvItem['items'][$yandexAdvCampaigns[$banner['CAMPAIGN_ID']]]['items'][] = array(
                                 'url' => 'seo_search_yandex_direct_banner_edit.php?lang=' . LANGUAGE_ID . '&campaign=' . $banner['CAMPAIGN_ID'] . '&ID=' . $banner['ID'],
@@ -135,11 +140,12 @@ if ($APPLICATION->GetGroupRight("seo") > "D") {
         }
 
 //		not show Yandex and Google on portal
-        if ($bShowGoogleServices)
+        if ($bShowGoogleServices) {
             $arEngineList[] = array(
                 'url' => 'seo_search_google.php?lang=' . LANGUAGE_ID,
                 'text' => Loc::getMessage("SEO_MENU_GOOGLE"),
             );
+        }
 
         if (count($arEngineList) > 0) {
             $aMenu[0]["items"][] = array(

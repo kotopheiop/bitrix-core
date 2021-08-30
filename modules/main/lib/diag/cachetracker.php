@@ -48,7 +48,7 @@ class CacheTracker
         foreach (Helper::getBackTrace(8) as $tr) {
             $func = $tr["class"] . $tr["type"] . $tr["function"];
 
-            if ($found < 0 && !isset(self::$skipUntil[strtolower($func)])) {
+            if ($found < 0 && !isset(self::$skipUntil[mb_strtolower($func)])) {
                 $found = count(self::$arCacheDebug);
                 self::$arCacheDebug[$found] = array(
                     "TRACE" => array(),
@@ -75,20 +75,22 @@ class CacheTracker
                         foreach ($tr["args"] as $k1 => $v1) {
                             if (is_array($v1)) {
                                 foreach ($v1 as $k2 => $v2) {
-                                    if (is_scalar($v2))
+                                    if (is_scalar($v2)) {
                                         $args[$k1][$k2] = $v2;
-                                    elseif (is_object($v2))
+                                    } elseif (is_object($v2)) {
                                         $args[$k1][$k2] = get_class($v2);
-                                    else
+                                    } else {
                                         $args[$k1][$k2] = gettype($v2);
+                                    }
                                 }
                             } else {
-                                if (is_scalar($v1))
+                                if (is_scalar($v1)) {
                                     $args[$k1] = $v1;
-                                elseif (is_object($v1))
+                                } elseif (is_object($v1)) {
                                     $args[$k1] = get_class($v1);
-                                else
+                                } else {
                                     $args[$k1] = gettype($v1);
+                                }
                             }
                         }
                     }

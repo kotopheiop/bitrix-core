@@ -29,10 +29,12 @@ class Repo
             $bad,
             $splitter
         );
-        $result->setResult(array(
-            'is_bad' => $bad,
-            'content' => $content
-        ));
+        $result->setResult(
+            array(
+                'is_bad' => $bad,
+                'content' => $content
+            )
+        );
         return $result;
     }
 
@@ -106,7 +108,8 @@ class Repo
                                                 array(
                                                     '#preset#' => $presetCode,
                                                     '#card#' => $cardCode
-                                                ))
+                                                )
+                                            )
                                         );
                                         $result->setError($error);
                                         return $result;
@@ -130,20 +133,22 @@ class Repo
 
         // check unique
         if ($fields['XML_ID']) {
-            $check = RepoCore::getList(array(
-                'select' => array(
-                    'ID'
-                ),
-                'filter' =>
-                    isset($fields['APP_CODE'])
-                        ? array(
-                        '=XML_ID' => $fields['XML_ID'],
-                        '=APP_CODE' => $fields['APP_CODE']
-                    )
-                        : array(
-                        '=XML_ID' => $fields['XML_ID']
-                    )
-            ))->fetch();
+            $check = RepoCore::getList(
+                array(
+                    'select' => array(
+                        'ID'
+                    ),
+                    'filter' =>
+                        isset($fields['APP_CODE'])
+                            ? array(
+                            '=XML_ID' => $fields['XML_ID'],
+                            '=APP_CODE' => $fields['APP_CODE']
+                        )
+                            : array(
+                            '=XML_ID' => $fields['XML_ID']
+                        )
+                )
+            )->fetch();
         }
 
         // register (add / update)
@@ -191,24 +196,8 @@ class Repo
             // set app code
             $app = \Bitrix\Landing\PublicAction::restApplication();
 
-            $row = RepoCore::getList(array(
-                'select' => array(
-                    'ID'
-                ),
-                'filter' =>
-                    isset($app['CODE'])
-                        ? array(
-                        '=XML_ID' => $code,
-                        '=APP_CODE' => $app['CODE']
-                    )
-                        : array(
-                        '=XML_ID' => $code
-                    )
-            ))->fetch();
-            if ($row) {
-                // delete all sush blocks from landings
-                $codeToDelete = array();
-                $res = RepoCore::getList(array(
+            $row = RepoCore::getList(
+                array(
                     'select' => array(
                         'ID'
                     ),
@@ -221,7 +210,27 @@ class Repo
                             : array(
                             '=XML_ID' => $code
                         )
-                ));
+                )
+            )->fetch();
+            if ($row) {
+                // delete all sush blocks from landings
+                $codeToDelete = array();
+                $res = RepoCore::getList(
+                    array(
+                        'select' => array(
+                            'ID'
+                        ),
+                        'filter' =>
+                            isset($app['CODE'])
+                                ? array(
+                                '=XML_ID' => $code,
+                                '=APP_CODE' => $app['CODE']
+                            )
+                                : array(
+                                '=XML_ID' => $code
+                            )
+                    )
+                );
                 while ($rowRepo = $res->fetch()) {
                     $codeToDelete[] = 'repo_' . $rowRepo['ID'];
                 }
@@ -279,9 +288,11 @@ class Repo
                         $app['PRICE'] = $data['PRICE'];
                     }
                 }
-                $updates = Client::getUpdates(array(
-                    $code => $appLocal['VERSION']
-                ));
+                $updates = Client::getUpdates(
+                    array(
+                        $code => $appLocal['VERSION']
+                    )
+                );
                 if (
                     isset($updates['ITEMS'][0]['VERSIONS']) &&
                     is_array($updates['ITEMS'][0]['VERSIONS'])
@@ -319,22 +330,24 @@ class Repo
             $fields['APP_ID'] = $app['ID'];
         }
 
-        $res = Placement::getList(array(
-            'select' => array(
-                'ID'
-            ),
-            'filter' => array(
-                'APP_ID' => isset($fields['APP_ID'])
-                    ? $fields['APP_ID']
-                    : false,
-                'PLACEMENT' => isset($fields['PLACEMENT'])
-                    ? $fields['PLACEMENT']
-                    : false,
-                'PLACEMENT_HANDLER' => isset($fields['PLACEMENT_HANDLER'])
-                    ? $fields['PLACEMENT_HANDLER']
-                    : false
+        $res = Placement::getList(
+            array(
+                'select' => array(
+                    'ID'
+                ),
+                'filter' => array(
+                    'APP_ID' => isset($fields['APP_ID'])
+                        ? $fields['APP_ID']
+                        : false,
+                    'PLACEMENT' => isset($fields['PLACEMENT'])
+                        ? $fields['PLACEMENT']
+                        : false,
+                    'PLACEMENT_HANDLER' => isset($fields['PLACEMENT_HANDLER'])
+                        ? $fields['PLACEMENT_HANDLER']
+                        : false
+                )
             )
-        ));
+        );
         // add, if not exist
         if (!$res->fetch()) {
             if (\Bitrix\Main\Loader::includeModule('rest')) {
@@ -475,7 +488,7 @@ class Repo
             if (isset($row['DATE_MODIFY'])) {
                 $row['DATE_MODIFY'] = (string)$row['DATE_MODIFY'];
             }
-            $row['MANIFEST'] = unserialize($row['MANIFEST']);
+            $row['MANIFEST'] = unserialize($row['MANIFEST'], ['allowed_classes' => false]);
             $data[] = $row;
         }
         $result->setResult($data);

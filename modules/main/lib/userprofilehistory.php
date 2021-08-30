@@ -10,6 +10,11 @@ namespace Bitrix\Main;
 
 use Bitrix\Main\Entity;
 
+/**
+ * @internal
+ * Class UserProfileHistoryTable
+ * @package Bitrix\Main
+ */
 class UserProfileHistoryTable extends Entity\DataManager
 {
     const TYPE_ADD = 1;
@@ -24,19 +29,25 @@ class UserProfileHistoryTable extends Entity\DataManager
     public static function getMap()
     {
         return array(
-            new Entity\IntegerField("ID", array(
+            new Entity\IntegerField(
+                "ID", array(
                 'primary' => true,
                 'autocomplete' => true,
-            )),
-            new Entity\IntegerField("USER_ID", array(
+            )
+            ),
+            new Entity\IntegerField(
+                "USER_ID", array(
                 'required' => true,
-            )),
+            )
+            ),
             new Entity\IntegerField("EVENT_TYPE"),
-            new Entity\DatetimeField("DATE_INSERT", array(
+            new Entity\DatetimeField(
+                "DATE_INSERT", array(
                 'default_value' => function () {
                     return new Type\DateTime();
                 }
-            )),
+            )
+            ),
             new Entity\StringField("REMOTE_ADDR"),
             new Entity\TextField('USER_AGENT'),
             new Entity\TextField('REQUEST_URI'),
@@ -91,23 +102,27 @@ class UserProfileHistoryTable extends Entity\DataManager
         $result = null;
 
         if (!empty($changedFields) || $type <> self::TYPE_UPDATE) {
-            $result = static::add(array(
-                "USER_ID" => $userId,
-                "EVENT_TYPE" => $type,
-                "REMOTE_ADDR" => $remoteAddr,
-                "USER_AGENT" => $userAgent,
-                "REQUEST_URI" => $url,
-                "UPDATED_BY_ID" => $updatedBy,
-            ));
+            $result = static::add(
+                array(
+                    "USER_ID" => $userId,
+                    "EVENT_TYPE" => $type,
+                    "REMOTE_ADDR" => $remoteAddr,
+                    "USER_AGENT" => $userAgent,
+                    "REQUEST_URI" => $url,
+                    "UPDATED_BY_ID" => $updatedBy,
+                )
+            );
         }
 
         if (!empty($changedFields) && $result->isSuccess()) {
             foreach ($changedFields as $value) {
-                UserProfileRecordTable::add(array(
-                    "HISTORY_ID" => $result->getId(),
-                    "FIELD" => $value["FIELD"],
-                    "DATA" => $value["DATA"],
-                ));
+                UserProfileRecordTable::add(
+                    array(
+                        "HISTORY_ID" => $result->getId(),
+                        "FIELD" => $value["FIELD"],
+                        "DATA" => $value["DATA"],
+                    )
+                );
             }
         }
 
@@ -116,15 +131,33 @@ class UserProfileHistoryTable extends Entity\DataManager
 
     public static function deleteByUser($userId)
     {
-        $userId = intval($userId);
+        static::deleteByFilter(["=USER_ID" => $userId]);
+    }
 
-        UserProfileRecordTable::deleteByUser($userId);
+    /**
+     * @param array $filter
+     */
+    public static function deleteByFilter(array $filter)
+    {
+        if (empty($filter)) {
+            throw new ArgumentException(
+                "Deleting by empty filter is not allowed, use truncate (b_user_profile_history).", "filter"
+            );
+        }
 
         $entity = static::getEntity();
-        $conn = $entity->getConnection();
 
-        $conn->queryExecute("DELETE FROM b_user_profile_history WHERE USER_ID = {$userId}");
+        $where = Entity\Query::buildFilterSql($entity, $filter);
 
-        $entity->cleanCache();
+        if ($where <> '') {
+            $where = "WHERE " . $where;
+
+            UserProfileRecordTable::deleteByHistoryFilter($where);
+
+            $conn = $entity->getConnection();
+            $conn->query("DELETE FROM b_user_profile_history {$where}");
+
+            $entity->cleanCache();
+        }
     }
 }

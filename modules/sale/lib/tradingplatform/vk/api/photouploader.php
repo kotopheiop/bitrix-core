@@ -130,24 +130,35 @@ class PhotoUploader
 
             $uploadServer = $this->api->run($this->params['uploadServerMethod'], $getServerParams);
 //			todo: may be this error in upload server response
-            $this->logger->addLog("Get photo upload server", [
-                'PARAMS' => $getServerParams,
-                'RESULT' => $uploadServer,
-            ]);
+            $this->logger->addLog(
+                "Get photo upload server",
+                [
+                    'PARAMS' => $getServerParams,
+                    'RESULT' => $uploadServer,
+                ]
+            );
             $uploadServer = $uploadServer["upload_url"];
 
 
 //			UPLOAD photo by http
-            $this->logger->addLog("Upload photo HTTP before", array(
-                "UPLOAD_TYPE" => $this->type,
-                "ITEM" => array_key_exists("BX_ID", $item) ?
-                    $item["BX_ID"] . ': ' . $item["NAME"] :
-                    $item["SECTION_ID"] . ': ' . $item["TITLE"],
-                "PHOTO_BX_ID" => array_key_exists("PHOTO_MAIN_BX_ID",
-                    $item) ? $item["PHOTO_MAIN_BX_ID"] : $item["PHOTO_BX_ID"],
-                "PHOTO_URL" => array_key_exists("PHOTO_MAIN_URL", $item) ? $item["PHOTO_MAIN_URL"] : $item["PHOTO_URL"],
-                "PHOTOS" => $item["PHOTOS"]    //only for products
-            ));
+            $this->logger->addLog(
+                "Upload photo HTTP before",
+                array(
+                    "UPLOAD_TYPE" => $this->type,
+                    "ITEM" => array_key_exists("BX_ID", $item) ?
+                        $item["BX_ID"] . ': ' . $item["NAME"] :
+                        $item["SECTION_ID"] . ': ' . $item["TITLE"],
+                    "PHOTO_BX_ID" => array_key_exists(
+                        "PHOTO_MAIN_BX_ID",
+                        $item
+                    ) ? $item["PHOTO_MAIN_BX_ID"] : $item["PHOTO_BX_ID"],
+                    "PHOTO_URL" => array_key_exists(
+                        "PHOTO_MAIN_URL",
+                        $item
+                    ) ? $item["PHOTO_MAIN_URL"] : $item["PHOTO_URL"],
+                    "PHOTOS" => $item["PHOTOS"]    //only for products
+                )
+            );
             $uploadHttpResult = $this->uploadHttp($item, $uploadServer);
 //			if not response - was be ERROR in http upload. SKIP saving
             if ($uploadHttpResult === false) {
@@ -202,11 +213,14 @@ class PhotoUploader
         $http->setHeader('Content-type', 'multipart/form-data; boundary=' . $boundary);
         $http->setHeader('Content-length', \Bitrix\Main\Text\BinaryString::getLength($request));
 
-        $this->logger->addLog("Upload photo HTTP params", [
-            'SERVER' => $uploadServer,
-            'PARAMS' => $postParams,
-            'FILE_OK' => $file ? 'Y' : 'N',
-        ]);
+        $this->logger->addLog(
+            "Upload photo HTTP params",
+            [
+                'SERVER' => $uploadServer,
+                'PARAMS' => $postParams,
+                'FILE_OK' => $file ? 'Y' : 'N',
+            ]
+        );
         $result = $http->post($uploadServer, $request);
 
         $result = Json::decode($result);
@@ -248,10 +262,12 @@ class PhotoUploader
 
         // for product photo we need more params
         if ($this->params['saveMethod'] == "photos.saveMarketPhoto") {
-            if (isset($uploadResult["crop_hash"]) && $uploadResult["crop_hash"])
+            if (isset($uploadResult["crop_hash"]) && $uploadResult["crop_hash"]) {
                 $photoSaveParams["crop_hash"] = $uploadResult["crop_hash"];
-            if (isset($uploadResult["crop_data"]) && $uploadResult["crop_data"])
+            }
+            if (isset($uploadResult["crop_data"]) && $uploadResult["crop_data"]) {
                 $photoSaveParams["crop_data"] = $uploadResult["crop_data"];
+            }
         }
 
         return $this->api->run($this->params['saveMethod'], $photoSaveParams);

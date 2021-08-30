@@ -10,7 +10,9 @@ $newClassFile = $_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/lib/composite/
 if (!class_exists($oldClassName, false)) {
     if (class_exists($newClassName, false)) {
         class_alias($newClassName, $oldClassName, false);
-    } else if (file_exists($newClassFile)) {
-        require_once($newClassFile);
+    } else {
+        if (file_exists($newClassFile)) {
+            require_once($newClassFile);
+        }
     }
 }

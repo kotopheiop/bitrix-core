@@ -13,14 +13,14 @@ Loc::loadMessages(__FILE__);
 /** @internal */
 final class Handlers
 {
-    static public function onGetCounterTypes()
+    public static function onGetCounterTypes()
     {
         return array(
             'conversion_visit_day' => array('MODULE' => 'conversion', 'GROUP' => 'day', 'NAME' => 'Day visits'),
         );
     }
 
-    static public function onGetAttributeTypes()
+    public static function onGetAttributeTypes()
     {
         $userAgent = $_SERVER['HTTP_USER_AGENT'];
 
@@ -73,11 +73,13 @@ final class Handlers
                 'GET_VALUES' => function (array $ids) {
                     $values = array();
 
-                    $result = SiteTable::getList(array(
-                        'select' => array('LID', 'NAME'),
-                        'filter' => array('LID' => $ids),
-                        'order' => array('SORT' => 'ASC'),
-                    ));
+                    $result = SiteTable::getList(
+                        array(
+                            'select' => array('LID', 'NAME'),
+                            'filter' => array('LID' => $ids),
+                            'order' => array('SORT' => 'ASC'),
+                        )
+                    );
 
                     while ($row = $result->fetch()) {
                         $values[$row['LID']] = array('NAME' => $row['NAME']);
@@ -230,7 +232,7 @@ final class Handlers
         );
     }
 
-    static public function onSetDayContextAttributes(DayContext $dayContext)
+    public static function onSetDayContextAttributes(DayContext $dayContext)
     {
         foreach (self::onGetAttributeTypes() as $name => $type) {
             if ($setDayContext = $type['SET_DAY_CONTEXT']) {
@@ -253,7 +255,7 @@ final class Handlers
         );
     }
 
-    static public function onProlog()
+    public static function onProlog()
     {
         static $done = false;
         if (!$done) {

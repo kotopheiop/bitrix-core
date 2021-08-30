@@ -76,8 +76,9 @@ class EventMessageThemeCompiler
      */
     public static function getInstance()
     {
-        if (!isset(static::$instance))
+        if (!isset(static::$instance)) {
             throw new ObjectNotFoundException('createInstance() should be called before getInstance()');
+        }
 
         return static::$instance;
     }
@@ -89,8 +90,9 @@ class EventMessageThemeCompiler
      */
     public static function unsetInstance()
     {
-        if (isset(static::$instance))
+        if (isset(static::$instance)) {
             static::$instance = null;
+        }
     }
 
     /**
@@ -235,8 +237,9 @@ class EventMessageThemeCompiler
      */
     public function setStyleArray(array $arPaths, $sort = false)
     {
-        foreach ($arPaths as $path)
+        foreach ($arPaths as $path) {
             $this->setStyle($path, $sort);
+        }
     }
 
     /**
@@ -267,7 +270,7 @@ class EventMessageThemeCompiler
             }
         }
 
-        if (strlen($returnStylesString) > 0) {
+        if ($returnStylesString <> '') {
             $returnStylesString = '<style type="text/css">' . "\r\n" . $returnStylesString . "\r\n" . '</style>';
         }
 
@@ -293,13 +296,17 @@ class EventMessageThemeCompiler
 
     protected function setTheme($site_template_id)
     {
-        if (strlen($site_template_id) > 0) {
+        if ($site_template_id <> '') {
             $result = \CSiteTemplate::GetByID($site_template_id);
             if ($templateFields = $result->Fetch()) {
                 $this->themePath = $templateFields['PATH'];
-                $template_path_header = \Bitrix\Main\Application::getDocumentRoot() . $templateFields['PATH'] . '/header.php';
-                $template_path_footer = \Bitrix\Main\Application::getDocumentRoot() . $templateFields['PATH'] . '/footer.php';
-                if ($templateFields['PATH'] != '' && IO\File::isFileExists($template_path_footer) && IO\File::isFileExists($template_path_header)) {
+                $template_path_header = \Bitrix\Main\Application::getDocumentRoot(
+                    ) . $templateFields['PATH'] . '/header.php';
+                $template_path_footer = \Bitrix\Main\Application::getDocumentRoot(
+                    ) . $templateFields['PATH'] . '/footer.php';
+                if ($templateFields['PATH'] != '' && IO\File::isFileExists(
+                        $template_path_footer
+                    ) && IO\File::isFileExists($template_path_header)) {
                     $this->themeStylesString .= $templateFields['TEMPLATE_STYLES'] . "\r\n";
                     $this->themeStylesString .= $templateFields['STYLES'] . "\r\n";
 
@@ -344,8 +351,9 @@ class EventMessageThemeCompiler
         $resultThemeProlog = '';
         $resultThemeEpilog = '';
 
-        if (!$this->themeProlog && $this->contentTypeHtml)
+        if (!$this->themeProlog && $this->contentTypeHtml) {
             $this->body = '<?=$this->showStyles()?>' . $this->body;
+        }
 
         $resultBody = $this->executePhp($this->body, 100);
         if ($this->themeProlog) {
@@ -389,8 +397,9 @@ class EventMessageThemeCompiler
         $arReplaceStrings = array();
         foreach ($this->replaceCallback as $identificator => $callback) {
             $result = call_user_func_array($callback, array());
-            if ($result === false)
+            if ($result === false) {
                 $result = '';
+            }
 
             $arReplaceIdentificators[] = $identificator;
             $arReplaceStrings[] = $result;
@@ -404,15 +413,22 @@ class EventMessageThemeCompiler
      *
      * @return mixed
      */
-    public static function includeComponent($componentName, $componentTemplate, $arParams = array(), $parentComponent = null, $arFunctionParams = array())
-    {
+    public static function includeComponent(
+        $componentName,
+        $componentTemplate,
+        $arParams = array(),
+        $parentComponent = null,
+        $arFunctionParams = array()
+    ) {
         $componentRelativePath = \CComponentEngine::MakeComponentPath($componentName);
-        if (StrLen($componentRelativePath) <= 0)
-            return False;
+        if ($componentRelativePath == '') {
+            return false;
+        }
 
         if (is_object($parentComponent)) {
-            if (!($parentComponent instanceof \cbitrixcomponent))
+            if (!($parentComponent instanceof \cbitrixcomponent)) {
                 $parentComponent = null;
+            }
         }
 
         $result = null;
@@ -434,8 +450,9 @@ class EventMessageThemeCompiler
                 }
 
                 $arThemeCss = array(); // TODO: use styles array from $component
-                foreach ($arThemeCss as $cssPath)
+                foreach ($arThemeCss as $cssPath) {
                     static::getInstance()->setStyle($cssPath);
+                }
             }
         }
 

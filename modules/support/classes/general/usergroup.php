@@ -1,9 +1,10 @@
-<?
+<?php
+
 IncludeModuleLangFile(__FILE__);
 
 class CSupportUserGroup
 {
-    function GetList($arOrder = array(), $arFilter = array())
+    public static function GetList($arOrder = array(), $arFilter = array())
     {
         global $DB;
 
@@ -44,11 +45,11 @@ class CSupportUserGroup
         if (is_array($arOrder) && count($arOrder) > 0) {
             foreach ($arOrder as $k => $v) {
                 if (array_key_exists($k, $arFields)) {
-                    $v = strtoupper($v);
+                    $v = mb_strtoupper($v);
                     if ($v != 'DESC') {
                         $v = 'ASC';
                     }
-                    if (strlen($strOrder) > 0) {
+                    if ($strOrder <> '') {
                         $strOrder .= ', ';
                     }
                     $strOrder .= $arFields[$k]['TABLE_ALIAS'] . '.' . $arFields[$k]['FIELD_NAME'] . ' ' . $v;
@@ -63,30 +64,30 @@ class CSupportUserGroup
 
         $strQuery = 'SELECT G.* FROM b_ticket_ugroups G';
 
-        if (strlen($where) > 0) {
+        if ($where <> '') {
             $strQuery .= ' WHERE ' . $where;
         }
 
-        if (strlen($strOrder) > 0) {
+        if ($strOrder <> '') {
             $strQuery .= ' ORDER BY ' . $strOrder;
         }
         return $DB->Query($strQuery, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
     }
 
-    function Add($arFields)
+    public static function Add($arFields)
     {
         global $DB, $APPLICATION;
-        if ($this->CheckFields($arFields)) {
+        if (static::CheckFields($arFields)) {
             return $DB->Add('b_ticket_ugroups', $arFields);
         }
         return false;
     }
 
-    function Update($ID, $arFields)
+    public static function Update($ID, $arFields)
     {
         global $DB, $APPLICATION;
         $ID = intval($ID);
-        if ($this->CheckFields($arFields, $ID)) {
+        if (static::CheckFields($arFields, $ID)) {
             $strUpdate = $DB->PrepareUpdate('b_ticket_ugroups', $arFields);
             $DB->Query("UPDATE b_ticket_ugroups SET $strUpdate WHERE ID=$ID");
             return true;
@@ -94,7 +95,7 @@ class CSupportUserGroup
         return false;
     }
 
-    function CheckFields(&$arFields, $ID = 0)
+    public static function CheckFields(&$arFields, $ID = 0)
     {
         global $APPLICATION;
         if ($ID > 0) {
@@ -122,7 +123,7 @@ class CSupportUserGroup
         return true;
     }
 
-    function Delete($ID)
+    public static function Delete($ID)
     {
         global $DB;
         $ID = intval($ID);
@@ -132,25 +133,23 @@ class CSupportUserGroup
         }
     }
 
-    function GetUserGroupList($arOrder = array(), $arFilter = array())
+    public static function GetUserGroupList($arOrder = array(), $arFilter = array())
     {
         return CSupportUser2UserGroup::GetList($arOrder, $arFilter);
     }
 
-    function AddUserGroup($arFields)
+    public static function AddUserGroup($arFields)
     {
         return CSupportUser2UserGroup::Add($arFields);
     }
 
-    function UpdateUserGroup($groupID, $userID, $arFields)
+    public static function UpdateUserGroup($groupID, $userID, $arFields)
     {
         return CSupportUser2UserGroup::Update($groupID, $userID, $arFields);
     }
 
-    function DeleteUserGroup($groupID, $userID)
+    public static function DeleteUserGroup($groupID, $userID)
     {
         return CSupportUser2UserGroup::Delete($groupID, $userID);
     }
 }
-
-?>

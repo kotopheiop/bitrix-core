@@ -10,7 +10,10 @@ use Bitrix\Iblock\ORM\Fields\PropertyReference;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Data\DataManager;
+use Bitrix\Main\ORM\Event;
+use Bitrix\Main\ORM\Fields\BooleanField;
 use Bitrix\Main\ORM\Fields\Relations\CascadePolicy;
+use Bitrix\Main\ORM\Fields\Relations\ManyToMany;
 use Bitrix\Main\ORM\Fields\Relations\OneToMany;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\ORM\Fields\StringField;
@@ -144,6 +147,9 @@ class IblockTable extends DataManager
             ),
             (new StringField('API_CODE'))
                 ->configureSize(50),
+            (new BooleanField('REST_ON'))
+                ->configureValues('N', 'Y')
+                ->configureDefaultValue('N'),
             'NAME' => array(
                 'data_type' => 'string',
                 'required' => true,
@@ -251,7 +257,11 @@ class IblockTable extends DataManager
             ),
             'PROPERTY_INDEX' => array(
                 'data_type' => 'enum',
-                'values' => array(self::PROPERTY_INDEX_DISABLE, self::PROPERTY_INDEX_ENABLE, self::PROPERTY_INDEX_INVALID),
+                'values' => array(
+                    self::PROPERTY_INDEX_DISABLE,
+                    self::PROPERTY_INDEX_ENABLE,
+                    self::PROPERTY_INDEX_INVALID
+                ),
                 'default' => self::PROPERTY_INDEX_DISABLE,
                 'title' => Loc::getMessage('IBLOCK_ENTITY_PROPERTY_INDEX_FIELD'),
             ),
@@ -303,10 +313,12 @@ class IblockTable extends DataManager
             $iblock = $iblockApiCode;
             $iblock->fillApiCode();
         } else {
-            $iblock = IblockTable::getList([
-                'select' => ['ID', 'API_CODE'],
-                'filter' => Query::filter()->where('API_CODE', $iblockApiCode)
-            ])->fetchObject();
+            $iblock = IblockTable::getList(
+                [
+                    'select' => ['ID', 'API_CODE'],
+                    'filter' => Query::filter()->where('API_CODE', $iblockApiCode)
+                ]
+            )->fetchObject();
         }
 
         if (!$iblock || empty($iblock->getApiCode())) {
@@ -317,7 +329,7 @@ class IblockTable extends DataManager
         $iblockNamespace = static::DATA_CLASS_NAMESPACE;
         $iblockDataClassName = $iblock->getEntityDataClassName();
 
-        if (!strlen($iblockDataClassName)) {
+        if ($iblockDataClassName == '') {
             return false;
         }
 
@@ -349,6 +361,21 @@ class IblockTable extends DataManager
         // set iblock to the entity
         $elementEntity->setIblock($iblock);
 
+        // set relation with sections
+        SectionElementTable::getEntity()->addField(
+            (new Reference(
+                'REGULAR_ELEMENT_' . $iblock->getId(), $elementEntity,
+                Join::on('this.IBLOCK_ELEMENT_ID', 'ref.ID')->whereNull('this.ADDITIONAL_PROPERTY_ID')
+            ))
+        );
+
+        $elementEntity->addField(
+            (new ManyToMany('SECTIONS', SectionTable::class))
+                ->configureMediatorEntity(SectionElementTable::class)
+                ->configureLocalReference('REGULAR_ELEMENT_' . $iblock->getId())
+                ->configureRemoteReference('IBLOCK_SECTION')
+        );
+
         //$baseTypeList = \Bitrix\Iblock\Helpers\Admin\Property::getBaseTypeList(true);
         $userTypeList = CIBlockProperty::GetUserType();
 
@@ -359,11 +386,15 @@ class IblockTable extends DataManager
             }
 
             // build property entity with base fields
-            $propertyValueEntity = $property->getValueEntity();
+            $propertyValueEntity = $property->getValueEntity($elementEntity);
 
             // add custom fields
             if (!empty($property->getUserType()) && !empty($userTypeList[$property->getUserType()]['GetORMFields'])) {
-                call_user_func($userTypeList[$property->getUserType()]['GetORMFields'], $propertyValueEntity, $property);
+                call_user_func(
+                    $userTypeList[$property->getUserType()]['GetORMFields'],
+                    $propertyValueEntity,
+                    $property
+                );
             }
 
             // add relations with property entity
@@ -574,5 +605,41 @@ class IblockTable extends DataManager
         return array(
             new Entity\Validator\Length(null, 255),
         );
+    }
+
+    /**
+     * Default onAfterAdd handler. Absolutely necessary.
+     *
+     * @param Event $event Current data for add.
+     * @return void
+     */
+    public static function onAfterAdd(Event $event)
+    {
+        $primary = $event->getParameter('primary');
+        \CIBlock::CleanCache($primary['ID']);
+    }
+
+    /**
+     * Default onAfterUpdate handler. Absolutely necessary.
+     *
+     * @param Event $event Current data for add.
+     * @return void
+     */
+    public static function onAfterUpdate(Event $event)
+    {
+        $primary = $event->getParameter('primary');
+        \CIBlock::CleanCache($primary['ID']);
+    }
+
+    /**
+     * Default onAfterDelete handler. Absolutely necessary.
+     *
+     * @param Event $event Current data for add.
+     * @return void
+     */
+    public static function onAfterDelete(Event $event)
+    {
+        $primary = $event->getParameter('primary');
+        \CIBlock::CleanCache($primary['ID']);
     }
 }

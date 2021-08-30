@@ -18,7 +18,15 @@ if (Main\Loader::includeModule("rest")):
             $filter = (isset($query['filter']) ? $query['filter'] : array());
             $order = (isset($query['order']) ? $query['order'] : array('ID' => 'DESC'));
 
-            static $filterFields = array("USER_ID", "DATE_INSERT", "EVENT_TYPE", "REMOTE_ADDR", "USER_AGENT", "REQUEST_URI", "FIELD");
+            static $filterFields = array(
+                "USER_ID",
+                "DATE_INSERT",
+                "EVENT_TYPE",
+                "REMOTE_ADDR",
+                "USER_AGENT",
+                "REQUEST_URI",
+                "FIELD"
+            );
             static $orderFields = array("ID");
 
             $queryFilter = static::sanitizeFilter(
@@ -32,17 +40,24 @@ if (Main\Loader::includeModule("rest")):
                         case 'USER_ID':
                         case 'FIELD':
                             if ($operation <> '=') {
-                                throw new Rest\RestException("Only '=' operation is allowed for the filter field {$field}.", Rest\RestException::ERROR_ARGUMENT, \CRestServer::STATUS_WRONG_REQUEST);
+                                throw new Rest\RestException(
+                                    "Only '=' operation is allowed for the filter field {$field}.",
+                                    Rest\RestException::ERROR_ARGUMENT,
+                                    \CRestServer::STATUS_WRONG_REQUEST
+                                );
                             }
                             break;
-
                     }
                     return $value;
                 }
             );
 
             if (!isset($queryFilter["=USER_ID"])) {
-                throw new Rest\RestException("USER_ID filter field is required.", Rest\RestException::ERROR_ARGUMENT, \CRestServer::STATUS_WRONG_REQUEST);
+                throw new Rest\RestException(
+                    "USER_ID filter field is required.",
+                    Rest\RestException::ERROR_ARGUMENT,
+                    \CRestServer::STATUS_WRONG_REQUEST
+                );
             }
 
             if (!$USER->CanDoOperation('edit_all_users') && $queryFilter["=USER_ID"] <> $USER->GetID()) {
@@ -58,13 +73,15 @@ if (Main\Loader::includeModule("rest")):
 
             $navParams = static::getNavData($nav, true);
 
-            $dbRes = Main\UserProfileHistoryTable::getList(array(
-                'filter' => $queryFilter,
-                'limit' => $navParams['limit'],
-                'offset' => $navParams['offset'],
-                'count_total' => true,
-                'order' => $order,
-            ));
+            $dbRes = Main\UserProfileHistoryTable::getList(
+                array(
+                    'filter' => $queryFilter,
+                    'limit' => $navParams['limit'],
+                    'offset' => $navParams['offset'],
+                    'count_total' => true,
+                    'order' => $order,
+                )
+            );
 
             $result = array();
             while ($event = $dbRes->fetch()) {
@@ -75,10 +92,13 @@ if (Main\Loader::includeModule("rest")):
                 $result[] = $event;
             }
 
-            return static::setNavData($result, array(
-                "count" => $dbRes->getCount(),
-                "offset" => $navParams['offset']
-            ));
+            return static::setNavData(
+                $result,
+                array(
+                    "count" => $dbRes->getCount(),
+                    "offset" => $navParams['offset']
+                )
+            );
         }
 
         public static function getHistoryFieldsList($query, $nav = 0, \CRestServer $server)
@@ -101,17 +121,24 @@ if (Main\Loader::includeModule("rest")):
                         case 'HISTORY_ID':
                         case 'FIELD':
                             if ($operation <> '=') {
-                                throw new Rest\RestException("Only '=' operation is allowed for the filter field {$field}.", Rest\RestException::ERROR_ARGUMENT, \CRestServer::STATUS_WRONG_REQUEST);
+                                throw new Rest\RestException(
+                                    "Only '=' operation is allowed for the filter field {$field}.",
+                                    Rest\RestException::ERROR_ARGUMENT,
+                                    \CRestServer::STATUS_WRONG_REQUEST
+                                );
                             }
                             break;
-
                     }
                     return $value;
                 }
             );
 
             if (!isset($queryFilter["=HISTORY_ID"])) {
-                throw new Rest\RestException("HISTORY_ID filter field is required.", Rest\RestException::ERROR_ARGUMENT, \CRestServer::STATUS_WRONG_REQUEST);
+                throw new Rest\RestException(
+                    "HISTORY_ID filter field is required.",
+                    Rest\RestException::ERROR_ARGUMENT,
+                    \CRestServer::STATUS_WRONG_REQUEST
+                );
             }
 
             if (!$USER->CanDoOperation('edit_all_users')) {
@@ -120,10 +147,12 @@ if (Main\Loader::includeModule("rest")):
 
             $order = static::sanitizeOrder($order, $orderFields);
 
-            $dbRes = Main\UserProfileRecordTable::getList(array(
-                'filter' => $queryFilter,
-                'order' => $order,
-            ));
+            $dbRes = Main\UserProfileRecordTable::getList(
+                array(
+                    'filter' => $queryFilter,
+                    'order' => $order,
+                )
+            );
 
             $result = $dbRes->fetchAll();
 

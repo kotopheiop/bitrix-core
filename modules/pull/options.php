@@ -15,19 +15,22 @@ $arDefaultValues['default'] = $pull_default_option;
 
 $aTabs = array(
     array(
-        "DIV" => "edit1", "TAB" => GetMessage("PULL_TAB_SETTINGS"), "ICON" => "pull_path", "TITLE" => GetMessage("PULL_TAB_TITLE_SETTINGS"),
+        "DIV" => "edit1",
+        "TAB" => GetMessage("PULL_TAB_SETTINGS"),
+        "ICON" => "pull_path",
+        "TITLE" => GetMessage("PULL_TAB_TITLE_SETTINGS"),
     ),
 );
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 $registrationErrors = [];
-if (strlen($_POST['Update'] . $_GET['RestoreDefaults']) > 0 && check_bitrix_sessid() && $MOD_RIGHT >= 'W') {
-    if (strlen($_GET['RestoreDefaults']) > 0) {
+if ($_POST['Update'] . $_GET['RestoreDefaults'] <> '' && check_bitrix_sessid() && $MOD_RIGHT >= 'W') {
+    if ($_GET['RestoreDefaults'] <> '') {
         $arDefValues = $arDefaultValues['default'];
         foreach ($arDefValues as $key => $value) {
             COption::RemoveOption("pull", $key);
         }
         COption::RemoveOption("pull", 'exclude_sites');
-    } elseif (strlen($_POST['Update']) > 0) {
+    } elseif ($_POST['Update'] <> '') {
         if ($_POST['push_server_mode'] === 'N') {
             if (CPullOptions::GetQueueServerStatus()) {
                 CPullOptions::SendConfigDie();
@@ -35,63 +38,73 @@ if (strlen($_POST['Update'] . $_GET['RestoreDefaults']) > 0 && check_bitrix_sess
             }
             CPullOptions::SetQueueServerMode(CPullOptions::SERVER_MODE_PERSONAL);
             SharedServer\Config::setRegistered(false);
-        } else if ($_POST['push_server_mode'] === CPullOptions::SERVER_MODE_SHARED) {
-            if (!CPullOptions::IsServerShared()) {
-                CPullOptions::SendConfigDie();
-                CPullOptions::SetQueueServerMode(\CPullOptions::SERVER_MODE_SHARED);
-            }
-
-            if (!SharedServer\Config::isRegistered()) {
-                // try to register
-                $preferredServer = $_POST["cloud_server_hostname"] ?? "";
-                $registerResult = \Bitrix\Pull\SharedServer\Client::register($preferredServer);
-                if ($registerResult->isSuccess()) {
-                    CPullOptions::SetQueueServerStatus("Y");
-                    CPullOptions::SetConfigTimestamp();
-                } else {
-                    $registrationErrors = $registerResult->getErrorMessages();
-                }
-            }
         } else {
-            if (CPullOptions::IsServerShared()) {
-                CPullOptions::SendConfigDie();
-                CPullOptions::SetQueueServerMode(CPullOptions::SERVER_MODE_PERSONAL);
-            }
+            if ($_POST['push_server_mode'] === CPullOptions::SERVER_MODE_SHARED) {
+                if (!CPullOptions::IsServerShared()) {
+                    CPullOptions::SendConfigDie();
+                    CPullOptions::SetQueueServerMode(\CPullOptions::SERVER_MODE_SHARED);
+                }
 
-            CPullOptions::SetQueueServerStatus('Y');
-            SharedServer\Config::setRegistered(false);
-            if (CPullOptions::GetSignatureKey() != $_POST['signature_key'] && $_POST['nginx_version'] > 2) {
-                CPullOptions::SetSignatureKey($_POST['signature_key']);
-            }
-            if ($_POST['path_to_publish'] != "" && CPullOptions::GetPublishUrl() != $_POST['path_to_publish']) {
-                CPullOptions::SetPublishUrl($_POST['path_to_publish']);
-            }
-            if ($_POST['path_to_modern_listener'] != "" && CPullOptions::GetListenUrl("") != $_POST['path_to_modern_listener']) {
-                CPullOptions::SetListenUrl($_POST['path_to_modern_listener']);
-            }
-            if ($_POST['path_to_modern_listener_secure'] != "" && CPullOptions::GetListenSecureUrl("") != $_POST['path_to_modern_listener_secure']) {
-                CPullOptions::SetListenSecureUrl($_POST['path_to_modern_listener_secure']);
-            }
-            if ($_POST['path_to_publish_web'] != "" && CPullOptions::GetPublishWebUrl() != $_POST['path_to_publish_web']) {
-                CPullOptions::SetPublishWebUrl($_POST['path_to_publish_web']);
-            }
-            if ($_POST['path_to_publish_web_secure'] != "" && CPullOptions::GetPublishWebSecureUrl() != $_POST['path_to_publish_web_secure']) {
-                CPullOptions::SetPublishWebSecureUrl($_POST['path_to_publish_web_secure']);
-            }
-            if ($_POST['nginx_version'] != "" && CPullOptions::GetQueueServerVersion() != $_POST['nginx_version']) {
-                CPullOptions::SetQueueServerVersion($_POST['nginx_version']);
-            }
-
-            if (isset($_POST['websocket']) || CPullOptions::GetQueueServerVersion() > 2) {
-                CPullOptions::SetWebSocket('Y');
+                if (!SharedServer\Config::isRegistered()) {
+                    // try to register
+                    $preferredServer = $_POST["cloud_server_hostname"] ?? "";
+                    $registerResult = \Bitrix\Pull\SharedServer\Client::register($preferredServer);
+                    if ($registerResult->isSuccess()) {
+                        CPullOptions::SetQueueServerStatus("Y");
+                        CPullOptions::SetConfigTimestamp();
+                    } else {
+                        $registrationErrors = $registerResult->getErrorMessages();
+                    }
+                }
             } else {
-                CPullOptions::SetWebSocket('N');
-            }
-            if ($_POST['path_to_websocket'] != "" && CPullOptions::GetWebSocketUrl() != $_POST['path_to_websocket']) {
-                CPullOptions::SetWebSocketUrl($_POST['path_to_websocket']);
-            }
-            if ($_POST['path_to_websocket_secure'] != "" && CPullOptions::GetWebSocketSecureUrl() != $_POST['path_to_websocket_secure']) {
-                CPullOptions::SetWebSocketSecureUrl($_POST['path_to_websocket_secure']);
+                if (CPullOptions::IsServerShared()) {
+                    CPullOptions::SendConfigDie();
+                    CPullOptions::SetQueueServerMode(CPullOptions::SERVER_MODE_PERSONAL);
+                }
+
+                CPullOptions::SetQueueServerStatus('Y');
+                SharedServer\Config::setRegistered(false);
+                if (CPullOptions::GetSignatureKey() != $_POST['signature_key'] && $_POST['nginx_version'] > 2) {
+                    CPullOptions::SetSignatureKey($_POST['signature_key']);
+                }
+                if ($_POST['path_to_publish'] != "" && CPullOptions::GetPublishUrl() != $_POST['path_to_publish']) {
+                    CPullOptions::SetPublishUrl($_POST['path_to_publish']);
+                }
+                if ($_POST['path_to_modern_listener'] != "" && CPullOptions::GetListenUrl(
+                        ""
+                    ) != $_POST['path_to_modern_listener']) {
+                    CPullOptions::SetListenUrl($_POST['path_to_modern_listener']);
+                }
+                if ($_POST['path_to_modern_listener_secure'] != "" && CPullOptions::GetListenSecureUrl(
+                        ""
+                    ) != $_POST['path_to_modern_listener_secure']) {
+                    CPullOptions::SetListenSecureUrl($_POST['path_to_modern_listener_secure']);
+                }
+                if ($_POST['path_to_publish_web'] != "" && CPullOptions::GetPublishWebUrl(
+                    ) != $_POST['path_to_publish_web']) {
+                    CPullOptions::SetPublishWebUrl($_POST['path_to_publish_web']);
+                }
+                if ($_POST['path_to_publish_web_secure'] != "" && CPullOptions::GetPublishWebSecureUrl(
+                    ) != $_POST['path_to_publish_web_secure']) {
+                    CPullOptions::SetPublishWebSecureUrl($_POST['path_to_publish_web_secure']);
+                }
+                if ($_POST['nginx_version'] != "" && CPullOptions::GetQueueServerVersion() != $_POST['nginx_version']) {
+                    CPullOptions::SetQueueServerVersion($_POST['nginx_version']);
+                }
+
+                if (isset($_POST['websocket']) || CPullOptions::GetQueueServerVersion() > 2) {
+                    CPullOptions::SetWebSocket('Y');
+                } else {
+                    CPullOptions::SetWebSocket('N');
+                }
+                if ($_POST['path_to_websocket'] != "" && CPullOptions::GetWebSocketUrl(
+                    ) != $_POST['path_to_websocket']) {
+                    CPullOptions::SetWebSocketUrl($_POST['path_to_websocket']);
+                }
+                if ($_POST['path_to_websocket_secure'] != "" && CPullOptions::GetWebSocketSecureUrl(
+                    ) != $_POST['path_to_websocket_secure']) {
+                    CPullOptions::SetWebSocketSecureUrl($_POST['path_to_websocket_secure']);
+                }
             }
         }
 
@@ -99,11 +112,13 @@ if (strlen($_POST['Update'] . $_GET['RestoreDefaults']) > 0 && check_bitrix_sess
         CPullOptions::SendConfigDie();
 
         if (isset($_POST['push'])) {
-            if (!CPullOptions::GetPushStatus())
+            if (!CPullOptions::GetPushStatus()) {
                 CPullOptions::SetPushStatus('Y');
+            }
         } else {
-            if (CPullOptions::GetPushStatus())
+            if (CPullOptions::GetPushStatus()) {
                 CPullOptions::SetPushStatus('N');
+            }
         }
 
         if ($_POST['push_message_per_hit'] != "") {
@@ -111,19 +126,22 @@ if (strlen($_POST['Update'] . $_GET['RestoreDefaults']) > 0 && check_bitrix_sess
         }
 
         if (isset($_POST['guest'])) {
-            if (!CPullOptions::GetGuestStatus())
+            if (!CPullOptions::GetGuestStatus()) {
                 CPullOptions::SetGuestStatus('Y');
+            }
         } else {
-            if (CPullOptions::GetGuestStatus())
+            if (CPullOptions::GetGuestStatus()) {
                 CPullOptions::SetGuestStatus('N');
+            }
         }
 
         if (isset($_POST['exclude_sites'])) {
             $arSites = Array();
             foreach ($_POST['exclude_sites'] as $site) {
                 $site = htmlspecialcharsbx(trim($site));
-                if (strlen($site) <= 0)
+                if ($site == '') {
                     continue;
+                }
 
                 $arSites[$site] = $site;
             }
@@ -142,11 +160,12 @@ if (strlen($_POST['Update'] . $_GET['RestoreDefaults']) > 0 && check_bitrix_sess
     CPullOptions::ClearAgent();
     $arDependentModule = Array();
     $ar = CPullOptions::GetDependentModule();
-    foreach ($ar as $key => $value)
+    foreach ($ar as $key => $value) {
         $arDependentModule[] = $value['MODULE_ID'];
+    }
 
 
-    $dbSites = CSite::GetList(($b = ""), ($o = ""), Array("ACTIVE" => "Y"));
+    $dbSites = CSite::GetList('', '', Array("ACTIVE" => "Y"));
     $arSites = array();
     $aSubTabs = array();
     while ($site = $dbSites->Fetch()) {
@@ -178,8 +197,8 @@ if (strlen($_POST['Update'] . $_GET['RestoreDefaults']) > 0 && check_bitrix_sess
     </tr>
     <tr>
         <td align="right" width="50%"><?= GetMessage("PULL_OPTIONS_PUSH") ?>:</td>
-        <td><input id="push_enable" type="checkbox" size="40"
-                   value="Y" <?= (CPullOptions::GetPushStatus() ? ' checked' : '') ?> name="push"></td>
+        <td><input id="push_enable" type="checkbox" size="40" value="Y" <?= (CPullOptions::GetPushStatus(
+            ) ? ' checked' : '') ?> name="push"></td>
     </tr>
     <tr>
         <td align="right" width="50%"><?= GetMessage("PULL_BATCH_MAX_COUNT_MESSAGES"); ?>:</td>
@@ -188,9 +207,9 @@ if (strlen($_POST['Update'] . $_GET['RestoreDefaults']) > 0 && check_bitrix_sess
     </tr>
     <tr>
         <td align="right" width="50%" valign="top"><?= GetMessage("PULL_OPTIONS_GUEST") ?>:</td>
-        <td><input type="checkbox" size="40"
-                   value="Y" <?= (CPullOptions::GetGuestStatus() ? ' checked' : '') ?> <?= (IsModuleInstalled('statistic') ? '' : ' disabled="true') ?>
-                   name="guest" title="<?= htmlspecialcharsEx(GetMessage("PULL_OPTIONS_GUEST_DESC")) ?>"></td>
+        <td><input type="checkbox" size="40" value="Y" <?= (CPullOptions::GetGuestStatus(
+            ) ? ' checked' : '') ?> <?= (IsModuleInstalled('statistic') ? '' : ' disabled="true') ?> name="guest"
+                   title="<?= htmlspecialcharsEx(GetMessage("PULL_OPTIONS_GUEST_DESC")) ?>"></td>
     </tr>
     <tr>
         <td width="40%"></td>
@@ -203,20 +222,23 @@ if (strlen($_POST['Update'] . $_GET['RestoreDefaults']) > 0 && check_bitrix_sess
         </td>
         <td width="60%">
             <select id="push_server_mode" name="push_server_mode">
-                <option value="N" <?= (!\CPullOptions::IsServerShared() && !\CPullOptions::GetQueueServerStatus() ? "selected" : "") ?>>
+                <option value="N" <?= (!\CPullOptions::IsServerShared() && !\CPullOptions::GetQueueServerStatus(
+                ) ? "selected" : "") ?>>
                     <?= Loc::getMessage("PULL_OPTIONS_DO_NOT_USE_PUSH_SERVER") ?>
                 </option>
-                <option value="<?= \CPullOptions::SERVER_MODE_SHARED ?>" <?= (\CPullOptions::IsServerShared() ? "selected" : "") ?>>
+                <option value="<?= \CPullOptions::SERVER_MODE_SHARED ?>" <?= (\CPullOptions::IsServerShared(
+                ) ? "selected" : "") ?>>
                     <?= Loc::getMessage("PULL_OPTIONS_USE_CLOUD_SERVER") ?>
                 </option>
-                <option value="<?= \CPullOptions::SERVER_MODE_PERSONAL ?>" <?= (!\CPullOptions::IsServerShared() && \CPullOptions::GetQueueServerStatus() ? "selected" : "") ?>>
+                <option value="<?= \CPullOptions::SERVER_MODE_PERSONAL ?>" <?= (!\CPullOptions::IsServerShared(
+                ) && \CPullOptions::GetQueueServerStatus() ? "selected" : "") ?>>
                     <?= Loc::getMessage("PULL_OPTIONS_USE_LOCAL_SERVER") ?>
                 </option>
             </select>
         </td>
     </tr>
-    <tbody id="pull_disabled"
-           style="<?= \CPullOptions::IsServerShared() || \CPullOptions::GetQueueServerStatus() ? "display: none" : "" ?>">
+    <tbody id="pull_disabled" style="<?= \CPullOptions::IsServerShared() || \CPullOptions::GetQueueServerStatus(
+    ) ? "display: none" : "" ?>">
     <tr>
         <td colspan="2" align="center">
             <?= BeginNote() ?>
@@ -229,12 +251,18 @@ if (strlen($_POST['Update'] . $_GET['RestoreDefaults']) > 0 && check_bitrix_sess
         <td align="right"><?= Loc::getMessage("PULL_OPTIONS_CLOUD_SERVER_REGISTRATION") ?>:</td>
         <td>
             <? if (SharedServer\Config::isRegistered()): ?>
-                <span style="color:green; font-weight: bold"><?= Loc::getMessage("PULL_OPTIONS_CLOUD_REGISTRATION_ACTIVE") ?></span>
+                <span style="color:green; font-weight: bold"><?= Loc::getMessage(
+                        "PULL_OPTIONS_CLOUD_REGISTRATION_ACTIVE"
+                    ) ?></span>
             <? else: ?>
                 <? if (count($registrationErrors) > 0): ?>
-                    <span style="color:red; font-weight: bold;"><?= Loc::getMessage("PULL_OPTIONS_CLOUD_REGISTRATION_ERROR") ?>: <?= htmlspecialcharsbx($registrationErrors[0]) ?></span>
+                    <span style="color:red; font-weight: bold;"><?= Loc::getMessage(
+                            "PULL_OPTIONS_CLOUD_REGISTRATION_ERROR"
+                        ) ?>: <?= htmlspecialcharsbx($registrationErrors[0]) ?></span>
                 <? else: ?>
-                    <span style="color:red; font-weight: bold;"><?= Loc::getMessage("PULL_OPTIONS_CLOUD_REGISTRATION_INACTIVE") ?></span>
+                    <span style="color:red; font-weight: bold;"><?= Loc::getMessage(
+                            "PULL_OPTIONS_CLOUD_REGISTRATION_INACTIVE"
+                        ) ?></span>
                 <? endif ?>
             <? endif ?>
         </td>
@@ -261,7 +289,10 @@ if (strlen($_POST['Update'] . $_GET['RestoreDefaults']) > 0 && check_bitrix_sess
                         <? endforeach ?>
                     </select>
                 <? else: ?>
-                    <span style="color:red;"><?= Loc::getMessage("PULL_OPTIONS_CLOUD_SERVER_ADDRESS_LIST_ERROR", ["#HOST#" => SharedServer\Config::DEFAULT_SERVER]) ?></span>
+                    <span style="color:red;"><?= Loc::getMessage(
+                            "PULL_OPTIONS_CLOUD_SERVER_ADDRESS_LIST_ERROR",
+                            ["#HOST#" => SharedServer\Config::DEFAULT_SERVER]
+                        ) ?></span>
                 <? endif ?>
             </td>
         </tr>
@@ -282,38 +313,14 @@ if (strlen($_POST['Update'] . $_GET['RestoreDefaults']) > 0 && check_bitrix_sess
             <?= EndNote() ?>
         </td>
     </tr>
-    <tbody id="pull_local_settings"
-           style="<?= \CPullOptions::IsServerShared() || !CPullOptions::GetQueueServerStatus() ? "display: none" : "" ?>">
+    <tbody id="pull_local_settings" style="<?= \CPullOptions::IsServerShared() || !CPullOptions::GetQueueServerStatus(
+    ) ? "display: none" : "" ?>">
     <tr>
-        <td width="40%">
+        <td width="40%" valign="top" style="padding-top:9px">
             <nobr><?= GetMessage("PULL_OPTIONS_NGINX_VERSION") ?></nobr>
             :
         </td>
         <td width="60%">
-            <nobr>
-                <label>
-                    <input type="radio" id="config_nginx_version_1" value="1"
-                           name="nginx_version" <?= (CPullOptions::GetQueueServerVersion() == 1 ? ' checked' : '') ?>>
-                    <?= GetMessage("PULL_OPTIONS_NGINX_VERSION_034") ?>
-                </label>
-            </nobr>
-            <br>
-            <nobr>
-                <label>
-                    <input type="radio" id="config_nginx_version_2" value="2"
-                           name="nginx_version" <?= (CPullOptions::GetQueueServerVersion() == 2 ? ' checked' : '') ?>>
-                    <?= GetMessage("PULL_OPTIONS_NGINX_VERSION_040") ?>
-                </label>
-            </nobr>
-            <br>
-            <nobr>
-                <label>
-                    <input type="radio" id="config_nginx_version_3" value="3"
-                           name="nginx_version" <?= (CPullOptions::GetQueueServerVersion() == 3 ? ' checked' : '') ?>>
-                    <?= GetMessage("PULL_OPTIONS_NGINX_VERSION_710") ?>
-                </label>
-            </nobr>
-            <br>
             <nobr>
                 <label>
                     <input type="radio" id="config_nginx_version_4" value="4"
@@ -322,6 +329,38 @@ if (strlen($_POST['Update'] . $_GET['RestoreDefaults']) > 0 && check_bitrix_sess
                 </label>
             </nobr>
             <br>
+            <br>
+            <div style="border: 1px solid darkred; padding: 10px">
+                <div style="padding-bottom: 5px">
+                    <b><?= GetMessage('PULL_NOTIFY_OUTDATED'); ?></b>
+                </div>
+                <nobr>
+                    <label>
+                        <input type="radio" id="config_nginx_version_3" value="3"
+                               name="nginx_version" <?= (CPullOptions::GetQueueServerVersion(
+                        ) == 3 ? ' checked' : '') ?>>
+                        <?= GetMessage("PULL_OPTIONS_NGINX_VERSION_710") ?>
+                    </label>
+                </nobr>
+                <br>
+                <nobr>
+                    <label>
+                        <input type="radio" id="config_nginx_version_2" value="2"
+                               name="nginx_version" <?= (CPullOptions::GetQueueServerVersion(
+                        ) == 2 ? ' checked' : '') ?>>
+                        <?= GetMessage("PULL_OPTIONS_NGINX_VERSION_040") ?>
+                    </label>
+                </nobr>
+                <br>
+                <nobr>
+                    <label>
+                        <input type="radio" id="config_nginx_version_1" value="1"
+                               name="nginx_version" <?= (CPullOptions::GetQueueServerVersion(
+                        ) == 1 ? ' checked' : '') ?>>
+                        <?= GetMessage("PULL_OPTIONS_NGINX_VERSION_034") ?>
+                    </label>
+                </nobr>
+            </div>
         </td>
     </tr>
     <tr class="heading">
@@ -343,8 +382,9 @@ if (strlen($_POST['Update'] . $_GET['RestoreDefaults']) > 0 && check_bitrix_sess
         <td></td>
         <td>
             <div id="config_signature_key_error"
-                 style="color: darkred; font-weight: bold; <?= (CPullOptions::GetQueueServerStatus() && CPullOptions::GetQueueServerVersion() > 3 && !CPullOptions::GetSignatureKey() ? '' : 'display: none') ?>">
-                <b><?= GetMessage('PULL_OPTIONS_SIGNATURE_KEY_ERROR') ?></b></div>
+                 style="color: darkred; font-weight: bold; <?= (CPullOptions::GetQueueServerStatus(
+                 ) && CPullOptions::GetQueueServerVersion() > 3 && !CPullOptions::GetSignatureKey(
+                 ) ? '' : 'display: none') ?>"><b><?= GetMessage('PULL_OPTIONS_SIGNATURE_KEY_ERROR') ?></b></div>
         </td>
     </tr>
     <tr class="heading">
@@ -354,15 +394,15 @@ if (strlen($_POST['Update'] . $_GET['RestoreDefaults']) > 0 && check_bitrix_sess
         <td><?= GetMessage("PULL_OPTIONS_PATH_TO_PUBLISH_WEB") ?>:</td>
         <td><input id="config_path_to_publish_web" type="text" size="40"
                    value="<?= htmlspecialcharsbx(CPullOptions::GetPublishWebUrl()) ?>"
-                   name="path_to_publish_web" <?= (CPullOptions::GetQueueServerVersion() > 3 ? '' : 'disabled="true"') ?>>
-        </td>
+                   name="path_to_publish_web" <?= (CPullOptions::GetQueueServerVersion(
+            ) > 3 ? '' : 'disabled="true"') ?>></td>
     </tr>
     <tr>
         <td><?= GetMessage("PULL_OPTIONS_PATH_TO_PUBLISH_WEB_SECURE") ?>:</td>
         <td><input id="config_path_to_publish_web_secure" type="text" size="40"
                    value="<?= htmlspecialcharsbx(CPullOptions::GetPublishWebSecureUrl()) ?>"
-                   name="path_to_publish_web_secure" <?= (CPullOptions::GetQueueServerVersion() > 3 ? '' : 'disabled="true"') ?>>
-        </td>
+                   name="path_to_publish_web_secure" <?= (CPullOptions::GetQueueServerVersion(
+            ) > 3 ? '' : 'disabled="true"') ?>></td>
     </tr>
     <tr>
         <td width="40%"></td>
@@ -390,8 +430,8 @@ if (strlen($_POST['Update'] . $_GET['RestoreDefaults']) > 0 && check_bitrix_sess
     <tr>
         <td align="right" width="50%"><?= GetMessage("PULL_OPTIONS_WEBSOCKET") ?>:</td>
         <td><input type="checkbox" size="40" value="Y" <?= (CPullOptions::GetWebSocket() ? ' checked' : '') ?>
-                   id="config_websocket"
-                   name="websocket" <?= (CPullOptions::GetQueueServerVersion() == 2 ? '' : 'disabled="true"') ?>></td>
+                   id="config_websocket" name="websocket" <?= (CPullOptions::GetQueueServerVersion(
+            ) == 2 ? '' : 'disabled="true"') ?>></td>
     </tr>
     <tr>
         <td><?= GetMessage("PULL_OPTIONS_PATH_TO_LISTENER") ?>:</td>
@@ -413,21 +453,23 @@ if (strlen($_POST['Update'] . $_GET['RestoreDefaults']) > 0 && check_bitrix_sess
         </td>
     </tr>
     <? if (count($arSites) > 1 || count($arExcludeSites) > 0): ?>
-        <tr class="heading">
-            <td colspan="2"><b><?= GetMessage('PULL_OPTIONS_HEAD_BLOCK') ?></b></td>
-        </tr>
-        <tr valign="top">
-            <td><?= GetMessage("PULL_OPTIONS_SITES") ?>:</td>
-            <td>
-                <select name="exclude_sites[]" multiple size="4">
-                    <option value=""></option>
-                    <? foreach ($arSites as $site): ?>
-                        <option value="<?= $site['ID'] ?>" <?= (isset($arExcludeSites[$site['ID']]) ? ' selected' : '') ?>><? echo $site['NAME'] . ' [' . $site['ID'] . ']' ?></option>
-                    <? endforeach; ?>
-                </select>
-            </td>
-        </tr>
-    <? endif; ?>
+    <tbody id="pull_disabled_sites">
+    <tr class="heading">
+        <td colspan="2"><b><?= GetMessage('PULL_OPTIONS_HEAD_BLOCK') ?></b></td>
+    </tr>
+    <tr valign="top">
+        <td><?= GetMessage("PULL_OPTIONS_SITES") ?>:</td>
+        <td>
+            <select name="exclude_sites[]" multiple size="4">
+                <option value=""></option>
+                <? foreach ($arSites as $site): ?>
+                    <option value="<?= $site['ID'] ?>" <?= (isset($arExcludeSites[$site['ID']]) ? ' selected' : '') ?>><? echo $site['NAME'] . ' [' . $site['ID'] . ']' ?></option>
+                <? endforeach; ?>
+            </select>
+        </td>
+    </tr>
+    </tbody>
+<? endif; ?>
 
     <? $tabControl->Buttons(); ?>
     <script language="JavaScript">
@@ -440,18 +482,28 @@ if (strlen($_POST['Update'] . $_GET['RestoreDefaults']) > 0 && check_bitrix_sess
             var disabledServerSection = BX("pull_disabled");
             var sharedServerSettings = BX("pull_cloud_settings");
             var localServerSettings = BX("pull_local_settings");
+            var disabledSites = BX("pull_disabled_sites");
             if (mode == "N") {
                 disabledServerSection.style.removeProperty("display");
                 sharedServerSettings.style.display = "none";
                 localServerSettings.style.display = "none";
+                if (disabledSites) {
+                    disabledSites.style.display = "none";
+                }
             } else if (mode == "<?=CPullOptions::SERVER_MODE_PERSONAL?>") {
                 disabledServerSection.style.display = "none";
                 sharedServerSettings.style.display = "none";
                 localServerSettings.style.removeProperty("display");
+                if (disabledSites) {
+                    disabledSites.style.removeProperty("display");
+                }
             } else {
                 disabledServerSection.style.display = "none";
                 sharedServerSettings.style.removeProperty("display");
                 localServerSettings.style.display = "none";
+                if (disabledSites) {
+                    disabledSites.style.removeProperty("display");
+                }
             }
         });
 
@@ -599,7 +651,8 @@ if (strlen($_POST['Update'] . $_GET['RestoreDefaults']) > 0 && check_bitrix_sess
 
         function RestoreDefaults() {
             if (confirm('<?echo AddSlashes(GetMessage('MAIN_HINT_RESTORE_DEFAULTS_WARNING'))?>'))
-                window.location = "<?echo $APPLICATION->GetCurPage()?>?RestoreDefaults=Y&lang=<?echo LANG?>&mid=<?echo urlencode($mid) . "&" . bitrix_sessid_get();?>";
+                window.location = "<?echo $APPLICATION->GetCurPage(
+                )?>?RestoreDefaults=Y&lang=<?echo LANG?>&mid=<?echo urlencode($mid) . "&" . bitrix_sessid_get();?>";
         }
     </script>
     <input type="submit" name="Update" <? if ($MOD_RIGHT < 'W') echo "disabled" ?>

@@ -15,60 +15,73 @@ Loc::loadMessages(__FILE__);
 
 Loader::IncludeModule('conversion');
 
-if ($APPLICATION->GetGroupRight('conversion') < 'R')
+if ($APPLICATION->GetGroupRight('conversion') < 'R') {
     $APPLICATION->AuthForm(Loc::getMessage('ACCESS_DENIED'));
+}
 
 $userOptions = CUserOptions::GetOption('conversion', 'filter', array());
 
 // PERIOD
 
-$from = ($d = $_GET['from'] ?: $userOptions['from']) && Date::isCorrect($d) ? new Date($d) : Date::createFromPhp(new DateTime('first day of last month'));
-$to = ($d = $_GET['to'] ?: $userOptions['to']) && Date::isCorrect($d) ? new Date($d) : Date::createFromPhp(new DateTime('last day of this month'));
+$from = ($d = $_GET['from'] ?: $userOptions['from']) && Date::isCorrect($d) ? new Date($d) : Date::createFromPhp(
+    new DateTime('first day of last month')
+);
+$to = ($d = $_GET['to'] ?: $userOptions['to']) && Date::isCorrect($d) ? new Date($d) : Date::createFromPhp(
+    new DateTime('last day of this month')
+);
 
 // RATES
 
-if (!$rateTypes = RateManager::getTypes())
+if (!$rateTypes = RateManager::getTypes()) {
     die ('No rates available!');
+}
 
 $rateName = $_GET['rate'] ?: $userOptions['rate'];
 
 if (!$rateType = $rateTypes[$rateName]) {
-    list ($rateName, $rateType) = each($rateTypes);
+    $rateName = key($rateTypes);
+    $rateType = current($rateTypes);
 }
 
 // SITES
 
 $sites = array();
 
-$result = SiteTable::getList(array(
-    'select' => array('LID', 'NAME'),
-    'order' => array('DEF' => 'DESC', 'SORT' => 'ASC'),
-));
+$result = SiteTable::getList(
+    array(
+        'select' => array('LID', 'NAME'),
+        'order' => array('DEF' => 'DESC', 'SORT' => 'ASC'),
+    )
+);
 
 while ($row = $result->fetch()) {
     $sites[$row['LID']] = $row['NAME'];
 }
 
-if (!$sites)
+if (!$sites) {
     die ('No sites available!');
+}
 
 $site = $_GET['site'] ?: $userOptions['site'];
 
 if (!$siteName = $sites[$site]) {
-    list ($site, $siteName) = each($sites);
+    $site = key($sites);
+    $siteName = current($sites);
 }
 
 // ATTRIBUTES
 
-if (!$attributeTypes = AttributeManager::getTypes())
+if (!$attributeTypes = AttributeManager::getTypes()) {
     die ('No attributes!');
+}
 
 unset($attributeTypes['conversion_site']);
 
 $attributeName = $_GET['split']; // different split in $userOptions from summary page!
 
 if (!$attributeType = $attributeTypes[$attributeName]) {
-    list ($attributeName, $attributeType) = each($attributeTypes);
+    $attributeName = key($attributeTypes);
+    $attributeType = current($attributeTypes);
 }
 
 $attributeGroupTypes = AttributeGroupManager::getTypes();
@@ -102,7 +115,9 @@ foreach ($attributeTypes as $name => $type) {
         $context->setAttribute($name, $value);
 
         if ($value) {
-            $filterInfo[$type['NAME'] ?: $name] = ($gv = $type['GET_VALUES']) && ($vs = $gv(array($value))) && isset($vs[$value]['NAME']) ? $vs[$value]['NAME'] : htmlspecialcharsbx($value);
+            $filterInfo[$type['NAME'] ?: $name] = ($gv = $type['GET_VALUES']) && ($vs = $gv(
+                array($value)
+            )) && isset($vs[$value]['NAME']) ? $vs[$value]['NAME'] : htmlspecialcharsbx($value);
         } elseif ($g = $type['GROUP']) {
             $filterInfo[isset($attributeGroupTypes[$g]['NAME']) ? $attributeGroupTypes[$g]['NAME'] : $g] = $type['NAME'] ?: $name;
         } else {
@@ -138,15 +153,18 @@ foreach ($attributeTypes as $name => $type) {
 //die;
 
 
-$splitRates = $context->getRates(array($rateName => $rateType), array(
-    'filter' => array(
-        '>=DAY' => $filter['from'],
-        '<=DAY' => $filter['to'],
-    ),
-    'split' => array(
-        'ATTRIBUTE_NAME' => $attributeName,
-    ),
-));
+$splitRates = $context->getRates(
+    array($rateName => $rateType),
+    array(
+        'filter' => array(
+            '>=DAY' => $filter['from'],
+            '<=DAY' => $filter['to'],
+        ),
+        'split' => array(
+            'ATTRIBUTE_NAME' => $attributeName,
+        ),
+    )
+);
 
 $attributeValues = $splitRates ? $attributeType['GET_VALUES'](array_keys($splitRates)) : array();
 
@@ -154,20 +172,31 @@ $attributeValues = $splitRates ? $attributeType['GET_VALUES'](array_keys($splitR
 
 $adminList = new CAdminList('');
 
-$adminList->AddHeaders(array(
-    array('id' => 'TITLE', 'default' => true, 'content' => Loc::getMessage('CONVERSION_DETAILED_HEAD_TITLE')),
-    array('id' => 'CONVERSION', 'default' => true, 'content' => Loc::getMessage('CONVERSION_DETAILED_HEAD_CONVERSION')),
-    array('id' => 'SUM', 'default' => true, 'content' => Loc::getMessage('CONVERSION_DETAILED_HEAD_SUM')),
-    array('id' => 'ACHIEVEMENTS', 'default' => true, 'content' => Loc::getMessage('CONVERSION_DETAILED_HEAD_ACHIEVEMENTS')),
-    array('id' => 'TRAFFIC', 'default' => true, 'content' => Loc::getMessage('CONVERSION_DETAILED_HEAD_TRAFFIC')),
+$adminList->AddHeaders(
+    array(
+        array('id' => 'TITLE', 'default' => true, 'content' => Loc::getMessage('CONVERSION_DETAILED_HEAD_TITLE')),
+        array(
+            'id' => 'CONVERSION',
+            'default' => true,
+            'content' => Loc::getMessage('CONVERSION_DETAILED_HEAD_CONVERSION')
+        ),
+        array('id' => 'SUM', 'default' => true, 'content' => Loc::getMessage('CONVERSION_DETAILED_HEAD_SUM')),
+        array(
+            'id' => 'ACHIEVEMENTS',
+            'default' => true,
+            'content' => Loc::getMessage('CONVERSION_DETAILED_HEAD_ACHIEVEMENTS')
+        ),
+        array('id' => 'TRAFFIC', 'default' => true, 'content' => Loc::getMessage('CONVERSION_DETAILED_HEAD_TRAFFIC')),
 
-));
+    )
+);
 
 foreach ($splitRates as $name => $rates) {
     if (isset($attributeValues[$name]['NAME'])) {
         $name = $attributeValues[$name]['NAME'];
-        if (is_array($name))
+        if (is_array($name)) {
             $name = $name[0];
+        }
     }
 
     $rate = current($rates);
@@ -175,7 +204,12 @@ foreach ($splitRates as $name => $rates) {
     $row =& $adminList->AddRow();
     $row->AddField('TITLE', $name);
     $row->AddField('CONVERSION', number_format($rate['RATE'] * 100, 2) . ' %');
-    $row->AddField('SUM', isset($rate['SUM']) ? (isset($rateType['FORMAT']['SUM']) ? $rateType['FORMAT']['SUM']($rate['SUM']) : $rate['SUM']) : '');
+    $row->AddField(
+        'SUM',
+        isset($rate['SUM']) ? (isset($rateType['FORMAT']['SUM']) ? $rateType['FORMAT']['SUM'](
+            $rate['SUM']
+        ) : $rate['SUM']) : ''
+    );
     $row->AddField('ACHIEVEMENTS', number_format($rate['NUMERATOR']));
     $row->AddField('TRAFFIC', number_format($rate['DENOMINATOR']));
 }
@@ -210,8 +244,12 @@ Bitrix\Conversion\AdminHelpers\renderFilter($filter);
                     Bitrix\Conversion\AdminHelpers\renderSite(sprintf('%s (%s)', $siteName, $site), $menuItems);
 
                     ?>
-                    <div class="adm-profit-title"><?= Loc::getMessage('CONVERSION_DETAILED_FILTER_SPLIT') . ': ' . ($attributeType['NAME'] ?: $attributeName) ?></div>
-                    <div class="adm-profit-title"><?= Loc::getMessage('CONVERSION_DETAILED_FILTER_RATE') . ': ' . ($rateType['NAME'] ?: $rateName) ?></div>
+                    <div class="adm-profit-title"><?= Loc::getMessage(
+                            'CONVERSION_DETAILED_FILTER_SPLIT'
+                        ) . ': ' . ($attributeType['NAME'] ?: $attributeName) ?></div>
+                    <div class="adm-profit-title"><?= Loc::getMessage(
+                            'CONVERSION_DETAILED_FILTER_RATE'
+                        ) . ': ' . ($rateType['NAME'] ?: $rateName) ?></div>
                     <?
 
                     foreach ($filterInfo as $name => $value) {

@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/iblock/prolog.php");
 CModule::IncludeModule('iblock');
@@ -57,19 +58,45 @@ $arFilter = array(
 );
 
 $arHeader = array();
-$arHeader[] = array("id" => "ID", "content" => GetMessage("BX_MOD_CATALOG_ADMIN_CIS_HEAD_ID"), "sort" => "ID", "align" => "right", "default" => true);
-$arHeader[] = array("id" => "IBLOCK_TYPE_ID", "content" => GetMessage("BX_MOD_CATALOG_ADMIN_CIS_HEAD_IBLOCK_TYPE_ID"), "sort" => "IBLOCK_TYPE_ID", "default" => true);
-$arHeader[] = array("id" => "NAME", "content" => GetMessage("BX_MOD_CATALOG_ADMIN_CIS_HEAD_NAME"), "sort" => "NAME", "default" => true);
-$arHeader[] = array("id" => "ACTIVE", "content" => GetMessage("BX_MOD_CATALOG_ADMIN_CIS_HEAD_ACTIVE"), "sort" => "ACTIVE");
-$arHeader[] = array("id" => "XML_ID", "content" => GetMessage("BX_MOD_CATALOG_ADMIN_CIS_HEAD_XML_ID"), "sort" => "XML_ID");
+$arHeader[] = array(
+    "id" => "ID",
+    "content" => GetMessage("BX_MOD_CATALOG_ADMIN_CIS_HEAD_ID"),
+    "sort" => "ID",
+    "align" => "right",
+    "default" => true
+);
+$arHeader[] = array(
+    "id" => "IBLOCK_TYPE_ID",
+    "content" => GetMessage("BX_MOD_CATALOG_ADMIN_CIS_HEAD_IBLOCK_TYPE_ID"),
+    "sort" => "IBLOCK_TYPE_ID",
+    "default" => true
+);
+$arHeader[] = array(
+    "id" => "NAME",
+    "content" => GetMessage("BX_MOD_CATALOG_ADMIN_CIS_HEAD_NAME"),
+    "sort" => "NAME",
+    "default" => true
+);
+$arHeader[] = array(
+    "id" => "ACTIVE",
+    "content" => GetMessage("BX_MOD_CATALOG_ADMIN_CIS_HEAD_ACTIVE"),
+    "sort" => "ACTIVE"
+);
+$arHeader[] = array(
+    "id" => "XML_ID",
+    "content" => GetMessage("BX_MOD_CATALOG_ADMIN_CIS_HEAD_XML_ID"),
+    "sort" => "XML_ID"
+);
 $arHeader[] = array("id" => "CODE", "content" => GetMessage("BX_MOD_CATALOG_ADMIN_CIS_HEAD_CODE"), "sort" => "CODE");
 
 $lAdmin->AddHeaders($arHeader);
 
-if (!isset($by))
+if (!isset($by)) {
     $by = 'ID';
-if (!isset($order))
+}
+if (!isset($order)) {
     $order = 'ASC';
+}
 
 $rsIBlocks = CIBlock::GetList(array($by => $order), $arFilter);
 $rsIBlocks = new CAdminResult($rsIBlocks, $sTableID);
@@ -82,38 +109,54 @@ while ($arRes = $rsIBlocks->GetNext()) {
 
     $row->AddViewField(
         'NAME',
-        $arRes['NAME'] . '<input type="hidden" name="n' . $arRes['ID'] . '" id="name_' . $arRes['ID'] . '" value="' . htmlspecialcharsbx($arRes['NAME']) . '">'
+        $arRes['NAME'] . '<input type="hidden" name="n' . $arRes['ID'] . '" id="name_' . $arRes['ID'] . '" value="' . htmlspecialcharsbx(
+            $arRes['NAME']
+        ) . '">'
     );
     $row->AddViewField("IBLOCK_TYPE_ID", $arRes["IBLOCK_TYPE_ID"]);
     $row->AddCheckField("ACTIVE", false);
     $row->AddViewField("XML_ID", $arRes["XML_ID"]);
     $row->AddViewField("CODE", $arRes["CODE"]);
 
-    $row->AddActions(array(
+    $row->AddActions(
         array(
-            "DEFAULT" => "Y",
-            "TEXT" => GetMessage("BX_MOD_CATALOG_ADMIN_CIS_SELECT"),
-            "ACTION" => "javascript:SelEl('" . CUtil::JSEscape($arRes["ID"]) . "', '" . CUtil::JSEscape($arRes["NAME"]) . "')",
-        ),
-    ));
+            array(
+                "DEFAULT" => "Y",
+                "TEXT" => GetMessage("BX_MOD_CATALOG_ADMIN_CIS_SELECT"),
+                "ACTION" => "javascript:SelEl('" . CUtil::JSEscape($arRes["ID"]) . "', '" . CUtil::JSEscape(
+                        $arRes["NAME"]
+                    ) . "')",
+            ),
+        )
+    );
 }
 
 $lAdmin->AddFooter(
     array(
-        array("title" => GetMessage("BX_MOD_CATALOG_ADMIN_CIS_MAIN_ADMIN_LIST_SELECTED"), "value" => $rsIBlocks->SelectedRowsCount()),
-        array("counter" => true, "title" => GetMessage("BX_MOD_CATALOG_ADMIN_CIS_MAIN_ADMIN_LIST_CHECKED"), "value" => "0"),
+        array(
+            "title" => GetMessage("BX_MOD_CATALOG_ADMIN_CIS_MAIN_ADMIN_LIST_SELECTED"),
+            "value" => $rsIBlocks->SelectedRowsCount()
+        ),
+        array(
+            "counter" => true,
+            "title" => GetMessage("BX_MOD_CATALOG_ADMIN_CIS_MAIN_ADMIN_LIST_CHECKED"),
+            "value" => "0"
+        ),
     )
 );
 
 if ($boolMultiSelect) {
-    $lAdmin->AddGroupActionTable(array(
+    $lAdmin->AddGroupActionTable(
         array(
-            "action" => "SelAll()",
-            "value" => "select",
-            "type" => "button",
-            "name" => GetMessage("BX_MOD_CATALOG_ADMIN_CIS_SELECT"),
-        )
-    ), array("disable_action_target" => true));
+            array(
+                "action" => "SelAll()",
+                "value" => "select",
+                "type" => "button",
+                "name" => GetMessage("BX_MOD_CATALOG_ADMIN_CIS_SELECT"),
+            )
+        ),
+        array("disable_action_target" => true)
+    );
 }
 
 $lAdmin->AddAdminContextMenu(array(), false);

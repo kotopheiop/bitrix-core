@@ -36,8 +36,9 @@ class Currency extends Base\Restriction
             $order = $entity;
         }
 
-        if (!$order)
+        if (!$order) {
             return false;
+        }
 
         return $order->getCurrency();
     }
@@ -82,8 +83,9 @@ class Currency extends Base\Restriction
      */
     public static function check($params, array $restrictionParams, $serviceId = 0)
     {
-        if (isset($restrictionParams) && is_array($restrictionParams['CURRENCY']))
+        if (isset($restrictionParams) && is_array($restrictionParams['CURRENCY'])) {
             return in_array($params, $restrictionParams['CURRENCY']);
+        }
 
         return true;
     }

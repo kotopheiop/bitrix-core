@@ -37,8 +37,8 @@ if (Loader::includeModule('replica')) {
             $dialogId = $params['DIALOG_ID'];
 
             $operation = new \Bitrix\Replica\Db\Execute();
-            if (substr($dialogId, 0, 4) === "chat") {
-                $chatId = intval(substr($dialogId, 4));
+            if (mb_substr($dialogId, 0, 4) === "chat") {
+                $chatId = intval(mb_substr($dialogId, 4));
                 $operation->writeToLog(
                     "StartWriting",
                     array(
@@ -85,14 +85,15 @@ if (Loader::includeModule('replica')) {
             $dialogId = $parameters[1] . $parameters[2];
 
             if ($userId > 0) {
-                if (!\Bitrix\Main\Loader::includeModule('pull'))
+                if (!\Bitrix\Main\Loader::includeModule('pull')) {
                     return;
+                }
 
                 $userName = \Bitrix\Im\User::getInstance($userId)->getFullName();
 
 
-                if (substr($dialogId, 0, 4) == 'chat') {
-                    $chatId = substr($dialogId, 4);
+                if (mb_substr($dialogId, 0, 4) == 'chat') {
+                    $chatId = mb_substr($dialogId, 4);
                     $arRelation = \CIMChat::GetRelationById($chatId);
                     unset($arRelation[$userId]);
 
@@ -124,18 +125,23 @@ if (Loader::includeModule('replica')) {
                     if ($chat['TYPE'] == IM_MESSAGE_OPEN || $chat['TYPE'] == IM_MESSAGE_OPEN_LINE) {
                         \CPullWatch::AddToStack('IM_PUBLIC_' . $chatId, $pullMessage);
                     }
-                } else if (intval($dialogId) > 0) {
-                    \Bitrix\Pull\Event::add($dialogId, Array(
-                        'module_id' => 'im',
-                        'command' => 'startWriting',
-                        'expiry' => 60,
-                        'params' => Array(
-                            'dialogId' => $userId,
-                            'userId' => $userId,
-                            'userName' => $userName
-                        ),
-                        'extra' => \Bitrix\Im\Common::getPullExtra()
-                    ));
+                } else {
+                    if (intval($dialogId) > 0) {
+                        \Bitrix\Pull\Event::add(
+                            $dialogId,
+                            Array(
+                                'module_id' => 'im',
+                                'command' => 'startWriting',
+                                'expiry' => 60,
+                                'params' => Array(
+                                    'dialogId' => $userId,
+                                    'userId' => $userId,
+                                    'userName' => $userName
+                                ),
+                                'extra' => \Bitrix\Im\Common::getPullExtra()
+                            )
+                        );
+                    }
                 }
             }
         }

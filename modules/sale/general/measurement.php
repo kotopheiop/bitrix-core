@@ -1,47 +1,52 @@
-<?
+<?php
 
 class CSaleMeasure
 {
-    function GetList($category = false)
+    public static function GetList($category = false)
     {
         static $arMeasurementsTable;
 
         if (!is_array($arMeasurementsTable)) {
             $tablePath = COption::GetOptionString('sale', 'measurement_path', '/bitrix/modules/sale/measurements.php');
             $fullPath = $_SERVER["DOCUMENT_ROOT"] . $tablePath;
-            if (strlen($tablePath) > 0 && file_exists($fullPath) && !is_dir($fullPath)) {
+            if ($tablePath <> '' && file_exists($fullPath) && !is_dir($fullPath)) {
                 require_once($fullPath);
 
-                if (!is_array($arMeasurementsTable))
+                if (!is_array($arMeasurementsTable)) {
                     return false;
-            } else
+                }
+            } else {
                 return false;
+            }
         }
 
-        if (!$category)
+        if (!$category) {
             return $arMeasurementsTable;
-        else {
+        } else {
             $arList = array();
             foreach ($arMeasurementsTable as $key => $arM) {
-                if ($arM["CATEGORY"] == $category) $arList[$key] = $arM;
+                if ($arM["CATEGORY"] == $category) {
+                    $arList[$key] = $arM;
+                }
             }
             return $arList;
         }
     }
 
-    function Convert($value, $measureFrom, $measureTo = "G")
+    public static function Convert($value, $measureFrom, $measureTo = "G")
     {
-        if (!is_numeric($value))
+        if (!is_numeric($value)) {
             return false;
+        }
 
-        if (!$arMeasurementsTable = CSaleMeasure::GetList())
+        if (!$arMeasurementsTable = CSaleMeasure::GetList()) {
             return false;
+        }
 
-        if (is_set($arMeasurementsTable, $measureFrom) && is_set($arMeasurementsTable, $measureTo))
+        if (is_set($arMeasurementsTable, $measureFrom) && is_set($arMeasurementsTable, $measureTo)) {
             return $value * $arMeasurementsTable[$measureFrom]['KOEF'] / $arMeasurementsTable[$measureTo]['KOEF'];
-        else
+        } else {
             return false;
+        }
     }
 }
-
-?>

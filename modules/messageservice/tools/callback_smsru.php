@@ -1,4 +1,5 @@
 <?
+
 define("NOT_CHECK_PERMISSIONS", true);
 define("EXTRANET_NO_REDIRECT", true);
 define("STOP_STATISTICS", true);
@@ -9,8 +10,9 @@ define('BX_SECURITY_SESSION_READONLY', true);
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_before.php");
 
-if (!isset($_POST['data']) || !is_array($_POST['data']) || !CModule::IncludeModule("messageservice"))
+if (!isset($_POST['data']) || !is_array($_POST['data']) || !CModule::IncludeModule("messageservice")) {
     die();
+}
 
 $smsStatuses = array();
 foreach ($_POST["data"] as $entry) {

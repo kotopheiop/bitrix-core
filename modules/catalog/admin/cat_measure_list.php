@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/catalog/prolog.php");
 global $APPLICATION;
@@ -13,8 +14,9 @@ global $adminSidePanelHelper;
 $publicMode = $adminPage->publicMode;
 $selfFolderUrl = $adminPage->getSelfFolderUrl();
 
-if (!($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_store')))
+if (!($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_store'))) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 CModule::IncludeModule("catalog");
 $bReadOnly = !$USER->CanDoOperation('catalog_store');
 
@@ -22,8 +24,9 @@ IncludeModuleLangFile(__FILE__);
 
 $bCanAdd = true;
 $bExport = false;
-if ($_REQUEST["mode"] == "excel")
+if ($_REQUEST["mode"] == "excel") {
     $bExport = true;
+}
 
 if ($ex = $APPLICATION->GetException()) {
     require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
@@ -47,15 +50,22 @@ if ($lAdmin->EditAction() && !$bReadOnly) {
     foreach ($_POST['FIELDS'] as $ID => $arFields) {
         $ID = (int)$ID;
 
-        if ($ID <= 0 || !$lAdmin->IsUpdated($ID))
+        if ($ID <= 0 || !$lAdmin->IsUpdated($ID)) {
             continue;
+        }
 
         $DB->StartTransaction();
         if (!CCatalogMeasure::update($ID, $arFields)) {
-            if ($ex = $APPLICATION->GetException())
+            if ($ex = $APPLICATION->GetException()) {
                 $lAdmin->AddUpdateError($ex->GetString(), $ID);
-            else
-                $lAdmin->AddUpdateError(GetMessage("ERROR_UPDATING_REC") . " (" . $arFields["ID"] . ", " . $arFields["TITLE"] . ", " . $arFields["SORT"] . ")", $ID);
+            } else {
+                $lAdmin->AddUpdateError(
+                    GetMessage(
+                        "ERROR_UPDATING_REC"
+                    ) . " (" . $arFields["ID"] . ", " . $arFields["TITLE"] . ", " . $arFields["SORT"] . ")",
+                    $ID
+                );
+            }
 
             $DB->Rollback();
         } else {
@@ -67,14 +77,22 @@ if ($lAdmin->EditAction() && !$bReadOnly) {
 if (($arID = $lAdmin->GroupAction()) && !$bReadOnly) {
     if ($_REQUEST['action_target'] == 'selected') {
         $arID = Array();
-        $dbResultList = CCatalogMeasure::getList(array($_REQUEST["by"] => $_REQUEST["order"]), $arFilter, false, false, array('ID'));
-        while ($arResult = $dbResultList->Fetch())
+        $dbResultList = CCatalogMeasure::getList(
+            array($_REQUEST["by"] => $_REQUEST["order"]),
+            $arFilter,
+            false,
+            false,
+            array('ID')
+        );
+        while ($arResult = $dbResultList->Fetch()) {
             $arID[] = $arResult['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
 
         switch ($_REQUEST['action']) {
             case "delete":
@@ -83,10 +101,11 @@ if (($arID = $lAdmin->GroupAction()) && !$bReadOnly) {
                 if (!CCatalogMeasure::delete($ID)) {
                     $DB->Rollback();
 
-                    if ($ex = $APPLICATION->GetException())
+                    if ($ex = $APPLICATION->GetException()) {
                         $lAdmin->AddGroupError($ex->GetString(), $ID);
-                    else
+                    } else {
                         $lAdmin->AddGroupError(GetMessage("ERROR_DELETING_TYPE"), $ID);
+                    }
                 } else {
                     $DB->Commit();
                 }
@@ -109,10 +128,11 @@ $arSelect = array(
     "IS_DEFAULT",
 );
 
-if (array_key_exists("mode", $_REQUEST) && $_REQUEST["mode"] == "excel")
+if (array_key_exists("mode", $_REQUEST) && $_REQUEST["mode"] == "excel") {
     $arNavParams = false;
-else
+} else {
     $arNavParams = array("nPageSize" => CAdminUiResult::GetNavSize($sTableID));
+}
 
 global $by, $order;
 
@@ -127,50 +147,52 @@ $dbResultList = new CCatalogMeasureAdminUiResult($dbResultList, $sTableID);
 $dbResultList->NavStart();
 $lAdmin->SetNavigationParams($dbResultList, array("BASE_LINK" => $selfFolderUrl . "cat_measure_list.php"));
 
-$lAdmin->AddHeaders(array(
+$lAdmin->AddHeaders(
     array(
-        "id" => "ID",
-        "content" => "ID",
-        "sort" => "ID",
-        "default" => true
-    ),
-    array(
-        "id" => "CODE",
-        "content" => GetMessage("CAT_MEASURE_CODE"),
-        "sort" => "CODE",
-        "default" => true
-    ),
-    array(
-        "id" => "MEASURE_TITLE",
-        "content" => GetMessage("CAT_MEASURE_MEASURE_TITLE"),
-        "sort" => "MEASURE_TITLE",
-        "default" => true
-    ),
-    array(
-        "id" => "SYMBOL_RUS",
-        "content" => GetMessage("CAT_MEASURE_SYMBOL_RUS"),
-        "sort" => "SYMBOL_RUS",
-        "default" => true
-    ),
-    array(
-        "id" => "SYMBOL_INTL",
-        "content" => GetMessage("CAT_MEASURE_SYMBOL_INTL"),
-        "sort" => "SYMBOL_INTL",
-        "default" => true
-    ),
-    array(
-        "id" => "SYMBOL_LETTER_INTL",
-        "content" => GetMessage("CAT_MEASURE_SYMBOL_LETTER_INTL"),
-        "sort" => "SYMBOL_LETTER_INTL",
-        "default" => false
-    ),
-    array(
-        "id" => "IS_DEFAULT",
-        "content" => GetMessage("CAT_MEASURE_IS_DEFAULT"),
-        "sort" => "IS_DEFAULT",
-        "default" => true
-    ),
-));
+        array(
+            "id" => "ID",
+            "content" => "ID",
+            "sort" => "ID",
+            "default" => true
+        ),
+        array(
+            "id" => "CODE",
+            "content" => GetMessage("CAT_MEASURE_CODE"),
+            "sort" => "CODE",
+            "default" => true
+        ),
+        array(
+            "id" => "MEASURE_TITLE",
+            "content" => GetMessage("CAT_MEASURE_MEASURE_TITLE"),
+            "sort" => "MEASURE_TITLE",
+            "default" => true
+        ),
+        array(
+            "id" => "SYMBOL_RUS",
+            "content" => GetMessage("CAT_MEASURE_SYMBOL_RUS"),
+            "sort" => "SYMBOL_RUS",
+            "default" => true
+        ),
+        array(
+            "id" => "SYMBOL_INTL",
+            "content" => GetMessage("CAT_MEASURE_SYMBOL_INTL"),
+            "sort" => "SYMBOL_INTL",
+            "default" => true
+        ),
+        array(
+            "id" => "SYMBOL_LETTER_INTL",
+            "content" => GetMessage("CAT_MEASURE_SYMBOL_LETTER_INTL"),
+            "sort" => "SYMBOL_LETTER_INTL",
+            "default" => false
+        ),
+        array(
+            "id" => "IS_DEFAULT",
+            "content" => GetMessage("CAT_MEASURE_IS_DEFAULT"),
+            "sort" => "IS_DEFAULT",
+            "default" => true
+        ),
+    )
+);
 
 $arSelectFieldsMap = array(
     "ID" => false,
@@ -183,8 +205,9 @@ $arSelectFieldsMap = array(
 );
 
 $arSelectFields = $lAdmin->GetVisibleHeaderColumns();
-if (!in_array('ID', $arSelectFields))
+if (!in_array('ID', $arSelectFields)) {
     $arSelectFields[] = 'ID';
+}
 
 $arSelectFieldsMap = array_merge($arSelectFieldsMap, array_fill_keys($arSelectFields, true));
 
@@ -198,13 +221,15 @@ while ($arRes = $dbResultList->Fetch()) {
     $arRes['ID'] = (int)$arRes['ID'];
     if ($arSelectFieldsMap['USER_ID']) {
         $arRes['USER_ID'] = (int)$arRes['USER_ID'];
-        if (0 < $arRes['USER_ID'])
+        if (0 < $arRes['USER_ID']) {
             $arUserID[$arRes['USER_ID']] = true;
+        }
     }
     if ($arSelectFieldsMap['MODIFIED_BY']) {
         $arRes['MODIFIED_BY'] = (int)$arRes['MODIFIED_BY'];
-        if (0 < $arRes['MODIFIED_BY'])
+        if (0 < $arRes['MODIFIED_BY']) {
             $arUserID[$arRes['MODIFIED_BY']] = true;
+        }
     }
 
     $editUrl = $selfFolderUrl . "cat_measure_edit.php?ID=" . $arRes["ID"] . "&lang=" . LANGUAGE_ID;
@@ -212,37 +237,51 @@ while ($arRes = $dbResultList->Fetch()) {
     $arRows[$arRes['ID']] = $row =& $lAdmin->AddRow($arRes['ID'], $arRes, $editUrl);
     $row->AddField("ID", $arRes['ID']);
     if ($bReadOnly) {
-        if ($arSelectFieldsMap['CODE'])
+        if ($arSelectFieldsMap['CODE']) {
             $row->AddField("CODE", false);
-        if ($arSelectFieldsMap['MEASURE_TITLE'])
+        }
+        if ($arSelectFieldsMap['MEASURE_TITLE']) {
             $row->AddInputField("MEASURE_TITLE", false);
-        if ($arSelectFieldsMap['SYMBOL_RUS'])
+        }
+        if ($arSelectFieldsMap['SYMBOL_RUS']) {
             $row->AddInputField("SYMBOL_RUS", false);
-        if ($arSelectFieldsMap['SYMBOL_INTL'])
+        }
+        if ($arSelectFieldsMap['SYMBOL_INTL']) {
             $row->AddInputField("SYMBOL_INTL", false);
-        if ($arSelectFieldsMap['SYMBOL_LETTER_INTL'])
+        }
+        if ($arSelectFieldsMap['SYMBOL_LETTER_INTL']) {
             $row->AddInputField("SYMBOL_LETTER_INTL", false);
-        if ($arSelectFieldsMap['IS_DEFAULT'])
+        }
+        if ($arSelectFieldsMap['IS_DEFAULT']) {
             $row->AddCheckField("IS_DEFAULT", false);
+        }
     } else {
-        if ($arSelectFieldsMap['CODE'])
+        if ($arSelectFieldsMap['CODE']) {
             $row->AddInputField("CODE", false);
-        if ($arSelectFieldsMap['MEASURE_TITLE'])
+        }
+        if ($arSelectFieldsMap['MEASURE_TITLE']) {
             $row->AddInputField("MEASURE_TITLE", array("size" => 30));
-        if ($arSelectFieldsMap['SYMBOL_RUS'])
+        }
+        if ($arSelectFieldsMap['SYMBOL_RUS']) {
             $row->AddInputField("SYMBOL_RUS", array("size" => 8));
-        if ($arSelectFieldsMap['SYMBOL_INTL'])
+        }
+        if ($arSelectFieldsMap['SYMBOL_INTL']) {
             $row->AddInputField("SYMBOL_INTL", array("size" => 8));
-        if ($arSelectFieldsMap['SYMBOL_LETTER_INTL'])
+        }
+        if ($arSelectFieldsMap['SYMBOL_LETTER_INTL']) {
             $row->AddInputField("SYMBOL_LETTER_INTL", array("size" => 8));
-        if ($arSelectFieldsMap['IS_DEFAULT'])
+        }
+        if ($arSelectFieldsMap['IS_DEFAULT']) {
             $row->AddCheckField("IS_DEFAULT", false);
+        }
     }
 
-    if ($arSelectFieldsMap['DATE_CREATE'])
+    if ($arSelectFieldsMap['DATE_CREATE']) {
         $row->AddCalendarField("DATE_CREATE", false);
-    if ($arSelectFieldsMap['DATE_MODIFY'])
+    }
+    if ($arSelectFieldsMap['DATE_MODIFY']) {
         $row->AddCalendarField("DATE_MODIFY", false);
+    }
 
     $arActions = array();
     $arActions[] = array(
@@ -256,32 +295,38 @@ while ($arRes = $dbResultList->Fetch()) {
         $arActions[] = array(
             "ICON" => "delete",
             "TEXT" => GetMessage("CAT_MEASURE_DELETE_ALT"),
-            "ACTION" => "if(confirm('" . GetMessageJS('CAT_MEASURE_DELETE_CONFIRM') . "')) " . $lAdmin->ActionDoGroup($arRes['ID'], "delete")
+            "ACTION" => "if(confirm('" . GetMessageJS('CAT_MEASURE_DELETE_CONFIRM') . "')) " . $lAdmin->ActionDoGroup(
+                    $arRes['ID'],
+                    "delete"
+                )
         );
     }
 
     $row->AddActions($arActions);
 }
-if (isset($row))
+if (isset($row)) {
     unset($row);
+}
 
 if ($arSelectFieldsMap['USER_ID'] || $arSelectFieldsMap['MODIFIED_BY']) {
     if (!empty($arUserID)) {
-        $byUser = 'ID';
-        $byOrder = 'ASC';
         $rsUsers = CUser::GetList(
-            $byUser,
-            $byOrder,
+            'ID',
+            'ASC',
             array('ID' => implode(' | ', array_keys($arUserID))),
             array('FIELDS' => array('ID', 'LOGIN', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'EMAIL'))
         );
         while ($arOneUser = $rsUsers->Fetch()) {
             $arOneUser['ID'] = (int)$arOneUser['ID'];
             $userEdit = $selfFolderUrl . "user_edit.php?lang=" . LANGUAGE_ID . "&ID=" . $arOneUser["ID"];
-            if ($publicMode)
+            if ($publicMode) {
                 $arUserList[$arOneUser['ID']] = CUser::FormatName($strNameFormat, $arOneUser);
-            else
-                $arUserList[$arOneUser['ID']] = '<a href="' . $userEdit . '">' . CUser::FormatName($strNameFormat, $arOneUser) . '</a>';
+            } else {
+                $arUserList[$arOneUser['ID']] = '<a href="' . $userEdit . '">' . CUser::FormatName(
+                        $strNameFormat,
+                        $arOneUser
+                    ) . '</a>';
+            }
         }
     }
 
@@ -301,15 +346,18 @@ if ($arSelectFieldsMap['USER_ID'] || $arSelectFieldsMap['MODIFIED_BY']) {
             $row->AddViewField("MODIFIED_BY", $strModifiedBy);
         }
     }
-    if (isset($row))
+    if (isset($row)) {
         unset($row);
+    }
 }
 
 if (!$bReadOnly) {
-    $lAdmin->AddGroupActionTable([
-        'edit' => true,
-        'delete' => true
-    ]);
+    $lAdmin->AddGroupActionTable(
+        [
+            'edit' => true,
+            'delete' => true
+        ]
+    );
 }
 
 if (!$bReadOnly && $bCanAdd) {

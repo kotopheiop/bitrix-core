@@ -31,11 +31,13 @@ class Actions
             return $result;
         }
 
-        $event = new Event("main", "OnUISelectorActionProcessAjax", array(
+        $event = new Event(
+            "main", "OnUISelectorActionProcessAjax", array(
             'action' => $action,
             'options' => $options,
             'requestFields' => $requestFields
-        ));
+        )
+        );
         $event->send();
         $eventResultList = $event->getResults();
 

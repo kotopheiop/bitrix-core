@@ -1,4 +1,5 @@
 <?
+
 define("ADMIN_MODULE_NAME", "clouds");
 
 /*.require_module 'standard';.*/
@@ -6,12 +7,14 @@ define("ADMIN_MODULE_NAME", "clouds");
 /*.require_module 'bitrix_main_include_prolog_admin_before';.*/
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
-if (!$USER->CanDoOperation("clouds_browse"))
+if (!$USER->CanDoOperation("clouds_browse")) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 /*.require_module 'bitrix_clouds_include';.*/
-if (!CModule::IncludeModule('clouds'))
+if (!CModule::IncludeModule('clouds')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 
@@ -19,10 +22,12 @@ $obBucket = new CCloudStorageBucket(intval($_GET["bucket"]), false);
 if (!$obBucket->Init()) {
     $APPLICATION->SetTitle($obBucket->BUCKET);
     require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
-    $message = new CAdminMessage(array(
-        "MESSAGE" => GetMessage("CLO_STORAGE_FILE_LIST_ERROR"),
-        "DETAILS" => GetMessage("CLO_STORAGE_FILE_UNKNOWN_ERROR", array("#CODE#" => "L00")),
-    ));
+    $message = new CAdminMessage(
+        array(
+            "MESSAGE" => GetMessage("CLO_STORAGE_FILE_LIST_ERROR"),
+            "DETAILS" => GetMessage("CLO_STORAGE_FILE_UNKNOWN_ERROR", array("#CODE#" => "L00")),
+        )
+    );
     echo $message->Show();
     require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_admin.php");
     die();
@@ -43,17 +48,23 @@ $arFilterFields = Array(
 );
 $lAdmin->InitFilter($arFilterFields);
 
+if (mb_strpos($find_name, "*") !== false) {
+    $re_find_name = "#^" . str_replace(array("\\*", "\\?"), array(".*", ".{0,1}"), preg_quote($find_name, "#")) . "$#";
+} else {
+    $re_find_name = "#" . preg_quote($find_name, "#") . "#";
+}
+
 if ($arID = $lAdmin->GroupAction()) {
     if ($_REQUEST['action_target'] == 'selected') {
         $arFiles = $obBucket->ListFiles($path);
         if (is_array($arFiles)) {
             foreach ($arFiles["file"] as $i => $file) {
-                if ($find_name == "" || strpos($file, $find_name) !== false) {
+                if ($find_name == "" || preg_match($re_find_name, $file)) {
                     $arID[] = "F" . urlencode($file);
                 }
             }
             foreach ($arFiles["dir"] as $i => $file) {
-                if ($find_name == "" || strpos($file, $find_name) !== false) {
+                if ($find_name == "" || preg_match($re_find_name, $file)) {
                     $arID[] = "D" . urlencode($file);
                 }
             }
@@ -64,37 +75,52 @@ if ($arID = $lAdmin->GroupAction()) {
 $action = isset($_REQUEST["action"]) && is_string($_REQUEST["action"]) ? "$_REQUEST[action]" : "";
 if ($USER->CanDoOperation("clouds_upload") && is_array($arID)) {
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
         $ID = urldecode($ID);
 
         switch ($action) {
             case "delete":
-                if (substr($ID, 0, 1) === "F") {
-                    $file_size = $obBucket->GetFileSize($path . substr($ID, 1));
-                    if (!$obBucket->DeleteFile($path . substr($ID, 1))) {
+                if (mb_substr($ID, 0, 1) === "F") {
+                    $file_size = $obBucket->GetFileSize($path . mb_substr($ID, 1));
+                    if (!$obBucket->DeleteFile($path . mb_substr($ID, 1))) {
                         $e = $APPLICATION->GetException();
-                        if (is_object($e))
+                        if (is_object($e)) {
                             $lAdmin->AddUpdateError($e->GetString(), $ID);
-                        else
-                            $lAdmin->AddUpdateError(GetMessage("CLO_STORAGE_FILE_UNKNOWN_ERROR", array(
-                                "#CODE#" => "D01",
-                            )), $ID);
+                        } else {
+                            $lAdmin->AddUpdateError(
+                                GetMessage(
+                                    "CLO_STORAGE_FILE_UNKNOWN_ERROR",
+                                    array(
+                                        "#CODE#" => "D01",
+                                    )
+                                ),
+                                $ID
+                            );
+                        }
                     } else {
                         $obBucket->DecFileCounter($file_size);
                     }
-                } elseif (substr($ID, 0, 1) === "D") {
-                    $arFiles = $obBucket->ListFiles($path . substr($ID, 1), true);
+                } elseif (mb_substr($ID, 0, 1) === "D") {
+                    $arFiles = $obBucket->ListFiles($path . mb_substr($ID, 1), true);
                     if (is_array($arFiles)) {
                         foreach ($arFiles["file"] as $i => $file) {
-                            if (!$obBucket->DeleteFile($path . substr($ID, 1) . "/" . $file)) {
+                            if (!$obBucket->DeleteFile($path . mb_substr($ID, 1) . "/" . $file)) {
                                 $e = $APPLICATION->GetException();
-                                if (is_object($e))
+                                if (is_object($e)) {
                                     $lAdmin->AddUpdateError($e->GetString(), $ID);
-                                else
-                                    $lAdmin->AddUpdateError(GetMessage("CLO_STORAGE_FILE_UNKNOWN_ERROR", array(
-                                        "#CODE#" => "D02",
-                                    )), $ID);
+                                } else {
+                                    $lAdmin->AddUpdateError(
+                                        GetMessage(
+                                            "CLO_STORAGE_FILE_UNKNOWN_ERROR",
+                                            array(
+                                                "#CODE#" => "D02",
+                                            )
+                                        ),
+                                        $ID
+                                    );
+                                }
                                 break;
                             } else {
                                 $obBucket->DecFileCounter($arFiles["file_size"][$i]);
@@ -102,12 +128,19 @@ if ($USER->CanDoOperation("clouds_upload") && is_array($arID)) {
                         }
                     } else {
                         $e = $APPLICATION->GetException();
-                        if (is_object($e))
+                        if (is_object($e)) {
                             $lAdmin->AddUpdateError($e->GetString(), $ID);
-                        else
-                            $lAdmin->AddUpdateError(GetMessage("CLO_STORAGE_FILE_UNKNOWN_ERROR", array(
-                                "#CODE#" => "D03",
-                            )), $ID);
+                        } else {
+                            $lAdmin->AddUpdateError(
+                                GetMessage(
+                                    "CLO_STORAGE_FILE_UNKNOWN_ERROR",
+                                    array(
+                                        "#CODE#" => "D03",
+                                    )
+                                ),
+                                $ID
+                            );
+                        }
                         break;
                     }
                 }
@@ -125,8 +158,9 @@ if ($USER->CanDoOperation("clouds_upload") && is_array($arID)) {
                     $filePath = preg_replace("#[\\\\\\/]+#", "/", $filePath);
 
                     if (isset($_REQUEST["chunk_start"]) && $_REQUEST["chunk_start"] == 0) {
-                        if ($obBucket->FileExists($filePath))
+                        if ($obBucket->FileExists($filePath)) {
                             $strError = GetMessage("CLO_STORAGE_FILE_EXISTS_ERROR");
+                        }
                     }
                 }
 
@@ -138,8 +172,9 @@ if ($USER->CanDoOperation("clouds_upload") && is_array($arID)) {
                     // create a temp file where to save data from the input stream
                     $fileHandler = fopen($absPath, "ab");
                     // save data from the input stream
-                    while (!feof($inputHandler))
+                    while (!feof($inputHandler)) {
                         fwrite($fileHandler, fread($inputHandler, 1024 * 1024));
+                    }
                     fclose($fileHandler);
                 } else {
                     @unlink($absPath);
@@ -186,8 +221,9 @@ if ($USER->CanDoOperation("clouds_upload") && is_array($arID)) {
                                 <script>
                                     readFileChunk(0, <?echo $PHPchunkSize - 1?>);
                                 </script><?
-                            } else
+                            } else {
                                 $strError = GetMessage("CLO_STORAGE_FILE_UNKNOWN_ERROR", array("#CODE#" => "e01"));
+                            }
                         } else {
                             $pos = $obUpload->getPos();
                             if ($pos > $fileSize) {
@@ -214,7 +250,10 @@ if ($USER->CanDoOperation("clouds_upload") && is_array($arID)) {
                                     $moveResult = CCloudStorage::FILE_PARTLY_UPLOADED;
                                     ?>
                                     <script>
-                                        readFileChunk(<?echo $bytes?>, <?echo min($fileSize - 1, $bytes + $PHPchunkSize - 1)?>);
+                                        readFileChunk(<?echo $bytes?>, <?echo min(
+                                            $fileSize - 1,
+                                            $bytes + $PHPchunkSize - 1
+                                        )?>);
                                     </script><?
                                 } else {
                                     $part = file_get_contents($absPath);
@@ -227,12 +266,18 @@ if ($USER->CanDoOperation("clouds_upload") && is_array($arID)) {
                                         }
                                     }
 
-                                    if ($moveResult == CCloudStorage::FILE_SKIPPED)
-                                        $strError = GetMessage("CLO_STORAGE_FILE_UNKNOWN_ERROR", array("#CODE#" => "e03"));
-                                    else {
+                                    if ($moveResult == CCloudStorage::FILE_SKIPPED) {
+                                        $strError = GetMessage(
+                                            "CLO_STORAGE_FILE_UNKNOWN_ERROR",
+                                            array("#CODE#" => "e03")
+                                        );
+                                    } else {
                                         ?>
                                         <script>
-                                            readFileChunk(<?echo $obUpload->getPos()?>, <?echo min($fileSize - 1, $obUpload->getPos() + $PHPchunkSize - 1)?>);
+                                            readFileChunk(<?echo $obUpload->getPos()?>, <?echo min(
+                                                $fileSize - 1,
+                                                $obUpload->getPos() + $PHPchunkSize - 1
+                                            )?>);
                                         </script><?
                                         @unlink($absPath);
                                     }
@@ -244,8 +289,9 @@ if ($USER->CanDoOperation("clouds_upload") && is_array($arID)) {
 
                 if ($strError != "") {
                     $e = $APPLICATION->GetException();
-                    if (!is_object($e))
+                    if (!is_object($e)) {
                         $e = new CApplicationException($strError);
+                    }
                     $message = new CAdminMessage(GetMessage("CLO_STORAGE_FILE_UPLOAD_ERROR"), $e);
                 }
 
@@ -253,36 +299,54 @@ if ($USER->CanDoOperation("clouds_upload") && is_array($arID)) {
                     echo $message->Show();
                     $message = null;
                 } elseif ($moveResult == CCloudStorage::FILE_PARTLY_UPLOADED) {
-                    CAdminMessage::ShowMessage(array(
-                        "TYPE" => "PROGRESS",
-                        "MESSAGE" => GetMessage("CLO_STORAGE_FILE_UPLOAD_IN_PROGRESS"),
-                        "DETAILS" => GetMessage("CLO_STORAGE_FILE_UPLOAD_PROGRESS", array(
-                                "#bytes#" => CFile::FormatSize($bytes),
-                                "#file_size#" => CFile::FormatSize($fileSize),
-                            )) . "#PROGRESS_BAR#",
-                        "HTML" => true,
-                        "PROGRESS_TOTAL" => $fileSize,
-                        "PROGRESS_VALUE" => $bytes,
-                        "BUTTONS" => array(
-                            array(
-                                "VALUE" => GetMessage("CLO_STORAGE_FILE_STOP"),
-                                "ONCLICK" => 'window.location = \'' . CUtil::AddSlashes("/bitrix/admin/clouds_file_list.php?lang=" . urlencode(LANGUAGE_ID) . "&bucket=" . urlencode($obBucket->ID) . "&path=" . urlencode($path)) . '\'',
+                    CAdminMessage::ShowMessage(
+                        array(
+                            "TYPE" => "PROGRESS",
+                            "MESSAGE" => GetMessage("CLO_STORAGE_FILE_UPLOAD_IN_PROGRESS"),
+                            "DETAILS" => GetMessage(
+                                    "CLO_STORAGE_FILE_UPLOAD_PROGRESS",
+                                    array(
+                                        "#bytes#" => CFile::FormatSize($bytes),
+                                        "#file_size#" => CFile::FormatSize($fileSize),
+                                    )
+                                ) . "#PROGRESS_BAR#",
+                            "HTML" => true,
+                            "PROGRESS_TOTAL" => $fileSize,
+                            "PROGRESS_VALUE" => $bytes,
+                            "BUTTONS" => array(
+                                array(
+                                    "VALUE" => GetMessage("CLO_STORAGE_FILE_STOP"),
+                                    "ONCLICK" => 'window.location = \'' . CUtil::AddSlashes(
+                                            "/bitrix/admin/clouds_file_list.php?lang=" . urlencode(
+                                                LANGUAGE_ID
+                                            ) . "&bucket=" . urlencode($obBucket->ID) . "&path=" . urlencode($path)
+                                        ) . '\'',
+                                ),
                             ),
-                        ),
-                    ));
+                        )
+                    );
                 } else {
-                    CAdminMessage::ShowMessage(array(
-                        "MESSAGE" => GetMessage("CLO_STORAGE_FILE_UPLOAD_DONE"),
-                        "DETAILS" => GetMessage("CLO_STORAGE_FILE_UPLOAD_PROGRESS", array(
-                            "#bytes#" => CFile::FormatSize($bytes),
-                            "#file_size#" => CFile::FormatSize($fileSize),
-                        )),
-                        "HTML" => true,
-                        "TYPE" => "OK",
-                    ));
+                    CAdminMessage::ShowMessage(
+                        array(
+                            "MESSAGE" => GetMessage("CLO_STORAGE_FILE_UPLOAD_DONE"),
+                            "DETAILS" => GetMessage(
+                                "CLO_STORAGE_FILE_UPLOAD_PROGRESS",
+                                array(
+                                    "#bytes#" => CFile::FormatSize($bytes),
+                                    "#file_size#" => CFile::FormatSize($fileSize),
+                                )
+                            ),
+                            "HTML" => true,
+                            "TYPE" => "OK",
+                        )
+                    );
                     ?>
                     <script>
-                        <?=$sTableID?>.GetAdminList('<?echo CUtil::JSEscape($APPLICATION->GetCurPage() . '?lang=' . urlencode(LANGUAGE_ID) . '&bucket=' . urlencode($obBucket->ID) . '&path=' . urlencode($path))?>');
+                        <?=$sTableID?>.GetAdminList('<?echo CUtil::JSEscape(
+                            $APPLICATION->GetCurPage() . '?lang=' . urlencode(LANGUAGE_ID) . '&bucket=' . urlencode(
+                                $obBucket->ID
+                            ) . '&path=' . urlencode($path)
+                        )?>');
                     </script><?
                 }
 
@@ -300,37 +364,57 @@ if ($USER->CanDoOperation("clouds_upload") && is_array($arID)) {
 
                         $f = $io->GetFile($_FILES["upload"]["tmp_name"]);
                     } else {
-                        $message = new CAdminMessage(GetMessage("CLO_STORAGE_FILE_UPLOAD_ERROR"), new CApplicationException(GetMessage("CLO_STORAGE_FILE_OPEN_ERROR")));
+                        $message = new CAdminMessage(
+                            GetMessage("CLO_STORAGE_FILE_UPLOAD_ERROR"),
+                            new CApplicationException(
+                                GetMessage("CLO_STORAGE_FILE_OPEN_ERROR")
+                            )
+                        );
                     }
                 } elseif ($ID !== "Fnew") {
                     //TODO check for ../../../
-                    $filePath = substr($ID, 1);
+                    $filePath = mb_substr($ID, 1);
                     $filePath = "/" . $path . "/" . $filePath;
                     $filePath = preg_replace("#[\\\\\\/]+#", "/", $filePath);
 
-                    $f = $io->GetFile(preg_replace("#[\\\\\\/]+#", "/", $_SERVER["DOCUMENT_ROOT"] . "/" . $path . "/" . substr($ID, 1)));
+                    $f = $io->GetFile(
+                        preg_replace(
+                            "#[\\\\\\/]+#",
+                            "/",
+                            $_SERVER["DOCUMENT_ROOT"] . "/" . $path . "/" . mb_substr($ID, 1)
+                        )
+                    );
+                    if ($f && !$f->IsExists()) {
+                        break;
+                    }
                 } elseif (isset($_REQUEST["filePath"])) {
                     $obUpload = new CCloudStorageUpload($_REQUEST["filePath"]);
                     if ($obUpload->isStarted()) {
                         $tempFile = $obUpload->getTempFileName();
-                        if ($tempFile)
+                        if ($tempFile) {
                             $f = $io->GetFile($tempFile);
+                        }
                     }
                 }
 
-                if (!$f)
+                if (!$f) {
                     break;
+                }
 
                 if (
-                    substr($ID, 0, 1) !== "F"
+                    mb_substr($ID, 0, 1) !== "F"
                     || $obBucket->ACTIVE !== "Y"
                     || $obBucket->READ_ONLY !== "N"
-                )
+                ) {
                     break;
+                }
 
                 $fp = $f->Open("rb");
                 if (!is_resource($fp)) {
-                    $message = new CAdminMessage(GetMessage("CLO_STORAGE_FILE_UPLOAD_ERROR"), new CApplicationException(GetMessage("CLO_STORAGE_FILE_OPEN_ERROR")));
+                    $message = new CAdminMessage(
+                        GetMessage("CLO_STORAGE_FILE_UPLOAD_ERROR"),
+                        new CApplicationException(GetMessage("CLO_STORAGE_FILE_OPEN_ERROR"))
+                    );
                     break;
                 }
 
@@ -341,7 +425,12 @@ if ($USER->CanDoOperation("clouds_upload") && is_array($arID)) {
 
                     if (!$obUpload->isStarted()) {
                         if ($obBucket->FileExists($filePath)) {
-                            $message = new CAdminMessage(GetMessage("CLO_STORAGE_FILE_UPLOAD_ERROR"), new CApplicationException(GetMessage("CLO_STORAGE_FILE_EXISTS_ERROR")));
+                            $message = new CAdminMessage(
+                                GetMessage("CLO_STORAGE_FILE_UPLOAD_ERROR"),
+                                new CApplicationException(
+                                    GetMessage("CLO_STORAGE_FILE_EXISTS_ERROR")
+                                )
+                            );
                             break;
                         }
 
@@ -349,10 +438,16 @@ if ($USER->CanDoOperation("clouds_upload") && is_array($arID)) {
                         $tempFileX = $io->GetPhysicalName($tempFile);
                         CheckDirPath($tempFileX);
                         if (copy($io->GetPhysicalName($f->GetPathWithName()), $tempFileX)) {
-                            if ($obUpload->Start($obBucket->ID, $fileSize, CFile::GetContentType($tempFile), $tempFile))
+                            if ($obUpload->Start(
+                                $obBucket->ID,
+                                $fileSize,
+                                CFile::GetContentType($tempFile),
+                                $tempFile
+                            )) {
                                 $moveResult = CCloudStorage::FILE_PARTLY_UPLOADED;
-                            else
+                            } else {
                                 $strError = GetMessage("CLO_STORAGE_FILE_UNKNOWN_ERROR", array("#CODE#" => "e01"));
+                            }
                         } else {
                             $strError = GetMessage("CLO_STORAGE_FILE_UNKNOWN_ERROR", array("#CODE#" => "e04"));
                         }
@@ -370,7 +465,7 @@ if ($USER->CanDoOperation("clouds_upload") && is_array($arID)) {
                         } else {
                             fseek($fp, $pos);
                             $part = fread($fp, $obUpload->getPartSize());
-                            $bytes = $pos + $part;
+                            $bytes = $pos + strlen($part);
                             $moveResult = CCloudStorage::FILE_SKIPPED;
                             while ($obUpload->hasRetries()) {
                                 if ($obUpload->Next($part)) {
@@ -379,13 +474,19 @@ if ($USER->CanDoOperation("clouds_upload") && is_array($arID)) {
                                 }
                             }
 
-                            if ($moveResult == CCloudStorage::FILE_SKIPPED)
+                            if ($moveResult == CCloudStorage::FILE_SKIPPED) {
                                 $strError = GetMessage("CLO_STORAGE_FILE_UNKNOWN_ERROR", array("#CODE#" => "e03"));
+                            }
                         }
                     }
                 } else {
                     if ($obBucket->FileExists($filePath)) {
-                        $message = new CAdminMessage(GetMessage("CLO_STORAGE_FILE_UPLOAD_ERROR"), new CApplicationException(GetMessage("CLO_STORAGE_FILE_EXISTS_ERROR")));
+                        $message = new CAdminMessage(
+                            GetMessage("CLO_STORAGE_FILE_UPLOAD_ERROR"),
+                            new CApplicationException(
+                                GetMessage("CLO_STORAGE_FILE_EXISTS_ERROR")
+                            )
+                        );
                         break;
                     }
 
@@ -409,8 +510,9 @@ if ($USER->CanDoOperation("clouds_upload") && is_array($arID)) {
 
                 if ($strError != "") {
                     $e = $APPLICATION->GetException();
-                    if (!is_object($e))
+                    if (!is_object($e)) {
                         $e = new CApplicationException($strError);
+                    }
 
                     $message = new CAdminMessage(GetMessage("CLO_STORAGE_FILE_UPLOAD_ERROR"), $e);
                 }
@@ -419,39 +521,61 @@ if ($USER->CanDoOperation("clouds_upload") && is_array($arID)) {
                     echo $message->Show();
                     $message = null;
                 } elseif ($moveResult == CCloudStorage::FILE_PARTLY_UPLOADED) {
-                    CAdminMessage::ShowMessage(array(
-                        "MESSAGE" => GetMessage("CLO_STORAGE_FILE_UPLOAD_IN_PROGRESS"),
-                        "DETAILS" => GetMessage("CLO_STORAGE_FILE_UPLOAD_PROGRESS", array(
-                                "#bytes#" => CFile::FormatSize($bytes),
-                                "#file_size#" => CFile::FormatSize($fileSize),
-                            )) . '#PROGRESS_BAR#',
-                        "HTML" => true,
-                        "TYPE" => "PROGRESS",
-                        "PROGRESS_TOTAL" => $fileSize,
-                        "PROGRESS_VALUE" => $bytes,
-                        "BUTTONS" => array(
-                            array(
-                                "VALUE" => GetMessage("CLO_STORAGE_FILE_STOP"),
-                                "ONCLICK" => 'window.location = \'' . CUtil::JSEscape("/bitrix/admin/clouds_file_list.php?lang=" . urlencode(LANGUAGE_ID) . "&bucket=" . urlencode($obBucket->ID) . "&path=" . urlencode($path)) . '\'',
+                    CAdminMessage::ShowMessage(
+                        array(
+                            "MESSAGE" => GetMessage("CLO_STORAGE_FILE_UPLOAD_IN_PROGRESS"),
+                            "DETAILS" => GetMessage(
+                                    "CLO_STORAGE_FILE_UPLOAD_PROGRESS",
+                                    array(
+                                        "#bytes#" => CFile::FormatSize($bytes),
+                                        "#file_size#" => CFile::FormatSize($fileSize),
+                                    )
+                                ) . '#PROGRESS_BAR#',
+                            "HTML" => true,
+                            "TYPE" => "PROGRESS",
+                            "PROGRESS_TOTAL" => $fileSize,
+                            "PROGRESS_VALUE" => $bytes,
+                            "BUTTONS" => array(
+                                array(
+                                    "VALUE" => GetMessage("CLO_STORAGE_FILE_STOP"),
+                                    "ONCLICK" => 'window.location = \'' . CUtil::JSEscape(
+                                            "/bitrix/admin/clouds_file_list.php?lang=" . urlencode(
+                                                LANGUAGE_ID
+                                            ) . "&bucket=" . urlencode($obBucket->ID) . "&path=" . urlencode($path)
+                                        ) . '\'',
+                                ),
                             ),
-                        ),
-                    ));
+                        )
+                    );
                 } else {
-                    CAdminMessage::ShowMessage(array(
-                        "MESSAGE" => GetMessage("CLO_STORAGE_FILE_UPLOAD_DONE"),
-                        "DETAILS" => GetMessage("CLO_STORAGE_FILE_UPLOAD_PROGRESS", array(
-                            "#bytes#" => CFile::FormatSize($bytes),
-                            "#file_size#" => CFile::FormatSize($fileSize),
-                        )),
-                        "HTML" => true,
-                        "TYPE" => "OK",
-                    ));
+                    CAdminMessage::ShowMessage(
+                        array(
+                            "MESSAGE" => GetMessage("CLO_STORAGE_FILE_UPLOAD_DONE"),
+                            "DETAILS" => GetMessage(
+                                "CLO_STORAGE_FILE_UPLOAD_PROGRESS",
+                                array(
+                                    "#bytes#" => CFile::FormatSize($bytes),
+                                    "#file_size#" => CFile::FormatSize($fileSize),
+                                )
+                            ),
+                            "HTML" => true,
+                            "TYPE" => "OK",
+                        )
+                    );
                 }
                 $lAdmin->EndPrologContent();
 
                 if ($moveResult == CCloudStorage::FILE_PARTLY_UPLOADED) {
                     $lAdmin->BeginEpilogContent();
-                    echo '<script>BX.ready(function(){', $lAdmin->ActionDoGroup(urlencode($ID), "upload", "bucket=" . urlencode($obBucket->ID) . "&path=" . urlencode($path) . "&filePath=" . urlencode($filePath)), '});</script>';
+                    echo '<script>BX.ready(function(){', $lAdmin->ActionDoGroup(
+                        urlencode($ID),
+                        "upload",
+                        "bucket=" . urlencode(
+                            $obBucket->ID
+                        ) . "&path=" . urlencode(
+                            $path
+                        ) . "&filePath=" . urlencode($filePath)
+                    ), '});</script>';
                     $lAdmin->EndEpilogContent();
                 }
                 break;
@@ -500,13 +624,16 @@ $arFiles = $obBucket->ListFiles($path, $_GET["size"] === "y");
 
 if (is_array($arFiles)) {
     foreach ($arFiles["file"] as $i => $file) {
-        $p = strpos($file, "/");
+        $p = mb_strpos($file, "/");
         if ($p !== false) {
-            $dir = substr($file, 0, $p);
+            $dir = mb_substr($file, 0, $p);
             if (isset($arFiles["dir"][$dir])) {
                 $arFiles["dir"][$dir]["FILE_SIZE"] += $arFiles["file_size"][$i];
                 $arFiles["dir"][$dir]["FILE_COUNT"]++;
-                $arFiles["dir"][$dir]["FILE_MTIME"] = max($arFiles["dir"][$dir]["FILE_MTIME"], CCloudUtil::gmtTimeToDateTime($arFiles["file_mtime"][$i]));
+                $arFiles["dir"][$dir]["FILE_MTIME"] = max(
+                    $arFiles["dir"][$dir]["FILE_MTIME"],
+                    CCloudUtil::gmtTimeToDateTime($arFiles["file_mtime"][$i])
+                );
             } else {
                 $arFiles["dir"][$dir] = array(
                     "ID" => "D" . urlencode($dir),
@@ -517,7 +644,7 @@ if (is_array($arFiles)) {
                     "FILE_MTIME" => CCloudUtil::gmtTimeToDateTime($arFiles["file_mtime"][$i]),
                 );
             }
-        } elseif ($find_name == "" || strpos($file, $find_name) !== false) {
+        } elseif ($find_name == "" || preg_match($re_find_name, $file)) {
             $arData[] = array(
                 "ID" => "F" . urlencode($file),
                 "TYPE" => "file",
@@ -531,10 +658,10 @@ if (is_array($arFiles)) {
 
     foreach ($arFiles["dir"] as $i => $dir) {
         if (is_array($dir)) {
-            if ($find_name == "" || strpos($dir["NAME"], $find_name) !== false) {
+            if ($find_name == "" || preg_match($re_find_name, $dir["NAME"])) {
                 $arData[] = $dir;
             }
-        } elseif ($find_name == "" || strpos($dir, $find_name) !== false) {
+        } elseif ($find_name == "" || preg_match($re_find_name, $dir)) {
             $size = '';
             $count = '';
             $mtime = '';
@@ -558,36 +685,48 @@ if (is_array($arFiles)) {
     }
 
     if ($order && $by) {
-        \Bitrix\Main\Type\Collection::sortByColumn($arData, array(
-            'TYPE' => SORT_ASC,
-            $by => $order == "desc" ? SORT_DESC : SORT_ASC,
-        ));
+        \Bitrix\Main\Type\Collection::sortByColumn(
+            $arData,
+            array(
+                'TYPE' => SORT_ASC,
+                $by => $order == "desc" ? SORT_DESC : SORT_ASC,
+            )
+        );
     } else {
-        \Bitrix\Main\Type\Collection::sortByColumn($arData, array(
-            'TYPE' => SORT_ASC,
-            'NAME' => SORT_ASC,
-        ));
+        \Bitrix\Main\Type\Collection::sortByColumn(
+            $arData,
+            array(
+                'TYPE' => SORT_ASC,
+                'NAME' => SORT_ASC,
+            )
+        );
     }
 
     if ($path != "/") {
-        array_unshift($arData, array(
-            "ID" => "D..",
-            "TYPE" => "dir",
-            "NAME" => "..",
-            "FILE_SIZE" => "",
-            "FILE_COUNT" => "",
-            "FILE_MTIME" => "",
-        ));
+        array_unshift(
+            $arData,
+            array(
+                "ID" => "D..",
+                "TYPE" => "dir",
+                "NAME" => "..",
+                "FILE_SIZE" => "",
+                "FILE_COUNT" => "",
+                "FILE_MTIME" => "",
+            )
+        );
     }
 } else {
     $e = $APPLICATION->GetException();
-    if (is_object($e))
+    if (is_object($e)) {
         $message = new CAdminMessage(GetMessage("CLO_STORAGE_FILE_LIST_ERROR"), $e);
-    else
-        $message = new CAdminMessage(array(
-            "MESSAGE" => GetMessage("CLO_STORAGE_FILE_LIST_ERROR"),
-            "DETAILS" => GetMessage("CLO_STORAGE_FILE_UNKNOWN_ERROR", array("#CODE#" => "L01")),
-        ));
+    } else {
+        $message = new CAdminMessage(
+            array(
+                "MESSAGE" => GetMessage("CLO_STORAGE_FILE_LIST_ERROR"),
+                "DETAILS" => GetMessage("CLO_STORAGE_FILE_UNKNOWN_ERROR", array("#CODE#" => "L01")),
+            )
+        );
+    }
 }
 
 $total_size = 0.0;
@@ -612,26 +751,55 @@ while (is_array($arRes = $rsData->NavNext())) {
     if ($arRes["TYPE"] === "dir") {
         if ($arRes["NAME"] === "..") {
             $row->bReadOnly = true;
-            $row->AddViewField("FILE_NAME", '<a href="' . htmlspecialcharsbx('clouds_file_list.php?lang=' . urlencode(LANGUAGE_ID) . '&bucket=' . urlencode($obBucket->ID) . '&path=' . urlencode(preg_replace('#([^/]+)/$#', '', $path))) . '" class="adm-list-table-icon-link"><span class="adm-submenu-item-link-icon adm-list-table-icon clouds-up-icon"></span><span class="adm-list-table-link">' . htmlspecialcharsex($arRes["NAME"]) . '</span></a>');
+            $row->AddViewField(
+                "FILE_NAME",
+                '<a href="' . htmlspecialcharsbx(
+                    'clouds_file_list.php?lang=' . urlencode(LANGUAGE_ID) . '&bucket=' . urlencode(
+                        $obBucket->ID
+                    ) . '&path=' . urlencode(preg_replace('#[^/]*/$#', '', $path))
+                ) . '" class="adm-list-table-icon-link"><span class="adm-submenu-item-link-icon adm-list-table-icon clouds-up-icon"></span><span class="adm-list-table-link">' . htmlspecialcharsex(
+                    $arRes["NAME"]
+                ) . '</span></a>'
+            );
         } else {
-            $row->AddViewField("FILE_NAME", '<a href="' . htmlspecialcharsbx('clouds_file_list.php?lang=' . urlencode(LANGUAGE_ID) . '&bucket=' . urlencode($obBucket->ID) . '&path=' . urlencode($path . $arRes["NAME"] . '/')) . '" class="adm-list-table-icon-link"><span class="adm-submenu-item-link-icon adm-list-table-icon clouds-directory-icon"></span><span class="adm-list-table-link">' . htmlspecialcharsex($arRes["NAME"]) . '</span></a>');
+            $row->AddViewField(
+                "FILE_NAME",
+                '<a href="' . htmlspecialcharsbx(
+                    'clouds_file_list.php?lang=' . urlencode(LANGUAGE_ID) . '&bucket=' . urlencode(
+                        $obBucket->ID
+                    ) . '&path=' . urlencode($path . $arRes["NAME"] . '/')
+                ) . '" class="adm-list-table-icon-link"><span class="adm-submenu-item-link-icon adm-list-table-icon clouds-directory-icon"></span><span class="adm-list-table-link">' . htmlspecialcharsex(
+                    $arRes["NAME"]
+                ) . '</span></a>'
+            );
         }
     } else {
-        $row->AddViewField("FILE_NAME", '<a href="' . htmlspecialcharsbx($obBucket->GetFileSRC(array("URN" => $path . $arRes["NAME"]))) . '">' . htmlspecialcharsex($arRes["NAME"]) . '</a>');
+        $row->AddViewField(
+            "FILE_NAME",
+            '<a href="' . htmlspecialcharsbx(
+                $obBucket->GetFileSRC(array("URN" => $path . $arRes["NAME"]))
+            ) . '">' . htmlspecialcharsex($arRes["NAME"]) . '</a>'
+        );
     }
 
     $arActions = /*.(array[int][string]string).*/
         array();
 
-    if ($USER->CanDoOperation("clouds_upload"))
+    if ($USER->CanDoOperation("clouds_upload")) {
         $arActions[] = array(
             "ICON" => "delete",
             "TEXT" => GetMessage("CLO_STORAGE_FILE_DELETE"),
-            "ACTION" => "if(confirm('" . GetMessage("CLO_STORAGE_FILE_DELETE_CONF") . "')) " . $lAdmin->ActionDoGroup($arRes["ID"], "delete", 'bucket=' . urlencode($obBucket->ID) . '&path=' . urlencode($path))
+            "ACTION" => "if(confirm('" . GetMessage("CLO_STORAGE_FILE_DELETE_CONF") . "')) " . $lAdmin->ActionDoGroup(
+                    $arRes["ID"],
+                    "delete",
+                    'bucket=' . urlencode($obBucket->ID) . '&path=' . urlencode($path)
+                )
         );
+    }
 
-    if (!empty($arActions))
+    if (!empty($arActions)) {
         $row->AddActions($arActions);
+    }
 }
 
 if (
@@ -666,8 +834,9 @@ $lAdmin->AddFooter($arFooter);
 
 $arGroupActions = array();
 
-if ($USER->CanDoOperation("clouds_upload"))
+if ($USER->CanDoOperation("clouds_upload")) {
     $arGroupActions["delete"] = GetMessage("MAIN_ADMIN_LIST_DELETE");
+}
 
 $lAdmin->AddGroupActionTable($arGroupActions);
 
@@ -677,12 +846,16 @@ $curPath = "/";
 foreach ($arPath as $dir) {
     if ($dir != "") {
         $curPath .= $dir . "/";
-        $url = "clouds_file_list.php?lang=" . urlencode(LANGUAGE_ID) . "&bucket=" . urlencode($obBucket->ID) . "&path=" . urlencode($curPath);
-        $chain->AddItem(array(
-            "TEXT" => htmlspecialcharsex($dir),
-            "LINK" => htmlspecialcharsbx($url),
-            "ONCLICK" => $lAdmin->ActionAjaxReload($url) . ';return false;',
-        ));
+        $url = "clouds_file_list.php?lang=" . urlencode(LANGUAGE_ID) . "&bucket=" . urlencode(
+                $obBucket->ID
+            ) . "&path=" . urlencode($curPath);
+        $chain->AddItem(
+            array(
+                "TEXT" => htmlspecialcharsex($dir),
+                "LINK" => htmlspecialcharsbx($url),
+                "ONCLICK" => $lAdmin->ActionAjaxReload($url) . ';return false;',
+            )
+        );
     }
 }
 $lAdmin->ShowChain($chain);
@@ -702,15 +875,18 @@ if (
 }
 $aContext[] = array(
     "TEXT" => GetMessage("CLO_STORAGE_FILE_SHOW_DIR_SIZE"),
-    "LINK" => "/bitrix/admin/clouds_file_list.php?lang=" . urlencode(LANGUAGE_ID) . '&bucket=' . urlencode($obBucket->ID) . '&path=' . urlencode($path) . '&size=y',
+    "LINK" => "/bitrix/admin/clouds_file_list.php?lang=" . urlencode(LANGUAGE_ID) . '&bucket=' . urlencode(
+            $obBucket->ID
+        ) . '&path=' . urlencode($path) . '&size=y',
     "TITLE" => GetMessage("CLO_STORAGE_FILE_SHOW_DIR_SIZE_TITLE"),
 );
 
 $lAdmin->AddAdminContextMenu($aContext, /*$bShowExcel=*/ false);
 
 $lAdmin->BeginPrologContent();
-if (is_object($message))
+if (is_object($message)) {
     echo $message->Show();
+}
 $lAdmin->EndPrologContent();
 
 $lAdmin->CheckListMode();
@@ -749,11 +925,15 @@ if ($USER->CanDoOperation("clouds_upload")):
             </td>
         </tr>
         <?
-        $oFilter->Buttons(array(
-            "table_id" => $sTableID,
-            "url" => "/bitrix/admin/clouds_file_list.php?lang=" . urlencode(LANGUAGE_ID) . '&bucket=' . urlencode($obBucket->ID) . '&path=' . urlencode($path),
-            "form" => "find_form",
-        ));
+        $oFilter->Buttons(
+            array(
+                "table_id" => $sTableID,
+                "url" => "/bitrix/admin/clouds_file_list.php?lang=" . urlencode(LANGUAGE_ID) . '&bucket=' . urlencode(
+                        $obBucket->ID
+                    ) . '&path=' . urlencode($path),
+                "form" => "find_form",
+            )
+        );
         $oFilter->End();
         ?>
     </form>

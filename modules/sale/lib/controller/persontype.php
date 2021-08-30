@@ -19,9 +19,11 @@ class PersonType extends Controller
     public function getFieldsAction()
     {
         $entity = new \Bitrix\Sale\Rest\Entity\PersonType();
-        return ['PERSON_TYPE' => $entity->prepareFieldInfos(
-            $entity->getFields()
-        )];
+        return [
+            'PERSON_TYPE' => $entity->prepareFieldInfos(
+                $entity->getFields()
+            )
+        ];
     }
 
     /*
@@ -48,11 +50,13 @@ class PersonType extends Controller
         $personTypeId = 0;
         $salePersonType = new \CSalePersonType();
 
-        if (isset($fields['ID']))
+        if (isset($fields['ID'])) {
             unset($fields['ID']);
+        }
 
-        if (isset($fields['CODE']))
+        if (isset($fields['CODE'])) {
             $r = $this->isCodeUniq($fields['CODE']);
+        }
 
         if ($r->isSuccess()) {
             $personTypeId = $salePersonType->Add($fields);
@@ -62,8 +66,9 @@ class PersonType extends Controller
                     self::getApplication()->ThrowException($ex->GetString(), 200750000006);
 
                     $r->addError(new Error($ex->GetString(), $ex->GetID()));
-                } else
+                } else {
                     $r->addError(new Error('add person type error', 200750000001));
+                }
             }
         }
 
@@ -81,8 +86,9 @@ class PersonType extends Controller
 
         $r = $this->exists($id);
         if ($r->isSuccess()) {
-            if (isset($fields['CODE']))
+            if (isset($fields['CODE'])) {
                 $r = $this->isCodeUniq($fields['CODE'], $id);
+            }
 
             if ($r->isSuccess()) {
                 if (!$salePersonType->Update($id, $fields)) {
@@ -91,8 +97,9 @@ class PersonType extends Controller
                         self::getApplication()->ThrowException($ex->GetString(), 200750000007);
 
                         $r->addError(new Error($ex->GetString(), $ex->GetID()));
-                    } else
+                    } else {
                         $r->addError(new Error('update person type error', 200750000002));
+                    }
                 }
             }
         }
@@ -132,8 +139,9 @@ class PersonType extends Controller
                         self::getApplication()->ThrowException($ex->GetString(), 200750000008);
 
                         $r->addError(new Error($ex->GetString(), $ex->GetID()));
-                    } else
+                    } else {
                         $r->addError(new Error('delete person type error', 200750000004));
+                    }
                 }
             }
         }
@@ -161,11 +169,13 @@ class PersonType extends Controller
             ]
         );
 
-        return new Page('PERSON_TYPES', $items, function () use ($filter) {
+        return new Page(
+            'PERSON_TYPES', $items, function () use ($filter) {
             return count(
                 \Bitrix\Sale\PersonType::getList(['filter' => $filter])->fetchAll()
             );
-        });
+        }
+        );
     }
 
     //end region
@@ -180,8 +190,9 @@ class PersonType extends Controller
     {
         $r = new Result();
 
-        if (\Bitrix\Sale\PersonType::getList(['filter' => ['CODE' => $code, '!ID' => $id]])->fetchAll())
+        if (\Bitrix\Sale\PersonType::getList(['filter' => ['CODE' => $code, '!ID' => $id]])->fetchAll()) {
             $r->addError(new Error('person type code exists', 200750000005));
+        }
 
         return $r;
     }
@@ -189,25 +200,31 @@ class PersonType extends Controller
     protected function exists($id)
     {
         $r = new Result();
-        if ($this->get($id)['ID'] <= 0)
+        if ($this->get($id)['ID'] <= 0) {
             $r->addError(new Error('person type is not exists', 200740400001));
+        }
 
         return $r;
     }
 
     protected function modifyBusinessValuePersonDomain(array $fields)
     {
-        \Bitrix\Sale\Internals\BusinessValuePersonDomainTable::delete([
-            'PERSON_TYPE_ID' => $fields['ID']
-        ]);
+        \Bitrix\Sale\Internals\BusinessValuePersonDomainTable::delete(
+            [
+                'PERSON_TYPE_ID' => $fields['ID']
+            ]
+        );
 
-        if ($fields['BUSVAL_DOMAIN'] !== '' && in_array($fields['BUSVAL_DOMAIN'],
+        if ($fields['BUSVAL_DOMAIN'] !== '' && in_array(
+                $fields['BUSVAL_DOMAIN'],
                 array_keys(BusinessValuePersonDomainType::getAllDescriptions())
             )) {
-            \Bitrix\Sale\Internals\BusinessValuePersonDomainTable::add([
-                'PERSON_TYPE_ID' => $fields['ID'],
-                'DOMAIN' => $fields['BUSVAL_DOMAIN'],
-            ]);
+            \Bitrix\Sale\Internals\BusinessValuePersonDomainTable::add(
+                [
+                    'PERSON_TYPE_ID' => $fields['ID'],
+                    'DOMAIN' => $fields['BUSVAL_DOMAIN'],
+                ]
+            );
         }
     }
 

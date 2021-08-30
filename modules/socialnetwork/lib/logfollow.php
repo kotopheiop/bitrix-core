@@ -65,7 +65,8 @@ class LogFollowTable extends Entity\DataManager
             return $defaultValue;
         }
 
-        $res = self::getList(array(
+        $res = self::getList(
+            array(
                 'filter' => array(
                     "USER_ID" => $userId,
                     "=CODE" => "**"

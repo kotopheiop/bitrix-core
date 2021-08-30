@@ -25,12 +25,16 @@ class ReportConfigurationTable extends DataManager
     public static function getMap()
     {
         return array(
-            new IntegerField('REPORT_ID', array(
+            new IntegerField(
+                'REPORT_ID', array(
                 'primary' => true
-            )),
-            new IntegerField('CONFIGURATION_ID', array(
+            )
+            ),
+            new IntegerField(
+                'CONFIGURATION_ID', array(
                 'primary' => true
-            )),
+            )
+            ),
             new ReferenceField(
                 'REPORT',
                 'Bitrix\Report\VisualConstructor\Internal\ReportTable',

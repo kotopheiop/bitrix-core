@@ -18,15 +18,17 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
-if (!\Bitrix\Main\Loader::includeModule('sale'))
+if (!\Bitrix\Main\Loader::includeModule('sale')) {
     $arResult["ERROR"] = Loc::getMessage("SALE_VK_SALE_NOT_INSTALLED_ERROR");
+}
 
-if (!\Bitrix\Main\Loader::includeModule('iblock'))
+if (!\Bitrix\Main\Loader::includeModule('iblock')) {
     $arResult["ERROR"] = Loc::getMessage("SALE_VK_IBLOCK_NOT_INSTALLED_ERROR");
+}
 
 $result = false;
 
-if (isset($arResult["ERROR"]) && strlen($arResult["ERROR"]) > 0) {
+if (isset($arResult["ERROR"]) && $arResult["ERROR"] <> '') {
     $arResult["RESULT"] = "ERROR";
     $arResult["ERRORS_CRITICAL"] = Vk\Journal::getCriticalErrorsMessage($exportId, $arResult["ERROR"]);
 } elseif ($APPLICATION->GetGroupRight("sale") >= "W" && check_bitrix_sessid()) {
@@ -53,13 +55,13 @@ if (isset($arResult["ERROR"]) && strlen($arResult["ERROR"]) > 0) {
 
                 if ($arResult['CONTINUE']) {
                     $arResult['PROGRESS'] = Vk\Journal::getProgressMessage($exportId, $type);
-                    if ($arResult['TOO_MUCH_TIMES'])
+                    if ($arResult['TOO_MUCH_TIMES']) {
                         $arResult['PROGRESS'] .= $arResult['TOO_MUCH_TIMES'];
+                    }
                 } else {
                     $ok = isset($arResult["ERRORS_CRITICAL"]) && $arResult["ERRORS_CRITICAL"] ? false : true;
                     $arResult['PROGRESS'] .= Vk\Journal::getProgressFinishMessage($ok);
                 }
-
             } else {
                 $arResult['PROGRESS'] .= Vk\Journal::getProgressFinishMessage(false);
                 $arResult['ABORT'] = true;
@@ -68,8 +70,9 @@ if (isset($arResult["ERROR"]) && strlen($arResult["ERROR"]) > 0) {
 
 //			check not critical errors
             $errorsNormal = $logger->getErrorsList(false);
-            if (strlen($errorsNormal) > 0)
+            if ($errorsNormal <> '') {
                 $arResult['ERRORS_NORMAL'] = $errorsNormal;
+            }
 
             $arResult['STATS_ALBUMS'] = Vk\Journal::getStatisticText('ALBUMS', $exportId);
             $arResult['STATS_PRODUCTS'] = Vk\Journal::getStatisticText('PRODUCTS', $exportId);
@@ -78,10 +81,11 @@ if (isset($arResult["ERROR"]) && strlen($arResult["ERROR"]) > 0) {
             if (isset($arResult['ERRORS_CRITICAL']) && $arResult['ERRORS_CRITICAL']) {
                 Vk\Journal::stopProcessParams($exportId);
                 $errorsCritical = $logger->getErrorsList(true);
-                if (strlen($errorsCritical) > 0)
+                if ($errorsCritical <> '') {
                     $arResult['ERRORS_CRITICAL'] = Vk\Journal::getCriticalErrorsMessage($exportId, $errorsCritical);
-                else
+                } else {
                     $arResult['ERRORS_CRITICAL'] = false;
+                }
             }
 
             break;
@@ -99,10 +103,11 @@ if (isset($arResult["ERROR"]) && strlen($arResult["ERROR"]) > 0) {
 
 
         case "stopProcess":
-            if (Vk\Journal::stopProcessParams($exportId))
+            if (Vk\Journal::stopProcessParams($exportId)) {
                 $arResult['COMPLETED'] = true;
-            else
+            } else {
                 $arResult["ERROR"] = 'Error during process stopped';
+            }
 
             break;
 
@@ -117,20 +122,22 @@ if (isset($arResult["ERROR"]) && strlen($arResult["ERROR"]) > 0) {
             break;
     }
 } else {
-    if (strlen($arResult["ERROR"]) <= 0) {
+    if ($arResult["ERROR"] == '') {
         $arResult["RESULT"] = "ERROR";
         $arResult["ERROR"] = Loc::getMessage("SALE_VK_ACCESS_DENIED_ERROR");
         $arResult["ERRORS_CRITICAL"] .= Vk\Journal::getCriticalErrorsMessage($exportId, $arResult["ERROR"]);
     }
 }
 
-if (!isset($arResult["ERROR"]) && strlen($arResult["RESULT"]) <= 0)
+if (!isset($arResult["ERROR"]) && $arResult["RESULT"] == '') {
     $arResult["RESULT"] = "OK";
+}
 
-if (strtolower(SITE_CHARSET) != 'utf-8')
+if (mb_strtolower(SITE_CHARSET) != 'utf-8') {
     $arResult = $APPLICATION->ConvertCharsetArray($arResult, SITE_CHARSET, 'utf-8');
+}
 
 header('Content-Type: application/json');
 print json_encode($arResult);
-$APPLICATION::FinalActions();
+\CMain::FinalActions();
 die();

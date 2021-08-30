@@ -24,8 +24,9 @@ Loc::loadMessages(__FILE__);
 
 $arResult = array("ERROR" => "");
 
-if (!\Bitrix\Main\Loader::includeModule('sale'))
+if (!\Bitrix\Main\Loader::includeModule('sale')) {
     $arResult["ERROR"] = "Error! Can't include module \"Sale\"";
+}
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/lib/services/company/inputs.php");
 
@@ -42,8 +43,9 @@ if ($arResult["ERROR"] === '' && $saleModulePermissions >= "W" && check_bitrix_s
             $companyId = ($request->get('companyId') !== null) ? intval($request->get('companyId')) : 0;
             $sort = ($request->get('sort') !== null) ? intval($request->get('sort')) : 100;
 
-            if (!$className)
+            if (!$className) {
                 throw new \Bitrix\Main\ArgumentNullException("className");
+            }
 
             Company\Restrictions\Manager::getClassesList();
             $paramsStructure = $className::getParamsStructure($companyId);
@@ -51,13 +53,20 @@ if ($arResult["ERROR"] === '' && $saleModulePermissions >= "W" && check_bitrix_s
 
             $paramsField = "<table>";
 
-            if ($className == '\Bitrix\Sale\Services\Company\Restrictions\Price')
-                $paramsField .= '<tr><td colspan=\'2\' style=\'padding-bottom:5px\'><b>' . Loc::getMessage('SALE_COMPANY_PRICE_INFO') . '</b></td></tr>';
+            if ($className == '\Bitrix\Sale\Services\Company\Restrictions\Price') {
+                $paramsField .= '<tr><td colspan=\'2\' style=\'padding-bottom:5px\'><b>' . Loc::getMessage(
+                        'SALE_COMPANY_PRICE_INFO'
+                    ) . '</b></td></tr>';
+            }
 
             foreach ($paramsStructure as $name => $param) {
                 $paramsField .= "<tr>" .
-                    "<td>" . (strlen($param["LABEL"]) > 0 ? $param["LABEL"] . ": " : "") . "</td>" .
-                    "<td>" . \Bitrix\Sale\Internals\Input\Manager::getEditHtml("RULE[" . $name . "]", $param, (isset($params[$name]) ? $params[$name] : null)) . "</td>" .
+                    "<td>" . ($param["LABEL"] <> '' ? $param["LABEL"] . ": " : "") . "</td>" .
+                    "<td>" . \Bitrix\Sale\Internals\Input\Manager::getEditHtml(
+                        "RULE[" . $name . "]",
+                        $param,
+                        (isset($params[$name]) ? $params[$name] : null)
+                    ) . "</td>" .
                     "</tr>";
             }
 
@@ -79,20 +88,26 @@ if ($arResult["ERROR"] === '' && $saleModulePermissions >= "W" && check_bitrix_s
             $companyId = ($request->get('companyId') !== null) ? (int)$request->get('companyId') : 0;
             $ruleId = ($request->get('ruleId') !== null) ? (int)$request->get('ruleId') : 0;
 
-            if (!class_exists($className))
+            if (!class_exists($className)) {
                 throw new \Bitrix\Main\ArgumentNullException("className");
+            }
 
-            if (!$companyId)
+            if (!$companyId) {
                 throw new \Bitrix\Main\ArgumentNullException("companyId");
+            }
 
             foreach ($className::getParamsStructure() as $key => $rParams) {
                 $errors = \Bitrix\Sale\Internals\Input\Manager::getError($rParams, $params[$key]);
-                if (!empty($errors))
-                    $arResult["ERROR"] .= Loc::getMessage('SALE_COMPANY_ERROR_FIELD') . ': "' . $rParams["LABEL"] . '" ' . implode("\n", $errors) . "\n";
+                if (!empty($errors)) {
+                    $arResult["ERROR"] .= Loc::getMessage(
+                            'SALE_COMPANY_ERROR_FIELD'
+                        ) . ': "' . $rParams["LABEL"] . '" ' . implode("\n", $errors) . "\n";
+                }
             }
 
-            if (!$params)
+            if (!$params) {
                 $arResult["ERROR"] = Loc::getMessage('SALE_COMPANY_ERROR_PARAMS');
+            }
 
             if ($arResult["ERROR"] == '') {
                 $fields = array(
@@ -105,8 +120,9 @@ if ($arResult["ERROR"] === '' && $saleModulePermissions >= "W" && check_bitrix_s
                 /** @var \Bitrix\Sale\Result $res */
                 $res = $className::save($fields, $ruleId);
 
-                if (!$res->isSuccess())
+                if (!$res->isSuccess()) {
                     $arResult["ERROR"] .= implode(".", $res->getErrorMessages());
+                }
                 $arResult["HTML"] = getRuleHtml($companyId);
             }
 
@@ -117,8 +133,9 @@ if ($arResult["ERROR"] === '' && $saleModulePermissions >= "W" && check_bitrix_s
             $ruleId = ($request->get('ruleId') !== null) ? (int)$request->get('ruleId') : 0;
             $companyId = ($request->get('companyId') !== null) ? (int)$request->get('companyId') : 0;
 
-            if (!$ruleId)
+            if (!$ruleId) {
                 throw new \Bitrix\Main\ArgumentNullException('ruleId');
+            }
 
             $dbRes = Company\Restrictions\Manager::getById($ruleId);
 
@@ -126,8 +143,9 @@ if ($arResult["ERROR"] === '' && $saleModulePermissions >= "W" && check_bitrix_s
                 /** @var \Bitrix\Sale\Result $res */
                 $res = $fields["CLASS_NAME"]::delete($ruleId, $companyId);
 
-                if (!$res->isSuccess())
+                if (!$res->isSuccess()) {
                     $arResult["ERROR"] .= implode(".", $res->getErrorMessages());
+                }
             } else {
                 $arResult["ERROR"] .= "Can't find rule with id: " . $ruleId;
             }
@@ -140,27 +158,31 @@ if ($arResult["ERROR"] === '' && $saleModulePermissions >= "W" && check_bitrix_s
             break;
     }
 } else {
-    if ($request->get('mode') == 'settings')
+    if ($request->get('mode') == 'settings') {
         getRuleHtml($request->get('ID'));
-    elseif (strlen($arResult["ERROR"]) <= 0)
+    } elseif ($arResult["ERROR"] == '') {
         $arResult["ERROR"] = "Error! Access denied";
+    }
 }
 
-if (strlen($arResult["ERROR"]) > 0)
+if ($arResult["ERROR"] <> '') {
     $arResult["RESULT"] = "ERROR";
-else
+} else {
     $arResult["RESULT"] = "OK";
+}
 
-if (strtolower(SITE_CHARSET) != 'utf-8')
+if (mb_strtolower(SITE_CHARSET) != 'utf-8') {
     $arResult = $APPLICATION->ConvertCharsetArray($arResult, SITE_CHARSET, 'utf-8');
+}
 
 header('Content-Type: application/json');
 die(json_encode($arResult));
 
 function getRuleHtml($companyId)
 {
-    if (intval($companyId) <= 0)
+    if (intval($companyId) <= 0) {
         throw new \Bitrix\Main\ArgumentNullException("companyId");
+    }
 
     $_REQUEST['table_id'] = 'table_company_rules';
     $_REQUEST['admin_history'] = 'Y';

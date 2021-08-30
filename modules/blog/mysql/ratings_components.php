@@ -1,9 +1,10 @@
-<?
+<?php
+
 require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/blog/general/ratings_components.php");
 
 class CRatingsComponentsBlog extends CAllRatingsComponentsBlog
 {
-    function CalcPost($arConfigs)
+    public static function CalcPost($arConfigs)
     {
         global $DB;
 
@@ -11,12 +12,14 @@ class CRatingsComponentsBlog extends CAllRatingsComponentsBlog
 
         CRatings::AddComponentResults($arConfigs);
 
-        $strSql = "DELETE FROM b_rating_component_results WHERE RATING_ID = '" . IntVal($arConfigs['RATING_ID']) . "' AND COMPLEX_NAME = '" . $DB->ForSql($arConfigs['COMPLEX_NAME']) . "'";
+        $strSql = "DELETE FROM b_rating_component_results WHERE RATING_ID = '" . intval(
+                $arConfigs['RATING_ID']
+            ) . "' AND COMPLEX_NAME = '" . $DB->ForSql($arConfigs['COMPLEX_NAME']) . "'";
         $res = $DB->Query($strSql, false, $err_mess . __LINE__);
 
         $strSql = "INSERT INTO b_rating_component_results (RATING_ID, MODULE_ID, RATING_TYPE, NAME, COMPLEX_NAME, ENTITY_ID, ENTITY_TYPE_ID, CURRENT_VALUE)
 					SELECT
-						'" . IntVal($arConfigs['RATING_ID']) . "'  RATING_ID,
+						'" . intval($arConfigs['RATING_ID']) . "'  RATING_ID,
 						'" . $DB->ForSql($arConfigs['MODULE_ID']) . "'  MODULE_ID,
 						'" . $DB->ForSql($arConfigs['RATING_TYPE']) . "'  RATING_TYPE,
 						'" . $DB->ForSql($arConfigs['NAME']) . "'  NAME,
@@ -29,14 +32,18 @@ class CRatingsComponentsBlog extends CAllRatingsComponentsBlog
 						b_rating_vote RVE
 					WHERE
 						RV.ENTITY_TYPE_ID = 'BLOG_POST' AND FT.AUTHOR_ID > 0
-					AND RVE.RATING_VOTING_ID = RV.ID" . (IntVal($arConfigs['CONFIG']['LIMIT']) > 0 ? " AND RVE.CREATED > DATE_SUB(NOW(), INTERVAL " . IntVal($arConfigs['CONFIG']['LIMIT']) . " DAY)" : "") . "
+					AND RVE.RATING_VOTING_ID = RV.ID" . (intval(
+                $arConfigs['CONFIG']['LIMIT']
+            ) > 0 ? " AND RVE.CREATED > DATE_SUB(NOW(), INTERVAL " . intval(
+                    $arConfigs['CONFIG']['LIMIT']
+                ) . " DAY)" : "") . "
 					GROUP BY AUTHOR_ID";
         $res = $DB->Query($strSql, false, $err_mess . __LINE__);
 
         return true;
     }
 
-    function CalcComment($arConfigs)
+    public static function CalcComment($arConfigs)
     {
         global $DB;
 
@@ -44,12 +51,14 @@ class CRatingsComponentsBlog extends CAllRatingsComponentsBlog
 
         CRatings::AddComponentResults($arConfigs);
 
-        $strSql = "DELETE FROM b_rating_component_results WHERE RATING_ID = '" . IntVal($arConfigs['RATING_ID']) . "' AND COMPLEX_NAME = '" . $DB->ForSql($arConfigs['COMPLEX_NAME']) . "'";
+        $strSql = "DELETE FROM b_rating_component_results WHERE RATING_ID = '" . intval(
+                $arConfigs['RATING_ID']
+            ) . "' AND COMPLEX_NAME = '" . $DB->ForSql($arConfigs['COMPLEX_NAME']) . "'";
         $res = $DB->Query($strSql, false, $err_mess . __LINE__);
 
         $strSql = "INSERT INTO b_rating_component_results (RATING_ID, MODULE_ID, RATING_TYPE, NAME, COMPLEX_NAME, ENTITY_ID, ENTITY_TYPE_ID, CURRENT_VALUE)
 					SELECT
-						'" . IntVal($arConfigs['RATING_ID']) . "'  RATING_ID,
+						'" . intval($arConfigs['RATING_ID']) . "'  RATING_ID,
 						'" . $DB->ForSql($arConfigs['MODULE_ID']) . "'  MODULE_ID,
 						'" . $DB->ForSql($arConfigs['RATING_TYPE']) . "'  RATING_TYPE,
 						'" . $DB->ForSql($arConfigs['NAME']) . "'  NAME,
@@ -62,14 +71,18 @@ class CRatingsComponentsBlog extends CAllRatingsComponentsBlog
 						b_rating_vote RVE
 					WHERE
 						RV.ENTITY_TYPE_ID = 'BLOG_COMMENT' AND FM.AUTHOR_ID > 0
-					AND RVE.RATING_VOTING_ID = RV.ID" . (IntVal($arConfigs['CONFIG']['LIMIT']) > 0 ? " AND RVE.CREATED > DATE_SUB(NOW(), INTERVAL " . IntVal($arConfigs['CONFIG']['LIMIT']) . " DAY)" : "") . "
+					AND RVE.RATING_VOTING_ID = RV.ID" . (intval(
+                $arConfigs['CONFIG']['LIMIT']
+            ) > 0 ? " AND RVE.CREATED > DATE_SUB(NOW(), INTERVAL " . intval(
+                    $arConfigs['CONFIG']['LIMIT']
+                ) . " DAY)" : "") . "
 					GROUP BY AUTHOR_ID";
         $res = $DB->Query($strSql, false, $err_mess . __LINE__);
 
         return true;
     }
 
-    function CalcActivity($arConfigs)
+    public static function CalcActivity($arConfigs)
     {
         global $DB;
 
@@ -77,7 +90,9 @@ class CRatingsComponentsBlog extends CAllRatingsComponentsBlog
 
         CRatings::AddComponentResults($arConfigs);
 
-        $strSql = "DELETE FROM b_rating_component_results WHERE RATING_ID = '" . IntVal($arConfigs['RATING_ID']) . "' AND COMPLEX_NAME = '" . $DB->ForSql($arConfigs['COMPLEX_NAME']) . "'";
+        $strSql = "DELETE FROM b_rating_component_results WHERE RATING_ID = '" . intval(
+                $arConfigs['RATING_ID']
+            ) . "' AND COMPLEX_NAME = '" . $DB->ForSql($arConfigs['COMPLEX_NAME']) . "'";
         $res = $DB->Query($strSql, false, $err_mess . __LINE__);
         $sqlAllPost = '';
         if (isset($arConfigs['CONFIG']['ALL_POST_COEF']) && $arConfigs['CONFIG']['ALL_POST_COEF'] != 0) {
@@ -105,7 +120,7 @@ class CRatingsComponentsBlog extends CAllRatingsComponentsBlog
         }
         $strSql = "INSERT INTO b_rating_component_results (RATING_ID, MODULE_ID, RATING_TYPE, NAME, COMPLEX_NAME, ENTITY_ID, ENTITY_TYPE_ID, CURRENT_VALUE)
 			SELECT
-				'" . IntVal($arConfigs['RATING_ID']) . "' as RATING_ID,
+				'" . intval($arConfigs['RATING_ID']) . "' as RATING_ID,
 				'" . $DB->ForSql($arConfigs['MODULE_ID']) . "' as MODULE_ID,
 				'" . $DB->ForSql($arConfigs['RATING_TYPE']) . "' as RATING_TYPE,
 				'" . $DB->ForSql($arConfigs['NAME']) . "' as NAME,
@@ -117,8 +132,12 @@ class CRatingsComponentsBlog extends CAllRatingsComponentsBlog
 				" . $sqlAllPost . "
 				SELECT
 					AUTHOR_ID as ENTITY_ID,
-					SUM(IF(TO_DAYS(DATE_PUBLISH) > TO_DAYS(NOW())-1, 1, 0))*" . floatval($arConfigs['CONFIG']['TODAY_POST_COEF']) . " +
-					SUM(IF(TO_DAYS(DATE_PUBLISH) > TO_DAYS(NOW())-7, 1, 0))*" . floatval($arConfigs['CONFIG']['WEEK_POST_COEF']) . "+
+					SUM(IF(TO_DAYS(DATE_PUBLISH) > TO_DAYS(NOW())-1, 1, 0))*" . floatval(
+                $arConfigs['CONFIG']['TODAY_POST_COEF']
+            ) . " +
+					SUM(IF(TO_DAYS(DATE_PUBLISH) > TO_DAYS(NOW())-7, 1, 0))*" . floatval(
+                $arConfigs['CONFIG']['WEEK_POST_COEF']
+            ) . "+
 					COUNT(*)*" . floatval($arConfigs['CONFIG']['MONTH_POST_COEF']) . " as CURRENT_VALUE
 				FROM b_blog_post
 				WHERE DATE_PUBLISH  > DATE_SUB(NOW(), INTERVAL 30 DAY)
@@ -129,8 +148,12 @@ class CRatingsComponentsBlog extends CAllRatingsComponentsBlog
 				" . $sqlAllComment . "
 				SELECT
 					AUTHOR_ID as ENTITY_ID,
-					SUM(IF(TO_DAYS(DATE_CREATE) > TO_DAYS(NOW())-1, 1, 0))*" . floatval($arConfigs['CONFIG']['TODAY_COMMENT_COEF']) . " +
-					SUM(IF(TO_DAYS(DATE_CREATE) > TO_DAYS(NOW())-7, 1, 0))*" . floatval($arConfigs['CONFIG']['WEEK_COMMENT_COEF']) . " +
+					SUM(IF(TO_DAYS(DATE_CREATE) > TO_DAYS(NOW())-1, 1, 0))*" . floatval(
+                $arConfigs['CONFIG']['TODAY_COMMENT_COEF']
+            ) . " +
+					SUM(IF(TO_DAYS(DATE_CREATE) > TO_DAYS(NOW())-7, 1, 0))*" . floatval(
+                $arConfigs['CONFIG']['WEEK_COMMENT_COEF']
+            ) . " +
 					COUNT(*)*" . floatval($arConfigs['CONFIG']['MONTH_COMMENT_COEF']) . " as CURRENT_VALUE
 				FROM b_blog_comment
 				WHERE DATE_CREATE  > DATE_SUB(NOW(), INTERVAL 30 DAY)
@@ -145,5 +168,3 @@ class CRatingsComponentsBlog extends CAllRatingsComponentsBlog
         return true;
     }
 }
-
-?>

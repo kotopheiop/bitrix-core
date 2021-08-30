@@ -85,44 +85,50 @@ class Manager extends \Bitrix\Sale\Services\Base\RestrictionManager
                 'DELIVERY_SERVICE.ACTIVE' => 'Y'
             );
 
-            $dbRes = ServiceRestrictionTable::getList(array(
-                'runtime' => array(
-                    new \Bitrix\Main\Entity\ReferenceField(
-                        'DELIVERY_SERVICE',
-                        '\Bitrix\Sale\Delivery\Services\Table',
-                        array(
-                            '=this.SERVICE_ID' => 'ref.ID',
-                            '=this.SERVICE_TYPE' => array('?', self::SERVICE_TYPE_SHIPMENT)
-                        ),
-                        array('join_type' => 'inner')
-                    )
-                ),
-                'filter' => $filter,
-                'order' => array('SORT' => 'ASC')
-            ));
+            $dbRes = ServiceRestrictionTable::getList(
+                array(
+                    'runtime' => array(
+                        new \Bitrix\Main\Entity\ReferenceField(
+                            'DELIVERY_SERVICE',
+                            '\Bitrix\Sale\Delivery\Services\Table',
+                            array(
+                                '=this.SERVICE_ID' => 'ref.ID',
+                                '=this.SERVICE_TYPE' => array('?', self::SERVICE_TYPE_SHIPMENT)
+                            ),
+                            array('join_type' => 'inner')
+                        )
+                    ),
+                    'filter' => $filter,
+                    'order' => array('SORT' => 'ASC')
+                )
+            );
 
             $data = array();
             $checkedGroupFiltering = array();
 
             while ($rstr = $dbRes->fetch()) {
-                if (!isset($data[$rstr["SERVICE_ID"]]))
+                if (!isset($data[$rstr["SERVICE_ID"]])) {
                     $data[$rstr["SERVICE_ID"]] = array();
+                }
 
                 $data[$rstr["SERVICE_ID"]][$rstr['ID']] = $rstr;
 
                 if (!in_array($rstr['CLASS_NAME'], $checkedGroupFiltering)) {
                     $checkedGroupFiltering[] = $rstr['CLASS_NAME'];
 
-                    if (method_exists($rstr['CLASS_NAME'], 'filterServicesArray'))
+                    if (method_exists($rstr['CLASS_NAME'], 'filterServicesArray')) {
                         $supportGroupFiltering[] = $rstr['CLASS_NAME'];
+                    }
                 }
 
                 if (in_array($rstr['CLASS_NAME'], $supportGroupFiltering)) {
-                    if (!is_array($idsGrouppedByRestrictions[$rstr['CLASS_NAME']]))
+                    if (!is_array($idsGrouppedByRestrictions[$rstr['CLASS_NAME']])) {
                         $idsGrouppedByRestrictions[$rstr['CLASS_NAME']] = array();
+                    }
 
-                    if (!in_array($rstr["SERVICE_ID"], $idsGrouppedByRestrictions[$rstr['CLASS_NAME']]))
+                    if (!in_array($rstr["SERVICE_ID"], $idsGrouppedByRestrictions[$rstr['CLASS_NAME']])) {
                         $idsGrouppedByRestrictions[$rstr['CLASS_NAME']][$rstr["SERVICE_ID"]] = $rstr;
+                    }
                 }
             }
 
@@ -138,9 +144,11 @@ class Manager extends \Bitrix\Sale\Services\Base\RestrictionManager
             $passedServicesIds = $rstrClass::filterServicesArray($shipment, $idsGrouppedByRestrictions[$rstrClass]);
             $notPassed = array_diff_key($idsGrouppedByRestrictions[$rstrClass], array_flip($passedServicesIds));
 
-            if ($restrictionMode == self::MODE_MANAGER)
-                foreach ($notPassed as $srvId => $rstr)
+            if ($restrictionMode == self::MODE_MANAGER) {
+                foreach ($notPassed as $srvId => $rstr) {
                     $filterResult[$srvId] = $rstrClass::getSeverity($restrictionMode);
+                }
+            }
 
             $data = array_diff_key($data, $notPassed);
         }
@@ -150,14 +158,17 @@ class Manager extends \Bitrix\Sale\Services\Base\RestrictionManager
 
             if ($shipment != null) {
                 foreach ($serviceRestrictions as $restrictionId => $rstr) {
-                    if (in_array($rstr['CLASS_NAME'], $supportGroupFiltering))
+                    if (in_array($rstr['CLASS_NAME'], $supportGroupFiltering)) {
                         continue;
+                    }
 
-                    if (!self::isClassValid($rstr['CLASS_NAME']))
+                    if (!self::isClassValid($rstr['CLASS_NAME'])) {
                         continue;
+                    }
 
-                    if (!$rstr['PARAMS'])
+                    if (!$rstr['PARAMS']) {
                         $rstr['PARAMS'] = array();
+                    }
 
                     $res = $rstr['CLASS_NAME']::checkByEntity(
                         $shipment,
@@ -166,14 +177,17 @@ class Manager extends \Bitrix\Sale\Services\Base\RestrictionManager
                         $serviceId
                     );
 
-                    if ($res == self::SEVERITY_STRICT)
+                    if ($res == self::SEVERITY_STRICT) {
                         continue 2;
+                    }
 
-                    if ($res == self::SEVERITY_SOFT && $restrictionMode == self::MODE_CLIENT)
+                    if ($res == self::SEVERITY_SOFT && $restrictionMode == self::MODE_CLIENT) {
                         continue 2;
+                    }
 
-                    if ($res == self::SEVERITY_SOFT && $srvRes == self::SEVERITY_NONE)
+                    if ($res == self::SEVERITY_SOFT && $srvRes == self::SEVERITY_NONE) {
                         $srvRes = self::SEVERITY_SOFT;
+                    }
                 }
             }
 
@@ -185,22 +199,26 @@ class Manager extends \Bitrix\Sale\Services\Base\RestrictionManager
 
     protected function isClassSupportGroupFiltering($className)
     {
-        if (!self::isClassValid($className))
+        if (!self::isClassValid($className)) {
             return false;
+        }
 
         return method_exists($className, 'filterServicesArray');
     }
 
     protected static function isClassValid($className)
     {
-        if (empty($className))
+        if (empty($className)) {
             return false;
+        }
 
-        if (!class_exists($className))
+        if (!class_exists($className)) {
             return false;
+        }
 
-        if (!is_subclass_of($className, 'Bitrix\Sale\Services\Base\Restriction'))
+        if (!is_subclass_of($className, 'Bitrix\Sale\Services\Base\Restriction')) {
             return false;
+        }
 
         return true;
     }

@@ -39,17 +39,23 @@ class EnumField extends ScalarField
     public function postInitialize()
     {
         if (!is_array($this->values)) {
-            throw new SystemException(sprintf(
-                'Parameter "values" for %s field in `%s` entity should be an array',
-                $this->name, $this->entity->getDataClass()
-            ));
+            throw new SystemException(
+                sprintf(
+                    'Parameter "values" for %s field in `%s` entity should be an array',
+                    $this->name,
+                    $this->entity->getDataClass()
+                )
+            );
         }
 
         if (empty($this->values)) {
-            throw new SystemException(sprintf(
-                'Required parameter "values" for %s field in `%s` entity is not found',
-                $this->name, $this->entity->getDataClass()
-            ));
+            throw new SystemException(
+                sprintf(
+                    'Required parameter "values" for %s field in `%s` entity is not found',
+                    $this->name,
+                    $this->entity->getDataClass()
+                )
+            );
         }
     }
 

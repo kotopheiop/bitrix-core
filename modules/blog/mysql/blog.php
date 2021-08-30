@@ -1,59 +1,66 @@
-<?
+<?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/blog/general/blog.php");
 
 class CBlog extends CAllBlog
 {
     /*************** ADD, UPDATE, DELETE *****************/
-    function Add($arFields)
+    public static function Add($arFields)
     {
         global $DB;
-        if (strlen($arFields["PATH"]) > 0) {
+        if ($arFields["PATH"] <> '') {
             $path = $arFields["PATH"];
             unset($arFields["PATH"]);
         }
 
         $arFields1 = array();
         foreach ($arFields as $key => $value) {
-            if (substr($key, 0, 1) == "=") {
-                $arFields1[substr($key, 1)] = $value;
+            if (mb_substr($key, 0, 1) == "=") {
+                $arFields1[mb_substr($key, 1)] = $value;
                 unset($arFields[$key]);
             }
         }
 
-        if (!CBlog::CheckFields("ADD", $arFields))
+        if (!CBlog::CheckFields("ADD", $arFields)) {
             return false;
-        elseif (!$GLOBALS["USER_FIELD_MANAGER"]->CheckFields("BLOG_BLOG", 0, $arFields))
+        } elseif (!$GLOBALS["USER_FIELD_MANAGER"]->CheckFields("BLOG_BLOG", 0, $arFields)) {
             return false;
+        }
 
         foreach (GetModuleEvents("blog", "OnBeforeBlogAdd", true) as $arEvent) {
-            if (ExecuteModuleEventEx($arEvent, Array(&$arFields)) === false)
+            if (ExecuteModuleEventEx($arEvent, Array(&$arFields)) === false) {
                 return false;
+            }
         }
 
         $arInsert = $DB->PrepareInsert("b_blog", $arFields);
 
         foreach ($arFields1 as $key => $value) {
-            if (strlen($arInsert[0]) > 0)
+            if ($arInsert[0] <> '') {
                 $arInsert[0] .= ", ";
+            }
             $arInsert[0] .= $key;
-            if (strlen($arInsert[1]) > 0)
+            if ($arInsert[1] <> '') {
                 $arInsert[1] .= ", ";
+            }
             $arInsert[1] .= $value;
         }
 
         $ID = false;
-        if (strlen($arInsert[0]) > 0) {
+        if ($arInsert[0] <> '') {
             $strSql =
                 "INSERT INTO b_blog(" . $arInsert[0] . ") " .
                 "VALUES(" . $arInsert[1] . ")";
-            $DB->Query($strSql, False, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+            $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 
-            $ID = IntVal($DB->LastID());
+            $ID = intval($DB->LastID());
 
-            if (is_set($arFields, "PERMS_POST"))
+            if (is_set($arFields, "PERMS_POST")) {
                 CBlog::SetBlogPerms($ID, $arFields["PERMS_POST"], BLOG_PERMS_POST);
-            if (is_set($arFields, "PERMS_COMMENT"))
+            }
+            if (is_set($arFields, "PERMS_COMMENT")) {
                 CBlog::SetBlogPerms($ID, $arFields["PERMS_COMMENT"], BLOG_PERMS_COMMENT);
+            }
 
             $GLOBALS["USER_FIELD_MANAGER"]->Update("BLOG_BLOG", $ID, $arFields);
 
@@ -68,7 +75,7 @@ class CBlog extends CAllBlog
                 if ($arBlog["ACTIVE"] == "Y" && $arBlog["SEARCH_INDEX"] == "Y" && $arBlog["USE_SOCNET"] != "Y") {
                     $arGroup = CBlogGroup::GetByID($arBlog["GROUP_ID"]);
 
-                    if (strlen($path) > 0) {
+                    if ($path <> '') {
                         $path = str_replace("#blog_url#", $arBlog["URL"], $path);
                         $arPostSite = array($arGroup["SITE_ID"] => $path);
                     } else {
@@ -90,7 +97,7 @@ class CBlog extends CAllBlog
                         "PARAM2" => $arBlog["OWNER_ID"],
                         "PERMISSIONS" => array(2),
                         "TITLE" => $arBlog["NAME"],
-                        "BODY" => ((strlen($arBlog["DESCRIPTION"]) > 0) ? $arBlog["DESCRIPTION"] : $arBlog["NAME"]),
+                        "BODY" => (($arBlog["DESCRIPTION"] <> '') ? $arBlog["DESCRIPTION"] : $arBlog["NAME"]),
                     );
                     CSearch::Index("blog", "B" . $ID, $arSearchIndex);
                 }
@@ -100,35 +107,38 @@ class CBlog extends CAllBlog
         return $ID;
     }
 
-    function Update($ID, $arFields)
+    public static function Update($ID, $arFields)
     {
         global $DB;
 
-        $ID = IntVal($ID);
-        if ($ID <= 0)
+        $ID = intval($ID);
+        if ($ID <= 0) {
             return false;
+        }
 
-        if (strlen($arFields["PATH"]) > 0) {
+        if ($arFields["PATH"] <> '') {
             $path = $arFields["PATH"];
             unset($arFields["PATH"]);
         }
 
         $arFields1 = array();
         foreach ($arFields as $key => $value) {
-            if (substr($key, 0, 1) == "=") {
-                $arFields1[substr($key, 1)] = $value;
+            if (mb_substr($key, 0, 1) == "=") {
+                $arFields1[mb_substr($key, 1)] = $value;
                 unset($arFields[$key]);
             }
         }
 
-        if (!CBlog::CheckFields("UPDATE", $arFields, $ID))
+        if (!CBlog::CheckFields("UPDATE", $arFields, $ID)) {
             return false;
-        elseif (!$GLOBALS["USER_FIELD_MANAGER"]->CheckFields("BLOG_BLOG", $ID, $arFields))
+        } elseif (!$GLOBALS["USER_FIELD_MANAGER"]->CheckFields("BLOG_BLOG", $ID, $arFields)) {
             return false;
+        }
 
         foreach (GetModuleEvents("blog", "OnBeforeBlogUpdate", true) as $arEvent) {
-            if (ExecuteModuleEventEx($arEvent, Array($ID, &$arFields)) === false)
+            if (ExecuteModuleEventEx($arEvent, Array($ID, &$arFields)) === false) {
                 return false;
+            }
         }
 
         $arBlogOld = CBlog::GetByID($ID);
@@ -136,17 +146,18 @@ class CBlog extends CAllBlog
         $strUpdate = $DB->PrepareUpdate("b_blog", $arFields);
 
         foreach ($arFields1 as $key => $value) {
-            if (strlen($strUpdate) > 0)
+            if ($strUpdate <> '') {
                 $strUpdate .= ", ";
+            }
             $strUpdate .= $key . "=" . $value . " ";
         }
 
-        if (strlen($strUpdate) > 0) {
+        if ($strUpdate <> '') {
             $strSql =
                 "UPDATE b_blog SET " .
                 "	" . $strUpdate . " " .
                 "WHERE ID = " . $ID . " ";
-            $DB->Query($strSql, False, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+            $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 
             unset($GLOBALS["BLOG"]["BLOG_CACHE_" . $ID]);
             unset($GLOBALS["BLOG"]["BLOG4OWNER_CACHE_" . $arBlogOld["OWNER_ID"]]);
@@ -156,14 +167,16 @@ class CBlog extends CAllBlog
                 ExecuteModuleEventEx($arEvent, Array($ID, &$arFields));
             }
 
-            if (is_set($arFields, "PERMS_POST"))
+            if (is_set($arFields, "PERMS_POST")) {
                 CBlog::SetBlogPerms($ID, $arFields["PERMS_POST"], BLOG_PERMS_POST);
-            if (is_set($arFields, "PERMS_COMMENT"))
+            }
+            if (is_set($arFields, "PERMS_COMMENT")) {
                 CBlog::SetBlogPerms($ID, $arFields["PERMS_COMMENT"], BLOG_PERMS_COMMENT);
+            }
 
             $GLOBALS["USER_FIELD_MANAGER"]->Update("BLOG_BLOG", $ID, $arFields);
         } else {
-            $ID = False;
+            $ID = false;
         }
 
         if ($ID && (is_set($arFields, "NAME") || is_set($arFields, "DESCRIPTION"))) {
@@ -178,7 +191,7 @@ class CBlog extends CAllBlog
                         CSearch::DeleteIndex("blog", "B" . $ID);
                     } else {
                         $arGroup = CBlogGroup::GetByID($arBlog["GROUP_ID"]);
-                        if (strlen($path) > 0) {
+                        if ($path <> '') {
                             $path = str_replace("#blog_url#", $arBlog["URL"], $path);
                             $arPostSite = array($arGroup["SITE_ID"] => $path);
                         } else {
@@ -201,7 +214,7 @@ class CBlog extends CAllBlog
                             "PARAM2" => $arBlog["OWNER_ID"],
                             "PERMISSIONS" => array(2),
                             "TITLE" => $arBlog["NAME"],
-                            "BODY" => ((strlen($arBlog["DESCRIPTION"]) > 0) ? $arBlog["DESCRIPTION"] : $arBlog["NAME"]),
+                            "BODY" => (($arBlog["DESCRIPTION"] <> '') ? $arBlog["DESCRIPTION"] : $arBlog["NAME"]),
                         );
                         CSearch::Index("blog", "B" . $ID, $arSearchIndex);
                     }
@@ -212,8 +225,13 @@ class CBlog extends CAllBlog
     }
 
     //*************** SELECT *********************/
-    function GetList($arOrder = Array("ID" => "DESC"), $arFilter = Array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
-    {
+    public static function GetList(
+        $arOrder = Array("ID" => "DESC"),
+        $arFilter = Array(),
+        $arGroupBy = false,
+        $arNavStartParams = false,
+        $arSelectFields = array()
+    ) {
         global $DB, $USER_FIELD_MANAGER, $USER;
 
         $obUserFieldsSql = new CUserTypeSQL;
@@ -222,13 +240,72 @@ class CBlog extends CAllBlog
         $obUserFieldsSql->SetFilter($arFilter);
         $obUserFieldsSql->SetOrder($arOrder);
 
-        if (!empty($arSelectFields) && !in_array("ID", $arSelectFields))
+        if (!empty($arSelectFields) && !in_array("ID", $arSelectFields)) {
             $arSelectFields[] = "ID";
+        }
 
-        if (count($arSelectFields) <= 0)
-            $arSelectFields = array("ID", "NAME", "DESCRIPTION", "DATE_CREATE", "DATE_UPDATE", "ACTIVE", "OWNER_ID", "URL", "REAL_URL", "GROUP_ID", "ENABLE_COMMENTS", "ENABLE_IMG_VERIF", "EMAIL_NOTIFY", "ENABLE_RSS", "LAST_POST_ID", "LAST_POST_DATE", "AUTO_GROUPS", "ALLOW_HTML", "SOCNET_GROUP_ID");
-        if (in_array("*", $arSelectFields))
-            $arSelectFields = array("ID", "NAME", "DESCRIPTION", "DATE_CREATE", "DATE_UPDATE", "ACTIVE", "OWNER_ID", "SOCNET_GROUP_ID", "URL", "REAL_URL", "GROUP_ID", "ENABLE_COMMENTS", "ENABLE_IMG_VERIF", "EMAIL_NOTIFY", "ENABLE_RSS", "ALLOW_HTML", "LAST_POST_ID", "LAST_POST_DATE", "AUTO_GROUPS", "SEARCH_INDEX", "USE_SOCNET", "OWNER_LOGIN", "OWNER_NAME", "OWNER_LAST_NAME", "OWNER_EMAIL", "OWNER", "GROUP_NAME", "GROUP_SITE_ID", "BLOG_USER_ALIAS", "BLOG_USER_AVATAR", "EDITOR_USE_FONT", "EDITOR_USE_LINK", "EDITOR_USE_IMAGE", "EDITOR_USE_FORMAT", "EDITOR_USE_VIDEO");
+        if (count($arSelectFields) <= 0) {
+            $arSelectFields = array(
+                "ID",
+                "NAME",
+                "DESCRIPTION",
+                "DATE_CREATE",
+                "DATE_UPDATE",
+                "ACTIVE",
+                "OWNER_ID",
+                "URL",
+                "REAL_URL",
+                "GROUP_ID",
+                "ENABLE_COMMENTS",
+                "ENABLE_IMG_VERIF",
+                "EMAIL_NOTIFY",
+                "ENABLE_RSS",
+                "LAST_POST_ID",
+                "LAST_POST_DATE",
+                "AUTO_GROUPS",
+                "ALLOW_HTML",
+                "SOCNET_GROUP_ID"
+            );
+        }
+        if (in_array("*", $arSelectFields)) {
+            $arSelectFields = array(
+                "ID",
+                "NAME",
+                "DESCRIPTION",
+                "DATE_CREATE",
+                "DATE_UPDATE",
+                "ACTIVE",
+                "OWNER_ID",
+                "SOCNET_GROUP_ID",
+                "URL",
+                "REAL_URL",
+                "GROUP_ID",
+                "ENABLE_COMMENTS",
+                "ENABLE_IMG_VERIF",
+                "EMAIL_NOTIFY",
+                "ENABLE_RSS",
+                "ALLOW_HTML",
+                "LAST_POST_ID",
+                "LAST_POST_DATE",
+                "AUTO_GROUPS",
+                "SEARCH_INDEX",
+                "USE_SOCNET",
+                "OWNER_LOGIN",
+                "OWNER_NAME",
+                "OWNER_LAST_NAME",
+                "OWNER_EMAIL",
+                "OWNER",
+                "GROUP_NAME",
+                "GROUP_SITE_ID",
+                "BLOG_USER_ALIAS",
+                "BLOG_USER_AVATAR",
+                "EDITOR_USE_FONT",
+                "EDITOR_USE_LINK",
+                "EDITOR_USE_IMAGE",
+                "EDITOR_USE_FORMAT",
+                "EDITOR_USE_VIDEO"
+            );
+        }
 
         // FIELDS -->
         $arFields = array(
@@ -254,20 +331,65 @@ class CBlog extends CAllBlog
             "SEARCH_INDEX" => array("FIELD" => "B.SEARCH_INDEX", "TYPE" => "char"),
             "USE_SOCNET" => array("FIELD" => "B.USE_SOCNET", "TYPE" => "char"),
 
-            "OWNER_LOGIN" => array("FIELD" => "U.LOGIN", "TYPE" => "string", "FROM" => "LEFT JOIN b_user U ON (B.OWNER_ID = U.ID)"),
-            "OWNER_NAME" => array("FIELD" => "U.NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_user U ON (B.OWNER_ID = U.ID)"),
-            "OWNER_LAST_NAME" => array("FIELD" => "U.LAST_NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_user U ON (B.OWNER_ID = U.ID)"),
-            "OWNER_SECOND_NAME" => array("FIELD" => "U.SECOND_NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_user U ON (B.OWNER_ID = U.ID)"),
-            "OWNER_EMAIL" => array("FIELD" => "U.EMAIL", "TYPE" => "string", "FROM" => "LEFT JOIN b_user U ON (B.OWNER_ID = U.ID)"),
-            "OWNER" => array("FIELD" => "U.LOGIN,U.NAME,U.LAST_NAME,U.EMAIL,U.ID", "WHERE_ONLY" => "Y", "TYPE" => "string", "FROM" => "LEFT JOIN b_user U ON (B.OWNER_ID = U.ID)"),
+            "OWNER_LOGIN" => array(
+                "FIELD" => "U.LOGIN",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_user U ON (B.OWNER_ID = U.ID)"
+            ),
+            "OWNER_NAME" => array(
+                "FIELD" => "U.NAME",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_user U ON (B.OWNER_ID = U.ID)"
+            ),
+            "OWNER_LAST_NAME" => array(
+                "FIELD" => "U.LAST_NAME",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_user U ON (B.OWNER_ID = U.ID)"
+            ),
+            "OWNER_SECOND_NAME" => array(
+                "FIELD" => "U.SECOND_NAME",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_user U ON (B.OWNER_ID = U.ID)"
+            ),
+            "OWNER_EMAIL" => array(
+                "FIELD" => "U.EMAIL",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_user U ON (B.OWNER_ID = U.ID)"
+            ),
+            "OWNER" => array(
+                "FIELD" => "U.LOGIN,U.NAME,U.LAST_NAME,U.EMAIL,U.ID",
+                "WHERE_ONLY" => "Y",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_user U ON (B.OWNER_ID = U.ID)"
+            ),
 
-            "GROUP_NAME" => array("FIELD" => "G.NAME", "TYPE" => "string", "FROM" => "INNER JOIN b_blog_group G ON (B.GROUP_ID = G.ID)"),
-            "GROUP_SITE_ID" => array("FIELD" => "G.SITE_ID", "TYPE" => "string", "FROM" => "INNER JOIN b_blog_group G ON (B.GROUP_ID = G.ID)"),
+            "GROUP_NAME" => array(
+                "FIELD" => "G.NAME",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_blog_group G ON (B.GROUP_ID = G.ID)"
+            ),
+            "GROUP_SITE_ID" => array(
+                "FIELD" => "G.SITE_ID",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_blog_group G ON (B.GROUP_ID = G.ID)"
+            ),
 
-            "BLOG_USER_ALIAS" => array("FIELD" => "BU.ALIAS", "TYPE" => "string", "FROM" => "LEFT JOIN b_blog_user BU ON (B.OWNER_ID = BU.USER_ID)"),
-            "BLOG_USER_AVATAR" => array("FIELD" => "BU.AVATAR", "TYPE" => "int", "FROM" => "LEFT JOIN b_blog_user BU ON (B.OWNER_ID = BU.USER_ID)"),
+            "BLOG_USER_ALIAS" => array(
+                "FIELD" => "BU.ALIAS",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_blog_user BU ON (B.OWNER_ID = BU.USER_ID)"
+            ),
+            "BLOG_USER_AVATAR" => array(
+                "FIELD" => "BU.AVATAR",
+                "TYPE" => "int",
+                "FROM" => "LEFT JOIN b_blog_user BU ON (B.OWNER_ID = BU.USER_ID)"
+            ),
 
-            "SOCNET_BLOG_READ" => array("FIELD" => "BS.BLOG_ID", "TYPE" => "int", "FROM" => "INNER JOIN b_blog_socnet BS ON (B.ID = BS.BLOG_ID)"),
+            "SOCNET_BLOG_READ" => array(
+                "FIELD" => "BS.BLOG_ID",
+                "TYPE" => "int",
+                "FROM" => "INNER JOIN b_blog_socnet BS ON (B.ID = BS.BLOG_ID)"
+            ),
             "PERMS" => Array(),
 
             "EDITOR_USE_FONT" => array("FIELD" => "B.EDITOR_USE_FONT", "TYPE" => "char"),
@@ -313,8 +435,9 @@ class CBlog extends CAllBlog
         $arSqls["SELECT"] = str_replace("%%_DISTINCT_%%", "", $arSqls["SELECT"]);
 
         $r = $obUserFieldsSql->GetFilter();
-        if (strlen($r) > 0)
+        if ($r <> '') {
             $strSqlUFFilter = " (" . $r . ") ";
+        }
 
         if (is_array($arGroupBy) && count($arGroupBy) == 0) {
             $strSql =
@@ -323,23 +446,27 @@ class CBlog extends CAllBlog
                 "FROM b_blog B " .
                 "	" . $arSqls["FROM"] . " " .
                 $obUserFieldsSql->GetJoin("B.ID") . " ";
-            if (strlen($arSqls["WHERE"]) > 0)
+            if ($arSqls["WHERE"] <> '') {
                 $strSql .= "WHERE " . $arSqls["WHERE"] . " ";
-            if (strlen($arSqls["WHERE"]) > 0 && strlen($strSqlUFFilter) > 0)
+            }
+            if ($arSqls["WHERE"] <> '' && $strSqlUFFilter <> '') {
                 $strSql .= " AND " . $strSqlUFFilter . " ";
-            elseif (strlen($arSqls["WHERE"]) <= 0 && strlen($strSqlUFFilter) > 0)
+            } elseif ($arSqls["WHERE"] == '' && $strSqlUFFilter <> '') {
                 $strSql .= " WHERE " . $strSqlUFFilter . " ";
+            }
 
-            if (strlen($arSqls["GROUPBY"]) > 0)
+            if ($arSqls["GROUPBY"] <> '') {
                 $strSql .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
+            }
 
             //echo "!1!=".htmlspecialcharsbx($strSql)."<br>";
 
             $dbRes = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-            if ($arRes = $dbRes->Fetch())
+            if ($arRes = $dbRes->Fetch()) {
                 return $arRes["CNT"];
-            else
-                return False;
+            } else {
+                return false;
+            }
         }
 
         $strSql =
@@ -348,41 +475,49 @@ class CBlog extends CAllBlog
             "FROM b_blog B " .
             "	" . $arSqls["FROM"] . " " .
             $obUserFieldsSql->GetJoin("B.ID") . " ";
-        if (strlen($arSqls["WHERE"]) > 0)
+        if ($arSqls["WHERE"] <> '') {
             $strSql .= "WHERE " . $arSqls["WHERE"] . " ";
-        if (strlen($arSqls["WHERE"]) > 0 && strlen($strSqlUFFilter) > 0)
+        }
+        if ($arSqls["WHERE"] <> '' && $strSqlUFFilter <> '') {
             $strSql .= " AND " . $strSqlUFFilter . " ";
-        elseif (strlen($arSqls["WHERE"]) <= 0 && strlen($strSqlUFFilter) > 0)
+        } elseif ($arSqls["WHERE"] == '' && $strSqlUFFilter <> '') {
             $strSql .= " WHERE " . $strSqlUFFilter . " ";
+        }
 
-        if (strlen($arSqls["GROUPBY"]) > 0)
+        if ($arSqls["GROUPBY"] <> '') {
             $strSql .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
-        if (strlen($arSqls["ORDERBY"]) > 0)
+        }
+        if ($arSqls["ORDERBY"] <> '') {
             $strSql .= "ORDER BY " . $arSqls["ORDERBY"] . " ";
+        }
 
-        if (is_array($arNavStartParams) && IntVal($arNavStartParams["nTopCount"]) <= 0) {
+        if (is_array($arNavStartParams) && intval($arNavStartParams["nTopCount"]) <= 0) {
             $strSql_tmp =
                 "SELECT COUNT('x') as CNT " .
                 "FROM b_blog B " .
                 "	" . $arSqls["FROM"] . " " .
                 $obUserFieldsSql->GetJoin("B.ID") . " ";
-            if (strlen($arSqls["WHERE"]) > 0)
+            if ($arSqls["WHERE"] <> '') {
                 $strSql_tmp .= "WHERE " . $arSqls["WHERE"] . " ";
-            if (strlen($arSqls["WHERE"]) > 0 && strlen($strSqlUFFilter) > 0)
+            }
+            if ($arSqls["WHERE"] <> '' && $strSqlUFFilter <> '') {
                 $strSql_tmp .= " AND " . $strSqlUFFilter . " ";
-            elseif (strlen($arSqls["WHERE"]) <= 0 && strlen($strSqlUFFilter) > 0)
+            } elseif ($arSqls["WHERE"] == '' && $strSqlUFFilter <> '') {
                 $strSql_tmp .= " WHERE " . $strSqlUFFilter . " ";
+            }
 
-            if (strlen($arSqls["GROUPBY"]) > 0)
+            if ($arSqls["GROUPBY"] <> '') {
                 $strSql_tmp .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
+            }
 
             //echo "!2.1!=".htmlspecialcharsbx($strSql_tmp)."<br>";
 
             $dbRes = $DB->Query($strSql_tmp, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             $cnt = 0;
-            if (strlen($arSqls["GROUPBY"]) <= 0) {
-                if ($arRes = $dbRes->Fetch())
+            if ($arSqls["GROUPBY"] == '') {
+                if ($arRes = $dbRes->Fetch()) {
                     $cnt = $arRes["CNT"];
+                }
             } else {
                 $cnt = $dbRes->SelectedRowsCount();
             }
@@ -394,8 +529,9 @@ class CBlog extends CAllBlog
             $dbRes->SetUserFields($USER_FIELD_MANAGER->GetUserFields("BLOG_BLOG"));
             $dbRes->NavQuery($strSql, $cnt, $arNavStartParams);
         } else {
-            if (is_array($arNavStartParams) && IntVal($arNavStartParams["nTopCount"]) > 0)
-                $strSql .= "LIMIT " . IntVal($arNavStartParams["nTopCount"]);
+            if (is_array($arNavStartParams) && intval($arNavStartParams["nTopCount"]) > 0) {
+                $strSql .= "LIMIT " . intval($arNavStartParams["nTopCount"]);
+            }
 
             //echo "!3!=".htmlspecialcharsbx($strSql)."<br>";
 
@@ -407,23 +543,24 @@ class CBlog extends CAllBlog
         return $dbRes;
     }
 
-    function AddSocnetRead($ID)
+    public static function AddSocnetRead($ID)
     {
         global $DB;
-        $ID = IntVal($ID);
-        if ($ID <= 0)
+        $ID = intval($ID);
+        if ($ID <= 0) {
             return false;
+        }
 
-        if (CBlog::GetSocnetReadByBlog($ID))
+        if (CBlog::GetSocnetReadByBlog($ID)) {
             return true;
+        }
         $strSql =
             "INSERT INTO b_blog_socnet(BLOG_ID) " .
             "VALUES(" . $ID . ")";
-        if ($DB->Query($strSql, False, "File: " . __FILE__ . "<br>Line: " . __LINE__))
+        if ($DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__)) {
             return true;
+        }
 
         return false;
     }
 }
-
-?>

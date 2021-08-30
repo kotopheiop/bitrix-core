@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 use \Bitrix\Main\Localization\Loc;
@@ -37,14 +38,16 @@ if ($request->getPost("Save") && check_bitrix_sessid()) {
     foreach ($sitesData as $personTypeId => $fields) {
         if ($fields["SETTINGS_CLEAR_ALL"]) {
             $shopId = \Bitrix\Sale\BusinessValue::get('YANDEX_INVOICE_SHOP_ID', 'PAYSYSTEM_' . $id, $personTypeId);
-            if ($shopId)
+            if ($shopId) {
                 \Bitrix\Sale\Internals\YandexSettingsTable::delete($shopId);
+            }
         }
 
         if ($fields["SETTINGS_CLEAR"]) {
             $shopId = \Bitrix\Sale\BusinessValue::get('YANDEX_INVOICE_SHOP_ID', 'PAYSYSTEM_' . $id, $personTypeId);
-            if ($shopId)
+            if ($shopId) {
                 \Bitrix\Sale\Internals\YandexSettingsTable::update($shopId, array('PUB_KEY' => ''));
+            }
         }
 
         $file = $request->getFile("YANDEX_PUB_KEY_" . $personTypeId);
@@ -52,8 +55,9 @@ if ($request->getPost("Save") && check_bitrix_sessid()) {
             $publicKey = file_get_contents($file['tmp_name']);
             if (openssl_pkey_get_public($publicKey)) {
                 $shopId = \Bitrix\Sale\BusinessValue::get('YANDEX_INVOICE_SHOP_ID', 'PAYSYSTEM_' . $id, $personTypeId);
-                if (strlen($shopId) > 0)
+                if ($shopId <> '') {
                     \Bitrix\Sale\Internals\YandexSettingsTable::update($shopId, array('PUB_KEY' => $publicKey));
+                }
             } else {
                 $errorMsg .= GetMessage('SALE_YANDEX_INVOICE_SETTINGS_ERROR_PUBLIC_KEY_LOAD');
             }
@@ -71,7 +75,7 @@ if ($request->get('generate') === 'Y') {
     $personTypeId = $request->get('person_type_id');
 
     $shopId = \Bitrix\Sale\BusinessValue::get('YANDEX_INVOICE_SHOP_ID', 'PAYSYSTEM_' . $id, $personTypeId);
-    if (strlen($shopId) > 0) {
+    if ($shopId <> '') {
         $dbRes = \Bitrix\Sale\Internals\YandexSettingsTable::getById($shopId);
         $yandexSettings = $dbRes->fetch();
         if (!$yandexSettings || !$yandexSettings['PKEY']) {
@@ -82,10 +86,11 @@ if ($request->get('generate') === 'Y') {
             $return_value = proc_close($process);
 
             $dbRes = \Bitrix\Sale\Internals\YandexSettingsTable::getById($shopId);
-            if ($dbRes->fetch())
+            if ($dbRes->fetch()) {
                 \Bitrix\Sale\Internals\YandexSettingsTable::update($shopId, array('PKEY' => $privateKey));
-            else
+            } else {
                 \Bitrix\Sale\Internals\YandexSettingsTable::add(array('SHOP_ID' => $shopId, 'PKEY' => $privateKey));
+            }
         } else {
             $errorMsg = Loc::getMessage('SALE_YANDEX_INVOICE_SETTINGS_ALREADY_CONFIGURED');
         }
@@ -96,27 +101,29 @@ if ($request->get('generate') === 'Y') {
             LocalRedirect($redirectUrl);
         }
     }
-} else if ($request->get('download') === 'Y') {
-    $personTypeId = $request->get('person_type_id');
-    $shopId = \Bitrix\Sale\BusinessValue::get('YANDEX_INVOICE_SHOP_ID', 'PAYSYSTEM_' . $id, $personTypeId);
+} else {
+    if ($request->get('download') === 'Y') {
+        $personTypeId = $request->get('person_type_id');
+        $shopId = \Bitrix\Sale\BusinessValue::get('YANDEX_INVOICE_SHOP_ID', 'PAYSYSTEM_' . $id, $personTypeId);
 
-    $APPLICATION->RestartBuffer();
+        $APPLICATION->RestartBuffer();
 
-    header('Content-Description: File Transfer');
-    header('Content-Type: application/octet-stream');
-    header('Content-Disposition: attachment; filename=public_key.pem');
-    header('Content-Transfer-Encoding: binary');
-    header('Expires: 0');
-    header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
-    header('Pragma: public');
+        header('Content-Description: File Transfer');
+        header('Content-Type: application/octet-stream');
+        header('Content-Disposition: attachment; filename=public_key.pem');
+        header('Content-Transfer-Encoding: binary');
+        header('Expires: 0');
+        header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+        header('Pragma: public');
 
-    $dbRes = \Bitrix\Sale\Internals\YandexSettingsTable::getById($shopId);
-    $yandexSettings = $dbRes->fetch();
-    if ($yandexSettings) {
-        $pkeyRes = openssl_get_privatekey($yandexSettings['PKEY']);
-        $pkeyDetail = openssl_pkey_get_details($pkeyRes);
-        echo $pkeyDetail['key'];
-        die();
+        $dbRes = \Bitrix\Sale\Internals\YandexSettingsTable::getById($shopId);
+        $yandexSettings = $dbRes->fetch();
+        if ($yandexSettings) {
+            $pkeyRes = openssl_get_privatekey($yandexSettings['PKEY']);
+            $pkeyDetail = openssl_pkey_get_details($pkeyRes);
+            echo $pkeyDetail['key'];
+            die();
+        }
     }
 }
 
@@ -126,15 +133,18 @@ $APPLICATION->SetTitle(Loc::getMessage('SALE_YANDEX_INVOICE_SETTINGS_TITLE'));
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
-if ($errorMsg !== '')
+if ($errorMsg !== '') {
     CAdminMessage::ShowMessage(array("DETAILS" => $errorMsg, "TYPE" => "ERROR", "HTML" => true));
+}
 
 $personTypeTabs = array();
 $personTypeTabs[] = array(
     "PERSON_TYPE" => 0,
     "DIV" => 0,
     "TAB" => Loc::getMessage('SALE_YANDEX_INVOICE_SETTINGS_BY_DEFAULT'),
-    "TITLE" => Loc::getMessage("SALE_YANDEX_INVOICE_SETTINGS_PT") . ": " . Loc::getMessage('SALE_YANDEX_INVOICE_SETTINGS_BY_DEFAULT')
+    "TITLE" => Loc::getMessage("SALE_YANDEX_INVOICE_SETTINGS_PT") . ": " . Loc::getMessage(
+            'SALE_YANDEX_INVOICE_SETTINGS_BY_DEFAULT'
+        )
 );
 
 foreach ($personTypeList as $personTypeId) {
@@ -154,7 +164,9 @@ $showButton = false;
 $aMenu = array(
     array(
         "TEXT" => Loc::getMessage("SPSN_2FLIST"),
-        "LINK" => $adminSidePanelHelper->editUrlToPublicPage($selfFolderUrl . "sale_pay_system_edit.php?ID=" . $id . "&lang=" . $context->getLanguage()),
+        "LINK" => $adminSidePanelHelper->editUrlToPublicPage(
+            $selfFolderUrl . "sale_pay_system_edit.php?ID=" . $id . "&lang=" . $context->getLanguage()
+        ),
         "ICON" => "btn_list"
     )
 );
@@ -190,31 +202,36 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
                 </tr>
                 <? if ($yandexSettings): ?>
                     <tr>
-                        <td width="50%"
-                            class="adm-detail-content-cell-l"><?= Loc::getMessage("SALE_YANDEX_INVOICE_SETTINGS_PUB_KEY") ?>
-                            :
+                        <td width="50%" class="adm-detail-content-cell-l"><?= Loc::getMessage(
+                                "SALE_YANDEX_INVOICE_SETTINGS_PUB_KEY"
+                            ) ?>:
                         </td>
                         <td width="50%" class="adm-detail-content-cell-r">
-                            <a href="<?= $APPLICATION->GetCurPage(); ?>?pay_system_id=<?= $id ?>&person_type_id=<?= $personTypeId; ?>&download=Y"><?= Loc::getMessage("SALE_YANDEX_INVOICE_SETTINGS_DOWNLOAD"); ?></a>
+                            <a href="<?= $APPLICATION->GetCurPage(
+                            ); ?>?pay_system_id=<?= $id ?>&person_type_id=<?= $personTypeId; ?>&download=Y"><?= Loc::getMessage(
+                                    "SALE_YANDEX_INVOICE_SETTINGS_DOWNLOAD"
+                                ); ?></a>
                         </td>
                     </tr>
                     <? if ($yandexSettings['PUB_KEY']): ?>
                         <tr>
-                            <td width="50%"
-                                class="adm-detail-content-cell-l"><?= Loc::getMessage("SALE_YANDEX_INVOICE_SETTINGS_PUB_KEY_YA") ?>
-                                :
+                            <td width="50%" class="adm-detail-content-cell-l"><?= Loc::getMessage(
+                                    "SALE_YANDEX_INVOICE_SETTINGS_PUB_KEY_YA"
+                                ) ?>:
                             </td>
                             <td width="50%" class="adm-detail-content-cell-r">
                                 <?= Loc::getMessage('SALE_YANDEX_INVOICE_SETTINGS_PUBLIC_KEY_OK') ?><br>
                                 <input type="checkbox"
-                                       name="settings[<?= $personTypeId; ?>][SETTINGS_CLEAR]"> <?= Loc::getMessage('SALE_YANDEX_INVOICE_SETTINGS_DEL'); ?>
+                                       name="settings[<?= $personTypeId; ?>][SETTINGS_CLEAR]"> <?= Loc::getMessage(
+                                    'SALE_YANDEX_INVOICE_SETTINGS_DEL'
+                                ); ?>
                             </td>
                         </tr>
                     <? else: ?>
                         <tr>
-                            <td width="50%"
-                                class="adm-detail-content-cell-l"><?= Loc::getMessage("SALE_YANDEX_INVOICE_SETTINGS_PUB_KEY_YA") ?>
-                                :
+                            <td width="50%" class="adm-detail-content-cell-l"><?= Loc::getMessage(
+                                    "SALE_YANDEX_INVOICE_SETTINGS_PUB_KEY_YA"
+                                ) ?>:
                             </td>
                             <td width="50%" class="adm-detail-content-cell-r">
                                 <input type="file" name="YANDEX_PUB_KEY_<?= $personTypeId; ?>">
@@ -225,9 +242,9 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
                         <td colspan="2"><?= Loc::getMessage('SALE_YANDEX_INVOICE_SETTINGS_RESET_TITLE'); ?></td>
                     </tr>
                     <tr>
-                        <td width="50%"
-                            class="adm-detail-content-cell-l"><?= Loc::getMessage("SALE_YANDEX_INVOICE_SETTINGS_RESET") ?>
-                            :
+                        <td width="50%" class="adm-detail-content-cell-l"><?= Loc::getMessage(
+                                "SALE_YANDEX_INVOICE_SETTINGS_RESET"
+                            ) ?>:
                         </td>
                         <td width="50%" class="adm-detail-content-cell-r">
                             <input type="checkbox" name="settings[<?= $personTypeId; ?>][SETTINGS_CLEAR_ALL]">
@@ -235,13 +252,16 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
                     </tr>
                 <? else: ?>
                     <tr>
-                        <td width="50%"
-                            class="adm-detail-content-cell-l"><?= Loc::getMessage("SALE_YANDEX_INVOICE_SETTINGS_PKEY") ?>
-                            :
+                        <td width="50%" class="adm-detail-content-cell-l"><?= Loc::getMessage(
+                                "SALE_YANDEX_INVOICE_SETTINGS_PKEY"
+                            ) ?>:
                         </td>
 
                         <td width="50%" class="adm-detail-content-cell-r">
-                            <a href="<?= $APPLICATION->GetCurPage(); ?>?pay_system_id=<?= $id ?>&person_type_id=<?= $personTypeId; ?>&generate=Y"><?= Loc::getMessage("SALE_YANDEX_INVOICE_SETTINGS_PKEY_GENERATE"); ?></a>
+                            <a href="<?= $APPLICATION->GetCurPage(
+                            ); ?>?pay_system_id=<?= $id ?>&person_type_id=<?= $personTypeId; ?>&generate=Y"><?= Loc::getMessage(
+                                    "SALE_YANDEX_INVOICE_SETTINGS_PKEY_GENERATE"
+                                ); ?></a>
                         </td>
                     </tr>
                 <? endif; ?>
@@ -249,7 +269,13 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
                 <tr>
                     <td colspan="2">
                         <?
-                        CAdminMessage::ShowMessage(array("DETAILS" => Loc::getMessage("SALE_YANDEX_INVOICE_SETTINGS_ERROR_SHOP_ID"), "TYPE" => "ERROR", "HTML" => true));
+                        CAdminMessage::ShowMessage(
+                            array(
+                                "DETAILS" => Loc::getMessage("SALE_YANDEX_INVOICE_SETTINGS_ERROR_SHOP_ID"),
+                                "TYPE" => "ERROR",
+                                "HTML" => true
+                            )
+                        );
                         ?>
                     </td>
                 </tr>

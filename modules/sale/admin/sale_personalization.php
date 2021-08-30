@@ -249,21 +249,29 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
                     <li <?= $available ? 'class="good"' : '' ?>>
                         <?= GetMessage('BIGDATA_ENABLED') ?>
                         <? if (!$available): ?>
-                            <div class="adm-c-bigdata-activate-content-task-list-warning">
-                                <span><?= GetMessage('BIGDATA_DISABLED') ?></span></div>
+                            <div class="adm-c-bigdata-activate-content-task-list-warning"><span><?= GetMessage(
+                                        'BIGDATA_DISABLED'
+                                    ) ?></span></div>
                         <? endif; ?>
                     </li>
 
-                    <? $installed = (time() - Bitrix\Main\Config\Option::get('main', 'rcm_component_usage', 0) < 3600 * 24); ?>
+                    <? $installed = (time() - Bitrix\Main\Config\Option::get(
+                            'main',
+                            'rcm_component_usage',
+                            0
+                        ) < 3600 * 24); ?>
                     <li <?= $installed ? 'class="good"' : '' ?>>
                         <?= GetMessage('BIGDATA_INSTALLED') ?>
                         <? if (!$installed): ?>
-                            <div class="adm-c-bigdata-activate-content-task-list-warning">
-                                <span><?= GetMessage('BIGDATA_UNINSTALLED') ?></span></div>
+                            <div class="adm-c-bigdata-activate-content-task-list-warning"><span><?= GetMessage(
+                                        'BIGDATA_UNINSTALLED'
+                                    ) ?></span></div>
                         <? endif; ?>
                     </li>
 
-                    <li <?= ($available && $installed) ? 'class="good"' : '' ?>><?= GetMessage('BIGDATA_OBSERVE') ?></li>
+                    <li <?= ($available && $installed) ? 'class="good"' : '' ?>><?= GetMessage(
+                            'BIGDATA_OBSERVE'
+                        ) ?></li>
                 </ul>
 
                 <?
@@ -274,13 +282,15 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
                 } elseif (!$available) {
                     $goUrl = 'settings.php?mid=main&mid_menu=1&lang=' . LANGUAGE_ID;
                 } elseif (!$installed) {
-                    $goUrl = 'https://dev.1c-bitrix.ru/learning/course/index.php?COURSE_ID=42&LESSON_ID=5367';
+                    $goUrl = 'https://dev.1c-bitrix.ru/learning/course/index.php?COURSE_ID=42&CHAPTER_ID=05367';
                 }
                 ?>
 
                 <div class="adm-c-bigdata-getStart-btn-container">
                     <a href="<?= htmlspecialcharsbx($goUrl) ?>"
-                       class="adm-c-bigdata-getStart-btn"><?= ($available && $installed) ? GetMessage('BIGDATA_ANALYZE') : GetMessage('BIGDATA_GO') ?></a>
+                       class="adm-c-bigdata-getStart-btn"><?= ($available && $installed) ? GetMessage(
+                            'BIGDATA_ANALYZE'
+                        ) : GetMessage('BIGDATA_GO') ?></a>
                 </div>
             </div>
         </div>

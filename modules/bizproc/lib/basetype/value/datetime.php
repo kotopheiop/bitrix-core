@@ -21,12 +21,15 @@ class DateTime extends Date
             }
 
             try {
-                $this->timestamp = (new Main\Type\DateTime($dateFormatted))->getTimestamp() - $offset;
+                $datetime = new Main\Type\DateTime($dateFormatted);
+                $this->checkYear($datetime);
+
+                $this->timestamp = $datetime->getTimestamp() - $offset;
             } catch (Main\ObjectException $exception) {
                 try {
                     $this->timestamp = (new Main\Type\DateTime($dateFormatted, DATE_ISO8601))->getTimestamp() - $offset;
                 } catch (Main\ObjectException $exception) {
-                    $this->timestamp = 0;
+                    $this->timestamp = null;
                 }
             }
         }

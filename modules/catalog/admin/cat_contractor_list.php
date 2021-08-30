@@ -1,5 +1,6 @@
 <?
 /** @global CDatabase $DB */
+
 /** @global CUser $USER */
 
 /** @global CMain $APPLICATION */
@@ -17,8 +18,9 @@ global $adminSidePanelHelper;
 $selfFolderUrl = $adminPage->getSelfFolderUrl();
 $publicMode = $adminPage->publicMode;
 
-if (!($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_store')))
+if (!($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_store'))) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 Loader::includeModule('catalog');
 $bReadOnly = !$USER->CanDoOperation('catalog_store');
 
@@ -91,15 +93,22 @@ $lAdmin->AddFilter($filterFields, $arFilter);
 if ($lAdmin->EditAction() && !$bReadOnly) {
     foreach ($_POST['FIELDS'] as $ID => $arFields) {
         $ID = (int)$ID;
-        if ($ID <= 0 || !$lAdmin->IsUpdated($ID))
+        if ($ID <= 0 || !$lAdmin->IsUpdated($ID)) {
             continue;
+        }
 
         $DB->StartTransaction();
         if (!CCatalogContractor::Update($ID, $arFields)) {
-            if ($ex = $APPLICATION->GetException())
+            if ($ex = $APPLICATION->GetException()) {
                 $lAdmin->AddUpdateError($ex->GetString(), $ID);
-            else
-                $lAdmin->AddUpdateError(GetMessage("ERROR_UPDATING_REC") . " (" . $arFields["ID"] . ", " . $arFields["TITLE"] . ", " . $arFields["SORT"] . ")", $ID);
+            } else {
+                $lAdmin->AddUpdateError(
+                    GetMessage(
+                        "ERROR_UPDATING_REC"
+                    ) . " (" . $arFields["ID"] . ", " . $arFields["TITLE"] . ", " . $arFields["SORT"] . ")",
+                    $ID
+                );
+            }
 
             $DB->Rollback();
         } else {
@@ -112,13 +121,15 @@ if (($arID = $lAdmin->GroupAction()) && !$bReadOnly) {
     if ($_REQUEST['action_target'] == 'selected') {
         $arID = array();
         $dbResultList = CCatalogContractor::GetList(array(), $arFilter, false, false, array('ID'));
-        while ($arResult = $dbResultList->Fetch())
+        while ($arResult = $dbResultList->Fetch()) {
             $arID[] = $arResult['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
 
         switch ($_REQUEST['action']) {
             case "delete":
@@ -127,10 +138,11 @@ if (($arID = $lAdmin->GroupAction()) && !$bReadOnly) {
                 if (!CCatalogContractor::Delete($ID)) {
                     $DB->Rollback();
 
-                    if ($ex = $APPLICATION->GetException())
+                    if ($ex = $APPLICATION->GetException()) {
                         $lAdmin->AddGroupError($ex->GetString(), $ID);
-                    else
+                    } else {
                         $lAdmin->AddGroupError(GetMessage("ERROR_DELETING_TYPE"), $ID);
+                    }
                 } else {
                     $DB->Commit();
                 }
@@ -166,10 +178,12 @@ isset($_REQUEST['mode']) && $_REQUEST['mode'] == 'excel'
     : array("nPageSize" => CAdminUiResult::GetNavSize($sTableID))
 );
 global $by, $order;
-if (!isset($by))
+if (!isset($by)) {
     $by = 'ID';
-if (!isset($order))
+}
+if (!isset($order)) {
     $order = 'ASC';
+}
 
 $dbResultList = CCatalogContractor::GetList(
     array($by => $order),
@@ -185,24 +199,49 @@ $lAdmin->SetNavigationParams($dbResultList, array("BASE_LINK" => $selfFolderUrl 
 
 $arHeaders = array(
     array("id" => "ID", "content" => "ID", "sort" => "ID", "default" => true),
-    array('id' => 'PERSON_TYPE', 'content' => GetMessage('CONTRACTOR_TYPE'), 'sort' => 'PERSON_TYPE', 'default' => true),
-    array('id' => 'PERSON_NAME', 'content' => GetMessage('CONTRACTOR_PERSON_TITLE'), 'sort' => 'PERSON_NAME', 'default' => true),
+    array(
+        'id' => 'PERSON_TYPE',
+        'content' => GetMessage('CONTRACTOR_TYPE'),
+        'sort' => 'PERSON_TYPE',
+        'default' => true
+    ),
+    array(
+        'id' => 'PERSON_NAME',
+        'content' => GetMessage('CONTRACTOR_PERSON_TITLE'),
+        'sort' => 'PERSON_NAME',
+        'default' => true
+    ),
     array("id" => "COMPANY", "content" => GetMessage("CONTRACTOR_COMPANY"), "sort" => "COMPANY", "default" => true),
     array("id" => "EMAIL", "content" => GetMessage("CONTRACTOR_EMAIL"), "sort" => "EMAIL", "default" => true),
     array("id" => "PHONE", "content" => GetMessage("CONTRACTOR_PHONE"), "sort" => "PHONE", "default" => false),
-    array("id" => "POST_INDEX", "content" => GetMessage("CONTRACTOR_POST_INDEX"), "sort" => "POST_INDEX", "default" => false),
+    array(
+        "id" => "POST_INDEX",
+        "content" => GetMessage("CONTRACTOR_POST_INDEX"),
+        "sort" => "POST_INDEX",
+        "default" => false
+    ),
     array("id" => "INN", "content" => GetMessage("CONTRACTOR_INN"), "sort" => "INN", "default" => false),
 );
-if (trim(GetMessage("CONTRACTOR_KPP")) != '')
+if (trim(GetMessage("CONTRACTOR_KPP")) != '') {
     $arHeaders[] = array("id" => "KPP", "content" => GetMessage("CONTRACTOR_KPP"), "sort" => "KPP", "default" => false);
+}
 
-$arHeaders[] = array("id" => "ADDRESS", "content" => GetMessage("CONTRACTOR_ADDRESS"), "sort" => "ADDRESS", "default" => true);
+$arHeaders[] = array(
+    "id" => "ADDRESS",
+    "content" => GetMessage("CONTRACTOR_ADDRESS"),
+    "sort" => "ADDRESS",
+    "default" => true
+);
 
 $lAdmin->AddHeaders($arHeaders);
 
 $arVisibleColumns = $lAdmin->GetVisibleHeaderColumns();
 while ($arResultContractor = $dbResultList->Fetch()) {
-    $row =& $lAdmin->AddRow($arResultContractor['ID'], $arResultContractor, "cat_contractor_edit.php?ID=" . $arResultContractor['ID'] . "&lang=" . LANGUAGE_ID);
+    $row =& $lAdmin->AddRow(
+        $arResultContractor['ID'],
+        $arResultContractor,
+        "cat_contractor_edit.php?ID=" . $arResultContractor['ID'] . "&lang=" . LANGUAGE_ID
+    );
     $row->AddField('ID', $arResultContractor['ID']);
     $row->AddViewField('PERSON_TYPE', $typeList[$arResultContractor['PERSON_TYPE']]);
     $row->AddInputField('PERSON_NAME', false);
@@ -231,7 +270,10 @@ while ($arResultContractor = $dbResultList->Fetch()) {
         $arActions[] = array(
             "ICON" => "delete",
             "TEXT" => GetMessage("DELETE_CONTRACTOR_ALT"),
-            "ACTION" => "if(confirm('" . GetMessage('DELETE_CONTRACTOR_CONFIRM') . "')) " . $lAdmin->ActionDoGroup($arResultContractor['ID'], "delete")
+            "ACTION" => "if(confirm('" . GetMessage('DELETE_CONTRACTOR_CONFIRM') . "')) " . $lAdmin->ActionDoGroup(
+                    $arResultContractor['ID'],
+                    "delete"
+                )
         );
     }
 

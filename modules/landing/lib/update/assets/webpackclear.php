@@ -65,12 +65,15 @@ final class WebpackClear extends Stepper
     protected function findFilesToDelete(): void
     {
         $fileIds = [];
-        $dbFiles = FileTable::getList([
-            'select' => ['ID'],
-            'filter' => [
-                '%ORIGINAL_NAME' => self::WEBPACK_NAME_MASK,
-            ],
-        ]);
+        $dbFiles = FileTable::getList(
+            [
+                'select' => ['ID'],
+                'filter' => [
+                    '%ORIGINAL_NAME' => self::WEBPACK_NAME_MASK,
+                    '=MODULE_ID' => self::MODULE_ID,
+                ],
+            ]
+        );
         while ($row = $dbFiles->fetch()) {
             $fileIds[] = (int)$row['ID'];
         }
@@ -82,12 +85,14 @@ final class WebpackClear extends Stepper
             },
             $fileIds
         );
-        $dbLandingFiles = Landing\Internals\FileTable::getList([
-            'select' => ['FILE_ID'],
-            'filter' => [
-                'FILE_ID' => array_merge($fileIds, $fileIdsInRecycleBin),
-            ],
-        ]);
+        $dbLandingFiles = Landing\Internals\FileTable::getList(
+            [
+                'select' => ['FILE_ID'],
+                'filter' => [
+                    'FILE_ID' => array_merge($fileIds, $fileIdsInRecycleBin),
+                ],
+            ]
+        );
         while ($row = $dbLandingFiles->fetch()) {
             $landingFileIds[] = abs($row['FILE_ID']);
         }
@@ -103,6 +108,6 @@ final class WebpackClear extends Stepper
      */
     public static function clearNotBindedFiles(): void
     {
-        Stepper::bindClass('Bitrix\Landing\Update\Assets\WebpackClear', 'landing', 300);
+        Stepper::bindClass('Bitrix\Landing\Update\Assets\WebpackClear', 'landing', 600);
     }
 }

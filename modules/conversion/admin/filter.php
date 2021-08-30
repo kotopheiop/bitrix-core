@@ -14,13 +14,18 @@ Loc::loadMessages(__FILE__);
 
 // PERIOD
 
-$from = ($d = $_GET['from']) && Date::isCorrect($d) ? new Date($d) : Date::createFromPhp(new DateTime('first day of last month'));
-$to = ($d = $_GET['to']) && Date::isCorrect($d) ? new Date($d) : Date::createFromPhp(new DateTime('last day of this month'));
+$from = ($d = $_GET['from']) && Date::isCorrect($d) ? new Date($d) : Date::createFromPhp(
+    new DateTime('first day of last month')
+);
+$to = ($d = $_GET['to']) && Date::isCorrect($d) ? new Date($d) : Date::createFromPhp(
+    new DateTime('last day of this month')
+);
 
 // RATES
 
-if (!$rateTypes = RateManager::getTypes())
+if (!$rateTypes = RateManager::getTypes()) {
     die ('No rates!');
+}
 
 $rateName = $_GET['rate'];
 
@@ -30,8 +35,9 @@ if (!$rateType = $rateTypes[$rateName]) {
 
 // ATTRIBUTES
 
-if (!$attributeTypes = AttributeManager::getTypes())
+if (!$attributeTypes = AttributeManager::getTypes()) {
     die ('No attributes!');
+}
 
 $splitByAttribute = (($s = $_GET['split']) && $attributeTypes[$s]) ? $s : null;
 
@@ -45,29 +51,31 @@ $filter = array(
     'split' => & $splitByAttribute,
 );
 
-call_user_func(function () use ($from, $to, & $attributeTypes, & $filter, & $splitByAttribute) {
-    foreach ($attributeTypes as $name => & $type) {
-        $values =& $type['VALUES'];
+call_user_func(
+    function () use ($from, $to, & $attributeTypes, & $filter, & $splitByAttribute) {
+        foreach ($attributeTypes as $name => & $type) {
+            $values =& $type['VALUES'];
 
-        if ($getValues = $type['GET_VALUES']) {
-            $values = $getValues($from, $to);
+            if ($getValues = $type['GET_VALUES']) {
+                $values = $getValues($from, $to);
 
-            if (($value = $_GET[$name]) && $values[$value]) {
-                $filter[$name] = $value;
-            }
-        } else {
-            $values = array();
-        }
-    }
-
-    if (!$splitByAttribute || $filter[$splitByAttribute]) {
-        foreach ($attributeTypes as $name => $value) {
-            if (!$filter[$name]) {
-                $splitByAttribute = $name;
+                if (($value = $_GET[$name]) && $values[$value]) {
+                    $filter[$name] = $value;
+                }
+            } else {
+                $values = array();
             }
         }
+
+        if (!$splitByAttribute || $filter[$splitByAttribute]) {
+            foreach ($attributeTypes as $name => $value) {
+                if (!$filter[$name]) {
+                    $splitByAttribute = $name;
+                }
+            }
+        }
     }
-});
+);
 
 // SPLITS
 
@@ -91,10 +99,14 @@ foreach ($attributeTypes as $name => $type) {
     }
 }
 
-$splitRates = $context->getSplitRatesDeprecated($splits, array($rateName => $rateType), array(
-    '>=DAY' => $filter['from'],
-    '<=DAY' => $filter['to'],
-));
+$splitRates = $context->getSplitRatesDeprecated(
+    $splits,
+    array($rateName => $rateType),
+    array(
+        '>=DAY' => $filter['from'],
+        '<=DAY' => $filter['to'],
+    )
+);
 
 unset($splitRates['total'], $splitRates['other']); // TODO loop through getRates
 
@@ -102,14 +114,24 @@ unset($splitRates['total'], $splitRates['other']); // TODO loop through getRates
 
 $adminList = new CAdminList($sTableID, $oSort);
 
-$adminList->AddHeaders(array(
-    array('id' => 'TITLE', 'default' => true, 'content' => Loc::getMessage('CONVERSION_DETAILED_HEAD_TITLE')),
-    array('id' => 'CONVERSION', 'default' => true, 'content' => Loc::getMessage('CONVERSION_DETAILED_HEAD_CONVERSION')),
-    array('id' => 'SUM', 'default' => true, 'content' => Loc::getMessage('CONVERSION_DETAILED_HEAD_SUM')),
-    array('id' => 'ACHIEVEMENTS', 'default' => true, 'content' => Loc::getMessage('CONVERSION_DETAILED_HEAD_ACHIEVEMENTS')),
-    array('id' => 'TRAFFIC', 'default' => true, 'content' => Loc::getMessage('CONVERSION_DETAILED_HEAD_TRAFFIC')),
+$adminList->AddHeaders(
+    array(
+        array('id' => 'TITLE', 'default' => true, 'content' => Loc::getMessage('CONVERSION_DETAILED_HEAD_TITLE')),
+        array(
+            'id' => 'CONVERSION',
+            'default' => true,
+            'content' => Loc::getMessage('CONVERSION_DETAILED_HEAD_CONVERSION')
+        ),
+        array('id' => 'SUM', 'default' => true, 'content' => Loc::getMessage('CONVERSION_DETAILED_HEAD_SUM')),
+        array(
+            'id' => 'ACHIEVEMENTS',
+            'default' => true,
+            'content' => Loc::getMessage('CONVERSION_DETAILED_HEAD_ACHIEVEMENTS')
+        ),
+        array('id' => 'TRAFFIC', 'default' => true, 'content' => Loc::getMessage('CONVERSION_DETAILED_HEAD_TRAFFIC')),
 
-));
+    )
+);
 
 foreach ($splitRates as $name => $rates) {
     $split = $splits[$name];
@@ -118,7 +140,12 @@ foreach ($splitRates as $name => $rates) {
     $row =& $adminList->AddRow();
     $row->AddField('TITLE', $split['TITLE']);
     $row->AddField('CONVERSION', number_format($rate['RATE'] * 100, 2) . ' %');
-    $row->AddField('SUM', isset($rate['SUM']) ? (isset($rateType['FORMAT']['SUM']) ? $rateType['FORMAT']['SUM']($rate['SUM']) : $rate['SUM']) : '');
+    $row->AddField(
+        'SUM',
+        isset($rate['SUM']) ? (isset($rateType['FORMAT']['SUM']) ? $rateType['FORMAT']['SUM'](
+            $rate['SUM']
+        ) : $rate['SUM']) : ''
+    );
     $row->AddField('ACHIEVEMENTS', number_format($rate['NUMERATOR']));
     $row->AddField('TRAFFIC', number_format($rate['DENOMINATOR']));
 }

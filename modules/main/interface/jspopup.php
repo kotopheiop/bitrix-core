@@ -29,10 +29,10 @@ class CJSPopup
 	*/
 	public function __construct($title = '', $arConfig = array())
 	{
-		if ($title != '') $this->SetTitle($title);
-		if (is_set($arConfig, 'TITLE')) $this->SetTitle($arConfig['TITLE']);
-		if (is_set($arConfig, 'ARGS')) $this->SetAdditionalArgs($arConfig['ARGS']);
-		if (is_set($arConfig, 'SUFFIX') && strlen($arConfig['SUFFIX']) > 0) $this->SetSuffix($arConfig['SUFFIX']);
+		if ($title != '') {$this->SetTitle($title);}
+		if (is_set($arConfig, 'TITLE')) {$this->SetTitle($arConfig['TITLE']);}
+		if (is_set($arConfig, 'ARGS')) {$this->SetAdditionalArgs($arConfig['ARGS']);}
+		if (is_set($arConfig, 'SUFFIX') && $arConfig['SUFFIX'] <> '') {$this->SetSuffix($arConfig['SUFFIX']);}
 	}
 
 	function InitSystem()
@@ -57,9 +57,9 @@ class CJSPopup
 	{
 		$adminPage = new CAdminPage();
 
-		echo $adminPage->ShowPopupCSS();
-		echo $adminPage->ShowScript();
-
+		return
+		 	$adminPage->ShowPopupCSS().
+			$adminPage->ShowScript();
 	}
 
 	function InitScripts()
@@ -93,11 +93,11 @@ class CJSPopup
 		$this->InitSystem();
 
 		if ($title == '')
-			$title = $this->title;
+			{$title = $this->title;}
 		?>
 		<script type="text/javascript">
 			var currentWindow = top.window;
-			if (top.BX.SidePanel.Instance && top.BX.SidePanel.Instance.getTopSlider())
+			if (top.BX.SidePanel && top.BX.SidePanel.Instance && top.BX.SidePanel.Instance.getTopSlider())
 			{
 				currentWindow = top.BX.SidePanel.Instance.getTopSlider().getWindow();
 			}
@@ -113,7 +113,7 @@ class CJSPopup
 		$this->bDescriptionStarted = true;
 ?>
 <script type="text/javascript"><?if ($icon):?>
-	<?if (strpos($icon, '/') === false):?>
+	<?if (strpos($icon,'/') === false):?>
 
 		<?=$this->jsPopup?>.SetIcon('<?echo CUtil::JSEscape($icon)?>');
 	<?else:?>
@@ -159,7 +159,7 @@ class CJSPopup
 		echo bitrix_sessid_post()."\r\n";
 
 		if (is_set($_REQUEST, 'back_url'))
-			echo '<input type="hidden" name="back_url" value="'.htmlspecialcharsbx($_REQUEST['back_url']).'" />'."\r\n";
+			{echo '<input type="hidden" name="back_url" value="'.htmlspecialcharsbx($_REQUEST['back_url']).'" />'."\r\n";}
 	}
 
 	function EndContent()
@@ -215,7 +215,7 @@ class CJSPopup
 	{
 		$this->InitSystem();
 
-		if (!is_array($arButtons)) return;
+		if (!is_array($arButtons)) {return;}
 
 		if ($this->bButtonsStarted)
 		{
@@ -225,13 +225,13 @@ class CJSPopup
 		$arSB = array('save' => $this->jsPopup.'.btnSave', 'cancel' => $this->jsPopup.'.btnCancel', 'close' => $this->jsPopup.'.btnClose');
 
 		foreach ($arButtons as $key => $value)
-			if (!$arSB[$value]) unset($arButtons[$key]);
+			{if (!$arSB[$value]) {unset($arButtons[$key]);}}
 		$arButtons = array_values($arButtons);
 
 ?>
 <script type="text/javascript"><?=$this->jsPopup?>.SetButtons([<?
 	foreach ($arButtons as $key => $btn)
-		echo ($key ? ',' : '').$arSB[$btn];
+		{echo ($key ? ',' : '').$arSB[$btn];}
 ?>]);</script><?
 	}
 
@@ -246,7 +246,7 @@ class CJSPopup
 		$this->ShowTitlebar($title != "" ? $title : $this->title);
 
 		if (!$this->bDescriptionStarted)
-			$this->StartDescription();
+			{$this->StartDescription();}
 
 		ShowError($errortext);
 
@@ -260,9 +260,9 @@ class CJSPopup
 	function Close($bReload = true, $back_url = false)
 	{
 		if (!$back_url && is_set($_REQUEST, 'back_url'))
-			$back_url = $_REQUEST['back_url'];
+			{$back_url = $_REQUEST['back_url'];}
 
-		if(substr($back_url, 0, 1) != "/" || substr($back_url, 1, 1) == "/")
+		if(substr($back_url,0,1) != "/" || substr($back_url,1,1) == "/")
 		{
 			//only local /url is allowed
 			$back_url = '';

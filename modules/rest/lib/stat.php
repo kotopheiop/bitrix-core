@@ -45,6 +45,19 @@ use Bitrix\Main;
 /**
  * Class StatTable
  * @deprecated
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Stat_Query query()
+ * @method static EO_Stat_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Stat_Result getById($id)
+ * @method static EO_Stat_Result getList(array $parameters = array())
+ * @method static EO_Stat_Entity getEntity()
+ * @method static \Bitrix\Rest\EO_Stat createObject($setDefaultValues = true)
+ * @method static \Bitrix\Rest\EO_Stat_Collection createCollection()
+ * @method static \Bitrix\Rest\EO_Stat wakeUpObject($row)
+ * @method static \Bitrix\Rest\EO_Stat_Collection wakeUpCollection($rows)
  */
 class StatTable extends Main\Entity\DataManager
 {
@@ -285,8 +298,9 @@ class StatTable extends Main\Entity\DataManager
         $hour = intval(date('G'));
         $curDateSql = new Main\Type\Date();
         if (count(static::$data) > 0) {
-            foreach (static::$data as $clientId => $stat)
+            foreach (static::$data as $clientId => $stat) {
                 $appInfo = AppTable::getByClientId($clientId);
+            }
             {
                 if ($appInfo) {
                     StatAppTable::register($appInfo);
@@ -325,7 +339,6 @@ class StatTable extends Main\Entity\DataManager
 
         if (count(static::$dataPassword) > 0) {
             foreach (static::$dataPassword as $passwordID => $stat) {
-
                 foreach ($stat as $methodName => $count) {
                     $methodId = StatMethodTable::getId($methodName);
                     if (!$methodId) {
@@ -404,9 +417,11 @@ class StatTable extends Main\Entity\DataManager
         $date = new Main\Type\DateTime();
         $date->add("-60D");
 
-        static::deleteByFilter(array(
-            "<STAT_DATE" => $date,
-        ));
+        static::deleteByFilter(
+            array(
+                "<STAT_DATE" => $date,
+            )
+        );
 
         return "\\Bitrix\\Rest\\StatTable::cleanUpAgent();";
     }

@@ -13,7 +13,9 @@ global $USER, $APPLICATION;
 
 Loc::loadMessages(__FILE__);
 
-if (!$USER->IsAdmin() || !\Bitrix\Main\Loader::includeModule('catalog') || !\Bitrix\Main\Loader::includeModule('sale')) {
+if (!$USER->IsAdmin() || !\Bitrix\Main\Loader::includeModule('catalog') || !\Bitrix\Main\Loader::includeModule(
+        'sale'
+    )) {
     $APPLICATION->AuthForm(GetMessage('ACCESS_DENIED'));
 }
 
@@ -59,10 +61,12 @@ final class DiscountCatalogMigrator
     {
         $this->setTimeStart(time());
         $this->logger = new DiscountCatalogMigratorLogger();
-        $this->logger->initialize(array(
-            'file' => DiscountCatalogMigratorLogger::DEFAULT_LOG_FILE,
-            'log_size' => DiscountCatalogMigratorLogger::MAX_LOG_SIZE,
-        ));
+        $this->logger->initialize(
+            array(
+                'file' => DiscountCatalogMigratorLogger::DEFAULT_LOG_FILE,
+                'log_size' => DiscountCatalogMigratorLogger::MAX_LOG_SIZE,
+            )
+        );
         $this->connection = \Bitrix\Main\Application::getInstance()->getConnection();
         $this->sqlHelper = $this->connection->getSqlHelper();
 
@@ -124,11 +128,13 @@ final class DiscountCatalogMigrator
         );
 
         $this->countSuccessfulSteps++;
-        $this->log(array(
-            "finished",
-            "Step {$stepName}",
-            $description,
-        ));
+        $this->log(
+            array(
+                "finished",
+                "Step {$stepName}",
+                $description,
+            )
+        );
 
         $this->resetCounter();
         $this->abortIfNeeded();
@@ -144,17 +150,21 @@ final class DiscountCatalogMigrator
         $finished = Option::get('sale', '~sF' . md5($stepName), 'N') == 'Y';
 
         if (!$finished) {
-            $this->log(array(
-                "Start",
-                "Step {$stepName}",
-                $description,
-            ));
+            $this->log(
+                array(
+                    "Start",
+                    "Step {$stepName}",
+                    $description,
+                )
+            );
         } else {
             $this->countSuccessfulSteps++;
-            $this->log(array(
-                "Skip",
-                "Step {$stepName}",
-            ));
+            $this->log(
+                array(
+                    "Skip",
+                    "Step {$stepName}",
+                )
+            );
         }
 
         return $finished;
@@ -209,13 +219,18 @@ final class DiscountCatalogMigrator
             "DELETE FROM b_option WHERE MODULE_ID = 'sale' AND VALUE = 'Y' AND NAME LIKE '~sF%'"
         );
 
-        $query = Catalog\DiscountTable::getList(array(
-            'select' => array('ID', 'SALE_ID'),
-            'runtime' => array(
-                new \Bitrix\Main\Entity\ExpressionField('FSALE_ID', 'CASE WHEN SALE_ID IS NOT NULL THEN 1 ELSE 0 END')
-            ),
-            'filter' => array('=FSALE_ID' => true)
-        ));
+        $query = Catalog\DiscountTable::getList(
+            array(
+                'select' => array('ID', 'SALE_ID'),
+                'runtime' => array(
+                    new \Bitrix\Main\Entity\ExpressionField(
+                        'FSALE_ID',
+                        'CASE WHEN SALE_ID IS NOT NULL THEN 1 ELSE 0 END'
+                    )
+                ),
+                'filter' => array('=FSALE_ID' => true)
+            )
+        );
 
         while ($row = $query->fetch()) {
             if (empty($row['SALE_ID'])) {
@@ -233,12 +248,14 @@ final class DiscountCatalogMigrator
 //			"ALTER TABLE b_sale_discount DROP COLUMN PRIORITY_BACKUP"
 //		);
 
-        $this->connection->queryExecute("
+        $this->connection->queryExecute(
+            "
 			UPDATE b_catalog_discount_cond cond SET cond.ACTIVE = 'Y' 
 			WHERE EXISTS(
 				SELECT 'x' FROM b_catalog_discount WHERE ID = cond.DISCOUNT_ID AND SALE_ID IS NOT NULL
 			)
-		");
+		"
+        );
 
         $this->connection->queryExecute(
             "UPDATE b_catalog_discount SET ACTIVE = 'Y', SALE_ID = null WHERE SALE_ID IS NOT NULL"
@@ -323,14 +340,16 @@ final class DiscountCatalogMigrator
         }
 
         $counter = $this->getCounter();
-        $discountIterator = Catalog\DiscountTable::getList(array(
-            'filter' => array(
-                '>ID' => $counter,
-                'TYPE' => \CCatalogDiscount::ENTITY_ID,
-                '=ACTIVE' => 'Y',
-            ),
-            'order' => array('ID' => 'ASC'),
-        ));
+        $discountIterator = Catalog\DiscountTable::getList(
+            array(
+                'filter' => array(
+                    '>ID' => $counter,
+                    'TYPE' => \CCatalogDiscount::ENTITY_ID,
+                    '=ACTIVE' => 'Y',
+                ),
+                'order' => array('ID' => 'ASC'),
+            )
+        );
 
         $this->migrateDiscounts($discountIterator);
 
@@ -370,22 +389,27 @@ final class DiscountCatalogMigrator
             }
 
             $rawFields = $this->createActionAndCondition($discount);
-            $rawFields = array_merge($rawFields, array(
-                'ID' => $discount['ID'],
-                'LID' => $newData['LID'],
-                'CURRENCY' => $discount['CURRENCY'],
-                'USER_GROUPS' => array(2), //fabrication!
-            ));
+            $rawFields = array_merge(
+                $rawFields,
+                array(
+                    'ID' => $discount['ID'],
+                    'LID' => $newData['LID'],
+                    'CURRENCY' => $discount['CURRENCY'],
+                    'USER_GROUPS' => array(2), //fabrication!
+                )
+            );
 
             if (\CSaleDiscount::checkFields('ADD', $rawFields)) {
                 $newData['UNPACK'] = $rawFields['UNPACK'];
                 $newData['APPLICATION'] = $rawFields['APPLICATION'];
-                if (!is_array($rawFields['ACTIONS']))
-                    $rawFields['ACTIONS'] = unserialize($rawFields['ACTIONS']);
+                if (!is_array($rawFields['ACTIONS'])) {
+                    $rawFields['ACTIONS'] = unserialize($rawFields['ACTIONS'], ['allowed_classes' => false]);
+                }
                 $newData['ACTIONS_LIST'] = $rawFields['ACTIONS'];
 
-                if (!is_array($rawFields['CONDITIONS']))
-                    $rawFields['CONDITIONS'] = unserialize($rawFields['CONDITIONS']);
+                if (!is_array($rawFields['CONDITIONS'])) {
+                    $rawFields['CONDITIONS'] = unserialize($rawFields['CONDITIONS'], ['allowed_classes' => false]);
+                }
                 $newData['CONDITIONS_LIST'] = $rawFields['CONDITIONS'];
 
                 if (isset($rawFields['EXECUTE_MODULE'])) {
@@ -398,19 +422,29 @@ final class DiscountCatalogMigrator
 
                 $addResult = \Bitrix\Sale\Internals\DiscountTable::add($newData);
                 if (!$addResult->isSuccess()) {
-                    $this->log(array(
-                        "Can't add",
-                        $discount['ID'],
-                        $addResult->getErrorMessages()
-                    ));
+                    $this->log(
+                        array(
+                            "Can't add",
+                            $discount['ID'],
+                            $addResult->getErrorMessages()
+                        )
+                    );
 
                     $this->setAsConverted($discount['ID'], 0, $typeDiscount);
                 } else {
                     if (isset($rawFields['ENTITIES'])) {
-                        Sale\Internals\DiscountEntitiesTable::updateByDiscount($addResult->getId(), $rawFields['ENTITIES'], true);
+                        Sale\Internals\DiscountEntitiesTable::updateByDiscount(
+                            $addResult->getId(),
+                            $rawFields['ENTITIES'],
+                            true
+                        );
                     }
                     if (isset($rawFields['HANDLERS']['MODULES'])) {
-                        Sale\Internals\DiscountModuleTable::updateByDiscount($addResult->getId(), $rawFields['HANDLERS']['MODULES'], true);
+                        Sale\Internals\DiscountModuleTable::updateByDiscount(
+                            $addResult->getId(),
+                            $rawFields['HANDLERS']['MODULES'],
+                            true
+                        );
                     }
                     $this->moveUserGroupsByDiscount($discount, $addResult->getId(), $typeDiscount);
 
@@ -426,18 +460,24 @@ final class DiscountCatalogMigrator
                 $this->stepErrors[] = GetMessage(
                     'DISCOUNT_CATALOG_MIGRATOR_ERROR_REPORT',
                     array(
-                        '#URL#' => str_replace('#ID#', $discount['ID'], '/bitrix/admin/cat_discount_edit.php?ID=#ID#&lang=' . LANGUAGE_ID),
+                        '#URL#' => str_replace(
+                            '#ID#',
+                            $discount['ID'],
+                            '/bitrix/admin/cat_discount_edit.php?ID=#ID#&lang=' . LANGUAGE_ID
+                        ),
                         '#TITLE#' => (trim((string)$discount['NAME']) != '' ? $discount['NAME'] : $discount['ID']),
                         '#ERRORS#' => implode('; ', $errors)
                     )
                 );
                 $this->setAsConverted($discount['ID'], 0, $typeDiscount);
 
-                $this->log(array(
-                    "Check fields error",
-                    $discount['ID'],
-                    $errors
-                ));
+                $this->log(
+                    array(
+                        "Check fields error",
+                        $discount['ID'],
+                        $errors
+                    )
+                );
             }
 
             $this->storeCounter($discount['ID']);
@@ -451,14 +491,16 @@ final class DiscountCatalogMigrator
         }
 
         $counter = $this->getCounter();
-        $discountIterator = Catalog\DiscountTable::getList(array(
-            'filter' => array(
-                '>ID' => $counter,
-                'TYPE' => \CCatalogDiscountSave::ENTITY_ID,
-                '=ACTIVE' => 'Y',
-            ),
-            'order' => array('ID' => 'ASC'),
-        ));
+        $discountIterator = Catalog\DiscountTable::getList(
+            array(
+                'filter' => array(
+                    '>ID' => $counter,
+                    'TYPE' => \CCatalogDiscountSave::ENTITY_ID,
+                    '=ACTIVE' => 'Y',
+                ),
+                'order' => array('ID' => 'ASC'),
+            )
+        );
 
         $this->migrateDiscounts($discountIterator);
         $this->recalculatePriorityForCumulativeDiscounts();
@@ -475,20 +517,23 @@ final class DiscountCatalogMigrator
             return;
         }
 
-        $this->connection->queryExecute("
+        $this->connection->queryExecute(
+            "
 			UPDATE b_sale_discount discount
 			INNER JOIN b_catalog_discount c_discount ON c_discount.SALE_ID = discount.ID
 			SET discount.PRIORITY = -1
 			WHERE c_discount.TYPE = 1 AND discount.ACTIVE = 'Y'"
         );
 
-        $this->connection->queryExecute("
+        $this->connection->queryExecute(
+            "
 			UPDATE b_sale_discount discount
 			SET discount.PRIORITY = discount.PRIORITY + 100
 			WHERE discount.ACTIVE = 'Y' AND discount.PRIORITY <> -1"
         );
 
-        $this->connection->queryExecute("
+        $this->connection->queryExecute(
+            "
 			UPDATE b_sale_discount discount
 			SET discount.PRIORITY = 50
 			WHERE discount.ACTIVE = 'Y' AND discount.PRIORITY = -1"
@@ -620,16 +665,20 @@ final class DiscountCatalogMigrator
         $this->connection->queryExecute($sql);
 
         if ($this->isMysql) {
-            $this->connection->queryExecute("
+            $this->connection->queryExecute(
+                "
 				UPDATE b_sale_discount sale_d SET USE_COUPONS = 'Y' WHERE EXISTS(
 						SELECT 'x' FROM b_sale_discount_coupon WHERE DISCOUNT_ID = sale_d.ID
 				)		
-			");
+			"
+            );
         } else {
-            $this->connection->queryExecute("
+            $this->connection->queryExecute(
+                "
 				UPDATE b_sale_discount  SET USE_COUPONS = 'Y' 
 				WHERE ID IN (SELECT c.DISCOUNT_ID FROM b_sale_discount_coupon c)  
-			");
+			"
+            );
         }
 
         $this->setStepFinished(__METHOD__);
@@ -643,14 +692,16 @@ final class DiscountCatalogMigrator
 
         $counter = $this->getCounter();
 
-        $discountIterator = \Bitrix\Sale\Internals\DiscountTable::getList(array(
-            'select' => array('ID', 'ACTIONS_LIST'),
-            'filter' => array(
-                '>ID' => $counter,
-                '=SHORT_DESCRIPTION_STRUCTURE' => null,
-            ),
-            'order' => array('ID' => 'ASC'),
-        ));
+        $discountIterator = \Bitrix\Sale\Internals\DiscountTable::getList(
+            array(
+                'select' => array('ID', 'ACTIONS_LIST'),
+                'filter' => array(
+                    '>ID' => $counter,
+                    '=SHORT_DESCRIPTION_STRUCTURE' => null,
+                ),
+                'order' => array('ID' => 'ASC'),
+            )
+        );
 
         while ($discount = $discountIterator->fetch()) {
             if ($counter > $discount['ID']) {
@@ -659,9 +710,12 @@ final class DiscountCatalogMigrator
 
             $actionConfiguration = Sale\Discount\Actions::getActionConfiguration($discount);
             if ($actionConfiguration) {
-                \Bitrix\Sale\Internals\DiscountTable::update($discount['ID'], array(
-                    'SHORT_DESCRIPTION_STRUCTURE' => $actionConfiguration,
-                ));
+                \Bitrix\Sale\Internals\DiscountTable::update(
+                    $discount['ID'],
+                    array(
+                        'SHORT_DESCRIPTION_STRUCTURE' => $actionConfiguration,
+                    )
+                );
             }
 
             $this->storeCounter($discount['ID']);
@@ -736,16 +790,22 @@ final class DiscountCatalogMigrator
     protected function setAsConverted($catalogDiscountId, $saleDiscountId, $typeDiscount = self::TYPE_GENERAL)
     {
         if ($typeDiscount === self::TYPE_GENERAL) {
-            CCatalogDiscount::Update($catalogDiscountId, array(
-                'ACTIVE' => 'N',
-                'SALE_ID' => $saleDiscountId,
-            ));
+            CCatalogDiscount::Update(
+                $catalogDiscountId,
+                array(
+                    'ACTIVE' => 'N',
+                    'SALE_ID' => $saleDiscountId,
+                )
+            );
         }
         if ($typeDiscount === self::TYPE_CUMULATIVE) {
-            CCatalogDiscountSave::Update($catalogDiscountId, array(
-                'ACTIVE' => 'N',
-                'SALE_ID' => $saleDiscountId,
-            ));
+            CCatalogDiscountSave::Update(
+                $catalogDiscountId,
+                array(
+                    'ACTIVE' => 'N',
+                    'SALE_ID' => $saleDiscountId,
+                )
+            );
         }
     }
 
@@ -754,9 +814,11 @@ final class DiscountCatalogMigrator
         static $groups = null;
 
         if ($groups === null) {
-            $groupsIterator = \Bitrix\Main\GroupTable::getList(array(
-                'select' => array('ID'),
-            ));
+            $groupsIterator = \Bitrix\Main\GroupTable::getList(
+                array(
+                    'select' => array('ID'),
+                )
+            );
             while ($row = $groupsIterator->fetch()) {
                 $groups[] = $row['ID'];
             }
@@ -767,10 +829,12 @@ final class DiscountCatalogMigrator
 
     protected function getPriceTypesByDiscount($catalogDiscountId)
     {
-        $groupDiscountIterator = Catalog\DiscountRestrictionTable::getList(array(
-            'select' => array('DISCOUNT_ID', 'PRICE_TYPE_ID'),
-            'filter' => array('=DISCOUNT_ID' => $catalogDiscountId, '=ACTIVE' => 'Y'),
-        ));
+        $groupDiscountIterator = Catalog\DiscountRestrictionTable::getList(
+            array(
+                'select' => array('DISCOUNT_ID', 'PRICE_TYPE_ID'),
+                'filter' => array('=DISCOUNT_ID' => $catalogDiscountId, '=ACTIVE' => 'Y'),
+            )
+        );
 
         $priceTypeIds = array();
         while ($row = $groupDiscountIterator->fetch()) {
@@ -788,14 +852,18 @@ final class DiscountCatalogMigrator
         $catalogDiscountId = (int)$catalogRow['ID'];
 
         if ($typeDiscount === self::TYPE_CUMULATIVE) {
-            $groupDiscountIterator = $this->connection->query("
+            $groupDiscountIterator = $this->connection->query(
+                "
 				SELECT GROUP_ID as USER_GROUP_ID FROM b_catalog_disc_save_group WHERE DISCOUNT_ID = {$catalogDiscountId}
-			");
+			"
+            );
         } else {
-            $groupDiscountIterator = Catalog\DiscountRestrictionTable::getList(array(
-                'select' => array('USER_GROUP_ID'),
-                'filter' => array('=DISCOUNT_ID' => $catalogDiscountId, '=ACTIVE' => 'Y'),
-            ));
+            $groupDiscountIterator = Catalog\DiscountRestrictionTable::getList(
+                array(
+                    'select' => array('USER_GROUP_ID'),
+                    'filter' => array('=DISCOUNT_ID' => $catalogDiscountId, '=ACTIVE' => 'Y'),
+                )
+            );
         }
 
         $groupIds = array();
@@ -1038,14 +1106,16 @@ if (isset($_REQUEST['migrator_process']) && ($_REQUEST['migrator_process'] === '
         </script>
         <?php
     } elseif ($status === DiscountCatalogMigrator::STATUS_FINISH) {
-        CAdminMessage::ShowMessage(array(
-            "TYPE" => "PROGRESS",
-            "HTML" => true,
-            "MESSAGE" => GetMessage('DISCOUNT_CATALOG_MIGRATOR_CONVERT_COMPLETE'),
-            "DETAILS" => "#PROGRESS_BAR#",
-            "PROGRESS_TOTAL" => 1,
-            "PROGRESS_VALUE" => 1,
-        ));
+        CAdminMessage::ShowMessage(
+            array(
+                "TYPE" => "PROGRESS",
+                "HTML" => true,
+                "MESSAGE" => GetMessage('DISCOUNT_CATALOG_MIGRATOR_CONVERT_COMPLETE'),
+                "DETAILS" => "#PROGRESS_BAR#",
+                "PROGRESS_TOTAL" => 1,
+                "PROGRESS_VALUE" => 1,
+            )
+        );
 
         CAdminMessage::ShowMessage(
             array(
@@ -1062,14 +1132,16 @@ if (isset($_REQUEST['migrator_process']) && ($_REQUEST['migrator_process'] === '
         </script>
         <?php
     } elseif ($status === $migrator::STATUS_TIME_EXPIRED) {
-        CAdminMessage::ShowMessage(array(
-            "TYPE" => "PROGRESS",
-            "HTML" => true,
-            "MESSAGE" => GetMessage('DISCOUNT_CATALOG_MIGRATOR_CONVERT_IN_PROGRESS'),
-            "DETAILS" => "#PROGRESS_BAR#",
-            "PROGRESS_TOTAL" => $totalCount,
-            "PROGRESS_VALUE" => intval($processedSummary),
-        ));
+        CAdminMessage::ShowMessage(
+            array(
+                "TYPE" => "PROGRESS",
+                "HTML" => true,
+                "MESSAGE" => GetMessage('DISCOUNT_CATALOG_MIGRATOR_CONVERT_IN_PROGRESS'),
+                "DETAILS" => "#PROGRESS_BAR#",
+                "PROGRESS_TOTAL" => $totalCount,
+                "PROGRESS_VALUE" => intval($processedSummary),
+            )
+        );
 
         ?>
         <script>
@@ -1082,29 +1154,37 @@ if (isset($_REQUEST['migrator_process']) && ($_REQUEST['migrator_process'] === '
 } else {
     $listNonSupportedFeatures = array();
 
-    $discountWithRelativeActivePeriod = (bool)Catalog\DiscountTable::getList(array(
-        'select' => array('ID'),
-        'filter' => array(
-            '=ACTIVE' => 'Y',
-            '>ACTION_SIZE' => 0,
-        ),
-        'limit' => 1,
-    ))->fetch();
+    $discountWithRelativeActivePeriod = (bool)Catalog\DiscountTable::getList(
+        array(
+            'select' => array('ID'),
+            'filter' => array(
+                '=ACTIVE' => 'Y',
+                '>ACTION_SIZE' => 0,
+            ),
+            'limit' => 1,
+        )
+    )->fetch();
 
     if ($discountWithRelativeActivePeriod) {
-        $listNonSupportedFeatures[] = Loc::getMessage('DISCOUNT_CATALOG_MIGRATOR_NON_SUPPORTED_FEATURE_RELATIVE_ACTIVE_PERIOD');
+        $listNonSupportedFeatures[] = Loc::getMessage(
+            'DISCOUNT_CATALOG_MIGRATOR_NON_SUPPORTED_FEATURE_RELATIVE_ACTIVE_PERIOD'
+        );
     }
 
     //check currency <> SITE_ID sale currency
     $connection = Application::getConnection();
     $isMysql = $connection instanceof \Bitrix\Main\DB\MysqlCommonConnection;
-    $discountWithOtherCurrency = $connection->query('
+    $discountWithOtherCurrency = $connection->query(
+        '
 		SELECT ID FROM b_catalog_discount d 
 					INNER JOIN b_sale_lang l ON d.SITE_ID = l.LID 
-		WHERE d.ACTIVE = "Y" AND d.CURRENCY <> l.CURRENCY' . ($isMysql ? ' LIMIT 1' : ''))->fetch();
+		WHERE d.ACTIVE = "Y" AND d.CURRENCY <> l.CURRENCY' . ($isMysql ? ' LIMIT 1' : '')
+    )->fetch();
 
     if ($discountWithOtherCurrency) {
-        $listNonSupportedFeatures[] = Loc::getMessage('DISCOUNT_CATALOG_MIGRATOR_NON_SUPPORTED_FEATURE_DISC_CURRENCY_SALE_SITE');
+        $listNonSupportedFeatures[] = Loc::getMessage(
+            'DISCOUNT_CATALOG_MIGRATOR_NON_SUPPORTED_FEATURE_DISC_CURRENCY_SALE_SITE'
+        );
     }
 
     foreach ($listNonSupportedFeatures as $i => $feature) {
@@ -1113,13 +1193,25 @@ if (isset($_REQUEST['migrator_process']) && ($_REQUEST['migrator_process'] === '
 
     //check "discount save"
     $isThereSaveDiscounts = false;
-    $discountSaveResult = CCatalogDiscountSave::GetList(array(), array('ACTIVE' => 'Y',), false, array("nTopCount" => 1));
+    $discountSaveResult = CCatalogDiscountSave::GetList(
+        array(),
+        array('ACTIVE' => 'Y',),
+        false,
+        array("nTopCount" => 1)
+    );
     while ($discountSaveResult && ($row = $discountSaveResult->fetch())) {
         $isThereSaveDiscounts = true;
     }
 
     $popupText =
-        Loc::getMessage('DISCOUNT_CATALOG_MIGRATOR_HELLO_TEXT_NEW', array('#CUMULATIVE_PART#' => $isThereSaveDiscounts ? Loc::getMessage('DISCOUNT_CATALOG_MIGRATOR_HELLO_TEXT_CUMULATIVE_PART') : '',)) . '<br>' .
+        Loc::getMessage(
+            'DISCOUNT_CATALOG_MIGRATOR_HELLO_TEXT_NEW',
+            array(
+                '#CUMULATIVE_PART#' => $isThereSaveDiscounts ? Loc::getMessage(
+                    'DISCOUNT_CATALOG_MIGRATOR_HELLO_TEXT_CUMULATIVE_PART'
+                ) : '',
+            )
+        ) . '<br>' .
         Loc::getMessage('DISCOUNT_CATALOG_MIGRATOR_HELLO_TEXT_FINAL');
 
     if ($listNonSupportedFeatures) {
@@ -1130,6 +1222,8 @@ if (isset($_REQUEST['migrator_process']) && ($_REQUEST['migrator_process'] === '
 
     $APPLICATION->SetTitle(GetMessage('DISCOUNT_CATALOG_MIGRATOR_CONVERT_TITLE'));
 
+    $repeatMigrate = (Option::get('sale', 'process_discount_migrator', '-') !== '-');
+
     $aTabs = array(
         array(
             'DIV' => 'edit1',
@@ -1137,10 +1231,13 @@ if (isset($_REQUEST['migrator_process']) && ($_REQUEST['migrator_process'] === '
             'ICON' => 'main_user_edit',
             'CONTENT' => '
 				<div style="width: 180px; float: left;">
-					<img width="160" height="160" src="/bitrix/images/sale/discount/wizard.png">
+					<img width="160" height="160" src="/bitrix/images/sale/discount/wizard.png" alt="">
 				</div>
 				<div>' .
-                GetMessage('DISCOUNT_CATALOG_MIGRATOR_PAGE_HELLO_TEXT') .
+                ($repeatMigrate
+                    ? GetMessage('DISCOUNT_CATALOG_MIGRATOR_PAGE_REPEAT_HELLO_TEXT')
+                    : GetMessage('DISCOUNT_CATALOG_MIGRATOR_PAGE_HELLO_TEXT')
+                ) .
                 '</div>'
         )
     );
@@ -1167,11 +1264,21 @@ if (isset($_REQUEST['migrator_process']) && ($_REQUEST['migrator_process'] === '
             background: url("/bitrix/panel/main/images/bx-admin-sprite.png") no-repeat 4px -88px;
         }
     </style>
-    <script language='JavaScript'>
+    <script type="text/javascript">
         var wd_stop;
         var wd_dialog;
 
         function ShowConvert() {
+            <?php
+            if ($repeatMigrate)
+            {
+            ?>
+            if (!confirm('<?php echo CUtil::JSEscape(GetMessage('DISCOUNT_CATALOG_MIGRATOR_CONFIRM_MESSAGE')); ?>')) {
+                return;
+            }
+            <?php
+            }
+            ?>
             var dialog = new BX.CDialog({
                 title: '<?= GetMessageJS('DISCOUNT_CATALOG_MIGRATOR_CONVERT_TAB_TITLE') ?>',
                 width: 450,
@@ -1233,7 +1340,9 @@ if (isset($_REQUEST['migrator_process']) && ($_REQUEST['migrator_process'] === '
                         this.destroy();
                     }
                 },
-                content: '<div style="width: 400px;"><?= GetMessageJS('DISCOUNT_CATALOG_MIGRATOR_CONVERT_POPUP_NOTICE') ?></div>'
+                content: '<div style="width: 400px;"><?= GetMessageJS(
+                    'DISCOUNT_CATALOG_MIGRATOR_CONVERT_POPUP_NOTICE'
+                ) ?></div>'
             });
             wd_dialog.show();
         }
@@ -1261,7 +1370,7 @@ if (isset($_REQUEST['migrator_process']) && ($_REQUEST['migrator_process'] === '
 
         function DoNext(processedSummary, options) {
             options = options || {};
-            var queryString = 'migrator_process=Y&lang=<?php echo htmlspecialcharsbx(LANG); ?>';
+            var queryString = 'migrator_process=Y&lang=<?php echo htmlspecialcharsbx(LANGUAGE_ID); ?>';
 
             queryString += '&<?php echo bitrix_sessid_get(); ?>';
             queryString += '&processedSummary=' + parseInt(processedSummary);
@@ -1290,7 +1399,7 @@ if (isset($_REQUEST['migrator_process']) && ($_REQUEST['migrator_process'] === '
 
     <form method='POST' action='<?php
     echo $APPLICATION->GetCurPage(); ?>?lang=<?php
-    echo htmlspecialcharsbx(LANG);
+    echo htmlspecialcharsbx(LANGUAGE_ID);
     ?>'>
         <?php
         $tabControl->Begin();

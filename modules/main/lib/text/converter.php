@@ -13,30 +13,34 @@ abstract class Converter
 
     public static function getHtmlConverter()
     {
-        if (self::$htmlConverter == null)
+        if (self::$htmlConverter == null) {
             self::$htmlConverter = new HtmlConverter();
+        }
         return self::$htmlConverter;
     }
 
     public static function getXmlConverter()
     {
-        if (self::$xmlConverter == null)
+        if (self::$xmlConverter == null) {
             self::$xmlConverter = new XmlConverter();
+        }
         return self::$xmlConverter;
     }
 
     public static function getEmptyConverter()
     {
-        if (self::$emptyConverter == null)
+        if (self::$emptyConverter == null) {
             self::$emptyConverter = new EmptyConverter();
+        }
         return self::$emptyConverter;
     }
 
     public static function initTextType($textType)
     {
-        $textType = strtolower($textType);
-        if ($textType != self::TEXT && $textType != self::HTML)
+        $textType = mb_strtolower($textType);
+        if ($textType != self::TEXT && $textType != self::HTML) {
             $textType = self::TEXT;
+        }
         return $textType;
     }
 

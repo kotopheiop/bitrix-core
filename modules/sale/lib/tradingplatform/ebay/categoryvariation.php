@@ -83,7 +83,9 @@ class CategoryVariationTable extends Entity\DataManager
             'ALLOWED_AS_VARIATION' => array(
                 'data_type' => 'string',
                 'validation' => array(__CLASS__, 'validateAllowedAsVariation'),
-                'title' => Loc::getMessage('TRADING_PLATFORM_EBAY_VARIATION_METADATA_ENTITY_ALLOWED_AS_VARIATION_FIELD'),
+                'title' => Loc::getMessage(
+                    'TRADING_PLATFORM_EBAY_VARIATION_METADATA_ENTITY_ALLOWED_AS_VARIATION_FIELD'
+                ),
             ),
             'HELP_URL' => array(
                 'data_type' => 'string',

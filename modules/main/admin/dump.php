@@ -18,20 +18,22 @@ define("STATISTIC_SKIP_ACTIVITY_CHECK", true);
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 define("HELP_FILE", "utilities/dump.php");
 
-if (!$USER->CanDoOperation('edit_php'))
+if (!$USER->CanDoOperation('edit_php')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
-if (!defined("START_EXEC_TIME"))
+if (!defined("START_EXEC_TIME")) {
     define("START_EXEC_TIME", microtime(true));
+}
 
 IncludeModuleLangFile(__FILE__);
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/classes/general/backup.php");
 $strBXError = '';
 $bGzip = function_exists('gzcompress');
-$bMcrypt = function_exists('mcrypt_encrypt') || function_exists('openssl_encrypt');
+$encrypt = function_exists('openssl_encrypt');
 $bHash = function_exists('hash');
-$bBitrixCloud = $bMcrypt && $bHash;
+$bBitrixCloud = $encrypt && $bHash;
 if (!CModule::IncludeModule('bitrixcloud')) {
     $bBitrixCloud = false;
     $strBXError = GetMessage('ERR_NO_BX_CLOUD');
@@ -40,8 +42,12 @@ if (!CModule::IncludeModule('bitrixcloud')) {
     $strBXError = GetMessage('ERR_NO_CLOUDS');
 }
 
-if (function_exists('mb_internal_encoding'))
-    mb_internal_encoding('ISO-8859-1');
+
+if ($bBitrixCloud) {
+    $backup = CBitrixCloudBackup::getInstance();
+    $arFiles = $backup->listFiles();
+    $backup->saveToOptions();
+}
 
 define('DOCUMENT_ROOT', rtrim(str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT']), '/'));
 
@@ -64,18 +70,20 @@ if ($_REQUEST['ajax_mode'] == 'Y') {
         die();
     }
 } elseif ($_REQUEST['process'] == "Y") {
-    if (!check_bitrix_sessid())
+    if (!check_bitrix_sessid()) {
         RaiseErrorAndDie(GetMessage("DUMP_MAIN_SESISON_ERROR"));
+    }
 
     require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_js.php");
-    $NS =& $_SESSION['BX_DUMP_STATE'];
+    $NS =& \Bitrix\Main\Application::getInstance()->getSession()['BX_DUMP_STATE'];
     if ($_REQUEST['action'] == 'start') {
         define('NO_TIME', true);
 
         $bFull = $_REQUEST['dump_all'] == 'Y';
 
-        if (!file_exists(DOCUMENT_ROOT . BX_ROOT . "/backup"))
+        if (!file_exists(DOCUMENT_ROOT . BX_ROOT . "/backup")) {
             mkdir(DOCUMENT_ROOT . BX_ROOT . "/backup", BX_DIR_PERMISSIONS);
+        }
 
         if (!file_exists(DOCUMENT_ROOT . BX_ROOT . "/backup/index.php")) {
             $f = fopen(DOCUMENT_ROOT . BX_ROOT . "/backup/index.php", "w");
@@ -83,8 +91,11 @@ if ($_REQUEST['ajax_mode'] == 'Y') {
             fclose($f);
         }
 
-        if (!is_dir(DOCUMENT_ROOT . BX_ROOT . "/backup") || !is_writable(DOCUMENT_ROOT . BX_ROOT . "/backup"))
-            RaiseErrorAndDie(GetMessage("MAIN_DUMP_FOLDER_ERR", array('#FOLDER#' => DOCUMENT_ROOT . BX_ROOT . '/backup')));
+        if (!is_dir(DOCUMENT_ROOT . BX_ROOT . "/backup") || !is_writable(DOCUMENT_ROOT . BX_ROOT . "/backup")) {
+            RaiseErrorAndDie(
+                GetMessage("MAIN_DUMP_FOLDER_ERR", array('#FOLDER#' => DOCUMENT_ROOT . BX_ROOT . '/backup'))
+            );
+        }
 
         DeleteDirFilesEx(BX_ROOT . '/backup/clouds');
 
@@ -94,16 +105,18 @@ if ($_REQUEST['ajax_mode'] == 'Y') {
         $NS['BUCKET_ID'] = intval($_REQUEST['dump_bucket_id']);
         COption::SetOptionInt("main", "dump_bucket_id", $NS['BUCKET_ID']);
 
-        if ($bMcrypt && $_REQUEST['dump_encrypt_key']) {
+        if ($encrypt && $_REQUEST['dump_encrypt_key']) {
             $NS['dump_encrypt_key'] = $_REQUEST['dump_encrypt_key'];
 //			if (!defined('BX_UTF') || !BX_UTF)
 //				$NS['dump_encrypt_key'] = $APPLICATION->ConvertCharset('windows-1251','utf-8',$NS['dump_encrypt_key']);
             COption::SetOptionInt("main", "dump_encrypt", 1);
-        } else
+        } else {
             COption::SetOptionInt("main", "dump_encrypt", 0);
+        }
 
-        if ($NS['BUCKET_ID'] == -1 && !$NS['dump_encrypt_key'])
+        if ($NS['BUCKET_ID'] == -1 && !$NS['dump_encrypt_key']) {
             RaiseErrorAndDie(GetMessage('MAIN_DUMP_BXCLOUD_ENC'));
+        }
 
 
         $bUseCompression = $bGzip && ($_REQUEST['dump_disable_gzip'] != 'Y' || $bFull);
@@ -129,49 +142,61 @@ if ($_REQUEST['ajax_mode'] == 'Y') {
                 $bDumpCloud = 1;
                 $NS['total_steps']++;
                 COption::SetOptionInt("main", "dump_do_clouds", 1);
-                foreach ($arAllBucket as $arBucket)
+                foreach ($arAllBucket as $arBucket) {
                     COption::SetOptionInt('main', 'dump_cloud_' . $arBucket['ID'], 1);
+                }
             }
 
             COption::SetOptionInt("main", "skip_mask", 0);
         } else {
-            COption::SetOptionInt("main", "dump_max_exec_time", intval($_REQUEST['dump_max_exec_time']) < 5 ? 5 : $_REQUEST['dump_max_exec_time']);
+            COption::SetOptionInt(
+                "main",
+                "dump_max_exec_time",
+                intval($_REQUEST['dump_max_exec_time']) < 5 ? 5 : $_REQUEST['dump_max_exec_time']
+            );
             COption::SetOptionInt("main", "dump_max_exec_time_sleep", $_REQUEST['dump_max_exec_time_sleep']);
             $dump_archive_size_limit = intval($_REQUEST['dump_archive_size_limit']);
-            if ($dump_archive_size_limit > 2047 || $dump_archive_size_limit <= 10)
+            if ($dump_archive_size_limit > 2047 || $dump_archive_size_limit <= 10) {
                 $dump_archive_size_limit = 100;
+            }
             COption::SetOptionInt("main", "dump_archive_size_limit", $dump_archive_size_limit * 1024 * 1024);
             COption::SetOptionInt("main", "dump_max_file_size", $_REQUEST['max_file_size']);
 
             $NS['total_steps'] = 0;
-            if ($r = $_REQUEST['dump_file_public'] == 'Y')
+            if ($r = $_REQUEST['dump_file_public'] == 'Y') {
                 $NS['total_steps'] = 1;
+            }
             COption::SetOptionInt("main", "dump_file_public", $r);
 
-            if ($r = $_REQUEST['dump_file_kernel'] == 'Y')
+            if ($r = $_REQUEST['dump_file_kernel'] == 'Y') {
                 $NS['total_steps'] = 1;
+            }
             COption::SetOptionInt("main", "dump_file_kernel", $r);
 
-            if ($r = $DB->type == 'MYSQL' ? ($_REQUEST['dump_base'] == 'Y') : 0)
+            if ($r = $DB->type == 'MYSQL' ? ($_REQUEST['dump_base'] == 'Y') : 0) {
                 $NS['total_steps'] += 2;
+            }
             COption::SetOptionInt("main", "dump_base", $r);
             COption::SetOptionInt("main", "dump_base_skip_stat", $_REQUEST['dump_base_skip_stat'] == 'Y');
             COption::SetOptionInt("main", "dump_base_skip_search", $_REQUEST['dump_base_skip_search'] == 'Y');
             COption::SetOptionInt("main", "dump_base_skip_log", $_REQUEST['dump_base_skip_log'] == 'Y');
 
-            if ($r = $_REQUEST['dump_integrity_check'] == 'Y')
+            if ($r = $_REQUEST['dump_integrity_check'] == 'Y') {
                 $NS['total_steps']++;
+            }
             COption::SetOptionInt("main", "dump_integrity_check", $r);
 
             $bDumpCloud = false;
             if ($arAllBucket) {
                 foreach ($arAllBucket as $arBucket) {
-                    if ($res = $_REQUEST['dump_cloud'][$arBucket['ID']] == 'Y')
+                    if ($res = $_REQUEST['dump_cloud'][$arBucket['ID']] == 'Y') {
                         $bDumpCloud = true;
+                    }
                     COption::SetOptionInt('main', 'dump_cloud_' . $arBucket['ID'], $res);
                 }
-                if ($bDumpCloud)
+                if ($bDumpCloud) {
                     $NS['total_steps']++;
+                }
             }
             COption::SetOptionInt("main", "dump_do_clouds", $bDumpCloud);
 
@@ -181,11 +206,12 @@ if ($_REQUEST['ajax_mode'] == 'Y') {
             $skip_mask_array = array();
             if ($skip_mask && is_array($_REQUEST['arMask'])) {
                 $arMask = array_unique($_REQUEST['arMask']);
-                foreach ($arMask as $mask)
+                foreach ($arMask as $mask) {
                     if (trim($mask)) {
                         $mask = rtrim(str_replace('\\', '/', trim($mask)), '/');
                         $skip_mask_array[] = $mask;
                     }
+                }
                 COption::SetOptionString("main", "skip_mask_array", serialize($skip_mask_array));
             }
         }
@@ -193,11 +219,14 @@ if ($_REQUEST['ajax_mode'] == 'Y') {
         $NS["step"] = 1;
 
         if ($NS['BUCKET_ID']) // send to the [bitrix]cloud
+        {
             $NS['total_steps']++;
+        }
 
         $NS['dump_site_id'] = $_REQUEST['dump_site_id'];
-        if (!is_array($NS['dump_site_id']))
+        if (!is_array($NS['dump_site_id'])) {
             $NS['dump_site_id'] = array();
+        }
         COption::SetOptionString("main", "dump_site_id", serialize($NS['dump_site_id']));
 
         if ($NS['BUCKET_ID'] == -1) // Bitrixcloud
@@ -208,13 +237,17 @@ if ($_REQUEST['ajax_mode'] == 'Y') {
         } else {
             $prefix = '';
             if (count($NS['dump_site_id']) == 1) {
-                $rs = CSite::GetList($by = 'sort', $order = 'asc', array('ID' => $NS['dump_site_id'][0], 'ACTIVE' => 'Y'));
-                if ($f = $rs->Fetch())
+                $rs = CSite::GetList('sort', 'asc', array('ID' => $NS['dump_site_id'][0], 'ACTIVE' => 'Y'));
+                if ($f = $rs->Fetch()) {
                     $prefix = str_replace('/', '', $f['SERVER_NAME']);
-            } else
+                }
+            } else {
                 $prefix = str_replace('/', '', COption::GetOptionString("main", "server_name", ""));
+            }
 
-            $arc_name = CBackup::GetArcName(preg_match('#^[a-z0-9\.\-]+$#i', $prefix) ? substr($prefix, 0, 20) . '_' : '');
+            $arc_name = CBackup::GetArcName(
+                preg_match('#^[a-z0-9\.\-]+$#i', $prefix) ? substr($prefix, 0, 20) . '_' : ''
+            );
             $NS['dump_name'] = $arc_name . ".sql";
             $NS['arc_name'] = $arc_name . ($NS['dump_encrypt_key'] ? ".enc" : ".tar") . ($bUseCompression ? ".gz" : '');
         }
@@ -225,25 +258,35 @@ if ($_REQUEST['ajax_mode'] == 'Y') {
         $NS['total_steps'] = 1;
         $NS['cloud_send'] = 1;
         $NS['dump_encrypt_key'] = $_REQUEST['dump_encrypt_key'];
-        $NS['arc_name'] = $name = DOCUMENT_ROOT . BX_ROOT . '/backup/' . str_replace(array('..', '/', '\\'), '', $_REQUEST['f_id']);
+        $NS['arc_name'] = $name = DOCUMENT_ROOT . BX_ROOT . '/backup/' . str_replace(
+                array('..', '/', '\\'),
+                '',
+                $_REQUEST['f_id']
+            );
         $NS['arc_size'] = filesize($NS['arc_name']);
         $NS['BUCKET_ID'] = intval($_REQUEST['dump_bucket_id']);
-        while (file_exists($name = CTar::getNextName($name)))
+        $tar = new CTar;
+        while (file_exists($name = $tar->getNextName($name))) {
             $NS['arc_size'] += filesize($name);
+        }
         $NS['step'] = 6;
     } elseif ($_REQUEST['action'] == 'check_archive') {
         define('NO_TIME', true);
         $NS = Array();
         $NS['finished_steps'] = 0;
         $NS['total_steps'] = 1;
-        $NS['arc_name'] = $name = DOCUMENT_ROOT . BX_ROOT . '/backup/' . str_replace(array('..', '/', '\\'), '', $_REQUEST['f_id']);
+        $NS['arc_name'] = $name = DOCUMENT_ROOT . BX_ROOT . '/backup/' . str_replace(
+                array('..', '/', '\\'),
+                '',
+                $_REQUEST['f_id']
+            );
         $NS['step'] = 5;
         $NS['dump_encrypt_key'] = $_REQUEST['dump_encrypt_key'];
         $NS['check_archive'] = true;
         $tar = new CTar;
         $NS['data_size'] = $tar->getDataSize($name);
     } else {
-        $ar = unserialize(COption::GetOptionString("main", "skip_mask_array"));
+        $ar = unserialize(COption::GetOptionString("main", "skip_mask_array"), ['allowed_classes' => false]);
         $skip_mask_array = is_array($ar) ? $ar : array();
     }
 
@@ -254,32 +297,37 @@ if ($_REQUEST['ajax_mode'] == 'Y') {
     if ($NS["step"] == 1) {
         $step_done = 0;
         if (IntOption('dump_base')) {
-            if (!CBackup::MakeDump($NS['dump_name'], $NS['dump_state']))
+            if (!CBackup::MakeDump($NS['dump_name'], $NS['dump_state'])) {
                 RaiseErrorAndDie(GetMessage('DUMP_NO_PERMS'));
+            }
 
             $TotalTables = $NS['dump_state']['TableCount'];
             $FinishedTables = $TotalTables - count($NS['dump_state']['TABLES']);
 
             $status_title = GetMessage('DUMP_DB_CREATE');
-            $status_details = GetMessage("MAIN_DUMP_TABLE_FINISH") . " <b>" . (intval($FinishedTables)) . "</b> " . GetMessage('MAIN_DUMP_FROM') . ' <b>' . $TotalTables . '</b>';
+            $status_details = GetMessage("MAIN_DUMP_TABLE_FINISH") . " <b>" . (intval(
+                    $FinishedTables
+                )) . "</b> " . GetMessage('MAIN_DUMP_FROM') . ' <b>' . $TotalTables . '</b>';
             $step_done = $FinishedTables / $TotalTables;
 
             if ($NS['dump_state']['end']) {
-
                 $rs = $DB->Query('SHOW VARIABLES LIKE "character_set_results"');
-                if (($f = $rs->Fetch()) && array_key_exists('Value', $f))
+                if (($f = $rs->Fetch()) && array_key_exists('Value', $f)) {
                     file_put_contents($after_file, "SET NAMES '" . $f['Value'] . "';\n");
+                }
 
                 $rs = $DB->Query('SHOW VARIABLES LIKE "collation_database"');
-                if (($f = $rs->Fetch()) && array_key_exists('Value', $f))
+                if (($f = $rs->Fetch()) && array_key_exists('Value', $f)) {
                     file_put_contents($after_file, "ALTER DATABASE `<DATABASE>` COLLATE " . $f['Value'] . ";\n", 8);
+                }
 
                 clearstatcache();
                 $NS["step"]++;
                 $NS['finished_steps']++;
             }
-        } else
+        } else {
             $NS["step"]++;
+        }
     }
 
     // Step 2: pack dump
@@ -294,31 +342,39 @@ if ($_REQUEST['ajax_mode'] == 'Y') {
                 $tar->path = DOCUMENT_ROOT;
                 $tar->ReadBlockCurrent = intval($NS['ReadBlockCurrent']);
 
-                if (!$tar->openWrite($NS["arc_name"]))
+                if (!$tar->openWrite($NS["arc_name"])) {
                     RaiseErrorAndDie(GetMessage('DUMP_NO_PERMS'));
+                }
 
-                if (!$tar->ReadBlockCurrent && file_exists($f = DOCUMENT_ROOT . BX_ROOT . '/.config.php'))
+                if (!$tar->ReadBlockCurrent && file_exists($f = DOCUMENT_ROOT . BX_ROOT . '/.config.php')) {
                     $tar->addFile($f);
+                }
 
                 $Block = $tar->Block;
                 $r = null;
-                while (haveTime() && ($r = $tar->addFile($NS['dump_name'])) && $tar->ReadBlockCurrent > 0) ;
+                while (haveTime() && ($r = $tar->addFile($NS['dump_name'])) && $tar->ReadBlockCurrent > 0) {
+                    ;
+                }
                 $NS["data_size"] += 512 * ($tar->Block - $Block);
 
-                if ($r === false)
+                if ($r === false) {
                     RaiseErrorAndDie(implode('<br>', $tar->err));
+                }
 
                 $NS["ReadBlockCurrent"] = $tar->ReadBlockCurrent;
 
                 if (!$NS['dump_size']) {
                     $next_part = $NS['dump_name'];
                     $NS['dump_size'] = filesize($next_part);
-                    while (file_exists($next_part = CBackup::getNextName($next_part)))
+                    while (file_exists($next_part = CBackup::getNextName($next_part))) {
                         $NS['dump_size'] += filesize($next_part);
+                    }
                 }
 
                 $status_title = GetMessage("MAIN_DUMP_DB_PROC");
-                $status_details = GetMessage('CURRENT_POS') . ' <b>' . round(100 * $NS['data_size'] / $NS['dump_size']) . '%</b>';
+                $status_details = GetMessage('CURRENT_POS') . ' <b>' . round(
+                        100 * $NS['data_size'] / $NS['dump_size']
+                    ) . '%</b>';
                 $step_done = $NS['data_size'] / $NS['dump_size'];
 
                 if ($tar->ReadBlockCurrent == 0) {
@@ -337,9 +393,10 @@ if ($_REQUEST['ajax_mode'] == 'Y') {
                         while (file_exists($name)) {
                             $size = filesize($name);
                             $NS['arc_size'] += $size;
-                            if (IntOption("disk_space") > 0)
+                            if (IntOption("disk_space") > 0) {
                                 CDiskQuota::updateDiskQuota("file", $size, "add");
-                            $name = CTar::getNextName($name);
+                            }
+                            $name = $tar->getNextName($name);
                         }
 
                         $NS["step"]++;
@@ -348,8 +405,9 @@ if ($_REQUEST['ajax_mode'] == 'Y') {
                 }
                 $tar->close();
             }
-        } else
+        } else {
             $NS["step"]++;
+        }
     }
 
     // Step 3: Download Cloud Files
@@ -360,8 +418,9 @@ if ($_REQUEST['ajax_mode'] == 'Y') {
             if (haveTime()) {
                 $res = null;
                 foreach ($arDumpClouds as $id) {
-                    if ($NS['bucket_finished_' . $id])
+                    if ($NS['bucket_finished_' . $id]) {
                         continue;
+                    }
 
                     $obCloud = new CloudDownload($id);
                     $obCloud->last_bucket_path = $NS['last_bucket_path'];
@@ -372,14 +431,17 @@ if ($_REQUEST['ajax_mode'] == 'Y') {
                         $NS['last_bucket_path'] = $obCloud->path;
                         $NS['download_cnt'] += $obCloud->download_cnt;
                         $NS['download_size'] += $obCloud->download_size;
-                        if ($c = count($obCloud->arSkipped))
+                        if ($c = count($obCloud->arSkipped)) {
                             $NS['download_skipped'] += $c;
+                        }
                         break;
                     }
                 }
 
                 $status_title = GetMessage("MAIN_DUMP_CLOUDS_DOWNLOAD");
-                $status_details = GetMessage("MAIN_DUMP_FILES_DOWNLOADED") . ': <b>' . intval($NS["download_cnt"]) . '</b>';
+                $status_details = GetMessage("MAIN_DUMP_FILES_DOWNLOADED") . ': <b>' . intval(
+                        $NS["download_cnt"]
+                    ) . '</b>';
 //				if ($NS['download_skipped'])
 //					$status_title .= GetMessage("MAIN_DUMP_DOWN_ERR_CNT").': <b>'.$NS['download_skipped'].'</b><br>';
 
@@ -389,8 +451,9 @@ if ($_REQUEST['ajax_mode'] == 'Y') {
                     $NS['finished_steps']++;
                 }
             }
-        } else
+        } else {
             $NS["step"]++;
+        }
     }
 
     // Step 4: Tar Files
@@ -404,7 +467,7 @@ if ($_REQUEST['ajax_mode'] == 'Y') {
                 $DOCUMENT_ROOT_SITE = DOCUMENT_ROOT;
                 if (is_array($NS['dump_site_id'])) {
                     $SITE_ID = reset($NS['dump_site_id']);
-                    $rs = CSite::GetList($by = 'sort', $order = 'asc', array('ID' => $SITE_ID, 'ACTIVE' => 'Y'));
+                    $rs = CSite::GetList('sort', 'asc', array('ID' => $SITE_ID, 'ACTIVE' => 'Y'));
                     if ($f = $rs->Fetch()) {
                         $DOCUMENT_ROOT_SITE = rtrim(str_replace('\\', '/', $f['ABS_DOC_ROOT']), '/');
                         if ($NS['multisite']) {
@@ -425,23 +488,27 @@ if ($_REQUEST['ajax_mode'] == 'Y') {
                 $tar->ReadBlockCurrent = intval($NS['ReadBlockCurrent']);
                 $tar->ReadFileSize = intval($NS['ReadFileSize']);
 
-                if (!$tar->openWrite($NS["arc_name"]))
+                if (!$tar->openWrite($NS["arc_name"])) {
                     RaiseErrorAndDie(GetMessage('DUMP_NO_PERMS'));
+                }
 
                 $Block = $tar->Block;
 
                 if (!$NS['startPath']) {
-                    if (!IntOption('dump_base') && file_exists($f = DOCUMENT_ROOT . BX_ROOT . '/.config.php'))
+                    if (!IntOption('dump_base') && file_exists($f = DOCUMENT_ROOT . BX_ROOT . '/.config.php')) {
                         $tar->addFile($f);
-                } else
+                    }
+                } else {
                     $DirScan->startPath = $NS['startPath'];
+                }
 
                 $r = $DirScan->Scan($DOCUMENT_ROOT_SITE);
                 $NS["data_size"] += 512 * ($tar->Block - $Block);
                 $tar->close();
 
-                if ($r === false)
+                if ($r === false) {
                     RaiseErrorAndDie(implode('<br>', array_merge($tar->err, $DirScan->err)));
+                }
 
                 $NS["ReadBlockCurrent"] = $tar->ReadBlockCurrent;
                 $NS["ReadFileSize"] = $tar->ReadFileSize;
@@ -451,11 +518,13 @@ if ($_REQUEST['ajax_mode'] == 'Y') {
                 $status_title = GetMessage("MAIN_DUMP_SITE_PROC");
                 $status_details = GetMessage("MAIN_DUMP_FILE_CNT") . " <b>" . intval($NS["cnt"]) . "</b>";
                 $last_files_count = IntOption('last_files_count');
-                if (!$last_files_count)
+                if (!$last_files_count) {
                     $last_files_count = 200000;
+                }
                 $step_done = $NS['cnt'] / $last_files_count;
-                if ($step_done > 1)
+                if ($step_done > 1) {
                     $step_done = 1;
+                }
 
                 if ($r !== 'BREAK') {
                     if (count($NS['dump_site_id']) > 1) {
@@ -469,9 +538,10 @@ if ($_REQUEST['ajax_mode'] == 'Y') {
                         while (file_exists($name)) {
                             $size = filesize($name);
                             $NS['arc_size'] += $size;
-                            if (IntOption("disk_space") > 0)
+                            if (IntOption("disk_space") > 0) {
                                 CDiskQuota::updateDiskQuota("file", $size, "add");
-                            $name = CTar::getNextName($name);
+                            }
+                            $name = $tar->getNextName($name);
                         }
                         DeleteDirFilesEx(BX_ROOT . '/backup/clouds');
                         $NS["step"]++;
@@ -479,8 +549,9 @@ if ($_REQUEST['ajax_mode'] == 'Y') {
                     }
                 }
             }
-        } else
+        } else {
             $NS["step"]++;
+        }
     }
 
     // Step 5: Integrity check
@@ -491,20 +562,28 @@ if ($_REQUEST['ajax_mode'] == 'Y') {
                 $tar = new CTarCheck;
                 $tar->EncryptKey = $NS['dump_encrypt_key'];
 
-                if (!$tar->openRead($NS["arc_name"]))
+                if (!$tar->openRead($NS["arc_name"])) {
                     RaiseErrorAndDie(GetMessage('DUMP_NO_PERMS_READ') . '<br>' . implode('<br>', $tar->err));
-                else {
-                    if (($Block = intval($NS['Block'])) && !$tar->SkipTo($Block))
+                } else {
+                    if (($Block = intval($NS['Block'])) && !$tar->SkipTo($Block)) {
                         RaiseErrorAndDie(implode('<br>', $tar->err));
-                    while (($r = $tar->extractFile()) && haveTime()) ;
+                    }
+                    while (($r = $tar->extractFile()) && haveTime()) {
+                        ;
+                    }
 
                     $NS["Block"] = $tar->Block;
                     $status_title = GetMessage('INTEGRITY_CHECK');
-                    $status_details = GetMessage('CURRENT_POS') . ' <b>' . CFile::FormatSize($NS['Block'] * 512) . '</b> ' . GetMessage('MAIN_DUMP_FROM') . ' <b>' . CFile::FormatSize($NS['data_size']) . '</b>';
+                    $status_details = GetMessage('CURRENT_POS') . ' <b>' . CFile::FormatSize(
+                            $NS['Block'] * 512
+                        ) . '</b> ' . GetMessage('MAIN_DUMP_FROM') . ' <b>' . CFile::FormatSize(
+                            $NS['data_size']
+                        ) . '</b>';
                     $step_done = $NS['Block'] * 512 / $NS['data_size'];
 
-                    if ($r === false)
+                    if ($r === false) {
                         RaiseErrorAndDie(implode('<br>', $tar->err));
+                    }
                     if ($r === 0) {
                         $NS["step"]++;
                         $NS['finished_steps']++;
@@ -512,8 +591,9 @@ if ($_REQUEST['ajax_mode'] == 'Y') {
                 }
                 $tar->close();
             }
-        } else
+        } else {
             $NS["step"]++;
+        }
     }
 
     // Step 6: Send to the cloud
@@ -521,19 +601,25 @@ if ($_REQUEST['ajax_mode'] == 'Y') {
         $step_done = 0;
         if ($NS['BUCKET_ID']) {
             if (haveTime()) {
-                if (!CModule::IncludeModule('clouds'))
+                if (!CModule::IncludeModule('clouds')) {
                     RaiseErrorAndDie(GetMessage("MAIN_DUMP_NO_CLOUDS_MODULE"));
+                }
 
                 $file_size = filesize($NS["arc_name"]);
-                $file_name = $NS['BUCKET_ID'] == -1 ? basename($NS['arc_name']) : substr($NS['arc_name'], strlen(DOCUMENT_ROOT));
+                $file_name = $NS['BUCKET_ID'] == -1 ? basename($NS['arc_name']) : substr(
+                    $NS['arc_name'],
+                    strlen(DOCUMENT_ROOT)
+                );
                 $obUpload = new CCloudStorageUpload($file_name);
 
-                if (!$NS['upload_start_time'])
+                if (!$NS['upload_start_time']) {
                     $NS['upload_start_time'] = START_EXEC_TIME;
+                }
 
                 if ($NS['BUCKET_ID'] == -1) {
-                    if (!$bBitrixCloud)
+                    if (!$bBitrixCloud) {
                         RaiseErrorAndDie(getMessage('DUMP_BXCLOUD_NA'));
+                    }
 
                     $obBucket = null;
                     if (!$NS['obBucket']) {
@@ -543,18 +629,32 @@ if ($_REQUEST['ajax_mode'] == 'Y') {
                             unset($NS['obBucket']);
                             RaiseErrorAndDie($e->GetString(), true);
                         } else {
-                            if ($NS['arc_size'] > $q)
-                                RaiseErrorAndDie(GetMessage('DUMP_ERR_BIG_BACKUP', array('#ARC_SIZE#' => $NS['arc_size'], '#QUOTA#' => $q)), true);
+                            if ($NS['arc_size'] > $q) {
+                                RaiseErrorAndDie(
+                                    GetMessage(
+                                        'DUMP_ERR_BIG_BACKUP',
+                                        array('#ARC_SIZE#' => $NS['arc_size'], '#QUOTA#' => $q)
+                                    ),
+                                    true
+                                );
+                            }
 
                             try {
-                                $obBucket = $backup->getBucketToWriteFile(CTar::getCheckword($NS['dump_encrypt_key']), basename($NS['arc_name']));
+                                $obBucket = $backup->getBucketToWriteFile(
+                                    CTar::getCheckword($NS['dump_encrypt_key']),
+                                    basename($NS['arc_name'])
+                                );
                                 $NS['obBucket'] = serialize($obBucket);
                             } catch (CBitrixCloudException $e) {
                                 RaiseErrorAndDie($e->GetMessage(), true);
                             }
                         }
-                    } else
-                        $obBucket = unserialize($NS['obBucket']);
+                    } else {
+                        $obBucket = unserialize(
+                            $NS['obBucket'],
+                            ['allowed_classes' => ['CBitrixCloudBackupBucket']]
+                        );
+                    }
 
                     $obBucket->Init();
                     $obBucket->GetService()->setPublic(false);
@@ -566,20 +666,23 @@ if ($_REQUEST['ajax_mode'] == 'Y') {
                 }
 
                 if (!$obUpload->isStarted()) {
-                    if (is_object($obBucket))
+                    if (is_object($obBucket)) {
                         $obBucket->setCheckWordHeader();
+                    }
 
                     if (!$obUpload->Start($bucket_id, $file_size)) {
-                        if ($e = $APPLICATION->GetException())
+                        if ($e = $APPLICATION->GetException()) {
                             $strError = $e->GetString();
-                        else
+                        } else {
                             $strError = GetMessage('MAIN_DUMP_INT_CLOUD_ERR');
+                        }
                         unset($NS['obBucket']);
                         RaiseErrorAndDie($strError, true);
                     }
 
-                    if (is_object($obBucket))
+                    if (is_object($obBucket)) {
                         $obBucket->unsetCheckWordHeader();
+                    }
                 }
 
                 if ($fp = fopen($NS['arc_name'], 'rb')) {
@@ -589,10 +692,11 @@ if ($_REQUEST['ajax_mode'] == 'Y') {
                     $fails = 0;
                     $res = null;
                     while ($obUpload->hasRetries()) {
-                        if ($res = $obUpload->Next($part, $obBucket))
+                        if ($res = $obUpload->Next($part, $obBucket)) {
                             break;
-                        elseif (++$fails >= 10)
+                        } elseif (++$fails >= 10) {
                             RaiseErrorAndDie('Internal Error: could not init upload for ' . $fails . ' times');
+                        }
                     }
 
                     if ($res) {
@@ -608,7 +712,9 @@ if ($_REQUEST['ajax_mode'] == 'Y') {
                                     $oBucket->IncFileCounter($file_size);
                                 }
 
-                                if (file_exists($arc_name = CTar::getNextName($NS['arc_name']))) {
+                                $tar = new CTar;
+
+                                if (file_exists($arc_name = $tar->getNextName($NS['arc_name']))) {
                                     unset($NS['obBucket']);
                                     $NS['arc_name'] = $arc_name;
                                 } else {
@@ -617,9 +723,10 @@ if ($_REQUEST['ajax_mode'] == 'Y') {
                                     $name = CTar::getFirstName($NS['arc_name']);
                                     while (file_exists($name)) {
                                         $size = filesize($name);
-                                        if (unlink($name) && IntOption("disk_space") > 0)
+                                        if (unlink($name) && IntOption("disk_space") > 0) {
                                             CDiskQuota::updateDiskQuota("file", $size, "del");
-                                        $name = CTar::getNextName($name);
+                                        }
+                                        $name = $tar->getNextName($name);
                                     }
 
                                     $NS["step"]++;
@@ -628,15 +735,31 @@ if ($_REQUEST['ajax_mode'] == 'Y') {
                             } else {
                                 $obUpload->Delete();
                                 unset($NS['obBucket']);
-                                RaiseErrorAndDie(GetMessage("MAIN_DUMP_ERR_FILE_SEND") . basename($NS['arc_name']), true);
+                                RaiseErrorAndDie(
+                                    GetMessage("MAIN_DUMP_ERR_FILE_SEND") . basename($NS['arc_name']),
+                                    true
+                                );
                             }
                         }
 
                         $pos += $NS['pos'];
 
                         $status_title = GetMessage("MAIN_DUMP_FILE_SENDING");
-                        $status_details = GetMessage('CURRENT_POS') . ' <b>' . CFile::FormatSize($pos) . '</b>  ' . GetMessage('MAIN_DUMP_FROM') . ' <b>' . CFile::FormatSize($NS["arc_size"]) . "</b>" .
-                            GetMessage('TIME_LEFT', array('#TIME#' => HumanTime(($NS['arc_size'] - $pos) / $pos * (microtime(true) - $NS['upload_start_time']))));
+                        $status_details = GetMessage('CURRENT_POS') . ' <b>' . CFile::FormatSize(
+                                $pos
+                            ) . '</b>  ' . GetMessage('MAIN_DUMP_FROM') . ' <b>' . CFile::FormatSize(
+                                $NS["arc_size"]
+                            ) . "</b>" .
+                            GetMessage(
+                                'TIME_LEFT',
+                                array(
+                                    '#TIME#' => HumanTime(
+                                        ($NS['arc_size'] - $pos) / $pos * (microtime(
+                                                true
+                                            ) - $NS['upload_start_time'])
+                                    )
+                                )
+                            );
                         $step_done = $pos / $NS['arc_size'];
                     } else {
                         $obUpload->Delete();
@@ -648,8 +771,9 @@ if ($_REQUEST['ajax_mode'] == 'Y') {
                     RaiseErrorAndDie(GetMessage("MAIN_DUMP_ERR_OPEN_FILE") . $NS['arc_name'], true);
                 }
             }
-        } else
+        } else {
             $NS["step"]++;
+        }
     }
 
 
@@ -657,58 +781,80 @@ if ($_REQUEST['ajax_mode'] == 'Y') {
 
     if ($NS["step"] <= 6) // partial
     {
-        CAdminMessage::ShowMessage(array(
-            "TYPE" => "PROGRESS",
-            "MESSAGE" => $status_title,
-            "DETAILS" => $status_details . '#PROGRESS_BAR#' .
+        CAdminMessage::ShowMessage(
+            array(
+                "TYPE" => "PROGRESS",
+                "MESSAGE" => $status_title,
+                "DETAILS" => $status_details . '#PROGRESS_BAR#' .
 //				GetMessage('TIME_SPENT').' '.HumanTime($NS["time"]),
-                GetMessage('TIME_SPENT') . ' <span id="counter_field">' . sprintf('%02d', floor($NS["time"] / 60)) . ':' . sprintf('%02d', $NS['time'] % 60) . '</span><!--' . intval($NS['time']) . '-->',
-            "HTML" => true,
-            "PROGRESS_TOTAL" => 100,
-            "PROGRESS_VALUE" => ($NS['finished_steps'] + $step_done) * 100 / $NS['total_steps'],
-        ));
+                    GetMessage('TIME_SPENT') . ' <span id="counter_field">' . sprintf(
+                        '%02d',
+                        floor($NS["time"] / 60)
+                    ) . ':' . sprintf('%02d', $NS['time'] % 60) . '</span><!--' . intval($NS['time']) . '-->',
+                "HTML" => true,
+                "PROGRESS_TOTAL" => 100,
+                "PROGRESS_VALUE" => ($NS['finished_steps'] + $step_done) * 100 / $NS['total_steps'],
+            )
+        );
         ?>
         <script>
-            window.setTimeout("if(!stop)AjaxSend('?process=Y&<?=bitrix_sessid_get()?>')",<?=1000 * IntOption("dump_max_exec_time_sleep")?>);
+            window.setTimeout("if(!stop)AjaxSend('?process=Y&<?=bitrix_sessid_get()?>')",<?=1000 * IntOption(
+                "dump_max_exec_time_sleep"
+            )?>);
         </script>
         <?
     } else // Finish
     {
-        $title = ($NS['cloud_send'] ? GetMessage("MAIN_DUMP_SUCCESS_SENT") : GetMessage("MAIN_DUMP_FILE_FINISH")) . '<br><br>';
+        $title = ($NS['cloud_send'] ? GetMessage("MAIN_DUMP_SUCCESS_SENT") : GetMessage(
+                "MAIN_DUMP_FILE_FINISH"
+            )) . '<br><br>';
         $status_msg = '';
 
         if ($NS["arc_size"]) {
-            $status_msg .= GetMessage("MAIN_DUMP_ARC_NAME") . ": <b>" . basename(CTar::getFirstName($NS["arc_name"])) . "</b><br>";
+            $status_msg .= GetMessage("MAIN_DUMP_ARC_NAME") . ": <b>" . basename(
+                    CTar::getFirstName($NS["arc_name"])
+                ) . "</b><br>";
             $status_msg .= GetMessage("MAIN_DUMP_ARC_SIZE") . " <b>" . CFile::FormatSize($NS["arc_size"]) . "</b><br>";
-            if ($NS['BUCKET_ID'] > 0)
-                $l = ''; //htmlspecialcharsbx($arBucket['BUCKET'].' ('.$arBucket['SERVICE_ID'].')');
-            elseif ($NS['BUCKET_ID'] == -1)
+            if ($NS['BUCKET_ID'] > 0) {
+                $l = '';
+            } //htmlspecialcharsbx($arBucket['BUCKET'].' ('.$arBucket['SERVICE_ID'].')');
+            elseif ($NS['BUCKET_ID'] == -1) {
                 $l = GetMessage('DUMP_MAIN_BITRIX_CLOUD');
-            else
+            } else {
                 $l = GetMessage("MAIN_DUMP_LOCAL");
+            }
 
-            if ($l)
+            if ($l) {
                 $status_msg .= GetMessage("MAIN_DUMP_LOCATION") . ": <b>" . $l . "</b><br>";
+            }
         }
 
-        if ($FinishedTables)
+        if ($FinishedTables) {
             $status_msg .= GetMessage("MAIN_DUMP_TABLE_FINISH") . " <b>" . $FinishedTables . "</b><br>";
+        }
         if ($NS["cnt"]) {
             $status_msg .= GetMessage("MAIN_DUMP_FILE_CNT") . " <b>" . $NS["cnt"] . "</b><br>";
-            if (IntOption("dump_file_public") && IntOption("dump_file_kernel"))
+            if (IntOption("dump_file_public") && IntOption("dump_file_kernel")) {
                 COption::SetOptionInt("main", "last_files_count", $NS['cnt']);
+            }
         }
 
-        if ($NS["data_size"])
-            $status_msg .= GetMessage("MAIN_DUMP_FILE_SIZE") . " <b>" . CFile::FormatSize($NS["data_size"]) . "</b><br>";
+        if ($NS["data_size"]) {
+            $status_msg .= GetMessage("MAIN_DUMP_FILE_SIZE") . " <b>" . CFile::FormatSize(
+                    $NS["data_size"]
+                ) . "</b><br>";
+        }
 
         $status_msg .= GetMessage('TIME_SPENT') . ' <b>' . HumanTime($NS["time"]) . '</b>';
 
-        CAdminMessage::ShowMessage(array(
-            "MESSAGE" => $title,
-            "DETAILS" => $status_msg,
-            "TYPE" => "OK",
-            "HTML" => true));
+        CAdminMessage::ShowMessage(
+            array(
+                "MESSAGE" => $title,
+                "DETAILS" => $status_msg,
+                "TYPE" => "OK",
+                "HTML" => true
+            )
+        );
 
         ?>
         <? echo bitrix_sessid_post() ?>
@@ -729,23 +875,41 @@ $APPLICATION->SetTitle(GetMessage("MAIN_DUMP_PAGE_TITLE"));
 require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admin_after.php");
 
 $aTabs = array();
-$aTabs[] = array("DIV" => "std", "TAB" => GetMessage("DUMP_MAIN_MAKE_ARC"), "ICON" => "main_user_edit", "TITLE" => GetMessage("MAKE_DUMP_FULL"));
-$aTabs[] = array("DIV" => "expert", "TAB" => GetMessage("DUMP_MAIN_PARAMETERS"), "ICON" => "main_user_edit", "TITLE" => GetMessage("DUMP_MAIN_EXPERT_SETTINGS"));
+$aTabs[] = array(
+    "DIV" => "std",
+    "TAB" => GetMessage("DUMP_MAIN_MAKE_ARC"),
+    "ICON" => "main_user_edit",
+    "TITLE" => GetMessage("MAKE_DUMP_FULL")
+);
+$aTabs[] = array(
+    "DIV" => "expert",
+    "TAB" => GetMessage("DUMP_MAIN_PARAMETERS"),
+    "ICON" => "main_user_edit",
+    "TITLE" => GetMessage("DUMP_MAIN_EXPERT_SETTINGS")
+);
 
 $editTab = new CAdminTabControl("editTab", $aTabs, true, true);
 
-if ($DB->type != 'MYSQL')
+if ($DB->type != 'MYSQL') {
     echo BeginNote() . GetMessage('MAIN_DUMP_MYSQL_ONLY') . EndNote();
-if (!$bMcrypt || !$bHash) {
-    CAdminMessage::ShowMessage(array(
-        "MESSAGE" => ($bMcrypt ? '' : GetMessage("MAIN_DUMP_NOT_INSTALLED")) . ($bHash ? '' : ' ' . GetMessage('MAIN_DUMP_NOT_INSTALLED_HASH')),
-        "DETAILS" => GetMessage("MAIN_DUMP_NO_ENC_FUNCTIONS"),
-        "TYPE" => "ERROR",
-        "HTML" => true));
+}
+if (!$encrypt || !$bHash) {
+    CAdminMessage::ShowMessage(
+        array(
+            "MESSAGE" => ($encrypt ? '' : GetMessage("MAIN_DUMP_NOT_INSTALLED1")) . ($bHash ? '' : ' ' . GetMessage(
+                        'MAIN_DUMP_NOT_INSTALLED_HASH'
+                    )),
+            "DETAILS" => GetMessage("MAIN_DUMP_NO_ENC_FUNCTIONS"),
+            "TYPE" => "ERROR",
+            "HTML" => true
+        )
+    );
 }
 
-if (defined('DUMP_DEBUG_MODE'))
-    echo '<div style="color:red">DEBUG MODE</div><input type=button value=Next onclick="AjaxSend(\'?process=Y&' . bitrix_sessid_get() . '\')">';
+if (defined('DUMP_DEBUG_MODE')) {
+    echo '<div style="color:red">DEBUG MODE</div><input type=button value=Next onclick="AjaxSend(\'?process=Y&' . bitrix_sessid_get(
+        ) . '\')">';
+}
 
 ?>
 <div id="dump_result_div"></div><?
@@ -878,8 +1042,9 @@ CAdminFileDialog::ShowScript(
 
             <?
             if ($arAllBucket) {
-                foreach ($arAllBucket as $arBucket)
+                foreach ($arAllBucket as $arBucket) {
                     echo 'start = start || BX("dump_cloud_' . $arBucket['ID'] . '").checked;' . "\n";
+                }
             }
             ?>
 
@@ -907,12 +1072,21 @@ CAdminFileDialog::ShowScript(
         function () {
             CheckExpert();
             <?
-            if ($_REQUEST['from'] == 'bitrixcloud')
+            if ($_REQUEST['from'] == 'bitrixcloud') {
                 echo 'StartDump();';
-            elseif ($_REQUEST['action'] == 'cloud_send' && check_bitrix_sessid())
-                echo "AjaxSend('?process=Y&action=cloud_send&f_id=" . CUtil::JSEscape($_REQUEST['f_id']) . "&dump_encrypt_key=" . CUtil::JSEscape($_REQUEST['dump_encrypt_key']) . "&dump_bucket_id=" . CUtil::JSEscape($_REQUEST['dump_bucket_id']) . "&" . bitrix_sessid_get() . "');";
-            elseif ($_REQUEST['action'] == 'check_archive' && check_bitrix_sessid())
-                echo "AjaxSend('?process=Y&action=check_archive&f_id=" . CUtil::JSEscape($_REQUEST['f_id']) . "&dump_encrypt_key=" . CUtil::JSEscape($_REQUEST['dump_encrypt_key']) . "&" . bitrix_sessid_get() . "');";
+            } elseif ($_REQUEST['action'] == 'cloud_send' && check_bitrix_sessid()) {
+                echo "AjaxSend('?process=Y&action=cloud_send&f_id=" . CUtil::JSEscape(
+                        $_REQUEST['f_id']
+                    ) . "&dump_encrypt_key=" . CUtil::JSEscape(
+                        $_REQUEST['dump_encrypt_key']
+                    ) . "&dump_bucket_id=" . CUtil::JSEscape($_REQUEST['dump_bucket_id']) . "&" . bitrix_sessid_get(
+                    ) . "');";
+            } elseif ($_REQUEST['action'] == 'check_archive' && check_bitrix_sessid()) {
+                echo "AjaxSend('?process=Y&action=check_archive&f_id=" . CUtil::JSEscape(
+                        $_REQUEST['f_id']
+                    ) . "&dump_encrypt_key=" . CUtil::JSEscape($_REQUEST['dump_encrypt_key']) . "&" . bitrix_sessid_get(
+                    ) . "');";
+            }
             ?>
         }
     );
@@ -956,8 +1130,12 @@ CAdminFileDialog::ShowScript(
                         echo '<div style="color:red" id=password_error></div>';
                         echo CUtil::JSEscape(BeginNote() . GetMessage('MAIN_DUMP_SAVE_PASS') . EndNote());
                         echo '<table>';
-                        echo '<tr><td>' . GetMessage('MAIN_DUMP_ENC_PASS') . '</td><td><input type="password" value="" id="dump_encrypt_key" onkeyup="if(event.keyCode==13) {BX(&quot;dump_encrypt_key_confirm&quot;).focus()}"/></td></tr>';
-                        echo '<tr><td>' . GetMessage('DUMP_MAIN_PASSWORD_CONFIRM') . '</td><td><input type="password" value="" id="dump_encrypt_key_confirm"  onkeyup="if(event.keyCode==13) {SavePassword()}"/></td></tr>';
+                        echo '<tr><td>' . GetMessage(
+                                'MAIN_DUMP_ENC_PASS'
+                            ) . '</td><td><input type="password" value="" id="dump_encrypt_key" onkeyup="if(event.keyCode==13) {BX(&quot;dump_encrypt_key_confirm&quot;).focus()}"/></td></tr>';
+                        echo '<tr><td>' . GetMessage(
+                                'DUMP_MAIN_PASSWORD_CONFIRM'
+                            ) . '</td><td><input type="password" value="" id="dump_encrypt_key_confirm"  onkeyup="if(event.keyCode==13) {SavePassword()}"/></td></tr>';
                         echo '</table>';
                         ?>',
                     height: 300,
@@ -1112,7 +1290,10 @@ CAdminFileDialog::ShowScript(
         <tr>
             <td colspan=2><?
                 echo BeginNote();
-                echo GetMessage('MAIN_DUMP_AUTO_WARN', array('#LINK#' => '/bitrix/admin/dump_auto.php?lang=' . LANGUAGE_ID));
+                echo GetMessage(
+                    'MAIN_DUMP_AUTO_WARN',
+                    array('#LINK#' => '/bitrix/admin/dump_auto.php?lang=' . LANGUAGE_ID)
+                );
                 echo EndNote();
                 ?></td>
         </tr>
@@ -1127,19 +1308,23 @@ CAdminFileDialog::ShowScript(
             </td>
             <td width="60%">
                 <?
-                $backup = CBitrixCloudBackup::getInstance();
-                $arFiles = $backup->listFiles();
-                $backup->saveToOptions();
-                CAdminMessage::ShowMessage(array(
-                    "TYPE" => "PROGRESS",
-                    "DETAILS" => GetMessage("BCL_BACKUP_USAGE", array(
-                            "#QUOTA#" => CFile::FormatSize($quota = $backup->getQuota()),
-                            "#USAGE#" => CFile::FormatSize($usage = $backup->getUsage()),
-                        )) . '#PROGRESS_BAR#',
-                    "HTML" => false,
-                    "PROGRESS_TOTAL" => $quota,
-                    "PROGRESS_VALUE" => $usage,
-                ));
+                if (is_object($backup)) {
+                    CAdminMessage::ShowMessage(
+                        array(
+                            "TYPE" => "PROGRESS",
+                            "DETAILS" => GetMessage(
+                                    "BCL_BACKUP_USAGE",
+                                    array(
+                                        "#QUOTA#" => CFile::FormatSize($quota = $backup->getQuota()),
+                                        "#USAGE#" => CFile::FormatSize($usage = $backup->getUsage()),
+                                    )
+                                ) . '#PROGRESS_BAR#',
+                            "HTML" => false,
+                            "PROGRESS_TOTAL" => $quota,
+                            "PROGRESS_VALUE" => $usage,
+                        )
+                    );
+                }
                 ?>
             </td>
         </tr>
@@ -1151,27 +1336,32 @@ CAdminFileDialog::ShowScript(
         <td>
             <div><input type=radio name=dump_bucket_id value="-1" <?= $bBitrixCloud ? "checked" : "" ?>
                         id="bitrixcloud" <?= $bBitrixCloud ? '' : 'disabled' ?> onclick="CheckEncrypt(this)"> <label
-                        for="bitrixcloud"><?= GetMessage('DUMP_MAIN_IN_THE_BXCLOUD') ?></label><?= $strBXError ? ' <span style="color:red">(' . $strBXError . ')</span>' : '' ?>
-            </div>
+                        for="bitrixcloud"><?= GetMessage(
+                        'DUMP_MAIN_IN_THE_BXCLOUD'
+                    ) ?></label><?= $strBXError ? ' <span style="color:red">(' . $strBXError . ')</span>' : '' ?></div>
             <div><input type=radio name=dump_bucket_id value="0" <?= !$bBitrixCloud ? "checked" : "" ?>
                         id="dump_bucket_id_0" onclick="CheckEncrypt(this)"> <label
                         for="dump_bucket_id_0"><?= GetMessage('MAIN_DUMP_LOCAL_DISK') ?></label></div>
             <?
             $arWriteBucket = CBackup::GetBucketList($arFilter = array('READ_ONLY' => 'N'));
             if ($arWriteBucket) {
-                foreach ($arWriteBucket as $f)
-                    echo '<div><input type=radio name=dump_bucket_id value="' . $f['ID'] . '" id="dump_bucket_id_' . $f['ID'] . '" onclick="CheckEncrypt(this)"> <label for="dump_bucket_id_' . $f['ID'] . '">' . GetMessage('DUMP_MAIN_IN_THE_CLOUD') . ' ' . htmlspecialcharsbx($f['BUCKET'] . ' (' . $f['SERVICE_ID'] . ')') . '</label></div>';
+                foreach ($arWriteBucket as $f) {
+                    echo '<div><input type=radio name=dump_bucket_id value="' . $f['ID'] . '" id="dump_bucket_id_' . $f['ID'] . '" onclick="CheckEncrypt(this)"> <label for="dump_bucket_id_' . $f['ID'] . '">' . GetMessage(
+                            'DUMP_MAIN_IN_THE_CLOUD'
+                        ) . ' ' . htmlspecialcharsbx($f['BUCKET'] . ' (' . $f['SERVICE_ID'] . ')') . '</label></div>';
+                }
             }
             ?>
         </td>
     </tr>
     <?
     $arSitePath = array();
-    $res = CSite::GetList($by = 'sort', $order = 'asc', array('ACTIVE' => 'Y'));
+    $res = CSite::GetList('sort', 'asc', array('ACTIVE' => 'Y'));
     while ($f = $res->Fetch()) {
         $root = rtrim($f['ABS_DOC_ROOT'], '/');
-        if (is_dir($root))
+        if (is_dir($root)) {
             $arSitePath[$root] = array($f['ID'] => '[' . $f['ID'] . '] ' . $f['NAME']);
+        }
     }
 
     if (count($arSitePath) > 1) {
@@ -1181,15 +1371,24 @@ CAdminFileDialog::ShowScript(
                         class="required"><sup>2</sup></span></td>
             <td>
                 <?
-                if ($s = COption::GetOptionString("main", "dump_site_id", $NS['dump_site_id']))
-                    $dump_site_id = unserialize($s);
-                else
+                if ($s = COption::GetOptionString("main", "dump_site_id", $NS['dump_site_id'])) {
+                    $dump_site_id = unserialize($s, ['allowed_classes' => false]);
+                } else {
                     $dump_site_id = array();
+                }
                 $i = 0;
                 foreach ($arSitePath as $path => $val) {
                     $path = rtrim(str_replace('\\', '/', $path), '/');
-                    list($k, $v) = each($val);
-                    echo '<div><input type=checkbox id="dump_site_id' . $i . '" value="' . htmlspecialcharsbx($k) . '" ' . (in_array($k, $dump_site_id) ? ' checked' : '') . '> <label for="dump_site_id' . $i . '">' . htmlspecialcharsbx($v) . '</label></div>';
+                    $k = key($val);
+                    $v = current($val);
+                    echo '<div><input type=checkbox id="dump_site_id' . $i . '" value="' . htmlspecialcharsbx(
+                            $k
+                        ) . '" ' . (in_array(
+                            $k,
+                            $dump_site_id
+                        ) ? ' checked' : '') . '> <label for="dump_site_id' . $i . '">' . htmlspecialcharsbx(
+                            $v
+                        ) . '</label></div>';
                     $i++;
                 }
                 ?>
@@ -1224,8 +1423,14 @@ CAdminFileDialog::ShowScript(
             <td class="adm-detail-valign-top"><?= GetMessage("DUMP_MAIN_DOWNLOAD_CLOUDS") ?></td>
             <td>
                 <?
-                foreach ($arAllBucket as $arBucket)
-                    echo '<div><input type="checkbox" id="dump_cloud_' . $arBucket['ID'] . '" OnClick="CheckActiveStart()" ' . (IntOption("dump_cloud_" . $arBucket['ID'], 1) ? "checked" : "") . '> <label for="dump_cloud_' . $arBucket['ID'] . '">' . htmlspecialcharsbx($arBucket['BUCKET'] . ' (' . $arBucket['SERVICE_ID'] . ')') . '</label></div>';
+                foreach ($arAllBucket as $arBucket) {
+                    echo '<div><input type="checkbox" id="dump_cloud_' . $arBucket['ID'] . '" OnClick="CheckActiveStart()" ' . (IntOption(
+                            "dump_cloud_" . $arBucket['ID'],
+                            1
+                        ) ? "checked" : "") . '> <label for="dump_cloud_' . $arBucket['ID'] . '">' . htmlspecialcharsbx(
+                            $arBucket['BUCKET'] . ' (' . $arBucket['SERVICE_ID'] . ')'
+                        ) . '</label></div>';
+                }
                 ?>
             </td>
         </tr>
@@ -1239,26 +1444,32 @@ CAdminFileDialog::ShowScript(
             <td><?= GetMessage("DUMP_MAIN_ARC_DATABASE") ?> <span id="db_size">(<a
                             href="javascript:getTableSize()">?</a> <?= GetMessage("MAIN_DUMP_BASE_SIZE") ?>)</span>:
             </td>
-            <td><input type="checkbox" name="dump_base"
-                       OnClick="CheckActiveStart()" <?= IntOption("dump_base", 1) ? "checked" : "" ?>></td>
+            <td><input type="checkbox" name="dump_base" OnClick="CheckActiveStart()" <?= IntOption(
+                    "dump_base",
+                    1
+                ) ? "checked" : "" ?>></td>
         </tr>
         <tr>
             <td class="adm-detail-valign-top"><?= GetMessage("DUMP_MAIN_DB_EXCLUDE") ?></td>
             <td>
-                <div><input type="checkbox"
-                            name="dump_base_skip_stat" <?= IntOption("dump_base_skip_stat", 0) ? "checked" : "" ?>
-                            id="dump_base_skip_stat"> <label
-                            for="dump_base_skip_stat"><?= GetMessage("MAIN_DUMP_BASE_STAT") ?></label> <span
-                            id=db_stat_size></span></div>
-                <div><input type="checkbox" name="dump_base_skip_search"
-                            value="Y" <?= IntOption("dump_base_skip_search", 0) ? "checked" : "" ?>
-                            id="dump_base_skip_search"> <label
-                            for="dump_base_skip_search"><?= GetMessage("MAIN_DUMP_BASE_SINDEX") ?></label> <span
-                            id=db_search_size></span></div>
-                <div><input type="checkbox" name="dump_base_skip_log"
-                            value="Y"<?= IntOption("dump_base_skip_log", 0) ? "checked" : "" ?> id="dump_base_skip_log">
-                    <label for="dump_base_skip_log"><?= GetMessage("MAIN_DUMP_EVENT_LOG") ?></label> <span
-                            id=db_event_size></span></div>
+                <div><input type="checkbox" name="dump_base_skip_stat" <?= IntOption(
+                        "dump_base_skip_stat",
+                        0
+                    ) ? "checked" : "" ?> id="dump_base_skip_stat"> <label for="dump_base_skip_stat"><?= GetMessage(
+                            "MAIN_DUMP_BASE_STAT"
+                        ) ?></label> <span id=db_stat_size></span></div>
+                <div><input type="checkbox" name="dump_base_skip_search" value="Y" <?= IntOption(
+                        "dump_base_skip_search",
+                        0
+                    ) ? "checked" : "" ?> id="dump_base_skip_search"> <label for="dump_base_skip_search"><?= GetMessage(
+                            "MAIN_DUMP_BASE_SINDEX"
+                        ) ?></label> <span id=db_search_size></span></div>
+                <div><input type="checkbox" name="dump_base_skip_log" value="Y"<?= IntOption(
+                        "dump_base_skip_log",
+                        0
+                    ) ? "checked" : "" ?> id="dump_base_skip_log"> <label for="dump_base_skip_log"><?= GetMessage(
+                            "MAIN_DUMP_EVENT_LOG"
+                        ) ?></label> <span id=db_event_size></span></div>
             </td>
         </tr>
         <?
@@ -1266,13 +1477,17 @@ CAdminFileDialog::ShowScript(
     ?>
     <tr>
         <td><? echo GetMessage("MAIN_DUMP_FILE_KERNEL") ?></td>
-        <td><input type="checkbox" name="dump_file_kernel" value="Y"
-                   OnClick="CheckActiveStart()" <?= IntOption("dump_file_kernel", 1) ? "checked" : '' ?>></td>
+        <td><input type="checkbox" name="dump_file_kernel" value="Y" OnClick="CheckActiveStart()" <?= IntOption(
+                "dump_file_kernel",
+                1
+            ) ? "checked" : '' ?>></td>
     </tr>
     <tr>
         <td><? echo GetMessage("MAIN_DUMP_FILE_PUBLIC") ?></td>
-        <td><input type="checkbox" name="dump_file_public" value="Y"
-                   OnClick="CheckActiveStart()" <?= IntOption("dump_file_public", 1) ? "checked" : '' ?>></td>
+        <td><input type="checkbox" name="dump_file_public" value="Y" OnClick="CheckActiveStart()" <?= IntOption(
+                "dump_file_public",
+                1
+            ) ? "checked" : '' ?>></td>
     </tr>
     <tr>
         <td class="adm-detail-valign-top"><? echo GetMessage("MAIN_DUMP_MASK") ?><span
@@ -1284,14 +1499,16 @@ CAdminFileDialog::ShowScript(
                 <?
                 $i = -1;
 
-                $res = unserialize(COption::GetOptionString("main", "skip_mask_array"));
+                $res = unserialize(COption::GetOptionString("main", "skip_mask_array"), ['allowed_classes' => false]);
                 $skip_mask_array = is_array($res) ? $res : array();
 
                 foreach ($skip_mask_array as $mask) {
                     $i++;
                     echo
                         '<tr><td>
-					<input type="text" name="arMask[]" id="mnu_FILES_' . $i . '" value="' . htmlspecialcharsbx($mask) . '" size=30>' .
+					<input type="text" name="arMask[]" id="mnu_FILES_' . $i . '" value="' . htmlspecialcharsbx(
+                            $mask
+                        ) . '" size=30>' .
                         '<input type="button" id="mnu_FILES_btn_' . $i . '" value="..." onclick="showMenu(this, \'' . $i . '\')">' .
                         '</tr>';
                 }
@@ -1320,19 +1537,24 @@ CAdminFileDialog::ShowScript(
     </tr>
     <tr>
         <td><?= GetMessage("MAIN_DUMP_ENABLE_ENC") ?><span class="required"><sup>4</sup></td>
-        <td><input type="checkbox" name="dump_encrypt"
-                   value="Y" <?= (IntOption("dump_encrypt", 0) ? "checked" : "") ?> <?= $bMcrypt && !$bBitrixCloud ? '' : 'disabled' ?>>
-        </td>
+        <td><input type="checkbox" name="dump_encrypt" value="Y" <?= (IntOption(
+                "dump_encrypt",
+                0
+            ) ? "checked" : "") ?> <?= $encrypt && !$bBitrixCloud ? '' : 'disabled' ?>></td>
     </tr>
     <tr>
         <td width=40%><?= GetMessage('INTEGRITY_CHECK_OPTION') ?></td>
-        <td><input type="checkbox"
-                   name="dump_integrity_check" <?= IntOption('dump_integrity_check', 1) ? 'checked' : '' ?>>
+        <td><input type="checkbox" name="dump_integrity_check" <?= IntOption(
+                'dump_integrity_check',
+                1
+            ) ? 'checked' : '' ?>>
     </tr>
     <tr>
         <td><?= GetMessage('DISABLE_GZIP') ?></td>
-        <td><input type="checkbox"
-                   name="dump_disable_gzip" <?= IntOption('dump_use_compression', 1) && $bGzip ? '' : 'checked' ?> <?= $bGzip ? '' : 'disabled' ?>>
+        <td><input type="checkbox" name="dump_disable_gzip" <?= IntOption(
+                'dump_use_compression',
+                1
+            ) && $bGzip ? '' : 'checked' ?> <?= $bGzip ? '' : 'disabled' ?>>
     </tr>
     <tr>
         <td width=40%><?= GetMessage('STEP_LIMIT') ?></td>
@@ -1348,9 +1570,9 @@ CAdminFileDialog::ShowScript(
 
     <tr>
         <td><?= GetMessage("MAIN_DUMP_MAX_ARCHIVE_SIZE") ?></td>
-        <td><input type="text" name="dump_archive_size_limit"
-                   value="<?= intval(COption::GetOptionString('main', 'dump_archive_size_limit', 100 * 1024 * 1024)) / 1024 / 1024 ?>"
-                   size=4> <?= GetMessage("MAIN_DUMP_MAX_ARCHIVE_SIZE_VALUES") ?><span
+        <td><input type="text" name="dump_archive_size_limit" value="<?= intval(
+                COption::GetOptionString('main', 'dump_archive_size_limit', 100 * 1024 * 1024)
+            ) / 1024 / 1024 ?>" size=4> <?= GetMessage("MAIN_DUMP_MAX_ARCHIVE_SIZE_VALUES") ?><span
                     class="required"><sup>5</sup></span></td>
     </tr>
     <?
@@ -1382,16 +1604,18 @@ require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/epilog_admi
 function IntOption($name, $def = 0)
 {
     static $CACHE;
-    if (!$CACHE[$name])
+    if (!$CACHE[$name]) {
         $CACHE[$name] = COption::GetOptionInt("main", $name, $def);
+    }
     return $CACHE[$name];
 }
 
 function getTableSize($reg)
 {
     global $DB;
-    if ($DB->type != 'MYSQL')
+    if ($DB->type != 'MYSQL') {
         return 0;
+    }
 
     static $CACHE;
 
@@ -1400,21 +1624,25 @@ function getTableSize($reg)
         $sql = "SHOW TABLE STATUS";
         $res = $DB->Query($sql);
 
-        while ($row = $res->Fetch())
+        while ($row = $res->Fetch()) {
             $CACHE[$row['Name']] = $row['Data_length'];
+        }
     }
 
     $size = 0;
-    foreach ($CACHE as $table => $s)
-        if (!$reg || preg_match('#' . $reg . '#i', $table))
+    foreach ($CACHE as $table => $s) {
+        if (!$reg || preg_match('#' . $reg . '#i', $table)) {
             $size += $s;
+        }
+    }
     return $size;
 }
 
 function haveTime()
 {
-    if (defined('NO_TIME'))
+    if (defined('NO_TIME')) {
         return microtime(true) - START_EXEC_TIME < 1;
+    }
     return microtime(true) - START_EXEC_TIME < IntOption("dump_max_exec_time");
 }
 
@@ -1431,11 +1659,14 @@ function RaiseErrorAndDie($strError, $bRepeat = false)
 		<script>window.setTimeout(RetryRequest, 60000);</script>';
     }
 
-    CAdminMessage::ShowMessage(array(
-        "MESSAGE" => GetMessage("MAIN_DUMP_ERROR"),
-        "DETAILS" => $strError,
-        "TYPE" => "ERROR",
-        "HTML" => true));
+    CAdminMessage::ShowMessage(
+        array(
+            "MESSAGE" => GetMessage("MAIN_DUMP_ERROR"),
+            "DETAILS" => $strError,
+            "TYPE" => "ERROR",
+            "HTML" => true
+        )
+    );
     echo '<script>EndDump();</script>';
     die();
 }

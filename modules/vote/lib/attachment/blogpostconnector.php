@@ -16,8 +16,9 @@ final class BlogPostConnector extends Connector
 
     private static function getPostData($entityId)
     {
-        if (array_key_exists($entityId, self::$posts))
+        if (array_key_exists($entityId, self::$posts)) {
             return self::$posts[$entityId];
+        }
         $cacheTtl = 2592000;
         $cacheId = 'blog_post_socnet_general_' . $entityId . '_' . LANGUAGE_ID . '_voteconnector';
         $timezoneOffset = \CTimeZone::getOffset();
@@ -31,27 +32,38 @@ final class BlogPostConnector extends Connector
             $post = $cache->getVars();
         } else {
             $cache->startDataCache();
-            $post = \CBlogPost::getList(array(), array("ID" => $entityId), false, false, array(
-                "ID",
-                "BLOG_ID",
-                "BLOG_OWNER_ID",
-                "PUBLISH_STATUS",
-                "TITLE",
-                "AUTHOR_ID",
-                "ENABLE_COMMENTS",
-                "NUM_COMMENTS",
-                "VIEWS",
-                "CODE",
-                "MICRO",
-                "DETAIL_TEXT",
-                "DATE_PUBLISH",
-                "CATEGORY_ID",
-                "HAS_SOCNET_ALL",
-                "HAS_TAGS",
-                "HAS_IMAGES",
-                "HAS_PROPS",
-                "HAS_COMMENT_IMAGES"
-            ))->fetch();
+            $post = \CBlogPost::getList(
+                array(),
+                array("ID" => $entityId),
+                false,
+                false,
+                array(
+                    "ID",
+                    "BLOG_ID",
+                    "BLOG_OWNER_ID",
+                    "PUBLISH_STATUS",
+                    "TITLE",
+                    "AUTHOR_ID",
+                    "ENABLE_COMMENTS",
+                    "NUM_COMMENTS",
+                    "VIEWS",
+                    "CODE",
+                    "MICRO",
+                    "DETAIL_TEXT",
+                    "DATE_PUBLISH",
+                    "CATEGORY_ID",
+                    "HAS_SOCNET_ALL",
+                    "HAS_TAGS",
+                    "HAS_IMAGES",
+                    "HAS_PROPS",
+                    "HAS_COMMENT_IMAGES"
+                )
+            )->fetch();
+
+            if (!empty($post['DETAIL_TEXT'])) {
+                $post['DETAIL_TEXT'] = \Bitrix\Main\Text\Emoji::decode($post['DETAIL_TEXT']);
+            }
+
             $cache->endDataCache($post);
         }
         self::$posts[$entityId] = $post;
@@ -62,23 +74,25 @@ final class BlogPostConnector extends Connector
     {
         global $APPLICATION;
 
-        if (!Loader::includeModule('socialnetwork'))
+        if (!Loader::includeModule('socialnetwork')) {
             return false;
-        elseif (
+        } elseif (
             $APPLICATION->getGroupRight("blog") >= "W"
             || \CSocNetUser::isCurrentUserModuleAdmin()
         ) {
             self::$permissions[$this->entityId] = BLOG_PERMS_FULL;
-        } else if (!array_key_exists($this->entityId, self::$permissions)) {
-            self::$permissions[$this->entityId] = BLOG_PERMS_DENY;
-            $post = self::getPostData($this->entityId);
-            if ($post && $post["ID"] > 0) {
-                $p = \CBlogPost::getSocNetPostPerms($this->entityId, true, $userId, $post["AUTHOR_ID"]);
-                if ($p > BLOG_PERMS_MODERATE || ($p >= BLOG_PERMS_WRITE && $post["AUTHOR_ID"] == $userId))
-                    $p = BLOG_PERMS_FULL;
-                self::$permissions[$this->entityId] = $p;
+        } else {
+            if (!array_key_exists($this->entityId, self::$permissions)) {
+                self::$permissions[$this->entityId] = BLOG_PERMS_DENY;
+                $post = self::getPostData($this->entityId);
+                if ($post && $post["ID"] > 0) {
+                    $p = \CBlogPost::getSocNetPostPerms($this->entityId, true, $userId, $post["AUTHOR_ID"]);
+                    if ($p > BLOG_PERMS_MODERATE || ($p >= BLOG_PERMS_WRITE && $post["AUTHOR_ID"] == $userId)) {
+                        $p = BLOG_PERMS_FULL;
+                    }
+                    self::$permissions[$this->entityId] = $p;
+                }
             }
-
         }
         return self::$permissions[$this->entityId];
     }
@@ -107,8 +121,12 @@ final class BlogPostConnector extends Connector
      */
     public function canRead($userId)
     {
-        if (is_null($this->canRead))
+        if ($this->entityId === null) {
+            return true;
+        }
+        if (is_null($this->canRead)) {
             $this->canRead = $this->getPermission($userId) >= BLOG_PERMS_READ;
+        }
 
         return $this->canRead;
     }
@@ -119,8 +137,12 @@ final class BlogPostConnector extends Connector
      */
     public function canEdit($userId)
     {
-        if (is_null($this->canEdit))
+        if ($this->entityId === null) {
+            return true;
+        }
+        if (is_null($this->canEdit)) {
             $this->canEdit = $this->getPermission($userId) > BLOG_PERMS_MODERATE;
+        }
 
         return $this->canEdit;
     }

@@ -31,46 +31,41 @@ $menu = array(
 );
 
 $sites = array();
-$res = \Bitrix\Main\SiteTable::getList(array(
-    'select' => array(
-        'LID', 'NAME'
-    ),
-    'filter' => array(
-        'ACTIVE' => 'Y'
-    ),
-    'order' => array(
-        'SORT' => 'ASC'
+$res = \Bitrix\Main\SiteTable::getList(
+    array(
+        'select' => array(
+            'LID',
+            'NAME'
+        ),
+        'filter' => array(
+            'ACTIVE' => 'Y'
+        ),
+        'order' => array(
+            'SORT' => 'ASC'
+        )
     )
-));
+);
 while ($row = $res->fetch()) {
     $sites[$row['LID']] = $row;
 }
 
 if (!empty($sites)) {
-    $res = \Bitrix\Landing\Site::getList(array(
-        'select' => array(
-            'ID', 'TITLE', 'SMN_SITE_ID', 'TYPE'
-        ),
-        'filter' => array(
-            '=SMN_SITE_ID' => array_keys($sites),
-            'CHECK_PERMISSIONS' => 'N'
+    $res = \Bitrix\Landing\Site::getList(
+        array(
+            'select' => array(
+                'ID',
+                'TITLE',
+                'SMN_SITE_ID',
+                'TYPE'
+            ),
+            'filter' => array(
+                '=SMN_SITE_ID' => array_keys($sites),
+                'CHECK_PERMISSIONS' => 'N'
+            )
         )
-    ));
+    );
     while ($row = $res->fetch()) {
-        // not hide PREVIEW on a repo
-        if ($row['TYPE'] != 'PREVIEW') {
-            $sites[$row['SMN_SITE_ID']]['NAME'] = $row['TITLE'];
-        } // show preview on REPO
-        elseif (defined('LANDING_IS_REPO') && LANDING_IS_REPO === true) {
-            $menu['items'][] = array(
-                'text' => '!!! ' . strtoupper($row['TITLE']) . ' !!!',
-                'url' => 'landing_site.php' .
-                    '?lang=' . LANGUAGE_ID .
-                    '&site=' . $row['SMN_SITE_ID'] .
-                    '&siteId=' . $row['ID'] .
-                    '&type=' . $row['TYPE'],
-            );
-        }
+        $sites[$row['SMN_SITE_ID']]['NAME'] = $row['TITLE'];
     }
 }
 

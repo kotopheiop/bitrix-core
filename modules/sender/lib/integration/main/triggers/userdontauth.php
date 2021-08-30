@@ -36,8 +36,9 @@ class UserDontAuth extends TriggerConnectorClosed
     public function filter()
     {
         $daysDontAuth = $this->getFieldValue('DAYS_DONT_AUTH');
-        if (!is_numeric($daysDontAuth))
+        if (!is_numeric($daysDontAuth)) {
             $daysDontAuth = 90;
+        }
 
         $dateFrom = new DateTime;
         $dateTo = new DateTime;
@@ -58,17 +59,20 @@ class UserDontAuth extends TriggerConnectorClosed
         }
 
         $filter['=ACTIVE'] = true;
-        $userListDb = UserTable::getList(array(
-            'select' => array('EMAIL', 'ID', 'NAME'),
-            'filter' => $filter,
-            'order' => array('ID' => 'ASC')
-        ));
+        $userListDb = UserTable::getList(
+            array(
+                'select' => array('EMAIL', 'ID', 'NAME'),
+                'filter' => $filter,
+                'order' => array('ID' => 'ASC')
+            )
+        );
         if ($userListDb->getSelectedRowsCount() > 0) {
             $userListDb->addFetchDataModifier(array($this, 'getFetchDataModifier'));
             $this->recipient = $userListDb;
             return true;
-        } else
+        } else {
             return false;
+        }
     }
 
     public function getRecipient()
@@ -78,7 +82,9 @@ class UserDontAuth extends TriggerConnectorClosed
 
     public function getForm()
     {
-        $daysDontAuth = ' <input size=3 type="text" name="' . $this->getFieldName('DAYS_DONT_AUTH') . '" value="' . htmlspecialcharsbx($this->getFieldValue('DAYS_DONT_AUTH', 90)) . '"> ';
+        $daysDontAuth = ' <input size=3 type="text" name="' . $this->getFieldName(
+                'DAYS_DONT_AUTH'
+            ) . '" value="' . htmlspecialcharsbx($this->getFieldValue('DAYS_DONT_AUTH', 90)) . '"> ';
 
         return '
 			<table>

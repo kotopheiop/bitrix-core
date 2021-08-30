@@ -95,10 +95,12 @@ class Action implements Errorable
             $this->binder = AutoWire\Binder::buildForMethod($this, 'run')
                 ->setSourcesParametersToMap($controller->getSourceParametersList())
                 ->setAutoWiredParameters(
-                    array_filter(array_merge(
-                        [$controller->getPrimaryAutoWiredParameter()],
-                        $controller->getAutoWiredParameters()
-                    ))
+                    array_filter(
+                        array_merge(
+                            [$controller->getPrimaryAutoWiredParameter()],
+                            $controller->getAutoWiredParameters()
+                        )
+                    )
                 );
         }
 

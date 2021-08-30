@@ -79,15 +79,19 @@ class CSocServAuthManager
         foreach (self::$arAuthServices as $key => $service) {
             if ($service["__active"] === true && $service["DISABLED"] !== true) {
                 $cl = new $service["CLASS"];
-                if (is_callable(array($cl, "CheckSettings")))
-                    if (!call_user_func_array(array($cl, "CheckSettings"), array()))
+                if (is_callable(array($cl, "CheckSettings"))) {
+                    if (!call_user_func_array(array($cl, "CheckSettings"), array())) {
                         continue;
+                    }
+                }
 
-                if (is_callable(array($cl, "GetFormHtml")))
+                if (is_callable(array($cl, "GetFormHtml"))) {
                     $service["FORM_HTML"] = call_user_func_array(array($cl, "GetFormHtml"), array($arParams));
+                }
 
-                if (is_callable(array($cl, "GetOnClickJs")))
+                if (is_callable(array($cl, "GetOnClickJs"))) {
                     $service["ONCLICK"] = call_user_func_array(array($cl, "GetOnClickJs"), array($arParams));
+                }
 
                 $aServ[$key] = $service;
             }
@@ -99,13 +103,15 @@ class CSocServAuthManager
     {
         if (isset(self::$arAuthServices[$service])) {
             if (!is_array($arService)) {
-                $dbSocservUser = UserTable::getList([
-                    'filter' => [
-                        '=USER_ID' => $this->userId,
-                        '=EXTERNAL_AUTH_ID' => $service,
-                    ],
-                    'select' => ['ID']
-                ]);
+                $dbSocservUser = UserTable::getList(
+                    [
+                        'filter' => [
+                            '=USER_ID' => $this->userId,
+                            '=EXTERNAL_AUTH_ID' => $service,
+                        ],
+                        'select' => ['ID']
+                    ]
+                );
                 $arService = $dbSocservUser->fetch();
             }
 
@@ -128,13 +134,15 @@ class CSocServAuthManager
     public function GetFriendsList($service, $limit, &$next)
     {
         if (isset(self::$arAuthServices[$service])) {
-            $dbSocservUser = UserTable::getList([
-                'filter' => [
-                    '=USER_ID' => $this->userId,
-                    '=EXTERNAL_AUTH_ID' => $service,
-                ],
-                'select' => ['ID']
-            ]);
+            $dbSocservUser = UserTable::getList(
+                [
+                    'filter' => [
+                        '=USER_ID' => $this->userId,
+                        '=EXTERNAL_AUTH_ID' => $service,
+                    ],
+                    'select' => ['ID']
+                ]
+            );
             $arService = $dbSocservUser->fetch();
             if (
                 is_array($arService)
@@ -167,16 +175,40 @@ class CSocServAuthManager
     {
         $arOptions = array();
         foreach (self::$arAuthServices as $service) {
-            if (is_callable(array($service["CLASS"], "GetSettings"))) {
+            $serviceInstance = new $service["CLASS"]();
+            if (is_callable(array($serviceInstance, "GetSettings"))) {
                 $arOptions[] = htmlspecialcharsbx($service["NAME"]);
-                $options = call_user_func_array(array(new $service["CLASS"](), "GetSettings"), array());
-                if (is_array($options))
-                    foreach ($options as $opt)
+                $options = call_user_func_array(array($serviceInstance, "GetSettings"), array());
+                if (is_array($options)) {
+                    foreach ($options as $opt) {
                         $arOptions[] = $opt;
+                    }
+                }
             }
         }
 
         return $arOptions;
+    }
+
+    public function GetSettingByServiceId(string $serviceId): ?array
+    {
+        $settings = [];
+        if (!isset(self::$arAuthServices[$serviceId])) {
+            return null;
+        }
+
+        $service = self::$arAuthServices[$serviceId];
+        $serviceInstance = new $service["CLASS"]();
+        if (is_callable([$serviceInstance, "GetSettings"])) {
+            $options = call_user_func_array([$serviceInstance, "GetSettings"], []);
+            if (is_array($options)) {
+                foreach ($options as $opt) {
+                    $settings[] = $opt;
+                }
+            }
+        }
+
+        return $settings;
     }
 
     public function Authorize($service_id, $arParams = array())
@@ -201,8 +233,13 @@ class CSocServAuthManager
             ) {
                 $cl = new $service["CLASS"];
                 if (is_callable(array($cl, "Authorize"))) {
-                    return call_user_func_array(array($cl, "Authorize"), array
-                    ($arParams));
+                    return call_user_func_array(
+                        array($cl, "Authorize"),
+                        array
+                        (
+                            $arParams
+                        )
+                    );
                 }
             }
         }
@@ -214,8 +251,9 @@ class CSocServAuthManager
     {
         if (isset(self::$arAuthServices[$service_id])) {
             $service = self::$arAuthServices[$service_id];
-            if (is_callable(array($service["CLASS"], "GetError")))
+            if (is_callable(array($service["CLASS"], "GetError"))) {
                 return call_user_func_array(array($service["CLASS"], "GetError"), array($error_code));
+            }
             $error = ($error_code == 2) ? "socserv_error_new_user" : "socserv_controller_error";
             return GetMessage($error, array("#SERVICE_NAME#" => $service["NAME"]));
         }
@@ -233,8 +271,9 @@ class CSocServAuthManager
 
     public static function SetUniqueKey()
     {
-        if (!isset($_SESSION["UNIQUE_KEY"]))
+        if (!isset($_SESSION["UNIQUE_KEY"])) {
             $_SESSION["UNIQUE_KEY"] = md5(bitrix_sessid_get() . uniqid(rand(), true));
+        }
     }
 
     public static function CheckUniqueKey($bUnset = true)
@@ -270,6 +309,24 @@ class CSocServAuthManager
         return false;
     }
 
+    public static function SetAuthorizedServiceId($service_id)
+    {
+        $session = \Bitrix\Main\Application::getInstance()->getKernelSession();
+        $session["AUTH_SERVICE_ID"] = $service_id;
+    }
+
+    public static function UnsetAuthorizedServiceId()
+    {
+        $session = \Bitrix\Main\Application::getInstance()->getKernelSession();
+        unset($session["AUTH_SERVICE_ID"]);
+    }
+
+    public static function GetAuthorizedServiceId()
+    {
+        $session = \Bitrix\Main\Application::getInstance()->getKernelSession();
+        return $session["AUTH_SERVICE_ID"];
+    }
+
     function CleanParam()
     {
         global $APPLICATION;
@@ -283,19 +340,23 @@ class CSocServAuthManager
         $arUserOauth = array();
         $userId = intval($userId);
         if ($userId > 0) {
-            $dbSocservUser = UserTable::getList([
-                'filter' => [
-                    '=USER_ID' => $userId
-                ],
-                'select' => ["ID", "EXTERNAL_AUTH_ID", "OATOKEN"]
-            ]);
+            $dbSocservUser = UserTable::getList(
+                [
+                    'filter' => [
+                        '=USER_ID' => $userId
+                    ],
+                    'select' => ["ID", "EXTERNAL_AUTH_ID", "OATOKEN"]
+                ]
+            );
             while ($arOauth = $dbSocservUser->fetch()) {
-                if ($arOauth["OATOKEN"] <> '' && ($arOauth["EXTERNAL_AUTH_ID"] == "Twitter" || $arOauth["EXTERNAL_AUTH_ID"] == "Facebook"))
+                if ($arOauth["OATOKEN"] <> '' && ($arOauth["EXTERNAL_AUTH_ID"] == "Twitter" || $arOauth["EXTERNAL_AUTH_ID"] == "Facebook")) {
                     $arUserOauth[$arOauth["ID"]] = $arOauth["EXTERNAL_AUTH_ID"];
+                }
             }
         }
-        if (!empty($arUserOauth))
+        if (!empty($arUserOauth)) {
             return $arUserOauth;
+        }
         return false;
     }
 
@@ -317,8 +378,9 @@ class CSocServAuthManager
                 default:
                     $className = "";
             }
-            if ($className != "")
+            if ($className != "") {
                 $result = call_user_func($className . '::SendUserFeed', $socServUserId, $message, $messageId);
+            }
         }
         return $result;
     }
@@ -335,16 +397,19 @@ class CSocServAuthManager
     {
         if (isset($arUserTwit['statuses']) && !empty($arUserTwit['statuses'])) {
             foreach ($arUserTwit['statuses'] as $userTwit) {
-                if (isset($userTwit["id_str"]))
+                if (isset($userTwit["id_str"])) {
                     $lastTwitId = ($userTwit["id_str"] . '/' > $lastTwitId . '/') ? $userTwit["id_str"] : $lastTwitId;
+                }
                 if (IsModuleInstalled('bitrix24') && defined('BX24_HOST_NAME')) {
                     $userId = $userTwit['kp_user_id'];
                     $rsUser = CUser::GetByID($userId);
                     $arUser = $rsUser->Fetch();
-                    foreach (GetModuleEvents("socialservices", "OnPublishSocServMessage", true) as $arEvent)
+                    foreach (GetModuleEvents("socialservices", "OnPublishSocServMessage", true) as $arEvent) {
                         ExecuteModuleEventEx($arEvent, array($arUser, $userTwit, $arSiteId));
-                } else
+                    }
+                } else {
                     self::PostIntoBuzzAsBlog($userTwit, $lastTwitId, $arSiteId);
+                }
             }
             return $lastTwitId;
         }
@@ -354,24 +419,31 @@ class CSocServAuthManager
     public static function PostIntoBuzzAsBlog($userTwit, $arSiteId = array(), $userLogin = '')
     {
         global $DB;
-        if (!CModule::IncludeModule("blog") || !CModule::IncludeModule("socialnetwork"))
+        if (!CModule::IncludeModule("blog") || !CModule::IncludeModule("socialnetwork")) {
             return;
+        }
         $arParams = array();
         if ((IsModuleInstalled('bitrix24') && defined('BX24_HOST_NAME')) && $userLogin != '') {
-            if ($arUserTwit = unserialize(base64_decode($userTwit)))
+            if ($arUserTwit = unserialize(base64_decode($userTwit))) {
                 $userTwit = $arUserTwit;
-            if ($arSiteIdCheck = unserialize(base64_decode($arSiteId)))
+            }
+            if ($arSiteIdCheck = unserialize(base64_decode($arSiteId))) {
                 $arSiteId = $arSiteIdCheck;
+            }
             $dbUser = CUser::GetByLogin($userLogin);
-            if ($arUser = $dbUser->Fetch())
+            if ($arUser = $dbUser->Fetch()) {
                 $arParams["USER_ID"] = $arUser["ID"];
-        } else
+            }
+        } else {
             $arParams["USER_ID"] = $userTwit['kp_user_id'];
+        }
         $siteId = null;
-        if (isset($arSiteId[$userTwit['kp_user_id']]))
+        if (isset($arSiteId[$userTwit['kp_user_id']])) {
             $siteId = $arSiteId[$userTwit['kp_user_id']];
-        if (strlen($siteId) <= 0)
+        }
+        if ($siteId == '') {
             $siteId = SITE_ID;
+        }
         if (isset($userTwit['text'])) {
             $arParams["GROUP_ID"] = COption::GetOptionString("socialnetwork", "userbloggroup_id", false, $siteId);
             $arParams["PATH_TO_BLOG"] = COption::GetOptionString("socialnetwork", "userblogpost_page", false, $siteId);
@@ -387,14 +459,17 @@ class CSocServAuthManager
                 "GROUP_SITE_ID" => $siteId,
                 "OWNER_ID" => $arParams["USER_ID"],
             );
-            $groupId = (is_array($arParams["GROUP_ID"]) ? IntVal($arParams["GROUP_ID"][0]) : IntVal($arParams["GROUP_ID"]));
+            $groupId = (is_array($arParams["GROUP_ID"]) ? intval($arParams["GROUP_ID"][0]) : intval(
+                $arParams["GROUP_ID"]
+            ));
             if (isset($GLOBALS["BLOG_POST"]["BLOG_P_" . $groupId . "_" . $arParams["USER_ID"]]) && !empty($GLOBALS["BLOG_POST"]["BLOG_P_" . $groupId . "_" . $arParams["USER_ID"]])) {
                 $arBlog = $GLOBALS["BLOG_POST"]["BLOG_P_" . $groupId . "_" . $arParams["USER_ID"]];
             } else {
                 $dbBl = CBlog::GetList(Array(), $arFilterblg);
                 $arBlog = $dbBl->Fetch();
-                if (!$arBlog && IsModuleInstalled("intranet"))
+                if (!$arBlog && IsModuleInstalled("intranet")) {
                     $arBlog = CBlog::GetByOwnerID($arParams["USER_ID"]);
+                }
 
                 $GLOBALS["BLOG_POST"]["BLOG_P_" . $groupId . "_" . $arParams["USER_ID"]] = $arBlog;
             }
@@ -405,7 +480,9 @@ class CSocServAuthManager
                 if (!empty($arParams["GROUP_ID"])) {
                     $arFields = array(
                         "=DATE_UPDATE" => $DB->CurrentTimeFunction(),
-                        "GROUP_ID" => (is_array($arParams["GROUP_ID"])) ? IntVal($arParams["GROUP_ID"][0]) : IntVal($arParams["GROUP_ID"]),
+                        "GROUP_ID" => (is_array($arParams["GROUP_ID"])) ? intval($arParams["GROUP_ID"][0]) : intval(
+                            $arParams["GROUP_ID"]
+                        ),
                         "ACTIVE" => "Y",
                         "ENABLE_COMMENTS" => "Y",
                         "ENABLE_IMG_VERIF" => "Y",
@@ -418,19 +495,22 @@ class CSocServAuthManager
                         "=DATE_CREATE" => $DB->CurrentTimeFunction(),
                         "PERMS_POST" => Array(
                             1 => "I",
-                            2 => "I"),
+                            2 => "I"
+                        ),
                         "PERMS_COMMENT" => Array(
                             1 => "P",
-                            2 => "P"),
+                            2 => "P"
+                        ),
                     );
 
                     $bRights = false;
                     $rsUser = CUser::GetByID($arParams["USER_ID"]);
                     $arUser = $rsUser->Fetch();
-                    if (strlen($arUser["NAME"] . "" . $arUser["LAST_NAME"]) <= 0)
+                    if ($arUser["NAME"] . "" . $arUser["LAST_NAME"] == '') {
                         $arFields["NAME"] = GetMessage("BLG_NAME") . " " . $arUser["LOGIN"];
-                    else
+                    } else {
                         $arFields["NAME"] = GetMessage("BLG_NAME") . " " . $arUser["NAME"] . " " . $arUser["LAST_NAME"];
+                    }
 
                     $arFields["URL"] = str_replace(" ", "_", $arUser["LOGIN"]) . "-blog-" . SITE_ID;
                     $arFields["OWNER_ID"] = $arParams["USER_ID"];
@@ -447,15 +527,29 @@ class CSocServAuthManager
                         } while (CBlog::GetByUrl($arFields["URL"]));
                     }
 
-                    $featureOperationPerms = CSocNetFeaturesPerms::GetOperationPerm(SONET_ENTITY_USER, $arFields["OWNER_ID"], "blog", "view_post");
-                    if ($featureOperationPerms == SONET_RELATIONS_TYPE_ALL)
+                    $featureOperationPerms = CSocNetFeaturesPerms::GetOperationPerm(
+                        SONET_ENTITY_USER,
+                        $arFields["OWNER_ID"],
+                        "blog",
+                        "view_post"
+                    );
+                    if ($featureOperationPerms == SONET_RELATIONS_TYPE_ALL) {
                         $bRights = true;
+                    }
 
-                    $arFields["PATH"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_BLOG"], array("blog" => $arFields["URL"], "user_id" => $arFields["OWNER_ID"], "group_id" => $arFields["SOCNET_GROUP_ID"]));
+                    $arFields["PATH"] = CComponentEngine::MakePathFromTemplate(
+                        $arParams["PATH_TO_BLOG"],
+                        array(
+                            "blog" => $arFields["URL"],
+                            "user_id" => $arFields["OWNER_ID"],
+                            "group_id" => $arFields["SOCNET_GROUP_ID"]
+                        )
+                    );
 
                     $blogID = CBlog::Add($arFields);
-                    if ($bRights)
+                    if ($bRights) {
                         CBlog::AddSocnetRead($blogID);
+                    }
                     $arBlog = CBlog::GetByID($blogID, $arParams["GROUP_ID"]);
                 }
             }
@@ -475,7 +569,13 @@ class CSocServAuthManager
                 "DETAIL_TEXT_TYPE" => "text",
                 "DATE_PUBLISH" => $DATE_PUBLISH,
                 "PUBLISH_STATUS" => BLOG_PUBLISH_STATUS_PUBLISH,
-                "PATH" => CComponentEngine::MakePathFromTemplate(htmlspecialcharsBack($arParams["PATH_TO_POST"]), array("post_id" => "#post_id#", "user_id" => $arBlog["OWNER_ID"])),
+                "PATH" => CComponentEngine::MakePathFromTemplate(
+                    htmlspecialcharsBack($arParams["PATH_TO_POST"]),
+                    array(
+                        "post_id" => "#post_id#",
+                        "user_id" => $arBlog["OWNER_ID"]
+                    )
+                ),
                 "URL" => $arBlog["URL"],
                 "SOURCE_TYPE" => "twitter",
             );
@@ -483,24 +583,25 @@ class CSocServAuthManager
             $arFields["PERMS_POST"] = array();
             $arFields["PERMS_COMMENT"] = array();
             $arFields["MICRO"] = "N";
-            if (strlen($arFields["TITLE"]) <= 0) {
+            if ($arFields["TITLE"] == '') {
                 $arFields["MICRO"] = "Y";
                 $arFields["TITLE"] = trim(blogTextParser::killAllTags($arFields["DETAIL_TEXT"]));
-                if (strlen($arFields["TITLE"]) <= 0)
+                if ($arFields["TITLE"] == '') {
                     $arFields["TITLE"] = GetMessage("BLOG_EMPTY_TITLE_PLACEHOLDER");
+                }
             }
 
             $arFields["SOCNET_RIGHTS"] = Array();
             if (!empty($userTwit['user_perms'])) {
                 $bOne = true;
                 foreach ($userTwit['user_perms'] as $v => $k) {
-                    if (strlen($v) > 0 && is_array($k) && !empty($k)) {
+                    if ($v <> '' && is_array($k) && !empty($k)) {
                         foreach ($k as $vv) {
-                            if (strlen($vv) > 0) {
+                            if ($vv <> '') {
                                 $arFields["SOCNET_RIGHTS"][] = $vv;
-                                if ($v != "SG")
+                                if ($v != "SG") {
                                     $bOne = false;
-
+                                }
                             }
                         }
                     }
@@ -511,20 +612,39 @@ class CSocServAuthManager
                     $bFirst = true;
                     $oGrId = 0;
                     foreach ($userTwit['user_perms']["SG"] as $v) {
-                        if (strlen($v) > 0) {
+                        if ($v <> '') {
                             if ($bFirst) {
                                 $bOnesg = true;
                                 $bFirst = false;
                                 $v = str_replace("SG", "", $v);
-                                $oGrId = IntVal($v);
+                                $oGrId = intval($v);
                             } else {
                                 $bOnesg = false;
                             }
                         }
                     }
                     if ($bOnesg) {
-                        if (!CSocNetFeaturesPerms::CanPerformOperation($arParams["USER_ID"], SONET_ENTITY_GROUP, $oGrId, "blog", "write_post") && !CSocNetFeaturesPerms::CanPerformOperation($arParams["USER_ID"], SONET_ENTITY_GROUP, $oGrId, "blog", "moderate_post") && !CSocNetFeaturesPerms::CanPerformOperation($arParams["USER_ID"], SONET_ENTITY_GROUP, $oGrId, "blog", "full_post"))
+                        if (!CSocNetFeaturesPerms::CanPerformOperation(
+                                $arParams["USER_ID"],
+                                SONET_ENTITY_GROUP,
+                                $oGrId,
+                                "blog",
+                                "write_post"
+                            ) && !CSocNetFeaturesPerms::CanPerformOperation(
+                                $arParams["USER_ID"],
+                                SONET_ENTITY_GROUP,
+                                $oGrId,
+                                "blog",
+                                "moderate_post"
+                            ) && !CSocNetFeaturesPerms::CanPerformOperation(
+                                $arParams["USER_ID"],
+                                SONET_ENTITY_GROUP,
+                                $oGrId,
+                                "blog",
+                                "full_post"
+                            )) {
                             $arFields["PUBLISH_STATUS"] = BLOG_PUBLISH_STATUS_READY;
+                        }
                     }
                 }
             }
@@ -541,7 +661,11 @@ class CSocServAuthManager
             $newID = null;
             $socnetRightsOld = Array("U" => Array());
             if (!$bError) {
-                preg_match_all("/\\[user\\s*=\\s*([^\\]]*)\\](.+?)\\[\\/user\\]/ies" . BX_UTF_PCRE_MODIFIER, $userTwit['text'], $arMention);
+                preg_match_all(
+                    "/\\[user\\s*=\\s*([^\\]]*)\\](.+?)\\[\\/user\\]/ies" . BX_UTF_PCRE_MODIFIER,
+                    $userTwit['text'],
+                    $arMention
+                );
 
                 $arFields["=DATE_CREATE"] = $DB->GetNowFunction();
                 $arFields["AUTHOR_ID"] = $arParams["USER_ID"];
@@ -566,47 +690,60 @@ class CSocServAuthManager
                     CBlogPost::Notify($arFields, $arBlog, $arParamsNotify);
                 }
             }
-            if ($newID > 0 && strlen($arResult["ERROR_MESSAGE"]) <= 0 && $arFields["PUBLISH_STATUS"] == BLOG_PUBLISH_STATUS_PUBLISH) // Record saved successfully
+            if ($newID > 0 && $arResult["ERROR_MESSAGE"] == '' && $arFields["PUBLISH_STATUS"] == BLOG_PUBLISH_STATUS_PUBLISH) // Record saved successfully
             {
                 BXClearCache(true, "/" . SITE_ID . "/blog/last_messages_list/");
 
                 $arFieldsIM = Array(
                     "TYPE" => "POST",
                     "TITLE" => $arFields["TITLE"],
-                    "URL" => CComponentEngine::MakePathFromTemplate(htmlspecialcharsBack($arParams["PATH_TO_POST"]), array("post_id" => $newID, "user_id" => $arBlog["OWNER_ID"])),
+                    "URL" => CComponentEngine::MakePathFromTemplate(
+                        htmlspecialcharsBack($arParams["PATH_TO_POST"]),
+                        array(
+                            "post_id" => $newID,
+                            "user_id" => $arBlog["OWNER_ID"]
+                        )
+                    ),
                     "ID" => $newID,
                     "FROM_USER_ID" => $arParams["USER_ID"],
                     "TO_USER_ID" => array(),
                     "TO_SOCNET_RIGHTS" => $arFields["SOCNET_RIGHTS"],
                     "TO_SOCNET_RIGHTS_OLD" => $socnetRightsOld["U"],
                 );
-                if (!empty($arMentionOld))
+                if (!empty($arMentionOld)) {
                     $arFieldsIM["MENTION_ID_OLD"] = $arMentionOld[1];
-                if (!empty($arMention))
+                }
+                if (!empty($arMention)) {
                     $arFieldsIM["MENTION_ID"] = $arMention[1];
+                }
 
                 CBlogPost::NotifyIm($arFieldsIM);
 
                 $arParams["ID"] = $newID;
                 if (!empty($_POST["SPERM"]["SG"])) {
                     foreach ($_POST["SPERM"]["SG"] as $v) {
-                        $group_id_tmp = substr($v, 2);
-                        if (IntVal($group_id_tmp) > 0)
-                            CSocNetGroup::SetLastActivity(IntVal($group_id_tmp));
+                        $group_id_tmp = mb_substr($v, 2);
+                        if (intval($group_id_tmp) > 0) {
+                            CSocNetGroup::SetLastActivity(intval($group_id_tmp));
+                        }
                     }
                 }
             }
         }
     }
 
-    function GetTwitMessages($lastTwitId = "1", $counter = 1)
+    public static function GetTwitMessages($lastTwitId = "1", $counter = 1)
     {
         $oAuthManager = new CSocServAuthManager();
         $arActiveSocServ = $oAuthManager->GetActiveAuthServices(array());
-        if (!(isset($arActiveSocServ["Twitter"]) && isset($arActiveSocServ["Twitter"]["__active"])) || !function_exists("hash_hmac"))
+        if (!(isset($arActiveSocServ["Twitter"]) && isset($arActiveSocServ["Twitter"]["__active"])) || !function_exists(
+                "hash_hmac"
+            )) {
             return false;
-        if (!CModule::IncludeModule("socialnetwork"))
+        }
+        if (!CModule::IncludeModule("socialnetwork")) {
             return "CSocServAuthManager::GetTwitMessages(\"$lastTwitId\", $counter);";
+        }
         global $USER;
         $bTmpUserCreated = false;
         if (!isset($USER) || !(($USER instanceof CUser) && ('CUser' == get_class($USER)))) {
@@ -618,19 +755,24 @@ class CSocServAuthManager
 
             $USER = new CUser();
         }
-        if (intval($lastTwitId) <= 1 || $counter == 1)
+        if (intval($lastTwitId) <= 1 || $counter == 1) {
             $lastTwitId = COption::GetOptionString('socialservices', 'last_twit_id', '1');
+        }
         $socServUserArray = self::GetUserArray('Twitter');
         $arSiteId = array();
-        if (isset($socServUserArray[3]) && is_array($socServUserArray[3]))
+        if (isset($socServUserArray[3]) && is_array($socServUserArray[3])) {
             $arSiteId = $socServUserArray[3];
+        }
         $twitManager = new CSocServTwitter();
         $arUserTwit = $twitManager->GetUserMessage($socServUserArray, $lastTwitId);
         if (is_array($arUserTwit)) {
-            if (isset($arUserTwit["statuses"]) && !empty($arUserTwit["statuses"]))
+            if (isset($arUserTwit["statuses"]) && !empty($arUserTwit["statuses"])) {
                 $lastTwitId = self::PostIntoBuzz($arUserTwit, $lastTwitId, $arSiteId);
-            elseif ((is_array($arUserTwit["search_metadata"]) && isset($arUserTwit["search_metadata"]["max_id_str"])) && (strlen($arUserTwit["search_metadata"]["max_id_str"]) > 0))
+            } elseif ((is_array(
+                        $arUserTwit["search_metadata"]
+                    ) && isset($arUserTwit["search_metadata"]["max_id_str"])) && ($arUserTwit["search_metadata"]["max_id_str"] <> '')) {
                 $lastTwitId = $arUserTwit["search_metadata"]["max_id_str"];
+            }
         }
         $counter++;
         if ($counter >= 20) {
@@ -655,8 +797,11 @@ class CSocServAuthManager
     {
         $oAuthManager = new CSocServAuthManager();
         $arActiveSocServ = $oAuthManager->GetActiveAuthServices(array());
-        if (!(isset($arActiveSocServ["Twitter"]) && isset($arActiveSocServ["Twitter"]["__active"])) || !function_exists("hash_hmac"))
+        if (!(isset($arActiveSocServ["Twitter"]) && isset($arActiveSocServ["Twitter"]["__active"])) || !function_exists(
+                "hash_hmac"
+            )) {
             return false;
+        }
 
         $ttl = 86400;
         $cache_id = 'socserv_mes_user';
@@ -664,23 +809,42 @@ class CSocServAuthManager
         $cache_dir = '/bx/socserv_mes_user';
 
         $arSocServMessage = array();
-        if ($obCache->InitCache($ttl, $cache_id, $cache_dir))
+        if ($obCache->InitCache($ttl, $cache_id, $cache_dir)) {
             $arSocServMessage = $obCache->GetVars();
-        else {
-            $dbSocServMessage = CSocServMessage::GetList(array(), array('SUCCES_SENT' => 'N'), false, array("nTopCount" => 5), array("ID", "SOCSERV_USER_ID", "PROVIDER", "MESSAGE"));
+        } else {
+            $dbSocServMessage = CSocServMessage::GetList(
+                array(),
+                array('SUCCES_SENT' => 'N'),
+                false,
+                array("nTopCount" => 5),
+                array("ID", "SOCSERV_USER_ID", "PROVIDER", "MESSAGE")
+            );
 
-            while ($arSocMessage = $dbSocServMessage->Fetch())
+            while ($arSocMessage = $dbSocServMessage->Fetch()) {
                 $arSocServMessage[] = $arSocMessage;
-            if (empty($arSocServMessage))
-                if ($obCache->StartDataCache())
-                    $obCache->EndDataCache($arSocServMessage);
-        }
-        if (is_array($arSocServMessage) && !empty($arSocServMessage))
-            foreach ($arSocServMessage as $arSocMessage) {
-                $arResult = CSocServAuthManager::SendUserMessage($arSocMessage['SOCSERV_USER_ID'], $arSocMessage['PROVIDER'], $arSocMessage['MESSAGE'], $arSocMessage['ID']);
-                if ($arResult !== false && is_array($arResult) && !preg_match("/error/i", join(",", array_keys($arResult))))
-                    self::MarkMessageAsSent($arSocMessage['ID']);
             }
+            if (empty($arSocServMessage)) {
+                if ($obCache->StartDataCache()) {
+                    $obCache->EndDataCache($arSocServMessage);
+                }
+            }
+        }
+        if (is_array($arSocServMessage) && !empty($arSocServMessage)) {
+            foreach ($arSocServMessage as $arSocMessage) {
+                $arResult = CSocServAuthManager::SendUserMessage(
+                    $arSocMessage['SOCSERV_USER_ID'],
+                    $arSocMessage['PROVIDER'],
+                    $arSocMessage['MESSAGE'],
+                    $arSocMessage['ID']
+                );
+                if ($arResult !== false && is_array($arResult) && !preg_match(
+                        "/error/i",
+                        join(",", array_keys($arResult))
+                    )) {
+                    self::MarkMessageAsSent($arSocMessage['ID']);
+                }
+            }
+        }
         return "CSocServAuthManager::SendSocialservicesMessages();";
     }
 
@@ -689,7 +853,7 @@ class CSocServAuthManager
         CSocServMessage::Update($id, array("SUCCES_SENT" => 'Y'));
     }
 
-    public function GetUserArray($authId)
+    public static function GetUserArray($authId)
     {
         $ttl = 10000;
         $cache_id = 'socserv_ar_user';
@@ -700,13 +864,15 @@ class CSocServAuthManager
             $arResult = $obCache->GetVars();
         } else {
             $arUserXmlId = $arOaToken = $arOaSecret = $arSiteId = array();
-            $dbSocUser = UserTable::getList([
-                'filter' => [
-                    '=EXTERNAL_AUTH_ID' => $authId,
-                    "=USER.ACTIVE" => 'Y'
-                ],
-                'select' => ["XML_ID", "USER_ID", "OATOKEN", "OASECRET", "SITE_ID"]
-            ]);
+            $dbSocUser = UserTable::getList(
+                [
+                    'filter' => [
+                        '=EXTERNAL_AUTH_ID' => $authId,
+                        "=USER.ACTIVE" => 'Y'
+                    ],
+                    'select' => ["XML_ID", "USER_ID", "OATOKEN", "OASECRET", "SITE_ID"]
+                ]
+            );
 
             while ($arSocUser = $dbSocUser->fetch()) {
                 $arUserXmlId[$arSocUser["USER_ID"]] = $arSocUser["XML_ID"];
@@ -715,8 +881,9 @@ class CSocServAuthManager
                 $arSiteId[$arSocUser["USER_ID"]] = $arSocUser["SITE_ID"];
             }
             $arResult = array($arUserXmlId, $arOaToken, $arOaSecret, $arSiteId);
-            if ($obCache->StartDataCache())
+            if ($obCache->StartDataCache()) {
                 $obCache->EndDataCache($arResult);
+            }
         }
         return $arResult;
     }
@@ -732,14 +899,14 @@ class CSocServAuthManager
             $obCache = new CPHPCache;
             $cache_dir = '/bx/socserv_user_option';
 
-            if ($obCache->InitCache($ttl, $cache_id, $cache_dir))
+            if ($obCache->InitCache($ttl, $cache_id, $cache_dir)) {
                 $result = $obCache->GetVars();
-            else {
+            } else {
                 $result = CUtil::JSEscape(CUserOptions::GetOption("socialservices", $option, "N", $USER->GetID()));
-                if ($obCache->StartDataCache())
+                if ($obCache->StartDataCache()) {
                     $obCache->EndDataCache($result);
+                }
             }
-
         }
 
         return $result;
@@ -748,7 +915,16 @@ class CSocServAuthManager
     public static function checkOldUser(&$socservUserFields)
     {
         // check for user with old socialservices linking system (socservice ID in user's EXTERNAL_AUTH_ID)
-        $dbUsersOld = CUser::GetList($by = 'ID', $ord = 'ASC', array('XML_ID' => $socservUserFields['XML_ID'], 'EXTERNAL_AUTH_ID' => $socservUserFields['EXTERNAL_AUTH_ID'], 'ACTIVE' => 'Y'), array('NAV_PARAMS' => array("nTopCount" => "1")));
+        $dbUsersOld = CUser::GetList(
+            'ID',
+            'ASC',
+            array(
+                'XML_ID' => $socservUserFields['XML_ID'],
+                'EXTERNAL_AUTH_ID' => $socservUserFields['EXTERNAL_AUTH_ID'],
+                'ACTIVE' => 'Y'
+            ),
+            array('NAV_PARAMS' => array("nTopCount" => "1"))
+        );
         $socservUser = $dbUsersOld->Fetch();
         if ($socservUser) {
             return $socservUser["ID"];
@@ -760,7 +936,16 @@ class CSocServAuthManager
     public static function checkAbandonedUser(&$socservUserFields)
     {
         // theoretically possible situation with abandoned external user w/o b_socialservices_user entry
-        $dbUsersNew = CUser::GetList($by = 'ID', $ord = 'ASC', array('XML_ID' => $socservUserFields['XML_ID'], 'EXTERNAL_AUTH_ID' => 'socservices', 'ACTIVE' => 'Y'), array('NAV_PARAMS' => array("nTopCount" => "1")));
+        $dbUsersNew = CUser::GetList(
+            'ID',
+            'ASC',
+            array(
+                'XML_ID' => $socservUserFields['XML_ID'],
+                'EXTERNAL_AUTH_ID' => 'socservices',
+                'ACTIVE' => 'Y'
+            ),
+            array('NAV_PARAMS' => array("nTopCount" => "1"))
+        );
         $socservUser = $dbUsersNew->Fetch();
 
         if ($socservUser) {
@@ -838,16 +1023,16 @@ class CSocServAuth
         return false;
     }
 
-    protected function CheckFields($action, &$arFields)
+    protected static function CheckFields($action, &$arFields)
     {
         global $USER;
 
         if ($action === 'ADD') {
-            if (isset($arFields["EXTERNAL_AUTH_ID"]) && strlen($arFields["EXTERNAL_AUTH_ID"]) <= 0) {
+            if (isset($arFields["EXTERNAL_AUTH_ID"]) && $arFields["EXTERNAL_AUTH_ID"] == '') {
                 return false;
             }
 
-            if (isset($arFields["SITE_ID"]) && strlen($arFields["SITE_ID"]) <= 0) {
+            if (isset($arFields["SITE_ID"]) && $arFields["SITE_ID"] == '') {
                 $arFields["SITE_ID"] = SITE_ID;
             }
 
@@ -855,13 +1040,15 @@ class CSocServAuth
                 $arFields["USER_ID"] = $USER->GetID();
             }
 
-            $dbCheck = UserTable::getList([
-                'filter' => [
-                    '=USER_ID' => $arFields["USER_ID"],
-                    '=EXTERNAL_AUTH_ID' => $arFields["EXTERNAL_AUTH_ID"],
-                ],
-                'select' => ["ID"]
-            ]);
+            $dbCheck = UserTable::getList(
+                [
+                    'filter' => [
+                        '=USER_ID' => $arFields["USER_ID"],
+                        '=EXTERNAL_AUTH_ID' => $arFields["EXTERNAL_AUTH_ID"],
+                    ],
+                    'select' => ["ID"]
+                ]
+            );
             if ($dbCheck->fetch()) {
                 return false;
             }
@@ -869,7 +1056,7 @@ class CSocServAuth
 
         if (is_set($arFields, "PERSONAL_PHOTO")) {
             $res = CFile::CheckImageFile($arFields["PERSONAL_PHOTO"]);
-            if (strlen($res) > 0) {
+            if ($res <> '') {
                 unset($arFields["PERSONAL_PHOTO"]);
             } else {
                 $arFields["PERSONAL_PHOTO"]["MODULE_ID"] = "socialservices";
@@ -880,7 +1067,7 @@ class CSocServAuth
         return true;
     }
 
-    static function Update($id, $arFields)
+    public static function Update($id, $arFields)
     {
         global $DB;
         $id = intval($id);
@@ -895,13 +1082,25 @@ class CSocServAuth
             }
         }
 
+        if (is_set($arFields, "PERSONAL_PHOTO")) {
+            if ($arFields["PERSONAL_PHOTO"]["name"] == '' && $arFields["PERSONAL_PHOTO"]["del"] == '') {
+                unset($arFields["PERSONAL_PHOTO"]);
+            } else {
+                $rsPersonalPhoto = $DB->Query("SELECT PERSONAL_PHOTO FROM b_socialservices_user WHERE ID=" . $id);
+                if ($personalPhoto = $rsPersonalPhoto->Fetch()) {
+                    $arFields["PERSONAL_PHOTO"]["old_file"] = $personalPhoto["PERSONAL_PHOTO"];
+                }
+            }
+        }
+
         if (!self::CheckFields('UPDATE', $arFields)) {
             return false;
         }
 
         $arDbFields = $arFields;
-        if (static::hasEncryptedFields(array_keys($arDbFields)))
+        if (static::hasEncryptedFields(array_keys($arDbFields))) {
             static::encryptFields($arDbFields);
+        }
 
         $strUpdate = $DB->PrepareUpdate("b_socialservices_user", $arDbFields);
 
@@ -914,8 +1113,9 @@ class CSocServAuth
         $obCache->Clean($cache_id, $cache_dir);
 
         $arFields['ID'] = $id;
-        foreach (GetModuleEvents("socialservices", "OnAfterSocServUserUpdate", true) as $arEvent)
+        foreach (GetModuleEvents("socialservices", "OnAfterSocServUserUpdate", true) as $arEvent) {
             ExecuteModuleEventEx($arEvent, array(&$arFields));
+        }
 
         return $id;
     }
@@ -925,39 +1125,49 @@ class CSocServAuth
         global $DB;
         $id = intval($id);
         if ($id > 0) {
-            $rsUser = $DB->Query("SELECT ID FROM b_socialservices_user WHERE ID=" . $id);
+            $rsUser = $DB->Query("SELECT ID, PERSONAL_PHOTO FROM b_socialservices_user WHERE ID=" . $id);
             $arUser = $rsUser->Fetch();
-            if (!$arUser)
+            if (!$arUser) {
                 return false;
+            }
 
-            foreach (GetModuleEvents("socialservices", "OnBeforeSocServUserDelete", true) as $arEvent)
+            foreach (GetModuleEvents("socialservices", "OnBeforeSocServUserDelete", true) as $arEvent) {
                 ExecuteModuleEventEx($arEvent, array($id));
+            }
+
+            CFile::Delete($arUser["PERSONAL_PHOTO"]);
 
             $DB->Query("DELETE FROM b_socialservices_user WHERE ID = " . $id . " ", true);
+
             $cache_id = 'socserv_ar_user';
             $obCache = new CPHPCache;
             $cache_dir = '/bx/socserv_ar_user';
             $obCache->Clean($cache_id, $cache_dir);
+
             return true;
         }
         return false;
     }
 
-    function OnUserDelete($id)
+    public static function OnUserDelete($id)
     {
         global $DB;
         $id = intval($id);
         if ($id > 0) {
-            $DB->Query("DELETE FROM b_socialservices_user WHERE USER_ID = " . $id . " ", true);
+            $rsUsers = $DB->Query("SELECT ID FROM b_socialservices_user WHERE USER_ID = " . $id . " ", true);
+            while ($arUserLink = $rsUsers->Fetch()) {
+                self::Delete($arUserLink["ID"]);
+            }
             return true;
         }
         return false;
     }
 
-    function OnAfterTMReportDailyAdd()
+    public static function OnAfterTMReportDailyAdd()
     {
-        if (COption::GetOptionString("socialservices", "allow_send_user_activity", "Y") != 'Y')
+        if (COption::GetOptionString("socialservices", "allow_send_user_activity", "Y") != 'Y') {
             return;
+        }
         global $USER;
         $arIntranetData = $arResult = $arData = array();
         $eventCounter = $taskCounter = 0;
@@ -976,13 +1186,43 @@ class CSocServAuth
 
         $arResult['USER_ID'] = intval($USER->GetID());
         if ($arResult['USER_ID'] > 0) {
-            $enabledSendMessage = CUserOptions::GetOption("socialservices", "user_socserv_enable", "N", $arResult['USER_ID']);
+            $enabledSendMessage = CUserOptions::GetOption(
+                "socialservices",
+                "user_socserv_enable",
+                "N",
+                $arResult['USER_ID']
+            );
             if ($enabledSendMessage == 'Y') {
-                $enabledEndDaySend = CUserOptions::GetOption("socialservices", "user_socserv_end_day", "N", $arResult['USER_ID']);
+                $enabledEndDaySend = CUserOptions::GetOption(
+                    "socialservices",
+                    "user_socserv_end_day",
+                    "N",
+                    $arResult['USER_ID']
+                );
                 if ($enabledEndDaySend == 'Y') {
-                    $arResult['MESSAGE'] = str_replace('#event#', $eventCounter, str_replace('#task#', $taskCounter, CUserOptions::GetOption("socialservices", "user_socserv_end_text", GetMessage("JS_CORE_SS_WORKDAY_START"), $arResult['USER_ID'])));
+                    $arResult['MESSAGE'] = str_replace(
+                        '#event#',
+                        $eventCounter,
+                        str_replace(
+                            '#task#',
+                            $taskCounter,
+                            CUserOptions::GetOption(
+                                "socialservices",
+                                "user_socserv_end_text",
+                                GetMessage(
+                                    "JS_CORE_SS_WORKDAY_START"
+                                ),
+                                $arResult['USER_ID']
+                            )
+                        )
+                    );
 
-                    $socServArray = CUserOptions::GetOption("socialservices", "user_socserv_array", "a:0:{}", $arResult['USER_ID']);
+                    $socServArray = CUserOptions::GetOption(
+                        "socialservices",
+                        "user_socserv_array",
+                        "a:0:{}",
+                        $arResult['USER_ID']
+                    );
                     if (!CheckSerializedData($socServArray)) {
                         $socServArray = "a:0:{}";
                     }
@@ -1001,21 +1241,42 @@ class CSocServAuth
         }
     }
 
-    function OnAfterTMDayStart()
+    public static function OnAfterTMDayStart()
     {
-        if (COption::GetOptionString("socialservices", "allow_send_user_activity", "Y") != 'Y')
+        if (COption::GetOptionString("socialservices", "allow_send_user_activity", "Y") != 'Y') {
             return;
+        }
         global $USER;
         $arResult = array();
         $arResult['USER_ID'] = intval($USER->GetID());
         if ($arResult['USER_ID'] > 0) {
-            $enabledSendMessage = CUserOptions::GetOption("socialservices", "user_socserv_enable", "N", $arResult['USER_ID']);
+            $enabledSendMessage = CUserOptions::GetOption(
+                "socialservices",
+                "user_socserv_enable",
+                "N",
+                $arResult['USER_ID']
+            );
             if ($enabledSendMessage == 'Y') {
-                $enabledEndDaySend = CUserOptions::GetOption("socialservices", "user_socserv_start_day", "N", $arResult['USER_ID']);
+                $enabledEndDaySend = CUserOptions::GetOption(
+                    "socialservices",
+                    "user_socserv_start_day",
+                    "N",
+                    $arResult['USER_ID']
+                );
                 if ($enabledEndDaySend == 'Y') {
-                    $arResult['MESSAGE'] = CUserOptions::GetOption("socialservices", "user_socserv_start_text", GetMessage("JS_CORE_SS_WORKDAY_START"), $arResult['USER_ID']);
+                    $arResult['MESSAGE'] = CUserOptions::GetOption(
+                        "socialservices",
+                        "user_socserv_start_text",
+                        GetMessage("JS_CORE_SS_WORKDAY_START"),
+                        $arResult['USER_ID']
+                    );
 
-                    $socServArray = CUserOptions::GetOption("socialservices", "user_socserv_array", "a:0:{}", $arResult['USER_ID']);
+                    $socServArray = CUserOptions::GetOption(
+                        "socialservices",
+                        "user_socserv_array",
+                        "a:0:{}",
+                        $arResult['USER_ID']
+                    );
                     if (!CheckSerializedData($socServArray)) {
                         $socServArray = "a:0:{}";
                     }
@@ -1038,18 +1299,22 @@ class CSocServAuth
     {
         $arSettings = $this->GetSettings();
         if (is_array($arSettings)) {
-            foreach ($arSettings as $sett)
-                if (is_array($sett) && !array_key_exists("note", $sett))
-                    if (self::GetOption($sett[0]) == '')
+            foreach ($arSettings as $sett) {
+                if (is_array($sett) && !array_key_exists("note", $sett)) {
+                    if (self::GetOption($sett[0]) == '') {
                         return false;
+                    }
+                }
+            }
         }
         return true;
     }
 
     public function CheckPhotoURI($photoURI)
     {
-        if (preg_match("|^http[s]?://|i", $photoURI))
+        if (preg_match("|^http[s]?://|i", $photoURI)) {
             return true;
+        }
         return false;
     }
 
@@ -1057,21 +1322,23 @@ class CSocServAuth
     {
         //settings depend on current site
         $arUseOnSites = unserialize(COption::GetOptionString("socialservices", "use_on_sites", ""));
-        return ($arUseOnSites[SITE_ID] == "Y" ? '_bx_site_' . SITE_ID : '');
+        return (isset($arUseOnSites[SITE_ID]) && $arUseOnSites[SITE_ID] === "Y" ? '_bx_site_' . SITE_ID : '');
     }
 
     public static function GetOption($opt)
     {
-        if (self::$settingsSuffix === false)
+        if (self::$settingsSuffix === false) {
             self::$settingsSuffix = self::OptionsSuffix();
+        }
 
         return COption::GetOptionString("socialservices", $opt . self::$settingsSuffix);
     }
 
     public static function SetOption($opt, $value)
     {
-        if (self::$settingsSuffix === false)
+        if (self::$settingsSuffix === false) {
             self::$settingsSuffix = self::OptionsSuffix();
+        }
 
         return COption::SetOptionString("socialservices", $opt . self::$settingsSuffix, $value);
     }
@@ -1113,7 +1380,7 @@ class CSocServAuth
         return count(array_intersect(self::getGroupsDenyAuth(), $arGroups)) > 0;
     }
 
-    public function AuthorizeUser($socservUserFields)
+    public function AuthorizeUser($socservUserFields, $bSave = false)
     {
         global $USER, $APPLICATION;
 
@@ -1145,13 +1412,15 @@ class CSocServAuth
 
         $errorCode = SOCSERV_AUTHORISATION_ERROR;
 
-        $dbSocUser = UserTable::getList(array(
-            'filter' => array(
-                '=XML_ID' => $socservUserFields['XML_ID'],
-                '=EXTERNAL_AUTH_ID' => $socservUserFields['EXTERNAL_AUTH_ID']
-            ),
-            'select' => array("ID", "USER_ID", "ACTIVE" => "USER.ACTIVE", "PERSONAL_PHOTO"),
-        ));
+        $dbSocUser = UserTable::getList(
+            array(
+                'filter' => array(
+                    '=XML_ID' => $socservUserFields['XML_ID'],
+                    '=EXTERNAL_AUTH_ID' => $socservUserFields['EXTERNAL_AUTH_ID']
+                ),
+                'select' => array("ID", "USER_ID", "ACTIVE" => "USER.ACTIVE", "PERSONAL_PHOTO"),
+            )
+        );
         $socservUser = $dbSocUser->fetch();
 
         if ($USER->IsAuthorized()) {
@@ -1166,13 +1435,15 @@ class CSocServAuth
                     // socservice link split
                     if ($socservUser['USER_ID'] != $USER->GetID()) {
                         if ($this->allowChangeOwner) {
-                            $dbSocUser = UserTable::getList(array(
-                                'filter' => array(
-                                    '=USER_ID' => $USER->GetID(),
-                                    '=EXTERNAL_AUTH_ID' => $socservUserFields['EXTERNAL_AUTH_ID']
-                                ),
-                                'select' => array("ID")
-                            ));
+                            $dbSocUser = UserTable::getList(
+                                array(
+                                    'filter' => array(
+                                        '=USER_ID' => $USER->GetID(),
+                                        '=EXTERNAL_AUTH_ID' => $socservUserFields['EXTERNAL_AUTH_ID']
+                                    ),
+                                    'select' => array("ID")
+                                )
+                            );
                             if ($dbSocUser->fetch()) {
                                 return SOCSERV_AUTHORISATION_ERROR;
                             } else {
@@ -1281,7 +1552,7 @@ class CSocServAuth
                     CTimeZone::SetCookieValue($socservUserFields["TIME_ZONE_OFFSET"]);
                 }
 
-                $USER->AuthorizeWithOtp($USER_ID);
+                $USER->AuthorizeWithOtp($USER_ID, $bSave);
 
                 if ($USER->IsJustAuthorized()) {
                     foreach (GetModuleEvents("socialservices", "OnUserLoginSocserv", true) as $arEvent) {
@@ -1303,12 +1574,14 @@ class CSocServAuth
     {
         global $DB;
 
-        $res = $DB->Query("
+        $res = $DB->Query(
+            "
 SELECT bsu.USER_ID
 FROM b_socialservices_user bsu
 LEFT JOIN b_user bu ON bsu.USER_ID=bu.ID
 WHERE bsu.LOGIN='" . $DB->ForSql($login) . "' AND bu.ACTIVE='Y'
-");
+"
+        );
         if (($user = $res->Fetch())) {
             return $user["USER_ID"];
         }
@@ -1322,8 +1595,9 @@ WHERE bsu.LOGIN='" . $DB->ForSql($login) . "' AND bu.ACTIVE='Y'
 
     protected static function hasEncryptedFields($arFields)
     {
-        if (!\Bitrix\Socialservices\EncryptedToken\CryptoField::cryptoAvailable())
+        if (!\Bitrix\Socialservices\EncryptedToken\CryptoField::cryptoAvailable()) {
             return false;
+        }
 
         return (
             !$arFields
@@ -1338,14 +1612,17 @@ WHERE bsu.LOGIN='" . $DB->ForSql($login) . "' AND bu.ACTIVE='Y'
     {
         $cryptoField = new \Bitrix\Socialservices\EncryptedToken\CryptoField('OATOKEN');
 
-        if (array_key_exists('OATOKEN', $arFields))
+        if (array_key_exists('OATOKEN', $arFields)) {
             $arFields['OATOKEN'] = $cryptoField->encrypt($arFields['OATOKEN']);
+        }
 
-        if (array_key_exists('OASECRET', $arFields))
+        if (array_key_exists('OASECRET', $arFields)) {
             $arFields['OASECRET'] = $cryptoField->encrypt($arFields['OASECRET']);
+        }
 
-        if (array_key_exists('REFRESH_TOKEN', $arFields))
+        if (array_key_exists('REFRESH_TOKEN', $arFields)) {
             $arFields['REFRESH_TOKEN'] = $cryptoField->encrypt($arFields['REFRESH_TOKEN']);
+        }
     }
 }
 
@@ -1359,7 +1636,13 @@ class CSocServUtil
     {
         global $APPLICATION;
 
-        $arRemove = array("logout", "auth_service_error", "auth_service_id", "MUL_MODE", "SEF_APPLICATION_CUR_PAGE_URL");
+        $arRemove = array(
+            "logout",
+            "auth_service_error",
+            "auth_service_id",
+            "MUL_MODE",
+            "SEF_APPLICATION_CUR_PAGE_URL"
+        );
 
         if ($removeParam !== false) {
             $arRemove = array_merge($arRemove, $removeParam);
@@ -1370,7 +1653,9 @@ class CSocServUtil
             foreach (self::$oAuthParams as $param) {
                 if (isset($_GET[$param])) {
                     $arRemove[] = $param;
-                    $proxyString .= ($proxyString == "" ? "" : "&") . urlencode($param) . "=" . urlencode($_GET[$param]);
+                    $proxyString .= ($proxyString == "" ? "" : "&") . urlencode($param) . "=" . urlencode(
+                            $_GET[$param]
+                        );
                 }
             }
 
@@ -1406,14 +1691,16 @@ class CSocServUtil
 
     public static function getOAuthProxyString()
     {
-        return isset($_REQUEST[self::OAUTH_PACK_PARAM]) ? self::OAUTH_PACK_PARAM . "=" . urlencode($_REQUEST[self::OAUTH_PACK_PARAM]) : '';
+        return isset($_REQUEST[self::OAUTH_PACK_PARAM]) ? self::OAUTH_PACK_PARAM . "=" . urlencode(
+                $_REQUEST[self::OAUTH_PACK_PARAM]
+            ) : '';
     }
 
     public static function checkOAuthProxyParams()
     {
-        if (isset($_REQUEST[self::OAUTH_PACK_PARAM]) && strlen($_REQUEST[self::OAUTH_PACK_PARAM]) > 0) {
+        if (isset($_REQUEST[self::OAUTH_PACK_PARAM]) && $_REQUEST[self::OAUTH_PACK_PARAM] <> '') {
             $proxyString = base64_decode($_REQUEST[self::OAUTH_PACK_PARAM]);
-            if (strlen($proxyString) > 0) {
+            if ($proxyString <> '') {
                 $arVars = array();
                 parse_str($proxyString, $arVars);
                 foreach (self::$oAuthParams as $param) {
@@ -1431,25 +1718,29 @@ class CSocServUtil
 
 class CSocServAllMessage
 {
-    protected function CheckFields($action, &$arFields)
+    protected static function CheckFields($action, &$arFields)
     {
-        if (($action == "ADD" && !isset($arFields["SOCSERV_USER_ID"])) || (isset($arFields["SOCSERV_USER_ID"]) && intval($arFields["SOCSERV_USER_ID"]) <= 0)) {
+        if (($action == "ADD" && !isset($arFields["SOCSERV_USER_ID"])) || (isset($arFields["SOCSERV_USER_ID"]) && intval(
+                    $arFields["SOCSERV_USER_ID"]
+                ) <= 0)) {
             return false;
         }
-        if (($action == "ADD" && !isset($arFields["PROVIDER"])) || (isset($arFields["PROVIDER"]) && strlen($arFields["PROVIDER"]) <= 0)) {
+        if (($action == "ADD" && !isset($arFields["PROVIDER"])) || (isset($arFields["PROVIDER"]) && $arFields["PROVIDER"] == '')) {
             return false;
         }
-        if ($action == "ADD")
+        if ($action == "ADD") {
             $arFields["INSERT_DATE"] = ConvertTimeStamp(time(), "FULL");
+        }
         return true;
     }
 
-    static function Update($id, $arFields)
+    public static function Update($id, $arFields)
     {
         global $DB;
         $id = intval($id);
-        if ($id <= 0 || !self::CheckFields('UPDATE', $arFields))
+        if ($id <= 0 || !self::CheckFields('UPDATE', $arFields)) {
             return false;
+        }
         $strUpdate = $DB->PrepareUpdate("b_socialservices_message", $arFields);
         $strSql = "UPDATE b_socialservices_message SET " . $strUpdate . " WHERE ID = " . $id . " ";
         $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
@@ -1461,15 +1752,16 @@ class CSocServAllMessage
         return $id;
     }
 
-    static function Delete($id)
+    public static function Delete($id)
     {
         global $DB;
         $id = intval($id);
         if ($id > 0) {
             $rsUser = $DB->Query("SELECT ID FROM b_socialservices_message WHERE ID=" . $id);
             $arUser = $rsUser->Fetch();
-            if (!$arUser)
+            if (!$arUser) {
                 return false;
+            }
 
             $DB->Query("DELETE FROM b_socialservices_message WHERE ID = " . $id . " ", true);
             $cache_id = 'socserv_mes_user';
@@ -1480,5 +1772,4 @@ class CSocServAllMessage
         }
         return false;
     }
-
 }

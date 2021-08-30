@@ -1,4 +1,5 @@
 <?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/classes/general/stateventtype.php");
 
 class CStatEventType extends CAllStatEventType
@@ -23,14 +24,20 @@ class CStatEventType extends CAllStatEventType
         return $res;
     }
 
-    public static function GetList(&$by, &$order, $arFilter = Array(), &$is_filtered, $LIMIT = false)
-    {
+    public static function GetList(
+        $by = 's_today_counter',
+        $order = 'desc',
+        $arFilter = [],
+        &$is_filtered = false,
+        $LIMIT = false
+    ) {
         $err_mess = "File: " . __FILE__ . "<br>Line: ";
         $DB = CDatabase::GetModuleConnection('statistic');
 
         $find_group = $arFilter["GROUP"];
-        if ($find_group != "event1" && $find_group != "event2" && $find_group != "total")
+        if ($find_group != "event1" && $find_group != "event2" && $find_group != "total") {
             $find_group = "";
+        }
 
         $arSqlSearch = Array();
         $arSqlSearch_h = Array();
@@ -46,16 +53,16 @@ class CStatEventType extends CAllStatEventType
             $date2 = $arFilter["DATE2_PERIOD"];
             $date_from = MkDateTime(ConvertDateTime($date1, "D.M.Y"), "d.m.Y");
             $date_to = MkDateTime(ConvertDateTime($date2, "D.M.Y") . " 23:59", "d.m.Y H:i");
-            if (strlen($date1) > 0) {
+            if ($date1 <> '') {
                 $filter_period = true;
-                if (strlen($date2) > 0) {
+                if ($date2 <> '') {
                     $strSqlPeriod = "if(D.DATE_STAT<FROM_UNIXTIME('$date_from'),0, if(D.DATE_STAT>FROM_UNIXTIME('$date_to'),0,";
                     $strT = "))";
                 } else {
                     $strSqlPeriod = "if(D.DATE_STAT<FROM_UNIXTIME('$date_from'),0,";
                     $strT = ")";
                 }
-            } elseif (strlen($date2) > 0) {
+            } elseif ($date2 <> '') {
                 $filter_period = true;
                 $strSqlPeriod = "if(D.DATE_STAT>FROM_UNIXTIME('$date_to'),0,";
                 $strT = ")";
@@ -63,11 +70,13 @@ class CStatEventType extends CAllStatEventType
 
             foreach ($arFilter as $key => $val) {
                 if (is_array($val)) {
-                    if (count($val) <= 0)
+                    if (count($val) <= 0) {
                         continue;
+                    }
                 } else {
-                    if ((strlen($val) <= 0) || ($val === "NOT_REF"))
+                    if (((string)$val == '') || ($val === "NOT_REF")) {
                         continue;
+                    }
                 }
                 $match_value_set = array_key_exists($key . "_EXACT_MATCH", $arFilter);
                 $key = strtoupper($key);
@@ -77,20 +86,30 @@ class CStatEventType extends CAllStatEventType
                         $arSqlSearch[] = GetFilterQuery("E." . $key, $val, $match);
                         break;
                     case "DATE_ENTER_1":
-                        if (CheckDateTime($val))
+                        if (CheckDateTime($val)) {
                             $arSqlSearch[] = "E.DATE_ENTER>=" . $DB->CharToDateFunction($val, "SHORT");
+                        }
                         break;
                     case "DATE_ENTER_2":
-                        if (CheckDateTime($val))
-                            $arSqlSearch[] = "E.DATE_ENTER<" . $DB->CharToDateFunction($val, "SHORT") . " + INTERVAL 1 DAY";
+                        if (CheckDateTime($val)) {
+                            $arSqlSearch[] = "E.DATE_ENTER<" . $DB->CharToDateFunction(
+                                    $val,
+                                    "SHORT"
+                                ) . " + INTERVAL 1 DAY";
+                        }
                         break;
                     case "DATE_LAST_1":
-                        if (CheckDateTime($val))
+                        if (CheckDateTime($val)) {
                             $arSqlSearch_h[] = "max(D.DATE_LAST)>=" . $DB->CharToDateFunction($val, "SHORT");
+                        }
                         break;
                     case "DATE_LAST_2":
-                        if (CheckDateTime($val))
-                            $arSqlSearch_h[] = "max(D.DATE_LAST)<" . $DB->CharToDateFunction($val, "SHORT") . " + INTERVAL 1 DAY";
+                        if (CheckDateTime($val)) {
+                            $arSqlSearch_h[] = "max(D.DATE_LAST)<" . $DB->CharToDateFunction(
+                                    $val,
+                                    "SHORT"
+                                ) . " + INTERVAL 1 DAY";
+                        }
                         break;
                     case "EVENT1":
                     case "EVENT2":
@@ -140,46 +159,64 @@ class CStatEventType extends CAllStatEventType
         $rate = 1;
         $base_currency = GetStatisticBaseCurrency();
         $view_currency = $base_currency;
-        if (strlen($base_currency) > 0) {
+        if ($base_currency <> '') {
             if (CModule::IncludeModule("currency")) {
-                if ($CURRENCY != $base_currency && strlen($CURRENCY) > 0) {
+                if ($CURRENCY != $base_currency && $CURRENCY <> '') {
                     $rate = CCurrencyRates::GetConvertFactor($base_currency, $CURRENCY);
                     $view_currency = $CURRENCY;
                 }
             }
         }
 
-        if ($by == "s_id" && $find_group == "") $strSqlOrder = "ORDER BY E.ID";
-        elseif ($by == "s_date_last") $strSqlOrder = "ORDER BY E_DATE_LAST";
-        elseif ($by == "s_date_enter") $strSqlOrder = "ORDER BY DATE_ENTER";
-        elseif ($by == "s_today_counter") $strSqlOrder = "ORDER BY TODAY_COUNTER";
-        elseif ($by == "s_yesterday_counter") $strSqlOrder = "ORDER BY YESTERDAY_COUNTER";
-        elseif ($by == "s_b_yesterday_counter") $strSqlOrder = "ORDER BY B_YESTERDAY_COUNTER";
-        elseif ($by == "s_total_counter") $strSqlOrder = "ORDER BY TOTAL_COUNTER";
-        elseif ($by == "s_period_counter") $strSqlOrder = "ORDER BY PERIOD_COUNTER";
-        elseif ($by == "s_name" && $find_group == "") $strSqlOrder = "ORDER BY E.NAME";
-        elseif ($by == "s_event1" && $find_group == "") $strSqlOrder = "ORDER BY E.EVENT1";
-        elseif ($by == "s_event1" && $find_group == "event1") $strSqlOrder = "ORDER BY E.EVENT1";
-        elseif ($by == "s_event2" && $find_group == "") $strSqlOrder = "ORDER BY E.EVENT2";
-        elseif ($by == "s_event2" && $find_group == "event2") $strSqlOrder = "ORDER BY E.EVENT2";
-        elseif ($by == "s_event12" && $find_group == "") $strSqlOrder = "ORDER BY E.EVENT1, E.EVENT2";
-        elseif ($by == "s_chart" && $find_group == "") $strSqlOrder = "ORDER BY E.DIAGRAM_DEFAULT desc, TOTAL_COUNTER ";
-        elseif ($by == "s_stat") $strSqlOrder = "ORDER BY TODAY_COUNTER desc, YESTERDAY_COUNTER desc, B_YESTERDAY_COUNTER desc, TOTAL_COUNTER desc, PERIOD_COUNTER";
-        else {
-            $by = "s_today_counter";
+        if ($by == "s_id" && $find_group == "") {
+            $strSqlOrder = "ORDER BY E.ID";
+        } elseif ($by == "s_date_last") {
+            $strSqlOrder = "ORDER BY E_DATE_LAST";
+        } elseif ($by == "s_date_enter") {
+            $strSqlOrder = "ORDER BY DATE_ENTER";
+        } elseif ($by == "s_today_counter") {
+            $strSqlOrder = "ORDER BY TODAY_COUNTER";
+        } elseif ($by == "s_yesterday_counter") {
+            $strSqlOrder = "ORDER BY YESTERDAY_COUNTER";
+        } elseif ($by == "s_b_yesterday_counter") {
+            $strSqlOrder = "ORDER BY B_YESTERDAY_COUNTER";
+        } elseif ($by == "s_total_counter") {
+            $strSqlOrder = "ORDER BY TOTAL_COUNTER";
+        } elseif ($by == "s_period_counter") {
+            $strSqlOrder = "ORDER BY PERIOD_COUNTER";
+        } elseif ($by == "s_name" && $find_group == "") {
+            $strSqlOrder = "ORDER BY E.NAME";
+        } elseif ($by == "s_event1" && $find_group == "") {
+            $strSqlOrder = "ORDER BY E.EVENT1";
+        } elseif ($by == "s_event1" && $find_group == "event1") {
+            $strSqlOrder = "ORDER BY E.EVENT1";
+        } elseif ($by == "s_event2" && $find_group == "") {
+            $strSqlOrder = "ORDER BY E.EVENT2";
+        } elseif ($by == "s_event2" && $find_group == "event2") {
+            $strSqlOrder = "ORDER BY E.EVENT2";
+        } elseif ($by == "s_event12" && $find_group == "") {
+            $strSqlOrder = "ORDER BY E.EVENT1, E.EVENT2";
+        } elseif ($by == "s_chart" && $find_group == "") {
+            $strSqlOrder = "ORDER BY E.DIAGRAM_DEFAULT desc, TOTAL_COUNTER ";
+        } elseif ($by == "s_stat") {
+            $strSqlOrder = "ORDER BY TODAY_COUNTER desc, YESTERDAY_COUNTER desc, B_YESTERDAY_COUNTER desc, TOTAL_COUNTER desc, PERIOD_COUNTER";
+        } else {
             $strSqlOrder = "ORDER BY TODAY_COUNTER desc, YESTERDAY_COUNTER desc, B_YESTERDAY_COUNTER desc, TOTAL_COUNTER desc, PERIOD_COUNTER";
         }
+
         if ($order != "asc") {
             $strSqlOrder .= " desc ";
-            $order = "desc";
         }
 
         $strSqlSearch = GetFilterSqlSearch($arSqlSearch);
-        foreach ($arSqlSearch_h as $sqlWhere)
+        foreach ($arSqlSearch_h as $sqlWhere) {
             $strSqlSearch_h .= " and (" . $sqlWhere . ") ";
+        }
 
         $limit_sql = "LIMIT " . intval(COption::GetOptionString('statistic', 'RECORDS_LIMIT'));
-        if (intval($LIMIT) > 0) $limit_sql = "LIMIT " . intval($LIMIT);
+        if (intval($LIMIT) > 0) {
+            $limit_sql = "LIMIT " . intval($LIMIT);
+        }
         if ($find_group == "") // ���� ����������� �� �������
         {
             $strSql = "
@@ -254,9 +291,11 @@ class CStatEventType extends CAllStatEventType
 				$strSqlSearch_h
 			";
             $res = $DB->Query($strSql, false, $err_mess . __LINE__);
-            if ($ar = $res->Fetch())
-                foreach ($ar as $k => $v)
+            if ($ar = $res->Fetch()) {
+                foreach ($ar as $k => $v) {
                     $arResult[$k] += $v;
+                }
+            }
             $strSql = "
 			SELECT
 				sum(ifnull(E.COUNTER,0))		TOTAL_COUNTER,
@@ -267,15 +306,21 @@ class CStatEventType extends CAllStatEventType
 				$strSqlSearch
 			";
             $res = $DB->Query($strSql, false, $err_mess . __LINE__);
-            if ($ar = $res->Fetch())
-                foreach ($ar as $k => $v)
+            if ($ar = $res->Fetch()) {
+                foreach ($ar as $k => $v) {
                     $arResult[$k] += $v;
+                }
+            }
             $arResult["CURRENCY"] = $view_currency;
             $res = new CDBResult;
             $res->InitFromArray(array($arResult));
         } else {
             $arResult = array();
-            if ($find_group == "event1") $group = "E.EVENT1"; else $group = "E.EVENT2";
+            if ($find_group == "event1") {
+                $group = "E.EVENT1";
+            } else {
+                $group = "E.EVENT2";
+            }
             $strSql = "
 			SELECT
 				$group											GROUPING_KEY,
@@ -306,8 +351,9 @@ class CStatEventType extends CAllStatEventType
 			$strSqlOrder
 			";
             $res = $DB->Query($strSql, false, $err_mess . __LINE__);
-            while ($ar = $res->Fetch())
+            while ($ar = $res->Fetch()) {
                 $arResult[$ar["GROUPING_KEY"]] = $ar;
+            }
             $strSql = "
 			SELECT
 				$group							GROUPING_KEY,
@@ -348,11 +394,11 @@ class CStatEventType extends CAllStatEventType
             $res = new CDBResult;
             $res->InitFromArray($arResult);
         }
-        $is_filtered = (IsFiltered($strSqlSearch) || $filter_period || strlen($strSqlSearch_h) > 0 || $find_group != "");
+        $is_filtered = (IsFiltered($strSqlSearch) || $filter_period || $strSqlSearch_h <> '' || $find_group != "");
         return $res;
     }
 
-    public static function GetSimpleList(&$by, &$order, $arFilter = Array(), &$is_filtered)
+    public static function GetSimpleList($by = 's_event1', $order = 'asc', $arFilter = [])
     {
         $err_mess = "File: " . __FILE__ . "<br>Line: ";
         $DB = CDatabase::GetModuleConnection('statistic');
@@ -361,11 +407,13 @@ class CStatEventType extends CAllStatEventType
         if (is_array($arFilter)) {
             foreach ($arFilter as $key => $val) {
                 if (is_array($val)) {
-                    if (count($val) <= 0)
+                    if (count($val) <= 0) {
                         continue;
+                    }
                 } else {
-                    if ((strlen($val) <= 0) || ($val === "NOT_REF"))
+                    if (((string)$val == '') || ($val === "NOT_REF")) {
                         continue;
+                    }
                 }
                 $match_value_set = array_key_exists($key . "_EXACT_MATCH", $arFilter);
                 $key = strtoupper($key);
@@ -390,20 +438,20 @@ class CStatEventType extends CAllStatEventType
         }
 
         $strSqlSearch = GetFilterSqlSearch($arSqlSearch);
-        $order = ($order != "desc") ? "asc" : "desc";
 
-        if ($by == "s_id")
+        $order = ($order != "desc" ? "asc" : "desc");
+
+        if ($by == "s_id") {
             $strSqlOrder = "ORDER BY E.ID " . $order;
-        elseif ($by == "s_event1")
+        } elseif ($by == "s_event1") {
             $strSqlOrder = "ORDER BY E.EVENT1 " . $order . ", E.EVENT2";
-        elseif ($by == "s_event2")
+        } elseif ($by == "s_event2") {
             $strSqlOrder = "ORDER BY E.EVENT2 " . $order;
-        elseif ($by == "s_name")
+        } elseif ($by == "s_name") {
             $strSqlOrder = "ORDER BY E.NAME " . $order;
-        elseif ($by == "s_description")
+        } elseif ($by == "s_description") {
             $strSqlOrder = "ORDER BY E.DESCRIPTION " . $order;
-        else {
-            $by = "s_event1";
+        } else {
             $strSqlOrder = "ORDER BY E.EVENT1 " . $order . ", E.EVENT2";
         }
 
@@ -421,7 +469,7 @@ class CStatEventType extends CAllStatEventType
 		";
 
         $res = $DB->Query($strSql, false, $err_mess . __LINE__);
-        $is_filtered = (IsFiltered($strSqlSearch));
+
         return $res;
     }
 
@@ -441,7 +489,7 @@ class CStatEventType extends CAllStatEventType
         return $res;
     }
 
-    public static function GetDynamicList($EVENT_ID, &$by, &$order, &$arMaxMin, $arFilter = Array())
+    public static function GetDynamicList($EVENT_ID, $by = 's_date', $order = 'desc', &$arMaxMin = [], $arFilter = [])
     {
         $err_mess = "File: " . __FILE__ . "<br>Line: ";
         $DB = CDatabase::GetModuleConnection('statistic');
@@ -451,40 +499,46 @@ class CStatEventType extends CAllStatEventType
         if (is_array($arFilter)) {
             foreach ($arFilter as $key => $val) {
                 if (is_array($val)) {
-                    if (count($val) <= 0)
+                    if (count($val) <= 0) {
                         continue;
+                    }
                 } else {
-                    if ((strlen($val) <= 0) || ($val === "NOT_REF"))
+                    if (((string)$val == '') || ($val === "NOT_REF")) {
                         continue;
+                    }
                 }
 
                 $key = strtoupper($key);
                 switch ($key) {
                     case "DATE1":
-                        if (CheckDateTime($val))
+                        if (CheckDateTime($val)) {
                             $arSqlSearch[] = "D.DATE_STAT>=" . $DB->CharToDateFunction($val, "SHORT");
+                        }
                         break;
                     case "DATE2":
-                        if (CheckDateTime($val))
-                            $arSqlSearch[] = "D.DATE_STAT<" . $DB->CharToDateFunction($val, "SHORT") . " + INTERVAL 1 DAY";
+                        if (CheckDateTime($val)) {
+                            $arSqlSearch[] = "D.DATE_STAT<" . $DB->CharToDateFunction(
+                                    $val,
+                                    "SHORT"
+                                ) . " + INTERVAL 1 DAY";
+                        }
                         break;
                 }
             }
         }
 
-        foreach ($arSqlSearch as $sqlWhere)
+        foreach ($arSqlSearch as $sqlWhere) {
             $strSqlSearch .= " and (" . $sqlWhere . ") ";
+        }
 
-        if ($by == "s_date")
+        if ($by == "s_date") {
             $strSqlOrder = "ORDER BY D.DATE_STAT";
-        else {
-            $by = "s_date";
+        } else {
             $strSqlOrder = "ORDER BY D.DATE_STAT";
         }
 
         if ($order != "asc") {
             $strSqlOrder .= " desc ";
-            $order = "desc";
         }
 
         $strSql = "

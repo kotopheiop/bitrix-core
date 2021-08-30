@@ -1,4 +1,5 @@
 <?
+
 $vote_default_option = array(
     "USE_HTML_EDIT" => "Y",
     "VOTE_COMPATIBLE_OLD_TEMPLATE" => "N",

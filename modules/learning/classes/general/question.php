@@ -8,17 +8,19 @@ class CLQuestion
         global $DB, $USER;
         $arMsg = Array();
 
-        if ((is_set($arFields, "NAME") || $ID === false) && strlen(trim($arFields["NAME"])) <= 0)
+        if ((is_set($arFields, "NAME") || $ID === false) && trim($arFields["NAME"]) == '') {
             $arMsg[] = array("id" => "NAME", "text" => GetMessage("LEARNING_BAD_NAME"));
+        }
 
 
         if (is_set($arFields, "FILE_ID")) {
             $error = CFile::CheckImageFile($arFields["FILE_ID"]);
-            if (strlen($error) > 0)
+            if ($error <> '') {
                 $arMsg[] = array("id" => "FILE_ID", "text" => $error);
+            }
         }
 
-        if (strlen($this->LAST_ERROR) <= 0) {
+        if ($this->LAST_ERROR == '') {
             if (
                 ($ID === false && !is_set($arFields, "LESSON_ID"))
                 ||
@@ -34,8 +36,9 @@ class CLQuestion
                         $oAccess->IsBaseAccess(CLearnAccess::OP_LESSON_WRITE)
                         || $oAccess->IsLessonAccessible($arFields["LESSON_ID"], CLearnAccess::OP_LESSON_WRITE);
 
-                    if (!$bAccessLessonModify)
+                    if (!$bAccessLessonModify) {
                         $arMsg[] = array("id" => "LESSON_ID", "text" => GetMessage("LEARNING_BAD_LESSON_ID_EX"));
+                    }
                 } else {
                     $arMsg[] = array("id" => "LESSON_ID", "text" => GetMessage("LEARNING_BAD_LESSON_ID_EX"));
                 }
@@ -48,26 +51,33 @@ class CLQuestion
             return false;
         }
 
-        if (is_set($arFields, "QUESTION_TYPE") && !in_array($arFields["QUESTION_TYPE"], Array("S", "M", "T", "R")))
+        if (is_set($arFields, "QUESTION_TYPE") && !in_array($arFields["QUESTION_TYPE"], Array("S", "M", "T", "R"))) {
             $arFields["QUESTION_TYPE"] = "S";
+        }
 
-        if (is_set($arFields, "DESCRIPTION_TYPE") && $arFields["DESCRIPTION_TYPE"] != "html")
+        if (is_set($arFields, "DESCRIPTION_TYPE") && $arFields["DESCRIPTION_TYPE"] != "html") {
             $arFields["DESCRIPTION_TYPE"] = "text";
+        }
 
-        if (is_set($arFields, "DIRECTION") && $arFields["DIRECTION"] != "H")
+        if (is_set($arFields, "DIRECTION") && $arFields["DIRECTION"] != "H") {
             $arFields["DIRECTION"] = "V";
+        }
 
-        if (is_set($arFields, "SELF") && $arFields["SELF"] != "Y")
+        if (is_set($arFields, "SELF") && $arFields["SELF"] != "Y") {
             $arFields["SELF"] = "N";
+        }
 
-        if (is_set($arFields, "ACTIVE") && $arFields["ACTIVE"] != "Y")
+        if (is_set($arFields, "ACTIVE") && $arFields["ACTIVE"] != "Y") {
             $arFields["ACTIVE"] = "N";
+        }
 
-        if (is_set($arFields, "EMAIL_ANSWER") && $arFields["EMAIL_ANSWER"] != "Y")
+        if (is_set($arFields, "EMAIL_ANSWER") && $arFields["EMAIL_ANSWER"] != "Y") {
             $arFields["EMAIL_ANSWER"] = "N";
+        }
 
-        if (is_set($arFields, "CORRECT_REQUIRED") && $arFields["CORRECT_REQUIRED"] != "Y")
+        if (is_set($arFields, "CORRECT_REQUIRED") && $arFields["CORRECT_REQUIRED"] != "Y") {
             $arFields["CORRECT_REQUIRED"] = "N";
+        }
 
         return true;
     }
@@ -88,20 +98,23 @@ class CLQuestion
                 && is_array($arFields["FILE_ID"])
                 && (
                     !array_key_exists("MODULE_ID", $arFields["FILE_ID"])
-                    || strlen($arFields["FILE_ID"]["MODULE_ID"]) <= 0
+                    || $arFields["FILE_ID"]["MODULE_ID"] == ''
                 )
-            )
+            ) {
                 $arFields["FILE_ID"]["MODULE_ID"] = "learning";
+            }
 
             CFile::SaveForDB($arFields, "FILE_ID", "learning");
 
             $ID = $DB->Add("b_learn_question", $arFields, array("DESCRIPTION", 'COMMENT_TEXT', 'INCORRECT_MESSAGE'));
 
-            if ($ID)
+            if ($ID) {
                 $USER_FIELD_MANAGER->Update('LEARNING_QUESTIONS', $ID, $arFields);
+            }
 
-            foreach (GetModuleEvents('learning', 'OnAfterQuestionAdd', true) as $arEvent)
+            foreach (GetModuleEvents('learning', 'OnAfterQuestionAdd', true) as $arEvent) {
                 ExecuteModuleEventEx($arEvent, array($ID, $arFields));
+            }
 
             return $ID;
         }
@@ -115,15 +128,18 @@ class CLQuestion
         global $DB, $USER_FIELD_MANAGER;
 
         $ID = intval($ID);
-        if ($ID < 1) return false;
+        if ($ID < 1) {
+            return false;
+        }
 
         if (is_set($arFields, "FILE_ID")) {
-            if (strlen($arFields["FILE_ID"]["name"]) <= 0 && strlen($arFields["FILE_ID"]["del"]) <= 0 && strlen($arFields["FILE_ID"]["description"]) <= 0)
+            if ($arFields["FILE_ID"]["name"] == '' && $arFields["FILE_ID"]["del"] == '' && $arFields["FILE_ID"]["description"] == '') {
                 unset($arFields["FILE_ID"]);
-            else {
+            } else {
                 $pic_res = $DB->Query("SELECT FILE_ID FROM b_learn_question WHERE ID=" . $ID);
-                if ($pic_res = $pic_res->Fetch())
+                if ($pic_res = $pic_res->Fetch()) {
                     $arFields["FILE_ID"]["old_file"] = $pic_res["FILE_ID"];
+                }
             }
         }
 
@@ -144,10 +160,11 @@ class CLQuestion
                 && is_array($arFields["FILE_ID"])
                 && (
                     !array_key_exists("MODULE_ID", $arFields["FILE_ID"])
-                    || strlen($arFields["FILE_ID"]["MODULE_ID"]) <= 0
+                    || $arFields["FILE_ID"]["MODULE_ID"] == ''
                 )
-            )
+            ) {
                 $arFields["FILE_ID"]["MODULE_ID"] = "learning";
+            }
 
             CFile::SaveForDB($arFields, "FILE_ID", "learning");
 
@@ -158,8 +175,9 @@ class CLQuestion
                 $DB->QueryBind($strSql, $arBinds, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             }
 
-            foreach (GetModuleEvents('learning', 'OnAfterQuestionUpdate', true) as $arEvent)
+            foreach (GetModuleEvents('learning', 'OnAfterQuestionUpdate', true) as $arEvent) {
                 ExecuteModuleEventEx($arEvent, array($ID, $arFields));
+            }
 
             return true;
         }
@@ -167,34 +185,40 @@ class CLQuestion
     }
 
 
-    function Delete($ID)
+    public static function Delete($ID)
     {
         global $DB, $USER_FIELD_MANAGER;
 
         $ID = intval($ID);
-        if ($ID < 1) return false;
+        if ($ID < 1) {
+            return false;
+        }
 
         $strSql = "SELECT FILE_ID FROM b_learn_question WHERE ID = " . $ID;
         $r = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-        if (!$arQuestion = $r->Fetch())
+        if (!$arQuestion = $r->Fetch()) {
             return false;
+        }
 
         $answers = CLAnswer::GetList(Array(), Array("QUESTION_ID" => $ID));
         while ($arAnswer = $answers->Fetch()) {
-            if (!CLAnswer::Delete($arAnswer["ID"]))
+            if (!CLAnswer::Delete($arAnswer["ID"])) {
                 return false;
+            }
         }
 
         $arAttempts = Array();
         $strSql = "SELECT ATTEMPT_ID FROM b_learn_test_result WHERE QUESTION_ID = " . $ID;
         $res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-        while ($ar = $res->Fetch())
-            $arAttempts[] = $ar["ATTEMPT_ID"]; //Attempts to recount
+        while ($ar = $res->Fetch()) {
+            $arAttempts[] = $ar["ATTEMPT_ID"];
+        } //Attempts to recount
 
         //Results
         $strSql = "DELETE FROM b_learn_test_result WHERE QUESTION_ID = " . $ID;
-        if (!$DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__))
+        if (!$DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__)) {
             return false;
+        }
 
         foreach ($arAttempts as $ATTEMPT_ID) {
             CTestAttempt::RecountQuestions($ATTEMPT_ID);
@@ -203,39 +227,44 @@ class CLQuestion
 
         $strSql = "DELETE FROM b_learn_question WHERE ID = " . $ID;
 
-        if (!$DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__))
+        if (!$DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__)) {
             return false;
+        }
 
         $USER_FIELD_MANAGER->delete('LEARNING_QUESTIONS', $ID);
 
         CFile::Delete($arQuestion["FILE_ID"]);
 
-        CEventLog::add(array(
-            'AUDIT_TYPE_ID' => 'LEARNING_REMOVE_ITEM',
-            'MODULE_ID' => 'learning',
-            'ITEM_ID' => 'Q #' . $ID,
-            'DESCRIPTION' => 'question removed'
-        ));
+        CEventLog::add(
+            array(
+                'AUDIT_TYPE_ID' => 'LEARNING_REMOVE_ITEM',
+                'MODULE_ID' => 'learning',
+                'ITEM_ID' => 'Q #' . $ID,
+                'DESCRIPTION' => 'question removed'
+            )
+        );
 
-        foreach (GetModuleEvents('learning', 'OnAfterQuestionDelete', true) as $arEvent)
+        foreach (GetModuleEvents('learning', 'OnAfterQuestionDelete', true) as $arEvent) {
             ExecuteModuleEventEx($arEvent, array($ID, $arQuestion));
+        }
 
         return true;
     }
 
 
-    function GetByID($ID)
+    public static function GetByID($ID)
     {
         return CLQuestion::GetList($arOrder = Array(), $arFilter = Array("ID" => $ID));
     }
 
 
-    function GetFilter($arFilter)
+    public static function GetFilter($arFilter)
     {
         global $DBType;
 
-        if (!is_array($arFilter))
+        if (!is_array($arFilter)) {
             $arFilter = Array();
+        }
 
         $arSqlSearch = Array();
 
@@ -244,22 +273,29 @@ class CLQuestion
             $key = $res["FIELD"];
             $cOperationType = $res["OPERATION"];
 
-            $key = strtoupper($key);
+            $key = mb_strtoupper($key);
 
             switch ($key) {
                 case "ID":
                 case "SORT":
                 case "LESSON_ID":
                 case "POINT":
-                    $arSqlSearch[] = CLearnHelper::FilterCreate("CQ." . $key, $val, "number", $bFullJoin, $cOperationType);
+                    $arSqlSearch[] = CLearnHelper::FilterCreate(
+                        "CQ." . $key,
+                        $val,
+                        "number",
+                        $bFullJoin,
+                        $cOperationType
+                    );
                     break;
 
                 case "COURSE_ID":
                     // was:	$arSqlSearch[] = CLearnHelper::FilterCreate("C.".$key, $val, "number", $bFullJoin, $cOperationType);
 
                     $courseLessonId = CCourse::CourseGetLinkedLesson($val);
-                    if ($courseLessonId === false)
-                        break;    // it is not a course, so skipping
+                    if ($courseLessonId === false) {
+                        break;
+                    }    // it is not a course, so skipping
 
                     if ($DBType === 'oracle') {
                         // This subquery gets ids of all childs lesson for given $courseLessonId
@@ -289,33 +325,53 @@ class CLQuestion
 
                         $sqlCourseLessonsIdsList = implode(', ', $arChildLessonForCourseEscaped);
 
-                        if (strlen($sqlCourseLessonsIdsList) > 0)
+                        if ($sqlCourseLessonsIdsList <> '') {
                             $arSqlSearch[] = 'CQ.LESSON_ID IN (' . $sqlCourseLessonsIdsList . ')';
-                    } else
-                        throw new LearnException('Unsupported DB engine: ' . $DBType, LearnException::EXC_ERR_ALL_GIVEUP);
+                        }
+                    } else {
+                        throw new LearnException(
+                            'Unsupported DB engine: ' . $DBType, LearnException::EXC_ERR_ALL_GIVEUP
+                        );
+                    }
 
                     break;
 
                 case "NAME":
-                    $arSqlSearch[] = CLearnHelper::FilterCreate("CQ." . $key, $val, "string", $bFullJoin, $cOperationType);
+                    $arSqlSearch[] = CLearnHelper::FilterCreate(
+                        "CQ." . $key,
+                        $val,
+                        "string",
+                        $bFullJoin,
+                        $cOperationType
+                    );
                     break;
 
                 case "QUESTION_TYPE":
                 case "ACTIVE":
                 case "SELF":
                 case "CORRECT_REQUIRED":
-                    $arSqlSearch[] = CLearnHelper::FilterCreate("CQ." . $key, $val, "string_equal", $bFullJoin, $cOperationType);
+                    $arSqlSearch[] = CLearnHelper::FilterCreate(
+                        "CQ." . $key,
+                        $val,
+                        "string_equal",
+                        $bFullJoin,
+                        $cOperationType
+                    );
                     break;
             }
-
         }
 
         return $arSqlSearch;
     }
 
 
-    function GetList($arOrder = array(), $arFilter = array(), $bHz = false, $arNavParams = array(), $arSelect = array())
-    {
+    public static function GetList(
+        $arOrder = array(),
+        $arFilter = array(),
+        $bHz = false,
+        $arNavParams = array(),
+        $arSelect = array()
+    ) {
         global $DB, $USER, $USER_FIELD_MANAGER;
 
         $obUserFieldsSql = new CUserTypeSQL();
@@ -332,13 +388,15 @@ class CLQuestion
             . " WHERE ";
 
         $r = $obUserFieldsSql->GetFilter();
-        if (strlen($r) > 0)
+        if ($r <> '') {
             $arSqlSearch[] = "(" . $r . ")";
+        }
 
-        if (!empty($arSqlSearch))
+        if (!empty($arSqlSearch)) {
             $strSqlFrom .= implode(' AND ', $arSqlSearch);
-        else
+        } else {
             $strSqlFrom .= ' 1=1 ';
+        }
 
         $strSql = "SELECT CQ.ID, CQ.ACTIVE, CQ.LESSON_ID, CQ.QUESTION_TYPE,
 				CQ.NAME, CQ.SORT, CQ.DESCRIPTION, CQ.DESCRIPTION_TYPE,
@@ -349,45 +407,50 @@ class CLQuestion
             . " "
             . $strSqlFrom;
 
-        if (!is_array($arOrder))
+        if (!is_array($arOrder)) {
             $arOrder = Array();
+        }
 
+        $arSqlOrder = [];
         foreach ($arOrder as $by => $order) {
-            $by = strtolower($by);
-            $order = strtolower($order);
-            if ($order != "asc")
+            $by = mb_strtolower($by);
+            $order = mb_strtolower($order);
+            if ($order != "asc") {
                 $order = "desc";
+            }
 
-            if ($by == "id")
+            if ($by == "id") {
                 $arSqlOrder[] = " CQ.ID " . $order . " ";
-            elseif ($by == "name")
+            } elseif ($by == "name") {
                 $arSqlOrder[] = " CQ.NAME " . $order . " ";
-            elseif ($by == "sort")
+            } elseif ($by == "sort") {
                 $arSqlOrder[] = " CQ.SORT " . $order . " ";
-            elseif ($by == "point")
+            } elseif ($by == "point") {
                 $arSqlOrder[] = " CQ.POINT " . $order . " ";
-            elseif ($by == "type")
+            } elseif ($by == "type") {
                 $arSqlOrder[] = " CQ.QUESTION_TYPE " . $order . " ";
-            elseif ($by == "self")
+            } elseif ($by == "self") {
                 $arSqlOrder[] = " CQ.SELF " . $order . " ";
-            elseif ($by == "active")
+            } elseif ($by == "active") {
                 $arSqlOrder[] = " CQ.ACTIVE " . $order . " ";
-            elseif ($by == "correct_required")
+            } elseif ($by == "correct_required") {
                 $arSqlOrder[] = " CQ.CORRECT_REQUIRED " . $order . " ";
-            elseif ($s = $obUserFieldsSql->getOrder($by))
+            } elseif ($s = $obUserFieldsSql->getOrder($by)) {
                 $arSqlOrder[] = ' ' . $s . ' ' . $order . ' ';
-            else
+            } else {
                 $arSqlOrder[] = " CQ.TIMESTAMP_X " . $order . " ";
+            }
         }
 
         $strSqlOrder = "";
         DelDuplicateSort($arSqlOrder);
         $cnt = count($arSqlOrder);
         for ($i = 0; $i < $cnt; $i++) {
-            if ($i == 0)
+            if ($i == 0) {
                 $strSqlOrder = " ORDER BY ";
-            else
+            } else {
                 $strSqlOrder .= ",";
+            }
 
             $strSqlOrder .= $arSqlOrder[$i];
         }
@@ -404,8 +467,9 @@ class CLQuestion
                 $res = new CDBResult();
                 $res->NavQuery($strSql, $res_cnt['C'], $arNavParams);
             }
-        } else
+        } else {
             $res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+        }
 
         $res->SetUserFields($USER_FIELD_MANAGER->GetUserFields('LEARNING_QUESTIONS'));
 
@@ -413,7 +477,7 @@ class CLQuestion
     }
 
 
-    function GetCount($arFilter = Array())
+    public static function GetCount($arFilter = Array())
     {
         global $DB;
 
@@ -421,9 +485,11 @@ class CLQuestion
 
         $strSqlSearch = "";
         $cnt = count($arSqlSearch);
-        for ($i = 0; $i < $cnt; $i++)
-            if (strlen($arSqlSearch[$i]) > 0)
+        for ($i = 0; $i < $cnt; $i++) {
+            if ($arSqlSearch[$i] <> '') {
                 $strSqlSearch .= " AND " . $arSqlSearch[$i] . " ";
+            }
+        }
 
         $strSql =
             "SELECT COUNT(DISTINCT CQ.ID) as C " .

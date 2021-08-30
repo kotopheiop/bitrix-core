@@ -58,7 +58,5 @@ class Policy
         if (!self::isRequired($languageId) || !self::hasText($languageId)) {
             return;
         }
-
-
     }
 }

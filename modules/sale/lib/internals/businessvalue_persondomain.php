@@ -22,7 +22,8 @@ class BusinessValuePersonDomainTable extends Main\Entity\DataManager
             new Main\Entity\IntegerField('PERSON_TYPE_ID', array('primary' => true)),
             new Main\Entity\StringField ('DOMAIN', array('primary' => true, 'size' => 1)),
 
-            new Main\Entity\ReferenceField('PERSON_TYPE_REFERENCE', 'Bitrix\Sale\Internals\PersonTypeTable',
+            new Main\Entity\ReferenceField(
+                'PERSON_TYPE_REFERENCE', 'Bitrix\Sale\Internals\PersonTypeTable',
                 array('=this.PERSON_TYPE_ID' => 'ref.ID'),
                 array('join_type' => 'INNER')
             ),

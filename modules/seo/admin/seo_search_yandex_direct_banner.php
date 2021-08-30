@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 /**
@@ -64,10 +65,12 @@ if ($campaignId > 0) {
 if (!$campaign) {
     require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
-    $message = new CAdminMessage(array(
-        "TYPE" => "ERROR",
-        "DETAILS" => Loc::getMessage("SEO_ERROR_NO_CAMPAIGN"),
-    ));
+    $message = new CAdminMessage(
+        array(
+            "TYPE" => "ERROR",
+            "DETAILS" => Loc::getMessage("SEO_ERROR_NO_CAMPAIGN"),
+        )
+    );
     echo $message->Show();
 
     require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_admin.php");
@@ -81,20 +84,32 @@ if ($campaign['OWNER_ID'] != $currentUser['id']) {
     $bReadOnly = true;
     $bAllowSimpleActions = false;
 
-    $message = new CAdminMessage(array(
-        "TYPE" => "ERROR",
-        "MESSAGE" => Loc::getMessage('SEO_CAMPAIGN_WRONG_OWNER', array("#USERINFO#" => "(" . $campaign["OWNER_ID"] . ") " . $campaign["OWNER_NAME"]))
-    ));
+    $message = new CAdminMessage(
+        array(
+            "TYPE" => "ERROR",
+            "MESSAGE" => Loc::getMessage(
+                'SEO_CAMPAIGN_WRONG_OWNER',
+                array("#USERINFO#" => "(" . $campaign["OWNER_ID"] . ") " . $campaign["OWNER_NAME"])
+            )
+        )
+    );
 } elseif (!in_array($campaign["SETTINGS"]['Strategy']['StrategyName'], Adv\YandexCampaignTable::$supportedStrategy)) {
     $bReadOnly = true;
     $bAllowSimpleActions = true;
 
-    $message = new CAdminMessage(array(
-        "TYPE" => "ERROR",
-        "MESSAGE" => Loc::getMessage("SEO_CAMPAIGN_STRATEGY_NOT_SUPPORTED", array(
-            "#STRATEGY#" => Loc::getMessage('SEO_CAMPAIGN_STRATEGY_' . $campaign["SETTINGS"]['Strategy']['StrategyName']),
-        ))
-    ));
+    $message = new CAdminMessage(
+        array(
+            "TYPE" => "ERROR",
+            "MESSAGE" => Loc::getMessage(
+                "SEO_CAMPAIGN_STRATEGY_NOT_SUPPORTED",
+                array(
+                    "#STRATEGY#" => Loc::getMessage(
+                        'SEO_CAMPAIGN_STRATEGY_' . $campaign["SETTINGS"]['Strategy']['StrategyName']
+                    ),
+                )
+            )
+        )
+    );
 }
 
 $tableID = "tbl_yandex_direct_banner";
@@ -113,10 +128,12 @@ if ($bAllowSimpleActions && ($bannerIDs = $adminList->GroupAction())) {
         $filter['=ID'] = $bannerIDs;
     }
 
-    $dbRes = Adv\YandexBannerTable::getList(array(
-        'filter' => $filter,
-        'select' => array('ID', 'XML_ID'),
-    ));
+    $dbRes = Adv\YandexBannerTable::getList(
+        array(
+            'filter' => $filter,
+            'select' => array('ID', 'XML_ID'),
+        )
+    );
 
     $bannersList = array();
     while ($banner = $dbRes->fetch()) {
@@ -193,7 +210,8 @@ if ($bAllowSimpleActions && ($bannerIDs = $adminList->GroupAction())) {
                 foreach ($bannersList as $bannerXmlId => $bannerId) {
                     if (isset($bannersListSorted[$bannerXmlId])) {
                         $result = Adv\YandexBannerTable::update(
-                            $bannerId, array(
+                            $bannerId,
+                            array(
                                 "SETTINGS" => $bannersListSorted[$bannerXmlId]
                             )
                         );
@@ -217,7 +235,6 @@ if ($bAllowSimpleActions && ($bannerIDs = $adminList->GroupAction())) {
                     }
                 }
                 Adv\YandexBannerTable::setSkipRemoteUpdate(false);
-
             } catch (Engine\YandexDirectException $e) {
                 $adminList->AddGroupError($e->getCode() . ': ' . $e->getMessage());
             }
@@ -230,24 +247,26 @@ $map = Adv\YandexBannerTable::getMap();
 unset($map['GROUP']);
 unset($map['CAMPAIGN']);
 
-$bannerList = Adv\YandexBannerTable::getList(array(
-    'order' => array($by => $order),
-    'filter' => array(
-        "=ENGINE_ID" => $engine->getId(),
-        "=CAMPAIGN_ID" => $campaign['ID'],
-        '=ACTIVE' => $archive ? Adv\YandexBannerTable::INACTIVE : Adv\YandexBannerTable::ACTIVE,
-    ),
-    "select" => ['*'],
-    /*
-        'runtime' => array(
-            new Entity\ExpressionField(
-                'BANNER_CNT',
-                'COUNT(%s)',
-                "\\Bitrix\\Seo\\Adv\\YandexBannerTable:CAMPAIGN.ID"
-            ),
-        )
-    */
-));
+$bannerList = Adv\YandexBannerTable::getList(
+    array(
+        'order' => array($by => $order),
+        'filter' => array(
+            "=ENGINE_ID" => $engine->getId(),
+            "=CAMPAIGN_ID" => $campaign['ID'],
+            '=ACTIVE' => $archive ? Adv\YandexBannerTable::INACTIVE : Adv\YandexBannerTable::ACTIVE,
+        ),
+        "select" => ['*'],
+        /*
+            'runtime' => array(
+                new Entity\ExpressionField(
+                    'BANNER_CNT',
+                    'COUNT(%s)',
+                    "\\Bitrix\\Seo\\Adv\\YandexBannerTable:CAMPAIGN.ID"
+                ),
+            )
+        */
+    )
+);
 
 $data = new \CAdminResult($bannerList, $tableID);
 $data->NavStart();
@@ -261,7 +280,12 @@ $arHeaders = array(
     array("id" => "SHOW", "content" => Loc::getMessage('SEO_STATUS_SHOW'), "default" => true),
     array("id" => "MODERATE", "content" => Loc::getMessage('SEO_STATUS_MODERATE'), "default" => true),
     array("id" => "PHRASES_MODERATE", "content" => Loc::getMessage('SEO_STATUS_PHRASES_MODERATE'), "default" => true),
-    array("id" => "LAST_UPDATE", "content" => Loc::getMessage('SEO_BANNER_LAST_UPDATE'), "sort" => "LAST_UPDATE", "default" => true),
+    array(
+        "id" => "LAST_UPDATE",
+        "content" => Loc::getMessage('SEO_BANNER_LAST_UPDATE'),
+        "sort" => "LAST_UPDATE",
+        "default" => true
+    ),
 );
 
 if ($request["mode"] != 'excel') {
@@ -273,19 +297,36 @@ $adminList->NavText($data->GetNavPrint(Loc::getMessage("PAGES")));
 while ($banner = $data->NavNext()) {
     $editUrl = "seo_search_yandex_direct_banner_edit.php?lang=" . LANGUAGE_ID . "&campaign=" . $campaign['ID'] . "&ID=" . $banner["ID"];
 
-    $row = &$adminList->AddRow($banner["ID"], $banner, $editUrl, Loc::getMessage("SEO_BANNER_EDIT_TITLE", array(
-        "#ID#" => $banner["ID"],
-        "#XML_ID#" => $banner["XML_ID"],
-    )));
+    $row = &$adminList->AddRow(
+        $banner["ID"],
+        $banner,
+        $editUrl,
+        Loc::getMessage(
+            "SEO_BANNER_EDIT_TITLE",
+            array(
+                "#ID#" => $banner["ID"],
+                "#XML_ID#" => $banner["XML_ID"],
+            )
+        )
+    );
 
     $row->AddViewField("ID", $banner['ID']);
 
-    $row->AddField("NAME", '<a href="' . Converter::getHtmlConverter()->encode($editUrl) . '" title="' . Loc::getMessage("SEO_BANNER_EDIT_TITLE", array(
-            "#ID#" => $banner["ID"],
-            "#XML_ID#" => $banner["XML_ID"],
-        )) . '">' . Converter::getHtmlConverter()->encode($banner['NAME']) . '</a>');
+    $row->AddField(
+        "NAME",
+        '<a href="' . Converter::getHtmlConverter()->encode($editUrl) . '" title="' . Loc::getMessage(
+            "SEO_BANNER_EDIT_TITLE",
+            array(
+                "#ID#" => $banner["ID"],
+                "#XML_ID#" => $banner["XML_ID"],
+            )
+        ) . '">' . Converter::getHtmlConverter()->encode($banner['NAME']) . '</a>'
+    );
 
-    $row->AddViewField('LAST_UPDATE', $banner['LAST_UPDATE'] ? $banner['LAST_UPDATE'] : Loc::getMessage('SEO_UPDATE_NEVER'));
+    $row->AddViewField(
+        'LAST_UPDATE',
+        $banner['LAST_UPDATE'] ? $banner['LAST_UPDATE'] : Loc::getMessage('SEO_UPDATE_NEVER')
+    );
 
     $active = '';
     $active_title = '';
@@ -321,20 +362,39 @@ while ($banner = $data->NavNext()) {
         }
     }
 
-    $row->AddField("ISACTIVE", '<div style="white-space:nowrap;"><div class="lamp-' . $active . '" style="display:inline-block;"></div>&nbsp;' . $active_title . '</div>'/*.'<pre>'.print_r(array(
+    $row->AddField(
+        "ISACTIVE",
+        '<div style="white-space:nowrap;"><div class="lamp-' . $active . '" style="display:inline-block;"></div>&nbsp;' . $active_title . '</div>'/*.'<pre>'.print_r(array(
 		'IsActive' => $banner['SETTINGS']['IsActive'],
 		'StatusShow' => $banner['SETTINGS']['StatusShow'],
 		'StatusBannerModerate' => $banner['SETTINGS']['StatusBannerModerate'],
 		'StatusActivating' => $banner['SETTINGS']['StatusActivating'],
 		'StatusPhrasesModerate' => $banner['SETTINGS']['StatusPhrasesModerate'],
-	), 1).'</pre>'*/);
+	), 1).'</pre>'*/
+    );
 
-    $row->AddField("UPDATE", '<input type="button" ' . ($bAllowSimpleActions ? '' : 'disabled="disabled"') . ' class="adm-btn-save" value="' . Converter::getHtmlConverter()->encode(Loc::getMessage('SEO_CAMPAIGN_UPDATE')) . '" onclick="updateBanner(this, ' . $banner['ID'] . ')" name="save" id="banner_update_button_' . $banner['ID'] . '" />');
+    $row->AddField(
+        "UPDATE",
+        '<input type="button" ' . ($bAllowSimpleActions ? '' : 'disabled="disabled"') . ' class="adm-btn-save" value="' . Converter::getHtmlConverter(
+        )->encode(
+            Loc::getMessage('SEO_CAMPAIGN_UPDATE')
+        ) . '" onclick="updateBanner(this, ' . $banner['ID'] . ')" name="save" id="banner_update_button_' . $banner['ID'] . '" />'
+    );
 
-    $row->AddViewField('XML_ID', '<a href="https://direct.yandex.ru/registered/main.pl?cmd=showCampMultiEdit&bids=' . $banner['XML_ID'] . '&cid=' . $campaign['XML_ID'] . '" target="_blank" title="' . Converter::getHtmlConverter()->encode(Loc::getMessage('SEO_CAMPAIGN_EDIT_EXTERNAL')) . '">' . Loc::getMessage('SEO_YANDEX_DIRECT_LINK_TPL', array('#XML_ID#' => $banner['XML_ID'])) . '</a>');
+    $row->AddViewField(
+        'XML_ID',
+        '<a href="https://direct.yandex.ru/registered/main.pl?cmd=showCampMultiEdit&bids=' . $banner['XML_ID'] . '&cid=' . $campaign['XML_ID'] . '" target="_blank" title="' . Converter::getHtmlConverter(
+        )->encode(Loc::getMessage('SEO_CAMPAIGN_EDIT_EXTERNAL')) . '">' . Loc::getMessage(
+            'SEO_YANDEX_DIRECT_LINK_TPL',
+            array('#XML_ID#' => $banner['XML_ID'])
+        ) . '</a>'
+    );
 
     $row->AddViewField('MODERATE', Loc::getMessage('SEO_YANDEX_STATUS_' . $banner['SETTINGS']['StatusBannerModerate']));
-    $row->AddViewField('PHRASES_MODERATE', Loc::getMessage('SEO_YANDEX_STATUS_' . $banner['SETTINGS']['StatusPhrasesModerate']));
+    $row->AddViewField(
+        'PHRASES_MODERATE',
+        Loc::getMessage('SEO_YANDEX_STATUS_' . $banner['SETTINGS']['StatusPhrasesModerate'])
+    );
     $row->AddViewField('SHOW', Loc::getMessage('SEO_YANDEX_STATUS_' . $banner['SETTINGS']['StatusShow']));
 
     if ($bAllowSimpleActions) {
@@ -357,20 +417,32 @@ while ($banner = $data->NavNext()) {
                 $rowActions[] = array(
                     "ICON" => "moderate",
                     "TEXT" => Loc::getMessage("SEO_BANNER_MODERATE"),
-                    "ACTION" => "BX.adminPanel.showWait(BX('banner_update_button_" . $banner['ID'] . "'));" . $adminList->ActionDoGroup($banner['ID'], 'moderate', 'campaign=' . $campaignId),
+                    "ACTION" => "BX.adminPanel.showWait(BX('banner_update_button_" . $banner['ID'] . "'));" . $adminList->ActionDoGroup(
+                            $banner['ID'],
+                            'moderate',
+                            'campaign=' . $campaignId
+                        ),
                 );
             } else {
                 if ($banner['SETTINGS']['StatusShow'] == Engine\YandexDirect::BOOL_YES) {
                     $rowActions[] = array(
                         "ICON" => "stop",
                         "TEXT" => Loc::getMessage("SEO_BANNER_STOP"),
-                        "ACTION" => "BX.adminPanel.showWait(BX('banner_update_button_" . $banner['ID'] . "'));" . $adminList->ActionDoGroup($banner['ID'], 'stop', 'campaign=' . $campaignId),
+                        "ACTION" => "BX.adminPanel.showWait(BX('banner_update_button_" . $banner['ID'] . "'));" . $adminList->ActionDoGroup(
+                                $banner['ID'],
+                                'stop',
+                                'campaign=' . $campaignId
+                            ),
                     );
                 } else {
                     $rowActions[] = array(
                         "ICON" => "start",
                         "TEXT" => Loc::getMessage("SEO_BANNER_RESUME"),
-                        "ACTION" => "BX.adminPanel.showWait(BX('banner_update_button_" . $banner['ID'] . "'));" . $adminList->ActionDoGroup($banner['ID'], 'resume', 'campaign=' . $campaignId),
+                        "ACTION" => "BX.adminPanel.showWait(BX('banner_update_button_" . $banner['ID'] . "'));" . $adminList->ActionDoGroup(
+                                $banner['ID'],
+                                'resume',
+                                'campaign=' . $campaignId
+                            ),
                     );
                 }
             }
@@ -382,13 +454,23 @@ while ($banner = $data->NavNext()) {
                 $rowActions[] = array(
                     "ICON" => "delete",
                     "TEXT" => Loc::getMessage("SEO_CAMPAIGN_ARCHIVE"),
-                    "ACTION" => "if(confirm('" . \CUtil::JSEscape(Loc::getMessage('SEO_BANNER_ARCHIVE_CONFIRM')) . "')) {BX.adminPanel.showWait(BX('banner_update_button_" . $banner['ID'] . "'));" . $adminList->ActionDoGroup($banner['ID'], "archive", 'campaign=' . $campaignId) . "}"
+                    "ACTION" => "if(confirm('" . \CUtil::JSEscape(
+                            Loc::getMessage('SEO_BANNER_ARCHIVE_CONFIRM')
+                        ) . "')) {BX.adminPanel.showWait(BX('banner_update_button_" . $banner['ID'] . "'));" . $adminList->ActionDoGroup(
+                            $banner['ID'],
+                            "archive",
+                            'campaign=' . $campaignId
+                        ) . "}"
                 );
             }
         } else {
             $rowActions[] = array(
                 "TEXT" => Loc::getMessage("SEO_CAMPAIGN_UNARCHIVE"),
-                "ACTION" => "BX.adminPanel.showWait(BX('banner_update_button_" . $banner['ID'] . "'));" . $adminList->ActionDoGroup($banner['ID'], "unarchive", 'campaign=' . $campaignId . '&archive=1')
+                "ACTION" => "BX.adminPanel.showWait(BX('banner_update_button_" . $banner['ID'] . "'));" . $adminList->ActionDoGroup(
+                        $banner['ID'],
+                        "unarchive",
+                        'campaign=' . $campaignId . '&archive=1'
+                    )
             );
         }
 
@@ -396,7 +478,13 @@ while ($banner = $data->NavNext()) {
             $rowActions[] = array(
                 "ICON" => "delete",
                 "TEXT" => Loc::getMessage("SEO_BANNER_DELETE"),
-                "ACTION" => "if(confirm('" . \CUtil::JSEscape(Loc::getMessage('SEO_BANNER_DELETE_CONFIRM')) . "')) " . $adminList->ActionDoGroup($banner['ID'], "delete", 'campaign=' . $campaignId . ($archive ? "&archive=1" : "")),
+                "ACTION" => "if(confirm('" . \CUtil::JSEscape(
+                        Loc::getMessage('SEO_BANNER_DELETE_CONFIRM')
+                    ) . "')) " . $adminList->ActionDoGroup(
+                        $banner['ID'],
+                        "delete",
+                        'campaign=' . $campaignId . ($archive ? "&archive=1" : "")
+                    ),
             );
         }
     } else {
@@ -408,7 +496,6 @@ while ($banner = $data->NavNext()) {
                 "DEFAULT" => true,
             ),
         );
-
     }
 
     $row->AddActions($rowActions);
@@ -453,7 +540,10 @@ $aContext[] = array(
     "ICON" => $bReadOnly ? "btn_view" : "btn_edit",
     "TEXT" => Loc::getMessage($bReadOnly ? 'SEO_CAMPAIGN_VIEW_BTN' : 'SEO_CAMPAIGN_EDIT_BTN'),
     "LINK" => "seo_search_yandex_direct_edit.php?lang=" . LANGUAGE_ID . "&ID=" . $campaign['ID'],
-    "TITLE" => Loc::getMessage($bReadOnly ? 'SEO_CAMPAIGN_VIEW_TITLE' : 'SEO_CAMPAIGN_EDIT_TITLE', array("#ID#" => $campaign['ID'], '#XML_ID#' => $campaign['XML_ID'])),
+    "TITLE" => Loc::getMessage(
+        $bReadOnly ? 'SEO_CAMPAIGN_VIEW_TITLE' : 'SEO_CAMPAIGN_EDIT_TITLE',
+        array("#ID#" => $campaign['ID'], '#XML_ID#' => $campaign['XML_ID'])
+    ),
 );
 
 
@@ -487,10 +577,15 @@ $adminList->AddAdminContextMenu($aContext);
 
 $adminList->CheckListMode();
 
-$APPLICATION->SetTitle(Loc::getMessage($archive ? "SEO_YANDEX_DIRECT_BANNER_TITLE_ARCHIVE" : "SEO_YANDEX_DIRECT_BANNER_TITLE", array(
-    "#ID#" => $campaign["ID"],
-    "#XML_ID#" => $campaign["XML_ID"],
-)));
+$APPLICATION->SetTitle(
+    Loc::getMessage(
+        $archive ? "SEO_YANDEX_DIRECT_BANNER_TITLE_ARCHIVE" : "SEO_YANDEX_DIRECT_BANNER_TITLE",
+        array(
+            "#ID#" => $campaign["ID"],
+            "#XML_ID#" => $campaign["XML_ID"],
+        )
+    )
+);
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
 if ($message) {

@@ -1,10 +1,12 @@
 <?
 /**********************************************************************/
+
 /**    DO NOT MODIFY THIS FILE                                       **/
 /**    MODIFICATION OF THIS FILE WILL ENTAIL SITE FAILURE            **/
 /**********************************************************************/
-if (!defined("UPDATE_SYSTEM_VERSION"))
+if (!defined("UPDATE_SYSTEM_VERSION")) {
     define("UPDATE_SYSTEM_VERSION", "11.0.12");
+}
 if (file_exists($_SERVER["DOCUMENT_ROOT"] . "/bitrix/admin/update_system.php")) {
     require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/admin/update_system.php");
     die();
@@ -23,21 +25,29 @@ if (defined("SM_VERSION") && version_compare(SM_VERSION, "5.0.10") >= 0) {
     die();
 }
 
-include(GetLangFileName($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/lang/", "/classes/general/update_update.php", $lang));
+include(GetLangFileName(
+    $_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/lang/",
+    "/classes/general/update_update.php",
+    $lang
+));
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/prolog.php");
 
 $MAIN_RIGHT = $APPLICATION->GetGroupRight("main");
-if ($MAIN_RIGHT < "R") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($MAIN_RIGHT < "R") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $strErrorMessage = "";
 
 /* ����������� ��������� ������ �������� */
 $STEP = IntVal($STEP);
-if ($STEP <= 0 || $STEP > 4)
+if ($STEP <= 0 || $STEP > 4) {
     $STEP = 1;
+}
 
-if ($MAIN_RIGHT != "W")
+if ($MAIN_RIGHT != "W") {
     $STEP = 1;
+}
 
 if ($TYPE != "REGVER" && $TYPE != "LOADSRC" && $TYPE != "UPDUPD" && $TYPE != "LANGS" && $TYPE != "HELP" && $TYPE != "HISTORY" && $TYPE != "SAVE_KEY" && $TYPE != "ACTIVATE_KEY" && $TYPE != "ADD_SITE" && $TYPE != "SUBSCR_UPDATE" && $TYPE != "TURN_STABILITY" && $TYPE != "AGREE_LICENSE_ACT") {
     $TYPE = "UPDATE";
@@ -76,10 +86,11 @@ if ($TYPE == "TURN_STABILITY" && $MAIN_RIGHT == "W") {
 if ($TYPE == "SAVE_KEY" && $MAIN_RIGHT == "W") {
     $NEW_LICENSE_KEY = preg_replace("/[^A-Za-z0-9_.-]/", "", $NEW_LICENSE_KEY);
 
-    if (strlen($NEW_LICENSE_KEY) <= 0)
+    if (strlen($NEW_LICENSE_KEY) <= 0) {
         $strErrorMessage .= GetMessage("SUP_ENTER_KEY") . " [PULK01]. ";
-    elseif (strtolower($NEW_LICENSE_KEY) == "demo")
+    } elseif (strtolower($NEW_LICENSE_KEY) == "demo") {
         $strErrorMessage .= GetMessage("SUP_ENTER_CORRECT_KEY") . " [PULK02]. ";
+    }
 
     if (strlen($strErrorMessage) <= 0) {
         if (!($fp = fopen($_SERVER["DOCUMENT_ROOT"] . "/bitrix/license_key.php", "w"))) {
@@ -101,8 +112,9 @@ if ($TYPE == "SUBSCR_UPDATE" && $MAIN_RIGHT == "W") {
     $strSaveEmails = "";
 
     if (strlen($SUBSCR_DELETE) <= 0) {
-        if (strlen($SUBSCR_EMAIL) <= 0)
+        if (strlen($SUBSCR_EMAIL) <= 0) {
             $strErrorMessage .= GetMessage("SUP_ERROR_NO_MAIL_U") . " [PSUUE01]. ";
+        }
 
         if (strlen($strErrorMessage) <= 0) {
             $arEmails = explode(",", $SUBSCR_EMAIL);
@@ -110,11 +122,16 @@ if ($TYPE == "SUBSCR_UPDATE" && $MAIN_RIGHT == "W") {
                 $arEmails[$i] = Trim($arEmails[$i]);
                 if (strlen($arEmails[$i]) > 0) {
                     if (CUpdateSystem::CheckEMail($arEmails[$i])) {
-                        if (strlen($strSaveEmails) > 0)
+                        if (strlen($strSaveEmails) > 0) {
                             $strSaveEmails .= ",";
+                        }
                         $strSaveEmails .= $arEmails[$i];
                     } else {
-                        $strErrorMessage .= str_replace("#EMAIL#", $arEmails[$i], GetMessage("SUP_ERROR_BAD_MAIL_U")) . " [PSUUE02]. ";
+                        $strErrorMessage .= str_replace(
+                                "#EMAIL#",
+                                $arEmails[$i],
+                                GetMessage("SUP_ERROR_BAD_MAIL_U")
+                            ) . " [PSUUE02]. ";
                     }
                 }
             }
@@ -137,30 +154,38 @@ if ($TYPE == "SUBSCR_UPDATE" && $MAIN_RIGHT == "W") {
 /*********** �������� ��� ���������� ����� *************/
 
 if ($TYPE == "ACTIVATE_KEY" && $MAIN_RIGHT == "W") {
-    if (strlen($NAME) <= 0)
+    if (strlen($NAME) <= 0) {
         $strErrorMessage .= GetMessage("SUP_ACT_NAME") . ". ";
+    }
 
-    if (strlen($EMAIL) <= 0)
+    if (strlen($EMAIL) <= 0) {
         $strErrorMessage .= GetMessage("SUP_ACT_EMAIL") . ". ";
-    elseif (!CUpdateSystem::CheckEMail($EMAIL))
+    } elseif (!CUpdateSystem::CheckEMail($EMAIL)) {
         $strErrorMessage .= GetMessage("SUP_ACT_BAD_EMAIL") . ". ";
+    }
 
-    if (strlen($SITE_URL) <= 0)
+    if (strlen($SITE_URL) <= 0) {
         $strErrorMessage .= GetMessage("SUP_ACT_URL") . ". ";
+    }
 
     if ($GENERATE_USER == "Y") {
-        if (strlen($USER_NAME) <= 0)
+        if (strlen($USER_NAME) <= 0) {
             $strErrorMessage .= GetMessage("SUP_ACT_NO_USER_NAME") . ". ";
-        if (strlen($USER_LAST_NAME) <= 0)
+        }
+        if (strlen($USER_LAST_NAME) <= 0) {
             $strErrorMessage .= GetMessage("SUP_ACT_NO_USER_LAST_NAME") . ". ";
-        if (strlen($USER_LOGIN) <= 0)
+        }
+        if (strlen($USER_LOGIN) <= 0) {
             $strErrorMessage .= GetMessage("SUP_ACT_NO_USER_LOGIN") . ". ";
-        elseif (strlen($USER_LOGIN) < 3)
+        } elseif (strlen($USER_LOGIN) < 3) {
             $strErrorMessage .= GetMessage("SUP_ACT_SHORT_USER_LOGIN") . ". ";
-        if (strlen($USER_PASSWORD) <= 0)
+        }
+        if (strlen($USER_PASSWORD) <= 0) {
             $strErrorMessage .= GetMessage("SUP_ACT_NO_USER_PASSWORD") . ". ";
-        if ($USER_PASSWORD != $USER_PASSWORD_CONFIRM)
+        }
+        if ($USER_PASSWORD != $USER_PASSWORD_CONFIRM) {
             $strErrorMessage .= GetMessage("SUP_ACT_NO_USER_PASSWORD_CONFIRM") . ". ";
+        }
     }
 
     if (strlen($strErrorMessage) <= 0) {
@@ -184,16 +209,18 @@ if ($TYPE == "ACTIVATE_KEY" && $MAIN_RIGHT == "W") {
 /*********** �������� ��� ������ *************/
 
 if ($TYPE == "ADD_SITE" && $MAIN_RIGHT == "W" && $STEP == 2) {
-    if (strlen($CHECK) <= 0)
+    if (strlen($CHECK) <= 0) {
         $strErrorMessage .= GetMessage("SUP_ENTER_CHECK") . ". ";
+    }
 
     if (strlen($strErrorMessage) <= 0) {
         CUpdateSystem::AddSites($CHECK, $strErrorMessage, LANG, $stableVersionsOnly);
     }
 
     $STEP = 1;
-    if (strlen($strErrorMessage) <= 0)
+    if (strlen($strErrorMessage) <= 0) {
         $TYPE = "UPDATE";
+    }
 }
 
 /*********** �������� ��� ������������ *************/
@@ -239,8 +266,9 @@ if ($TYPE == "UPDATE" && $STEP == 4 && $MAIN_RIGHT == "W") {
             $arLoadModules_tmp = explode(",", $load_modules);
             for ($i = 0; $i < count($arLoadModules_tmp); $i++) {
                 $arLoadModules_tmp[$i] = Trim($arLoadModules_tmp[$i]);
-                if (strlen($arLoadModules_tmp[$i]) > 0)
+                if (strlen($arLoadModules_tmp[$i]) > 0) {
                     $arLoadModules[] = $arLoadModules_tmp[$i];
+                }
             }
         }
 
@@ -272,15 +300,32 @@ if ($TYPE == "UPDATE" && $STEP == 4 && $MAIN_RIGHT == "W") {
     $arErrorModules = array();
     $arSuccessModules = array();
     if (strlen($strErrorMessage) <= 0) {
-        if (strlen($UNIID) > 0) $_SESSION[$UNIID] = "Y";
+        if (strlen($UNIID) > 0) {
+            $_SESSION[$UNIID] = "Y";
+        }
 
-        if (!CUpdateSystem::UpdateKernel($temporary_updates_dir, $arLoadModules, $strErrorMessage, $arErrorModules, $arSuccessModules)) {
+        if (!CUpdateSystem::UpdateKernel(
+            $temporary_updates_dir,
+            $arLoadModules,
+            $strErrorMessage,
+            $arErrorModules,
+            $arSuccessModules
+        )) {
             $strErrorMessage .= GetMessage("SUP_BAD_UPD_INSTALL") . " [PU405]. ";
             CUpdateSystem::AddMessage2Log(GetMessage("SUP_BAD_UPD_INSTALL"), "PU405");
         } else {
             $db_events = GetModuleEvents("main", "OnUpdatesInstalled");
-            while ($arEvent = $db_events->Fetch())
-                ExecuteModuleEvent($arEvent, Array("successModules" => $arSuccessModules, "loadModules" => $arLoadModules, "errorModules" => $arErrorModules, "modulesUpdates" => $arModulesUpdates));
+            while ($arEvent = $db_events->Fetch()) {
+                ExecuteModuleEvent(
+                    $arEvent,
+                    Array(
+                        "successModules" => $arSuccessModules,
+                        "loadModules" => $arLoadModules,
+                        "errorModules" => $arErrorModules,
+                        "modulesUpdates" => $arModulesUpdates
+                    )
+                );
+            }
         }
     }
 }
@@ -294,8 +339,9 @@ if ($TYPE == "UPDATE" && $STEP == 3 && $MAIN_RIGHT == "W") {
             $arLoadModules_tmp = explode(",", $load_modules);
             for ($i = 0; $i < count($arLoadModules_tmp); $i++) {
                 $arLoadModules_tmp[$i] = Trim($arLoadModules_tmp[$i]);
-                if (strlen($arLoadModules_tmp[$i]) > 0)
+                if (strlen($arLoadModules_tmp[$i]) > 0) {
                     $arLoadModules[] = $arLoadModules_tmp[$i];
+                }
             }
         }
 
@@ -377,8 +423,9 @@ if ($TYPE == "LANGS" && $STEP == 3 && $MAIN_RIGHT == "W") {
             $arLoadLangs_tmp = explode(",", $load_langs);
             for ($i = 0; $i < count($arLoadLangs_tmp); $i++) {
                 $arLoadLangs_tmp[$i] = Trim($arLoadLangs_tmp[$i]);
-                if (strlen($arLoadLangs_tmp[$i]) > 0)
+                if (strlen($arLoadLangs_tmp[$i]) > 0) {
                     $arLoadLangs[] = $arLoadLangs_tmp[$i];
+                }
             }
         }
 
@@ -423,9 +470,17 @@ if ($TYPE == "LANGS" && $STEP == 3 && $MAIN_RIGHT == "W") {
     $arSuccessLangs = array();
 
     if (strlen($strErrorMessage) <= 0) {
-        if (strlen($UNIID) > 0) $_SESSION[$UNIID] = "Y";
+        if (strlen($UNIID) > 0) {
+            $_SESSION[$UNIID] = "Y";
+        }
 
-        if (!CUpdateSystem::UpdateLangs($temporary_updates_dir, $arLoadLangs, $strErrorMessage, $arErrorLangs, $arSuccessLangs)) {
+        if (!CUpdateSystem::UpdateLangs(
+            $temporary_updates_dir,
+            $arLoadLangs,
+            $strErrorMessage,
+            $arErrorLangs,
+            $arSuccessLangs
+        )) {
             $strErrorMessage .= GetMessage("SUP_BAD_LANG_INSTALL") . " [PUL305]. ";
             CUpdateSystem::AddMessage2Log(GetMessage("SUP_BAD_LANG_INSTALL"), "PUL305");
         }
@@ -476,9 +531,17 @@ if ($TYPE == "HELP" && $STEP == 3 && $MAIN_RIGHT == "W") {
     $arErrorHelp = array();
     $arSuccessHelp = array();
     if (strlen($strErrorMessage) <= 0) {
-        if (strlen($UNIID) > 0) $_SESSION[$UNIID] = "Y";
+        if (strlen($UNIID) > 0) {
+            $_SESSION[$UNIID] = "Y";
+        }
 
-        if (!CUpdateSystem::UpdateHelp($temporary_updates_dir, array($load_help), $strErrorMessage, $arErrorHelp, $arSuccessHelp)) {
+        if (!CUpdateSystem::UpdateHelp(
+            $temporary_updates_dir,
+            array($load_help),
+            $strErrorMessage,
+            $arErrorHelp,
+            $arSuccessHelp
+        )) {
             $strErrorMessage .= GetMessage("SUP_BAD_HELP_INSTALL") . " [PUH305]. ";
             CUpdateSystem::AddMessage2Log(GetMessage("SUP_BAD_HELP_INSTALL"), "PUH305");
         }
@@ -492,26 +555,27 @@ if ($TYPE == "HELP" && $STEP == 2 && $MAIN_RIGHT == "W") {
 /*********** ����� �������� *************/
 
 $strTitle = GetMessage("SUP_TITLE_BASE");
-if ($TYPE == "UPDATE" && $STEP == 1)
+if ($TYPE == "UPDATE" && $STEP == 1) {
     $strTitle = GetMessage("SUP_TITLE_UPD_1");
-elseif ($TYPE == "UPDATE" && $STEP == 2)
+} elseif ($TYPE == "UPDATE" && $STEP == 2) {
     $strTitle = GetMessage("SUP_TITLE_UPD_2");
-elseif ($TYPE == "UPDATE" && $STEP == 3)
+} elseif ($TYPE == "UPDATE" && $STEP == 3) {
     $strTitle = GetMessage("SUP_TITLE_UPD_3");
-elseif ($TYPE == "UPDATE" && $STEP == 4)
+} elseif ($TYPE == "UPDATE" && $STEP == 4) {
     $strTitle = GetMessage("SUP_TITLE_UPD_4");
-elseif ($TYPE == "LANGS" && $STEP == 2)
+} elseif ($TYPE == "LANGS" && $STEP == 2) {
     $strTitle = GetMessage("SUP_TITLE_LANG_2");
-elseif ($TYPE == "LANGS" && $STEP == 3)
+} elseif ($TYPE == "LANGS" && $STEP == 3) {
     $strTitle = GetMessage("SUP_TITLE_LANG_3");
-elseif ($TYPE == "HELP" && $STEP == 2)
+} elseif ($TYPE == "HELP" && $STEP == 2) {
     $strTitle = GetMessage("SUP_TITLE_HELP_2");
-elseif ($TYPE == "HELP" && $STEP == 3)
+} elseif ($TYPE == "HELP" && $STEP == 3) {
     $strTitle = GetMessage("SUP_TITLE_HELP_3");
-elseif ($TYPE == "HISTORY")
+} elseif ($TYPE == "HISTORY") {
     $strTitle = GetMessage("SUP_TITLE_HISTORY");
-elseif ($TYPE == "ADD_SITE")
+} elseif ($TYPE == "ADD_SITE") {
     $strTitle = GetMessage("SUP_TITLE_ADD_SITE");
+}
 
 $APPLICATION->SetTitle($strTitle);
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
@@ -519,6 +583,7 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
 
 <?
 /*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*/
+
 /*@@@@@@@@@   ������� �����   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*/
 /*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*/
 
@@ -526,11 +591,17 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
 /******   ��� 1  /�����/   ********************************************/
 /**********************************************************************/
 if ($TYPE == "UPDATE" && $STEP == 1) {
-    if (!CUpdateSystem::IsGzipInstalled())
-        echo "<font class=\"errortext\">" . str_replace("#ZLIB_URL#", "http://www.php.net/manual/en/ref.zlib.php", GetMessage("SUP_ZLIB_RECOM")) . "</font><br><br>";
+    if (!CUpdateSystem::IsGzipInstalled()) {
+        echo "<font class=\"errortext\">" . str_replace(
+                "#ZLIB_URL#",
+                "http://www.php.net/manual/en/ref.zlib.php",
+                GetMessage("SUP_ZLIB_RECOM")
+            ) . "</font><br><br>";
+    }
 
-    if (strlen($strErrorMessage) > 0)
+    if (strlen($strErrorMessage) > 0) {
         echo "<font class=\"errortext\">" . $strErrorMessage . "</font><br><br>";
+    }
 
     // ���� ������ ������ � �������
     if ($arTypesUpdates !== false
@@ -547,7 +618,7 @@ if ($TYPE == "UPDATE" && $STEP == 1) {
     }
 
     if ($DB->type == "MYSQL") {
-        $dbQueryRes = $DB->Query("select VERSION() as ver", True);
+        $dbQueryRes = $DB->Query("select VERSION() as ver", true);
         if ($arQueryRes = $dbQueryRes->Fetch()) {
             $curMySqlVer = trim($arQueryRes["ver"]);
             $arCurMySqlVer = explode(".", $curMySqlVer);
@@ -566,10 +637,11 @@ if ($TYPE == "UPDATE" && $STEP == 1) {
 
         <?
         if ($stableVersionsOnly == "N") {
-            if (class_exists("CAdminMessage"))
+            if (class_exists("CAdminMessage")) {
                 CAdminMessage::ShowNote(GetMessage("SUP_STABLE_OFF"));
-            else
+            } else {
                 ShowNote(GetMessage("SUP_STABLE_OFF"));
+            }
         }
         ?>
 
@@ -589,19 +661,32 @@ if ($TYPE == "UPDATE" && $STEP == 1) {
                             <br>
                             <? echo GetMessage("SUP_EDITION") ?> <? echo $arTypesUpdates["CLIENT"]["@"]["LICENSE"] ?>
                             <br>
-                            <? echo GetMessage("SUP_SITES") ?> <? echo($arTypesUpdates["CLIENT"]["@"]["MAX_SITES"] > 0 ? $arTypesUpdates["CLIENT"]["@"]["MAX_SITES"] : 2) ?>
+                            <? echo GetMessage(
+                                "SUP_SITES"
+                            ) ?> <? echo($arTypesUpdates["CLIENT"]["@"]["MAX_SITES"] > 0 ? $arTypesUpdates["CLIENT"]["@"]["MAX_SITES"] : 2) ?>
                             <br>
                             <?
                             echo str_replace(
                                 "#DATE_TO#",
-                                ((strlen($arTypesUpdates["CLIENT"]["@"]["DATE_TO"]) > 0) ? $arTypesUpdates["CLIENT"]["@"]["DATE_TO"] : "NA"),
+                                ((strlen(
+                                        $arTypesUpdates["CLIENT"]["@"]["DATE_TO"]
+                                    ) > 0) ? $arTypesUpdates["CLIENT"]["@"]["DATE_TO"] : "NA"),
                                 str_replace(
                                     "#DATE_FROM#",
-                                    ((strlen($arTypesUpdates["CLIENT"]["@"]["DATE_FROM"]) > 0) ? $arTypesUpdates["CLIENT"]["@"]["DATE_FROM"] : "NA"),
-                                    GetMessage("SUP_ACTIVE_PERIOD")));
+                                    ((strlen(
+                                            $arTypesUpdates["CLIENT"]["@"]["DATE_FROM"]
+                                        ) > 0) ? $arTypesUpdates["CLIENT"]["@"]["DATE_FROM"] : "NA"),
+                                    GetMessage("SUP_ACTIVE_PERIOD")
+                                )
+                            );
                             echo "<br>";
-                            if (strlen($arTypesUpdates["CLIENT"]["@"]["HTTP_HOST"]) > 0)
-                                echo str_replace("#HOST#", $arTypesUpdates["CLIENT"]["@"]["HTTP_HOST"], GetMessage("SUP_UPD_HOST"));
+                            if (strlen($arTypesUpdates["CLIENT"]["@"]["HTTP_HOST"]) > 0) {
+                                echo str_replace(
+                                    "#HOST#",
+                                    $arTypesUpdates["CLIENT"]["@"]["HTTP_HOST"],
+                                    GetMessage("SUP_UPD_HOST")
+                                );
+                            }
                             ?>
                         </font>
                     </td>
@@ -655,8 +740,9 @@ if ($TYPE == "UPDATE" && $STEP == 1) {
                                 <font class="tablefieldtext"><?= GetMessage("SUP_ACTIVATE_CONTARC_INFO") ?>:</font>
                             </td>
                             <td valign="top" align="left" width="50%" class="tablebody">
-                                <textarea name="CONTACT_INFO" rows="2" cols="46"
-                                          class="typearea"><?= htmlspecialchars($CONTACT_INFO) ?></textarea>
+                                <textarea name="CONTACT_INFO" rows="2" cols="46" class="typearea"><?= htmlspecialchars(
+                                        $CONTACT_INFO
+                                    ) ?></textarea>
                             </td>
                         </tr>
                         <tr>
@@ -719,7 +805,9 @@ if ($TYPE == "UPDATE" && $STEP == 1) {
                             </td>
                             <td valign="top" align="left" width="50%">
                                 <input type="checkbox" name="GENERATE_USER" OnClick="EnableDisableUser(true)"
-                                       value="Y"<? if ($GENERATE_USER == "Y" || !isset($GENERATE_USER)) echo " checked"; ?>>
+                                       value="Y"<? if ($GENERATE_USER == "Y" || !isset($GENERATE_USER)) {
+                                    echo " checked";
+                                } ?>>
                             </td>
                         </tr>
                         <tr id="tr_user_name">
@@ -788,13 +876,13 @@ if ($TYPE == "UPDATE" && $STEP == 1) {
         ?>
 
         <?
-        $bLicenseNotFound = False;
+        $bLicenseNotFound = false;
         if ($arTypesUpdates !== false
             && isset($arTypesUpdates["ERROR"])
             && count($arTypesUpdates["ERROR"]) > 0) {
             for ($i = 0; $i < count($arTypesUpdates["ERROR"]); $i++) {
                 if ($arTypesUpdates["ERROR"][$i]["@"]["TYPE"] == "LICENSE_NOT_FOUND") {
-                    $bLicenseNotFound = True;
+                    $bLicenseNotFound = true;
                     break;
                 }
             }
@@ -806,20 +894,40 @@ if ($TYPE == "UPDATE" && $STEP == 1) {
                 || $bLicenseNotFound)) {
             if (defined("DEMO") && DEMO == "Y") {
                 ?>
-                <?= str_replace("#URL#", "http://" . (($lang == "ru") ? "www.bitrixsoft.ru/ru" : "www.bitrixsoft.com") . "/bsm_register.php?dt=" . UrlEncode($SiteExpireDate), GetMessage("SUP_NO_KEY_PROMT")) ?>
+                <?= str_replace(
+                    "#URL#",
+                    "http://" . (($lang == "ru") ? "www.bitrixsoft.ru/ru" : "www.bitrixsoft.com") . "/bsm_register.php?dt=" . UrlEncode(
+                        $SiteExpireDate
+                    ),
+                    GetMessage("SUP_NO_KEY_PROMT")
+                ) ?>
                 <br><br>
 
-                <a href="http://<?= (($lang == "ru") ? "www.bitrixsoft.ru/ru" : "www.bitrixsoft.com") ?>/bsm_register.php?dt=<? echo UrlEncode($SiteExpireDate) ?>"
-                   target="_blank"><img src="/bitrix/images/main/icon2.gif" width="15" height="15" border="0"
-                                        alt="<?= GetMessage("SUP_NO_KEY_ACT_ALT") ?>"> <?= GetMessage("SUP_NO_KEY_ACT") ?>
-                    &gt;&gt;</a>
+                <a href="http://<?= (($lang == "ru") ? "www.bitrixsoft.ru/ru" : "www.bitrixsoft.com") ?>/bsm_register.php?dt=<? echo UrlEncode(
+                    $SiteExpireDate
+                ) ?>" target="_blank"><img src="/bitrix/images/main/icon2.gif" width="15" height="15" border="0"
+                                           alt="<?= GetMessage("SUP_NO_KEY_ACT_ALT") ?>"> <?= GetMessage(
+                        "SUP_NO_KEY_ACT"
+                    ) ?> &gt;&gt;</a>
                 <br><br><br>
 
-                <?= str_replace("#URL#", "/bitrix/admin/settings.php?mid_SELECTED=yes&mid=main", GetMessage("SUP_NO_KEY_ENTER_PROMT")) ?>
+                <?= str_replace(
+                    "#URL#",
+                    "/bitrix/admin/settings.php?mid_SELECTED=yes&mid=main",
+                    GetMessage("SUP_NO_KEY_ENTER_PROMT")
+                ) ?>
                 <?
             } else {
                 ?>
-                <?= str_replace("#URL_SET#", "/bitrix/admin/settings.php?mid_SELECTED=yes&mid=main", str_replace("#URL#", "http://www.bitrixsoft." . (($lang == "ru") ? "ru" : "com") . "/support/", GetMessage("SUP_NO_KEY_PROMT_SRC"))) ?>
+                <?= str_replace(
+                    "#URL_SET#",
+                    "/bitrix/admin/settings.php?mid_SELECTED=yes&mid=main",
+                    str_replace(
+                        "#URL#",
+                        "http://www.bitrixsoft." . (($lang == "ru") ? "ru" : "com") . "/support/",
+                        GetMessage("SUP_NO_KEY_PROMT_SRC")
+                    )
+                ) ?>
                 <?
             }
             ?>
@@ -832,7 +940,9 @@ if ($TYPE == "UPDATE" && $STEP == 1) {
                     <input type="hidden" name="STEP" VALUE="1">
                     <input type="hidden" name="lang" VALUE="<?= htmlspecialchars($lang) ?>">
                     <input <? if ($MAIN_RIGHT < "W") echo "disabled" ?> class="button" type="submit"
-                                                                        value="<?= GetMessage("SUP_NO_KEY_ENTER_DO") ?>">
+                                                                        value="<?= GetMessage(
+                                                                            "SUP_NO_KEY_ENTER_DO"
+                                                                        ) ?>">
                 </center>
             </form>
             <br><br>
@@ -850,8 +960,7 @@ if ($TYPE == "UPDATE" && $STEP == 1) {
 
             <a href="sysupdate.php?TYPE=UPDUPD&STEP=1&lang=<?= htmlspecialchars($lang) ?>"><img
                         src="/bitrix/images/main/icon2.gif" width="15" height="15" border="0"
-                        alt="<?= GetMessage("SUP_UPD_UPD_ACT_ALT") ?>"> <?= GetMessage("SUP_UPD_UPD_ACT") ?>
-                &gt;&gt;</a>
+                        alt="<?= GetMessage("SUP_UPD_UPD_ACT_ALT") ?>"> <?= GetMessage("SUP_UPD_UPD_ACT") ?>&gt;&gt;</a>
             <br><br><br>
             <?
         }
@@ -887,7 +996,15 @@ if ($TYPE == "UPDATE" && $STEP == 1) {
                 && !isset($arTypesUpdates["UPDATE_SYSTEM"])
                 && IntVal($arTypesUpdates["MODULES"]["@"]["COUNT"]) > 0) {
                 ?>
-                <?= str_replace("#END#", CUpdateSystem::NumberEndings($arTypesUpdates["MODULES"]["@"]["COUNT"]), str_replace("#NUM#", $arTypesUpdates["MODULES"]["@"]["COUNT"], GetMessage("SUP_MUPD_PROMT"))) ?>
+                <?= str_replace(
+                    "#END#",
+                    CUpdateSystem::NumberEndings($arTypesUpdates["MODULES"]["@"]["COUNT"]),
+                    str_replace(
+                        "#NUM#",
+                        $arTypesUpdates["MODULES"]["@"]["COUNT"],
+                        GetMessage("SUP_MUPD_PROMT")
+                    )
+                ) ?>
                 <br><br>
 
                 <a href="sysupdate.php?STEP=2&TYPE=UPDATE&lang=<?= htmlspecialchars($lang) ?>"><img
@@ -918,8 +1035,7 @@ if ($TYPE == "UPDATE" && $STEP == 1) {
                     || IntVal($arTypesUpdates["MODULES"]["@"]["COUNT"]) <= 0):?>
                     <a href="sysupdate.php?TYPE=LOADSRC&STEP=1&lang=<?= htmlspecialchars($lang) ?>"><img
                                 src="/bitrix/images/main/icon2.gif" width="15" height="15" border="0"
-                                alt="<?= GetMessage("SUP_SRC_ACT_ALT") ?>"> <?= GetMessage("SUP_SRC_ACT") ?>
-                        &gt;&gt;</a>
+                                alt="<?= GetMessage("SUP_SRC_ACT_ALT") ?>"> <?= GetMessage("SUP_SRC_ACT") ?>&gt;&gt;</a>
                     <br><br>
                 <?endif; ?>
                 <br>
@@ -935,10 +1051,20 @@ if ($TYPE == "UPDATE" && $STEP == 1) {
                 && (IntVal($arTypesUpdates["LANGS"]["@"]["COUNT"]) > 0
                     || IntVal($arTypesUpdates["LANGS"]["@"]["OTHER_COUNT"]) > 0)
             ) {
-                if (IntVal($arTypesUpdates["LANGS"]["@"]["COUNT"]) > 0)
-                    echo str_replace("#END#", CUpdateSystem::NumberEndings($arTypesUpdates["LANGS"]["@"]["COUNT"]), str_replace("#NUM#", $arTypesUpdates["LANGS"]["@"]["COUNT"], GetMessage("SUP_LUPD_PROMT")));
-                if (IntVal($arTypesUpdates["LANGS"]["@"]["OTHER_COUNT"]) > 0)
+                if (IntVal($arTypesUpdates["LANGS"]["@"]["COUNT"]) > 0) {
+                    echo str_replace(
+                        "#END#",
+                        CUpdateSystem::NumberEndings($arTypesUpdates["LANGS"]["@"]["COUNT"]),
+                        str_replace(
+                            "#NUM#",
+                            $arTypesUpdates["LANGS"]["@"]["COUNT"],
+                            GetMessage("SUP_LUPD_PROMT")
+                        )
+                    );
+                }
+                if (IntVal($arTypesUpdates["LANGS"]["@"]["OTHER_COUNT"]) > 0) {
                     echo GetMessage("SUP_LUPD_PROMT_OTHER");
+                }
                 ?>
                 <br><br>
 
@@ -958,10 +1084,29 @@ if ($TYPE == "UPDATE" && $STEP == 1) {
                 && (IntVal($arTypesUpdates["HELPS"]["@"]["COUNT"]) > 0
                     || IntVal($arTypesUpdates["HELPS"]["@"]["OTHER_COUNT"]) > 0)
             ) {
-                if (IntVal($arTypesUpdates["HELPS"]["@"]["COUNT"]) > 0)
-                    echo str_replace("#END#", CUpdateSystem::NumberEndings($arTypesUpdates["HELPS"]["@"]["COUNT"], $lang, array(GetMessage("SUP_WORD_YAZIK_END1"), GetMessage("SUP_WORD_YAZIK_END2"), GetMessage("SUP_WORD_YAZIK_END3"), GetMessage("SUP_WORD_YAZIK_END4"))), str_replace("#NUM#", $arTypesUpdates["HELPS"]["@"]["COUNT"], GetMessage("SUP_HUPD_PROMT")));
-                if (IntVal($arTypesUpdates["HELPS"]["@"]["OTHER_COUNT"]) > 0)
+                if (IntVal($arTypesUpdates["HELPS"]["@"]["COUNT"]) > 0) {
+                    echo str_replace(
+                        "#END#",
+                        CUpdateSystem::NumberEndings(
+                            $arTypesUpdates["HELPS"]["@"]["COUNT"],
+                            $lang,
+                            array(
+                                GetMessage("SUP_WORD_YAZIK_END1"),
+                                GetMessage("SUP_WORD_YAZIK_END2"),
+                                GetMessage("SUP_WORD_YAZIK_END3"),
+                                GetMessage("SUP_WORD_YAZIK_END4")
+                            )
+                        ),
+                        str_replace(
+                            "#NUM#",
+                            $arTypesUpdates["HELPS"]["@"]["COUNT"],
+                            GetMessage("SUP_HUPD_PROMT")
+                        )
+                    );
+                }
+                if (IntVal($arTypesUpdates["HELPS"]["@"]["OTHER_COUNT"]) > 0) {
                     echo GetMessage("SUP_HUPD_PROMT_OTHER");
+                }
                 ?>
                 <br><br>
 
@@ -980,10 +1125,28 @@ if ($TYPE == "UPDATE" && $STEP == 1) {
                 && count($arTypesUpdates["CLIENT"]) > 0
                 && $arTypesUpdates["CLIENT"]["@"]["RESERVED"] != "Y") {
                 $arTypesUpdates["CLIENT"]["@"]["MAX_SITES"] = IntVal($arTypesUpdates["CLIENT"]["@"]["MAX_SITES"]);
-                if ($arTypesUpdates["CLIENT"]["@"]["MAX_SITES"] > 0)
-                    echo str_replace("#END#", CUpdateSystem::NumberEndings($arTypesUpdates["CLIENT"]["@"]["MAX_SITES"], $lang, array(GetMessage("SUP_WORD_SAIT_END1"), GetMessage("SUP_WORD_SAIT_END2"), GetMessage("SUP_WORD_SAIT_END3"), GetMessage("SUP_WORD_SAIT_END4"))), str_replace("#NUM#", $arTypesUpdates["CLIENT"]["@"]["MAX_SITES"], GetMessage("SUP_CHECK_PROMT")));
-                else
+                if ($arTypesUpdates["CLIENT"]["@"]["MAX_SITES"] > 0) {
+                    echo str_replace(
+                        "#END#",
+                        CUpdateSystem::NumberEndings(
+                            $arTypesUpdates["CLIENT"]["@"]["MAX_SITES"],
+                            $lang,
+                            array(
+                                GetMessage("SUP_WORD_SAIT_END1"),
+                                GetMessage("SUP_WORD_SAIT_END2"),
+                                GetMessage("SUP_WORD_SAIT_END3"),
+                                GetMessage("SUP_WORD_SAIT_END4")
+                            )
+                        ),
+                        str_replace(
+                            "#NUM#",
+                            $arTypesUpdates["CLIENT"]["@"]["MAX_SITES"],
+                            GetMessage("SUP_CHECK_PROMT")
+                        )
+                    );
+                } else {
                     echo GetMessage("SUP_CHECK_PROMT_2");
+                }
                 ?>
                 <br><br>
                 <?= GetMessage("SUP_CHECK_PROMT_1") ?>
@@ -991,8 +1154,7 @@ if ($TYPE == "UPDATE" && $STEP == 1) {
 
                 <a href="sysupdate.php?TYPE=ADD_SITE&STEP=1&lang=<?= htmlspecialchars($lang) ?>"><img
                             src="/bitrix/images/main/icon2.gif" width="15" height="15" border="0"
-                            alt="<?= GetMessage("SUP_SITES_ACT_ALT") ?>"> <?= GetMessage("SUP_CHECK_ACT") ?>
-                    &gt;&gt;</a>
+                            alt="<?= GetMessage("SUP_SITES_ACT_ALT") ?>"> <?= GetMessage("SUP_CHECK_ACT") ?>&gt;&gt;</a>
                 <br><br>
                 <br>
                 <?
@@ -1014,10 +1176,11 @@ if ($TYPE == "UPDATE" && $STEP == 1) {
                     </script>
 
                     <?
-                    if (LANG == "ru")
+                    if (LANG == "ru") {
                         $license_text_file = "http://www.bitrixsoft.ru/license-ru.htm";
-                    else
+                    } else {
                         $license_text_file = "http://www.bitrixsoft.com/license-en.htm";
+                    }
                     ?>
                     <iframe name="license_text" src="<?= $license_text_file ?>" width="560" height="250" border="0"
                             frameBorder="1" scrolling="yes"></iframe>
@@ -1049,18 +1212,22 @@ if ($TYPE == "UPDATE" && $STEP == 1) {
 
         <?
         if (!$bLockUpdateSystemKernel) {
-            if ($stableVersionsOnly == "N")
+            if ($stableVersionsOnly == "N") {
                 echo GetMessage("SUP_STABLE_OFF_PROMT");
-            else
+            } else {
                 echo GetMessage("SUP_STABLE_ON_PROMT");
+            }
             ?>
             <br><?= GetMessage("SUP_STABLE_PROMT"); ?>
             <br><br>
 
             <a href="sysupdate.php?TYPE=TURN_STABILITY&STEP=1&lang=<?= htmlspecialchars($lang) ?>"><img
                         src="/bitrix/images/main/icon2.gif" width="15" height="15" border="0"
-                        alt="<?= (($stableVersionsOnly == "N") ? GetMessage("SUP_STABLE_TURN_ON") : GetMessage("SUP_STABLE_TURN_OFF")) ?>"> <?= (($stableVersionsOnly == "N") ? GetMessage("SUP_STABLE_TURN_ON") : GetMessage("SUP_STABLE_TURN_OFF")) ?>
-                &gt;&gt;</a>
+                        alt="<?= (($stableVersionsOnly == "N") ? GetMessage("SUP_STABLE_TURN_ON") : GetMessage(
+                            "SUP_STABLE_TURN_OFF"
+                        )) ?>"> <?= (($stableVersionsOnly == "N") ? GetMessage("SUP_STABLE_TURN_ON") : GetMessage(
+                    "SUP_STABLE_TURN_OFF"
+                )) ?> &gt;&gt;</a>
             <br><br>
             <br>
             <?
@@ -1084,26 +1251,36 @@ if ($TYPE == "UPDATE" && $STEP == 1) {
             ?>
             <!-- �������� -->
             <form method="POST" action="sysupdate.php">
-                <? if (isset($arTypesUpdates["CLIENT"]["@"]["SUBSCR_EMAIL"]) && strlen($arTypesUpdates["CLIENT"]["@"]["SUBSCR_EMAIL"]) > 0):?>
+                <? if (isset($arTypesUpdates["CLIENT"]["@"]["SUBSCR_EMAIL"]) && strlen(
+                        $arTypesUpdates["CLIENT"]["@"]["SUBSCR_EMAIL"]
+                    ) > 0):?>
                     <?= GetMessage("SUP_SUBSCR_ALREADY_U") ?><br>
                 <? else:?>
                     <?= GetMessage("SUP_SUBSCR_NEW_U") ?><br>
                 <?endif; ?>
                 <input type="text" name="SUBSCR_EMAIL" class="typeinput"
-                       VALUE="<?= ((isset($arTypesUpdates["CLIENT"]["@"]["SUBSCR_EMAIL"])) ? htmlspecialchars($arTypesUpdates["CLIENT"]["@"]["SUBSCR_EMAIL"]) : "") ?>"
-                       size="40">
+                       VALUE="<?= ((isset($arTypesUpdates["CLIENT"]["@"]["SUBSCR_EMAIL"])) ? htmlspecialchars(
+                           $arTypesUpdates["CLIENT"]["@"]["SUBSCR_EMAIL"]
+                       ) : "") ?>" size="40">
                 <input type="hidden" name="TYPE" VALUE="SUBSCR_UPDATE">
                 <input type="hidden" name="STEP" VALUE="1">
                 <input type="hidden" name="lang" VALUE="<?= htmlspecialchars($lang) ?>">
-                <? if (isset($arTypesUpdates["CLIENT"]["@"]["SUBSCR_EMAIL"]) && strlen($arTypesUpdates["CLIENT"]["@"]["SUBSCR_EMAIL"]) > 0):?>
+                <? if (isset($arTypesUpdates["CLIENT"]["@"]["SUBSCR_EMAIL"]) && strlen(
+                        $arTypesUpdates["CLIENT"]["@"]["SUBSCR_EMAIL"]
+                    ) > 0):?>
                     <input <? if ($MAIN_RIGHT < "W") echo "disabled" ?> class="button" type="submit"
-                                                                        value="<?= GetMessage("SUP_SUBSCR_ALREADY_CHANGE_U") ?>">
+                                                                        value="<?= GetMessage(
+                                                                            "SUP_SUBSCR_ALREADY_CHANGE_U"
+                                                                        ) ?>">
                     <input <? if ($MAIN_RIGHT < "W") echo "disabled" ?> class="button" type="submit"
-                                                                        name="SUBSCR_DELETE"
-                                                                        value="<?= GetMessage("SUP_SUBSCR_ALREADY_DEL_U") ?>">
+                                                                        name="SUBSCR_DELETE" value="<?= GetMessage(
+                        "SUP_SUBSCR_ALREADY_DEL_U"
+                    ) ?>">
                 <? else:?>
                     <input <? if ($MAIN_RIGHT < "W") echo "disabled" ?> class="button" type="submit"
-                                                                        value="<?= GetMessage("SUP_SUBSCR_ALREADY_ADD_U") ?>">
+                                                                        value="<?= GetMessage(
+                                                                            "SUP_SUBSCR_ALREADY_ADD_U"
+                                                                        ) ?>">
                 <?endif; ?>
             </form>
             <br><br>
@@ -1158,8 +1335,13 @@ if ($TYPE == "UPDATE" && $STEP == 2 && $MAIN_RIGHT == "W") {
         <tr>
             <td align="left">
                 <form method="post" action="sysupdate.php" onsubmit="return ValidateForm(this);">
-                    <input type="submit" name="load_button" id="load_button"
-                           value="<?= GetMessage("SUP_STEP2_LOAD_BTN") ?>" <? if (!isset($arModulesUpdates["MODULES"]) || !isset($arModulesUpdates["MODULES"]["#"]["MODULE"]) || !is_array($arModulesUpdates["MODULES"]["#"]["MODULE"]) || !count($arModulesUpdates["MODULES"]["#"]["MODULE"]) > 0) echo "disabled"; ?>>
+                    <input type="submit" name="load_button" id="load_button" value="<?= GetMessage(
+                        "SUP_STEP2_LOAD_BTN"
+                    ) ?>" <? if (!isset($arModulesUpdates["MODULES"]) || !isset($arModulesUpdates["MODULES"]["#"]["MODULE"]) || !is_array(
+                            $arModulesUpdates["MODULES"]["#"]["MODULE"]
+                        ) || !count($arModulesUpdates["MODULES"]["#"]["MODULE"]) > 0) {
+                        echo "disabled";
+                    } ?>>
                     <input type="hidden" name="load_modules" id="load_modules" value="">
                     <input type="hidden" name="STEP" value="3">
                     <input type="hidden" name="lang" value="<?= htmlspecialchars($lang) ?>">
@@ -1216,8 +1398,13 @@ if ($TYPE == "UPDATE" && $STEP == 3 && $MAIN_RIGHT == "W") {
         <tr>
             <td align="left">
                 <form method="post" action="sysupdate.php" onsubmit="return ValidateForm(this);">
-                    <input type="submit" name="load_button" id="load_button"
-                           value="<?= GetMessage("SUP_STEP3_LOAD_BTN") ?>" <? if (!isset($arModulesUpdates["MODULES"]) || !isset($arModulesUpdates["MODULES"]["#"]["MODULE"]) || !is_array($arModulesUpdates["MODULES"]["#"]["MODULE"]) || !count($arModulesUpdates["MODULES"]["#"]["MODULE"]) > 0) echo "disabled"; ?>>
+                    <input type="submit" name="load_button" id="load_button" value="<?= GetMessage(
+                        "SUP_STEP3_LOAD_BTN"
+                    ) ?>" <? if (!isset($arModulesUpdates["MODULES"]) || !isset($arModulesUpdates["MODULES"]["#"]["MODULE"]) || !is_array(
+                            $arModulesUpdates["MODULES"]["#"]["MODULE"]
+                        ) || !count($arModulesUpdates["MODULES"]["#"]["MODULE"]) > 0) {
+                        echo "disabled";
+                    } ?>>
                     <input type="hidden" name="load_modules" id="load_modules" value="">
                     <input type="hidden" name="temporary_updates_dir"
                            value="<?= htmlspecialchars($temporary_updates_dir) ?>">
@@ -1263,10 +1450,20 @@ if ($TYPE == "UPDATE" && ($STEP == 2 || $STEP == 3) && $MAIN_RIGHT == "W") {
             for ($j = 0; $j < count($arModulesUpdates["MODULES"]["#"]["MODULE"]); $j++) {
                 if ($i != $j) {
                     if (is_array($arModulesUpdates["MODULES"]["#"]["MODULE"][$j]["#"]["VERSION_CONTROL"])) {
-                        for ($k = 0; $k < count($arModulesUpdates["MODULES"]["#"]["MODULE"][$j]["#"]["VERSION_CONTROL"]); $k++) {
+                        for (
+                            $k = 0; $k < count(
+                            $arModulesUpdates["MODULES"]["#"]["MODULE"][$j]["#"]["VERSION_CONTROL"]
+                        ); $k++
+                        ) {
                             if ($arModulesUpdates["MODULES"]["#"]["MODULE"][$j]["#"]["VERSION_CONTROL"][$k]["@"]["MODUL"] == $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["ID"]) {
-                                if (!array_key_exists($arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["ID"], $arModuleCurVersions))
-                                    $arModuleCurVersions[$arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["ID"]] = CUpdateSystem::GetModuleVersion($arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["ID"]);
+                                if (!array_key_exists(
+                                    $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["ID"],
+                                    $arModuleCurVersions
+                                )) {
+                                    $arModuleCurVersions[$arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["ID"]] = CUpdateSystem::GetModuleVersion(
+                                        $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["ID"]
+                                    );
+                                }
 
                                 $i_cur_version = $arModuleCurVersions[$arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["ID"]];
                                 if (!$i_cur_version
@@ -1293,9 +1490,19 @@ if ($TYPE == "UPDATE" && ($STEP == 2 || $STEP == 3) && $MAIN_RIGHT == "W") {
 
             $arDepends1 = array();
             if (is_array($arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["#"]["VERSION_CONTROL"])) {
-                for ($j = 0; $j < count($arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["#"]["VERSION_CONTROL"]); $j++) {
-                    if (!array_key_exists($arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["#"]["VERSION_CONTROL"][$j]["@"]["MODUL"], $arModuleCurVersions))
-                        $arModuleCurVersions[$arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["#"]["VERSION_CONTROL"][$j]["@"]["MODUL"]] = CUpdateSystem::GetModuleVersion($arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["#"]["VERSION_CONTROL"][$j]["@"]["MODUL"]);
+                for (
+                    $j = 0; $j < count(
+                    $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["#"]["VERSION_CONTROL"]
+                ); $j++
+                ) {
+                    if (!array_key_exists(
+                        $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["#"]["VERSION_CONTROL"][$j]["@"]["MODUL"],
+                        $arModuleCurVersions
+                    )) {
+                        $arModuleCurVersions[$arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["#"]["VERSION_CONTROL"][$j]["@"]["MODUL"]] = CUpdateSystem::GetModuleVersion(
+                            $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["#"]["VERSION_CONTROL"][$j]["@"]["MODUL"]
+                        );
+                    }
 
                     $i_cur_version = $arModuleCurVersions[$arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["#"]["VERSION_CONTROL"][$j]["@"]["MODUL"]];
                     if (!$i_cur_version
@@ -1331,19 +1538,36 @@ if ($TYPE == "UPDATE" && ($STEP == 2 || $STEP == 3) && $MAIN_RIGHT == "W") {
                 $strModuleDescr = "";
                 if ($STEP == 2) {
                     if (is_array($arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["#"]["DESCRIPTION"])) {
-                        for ($j = 0; $j < count($arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["#"]["DESCRIPTION"]); $j++) {
-                            if (strlen($arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["#"]["DESCRIPTION"][$j]["@"]["VERSION"]) > 0)
+                        for (
+                            $j = 0; $j < count(
+                            $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["#"]["DESCRIPTION"]
+                        ); $j++
+                        ) {
+                            if (strlen(
+                                    $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["#"]["DESCRIPTION"][$j]["@"]["VERSION"]
+                                ) > 0) {
                                 $strModuleDescr .= "<br><b>" . $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["#"]["DESCRIPTION"][$j]["@"]["VERSION"] . "</b><br>";
+                            }
                             $strModuleDescr .= $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["#"]["DESCRIPTION"][$j]["#"] . "<br>";
                         }
                     }
                 }
                 if (is_array($arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["#"]["VERSION_CONTROL"])) {
                     $strModuleDescr .= "<br><b>" . GetMessage("SUP_UPD_DESCR_VERC") . ":</b><br>";
-                    for ($j = 0; $j < count($arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["#"]["VERSION_CONTROL"]); $j++) {
+                    for (
+                        $j = 0; $j < count(
+                        $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["#"]["VERSION_CONTROL"]
+                    ); $j++
+                    ) {
                         $strModuleDescr .= "-&nbsp;" . $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["#"]["VERSION_CONTROL"][$j]["@"]["MODUL"] . " ";
-                        $strModuleDescr .= str_replace("#VERS#", $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["#"]["VERSION_CONTROL"][$j]["@"]["VERSION"], GetMessage("SUP_UPD_DESCR_VERC_N")) . " ";
-                        if (strlen($arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["#"]["VERSION_CONTROL"][$j]["@"]["NOTES"]) > 0) {
+                        $strModuleDescr .= str_replace(
+                                "#VERS#",
+                                $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["#"]["VERSION_CONTROL"][$j]["@"]["VERSION"],
+                                GetMessage("SUP_UPD_DESCR_VERC_N")
+                            ) . " ";
+                        if (strlen(
+                                $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["#"]["VERSION_CONTROL"][$j]["@"]["NOTES"]
+                            ) > 0) {
                             $strModuleDescr .= "<small>(" . $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["#"]["VERSION_CONTROL"][$j]["@"]["NOTES"] . ")</small>";
                         }
                         $strModuleDescr .= "<br>";
@@ -1396,7 +1620,9 @@ if ($TYPE == "UPDATE" && ($STEP == 2 || $STEP == 3) && $MAIN_RIGHT == "W") {
         if (iSize_tmp <= 0) {
             iSize_tmp = 0.1;
         }
-        oTotalSizeInfo.value = "<?= GetMessage("SUP_TOTAL_UPDS") ?>: " + totalNumUpd + " = " + iSize_tmp + " " + degKoeffName;
+        oTotalSizeInfo.value = "<?= GetMessage(
+            "SUP_TOTAL_UPDS"
+        ) ?>: " + totalNumUpd + " = " + iSize_tmp + " " + degKoeffName;
 
 
         // Modules to load
@@ -1454,7 +1680,9 @@ if ($TYPE == "UPDATE" && ($STEP == 2 || $STEP == 3) && $MAIN_RIGHT == "W") {
                 strTxt += '<table border="0" width="100%" cellspacing="1" cellpadding="3"><tr><td width="100%">';
                 strTxt += '<font class="text">';
 
-                strTxt += '<font class="titletext"><?= GetMessage("SUP_MODULE") ?> "' + arModules[ind][1] + '" (' + arModules[ind][0] + ')</font>';
+                strTxt += '<font class="titletext"><?= GetMessage(
+                    "SUP_MODULE"
+                ) ?> "' + arModules[ind][1] + '" (' + arModules[ind][0] + ')</font>';
                 if (arModules[ind][6] == "Y") {
                     strTxt += '<font color="#00AA00"><b> - <?= GetMessage("SUP_NEW") ?>!</b></font>';
                 }
@@ -1477,7 +1705,9 @@ if ($TYPE == "UPDATE" && ($STEP == 2 || $STEP == 3) && $MAIN_RIGHT == "W") {
                 strTxt += '</font>';
                 strTxt += '</td><td align="right" width="0%">';
 
-                strTxt += '<input type="button" value="<?= GetMessage("SUP_DELETE_FROM_LOAD") ?>" OnClick="DoEvent(\'DisableUpdate(' + ind + ')\')">';
+                strTxt += '<input type="button" value="<?= GetMessage(
+                    "SUP_DELETE_FROM_LOAD"
+                ) ?>" OnClick="DoEvent(\'DisableUpdate(' + ind + ')\')">';
 
                 strTxt += '</td></tr><tr><td>';
                 strTxt += '<font class="text">';
@@ -1490,12 +1720,16 @@ if ($TYPE == "UPDATE" && ($STEP == 2 || $STEP == 3) && $MAIN_RIGHT == "W") {
             } else {
                 strTxt += '<table border="0" width="100%" cellspacing="1" cellpadding="3"><tr><td disabled width="100%">';
 
-                strTxt += '<font class="text"><font color="#AAAAAA"><?= GetMessage("SUP_MODULE") ?> "' + arModules[ind][1] + '" (' + arModules[ind][0] + ')</font></font><br>';
+                strTxt += '<font class="text"><font color="#AAAAAA"><?= GetMessage(
+                    "SUP_MODULE"
+                ) ?> "' + arModules[ind][1] + '" (' + arModules[ind][0] + ')</font></font><br>';
 
                 strTxt += '</font>';
                 strTxt += '</td><td align="right" width="0%">';
 
-                strTxt += '<input type="button" value="<?= GetMessage("SUP_ADD_TO_LOAD") ?>" OnClick="DoEvent(\'EnableUpdate(' + ind + ')\')">';
+                strTxt += '<input type="button" value="<?= GetMessage(
+                    "SUP_ADD_TO_LOAD"
+                ) ?>" OnClick="DoEvent(\'EnableUpdate(' + ind + ')\')">';
 
                 strTxt += '</td></tr></table>';
 
@@ -1523,7 +1757,9 @@ if ($TYPE == "UPDATE" && ($STEP == 2 || $STEP == 3) && $MAIN_RIGHT == "W") {
                 iSize_tmp = 0.1;
             }
 
-            oTotalSizeInfo.value = "<?= GetMessage("SUP_TOTAL_UPDS") ?>: " + totalNumUpd + " = " + iSize_tmp + " " + degKoeffName;
+            oTotalSizeInfo.value = "<?= GetMessage(
+                "SUP_TOTAL_UPDS"
+            ) ?>: " + totalNumUpd + " = " + iSize_tmp + " " + degKoeffName;
             if (totalNumUpd <= 0) {
                 oLoadButton.disabled = true;
             }
@@ -1537,7 +1773,15 @@ if ($TYPE == "UPDATE" && ($STEP == 2 || $STEP == 3) && $MAIN_RIGHT == "W") {
                 for (i1 = 0; i1 < arModules[ind][7].length; i1++) {
                     if (arModules[arModules[ind][7][i1]][5] == "Y") {
                         updates_list_DisableUpdate(arModules[ind][7][i1]);
-                        alert('<?= GetMessage("SUP_ALERT_PART1") ?> "' + arModules[arModules[ind][7][i1]][1] + '" (' + arModules[arModules[ind][7][i1]][0] + ') <?= GetMessage("SUP_ALERT_PART2") ?> "' + arModules[ind][1] + '" (' + arModules[ind][0] + '). <?= GetMessage("SUP_ALERT_PART3") ?> "' + arModules[arModules[ind][7][i1]][1] + '" (' + arModules[arModules[ind][7][i1]][0] + ') <?= GetMessage("SUP_ALERT_PART4") ?>.');
+                        alert('<?= GetMessage(
+                            "SUP_ALERT_PART1"
+                        ) ?> "' + arModules[arModules[ind][7][i1]][1] + '" (' + arModules[arModules[ind][7][i1]][0] + ') <?= GetMessage(
+                            "SUP_ALERT_PART2"
+                        ) ?> "' + arModules[ind][1] + '" (' + arModules[ind][0] + '). <?= GetMessage(
+                            "SUP_ALERT_PART3"
+                        ) ?> "' + arModules[arModules[ind][7][i1]][1] + '" (' + arModules[arModules[ind][7][i1]][0] + ') <?= GetMessage(
+                            "SUP_ALERT_PART4"
+                        ) ?>.');
                     }
                 }
             }
@@ -1561,7 +1805,9 @@ if ($TYPE == "UPDATE" && ($STEP == 2 || $STEP == 3) && $MAIN_RIGHT == "W") {
                 iSize_tmp = 0.1;
             }
 
-            oTotalSizeInfo.value = "<?= GetMessage("SUP_TOTAL_UPDS") ?>: " + totalNumUpd + " = " + iSize_tmp + " " + degKoeffName;
+            oTotalSizeInfo.value = "<?= GetMessage(
+                "SUP_TOTAL_UPDS"
+            ) ?>: " + totalNumUpd + " = " + iSize_tmp + " " + degKoeffName;
             if (totalNumUpd > 0) {
                 oLoadButton.disabled = false;
             }
@@ -1575,7 +1821,15 @@ if ($TYPE == "UPDATE" && ($STEP == 2 || $STEP == 3) && $MAIN_RIGHT == "W") {
                 for (i1 = 0; i1 < arModules[ind][8].length; i1++) {
                     if (arModules[arModules[ind][8][i1]][5] != "Y") {
                         updates_list_EnableUpdate(arModules[ind][8][i1]);
-                        alert('<?= GetMessage("SUP_ALERT1_PART1") ?> "' + arModules[arModules[ind][8][i1]][1] + '" (' + arModules[arModules[ind][8][i1]][0] + ') <?= GetMessage("SUP_ALERT1_PART2") ?> "' + arModules[ind][1] + '" (' + arModules[ind][0] + '). <?= GetMessage("SUP_ALERT1_PART3") ?> "' + arModules[arModules[ind][8][i1]][1] + '" (' + arModules[arModules[ind][8][i1]][0] + ') <?= GetMessage("SUP_ALERT1_PART4") ?>.');
+                        alert('<?= GetMessage(
+                            "SUP_ALERT1_PART1"
+                        ) ?> "' + arModules[arModules[ind][8][i1]][1] + '" (' + arModules[arModules[ind][8][i1]][0] + ') <?= GetMessage(
+                            "SUP_ALERT1_PART2"
+                        ) ?> "' + arModules[ind][1] + '" (' + arModules[ind][0] + '). <?= GetMessage(
+                            "SUP_ALERT1_PART3"
+                        ) ?> "' + arModules[arModules[ind][8][i1]][1] + '" (' + arModules[arModules[ind][8][i1]][0] + ') <?= GetMessage(
+                            "SUP_ALERT1_PART4"
+                        ) ?>.');
                     }
                 }
             }
@@ -1681,31 +1935,65 @@ if ($TYPE == "UPDATE" && $STEP == 4 && $MAIN_RIGHT == "W") {
                     $strErrorModules .= "<b>" . $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["NAME"] . "</b> (" . $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["ID"] . ")";
                     if ($arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["NEW"] == "Y") {
                         $strErrorModules .= " - <font class=\"text\">";
-                        $strErrorModules .= "<a href=\"module_admin.php?lang=" . LANG . "&id=" . urlencode($arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["ID"]) . "&" . bitrix_sessid_get() . "&install=" . urlencode(GetMessage("SUP_STEP4_INST")) . "\" target=\"_blank\" title=\"" . GetMessage("SUP_STEP4_INST_ALT") . "\">" . GetMessage("SUP_STEP4_INST_DO") . "</a>";
+                        $strErrorModules .= "<a href=\"module_admin.php?lang=" . LANG . "&id=" . urlencode(
+                                $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["ID"]
+                            ) . "&" . bitrix_sessid_get() . "&install=" . urlencode(
+                                GetMessage("SUP_STEP4_INST")
+                            ) . "\" target=\"_blank\" title=\"" . GetMessage("SUP_STEP4_INST_ALT") . "\">" . GetMessage(
+                                "SUP_STEP4_INST_DO"
+                            ) . "</a>";
                         $strErrorModules .= "</font>";
                     }
                     $strErrorModules .= "<br>";
                     $strErrorModules .= "<i>" . $arErrorModules[$arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["ID"]] . "</i><br>";
 
                     CUpdateSystem::AddMessage2Log(
-                        str_replace("#VERS#", $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["VERSION"], str_replace("#MODULE#", $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["NAME"] . " (" . $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["ID"] . ")", GetMessage("SUP_STEP4_UPD_LOG"))) .
+                        str_replace(
+                            "#VERS#",
+                            $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["VERSION"],
+                            str_replace(
+                                "#MODULE#",
+                                $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["NAME"] . " (" . $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["ID"] . ")",
+                                GetMessage("SUP_STEP4_UPD_LOG")
+                            )
+                        ) .
                         $arErrorModules[$arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["ID"]],
-                        "UPD_ERROR");
-                    $arServerReport[$arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["ID"]] = array($arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["VERSION"], $arErrorModules[$arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["ID"]]);
-                } elseif (array_key_exists($arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["ID"], $arSuccessModules)) {
+                        "UPD_ERROR"
+                    );
+                    $arServerReport[$arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["ID"]] = array(
+                        $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["VERSION"],
+                        $arErrorModules[$arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["ID"]]
+                    );
+                } elseif (array_key_exists(
+                    $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["ID"],
+                    $arSuccessModules
+                )) {
                     $strSuccessModules .= "<b>" . $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["NAME"] . "</b> (" . $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["ID"] . ")";
                     if ($arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["NEW"] == "Y") {
                         $strSuccessModules .= " - <font class=\"text\">";
-                        $strSuccessModules .= "<a href=\"module_admin.php?lang=" . LANG . "&id=" . urlencode($arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["ID"]) . "&" . bitrix_sessid_get() . "&install=" . urlencode(GetMessage("SUP_STEP4_INST")) . "\" target=\"_blank\" title=\"" . GetMessage("SUP_STEP4_INST_ALT") . "\">" . GetMessage("SUP_STEP4_INST_DO") . "</a>";
+                        $strSuccessModules .= "<a href=\"module_admin.php?lang=" . LANG . "&id=" . urlencode(
+                                $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["ID"]
+                            ) . "&" . bitrix_sessid_get() . "&install=" . urlencode(
+                                GetMessage("SUP_STEP4_INST")
+                            ) . "\" target=\"_blank\" title=\"" . GetMessage("SUP_STEP4_INST_ALT") . "\">" . GetMessage(
+                                "SUP_STEP4_INST_DO"
+                            ) . "</a>";
                         $strSuccessModules .= "</font>";
                     }
                     $strSuccessModules .= "<br>";
 
                     $strModuleDescr = "";
                     if (is_array($arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["#"]["DESCRIPTION"])) {
-                        for ($j = 0; $j < count($arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["#"]["DESCRIPTION"]); $j++) {
-                            if (strlen($arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["#"]["DESCRIPTION"][$j]["@"]["VERSION"]) > 0)
+                        for (
+                            $j = 0; $j < count(
+                            $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["#"]["DESCRIPTION"]
+                        ); $j++
+                        ) {
+                            if (strlen(
+                                    $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["#"]["DESCRIPTION"][$j]["@"]["VERSION"]
+                                ) > 0) {
                                 $strModuleDescr .= "<br><b>" . $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["#"]["DESCRIPTION"][$j]["@"]["VERSION"] . "</b><br>";
+                            }
                             $strModuleDescr .= $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["#"]["DESCRIPTION"][$j]["#"] . "<br>";
                         }
                     }
@@ -1714,13 +2002,28 @@ if ($TYPE == "UPDATE" && $STEP == 4 && $MAIN_RIGHT == "W") {
                     $strModuleDescr = addslashes($strModuleDescr);
 
                     CUpdateSystem::AddMessage2Log(
-                        str_replace("#VERS#", $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["VERSION"], str_replace("#MODULE#", $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["NAME"] . " (" . $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["ID"] . ")", GetMessage("SUP_STEP4_UPD_LOG"))) . "<br>" . $strModuleDescr,
-                        "UPD_SUCCESS");
+                        str_replace(
+                            "#VERS#",
+                            $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["VERSION"],
+                            str_replace(
+                                "#MODULE#",
+                                $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["NAME"] . " (" . $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["ID"] . ")",
+                                GetMessage("SUP_STEP4_UPD_LOG")
+                            )
+                        ) . "<br>" . $strModuleDescr,
+                        "UPD_SUCCESS"
+                    );
 
-                    $arServerReport[$arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["ID"]] = array($arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["VERSION"], "S");
+                    $arServerReport[$arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["ID"]] = array(
+                        $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["VERSION"],
+                        "S"
+                    );
                 } else {
                     $strNoneModules .= "<b>" . $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["NAME"] . "</b> (" . $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["ID"] . ")<br>";
-                    $arServerReport[$arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["ID"]] = array($arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["VERSION"], "N");
+                    $arServerReport[$arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["ID"]] = array(
+                        $arModulesUpdates["MODULES"]["#"]["MODULE"][$i]["@"]["VERSION"],
+                        "N"
+                    );
                 }
             }
 
@@ -1840,23 +2143,41 @@ if ($TYPE == "LANGS" && $STEP == 2 && $MAIN_RIGHT == "W") {
                                 arLangs[<?= $i ?>] = Array('<?= $arLangsUpdates["LANGS"]["#"]["LANG"][$i]["@"]["ID"] ?>', 'N');
                             </script>
                             <?
-                            $dDate = mktime(0, 0, 0,
+                            $dDate = mktime(
+                                0,
+                                0,
+                                0,
                                 substr($arLangsUpdates["LANGS"]["#"]["LANG"][$i]["@"]["DATE"], 4, 2),
                                 substr($arLangsUpdates["LANGS"]["#"]["LANG"][$i]["@"]["DATE"], 6, 2),
-                                substr($arLangsUpdates["LANGS"]["#"]["LANG"][$i]["@"]["DATE"], 0, 4));
+                                substr($arLangsUpdates["LANGS"]["#"]["LANG"][$i]["@"]["DATE"], 0, 4)
+                            );
 
                             $strLID = $arLangsUpdates["LANGS"]["#"]["LANG"][$i]["@"]["ID"];
 
                             if ($arLangsUpdates["LANGS"]["#"]["LANG"][$i]["@"]["TYPE"] == "INST") {
                                 $strLangsHTML1 .= "<input type=\"checkbox\" name=\"load_lang_cbox_" . $i . "\" id=\"load_lang_cbox_" . $i . "\" value=\"" . $strLID . "\" OnClick=\"LangClick(this, " . $i . ")\">&nbsp;&nbsp;";
-                                $strLangsHTML1 .= "<b><label for=\"load_lang_cbox_" . $i . "\">[" . htmlspecialchars($strLID) . "]&nbsp;&nbsp;";
-                                $strLangsHTML1 .= htmlspecialchars($arLangsUpdates["LANGS"]["#"]["LANG"][$i]["@"]["NAME"]) . "&nbsp;&nbsp;";
-                                $strLangsHTML1 .= "(" . GetMessage("SUP_LSTEP2_FROM") . "&nbsp;" . Date($strPHPDateFormat, $dDate) . ")</label></b><br>";
+                                $strLangsHTML1 .= "<b><label for=\"load_lang_cbox_" . $i . "\">[" . htmlspecialchars(
+                                        $strLID
+                                    ) . "]&nbsp;&nbsp;";
+                                $strLangsHTML1 .= htmlspecialchars(
+                                        $arLangsUpdates["LANGS"]["#"]["LANG"][$i]["@"]["NAME"]
+                                    ) . "&nbsp;&nbsp;";
+                                $strLangsHTML1 .= "(" . GetMessage("SUP_LSTEP2_FROM") . "&nbsp;" . Date(
+                                        $strPHPDateFormat,
+                                        $dDate
+                                    ) . ")</label></b><br>";
                             } else {
                                 $strLangsHTML2 .= "<input type=\"checkbox\" name=\"load_lang_cbox_" . $i . "\" id=\"load_lang_cbox_" . $i . "\" value=\"" . $strLID . "\" OnClick=\"LangClick(this, " . $i . ")\">&nbsp;&nbsp;";
-                                $strLangsHTML2 .= "<label for=\"load_lang_cbox_" . $i . "\">[" . htmlspecialchars($strLID) . "]&nbsp;&nbsp;";
-                                $strLangsHTML2 .= htmlspecialchars($arLangsUpdates["LANGS"]["#"]["LANG"][$i]["@"]["NAME"]) . "&nbsp;&nbsp;";
-                                $strLangsHTML2 .= "(" . GetMessage("SUP_LSTEP2_FROM") . "&nbsp;" . Date($strPHPDateFormat, $dDate) . ")</label><br>";
+                                $strLangsHTML2 .= "<label for=\"load_lang_cbox_" . $i . "\">[" . htmlspecialchars(
+                                        $strLID
+                                    ) . "]&nbsp;&nbsp;";
+                                $strLangsHTML2 .= htmlspecialchars(
+                                        $arLangsUpdates["LANGS"]["#"]["LANG"][$i]["@"]["NAME"]
+                                    ) . "&nbsp;&nbsp;";
+                                $strLangsHTML2 .= "(" . GetMessage("SUP_LSTEP2_FROM") . "&nbsp;" . Date(
+                                        $strPHPDateFormat,
+                                        $dDate
+                                    ) . ")</label><br>";
                             }
                         }
 
@@ -1974,26 +2295,52 @@ if ($TYPE == "LANGS" && $STEP == 3 && $MAIN_RIGHT == "W") {
                     $strErrorLangs .= "<b>[" . $arLangsUpdates["LANGS"]["#"]["LANG"][$i]["@"]["ID"] . "] " . $arLangsUpdates["LANGS"]["#"]["LANG"][$i]["@"]["NAME"] . "</b><br>";
                     $strErrorLangs .= "<i>" . $arErrorLangs[$arLangsUpdates["LANGS"]["#"]["LANG"][$i]["@"]["ID"]] . "</i><br>";
 
-                    $dDate = mktime(0, 0, 0,
+                    $dDate = mktime(
+                        0,
+                        0,
+                        0,
                         substr($arLangsUpdates["LANGS"]["#"]["LANG"][$i]["@"]["DATE"], 4, 2),
                         substr($arLangsUpdates["LANGS"]["#"]["LANG"][$i]["@"]["DATE"], 6, 2),
-                        substr($arLangsUpdates["LANGS"]["#"]["LANG"][$i]["@"]["DATE"], 0, 4));
+                        substr($arLangsUpdates["LANGS"]["#"]["LANG"][$i]["@"]["DATE"], 0, 4)
+                    );
 
                     CUpdateSystem::AddMessage2Log(
-                        str_replace("#DATE#", Date($strPHPDateFormat, $dDate), str_replace("#LANG#", $arLangsUpdates["LANGS"]["#"]["LANG"][$i]["@"]["NAME"] . " (" . $arLangsUpdates["LANGS"]["#"]["LANG"][$i]["@"]["ID"] . ")", GetMessage("SUP_LSTEP3_UPD_LOG"))) . " " .
+                        str_replace(
+                            "#DATE#",
+                            Date($strPHPDateFormat, $dDate),
+                            str_replace(
+                                "#LANG#",
+                                $arLangsUpdates["LANGS"]["#"]["LANG"][$i]["@"]["NAME"] . " (" . $arLangsUpdates["LANGS"]["#"]["LANG"][$i]["@"]["ID"] . ")",
+                                GetMessage("SUP_LSTEP3_UPD_LOG")
+                            )
+                        ) . " " .
                         $arErrorLangs[$arLangsUpdates["LANGS"]["#"]["LANG"][$i]["@"]["ID"]],
-                        "UPD_ERROR");
+                        "UPD_ERROR"
+                    );
                 } elseif (array_key_exists($arLangsUpdates["LANGS"]["#"]["LANG"][$i]["@"]["ID"], $arSuccessLangs)) {
                     $strSuccessLangs .= "<b>[" . $arLangsUpdates["LANGS"]["#"]["LANG"][$i]["@"]["ID"] . "] " . $arLangsUpdates["LANGS"]["#"]["LANG"][$i]["@"]["NAME"] . "</b><br>";
 
-                    $dDate = mktime(0, 0, 0,
+                    $dDate = mktime(
+                        0,
+                        0,
+                        0,
                         substr($arLangsUpdates["LANGS"]["#"]["LANG"][$i]["@"]["DATE"], 4, 2),
                         substr($arLangsUpdates["LANGS"]["#"]["LANG"][$i]["@"]["DATE"], 6, 2),
-                        substr($arLangsUpdates["LANGS"]["#"]["LANG"][$i]["@"]["DATE"], 0, 4));
+                        substr($arLangsUpdates["LANGS"]["#"]["LANG"][$i]["@"]["DATE"], 0, 4)
+                    );
 
                     CUpdateSystem::AddMessage2Log(
-                        str_replace("#DATE#", Date($strPHPDateFormat, $dDate), str_replace("#LANG#", $arLangsUpdates["LANGS"]["#"]["LANG"][$i]["@"]["NAME"] . " (" . $arLangsUpdates["LANGS"]["#"]["LANG"][$i]["@"]["ID"] . ")", GetMessage("SUP_LSTEP3_UPD_LOG"))),
-                        "UPD_SUCCESS");
+                        str_replace(
+                            "#DATE#",
+                            Date($strPHPDateFormat, $dDate),
+                            str_replace(
+                                "#LANG#",
+                                $arLangsUpdates["LANGS"]["#"]["LANG"][$i]["@"]["NAME"] . " (" . $arLangsUpdates["LANGS"]["#"]["LANG"][$i]["@"]["ID"] . ")",
+                                GetMessage("SUP_LSTEP3_UPD_LOG")
+                            )
+                        ),
+                        "UPD_SUCCESS"
+                    );
                 } else {
                     $strNoneLangs .= "<b>[" . $arLangsUpdates["LANGS"]["#"]["LANG"][$i]["@"]["ID"] . "] " . $arLangsUpdates["LANGS"]["#"]["LANG"][$i]["@"]["NAME"] . "</b><br>";
                 }
@@ -2105,23 +2452,41 @@ if ($TYPE == "HELP" && $STEP == 2 && $MAIN_RIGHT == "W") {
                         $strHelpsHTML1 = "";
                         $strHelpsHTML2 = "";
                         for ($i = 0; $i < count($arHelpUpdates["HELPS"]["#"]["HELP"]); $i++) {
-                            $dDate = mktime(0, 0, 0,
+                            $dDate = mktime(
+                                0,
+                                0,
+                                0,
                                 substr($arHelpUpdates["HELPS"]["#"]["HELP"][$i]["@"]["DATE"], 4, 2),
                                 substr($arHelpUpdates["HELPS"]["#"]["HELP"][$i]["@"]["DATE"], 6, 2),
-                                substr($arHelpUpdates["HELPS"]["#"]["HELP"][$i]["@"]["DATE"], 0, 4));
+                                substr($arHelpUpdates["HELPS"]["#"]["HELP"][$i]["@"]["DATE"], 0, 4)
+                            );
 
                             $strLID = $arHelpUpdates["HELPS"]["#"]["HELP"][$i]["@"]["ID"];
 
                             if ($arHelpUpdates["HELPS"]["#"]["HELP"][$i]["@"]["TYPE"] == "INST") {
                                 $strHelpsHTML1 .= "<input type=\"radio\" name=\"load_lang_rd\" id=\"load_lang_rd_" . $i . "\" value=\"" . $strLID . "\" OnClick=\"HelpClick(this)\">&nbsp;&nbsp;";
-                                $strHelpsHTML1 .= "<b><label for=\"load_lang_rd_" . $i . "\">[" . htmlspecialchars($strLID) . "]&nbsp;&nbsp;";
-                                $strHelpsHTML1 .= htmlspecialchars($arHelpUpdates["HELPS"]["#"]["HELP"][$i]["@"]["NAME"]) . "&nbsp;&nbsp;";
-                                $strHelpsHTML1 .= "(" . GetMessage("SUP_LSTEP2_FROM") . "&nbsp;" . Date($strPHPDateFormat, $dDate) . ")</label></b><br>";
+                                $strHelpsHTML1 .= "<b><label for=\"load_lang_rd_" . $i . "\">[" . htmlspecialchars(
+                                        $strLID
+                                    ) . "]&nbsp;&nbsp;";
+                                $strHelpsHTML1 .= htmlspecialchars(
+                                        $arHelpUpdates["HELPS"]["#"]["HELP"][$i]["@"]["NAME"]
+                                    ) . "&nbsp;&nbsp;";
+                                $strHelpsHTML1 .= "(" . GetMessage("SUP_LSTEP2_FROM") . "&nbsp;" . Date(
+                                        $strPHPDateFormat,
+                                        $dDate
+                                    ) . ")</label></b><br>";
                             } else {
                                 $strHelpsHTML2 .= "<input type=\"radio\" name=\"load_lang_rd\" id=\"load_lang_rd_" . $i . "\" value=\"" . $strLID . "\" OnClick=\"HelpClick(this)\">&nbsp;&nbsp;";
-                                $strHelpsHTML2 .= "<label for=\"load_lang_rd_" . $i . "\">[" . htmlspecialchars($strLID) . "]&nbsp;&nbsp;";
-                                $strHelpsHTML2 .= htmlspecialchars($arHelpUpdates["HELPS"]["#"]["HELP"][$i]["@"]["NAME"]) . "&nbsp;&nbsp;";
-                                $strHelpsHTML2 .= "(" . GetMessage("SUP_LSTEP2_FROM") . "&nbsp;" . Date($strPHPDateFormat, $dDate) . ")</label><br>";
+                                $strHelpsHTML2 .= "<label for=\"load_lang_rd_" . $i . "\">[" . htmlspecialchars(
+                                        $strLID
+                                    ) . "]&nbsp;&nbsp;";
+                                $strHelpsHTML2 .= htmlspecialchars(
+                                        $arHelpUpdates["HELPS"]["#"]["HELP"][$i]["@"]["NAME"]
+                                    ) . "&nbsp;&nbsp;";
+                                $strHelpsHTML2 .= "(" . GetMessage("SUP_LSTEP2_FROM") . "&nbsp;" . Date(
+                                        $strPHPDateFormat,
+                                        $dDate
+                                    ) . ")</label><br>";
                             }
                         }
 
@@ -2206,36 +2571,82 @@ if ($TYPE == "HELP" && $STEP == 3 && $MAIN_RIGHT == "W") {
 
             for ($i = 0; $i < count($arHelpUpdates["HELPS"]["#"]["HELP"]); $i++) {
                 if (array_key_exists($arHelpUpdates["HELPS"]["#"]["HELP"][$i]["@"]["ID"], $arErrorHelp)) {
-                    $dDate = mktime(0, 0, 0,
+                    $dDate = mktime(
+                        0,
+                        0,
+                        0,
                         substr($arHelpUpdates["HELPS"]["#"]["HELP"][$i]["@"]["DATE"], 4, 2),
                         substr($arHelpUpdates["HELPS"]["#"]["HELP"][$i]["@"]["DATE"], 6, 2),
-                        substr($arHelpUpdates["HELPS"]["#"]["HELP"][$i]["@"]["DATE"], 0, 4));
+                        substr($arHelpUpdates["HELPS"]["#"]["HELP"][$i]["@"]["DATE"], 0, 4)
+                    );
 
-                    echo str_replace("#DATE#", Date($strPHPDateFormat, $dDate), str_replace("#HELP#", $arHelpUpdates["HELPS"]["#"]["HELP"][$i]["@"]["NAME"] . " (" . $arHelpUpdates["HELPS"]["#"]["HELP"][$i]["@"]["ID"] . ")", GetMessage("SUP_HSTEP3_UPD_ERR")));
+                    echo str_replace(
+                        "#DATE#",
+                        Date($strPHPDateFormat, $dDate),
+                        str_replace(
+                            "#HELP#",
+                            $arHelpUpdates["HELPS"]["#"]["HELP"][$i]["@"]["NAME"] . " (" . $arHelpUpdates["HELPS"]["#"]["HELP"][$i]["@"]["ID"] . ")",
+                            GetMessage("SUP_HSTEP3_UPD_ERR")
+                        )
+                    );
                     ?>
                     <br>
                     <i><?= $arErrorHelp[$arHelpUpdates["HELPS"]["#"]["HELP"][$i]["@"]["ID"]] ?></i>
                     <br><br>
                     <?
                     CUpdateSystem::AddMessage2Log(
-                        str_replace("#DATE#", Date($strPHPDateFormat, $dDate), str_replace("#HELP#", $arHelpUpdates["HELPS"]["#"]["HELP"][$i]["@"]["NAME"] . " (" . $arHelpUpdates["HELPS"]["#"]["HELP"][$i]["@"]["ID"] . ")", GetMessage("SUP_HSTEP3_UPD_LOG"))) . " " .
+                        str_replace(
+                            "#DATE#",
+                            Date($strPHPDateFormat, $dDate),
+                            str_replace(
+                                "#HELP#",
+                                $arHelpUpdates["HELPS"]["#"]["HELP"][$i]["@"]["NAME"] . " (" . $arHelpUpdates["HELPS"]["#"]["HELP"][$i]["@"]["ID"] . ")",
+                                GetMessage("SUP_HSTEP3_UPD_LOG")
+                            )
+                        ) . " " .
                         $arErrorHelp[$arHelpUpdates["HELPS"]["#"]["HELP"][$i]["@"]["ID"]],
-                        "UPD_ERROR");
+                        "UPD_ERROR"
+                    );
                 } elseif (array_key_exists($arHelpUpdates["HELPS"]["#"]["HELP"][$i]["@"]["ID"], $arSuccessHelp)) {
-                    $dDate = mktime(0, 0, 0,
+                    $dDate = mktime(
+                        0,
+                        0,
+                        0,
                         substr($arHelpUpdates["HELPS"]["#"]["HELP"][$i]["@"]["DATE"], 4, 2),
                         substr($arHelpUpdates["HELPS"]["#"]["HELP"][$i]["@"]["DATE"], 6, 2),
-                        substr($arHelpUpdates["HELPS"]["#"]["HELP"][$i]["@"]["DATE"], 0, 4));
+                        substr($arHelpUpdates["HELPS"]["#"]["HELP"][$i]["@"]["DATE"], 0, 4)
+                    );
 
-                    echo str_replace("#DATE#", Date($strPHPDateFormat, $dDate), str_replace("#HELP#", $arHelpUpdates["HELPS"]["#"]["HELP"][$i]["@"]["NAME"] . " (" . $arHelpUpdates["HELPS"]["#"]["HELP"][$i]["@"]["ID"] . ")", GetMessage("SUP_HSTEP3_UPD_SUC")));
+                    echo str_replace(
+                        "#DATE#",
+                        Date($strPHPDateFormat, $dDate),
+                        str_replace(
+                            "#HELP#",
+                            $arHelpUpdates["HELPS"]["#"]["HELP"][$i]["@"]["NAME"] . " (" . $arHelpUpdates["HELPS"]["#"]["HELP"][$i]["@"]["ID"] . ")",
+                            GetMessage("SUP_HSTEP3_UPD_SUC")
+                        )
+                    );
                     ?>
                     <br><br>
                     <?
                     CUpdateSystem::AddMessage2Log(
-                        str_replace("#DATE#", Date($strPHPDateFormat, $dDate), str_replace("#HELP#", $arHelpUpdates["HELPS"]["#"]["HELP"][$i]["@"]["NAME"] . " (" . $arHelpUpdates["HELPS"]["#"]["HELP"][$i]["@"]["ID"] . ")", GetMessage("SUP_HSTEP3_UPD_LOG"))),
-                        "UPD_SUCCESS");
+                        str_replace(
+                            "#DATE#",
+                            Date($strPHPDateFormat, $dDate),
+                            str_replace(
+                                "#HELP#",
+                                $arHelpUpdates["HELPS"]["#"]["HELP"][$i]["@"]["NAME"] . " (" . $arHelpUpdates["HELPS"]["#"]["HELP"][$i]["@"]["ID"] . ")",
+                                GetMessage("SUP_HSTEP3_UPD_LOG")
+                            )
+                        ),
+                        "UPD_SUCCESS"
+                    );
                 } else {
-                    echo str_replace("#HELP#", $arHelpUpdates["HELPS"]["#"]["HELP"][$i]["@"]["NAME"] . " (" . $arHelpUpdates["HELPS"]["#"]["HELP"][$i]["@"]["ID"] . ")", GetMessage("SUP_HSTEP3_UPD_NONE"));
+                    echo str_replace(
+                        "#HELP#",
+                        $arHelpUpdates["HELPS"]["#"]["HELP"][$i]["@"]["NAME"] . " (" . $arHelpUpdates["HELPS"]["#"]["HELP"][$i]["@"]["ID"] . ")",
+                        GetMessage("SUP_HSTEP3_UPD_NONE")
+                    );
                     ?>
                     <br><br>
                     <?
@@ -2288,9 +2699,11 @@ if ($TYPE == "HISTORY")
                         "S",
                         substr($buffer, 0, strlen("0000-00-00 00:00:00")),
                         substr($buffer, strlen("0000-00-00 00:00:00 - UPD_SUCCESS - "))
-                    ));
-                if (count($arLogRecs) > $iMaxNumRecs)
+                    )
+                );
+                if (count($arLogRecs) > $iMaxNumRecs) {
                     array_splice($arLogRecs, $iMaxNumRecs);
+                }
             } elseif (substr($buffer, strlen("0000-00-00 00:00:00 "), strlen("- UPD_ERROR -")) == "- UPD_ERROR -") {
                 array_unshift(
                     $arLogRecs,
@@ -2298,9 +2711,11 @@ if ($TYPE == "HISTORY")
                         "E",
                         substr($buffer, 0, strlen("0000-00-00 00:00:00")),
                         substr($buffer, strlen("0000-00-00 00:00:00 - UPD_ERROR - "))
-                    ));
-                if (count($arLogRecs) > $iMaxNumRecs)
+                    )
+                );
+                if (count($arLogRecs) > $iMaxNumRecs) {
                     array_splice($arLogRecs, $iMaxNumRecs);
+                }
             } elseif (substr($buffer, strlen("0000-00-00 00:00:00 "), strlen("- UPD_NOTE -")) == "- UPD_NOTE -") {
                 array_unshift(
                     $arLogRecs,
@@ -2308,9 +2723,11 @@ if ($TYPE == "HISTORY")
                         "N",
                         substr($buffer, 0, strlen("0000-00-00 00:00:00")),
                         substr($buffer, strlen("0000-00-00 00:00:00 - UPD_NOTE - "))
-                    ));
-                if (count($arLogRecs) > $iMaxNumRecs)
+                    )
+                );
+                if (count($arLogRecs) > $iMaxNumRecs) {
                     array_splice($arLogRecs, $iMaxNumRecs);
+                }
             }
         }
         fclose($logf);
@@ -2438,12 +2855,13 @@ if ($TYPE == "HISTORY")
         < font
     class
     = "tablebodytext" ><?
-        if ($arLogRecs[$i][0] == "S")
+        if ($arLogRecs[$i][0] == "S") {
             echo GetMessage("SUP_HIST_SUCCESS");
-        elseif ($arLogRecs[$i][0] == "E")
+        } elseif ($arLogRecs[$i][0] == "E") {
             echo GetMessage("SUP_HIST_ERROR");
-        elseif ($arLogRecs[$i][0] == "N")
+        } elseif ($arLogRecs[$i][0] == "N") {
             echo GetMessage("SUP_HIST_NOTES");
+        }
         ?>< /font>
         < /td>
         < /tr>

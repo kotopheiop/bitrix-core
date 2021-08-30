@@ -9,7 +9,6 @@
 namespace Bitrix\Main\UserConsent;
 
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Text\BinaryString;
 
 Loc::loadLanguageFile(__FILE__);
 
@@ -34,7 +33,7 @@ class Text
 
         $dataTmp = array();
         foreach ($data as $key => $value) {
-            $key = strtolower($key);
+            $key = mb_strtolower($key);
             if (is_array($value)) {
                 $value = self::formatArrayToText($value);
             } else {
@@ -64,7 +63,12 @@ class Text
         $from = array();
         $to = array();
 
-        $matchResult = preg_match_all('/\%cut\.([A-Za-z0-9_\.]*)\.(start|end)\%/', $template, $matches, PREG_OFFSET_CAPTURE);
+        $matchResult = preg_match_all(
+            '/\%cut\.([A-Za-z0-9_\.]*)\.(start|end)\%/',
+            $template,
+            $matches,
+            PREG_OFFSET_CAPTURE
+        );
         if (!$matchResult) {
             return $template;
         }
@@ -88,7 +92,7 @@ class Text
             }
 
             if ($mod == 'end') {
-                $pos += BinaryString::getLength($tag);
+                $pos += strlen($tag);
             }
 
             $cut[$var][$mod][] = $pos;
@@ -96,7 +100,6 @@ class Text
 
         $items = array();
         foreach ($cut as $key => $item) {
-
             foreach ($item['start'] as $index => $position) {
                 if (!isset($item['end'][$index])) {
                     continue;
@@ -123,7 +126,7 @@ class Text
                 continue;
             }
 
-            $template = BinaryString::getSubstring($template, 0, $start) . BinaryString::getSubstring($template, $end);
+            $template = substr($template, 0, $start) . substr($template, $end);
         }
 
         return str_replace($from, $to, $template);

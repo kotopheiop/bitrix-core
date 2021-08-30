@@ -1,25 +1,27 @@
 <?php
+
 IncludeModuleLangFile(__FILE__);
 
 // fix HTTP_REFERER, r1, r2 for  google ads
 function __GoogleAd($set_new_adv = false, $r1 = false, $r2 = false, $s = "http://pagead2.googlesyndication.com/")
 {
     if (intval($_SESSION["SESS_SESSION_ID"]) <= 0 &&
-        strlen($_SERVER["HTTP_REFERER"]) > 0 &&
-        strncmp($s, $_SERVER["HTTP_REFERER"], strlen($s)) == 0) {
+        $_SERVER["HTTP_REFERER"] <> '' &&
+        strncmp($s, $_SERVER["HTTP_REFERER"], mb_strlen($s)) == 0) {
         $arr = parse_url($_SERVER["HTTP_REFERER"]);
-        if (strlen($arr["query"]) > 0) {
+        if ($arr["query"] <> '') {
             parse_str($arr["query"], $ar);
-            if (strlen($ar["url"]) > 0) {
+            if ($ar["url"] <> '') {
                 $_SERVER["HTTP_REFERER"] = $ar["url"];
                 if ($set_new_adv) {
                     __SetReferer("referer1", "REFERER1_SYN");
                     __SetReferer("referer2", "REFERER2_SYN");
-                    if (strlen($_SESSION["referer1"]) <= 0 && strlen($_SESSION["referer2"]) <= 0) {
+                    if ($_SESSION["referer1"] == '' && $_SESSION["referer2"] == '') {
                         __GetReferringSite($protocol, $site_port, $site, $page, $_SERVER["HTTP_REFERER"]);
                         $_SESSION["referer1"] = ($r1 !== false) ? $r1 : "google_adwords";
-                        if ($r2 !== false) $_SESSION["referer2"] = $r2;
-                        else {
+                        if ($r2 !== false) {
+                            $_SESSION["referer2"] = $r2;
+                        } else {
                             $_ar = explode(".", $site);
                             if (is_array($_ar)) {
                                 $_ar = array_reverse($_ar);
@@ -42,19 +44,19 @@ function __GetReferringSite(
     &$server_name_wo_port, // www.site.ru
     &$PAGE_FROM, // page with out site (uri)
     $URL_FROM = false
-)
-{
-    if ($URL_FROM === false)
+) {
+    if ($URL_FROM === false) {
         $URL_FROM = $_SERVER["HTTP_REFERER"];
+    }
 
     if (!empty($URL_FROM)) {
-        $protocol = substr($URL_FROM, 0, 7);
+        $protocol = mb_substr($URL_FROM, 0, 7);
         if ($protocol == "http://") {
-            $server_name = substr($URL_FROM, 7);
+            $server_name = mb_substr($URL_FROM, 7);
         } else {
-            $protocol = substr($URL_FROM, 0, 8);
+            $protocol = mb_substr($URL_FROM, 0, 8);
             if ($protocol == "https://") {
-                $server_name = substr($URL_FROM, 8);
+                $server_name = mb_substr($URL_FROM, 8);
             } else {
                 $server_name = "";
                 $protocol = "";
@@ -62,21 +64,24 @@ function __GetReferringSite(
         }
 
         if (!empty($server_name)) {
-            $p = strpos($server_name, "/");
-            if ($p > 0)
-                $server_name = substr($server_name, 0, $p);
+            $p = mb_strpos($server_name, "/");
+            if ($p > 0) {
+                $server_name = mb_substr($server_name, 0, $p);
+            }
 
-            $server_name = strtolower($server_name);
+            $server_name = mb_strtolower($server_name);
 
-            $p = strpos($server_name, ":");
-            if ($p > 0)
-                $server_name_wo_port = substr($server_name, 0, $p);
-            else
+            $p = mb_strpos($server_name, ":");
+            if ($p > 0) {
+                $server_name_wo_port = mb_substr($server_name, 0, $p);
+            } else {
                 $server_name_wo_port = $server_name;
+            }
 
-            $PAGE_FROM = substr($URL_FROM, strlen($protocol . $server_name));
-            if (strlen($PAGE_FROM) <= 0)
+            $PAGE_FROM = mb_substr($URL_FROM, mb_strlen($protocol . $server_name));
+            if ($PAGE_FROM == '') {
                 $PAGE_FROM = "/";
+            }
         }
 
         return true;
@@ -90,13 +95,13 @@ function __SetReferer($referer, $syn)
 {
     stat_session_register($referer);
     global $$referer;
-    if (strlen($_SESSION[$referer]) <= 0) {
+    if ($_SESSION[$referer] == '') {
         $_SESSION[$referer] = $$referer;
         $arr = explode(",", COption::GetOptionString("statistic", $syn));
         foreach ($arr as $s) {
             $s = trim($s);
             global $$s;
-            if (strlen($$s) > 0) {
+            if ($$s <> '') {
                 $_SESSION[$referer] = $$s;
                 break;
             }
@@ -110,22 +115,28 @@ function __SetNoKeepStatistics()
         $key_to_check = "no_keep_statistic_" . LICENSE_KEY;
         if (isset($_REQUEST[$key_to_check]) && $_REQUEST[$key_to_check] <> '') {
             $_SESSION["SESS_NO_KEEP_STATISTIC"] = $_REQUEST[$key_to_check];
-            if (!isset($_SESSION["SESS_NO_AGENT_STATISTIC"]) || $_SESSION["SESS_NO_AGENT_STATISTIC"] == '')
+            if (!isset($_SESSION["SESS_NO_AGENT_STATISTIC"]) || $_SESSION["SESS_NO_AGENT_STATISTIC"] == '') {
                 $_SESSION["SESS_NO_AGENT_STATISTIC"] = $_REQUEST[$key_to_check];
+            }
         }
     }
 
     $key_to_check = "no_agent_statistic_" . LICENSE_KEY;
     if (isset($_REQUEST[$key_to_check]) && $_REQUEST[$key_to_check] <> '') {
-        if (!isset($_SESSION["SESS_NO_AGENT_STATISTIC"]) || $_SESSION["SESS_NO_AGENT_STATISTIC"] == '')
+        if (!isset($_SESSION["SESS_NO_AGENT_STATISTIC"]) || $_SESSION["SESS_NO_AGENT_STATISTIC"] == '') {
             $_SESSION["SESS_NO_AGENT_STATISTIC"] = $_REQUEST[$key_to_check];
+        }
     }
 }
 
 function __SortLinkStat($ar1, $ar2)
 {
-    if ($ar1["CNT"] < $ar2["CNT"]) return 1;
-    if ($ar1["CNT"] > $ar2["CNT"]) return -1;
+    if ($ar1["CNT"] < $ar2["CNT"]) {
+        return 1;
+    }
+    if ($ar1["CNT"] > $ar2["CNT"]) {
+        return -1;
+    }
     return 0;
 }
 
@@ -136,12 +147,10 @@ function __IsHiddenLink($link)
 
 function __ModifyATags($matches)
 {
-
     global $arHashLink;
     $link = $matches[3];
 
-    if (strlen($link) && !__IsHiddenLink($link) && !preg_match("/<img/i", $matches[0])) {
-
+    if (mb_strlen($link) && !__IsHiddenLink($link) && !preg_match("/<img/i", $matches[0])) {
         $link = __GetFullRequestUri(__GetFullCurPage($link));
         $crc32 = crc32ex($link);
         if (array_key_exists($crc32, $arHashLink)) {
@@ -191,12 +200,14 @@ function GetCookieString($arrCookie = false)
 {
     $res = "";
 
-    if ($arrCookie === false)
+    if ($arrCookie === false) {
         $arrCookie = $_COOKIE;
+    }
 
     if (is_array($arrCookie)) {
-        foreach ($arrCookie as $key => $value)
+        foreach ($arrCookie as $key => $value) {
             $res .= "[" . $key . "] = " . $value . "\n";
+        }
     }
 
     return $res;
@@ -204,20 +215,22 @@ function GetCookieString($arrCookie = false)
 
 function __GetCurrentPage()
 {
-    if (CModule::IncludeModule("wacko"))
+    if (CModule::IncludeModule("wacko")) {
         return CgeneralWacko::GetCurPage();
-    else
+    } else {
         return __GetPage();
+    }
 }
 
 function __GetCurrentDir()
 {
     /** @var CMain $APPLICATION */
     global $APPLICATION;
-    if (CModule::IncludeModule("wacko"))
+    if (CModule::IncludeModule("wacko")) {
         return CgeneralWacko::GetCurDir();
-    else
+    } else {
         return $APPLICATION->GetCurDir();
+    }
 }
 
 function __GetPage($page = false, $with_imp_params = true, $curdir = false)
@@ -227,20 +240,21 @@ function __GetPage($page = false, $with_imp_params = true, $curdir = false)
         $check_path = false;
     } else {
         $page = str_replace("\\", "/", $page);
-        if (substr($page, 0, 1) !== "/" && strpos($page, "://") === false) {
+        if (mb_substr($page, 0, 1) !== "/" && mb_strpos($page, "://") === false) {
             $curdir = ($curdir !== false) ? $curdir : __GetCurrentDir();
             $page = Rel2Abs($curdir, $page);
         }
         $check_path = true;
     }
 
-    $found = strpos($page, "?");
-    $sPath = ($found ? substr($page, 0, $found) : $page);
+    $found = mb_strpos($page, "?");
+    $sPath = ($found ? mb_substr($page, 0, $found) : $page);
     if ($check_path) {
         $sPath = str_replace("\\", "/", $sPath);
-        $last_char = substr($sPath, -1);
-        if ($last_char != "/" && @is_dir($_SERVER["DOCUMENT_ROOT"] . $sPath))
+        $last_char = mb_substr($sPath, -1);
+        if ($last_char != "/" && @is_dir($_SERVER["DOCUMENT_ROOT"] . $sPath)) {
             $sPath .= "/";
+        }
     }
 
     if ($with_imp_params) {
@@ -257,10 +271,11 @@ function __GetPage($page = false, $with_imp_params = true, $curdir = false)
         $i = 0;
         foreach ($arImpParams as $key) {
             if (array_key_exists($key, $arVars) && !is_array($arVars[$key])) {
-                if ($i > 0)
+                if ($i > 0) {
                     $sPath .= "&";
-                else
+                } else {
                     $sPath .= "?";
+                }
 
                 $sPath .= urlencode($key) . "=" . urlencode($arVars[$key]);
                 $i++;
@@ -269,12 +284,12 @@ function __GetPage($page = false, $with_imp_params = true, $curdir = false)
     }
 
     $ar = explode("?", $sPath);
-    if (strlen($ar[0]) > 0) {
+    if ($ar[0] <> '') {
         $arTail = explode(",", COption::GetOptionString("statistic", "DIRECTORY_INDEX"));
         foreach ($arTail as $tail) {
             $tail = "/" . trim($tail);
-            if (substr($ar[0], -strlen($tail)) == $tail) {
-                $ar[0] = substr($ar[0], 0, strlen($ar[0]) - strlen($tail) + 1);
+            if (mb_substr($ar[0], -mb_strlen($tail)) == $tail) {
+                $ar[0] = mb_substr($ar[0], 0, mb_strlen($ar[0]) - mb_strlen($tail) + 1);
                 break;
             }
         }
@@ -290,7 +305,9 @@ function __GetFullCurPage($page = false, $with_imp_params = true)
 
 function __GetFullReferer($referer = false)
 {
-    if ($referer === false) $referer = $_SERVER["HTTP_REFERER"];
+    if ($referer === false) {
+        $referer = $_SERVER["HTTP_REFERER"];
+    }
     $referer = __GetPage($referer);
     return $referer;
 }
@@ -299,21 +316,37 @@ function __GetFullRequestUri($url = false, $host = false, $port = false, $protoc
 {
     global $HTTP_HOST, $SERVER_PORT, $APPLICATION;
 
-    if ($url === false) $url = $_SERVER["REQUEST_URI"];
-    if ($host === false) $host = $_SERVER["HTTP_HOST"];
-    if ($port === false) $port = $_SERVER["SERVER_PORT"];
-    if ($protocol === false) $protocol = CMain::IsHTTPS() ? "https" : "http";
+    if ($url === false) {
+        $url = $_SERVER["REQUEST_URI"];
+    }
+    if ($host === false) {
+        $host = $_SERVER["HTTP_HOST"];
+    }
+    if ($port === false) {
+        $port = $_SERVER["SERVER_PORT"];
+    }
+    if ($protocol === false) {
+        $protocol = CMain::IsHTTPS() ? "https" : "http";
+    }
 
     $res = "";
-    $host_exists = (strpos($url, "http://") === false && strpos($url, "https://") === false) ? false : true;
+    $host_exists = (mb_strpos($url, "http://") === false && mb_strpos($url, "https://") === false) ? false : true;
     if (!$host_exists) {
-        if (strlen($protocol) > 0) $res = $protocol . "://";
-        if (strlen($host) > 0) $res .= $host;
-        if (intval($port) > 0 && intval($port) != 80 && intval($port) != 443 && strpos($host, ":") === false) $res .= ":" . $port;
+        if ($protocol <> '') {
+            $res = $protocol . "://";
+        }
+        if ($host <> '') {
+            $res .= $host;
+        }
+        if (intval($port) > 0 && intval($port) != 80 && intval($port) != 443 && mb_strpos($host, ":") === false) {
+            $res .= ":" . $port;
+        }
     }
-    if (strlen($url) > 0) $res .= $url;
+    if ($url <> '') {
+        $res .= $url;
+    }
 
-    if (strpos($res, "/bitrix/admin/") !== false) {
+    if (mb_strpos($res, "/bitrix/admin/") !== false) {
         $res = str_replace("&mode=list", "", $res);
         $res = str_replace("&mode=frame", "", $res);
     }
@@ -325,9 +358,11 @@ function __GetFullRequestUri($url = false, $host = false, $port = false, $protoc
 function GetStatisticBaseCurrency()
 {
     $base_currency = trim(COption::GetOptionString("statistic", "BASE_CURRENCY"));
-    if ($base_currency != "xxx" && strlen($base_currency) > 0) {
+    if ($base_currency != "xxx" && $base_currency <> '') {
         if (CModule::IncludeModule("currency")) {
-            if (CCurrency::GetByID($base_currency)) return $base_currency;
+            if (CCurrency::GetByID($base_currency)) {
+                return $base_currency;
+            }
         }
     }
     return "";
@@ -353,11 +388,12 @@ function LoadEventsBySteps(
     $check_unique = "Y",    // check uniquness
     $base_currency = "",    // module base currency
     &$next_pos
-)
-{
+) {
     $all_loaded = "";
     if ($fp = fopen($csvfile, "rb")) {
-        if ($next_pos > 0) fseek($fp, $next_pos);
+        if ($next_pos > 0) {
+            fseek($fp, $next_pos);
+        }
         $start = getmicrotime();
         $next_line = intval($next_line);
         $read_lines = 0;
@@ -377,23 +413,25 @@ function LoadEventsBySteps(
                 $EVENT3 = $arrCSV[1];
                 $DATE_ENTER = $arrCSV[2];
                 $PARAMETER = $arrCSV[3];
-                $MONEY = $arrCSV[4];
+                $MONEY = floatval($arrCSV[4]);
                 $CURRENCY = $arrCSV[5];
                 $CHARGEBACK = $arrCSV[6];
                 $RES_MONEY = $MONEY;
                 $EVENT_ID = intval($EVENT_ID);
                 $CHARGEBACK = ($CHARGEBACK == "Y") ? "Y" : "N";
                 if ($EVENT_ID > 0) {
-                    if (strlen($base_currency) <= 0) {
+                    if ($base_currency == '') {
                         $base_currency = GetStatisticBaseCurrency();
                     }
-                    if (strlen($base_currency) > 0) {
-                        if ($CURRENCY != $base_currency && strlen(trim($CURRENCY)) > 0) {
+                    if ($base_currency <> '') {
+                        if ($CURRENCY != $base_currency && trim($CURRENCY) <> '') {
                             if (CModule::IncludeModule("currency")) {
                                 $stmp = MkDateTime(ConvertDateTime($DATE_ENTER, "D.M.Y H:I:S"), "d.m.Y H:i:s");
                                 $valDate = date("Y-m-d", $stmp);
                                 $rate = CCurrencyRates::GetConvertFactor($CURRENCY, $base_currency, $valDate);
-                                if ($rate > 0) $RES_MONEY = $MONEY * $rate;
+                                if ($rate > 0) {
+                                    $RES_MONEY = $MONEY * $rate;
+                                }
                             }
                         }
                     }
@@ -430,10 +468,11 @@ function LoadEventsBySteps(
                 }
             }
         }
-        if ($all_loaded == "N")
+        if ($all_loaded == "N") {
             $next_pos = ftell($fp);
-        else
+        } else {
             $next_pos = 0;
+        }
         @fclose($fp);
         if ($all_loaded != "N") {
             $all_loaded = "Y";
@@ -458,8 +497,9 @@ function stat_session_register($var_name)
         }
         $arrSTAT_SESSION = array();
     } elseif ($var_name === true) {
-        foreach ($arrSTAT_SESSION as $key => $value)
+        foreach ($arrSTAT_SESSION as $key => $value) {
             $arrSTAT_SESSION[$key] = $_SESSION[$key];
+        }
         return $arrSTAT_SESSION;
     } else {
         $arrSTAT_SESSION[$var_name] = 0;
@@ -504,16 +544,22 @@ function SendDailyStatistics()
         $bef_yesterday_date = GetTime(time() - 172800, "SHORT", $arSite["ID"], true);
 
         $arComm = CTraffic::GetCommonValues();
-        $adv = CAdv::GetList($a_by, $a_order, array(), $is_filtered, "", $arrGROUP_DAYS, $v);
-        $events = CStatEventType::GetList(($e_by = "s_stat"), ($e_order = "desc"), array(), $is_filtered);
-        $referers = CTraffic::GetRefererList($by, $order, array(), $is_filtered);
+        $adv = CAdv::GetList();
+        $events = CStatEventType::GetList("s_stat", "desc");
+        $referers = CTraffic::GetRefererList();
         $phrases = CTraffic::GetPhraseList($s_by, $s_order, array(), $is_filtered);
-        $searchers = CSearcher::GetList(($f_by = "s_stat"), ($f_order = "desc"), array(), $is_filtered);
+        $searchers = CSearcher::GetList("s_stat", "desc");
 
         $OLD_MESS = $MESS;
         $MESS = array();
-        IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/include.php", $arSite["LANGUAGE_ID"]);
-        IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/admin/stat_list.php", $arSite["LANGUAGE_ID"]);
+        IncludeModuleLangFile(
+            $_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/include.php",
+            $arSite["LANGUAGE_ID"]
+        );
+        IncludeModuleLangFile(
+            $_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/admin/stat_list.php",
+            $arSite["LANGUAGE_ID"]
+        );
 
         $HTML_HEADER = '
 			<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
@@ -542,35 +588,53 @@ function SendDailyStatistics()
         $HTML_COMMON = '
 					<table border="0" cellspacing="1" cellpadding="3" width="100%">
 						<tr>
-							<td valign="top" align="center" class="tablehead1" width="48%" nowrap><font class="tableheadtext">' . GetMessage("STAT_VISIT") . '</font></td>
-							<td valign="top" align="center" class="tablehead2" width="13%" nowrap><font class="tableheadtext">' . GetMessage("STAT_TODAY") . '</font><br><font class="notesmall">' . $now_date . '</font></td>
-							<td valign="top" align="center" class="tablehead2" width="13%" nowrap><font class="tableheadtext">' . GetMessage("STAT_YESTERDAY") . '</font><br><font class="notesmall">' . $yesterday_date . '</font></td>
-							<td valign="top" align="center" class="tablehead2" width="13%" nowrap><font class="tableheadtext">' . GetMessage("STAT_BEFORE_YESTERDAY") . '</font><br><font class="notesmall">' . $bef_yesterday_date . '</font></td>
-							<td valign="top" align="center" class="tablehead3" width="13%" nowrap><font class="tableheadtext">' . GetMessage("STAT_TOTAL_1") . '</font></td>
+							<td valign="top" align="center" class="tablehead1" width="48%" nowrap><font class="tableheadtext">' . GetMessage(
+                "STAT_VISIT"
+            ) . '</font></td>
+							<td valign="top" align="center" class="tablehead2" width="13%" nowrap><font class="tableheadtext">' . GetMessage(
+                "STAT_TODAY"
+            ) . '</font><br><font class="notesmall">' . $now_date . '</font></td>
+							<td valign="top" align="center" class="tablehead2" width="13%" nowrap><font class="tableheadtext">' . GetMessage(
+                "STAT_YESTERDAY"
+            ) . '</font><br><font class="notesmall">' . $yesterday_date . '</font></td>
+							<td valign="top" align="center" class="tablehead2" width="13%" nowrap><font class="tableheadtext">' . GetMessage(
+                "STAT_BEFORE_YESTERDAY"
+            ) . '</font><br><font class="notesmall">' . $bef_yesterday_date . '</font></td>
+							<td valign="top" align="center" class="tablehead3" width="13%" nowrap><font class="tableheadtext">' . GetMessage(
+                "STAT_TOTAL_1"
+            ) . '</font></td>
 						</tr>
 						<tr valign="top">
-							<td valign="top" class="tablebody1" width="48%" nowrap><font class="tablebodytext">' . GetMessage("STAT_HITS") . '</font></td>
+							<td valign="top" class="tablebody1" width="48%" nowrap><font class="tablebodytext">' . GetMessage(
+                "STAT_HITS"
+            ) . '</font></td>
 							<td valign="top" align="right" class="tablebody2" width="13%" nowrap><font class="tablebodytext">' . $arComm["TODAY_HITS"] . '</font></td>
 							<td valign="top" align="right" class="tablebody2" width="13%" nowrap><font class="tablebodytext">' . $arComm["YESTERDAY_HITS"] . '</font></td>
 							<td valign="top" align="right" class="tablebody2" width="13%" nowrap><font class="tablebodytext">' . $arComm["B_YESTERDAY_HITS"] . '</font></td>
 							<td valign="top" align="right" class="tablebody3" width="13%" nowrap><font class="tablebodytext">' . $arComm["TOTAL_HITS"] . '&nbsp;&nbsp;</font></td>
 						</tr>
 						<tr valign="top">
-							<td valign="top" class="tablebody1" width="48%" nowrap><font class="tablebodytext">' . GetMessage("STAT_HOSTS") . '</font></td>
+							<td valign="top" class="tablebody1" width="48%" nowrap><font class="tablebodytext">' . GetMessage(
+                "STAT_HOSTS"
+            ) . '</font></td>
 							<td valign="top" align="right" class="tablebody2" width="13%" nowrap><font class="tablebodytext">' . $arComm["TODAY_HOSTS"] . '</font></td>
 							<td valign="top" align="right" class="tablebody2" width="13%" nowrap><font class="tablebodytext">' . $arComm["YESTERDAY_HOSTS"] . '</font></td>
 							<td valign="top" align="right" class="tablebody2" width="13%" nowrap><font class="tablebodytext">' . $arComm["B_YESTERDAY_HOSTS"] . '</font></td>
 							<td valign="top" align="right" class="tablebody3" width="13%" nowrap><font class="tablebodytext">' . $arComm["TOTAL_HOSTS"] . '&nbsp;&nbsp;</font></td>
 						</tr>
 						<tr valign="top">
-							<td valign="top" class="tablebody1" width="48%" nowrap><font class="tablebodytext">' . GetMessage("STAT_SESSIONS") . '</font></td>
+							<td valign="top" class="tablebody1" width="48%" nowrap><font class="tablebodytext">' . GetMessage(
+                "STAT_SESSIONS"
+            ) . '</font></td>
 							<td valign="top" align="right" class="tablebody2" width="13%" nowrap><font class="tablebodytext">' . $arComm["TODAY_SESSIONS"] . '</font></td>
 							<td valign="top" align="right" class="tablebody2" width="13%" nowrap><font class="tablebodytext">' . $arComm["YESTERDAY_SESSIONS"] . '</font></td>
 							<td valign="top" align="right" class="tablebody2" width="13%" nowrap><font class="tablebodytext">' . $arComm["B_YESTERDAY_SESSIONS"] . '</font></td>
 							<td valign="top" align="right" class="tablebody3" width="13%" nowrap><font class="tablebodytext">' . $arComm["TOTAL_SESSIONS"] . '&nbsp;&nbsp;</font></td>
 						</tr>
 						<tr valign="top">
-							<td valign="top" class="tablebody1" width="48%" nowrap><font class="tablebodytext">' . GetMessage("STAT_C_EVENTS") . '</font></td>
+							<td valign="top" class="tablebody1" width="48%" nowrap><font class="tablebodytext">' . GetMessage(
+                "STAT_C_EVENTS"
+            ) . '</font></td>
 							<td valign="top" align="right" class="tablebody2" width="13%" nowrap><font class="tablebodytext">' . $arComm["TODAY_EVENTS"] . '</font></td>
 							<td valign="top" align="right" class="tablebody2" width="13%" nowrap><font class="tablebodytext">' . $arComm["YESTERDAY_EVENTS"] . '</font></td>
 							<td valign="top" align="right" class="tablebody2" width="13%" nowrap><font class="tablebodytext">' . $arComm["B_YESTERDAY_EVENTS"] . '</font></td>
@@ -581,15 +645,21 @@ function SendDailyStatistics()
 								<table border="0" cellspacing="0" cellpadding="0" width="100%">
 									<tr>
 										<td width="100%"><font class="tablebodytext">' . GetMessage("STAT_GUESTS") . '</font></td>
-										<td width="0%" align="right" class="tablelinebottom" nowrap><font class="tablebodytext">' . GetMessage("STAT_TOTAL") . '</font></td>
+										<td width="0%" align="right" class="tablelinebottom" nowrap><font class="tablebodytext">' . GetMessage(
+                "STAT_TOTAL"
+            ) . '</font></td>
 									</tr>
 									<tr>
 										<td></td>
-										<td class="tablelinebottom" align="right" nowrap><font class="tablebodytext">' . GetMessage("STAT_NEW") . '</font></td>
+										<td class="tablelinebottom" align="right" nowrap><font class="tablebodytext">' . GetMessage(
+                "STAT_NEW"
+            ) . '</font></td>
 									</tr>
 									<tr>
 										<td></td>
-										<td align="right" nowrap><font class="tablebodytext">' . GetMessage("STAT_ONLINE") . '</font></td>
+										<td align="right" nowrap><font class="tablebodytext">' . GetMessage(
+                "STAT_ONLINE"
+            ) . '</font></td>
 									</tr>
 								</table></td>
 							<td valign="top" align="right" class="tablebody2" width="13%" nowrap>
@@ -624,11 +694,21 @@ function SendDailyStatistics()
 			<font class="tablebodytext">' . GetMessage("STAT_ADV") . ' (' . GetMessage("STAT_DIRECT_SESSIONS") . ') (Top 10):</font><br>
 			<table border="0" cellspacing="1" cellpadding="3" width="100%">
 				<tr>
-					<td valign="top" align="center" class="tablehead1" width="48%" nowrap><font class="tableheadtext">' . GetMessage("STAT_ADV_NAME") . '</font></td>
-					<td valign="top" align="center" class="tablehead2" width="13%" nowrap><font class="tableheadtext">' . GetMessage("STAT_TODAY") . '</font><br><font class="notesmall">' . $now_date . '</font></td>
-					<td valign="top" align="center" class="tablehead2" width="13%" nowrap><font class="tableheadtext">' . GetMessage("STAT_YESTERDAY") . '</font><br><font class="notesmall">' . $yesterday_date . '</font></td>
-					<td valign="top" align="center" class="tablehead2" width="13%" nowrap><font class="tableheadtext">' . GetMessage("STAT_BEFORE_YESTERDAY") . '</font><br><font class="notesmall">' . $bef_yesterday_date . '</font></td>
-					<td valign="top" align="center" class="tablehead3" width="13%" nowrap><font class="tableheadtext">' . GetMessage("STAT_TOTAL_1") . '</font></td>
+					<td valign="top" align="center" class="tablehead1" width="48%" nowrap><font class="tableheadtext">' . GetMessage(
+                "STAT_ADV_NAME"
+            ) . '</font></td>
+					<td valign="top" align="center" class="tablehead2" width="13%" nowrap><font class="tableheadtext">' . GetMessage(
+                "STAT_TODAY"
+            ) . '</font><br><font class="notesmall">' . $now_date . '</font></td>
+					<td valign="top" align="center" class="tablehead2" width="13%" nowrap><font class="tableheadtext">' . GetMessage(
+                "STAT_YESTERDAY"
+            ) . '</font><br><font class="notesmall">' . $yesterday_date . '</font></td>
+					<td valign="top" align="center" class="tablehead2" width="13%" nowrap><font class="tableheadtext">' . GetMessage(
+                "STAT_BEFORE_YESTERDAY"
+            ) . '</font><br><font class="notesmall">' . $bef_yesterday_date . '</font></td>
+					<td valign="top" align="center" class="tablehead3" width="13%" nowrap><font class="tableheadtext">' . GetMessage(
+                "STAT_TOTAL_1"
+            ) . '</font></td>
 				</tr>
 			';
         $i = 0;
@@ -656,7 +736,9 @@ function SendDailyStatistics()
         endwhile;
         $HTML_ADV .= '
 				<tr>
-					<td valign="top" align="right" class="tablebody1_sel" style="padding:3px"><font class="tablebodytext">' . GetMessage("STAT_TOTAL") . '</font></td>
+					<td valign="top" align="right" class="tablebody1_sel" style="padding:3px"><font class="tablebodytext">' . GetMessage(
+                "STAT_TOTAL"
+            ) . '</font></td>
 					<td valign="top" align="right" class="tablebody2_sel" style="padding:3px"><font class="tablebodytext">&nbsp;' . ($total_SESSIONS_TODAY > 0 ? $total_SESSIONS_TODAY : "&nbsp;") . '</font></td>
 					<td valign="top" align="right" class="tablebody2_sel" style="padding:3px"><font class="tablebodytext">&nbsp;' . ($total_SESSIONS_YESTERDAY > 0 ? $total_SESSIONS_YESTERDAY : "&nbsp;") . '</font></td>
 					<td valign="top" align="right" class="tablebody2_sel" style="padding:3px"><font class="tablebodytext">&nbsp;' . ($total_SESSIONS_BEF_YESTERDAY > 0 ? $total_SESSIONS_BEF_YESTERDAY : "&nbsp;") . '</font></td>
@@ -668,13 +750,21 @@ function SendDailyStatistics()
 			<font class="tablebodytext">' . GetMessage("STAT_EVENTS_2") . ' (Top 10):</font><br>
 			<table border="0" cellspacing="1" cellpadding="3" width="100%">
 				<tr>
-					<td valign="top" align="center" class="tablehead1" width="48%" nowrap><font class="tableheadtext">' . GetMessage("STAT_EVENT") . '</font></td>
+					<td valign="top" align="center" class="tablehead1" width="48%" nowrap><font class="tableheadtext">' . GetMessage(
+                "STAT_EVENT"
+            ) . '</font></td>
 					<td valign="top" align="center" class="tablehead2" width="13%" nowrap>
-						<font class="tablebodytext">' . GetMessage("STAT_TODAY") . '</font><br><font class="notesmall">' . $now_date . '</font></td>
+						<font class="tablebodytext">' . GetMessage(
+                "STAT_TODAY"
+            ) . '</font><br><font class="notesmall">' . $now_date . '</font></td>
 					<td valign="top" align="center" class="tablehead2" width="13%" nowrap>
-						<font class="tablebodytext">' . GetMessage("STAT_YESTERDAY") . '</font><br><font class="notesmall">' . $yesterday_date . '</font></td>
+						<font class="tablebodytext">' . GetMessage(
+                "STAT_YESTERDAY"
+            ) . '</font><br><font class="notesmall">' . $yesterday_date . '</font></td>
 					<td valign="top" align="center" class="tablehead2" width="13%" nowrap>
-						<font class="tablebodytext">' . GetMessage("STAT_BEFORE_YESTERDAY") . '</font><br><font class="notesmall">' . $bef_yesterday_date . '</font></td>
+						<font class="tablebodytext">' . GetMessage(
+                "STAT_BEFORE_YESTERDAY"
+            ) . '</font><br><font class="notesmall">' . $bef_yesterday_date . '</font></td>
 					<td valign="top" align="center" class="tablehead3" width="13%" nowrap>
 						<font class="tablebodytext">' . GetMessage("STAT_TOTAL_1") . '</font></td>
 				</tr>
@@ -704,7 +794,9 @@ function SendDailyStatistics()
         endwhile;
         $HTML_EVENTS .= '
 				<tr valign="top">
-					<td align="right" class="tablebody1_sel" style="padding:3px"><font class="tablebodytext">' . GetMessage("STAT_TOTAL") . '</font></td>
+					<td align="right" class="tablebody1_sel" style="padding:3px"><font class="tablebodytext">' . GetMessage(
+                "STAT_TOTAL"
+            ) . '</font></td>
 					<td align="right" class="tablebody2_sel" style="padding:3px"><font class="tablebodytext">' . ($total_TODAY_COUNTER > 0 ? $total_TODAY_COUNTER : "&nbsp;") . '</font></td>
 					<td align="right" class="tablebody2_sel" style="padding:3px"><font class="tablebodytext">' . ($total_YESTERDAY_COUNTER > 0 ? $total_YESTERDAY_COUNTER : "&nbsp;") . '</font></td>
 					<td align="right" class="tablebody2_sel" style="padding:3px"><font class="tablebodytext">' . ($total_B_YESTERDAY_COUNTER > 0 ? $total_B_YESTERDAY_COUNTER : "&nbsp;") . '</font></td>
@@ -716,11 +808,21 @@ function SendDailyStatistics()
 			<font class="tablebodytext">' . GetMessage("STAT_REFERERS") . ' (Top 10):</font><br>
 			<table border="0" cellspacing="1" cellpadding="3" width="100%">
 				<tr>
-					<td valign="top" align="center" class="tablehead1" width="48%" nowrap><font class="tableheadtext">' . GetMessage("STAT_SERVER") . '</font></td>
-					<td valign="top" align="center" class="tablehead2" width="13%" nowrap><font class="tablebodytext">' . GetMessage("STAT_TODAY") . '</font><br><font class="notesmall">' . $now_date . '</font></td>
-					<td valign="top" align="center" class="tablehead2" width="13%" nowrap><font class="tablebodytext">' . GetMessage("STAT_YESTERDAY") . '</font><br><font class="notesmall">' . $yesterday_date . '</font></td>
-					<td valign="top" align="center" class="tablehead2" width="13%" nowrap><font class="tablebodytext">' . GetMessage("STAT_BEFORE_YESTERDAY") . '</font><br><font class="notesmall">' . $bef_yesterday_date . '</font></td>
-					<td valign="top" align="center" class="tablehead3" width="13%" nowrap><font class="tablebodytext">' . GetMessage("STAT_TOTAL_1") . '</font></td>
+					<td valign="top" align="center" class="tablehead1" width="48%" nowrap><font class="tableheadtext">' . GetMessage(
+                "STAT_SERVER"
+            ) . '</font></td>
+					<td valign="top" align="center" class="tablehead2" width="13%" nowrap><font class="tablebodytext">' . GetMessage(
+                "STAT_TODAY"
+            ) . '</font><br><font class="notesmall">' . $now_date . '</font></td>
+					<td valign="top" align="center" class="tablehead2" width="13%" nowrap><font class="tablebodytext">' . GetMessage(
+                "STAT_YESTERDAY"
+            ) . '</font><br><font class="notesmall">' . $yesterday_date . '</font></td>
+					<td valign="top" align="center" class="tablehead2" width="13%" nowrap><font class="tablebodytext">' . GetMessage(
+                "STAT_BEFORE_YESTERDAY"
+            ) . '</font><br><font class="notesmall">' . $bef_yesterday_date . '</font></td>
+					<td valign="top" align="center" class="tablehead3" width="13%" nowrap><font class="tablebodytext">' . GetMessage(
+                "STAT_TOTAL_1"
+            ) . '</font></td>
 				</tr>
 			';
         $i = 0;
@@ -748,7 +850,9 @@ function SendDailyStatistics()
         endwhile;
         $HTML_REFERERS .= '
 				<tr valign="top">
-					<td align="right" class="tablebody1_sel" style="padding:3px"><font class="tablebodytext">' . GetMessage("STAT_TOTAL") . '</font></td>
+					<td align="right" class="tablebody1_sel" style="padding:3px"><font class="tablebodytext">' . GetMessage(
+                "STAT_TOTAL"
+            ) . '</font></td>
 					<td align="right" class="tablebody2_sel" style="padding:3px"><font class="tablebodytext">' . ($total_TODAY_REFERERS > 0 ? $total_TODAY_REFERERS : "&nbsp;") . '</font></td>
 					<td align="right" class="tablebody2_sel" style="padding:3px"><font class="tablebodytext">' . ($total_YESTERDAY_REFERERS > 0 ? $total_YESTERDAY_REFERERS : "&nbsp;") . '</font></td>
 					<td align="right" class="tablebody2_sel" style="padding:3px"><font class="tablebodytext">' . ($total_B_YESTERDAY_REFERERS > 0 ? $total_B_YESTERDAY_REFERERS : "&nbsp;") . '</font></td>
@@ -760,11 +864,21 @@ function SendDailyStatistics()
 			<font class="tablebodytext">' . GetMessage("STAT_PHRASES") . ' (Top 10):</font><br>
 			<table border="0" cellspacing="1" cellpadding="3" width="100%">
 				<tr>
-					<td valign="top" align="center" class="tablehead1" width="48%" nowrap><font class="tableheadtext">' . GetMessage("STAT_PHRASE") . '</td>
-					<td valign="top" align="center" class="tablehead2" width="13%" nowrap><font class="tablebodytext">' . GetMessage("STAT_TODAY") . '</font><br><font class="notesmall">' . $now_date . '</font></td>
-					<td valign="top" align="center" class="tablehead2" width="13%" nowrap><font class="tablebodytext">' . GetMessage("STAT_YESTERDAY") . '</font><br><font class="notesmall">' . $yesterday_date . '</font></td>
-					<td valign="top" align="center" class="tablehead2" width="13%" nowrap><font class="tablebodytext">' . GetMessage("STAT_BEFORE_YESTERDAY") . '</font><br><font class="notesmall">' . $bef_yesterday_date . '</font></td>
-					<td valign="top" align="center" class="tablehead3" width="13%" nowrap><font class="tablebodytext">' . GetMessage("STAT_TOTAL_1") . '</font></td>
+					<td valign="top" align="center" class="tablehead1" width="48%" nowrap><font class="tableheadtext">' . GetMessage(
+                "STAT_PHRASE"
+            ) . '</td>
+					<td valign="top" align="center" class="tablehead2" width="13%" nowrap><font class="tablebodytext">' . GetMessage(
+                "STAT_TODAY"
+            ) . '</font><br><font class="notesmall">' . $now_date . '</font></td>
+					<td valign="top" align="center" class="tablehead2" width="13%" nowrap><font class="tablebodytext">' . GetMessage(
+                "STAT_YESTERDAY"
+            ) . '</font><br><font class="notesmall">' . $yesterday_date . '</font></td>
+					<td valign="top" align="center" class="tablehead2" width="13%" nowrap><font class="tablebodytext">' . GetMessage(
+                "STAT_BEFORE_YESTERDAY"
+            ) . '</font><br><font class="notesmall">' . $bef_yesterday_date . '</font></td>
+					<td valign="top" align="center" class="tablehead3" width="13%" nowrap><font class="tablebodytext">' . GetMessage(
+                "STAT_TOTAL_1"
+            ) . '</font></td>
 				</tr>
 			';
         $i = 0;
@@ -781,7 +895,10 @@ function SendDailyStatistics()
             if ($i <= 10) :
                 $HTML_PHRASES .= '
 				<tr valign="top">
-					<td valign="top" class="tablebody1" width="0%" nowrap><font class="tablebodytext">' . TruncateText($pr["PHRASE"], 50) . '</font></td>
+					<td valign="top" class="tablebody1" width="0%" nowrap><font class="tablebodytext">' . TruncateText(
+                        $pr["PHRASE"],
+                        50
+                    ) . '</font></td>
 					<td align="right" class="tablebody2"><font class="tablebodytext">' . ($pr["TODAY_PHRASES"] > 0 ? $pr["TODAY_PHRASES"] : "&nbsp;") . '</font></td>
 					<td align="right" class="tablebody2"><font class="tablebodytext">' . ($pr["YESTERDAY_PHRASES"] > 0 ? $pr["YESTERDAY_PHRASES"] : "&nbsp;") . '</font></td>
 					<td align="right" class="tablebody2"><font class="tablebodytext">' . ($pr["B_YESTERDAY_PHRASES"] > 0 ? $pr["B_YESTERDAY_PHRASES"] : "&nbsp;") . '</font></td>
@@ -792,7 +909,9 @@ function SendDailyStatistics()
         endwhile;
         $HTML_PHRASES .= '
 				<tr valign="top">
-					<td align="right" class="tablebody1_sel" style="padding:3px"><font class="tablebodytext">' . GetMessage("STAT_TOTAL") . '</font></td>
+					<td align="right" class="tablebody1_sel" style="padding:3px"><font class="tablebodytext">' . GetMessage(
+                "STAT_TOTAL"
+            ) . '</font></td>
 					<td align="right" class="tablebody2_sel" style="padding:3px"><font class="tablebodytext">' . ($total_TODAY_PHRASES > 0 ? $total_TODAY_PHRASES : "&nbsp;") . '</font></td>
 					<td align="right" class="tablebody2_sel" style="padding:3px"><font class="tablebodytext">' . ($total_YESTERDAY_PHRASES > 0 ? $total_YESTERDAY_PHRASES : "&nbsp;") . '</font></td>
 					<td align="right" class="tablebody2_sel" style="padding:3px"><font class="tablebodytext">' . ($total_B_YESTERDAY_PHRASES > 0 ? $total_B_YESTERDAY_PHRASES : "&nbsp;") . '</font></td>
@@ -804,11 +923,21 @@ function SendDailyStatistics()
 			<font class="tablebodytext">' . GetMessage("STAT_SITE_INDEXING") . ' (Top 10):</font><br>
 			<table border="0" cellspacing="1" cellpadding="3" width="100%">
 				<tr>
-					<td valign="top" align="center" class="tablehead1" width="48%" nowrap><font class="tableheadtext">' . GetMessage("STAT_SEARCHER") . '</font></td>
-					<td valign="top" align="center" class="tablehead2" width="13%" nowrap><font class="tablebodytext">' . GetMessage("STAT_TODAY") . '</font><br><font class="notesmall">' . $now_date . '</font></td>
-					<td valign="top" align="center" class="tablehead2" width="13%" nowrap><font class="tablebodytext">' . GetMessage("STAT_YESTERDAY") . '</font><br><font class="notesmall">' . $yesterday_date . '</font></td>
-					<td valign="top" align="center" class="tablehead2" width="13%" nowrap><font class="tablebodytext">' . GetMessage("STAT_BEFORE_YESTERDAY") . '</font><br><font class="notesmall">' . $bef_yesterday_date . '</font></td>
-					<td valign="top" align="center" class="tablehead3" width="13%" nowrap><font class="tablebodytext">' . GetMessage("STAT_TOTAL_1") . '</font></td>
+					<td valign="top" align="center" class="tablehead1" width="48%" nowrap><font class="tableheadtext">' . GetMessage(
+                "STAT_SEARCHER"
+            ) . '</font></td>
+					<td valign="top" align="center" class="tablehead2" width="13%" nowrap><font class="tablebodytext">' . GetMessage(
+                "STAT_TODAY"
+            ) . '</font><br><font class="notesmall">' . $now_date . '</font></td>
+					<td valign="top" align="center" class="tablehead2" width="13%" nowrap><font class="tablebodytext">' . GetMessage(
+                "STAT_YESTERDAY"
+            ) . '</font><br><font class="notesmall">' . $yesterday_date . '</font></td>
+					<td valign="top" align="center" class="tablehead2" width="13%" nowrap><font class="tablebodytext">' . GetMessage(
+                "STAT_BEFORE_YESTERDAY"
+            ) . '</font><br><font class="notesmall">' . $bef_yesterday_date . '</font></td>
+					<td valign="top" align="center" class="tablehead3" width="13%" nowrap><font class="tablebodytext">' . GetMessage(
+                "STAT_TOTAL_1"
+            ) . '</font></td>
 				</tr>
 			';
         $i = 0;
@@ -836,7 +965,9 @@ function SendDailyStatistics()
         endwhile;
         $HTML_SEARCHERS .= '
 				<tr valign="top">
-					<td align="right" class="tablebody1_sel" style="padding:3px"><font class="tablebodytext">' . GetMessage("STAT_TOTAL") . '</font></td>
+					<td align="right" class="tablebody1_sel" style="padding:3px"><font class="tablebodytext">' . GetMessage(
+                "STAT_TOTAL"
+            ) . '</font></td>
 					<td align="right" class="tablebody2_sel" style="padding:3px"><font class="tablebodytext">' . ($total_TODAY_HITS > 0 ? $total_TODAY_HITS : "&nbsp;") . '</font></td>
 					<td align="right" class="tablebody2_sel" style="padding:3px"><font class="tablebodytext">' . ($total_YESTERDAY_HITS > 0 ? $total_YESTERDAY_HITS : "&nbsp;") . '</font></td>
 					<td align="right" class="tablebody2_sel" style="padding:3px"><font class="tablebodytext">' . ($total_B_YESTERDAY_HITS > 0 ? $total_B_YESTERDAY_HITS : "&nbsp;") . '</font></td>
@@ -883,8 +1014,9 @@ function SendDailyStatistics()
 function crc32ex($s)
 {
     $c = crc32($s);
-    if ($c > 0x7FFFFFFF)
+    if ($c > 0x7FFFFFFF) {
         $c = -(0xFFFFFFFF - $c + 1);
+    }
     return $c;
 }
 
@@ -893,36 +1025,40 @@ function AdminListCheckDate(&$lAdmin, $arDates)
     $DB = CDatabase::GetModuleConnection('statistic');
 
     $ok1 = false;
-    list($id1, $date1) = each($arDates);
-    if (strlen($date1) > 0) {
+    $date1 = current($arDates);
+    next($arDates);
+    if ($date1 <> '') {
         if (!CheckDateTime($date1)) {
-            if (is_object($lAdmin))
+            if (is_object($lAdmin)) {
                 $lAdmin->AddFilterError(GetMessage("STAT_WRONG_DATE_FROM"));
-            else
+            } else {
                 $lAdmin .= GetMessage("STAT_WRONG_DATE_FROM") . "<br>";
+            }
         } else {
             $ok1 = true;
         }
     }
 
     $ok2 = false;
-    list($id2, $date2) = each($arDates);
-    if (strlen($date2) > 0) {
+    $date2 = current($arDates);
+    if ($date2 <> '') {
         if (!CheckDateTime($date2)) {
-            if (is_object($lAdmin))
+            if (is_object($lAdmin)) {
                 $lAdmin->AddFilterError(GetMessage("STAT_WRONG_DATE_TILL"));
-            else
+            } else {
                 $lAdmin .= GetMessage("STAT_WRONG_DATE_TILL") . "<br>";
+            }
         } else {
             $ok2 = true;
         }
     }
 
     if ($ok1 && $ok2 && $DB->CompareDates($date1, $date2) == 1) {
-        if (is_object($lAdmin))
+        if (is_object($lAdmin)) {
             $lAdmin->AddFilterError(GetMessage("STAT_FROM_TILL_DATE"));
-        else
+        } else {
             $lAdmin .= GetMessage("STAT_FROM_TILL_DATE") . "<br>";
+        }
     }
 
     return true;
@@ -931,40 +1067,47 @@ function AdminListCheckDate(&$lAdmin, $arDates)
 function StatAdminListFormatURL($url, $arOptions = array())
 {
     $new_window = false;
-    if (isset($arOptions["new_window"]) && $arOptions["new_window"] == true)
+    if (isset($arOptions["new_window"]) && $arOptions["new_window"] == true) {
         $new_window = true;
+    }
 
     $href_class = '';
-    if (isset($arOptions["attention"]) && $arOptions["attention"] == true)
+    if (isset($arOptions["attention"]) && $arOptions["attention"] == true) {
         $href_class = 'stat_attention';
+    }
 
     $href_title = '';
-    if (isset($arOptions["title"]))
+    if (isset($arOptions["title"])) {
         $href_title = htmlspecialcharsEx($arOptions["title"]);
+    }
 
     $max_display_chars = 0;
     if (isset($arOptions["max_display_chars"])) {
-        if ($arOptions["max_display_chars"] === 'default')
+        if ($arOptions["max_display_chars"] === 'default') {
             $max_display_chars = 80;
-        elseif ($arOptions["max_display_chars"] > 0)
+        } elseif ($arOptions["max_display_chars"] > 0) {
             $max_display_chars = $arOptions["max_display_chars"];
+        }
     }
 
     $chars_per_line = 0;
     if (isset($arOptions["chars_per_line"])) {
-        if ($arOptions["chars_per_line"] === 'default')
+        if ($arOptions["chars_per_line"] === 'default') {
             $chars_per_line = 33;
-        elseif ($arOptions["chars_per_line"] > 0)
+        } elseif ($arOptions["chars_per_line"] > 0) {
             $chars_per_line = $arOptions["chars_per_line"];
+        }
     }
 
     $line_delimiter = '<br />';
-    if (isset($arOptions["line_delimiter"]))
+    if (isset($arOptions["line_delimiter"])) {
         $line_delimiter = $arOptions["line_delimiter"];
+    }
 
     $kill_sessid = true;
-    if (isset($arOptions["kill_sessid"]))
+    if (isset($arOptions["kill_sessid"])) {
         $kill_sessid = $arOptions["kill_sessid"];
+    }
 
     if ($kill_sessid) {
         $url = preg_replace('/(sessid=[a-zA-Z0-9]+)/', '', $url);
@@ -975,20 +1118,29 @@ function StatAdminListFormatURL($url, $arOptions = array())
 
     $htmlA = '<a href="' . htmlspecialcharsEx($url) . '"';
 
-    if ($new_window)
+    if ($new_window) {
         $htmlA .= ' target="_blank"';
+    }
 
-    if ($href_class)
+    if ($href_class) {
         $htmlA .= ' class="' . $href_class . '"';
+    }
 
-    if ($href_title)
+    if ($href_title) {
         $htmlA .= ' title="' . $href_title . '"';
+    }
 
     $htmlA .= '>';
 
     $url_display = $url;
-    if ($max_display_chars > 0 && strlen($url) >= $max_display_chars)
-        $url_display = substr($url, 0, intval($max_display_chars * 0.7)) . '...' . substr($url, -intval($max_display_chars * 0.2));
+    if ($max_display_chars > 0 && mb_strlen($url) >= $max_display_chars) {
+        $url_display = mb_substr($url, 0, intval($max_display_chars * 0.7)) . '...' . mb_substr(
+                $url,
+                -intval(
+                    $max_display_chars * 0.2
+                )
+            );
+    }
 
     if ($chars_per_line > 0) {
         $url_display = InsertSpaces($url_display, $chars_per_line, "\x01");
@@ -1006,15 +1158,17 @@ function is_utf8_url($url)
     //http://mail.nl.linux.org/linux-utf8/1999-09/msg00110.html
     if (preg_match_all("/(%[0-9A-F]{2})/i", $url, $match)) {
         $arBytes = array();
-        foreach ($match[1] as $hex)
-            $arBytes[] = hexdec(substr($hex, 1));
+        foreach ($match[1] as $hex) {
+            $arBytes[] = hexdec(mb_substr($hex, 1));
+        }
         $is_utf = 0;
         foreach ($arBytes as $i => $byte) {
             if (($byte & 0xC0) == 0x80) {
-                if (($i > 0) && (($arBytes[$i - 1] & 0xC0) == 0xC0))
+                if (($i > 0) && (($arBytes[$i - 1] & 0xC0) == 0xC0)) {
                     $is_utf++;
-                elseif (($i > 0) && (($arBytes[$i - 1] & 0x80) == 0x00))
+                } elseif (($i > 0) && (($arBytes[$i - 1] & 0x80) == 0x00)) {
                     $is_utf--;
+                }
             } elseif (($i > 0) && (($arBytes[$i - 1] & 0xC0) == 0xC0)) {
                 $is_utf--;
             }
@@ -1056,14 +1210,18 @@ class CStatisticSort
 
     function Compare($ar1, $ar2)
     {
-        if ($ar1[$this->field] < $ar2[$this->field])
+        if ($ar1[$this->field] < $ar2[$this->field]) {
             return 1;
-        if ($ar1[$this->field] > $ar2[$this->field])
+        }
+        if ($ar1[$this->field] > $ar2[$this->field]) {
             return -1;
-        if ($ar1["CITY_ID"] < $ar2["CITY_ID"])
+        }
+        if ($ar1["CITY_ID"] < $ar2["CITY_ID"]) {
             return -1;
-        if ($ar1["CITY_ID"] > $ar2["CITY_ID"])
+        }
+        if ($ar1["CITY_ID"] > $ar2["CITY_ID"]) {
             return 1;
+        }
         return 0;
     }
 }

@@ -44,20 +44,26 @@ class BatchCreate extends Base
 
         if (is_array($rawData['errors'])) {
             foreach ($rawData['errors'] as $error) {
-                if (!isset($requestData[$error['position']]))
+                if (!isset($requestData[$error['position']])) {
                     continue;
+                }
 
                 $externalShipmentId = $requestData[$error['position']];
                 $internalShipmentId = $flippedIdsMap[$externalShipmentId];
 
-                if (!isset($shipmentResults[$internalShipmentId]))
-                    $shipmentResults[$internalShipmentId] = new Requests\ShipmentResult($internalShipmentId, $externalShipmentId);
+                if (!isset($shipmentResults[$internalShipmentId])) {
+                    $shipmentResults[$internalShipmentId] = new Requests\ShipmentResult(
+                        $internalShipmentId,
+                        $externalShipmentId
+                    );
+                }
 
                 $errorPositions[] = $error['position'];
                 $message = Reference::getErrorDescription($error['error-code'], 'POST /1.0/user/shipment');
 
-                if (!empty($error['error-details']))
+                if (!empty($error['error-details'])) {
                     $message .= ' (' . $error['error-details'] . ')';
+                }
 
                 $shipmentResults[$internalShipmentId]->addError(new Main\Error($message));
             }
@@ -76,7 +82,10 @@ class BatchCreate extends Base
 
                 foreach ($resOrders->getData() as $order) {
                     /** @var \Bitrix\Sale\Delivery\Requests\ShipmentResult[] $shpResults */
-                    $shpResults[$order['order-num']] = new Requests\ShipmentResult($order['order-num'], intval($order['id']));
+                    $shpResults[$order['order-num']] = new Requests\ShipmentResult(
+                        $order['order-num'],
+                        intval($order['id'])
+                    );
                     $shpResults[$order['order-num']]->setTrackingNumber($order['barcode']);
                     $shpResults[$order['order-num']]->setDeliveryDocNum($order['list-number']);
                     $shpResults[$order['order-num']]->setDeliveryDocDate($order['ist-number-date']);
@@ -130,8 +139,9 @@ class BatchCreate extends Base
 
         $addedShipments = array();
 
-        if (!$res->isSuccess())
+        if (!$res->isSuccess()) {
             return $res;
+        }
 
         /** @var Requests\ShipmentResult[] $shipmentCreateResults */
         $shipmentCreateResults = $res->getShipmentResults();
@@ -140,18 +150,20 @@ class BatchCreate extends Base
             foreach ($shipmentCreateResults as $createResult) {
                 $shipmentId = $createResult->getInternalId();
 
-                if ($createResult->isSuccess() && strlen($createResult->getExternalId()) > 0)
+                if ($createResult->isSuccess() && $createResult->getExternalId() <> '') {
                     $this->shipmentIdsMap[$shipmentId] = $createResult->getExternalId();
+                }
             }
 
             $addedShipments = array_values($this->shipmentIdsMap);
             $result->setResults($shipmentCreateResults);
         }
 
-        if (!empty($addedShipments))
+        if (!empty($addedShipments)) {
             $result->setData($addedShipments);
-        else
+        } else {
             $result->addError(new Main\Error(Loc::getMessage('SALE_DLVRS_ADD_DREQ_RBATCHC_03')));
+        }
 
         return $result;
     }
@@ -173,7 +185,9 @@ class BatchCreate extends Base
                 return $result;
             }
 
-            $this->path = $this->path . '?sending-date=' . $date->format('Y') . '-' . $date->format('m') . '-' . $date->format('d');
+            $this->path = $this->path . '?sending-date=' . $date->format('Y') . '-' . $date->format(
+                    'm'
+                ) . '-' . $date->format('d');
         }
 
         return parent::process($shipmentIds, $additional);

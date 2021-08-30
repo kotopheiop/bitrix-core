@@ -136,7 +136,7 @@ HTML
 				<span class="container-doc-title" id="#id#Name">#name#</span>
 			</div>
 			<div class="adm-fileinput-item-preview-img" id="#id#Canvas"></div>
-			<input style="display: none;" type="hidden" id="#id#Value" readonly="readonly" name="#input_name#" value="#id#" />
+			<input style="display: none;" type="hidden" id="#id#Value" readonly="readonly" name="#input_name#" value="#input_value#" />
 		</div>
 		#description#
 		<div class="adm-fileinput-item-panel">
@@ -196,18 +196,35 @@ HTML
             "thumbSize" => 640,
             //"properties" => (is_array($inputs) ? $inputs : array()) //TODO It is needed to deal with additional properties
         );
-        if (isset($params['id']))
+        if (isset($params['id'])) {
             $this->elementSetts['id'] = $params['id'];
+        }
         $replace = array(
             "/\\#MESS_LOADING\\#/" => Loc::getMessage("BXU_LoadingProcess"),
             "/\\#description\\#/" => ($this->elementSetts["edit"] == true && $this->elementSetts["description"] == true ? self::$templatePatterns["description"] : ""),
             "/\\#properties\\#/" => "",
             "/[\n\t]+/" => ""
         );
-        $this->templates["uploaded"] = preg_replace(array_keys($replace), array_values($replace), self::$templatePatterns["uploaded"]);
-        $this->templates["unexisted"] = preg_replace(array_keys($replace), array_values($replace), self::$templatePatterns["unexisted"]);
-        $this->templates["new"] = preg_replace(array_keys($replace), array_values($replace), self::$templatePatterns["new"]);
-        $this->templates["unsaved"] = preg_replace(array_keys($replace), array_values($replace), self::$templatePatterns["unsaved"]);
+        $this->templates["uploaded"] = preg_replace(
+            array_keys($replace),
+            array_values($replace),
+            self::$templatePatterns["uploaded"]
+        );
+        $this->templates["unexisted"] = preg_replace(
+            array_keys($replace),
+            array_values($replace),
+            self::$templatePatterns["unexisted"]
+        );
+        $this->templates["new"] = preg_replace(
+            array_keys($replace),
+            array_values($replace),
+            self::$templatePatterns["new"]
+        );
+        $this->templates["unsaved"] = preg_replace(
+            array_keys($replace),
+            array_values($replace),
+            self::$templatePatterns["unsaved"]
+        );
         $replace = array(
             "#input_name#" => $inputs["name"],
             "#input_value#" => "",
@@ -215,42 +232,67 @@ HTML
         );
         $this->templates["new"] = str_replace(array_keys($replace), array_values($replace), $this->templates["new"]);
 
-        $this->templates["unsavedArray"] = str_replace("#input#", self::$templatePatterns["arrayInput"], $this->templates["unsaved"]);
-        $this->templates["unsaved"] = str_replace("#input#", self::$templatePatterns["regularInput"], $this->templates["unsaved"]);
+        $this->templates["unsavedArray"] = str_replace(
+            "#input#",
+            self::$templatePatterns["arrayInput"],
+            $this->templates["unsaved"]
+        );
+        $this->templates["unsaved"] = str_replace(
+            "#input#",
+            self::$templatePatterns["regularInput"],
+            $this->templates["unsaved"]
+        );
 
         $inputs = array_merge($this->uploadSetts, $params);
 
         $this->uploadSetts = array(
             "upload" => '',
             "uploadType" => "path",
-            "medialib" => ($inputs['medialib'] === true && \COption::GetOptionString('fileman', "use_medialib", "Y") != "N"),
+            "medialib" => ($inputs['medialib'] === true && \COption::GetOptionString(
+                    'fileman',
+                    "use_medialib",
+                    "Y"
+                ) != "N"),
             "fileDialog" => ($inputs['file_dialog'] === true || $inputs['fileDialog'] === true),
-            "cloud" => ($inputs['cloud'] === true && $USER->CanDoOperation("clouds_browse") && \CModule::IncludeModule("clouds") && \CCloudStorage::HasActiveBuckets()),
+            "cloud" => ($inputs['cloud'] === true && $USER->CanDoOperation("clouds_browse") && \CModule::IncludeModule(
+                    "clouds"
+                ) && \CCloudStorage::HasActiveBuckets()),
             "maxCount" => ($params["maxCount"] > 0 ? $params["maxCount"] : 0),
             "maxSize" => ($params["maxSize"] > 0 ? $params["maxSize"] : 0),
             "allowUpload" => (in_array($params["allowUpload"], array("A", "I", "F")) ? $params["allowUpload"] : "A"),
             "allowUploadExt" => trim($params["allowUploadExt"]),
             "allowSort" => ($params["allowSort"] == "N" ? "N" : "Y")
         );
-        if ($this->uploadSetts["medialib"] === true)
-            $this->uploadSetts["medialib"] = (\Bitrix\Main\Loader::includeModule("fileman") && \CMedialib::CanDoOperation('medialib_view_collection', 0));
-        if ($this->uploadSetts["fileDialog"] === true && !$USER->CanDoOperation('fileman_view_file_structure'))
+        if ($this->uploadSetts["medialib"] === true) {
+            $this->uploadSetts["medialib"] = (\Bitrix\Main\Loader::includeModule(
+                    "fileman"
+                ) && \CMedialib::CanDoOperation('medialib_view_collection', 0));
+        }
+        if ($this->uploadSetts["fileDialog"] === true && !$USER->CanDoOperation('fileman_view_file_structure')) {
             $this->uploadSetts["fileDialog"] = false;
+        }
 
-        if (empty($this->uploadSetts["allowUploadExt"]) && $this->uploadSetts["allowUpload"] == "F")
+        if (empty($this->uploadSetts["allowUploadExt"]) && $this->uploadSetts["allowUpload"] == "F") {
             $this->uploadSetts["allowUpload"] = "A";
-        if (isset($this->elementSetts["id"]))
-            $this->id = 'bx_file_' . strtolower(preg_replace("/[^a-z0-9]/i", "_", $this->elementSetts["id"]));
-        else
-            $this->id = 'bx_file_' . strtolower(preg_replace("/[^a-z0-9]/i", "_", $this->elementSetts["name"]));
+        }
+        if (isset($this->elementSetts["id"])) {
+            $this->id = 'bx_file_' . mb_strtolower(preg_replace("/[^a-z0-9]/i", "_", $this->elementSetts["id"]));
+        } else {
+            $this->id = 'bx_file_' . mb_strtolower(preg_replace("/[^a-z0-9]/i", "_", $this->elementSetts["name"]));
+        }
 
         if ($inputs['upload'] === true) {
-            $this->uploadSetts['upload'] = FileInputReceiver::sign(array(
-                "id" => ($inputs['uploadType'] === "hash" ? "hash" : "path"),
-                "allowUpload" => $this->uploadSetts["allowUpload"],
-                "allowUploadExt" => $this->uploadSetts["allowUploadExt"]
-            ));
-            $this->uploadSetts['uploadType'] = (in_array($inputs["uploadType"], array(/*"file",*/ "hash", "path")) ? $inputs["uploadType"] : "path");
+            $this->uploadSetts['upload'] = FileInputReceiver::sign(
+                array(
+                    "id" => ($inputs['uploadType'] === "hash" ? "hash" : "path"),
+                    "allowUpload" => $this->uploadSetts["allowUpload"],
+                    "allowUploadExt" => $this->uploadSetts["allowUploadExt"]
+                )
+            );
+            $this->uploadSetts['uploadType'] = (in_array(
+                $inputs["uploadType"],
+                array(/*"file",*/ "hash", "path")
+            ) ? $inputs["uploadType"] : "path");
         }
         self::$instance = $this;
     }
@@ -275,24 +317,40 @@ HTML
         \CJSCore::Init(array('fileinput'));
 
         $files = '';
-        if (!is_array($values) || is_array($values) && array_key_exists("tmp_name", $values))
+        if (!is_array($values) || is_array($values) && array_key_exists("tmp_name", $values)) {
             $values = array($this->elementSetts["name"] => $values);
+        }
         $maxIndex = 0;
-        $pattMaxIndex = strpos($this->elementSetts["name"], "#IND#") > 0 ? str_replace("#IND#", "(\\d+)", preg_quote($this->elementSetts["name"])) : null;
+        $pattMaxIndex = mb_strpos($this->elementSetts["name"], "#IND#") > 0 ? str_replace(
+            "#IND#",
+            "(\\d+)",
+            preg_quote(
+                $this->elementSetts["name"]
+            )
+        ) : null;
         foreach ($values as $inputName => $fileId) {
             if ($pattMaxIndex && preg_match("/" . $pattMaxIndex . "/", $inputName, $matches)) {
                 $maxIndex = max($maxIndex, intval($matches[1]));
             }
             if ($res = $this->getFile($fileId, $inputName, $getDataFromRequest)) {
-                $t = ($res["fileId"] > 0 ? $this->templates["uploaded"] : (is_array($fileId) ? $this->templates["unsavedArray"] : $this->templates["unsaved"]));
+                $t = ($res["fileId"] > 0 ? $this->templates["uploaded"] : (is_array(
+                    $fileId
+                ) ? $this->templates["unsavedArray"] : $this->templates["unsaved"]));
                 if (!is_array($res)) {
                     $res = $this->formFile($fileId, $inputName);
                     $t = $this->templates["unexisted"];
                 }
                 $patt = array();
-                foreach ($res as $pat => $rep)
-                    $patt[] = "#" . $pat . "#";
-                $files .= str_ireplace($patt, array_values($res), $t);
+                foreach ($res as $pat => $rep) {
+                    $patt["#" . $pat . "#"] = htmlspecialcharsbx($rep);
+                }
+                if (array_key_exists("#description#", $patt) && strpos(
+                        $patt["#description#"],
+                        "&amp;quot;"
+                    ) !== false) {
+                    $patt["#description#"] = str_replace("&amp;quot;", "&quot;", $patt["#description#"]);
+                }
+                $files .= str_ireplace(array_keys($patt), array_values($patt), $t);
                 $this->files[] = $res;
             }
         }
@@ -312,25 +370,61 @@ HTML
         ));
 
         if ($this->uploadSetts["maxCount"] == 1) {
-            if ($this->uploadSetts["allowUpload"] == "I")
+            if ($this->uploadSetts["allowUpload"] == "I") {
                 $hintMessage = Loc::getMessage("BXU_DNDMessage01");
-            else if ($this->uploadSetts["allowUpload"] == "F")
-                $hintMessage = Loc::getMessage("BXU_DNDMessage02", array("#ext#" => $this->uploadSetts["allowUploadExt"]));
-            else
-                $hintMessage = Loc::getMessage("BXU_DNDMessage03");
+            } else {
+                if ($this->uploadSetts["allowUpload"] == "F") {
+                    $hintMessage = Loc::getMessage(
+                        "BXU_DNDMessage02",
+                        array(
+                            "#ext#" => htmlspecialcharsbx(
+                                $this->uploadSetts["allowUploadExt"]
+                            )
+                        )
+                    );
+                } else {
+                    $hintMessage = Loc::getMessage("BXU_DNDMessage03");
+                }
+            }
 
-            if ($this->uploadSetts["maxSize"] > 0)
-                $hintMessage .= Loc::getMessage("BXU_DNDMessage04", array("#size#" => \CFile::FormatSize($this->uploadSetts["maxSize"])));
+            if ($this->uploadSetts["maxSize"] > 0) {
+                $hintMessage .= Loc::getMessage(
+                    "BXU_DNDMessage04",
+                    array("#size#" => \CFile::FormatSize($this->uploadSetts["maxSize"]))
+                );
+            }
         } else {
-            $maxCount = ($this->uploadSetts["maxCount"] > 0 ? GetMessage("BXU_DNDMessage5", array("#maxCount#" => $this->uploadSetts["maxCount"])) : "");
-            if ($this->uploadSetts["allowUpload"] == "I")
+            $maxCount = ($this->uploadSetts["maxCount"] > 0 ? GetMessage(
+                "BXU_DNDMessage5",
+                array(
+                    "#maxCount#" => htmlspecialcharsbx(
+                        $this->uploadSetts["maxCount"]
+                    )
+                )
+            ) : "");
+            if ($this->uploadSetts["allowUpload"] == "I") {
                 $hintMessage = Loc::getMessage("BXU_DNDMessage1", array("#maxCount#" => $maxCount));
-            else if ($this->uploadSetts["allowUpload"] == "F")
-                $hintMessage = Loc::getMessage("BXU_DNDMessage2", array("#ext#" => $this->uploadSetts["allowUploadExt"], "#maxCount#" => $maxCount));
-            else
-                $hintMessage = Loc::getMessage("BXU_DNDMessage3", array("#maxCount#" => $maxCount));
-            if ($this->uploadSetts["maxSize"] > 0)
-                $hintMessage .= Loc::getMessage("BXU_DNDMessage4", array("#size#" => \CFile::FormatSize($this->uploadSetts["maxSize"])));
+            } else {
+                if ($this->uploadSetts["allowUpload"] == "F") {
+                    $hintMessage = Loc::getMessage(
+                        "BXU_DNDMessage2",
+                        array(
+                            "#ext#" => htmlspecialcharsbx(
+                                $this->uploadSetts["allowUploadExt"]
+                            ),
+                            "#maxCount#" => $maxCount
+                        )
+                    );
+                } else {
+                    $hintMessage = Loc::getMessage("BXU_DNDMessage3", array("#maxCount#" => $maxCount));
+                }
+            }
+            if ($this->uploadSetts["maxSize"] > 0) {
+                $hintMessage .= Loc::getMessage(
+                    "BXU_DNDMessage4",
+                    array("#size#" => \CFile::FormatSize($this->uploadSetts["maxSize"]))
+                );
+            }
         }
 
         $this->getExtDialogs();
@@ -342,7 +436,9 @@ HTML
         }
         $uploadSetts["maxIndex"] = $maxIndex;
         $template = \CUtil::JSEscape($this->templates["new"]);
-        $classSingle = (array_key_exists("maxCount", $uploadSetts) && intval($uploadSetts["maxCount"]) == 1 ? "adm-fileinput-wrapper-single" : "");
+        $classSingle = (array_key_exists("maxCount", $uploadSetts) && intval(
+            $uploadSetts["maxCount"]
+        ) == 1 ? "adm-fileinput-wrapper-single" : "");
         $uploadSetts = \CUtil::PhpToJSObject($uploadSetts);
         $elementSetts = \CUtil::PhpToJSObject($this->elementSetts);
         $values = \CUtil::PhpToJSObject($this->files);
@@ -388,12 +484,14 @@ HTML;
                 "click" => "OpenMedialibDialog" . $this->id,
                 "handler" => "SetValueFromMedialib" . $this->id
             );
-            \CMedialib::ShowDialogScript(array(
-                "event" => $this->uploadSetts["medialib"]["click"],
-                "arResultDest" => array(
-                    "FUNCTION_NAME" => $this->uploadSetts["medialib"]["handler"]
+            \CMedialib::ShowDialogScript(
+                array(
+                    "event" => $this->uploadSetts["medialib"]["click"],
+                    "arResultDest" => array(
+                        "FUNCTION_NAME" => $this->uploadSetts["medialib"]["handler"]
+                    )
                 )
-            ));
+            );
         }
         if ($this->uploadSetts["fileDialog"]) {
             $this->uploadSetts["fileDialog"] = array(
@@ -441,7 +539,7 @@ HTML;
 
     private function getFile($fileId = "", $inputName = "file", $getDataFromRequest = false)
     {
-        $result = NULL;
+        $result = null;
         $properties = array();
         if (is_array($fileId) && array_key_exists("ID", $fileId)) {
             $properties = $fileId;
@@ -450,10 +548,10 @@ HTML;
         }
 
         if ($fileId > 0 && ($ar = \CFile::GetFileArray($fileId)) && is_array($ar)) {
-            $name = (strlen($ar['ORIGINAL_NAME']) > 0 ? $ar['ORIGINAL_NAME'] : $ar['FILE_NAME']);
+            $name = ($ar['ORIGINAL_NAME'] <> '' ? $ar['ORIGINAL_NAME'] : $ar['FILE_NAME']);
             $result = array(
                 'fileId' => $fileId,
-                'id' => $fileId,
+                'id' => $this->id . '_' . $fileId,
                 'name' => $name,
                 'description_name' => self::getInputName($inputName, "_descr"),
                 'description' => str_replace('"', "&quot;", $ar['DESCRIPTION']),
@@ -467,50 +565,60 @@ HTML;
             );
             if ($result['entity'] == "image") {
                 $result['tmp_url'] = FileInputUnclouder::getSrc($ar);
-                $result['preview_url'] = FileInputUnclouder::getSrcWithResize($ar, array('width' => 200, 'height' => 200));
+                $result['preview_url'] = FileInputUnclouder::getSrcWithResize(
+                    $ar,
+                    array('width' => 200, 'height' => 200)
+                );
                 $result['width'] = $ar["WIDTH"];
                 $result['height'] = $ar["HEIGHT"];
             }
         } else {
             $file = null;
-            if (is_array($fileId) && array_key_exists("tmp_name", $fileId))
+            if (is_array($fileId) && array_key_exists("tmp_name", $fileId)) {
                 $file = array(
                     "tmp_name" => $fileId["tmp_name"],
                     "type" => (array_key_exists("type", $fileId) ? $fileId["type"] : null),
                     "name" => (array_key_exists("name", $fileId) ? $fileId["name"] : null),
                     "description" => (array_key_exists("description", $fileId) ? $fileId["description"] : null)
                 );
-            else if (is_string($fileId))
-                $file = array(
-                    "tmp_name" => $fileId,
-                    "type" => null,
-                    "name" => null,
-                    "description" => null
-                );
+            } else {
+                if (is_string($fileId)) {
+                    $file = array(
+                        "tmp_name" => $fileId,
+                        "type" => null,
+                        "name" => null,
+                        "description" => null
+                    );
+                }
+            }
             if (is_array($file) && ($paths = Uploader::getPaths($file["tmp_name"])) &&
                 ($flTmp = \CBXVirtualIo::GetInstance()->GetFile($paths["tmp_name"])) && $flTmp->IsExists()) {
-                $ar = \CFile::GetImageSize($paths["tmp_name"]);
-                $name = is_string($file["name"]) && strlen($file["name"]) > 0 ? $file["name"] : $flTmp->getName();
+                $name = is_string($file["name"]) && $file["name"] <> '' ? $file["name"] : $flTmp->getName();
                 $result = array(
                     'id' => md5($file["tmp_name"]),
                     'name' => $name,
                     'description_name' => self::getInputName($inputName, "_descr"),
-                    'description' => is_string($file["description"]) && strlen($file["description"]) > 0 ? $file["description"] : "",
+                    'description' => is_string(
+                        $file["description"]
+                    ) && $file["description"] <> '' ? $file["description"] : "",
                     'size' => $flTmp->GetFileSize(),
-                    'type' => is_string($file["type"]) && strlen($file["type"]) > 0 ? $file["type"] : $flTmp->getType(),
+                    'type' => is_string($file["type"]) && $file["type"] <> '' ? $file["type"] : $flTmp->getType(),
                     'input_name' => $inputName,
                     'input_value' => $file["tmp_name"],
                     'entity' => "file",
                     'ext' => GetFileExtension($name),
                     'real_url' => $paths["tmp_url"]
                 );
-                if (is_array($ar)) {
+
+                $info = (new \Bitrix\Main\File\Image($paths["tmp_name"]))->getInfo();
+                if ($info) {
                     $result['entity'] = "image";
                     $result['tmp_url'] = $paths["tmp_url"];
-                    if (isset($ar["mime"]))
-                        $result['type'] = $ar["mime"];
-                    $result['width'] = $ar[0];
-                    $result['height'] = $ar[1];
+                    if (($mime = $info->getMime()) <> '') {
+                        $result['type'] = $mime;
+                    }
+                    $result['width'] = $info->getWidth();
+                    $result['height'] = $info->getHeight();
                 }
             }
         }
@@ -518,11 +626,15 @@ HTML;
             $request = null;
             if ($getDataFromRequest === true) {
                 $request = \Bitrix\Main\Context::getCurrent()->getRequest();
-                $result["description"] = $request->isPost() ? $request->getPost($result["description_name"]) : $request->getQuery($result["description_name"]);
+                $result["description"] = $request->isPost() ? $request->getPost(
+                    $result["description_name"]
+                ) : $request->getQuery($result["description_name"]);
             }
             foreach ($this->elementSetts["properties"] as $key) {
                 $result[$key . "_name"] = self::getInputName($inputName, "_" . $key);
-                $result[$key] = (is_null($request) ? $properties[$key] : ($request->isPost() ? $request->getPost($result[$key . "_name"]) : $request->getQuery($result[$key . "_name"])));
+                $result[$key] = (is_null($request) ? $properties[$key] : ($request->isPost() ? $request->getPost(
+                    $result[$key . "_name"]
+                ) : $request->getQuery($result[$key . "_name"])));
             }
         }
         return $result;
@@ -530,10 +642,11 @@ HTML;
 
     private static function getInputName($inputName, $type = "")
     {
-        if ($type == "")
+        if ($type == "") {
             return $inputName;
-        $p = strpos($inputName, "[");
-        return ($p > 0) ? substr($inputName, 0, $p) . $type . substr($inputName, $p) : $inputName . $type;
+        }
+        $p = mb_strpos($inputName, "[");
+        return ($p > 0) ? mb_substr($inputName, 0, $p) . $type . mb_substr($inputName, $p) : $inputName . $type;
     }
 
     /**
@@ -545,7 +658,6 @@ HTML;
     {
         $return = null;
         if (is_array($file) && isset($file["tmp_name"]) && !empty($file["tmp_name"])) {
-
         }
         return $file;
     }

@@ -100,13 +100,17 @@ if (Loader::includeModule('replica')) {
             $userId = $USER->GetID();
             $file = \Bitrix\Disk\File::loadById($fileId);
             if (!$file) {
-                AddMessage2Log('MessageParamHandler::beforeLogFormat: file (' . $fileId . ') not found for user (' . $userId . ').');
+                AddMessage2Log(
+                    'MessageParamHandler::beforeLogFormat: file (' . $fileId . ') not found for user (' . $userId . ').'
+                );
                 return;
             }
 
             $url = \CIMDisk::GetFileLink($file);
             if (!$url) {
-                AddMessage2Log('MessageParamHandler::beforeLogFormat: failed to get external link for file (' . $fileId . ').');
+                AddMessage2Log(
+                    'MessageParamHandler::beforeLogFormat: failed to get external link for file (' . $fileId . ').'
+                );
                 AddMessage2Log($file->getErrors());
                 return;
             }
@@ -118,21 +122,29 @@ if (Loader::includeModule('replica')) {
             if (\Bitrix\Disk\TypeFile::isImage($file)) {
                 $source = $file->getFile();
                 if ($source) {
-                    $attach->AddImages([[
-                        "NAME" => $fileName,
-                        "LINK" => $url,
-                        "WIDTH" => (int)$source["WIDTH"],
-                        "HEIGHT" => (int)$source["HEIGHT"],
-                    ]]);
+                    $attach->AddImages(
+                        [
+                            [
+                                "NAME" => $fileName,
+                                "LINK" => $url,
+                                "WIDTH" => (int)$source["WIDTH"],
+                                "HEIGHT" => (int)$source["HEIGHT"],
+                            ]
+                        ]
+                    );
                 }
             }
 
             if ($attach->IsEmpty()) {
-                $attach->AddFiles([[
-                    "NAME" => $fileName,
-                    "LINK" => $url,
-                    "SIZE" => $fileSize,
-                ]]);
+                $attach->AddFiles(
+                    [
+                        [
+                            "NAME" => $fileName,
+                            "LINK" => $url,
+                            "SIZE" => $fileSize,
+                        ]
+                    ]
+                );
             }
 
             $record["PARAM_NAME"] = 'ATTACH';
@@ -151,53 +163,79 @@ if (Loader::includeModule('replica')) {
         {
             $id = intval($newRecord['MESSAGE_ID']);
 
-            if (!\Bitrix\Main\Loader::includeModule('pull'))
+            if (!\Bitrix\Main\Loader::includeModule('pull')) {
                 return;
+            }
 
             $message = \CIMMessenger::GetById($id, Array('WITH_FILES' => 'Y'));
-            if (!$message)
+            if (!$message) {
                 return;
+            }
 
             if ($newRecord['PARAM_NAME'] === 'LIKE' && $newRecord["PARAM_VALUE"]) {
                 $like = $message['PARAMS']['LIKE'];
 
-                $result = \Bitrix\IM\Model\ChatTable::getList(Array(
-                    'filter' => Array(
-                        '=ID' => $message['CHAT_ID']
+                $result = \Bitrix\Im\Model\ChatTable::getList(
+                    Array(
+                        'filter' => Array(
+                            '=ID' => $message['CHAT_ID']
+                        )
                     )
-                ));
+                );
                 $chat = $result->fetch();
 
                 $relations = \CIMMessenger::GetRelationById($id);
-                if (!isset($relations[$newRecord["PARAM_VALUE"]]))
+                if (!isset($relations[$newRecord["PARAM_VALUE"]])) {
                     return;
+                }
 
                 if ($message['AUTHOR_ID'] > 0 && $message['AUTHOR_ID'] != $newRecord["PARAM_VALUE"]) {
                     $message['MESSAGE'] = str_replace('<br />', ' ', \Bitrix\Im\Text::parse($message['MESSAGE']));
                     $message['MESSAGE'] = preg_replace("/\[s\].*?\[\/s\]/i", "", $message['MESSAGE']);
                     $message['MESSAGE'] = preg_replace("/\[[bui]\](.*?)\[\/[bui]\]/i", "$1", $message['MESSAGE']);
-                    $message['MESSAGE'] = preg_replace("/\[USER=([0-9]{1,})\](.*?)\[\/USER\]/i", "$2", $message['MESSAGE']);
-                    $message['MESSAGE'] = preg_replace("/\[SEND(?:=(.+?))?\](.+?)?\[\/SEND\]/i", "$2", $message['MESSAGE']);
-                    $message['MESSAGE'] = preg_replace("/\[PUT(?:=(.+?))?\](.+?)?\[\/PUT\]/i", "$2", $message['MESSAGE']);
-                    $message['MESSAGE'] = preg_replace("/\[CALL(?:=(.+?))?\](.+?)?\[\/CALL\]/i", "$2", $message['MESSAGE']);
-                    $message['MESSAGE'] = preg_replace("/------------------------------------------------------(.*)------------------------------------------------------/mi", " [" . GetMessage('IM_QUOTE') . "] ", str_replace(array("#BR#"), Array(" "), $message['MESSAGE']));
+                    $message['MESSAGE'] = preg_replace(
+                        "/\[USER=([0-9]{1,})\](.*?)\[\/USER\]/i",
+                        "$2",
+                        $message['MESSAGE']
+                    );
+                    $message['MESSAGE'] = preg_replace(
+                        "/\[SEND(?:=(.+?))?\](.+?)?\[\/SEND\]/i",
+                        "$2",
+                        $message['MESSAGE']
+                    );
+                    $message['MESSAGE'] = preg_replace(
+                        "/\[PUT(?:=(.+?))?\](.+?)?\[\/PUT\]/i",
+                        "$2",
+                        $message['MESSAGE']
+                    );
+                    $message['MESSAGE'] = preg_replace(
+                        "/\[CALL(?:=(.+?))?\](.+?)?\[\/CALL\]/i",
+                        "$2",
+                        $message['MESSAGE']
+                    );
+                    $message['MESSAGE'] = preg_replace(
+                        "/------------------------------------------------------(.*)------------------------------------------------------/mi",
+                        " [" . GetMessage('IM_QUOTE') . "] ",
+                        str_replace(array("#BR#"), Array(" "), $message['MESSAGE'])
+                    );
 
-                    if (count($message['FILES']) > 0 && strlen($message['MESSAGE']) < 200) {
+                    if (count($message['FILES']) > 0 && mb_strlen($message['MESSAGE']) < 200) {
                         foreach ($message['FILES'] as $file) {
                             $file = " [" . GetMessage('IM_MESSAGE_FILE') . ": " . $file['name'] . "]";
-                            if (strlen($message['MESSAGE'] . $file) > 200)
+                            if (mb_strlen($message['MESSAGE'] . $file) > 200) {
                                 break;
+                            }
 
                             $message['MESSAGE'] .= $file;
                         }
                         $message['MESSAGE'] = trim($message['MESSAGE']);
                     }
 
-                    $isChat = $chat && strlen($chat['TITLE']) > 0;
+                    $isChat = $chat && $chat['TITLE'] <> '';
 
-                    $dot = strlen($message['MESSAGE']) >= 200 ? '...' : '';
-                    $message['MESSAGE'] = substr($message['MESSAGE'], 0, 199) . $dot;
-                    $message['MESSAGE'] = strlen($message['MESSAGE']) > 0 ? $message['MESSAGE'] : '-';
+                    $dot = mb_strlen($message['MESSAGE']) >= 200 ? '...' : '';
+                    $message['MESSAGE'] = mb_substr($message['MESSAGE'], 0, 199) . $dot;
+                    $message['MESSAGE'] = $message['MESSAGE'] <> '' ? $message['MESSAGE'] : '-';
 
                     $arMessageFields = array(
                         "MESSAGE_TYPE" => IM_MESSAGE_SYSTEM,
@@ -207,10 +245,13 @@ if (Loader::includeModule('replica')) {
                         "NOTIFY_MODULE" => "im",
                         "NOTIFY_EVENT" => "like",
                         "NOTIFY_TAG" => "RATING|IM|" . ($isChat ? 'G' : 'P') . "|" . ($isChat ? $chat['ID'] : $newRecord["PARAM_VALUE"]) . "|" . $id,
-                        "NOTIFY_MESSAGE" => GetMessage($isChat ? 'IM_MESSAGE_LIKE' : 'IM_MESSAGE_LIKE_PRIVATE', Array(
-                            '#MESSAGE#' => $message['MESSAGE'],
-                            '#TITLE#' => $chat['TITLE']
-                        ))
+                        "NOTIFY_MESSAGE" => GetMessage(
+                            $isChat ? 'IM_MESSAGE_LIKE' : 'IM_MESSAGE_LIKE_PRIVATE',
+                            Array(
+                                '#MESSAGE#' => $message['MESSAGE'],
+                                '#TITLE#' => $chat['TITLE']
+                            )
+                        )
                     );
                     \CIMNotify::Add($arMessageFields);
                 }
@@ -223,15 +264,20 @@ if (Loader::includeModule('replica')) {
                 );
 
                 foreach ($relations as $rel) {
-                    \Bitrix\Pull\Event::add($rel['USER_ID'], Array(
-                        'module_id' => 'im',
-                        'command' => 'messageLike',
-                        'params' => $arPullMessage,
-                        'extra' => \Bitrix\Im\Common::getPullExtra()
-                    ));
+                    \Bitrix\Pull\Event::add(
+                        $rel['USER_ID'],
+                        Array(
+                            'module_id' => 'im',
+                            'command' => 'messageLike',
+                            'params' => $arPullMessage,
+                            'extra' => \Bitrix\Im\Common::getPullExtra()
+                        )
+                    );
                 }
-            } else if (in_array($newRecord['PARAM_NAME'], Array('ATTACH', 'URL_ID', 'IS_DELETED', 'IS_EDITED'))) {
-                \CIMMessageParam::SendPull($id, Array($newRecord['PARAM_NAME']));
+            } else {
+                if (in_array($newRecord['PARAM_NAME'], Array('ATTACH', 'URL_ID', 'IS_DELETED', 'IS_EDITED'))) {
+                    \CIMMessageParam::SendPull($id, Array($newRecord['PARAM_NAME']));
+                }
             }
         }
 

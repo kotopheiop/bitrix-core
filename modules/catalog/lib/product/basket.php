@@ -42,18 +42,22 @@ class Basket
         }
         $productId = (int)$product['PRODUCT_ID'];
         if ($productId <= 0) {
-            $result->addError(new Main\Error(Main\Localization\Loc::getMessage('BX_CATALOG_PRODUCT_BASKET_ERR_NO_PRODUCT')));
+            $result->addError(
+                new Main\Error(Main\Localization\Loc::getMessage('BX_CATALOG_PRODUCT_BASKET_ERR_NO_PRODUCT'))
+            );
             return $result;
         }
 
         $product['MODULE'] = 'catalog';
         $product['PRODUCT_PROVIDER_CLASS'] = self::getDefaultProviderName();
 
-        if (!empty($basketFields))
+        if (!empty($basketFields)) {
             $product = array_merge($product, $basketFields);
+        }
 
-        if (self::$saleIncluded === null)
+        if (self::$saleIncluded === null) {
             self::$saleIncluded = Loader::includeModule('sale');
+        }
 
         if (!self::$saleIncluded) {
             $result->addError(new Main\Error(Loc::getMessage('BX_CATALOG_PRODUCT_BASKET_ERR_NO_SALE')));
@@ -61,8 +65,9 @@ class Basket
         }
 
         $siteId = SITE_ID;
-        if (!empty($basketFields['LID']))
+        if (!empty($basketFields['LID'])) {
             $siteId = $basketFields['LID'];
+        }
 
         $context = array(
             'SITE_ID' => $siteId,
@@ -88,17 +93,22 @@ class Basket
                 if (!empty($resultData['BASKET_ITEM'])) {
                     $item = $resultData['BASKET_ITEM'];
                     if ($item instanceof Sale\BasketItemBase) {
-                        if (self::$statisticIncluded === null)
+                        if (self::$statisticIncluded === null) {
                             self::$statisticIncluded = Main\Loader::includeModule('statistic');
+                        }
 
                         if (self::$statisticIncluded) {
                             \CStatistic::Set_Event(
-                                'sale2basket', 'catalog', $item->getField('DETAIL_PAGE_URL')
+                                'sale2basket',
+                                'catalog',
+                                $item->getField('DETAIL_PAGE_URL')
                             );
                         }
-                        $result->setData(array(
-                            'ID' => $item->getId()
-                        ));
+                        $result->setData(
+                            array(
+                                'ID' => $item->getId()
+                            )
+                        );
                     } else {
                         $result->addError(new Main\Error(Loc::getMessage('BX_CATALOG_PRODUCT_BASKET_ERR_UNKNOWN')));
                     }
@@ -130,8 +140,12 @@ class Basket
      * @throws Main\LoaderException
      * @throws Main\ObjectNotFoundException
      */
-    public static function addProductToBasket(Sale\BasketBase $basket, array $fields, array $context, array $options = [])
-    {
+    public static function addProductToBasket(
+        Sale\BasketBase $basket,
+        array $fields,
+        array $context,
+        array $options = []
+    ) {
         $options['CHECK_CRAWLERS'] = 'N';
         return static::add($basket, $fields, $context, $options);
     }
@@ -149,10 +163,15 @@ class Basket
      * @throws Main\LoaderException
      * @throws Main\ObjectNotFoundException
      */
-    public static function addProductToBasketWithPermissions(Sale\BasketBase $basket, array $fields, array $context, $options = true)
-    {
-        if (!is_array($options))
+    public static function addProductToBasketWithPermissions(
+        Sale\BasketBase $basket,
+        array $fields,
+        array $context,
+        $options = true
+    ) {
+        if (!is_array($options)) {
             $options = ['USE_MERGE' => ($options ? 'Y' : 'N')];
+        }
         $options['CHECK_PERMISSIONS'] = 'Y';
         $options['CHECK_CRAWLERS'] = 'Y';
         return static::add($basket, $fields, $context, $options);
@@ -191,7 +210,9 @@ class Basket
         }
         $productId = (int)$fields['PRODUCT_ID'];
         if ($productId <= 0) {
-            $result->addError(new Main\Error(Main\Localization\Loc::getMessage('BX_CATALOG_PRODUCT_BASKET_ERR_NO_PRODUCT')));
+            $result->addError(
+                new Main\Error(Main\Localization\Loc::getMessage('BX_CATALOG_PRODUCT_BASKET_ERR_NO_PRODUCT'))
+            );
             return $result;
         }
         unset($fields['PRODUCT_ID']);
@@ -206,8 +227,9 @@ class Basket
             return $result;
         }
 
-        if (self::$saleIncluded === null)
+        if (self::$saleIncluded === null) {
             self::$saleIncluded = Loader::includeModule('sale');
+        }
 
         if (!self::$saleIncluded) {
             $result->addError(new Main\Error(Loc::getMessage('BX_CATALOG_PRODUCT_BASKET_ERR_NO_SALE')));
@@ -234,10 +256,10 @@ class Basket
         unset($transferFields);
 
         $propertyList = (!empty($fields['PROPS']) && is_array($fields['PROPS']) ? $fields['PROPS'] : []);
-        if (array_key_exists('PROPS', $fields))
+        if (array_key_exists('PROPS', $fields)) {
             unset($fields['PROPS']);
+        }
 
-        $productFields = [];
         if ($module == 'catalog') {
             $elementFilter = array(
                 'ID' => $productId,
@@ -249,8 +271,9 @@ class Basket
             if (!empty($options['CHECK_PERMISSIONS']) && $options['CHECK_PERMISSIONS'] == "Y") {
                 $elementFilter['CHECK_PERMISSIONS'] = 'Y';
                 $elementFilter['MIN_PERMISSION'] = 'R';
-                if (isset($context['USER_ID']))
+                if (isset($context['USER_ID'])) {
                     $elementFilter['PERMISSIONS_BY'] = $context['USER_ID'];
+                }
             }
 
             $iterator = \CIBlockElement::GetList(
@@ -271,14 +294,25 @@ class Basket
                 return $result;
             }
 
-            $iterator = Catalog\ProductTable::getList(array(
-                'select' => array(
-                    'ID', 'TYPE', 'AVAILABLE', 'CAN_BUY_ZERO', 'QUANTITY_TRACE', 'QUANTITY',
-                    'WEIGHT', 'WIDTH', 'HEIGHT', 'LENGTH',
-                    'MEASURE', 'BARCODE_MULTI'
-                ),
-                'filter' => array('=ID' => $productId)
-            ));
+            $iterator = Catalog\ProductTable::getList(
+                array(
+                    'select' => array(
+                        'ID',
+                        'TYPE',
+                        'AVAILABLE',
+                        'CAN_BUY_ZERO',
+                        'QUANTITY_TRACE',
+                        'QUANTITY',
+                        'WEIGHT',
+                        'WIDTH',
+                        'HEIGHT',
+                        'LENGTH',
+                        'MEASURE',
+                        'BARCODE_MULTI'
+                    ),
+                    'filter' => array('=ID' => $productId)
+                )
+            );
             $productFields = $iterator->fetch();
             unset($iterator);
             if (empty($productFields)) {
@@ -300,7 +334,9 @@ class Basket
             if ($productFields['TYPE'] == Catalog\ProductTable::TYPE_OFFER) {
                 $skuInfo = \CCatalogSku::GetProductInfo($productId, $elementFields['IBLOCK_ID']);
                 if (empty($skuInfo)) {
-                    $result->addError(new Main\Error(Loc::getMessage('BX_CATALOG_PRODUCT_BASKET_ERR_PRODUCT_BAD_TYPE')));
+                    $result->addError(
+                        new Main\Error(Loc::getMessage('BX_CATALOG_PRODUCT_BASKET_ERR_PRODUCT_BAD_TYPE'))
+                    );
                     return $result;
                 } else {
                     $parentIterator = \CIBlockElement::GetList(
@@ -320,7 +356,7 @@ class Basket
                     if (empty($parent)) {
                         $result->addError(new Main\Error(Loc::getMessage('BX_CATALOG_PRODUCT_BASKET_ERR_NO_PRODUCT')));
                         return $result;
-                    } elseif (strpos($elementFields["~XML_ID"], '#') === false) {
+                    } elseif (mb_strpos($elementFields["~XML_ID"], '#') === false) {
                         $elementFields["~XML_ID"] = $parent['XML_ID'] . '#' . $elementFields["~XML_ID"];
                     }
                     unset($parent, $parentIterator);
@@ -337,8 +373,9 @@ class Basket
                 unset($allSets);
                 $itemIds = array();
                 foreach ($set['ITEMS'] as $item) {
-                    if ($item['ITEM_ID'] != $item['OWNER_ID'])
+                    if ($item['ITEM_ID'] != $item['OWNER_ID']) {
                         $itemIds[$item['ITEM_ID']] = $item['ITEM_ID'];
+                    }
                 }
                 if (empty($itemIds)) {
                     $result->addError(new Main\Error(Loc::getMessage('BX_CATALOG_PRODUCT_BASKET_ERR_NO_PRODUCT_SET')));
@@ -354,8 +391,9 @@ class Basket
                 if (!empty($options['CHECK_PERMISSIONS']) && $options['CHECK_PERMISSIONS'] == "Y") {
                     $setFilter['CHECK_PERMISSIONS'] = 'Y';
                     $setFilter['MIN_PERMISSION'] = 'R';
-                    if (isset($context['USER_ID']))
+                    if (isset($context['USER_ID'])) {
                         $setFilter['PERMISSIONS_BY'] = $context['USER_ID'];
+                    }
                 }
 
                 $iterator = \CIBlockElement::GetList(
@@ -366,12 +404,15 @@ class Basket
                     array('ID', 'IBLOCK_ID')
                 );
                 while ($row = $iterator->Fetch()) {
-                    if (isset($itemIds[$row['ID']]))
+                    if (isset($itemIds[$row['ID']])) {
                         unset($itemIds[$row['ID']]);
+                    }
                 }
                 unset($row, $iterator);
                 if (!empty($itemIds)) {
-                    $result->addError(new Main\Error(Loc::getMessage('BX_CATALOG_PRODUCT_BASKET_ERR_NO_PRODUCT_SET_ITEMS')));
+                    $result->addError(
+                        new Main\Error(Loc::getMessage('BX_CATALOG_PRODUCT_BASKET_ERR_NO_PRODUCT_SET_ITEMS'))
+                    );
                     return $result;
                 }
             }
@@ -386,10 +427,11 @@ class Basket
                         'CODE' => 'CATALOG.XML_ID',
                         'VALUE' => $iBlockXmlID
                     );
-                    if ($propertyIndex !== null)
+                    if ($propertyIndex !== null) {
                         $propertyList[$propertyIndex] = $propertyData;
-                    else
+                    } else {
                         $propertyList[] = $propertyData;
+                    }
                     unset($propertyData);
                 }
                 unset($iBlockXmlID);
@@ -403,10 +445,11 @@ class Basket
                     'CODE' => 'PRODUCT.XML_ID',
                     'VALUE' => $elementFields['~XML_ID']
                 );
-                if ($propertyIndex !== null)
+                if ($propertyIndex !== null) {
                     $propertyList[$propertyIndex] = $propertyData;
-                else
+                } else {
                     $propertyList[] = $propertyData;
+                }
                 unset($propertyData);
             }
             unset($propertyIndex);
@@ -458,6 +501,8 @@ class Basket
                     'MEASURE_NAME' => $productFields['MEASURE_NAME'],
                     'MEASURE_CODE' => $productFields['MEASURE_CODE']
                 ];
+
+            unset($productFields);
         }
 
         if (static::isCompatibilityEventAvailable()) {
@@ -506,7 +551,7 @@ class Basket
         /** @var Sale\BasketPropertiesCollection $propertyCollection */
         $propertyCollection = $basketItem->getPropertyCollection();
         if ($propertyCollection) {
-            $propertyCollection->setProperty($propertyList);
+            $propertyCollection->redefine($propertyList);
         }
 
         $r = $basketItem->setFields($presets);
@@ -558,8 +603,9 @@ class Basket
     private static function runCompatibilityEvent(array $fields)
     {
         foreach (GetModuleEvents("sale", "OnBeforeBasketAdd", true) as $event) {
-            if (ExecuteModuleEventEx($event, array(&$fields)) === false)
+            if (ExecuteModuleEventEx($event, array(&$fields)) === false) {
                 return false;
+            }
         }
 
         return $fields;
@@ -576,38 +622,43 @@ class Basket
         static $properties = [];
 
         $skuInfo = \CCatalogSku::GetInfoByOfferIBlock($iblockId);
-        if (empty($skuInfo))
+        if (empty($skuInfo)) {
             return;
+        }
         $skuPropertyId = $skuInfo['SKU_PROPERTY_ID'];
         $parentIblockId = $skuInfo['PRODUCT_IBLOCK_ID'];
         unset($skuInfo);
 
         if (!isset($properties[$iblockId])) {
             $properties[$iblockId] = [];
-            $iterator = Iblock\PropertyTable::getList([
-                'select' => ['ID'],
-                'filter' => [
-                    '=IBLOCK_ID' => $iblockId,
-                    '=ACTIVE' => 'Y',
-                    '=PROPERTY_TYPE' => [
-                        Iblock\PropertyTable::TYPE_ELEMENT,
-                        Iblock\PropertyTable::TYPE_LIST,
-                        Iblock\PropertyTable::TYPE_STRING
+            $iterator = Iblock\PropertyTable::getList(
+                [
+                    'select' => ['ID'],
+                    'filter' => [
+                        '=IBLOCK_ID' => $iblockId,
+                        '=ACTIVE' => 'Y',
+                        '=PROPERTY_TYPE' => [
+                            Iblock\PropertyTable::TYPE_ELEMENT,
+                            Iblock\PropertyTable::TYPE_LIST,
+                            Iblock\PropertyTable::TYPE_STRING
+                        ],
+                        '=MULTIPLE' => 'N'
                     ],
-                    '=MULTIPLE' => 'N'
-                ],
-                'order' => ['ID' => 'ASC']
-            ]);
+                    'order' => ['ID' => 'ASC']
+                ]
+            );
             while ($row = $iterator->fetch()) {
                 $row['ID'] = (int)$row['ID'];
-                if ($row['ID'] == $skuPropertyId)
+                if ($row['ID'] == $skuPropertyId) {
                     continue;
+                }
                 $properties[$iblockId][] = $row['ID'];
             }
             unset($row, $iterator);
         }
-        if (empty($properties[$iblockId]))
+        if (empty($properties[$iblockId])) {
             return;
+        }
 
         $offerProperties = \CIBlockPriceTools::GetOfferProperties(
             $id,
@@ -616,25 +667,29 @@ class Basket
         );
         unset($parentIblockId, $skuPropertyId);
 
-        if (empty($offerProperties))
+        if (empty($offerProperties)) {
             return;
+        }
 
         $codeMap = [];
         if (!empty($propertyList)) {
             foreach ($propertyList as $row) {
-                if (!isset($row['CODE']))
+                if (!isset($row['CODE'])) {
                     continue;
+                }
                 $index = (string)$row['CODE'];
-                if ($index === '')
+                if ($index === '') {
                     continue;
+                }
                 $codeMap[$index] = true;
             }
             unset($index, $row);
         }
         foreach ($offerProperties as $row) {
             $index = (string)$row['CODE'];
-            if (isset($codeMap[$index]))
+            if (isset($codeMap[$index])) {
                 continue;
+            }
             $codeMap[$index] = true;
             $propertyList[] = $row;
         }
@@ -651,8 +706,9 @@ class Basket
     private static function getPropertyIndex($code, array $propertyList = array())
     {
         $propertyIndex = null;
-        if (empty($propertyList))
+        if (empty($propertyList)) {
             return $propertyIndex;
+        }
 
         foreach ($propertyList as $index => $propertyData) {
             if (!empty($propertyData['CODE']) && $code == $propertyData['CODE']) {
@@ -682,7 +738,6 @@ class Basket
     {
         $result = static::checkCurrentUser();
         return $result->isSuccess();
-
     }
 
     /**
@@ -694,14 +749,17 @@ class Basket
     {
         $result = new Main\Result();
 
-        if (self::$statisticIncluded === null)
+        if (self::$statisticIncluded === null) {
             self::$statisticIncluded = Main\Loader::includeModule('statistic');
+        }
 
-        if (!self::$statisticIncluded)
+        if (!self::$statisticIncluded) {
             return $result;
+        }
 
-        if (isset($_SESSION['SESS_SEARCHER_ID']) && (int)$_SESSION['SESS_SEARCHER_ID'] > 0)
+        if (isset($_SESSION['SESS_SEARCHER_ID']) && (int)$_SESSION['SESS_SEARCHER_ID'] > 0) {
             $result->addError(new Main\Error(Loc::getMessage('BX_CATALOG_PRODUCT_BASKET_ERR_SEARCHER')));
+        }
 
         return $result;
     }

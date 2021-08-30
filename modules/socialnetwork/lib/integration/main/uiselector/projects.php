@@ -25,10 +25,13 @@ class Projects extends \Bitrix\Main\UI\Selector\EntityBase
         $selectedItems = (!empty($params['selectedItems']) ? $params['selectedItems'] : array());
 
         $limitReached = false;
-        $projectsList = \Bitrix\Socialnetwork\ComponentHelper::getSonetGroupAvailable(array(
-            'limit' => 100,
-            'useProjects' => 'Y'
-        ), $limitReached);
+        $projectsList = \Bitrix\Socialnetwork\ComponentHelper::getSonetGroupAvailable(
+            array(
+                'limit' => 100,
+                'useProjects' => 'Y'
+            ),
+            $limitReached
+        );
 
         $projectsList = $projectsList['PROJECTS'];
 
@@ -84,19 +87,24 @@ class Projects extends \Bitrix\Main\UI\Selector\EntityBase
 
         if (!empty($selectedItems[Handler::ENTITY_TYPE_SONETGROUPS])) {
             $hiddenItemsList = array_diff($selectedItems[Handler::ENTITY_TYPE_SONETGROUPS], array_keys($projectsList));
-            $hiddenItemsList = array_map(function ($code) {
-                return preg_replace('/^SG(\d+)$/', '$1', $code);
-            }, $hiddenItemsList);
+            $hiddenItemsList = array_map(
+                function ($code) {
+                    return preg_replace('/^SG(\d+)$/', '$1', $code);
+                },
+                $hiddenItemsList
+            );
 
             if (!empty($hiddenItemsList)) {
                 $isCurrentUserModuleAdmin = \CSocNetUser::isCurrentUserModuleAdmin();
-                $res = \Bitrix\Socialnetwork\WorkgroupTable::getList(array(
-                    'filter' => array(
-                        "@ID" => $hiddenItemsList,
-                        'PROJECT' => 'Y'
-                    ),
-                    'select' => array("ID", "NAME", "DESCRIPTION", "OPENED")
-                ));
+                $res = \Bitrix\Socialnetwork\WorkgroupTable::getList(
+                    array(
+                        'filter' => array(
+                            "@ID" => $hiddenItemsList,
+                            'PROJECT' => 'Y'
+                        ),
+                        'select' => array("ID", "NAME", "DESCRIPTION", "OPENED")
+                    )
+                );
 
                 $extranetGroupsIdList = \Bitrix\Socialnetwork\ComponentHelper::getExtranetSonetGroupIdList();
 

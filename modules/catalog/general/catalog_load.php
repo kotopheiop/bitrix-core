@@ -7,23 +7,27 @@ class CAllCatalogLoad
         global $DB;
         $arSqlSearch = Array();
 
-        if (!is_array($arFilter))
+        if (!is_array($arFilter)) {
             $filter_keys = Array();
-        else
+        } else {
             $filter_keys = array_keys($arFilter);
+        }
 
         for ($i = 0; $i < count($filter_keys); $i++) {
             $val = $DB->ForSql($arFilter[$filter_keys[$i]]);
-            if (strlen($val) <= 0) continue;
+            if ($val == '') {
+                continue;
+            }
 
             $key = $filter_keys[$i];
             if ($key[0] == "!") {
-                $key = substr($key, 1);
+                $key = mb_substr($key, 1);
                 $bInvert = true;
-            } else
+            } else {
                 $bInvert = false;
+            }
 
-            switch (strtoupper($key)) {
+            switch (mb_strtoupper($key)) {
                 case "NAME":
                     $arSqlSearch[] = "CL.NAME " . ($bInvert ? "<>" : "=") . " '" . $val . "'";
                     break;
@@ -47,13 +51,17 @@ class CAllCatalogLoad
 
         $arSqlOrder = Array();
         foreach ($arOrder as $by => $order) {
-            $by = strtoupper($by);
-            $order = strtoupper($order);
-            if ($order != "ASC") $order = "DESC";
+            $by = mb_strtoupper($by);
+            $order = mb_strtoupper($order);
+            if ($order != "ASC") {
+                $order = "DESC";
+            }
 
-            if ($by == "NAME") $arSqlOrder[] = " CL.NAME " . $order . " ";
-            elseif ($by == "TYPE") $arSqlOrder[] = " CL.TYPE " . $order . " ";
-            else {
+            if ($by == "NAME") {
+                $arSqlOrder[] = " CL.NAME " . $order . " ";
+            } elseif ($by == "TYPE") {
+                $arSqlOrder[] = " CL.TYPE " . $order . " ";
+            } else {
                 $arSqlOrder[] = " CL.LAST_USED " . $order . " ";
                 $by = "LAST_USED";
             }
@@ -62,10 +70,11 @@ class CAllCatalogLoad
         $strSqlOrder = "";
         DelDuplicateSort($arSqlOrder);
         for ($i = 0; $i < count($arSqlOrder); $i++) {
-            if ($i == 0)
+            if ($i == 0) {
                 $strSqlOrder = " ORDER BY ";
-            else
+            } else {
                 $strSqlOrder .= ", ";
+            }
 
             $strSqlOrder .= $arSqlOrder[$i];
         }
@@ -80,7 +89,9 @@ class CAllCatalogLoad
     {
         global $DB;
 
-        if ($arFields["TYPE"] != "E") $arFields["TYPE"] = "I";
+        if ($arFields["TYPE"] != "E") {
+            $arFields["TYPE"] = "I";
+        }
 
         $arInsert = $DB->PrepareInsert("b_catalog_load", $arFields);
 
@@ -105,13 +116,15 @@ class CAllCatalogLoad
         $DB->Query(
             "UPDATE b_catalog_load SET " .
             "	LAST_USED = 'N' " .
-            "WHERE TYPE = '" . $DB->ForSql($TYPE) . "'");
+            "WHERE TYPE = '" . $DB->ForSql($TYPE) . "'"
+        );
 
         $DB->Query(
             "UPDATE b_catalog_load SET " .
             "	LAST_USED = 'Y' " .
             "WHERE NAME = '" . $DB->ForSql($NAME) . "' " .
-            "	AND TYPE = '" . $DB->ForSql($TYPE) . "'");
+            "	AND TYPE = '" . $DB->ForSql($TYPE) . "'"
+        );
 
         return true;
     }

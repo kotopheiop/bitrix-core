@@ -18,24 +18,30 @@ class ProductAction
 
         $iblockId = (int)$iblockId;
         if ($iblockId <= 0) {
-            $result->addError(new Main\Error(
-                Loc::getMessage('BX_CATALOG_PRODUCT_ACTION_ERR_BAD_IBLOCK_ID')
-            ));
+            $result->addError(
+                new Main\Error(
+                    Loc::getMessage('BX_CATALOG_PRODUCT_ACTION_ERR_BAD_IBLOCK_ID')
+                )
+            );
             return $result;
         }
 
         $catalog = \CCatalogSku::GetInfoByIBlock($iblockId);
         if (empty($catalog) || $catalog['CATALOG_TYPE'] == \CCatalogSku::TYPE_PRODUCT) {
-            $result->addError(new Main\Error(
-                Loc::getMessage('BX_CATALOG_PRODUCT_ACTION_ERR_BAD_CATALOG')
-            ));
+            $result->addError(
+                new Main\Error(
+                    Loc::getMessage('BX_CATALOG_PRODUCT_ACTION_ERR_BAD_CATALOG')
+                )
+            );
             return $result;
         }
 
         if (empty($fields)) {
-            $result->addError(new Main\Error(
-                Loc::getMessage('BX_CATALOG_PRODUCT_ACTION_ERR_EMPTY_FIELDS')
-            ));
+            $result->addError(
+                new Main\Error(
+                    Loc::getMessage('BX_CATALOG_PRODUCT_ACTION_ERR_EMPTY_FIELDS')
+                )
+            );
             return $result;
         }
 
@@ -53,11 +59,13 @@ class ProductAction
 
         $sectionIdList = array_keys($sectionElements);
         $sectionNames = [];
-        $iterator = Iblock\SectionTable::getList([
-            'select' => ['ID', 'NAME'],
-            'filter' => ['@ID' => $sectionIdList, '=IBLOCK_ID' => $iblockId],
-            'order' => ['ID' => 'ASC']
-        ]);
+        $iterator = Iblock\SectionTable::getList(
+            [
+                'select' => ['ID', 'NAME'],
+                'filter' => ['@ID' => $sectionIdList, '=IBLOCK_ID' => $iblockId],
+                'order' => ['ID' => 'ASC']
+            ]
+        );
         while ($row = $iterator->fetch()) {
             $row['ID'] = (int)$row['ID'];
             $sectionNames[$row['ID']] = $row['NAME'];
@@ -71,13 +79,15 @@ class ProductAction
                 $fields
             );
             if (!$elementResult->isSuccess()) {
-                $result->addError(new Main\Error(
-                    Loc::getMessage(
-                        'BX_CATALOG_PRODUCT_ACTION_ERR_SECTION_PRODUCTS_UPDATE',
-                        ['#ID#' => $sectionId, '#NAME#' => $sectionNames[$sectionId]]
-                    ),
-                    $sectionId
-                ));
+                $result->addError(
+                    new Main\Error(
+                        Loc::getMessage(
+                            'BX_CATALOG_PRODUCT_ACTION_ERR_SECTION_PRODUCTS_UPDATE',
+                            ['#ID#' => $sectionId, '#NAME#' => $sectionNames[$sectionId]]
+                        ),
+                        $sectionId
+                    )
+                );
             }
         }
         unset($sectionId);
@@ -92,29 +102,37 @@ class ProductAction
 
         $iblockId = (int)$iblockId;
         if ($iblockId <= 0) {
-            $result->addError(new Main\Error(
-                Loc::getMessage('BX_CATALOG_PRODUCT_ACTION_ERR_BAD_IBLOCK_ID')
-            ));
+            $result->addError(
+                new Main\Error(
+                    Loc::getMessage('BX_CATALOG_PRODUCT_ACTION_ERR_BAD_IBLOCK_ID')
+                )
+            );
             return $result;
         }
         Main\Type\Collection::normalizeArrayValuesByInt($elementIds, true);
         if (empty($elementIds)) {
-            $result->addError(new Main\Error(
-                Loc::getMessage('BX_CATALOG_PRODUCT_ACTION_ERR_EMPTY_ELEMENTS')
-            ));
+            $result->addError(
+                new Main\Error(
+                    Loc::getMessage('BX_CATALOG_PRODUCT_ACTION_ERR_EMPTY_ELEMENTS')
+                )
+            );
             return $result;
         }
         if (empty($fields)) {
-            $result->addError(new Main\Error(
-                Loc::getMessage('BX_CATALOG_PRODUCT_ACTION_ERR_EMPTY_FIELDS')
-            ));
+            $result->addError(
+                new Main\Error(
+                    Loc::getMessage('BX_CATALOG_PRODUCT_ACTION_ERR_EMPTY_FIELDS')
+                )
+            );
             return $result;
         }
         $catalog = \CCatalogSku::GetInfoByIBlock($iblockId);
         if (empty($catalog) || $catalog['CATALOG_TYPE'] == \CCatalogSku::TYPE_PRODUCT) {
-            $result->addError(new Main\Error(
-                Loc::getMessage('BX_CATALOG_PRODUCT_ACTION_ERR_BAD_CATALOG')
-            ));
+            $result->addError(
+                new Main\Error(
+                    Loc::getMessage('BX_CATALOG_PRODUCT_ACTION_ERR_BAD_CATALOG')
+                )
+            );
             return $result;
         }
         $blockedTypes = self::getBlockedProductTypes($catalog, $fields);
@@ -124,10 +142,12 @@ class ProductAction
 
         $products = [];
         foreach (array_chunk($elementIds, 500) as $pageIds) {
-            $iterator = Catalog\Model\Product::getList([
-                'select' => ['ID', 'TYPE'],
-                'filter' => ['@ID' => $pageIds]
-            ]);
+            $iterator = Catalog\Model\Product::getList(
+                [
+                    'select' => ['ID', 'TYPE'],
+                    'filter' => ['@ID' => $pageIds]
+                ]
+            );
             while ($row = $iterator->fetch()) {
                 $row['ID'] = (int)$row['ID'];
                 $row['TYPE'] = (int)$row['TYPE'];
@@ -150,35 +170,43 @@ class ProductAction
                 $newData['fields']['ID'] = $id;
                 $elementResult = Catalog\Model\Product::add($newData);
                 if (!$elementResult->isSuccess()) {
-                    $result->addError(new Main\Error(
-                        implode('; ', $elementResult->getErrorMessages()),
-                        $id
-                    ));
+                    $result->addError(
+                        new Main\Error(
+                            implode('; ', $elementResult->getErrorMessages()),
+                            $id
+                        )
+                    );
                 }
             } else {
                 $type = $products[$id]['TYPE'];
                 if (isset($blockedTypes[$type])) {
                     switch ($type) {
                         case Catalog\ProductTable::TYPE_SKU:
-                            $result->addError(new Main\Error(
-                                Loc::getMessage('BX_CATALOG_PRODUCT_ACTION_ERR_CANNOT_MODIFY_SKU'),
-                                $id
-                            ));
+                            $result->addError(
+                                new Main\Error(
+                                    Loc::getMessage('BX_CATALOG_PRODUCT_ACTION_ERR_CANNOT_MODIFY_SKU'),
+                                    $id
+                                )
+                            );
                             break;
                         case Catalog\ProductTable::TYPE_SET:
-                            $result->addError(new Main\Error(
-                                Loc::getMessage('BX_CATALOG_PRODUCT_ACTION_ERR_CANNOT_MODIFY_SET'),
-                                $id
-                            ));
+                            $result->addError(
+                                new Main\Error(
+                                    Loc::getMessage('BX_CATALOG_PRODUCT_ACTION_ERR_CANNOT_MODIFY_SET'),
+                                    $id
+                                )
+                            );
                             break;
                     }
                 } else {
                     $elementResult = Catalog\Model\Product::update($id, $data);
                     if (!$elementResult->isSuccess()) {
-                        $result->addError(new Main\Error(
-                            implode('; ', $elementResult->getErrorMessages()),
-                            $id
-                        ));
+                        $result->addError(
+                            new Main\Error(
+                                implode('; ', $elementResult->getErrorMessages()),
+                                $id
+                            )
+                        );
                     }
                 }
                 unset($type);
@@ -193,7 +221,6 @@ class ProductAction
 
     public static function updateProductField(int $iblockId, int $elementId, array $fields)
     {
-
     }
 
     protected static function getSectionProducts(int $iblockId, array $sections, array $filter)

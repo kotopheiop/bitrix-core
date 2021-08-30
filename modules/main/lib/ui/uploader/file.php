@@ -69,9 +69,13 @@ class File
      */
     public static function initHash($file = array())
     {
-        if (empty($file["id"]))
+        if (empty($file["id"])) {
             return md5($file["name"]);
-        return $file["id"];
+        }
+        if (preg_match("/^file([0-9]+)$/", $file["id"])) {
+            return $file["id"];
+        }
+        return md5($file["id"]);
     }
 
     /**
@@ -150,64 +154,82 @@ class File
 
         if ($code !== "default" && !array_key_exists($code, $copies)) {
             $result->addError(new Error("The copy name is not in the list."));
-        } else if ($this->isUploaded()) {
-            return $result;
-        } else if (isset($file["chunkId"])) {
-            $info = $this->getFile($code);
-            if (empty($info))
-                $info = array(
-                    "name" => $this->getName(),
-                    "code" => $code,
-                    "type" => $file["type"],
-                    "uploadStatus" => "inprogress",
-                    "count" => $file["count"],
-                    "chunks" => array());
-            $file["chunks"] = $info["chunks"];
-            $r = $storage->copy($this->package->getPath() . $this->getHash(), $file);
-            if (!$r->isSuccess()) {
-                $result->addError($r->getErrorCollection()->current());
-            } else {
-                $info["chunks"][$file["chunkId"]] = array(
-                    "size" => $file["size"],
-                    "number" => $file["number"],
-                    "start" => $file["start"],
-                    "error" => $file["error"]
-                );
-                $file["uploadStatus"] = "uploaded";
-                if (count($info["chunks"]) == $info["count"]) {
-                    $data = $r->getData();
-                    $data["name"] = $this->getName();
-                    $data["code"] = $info["code"];
-                    $data["uploadStatus"] = "uploaded";
-                    $info = $data;
-                }
-                $this->setFile($code, $info);
-                $storage->flushDescriptor();
-            }
         } else {
-            $r = $storage->copy($this->package->getPath() . $this->getHash(), $file);
-            if ($r->isSuccess()) {
-                $data = $r->getData();
-                $data["name"] = $this->getName();
-                $data["code"] = $code;
-                $data["uploadStatus"] = "uploaded";
-                $this->setFile($code, $data);
+            if ($this->isUploaded()) {
+                return $result;
             } else {
-                $result->addError($r->getErrorCollection()->current());
+                if (isset($file["chunkId"])) {
+                    $info = $this->getFile($code);
+                    if (empty($info)) {
+                        $info = array(
+                            "name" => $this->getName(),
+                            "code" => $code,
+                            "type" => $file["type"],
+                            "uploadStatus" => "inprogress",
+                            "count" => $file["count"],
+                            "chunks" => array()
+                        );
+                    }
+                    $file["chunks"] = $info["chunks"];
+                    $r = $storage->copy($this->package->getPath() . $this->getHash(), $file);
+                    if (!$r->isSuccess()) {
+                        $result->addError($r->getErrorCollection()->current());
+                    } else {
+                        $info["chunks"][$file["chunkId"]] = array(
+                            "size" => $file["size"],
+                            "number" => $file["number"],
+                            "start" => $file["start"],
+                            "error" => $file["error"]
+                        );
+                        $file["uploadStatus"] = "uploaded";
+                        $data = $r->getData();
+                        if (count($info["chunks"]) == $info["count"]) {
+                            $data["name"] = $this->getName();
+                            $data["code"] = $info["code"];
+                            $data["uploadStatus"] = "uploaded";
+                            $info = $data + array_intersect_key($info, ["width" => "", "height" => ""]);
+                        } else {
+                            $info += array_intersect_key($data, ["width" => "", "height" => ""]);
+                        }
+                        $this->setFile($code, $info);
+                        $storage->flushDescriptor();
+                    }
+                } else {
+                    $r = $storage->copy($this->package->getPath() . $this->getHash(), $file);
+                    if ($r->isSuccess()) {
+                        $data = $r->getData();
+                        $data["name"] = $this->getName();
+                        $data["code"] = $code;
+                        $data["uploadStatus"] = "uploaded";
+                        $this->setFile($code, $data);
+                    } else {
+                        $result->addError($r->getErrorCollection()->current());
+                    }
+                }
             }
         }
         if ($result->isSuccess()) {
             $info = $this->getFile($code);
             if ($info["uploadStatus"] == "uploaded") {
                 $info["url"] = $this->getUrl("view", $code);
-                $info["~url"] = $this->getUrl("view", $code, \COption::GetOptionString("main.fileinput", "entryPointUrl", "/bitrix/tools/upload.php"));
+                $info["~url"] = $this->getUrl(
+                    "view",
+                    $code,
+                    \COption::GetOptionString(
+                        "main.fileinput",
+                        "entryPointUrl",
+                        "/bitrix/tools/upload.php"
+                    )
+                );
                 $info["sizeFormatted"] = \CFile::FormatSize($info["size"]);
                 foreach ($this->data["files"] as $k => $f) {
-                    if ($f["uploadStatus"] == "uploaded")
+                    if ($f["uploadStatus"] == "uploaded") {
                         unset($copies[$k]);
+                    }
                 }
-                if (empty($copies))
+                if (empty($copies)) {
                     $this->setUploadStatus("uploaded");
+                }
             }
             $this->setFile($code, $info);
         }
@@ -237,8 +259,10 @@ class File
         foreach ($array as $k => $v) {
             if (is_array($v)) {
                 $array[$k] = self::arrayWalkRecursive($v);
-            } else if (is_object($v)) {
-                unset($array[$k]);
+            } else {
+                if (is_object($v)) {
+                    unset($array[$k]);
+                }
             }
         }
         return $array;
@@ -295,7 +319,10 @@ class File
      */
     protected static function getFromCache($hash, $path)
     {
-        return unserialize(\CBXVirtualIo::GetInstance()->GetFile($path . $hash . "/.log")->GetContents());
+        return unserialize(
+            \CBXVirtualIo::GetInstance()->GetFile($path . $hash . "/.log")->GetContents(),
+            ['allowed_classes' => false]
+        );
     }
 
     /**
@@ -308,8 +335,9 @@ class File
         $hash = self::initHash($file);
         if (FileInputUtility::instance()->checkFile($package->getCid(), $hash)) {
             $file = \CBXVirtualIo::GetInstance()->GetFile($package->getPath() . $hash . "/.log");
-            if ($file->IsExists())
+            if ($file->IsExists()) {
                 $file->unlink();
+            }
             FileInputUtility::instance()->unRegisterFile($package->getCid(), $hash);
         }
     }
@@ -325,8 +353,9 @@ class File
     {
         $io = \CBXVirtualIo::GetInstance();
         $directory = $io->GetDirectory($path . $hash);
-        if ($directory->Create())
+        if ($directory->Create()) {
             $io->GetFile($path . $hash . "/.log")->PutContents(serialize($data));
+        }
     }
 
     /**
@@ -342,10 +371,11 @@ class File
         $res = is_array($res) ? $res : array();
         $res2 = is_array($res2) ? $res2 : array();
         foreach ($res2 as $key => $val) {
-            if (array_key_exists($key, $res) && is_array($val))
+            if (array_key_exists($key, $res) && is_array($val)) {
                 $res[$key] = self::merge($res[$key], $val);
-            else
+            } else {
                 $res[$key] = $val;
+            }
         }
         return $res;
     }
@@ -424,8 +454,9 @@ class File
             $io = \CBXVirtualIo::GetInstance();
             $directory = $io->GetDirectory($path . $hash);
             $res = $directory->GetChildren();
-            foreach ($res as $file)
+            foreach ($res as $file) {
                 $file->unlink();
+            }
             $directory->rmdir();
 
             return true;
@@ -443,7 +474,7 @@ class File
     {
         $file = false;
         $copy = "";
-        if (strpos($hash, "_") > 0) {
+        if (mb_strpos($hash, "_") > 0) {
             $copy = explode("_", $hash);
             $hash = $copy[0];
             $copy = $copy[1];
@@ -456,10 +487,11 @@ class File
 
         if (is_array($file)) {
             $docRoot = Application::getInstance()->getContext()->getServer()->getDocumentRoot();
-            if (strpos(\CTempFile::GetAbsoluteRoot(), $docRoot) === 0)
+            if (mb_strpos(\CTempFile::GetAbsoluteRoot(), $docRoot) === 0) {
                 \CFile::ViewByUser($file, array("content_type" => $file["type"]));
-            else
+            } else {
                 self::view($file, array("content_type" => $file["type"]));
+            }
         }
     }
 
@@ -471,7 +503,8 @@ class File
     private function getUrl($act = "view", $copy = "default", $uri = null)
     {
         $uri = is_null($uri) ? \Bitrix\Main\Context::getCurrent()->getRequest()->getRequestUri() : $uri;
-        return \CHTTP::URN2URI($uri . (strpos($uri, "?") === false ? "?" : "&") .
+        return \CHTTP::URN2URI(
+            $uri . (mb_strpos($uri, "?") === false ? "?" : "&") .
             \CHTTP::PrepareData(
                 array(
                     Uploader::INFO_NAME => array(
@@ -488,7 +521,9 @@ class File
     public static function getUrlFromRelativePath($tmpName)
     {
         $io = \CBXVirtualIo::GetInstance();
-        if (($tempRoot = \CTempFile::GetAbsoluteRoot()) && ($filePath = $tempRoot . $tmpName) && $io->FileExists($filePath)) {
+        if (($tempRoot = \CTempFile::GetAbsoluteRoot()) && ($filePath = $tempRoot . $tmpName) && $io->FileExists(
+                $filePath
+            )) {
             $f = $io->GetFile($filePath);
             $directory = $io->GetDirectory($f->GetPath());
             $hash = $directory->GetName();
@@ -540,8 +575,10 @@ class File
      */
     public static function http()
     {
-        if (is_null(static::$http))
+        if (is_null(static::$http)) {
             static::$http = new HttpClient;
+            static::$http->setPrivateIp(false);
+        }
         return static::$http;
     }
 
@@ -554,30 +591,41 @@ class File
     public static function checkFile(&$file, File $f, $params)
     {
         $result = new Result();
-        if ($file["error"] > 0)
+        if ($file["error"] > 0) {
             $result->addError(new Error(File::getUploadErrorMessage($file["error"]), "BXU347.2.9" . $file["error"]));
-        else if (array_key_exists("tmp_url", $file)) {
-            $url = new Uri($file["tmp_url"]);
-            if ($url->getHost() == '' && ($tmp = \CFile::MakeFileArray($url->getPath())) && is_array($tmp)) {
-                $file = array_merge($tmp, $file);
-            } else if ($url->getHost() <> '' &&
-                self::http()->query("HEAD", $file["tmp_url"]) &&
-                self::http()->getStatus() == "200") {
-                $file = array_merge($file, array(
-                    "size" => self::http()->getHeaders()->get("content-length"),
-                    "type" => self::http()->getHeaders()->get("content-type")
-                ));
+        } else {
+            if (array_key_exists("tmp_url", $file)) {
+                $url = new Uri($file["tmp_url"]);
+                if ($url->getHost() == '' && ($tmp = \CFile::MakeFileArray($url->getPath())) && is_array($tmp)) {
+                    $file = array_merge($tmp, $file);
+                } else {
+                    if ($url->getHost() <> '' &&
+                        self::http()->query("HEAD", $file["tmp_url"]) &&
+                        self::http()->getStatus() == "200") {
+                        $file = array_merge(
+                            $file,
+                            array(
+                                "size" => self::http()->getHeaders()->get("content-length"),
+                                "type" => self::http()->getHeaders()->get("content-type")
+                            )
+                        );
+                    } else {
+                        $result->addError(new Error(Loc::getMessage("BXU_FileIsNotUploaded"), "BXU347.2"));
+                    }
+                }
             } else {
-                $result->addError(new Error(Loc::getMessage("BXU_FileIsNotUploaded"), "BXU347.2"));
+                if (isset($file['bucketId']) && !CloudStorage::checkBucket($file['bucketId'])) {
+                    $result->addError(new Error(Loc::getMessage("BXU_FileIsNotUploaded"), "BXU347.2.8"));
+                } else {
+                    if (!isset($file['bucketId']) && (!file_exists($file['tmp_name']) || (
+                                (mb_substr($file["tmp_name"], 0, mb_strlen($params["path"])) !== $params["path"]) &&
+                                !is_uploaded_file($file['tmp_name'])
+                            ))
+                    ) {
+                        $result->addError(new Error(Loc::getMessage("BXU_FileIsNotUploaded"), "BXU347.2.7"));
+                    }
+                }
             }
-        } else if (isset($file['bucketId']) && !CloudStorage::checkBucket($file['bucketId'])) {
-            $result->addError(new Error(Loc::getMessage("BXU_FileIsNotUploaded"), "BXU347.2.8"));
-        } else if (!isset($file['bucketId']) && (!file_exists($file['tmp_name']) || (
-                    (substr($file["tmp_name"], 0, strlen($params["path"])) !== $params["path"]) &&
-                    !is_uploaded_file($file['tmp_name'])
-                ))
-        ) {
-            $result->addError(new Error(Loc::getMessage("BXU_FileIsNotUploaded"), "BXU347.2.7"));
         }
 
         if ($result->isSuccess()) {
@@ -587,7 +635,12 @@ class File
                 $name = $f->getName();
                 $ff = array_merge($file, array("name" => $name));
                 if ($params["allowUpload"] == "I") {
-                    $error = \CFile::CheckFile($ff, $params["uploadMaxFilesize"], "image/", \CFile::GetImageExtensions());
+                    $error = \CFile::CheckFile(
+                        $ff,
+                        $params["uploadMaxFilesize"],
+                        "image/",
+                        \CFile::GetImageExtensions()
+                    );
                 } elseif ($params["allowUpload"] == "F") {
                     $error = \CFile::CheckFile($ff, $params["uploadMaxFilesize"], false, $params["allowUploadExt"]);
                 } else {
@@ -595,8 +648,9 @@ class File
                 }
             }
 
-            if ($error !== "")
+            if ($error !== "") {
                 $result->addError(new Error($error, "BXU347.3"));
+            }
         }
         if (preg_match("/^(.+?)\\.ch(\\d+)\\.(\\d+)\\.chs(\\d+)$/", $file["code"], $matches)) {
             $file["code"] = $matches[1];
@@ -644,10 +698,12 @@ class File
             array()
         )) {
             $dest = array_merge($source, $dest);
-            if (array_key_exists("watermark", $source) || !empty($watermarkParams))
+            if (array_key_exists("watermark", $source) || !empty($watermarkParams)) {
                 $dest["watermark"] = true;
-        } else
+            }
+        } else {
             $dest["error"] = 348;
+        }
         $dest["size"] = filesize($dest["tmp_name"]);
         $dest["type"] = $dest["type"] ?: \CFile::GetContentType($dest["tmp_name"]);
         $dest["sizeFormatted"] = \CFile::FormatSize($dest["size"]);
@@ -662,8 +718,9 @@ class File
      */
     public static function view(array $fileData, $options = array())
     {
-        if (!array_key_exists("tmp_name", $fileData) || empty($fileData["tmp_name"]))
+        if (!array_key_exists("tmp_name", $fileData) || empty($fileData["tmp_name"])) {
             return false;
+        }
 
         /** @global \CMain $APPLICATION */
         global $APPLICATION;
@@ -677,33 +734,40 @@ class File
         $filetime = 0;
 
         if (is_array($options)) {
-            if (isset($options["content_type"]))
+            if (isset($options["content_type"])) {
                 $content_type = $options["content_type"];
-            if (isset($options["specialchars"]))
+            }
+            if (isset($options["specialchars"])) {
                 $specialchars = $options["specialchars"];
-            if (isset($options["force_download"]))
+            }
+            if (isset($options["force_download"])) {
                 $force_download = $options["force_download"];
-            if (isset($options["cache_time"]))
+            }
+            if (isset($options["cache_time"])) {
                 $cache_time = intval($options["cache_time"]);
-            if (isset($options["attachment_name"]))
+            }
+            if (isset($options["attachment_name"])) {
                 $attachment_name = $options["attachment_name"];
+            }
         }
 
-        if ($cache_time < 0)
+        if ($cache_time < 0) {
             $cache_time = 0;
+        }
 
         $name = str_replace(array("\n", "\r"), '', $fileData["name"]);
 
-        if ($attachment_name)
+        if ($attachment_name) {
             $attachment_name = str_replace(array("\n", "\r"), '', $attachment_name);
-        else
+        } else {
             $attachment_name = $name;
+        }
 
         $content_type = \CFile::NormalizeContentType($content_type);
 
         $src = null;
         $file = null;
-        if (strpos($fileData["tmp_name"], \CTempFile::GetAbsoluteRoot()) === 0) {
+        if (mb_strpos($fileData["tmp_name"], \CTempFile::GetAbsoluteRoot()) === 0) {
             $file = new \Bitrix\Main\IO\File($fileData["tmp_name"]);
             try {
                 $src = $file->open(\Bitrix\Main\IO\FileStreamOpenMode::READ);
@@ -716,19 +780,18 @@ class File
         }
 
         $APPLICATION->RestartBuffer();
-        while (ob_end_clean()) ;
 
         $cur_pos = 0;
         $filesize = $fileData["size"];
         $size = $filesize - 1;
         $server = Application::getInstance()->getContext()->getServer();
-        $p = $server->get("HTTP_RANGE") && strpos($server->get("HTTP_RANGE"), "=");
+        $p = $server->get("HTTP_RANGE") && mb_strpos($server->get("HTTP_RANGE"), "=");
         if (intval($p) > 0) {
-            $bytes = substr($server->get("HTTP_RANGE"), $p + 1);
-            $p = strpos($bytes, "-");
+            $bytes = mb_substr($server->get("HTTP_RANGE"), $p + 1);
+            $p = mb_strpos($bytes, "-");
             if ($p !== false) {
-                $cur_pos = floatval(substr($bytes, 0, $p));
-                $size = floatval(substr($bytes, $p + 1));
+                $cur_pos = floatval(mb_substr($bytes, 0, $p));
+                $size = floatval(mb_substr($bytes, $p + 1));
                 if ($size <= 0) {
                     $size = $filesize - 1;
                 }
@@ -745,8 +808,9 @@ class File
             header("Content-Type: " . $content_type);
             header("Content-Length: " . ($size - $cur_pos + 1));
 
-            if ($filetime > 0)
+            if ($filetime > 0) {
                 header("Last-Modified: " . date("r", $filetime));
+            }
         } else {
             $lastModified = '';
             if ($cache_time > 0) {
@@ -771,22 +835,28 @@ class File
             }
 
             $utfName = \CHTTP::urnEncode($attachment_name, "UTF-8");
-            $translitName = \CUtil::translit($attachment_name, LANGUAGE_ID, array(
-                "max_len" => 1024,
-                "safe_chars" => ".",
-                "replace_space" => '-',
-                "change_case" => false,
-            ));
+            $translitName = \CUtil::translit(
+                $attachment_name,
+                LANGUAGE_ID,
+                array(
+                    "max_len" => 1024,
+                    "safe_chars" => ".",
+                    "replace_space" => '-',
+                    "change_case" => false,
+                )
+            );
 
             //Disable zlib for old versions of php <= 5.3.0
             //it has broken Content-Length handling
-            if (ini_get('zlib.output_compression'))
+            if (ini_get('zlib.output_compression')) {
                 ini_set('zlib.output_compression', 'Off');
+            }
 
-            if ($cur_pos > 0)
+            if ($cur_pos > 0) {
                 \CHTTP::SetStatus("206 Partial Content");
-            else
+            } else {
                 \CHTTP::SetStatus("200 OK");
+            }
 
             header("Content-Type: " . $content_type);
             header("Content-Disposition: attachment; filename=\"" . $translitName . "\"; filename*=utf-8''" . $utfName);
@@ -799,8 +869,9 @@ class File
 
             if ($cache_time > 0) {
                 header("Cache-Control: private, max-age=" . $cache_time . ", pre-check=" . $cache_time);
-                if ($filetime > 0)
+                if ($filetime > 0) {
                     header('Last-Modified: ' . $lastModified);
+                }
             } else {
                 header("Cache-Control: no-cache, must-revalidate, post-check=0, pre-check=0");
             }
@@ -809,30 +880,42 @@ class File
             header("Pragma: public");
 
             // Download from front-end
-            if ($fastDownload && ($fromClouds || strpos($fileData["tmp_name"], Application::getInstance()->getContext()->getServer()->getDocumentRoot()) === 0)) {
+            if ($fastDownload && ($fromClouds || mb_strpos(
+                        $fileData["tmp_name"],
+                        Application::getInstance()->getContext()->getServer()->getDocumentRoot()
+                    ) === 0)) {
                 if ($fromClouds) {
                     $filename = preg_replace('~^(http[s]?)(\://)~i', '\\1.', $fileData["tmp_name"]);
                     $cloudUploadPath = \COption::GetOptionString('main', 'bx_cloud_upload', '/upload/bx_cloud_upload/');
                     header('X-Accel-Redirect: ' . $cloudUploadPath . $filename);
                 } else {
-                    header('X-Accel-Redirect: ' . \Bitrix\Main\Text\Encoding::convertEncoding($fileData["tmp_name"], SITE_CHARSET, "UTF-8"));
+                    header(
+                        'X-Accel-Redirect: ' . \Bitrix\Main\Text\Encoding::convertEncoding(
+                            $fileData["tmp_name"],
+                            SITE_CHARSET,
+                            "UTF-8"
+                        )
+                    );
                 }
-            } else if ($src) {
-                session_write_close();
-                $file->seek($cur_pos);
-                while (!feof($src) && ($cur_pos <= $size)) {
-                    $bufsize = 131072; //128K
-                    if ($cur_pos + $bufsize > $size)
-                        $bufsize = $size - $cur_pos + 1;
-                    $cur_pos += $bufsize;
-                    echo fread($src, $bufsize);
-                }
-                $file->close();
             } else {
-                $src = new \Bitrix\Main\Web\HttpClient();
-                $fp = fopen("php://output", "wb");
-                $src->setOutputStream($fp);
-                $src->get($fileData["tmp_name"]);
+                if ($src) {
+                    session_write_close();
+                    $file->seek($cur_pos);
+                    while (!feof($src) && ($cur_pos <= $size)) {
+                        $bufsize = 131072; //128K
+                        if ($cur_pos + $bufsize > $size) {
+                            $bufsize = $size - $cur_pos + 1;
+                        }
+                        $cur_pos += $bufsize;
+                        echo fread($src, $bufsize);
+                    }
+                    $file->close();
+                } else {
+                    $src = new \Bitrix\Main\Web\HttpClient();
+                    $fp = fopen("php://output", "wb");
+                    $src->setOutputStream($fp);
+                    $src->get($fileData["tmp_name"]);
+                }
             }
         }
         \CMain::FinalActions();

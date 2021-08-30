@@ -9,9 +9,11 @@ use Bitrix\Rest\AppTable;
 use Bitrix\Rest\AuthTypeException;
 use Bitrix\Rest\HandlerHelper;
 use Bitrix\Rest\OAuth\Auth;
+use Bitrix\Rest\PlacementLangTable;
 use Bitrix\Rest\PlacementTable;
 use Bitrix\Rest\RestException;
 use Bitrix\Rest\UserField\Callback;
+use Bitrix\Rest\Lang;
 
 class UserFieldType extends \IRestService
 {
@@ -53,22 +55,24 @@ class UserFieldType extends \IRestService
 
         $navParams = static::getNavData($nav, true);
 
-        $dbRes = PlacementTable::getList(array(
-            'filter' => array(
-                '=PLACEMENT' => static::PLACEMENT_UF_TYPE,
-                '=REST_APP.CLIENT_ID' => $server->getClientId(),
-            ),
-            'select' => array(
-                'USER_TYPE_ID' => 'ADDITIONAL',
-                'HANDLER' => 'PLACEMENT_HANDLER',
-                'TITLE' => 'TITLE',
-                'DESCRIPTION' => 'COMMENT'
-            ),
+        $dbRes = PlacementTable::getList(
+            array(
+                'filter' => array(
+                    '=PLACEMENT' => static::PLACEMENT_UF_TYPE,
+                    '=REST_APP.CLIENT_ID' => $server->getClientId(),
+                ),
+                'select' => array(
+                    'USER_TYPE_ID' => 'ADDITIONAL',
+                    'HANDLER' => 'PLACEMENT_HANDLER',
+                    'TITLE' => 'TITLE',
+                    'DESCRIPTION' => 'COMMENT'
+                ),
 
-            'limit' => $navParams['limit'],
-            'offset' => $navParams['offset'],
-            'count_total' => true,
-        ));
+                'limit' => $navParams['limit'],
+                'offset' => $navParams['offset'],
+                'count_total' => true,
+            )
+        );
 
         $result = array();
         while ($handler = $dbRes->fetch()) {
@@ -84,6 +88,19 @@ class UserFieldType extends \IRestService
         );
     }
 
+    private static function prepareOption($option): array
+    {
+        $result = [];
+        if (is_array($option)) {
+            $option = array_change_key_case($option, CASE_LOWER);
+            if ($option['height']) {
+                $result['height'] = (int)$option['height'];
+            }
+        }
+
+        return $result;
+    }
+
     public static function add($param, $n, \CRestServer $server)
     {
         static::checkPermission($server);
@@ -93,11 +110,11 @@ class UserFieldType extends \IRestService
         $userTypeId = toLower($param['USER_TYPE_ID']);
         $placementHandler = $param['HANDLER'];
 
-        if (strlen($userTypeId) <= 0) {
+        if ($userTypeId == '') {
             throw new ArgumentNullException("USER_TYPE_ID");
         }
 
-        if (strlen($placementHandler) <= 0) {
+        if ($placementHandler == '') {
             throw new ArgumentNullException("HANDLER");
         }
 
@@ -111,15 +128,27 @@ class UserFieldType extends \IRestService
             'PLACEMENT_HANDLER' => $placementHandler,
             'TITLE' => $userTypeId,
             'ADDITIONAL' => $userTypeId,
+            'OPTIONS' => static::prepareOption($param['OPTIONS']),
         );
 
-        if (!empty($param['TITLE'])) {
-            $placementBind['TITLE'] = trim($param['TITLE']);
+        $placementBind = array_merge(
+            $placementBind,
+            Lang::fillCompatibility(
+                $param,
+                [
+                    'TITLE',
+                    'DESCRIPTION',
+                ],
+                [
+                    'TITLE' => $placementBind['TITLE']
+                ]
+            )
+        );
+        $langAll = [];
+        if ($placementBind['LANG_ALL']) {
+            $langAll = $placementBind['LANG_ALL'];
         }
-
-        if (!empty($param['DESCRIPTION'])) {
-            $placementBind['COMMENT'] = trim($param['DESCRIPTION']);
-        }
+        unset($placementBind['LANG_ALL']);
 
         $result = PlacementTable::add($placementBind);
         if (!$result->isSuccess()) {
@@ -129,11 +158,25 @@ class UserFieldType extends \IRestService
                 RestException::ERROR_CORE
             );
         } else {
-            Callback::bind(array(
-                'ID' => $result->getId(),
-                'APP_ID' => $appInfo['ID'],
-                'ADDITIONAL' => $userTypeId,
-            ));
+            $placementId = $result->getId();
+            foreach ($langAll as $lang => $item) {
+                $item['PLACEMENT_ID'] = $placementId;
+                $item['LANGUAGE_ID'] = $lang;
+                $res = PlacementLangTable::add($item);
+                if (!$res->isSuccess()) {
+                    throw new RestException(
+                        'Error: ' . implode(', ', $res->getErrorMessages()),
+                        RestException::ERROR_CORE
+                    );
+                }
+            }
+            Callback::bind(
+                array(
+                    'ID' => $placementId,
+                    'APP_ID' => $appInfo['ID'],
+                    'ADDITIONAL' => $userTypeId,
+                )
+            );
         }
 
         return true;
@@ -147,7 +190,7 @@ class UserFieldType extends \IRestService
 
         $userTypeId = toLower($param['USER_TYPE_ID']);
 
-        if (strlen($userTypeId) <= 0) {
+        if ($userTypeId == '') {
             throw new ArgumentNullException("USER_TYPE_ID");
         }
 
@@ -159,26 +202,55 @@ class UserFieldType extends \IRestService
             $updateFields['PLACEMENT_HANDLER'] = $param['HANDLER'];
         }
 
-        if (!empty($param['TITLE'])) {
-            $updateFields['TITLE'] = trim($param['TITLE']);
+        if (array_key_exists('OPTIONS', $param)) {
+            $updateFields['OPTIONS'] = static::prepareOption($param['OPTIONS']);
         }
 
-        if (!empty($param['DESCRIPTION'])) {
-            $updateFields['COMMENT'] = trim($param['DESCRIPTION']);
+        $updateFields = array_merge(
+            $updateFields,
+            Lang::fillCompatibility(
+                $param,
+                [
+                    'TITLE',
+                    'DESCRIPTION',
+                ],
+                [
+                    'TITLE' => $updateFields['TITLE']
+                ]
+            )
+        );
+        $langAll = [];
+        if ($updateFields['LANG_ALL']) {
+            $langAll = $updateFields['LANG_ALL'];
         }
+        unset($updateFields['LANG_ALL']);
 
         if (count($updateFields) > 0) {
-            $dbRes = PlacementTable::getList(array(
-                'filter' => array(
-                    '=REST_APP.CLIENT_ID' => $server->getClientId(),
-                    '=ADDITIONAL' => $userTypeId
-                ),
-                'select' => array('ID', 'APP_ID', 'ADDITIONAL')
-            ));
+            $dbRes = PlacementTable::getList(
+                array(
+                    'filter' => array(
+                        '=REST_APP.CLIENT_ID' => $server->getClientId(),
+                        '=ADDITIONAL' => $userTypeId
+                    ),
+                    'select' => array('ID', 'APP_ID', 'ADDITIONAL')
+                )
+            );
             $placementInfo = $dbRes->fetch();
             if ($placementInfo) {
                 $updateResult = PlacementTable::update($placementInfo['ID'], $updateFields);
                 if ($updateResult->isSuccess()) {
+                    PlacementLangTable::deleteByPlacement($placementInfo['ID']);
+                    foreach ($langAll as $lang => $item) {
+                        $item['PLACEMENT_ID'] = $placementInfo['ID'];
+                        $item['LANGUAGE_ID'] = $lang;
+                        $res = PlacementLangTable::add($item);
+                        if (!$res->isSuccess()) {
+                            throw new RestException(
+                                'Error: ' . implode(', ', $res->getErrorMessages()),
+                                RestException::ERROR_CORE
+                            );
+                        }
+                    }
                     // rebind handler for failover reasons
                     Callback::bind($placementInfo);
                 } else {
@@ -206,17 +278,19 @@ class UserFieldType extends \IRestService
 
         $userTypeId = toLower($param['USER_TYPE_ID']);
 
-        if (strlen($userTypeId) <= 0) {
+        if ($userTypeId == '') {
             throw new ArgumentNullException("USER_TYPE_ID");
         }
 
-        $dbRes = PlacementTable::getList(array(
-            'filter' => array(
-                '=REST_APP.CLIENT_ID' => $server->getClientId(),
-                '=ADDITIONAL' => $userTypeId
-            ),
-            'select' => array('ID', 'APP_ID', 'ADDITIONAL')
-        ));
+        $dbRes = PlacementTable::getList(
+            array(
+                'filter' => array(
+                    '=REST_APP.CLIENT_ID' => $server->getClientId(),
+                    '=ADDITIONAL' => $userTypeId
+                ),
+                'select' => array('ID', 'APP_ID', 'ADDITIONAL')
+            )
+        );
         $placementInfo = $dbRes->fetch();
         if ($placementInfo) {
             $deleteResult = PlacementTable::delete($placementInfo['ID']);

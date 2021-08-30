@@ -30,10 +30,12 @@ final class InlineAction extends Action
             $this->binder = AutoWire\Binder::buildForMethod($controller, $this->methodName)
                 ->setSourcesParametersToMap($controller->getSourceParametersList())
                 ->setAutoWiredParameters(
-                    array_filter(array_merge(
-                        [$controller->getPrimaryAutoWiredParameter()],
-                        $controller->getAutoWiredParameters()
-                    ))
+                    array_filter(
+                        array_merge(
+                            [$controller->getPrimaryAutoWiredParameter()],
+                            $controller->getAutoWiredParameters()
+                        )
+                    )
                 );
         }
 

@@ -57,20 +57,24 @@ class Template
         if ($type == TemplateRef::ENTITY_TYPE_SITE) {
             $entityClass = SiteCore::class;
             $method = $method . 'ForSite';
-        } else if ($type == TemplateRef::ENTITY_TYPE_LANDING) {
-            $entityClass = LandingCore::class;
-            $method = $method . 'ForLanding';
+        } else {
+            if ($type == TemplateRef::ENTITY_TYPE_LANDING) {
+                $entityClass = LandingCore::class;
+                $method = $method . 'ForLanding';
+            }
         }
 
         if (isset($entityClass)) {
-            $entity = $entityClass::getList(array(
-                'select' => array(
-                    'ID'
-                ),
-                'filter' => array(
-                    'ID' => $id
+            $entity = $entityClass::getList(
+                array(
+                    'select' => array(
+                        'ID'
+                    ),
+                    'filter' => array(
+                        'ID' => $id
+                    )
                 )
-            ))->fetch();
+            )->fetch();
             if ($entity) {
                 $res = TemplateRef::$method(
                     $id,

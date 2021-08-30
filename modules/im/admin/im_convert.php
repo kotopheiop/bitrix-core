@@ -1,15 +1,18 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/im/include.php");
 
 IncludeModuleLangFile(__FILE__);
-if (!CModule::IncludeModule("im"))
+if (!CModule::IncludeModule("im")) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 
 $POST_RIGHT = $APPLICATION->GetGroupRight("im");
-if ($POST_RIGHT == "D")
+if ($POST_RIGHT == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $res = false;
 if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Convert"] == "Y") {
@@ -18,15 +21,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Convert"] == "Y") {
     require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_js.php");
 
     $max_execution_time = intval($max_execution_time);
-    if ($max_execution_time <= 0)
+    if ($max_execution_time <= 0) {
         $max_execution_time = 10;
+    }
     COption::SetOptionString("im", "max_execution_time", $max_execution_time);
 
     $converted = isset($_REQUEST['converted']) ? intval($_REQUEST['converted']) : 0;
     $maxMessage = isset($_REQUEST['maxMessage']) ? intval($_REQUEST['maxMessage']) : 0;
     $maxMessagePerStep = isset($_REQUEST['maxMessagePerStep']) ? intval($_REQUEST['maxMessagePerStep']) : 100;
-    if ($converted == 0 && $maxMessage == 0)
+    if ($converted == 0 && $maxMessage == 0) {
         $maxMessage = CIMConvert::ConvertCount();
+    }
 
     CIMConvert::$convertPerStep = 0;
     CIMConvert::$converted = $converted;
@@ -35,14 +40,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Convert"] == "Y") {
 
     if (CIMConvert::$convertPerStep > 0):
         $aboutMinute = ($maxMessage - CIMConvert::$converted) / CIMConvert::$convertPerStep * $max_execution_time / 60;
-        CAdminMessage::ShowMessage(array(
-            "TYPE" => "PROGRESS",
-            "HTML" => true,
-            "MESSAGE" => GetMessage("IM_CONVERT_IN_PROGRESS"),
-            "DETAILS" => "#PROGRESS_BAR# " . GetMessage("IM_CONVERT_TOTAL") . " <b>" . $converted . "</b> (" . ceil(CIMConvert::$converted / $maxMessage * 100) . "%, " . GetMessage("IM_CONVERT_ABOUT_TIME") . " " . ($aboutMinute >= 1 ? ceil($aboutMinute) . ' ' . GetMessage("IM_CONVERT_ABOUT_TIME_MINUTE") : ceil($aboutMinute * 60) . ' ' . GetMessage("IM_CONVERT_ABOUT_TIME_SEC")) . " )",
-            "PROGRESS_TOTAL" => $maxMessage,
-            "PROGRESS_VALUE" => CIMConvert::$converted,
-        ));
+        CAdminMessage::ShowMessage(
+            array(
+                "TYPE" => "PROGRESS",
+                "HTML" => true,
+                "MESSAGE" => GetMessage("IM_CONVERT_IN_PROGRESS"),
+                "DETAILS" => "#PROGRESS_BAR# " . GetMessage("IM_CONVERT_TOTAL") . " <b>" . $converted . "</b> (" . ceil(
+                        CIMConvert::$converted / $maxMessage * 100
+                    ) . "%, " . GetMessage("IM_CONVERT_ABOUT_TIME") . " " . ($aboutMinute >= 1 ? ceil(
+                            $aboutMinute
+                        ) . ' ' . GetMessage("IM_CONVERT_ABOUT_TIME_MINUTE") : ceil(
+                            $aboutMinute * 60
+                        ) . ' ' . GetMessage("IM_CONVERT_ABOUT_TIME_SEC")) . " )",
+                "PROGRESS_TOTAL" => $maxMessage,
+                "PROGRESS_VALUE" => CIMConvert::$converted,
+            )
+        );
         ?>
         <script>
             CloseWaitWindow();
@@ -51,12 +64,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Convert"] == "Y") {
 
     <?
     else:
-        CAdminMessage::ShowMessage(array(
-            "MESSAGE" => GetMessage("IM_CONVERT_COMPLETE"),
-            "DETAILS" => GetMessage("IM_CONVERT_TOTAL") . " <b>" . $converted . "</b><div id='im_convert_finish'></div>",
-            "HTML" => true,
-            "TYPE" => "OK",
-        ));
+        CAdminMessage::ShowMessage(
+            array(
+                "MESSAGE" => GetMessage("IM_CONVERT_COMPLETE"),
+                "DETAILS" => GetMessage(
+                        "IM_CONVERT_TOTAL"
+                    ) . " <b>" . $converted . "</b><div id='im_convert_finish'></div>",
+                "HTML" => true,
+                "TYPE" => "OK",
+            )
+        );
         CAdminNotify::DeleteByTag("IM_CONVERT");
         ?>
         <script>
@@ -66,11 +83,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Convert"] == "Y") {
     <?endif;
     require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/epilog_admin_js.php");
 } else {
-
     $APPLICATION->SetTitle(GetMessage("IM_CONVERT_TITLE"));
 
     $aTabs = array(
-        array("DIV" => "edit1", "TAB" => GetMessage("IM_CONVERT_TAB"), "ICON" => "main_user_edit", "TITLE" => GetMessage("IM_CONVERT_TAB_TITLE")),
+        array(
+            "DIV" => "edit1",
+            "TAB" => GetMessage("IM_CONVERT_TAB"),
+            "ICON" => "main_user_edit",
+            "TITLE" => GetMessage("IM_CONVERT_TAB_TITLE")
+        ),
     );
     $tabControl = new CAdminTabControl("tabControl", $aTabs, true, true);
 
@@ -133,12 +154,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Convert"] == "Y") {
     <?
     $max_messages = CIMConvert::ConvertCount();
     if ($max_messages <= 0) {
-        CAdminMessage::ShowMessage(array(
-            "MESSAGE" => GetMessage("IM_CONVERT_COMPLETE"),
-            "DETAILS" => GetMessage("IM_CONVERT_COMPLETE_ALL_OK"),
-            "HTML" => true,
-            "TYPE" => "OK",
-        ));
+        CAdminMessage::ShowMessage(
+            array(
+                "MESSAGE" => GetMessage("IM_CONVERT_COMPLETE"),
+                "DETAILS" => GetMessage("IM_CONVERT_COMPLETE_ALL_OK"),
+                "HTML" => true,
+                "TYPE" => "OK",
+            )
+        );
         CAdminNotify::DeleteByTag("IM_CONVERT");
     }
     ?>
@@ -154,8 +177,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Convert"] == "Y") {
 
 
         $max_execution_time = intval(COption::GetOptionString("im", "max_execution_time", 10));
-        if ($max_execution_time <= 0)
+        if ($max_execution_time <= 0) {
             $max_execution_time = '';
+        }
         ?>
         <tr>
             <td width="40%"><? echo GetMessage("IM_CONVERT_STEP") ?></td>

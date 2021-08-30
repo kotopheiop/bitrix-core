@@ -15,8 +15,11 @@ class MysqliResult extends Result
      * @param Connection $dbConnection Connection object.
      * @param \Bitrix\Main\Diag\SqlTrackerQuery $trackerQuery Helps to collect debug information.
      */
-    public function __construct($result, Connection $dbConnection = null, \Bitrix\Main\Diag\SqlTrackerQuery $trackerQuery = null)
-    {
+    public function __construct(
+        $result,
+        Connection $dbConnection = null,
+        \Bitrix\Main\Diag\SqlTrackerQuery $trackerQuery = null
+    ) {
         parent::__construct($result, $dbConnection, $trackerQuery);
     }
 

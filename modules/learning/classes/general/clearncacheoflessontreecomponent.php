@@ -12,7 +12,8 @@ class CLearnCacheOfLessonTreeComponent
         $isCacheDirty = COption::GetOptionInt(
             'learning',
             self::OPTION_NAME,
-            1);
+            1
+        );
 
         return ((boolean)$isCacheDirty);
     }
@@ -62,8 +63,9 @@ class CLearnCacheOfLessonTreeComponent
             && (!self::IsDirty())
         ) {
             $arCached = $oCache->GetVars();
-            if (isset($arCached['arContents']) && is_array($arCached['arContents']))
+            if (isset($arCached['arContents']) && is_array($arCached['arContents'])) {
                 $arContents = $arCached['arContents'];
+            }
         } else {
             self::Purge();
 
@@ -87,8 +89,9 @@ class CLearnCacheOfLessonTreeComponent
         );
 
         $arContents = array();
-        while ($arContent = $rsContent->GetNext())
+        while ($arContent = $rsContent->GetNext()) {
             $arContents[] = $arContent;
+        }
 
         return ($arContents);
     }

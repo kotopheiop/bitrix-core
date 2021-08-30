@@ -58,7 +58,9 @@ class GroupedDataGrid extends Base
                 foreach ($items as $item) {
                     $result['items'][$item['groupBy']][$reportKey] = $item;
                 }
-                $result['config']['reportOptions'][$reportKey]['title'] = htmlspecialcharsbx($reportHandlerResult['config']['reportTitle']);
+                $result['config']['reportOptions'][$reportKey]['title'] = htmlspecialcharsbx(
+                    $reportHandlerResult['config']['reportTitle']
+                );
 
                 foreach ($reportHandlerResult['config']['groupsLabelMap'] as $groupKey => $label) {
                     $result['config']['groupOptions'][$groupKey]['title'] = htmlspecialcharsbx($label);
@@ -109,13 +111,19 @@ class GroupedDataGrid extends Base
         $whatWillCalculateField = $reportHandler->getFormElement('calculate');
         $labelField = $reportHandler->getFormElement('label');
         if ($whatWillCalculateField) {
-            $labelField->addJsEventListener($whatWillCalculateField, $whatWillCalculateField::JS_EVENT_ON_CHANGE, array(
-                'class' => 'BX.Report.VisualConstructor.FieldEventHandlers.Title',
-                'action' => 'whatWillCalculateChange',
-            ));
-            $labelField->addAssets(array(
-                'js' => array('/bitrix/js/report/js/visualconstructor/fields/reporttitle.js')
-            ));
+            $labelField->addJsEventListener(
+                $whatWillCalculateField,
+                $whatWillCalculateField::JS_EVENT_ON_CHANGE,
+                array(
+                    'class' => 'BX.Report.VisualConstructor.FieldEventHandlers.Title',
+                    'action' => 'whatWillCalculateChange',
+                )
+            );
+            $labelField->addAssets(
+                array(
+                    'js' => array('/bitrix/js/report/js/visualconstructor/fields/reporttitle.js')
+                )
+            );
         }
         /** @var DropDown $calculateField */
         $calculateField = $reportHandler->getFormElement('calculate');

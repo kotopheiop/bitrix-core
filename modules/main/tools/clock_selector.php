@@ -1,17 +1,25 @@
 <?
+
 define("STOP_STATISTICS", true);
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
-if (!$USER->IsAuthorized() || !check_bitrix_sessid())
+if (!$USER->IsAuthorized() || !check_bitrix_sessid()) {
     die();
+}
 
 $start_time = intval($_REQUEST['start_time']) % 86400;
 
-if ($start_time > 0)
-    $start_time = str_pad(intval($start_time / 3600), 2, '0', STR_PAD_LEFT) . ':' . str_pad(intval(($start_time % 3600) / 60), 2, '0', STR_PAD_LEFT);
-else
+if ($start_time > 0) {
+    $start_time = str_pad(intval($start_time / 3600), 2, '0', STR_PAD_LEFT) . ':' . str_pad(
+            intval(($start_time % 3600) / 60),
+            2,
+            '0',
+            STR_PAD_LEFT
+        );
+} else {
     $start_time = '';
+}
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/tools/clock.php");
 

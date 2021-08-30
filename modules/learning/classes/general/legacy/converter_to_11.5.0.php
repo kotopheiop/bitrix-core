@@ -33,8 +33,9 @@ class CLearnInstall201203ConvertDB
         $errorMessage = '';
 
         // If data tables are not installed - nothing to do
-        if (!$DB->TableExists('b_learn_lesson'))
+        if (!$DB->TableExists('b_learn_lesson')) {
             return ($errorMessage);
+        }
 
         try {
             if (!self::IsNewRightsModelInitialized($step, $msg)) {
@@ -78,10 +79,11 @@ class CLearnInstall201203ConvertDB
     {
         global $DB, $DBType;
 
-        $dbtype = strtolower($DBType);
+        $dbtype = mb_strtolower($DBType);
 
-        if ($dbtype == 'mssql')
+        if ($dbtype == 'mssql') {
             return;
+        }
 
         $DB->StartTransaction();
     }
@@ -91,10 +93,11 @@ class CLearnInstall201203ConvertDB
     {
         global $DB, $DBType;
 
-        $dbtype = strtolower($DBType);
+        $dbtype = mb_strtolower($DBType);
 
-        if ($dbtype == 'mssql')
+        if ($dbtype == 'mssql') {
             return;
+        }
 
         $DB->Rollback();
     }
@@ -104,10 +107,11 @@ class CLearnInstall201203ConvertDB
     {
         global $DB, $DBType;
 
-        $dbtype = strtolower($DBType);
+        $dbtype = mb_strtolower($DBType);
 
-        if ($dbtype == 'mssql')
+        if ($dbtype == 'mssql') {
             return;
+        }
 
         $DB->Commit();
     }
@@ -117,10 +121,11 @@ class CLearnInstall201203ConvertDB
     {
         global $DB, $DBType;
 
-        $dbtype = strtolower($DBType);
+        $dbtype = mb_strtolower($DBType);
 
-        if ($dbtype != 'mssql')
+        if ($dbtype != 'mssql') {
             return;
+        }
 
         $arTriggers = array(
             'B_LEARN_COURSE_UPDATE' => 'B_LEARN_COURSE',
@@ -134,7 +139,8 @@ class CLearnInstall201203ConvertDB
         foreach ($arTriggers as $triggerName => $tableName) {
             $DB->Query('DROP TRIGGER ' . $triggerName, true);
 
-            $DB->Query('
+            $DB->Query(
+                '
 					CREATE TRIGGER ' . $triggerName . ' ON ' . $tableName . ' FOR UPDATE AS
 					BEGIN
 						SET NOCOUNT ON;
@@ -151,7 +157,9 @@ class CLearnInstall201203ConvertDB
 								AND U.ID = D.ID;
 						END
 					END
-					', true);
+					',
+                true
+            );
         }
     }
 
@@ -258,28 +266,33 @@ class CLearnInstall201203ConvertDB
 
         $rc = $DB->Query("SELECT ID, NAME, BINDING FROM b_operation WHERE MODULE_ID = 'learning'", true);
 
-        if ($rc === false)
+        if ($rc === false) {
             throw new CLearnInstall201203ConvertDBException('EA_SQLERROR');
+        }
 
         $arOperationsInDB = array();
         while ($arOperation = $rc->Fetch()) {
-            if (substr($arOperation['NAME'], 0, 7) === 'lesson_')
+            if (mb_substr($arOperation['NAME'], 0, 7) === 'lesson_') {
                 $binding = 'lesson';
-            else
+            } else {
                 $binding = 'module';
+            }
 
-            if ($arOperation['BINDING'] !== $binding)
+            if ($arOperation['BINDING'] !== $binding) {
                 throw new Exception();
+            }
 
             $arOperationsInDB[$arOperation['NAME']] = $arOperation['ID'];
         }
 
-        if (count($arOperationsInDB) !== count($arAllOperations))
-            throw new Exception();    // not all operations in DB
+        if (count($arOperationsInDB) !== count($arAllOperations)) {
+            throw new Exception();
+        }    // not all operations in DB
 
         foreach ($arAllOperations as $operationName) {
-            if (!isset($arOperationsInDB[$operationName]))
-                throw new Exception();    // not all operations in DB
+            if (!isset($arOperationsInDB[$operationName])) {
+                throw new Exception();
+            }    // not all operations in DB
         }
 
         return ($arOperationsInDB);
@@ -292,32 +305,38 @@ class CLearnInstall201203ConvertDB
 
         $rc = $DB->Query("SELECT ID, NAME, BINDING FROM b_task WHERE MODULE_ID = 'learning'", true);
 
-        if ($rc === false)
+        if ($rc === false) {
             throw new CLearnInstall201203ConvertDBException('EA_SQLERROR');
+        }
 
         $arTasksInDB = array();
         while ($arTask = $rc->Fetch()) {
-            if (substr($arTask['NAME'], 0, 16) === 'learning_lesson_')
+            if (mb_substr($arTask['NAME'], 0, 16) === 'learning_lesson_') {
                 $binding = 'lesson';
-            else
+            } else {
                 $binding = 'module';
+            }
 
-            if ($arTask['BINDING'] !== $binding)
+            if ($arTask['BINDING'] !== $binding) {
                 throw new Exception();
+            }
 
             $arTasksInDB[$arTask['NAME']] = $arTask['ID'];
         }
 
         if (count($arTasksInDB) !== count($arTasksOperations)) {
-            throw new Exception('count($arTasksInDB) = '
+            throw new Exception(
+                'count($arTasksInDB) = '
                 . count($arTasksInDB)
                 . '; count($arTasksOperations) = '
-                . count($arTasksOperations));    // not all tasks in DB
+                . count($arTasksOperations)
+            );    // not all tasks in DB
         }
 
         foreach (array_keys($arTasksOperations) as $taskName) {
-            if (!isset($arTasksInDB[$taskName]))
-                throw new Exception();    // not all tasks in DB
+            if (!isset($arTasksInDB[$taskName])) {
+                throw new Exception();
+            }    // not all tasks in DB
         }
 
         return ($arTasksInDB);
@@ -329,14 +348,16 @@ class CLearnInstall201203ConvertDB
         global $DB;
 
         foreach ($arTasksInDB as $taskName => $taskId) {
-            if (!isset($arTasksOperations[$taskName]))
+            if (!isset($arTasksOperations[$taskName])) {
                 throw new Exception();
+            }
 
             $arCurTaskOperations = $arTasksOperations[$taskName];
             $arCurTaskOperationsIDs = array();
             foreach ($arCurTaskOperations as $operationName) {
-                if (!isset($arOperationsInDB[$operationName]))
+                if (!isset($arOperationsInDB[$operationName])) {
                     throw new Exception();
+                }
 
                 $operationId = $arOperationsInDB[$operationName];
 
@@ -346,19 +367,22 @@ class CLearnInstall201203ConvertDB
             // Get list of task's operations reltaions
             $rc = $DB->Query("SELECT OPERATION_ID FROM b_task_operation WHERE TASK_ID = " . ($taskId + 0), true);
 
-            if ($rc === false)
+            if ($rc === false) {
                 throw new CLearnInstall201203ConvertDBException('EA_SQLERROR');
+            }
 
 
             while ($arRelation = $rc->Fetch()) {
-                if (!isset($arCurTaskOperationsIDs[$arRelation['OPERATION_ID']]))
+                if (!isset($arCurTaskOperationsIDs[$arRelation['OPERATION_ID']])) {
                     throw new Exception();
+                }
 
                 unset ($arCurTaskOperationsIDs[$arRelation['OPERATION_ID']]);
             }
 
-            if (count($arCurTaskOperationsIDs) > 0)
+            if (count($arCurTaskOperationsIDs) > 0) {
                 throw new Exception();
+            }
         }
     }
 
@@ -394,10 +418,11 @@ class CLearnInstall201203ConvertDB
         $arOperationsInDB = array();
 
         foreach ($arAllOperations as $operationName) {
-            if (substr($operationName, 0, 7) === 'lesson_')
+            if (mb_substr($operationName, 0, 7) === 'lesson_') {
                 $binding = 'lesson';
-            else
+            } else {
                 $binding = 'module';
+            }
 
             $arFields = array(
                 'NAME' => "'" . $DB->ForSql($operationName) . "'",
@@ -415,8 +440,9 @@ class CLearnInstall201203ConvertDB
                 false    // don't ignore errors, due to the bug in Database::Insert (it don't checks Query return status)
             );
 
-            if ($id === false)
+            if ($id === false) {
                 throw new Exception();
+            }
 
             $arOperationsInDB[$operationName] = $id;
         }
@@ -442,7 +468,7 @@ class CLearnInstall201203ConvertDB
             'learning_lesson_access_manage_full' => array('G1')        // Admins
         );
 
-        $rc = CGroup::GetList($v1 = 'sort', $v2 = 'asc', array('ACTIVE' => 'Y'));
+        $rc = CGroup::GetList('sort', 'asc', array('ACTIVE' => 'Y'));
         while ($zr = $rc->Fetch()) {
             $group_id = $zr['ID'];
             $oldSymbol = $APPLICATION->GetGroupRight(
@@ -450,22 +476,25 @@ class CLearnInstall201203ConvertDB
                 array($group_id),
                 $use_default_level = "N",
                 $max_right_for_super_admin = "N",
-                $site_id = false);
+                $site_id = false
+            );
 
             if (isset($arOld2NewRightsMatrix[$oldSymbol])) {
                 $newSymbol = $arOld2NewRightsMatrix[$oldSymbol];
-                if (isset($arDefaultRights[$newSymbol]))
+                if (isset($arDefaultRights[$newSymbol])) {
                     $arDefaultRights[$newSymbol][] = 'G' . $group_id;
+                }
             }
         }
 
         $arTasksOperations = self::_RightsModelGetTasksWithOperations();
 
         foreach ($arTasksOperations as $taskName => $arOperationsForTask) {
-            if (substr($taskName, 0, 16) === 'learning_lesson_')
+            if (mb_substr($taskName, 0, 16) === 'learning_lesson_') {
                 $binding = 'lesson';
-            else
+            } else {
                 $binding = 'module';
+            }
 
             $arFields = array(
                 'NAME' => "'" . $DB->ForSql($taskName) . "'",
@@ -485,38 +514,47 @@ class CLearnInstall201203ConvertDB
                 false    // don't ignore errors, due to the bug in Database::Insert (it don't checks Query return status)
             );
 
-            if ($taskId === false)
+            if ($taskId === false) {
                 throw new Exception();
+            }
 
             // Create relation for every operation per task
             foreach ($arOperationsForTask as $operationName) {
-                if (!isset($arOperationsInDB[$operationName]))
+                if (!isset($arOperationsInDB[$operationName])) {
                     throw new Exception();
+                }
 
                 $operationId = (int)$arOperationsInDB[$operationName];
 
                 $rc = $DB->Query(
                     "INSERT INTO b_task_operation (TASK_ID, OPERATION_ID) 
-						VALUES (" . (int)$taskId . ", " . (int)$operationId . ")", true);
+						VALUES (" . (int)$taskId . ", " . (int)$operationId . ")",
+                    true
+                );
 
-                if ($rc === false)
+                if ($rc === false) {
                     throw new Exception();
+                }
             }
 
             // Add default rights for this task, if it exists
             if (array_key_exists($taskName, $arDefaultRights)) {
                 $arDefaultRights[$taskName] = array_unique($arDefaultRights[$taskName]);
                 foreach ($arDefaultRights[$taskName] as $subject_id) {
-                    $DB->Query("DELETE FROM b_learn_rights_all 
-							WHERE SUBJECT_ID = '" . $DB->ForSQL($subject_id) . "'");
+                    $DB->Query(
+                        "DELETE FROM b_learn_rights_all 
+							WHERE SUBJECT_ID = '" . $DB->ForSQL($subject_id) . "'"
+                    );
 
                     $rc = $DB->Query(
                         "INSERT INTO b_learn_rights_all (SUBJECT_ID, TASK_ID) 
 							VALUES ('" . $DB->ForSQL($subject_id) . "', " . (int)$taskId . ")",
-                        true);
+                        true
+                    );
 
-                    if ($rc === false)
+                    if ($rc === false) {
                         throw new Exception();
+                    }
                 }
             }
         }
@@ -541,8 +579,9 @@ class CLearnInstall201203ConvertDB
 
         foreach ($arQueries as $key => $query) {
             $rc = $DB->Query($query, true);        // ignore_errors = true
-            if ($rc === false)
+            if ($rc === false) {
                 throw new Exception ('EA_SQLERROR in query #' . $key);
+            }
         }
     }
 
@@ -554,8 +593,9 @@ class CLearnInstall201203ConvertDB
         // Clean up learning module operations and tasks (if exists)
         self::_RightsModelPurge();
 
-        if (!$DB->TableExists('b_learn_rights_all'))
+        if (!$DB->TableExists('b_learn_rights_all')) {
             self::_CreateTblRightsAll();
+        }
 
         $arOperationsInDB = self::_RightsModelCreateOperations();
 
@@ -568,7 +608,7 @@ class CLearnInstall201203ConvertDB
         global $DB, $DBType;
 
         if (!$DB->TableExists('b_learn_rights_all')) {
-            $dbtype = strtolower($DBType);
+            $dbtype = mb_strtolower($DBType);
 
             // Prepare sql code for adding fields
             if ($dbtype === 'mysql') {
@@ -595,12 +635,15 @@ class CLearnInstall201203ConvertDB
 						PRIMARY KEY(SUBJECT_ID)
 					)";
             } else {
-                throw new CLearnInstall201203ConvertDBException('SQL code not ready for: ' . $DBType . ' in line #' . __LINE__);
+                throw new CLearnInstall201203ConvertDBException(
+                    'SQL code not ready for: ' . $DBType . ' in line #' . __LINE__
+                );
             }
 
             $rc = $DB->Query($sql_tbl_b_learn_rights_all);
-            if ($rc === false)
+            if ($rc === false) {
                 throw new CLearnInstall201203ConvertDBException(__LINE__ . '/tbl: sql_tbl_b_learn_rights_all');
+            }
         }
     }
 
@@ -615,13 +658,15 @@ class CLearnInstall201203ConvertDB
         self::$items_processed = 0;
 
         // Check, was DB already converted?
-        if (self::_IsAlreadyConverted() === true)
+        if (self::_IsAlreadyConverted() === true) {
             return (true);
+        }
 
         // Mark that db convert process started
         $rc = COption::SetOptionString(self::MODULE_ID, self::OPTION_ID, self::STATUS_INSTALL_INCOMPLETE);
-        if ($rc === false)
+        if ($rc === false) {
             throw new CLearnInstall201203ConvertDBException('SetOptionString() failed!');
+        }
 
         // Create fields `CODE`, `WAS_CHAPTER_ID` in `b_learn_lesson` (if they doesn't exists yet)
         // and `JOURNAL_STATUS` in `b_learn_chapter`
@@ -665,8 +710,9 @@ class CLearnInstall201203ConvertDB
 
         // Mark that db convert process complete
         $rc = COption::SetOptionString(self::MODULE_ID, self::OPTION_ID, self::STATUS_INSTALL_COMPLETE);
-        if ($rc === false)
+        if ($rc === false) {
             throw new CLearnInstall201203ConvertDBException('SetOptionString() failed!');
+        }
     }
 
 
@@ -678,22 +724,26 @@ class CLearnInstall201203ConvertDB
         $arTasks = array(
             'R' => 'learning_lesson_access_read',
             'W' => 'learning_lesson_access_manage_basic',
-            'X' => 'learning_lesson_access_manage_full');
+            'X' => 'learning_lesson_access_manage_full'
+        );
 
         foreach ($arTasks as $oldSymbol => $taskName) {
             $rc = $DB->Query(
                 "SELECT ID 
 					FROM b_task 
 					WHERE NAME = '" . $taskName . "'",
-                true);
+                true
+            );
 
-            if ($rc === false)
+            if ($rc === false) {
                 throw new CLearnInstall201203ConvertDBException('EA_SQLERROR');
+            }
 
             $row = $rc->Fetch();
 
-            if (!isset($row['ID']))
+            if (!isset($row['ID'])) {
                 throw new CLearnInstall201203ConvertDBException('EA_LOGIC');
+            }
 
             $arTaskIdByOldSymbol[$oldSymbol] = (int)$row['ID'];
         }
@@ -720,8 +770,9 @@ class CLearnInstall201203ConvertDB
 
         $res = $DB->Query($sql, true);
 
-        if ($res === false)
+        if ($res === false) {
             throw new CLearnInstall201203ConvertDBException('EA_SQLERROR');
+        }
 
         while ($row = $res->Fetch()) {
             $lessonId = $row['ID'];
@@ -731,8 +782,9 @@ class CLearnInstall201203ConvertDB
             $group = 'G' . $user_group_id;
 
             // Determine task id
-            if (!in_array($permission, array('R', 'W', 'X'), true))
-                continue;        // skip elements with D
+            if (!in_array($permission, array('R', 'W', 'X'), true)) {
+                continue;
+            }        // skip elements with D
 
             $task_id = $arTaskIdByOldSymbol[$permission];
 
@@ -740,19 +792,23 @@ class CLearnInstall201203ConvertDB
                 "DELETE FROM b_learn_rights 
 					WHERE LESSON_ID = " . (int)$lessonId . "
 						AND SUBJECT_ID = '" . $DB->ForSql($group) . "'",
-                true);
-            if ($rc === false)
+                true
+            );
+            if ($rc === false) {
                 throw new CLearnInstall201203ConvertDBException('EA_SQLERROR');
+            }
 
 
             $rc = $DB->Query(
                 "INSERT INTO b_learn_rights (LESSON_ID, SUBJECT_ID, TASK_ID) 
-					VALUES (" . (int)$lessonId . ", '" . $DB->ForSql($group) . "', '" . $task_id . "')", true);
+					VALUES (" . (int)$lessonId . ", '" . $DB->ForSql($group) . "', '" . $task_id . "')",
+                true
+            );
 
-            if ($rc === false)
+            if ($rc === false) {
                 throw new CLearnInstall201203ConvertDBException('EA_SQLERROR');
+            }
         }
-
     }
 
 
@@ -763,39 +819,49 @@ class CLearnInstall201203ConvertDB
         $res = $DB->Query(
             "SELECT DISTINCT SITE_ID 
 				FROM b_learn_site_path 
-				WHERE 1=1", true);
+				WHERE 1=1",
+            true
+        );
 
-        if ($res === false)
+        if ($res === false) {
             throw new CLearnInstall201203ConvertDBException('EA_SQLERROR');
+        }
 
         $arSitesIds = array();
-        while ($row = $res->Fetch())
+        while ($row = $res->Fetch()) {
             $arSitesIds[] = $row['SITE_ID'];
+        }
 
         foreach ($arSitesIds as $k => $siteId) {
             $res = $DB->Query(
                 "DELETE FROM b_learn_site_path 
 					WHERE SITE_ID = '" . $DB->ForSql($siteId) . "' 
-						AND TYPE = 'U'", true);
+						AND TYPE = 'U'",
+                true
+            );
 
-            if ($res === false)
+            if ($res === false) {
                 throw new CLearnInstall201203ConvertDBException('EA_SQLERROR');
+            }
 
             $res = $DB->Query(
                 "SELECT TSP.PATH
 					FROM b_learn_site_path TSP
 					WHERE TYPE = 'C' AND SITE_ID = '" . $DB->ForSql($siteId) . "'",
-                true);
+                true
+            );
 
-            if ($res === false)
+            if ($res === false) {
                 throw new CLearnInstall201203ConvertDBException('EA_SQLERROR');
+            }
 
             $row = $res->Fetch();
             if (isset($row['PATH'])) {
                 $path = str_replace('COURSE_ID=#COURSE_ID#', 'LESSON_PATH=#LESSON_PATH#', $row['PATH']);
                 $path = str_replace('&INDEX=Y', '', $path);
-            } else
+            } else {
                 $path = '/services/learning/course.php?LESSON_PATH=#LESSON_PATH#';
+            }
 
             $DB->Insert(
                 'b_learn_site_path',
@@ -822,10 +888,12 @@ class CLearnInstall201203ConvertDB
 				FROM b_learn_lesson 
 				WHERE JOURNAL_STATUS != " . self::JOURNAL_STATUS_LESSON_EDGES_CREATED . "
 					AND WAS_COURSE_ID IS NULL",
-            $ignore_errors = true);
+            $ignore_errors = true
+        );
 
-        if ($res === false)
+        if ($res === false) {
             throw new CLearnInstall201203ConvertDBException('EA_SQLERROR');
+        }
 
         while ($arLesson = $res->Fetch()) {
             $sort = $arLesson['SORT'];
@@ -833,36 +901,37 @@ class CLearnInstall201203ConvertDB
             $childNodeId = $arLesson['ID'];
 
             // Determine, who is immediate parent of lesson - chapter or course
-            if ($arLesson['WAS_CHAPTER_ID'] === NULL)    // current node wasn't a chapter
+            if ($arLesson['WAS_CHAPTER_ID'] === null)    // current node wasn't a chapter
             {
-                if ($arLesson['CHAPTER_ID'] !== NULL) {
+                if ($arLesson['CHAPTER_ID'] !== null) {
                     // intermediate parent is chapter, get it id in new data model
                     $parentNodeId = self::_GetChapterIdInNewDataModel($arLesson['CHAPTER_ID']);
-                } elseif ($arLesson['COURSE_ID'] !== NULL) {
+                } elseif ($arLesson['COURSE_ID'] !== null) {
                     // intermediate parent is course, get it id in new data model
                     $parentNodeId = self::_GetCourseIdInNewDataModel($arLesson['COURSE_ID']);
                 } else {
                     // No parent? It's very strange for old data model, but it's OK for new data model.
                     // So, nothing to do here.
-                    $parentNodeId = NULL;
+                    $parentNodeId = null;
                 }
             } else    // current node was a chapter
             {
-                if ($arLesson['WAS_PARENT_CHAPTER_ID'] !== NULL) {
+                if ($arLesson['WAS_PARENT_CHAPTER_ID'] !== null) {
                     // intermediate parent is chapter, get it id in new data model
                     $parentNodeId = self::_GetChapterIdInNewDataModel($arLesson['WAS_PARENT_CHAPTER_ID']);
-                } elseif ($arLesson['WAS_PARENT_COURSE_ID'] !== NULL) {
+                } elseif ($arLesson['WAS_PARENT_COURSE_ID'] !== null) {
                     // intermediate parent is course, get it id in new data model
                     $parentNodeId = self::_GetCourseIdInNewDataModel($arLesson['WAS_PARENT_COURSE_ID']);
                 } else {
                     // No parent? It's very strange for old data model, but it's OK for new data model.
                     // So, nothing to do here.
-                    $parentNodeId = NULL;
+                    $parentNodeId = null;
                 }
             }
 
-            if ($parentNodeId === NULL)
-                ; //	nothing to do
+            if ($parentNodeId === null) {
+                ;
+            } //	nothing to do
             elseif ($parentNodeId === -1) {
                 /**
                  * An error occured (chapter or course not found in new data model)
@@ -881,7 +950,9 @@ class CLearnInstall201203ConvertDB
                     . "; COURSE_ID = " . $arLesson['COURSE_ID'] . "<br>\n";
             } elseif ($parentNodeId <= 0) {
                 // This is invalid value
-                throw new CLearnInstall201203ConvertDBException('EA_OTHER: invalid parentNodeId for lesson_id = ' . $arLesson['ID']);
+                throw new CLearnInstall201203ConvertDBException(
+                    'EA_OTHER: invalid parentNodeId for lesson_id = ' . $arLesson['ID']
+                );
             } else {
                 // All is OK, so create edge for nodes
                 self::_CreateEdgeForNodes($parentNodeId, $childNodeId, $sort);
@@ -902,7 +973,8 @@ class CLearnInstall201203ConvertDB
         global $DB;
 
         // Mark this course as processed
-        $rc = $DB->Update('b_learn_lesson',
+        $rc = $DB->Update(
+            'b_learn_lesson',
             array('JOURNAL_STATUS' => self::JOURNAL_STATUS_LESSON_EDGES_CREATED),
             "WHERE ID = '" . ($lessonId + 0) . "'",
             $error_position = "",
@@ -910,9 +982,9 @@ class CLearnInstall201203ConvertDB
             $ignore_errors = true
         );
 
-        if ($rc === false)
+        if ($rc === false) {
             throw new CLearnInstall201203ConvertDBException('EA_SQLERROR');
-
+        }
     }
 
     public static function _CreateEdgeForNodes($parentNodeId, $childNodeId, $sort)
@@ -927,19 +999,23 @@ class CLearnInstall201203ConvertDB
             "DELETE FROM b_learn_lesson_edges 
 				WHERE SOURCE_NODE = '" . $parentNodeId . "'
 					AND TARGET_NODE = '" . $childNodeId . "'",
-            $ignore_errors = true);
+            $ignore_errors = true
+        );
 
-        if ($rc === false)
+        if ($rc === false) {
             throw new CLearnInstall201203ConvertDBException('EA_SQLERROR');
+        }
 
         // Now, create edge
         $rc = $DB->Query(
             "INSERT INTO b_learn_lesson_edges (SOURCE_NODE, TARGET_NODE, SORT)
 				VALUES ('" . $parentNodeId . "', '" . $childNodeId . "', '" . $sort . "')",
-            $ignore_errors = true);
+            $ignore_errors = true
+        );
 
-        if ($rc === false)
+        if ($rc === false) {
             throw new CLearnInstall201203ConvertDBException('EA_SQLERROR');
+        }
     }
 
     /**
@@ -953,15 +1029,18 @@ class CLearnInstall201203ConvertDB
         $res = $DB->Query(
             "SELECT ID FROM b_learn_lesson 
 				WHERE WAS_CHAPTER_ID = '" . ($b_learn_chapter_ID + 0) . "'",
-            $ignore_errors = true);
+            $ignore_errors = true
+        );
 
-        if ($res === false)
+        if ($res === false) {
             throw new CLearnInstall201203ConvertDBException('EA_SQLERROR');
+        }
 
-        if ($arLesson = $res->Fetch())
+        if ($arLesson = $res->Fetch()) {
             return ($arLesson['ID'] + 0);
-        else
+        } else {
             return (-1);
+        }
     }
 
     /**
@@ -975,15 +1054,18 @@ class CLearnInstall201203ConvertDB
         $res = $DB->Query(
             "SELECT ID FROM b_learn_lesson 
 				WHERE WAS_COURSE_ID = '" . ($b_learn_course_ID + 0) . "'",
-            $ignore_errors = true);
+            $ignore_errors = true
+        );
 
-        if ($res === false)
+        if ($res === false) {
             throw new CLearnInstall201203ConvertDBException('EA_SQLERROR');
+        }
 
-        if ($arLesson = $res->Fetch())
+        if ($arLesson = $res->Fetch()) {
             return ($arLesson['ID'] + 0);
-        else
+        } else {
             return (-1);
+        }
     }
 
     /**
@@ -993,20 +1075,23 @@ class CLearnInstall201203ConvertDB
     {
         global $DB;
 
-        $res = $DB->Query("SELECT * FROM b_learn_course WHERE JOURNAL_STATUS != " . self::JOURNAL_STATUS_COURSE_LINKED,
-            $ignore_errors = true);
+        $res = $DB->Query(
+            "SELECT * FROM b_learn_course WHERE JOURNAL_STATUS != " . self::JOURNAL_STATUS_COURSE_LINKED,
+            $ignore_errors = true
+        );
 
-        if ($res === false)
+        if ($res === false) {
             throw new CLearnInstall201203ConvertDBException('EA_SQLERROR');
+        }
 
         while ($arCourses = $res->Fetch()) {
             $arFields = array(
                 'ACTIVE' => $arCourses['ACTIVE'],
-                'NAME' => ($arCourses['NAME'] === NULL) ? false : $arCourses['NAME'],
-                'CODE' => ($arCourses['CODE'] === NULL) ? false : $arCourses['CODE'],
+                'NAME' => ($arCourses['NAME'] === null) ? false : $arCourses['NAME'],
+                'CODE' => ($arCourses['CODE'] === null) ? false : $arCourses['CODE'],
                 'SORT' => $arCourses['SORT'],
-                'PREVIEW_PICTURE' => ($arCourses['PREVIEW_PICTURE'] === NULL) ? false : $arCourses['PREVIEW_PICTURE'],
-                'DETAIL_PICTURE' => ($arCourses['PREVIEW_PICTURE'] === NULL) ? false : $arCourses['PREVIEW_PICTURE'],
+                'PREVIEW_PICTURE' => ($arCourses['PREVIEW_PICTURE'] === null) ? false : $arCourses['PREVIEW_PICTURE'],
+                'DETAIL_PICTURE' => ($arCourses['PREVIEW_PICTURE'] === null) ? false : $arCourses['PREVIEW_PICTURE'],
                 'PREVIEW_TEXT_TYPE' => $arCourses['PREVIEW_TEXT_TYPE'],
                 'DETAIL_TEXT_TYPE' => $arCourses['DESCRIPTION_TYPE'],
                 'LAUNCH' => '',
@@ -1023,7 +1108,8 @@ class CLearnInstall201203ConvertDB
             $id_of_new_lesson = self::_UnrepeatableCreateLesson($arFields);
 
             // Link course to this lesson
-            $rc = $DB->Update('b_learn_course',
+            $rc = $DB->Update(
+                'b_learn_course',
                 array('LINKED_LESSON_ID' => $id_of_new_lesson),
                 "WHERE ID = '" . ($arCourses['ID'] + 0) . "'",
                 $error_position = "",
@@ -1031,11 +1117,13 @@ class CLearnInstall201203ConvertDB
                 $ignore_errors = true
             );
 
-            if ($rc === false)
+            if ($rc === false) {
                 throw new CLearnInstall201203ConvertDBException('EA_SQLERROR');
+            }
 
             // Mark this course as processed
-            $rc = $DB->Update('b_learn_course',
+            $rc = $DB->Update(
+                'b_learn_course',
                 array('JOURNAL_STATUS' => self::JOURNAL_STATUS_COURSE_LINKED),
                 "WHERE ID = '" . ($arCourses['ID'] + 0) . "'",
                 $error_position = "",
@@ -1043,8 +1131,9 @@ class CLearnInstall201203ConvertDB
                 $ignore_errors = true
             );
 
-            if ($rc === false)
+            if ($rc === false) {
                 throw new CLearnInstall201203ConvertDBException('EA_SQLERROR');
+            }
 
             ++self::$items_processed;
 
@@ -1095,8 +1184,9 @@ class CLearnInstall201203ConvertDB
         $time_executed = microtime(true) - $started_at;
         $time_left = $time_limit - $time_executed;
 
-        if ($time_left < 4)
+        if ($time_left < 4) {
             throw new CLearnInstall201203ConvertDBTimeOut();
+        }
     }
 
 
@@ -1104,29 +1194,32 @@ class CLearnInstall201203ConvertDB
     {
         global $DB;
 
-        $res = $DB->Query("SELECT * FROM b_learn_chapter WHERE JOURNAL_STATUS != " . self::JOURNAL_STATUS_CHAPTER_COPIED,
-            $ignore_errors = true);
+        $res = $DB->Query(
+            "SELECT * FROM b_learn_chapter WHERE JOURNAL_STATUS != " . self::JOURNAL_STATUS_CHAPTER_COPIED,
+            $ignore_errors = true
+        );
 
-        if ($res === false)
+        if ($res === false) {
             throw new CLearnInstall201203ConvertDBException('EA_SQLERROR');
+        }
 
         while ($arChapter = $res->Fetch()) {
             $arFields = array(
                 'ACTIVE' => $arChapter['ACTIVE'],
-                'NAME' => ($arChapter['NAME'] === NULL) ? false : $arChapter['NAME'],
-                'CODE' => ($arChapter['CODE'] === NULL) ? false : $arChapter['CODE'],
+                'NAME' => ($arChapter['NAME'] === null) ? false : $arChapter['NAME'],
+                'CODE' => ($arChapter['CODE'] === null) ? false : $arChapter['CODE'],
                 'SORT' => (string)(1000000 + (int)$arChapter['SORT']),
-                'PREVIEW_PICTURE' => ($arChapter['PREVIEW_PICTURE'] === NULL) ? false : $arChapter['PREVIEW_PICTURE'],
+                'PREVIEW_PICTURE' => ($arChapter['PREVIEW_PICTURE'] === null) ? false : $arChapter['PREVIEW_PICTURE'],
                 'PREVIEW_TEXT' => $arChapter['PREVIEW_TEXT'],
                 'PREVIEW_TEXT_TYPE' => $arChapter['PREVIEW_TEXT_TYPE'],
-                'DETAIL_PICTURE' => ($arChapter['DETAIL_PICTURE'] === NULL) ? false : $arChapter['DETAIL_PICTURE'],
+                'DETAIL_PICTURE' => ($arChapter['DETAIL_PICTURE'] === null) ? false : $arChapter['DETAIL_PICTURE'],
                 'DETAIL_TEXT' => $arChapter['DETAIL_TEXT'],
                 'DETAIL_TEXT_TYPE' => $arChapter['DETAIL_TEXT_TYPE'],
                 'LAUNCH' => '',
                 'JOURNAL_STATUS' => self::JOURNAL_STATUS_UNPROCESSED,
                 'WAS_CHAPTER_ID' => ($arChapter['ID']),
-                'WAS_PARENT_CHAPTER_ID' => ($arChapter['CHAPTER_ID'] === NULL) ? false : $arChapter['CHAPTER_ID'],
-                'WAS_PARENT_COURSE_ID' => ($arChapter['COURSE_ID'] === NULL) ? false : $arChapter['COURSE_ID'],
+                'WAS_PARENT_CHAPTER_ID' => ($arChapter['CHAPTER_ID'] === null) ? false : $arChapter['CHAPTER_ID'],
+                'WAS_PARENT_COURSE_ID' => ($arChapter['COURSE_ID'] === null) ? false : $arChapter['COURSE_ID'],
                 'WAS_COURSE_ID' => false
             );
 
@@ -1147,11 +1240,13 @@ class CLearnInstall201203ConvertDB
                 $ignore_errors = true
             );
 
-            if ($rc === false)
+            if ($rc === false) {
                 throw new CLearnInstall201203ConvertDBException('EA_SQLERROR');
+            }
 
             // Mark this chapter as processed
-            $rc = $DB->Update('b_learn_chapter',
+            $rc = $DB->Update(
+                'b_learn_chapter',
                 array('JOURNAL_STATUS' => self::JOURNAL_STATUS_CHAPTER_COPIED),
                 "WHERE ID = '" . ($arChapter['ID'] + 0) . "'",
                 $error_position = "",
@@ -1159,8 +1254,9 @@ class CLearnInstall201203ConvertDB
                 $ignore_errors = true
             );
 
-            if ($rc === false)
+            if ($rc === false) {
                 throw new CLearnInstall201203ConvertDBException('EA_SQLERROR');
+            }
 
             ++self::$items_processed;
 
@@ -1178,13 +1274,15 @@ class CLearnInstall201203ConvertDB
     {
         global $DB, $DBType;
 
-        $dbtype = strtolower($DBType);
+        $dbtype = mb_strtolower($DBType);
 
-        if (!is_array($arFields))
+        if (!is_array($arFields)) {
             throw new CLearnInstall201203ConvertDBException('EA_PARAMS');
+        }
 
-        if (!isset($arFields['COURSE_ID']))
+        if (!isset($arFields['COURSE_ID'])) {
             $arFields['COURSE_ID'] = 0;
+        }
 
         // Determine, from what source import doing (Chapter or Course)
         if (array_key_exists('WAS_CHAPTER_ID', $arFields)
@@ -1203,8 +1301,9 @@ class CLearnInstall201203ConvertDB
 
         // Firstly, remove such imported lesson, if exists
         $rc = $DB->Query("DELETE FROM b_learn_lesson WHERE " . $sqlWhere, $ignore_errors = true);
-        if ($rc === false)
+        if ($rc === false) {
             throw new CLearnInstall201203ConvertDBException('EA_SQLERROR');
+        }
 
         $arInsert = $DB->PrepareInsert('b_learn_lesson', $arFields);
 
@@ -1221,15 +1320,18 @@ class CLearnInstall201203ConvertDB
 
             $arBinds = array();
 
-            if (array_key_exists('PREVIEW_TEXT', $arFields))
+            if (array_key_exists('PREVIEW_TEXT', $arFields)) {
                 $arBinds['PREVIEW_TEXT'] = $arFields['PREVIEW_TEXT'];
+            }
 
-            if (array_key_exists('DETAIL_TEXT', $arFields))
+            if (array_key_exists('DETAIL_TEXT', $arFields)) {
                 $arBinds['DETAIL_TEXT'] = $arFields['DETAIL_TEXT'];
+            }
 
             $rc = $DB->QueryBind($strSql, $arBinds);
-            if ($rc === false)
+            if ($rc === false) {
                 throw new CLearnInstall201203ConvertDBException('EA_SQLERROR');
+            }
         } elseif (($dbtype === 'mssql') || ($dbtype === 'mysql')) {
             $strSql =
                 "INSERT INTO b_learn_lesson 
@@ -1240,8 +1342,9 @@ class CLearnInstall201203ConvertDB
                 . $DB->GetNowFunction() . ", " . $DB->GetNowFunction() . ", 1)";
 
             $rc = $DB->Query($strSql, true);
-            if ($rc === false)
+            if ($rc === false) {
                 throw new CLearnInstall201203ConvertDBException('EA_SQLERROR');
+            }
 
             $newLessonId = intval($DB->LastID());
         }
@@ -1262,7 +1365,12 @@ class CLearnInstall201203ConvertDB
      */
     public static function _IsAlreadyConverted()
     {
-        $rc = (string)COption::GetOptionString(self::MODULE_ID, self::OPTION_ID, self::STATUS_INSTALL_NEVER_START, $site = '');
+        $rc = (string)COption::GetOptionString(
+            self::MODULE_ID,
+            self::OPTION_ID,
+            self::STATUS_INSTALL_NEVER_START,
+            $site = ''
+        );
 
         if ($rc === self::STATUS_INSTALL_NEVER_START) {
             global $DB;
@@ -1273,18 +1381,21 @@ class CLearnInstall201203ConvertDB
             ) {
                 // Mark that db convert process complete
                 $rc = COption::SetOptionString(self::MODULE_ID, self::OPTION_ID, self::STATUS_INSTALL_COMPLETE);
-                if ($rc === false)
+                if ($rc === false) {
                     throw new CLearnInstall201203ConvertDBException('SetOptionString() failed!');
+                }
 
                 return (true);
-            } else
+            } else {
                 return (false);
-        } elseif ($rc === self::STATUS_INSTALL_COMPLETE)
+            }
+        } elseif ($rc === self::STATUS_INSTALL_COMPLETE) {
             return (true);
-        elseif ($rc === self::STATUS_INSTALL_INCOMPLETE)
+        } elseif ($rc === self::STATUS_INSTALL_INCOMPLETE) {
             return (false);
-        else
+        } else {
             self::_GiveUp(__LINE__);
+        }
     }
 
 
@@ -1292,22 +1403,27 @@ class CLearnInstall201203ConvertDB
     {
         global $DB, $DBType;
 
-        if (!$DB->TableExists('b_learn_course_permission'))
+        if (!$DB->TableExists('b_learn_course_permission')) {
             return;
+        }
 
         $rc = $DB->Query("DROP TABLE b_learn_course_permission", true);
-        if ($rc === false)
-            throw new CLearnInstall201203ConvertDBException('Can\'t DROP `b_learn_course_permission` under database engine: ' . $DBType);
+        if ($rc === false) {
+            throw new CLearnInstall201203ConvertDBException(
+                'Can\'t DROP `b_learn_course_permission` under database engine: ' . $DBType
+            );
+        }
     }
 
     public static function _CreateEdgesTbl()
     {
         global $DB, $DBType;
 
-        if ($DB->TableExists('b_learn_lesson_edges'))
+        if ($DB->TableExists('b_learn_lesson_edges')) {
             return;
+        }
 
-        switch (strtolower($DBType)) {
+        switch (mb_strtolower($DBType)) {
             case 'mysql':
                 $sql
                     = "CREATE TABLE b_learn_lesson_edges (
@@ -1349,8 +1465,11 @@ class CLearnInstall201203ConvertDB
         }
 
         $rc = $DB->Query($sql, $ignore_errors = true);
-        if ($rc === false)
-            throw new CLearnInstall201203ConvertDBException('Can\'t create `b_learn_lesson_edges` under database engine: ' . $DBType);
+        if ($rc === false) {
+            throw new CLearnInstall201203ConvertDBException(
+                'Can\'t create `b_learn_lesson_edges` under database engine: ' . $DBType
+            );
+        }
     }
 
     public static function _CreateFieldsInTbls()
@@ -1364,7 +1483,7 @@ class CLearnInstall201203ConvertDB
         );
 
         $sql_add = array();
-        $dbtype = strtolower($DBType);
+        $dbtype = mb_strtolower($DBType);
         $other_sql_skip_errors = array();
         $other_sql = array();
 
@@ -1478,7 +1597,6 @@ class CLearnInstall201203ConvertDB
 						LINE INT NOT NULL,
 						BACKTRACE TEXT NOT NULL
 					)";
-
             /*
 
             declare @default sysname, @sql nvarchar(max)
@@ -1563,13 +1681,16 @@ class CLearnInstall201203ConvertDB
 					PRIMARY KEY ( COURSE_LESSON_ID , PROHIBITED_LESSON_ID )
 				)";
         } else {
-            throw new CLearnInstall201203ConvertDBException('SQL code not ready for: ' . $DBType . ' in line #' . __LINE__);
+            throw new CLearnInstall201203ConvertDBException(
+                'SQL code not ready for: ' . $DBType . ' in line #' . __LINE__
+            );
         }
 
         if (!$DB->TableExists('b_learn_rights')) {
             $rc = $DB->Query($sql_tbl_b_learn_rights);
-            if ($rc === false)
+            if ($rc === false) {
                 throw new CLearnInstall201203ConvertDBException(__LINE__ . '/tbl: sql_tbl_b_learn_rights');
+            }
         }
 
         foreach ($sql_add as $tableName => $sql_for_table) {
@@ -1578,8 +1699,9 @@ class CLearnInstall201203ConvertDB
                 if (!in_array($fieldName, $arTableFields[$tableName], true)) {
                     $rc = $DB->Query($sql, $ignore_erros = true);
 
-                    if ($rc === false)
-                        throw new CLearnInstall201203ConvertDBException(__LINE__ . '/tbl:' . strlen($fieldName));
+                    if ($rc === false) {
+                        throw new CLearnInstall201203ConvertDBException(__LINE__ . '/tbl:' . mb_strlen($fieldName));
+                    }
                 }
             }
             /*
@@ -1595,19 +1717,22 @@ class CLearnInstall201203ConvertDB
             */
         }
 
-        foreach ($other_sql_skip_errors as $sql)
+        foreach ($other_sql_skip_errors as $sql) {
             $rc = $DB->Query($sql, $ignore_erros = true);
+        }
 
         foreach ($other_sql as $sql) {
             $rc = $DB->Query($sql, $ignore_erros = true);
-            if ($rc === false)
+            if ($rc === false) {
                 throw new CLearnInstall201203ConvertDBException(__LINE__ . '/sql:' . htmlspecialcharsbx($sql));
+            }
         }
 
         // Drop cache
         $rc = $DB->DDL("SELECT * FROM b_learn_lesson WHERE 1=1", true);
-        if ($rc === false)
+        if ($rc === false) {
             throw new CLearnInstall201203ConvertDBException(__LINE__ . ', on DDL\'s cache drop');
+        }
     }
 
     /*
@@ -1651,10 +1776,11 @@ class CLearnInstall201203ConvertDB
 
     public static function _GiveUp($msg = false)
     {
-        if ($msg !== false)
+        if ($msg !== false) {
             throw new Exception ('FATAL: ' . $msg);
-        else
+        } else {
             throw new Exception ('Shit happens.');
+        }
     }
 }
 

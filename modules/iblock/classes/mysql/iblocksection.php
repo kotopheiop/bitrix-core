@@ -1,23 +1,54 @@
 <?
 
+use Bitrix\Iblock;
+
 class CIBlockSection extends CAllIBlockSection
 {
-    public static function GetList($arOrder = array("SORT" => "ASC"), $arFilter = array(), $bIncCnt = false, $arSelect = array(), $arNavStartParams = false)
-    {
+    /**
+     * @param array $arOrder
+     * @param array $arFilter
+     * @param bool $bIncCnt
+     * @param array $arSelect
+     * @param array|false $arNavStartParams
+     * @return CIBlockResult
+     */
+    public static function GetList(
+        $arOrder = array("SORT" => "ASC"),
+        $arFilter = array(),
+        $bIncCnt = false,
+        $arSelect = array(),
+        $arNavStartParams = false
+    ) {
         global $DB, $USER, $USER_FIELD_MANAGER;
 
-        if (!is_array($arOrder))
+        if (!is_array($arOrder)) {
             $arOrder = array();
+        }
+        if (!is_array($arFilter)) {
+            $arFilter = array();
+        }
+        if (!is_array($arSelect)) {
+            $arSelect = array();
+        }
 
         $iblockFilterExist = (isset($arFilter['IBLOCK_ID']) && $arFilter['IBLOCK_ID'] > 0);
 
-        if ($iblockFilterExist) {
+        $needUfManager = self::checkUfFields($arOrder, $arFilter, $arSelect);
+
+        if ($needUfManager && !$iblockFilterExist) {
+            trigger_error(
+                "Parameters of the CIBlockSection::GetList contains user fields, but arFilter has no IBLOCK_ID field.",
+                E_USER_WARNING
+            );
+        }
+        if ($needUfManager) {
             $userFieldsSelect = $arSelect;
-            if (is_array($userFieldsSelect) && !in_array("UF_*", $userFieldsSelect)) {
+            if (!in_array("UF_*", $userFieldsSelect)) {
                 if (!empty($arOrder) && is_array($arOrder)) {
                     foreach (array_keys($arOrder) as $userFieldName) {
-                        if (!in_array($userFieldName, $userFieldsSelect))
+                        if (!in_array($userFieldName, $userFieldsSelect)) {
                             $userFieldsSelect[] = $userFieldName;
+                        }
                     }
                     unset($userFieldName);
                 }
@@ -30,14 +61,6 @@ class CIBlockSection extends CAllIBlockSection
             $obUserFieldsSql->SetOrder($arOrder);
 
             unset($userFieldsSelect);
-        } else {
-            foreach ($arFilter as $key => $val) {
-                $res = CIBlock::MkOperationFilter($key);
-                if (preg_match("/^UF_/", $res["FIELD"])) {
-                    trigger_error("arFilter parameter of the CIBlockSection::GetList contains user fields, but has no IBLOCK_ID field.", E_USER_WARNING);
-                    break;
-                }
-            }
         }
 
         $arJoinProps = array();
@@ -45,52 +68,91 @@ class CIBlockSection extends CAllIBlockSection
 
         $arSqlSearch = CIBlockSection::GetFilter($arFilter);
 
-        $bCheckPermissions = !array_key_exists("CHECK_PERMISSIONS", $arFilter) || $arFilter["CHECK_PERMISSIONS"] !== "N";
+        $bCheckPermissions = !array_key_exists(
+                "CHECK_PERMISSIONS",
+                $arFilter
+            ) || $arFilter["CHECK_PERMISSIONS"] !== "N";
         $bIsAdmin = is_object($USER) && $USER->IsAdmin();
         $permissionsBy = null;
         if ($bCheckPermissions && isset($arFilter['PERMISSIONS_BY'])) {
             $permissionsBy = (int)$arFilter['PERMISSIONS_BY'];
-            if ($permissionsBy < 0)
+            if ($permissionsBy < 0) {
                 $permissionsBy = null;
+            }
         }
-        if ($bCheckPermissions && ($permissionsBy !== null || !$bIsAdmin))
+        if ($bCheckPermissions && ($permissionsBy !== null || !$bIsAdmin)) {
             $arSqlSearch[] = self::_check_rights_sql($arFilter["MIN_PERMISSION"], $permissionsBy);
+        }
         unset($permissionsBy);
 
-        if (array_key_exists("PROPERTY", $arFilter)) {
+        if (!empty($arFilter["PROPERTY"]) && is_array($arFilter["PROPERTY"])) {
             $val = $arFilter["PROPERTY"];
             foreach ($val as $propID => $propVAL) {
                 $res = CIBlock::MkOperationFilter($propID);
                 $propID = $res["FIELD"];
                 $cOperationType = $res["OPERATION"];
-                if ($db_prop = CIBlockProperty::GetPropertyArray($propID, CIBlock::_MergeIBArrays($arFilter["IBLOCK_ID"], $arFilter["IBLOCK_CODE"]))) {
-
+                if ($db_prop = CIBlockProperty::GetPropertyArray(
+                    $propID,
+                    CIBlock::_MergeIBArrays(
+                        $arFilter["IBLOCK_ID"],
+                        $arFilter["IBLOCK_CODE"]
+                    )
+                )) {
                     $bSave = false;
-                    if (array_key_exists($db_prop["ID"], $arJoinProps))
-                        $iPropCnt = $arJoinProps[$db_prop["ID"]];
-                    elseif ($db_prop["VERSION"] != 2 || $db_prop["MULTIPLE"] == "Y") {
+                    $separateSingle = (
+                        $db_prop["VERSION"] == Iblock\IblockTable::PROPERTY_STORAGE_SEPARATE
+                        && $db_prop["MULTIPLE"] == "N"
+                    );
+
+                    $iPropCnt = -1;
+                    if (isset($arJoinProps[$db_prop["ID"]])) {
+                        $iPropCnt = $arJoinProps[$db_prop["ID"]]["iPropCnt"];
+                    } elseif (!$separateSingle) {
                         $bSave = true;
                         $iPropCnt = count($arJoinProps);
                     }
 
-                    if (!is_array($propVAL))
+                    if (!is_array($propVAL)) {
                         $propVAL = Array($propVAL);
-
-                    if ($db_prop["PROPERTY_TYPE"] == "N" || $db_prop["PROPERTY_TYPE"] == "G" || $db_prop["PROPERTY_TYPE"] == "E") {
-                        if ($db_prop["VERSION"] == 2 && $db_prop["MULTIPLE"] == "N") {
-                            $r = CIBlock::FilterCreate("FPS.PROPERTY_" . $db_prop["ORIG_ID"], $propVAL, "number", $cOperationType);
-                            $bJoinFlatProp = $db_prop["IBLOCK_ID"];
-                        } else
-                            $r = CIBlock::FilterCreate("FPV" . $iPropCnt . ".VALUE_NUM", $propVAL, "number", $cOperationType);
-                    } else {
-                        if ($db_prop["VERSION"] == 2 && $db_prop["MULTIPLE"] == "N") {
-                            $r = CIBlock::FilterCreate("FPS.PROPERTY_" . $db_prop["ORIG_ID"], $propVAL, "string", $cOperationType);
-                            $bJoinFlatProp = $db_prop["IBLOCK_ID"];
-                        } else
-                            $r = CIBlock::FilterCreate("FPV" . $iPropCnt . ".VALUE", $propVAL, "string", $cOperationType);
                     }
 
-                    if (strlen($r) > 0) {
+                    if ($db_prop["PROPERTY_TYPE"] == "N" || $db_prop["PROPERTY_TYPE"] == "G" || $db_prop["PROPERTY_TYPE"] == "E") {
+                        if ($separateSingle) {
+                            $r = CIBlock::FilterCreate(
+                                "FPS.PROPERTY_" . $db_prop["ORIG_ID"],
+                                $propVAL,
+                                "number",
+                                $cOperationType
+                            );
+                            $bJoinFlatProp = $db_prop["IBLOCK_ID"];
+                        } else {
+                            $r = CIBlock::FilterCreate(
+                                "FPV" . $iPropCnt . ".VALUE_NUM",
+                                $propVAL,
+                                "number",
+                                $cOperationType
+                            );
+                        }
+                    } else {
+                        if ($separateSingle) {
+                            $r = CIBlock::FilterCreate(
+                                "FPS.PROPERTY_" . $db_prop["ORIG_ID"],
+                                $propVAL,
+                                "string",
+                                $cOperationType
+                            );
+                            $bJoinFlatProp = $db_prop["IBLOCK_ID"];
+                        } else {
+                            $r = CIBlock::FilterCreate(
+                                "FPV" . $iPropCnt . ".VALUE",
+                                $propVAL,
+                                "string",
+                                $cOperationType
+                            );
+                        }
+                    }
+
+                    if ($r != '') {
                         if ($bSave) {
                             $db_prop["iPropCnt"] = $iPropCnt;
                             $arJoinProps[$db_prop["ID"]] = $db_prop;
@@ -102,32 +164,40 @@ class CIBlockSection extends CAllIBlockSection
         }
 
         $strSqlSearch = "";
-        foreach ($arSqlSearch as $r)
-            if (strlen($r) > 0)
+        foreach ($arSqlSearch as $r) {
+            if ($r <> '') {
                 $strSqlSearch .= "\n\t\t\t\tAND  (" . $r . ") ";
+            }
+        }
 
         if (isset($obUserFieldsSql)) {
             $r = $obUserFieldsSql->GetFilter();
-            if (strlen($r) > 0)
+            if ($r <> '') {
                 $strSqlSearch .= "\n\t\t\t\tAND (" . $r . ") ";
+            }
         }
 
         $strProp1 = "";
         foreach ($arJoinProps as $propID => $db_prop) {
-            if ($db_prop["VERSION"] == 2)
+            if ($db_prop["VERSION"] == 2) {
                 $strTable = "b_iblock_element_prop_m" . $db_prop["IBLOCK_ID"];
-            else
+            } else {
                 $strTable = "b_iblock_element_property";
+            }
             $i = $db_prop["iPropCnt"];
             $strProp1 .= "
 				LEFT JOIN b_iblock_property FP" . $i . " ON FP" . $i . ".IBLOCK_ID=B.ID AND
-				" . ((int)$propID > 0 ? " FP" . $i . ".ID=" . (int)$propID . " " : " FP" . $i . ".CODE='" . $DB->ForSQL($propID, 200) . "' ") . "
+				" . ((int)$propID > 0 ? " FP" . $i . ".ID=" . (int)$propID . " " : " FP" . $i . ".CODE='" . $DB->ForSQL(
+                        $propID,
+                        200
+                    ) . "' ") . "
 				LEFT JOIN " . $strTable . " FPV" . $i . " ON FP" . $i . ".ID=FPV" . $i . ".IBLOCK_PROPERTY_ID AND FPV" . $i . ".IBLOCK_ELEMENT_ID=BE.ID ";
         }
-        if ($bJoinFlatProp)
+        if ($bJoinFlatProp) {
             $strProp1 .= "
 				LEFT JOIN b_iblock_element_prop_s" . $bJoinFlatProp . " FPS ON FPS.IBLOCK_ELEMENT_ID = BE.ID
 			";
+        }
 
         $arFields = array(
             "ID" => "BS.ID",
@@ -166,13 +236,15 @@ class CIBlockSection extends CAllIBlockSection
 
         $arSqlSelect = array();
         foreach ($arSelect as $field) {
-            $field = strtoupper($field);
-            if (isset($arFields[$field]))
+            $field = mb_strtoupper($field);
+            if (isset($arFields[$field])) {
                 $arSqlSelect[$field] = $arFields[$field] . " AS " . $field;
+            }
         }
 
-        if (isset($arSqlSelect['DESCRIPTION']))
+        if (isset($arSqlSelect['DESCRIPTION'])) {
             $arSqlSelect["DESCRIPTION_TYPE"] = $arFields["DESCRIPTION_TYPE"] . " AS DESCRIPTION_TYPE";
+        }
 
         if (isset($arSqlSelect['LIST_PAGE_URL']) || isset($arSqlSelect['SECTION_PAGE_URL'])) {
             $arSqlSelect["ID"] = $arFields["ID"] . " AS ID";
@@ -189,12 +261,14 @@ class CIBlockSection extends CAllIBlockSection
         $additionalSelect = array();
         $arSqlOrder = array();
         foreach ($arOrder as $by => $order) {
-            $by = strtolower($by);
-            if (isset($arSqlOrder[$by]))
+            $by = mb_strtolower($by);
+            if (isset($arSqlOrder[$by])) {
                 continue;
-            $order = strtolower($order);
-            if ($order != "asc")
+            }
+            $order = mb_strtolower($order);
+            if ($order != "asc") {
                 $order = "desc";
+            }
 
             switch ($by) {
                 case "id":
@@ -259,13 +333,14 @@ class CIBlockSection extends CAllIBlockSection
             }
         }
         if (!empty($additionalSelect) && !empty($arSqlSelect)) {
-            foreach ($additionalSelect as $key => $value)
+            foreach ($additionalSelect as $key => $value) {
                 $arSqlSelect[$key] = $value;
+            }
         }
 
-        if (!empty($arSqlSelect))
+        if (!empty($arSqlSelect)) {
             $sSelect = implode(",\n", $arSqlSelect);
-        else
+        } else {
             $sSelect = "
 				BS.*,
 				B.LIST_PAGE_URL,
@@ -277,6 +352,7 @@ class CIBlockSection extends CAllIBlockSection
 				" . $DB->DateToCharFunction("BS.TIMESTAMP_X") . " as TIMESTAMP_X,
 				" . $DB->DateToCharFunction("BS.DATE_CREATE") . " as DATE_CREATE
 			";
+        }
 
         if (!$bIncCnt) {
             $strSelect = $sSelect . (isset($obUserFieldsSql) ? $obUserFieldsSql->GetSelect() : "");
@@ -284,7 +360,7 @@ class CIBlockSection extends CAllIBlockSection
 				FROM b_iblock_section BS
 					INNER JOIN b_iblock B ON BS.IBLOCK_ID = B.ID
 					" . (isset($obUserFieldsSql) ? $obUserFieldsSql->GetJoin("BS.ID") : "") . "
-				" . (strlen($strProp1) > 0 ?
+				" . ($strProp1 <> '' ?
                     "	INNER JOIN b_iblock_section BSTEMP ON BSTEMP.IBLOCK_ID = BS.IBLOCK_ID
 						LEFT JOIN b_iblock_section_element BSE ON BSE.IBLOCK_SECTION_ID=BSTEMP.ID
 						LEFT JOIN b_iblock_element BE ON (BSE.IBLOCK_ELEMENT_ID=BE.ID
@@ -299,7 +375,7 @@ class CIBlockSection extends CAllIBlockSection
 						" . $strProp1 . " "
                     : "") . "
 				WHERE 1=1
-				" . (strlen($strProp1) > 0 ?
+				" . ($strProp1 <> '' ?
                     "	AND BSTEMP.LEFT_MARGIN >= BS.LEFT_MARGIN
 						AND BSTEMP.RIGHT_MARGIN <= BS.RIGHT_MARGIN "
                     : ""
@@ -308,7 +384,8 @@ class CIBlockSection extends CAllIBlockSection
 			";
             $strGroupBy = "";
         } else {
-            $strSelect = $sSelect . ",COUNT(DISTINCT BE.ID) as ELEMENT_CNT" . (isset($obUserFieldsSql) ? $obUserFieldsSql->GetSelect() : "");
+            $strSelect = $sSelect . ",COUNT(DISTINCT BE.ID) as ELEMENT_CNT" . (isset($obUserFieldsSql) ? $obUserFieldsSql->GetSelect(
+                ) : "");
             $strSql = "
 				FROM b_iblock_section BS
 					INNER JOIN b_iblock B ON BS.IBLOCK_ID = B.ID
@@ -345,34 +422,51 @@ class CIBlockSection extends CAllIBlockSection
             $strGroupBy = "GROUP BY BS.ID, B.ID";
         }
 
-        if (!empty($arSqlOrder))
+        if (!empty($arSqlOrder)) {
             $strSqlOrder = "\n\t\t\t\tORDER BY " . implode(", ", $arSqlOrder);
-        else
+        } else {
             $strSqlOrder = "";
+        }
 
         if (is_array($arNavStartParams)) {
             $nTopCount = (isset($arNavStartParams['nTopCount']) ? (int)$arNavStartParams['nTopCount'] : 0);
             if ($nTopCount > 0) {
-                $res = $DB->Query($DB->TopSql(
-                    "SELECT DISTINCT " . $strSelect . $strSql . $strGroupBy . $strSqlOrder,
-                    $nTopCount
-                ));
+                $res = $DB->Query(
+                    $DB->TopSql(
+                        "SELECT DISTINCT " . $strSelect . $strSql . $strGroupBy . $strSqlOrder,
+                        $nTopCount
+                    )
+                );
                 if ($iblockFilterExist) {
-                    $res->SetUserFields($USER_FIELD_MANAGER->GetUserFields("IBLOCK_" . $arFilter["IBLOCK_ID"] . "_SECTION"));
+                    $res->SetUserFields(
+                        $USER_FIELD_MANAGER->GetUserFields("IBLOCK_" . $arFilter["IBLOCK_ID"] . "_SECTION")
+                    );
                 }
             } else {
                 $res_cnt = $DB->Query("SELECT COUNT(DISTINCT BS.ID) as C " . $strSql);
                 $res_cnt = $res_cnt->Fetch();
                 $res = new CDBResult();
                 if ($iblockFilterExist) {
-                    $res->SetUserFields($USER_FIELD_MANAGER->GetUserFields("IBLOCK_" . $arFilter["IBLOCK_ID"] . "_SECTION"));
+                    $res->SetUserFields(
+                        $USER_FIELD_MANAGER->GetUserFields("IBLOCK_" . $arFilter["IBLOCK_ID"] . "_SECTION")
+                    );
                 }
-                $res->NavQuery("SELECT DISTINCT " . $strSelect . $strSql . $strGroupBy . $strSqlOrder, $res_cnt["C"], $arNavStartParams);
+                $res->NavQuery(
+                    "SELECT DISTINCT " . $strSelect . $strSql . $strGroupBy . $strSqlOrder,
+                    $res_cnt["C"],
+                    $arNavStartParams
+                );
             }
         } else {
-            $res = $DB->Query("SELECT DISTINCT " . $strSelect . $strSql . $strGroupBy . $strSqlOrder, false, "FILE: " . __FILE__ . "<br> LINE: " . __LINE__);
+            $res = $DB->Query(
+                "SELECT DISTINCT " . $strSelect . $strSql . $strGroupBy . $strSqlOrder,
+                false,
+                "FILE: " . __FILE__ . "<br> LINE: " . __LINE__
+            );
             if ($iblockFilterExist) {
-                $res->SetUserFields($USER_FIELD_MANAGER->GetUserFields("IBLOCK_" . $arFilter["IBLOCK_ID"] . "_SECTION"));
+                $res->SetUserFields(
+                    $USER_FIELD_MANAGER->GetUserFields("IBLOCK_" . $arFilter["IBLOCK_ID"] . "_SECTION")
+                );
             }
         }
 
@@ -391,8 +485,9 @@ class CIBlockSection extends CAllIBlockSection
         global $DB, $USER;
 
         $strUpdate = $DB->PrepareUpdate("b_iblock_section", $arFields, "iblock", false, "BS");
-        if ($strUpdate == "")
+        if ($strUpdate == "") {
             return false;
+        }
 
         if (isset($arFilter["IBLOCK_ID"]) && $arFilter["IBLOCK_ID"] > 0) {
             $obUserFieldsSql = new CUserTypeSQL;
@@ -402,7 +497,10 @@ class CIBlockSection extends CAllIBlockSection
             foreach ($arFilter as $key => $val) {
                 $res = CIBlock::MkOperationFilter($key);
                 if (preg_match("/^UF_/", $res["FIELD"])) {
-                    trigger_error("arFilter parameter of the CIBlockSection::GetList contains user fields, but has no IBLOCK_ID field.", E_USER_WARNING);
+                    trigger_error(
+                        "arFilter parameter of the CIBlockSection::GetList contains user fields, but has no IBLOCK_ID field.",
+                        E_USER_WARNING
+                    );
                     break;
                 }
             }
@@ -413,16 +511,21 @@ class CIBlockSection extends CAllIBlockSection
 
         $arSqlSearch = CIBlockSection::GetFilter($arFilter);
 
-        $bCheckPermissions = !array_key_exists("CHECK_PERMISSIONS", $arFilter) || $arFilter["CHECK_PERMISSIONS"] !== "N";
+        $bCheckPermissions = !array_key_exists(
+                "CHECK_PERMISSIONS",
+                $arFilter
+            ) || $arFilter["CHECK_PERMISSIONS"] !== "N";
         $bIsAdmin = is_object($USER) && $USER->IsAdmin();
         $permissionsBy = null;
         if ($bCheckPermissions && isset($arFilter['PERMISSIONS_BY'])) {
             $permissionsBy = (int)$arFilter['PERMISSIONS_BY'];
-            if ($permissionsBy < 0)
+            if ($permissionsBy < 0) {
                 $permissionsBy = null;
+            }
         }
-        if ($bCheckPermissions && ($permissionsBy !== null || !$bIsAdmin))
+        if ($bCheckPermissions && ($permissionsBy !== null || !$bIsAdmin)) {
             $arSqlSearch[] = self::_check_rights_sql($arFilter["MIN_PERMISSION"], $permissionsBy);
+        }
         unset($permissionsBy);
 
         if (array_key_exists("PROPERTY", $arFilter)) {
@@ -431,34 +534,62 @@ class CIBlockSection extends CAllIBlockSection
                 $res = CIBlock::MkOperationFilter($propID);
                 $propID = $res["FIELD"];
                 $cOperationType = $res["OPERATION"];
-                if ($db_prop = CIBlockProperty::GetPropertyArray($propID, CIBlock::_MergeIBArrays($arFilter["IBLOCK_ID"], $arFilter["IBLOCK_CODE"]))) {
-
+                if ($db_prop = CIBlockProperty::GetPropertyArray(
+                    $propID,
+                    CIBlock::_MergeIBArrays(
+                        $arFilter["IBLOCK_ID"],
+                        $arFilter["IBLOCK_CODE"]
+                    )
+                )) {
                     $bSave = false;
-                    if (array_key_exists($db_prop["ID"], $arJoinProps))
+                    if (array_key_exists($db_prop["ID"], $arJoinProps)) {
                         $iPropCnt = $arJoinProps[$db_prop["ID"]];
-                    elseif ($db_prop["VERSION"] != 2 || $db_prop["MULTIPLE"] == "Y") {
+                    } elseif ($db_prop["VERSION"] != 2 || $db_prop["MULTIPLE"] == "Y") {
                         $bSave = true;
                         $iPropCnt = count($arJoinProps);
                     }
 
-                    if (!is_array($propVAL))
+                    if (!is_array($propVAL)) {
                         $propVAL = Array($propVAL);
+                    }
 
                     if ($db_prop["PROPERTY_TYPE"] == "N" || $db_prop["PROPERTY_TYPE"] == "G" || $db_prop["PROPERTY_TYPE"] == "E") {
                         if ($db_prop["VERSION"] == 2 && $db_prop["MULTIPLE"] == "N") {
-                            $r = CIBlock::FilterCreate("FPS.PROPERTY_" . $db_prop["ORIG_ID"], $propVAL, "number", $cOperationType);
+                            $r = CIBlock::FilterCreate(
+                                "FPS.PROPERTY_" . $db_prop["ORIG_ID"],
+                                $propVAL,
+                                "number",
+                                $cOperationType
+                            );
                             $bJoinFlatProp = $db_prop["IBLOCK_ID"];
-                        } else
-                            $r = CIBlock::FilterCreate("FPV" . $iPropCnt . ".VALUE_NUM", $propVAL, "number", $cOperationType);
+                        } else {
+                            $r = CIBlock::FilterCreate(
+                                "FPV" . $iPropCnt . ".VALUE_NUM",
+                                $propVAL,
+                                "number",
+                                $cOperationType
+                            );
+                        }
                     } else {
                         if ($db_prop["VERSION"] == 2 && $db_prop["MULTIPLE"] == "N") {
-                            $r = CIBlock::FilterCreate("FPS.PROPERTY_" . $db_prop["ORIG_ID"], $propVAL, "string", $cOperationType);
+                            $r = CIBlock::FilterCreate(
+                                "FPS.PROPERTY_" . $db_prop["ORIG_ID"],
+                                $propVAL,
+                                "string",
+                                $cOperationType
+                            );
                             $bJoinFlatProp = $db_prop["IBLOCK_ID"];
-                        } else
-                            $r = CIBlock::FilterCreate("FPV" . $iPropCnt . ".VALUE", $propVAL, "string", $cOperationType);
+                        } else {
+                            $r = CIBlock::FilterCreate(
+                                "FPV" . $iPropCnt . ".VALUE",
+                                $propVAL,
+                                "string",
+                                $cOperationType
+                            );
+                        }
                     }
 
-                    if (strlen($r) > 0) {
+                    if ($r <> '') {
                         if ($bSave) {
                             $db_prop["iPropCnt"] = $iPropCnt;
                             $arJoinProps[$db_prop["ID"]] = $db_prop;
@@ -470,39 +601,47 @@ class CIBlockSection extends CAllIBlockSection
         }
 
         $strSqlSearch = "";
-        foreach ($arSqlSearch as $r)
-            if (strlen($r) > 0)
+        foreach ($arSqlSearch as $r) {
+            if ($r <> '') {
                 $strSqlSearch .= "\n\t\t\t\tAND  (" . $r . ") ";
+            }
+        }
 
         if (isset($obUserFieldsSql)) {
             $r = $obUserFieldsSql->GetFilter();
-            if (strlen($r) > 0)
+            if ($r <> '') {
                 $strSqlSearch .= "\n\t\t\t\tAND (" . $r . ") ";
+            }
         }
 
         $strProp1 = "";
         foreach ($arJoinProps as $propID => $db_prop) {
-            if ($db_prop["VERSION"] == 2)
+            if ($db_prop["VERSION"] == 2) {
                 $strTable = "b_iblock_element_prop_m" . $db_prop["IBLOCK_ID"];
-            else
+            } else {
                 $strTable = "b_iblock_element_property";
+            }
             $i = $db_prop["iPropCnt"];
             $strProp1 .= "
 				LEFT JOIN b_iblock_property FP" . $i . " ON FP" . $i . ".IBLOCK_ID=B.ID AND
-				" . ((int)$propID > 0 ? " FP" . $i . ".ID=" . (int)$propID . " " : " FP" . $i . ".CODE='" . $DB->ForSQL($propID, 200) . "' ") . "
+				" . ((int)$propID > 0 ? " FP" . $i . ".ID=" . (int)$propID . " " : " FP" . $i . ".CODE='" . $DB->ForSQL(
+                        $propID,
+                        200
+                    ) . "' ") . "
 				LEFT JOIN " . $strTable . " FPV" . $i . " ON FP" . $i . ".ID=FPV" . $i . ".IBLOCK_PROPERTY_ID AND FPV" . $i . ".IBLOCK_ELEMENT_ID=BE.ID ";
         }
-        if ($bJoinFlatProp)
+        if ($bJoinFlatProp) {
             $strProp1 .= "
 				LEFT JOIN b_iblock_element_prop_s" . $bJoinFlatProp . " FPS ON FPS.IBLOCK_ELEMENT_ID = BE.ID
 			";
+        }
 
         $strSql = "
 			UPDATE
 			b_iblock_section BS
 				INNER JOIN b_iblock B ON BS.IBLOCK_ID = B.ID
 				" . (isset($obUserFieldsSql) ? $obUserFieldsSql->GetJoin("BS.ID") : "") . "
-			" . (strlen($strProp1) > 0 ?
+			" . ($strProp1 <> '' ?
                 "	INNER JOIN b_iblock_section BSTEMP ON BSTEMP.IBLOCK_ID = BS.IBLOCK_ID
 					LEFT JOIN b_iblock_section_element BSE ON BSE.IBLOCK_SECTION_ID=BSTEMP.ID
 					LEFT JOIN b_iblock_element BE ON (BSE.IBLOCK_ELEMENT_ID=BE.ID
@@ -518,7 +657,7 @@ class CIBlockSection extends CAllIBlockSection
                 : "") . "
 			SET " . $strUpdate . "
 			WHERE 1=1
-			" . (strlen($strProp1) > 0 ?
+			" . ($strProp1 <> '' ?
                 "	AND BSTEMP.LEFT_MARGIN >= BS.LEFT_MARGIN
 					AND BSTEMP.RIGHT_MARGIN <= BS.RIGHT_MARGIN "
                 : ""
@@ -527,5 +666,55 @@ class CIBlockSection extends CAllIBlockSection
 		";
 
         return $DB->Query($strSql, false, "FILE: " . __FILE__ . "<br> LINE: " . __LINE__);
+    }
+
+    /**
+     * @param array $order
+     * @param array $filter
+     * @param array $select
+     * @return bool
+     */
+    private static function checkUfFields(array $order, array $filter, array $select): bool
+    {
+        $result = false;
+
+        $parsed = array();
+        if (!empty($select)) {
+            if (in_array('UF_*', $select)) {
+                $result = true;
+            } else {
+                foreach ($select as $field) {
+                    if (preg_match('/^UF_/', $field, $parsed)) {
+                        $result = true;
+                        break;
+                    }
+                }
+                unset($field);
+            }
+        }
+        if (!$result && !empty($filter)) {
+            $filter = array_keys($filter);
+            foreach ($filter as $key) {
+                $field = CIBlock::MkOperationFilter($key);
+                if (preg_match('/^UF_/', $field['FIELD'], $parsed)) {
+                    $result = true;
+                    break;
+                }
+            }
+            unset($field, $key);
+        }
+        if (!$result && !empty($order)) {
+            $order = array_keys($order);
+            foreach ($order as $field) {
+                if (preg_match('/^UF_/', $field, $parsed)) {
+                    $result = true;
+                    break;
+                }
+            }
+            unset($field);
+        }
+        unset($parced);
+
+        return $result;
     }
 }

@@ -23,7 +23,7 @@ class Condition
     /** @var string|Field|null */
     protected $column;
 
-    /** @var string */
+    /** @var string Key of Operator::$operators */
     protected $operator;
 
     /** @var mixed */

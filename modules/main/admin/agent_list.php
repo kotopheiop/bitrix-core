@@ -10,8 +10,9 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
 require_once($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/prolog.php");
 define("HELP_FILE", "utilities/agent_list.php");
 
-if (!$USER->CanDoOperation('view_other_settings'))
+if (!$USER->CanDoOperation('view_other_settings')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $isAdmin = $USER->CanDoOperation('edit_php');
 
@@ -36,27 +37,32 @@ $arFilterFields = Array(
 );
 function CheckFilter($FilterArr) // �������� ��������� �����
 {
-    foreach ($FilterArr as $f)
+    foreach ($FilterArr as $f) {
         global $$f;
+    }
 
     $str = "";
-    if (strlen(trim($find_last_exec)) > 0) {
+    if (trim($find_last_exec) <> '') {
         $date_1_ok = false;
         $date1_stm = MkDateTime(FmtDate($find_last_exec, "D.M.Y"), "d.m.Y");
-        if (!$date1_stm && strlen(trim($find_last_exec)) > 0)
+        if (!$date1_stm && trim($find_last_exec) <> '') {
             $str .= GetMessage("MAIN_AGENT_WRONG_LAST_EXEC") . "<br>";
-        else $date_1_ok = true;
+        } else {
+            $date_1_ok = true;
+        }
     }
 
-    if (strlen(trim($find_next_exec)) > 0) {
+    if (trim($find_next_exec) <> '') {
         $date_1_ok = false;
         $date1_stm = MkDateTime(FmtDate($find_next_exec, "D.M.Y"), "d.m.Y");
-        if (!$date1_stm && strlen(trim($find_next_exec)) > 0)
+        if (!$date1_stm && trim($find_next_exec) <> '') {
             $str .= GetMessage("MAIN_AGENT_WRONG_NEXT_EXEC") . "<br>";
-        else $date_1_ok = true;
+        } else {
+            $date_1_ok = true;
+        }
     }
 
-    if (strlen($str) > 0) {
+    if ($str <> '') {
         global $lAdmin;
         $lAdmin->AddFilterError($str);
         return false;
@@ -87,10 +93,11 @@ if (CheckFilter($arFilterFields)) {
 if ($lAdmin->EditAction() && $isAdmin) {
     foreach ($FIELDS as $ID => $arFields) {
         $DB->StartTransaction();
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
-        if (!$lAdmin->IsUpdated($ID))
+        if (!$lAdmin->IsUpdated($ID)) {
             continue;
+        }
 
         $APPLICATION->ResetException();
         if (!CAgent::Update($ID, $arFields)) {
@@ -107,20 +114,23 @@ if (($arID = $lAdmin->GroupAction()) && $isAdmin) {
     if ($_REQUEST['action_target'] == 'selected') {
         $arID = Array();
         $rsData = CAgent::GetList(array($by => $order), $arFilter);
-        while ($arRes = $rsData->Fetch())
+        while ($arRes = $rsData->Fetch()) {
             $arID[] = $arRes['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        $ID = IntVal($ID);
-        if ($ID <= 0)
+        $ID = intval($ID);
+        if ($ID <= 0) {
             continue;
+        }
 
         switch ($_REQUEST['action']) {
             case "delete":
                 @set_time_limit(0);
-                if (!CAgent::Delete($ID))
+                if (!CAgent::Delete($ID)) {
                     $lAdmin->AddGroupError(GetMessage("DELETE_ERROR"), $ID);
+                }
                 break;
             case "activate":
                 CAgent::Update($ID, array("ACTIVE" => "Y"));
@@ -137,34 +147,78 @@ $agentList = CAgent::GetList(array($by => $order), $arFilter);
 $rsData = new CAdminResult($agentList, $sTableID);
 $rsData->NavStart(20);
 $lAdmin->NavText($rsData->GetNavPrint(GetMessage("MAIN_AGENT_LIST_PAGE")));
-$lAdmin->AddHeaders(array(
-    array("id" => "ID", "content" => GetMessage("MAIN_AGENT_ID"), "sort" => "ID", "default" => true, "align" => "right"),
-    array("id" => "MODULE_ID", "content" => GetMessage("MAIN_AGENT_MODULE_ID"), "sort" => "MODULE_ID", "default" => true),
-    array("id" => "USER_ID", "content" => GetMessage("MAIN_AGENT_USER_ID"), "sort" => "USER_ID"),
-    array("id" => "SORT", "content" => GetMessage("MAIN_AGENT_SORT"), "sort" => "SORT"),
-    array("id" => "NAME", "content" => GetMessage("MAIN_AGENT_NAME"), "sort" => "NAME", "default" => true),
-    array("id" => "ACTIVE", "content" => GetMessage("MAIN_AGENT_ACTIVE"), "sort" => "ACTIVE", "default" => true),
-    array("id" => "LAST_EXEC", "content" => GetMessage("MAIN_AGENT_LAST_EXEC"), "sort" => "LAST_EXEC", "default" => true),
-    array("id" => "NEXT_EXEC", "content" => GetMessage("MAIN_AGENT_NEXT_EXEC"), "sort" => "NEXT_EXEC", "default" => true),
-    array("id" => "AGENT_INTERVAL", "content" => GetMessage("MAIN_AGENT_INTERVAL"), "sort" => "AGENT_INTERVAL", "default" => true, "align" => "right"),
-    array("id" => "IS_PERIOD", "content" => GetMessage("MAIN_AGENT_LIST_PERIODICAL"), "sort" => "IS_PERIOD"),
-    array("id" => "DATE_CHECK", "content" => GetMessage("MAIN_AGENT_LIST_DATE_CHECK"), "sort" => "DATE_CHECK"),
-    array("id" => "RUNNING", "content" => GetMessage("MAIN_AGENT_LIST_RUNNING")),
-));
+$lAdmin->AddHeaders(
+    array(
+        array(
+            "id" => "ID",
+            "content" => GetMessage("MAIN_AGENT_ID"),
+            "sort" => "ID",
+            "default" => true,
+            "align" => "right"
+        ),
+        array(
+            "id" => "MODULE_ID",
+            "content" => GetMessage("MAIN_AGENT_MODULE_ID"),
+            "sort" => "MODULE_ID",
+            "default" => true
+        ),
+        array("id" => "USER_ID", "content" => GetMessage("MAIN_AGENT_USER_ID"), "sort" => "USER_ID"),
+        array("id" => "SORT", "content" => GetMessage("MAIN_AGENT_SORT"), "sort" => "SORT"),
+        array("id" => "NAME", "content" => GetMessage("MAIN_AGENT_NAME"), "sort" => "NAME", "default" => true),
+        array("id" => "ACTIVE", "content" => GetMessage("MAIN_AGENT_ACTIVE"), "sort" => "ACTIVE", "default" => true),
+        array(
+            "id" => "LAST_EXEC",
+            "content" => GetMessage("MAIN_AGENT_LAST_EXEC"),
+            "sort" => "LAST_EXEC",
+            "default" => true
+        ),
+        array(
+            "id" => "NEXT_EXEC",
+            "content" => GetMessage("MAIN_AGENT_NEXT_EXEC"),
+            "sort" => "NEXT_EXEC",
+            "default" => true
+        ),
+        array(
+            "id" => "AGENT_INTERVAL",
+            "content" => GetMessage("MAIN_AGENT_INTERVAL"),
+            "sort" => "AGENT_INTERVAL",
+            "default" => true,
+            "align" => "right"
+        ),
+        array("id" => "IS_PERIOD", "content" => GetMessage("MAIN_AGENT_LIST_PERIODICAL"), "sort" => "IS_PERIOD"),
+        array("id" => "DATE_CHECK", "content" => GetMessage("MAIN_AGENT_LIST_DATE_CHECK"), "sort" => "DATE_CHECK"),
+        array("id" => "RUNNING", "content" => GetMessage("MAIN_AGENT_LIST_RUNNING")),
+        array("id" => "RETRY_COUNT", "content" => GetMessage("MAIN_AGENT_LIST_RETRY_COUNT")),
+    )
+);
 while ($db_res = $rsData->NavNext(true, "a_")) {
     $row =& $lAdmin->AddRow($a_ID, $db_res);
     $row->AddField("ID", $a_ID);
     $row->AddField("MODULE_ID", $a_MODULE_ID);
-    $row->AddField("USER_ID", ($a_USER_ID > 0) ? "<a href=\"/bitrix/admin/user_edit.php?ID=" . $a_USER_ID . "&lang=" . LANG . "\">[" . $a_USER_ID . "] " . $a_USER_NAME . " " . $a_LAST_NAME . " (" . $a_LOGIN . ")</a>" : GetMessage("MAIN_AGENT_SYSTEM_USER"));
+    $row->AddField(
+        "USER_ID",
+        ($a_USER_ID > 0) ? "<a href=\"/bitrix/admin/user_edit.php?ID=" . $a_USER_ID . "&lang=" . LANG . "\">[" . $a_USER_ID . "] " . $a_USER_NAME . " " . $a_LAST_NAME . " (" . $a_LOGIN . ")</a>" : GetMessage(
+            "MAIN_AGENT_SYSTEM_USER"
+        )
+    );
     $row->AddInputField("SORT");
     $row->AddInputField("NAME");
     $row->AddCheckField("ACTIVE");
     $row->AddField("LAST_EXEC", $a_LAST_EXEC);
     $row->AddField("NEXT_EXEC", $a_NEXT_EXEC);
     $row->AddInputField("AGENT_INTERVAL");
-    $row->AddField("IS_PERIOD", ($a_IS_PERIOD == "Y" ? GetMessage("MAIN_AGENT_LIST_PERIODICAL_TIME") : GetMessage("MAIN_AGENT_LIST_PERIODICAL_INTERVAL")));
+    $row->AddField(
+        "IS_PERIOD",
+        ($a_IS_PERIOD == "Y" ? GetMessage("MAIN_AGENT_LIST_PERIODICAL_TIME") : GetMessage(
+            "MAIN_AGENT_LIST_PERIODICAL_INTERVAL"
+        ))
+    );
     $row->AddField("DATE_CHECK", $a_DATE_CHECK);
-    $row->AddField("RUNNING", ($a_RUNNING == "Y" ? GetMessage("MAIN_AGENT_ACTIVE_YES") : GetMessage("MAIN_AGENT_ACTIVE_NO")));
+    $row->AddField(
+        "RUNNING",
+        ($a_RUNNING == "Y" ? GetMessage("MAIN_AGENT_ACTIVE_YES") : GetMessage("MAIN_AGENT_ACTIVE_NO"))
+    );
+    $row->AddField("RETRY_COUNT", $a_RETRY_COUNT);
 
     $arActions = array();
     $arActions[] = array(
@@ -189,11 +243,13 @@ while ($db_res = $rsData->NavNext(true, "a_")) {
     $arActions[] = array(
         "ICON" => "delete",
         "TEXT" => GetMessage("MAIN_AGENT_DELETE"),
-        "ACTION" => "if(confirm('" . GetMessage('MAIN_AGENT_ALERT_DELETE') . "')) " . $lAdmin->ActionDoGroup($a_ID, "delete")
+        "ACTION" => "if(confirm('" . GetMessage('MAIN_AGENT_ALERT_DELETE') . "')) " . $lAdmin->ActionDoGroup(
+                $a_ID,
+                "delete"
+            )
     );
 
     $row->AddActions($arActions);
-
 }
 
 $lAdmin->AddGroupActionTable(
@@ -243,10 +299,18 @@ require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admi
             <input type="text" size="25" name="find" value="<? echo htmlspecialcharsbx($find) ?>"
                    title="<?= GetMessage("MAIN_AGENT_FLT_SEARCH_TITLE") ?>">
             <select name="find_type">
-                <option value="id"<? if ($find_type == "id") echo " selected" ?>><?= GetMessage("MAIN_AGENT_FLT_ID") ?></option>
-                <option value="module_id"<? if ($find_type == "module_id") echo " selected" ?>><?= GetMessage("MAIN_AGENT_FLT_MODULE_ID") ?></option>
-                <option value="user_id"<? if ($find_type == "user_id") echo " selected" ?>><?= GetMessage("MAIN_AGENT_FLT_USER_ID") ?></option>
-                <option value="name"<? if ($find_type == "name") echo " selected" ?>><?= GetMessage("MAIN_AGENT_FLT_NAME") ?></option>
+                <option value="id"<? if ($find_type == "id") echo " selected" ?>><?= GetMessage(
+                        "MAIN_AGENT_FLT_ID"
+                    ) ?></option>
+                <option value="module_id"<? if ($find_type == "module_id") echo " selected" ?>><?= GetMessage(
+                        "MAIN_AGENT_FLT_MODULE_ID"
+                    ) ?></option>
+                <option value="user_id"<? if ($find_type == "user_id") echo " selected" ?>><?= GetMessage(
+                        "MAIN_AGENT_FLT_USER_ID"
+                    ) ?></option>
+                <option value="name"<? if ($find_type == "name") echo " selected" ?>><?= GetMessage(
+                        "MAIN_AGENT_FLT_NAME"
+                    ) ?></option>
             </select>
         </td>
     </tr>
@@ -270,7 +334,10 @@ require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admi
     <tr>
         <td><? echo GetMessage("MAIN_AGENT_FLT_ACTIVE") ?>:</td>
         <td><?
-            $arr = array("reference" => array(GetMessage("MAIN_YES"), GetMessage("MAIN_NO")), "reference_id" => array("Y", "N"));
+            $arr = array(
+                "reference" => array(GetMessage("MAIN_YES"), GetMessage("MAIN_NO")),
+                "reference_id" => array("Y", "N")
+            );
             echo SelectBoxFromArray("find_active", $arr, htmlspecialcharsbx($find_active), GetMessage('MAIN_ALL'));
             ?>
         </td>
@@ -286,8 +353,19 @@ require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admi
     <tr>
         <td><? echo GetMessage("MAIN_AGENT_FLT_PERIODICAL1") ?></td>
         <td><?
-            $arr = array("reference" => array(GetMessage("MAIN_AGENT_FLT_PERIODICAL_INTERVAL"), GetMessage("MAIN_AGENT_FLT_PERIODICAL_TIME")), "reference_id" => array("N", "Y"));
-            echo SelectBoxFromArray("find_is_period", $arr, htmlspecialcharsbx($find_is_period), GetMessage('MAIN_ALL'));
+            $arr = array(
+                "reference" => array(
+                    GetMessage("MAIN_AGENT_FLT_PERIODICAL_INTERVAL"),
+                    GetMessage("MAIN_AGENT_FLT_PERIODICAL_TIME")
+                ),
+                "reference_id" => array("N", "Y")
+            );
+            echo SelectBoxFromArray(
+                "find_is_period",
+                $arr,
+                htmlspecialcharsbx($find_is_period),
+                GetMessage('MAIN_ALL')
+            );
             ?>
         </td>
     </tr>

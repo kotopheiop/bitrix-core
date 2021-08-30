@@ -31,8 +31,9 @@ class MailBlock
     {
         $resultTemplateList = array();
         $arTemplateList = static::getList();
-        foreach ($arTemplateList as $template)
+        foreach ($arTemplateList as $template) {
             $resultTemplateList[$template['TYPE']][] = $template;
+        }
 
         return $resultTemplateList;
     }
@@ -99,13 +100,13 @@ class MailBlock
                     );
                     $arGroupExists[] = $arBlock['TYPE'];
                 }
-
             } // foreach $arBlockList
 
         } // foreach $arBlocksByType
 
-        if (isset($arResult['groups'][0]))
+        if (isset($arResult['groups'][0])) {
             $arResult['rootDefaultFilename'] = $arResult['groups'][0]['default_name'];
+        }
 
         return $arResult;
     }

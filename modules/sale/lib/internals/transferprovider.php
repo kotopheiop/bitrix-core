@@ -165,15 +165,20 @@ class TransferProvider extends TransferProviderBase
      * @return Sale\Result
      * @throws Main\ObjectNotFoundException
      */
-    private function setItemsResultAfterTryShipByCoefficient(PoolQuantity $pool, array $products, array $productTryList, $coefficient)
-    {
+    private function setItemsResultAfterTryShipByCoefficient(
+        PoolQuantity $pool,
+        array $products,
+        array $productTryList,
+        $coefficient
+    ) {
         foreach ($products as $productId => $productData) {
             if (!isset($productTryList[$productId])) {
                 continue;
             }
 
-            if (empty($productData['SHIPMENT_ITEM_DATA_LIST']))
+            if (empty($productData['SHIPMENT_ITEM_DATA_LIST'])) {
                 continue;
+            }
 
             /**
              * @var int $shipmentItemIndex

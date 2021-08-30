@@ -33,19 +33,24 @@ class AccessTable extends Entity\DataManager
     public static function getMap()
     {
         return array(
-            'ID' => new Entity\IntegerField('ID', array(
+            'ID' => new Entity\IntegerField(
+                'ID', array(
                 'primary' => true,
                 'autocomplete' => true,
-            )),
-            'ROLE_ID' => new Entity\IntegerField('ROLE_ID', array(
+            )
+            ),
+            'ROLE_ID' => new Entity\IntegerField(
+                'ROLE_ID', array(
                 'required' => true,
-            )),
-            'ACCESS_CODE' => new Entity\StringField('ACCESS_CODE', array(
+            )
+            ),
+            'ACCESS_CODE' => new Entity\StringField(
+                'ACCESS_CODE', array(
                 'required' => true,
-            )),
+            )
+            ),
             'ROLE' => new Entity\ReferenceField(
-                'ROLE',
-                'Bitrix\Sender\Internals\Model\Role\Role',
+                'ROLE', 'Bitrix\Sender\Access\Role\Role',
                 array('=this.ROLE_ID' => 'ref.ID'),
                 array('join_type' => 'INNER')
             )

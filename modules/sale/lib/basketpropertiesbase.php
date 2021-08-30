@@ -336,7 +336,10 @@ abstract class BasketPropertiesCollectionBase extends Internals\EntityCollection
             return false;
         } else {
             foreach ($requestValues as $key => $val) {
-                if (!array_key_exists($key, $propertyValues) || (array_key_exists($key, $propertyValues) && $propertyValues[$key]['VALUE'] != $val)) {
+                if (!array_key_exists($key, $propertyValues) || (array_key_exists(
+                            $key,
+                            $propertyValues
+                        ) && $propertyValues[$key]['VALUE'] != $val)) {
                     return false;
                 }
             }

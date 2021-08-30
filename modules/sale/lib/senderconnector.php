@@ -72,26 +72,35 @@ class SenderConnectorBuyer extends \Bitrix\Sender\Connector
         $orderLastDateTo = $this->getFieldValue('LAST_ORDER_DATE_TO', null);
 
         $filter = array();
-        if ($lid)
+        if ($lid) {
             $filter['LID'] = $lid;
-        if ($orderCountFrom)
+        }
+        if ($orderCountFrom) {
             $filter['>=COUNT_FULL_PAID_ORDER'] = $orderCountFrom;
-        if ($orderCountTo)
+        }
+        if ($orderCountTo) {
             $filter['<COUNT_FULL_PAID_ORDER'] = $orderCountTo;
-        if ($orderSumFrom)
+        }
+        if ($orderSumFrom) {
             $filter['>=SUM_PAID'] = $orderSumFrom;
-        if ($orderSumTo)
+        }
+        if ($orderSumTo) {
             $filter['<SUM_PAID'] = $orderSumTo;
-        if ($orderLastDateFrom)
+        }
+        if ($orderLastDateFrom) {
             $filter['>=LAST_ORDER_DATE'] = $orderLastDateFrom;
-        if ($orderLastDateTo)
+        }
+        if ($orderLastDateTo) {
             $filter['<LAST_ORDER_DATE'] = $orderLastDateTo;
+        }
 
-        return BuyerStatistic::getList(array(
-            'select' => array("EMAIL" => 'USER.EMAIL', "NAME" => 'USER.NAME', "USER_ID", "ID"),
-            'filter' => $filter,
-            'order' => array('ID' => 'ASC'),
-        ));
+        return BuyerStatistic::getList(
+            array(
+                'select' => array("EMAIL" => 'USER.EMAIL', "NAME" => 'USER.NAME', "USER_ID", "ID"),
+                'filter' => $filter,
+                'order' => array('ID' => 'ASC'),
+            )
+        );
     }
 
     /**
@@ -102,7 +111,7 @@ class SenderConnectorBuyer extends \Bitrix\Sender\Connector
     public function getForm()
     {
         $siteInput = '<select name="' . $this->getFieldName('LID') . '">';
-        $siteDb = \CSite::GetList($by = "sort", $order = "asc", array("ACTIVE" => "Y"));
+        $siteDb = \CSite::GetList("sort", "asc", array("ACTIVE" => "Y"));
         while ($site = $siteDb->Fetch()) {
             $inputSelected = ($site['LID'] == $this->getFieldValue('LID') ? 'selected' : '');
             $siteInput .= '<option value="' . $site['LID'] . '" ' . $inputSelected . '>';
@@ -113,14 +122,22 @@ class SenderConnectorBuyer extends \Bitrix\Sender\Connector
 
 
         $orderCountInput = Loc::getMessage('sender_connector_buyer_from');
-        $orderCountInput .= ' <input size=3 type="text" name="' . $this->getFieldName('ORDER_COUNT_FROM') . '" value="' . htmlspecialcharsbx($this->getFieldValue('ORDER_COUNT_FROM')) . '"> ';
+        $orderCountInput .= ' <input size=3 type="text" name="' . $this->getFieldName(
+                'ORDER_COUNT_FROM'
+            ) . '" value="' . htmlspecialcharsbx($this->getFieldValue('ORDER_COUNT_FROM')) . '"> ';
         $orderCountInput .= Loc::getMessage('sender_connector_buyer_to');
-        $orderCountInput .= ' <input size=3 type="text" name="' . $this->getFieldName('ORDER_COUNT_TO') . '" value="' . htmlspecialcharsbx($this->getFieldValue('ORDER_COUNT_TO')) . '">';
+        $orderCountInput .= ' <input size=3 type="text" name="' . $this->getFieldName(
+                'ORDER_COUNT_TO'
+            ) . '" value="' . htmlspecialcharsbx($this->getFieldValue('ORDER_COUNT_TO')) . '">';
 
         $orderSumInput = Loc::getMessage('sender_connector_buyer_from');
-        $orderSumInput .= ' <input size=3 type="text" name="' . $this->getFieldName('ORDER_SUM_FROM') . '" value="' . htmlspecialcharsbx($this->getFieldValue('ORDER_SUM_FROM')) . '"> ';
+        $orderSumInput .= ' <input size=3 type="text" name="' . $this->getFieldName(
+                'ORDER_SUM_FROM'
+            ) . '" value="' . htmlspecialcharsbx($this->getFieldValue('ORDER_SUM_FROM')) . '"> ';
         $orderSumInput .= Loc::getMessage('sender_connector_buyer_to');
-        $orderSumInput .= ' <input size=3 type="text" name="' . $this->getFieldName('ORDER_SUM_TO') . '" value="' . htmlspecialcharsbx($this->getFieldValue('ORDER_SUM_TO')) . '">';
+        $orderSumInput .= ' <input size=3 type="text" name="' . $this->getFieldName(
+                'ORDER_SUM_TO'
+            ) . '" value="' . htmlspecialcharsbx($this->getFieldValue('ORDER_SUM_TO')) . '">';
 
         $lastOrderDateInput = CalendarPeriod(
             $this->getFieldName('LAST_ORDER_DATE_FROM'),

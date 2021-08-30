@@ -35,7 +35,8 @@ class Journal
 
     public static function getCurrentProcess($exportId)
     {
-        $resProfiles = ExportProfileTable::getList(array(
+        $resProfiles = ExportProfileTable::getList(
+            array(
                 "filter" => array('=ID' => $exportId),
                 "select" => array("PROCESS"),
             )
@@ -43,10 +44,14 @@ class Journal
         $profile = $resProfiles->fetch();
 
 //		if PROCESS empty of set STOP flag - return false
-        if (!empty($profile['PROCESS']) && !(array_key_exists('STOP', $profile['PROCESS']) && $profile['PROCESS']['STOP']))
+        if (!empty($profile['PROCESS']) && !(array_key_exists(
+                    'STOP',
+                    $profile['PROCESS']
+                ) && $profile['PROCESS']['STOP'])) {
             return $profile['PROCESS'];
-        else
+        } else {
             return false;
+        }
     }
 
 
@@ -57,21 +62,28 @@ class Journal
         $journal = self::getStatistic($type, $exportId);
         $count = $journal[$type]['COUNT'] ? $journal[$type]['COUNT'] : 0;
 
-        $detailsMsg = '<p>' . date('G:i - ') . Loc::getMessage('VK_JOURNAL_PROCESSING_COUNT', array("#C1" => $count)) . '</p>';
-        $detailsMsg .= '<p><i>' . Loc::getMessage('VK_JOURNAL_RUNNING_NOTIFY_1') . '<br>' . Loc::getMessage('VK_JOURNAL_RUNNING_NOTIFY_2') . '</i></p>';
+        $detailsMsg = '<p>' . date('G:i - ') . Loc::getMessage(
+                'VK_JOURNAL_PROCESSING_COUNT',
+                array("#C1" => $count)
+            ) . '</p>';
+        $detailsMsg .= '<p><i>' . Loc::getMessage('VK_JOURNAL_RUNNING_NOTIFY_1') . '<br>' . Loc::getMessage(
+                'VK_JOURNAL_RUNNING_NOTIFY_2'
+            ) . '</i></p>';
         ob_start();
-        \CAdminMessage::ShowMessage(array(
-            "MESSAGE" => Loc::getMessage("VK_JOURNAL_NOW_EXPORT_" . $type),
-            "DETAILS" =>
-                '<p>' . $detailsMsg . '</p>' .
-                '<input
+        \CAdminMessage::ShowMessage(
+            array(
+                "MESSAGE" => Loc::getMessage("VK_JOURNAL_NOW_EXPORT_" . $type),
+                "DETAILS" =>
+                    '<p>' . $detailsMsg . '</p>' .
+                    '<input
 					type="button"
 					value="' . Loc::getMessage("VK_JOURNAL_BUTTON_STOP_PROCESS") . '"
 					onclick="if(confirm(\'' . Loc::getMessage("VK_JOURNAL_BUTTON_STOP_PROCESS_ALERT") . '\'))
 						{BX.Sale.VkAdmin.stopProcess(' . $exportId . ');}">',
-            "HTML" => true,
-            "TYPE" => "PROGRESS",
-        ));
+                "HTML" => true,
+                "TYPE" => "PROGRESS",
+            )
+        );
         $res = ob_get_clean();
 
         return $res;
@@ -83,10 +95,12 @@ class Journal
             Loc::getMessage("VK_JOURNAL_EXPORT_FININSH") :
             Loc::getMessage("VK_JOURNAL_EXPORT_ABORT");
         ob_start();
-        \CAdminMessage::ShowMessage(array(
+        \CAdminMessage::ShowMessage(
+            array(
                 "MESSAGE" => $msg,
                 "DETAILS" => '',
-                "TYPE" => "OK")
+                "TYPE" => "OK"
+            )
         );
         $res = ob_get_clean();
 
@@ -97,7 +111,8 @@ class Journal
     public static function getTooMuchTimeExportMessage()
     {
         ob_start();
-        \CAdminMessage::ShowMessage(array
+        \CAdminMessage::ShowMessage(
+            array
             (
                 "MESSAGE" => Loc::getMessage("VK_JOURNAL_TOO_MUCH_TIMES_NOTIFY_1"),
                 "DETAILS" => Loc::getMessage("VK_JOURNAL_TOO_MUCH_TIMES_NOTIFY_2"),
@@ -127,12 +142,13 @@ class Journal
             $exportId = \EscapePHPString($exportId);
 //			if set data - update, if not - clear process
             $data = array();
-            if ($type !== false && $position !== false && $execCount !== false)
+            if ($type !== false && $position !== false && $execCount !== false) {
                 $data = array(
                     'TYPE' => $type,
                     'EXEC_COUNT' => $execCount,
                     'START_POSITION' => $position,
                 );
+            }
             $resUpdate = ExportProfileTable::update($exportId, array("PROCESS" => $data));
 
             return $resUpdate->isSuccess();
@@ -148,7 +164,7 @@ class Journal
      */
     public static function clearStopProcessParams($exportId)
     {
-        $resUpdate = ExportProfileTable::update($exportId, array("PROCESS" => NULL));
+        $resUpdate = ExportProfileTable::update($exportId, array("PROCESS" => null));
 
         return $resUpdate->isSuccess();
     }
@@ -172,7 +188,8 @@ class Journal
     {
         $exportId = \EscapePHPString($exportId);
 
-        $resProfiles = ExportProfileTable::getList(array(
+        $resProfiles = ExportProfileTable::getList(
+            array(
                 "filter" => array('=ID' => $exportId),
                 "select" => array("PROCESS"),
             )
@@ -193,7 +210,8 @@ class Journal
      */
     private function getJournal()
     {
-        $resJournal = ExportProfileTable::getList(array(
+        $resJournal = ExportProfileTable::getList(
+            array(
                 "filter" => array('=ID' => $this->exportId),
                 "select" => array("JOURNAL"),
             )
@@ -270,16 +288,18 @@ class Journal
 
     private static function getStatistic($type, $exportId)
     {
-        $resJournal = ExportProfileTable::getList(array(
+        $resJournal = ExportProfileTable::getList(
+            array(
                 "filter" => array('=ID' => $exportId),
                 "select" => array("JOURNAL"),
             )
         );
         $journal = $resJournal->fetch();
-        if (!$journal)
+        if (!$journal) {
             return false;
-        else
+        } else {
             $journal = $journal["JOURNAL"];
+        }
 
         //check if process stopped, but journal not ending
         return self::getCheckedEndingJournal($type, $exportId, $journal);
@@ -306,33 +326,44 @@ class Journal
         } //		export was finished
         elseif (isset($journal[$type]["END"])) {
             $result .= "<p>";
-            $result .= Loc::getMessage("VK_JOURNAL_LAST_EXPORT", array(
-                '#D1' => date('d.m.y', $journal[$type]["END"]),
-                '#D2' => date('G:i', $journal[$type]["END"]),
-            ));
+            $result .= Loc::getMessage(
+                "VK_JOURNAL_LAST_EXPORT",
+                array(
+                    '#D1' => date('d.m.y', $journal[$type]["END"]),
+                    '#D2' => date('G:i', $journal[$type]["END"]),
+                )
+            );
             $result .= isset($journal[$type]["ABORT"]) && $journal[$type]["ABORT"] ?
                 ' ' . Loc::getMessage("VK_JOURNAL_LAST_EXPORT_ABORTED") : '';
             $result .= "</p>";
 
 //				add count items
-            if ($journal[$type]["COUNT"])
+            if ($journal[$type]["COUNT"]) {
                 $result .= "<p>" .
-                    Loc::getMessage("VK_JOURNAL_COUNT_WAS", array(
-                        '#C1' => $journal[$type]["COUNT"],
-                    )) .
+                    Loc::getMessage(
+                        "VK_JOURNAL_COUNT_WAS",
+                        array(
+                            '#C1' => $journal[$type]["COUNT"],
+                        )
+                    ) .
                     "</p>";
+            }
         } //		running now
         elseif (isset($journal[$type]["START"])) {
             $result .= "<p>" . Loc::getMessage("VK_JOURNAL_EXPORT_NOW") . "</p>";
 
 //			add count items
-            if ($journal[$type]["COUNT"])
+            if ($journal[$type]["COUNT"]) {
                 $result .=
                     "<p>" .
-                    Loc::getMessage("VK_JOURNAL_COUNT_NOW", array(
-                        '#C1' => $journal[$type]["COUNT"],
-                    )) .
+                    Loc::getMessage(
+                        "VK_JOURNAL_COUNT_NOW",
+                        array(
+                            '#C1' => $journal[$type]["COUNT"],
+                        )
+                    ) .
                     "</p>";
+            }
         }
 
         return $result;

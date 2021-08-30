@@ -50,8 +50,9 @@ class HostRestriction
      */
     public static function onPageStart()
     {
-        if (\CSecuritySystemInformation::isCliMode())
+        if (\CSecuritySystemInformation::isCliMode()) {
             return;
+        }
 
         /** @var HostRestriction $instance */
         $instance = new static;
@@ -62,7 +63,10 @@ class HostRestriction
     {
         $this->hosts = Config\Option::get('security', $this->optionPrefix . 'hosts', '');
         $this->action = Config\Option::get('security', $this->optionPrefix . 'action', '');
-        $this->actionOptions = unserialize(Config\Option::get('security', $this->optionPrefix . 'action_options', '{}'));
+        $this->actionOptions = unserialize(
+            Config\Option::get('security', $this->optionPrefix . 'action_options', '{}'),
+            ['allowed_classes' => false]
+        );
         $this->isLogNeeded = Config\Option::get('security', $this->optionPrefix . 'logging', false);
     }
 
@@ -74,14 +78,17 @@ class HostRestriction
      */
     public function process($host = null)
     {
-        if (is_null($host))
+        if (is_null($host)) {
             $host = $this->getTargetHost();
+        }
 
-        if ($this->isValidHost($host))
+        if ($this->isValidHost($host)) {
             return $this;
+        }
 
-        if ($this->isLogNeeded)
+        if ($this->isLogNeeded) {
             $this->log($host);
+        }
 
         $this->doActions();
 
@@ -188,21 +195,29 @@ class HostRestriction
      */
     public function setAction($action, array $options = array())
     {
-        if (!$action)
+        if (!$action) {
             throw new ArgumentNullException('action');
+        }
 
-        if (!is_string($action))
+        if (!is_string($action)) {
             throw new ArgumentTypeException('action', 'string');
+        }
 
-        if (!in_array($action, $this->validActions))
+        if (!in_array($action, $this->validActions)) {
             throw new ArgumentOutOfRangeException('action', $this->validActions);
+        }
 
         if ($action === self::ACTION_REDIRECT) {
-            if (!isset($options['host']) || !$options['host'])
+            if (!isset($options['host']) || !$options['host']) {
                 throw new LogicException('options[host] not present', 'SECURITY_HOSTS_EMPTY_HOST_ACTION');
+            }
 
-            if (!preg_match('#^https?://#', $options['host']))
-                throw new LogicException('invalid redirecting host present in options[host]', 'SECURITY_HOSTS_INVALID_HOST_ACTION');
+            if (!preg_match('#^https?://#', $options['host'])) {
+                throw new LogicException(
+                    'invalid redirecting host present in options[host]',
+                    'SECURITY_HOSTS_INVALID_HOST_ACTION'
+                );
+            }
         }
 
 
@@ -229,8 +244,9 @@ class HostRestriction
      */
     public function setLogging($isLogNeeded = true)
     {
-        if (!is_bool($isLogNeeded))
+        if (!is_bool($isLogNeeded)) {
             throw new ArgumentTypeException('isLogNeeded', 'bool');
+        }
 
         $this->isLogNeeded = $isLogNeeded;
 
@@ -242,8 +258,9 @@ class HostRestriction
      */
     public function getActive()
     {
-        if (is_null($this->isActive))
+        if (is_null($this->isActive)) {
             $this->isActive = $this->isBound();
+        }
 
         return $this->isActive;
     }
@@ -257,8 +274,9 @@ class HostRestriction
      */
     public function setActive($isActive = false)
     {
-        if (!is_bool($isActive))
+        if (!is_bool($isActive)) {
             throw new ArgumentTypeException('isActive', 'bool');
+        }
 
         $this->isActive = $isActive;
 
@@ -284,11 +302,13 @@ class HostRestriction
      */
     public function setHosts($hosts, $ignoreChecking = false)
     {
-        if (!is_string($hosts))
+        if (!is_string($hosts)) {
             throw new ArgumentTypeException('host', 'string');
+        }
 
-        if (!$ignoreChecking)
+        if (!$ignoreChecking) {
             $this->checkNewHosts($hosts);
+        }
 
         $this->hosts = $hosts;
 
@@ -303,8 +323,9 @@ class HostRestriction
      */
     public function getValidationRegExp()
     {
-        if ($this->validationRegExp)
+        if ($this->validationRegExp) {
             return $this->validationRegExp;
+        }
 
         $cache = Data\Cache::createInstance();
         if ($cache->initCache($this->cacheTtl, $this->cacheId, $this->cacheInitPath)) {
@@ -330,7 +351,6 @@ class HostRestriction
         Config\Option::set('security', $this->optionPrefix . 'action_options', serialize($this->actionOptions), '');
         Config\Option::set('security', $this->optionPrefix . 'logging', $this->isLogNeeded, '');
         if (!is_null($this->isActive)) {
-
             if ($this->isActive) {
                 EventManager::getInstance()
                     ->registerEventHandler('main', 'OnPageStart', 'security', get_class($this), 'onPageStart');
@@ -354,8 +374,9 @@ class HostRestriction
         $handlers = EventManager::getInstance()->findEventHandlers('main', 'OnPageStart', array('security'));
 
         foreach ($handlers as $handler) {
-            if ($handler['TO_CLASS'] === get_class($this))
+            if ($handler['TO_CLASS'] === get_class($this)) {
                 return true;
+            }
         }
 
         return false;
@@ -369,8 +390,9 @@ class HostRestriction
     protected function getTargetHost()
     {
         static $host = null;
-        if (is_null($host))
+        if (is_null($host)) {
             $host = Context::getCurrent()->getServer()->getHttpHost();
+        }
 
         return $host;
     }
@@ -439,11 +461,13 @@ class HostRestriction
     {
         $this->validationRegExp = $this->genValidationRegExp($hosts);
 
-        if (!preg_match($this->validationRegExp, $this->getTargetHost()))
+        if (!preg_match($this->validationRegExp, $this->getTargetHost())) {
             throw new LogicException('Current host blocked', 'SECURITY_HOSTS_SELF_BLOCK');
+        }
 
-        if (preg_match($this->validationRegExp, 'some-invalid-host.com'))
+        if (preg_match($this->validationRegExp, 'some-invalid-host.com')) {
             throw new LogicException('Any host passed restrictions', 'SECURITY_HOSTS_ANY_HOST');
+        }
 
         return $this;
     }

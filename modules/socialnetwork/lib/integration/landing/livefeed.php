@@ -104,7 +104,7 @@ class Livefeed extends Landing\Source\DataLoader
 
         $result[] = [
             'SOURCE_ID' => 'livefeed',
-            'TITLE' => Loc::getMessage('SONET_LANDING_DYNAMIC_BLOCK_LIVEFEED_TITLE'),
+            'TITLE' => Loc::getMessage('SONET_LANDING_DYNAMIC_BLOCK_LIVEFEED_TITLE2'),
             'TYPE' => Landing\Source\Selector::SOURCE_TYPE_COMPONENT,
             'SETTINGS' => [
                 'COMPONENT_NAME' => 'bitrix:socialnetwork.landing.livefeed.selector',
@@ -159,30 +159,38 @@ class Livefeed extends Landing\Source\DataLoader
             }
         }
 
-        $groupIdList = array_filter(array_map(function ($val) {
-            $res = false;
-            if (preg_match('/^SG(\d+)$/i', $val, $matches)) {
-                $res = intval($matches[1]);
-            }
+        $groupIdList = array_filter(
+            array_map(
+                function ($val) {
+                    $res = false;
+                    if (preg_match('/^SG(\d+)$/i', $val, $matches)) {
+                        $res = intval($matches[1]);
+                    }
 
-            return $res;
-        }, $result), function ($val) {
-            return ($val > 0);
-        });
+                    return $res;
+                },
+                $result
+            ),
+            function ($val) {
+                return ($val > 0);
+            }
+        );
 
         if (empty($groupIdList)) {
             return $result;
         }
 
         $result = [];
-        $res = WorkgroupTable::getList([
-            'filter' => [
-                '=LANDING' => 'Y',
-                '=ACTIVE' => 'Y',
-                '@ID' => $groupIdList
-            ],
-            'select' => ['ID']
-        ]);
+        $res = WorkgroupTable::getList(
+            [
+                'filter' => [
+                    '=LANDING' => 'Y',
+                    '=ACTIVE' => 'Y',
+                    '@ID' => $groupIdList
+                ],
+                'select' => ['ID']
+            ]
+        );
         while ($workgroupFields = $res->fetch()) {
             $result[] = 'SG' . $workgroupFields['ID'];
         }
@@ -213,29 +221,37 @@ class Livefeed extends Landing\Source\DataLoader
             }
         }
 
-        $authorIdList = array_filter(array_map(function ($val) {
-            $res = false;
-            if (preg_match('/^U(\d+)$/i', $val, $matches)) {
-                $res = intval($matches[1]);
-            }
+        $authorIdList = array_filter(
+            array_map(
+                function ($val) {
+                    $res = false;
+                    if (preg_match('/^U(\d+)$/i', $val, $matches)) {
+                        $res = intval($matches[1]);
+                    }
 
-            return $res;
-        }, $result), function ($val) {
-            return ($val > 0);
-        });
+                    return $res;
+                },
+                $result
+            ),
+            function ($val) {
+                return ($val > 0);
+            }
+        );
 
         if (empty($authorIdList)) {
             return $result;
         }
 
         $result = [];
-        $res = UserTable::getList([
-            'filter' => [
-                '=ACTIVE' => 'Y',
-                '@ID' => $authorIdList
-            ],
-            'select' => ['ID']
-        ]);
+        $res = UserTable::getList(
+            [
+                'filter' => [
+                    '=ACTIVE' => 'Y',
+                    '@ID' => $authorIdList
+                ],
+                'select' => ['ID']
+            ]
+        );
         while ($userFields = $res->fetch()) {
             $result[] = $userFields['ID'];
         }
@@ -324,11 +340,13 @@ class Livefeed extends Landing\Source\DataLoader
         $this->seo->clear();
 
         $result = [];
-        if (!is_string($element) && !is_int($element))
+        if (!is_string($element) && !is_int($element)) {
             return $result;
+        }
         $element = (int)$element;
-        if ($element <= 0)
+        if ($element <= 0) {
             return $result;
+        }
 
         $rightsFilter = $this->getRightsFilter();
         if (empty($rightsFilter)) {
@@ -441,7 +459,8 @@ class Livefeed extends Landing\Source\DataLoader
 
             $query->registerRuntimeField(
                 '',
-                new \Bitrix\Main\Entity\ReferenceField('U',
+                new \Bitrix\Main\Entity\ReferenceField(
+                    'U',
                     UserTable::getEntity(),
                     array(
                         '=ref.ID' => 'this.AUTHOR_ID'
@@ -464,16 +483,23 @@ class Livefeed extends Landing\Source\DataLoader
                 $attachedFilesList = [];
 
                 if ($diskInstalled) {
-                    $res = \Bitrix\Disk\AttachedObject::getList(array(
-                        'filter' => array(
-                            '=ENTITY_TYPE' => \Bitrix\Disk\Uf\BlogPostConnector::className(),
-                            'ENTITY_ID' => $row
-                        ),
-                        'select' => array('ID', 'OBJECT_ID', 'FILENAME' => 'OBJECT.NAME')
-                    ));
+                    $res = \Bitrix\Disk\AttachedObject::getList(
+                        array(
+                            'filter' => array(
+                                '=ENTITY_TYPE' => \Bitrix\Disk\Uf\BlogPostConnector::className(),
+                                'ENTITY_ID' => $row
+                            ),
+                            'select' => array('ID', 'OBJECT_ID', 'FILENAME' => 'OBJECT.NAME')
+                        )
+                    );
                     foreach ($res as $attachedObjectFields) {
-                        $attachedObjectFields['URL'] = (\Bitrix\Disk\TypeFile::isImage($attachedObjectFields['FILENAME'])
-                            ? $urlManager->getUrlUfController('show', array('attachedId' => $attachedObjectFields['ID']))
+                        $attachedObjectFields['URL'] = (\Bitrix\Disk\TypeFile::isImage(
+                            $attachedObjectFields['FILENAME']
+                        )
+                            ? $urlManager->getUrlUfController(
+                                'show',
+                                array('attachedId' => $attachedObjectFields['ID'])
+                            )
                             : ''
                         );
                         $attachedFilesList[] = $attachedObjectFields;
@@ -488,7 +514,7 @@ class Livefeed extends Landing\Source\DataLoader
                         $inlineAttachmentsList[] = [
                             'ID' => $value,
                             'KEY' => ($matches[1][$key] === 'n' ? 'OBJECT_ID' : 'ID'),
-                            'POSITION' => strpos($detailTextInOneString, $matches[0][$key])
+                            'POSITION' => mb_strpos($detailTextInOneString, $matches[0][$key])
                         ];
                     }
                 }
@@ -516,12 +542,7 @@ class Livefeed extends Landing\Source\DataLoader
 
                 $imgPattern = '/\[IMG\s+WIDTH\s*=\s*\d+\s+HEIGHT\s*=\s*\d+\s*\](.+?)\[\/IMG\]/is' . BX_UTF_PCRE_MODIFIER;
                 $videoPattern = '/\[VIDEO[^\]]*](.+?)\[\/VIDEO\]/is' . BX_UTF_PCRE_MODIFIER;
-
-                $detailText = preg_replace(
-                    '/\[USER\s*=\s*([^\]]*)\](.+?)\[\/USER\]/is' . BX_UTF_PCRE_MODIFIER,
-                    '\\2',
-                    $row["DETAIL_TEXT"]
-                );
+                $detailText = \Bitrix\Socialnetwork\Helper\Mention::clear($row['DETAIL_TEXT']);
 
                 if (
                     preg_match_all($imgPattern, $detailText, $matches)
@@ -530,7 +551,7 @@ class Livefeed extends Landing\Source\DataLoader
                 ) {
                     if (
                         $diskPicturePosition === false
-                        || strpos($detailTextInOneString, $matches[0][0]) < $diskPicturePosition
+                        || mb_strpos($detailTextInOneString, $matches[0][0]) < $diskPicturePosition
                     ) {
                         $picture = [
                             'alt' => '',
@@ -544,7 +565,12 @@ class Livefeed extends Landing\Source\DataLoader
 
                 $postFields = $USER_FIELD_MANAGER->getUserFields("BLOG_POST", $row['ID'], LANGUAGE_ID);
                 if (!empty($postFields["UF_BLOG_POST_FILE"])) {
-                    $parser->arUserfields = array("UF_BLOG_POST_FILE" => array_merge($postFields["UF_BLOG_POST_FILE"], ["TAG" => "DOCUMENT ID"]));
+                    $parser->arUserfields = array(
+                        "UF_BLOG_POST_FILE" => array_merge(
+                            $postFields["UF_BLOG_POST_FILE"],
+                            ["TAG" => "DOCUMENT ID"]
+                        )
+                    );
                 }
 
                 $clearedText = $detailText;
@@ -560,12 +586,12 @@ class Livefeed extends Landing\Source\DataLoader
                     $clearedText
                 );
                 $clearedText = preg_replace(
-                    '/\[URL(.*?)]((?:[^\ ]{1,19}\s+)+)\[\/URL\]/is' . BX_UTF_PCRE_MODIFIER,
+                    '/\[URL(.*?)]((?:[^\]\s]{1,19}\s+)+)\[\/URL\]/is' . BX_UTF_PCRE_MODIFIER,
                     '\\2',
                     $clearedText
                 );
                 $clearedText = preg_replace(
-                    '/\[URL(.*?)]((?:[^\ ]{1,19}\s+)+)\[\/URL\]/is' . BX_UTF_PCRE_MODIFIER,
+                    '/\[URL(.*?)]((?:[^\]\s]{1,19}\s+)+)\[\/URL\]/is' . BX_UTF_PCRE_MODIFIER,
                     '\\2',
                     $clearedText
                 );
@@ -589,13 +615,16 @@ class Livefeed extends Landing\Source\DataLoader
                     }
                 }
                 if (intval($row['AUTHOR_ID']) > 0) {
-                    $authorName = \CUser::formatName(\CSite::getNameFormat(), [
-                        "NAME" => $row["AUTHOR_NAME"],
-                        "LAST_NAME" => $row["AUTHOR_LAST_NAME"],
-                        "SECOND_NAME" => $row["AUTHOR_SECOND_NAME"],
-                        "LOGIN" => $row["AUTHOR_LOGIN"],
-                        "NAME_LIST_FORMATTED" => "",
-                    ]);
+                    $authorName = \CUser::formatName(
+                        \CSite::getNameFormat(),
+                        [
+                            "NAME" => $row["AUTHOR_NAME"],
+                            "LAST_NAME" => $row["AUTHOR_LAST_NAME"],
+                            "SECOND_NAME" => $row["AUTHOR_SECOND_NAME"],
+                            "LOGIN" => $row["AUTHOR_LOGIN"],
+                            "NAME_LIST_FORMATTED" => "",
+                        ]
+                    );
                 }
                 if ($row['DATE_PUBLISH'] instanceof \Bitrix\Main\Type\DateTime) {
                     $logDate = $row['DATE_PUBLISH']->format(\Bitrix\Main\Type\Date::getFormat());
@@ -613,11 +642,14 @@ class Livefeed extends Landing\Source\DataLoader
                 ];
             }
             if (!empty($result)) {
-                usort($result, function ($a, $b) use ($blogPostIdList) {
-                    $keyA = array_search($a['ID'], $blogPostIdList);
-                    $keyB = array_search($b['ID'], $blogPostIdList);
-                    return ($keyA > $keyB) ? +1 : -1;
-                });
+                usort(
+                    $result,
+                    function ($a, $b) use ($blogPostIdList) {
+                        $keyA = array_search($a['ID'], $blogPostIdList);
+                        $keyB = array_search($b['ID'], $blogPostIdList);
+                        return ($keyA > $keyB) ? +1 : -1;
+                    }
+                );
             }
         }
 
@@ -634,7 +666,7 @@ class Livefeed extends Landing\Source\DataLoader
 
         if (
             defined("BX_COMP_MANAGED_CACHE")
-            && strlen($code) > 0
+            && $code <> ''
             && preg_match('/^SG(\d+)$/i', $code, $matches)
             && Main\ModuleManager::isModuleInstalled('landing')
         ) {

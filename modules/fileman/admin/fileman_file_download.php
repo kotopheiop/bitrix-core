@@ -1,9 +1,11 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/fileman/prolog.php");
 
-if (!$USER->CanDoOperation('fileman_view_file_structure'))
+if (!$USER->CanDoOperation('fileman_view_file_structure')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/fileman/include.php");
 IncludeModuleLangFile(__FILE__);
 
@@ -14,17 +16,27 @@ $io = CBXVirtualIo::GetInstance();
 $path = CBXVirtualIoFileSystem::ConvertCharset($path, CBXVirtualIoFileSystem::directionDecode);
 $path = $io->CombinePath("/", $path);
 $arFile = CFile::MakeFileArray($io->GetPhysicalName($DOC_ROOT . $path));
-$arFile["tmp_name"] = CBXVirtualIoFileSystem::ConvertCharset($arFile["tmp_name"], CBXVirtualIoFileSystem::directionDecode);
+$arFile["tmp_name"] = CBXVirtualIoFileSystem::ConvertCharset(
+    $arFile["tmp_name"],
+    CBXVirtualIoFileSystem::directionDecode
+);
 $arPath = Array($site, $path);
 
-if (!$USER->CanDoFileOperation('fm_download_file', $arPath))
+if (!$USER->CanDoFileOperation('fm_download_file', $arPath)) {
     $strWarning = GetMessage("ACCESS_DENIED");
-else if (!$io->FileExists($arFile["tmp_name"]))
-    $strWarning = GetMessage("FILEMAN_FILENOT_FOUND") . " ";
-elseif (!$USER->CanDoOperation('edit_php') && (HasScriptExtension($path) || substr(CFileman::GetFileName($path), 0, 1) == "."))
-    $strWarning .= GetMessage("FILEMAN_FILE_DOWNLOAD_PHPERROR") . "\n";
+} else {
+    if (!$io->FileExists($arFile["tmp_name"])) {
+        $strWarning = GetMessage("FILEMAN_FILENOT_FOUND") . " ";
+    } elseif (!$USER->CanDoOperation('edit_php') && (HasScriptExtension($path) || mb_substr(
+                CFileman::GetFileName($path),
+                0,
+                1
+            ) == ".")) {
+        $strWarning .= GetMessage("FILEMAN_FILE_DOWNLOAD_PHPERROR") . "\n";
+    }
+}
 
-if (strlen($strWarning) <= 0) {
+if ($strWarning == '') {
     $fileName = str_replace(array("\r", "\n"), "", $arFile["name"]);
     $flTmp = $io->GetFile($arFile["tmp_name"]);
     $fsize = $flTmp->GetFileSize();
@@ -42,7 +54,10 @@ if (strlen($strWarning) <= 0) {
     header("Pragma: no-cache");
     header('Connection: close');
 
-    $arFile["tmp_name"] = CBXVirtualIoFileSystem::ConvertCharset($arFile["tmp_name"], CBXVirtualIoFileSystem::directionEncode);
+    $arFile["tmp_name"] = CBXVirtualIoFileSystem::ConvertCharset(
+        $arFile["tmp_name"],
+        CBXVirtualIoFileSystem::directionEncode
+    );
 
     $f = fopen($arFile["tmp_name"], 'rb');
 

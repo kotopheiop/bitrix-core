@@ -49,13 +49,15 @@ class Stepper
 
                     // journal
                     $eventLog = new \CEventLog;
-                    $eventLog->Add(array(
-                        'SEVERITY' => $eventLog::SEVERITY_WARNING,
-                        'AUDIT_TYPE_ID' => 'LANDING_STEPPER',
-                        'MODULE_ID' => 'landing',
-                        'ITEM_ID' => $className,
-                        'DESCRIPTION' => 'Stepper is running, but agent not exist. Stepper was deleted.',
-                    ));
+                    $eventLog->Add(
+                        array(
+                            'SEVERITY' => $eventLog::SEVERITY_WARNING,
+                            'AUDIT_TYPE_ID' => 'LANDING_STEPPER',
+                            'MODULE_ID' => 'landing',
+                            'ITEM_ID' => $className,
+                            'DESCRIPTION' => 'Stepper is running, but agent not exist. Stepper was deleted.',
+                        )
+                    );
                 }
             }
         }
@@ -63,9 +65,11 @@ class Stepper
         // show active updaters
         if (!empty($updatersToShow)) {
             echo '<div style="padding-bottom: 20px;">';
-            echo \Bitrix\Main\Update\Stepper::getHtml(array(
-                $moduleId => $updatersToShow
-            ));
+            echo \Bitrix\Main\Update\Stepper::getHtml(
+                array(
+                    $moduleId => $updatersToShow
+                )
+            );
             echo '</div>';
         }
     }
@@ -82,7 +86,8 @@ class Stepper
         $className = trim($className, '\\');
         $name = $DB->ForSql($className . '::execAgent();');
 
-        $res = $DB->Query("
+        $res = $DB->Query(
+            "
 			SELECT ID
 			FROM b_agent
 			WHERE NAME = '" . $name . "' OR NAME = '\\" . $name . "'

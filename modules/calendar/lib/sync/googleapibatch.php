@@ -118,9 +118,17 @@ class GoogleApiBatch
 
             foreach ($instances as $instance) {
                 $currentInstance = $instance;
-                $instanceDate = \CCalendar::GetOriginalDate($instanceData[$instance['RECURRENCE_ID']]['dateFrom'], $instance['DATE_FROM'], $instanceData[$instance['RECURRENCE_ID']]['originalTz']);
+                $instanceDate = \CCalendar::GetOriginalDate(
+                    $instanceData[$instance['RECURRENCE_ID']]['dateFrom'],
+                    $instance['DATE_FROM'],
+                    $instanceData[$instance['RECURRENCE_ID']]['originalTz']
+                );
                 $instanceOriginalTz = $this->prepareTimezone($instanceData[$instance['RECURRENCE_ID']]['originalTz']);
-                $eventOriginalStart = new Type\DateTime($instanceDate, Type\Date::convertFormatToPhp(FORMAT_DATETIME), $instanceOriginalTz);
+                $eventOriginalStart = new Type\DateTime(
+                    $instanceDate,
+                    Type\Date::convertFormatToPhp(FORMAT_DATETIME),
+                    $instanceOriginalTz
+                );
                 $currentInstance['ORIGINAL_DATE_FROM'] = $eventOriginalStart;
                 $currentInstance['DAV_XML_ID'] = $instanceData[$instance['RECURRENCE_ID']]['DAV_XML_ID'];
                 $utcTz = $this->prepareTimezone();
@@ -239,10 +247,12 @@ class GoogleApiBatch
     {
         foreach ($events as $event) {
             $this->prepareEvent($event);
-            \CCalendarEvent::Edit([
-                'arFields' => $event,
-                'currentEvent' => $event,
-            ]);
+            \CCalendarEvent::Edit(
+                [
+                    'arFields' => $event,
+                    'currentEvent' => $event,
+                ]
+            );
         }
 
         return true;
@@ -349,10 +359,20 @@ class GoogleApiBatch
     {
         \CTimeZone::Disable();
         $tzFrom = $this->prepareTimezone($event['TZ_FROM']);
-        $event['DATE_FROM'] = (new Type\DateTime($event['DATE_FROM'], Type\Date::convertFormatToPhp(FORMAT_DATETIME), $tzFrom))->toString();
+        $event['DATE_FROM'] = (new Type\DateTime(
+            $event['DATE_FROM'],
+            Type\Date::convertFormatToPhp(FORMAT_DATETIME),
+            $tzFrom
+        ))->toString();
         $tzTo = $this->prepareTimezone($event['TZ_TO']);
-        $event['DATE_TO'] = (new Type\DateTime($event['DATE_TO'], Type\Date::convertFormatToPhp(FORMAT_DATETIME), $tzTo))->toString();
-        $event['ORIGINAL_DATE_FROM'] = (new Type\DateTime($event['ORIGINAL_DATE_FROM'], Type\Date::convertFormatToPhp(FORMAT_DATETIME), $tzFrom))->toString();
+        $event['DATE_TO'] = (new Type\DateTime(
+            $event['DATE_TO'], Type\Date::convertFormatToPhp(FORMAT_DATETIME), $tzTo
+        ))->toString();
+        $event['ORIGINAL_DATE_FROM'] = (new Type\DateTime(
+            $event['ORIGINAL_DATE_FROM'],
+            Type\Date::convertFormatToPhp(FORMAT_DATETIME),
+            $tzFrom
+        ))->toString();
         \CTimeZone::Enable();
         return $event;
     }

@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/workflow/include.php");
 $module_id = "workflow";
 $WORKFLOW_RIGHT = $APPLICATION->GetGroupRight($module_id);
@@ -68,13 +69,13 @@ if ($WORKFLOW_RIGHT >= "R") {
         && $WORKFLOW_RIGHT >= "W"
         && check_bitrix_sessid()
     ) {
-        if (strlen($_POST["RestoreDefaults"]) > 0) {
+        if ($_POST["RestoreDefaults"] <> '') {
             COption::RemoveOption($module_id);
-            $z = CGroup::GetList($v1 = "id", $v2 = "asc", array("ACTIVE" => "Y", "ADMIN" => "N"));
+            $z = CGroup::GetList("id", "asc", array("ACTIVE" => "Y", "ADMIN" => "N"));
             while ($zr = $z->Fetch()) {
                 $APPLICATION->DelGroupRight($module_id, array($zr["ID"]));
             }
-        } elseif (strlen($Update) > 0) {
+        } elseif ($Update <> '') {
             foreach ($arAllOptions as $option) {
                 $name = $option[0];
                 $val = $_POST[$name];
@@ -102,7 +103,11 @@ if ($WORKFLOW_RIGHT >= "R") {
         require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/admin/group_rights.php");
         ob_end_clean();
 
-        LocalRedirect($APPLICATION->GetCurPage() . "?mid=" . urlencode($module_id) . "&lang=" . urlencode(LANGUAGE_ID) . "&" . $tabControl->ActiveTabParam());
+        LocalRedirect(
+            $APPLICATION->GetCurPage() . "?mid=" . urlencode($module_id) . "&lang=" . urlencode(
+                LANGUAGE_ID
+            ) . "&" . $tabControl->ActiveTabParam()
+        );
     }
     $WORKFLOW_ADMIN_GROUP_ID = COption::GetOptionString($module_id, "WORKFLOW_ADMIN_GROUP_ID");
 
@@ -110,8 +115,9 @@ if ($WORKFLOW_RIGHT >= "R") {
     <?
     $tabControl->Begin();
     ?>
-    <form method="POST"
-          action="<? echo htmlspecialcharsbx($APPLICATION->GetCurPage() . '?mid=' . urlencode($module_id) . '&lang=' . LANGUAGE_ID) ?>"><?
+    <form method="POST"action="<? echo htmlspecialcharsbx(
+        $APPLICATION->GetCurPage() . '?mid=' . urlencode($module_id) . '&lang=' . LANGUAGE_ID
+    ) ?>"><?
     $tabControl->BeginNextTab();
     ?>
     <?
@@ -125,21 +131,24 @@ if ($WORKFLOW_RIGHT >= "R") {
             <td width="60%">
                 <? if ($type[0] == "checkbox") {
                     ?><input type="checkbox" name="<? echo htmlspecialcharsbx($Option[0]) ?>"
-                             id="<? echo htmlspecialcharsbx($Option[0]) ?>"
-                             value="Y"<? if ($val == "Y") echo " checked"; ?>><?
+                             id="<? echo htmlspecialcharsbx($Option[0]) ?>" value="Y"<? if ($val == "Y") {
+                        echo " checked";
+                    } ?>><?
                 } elseif ($type[0] == "text") {
                     ?><input type="text" size="<? echo $type[1] ?>" maxlength="255"
                              value="<? echo htmlspecialcharsbx($val) ?>"
                              name="<? echo htmlspecialcharsbx($Option[0]) ?>"><?
                     if ($Option[4]) {
-                        ?>&nbsp;<label
-                                for="<? echo htmlspecialcharsbx($Option[0]) ?>_clear"><?= GetMessage("FLOW_CLEAR") ?>
-                            :</label><input type="checkbox" name="<? echo htmlspecialcharsbx($Option[0]) ?>_clear"
-                                            id="<? echo htmlspecialcharsbx($Option[0]) ?>_clear" value="Y"><?
+                        ?>&nbsp;<label for="<? echo htmlspecialcharsbx($Option[0]) ?>_clear"><?= GetMessage(
+                                "FLOW_CLEAR"
+                            ) ?>:</label><input type="checkbox" name="<? echo htmlspecialcharsbx($Option[0]) ?>_clear"
+                                                id="<? echo htmlspecialcharsbx($Option[0]) ?>_clear" value="Y"><?
                     }
                 } elseif ($type[0] == "textarea") {
                     ?><textarea rows="<? echo $type[1] ?>" cols="<? echo $type[2] ?>"
-                                name="<? echo htmlspecialcharsbx($Option[0]) ?>"><? echo htmlspecialcharsbx($val) ?></textarea><?
+                                name="<? echo htmlspecialcharsbx($Option[0]) ?>"><? echo htmlspecialcharsbx(
+                        $val
+                    ) ?></textarea><?
                 }
                 ?></td>
         </tr>
@@ -147,7 +156,12 @@ if ($WORKFLOW_RIGHT >= "R") {
     } ?>
     <tr>
         <td><? echo GetMessage("FLOW_ADMIN") ?></td>
-        <td><? echo SelectBox("WORKFLOW_ADMIN_GROUP_ID", CGroup::GetDropDownList(""), GetMessage("MAIN_NO"), htmlspecialcharsbx($WORKFLOW_ADMIN_GROUP_ID)); ?></td>
+        <td><? echo SelectBox(
+                "WORKFLOW_ADMIN_GROUP_ID",
+                CGroup::GetDropDownList(""),
+                GetMessage("MAIN_NO"),
+                htmlspecialcharsbx($WORKFLOW_ADMIN_GROUP_ID)
+            ); ?></td>
     </tr>
 
     <?
@@ -161,7 +175,9 @@ if ($WORKFLOW_RIGHT >= "R") {
     <input type="reset" name="reset" value="<?= GetMessage("FLOW_RESET") ?>">
     <input <? if ($WORKFLOW_RIGHT < "W") echo "disabled" ?> type="submit"
                                                             title="<? echo GetMessage("MAIN_HINT_RESTORE_DEFAULTS") ?>"
-                                                            OnClick="return confirm('<? echo AddSlashes(GetMessage("MAIN_HINT_RESTORE_DEFAULTS_WARNING")) ?>')"
+                                                            OnClick="return confirm('<? echo AddSlashes(
+                                                                GetMessage("MAIN_HINT_RESTORE_DEFAULTS_WARNING")
+                                                            ) ?>')"
                                                             value="<? echo GetMessage("MAIN_RESTORE_DEFAULTS") ?>"
                                                             name="RestoreDefaults">
     <?= bitrix_sessid_post(); ?>

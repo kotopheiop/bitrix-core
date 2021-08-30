@@ -31,20 +31,85 @@ class Section implements Controllable, Errorable
         $this->param = $param;
         $this->params = $param->getParams();
 
-        $this->fieldList = ["ID", "CODE", "EXTERNAL_ID", "XML_ID", "IBLOCK_ID", "IBLOCK_SECTION_ID", "TIMESTAMP_X",
-            "SORT", "NAME", "ACTIVE", "SORT", "PICTURE", "DESCRIPTION", "DESCRIPTION_TYPE", "MODIFIED_BY",
-            "DATE_CREATE", "CREATED_BY", "DETAIL_PICTURE", "SECTION_PROPERTY"];
+        $this->fieldList = [
+            "ID",
+            "CODE",
+            "EXTERNAL_ID",
+            "XML_ID",
+            "IBLOCK_ID",
+            "IBLOCK_SECTION_ID",
+            "TIMESTAMP_X",
+            "SORT",
+            "NAME",
+            "ACTIVE",
+            "SORT",
+            "PICTURE",
+            "DESCRIPTION",
+            "DESCRIPTION_TYPE",
+            "MODIFIED_BY",
+            "DATE_CREATE",
+            "CREATED_BY",
+            "DETAIL_PICTURE",
+            "SECTION_PROPERTY"
+        ];
 
-        $this->filterList = ["ACTIVE", "GLOBAL_ACTIVE", "NAME", "CODE", "XML_ID", "EXTERNAL_ID", "SECTION_ID",
-            "DEPTH_LEVEL", "LEFT_BORDER", "RIGHT_BORDER", "LEFT_MARGIN", "RIGHT_MARGIN", "IBLOCK_ID", "ID",
-            "IBLOCK_ACTIVE", "IBLOCK_NAME", "IBLOCK_TYPE", "IBLOCK_CODE", "IBLOCK_XML_ID", "IBLOCK_EXTERNAL_ID",
-            "TIMESTAMP_X", "DATE_CREATE", "MODIFIED_BY", "CREATED_BY", "SOCNET_GROUP_ID", "MIN_PERMISSION",
-            "CHECK_PERMISSIONS", "PERMISSIONS_BY", "PROPERTY"];
+        $this->filterList = [
+            "ACTIVE",
+            "GLOBAL_ACTIVE",
+            "NAME",
+            "CODE",
+            "XML_ID",
+            "EXTERNAL_ID",
+            "SECTION_ID",
+            "DEPTH_LEVEL",
+            "LEFT_BORDER",
+            "RIGHT_BORDER",
+            "LEFT_MARGIN",
+            "RIGHT_MARGIN",
+            "IBLOCK_ID",
+            "ID",
+            "IBLOCK_ACTIVE",
+            "IBLOCK_NAME",
+            "IBLOCK_TYPE",
+            "IBLOCK_CODE",
+            "IBLOCK_XML_ID",
+            "IBLOCK_EXTERNAL_ID",
+            "TIMESTAMP_X",
+            "DATE_CREATE",
+            "MODIFIED_BY",
+            "CREATED_BY",
+            "SOCNET_GROUP_ID",
+            "MIN_PERMISSION",
+            "CHECK_PERMISSIONS",
+            "PERMISSIONS_BY",
+            "PROPERTY"
+        ];
 
-        $this->selectList = ["ID", "CODE", "EXTERNAL_ID", "XML_ID", "IBLOCK_ID", "IBLOCK_SECTION_ID", "TIMESTAMP_X",
-            "SORT", "NAME", "ACTIVE", "GLOBAL_ACTIVE", "PICTURE", "DESCRIPTION", "DESCRIPTION_TYPE", "LEFT_MARGIN",
-            "RIGHT_MARGIN", "DEPTH_LEVEL", "SEARCHABLE_CONTENT", "SECTION_PAGE_URL", "MODIFIED_BY", "DATE_CREATE",
-            "CREATED_BY", "DETAIL_PICTURE"];
+        $this->selectList = [
+            "ID",
+            "CODE",
+            "EXTERNAL_ID",
+            "XML_ID",
+            "IBLOCK_ID",
+            "IBLOCK_SECTION_ID",
+            "TIMESTAMP_X",
+            "SORT",
+            "NAME",
+            "ACTIVE",
+            "GLOBAL_ACTIVE",
+            "PICTURE",
+            "DESCRIPTION",
+            "DESCRIPTION_TYPE",
+            "LEFT_MARGIN",
+            "RIGHT_MARGIN",
+            "DEPTH_LEVEL",
+            "SEARCHABLE_CONTENT",
+            "SECTION_PAGE_URL",
+            "MODIFIED_BY",
+            "DATE_CREATE",
+            "CREATED_BY",
+            "DETAIL_PICTURE"
+        ];
 
         $this->iblockId = Utils::getIblockId($this->params);
         $this->sectionId = Utils::getSectionId($this->params);
@@ -140,8 +205,15 @@ class Section implements Controllable, Errorable
      */
     public function update()
     {
-        $this->param->checkRequiredInputParams(["IBLOCK_CODE", "IBLOCK_ID",
-            "SECTION_ID", "SECTION_CODE", ["FIELDS" => ["NAME"]]]);
+        $this->param->checkRequiredInputParams(
+            [
+                "IBLOCK_CODE",
+                "IBLOCK_ID",
+                "SECTION_ID",
+                "SECTION_CODE",
+                ["FIELDS" => ["NAME"]]
+            ]
+        );
         if ($this->param->hasErrors()) {
             $this->errorCollection->add($this->param->getErrors());
             return false;

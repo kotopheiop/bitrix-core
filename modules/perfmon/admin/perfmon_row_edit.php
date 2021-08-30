@@ -1,4 +1,7 @@
 <?
+
+use Bitrix\Main\Loader;
+
 define("ADMIN_MODULE_NAME", "perfmon");
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
@@ -7,7 +10,7 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
 /** @global CUser $USER */
 IncludeModuleLangFile(__FILE__);
 
-if (!CModule::IncludeModule('perfmon')) {
+if (!Loader::includeModule('perfmon')) {
     require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
     $message = new CAdminMessage(GetMessage("PERFMON_ROW_EDIT_MODULE_ERROR"));
     echo $message->Show();
@@ -18,16 +21,18 @@ if (!CModule::IncludeModule('perfmon')) {
 $hasTokenizer = function_exists('token_get_all');
 $isAdmin = $USER->CanDoOperation('edit_php');
 $RIGHT = $APPLICATION->GetGroupRight("perfmon");
-if ($RIGHT <= "D")
+if ($RIGHT <= "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 function var_import_r($tokens, &$pos, &$result)
 {
     while (isset($tokens[$pos])) {
-        if ($tokens[$pos][0] === T_STRING)
-            $uc = strtoupper($tokens[$pos][1]);
-        else
+        if ($tokens[$pos][0] === T_STRING) {
+            $uc = mb_strtoupper($tokens[$pos][1]);
+        } else {
             $uc = "";
+        }
 
         if ($uc === "NULL" || $uc === "TRUE" || $uc === "FALSE") {
             $result = eval("return " . $tokens[$pos][1] . ";");
@@ -37,27 +42,32 @@ function var_import_r($tokens, &$pos, &$result)
             $pos++;
         } elseif ($tokens[$pos][0] === T_ARRAY) {
             $pos++;
-            while (isset($tokens[$pos]) && $tokens[$pos][0] === T_WHITESPACE)
+            while (isset($tokens[$pos]) && $tokens[$pos][0] === T_WHITESPACE) {
                 $pos++;
+            }
 
-            if ($tokens[$pos][0] !== "(")
+            if ($tokens[$pos][0] !== "(") {
                 return;
-            else
+            } else {
                 $pos++;
+            }
 
             $result = array();
             while (true) {
-                while (isset($tokens[$pos]) && $tokens[$pos][0] === T_WHITESPACE)
+                while (isset($tokens[$pos]) && $tokens[$pos][0] === T_WHITESPACE) {
                     $pos++;
+                }
 
-                if ($tokens[$pos][0] === ")")
+                if ($tokens[$pos][0] === ")") {
                     break;
+                }
 
                 $key = null;
                 var_import_r($tokens, $pos, $key);
 
-                while (isset($tokens[$pos]) && $tokens[$pos][0] === T_WHITESPACE)
+                while (isset($tokens[$pos]) && $tokens[$pos][0] === T_WHITESPACE) {
                     $pos++;
+                }
 
                 if ($tokens[$pos][0] === "," || $tokens[$pos][0] === ")") {
                     $result[] = $key;
@@ -65,25 +75,30 @@ function var_import_r($tokens, &$pos, &$result)
                     continue;
                 }
 
-                if ($tokens[$pos][0] !== T_DOUBLE_ARROW)
+                if ($tokens[$pos][0] !== T_DOUBLE_ARROW) {
                     return;
-                else
+                } else {
                     $pos++;
+                }
 
-                while (isset($tokens[$pos]) && $tokens[$pos][0] === T_WHITESPACE)
+                while (isset($tokens[$pos]) && $tokens[$pos][0] === T_WHITESPACE) {
                     $pos++;
+                }
 
                 $value = null;
                 var_import_r($tokens, $pos, $value);
 
-                while (isset($tokens[$pos]) && $tokens[$pos][0] === T_WHITESPACE)
+                while (isset($tokens[$pos]) && $tokens[$pos][0] === T_WHITESPACE) {
                     $pos++;
+                }
 
-                if ($tokens[$pos][0] === "," || $tokens[$pos][0] === ")")
+                if ($tokens[$pos][0] === "," || $tokens[$pos][0] === ")") {
                     $result[$key] = $value;
+                }
 
-                if ($tokens[$pos][0] === ",")
+                if ($tokens[$pos][0] === ",") {
                     $pos++;
+                }
             }
             $pos++;
         } else {
@@ -101,10 +116,11 @@ function var_import($str)
     return $result;
 }
 
-if ($_SERVER["REQUEST_METHOD"] === "POST" && check_bitrix_sessid() && $isAdmin && $_REQUEST["action"] === "unserialize") {
+if ($_SERVER["REQUEST_METHOD"] === "POST" && check_bitrix_sessid(
+    ) && $isAdmin && $_REQUEST["action"] === "unserialize") {
     require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_js.php");
     CUtil::JSPostUnescape();
-    echo var_export(unserialize($_POST["data"]), true);
+    echo var_export(unserialize($_POST["data"], array('allowed_classes' => false)), true);
     require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_admin_js.php");
     die();
 }
@@ -118,14 +134,37 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && check_bitrix_sessid() && $isAdmin &
     die();
 }
 
+if ($_SERVER["REQUEST_METHOD"] === "POST" && check_bitrix_sessid(
+    ) && $isAdmin && $_REQUEST["action"] === "base64decode") {
+    require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_js.php");
+    CUtil::JSPostUnescape();
+    echo base64_decode($_POST["data"]);
+    require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_admin_js.php");
+    die();
+}
+
+if ($_SERVER["REQUEST_METHOD"] === "POST" && check_bitrix_sessid(
+    ) && $isAdmin && $_REQUEST["action"] === "base64encode") {
+    require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_js.php");
+    CUtil::JSPostUnescape();
+    echo base64_encode($_POST["data"]);
+    require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_admin_js.php");
+    die();
+}
+
 $table_name = $_REQUEST["table_name"];
 $obTable = new CPerfomanceTable;
 $obTable->Init($table_name);
 if (!$obTable->IsExists()) {
     require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
-    $message = new CAdminMessage(GetMessage("PERFMON_ROW_EDIT_TABLE_ERROR", array(
-        "#TABLE_NAME#" => htmlspecialcharsbx($table_name),
-    )));
+    $message = new CAdminMessage(
+        GetMessage(
+            "PERFMON_ROW_EDIT_TABLE_ERROR",
+            array(
+                "#TABLE_NAME#" => htmlspecialcharsbx($table_name),
+            )
+        )
+    );
     echo $message->Show();
     require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_admin.php");
     die();
@@ -145,10 +184,11 @@ if (count($arRowPK)) {
             $strWhere = "WHERE 1 = 1";
             foreach ($arRowPK as $column => $value) {
                 $arFilter["=" . $column] = $value;
-                if ($value != "")
+                if ($value != "") {
                     $strWhere .= " AND " . $column . " = '" . $DB->ForSQL($value) . "'";
-                else
+                } else {
                     $strWhere .= " AND (" . $column . " = '' OR " . $column . " IS NULL)";
+                }
             }
             break;
         }
@@ -223,10 +263,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && check_bitrix_sessid() && $isAdmin) 
     CTimeZone::Disable();
     if (isset($_REQUEST["delete"]) && $_REQUEST["delete"] != "") {
         if (!$bNewRow) {
-            $res = $DB->Query("
+            $res = $DB->Query(
+                "
 				delete from " . CPerfomanceTable::escapeTable($table_name) . "
 				" . $strWhere . "
-			", true);
+			",
+                true
+            );
             if ($res) {
                 LocalRedirect("perfmon_table.php?lang=" . LANGUAGE_ID . "&table_name=" . urlencode($table_name));
             } else {
@@ -238,12 +281,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && check_bitrix_sessid() && $isAdmin) 
         $arToInsert = array();
         foreach ($arFields as $Field => $arField) {
             if (!in_array($Field, $arIndexColumns)) {
-                if (isset($_POST["mark_" . $Field . "_"]) && $_POST["mark_" . $Field . "_"] === "Y")
+                if (isset($_POST["mark_" . $Field . "_"]) && $_POST["mark_" . $Field . "_"] === "Y") {
                     $arToInsert[$Field] = var_import($_POST[$Field]);
-                elseif (isset($_POST[$Field]) && strlen($_POST[$Field]) > 0)
+                } elseif (isset($_POST[$Field]) && $_POST[$Field] <> '') {
                     $arToInsert[$Field] = $_POST[$Field];
-                else
+                } else {
                     $arToInsert[$Field] = false;
+                }
             }
         }
         $res = $DB->Add($table_name, $arToInsert, array(), "", true);
@@ -255,22 +299,26 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && check_bitrix_sessid() && $isAdmin) 
         $arToUpdate = array();
         foreach ($arFields as $Field => $arField) {
             if (!in_array($Field, $arIndexColumns)) {
-                if (isset($_POST["mark_" . $Field . "_"]) && $_POST["mark_" . $Field . "_"] === "Y")
+                if (isset($_POST["mark_" . $Field . "_"]) && $_POST["mark_" . $Field . "_"] === "Y") {
                     $arToUpdate[$Field] = serialize(var_import($_POST[$Field]));
-                elseif (isset($_POST[$Field]) && strlen($_POST[$Field]) > 0)
+                } elseif (isset($_POST[$Field]) && $_POST[$Field] <> '') {
                     $arToUpdate[$Field] = $_POST[$Field];
-                else
+                } else {
                     $arToUpdate[$Field] = false;
+                }
             }
         }
 
         $strUpdate = $DB->PrepareUpdate($table_name, $arToUpdate);
-        if (strlen($strUpdate)) {
-            $res = $DB->Query("
+        if ($strUpdate <> '') {
+            $res = $DB->Query(
+                "
 				update " . CPerfomanceTable::escapeTable($table_name) . "
 				set " . $strUpdate . "
 				" . $strWhere . "
-			", true);
+			",
+                true
+            );
             if (!$res) {
                 $bVarsFromForm = true;
                 $strError = $DB->GetErrorMessage();
@@ -290,8 +338,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && check_bitrix_sessid() && $isAdmin) 
         if ($_POST["apply"] != "") {
             $s = "";
             if ($bNewRow) {
-                foreach ($arIndexColumns as $Field)
+                foreach ($arIndexColumns as $Field) {
                     $s = "&" . urlencode("pk[" . $Field . "]") . "=" . urlencode($res);
+                }
             }
             LocalRedirect($APPLICATION->GetCurPageParam() . "&" . $tabControl->ActiveTabParam() . $s);
         } else {
@@ -324,11 +373,13 @@ $context = new CAdminContextMenu($aMenu);
 $context->Show();
 
 if ($strError) {
-    $message = new CAdminMessage(array(
-        "MESSAGE" => GetMessage("admin_lib_error"),
-        "DETAILS" => $strError,
-        "TYPE" => "ERROR",
-    ));
+    $message = new CAdminMessage(
+        array(
+            "MESSAGE" => GetMessage("admin_lib_error"),
+            "DETAILS" => $strError,
+            "TYPE" => "ERROR",
+        )
+    );
     echo $message->Show();
 }
 
@@ -364,7 +415,8 @@ if ($strError) {
             var markHidden = BX(mark);
             if (textArea && markHidden) {
                 var action = (button.value == 'unserialize' ? 'unserialize' : 'serialize');
-                var url = 'perfmon_row_edit.php?lang=<?echo LANGUAGE_ID?>&<?echo bitrix_sessid_get()?>&action=' + action;
+                var url = 'perfmon_row_edit.php?lang=<?echo LANGUAGE_ID?>&<?echo bitrix_sessid_get(
+                )?>&action=' + action;
                 BX.showWait();
                 BX.ajax.post(
                     url,
@@ -379,6 +431,35 @@ if ($strError) {
                             } else {
                                 markHidden.value = '';
                                 button.value = 'unserialize';
+                            }
+                            AdjustHeight();
+                        }
+                    }
+                );
+            }
+        }
+
+        function editAsBase64(button, Field, mark) {
+            var textArea = BX(Field);
+            var markHidden = BX(mark);
+            if (textArea && markHidden) {
+                var action = (button.value == 'base64decode' ? 'base64decode' : 'base64encode');
+                var url = 'perfmon_row_edit.php?lang=<?echo LANGUAGE_ID?>&<?echo bitrix_sessid_get(
+                )?>&action=' + action;
+                BX.showWait();
+                BX.ajax.post(
+                    url,
+                    {data: textArea.value},
+                    function (result) {
+                        BX.closeWait();
+                        if (result.length > 0) {
+                            textArea.value = result;
+                            if (action == 'base64decode') {
+                                markHidden.value = 'Y';
+                                button.value = 'base64encode';
+                            } else {
+                                markHidden.value = '';
+                                button.value = 'base64decode';
                             }
                             AdjustHeight();
                         }
@@ -407,11 +488,14 @@ if ($strError) {
                 && $DB->TableExists($arParents[$Field]["PARENT_TABLE"])
             ) {
                 $rs = $DB->Query(
-                    $DB->TopSql("
+                    $DB->TopSql(
+                        "
 					select distinct " . $arParents[$Field]["PARENT_COLUMN"] . "
 					from " . $arParents[$Field]["PARENT_TABLE"] . "
 					order by 1
-				", 21)
+				",
+                        21
+                    )
                 );
                 $arSelect = array(
                     "REFERENCE" => array(),
@@ -526,7 +610,19 @@ if ($strError) {
                         <input
                                 type="button"
                                 value="unserialize"
-                                onclick="<? echo htmlspecialcharsbx("editAsSerialize(this, '" . CUtil::JSEscape($Field) . "', 'mark_" . CUtil::JSEscape($Field) . "_');") ?>"/>
+                                onclick="<? echo htmlspecialcharsbx(
+                                    "editAsSerialize(this, '" . CUtil::JSEscape($Field) . "', 'mark_" . CUtil::JSEscape(
+                                        $Field
+                                    ) . "_');"
+                                ) ?>"/>
+                        <input
+                                type="button"
+                                value="base64decode"
+                                onclick="<? echo htmlspecialcharsbx(
+                                    "editAsBase64(this, '" . CUtil::JSEscape($Field) . "', 'mark_" . CUtil::JSEscape(
+                                        $Field
+                                    ) . "_');"
+                                ) ?>"/>
                     <?endif; ?>
                 </td>
                 <?

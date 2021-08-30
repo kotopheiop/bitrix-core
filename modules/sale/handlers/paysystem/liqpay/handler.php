@@ -29,6 +29,7 @@ class LiqPayHandler extends PaySystem\ServiceHandler
     public function initiatePay(Payment $payment, Request $request = null)
     {
         $busValues = $this->getParamsBusValue($payment);
+        $busValues['LIQPAY_PATH_TO_RESULT_URL'] = $this->getPathResultUrl($payment);
 
         $xml = "<request>
 			<version>1.2</version>
@@ -51,8 +52,9 @@ class LiqPayHandler extends PaySystem\ServiceHandler
             'SIGNATURE' => $signature,
         );
 
-        if ($busValues['PAYMENT_CURRENCY'] == "RUB")
+        if ($busValues['PAYMENT_CURRENCY'] == "RUB") {
             $params['PAYMENT_CURRENCY'] = "RUR";
+        }
 
         $this->setExtraParams($params);
 
@@ -139,9 +141,11 @@ class LiqPayHandler extends PaySystem\ServiceHandler
         $status = $this->getValueByTag($this->getOperationXml($request), 'status');
 
         if ($this->isCorrectHash($payment, $request)) {
-            if ($status == 'success') {
+            if ($status === 'success' || $status === 'wait_reserve') {
                 return $this->processNoticeAction($payment, $request);
-            } else if ($status == 'wait_secure') {
+            }
+
+            if ($status === 'wait_secure') {
                 return new PaySystem\ServiceResult();
             }
         } else {
@@ -175,7 +179,7 @@ class LiqPayHandler extends PaySystem\ServiceHandler
 
         $fields = array(
             "PS_STATUS" => "Y",
-            "PS_STATUS_CODE" => substr($this->getValueByTag($response, 'status'), 0, 5),
+            "PS_STATUS_CODE" => mb_substr($this->getValueByTag($response, 'status'), 0, 5),
             "PS_STATUS_DESCRIPTION" => $description,
             "PS_STATUS_MESSAGE" => $statusMessage,
             "PS_SUM" => $this->getValueByTag($response, 'amount'),
@@ -200,7 +204,7 @@ class LiqPayHandler extends PaySystem\ServiceHandler
      */
     public function getCurrencyList()
     {
-        return array('RUB', 'USD', 'EUR');
+        return ['RUB', 'USD', 'EUR', 'UAH'];
     }
 
     /**
@@ -213,10 +217,10 @@ class LiqPayHandler extends PaySystem\ServiceHandler
         $string = str_replace("\n", "", str_replace("\r", "", $string));
         $open = '<' . $tag . '>';
         $close = '</' . $tag;
-        $start = strpos($string, $open) + strlen($open);
-        $end = strpos($string, $close);
+        $start = mb_strpos($string, $open) + mb_strlen($open);
+        $end = mb_strpos($string, $close);
 
-        return substr($string, $start, ($end - $start));
+        return mb_substr($string, $start, ($end - $start));
     }
 
     /**
@@ -227,8 +231,9 @@ class LiqPayHandler extends PaySystem\ServiceHandler
     {
         static $operationXml = '';
 
-        if ($operationXml === '')
+        if ($operationXml === '') {
             $operationXml = base64_decode($request->get('operation_xml'));
+        }
 
         return $operationXml;
     }
@@ -264,5 +269,16 @@ class LiqPayHandler extends PaySystem\ServiceHandler
             ],
             $this->getBusinessValue($payment, 'LIQPAY_PAYMENT_DESCRIPTION')
         );
+    }
+
+    /**
+     * @param Payment $payment
+     * @return mixed|string
+     */
+    private function getPathResultUrl(Payment $payment)
+    {
+        $url = $this->getBusinessValue($payment, 'LIQPAY_PATH_TO_RESULT_URL') ?: $this->service->getContext()->getUrl();
+
+        return str_replace('&', '&amp;', $url);
     }
 }

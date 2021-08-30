@@ -23,7 +23,8 @@ class ActionModifyer
      */
     public static function mysqlAddSlave($actionId, $actionParams, $hostname, $userParamsValues)
     {
-        $action = new Action("MYSQL_ADD_SLAVE_MODIFYER", array(
+        $action = new Action(
+            "MYSQL_ADD_SLAVE_MODIFYER", array(
             "START_COMMAND_TEMPLATE" => "sudo -u root /opt/webdir/bin/bx-mysql -a options -o json",
             "LOG_LEVEL" => Logger::LOG_LEVEL_DISABLE
         ),
@@ -41,12 +42,14 @@ class ActionModifyer
         ) {
             foreach ($actRes["MYSQL_ADD_SLAVE_MODIFYER"]["OUTPUT"]["DATA"]["params"]["options"] as $option) {
                 if ($option == "cluster_password" || $option == "replica_password") {
-                    $actionParams["START_COMMAND_TEMPLATE"] .= " --" . $option . "=" . \Bitrix\Scale\Helper::generatePass();
+                    $actionParams["START_COMMAND_TEMPLATE"] .= " --" . $option . "=" . \Bitrix\Scale\Helper::generatePass(
+                        );
                 } elseif ($option == "mysql_password") {
                     $actionParams["START_COMMAND_TEMPLATE"] .= " --" . $option . "=##USER_PARAMS:MYSQL_PASS##";
 
-                    if (!isset($actionParams["USER_PARAMS"]))
+                    if (!isset($actionParams["USER_PARAMS"])) {
                         $actionParams["USER_PARAMS"] = array();
+                    }
 
                     $actionParams["USER_PARAMS"]["MYSQL_PASS"] = array(
                         "NAME" => Loc::getMessage("SCALE_AM_MYAR_MYSQL_PASS"),
@@ -59,8 +62,9 @@ class ActionModifyer
                 }
             }
 
-            if ($needModeInfo)
+            if ($needModeInfo) {
                 throw new NeedMoreUserInfoException("Need more user's info", $actionParams);
+            }
         }
 
         return $actionParams;
@@ -77,8 +81,9 @@ class ActionModifyer
      */
     public static function checkExtraDbExist($actionId, $actionParams, $hostname, $userParamsValues)
     {
-        if ($actionId == "MYSQL_ADD_SLAVE" || $actionId == "MYSQL_CHANGE_MASTER")
+        if ($actionId == "MYSQL_ADD_SLAVE" || $actionId == "MYSQL_CHANGE_MASTER") {
             $hostname = ServersData::getDbMasterHostname();
+        }
 
         if (Helper::isExtraDbExist($hostname)) {
             $actionParams["CHECK_EXTRA_DB_USER_ASK"] = "Y";
@@ -98,13 +103,15 @@ class ActionModifyer
      */
     public static function emailSettingsModifier($actionId, $actionParams, $hostname, $userParamsValues)
     {
-        if ($actionId != 'SET_EMAIL_SETTINGS')
+        if ($actionId != 'SET_EMAIL_SETTINGS') {
             return $actionParams;
+        }
 
-        if ($userParamsValues['USE_AUTH'] == 'Y')
+        if ($userParamsValues['USE_AUTH'] == 'Y') {
             $pattern = '/(--8<--AUTH_BEGIN----|----AUTH_END--8<--)/';
-        else
+        } else {
             $pattern = '/--8<--AUTH_BEGIN----.*----AUTH_END--8<--/';
+        }
 
         $actionParams['START_COMMAND_TEMPLATE'] = preg_replace($pattern, '', $actionParams['START_COMMAND_TEMPLATE']);
         return $actionParams;
@@ -120,17 +127,20 @@ class ActionModifyer
      */
     public static function siteCreateLinkModifier($actionId, $actionParams, $hostname, $userParamsValues)
     {
-        if ($actionId != 'SITE_CREATE_LINK')
+        if ($actionId != 'SITE_CREATE_LINK') {
             return $actionParams;
+        }
 
-        if (empty($userParamsValues['KERNEL_SITE']))
+        if (empty($userParamsValues['KERNEL_SITE'])) {
             return $actionParams;
+        }
 
         $siteId = $userParamsValues['KERNEL_SITE'];
         $sites = SitesData::getList();
 
-        if (empty($sites[$siteId]))
+        if (empty($sites[$siteId])) {
             return $actionParams;
+        }
 
         $actionParams['START_COMMAND_TEMPLATE'] = str_replace(
             '##MODIFYER:KERNEL_ROOT##',

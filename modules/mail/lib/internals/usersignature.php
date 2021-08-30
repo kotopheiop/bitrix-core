@@ -25,13 +25,17 @@ class UserSignatureTable extends DataManager
     public static function getMap()
     {
         return [
-            new Entity\IntegerField('ID', [
+            new Entity\IntegerField(
+                'ID', [
                 'primary' => true,
                 'autocomplete' => true,
-            ]),
-            new Entity\IntegerField('USER_ID', [
+            ]
+            ),
+            new Entity\IntegerField(
+                'USER_ID', [
                 'required' => true,
-            ]),
+            ]
+            ),
             new Entity\TextField('SIGNATURE'),
             new Entity\StringField('SENDER'),
         ];

@@ -1,4 +1,5 @@
 <?
+
 /*
 ##############################################
 # Bitrix: SiteManager                        #
@@ -15,7 +16,9 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/support/include.php");
 ClearVars();
 
 $TICKET_ID = intval($TICKET_ID);
-$url = $APPLICATION->GetCurPage() . "?TICKET_ID=" . $TICKET_ID . "&OWNER_USER_ID=" . intval($OWNER_USER_ID) . "&lang=" . LANGUAGE_ID . "&ONLINE_AUTO_REFRESH=" . intval($ONLINE_AUTO_REFRESH);
+$url = $APPLICATION->GetCurPage() . "?TICKET_ID=" . $TICKET_ID . "&OWNER_USER_ID=" . intval(
+        $OWNER_USER_ID
+    ) . "&lang=" . LANGUAGE_ID . "&ONLINE_AUTO_REFRESH=" . intval($ONLINE_AUTO_REFRESH);
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_popup_admin.php"); ?>
 <?
 $lamp = CTicket::GetStatus($TICKET_ID);
@@ -24,13 +27,18 @@ $arTicket = $ticket->ExtractFields();
 ?>
     <table cellspacing=0 cellpadding=0 class="support-online">
         <?
-        $mode = strlen($mode) > 0 ? $mode : false;
+        $mode = $mode <> '' ? $mode : false;
         CTicket::UpdateOnline($TICKET_ID, false, $mode);
         $rs = CTicket::GetOnline($TICKET_ID);
         while ($ar = $rs->GetNext()) :
             $is_support = "";
-            if (intval($OWNER_USER_ID) == $ar["USER_ID"]) $is_support = "N";
-            elseif (CTicket::IsSupportTeam($ar["USER_ID"]) || CTicket::IsAdmin($ar["USER_ID"]) || CTicket::IsDemo($ar["USER_ID"])) $is_support = "Y";
+            if (intval($OWNER_USER_ID) == $ar["USER_ID"]) {
+                $is_support = "N";
+            } elseif (CTicket::IsSupportTeam($ar["USER_ID"]) || CTicket::IsAdmin($ar["USER_ID"]) || CTicket::IsDemo(
+                    $ar["USER_ID"]
+                )) {
+                $is_support = "Y";
+            }
             ?>
             <tr>
                 <td valign="top" width="16%"><?
@@ -49,7 +57,7 @@ $arTicket = $ticket->ExtractFields();
                     ?></font></td>
 
                 <td width="84%" valign="top"><?
-                    if (strlen(trim($ar["USER_NAME"])) > 0):
+                    if (trim($ar["USER_NAME"]) <> ''):
                         ?><a title="<?= GetMessage("SUP_USER_PROFILE") ?>" target="_blank"
                              href="/bitrix/admin/user_edit.php?lang=<?= LANGUAGE_ID ?>&ID=<?= $ar["USER_ID"] ?>"><?= $ar["USER_NAME"] ?></a><?
                     else:
@@ -62,8 +70,8 @@ $arTicket = $ticket->ExtractFields();
         <? endwhile; ?>
     </table>
 <?
-if (strlen($lamp) > 0) {
-    $lamp_alt = GetMessage("SUP_" . strtoupper($lamp) . "_ALT");
+if ($lamp <> '') {
+    $lamp_alt = GetMessage("SUP_" . mb_strtoupper($lamp) . "_ALT");
     //$lamp = "/bitrix/images/support/$lamp.gif";
     ?>
     <script type="text/javascript">

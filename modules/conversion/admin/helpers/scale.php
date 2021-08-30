@@ -28,7 +28,9 @@ function renderFilter(array $filter)
             </div>
             <span class="adm-btn" onclick="
 
-                    window.location.href = '?<?= http_build_query(array_diff_key($filter, array('from' => 1, 'to' => 1))) ?>'
+                    window.location.href = '?<?= http_build_query(
+                array_diff_key($filter, array('from' => 1, 'to' => 1))
+            ) ?>'
                     + '&from=' + BX('bitrix-conversion-from').value
                     + '&to='   + BX('bitrix-conversion-to'  ).value
 
@@ -139,8 +141,10 @@ function renderScale(array $param)
 
                     ?>
                     <div id="conversion-scale-shift" class="adm-profit-scale-value" style="left: <?= $shift ?>%">
-                        <div id="conversion-scale-conversion"
-                             class="adm-profit-scale-value-num"><?= number_format($conversion, 2) ?>%
+                        <div id="conversion-scale-conversion" class="adm-profit-scale-value-num"><?= number_format(
+                                $conversion,
+                                2
+                            ) ?>%
                         </div>
                     </div>
                 </div>

@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/subscribe/include.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/subscribe/prolog.php");
@@ -7,12 +8,23 @@ IncludeModuleLangFile(__FILE__);
 define("HELP_FILE", "add_newsletter.php");
 
 $POST_RIGHT = $APPLICATION->GetGroupRight("subscribe");
-if ($POST_RIGHT == "D")
+if ($POST_RIGHT == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $aTabs = array(
-    array("DIV" => "edit1", "TAB" => GetMessage("rub_tab_rubric"), "ICON" => "main_user_edit", "TITLE" => GetMessage("rub_tab_rubric_title")),
-    array("DIV" => "edit2", "TAB" => GetMessage("rub_tab_generation"), "ICON" => "main_user_edit", "TITLE" => GetMessage("rub_tab_generation_title")),
+    array(
+        "DIV" => "edit1",
+        "TAB" => GetMessage("rub_tab_rubric"),
+        "ICON" => "main_user_edit",
+        "TITLE" => GetMessage("rub_tab_rubric_title")
+    ),
+    array(
+        "DIV" => "edit2",
+        "TAB" => GetMessage("rub_tab_generation"),
+        "ICON" => "main_user_edit",
+        "TITLE" => GetMessage("rub_tab_generation_title")
+    ),
 );
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
@@ -47,16 +59,20 @@ if ($REQUEST_METHOD == "POST" && ($save != "" || $apply != "") && $POST_RIGHT ==
     }
 
     if ($res) {
-        if ($apply != "")
-            LocalRedirect("/bitrix/admin/rubric_edit.php?ID=" . $ID . "&mess=ok&lang=" . LANG . "&" . $tabControl->ActiveTabParam());
-        else
+        if ($apply != "") {
+            LocalRedirect(
+                "/bitrix/admin/rubric_edit.php?ID=" . $ID . "&mess=ok&lang=" . LANG . "&" . $tabControl->ActiveTabParam(
+                )
+            );
+        } else {
             LocalRedirect("/bitrix/admin/rubric_admin.php?lang=" . LANG);
+        }
     } else {
-        if ($e = $APPLICATION->GetException())
+        if ($e = $APPLICATION->GetException()) {
             $message = new CAdminMessage(GetMessage("rub_save_error"), $e);
+        }
         $bVarsFromForm = true;
     }
-
 }
 
 //Edit/Add part
@@ -73,16 +89,20 @@ $str_FROM_FIELD = COption::GetOptionString("subscribe", "default_from");
 
 if ($ID > 0) {
     $rubric = CRubric::GetByID($ID);
-    if (!$rubric->ExtractFields("str_"))
+    if (!$rubric->ExtractFields("str_")) {
         $ID = 0;
+    }
 }
-if ($ID > 0 && !$message)
+if ($ID > 0 && !$message) {
     $DAYS_OF_WEEK = explode(",", $str_DAYS_OF_WEEK);
-if (!is_array($DAYS_OF_WEEK))
+}
+if (!is_array($DAYS_OF_WEEK)) {
     $DAYS_OF_WEEK = array();
+}
 
-if ($bVarsFromForm)
+if ($bVarsFromForm) {
     $DB->InitTableVarsForEdit("b_list_rubric", "", "str_");
+}
 
 $APPLICATION->SetTitle(($ID > 0 ? GetMessage("rub_title_edit") . $ID : GetMessage("rub_title_add")));
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
@@ -106,7 +126,10 @@ if ($ID > 0) {
     $aMenu[] = array(
         "TEXT" => GetMessage("rub_delete"),
         "TITLE" => GetMessage("rubric_mnu_del"),
-        "LINK" => "javascript:if(confirm('" . GetMessage("rubric_mnu_del_conf") . "'))window.location='rubric_admin.php?ID=" . $ID . "&action=delete&lang=" . LANG . "&" . bitrix_sessid_get() . "';",
+        "LINK" => "javascript:if(confirm('" . GetMessage(
+                "rubric_mnu_del_conf"
+            ) . "'))window.location='rubric_admin.php?ID=" . $ID . "&action=delete&lang=" . LANG . "&" . bitrix_sessid_get(
+            ) . "';",
         "ICON" => "btn_delete",
     );
     $aMenu[] = array("SEPARATOR" => "Y");
@@ -121,13 +144,15 @@ $context->Show();
 ?>
 
 <?
-if ($_REQUEST["mess"] == "ok" && $ID > 0)
+if ($_REQUEST["mess"] == "ok" && $ID > 0) {
     CAdminMessage::ShowMessage(array("MESSAGE" => GetMessage("rub_saved"), "TYPE" => "OK"));
+}
 
-if ($message)
+if ($message) {
     echo $message->Show();
-elseif ($rubric->LAST_ERROR != "")
+} elseif ($rubric->LAST_ERROR != "") {
     CAdminMessage::ShowMessage($rubric->LAST_ERROR);
+}
 ?>
 
 <form method="POST" Action="<? echo $APPLICATION->GetCurPage() ?>" ENCTYPE="multipart/form-data" name="post_form">
@@ -214,8 +239,10 @@ $tabControl->BeginNextTab();
                 <tr>
                     <? foreach ($arDoW as $strVal => $strDoW): ?>
                         <td style="text-align:center"><input type="checkbox" name="DAYS_OF_WEEK[]"
-                                                             value="<?= $strVal ?>"<? if (array_search($strVal, $DAYS_OF_WEEK) !== false) echo " checked" ?>>
-                        </td>
+                                                             value="<?= $strVal ?>"<? if (array_search(
+                                    $strVal,
+                                    $DAYS_OF_WEEK
+                                ) !== false) echo " checked" ?>></td>
                     <? endforeach; ?>
                 </tr>
             </table>
@@ -247,10 +274,14 @@ if (count($arTemplates) > 0):
                         </td>
                         <td>
                             <label for="TEMPLATE<?= $i ?>"
-                                   title="<?= $arTemplate["DESCRIPTION"] ?>"><?= (strlen($arTemplate["NAME"]) > 0 ? $arTemplate["NAME"] : GetMessage("rub_no_name")) ?></label><br>
+                                   title="<?= $arTemplate["DESCRIPTION"] ?>"><?= ($arTemplate["NAME"] <> '' ? $arTemplate["NAME"] : GetMessage(
+                                    "rub_no_name"
+                                )) ?></label><br>
                             <? if (IsModuleInstalled("fileman")):?>
                                 <a title="<?= GetMessage("rub_manage") ?>"
-                                   href="/bitrix/admin/fileman_admin.php?path=<?= urlencode("/" . $arTemplate["PATH"]) ?>"><?= $arTemplate["PATH"] ?></a>
+                                   href="/bitrix/admin/fileman_admin.php?path=<?= urlencode(
+                                       "/" . $arTemplate["PATH"]
+                                   ) ?>"><?= $arTemplate["PATH"] ?></a>
                             <? else:?>
                                 <?= $arTemplate["PATH"] ?>
                             <? endif ?>

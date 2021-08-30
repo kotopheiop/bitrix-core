@@ -18,8 +18,9 @@ require_once(dirname(__FILE__) . "/../include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/prolog.php");
 define("HELP_FILE", "settings/mail_events/messagetype_edit.php");
 
-if (!$USER->CanDoOperation('edit_other_settings') && !$USER->CanDoOperation('view_other_settings'))
+if (!$USER->CanDoOperation('edit_other_settings') && !$USER->CanDoOperation('view_other_settings')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $isAdmin = $USER->CanDoOperation('edit_other_settings');
 
@@ -31,10 +32,8 @@ $strError = "";
 $bVarsFromForm = false;
 $message = null;
 $arLangs = array();
-$by = "sort";
-$order = "asc";
 
-$db_res = CLanguage::GetList($by, $order);
+$db_res = CLanguage::GetList();
 if ($db_res && $res = $db_res->GetNext()) {
     do {
         $arParams["LANGUAGE"][$res["LID"]] = $res;
@@ -42,7 +41,8 @@ if ($db_res && $res = $db_res->GetNext()) {
     } while ($res = $db_res->GetNext());
 }
 
-if ($_SERVER["REQUEST_METHOD"] == "POST" && ($_POST["save"] <> '' || $_POST["apply"] <> '') && $isAdmin && check_bitrix_sessid()) {
+if ($_SERVER["REQUEST_METHOD"] == "POST" && ($_POST["save"] <> '' || $_POST["apply"] <> '') && $isAdmin && check_bitrix_sessid(
+    )) {
     $_POST["EVENT_NAME"] = trim($_POST["EVENT_NAME"]);
 
     $res = array();
@@ -75,18 +75,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($_POST["save"] <> '' || $_POST["app
             unset($arLangs[$idLang]);
 
             if (intval($arType["ID"]) > 0) {
-                if (!CEventType::Delete(array("ID" => $arType["ID"])))
+                if (!CEventType::Delete(array("ID" => $arType["ID"]))) {
                     $bVarsFromForm = true;
+                }
             }
         }
-        if ($bVarsFromForm)
+        if ($bVarsFromForm) {
             break;
+        }
     }
 
     if (empty($arLangs)) {
         $arMsg = array();
-        if ($res["EVENT_NAME"] == '')
+        if ($res["EVENT_NAME"] == '') {
             $arMsg[] = array("id" => "EVENT_NAME_EMPTY", "text" => GetMessage("EVENT_NAME_EMPTY"));
+        }
         $arMsg[] = array("id" => "LID_EMPTY", "text" => GetMessage("ERROR_LANG_EMPTY"));
 
         $e = new CAdminException($arMsg);
@@ -97,14 +100,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($_POST["save"] <> '' || $_POST["app
         $DB->Rollback();
     } else {
         $DB->Commit();
-        if ($_POST["save"] <> '')
+        if ($_POST["save"] <> '') {
             LocalRedirect(BX_ROOT . "/admin/type_admin.php?lang=" . LANGUAGE_ID);
-        else
+        } else {
             LocalRedirect(BX_ROOT . "/admin/type_edit.php?EVENT_NAME=" . $res["EVENT_NAME"] . "&lang=" . LANGUAGE_ID);
+        }
     }
 }
-if ($bVarsFromForm && ($e = $APPLICATION->GetException()))
+if ($bVarsFromForm && ($e = $APPLICATION->GetException())) {
     $message = new CAdminMessage(GetMessage("MAIN_ERROR_SAVING"), $e);
+}
 
 $arParams["EVENT_NAME"] = $_REQUEST["EVENT_NAME"];
 
@@ -113,17 +118,31 @@ if ($arParams["EVENT_NAME"] <> '') {
     if ($db_res && ($res = $db_res->Fetch())) {
         $arParams["DATA"] = $res;
         if (is_array($res["TYPE"])) {
-            foreach ($res["TYPE"] as $r)
+            foreach ($res["TYPE"] as $r) {
                 $arParams["DATA"][$r["LID"]] = $r;
+            }
         }
         $arParams["ACTION"] = "UPDATE";
         $arParams["DATA_OLD"] = $arParams["DATA"];
     }
 }
 
-$aTabs = array(array("DIV" => "edit1", "TAB" => GetMessage("EVENT_NAME_TITLE"), "ICON" => "mail", "TITLE" => GetMessage("EVENT_NAME_DESCR1")));
-if ($arParams["ACTION"] == "UPDATE" && $arParams["DATA"]["EVENT_TYPE"] == EventTypeTable::TYPE_EMAIL)
-    $aTabs[] = array("DIV" => "edit2", "TAB" => GetMessage("TEMPLATES_TITLE"), "ICON" => "mail", "TITLE" => GetMessage("TEMPLATES_DESCR"));
+$aTabs = array(
+    array(
+        "DIV" => "edit1",
+        "TAB" => GetMessage("EVENT_NAME_TITLE"),
+        "ICON" => "mail",
+        "TITLE" => GetMessage("EVENT_NAME_DESCR1")
+    )
+);
+if ($arParams["ACTION"] == "UPDATE" && $arParams["DATA"]["EVENT_TYPE"] == EventTypeTable::TYPE_EMAIL) {
+    $aTabs[] = array(
+        "DIV" => "edit2",
+        "TAB" => GetMessage("TEMPLATES_TITLE"),
+        "ICON" => "mail",
+        "TITLE" => GetMessage("TEMPLATES_DESCR")
+    );
+}
 
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
@@ -163,7 +182,11 @@ if ($arParams["ACTION"] == "ADD") {
             ),
             array(
                 "TEXT" => GetMessage("MAIN_DELETE_RECORD"),
-                "LINK" => "javascript:if(confirm('" . GetMessage("MAIN_DELETE_RECORD_CONF") . "')) window.location='/bitrix/admin/type_admin.php?ID=" . urlencode($arParams["EVENT_NAME"]) . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get() . "&action=delete';",
+                "LINK" => "javascript:if(confirm('" . GetMessage(
+                        "MAIN_DELETE_RECORD_CONF"
+                    ) . "')) window.location='/bitrix/admin/type_admin.php?ID=" . urlencode(
+                        $arParams["EVENT_NAME"]
+                    ) . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get() . "&action=delete';",
                 "TITLE" => GetMessage("MAIN_DELETE_RECORD_TITLE"),
                 "ICON" => "btn_delete"
             ),
@@ -174,8 +197,9 @@ require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admi
 
 $context->Show();
 
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 
 $arParams["EVENT_NAME"] = htmlspecialcharsbx($arParams["EVENT_NAME"]);
 ?>
@@ -199,8 +223,12 @@ $arParams["EVENT_NAME"] = htmlspecialcharsbx($arParams["EVENT_NAME"]);
         <td><? echo GetMessage("type_edit_event_type") ?></td>
         <td>
             <select name="EVENT_TYPE">
-                <option value="<?= EventTypeTable::TYPE_EMAIL ?>"<? if ($arParams["DATA"]["EVENT_TYPE"] == EventTypeTable::TYPE_EMAIL) echo " selected" ?>><? echo GetMessage("type_edit_event_type_email") ?></option>
-                <option value="<?= EventTypeTable::TYPE_SMS ?>"<? if ($arParams["DATA"]["EVENT_TYPE"] == EventTypeTable::TYPE_SMS) echo " selected" ?>><? echo GetMessage("type_edit_event_type_sms") ?></option>
+                <option value="<?= EventTypeTable::TYPE_EMAIL ?>"<? if ($arParams["DATA"]["EVENT_TYPE"] == EventTypeTable::TYPE_EMAIL) echo " selected" ?>><? echo GetMessage(
+                        "type_edit_event_type_email"
+                    ) ?></option>
+                <option value="<?= EventTypeTable::TYPE_SMS ?>"<? if ($arParams["DATA"]["EVENT_TYPE"] == EventTypeTable::TYPE_SMS) echo " selected" ?>><? echo GetMessage(
+                        "type_edit_event_type_sms"
+                    ) ?></option>
             </select>
         </td>
     </tr>
@@ -230,8 +258,9 @@ $arParams["EVENT_NAME"] = htmlspecialcharsbx($arParams["EVENT_NAME"]);
             <td>
                 <input type="hidden" name="FIELDS_OLD[<?= $arLang["ID"] ?>][SORT]"
                        value="<?= htmlspecialcharsbx($arParams["DATA_OLD"][$arLang["ID"]]["SORT"]) ?>">
-                <input type="text" name="FIELDS[<?= $arLang["ID"] ?>][SORT]"
-                       value="<?= (intval($arParams["DATA"][$arLang["ID"]]["SORT"]) ? $arParams["DATA"][$arLang["ID"]]["SORT"] : "150") ?>">
+                <input type="text" name="FIELDS[<?= $arLang["ID"] ?>][SORT]" value="<?= (intval(
+                    $arParams["DATA"][$arLang["ID"]]["SORT"]
+                ) ? $arParams["DATA"][$arLang["ID"]]["SORT"] : "150") ?>">
             </td>
         </tr>
         <tr>
@@ -249,7 +278,9 @@ $arParams["EVENT_NAME"] = htmlspecialcharsbx($arParams["EVENT_NAME"]);
                 <input type="hidden" name="FIELDS_OLD[<?= $arLang["ID"] ?>][DESCRIPTION]"
                        value="<?= htmlspecialcharsbx($arParams["DATA_OLD"][$arLang["ID"]]["DESCRIPTION"]) ?>">
                 <textarea name="FIELDS[<?= $arLang["ID"] ?>][DESCRIPTION]" style="width:100%;"
-                          rows="10"><?= htmlspecialcharsbx($arParams["DATA"][$arLang["ID"]]["DESCRIPTION"]) ?></textarea>
+                          rows="10"><?= htmlspecialcharsbx(
+                        $arParams["DATA"][$arLang["ID"]]["DESCRIPTION"]
+                    ) ?></textarea>
             </td>
         </tr>
     <? endforeach; ?>
@@ -259,7 +290,9 @@ $arParams["EVENT_NAME"] = htmlspecialcharsbx($arParams["EVENT_NAME"]);
         ?>
         <tr>
             <td colspan="2">
-                <a href="message_edit.php?lang=<?= LANGUAGE_ID ?>&amp;EVENT_NAME=<?= urlencode($arParams["EVENT_NAME"]) ?>"><? echo GetMessage("type_edit_add_message_template") ?></a>
+                <a href="message_edit.php?lang=<?= LANGUAGE_ID ?>&amp;EVENT_NAME=<?= urlencode(
+                    $arParams["EVENT_NAME"]
+                ) ?>"><? echo GetMessage("type_edit_add_message_template") ?></a>
             </td>
         </tr>
         <?
@@ -268,12 +301,15 @@ $arParams["EVENT_NAME"] = htmlspecialcharsbx($arParams["EVENT_NAME"]);
                 ?>
                 <tr>
                 <td colspan="2">[<a
-                            href="/bitrix/admin/message_edit.php?ID=<?= $v["ID"] ?>"><?= $v["ID"] ?></a>]<?= (strlen(trim($v["SUBJECT"])) > 0 ? " " : "") . htmlspecialcharsEx($v["SUBJECT"]) ?>
+                            href="/bitrix/admin/message_edit.php?ID=<?= $v["ID"] ?>"><?= $v["ID"] ?></a>]<?= (trim(
+                        $v["SUBJECT"]
+                    ) <> '' ? " " : "") . htmlspecialcharsEx($v["SUBJECT"]) ?>
                     <?
                     $arLID = array();
                     $db_LID = CEventMessage::GetLang($v["ID"]);
-                    while ($arrLID = $db_LID->Fetch())
+                    while ($arrLID = $db_LID->Fetch()) {
                         $arLID[] = $arrLID["LID"];
+                    }
                     if (!empty($arLID)) {
                         echo " (" . implode(", ", $arLID) . ")";
                     }
@@ -289,7 +325,8 @@ $arParams["EVENT_NAME"] = htmlspecialcharsbx($arParams["EVENT_NAME"]);
 </form>
 <?
 $tabControl->ShowWarnings(
-    "form1", $message,
+    "form1",
+    $message,
     array(
         "EVENT_NAME_EMPTY" => "EVENT_NAME",
         "LID_EMPTY" => "LID",

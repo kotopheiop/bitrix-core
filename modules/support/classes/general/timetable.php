@@ -1,9 +1,9 @@
 <?php
+
 IncludeModuleLangFile(__FILE__);
 
 class CSupportTimetable
 {
-
     static $fieldsTypes = array(
         "ID" => array("TYPE" => CSupportTableFields::VT_NUMBER, "DEF_VAL" => 0, "AUTO_CALCULATED" => true),
         "NAME" => array("TYPE" => CSupportTableFields::VT_STRING, "DEF_VAL" => "", "MAX_STR_LEN" => 255),
@@ -14,7 +14,11 @@ class CSupportTimetable
         "SLA_ID" => array("TYPE" => CSupportTableFields::VT_NUMBER, "DEF_VAL" => 0),
         "TIMETABLE_ID" => array("TYPE" => CSupportTableFields::VT_NUMBER, "DEF_VAL" => null),
         "WEEKDAY_NUMBER" => array("TYPE" => CSupportTableFields::VT_NUMBER, "DEF_VAL" => 0),
-        "OPEN_TIME" => array("TYPE" => CSupportTableFields::VT_STRING, "DEF_VAL" => "24H", "LIST" => array("24H", "CLOSED", "CUSTOM")),
+        "OPEN_TIME" => array(
+            "TYPE" => CSupportTableFields::VT_STRING,
+            "DEF_VAL" => "24H",
+            "LIST" => array("24H", "CLOSED", "CUSTOM")
+        ),
         "MINUTE_FROM" => array("TYPE" => CSupportTableFields::VT_NUMBER, "DEF_VAL" => null),
         "MINUTE_TILL" => array("TYPE" => CSupportTableFields::VT_NUMBER, "DEF_VAL" => null),
 
@@ -22,15 +26,17 @@ class CSupportTimetable
     const TABLE = "b_ticket_timetable";
     const TABLE_SHEDULE = "b_ticket_sla_shedule";
 
-
-    static function err_mess()
+    public static function err_mess()
     {
         $module_id = "support";
         @include($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/" . $module_id . "/install/version.php");
         return "<br>Module: " . $module_id . " <br>Class: CSupportTimetable<br>File: " . __FILE__;
     }
 
-    function Set($arFields, $arFieldsShedule) //$arFields, $arFieldsShedule = array(0 => array("ID" => 1 ...), 1 => array("ID" => 3 ...) ...)
+    public static function Set(
+        $arFields,
+        $arFieldsShedule
+    ) //$arFields, $arFieldsShedule = array(0 => array("ID" => 1 ...), 1 => array("ID" => 3 ...) ...)
     {
         global $DB, $APPLICATION;
         $err_mess = (self::err_mess()) . "<br>Function: Set<br>Line: ";
@@ -52,11 +58,15 @@ class CSupportTimetable
         if (is_array($arFields)) {
             $f = new CSupportTableFields(self::$fieldsTypes);
             $f->FromArray($arFields);
-        } else $f = $arFields;
+        } else {
+            $f = $arFields;
+        }
         if (is_array($arFieldsShedule)) {
             $f_s = new CSupportTableFields(self::$fieldsTypesShedule, CSupportTableFields::C_Table);
             $f_s->FromTable($arFieldsShedule);
-        } else $f_s = $arFieldsShedule;
+        } else {
+            $f_s = $arFieldsShedule;
+        }
 
         $table = self::TABLE;
         $table_shedule = self::TABLE_SHEDULE;
@@ -64,12 +74,16 @@ class CSupportTimetable
         $id = $f->ID;
         $isNew = ($f->ID <= 0);
 
-        if (strlen($f->NAME) <= 0) {
+        if ($f->NAME == '') {
             $APPLICATION->ThrowException(GetMessage('SUP_ERROR_EMPTY_NAME'));
             return false;
         }
 
-        $arFields_i = $f->ToArray(CSupportTableFields::ALL, array(CSupportTableFields::NOT_NULL, CSupportTableFields::NOT_DEFAULT), true);
+        $arFields_i = $f->ToArray(
+            CSupportTableFields::ALL,
+            array(CSupportTableFields::NOT_NULL, CSupportTableFields::NOT_DEFAULT),
+            true
+        );
         $res = 0;
         if (count($arFields_i) > 0) {
             if ($isNew) {
@@ -98,7 +112,11 @@ class CSupportTimetable
             if ($f_s->OPEN_TIME == "CUSTOM" && $f_s->MINUTE_FROM <= 0 && $f_s->MINUTE_TILL <= 0) {
                 continue;
             }
-            $DB->Insert($table_shedule, $f_s->ToArray(CSupportTableFields::ALL, array(CSupportTableFields::NOT_NULL), true), $err_mess . __LINE__);
+            $DB->Insert(
+                $table_shedule,
+                $f_s->ToArray(CSupportTableFields::ALL, array(CSupportTableFields::NOT_NULL), true),
+                $err_mess . __LINE__
+            );
             $noWrite[$f_s->WEEKDAY_NUMBER] = $f_s->OPEN_TIME;
         }
         for ($i = 0; $i <= 6; $i++) {
@@ -129,7 +147,7 @@ class CSupportTimetable
     }
 
     // get Timetable list
-    function GetList($arSort = null, $arFilter = null)
+    public static function GetList($arSort = null, $arFilter = null)
     {
         $err_mess = (self::err_mess()) . "<br>Function: GetList<br>Line: ";
         global $DB, $USER, $APPLICATION;
@@ -139,10 +157,12 @@ class CSupportTimetable
             $arFilter = Array();
         }
         foreach ($arFilter as $key => $val) {
-            if ((is_array($val) && count($val) <= 0) || (!is_array($val) && (strlen($val) <= 0 || $val === 'NOT_REF'))) {
+            if ((is_array($val) && count($val) <= 0) || (!is_array(
+                        $val
+                    ) && ((string)$val == '' || $val === 'NOT_REF'))) {
                 continue;
             }
-            $key = strtoupper($key);
+            $key = mb_strtoupper($key);
             if (is_array($val)) {
                 $val = implode(" | ", $val);
             }
@@ -167,13 +187,17 @@ class CSupportTimetable
             $ar1 = array_merge($DB->GetTableFieldsList($table), array());
             $ar2 = array_keys($arSort);
             $arDiff = array_diff($ar2, $ar1);
-            if (is_array($arDiff) && count($arDiff) > 0) foreach ($arDiff as $value) unset($arSort[$value]);
+            if (is_array($arDiff) && count($arDiff) > 0) {
+                foreach ($arDiff as $value) {
+                    unset($arSort[$value]);
+                }
+            }
         }
         if (count($arSort) <= 0) {
             $arSort = array("ID" => "asc");
         }
         foreach ($arSort as $by => $order) {
-            if (strtoupper($order) != "DESC") {
+            if (mb_strtoupper($order) != "DESC") {
                 $order = "ASC";
             }
             $arSqlOrder[] = $by . " " . $order;
@@ -195,7 +219,7 @@ class CSupportTimetable
         return $rs;
     }
 
-    function GetSheduleByID($id, $needObj = false)
+    public static function GetSheduleByID($id, $needObj = false)
     {
         global $DB;
         $err_mess = (self::err_mess()) . "<br>Function: Set<br>Line: ";
@@ -224,7 +248,7 @@ class CSupportTimetable
     }
 
     // delete Timetable
-    function Delete($id, $checkRights = true)
+    public static function Delete($id, $checkRights = true)
     {
         $err_mess = (self::err_mess()) . "<br>Function: Delete<br>Line: ";
         global $DB, $USER, $APPLICATION;
@@ -259,13 +283,10 @@ class CSupportTimetable
             $DB->Query("DELETE FROM $table WHERE ID = $id", false, $err_mess . __LINE__);
             $DB->Query("DELETE FROM $tableShedule WHERE TIMETABLE_ID = $id", false, $err_mess . __LINE__);
             return true;
-        } else
+        } else {
             $APPLICATION->ThrowException(str_replace("#ID#", "$id", GetMessage("SUP_ERROR_TIMETABLE_HAS_SLA")));
+        }
 
         return false;
     }
-
-
 }
-
-?>

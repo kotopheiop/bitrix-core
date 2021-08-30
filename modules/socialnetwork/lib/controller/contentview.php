@@ -4,10 +4,22 @@ namespace Bitrix\Socialnetwork\Controller;
 
 use Bitrix\Main\Loader;
 use Bitrix\Main\Error;
-use Bitrix\Socialnetwork\Livefeed;
+use Bitrix\Socialnetwork\Item\UserContentView;
 
-class ContentView extends \Bitrix\Main\Engine\Controller
+class ContentView extends Base
 {
+    public function configureActions()
+    {
+        $configureActions = parent::configureActions();
+        $configureActions['set'] = [
+            '+prefilters' => [
+                new \Bitrix\Main\Engine\ActionFilter\CloseSession(),
+            ]
+        ];
+
+        return $configureActions;
+    }
+
     public function setAction(array $params = [])
     {
         $xmlIdList = (
@@ -17,39 +29,22 @@ class ContentView extends \Bitrix\Main\Engine\Controller
             : []
         );
 
+        $context = ($params['context'] ?? '');
+
         if (!Loader::includeModule('socialnetwork')) {
-            $this->addError(new Error('Cannot include Socialnetwork module', 'SONET_CONTROLLER_CONTENTVIEW_NO_SOCIALNETWORK_MODULE'));
+            $this->addError(
+                new Error('Cannot include Socialnetwork module', 'SONET_CONTROLLER_CONTENTVIEW_NO_SOCIALNETWORK_MODULE')
+            );
             return null;
         }
 
-        if (!empty(!empty($xmlIdList))) {
-            foreach ($xmlIdList as $val) {
-                $xmlId = $val['xmlId'];
-                $save = (
-                    !isset($val['save'])
-                    || $val['save'] != 'N'
-                );
-
-                $tmp = explode('-', $xmlId, 2);
-                $entityType = trim($tmp[0]);
-                $entityId = intval($tmp[1]);
-
-                if (
-                    !empty($entityType)
-                    && $entityId > 0
-                ) {
-                    $provider = Livefeed\Provider::init(array(
-                        'ENTITY_TYPE' => $entityType,
-                        'ENTITY_ID' => $entityId,
-                    ));
-                    if ($provider) {
-                        $provider->setContentView(array(
-                            'save' => $save
-                        ));
-                    }
-                }
-            }
-        }
+        UserContentView::set(
+            [
+                'xmlIdList' => $xmlIdList,
+                'context' => $context,
+                'userId' => $this->getCurrentUser()->getId()
+            ]
+        );
 
         return [
             'SUCCESS' => 'Y'
@@ -79,21 +74,25 @@ class ContentView extends \Bitrix\Main\Engine\Controller
             : ''
         );
 
-        if (strlen($contentId) <= 0) {
+        if ($contentId == '') {
             $this->addError(new Error('Empty Content ID', 'SONET_CONTROLLER_CONTENTVIEW_EMPTY_CONTENT_ID'));
             return null;
         }
 
         if (!Loader::includeModule('socialnetwork')) {
-            $this->addError(new Error('Cannot include Socialnetwork module', 'SONET_CONTROLLER_CONTENTVIEW_NO_SOCIALNETWORK_MODULE'));
+            $this->addError(
+                new Error('Cannot include Socialnetwork module', 'SONET_CONTROLLER_CONTENTVIEW_NO_SOCIALNETWORK_MODULE')
+            );
             return null;
         }
 
-        $userList = \Bitrix\Socialnetwork\Item\UserContentView::getUserList([
-            'contentId' => $contentId,
-            'page' => $page,
-            'pathToUserProfile' => $pathToUserProfile
-        ]);
+        $userList = UserContentView::getUserList(
+            [
+                'contentId' => $contentId,
+                'page' => $page,
+                'pathToUserProfile' => $pathToUserProfile
+            ]
+        );
 
         $result['items'] = $userList['items'];
         $result['itemsCount'] = count($result['items']);

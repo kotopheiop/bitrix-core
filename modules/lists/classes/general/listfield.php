@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 use Bitrix\Main\ArgumentException;
@@ -28,28 +29,35 @@ abstract class CListField
         $this->_label = $label;
         $this->_sort = intval($sort);
 
-        if ($this->_iblock_id > 0 && strlen($this->_field_id)) {
+        if ($this->_iblock_id > 0 && mb_strlen($this->_field_id)) {
             $arField = $this->_read_from_cache($this->_field_id);
             if (!$arField) {
-                $DB->Add("b_lists_field", array(
-                    "ID" => 1, //This makes Oracle version happy
-                    "IBLOCK_ID" => $this->_iblock_id,
-                    "FIELD_ID" => $this->_field_id,
-                    "SORT" => $this->_sort,
-                    "NAME" => $this->_label,
-                ));
+                $DB->Add(
+                    "b_lists_field",
+                    array(
+                        "ID" => 1, //This makes Oracle version happy
+                        "IBLOCK_ID" => $this->_iblock_id,
+                        "FIELD_ID" => $this->_field_id,
+                        "SORT" => $this->_sort,
+                        "NAME" => $this->_label,
+                    )
+                );
                 $this->_clear_cache();
             } elseif (
                 $arField["SORT"] != $this->_sort
                 || $arField["NAME"] != $this->_label
             ) {
-                $DB->Query("
+                $DB->Query(
+                    "
 					UPDATE b_lists_field
 					SET SORT = " . $this->_sort . "
 					,NAME = '" . $DB->ForSQL($this->_label) . "'
 					WHERE IBLOCK_ID = " . $this->_iblock_id . "
 					AND FIELD_ID = '" . $DB->ForSQL($this->_field_id) . "'
-				", false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+				",
+                    false,
+                    "File: " . __FILE__ . "<br>Line: " . __LINE__
+                );
                 $this->_clear_cache();
             }
         }
@@ -60,26 +68,33 @@ abstract class CListField
         global $DB;
 
         if ($this->_iblock_id > 0 && !isset(self::$prop_cache[$this->_iblock_id])) {
-            $rsFields = $DB->Query("
+            $rsFields = $DB->Query(
+                "
 				SELECT * FROM b_lists_field
 				WHERE IBLOCK_ID = " . $this->_iblock_id . "
-			", false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+			",
+                false,
+                "File: " . __FILE__ . "<br>Line: " . __LINE__
+            );
 
             self::$prop_cache[$this->_iblock_id] = array();
-            while ($arField = $rsFields->Fetch())
+            while ($arField = $rsFields->Fetch()) {
                 self::$prop_cache[$this->_iblock_id][$arField["FIELD_ID"]] = $arField;
+            }
         }
 
-        if (isset(self::$prop_cache[$this->_iblock_id][$field_id]))
+        if (isset(self::$prop_cache[$this->_iblock_id][$field_id])) {
             return self::$prop_cache[$this->_iblock_id][$field_id];
-        else
+        } else {
             return false;
+        }
     }
 
     private function _clear_cache()
     {
-        if (isset(self::$prop_cache[$this->_iblock_id]))
+        if (isset(self::$prop_cache[$this->_iblock_id])) {
             unset(self::$prop_cache[$this->_iblock_id]);
+        }
     }
 
     public function GetID()
@@ -126,8 +141,9 @@ abstract class CListField
         $arField = $this->_read_from_cache($this->_field_id);
         if ($arField) {
             $res = unserialize($arField["SETTINGS"]);
-            if (is_array($res))
+            if (is_array($res)) {
                 return $res;
+            }
         }
         return $this->GetSettingsDefaults();
     }
@@ -139,15 +155,17 @@ abstract class CListField
         $arStore = false;
         switch ($this->_field_id) {
             case "PREVIEW_TEXT":
-                if (preg_match('/\s*(\d+)\s*(px|%|)/', $arSettings["WIDTH"], $match) && ($match[1] > 0))
+                if (preg_match('/\s*(\d+)\s*(px|%|)/', $arSettings["WIDTH"], $match) && ($match[1] > 0)) {
                     $width = $match[1] . $match[2];
-                else
+                } else {
                     $width = "40";
+                }
 
-                if (preg_match('/\s*(\d+)\s*(px|%|)/', $arSettings["HEIGHT"], $match) && ($match[1] > 0))
+                if (preg_match('/\s*(\d+)\s*(px|%|)/', $arSettings["HEIGHT"], $match) && ($match[1] > 0)) {
                     $height = $match[1] . $match[2];
-                else
+                } else {
                     $height = "3";
+                }
 
                 $arStore = array(
                     "USE_EDITOR" => $arSettings["USE_EDITOR"] == "Y" ? "Y" : "N",
@@ -165,10 +183,11 @@ abstract class CListField
         }
 
         $arFields = array();
-        if (is_array($arStore))
+        if (is_array($arStore)) {
             $arFields["SETTINGS"] = serialize($arStore);
-        else
+        } else {
             $arFields["SETTINGS"] = false;
+        }
 
         $strUpdate = $DB->PrepareUpdate("b_lists_field", $arFields);
         if ($strUpdate != "") {
@@ -200,11 +219,15 @@ abstract class CListField
     public function Delete()
     {
         global $DB;
-        $DB->Query("
+        $DB->Query(
+            "
 			DELETE FROM b_lists_field
 			WHERE IBLOCK_ID = " . $this->_iblock_id . "
 			AND FIELD_ID = '" . $DB->ForSQL($this->_field_id) . "'
-		", false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+		",
+            false,
+            "File: " . __FILE__ . "<br>Line: " . __LINE__
+        );
     }
 
     abstract public function Update($arFields);
@@ -224,10 +247,11 @@ class CListElementField extends CListField
 
         $this->_type = CListFieldTypeList::GetByID($field_id);
 
-        if ($this->_iblock_id > 0)
+        if ($this->_iblock_id > 0) {
             $arIBlockFields = CIBlock::GetArrayByID($this->_iblock_id, "FIELDS");
-        else
+        } else {
             $arIBlockFields = CIBlock::GetFieldsDefaults();
+        }
 
         $this->_iblock_field = $arIBlockFields[$field_id];
     }
@@ -291,10 +315,11 @@ class CListElementField extends CListField
     {
         /** @global CStackCacheManager $stackCacheManager */
         global $stackCacheManager;
-        if (isset($arFields["TYPE"]))
+        if (isset($arFields["TYPE"])) {
             $newType = $arFields["TYPE"];
-        else
+        } else {
             $newType = $this->GetTypeID();
+        }
 
         if ($this->_iblock_id > 0 && CListFieldTypeList::IsField($newType)) {
             $arIBlockFields = CIBlock::GetArrayByID($this->_iblock_id, "FIELDS");
@@ -302,8 +327,9 @@ class CListElementField extends CListField
             CIBlock::SetFields($this->_iblock_id, $arIBlockFields);
             $stackCacheManager->Clear("b_iblock");
 
-            if ($newType != $this->GetTypeID())
+            if ($newType != $this->GetTypeID()) {
                 $this->Delete();
+            }
 
             return new CListElementField($this->_iblock_id, $newType, $arFields["NAME"], $arFields["SORT"]);
         }
@@ -339,14 +365,18 @@ class CListPropertyField extends CListField
         }
 
         if ($this->_property) {
-            if ($this->_property["USER_TYPE"])
-                $this->_type = CListFieldTypeList::GetByID($this->_property["PROPERTY_TYPE"] . ":" . $this->_property["USER_TYPE"]);
-            else
+            if ($this->_property["USER_TYPE"]) {
+                $this->_type = CListFieldTypeList::GetByID(
+                    $this->_property["PROPERTY_TYPE"] . ":" . $this->_property["USER_TYPE"]
+                );
+            } else {
                 $this->_type = CListFieldTypeList::GetByID($this->_property["PROPERTY_TYPE"]);
+            }
         }
 
-        if (!is_object($this->_type))
+        if (!is_object($this->_type)) {
             $this->_type = CListFieldTypeList::GetByID("S");
+        }
     }
 
     private function getPropertyArrayFromCache($id)
@@ -355,13 +385,17 @@ class CListPropertyField extends CListField
         if (!array_key_exists($this->_iblock_id, self::$prop_cache)) {
             self::$prop_cache[$this->_iblock_id] = array();
 
-            $rsProperties = CIBlockProperty::GetList(array(), array(
-                "IBLOCK_ID" => $this->_iblock_id,
-                "CHECK_PERMISSIONS" => "N",
-                "ACTIVE" => "Y",
-            ));
-            while ($arProperty = $rsProperties->Fetch())
+            $rsProperties = CIBlockProperty::GetList(
+                array(),
+                array(
+                    "IBLOCK_ID" => $this->_iblock_id,
+                    "CHECK_PERMISSIONS" => "N",
+                    "ACTIVE" => "Y",
+                )
+            );
+            while ($arProperty = $rsProperties->Fetch()) {
                 self::$prop_cache[$this->_iblock_id][$arProperty["ID"]] = $arProperty;
+            }
         }
         return self::$prop_cache[$this->_iblock_id][$id];
     }
@@ -414,7 +448,9 @@ class CListPropertyField extends CListField
                 "DEFAULT_VALUE" => $this->_property["DEFAULT_VALUE"],
                 "TYPE" => $this->GetTypeID(),
                 "PROPERTY_TYPE" => $this->_property["PROPERTY_TYPE"],
-                "PROPERTY_USER_TYPE" => $this->_property["USER_TYPE"] ? CIBlockProperty::GetUserType($this->_property["USER_TYPE"]) : false,
+                "PROPERTY_USER_TYPE" => $this->_property["USER_TYPE"] ? CIBlockProperty::GetUserType(
+                    $this->_property["USER_TYPE"]
+                ) : false,
                 "CODE" => $this->_property["CODE"],
                 "ID" => $this->_property["ID"],
                 "LINK_IBLOCK_ID" => $this->_property["LINK_IBLOCK_ID"],
@@ -461,23 +497,26 @@ class CListPropertyField extends CListField
 
     public function Update($arFields)
     {
-        if (isset($arFields["TYPE"]))
+        if (isset($arFields["TYPE"])) {
             $newType = $arFields["TYPE"];
-        else
+        } else {
             $newType = $this->GetTypeID();
+        }
 
         if (is_array($this->_property) && !CListFieldTypeList::IsField($newType)) {
             if (self::existPropertyCode($this->_iblock_id, $arFields["CODE"], $this->_property["ID"])) {
                 throw new NotSupportedException(GetMessage("LIST_PROPERTY_FIELD_DUPLICATE_CODE"));
             }
 
-            foreach ($this->GetArray() as $id => $val)
-                if (array_key_exists($id, $arFields) && $id != "IBLOCK_ID")
+            foreach ($this->GetArray() as $id => $val) {
+                if (array_key_exists($id, $arFields) && $id != "IBLOCK_ID") {
                     $this->_property[$id] = $arFields[$id];
+                }
+            }
 
-            if (strpos($newType, ":") !== false)
+            if (mb_strpos($newType, ":") !== false) {
                 list($this->_property["PROPERTY_TYPE"], $this->_property["USER_TYPE"]) = explode(":", $newType);
-            else {
+            } else {
                 $this->_property["PROPERTY_TYPE"] = $newType;
                 $this->_property["USER_TYPE"] = "";
             }
@@ -489,10 +528,16 @@ class CListPropertyField extends CListField
             if ($obProperty->Update($this->_property["ID"], $this->_property)) {
                 self::resetPropertyArrayCache();
 
-                if ($this->_property["PROPERTY_TYPE"] == "L" && is_array($arFields["LIST"]))
+                if ($this->_property["PROPERTY_TYPE"] == "L" && is_array($arFields["LIST"])) {
                     CList::UpdatePropertyList($this->_property["ID"], $arFields["LIST"]);
+                }
 
-                return new CListPropertyField($this->_property["IBLOCK_ID"], "PROPERTY_" . $this->_property["ID"], $arFields["NAME"], $arFields["SORT"]);
+                return new CListPropertyField(
+                    $this->_property["IBLOCK_ID"],
+                    "PROPERTY_" . $this->_property["ID"],
+                    $arFields["NAME"],
+                    $arFields["SORT"]
+                );
             } elseif (!empty($obProperty->LAST_ERROR)) {
                 throw new ArgumentException($obProperty->LAST_ERROR);
             }
@@ -509,13 +554,19 @@ class CListPropertyField extends CListField
             }
             $property_id = intval($arFields["ID"]);
             if ($property_id > 0) {
-                return new CListPropertyField($iblock_id, "PROPERTY_" . $property_id, $arFields["NAME"], $arFields["SORT"]);
+                return new CListPropertyField(
+                    $iblock_id,
+                    "PROPERTY_" . $property_id,
+                    $arFields["NAME"],
+                    $arFields["SORT"]
+                );
             } else {
                 $arFields["IBLOCK_ID"] = $iblock_id;
-                if (strpos($arFields["TYPE"], ":") !== false)
+                if (mb_strpos($arFields["TYPE"], ":") !== false) {
                     list($arFields["PROPERTY_TYPE"], $arFields["USER_TYPE"]) = explode(":", $arFields["TYPE"]);
-                else
+                } else {
                     $arFields["PROPERTY_TYPE"] = $arFields["TYPE"];
+                }
                 $arFields["MULTIPLE_CNT"] = 1;
                 $arFields["CHECK_PERMISSIONS"] = "N";
 
@@ -527,8 +578,9 @@ class CListPropertyField extends CListField
                 if ($res) {
                     self::resetPropertyArrayCache();
 
-                    if ($arFields["PROPERTY_TYPE"] == "L" && is_array($arFields["LIST"]))
+                    if ($arFields["PROPERTY_TYPE"] == "L" && is_array($arFields["LIST"])) {
                         CList::UpdatePropertyList($res, $arFields["LIST"]);
+                    }
 
                     return new CListPropertyField($iblock_id, "PROPERTY_" . $res, $arFields["NAME"], $arFields["SORT"]);
                 }

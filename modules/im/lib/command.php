@@ -22,10 +22,12 @@ class Command
     public static function register(array $fields)
     {
         $moduleId = $fields['MODULE_ID'];
-        $command = substr($fields['COMMAND'], 0, 1) == '/' ? substr($fields['COMMAND'], 1) : $fields['COMMAND'];
+        $command = mb_substr($fields['COMMAND'], 0, 1) == '/' ? mb_substr($fields['COMMAND'], 1) : $fields['COMMAND'];
 
         $botId = isset($fields['BOT_ID']) ? intval($fields['BOT_ID']) : 0;
-        if ($botId > 0 && (!\Bitrix\Im\User::getInstance($botId)->isExists() || !\Bitrix\Im\User::getInstance($botId)->isBot())) {
+        if ($botId > 0 && (!\Bitrix\Im\User::getInstance($botId)->isExists() || !\Bitrix\Im\User::getInstance(
+                    $botId
+                )->isBot())) {
             $botId = 0;
         }
 
@@ -47,7 +49,7 @@ class Command
         $appId = isset($fields['APP_ID']) ? $fields['APP_ID'] : '';
         $langSet = isset($fields['LANG']) ? $fields['LANG'] : Array();
 
-        if (strlen($moduleId) <= 0) {
+        if ($moduleId == '') {
             return false;
         }
         if ($moduleId == 'rest') {
@@ -69,31 +71,38 @@ class Command
                 if ($botId == $cmd['BOT_ID'] && $command == $cmd['COMMAND']) {
                     return $cmd['ID'];
                 }
-            } else if ($appId) {
-                if ($appId == $cmd['APP_ID'] && $command == $cmd['COMMAND']) {
-                    return $cmd['ID'];
+            } else {
+                if ($appId) {
+                    if ($appId == $cmd['APP_ID'] && $command == $cmd['COMMAND']) {
+                        return $cmd['ID'];
+                    }
+                } else {
+                    if ($moduleId == $cmd['MODULE_ID'] && $command == $cmd['COMMAND']) {
+                        return $cmd['ID'];
+                    }
                 }
-            } else if ($moduleId == $cmd['MODULE_ID'] && $command == $cmd['COMMAND']) {
-                return $cmd['ID'];
             }
         }
 
-        $result = \Bitrix\Im\Model\CommandTable::add(Array(
-            'BOT_ID' => $botId,
-            'MODULE_ID' => $moduleId,
-            'COMMAND' => $command,
-            'COMMON' => $common,
-            'HIDDEN' => $hidden,
-            'SONET_SUPPORT' => $sonetSupport,
-            'EXTRANET_SUPPORT' => $extranetSupport,
-            'CLASS' => $class,
-            'METHOD_COMMAND_ADD' => $methodCommandAdd,
-            'METHOD_LANG_GET' => $methodLangGet,
-            'APP_ID' => $appId
-        ));
+        $result = \Bitrix\Im\Model\CommandTable::add(
+            Array(
+                'BOT_ID' => $botId,
+                'MODULE_ID' => $moduleId,
+                'COMMAND' => $command,
+                'COMMON' => $common,
+                'HIDDEN' => $hidden,
+                'SONET_SUPPORT' => $sonetSupport,
+                'EXTRANET_SUPPORT' => $extranetSupport,
+                'CLASS' => $class,
+                'METHOD_COMMAND_ADD' => $methodCommandAdd,
+                'METHOD_LANG_GET' => $methodLangGet,
+                'APP_ID' => $appId
+            )
+        );
 
-        if (!$result->isSuccess())
+        if (!$result->isSuccess()) {
             return false;
+        }
 
         $cache = \Bitrix\Main\Data\Cache::createInstance();
         $cache->cleanDir(self::CACHE_PATH);
@@ -102,19 +111,23 @@ class Command
 
         if ($moduleId == 'rest') {
             foreach ($langSet as $lang) {
-                if (!isset($lang['LANGUAGE_ID']) || empty($lang['LANGUAGE_ID']))
+                if (!isset($lang['LANGUAGE_ID']) || empty($lang['LANGUAGE_ID'])) {
                     continue;
+                }
 
-                if (!isset($lang['TITLE']) && empty($lang['TITLE']))
+                if (!isset($lang['TITLE']) && empty($lang['TITLE'])) {
                     continue;
+                }
 
                 try {
-                    \Bitrix\Im\Model\CommandLangTable::add(array(
-                        'COMMAND_ID' => $commandId,
-                        'LANGUAGE_ID' => strtolower($lang['LANGUAGE_ID']),
-                        'TITLE' => $lang['TITLE'],
-                        'PARAMS' => isset($lang['PARAMS']) ? $lang['PARAMS'] : ''
-                    ));
+                    \Bitrix\Im\Model\CommandLangTable::add(
+                        array(
+                            'COMMAND_ID' => $commandId,
+                            'LANGUAGE_ID' => mb_strtolower($lang['LANGUAGE_ID']),
+                            'TITLE' => $lang['TITLE'],
+                            'PARAMS' => isset($lang['PARAMS']) ? $lang['PARAMS'] : ''
+                        )
+                    );
                 } catch (Exception $e) {
                 }
             }
@@ -129,26 +142,32 @@ class Command
         $moduleId = isset($command['MODULE_ID']) ? $command['MODULE_ID'] : '';
         $appId = isset($command['APP_ID']) ? $command['APP_ID'] : '';
 
-        if (intval($commandId) <= 0)
+        if (intval($commandId) <= 0) {
             return false;
+        }
 
         if (!isset($command['FORCE']) || $command['FORCE'] == 'N') {
             $commands = self::getListCache();
-            if (!isset($commands[$commandId]))
+            if (!isset($commands[$commandId])) {
                 return false;
+            }
 
-            if (strlen($moduleId) > 0 && $commands[$commandId]['MODULE_ID'] != $moduleId)
+            if ($moduleId <> '' && $commands[$commandId]['MODULE_ID'] != $moduleId) {
                 return false;
+            }
 
-            if (strlen($appId) > 0 && $commands[$commandId]['APP_ID'] != $appId)
+            if ($appId <> '' && $commands[$commandId]['APP_ID'] != $appId) {
                 return false;
+            }
         }
 
         \Bitrix\Im\Model\CommandTable::delete($commandId);
 
-        $orm = \Bitrix\Im\Model\CommandLangTable::getList(Array(
-            'filter' => Array('=COMMAND_ID' => $commandId)
-        ));
+        $orm = \Bitrix\Im\Model\CommandLangTable::getList(
+            Array(
+                'filter' => Array('=COMMAND_ID' => $commandId)
+            )
+        );
         while ($row = $orm->fetch()) {
             \Bitrix\Im\Model\CommandLangTable::delete($row['ID']);
         }
@@ -157,14 +176,16 @@ class Command
         $cache->cleanDir(self::CACHE_PATH);
 
         if (\Bitrix\Main\Loader::includeModule('pull')) {
-            \CPullStack::AddShared(Array(
-                'module_id' => 'im',
-                'command' => 'deleteCommand',
-                'params' => Array(
-                    'commandId' => $commandId
-                ),
-                'extra' => \Bitrix\Im\Common::getPullExtra()
-            ));
+            \CPullStack::AddShared(
+                Array(
+                    'module_id' => 'im',
+                    'command' => 'deleteCommand',
+                    'params' => Array(
+                        'commandId' => $commandId
+                    ),
+                    'extra' => \Bitrix\Im\Common::getPullExtra()
+                )
+            );
         }
 
         return true;
@@ -176,40 +197,50 @@ class Command
         $moduleId = isset($command['MODULE_ID']) ? $command['MODULE_ID'] : '';
         $appId = isset($command['APP_ID']) ? $command['APP_ID'] : '';
 
-        if (intval($commandId) <= 0)
+        if (intval($commandId) <= 0) {
             return false;
+        }
 
         $commands = self::getListCache();
-        if (!isset($commands[$commandId]))
+        if (!isset($commands[$commandId])) {
             return false;
+        }
 
-        if (strlen($moduleId) > 0 && $commands[$commandId]['MODULE_ID'] != $moduleId)
+        if ($moduleId <> '' && $commands[$commandId]['MODULE_ID'] != $moduleId) {
             return false;
+        }
 
-        if (strlen($appId) > 0 && $commands[$commandId]['APP_ID'] != $appId)
+        if ($appId <> '' && $commands[$commandId]['APP_ID'] != $appId) {
             return false;
+        }
 
         if (isset($updateFields['LANG']) && $commands[$commandId]['MODULE_ID'] == 'rest') {
-            $orm = \Bitrix\Im\Model\CommandLangTable::getList(Array(
-                'filter' => Array('=COMMAND_ID' => $commandId)
-            ));
+            $orm = \Bitrix\Im\Model\CommandLangTable::getList(
+                Array(
+                    'filter' => Array('=COMMAND_ID' => $commandId)
+                )
+            );
             while ($row = $orm->fetch()) {
                 \Bitrix\Im\Model\CommandLangTable::delete($row['ID']);
             }
             foreach ($updateFields['LANG'] as $lang) {
-                if (!isset($lang['LANGUAGE_ID']) || empty($lang['LANGUAGE_ID']))
+                if (!isset($lang['LANGUAGE_ID']) || empty($lang['LANGUAGE_ID'])) {
                     continue;
+                }
 
-                if (!isset($lang['TITLE']) && empty($lang['TITLE']))
+                if (!isset($lang['TITLE']) && empty($lang['TITLE'])) {
                     continue;
+                }
 
                 try {
-                    \Bitrix\Im\Model\CommandLangTable::add(array(
-                        'COMMAND_ID' => $commandId,
-                        'LANGUAGE_ID' => strtolower($lang['LANGUAGE_ID']),
-                        'TITLE' => $lang['TITLE'],
-                        'PARAMS' => isset($lang['PARAMS']) ? $lang['PARAMS'] : ''
-                    ));
+                    \Bitrix\Im\Model\CommandLangTable::add(
+                        array(
+                            'COMMAND_ID' => $commandId,
+                            'LANGUAGE_ID' => mb_strtolower($lang['LANGUAGE_ID']),
+                            'TITLE' => $lang['TITLE'],
+                            'PARAMS' => isset($lang['PARAMS']) ? $lang['PARAMS'] : ''
+                        )
+                    );
                 } catch (Exception $e) {
                 }
             }
@@ -253,25 +284,39 @@ class Command
 
     public static function onCommandAdd($messageId, $messageFields)
     {
-        if ($messageFields['SKIP_COMMAND'] == 'Y' || $messageFields['SYSTEM'] == 'Y')
+        if ($messageFields['SKIP_COMMAND'] == 'Y' || $messageFields['SYSTEM'] == 'Y') {
             return true;
+        }
 
         $commands = self::getListCache();
-        if (empty($commands))
+        if (empty($commands)) {
             return false;
+        }
 
         $commandList = Array();
-        if (preg_match_all("/^\\/(?P<COMMAND>[^\\040\\n]*)(\\040?)(?P<PARAMS>.*)$/m", $messageFields['MESSAGE'], $matches)) {
+        if (preg_match_all(
+            "/^\\/(?P<COMMAND>[^\\040\\n]*)(\\040?)(?P<PARAMS>.*)$/m",
+            $messageFields['MESSAGE'],
+            $matches
+        )) {
             foreach ($matches['COMMAND'] as $idx => $cmd) {
-                $commandData = self::findCommands(Array('COMMAND' => $cmd, 'EXEC_PARAMS' => $matches['PARAMS'][$idx], 'MESSAGE_FIELDS' => $messageFields));
-                if (!$commandData)
+                $commandData = self::findCommands(
+                    Array(
+                        'COMMAND' => $cmd,
+                        'EXEC_PARAMS' => $matches['PARAMS'][$idx],
+                        'MESSAGE_FIELDS' => $messageFields
+                    )
+                );
+                if (!$commandData) {
                     continue;
+                }
 
                 $commandList = array_merge($commandList, $commandData);
             }
         }
-        if (empty($commandList))
+        if (empty($commandList)) {
             return false;
+        }
 
         $messageFields['DIALOG_ID'] = \Bitrix\Im\Command::getDialogId($messageFields);
         unset($messageFields['MESSAGE_OUT']);
@@ -307,14 +352,23 @@ class Command
             $messageFields['COMMAND_ID'] = $params['COMMAND_ID'];
             $messageFields['COMMAND_PARAMS'] = $params['EXEC_PARAMS'];
 
-            if ($params["METHOD_COMMAND_ADD"] && class_exists($params["CLASS"]) && method_exists($params["CLASS"], $params["METHOD_COMMAND_ADD"])) {
+            if ($params["METHOD_COMMAND_ADD"] && class_exists($params["CLASS"]) && method_exists(
+                    $params["CLASS"],
+                    $params["METHOD_COMMAND_ADD"]
+                )) {
                 if ($params['BOT_ID'] > 0) {
-                    \Bitrix\Im\Model\BotTable::update($params['BOT_ID'], array(
-                        "COUNT_COMMAND" => new \Bitrix\Main\DB\SqlExpression("?# + 1", "COUNT_COMMAND")
-                    ));
+                    \Bitrix\Im\Model\BotTable::update(
+                        $params['BOT_ID'],
+                        array(
+                            "COUNT_COMMAND" => new \Bitrix\Main\DB\SqlExpression("?# + 1", "COUNT_COMMAND")
+                        )
+                    );
                 }
 
-                call_user_func_array(array($params["CLASS"], $params["METHOD_COMMAND_ADD"]), Array($messageId, $messageFields));
+                call_user_func_array(
+                    array($params["CLASS"], $params["METHOD_COMMAND_ADD"]),
+                    Array($messageId, $messageFields)
+                );
             }
         }
         unset($messageFields['COMMAND']);
@@ -336,28 +390,34 @@ class Command
         $moduleId = isset($access['MODULE_ID']) ? $access['MODULE_ID'] : '';
         $appId = isset($access['APP_ID']) ? $access['APP_ID'] : '';
 
-        if ($messageId <= 0 || $commandId <= 0)
+        if ($messageId <= 0 || $commandId <= 0) {
             return false;
+        }
 
         $commands = self::getListCache();
-        if (!isset($commands[$commandId]))
+        if (!isset($commands[$commandId])) {
             return false;
+        }
 
-        if (strlen($moduleId) > 0 && $commands[$commandId]['MODULE_ID'] != $moduleId)
+        if ($moduleId <> '' && $commands[$commandId]['MODULE_ID'] != $moduleId) {
             return false;
+        }
 
-        if (strlen($appId) > 0 && $commands[$commandId]['APP_ID'] != $appId)
+        if ($appId <> '' && $commands[$commandId]['APP_ID'] != $appId) {
             return false;
+        }
 
         $botId = intval($commands[$commandId]['BOT_ID']);
 
         $orm = \Bitrix\Im\Model\MessageTable::getById($messageId);
-        if (!($message = $orm->fetch()))
+        if (!($message = $orm->fetch())) {
             return false;
+        }
 
         $orm = \Bitrix\Im\Model\ChatTable::getById($message['CHAT_ID']);
-        if (!($chat = $orm->fetch()))
+        if (!($chat = $orm->fetch())) {
             return false;
+        }
 
         $relations = \CIMChat::GetRelationById($message['CHAT_ID']);
 
@@ -373,9 +433,11 @@ class Command
                     $messageFields['DIALOG_ID'] = $relation['USER_ID'];
                     break;
                 }
-            } else if ($message['AUTHOR_ID'] != $relation['USER_ID']) {
-                $messageFields['DIALOG_ID'] = $relation['USER_ID'];
-                break;
+            } else {
+                if ($message['AUTHOR_ID'] != $relation['USER_ID']) {
+                    $messageFields['DIALOG_ID'] = $relation['USER_ID'];
+                    break;
+                }
             }
         }
 
@@ -386,7 +448,11 @@ class Command
             }
         } else {
             $grantAccess = false;
-            if (preg_match_all("/^\\/(?P<COMMAND>[^\\040\\n]*)(\\040?)(?P<PARAMS>.*)$/m", $message['MESSAGE'], $matches)) {
+            if (preg_match_all(
+                "/^\\/(?P<COMMAND>[^\\040\\n]*)(\\040?)(?P<PARAMS>.*)$/m",
+                $message['MESSAGE'],
+                $matches
+            )) {
                 foreach ($matches['COMMAND'] as $idx => $cmd) {
                     if ($commands[$commandId]['COMMAND'] == $cmd) {
                         $grantAccess = true;
@@ -395,17 +461,19 @@ class Command
                 }
             }
         }
-        if (!$grantAccess)
+        if (!$grantAccess) {
             return true;
+        }
 
         $messageFields['ATTACH'] = $messageFields['ATTACH'] ? $messageFields['ATTACH'] : null;
         $messageFields['KEYBOARD'] = $messageFields['KEYBOARD'] ? $messageFields['KEYBOARD'] : null;
         $messageFields['MENU'] = $messageFields['MENU'] ? $messageFields['MENU'] : null;
 
         if (Common::isChatId($messageFields['DIALOG_ID'])) {
-            $chatId = intval(substr($messageFields['DIALOG_ID'], 4));
-            if ($chatId <= 0)
+            $chatId = intval(mb_substr($messageFields['DIALOG_ID'], 4));
+            if ($chatId <= 0) {
                 return false;
+            }
 
             if (isset($relations[$botId]) && $messageFields['SYSTEM'] != 'Y') {
                 $ar = Array(
@@ -431,9 +499,15 @@ class Command
                     $ar['MESSAGE'] = $messageFields['MESSAGE'];
                 }
                 if ($botId > 0) {
-                    $ar['MESSAGE'] = Loc::getMessage("COMMAND_BOT_ANSWER", Array("#BOT_NAME#" => "[USER=" . $botId . "]" . \Bitrix\Im\User::getInstance($botId)->getFullName() . "[/USER]\n ")) . $ar['MESSAGE'];
+                    $ar['MESSAGE'] = Loc::getMessage(
+                            "COMMAND_BOT_ANSWER",
+                            Array("#BOT_NAME#" => "[USER=" . $botId . "][/USER]\n ")
+                        ) . $ar['MESSAGE'];
                 } else {
-                    $ar['MESSAGE'] = "[B]" . Loc::getMessage("COMMAND_SYSTEM_ANSWER", Array("#COMMAND#" => "/" . $commands[$commandId]['COMMAND'])) . "[/B]\n " . $ar['MESSAGE'];
+                    $ar['MESSAGE'] = "[B]" . Loc::getMessage(
+                            "COMMAND_SYSTEM_ANSWER",
+                            Array("#COMMAND#" => "/" . $commands[$commandId]['COMMAND'])
+                        ) . "[/B]\n " . $ar['MESSAGE'];
                 }
             }
 
@@ -475,9 +549,15 @@ class Command
                     $ar['MESSAGE'] = $messageFields['MESSAGE'];
                 }
                 if ($botId > 0) {
-                    $ar['MESSAGE'] = Loc::getMessage("COMMAND_BOT_ANSWER", Array("#BOT_NAME#" => "[USER=" . $botId . "]" . \Bitrix\Im\User::getInstance($botId)->getFullName() . "[/USER]\n ")) . $ar['MESSAGE'];
+                    $ar['MESSAGE'] = Loc::getMessage(
+                            "COMMAND_BOT_ANSWER",
+                            Array("#BOT_NAME#" => "[USER=" . $botId . "][/USER]\n ")
+                        ) . $ar['MESSAGE'];
                 } else {
-                    $ar['MESSAGE'] = "[B]" . Loc::getMessage("COMMAND_SYSTEM_ANSWER", Array("#COMMAND#" => "/" . $commands[$commandId]['COMMAND'])) . "[/B]\n " . $ar['MESSAGE'];
+                    $ar['MESSAGE'] = "[B]" . Loc::getMessage(
+                            "COMMAND_SYSTEM_ANSWER",
+                            Array("#COMMAND#" => "/" . $commands[$commandId]['COMMAND'])
+                        ) . "[/B]\n " . $ar['MESSAGE'];
                 }
             }
 
@@ -505,7 +585,7 @@ class Command
 
     private static function findCommands($fields)
     {
-        $command = substr($fields['COMMAND'], 0, 1) == '/' ? substr($fields['COMMAND'], 1) : $fields['COMMAND'];
+        $command = mb_substr($fields['COMMAND'], 0, 1) == '/' ? mb_substr($fields['COMMAND'], 1) : $fields['COMMAND'];
         $execParams = isset($fields['EXEC_PARAMS']) ? $fields['EXEC_PARAMS'] : '';
         $messageFields = isset($fields['MESSAGE_FIELDS']) ? $fields['MESSAGE_FIELDS'] : Array();
 
@@ -514,8 +594,9 @@ class Command
         }
 
         $result = Array();
-        if (strlen($command) <= 0)
+        if ($command == '') {
             return $result;
+        }
 
         $isExtranet = \Bitrix\Im\User::getInstance($messageFields['FROM_USER_ID'])->isExtranet();
 
@@ -553,11 +634,51 @@ class Command
     private static function mergeWithDefaultCommands($commands)
     {
         $defaultCommands = Array(
-            Array('COMMAND' => 'me', 'TITLE' => Loc::getMessage("COMMAND_DEF_ME_TITLE"), 'PARAMS' => Loc::getMessage("COMMAND_DEF_ME_PARAMS"), 'HIDDEN' => 'N', 'EXTRANET_SUPPORT' => 'Y'),
-            Array('COMMAND' => 'loud', 'TITLE' => Loc::getMessage("COMMAND_DEF_LOUD_TITLE"), 'PARAMS' => Loc::getMessage("COMMAND_DEF_LOUD_PARAMS"), 'HIDDEN' => 'N', 'EXTRANET_SUPPORT' => 'Y'),
-            Array('COMMAND' => '>>', 'TITLE' => Loc::getMessage("COMMAND_DEF_QUOTE_TITLE"), 'PARAMS' => Loc::getMessage("COMMAND_DEF_QUOTE_PARAMS"), 'HIDDEN' => 'N', 'EXTRANET_SUPPORT' => 'Y'),
-            Array('COMMAND' => 'rename', 'TITLE' => Loc::getMessage("COMMAND_DEF_RENAME_TITLE"), 'PARAMS' => Loc::getMessage("COMMAND_DEF_RENAME_PARAMS"), 'HIDDEN' => 'N', 'EXTRANET_SUPPORT' => 'Y', 'CATEGORY' => Loc::getMessage("COMMAND_DEF_CATEGORY_CHAT"), 'CONTEXT' => 'chat'),
-            Array('COMMAND' => 'webrtcDebug', 'TITLE' => Loc::getMessage("COMMAND_DEF_WD_TITLE"), 'HIDDEN' => 'N', 'EXTRANET_SUPPORT' => 'Y', 'CATEGORY' => Loc::getMessage("COMMAND_DEF_CATEGORY_DEBUG"), 'CONTEXT' => 'call'),
+            Array(
+                'COMMAND' => 'me',
+                'TITLE' => Loc::getMessage("COMMAND_DEF_ME_TITLE"),
+                'PARAMS' => Loc::getMessage("COMMAND_DEF_ME_PARAMS"),
+                'HIDDEN' => 'N',
+                'EXTRANET_SUPPORT' => 'Y'
+            ),
+            Array(
+                'COMMAND' => 'loud',
+                'TITLE' => Loc::getMessage("COMMAND_DEF_LOUD_TITLE"),
+                'PARAMS' => Loc::getMessage("COMMAND_DEF_LOUD_PARAMS"),
+                'HIDDEN' => 'N',
+                'EXTRANET_SUPPORT' => 'Y'
+            ),
+            Array(
+                'COMMAND' => '>>',
+                'TITLE' => Loc::getMessage("COMMAND_DEF_QUOTE_TITLE"),
+                'PARAMS' => Loc::getMessage("COMMAND_DEF_QUOTE_PARAMS"),
+                'HIDDEN' => 'N',
+                'EXTRANET_SUPPORT' => 'Y'
+            ),
+            Array(
+                'COMMAND' => 'rename',
+                'TITLE' => Loc::getMessage("COMMAND_DEF_RENAME_TITLE"),
+                'PARAMS' => Loc::getMessage("COMMAND_DEF_RENAME_PARAMS"),
+                'HIDDEN' => 'N',
+                'EXTRANET_SUPPORT' => 'Y',
+                'CATEGORY' => Loc::getMessage("COMMAND_DEF_CATEGORY_CHAT"),
+                'CONTEXT' => 'chat'
+            ),
+            Array(
+                'COMMAND' => 'getDialogId',
+                'TITLE' => Loc::getMessage("COMMAND_DEF_DIALOGID_TITLE"),
+                'HIDDEN' => 'N',
+                'EXTRANET_SUPPORT' => 'N',
+                'CATEGORY' => Loc::getMessage("COMMAND_DEF_CATEGORY_CHAT")
+            ),
+            Array(
+                'COMMAND' => 'webrtcDebug',
+                'TITLE' => Loc::getMessage("COMMAND_DEF_WD_TITLE"),
+                'HIDDEN' => 'N',
+                'EXTRANET_SUPPORT' => 'Y',
+                'CATEGORY' => Loc::getMessage("COMMAND_DEF_CATEGORY_DEBUG"),
+                'CONTEXT' => 'call'
+            ),
         );
 
         $imCommands = Array();
@@ -578,7 +699,9 @@ class Command
             }
             $newCommand['MODULE_ID'] = 'im';
             $newCommand['COMMAND_ID'] = $newCommand['ID'];
-            $newCommand['CATEGORY'] = isset($command['CATEGORY']) ? $command['CATEGORY'] : Loc::getMessage('COMMAND_IM_CATEGORY');
+            $newCommand['CATEGORY'] = isset($command['CATEGORY']) ? $command['CATEGORY'] : Loc::getMessage(
+                'COMMAND_IM_CATEGORY'
+            );
             $newCommand['CONTEXT'] = isset($command['CONTEXT']) ? $command['CONTEXT'] : '';
             $newCommand['TITLE'] = isset($command['TITLE']) ? $command['TITLE'] : '';
             $newCommand['PARAMS'] = isset($command['PARAMS']) ? $command['PARAMS'] : '';
@@ -599,7 +722,7 @@ class Command
     public static function getListCache($lang = LANGUAGE_ID)
     {
         $cache = \Bitrix\Main\Data\Cache::createInstance();
-        if ($cache->initCache(self::CACHE_TTL, 'list_v4_' . $lang, self::CACHE_PATH)) {
+        if ($cache->initCache(self::CACHE_TTL, 'list_v5_' . $lang, self::CACHE_PATH)) {
             $result = $cache->getVars();
         } else {
             $loadRestLang = false;
@@ -611,17 +734,24 @@ class Command
 
                 if ($row['BOT_ID'] > 0) {
                     $row['CATEGORY'] = \Bitrix\Im\User::getInstance($row['BOT_ID'])->getFullName();
-                } else if ($row['MODULE_ID'] == 'im') {
-                    $row['CATEGORY'] = Loc::getMessage('COMMAND_IM_CATEGORY');
                 } else {
-                    $moduleClass = new \CModule();
-                    $module = $moduleClass->createModuleObject($row['MODULE_ID']);
-                    $row['CATEGORY'] = $module->MODULE_NAME;
+                    if ($row['MODULE_ID'] == 'im') {
+                        $row['CATEGORY'] = Loc::getMessage('COMMAND_IM_CATEGORY');
+                    } else {
+                        $moduleClass = new \CModule();
+                        $module = $moduleClass->createModuleObject($row['MODULE_ID']);
+                        $row['CATEGORY'] = $module->MODULE_NAME;
+                    }
                 }
 
                 if (!empty($row['CLASS']) && !empty($row['METHOD_LANG_GET'])) {
-                    if (\Bitrix\Main\Loader::includeModule($row['MODULE_ID']) && class_exists($row["CLASS"]) && method_exists($row["CLASS"], $row["METHOD_LANG_GET"])) {
-                        $localize = call_user_func_array(array($row["CLASS"], $row["METHOD_LANG_GET"]), Array($row['COMMAND'], $lang));
+                    if (\Bitrix\Main\Loader::includeModule($row['MODULE_ID']) && class_exists(
+                            $row["CLASS"]
+                        ) && method_exists($row["CLASS"], $row["METHOD_LANG_GET"])) {
+                        $localize = call_user_func_array(
+                            array($row["CLASS"], $row["METHOD_LANG_GET"]),
+                            Array($row['COMMAND'], $lang)
+                        );
                         if ($localize) {
                             $row['TITLE'] = $localize['TITLE'];
                             $row['PARAMS'] = $localize['PARAMS'];
@@ -653,8 +783,9 @@ class Command
                 $langSet = Array();
                 $orm = \Bitrix\Im\Model\CommandLangTable::getList();
                 while ($row = $orm->fetch()) {
-                    if (!isset($result[$row['COMMAND_ID']]))
+                    if (!isset($result[$row['COMMAND_ID']])) {
                         continue;
+                    }
 
                     $langSet[$row['COMMAND_ID']][$row['LANGUAGE_ID']]['TITLE'] = $row['TITLE'];
                     $langSet[$row['COMMAND_ID']][$row['LANGUAGE_ID']]['PARAMS'] = $row['PARAMS'];
@@ -665,13 +796,17 @@ class Command
                     if (isset($langSet[$commandId][$lang])) {
                         $result[$commandId]['TITLE'] = $langSet[$commandId][$lang]['TITLE'];
                         $result[$commandId]['PARAMS'] = $langSet[$commandId][$lang]['PARAMS'];
-                    } else if (isset($langSet[$commandId][$langAlter])) {
-                        $result[$commandId]['TITLE'] = $langSet[$commandId][$langAlter]['TITLE'];
-                        $result[$commandId]['PARAMS'] = $langSet[$commandId][$langAlter]['PARAMS'];
-                    } else if (isset($langSet[$commandId])) {
-                        $langSetCommand = array_values($langSet[$commandId]);
-                        $result[$commandId]['TITLE'] = $langSetCommand[0]['TITLE'];
-                        $result[$commandId]['PARAMS'] = $langSetCommand[0]['PARAMS'];
+                    } else {
+                        if (isset($langSet[$commandId][$langAlter])) {
+                            $result[$commandId]['TITLE'] = $langSet[$commandId][$langAlter]['TITLE'];
+                            $result[$commandId]['PARAMS'] = $langSet[$commandId][$langAlter]['PARAMS'];
+                        } else {
+                            if (isset($langSet[$commandId])) {
+                                $langSetCommand = array_values($langSet[$commandId]);
+                                $result[$commandId]['TITLE'] = $langSetCommand[0]['TITLE'];
+                                $result[$commandId]['PARAMS'] = $langSetCommand[0]['PARAMS'];
+                            }
+                        }
                     }
                 }
 
@@ -709,8 +844,9 @@ class Command
 
         $result = Array();
         foreach ($commands as $command) {
-            if ($command['HIDDEN'] == 'Y')
+            if ($command['HIDDEN'] == 'Y') {
                 continue;
+            }
 
             $result[] = Array(
                 'id' => $command['COMMAND_ID'],
@@ -734,11 +870,13 @@ class Command
 
         $result = Array();
         foreach ($commands as $command) {
-            if ($command['HIDDEN'] == 'Y')
+            if ($command['HIDDEN'] == 'Y') {
                 continue;
+            }
 
-            if ($command['SONET_SUPPORT'] != 'Y')
+            if ($command['SONET_SUPPORT'] != 'Y') {
                 continue;
+            }
 
             $result[] = Array(
                 'id' => $command['COMMAND_ID'],

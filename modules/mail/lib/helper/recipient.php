@@ -12,7 +12,7 @@ use Bitrix\Mail;
 class Recipient
 {
     /**
-     * Builds unique code for BX.SocNetLogDestination selector.
+     * Builds unique code for BX.UI.Selector selector.
      *
      * @param string $email Email.
      *
@@ -20,7 +20,8 @@ class Recipient
      */
     public static function buildUniqueEmailCode($email)
     {
-        return 'U' . md5($email);
+//		return 'U' . md5($email);
+        return 'MC' . $email;
     }
 
     /**
@@ -29,7 +30,7 @@ class Recipient
      * @param string $emailTo Add this email to the result list.
      * @param integer $limit Limit list length.
      *
-     * @return array Data preformed for BX.SocNetLogDestination selector with email only mode enabled.
+     * @return array Data preformed for BX.UI.Selector selector with email only mode enabled.
      *
      * @throws Main\SystemException
      */
@@ -41,15 +42,17 @@ class Recipient
 
         $currentUser = \Bitrix\Main\Engine\CurrentUser::get();
 
-        $lastRcptResult = \Bitrix\Main\FinderDestTable::getList(array(
-            'filter' => array(
-                '=USER_ID' => $currentUser->getId(),
-                '=CONTEXT' => 'MAIL_LAST_RCPT',
-            ),
-            'select' => array('CODE'),
-            'order' => array('LAST_USE_DATE' => 'DESC'),
-            'limit' => $limit,
-        ));
+        $lastRcptResult = \Bitrix\Main\FinderDestTable::getList(
+            array(
+                'filter' => array(
+                    '=USER_ID' => $currentUser->getId(),
+                    '=CONTEXT' => 'MAIL_LAST_RCPT',
+                ),
+                'select' => array('CODE'),
+                'order' => array('LAST_USE_DATE' => 'DESC'),
+                'limit' => $limit,
+            )
+        );
 
         $emailUsersIds = array();
         while ($item = $lastRcptResult->fetch()) {
@@ -57,14 +60,16 @@ class Recipient
         }
 
         if (count($emailUsersIds) > 0) {
-            $mailContacts = Mail\Internals\MailContactTable::getList([
-                'filter' => array(
-                    '@ID' => $emailUsersIds,
-                    '=USER_ID' => $currentUser->getId(),
-                ),
-                'select' => ['ID', 'NAME', 'EMAIL', 'ICON'],
-                'limit' => $limit,
-            ])->fetchAll();
+            $mailContacts = Mail\Internals\MailContactTable::getList(
+                [
+                    'filter' => array(
+                        '@ID' => $emailUsersIds,
+                        '=USER_ID' => $currentUser->getId(),
+                    ),
+                    'select' => ['ID', 'NAME', 'EMAIL', 'ICON'],
+                    'limit' => $limit,
+                ]
+            )->fetchAll();
 
             $contactAvatars = $resultsMailContacts = [];
             foreach ($mailContacts as $mailContact) {
@@ -74,9 +79,13 @@ class Recipient
                 $email = $mailContact['EMAIL'];
                 if ($contactAvatars[$email] === null) {
                     ob_start();
-                    $APPLICATION->includeComponent('bitrix:mail.contact.avatar', '', array(
-                        'mailContact' => $mailContact,
-                    ));
+                    $APPLICATION->includeComponent(
+                        'bitrix:mail.contact.avatar',
+                        '',
+                        array(
+                            'mailContact' => $mailContact,
+                        )
+                    );
                     $contactAvatars[$email] = ob_get_clean();
                 }
                 $id = static::buildUniqueEmailCode($email);
@@ -103,7 +112,7 @@ class Recipient
      * @param array $filter Filter.
      * @param integer $limit Limit list length.
      *
-     * @return array  Data preformed for BX.SocNetLogDestination selector with email only mode enabled.
+     * @return array  Data preformed for BX.UI.Selector selector with email only mode enabled.
      *
      * @throws Main\SystemException
      */
@@ -113,41 +122,46 @@ class Recipient
 
         $result = array();
 
-        $mailContacts = \Bitrix\Main\UserTable::getList(array(
-            'select' => array(
-                'ID',
-                'NAME',
-                'LAST_NAME',
-                'SECOND_NAME',
-                'EMAIL',
-                'PERSONAL_PHOTO',
-            ),
-            'filter' => array_merge(
-                array(
-                    '=ACTIVE' => 'Y',
-                    '=EXTERNAL_AUTH_ID' => 'email',
+        $mailContacts = \Bitrix\Main\UserTable::getList(
+            array(
+                'select' => array(
+                    'ID',
+                    'NAME',
+                    'LAST_NAME',
+                    'SECOND_NAME',
+                    'EMAIL',
+                    'PERSONAL_PHOTO',
                 ),
-                $filter
-            ),
-            'order' => array(
-                'LAST_NAME' => 'ASC',
-            ),
-            'limit' => $limit,
-        ));
+                'filter' => array_merge(
+                    array(
+                        '=ACTIVE' => 'Y',
+                        '=EXTERNAL_AUTH_ID' => 'email',
+                    ),
+                    $filter
+                ),
+                'order' => array(
+                    'LAST_NAME' => 'ASC',
+                ),
+                'limit' => $limit,
+            )
+        );
 
         $contactAvatars = array();
         while ($mailContact = $mailContacts->fetch()) {
             $email = $mailContact['EMAIL'];
             if ($contactAvatars[$email] === null) {
                 ob_start();
-                $APPLICATION->includeComponent('bitrix:mail.contact.avatar', '',
+                $APPLICATION->includeComponent(
+                    'bitrix:mail.contact.avatar',
+                    '',
                     [
                         'mailContact' => array(
                             'FILE_ID' => $mailContact['PERSONAL_PHOTO'],
                             'name' => \CUser::formatName(\CSite::getNameFormat(), $mailContact),
                             'email' => $mailContact['EMAIL'],
                         ),
-                    ]);
+                    ]
+                );
                 $contactAvatars[$email] = ob_get_clean();
             }
 
@@ -172,7 +186,7 @@ class Recipient
      *
      * @param array $filter Filter.
      * @param integer $limit Limit list length.
-     * @return array  Data preformed for BX.SocNetLogDestination selector with email only mode enabled.
+     * @return array  Data preformed for BX.UI.Selector selector with email only mode enabled.
      *
      * @throws Main\LoaderException
      */
@@ -183,27 +197,29 @@ class Recipient
         $result = array();
 
         if (Main\Loader::includeModule('crm')) {
-            $mailContacts = \Bitrix\Main\UserTable::getList(array(
-                'select' => array(
-                    'ID',
-                    'NAME',
-                    'LAST_NAME',
-                    'SECOND_NAME',
-                    'EMAIL',
-                    'PERSONAL_PHOTO',
-                ),
-                'filter' => array_merge(
-                    array(
-                        '=ACTIVE' => 'Y',
-                        '=EXTERNAL_AUTH_ID' => 'email',
+            $mailContacts = \Bitrix\Main\UserTable::getList(
+                array(
+                    'select' => array(
+                        'ID',
+                        'NAME',
+                        'LAST_NAME',
+                        'SECOND_NAME',
+                        'EMAIL',
+                        'PERSONAL_PHOTO',
                     ),
-                    $filter
-                ),
-                'order' => array(
-                    'LAST_NAME' => 'ASC',
-                ),
-                'limit' => $limit,
-            ));
+                    'filter' => array_merge(
+                        array(
+                            '=ACTIVE' => 'Y',
+                            '=EXTERNAL_AUTH_ID' => 'email',
+                        ),
+                        $filter
+                    ),
+                    'order' => array(
+                        'LAST_NAME' => 'ASC',
+                    ),
+                    'limit' => $limit,
+                )
+            );
 
             $contactAvatars = array();
             while ($mailContact = $mailContacts->fetch()) {
@@ -212,23 +228,28 @@ class Recipient
                     continue;
                 }
 
-                $crmCommunications = \CSocNetLogDestination::searchCrmEntities(array(
-                    'SEARCH' => $email,
-                    'ENTITIES' => array('CONTACT'),
-                ));
+                $crmCommunications = \CSocNetLogDestination::searchCrmEntities(
+                    array(
+                        'SEARCH' => $email,
+                        'ENTITIES' => array('CONTACT'),
+                    )
+                );
                 foreach ($crmCommunications as $communication) {
                     $email = $communication['email'];
 
                     if ($contactAvatars[$email] === null) {
                         ob_start();
-                        $APPLICATION->includeComponent('bitrix:mail.contact.avatar', '',
+                        $APPLICATION->includeComponent(
+                            'bitrix:mail.contact.avatar',
+                            '',
                             [
                                 'mailContact' => array(
                                     'FILE_ID' => $mailContact['PERSONAL_PHOTO'],
                                     'name' => \CUser::formatName(\CSite::getNameFormat(), $mailContact),
                                     'email' => $email,
                                 ),
-                            ]);
+                            ]
+                        );
                         $contactAvatars[$email] = ob_get_clean();
                         $communication['iconCustom'] = $contactAvatars[$email];
                     }

@@ -90,14 +90,16 @@ class WorkflowInstanceTable extends Entity\DataManager
     public static function getIdsByDocument(array $documentId)
     {
         $documentId = \CBPHelper::ParseDocumentId($documentId);
-        $rows = static::getList([
-            'select' => ['ID'],
-            'filter' => [
-                '=MODULE_ID' => $documentId[0],
-                '=ENTITY' => $documentId[1],
-                '=DOCUMENT_ID' => $documentId[2]
+        $rows = static::getList(
+            [
+                'select' => ['ID'],
+                'filter' => [
+                    '=MODULE_ID' => $documentId[0],
+                    '=ENTITY' => $documentId[1],
+                    '=DOCUMENT_ID' => $documentId[2]
+                ]
             ]
-        ])->fetchAll();
+        )->fetchAll();
 
         return array_column($rows, 'ID');
     }
@@ -109,12 +111,14 @@ class WorkflowInstanceTable extends Entity\DataManager
             $tplIds = reset($tplIds);
         }
 
-        $rows = static::getList([
-            'select' => ['ID'],
-            'filter' => [
-                $filterKeyPrefix . 'WORKFLOW_TEMPLATE_ID' => $tplIds,
+        $rows = static::getList(
+            [
+                'select' => ['ID'],
+                'filter' => [
+                    $filterKeyPrefix . 'WORKFLOW_TEMPLATE_ID' => $tplIds,
+                ]
             ]
-        ])->fetchAll();
+        )->fetchAll();
 
         return array_column($rows, 'ID');
     }
@@ -136,7 +140,8 @@ class WorkflowInstanceTable extends Entity\DataManager
         $secondEntity = $sqlHelper->forSql($secondDocumentId[1]);
         $secondModule = $sqlHelper->forSql($secondDocumentId[0]);
 
-        $connection->queryExecute("UPDATE {$table} 
+        $connection->queryExecute(
+            "UPDATE {$table} 
 			SET 
 				DOCUMENT_ID = '{$firstDocId}',
 				ENTITY = '{$firstEntity}',
@@ -145,7 +150,8 @@ class WorkflowInstanceTable extends Entity\DataManager
 				DOCUMENT_ID = '{$secondDocId}' 
 				AND ENTITY = '{$secondEntity}' 
 				AND MODULE_ID = '{$secondModule}'
-		");
+		"
+        );
 
         return true;
     }
@@ -167,7 +173,8 @@ class WorkflowInstanceTable extends Entity\DataManager
 
         $templates = implode(",", array_map('intval', $workflowTemplateIds));
 
-        $connection->queryExecute("UPDATE {$table} 
+        $connection->queryExecute(
+            "UPDATE {$table} 
 			SET 
 				ENTITY = '{$firstEntity}',
 				MODULE_ID = '{$firstModule}' 
@@ -175,7 +182,8 @@ class WorkflowInstanceTable extends Entity\DataManager
 				ENTITY = '{$secondEntity}' 
 				AND MODULE_ID = '{$secondModule}' 
 				AND WORKFLOW_TEMPLATE_ID IN ({$templates})
-		");
+		"
+        );
 
         return true;
     }

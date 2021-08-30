@@ -25,19 +25,25 @@ class FilterBlockTable extends Entity\DataManager
     public static function getMap()
     {
         return array(
-            'ID' => new Entity\IntegerField('ID', array(
+            'ID' => new Entity\IntegerField(
+                'ID', array(
                 'primary' => true,
                 'autocomplete' => true,
                 'title' => 'ID'
-            )),
-            'FILTER_ID' => new Entity\IntegerField('FILTER_ID', array(
+            )
+            ),
+            'FILTER_ID' => new Entity\IntegerField(
+                'FILTER_ID', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_FILTER_ID'),
                 'required' => true
-            )),
-            'BLOCK_ID' => new Entity\IntegerField('BLOCK_ID', array(
+            )
+            ),
+            'BLOCK_ID' => new Entity\IntegerField(
+                'BLOCK_ID', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_BLOCK_ID'),
                 'required' => true
-            ))
+            )
+            )
         );
     }
 }

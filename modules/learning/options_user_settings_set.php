@@ -1,4 +1,5 @@
 <?
+
 $learningWarningTmp = "";
 
 if (CModule::IncludeModule("learning")):

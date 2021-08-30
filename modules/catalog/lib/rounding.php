@@ -26,7 +26,20 @@ Loc::loadMessages(__FILE__);
  * </ul>
  *
  * @package Bitrix\Catalog
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Rounding_Query query()
+ * @method static EO_Rounding_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Rounding_Result getById($id)
+ * @method static EO_Rounding_Result getList(array $parameters = array())
+ * @method static EO_Rounding_Entity getEntity()
+ * @method static \Bitrix\Catalog\EO_Rounding createObject($setDefaultValues = true)
+ * @method static \Bitrix\Catalog\EO_Rounding_Collection createCollection()
+ * @method static \Bitrix\Catalog\EO_Rounding wakeUpObject($row)
+ * @method static \Bitrix\Catalog\EO_Rounding_Collection wakeUpCollection($rows)
+ */
 class RoundingTable extends Main\Entity\DataManager
 {
     const ROUND_MATH = 0x0001;
@@ -56,40 +69,58 @@ class RoundingTable extends Main\Entity\DataManager
     public static function getMap()
     {
         return array(
-            'ID' => new Main\Entity\IntegerField('ID', array(
+            'ID' => new Main\Entity\IntegerField(
+                'ID', array(
                 'primary' => true,
                 'autocomplete' => true,
                 'title' => Loc::getMessage('ROUNDING_ENTITY_ID_FIELD')
-            )),
-            'CATALOG_GROUP_ID' => new Main\Entity\IntegerField('CATALOG_GROUP_ID', array(
+            )
+            ),
+            'CATALOG_GROUP_ID' => new Main\Entity\IntegerField(
+                'CATALOG_GROUP_ID', array(
                 'required' => true,
                 'title' => Loc::getMessage('ROUNDING_ENTITY_CATALOG_GROUP_ID_FIELD')
-            )),
-            'PRICE' => new Main\Entity\FloatField('PRICE', array(
+            )
+            ),
+            'PRICE' => new Main\Entity\FloatField(
+                'PRICE', array(
                 'required' => true,
                 'title' => Loc::getMessage('ROUNDING_ENTITY_PRICE_FIELD')
-            )),
-            'ROUND_TYPE' => new Main\Entity\EnumField('ROUND_TYPE', array(
+            )
+            ),
+            'ROUND_TYPE' => new Main\Entity\EnumField(
+                'ROUND_TYPE', array(
                 'required' => true,
                 'values' => array(self::ROUND_MATH, self::ROUND_UP, self::ROUND_DOWN),
                 'title' => Loc::getMessage('ROUNDING_ENTITY_ROUND_TYPE_FIELD')
-            )),
-            'ROUND_PRECISION' => new Main\Entity\FloatField('ROUND_PRECISION', array(
+            )
+            ),
+            'ROUND_PRECISION' => new Main\Entity\FloatField(
+                'ROUND_PRECISION', array(
                 'required' => true,
                 'title' => Loc::getMessage('ROUNDING_ENTITY_ROUND_PRECISION_FIELD')
-            )),
-            'CREATED_BY' => new Main\Entity\IntegerField('CREATED_BY', array(
+            )
+            ),
+            'CREATED_BY' => new Main\Entity\IntegerField(
+                'CREATED_BY', array(
                 'title' => Loc::getMessage('ROUNDING_ENTITY_CREATED_BY_FIELD')
-            )),
-            'DATE_CREATE' => new Main\Entity\DatetimeField('DATE_CREATE', array(
+            )
+            ),
+            'DATE_CREATE' => new Main\Entity\DatetimeField(
+                'DATE_CREATE', array(
                 'title' => Loc::getMessage('ROUNDING_ENTITY_DATE_CREATE_FIELD')
-            )),
-            'MODIFIED_BY' => new Main\Entity\IntegerField('MODIFIED_BY', array(
+            )
+            ),
+            'MODIFIED_BY' => new Main\Entity\IntegerField(
+                'MODIFIED_BY', array(
                 'title' => Loc::getMessage('ROUNDING_ENTITY_MODIFIED_BY_FIELD')
-            )),
-            'DATE_MODIFY' => new Main\Entity\DatetimeField('DATE_MODIFY', array(
+            )
+            ),
+            'DATE_MODIFY' => new Main\Entity\DatetimeField(
+                'DATE_MODIFY', array(
                 'title' => Loc::getMessage('ROUNDING_ENTITY_TIMESTAMP_X_FIELD')
-            )),
+            )
+            ),
             'CREATED_BY_USER' => new Main\Entity\ReferenceField(
                 'CREATED_BY_USER',
                 '\Bitrix\Main\User',
@@ -120,8 +151,9 @@ class RoundingTable extends Main\Entity\DataManager
         static::setUserId($modifyFieldList, $data, array('CREATED_BY', 'MODIFIED_BY'));
         static::setTimestamp($modifyFieldList, $data, array('DATE_CREATE', 'DATE_MODIFY'));
 
-        if (!empty($modifyFieldList))
+        if (!empty($modifyFieldList)) {
             $result->modifyFields($modifyFieldList);
+        }
         unset($modifyFieldList);
 
         return $result;
@@ -135,8 +167,9 @@ class RoundingTable extends Main\Entity\DataManager
      */
     public static function onAfterAdd(Main\Entity\Event $event)
     {
-        if (!static::isAllowedClearCache())
+        if (!static::isAllowedClearCache()) {
             return;
+        }
         $data = $event->getParameter('fields');
         self::$priceTypeIds[$data['CATALOG_GROUP_ID']] = $data['CATALOG_GROUP_ID'];
         unset($data);
@@ -158,8 +191,9 @@ class RoundingTable extends Main\Entity\DataManager
         static::setUserId($modifyFieldList, $data, array('MODIFIED_BY'));
         static::setTimestamp($modifyFieldList, $data, array('DATE_MODIFY'));
 
-        if (!empty($modifyFieldList))
+        if (!empty($modifyFieldList)) {
             $result->modifyFields($modifyFieldList);
+        }
         unset($modifyFieldList);
 
         return $result;
@@ -173,17 +207,21 @@ class RoundingTable extends Main\Entity\DataManager
      */
     public static function onUpdate(Main\Entity\Event $event)
     {
-        if (!static::isAllowedClearCache())
+        if (!static::isAllowedClearCache()) {
             return;
+        }
         $data = $event->getParameter('fields');
-        $rule = static::getList(array(
-            'select' => array('ID', 'CATALOG_GROUP_ID'),
-            'filter' => array('=ID' => $event->getParameter('id'))
-        ))->fetch();
+        $rule = static::getList(
+            array(
+                'select' => array('ID', 'CATALOG_GROUP_ID'),
+                'filter' => array('=ID' => $event->getParameter('id'))
+            )
+        )->fetch();
         if (!empty($rule)) {
             self::$priceTypeIds[$rule['CATALOG_GROUP_ID']] = $rule['CATALOG_GROUP_ID'];
-            if (isset($data['CATALOG_GROUP_ID']))
+            if (isset($data['CATALOG_GROUP_ID'])) {
                 self::$priceTypeIds[$data['CATALOG_GROUP_ID']] = $data['CATALOG_GROUP_ID'];
+            }
         }
         unset($rule, $data);
     }
@@ -207,14 +245,18 @@ class RoundingTable extends Main\Entity\DataManager
      */
     public static function onDelete(Main\Entity\Event $event)
     {
-        if (!static::isAllowedClearCache())
+        if (!static::isAllowedClearCache()) {
             return;
-        $rule = static::getList(array(
-            'select' => array('ID', 'CATALOG_GROUP_ID'),
-            'filter' => array('=ID' => $event->getParameter('id'))
-        ))->fetch();
-        if (!empty($rule))
+        }
+        $rule = static::getList(
+            array(
+                'select' => array('ID', 'CATALOG_GROUP_ID'),
+                'filter' => array('=ID' => $event->getParameter('id'))
+            )
+        )->fetch();
+        if (!empty($rule)) {
             self::$priceTypeIds[$rule['CATALOG_GROUP_ID']] = $rule['CATALOG_GROUP_ID'];
+        }
         unset($rule);
     }
 
@@ -277,11 +319,16 @@ class RoundingTable extends Main\Entity\DataManager
      */
     public static function setPriceTypeIds($priceTypes)
     {
-        if (!is_array($priceTypes))
+        if (!is_array($priceTypes)) {
             $priceTypes = array($priceTypes => $priceTypes);
+        }
 
-        if (!empty($priceTypes) && is_array($priceTypes))
-            self::$priceTypeIds = (empty(self::$priceTypeIds) ? $priceTypes : array_merge(self::$priceTypeIds, $priceTypes));
+        if (!empty($priceTypes) && is_array($priceTypes)) {
+            self::$priceTypeIds = (empty(self::$priceTypeIds) ? $priceTypes : array_merge(
+                self::$priceTypeIds,
+                $priceTypes
+            ));
+        }
     }
 
     /**
@@ -291,10 +338,12 @@ class RoundingTable extends Main\Entity\DataManager
      */
     public static function clearCache()
     {
-        if (!static::isAllowedClearCache() || empty(self::$priceTypeIds))
+        if (!static::isAllowedClearCache() || empty(self::$priceTypeIds)) {
             return;
-        foreach (self::$priceTypeIds as $priceType)
+        }
+        foreach (self::$priceTypeIds as $priceType) {
             Product\Price::clearRoundRulesCache($priceType);
+        }
         unset($priceType);
         static::clearPriceTypeIds();
     }
@@ -308,12 +357,15 @@ class RoundingTable extends Main\Entity\DataManager
     public static function deleteByPriceType($priceType)
     {
         $priceType = (int)$priceType;
-        if ($priceType <= 0)
+        if ($priceType <= 0) {
             return;
+        }
         $conn = Main\Application::getConnection();
         $helper = $conn->getSqlHelper();
         $conn->queryExecute(
-            'delete from ' . $helper->quote(self::getTableName()) . ' where ' . $helper->quote('CATALOG_GROUP_ID') . ' = ' . $priceType
+            'delete from ' . $helper->quote(self::getTableName()) . ' where ' . $helper->quote(
+                'CATALOG_GROUP_ID'
+            ) . ' = ' . $priceType
         );
         unset($helper, $conn);
         Product\Price::clearRoundRulesCache($priceType);
@@ -360,11 +412,13 @@ class RoundingTable extends Main\Entity\DataManager
         }
         foreach ($keys as $index) {
             $setField = true;
-            if (array_key_exists($index, $data))
+            if (array_key_exists($index, $data)) {
                 $setField = ($data[$index] !== null && (int)$data[$index] <= 0);
+            }
 
-            if ($setField)
+            if ($setField) {
                 $result[$index] = $currentUserID;
+            }
         }
         unset($index);
     }
@@ -381,11 +435,13 @@ class RoundingTable extends Main\Entity\DataManager
     {
         foreach ($keys as $index) {
             $setField = true;
-            if (array_key_exists($index, $data))
+            if (array_key_exists($index, $data)) {
                 $setField = ($data[$index] !== null && !is_object($data[$index]));
+            }
 
-            if ($setField)
+            if ($setField) {
                 $result[$index] = new Main\Type\DateTime();
+            }
         }
         unset($index);
     }

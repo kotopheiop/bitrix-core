@@ -11,7 +11,9 @@
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/vote/prolog.php");
 $VOTE_RIGHT = $APPLICATION->GetGroupRight("vote");
-if ($VOTE_RIGHT == "D") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($VOTE_RIGHT == "D") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/vote/include.php");
 
@@ -68,9 +70,9 @@ switch ($dtype) {
     </HEAD>
     <BODY onKeyPress="KeyPress()">
     <?
-    if ($fname == "")
+    if ($fname == "") {
         echo GetMessage("VOTE_DIALOGS_BAD_TYPE");
-    else {
+    } else {
         require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/vote/admin/" . $fname);
     }
     ?>

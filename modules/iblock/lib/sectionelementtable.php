@@ -30,17 +30,23 @@ class SectionElementTable extends Main\Entity\DataManager
     public static function getMap()
     {
         return array(
-            'IBLOCK_SECTION_ID' => new Main\Entity\IntegerField('IBLOCK_SECTION_ID', array(
+            'IBLOCK_SECTION_ID' => new Main\Entity\IntegerField(
+                'IBLOCK_SECTION_ID', array(
                 'primary' => true,
                 'title' => Loc::getMessage('IBLOCK_SECTION_ELEMENT_ENTITY_IBLOCK_SECTION_ID_FIELD'),
-            )),
-            'IBLOCK_ELEMENT_ID' => new Main\Entity\IntegerField('IBLOCK_ELEMENT_ID', array(
+            )
+            ),
+            'IBLOCK_ELEMENT_ID' => new Main\Entity\IntegerField(
+                'IBLOCK_ELEMENT_ID', array(
                 'primary' => true,
                 'title' => Loc::getMessage('IBLOCK_SECTION_ELEMENT_ENTITY_IBLOCK_ELEMENT_ID_FIELD'),
-            )),
-            'ADDITIONAL_PROPERTY_ID' => new Main\Entity\IntegerField('ADDITIONAL_PROPERTY_ID', array(
+            )
+            ),
+            'ADDITIONAL_PROPERTY_ID' => new Main\Entity\IntegerField(
+                'ADDITIONAL_PROPERTY_ID', array(
                 'title' => Loc::getMessage('IBLOCK_SECTION_ELEMENT_ENTITY_ADDITIONAL_PROPERTY_ID_FIELD'),
-            )),
+            )
+            ),
             'IBLOCK_SECTION' => new Main\Entity\ReferenceField(
                 'IBLOCK_SECTION',
                 'Bitrix\Iblock\Section',

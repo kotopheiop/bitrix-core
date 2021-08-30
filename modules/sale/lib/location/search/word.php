@@ -37,7 +37,7 @@ final class WordTable extends Entity\DataManager implements \Serializable
 
     public function unserialize($data)
     {
-        $this->procData = unserialize($data);
+        $this->procData = unserialize($data, ['allowed_classes' => false]);
         $this->initInsertHandles();
     }
 
@@ -82,41 +82,47 @@ final class WordTable extends Entity\DataManager implements \Serializable
 
     public function initInsertHandles()
     {
-        $this->word2LocationInserter = new BlockInserter(array(
-            'tableName' => static::getTableNameWord2Location(),
-            'exactFields' => array(
-                'LOCATION_ID' => array('data_type' => 'integer'),
-                'WORD_ID' => array('data_type' => 'integer')
-            ),
-            'parameters' => array(
-                'mtu' => static::MTU
-            )
-        ));
-
-        $this->dictionaryInserter = new BlockInserter(array(
-            'entityName' => '\Bitrix\Sale\Location\Search\WordTable',
-            'exactFields' => array(
-                'WORD'
-            ),
-            'parameters' => array(
-                'mtu' => static::MTU,
-                'autoIncrementFld' => 'ID',
-                'CALLBACKS' => array(
-                    'ON_BEFORE_FLUSH' => array($this, 'onBeforeDictionaryFlush')
+        $this->word2LocationInserter = new BlockInserter(
+            array(
+                'tableName' => static::getTableNameWord2Location(),
+                'exactFields' => array(
+                    'LOCATION_ID' => array('data_type' => 'integer'),
+                    'WORD_ID' => array('data_type' => 'integer')
+                ),
+                'parameters' => array(
+                    'mtu' => static::MTU
                 )
             )
-        ));
+        );
 
-        $this->dictionaryResorter = new BlockInserter(array(
-            'tableName' => static::getTableNamePositionTemporal(),
-            'exactFields' => array(
-                'WORD_ID' => array('data_type' => 'integer'),
-                'POSITION' => array('data_type' => 'integer')
-            ),
-            'parameters' => array(
-                'mtu' => static::MTU
+        $this->dictionaryInserter = new BlockInserter(
+            array(
+                'entityName' => '\Bitrix\Sale\Location\Search\WordTable',
+                'exactFields' => array(
+                    'WORD'
+                ),
+                'parameters' => array(
+                    'mtu' => static::MTU,
+                    'autoIncrementFld' => 'ID',
+                    'CALLBACKS' => array(
+                        'ON_BEFORE_FLUSH' => array($this, 'onBeforeDictionaryFlush')
+                    )
+                )
             )
-        ));
+        );
+
+        $this->dictionaryResorter = new BlockInserter(
+            array(
+                'tableName' => static::getTableNamePositionTemporal(),
+                'exactFields' => array(
+                    'WORD_ID' => array('data_type' => 'integer'),
+                    'POSITION' => array('data_type' => 'integer')
+                ),
+                'parameters' => array(
+                    'mtu' => static::MTU
+                )
+            )
+        );
     }
 
     public function resetProcess()
@@ -135,15 +141,19 @@ final class WordTable extends Entity\DataManager implements \Serializable
 
         Helper::dropTable(static::getTableName());
 
-        $binary = ToLower($dbConnection->getType()) == 'mysql' ? 'binary' : ''; // http://bugs.mysql.com/bug.php?id=34096
+        $binary = ToLower(
+            $dbConnection->getType()
+        ) == 'mysql' ? 'binary' : ''; // http://bugs.mysql.com/bug.php?id=34096
 
         // ORACE: OK, MSSQL: OK
-        Main\HttpApplication::getConnection()->query("create table " . static::getTableName() . " (
+        Main\HttpApplication::getConnection()->query(
+            "create table " . static::getTableName() . " (
 
 			ID " . Helper::getSqlForDataType('int') . " not null " . Helper::getSqlForAutoIncrement() . " primary key,
 			WORD " . Helper::getSqlForDataType('varchar', 50) . " " . $binary . " not null,
 			POSITION " . Helper::getSqlForDataType('int') . " default '0'
-		)");
+		)"
+        );
 
         Helper::addAutoIncrement(static::getTableName()); // only for ORACLE
 
@@ -151,20 +161,24 @@ final class WordTable extends Entity\DataManager implements \Serializable
         Helper::dropTable(static::getTableNameWord2Location());
 
         // ORACLE: OK, MSSQL: OK
-        Main\HttpApplication::getConnection()->query("create table " . static::getTableNameWord2Location() . " (
+        Main\HttpApplication::getConnection()->query(
+            "create table " . static::getTableNameWord2Location() . " (
 
 			LOCATION_ID " . Helper::getSqlForDataType('int') . " not null,
 			WORD_ID " . Helper::getSqlForDataType('int') . " not null,
 
 			primary key (LOCATION_ID, WORD_ID)
-		)");
+		)"
+        );
 
         Helper::dropTable(static::getTableNamePositionTemporal());
 
-        $dbConnection->query("create table " . static::getTableNamePositionTemporal() . " (
+        $dbConnection->query(
+            "create table " . static::getTableNamePositionTemporal() . " (
 			WORD_ID " . Helper::getSqlForDataType('int') . " not null,
 			POSITION " . Helper::getSqlForDataType('int') . " default '0'
-		)");
+		)"
+        );
     }
 
     public static function createIndex()
@@ -180,8 +194,9 @@ final class WordTable extends Entity\DataManager implements \Serializable
             $word = ToUpper(trim($word));
             $word = str_replace('%', '', $word);
 
-            if (!strlen($word))
+            if ($word == '') {
                 continue;
+            }
 
             $result[] = $word;
         }
@@ -232,39 +247,47 @@ final class WordTable extends Entity\DataManager implements \Serializable
     {
         $filter = array();
 
-        if (!is_array($parameters))
+        if (!is_array($parameters)) {
             $parameters = array();
+        }
 
-        if (is_array($parameters['TYPES']) && !empty($parameters['TYPES']))
+        if (is_array($parameters['TYPES']) && !empty($parameters['TYPES'])) {
             $filter['=LOCATION.TYPE_ID'] = array_unique($parameters['TYPES']);
+        }
 
-        if (is_array($parameters['LANGS']) && !empty($parameters['LANGS']))
+        if (is_array($parameters['LANGS']) && !empty($parameters['LANGS'])) {
             $filter['=LANGUAGE_ID'] = array_unique($parameters['LANGS']);
+        }
 
         return $filter;
     }
 
     public function initializeData()
     {
-        $res = Location\Name\LocationTable::getList(array(
-            'select' => array(
-                'NAME',
-                'LOCATION_ID'
-            ),
-            'filter' => static::getFilterForInitData(array(
-                'TYPES' => $this->procData['ALLOWED_TYPES'],
-                'LANGS' => $this->procData['ALLOWED_LANGS']
-            )),
-            'order' => array('LOCATION_ID' => 'asc'), // need to make same location ids stay together
-            'limit' => static::STEP_SIZE,
-            'offset' => $this->procData['OFFSET']
-        ));
+        $res = Location\Name\LocationTable::getList(
+            array(
+                'select' => array(
+                    'NAME',
+                    'LOCATION_ID'
+                ),
+                'filter' => static::getFilterForInitData(
+                    array(
+                        'TYPES' => $this->procData['ALLOWED_TYPES'],
+                        'LANGS' => $this->procData['ALLOWED_LANGS']
+                    )
+                ),
+                'order' => array('LOCATION_ID' => 'asc'), // need to make same location ids stay together
+                'limit' => static::STEP_SIZE,
+                'offset' => $this->procData['OFFSET']
+            )
+        );
 
         $cnt = 0;
         while ($item = $res->fetch()) {
-            if (strlen($item['NAME'])) {
-                if ($this->procData['CURRENT_LOCATION'] != $item['LOCATION_ID'])
+            if ($item['NAME'] <> '') {
+                if ($this->procData['CURRENT_LOCATION'] != $item['LOCATION_ID']) {
                     $this->procData['CURRENT_LOCATION_WORDS'] = array();
+                }
 
                 $this->procData['CURRENT_LOCATION'] = $item['LOCATION_ID'];
 
@@ -282,19 +305,23 @@ final class WordTable extends Entity\DataManager implements \Serializable
                     }
 
                     if ($wordId === false) {
-                        $wordId = $this->dictionaryInserter->insert(array(
-                            'WORD' => $word
-                        ));
+                        $wordId = $this->dictionaryInserter->insert(
+                            array(
+                                'WORD' => $word
+                            )
+                        );
                         $this->dictionaryIndex[$wordHash] = $wordId;
                     }
 
                     if ($wordId !== false && !isset($this->procData['CURRENT_LOCATION_WORDS'][$wordId])) {
                         $this->procData['CURRENT_LOCATION_WORDS'][$wordId] = true;
 
-                        $this->word2LocationInserter->insert(array(
-                            'LOCATION_ID' => intval($item['LOCATION_ID']),
-                            'WORD_ID' => intval($wordId)
-                        ));
+                        $this->word2LocationInserter->insert(
+                            array(
+                                'LOCATION_ID' => intval($item['LOCATION_ID']),
+                                'WORD_ID' => intval($wordId)
+                            )
+                        );
                     }
                 }
             }
@@ -313,17 +340,23 @@ final class WordTable extends Entity\DataManager implements \Serializable
     public function resort()
     {
         $res = Main\HttpApplication::getConnection()->query(
-            Main\HttpApplication::getConnection()->getSqlHelper()->getTopSql("select ID, WORD from " . static::getTableName() . " order by WORD asc, ID asc", self::STEP_SIZE, intval($this->procData['OFFSET']))
+            Main\HttpApplication::getConnection()->getSqlHelper()->getTopSql(
+                "select ID, WORD from " . static::getTableName() . " order by WORD asc, ID asc",
+                self::STEP_SIZE,
+                intval($this->procData['OFFSET'])
+            )
         );
 
         $cnt = 0;
         while ($item = $res->fetch()) {
             $this->procData['POSITION']++;
 
-            $this->dictionaryResorter->insert(array(
-                'WORD_ID' => $item['ID'],
-                'POSITION' => $this->procData['POSITION']
-            ));
+            $this->dictionaryResorter->insert(
+                array(
+                    'WORD_ID' => $item['ID'],
+                    'POSITION' => $this->procData['POSITION']
+                )
+            );
 
             $cnt++;
         }
@@ -349,12 +382,17 @@ final class WordTable extends Entity\DataManager implements \Serializable
 
     public static function getIdByWord($word)
     {
-        if (!strlen($word))
+        if ($word == '') {
             return false;
+        }
 
         $dbConnection = Main\HttpApplication::getConnection();
 
-        $item = $dbConnection->query("select ID from " . static::getTableName() . " where WORD = '" . $dbConnection->getSqlHelper()->forSql($word) . "'")->fetch();
+        $item = $dbConnection->query(
+            "select ID from " . static::getTableName() . " where WORD = '" . $dbConnection->getSqlHelper()->forSql(
+                $word
+            ) . "'"
+        )->fetch();
 
         return intval($item['ID']) ? intval($item['ID']) : false;
     }
@@ -364,29 +402,36 @@ final class WordTable extends Entity\DataManager implements \Serializable
         $word = trim($word);
 
         $dbConnection = Main\HttpApplication::getConnection();
-        $sql = "select MIN(POSITION) as INF, MAX(POSITION) as SUP from " . static::getTableName() . " where WORD like '" . ToUpper($dbConnection->getSqlHelper()->forSql($word)) . "%'";
+        $sql = "select MIN(POSITION) as INF, MAX(POSITION) as SUP from " . static::getTableName(
+            ) . " where WORD like '" . ToUpper($dbConnection->getSqlHelper()->forSql($word)) . "%'";
 
         return $dbConnection->query($sql)->fetch();
     }
 
     public static function getWordsByBounds($inf, $sup)
     {
-        return static::getList(array('filter' => array(
-            '>=POSITION' => intval($inf),
-            '<=POSITION' => intval($sup)
-        ), 'order' => array(
-            'POSITION' => 'asc'
-        )));
+        return static::getList(
+            array(
+                'filter' => array(
+                    '>=POSITION' => intval($inf),
+                    '<=POSITION' => intval($sup)
+                ),
+                'order' => array(
+                    'POSITION' => 'asc'
+                )
+            )
+        );
     }
 
     public static function getBoundsForPhrase($phrase)
     {
-        if (is_string($phrase))
+        if (is_string($phrase)) {
             $words = self::parseString($phrase);
-        elseif (is_array($phrase))
+        } elseif (is_array($phrase)) {
             $words = self::parseWords($phrase);
-        else
+        } else {
             return array();
+        }
 
         // check for empty request
 
@@ -396,7 +441,9 @@ final class WordTable extends Entity\DataManager implements \Serializable
         foreach ($words as $word) {
             $bound = self::getBoundsByWord($word);
             if (!intval($bound['INF']) && !intval($bound['SUP'])) // no such word
+            {
                 return array();
+            }
 
             $bounds[$i] = $bound;
 
@@ -409,8 +456,9 @@ final class WordTable extends Entity\DataManager implements \Serializable
         //asort($sizes, SORT_NUMERIC);
 
         $boundsSorted = array();
-        foreach ($sizes as $j => $size)
+        foreach ($sizes as $j => $size) {
             $boundsSorted[] = $bounds[$j];
+        }
 
         // todo: here drop nested intervals, if any
 

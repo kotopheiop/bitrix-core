@@ -102,7 +102,10 @@ class CryptoField extends TextField
             $value = static::$cipher->encrypt($data, $this->cryptoKey);
             return base64_encode($value);
         } catch (Security\SecurityException $e) {
-            trigger_error("Error on encrypting the field {$this->getEntity()->getName()}.{$this->getName()}: {$e->getMessage()}", E_USER_WARNING);
+            trigger_error(
+                "Error on encrypting the field {$this->getEntity()->getName()}.{$this->getName()}: {$e->getMessage()}",
+                E_USER_WARNING
+            );
             return null;
         }
     }
@@ -119,7 +122,10 @@ class CryptoField extends TextField
             $value = static::$cipher->decrypt($value, $this->cryptoKey);
             return $value;
         } catch (Security\SecurityException $e) {
-            trigger_error("Error on decrypting the field {$this->getEntity()->getName()}.{$this->getName()}: {$e->getMessage()}", E_USER_WARNING);
+            trigger_error(
+                "Error on decrypting the field {$this->getEntity()->getName()}.{$this->getName()}: {$e->getMessage()}",
+                E_USER_WARNING
+            );
             return null;
         }
     }

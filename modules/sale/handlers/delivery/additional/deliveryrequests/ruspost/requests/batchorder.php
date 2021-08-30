@@ -41,16 +41,20 @@ class BatchOrder extends Base
             return $result;
         }
 
-        $res = Requests\ShipmentTable::getList(array(
-            'filter' => array(
-                '=SHIPMENT_ID' => $shipmentId
+        $res = Requests\ShipmentTable::getList(
+            array(
+                'filter' => array(
+                    '=SHIPMENT_ID' => $shipmentId
+                )
             )
-        ));
+        );
 
         $row = $res->fetch();
 
-        if (!$row || strlen($row['EXTERNAL_ID']) <= 0) {
-            $result->addError(new Error(Loc::getMessage('SALE_DLVRS_ADD_DREQ_RBATCHO_03', array('#SHIPMENT_ID#' => $shipmentId))));
+        if (!$row || $row['EXTERNAL_ID'] == '') {
+            $result->addError(
+                new Error(Loc::getMessage('SALE_DLVRS_ADD_DREQ_RBATCHO_03', array('#SHIPMENT_ID#' => $shipmentId)))
+            );
             return $result;
         }
 

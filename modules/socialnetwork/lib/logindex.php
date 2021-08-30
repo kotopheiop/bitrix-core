@@ -88,7 +88,9 @@ class LogIndexTable extends Entity\DataManager
         );
 
         $updateFields = array(
-            'CONTENT' => new \Bitrix\Main\DB\SqlExpression("IF(SHA1(CONTENT) = '{$encryptedValue}', CONTENT, '{$value}')")
+            'CONTENT' => new \Bitrix\Main\DB\SqlExpression(
+                "IF(SHA1(CONTENT) = '{$encryptedValue}', CONTENT, '{$value}')"
+            )
         );
 
         if (
@@ -136,7 +138,7 @@ class LogIndexTable extends Entity\DataManager
         $now = $connection->getSqlHelper()->getCurrentDateTimeFunction();
         if (
             !$value
-            || strtolower($value) == strtolower($now)
+            || mb_strtolower($value) == mb_strtolower($now)
         ) {
             $value = new SqlExpression($now);
         }

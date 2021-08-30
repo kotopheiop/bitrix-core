@@ -21,12 +21,14 @@ class Tools
     public static function checkExistKeys(array $fields, array $keyList, $checkNull = false)
     {
         $result = false;
-        if (empty($fields) || empty($keyList))
+        if (empty($fields) || empty($keyList)) {
             return $result;
+        }
 
         $checkNull = ($checkNull === true);
-        if (!$checkNull)
+        if (!$checkNull) {
             $fields = array_filter($fields, '\Bitrix\Catalog\Helpers\Tools::clearNullFields');
+        }
 
         foreach ($keyList as &$key) {
             if (array_key_exists($key, $fields)) {
@@ -50,18 +52,22 @@ class Tools
     public static function getMissingKeys(array $fields, array $keyList, $checkNull = false)
     {
         $result = array();
-        if (empty($keyList))
+        if (empty($keyList)) {
             return $result;
-        if (empty($fields))
+        }
+        if (empty($fields)) {
             return $keyList;
+        }
 
         $checkNull = ($checkNull === true);
-        if (!$checkNull)
+        if (!$checkNull) {
             $fields = array_filter($fields, '\Bitrix\Catalog\Helpers\Tools::clearNullFields');
+        }
 
         foreach ($keyList as &$key) {
-            if (!array_key_exists($key, $fields))
+            if (!array_key_exists($key, $fields)) {
                 $result[] = $key;
+            }
         }
         unset($key);
         return $result;
@@ -81,8 +87,9 @@ class Tools
             'EXIST' => array(),
             'MISSING' => array()
         );
-        if (empty($keyList))
+        if (empty($keyList)) {
             return false;
+        }
 
         if (empty($fields)) {
             $result['MISSING'] = $keyList;
@@ -90,14 +97,16 @@ class Tools
         }
 
         $checkNull = ($checkNull === true);
-        if (!$checkNull)
+        if (!$checkNull) {
             $fields = array_filter($fields, '\Bitrix\Catalog\Helpers\Tools::clearNullFields');
+        }
 
         foreach ($keyList as &$key) {
-            if (!array_key_exists($key, $fields))
+            if (!array_key_exists($key, $fields)) {
                 $result['MISSING'][] = $key;
-            else
+            } else {
                 $result['EXIST'][] = $key;
+            }
         }
         unset($key);
         return $result;

@@ -1,21 +1,27 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 class CClock
 {
     public static function Init(&$arParams)
     {
-        if (!isset($arParams['inputId']))
+        if (!isset($arParams['inputId'])) {
             $arParams['inputId'] = 'bxclock_' . rand();
-        if (!isset($arParams['inputName']))
+        }
+        if (!isset($arParams['inputName'])) {
             $arParams['inputName'] = $arParams['inputId'];
-        if (!isset($arParams['step']))
+        }
+        if (!isset($arParams['step'])) {
             $arParams['step'] = 5;
-        if ($arParams['view'] == 'select' && $arParams['step'] < 30)
+        }
+        if ($arParams['view'] == 'select' && $arParams['step'] < 30) {
             $arParams['step'] = 30;
+        }
 
-        if ($arParams['view'] != 'inline')
+        if ($arParams['view'] != 'inline') {
             $arParams['view'] = 'input';
+        }
     }
 
     public static function Show($arParams)
@@ -71,14 +77,16 @@ class CClock
                         }
                     }
 
-                    window.bxClockLoaders.push("bxShowClock_<?=$jsInputId?>('<?=CUtil::JSEscape($arParams['inputId'])?>_clock');");
+                    window.bxClockLoaders.push("bxShowClock_<?=$jsInputId?>('<?=CUtil::JSEscape(
+                        $arParams['inputId']
+                    )?>_clock');");
                 </script>
                 <?
                 break;
             default: //input
                 ?><input id="<?= $inputId ?>" <?= ($arParams['inputName'] ? 'name="' . $inputName . '"' : '') ?>
-                         type="text" value="<?= $initTime ?>"
-                         size="<?= IsAmPmMode() ? 6 : 4 ?>" <?= ($arParams['inputTitle'] ? 'title="' . $inputTitle . '"' : '') ?> <?= ($arParams['inputClass'] ? 'class="' . $arParams['inputClass'] . '"' : '') ?>
+                         type="text" value="<?= $initTime ?>"size="<?= IsAmPmMode(
+            ) ? 6 : 4 ?>" <?= ($arParams['inputTitle'] ? 'title="' . $inputTitle . '"' : '') ?> <?= ($arParams['inputClass'] ? 'class="' . $arParams['inputClass'] . '"' : '') ?>
                          autocomplete="off"/><?
                 break;
         }

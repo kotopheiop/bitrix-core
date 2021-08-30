@@ -27,10 +27,12 @@ class Rest
      */
     public static function getAgreementList($query, $nav = 0, \CRestServer $server)
     {
-        return Internals\AgreementTable::getList(array(
-            'select' => array('ID', 'NAME', 'ACTIVE', 'LANGUAGE_ID'),
-            'order' => array('ID' => 'DESC')
-        ))->fetchAll();
+        return Internals\AgreementTable::getList(
+            array(
+                'select' => array('ID', 'NAME', 'ACTIVE', 'LANGUAGE_ID'),
+                'order' => array('ID' => 'DESC')
+            )
+        )->fetchAll();
     }
 
     /**
@@ -73,14 +75,16 @@ class Rest
         $agreementId = isset($query['AGREEMENT_ID']) ? $query['AGREEMENT_ID'] : null;
         self::getAgreementById($agreementId);
 
-        $result = Internals\ConsentTable::add([
-            'AGREEMENT_ID' => $agreementId,
-            'USER_ID' => isset($query['USER_ID']) ? $query['USER_ID'] : null,
-            'IP' => isset($query['IP']) ? $query['IP'] : null,
-            'URL' => isset($query['URL']) ? $query['URL'] : null,
-            'ORIGIN_ID' => isset($query['ORIGIN_ID']) ? $query['ORIGIN_ID'] : null,
-            'ORIGINATOR_ID' => isset($query['ORIGINATOR_ID']) ? $query['ORIGINATOR_ID'] : null,
-        ]);
+        $result = Internals\ConsentTable::add(
+            [
+                'AGREEMENT_ID' => $agreementId,
+                'USER_ID' => isset($query['USER_ID']) ? $query['USER_ID'] : null,
+                'IP' => isset($query['IP']) ? $query['IP'] : null,
+                'URL' => isset($query['URL']) ? $query['URL'] : null,
+                'ORIGIN_ID' => isset($query['ORIGIN_ID']) ? $query['ORIGIN_ID'] : null,
+                'ORIGINATOR_ID' => isset($query['ORIGINATOR_ID']) ? $query['ORIGINATOR_ID'] : null,
+            ]
+        );
 
         if (!$result->isSuccess()) {
             self::printErrors($result->getErrors());

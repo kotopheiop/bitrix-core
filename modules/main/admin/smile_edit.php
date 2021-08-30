@@ -2,15 +2,16 @@
 
 IncludeModuleLangFile(__FILE__);
 
-if (!$USER->CanDoOperation('edit_other_settings'))
+if (!$USER->CanDoOperation('edit_other_settings')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
-$ID = intVal($ID);
+$ID = intval($ID);
 $arError = $arSmile = $arFields = $arLang = array();
 
 /* LANGS */
 $arLangTitle = array("reference_id" => array(), "reference" => array());
-$db_res = CLanguage::GetList(($b = "sort"), ($o = "asc"));
+$db_res = CLanguage::GetList();
 while ($res = $db_res->GetNext(true, false)) {
     $arLang[$res["LID"]] = $res;
     $arLangTitle["reference_id"][] = $res["LID"];
@@ -21,40 +22,50 @@ $bInitVars = false;
 $APPLICATION->SetTitle($ID > 0 ? GetMessage("SMILE_EDIT_RECORD") : GetMessage("SMILE_NEW_RECORD"));
 
 $fileName = '';
-if ($REQUEST_METHOD == "POST" && (strlen($save) > 0 || strlen($apply) > 0 || strlen($save_and_add) > 0)) {
-    if (isset($_FILES["IMAGE"]["name"]))
+if ($REQUEST_METHOD == "POST" && ($save <> '' || $apply <> '' || $save_and_add <> '')) {
+    if (isset($_FILES["IMAGE"]["name"])) {
         $fileName = RemoveScriptExtension($_FILES["IMAGE"]["name"]);
+    }
 
     if (!check_bitrix_sessid()) {
         $arError[] = array(
             "id" => "bad_sessid",
-            "text" => GetMessage("ERROR_BAD_SESSID"));
+            "text" => GetMessage("ERROR_BAD_SESSID")
+        );
     } elseif (!empty($_FILES["IMAGE"]["tmp_name"])) {
-        $sUploadDir = ($_POST['TYPE'] == CSmile::TYPE_ICON ? CSmile::PATH_TO_ICON : CSmile::PATH_TO_SMILE) . intval($_REQUEST["SET_ID"]) . '/';
+        $sUploadDir = ($_POST['TYPE'] == CSmile::TYPE_ICON ? CSmile::PATH_TO_ICON : CSmile::PATH_TO_SMILE) . intval(
+                $_REQUEST["SET_ID"]
+            ) . '/';
         CheckDirPath($_SERVER["DOCUMENT_ROOT"] . $sUploadDir);
 
         $arSmile = ($ID > 0 ? CSmile::getByID($ID) : $arSmile);
         $res = CFile::CheckImageFile($_FILES["IMAGE"], 300000, 0, 0);
-        if (strLen($res) > 0) {
+        if ($res <> '') {
             $arError[] = array(
                 "id" => "IMAGE",
                 "text" => $res
             );
-        } elseif (file_exists($_SERVER["DOCUMENT_ROOT"] . $sUploadDir . $fileName) && !(isset($arSmile["IMAGE"]) && $arSmile["IMAGE"] == $fileName)) {
+        } elseif (file_exists(
+                $_SERVER["DOCUMENT_ROOT"] . $sUploadDir . $fileName
+            ) && !(isset($arSmile["IMAGE"]) && $arSmile["IMAGE"] == $fileName)) {
             $arError[] = array(
                 "id" => "IMAGE",
-                "text" => GetMessage("ERROR_EXISTS_IMAGE", array("#FILE#" => str_replace("//", "/", $sUploadDir . $fileName)))
+                "text" => GetMessage(
+                    "ERROR_EXISTS_IMAGE",
+                    array("#FILE#" => str_replace("//", "/", $sUploadDir . $fileName))
+                )
             );
         } elseif (!@copy($_FILES["IMAGE"]["tmp_name"], $_SERVER["DOCUMENT_ROOT"] . $sUploadDir . $fileName)) {
             $arError[] = array(
                 "id" => "IMAGE",
-                "text" => GetMessage("ERROR_COPY_IMAGE"));
+                "text" => GetMessage("ERROR_COPY_IMAGE")
+            );
         } else {
             @chmod($_SERVER["DOCUMENT_ROOT"] . $sUploadDir . $fileName, BX_FILE_PERMISSIONS);
-            $imgArray = CFile::GetImageSize($_SERVER["DOCUMENT_ROOT"] . $sUploadDir . $fileName);
-            if (is_array($imgArray)) {
-                $arImageSize['WIDTH'] = $imgArray[0];
-                $arImageSize['HEIGHT'] = $imgArray[1];
+            $info = (new \Bitrix\Main\File\Image($_SERVER["DOCUMENT_ROOT"] . $sUploadDir . $fileName))->getInfo();
+            if ($info) {
+                $arImageSize['WIDTH'] = $info->getWidth();
+                $arImageSize['HEIGHT'] = $info->getHeight();
             } else {
                 $arImageSize['WIDTH'] = 0;
                 $arImageSize['HEIGHT'] = 0;
@@ -80,8 +91,9 @@ if ($REQUEST_METHOD == "POST" && (strlen($save) > 0 || strlen($apply) > 0 || str
             $arFields["IMAGE_DEFINITION"] = $_REQUEST["IMAGE_DEFINITION"];
         }
 
-        foreach ($arLang as $key => $val)
+        foreach ($arLang as $key => $val) {
             $arFields["LANG"][$key] = $_REQUEST["LANG"][$key];
+        }
 
         if ($ID > 0) {
             $arSmile = (empty($arSmile) ? CSmile::getByID($ID) : $arSmile);
@@ -103,11 +115,19 @@ if ($REQUEST_METHOD == "POST" && (strlen($save) > 0 || strlen($apply) > 0 || str
             if (!empty($arSmile)) {
                 $res = CSmile::getByID($ID);
                 if ($arSmile["IMAGE"] != $res["IMAGE"]) {
-                    @unlink($_SERVER["DOCUMENT_ROOT"] . ($arSmile['TYPE'] == CSmile::TYPE_ICON ? CSmile::PATH_TO_ICON : CSmile::PATH_TO_SMILE) . intval($arSmile["SET_ID"]) . '/' . $arSmile["IMAGE"]);
+                    @unlink(
+                        $_SERVER["DOCUMENT_ROOT"] . ($arSmile['TYPE'] == CSmile::TYPE_ICON ? CSmile::PATH_TO_ICON : CSmile::PATH_TO_SMILE) . intval(
+                            $arSmile["SET_ID"]
+                        ) . '/' . $arSmile["IMAGE"]
+                    );
                 } elseif ($arSmile["TYPE"] != $res["TYPE"] || $arSmile["SET_ID"] != $res["SET_ID"]) {
                     CopyDirFiles(
-                        $_SERVER["DOCUMENT_ROOT"] . ($arSmile['TYPE'] == CSmile::TYPE_ICON ? CSmile::PATH_TO_ICON : CSmile::PATH_TO_SMILE) . intval($arSmile["SET_ID"]) . '/' . $arSmile["IMAGE"],
-                        $_SERVER["DOCUMENT_ROOT"] . ($res['TYPE'] == CSmile::TYPE_ICON ? CSmile::PATH_TO_ICON : CSmile::PATH_TO_SMILE) . intval($res["SET_ID"]) . '/' . $arSmile["IMAGE"],
+                        $_SERVER["DOCUMENT_ROOT"] . ($arSmile['TYPE'] == CSmile::TYPE_ICON ? CSmile::PATH_TO_ICON : CSmile::PATH_TO_SMILE) . intval(
+                            $arSmile["SET_ID"]
+                        ) . '/' . $arSmile["IMAGE"],
+                        $_SERVER["DOCUMENT_ROOT"] . ($res['TYPE'] == CSmile::TYPE_ICON ? CSmile::PATH_TO_ICON : CSmile::PATH_TO_SMILE) . intval(
+                            $res["SET_ID"]
+                        ) . '/' . $arSmile["IMAGE"],
                         false,
                         false,
                         true,
@@ -115,11 +135,17 @@ if ($REQUEST_METHOD == "POST" && (strlen($save) > 0 || strlen($apply) > 0 || str
                     );
                 }
             }
-            LocalRedirect(strlen($apply) > 0 ?
-                "smile_edit.php?lang=" . LANG . "&ID=" . $ID . "&" . GetFilterParams("filter_", false) :
-                (strlen($save_and_add) > 0 ?
-                    "smile_edit.php?lang=" . LANG . "&TYPE=" . ($arSmile['TYPE'] == CSmile::TYPE_ICON ? CSmile::TYPE_ICON : CSmile::TYPE_SMILE) . "&SET_ID=" . intval($_REQUEST['SET_ID']) . "&" . GetFilterParams("filter_", false) :
-                    "smile.php?SET_ID=" . intval($_REQUEST['SET_ID']) . "&lang=" . LANG . "&" . GetFilterParams("filter_", false))
+            LocalRedirect(
+                $apply <> '' ?
+                    "smile_edit.php?lang=" . LANG . "&ID=" . $ID . "&" . GetFilterParams("filter_", false) :
+                    ($save_and_add <> '' ?
+                        "smile_edit.php?lang=" . LANG . "&TYPE=" . ($arSmile['TYPE'] == CSmile::TYPE_ICON ? CSmile::TYPE_ICON : CSmile::TYPE_SMILE) . "&SET_ID=" . intval(
+                            $_REQUEST['SET_ID']
+                        ) . "&" . GetFilterParams("filter_", false) :
+                        "smile.php?SET_ID=" . intval($_REQUEST['SET_ID']) . "&lang=" . LANG . "&" . GetFilterParams(
+                            "filter_",
+                            false
+                        ))
             );
         }
     }
@@ -129,9 +155,11 @@ if ($REQUEST_METHOD == "POST" && (strlen($save) > 0 || strlen($apply) > 0 || str
 }
 
 if ($bInitVars && !empty($arFields)) {
-    if (isset($arFields['LANG']))
-        foreach ($arFields['LANG'] as $key => $value)
+    if (isset($arFields['LANG'])) {
+        foreach ($arFields['LANG'] as $key => $value) {
             $arFields['LANG'][htmlspecialcharsbx($key)] = htmlspecialcharsbx($value);
+        }
+    }
 
     $arSmile = array(
         "SORT" => isset($arFields['SORT']) ? intval($arFields['SORT']) : 300,
@@ -147,9 +175,11 @@ if ($bInitVars && !empty($arFields)) {
     $arSmile = CSmile::getById($ID, CSmile::GET_ALL_LANGUAGE);
     $arSmile['LANG'] = $arSmile['NAME'];
 } else {
-    if (isset($_REQUEST['LANG']))
-        foreach ($_REQUEST['LANG'] as $key => $value)
+    if (isset($_REQUEST['LANG'])) {
+        foreach ($_REQUEST['LANG'] as $key => $value) {
             $_REQUEST['LANG'][htmlspecialcharsbx($key)] = htmlspecialcharsbx($value);
+        }
+    }
 
     $arSmile = array(
         "SORT" => isset($_REQUEST['SORT']) ? intval($_REQUEST['SORT']) : 300,
@@ -171,7 +201,10 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
 $aMenu = array(
     array(
         "TEXT" => GetMessage("SMILE_BTN_BACK"),
-        "LINK" => "/bitrix/admin/smile.php?SET_ID=" . $arSmile['SET_ID'] . "&lang=" . LANG . "&" . GetFilterParams("filter_", false),
+        "LINK" => "/bitrix/admin/smile.php?SET_ID=" . $arSmile['SET_ID'] . "&lang=" . LANG . "&" . GetFilterParams(
+                "filter_",
+                false
+            ),
         "ICON" => "btn_list",
     )
 );
@@ -181,21 +214,28 @@ if ($ID > 0) {
 
     $aMenu[] = array(
         "TEXT" => GetMessage("SMILE_BTN_NEW"),
-        "LINK" => "/bitrix/admin/smile_edit.php?lang=" . LANG . "&SET_ID=" . $arSmile['SET_ID'] . "&" . GetFilterParams("filter_", false),
+        "LINK" => "/bitrix/admin/smile_edit.php?lang=" . LANG . "&SET_ID=" . $arSmile['SET_ID'] . "&" . GetFilterParams(
+                "filter_",
+                false
+            ),
         "ICON" => "btn_new",
     );
 
     $aMenu[] = array(
         "TEXT" => GetMessage("SMILE_BTN_DELETE"),
-        "LINK" => "javascript:if(confirm('" . GetMessage("SMILE_BTN_DELETE_CONFIRM") . "')) window.location='/bitrix/admin/smile.php?SET_ID=" . $arSmile['SET_ID'] . "&action=delete&ID[]=" . $ID . "&lang=" . LANG . "&" . bitrix_sessid_get() . "#tb';",
+        "LINK" => "javascript:if(confirm('" . GetMessage(
+                "SMILE_BTN_DELETE_CONFIRM"
+            ) . "')) window.location='/bitrix/admin/smile.php?SET_ID=" . $arSmile['SET_ID'] . "&action=delete&ID[]=" . $ID . "&lang=" . LANG . "&" . bitrix_sessid_get(
+            ) . "#tb';",
         "ICON" => "btn_delete",
     );
 }
 
 $context = new CAdminContextMenu($aMenu);
 $context->Show();
-if (isset($message) && $message)
+if (isset($message) && $message) {
     echo $message->Show();
+}
 
 ?>
 <form method="POST" action="<?= $APPLICATION->GetCurPageParam() ?>" name="smile_edit" enctype="multipart/form-data">
@@ -205,7 +245,12 @@ if (isset($message) && $message)
     <?= bitrix_sessid_post() ?>
     <?
     $aTabs = array(
-        array("DIV" => "edit1", "TAB" => GetMessage("SMILE_TAB_SMILE"), "ICON" => "smile", "TITLE" => GetMessage("SMILE_TAB_SMILE_DESCR"))
+        array(
+            "DIV" => "edit1",
+            "TAB" => GetMessage("SMILE_TAB_SMILE"),
+            "ICON" => "smile",
+            "TITLE" => GetMessage("SMILE_TAB_SMILE_DESCR")
+        )
     );
     $tabControl = new CAdminTabControl("tabControl", $aTabs);
     $tabControl->Begin();
@@ -216,8 +261,12 @@ if (isset($message) && $message)
         <td><?= GetMessage("SMILE_TYPE") ?>:</td>
         <td>
             <select name="TYPE">
-                <option value="<?= CSmile::TYPE_SMILE ?>" <?= ($arSmile["TYPE"] == CSmile::TYPE_SMILE ? "selected" : "") ?>><?= GetMessage("SMILE_TYPE_SMILE"); ?></option>
-                <option value="<?= CSmile::TYPE_ICON ?>" <?= ($arSmile["TYPE"] == CSmile::TYPE_ICON ? "selected" : "") ?>><?= GetMessage("SMILE_TYPE_ICON"); ?></option>
+                <option value="<?= CSmile::TYPE_SMILE ?>" <?= ($arSmile["TYPE"] == CSmile::TYPE_SMILE ? "selected" : "") ?>><?= GetMessage(
+                        "SMILE_TYPE_SMILE"
+                    ); ?></option>
+                <option value="<?= CSmile::TYPE_ICON ?>" <?= ($arSmile["TYPE"] == CSmile::TYPE_ICON ? "selected" : "") ?>><?= GetMessage(
+                        "SMILE_TYPE_ICON"
+                    ); ?></option>
             </select>
         </td>
     </tr>
@@ -256,16 +305,18 @@ if (isset($message) && $message)
     <tr<? if ($ID <= 0) { ?> class="adm-detail-required-field"<? } ?>>
         <td>
             <?= GetMessage(($ID <= 0) ? "SMILE_IMAGE" : "SMILE_IMAGE_UPLOAD") ?> <span
-                    title="<?= GetMessage('SMILE_IMAGE_HR_TITLE_2') ?>">(?)</span>:<br><small><?= GetMessage("SMILE_IMAGE_NOTE_2") ?></small>
-        </td>
+                    title="<?= GetMessage('SMILE_IMAGE_HR_TITLE_2') ?>">(?)</span>:<br><small><?= GetMessage(
+                    "SMILE_IMAGE_NOTE_2"
+                ) ?></small></td>
         <td>
             <input type="file" name="IMAGE" size="30"/>
             <div style="margin-top: 10px">
 
                 <div><label><input type="radio" name="IMAGE_DEFINITION" value="<?= CSmile::IMAGE_SD ?>"
                                    checked="true"/><?= GetMessage('SMILE_IMAGE_SD') ?></label></div>
-                <div><label><input type="radio" name="IMAGE_DEFINITION"
-                                   value="<?= CSmile::IMAGE_HD ?>"/><?= GetMessage('SMILE_IMAGE_HD') ?></label></div>
+                <div><label><input type="radio" name="IMAGE_DEFINITION" value="<?= CSmile::IMAGE_HD ?>"/><?= GetMessage(
+                            'SMILE_IMAGE_HD'
+                        ) ?></label></div>
                 <div><label><input type="radio" name="IMAGE_DEFINITION"
                                    value="<?= CSmile::IMAGE_UHD ?>"/><?= GetMessage('SMILE_IMAGE_UHD') ?></label></div>
         </td>
@@ -287,8 +338,8 @@ if (isset($message) && $message)
     </tr>
     <? foreach ($arLang as $key => $val): ?>
         <tr>
-            <td><? $word = GetMessage('SMILE_IMAGE_NAME_' . strtoupper($key));
-                if (strlen($word) > 0) {
+            <td><? $word = GetMessage('SMILE_IMAGE_NAME_' . mb_strtoupper($key));
+                if ($word <> '') {
                     echo $word;
                 } else {
                     echo $val["NAME"];
@@ -301,9 +352,15 @@ if (isset($message) && $message)
     <?
     $tabControl->EndTab();
 
-    $tabControl->Buttons(array(
-        "btnSaveAndAdd" => true,
-        "back_url" => "/bitrix/admin/smile.php?SET_ID=" . $arSmile['SET_ID'] . "&lang=" . LANG . "&" . GetFilterParams("filter_", false)));
+    $tabControl->Buttons(
+        array(
+            "btnSaveAndAdd" => true,
+            "back_url" => "/bitrix/admin/smile.php?SET_ID=" . $arSmile['SET_ID'] . "&lang=" . LANG . "&" . GetFilterParams(
+                    "filter_",
+                    false
+                )
+        )
+    );
     ?>
 </form>
 <?

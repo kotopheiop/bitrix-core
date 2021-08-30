@@ -1,4 +1,5 @@
 <?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/tools.php");
 include($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/colors.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/img.php");
@@ -7,15 +8,17 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/img.php");
 $ImageHandle = CreateImageHandle(45, 2);
 imagefill($ImageHandle, 0, 0, imagecolorallocate($ImageHandle, 255, 255, 255));
 
-if (isset($_REQUEST["color"]))
+if (isset($_REQUEST["color"])) {
     $dec = ReColor($_REQUEST["color"]);
-else
+} else {
     $dec = 0;
+}
 
-if (is_array($dec))
+if (is_array($dec)) {
     $color = imagecolorallocate($ImageHandle, $dec[0], $dec[1], $dec[2]);
-else
+} else {
     $color = imagecolorallocate($ImageHandle, 0, 0, 0);
+}
 
 if (isset($_REQUEST["dash"]) && $_REQUEST["dash"] == "Y") {
     $style = array(

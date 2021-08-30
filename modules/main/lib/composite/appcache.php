@@ -90,7 +90,6 @@ class AppCache
     public static function setEnabled($isEnabled = true)
     {
         self::$isEnabled = (bool)$isEnabled;
-
     }
 
     public function generate(&$content)
@@ -108,7 +107,11 @@ class AppCache
             }
         }
 
-        $currentHashSum = md5(serialize($files["FULL_FILE_LIST"]) . serialize($this->fallbackPages) . serialize($this->network) . serialize($this->excludeImagePatterns));
+        $currentHashSum = md5(
+            serialize($files["FULL_FILE_LIST"]) . serialize($this->fallbackPages) . serialize(
+                $this->network
+            ) . serialize($this->excludeImagePatterns)
+        );
         $manifestCache = $this->readManifestCache($manifestId);
         if (!$manifestCache || $manifestCache["FILE_HASH"] != $currentHashSum || self::$debug) {
             $this->isModified = true;
@@ -169,7 +172,7 @@ JS;
         $params = Array();
         $appCacheUrl = $server->get("HTTP_BX_APPCACHE_URL");
         $appCacheParams = $server->get("HTTP_BX_APPCACHE_PARAMS");
-        if (strlen($appCacheUrl) > 0) {
+        if ($appCacheUrl <> '') {
             //TODO compare $_SERVER["REQUEST_URI"] and $_SERVER["HTTP_BX_APPCACHE_URL"]
             $selfObject->setIsSided(true);
             $selfObject->setPageURI($appCacheUrl);
@@ -186,7 +189,11 @@ JS;
             $selfObject->setPageURI($server->get("REQUEST_URI"));
 
             if (!self::$debug) {
-                $APPLICATION->SetPageProperty("manifest", " manifest=\"" . self::getManifestCheckFile() . "?manifest_id=" . $selfObject->getCurrentManifestID() . "\"");
+                $APPLICATION->SetPageProperty(
+                    "manifest",
+                    " manifest=\"" . self::getManifestCheckFile() . "?manifest_id=" . $selfObject->getCurrentManifestID(
+                    ) . "\""
+                );
             } else {
                 Asset::getInstance()->addString("<script type=\"text/javascript\">" . self::DEBUG_HOLDER . "</script>");
             }
@@ -205,11 +212,12 @@ JS;
      * Gets file path for getting of manifest content
      * @return string
      */
-    public function getManifestCheckFile()
+    public static function getManifestCheckFile()
     {
         $checkFile = self::MANIFEST_CHECK_FILE;
-        if (self::$customCheckFile != null && strlen(self::$customCheckFile) > 0)
+        if (self::$customCheckFile != null && self::$customCheckFile <> '') {
             $checkFile = self::$customCheckFile;
+        }
         return $checkFile;
     }
 
@@ -304,7 +312,10 @@ JS;
         if (array_key_exists("css", $arFilesByType)) {
             $findImageRegexp = '#([;\s:]*(?:url|@import)\s*\(\s*)(\'|"|)(.+?)(\2)\s*\)#si';
             if (count($this->excludeImagePatterns) > 0) {
-                $findImageRegexp = '#([;\s:]*(?:url|@import)\s*\(\s*)(\'|"|)((?:(?!' . implode("|", $this->excludeImagePatterns) . ').)+?)(\2)\s*\)#si';
+                $findImageRegexp = '#([;\s:]*(?:url|@import)\s*\(\s*)(\'|"|)((?:(?!' . implode(
+                        "|",
+                        $this->excludeImagePatterns
+                    ) . ').)+?)(\2)\s*\)#si';
             }
 
             $cssCount = count($arFilesByType["css"]);
@@ -313,13 +324,13 @@ JS;
                 if ($manifestCache["FILE_DATA"]["FILE_TIMESTAMPS"][$cssFilePath] != $fileData["FILE_TIMESTAMPS"][$cssFilePath]
                     || $excludePatternsHash != $manifestCache["EXCLUDE_PATTERNS_HASH"]
                 ) {
-
                     $fileContent = false;
                     $fileUrl = parse_url($cssFilePath);
                     $file = new  \Bitrix\Main\IO\File(Application::getDocumentRoot() . $fileUrl['path']);
 
-                    if ($file->getExtension() !== "css")
+                    if ($file->getExtension() !== "css") {
                         continue;
+                    }
 
                     if ($file->isExists() && $file->isReadable()) {
                         $fileContent = $file->getContents();
@@ -335,10 +346,9 @@ JS;
                         preg_match_all($findImageRegexp, $fileContent, $match);
                         $matchCount = count($match[3]);
                         for ($k = 0; $k < $matchCount; $k++) {
-
                             $file = self::replaceUrlCSS($match[3][$k], addslashes($cssPath));
 
-                            if (!in_array($file, $files) && !strpos($file, ";base64")) {
+                            if (!in_array($file, $files) && !mb_strpos($file, ";base64")) {
                                 $fileData["FULL_FILE_LIST"][] = $files[] = $file;
                                 $fileData["CSS_FILE_IMAGES"][$cssFilePath][] = $file;
                             }
@@ -347,10 +357,12 @@ JS;
                 } else {
                     $fileData["CSS_FILE_IMAGES"][$cssFilePath] = $manifestCache["FILE_DATA"]["CSS_FILE_IMAGES"][$cssFilePath];
                     if (is_array($manifestCache["FILE_DATA"]["CSS_FILE_IMAGES"][$cssFilePath])) {
-                        $fileData["FULL_FILE_LIST"] = array_merge($fileData["FULL_FILE_LIST"], $manifestCache["FILE_DATA"]["CSS_FILE_IMAGES"][$cssFilePath]);
+                        $fileData["FULL_FILE_LIST"] = array_merge(
+                            $fileData["FULL_FILE_LIST"],
+                            $manifestCache["FILE_DATA"]["CSS_FILE_IMAGES"][$cssFilePath]
+                        );
                     }
                 }
-
             }
         }
 
@@ -367,11 +379,11 @@ JS;
      */
     private static function replaceUrlCSS($url, $cssPath)
     {
-        if (strpos($url, "://") !== false || strpos($url, "data:") !== false) {
+        if (mb_strpos($url, "://") !== false || mb_strpos($url, "data:") !== false) {
             return $url;
         }
         $url = trim(stripslashes($url), "'\" \r\n\t");
-        if (substr($url, 0, 1) == "/") {
+        if (mb_substr($url, 0, 1) == "/") {
             return $url;
         }
 
@@ -490,7 +502,6 @@ JS;
 
     private function getManifestDescription()
     {
-
         $manifestParams = "";
         $arCacheParams = $this->params;
         if (count($arCacheParams) > 0) {
@@ -520,7 +531,7 @@ JS;
         return true;
     }
 
-    public function readManifestCache($manifestId)
+    public static function readManifestCache($manifestId)
     {
         $cache = new \CPHPCache();
 
@@ -547,13 +558,13 @@ JS;
      */
     public static function getCachePath($manifestId)
     {
-        $cachePath = "/appcache/" . substr($manifestId, 0, 2) . "/" . substr($manifestId, 2, 4) . "/";
+        $cachePath = "/appcache/" . mb_substr($manifestId, 0, 2) . "/" . mb_substr($manifestId, 2, 4) . "/";
 
         return $cachePath;
     }
 
 
-    private function getManifestID($pageURI, $arParams)
+    private static function getManifestID($pageURI, $arParams)
     {
         $id = $pageURI;
         if (count($arParams) > 0) {
@@ -591,7 +602,6 @@ JS;
             self::removeManifestById($manifestId);
             self::getInstance()->isModified = true;
         }
-
     }
 
 }

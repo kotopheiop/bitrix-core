@@ -5,7 +5,7 @@ namespace Bitrix\Translate;
 use Bitrix\Main;
 use Bitrix\Translate;
 use Bitrix\Translate\Index;
-
+use Bitrix\Translate\Text\StringHelper;
 
 class File
     extends Translate\IO\File
@@ -29,6 +29,9 @@ class File
     /** @var array */
     protected $messageCodes = [];
 
+    /** @var array */
+    protected $messageEnclosure = [];
+
     /** @var int */
     protected $dataPosition = 0;
 
@@ -48,7 +51,10 @@ class File
      */
     public static function instantiateByPath($path)
     {
-        if (empty($path) || !is_string($path) || (substr($path, -4) !== '.php') || !preg_match("#.+/lang/[a-z]{2}/.+\.php$#", $path)) {
+        if (empty($path) || !is_string($path) || (mb_substr($path, -4) !== '.php') || !preg_match(
+                "#.+/lang/[a-z]{2}/.+\.php$#",
+                $path
+            )) {
             throw new Main\ArgumentException("Parameter 'path' has a wrong value");
         }
 
@@ -207,10 +213,17 @@ class File
      */
     public function lint(
         $content = '',
-        $validTokens = array(T_OPEN_TAG, T_CLOSE_TAG, T_WHITESPACE, T_CONSTANT_ENCAPSED_STRING, T_VARIABLE, T_COMMENT, T_DOC_COMMENT),
+        $validTokens = array(
+            T_OPEN_TAG,
+            T_CLOSE_TAG,
+            T_WHITESPACE,
+            T_CONSTANT_ENCAPSED_STRING,
+            T_VARIABLE,
+            T_COMMENT,
+            T_DOC_COMMENT
+        ),
         $validChars = array('[', ']', ';', '=')
-    )
-    {
+    ) {
         $isValid = false;
 
         if (empty($content)) {
@@ -223,32 +236,38 @@ class File
             return $isValid;
         }
 
-        if (function_exists('token_get_all')) {
-            $tokens = token_get_all($content);
+        $tokens = token_get_all($content);
 
-            $line = $tokens[0][2] || 1;
-            if (!is_array($tokens[0]) || $tokens[0][0] !== T_OPEN_TAG) {
-                $this->addError(new Main\Error("Parse Error: Wrong open tag " . token_name($tokens[0][0]) . " '{$tokens[0][1]}' at line {$line}"));
-            } else {
-                $isValid = true;
-                foreach ($tokens as $token) {
-                    if (is_array($token)) {
-                        $line = $token[2];
-                        if (
-                            !in_array($token[0], $validTokens) ||
-                            ($token[0] === T_VARIABLE && $token[1] != '$MESS')
-                        ) {
-                            $this->addError(new Main\Error("Parse Error: Wrong token " . token_name($token[0]) . " '{$token[1]}' at line {$line}"));
-                            $isValid = false;
-                            break;
-                        }
-                    } elseif (is_string($token)) {
-                        if (!in_array($token, $validChars)) {
-                            $line++;
-                            $this->addError(new Main\Error("Parse Error: Expected character '{$token}' at line {$line}"));
-                            $isValid = false;
-                            break;
-                        }
+        $line = $tokens[0][2] || 1;
+        if (!is_array($tokens[0]) || $tokens[0][0] !== T_OPEN_TAG) {
+            $this->addError(
+                new Main\Error(
+                    "Parse Error: Wrong open tag " . token_name($tokens[0][0]) . " '{$tokens[0][1]}' at line {$line}"
+                )
+            );
+        } else {
+            $isValid = true;
+            foreach ($tokens as $token) {
+                if (is_array($token)) {
+                    $line = $token[2];
+                    if (
+                        !in_array($token[0], $validTokens) ||
+                        ($token[0] === T_VARIABLE && $token[1] != '$MESS')
+                    ) {
+                        $this->addError(
+                            new Main\Error(
+                                "Parse Error: Wrong token " . token_name($token[0]) . " '{$token[1]}' at line {$line}"
+                            )
+                        );
+                        $isValid = false;
+                        break;
+                    }
+                } elseif (is_string($token)) {
+                    if (!in_array($token, $validChars)) {
+                        $line++;
+                        $this->addError(new Main\Error("Parse Error: Expected character '{$token}' at line {$line}"));
+                        $isValid = false;
+                        break;
                     }
                 }
             }
@@ -265,6 +284,7 @@ class File
      * Loads language file for operate.
      *
      * @return bool
+     * @throws \ParseError
      */
     public function load()
     {
@@ -283,16 +303,50 @@ class File
             return false;
         }
 
+        $content = $this->getContents();
+        if (
+            empty($content)
+            || !is_string($content)
+            || $content === '<?'
+            || $content === '<?php'
+        ) {
+            $this->addError(new Main\Error('Empty content', 'EMPTY_CONTENT'));
+            return false;
+        }
+
         // encoding
         $targetEncoding = $this->getOperatingEncoding();
         $sourceEncoding = $this->getSourceEncoding();
-        $convertEncoding = (strtolower($targetEncoding) != strtolower($sourceEncoding));
+        $convertEncoding = (mb_strtolower($targetEncoding) != mb_strtolower($sourceEncoding));
+        if ($convertEncoding) {
+            $path = Main\Localization\Translation::convertLangPath($this->getPhysicalPath(), $this->getLangId());
 
-        $MESS = array();
-        include $this->getPhysicalPath();
+            if (Main\Localization\Translation::getDeveloperRepositoryPath() !== null) {
+                $convertEncoding = (stripos($path, Main\Localization\Translation::getDeveloperRepositoryPath()) === 0);
+            }
+            if (!$convertEncoding && Main\Localization\Translation::useTranslationRepository()) {
+                $convertEncoding = (stripos(
+                        $path,
+                        Main\Localization\Translation::getTranslationRepositoryPath()
+                    ) === 0);
+            }
+        }
 
-        if (is_array($MESS) && count($MESS) > 0) {
-            foreach ($MESS as $phraseId => $phrase) {
+        $messages = (function () {
+            if (isset($GLOBALS['MESS'])) {
+                unset($GLOBALS['MESS']);
+            }
+
+            $MESS = [];
+            \ob_start();
+            include $this->getPhysicalPath();
+            \ob_end_clean();
+
+            return $MESS;
+        })();
+
+        if (is_array($messages) && count($messages) > 0) {
+            foreach ($messages as $phraseId => $phrase) {
                 if ($convertEncoding) {
                     $phrase = Main\Text\Encoding::convertEncoding($phrase, $sourceEncoding, $targetEncoding);
                 }
@@ -303,7 +357,183 @@ class File
             }
         }
 
-        // todo: Handle here developer's comment from file
+        return true;
+    }
+
+    /**
+     * Lints php code.
+     *
+     * @return bool
+     */
+    public function loadTokens()
+    {
+        $this->messages = [];
+        $this->messageCodes = [];
+        $this->messageEnclosure = [];
+        $this->messagesCount = 0;
+
+        if (!$this->isExists() || !$this->isFile() || ($this->getExtension() !== 'php')) {
+            return false;
+        }
+
+        // language id
+        $langId = $this->getLangId();
+        if (empty($langId)) {
+            $this->addError(new Main\Error('Language Id must be filled'));
+            return false;
+        }
+
+        $content = $this->getContents();
+        if (
+            empty($content)
+            || !is_string($content)
+            || $content === '<?'
+            || $content === '<?php'
+        ) {
+            $this->addError(new Main\Error('Empty content', 'EMPTY_CONTENT'));
+            return false;
+        }
+
+        $is = function ($token, $type, $value = null) {
+            if (is_string($token)) {
+                return $token === $type;
+            }
+            if (is_array($token)) {
+                if ($token[0] === $type) {
+                    if ($value !== null) {
+                        return $token[1] === $value;
+                    }
+                    return true;
+                }
+            }
+            return false;
+        };
+
+        $tokens = token_get_all($content);
+
+        $hasPhraseDefinition = false;
+        foreach ($tokens as $inx => $token) {
+            if ($is($token, T_WHITESPACE)) {
+                unset($tokens[$inx]);
+                continue;
+            }
+            if (!$hasPhraseDefinition && $is($token, T_VARIABLE, '$MESS')) {
+                $hasPhraseDefinition = true;
+            }
+            //if (is_array($token))$tokens[$inx][] = token_name($token[0]);
+        }
+
+        if (!$hasPhraseDefinition) {
+            $this->addError(new Main\Error("There are no phrase definitions"));
+            return false;
+        }
+
+        array_splice($tokens, 0, 0);
+
+        $addPhrase = function ($phraseId, $phraseParts, $isHeredoc = false) {
+            if ($phraseId != '') {
+                $len = mb_strlen($phraseId, $this->getOperatingEncoding());
+                $phraseId = mb_substr($phraseId, 1, $len - 2, $this->getOperatingEncoding());// strip trailing quotes
+                $phraseId = str_replace("\\\\", "\\", $phraseId);// strip slashes in code
+
+                $enclosure = $isHeredoc ? '<<<' : mb_substr($phraseParts[0], 0, 1);// what quote
+
+                $phrase = '';
+                if ($isHeredoc) {
+                    $part = $phraseParts[0];
+                    $len = mb_strlen($part, $this->getOperatingEncoding());
+                    $phrase = mb_substr($part, 0, $len - 1, $this->getOperatingEncoding());// strip final \n
+                } else {
+                    foreach ($phraseParts as $part) {
+                        $enclosure = mb_substr($part, 0, 1);// what quote
+                        // strip trailing quotes
+                        if ($enclosure === '"' || $enclosure === "'") {
+                            $len = mb_strlen($part, $this->getOperatingEncoding());
+                            $part = mb_substr($part, 1, $len - 2, $this->getOperatingEncoding());
+                        }
+                        //$part = StringHelper::unescapePhp($part, $enclosure);
+                        $phrase .= $part;
+                    }
+                }
+
+                $this->messages[$phraseId] = $phrase;
+                $this->messageCodes[] = $phraseId;
+                $this->messageEnclosure[$phraseId] = $enclosure;
+                $this->messagesCount++;
+            }
+        };
+
+        $startPhrase = false;
+        $endPhrase = false;
+        $inPhrase = false;
+        $inCode = false;
+        $isHeredoc = false;
+        $phraseId = '';
+        $phrase = [];
+        $whereIsPhrase = [];
+
+        foreach ($tokens as $inx => &$token) {
+            if (!$startPhrase && $is($token, T_VARIABLE, '$MESS')) {
+                $startPhrase = true;
+            }
+
+            if ($startPhrase) {
+                if ($is($token, '[')) {
+                    $inCode = true;
+                } elseif ($is($token, ']')) {
+                    $inCode = false;
+                } elseif ($is($token, '=')) {
+                    $inPhrase = true;
+                } elseif ($is($token, ';')) {
+                    $endPhrase = true;
+                } elseif ($is($token, T_CLOSE_TAG)) {
+                    $endPhrase = true;
+                } elseif ($is($token, T_START_HEREDOC)) {
+                    $isHeredoc = true;
+                }
+
+                if (
+                    $inPhrase
+                    && $is($token, T_VARIABLE, '$MESS')
+                    && $is($tokens[$inx + 1], '[')
+                    && $is($tokens[$inx + 2], T_CONSTANT_ENCAPSED_STRING)
+                ) {
+                    $clonePhraseId = $tokens[$inx + 2][1];
+                    $cloneInx = $whereIsPhrase[$clonePhraseId];
+                    $phrase[] = $tokens[$cloneInx][1];
+                    $endPhrase = true;
+                }
+
+                if ($is($token, T_CONSTANT_ENCAPSED_STRING) || $is($token, T_ENCAPSED_AND_WHITESPACE)) {
+                    if ($inPhrase) {
+                        $phrase[] = $token[1];
+                        $whereIsPhrase[$phraseId] = $inx;
+                    }
+                    if ($inCode) {
+                        $phraseId = $token[1];
+                    }
+                }
+
+                if ($endPhrase) {
+                    $addPhrase($phraseId, $phrase, $isHeredoc);
+
+                    $phrase = [];
+                    $phraseId = '';
+                    $startPhrase = false;
+                    $endPhrase = false;
+                    $inPhrase = false;
+                    $inCode = false;
+                    $isHeredoc = false;
+                }
+            }
+
+            // todo: Handle here developer's comment from file
+            // T_COMMENT T_DOC_COMMENT
+        }
+
+        if ($startPhrase) {
+            $addPhrase($phraseId, $phrase, $isHeredoc);
+        }
 
         return true;
     }
@@ -328,11 +558,24 @@ class File
         // encoding
         $operatingEncoding = $this->getOperatingEncoding();
         $sourceEncoding = $this->getSourceEncoding();
-        $convertEncoding = (strtolower($operatingEncoding) != strtolower($sourceEncoding));
+        $convertEncoding = (mb_strtolower($operatingEncoding) != mb_strtolower($sourceEncoding));
+        if ($convertEncoding) {
+            $path = Main\Localization\Translation::convertLangPath($this->getPhysicalPath(), $this->getLangId());
+
+            if (Main\Localization\Translation::getDeveloperRepositoryPath() !== null) {
+                $convertEncoding = (stripos($path, Main\Localization\Translation::getDeveloperRepositoryPath()) === 0);
+            }
+            if (!$convertEncoding && Main\Localization\Translation::useTranslationRepository()) {
+                $convertEncoding = (stripos(
+                        $path,
+                        Main\Localization\Translation::getTranslationRepositoryPath()
+                    ) === 0);
+            }
+        }
 
         $content = '';
         foreach ($this->messages as $phraseId => $phrase) {
-            if (empty($phrase)) {
+            if (empty($phrase) && $phrase !== '0') {
                 // remove empty
                 continue;
             }
@@ -340,13 +583,24 @@ class File
             if ($convertEncoding) {
                 $phrase = Main\Text\Encoding::convertEncoding($phrase, $operatingEncoding, $sourceEncoding);
             }
-            $row = "\$MESS[\"" . \EscapePHPString($phraseId) . "\"] = \"" . \EscapePHPString($phrase) . "\"";
+            $enclosure = '"';
+            if (isset($this->messageEnclosure[$phraseId])) {
+                $enclosure = $this->messageEnclosure[$phraseId];// preserve origin quote
+            }
+            $row = '$MESS["' . StringHelper::escapePhp($phraseId, '"', "\\\\") . '"] = ';
+
+            if ($enclosure === '<<<') {
+                $row .= "<<<HTML\n" . StringHelper::escapePhp($phrase, $enclosure) . "\nHTML";
+            } else {
+                $row .= $enclosure . StringHelper::escapePhp($phrase, $enclosure) . $enclosure;
+            }
+
             $content .= "\n" . $row . ';';
         }
         unset($phraseId, $phrase, $row);
 
-        if (strlen($content) > 0) {
-            if (parent::putContents('<?' . $content . "\n?" . '>') === false) {
+        if ($content <> '') {
+            if (parent::putContents('<?php' . $content . "\n") === false) {
                 $filePath = $this->getPath();
                 throw new Main\IO\IoException("Couldn't write language file '{$filePath}'");
             }
@@ -406,8 +660,11 @@ class File
 
         $fullPath = $langFile = $this->getPhysicalPath();
 
-        if (Main\Localization\Translation::useTranslationRepository() && in_array($langId, Translate\Config::getTranslationRepositoryLanguages())) {
-            if (strpos($langFile, Main\Localization\Translation::getTranslationRepositoryPath()) === 0) {
+        if (Main\Localization\Translation::useTranslationRepository() && in_array(
+                $langId,
+                Translate\Config::getTranslationRepositoryLanguages()
+            )) {
+            if (mb_strpos($langFile, Main\Localization\Translation::getTranslationRepositoryPath()) === 0) {
                 $langFile = str_replace(
                     Main\Localization\Translation::getTranslationRepositoryPath() . '/',
                     '',
@@ -416,7 +673,7 @@ class File
             }
         }
         if (Main\Localization\Translation::getDeveloperRepositoryPath() !== null) {
-            if (strpos($langFile, Main\Localization\Translation::getDeveloperRepositoryPath()) === 0) {
+            if (mb_strpos($langFile, Main\Localization\Translation::getDeveloperRepositoryPath()) === 0) {
                 $langFile = str_replace(
                     Main\Localization\Translation::getDeveloperRepositoryPath() . '/',
                     '',
@@ -424,7 +681,7 @@ class File
                 );
             }
         }
-        if (strpos($langFile, Main\Application::getDocumentRoot()) === 0) {
+        if (mb_strpos($langFile, Main\Application::getDocumentRoot()) === 0) {
             $langFile = str_replace(
                 Main\Application::getDocumentRoot() . '/',
                 '',
@@ -473,13 +730,15 @@ class File
     public function getFileIndex()
     {
         if (!$this->fileIndex instanceof Index\FileIndex) {
-            $indexFileRes = Index\Internals\FileIndexTable::getList([
-                'filter' => [
-                    '=LANG_ID' => $this->getLangId(),
-                    '=FULL_PATH' => $this->getPath(),
-                ],
-                'limit' => 1
-            ]);
+            $indexFileRes = Index\Internals\FileIndexTable::getList(
+                [
+                    'filter' => [
+                        '=LANG_ID' => $this->getLangId(),
+                        '=FULL_PATH' => $this->getPath(),
+                    ],
+                    'limit' => 1
+                ]
+            );
             $this->fileIndex = $indexFileRes->fetchObject();
         }
 
@@ -642,7 +901,7 @@ class File
      */
     public function sortPhrases()
     {
-        ksort($this->messages, SORT_STRING);
+        \ksort($this->messages, \SORT_NATURAL);
         $this->rewind();
 
         return $this;
@@ -679,7 +938,13 @@ class File
     {
         $code = $this->messageCodes[$this->dataPosition];
 
-        return $this->messages[$code] ?: null;
+        if (!isset($this->messages[$code]) || !is_string(
+                $this->messages[$code]
+            ) || (empty($this->messages[$code]) && $this->messages[$code] !== '0')) {
+            return null;
+        }
+
+        return $this->messages[$code];
     }
 
     /**
@@ -754,6 +1019,7 @@ class File
 
     //endregion
 
+    //region Content
 
     /**
      * Returns string fiile content.
@@ -797,6 +1063,9 @@ class File
         return parent::putContents($data, $flags);
     }
 
+    //endregion
+
+    //region Excess & Deficiency
 
     /**
      * Compares two files and returns excess amount of phrases.
@@ -821,4 +1090,6 @@ class File
     {
         return (int)count(array_diff($ethalon->getCodes(), $this->getCodes()));
     }
+
+    //endregion
 }

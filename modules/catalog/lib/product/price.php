@@ -32,15 +32,18 @@ class Price
     public static function handlerAfterUpdateCurrencyBaseRate(Main\Event $event)
     {
         $params = $event->getParameters();
-        if (empty($params))
+        if (empty($params)) {
             return;
+        }
 
         $oldBaseRate = (float)$params['OLD_BASE_RATE'];
-        if ($oldBaseRate < 1E-4)
+        if ($oldBaseRate < 1E-4) {
             return;
+        }
         $currentBaseRate = (float)$params['CURRENT_BASE_RATE'];
-        if (abs($currentBaseRate - $oldBaseRate) / $oldBaseRate < 1E-4)
+        if (abs($currentBaseRate - $oldBaseRate) / $oldBaseRate < 1E-4) {
             return;
+        }
         $currency = $params['CURRENCY'];
 
         $conn = Main\Application::getConnection();
@@ -65,11 +68,13 @@ class Price
      */
     public static function loadRoundRules(array $priceTypes)
     {
-        if (empty($priceTypes))
+        if (empty($priceTypes)) {
             return;
+        }
         Main\Type\Collection::normalizeArrayValuesByInt($priceTypes);
-        if (empty($priceTypes))
+        if (empty($priceTypes)) {
             return;
+        }
 
         $skipCache = (defined('CATALOG_SKIP_CACHE') && CATALOG_SKIP_CACHE);
         $cacheTime = (int)self::CACHE_TIME;
@@ -88,22 +93,26 @@ class Price
                         self::$roundRules[$priceTypeId] = $managedCache->get($cacheId);
                     }
                 }
-                if ($skipCache || !$rulesFound)
+                if ($skipCache || !$rulesFound) {
                     $needLoad[] = $priceTypeId;
+                }
                 unset($cacheId, $rulesFound);
             }
         }
         unset($priceTypeId);
 
         if (!empty($needLoad)) {
-            foreach ($needLoad as $priceTypeId)
+            foreach ($needLoad as $priceTypeId) {
                 self::$roundRules[$priceTypeId] = array();
+            }
             unset($priceTypeId);
-            $iterator = Catalog\RoundingTable::getList(array(
-                'select' => array('PRICE', 'ROUND_TYPE', 'ROUND_PRECISION', 'CATALOG_GROUP_ID'),
-                'filter' => array('@CATALOG_GROUP_ID' => $needLoad),
-                'order' => array('CATALOG_GROUP_ID' => 'ASC', 'PRICE' => 'DESC')
-            ));
+            $iterator = Catalog\RoundingTable::getList(
+                array(
+                    'select' => array('PRICE', 'ROUND_TYPE', 'ROUND_PRECISION', 'CATALOG_GROUP_ID'),
+                    'filter' => array('@CATALOG_GROUP_ID' => $needLoad),
+                    'order' => array('CATALOG_GROUP_ID' => 'ASC', 'PRICE' => 'DESC')
+                )
+            );
             while ($row = $iterator->fetch()) {
                 $priceTypeId = (int)$row['CATALOG_GROUP_ID'];
                 self::$roundRules[$priceTypeId][] = $row;
@@ -112,8 +121,9 @@ class Price
             unset($row, $iterator);
 
             if (!$skipCache) {
-                foreach ($needLoad as $priceTypeId)
+                foreach ($needLoad as $priceTypeId) {
                     $managedCache->set(static::getRulesCacheId($priceTypeId), self::$roundRules[$priceTypeId]);
+                }
                 unset($priceType);
             }
         }
@@ -130,10 +140,12 @@ class Price
     public static function getRoundRules($priceType)
     {
         $priceType = (int)$priceType;
-        if ($priceType <= 0)
+        if ($priceType <= 0) {
             return array();
-        if (!isset(self::$roundRules[$priceType]))
+        }
+        if (!isset(self::$roundRules[$priceType])) {
             static::loadRoundRules(array($priceType));
+        }
 
         return self::$roundRules[$priceType];
     }
@@ -147,10 +159,12 @@ class Price
     public static function clearRoundRulesCache($priceType)
     {
         $priceType = (int)$priceType;
-        if ($priceType <= 0)
+        if ($priceType <= 0) {
             return;
-        if (isset(self::$roundRules[$priceType]))
+        }
+        if (isset(self::$roundRules[$priceType])) {
             unset(self::$roundRules[$priceType]);
+        }
         Main\Application::getInstance()->getManagedCache()->clean(
             static::getRulesCacheId($priceType),
             Catalog\RoundingTable::getTableName()
@@ -169,14 +183,15 @@ class Price
         $priceType,
         $price,
         /** @noinspection PhpUnusedParameterInspection */ $currency = ''
-    )
-    {
+    ) {
         $rules = static::getRoundRules($priceType);
-        if (empty($rules))
+        if (empty($rules)) {
             return array();
+        }
         foreach ($rules as $row) {
-            if ($row['PRICE'] < $price)
+            if ($row['PRICE'] < $price) {
                 return $row;
+            }
         }
         return array();
     }
@@ -192,14 +207,17 @@ class Price
     public static function roundPrice($priceType, $price, $currency)
     {
         $price = (float)$price;
-        if ($price <= 0)
+        if ($price <= 0) {
             return $price;
+        }
         $priceType = (int)$priceType;
-        if ($priceType <= 0)
+        if ($priceType <= 0) {
             return $price;
+        }
         $rule = static::searchRoundRule($priceType, $price, $currency);
-        if (empty($rule))
+        if (empty($rule)) {
             return $price;
+        }
         return static::roundValue($price, $rule['ROUND_PRECISION'], $rule['ROUND_TYPE']);
     }
 
@@ -214,18 +232,22 @@ class Price
     public static function roundValue($value, $precision, $type)
     {
         $type = (int)$type;
-        if (!in_array($type, Catalog\RoundingTable::getRoundTypes(false)))
+        if (!in_array($type, Catalog\RoundingTable::getRoundTypes(false))) {
             return $value;
+        }
 
         $precision = (float)$precision;
-        if ($precision <= 0)
+        if ($precision <= 0) {
             return 0;
-        if ($precision >= 1)
+        }
+        if ($precision >= 1) {
             $precision = (int)$precision;
+        }
 
         $value = (float)$value;
-        if (abs($value) <= self::VALUE_EPS)
+        if (abs($value) <= self::VALUE_EPS) {
             return 0;
+        }
 
         return ($precision < 1
             ? static::roundFraction($value, $precision, $type)
@@ -258,17 +280,20 @@ class Price
         $quotientFloor = floor($quotient);
         switch ($type) {
             case Catalog\RoundingTable::ROUND_UP:
-                if (($quotient - $quotientFloor) > self::VALUE_EPS)
+                if (($quotient - $quotientFloor) > self::VALUE_EPS) {
                     $quotientFloor += 1;
+                }
                 break;
             case Catalog\RoundingTable::ROUND_DOWN:
-                if ($quotientFloor < floor(($value + self::VALUE_EPS) / $precision))
+                if ($quotientFloor < floor(($value + self::VALUE_EPS) / $precision)) {
                     $quotientFloor += 1;
+                }
                 break;
             case Catalog\RoundingTable::ROUND_MATH:
             default:
-                if (($quotient - $quotientFloor + self::VALUE_EPS) >= .5)
+                if (($quotient - $quotientFloor + self::VALUE_EPS) >= .5) {
                     $quotientFloor += 1;
+                }
                 break;
         }
 
@@ -287,8 +312,9 @@ class Price
     {
         $valueFloor = floor($value);
         $fraction = $value - $valueFloor;
-        if ($fraction <= self::VALUE_EPS)
+        if ($fraction <= self::VALUE_EPS) {
             return $value;
+        }
 
         return $valueFloor + static::roundWhole($fraction, $precision, $type);
     }

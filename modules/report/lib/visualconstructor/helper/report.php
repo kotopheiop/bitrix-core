@@ -19,8 +19,11 @@ class Report
      * @param bool $isPseudo Marker to set built widget will be pseudo or no.
      * @return BaseReport|null
      */
-    public static function buildReportHandlerForWidget($reportHandlerClassName, \Bitrix\Report\VisualConstructor\Entity\Widget $widget, $isPseudo = false)
-    {
+    public static function buildReportHandlerForWidget(
+        $reportHandlerClassName,
+        \Bitrix\Report\VisualConstructor\Entity\Widget $widget,
+        $isPseudo = false
+    ) {
         $reportHandler = ReportProvider::getReportHandlerByClassName($reportHandlerClassName);
         if ($reportHandler instanceof BaseReport) {
             /** @var BaseReport $reportHandler */

@@ -24,8 +24,9 @@ class Pool
      */
     public function get($code)
     {
-        if (isset($this->quantities[$code]) || array_key_exists($code, $this->quantities))
+        if (isset($this->quantities[$code]) || array_key_exists($code, $this->quantities)) {
             return $this->quantities[$code];
+        }
 
         return null;
     }
@@ -37,7 +38,6 @@ class Pool
     public function set($code, $quantity)
     {
         $this->quantities[$code] = $quantity;
-
     }
 
     /**
@@ -54,8 +54,9 @@ class Pool
      */
     public function addItem($code, $item)
     {
-        if (!array_key_exists($code, $this->items))
+        if (!array_key_exists($code, $this->items)) {
             $this->items[$code] = $item;
+        }
     }
 
     /**

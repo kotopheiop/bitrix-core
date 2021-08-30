@@ -16,47 +16,58 @@ Loc::loadMessages(__FILE__);
 
 Loader::IncludeModule('conversion');
 
-if ($APPLICATION->GetGroupRight('conversion') < 'R')
+if ($APPLICATION->GetGroupRight('conversion') < 'R') {
     $APPLICATION->AuthForm(Loc::getMessage('ACCESS_DENIED'));
+}
 
 $userOptions = CUserOptions::GetOption('conversion', 'filter', array());
 
 // PERIOD
 
-$from = ($d = $_GET['from'] ?: $userOptions['from']) && Date::isCorrect($d) ? new Date($d) : Date::createFromPhp(new DateTime('first day of last month'));
-$to = ($d = $_GET['to'] ?: $userOptions['to']) && Date::isCorrect($d) ? new Date($d) : Date::createFromPhp(new DateTime('last day of this month'));
+$from = ($d = $_GET['from'] ?: $userOptions['from']) && Date::isCorrect($d) ? new Date($d) : Date::createFromPhp(
+    new DateTime('first day of last month')
+);
+$to = ($d = $_GET['to'] ?: $userOptions['to']) && Date::isCorrect($d) ? new Date($d) : Date::createFromPhp(
+    new DateTime('last day of this month')
+);
 
 // RATES
 
-if (!$rateTypes = RateManager::getTypes(array('MODULE' => 'sale')))
+if (!$rateTypes = RateManager::getTypes(array('MODULE' => 'sale'))) {
     die ('No rates available!');
+}
 
 $rateName = $_GET['rate'];
 
 if (!$rateType = $rateTypes[$rateName]) {
-    list ($rateName, $rateType) = each($rateTypes);
+    $rateName = key($rateTypes);
+    $rateType = current($rateTypes);
 }
 
 // SITES
 
 $sites = array();
 
-$result = SiteTable::getList(array(
-    'select' => array('LID', 'NAME'),
-    'order' => array('DEF' => 'DESC', 'SORT' => 'ASC'),
-));
+$result = SiteTable::getList(
+    array(
+        'select' => array('LID', 'NAME'),
+        'order' => array('DEF' => 'DESC', 'SORT' => 'ASC'),
+    )
+);
 
 while ($row = $result->fetch()) {
     $sites[$row['LID']] = $row['NAME'];
 }
 
-if (!$sites)
+if (!$sites) {
     die ('No sites available!');
+}
 
 $site = $_GET['site'] ?: $userOptions['site'];
 
 if (!$siteName = $sites[$site]) {
-    list ($site, $siteName) = each($sites);
+    $site = key($sites);
+    $siteName = current($sites);
 }
 
 // FILTER
@@ -79,10 +90,13 @@ $context = new ReportContext();
 
 $context->setAttribute('conversion_site', $site);
 
-$rates = $context->getRatesDeprecated($rateTypes, array(
-    '>=DAY' => $from,
-    '<=DAY' => $to,
-));
+$rates = $context->getRatesDeprecated(
+    $rateTypes,
+    array(
+        '>=DAY' => $from,
+        '<=DAY' => $to,
+    )
+);
 
 if ($topRate = reset($rates)) {
     $traffic = $topRate['DENOMINATOR'];
@@ -156,12 +170,14 @@ Bitrix\Conversion\AdminHelpers\renderFilter($filter);
                             $menuItems[sprintf('%s (%s)', $name, $id)] = array_merge($filter, array('site' => $id));
                         }
 
-                        Bitrix\Conversion\AdminHelpers\renderScale(array(
-                            'SITE_NAME' => sprintf('%s (%s)', $siteName, $site),
-                            'SITE_MENU' => $menuItems,
-                            'CONVERSION' => $conversion,
-                            'SCALE' => $rateType['SCALE'],
-                        ));
+                        Bitrix\Conversion\AdminHelpers\renderScale(
+                            array(
+                                'SITE_NAME' => sprintf('%s (%s)', $siteName, $site),
+                                'SITE_MENU' => $menuItems,
+                                'CONVERSION' => $conversion,
+                                'SCALE' => $rateType['SCALE'],
+                            )
+                        );
 
                         ?>
                     </div>
@@ -170,7 +186,9 @@ Bitrix\Conversion\AdminHelpers\renderFilter($filter);
                         <div class="adm-profit-indicators-wrap" id="top-blocks-wrapper">
                             <div class="adm-profit-indicators-item">
                                 <div class="adm-profit-indicators-block adm-profit-indicators-blue">
-                                    <div class="adm-profit-indicators-title"><?= Loc::getMessage('CONVERSION_CALC_GROSS_INCOME') ?></div>
+                                    <div class="adm-profit-indicators-title"><?= Loc::getMessage(
+                                            'CONVERSION_CALC_GROSS_INCOME'
+                                        ) ?></div>
                                     <div class="adm-profit-indicators-cont">
                                         <span class="adm-profit-indicators-alignment"></span>
                                         <span id="conversion-calc-topGross" class="adm-profit-indicators-num"></span>
@@ -179,13 +197,17 @@ Bitrix\Conversion\AdminHelpers\renderFilter($filter);
                             </div>
                             <div class="adm-profit-indicators-item">
                                 <div class="adm-profit-indicators-block adm-profit-indicators-green">
-                                    <div class="adm-profit-indicators-title"><?= Loc::getMessage('CONVERSION_CALC_ADVERT_BUDGET') ?></div>
+                                    <div class="adm-profit-indicators-title"><?= Loc::getMessage(
+                                            'CONVERSION_CALC_ADVERT_BUDGET'
+                                        ) ?></div>
                                     <div class="adm-profit-indicators-cont">
                                         <span class="adm-profit-indicators-alignment"></span>
                                         <span id="conversion-calc-topAdvertExpense"
                                               class="adm-profit-indicators-num"></span>
                                     </div>
-                                    <div class="adm-profit-indicators-title"><?= Loc::getMessage('CONVERSION_CALC_OTHER_EXPENSES') ?></div>
+                                    <div class="adm-profit-indicators-title"><?= Loc::getMessage(
+                                            'CONVERSION_CALC_OTHER_EXPENSES'
+                                        ) ?></div>
                                     <div class="adm-profit-indicators-cont">
                                         <span class="adm-profit-indicators-alignment"></span>
                                         <span id="conversion-calc-topOtherExpense"
@@ -195,7 +217,9 @@ Bitrix\Conversion\AdminHelpers\renderFilter($filter);
                             </div>
                             <div class="adm-profit-indicators-item">
                                 <div class="adm-profit-indicators-block adm-profit-indicators-violet">
-                                    <div class="adm-profit-indicators-title"><?= Loc::getMessage('CONVERSION_CALC_PROFIT') ?></div>
+                                    <div class="adm-profit-indicators-title"><?= Loc::getMessage(
+                                            'CONVERSION_CALC_PROFIT'
+                                        ) ?></div>
                                     <div class="adm-profit-indicators-cont">
                                         <span class="adm-profit-indicators-alignment"></span>
                                         <span id="conversion-calc-topProfit" class="adm-profit-indicators-num"></span>
@@ -214,7 +238,9 @@ Bitrix\Conversion\AdminHelpers\renderFilter($filter);
                                 </div>
                             </div>
                             <div class="adm-profit-indicators-block adm-profit-percent">
-                                <div class="adm-profit-indicators-title"><?= Loc::getMessage('CONVERSION_CALC_CONVERSION') ?></div>
+                                <div class="adm-profit-indicators-title"><?= Loc::getMessage(
+                                        'CONVERSION_CALC_CONVERSION'
+                                    ) ?></div>
                                 <div class="adm-profit-indicators-cont">
                                     <span id="conversion-calc-topConversion"></span>
                                 </div>
@@ -225,7 +251,9 @@ Bitrix\Conversion\AdminHelpers\renderFilter($filter);
                     <div class="adm-profit-block adm-profit-block-white">
 
                         <div class="adm-profit-block-part">
-                            <div class="adm-profit-title adm-profit-title-funnel"><?= Loc::getMessage('CONVERSION_CALC_FUNNEL') ?></div>
+                            <div class="adm-profit-title adm-profit-title-funnel"><?= Loc::getMessage(
+                                    'CONVERSION_CALC_FUNNEL'
+                                ) ?></div>
                             <div class="adm-profit-funnel-block">
                                 <div id="bitrix-conversion-funnel" style="height:350px"></div>
                                 <div class="adm-profit-funnel-arrow">
@@ -236,41 +264,56 @@ Bitrix\Conversion\AdminHelpers\renderFilter($filter);
 
                         <div id="conversion-calc" class="adm-profit-block-part">
                             <div class="adm-profit-title-wrap">
-                                <div class="adm-profit-title adm-profit-title-calc"><?= Loc::getMessage('CONVERSION_CALC_PROFITABILITY') ?></div>
+                                <div class="adm-profit-title adm-profit-title-calc"><?= Loc::getMessage(
+                                        'CONVERSION_CALC_PROFITABILITY'
+                                    ) ?></div>
                                 <div id="conversion-calc-forecast" class="adm-profit-calc-toggle">
-                                    <span class="adm-profit-calc-toggle-text"><?= Loc::getMessage('CONVERSION_CALC_FORECAST') ?></span>
+                                    <span class="adm-profit-calc-toggle-text"><?= Loc::getMessage(
+                                            'CONVERSION_CALC_FORECAST'
+                                        ) ?></span>
                                     <span class="adm-profit-calc-toggle-btn"></span>
                                 </div>
                             </div>
                             <div class="adm-profit-calc-block">
                                 <div class="adm-profit-calc-row">
                                     <div class="adm-profit-calc-cel">
-                                        <div class="adm-profit-calc-cel-header"><?= Loc::getMessage('CONVERSION_CALC_ADVERT_BUDGET') ?></div>
+                                        <div class="adm-profit-calc-cel-header"><?= Loc::getMessage(
+                                                'CONVERSION_CALC_ADVERT_BUDGET'
+                                            ) ?></div>
                                         <input id="conversion-calc-advertExpense" type="text" readonly
                                                class="adm-profit-calc-inp">
                                     </div>
                                     <div class="adm-profit-calc-cel">
-                                        <div class="adm-profit-calc-cel-header"><?= Loc::getMessage('CONVERSION_CALC_CLICK_PRICE') ?></div>
+                                        <div class="adm-profit-calc-cel-header"><?= Loc::getMessage(
+                                                'CONVERSION_CALC_CLICK_PRICE'
+                                            ) ?></div>
                                         <input id="conversion-calc-clickPrice" type="text" readonly
                                                class="adm-profit-calc-inp">
                                     </div>
                                     <div class="adm-profit-calc-cel adm-profit-calc-cel-yellow">
-                                        <div class="adm-profit-calc-cel-header"><?= Loc::getMessage('CONVERSION_CALC_DENOMINATOR') ?></div>
+                                        <div class="adm-profit-calc-cel-header"><?= Loc::getMessage(
+                                                'CONVERSION_CALC_DENOMINATOR'
+                                            ) ?></div>
                                         <input id="conversion-calc-traffic" type="text" readonly tabindex="-1">
                                     </div>
                                 </div>
                                 <div class="adm-profit-calc-row">
                                     <div class="adm-profit-calc-cel">
-                                        <div class="adm-profit-calc-cel-header"><?= Loc::getMessage('CONVERSION_CALC_DENOMINATOR') ?></div>
+                                        <div class="adm-profit-calc-cel-header"><?= Loc::getMessage(
+                                                'CONVERSION_CALC_DENOMINATOR'
+                                            ) ?></div>
                                         <input id="conversion-calc-traffic2" type="text" readonly tabindex="-1">
                                     </div>
                                     <div class="adm-profit-calc-cel">
-                                        <div class="adm-profit-calc-cel-header"><?= Loc::getMessage('CONVERSION_CALC_NUMERATOR') ?></div>
+                                        <div class="adm-profit-calc-cel-header"><?= Loc::getMessage(
+                                                'CONVERSION_CALC_NUMERATOR'
+                                            ) ?></div>
                                         <input id="conversion-calc-quantity" type="text" readonly tabindex="-1">
                                     </div>
                                     <div class="adm-profit-calc-cel adm-profit-calc-cel-yellow">
-                                        <div class="adm-profit-calc-cel-header"><?= Loc::getMessage('CONVERSION_CALC_CONVERSION') ?>
-                                            %
+                                        <div class="adm-profit-calc-cel-header"><?= Loc::getMessage(
+                                                'CONVERSION_CALC_CONVERSION'
+                                            ) ?> %
                                         </div>
                                         <input id="conversion-calc-conversion" type="text" readonly
                                                class="adm-profit-calc-inp">
@@ -278,58 +321,79 @@ Bitrix\Conversion\AdminHelpers\renderFilter($filter);
                                 </div>
                                 <div class="adm-profit-calc-row">
                                     <div class="adm-profit-calc-cel">
-                                        <div class="adm-profit-calc-cel-header"><?= Loc::getMessage('CONVERSION_CALC_GROSS_INCOME') ?></div>
+                                        <div class="adm-profit-calc-cel-header"><?= Loc::getMessage(
+                                                'CONVERSION_CALC_GROSS_INCOME'
+                                            ) ?></div>
                                         <input id="conversion-calc-gross" type="text" readonly tabindex="-1">
                                     </div>
                                     <div class="adm-profit-calc-cel">
-                                        <div class="adm-profit-calc-cel-header"><?= Loc::getMessage('CONVERSION_CALC_NUMERATOR') ?></div>
+                                        <div class="adm-profit-calc-cel-header"><?= Loc::getMessage(
+                                                'CONVERSION_CALC_NUMERATOR'
+                                            ) ?></div>
                                         <input id="conversion-calc-quantity2" type="text" readonly tabindex="-1">
                                     </div>
                                     <div class="adm-profit-calc-cel adm-profit-calc-cel-red">
-                                        <div class="adm-profit-calc-cel-header"><?= Loc::getMessage('CONVERSION_CALC_AVERAGE_BILL') ?></div>
+                                        <div class="adm-profit-calc-cel-header"><?= Loc::getMessage(
+                                                'CONVERSION_CALC_AVERAGE_BILL'
+                                            ) ?></div>
                                         <input id="conversion-calc-averageBill" type="text" readonly
                                                class="adm-profit-calc-inp">
                                     </div>
                                 </div>
                                 <div class="adm-profit-calc-row">
                                     <div class="adm-profit-calc-cel">
-                                        <div class="adm-profit-calc-cel-header"><?= Loc::getMessage('CONVERSION_CALC_ADVERT_BUDGET') ?></div>
+                                        <div class="adm-profit-calc-cel-header"><?= Loc::getMessage(
+                                                'CONVERSION_CALC_ADVERT_BUDGET'
+                                            ) ?></div>
                                         <input id="conversion-calc-advertExpense2" type="text" readonly tabindex="-1">
                                     </div>
                                     <div class="adm-profit-calc-cel">
-                                        <div class="adm-profit-calc-cel-header"><?= Loc::getMessage('CONVERSION_CALC_NUMERATOR') ?></div>
+                                        <div class="adm-profit-calc-cel-header"><?= Loc::getMessage(
+                                                'CONVERSION_CALC_NUMERATOR'
+                                            ) ?></div>
                                         <input id="conversion-calc-quantity3" type="text" readonly tabindex="-1">
                                     </div>
                                     <div class="adm-profit-calc-cel adm-profit-calc-cel-red">
-                                        <div class="adm-profit-calc-cel-header"><?= Loc::getMessage('CONVERSION_CALC_CPA') ?></div>
+                                        <div class="adm-profit-calc-cel-header"><?= Loc::getMessage(
+                                                'CONVERSION_CALC_CPA'
+                                            ) ?></div>
                                         <input id="conversion-calc-cpa" type="text" readonly tabindex="-1">
                                     </div>
                                 </div>
                                 <div class="adm-profit-calc-row">
                                     <div class="adm-profit-calc-cel">
-                                        <div class="adm-profit-calc-cel-header"><?= Loc::getMessage('CONVERSION_CALC_ADVERT_BUDGET') ?></div>
+                                        <div class="adm-profit-calc-cel-header"><?= Loc::getMessage(
+                                                'CONVERSION_CALC_ADVERT_BUDGET'
+                                            ) ?></div>
                                         <input id="conversion-calc-advertExpense3" type="text" readonly tabindex="-1">
                                     </div>
                                     <div class="adm-profit-calc-cel">
-                                        <div class="adm-profit-calc-cel-header"><?= Loc::getMessage('CONVERSION_CALC_MARGIN') ?>
-                                            , %
+                                        <div class="adm-profit-calc-cel-header"><?= Loc::getMessage(
+                                                'CONVERSION_CALC_MARGIN'
+                                            ) ?>, %
                                         </div>
                                         <input id="conversion-calc-margin" type="text" readonly
                                                class="adm-profit-calc-inp">
                                     </div>
                                     <div class="adm-profit-calc-cel adm-profit-calc-cel-violet">
-                                        <div class="adm-profit-calc-cel-header"><?= Loc::getMessage('CONVERSION_CALC_ROI') ?></div>
+                                        <div class="adm-profit-calc-cel-header"><?= Loc::getMessage(
+                                                'CONVERSION_CALC_ROI'
+                                            ) ?></div>
                                         <input id="conversion-calc-roi" type="text" readonly tabindex="-1">
                                     </div>
                                 </div>
                                 <div class="adm-profit-calc-row">
                                     <div class="adm-profit-calc-cel adm-profit-calc-footer">
-                                        <div class="adm-profit-calc-cel-header"><?= Loc::getMessage('CONVERSION_CALC_OTHER_EXPENSES') ?></div>
+                                        <div class="adm-profit-calc-cel-header"><?= Loc::getMessage(
+                                                'CONVERSION_CALC_OTHER_EXPENSES'
+                                            ) ?></div>
                                         <input id="conversion-calc-otherExpenses" type="text" readonly
                                                class="adm-profit-calc-inp">
                                     </div>
                                     <div class="adm-profit-calc-cel adm-profit-calc-footer">
-                                        <div class="adm-profit-calc-cel-header"><?= Loc::getMessage('CONVERSION_CALC_COST') ?></div>
+                                        <div class="adm-profit-calc-cel-header"><?= Loc::getMessage(
+                                                'CONVERSION_CALC_COST'
+                                            ) ?></div>
                                         <input id="conversion-calc-cost" type="text" readonly
                                                class="adm-profit-calc-inp">
                                     </div>
@@ -377,7 +441,9 @@ Bitrix\Conversion\AdminHelpers\renderFilter($filter);
             funnel.dataProvider = funnelData;
             funnel.theme = 'none';
             funnel.labelText = ' ';
-            funnel.balloonText = '[[title]]: <span style="white-space: nowrap; ">[[value]] <?=CUtil::JSEscape(Utils::getBaseCurrencyUnit())?></span>';
+            funnel.balloonText = '[[title]]: <span style="white-space: nowrap; ">[[value]] <?=CUtil::JSEscape(
+                Utils::getBaseCurrencyUnit()
+            )?></span>';
             funnel.titleField = 'title';
             funnel.valueField = 'value';
             funnel.thousandsSeparator = ' ';
@@ -469,7 +535,10 @@ Bitrix\Conversion\AdminHelpers\renderFilter($filter);
                     costElement.value = <?=$cost?>;
                     topProfitElement.innerHTML = <?=round($profit)?>;
                     // scale
-                    scaleConversionElement.innerHTML = topConversionElement.innerHTML = '<?=number_format($conversion, 2)?>%';
+                    scaleConversionElement.innerHTML = topConversionElement.innerHTML = '<?=number_format(
+                        $conversion,
+                        2
+                    )?>%';
                     scaleShiftElement.style.left = getShift(<?=$conversion?>, scale) + '%';
 
                     calcFixSize1.increase();

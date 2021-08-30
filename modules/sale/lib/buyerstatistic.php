@@ -58,10 +58,11 @@ class BuyerStatistic
         $buyerStatistic = $statisticData->fetch();
         $id = $buyerStatistic['ID'];
 
-        if (empty($id))
+        if (empty($id)) {
             return Internals\BuyerStatisticTable::add($result->getData());
-        else
+        } else {
             return Internals\BuyerStatisticTable::update($id, $result->getData());
+        }
     }
 
     /**
@@ -89,23 +90,27 @@ class BuyerStatistic
         $lastOrderDate = null;
         $lastArchiveDate = null;
 
-        $orderData = $orderClass::getList([
-            'select' => ['DATE_INSERT'],
-            'filter' => ['=USER_ID' => $userId, '=CURRENCY' => $currency, '=LID' => $lid],
-            'order' => ['DATE_INSERT' => 'DESC'],
-            'limit' => 1
-        ]);
+        $orderData = $orderClass::getList(
+            [
+                'select' => ['DATE_INSERT'],
+                'filter' => ['=USER_ID' => $userId, '=CURRENCY' => $currency, '=LID' => $lid],
+                'order' => ['DATE_INSERT' => 'DESC'],
+                'limit' => 1
+            ]
+        );
 
         if ($resultOrder = $orderData->fetch()) {
             $lastOrderDate = $resultOrder['DATE_INSERT'];
         }
 
-        $archiveData = Archive\Manager::getList([
-            'select' => ['DATE_INSERT'],
-            'filter' => ['=USER_ID' => $userId, '=CURRENCY' => $currency, '=LID' => $lid],
-            'order' => ['DATE_INSERT' => 'DESC'],
-            'limit' => 1
-        ]);
+        $archiveData = Archive\Manager::getList(
+            [
+                'select' => ['DATE_INSERT'],
+                'filter' => ['=USER_ID' => $userId, '=CURRENCY' => $currency, '=LID' => $lid],
+                'order' => ['DATE_INSERT' => 'DESC'],
+                'limit' => 1
+            ]
+        );
 
         if ($resultOrder = $archiveData->fetch()) {
             $lastArchiveDate = $resultOrder['DATE_INSERT'];
@@ -120,21 +125,25 @@ class BuyerStatistic
             );
 
             if ($lastOrderDate) {
-                $orderDataCount = $orderClass::getList([
-                    'select' => ['FULL_SUM_PAID', 'COUNT_FULL_PAID_ORDER', 'COUNT_PART_PAID_ORDER'],
-                    'filter' => [
-                        '=USER_ID' => $userId,
-                        '=CURRENCY' => $currency,
-                        '=LID' => $lid,
-                        '>SUM_PAID' => 0
-                    ],
-                    'group' => ['USER_ID'],
-                    'runtime' => [
-                        new ExpressionField('COUNT_PART_PAID_ORDER', 'COUNT(1)'),
-                        new ExpressionField('COUNT_FULL_PAID_ORDER', 'SUM(CASE WHEN PAYED = "Y" THEN 1 ELSE 0 END)'),
-                        new ExpressionField('FULL_SUM_PAID', 'SUM(SUM_PAID)')
-                    ],
-                ]);
+                $orderDataCount = $orderClass::getList(
+                    [
+                        'select' => ['FULL_SUM_PAID', 'COUNT_FULL_PAID_ORDER', 'COUNT_PART_PAID_ORDER'],
+                        'filter' => [
+                            '=USER_ID' => $userId,
+                            '=CURRENCY' => $currency,
+                            '=LID' => $lid,
+                            '>SUM_PAID' => 0
+                        ],
+                        'group' => ['USER_ID'],
+                        'runtime' => [
+                            new ExpressionField('COUNT_PART_PAID_ORDER', 'COUNT(1)'),
+                            new ExpressionField(
+                                'COUNT_FULL_PAID_ORDER', 'SUM(CASE WHEN PAYED = "Y" THEN 1 ELSE 0 END)'
+                            ),
+                            new ExpressionField('FULL_SUM_PAID', 'SUM(SUM_PAID)')
+                        ],
+                    ]
+                );
 
                 $countData = $orderDataCount->fetch();
 
@@ -144,30 +153,37 @@ class BuyerStatistic
             }
 
             if ($lastArchiveDate) {
-                $archiveDataCount = Archive\Manager::getList([
-                    'select' => ['FULL_SUM_PAID', 'COUNT_FULL_PAID_ORDER', 'COUNT_PART_PAID_ORDER'],
-                    'filter' => [
-                        '=USER_ID' => $userId,
-                        '=CURRENCY' => $currency,
-                        '=LID' => $lid,
-                        '>SUM_PAID' => 0
-                    ],
-                    'group' => ['USER_ID'],
-                    'runtime' => [
-                        new ExpressionField('COUNT_PART_PAID_ORDER', 'COUNT(1)'),
-                        new ExpressionField('COUNT_FULL_PAID_ORDER', 'SUM(CASE WHEN PAYED = "Y" THEN 1 ELSE 0 END)'),
-                        new ExpressionField('FULL_SUM_PAID', 'SUM(SUM_PAID)')
-                    ],
-                ]);
+                $archiveDataCount = Archive\Manager::getList(
+                    [
+                        'select' => ['FULL_SUM_PAID', 'COUNT_FULL_PAID_ORDER', 'COUNT_PART_PAID_ORDER'],
+                        'filter' => [
+                            '=USER_ID' => $userId,
+                            '=CURRENCY' => $currency,
+                            '=LID' => $lid,
+                            '>SUM_PAID' => 0
+                        ],
+                        'group' => ['USER_ID'],
+                        'runtime' => [
+                            new ExpressionField('COUNT_PART_PAID_ORDER', 'COUNT(1)'),
+                            new ExpressionField(
+                                'COUNT_FULL_PAID_ORDER', 'SUM(CASE WHEN PAYED = "Y" THEN 1 ELSE 0 END)'
+                            ),
+                            new ExpressionField('FULL_SUM_PAID', 'SUM(SUM_PAID)')
+                        ],
+                    ]
+                );
 
                 $countArchiveData = $archiveDataCount->fetch();
 
-                if ($countArchiveData['FULL_SUM_PAID'] > 0)
+                if ($countArchiveData['FULL_SUM_PAID'] > 0) {
                     $statistic['SUM_PAID'] += $countArchiveData['FULL_SUM_PAID'];
-                if ($countArchiveData['COUNT_PART_PAID_ORDER'] > 0)
+                }
+                if ($countArchiveData['COUNT_PART_PAID_ORDER'] > 0) {
                     $statistic['COUNT_PART_PAID_ORDER'] += $countArchiveData['COUNT_PART_PAID_ORDER'];
-                if ($countArchiveData['COUNT_FULL_PAID_ORDER'] > 0)
+                }
+                if ($countArchiveData['COUNT_FULL_PAID_ORDER'] > 0) {
                     $statistic['COUNT_FULL_PAID_ORDER'] += $countArchiveData['COUNT_FULL_PAID_ORDER'];
+                }
             }
 
             $result->setData($statistic);

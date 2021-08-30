@@ -82,12 +82,14 @@ class Manager
     public static function dropIfExists($iblockId)
     {
         $storage = new Storage($iblockId);
-        if ($storage->isExists())
+        if ($storage->isExists()) {
             $storage->drop();
+        }
 
         $dictionary = new Dictionary($iblockId);
-        if ($dictionary->isExists())
+        if ($dictionary->isExists()) {
             $dictionary->drop();
+        }
     }
 
     /**
@@ -119,15 +121,21 @@ class Manager
      */
     public static function markAsInvalid($iblockId)
     {
-        Iblock\IblockTable::update($iblockId, array(
-            "PROPERTY_INDEX" => "I",
-        ));
+        Iblock\IblockTable::update(
+            $iblockId,
+            array(
+                "PROPERTY_INDEX" => "I",
+            )
+        );
 
         $productIblock = self::resolveIblock($iblockId);
         if ($iblockId != $productIblock) {
-            Iblock\IblockTable::update($productIblock, array(
-                "PROPERTY_INDEX" => "I",
-            ));
+            Iblock\IblockTable::update(
+                $productIblock,
+                array(
+                    "PROPERTY_INDEX" => "I",
+                )
+            );
         }
 
         self::checkAdminNotification(true);
@@ -165,27 +173,38 @@ class Manager
         if ($force) {
             $add = true;
         } else {
-            $iblockList = Iblock\IblockTable::getList(array(
-                'select' => array('ID'),
-                'filter' => array('=PROPERTY_INDEX' => 'I'),
-            ));
+            $iblockList = Iblock\IblockTable::getList(
+                array(
+                    'select' => array('ID'),
+                    'filter' => array('=PROPERTY_INDEX' => 'I'),
+                )
+            );
             $add = ($iblockList->fetch() ? true : false);
         }
 
         if ($add) {
-            $notifyList = \CAdminNotify::getList(array(), array(
-                "TAG" => "iblock_property_reindex",
-            ));
-            if (!$notifyList->fetch()) {
-                \CAdminNotify::add(array(
-                    "MESSAGE" => Loc::getMessage("IBLOCK_NOTIFY_PROPERTY_REINDEX", array(
-                        "#LINK#" => "/bitrix/admin/iblock_reindex.php?lang=" . \Bitrix\Main\Application::getInstance()->getContext()->getLanguage(),
-                    )),
+            $notifyList = \CAdminNotify::getList(
+                array(),
+                array(
                     "TAG" => "iblock_property_reindex",
-                    "MODULE_ID" => "iblock",
-                    "ENABLE_CLOSE" => "Y",
-                    "PUBLIC_SECTION" => "N",
-                ));
+                )
+            );
+            if (!$notifyList->fetch()) {
+                \CAdminNotify::add(
+                    array(
+                        "MESSAGE" => Loc::getMessage(
+                            "IBLOCK_NOTIFY_PROPERTY_REINDEX",
+                            array(
+                                "#LINK#" => "/bitrix/admin/iblock_reindex.php?lang=" . \Bitrix\Main\Application::getInstance(
+                                    )->getContext()->getLanguage(),
+                            )
+                        ),
+                        "TAG" => "iblock_property_reindex",
+                        "MODULE_ID" => "iblock",
+                        "ENABLE_CLOSE" => "Y",
+                        "PUBLIC_SECTION" => "N",
+                    )
+                );
             }
         } else {
             \CAdminNotify::deleteByTag("iblock_property_reindex");
@@ -202,9 +221,12 @@ class Manager
     public static function deleteIndex($iblockId)
     {
         self::dropIfExists($iblockId);
-        Iblock\IblockTable::update($iblockId, array(
-            "PROPERTY_INDEX" => "N",
-        ));
+        Iblock\IblockTable::update(
+            $iblockId,
+            array(
+                "PROPERTY_INDEX" => "N",
+            )
+        );
     }
 
     /**
@@ -242,8 +264,9 @@ class Manager
     {
         $elementId = (int)$elementId;
         $productIblock = self::resolveIblock($iblockId);
-        if ($iblockId != $productIblock)
+        if ($iblockId != $productIblock) {
             $elementId = self::resolveElement($iblockId, $elementId);
+        }
         if (self::usedDeferredIndexing()) {
             self::pushToQueue($productIblock, $elementId);
         } else {
@@ -295,14 +318,16 @@ class Manager
     {
         $iblockId = (int)$iblockId;
         $productIblock = self::resolveIblock($iblockId);
-        if (empty(self::$elementQueue[$productIblock]))
+        if (empty(self::$elementQueue[$productIblock])) {
             return;
+        }
         $indexer = self::createIndexer($productIblock);
         if ($indexer->isExists()) {
             sort(self::$elementQueue[$productIblock]);
 
-            foreach (self::$elementQueue[$productIblock] as $elementId)
+            foreach (self::$elementQueue[$productIblock] as $elementId) {
                 self::elementIndexing($indexer, $elementId);
+            }
             unset($elementId);
         }
         unset($indexer);
@@ -311,8 +336,9 @@ class Manager
 
     private static function pushToQueue($iblockId, $elementId)
     {
-        if (!isset(self::$elementQueue[$iblockId]))
+        if (!isset(self::$elementQueue[$iblockId])) {
             self::$elementQueue[$iblockId] = [];
+        }
         self::$elementQueue[$iblockId][$elementId] = $elementId;
     }
 
@@ -320,7 +346,8 @@ class Manager
     {
         $indexer->deleteElement($elementId);
         $connection = \Bitrix\Main\Application::getConnection();
-        $elementCheck = $connection->query("
+        $elementCheck = $connection->query(
+            "
 				SELECT BE.ID
 				FROM b_iblock_element BE
 				WHERE BE.ACTIVE = 'Y' AND BE.ID = " . $elementId .

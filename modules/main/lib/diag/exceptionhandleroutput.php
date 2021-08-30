@@ -18,10 +18,11 @@ class ExceptionHandlerOutput implements IExceptionHandlerOutput
             echo ExceptionHandlerFormatter::format($exception, false);
         } else {
             $context = Main\Application::getInstance();
-            if ($context)
+            if ($context) {
                 echo Main\Localization\Loc::getMessage("eho_render_exception_message");
-            else
+            } else {
                 echo "A error occurred during execution of this script. You can turn on extended error reporting in .settings.php file.";
+            }
         }
     }
 }

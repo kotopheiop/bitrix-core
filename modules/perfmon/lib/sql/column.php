@@ -102,7 +102,10 @@ class Column extends BaseObject
 
         $columnType = $token->upper;
         if (!self::checkType($columnType)) {
-            throw new NotSupportedException("column type expected but [" . $tokenizer->getCurrentToken()->text . "] found. line: " . $tokenizer->getCurrentToken()->line);
+            throw new NotSupportedException(
+                "column type expected but [" . $tokenizer->getCurrentToken(
+                )->text . "] found. line: " . $tokenizer->getCurrentToken()->line
+            );
         }
 
         $column = new self($columnName);
@@ -112,18 +115,20 @@ class Column extends BaseObject
         $lengthLevel = -1;
         $columnDefinition = '';
         do {
-            if ($token->level == $level && $token->text == ',')
+            if ($token->level == $level && $token->text == ',') {
                 break;
-            if ($token->level < $level && $token->text == ')')
+            }
+            if ($token->level < $level && $token->text == ')') {
                 break;
+            }
 
             $columnDefinition .= $token->text;
 
-            if ($token->upper === 'NOT')
+            if ($token->upper === 'NOT') {
                 $column->nullable = false;
-            elseif ($token->upper === 'DEFAULT')
+            } elseif ($token->upper === 'DEFAULT') {
                 $column->default = false;
-            elseif ($column->default === false) {
+            } elseif ($column->default === false) {
                 if ($token->type !== Token::T_WHITESPACE && $token->type !== Token::T_COMMENT) {
                     $column->default = $token->text;
                 }
@@ -141,8 +146,9 @@ class Column extends BaseObject
 
                         $token = $tokenizer->nextToken();
 
-                        if ($token->level == $lengthLevel && $token->text == ')')
+                        if ($token->level == $lengthLevel && $token->text == ')') {
                             break;
+                        }
 
                         $column->length .= $token->text;
                     }
@@ -228,7 +234,7 @@ class Column extends BaseObject
                         intval($this->length) < intval($target->length)
                         || (
                             intval($target->length) < intval($this->length)
-                            && strtoupper($this->type) === "CHAR"
+                            && mb_strtoupper($this->type) === "CHAR"
                         )
                     )
                 ) {
@@ -253,7 +259,9 @@ class Column extends BaseObject
                 ) {
                     return "ALTER TABLE " . $this->parent->name . " ALTER COLUMN " . $this->name . " " . $target->body;
                 } else {
-                    return "// " . get_class($this) . ":getModifyDdl for database type [" . $dbType . "] not implemented. Change requested from [$this->body] to [$target->body].";
+                    return "// " . get_class(
+                            $this
+                        ) . ":getModifyDdl for database type [" . $dbType . "] not implemented. Change requested from [$this->body] to [$target->body].";
                 }
             case "ORACLE":
                 if (
@@ -263,7 +271,7 @@ class Column extends BaseObject
                         intval($this->length) < intval($target->length)
                         || (
                             intval($target->length) < intval($this->length)
-                            && strtoupper($this->type) === "CHAR"
+                            && mb_strtoupper($this->type) === "CHAR"
                         )
                     )
                 ) {
@@ -288,10 +296,14 @@ class Column extends BaseObject
 					end;
 				";
                 } else {
-                    return "// " . get_class($this) . ":getModifyDdl for database type [" . $dbType . "] not implemented. Change requested from [$this->body] to [$target->body].";
+                    return "// " . get_class(
+                            $this
+                        ) . ":getModifyDdl for database type [" . $dbType . "] not implemented. Change requested from [$this->body] to [$target->body].";
                 }
             default:
-                return "// " . get_class($this) . ":getModifyDdl for database type [" . $dbType . "] not implemented. Change requested from [$this->body] to [$target->body].";
+                return "// " . get_class(
+                        $this
+                    ) . ":getModifyDdl for database type [" . $dbType . "] not implemented. Change requested from [$this->body] to [$target->body].";
         }
     }
 }

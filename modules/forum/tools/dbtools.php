@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 class CForumDBTools
@@ -64,10 +65,11 @@ class CForumDBTools
             $arUpperCaseFields = array('TABLE', 'FIELDS', 'INDEX', 'COMMAND');
             foreach ($arUpperCaseFields as $fn) {
                 if (isset($arParams[$fn])) {
-                    if (!is_array($arParams[$fn]))
-                        $arParams[$fn] = strtoupper($arParams[$fn]);
-                    else
+                    if (!is_array($arParams[$fn])) {
+                        $arParams[$fn] = mb_strtoupper($arParams[$fn]);
+                    } else {
                         $arParams[$fn] = array_map('strtoupper', $arParams[$fn]);
+                    }
                 }
             }
         }

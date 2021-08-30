@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/catalog/prolog.php");
 
@@ -6,15 +7,17 @@ global $APPLICATION;
 global $DB;
 global $USER;
 
-if (!($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_view')))
+if (!($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_view'))) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 CModule::IncludeModule("catalog");
 IncludeModuleLangFile(__FILE__);
 
 $boolSubscribe = false;
-if (isset($_REQUEST['subscribe']) && 'Y' == $_REQUEST['subscribe'])
+if (isset($_REQUEST['subscribe']) && 'Y' == $_REQUEST['subscribe']) {
     $boolSubscribe = true;
+}
 
 ClearVars("str_iblock_");
 ClearVars("s_");
@@ -34,43 +37,52 @@ function GetProductSku($userId, $lid, $productId, $productName = '', $currency =
     $userId = intval($userId);
 
     $productId = intval($productId);
-    if ($productId <= 0)
+    if ($productId <= 0) {
         return false;
+    }
 
     $lid = trim($lid);
-    if ($lid === '')
+    if ($lid === '') {
         return false;
+    }
 
     $productName = trim($productName);
     $arResult = array();
 
     static $arCacheGroups = array();
 
-    if (!isset($arCacheGroups[$userId]))
+    if (!isset($arCacheGroups[$userId])) {
         $arCacheGroups[$userId] = CUser::GetUserGroup($userId);
+    }
     $arGroups = $arCacheGroups[$userId];
 
-    if (!isset($arProduct["IBLOCK_ID"]) || 0 >= intval($arProduct["IBLOCK_ID"]))
+    if (!isset($arProduct["IBLOCK_ID"]) || 0 >= intval($arProduct["IBLOCK_ID"])) {
         $arProduct["IBLOCK_ID"] = CIBlockElement::GetIBlockByID($arProduct["IBLOCK_ID"]);
+    }
 
     static $arOffersIblock = array();
     if (!isset($arOffersIblock[$arProduct["IBLOCK_ID"]])) {
         $mxResult = CCatalogSKU::GetInfoByProductIBlock($arProduct["IBLOCK_ID"]);
-        if (is_array($mxResult))
+        if (is_array($mxResult)) {
             $arOffersIblock[$arProduct["IBLOCK_ID"]] = $mxResult["IBLOCK_ID"];
+        }
     }
 
     if ($arOffersIblock[$arProduct["IBLOCK_ID"]] > 0) {
-
         static $arCacheOfferProperties = array();
         if (!is_set($arCacheOfferProperties[$arOffersIblock[$arProduct["IBLOCK_ID"]]])) {
             $dbOfferProperties = CIBlockProperty::GetList(
                 array('SORT' => 'ASC', 'ID' => 'ASC'),
-                array('IBLOCK_ID' => $arOffersIblock[$arProduct["IBLOCK_ID"]], 'ACTIVE' => 'Y', "!XML_ID" => "CML2_LINK")
+                array(
+                    'IBLOCK_ID' => $arOffersIblock[$arProduct["IBLOCK_ID"]],
+                    'ACTIVE' => 'Y',
+                    "!XML_ID" => "CML2_LINK"
+                )
             );
             while ($arOfferProperties = $dbOfferProperties->Fetch()) {
-                if ('F' == $arOfferProperties['PROPERTY_TYPE'])
+                if ('F' == $arOfferProperties['PROPERTY_TYPE']) {
                     continue;
+                }
                 $arCacheOfferProperties[$arOffersIblock[$arProduct["IBLOCK_ID"]]][] = $arOfferProperties;
             }
         }
@@ -103,12 +115,28 @@ function GetProductSku($userId, $lid, $productId, $productName = '', $currency =
         $arSku = array();
         $arSkuId = array();
         $arImgSku = array();
-        foreach ($arOffers as $arOffer)
+        foreach ($arOffers as $arOffer) {
             $arSkuId[] = $arOffer['ID'];
+        }
         if (!empty($arSkuId)) {
-            $res = CIBlockElement::GetList(array(), array("ID" => $arSkuId), false, false, array("ID", "IBLOCK_ID", "NAME", "PREVIEW_PICTURE", "DETAIL_PICTURE", "DETAIL_PAGE_URL", "ACTIVE"));
-            while ($arOfferImg = $res->GetNext())
+            $res = CIBlockElement::GetList(
+                array(),
+                array("ID" => $arSkuId),
+                false,
+                false,
+                array(
+                    "ID",
+                    "IBLOCK_ID",
+                    "NAME",
+                    "PREVIEW_PICTURE",
+                    "DETAIL_PICTURE",
+                    "DETAIL_PAGE_URL",
+                    "ACTIVE"
+                )
+            );
+            while ($arOfferImg = $res->GetNext()) {
                 $arImgSku[$arOfferImg["ID"]] = $arOfferImg;
+            }
         }
         $arOffersId = array();
         foreach ($arOffers as $arOffer) {
@@ -117,8 +145,9 @@ function GetProductSku($userId, $lid, $productId, $productName = '', $currency =
 
         $dbCatalogProduct = CCatalogProduct::GetList(array(), array("ID" => $arOffersId));
 
-        while ($arCatalogProduct = $dbCatalogProduct->fetch())
+        while ($arCatalogProduct = $dbCatalogProduct->fetch()) {
             $arCatalogProductResult[$arCatalogProduct["ID"]] = $arCatalogProduct;
+        }
 
         foreach ($arOffers as $arOffer) {
             $arSkuTmp = array();
@@ -126,25 +155,31 @@ function GetProductSku($userId, $lid, $productId, $productName = '', $currency =
             $arOffer["CAN_BUY"] = "N";
             $arCatalogProduct = $arCatalogProductResult[$arOffer["ID"]];
             if (!empty($arCatalogProduct)) {
-                if ($arCatalogProduct["CAN_BUY_ZERO"] != "Y" && ($arCatalogProduct["QUANTITY_TRACE"] == "Y" && doubleval($arCatalogProduct["QUANTITY"]) <= 0))
+                if ($arCatalogProduct["CAN_BUY_ZERO"] != "Y" && ($arCatalogProduct["QUANTITY_TRACE"] == "Y" && doubleval(
+                            $arCatalogProduct["QUANTITY"]
+                        ) <= 0)) {
                     $arOffer["CAN_BUY"] = "N";
-                else
+                } else {
                     $arOffer["CAN_BUY"] = "Y";
+                }
             }
 
             $arSkuTmp["ImageUrl"] = '';
             if ($arOffer["CAN_BUY"] == "Y") {
                 if (isset($arImgSku[$arOffer['ID']]) && !empty($arImgSku[$arOffer['ID']])) {
-                    if ('' == $productName)
+                    if ('' == $productName) {
                         $productName = $arImgSku[$arOffer['ID']]["~NAME"];
+                    }
 
                     $active = $arImgSku[$arOffer['ID']]["ACTIVE"];
 
-                    if ($arImgSku[$arOffer['ID']]["PREVIEW_PICTURE"] != "")
+                    if ($arImgSku[$arOffer['ID']]["PREVIEW_PICTURE"] != "") {
                         $arSkuTmp["PREVIEW_PICTURE"] = $arImgSku[$arOffer['ID']]["PREVIEW_PICTURE"];
+                    }
 
-                    if ($arImgSku[$arOffer['ID']]["DETAIL_PICTURE"] != "")
+                    if ($arImgSku[$arOffer['ID']]["DETAIL_PICTURE"] != "") {
                         $arSkuTmp["DETAIL_PICTURE"] = $arImgSku[$arOffer['ID']]["DETAIL_PICTURE"];
+                    }
                 }
             }
             foreach ($arIblockOfferProps as $arCode) {
@@ -154,14 +189,16 @@ function GetProductSku($userId, $lid, $productId, $productName = '', $currency =
                         if ('E' == $arOffer["DISPLAY_PROPERTIES"][$arCode["CODE"]]['PROPERTY_TYPE']) {
                             if (!empty($arOffer["DISPLAY_PROPERTIES"][$arCode["CODE"]]['LINK_ELEMENT_VALUE'])) {
                                 $mxValues = array();
-                                foreach ($arOffer["DISPLAY_PROPERTIES"][$arCode["CODE"]]['LINK_ELEMENT_VALUE'] as $arTempo)
+                                foreach ($arOffer["DISPLAY_PROPERTIES"][$arCode["CODE"]]['LINK_ELEMENT_VALUE'] as $arTempo) {
                                     $mxValues[] = $arTempo['NAME'] . ' [' . $arTempo['ID'] . ']';
+                                }
                             }
                         } elseif ('G' == $arOffer["DISPLAY_PROPERTIES"][$arCode["CODE"]]['PROPERTY_TYPE']) {
                             if (!empty($arOffer["DISPLAY_PROPERTIES"][$arCode["CODE"]]['LINK_SECTION_VALUE'])) {
                                 $mxValues = array();
-                                foreach ($arOffer["DISPLAY_PROPERTIES"][$arCode["CODE"]]['LINK_SECTION_VALUE'] as $arTempo)
+                                foreach ($arOffer["DISPLAY_PROPERTIES"][$arCode["CODE"]]['LINK_SECTION_VALUE'] as $arTempo) {
                                     $mxValues[] = $arTempo['NAME'] . ' [' . $arTempo['ID'] . ']';
+                                }
                             }
                         }
                         if (empty($mxValues)) {
@@ -199,8 +236,9 @@ function GetProductSku($userId, $lid, $productId, $productName = '', $currency =
         }
         if ((!is_array($arIblockOfferProps) || empty($arIblockOfferProps)) && is_array($arSku) && !empty($arSku)) {
             $arIblockOfferProps[0] = array("CODE" => "TITLE", "NAME" => GetMessage("SKU_TITLE"));
-            foreach ($arSku as $key => $val)
+            foreach ($arSku as $key => $val) {
                 $arSku[$key][0] = $val["NAME"];
+            }
         }
 
         $arResult["SKU_ELEMENTS"] = $arSku;
@@ -219,7 +257,9 @@ function GetProductSku($userId, $lid, $productId, $productName = '', $currency =
  */
 function _ShowGroupPropertyFieldList($name, $property_fields, $values)
 {
-    if (!is_array($values)) $values = Array();
+    if (!is_array($values)) {
+        $values = Array();
+    }
 
     static $linkIblockId;
     static $sections = null;
@@ -235,17 +275,19 @@ function _ShowGroupPropertyFieldList($name, $property_fields, $values)
     if (!$linkIblockId || ($property_fields["LINK_IBLOCK_ID"] != $linkIblockId)) {
         $linkIblockId = $property_fields["LINK_IBLOCK_ID"];
 
-        if (intval($linkIblockId) <= 0)
+        if (intval($linkIblockId) <= 0) {
             return false;
+        }
 
         $obCache->Clean($cache_id, $cache_dir);
     }
 
-    if ($obCache->InitCache($ttl, $cache_id, $cache_dir))
+    if ($obCache->InitCache($ttl, $cache_id, $cache_dir)) {
         $res = $obCache->GetVars();
-    else {
-        if ($sections === null)
+    } else {
+        if ($sections === null) {
             $sections = CIBlockSection::GetTreeList(Array("IBLOCK_ID" => $linkIblockId));
+        }
         while ($ar = $sections->GetNext()) {
             $res .= '<option value="' . $ar["ID"] . '"';
             if (in_array($ar["ID"], $values)) {
@@ -254,8 +296,9 @@ function _ShowGroupPropertyFieldList($name, $property_fields, $values)
             }
             $res .= '>' . str_repeat(" . ", $ar["DEPTH_LEVEL"]) . $ar["NAME"] . '</option>';
         }
-        if ($obCache->StartDataCache())
+        if ($obCache->StartDataCache()) {
             $obCache->EndDataCache($res);
+        }
     }
 
 
@@ -273,11 +316,18 @@ function _ShowGroupPropertyFieldList($name, $property_fields, $values)
 function GetElementName($ID)
 {
     $ID = (int)$ID;
-    if ($ID <= 0)
+    if ($ID <= 0) {
         return false;
+    }
     static $cache = array();
     if (!isset($cache[$ID])) {
-        $rsElement = CIBlockElement::GetList(array(), array("ID" => $ID, "SHOW_HISTORY" => "Y"), false, false, array("ID", "IBLOCK_ID", "NAME"));
+        $rsElement = CIBlockElement::GetList(
+            array(),
+            array("ID" => $ID, "SHOW_HISTORY" => "Y"),
+            false,
+            false,
+            array("ID", "IBLOCK_ID", "NAME")
+        );
         $cache[$ID] = $rsElement->GetNext();
     }
     return $cache[$ID];
@@ -286,8 +336,9 @@ function GetElementName($ID)
 function GetSectionName($ID)
 {
     $ID = (int)$ID;
-    if ($ID <= 0)
+    if ($ID <= 0) {
         return false;
+    }
     static $cache = array();
     if (!isset($cache[$ID])) {
         $rsSection = CIBlockSection::GetList(array(), array("ID" => $ID), false, array("ID", "IBLOCK_ID", "NAME"));
@@ -296,15 +347,22 @@ function GetSectionName($ID)
     return $cache[$ID];
 }
 
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_REQUEST["BARCODE_AJAX"]) && $_REQUEST["BARCODE_AJAX"] === 'Y' && check_bitrix_sessid()) {
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_REQUEST["BARCODE_AJAX"]) && $_REQUEST["BARCODE_AJAX"] === 'Y' && check_bitrix_sessid(
+    )) {
     CUtil::JSPostUnescape();
     $barcode = (isset($_REQUEST["BARCODE"])) ? htmlspecialcharsbx($_REQUEST["BARCODE"]) : "";
     $arBarCode = array();
     $arElement = array();
     $elementId = 0;
 
-    if (strlen($barcode) > 0) {
-        $rsBarCode = CCatalogStoreBarCode::getList(array(), array("BARCODE" => $barcode), false, false, array('PRODUCT_ID'));
+    if ($barcode <> '') {
+        $rsBarCode = CCatalogStoreBarCode::getList(
+            array(),
+            array("BARCODE" => $barcode),
+            false,
+            false,
+            array('PRODUCT_ID')
+        );
         $arBarCode = $rsBarCode->Fetch();
     }
 
@@ -316,8 +374,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_REQUEST["BARCODE_AJAX"]) && 
         $dbResultList = CCatalogProduct::getList(array(), array('ID' => $elementId), false, false, array('TYPE'));
         $arItems = $dbResultList->Fetch();
         $arParams = array("id" => $elementId, "barcode" => $barcode);
-        if (isset($arItems["TYPE"]))
+        if (isset($arItems["TYPE"])) {
             $arParams['type'] = $arItems["TYPE"];
+        }
         $result = CUtil::PhpToJSObject($arParams);
         echo $result;
     }
@@ -364,12 +423,14 @@ $dbIBlock = CIBlock::GetByID($iblockId);
 if (!($arIBlock = $dbIBlock->Fetch())) {
     $arFilterTmp = array("MIN_PERMISSION" => "R");
 
-    if ($lid !== '')
+    if ($lid !== '') {
         $arFilterTmp["LID"] = $lid;
+    }
 
     $arCatalogFilter = array();
-    if ($boolSubscribe)
+    if ($boolSubscribe) {
         $arCatalogFilter['SUBSCRIPTION'] = 'Y';
+    }
 
     $dbItem = CCatalog::GetList(
         array(),
@@ -378,8 +439,9 @@ if (!($arIBlock = $dbIBlock->Fetch())) {
         false,
         array('IBLOCK_ID', 'PRODUCT_IBLOCK_ID', 'SKU_PROPERTY_ID')
     );
-    while ($arItems = $dbItem->Fetch())
+    while ($arItems = $dbItem->Fetch()) {
         $arFilterTmp["ID"][] = $arItems["IBLOCK_ID"];
+    }
 
     foreach (GetModuleEvents("sale", "OnProductSearchFormIBlock", true) as $arEvent) {
         $arFilterTmp = ExecuteModuleEventEx($arEvent, array($arFilterTmp));
@@ -388,13 +450,14 @@ if (!($arIBlock = $dbIBlock->Fetch())) {
     $arFilterTmp['ACTIVE'] = 'Y';
 
     $dbIBlock = CIBlock::GetList(Array("ID" => "ASC"), $arFilterTmp);
-    if ($arIBlock = $dbIBlock->Fetch())
+    if ($arIBlock = $dbIBlock->Fetch()) {
         $iblockId = intval($arIBlock["ID"]);
-    else {
+    } else {
         unset($arFilterTmp["LID"]);
         $dbIBlock = CIBlock::GetList(Array("ID" => "ASC"), $arFilterTmp);
-        if ($arIBlock = $dbIBlock->Fetch())
+        if ($arIBlock = $dbIBlock->Fetch()) {
             $iblockId = intval($arIBlock["ID"]);
+        }
     }
 }
 
@@ -405,8 +468,13 @@ $arBuyerGroups = CUser::GetUserGroup($buyerId);
 $storeFromId = intval($_REQUEST["STORE_FROM_ID"]);
 
 $QUANTITY = intval($QUANTITY);
-if ($QUANTITY <= 0)
+if ($QUANTITY <= 0) {
     $QUANTITY = 1;
+}
+
+$arProps = [];
+$arPrices = [];
+$arSKUProps = [];
 
 if (!$bBadBlock) {
     $arFilterFields = array(
@@ -446,14 +514,14 @@ if (!$bBadBlock) {
         )
     );
 
-    $arProps = $arPrices = array();
     while ($arProp = $dbrFProps->GetNext()) {
-        $arProp["PROPERTY_USER_TYPE"] = (!empty($arProp["USER_TYPE"]) ? CIBlockProperty::GetUserType($arProp["USER_TYPE"]) : array());
+        $arProp["PROPERTY_USER_TYPE"] = (!empty($arProp["USER_TYPE"]) ? CIBlockProperty::GetUserType(
+            $arProp["USER_TYPE"]
+        ) : array());
         $arProps[] = $arProp;
     }
 
     //filter sku props
-    $arSKUProps = array();
     $arCatalog = CCatalogSKU::GetInfoByProductIBlock($iblockId);
 
     if (!empty($arCatalog)) {
@@ -472,9 +540,12 @@ if (!$bBadBlock) {
         );
 
         while ($arProp = $dbrFProps->GetNext()) {
-            if ($arCatalog['SKU_PROPERTY_ID'] == $arProp['ID'])
+            if ($arCatalog['SKU_PROPERTY_ID'] == $arProp['ID']) {
                 continue;
-            $arProp["PROPERTY_USER_TYPE"] = (!empty($arProp["USER_TYPE"]) ? CIBlockProperty::GetUserType($arProp["USER_TYPE"]) : array());
+            }
+            $arProp["PROPERTY_USER_TYPE"] = (!empty($arProp["USER_TYPE"]) ? CIBlockProperty::GetUserType(
+                $arProp["USER_TYPE"]
+            ) : array());
             $arSKUProps[] = $arProp;
         }
     }
@@ -485,10 +556,12 @@ if (!$bBadBlock) {
         "ACTIVE" => ($orderForm ? "Y" : $_REQUEST['filter_active']),
         "WF_PARENT_ELEMENT_ID" => false,
     );
-    if ('' != trim($_REQUEST['filter_product_name']))
+    if ('' != trim($_REQUEST['filter_product_name'])) {
         $arFilter["%NAME"] = $_REQUEST['filter_product_name'];
-    if ('' != trim($_REQUEST['filter_intext']))
+    }
+    if ('' != trim($_REQUEST['filter_intext'])) {
         $arFilter["%SEARCHABLE_CONTENT"] = $_REQUEST['filter_intext'];
+    }
     $arFilter["SHOW_NEW"] = "Y";
 
     if (!empty($arProps)) {
@@ -496,15 +569,19 @@ if (!$bBadBlock) {
             $value = ${"filter_el_property_" . $arProp["ID"]};
 
             if (array_key_exists("AddFilterFields", $arProp["PROPERTY_USER_TYPE"])) {
-                call_user_func_array($arProp["PROPERTY_USER_TYPE"]["AddFilterFields"], array(
-                    $arProp,
-                    array("VALUE" => "filter_el_property_" . $arProp["ID"]),
-                    &$arFilter,
-                    &$filtered,
-                ));
-            } elseif (is_array($value) || strlen($value)) {
-                if ($value === "NOT_REF")
+                call_user_func_array(
+                    $arProp["PROPERTY_USER_TYPE"]["AddFilterFields"],
+                    array(
+                        $arProp,
+                        array("VALUE" => "filter_el_property_" . $arProp["ID"]),
+                        &$arFilter,
+                        &$filtered,
+                    )
+                );
+            } elseif (is_array($value) || mb_strlen($value)) {
+                if ($value === "NOT_REF") {
                     $value = false;
+                }
                 $arFilter["?PROPERTY_" . $arProp["ID"]] = $value;
             }
         }
@@ -516,17 +593,21 @@ if (!$bBadBlock) {
         for ($i = 0, $intPropCount = count($arSKUProps); $i < $intPropCount; $i++) {
             if (('Y' == $arSKUProps[$i]["FILTRABLE"]) && ('F' != $arSKUProps[$i]["PROPERTY_TYPE"]) && ($arCatalog['SKU_PROPERTY_ID'] != $arSKUProps[$i]["ID"])) {
                 if (array_key_exists("AddFilterFields", $arSKUProps[$i]["PROPERTY_USER_TYPE"])) {
-                    call_user_func_array($arSKUProps[$i]["PROPERTY_USER_TYPE"]["AddFilterFields"], array(
-                        $arSKUProps[$i],
-                        array("VALUE" => "filter_sub_el_property_" . $arSKUProps[$i]["ID"]),
-                        &$arSubQuery,
-                        &$filtered,
-                    ));
+                    call_user_func_array(
+                        $arSKUProps[$i]["PROPERTY_USER_TYPE"]["AddFilterFields"],
+                        array(
+                            $arSKUProps[$i],
+                            array("VALUE" => "filter_sub_el_property_" . $arSKUProps[$i]["ID"]),
+                            &$arSubQuery,
+                            &$filtered,
+                        )
+                    );
                 } else {
                     $value = ${"filter_sub_el_property_" . $arSKUProps[$i]["ID"]};
-                    if (strlen($value) || is_array($value)) {
-                        if ($value === "NOT_REF")
+                    if (mb_strlen($value) || is_array($value)) {
+                        if ($value === "NOT_REF") {
                             $value = false;
+                        }
                         $arSubQuery["?PROPERTY_" . $arSKUProps[$i]["ID"]] = $value;
                     }
                 }
@@ -538,25 +619,39 @@ if (!$bBadBlock) {
         $arFilter['ID'] = CIBlockElement::SubQuery('PROPERTY_' . $arCatalog['SKU_PROPERTY_ID'], $arSubQuery);
     }
 
-    if (intval($_REQUEST['filter_section']) < 0 || strlen($_REQUEST['filter_section']) <= 0)
+    if (intval($_REQUEST['filter_section']) < 0 || $_REQUEST['filter_section'] == '') {
         unset($arFilter["SECTION_ID"]);
-    elseif ($_REQUEST['filter_subsections'] == "Y") {
-        if ($arFilter["SECTION_ID"] == 0)
+    } elseif ($_REQUEST['filter_subsections'] == "Y") {
+        if ($arFilter["SECTION_ID"] == 0) {
             unset($arFilter["SECTION_ID"]);
-        else
+        } else {
             $arFilter["INCLUDE_SUBSECTIONS"] = "Y";
+        }
     }
 
-    if (!empty($_REQUEST["filter_id_start"])) $arFilter[">=ID"] = $_REQUEST["filter_id_start"];
-    if (!empty($_REQUEST["filter_id_end"])) $arFilter["<=ID"] = $_REQUEST["filter_id_end"];
-    if (!empty($_REQUEST["filter_timestamp_from"])) $arFilter["DATE_MODIFY_FROM"] = $_REQUEST["filter_timestamp_from"];
-    if (!empty($_REQUEST["filter_timestamp_to"])) $arFilter["DATE_MODIFY_TO"] = $_REQUEST["filter_timestamp_to"];
-    if (!empty($_REQUEST["filter_xml_id"])) $arFilter["XML_ID"] = $_REQUEST["filter_xml_id"];
-    if (!empty($_REQUEST["filter_code"])) $arFilter["CODE"] = $_REQUEST["filter_code"];
+    if (!empty($_REQUEST["filter_id_start"])) {
+        $arFilter[">=ID"] = $_REQUEST["filter_id_start"];
+    }
+    if (!empty($_REQUEST["filter_id_end"])) {
+        $arFilter["<=ID"] = $_REQUEST["filter_id_end"];
+    }
+    if (!empty($_REQUEST["filter_timestamp_from"])) {
+        $arFilter["DATE_MODIFY_FROM"] = $_REQUEST["filter_timestamp_from"];
+    }
+    if (!empty($_REQUEST["filter_timestamp_to"])) {
+        $arFilter["DATE_MODIFY_TO"] = $_REQUEST["filter_timestamp_to"];
+    }
+    if (!empty($_REQUEST["filter_xml_id"])) {
+        $arFilter["XML_ID"] = $_REQUEST["filter_xml_id"];
+    }
+    if (!empty($_REQUEST["filter_code"])) {
+        $arFilter["CODE"] = $_REQUEST["filter_code"];
+    }
 
     //select subsection
-    if ($arFilter["SECTION_ID"] > 0)
+    if ($arFilter["SECTION_ID"] > 0) {
         $arFilter["INCLUDE_SUBSECTIONS"] = "Y";
+    }
 
     $arNavParams = array("nPageSize" => CAdminResult::GetNavSize($sTableID));
 
@@ -575,34 +670,69 @@ if (!$bBadBlock) {
     $arHeaders = array(
         array("id" => "ID", "content" => "ID", "sort" => "id", "default" => true),
         array("id" => "ACTIVE", "content" => GetMessage("SOPS_ACTIVE"), "sort" => "ACTIVE", "default" => true),
-        array("id" => "DETAIL_PICTURE", "default" => true, "content" => GetMessage("SPS_FIELD_DETAIL_PICTURE"), "align" => "center"),
+        array(
+            "id" => "DETAIL_PICTURE",
+            "default" => true,
+            "content" => GetMessage("SPS_FIELD_DETAIL_PICTURE"),
+            "align" => "center"
+        ),
         array("id" => "NAME", "content" => GetMessage("SPS_NAME"), "sort" => "name", "default" => true),
         array("id" => "QUANTITY", "content" => GetMessage("SOPS_QUANTITY"), "default" => true),
         array("id" => "BALANCE", "content" => $balanceTitle, "sort" => "", "default" => true, "align" => "right"),
     );
     $arHeaders[] = array("id" => "CODE", "content" => GetMessage("SPS_FIELD_CODE"), "sort" => "code");
     $arHeaders[] = array("id" => "EXTERNAL_ID", "content" => GetMessage("SPS_FIELD_XML_ID"), "sort" => "external_id");
-    $arHeaders[] = array("id" => "SHOW_COUNTER", "content" => GetMessage("SPS_FIELD_SHOW_COUNTER"), "sort" => "show_counter", "align" => "right");
-    $arHeaders[] = array("id" => "SHOW_COUNTER_START", "content" => GetMessage("SPS_FIELD_SHOW_COUNTER_START"), "sort" => "show_counter_start", "align" => "right");
-    $arHeaders[] = array("id" => "PREVIEW_PICTURE", "content" => GetMessage("SPS_FIELD_PREVIEW_PICTURE"), "align" => "right");
+    $arHeaders[] = array(
+        "id" => "SHOW_COUNTER",
+        "content" => GetMessage("SPS_FIELD_SHOW_COUNTER"),
+        "sort" => "show_counter",
+        "align" => "right"
+    );
+    $arHeaders[] = array(
+        "id" => "SHOW_COUNTER_START",
+        "content" => GetMessage("SPS_FIELD_SHOW_COUNTER_START"),
+        "sort" => "show_counter_start",
+        "align" => "right"
+    );
+    $arHeaders[] = array(
+        "id" => "PREVIEW_PICTURE",
+        "content" => GetMessage("SPS_FIELD_PREVIEW_PICTURE"),
+        "align" => "right"
+    );
     $arHeaders[] = array("id" => "PREVIEW_TEXT", "content" => GetMessage("SPS_FIELD_PREVIEW_TEXT"));
     $arHeaders[] = array("id" => "DETAIL_TEXT", "content" => GetMessage("SPS_FIELD_DETAIL_TEXT"));
     foreach ($arProps as $prop) {
-        $arHeaders[] = array("id" => "PROPERTY_" . $prop['ID'], "content" => $prop['NAME'], "align" => ($prop["PROPERTY_TYPE"] == 'N' ? "right" : "left"), "sort" => ($prop["MULTIPLE"] != 'Y' ? "PROPERTY_" . $prop['ID'] : ""));
+        $arHeaders[] = array(
+            "id" => "PROPERTY_" . $prop['ID'],
+            "content" => $prop['NAME'],
+            "align" => ($prop["PROPERTY_TYPE"] == 'N' ? "right" : "left"),
+            "sort" => ($prop["MULTIPLE"] != 'Y' ? "PROPERTY_" . $prop['ID'] : "")
+        );
     }
 
-    $rsPrice = CCatalogGroup::GetListEx(array("SORT" => "ASC"), array(), false, false, array("ID", "NAME", "NAME_LANG", "BASE"));
+    $rsPrice = CCatalogGroup::GetListEx(
+        array("SORT" => "ASC"),
+        array(),
+        false,
+        false,
+        array("ID", "NAME", "NAME_LANG", "BASE")
+    );
     while ($price = $rsPrice->Fetch()) {
         $arPrices[] = $price;
-        $arHeaders[] = array("id" => "PRICE" . $price["ID"], "content" => htmlspecialcharsex(!empty($price["NAME_LANG"]) ? $price["NAME_LANG"] : $price["NAME"]), "default" => ($price["BASE"] == 'Y') ? true : false,);
+        $arHeaders[] = array(
+            "id" => "PRICE" . $price["ID"],
+            "content" => htmlspecialcharsex(!empty($price["NAME_LANG"]) ? $price["NAME_LANG"] : $price["NAME"]),
+            "default" => ($price["BASE"] == 'Y') ? true : false,
+        );
     }
     $arHeaders[] = array("id" => "ACT", "content" => GetMessage("SPS_FIELD_ACTION"), "default" => true);
 
     $lAdmin->AddHeaders($arHeaders);
 
     $arSelectedFields = $lAdmin->GetVisibleHeaderColumns();
-    if (!in_array('ACT', $arSelectedFields))
+    if (!in_array('ACT', $arSelectedFields)) {
         $arSelectedFields[] = 'ACT';
+    }
 
     $arSelectedProps = array();
     foreach ($arProps as $prop) {
@@ -610,30 +740,37 @@ if (!$bBadBlock) {
             $arSelectedProps[] = $prop;
             $arSelect[$prop['ID']] = Array();
             $props = CIBlockProperty::GetPropertyEnum($prop['ID']);
-            while ($res = $props->Fetch())
+            while ($res = $props->Fetch()) {
                 $arSelect[$prop['ID']][$res["ID"]] = $res["VALUE"];
+            }
             unset($arSelectedFields[$key]);
         }
     }
 
-    if (!in_array("ID", $arSelectedFields))
+    if (!in_array("ID", $arSelectedFields)) {
         $arSelectedFields[] = "ID";
+    }
 
     $arSelectedFields[] = "LANG_DIR";
     $arSelectedFields[] = "LID";
     $arSelectedFields[] = "WF_PARENT_ELEMENT_ID";
     $arSelectedFields[] = "ACT";
 
-    if (in_array("LOCKED_USER_NAME", $arSelectedFields))
+    if (in_array("LOCKED_USER_NAME", $arSelectedFields)) {
         $arSelectedFields[] = "WF_LOCKED_BY";
-    if (in_array("USER_NAME", $arSelectedFields))
+    }
+    if (in_array("USER_NAME", $arSelectedFields)) {
         $arSelectedFields[] = "MODIFIED_BY";
-    if (in_array("CREATED_USER_NAME", $arSelectedFields))
+    }
+    if (in_array("CREATED_USER_NAME", $arSelectedFields)) {
         $arSelectedFields[] = "CREATED_BY";
-    if (in_array("PREVIEW_TEXT", $arSelectedFields))
+    }
+    if (in_array("PREVIEW_TEXT", $arSelectedFields)) {
         $arSelectedFields[] = "PREVIEW_TEXT_TYPE";
-    if (in_array("DETAIL_TEXT", $arSelectedFields))
+    }
+    if (in_array("DETAIL_TEXT", $arSelectedFields)) {
         $arSelectedFields[] = "DETAIL_TEXT_TYPE";
+    }
 
     $arSelectedFields[] = "LOCK_STATUS";
     $arSelectedFields[] = "WF_NEW";
@@ -663,19 +800,27 @@ if (!$bBadBlock) {
 
     if (!empty($arCatalogProduct)) {
         foreach ($arPrices as $price) {
-            $dbPrice = CPrice::GetList(array(), array('PRODUCT_ID' => $arCatalogProduct, 'CATALOG_GROUP_ID' => $price['ID']), false, false, array('PRODUCT_ID', 'PRICE'));
+            $dbPrice = CPrice::GetList(
+                array(),
+                array('PRODUCT_ID' => $arCatalogProduct, 'CATALOG_GROUP_ID' => $price['ID']),
+                false,
+                false,
+                array('PRODUCT_ID', 'PRICE')
+            );
             while ($arPrice = $dbPrice->fetch()) {
                 $arPricesResult[$price['ID']][$arPrice["PRODUCT_ID"]] = $arPrice["PRICE"];
             }
         }
 
         $dbCatalogProduct = CCatalogProduct::GetList(array(), array("ID" => $arCatalogProduct));
-        while ($oneProduct = $dbCatalogProduct->fetch())
+        while ($oneProduct = $dbCatalogProduct->fetch()) {
             $arCatalogProductResult[$oneProduct["ID"]] = $oneProduct;
+        }
         $existSku = CCatalogSKU::getExistOffers($arCatalogProduct);
         foreach ($existSku as $productID => $existOffers) {
-            if (isset($arCatalogProductResult[$productID]))
+            if (isset($arCatalogProductResult[$productID])) {
                 $arCatalogProductResult[$productID] = array();
+            }
             $arCatalogProductResult[$productID]['EXIST_SKU'] = $existOffers;
         }
         unset($existOffers, $productID, $existSku);
@@ -685,94 +830,137 @@ if (!$bBadBlock) {
         $arCatalogProduct = array(
             'EXIST_SKU' => false
         );
-        if (isset($arCatalogProductResult[$productId]))
+        if (isset($arCatalogProductResult[$productId])) {
             $arCatalogProduct = $arCatalogProductResult[$productId];
+        }
         //only for store documents skip sets
-        if ($caller == "storeDocs" && isset($arCatalogProduct["TYPE"]) && $arCatalogProduct["TYPE"] == CCatalogProduct::TYPE_SET)
+        if ($caller == "storeDocs" && isset($arCatalogProduct["TYPE"]) && $arCatalogProduct["TYPE"] == CCatalogProduct::TYPE_SET) {
             continue;
+        }
         $row = &$lAdmin->AddRow($arItems["ID"], $arItems);
         $isProductExistSKU = false;
-        if (!$boolSubscribe)
+        if (!$boolSubscribe) {
             $isProductExistSKU = $arCatalogProduct['EXIST_SKU'];
+        }
         $arResult = array();
         if ($isProductExistSKU) {
             $arResult = GetProductSku($buyerId, $lid, $arItems["ID"], $arItems["NAME"], '', $arItems);
             $arSKUId = $arSKUPricesResult = array();
-            if (isset($arResult["SKU_ELEMENTS"]) && !empty($arResult["SKU_ELEMENTS"]) && is_array($arResult["SKU_ELEMENTS"])) {
-                foreach ($arResult["SKU_ELEMENTS"] as $sku)
+            if (isset($arResult["SKU_ELEMENTS"]) && !empty($arResult["SKU_ELEMENTS"]) && is_array(
+                    $arResult["SKU_ELEMENTS"]
+                )) {
+                foreach ($arResult["SKU_ELEMENTS"] as $sku) {
                     $arSKUId[] = $sku["ID"];
+                }
             }
 
             foreach ($arPrices as $price) {
-                $dbPrice = CPrice::getList(array(), array('PRODUCT_ID' => $arSKUId, 'CATALOG_GROUP_ID' => $price['ID']), false, false, array('PRODUCT_ID', 'PRICE'));
+                $dbPrice = CPrice::getList(
+                    array(),
+                    array('PRODUCT_ID' => $arSKUId, 'CATALOG_GROUP_ID' => $price['ID']),
+                    false,
+                    false,
+                    array('PRODUCT_ID', 'PRICE')
+                );
                 while ($arPrice = $dbPrice->fetch()) {
                     $arSKUPricesResult[$price['ID']][$arPrice["PRODUCT_ID"]] = $arPrice["PRICE"];
                 }
             }
 
-            $active = ($arItems["ACTIVE"] == 'Y' ? GetMEssage('SPS_PRODUCT_ACTIVE') : GetMEssage('SPS_PRODUCT_NO_ACTIVE'));
+            $active = ($arItems["ACTIVE"] == 'Y' ? GetMEssage('SPS_PRODUCT_ACTIVE') : GetMEssage(
+                'SPS_PRODUCT_NO_ACTIVE'
+            ));
             if (!empty($arResult["SKU_ELEMENTS"])) {
                 $OfferIblockId = $arResult["OFFERS_IBLOCK_ID"];
                 $row->AddField("ACTIVE", $active);
-                $row->AddField("ACT", '<input type="button" onclick="fShowSku(this, ' . CUtil::PhpToJSObject($arResult["SKU_ELEMENTS"]) . ');" name="btn_show_sku_' . $arItems["ID"] . '" value="' . GetMessage("SPS_SKU_SHOW") . '">');
-                $row->AddViewField("PREVIEW_PICTURE", CFileInput::Show('NO_FIELDS[' . $arItems['ID'] . '][PREVIEW_PICTURE]', $arItems['PREVIEW_PICTURE'], array(
-                    "IMAGE" => "Y",
-                    "PATH" => "Y",
-                    "FILE_SIZE" => "Y",
-                    "DIMENSIONS" => "Y",
-                    "IMAGE_POPUP" => "Y",
-                    "MAX_SIZE" => $maxImageSize,
-                    "MIN_SIZE" => $minImageSize,
-                ), array(
-                    'upload' => false,
-                    'medialib' => false,
-                    'file_dialog' => false,
-                    'cloud' => false,
-                    'del' => false,
-                    'description' => false,
-                )));
-                $row->AddViewField("DETAIL_PICTURE", CFileInput::Show('NO_FIELDS[' . $arItems['ID'] . '][DETAIL_PICTURE]', $arItems['DETAIL_PICTURE'], array(
-                    "IMAGE" => "Y",
-                    "PATH" => "Y",
-                    "FILE_SIZE" => "Y",
-                    "DIMENSIONS" => "Y",
-                    "IMAGE_POPUP" => "Y",
-                    "MAX_SIZE" => $maxImageSize,
-                    "MIN_SIZE" => $minImageSize,
-                ), array(
-                    'upload' => false,
-                    'medialib' => false,
-                    'file_dialog' => false,
-                    'cloud' => false,
-                    'del' => false,
-                    'description' => false,
-                )));
+                $row->AddField(
+                    "ACT",
+                    '<input type="button" onclick="fShowSku(this, ' . CUtil::PhpToJSObject(
+                        $arResult["SKU_ELEMENTS"]
+                    ) . ');" name="btn_show_sku_' . $arItems["ID"] . '" value="' . GetMessage(
+                        "SPS_SKU_SHOW"
+                    ) . '">'
+                );
+                $row->AddViewField(
+                    "PREVIEW_PICTURE",
+                    CFileInput::Show(
+                        'NO_FIELDS[' . $arItems['ID'] . '][PREVIEW_PICTURE]',
+                        $arItems['PREVIEW_PICTURE'],
+                        array(
+                            "IMAGE" => "Y",
+                            "PATH" => "Y",
+                            "FILE_SIZE" => "Y",
+                            "DIMENSIONS" => "Y",
+                            "IMAGE_POPUP" => "Y",
+                            "MAX_SIZE" => $maxImageSize,
+                            "MIN_SIZE" => $minImageSize,
+                        ),
+                        array(
+                            'upload' => false,
+                            'medialib' => false,
+                            'file_dialog' => false,
+                            'cloud' => false,
+                            'del' => false,
+                            'description' => false,
+                        )
+                    )
+                );
+                $row->AddViewField(
+                    "DETAIL_PICTURE",
+                    CFileInput::Show(
+                        'NO_FIELDS[' . $arItems['ID'] . '][DETAIL_PICTURE]',
+                        $arItems['DETAIL_PICTURE'],
+                        array(
+                            "IMAGE" => "Y",
+                            "PATH" => "Y",
+                            "FILE_SIZE" => "Y",
+                            "DIMENSIONS" => "Y",
+                            "IMAGE_POPUP" => "Y",
+                            "MAX_SIZE" => $maxImageSize,
+                            "MIN_SIZE" => $minImageSize,
+                        ),
+                        array(
+                            'upload' => false,
+                            'medialib' => false,
+                            'file_dialog' => false,
+                            'cloud' => false,
+                            'del' => false,
+                            'description' => false,
+                        )
+                    )
+                );
                 $arProperties = array();
                 if (!empty($arSelectedProps)) {
                     $rsProperties = CIBlockElement::GetProperty($iblockId, $arItems["ID"]);
                     while ($ar = $rsProperties->Fetch()) {
-                        if (!array_key_exists($ar["ID"], $arProperties))
+                        if (!array_key_exists($ar["ID"], $arProperties)) {
                             $arProperties[$ar["ID"]] = array();
-                        if ($ar["PROPERTY_TYPE"] === "L")
+                        }
+                        if ($ar["PROPERTY_TYPE"] === "L") {
                             $arProperties[$ar["ID"]][$ar["PROPERTY_VALUE_ID"]] = $ar["VALUE_ENUM"];
-                        else
+                        } else {
                             $arProperties[$ar["ID"]][$ar["PROPERTY_VALUE_ID"]] = $ar["VALUE"];
+                        }
                     }
                 }
                 foreach ($arSelectedProps as $aProp) {
                     $v = '';
                     foreach ($arProperties[$aProp['ID']] as $property_value_id => $property_value) {
                         $res = '';
-                        if ($aProp['PROPERTY_TYPE'] == 'F')
-                            $res = CFileInput::Show('NO_FIELDS[' . $property_value_id . ']', $property_value, array(
-                                "IMAGE" => "Y",
-                                "PATH" => "Y",
-                                "FILE_SIZE" => "Y",
-                                "DIMENSIONS" => "Y",
-                                "IMAGE_POPUP" => "Y",
-                                "MAX_SIZE" => $maxImageSize,
-                                "MIN_SIZE" => $minImageSize,
-                            ), array(
+                        if ($aProp['PROPERTY_TYPE'] == 'F') {
+                            $res = CFileInput::Show(
+                                'NO_FIELDS[' . $property_value_id . ']',
+                                $property_value,
+                                array(
+                                    "IMAGE" => "Y",
+                                    "PATH" => "Y",
+                                    "FILE_SIZE" => "Y",
+                                    "DIMENSIONS" => "Y",
+                                    "IMAGE_POPUP" => "Y",
+                                    "MAX_SIZE" => $maxImageSize,
+                                    "MIN_SIZE" => $minImageSize,
+                                ),
+                                array(
                                     'upload' => false,
                                     'medialib' => false,
                                     'file_dialog' => false,
@@ -781,34 +969,46 @@ if (!$bBadBlock) {
                                     'description' => false,
                                 )
                             );
-                        elseif ($aProp['PROPERTY_TYPE'] == 'G') {
+                        } elseif ($aProp['PROPERTY_TYPE'] == 'G') {
                             $t = GetSectionName($property_value);
-                            if ($t)
-                                $res = $t['NAME'] . ' [<a href="' . htmlspecialcharsbx(CIBlock::GetAdminSectionEditLink($t['IBLOCK_ID'], $t['ID'])) . '" title="' . GetMessage("SPS_ELSEARCH_SECTION_EDIT") . '">' . $t['ID'] . '</a>]';
+                            if ($t) {
+                                $res = $t['NAME'] . ' [<a href="' . htmlspecialcharsbx(
+                                        CIBlock::GetAdminSectionEditLink($t['IBLOCK_ID'], $t['ID'])
+                                    ) . '" title="' . GetMessage(
+                                        "SPS_ELSEARCH_SECTION_EDIT"
+                                    ) . '">' . $t['ID'] . '</a>]';
+                            }
                         } elseif ($aProp['PROPERTY_TYPE'] == 'E') {
                             $t = GetElementName($property_value);
                             if ($t) {
-                                $res = $t['NAME'] . ' [<a href="' . htmlspecialcharsbx(CIBlock::GetAdminElementEditLink($t['IBLOCK_ID'], $t['ID'])) . '" title="' . GetMessage("SPS_ELSEARCH_ELEMENT_EDIT") . '">' . $t['ID'] . '</a>]';
+                                $res = $t['NAME'] . ' [<a href="' . htmlspecialcharsbx(
+                                        CIBlock::GetAdminElementEditLink($t['IBLOCK_ID'], $t['ID'])
+                                    ) . '" title="' . GetMessage(
+                                        "SPS_ELSEARCH_ELEMENT_EDIT"
+                                    ) . '">' . $t['ID'] . '</a>]';
                             }
                         } else {
                             $res = htmlspecialcharsex($property_value);
                         }
 
-                        if ($res != "")
+                        if ($res != "") {
                             $v .= ($v != '' ? ' / ' : '') . $res;
+                        }
                     }
 
-                    if ($v != "")
+                    if ($v != "") {
                         $row->AddViewField("PROPERTY_" . $aProp['ID'], $v);
+                    }
                     unset($arSelectedProps[$aProp['ID']]["CACHE"]);
                 }
                 foreach ($arResult["SKU_ELEMENTS"] as $val) {
                     $skuProperty = "";
                     $arSkuProperty = array();
                     foreach ($val as $kk => $vv) {
-                        if (is_int($kk) && strlen($vv) > 0) {
-                            if ($skuProperty != "")
+                        if (is_int($kk) && $vv <> '') {
+                            if ($skuProperty != "") {
                                 $skuProperty .= " <br> ";
+                            }
                             $skuProperty .= '<span style="color: grey;">' . $arResult["SKU_PROPERTIES"][$kk]["NAME"] . '</span>: ' . $vv;
                             $arSkuProperty[$arResult["SKU_PROPERTIES"][$kk]["NAME"]] = $vv;
                         }
@@ -816,23 +1016,34 @@ if (!$bBadBlock) {
 
                     $arSku[] = $val["ID"];
                     $row =& $lAdmin->AddRow($val["ID"], $val);
-                    $row->AddField("NAME", $skuProperty . '<input type="hidden" name="prd" id="sku-' . $val["ID"] . '">');
-                    $row->AddViewField("DETAIL_PICTURE", CFileInput::Show('NO_FIELDS[' . $val['ID'] . '][DETAIL_PICTURE]', $val['DETAIL_PICTURE'], array(
-                        "IMAGE" => "Y",
-                        "PATH" => "Y",
-                        "FILE_SIZE" => "Y",
-                        "DIMENSIONS" => "Y",
-                        "IMAGE_POPUP" => "Y",
-                        "MAX_SIZE" => $maxImageSize,
-                        "MIN_SIZE" => $minImageSize,
-                    ), array(
-                        'upload' => false,
-                        'medialib' => false,
-                        'file_dialog' => false,
-                        'cloud' => false,
-                        'del' => false,
-                        'description' => false,
-                    )));
+                    $row->AddField(
+                        "NAME",
+                        $skuProperty . '<input type="hidden" name="prd" id="sku-' . $val["ID"] . '">'
+                    );
+                    $row->AddViewField(
+                        "DETAIL_PICTURE",
+                        CFileInput::Show(
+                            'NO_FIELDS[' . $val['ID'] . '][DETAIL_PICTURE]',
+                            $val['DETAIL_PICTURE'],
+                            array(
+                                "IMAGE" => "Y",
+                                "PATH" => "Y",
+                                "FILE_SIZE" => "Y",
+                                "DIMENSIONS" => "Y",
+                                "IMAGE_POPUP" => "Y",
+                                "MAX_SIZE" => $maxImageSize,
+                                "MIN_SIZE" => $minImageSize,
+                            ),
+                            array(
+                                'upload' => false,
+                                'medialib' => false,
+                                'file_dialog' => false,
+                                'cloud' => false,
+                                'del' => false,
+                                'description' => false,
+                            )
+                        )
+                    );
 
                     $row->AddField("ID", "&nbsp;&nbsp;" . $arItems["ID"] . "-" . $val["ID"]);
                     foreach ($arPrices as $price) {
@@ -846,8 +1057,9 @@ if (!$bBadBlock) {
                                 $arCatalogProduct["BARCODE"][] = $arBarCode["BARCODE"];
                             }
                         }
-                        if (is_array($arCatalogProduct["BARCODE"]))
+                        if (is_array($arCatalogProduct["BARCODE"])) {
                             $arCatalogProduct["BARCODE"] = implode(', ', $arCatalogProduct["BARCODE"]);
+                        }
 
                         $balance = FloatVal($val["BALANCE"]);
 
@@ -865,14 +1077,18 @@ if (!$bBadBlock) {
 
                         $countField = '<input type="text" name="quantity_' . $val["ID"] . '" id="quantity_' . $val["ID"] . '" value="1" size="3" />';
                         $active = GetMEssage('SPS_PRODUCT_ACTIVE');
-                        $act = '<script type="text/javascript">' . $arParams . '</script><input class="addBtn" type="button" onclick="SelEl(el' . $val["ID"] . ', ' . $val["ID"] . ')" name="btn_select_' . $val["ID"] . '" id="btn_select_' . $val["ID"] . '" value="' . GetMessage("SPS_SELECT") . '" />';
+                        $act = '<script type="text/javascript">' . $arParams . '</script><input class="addBtn" type="button" onclick="SelEl(el' . $val["ID"] . ', ' . $val["ID"] . ')" name="btn_select_' . $val["ID"] . '" id="btn_select_' . $val["ID"] . '" value="' . GetMessage(
+                                "SPS_SELECT"
+                            ) . '" />';
                     } else {
                         $countField = "&nbsp;";
                         $balance = "&nbsp;";
                         $active = GetMEssage('SPS_PRODUCT_NO_ACTIVE');
                         $act = GetMessage("SPS_CAN_BUY_NOT_PRODUCT");
                     }
-                    $active = ($val["ACTIVE"] == 'Y' ? GetMEssage('SPS_PRODUCT_ACTIVE') : GetMEssage('SPS_PRODUCT_NO_ACTIVE'));
+                    $active = ($val["ACTIVE"] == 'Y' ? GetMEssage('SPS_PRODUCT_ACTIVE') : GetMEssage(
+                        'SPS_PRODUCT_NO_ACTIVE'
+                    ));
 
                     $row->AddField("ACT", $act);
                     $row->AddField("QUANTITY", $countField);
@@ -881,65 +1097,92 @@ if (!$bBadBlock) {
                 }
             } else {
                 $row->AddField("ACTIVE", $active);
-                $row->AddField("ACT", '<input class="addBtn" type="button" name="btn_show_sku_' . $arItems["ID"] . '" value="' . GetMessage("SKU_EMPTY") . '" title="' . GetMessage('SKU_EMPTY_TITLE') . '">');
-                $row->AddViewField("PREVIEW_PICTURE", CFileInput::Show('NO_FIELDS[' . $arItems['ID'] . '][PREVIEW_PICTURE]', $arItems['PREVIEW_PICTURE'], array(
-                    "IMAGE" => "Y",
-                    "PATH" => "Y",
-                    "FILE_SIZE" => "Y",
-                    "DIMENSIONS" => "Y",
-                    "IMAGE_POPUP" => "Y",
-                    "MAX_SIZE" => $maxImageSize,
-                    "MIN_SIZE" => $minImageSize,
-                ), array(
-                    'upload' => false,
-                    'medialib' => false,
-                    'file_dialog' => false,
-                    'cloud' => false,
-                    'del' => false,
-                    'description' => false,
-                )));
-                $row->AddViewField("DETAIL_PICTURE", CFileInput::Show('NO_FIELDS[' . $arItems['ID'] . '][DETAIL_PICTURE]', $arItems['DETAIL_PICTURE'], array(
-                    "IMAGE" => "Y",
-                    "PATH" => "Y",
-                    "FILE_SIZE" => "Y",
-                    "DIMENSIONS" => "Y",
-                    "IMAGE_POPUP" => "Y",
-                    "MAX_SIZE" => $maxImageSize,
-                    "MIN_SIZE" => $minImageSize,
-                ), array(
-                    'upload' => false,
-                    'medialib' => false,
-                    'file_dialog' => false,
-                    'cloud' => false,
-                    'del' => false,
-                    'description' => false,
-                )));
+                $row->AddField(
+                    "ACT",
+                    '<input class="addBtn" type="button" name="btn_show_sku_' . $arItems["ID"] . '" value="' . GetMessage(
+                        "SKU_EMPTY"
+                    ) . '" title="' . GetMessage('SKU_EMPTY_TITLE') . '">'
+                );
+                $row->AddViewField(
+                    "PREVIEW_PICTURE",
+                    CFileInput::Show(
+                        'NO_FIELDS[' . $arItems['ID'] . '][PREVIEW_PICTURE]',
+                        $arItems['PREVIEW_PICTURE'],
+                        array(
+                            "IMAGE" => "Y",
+                            "PATH" => "Y",
+                            "FILE_SIZE" => "Y",
+                            "DIMENSIONS" => "Y",
+                            "IMAGE_POPUP" => "Y",
+                            "MAX_SIZE" => $maxImageSize,
+                            "MIN_SIZE" => $minImageSize,
+                        ),
+                        array(
+                            'upload' => false,
+                            'medialib' => false,
+                            'file_dialog' => false,
+                            'cloud' => false,
+                            'del' => false,
+                            'description' => false,
+                        )
+                    )
+                );
+                $row->AddViewField(
+                    "DETAIL_PICTURE",
+                    CFileInput::Show(
+                        'NO_FIELDS[' . $arItems['ID'] . '][DETAIL_PICTURE]',
+                        $arItems['DETAIL_PICTURE'],
+                        array(
+                            "IMAGE" => "Y",
+                            "PATH" => "Y",
+                            "FILE_SIZE" => "Y",
+                            "DIMENSIONS" => "Y",
+                            "IMAGE_POPUP" => "Y",
+                            "MAX_SIZE" => $maxImageSize,
+                            "MIN_SIZE" => $minImageSize,
+                        ),
+                        array(
+                            'upload' => false,
+                            'medialib' => false,
+                            'file_dialog' => false,
+                            'cloud' => false,
+                            'del' => false,
+                            'description' => false,
+                        )
+                    )
+                );
                 $arProperties = array();
                 if (!empty($arSelectedProps)) {
                     $rsProperties = CIBlockElement::GetProperty($iblockId, $arItems["ID"]);
                     while ($ar = $rsProperties->Fetch()) {
-                        if (!array_key_exists($ar["ID"], $arProperties))
+                        if (!array_key_exists($ar["ID"], $arProperties)) {
                             $arProperties[$ar["ID"]] = array();
-                        if ($ar["PROPERTY_TYPE"] === "L")
+                        }
+                        if ($ar["PROPERTY_TYPE"] === "L") {
                             $arProperties[$ar["ID"]][$ar["PROPERTY_VALUE_ID"]] = $ar["VALUE_ENUM"];
-                        else
+                        } else {
                             $arProperties[$ar["ID"]][$ar["PROPERTY_VALUE_ID"]] = $ar["VALUE"];
+                        }
                     }
                 }
                 foreach ($arSelectedProps as $aProp) {
                     $v = '';
                     foreach ($arProperties[$aProp['ID']] as $property_value_id => $property_value) {
                         $res = '';
-                        if ($aProp['PROPERTY_TYPE'] == 'F')
-                            $res = CFileInput::Show('NO_FIELDS[' . $property_value_id . ']', $property_value, array(
-                                "IMAGE" => "Y",
-                                "PATH" => "Y",
-                                "FILE_SIZE" => "Y",
-                                "DIMENSIONS" => "Y",
-                                "IMAGE_POPUP" => "Y",
-                                "MAX_SIZE" => $maxImageSize,
-                                "MIN_SIZE" => $minImageSize,
-                            ), array(
+                        if ($aProp['PROPERTY_TYPE'] == 'F') {
+                            $res = CFileInput::Show(
+                                'NO_FIELDS[' . $property_value_id . ']',
+                                $property_value,
+                                array(
+                                    "IMAGE" => "Y",
+                                    "PATH" => "Y",
+                                    "FILE_SIZE" => "Y",
+                                    "DIMENSIONS" => "Y",
+                                    "IMAGE_POPUP" => "Y",
+                                    "MAX_SIZE" => $maxImageSize,
+                                    "MIN_SIZE" => $minImageSize,
+                                ),
+                                array(
                                     'upload' => false,
                                     'medialib' => false,
                                     'file_dialog' => false,
@@ -948,25 +1191,36 @@ if (!$bBadBlock) {
                                     'description' => false,
                                 )
                             );
-                        elseif ($aProp['PROPERTY_TYPE'] == 'G') {
+                        } elseif ($aProp['PROPERTY_TYPE'] == 'G') {
                             $t = GetSectionName($property_value);
-                            if ($t)
-                                $res = $t['NAME'] . ' [<a href="' . htmlspecialcharsbx(CIBlock::GetAdminSectionEditLink($t['IBLOCK_ID'], $t['ID'])) . '" title="' . GetMessage("SPS_ELSEARCH_SECTION_EDIT") . '">' . $t['ID'] . '</a>]';
+                            if ($t) {
+                                $res = $t['NAME'] . ' [<a href="' . htmlspecialcharsbx(
+                                        CIBlock::GetAdminSectionEditLink($t['IBLOCK_ID'], $t['ID'])
+                                    ) . '" title="' . GetMessage(
+                                        "SPS_ELSEARCH_SECTION_EDIT"
+                                    ) . '">' . $t['ID'] . '</a>]';
+                            }
                         } elseif ($aProp['PROPERTY_TYPE'] == 'E') {
                             $t = GetElementName($property_value);
                             if ($t) {
-                                $res = $t['NAME'] . ' [<a href="' . htmlspecialcharsbx(CIBlock::GetAdminElementEditLink($t['IBLOCK_ID'], $t['ID'])) . '" title="' . GetMessage("SPS_ELSEARCH_ELEMENT_EDIT") . '">' . $t['ID'] . '</a>]';
+                                $res = $t['NAME'] . ' [<a href="' . htmlspecialcharsbx(
+                                        CIBlock::GetAdminElementEditLink($t['IBLOCK_ID'], $t['ID'])
+                                    ) . '" title="' . GetMessage(
+                                        "SPS_ELSEARCH_ELEMENT_EDIT"
+                                    ) . '">' . $t['ID'] . '</a>]';
                             }
                         } else {
                             $res = htmlspecialcharsex($property_value);
                         }
 
-                        if ($res != "")
+                        if ($res != "") {
                             $v .= ($v != '' ? ' / ' : '') . $res;
+                        }
                     }
 
-                    if ($v != "")
+                    if ($v != "") {
                         $row->AddViewField("PROPERTY_" . $aProp['ID'], $v);
+                    }
                     unset($arSelectedProps[$aProp['ID']]["CACHE"]);
                 }
             }
@@ -975,7 +1229,13 @@ if (!$bBadBlock) {
             $nearestQuantity = $QUANTITY;
             $amountToStore = 0;
             if ($storeFromId > 0) {
-                $dbStoreProduct = CCatalogStoreProduct::GetList(array(), array("PRODUCT_ID" => $arItems["ID"], "STORE_ID" => $storeFromId));
+                $dbStoreProduct = CCatalogStoreProduct::GetList(
+                    array(),
+                    array(
+                        "PRODUCT_ID" => $arItems["ID"],
+                        "STORE_ID" => $storeFromId
+                    )
+                );
                 if ($arStoreProduct = $dbStoreProduct->Fetch()) {
                     $amountToStore = $arStoreProduct["AMOUNT"];
                 }
@@ -989,46 +1249,68 @@ if (!$bBadBlock) {
                 }
             }
 
-            if (is_array($arCatalogProduct["BARCODE"]))
+            if (is_array($arCatalogProduct["BARCODE"])) {
                 $arCatalogProduct["BARCODE"] = implode(', ', $arCatalogProduct["BARCODE"]);
+            }
 
-            $balance = ($storeFromId > 0) ? FloatVal($arCatalogProduct["QUANTITY"]) . " / " . FloatVal($amountToStore) : FloatVal($arCatalogProduct["QUANTITY"]);
+            $balance = ($storeFromId > 0) ? FloatVal($arCatalogProduct["QUANTITY"]) . " / " . FloatVal(
+                    $amountToStore
+                ) : FloatVal($arCatalogProduct["QUANTITY"]);
             $row->AddField("BALANCE", $balance);
-            $row->AddViewField("PREVIEW_PICTURE", CFileInput::Show('NO_FIELDS[' . $arItems['ID'] . '][PREVIEW_PICTURE]', $arItems['PREVIEW_PICTURE'], array(
-                "IMAGE" => "Y",
-                "PATH" => "Y",
-                "FILE_SIZE" => "Y",
-                "DIMENSIONS" => "Y",
-                "IMAGE_POPUP" => "Y",
-                "MAX_SIZE" => $maxImageSize,
-                "MIN_SIZE" => $minImageSize,
-            ), array(
-                'upload' => false,
-                'medialib' => false,
-                'file_dialog' => false,
-                'cloud' => false,
-                'del' => false,
-                'description' => false,
-            )));
-            $row->AddViewField("DETAIL_PICTURE", CFileInput::Show('NO_FIELDS[' . $arItems['ID'] . '][DETAIL_PICTURE]', $arItems['DETAIL_PICTURE'], array(
-                "IMAGE" => "Y",
-                "PATH" => "Y",
-                "FILE_SIZE" => "Y",
-                "DIMENSIONS" => "Y",
-                "IMAGE_POPUP" => "Y",
-                "MAX_SIZE" => $maxImageSize,
-                "MIN_SIZE" => $minImageSize,
-            ), array(
-                'upload' => false,
-                'medialib' => false,
-                'file_dialog' => false,
-                'cloud' => false,
-                'del' => false,
-                'description' => false,
-            )));
+            $row->AddViewField(
+                "PREVIEW_PICTURE",
+                CFileInput::Show(
+                    'NO_FIELDS[' . $arItems['ID'] . '][PREVIEW_PICTURE]',
+                    $arItems['PREVIEW_PICTURE'],
+                    array(
+                        "IMAGE" => "Y",
+                        "PATH" => "Y",
+                        "FILE_SIZE" => "Y",
+                        "DIMENSIONS" => "Y",
+                        "IMAGE_POPUP" => "Y",
+                        "MAX_SIZE" => $maxImageSize,
+                        "MIN_SIZE" => $minImageSize,
+                    ),
+                    array(
+                        'upload' => false,
+                        'medialib' => false,
+                        'file_dialog' => false,
+                        'cloud' => false,
+                        'del' => false,
+                        'description' => false,
+                    )
+                )
+            );
+            $row->AddViewField(
+                "DETAIL_PICTURE",
+                CFileInput::Show(
+                    'NO_FIELDS[' . $arItems['ID'] . '][DETAIL_PICTURE]',
+                    $arItems['DETAIL_PICTURE'],
+                    array(
+                        "IMAGE" => "Y",
+                        "PATH" => "Y",
+                        "FILE_SIZE" => "Y",
+                        "DIMENSIONS" => "Y",
+                        "IMAGE_POPUP" => "Y",
+                        "MAX_SIZE" => $maxImageSize,
+                        "MIN_SIZE" => $minImageSize,
+                    ),
+                    array(
+                        'upload' => false,
+                        'medialib' => false,
+                        'file_dialog' => false,
+                        'cloud' => false,
+                        'del' => false,
+                        'description' => false,
+                    )
+                )
+            );
             $bCanBuy = true;
-            if ($arCatalogProduct["CAN_BUY_ZERO"] != "Y" && ($arCatalogProduct["QUANTITY_TRACE"] == "Y" && doubleval($arCatalogProduct["QUANTITY"]) <= 0))
+            if ($arCatalogProduct["CAN_BUY_ZERO"] != "Y" && ($arCatalogProduct["QUANTITY_TRACE"] == "Y" && doubleval(
+                        $arCatalogProduct["QUANTITY"]
+                    ) <= 0)) {
                 $bCanBuy = false;
+            }
             if ($addDefault == "Y" || ($bCanBuy && $addDefault == "N")) {
                 $arParams = array(
                     'id' => $arItems["ID"],
@@ -1050,13 +1332,17 @@ if (!$bBadBlock) {
 
                 $arParams = "var el" . $arItems["ID"] . " = " . $arParams;
 
-                $act = '<script type="text/javascript">' . $arParams . '</script><input class="addBtn" type="button" onClick="SelEl(el' . $arItems["ID"] . ', ' . $arItems["ID"] . ')" name="btn_select_' . $arItems["ID"] . '" id="btn_select_' . $arItems["ID"] . '" value="' . GetMessage("SPS_SELECT") . '">';
+                $act = '<script type="text/javascript">' . $arParams . '</script><input class="addBtn" type="button" onClick="SelEl(el' . $arItems["ID"] . ', ' . $arItems["ID"] . ')" name="btn_select_' . $arItems["ID"] . '" id="btn_select_' . $arItems["ID"] . '" value="' . GetMessage(
+                        "SPS_SELECT"
+                    ) . '">';
                 $countField = '<input type="text" name="quantity_' . $arItems["ID"] . '" id="quantity_' . $arItems["ID"] . '" value="1" size="3">';
             } else {
                 $act = GetMessage("SPS_CAN_BUY_NOT_PRODUCT");
                 $countField = "&nbsp;";
             }
-            $active = ($arItems["ACTIVE"] == 'Y' ? GetMEssage('SPS_PRODUCT_ACTIVE') : GetMEssage('SPS_PRODUCT_NO_ACTIVE'));
+            $active = ($arItems["ACTIVE"] == 'Y' ? GetMEssage('SPS_PRODUCT_ACTIVE') : GetMEssage(
+                'SPS_PRODUCT_NO_ACTIVE'
+            ));
             $row->AddField("ACT", $act);
             $row->AddField("QUANTITY", $countField);
             $row->AddField("ACTIVE", $active);
@@ -1065,28 +1351,34 @@ if (!$bBadBlock) {
             if (!empty($arSelectedProps)) {
                 $rsProperties = CIBlockElement::GetProperty($iblockId, $arItems["ID"]);
                 while ($ar = $rsProperties->Fetch()) {
-                    if (!array_key_exists($ar["ID"], $arProperties))
+                    if (!array_key_exists($ar["ID"], $arProperties)) {
                         $arProperties[$ar["ID"]] = array();
-                    if ($ar["PROPERTY_TYPE"] === "L")
+                    }
+                    if ($ar["PROPERTY_TYPE"] === "L") {
                         $arProperties[$ar["ID"]][$ar["PROPERTY_VALUE_ID"]] = $ar["VALUE_ENUM"];
-                    else
+                    } else {
                         $arProperties[$ar["ID"]][$ar["PROPERTY_VALUE_ID"]] = $ar["VALUE"];
+                    }
                 }
             }
             foreach ($arSelectedProps as $aProp) {
                 $v = '';
                 foreach ($arProperties[$aProp['ID']] as $property_value_id => $property_value) {
                     $res = '';
-                    if ($aProp['PROPERTY_TYPE'] == 'F')
-                        $res = CFileInput::Show('NO_FIELDS[' . $property_value_id . ']', $property_value, array(
-                            "IMAGE" => "Y",
-                            "PATH" => "Y",
-                            "FILE_SIZE" => "Y",
-                            "DIMENSIONS" => "Y",
-                            "IMAGE_POPUP" => "Y",
-                            "MAX_SIZE" => $maxImageSize,
-                            "MIN_SIZE" => $minImageSize,
-                        ), array(
+                    if ($aProp['PROPERTY_TYPE'] == 'F') {
+                        $res = CFileInput::Show(
+                            'NO_FIELDS[' . $property_value_id . ']',
+                            $property_value,
+                            array(
+                                "IMAGE" => "Y",
+                                "PATH" => "Y",
+                                "FILE_SIZE" => "Y",
+                                "DIMENSIONS" => "Y",
+                                "IMAGE_POPUP" => "Y",
+                                "MAX_SIZE" => $maxImageSize,
+                                "MIN_SIZE" => $minImageSize,
+                            ),
+                            array(
                                 'upload' => false,
                                 'medialib' => false,
                                 'file_dialog' => false,
@@ -1095,25 +1387,32 @@ if (!$bBadBlock) {
                                 'description' => false,
                             )
                         );
-                    elseif ($aProp['PROPERTY_TYPE'] == 'G') {
+                    } elseif ($aProp['PROPERTY_TYPE'] == 'G') {
                         $t = GetSectionName($property_value);
-                        if ($t)
-                            $res = $t['NAME'] . ' [<a href="' . htmlspecialcharsbx(CIBlock::GetAdminSectionEditLink($t['IBLOCK_ID'], $t['ID'])) . '" title="' . GetMessage("SPS_ELSEARCH_SECTION_EDIT") . '">' . $t['ID'] . '</a>]';
+                        if ($t) {
+                            $res = $t['NAME'] . ' [<a href="' . htmlspecialcharsbx(
+                                    CIBlock::GetAdminSectionEditLink($t['IBLOCK_ID'], $t['ID'])
+                                ) . '" title="' . GetMessage("SPS_ELSEARCH_SECTION_EDIT") . '">' . $t['ID'] . '</a>]';
+                        }
                     } elseif ($aProp['PROPERTY_TYPE'] == 'E') {
                         $t = GetElementName($property_value);
                         if ($t) {
-                            $res = $t['NAME'] . ' [<a href="' . htmlspecialcharsbx(CIBlock::GetAdminElementEditLink($t['IBLOCK_ID'], $t['ID'])) . '" title="' . GetMessage("SPS_ELSEARCH_ELEMENT_EDIT") . '">' . $t['ID'] . '</a>]';
+                            $res = $t['NAME'] . ' [<a href="' . htmlspecialcharsbx(
+                                    CIBlock::GetAdminElementEditLink($t['IBLOCK_ID'], $t['ID'])
+                                ) . '" title="' . GetMessage("SPS_ELSEARCH_ELEMENT_EDIT") . '">' . $t['ID'] . '</a>]';
                         }
                     } else {
                         $res = htmlspecialcharsex($property_value);
                     }
 
-                    if ($res != "")
+                    if ($res != "") {
                         $v .= ($v != '' ? ' / ' : '') . $res;
+                    }
                 }
 
-                if ($v != "")
+                if ($v != "") {
                     $row->AddViewField("PROPERTY_" . $aProp['ID'], $v);
+                }
                 unset($arSelectedProps[$aProp['ID']]["CACHE"]);
             }
             foreach ($arPrices as $price) {
@@ -1248,8 +1547,9 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_popup_a
                             foreach ($arUrlTag as $tag) {
                                 $tmp = explode("=", $tag);
                                 if ($tmp[0] == "IBLOCK_ID" || $tmp[0] == "find_section_section") {
-                                    if ($tmp[0] == "find_section_section")
+                                    if ($tmp[0] == "find_section_section") {
                                         $tmp[0] = "filter_section";
+                                    }
 
                                     $urlCurrent = CHTTP::urlDeleteParams($urlCurrent, array($tmp[0]));
                                     $arUrlAdd[$tmp[0]] = $tmp[1];
@@ -1316,14 +1616,16 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_popup_a
                     $arFindFields["find_descr"] = GetMessage("SPS_DESCR");
 
                     if (!empty($arProps)) {
-                        foreach ($arProps as $arProp)
+                        foreach ($arProps as $arProp) {
                             $arFindFields["find_prop_" . $arProp["ID"]] = $arProp["NAME"];
+                        }
                     }
 
                     if (!empty($arSKUProps)) {
                         foreach ($arSKUProps as $arProp) {
-                            if ($arProp["FILTRABLE"] == "Y" && $arProp["PROPERTY_TYPE"] != "F")
+                            if ($arProp["FILTRABLE"] == "Y" && $arProp["PROPERTY_TYPE"] != "F") {
                                 $arFindFields["IBLIST_A_SUB_PROP_" . $arProp["ID"]] = $arProp["NAME"];
+                            }
                         }
                     }
                     $oFilter = new CAdminFilter(
@@ -1342,8 +1644,9 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_popup_a
                     $strShowOffersIBlock = COption::GetOptionString('catalog', 'product_form_show_offers_iblock');
                     $catalogID = $arLid = array();
                     $arCatalogFilter = array();
-                    if ($boolSubscribe)
+                    if ($boolSubscribe) {
                         $arCatalogFilter['SUBSCRIPTION'] = 'Y';
+                    }
                     $dbItem = CCatalog::GetList(
                         array(),
                         $arCatalogFilter,
@@ -1412,7 +1715,13 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_popup_a
         </tr>
         <tr>
             <td nowrap><?= GetMessage("SPS_TIMESTAMP") ?>:</td>
-            <td nowrap><? echo CalendarPeriod("filter_timestamp_from", htmlspecialcharsex($_REQUEST['filter_timestamp_from']), "filter_timestamp_to", htmlspecialcharsex($_REQUEST['filter_timestamp_to']), "form1") ?></td>
+            <td nowrap><? echo CalendarPeriod(
+                    "filter_timestamp_from",
+                    htmlspecialcharsex($_REQUEST['filter_timestamp_from']),
+                    "filter_timestamp_to",
+                    htmlspecialcharsex($_REQUEST['filter_timestamp_to']),
+                    "form1"
+                ) ?></td>
         </tr>
         <?
         if (!$orderForm) {
@@ -1422,8 +1731,12 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_popup_a
                 <td nowrap>
                     <select name="filter_active">
                         <option value=""><?= htmlspecialcharsex("(" . GetMessage("SPS_ANY") . ")") ?></option>
-                        <option value="Y"<? if ($_REQUEST['filter_active'] == "Y") echo " selected" ?>><?= htmlspecialcharsex(GetMessage("SPS_YES")) ?></option>
-                        <option value="N"<? if ($_REQUEST['filter_active'] == "N") echo " selected" ?>><?= htmlspecialcharsex(GetMessage("SPS_NO")) ?></option>
+                        <option value="Y"<? if ($_REQUEST['filter_active'] == "Y") echo " selected" ?>><?= htmlspecialcharsex(
+                                GetMessage("SPS_YES")
+                            ) ?></option>
+                        <option value="N"<? if ($_REQUEST['filter_active'] == "N") echo " selected" ?>><?= htmlspecialcharsex(
+                                GetMessage("SPS_NO")
+                            ) ?></option>
                     </select>
                 </td>
             </tr>
@@ -1454,10 +1767,13 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_popup_a
                     <td>
                         <? if (array_key_exists("GetAdminFilterHTML", $arProp["PROPERTY_USER_TYPE"])):
                             echo "<script type='text/javascript'>var arClearHiddenFields = [];</script>";
-                            echo call_user_func_array($arProp["PROPERTY_USER_TYPE"]["GetAdminFilterHTML"], array(
-                                $arProp,
-                                array("VALUE" => "filter_el_property_" . $arProp["ID"]),
-                            ));
+                            echo call_user_func_array(
+                                $arProp["PROPERTY_USER_TYPE"]["GetAdminFilterHTML"],
+                                array(
+                                    $arProp,
+                                    array("VALUE" => "filter_el_property_" . $arProp["ID"]),
+                                )
+                            );
                         elseif ($arProp["PROPERTY_TYPE"] == 'S'):?>
                             <input type="text" name="filter_el_property_<?= $arProp["ID"] ?>"
                                    value="<? echo htmlspecialcharsex(${"filter_el_property_" . $arProp["ID"]}) ?>"
@@ -1470,7 +1786,10 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_popup_a
                             <select name="filter_el_property_<?= $arProp["ID"] ?>">
                                 <option value=""><? echo GetMessage("SPS_VALUE_ANY") ?></option>
                                 <option value="NOT_REF"><? echo GetMessage("SPS_A_PROP_NOT_SET") ?></option><?
-                                $dbrPEnum = CIBlockPropertyEnum::GetList(Array("SORT" => "ASC", "NAME" => "ASC"), Array("PROPERTY_ID" => $arProp["ID"]));
+                                $dbrPEnum = CIBlockPropertyEnum::GetList(
+                                    Array("SORT" => "ASC", "NAME" => "ASC"),
+                                    Array("PROPERTY_ID" => $arProp["ID"])
+                                );
                                 while ($arPEnum = $dbrPEnum->GetNext()):
                                     ?>
                                     <option value="<?= $arPEnum["ID"] ?>"<? if (${"filter_el_property_" . $arProp["ID"]} == $arPEnum["ID"]) echo " selected" ?>><?= $arPEnum["VALUE"] ?></option>
@@ -1479,7 +1798,11 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_popup_a
                                 ?></select>
                         <?
                         elseif ($arProp["PROPERTY_TYPE"] == 'G'):
-                            echo _ShowGroupPropertyFieldList('filter_el_property_' . $arProp["ID"], $arProp, ${'filter_el_property_' . $arProp["ID"]});
+                            echo _ShowGroupPropertyFieldList(
+                                'filter_el_property_' . $arProp["ID"],
+                                $arProp,
+                                ${'filter_el_property_' . $arProp["ID"]}
+                            );
                         endif;
                         ?>
                     </td>
@@ -1492,27 +1815,35 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_popup_a
                 if ($arProp["FILTRABLE"] == "Y" && $arProp["PROPERTY_TYPE"] != "F" && $arCatalog['SKU_PROPERTY_ID'] != $arProp['ID']) {
                     ?>
                     <tr>
-                        <td><? echo('' != $strSKUName ? $strSKUName . ' - ' : ''); ?><? echo $arProp["NAME"] ?>:</td>
+                        <td><? echo $arProp["NAME"] ?> (<?= GetMessage("SPS_OFFER") ?>):</td>
                         <td>
                             <? if (array_key_exists("GetAdminFilterHTML", $arProp["PROPERTY_USER_TYPE"])):
                                 echo "<script type='text/javascript'>var arClearHiddenFields = [];</script>";
-                                echo call_user_func_array($arProp["PROPERTY_USER_TYPE"]["GetAdminFilterHTML"], array(
-                                    $arProp,
-                                    array("VALUE" => "find_sub_el_property_" . $arProp["ID"]),
-                                ));
+                                echo call_user_func_array(
+                                    $arProp["PROPERTY_USER_TYPE"]["GetAdminFilterHTML"],
+                                    array(
+                                        $arProp,
+                                        array("VALUE" => "find_sub_el_property_" . $arProp["ID"]),
+                                    )
+                                );
                             elseif ($arProp["PROPERTY_TYPE"] == 'S'):?>
                                 <input type="text" name="filter_sub_el_property_<?= $arProp["ID"] ?>"
-                                       value="<? echo htmlspecialcharsex(${"filter_sub_el_property_" . $arProp["ID"]}) ?>"
-                                       size="30">&nbsp;<?= ShowFilterLogicHelp() ?>
+                                       value="<? echo htmlspecialcharsex(
+                                           ${"filter_sub_el_property_" . $arProp["ID"]}
+                                       ) ?>" size="30">&nbsp;<?= ShowFilterLogicHelp() ?>
                             <? elseif ($arProp["PROPERTY_TYPE"] == 'N' || $arProp["PROPERTY_TYPE"] == 'E'):?>
                                 <input type="text" name="filter_sub_el_property_<?= $arProp["ID"] ?>"
-                                       value="<? echo htmlspecialcharsex(${"filter_sub_el_property_" . $arProp["ID"]}) ?>"
-                                       size="30">
+                                       value="<? echo htmlspecialcharsex(
+                                           ${"filter_sub_el_property_" . $arProp["ID"]}
+                                       ) ?>" size="30">
                             <? elseif ($arProp["PROPERTY_TYPE"] == 'L'):?>
                                 <select name="filter_sub_el_property_<?= $arProp["ID"] ?>">
                                     <option value=""><? echo GetMessage("SPS_VALUE_ANY") ?></option>
                                     <option value="NOT_REF"><? echo GetMessage("SPS_A_PROP_NOT_SET") ?></option><?
-                                    $dbrPEnum = CIBlockPropertyEnum::GetList(Array("SORT" => "ASC", "NAME" => "ASC"), Array("PROPERTY_ID" => $arProp["ID"]));
+                                    $dbrPEnum = CIBlockPropertyEnum::GetList(
+                                        Array("SORT" => "ASC", "NAME" => "ASC"),
+                                        Array("PROPERTY_ID" => $arProp["ID"])
+                                    );
                                     while ($arPEnum = $dbrPEnum->GetNext()):
                                         ?>
                                         <option value="<?= $arPEnum["ID"] ?>"<? if (${"filter_sub_el_property_" . $arProp["ID"]} == $arPEnum["ID"]) echo " selected" ?>><?= $arPEnum["VALUE"] ?></option>
@@ -1521,7 +1852,11 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_popup_a
                                     ?></select>
                             <?
                             elseif ($arProp["PROPERTY_TYPE"] == 'G'):
-                                echo _ShowGroupPropertyFieldList('filter_sub_el_property_' . $arProp["ID"], $arProp, ${'filter_sub_el_property_' . $arProp["ID"]});
+                                echo _ShowGroupPropertyFieldList(
+                                    'filter_sub_el_property_' . $arProp["ID"],
+                                    $arProp,
+                                    ${'filter_sub_el_property_' . $arProp["ID"]}
+                                );
                             endif;
                             ?>
                         </td>
@@ -1545,7 +1880,15 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_popup_a
         $lAdmin->DisplayList();
         if (isset($_REQUEST["set_filter"]) && $_REQUEST["set_filter"] === 'Y') {
             if (isset($_REQUEST["IBLOCK_ID"])) {
-                CUserOptions::SetOption("catalog", "product_search_" . $caller, "&IBLOCK_ID=" . intval($_REQUEST["IBLOCK_ID"]) . "&filter_section=" . intval($_REQUEST["filter_section"]), false, $buyerId);
+                CUserOptions::SetOption(
+                    "catalog",
+                    "product_search_" . $caller,
+                    "&IBLOCK_ID=" . intval($_REQUEST["IBLOCK_ID"]) . "&filter_section=" . intval(
+                        $_REQUEST["filter_section"]
+                    ),
+                    false,
+                    $buyerId
+                );
             }
         }
         ?>
@@ -1554,4 +1897,4 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_popup_a
         </td>
         </tr>
     </table>
-<? require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_popup_admin.php"); ?>
+<? require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_popup_admin.php");

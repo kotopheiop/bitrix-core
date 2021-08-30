@@ -8,16 +8,20 @@
 ##############################################
 */
 
+use Bitrix\Main\Loader;
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/advertising/prolog.php");
-require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/advertising/include.php");
+Loader::includeModule('advertising');
 
 $isDemo = CAdvContract::IsDemo();
 $isManager = CAdvContract::IsManager();
 $isAdvertiser = CAdvContract::IsAdvertiser();
 $isAdmin = CAdvContract::IsAdmin();
 
-if (!$isAdmin && !$isDemo && !$isManager && !$isAdvertiser) $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if (!$isAdmin && !$isDemo && !$isManager && !$isAdvertiser) {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $DONT_USE_CONTRACT = COption::GetOptionString("advertising", "DONT_USE_CONTRACT", "N");
 
@@ -102,10 +106,11 @@ $arFilter = Array(
 if ($lAdmin->EditAction() && $isAdmin) {
     foreach ($FIELDS as $ID => $arFields) {
         $DB->StartTransaction();
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
-        if (!$lAdmin->IsUpdated($ID))
+        if (!$lAdmin->IsUpdated($ID)) {
             continue;
+        }
 
         if (!CAdvContract::Set($arFields, $ID)) {
             $lAdmin->AddUpdateError(GetMessage("SAVE_ERROR") . $ID . ": " . $ob->LAST_ERROR, $ID);
@@ -119,16 +124,18 @@ if ($lAdmin->EditAction() && $isAdmin) {
 if (($arID = $lAdmin->GroupAction()) && $isAdmin) {
     if ($_REQUEST['action_target'] == 'selected') {
         $arID = Array();
-        $rsData = CAdvContract::GetList($by, $order, $arFilter);
-        while ($arRes = $rsData->Fetch())
+        $rsData = CAdvContract::GetList('', '', $arFilter);
+        while ($arRes = $rsData->Fetch()) {
             $arID[] = $arRes['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
         $ob = new CAdvContract;
-        if (IntVal($ID) <= 0)
+        if (intval($ID) <= 0) {
             continue;
-        $ID = IntVal($ID);
+        }
+        $ID = intval($ID);
         switch ($_REQUEST['action']) {
             case "delete":
                 if (!CAdvContract::Delete($ID)) {
@@ -138,53 +145,129 @@ if (($arID = $lAdmin->GroupAction()) && $isAdmin) {
             case "activate":
             case "deactivate":
                 $arFields = Array("ACTIVE" => ($_REQUEST['action'] == "activate" ? "Y" : "N"));
-                if (!$ob->Set($arFields, $ID))
+                if (!$ob->Set($arFields, $ID)) {
                     $lAdmin->AddGroupError(GetMessage("MAIN_EDIT_ERROR") . $ob->LAST_ERROR, $ID);
+                }
                 break;
         }
     }
 }
 
-$rsContracts = CAdvContract::GetList($by, $order, $arFilter, $is_filtered);
+global $by, $order;
+
+$rsContracts = CAdvContract::GetList($by, $order, $arFilter);
 
 $rsData = new CAdminResult($rsContracts, $sTableID);
 $rsData->NavStart();
 $lAdmin->NavText($rsData->GetNavPrint(GetMessage("AD_PAGES")));
 $Headers = Array(
     array("id" => "ID", "content" => "ID", "sort" => "s_id", "default" => true, "align" => "right"),
-    array("id" => "LAMP", "content" => GetMessage("AD_LAMP"), "sort" => "s_lamp", "default" => true, "align" => "center", "default" => true),
-    array("id" => "DATE_MODIFY", "content" => GetMessage("AD_DATE_MODIFY"), "sort" => "s_date_modify", "default" => true),
+    array(
+        "id" => "LAMP",
+        "content" => GetMessage("AD_LAMP"),
+        "sort" => "s_lamp",
+        "default" => true,
+        "align" => "center",
+        "default" => true
+    ),
+    array(
+        "id" => "DATE_MODIFY",
+        "content" => GetMessage("AD_DATE_MODIFY"),
+        "sort" => "s_date_modify",
+        "default" => true
+    ),
     array("id" => "SITE", "content" => GetMessage("AD_SITE"), "sort" => "", "default" => true)
 );
-if ($isAdmin || $isDemo)
-    $Headers[] = array("id" => "SORT", "content" => GetMessage("AD_SORT"), "sort" => "s_sort", "default" => true, "align" => "right");
+if ($isAdmin || $isDemo) {
+    $Headers[] = array(
+        "id" => "SORT",
+        "content" => GetMessage("AD_SORT"),
+        "sort" => "s_sort",
+        "default" => true,
+        "align" => "right"
+    );
+}
 $Headers[] = array("id" => "ACTIVE", "content" => GetMessage("AD_ACTIVE"), "sort" => "s_active", "default" => true);
-if ($isAdmin || $isDemo)
-    $Headers[] = array("id" => "WEIGHT", "content" => GetMessage("AD_WEIGHT"), "sort" => "s_weight", "default" => true, "align" => "right");
+if ($isAdmin || $isDemo) {
+    $Headers[] = array(
+        "id" => "WEIGHT",
+        "content" => GetMessage("AD_WEIGHT"),
+        "sort" => "s_weight",
+        "default" => true,
+        "align" => "right"
+    );
+}
 $Headers[] = array("id" => "NAME", "content" => GetMessage("AD_NAME"), "sort" => "s_name", "default" => true);
 $Headers[] = array("id" => "DESCRIPTION", "content" => GetMessage("AD_DESCRIPTION"), "sort" => "s_description");
-$Headers[] = array("id" => "BANNER_COUNT", "content" => GetMessage("AD_BANNER_COUNT"), "sort" => "s_banner_count", "default" => true, "align" => "right");
-$Headers[] = array("id" => "VISITOR_COUNT", "content" => GetMessage("AD_VISITOR_COUNT"), "sort" => "s_visitor_count", "align" => "right");
-$Headers[] = array("id" => "MAX_VISITOR_COUNT", "content" => GetMessage("AD_VISITOR_COUNT_MAX"), "sort" => "s_max_visitor_count", "align" => "right");
-$Headers[] = array("id" => "SHOW_COUNT", "content" => GetMessage("AD_SHOW_COUNT"), "sort" => "s_show_count", "align" => "right");
-$Headers[] = array("id" => "MAX_SHOW_COUNT", "content" => GetMessage("AD_SHOW_COUNT_MAX"), "sort" => "s_max_show_count", "align" => "right");
-$Headers[] = array("id" => "CLICK_COUNT", "content" => GetMessage("AD_CLICK_COUNT"), "sort" => "s_click_count", "align" => "right");
-$Headers[] = array("id" => "MAX_CLICK_COUNT", "content" => GetMessage("AD_CLICK_COUNT_MAX"), "sort" => "s_max_click_count", "align" => "right");
+$Headers[] = array(
+    "id" => "BANNER_COUNT",
+    "content" => GetMessage("AD_BANNER_COUNT"),
+    "sort" => "s_banner_count",
+    "default" => true,
+    "align" => "right"
+);
+$Headers[] = array(
+    "id" => "VISITOR_COUNT",
+    "content" => GetMessage("AD_VISITOR_COUNT"),
+    "sort" => "s_visitor_count",
+    "align" => "right"
+);
+$Headers[] = array(
+    "id" => "MAX_VISITOR_COUNT",
+    "content" => GetMessage("AD_VISITOR_COUNT_MAX"),
+    "sort" => "s_max_visitor_count",
+    "align" => "right"
+);
+$Headers[] = array(
+    "id" => "SHOW_COUNT",
+    "content" => GetMessage("AD_SHOW_COUNT"),
+    "sort" => "s_show_count",
+    "align" => "right"
+);
+$Headers[] = array(
+    "id" => "MAX_SHOW_COUNT",
+    "content" => GetMessage("AD_SHOW_COUNT_MAX"),
+    "sort" => "s_max_show_count",
+    "align" => "right"
+);
+$Headers[] = array(
+    "id" => "CLICK_COUNT",
+    "content" => GetMessage("AD_CLICK_COUNT"),
+    "sort" => "s_click_count",
+    "align" => "right"
+);
+$Headers[] = array(
+    "id" => "MAX_CLICK_COUNT",
+    "content" => GetMessage("AD_CLICK_COUNT_MAX"),
+    "sort" => "s_max_click_count",
+    "align" => "right"
+);
 $Headers[] = array("id" => "CTR", "content" => "CTR (%)", "sort" => "s_ctr", "align" => "right");
 $lAdmin->AddHeaders($Headers);
 
 $arrSites = array();
-$rs = CSite::GetList(($b = "sort"), ($o = "asc"));
-while ($ar = $rs->Fetch())
+$rs = CSite::GetList();
+while ($ar = $rs->Fetch()) {
     $arrSites[$ar["ID"]] = $ar;
+}
 
 while ($arRes = $rsData->NavNext(true, "f_")):
-    $lamp_alt = GetMessage("AD_" . strtoupper($f_LAMP) . "_ALT");
+    $lamp_alt = GetMessage("AD_" . mb_strtoupper($f_LAMP) . "_ALT");
     $lamp = '<div class="lamp-' . $f_LAMP . '" title="' . $lamp_alt . '"></div>';
     $arrUserPerm = is_array($arrPERM[$f_ID]) ? $arrPERM[$f_ID] : array();
 
-    $row =& $lAdmin->AddRow($f_ID, $arRes, "adv_contract_edit.php?ID=" . $f_ID . "&lang=" . LANGUAGE_ID, GetMessage("ADV_EDIT_TITLE"));
-    $row->AddViewField("ID", "<a href='adv_contract_edit.php?lang=" . LANGUAGE_ID . "&ID=" . $f_ID . "' title='" . GetMessage("ADV_EDIT_TITLE") . "'>" . $f_ID . "</a>");
+    $row =& $lAdmin->AddRow(
+        $f_ID,
+        $arRes,
+        "adv_contract_edit.php?ID=" . $f_ID . "&lang=" . LANGUAGE_ID,
+        GetMessage("ADV_EDIT_TITLE")
+    );
+    $row->AddViewField(
+        "ID",
+        "<a href='adv_contract_edit.php?lang=" . LANGUAGE_ID . "&ID=" . $f_ID . "' title='" . GetMessage(
+            "ADV_EDIT_TITLE"
+        ) . "'>" . $f_ID . "</a>"
+    );
     $row->AddViewField("LAMP", $lamp);
 
     $arr = explode(" ", $f_DATE_MODIFY);
@@ -195,10 +278,15 @@ while ($arRes = $rsData->NavNext(true, "f_")):
     reset($arrSITE);
     if (is_array($arrSITE)):
         foreach ($arrSITE as $sid):
-            if ($isAdmin)
-                $sites .= '<a href="/bitrix/admin/site_edit.php?LID=' . htmlspecialcharsbx($sid) . '&amp;lang=' . LANGUAGE_ID . '" title="' . GetMessage("ADV_SITE_VIEW") . '">' . htmlspecialcharsbx($arrSites[$sid]["NAME"]) . '</a><br>';
-            else
+            if ($isAdmin) {
+                $sites .= '<a href="/bitrix/admin/site_edit.php?LID=' . htmlspecialcharsbx(
+                        $sid
+                    ) . '&amp;lang=' . LANGUAGE_ID . '" title="' . GetMessage(
+                        "ADV_SITE_VIEW"
+                    ) . '">' . htmlspecialcharsbx($arrSites[$sid]["NAME"]) . '</a><br>';
+            } else {
                 $sites .= htmlspecialcharsbx($arrSites[$sid]["NAME"]) . "<br>";
+            }
         endforeach;
     endif;
     $row->AddViewField("SITE", $sites);
@@ -207,44 +295,77 @@ while ($arRes = $rsData->NavNext(true, "f_")):
         $row->AddInputField("SORT");
         $row->AddCheckField("ACTIVE");
         $row->AddInputField("WEIGHT");
-    } else
+    } else {
         $row->AddCheckField("ACTIVE", false);
-    if ((is_array($arrUserPerm) && in_array("EDIT", $arrUserPerm)) || $isDemo)
+    }
+    if ((is_array($arrUserPerm) && in_array("EDIT", $arrUserPerm)) || $isDemo) {
         $row->AddInputField("NAME");
-    else
+    } else {
         $row->AddViewField("NAME", $f_NAME);
+    }
     $row->AddViewField("DESCRIPTION", TruncateText($f_DESCRIPTION, 100));
-    $row->AddViewField("BANNER_COUNT", '<a href="/bitrix/admin/adv_banner_list.php?find_contract_id[]=' . $f_ID . '&set_filter=Y" title="' . GetMessage("ADV_BANNER_LIST") . '">' . $f_BANNER_COUNT . '</a>');
+    $row->AddViewField(
+        "BANNER_COUNT",
+        '<a href="/bitrix/admin/adv_banner_list.php?find_contract_id[]=' . $f_ID . '&set_filter=Y" title="' . GetMessage(
+            "ADV_BANNER_LIST"
+        ) . '">' . $f_BANNER_COUNT . '</a>'
+    );
 
     $row->AddViewField("VISITOR_COUNT", $f_VISITOR_COUNT);
-    if ((is_array($arrUserPerm) && in_array("EDIT", $arrUserPerm)) || $isDemo)
+    if ((is_array($arrUserPerm) && in_array("EDIT", $arrUserPerm)) || $isDemo) {
         $row->AddInputField("MAX_VISITOR_COUNT");
-    else
+    } else {
         $row->AddViewField("MAX_VISITOR_COUNT", $f_MAX_VISITOR_COUNT);
+    }
     $row->AddViewField("SHOW_COUNT", $f_SHOW_COUNT);
-    if ((is_array($arrUserPerm) && in_array("EDIT", $arrUserPerm)) || $isDemo)
+    if ((is_array($arrUserPerm) && in_array("EDIT", $arrUserPerm)) || $isDemo) {
         $row->AddInputField("MAX_SHOW_COUNT");
-    else
+    } else {
         $row->AddViewField("MAX_SHOW_COUNT", $f_MAX_SHOW_COUNT);
+    }
     $row->AddViewField("CLICK_COUNT", $f_CLICK_COUNT);
-    if ((is_array($arrUserPerm) && in_array("EDIT", $arrUserPerm)) || $isDemo)
+    if ((is_array($arrUserPerm) && in_array("EDIT", $arrUserPerm)) || $isDemo) {
         $row->AddInputField("MAX_CLICK_COUNT");
-    else
+    } else {
         $row->AddViewField("MAX_CLICK_COUNT", $f_MAX_CLICK_COUNT);
+    }
     $row->AddViewField("CTR", $f_CTR);
 
     $arActions = Array();
     if ((is_array($arrUserPerm) && in_array("EDIT", $arrUserPerm)) || $isDemo) {
-        $arActions[] = array("ICON" => "edit", "TEXT" => GetMessage("AD_EDIT"), "ACTION" => $lAdmin->ActionRedirect("adv_contract_edit.php?ID=" . $f_ID));
+        $arActions[] = array(
+            "ICON" => "edit",
+            "TEXT" => GetMessage("AD_EDIT"),
+            "ACTION" => $lAdmin->ActionRedirect("adv_contract_edit.php?ID=" . $f_ID)
+        );
     }
 
-    $arActions[] = array("ICON" => "view", "TEXT" => GetMessage("AD_VIEW"), "ACTION" => $lAdmin->ActionRedirect("adv_contract_edit.php?ID=" . $f_ID . "&action=view"), "TITLE" => GetMessage("AD_VIEW_TITILE"));
+    $arActions[] = array(
+        "ICON" => "view",
+        "TEXT" => GetMessage("AD_VIEW"),
+        "ACTION" => $lAdmin->ActionRedirect("adv_contract_edit.php?ID=" . $f_ID . "&action=view"),
+        "TITLE" => GetMessage("AD_VIEW_TITILE")
+    );
 
-    $arActions[] = array("ICON" => "adv_graph", "TEXT" => GetMessage("AD_STATISTICS"), "ACTION" => $lAdmin->ActionRedirect("adv_contract_graph.php?find_contract_id[]=" . $f_ID . "&find_what_show[]=ctr&set_filter=Y&lang=" . LANGUAGE_ID), "TITLE" => GetMessage("AD_CONTRACT_STATISTICS_VIEW"));
+    $arActions[] = array(
+        "ICON" => "adv_graph",
+        "TEXT" => GetMessage("AD_STATISTICS"),
+        "ACTION" => $lAdmin->ActionRedirect(
+            "adv_contract_graph.php?find_contract_id[]=" . $f_ID . "&find_what_show[]=ctr&set_filter=Y&lang=" . LANGUAGE_ID
+        ),
+        "TITLE" => GetMessage("AD_CONTRACT_STATISTICS_VIEW")
+    );
 
     if ($f_ID > 1 && ($isAdmin || $isDemo)) {
         $arActions[] = array("SEPARATOR" => true);
-        $arActions[] = array("ICON" => "delete", "TEXT" => GetMessage("AD_DELETE"), "ACTION" => "if(confirm('" . GetMessage('AD_DELETE_CONTRACT_CONFIRM') . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete"));
+        $arActions[] = array(
+            "ICON" => "delete",
+            "TEXT" => GetMessage("AD_DELETE"),
+            "ACTION" => "if(confirm('" . GetMessage('AD_DELETE_CONTRACT_CONFIRM') . "')) " . $lAdmin->ActionDoGroup(
+                    $f_ID,
+                    "delete"
+                )
+        );
     }
     $row->AddActions($arActions);
 
@@ -259,12 +380,15 @@ $lAdmin->AddFooter(
 );
 
 // ����� ����� � �������� ����������, ...
-if ((is_array($arrUserPerm) && in_array("EDIT", $arrUserPerm)) || $isDemo)
-    $lAdmin->AddGroupActionTable(Array(
-        "delete" => GetMessage("MAIN_ADMIN_LIST_DELETE"),
-        "activate" => GetMessage("MAIN_ADMIN_LIST_ACTIVATE"),
-        "deactivate" => GetMessage("MAIN_ADMIN_LIST_DEACTIVATE")
-    ));
+if ((is_array($arrUserPerm) && in_array("EDIT", $arrUserPerm)) || $isDemo) {
+    $lAdmin->AddGroupActionTable(
+        Array(
+            "delete" => GetMessage("MAIN_ADMIN_LIST_DELETE"),
+            "activate" => GetMessage("MAIN_ADMIN_LIST_ACTIVATE"),
+            "deactivate" => GetMessage("MAIN_ADMIN_LIST_DEACTIVATE")
+        )
+    );
+}
 
 if ($isAdmin || $isDemo) {
     $aContext = array(
@@ -288,8 +412,9 @@ $APPLICATION->SetTitle(GetMessage("AD_PAGE_TITLE"));
  ****************************************************************************/
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
-if ($DONT_USE_CONTRACT == "Y")
+if ($DONT_USE_CONTRACT == "Y") {
     CAdminMessage::ShowNote(GetMessage("AD_CONTRACT_DISABLE"));
+}
 ?>
 <form name="form1" method="GET" action="<?= $APPLICATION->GetCurPage() ?>">
     <?
@@ -321,20 +446,37 @@ if ($DONT_USE_CONTRACT == "Y")
                    title="<?= GetMessage("ADV_FLT_SEARCH_TITLE") ?>">
             <select name="find_type">
                 <option value="id"<? if ($find_type == "id") echo " selected" ?>><?= GetMessage('AD_F_ID') ?></option>
-                <option value="name"<? if ($find_type == "name") echo " selected" ?>><?= GetMessage('AD_F_NAME') ?></option>
-                <option value="description"<? if ($find_type == "description") echo " selected" ?>><?= GetMessage('AD_F_DESCRIPTION') ?></option>
+                <option value="name"<? if ($find_type == "name") echo " selected" ?>><?= GetMessage(
+                        'AD_F_NAME'
+                    ) ?></option>
+                <option value="description"<? if ($find_type == "description") echo " selected" ?>><?= GetMessage(
+                        'AD_F_DESCRIPTION'
+                    ) ?></option>
             </select>
         </td>
     </tr>
     <tr>
         <td><? echo GetMessage("AD_F_ID") ?>:</td>
-        <td><input type="text" name="find_id" size="47"
-                   value="<? echo htmlspecialcharsbx($find_id) ?>"><?= InputType("checkbox", "find_id_exact_match", "Y", $find_id_exact_match, false, "", "title='" . GetMessage("AD_EXACT_MATCH") . "'") ?>
-            &nbsp;<?= ShowFilterLogicHelp() ?></td>
+        <td><input type="text" name="find_id" size="47" value="<? echo htmlspecialcharsbx($find_id) ?>"><?= InputType(
+                "checkbox",
+                "find_id_exact_match",
+                "Y",
+                $find_id_exact_match,
+                false,
+                "",
+                "title='" . GetMessage("AD_EXACT_MATCH") . "'"
+            ) ?>&nbsp;<?= ShowFilterLogicHelp() ?></td>
     </tr>
     <tr>
         <td><? echo GetMessage("AD_F_DATE_MODIFY") . " (" . CSite::GetDateFormat("SHORT") . "):" ?></td>
-        <td><? echo CalendarPeriod("find_date_modify_1", htmlspecialcharsbx($find_date_modify_1), "find_date_modify_2", htmlspecialcharsbx($find_date_modify_2), "form1", "Y") ?></td>
+        <td><? echo CalendarPeriod(
+                "find_date_modify_1",
+                htmlspecialcharsbx($find_date_modify_1),
+                "find_date_modify_2",
+                htmlspecialcharsbx($find_date_modify_2),
+                "form1",
+                "Y"
+            ) ?></td>
     </tr>
     <tr>
         <td><?= GetMessage("AD_F_LAMP") ?>:</td>
@@ -358,41 +500,52 @@ if ($DONT_USE_CONTRACT == "Y")
         <td><?
             $ref = array();
             $ref_id = array();
-            $rs = CSite::GetList(($v1 = "sort"), ($v2 = "asc"));
+            $rs = CSite::GetList();
             while ($ar = $rs->Fetch()) {
                 $ref[] = "[" . $ar["ID"] . "] " . $ar["NAME"];
                 $ref_id[] = $ar["ID"];
             }
-            echo SelectBoxMFromArray("find_site[]", array("reference" => $ref, "reference_id" => $ref_id), $find_site, "", false, "3");
+            echo SelectBoxMFromArray(
+                "find_site[]",
+                array("reference" => $ref, "reference_id" => $ref_id),
+                $find_site,
+                "",
+                false,
+                "3"
+            );
             ?></td>
     </tr>
     <tr>
         <td><?= GetMessage("AD_F_BANNER_COUNT") ?>:</td>
         <td><input type="text" name="find_banner_count_1" size="10"
-                   value="<?= htmlspecialcharsbx($find_banner_count_1) ?>"><? echo "&nbsp;" . GetMessage("AD_TILL") . "&nbsp;" ?>
-            <input type="text" name="find_banner_count_2" size="10"
-                   value="<?= htmlspecialcharsbx($find_banner_count_2) ?>"></td>
+                   value="<?= htmlspecialcharsbx($find_banner_count_1) ?>"><? echo "&nbsp;" . GetMessage(
+                    "AD_TILL"
+                ) . "&nbsp;" ?><input type="text" name="find_banner_count_2" size="10"
+                                      value="<?= htmlspecialcharsbx($find_banner_count_2) ?>"></td>
     </tr>
     <tr>
         <td><?= GetMessage("AD_F_VISITORS") ?>:</td>
         <td><input type="text" name="find_visitor_count_1" size="10"
-                   value="<?= htmlspecialcharsbx($find_visitor_count_1) ?>"><? echo "&nbsp;" . GetMessage("AD_TILL") . "&nbsp;" ?>
-            <input type="text" name="find_visitor_count_2" size="10"
-                   value="<?= htmlspecialcharsbx($find_visitor_count_2) ?>"></td>
+                   value="<?= htmlspecialcharsbx($find_visitor_count_1) ?>"><? echo "&nbsp;" . GetMessage(
+                    "AD_TILL"
+                ) . "&nbsp;" ?><input type="text" name="find_visitor_count_2" size="10"
+                                      value="<?= htmlspecialcharsbx($find_visitor_count_2) ?>"></td>
     </tr>
     <tr>
         <td><?= GetMessage("AD_F_SHOWN") ?>:</td>
         <td><input type="text" name="find_show_count_1" size="10"
-                   value="<?= htmlspecialcharsbx($find_show_count_1) ?>"><? echo "&nbsp;" . GetMessage("AD_TILL") . "&nbsp;" ?>
-            <input type="text" name="find_show_count_2" size="10" value="<?= htmlspecialcharsbx($find_show_count_2) ?>">
-        </td>
+                   value="<?= htmlspecialcharsbx($find_show_count_1) ?>"><? echo "&nbsp;" . GetMessage(
+                    "AD_TILL"
+                ) . "&nbsp;" ?><input type="text" name="find_show_count_2" size="10"
+                                      value="<?= htmlspecialcharsbx($find_show_count_2) ?>"></td>
     </tr>
     <tr>
         <td><?= GetMessage("AD_F_CLICKED") ?>:</td>
         <td><input type="text" name="find_click_count_1" size="10"
-                   value="<?= htmlspecialcharsbx($find_click_count_1) ?>"><? echo "&nbsp;" . GetMessage("AD_TILL") . "&nbsp;" ?>
-            <input type="text" name="find_click_count_2" size="10"
-                   value="<?= htmlspecialcharsbx($find_click_count_2) ?>"></td>
+                   value="<?= htmlspecialcharsbx($find_click_count_1) ?>"><? echo "&nbsp;" . GetMessage(
+                    "AD_TILL"
+                ) . "&nbsp;" ?><input type="text" name="find_click_count_2" size="10"
+                                      value="<?= htmlspecialcharsbx($find_click_count_2) ?>"></td>
     </tr>
     <tr>
         <td><?= GetMessage("AD_F_CTR") ?>:</td>
@@ -403,27 +556,63 @@ if ($DONT_USE_CONTRACT == "Y")
     <tr>
         <td><? echo GetMessage("AD_F_OWNER") ?>:</td>
         <td><input type="text" name="find_owner" size="47"
-                   value="<? echo htmlspecialcharsbx($find_owner) ?>"><?= InputType("checkbox", "find_owner_exact_match", "Y", $find_owner_exact_match, false, "", "title='" . GetMessage("AD_EXACT_MATCH") . "'") ?>
-            &nbsp;<?= ShowFilterLogicHelp() ?></td>
+                   value="<? echo htmlspecialcharsbx($find_owner) ?>"><?= InputType(
+                "checkbox",
+                "find_owner_exact_match",
+                "Y",
+                $find_owner_exact_match,
+                false,
+                "",
+                "title='" . GetMessage(
+                    "AD_EXACT_MATCH"
+                ) . "'"
+            ) ?>&nbsp;<?= ShowFilterLogicHelp() ?></td>
     </tr>
     <tr>
         <td><? echo GetMessage("AD_F_NAME") ?>:</td>
         <td><input type="text" name="find_name" size="47"
-                   value="<? echo htmlspecialcharsbx($find_name) ?>"><?= InputType("checkbox", "find_name_exact_match", "Y", $find_name_exact_match, false, "", "title='" . GetMessage("AD_EXACT_MATCH") . "'") ?>
-            &nbsp;<?= ShowFilterLogicHelp() ?></td>
+                   value="<? echo htmlspecialcharsbx($find_name) ?>"><?= InputType(
+                "checkbox",
+                "find_name_exact_match",
+                "Y",
+                $find_name_exact_match,
+                false,
+                "",
+                "title='" . GetMessage(
+                    "AD_EXACT_MATCH"
+                ) . "'"
+            ) ?>&nbsp;<?= ShowFilterLogicHelp() ?></td>
     </tr>
     <tr>
         <td><? echo GetMessage("AD_F_DESCRIPTION") ?>:</td>
         <td><input type="text" name="find_description" size="47"
-                   value="<? echo htmlspecialcharsbx($find_description) ?>"><?= InputType("checkbox", "find_description_exact_match", "Y", $find_description_exact_match, false, "", "title='" . GetMessage("AD_EXACT_MATCH") . "'") ?>
-            &nbsp;<?= ShowFilterLogicHelp() ?></td>
+                   value="<? echo htmlspecialcharsbx($find_description) ?>"><?= InputType(
+                "checkbox",
+                "find_description_exact_match",
+                "Y",
+                $find_description_exact_match,
+                false,
+                "",
+                "title='" . GetMessage(
+                    "AD_EXACT_MATCH"
+                ) . "'"
+            ) ?>&nbsp;<?= ShowFilterLogicHelp() ?></td>
     </tr>
     <? if ($isAdmin || $isDemo): ?>
         <tr>
             <td><? echo GetMessage("AD_F_ADMIN_COMMENTS") ?>:</td>
             <td><input type="text" name="find_admin_comments" size="47"
-                       value="<? echo htmlspecialcharsbx($find_admin_comments) ?>"><?= InputType("checkbox", "find_admin_comments_exact_match", "Y", $find_owner_exact_match, false, "", "title='" . GetMessage("AD_EXACT_MATCH") . "'") ?>
-                &nbsp;<?= ShowFilterLogicHelp() ?></td>
+                       value="<? echo htmlspecialcharsbx($find_admin_comments) ?>"><?= InputType(
+                    "checkbox",
+                    "find_admin_comments_exact_match",
+                    "Y",
+                    $find_owner_exact_match,
+                    false,
+                    "",
+                    "title='" . GetMessage(
+                        "AD_EXACT_MATCH"
+                    ) . "'"
+                ) ?>&nbsp;<?= ShowFilterLogicHelp() ?></td>
         </tr>
     <? endif; ?>
     <?

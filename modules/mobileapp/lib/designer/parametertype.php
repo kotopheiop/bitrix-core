@@ -33,7 +33,8 @@ class ParameterType
                 $desc = array("type" => self::getStringType($type));
                 break;
             case self::GROUP_BACKGROUND:
-                $desc = array("type" => self::getStringType($type),
+                $desc = array(
+                    "type" => self::getStringType($type),
                     "interface" => "background",
                     "primary" => "color",
                 );

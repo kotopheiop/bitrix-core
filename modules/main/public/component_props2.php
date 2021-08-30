@@ -1,4 +1,5 @@
 <?
+
 /**
  * @global CMain $APPLICATION
  * @global CUser $USER
@@ -45,16 +46,19 @@ $componentTemplate = $_GET["component_template"];
 $templateId = $_GET["template_id"];
 $relPath = $io->ExtractPathFromPath($src_path);
 
-CComponentParamsManager::Init(array(
-    'requestUrl' => '/bitrix/admin/fileman_component_params.php',
-    'relPath' => $relPath
-));
+CComponentParamsManager::Init(
+    array(
+        'requestUrl' => '/bitrix/admin/fileman_component_params.php',
+        'relPath' => $relPath
+    )
+);
 
 IncludeModuleLangFile(__FILE__);
 
 CUtil::JSPostUnescape();
 
-$obJSPopup = new CJSPopup('',
+$obJSPopup = new CJSPopup(
+    '',
     array(
         'TITLE' => GetMessage("comp_prop_title")
     )
@@ -72,8 +76,9 @@ $filesrc = "";
 $abs_path = "";
 $curTemplate = "";
 
-if (!CComponentEngine::CheckComponentName($componentName))
+if (!CComponentEngine::CheckComponentName($componentName)) {
     $strWarning .= GetMessage("comp_prop_error_name") . "<br>";
+}
 
 if ($strWarning == "") {
     // try to read parameters from script file
@@ -84,16 +89,18 @@ if ($strWarning == "") {
         $abs_path = $io->RelativeToAbsolutePath($src_path);
         $f = $io->GetFile($abs_path);
         $filesrc = $f->GetContents();
-        if (!$filesrc || $filesrc == "")
+        if (!$filesrc || $filesrc == "") {
             $strWarning .= GetMessage("comp_prop_err_open") . "<br>";
+        }
     }
 
     if ($strWarning == "") {
         $arComponent = PHPParser::FindComponent($componentName, $filesrc, $src_line);
-        if ($arComponent === false)
+        if ($arComponent === false) {
             $strWarning .= GetMessage("comp_prop_err_comp") . "<br>";
-        else
+        } else {
             $arValues = $arComponent["DATA"]["PARAMS"];
+        }
     }
 }
 
@@ -126,10 +133,11 @@ if ($strWarning == "") {
 
             CComponentUtil::PrepareVariables($aPostValues);
             foreach ($aPostValues as $name => $value) {
-                if (is_array($value) && count($value) == 1 && isset($value[0]) && $value[0] == "")
+                if (is_array($value) && count($value) == 1 && isset($value[0]) && $value[0] == "") {
                     $aPostValues[$name] = array();
-                elseif ($bLimitPhpAccess && substr($value, 0, 2) == '={' && substr($value, -1) == '}')
+                } elseif ($bLimitPhpAccess && mb_substr($value, 0, 2) == '={' && mb_substr($value, -1) == '}') {
                     $aPostValues[$name] = $arValues[$name];
+                }
             }
 
             //check template name
@@ -161,7 +169,10 @@ if ($strWarning == "") {
                 $functionParams .
                 "\n);";
 
-            $filesrc_for_save = substr($filesrc, 0, $arComponent["START"]) . $code . substr($filesrc, $arComponent["END"]);
+            $filesrc_for_save = mb_substr($filesrc, 0, $arComponent["START"]) . $code . mb_substr(
+                    $filesrc,
+                    $arComponent["END"]
+                );
 
             $f = $io->GetFile($abs_path);
             $arUndoParams = array(
@@ -257,13 +268,15 @@ $obJSPopup->StartContent(); ?>
                     }
                 };
 
-            window.publicComponentDialogManager = new CompDialogManager(<?=CUtil::PhpToJSObject(array(
-                'name' => $componentName,
-                'template' => $curTemplate,
-                'siteTemplate' => $templateId,
-                'currentValues' => $arValues,
-                'data' => $data
-            ))?>);
+            window.publicComponentDialogManager = new CompDialogManager(<?=CUtil::PhpToJSObject(
+                array(
+                    'name' => $componentName,
+                    'template' => $curTemplate,
+                    'siteTemplate' => $templateId,
+                    'currentValues' => $arValues,
+                    'data' => $data
+                )
+            )?>);
 
         })();
     </script>

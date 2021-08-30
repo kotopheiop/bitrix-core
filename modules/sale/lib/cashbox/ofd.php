@@ -14,6 +14,7 @@ use Bitrix\Main;
 abstract class Ofd
 {
     protected const EVENT_ON_GET_CUSTOM_OFD_HANDLERS = 'OnGetCustomOfdHandlers';
+    private const BX_OFD_PREFIX = 'bx_';
 
     /**
      * @return array
@@ -21,15 +22,7 @@ abstract class Ofd
      */
     public static function getHandlerList()
     {
-        $handlerList = [
-            '\Bitrix\Sale\Cashbox\FirstOfd' => FirstOfd::getName(),
-            '\Bitrix\Sale\Cashbox\PlatformaOfd' => PlatformaOfd::getName(),
-            '\Bitrix\Sale\Cashbox\YarusOfd' => YarusOfd::getName(),
-            '\Bitrix\Sale\Cashbox\TaxcomOfd' => TaxcomOfd::getName(),
-            '\Bitrix\Sale\Cashbox\OfdruOfd' => OfdruOfd::getName(),
-            '\Bitrix\Sale\Cashbox\TenzorOfd' => TenzorOfd::getName(),
-            '\Bitrix\Sale\Cashbox\ConturOfd' => ConturOfd::getName(),
-        ];
+        $handlerList = self::getSystemHandlerList();
 
         $event = new Main\Event('sale', static::EVENT_ON_GET_CUSTOM_OFD_HANDLERS);
         $event->send();
@@ -51,14 +44,45 @@ abstract class Ofd
     }
 
     /**
+     * @return array
+     */
+    private static function getSystemHandlerList()
+    {
+        return [
+            '\Bitrix\Sale\Cashbox\FirstOfd' => FirstOfd::getName(),
+            '\Bitrix\Sale\Cashbox\PlatformaOfd' => PlatformaOfd::getName(),
+            '\Bitrix\Sale\Cashbox\YarusOfd' => YarusOfd::getName(),
+            '\Bitrix\Sale\Cashbox\TaxcomOfd' => TaxcomOfd::getName(),
+            '\Bitrix\Sale\Cashbox\OfdruOfd' => OfdruOfd::getName(),
+            '\Bitrix\Sale\Cashbox\TenzorOfd' => TenzorOfd::getName(),
+            '\Bitrix\Sale\Cashbox\ConturOfd' => ConturOfd::getName(),
+        ];
+    }
+
+    /**
+     * @return string
+     */
+    final public static function getCode(): string
+    {
+        $reflectionOfdClass = new \ReflectionClass(static::class);
+        $code = $reflectionOfdClass->getShortName();
+        $systemHandlers = array_keys(self::getSystemHandlerList());
+        if (in_array('\\' . static::class, $systemHandlers)) {
+            $code = self::BX_OFD_PREFIX . $code;
+        }
+        return mb_strtolower($code);
+    }
+
+    /**
      * @param Cashbox $cashbox
      * @return null
      */
     public static function create(Cashbox $cashbox)
     {
         $handler = $cashbox->getField('OFD');
-        if (class_exists($handler))
+        if (class_exists($handler)) {
             return new $handler($cashbox);
+        }
 
         return null;
     }
@@ -98,12 +122,14 @@ abstract class Ofd
 
         $map = $this->getLinkParamsMap();
         foreach ($map as $queryKey => $checkKey) {
-            if ($data[$checkKey])
+            if ($data[$checkKey]) {
                 $queryParams[] = $queryKey . '=' . $data[$checkKey];
+            }
         }
 
-        if (empty($queryParams))
+        if (empty($queryParams)) {
             return '';
+        }
 
         $url = $this->getUrl();
         return $url . implode('&', $queryParams);
@@ -141,7 +167,7 @@ abstract class Ofd
      * @param $settings
      * @return Result
      */
-    public static function validateSettings($settings)
+    public function validate()
     {
         return new Result();
     }
@@ -156,8 +182,9 @@ abstract class Ofd
         $map = $this->cashbox->getField('OFD_SETTINGS');
         if (isset($map[$name])) {
             if (is_array($map[$name])) {
-                if (isset($map[$name][$code]))
+                if (isset($map[$name][$code])) {
                     return $map[$name][$code];
+                }
             } else {
                 return $map[$name];
             }

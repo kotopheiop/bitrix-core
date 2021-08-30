@@ -75,19 +75,23 @@ class Company extends Restriction
     {
         static $result = null;
 
-        if ($result !== null)
+        if ($result !== null) {
             return $result;
+        }
 
         $result = array();
 
-        $dbResultList = Sale\Services\Company\Manager::getList(array(
-            'select' => array("ID", "NAME", "ACTIVE"),
-            'filter' => array("ACTIVE" => "Y"),
-            'order' => array("SORT" => "ASC", "NAME" => "ASC")
-        ));
+        $dbResultList = Sale\Services\Company\Manager::getList(
+            array(
+                'select' => array("ID", "NAME", "ACTIVE"),
+                'filter' => array("ACTIVE" => "Y"),
+                'order' => array("SORT" => "ASC", "NAME" => "ASC")
+            )
+        );
 
-        while ($item = $dbResultList->fetch())
+        while ($item = $dbResultList->fetch()) {
             $result[$item["ID"]] = $item["NAME"];
+        }
 
         return $result;
     }

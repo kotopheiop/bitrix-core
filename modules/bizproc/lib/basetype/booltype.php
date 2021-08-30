@@ -45,7 +45,7 @@ class BoolType extends Base
      */
     protected static function formatValuePrintable(FieldType $fieldType, $value)
     {
-        return strtoupper($value) != 'N' && !empty($value)
+        return mb_strtoupper($value) != 'N' && !empty($value)
             ? Loc::getMessage('BPDT_BOOL_YES')
             : Loc::getMessage('BPDT_BOOL_NO');
     }
@@ -114,7 +114,9 @@ class BoolType extends Base
             $renderResult .= '<option value="">[' . Loc::getMessage("BPDT_BOOL_NOT_SET") . ']</option>';
         }
 
-        $renderResult .= '<option value="Y"' . ($value == "Y" ? ' selected' : '') . '>' . Loc::getMessage("BPDT_BOOL_YES") . '</option>
+        $renderResult .= '<option value="Y"' . ($value == "Y" ? ' selected' : '') . '>' . Loc::getMessage(
+                "BPDT_BOOL_YES"
+            ) . '</option>
 				<option value="N"' . ($value == "N" ? ' selected' : '') . '>' . Loc::getMessage("BPDT_BOOL_NO") . '</option>
 			</select>';
 
@@ -130,8 +132,13 @@ class BoolType extends Base
         return parent::renderControlSingle($fieldType, $field, $value, $allowSelection, $renderMode);
     }
 
-    public static function renderControlMultiple(FieldType $fieldType, array $field, $value, $allowSelection, $renderMode)
-    {
+    public static function renderControlMultiple(
+        FieldType $fieldType,
+        array $field,
+        $value,
+        $allowSelection,
+        $renderMode
+    ) {
         if ($renderMode & FieldType::RENDER_MODE_PUBLIC) {
             $allowSelection = false;
         }
@@ -161,19 +168,21 @@ class BoolType extends Base
         if ($value !== null && $value !== 'Y' && $value !== 'N') {
             if (is_bool($value)) {
                 $value = $value ? 'Y' : 'N';
-            } elseif (is_string($value) && strlen($value) > 0) {
-                $value = strtolower($value);
+            } elseif (is_string($value) && $value <> '') {
+                $value = mb_strtolower($value);
                 if (in_array($value, array('y', 'yes', 'true', '1'))) {
                     $value = 'Y';
                 } elseif (in_array($value, array('n', 'no', 'false', '0'))) {
                     $value = 'N';
                 } else {
                     $value = null;
-                    static::addError(array(
-                        'code' => 'ErrorValue',
-                        'message' => Loc::getMessage('BPDT_BOOL_INVALID'),
-                        'parameter' => static::generateControlName($field),
-                    ));
+                    static::addError(
+                        array(
+                            'code' => 'ErrorValue',
+                            'message' => Loc::getMessage('BPDT_BOOL_INVALID'),
+                            'parameter' => static::generateControlName($field),
+                        )
+                    );
                 }
             } else {
                 $value = null;
@@ -181,5 +190,15 @@ class BoolType extends Base
         }
 
         return $value;
+    }
+
+    public static function externalizeValue(FieldType $fieldType, $context, $value)
+    {
+        $map = $fieldType->getSettings()['ExternalValues'] ?? null;
+        if ($map && isset($map[$value])) {
+            return $map[$value];
+        }
+
+        return parent::externalizeValue($fieldType, $context, $value);
     }
 }

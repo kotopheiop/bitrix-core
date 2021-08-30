@@ -29,7 +29,7 @@ class SaveSource
             $this->addError(new Main\Error(Loc::getMessage('TR_EDIT_FILE_PATH_ERROR')));
             return $result;
         }
-        if (!Translate\IO\Path::isLangDir($file, true) || (substr($file, -4) !== '.php')) {
+        if (!Translate\IO\Path::isLangDir($file, true) || (mb_substr($file, -4) !== '.php')) {
             $this->addError(new Main\Error(Loc::getMessage('TR_EDIT_ERROR_FILE_NOT_LANG', array('#FILE#' => $file))));
             return $result;
         }
@@ -71,9 +71,11 @@ class SaveSource
             // backup
             if ($langFile->isExists() && Translate\Config::needToBackUpFiles()) {
                 if (!$langFile->backup()) {
-                    $this->addError(new Main\Error(
-                        Loc::getMessage('TR_CREATE_BACKUP_ERROR', ['#FILE#' => $langFile->getPath()])
-                    ));
+                    $this->addError(
+                        new Main\Error(
+                            Loc::getMessage('TR_CREATE_BACKUP_ERROR', ['#FILE#' => $langFile->getPath()])
+                        )
+                    );
                 }
             }
 
@@ -104,13 +106,17 @@ class SaveSource
                 }
             } catch (Main\IO\IoException $exception) {
                 if (!$langFile->isExists()) {
-                    $this->addError(new Main\Error(
-                        Loc::getMessage('TR_ERROR_WRITE_CREATE', ['#FILE#' => $langFile->getPath()])
-                    ));
+                    $this->addError(
+                        new Main\Error(
+                            Loc::getMessage('TR_ERROR_WRITE_CREATE', ['#FILE#' => $langFile->getPath()])
+                        )
+                    );
                 } else {
-                    $this->addError(new Main\Error(
-                        Loc::getMessage('TR_ERROR_WRITE_UPDATE', ['#FILE#' => $langFile->getPath()])
-                    ));
+                    $this->addError(
+                        new Main\Error(
+                            Loc::getMessage('TR_ERROR_WRITE_UPDATE', ['#FILE#' => $langFile->getPath()])
+                        )
+                    );
                 }
             }
         }

@@ -13,13 +13,16 @@ use Bitrix\Main\Authentication\ApplicationPasswordTable;
 use Bitrix\Main\Context;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UserTable;
+use Bitrix\Rest\Engine\Access;
+use Bitrix\Rest\Engine\Access\HoldEntity;
 
 class Auth
 {
     const AUTH_TYPE = 'apauth';
 
     protected static $authQueryParams = array(
-        'UID' => 'aplogin', 'PASSWORD' => 'ap',
+        'UID' => 'aplogin',
+        'PASSWORD' => 'ap',
     );
 
     protected static $integrationScope = array('crm', 'telephony', 'imopenlines');
@@ -46,17 +49,48 @@ class Auth
             if (is_array($tokenInfo)) {
                 $error = array_key_exists('error', $tokenInfo);
 
+                if (!$error && HoldEntity::is(HoldEntity::TYPE_WEBHOOK, $auth[static::$authQueryParams['PASSWORD']])) {
+                    $tokenInfo = [
+                        'error' => 'OVERLOAD_LIMIT',
+                        'error_description' => 'REST API is blocked due to overload.'
+                    ];
+                    $error = true;
+                }
+
+                if (
+                    !$error
+                    && (
+                        !Access::isAvailable()
+                        || (
+                            Access::needCheckCount()
+                            && !Access::isAvailableCount(Access::ENTITY_TYPE_WEBHOOK, $tokenInfo['password_id'])
+                        )
+                    )
+                ) {
+                    $tokenInfo = [
+                        'error' => 'ACCESS_DENIED',
+                        'error_description' => 'REST is available only on commercial plans.'
+                    ];
+                    $error = true;
+                }
+
                 if (!$error && $tokenInfo['user_id'] > 0) {
                     $tokenInfo['scope'] = implode(',', static::getPasswordScope($tokenInfo['password_id']));
 
                     if (!\CRestUtil::makeAuth($tokenInfo)) {
-                        $tokenInfo = array('error' => 'authorization_error', 'error_description' => 'Unable to authorize user');
+                        $tokenInfo = array(
+                            'error' => 'authorization_error',
+                            'error_description' => 'Unable to authorize user'
+                        );
                         $error = true;
                     } else {
-                        PasswordTable::update($tokenInfo['password_id'], array(
-                            'DATE_LOGIN' => new DateTime(),
-                            'LAST_IP' => Context::getCurrent()->getRequest()->getRemoteAddress(),
-                        ));
+                        PasswordTable::update(
+                            $tokenInfo['password_id'],
+                            array(
+                                'DATE_LOGIN' => new DateTime(),
+                                'LAST_IP' => Context::getCurrent()->getRequest()->getRemoteAddress(),
+                            )
+                        );
 
                         unset($tokenInfo['application_id']);
                     }
@@ -85,25 +119,29 @@ class Auth
         if (strval(intval($uid)) === $uid) {
             $userInfo = array('ID' => intval($uid));
         } else {
-            $dbRes = UserTable::getList(array(
-                'filter' => array(
-                    '=LOGIN' => $uid,
-                    '=ACTIVE' => 'Y',
-                ),
-                'select' => array('ID'),
-            ));
+            $dbRes = UserTable::getList(
+                array(
+                    'filter' => array(
+                        '=LOGIN' => $uid,
+                        '=ACTIVE' => 'Y',
+                    ),
+                    'select' => array('ID'),
+                )
+            );
             $userInfo = $dbRes->fetch();
         }
 
         if ($userInfo) {
-            $dbRes = PasswordTable::getList(array(
-                'filter' => array(
-                    '=USER_ID' => $userInfo['ID'],
-                    '=PASSWORD' => $auth[static::$authQueryParams['PASSWORD']],
-                    '=ACTIVE' => PasswordTable::ACTIVE,
-                ),
-                'select' => array('ID')
-            ));
+            $dbRes = PasswordTable::getList(
+                array(
+                    'filter' => array(
+                        '=USER_ID' => $userInfo['ID'],
+                        '=PASSWORD' => $auth[static::$authQueryParams['PASSWORD']],
+                        '=ACTIVE' => PasswordTable::ACTIVE,
+                    ),
+                    'select' => array('ID')
+                )
+            );
             $passwordInfo = $dbRes->fetch();
 
             if (!$passwordInfo) {
@@ -117,7 +155,10 @@ class Auth
                         'password_id' => $passwordInfo["ID"],
                     );
                 } else {
-                    $result = array('error' => 'insufficient_scope', 'error_description' => 'The request requires higher privileges than provided by the webhook token');
+                    $result = array(
+                        'error' => 'insufficient_scope',
+                        'error_description' => 'The request requires higher privileges than provided by the webhook token'
+                    );
                 }
             }
         }
@@ -146,24 +187,28 @@ class Auth
         $oldPassword = $dbRes->fetch();
         if ($oldPassword) {
             ApplicationPasswordTable::delete($appPassword['ID']);
-            $result = PasswordTable::add(array(
-                'USER_ID' => $oldPassword['USER_ID'],
-                'PASSWORD' => $password,
-                'ACTIVE' => PasswordTable::ACTIVE,
-                'TITLE' => $oldPassword['SYSCOMMENT'],
-                'COMMENT' => $oldPassword['COMMENT'],
-                'DATE_CREATE' => $oldPassword['DATE_CREATE'],
-                'DATE_LOGIN' => $oldPassword['DATE_LOGIN'],
-                'LAST_IP' => $oldPassword['LAST_IP'],
-            ));
+            $result = PasswordTable::add(
+                array(
+                    'USER_ID' => $oldPassword['USER_ID'],
+                    'PASSWORD' => $password,
+                    'ACTIVE' => PasswordTable::ACTIVE,
+                    'TITLE' => $oldPassword['SYSCOMMENT'],
+                    'COMMENT' => $oldPassword['COMMENT'],
+                    'DATE_CREATE' => $oldPassword['DATE_CREATE'],
+                    'DATE_LOGIN' => $oldPassword['DATE_LOGIN'],
+                    'LAST_IP' => $oldPassword['LAST_IP'],
+                )
+            );
             if ($result->isSuccess()) {
                 $passwordId = $result->getId();
 
                 foreach (static::$integrationScope as $scope) {
-                    PermissionTable::add(array(
-                        'PASSWORD_ID' => $passwordId,
-                        'PERM' => $scope,
-                    ));
+                    PermissionTable::add(
+                        array(
+                            'PASSWORD_ID' => $passwordId,
+                            'PERM' => $scope,
+                        )
+                    );
                 }
 
                 return array(
@@ -181,7 +226,9 @@ class Auth
             return true;
         }
 
-        return in_array($scope, static::getPasswordScope($passwordId));
+        $scopeList = static::getPasswordScope($passwordId);
+        $scopeList = \Bitrix\Rest\Engine\RestManager::fillAlternativeScope($scope, $scopeList);
+        return in_array($scope, $scopeList);
     }
 
     protected static function getPasswordScope($passwordId)
@@ -189,12 +236,14 @@ class Auth
         if (!array_key_exists($passwordId, static::$scopeCache)) {
             static::$scopeCache[$passwordId] = array();
 
-            $dbRes = PermissionTable::getList(array(
-                'filter' => array(
-                    '=PASSWORD_ID' => $passwordId,
-                ),
-                'select' => array('PERM')
-            ));
+            $dbRes = PermissionTable::getList(
+                array(
+                    'filter' => array(
+                        '=PASSWORD_ID' => $passwordId,
+                    ),
+                    'select' => array('PERM')
+                )
+            );
             while ($perm = $dbRes->fetch()) {
                 static::$scopeCache[$passwordId][] = $perm['PERM'];
             }

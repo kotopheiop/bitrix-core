@@ -37,7 +37,7 @@ trait BulkOperation
         $columns0 = array_keys($rows[0]);
         $columns = [];
         foreach ($columns0 as $c) {
-            $columns[$c] = $sqlHelper->quote(strtoupper($c));
+            $columns[$c] = $sqlHelper->quote(mb_strtoupper($c));
         }
 
         $sqlValues = array();
@@ -96,7 +96,7 @@ trait BulkOperation
             if (!empty($filter)) {
                 $hasSubQuery = false;
                 foreach ($filter as $field => $value) {
-                    if (strpos($field, '.') !== false) {
+                    if (mb_strpos($field, '.') !== false) {
                         $hasSubQuery = true;
                         break;
                     }
@@ -136,7 +136,7 @@ trait BulkOperation
         if (!empty($filter)) {
             $hasSubQuery = false;
             foreach ($filter as $field => $value) {
-                if (strpos($field, '.') !== false) {
+                if (mb_strpos($field, '.') !== false) {
                     $hasSubQuery = true;
                     break;
                 }
@@ -213,7 +213,7 @@ trait BulkOperation
                     if (is_array($val) && count($val) > 0) {
                         $val = array_map(array($sqlHelper, 'forSql'), $val);
                         $where[] = "$key IN('" . implode("', '", $val) . "')";
-                    } elseif (is_string($val) && strlen($val) > 0) {
+                    } elseif (is_string($val) && $val <> '') {
                         $where[] = "$key IN(" . $val . ')';
                     }
                     break;
@@ -224,7 +224,7 @@ trait BulkOperation
                     if (is_array($val) && count($val) > 0) {
                         $val = array_map(array($sqlHelper, 'forSql'), $val);
                         $where[] = "$key NOT IN('" . implode("', '", $val) . "')";
-                    } elseif (is_string($val) && strlen($val) > 0) {
+                    } elseif (is_string($val) && $val <> '') {
                         $where[] = "$key NOT IN(" . $val . ')';
                     }
                     break;

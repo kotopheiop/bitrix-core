@@ -15,7 +15,7 @@ use Bitrix\Sale\Helpers\Admin\OrderEdit;
 
 Loc::loadMessages(__FILE__);
 
-require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/general/admin_tool.php");
+require_once __DIR__ . '/../../../../general/admin_tool.php';
 
 class PresetBasket extends OrderBasket
 {
@@ -23,8 +23,13 @@ class PresetBasket extends OrderBasket
     /**
      * PresetBasket constructor.
      */
-    public function __construct(Order $order, $jsObjName = "", $idPrefix = "", $createProductBasement = true, $mode = self::EDIT_MODE)
-    {
+    public function __construct(
+        Order $order,
+        $jsObjName = "",
+        $idPrefix = "",
+        $createProductBasement = true,
+        $mode = self::EDIT_MODE
+    ) {
         parent::__construct($order, $jsObjName, $idPrefix, $createProductBasement, $mode);
         $this->createProductBasement = false;
     }
@@ -47,21 +52,37 @@ class PresetBasket extends OrderBasket
             static::$jsInited = true;
         }
 
-        $langPhrases = array("SALE_ORDER_BASKET_TURN", "SALE_ORDER_BASKET_EXPAND", "SALE_ORDER_BASKET_UP_RATIO",
-            "SALE_ORDER_BASKET_PROD_EDIT", "SALE_ORDER_BASKET_DOWN_RATIO", "SALE_ORDER_BASKET_PROD_COUNT",
-            "SALE_ORDER_BASKET_NO_PICTURE", "SALE_ORDER_BASKET_PROD_CREATE", "SALE_ORDER_BASKET_ROW_SETTINGS",
-            "SALE_ORDER_BASKET_PROD_MENU_EDIT", "SALE_ORDER_BASKET_PROD_MENU_DELETE", "SALE_ORDER_BASKET_BASE_CATALOG_PRICE",
-            "SALE_ORDER_BASKET_PROD_EDIT_ITEM_SAVE", "SALE_ORDER_BASKET_KG", "SALE_ORDER_BASKET_COUPON",
-            "SALE_ORDER_BASKET_COUPON_STATUS", "SALE_ORDER_BASKET_COUPON_APPLY", "SALE_ORDER_BASKET_COUPON_DELETE",
-            "SALE_ORDER_BASKET_POSITION_EXISTS", "SALE_ORDER_BASKET_ADD_COUPON_ERROR"
+        $langPhrases = array(
+            "SALE_ORDER_BASKET_TURN",
+            "SALE_ORDER_BASKET_EXPAND",
+            "SALE_ORDER_BASKET_UP_RATIO",
+            "SALE_ORDER_BASKET_PROD_EDIT",
+            "SALE_ORDER_BASKET_DOWN_RATIO",
+            "SALE_ORDER_BASKET_PROD_COUNT",
+            "SALE_ORDER_BASKET_NO_PICTURE",
+            "SALE_ORDER_BASKET_PROD_CREATE",
+            "SALE_ORDER_BASKET_ROW_SETTINGS",
+            "SALE_ORDER_BASKET_PROD_MENU_EDIT",
+            "SALE_ORDER_BASKET_PROD_MENU_DELETE",
+            "SALE_ORDER_BASKET_BASE_CATALOG_PRICE",
+            "SALE_ORDER_BASKET_PROD_EDIT_ITEM_SAVE",
+            "SALE_ORDER_BASKET_KG",
+            "SALE_ORDER_BASKET_COUPON",
+            "SALE_ORDER_BASKET_COUPON_STATUS",
+            "SALE_ORDER_BASKET_COUPON_APPLY",
+            "SALE_ORDER_BASKET_COUPON_DELETE",
+            "SALE_ORDER_BASKET_POSITION_EXISTS",
+            "SALE_ORDER_BASKET_ADD_COUPON_ERROR"
         );
         $result = '<script type="text/javascript">';
 
-        foreach ($langPhrases as $phrase)
+        foreach ($langPhrases as $phrase) {
             $result .= ' BX.message({' . $phrase . ': "' . \CUtil::jsEscape(Loc::getMessage($phrase)) . '"});';
+        }
 
-        if (!$defTails)
+        if (!$defTails) {
             $data = static::prepareData();
+        }
 
         $result .= '
 			BX.ready(function(){
@@ -108,7 +129,8 @@ class PresetBasket extends OrderBasket
 				<div class="adm-s-gray-title-btn-container">
 					<span
 						class="adm-btn adm-btn-green adm-btn-add"
-						onClick="' . $this->jsObjName . '.addProductSearch({lang: \'' . LANGUAGE_ID . '\', siteId: \'' . $this->order->getSiteId() . '\', orderId: ' . intval($this->order->getId()) . '});"
+						onClick="' . $this->jsObjName . '.addProductSearch({lang: \'' . LANGUAGE_ID . '\', siteId: \'' . $this->order->getSiteId(
+            ) . '\', orderId: ' . intval($this->order->getId()) . '});"
 						>' .
             Loc::getMessage("SALE_ORDER_BASKET_PRODUCT_ADD") .
             '</span>
@@ -124,8 +146,9 @@ class PresetBasket extends OrderBasket
 						<td>
 						</td>	';
 
-        foreach ($this->visibleColumns as $name)
+        foreach ($this->visibleColumns as $name) {
             $result .= "<td>" . htmlspecialcharsbx($name) . "</td>";
+        }
 
         $result .= '</tr>
 					</thead>';
@@ -158,7 +181,8 @@ class PresetBasket extends OrderBasket
 
         $result .= '<span
 						class="adm-btn adm-btn-green adm-btn-add"
-						onClick="' . $this->jsObjName . '.addProductSearch({lang: \'' . LANGUAGE_ID . '\', siteId: \'' . $this->order->getSiteId() . '\', index: 1, orderId: ' . intval($this->order->getId()) . '});"
+						onClick="' . $this->jsObjName . '.addProductSearch({lang: \'' . LANGUAGE_ID . '\', siteId: \'' . $this->order->getSiteId(
+            ) . '\', index: 1, orderId: ' . intval($this->order->getId()) . '});"
 						>' .
             Loc::getMessage("SALE_ORDER_BASKET_PRODUCT_ADD") .
             '</span>

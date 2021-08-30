@@ -18,21 +18,15 @@ class AnnotationReader
         if (
             extension_loaded('Zend Optimizer+') &&
             (ini_get('zend_optimizerplus.save_comments') === "0" || ini_get('opcache.save_comments') === "0")) {
-            throw new SystemException("You have to enable opcache.save_comments=1 or zend_optimizerplus.save_comments=1.");
+            throw new SystemException(
+                "You have to enable opcache.save_comments=1 or zend_optimizerplus.save_comments=1."
+            );
         }
 
         if (extension_loaded('Zend OPcache') && ini_get('opcache.save_comments') == 0) {
-            throw new SystemException("You have to enable opcache.save_comments=1 or zend_optimizerplus.save_comments=1.");
-        }
-
-        if (PHP_VERSION_ID < 70000) {
-            if (extension_loaded('Zend Optimizer+') &&
-                (ini_get('zend_optimizerplus.load_comments') === "0" || ini_get('opcache.load_comments') === "0")) {
-                throw new SystemException("You have to enable opcache.load_comments=1 or zend_optimizerplus.load_comments=1.");
-            }
-            if (extension_loaded('Zend OPcache') && ini_get('opcache.load_comments') == 0) {
-                throw new SystemException("You have to enable opcache.load_comments=1 or zend_optimizerplus.load_comments=1.");
-            }
+            throw new SystemException(
+                "You have to enable opcache.save_comments=1 or zend_optimizerplus.save_comments=1."
+            );
         }
     }
 
@@ -113,9 +107,9 @@ class AnnotationReader
             } else {
                 $value = (float)$valueInString;
             }
-        } elseif (substr($valueInString, 0, 1) === '[' && substr($valueInString, -1, 1) === ']') {
+        } elseif (mb_substr($valueInString, 0, 1) === '[' && mb_substr($valueInString, -1, 1) === ']') {
             $list = array();
-            $valueInString = substr($valueInString, 1, -1);
+            $valueInString = mb_substr($valueInString, 1, -1);
             foreach (explode(',', $valueInString) as $listValue) {
                 $listValue = trim($listValue);
                 if (!$listValue) {

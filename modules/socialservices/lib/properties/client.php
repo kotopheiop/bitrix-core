@@ -57,7 +57,10 @@ class Client
      */
     public function getByOgrn($ogrn, $showTerminated = false)
     {
-        return $this->call(static::METHOD_COMMON_GET_BY_OGRN, array('ogrn' => $ogrn, 'showTerminated' => $showTerminated));
+        return $this->call(
+            static::METHOD_COMMON_GET_BY_OGRN,
+            array('ogrn' => $ogrn, 'showTerminated' => $showTerminated)
+        );
     }
 
     /**
@@ -79,11 +82,14 @@ class Client
      */
     public function searchOrganizationByName($name, $limit, $offset = 0)
     {
-        return $this->call(static::METHOD_ORGANIZATION_SEARCH_BY_NAME, array(
-            'name' => $name,
-            'limit' => $limit,
-            'offset' => $offset
-        ));
+        return $this->call(
+            static::METHOD_ORGANIZATION_SEARCH_BY_NAME,
+            array(
+                'name' => $name,
+                'limit' => $limit,
+                'offset' => $offset
+            )
+        );
     }
 
     /**
@@ -97,13 +103,16 @@ class Client
      */
     public function searchIpByName($name, $secondName, $lastName, $limit, $offset = 0)
     {
-        return $this->call(static::METHOD_IP_SEARCH_BY_NAME, array(
-            'name' => $name,
-            'second_name' => $secondName,
-            'last_name' => $lastName,
-            'limit' => $limit,
-            'offset' => $offset
-        ));
+        return $this->call(
+            static::METHOD_IP_SEARCH_BY_NAME,
+            array(
+                'name' => $name,
+                'second_name' => $secondName,
+                'last_name' => $lastName,
+                'limit' => $limit,
+                'offset' => $offset
+            )
+        );
     }
 
     /**
@@ -145,11 +154,14 @@ class Client
      */
     public function uaSearchUoByName($name, $limit, $offset = 0)
     {
-        return $this->call(static::METHOD_UA_SEARCH_UO_BY_NAME, array(
-            'name' => $name,
-            'limit' => $limit,
-            'offset' => $offset
-        ));
+        return $this->call(
+            static::METHOD_UA_SEARCH_UO_BY_NAME,
+            array(
+                'name' => $name,
+                'limit' => $limit,
+                'offset' => $offset
+            )
+        );
     }
 
     /**
@@ -161,11 +173,14 @@ class Client
      */
     public function uaSearchFoByName($name, $limit, $offset = 0)
     {
-        return $this->call(static::METHOD_UA_SEARCH_FO_BY_NAME, array(
-            'name' => $name,
-            'limit' => $limit,
-            'offset' => $offset
-        ));
+        return $this->call(
+            static::METHOD_UA_SEARCH_FO_BY_NAME,
+            array(
+                'name' => $name,
+                'limit' => $limit,
+                'offset' => $offset
+            )
+        );
     }
 
     /**
@@ -178,11 +193,14 @@ class Client
      */
     public function uaSearchByName($name, $limit, $offset = 0)
     {
-        return $this->call(static::METHOD_UA_SEARCH_BY_NAME, array(
-            'name' => $name,
-            'limit' => $limit,
-            'offset' => $offset
-        ));
+        return $this->call(
+            static::METHOD_UA_SEARCH_BY_NAME,
+            array(
+                'name' => $name,
+                'limit' => $limit,
+                'offset' => $offset
+            )
+        );
     }
 
     /**
@@ -206,14 +224,17 @@ class Client
     {
         $this->errorCollection->clear();
 
-        if ($clearAccessSettings)
+        if ($clearAccessSettings) {
             $this->clearAccessSettings();
+        }
 
-        if (is_null($this->accessSettings))
+        if (is_null($this->accessSettings)) {
             $this->accessSettings = $this->getAccessSettings();
+        }
 
-        if ($this->accessSettings === false)
+        if ($this->accessSettings === false) {
             return false;
+        }
 
         if (!is_array($additionalParams)) {
             $additionalParams = array();
@@ -223,8 +244,9 @@ class Client
 
         $additionalParams['client_id'] = $this->accessSettings['client_id'];
         $additionalParams['client_secret'] = $this->accessSettings['client_secret'];
-        if ($licenseCheck)
+        if ($licenseCheck) {
             $additionalParams['key'] = static::getLicenseHash();
+        }
 
         $http = new HttpClient(array('socketTimeout' => $this->httpTimeout));
         $result = $http->post(
@@ -243,16 +265,25 @@ class Client
         $answer = $this->prepareAnswer($result);
 
         if (!is_array($answer) || count($answer) == 0) {
-            $this->errorCollection->add(array(new Error('Malformed answer from service: ' . $http->getStatus() . ' ' . $result, static::ERROR_SERVICE_UNAVAILABLE)));
+            $this->errorCollection->add(
+                array(
+                    new Error(
+                        'Malformed answer from service: ' . $http->getStatus() . ' ' . $result,
+                        static::ERROR_SERVICE_UNAVAILABLE
+                    )
+                )
+            );
             return false;
         }
 
         if (array_key_exists('error', $answer)) {
             if ($answer['error'] === 'verification_needed' && !$licenseCheck) {
                 return $this->call($methodName, $additionalParams, true);
-            } else if (($answer['error'] === 'ACCESS_DENIED' || $answer['error'] === 'Invalid client')
-                && !$clearAccessSettings) {
-                return $this->call($methodName, $additionalParams, true, true);
+            } else {
+                if (($answer['error'] === 'ACCESS_DENIED' || $answer['error'] === 'Invalid client')
+                    && !$clearAccessSettings) {
+                    return $this->call($methodName, $additionalParams, true, true);
+                }
             }
 
             $this->errorCollection->add(array(new Error($answer['error_description'], $answer['error'])));
@@ -260,7 +291,9 @@ class Client
         }
 
         if ($answer['result'] == false) {
-            $this->errorCollection->add(array(new Error(Loc::getMessage('SALE_PROPERTIES_ERROR_NOTHING_FOUND'), static::ERROR_NOTHING_FOUND)));
+            $this->errorCollection->add(
+                array(new Error(Loc::getMessage('SALE_PROPERTIES_ERROR_NOTHING_FOUND'), static::ERROR_NOTHING_FOUND))
+            );
         }
 
         return $answer['result'];
@@ -325,7 +358,7 @@ class Client
         $accessSettings = Option::get('sale', static::SERVICE_ACCESS_OPTION);
 
         if ($accessSettings != '') {
-            return unserialize($accessSettings);
+            return unserialize($accessSettings, ["allowed_classes" => false]);
         } else {
             if ($accessSettings = $this->register()) {
                 $this->setAccessSettings($accessSettings);

@@ -14,13 +14,12 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
-
-use Bitrix\Sender\Posting;
 use Bitrix\Sender\Dispatch;
 use Bitrix\Sender\Entity;
-use Bitrix\Sender\PostingRecipientTable;
-use Bitrix\Sender\Internals\Model;
 use Bitrix\Sender\Integration;
+use Bitrix\Sender\Internals\Model;
+use Bitrix\Sender\Posting;
+use Bitrix\Sender\PostingRecipientTable;
 
 Loc::loadMessages(__FILE__);
 
@@ -163,7 +162,8 @@ class State
                 self::SENT,
                 self::STOPPED,
                 self::HALTED,
-            ));
+            )
+        );
     }
 
     /**
@@ -181,7 +181,8 @@ class State
                 self::PAUSED,
                 self::SENT,
                 self::STOPPED,
-            ));
+            )
+        );
     }
 
     /**
@@ -388,7 +389,7 @@ class State
 
     protected static function getStateName($code)
     {
-        $code = $code === self::NEWISH ? self::READY : $code;
+//		$code = $code === self::NEWISH ? self::READY : $code;
         return Loc::getMessage('SENDER_DISPATCH_STATE1_' . $code) ?: Loc::getMessage('SENDER_DISPATCH_STATE_' . $code);
     }
 
@@ -802,10 +803,13 @@ class State
         }
 
         if (!$this->canChangeState($state)) {
-            $messageText = Loc::getMessage('SENDER_DISPATCH_STATE_ERROR_CHANGE', array(
-                '%old%' => $this->getName(),
-                '%new%' => self::getStateName($state)
-            ));
+            $messageText = Loc::getMessage(
+                'SENDER_DISPATCH_STATE_ERROR_CHANGE',
+                array(
+                    '%old%' => $this->getName(),
+                    '%new%' => self::getStateName($state)
+                )
+            );
 
             throw new InvalidOperationException($messageText);
         }
@@ -830,9 +834,12 @@ class State
 
         //TODO: remove
         if (!$this->letter->isSupportReiterate() && !$this->letter->isTrigger()) {
-            $possibleStates = array_filter($possibleStates, function ($value) {
-                return !in_array($value, [self::WAITING, self::HALTED]);
-            });
+            $possibleStates = array_filter(
+                $possibleStates,
+                function ($value) {
+                    return !in_array($value, [self::WAITING, self::HALTED]);
+                }
+            );
         }
 
         return in_array($state, $possibleStates);
@@ -854,6 +861,7 @@ class State
         }
         if ($state === self::SENDING) {
             $fields['AUTO_SEND_TIME'] = $sendDate ?: new DateTime();
+            $fields['WAITING_RECIPIENT'] = 'Y';
         }
         if ($state === self::PLANNED) {
             $fields['AUTO_SEND_TIME'] = $sendDate ?: new DateTime();
@@ -861,7 +869,6 @@ class State
         if ($state === self::WAITING && $sendDate) {
             $fields['AUTO_SEND_TIME'] = $sendDate;
         }
-
         if ($updatedBy = $this->letter->get('UPDATED_BY')) {
             $fields['UPDATED_BY'] = $updatedBy;
         }

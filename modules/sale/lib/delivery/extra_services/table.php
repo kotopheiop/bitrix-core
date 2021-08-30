@@ -4,6 +4,7 @@ namespace Bitrix\Sale\Delivery\ExtraServices;
 
 use Bitrix\Main\Entity;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ORM\Fields\ArrayField;
 
 Loc::loadMessages(__FILE__);
 
@@ -70,11 +71,21 @@ class Table extends Entity\DataManager
                 'validation' => array(__CLASS__, 'validateClassName'),
                 'title' => Loc::getMessage('DELIVERY_EXTRA_SERVICES_ENTITY_CLASS_NAME_FIELD'),
             ),
-            'PARAMS' => array(
-                'data_type' => 'text',
-                'serialized' => true,
-                'title' => Loc::getMessage('DELIVERY_EXTRA_SERVICES_ENTITY_PARAMS_FIELD'),
-            ),
+            (new ArrayField(
+                'PARAMS',
+                [
+                    'title' => Loc::getMessage('DELIVERY_EXTRA_SERVICES_ENTITY_PARAMS_FIELD')
+                ]
+            ))
+                ->configureSerializationPhp()
+                ->configureUnserializeCallback(
+                    function ($value) {
+                        return unserialize(
+                            $value,
+                            ['allowed_classes' => false]
+                        );
+                    }
+                ),
             'RIGHTS' => array(
                 'data_type' => 'string',
                 'required' => true,
@@ -163,16 +174,25 @@ class Table extends Entity\DataManager
         $primary = $event->getParameter("primary");
 
         if (intval($primary['ID']) > 0) {
-            $dbRes = \Bitrix\Sale\Internals\ShipmentExtraServiceTable::getList(array(
-                'filter' => array(
-                    '=EXTRA_SERVICE_ID' => $primary['ID']
+            $dbRes = \Bitrix\Sale\Internals\ShipmentExtraServiceTable::getList(
+                array(
+                    'filter' => array(
+                        '=EXTRA_SERVICE_ID' => $primary['ID']
+                    )
                 )
-            ));
+            );
 
-            if ($row = $dbRes->fetch())
-                $result->addError(new Entity\EntityError(
-                    str_replace('#ID#', $primary['ID'], Loc::getMessage('DELIVERY_EXTRA_SERVICES_ENTITY_ERROR_DELETE'))
-                ));
+            if ($row = $dbRes->fetch()) {
+                $result->addError(
+                    new Entity\EntityError(
+                        str_replace(
+                            '#ID#',
+                            $primary['ID'],
+                            Loc::getMessage('DELIVERY_EXTRA_SERVICES_ENTITY_ERROR_DELETE')
+                        )
+                    )
+                );
+            }
         }
 
         return $result;

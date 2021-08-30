@@ -26,28 +26,34 @@ class CSaleProxyResult extends CDBResult
         foreach ($runtime as $fld => $desc) {
             $found = false;
             foreach ($filter as $condition => $value) {
-                if (strpos($condition, $fld) !== false) {
+                if (mb_strpos($condition, $fld) !== false) {
                     $found = true;
                     break;
                 }
             }
 
-            if (!$found)
+            if (!$found) {
                 unset($runtime[$fld]);
+            }
         }
 
-        $count = $en::getList(array(
-            'filter' => $filter,
-            'select' => array('REC_CNT'),
-            'runtime' => array_merge($runtime, array(
-                'REC_CNT' => array(
-                    'data_type' => 'integer',
-                    'expression' => array(
-                        'count(*)'
+        $count = $en::getList(
+            array(
+                'filter' => $filter,
+                'select' => array('REC_CNT'),
+                'runtime' => array_merge(
+                    $runtime,
+                    array(
+                        'REC_CNT' => array(
+                            'data_type' => 'integer',
+                            'expression' => array(
+                                'count(*)'
+                            )
+                        )
                     )
                 )
-            ))
-        ))->fetch();
+            )
+        )->fetch();
         $this->NavRecordCount = $count['REC_CNT'];
 
         // the following code was taken from DBNavStart()
@@ -56,8 +62,9 @@ class CSaleProxyResult extends CDBResult
 
         //calculate total pages depend on rows count. start with 1
         $this->NavPageCount = floor($this->NavRecordCount / $this->NavPageSize);
-        if ($this->NavRecordCount % $this->NavPageSize > 0)
+        if ($this->NavRecordCount % $this->NavPageSize > 0) {
             $this->NavPageCount++;
+        }
 
         //page number to display. start with 1
         $this->NavPageNomer = ($this->PAGEN < 1 || $this->PAGEN > $this->NavPageCount ? ($_SESSION[$this->SESS_PAGEN] < 1 || $_SESSION[$this->SESS_PAGEN] > $this->NavPageCount ? 1 : $_SESSION[$this->SESS_PAGEN]) : $this->PAGEN);
@@ -68,7 +75,8 @@ class CSaleProxyResult extends CDBResult
 
         $res = $en::getList($parameters);
         $this->arResult = array();
-        while ($item = $res->Fetch())
+        while ($item = $res->Fetch()) {
             $this->arResult[] = $item;
+        }
     }
 }

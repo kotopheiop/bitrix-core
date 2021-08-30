@@ -2,15 +2,16 @@
 
 IncludeModuleLangFile(__FILE__);
 
-if (!$USER->CanDoOperation('edit_other_settings'))
+if (!$USER->CanDoOperation('edit_other_settings')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
-$ID = intVal($ID);
+$ID = intval($ID);
 $arError = $arSmile = $arFields = $arLang = array();
 
 /* LANGS */
 $arLangTitle = array("reference_id" => array(), "reference" => array());
-$db_res = CLanguage::GetList(($b = "sort"), ($o = "asc"));
+$db_res = CLanguage::GetList();
 while ($res = $db_res->Fetch()) {
     $arLang[$res["LID"]] = $res;
     $arLangTitle["reference_id"][] = $res["LID"];
@@ -22,19 +23,20 @@ $bImportComplete = false;
 $APPLICATION->SetTitle(GetMessage("SMILE_IMPORT_TITLE"));
 
 $fileName = '';
-if ($REQUEST_METHOD == "POST" && (strlen($save) > 0 || strlen($apply) > 0)) {
+if ($REQUEST_METHOD == "POST" && ($save <> '' || $apply <> '')) {
     $fileName = 'import' . $USER->GetID() . time() . '.zip';
 
     if (!check_bitrix_sessid()) {
         $arError[] = array(
             "id" => "bad_sessid",
-            "text" => GetMessage("ERROR_BAD_SESSID"));
+            "text" => GetMessage("ERROR_BAD_SESSID")
+        );
     } elseif (!empty($_FILES["IMPORT"]["tmp_name"])) {
         $sUploadDir = CTempFile::GetDirectoryName(1);
         CheckDirPath($sUploadDir);
 
         $res = CFile::CheckFile($_FILES["IMPORT"], 0, false, 'zip');
-        if (strLen($res) > 0) {
+        if ($res <> '') {
             $arError[] = array(
                 "id" => "IMPORT",
                 "text" => $res
@@ -47,7 +49,8 @@ if ($REQUEST_METHOD == "POST" && (strlen($save) > 0 || strlen($apply) > 0)) {
         } elseif (!@copy($_FILES["IMPORT"]["tmp_name"], $sUploadDir . $fileName)) {
             $arError[] = array(
                 "id" => "IMPORT",
-                "text" => GetMessage("ERROR_COPY_FILE"));
+                "text" => GetMessage("ERROR_COPY_FILE")
+            );
         } else {
             @chmod($sUploadDir . $fileName, BX_FILE_PERMISSIONS);
         }
@@ -61,10 +64,12 @@ if ($REQUEST_METHOD == "POST" && (strlen($save) > 0 || strlen($apply) > 0)) {
     if (empty($arError)) {
         $GLOBALS["APPLICATION"]->ResetException();
 
-        $importCount = CSmile::import(array(
-            'FILE' => $sUploadDir . $fileName,
-            'SET_ID' => intval($_REQUEST['SET_ID'])
-        ));
+        $importCount = CSmile::import(
+            array(
+                'FILE' => $sUploadDir . $fileName,
+                'SET_ID' => intval($_REQUEST['SET_ID'])
+            )
+        );
         if ($e = $GLOBALS["APPLICATION"]->GetException()) {
             $arError[] = array(
                 "id" => "",
@@ -90,15 +95,20 @@ $arSmile = array(
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
 if ($bImportComplete) {
-    CAdminMessage::ShowMessage(array(
-        "MESSAGE" => GetMessage("IM_IMPORT_COMPLETE"),
-        "DETAILS" => GetMessage("IM_IMPORT_TOTAL", Array('#COUNT#' => $importCount)),
-        "HTML" => true,
-        "TYPE" => "OK",
-    ));
+    CAdminMessage::ShowMessage(
+        array(
+            "MESSAGE" => GetMessage("IM_IMPORT_COMPLETE"),
+            "DETAILS" => GetMessage("IM_IMPORT_TOTAL", Array('#COUNT#' => $importCount)),
+            "HTML" => true,
+            "TYPE" => "OK",
+        )
+    );
     LocalRedirect("smile.php?SET_ID=" . $arSmile['SET_ID'] . "&lang=" . LANG);
-} else if (isset($message) && $message)
-    echo $message->Show();
+} else {
+    if (isset($message) && $message) {
+        echo $message->Show();
+    }
+}
 ?>
 <form method="POST" action="<?= $APPLICATION->GetCurPageParam() ?>" name="smile_import" enctype="multipart/form-data">
     <input type="hidden" name="Update" value="Y"/>
@@ -107,7 +117,12 @@ if ($bImportComplete) {
     <?= bitrix_sessid_post() ?>
     <?
     $aTabs = array(
-        array("DIV" => "edit1", "TAB" => GetMessage("SMILE_TAB_SMILE"), "ICON" => "smile", "TITLE" => GetMessage("SMILE_TAB_SMILE_DESCR"))
+        array(
+            "DIV" => "edit1",
+            "TAB" => GetMessage("SMILE_TAB_SMILE"),
+            "ICON" => "smile",
+            "TITLE" => GetMessage("SMILE_TAB_SMILE_DESCR")
+        )
     );
     $tabControl = new CAdminTabControl("tabControl", $aTabs);
     $tabControl->Begin();
@@ -141,9 +156,11 @@ if ($bImportComplete) {
     <?
     $tabControl->EndTab();
 
-    $tabControl->Buttons(array(
-        "btnApply" => false,
-    ));
+    $tabControl->Buttons(
+        array(
+            "btnApply" => false,
+        )
+    );
     ?>
 </form>
 <?
@@ -152,7 +169,13 @@ $tabControl->ShowWarnings("smile_import", $message);
 
 ?>
 <?= BeginNote(); ?>
-<div><?= GetMessage('IM_IMPORT_HELP_1', Array('#LINK_START#' => '<a href="/bitrix/admin/fileman_admin.php?lang=' . LANG . '&path=%2Fbitrix%2Fmodules%2Fmain%2Finstall%2Fsmiles">', '#LINK_END#' => '</a>')) ?></div>
+<div><?= GetMessage(
+        'IM_IMPORT_HELP_1',
+        Array(
+            '#LINK_START#' => '<a href="/bitrix/admin/fileman_admin.php?lang=' . LANG . '&path=%2Fbitrix%2Fmodules%2Fmain%2Finstall%2Fsmiles">',
+            '#LINK_END#' => '</a>'
+        )
+    ) ?></div>
 <div style="padding-top:5px"><?= GetMessage('IM_IMPORT_HELP_2') ?></div>
 <div style="padding-top:5px"><?= GetMessage('IM_IMPORT_HELP_3') ?></div>
 <div style="padding-top:15px"><?= GetMessage('IM_IMPORT_HELP_4') ?></div>

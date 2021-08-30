@@ -72,8 +72,9 @@ final class Manager
     public static function loadFromEntity(array $filter)
     {
         $filter = array_change_key_case($filter, CASE_UPPER);
-        if (empty($filter))
+        if (empty($filter)) {
             throw new ArgumentNullException("filter");
+        }
 
         $return = array();
         $res = Attach::getData($filter);
@@ -95,8 +96,9 @@ final class Manager
     public static function detachByFilter(array $filter)
     {
         $votes = self::loadFromEntity($filter);
-        foreach ($votes as $v)
+        foreach ($votes as $v) {
             $v->delete();
+        }
     }
 }
 

@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/catalog/prolog.php");
 global $APPLICATION;
@@ -9,8 +10,9 @@ $selfFolderUrl = $adminPage->getSelfFolderUrl();
 $listUrl = $selfFolderUrl . "cat_measure_list.php?lang=" . LANGUAGE_ID;
 $listUrl = $adminSidePanelHelper->editUrlToPublicPage($listUrl);
 
-if (!($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_store')))
+if (!($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_store'))) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 CModule::IncludeModule("catalog");
 $bReadOnly = !$USER->CanDoOperation('catalog_store');
 
@@ -40,10 +42,12 @@ if ($_REQUEST["OKEI"] == "Y") {
         $adminSidePanelHelper->localRedirect($listUrl);
         LocalRedirect($listUrl);
     }
-    if (isset($_REQUEST["main_section"]) && intval($_REQUEST["main_section"] < count($arMeasureClassifier)))
+    if (isset($_REQUEST["main_section"]) && intval($_REQUEST["main_section"] < count($arMeasureClassifier))) {
         $mainSectionId = intval($_REQUEST["main_section"]);
-    if (isset($_REQUEST["sub_section"]) && intval($_REQUEST["sub_section"] <= 6))
+    }
+    if (isset($_REQUEST["sub_section"]) && intval($_REQUEST["sub_section"] <= 6)) {
         $subSectionId = intval($_REQUEST["sub_section"]);
+    }
 
     $oSort = new CAdminSorting($sTableID, "ID", "asc");
     $lAdmin = new CAdminList($sTableID, $oSort);
@@ -59,10 +63,11 @@ if ($_REQUEST["OKEI"] == "Y") {
                 unset($arMeasureClassifier[$mainSectionId][$subSectionId][$code]["MEASURE_TITLE"]);
                 unset($arMeasureClassifier[$mainSectionId][$subSectionId][$code]["SYMBOL_RUS"]);
                 if (!CCatalogMeasure::add($arMeasureClassifier[$mainSectionId][$subSectionId][$code])) {
-                    if ($ex = $APPLICATION->GetException())
+                    if ($ex = $APPLICATION->GetException()) {
                         $lAdmin->AddUpdateError($ex->GetString(), $code);
-                    else
+                    } else {
                         $lAdmin->AddUpdateError(GetMessage("ERROR_UPDATING_REC") . " (" . $code . ")", $code);
+                    }
 
                     $DB->Rollback();
                 }
@@ -78,33 +83,35 @@ if ($_REQUEST["OKEI"] == "Y") {
         $arMeasureCode[] = $arMeasure["CODE"];
     }
 
-    $lAdmin->AddHeaders(array(
+    $lAdmin->AddHeaders(
         array(
-            "id" => "CODE",
-            "content" => GetMessage("CAT_MEASURE_CODE"),
-            "default" => true
-        ),
-        array(
-            "id" => "MEASURE_TITLE",
-            "content" => GetMessage("CAT_MEASURE_MEASURE_TITLE"),
-            "default" => true
-        ),
-        array(
-            "id" => "SYMBOL_RUS",
-            "content" => GetMessage("CAT_MEASURE_SYMBOL_RUS"),
-            "default" => true
-        ),
-        array(
-            "id" => "SYMBOL_INTL",
-            "content" => GetMessage("CAT_MEASURE_SYMBOL_INTL"),
-            "default" => true
-        ),
-        array(
-            "id" => "SYMBOL_LETTER_INTL",
-            "content" => GetMessage("CAT_MEASURE_SYMBOL_LETTER_INTL"),
-            "default" => false
-        ),
-    ));
+            array(
+                "id" => "CODE",
+                "content" => GetMessage("CAT_MEASURE_CODE"),
+                "default" => true
+            ),
+            array(
+                "id" => "MEASURE_TITLE",
+                "content" => GetMessage("CAT_MEASURE_MEASURE_TITLE"),
+                "default" => true
+            ),
+            array(
+                "id" => "SYMBOL_RUS",
+                "content" => GetMessage("CAT_MEASURE_SYMBOL_RUS"),
+                "default" => true
+            ),
+            array(
+                "id" => "SYMBOL_INTL",
+                "content" => GetMessage("CAT_MEASURE_SYMBOL_INTL"),
+                "default" => true
+            ),
+            array(
+                "id" => "SYMBOL_LETTER_INTL",
+                "content" => GetMessage("CAT_MEASURE_SYMBOL_LETTER_INTL"),
+                "default" => false
+            ),
+        )
+    );
     foreach ($arMeasureClassifier[$mainSectionId][$subSectionId] as $code => $value) {
         if ($code !== 'TITLE' && !in_array($code, $arMeasureCode) && $value['MEASURE_TITLE'] != '') {
             $arRes['CODE'] = intval($code);
@@ -122,7 +129,10 @@ if ($_REQUEST["OKEI"] == "Y") {
         $lAdmin->AddGroupActionTable(
             array(
                 array(
-                    'type' => "button", 'title' => GetMessage("CAT_MEASURE_ADD"), 'value' => 'add_measure', "name" => GetMessage("CAT_MEASURE_ADD"),
+                    'type' => "button",
+                    'title' => GetMessage("CAT_MEASURE_ADD"),
+                    'value' => 'add_measure',
+                    "name" => GetMessage("CAT_MEASURE_ADD"),
                 ),
             )
         );
@@ -134,7 +144,6 @@ if ($_REQUEST["OKEI"] == "Y") {
     }
 
     $lAdmin->CheckListMode();
-
 }
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/catalog/prolog.php");
@@ -154,15 +163,17 @@ $userId = intval($USER->GetID());
         }
     </script>
 <?
-if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($_REQUEST["Update"]) > 0 && !$bReadOnly && check_bitrix_sessid()) {
+if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Update"] <> '' && !$bReadOnly && check_bitrix_sessid()) {
     $adminSidePanelHelper->decodeUriComponent();
 
     $IS_DEFAULT = ($_REQUEST["IS_DEFAULT"] == 'Y') ? 'Y' : 'N';
 
-    if (intval($_REQUEST["CODE"]) <= 0)
+    if (intval($_REQUEST["CODE"]) <= 0) {
         $errorMessage .= GetMessage("CAT_MEASURE_CODE_EMPTY") . "\n";
-    if (trim($_REQUEST["MEASURE_TITLE"]) == '')
+    }
+    if (trim($_REQUEST["MEASURE_TITLE"]) == '') {
         $errorMessage .= GetMessage("CAT_MEASURE_TITLE_EMPTY") . "\n";
+    }
 
     $arFields = Array(
         "CODE" => $_REQUEST["CODE"],
@@ -173,21 +184,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($_REQUEST["Update"]) > 0 && !
         "IS_DEFAULT" => $IS_DEFAULT,
     );
     $DB->StartTransaction();
-    if (strlen($errorMessage) == 0 && $ID > 0 && $res = CCatalogMeasure::update($ID, $arFields)) {
+    if ($errorMessage == '' && $ID > 0 && $res = CCatalogMeasure::update($ID, $arFields)) {
         $ID = $res;
         $DB->Commit();
 
         $adminSidePanelHelper->sendSuccessResponse("apply", array("ID" => $ID));
 
-        if (strlen($_REQUEST["apply"]) <= 0)
+        if ($_REQUEST["apply"] == '') {
             LocalRedirect("/bitrix/admin/cat_measure_list.php?lang=" . LANG . "&" . GetFilterParams("filter_", false));
-        else
-            LocalRedirect("/bitrix/admin/cat_measure_edit.php?lang=" . LANG . "&ID=" . $ID . "&" . GetFilterParams("filter_", false));
-    } elseif (strlen($errorMessage) == 0 && $ID == 0 && $res = CCatalogMeasure::add($arFields)) {
+        } else {
+            LocalRedirect(
+                "/bitrix/admin/cat_measure_edit.php?lang=" . LANG . "&ID=" . $ID . "&" . GetFilterParams(
+                    "filter_",
+                    false
+                )
+            );
+        }
+    } elseif ($errorMessage == '' && $ID == 0 && $res = CCatalogMeasure::add($arFields)) {
         $ID = $res;
         $DB->Commit();
 
-        if (strlen($_REQUEST["apply"]) <= 0) {
+        if ($_REQUEST["apply"] == '') {
             $adminSidePanelHelper->sendSuccessResponse("base", array("ID" => $ID));
             $adminSidePanelHelper->localRedirect($listUrl);
             LocalRedirect($listUrl);
@@ -208,12 +225,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($_REQUEST["Update"]) > 0 && !
     }
 }
 
-if ($ID > 0)
+if ($ID > 0) {
     $APPLICATION->SetTitle(str_replace("#ID#", $ID, GetMessage("CAT_MEASURE_TITLE_EDIT")));
-elseif ($_REQUEST["OKEI"] == 'Y')
+} elseif ($_REQUEST["OKEI"] == 'Y') {
     $APPLICATION->SetTitle(GetMessage("CAT_MEASURE_TITLE_OKEI"));
-else
+} else {
     $APPLICATION->SetTitle(GetMessage("CAT_MEASURE_TITLE_NEW"));
+}
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
@@ -229,12 +247,14 @@ if ($ID > 0) {
     );
 
     $dbResult = CCatalogMeasure::GetList(array(), array('ID' => $ID), false, false, $arSelect);
-    if (!$dbResult->ExtractFields("str_"))
+    if (!$dbResult->ExtractFields("str_")) {
         $ID = 0;
+    }
 }
 
-if ($bVarsFromForm)
+if ($bVarsFromForm) {
     $DB->InitTableVarsForEdit("b_catalog_measure", "", "str_");
+}
 
 $aMenu = array(
     array(
@@ -253,7 +273,8 @@ if ($ID > 0 && !$bReadOnly) {
         "ICON" => "btn_new",
         "LINK" => $addUrl
     );
-    $deleteUrl = $selfFolderUrl . "cat_measure_list.php?action=delete&ID[]=" . $ID . "&lang=" . LANG . "&" . bitrix_sessid_get() . "#tb";
+    $deleteUrl = $selfFolderUrl . "cat_measure_list.php?action=delete&ID[]=" . $ID . "&lang=" . LANG . "&" . bitrix_sessid_get(
+        ) . "#tb";
     $buttonAction = "LINK";
     if ($adminSidePanelHelper->isPublicFrame()) {
         $deleteUrl = $adminSidePanelHelper->editUrlToPublicPage($deleteUrl);
@@ -262,7 +283,9 @@ if ($ID > 0 && !$bReadOnly) {
     $aMenu[] = array(
         "TEXT" => GetMessage("CAT_MEASURE_DELETE"),
         "ICON" => "btn_delete",
-        $buttonAction => "javascript:if(confirm('" . GetMessage("CAT_MEASURE_DELETE_CONFIRM") . "')) top.window.location.href='" . $deleteUrl . "';",
+        $buttonAction => "javascript:if(confirm('" . GetMessage(
+                "CAT_MEASURE_DELETE_CONFIRM"
+            ) . "')) top.window.location.href='" . $deleteUrl . "';",
         "WARNING" => "Y"
     );
 }
@@ -284,7 +307,12 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
 
         <?
         $aTabs = array(
-            array("DIV" => "edit1", "TAB" => GetMessage("CAT_MEASURE_TITLE"), "ICON" => "catalog", "TITLE" => GetMessage("CAT_MEASURE_TITLE_ONE")),
+            array(
+                "DIV" => "edit1",
+                "TAB" => GetMessage("CAT_MEASURE_TITLE"),
+                "ICON" => "catalog",
+                "TITLE" => GetMessage("CAT_MEASURE_TITLE_ONE")
+            ),
         );
 
         $tabControl = new CAdminTabControl("tabControl", $aTabs);
@@ -336,8 +364,9 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
             <tr>
                 <td width="40%"><?= GetMessage("CAT_MEASURE_DEFAULT") ?>:</td>
                 <td width="60%">
-                    <input type="checkbox" name="IS_DEFAULT"
-                           value="Y" <? if (($str_IS_DEFAULT == 'Y')) echo "checked"; ?> size="50"/>
+                    <input type="checkbox" name="IS_DEFAULT" value="Y" <? if (($str_IS_DEFAULT == 'Y')) {
+                        echo "checked";
+                    } ?> size="50"/>
                 </td>
             </tr>
             <tr class="adm-detail-required-field">

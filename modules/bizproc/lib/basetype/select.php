@@ -2,10 +2,9 @@
 
 namespace Bitrix\Bizproc\BaseType;
 
+use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Bizproc\FieldType;
-
-Loc::loadMessages(__FILE__);
 
 /**
  * Class Select
@@ -13,7 +12,6 @@ Loc::loadMessages(__FILE__);
  */
 class Select extends Base
 {
-
     /**
      * @return string
      */
@@ -30,8 +28,9 @@ class Select extends Base
     protected static function formatValuePrintable(FieldType $fieldType, $value)
     {
         $options = static::getFieldOptions($fieldType);
-        if (isset($options[$value]))
+        if (isset($options[$value])) {
             return (string)$options[$value];
+        }
         return '';
     }
 
@@ -59,7 +58,7 @@ class Select extends Base
 
         switch ($type) {
             case FieldType::BOOL:
-                $value = strtolower((string)$key);
+                $value = mb_strtolower((string)$key);
                 $value = in_array($value, array('y', 'yes', 'true', '1')) ? 'Y' : 'N';
                 break;
             case FieldType::DOUBLE:
@@ -79,8 +78,8 @@ class Select extends Base
                 break;
             case FieldType::USER:
                 $value = trim($key);
-                if (strpos($value, 'user_') === false
-                    && strpos($value, 'group_') === false
+                if (mb_strpos($value, 'user_') === false
+                    && mb_strpos($value, 'group_') === false
                     && !preg_match('#^[0-9]+$#', $value)
                 ) {
                     $value = null;
@@ -146,18 +145,36 @@ class Select extends Base
         }
 
         $className = static::generateControlClassName($fieldType, $field);
+        $selectorAttributes = '';
 
-        $renderResult = '<select id="' . htmlspecialcharsbx(static::generateControlId($field))
-            . '" class="' . htmlspecialcharsbx($className)
-            . '" name="' . htmlspecialcharsbx(static::generateControlName($field))
-            . ($fieldType->isMultiple() ? '[]' : '') . '"' . ($fieldType->isMultiple() ? ' size="5" multiple' : '') . '>';
+        $isPublicControl = $renderMode & FieldType::RENDER_MODE_PUBLIC;
+
+        if ($allowSelection && $isPublicControl) {
+            $selectorAttributes = sprintf(
+                'data-role="inline-selector-target" data-property="%s" ',
+                htmlspecialcharsbx(Main\Web\Json::encode($fieldType->getProperty()))
+            );
+        }
+
+        if ($fieldType->isMultiple()) {
+            $selectorAttributes .= 'size="5" multiple ';
+        }
+
+        $renderResult = sprintf(
+            '<select id="%s" class="%s" name="%s%s" %s>',
+            htmlspecialcharsbx(static::generateControlId($field)),
+            ($isPublicControl ? htmlspecialcharsbx($className) : ''),
+            htmlspecialcharsbx(static::generateControlName($field)),
+            $fieldType->isMultiple() ? '[]' : '',
+            $selectorAttributes
+        );
 
         if (!$fieldType->isMultiple()) {
             $renderResult .= '<option value="">[' . Loc::getMessage('BPCGHLP_NOT_SET') . ']</option>';
         }
 
         $settings = static::getFieldSettings($fieldType);
-        $groups = $settings['Groups'] ? $settings['Groups'] : null;
+        $groups = $settings['Groups'] ?: null;
 
         if (is_array($groups) && !empty($groups)) {
             foreach ($groups as $group) {
@@ -193,13 +210,24 @@ class Select extends Base
         } else {
             $options = static::getFieldOptions($fieldType);
             foreach ($options as $k => $v) {
-                $renderResult .= '<option value="' . htmlspecialcharsbx($k) . '"' . (in_array((string)$k, $typeValue) ? ' selected' : '') . '>' . htmlspecialcharsbx(htmlspecialcharsback($v)) . '</option>';
+                $renderResult .= '<option value="' . htmlspecialcharsbx($k) . '"' . (in_array(
+                        (string)$k,
+                        $typeValue
+                    ) ? ' selected' : '') . '>' . htmlspecialcharsbx(htmlspecialcharsback($v)) . '</option>';
             }
+        }
+
+        if ($allowSelection && $selectorValue && $isPublicControl) {
+            $renderResult .= sprintf(
+                '<option value="%s" selected data-role="expression">%s</option>',
+                htmlspecialcharsbx($selectorValue),
+                htmlspecialcharsbx($selectorValue)
+            );
         }
 
         $renderResult .= '</select>';
 
-        if ($allowSelection) {
+        if ($allowSelection && !$isPublicControl) {
             $renderResult .= static::renderControlSelector($field, $selectorValue, true, '', $fieldType);
         }
 
@@ -240,8 +268,13 @@ class Select extends Base
      * @param int $renderMode Control render mode.
      * @return string
      */
-    public static function renderControlMultiple(FieldType $fieldType, array $field, $value, $allowSelection, $renderMode)
-    {
+    public static function renderControlMultiple(
+        FieldType $fieldType,
+        array $field,
+        $value,
+        $allowSelection,
+        $renderMode
+    ) {
         if ($renderMode & FieldType::RENDER_MODE_PUBLIC) {
             $allowSelection = false;
         }
@@ -261,16 +294,19 @@ class Select extends Base
 
         $str = '';
         foreach ($options as $k => $v) {
-            if ((string)$k !== (string)$v)
+            if ((string)$k !== (string)$v) {
                 $str .= '[' . $k . ']' . $v;
-            else
+            } else {
                 $str .= $v;
+            }
 
             $str .= "\n";
         }
 
         $rnd = randString();
-        $renderResult = '<textarea id="WFSFormOptionsX' . $rnd . '" rows="5" cols="30">' . htmlspecialcharsbx($str) . '</textarea><br />';
+        $renderResult = '<textarea id="WFSFormOptionsX' . $rnd . '" rows="5" cols="30">' . htmlspecialcharsbx(
+                $str
+            ) . '</textarea><br />';
         $renderResult .= Loc::getMessage('BPDT_SELECT_OPTIONS1') . '<br />';
         $renderResult .= Loc::getMessage('BPDT_SELECT_OPTIONS2') . '<br />';
         $renderResult .= '<script type="text/javascript">
@@ -331,11 +367,13 @@ class Select extends Base
         }
 
         if ($showError) {
-            static::addError(array(
-                'code' => 'ErrorValue',
-                'message' => Loc::getMessage('BPDT_SELECT_INVALID'),
-                'parameter' => static::generateControlName($field),
-            ));
+            static::addError(
+                array(
+                    'code' => 'ErrorValue',
+                    'message' => Loc::getMessage('BPDT_SELECT_INVALID'),
+                    'parameter' => static::generateControlName($field),
+                )
+            );
         }
 
         return $value;
@@ -352,8 +390,9 @@ class Select extends Base
         $name = $field['Field'];
         $value = isset($request[$name]) ? $request[$name] : array();
 
-        if (!is_array($value) || is_array($value) && \CBPHelper::isAssociativeArray($value))
+        if (!is_array($value) || is_array($value) && \CBPHelper::isAssociativeArray($value)) {
             $value = array($value);
+        }
         $value = array_unique($value);
         $request[$name] = $value;
         return parent::extractValueMultiple($fieldType, $field, $request);
@@ -439,8 +478,31 @@ class Select extends Base
                 }
                 $normalized[$key] = $value;
             }
-        } else
+        } else {
             $normalized[$options] = $options;
+        }
         return $normalized;
+    }
+
+    public static function externalizeValue(FieldType $fieldType, $context, $value)
+    {
+        $map = $fieldType->getSettings()['ExternalValues'] ?? null;
+        if ($map && isset($map[$value])) {
+            return $map[$value];
+        }
+
+        return parent::externalizeValue($fieldType, $context, $value);
+    }
+
+    public static function mergeValue(FieldType $fieldType, array $baseValue, $appendValue): array
+    {
+        if (\CBPHelper::isAssociativeArray($baseValue)) {
+            $baseValue = array_keys($baseValue);
+        }
+        if (\CBPHelper::isAssociativeArray($appendValue)) {
+            $appendValue = array_keys($appendValue);
+        }
+
+        return parent::mergeValue($fieldType, $baseValue, $appendValue);
     }
 }

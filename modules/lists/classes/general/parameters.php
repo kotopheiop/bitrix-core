@@ -1,9 +1,10 @@
-<?
+<?php
+
 IncludeModuleLangFile(__FILE__);
 
 class CListsParameters
 {
-    function GetPathTemplateMenuItems($menuType, $action_function, $menuID, $inputID = "")
+    public static function GetPathTemplateMenuItems($menuType, $action_function, $menuID, $inputID = "")
     {
         $arResult = array();
 
@@ -42,16 +43,21 @@ class CListsParameters
         return $arResult;
     }
 
-    function GetPathTemplateParam($menuType, $ID, $parameterName, $defaultValue = "", $parentID = "URL_TEMPLATES")
-    {
-        if ($menuType == "LISTS")
+    public static function GetPathTemplateParam(
+        $menuType,
+        $ID,
+        $parameterName,
+        $defaultValue = "",
+        $parentID = "URL_TEMPLATES"
+    ) {
+        if ($menuType == "LISTS") {
             return array(
                 "PARENT" => $parentID,
                 "NAME" => $parameterName,
                 "TYPE" => "STRING",
                 "DEFAULT" => $defaultValue,
             );
-        else
+        } else {
             return array(
                 "PARENT" => $parentID,
                 "NAME" => $parameterName,
@@ -59,13 +65,22 @@ class CListsParameters
                 "DEFAULT" => $defaultValue,
                 "JS_FILE" => BX_ROOT . "/js/iblock/path_templates.js",
                 "JS_EVENT" => "IBlockComponentProperties",
-                "JS_DATA" => str_replace("\n", "", CUtil::PhpToJSObject(array(
-                    "mnu_" . $ID, //menu div ID
-                    5000, //zIndex
-                    CListsParameters::GetPathTemplateMenuItems($menuType, "window.IBlockComponentPropertiesObj.Action", "mnu_" . $ID), //Menu items
-                ))),
+                "JS_DATA" => str_replace(
+                    "\n",
+                    "",
+                    CUtil::PhpToJSObject(
+                        array(
+                            "mnu_" . $ID, //menu div ID
+                            5000, //zIndex
+                            CListsParameters::GetPathTemplateMenuItems(
+                                $menuType,
+                                "window.IBlockComponentPropertiesObj.Action",
+                                "mnu_" . $ID
+                            ), //Menu items
+                        )
+                    )
+                ),
             );
+        }
     }
 }
-
-?>

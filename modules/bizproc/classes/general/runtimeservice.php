@@ -11,12 +11,12 @@ abstract class CBPRuntimeService
 
     public function Start(CBPRuntime $runtime = null)
     {
-        if ($runtime != null)
+        if ($runtime != null) {
             $this->SetRuntime($runtime);
+        }
     }
 
     public function Stop()
     {
-
     }
 }

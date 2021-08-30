@@ -10,8 +10,9 @@ use Bitrix\Sale\Location;
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions < "W")
+if ($saleModulePermissions < "W") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 
@@ -45,52 +46,65 @@ $bInitVars = false;
 
 $lpEnabled = !!CSaleLocation::isLocationProEnabled();
 
-if ((strlen($save) > 0 || strlen($apply) > 0) && $_SERVER['REQUEST_METHOD'] == "POST" && $saleModulePermissions == "W" && check_bitrix_sessid()) {
+if (($save <> '' || $apply <> '') && $_SERVER['REQUEST_METHOD'] == "POST" && $saleModulePermissions == "W" && check_bitrix_sessid(
+    )) {
     $store = "";
-    if (isset($_POST["STORE"]) && count($_POST["STORE"]) > 0)
+    if (isset($_POST["STORE"]) && count($_POST["STORE"]) > 0) {
         $store = serialize($_POST["STORE"]);
+    }
 
     $LID = Trim($LID);
-    if (strlen($LID) <= 0)
+    if ($LID == '') {
         $strError .= GetMessage("ERROR_NO_LID") . "<br>";
+    }
 
     $NAME = Trim($NAME);
-    if (strlen($NAME) <= 0)
+    if ($NAME == '') {
         $strError .= GetMessage("ERROR_NO_NAME") . "<br>";
+    }
 
     $PRICE = str_replace(",", ".", $PRICE);
     $PRICE = DoubleVal($PRICE);
-    if ($PRICE < 0)
+    if ($PRICE < 0) {
         $strError .= GetMessage("ERROR_NO_PRICE") . "<br>";
+    }
 
     $CURRENCY = Trim($CURRENCY);
-    if (strlen($CURRENCY) <= 0)
+    if ($CURRENCY == '') {
         $strError .= GetMessage("ERROR_NO_CURRENCY") . "<br>";
+    }
 
     $ORDER_PRICE_FROM = str_replace(",", ".", $ORDER_PRICE_FROM);
     $ORDER_PRICE_TO = str_replace(",", ".", $ORDER_PRICE_TO);
     $ORDER_CURRENCY = Trim($ORDER_CURRENCY);
-    if ((DoubleVal($ORDER_PRICE_FROM) > 0 || DoubleVal($ORDER_PRICE_TO) > 0) && strlen($ORDER_CURRENCY) <= 0)
+    if ((DoubleVal($ORDER_PRICE_FROM) > 0 || DoubleVal($ORDER_PRICE_TO) > 0) && $ORDER_CURRENCY == '') {
         $strError .= GetMessage("ERROR_PRICE_NO_CUR") . "<br>";
+    }
 
-    if ($ACTIVE != "Y") $ACTIVE = "N";
+    if ($ACTIVE != "Y") {
+        $ACTIVE = "N";
+    }
 
     $SORT = intval($SORT);
-    if ($SORT <= 0) $SORT = 100;
+    if ($SORT <= 0) {
+        $SORT = 100;
+    }
 
     $arLocation = array();
     if ($lpEnabled) {
-        if (strlen($_REQUEST['LOCATION']['L']))
+        if ($_REQUEST['LOCATION']['L'] <> '') {
             $LOCATION1 = explode(':', $_REQUEST['LOCATION']['L']);
+        }
 
-        if (strlen($_REQUEST['LOCATION']['G']))
+        if ($_REQUEST['LOCATION']['G'] <> '') {
             $LOCATION2 = explode(':', $_REQUEST['LOCATION']['G']);
+        }
     }
 
     if (isset($LOCATION1) && is_array($LOCATION1) && count($LOCATION1) > 0) {
         $locationCount = count($LOCATION1);
         for ($i = 0; $i < $locationCount; $i++) {
-            if (strlen($LOCATION1[$i])) {
+            if ($LOCATION1[$i] <> '') {
                 $arLocation[] = array(
                     "LOCATION_ID" => $LOCATION1[$i],
                     "LOCATION_TYPE" => "L"
@@ -102,7 +116,7 @@ if ((strlen($save) > 0 || strlen($apply) > 0) && $_SERVER['REQUEST_METHOD'] == "
     if (isset($LOCATION2) && is_array($LOCATION2) && count($LOCATION2) > 0) {
         $locationCount = count($LOCATION2);
         for ($i = 0; $i < $locationCount; $i++) {
-            if (strlen($LOCATION2[$i]) > 0) {
+            if ($LOCATION2[$i] <> '') {
                 $arLocation[] = array(
                     "LOCATION_ID" => $LOCATION2[$i],
                     "LOCATION_TYPE" => "G"
@@ -111,16 +125,18 @@ if ((strlen($save) > 0 || strlen($apply) > 0) && $_SERVER['REQUEST_METHOD'] == "
         }
     }
 
-    if (!is_array($arLocation) || count($arLocation) <= 0)
+    if (!is_array($arLocation) || count($arLocation) <= 0) {
         $strError .= GetMessage("ERROR_NO_LOCATION") . "<br>";
+    }
 
     if ($strError == '') {
         unset($arFields);
 
         //add logotip
         $arPicture = array();
-        if (array_key_exists("LOGOTIP", $_FILES) && $_FILES["LOGOTIP"]["error"] == 0)
+        if (array_key_exists("LOGOTIP", $_FILES) && $_FILES["LOGOTIP"]["error"] == 0) {
             $arPicture = $_FILES["LOGOTIP"];
+        }
 
         //$arPicture["old_file"] = $arPSAction["LOGOTIP"];
         $arPicture["del"] = trim($_POST["LOGOTIP_del"]);
@@ -152,8 +168,9 @@ if ((strlen($save) > 0 || strlen($apply) > 0) && $_SERVER['REQUEST_METHOD'] == "
             $arFields["PAY_SYSTEM"] = array();
             $arPaySystem = $_POST["PAY_SYSTEM"];
 
-            if ($arPaySystem[0] == "")
+            if ($arPaySystem[0] == "") {
                 unset($arPaySystem[0]);
+            }
 
             $arFields["PAY_SYSTEM"] = $arPaySystem;
         }
@@ -161,22 +178,25 @@ if ((strlen($save) > 0 || strlen($apply) > 0) && $_SERVER['REQUEST_METHOD'] == "
         if ($ID > 0) {
             $delivery = new CSaleDelivery();
 
-            if (!$delivery->Update($ID, $arFields, array("EXPECT_LOCATION_CODES" => $lpEnabled)))
+            if (!$delivery->Update($ID, $arFields, array("EXPECT_LOCATION_CODES" => $lpEnabled))) {
                 $strError .= GetMessage("ERROR_EDIT_DELIVERY") . "<br>";
+            }
         } else {
             $ID = CSaleDelivery::Add($arFields, array("EXPECT_LOCATION_CODES" => $lpEnabled));
-            if ($ID <= 0)
+            if ($ID <= 0) {
                 $strError .= GetMessage("ERROR_ADD_DELIVERY") . "<br>";
+            }
         }
     }
 
     if ($strError != '') {
         $bInitVars = true;
     } else {
-        if (strlen($apply) > 0)
+        if ($apply <> '') {
             LocalRedirect("sale_delivery_edit.php?ID=" . $ID . "&lang=" . LANG . "&" . $tabControl->ActiveTabParam());
-        else
+        } else {
             LocalRedirect("sale_delivery.php?lang=" . LANG);
+        }
     }
 }
 
@@ -225,7 +245,10 @@ if ($ID > 0 && $saleModulePermissions >= "W") {
 
     $aMenu[] = array(
         "TEXT" => GetMessage("SDEN_DELETE_DELIVERY"),
-        "LINK" => "javascript:if(confirm('" . GetMessage("SDEN_DELETE_DELIVERY_CONFIRM") . "')) window.location='/bitrix/admin/sale_delivery.php?ID=" . $ID . "&action=delete&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get() . "#tb';",
+        "LINK" => "javascript:if(confirm('" . GetMessage(
+                "SDEN_DELETE_DELIVERY_CONFIRM"
+            ) . "')) window.location='/bitrix/admin/sale_delivery.php?ID=" . $ID . "&action=delete&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get(
+            ) . "#tb';",
         "ICON" => "btn_delete"
     );
 }
@@ -233,8 +256,11 @@ $context = new CAdminContextMenu($aMenu);
 $context->Show();
 ?>
 
-<? if (strlen($strError) > 0)
-    echo CAdminMessage::ShowMessage(Array("DETAILS" => $strError, "TYPE" => "ERROR", "MESSAGE" => GetMessage("SDEN_ERROR"), "HTML" => true)); ?>
+<? if ($strError <> '') {
+    echo CAdminMessage::ShowMessage(
+        Array("DETAILS" => $strError, "TYPE" => "ERROR", "MESSAGE" => GetMessage("SDEN_ERROR"), "HTML" => true)
+    );
+} ?>
 
     <form method="POST" action="<? echo $APPLICATION->GetCurPage() ?>?" name="form1" enctype="multipart/form-data">
         <? echo GetFilterHiddens("filter_"); ?>
@@ -308,7 +334,9 @@ $context->Show();
         <tr>
             <td width="40%"><? echo GetMessage("F_ACTIVE") ?>:</td>
             <td width="60%">
-                <input type="checkbox" name="ACTIVE" value="Y" <? if ($str_ACTIVE == "Y") echo "checked"; ?>>
+                <input type="checkbox" name="ACTIVE" value="Y" <? if ($str_ACTIVE == "Y") {
+                    echo "checked";
+                } ?>>
             </td>
         </tr>
         <tr>
@@ -339,10 +367,23 @@ $context->Show();
                 array("ACTIVE" => "Y"),
                 false,
                 false,
-                array("ID", "SITE_ID", "TITLE", "ADDRESS", "DESCRIPTION", "IMAGE_ID", "PHONE", "SCHEDULE", "LOCATION_ID", "GPS_N", "GPS_S")
+                array(
+                    "ID",
+                    "SITE_ID",
+                    "TITLE",
+                    "ADDRESS",
+                    "DESCRIPTION",
+                    "IMAGE_ID",
+                    "PHONE",
+                    "SCHEDULE",
+                    "LOCATION_ID",
+                    "GPS_N",
+                    "GPS_S"
+                )
             );
-            while ($arList = $dbList->Fetch())
+            while ($arList = $dbList->Fetch()) {
                 $arStoreList[] = $arList;
+            }
         }
 
         if (!empty($arStoreList)) {
@@ -351,8 +392,9 @@ $context->Show();
             $str_STORE = $arList["STORE"];
 
             $arStore = array();
-            if (strlen($str_STORE) > 0)
-                $arStore = unserialize($str_STORE);
+            if ($str_STORE <> '') {
+                $arStore = unserialize($str_STORE, ['allowed_classes' => false]);
+            }
             ?>
             <tr>
                 <td width="40%" valign="top"><? echo GetMessage("SDEN_STORE"); ?>:</td>
@@ -361,9 +403,12 @@ $context->Show();
                         <?
                         foreach ($arStoreList as $items):
 
-                            $siteInfo = (strlen($items["SITE_ID"]) > 0) ? " [" . $items["SITE_ID"] . "]" : "";
+                            $siteInfo = ($items["SITE_ID"] <> '') ? " [" . $items["SITE_ID"] . "]" : "";
                             ?>
-                            <option value="<?= $items["ID"] ?>" <?= (in_array($items["ID"], $arStore) ? "selected" : "") ?> ><?= htmlspecialcharsbx($items["TITLE"] . $siteInfo) ?></option>
+                            <option value="<?= $items["ID"] ?>" <?= (in_array(
+                                $items["ID"],
+                                $arStore
+                            ) ? "selected" : "") ?> ><?= htmlspecialcharsbx($items["TITLE"] . $siteInfo) ?></option>
                         <?
                         endforeach
                         ?>
@@ -402,15 +447,24 @@ $context->Show();
             <tr class="adm-detail-required-field">
                 <td colspan="2">
 
-                    <? $APPLICATION->IncludeComponent("bitrix:sale.location.selector.system", "", array(
-                        "ENTITY_PRIMARY" => $ID,
-                        "LINK_ENTITY_NAME" => CSaleDelivery::CONN_ENTITY_NAME,
-                        "INPUT_NAME" => 'LOCATION',
-                        "SELECTED_IN_REQUEST" => array(
-                            'L' => isset($_REQUEST['LOCATION']['L']) ? explode(':', $_REQUEST['LOCATION']['L']) : false,
-                            'G' => isset($_REQUEST['LOCATION']['G']) ? explode(':', $_REQUEST['LOCATION']['G']) : false
-                        )
-                    ),
+                    <? $APPLICATION->IncludeComponent(
+                        "bitrix:sale.location.selector.system",
+                        "",
+                        array(
+                            "ENTITY_PRIMARY" => $ID,
+                            "LINK_ENTITY_NAME" => CSaleDelivery::CONN_ENTITY_NAME,
+                            "INPUT_NAME" => 'LOCATION',
+                            "SELECTED_IN_REQUEST" => array(
+                                'L' => isset($_REQUEST['LOCATION']['L']) ? explode(
+                                    ':',
+                                    $_REQUEST['LOCATION']['L']
+                                ) : false,
+                                'G' => isset($_REQUEST['LOCATION']['G']) ? explode(
+                                    ':',
+                                    $_REQUEST['LOCATION']['G']
+                                ) : false
+                            )
+                        ),
                         false
                     ); ?>
 
@@ -422,7 +476,11 @@ $context->Show();
                 <td width="40%" valign="top"><? echo GetMessage("F_LOCATION1"); ?>:</td>
                 <td width="60%" valign="top">
 
-                    <? $db_vars = CSaleLocation::GetList(Array("COUNTRY_NAME_LANG" => "ASC", "REGION_NAME_LANG" => "ASC", "CITY_NAME_LANG" => "ASC"), array(), LANG); ?>
+                    <? $db_vars = CSaleLocation::GetList(
+                        Array("COUNTRY_NAME_LANG" => "ASC", "REGION_NAME_LANG" => "ASC", "CITY_NAME_LANG" => "ASC"),
+                        array(),
+                        LANG
+                    ); ?>
 
                     <select name="LOCATION1[]" size="5" multiple>
                         <?
@@ -430,7 +488,9 @@ $context->Show();
                         if ($bInitVars) {
                             $arLOCATION1 = $LOCATION1;
                         } else {
-                            $db_location = CSaleDelivery::GetLocationList(Array("DELIVERY_ID" => $ID, "LOCATION_TYPE" => "L"));
+                            $db_location = CSaleDelivery::GetLocationList(
+                                Array("DELIVERY_ID" => $ID, "LOCATION_TYPE" => "L")
+                            );
                             while ($arLocation = $db_location->Fetch()) {
                                 $arLOCATION1[] = $arLocation["LOCATION_ID"];
                             }
@@ -439,18 +499,23 @@ $context->Show();
                         <? while ($vars = $db_vars->Fetch()):
                             $locationName = $vars["COUNTRY_NAME"];
 
-                            if (strlen($vars["REGION_NAME"]) > 0) {
-                                if (strlen($locationName) > 0)
+                            if ($vars["REGION_NAME"] <> '') {
+                                if ($locationName <> '') {
                                     $locationName .= " - ";
+                                }
                                 $locationName .= $vars["REGION_NAME"];
                             }
-                            if (strlen($vars["CITY_NAME"]) > 0) {
-                                if (strlen($locationName) > 0)
+                            if ($vars["CITY_NAME"] <> '') {
+                                if ($locationName <> '') {
                                     $locationName .= " - ";
+                                }
                                 $locationName .= $vars["CITY_NAME"];
                             }
                             ?>
-                            <option value="<? echo $vars["ID"] ?>"<? if (is_array($arLOCATION1) && in_array(IntVal($vars["ID"]), $arLOCATION1)) echo " selected" ?>><? echo htmlspecialcharsbx($locationName) ?></option>
+                            <option value="<? echo $vars["ID"] ?>"<? if (is_array($arLOCATION1) && in_array(
+                                    intval($vars["ID"]),
+                                    $arLOCATION1
+                                )) echo " selected" ?>><? echo htmlspecialcharsbx($locationName) ?></option>
                         <? endwhile; ?>
                     </select>
                 </td>
@@ -467,14 +532,19 @@ $context->Show();
                         if ($bInitVars) {
                             $arLOCATION2 = $LOCATION2;
                         } else {
-                            $db_location = CSaleDelivery::GetLocationList(Array("DELIVERY_ID" => $ID, "LOCATION_TYPE" => "G"));
+                            $db_location = CSaleDelivery::GetLocationList(
+                                Array("DELIVERY_ID" => $ID, "LOCATION_TYPE" => "G")
+                            );
                             while ($arLocation = $db_location->Fetch()) {
                                 $arLOCATION2[] = $arLocation["LOCATION_ID"];
                             }
                         }
                         ?>
                         <? while ($vars = $db_vars->Fetch()): ?>
-                            <option value="<? echo $vars["ID"] ?>"<? if (is_array($arLOCATION2) && in_array(IntVal($vars["ID"]), $arLOCATION2)) echo " selected" ?>><? echo htmlspecialcharsbx($vars["NAME"]) ?></option>
+                            <option value="<? echo $vars["ID"] ?>"<? if (is_array($arLOCATION2) && in_array(
+                                    intval($vars["ID"]),
+                                    $arLOCATION2
+                                )) echo " selected" ?>><? echo htmlspecialcharsbx($vars["NAME"]) ?></option>
                         <? endwhile; ?>
                     </select>
                 </td>
@@ -494,8 +564,9 @@ $context->Show();
                     <?
                     $arPaySystemId = array();
                     $dbRes = CSaleDelivery::GetDelivery2PaySystem(array("DELIVERY_ID" => $ID));
-                    while ($arRes = $dbRes->Fetch())
+                    while ($arRes = $dbRes->Fetch()) {
                         $arPaySystemId[] = $arRes["PAYSYSTEM_ID"];
+                    }
 
                     $dbResultList = CSalePaySystem::GetList(
                         array("SORT" => "ASC", "NAME" => "ASC"),
@@ -505,9 +576,14 @@ $context->Show();
                         array("ID", "NAME", "ACTIVE", "SORT", "LID")
                     );
                     while ($arPayType = $dbResultList->Fetch()):
-                        $name = (strlen($arPayType["LID"]) > 0) ? htmlspecialcharsbx($arPayType["NAME"]) . " (" . $arPayType["LID"] . ")" : htmlspecialcharsbx($arPayType["NAME"]);
+                        $name = ($arPayType["LID"] <> '') ? htmlspecialcharsbx(
+                                $arPayType["NAME"]
+                            ) . " (" . $arPayType["LID"] . ")" : htmlspecialcharsbx($arPayType["NAME"]);
                         ?>
-                        <option value="<?= intval($arPayType["ID"]); ?>" <?= (in_array($arPayType["ID"], $arPaySystemId) || empty($arPaySystemId) ? "selected" : "") ?>><?= $name ?></option>
+                        <option value="<?= intval($arPayType["ID"]); ?>" <?= (in_array(
+                            $arPayType["ID"],
+                            $arPaySystemId
+                        ) || empty($arPaySystemId) ? "selected" : "") ?>><?= $name ?></option>
                     <? endwhile; ?>
                 </select>
             </td>

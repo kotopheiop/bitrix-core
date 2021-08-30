@@ -20,8 +20,9 @@ use Bitrix\Main\Text\HtmlFilter;
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/prolog.php");
 
-if (!$USER->CanDoOperation('edit_all_users'))
+if (!$USER->CanDoOperation('edit_all_users')) {
     $APPLICATION->AuthForm(Loc::getMessage("ACCESS_DENIED"));
+}
 
 $sTableID = "tbl_profile_history";
 $sorting = new CAdminSorting($sTableID, "ID", "DESC");
@@ -98,7 +99,7 @@ if (CheckFilter()) {
     }
 }
 
-$sortOrder = strtoupper($sorting->getOrder());
+$sortOrder = mb_strtoupper($sorting->getOrder());
 if ($sortOrder <> "DESC") {
     $sortOrder = "ASC";
 }
@@ -122,17 +123,19 @@ $nav->setRecordCount($historyList->getCount());
 
 $lAdmin->setNavigation($nav, Loc::getMessage("main_profile_history_records"));
 
-$lAdmin->AddHeaders(array(
-    array("id" => "ID", "content" => "ID", "sort" => "ID", "default" => true, "align" => "right"),
-    array("id" => "DATE_INSERT", "content" => Loc::getMessage("main_profile_history_date"), "default" => true),
-    array("id" => "USER", "content" => Loc::getMessage("main_profile_history_user"), "default" => true),
-    array("id" => "EVENT_TYPE", "content" => Loc::getMessage("main_profile_history_event"), "default" => true),
-    array("id" => "UPDATED_BY", "content" => Loc::getMessage("main_profile_history_updated_by"), "default" => true),
-    array("id" => "FIELDS", "content" => Loc::getMessage("main_profile_history_changes"), "default" => true),
-    array("id" => "REMOTE_ADDR", "content" => Loc::getMessage("main_profile_history_ip"), "default" => false),
-    array("id" => "USER_AGENT", "content" => Loc::getMessage("main_profile_history_browser"), "default" => false),
-    array("id" => "REQUEST_URI", "content" => Loc::getMessage("main_profile_history_url"), "default" => false),
-));
+$lAdmin->AddHeaders(
+    array(
+        array("id" => "ID", "content" => "ID", "sort" => "ID", "default" => true, "align" => "right"),
+        array("id" => "DATE_INSERT", "content" => Loc::getMessage("main_profile_history_date"), "default" => true),
+        array("id" => "USER", "content" => Loc::getMessage("main_profile_history_user"), "default" => true),
+        array("id" => "EVENT_TYPE", "content" => Loc::getMessage("main_profile_history_event"), "default" => true),
+        array("id" => "UPDATED_BY", "content" => Loc::getMessage("main_profile_history_updated_by"), "default" => true),
+        array("id" => "FIELDS", "content" => Loc::getMessage("main_profile_history_changes"), "default" => true),
+        array("id" => "REMOTE_ADDR", "content" => Loc::getMessage("main_profile_history_ip"), "default" => false),
+        array("id" => "USER_AGENT", "content" => Loc::getMessage("main_profile_history_browser"), "default" => false),
+        array("id" => "REQUEST_URI", "content" => Loc::getMessage("main_profile_history_url"), "default" => false),
+    )
+);
 
 $eventTypes = array(
     Main\UserProfileHistoryTable::TYPE_ADD => Loc::getMessage("main_profile_history_adding"),
@@ -148,14 +151,20 @@ while ($history = $historyList->fetch($converter)) {
         $userCache[$history["USER_ID"]] = $history["USER_ID"];
         $user = CUser::GetByID($history["USER_ID"])->Fetch();
         if ($user) {
-            $userCache[$history["USER_ID"]] = '[<a href="user_edit.php?lang=' . LANGUAGE_ID . '&amp;ID=' . $history["USER_ID"] . '">' . $history["USER_ID"] . '</a>] ' . CUser::FormatName("#NAME# #LAST_NAME#", $user);
+            $userCache[$history["USER_ID"]] = '[<a href="user_edit.php?lang=' . LANGUAGE_ID . '&amp;ID=' . $history["USER_ID"] . '">' . $history["USER_ID"] . '</a>] ' . CUser::FormatName(
+                    "#NAME# #LAST_NAME#",
+                    $user
+                );
         }
     }
     if ($history["UPDATED_BY_ID"] > 0 && !isset($userCache[$history["UPDATED_BY_ID"]])) {
         $userCache[$history["UPDATED_BY_ID"]] = $history["UPDATED_BY_ID"];
         $user = CUser::GetByID($history["UPDATED_BY_ID"])->Fetch();
         if ($user) {
-            $userCache[$history["UPDATED_BY_ID"]] = '[<a href="user_edit.php?lang=' . LANGUAGE_ID . '&amp;ID=' . $history["UPDATED_BY_ID"] . '">' . $history["UPDATED_BY_ID"] . '</a>] ' . CUser::FormatName("#NAME# #LAST_NAME#", $user);
+            $userCache[$history["UPDATED_BY_ID"]] = '[<a href="user_edit.php?lang=' . LANGUAGE_ID . '&amp;ID=' . $history["UPDATED_BY_ID"] . '">' . $history["UPDATED_BY_ID"] . '</a>] ' . CUser::FormatName(
+                    "#NAME# #LAST_NAME#",
+                    $user
+                );
         }
     }
 
@@ -164,7 +173,9 @@ while ($history = $historyList->fetch($converter)) {
         $records = Main\UserProfileRecordTable::getList(array("filter" => array("=HISTORY_ID" => $history["ID"])));
         while ($record = $records->fetch()) {
             $fields .= HtmlFilter::encode($record["FIELD"]) . ': <span style="color:red">' .
-                HtmlFilter::encode(var_export($record["DATA"]["before"], true)) . '</span> => <span style="color:green">' .
+                HtmlFilter::encode(
+                    var_export($record["DATA"]["before"], true)
+                ) . '</span> => <span style="color:green">' .
                 HtmlFilter::encode(var_export($record["DATA"]["after"], true)) . '</span><br>';
         }
     }
@@ -221,7 +232,15 @@ require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admi
     </tr>
     <tr>
         <td><? echo $arFilterNames["find_date_insert"] ?>:</td>
-        <td><? echo CAdminCalendar::CalendarPeriod("find_date_insert_1", "find_date_insert_2", $find_date_insert_1, $find_date_insert_2, false, 15, true) ?></td>
+        <td><? echo CAdminCalendar::CalendarPeriod(
+                "find_date_insert_1",
+                "find_date_insert_2",
+                $find_date_insert_1,
+                $find_date_insert_2,
+                false,
+                15,
+                true
+            ) ?></td>
     </tr>
     <tr>
         <td><? echo $arFilterNames["find_remote_addr"] ?>:</td>

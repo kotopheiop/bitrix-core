@@ -1,4 +1,5 @@
 <?php
+
 //region head
 define('ADMIN_MODULE_NAME', 'translate');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_before.php');
@@ -35,9 +36,15 @@ $APPLICATION->SetTitle(Loc::getMessage('TRANS_TITLE'));
 
 require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php');
 
-
-\CUtil::InitJSCore(array('translate_process', 'loader'));
-Main\UI\Extension::load(['ui.buttons', 'ui.alerts', 'ui.notification']);
+Main\UI\Extension::load(
+    [
+        'main.loader',
+        'ui.buttons',
+        'ui.alerts',
+        'ui.notification',
+        'ui.stepprocessing',
+    ]
+);
 
 //endregion
 
@@ -60,8 +67,9 @@ $updatePublic = false;
 const ACTION_EXTRACT = 'extract';
 const ACTION_COLLECT = 'collect';
 
-$currentAction = $request->get('tabControl_active_tab') === ACTION_EXTRACT ? ACTION_EXTRACT : ACTION_COLLECT;
+$request = \Bitrix\Main\Context::getCurrent()->getRequest();
 
+$currentAction = $request->get('tabControl_active_tab') === ACTION_EXTRACT ? ACTION_EXTRACT : ACTION_COLLECT;
 
 $aTabs = array(
     array(
@@ -102,14 +110,16 @@ $tabControl->Begin();
             <td>
                 <select name="languageId">
                     <?
-                    $iterator = Main\Localization\LanguageTable::getList([
-                        'select' => ['ID', 'NAME'],
-                        'filter' => [
-                            'ID' => array_intersect($availableLanguages, $enabledLanguages),
-                            '=ACTIVE' => 'Y'
-                        ],
-                        'order' => ['SORT' => 'ASC']
-                    ]);
+                    $iterator = Main\Localization\LanguageTable::getList(
+                        [
+                            'select' => ['ID', 'NAME'],
+                            'filter' => [
+                                'ID' => array_intersect($availableLanguages, $enabledLanguages),
+                                '=ACTIVE' => 'Y'
+                            ],
+                            'order' => ['SORT' => 'ASC']
+                        ]
+                    );
                     while ($row = $iterator->fetch()) {
                         ?>
                         <option value="<?= $row['ID'] ?>"<?= ($row['ID'] == $languageId ? ' selected' : ''); ?>><?= $row['NAME'] ?>
@@ -166,7 +176,9 @@ $tabControl->Begin();
                         foreach ($allowedEncodings as $enc) {
                             $encTitle = Translate\Config::getEncodingName($enc);
                             ?>
-                            <option value="<?= htmlspecialcharsbx($enc) ?>"<? if ($enc == $encoding) echo " selected"; ?>><?= $encTitle ?></option><?
+                            <option value="<?= htmlspecialcharsbx($enc) ?>"<? if ($enc == $encoding) {
+                                echo " selected";
+                            } ?>><?= $encTitle ?></option><?
                         }
                         ?>
                     </select>
@@ -211,8 +223,14 @@ $tabControl->Begin();
         <tr class="adm-required-field">
             <td style="width:40%" nowrap>
                 <?= Loc::getMessage('TR_UPLOAD_FILE') ?>
-                <?= Loc::getMessage('TR_UPLOAD_FILE_MAX_SIZE', ['#SIZE#' => \CFile::FormatSize(Translate\Controller\Asset\Grabber::getMaxUploadSize())]) ?>
-                :
+                <?= Loc::getMessage(
+                    'TR_UPLOAD_FILE_MAX_SIZE',
+                    [
+                        '#SIZE#' => \CFile::FormatSize(
+                            Translate\Controller\Asset\Grabber::getMaxUploadSize()
+                        )
+                    ]
+                ) ?>:
             </td>
             <td>
                 <input type="file" name="tarFile">
@@ -225,14 +243,16 @@ $tabControl->Begin();
             <td>
                 <select name="languageId">
                     <?
-                    $iterator = Main\Localization\LanguageTable::getList([
-                        'select' => ['ID', 'NAME'],
-                        'filter' => [
-                            'ID' => $enabledLanguages,
-                            '=ACTIVE' => 'Y'
-                        ],
-                        'order' => ['SORT' => 'ASC']
-                    ]);
+                    $iterator = Main\Localization\LanguageTable::getList(
+                        [
+                            'select' => ['ID', 'NAME'],
+                            'filter' => [
+                                'ID' => $enabledLanguages,
+                                '=ACTIVE' => 'Y'
+                            ],
+                            'order' => ['SORT' => 'ASC']
+                        ]
+                    );
                     while ($row = $iterator->fetch()) {
                         ?>
                         <option value="<?= $row['ID'] ?>"<?= ($row['ID'] == $languageId ? ' selected' : ''); ?>><?= $row['NAME'] ?>
@@ -279,7 +299,9 @@ $tabControl->Begin();
                             $encTitle = Translate\Config::getEncodingName($enc);
 
                             ?>
-                            <option value="<?= htmlspecialcharsbx($enc); ?>"<? if ($enc == $encoding) echo " selected"; ?>><?= $encTitle ?></option><?
+                            <option value="<?= htmlspecialcharsbx($enc); ?>"<? if ($enc == $encoding) {
+                                echo " selected";
+                            } ?>><?= $encTitle ?></option><?
                         }
                         ?></select>
                 </td>
@@ -311,7 +333,9 @@ $tabControl->Begin();
 $tabControl->Buttons();
 ?>
     <input type="submit" id="tr_submit" class="adm-btn-green" data-action="<?= $currentAction ?>" value="<?
-    echo $currentAction === ACTION_EXTRACT ? Loc::getMessage("TR_DOWNLOAD_LANGUAGE") : Loc::getMessage("TR_COLLECT_LANGUAGE"); ?>">
+    echo $currentAction === ACTION_EXTRACT ? Loc::getMessage("TR_DOWNLOAD_LANGUAGE") : Loc::getMessage(
+        "TR_COLLECT_LANGUAGE"
+    ); ?>">
 <?
 
 $tabControl->End();
@@ -361,10 +385,10 @@ $tabControl->End();
                 action = BX.data(button, 'action');
                 if (action == '<?=ACTION_COLLECT?>') {
                     form = document.forms['form<?=ACTION_COLLECT?>'];
-                    process = BX.Translate.ProcessManager.getInstance('<?=ACTION_COLLECT?>');
+                    process = BX.UI.StepProcessing.ProcessManager.get('<?=ACTION_COLLECT?>');
                 } else {
                     form = document.forms['form<?=ACTION_EXTRACT?>'];
-                    process = BX.Translate.ProcessManager.getInstance('<?=ACTION_EXTRACT?>');
+                    process = BX.UI.StepProcessing.ProcessManager.get('<?=ACTION_EXTRACT?>');
                 }
                 process
                     .setParams(BX.ajax.prepareForm(form).data)
@@ -373,94 +397,101 @@ $tabControl->End();
             });
 
 
-            BX.Translate.ProcessManager.create(<?=Json::encode([
-                'id' => ACTION_COLLECT,
-                'controller' => 'bitrix:translate.controller.asset.grabber',
-                'messages' => [
-                    'DialogTitle' => Loc::getMessage("TRANS_UPLOAD"),
-                    'DialogStopButton' => Loc::getMessage('TR_DLG_BTN_STOP'),
-                    'DialogCloseButton' => Loc::getMessage('TR_DLG_BTN_CLOSE'),
-                    'AuthError' => Loc::getMessage('main_include_decode_pass_sess'),
-                    'RequestError' => Loc::getMessage('TR_DLG_REQUEST_ERR'),
-                    'RequestCanceling' => Loc::getMessage('TR_DLG_REQUEST_CANCEL'),
-                    'RequestCanceled' => Loc::getMessage('TR_COLLECT_CANCELED'),
-                    'RequestCompleted' => Loc::getMessage('TR_COLLECT_COMPLETED'),
-                    'DialogExportDownloadButton' => Loc::getMessage('TR_COLLECT_DOWNLOAD'),
-                    'DialogExportClearButton' => Loc::getMessage('TR_COLLECT_CLEAR'),
-                ],
-                'showButtons' => ['stop' => true, 'close' => true],
-                'queue' => [
-                    [
-                        'action' => \Bitrix\Translate\Controller\Index\Collector::ACTION_COLLECT_LANG_PATH,
-                        'controller' => 'bitrix:translate.controller.index.collector',
-                        'title' => Loc::getMessage('TR_COLLECT_LANG_PATH', ['#NUM#' => 1, '#LEN#' => 3]),
-                        'progressBarTitle' => Loc::getMessage('TR_COLLECT_LANG_PATH_PROGRESS'),
-                        'params' => [
-                            'path' => \Bitrix\Translate\Controller\Asset\Grabber::START_PATH
-                        ]
+            BX.UI.StepProcessing.ProcessManager.create(<?=Json::encode(
+                [
+                    'id' => ACTION_COLLECT,
+                    'controller' => 'bitrix:translate.controller.asset.grabber',
+                    'messages' => [
+                        'DialogTitle' => Loc::getMessage("TRANS_UPLOAD"),
+                        'DialogStopButton' => Loc::getMessage('TR_DLG_BTN_STOP'),
+                        'DialogCloseButton' => Loc::getMessage('TR_DLG_BTN_CLOSE'),
+                        'RequestCanceling' => Loc::getMessage('TR_DLG_REQUEST_CANCEL'),
+                        'RequestCanceled' => Loc::getMessage('TR_COLLECT_CANCELED'),
+                        'RequestCompleted' => Loc::getMessage('TR_COLLECT_COMPLETED'),
+                        'DialogExportDownloadButton' => Loc::getMessage('TR_COLLECT_DOWNLOAD'),
+                        'DialogExportClearButton' => Loc::getMessage('TR_COLLECT_CLEAR'),
                     ],
-                    [
-                        'action' => \Bitrix\Translate\Controller\Asset\Grabber::ACTION_COLLECT,
-                        'controller' => 'bitrix:translate.controller.asset.grabber',
-                        'title' => Loc::getMessage('TR_COLLECT_COLLECT', ['#NUM#' => 2, '#LEN#' => 3]),
-                        'progressBarTitle' => Loc::getMessage('TR_COLLECT_COLLECT_PROGRESS'),
+                    'showButtons' => ['stop' => true, 'close' => true],
+                    'queue' => [
+                        [
+                            'action' => \Bitrix\Translate\Controller\Index\Collector::ACTION_COLLECT_LANG_PATH,
+                            'controller' => 'bitrix:translate.controller.index.collector',
+                            'title' => Loc::getMessage('TR_COLLECT_LANG_PATH', ['#NUM#' => 1, '#LEN#' => 3]),
+                            'progressBarTitle' => Loc::getMessage('TR_COLLECT_LANG_PATH_PROGRESS'),
+                            'params' => [
+                                'path' => \Bitrix\Translate\Controller\Asset\Grabber::START_PATH
+                            ]
+                        ],
+                        [
+                            'action' => \Bitrix\Translate\Controller\Asset\Grabber::ACTION_COLLECT,
+                            'controller' => 'bitrix:translate.controller.asset.grabber',
+                            'title' => Loc::getMessage('TR_COLLECT_COLLECT', ['#NUM#' => 2, '#LEN#' => 3]),
+                            'progressBarTitle' => Loc::getMessage('TR_COLLECT_COLLECT_PROGRESS'),
+                            'params' => [
+                                'path' => \Bitrix\Translate\Controller\Asset\Grabber::START_PATH
+                            ]
+                        ],
+                        [
+                            'action' => \Bitrix\Translate\Controller\Asset\Grabber::ACTION_PACK,
+                            'controller' => 'bitrix:translate.controller.asset.grabber',
+                            'title' => Loc::getMessage('TR_COLLECT_PACK', ['#NUM#' => 3, '#LEN#' => 3]),
+                            'progressBarTitle' => Loc::getMessage('TR_COLLECT_PACK_PROGRESS'),
+                            'params' => [
+                                'path' => \Bitrix\Translate\Controller\Asset\Grabber::START_PATH
+                            ]
+                        ],
+                        [
+                            'action' => \Bitrix\Translate\Controller\Asset\Grabber::ACTION_FINALIZE,
+                            'finalize' => true,
+                        ],
                     ],
-                    [
-                        'action' => \Bitrix\Translate\Controller\Asset\Grabber::ACTION_PACK,
-                        'controller' => 'bitrix:translate.controller.asset.grabber',
-                        'title' => Loc::getMessage('TR_COLLECT_PACK', ['#NUM#' => 3, '#LEN#' => 3]),
-                        'progressBarTitle' => Loc::getMessage('TR_COLLECT_PACK_PROGRESS'),
-                    ],
-                    [
-                        'action' => \Bitrix\Translate\Controller\Asset\Grabber::ACTION_FINALIZE,
-                        'finalize' => true,
-                    ],
-                ],
-                'sToken' => 's' . time(),
-            ])?>);
+                ]
+            )?>);
 
-            BX.Translate.ProcessManager.create(<?=Json::encode([
-                'id' => ACTION_EXTRACT,
-                'controller' => 'bitrix:translate.controller.asset.grabber',
-                'messages' => [
-                    'DialogTitle' => Loc::getMessage("TRANS_DOWNLOAD"),
-                    'DialogStopButton' => Loc::getMessage('TR_DLG_BTN_STOP'),
-                    'DialogCloseButton' => Loc::getMessage('TR_DLG_BTN_CLOSE'),
-                    'AuthError' => Loc::getMessage('main_include_decode_pass_sess'),
-                    'RequestError' => Loc::getMessage('TR_DLG_REQUEST_ERR'),
-                    'RequestCanceling' => Loc::getMessage('TR_DLG_REQUEST_CANCEL'),
-                    'RequestCanceled' => Loc::getMessage('TR_IMPORT_CANCELED'),
-                    'RequestCompleted' => Loc::getMessage('TR_IMPORT_COMPLETED'),
-                ],
-                'showButtons' => ['stop' => true, 'close' => true],
-                'queue' => [
-                    [
-                        'action' => \Bitrix\Translate\Controller\Asset\Grabber::ACTION_UPLOAD,
-                        'title' => Loc::getMessage('TR_EXTRACT_ACTION_UPLOAD', ['#NUM#' => 1, '#LEN#' => 4]),
-                        'progressBarTitle' => Loc::getMessage('TR_EXTRACT_ACTION_UPLOAD_PROGRESS'),
+            BX.UI.StepProcessing.ProcessManager.create(<?=Json::encode(
+                [
+                    'id' => ACTION_EXTRACT,
+                    'controller' => 'bitrix:translate.controller.asset.grabber',
+                    'messages' => [
+                        'DialogTitle' => Loc::getMessage("TRANS_DOWNLOAD"),
+                        'DialogStopButton' => Loc::getMessage('TR_DLG_BTN_STOP'),
+                        'DialogCloseButton' => Loc::getMessage('TR_DLG_BTN_CLOSE'),
+                        'RequestCanceling' => Loc::getMessage('TR_DLG_REQUEST_CANCEL'),
+                        'RequestCanceled' => Loc::getMessage('TR_IMPORT_CANCELED'),
+                        'RequestCompleted' => Loc::getMessage('TR_IMPORT_COMPLETED'),
                     ],
-                    [
-                        'action' => \Bitrix\Translate\Controller\Asset\Grabber::ACTION_EXTRACT,
-                        'title' => Loc::getMessage('TR_EXTRACT_ACTION_EXTRACTING', ['#NUM#' => 2, '#LEN#' => 4]),
-                        'progressBarTitle' => Loc::getMessage('TR_EXTRACT_ACTION_EXTRACTING_PROGRESS'),
+                    'showButtons' => ['stop' => true, 'close' => true],
+                    'queue' => [
+                        [
+                            'action' => \Bitrix\Translate\Controller\Asset\Grabber::ACTION_UPLOAD,
+                            'title' => Loc::getMessage('TR_EXTRACT_ACTION_UPLOAD', ['#NUM#' => 1, '#LEN#' => 4]),
+                            'progressBarTitle' => Loc::getMessage('TR_EXTRACT_ACTION_UPLOAD_PROGRESS'),
+                        ],
+                        [
+                            'action' => \Bitrix\Translate\Controller\Asset\Grabber::ACTION_EXTRACT,
+                            'title' => Loc::getMessage('TR_EXTRACT_ACTION_EXTRACTING', ['#NUM#' => 2, '#LEN#' => 4]),
+                            'progressBarTitle' => Loc::getMessage('TR_EXTRACT_ACTION_EXTRACTING_PROGRESS'),
+                        ],
+                        [
+                            'action' => \Bitrix\Translate\Controller\Asset\Grabber::ACTION_APPLY,
+                            'title' => Loc::getMessage('TR_EXTRACT_ACTION_APPLYING', ['#NUM#' => 3, '#LEN#' => 4]),
+                            'progressBarTitle' => Loc::getMessage('TR_EXTRACT_ACTION_APPLYING_PROGRESS'),
+                        ],
+                        [
+                            'action' => \Bitrix\Translate\Controller\Asset\Grabber::ACTION_APPLY_PUBLIC,
+                            'title' => Loc::getMessage(
+                                'TR_EXTRACT_ACTION_APPLYING_PUBLIC',
+                                ['#NUM#' => 4, '#LEN#' => 4]
+                            ),
+                            'progressBarTitle' => Loc::getMessage('TR_EXTRACT_ACTION_APPLYING_PROGRESS'),
+                        ],
+                        [
+                            'action' => \Bitrix\Translate\Controller\Asset\Grabber::ACTION_FINALIZE,
+                            'finalize' => true,
+                        ],
                     ],
-                    [
-                        'action' => \Bitrix\Translate\Controller\Asset\Grabber::ACTION_APPLY,
-                        'title' => Loc::getMessage('TR_EXTRACT_ACTION_APPLYING', ['#NUM#' => 3, '#LEN#' => 4]),
-                        'progressBarTitle' => Loc::getMessage('TR_EXTRACT_ACTION_APPLYING_PROGRESS'),
-                    ],
-                    [
-                        'action' => \Bitrix\Translate\Controller\Asset\Grabber::ACTION_APPLY_PUBLIC,
-                        'title' => Loc::getMessage('TR_EXTRACT_ACTION_APPLYING_PUBLIC', ['#NUM#' => 4, '#LEN#' => 4]),
-                        'progressBarTitle' => Loc::getMessage('TR_EXTRACT_ACTION_APPLYING_PROGRESS'),
-                    ],
-                    [
-                        'action' => \Bitrix\Translate\Controller\Asset\Grabber::ACTION_FINALIZE,
-                        'finalize' => true,
-                    ],
-                ],
-                'sToken' => 's' . time(),
-            ])?>);
+                ]
+            )?>);
 
             localizeClicked();
             encodeClicked();

@@ -42,8 +42,9 @@ class YandexCert
 
             $res = openssl_pkey_new($config);
             $csr_origin = openssl_csr_new($dnFull, $res);
-            if ($csr_origin === false)
+            if ($csr_origin === false) {
                 return;
+            }
             $csr_full = "";
             openssl_pkey_export($res, self::$pkey);
             openssl_csr_export($csr_origin, self::$csr);
@@ -60,10 +61,21 @@ class YandexCert
             self::$sign = $sign;
 
             $dbRes = YandexSettingsTable::getById($shopId);
-            if ($dbRes->fetch())
-                YandexSettingsTable::update($shopId, array('SIGN' => self::$sign, 'CSR' => self::$csr, 'PKEY' => self::$pkey, 'CERT' => ''));
-            else
-                YandexSettingsTable::add(array('SHOP_ID' => $shopId, 'SIGN' => self::$sign, 'CSR' => self::$csr, 'PKEY' => self::$pkey));
+            if ($dbRes->fetch()) {
+                YandexSettingsTable::update(
+                    $shopId,
+                    array(
+                        'SIGN' => self::$sign,
+                        'CSR' => self::$csr,
+                        'PKEY' => self::$pkey,
+                        'CERT' => ''
+                    )
+                );
+            } else {
+                YandexSettingsTable::add(
+                    array('SHOP_ID' => $shopId, 'SIGN' => self::$sign, 'CSR' => self::$csr, 'PKEY' => self::$pkey)
+                );
+            }
         }
     }
 
@@ -74,10 +86,11 @@ class YandexCert
      */
     static public function clear($shopId, $all = false)
     {
-        if ($all)
+        if ($all) {
             $settings = array('CERT' => '', 'SIGN' => '', 'CSR' => '', 'PKEY' => '');
-        else
+        } else {
             $settings = array('CERT' => '');
+        }
 
         YandexSettingsTable::update($shopId, $settings);
     }
@@ -91,8 +104,9 @@ class YandexCert
         $yandexCsr = self::getValue('CSR', $shopId);
 
         $subjects = openssl_csr_get_subject($yandexCsr);
-        if (!isset($subjects['CN']) || empty($subjects['CN']))
+        if (!isset($subjects['CN']) || empty($subjects['CN'])) {
             return '';
+        }
 
         return $subjects['CN'];
     }
@@ -106,8 +120,9 @@ class YandexCert
         $dbRes = PersonTypeTable::getList(array('select' => array('ID', 'PT_SITE_ID' => 'PERSON_TYPE_SITE.SITE_ID')));
         while ($data = $dbRes->fetch()) {
             $csr = Option::get('yandexmoney.ycms', 'KASSA_MWS_CSR', '', $data['PT_SITE_ID']);
-            if ($csr === '')
+            if ($csr === '') {
                 continue;
+            }
 
             $csr = Option::get('yandexmoney.ycms', 'KASSA_MWS_CSR', '', $data['PT_SITE_ID']);
             $pkey = Option::get('yandexmoney.ycms', 'KASSA_MWS_PKEY', '', $data['PT_SITE_ID']);
@@ -116,7 +131,9 @@ class YandexCert
 
             $dbRes = YandexSettingsTable::getById($shopId);
             if (!$dbRes->fetch()) {
-                YandexSettingsTable::add(array('SHOP_ID' => $shopId, 'CSR' => $csr, 'PKEY' => $pkey, 'SIGN' => $sign, 'CERT' => $cert));
+                YandexSettingsTable::add(
+                    array('SHOP_ID' => $shopId, 'CSR' => $csr, 'PKEY' => $pkey, 'SIGN' => $sign, 'CERT' => $cert)
+                );
                 return $csr;
             }
         }
@@ -142,12 +159,13 @@ class YandexCert
     static public function setCert($file, $shopId)
     {
         if (!empty($file['name'])) {
-            if (substr($file['name'], -4) != '.cer')
+            if (mb_substr($file['name'], -4) != '.cer') {
                 self::$errors[] = Loc::getMessage('YANDEX_CERT_ERR_EXT');
-            elseif ($file['error'] != UPLOAD_ERR_OK)
+            } elseif ($file['error'] != UPLOAD_ERR_OK) {
                 self::$errors[] = Loc::getMessage('YANDEX_CERT_ERR_LOAD');
-            elseif (filesize($file['tmp_name']) > 2048)
+            } elseif (filesize($file['tmp_name']) > 2048) {
                 self::$errors[] = Loc::getMessage('YANDEX_CERT_ERR_SIZE');
+            }
         } else {
             self::$errors[] = Loc::getMessage('YANDEX_CERT_ERR_LOAD');
         }
@@ -218,8 +236,9 @@ class YandexCert
     static public function getValue($field, $shopId)
     {
         $dbRes = YandexSettingsTable::getList(array('filter' => array('SHOP_ID' => $shopId)));
-        if ($data = $dbRes->fetch())
+        if ($data = $dbRes->fetch()) {
             return $data[$field];
+        }
 
         return '';
     }

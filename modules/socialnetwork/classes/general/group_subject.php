@@ -1,4 +1,5 @@
-<?
+<?php
+
 IncludeModuleLangFile(__FILE__);
 
 class CAllSocNetGroupSubject
@@ -10,7 +11,7 @@ class CAllSocNetGroupSubject
     {
         global $APPLICATION;
 
-        if ($ACTION != "ADD" && IntVal($ID) <= 0) {
+        if ($ACTION != "ADD" && intval($ID) <= 0) {
             $APPLICATION->ThrowException("System error 870164", "ERROR");
             return false;
         }
@@ -19,51 +20,58 @@ class CAllSocNetGroupSubject
             && (
                 (is_array($arFields["SITE_ID"]) && count($arFields["SITE_ID"]) <= 0)
                 ||
-                (!is_array($arFields["SITE_ID"]) && strlen($arFields["SITE_ID"]) <= 0)
+                (!is_array($arFields["SITE_ID"]) && $arFields["SITE_ID"] == '')
             )
         ) {
             $APPLICATION->ThrowException(GetMessage("SONET_GS_EMPTY_SITE_ID"), "EMPTY_SITE_ID");
             return false;
         } elseif (is_set($arFields, "SITE_ID")) {
-            if (!is_array($arFields["SITE_ID"]))
+            if (!is_array($arFields["SITE_ID"])) {
                 $arFields["SITE_ID"] = array($arFields["SITE_ID"]);
+            }
 
             foreach ($arFields["SITE_ID"] as $v) {
                 $dbResult = CSite::GetByID($v);
                 if (!$dbResult->Fetch()) {
-                    $APPLICATION->ThrowException(str_replace("#ID#", $v, GetMessage("SONET_GS_ERROR_NO_SITE")), "ERROR_NO_SITE");
+                    $APPLICATION->ThrowException(
+                        str_replace("#ID#", $v, GetMessage("SONET_GS_ERROR_NO_SITE")),
+                        "ERROR_NO_SITE"
+                    );
                     return false;
                 }
             }
         }
 
-        if ((is_set($arFields, "NAME") || $ACTION == "ADD") && strlen($arFields["NAME"]) <= 0) {
+        if ((is_set($arFields, "NAME") || $ACTION == "ADD") && $arFields["NAME"] == '') {
             $APPLICATION->ThrowException(GetMessage("SONET_GS_EMPTY_NAME"), "EMPTY_NAME");
             return false;
         }
 
-        if (is_set($arFields, "SORT") || $ACTION == "ADD")
-            $arFields["SORT"] = (intVal($arFields["SORT"]) > 0 ? intVal($arFields["SORT"]) : 100);
+        if (is_set($arFields, "SORT") || $ACTION == "ADD") {
+            $arFields["SORT"] = (intval($arFields["SORT"]) > 0 ? intval($arFields["SORT"]) : 100);
+        }
 
-        return True;
+        return true;
     }
 
     public static function Delete($ID)
     {
         global $DB, $CACHE_MANAGER, $APPLICATION;
 
-        if (!CSocNetGroup::__ValidateID($ID))
+        if (!CSocNetGroup::__ValidateID($ID)) {
             return false;
+        }
 
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
         $bCanDelete = true;
         $dbResult = CSocNetGroup::GetList(
             array(),
             array("SUBJECT_ID" => $ID)
         );
-        if ($arResult = $dbResult->Fetch())
+        if ($arResult = $dbResult->Fetch()) {
             $bCanDelete = false;
+        }
 
         if (!$bCanDelete) {
             $APPLICATION->ThrowException(GetMessage("SONET_GS_NOT_EMPTY_SUBJECT"), "NOT_EMPTY_SUBJECT");
@@ -77,11 +85,13 @@ class CAllSocNetGroupSubject
 
         $bSuccess = $DB->Query("DELETE FROM b_sonet_group_subject_site WHERE SUBJECT_ID = " . $ID . "", true);
 
-        if ($bSuccess)
+        if ($bSuccess) {
             $bSuccess = $DB->Query("DELETE FROM b_sonet_group_subject WHERE ID = " . $ID . "", true);
+        }
 
-        if (CACHED_b_sonet_group_subjects != false)
+        if (CACHED_b_sonet_group_subjects != false) {
             $CACHE_MANAGER->CleanDir("b_sonet_group_subjects");
+        }
 
         return $bSuccess;
     }
@@ -90,22 +100,24 @@ class CAllSocNetGroupSubject
     {
         global $DB, $CACHE_MANAGER;
 
-        if (!CSocNetGroup::__ValidateID($ID))
+        if (!CSocNetGroup::__ValidateID($ID)) {
             return false;
+        }
 
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
         $arFields1 = \Bitrix\Socialnetwork\Util::getEqualityFields($arFields);
 
-        if (!CSocNetGroupSubject::CheckFields("UPDATE", $arFields, $ID))
+        if (!CSocNetGroupSubject::CheckFields("UPDATE", $arFields, $ID)) {
             return false;
-        else {
+        } else {
             $arSiteID = Array();
             if (is_set($arFields, "SITE_ID")) {
-                if (is_array($arFields["SITE_ID"]))
+                if (is_array($arFields["SITE_ID"])) {
                     $arSiteID = $arFields["SITE_ID"];
-                else
+                } else {
                     $arSiteID[] = $arFields["SITE_ID"];
+                }
 
                 $arFields["SITE_ID"] = false;
                 $str_SiteID = "''";
@@ -119,12 +131,12 @@ class CAllSocNetGroupSubject
         $strUpdate = $DB->PrepareUpdate("b_sonet_group_subject", $arFields);
         \Bitrix\Socialnetwork\Util::processEqualityFieldsToUpdate($arFields1, $strUpdate);
 
-        if (strlen($strUpdate) > 0) {
+        if ($strUpdate <> '') {
             $strSql =
                 "UPDATE b_sonet_group_subject SET " .
                 "	" . $strUpdate . " " .
                 "WHERE ID = " . $ID . " ";
-            $DB->Query($strSql, False, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+            $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 
             if (count($arSiteID) > 0) {
                 $strSql = "DELETE FROM b_sonet_group_subject_site WHERE SUBJECT_ID=" . $ID;
@@ -143,10 +155,12 @@ class CAllSocNetGroupSubject
                 ExecuteModuleEventEx($arEvent, array($ID, &$arFields));
             }
 
-            if (CACHED_b_sonet_group_subjects != false)
+            if (CACHED_b_sonet_group_subjects != false) {
                 $CACHE_MANAGER->CleanDir("b_sonet_group_subjects");
-        } else
-            $ID = False;
+            }
+        } else {
+            $ID = false;
+        }
 
         return $ID;
     }
@@ -156,24 +170,26 @@ class CAllSocNetGroupSubject
     /***************************************/
     public static function GetByID($ID)
     {
-        if (!CSocNetGroup::__ValidateID($ID))
+        if (!CSocNetGroup::__ValidateID($ID)) {
             return false;
+        }
 
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
         $dbResult = CSocNetGroupSubject::GetList(Array(), Array("ID" => $ID));
-        if ($arResult = $dbResult->GetNext())
+        if ($arResult = $dbResult->GetNext()) {
             return $arResult;
+        }
 
-        return False;
+        return false;
     }
 
     public static function GetSite($subject_id)
     {
         global $DB;
-        $strSql = "SELECT L.*, SGSS.* FROM b_sonet_group_subject_site SGSS, b_lang L WHERE L.LID=SGSS.SITE_ID AND SGSS.SUBJECT_ID=" . IntVal($subject_id);
+        $strSql = "SELECT L.*, SGSS.* FROM b_sonet_group_subject_site SGSS, b_lang L WHERE L.LID=SGSS.SITE_ID AND SGSS.SUBJECT_ID=" . intval(
+                $subject_id
+            );
         return $DB->Query($strSql);
     }
 }
-
-?>

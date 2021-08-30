@@ -56,7 +56,6 @@ class Binder
         } else {
             $this->buildReflectionMethod();
         }
-
 //		$this->bindParams();
     }
 
@@ -101,8 +100,11 @@ class Binder
         );
     }
 
-    final public static function registerParameterDependsOnName($className, \Closure $constructObjectByClassAndId, \Closure $constructIdParameterName = null)
-    {
+    final public static function registerParameterDependsOnName(
+        $className,
+        \Closure $constructObjectByClassAndId,
+        \Closure $constructIdParameterName = null
+    ) {
         self::registerDefaultAutoWirings();
 
         $dependsOnParameter = new AutoWire\Parameter(
@@ -148,7 +150,10 @@ class Binder
                     throw new ArgumentNullException('class');
                 }
 
-                if (empty($handler['onConstructObjectByClassAndId']) || !is_callable($handler['onConstructObjectByClassAndId'], true)) {
+                if (empty($handler['onConstructObjectByClassAndId']) || !is_callable(
+                        $handler['onConstructObjectByClassAndId'],
+                        true
+                    )) {
                     throw new ArgumentTypeException('onConstructObjectByClassAndId', 'callable');
                 }
 
@@ -240,8 +245,8 @@ class Binder
         }
 
         if (
-            stripos($exception->getMessage(), 'must be an instance of') === false ||
-            stripos($exception->getMessage(), 'null given') === false
+            mb_stripos($exception->getMessage(), 'must be an instance of') === false ||
+            mb_stripos($exception->getMessage(), 'null given') === false
         ) {
             throw $exception;
         }
@@ -271,7 +276,10 @@ class Binder
         if ($autoWiredHandler) {
             $primaryId = null;
             if ($autoWiredHandler['onConstructIdParameterName'] !== self::ANY_PARAMETER_NAME) {
-                $parameterName = call_user_func_array($autoWiredHandler['onConstructIdParameterName'], array($parameter));
+                $parameterName = call_user_func_array(
+                    $autoWiredHandler['onConstructIdParameterName'],
+                    array($parameter)
+                );
                 $primaryId = $this->findParameterInSourceList($parameterName, $status);
                 if ($status === self::STATUS_NOT_FOUND) {
                     if ($parameter->isDefaultValueAvailable()) {

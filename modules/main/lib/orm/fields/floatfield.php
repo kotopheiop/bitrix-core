@@ -16,7 +16,7 @@ namespace Bitrix\Main\ORM\Fields;
 class FloatField extends ScalarField
 {
     /** @var int|null */
-    protected $scale;
+    protected $precision;
 
     /**
      * FloatField constructor.
@@ -31,27 +31,52 @@ class FloatField extends ScalarField
         parent::__construct($name, $parameters);
 
         if (isset($parameters['scale'])) {
-            $this->scale = intval($parameters['scale']);
+            $this->precision = intval($parameters['scale']);
+        }
+
+        if (isset($parameters['precision'])) {
+            $this->precision = intval($parameters['precision']);
         }
     }
 
     /**
-     * @param $scale
+     * @param int $precision
      *
      * @return $this
      */
+    public function configurePrecision($precision)
+    {
+        $this->precision = (int)$precision;
+        return $this;
+    }
+
+    /**
+     * @param $scale
+     * @return $this
+     * @deprecated
+     *
+     */
     public function configureScale($scale)
     {
-        $this->scale = (int)$scale;
+        $this->precision = (int)$scale;
         return $this;
     }
 
     /**
      * @return int|null
      */
+    public function getPrecision()
+    {
+        return $this->precision;
+    }
+
+    /**
+     * @return int|null
+     * @deprecated
+     */
     public function getScale()
     {
-        return $this->scale;
+        return $this->precision;
     }
 
     /**
@@ -63,8 +88,8 @@ class FloatField extends ScalarField
     {
         $value = doubleval($value);
 
-        if ($this->scale !== null) {
-            $value = round($value, $this->scale);
+        if ($this->precision !== null) {
+            $value = round($value, $this->precision);
         }
 
         return $value;

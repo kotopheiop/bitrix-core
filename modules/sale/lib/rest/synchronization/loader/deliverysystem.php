@@ -15,8 +15,9 @@ class DeliverySystem extends Entity
         }
 
         foreach (\Bitrix\Sale\Delivery\Services\Manager::getActiveList() as $row) {
-            if ($xmlId == $row['XML_ID'])
+            if ($xmlId == $row['XML_ID']) {
                 return $row['ID'];
+            }
         }
 
         return null;

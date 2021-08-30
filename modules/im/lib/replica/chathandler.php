@@ -47,12 +47,14 @@ if (Loader::includeModule('replica')) {
                 isset($newRecord["TYPE"])
                 && $newRecord["TYPE"] === "S"
             ) {
-                $chatList = \Bitrix\Im\Model\ChatTable::getList(array(
-                    "filter" => array(
-                        "=AUTHOR_ID" => $newRecord["AUTHOR_ID"],
-                        "=TYPE" => "S",
-                    ),
-                ));
+                $chatList = \Bitrix\Im\Model\ChatTable::getList(
+                    array(
+                        "filter" => array(
+                            "=AUTHOR_ID" => $newRecord["AUTHOR_ID"],
+                            "=TYPE" => "S",
+                        ),
+                    )
+                );
                 $oldRecord = $chatList->fetch();
                 if ($oldRecord) {
                     return $oldRecord;
@@ -96,15 +98,18 @@ if (Loader::includeModule('replica')) {
                             \CIMContactList::CleanChatCache($rel['USER_ID']);
                         }
 
-                        \Bitrix\Pull\Event::add($rel['USER_ID'], Array(
-                            'module_id' => 'im',
-                            'command' => 'chatRename',
-                            'params' => Array(
-                                'chatId' => $newRecord['CHAT_ID'],
-                                'name' => $newRecord['TITLE'],
-                            ),
-                            'extra' => \Bitrix\Im\Common::getPullExtra()
-                        ));
+                        \Bitrix\Pull\Event::add(
+                            $rel['USER_ID'],
+                            Array(
+                                'module_id' => 'im',
+                                'command' => 'chatRename',
+                                'params' => Array(
+                                    'chatId' => $newRecord['CHAT_ID'],
+                                    'name' => $newRecord['TITLE'],
+                                ),
+                                'extra' => \Bitrix\Im\Common::getPullExtra()
+                            )
+                        );
                     }
                     if ($clearCacheOpen) {
                         \CIMContactList::CleanAllChatCache();
@@ -124,15 +129,18 @@ if (Loader::includeModule('replica')) {
                             \CIMContactList::CleanChatCache($relation['USER_ID']);
                         }
 
-                        \Bitrix\Pull\Event::add($relation['USER_ID'], Array(
-                            'module_id' => 'im',
-                            'command' => 'chatAvatar',
-                            'params' => Array(
-                                'chatId' => $newRecord['CHAT_ID'],
-                                'avatar' => $avatarImage,
-                            ),
-                            'extra' => \Bitrix\Im\Common::getPullExtra()
-                        ));
+                        \Bitrix\Pull\Event::add(
+                            $relation['USER_ID'],
+                            Array(
+                                'module_id' => 'im',
+                                'command' => 'chatAvatar',
+                                'params' => Array(
+                                    'chatId' => $newRecord['CHAT_ID'],
+                                    'avatar' => $avatarImage,
+                                ),
+                                'extra' => \Bitrix\Im\Common::getPullExtra()
+                            )
+                        );
                     }
                     if ($clearCacheOpen) {
                         \CIMContactList::CleanAllChatCache();
@@ -151,15 +159,18 @@ if (Loader::includeModule('replica')) {
                             \CIMContactList::CleanChatCache($relation['USER_ID']);
                         }
 
-                        \Bitrix\Pull\Event::add($relation['USER_ID'], Array(
-                            'module_id' => 'im',
-                            'command' => 'chatChangeColor',
-                            'params' => Array(
-                                'chatId' => $newRecord['CHAT_ID'],
-                                'color' => \Bitrix\Im\Color::getColor($newRecord['COLOR']),
-                            ),
-                            'extra' => \Bitrix\Im\Common::getPullExtra()
-                        ));
+                        \Bitrix\Pull\Event::add(
+                            $relation['USER_ID'],
+                            Array(
+                                'module_id' => 'im',
+                                'command' => 'chatChangeColor',
+                                'params' => Array(
+                                    'chatId' => $newRecord['CHAT_ID'],
+                                    'color' => \Bitrix\Im\Color::getColor($newRecord['COLOR']),
+                                ),
+                                'extra' => \Bitrix\Im\Common::getPullExtra()
+                            )
+                        );
                     }
                     if ($clearCacheOpen) {
                         \CIMContactList::CleanAllChatCache();

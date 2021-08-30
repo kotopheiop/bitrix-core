@@ -1,9 +1,10 @@
 <?
-$MESS["SALE_DLVRS_ADDP_NAME"] = "Профиль дополнительной службы доставки";
-$MESS["SALE_DLVRS_ADDP_DESCRIPTION"] = "Профиль набора дополнительных служб доставок";
-$MESS["SALE_DLVRS_ADDP_MAIN_TITLE"] = "Настройки";
-$MESS["SALE_DLVRS_ADDP_MAIN_DESCRIPTION"] = "Настройки профиля дополнительной службы доставки";
-$MESS["SALE_DLVRS_ADDP_MAIN_TYPE"] = "Тип сервиса";
-$MESS["SALE_DLVRS_ADDP_MAIN_DESC"] = "Описание сервиса";
-$MESS["SALE_DLVRS_ADDP_Y"] = "Да";
-$MESS["SALE_DLVRS_ADDP_N"] = "Нет";
+
+$MESS["SALE_DLVRS_ADDP_NAME"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_DLVRS_ADDP_DESCRIPTION"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_DLVRS_ADDP_MAIN_TITLE"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_DLVRS_ADDP_MAIN_DESCRIPTION"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_DLVRS_ADDP_MAIN_TYPE"] = "пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_DLVRS_ADDP_MAIN_DESC"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_DLVRS_ADDP_Y"] = "пїЅпїЅ";
+$MESS["SALE_DLVRS_ADDP_N"] = "пїЅпїЅпїЅ";

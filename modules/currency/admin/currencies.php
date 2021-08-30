@@ -10,8 +10,9 @@ use Bitrix\Currency;
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/currency/prolog.php");
 $CURRENCY_RIGHT = $APPLICATION->GetGroupRight("currency");
-if ($CURRENCY_RIGHT == "D")
+if ($CURRENCY_RIGHT == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 Loader::includeModule('currency');
 IncludeModuleLangFile(__FILE__);
 
@@ -29,28 +30,36 @@ $adminList = new CAdminList($adminListTableID, $adminSort);
 $filter = array();
 $filterFields = array();
 
-if (!isset($by))
+if (!isset($by)) {
     $by = 'SORT';
-if (!isset($order))
+}
+if (!isset($order)) {
     $order = 'ASC';
-$by = strtoupper($by);
-$order = strtoupper($order);
+}
+$by = mb_strtoupper($by);
+$order = mb_strtoupper($order);
 
 if ($adminList->EditAction() && $CURRENCY_RIGHT == "W") {
     if (isset($FIELDS) && is_array($FIELDS)) {
         foreach ($FIELDS as $ID => $arFields) {
             $ID = Currency\CurrencyManager::checkCurrencyID($ID);
-            if ($ID === false)
+            if ($ID === false) {
                 continue;
+            }
 
-            if (!$adminList->IsUpdated($ID))
+            if (!$adminList->IsUpdated($ID)) {
                 continue;
+            }
 
             if (!CCurrency::Update($ID, $arFields)) {
-                if ($ex = $APPLICATION->GetException())
-                    $adminList->AddUpdateError(GetMessage("CURRENCY_SAVE_ERR", array("#ID#" => $ID, "#ERROR_TEXT#" => $ex->GetString())), $ID);
-                else
+                if ($ex = $APPLICATION->GetException()) {
+                    $adminList->AddUpdateError(
+                        GetMessage("CURRENCY_SAVE_ERR", array("#ID#" => $ID, "#ERROR_TEXT#" => $ex->GetString())),
+                        $ID
+                    );
+                } else {
                     $adminList->AddUpdateError(GetMessage("CURRENCY_SAVE_ERR2", array("#ID#" => $ID)), $ID);
+                }
             }
         }
     }
@@ -58,33 +67,39 @@ if ($adminList->EditAction() && $CURRENCY_RIGHT == "W") {
 
 if ($CURRENCY_RIGHT == "W" && $arID = $adminList->GroupAction()) {
     if ($_REQUEST['action_target'] == 'selected') {
-        $currencyIterator = Currency\CurrencyTable::getList(array(
-            'select' => array('CURRENCY')
-        ));
-        while ($currency = $currencyIterator->fetch())
+        $currencyIterator = Currency\CurrencyTable::getList(
+            array(
+                'select' => array('CURRENCY')
+            )
+        );
+        while ($currency = $currencyIterator->fetch()) {
             $arID[] = $currency['CURRENCY'];
+        }
     }
 
     foreach ($arID as $ID) {
         $ID = (string)$ID;
-        if ($ID == '')
+        if ($ID == '') {
             continue;
+        }
 
         switch ($_REQUEST['action']) {
             case "base":
                 if (!CCurrency::SetBaseCurrency($ID)) {
-                    if ($ex = $APPLICATION->GetException())
+                    if ($ex = $APPLICATION->GetException()) {
                         $adminList->AddGroupError($ex->GetString(), $ID);
-                    else
+                    } else {
                         $adminList->AddGroupError(GetMessage("currency_err2"), $ID);
+                    }
                 }
                 break;
             case "delete":
                 if (!CCurrency::Delete($ID)) {
-                    if ($ex = $APPLICATION->GetException())
+                    if ($ex = $APPLICATION->GetException()) {
                         $adminList->AddGroupError($ex->GetString(), $ID);
-                    else
+                    } else {
                         $adminList->AddGroupError(GetMessage("currency_err1"), $ID);
+                    }
                 }
                 break;
         }
@@ -202,8 +217,9 @@ if ($usePageNavigation) {
     $totalCount = (int)$totalCount['CNT'];
     if ($totalCount > 0) {
         $totalPages = ceil($totalCount / $navyParams['SIZEN']);
-        if ($navyParams['PAGEN'] > $totalPages)
+        if ($navyParams['PAGEN'] > $totalPages) {
             $navyParams['PAGEN'] = $totalPages;
+        }
         $getListParams['limit'] = $navyParams['SIZEN'];
         $getListParams['offset'] = $navyParams['SIZEN'] * ($navyParams['PAGEN'] - 1);
     } else {
@@ -232,24 +248,37 @@ $arRows = array();
 while ($arRes = $currencyIterator->Fetch()) {
     if ($selectFieldsMap['CREATED_BY']) {
         $arRes['CREATED_BY'] = (int)$arRes['CREATED_BY'];
-        if ($arRes['CREATED_BY'] > 0)
+        if ($arRes['CREATED_BY'] > 0) {
             $userIDs[$arRes['CREATED_BY']] = true;
+        }
     }
     if ($selectFieldsMap['MODIFIED_BY']) {
         $arRes['MODIFIED_BY'] = (int)$arRes['MODIFIED_BY'];
-        if ($arRes['MODIFIED_BY'] > 0)
+        if ($arRes['MODIFIED_BY'] > 0) {
             $userIDs[$arRes['MODIFIED_BY']] = true;
+        }
     }
 
     $arRes['FULL_NAME'] = (string)$arRes['FULL_NAME'];
-    if ($arRes['FULL_NAME'] === '')
+    if ($arRes['FULL_NAME'] === '') {
         $arRes['FULL_NAME'] = $arRes['CURRENCY'];
+    }
 
     $urlEdit = '/bitrix/admin/currency_edit.php?lang=' . LANGUAGE_ID . '&ID=' . $arRes['CURRENCY'];
 
-    $arRows[$arRes['CURRENCY']] = $row =& $adminList->AddRow($arRes['CURRENCY'], $arRes, $urlEdit, GetMessage('CURRENCY_A_EDIT'));
+    $arRows[$arRes['CURRENCY']] = $row =& $adminList->AddRow(
+        $arRes['CURRENCY'],
+        $arRes,
+        $urlEdit,
+        GetMessage('CURRENCY_A_EDIT')
+    );
 
-    $row->AddViewField("CURRENCY", '<a href="' . $urlEdit . '" title="' . GetMessage('CURRENCY_A_EDIT_TITLE') . '">' . $arRes['CURRENCY'] . '</a>');
+    $row->AddViewField(
+        "CURRENCY",
+        '<a href="' . $urlEdit . '" title="' . GetMessage(
+            'CURRENCY_A_EDIT_TITLE'
+        ) . '">' . $arRes['CURRENCY'] . '</a>'
+    );
     $row->AddInputField("SORT", array("size" => "5"));
     $row->AddViewField("FULL_NAME", htmlspecialcharsex($arRes['FULL_NAME']));
     if ($arRes['BASE'] == 'Y') {
@@ -262,13 +291,16 @@ while ($arRes = $currencyIterator->Fetch()) {
         $row->AddViewField('BASE', GetMessage('BASE_CURRENCY_NO'));
     }
 
-    if ($selectFieldsMap['DATE_CREATE'])
+    if ($selectFieldsMap['DATE_CREATE']) {
         $row->AddViewField('DATE_CREATE', $arRes['DATE_CREATE']);
-    if ($selectFieldsMap['DATE_UPDATE'])
+    }
+    if ($selectFieldsMap['DATE_UPDATE']) {
         $row->AddViewField('DATE_UPDATE', $arRes['DATE_UPDATE']);
+    }
 
-    if ($selectFieldsMap['NUMCODE'])
+    if ($selectFieldsMap['NUMCODE']) {
         $row->AddInputField('NUMCODE', array('size' => 3));
+    }
 
     $arActions = array();
 
@@ -285,13 +317,19 @@ while ($arRes = $currencyIterator->Fetch()) {
             "ICON" => "edit",
             "TEXT" => GetMessage('CURRENCY_SET_BASE'),
             "TITLE" => GetMessage('CURRENCY_SET_BASE_TITLE'),
-            "ACTION" => "if(confirm('" . GetMessage('CONFIRM_SET_BASE_MESSAGE') . "')) " . $adminList->ActionDoGroup($arRes['CURRENCY'], "base")
+            "ACTION" => "if(confirm('" . GetMessage('CONFIRM_SET_BASE_MESSAGE') . "')) " . $adminList->ActionDoGroup(
+                    $arRes['CURRENCY'],
+                    "base"
+                )
         );
         $arActions[] = array("SEPARATOR" => true);
         $arActions[] = array(
             "ICON" => "delete",
             "TEXT" => GetMessage("MAIN_ADMIN_MENU_DELETE"),
-            "ACTION" => "if(confirm('" . GetMessage('CONFIRM_DEL_MESSAGE') . "')) " . $adminList->ActionDoGroup($arRes['CURRENCY'], "delete")
+            "ACTION" => "if(confirm('" . GetMessage('CONFIRM_DEL_MESSAGE') . "')) " . $adminList->ActionDoGroup(
+                    $arRes['CURRENCY'],
+                    "delete"
+                )
         );
     }
 
@@ -300,16 +338,22 @@ while ($arRes = $currencyIterator->Fetch()) {
 
 if ($selectFieldsMap['CREATED_BY'] || $selectFieldsMap['MODIFIED_BY']) {
     if (!empty($userIDs)) {
-        $userIterator = Main\UserTable::getList(array(
-            'select' => array('ID', 'LOGIN', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'EMAIL'),
-            'filter' => array('ID' => array_keys($userIDs)),
-        ));
+        $userIterator = Main\UserTable::getList(
+            array(
+                'select' => array('ID', 'LOGIN', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'EMAIL'),
+                'filter' => array('ID' => array_keys($userIDs)),
+            )
+        );
         while ($oneUser = $userIterator->fetch()) {
             $oneUser['ID'] = (int)$oneUser['ID'];
-            if ($canViewUserList)
-                $userList[$oneUser['ID']] = '<a href="/bitrix/admin/user_edit.php?lang=' . LANGUAGE_ID . '&ID=' . $oneUser['ID'] . '">' . CUser::FormatName($nameFormat, $oneUser) . '</a>';
-            else
+            if ($canViewUserList) {
+                $userList[$oneUser['ID']] = '<a href="/bitrix/admin/user_edit.php?lang=' . LANGUAGE_ID . '&ID=' . $oneUser['ID'] . '">' . CUser::FormatName(
+                        $nameFormat,
+                        $oneUser
+                    ) . '</a>';
+            } else {
                 $userList[$oneUser['ID']] = CUser::FormatName($nameFormat, $oneUser);
+            }
         }
         unset($oneUser, $userIterator);
     }
@@ -331,8 +375,9 @@ if ($selectFieldsMap['CREATED_BY'] || $selectFieldsMap['MODIFIED_BY']) {
             $row->AddViewField("MODIFIED_BY", $strModifiedBy);
         }
     }
-    if (isset($row))
+    if (isset($row)) {
         unset($row);
+    }
 }
 
 $adminList->AddFooter(
@@ -343,7 +388,8 @@ $adminList->AddFooter(
 );
 
 if ($CURRENCY_RIGHT == "W") {
-    $adminList->AddGroupActionTable(Array(
+    $adminList->AddGroupActionTable(
+        Array(
             "delete" => GetMessage("MAIN_ADMIN_LIST_DELETE"),
         )
     );

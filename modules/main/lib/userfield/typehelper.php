@@ -5,6 +5,11 @@ namespace Bitrix\Main\UserField;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\HtmlFilter;
 
+/**
+ * Class Helper
+ * @package Bitrix\Main\UserField
+ * @deprecated
+ */
 class TypeHelper
 {
     protected $userTypeId;
@@ -21,12 +26,16 @@ class TypeHelper
 
     public function wrapSingleField($html, array $additionalCss = array())
     {
-        return '<span class="' . HtmlFilter::encode(static::getCssClassName($additionalCss)) . ' field-item">' . $html . '</span>';
+        return '<span class="' . HtmlFilter::encode(
+                static::getCssClassName($additionalCss)
+            ) . ' field-item">' . $html . '</span>';
     }
 
     public function wrapDisplayResult($html, $additionalCss = array())
     {
-        return '<span class="' . HtmlFilter::encode(static::getCssClassName($additionalCss)) . ' field-wrap">' . $html . '</span>';
+        return '<span class="' . HtmlFilter::encode(
+                static::getCssClassName($additionalCss)
+            ) . ' field-wrap">' . $html . '</span>';
     }
 
     public function getMultipleValuesSeparator()
@@ -36,6 +45,10 @@ class TypeHelper
 
     public function getCloneButton($fieldName)
     {
-        return '<input type="button" value="' . HtmlFilter::encode(Loc::getMessage('USER_TYPE_PROP_ADD')) . '" onclick="BX.Main.UF.Factory.get(\'' . $this->userTypeId . '\').addRow(\'' . \CUtil::jsEscape($fieldName) . '\', this);" />';
+        return '<input type="button" value="' . HtmlFilter::encode(
+                Loc::getMessage('USER_TYPE_PROP_ADD')
+            ) . '" onclick="BX.Main.UF.Factory.get(\'' . $this->userTypeId . '\').addRow(\'' . \CUtil::jsEscape(
+                $fieldName
+            ) . '\', this);" />';
     }
 }

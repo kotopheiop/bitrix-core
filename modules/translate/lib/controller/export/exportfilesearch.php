@@ -31,6 +31,8 @@ class ExportFileSearch
     {
         $this->keepField('seekPathId');
 
+        Loc::loadLanguageFile(__DIR__ . '/exportaction.php');
+
         parent::__construct($name, $controller, $config);
     }
 
@@ -62,7 +64,7 @@ class ExportFileSearch
 
             if ($this->totalItems > 0) {
                 $this->exportFileName = $this->generateExportFileName($path, $this->languages);
-                $this->createExportTempFile();
+                $this->createExportTempFile($this->exportFileName);
             }
 
             $this->saveProgressParameters();
@@ -103,27 +105,31 @@ class ExportFileSearch
         $select = array('PATH_ID', 'PATH');
 
         foreach ($this->languages as $langId) {
-            $select[] = strtoupper($langId) . "_LANG";
+            $select[] = mb_strtoupper($langId) . "_LANG";
         }
         if (!in_array($this->filter['LANGUAGE_ID'], $this->languages)) {
-            $select[] = strtoupper($this->filter['LANGUAGE_ID']) . "_LANG";
+            $select[] = mb_strtoupper($this->filter['LANGUAGE_ID']) . "_LANG";
         }
 
         /** @var Main\ORM\Query\Result $cachePathRes */
-        $pathInxRes = Index\FileIndexSearch::getList(array(
-            'filter' => $pathFilter,
-            'order' => ['PATH_ID' => 'ASC'],
-            'select' => $select,
-            //todo: add limit here
-        ));
+        $pathInxRes = Index\FileIndexSearch::getList(
+            array(
+                'filter' => $pathFilter,
+                'order' => ['PATH_ID' => 'ASC'],
+                'select' => $select,
+                //todo: add limit here
+            )
+        );
 
         $processedItemCount = 0;
         while ($pathInx = $pathInxRes->fetch()) {
-            $fileInxRes = Index\Internals\FileIndexTable::getList(array(
-                'filter' => ['=PATH_ID' => $pathInx['PATH_ID']],
-                'order' => ['ID' => 'ASC'],
-                'select' => ['ID', 'PATH_ID', 'LANG_ID', 'FULL_PATH'],
-            ));
+            $fileInxRes = Index\Internals\FileIndexTable::getList(
+                array(
+                    'filter' => ['=PATH_ID' => $pathInx['PATH_ID']],
+                    'order' => ['ID' => 'ASC'],
+                    'select' => ['ID', 'PATH_ID', 'LANG_ID', 'FULL_PATH'],
+                )
+            );
             $fullPaths = array();
             while ($fileInx = $fileInxRes->fetch()) {
                 $fullPaths[$fileInx['LANG_ID']] = $fileInx['FULL_PATH'];
@@ -171,7 +177,6 @@ class ExportFileSearch
         }
 
         return $result;
-
     }
 
 

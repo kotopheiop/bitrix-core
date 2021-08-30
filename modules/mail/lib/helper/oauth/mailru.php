@@ -15,10 +15,12 @@ class Mailru extends Mail\Helper\OAuth
             \CSocServMailRu2::getOption('mailru2_client_secret')
         );
 
-        $this->oauthEntity->addScope(array(
-            'userinfo',
-            'mail.imap',
-        ));
+        $this->oauthEntity->addScope(
+            array(
+                'userinfo',
+                'mail.imap',
+            )
+        );
     }
 
     protected function check()

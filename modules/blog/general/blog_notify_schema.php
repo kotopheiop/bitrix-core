@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 use    \Bitrix\Main\Localization\Loc;
@@ -114,7 +115,10 @@ class CBlogNotifySchema
             $post = false;
 
             $tagParsed = explode("|", $tag);
-            if (in_array($tagParsed[1], array("POST", "COMMENT", "SHARE", "SHARE2USERS", "POST_MENTION", "COMMENT_MENTION"))) {
+            if (in_array(
+                $tagParsed[1],
+                array("POST", "COMMENT", "SHARE", "SHARE2USERS", "POST_MENTION", "COMMENT_MENTION")
+            )) {
                 $postId = intval($tagParsed[2]);
                 if ($postId > 0) {
                     $res = \CBlogPost::getList(
@@ -167,12 +171,14 @@ class CBlogNotifySchema
                 return Loc::getMessage('BLG_NS_IM_ANSWER_ERROR');
             }
 
-            if (!\Bitrix\Blog\Item\Comment::checkDuplicate(array(
-                'MESSAGE' => $text,
-                'BLOG_ID' => $post['BLOG_ID'],
-                'POST_ID' => $post['ID'],
-                'AUTHOR_ID' => $currentUserId,
-            ))) {
+            if (!\Bitrix\Blog\Item\Comment::checkDuplicate(
+                array(
+                    'MESSAGE' => $text,
+                    'BLOG_ID' => $post['BLOG_ID'],
+                    'POST_ID' => $post['ID'],
+                    'AUTHOR_ID' => $currentUserId,
+                )
+            )) {
                 return Loc::getMessage('BLG_NS_IM_ANSWER_ERROR');
             }
 
@@ -181,20 +187,21 @@ class CBlogNotifySchema
             }
 
             if ($commentId = CBlogComment::add($commentFields)) {
-                \Bitrix\Blog\Item\Comment::actionsAfter(array(
-                    'MESSAGE' => $text,
-                    'BLOG_ID' => $post["BLOG_ID"],
-                    'BLOG_OWNER_ID' => $post["BLOG_OWNER_ID"],
-                    'POST_ID' => $post["ID"],
-                    'POST_TITLE' => $post["TITLE"],
-                    'POST_AUTHOR_ID' => $post["AUTHOR_ID"],
-                    'COMMENT_ID' => $commentId,
-                    'AUTHOR_ID' => $currentUserId,
-                ));
+                \Bitrix\Blog\Item\Comment::actionsAfter(
+                    array(
+                        'MESSAGE' => $text,
+                        'BLOG_ID' => $post["BLOG_ID"],
+                        'BLOG_OWNER_ID' => $post["BLOG_OWNER_ID"],
+                        'POST_ID' => $post["ID"],
+                        'POST_TITLE' => $post["TITLE"],
+                        'POST_AUTHOR_ID' => $post["AUTHOR_ID"],
+                        'COMMENT_ID' => $commentId,
+                        'AUTHOR_ID' => $currentUserId,
+                    )
+                );
 
                 return Loc::getMessage('BLG_NS_IM_ANSWER_SUCCESS');
             }
         }
-
     }
 }

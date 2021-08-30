@@ -31,7 +31,7 @@ class ProtobufTransport
         $queueServerUrl = \CHTTP::urlAddParams(Config::getPublishUrl(), ["binaryMode" => "true"]);
         foreach ($requestBatches as $requestBatch) {
             $urlWithSignature = $queueServerUrl;
-            $httpClient = new HttpClient(["waitResponse" => false]);
+            $httpClient = new HttpClient(["streamTimeout" => 1]);
             $bodyStream = $requestBatch->toStream();
             if (\CPullOptions::IsServerShared()) {
                 $signature = \CPullChannel::GetSignature($bodyStream->getContents());
@@ -39,7 +39,7 @@ class ProtobufTransport
             }
 
             $httpClient->disableSslVerification();
-            $httpClient->post($urlWithSignature, $bodyStream);
+            $httpClient->query(HttpClient::HTTP_POST, $urlWithSignature, $bodyStream);
         }
 
         return true;
@@ -141,7 +141,9 @@ class ProtobufTransport
 
         foreach ($messages as $message) {
             $event = $message['event'];
-            if (!is_array($message['channels']) || count($message['channels']) == 0 || !isset($event['module_id']) || !isset($event['command'])) {
+            if (!is_array($message['channels']) || count(
+                    $message['channels']
+                ) == 0 || !isset($event['module_id']) || !isset($event['command'])) {
                 continue;
             }
 
@@ -169,12 +171,18 @@ class ProtobufTransport
         $extra['revision_web'] = PULL_REVISION_WEB;
         $extra['revision_mobile'] = PULL_REVISION_MOBILE;
 
-        $body = Common::jsonEncode(array(
-            'module_id' => $event['module_id'],
-            'command' => $event['command'],
-            'params' => $event['params'] ?: [],
-            'extra' => $extra
-        ));
+        $body = Common::jsonEncode(
+            array(
+                'module_id' => $event['module_id'],
+                'command' => $event['command'],
+                'params' => $event['params'] ?: [],
+                'extra' => $extra
+            )
+        );
+
+        // for statistics
+        $messageType = "{$event['module_id']}_{$event['command']}";
+        $messageType = preg_replace("/[^\w]/", "", $messageType);
 
         $maxChannelsPerRequest = \CPullOptions::GetMaxChannelsPerRequest();
         $receivers = [];
@@ -187,8 +195,9 @@ class ProtobufTransport
             if (count($receivers) === $maxChannelsPerRequest) {
                 $message = new Protobuf\IncomingMessage();
                 $message->setReceiversList(new MessageCollection($receivers));
-                $message->setExpiry($event['expire']);
+                $message->setExpiry($event['expiry']);
                 $message->setBody($body);
+                $message->setType($messageType); // for statistics
 
                 $result[] = $message;
                 $receivers = [];
@@ -198,7 +207,7 @@ class ProtobufTransport
         if (count($receivers) > 0) {
             $message = new Protobuf\IncomingMessage();
             $message->setReceiversList(new MessageCollection($receivers));
-            $message->setExpiry($event['expire']);
+            $message->setExpiry($event['expiry']);
             $message->setBody($body);
 
             $result[] = $message;

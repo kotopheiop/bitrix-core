@@ -11,20 +11,17 @@ class CPHPCacheMemcache implements ICacheBackend
 
     // unfortunately is not available for memcache...
 
-    function __construct()
+    public function __construct()
     {
-        $this->CPHPCacheMemcache();
-    }
-
-    function CPHPCacheMemcache()
-    {
-        if (!is_object(self::$obMemcache))
+        if (!is_object(self::$obMemcache)) {
             self::$obMemcache = new Memcache;
+        }
 
-        if (defined("BX_MEMCACHE_PORT"))
+        if (defined("BX_MEMCACHE_PORT")) {
             $port = intval(BX_MEMCACHE_PORT);
-        else
+        } else {
             $port = 11211;
+        }
 
         if (!defined("BX_MEMCACHE_CONNECTED")) {
             if (self::$obMemcache->connect(BX_MEMCACHE_HOST, $port)) {
@@ -33,16 +30,18 @@ class CPHPCacheMemcache implements ICacheBackend
             }
         }
 
-        if (defined("BX_CACHE_SID"))
+        if (defined("BX_CACHE_SID")) {
             $this->sid = BX_CACHE_SID;
-        else
+        } else {
             $this->sid = "BX";
+        }
     }
 
     function close()
     {
-        if (defined("BX_MEMCACHE_CONNECTED") && is_object(self::$obMemcache))
+        if (defined("BX_MEMCACHE_CONNECTED") && is_object(self::$obMemcache)) {
             self::$obMemcache->close();
+        }
     }
 
     function IsAvailable()
@@ -53,34 +52,45 @@ class CPHPCacheMemcache implements ICacheBackend
     function clean($basedir, $initdir = false, $filename = false)
     {
         if (is_object(self::$obMemcache)) {
-            if (strlen($filename)) {
-                if (!isset(self::$basedir_version[$basedir]))
+            if ($filename <> '') {
+                if (!isset(self::$basedir_version[$basedir])) {
                     self::$basedir_version[$basedir] = self::$obMemcache->get($this->sid . $basedir);
+                }
 
-                if (self::$basedir_version[$basedir] === false || self::$basedir_version[$basedir] === '')
+                if (self::$basedir_version[$basedir] === false || self::$basedir_version[$basedir] === '') {
                     return true;
+                }
 
                 if ($initdir !== false) {
                     $initdir_version = self::$obMemcache->get(self::$basedir_version[$basedir] . "|" . $initdir);
-                    if ($initdir_version === false || $initdir_version === '')
+                    if ($initdir_version === false || $initdir_version === '') {
                         return true;
+                    }
                 } else {
                     $initdir_version = "";
                 }
 
-                self::$obMemcache->replace(self::$basedir_version[$basedir] . "|" . $initdir_version . "|" . $filename, "", 0, 1);
+                self::$obMemcache->replace(
+                    self::$basedir_version[$basedir] . "|" . $initdir_version . "|" . $filename,
+                    "",
+                    0,
+                    1
+                );
             } else {
-                if (strlen($initdir)) {
-                    if (!isset(self::$basedir_version[$basedir]))
+                if ($initdir <> '') {
+                    if (!isset(self::$basedir_version[$basedir])) {
                         self::$basedir_version[$basedir] = self::$obMemcache->get($this->sid . $basedir);
+                    }
 
-                    if (self::$basedir_version[$basedir] === false || self::$basedir_version[$basedir] === '')
+                    if (self::$basedir_version[$basedir] === false || self::$basedir_version[$basedir] === '') {
                         return true;
+                    }
 
                     self::$obMemcache->replace(self::$basedir_version[$basedir] . "|" . $initdir, "", 0, 1);
                 } else {
-                    if (isset(self::$basedir_version[$basedir]))
+                    if (isset(self::$basedir_version[$basedir])) {
                         unset(self::$basedir_version[$basedir]);
+                    }
 
                     self::$obMemcache->replace($this->sid . $basedir, "", 0, 1);
                 }
@@ -93,32 +103,39 @@ class CPHPCacheMemcache implements ICacheBackend
 
     function read(&$arAllVars, $basedir, $initdir, $filename, $TTL)
     {
-        if (!isset(self::$basedir_version[$basedir]))
+        if (!isset(self::$basedir_version[$basedir])) {
             self::$basedir_version[$basedir] = self::$obMemcache->get($this->sid . $basedir);
+        }
 
-        if (self::$basedir_version[$basedir] === false || self::$basedir_version[$basedir] === '')
+        if (self::$basedir_version[$basedir] === false || self::$basedir_version[$basedir] === '') {
             return false;
+        }
 
         if ($initdir !== false) {
             $initdir_version = self::$obMemcache->get(self::$basedir_version[$basedir] . "|" . $initdir);
-            if ($initdir_version === false || $initdir_version === '')
+            if ($initdir_version === false || $initdir_version === '') {
                 return false;
+            }
         } else {
             $initdir_version = "";
         }
 
-        $arAllVars = self::$obMemcache->get(self::$basedir_version[$basedir] . "|" . $initdir_version . "|" . $filename);
+        $arAllVars = self::$obMemcache->get(
+            self::$basedir_version[$basedir] . "|" . $initdir_version . "|" . $filename
+        );
 
-        if ($arAllVars === false || $arAllVars === '')
+        if ($arAllVars === false || $arAllVars === '') {
             return false;
+        }
 
         return true;
     }
 
     function write($arAllVars, $basedir, $initdir, $filename, $TTL)
     {
-        if (!isset(self::$basedir_version[$basedir]))
+        if (!isset(self::$basedir_version[$basedir])) {
             self::$basedir_version[$basedir] = self::$obMemcache->get($this->sid . $basedir);
+        }
 
         if (self::$basedir_version[$basedir] === false || self::$basedir_version[$basedir] === '') {
             self::$basedir_version[$basedir] = $this->sid . md5(mt_rand());
@@ -135,7 +152,12 @@ class CPHPCacheMemcache implements ICacheBackend
             $initdir_version = "";
         }
 
-        self::$obMemcache->set(self::$basedir_version[$basedir] . "|" . $initdir_version . "|" . $filename, $arAllVars, 0, time() + intval($TTL));
+        self::$obMemcache->set(
+            self::$basedir_version[$basedir] . "|" . $initdir_version . "|" . $filename,
+            $arAllVars,
+            0,
+            time() + intval($TTL)
+        );
     }
 
     function IsCacheExpired($path)

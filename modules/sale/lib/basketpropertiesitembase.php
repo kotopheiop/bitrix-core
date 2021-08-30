@@ -38,14 +38,6 @@ abstract class BasketPropertyItemBase extends Internals\CollectableEntity
     }
 
     /**
-     * @return int
-     */
-    public function getId()
-    {
-        return $this->getField('ID');
-    }
-
-    /**
      * @return string|void
      */
     public static function getRegistryEntity()
@@ -116,8 +108,8 @@ abstract class BasketPropertyItemBase extends Internals\CollectableEntity
                 if ($value instanceof Main\Entity\StringField) {
                     $fieldName = $value->getName();
                     if (array_key_exists($fieldName, $fields)) {
-                        if (!empty($fields[$fieldName]) && strlen($fields[$fieldName]) > $value->getSize()) {
-                            $fields[$fieldName] = substr($fields[$fieldName], 0, $value->getSize());
+                        if (!empty($fields[$fieldName]) && mb_strlen($fields[$fieldName]) > $value->getSize()) {
+                            $fields[$fieldName] = mb_substr($fields[$fieldName], 0, $value->getSize());
                         }
                     }
                 }
@@ -180,11 +172,17 @@ abstract class BasketPropertyItemBase extends Internals\CollectableEntity
 
         if ($order) {
             if (!$order->isSaveRunning()) {
-                trigger_error("Incorrect call to the save process. Use method save() on \Bitrix\Sale\Order entity", E_USER_WARNING);
+                trigger_error(
+                    "Incorrect call to the save process. Use method save() on \Bitrix\Sale\Order entity",
+                    E_USER_WARNING
+                );
             }
         } else {
             if (!$basket->isSaveRunning()) {
-                trigger_error("Incorrect call to the save process. Use method save() on \Bitrix\Sale\Basket entity", E_USER_WARNING);
+                trigger_error(
+                    "Incorrect call to the save process. Use method save() on \Bitrix\Sale\Basket entity",
+                    E_USER_WARNING
+                );
             }
         }
     }
@@ -211,9 +209,9 @@ abstract class BasketPropertyItemBase extends Internals\CollectableEntity
                 $fieldName = $value->getName();
                 if (array_key_exists($fieldName, $fields)) {
                     if (array_key_exists($fieldName, $fields)) {
-                        if (!empty($fields[$fieldName]) && strlen($fields[$fieldName]) > $value->getSize()) {
+                        if (!empty($fields[$fieldName]) && mb_strlen($fields[$fieldName]) > $value->getSize()) {
                             if ($fieldName === 'NAME') {
-                                $propertyName = substr($propertyName, 0, 50) . "...";
+                                $propertyName = mb_substr($propertyName, 0, 50) . "...";
                             }
 
                             $result->addError(
@@ -253,10 +251,12 @@ abstract class BasketPropertyItemBase extends Internals\CollectableEntity
 
         $result = [];
 
-        $dbRes = static::getList([
-            'filter' => ["=BASKET_ID" => $id],
-            'order' => ["SORT" => "ASC", "ID" => "ASC"],
-        ]);
+        $dbRes = static::getList(
+            [
+                'filter' => ["=BASKET_ID" => $id],
+                'order' => ["SORT" => "ASC", "ID" => "ASC"],
+            ]
+        );
 
         while ($property = $dbRes->fetch()) {
             $result[] = static::createBasketPropertyItemObject($property);

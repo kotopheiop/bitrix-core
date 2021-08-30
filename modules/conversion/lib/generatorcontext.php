@@ -54,7 +54,12 @@ final class GeneratorContext extends Internals\BaseContext
 
             $data = array();
 
-            foreach (EventManager::getInstance()->findEventHandlers('conversion', 'OnGenerateInitialData') as $handler) {
+            foreach (
+                EventManager::getInstance()->findEventHandlers(
+                    'conversion',
+                    'OnGenerateInitialData'
+                ) as $handler
+            ) {
                 $result = ExecuteModuleEventEx($handler, array($from, $to)); // TODO validate
 
                 foreach ($result as $row) {
@@ -98,7 +103,11 @@ final class GeneratorContext extends Internals\BaseContext
                         }
                     }
 
-                    $context->addCounter($day, 'conversion_visit_day', $visitQuantity ? round($visitSum / $visitQuantity * 100) + 1 : 1);
+                    $context->addCounter(
+                        $day,
+                        'conversion_visit_day',
+                        $visitQuantity ? round($visitSum / $visitQuantity * 100) + 1 : 1
+                    );
                 }
             }
         }

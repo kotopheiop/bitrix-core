@@ -43,32 +43,39 @@ class CAllCatalogSku
     public static function GetProductInfo($intOfferID, $intIBlockID = 0)
     {
         $intOfferID = (int)$intOfferID;
-        if ($intOfferID <= 0)
+        if ($intOfferID <= 0) {
             return false;
+        }
 
         if (!isset(self::$parentCache[$intOfferID])) {
             self::$parentCache[$intOfferID] = false;
             $intIBlockID = (int)$intIBlockID;
-            if ($intIBlockID <= 0)
+            if ($intIBlockID <= 0) {
                 $intIBlockID = (int)CIBlockElement::GetIBlockByID($intOfferID);
+            }
 
-            if ($intIBlockID <= 0)
+            if ($intIBlockID <= 0) {
                 return self::$parentCache[$intOfferID];
+            }
 
-            if (!isset(self::$arOfferCache[$intIBlockID]))
+            if (!isset(self::$arOfferCache[$intIBlockID])) {
                 $skuInfo = static::GetInfoByOfferIBlock($intIBlockID);
-            else
+            } else {
                 $skuInfo = self::$arOfferCache[$intIBlockID];
+            }
 
-            if (empty($skuInfo) || empty($skuInfo['SKU_PROPERTY_ID']))
+            if (empty($skuInfo) || empty($skuInfo['SKU_PROPERTY_ID'])) {
                 return self::$parentCache[$intOfferID];
+            }
 
             $conn = Application::getConnection();
             $helper = $conn->getSqlHelper();
 
             if ($skuInfo['VERSION'] == 2) {
                 $productField = $helper->quote('PROPERTY_' . $skuInfo['SKU_PROPERTY_ID']);
-                $sqlQuery = 'select ' . $productField . ' as ID from ' . $helper->quote('b_iblock_element_prop_s' . $skuInfo['IBLOCK_ID']) .
+                $sqlQuery = 'select ' . $productField . ' as ID from ' . $helper->quote(
+                        'b_iblock_element_prop_s' . $skuInfo['IBLOCK_ID']
+                    ) .
                     ' where ' . $helper->quote('IBLOCK_ELEMENT_ID') . ' = ' . $intOfferID;
             } else {
                 $productField = $helper->quote('VALUE_NUM');
@@ -97,14 +104,22 @@ class CAllCatalogSku
     public static function GetInfoByOfferIBlock($intIBlockID)
     {
         $intIBlockID = (int)$intIBlockID;
-        if ($intIBlockID <= 0)
+        if ($intIBlockID <= 0) {
             return false;
+        }
         if (!isset(self::$arOfferCache[$intIBlockID])) {
             self::$arOfferCache[$intIBlockID] = false;
-            $iblockIterator = Catalog\CatalogIblockTable::getList(array(
-                'select' => array('IBLOCK_ID', 'PRODUCT_IBLOCK_ID', 'SKU_PROPERTY_ID', 'VERSION' => 'IBLOCK.VERSION'),
-                'filter' => array('=IBLOCK_ID' => $intIBlockID, '!=PRODUCT_IBLOCK_ID' => 0)
-            ));
+            $iblockIterator = Catalog\CatalogIblockTable::getList(
+                array(
+                    'select' => array(
+                        'IBLOCK_ID',
+                        'PRODUCT_IBLOCK_ID',
+                        'SKU_PROPERTY_ID',
+                        'VERSION' => 'IBLOCK.VERSION'
+                    ),
+                    'filter' => array('=IBLOCK_ID' => $intIBlockID, '!=PRODUCT_IBLOCK_ID' => 0)
+                )
+            );
             $arResult = $iblockIterator->fetch();
             if (!empty($arResult)) {
                 $arResult['IBLOCK_ID'] = (int)$arResult['IBLOCK_ID'];
@@ -125,14 +140,22 @@ class CAllCatalogSku
     public static function GetInfoByProductIBlock($intIBlockID)
     {
         $intIBlockID = (int)$intIBlockID;
-        if ($intIBlockID <= 0)
+        if ($intIBlockID <= 0) {
             return false;
+        }
         if (!isset(self::$arProductCache[$intIBlockID])) {
             self::$arProductCache[$intIBlockID] = false;
-            $iblockIterator = Catalog\CatalogIblockTable::getList(array(
-                'select' => array('IBLOCK_ID', 'PRODUCT_IBLOCK_ID', 'SKU_PROPERTY_ID', 'VERSION' => 'IBLOCK.VERSION'),
-                'filter' => array('=PRODUCT_IBLOCK_ID' => $intIBlockID)
-            ));
+            $iblockIterator = Catalog\CatalogIblockTable::getList(
+                array(
+                    'select' => array(
+                        'IBLOCK_ID',
+                        'PRODUCT_IBLOCK_ID',
+                        'SKU_PROPERTY_ID',
+                        'VERSION' => 'IBLOCK.VERSION'
+                    ),
+                    'filter' => array('=PRODUCT_IBLOCK_ID' => $intIBlockID)
+                )
+            );
             $arResult = $iblockIterator->fetch();
             if (!empty($arResult)) {
                 $arResult['IBLOCK_ID'] = (int)$arResult['IBLOCK_ID'];
@@ -153,14 +176,22 @@ class CAllCatalogSku
     public static function GetInfoByLinkProperty($intPropertyID)
     {
         $intPropertyID = (int)$intPropertyID;
-        if ($intPropertyID <= 0)
+        if ($intPropertyID <= 0) {
             return false;
+        }
         if (!isset(self::$arPropertyCache[$intPropertyID])) {
             self::$arPropertyCache[$intPropertyID] = false;
-            $iblockIterator = Catalog\CatalogIblockTable::getList(array(
-                'select' => array('IBLOCK_ID', 'PRODUCT_IBLOCK_ID', 'SKU_PROPERTY_ID', 'VERSION' => 'IBLOCK.VERSION'),
-                'filter' => array('=SKU_PROPERTY_ID' => $intPropertyID)
-            ));
+            $iblockIterator = Catalog\CatalogIblockTable::getList(
+                array(
+                    'select' => array(
+                        'IBLOCK_ID',
+                        'PRODUCT_IBLOCK_ID',
+                        'SKU_PROPERTY_ID',
+                        'VERSION' => 'IBLOCK.VERSION'
+                    ),
+                    'filter' => array('=SKU_PROPERTY_ID' => $intPropertyID)
+                )
+            );
             $arResult = $iblockIterator->fetch();
             if (!empty($arResult)) {
                 $arResult['IBLOCK_ID'] = (int)$arResult['IBLOCK_ID'];
@@ -181,8 +212,9 @@ class CAllCatalogSku
     public static function GetInfoByIBlock($intIBlockID)
     {
         $intIBlockID = (int)$intIBlockID;
-        if ($intIBlockID <= 0)
+        if ($intIBlockID <= 0) {
             return false;
+        }
 
         if (!isset(self::$arIBlockCache[$intIBlockID])) {
             $result = false;
@@ -191,14 +223,25 @@ class CAllCatalogSku
             $boolExists = false;
             $boolIBlock = false;
             $boolProductIBlock = false;
-            $catalogIterator = Catalog\CatalogIblockTable::getList(array(
-                'select' => array('IBLOCK_ID', 'PRODUCT_IBLOCK_ID', 'SKU_PROPERTY_ID', 'VAT_ID', 'YANDEX_EXPORT', 'SUBSCRIPTION'),
-                'filter' => array(array(
-                    'LOGIC' => 'OR',
-                    '=IBLOCK_ID' => $intIBlockID,
-                    '=PRODUCT_IBLOCK_ID' => $intIBlockID
-                ))
-            ));
+            $catalogIterator = Catalog\CatalogIblockTable::getList(
+                array(
+                    'select' => array(
+                        'IBLOCK_ID',
+                        'PRODUCT_IBLOCK_ID',
+                        'SKU_PROPERTY_ID',
+                        'VAT_ID',
+                        'YANDEX_EXPORT',
+                        'SUBSCRIPTION'
+                    ),
+                    'filter' => array(
+                        array(
+                            'LOGIC' => 'OR',
+                            '=IBLOCK_ID' => $intIBlockID,
+                            '=PRODUCT_IBLOCK_ID' => $intIBlockID
+                        )
+                    )
+                )
+            );
             while ($catalog = $catalogIterator->fetch()) {
                 $catalog['IBLOCK_ID'] = (int)$catalog['IBLOCK_ID'];
                 $catalog['PRODUCT_IBLOCK_ID'] = (int)$catalog['PRODUCT_IBLOCK_ID'];
@@ -252,25 +295,30 @@ class CAllCatalogSku
     public static function getExistOffers($productID, $iblockID = 0)
     {
         $iblockID = (int)$iblockID;
-        if (!is_array($productID))
+        if (!is_array($productID)) {
             $productID = array($productID);
+        }
         Collection::normalizeArrayValuesByInt($productID);
-        if (empty($productID))
+        if (empty($productID)) {
             return false;
+        }
         $result = array_fill_keys($productID, false);
         $iblockProduct = array();
         $iblockSku = array();
         if ($iblockID == 0) {
             $iblockList = array();
-            $elementIterator = Iblock\ElementTable::getList(array(
-                'select' => array('ID', 'IBLOCK_ID'),
-                'filter' => array('@ID' => $productID)
-            ));
+            $elementIterator = Iblock\ElementTable::getList(
+                array(
+                    'select' => array('ID', 'IBLOCK_ID'),
+                    'filter' => array('@ID' => $productID)
+                )
+            );
             while ($element = $elementIterator->fetch()) {
                 $element['ID'] = (int)$element['ID'];
                 $element['IBLOCK_ID'] = (int)$element['IBLOCK_ID'];
-                if (!isset($iblockList[$element['IBLOCK_ID']]))
+                if (!isset($iblockList[$element['IBLOCK_ID']])) {
                     $iblockList[$element['IBLOCK_ID']] = array();
+                }
                 $iblockList[$element['IBLOCK_ID']][] = $element['ID'];
             }
             unset($element, $elementIterator);
@@ -291,10 +339,17 @@ class CAllCatalogSku
                 }
                 unset($oneIblock, $iblockListIds);
                 if (!empty($iblockList)) {
-                    $iblockIterator = Catalog\CatalogIblockTable::getList(array(
-                        'select' => array('IBLOCK_ID', 'PRODUCT_IBLOCK_ID', 'SKU_PROPERTY_ID', 'VERSION' => 'IBLOCK.VERSION'),
-                        'filter' => array('@PRODUCT_IBLOCK_ID' => array_keys($iblockList))
-                    ));
+                    $iblockIterator = Catalog\CatalogIblockTable::getList(
+                        array(
+                            'select' => array(
+                                'IBLOCK_ID',
+                                'PRODUCT_IBLOCK_ID',
+                                'SKU_PROPERTY_ID',
+                                'VERSION' => 'IBLOCK.VERSION'
+                            ),
+                            'filter' => array('@PRODUCT_IBLOCK_ID' => array_keys($iblockList))
+                        )
+                    );
                     while ($iblock = $iblockIterator->fetch()) {
                         $iblock['IBLOCK_ID'] = (int)$iblock['IBLOCK_ID'];
                         $iblock['PRODUCT_IBLOCK_ID'] = (int)$iblock['PRODUCT_IBLOCK_ID'];
@@ -320,10 +375,17 @@ class CAllCatalogSku
                         $iblockProduct[$iblockID] = $productID;
                     }
                 } else {
-                    $iblockIterator = Catalog\CatalogIblockTable::getList(array(
-                        'select' => array('IBLOCK_ID', 'PRODUCT_IBLOCK_ID', 'SKU_PROPERTY_ID', 'VERSION' => 'IBLOCK.VERSION'),
-                        'filter' => array('=PRODUCT_IBLOCK_ID' => $iblockID)
-                    ));
+                    $iblockIterator = Catalog\CatalogIblockTable::getList(
+                        array(
+                            'select' => array(
+                                'IBLOCK_ID',
+                                'PRODUCT_IBLOCK_ID',
+                                'SKU_PROPERTY_ID',
+                                'VERSION' => 'IBLOCK.VERSION'
+                            ),
+                            'filter' => array('=PRODUCT_IBLOCK_ID' => $iblockID)
+                        )
+                    );
                     if ($iblock = $iblockIterator->fetch()) {
                         $iblock['IBLOCK_ID'] = (int)$iblock['IBLOCK_ID'];
                         $iblock['PRODUCT_IBLOCK_ID'] = (int)$iblock['PRODUCT_IBLOCK_ID'];
@@ -341,8 +403,9 @@ class CAllCatalogSku
                 }
             }
         }
-        if (empty($iblockProduct))
+        if (empty($iblockProduct)) {
             return $result;
+        }
 
         $conn = Application::getConnection();
         $helper = $conn->getSqlHelper();
@@ -352,12 +415,16 @@ class CAllCatalogSku
             $sku = $iblockSku[$iblockID];
             if ($sku['VERSION'] == 2) {
                 $productField = $helper->quote('PROPERTY_' . $sku['SKU_PROPERTY_ID']);
-                $sqlQuery = 'select ' . $productField . ' as PRODUCT_ID, COUNT(*) as CNT from ' . $helper->quote('b_iblock_element_prop_s' . $sku['IBLOCK_ID']) .
+                $sqlQuery = 'select ' . $productField . ' as PRODUCT_ID, COUNT(*) as CNT from ' . $helper->quote(
+                        'b_iblock_element_prop_s' . $sku['IBLOCK_ID']
+                    ) .
                     ' where ' . $productField . ' IN (' . implode(',', $iblockProductID) . ')' .
                     ' group by ' . $productField;
             } else {
                 $productField = $helper->quote('VALUE_NUM');
-                $sqlQuery = 'select ' . $productField . ' as PRODUCT_ID, COUNT(*) as CNT from ' . $helper->quote('b_iblock_element_property') .
+                $sqlQuery = 'select ' . $productField . ' as PRODUCT_ID, COUNT(*) as CNT from ' . $helper->quote(
+                        'b_iblock_element_property'
+                    ) .
                     ' where ' . $propertyIdField . ' = ' . $sku['SKU_PROPERTY_ID'] .
                     ' and ' . $productField . ' IN (' . implode(',', $iblockProductID) . ')' .
                     ' group by ' . $productField;
@@ -366,8 +433,9 @@ class CAllCatalogSku
             $productIterator = $conn->query($sqlQuery);
             while ($product = $productIterator->fetch()) {
                 $product['CNT'] = (int)$product['CNT'];
-                if ($product['CNT'] <= 0)
+                if ($product['CNT'] <= 0) {
                     continue;
+                }
 
                 $product['PRODUCT_ID'] = (int)$product['PRODUCT_ID'];
                 $result[$product['PRODUCT_ID']] = true;
@@ -387,25 +455,38 @@ class CAllCatalogSku
      * @param array $fields
      * @param array $propertyFilter
      * @param array $options
+     * @param array $order
      * @return array|bool
      */
-    public static function getOffersList($productID, $iblockID = 0, $skuFilter = array(), $fields = array(), $propertyFilter = array(), $options = array())
-    {
+    public static function getOffersList(
+        $productID,
+        $iblockID = 0,
+        $skuFilter = array(),
+        $fields = array(),
+        $propertyFilter = array(),
+        $options = array(),
+        $order = array()
+    ) {
         static $propertyCache = array();
 
         $iblockID = (int)$iblockID;
-        if (!is_array($productID))
+        if (!is_array($productID)) {
             $productID = array($productID);
+        }
         Collection::normalizeArrayValuesByInt($productID);
-        if (empty($productID))
+        if (empty($productID)) {
             return false;
-        if (!is_array($skuFilter))
+        }
+        if (!is_array($skuFilter)) {
             $skuFilter = array();
-        if (!is_array($fields))
+        }
+        if (!is_array($fields)) {
             $fields = array($fields);
+        }
         $fields = array_merge($fields, array('ID', 'IBLOCK_ID'));
-        if (!is_array($propertyFilter))
+        if (!is_array($propertyFilter)) {
             $propertyFilter = array();
+        }
 
         $iblockProduct = array();
         $iblockSku = array();
@@ -415,8 +496,9 @@ class CAllCatalogSku
 
             $list = CIBlockElement::GetIBlockByIDList($productID);
             foreach ($list as $elementId => $elementIblock) {
-                if (!isset($iblockList[$elementIblock]))
+                if (!isset($iblockList[$elementIblock])) {
                     $iblockList[$elementIblock] = array();
+                }
                 $iblockList[$elementIblock][] = $elementId;
             }
             unset($elementId, $elementIblock, $list);
@@ -435,10 +517,17 @@ class CAllCatalogSku
                 }
                 unset($oneIblock, $iblockListIds);
                 if (!empty($iblockList)) {
-                    $iblockIterator = Catalog\CatalogIblockTable::getList(array(
-                        'select' => array('IBLOCK_ID', 'PRODUCT_IBLOCK_ID', 'SKU_PROPERTY_ID', 'VERSION' => 'IBLOCK.VERSION'),
-                        'filter' => array('@PRODUCT_IBLOCK_ID' => array_keys($iblockList))
-                    ));
+                    $iblockIterator = Catalog\CatalogIblockTable::getList(
+                        array(
+                            'select' => array(
+                                'IBLOCK_ID',
+                                'PRODUCT_IBLOCK_ID',
+                                'SKU_PROPERTY_ID',
+                                'VERSION' => 'IBLOCK.VERSION'
+                            ),
+                            'filter' => array('@PRODUCT_IBLOCK_ID' => array_keys($iblockList))
+                        )
+                    );
                     while ($iblock = $iblockIterator->fetch()) {
                         $iblock['IBLOCK_ID'] = (int)$iblock['IBLOCK_ID'];
                         $iblock['PRODUCT_IBLOCK_ID'] = (int)$iblock['PRODUCT_IBLOCK_ID'];
@@ -466,10 +555,17 @@ class CAllCatalogSku
                         $iblockProduct[$iblockID] = $productID;
                     }
                 } else {
-                    $iblockIterator = Catalog\CatalogIblockTable::getList(array(
-                        'select' => array('IBLOCK_ID', 'PRODUCT_IBLOCK_ID', 'SKU_PROPERTY_ID', 'VERSION' => 'IBLOCK.VERSION'),
-                        'filter' => array('=PRODUCT_IBLOCK_ID' => $iblockID)
-                    ));
+                    $iblockIterator = Catalog\CatalogIblockTable::getList(
+                        array(
+                            'select' => array(
+                                'IBLOCK_ID',
+                                'PRODUCT_IBLOCK_ID',
+                                'SKU_PROPERTY_ID',
+                                'VERSION' => 'IBLOCK.VERSION'
+                            ),
+                            'filter' => array('=PRODUCT_IBLOCK_ID' => $iblockID)
+                        )
+                    );
                     if ($iblock = $iblockIterator->fetch()) {
                         $iblock['IBLOCK_ID'] = (int)$iblock['IBLOCK_ID'];
                         $iblock['PRODUCT_IBLOCK_ID'] = (int)$iblock['PRODUCT_IBLOCK_ID'];
@@ -488,19 +584,22 @@ class CAllCatalogSku
                 }
             }
         }
-        if (empty($iblockProduct))
+        if (empty($iblockProduct)) {
             return array();
+        }
 
         $propertyFilter = array_filter($propertyFilter);
         if (isset($propertyFilter['ID'])) {
             $propertyFilter['ID'] = array_filter($propertyFilter['ID']);
-            if (empty($propertyFilter['ID']))
+            if (empty($propertyFilter['ID'])) {
                 unset($propertyFilter['ID']);
+            }
         }
         if (isset($propertyFilter['CODE'])) {
             $propertyFilter['CODE'] = array_filter($propertyFilter['CODE']);
-            if (empty($propertyFilter['CODE']))
+            if (empty($propertyFilter['CODE'])) {
                 unset($propertyFilter['CODE']);
+            }
         }
 
         $iblockProperties = array();
@@ -517,10 +616,12 @@ class CAllCatalogSku
             $propertyKey = md5(serialize($propertyIblock));
             if (!isset($propertyCache[$propertyKey])) {
                 $propertyCache[$propertyKey] = array_fill_keys($offersIblock, array());
-                $propertyIterator = Iblock\PropertyTable::getList(array(
-                    'select' => array('ID', 'IBLOCK_ID'),
-                    'filter' => $propertyIblock
-                ));
+                $propertyIterator = Iblock\PropertyTable::getList(
+                    array(
+                        'select' => array('ID', 'IBLOCK_ID'),
+                        'filter' => $propertyIblock
+                    )
+                );
                 while ($property = $propertyIterator->fetch()) {
                     $property['IBLOCK_ID'] = (int)$property['IBLOCK_ID'];
                     $propertyCache[$propertyKey][$property['IBLOCK_ID']][] = (int)$property['ID'];
@@ -531,6 +632,11 @@ class CAllCatalogSku
         }
         unset($offersIblock);
 
+        if (empty($order)) {
+            $order = array('ID' => 'ASC');
+        }
+        $orderFields = array_keys($order);
+
         $result = array_fill_keys($productID, array());
 
         foreach ($iblockProduct as $iblockID => $productList) {
@@ -540,13 +646,14 @@ class CAllCatalogSku
             $iblockFilter['=' . $skuProperty] = $productList;
             $iblockFields = $fields;
             $iblockFields[] = $skuProperty;
+            $iblockFields = array_merge($iblockFields, $orderFields);
             $skuProperty .= '_VALUE';
             $skuPropertyId = $skuProperty . '_ID';
             $offersLinks = array();
             $needProperties = !empty($iblockProperties[$iblockSku[$iblockID]['IBLOCK_ID']]);
 
             $offersIterator = CIBlockElement::GetList(
-                array('ID' => 'ASC'),
+                $order,
                 $iblockFilter,
                 false,
                 false,
@@ -555,15 +662,18 @@ class CAllCatalogSku
             while ($offer = $offersIterator->Fetch()) {
                 $offerProduct = (int)$offer[$skuProperty];
                 unset($offer[$skuProperty]);
-                if (isset($offer[$skuPropertyId]))
+                if (isset($offer[$skuPropertyId])) {
                     unset($offer[$skuPropertyId]);
-                if (!isset($result[$offerProduct]))
+                }
+                if (!isset($result[$offerProduct])) {
                     continue;
+                }
                 $offer['ID'] = (int)$offer['ID'];
                 $offer['IBLOCK_ID'] = (int)$offer['IBLOCK_ID'];
                 $offer['PARENT_ID'] = $offerProduct;
-                if ($needProperties)
+                if ($needProperties) {
                     $offer['PROPERTIES'] = array();
+                }
                 $result[$offerProduct][$offer['ID']] = $offer;
                 $offersLinks[$offer['ID']] = &$result[$offerProduct][$offer['ID']];
             }
@@ -596,25 +706,30 @@ class CAllCatalogSku
     public static function getProductList($offerID, $iblockID = 0)
     {
         $iblockID = (int)$iblockID;
-        if (!is_array($offerID))
+        if (!is_array($offerID)) {
             $offerID = array($offerID);
+        }
         Collection::normalizeArrayValuesByInt($offerID);
-        if (empty($offerID))
+        if (empty($offerID)) {
             return false;
+        }
 
         $iblockSku = array();
         $iblockOffers = array();
         if ($iblockID == 0) {
             $iblockList = array();
-            $elementIterator = Iblock\ElementTable::getList(array(
-                'select' => array('ID', 'IBLOCK_ID'),
-                'filter' => array('@ID' => $offerID)
-            ));
+            $elementIterator = Iblock\ElementTable::getList(
+                array(
+                    'select' => array('ID', 'IBLOCK_ID'),
+                    'filter' => array('@ID' => $offerID)
+                )
+            );
             while ($element = $elementIterator->fetch()) {
                 $element['ID'] = (int)$element['ID'];
                 $element['IBLOCK_ID'] = (int)$element['IBLOCK_ID'];
-                if (!isset($iblockList[$element['IBLOCK_ID']]))
+                if (!isset($iblockList[$element['IBLOCK_ID']])) {
                     $iblockList[$element['IBLOCK_ID']] = array();
+                }
                 $iblockList[$element['IBLOCK_ID']][] = $element['ID'];
             }
             unset($element, $elementIterator);
@@ -635,10 +750,17 @@ class CAllCatalogSku
                 }
                 unset($oneIblock, $iblockListIds);
                 if (!empty($iblockList)) {
-                    $iblockIterator = Catalog\CatalogIblockTable::getList(array(
-                        'select' => array('IBLOCK_ID', 'PRODUCT_IBLOCK_ID', 'SKU_PROPERTY_ID', 'VERSION' => 'IBLOCK.VERSION'),
-                        'filter' => array('@IBLOCK_ID' => array_keys($iblockList), '!=PRODUCT_IBLOCK_ID' => 0)
-                    ));
+                    $iblockIterator = Catalog\CatalogIblockTable::getList(
+                        array(
+                            'select' => array(
+                                'IBLOCK_ID',
+                                'PRODUCT_IBLOCK_ID',
+                                'SKU_PROPERTY_ID',
+                                'VERSION' => 'IBLOCK.VERSION'
+                            ),
+                            'filter' => array('@IBLOCK_ID' => array_keys($iblockList), '!=PRODUCT_IBLOCK_ID' => 0)
+                        )
+                    );
                     while ($iblock = $iblockIterator->fetch()) {
                         $iblock['IBLOCK_ID'] = (int)$iblock['IBLOCK_ID'];
                         $iblock['PRODUCT_IBLOCK_ID'] = (int)$iblock['PRODUCT_IBLOCK_ID'];
@@ -664,10 +786,17 @@ class CAllCatalogSku
                         $iblockOffers[$iblockID] = $offerID;
                     }
                 } else {
-                    $iblockIterator = Catalog\CatalogIblockTable::getList(array(
-                        'select' => array('IBLOCK_ID', 'PRODUCT_IBLOCK_ID', 'SKU_PROPERTY_ID', 'VERSION' => 'IBLOCK.VERSION'),
-                        'filter' => array('=IBLOCK_ID' => $iblockID, '!=PRODUCT_IBLOCK_ID' => 0)
-                    ));
+                    $iblockIterator = Catalog\CatalogIblockTable::getList(
+                        array(
+                            'select' => array(
+                                'IBLOCK_ID',
+                                'PRODUCT_IBLOCK_ID',
+                                'SKU_PROPERTY_ID',
+                                'VERSION' => 'IBLOCK.VERSION'
+                            ),
+                            'filter' => array('=IBLOCK_ID' => $iblockID, '!=PRODUCT_IBLOCK_ID' => 0)
+                        )
+                    );
                     if ($iblock = $iblockIterator->fetch()) {
                         $iblock['IBLOCK_ID'] = (int)$iblock['IBLOCK_ID'];
                         $iblock['PRODUCT_IBLOCK_ID'] = (int)$iblock['PRODUCT_IBLOCK_ID'];
@@ -685,8 +814,9 @@ class CAllCatalogSku
                 }
             }
         }
-        if (empty($iblockOffers))
+        if (empty($iblockOffers)) {
             return array();
+        }
 
         $result = array_fill_keys($offerID, array());
 
@@ -701,11 +831,15 @@ class CAllCatalogSku
             foreach (array_chunk($offerList, 500) as $pageIds) {
                 if ($sku['VERSION'] == 2) {
                     $productField = $helper->quote('PROPERTY_' . $sku['SKU_PROPERTY_ID']);
-                    $sqlQuery = 'select ' . $productField . ' as PRODUCT_ID, ' . $offerField . ' as ID from ' . $helper->quote('b_iblock_element_prop_s' . $sku['IBLOCK_ID']) .
+                    $sqlQuery = 'select ' . $productField . ' as PRODUCT_ID, ' . $offerField . ' as ID from ' . $helper->quote(
+                            'b_iblock_element_prop_s' . $sku['IBLOCK_ID']
+                        ) .
                         ' where ' . $offerField . ' IN (' . implode(',', $pageIds) . ')';
                 } else {
                     $productField = $helper->quote('VALUE_NUM');
-                    $sqlQuery = 'select ' . $productField . ' as PRODUCT_ID, ' . $offerField . ' as ID from ' . $helper->quote('b_iblock_element_property') .
+                    $sqlQuery = 'select ' . $productField . ' as PRODUCT_ID, ' . $offerField . ' as ID from ' . $helper->quote(
+                            'b_iblock_element_property'
+                        ) .
                         ' where ' . $propertyIdField . ' = ' . $sku['SKU_PROPERTY_ID'] .
                         ' and ' . $offerField . ' IN (' . implode(',', $pageIds) . ')';
                 }
@@ -714,8 +848,9 @@ class CAllCatalogSku
                 while ($offer = $offersIterator->fetch()) {
                     $currentOffer = (int)$offer['ID'];
                     $productID = (int)$offer['PRODUCT_ID'];
-                    if (!isset($result[$currentOffer]) || $productID <= 0)
+                    if (!isset($result[$currentOffer]) || $productID <= 0) {
                         continue;
+                    }
 
                     $result[$currentOffer] = array(
                         'ID' => $productID,

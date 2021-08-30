@@ -169,7 +169,6 @@ class QuantityControl
         } else {
             unset(static::$values[$type][$productId]);
         }
-
     }
 
     /**
@@ -183,11 +182,19 @@ class QuantityControl
         }
 
         if (isset($values[static::QUANTITY_CONTROL_AVAILABLE_QUANTITY])) {
-            static::setValue(static::QUANTITY_CONTROL_AVAILABLE_QUANTITY, $productId, $values[static::QUANTITY_CONTROL_AVAILABLE_QUANTITY]);
+            static::setValue(
+                static::QUANTITY_CONTROL_AVAILABLE_QUANTITY,
+                $productId,
+                $values[static::QUANTITY_CONTROL_AVAILABLE_QUANTITY]
+            );
         }
 
         if (isset($values[static::QUANTITY_CONTROL_RESERVED_QUANTITY])) {
-            static::setValue(static::QUANTITY_CONTROL_RESERVED_QUANTITY, $productId, $values[static::QUANTITY_CONTROL_RESERVED_QUANTITY]);
+            static::setValue(
+                static::QUANTITY_CONTROL_RESERVED_QUANTITY,
+                $productId,
+                $values[static::QUANTITY_CONTROL_RESERVED_QUANTITY]
+            );
         }
     }
 }

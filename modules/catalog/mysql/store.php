@@ -18,43 +18,54 @@ class CCatalogStore extends CAllCatalogStore
         global $DB;
 
         foreach (GetModuleEvents("catalog", "OnBeforeCatalogStoreAdd", true) as $arEvent) {
-            if (ExecuteModuleEventEx($arEvent, array(&$arFields)) === false)
+            if (ExecuteModuleEventEx($arEvent, array(&$arFields)) === false) {
                 return false;
+            }
         }
 
-        if (array_key_exists('DATE_CREATE', $arFields))
+        if (array_key_exists('DATE_CREATE', $arFields)) {
             unset($arFields['DATE_CREATE']);
-        if (array_key_exists('DATE_MODIFY', $arFields))
+        }
+        if (array_key_exists('DATE_MODIFY', $arFields)) {
             unset($arFields['DATE_MODIFY']);
+        }
 
         $arFields['~DATE_MODIFY'] = $DB->GetNowFunction();
         $arFields['~DATE_CREATE'] = $DB->GetNowFunction();
 
-        if (!self::CheckFields('ADD', $arFields))
+        if (!self::CheckFields('ADD', $arFields)) {
             return false;
+        }
 
         $arInsert = $DB->PrepareInsert("b_catalog_store", $arFields);
 
         $strSql = "INSERT INTO b_catalog_store (" . $arInsert[0] . ") VALUES(" . $arInsert[1] . ")";
 
-        $res = $DB->Query($strSql, False, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-        if (!$res)
+        $res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+        if (!$res) {
             return false;
+        }
         $lastId = intval($DB->LastID());
 
         Catalog\StoreTable::getEntity()->cleanCache();
 
-        foreach (GetModuleEvents("catalog", "OnCatalogStoreAdd", true) as $arEvent)
+        foreach (GetModuleEvents("catalog", "OnCatalogStoreAdd", true) as $arEvent) {
             ExecuteModuleEventEx($arEvent, array($lastId, $arFields));
+        }
 
         return $lastId;
     }
 
-    public static function GetList($arOrder = array(), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
-    {
+    public static function GetList(
+        $arOrder = array(),
+        $arFilter = array(),
+        $arGroupBy = false,
+        $arNavStartParams = false,
+        $arSelectFields = array()
+    ) {
         global $DB;
 
-        if (empty($arSelectFields))
+        if (empty($arSelectFields)) {
             $arSelectFields = array(
                 "ID",
                 "ACTIVE",
@@ -77,22 +88,26 @@ class CCatalogStore extends CAllCatalogStore
                 "SITE_ID",
                 "CODE"
             );
+        }
 
         $keyForDelete = array_search("PRODUCT_AMOUNT", $arSelectFields);
 
-        if (!isset($arFilter["PRODUCT_ID"]) && $keyForDelete !== false)
+        if (!isset($arFilter["PRODUCT_ID"]) && $keyForDelete !== false) {
             unset($arSelectFields[$keyForDelete]);
+        }
 
         if ($keyForDelete == false) {
             $keyForDelete = array_search("ELEMENT_ID", $arSelectFields);
-            if ($keyForDelete !== false)
+            if ($keyForDelete !== false) {
                 unset($arSelectFields[$keyForDelete]);
+            }
         }
         $productID = '(';
 
         if (is_array($arFilter["PRODUCT_ID"])) {
-            foreach ($arFilter["PRODUCT_ID"] as $id)
+            foreach ($arFilter["PRODUCT_ID"] as $id) {
                 $productID .= intval($id) . ',';
+            }
             $productID = rtrim($productID, ',') . ')';
         } else {
             $productID .= intval($arFilter["PRODUCT_ID"]) . ')';
@@ -121,9 +136,26 @@ class CCatalogStore extends CAllCatalogStore
             "SHIPPING_CENTER" => array("FIELD" => "CS.SHIPPING_CENTER", "TYPE" => "char"),
             "SITE_ID" => array("FIELD" => "CS.SITE_ID", "TYPE" => "string"),
             "CODE" => array("FIELD" => "CS.CODE", "TYPE" => "string"),
-            "PRODUCT_AMOUNT" => array("FIELD" => "CP.AMOUNT", "TYPE" => "double", "FROM" => "LEFT JOIN b_catalog_store_product CP ON (CS.ID = CP.STORE_ID AND CP.PRODUCT_ID IN " . $productID . ")"),
+            "PRODUCT_AMOUNT" => array(
+                "FIELD" => "CP.AMOUNT",
+                "TYPE" => "double",
+                "FROM" => "LEFT JOIN b_catalog_store_product CP ON (CS.ID = CP.STORE_ID AND CP.PRODUCT_ID IN " . $productID . ")"
+            ),
             "ELEMENT_ID" => array("FIELD" => "CP.PRODUCT_ID", "TYPE" => "int")
         );
+
+        if (!is_array($arOrder)) {
+            $arOrder = [];
+        }
+        if (!empty($arOrder)) {
+            $arOrder = array_change_key_case($arOrder, CASE_UPPER);
+            foreach (array_keys($arOrder) as $field) {
+                $arOrder[$field] = strtoupper($arOrder[$field]);
+                if ($arOrder[$field] !== 'DESC') {
+                    $arOrder[$field] = 'ASC';
+                }
+            }
+        }
 
         $userField = new CUserTypeSQL();
         $userField->SetEntity("CAT_STORE", "CS.ID");
@@ -132,17 +164,19 @@ class CCatalogStore extends CAllCatalogStore
         $userField->SetOrder($arOrder);
 
         $strUfFilter = $userField->GetFilter();
-        $strSqlUfFilter = (strlen($strUfFilter) > 0) ? " (" . $strUfFilter . ") " : "";
+        $strSqlUfFilter = ($strUfFilter <> '') ? " (" . $strUfFilter . ") " : "";
 
 
         $strSqlUfOrder = "";
         foreach ($arOrder as $field => $by) {
             $field = $userField->GetOrder($field);
-            if (empty($field))
+            if (empty($field)) {
                 continue;
+            }
 
-            if (strlen($strSqlUfOrder) > 0)
+            if ($strSqlUfOrder <> '') {
                 $strSqlUfOrder .= ', ';
+            }
             $strSqlUfOrder .= $field . " " . $by;
         }
 
@@ -150,74 +184,93 @@ class CCatalogStore extends CAllCatalogStore
         $arSqls["SELECT"] = str_replace("%%_DISTINCT_%%", "", $arSqls["SELECT"]);
 
         if (empty($arGroupBy) && is_array($arGroupBy)) {
-            $strSql = "SELECT " . $arSqls["SELECT"] . " " . $userField->GetSelect() . " FROM b_catalog_store CS " . $arSqls["FROM"] . " " . $userField->GetJoin("CS.ID");
-            if (!empty($arSqls["WHERE"]))
+            $strSql = "SELECT " . $arSqls["SELECT"] . " " . $userField->GetSelect(
+                ) . " FROM b_catalog_store CS " . $arSqls["FROM"] . " " . $userField->GetJoin("CS.ID");
+            if (!empty($arSqls["WHERE"])) {
                 $strSql .= " WHERE " . $arSqls["WHERE"] . " ";
+            }
 
-            if (strlen($arSqls["WHERE"]) > 0 && strlen($strSqlUfFilter) > 0)
+            if ($arSqls["WHERE"] <> '' && $strSqlUfFilter <> '') {
                 $strSql .= " AND " . $strSqlUfFilter . " ";
-            elseif (strlen($arSqls["WHERE"]) == 0 && strlen($strSqlUfFilter) > 0)
+            } elseif ($arSqls["WHERE"] == '' && $strSqlUfFilter <> '') {
                 $strSql .= " WHERE " . $strSqlUfFilter . " ";
+            }
 
-            if (!empty($arSqls["GROUPBY"]))
+            if (!empty($arSqls["GROUPBY"])) {
                 $strSql .= " GROUP BY " . $arSqls["GROUPBY"];
+            }
 
             $dbRes = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-            if ($arRes = $dbRes->Fetch())
+            if ($arRes = $dbRes->Fetch()) {
                 return $arRes["CNT"];
-            else
+            } else {
                 return false;
+            }
         }
-        $strSql = "SELECT " . $arSqls["SELECT"] . " " . $userField->GetSelect() . " FROM b_catalog_store CS " . $arSqls["FROM"] . " " . $userField->GetJoin("CS.ID");
-        if (!empty($arSqls["WHERE"]))
+        $strSql = "SELECT " . $arSqls["SELECT"] . " " . $userField->GetSelect(
+            ) . " FROM b_catalog_store CS " . $arSqls["FROM"] . " " . $userField->GetJoin("CS.ID");
+        if (!empty($arSqls["WHERE"])) {
             $strSql .= " WHERE " . $arSqls["WHERE"] . " ";
+        }
 
-        if (strlen($arSqls["WHERE"]) > 0 && strlen($strSqlUfFilter) > 0)
+        if ($arSqls["WHERE"] <> '' && $strSqlUfFilter <> '') {
             $strSql .= " AND " . $strSqlUfFilter . " ";
-        elseif (strlen($arSqls["WHERE"]) <= 0 && strlen($strSqlUfFilter) > 0)
+        } elseif ($arSqls["WHERE"] == '' && $strSqlUfFilter <> '') {
             $strSql .= " WHERE " . $strSqlUfFilter . " ";
+        }
 
-        if (!empty($arSqls["GROUPBY"]))
+        if (!empty($arSqls["GROUPBY"])) {
             $strSql .= " GROUP BY " . $arSqls["GROUPBY"];
+        }
 
-        if (!empty($arSqls["ORDERBY"]))
+        if (!empty($arSqls["ORDERBY"])) {
             $strSql .= " ORDER BY " . $arSqls["ORDERBY"];
-        elseif (strlen($arSqls["ORDERBY"]) <= 0 && strlen($strSqlUfOrder) > 0)
+        } elseif ($arSqls["ORDERBY"] == '' && $strSqlUfOrder <> '') {
             $strSql .= " ORDER BY " . $strSqlUfOrder;
+        }
 
         $intTopCount = 0;
         $boolNavStartParams = (!empty($arNavStartParams) && is_array($arNavStartParams));
-        if ($boolNavStartParams && array_key_exists('nTopCount', $arNavStartParams))
+        if ($boolNavStartParams && array_key_exists('nTopCount', $arNavStartParams)) {
             $intTopCount = intval($arNavStartParams["nTopCount"]);
+        }
 
         if ($boolNavStartParams && 0 >= $intTopCount) {
-            $strSql_tmp = "SELECT COUNT('x') as CNT FROM b_catalog_store CS " . $arSqls["FROM"] . " " . $userField->GetJoin("CS.ID");
-            if (!empty($arSqls["WHERE"]))
+            $strSql_tmp = "SELECT COUNT('x') as CNT FROM b_catalog_store CS " . $arSqls["FROM"] . " " . $userField->GetJoin(
+                    "CS.ID"
+                );
+            if (!empty($arSqls["WHERE"])) {
                 $strSql_tmp .= " WHERE " . $arSqls["WHERE"];
+            }
 
-            if (strlen($arSqls["WHERE"]) > 0 && strlen($strSqlUfFilter) > 0)
+            if ($arSqls["WHERE"] <> '' && $strSqlUfFilter <> '') {
                 $strSql_tmp .= " AND " . $strSqlUfFilter . " ";
-            elseif (strlen($arSqls["WHERE"]) <= 0 && strlen($strSqlUfFilter) > 0)
+            } elseif ($arSqls["WHERE"] == '' && $strSqlUfFilter <> '') {
                 $strSql_tmp .= " WHERE " . $strSqlUfFilter . " ";
+            }
 
-            if (!empty($arSqls["GROUPBY"]))
+            if (!empty($arSqls["GROUPBY"])) {
                 $strSql_tmp .= " GROUP BY " . $arSqls["GROUPBY"];
+            }
 
             $dbRes = $DB->Query($strSql_tmp, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 
             $cnt = 0;
-            if (empty($arSqls["GROUPBY"]))
-                if ($arRes = $dbRes->Fetch())
+            if (empty($arSqls["GROUPBY"])) {
+                if ($arRes = $dbRes->Fetch()) {
                     $cnt = $arRes["CNT"];
-                else
+                } else {
                     $cnt = $dbRes->SelectedRowsCount();
+                }
+            }
 
             $dbRes = new CDBResult();
 
             $dbRes->NavQuery($strSql, $cnt, $arNavStartParams);
         } else {
-            if ($boolNavStartParams && 0 < $intTopCount)
+            if ($boolNavStartParams && 0 < $intTopCount) {
                 $strSql .= " LIMIT " . $intTopCount;
+            }
 
             $dbRes = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
         }

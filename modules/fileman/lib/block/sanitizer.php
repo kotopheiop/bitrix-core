@@ -44,16 +44,18 @@ class Sanitizer
         $sanitizer = new \CBXSanitizer();
         $sanitizer->setLevel(\CBXSanitizer::SECURE_LEVEL_LOW);
         $sanitizer->addTags($tags);
-        $sanitizer->allowAttributes([
-            Editor::BLOCK_PHP_ATTR => [
-                'tag' => function () {
-                    return true;
-                },
-                'content' => function () {
-                    return true;
-                },
+        $sanitizer->allowAttributes(
+            [
+                Editor::BLOCK_PHP_ATTR => [
+                    'tag' => function () {
+                        return true;
+                    },
+                    'content' => function () {
+                        return true;
+                    },
+                ]
             ]
-        ]);
+        );
         $sanitizer->applyDoubleEncode(false);
 
         $storedMap = self::replacePhpToTags($html);
@@ -67,8 +69,17 @@ class Sanitizer
     {
         return array(
             Editor::BLOCK_PHP_ATTR,
-            'style', 'id', 'class', 'color', 'align', 'valign',
-            'height', 'width', 'title', 'style', 'class',
+            'style',
+            'id',
+            'class',
+            'color',
+            'align',
+            'valign',
+            'height',
+            'width',
+            'title',
+            'style',
+            'class',
             Editor::BLOCK_PLACE_ATTR,
             'data-bx-block-editor-block-type'
         );

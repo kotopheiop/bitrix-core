@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/search/prolog.php");
 IncludeModuleLangFile(__FILE__);
@@ -8,8 +9,9 @@ global $APPLICATION;
 $searchDB = CDatabase::GetModuleConnection('search');
 
 $POST_RIGHT = $APPLICATION->GetGroupRight("search");
-if ($POST_RIGHT == "D")
+if ($POST_RIGHT == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $res = false;
 $bFull = !isset($_REQUEST["Full"]) || $_REQUEST["Full"] != "N";
@@ -25,14 +27,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Reindex"] == "Y") {
     } else {
         $NS = array();
         $max_execution_time = intval($max_execution_time);
-        if ($max_execution_time <= 0)
+        if ($max_execution_time <= 0) {
             $max_execution_time = '';
+        }
         COption::SetOptionString("search", "max_execution_time", $max_execution_time);
         if (!$bFull) {
-            if (isset($_REQUEST["site_id"]) && $_REQUEST["site_id"] != "")
+            if (isset($_REQUEST["site_id"]) && $_REQUEST["site_id"] != "") {
                 $NS["SITE_ID"] = $_REQUEST["site_id"];
-            if (isset($_REQUEST["module_id"]) && $_REQUEST["module_id"] != "")
+            }
+            if (isset($_REQUEST["module_id"]) && $_REQUEST["module_id"] != "") {
                 $NS["MODULE_ID"] = $_REQUEST["module_id"];
+            }
         }
     }
 
@@ -46,30 +51,42 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Reindex"] == "Y") {
         $NS["CLEAR"] = "Y";
     }
 
-    $res = CSearch::ReIndexAll($bFull, COption::GetOptionInt("search", "max_execution_time"), $NS, $_REQUEST["clear_suggest"] === "Y");
+    $res = CSearch::ReIndexAll(
+        $bFull,
+        COption::GetOptionInt("search", "max_execution_time"),
+        $NS,
+        $_REQUEST["clear_suggest"] === "Y"
+    );
     if (is_array($res)):
         $jsNS = CUtil::PhpToJSObject(array("NS" => $res));
         $urlNS = "";
-        foreach ($res as $key => $value)
+        foreach ($res as $key => $value) {
             $urlNS .= "&" . urlencode("NS[" . $key . "]") . "=" . urlencode($value);
-        if ($bFull)
+        }
+        if ($bFull) {
             $urlNS .= "&Full=Y";
+        }
 
         $path = "";
         if ($res["MODULE"] === "main") {
             list($site, $path) = explode("|", $res["ID"], 2);
-            if ($path)
+            if ($path) {
                 $path .= "<br>";
+            }
         }
 
-        CAdminMessage::ShowMessage(array(
-            "MESSAGE" => GetMessage("SEARCH_REINDEX_IN_PROGRESS"),
-            "DETAILS" => GetMessage("SEARCH_REINDEX_TOTAL") . " <b>" . $res["CNT"] . "</b><br>
+        CAdminMessage::ShowMessage(
+            array(
+                "MESSAGE" => GetMessage("SEARCH_REINDEX_IN_PROGRESS"),
+                "DETAILS" => GetMessage("SEARCH_REINDEX_TOTAL") . " <b>" . $res["CNT"] . "</b><br>
 				" . $path . "
-				<a id=\"continue_href\" onclick=\"savedNS=" . $jsNS . "; ContinueReindex(); return false;\" href=\"" . htmlspecialcharsbx("search_reindex.php?Continue=Y&lang=" . urlencode(LANGUAGE_ID) . $urlNS) . "\">" . GetMessage("SEARCH_REINDEX_NEXT_STEP") . "</a>",
-            "HTML" => true,
-            "TYPE" => "PROGRESS",
-        ));
+				<a id=\"continue_href\" onclick=\"savedNS=" . $jsNS . "; ContinueReindex(); return false;\" href=\"" . htmlspecialcharsbx(
+                        "search_reindex.php?Continue=Y&lang=" . urlencode(LANGUAGE_ID) . $urlNS
+                    ) . "\">" . GetMessage("SEARCH_REINDEX_NEXT_STEP") . "</a>",
+                "HTML" => true,
+                "TYPE" => "PROGRESS",
+            )
+        );
         ?>
         <script>
             CloseWaitWindow();
@@ -77,19 +94,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Reindex"] == "Y") {
         </script>
     <?
     else:
-        CAdminMessage::ShowMessage(array(
-            "MESSAGE" => GetMessage("SEARCH_REINDEX_COMPLETE"),
-            "DETAILS" => GetMessage("SEARCH_REINDEX_TOTAL") . " <b>" . $res . "</b>",
-            "HTML" => true,
-            "TYPE" => "OK",
-        ));
-        if (IsModuleInstalled("socialnetwork")) {
-            CAdminMessage::ShowMessage(array(
-                "MESSAGE" => GetMessage("SEARCH_REINDEX_SOCNET_WARNING"),
-                "DETAILS" => GetMessage("SEARCH_REINDEX_SOCNET_WARN_DETAILS"),
+        CAdminMessage::ShowMessage(
+            array(
+                "MESSAGE" => GetMessage("SEARCH_REINDEX_COMPLETE"),
+                "DETAILS" => GetMessage("SEARCH_REINDEX_TOTAL") . " <b>" . $res . "</b>",
                 "HTML" => true,
-                "TYPE" => "ERROR",
-            ));
+                "TYPE" => "OK",
+            )
+        );
+        if (IsModuleInstalled("socialnetwork")) {
+            CAdminMessage::ShowMessage(
+                array(
+                    "MESSAGE" => GetMessage("SEARCH_REINDEX_SOCNET_WARNING"),
+                    "DETAILS" => GetMessage("SEARCH_REINDEX_SOCNET_WARN_DETAILS"),
+                    "HTML" => true,
+                    "TYPE" => "ERROR",
+                )
+            );
         }
         ?>
         <script>
@@ -102,18 +123,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Reindex"] == "Y") {
     <?endif;
     require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/epilog_admin_js.php");
 } else {
-
     $APPLICATION->SetTitle(GetMessage("SEARCH_REINDEX_TITLE"));
 
     $aTabs = array(
-        array("DIV" => "edit1", "TAB" => GetMessage("SEARCH_REINDEX_TAB"), "ICON" => "main_user_edit", "TITLE" => GetMessage("SEARCH_REINDEX_TAB_TITLE")),
+        array(
+            "DIV" => "edit1",
+            "TAB" => GetMessage("SEARCH_REINDEX_TAB"),
+            "ICON" => "main_user_edit",
+            "TITLE" => GetMessage("SEARCH_REINDEX_TAB_TITLE")
+        ),
     );
     $tabControl = new CAdminTabControl("tabControl", $aTabs, true, true);
 
     require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
-    if (is_object($message))
+    if (is_object($message)) {
         echo '<div id="search_message">', $message->Show(), '</div>';
+    }
     ?>
     <script language="JavaScript">
         var savedNS;
@@ -226,8 +252,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Reindex"] == "Y") {
         </tr>
         <?
         $max_execution_time = intval(COption::GetOptionString("search", "max_execution_time"));
-        if ($max_execution_time <= 0)
+        if ($max_execution_time <= 0) {
             $max_execution_time = '';
+        }
         ?>
         <tr>
             <td><? echo GetMessage("SEARCH_REINDEX_STEP") ?></td>
@@ -280,8 +307,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Reindex"] == "Y") {
     <?endif ?>
 
     <?
-    if (IsModuleInstalled("socialnetwork"))
+    if (IsModuleInstalled("socialnetwork")) {
         echo BeginNote(), GetMessage("SEARCH_REINDEX_SOCNET_MESSAGE"), EndNote();
+    }
 
     require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_admin.php");
 }

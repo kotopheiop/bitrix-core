@@ -22,19 +22,24 @@ class MetaOg extends \Bitrix\Landing\Hook\Page
     protected function getMap()
     {
         return array(
-            'TITLE' => new Field\Text('TITLE', array(
+            'TITLE' => new Field\Text(
+                'TITLE', array(
                 'title' => Loc::getMessage('LANDING_HOOK_METAOG_TITLE'),
                 'placeholder' => Loc::getMessage('LANDING_HOOK_METAOG_TITLE_PLACEHOLDER'),
                 'maxlength' => 140,
                 'searchable' => true
-            )),
-            'DESCRIPTION' => new Field\Textarea('DESCRIPTION', array(
+            )
+            ),
+            'DESCRIPTION' => new Field\Textarea(
+                'DESCRIPTION', array(
                 'title' => Loc::getMessage('LANDING_HOOK_METAOG_DESCRIPTION'),
                 'placeholder' => Loc::getMessage('LANDING_HOOK_METAOG_DESCRIPTION_PLACEHOLDER'),
                 'maxlength' => 300,
                 'searchable' => true
-            )),
-            'IMAGE' => new Field\Hidden('IMAGE', array(
+            )
+            ),
+            'IMAGE' => new Field\Hidden(
+                'IMAGE', array(
                 'title' => Loc::getMessage('LANDING_HOOK_METAOG_PICTURE'),
                 'fetch_data_modification' => function ($value) {
                     if (PublicAction::restApplication()) {
@@ -48,7 +53,8 @@ class MetaOg extends \Bitrix\Landing\Hook\Page
                     }
                     return $value;
                 }
-            ))
+            )
+            )
         );
     }
 
@@ -60,16 +66,20 @@ class MetaOg extends \Bitrix\Landing\Hook\Page
     public static function getAllImages($entityType = Hook::ENTITY_TYPE_LANDING)
     {
         $images = array();
-        $res = HookDataTable::getList(array(
-            'select' => array(
-                'VALUE', 'ENTITY_ID'
-            ),
-            'filter' => array(
-                '=HOOK' => 'METAOG',
-                '=CODE' => 'IMAGE',
-                '=ENTITY_TYPE' => $entityType
+        $res = HookDataTable::getList(
+            array(
+                'select' => array(
+                    'VALUE',
+                    'ENTITY_ID'
+                ),
+                'filter' => array(
+                    '=HOOK' => 'METAOG',
+                    '=CODE' => 'IMAGE',
+                    '=ENTITY_TYPE' => $entityType,
+                    '=PUBLIC' => Hook::getEditMode() ? 'N' : 'Y'
+                )
             )
-        ));
+        );
         while ($row = $res->fetch()) {
             $images[$row['ENTITY_ID']] = $row['VALUE'];
         }
@@ -142,14 +152,26 @@ class MetaOg extends \Bitrix\Landing\Hook\Page
                     if ($key == 'image') {
                         if (is_array($val)) {
                             $val['SRC'] = Manager::getUrlFromFile($val['SRC']);
-                            $output .= '<meta property="' . $rootTag . ':image" content="' . str_replace(' ', '%20', \htmlspecialcharsbx($val['SRC'])) . '" />';
+                            $output .= '<meta property="' . $rootTag . ':image" content="' . str_replace(
+                                    ' ',
+                                    '%20',
+                                    \htmlspecialcharsbx(
+                                        $val['SRC']
+                                    )
+                                ) . '" />';
                             if ($rootTag != 'twitter') {
                                 $output .=
                                     '<meta property="' . $rootTag . ':image:width" content="' . $val['WIDTH'] . '" />' .
                                     '<meta property="' . $rootTag . ':image:height" content="' . $val['HEIGHT'] . '" />';
                             }
                         } else {
-                            $output .= '<meta property="' . $rootTag . ':image" content="' . str_replace(' ', '%20', \htmlspecialcharsbx($val)) . '" />';
+                            $output .= '<meta property="' . $rootTag . ':image" content="' . str_replace(
+                                    ' ',
+                                    '%20',
+                                    \htmlspecialcharsbx(
+                                        $val
+                                    )
+                                ) . '" />';
                         }
                         if ($rootTag == 'twitter') {
                             $output .= '<meta name="twitter:card" content="summary_large_image" />';

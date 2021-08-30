@@ -82,7 +82,7 @@ class Rc
         ];
 
         foreach ($list as $index => $item) {
-            $code = strtoupper($item['CODE']);
+            $code = mb_strtoupper($item['CODE']);
             $msgPrefix = 'SENDER_PRESET_TEMPLATE_RC_' . $code . '_';
             foreach (['NAME', 'DESC', 'TITLE', 'TEXT'] as $key) {
                 $item[$key] = Loc::getMessage($msgPrefix . $key);
@@ -159,17 +159,19 @@ class Rc
             ]
         ];
         foreach (self::getListByType() as $item) {
-            $originalCode = strtolower($item['CODE']);
-            $code = 'rc_' . strtolower($item['CODE']);
+            $originalCode = mb_strtolower($item['CODE']);
+            $code = 'rc_' . mb_strtolower($item['CODE']);
             if ($templateId && $code !== $templateId) {
                 continue;
             }
 
             $segmentTiles = UI\TileView::create();
-            $segments = Segment::getList([
-                'select' => ['ID', 'NAME'],
-                'filter' => ['=CODE' => $item['SEGMENT_CODES']]
-            ]);
+            $segments = Segment::getList(
+                [
+                    'select' => ['ID', 'NAME'],
+                    'filter' => ['=CODE' => $item['SEGMENT_CODES']]
+                ]
+            );
             foreach ($segments as $segment) {
                 $segmentTiles->addTile($segment['ID'], $segment['NAME']);
             }

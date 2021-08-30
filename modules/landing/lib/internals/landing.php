@@ -47,111 +47,167 @@ class LandingTable extends Entity\DataManager
     public static function getMap()
     {
         return array(
-            'ID' => new Entity\IntegerField('ID', array(
+            'ID' => new Entity\IntegerField(
+                'ID', array(
                 'primary' => true,
                 'autocomplete' => true,
                 'title' => 'ID'
-            )),
-            'CODE' => new Entity\StringField('CODE', array(
+            )
+            ),
+            'CODE' => new Entity\StringField(
+                'CODE', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_LANDING_CODE')
-            )),
-            'INITIATOR_APP_CODE' => new Entity\StringField('INITIATOR_APP_CODE', array(
+            )
+            ),
+            'INITIATOR_APP_CODE' => new Entity\StringField(
+                'INITIATOR_APP_CODE', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_LANDING_INITIATOR_APP_CODE')
-            )),
-            'RULE' => new Entity\StringField('RULE', array(
+            )
+            ),
+            'RULE' => new Entity\StringField(
+                'RULE', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_RULE')
-            )),
-            'ACTIVE' => new Entity\StringField('ACTIVE', array(
+            )
+            ),
+            'ACTIVE' => new Entity\StringField(
+                'ACTIVE', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_LANDING_ACTIVE'),
                 'default_value' => 'Y'
-            )),
-            'DELETED' => new Entity\StringField('DELETED', array(
+            )
+            ),
+            'DELETED' => new Entity\StringField(
+                'DELETED', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_SITE_DELETED'),
                 'default_value' => 'N'
-            )),
-            'PUBLIC' => new Entity\StringField('PUBLIC', array(
+            )
+            ),
+            'PUBLIC' => new Entity\StringField(
+                'PUBLIC', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_LANDING_PUBLIC'),
                 'default_value' => 'Y'
-            )),
-            'SYS' => new Entity\StringField('SYS', array(
+            )
+            ),
+            'SYS' => new Entity\StringField(
+                'SYS', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_LANDING_SYSTEM'),
                 'default_value' => 'N'
-            )),
-            'VIEWS' => new Entity\IntegerField('VIEWS', array(
+            )
+            ),
+            'VIEWS' => new Entity\IntegerField(
+                'VIEWS', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_LANDING_VIEWS'),
                 'default_value' => 0
-            )),
-            'TITLE' => new Entity\StringField('TITLE', array(
+            )
+            ),
+            'TITLE' => new Entity\StringField(
+                'TITLE', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_LANDING_TITLE'),
                 'required' => true
-            )),
-            'XML_ID' => new Entity\StringField('XML_ID', array(
+            )
+            ),
+            'XML_ID' => new Entity\StringField(
+                'XML_ID', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_XML_ID')
-            )),
-            'DESCRIPTION' => new Entity\StringField('DESCRIPTION', array(
+            )
+            ),
+            'DESCRIPTION' => new Entity\StringField(
+                'DESCRIPTION', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_DESCRIPTION')
-            )),
-            'TPL_ID' => new Entity\IntegerField('TPL_ID', array(
+            )
+            ),
+            'TPL_ID' => new Entity\IntegerField(
+                'TPL_ID', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_TPL_ID')
-            )),
-            'TPL_CODE' => new Entity\StringField('TPL_CODE', array(
+            )
+            ),
+            'TPL_CODE' => new Entity\StringField(
+                'TPL_CODE', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_TPL_CODE')
-            )),
-            'SITE_ID' => new Entity\IntegerField('SITE_ID', array(
+            )
+            ),
+            'SITE_ID' => new Entity\IntegerField(
+                'SITE_ID', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_SITE_ID'),
                 'required' => true
-            )),
+            )
+            ),
             'SITE' => new Entity\ReferenceField(
                 'SITE',
                 'Bitrix\Landing\Internals\SiteTable',
                 array('=this.SITE_ID' => 'ref.ID')
             ),
-            'SITEMAP' => new Entity\StringField('SITEMAP', array(
+            'AREAS' => new Entity\ReferenceField(
+                'AREAS',
+                'Bitrix\Landing\Internals\TemplateRefTable',
+                array('=this.ID' => 'ref.LANDING_ID')
+            ),
+            'SITEMAP' => new Entity\StringField(
+                'SITEMAP', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_LANDING_SITEMAP'),
                 'default_value' => 'N'
-            )),
-            'FOLDER' => new Entity\StringField('FOLDER', array(
+            )
+            ),
+            'FOLDER' => new Entity\StringField(
+                'FOLDER', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_FOLDER'),
                 'default_value' => 'N'
-            )),
-            'FOLDER_ID' => new Entity\IntegerField('FOLDER_ID', array(
+            )
+            ),
+            'FOLDER_ID' => new Entity\IntegerField(
+                'FOLDER_ID', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_FOLDER_ID')
-            )),
-            'SEARCH_CONTENT' => new Entity\StringField('SEARCH_CONTENT', array(
+            )
+            ),
+            'SEARCH_CONTENT' => new Entity\StringField(
+                'SEARCH_CONTENT', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_SEARCH_CONTENT')
-            )),
-            'VERSION' => new Entity\IntegerField('VERSION', array(
-                'title' => Loc::getMessage('LANDING_TABLE_FIELD_VERSION')
-            )),
-            'CREATED_BY_ID' => new Entity\IntegerField('CREATED_BY_ID', array(
+            )
+            ),
+            'VERSION' => new Entity\IntegerField(
+                'VERSION', array(
+                'title' => Loc::getMessage('LANDING_TABLE_FIELD_VERSION'),
+                'default_value' => 10
+            )
+            ),
+            'CREATED_BY_ID' => new Entity\IntegerField(
+                'CREATED_BY_ID', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_CREATED_BY_ID'),
                 'required' => true
-            )),
+            )
+            ),
             'CREATED_BY' => new Entity\ReferenceField(
                 'CREATED_BY',
                 'Bitrix\Main\UserTable',
                 array('=this.CREATED_BY_ID' => 'ref.ID')
             ),
-            'MODIFIED_BY_ID' => new Entity\IntegerField('MODIFIED_BY_ID', array(
+            'MODIFIED_BY_ID' => new Entity\IntegerField(
+                'MODIFIED_BY_ID', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_MODIFIED_BY_ID'),
                 'required' => true
-            )),
+            )
+            ),
             'MODIFIED_BY' => new Entity\ReferenceField(
                 'MODIFIED_BY',
                 'Bitrix\Main\UserTable',
                 array('=this.MODIFIED_BY_ID' => 'ref.ID')
             ),
-            'DATE_CREATE' => new Entity\DatetimeField('DATE_CREATE', array(
+            'DATE_CREATE' => new Entity\DatetimeField(
+                'DATE_CREATE', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_DATE_CREATE'),
                 'required' => true
-            )),
-            'DATE_MODIFY' => new Entity\DatetimeField('DATE_MODIFY', array(
+            )
+            ),
+            'DATE_MODIFY' => new Entity\DatetimeField(
+                'DATE_MODIFY', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_DATE_MODIFY'),
                 'required' => true
-            )),
-            'DATE_PUBLIC' => new Entity\DatetimeField('DATE_PUBLIC', array(
+            )
+            ),
+            'DATE_PUBLIC' => new Entity\DatetimeField(
+                'DATE_PUBLIC', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_DATE_PUBLIC')
-            ))
+            )
+            )
         );
     }
 
@@ -170,7 +226,10 @@ class LandingTable extends Entity\DataManager
         }
 
         // build filter
-        $buildFilter = Rights::getAccessFilter();
+        $allowedSites = Rights::getAllowedSites();
+        $buildFilter = Rights::getAccessFilter(
+            $allowedSites ? ['SITE_ID' => $allowedSites] : []
+        );
         if (empty($buildFilter)) {
             return $params;
         }
@@ -204,47 +263,24 @@ class LandingTable extends Entity\DataManager
         }
 
         // create runtime fields
-        $runtimeParams = [
-            '=this.SITE.ID' => 'ref.ENTITY_ID',
-            '=ref.ENTITY_TYPE' => [
-                '?', Rights::ENTITY_TYPE_SITE
-            ]
-            /*'=ref.TASK_ID' => [
-                '?', $tasks[$readCode]
-            ]*/
+        $runtimeParams = [];
+        $runtimeParams[] = [
+            'LOGIC' => 'OR',
+            '=this.SITE_ID' => 'ref.ENTITY_ID',
+            '=ref.ENTITY_ID' => [0]
         ];
         if ($extendedRights) {
             $runtimeParams['=ref.ROLE_ID'] = [0];
         } else {
+            $runtimeParams['=ref.ENTITY_TYPE'] = ['?', Rights::ENTITY_TYPE_SITE];
             $runtimeParams['@ref.ROLE_ID'] = [implode(',', $expectedRoles)];
         }
         $params['runtime'][] = new Entity\ReferenceField(
             'RIGHTS',
             'Bitrix\Landing\Internals\RightsTable',
             $runtimeParams,
-            [
-                'join_type' => 'LEFT'
-            ]
+            ['join_type' => 'INNER']
         );
-        if (!$extendedRights) {
-            $params['runtime'][] = new Entity\ReferenceField(
-                'RIGHTS_COMMON',
-                'Bitrix\Landing\Internals\RightsTable',
-                [
-                    '=ref.ENTITY_ID' => [0],
-                    '=ref.ENTITY_TYPE' => [
-                        '?', Rights::ENTITY_TYPE_SITE
-                    ],
-                    /*'=ref.TASK_ID' => [
-                        $tasks[$readCode]
-                    ],*/
-                    '@ref.ROLE_ID' => [implode(',', $expectedRoles)]
-                ],
-                [
-                    'join_type' => 'LEFT'
-                ]
-            );
-        }
 
         $params['group'][] = 'SITE_ID';
 
@@ -271,18 +307,21 @@ class LandingTable extends Entity\DataManager
 
         // get all fields, which we need
         if ($primary) {
-            $res = self::getList([
-                'select' => [
-                    'CODE',
-                    'SITE_ID', 'FOLDER_ID',
-                    'INITIATOR_APP_CODE',
-                    'ID_INDEX' => 'SITE.LANDING_ID_INDEX'
-                ],
-                'filter' => [
-                    'ID' => $primary['ID'],
-                    '=DELETED' => ['Y', 'N']
+            $res = self::getList(
+                [
+                    'select' => [
+                        'CODE',
+                        'SITE_ID',
+                        'FOLDER_ID',
+                        'INITIATOR_APP_CODE',
+                        'ID_INDEX' => 'SITE.LANDING_ID_INDEX'
+                    ],
+                    'filter' => [
+                        'ID' => $primary['ID'],
+                        '=DELETED' => ['Y', 'N']
+                    ]
                 ]
-            ]);
+            );
             $existFields = $res->fetch();
             unset($res);
         }
@@ -296,12 +335,14 @@ class LandingTable extends Entity\DataManager
             )
         ) {
             if (preg_match('#^([\w]+)\_([\d]+)\_([\d]+)$#', $fields['CODE'], $matches)) {
-                $result->setErrors(array(
-                    new Entity\EntityError(
-                        Loc::getMessage('LANDING_TABLE_ERROR_WRONG_CODE_FORMAT'),
-                        'WRONG_CODE_FORMAT'
+                $result->setErrors(
+                    array(
+                        new Entity\EntityError(
+                            Loc::getMessage('LANDING_TABLE_ERROR_WRONG_CODE_FORMAT'),
+                            'WRONG_CODE_FORMAT'
+                        )
                     )
-                ));
+                );
                 return $result;
             }
         }
@@ -315,16 +356,18 @@ class LandingTable extends Entity\DataManager
             isset($existFields['INITIATOR_APP_CODE']) &&
             $existFields['INITIATOR_APP_CODE']
         ) {
-            $res = BlockTable::getList([
-                'select' => [
-                    'ID'
-                ],
-                'filter' => [
-                    'LID' => $primary['ID'],
-                    '=DELETED' => 'N',
-                    '=INITIATOR_APP_CODE' => $existFields['INITIATOR_APP_CODE']
+            $res = BlockTable::getList(
+                [
+                    'select' => [
+                        'ID'
+                    ],
+                    'filter' => [
+                        'LID' => $primary['ID'],
+                        '=DELETED' => 'N',
+                        '=INITIATOR_APP_CODE' => $existFields['INITIATOR_APP_CODE']
+                    ]
                 ]
-            ]);
+            );
             if (!$res->fetch()) {
                 $modifyFields['INITIATOR_APP_CODE'] = null;
             }
@@ -340,23 +383,27 @@ class LandingTable extends Entity\DataManager
             if ($fields['DELETED'] == 'Y' && $primary) {
                 if ($existFields['ID_INDEX'] == $primary['ID']) {
                     // disable only for a few pages in the site
-                    $sitesCheck = self::getList([
-                        'select' => [
-                            'ID'
-                        ],
-                        'filter' => [
-                            'SITE_ID' => $existFields['SITE_ID'],
-                            '=DELETED' => 'N'
-                        ],
-                        'limit' => 2
-                    ])->fetchAll();
+                    $sitesCheck = self::getList(
+                        [
+                            'select' => [
+                                'ID'
+                            ],
+                            'filter' => [
+                                'SITE_ID' => $existFields['SITE_ID'],
+                                '=DELETED' => 'N'
+                            ],
+                            'limit' => 2
+                        ]
+                    )->fetchAll();
                     if (count($sitesCheck) > 1) {
-                        $result->setErrors([
-                            new Entity\EntityError(
-                                Loc::getMessage('LANDING_TABLE_ERROR_LD_CANT_DELETE_MAIN'),
-                                'CANT_DELETE_MAIN'
-                            )
-                        ]);
+                        $result->setErrors(
+                            [
+                                new Entity\EntityError(
+                                    Loc::getMessage('LANDING_TABLE_ERROR_LD_CANT_DELETE_MAIN'),
+                                    'CANT_DELETE_MAIN'
+                                )
+                            ]
+                        );
                         return $result;
                     }
                 }
@@ -365,37 +412,45 @@ class LandingTable extends Entity\DataManager
 
         // get real site id, for check rights call upper level
         if (array_key_exists('SITE_ID', $fields)) {
-            $res = \Bitrix\Landing\Site::getList(array(
-                'select' => array(
-                    'ID'
-                ),
-                'filter' => array(
-                    'ID' => $fields['SITE_ID']
+            $res = \Bitrix\Landing\Site::getList(
+                array(
+                    'select' => array(
+                        'ID'
+                    ),
+                    'filter' => array(
+                        'ID' => $fields['SITE_ID']
+                    )
                 )
-            ));
+            );
             if (!$res->fetch()) {
-                $result->setErrors(array(
-                    new Entity\EntityError(
-                        Loc::getMessage('LANDING_TABLE_ERROR_SITE_NOT_FOUND'),
-                        'SITE_NOT_FOUND'
+                $result->setErrors(
+                    array(
+                        new Entity\EntityError(
+                            Loc::getMessage('LANDING_TABLE_ERROR_SITE_NOT_FOUND'),
+                            'SITE_NOT_FOUND'
+                        )
                     )
-                ));
-                return $result;
-            }
-        } else if ($existFields) {
-            if ($existFields['SITE_ID']) {
-                $fields['SITE_ID'] = $existFields['SITE_ID'];
-            } else {
-                $result->setErrors(array(
-                    new Entity\EntityError(
-                        Loc::getMessage('LANDING_TABLE_ERROR_SITE_NOT_FOUND'),
-                        'SITE_NOT_FOUND'
-                    )
-                ));
+                );
                 return $result;
             }
         } else {
-            $fields['SITE_ID'] = 0;
+            if ($existFields) {
+                if ($existFields['SITE_ID']) {
+                    $fields['SITE_ID'] = $existFields['SITE_ID'];
+                } else {
+                    $result->setErrors(
+                        array(
+                            new Entity\EntityError(
+                                Loc::getMessage('LANDING_TABLE_ERROR_SITE_NOT_FOUND'),
+                                'SITE_NOT_FOUND'
+                            )
+                        )
+                    );
+                    return $result;
+                }
+            } else {
+                $fields['SITE_ID'] = 0;
+            }
         }
 
         // check rights
@@ -409,12 +464,14 @@ class LandingTable extends Entity\DataManager
                     $errMessage = Loc::getMessage(
                         'LANDING_TABLE_ERROR_LD_ACCESS_DENIED_ADD'
                     );
-                    $result->setErrors(array(
-                        new Entity\EntityError(
-                            $errMessage,
-                            'ACCESS_DENIED'
+                    $result->setErrors(
+                        array(
+                            new Entity\EntityError(
+                                $errMessage,
+                                'ACCESS_DENIED'
+                            )
                         )
-                    ));
+                    );
                     return $result;
                 }
             } else {
@@ -429,7 +486,9 @@ class LandingTable extends Entity\DataManager
                 if (in_array(Rights::ACCESS_TYPES['sett'], $rights)) {
                     $freeAccessFields = $fields;
                     $higherAccess = [
-                        'ACTIVE', 'DATE_PUBLIC', 'DELETED'
+                        'ACTIVE',
+                        'DATE_PUBLIC',
+                        'DELETED'
                     ];
                     foreach ($higherAccess as $key) {
                         if (isset($freeAccessFields[$key])) {
@@ -459,12 +518,14 @@ class LandingTable extends Entity\DataManager
                                 'LANDING_TABLE_ERROR_LD_ACCESS_DENIED'
                             );
                         }
-                        $result->setErrors(array(
-                            new Entity\EntityError(
-                                $errMessage,
-                                'ACCESS_DENIED'
+                        $result->setErrors(
+                            array(
+                                new Entity\EntityError(
+                                    $errMessage,
+                                    'ACCESS_DENIED'
+                                )
                             )
-                        ));
+                        );
                         return $result;
                     }
                 }
@@ -482,26 +543,30 @@ class LandingTable extends Entity\DataManager
         // slash in CODE is not allowed
         if (
             array_key_exists('CODE', $fields) &&
-            strpos($fields['CODE'], '/') !== false
+            mb_strpos($fields['CODE'], '/') !== false
         ) {
-            $result->setErrors(array(
-                new Entity\EntityError(
-                    Loc::getMessage('LANDING_TABLE_ERROR_SLASH_IS_NOT_ALLOWED'),
-                    'SLASH_IS_NOT_ALLOWED'
+            $result->setErrors(
+                array(
+                    new Entity\EntityError(
+                        Loc::getMessage('LANDING_TABLE_ERROR_SLASH_IS_NOT_ALLOWED'),
+                        'SLASH_IS_NOT_ALLOWED'
+                    )
                 )
-            ));
+            );
             return $result;
         } // CODE can't be empty
         elseif (
             array_key_exists('CODE', $fields) &&
             $fields['CODE'] == ''
         ) {
-            $result->setErrors(array(
-                new Entity\EntityError(
-                    Loc::getMessage('LANDING_TABLE_ERROR_CANT_BE_EMPTY'),
-                    'CANT_BE_EMPTY'
+            $result->setErrors(
+                array(
+                    new Entity\EntityError(
+                        Loc::getMessage('LANDING_TABLE_ERROR_CANT_BE_EMPTY'),
+                        'CANT_BE_EMPTY'
+                    )
                 )
-            ));
+            );
             return $result;
         } elseif (
             $actionType == self::ACTION_TYPE_ADD && array_key_exists('TITLE', $fields) &&
@@ -513,7 +578,8 @@ class LandingTable extends Entity\DataManager
                 array(
                     'replace_space' => '',
                     'replace_other' => ''
-                ));
+                )
+            );
             if (!$fields['CODE']) {
                 $fields['CODE'] = randString(12);
             }
@@ -533,17 +599,19 @@ class LandingTable extends Entity\DataManager
             $i = 0;
             do {
                 $newCode = $fields['CODE'] . ($i++ > 0 ? $i : '');
-                $res = self::getList(array(
-                    'select' => array(
-                        'ID'
-                    ),
-                    'filter' => array(
-                        '!ID' => $primary ? $primary['ID'] : 0,
-                        'SITE_ID' => $fields['SITE_ID'],
-                        '=CODE' => $newCode,
-                        'CHECK_PERMISSIONS' => 'N'
+                $res = self::getList(
+                    array(
+                        'select' => array(
+                            'ID'
+                        ),
+                        'filter' => array(
+                            '!ID' => $primary ? $primary['ID'] : 0,
+                            'SITE_ID' => $fields['SITE_ID'],
+                            '=CODE' => $newCode,
+                            'CHECK_PERMISSIONS' => 'N'
+                        )
                     )
-                ));
+                );
             } while ($res->fetch());
 
             Landing::enableCheckDeleted();
@@ -561,23 +629,27 @@ class LandingTable extends Entity\DataManager
             array_key_exists('FOLDER_ID', $fields) &&
             $fields['FOLDER_ID'] > 0
         ) {
-            $res = self::getList(array(
-                'select' => array(
-                    'FOLDER'
-                ),
-                'filter' => array(
-                    'ID' => $fields['FOLDER_ID'],
-                    '=FOLDER' => 'Y',
-                    'CHECK_PERMISSIONS' => 'N'
-                )
-            ));
-            if (!$res->fetch()) {
-                $result->setErrors(array(
-                    new Entity\EntityError(
-                        Loc::getMessage('LANDING_TABLE_ERROR_ISNOT_FOLDER'),
-                        'ISNOT_FOLDER'
+            $res = self::getList(
+                array(
+                    'select' => array(
+                        'FOLDER'
+                    ),
+                    'filter' => array(
+                        'ID' => $fields['FOLDER_ID'],
+                        '=FOLDER' => 'Y',
+                        'CHECK_PERMISSIONS' => 'N'
                     )
-                ));
+                )
+            );
+            if (!$res->fetch()) {
+                $result->setErrors(
+                    array(
+                        new Entity\EntityError(
+                            Loc::getMessage('LANDING_TABLE_ERROR_ISNOT_FOLDER'),
+                            'ISNOT_FOLDER'
+                        )
+                    )
+                );
                 return $result;
             }
         }
@@ -588,12 +660,14 @@ class LandingTable extends Entity\DataManager
             $fields['FOLDER'] == 'Y'
         ) {
             if ($existFields['FOLDER_ID'] > 0) {
-                $result->setErrors(array(
-                    new Entity\EntityError(
-                        Loc::getMessage('LANDING_TABLE_ERROR_SUBFOLDER_DISABLED'),
-                        'SUBFOLDER_DISABLED'
+                $result->setErrors(
+                    array(
+                        new Entity\EntityError(
+                            Loc::getMessage('LANDING_TABLE_ERROR_SUBFOLDER_DISABLED'),
+                            'SUBFOLDER_DISABLED'
+                        )
                     )
-                ));
+                );
                 return $result;
             }
         }
@@ -680,17 +754,19 @@ class LandingTable extends Entity\DataManager
         $result = new Entity\EventResult();
         $primary = $event->getParameter('primary');
         if ($primary) {
-            $res = self::getList([
-                'select' => [
-                    'SITE_ID'
-                ],
-                'filter' => [
-                    'ID' => $primary['ID'],
-                    'CHECK_PERMISSIONS' => 'N',
-                    '=SITE.DELETED' => ['Y', 'N'],
-                    '=DELETED' => ['Y', 'N']
+            $res = self::getList(
+                [
+                    'select' => [
+                        'SITE_ID'
+                    ],
+                    'filter' => [
+                        'ID' => $primary['ID'],
+                        'CHECK_PERMISSIONS' => 'N',
+                        '=SITE.DELETED' => ['Y', 'N'],
+                        '=DELETED' => ['Y', 'N']
+                    ]
                 ]
-            ]);
+            );
             if ($site = $res->fetch()) {
                 // check delete access
                 $hasAccess = Rights::hasAccessForSite(
@@ -698,35 +774,53 @@ class LandingTable extends Entity\DataManager
                     Rights::ACCESS_TYPES['delete']
                 );
                 if (!$hasAccess) {
-                    $result->setErrors(array(
-                        new Entity\EntityError(
-                            Loc::getMessage('LANDING_TABLE_ERROR_LD_ACCESS_DENIED_DELETED'),
-                            'ACCESS_DENIED'
+                    $result->setErrors(
+                        array(
+                            new Entity\EntityError(
+                                Loc::getMessage('LANDING_TABLE_ERROR_LD_ACCESS_DENIED_DELETED'),
+                                'ACCESS_DENIED'
+                            )
                         )
-                    ));
+                    );
                     return $result;
                 }
             }
-            // check if it is folder
-            $res = self::getList(array(
-                'select' => array(
-                    'ID'
-                ),
-                'filter' => array(
-                    'FOLDER_ID' => $primary['ID'],
-                    'CHECK_PERMISSIONS' => 'N',
-                    '=SITE.DELETED' => ['Y', 'N'],
-                    '=DELETED' => ['Y', 'N']
-                ),
-                'limit' => 1
-            ));
-            if ($res->fetch()) {
-                $result->setErrors(array(
-                    new Entity\EntityError(
-                        Loc::getMessage('LANDING_TABLE_ERROR_PAGE_FOLDER_NOT_EMPTY'),
-                        'ERROR_PAGE_FOLDER_NOT_EMPTY'
+            // check lock status
+            if (\Bitrix\Landing\Lock::isLandingDeleteLocked($primary['ID'])) {
+                $result->setErrors(
+                    array(
+                        new Entity\EntityError(
+                            Loc::getMessage('LANDING_TABLE_ERROR_LD_IS_LOCK'),
+                            'LANDING_IS_LOCK'
+                        )
                     )
-                ));
+                );
+                return $result;
+            }
+            // check if it is folder
+            $res = self::getList(
+                array(
+                    'select' => array(
+                        'ID'
+                    ),
+                    'filter' => array(
+                        'FOLDER_ID' => $primary['ID'],
+                        'CHECK_PERMISSIONS' => 'N',
+                        '=SITE.DELETED' => ['Y', 'N'],
+                        '=DELETED' => ['Y', 'N']
+                    ),
+                    'limit' => 1
+                )
+            );
+            if ($res->fetch()) {
+                $result->setErrors(
+                    array(
+                        new Entity\EntityError(
+                            Loc::getMessage('LANDING_TABLE_ERROR_PAGE_FOLDER_NOT_EMPTY'),
+                            'ERROR_PAGE_FOLDER_NOT_EMPTY'
+                        )
+                    )
+                );
             }
         }
         return $result;
@@ -764,21 +858,26 @@ class LandingTable extends Entity\DataManager
 
         // set current landing as index, if this is single page
         if ($primary && isset($fields['SITE_ID'])) {
-            $res = self::getList(array(
-                'select' => array(
-                    'ID'
-                ),
-                'filter' => array(
-                    'SITE_ID' => $fields['SITE_ID'],
-                    'CHECK_PERMISSIONS' => 'N'
-                ),
-                'limit' => 2
-            ));
+            $res = self::getList(
+                array(
+                    'select' => array(
+                        'ID'
+                    ),
+                    'filter' => array(
+                        'SITE_ID' => $fields['SITE_ID'],
+                        'CHECK_PERMISSIONS' => 'N'
+                    ),
+                    'limit' => 2
+                )
+            );
             if (count($res->fetchAll()) == 1) {
                 Rights::setOff();
-                SiteTable::update($fields['SITE_ID'], array(
-                    'LANDING_ID_INDEX' => $primary['ID']
-                ));
+                SiteTable::update(
+                    $fields['SITE_ID'],
+                    array(
+                        'LANDING_ID_INDEX' => $primary['ID']
+                    )
+                );
                 Rights::setOn();
             }
         }
@@ -833,26 +932,30 @@ class LandingTable extends Entity\DataManager
             \Bitrix\Landing\UrlRewrite::removeForLanding($primary['ID']);
 
             // if delete index page, make new page is index
-            $res = \Bitrix\Landing\Site::getList(array(
-                'select' => array(
-                    'ID'
-                ),
-                'filter' => array(
-                    'LANDING_ID_INDEX' => $primary['ID']
-                )
-            ));
-            if ($site = $res->fetch()) {
-                $res = Landing::getList(array(
+            $res = \Bitrix\Landing\Site::getList(
+                array(
                     'select' => array(
                         'ID'
                     ),
                     'filter' => array(
-                        'SITE_ID' => $site['ID']
-                    ),
-                    'order' => array(
-                        'ID' => 'asc'
+                        'LANDING_ID_INDEX' => $primary['ID']
                     )
-                ));
+                )
+            );
+            if ($site = $res->fetch()) {
+                $res = Landing::getList(
+                    array(
+                        'select' => array(
+                            'ID'
+                        ),
+                        'filter' => array(
+                            'SITE_ID' => $site['ID']
+                        ),
+                        'order' => array(
+                            'ID' => 'asc'
+                        )
+                    )
+                );
                 while ($page = $res->fetch()) {
                     if (!TemplateRef::landingIsArea($page['ID'])) {
                         \Bitrix\Landing\Site::update(

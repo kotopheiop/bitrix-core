@@ -47,8 +47,9 @@ class Calculation
     public static function setConfig(array $config)
     {
         $config = static::checkConfig($config);
-        if (empty($config))
+        if (empty($config)) {
             return;
+        }
 
         self::$config = array_merge(self::$config, $config);
     }
@@ -80,8 +81,9 @@ class Calculation
      */
     public static function popConfig()
     {
-        if (empty(self::$stack))
+        if (empty(self::$stack)) {
             return;
+        }
         static::setConfig(array_pop(self::$stack));
     }
 
@@ -92,7 +94,8 @@ class Calculation
      */
     public static function getCurrency()
     {
-        return (self::$config['CURRENCY'] !== null ? self::$config['CURRENCY'] : Currency\CurrencyManager::getBaseCurrency());
+        return (self::$config['CURRENCY'] !== null ? self::$config['CURRENCY'] : Currency\CurrencyManager::getBaseCurrency(
+        ));
     }
 
     /**
@@ -227,8 +230,9 @@ class Calculation
                     default:
                         break;
                 }
-                if ($checked)
+                if ($checked) {
                     $result[$field] = $value;
+                }
             }
             unset($field, $value);
         }

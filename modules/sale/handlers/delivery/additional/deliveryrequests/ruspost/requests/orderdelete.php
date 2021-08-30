@@ -35,22 +35,26 @@ class OrderDelete extends Base
 
         if (is_array($rawData['errors'])) {
             foreach ($rawData['errors'] as $error) {
-                if (!isset($requestData[$error['position']]))
+                if (!isset($requestData[$error['position']])) {
                     continue;
+                }
 
                 $externalId = $requestData[$error['position']];
                 $internalId = $idsMapFlipped[$externalId];
 
-                if (!isset($deleteResults[$internalId]))
+                if (!isset($deleteResults[$internalId])) {
                     $deleteResults[$internalId] = new Requests\ShipmentResult($internalId, $externalId);
+                }
 
-                if ($error['error-code'] == 'NOT_FOUND')
+                if ($error['error-code'] == 'NOT_FOUND') {
                     continue;
+                }
 
                 $message = Reference::getErrorDescription($error['error-code'], 'DELETE /1.0/backlog');
 
-                if (!empty($error['error-details']))
+                if (!empty($error['error-details'])) {
                     $message .= ' (' . $error['error-details'] . ')';
+                }
 
                 $deleteResults[$internalId]->addError(new Main\Error($message));
             }
@@ -60,8 +64,9 @@ class OrderDelete extends Base
             foreach ($rawData['result-ids'] as $externalId) {
                 $internalId = $idsMapFlipped[$externalId];
 
-                if (!isset($deleteResults[$internalId]))
+                if (!isset($deleteResults[$internalId])) {
                     $deleteResults[$internalId] = new Requests\ShipmentResult($internalId, $externalId);
+                }
             }
         }
 
@@ -78,20 +83,29 @@ class OrderDelete extends Base
     {
         $result = new Requests\Result();
 
-        $res = ShipmentTable::getList(array(
-            'filter' => array(
-                '=SHIPMENT_ID' => $shipmentIds
+        $res = ShipmentTable::getList(
+            array(
+                'filter' => array(
+                    '=SHIPMENT_ID' => $shipmentIds
+                )
             )
-        ));
+        );
 
-        while ($row = $res->fetch())
-            if (strlen($row['EXTERNAL_ID']) > 0)
+        while ($row = $res->fetch()) {
+            if ($row['EXTERNAL_ID'] <> '') {
                 $this->idsMap[$row['SHIPMENT_ID']] = $row['EXTERNAL_ID'];
+            }
+        }
 
-        if (!empty($this->idsMap))
+        if (!empty($this->idsMap)) {
             $result->setData(array_values($this->idsMap));
-        else
-            $result->addError(new Main\Error(Loc::getMessage('SALE_DLVRS_ADD_DREQ_ROD_01') . ' "' . implode('", "', $shipmentIds) . '"'));
+        } else {
+            $result->addError(
+                new Main\Error(
+                    Loc::getMessage('SALE_DLVRS_ADD_DREQ_ROD_01') . ' "' . implode('", "', $shipmentIds) . '"'
+                )
+            );
+        }
 
         return $result;
     }

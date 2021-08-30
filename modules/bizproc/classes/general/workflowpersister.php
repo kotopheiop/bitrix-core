@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 /**
@@ -54,7 +55,9 @@ class CBPAllWorkflowPersister
                 $DB->Query(
                     "UPDATE b_bp_workflow_instance SET " .
                     "	OWNER_ID = '" . $DB->ForSql($this->serviceInstanceId) . "', " .
-                    "	OWNED_UNTIL = " . $DB->CharToDateFunction(date($GLOBALS["DB"]->DateFormatToPHP(FORMAT_DATETIME), $this->GetOwnershipTimeout())) . " " .
+                    "	OWNED_UNTIL = " . $DB->CharToDateFunction(
+                        date($GLOBALS["DB"]->DateFormatToPHP(FORMAT_DATETIME), $this->GetOwnershipTimeout())
+                    ) . " " .
                     "WHERE ID = '" . $DB->ForSql($instanceId) . "'"
                 );
             } elseif (!$silent) {
@@ -92,8 +95,12 @@ class CBPAllWorkflowPersister
                         "	WORKFLOW = '" . $DB->ForSql($buffer) . "', " .
                         "	STATUS = " . intval($status) . ", " .
                         "	MODIFIED = " . $DB->CurrentTimeFunction() . ", " .
-                        "	OWNER_ID = " . ($bUnlocked ? "NULL" : "'" . $DB->ForSql($this->serviceInstanceId) . "'") . ", " .
-                        "	OWNED_UNTIL = " . ($bUnlocked ? "NULL" : $DB->CharToDateFunction(date($GLOBALS["DB"]->DateFormatToPHP(FORMAT_DATETIME), $this->GetOwnershipTimeout()))) . " " .
+                        "	OWNER_ID = " . ($bUnlocked ? "NULL" : "'" . $DB->ForSql(
+                                $this->serviceInstanceId
+                            ) . "'") . ", " .
+                        "	OWNED_UNTIL = " . ($bUnlocked ? "NULL" : $DB->CharToDateFunction(
+                            date($GLOBALS["DB"]->DateFormatToPHP(FORMAT_DATETIME), $this->GetOwnershipTimeout())
+                        )) . " " .
                         "WHERE ID = '" . $DB->ForSql($id) . "' "
                     );
                 } else {
@@ -102,7 +109,9 @@ class CBPAllWorkflowPersister
             } else {
                 $status = (int)$status;
                 $ownerId = ($bUnlocked ? "NULL" : "'" . $DB->ForSql($this->serviceInstanceId) . "'");
-                $ownedUntil = ($bUnlocked ? "NULL" : $DB->CharToDateFunction(date($GLOBALS["DB"]->DateFormatToPHP(FORMAT_DATETIME), $this->GetOwnershipTimeout())));
+                $ownedUntil = ($bUnlocked ? "NULL" : $DB->CharToDateFunction(
+                    date($GLOBALS["DB"]->DateFormatToPHP(FORMAT_DATETIME), $this->GetOwnershipTimeout())
+                ));
 
                 $moduleId = isset($creationData['MODULE_ID']) ? $creationData['MODULE_ID'] : '';
                 $entity = isset($creationData['ENTITY']) ? $creationData['ENTITY'] : '';
@@ -133,19 +142,22 @@ class CBPAllWorkflowPersister
     public function LoadWorkflow($instanceId, $silent = false)
     {
         $state = $this->RetrieveWorkflow($instanceId, $silent);
-        if (strlen($state) > 0)
+        if ($state <> '') {
             return $this->RestoreFromSerializedForm($state);
+        }
 
         throw new Exception("WorkflowNotFound");
     }
 
     private function RestoreFromSerializedForm($buffer)
     {
-        if ($this->useGZipCompression)
+        if ($this->useGZipCompression) {
             $buffer = gzuncompress($buffer);
+        }
 
-        if (strlen($buffer) <= 0)
+        if ($buffer == '') {
             throw new Exception("EmptyWorkflowInstance");
+        }
 
         $activity = CBPActivity::Load($buffer);
         return $activity;
@@ -154,21 +166,24 @@ class CBPAllWorkflowPersister
     public static function __InsertWorkflowHack($id, $buffer)
     {
         $p = CBPWorkflowPersister::GetPersister();
-        if ($p->useGZipCompression)
+        if ($p->useGZipCompression) {
             $buffer = gzcompress($buffer, 9);
+        }
         $p->InsertWorkflow($id, $buffer, 1, true);
     }
 
     public function SaveWorkflow(CBPActivity $rootActivity, $bUnlocked)
     {
-        if ($rootActivity == null)
+        if ($rootActivity == null) {
             throw new Exception("rootActivity");
+        }
 
         $workflowStatus = $rootActivity->GetWorkflowStatus();
 
         $buffer = "";
-        if (($workflowStatus != CBPWorkflowStatus::Completed) && ($workflowStatus != CBPWorkflowStatus::Terminated))
+        if (($workflowStatus != CBPWorkflowStatus::Completed) && ($workflowStatus != CBPWorkflowStatus::Terminated)) {
             $buffer = $this->GetSerializedForm($rootActivity);
+        }
 
         $creationData = [];
         if ($rootActivity->workflow->isNew()) {
@@ -185,15 +200,22 @@ class CBPAllWorkflowPersister
             }
         }
 
-        $this->InsertWorkflow($rootActivity->GetWorkflowInstanceId(), $buffer, $workflowStatus, $bUnlocked, $creationData);
+        $this->InsertWorkflow(
+            $rootActivity->GetWorkflowInstanceId(),
+            $buffer,
+            $workflowStatus,
+            $bUnlocked,
+            $creationData
+        );
     }
 
     private function GetSerializedForm(CBPActivity $rootActivity)
     {
         $buffer = $rootActivity->Save();
 
-        if ($this->useGZipCompression)
+        if ($this->useGZipCompression) {
             $buffer = gzcompress($buffer, 9);
+        }
         return $buffer;
     }
 
@@ -201,8 +223,9 @@ class CBPAllWorkflowPersister
     {
         global $DB;
 
-        if ($rootActivity == null)
+        if ($rootActivity == null) {
             throw new Exception("rootActivity");
+        }
 
         $DB->Query(
             "UPDATE b_bp_workflow_instance SET " .

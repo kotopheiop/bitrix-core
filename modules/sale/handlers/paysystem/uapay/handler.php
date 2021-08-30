@@ -58,13 +58,12 @@ class UaPayHandler
             } else {
                 $result->addErrors($showTemplateResult->getErrors());
             }
+
+            if ($params["URL"]) {
+                $result->setPaymentUrl($params["URL"]);
+            }
         } else {
             $result->addErrors($invoiceResult->getErrors());
-        }
-
-        if (!$result->isSuccess()) {
-            $error = "UAPAY: initiatePay: " . join("\n", $result->getErrorMessages());
-            PaySystem\Logger::addError($error);
         }
 
         return $result;
@@ -116,7 +115,7 @@ class UaPayHandler
             return $result;
         }
 
-        PaySystem\Logger::addDebugInfo("UAPAY: createSession payload: " . self::encode($payloadData));
+        PaySystem\Logger::addDebugInfo(__CLASS__ . ": createSession payload: " . self::encode($payloadData));
 
         $result->setData(["id" => $payloadData["id"]]);
         return $result;
@@ -160,7 +159,7 @@ class UaPayHandler
                 "callbackUrl" => $this->getBusinessValue($payment, "UAPAY_CALLBACK_URL"),
                 "description" => $this->getPaymentDescription($payment),
                 "amount" => (int)PriceMaths::roundPrecision($payment->getSum() * 100),
-                "redirectUrl" => $this->getBusinessValue($payment, "UAPAY_REDIRECT_URL"),
+                "redirectUrl" => $this->getRedirectUrl($payment),
                 "extraInfo" => self::encode($extraInfo),
             ],
         ];
@@ -189,11 +188,20 @@ class UaPayHandler
             return $result;
         }
 
-        PaySystem\Logger::addDebugInfo("UAPAY: createInvoice payload: " . self::encode($payloadData));
+        PaySystem\Logger::addDebugInfo(__CLASS__ . ": createInvoice payload: " . self::encode($payloadData));
 
         $result->setPsData(["PS_INVOICE_ID" => $payloadData["id"]]);
         $result->setData($payloadData);
         return $result;
+    }
+
+    /**
+     * @param Payment $payment
+     * @return mixed|string
+     */
+    private function getRedirectUrl(Payment $payment)
+    {
+        return $this->getBusinessValue($payment, 'UAPAY_REDIRECT_URL') ?: $this->service->getContext()->getUrl();
     }
 
     /**
@@ -241,7 +249,9 @@ class UaPayHandler
                     if ($validationResult->isSuccess()) {
                         $payloadData = self::getPayload($sendData["data"]["token"]);
                         if ($payloadData) {
-                            PaySystem\Logger::addDebugInfo("UAPAY: refund payload: " . self::encode($payloadData));
+                            PaySystem\Logger::addDebugInfo(
+                                __CLASS__ . ": refund payload: " . self::encode($payloadData)
+                            );
                         } else {
                             $result->addError(new Main\Error(Loc::getMessage("SALE_HPS_UAPAY_ERROR_PARSE_JWT")));
                         }
@@ -257,7 +267,7 @@ class UaPayHandler
         if ($result->isSuccess()) {
             $result->setOperationType(PaySystem\ServiceResult::MONEY_LEAVING);
         } else {
-            PaySystem\Logger::addError("UAPAY: refund: " . join("\n", $result->getErrorMessages()));
+            PaySystem\Logger::addError(__CLASS__ . ": refund: " . join("\n", $result->getErrorMessages()));
         }
 
         return $result;
@@ -288,7 +298,7 @@ class UaPayHandler
         $params["token"] = $this->getJwt($payment, $params);
         $postData = self::encode($params);
 
-        PaySystem\Logger::addDebugInfo("UAPAY: request data: " . $postData);
+        PaySystem\Logger::addDebugInfo(__CLASS__ . ": request data: " . $postData);
 
         $response = $httpClient->post($url, $postData);
         if ($response === false) {
@@ -300,13 +310,20 @@ class UaPayHandler
             return $result;
         }
 
-        PaySystem\Logger::addDebugInfo("UAPAY: response data: " . $response);
+        PaySystem\Logger::addDebugInfo(__CLASS__ . ": response data: " . $response);
 
         $httpStatus = $httpClient->getStatus();
         if ($httpStatus !== 200) {
-            $result->addError(new Main\Error(Loc::getMessage("SALE_HPS_UAPAY_ERROR_HTTP_STATUS", [
-                "#STATUS_CODE#" => $httpStatus
-            ])));
+            $result->addError(
+                new Main\Error(
+                    Loc::getMessage(
+                        "SALE_HPS_UAPAY_ERROR_HTTP_STATUS",
+                        [
+                            "#STATUS_CODE#" => $httpStatus
+                        ]
+                    )
+                )
+            );
             return $result;
         }
 
@@ -452,14 +469,20 @@ class UaPayHandler
         $inputStream = self::readFromStream();
         $data = self::decode($inputStream);
         if ($payloadData = self::getPayload($data["token"])) {
+            PaySystem\Logger::addDebugInfo(__CLASS__ . ": processRequest payloadData: " . self::encode($payloadData));
             if ($this->isTokenCorrect($data["token"], $payment)) {
-                if ($payloadData["paymentStatus"] === self::PAYMENT_STATUS_FINISHED && isset($payloadData["id"])) {
-                    $description = Loc::getMessage("SALE_HPS_UAPAY_TRANSACTION", [
-                        "#ID#" => $payloadData["id"],
-                        "#PAYMENT_NUMBER#" => $payloadData["paymentNumber"]
-                    ]);
+                $paymentId = $payloadData["paymentId"] ?? $payloadData["id"];
+                if ($payloadData["paymentStatus"] === self::PAYMENT_STATUS_FINISHED && $paymentId) {
+                    $description = Loc::getMessage(
+                        "SALE_HPS_UAPAY_TRANSACTION",
+                        [
+                            "#ID#" => $payloadData["id"],
+                            "#PAYMENT_NUMBER#" => $payloadData["paymentNumber"]
+                        ]
+                    );
+                    $invoiceId = $payloadData["invoiceId"] ?? $payloadData["orderId"];
                     $fields = array(
-                        "PS_INVOICE_ID" => $payloadData["orderId"] . self::INVOICE_ID_DELIMITER . $payloadData["id"],
+                        "PS_INVOICE_ID" => $invoiceId . self::INVOICE_ID_DELIMITER . $paymentId,
                         "PS_STATUS_CODE" => $payloadData["paymentStatus"],
                         "PS_STATUS_DESCRIPTION" => $description,
                         "PS_SUM" => $payloadData["amount"] / 100,
@@ -471,7 +494,10 @@ class UaPayHandler
                         $fields["PS_STATUS"] = "Y";
 
                         PaySystem\Logger::addDebugInfo(
-                            "UAPAY: PS_CHANGE_STATUS_PAY=" . $this->getBusinessValue($payment, "PS_CHANGE_STATUS_PAY")
+                            __CLASS__ . ": PS_CHANGE_STATUS_PAY=" . $this->getBusinessValue(
+                                $payment,
+                                "PS_CHANGE_STATUS_PAY"
+                            )
                         );
 
                         if ($this->getBusinessValue($payment, "PS_CHANGE_STATUS_PAY") === "Y") {
@@ -493,7 +519,7 @@ class UaPayHandler
         }
 
         if (!$result->isSuccess()) {
-            $error = "UAPAY: processRequest: " . join("\n", $result->getErrorMessages());
+            $error = __CLASS__ . ": processRequest: " . join("\n", $result->getErrorMessages());
             PaySystem\Logger::addError($error);
         }
 
@@ -512,7 +538,9 @@ class UaPayHandler
     private function isSumCorrect(Payment $payment, $amount)
     {
         PaySystem\Logger::addDebugInfo(
-            "UAPAY: sum=" . PriceMaths::roundPrecision($amount) . "; paymentSum=" . PriceMaths::roundPrecision($payment->getSum())
+            __CLASS__ . ": sum=" . PriceMaths::roundPrecision($amount) . "; paymentSum=" . PriceMaths::roundPrecision(
+                $payment->getSum()
+            )
         );
 
         return PriceMaths::roundPrecision($amount) === PriceMaths::roundPrecision($payment->getSum());
@@ -664,7 +692,7 @@ class UaPayHandler
      */
     private static function urlSafeBase64Decode($input)
     {
-        $remainder = strlen($input) % 4;
+        $remainder = mb_strlen($input) % 4;
         if ($remainder) {
             $padLength = 4 - $remainder;
             $input .= str_repeat("=", $padLength);

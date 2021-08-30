@@ -43,35 +43,47 @@ class DiscountEntitiesTable extends Main\Entity\DataManager
     public static function getMap()
     {
         return array(
-            'ID' => new Main\Entity\IntegerField('ID', array(
+            'ID' => new Main\Entity\IntegerField(
+                'ID', array(
                 'primary' => true,
                 'autocomplete' => true,
                 'title' => Loc::getMessage('DISCOUNT_ENTITIES_ENTITY_ID_FIELD')
-            )),
-            'DISCOUNT_ID' => new Main\Entity\IntegerField('DISCOUNT_ID', array(
+            )
+            ),
+            'DISCOUNT_ID' => new Main\Entity\IntegerField(
+                'DISCOUNT_ID', array(
                 'required' => true,
                 'title' => Loc::getMessage('DISCOUNT_ENTITIES_ENTITY_DISCOUNT_ID_FIELD')
-            )),
-            'MODULE_ID' => new Main\Entity\StringField('MODULE_ID', array(
+            )
+            ),
+            'MODULE_ID' => new Main\Entity\StringField(
+                'MODULE_ID', array(
                 'required' => true,
                 'validation' => array(__CLASS__, 'validateModuleId'),
                 'title' => Loc::getMessage('DISCOUNT_ENTITIES_ENTITY_MODULE_ID_FIELD')
-            )),
-            'ENTITY' => new Main\Entity\StringField('ENTITY', array(
+            )
+            ),
+            'ENTITY' => new Main\Entity\StringField(
+                'ENTITY', array(
                 'required' => true,
                 'validation' => array(__CLASS__, 'validateEntity'),
                 'title' => Loc::getMessage('DISCOUNT_ENTITIES_ENTITY_ENTITY_FIELD')
-            )),
-            'FIELD_ENTITY' => new Main\Entity\StringField('FIELD_ENTITY', array(
+            )
+            ),
+            'FIELD_ENTITY' => new Main\Entity\StringField(
+                'FIELD_ENTITY', array(
                 'required' => true,
                 'validation' => array(__CLASS__, 'validateFieldEntity'),
                 'title' => Loc::getMessage('DISCOUNT_ENTITIES_ENTITY_FIELD_ENTITY_FIELD')
-            )),
-            'FIELD_TABLE' => new Main\Entity\StringField('FIELD_TABLE', array(
+            )
+            ),
+            'FIELD_TABLE' => new Main\Entity\StringField(
+                'FIELD_TABLE', array(
                 'required' => true,
                 'validation' => array(__CLASS__, 'validateFieldTable'),
                 'title' => Loc::getMessage('DISCOUNT_ENTITIES_ENTITY_FIELD_TABLE_FIELD'),
-            )),
+            )
+            ),
             'DISCOUNT' => new Main\Entity\ReferenceField(
                 'DISCOUNT',
                 'Bitrix\Sale\Internals\Discount',
@@ -138,12 +150,15 @@ class DiscountEntitiesTable extends Main\Entity\DataManager
     public static function deleteByDiscount($discount)
     {
         $discount = (int)$discount;
-        if ($discount <= 0)
+        if ($discount <= 0) {
             return;
+        }
         $conn = Application::getConnection();
         $helper = $conn->getSqlHelper();
         $conn->queryExecute(
-            'delete from ' . $helper->quote(self::getTableName()) . ' where ' . $helper->quote('DISCOUNT_ID') . ' = ' . $discount
+            'delete from ' . $helper->quote(self::getTableName()) . ' where ' . $helper->quote(
+                'DISCOUNT_ID'
+            ) . ' = ' . $discount
         );
     }
 
@@ -158,8 +173,9 @@ class DiscountEntitiesTable extends Main\Entity\DataManager
     public static function updateByDiscount($discount, $entityList, $clear)
     {
         $discount = (int)$discount;
-        if ($discount <= 0)
+        if ($discount <= 0) {
             return false;
+        }
         $clear = ($clear === true);
         if ($clear) {
             self::deleteByDiscount($discount);
@@ -172,12 +188,14 @@ class DiscountEntitiesTable extends Main\Entity\DataManager
                     'ENTITY' => $entity['ENTITY'],
                     'FIELD_ENTITY' => $entity['FIELD_ENTITY'],
                 );
-                if (is_array($fields['FIELD_ENTITY']))
+                if (is_array($fields['FIELD_ENTITY'])) {
                     $fields['FIELD_ENTITY'] = implode('-', $fields['FIELD_ENTITY']);
+                }
                 if (isset($entity['FIELD_TABLE']) && is_array($entity['FIELD_TABLE'])) {
                     foreach ($entity['FIELD_TABLE'] as $oneField) {
-                        if (empty($oneField))
+                        if (empty($oneField)) {
                             continue;
+                        }
                         $fields['FIELD_TABLE'] = $oneField;
                         $result = self::add($fields);
                     }
@@ -207,31 +225,37 @@ class DiscountEntitiesTable extends Main\Entity\DataManager
         if (!empty($discountList) && is_array($discountList)) {
             Main\Type\Collection::normalizeArrayValuesByInt($discountList);
             if (!empty($discountList)) {
-                if (!is_array($filter))
+                if (!is_array($filter)) {
                     $filter = array();
+                }
 
                 $discountRows = array_chunk($discountList, 500);
                 foreach ($discountRows as &$row) {
                     $filter['@DISCOUNT_ID'] = $row;
 
-                    $entityIterator = self::getList(array(
-                        'select' => array('DISCOUNT_ID', 'MODULE_ID', 'ENTITY', 'FIELD_ENTITY', 'FIELD_TABLE'),
-                        'filter' => $filter
-                    ));
+                    $entityIterator = self::getList(
+                        array(
+                            'select' => array('DISCOUNT_ID', 'MODULE_ID', 'ENTITY', 'FIELD_ENTITY', 'FIELD_TABLE'),
+                            'filter' => $filter
+                        )
+                    );
                     if ($groupModule) {
                         while ($entity = $entityIterator->fetch()) {
                             unset($entity['DISCOUNT_ID']);
-                            if (!isset($result[$entity['MODULE_ID']]))
+                            if (!isset($result[$entity['MODULE_ID']])) {
                                 $result[$entity['MODULE_ID']] = array();
-                            if (!isset($result[$entity['MODULE_ID']][$entity['ENTITY']]))
+                            }
+                            if (!isset($result[$entity['MODULE_ID']][$entity['ENTITY']])) {
                                 $result[$entity['MODULE_ID']][$entity['ENTITY']] = array();
+                            }
                             $result[$entity['MODULE_ID']][$entity['ENTITY']][$entity['FIELD_ENTITY']] = $entity;
                         }
                     } else {
                         while ($entity = $entityIterator->fetch()) {
                             $entity['DISCOUNT_ID'] = (int)$entity['DISCOUNT_ID'];
-                            if (!isset($result[$entity['DISCOUNT_ID']]))
+                            if (!isset($result[$entity['DISCOUNT_ID']])) {
                                 $result[$entity['DISCOUNT_ID']] = array();
+                            }
                             $result[$entity['DISCOUNT_ID']][] = $entity;
                         }
                     }

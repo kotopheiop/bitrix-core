@@ -49,10 +49,12 @@ class ExportTreeUkrainTable extends ExportTreeTable
         if ($this->types == false) {
             $res = $dbConnection->query('select ID, NAME, NAME_RU from b_tmp_ukrain_settlement_type');
             while ($item = $res->fetch()) {
-                $this->types[$item['ID']] = array('NAME' => array(
-                    'ua' => array('NAME' => $item['NAME']),
-                    'ru' => array('NAME' => $item['NAME_RU'])
-                ));
+                $this->types[$item['ID']] = array(
+                    'NAME' => array(
+                        'ua' => array('NAME' => $item['NAME']),
+                        'ru' => array('NAME' => $item['NAME_RU'])
+                    )
+                );
             }
         }
 
@@ -69,9 +71,11 @@ class ExportTreeUkrainTable extends ExportTreeTable
         unset($data['ID']);
 
         if (isset($data['ZIP'])) {
-            $data['EXTERNALS'] = serialize(array(
-                'ZIP' => $data['ZIP']
-            ));
+            $data['EXTERNALS'] = serialize(
+                array(
+                    'ZIP' => $data['ZIP']
+                )
+            );
         }
 
         $res = self::add($data);
@@ -86,27 +90,35 @@ class ExportTreeUkrainTable extends ExportTreeTable
     public function addRegion($params)
     {
         $dbConnection = Main\HttpApplication::getConnection();
-        $item = $dbConnection->query("select NAME, NAME_RU from b_tmp_ukrain_region where ID = '" . intval($params['ID']) . "'")->fetch();
+        $item = $dbConnection->query(
+            "select NAME, NAME_RU from b_tmp_ukrain_region where ID = '" . intval($params['ID']) . "'"
+        )->fetch();
 
-        return $this->addNode(array(
-            'ID' => $params['ID'],
-            'TYPE_CODE' => 'REGION',
-            'PARENT_CODE' => $params['PARENT_CODE'],
-            'NAME' => $this->getNames($params['ID'], 'REGION')
-        ));
+        return $this->addNode(
+            array(
+                'ID' => $params['ID'],
+                'TYPE_CODE' => 'REGION',
+                'PARENT_CODE' => $params['PARENT_CODE'],
+                'NAME' => $this->getNames($params['ID'], 'REGION')
+            )
+        );
     }
 
     public function addArea($params)
     {
         $dbConnection = Main\HttpApplication::getConnection();
-        $item = $dbConnection->query("select NAME, NAME_RU from b_tmp_ukrain_area where ID = '" . intval($params['ID']) . "'")->fetch();
+        $item = $dbConnection->query(
+            "select NAME, NAME_RU from b_tmp_ukrain_area where ID = '" . intval($params['ID']) . "'"
+        )->fetch();
 
-        return $this->addNode(array(
-            'ID' => $params['ID'],
-            'TYPE_CODE' => 'AREA',
-            'PARENT_CODE' => $params['PARENT_CODE'],
-            'NAME' => $this->getNames($params['ID'], 'AREA')
-        ));
+        return $this->addNode(
+            array(
+                'ID' => $params['ID'],
+                'TYPE_CODE' => 'AREA',
+                'PARENT_CODE' => $params['PARENT_CODE'],
+                'NAME' => $this->getNames($params['ID'], 'AREA')
+            )
+        );
     }
 
     public function getNames($id, $type)
@@ -128,7 +140,9 @@ class ExportTreeUkrainTable extends ExportTreeTable
                 break;
         }
 
-        $item = $dbConnection->query("select NAME, NAME_RU from " . $table . " where ID = '" . intval($id) . "'")->fetch();
+        $item = $dbConnection->query(
+            "select NAME, NAME_RU from " . $table . " where ID = '" . intval($id) . "'"
+        )->fetch();
 
         $replaceFrom = array('обл.', 'р-н');
         $replaceTo = array('область', 'район');
@@ -146,10 +160,12 @@ class ExportTreeUkrainTable extends ExportTreeTable
         if (!isset($this->settlementParent[$key])) {
             if (!isset($this->settlementParent[$params['REGION_ID']])) {
                 // new region!
-                $code = $this->addRegion(array(
-                    'ID' => $params['REGION_ID'],
-                    'PARENT_CODE' => '',
-                ));
+                $code = $this->addRegion(
+                    array(
+                        'ID' => $params['REGION_ID'],
+                        'PARENT_CODE' => '',
+                    )
+                );
 
                 $this->settlementParent[$params['REGION_ID']] = $code;
             }
@@ -157,10 +173,12 @@ class ExportTreeUkrainTable extends ExportTreeTable
             if (intval($params['AREA_ID'])) {
                 if (!isset($this->settlementParent[$params['AREA_ID']])) {
                     // new area!
-                    $code = $this->addArea(array(
-                        'ID' => $params['AREA_ID'],
-                        'PARENT_CODE' => $this->settlementParent[$params['REGION_ID']],
-                    ));
+                    $code = $this->addArea(
+                        array(
+                            'ID' => $params['AREA_ID'],
+                            'PARENT_CODE' => $this->settlementParent[$params['REGION_ID']],
+                        )
+                    );
 
                     $this->settlementParent[$key] = $code;
                 }
@@ -172,18 +190,23 @@ class ExportTreeUkrainTable extends ExportTreeTable
 
     public function buildFromUADB($options)
     {
-        if (isset($options['NEXT_FREE_CODE']))
+        if (isset($options['NEXT_FREE_CODE'])) {
             $this->exportOffset = intval($options['NEXT_FREE_CODE']);
+        }
 
         $dbConnection = Main\HttpApplication::getConnection();
 
         // settlements
-        $res = $dbConnection->query('select ID, ZIP, ZIP_TO, TYPE_ID, CITY_ID, REGION_ID, AREA_ID, VILLAGE_ID from b_tmp_ukrain_settlement');
+        $res = $dbConnection->query(
+            'select ID, ZIP, ZIP_TO, TYPE_ID, CITY_ID, REGION_ID, AREA_ID, VILLAGE_ID from b_tmp_ukrain_settlement'
+        );
         while ($item = $res->fetch()) {
-            $code = $this->getSettlementParentCode(array(
-                'REGION_ID' => $item['REGION_ID'],
-                'AREA_ID' => $item['AREA_ID']
-            ));
+            $code = $this->getSettlementParentCode(
+                array(
+                    'REGION_ID' => $item['REGION_ID'],
+                    'AREA_ID' => $item['AREA_ID']
+                )
+            );
 
             // now there can be several situations
             $type = $this->getMappedType($item['TYPE_ID']);
@@ -195,23 +218,23 @@ class ExportTreeUkrainTable extends ExportTreeTable
                 // must be attached to CITY
                 $code = $this->settlementParent[$item['CITY_ID']];
                 $id = $item['VILLAGE_ID'];
-
                 //$item['VILLAGE_ID']
             } elseif (intval($item['CITY_ID'])) {
                 $type = 'CITY';
                 $id = $item['CITY_ID'];
             }
 
-            $this->settlementParent[$key] = $this->addNode(array(
-                'ID' => $item['ID'],
-                'TYPE_CODE' => $type,
-                'PARENT_CODE' => $code,
-                'NAME' => $this->getNames($id, $type),
-                'ZIP' => $item['ZIP'],
-                'ZIP_TO' => $item['ZIP_TO'],
-            ));
+            $this->settlementParent[$key] = $this->addNode(
+                array(
+                    'ID' => $item['ID'],
+                    'TYPE_CODE' => $type,
+                    'PARENT_CODE' => $code,
+                    'NAME' => $this->getNames($id, $type),
+                    'ZIP' => $item['ZIP'],
+                    'ZIP_TO' => $item['ZIP_TO'],
+                )
+            );
         }
-
     }
 
     public function create()
@@ -223,7 +246,8 @@ class ExportTreeUkrainTable extends ExportTreeTable
         global $DB;
 
         if (!$DB->query('select * from ' . $table . ' where 1=0', true)) {
-            $dbConnection->query("create table " . $table . " (
+            $dbConnection->query(
+                "create table " . $table . " (
 
 				ID int not null auto_increment primary key,
 
@@ -250,7 +274,8 @@ class ExportTreeUkrainTable extends ExportTreeTable
 				BOUNDED_WITH varchar(100),
 
 				SOURCE varchar(2) default 'U'
-			)");
+			)"
+            );
 
             // SYS_CODE will be U_ + settlement id
 

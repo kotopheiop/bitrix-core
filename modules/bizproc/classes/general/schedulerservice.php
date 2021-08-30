@@ -16,8 +16,9 @@ class CBPSchedulerService
     public static function getDelayMinLimit($withType = false)
     {
         $result = (int)\Bitrix\Main\Config\Option::get('bizproc', 'delay_min_limit', 0);
-        if (!$withType)
+        if (!$withType) {
             return $result;
+        }
         $type = 's';
         if ($result > 0) {
             if ($result % (3600 * 24) == 0) {
@@ -101,20 +102,23 @@ class CBPSchedulerService
     {
         $entityKey = null;
         if (is_array($entityId)) {
-            foreach ($entityId as $entityKey => $entityId)
+            foreach ($entityId as $entityKey => $entityId) {
                 break;
+            }
         } elseif ($entityId !== null) {
             $entityKey = 0;
         }
 
         if (!SchedulerEventTable::isSubscribed($workflowId, $eventHandlerName, $eventModule, $eventName, $entityId)) {
-            SchedulerEventTable::add(array(
-                'WORKFLOW_ID' => (string)$workflowId,
-                'HANDLER' => (string)$eventHandlerName,
-                'EVENT_MODULE' => (string)$eventModule,
-                'EVENT_TYPE' => (string)$eventName,
-                'ENTITY_ID' => (string)$entityId
-            ));
+            SchedulerEventTable::add(
+                array(
+                    'WORKFLOW_ID' => (string)$workflowId,
+                    'HANDLER' => (string)$eventHandlerName,
+                    'EVENT_MODULE' => (string)$eventModule,
+                    'EVENT_TYPE' => (string)$eventName,
+                    'ENTITY_ID' => (string)$entityId
+                )
+            );
         }
 
         RegisterModuleDependences(
@@ -144,8 +148,9 @@ class CBPSchedulerService
 
         $entityKey = null;
         if (is_array($entityId)) {
-            foreach ($entityId as $entityKey => $entityId)
+            foreach ($entityId as $entityKey => $entityId) {
                 break;
+            }
         } elseif ($entityId !== null) {
             $entityKey = 0;
         }
@@ -175,17 +180,20 @@ class CBPSchedulerService
     {
         $num = func_num_args();
         if ($num > 3) {
-            for ($i = 3; $i < $num; $i++)
+            for ($i = 3; $i < $num; $i++) {
                 $arEventParameters[] = func_get_arg($i);
+            }
         }
 
         if (is_array($arEventParameters["EntityId"])) {
             foreach ($arEventParameters["EntityId"] as $key => $value) {
-                if (!isset($arEventParameters[0][$key]) || $arEventParameters[0][$key] != $value)
+                if (!isset($arEventParameters[0][$key]) || $arEventParameters[0][$key] != $value) {
                     return;
+                }
             }
-        } elseif ($arEventParameters["EntityId"] != null && $arEventParameters["EntityId"] != $arEventParameters[0])
+        } elseif ($arEventParameters["EntityId"] != null && $arEventParameters["EntityId"] != $arEventParameters[0]) {
             return;
+        }
 
         global $BX_MODULE_EVENT_LAST;
         $lastEvent = $BX_MODULE_EVENT_LAST;
@@ -240,8 +248,9 @@ class CBPSchedulerService
 
         $num = func_num_args();
         if ($num > 3) {
-            for ($i = 3; $i < $num; $i++)
+            for ($i = 3; $i < $num; $i++) {
                 $eventParameters[] = func_get_arg($i);
+            }
         }
 
         $filter = array(
@@ -250,17 +259,21 @@ class CBPSchedulerService
         );
 
         $entityId = null;
-        if ($entityKey === 0 && isset($eventParameters[0]))
+        if ($entityKey === 0 && isset($eventParameters[0])) {
             $entityId = (string)$eventParameters[0];
-        elseif ($entityKey !== null && isset($eventParameters[0][$entityKey]))
+        } elseif ($entityKey !== null && isset($eventParameters[0][$entityKey])) {
             $entityId = (string)$eventParameters[0][$entityKey];
+        }
 
-        if ($entityId !== null)
+        if ($entityId !== null) {
             $filter['=ENTITY_ID'] = $entityId;
+        }
 
-        $iterator = SchedulerEventTable::getList(array(
-            'filter' => $filter
-        ));
+        $iterator = SchedulerEventTable::getList(
+            array(
+                'filter' => $filter
+            )
+        );
 
         while ($event = $iterator->fetch()) {
             $event['EVENT_PARAMETERS'] = $eventParameters;

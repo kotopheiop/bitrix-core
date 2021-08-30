@@ -89,7 +89,13 @@ if (Main\Loader::includeModule('sender')) {
                 }
 
                 $filter = array('IBLOCK_ID' => $iblockId, '!' . $propertyEmailId => false);
-                $iblockElementListDb = \CIBlockElement::getList(array('id' => 'asc'), $filter, false, false, $selectFields);
+                $iblockElementListDb = \CIBlockElement::getList(
+                    array('id' => 'asc'),
+                    $filter,
+                    false,
+                    false,
+                    $selectFields
+                );
 
                 // replace property names from PROPERTY_123_VALUE to EMAIL, NAME
                 $iblockElementDb = new CDBResultSenderConnector($iblockElementListDb);
@@ -114,22 +120,25 @@ if (Main\Loader::includeModule('sender')) {
              * select iblock list
             */
             $iblockList = array();
-            $iblockDb = IblockTable::getList(array(
-                'select' => array('ID', 'NAME'),
-            ));
+            $iblockDb = IblockTable::getList(
+                array(
+                    'select' => array('ID', 'NAME'),
+                )
+            );
             while ($iblock = $iblockDb->fetch()) {
                 $iblockList[] = $iblock;
             }
-            if (!empty($iblockList))
+            if (!empty($iblockList)) {
                 $iblockList = array_merge(
                     array(array('ID' => '', 'NAME' => Loc::getMessage('sender_connector_iblock_select'))),
                     $iblockList
                 );
-            else
+            } else {
                 $iblockList = array_merge(
                     array(array('ID' => '', 'NAME' => Loc::getMessage('sender_connector_iblock_empty'))),
                     $iblockList
                 );
+            }
 
             /*
              * select properties from all iblocks
@@ -137,11 +146,16 @@ if (Main\Loader::includeModule('sender')) {
             $propertyToIblock = array();
             $propertyList = array();
             $propertyList[''][] = array('ID' => '', 'NAME' => Loc::getMessage('sender_connector_iblock_select'));
-            $propertyList['EMPTY'][] = array('ID' => '', 'NAME' => Loc::getMessage('sender_connector_iblock_prop_empty'));
-            $iblockFieldsDb = PropertyTable::getList(array(
-                'select' => array('ID', 'NAME', 'IBLOCK_ID'),
-                'filter' => array('=PROPERTY_TYPE' => PropertyTable::TYPE_STRING)
-            ));
+            $propertyList['EMPTY'][] = array(
+                'ID' => '',
+                'NAME' => Loc::getMessage('sender_connector_iblock_prop_empty')
+            );
+            $iblockFieldsDb = PropertyTable::getList(
+                array(
+                    'select' => array('ID', 'NAME', 'IBLOCK_ID'),
+                    'filter' => array('=PROPERTY_TYPE' => PropertyTable::TYPE_STRING)
+                )
+            );
             while ($iblockFields = $iblockFieldsDb->fetch()) {
                 // add property
                 $propertyList[$iblockFields['IBLOCK_ID']][] = array(
@@ -182,7 +196,9 @@ if (Main\Loader::includeModule('sender')) {
             /*
              * create html-control of iblock list
             */
-            $iblockInput = '<select name="' . $this->getFieldName('IBLOCK') . '" id="' . $this->getFieldId('IBLOCK') . '" onChange="IblockSelect' . $this->getFieldId('IBLOCK') . '()">';
+            $iblockInput = '<select name="' . $this->getFieldName('IBLOCK') . '" id="' . $this->getFieldId(
+                    'IBLOCK'
+                ) . '" onChange="IblockSelect' . $this->getFieldId('IBLOCK') . '()">';
             foreach ($iblockList as $iblock) {
                 $inputSelected = ($iblock['ID'] == $this->getFieldValue('IBLOCK') ? 'selected' : '');
                 $iblockInput .= '<option value="' . $iblock['ID'] . '" ' . $inputSelected . '>';
@@ -195,7 +211,9 @@ if (Main\Loader::includeModule('sender')) {
             /*
              * create html-control of properties list for name
             */
-            $iblockPropertyNameInput = '<select name="' . $this->getFieldName('PROPERTY_NAME') . '" id="' . $this->getFieldId('PROPERTY_NAME') . '">';
+            $iblockPropertyNameInput = '<select name="' . $this->getFieldName(
+                    'PROPERTY_NAME'
+                ) . '" id="' . $this->getFieldId('PROPERTY_NAME') . '">';
             if (array_key_exists($this->getFieldValue('PROPERTY_NAME', 0), $propertyToIblock)) {
                 $propSet = $propertyList[$propertyToIblock[$this->getFieldValue('PROPERTY_NAME', 0)]];
             } elseif (array_key_exists($this->getFieldValue('IBLOCK', 0), $propertyList)) {
@@ -216,7 +234,9 @@ if (Main\Loader::includeModule('sender')) {
             /*
              *  create html-control of properties list for email
             */
-            $iblockPropertyEmailInput = '<select name="' . $this->getFieldName('PROPERTY_EMAIL') . '" id="' . $this->getFieldId('PROPERTY_EMAIL') . '">';
+            $iblockPropertyEmailInput = '<select name="' . $this->getFieldName(
+                    'PROPERTY_EMAIL'
+                ) . '" id="' . $this->getFieldId('PROPERTY_EMAIL') . '">';
             if (array_key_exists($this->getFieldValue('PROPERTY_EMAIL', 0), $propertyToIblock)) {
                 $propSet = $propertyList[$propertyToIblock[$this->getFieldValue('PROPERTY_EMAIL', 0)]];
             } elseif (array_key_exists($this->getFieldValue('IBLOCK', 0), $propertyList)) {
@@ -337,8 +357,9 @@ class CDBResultSenderConnector extends \CDBResult
                     $keysForUnset[] = $this->senderConnectorFieldName . "_VALUE" . "_ID";
                 } elseif (isset($fields[$this->senderConnectorFieldName])) {
                     $fields['NAME'] = $fields[$this->senderConnectorFieldName];
-                    if ($this->senderConnectorFieldName != 'NAME')
+                    if ($this->senderConnectorFieldName != 'NAME') {
                         $keysForUnset[] = $this->senderConnectorFieldName;
+                    }
                 }
             }
 
@@ -355,7 +376,9 @@ class CDBResultSenderConnector extends \CDBResult
 
             if (count($keysForUnset) > 0) {
                 $keysForUnset = array_unique($keysForUnset);
-                foreach ($keysForUnset as $key) unset($fields[$key]);
+                foreach ($keysForUnset as $key) {
+                    unset($fields[$key]);
+                }
             }
         }
 

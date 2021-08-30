@@ -25,53 +25,73 @@ class RoleTable extends Entity\DataManager
     public static function getMap()
     {
         return array(
-            'ID' => new Entity\IntegerField('ID', array(
+            'ID' => new Entity\IntegerField(
+                'ID', array(
                 'title' => 'ID',
                 'primary' => true
-            )),
-            'TITLE' => new Entity\StringField('TITLE', array(
+            )
+            ),
+            'TITLE' => new Entity\StringField(
+                'TITLE', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_ROLE_TITLE')
-            )),
-            'XML_ID' => new Entity\StringField('XML_ID', array(
+            )
+            ),
+            'XML_ID' => new Entity\StringField(
+                'XML_ID', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_ROLE_XML_ID')
-            )),
-            'TYPE' => new Entity\StringField('TYPE', array(
+            )
+            ),
+            'TYPE' => new Entity\StringField(
+                'TYPE', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_ROLE_TYPE')
-            )),
-            'ACCESS_CODES' => new Entity\StringField('ACCESS_CODES', array(
+            )
+            ),
+            'ACCESS_CODES' => new Entity\StringField(
+                'ACCESS_CODES', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_ROLE_ACCESS_CODES'),
                 'serialized' => true
-            )),
-            'ADDITIONAL_RIGHTS' => new Entity\StringField('ADDITIONAL_RIGHTS', array(
+            )
+            ),
+            'ADDITIONAL_RIGHTS' => new Entity\StringField(
+                'ADDITIONAL_RIGHTS', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_ROLE_ADDITIONAL_RIGHTS'),
                 'serialized' => true
-            )),
-            'CREATED_BY_ID' => new Entity\IntegerField('CREATED_BY_ID', array(
+            )
+            ),
+            'CREATED_BY_ID' => new Entity\IntegerField(
+                'CREATED_BY_ID', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_CREATED_BY_ID'),
                 'required' => true
-            )),
+            )
+            ),
             'CREATED_BY' => new Entity\ReferenceField(
                 'CREATED_BY',
                 'Bitrix\Main\UserTable',
                 array('=this.CREATED_BY_ID' => 'ref.ID')
             ),
-            'MODIFIED_BY_ID' => new Entity\IntegerField('MODIFIED_BY_ID', array(
+            'MODIFIED_BY_ID' => new Entity\IntegerField(
+                'MODIFIED_BY_ID', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_MODIFIED_BY_ID'),
                 'required' => true
-            )),
+            )
+            ),
             'MODIFIED_BY' => new Entity\ReferenceField(
                 'MODIFIED_BY',
                 'Bitrix\Main\UserTable',
                 array('=this.MODIFIED_BY_ID' => 'ref.ID')
             ),
-            'DATE_CREATE' => new Entity\DatetimeField('DATE_CREATE', array(
+            'DATE_CREATE' => new Entity\DatetimeField(
+                'DATE_CREATE', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_DATE_CREATE'),
                 'required' => true
-            )),
-            'DATE_MODIFY' => new Entity\DatetimeField('DATE_MODIFY', array(
+            )
+            ),
+            'DATE_MODIFY' => new Entity\DatetimeField(
+                'DATE_MODIFY', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_DATE_MODIFY'),
                 'required' => true
-            ))
+            )
+            )
         );
     }
 
@@ -87,14 +107,16 @@ class RoleTable extends Entity\DataManager
 
         // delete all inner landings
         if ($primary) {
-            $res = RightsTable::getList(array(
-                'select' => array(
-                    'ID'
-                ),
-                'filter' => array(
-                    'ROLE_ID' => $primary['ID']
+            $res = RightsTable::getList(
+                array(
+                    'select' => array(
+                        'ID'
+                    ),
+                    'filter' => array(
+                        'ROLE_ID' => $primary['ID']
+                    )
                 )
-            ));
+            );
             while ($row = $res->fetch()) {
                 RightsTable::delete($row['ID']);
             }
@@ -126,17 +148,21 @@ class RoleTable extends Entity\DataManager
                 !trim($fields['XML_ID'])
             )
         ) {
-            $result->setErrors(array(
-                new Entity\EntityError(
-                    Loc::getMessage('LANDING_TABLE_ERROR_TITLE_REQUIRED'),
-                    'TITLE_REQUIRED'
+            $result->setErrors(
+                array(
+                    new Entity\EntityError(
+                        Loc::getMessage('LANDING_TABLE_ERROR_TITLE_REQUIRED'),
+                        'TITLE_REQUIRED'
+                    )
                 )
-            ));
+            );
         }
 
-        $result->modifyFields([
-            'TYPE' => \Bitrix\Landing\Site\Type::getFilterType(true)
-        ]);
+        $result->modifyFields(
+            [
+                'TYPE' => \Bitrix\Landing\Site\Type::getFilterType(true)
+            ]
+        );
 
         return $result;
     }
@@ -160,21 +186,25 @@ class RoleTable extends Entity\DataManager
                 !trim($fields['TITLE'])
             )
         ) {
-            $row = self::getList([
-                'filter' => [
-                    'ID' => $primary['ID']
+            $row = self::getList(
+                [
+                    'filter' => [
+                        'ID' => $primary['ID']
+                    ]
                 ]
-            ])->fetch();
+            )->fetch();
             if (
                 $row &&
                 !trim($row['XML_ID'])
             ) {
-                $result->setErrors(array(
-                    new Entity\EntityError(
-                        Loc::getMessage('LANDING_TABLE_ERROR_TITLE_REQUIRED'),
-                        'TITLE_REQUIRED'
+                $result->setErrors(
+                    array(
+                        new Entity\EntityError(
+                            Loc::getMessage('LANDING_TABLE_ERROR_TITLE_REQUIRED'),
+                            'TITLE_REQUIRED'
+                        )
                     )
-                ));
+                );
             }
             unset($primary, $fields, $row);
 

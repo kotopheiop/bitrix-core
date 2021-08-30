@@ -1,4 +1,7 @@
 <?
+
+use Bitrix\Main;
+
 $module_id = "perfmon";
 $RIGHT = $APPLICATION->GetGroupRight($module_id);
 if ($RIGHT >= "R") :
@@ -10,23 +13,58 @@ if ($RIGHT >= "R") :
         array("max_display_url", GetMessage("PERFMON_OPTIONS_MAX_DISPLAY_URL"), array("text", 6)),
         array("warning_log", GetMessage("PERFMON_OPTIONS_WARNING_LOG"), array("checkbox")),
         array("cache_log", GetMessage("PERFMON_OPTIONS_CACHE_LOG"), array("checkbox")),
-        array("large_cache_log", GetMessage("PERFMON_OPTIONS_LARGE_CACHE_LOG"), array("checkbox"), GetMessage("PERFMON_OPTIONS_LARGE_CACHE_NOTE")),
+        array(
+            "large_cache_log",
+            GetMessage("PERFMON_OPTIONS_LARGE_CACHE_LOG"),
+            array("checkbox"),
+            GetMessage("PERFMON_OPTIONS_LARGE_CACHE_NOTE")
+        ),
         array("large_cache_size", GetMessage("PERFMON_OPTIONS_LARGE_CACHE_SIZE"), array("text", 6)),
         array("sql_log", GetMessage("PERFMON_OPTIONS_SQL_LOG"), array("checkbox")),
         array("sql_backtrace", GetMessage("PERFMON_OPTIONS_SQL_BACKTRACE"), array("checkbox")),
-        array("slow_sql_log", GetMessage("PERFMON_OPTIONS_SLOW_SQL_LOG"), array("checkbox"), GetMessage("PERFMON_OPTIONS_SLOW_SQL_NOTE")),
+        array(
+            "slow_sql_log",
+            GetMessage("PERFMON_OPTIONS_SLOW_SQL_LOG"),
+            array("checkbox"),
+            GetMessage("PERFMON_OPTIONS_SLOW_SQL_NOTE")
+        ),
         array("slow_sql_time", GetMessage("PERFMON_OPTIONS_SLOW_SQL_TIME"), array("text", 6)),
     );
 
+    $ormOptions = array(
+        array("enable_tablet_generator", GetMessage("PERFMON_OPTIONS_ENABLE_TABLET_GENERATOR"), array("checkbox")),
+        GetMessage("PERFMON_OPTIONS_SECTION_GENERATOR_SETTINGS"),
+        array("tablet_short_aliases", GetMessage("PERFMON_OPTIONS_TABLET_SHORT_ALIASES"), array("checkbox")),
+        array("tablet_object_settings", GetMessage("PERFMON_OPTIONS_TABLET_OBJECT_SETTINGS"), array("checkbox")),
+        array("tablet_use_map_index", GetMessage("PERFMON_OPTIONS_TABLET_USE_MAP_INDEX"), array("checkbox"))
+    );
+
     $aTabs = array(
-        array("DIV" => "edit1", "TAB" => GetMessage("MAIN_TAB_SET"), "ICON" => "perfmon_settings", "TITLE" => GetMessage("MAIN_TAB_TITLE_SET")),
-        array("DIV" => "edit2", "TAB" => GetMessage("MAIN_TAB_RIGHTS"), "ICON" => "perfmon_settings", "TITLE" => GetMessage("MAIN_TAB_TITLE_RIGHTS")),
+        array(
+            "DIV" => "edit1",
+            "TAB" => GetMessage("MAIN_TAB_SET"),
+            "ICON" => "perfmon_settings",
+            "TITLE" => GetMessage("MAIN_TAB_TITLE_SET")
+        ),
+        array(
+            "DIV" => "edit3",
+            "TAB" => GetMessage("PERFMON_TAB_ORM"),
+            "ICON" => "perfmon_settings",
+            "TITLE" => GetMessage("PERFMON_TAB_TITLE_ORM")
+        ),
+        array(
+            "DIV" => "edit2",
+            "TAB" => GetMessage("MAIN_TAB_RIGHTS"),
+            "ICON" => "perfmon_settings",
+            "TITLE" => GetMessage("MAIN_TAB_TITLE_RIGHTS")
+        ),
     );
     $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
     CModule::IncludeModule($module_id);
 
-    if ($REQUEST_METHOD == "POST" && strlen($Update . $Apply . $RestoreDefaults) > 0 && $RIGHT == "W" && check_bitrix_sessid()) {
+    if ($_SERVER['REQUEST_METHOD'] == "POST" && $Update . $Apply . $RestoreDefaults <> '' && $RIGHT >= "W" && check_bitrix_sessid(
+        )) {
         require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/perfmon/prolog.php");
 
         if ($_REQUEST["clear_data"] === "y") {
@@ -42,16 +80,32 @@ if ($RIGHT >= "R") :
             CPerfomanceKeeper::SetActive($ACTIVE > 0, time() + $ACTIVE);
         }
 
-        if (strlen($RestoreDefaults) > 0) {
+        if ($RestoreDefaults <> '') {
             COption::RemoveOption("perfmon");
         } else {
             foreach ($arAllOptions as $arOption) {
                 $name = $arOption[0];
                 $val = $_REQUEST[$name];
-                if ($arOption[2][0] == "checkbox" && $val != "Y")
+                if ($arOption[2][0] == "checkbox" && $val != "Y") {
                     $val = "N";
+                }
                 COption::SetOptionString("perfmon", $name, $val, $arOption[1]);
             }
+
+            foreach ($ormOptions as $option) {
+                $name = $option[0];
+                if (!isset($_REQUEST[$name])) {
+                    continue;
+                }
+                $value = $_REQUEST[$name];
+                if ($option[2][0] == "checkbox") {
+                    if ($value !== 'N' && $value !== 'Y') {
+                        continue;
+                    }
+                }
+                Main\Config\Option::set("perfmon", $name, $value, '');
+            }
+            unset($option);
         }
 
         ob_start();
@@ -59,13 +113,24 @@ if ($RIGHT >= "R") :
         require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/admin/group_rights.php");
         ob_end_clean();
 
-        if (strlen($_REQUEST["back_url_settings"]) > 0) {
-            if ((strlen($Apply) > 0) || (strlen($RestoreDefaults) > 0))
-                LocalRedirect($APPLICATION->GetCurPage() . "?mid=" . urlencode($module_id) . "&lang=" . urlencode(LANGUAGE_ID) . "&back_url_settings=" . urlencode($_REQUEST["back_url_settings"]) . "&" . $tabControl->ActiveTabParam());
-            else
+        if ($_REQUEST["back_url_settings"] <> '') {
+            if (($Apply <> '') || ($RestoreDefaults <> '')) {
+                LocalRedirect(
+                    $APPLICATION->GetCurPage() . "?mid=" . urlencode($module_id) . "&lang=" . urlencode(
+                        LANGUAGE_ID
+                    ) . "&back_url_settings=" . urlencode(
+                        $_REQUEST["back_url_settings"]
+                    ) . "&" . $tabControl->ActiveTabParam()
+                );
+            } else {
                 LocalRedirect($_REQUEST["back_url_settings"]);
+            }
         } else {
-            LocalRedirect($APPLICATION->GetCurPage() . "?mid=" . urlencode($module_id) . "&lang=" . urlencode(LANGUAGE_ID) . "&" . $tabControl->ActiveTabParam());
+            LocalRedirect(
+                $APPLICATION->GetCurPage() . "?mid=" . urlencode($module_id) . "&lang=" . urlencode(
+                    LANGUAGE_ID
+                ) . "&" . $tabControl->ActiveTabParam()
+            );
         }
     }
 
@@ -79,8 +144,9 @@ if ($RIGHT >= "R") :
         foreach ($arAllOptions as $arOption):
             $val = COption::GetOptionString("perfmon", $arOption[0]);
             $type = $arOption[2];
-            if (isset($arOption[3]))
+            if (isset($arOption[3])) {
                 $arNotes[] = $arOption[3];
+            }
             ?>
             <tr>
                 <td width="40%" nowrap <? if ($type[0] == "textarea")
@@ -90,13 +156,16 @@ if ($RIGHT >= "R") :
                     <? endif; ?>
                     <label for="<? echo htmlspecialcharsbx($arOption[0]) ?>"><? echo $arOption[1] ?>
                         :</label>
+                </td>
                 <td width="60%">
                     <? if ($type[0] == "checkbox"): ?>
                         <input
                                 type="checkbox"
                                 name="<? echo htmlspecialcharsbx($arOption[0]) ?>"
                                 id="<? echo htmlspecialcharsbx($arOption[0]) ?>"
-                                value="Y"<? if ($val == "Y") echo " checked"; ?>>
+                                value="Y"<? if ($val == "Y") {
+                            echo " checked";
+                        } ?>>
                     <? elseif ($type[0] == "text"): ?>
                         <input
                                 type="text"
@@ -130,9 +199,9 @@ if ($RIGHT >= "R") :
                 <? if ($ACTIVE): ?>
                     <? echo GetMessage("PERFMON_OPT_ACTIVE_Y") ?>
                 <? else: ?>
-                <? echo GetMessage("PERFMON_OPT_ACTIVE_N") ?>
+                    <? echo GetMessage("PERFMON_OPT_ACTIVE_N") ?>
+                <? endif; ?>
             </td>
-            <? endif; ?>
         </tr>
         <? if ($ACTIVE): ?>
             <tr>
@@ -141,13 +210,16 @@ if ($RIGHT >= "R") :
                 </td>
                 <td valign="top" width="50%">
                     <?
-                    $interval = COption::GetOptionInt("perfmon", "end_time") - time();
-                    $hours = intval($interval / 3600);
+                    $interval = max(0, COption::GetOptionInt("perfmon", "end_time") - time());
+                    $hours = sprintf("%02d", intval($interval / 3600));
                     $interval -= $hours * 3600;
-                    $minutes = intval($interval / 60);
+                    $minutes = sprintf("%02d", intval($interval / 60));
                     $interval -= $minutes * 60;
-                    $seconds = intval($interval);
-                    echo GetMessage("PERFMON_OPT_MINUTES", array("#HOURS#" => $hours, "#MINUTES#" => $minutes, "#SECONDS#" => $seconds));
+                    $seconds = sprintf("%02d", intval($interval));
+                    echo GetMessage(
+                        "PERFMON_OPT_MINUTES",
+                        array("#HOURS#" => $hours, "#MINUTES#" => $minutes, "#SECONDS#" => $seconds)
+                    );
                     ?>
                 </td>
             </tr>
@@ -183,24 +255,73 @@ if ($RIGHT >= "R") :
                     <input type="checkbox" name="clear_data" id="clear_data" value="y">
                 </td>
             </tr>
-        <? endif; ?>
-        <? $tabControl->BeginNextTab(); ?>
-        <? require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/admin/group_rights.php"); ?>
-        <? $tabControl->Buttons(); ?>
+        <?endif;
+        $tabControl->BeginNextTab();
+        foreach ($ormOptions as $option) {
+            if (is_string($option)) {
+                ?>
+                <tr class="heading">
+                    <td colspan="2"><?= htmlspecialcharsbx($option); ?></td>
+                </tr>
+                <?
+                continue;
+            }
+            $value = Main\Config\Option::get("perfmon", $option[0]);
+            $type = $option[2];
+            $name = htmlspecialcharsbx($option[0]);
+            ?>
+            <tr>
+            <td style="width: 40%; white-space: nowrap" <? if ($type[0] == "textarea")
+                echo 'class="adm-detail-valign-top"' ?>>
+                <label for="<? echo htmlspecialcharsbx($option[0]) ?>"><? echo $option[1] ?></label>
+            </td>
+            <td style="width: 60%;"><?
+                switch ($type[0]) {
+                    case 'checkbox':
+                        ?>
+                        <input type="hidden" name="<?= $name; ?>" value="N">
+                        <input type="checkbox" name="<?= $name; ?>" id="<?= $name; ?>"
+                               value="Y"<?= ($value == "Y" ? ' checked' : ''); ?>>
+                        <?
+                        break;
+                    case 'text':
+                        ?>
+                        <input type="text" size="<?= $type[1]; ?>" maxlength="255"
+                               value="<?= htmlspecialcharsbx($value); ?>"
+                               name="<?= $name; ?>" id="<?= $name; ?>">
+                        <?
+                        break;
+                    case 'textarea':
+                        ?>
+                        <textarea rows="<?= $type[1]; ?>" cols="<?= $type[2]; ?>"
+                                  name="<?= $name; ?>" id="<?= $name; ?>"
+                        ><? echo htmlspecialcharsbx($val) ?></textarea>
+                        <?
+                        break;
+                }
+                ?>
+            </td>
+            </tr><?
+        }
+        $tabControl->BeginNextTab();
+        require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/admin/group_rights.php");
+        $tabControl->Buttons(); ?>
         <input <? if ($RIGHT < "W")
             echo "disabled" ?> type="submit" name="Update" value="<?= GetMessage("MAIN_SAVE") ?>"
                                title="<?= GetMessage("MAIN_OPT_SAVE_TITLE") ?>" class="adm-btn-save">
         <input <? if ($RIGHT < "W")
             echo "disabled" ?> type="submit" name="Apply" value="<?= GetMessage("MAIN_OPT_APPLY") ?>"
                                title="<?= GetMessage("MAIN_OPT_APPLY_TITLE") ?>">
-        <? if (strlen($_REQUEST["back_url_settings"]) > 0): ?>
+        <? if ($_REQUEST["back_url_settings"] <> ''): ?>
             <input
                 <? if ($RIGHT < "W") echo "disabled" ?>
                     type="button"
                     name="Cancel"
                     value="<?= GetMessage("MAIN_OPT_CANCEL") ?>"
                     title="<?= GetMessage("MAIN_OPT_CANCEL_TITLE") ?>"
-                    onclick="window.location='<? echo htmlspecialcharsbx(CUtil::addslashes($_REQUEST["back_url_settings"])) ?>'"
+                    onclick="window.location='<? echo htmlspecialcharsbx(
+                        CUtil::addslashes($_REQUEST["back_url_settings"])
+                    ) ?>'"
             >
             <input
                     type="hidden"
@@ -228,17 +349,37 @@ if ($RIGHT >= "R") :
                     (!BX('sql_log').checked || BX('sql_log').checked && BX('slow_sql_log').checked)
                     && (!BX('cache_log').checked || BX('cache_log').checked && BX('large_cache_log').checked)
                 ) {
-                    jsSelectUtils.addNewOption(activeCheckbox, '3600', '<?echo GetMessageJS("PERFMON_OPT_INTERVAL_3600_SEC")?>');
-                    jsSelectUtils.addNewOption(activeCheckbox, '14400', '<?echo GetMessageJS("PERFMON_OPT_INTERVAL_4_HOURS")?>');
-                    jsSelectUtils.addNewOption(activeCheckbox, '28800', '<?echo GetMessageJS("PERFMON_OPT_INTERVAL_8_HOURS")?>');
-                    jsSelectUtils.addNewOption(activeCheckbox, '86400', '<?echo GetMessageJS("PERFMON_OPT_INTERVAL_24_HOURS")?>');
-                    jsSelectUtils.addNewOption(activeCheckbox, '604800', '<?echo GetMessageJS("PERFMON_OPT_INTERVAL_7_DAYS")?>');
+                    jsSelectUtils.addNewOption(activeCheckbox, '3600', '<?echo GetMessageJS(
+                        "PERFMON_OPT_INTERVAL_3600_SEC"
+                    )?>');
+                    jsSelectUtils.addNewOption(activeCheckbox, '14400', '<?echo GetMessageJS(
+                        "PERFMON_OPT_INTERVAL_4_HOURS"
+                    )?>');
+                    jsSelectUtils.addNewOption(activeCheckbox, '28800', '<?echo GetMessageJS(
+                        "PERFMON_OPT_INTERVAL_8_HOURS"
+                    )?>');
+                    jsSelectUtils.addNewOption(activeCheckbox, '86400', '<?echo GetMessageJS(
+                        "PERFMON_OPT_INTERVAL_24_HOURS"
+                    )?>');
+                    jsSelectUtils.addNewOption(activeCheckbox, '604800', '<?echo GetMessageJS(
+                        "PERFMON_OPT_INTERVAL_7_DAYS"
+                    )?>');
                 } else {
-                    jsSelectUtils.addNewOption(activeCheckbox, '60', '<?echo GetMessageJS("PERFMON_OPT_INTERVAL_60_SEC")?>');
-                    jsSelectUtils.addNewOption(activeCheckbox, '300', '<?echo GetMessageJS("PERFMON_OPT_INTERVAL_300_SEC")?>');
-                    jsSelectUtils.addNewOption(activeCheckbox, '600', '<?echo GetMessageJS("PERFMON_OPT_INTERVAL_600_SEC")?>');
-                    jsSelectUtils.addNewOption(activeCheckbox, '1800', '<?echo GetMessageJS("PERFMON_OPT_INTERVAL_1800_SEC")?>');
-                    jsSelectUtils.addNewOption(activeCheckbox, '3600', '<?echo GetMessageJS("PERFMON_OPT_INTERVAL_3600_SEC")?>');
+                    jsSelectUtils.addNewOption(activeCheckbox, '60', '<?echo GetMessageJS(
+                        "PERFMON_OPT_INTERVAL_60_SEC"
+                    )?>');
+                    jsSelectUtils.addNewOption(activeCheckbox, '300', '<?echo GetMessageJS(
+                        "PERFMON_OPT_INTERVAL_300_SEC"
+                    )?>');
+                    jsSelectUtils.addNewOption(activeCheckbox, '600', '<?echo GetMessageJS(
+                        "PERFMON_OPT_INTERVAL_600_SEC"
+                    )?>');
+                    jsSelectUtils.addNewOption(activeCheckbox, '1800', '<?echo GetMessageJS(
+                        "PERFMON_OPT_INTERVAL_1800_SEC"
+                    )?>');
+                    jsSelectUtils.addNewOption(activeCheckbox, '3600', '<?echo GetMessageJS(
+                        "PERFMON_OPT_INTERVAL_3600_SEC"
+                    )?>');
                 }
             }
         }
@@ -260,4 +401,4 @@ if ($RIGHT >= "R") :
         echo EndNote();
     }
     ?>
-<? endif; ?>
+<? endif;

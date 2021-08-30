@@ -1,13 +1,21 @@
 <?
+
 global $DB, $MESS, $APPLICATION;
 
 define('WS_SP_SERVICE_PATH', '/_vti_bin/lists.asmx');
 define('WS_SP_SERVICE_NS', 'http://schemas.microsoft.com/sharepoint/soap/');
 
 $GLOBALS["xsd_simple_type"] = array(
-    "string" => "string", "bool" => "boolean", "boolean" => "boolean",
-    "int" => "integer", "integer" => "integer", "double" => "double", "float" => "float", "number" => "float",
-    "base64" => "base64Binary", "base64Binary" => "base64Binary",
+    "string" => "string",
+    "bool" => "boolean",
+    "boolean" => "boolean",
+    "int" => "integer",
+    "integer" => "integer",
+    "double" => "double",
+    "float" => "float",
+    "number" => "float",
+    "base64" => "base64Binary",
+    "base64Binary" => "base64Binary",
     "any" => "any",
 );
 
@@ -41,10 +49,13 @@ CModule::AddAutoloadClasses(
     )
 );
 
-CJSCore::RegisterExt('stssync', array(
-    'js' => '/bitrix/js/webservice/stssync.js',
-    'rel' => array('ajax')
-));
+CJSCore::RegisterExt(
+    'stssync',
+    array(
+        'js' => '/bitrix/js/webservice/stssync.js',
+        'rel' => array('ajax')
+    )
+);
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/classes/general/xml.php");
 

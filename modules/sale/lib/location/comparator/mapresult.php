@@ -69,38 +69,48 @@ class MapResult
 
     protected function getLocationChain($locationId)
     {
-        $res = LocationTable::getList(array(
-            'filter' => array(
-                array(
-                    'LOGIC' => 'OR',
-                    '=CODE' => $locationId,
-                    '=ID' => $locationId
+        $res = LocationTable::getList(
+            array(
+                'filter' => array(
+                    array(
+                        'LOGIC' => 'OR',
+                        '=CODE' => $locationId,
+                        '=ID' => $locationId
+                    ),
                 ),
-            ),
-            'select' => array(
-                'ID', 'CODE', 'LEFT_MARGIN', 'RIGHT_MARGIN'
+                'select' => array(
+                    'ID',
+                    'CODE',
+                    'LEFT_MARGIN',
+                    'RIGHT_MARGIN'
+                )
             )
-        ));
+        );
 
-        if (!$loc = $res->fetch())
+        if (!$loc = $res->fetch()) {
             return '';
+        }
 
         $result = '';
-        $res = LocationTable::getList(array(
-            'filter' => array(
-                '<=LEFT_MARGIN' => $loc['LEFT_MARGIN'],
-                '>=RIGHT_MARGIN' => $loc['RIGHT_MARGIN'],
-                'NAME.LANGUAGE_ID' => 'ru'
-            ),
-            'select' => array(
-                'ID', 'CODE',
-                'LOC_NAME' => 'NAME.NAME'
-            ),
-            'order' => array('LEFT_MARGIN' => 'ASC')
-        ));
+        $res = LocationTable::getList(
+            array(
+                'filter' => array(
+                    '<=LEFT_MARGIN' => $loc['LEFT_MARGIN'],
+                    '>=RIGHT_MARGIN' => $loc['RIGHT_MARGIN'],
+                    'NAME.LANGUAGE_ID' => 'ru'
+                ),
+                'select' => array(
+                    'ID',
+                    'CODE',
+                    'LOC_NAME' => 'NAME.NAME'
+                ),
+                'order' => array('LEFT_MARGIN' => 'ASC')
+            )
+        );
 
-        while ($loc = $res->fetch())
+        while ($loc = $res->fetch()) {
             $result .= $loc['LOC_NAME'] . ', ';
+        }
 
         return $result;
     }

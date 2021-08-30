@@ -30,13 +30,23 @@ Loc::loadMessages(__FILE__);
  * <li> NOTIFY_BUTTONS string optional
  * <li> NOTIFY_READ bool optional default 'N'
  * <li> IMPORT_ID int optional
- * <li> CHAT reference to {@link \Bitrix\Im\ImRelationTable}
- * <li> NOTIFY_MODULE reference to {@link \Bitrix\Module\ModuleTable}
- * <li> AUTHOR reference to {@link \Bitrix\User\UserTable}
  * </ul>
  *
  * @package Bitrix\Im
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Message_Query query()
+ * @method static EO_Message_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Message_Result getById($id)
+ * @method static EO_Message_Result getList(array $parameters = array())
+ * @method static EO_Message_Entity getEntity()
+ * @method static \Bitrix\Im\Model\EO_Message createObject($setDefaultValues = true)
+ * @method static \Bitrix\Im\Model\EO_Message_Collection createCollection()
+ * @method static \Bitrix\Im\Model\EO_Message wakeUpObject($row)
+ * @method static \Bitrix\Im\Model\EO_Message_Collection wakeUpCollection($rows)
+ */
 class MessageTable extends Main\Entity\DataManager
 {
     /**
@@ -146,6 +156,10 @@ class MessageTable extends Main\Entity\DataManager
                 'data_type' => 'Bitrix\Main\User',
                 'reference' => array('=this.AUTHOR_ID' => 'ref.ID'),
             ),
+            'STATUS' => array(
+                'data_type' => 'Bitrix\Im\Model\StatusTable',
+                'reference' => array('=this.AUTHOR_ID' => 'ref.USER_ID'),
+            ),
             'RELATION' => array(
                 'data_type' => 'Bitrix\Im\Model\RelationTable',
                 'reference' => array('=this.CHAT_ID' => 'ref.CHAT_ID'),
@@ -252,6 +266,12 @@ class MessageTable extends Main\Entity\DataManager
      */
     public static function indexRecord($id)
     {
+        $indexEnabled = \Bitrix\Main\Config\Option::get('im', 'message_history_index');
+
+        if (!$indexEnabled) {
+            return;
+        }
+
         $message = parent::getByPrimary($id)->fetch();
         if (!is_array($message)) {
             return;
@@ -286,8 +306,10 @@ class MessageTable extends Main\Entity\DataManager
         $messageText = $message['MESSAGE'];
         if ($message['NOTIFY_TYPE'] === IM_NOTIFY_FROM) {
             $messageText = strip_tags($messageText);
-        } else if ($message['NOTIFY_TYPE'] === IM_NOTIFY_MESSAGE) {
-            $messageText = Text::removeBbCodes($messageText);
+        } else {
+            if ($message['NOTIFY_TYPE'] === IM_NOTIFY_MESSAGE) {
+                $messageText = Text::removeBbCodes($messageText);
+            }
         }
         $builder->addText($messageText);
 
@@ -313,6 +335,20 @@ class MessageTable extends Main\Entity\DataManager
 
         return $builder->build();
     }
-}
 
-class_alias("Bitrix\\Im\\Model\\MessageTable", "Bitrix\\Im\\MessageTable", false);
+    /**
+     * Deletes rows by filter.
+     * @param array $filter Filter does not look like filter in getList. It depends by current implementation.
+     * @return void
+     */
+    public static function deleteBatch(array $filter)
+    {
+        $whereSql = \Bitrix\Main\Entity\Query::buildFilterSql(static::getEntity(), $filter);
+
+        if ($whereSql <> '') {
+            $tableName = static::getTableName();
+            $connection = Main\Application::getConnection();
+            $connection->queryExecute("DELETE FROM {$tableName} WHERE {$whereSql}");
+        }
+    }
+}

@@ -64,7 +64,8 @@ final class Config
                     AttributeManager::getTypesInternal(),
                     CounterManager::getTypesInternal(),
                     RateManager::getTypesInternal(),
-                ) as $types) {
+                ) as $types
+            ) {
                 foreach ($types as $type) {
                     $modules[$type['MODULE']] = $default;
                 }

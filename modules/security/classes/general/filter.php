@@ -37,11 +37,13 @@ class CSecurityFilter
 
     public static function OnBeforeProlog()
     {
-        if (CSecuritySystemInformation::isCliMode())
+        if (CSecuritySystemInformation::isCliMode()) {
             return;
+        }
 
-        if (CSecurityFilterMask::Check(SITE_ID, $_SERVER["REQUEST_URI"]))
+        if (CSecurityFilterMask::Check(SITE_ID, $_SERVER["REQUEST_URI"])) {
             return;
+        }
 
         if (
             check_bitrix_sessid()
@@ -84,13 +86,33 @@ class CSecurityFilter
     {
         if ($bActive) {
             if (!CSecurityFilter::IsActive()) {
-                registerModuleDependences("main", "OnBeforeProlog", "security", "CSecurityFilter", "OnBeforeProlog", "5");
-                registerModuleDependences("main", "OnEndBufferContent", "security", "CSecurityXSSDetect", "OnEndBufferContent", 9999);
+                registerModuleDependences(
+                    "main",
+                    "OnBeforeProlog",
+                    "security",
+                    "CSecurityFilter",
+                    "OnBeforeProlog",
+                    "5"
+                );
+                registerModuleDependences(
+                    "main",
+                    "OnEndBufferContent",
+                    "security",
+                    "CSecurityXSSDetect",
+                    "OnEndBufferContent",
+                    9999
+                );
             }
         } else {
             if (CSecurityFilter::IsActive()) {
                 unregisterModuleDependences("main", "OnBeforeProlog", "security", "CSecurityFilter", "OnBeforeProlog");
-                unregisterModuleDependences("main", "OnEndBufferContent", "security", "CSecurityXSSDetect", "OnEndBufferContent");
+                unregisterModuleDependences(
+                    "main",
+                    "OnEndBufferContent",
+                    "security",
+                    "CSecurityXSSDetect",
+                    "OnEndBufferContent"
+                );
             }
         }
     }
@@ -107,6 +129,7 @@ class CSecurityFilter
             "SECURITY_FILTER_XSS2" => "[SECURITY_FILTER_XSS2] " . getMessage("SECURITY_FILTER_XSS"),
             "SECURITY_FILTER_PHP" => "[SECURITY_FILTER_PHP] " . getMessage("SECURITY_FILTER_PHP"),
             "SECURITY_REDIRECT" => "[SECURITY_REDIRECT] " . getMessage("SECURITY_REDIRECT"),
+            "SECURITY_OTP" => "[SECURITY_OTP] " . getMessage("SECURITY_OTP"),
         );
     }
 
@@ -128,8 +151,9 @@ class CSecurityFilter
     {
         /** @global CMain $APPLICATION */
         global $APPLICATION;
-        if ($APPLICATION->GetGroupRight("security") < "W")
+        if ($APPLICATION->GetGroupRight("security") < "W") {
             return false;
+        }
 
         $setupLink = '/bitrix/admin/security_filter.php?lang=' . LANGUAGE_ID;
         $WAFAIParams = array(
@@ -140,23 +164,29 @@ class CSecurityFilter
 
         try {
             if (self::IsActive()) {
-
                 $days = COption::getOptionInt("main", "event_log_cleanup_days", 7);
-                if ($days > 7)
+                if ($days > 7) {
                     $days = 7;
+                }
                 $timestampX = ConvertTimeStamp(time() - $days * 24 * 3600 + CTimeZone::getOffset());
                 $eventLink = '/bitrix/admin/event_log.php?set_filter=Y&find_type=audit_type_id&find_audit_type[]=SECURITY_FILTER_SQL&find_audit_type[]=SECURITY_FILTER_XSS&find_audit_type[]=SECURITY_FILTER_XSS2&find_audit_type[]=SECURITY_FILTER_PHP&mod=security&find_timestamp_x_1=' . $timestampX . '&lang=' . LANGUAGE_ID;
 
                 $eventCount = self::getEventsCount($timestampX);
-                if ($eventCount > 999)
+                if ($eventCount > 999) {
                     $eventCount = round($eventCount / 1000, 1) . 'K';
+                }
 
-                if ($eventCount > 0)
-                    $descriptionText = getMessage("SECURITY_FILTER_INFORM_EVENT_COUNT") . '<a href="' . $eventLink . '">' . $eventCount . '</a>';
-                else
+                if ($eventCount > 0) {
+                    $descriptionText = getMessage(
+                            "SECURITY_FILTER_INFORM_EVENT_COUNT"
+                        ) . '<a href="' . $eventLink . '">' . $eventCount . '</a>';
+                } else {
                     $descriptionText = getMessage("SECURITY_FILTER_INFORM_EVENT_COUNT_EMPTY");
+                }
 
-                $WAFAIParams["FOOTER"] = '<a href="' . $setupLink . '">' . getMessage("SECURITY_FILTER_INFORM_LINK_TO_SETUP") . '</a>';
+                $WAFAIParams["FOOTER"] = '<a href="' . $setupLink . '">' . getMessage(
+                        "SECURITY_FILTER_INFORM_LINK_TO_SETUP"
+                    ) . '</a>';
                 $WAFAIParams["ALERT"] = false;
 
                 $WAFAIParams["HTML"] = '
@@ -235,8 +265,9 @@ class CSecurityFilter
     protected function getAuditors()
     {
         $wafConfig = \Bitrix\Main\Config\Configuration::getValue("waf");
-        if (is_array($wafConfig) && isset($wafConfig['auditors']))
+        if (is_array($wafConfig) && isset($wafConfig['auditors'])) {
             return $wafConfig['auditors'];
+        }
 
         return $this->defaultAuditors;
     }
@@ -332,10 +363,11 @@ class CSecurityFilter
     {
         /** @global CUser $USER */
         global $USER;
-        if (is_object($USER))
+        if (is_object($USER)) {
             return $USER->CanDoOperation('security_filter_bypass');
-        else
+        } else {
             return false;
+        }
     }
 
 
@@ -345,25 +377,50 @@ class CSecurityFilter
      */
     protected function blockCurrentUser($ip = "")
     {
-        if (self::currentUserHaveRightsForSkip())
+        if (self::currentUserHaveRightsForSkip()) {
             return false;
+        }
 
-        if (!is_string($ip) || $ip === "")
+        if (!is_string($ip) || $ip === "") {
             $ip = $_SERVER["REMOTE_ADDR"];
+        }
 
         $rule = new CSecurityIPRule;
 
         CTimeZone::Disable();
-        $added = $rule->Add(array(
-            "RULE_TYPE" => "A",
-            "ACTIVE" => "Y",
-            "ADMIN_SECTION" => "Y",
-            "NAME" => getMessage("SECURITY_FILTER_IP_RULE", array("#IP#" => $ip)),
-            "ACTIVE_FROM" => ConvertTimeStamp(false, "FULL"),
-            "ACTIVE_TO" => ConvertTimeStamp(time() + COption::getOptionInt("security", "filter_duration") * 60, "FULL"),
-            "INCL_IPS" => array($ip),
-            "INCL_MASKS" => array("/*"),
-        ));
+        $startTimestamp = ConvertTimeStamp(false, "FULL");
+        $endTimestamp = ConvertTimeStamp(time() + COption::getOptionInt("security", "filter_duration") * 60, "FULL");
+        $ruleList = $rule->GetList(
+            array("ID"),
+            array(
+                "=RULE_TYPE" => "A",
+                "=ACTIVE" => "Y",
+                "=ADMIN_SECTION" => "Y",
+                "=NAME" => getMessage("SECURITY_FILTER_IP_RULE", array("#IP#" => $ip)),
+                "<=ACTIVE_FROM" => $startTimestamp,
+                "<=ACTIVE_TO" => $endTimestamp,
+            ),
+            array("ID" => "DESC")
+        );
+        while ($prevRule = $ruleList->Fetch()) {
+            if ($rule->Update($prevRule['ID'], array("ACTIVE_TO" => $endTimestamp))) {
+                CTimeZone::Enable();
+                return true;
+            }
+            break;
+        }
+        $added = $rule->Add(
+            array(
+                "RULE_TYPE" => "A",
+                "ACTIVE" => "Y",
+                "ADMIN_SECTION" => "Y",
+                "NAME" => getMessage("SECURITY_FILTER_IP_RULE", array("#IP#" => $ip)),
+                "ACTIVE_FROM" => $startTimestamp,
+                "ACTIVE_TO" => $endTimestamp,
+                "INCL_IPS" => array($ip),
+                "INCL_MASKS" => array("/*"),
+            )
+        );
         CTimeZone::Enable();
 
         return ($added > 0);
@@ -451,11 +508,13 @@ class CSecurityFilter
     {
         $result = ini_get("request_order");
 
-        if (!$result)
+        if (!$result) {
             $result = ini_get("variables_order");
+        }
 
-        if (!$result)
+        if (!$result) {
             $result = self::DEFAULT_REQUEST_ORDER;
+        }
 
         return $result;
     }
@@ -465,7 +524,7 @@ class CSecurityFilter
         $systemOrder = static::getRequestOrder();
 
         $_REQUEST = self::getSuperGlobalArray($systemOrder[0]);
-        for ($i = 1, $count = strlen($systemOrder); $i < $count; $i++) {
+        for ($i = 1, $count = mb_strlen($systemOrder); $i < $count; $i++) {
             $targetArray = self::getSuperGlobalArray($systemOrder[$i]);
             foreach ($targetArray as $k => $v) {
                 $_REQUEST[$k] = $v;
@@ -532,8 +591,9 @@ class CSecurityFilter
                 $this->showAjaxForm();
             } else {
                 $originalPostVars = $this->getHttpRequest()->getPostList()->toArrayRaw();
-                if (!$originalPostVars)
+                if (!$originalPostVars) {
                     $originalPostVars = array();
+                }
 
                 $this->showHtmlForm($originalPostVars);
             }
@@ -547,7 +607,9 @@ class CSecurityFilter
      */
     protected function showTextForm()
     {
-        echo "[WAF] " . getMessage("SECURITY_FILTER_FORM_SUB_TITLE") . " " . getMessage("SECURITY_FILTER_FORM_TITLE") . ".";
+        echo "[WAF] " . getMessage("SECURITY_FILTER_FORM_SUB_TITLE") . " " . getMessage(
+                "SECURITY_FILTER_FORM_TITLE"
+            ) . ".";
     }
 
     /**
@@ -555,7 +617,9 @@ class CSecurityFilter
      */
     protected function showAjaxForm()
     {
-        echo '<script>top.BX.closeWait(); top.BX.WindowManager.Get().ShowError(\'' . getMessageJS("SECURITY_FILTER_FORM_SUB_TITLE") . " " . getMessageJS("SECURITY_FILTER_FORM_TITLE") . "." . '\')</script>';
+        echo '<script>top.BX.closeWait(); top.BX.WindowManager.Get().ShowError(\'' . getMessageJS(
+                "SECURITY_FILTER_FORM_SUB_TITLE"
+            ) . " " . getMessageJS("SECURITY_FILTER_FORM_TITLE") . "." . '\')</script>';
     }
 
     /**
@@ -563,7 +627,6 @@ class CSecurityFilter
      */
     protected function showHtmlForm($originalPostVars = array())
     {
-
         ?>
         <html>
         <head>
@@ -626,10 +689,12 @@ class CSecurityFilter
                             <? echo getMessage("SECURITY_FILTER_FORM_MESSAGE") ?><br/><br/>
                             <table cellpadding="0" cellspacing="0" witdh="100%">
                                 <tr>
-                                    <td class="head"
-                                        align="center"><? echo getMessage("SECURITY_FILTER_FORM_VARNAME") ?></td>
-                                    <td class="head"
-                                        align="center"><? echo getMessage("SECURITY_FILTER_FORM_VARDATA") ?></td>
+                                    <td class="head" align="center"><? echo getMessage(
+                                            "SECURITY_FILTER_FORM_VARNAME"
+                                        ) ?></td>
+                                    <td class="head" align="center"><? echo getMessage(
+                                            "SECURITY_FILTER_FORM_VARDATA"
+                                        ) ?></td>
                                 </tr>
                                 <? foreach ($this->getChangedVars() as $var_name => $str):?>
                                     <tr valign="top">
@@ -639,7 +704,9 @@ class CSecurityFilter
                                 <?endforeach ?>
                             </table>
                             <br/>
-                            <form method="POST" <? if (defined('POST_FORM_ACTION_URI')):?> action="<? echo POST_FORM_ACTION_URI ?>" <?endif ?>>
+                            <form method="POST" <? if (defined(
+                                'POST_FORM_ACTION_URI'
+                            )):?> action="<? echo POST_FORM_ACTION_URI ?>" <?endif ?>>
                                 <? echo self::formatHiddenFields($originalPostVars); ?>
                                 <? echo bitrix_sessid_post(); ?>
                                 <input type="submit" name='____SECFILTER_ACCEPT_JS'
@@ -681,13 +748,16 @@ class CSecurityFilter
     {
         $result = "";
         foreach ($array as $key => $value) {
-            if ($prefix !== null)
+            if ($prefix !== null) {
                 $key = $prefix . "[" . $key . "]";
+            }
 
             if (is_array($value)) {
                 $result .= self::formatHiddenFields($value, $key);
             } else {
-                $result .= "<input type=hidden name=\"" . htmlspecialcharsbx($key) . "\" value=\"" . htmlspecialcharsbx($value) . "\">\r\n";
+                $result .= "<input type=hidden name=\"" . htmlspecialcharsbx($key) . "\" value=\"" . htmlspecialcharsbx(
+                        $value
+                    ) . "\">\r\n";
             }
         }
 

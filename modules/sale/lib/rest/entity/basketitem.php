@@ -35,6 +35,10 @@ class BasketItem extends Base
                 'TYPE' => self::TYPE_STRING,
                 'ATTRIBUTES' => [Attributes::ReadOnly]
             ],
+            'FUSER_ID' => [
+                'TYPE' => self::TYPE_INT,
+                'ATTRIBUTES' => [Attributes::ReadOnly]
+            ],
             'LID' => [
                 'TYPE' => self::TYPE_STRING,
                 'ATTRIBUTES' => [Attributes::ReadOnly]
@@ -287,8 +291,9 @@ class BasketItem extends Base
             || $name == 'modifycatalogproduct') {
             if (isset($arguments['fields'])) {
                 $fields = $arguments['fields'];
-                if (!empty($fields))
+                if (!empty($fields)) {
                     $arguments['fields'] = $this->convertKeysToSnakeCaseFields($fields);
+                }
             }
         } else {
             $arguments = parent::convertKeysToSnakeCaseArguments($name, $arguments);
@@ -304,21 +309,44 @@ class BasketItem extends Base
         if ($name == 'getfieldscatalogproduct') {
         } elseif ($name == 'addcatalogproduct') {
             $fields = $arguments['fields'];
-            $fieldsInfo = $this->getListFieldInfo($this->getFieldsCatalogProduct(), ['filter' => ['ignoredAttributes' => [Attributes::Hidden, Attributes::ReadOnly]]]);
+            $fieldsInfo = $this->getListFieldInfo(
+                $this->getFieldsCatalogProduct(),
+                [
+                    'filter' => [
+                        'ignoredAttributes' => [
+                            Attributes::Hidden,
+                            Attributes::ReadOnly
+                        ]
+                    ]
+                ]
+            );
 
             if (!empty($fields)) {
                 $required = $this->checkRequiredFields($fields, $fieldsInfo);
-                if (!$required->isSuccess())
+                if (!$required->isSuccess()) {
                     $r->addError(new Error('Required fields: ' . implode(', ', $required->getErrorMessages())));
+                }
             }
         } elseif ($name == 'updatecatalogproduct') {
             $fields = $arguments['fields'];
-            $fieldsInfo = $this->getListFieldInfo($this->getFieldsCatalogProduct(), ['filter' => ['ignoredAttributes' => [Attributes::Hidden, Attributes::ReadOnly, Attributes::Immutable]]]);
+            $fieldsInfo = $this->getListFieldInfo(
+                $this->getFieldsCatalogProduct(),
+                [
+                    'filter' => [
+                        'ignoredAttributes' => [
+                            Attributes::Hidden,
+                            Attributes::ReadOnly,
+                            Attributes::Immutable
+                        ]
+                    ]
+                ]
+            );
 
             if (!empty($fields)) {
                 $required = $this->checkRequiredFields($fields, $fieldsInfo);
-                if (!$required->isSuccess())
+                if (!$required->isSuccess()) {
                     $r->addError(new Error('Required fields: ' . implode(', ', $required->getErrorMessages())));
+                }
             }
         } else {
             $r = parent::checkArguments($name, $arguments);
@@ -354,14 +382,35 @@ class BasketItem extends Base
         ) {
         } elseif ($name == 'addcatalogproduct') {
             $fields = $arguments['fields'];
-            $fieldsInfo = $this->getListFieldInfo($this->getFieldsCatalogProduct(), ['filter' => ['ignoredAttributes' => [Attributes::Hidden, Attributes::ReadOnly]]]);
+            $fieldsInfo = $this->getListFieldInfo(
+                $this->getFieldsCatalogProduct(),
+                [
+                    'filter' => [
+                        'ignoredAttributes' => [
+                            Attributes::Hidden,
+                            Attributes::ReadOnly
+                        ]
+                    ]
+                ]
+            );
 
             if (!empty($fields)) {
                 $arguments['fields'] = $this->internalizeFields($fields, $fieldsInfo);
             }
         } elseif ($name == 'updatecatalogproduct') {
             $fields = $arguments['fields'];
-            $fieldsInfo = $this->getListFieldInfo($this->getFieldsCatalogProduct(), ['filter' => ['ignoredAttributes' => [Attributes::Hidden, Attributes::ReadOnly, Attributes::Immutable]]]);
+            $fieldsInfo = $this->getListFieldInfo(
+                $this->getFieldsCatalogProduct(),
+                [
+                    'filter' => [
+                        'ignoredAttributes' => [
+                            Attributes::Hidden,
+                            Attributes::ReadOnly,
+                            Attributes::Immutable
+                        ]
+                    ]
+                ]
+            );
 
             if (!empty($fields)) {
                 $arguments['fields'] = $this->internalizeFields($fields, $fieldsInfo);
@@ -402,24 +451,52 @@ class BasketItem extends Base
         $basketProperties = new BasketProperties();
 
         $fieldsInfo = empty($fieldsInfo) ? $this->getFields() : $fieldsInfo;
-        $listFieldsInfoAdd = $this->getListFieldInfo($fieldsInfo, ['filter' => ['ignoredAttributes' => [Attributes::Hidden, Attributes::ReadOnly], 'ignoredFields' => ['ORDER_ID']]]);
-        $listFieldsInfoUpdate = $this->getListFieldInfo($fieldsInfo, ['filter' => ['ignoredAttributes' => [Attributes::Hidden, Attributes::ReadOnly, Attributes::Immutable], 'skipFields' => ['ID']]]);
+        $listFieldsInfoAdd = $this->getListFieldInfo(
+            $fieldsInfo,
+            [
+                'filter' => [
+                    'ignoredAttributes' => [
+                        Attributes::Hidden,
+                        Attributes::ReadOnly
+                    ],
+                    'ignoredFields' => ['ORDER_ID']
+                ]
+            ]
+        );
+        $listFieldsInfoUpdate = $this->getListFieldInfo(
+            $fieldsInfo,
+            [
+                'filter' => [
+                    'ignoredAttributes' => [
+                        Attributes::Hidden,
+                        Attributes::ReadOnly,
+                        Attributes::Immutable
+                    ],
+                    'skipFields' => ['ID']
+                ]
+            ]
+        );
 
-        if (isset($fields['ORDER']['ID']))
+        if (isset($fields['ORDER']['ID'])) {
             $result['ORDER']['ID'] = (int)$fields['ORDER']['ID'];
+        }
 
         if (isset($fields['ORDER']['BASKET_ITEMS'])) {
             foreach ($fields['ORDER']['BASKET_ITEMS'] as $k => $item) {
-                $result['ORDER']['BASKET_ITEMS'][$k] = $this->internalizeFields($item,
+                $result['ORDER']['BASKET_ITEMS'][$k] = $this->internalizeFields(
+                    $item,
                     $this->isNewItem($item) ? $listFieldsInfoAdd : $listFieldsInfoUpdate
                 );
 
                 // n1 - ref shipmentItem.basketId
-                if ($this->isNewItem($item) && isset($item['ID']))
+                if ($this->isNewItem($item) && isset($item['ID'])) {
                     $result['ORDER']['BASKET_ITEMS'][$k]['ID'] = $item['ID'];
+                }
 
                 if (isset($item['PROPERTIES'])) {
-                    $result['ORDER']['BASKET_ITEMS'][$k]['PROPERTIES'] = $basketProperties->internalizeFieldsModify(['BASKET_ITEM' => ['PROPERTIES' => $item['PROPERTIES']]])['BASKET_ITEM']['PROPERTIES'];
+                    $result['ORDER']['BASKET_ITEMS'][$k]['PROPERTIES'] = $basketProperties->internalizeFieldsModify(
+                        ['BASKET_ITEM' => ['PROPERTIES' => $item['PROPERTIES']]]
+                    )['BASKET_ITEM']['PROPERTIES'];
                 }
             }
         }
@@ -433,8 +510,9 @@ class BasketItem extends Base
 
         $result = parent::externalizeFields($fields);
 
-        if (isset($fields['PROPERTIES']))
+        if (isset($fields['PROPERTIES'])) {
             $result['PROPERTIES'] = $basketProperties->externalizeListFields($fields['PROPERTIES']);
+        }
 
         return $result;
     }
@@ -471,19 +549,46 @@ class BasketItem extends Base
 
         $basketProperties = new BasketProperties();
 
-        $listFieldsInfoAdd = $this->getListFieldInfo($this->getFields(), ['filter' => ['ignoredAttributes' => [Attributes::Hidden, Attributes::ReadOnly], 'ignoredFields' => ['ORDER_ID']]]);
-        $listFieldsInfoUpdate = $this->getListFieldInfo($this->getFields(), ['filter' => ['ignoredAttributes' => [Attributes::Hidden, Attributes::ReadOnly, Attributes::Immutable]]]);
+        $listFieldsInfoAdd = $this->getListFieldInfo(
+            $this->getFields(),
+            [
+                'filter' => [
+                    'ignoredAttributes' => [
+                        Attributes::Hidden,
+                        Attributes::ReadOnly
+                    ],
+                    'ignoredFields' => ['ORDER_ID']
+                ]
+            ]
+        );
+        $listFieldsInfoUpdate = $this->getListFieldInfo(
+            $this->getFields(),
+            [
+                'filter' => [
+                    'ignoredAttributes' => [
+                        Attributes::Hidden,
+                        Attributes::ReadOnly,
+                        Attributes::Immutable
+                    ]
+                ]
+            ]
+        );
 
         foreach ($fields['ORDER']['BASKET_ITEMS'] as $k => $item) {
-            $required = $this->checkRequiredFields($item,
+            $required = $this->checkRequiredFields(
+                $item,
                 $this->isNewItem($item) ? $listFieldsInfoAdd : $listFieldsInfoUpdate
             );
             if (!$required->isSuccess()) {
-                $r->addError(new Error('[basketItems][' . $k . '] - ' . implode(', ', $required->getErrorMessages()) . '.'));
+                $r->addError(
+                    new Error('[basketItems][' . $k . '] - ' . implode(', ', $required->getErrorMessages()) . '.')
+                );
             }
 
             if (isset($item['PROPERTIES'])) {
-                $requiredProperties = $basketProperties->checkRequiredFieldsModify(['BASKET_ITEM' => ['PROPERTIES' => $item['PROPERTIES']]]);
+                $requiredProperties = $basketProperties->checkRequiredFieldsModify(
+                    ['BASKET_ITEM' => ['PROPERTIES' => $item['PROPERTIES']]]
+                );
                 if (!$requiredProperties->isSuccess()) {
                     $requiredPropertiesFields = [];
                     foreach ($requiredProperties->getErrorMessages() as $errorMessage) {
@@ -491,7 +596,6 @@ class BasketItem extends Base
                     }
                     $r->addError(new Error(implode(' ', $requiredPropertiesFields)));
                 }
-
             }
         }
         return $r;

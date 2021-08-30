@@ -1,9 +1,11 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/fileman/prolog.php");
 
-if (!$USER->CanDoOperation('fileman_upload_files'))
+if (!$USER->CanDoOperation('fileman_upload_files')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/fileman/include.php");
 IncludeModuleLangFile(__FILE__);
 $addUrl = 'lang=' . LANGUAGE_ID . ($logical == "Y" ? '&logical=Y' : '');
@@ -23,22 +25,24 @@ $abs_path = $DOC_ROOT . $path;
 $bCan = false;
 
 // Check permissions
-if (!$USER->CanDoFileOperation('fm_upload_file', $arPath))
+if (!$USER->CanDoFileOperation('fm_upload_file', $arPath)) {
     $strWarning = GetMessage("ACCESS_DENIED");
-else {
+} else {
     $bCan = true;
-    if ($REQUEST_METHOD == "POST" && strlen($save) > 0 && check_bitrix_sessid()) {
-        $nums = IntVal($nums);
+    if ($REQUEST_METHOD == "POST" && $save <> '' && check_bitrix_sessid()) {
+        $nums = intval($nums);
         if ($nums > 0) {
             for ($i = 1; $i <= $nums; $i++) {
                 $arFile = $_FILES["file_" . $i];
-                if (strlen($arFile["name"]) <= 0 || $arFile["tmp_name"] == "none")
+                if ($arFile["name"] == '' || $arFile["tmp_name"] == "none") {
                     continue;
+                }
 
                 $arFile["name"] = CFileman::GetFileName($arFile["name"]);
                 $filename = ${"filename_" . $i};
-                if (strlen($filename) <= 0)
+                if ($filename == '') {
                     $filename = $arFile["name"];
+                }
 
                 $pathto = Rel2Abs($path, $filename);
                 if (!$USER->CanDoFileOperation('fm_upload_file', Array($site, $pathto))) {
@@ -47,50 +51,68 @@ else {
                     $strWarning .= GetMessage("FILEMAN_FILEUPLOAD_SIZE_ERROR", Array('#FILE_NAME#' => $pathto)) . "\n";
                 } elseif (($mess = CFileMan::CheckFileName(str_replace('/', '', $pathto))) !== true) {
                     $strWarning .= $mess . ".\n";
-                } else if ($io->FileExists($DOC_ROOT . $pathto)) {
-                    $strWarning .= GetMessage("FILEMAN_FILEUPLOAD_FILE_EXISTS1") . " \"" . $pathto . "\" " . GetMessage("FILEMAN_FILEUPLOAD_FILE_EXISTS2") . ".\n";
-                } elseif (!$USER->IsAdmin() && (HasScriptExtension($pathto) || substr(CFileman::GetFileName($pathto), 0, 1) == ".")) {
-                    $strWarning .= GetMessage("FILEMAN_FILEUPLOAD_PHPERROR") . " \"" . $pathto . "\".\n";
                 } else {
-                    $bQuota = true;
-                    if (COption::GetOptionInt("main", "disk_space") > 0) {
-                        $f = $io->GetFile($arFile["tmp_name"]);
-                        $bQuota = false;
-                        $size = $f->GetFileSize();
-                        $quota = new CDiskQuota();
-                        if ($quota->checkDiskQuota(array("FILE_SIZE" => $size)))
-                            $bQuota = true;
-                    }
-
-                    if ($bQuota) {
-                        if (!$io->Copy($arFile["tmp_name"], $DOC_ROOT . $pathto))
-                            $strWarning .= GetMessage("FILEMAN_FILEUPLOAD_FILE_CREATE_ERROR") . " \"" . $pathto . "\"\n";
-                        elseif (COption::GetOptionInt("main", "disk_space") > 0)
-                            CDiskQuota::updateDiskQuota("file", $size, "copy");
-                        $f = $io->GetFile($DOC_ROOT . $pathto);
-                        $f->MarkWritable();
-                        $module_id = 'fileman';
-                        if (COption::GetOptionString($module_id, "log_page", "Y") == "Y") {
-                            $res_log['path'] = substr($pathto, 1);
-                            CEventLog::Log(
-                                "content",
-                                "FILE_ADD",
-                                "main",
-                                "",
-                                serialize($res_log)
-                            );
+                    if ($io->FileExists($DOC_ROOT . $pathto)) {
+                        $strWarning .= GetMessage(
+                                "FILEMAN_FILEUPLOAD_FILE_EXISTS1"
+                            ) . " \"" . $pathto . "\" " . GetMessage("FILEMAN_FILEUPLOAD_FILE_EXISTS2") . ".\n";
+                    } elseif (!$USER->IsAdmin() && (HasScriptExtension($pathto) || mb_substr(
+                                CFileman::GetFileName($pathto),
+                                0,
+                                1
+                            ) == ".")) {
+                        $strWarning .= GetMessage("FILEMAN_FILEUPLOAD_PHPERROR") . " \"" . $pathto . "\".\n";
+                    } else {
+                        $bQuota = true;
+                        if (COption::GetOptionInt("main", "disk_space") > 0) {
+                            $f = $io->GetFile($arFile["tmp_name"]);
+                            $bQuota = false;
+                            $size = $f->GetFileSize();
+                            $quota = new CDiskQuota();
+                            if ($quota->checkDiskQuota(array("FILE_SIZE" => $size))) {
+                                $bQuota = true;
+                            }
                         }
-                    } else
-                        $strWarning .= $quota->LAST_ERROR . "\n";
+
+                        if ($bQuota) {
+                            if (!$io->Copy($arFile["tmp_name"], $DOC_ROOT . $pathto)) {
+                                $strWarning .= GetMessage(
+                                        "FILEMAN_FILEUPLOAD_FILE_CREATE_ERROR"
+                                    ) . " \"" . $pathto . "\"\n";
+                            } elseif (COption::GetOptionInt("main", "disk_space") > 0) {
+                                CDiskQuota::updateDiskQuota("file", $size, "copy");
+                            }
+                            $f = $io->GetFile($DOC_ROOT . $pathto);
+                            $f->MarkWritable();
+                            $module_id = 'fileman';
+                            if (COption::GetOptionString($module_id, "log_page", "Y") == "Y") {
+                                $res_log['path'] = mb_substr($pathto, 1);
+                                CEventLog::Log(
+                                    "content",
+                                    "FILE_ADD",
+                                    "main",
+                                    "",
+                                    serialize($res_log)
+                                );
+                            }
+                        } else {
+                            $strWarning .= $quota->LAST_ERROR . "\n";
+                        }
+                    }
                 }
             }
         }
 
-        if (strlen($strWarning) <= 0) {
-            if (!empty($_POST["apply"]))
-                LocalRedirect("/bitrix/admin/fileman_file_upload.php?" . $addUrl . "&site=" . $site . "&path=" . UrlEncode($path));
-            else
-                LocalRedirect("/bitrix/admin/fileman_admin.php?" . $addUrl . "&site=" . $site . "&path=" . UrlEncode($path));
+        if ($strWarning == '') {
+            if (!empty($_POST["apply"])) {
+                LocalRedirect(
+                    "/bitrix/admin/fileman_file_upload.php?" . $addUrl . "&site=" . $site . "&path=" . UrlEncode($path)
+                );
+            } else {
+                LocalRedirect(
+                    "/bitrix/admin/fileman_admin.php?" . $addUrl . "&site=" . $site . "&path=" . UrlEncode($path)
+                );
+            }
         }
     }
 }
@@ -99,7 +121,7 @@ foreach ($arParsedPath["AR_PATH"] as $chainLevel) {
     $adminChain->AddItem(
         array(
             "TEXT" => htmlspecialcharsex($chainLevel["TITLE"]),
-            "LINK" => ((strlen($chainLevel["LINK"]) > 0) ? $chainLevel["LINK"] : ""),
+            "LINK" => (($chainLevel["LINK"] <> '') ? $chainLevel["LINK"] : ""),
         )
     );
 }
@@ -110,7 +132,7 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
 
 <? CAdminMessage::ShowMessage($strWarning); ?>
 
-<? if (strlen($strWarning) <= 0 || $bCan): ?>
+<? if ($strWarning == '' || $bCan): ?>
     <script>
         function NewFileName(ob) {
             var
@@ -142,8 +164,9 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
         }
     </script>
     <form method="POST"
-          action="<? echo $APPLICATION->GetCurPage() . "?" . $addUrl . "&site=" . $site . "&path=" . UrlEncode($path); ?>"
-          name="ffilemanupload" enctype="multipart/form-data">
+          action="<? echo $APPLICATION->GetCurPage() . "?" . $addUrl . "&site=" . $site . "&path=" . UrlEncode(
+                  $path
+              ); ?>" name="ffilemanupload" enctype="multipart/form-data">
         <input type="hidden" name="logical" value="<?= htmlspecialcharsbx($logical) ?>">
         <? echo GetFilterHiddens("filter_"); ?>
         <input type="hidden" name="save" value="Y">
@@ -151,7 +174,12 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
 
         <?
         $aTabs = array(
-            array("DIV" => "edit1", "TAB" => GetMessage('FILEMAN_UPL_TAB'), "ICON" => "fileman", "TITLE" => GetMessage('FILEMAN_UPL_TAB_ALT')),
+            array(
+                "DIV" => "edit1",
+                "TAB" => GetMessage('FILEMAN_UPL_TAB'),
+                "ICON" => "fileman",
+                "TITLE" => GetMessage('FILEMAN_UPL_TAB_ALT')
+            ),
         );
         $tabControl = new CAdminTabControl("tabControl", $aTabs, true, true);
         $tabControl->Begin();
@@ -164,7 +192,9 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
                 <table id="bx-upload-tbl">
                     <tr class="heading">
                         <td style="text-align: right!important;" width="40%">
-                            <span style="display: inline-block; width: 200px; text-align: left;"><?= GetMessage("FILEMAN_FILEUPLOAD_NAME") ?></span>
+                            <span style="display: inline-block; width: 200px; text-align: left;"><?= GetMessage(
+                                    "FILEMAN_FILEUPLOAD_NAME"
+                                ) ?></span>
                         </td>
                         <td style="text-align: left!important;" width="60%">
                             <?= GetMessage("FILEMAN_FILEUPLOAD_FILE") ?>
@@ -188,7 +218,9 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
         $tabControl->Buttons(
             array(
                 "disabled" => false,
-                "back_url" => "/bitrix/admin/fileman_admin.php?" . $addUrl . "&site=" . $site . "&path=" . UrlEncode($path)
+                "back_url" => "/bitrix/admin/fileman_admin.php?" . $addUrl . "&site=" . $site . "&path=" . UrlEncode(
+                        $path
+                    )
             )
         );
         $tabControl->End();

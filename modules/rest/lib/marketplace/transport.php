@@ -17,6 +17,7 @@ if (!defined('REST_MARKETPLACE_URL')) {
 class Transport
 {
     const SERVICE_URL = REST_MARKETPLACE_URL;
+    protected const VERSION = 1;
 
     const SOCKET_TIMEOUT = 10;
     const STREAM_TIMEOUT = 10;
@@ -24,12 +25,15 @@ class Transport
     const METHOD_GET_LAST = 'get_last';
     const METHOD_GET_DEV = 'get_dev';
     const METHOD_GET_BEST = 'get_best';
+    const METHOD_GET_SALE_OUT = 'get_sale_out';
     const METHOD_GET_BUY = 'get_buy';
     const METHOD_GET_UPDATES = 'get_updates';
+    const METHOD_GET_IMMUNE = 'get_immune';
     const METHOD_GET_CATEGORIES = 'get_categories';
     const METHOD_GET_CATEGORY = 'get_category';
     const METHOD_GET_TAG = 'get_tag';
     const METHOD_GET_APP = 'get_app';
+    const METHOD_GET_APP_PUBLIC = 'get_app_public';
     const METHOD_GET_INSTALL = 'get_app_install';
     const METHOD_SET_INSTALL = 'is_installed';
     const METHOD_SEARCH_APP = 'search_app';
@@ -60,10 +64,12 @@ class Transport
     {
         $query = $this->prepareQuery($method, $fields);
 
-        $httpClient = new HttpClient(array(
-            'socketTimeout' => static::SOCKET_TIMEOUT,
-            'streamTimeout' => static::STREAM_TIMEOUT,
-        ));
+        $httpClient = new HttpClient(
+            array(
+                'socketTimeout' => static::SOCKET_TIMEOUT,
+                'streamTimeout' => static::STREAM_TIMEOUT,
+            )
+        );
 
         $response = $httpClient->post(self::SERVICE_URL, $query);
 
@@ -92,10 +98,13 @@ class Transport
         }
 
         $fields['action'] = $method;
+        if (Client::isSubscriptionAccess()) {
+            $fields['queryVersion'] = static::VERSION;
+        }
         $fields['lang'] = LANGUAGE_ID;
         $fields['bsm'] = ModuleManager::isModuleInstalled('intranet') ? '0' : '1';
 
-        if (Loader::includeModule('bitrix24')) {
+        if (Loader::includeModule('bitrix24') && defined('BX24_HOST_NAME')) {
             $fields['tariff'] = \CBitrix24::getLicensePrefix();
             $fields['host_name'] = BX24_HOST_NAME;
         } else {
@@ -111,7 +120,7 @@ class Transport
     protected function prepareAnswer($response)
     {
         $responseData = false;
-        if ($response && strlen($response) > 0) {
+        if ($response && $response <> '') {
             try {
                 $responseData = Json::decode($response);
             } catch (ArgumentException $e) {

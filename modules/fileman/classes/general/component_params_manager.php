@@ -23,7 +23,7 @@ class CComponentParamsManager
         }
 
         if (!isset($config['id'])) {
-            $config['id'] = 'bx_comp_params_manager_' . substr(uniqid(mt_rand(), true), 0, 4);
+            $config['id'] = 'bx_comp_params_manager_' . mb_substr(uniqid(mt_rand(), true), 0, 4);
         }
 
         $mess_lang = self::GetLangMessages();
@@ -51,7 +51,7 @@ class CComponentParamsManager
     public static function ProcessRequest()
     {
         if (isset($_REQUEST['component_params_manager'])) {
-            $reqId = intVal($_REQUEST['component_params_manager']);
+            $reqId = intval($_REQUEST['component_params_manager']);
             $result = self::GetComponentProperties(
                 $_REQUEST['component_name'],
                 $_REQUEST['component_template'],
@@ -85,8 +85,12 @@ class CComponentParamsManager
         }
     }
 
-    public static function GetComponentProperties($name = '', $template = '', $siteTemplate = '', $currentValues = array())
-    {
+    public static function GetComponentProperties(
+        $name = '',
+        $template = '',
+        $siteTemplate = '',
+        $currentValues = array()
+    ) {
         $template = (!$template || $template == '.default') ? '' : $template;
         $arTemplates = CComponentUtil::GetTemplatesList($name, $siteTemplate);
 
@@ -97,12 +101,15 @@ class CComponentParamsManager
         $arSiteTemplates = array(".default" => GetMessage("PAR_MAN_DEFAULT"));
         if (!empty($siteTemplate)) {
             $dbst = CSiteTemplate::GetList(array(), array("ID" => $siteTemplate), array());
-            while ($siteTempl = $dbst->Fetch())
+            while ($siteTempl = $dbst->Fetch()) {
                 $arSiteTemplates[$siteTempl['ID']] = $siteTempl['NAME'];
+            }
         }
 
         foreach ($arTemplates as $k => $templ) {
-            $showTemplateName = ($templ["TEMPLATE"] !== '' && $arSiteTemplates[$templ["TEMPLATE"]] <> '') ? $arSiteTemplates[$templ["TEMPLATE"]] : GetMessage("PAR_MAN_DEF_TEMPLATE");
+            $showTemplateName = ($templ["TEMPLATE"] !== '' && $arSiteTemplates[$templ["TEMPLATE"]] <> '') ? $arSiteTemplates[$templ["TEMPLATE"]] : GetMessage(
+                "PAR_MAN_DEF_TEMPLATE"
+            );
             $arTemplates[$k]['DISPLAY_NAME'] = $templ['NAME'] . ' (' . $showTemplateName . ')';
         }
 
@@ -113,7 +120,12 @@ class CComponentParamsManager
                 $tName = (!$arTemplate['NAME'] || $arTemplate['NAME'] == '.default') ? '' : $arTemplate['NAME'];
 
                 if ($tName == $template) {
-                    $arTemplateProps = CComponentUtil::GetTemplateProps($name, $arTemplate['NAME'], $siteTemplate, $currentValues);
+                    $arTemplateProps = CComponentUtil::GetTemplateProps(
+                        $name,
+                        $arTemplate['NAME'],
+                        $siteTemplate,
+                        $currentValues
+                    );
                 }
             }
         }
@@ -211,7 +223,7 @@ class CComponentParamsManager
                         'mode' => $fd['ONLY_ML'] ? 'medialib' : 'select',
                         'value' => '...',
                         'event' => "BX_FD_" . $fd['NAME'],
-                        'id' => "bx_fd_input_" . strtolower($fd['NAME']),
+                        'id' => "bx_fd_input_" . mb_strtolower($fd['NAME']),
                         'MedialibConfig' => array(
                             "event" => "bx_ml_event_" . $fd['NAME'],
                             "arResultDest" => Array("FUNCTION_NAME" => "BX_FD_ONRESULT_" . $fd['NAME']),
@@ -221,22 +233,26 @@ class CComponentParamsManager
                     )
                 );
                 ?>
-                <script>window._bxMlBrowseButton_<?= strtolower($fd['NAME'])?> = '<?= CUtil::JSEscape($MLRes)?>';</script><?
+                <script>window._bxMlBrowseButton_<?= mb_strtolower($fd['NAME'])?> = '<?= CUtil::JSEscape(
+                        $MLRes
+                    )?>';</script><?
             }
 
-            CAdminFileDialog::ShowScript(Array
-            (
-                "event" => "BX_FD_" . $fd['NAME'],
-                "arResultDest" => Array("FUNCTION_NAME" => "BX_FD_ONRESULT_" . $fd['NAME']),
-                "arPath" => Array(),
-                "select" => $fd['TARGET'], // F - file only, D - folder only, DF - files & dirs
-                "operation" => 'O',
-                "showUploadTab" => $fd['UPLOAD'],
-                "showAddToMenuTab" => false,
-                "fileFilter" => $fd['EXT'],
-                "allowAllFiles" => true,
-                "SaveConfig" => true
-            ));
+            CAdminFileDialog::ShowScript(
+                Array
+                (
+                    "event" => "BX_FD_" . $fd['NAME'],
+                    "arResultDest" => Array("FUNCTION_NAME" => "BX_FD_ONRESULT_" . $fd['NAME']),
+                    "arPath" => Array(),
+                    "select" => $fd['TARGET'], // F - file only, D - folder only, DF - files & dirs
+                    "operation" => 'O',
+                    "showUploadTab" => $fd['UPLOAD'],
+                    "showAddToMenuTab" => false,
+                    "fileFilter" => $fd['EXT'],
+                    "allowAllFiles" => true,
+                    "SaveConfig" => true
+                )
+            );
         }
     }
 }

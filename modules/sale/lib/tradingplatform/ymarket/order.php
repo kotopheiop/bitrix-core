@@ -25,31 +25,41 @@ class Order
      */
     public static function create(array $params)
     {
-        if (empty($params['CURRENCY']))
+        if (empty($params['CURRENCY'])) {
             throw new ArgumentNullException('params[CURRENCY]');
+        }
 
-        if (strlen($params['SITE_ID']) <= 0)
+        if ($params['SITE_ID'] == '') {
             throw new ArgumentNullException('params[SITE_ID]');
+        }
 
-        if (intval($params['PERSON_TYPE_ID']) <= 0)
+        if (intval($params['PERSON_TYPE_ID']) <= 0) {
             throw new ArgumentNullException('params[PERSON_TYPE_ID]');
+        }
 
-        if (empty($params['CART_ITEMS']))
+        if (empty($params['CART_ITEMS'])) {
             throw new ArgumentNullException('params[CART_ITEMS]');
+        }
 
-        if (empty($params['IS_ACCEPT_OLD_PRICE']))
+        if (empty($params['IS_ACCEPT_OLD_PRICE'])) {
             $params['IS_ACCEPT_OLD_PRICE'] = \CSaleYMHandler::NOT_ACCEPT_OLD_PRICE;
+        }
 
         $result = new Result();
         $currencyList = \Bitrix\Currency\CurrencyManager::getCurrencyList();
 
-        if ($params['CURRENCY'] == 'RUR' && empty($currencyList['RUR']) && !empty($currencyList['RUB']))
+        if ($params['CURRENCY'] == 'RUR' && empty($currencyList['RUR']) && !empty($currencyList['RUB'])) {
             $currency = 'RUB';
-        else
+        } else {
             $currency = $params['CURRENCY'];
+        }
 
         if (empty($currencyList[$currency])) {
-            $result->addError(new Error(Loc::getMessage('SALE_YMARKET_ORDER_CURRENCY_NOT_SUPPORTED', array('#CURRENCY#' => $currency))));
+            $result->addError(
+                new Error(
+                    Loc::getMessage('SALE_YMARKET_ORDER_CURRENCY_NOT_SUPPORTED', array('#CURRENCY#' => $currency))
+                )
+            );
             return $result;
         }
 
@@ -61,15 +71,17 @@ class Order
         /** @var \Bitrix\Sale\Result $res */
         $res = $order->setPersonTypeId(intval($params['PERSON_TYPE_ID']));
 
-        if (!$res->isSuccess())
+        if (!$res->isSuccess()) {
             $result->addErrors($res->getErrors());
+        }
 
         if (!empty($params['PROPERTIES'])) {
             $propCollection = $order->getPropertyCollection();
             $res = $propCollection->setValuesFromPost(array('PROPERTIES' => $params['PROPERTIES']), array());
 
-            if (!$res->isSuccess())
+            if (!$res->isSuccess()) {
                 $result->addErrors($res->getErrors());
+            }
         }
 
         $fUserId = $order->getUserId() > 0 ? \Bitrix\Sale\Fuser::getIdByUserId($order->getUserId()) : null;
@@ -81,8 +93,9 @@ class Order
         $basket = $basketClass::create($params['SITE_ID']);
         $res = $order->setBasket($basket);
 
-        if (!$res->isSuccess())
+        if (!$res->isSuccess()) {
             $result->addErrors($res->getErrors());
+        }
 
         $basket->setFUserId($fUserId);
         $discount = $order->getDiscount();
@@ -168,8 +181,9 @@ class Order
             $hasMeaningfulFields = $order->hasMeaningfulField();
             $res = $order->doFinalAction($hasMeaningfulFields);
 
-            if (!$res->isSuccess())
+            if (!$res->isSuccess()) {
                 $result->addErrors($res->getErrors());
+            }
         }
 
         $result->setData(
@@ -187,19 +201,23 @@ class Order
         $shipments = $order->getShipmentCollection();
 
         /** @var \Bitrix\Sale\Shipment $shipment */
-        if ($shipments->count() > 0)
-            foreach ($shipments as $shipment)
-                if (!$shipment->isSystem())
+        if ($shipments->count() > 0) {
+            foreach ($shipments as $shipment) {
+                if (!$shipment->isSystem()) {
                     $shipment->delete();
+                }
+            }
+        }
 
         $shipment = $shipments->createItem();
 
         if (intval($deliveryId) > 0) {
             /** @var \Bitrix\Sale\Delivery\Services\Base $dlvSrv */
-            if ($dlvSrv = \Bitrix\Sale\Delivery\Services\Manager::getObjectById($deliveryId))
+            if ($dlvSrv = \Bitrix\Sale\Delivery\Services\Manager::getObjectById($deliveryId)) {
                 $dlvName = $dlvSrv->getNameWithParent();
-            else
+            } else {
                 $dlvName = 'Not found (' . $deliveryId . ')';
+            }
 
             $shipment->setField('DELIVERY_ID', $deliveryId);
             $shipment->setField('DELIVERY_NAME', $dlvName);
@@ -233,8 +251,9 @@ class Order
         /** @var \Bitrix\Sale\Payment $payment */
         if ($payments->count() > 0) {
             foreach ($payments as $payment) {
-                if ($payment->isPaid())
+                if ($payment->isPaid()) {
                     $payment->setPaid("N");
+                }
 
                 $payment->delete();
             }
@@ -245,8 +264,9 @@ class Order
         if (intval($paySystemId) > 0) {
             $psName = 'Not found (' . $paySystemId . ')';
 
-            if ($ps = PaySystem\Manager::getById($paySystemId))
+            if ($ps = PaySystem\Manager::getById($paySystemId)) {
                 $psName = $ps['NAME'];
+            }
 
             $payment->setField('PAY_SYSTEM_ID', $paySystemId);
             $payment->setField('PAY_SYSTEM_NAME', $psName);

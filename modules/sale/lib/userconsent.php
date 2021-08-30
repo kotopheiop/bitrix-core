@@ -51,11 +51,13 @@ class UserConsent
                     $companyNames = array();
                     $companyAddresses = array();
 
-                    $dbRes = Manager::getList(array(
-                        'select' => array('NAME', 'ADDRESS'),
-                        'filter' => array('ACTIVE' => 'Y'),
-                        'order' => array('SORT' => 'ASC', 'ID' => 'ASC')
-                    ));
+                    $dbRes = Manager::getList(
+                        array(
+                            'select' => array('NAME', 'ADDRESS'),
+                            'filter' => array('ACTIVE' => 'Y'),
+                            'order' => array('SORT' => 'ASC', 'ID' => 'ASC')
+                        )
+                    );
                     while ($company = $dbRes->fetch()) {
                         $companyNames[] = $company['NAME'];
                         $companyAddresses[] = $company['ADDRESS'];

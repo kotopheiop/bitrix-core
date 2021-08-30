@@ -5,7 +5,6 @@
 # http://www.bitrixsoft.com                  #
 # mailto:admin@bitrixsoft.com                #
 ##############################################
-$_SESSION['photogallery'] = (is_array($_SESSION['photogallery']) ? $_SESSION['photogallery'] : array());
 CModule::AddAutoloadClasses(
     "photogallery",
     array(
@@ -19,7 +18,8 @@ if (!is_array($GLOBALS["PHOTOGALLERY_VARS"])) {
     $GLOBALS["PHOTOGALLERY_VARS"] = array(
         "arSections" => array(),
         "arGalleries" => array(),
-        "arIBlock" => array());
+        "arIBlock" => array()
+    );
 }
 
 IncludeModuleLangFile(__FILE__);
@@ -54,20 +54,23 @@ function PhotoShowError($arError, $arShowFields = array("ID", "NAME"), $bShowErr
     $sReturn = "";
     $tmp = false;
     $arRes = array();
-    if (empty($arError))
+    if (empty($arError)) {
         return $sReturn;
+    }
 
     if (!is_array($arError)) {
         $sReturn = $arError;
     } else {
-        if (isset($arError["title"]))
+        if (isset($arError["title"])) {
             $sReturn = $arError["title"];
+        }
 
         if (isset($arError["code"])) {
             if (empty($sReturn)) {
                 $str = GetMessage("P_ERROR_" . $arError["code"]);
-                if (!empty($str))
+                if (!empty($str)) {
                     $sReturn = $str;
+                }
             }
             $sReturn .= ($bShowErrorCode ? " [CODE: " . $arError["code"] . "]" : "");
         }
@@ -82,15 +85,19 @@ function PhotoShowError($arError, $arShowFields = array("ID", "NAME"), $bShowErr
                 }
 
                 foreach ($arShowFields as $key) {
-                    if (empty($tmp["~" . $key]) && empty($tmp[$key]))
+                    if (empty($tmp["~" . $key]) && empty($tmp[$key])) {
                         continue;
-                    $arRes[] = $key . ": " . (!empty($tmp["~" . $key]) ? htmlspecialcharsbx($tmp["~" . $key]) : $tmp[$key]);
+                    }
+                    $arRes[] = $key . ": " . (!empty($tmp["~" . $key]) ? htmlspecialcharsbx(
+                            $tmp["~" . $key]
+                        ) : $tmp[$key]);
                 }
             } else {
                 $arRes[] = $tmp;
             }
-            if (!empty($arRes))
+            if (!empty($arRes)) {
                 $sReturn .= " (" . implode(", ", $arRes) . ")";
+            }
         }
     }
     return $sReturn;
@@ -99,21 +106,23 @@ function PhotoShowError($arError, $arShowFields = array("ID", "NAME"), $bShowErr
 function PhotoGetBrowser()
 {
     $Browser = "";
-    $str = strToLower($_SERVER['HTTP_USER_AGENT']);
-    if (strpos($str, "opera") !== false)
+    $str = mb_strtolower($_SERVER['HTTP_USER_AGENT']);
+    if (mb_strpos($str, "opera") !== false) {
         $Browser = "opera";
-    elseif (strpos($str, "msie") !== false) {
+    } elseif (mb_strpos($str, "msie") !== false) {
         $Browser = "ie";
-        if (strpos($str, "win") !== false)
+        if (mb_strpos($str, "win") !== false) {
             $Browser = "win_ie";
+        }
     }
     return $Browser;
 }
 
 function PhotoDateFormat($format = "", $timestamp = "")
 {
-    if (empty($timestamp))
+    if (empty($timestamp)) {
         return "";
+    }
     if (LANG == "en") {
         return date($format, $timestamp);
     } elseif (preg_match_all("/[FMlD]/", $format, $matches)) {
@@ -138,32 +147,37 @@ function PhotoDateFormat($format = "", $timestamp = "")
         }
         $result .= date($ar[count($ar) - 1], $timestamp);
         return $result;
-    } else
+    } else {
         return date($format, $timestamp);
+    }
 }
 
 function PhotoFormatDate($strDate, $format = "DD.MM.YYYY HH:MI:SS", $new_format = "DD.MM.YYYY HH:MI:SS")
 {
+    global $DB;
+
     $strDate = trim($strDate);
 
     $new_format = str_replace("MI", "I", $new_format);
     $new_format = preg_replace("/([DMYIHS])\\1+/is" . BX_UTF_PCRE_MODIFIER, "\\1", $new_format);
-    $new_format_len = strlen($new_format);
-    $arFormat = preg_split('/[^0-9A-Za-z]/', strtoupper($format));
+    $new_format_len = mb_strlen($new_format);
+    $arFormat = preg_split('/[^0-9A-Za-z]/', mb_strtoupper($format));
     $arDate = preg_split('/[^0-9]/', $strDate);
     $arParsedDate = Array();
     $bound = min(count($arFormat), count($arDate));
 
     for ($i = 0; $i < $bound; $i++) {
-        if (preg_match("/[^0-9]/", $arDate[$i], $matches))
-            $r = CDatabase::ForSql($arDate[$i], 4);
-        else
-            $r = intVal($arDate[$i]);
+        if (preg_match("/[^0-9]/", $arDate[$i], $matches)) {
+            $r = $DB->ForSql($arDate[$i], 4);
+        } else {
+            $r = intval($arDate[$i]);
+        }
 
-        $arParsedDate[substr($arFormat[$i], 0, 2)] = $r;
+        $arParsedDate[mb_substr($arFormat[$i], 0, 2)] = $r;
     }
-    if (intval($arParsedDate["DD"]) <= 0 || intval($arParsedDate["MM"]) <= 0 || intval($arParsedDate["YY"]) <= 0)
+    if (intval($arParsedDate["DD"]) <= 0 || intval($arParsedDate["MM"]) <= 0 || intval($arParsedDate["YY"]) <= 0) {
         return false;
+    }
 
     $strResult = "";
 
@@ -178,7 +192,7 @@ function PhotoFormatDate($strDate, $format = "DD.MM.YYYY HH:MI:SS", $new_format 
         );
 
         for ($i = 0; $i < $new_format_len; $i++) {
-            switch (substr($new_format, $i, 1)) {
+            switch (mb_substr($new_format, $i, 1)) {
                 case "F":
                     $match = GetMessage("P_MONTH_" . date("n", $ux_time));
                     break;
@@ -192,35 +206,40 @@ function PhotoFormatDate($strDate, $format = "DD.MM.YYYY HH:MI:SS", $new_format 
                     $match = GetMessage("P_DOW_" . date("w", $ux_time));
                     break;
                 default:
-                    $match = date(substr($new_format, $i, 1), $ux_time);
+                    $match = date(mb_substr($new_format, $i, 1), $ux_time);
                     break;
             }
             $strResult .= $match;
         }
     } else {
-        if ($arParsedDate["MM"] < 1 || $arParsedDate["MM"] > 12)
+        if ($arParsedDate["MM"] < 1 || $arParsedDate["MM"] > 12) {
             $arParsedDate["MM"] = 1;
+        }
         for ($i = 0; $i < $new_format_len; $i++) {
-            switch (substr($new_format, $i, 1)) {
+            switch (mb_substr($new_format, $i, 1)) {
                 case "F":
                     $match = str_pad($arParsedDate["MM"], 2, "0", STR_PAD_LEFT);
-                    if (intVal($arParsedDate["MM"]) > 0)
-                        $match = GetMessage("P_MONTH_" . intVal($arParsedDate["MM"]));
+                    if (intval($arParsedDate["MM"]) > 0) {
+                        $match = GetMessage("P_MONTH_" . intval($arParsedDate["MM"]));
+                    }
                     break;
                 case "M":
                     $match = str_pad($arParsedDate["MM"], 2, "0", STR_PAD_LEFT);
-                    if (intVal($arParsedDate["MM"]) > 0)
-                        $match = GetMessage("P_MON_" . intVal($arParsedDate["MM"]));
+                    if (intval($arParsedDate["MM"]) > 0) {
+                        $match = GetMessage("P_MON_" . intval($arParsedDate["MM"]));
+                    }
                     break;
                 case "l":
                     $match = str_pad($arParsedDate["DD"], 2, "0", STR_PAD_LEFT);
-                    if (intVal($arParsedDate["DD"]) > 0)
-                        $match = GetMessage("P_DAY_OF_WEEK_" . intVal($arParsedDate["DD"]));
+                    if (intval($arParsedDate["DD"]) > 0) {
+                        $match = GetMessage("P_DAY_OF_WEEK_" . intval($arParsedDate["DD"]));
+                    }
                     break;
                 case "D":
                     $match = str_pad($arParsedDate["DD"], 2, "0", STR_PAD_LEFT);
-                    if (intVal($arParsedDate["DD"]) > 0)
-                        $match = GetMessage("P_DOW_" . intVal($arParsedDate["DD"]));
+                    if (intval($arParsedDate["DD"]) > 0) {
+                        $match = GetMessage("P_DOW_" . intval($arParsedDate["DD"]));
+                    }
                     break;
                 case "d":
                     $match = str_pad($arParsedDate["DD"], 2, "0", STR_PAD_LEFT);
@@ -229,13 +248,13 @@ function PhotoFormatDate($strDate, $format = "DD.MM.YYYY HH:MI:SS", $new_format 
                     $match = str_pad($arParsedDate["MM"], 2, "0", STR_PAD_LEFT);
                     break;
                 case "j":
-                    $match = intVal($arParsedDate["MM"]);
+                    $match = intval($arParsedDate["MM"]);
                     break;
                 case "Y":
                     $match = str_pad($arParsedDate["YY"], 4, "0", STR_PAD_LEFT);
                     break;
                 case "y":
-                    $match = substr($arParsedDate["YY"], 2);
+                    $match = mb_substr($arParsedDate["YY"], 2);
                     break;
                 case "H":
                     $match = str_pad($arParsedDate["HH"], 2, "0", STR_PAD_LEFT);
@@ -247,22 +266,25 @@ function PhotoFormatDate($strDate, $format = "DD.MM.YYYY HH:MI:SS", $new_format 
                     $match = str_pad($arParsedDate["SS"], 2, "0", STR_PAD_LEFT);
                     break;
                 case "g":
-                    $match = intVal($arParsedDate["HH"]);
-                    if ($match > 12)
+                    $match = intval($arParsedDate["HH"]);
+                    if ($match > 12) {
                         $match = $match - 12;
+                    }
                 case "a":
                 case "A":
-                    $match = intVal($arParsedDate["HH"]);
-                    if ($match > 12)
+                    $match = intval($arParsedDate["HH"]);
+                    if ($match > 12) {
                         $match = ($match - 12) . " PM";
-                    else
+                    } else {
                         $match .= " AM";
+                    }
 
-                    if (substr($new_format, $i, 1) == "a")
-                        $match = strToLower($match);
+                    if (mb_substr($new_format, $i, 1) == "a") {
+                        $match = mb_strtolower($match);
+                    }
 
                 default:
-                    $match = substr($new_format, $i, 1);
+                    $match = mb_substr($new_format, $i, 1);
                     break;
             }
             $strResult .= $match;
@@ -273,8 +295,9 @@ function PhotoFormatDate($strDate, $format = "DD.MM.YYYY HH:MI:SS", $new_format 
 
 function PClearComponentCache($components, $arSite = array())
 {
-    if (empty($components))
+    if (empty($components)) {
         return false;
+    }
 
     if (
         !is_array($arSite)
@@ -287,20 +310,21 @@ function PClearComponentCache($components, $arSite = array())
         $arSite = array(SITE_ID);
     }
 
-    if (is_array($components))
+    if (is_array($components)) {
         $aComponents = $components;
-    else
+    } else {
         $aComponents = explode(",", $components);
+    }
 
     foreach ($aComponents as $component_name) {
         $add_path = "";
-        if (strpos($component_name, "/") !== false) {
-            $add_path = substr($component_name, strpos($component_name, "/"));
-            $component_name = substr($component_name, 0, strpos($component_name, "/"));
+        if (mb_strpos($component_name, "/") !== false) {
+            $add_path = mb_substr($component_name, mb_strpos($component_name, "/"));
+            $component_name = mb_substr($component_name, 0, mb_strpos($component_name, "/"));
         }
         $componentRelativePath = CComponentEngine::MakeComponentPath($component_name);
 
-        if (strlen($componentRelativePath) > 0) {
+        if ($componentRelativePath <> '') {
             BXClearCache(true, "/" . $componentRelativePath . $add_path);
             foreach ($arSite as $siteId) {
                 BXClearCache(true, "/" . $siteId . $componentRelativePath . $add_path);
@@ -313,10 +337,16 @@ function PClearComponentCache($components, $arSite = array())
     }
 }
 
-function PClearComponentCacheEx($iblockId = false, $arSections = array(), $arGalleries = array(), $arUsers = array(), $clearCommon = true)
-{
-    if (!$iblockId)
+function PClearComponentCacheEx(
+    $iblockId = false,
+    $arSections = array(),
+    $arGalleries = array(),
+    $arUsers = array(),
+    $clearCommon = true
+) {
+    if (!$iblockId) {
         return;
+    }
 
     $arCache = array();
     $arCache[] = "photogallery";
@@ -331,21 +361,24 @@ function PClearComponentCacheEx($iblockId = false, $arSections = array(), $arGal
 
     if (is_array($arSections)) {
         $arSections = array_unique($arSections);
-        foreach ($arSections as $sectionId)
-            $arCache[] = "photogallery/" . $iblockId . "/section" . intVal($sectionId);
+        foreach ($arSections as $sectionId) {
+            $arCache[] = "photogallery/" . $iblockId . "/section" . intval($sectionId);
+        }
     }
-    $arCache[] = "photogallery/" . $iblockId . "/section" . intVal($sectionId);
+    $arCache[] = "photogallery/" . $iblockId . "/section" . intval($sectionId);
 
     if (is_array($arGalleries)) {
         $arGalleries = array_unique($arGalleries);
-        foreach ($arGalleries as $galleryCode)
-            $arCache[] = "photogallery/" . $iblockId . "/gallery" . $galleryCode; // todo: secure galleryCode!!!!
+        foreach ($arGalleries as $galleryCode) {
+            $arCache[] = "photogallery/" . $iblockId . "/gallery" . $galleryCode;
+        } // todo: secure galleryCode!!!!
     }
 
     if (is_array($arUsers)) {
         $arUsers = array_unique($arUsers);
-        foreach ($arUsers as $userId)
-            $arCache[] = "photogallery/" . $iblockId . "/user" . intVal($userId);
+        foreach ($arUsers as $userId) {
+            $arCache[] = "photogallery/" . $iblockId . "/user" . intval($userId);
+        }
     }
 
     $arSite = array();

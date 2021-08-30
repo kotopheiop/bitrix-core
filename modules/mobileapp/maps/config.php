@@ -138,7 +138,8 @@ $map = [
             "type" => ParameterType::STRING,
             "enabledIf" => [
                 "additional/push/use_push" => "YES"
-            ]],
+            ]
+        ],
         //offline
         'offline/launch_mode' => [
             "type" => ParameterType::VALUE_LIST,

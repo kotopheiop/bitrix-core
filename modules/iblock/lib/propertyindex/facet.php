@@ -208,7 +208,9 @@ class Facet
 						,MAX(F.VALUE_NUM) MAX_VALUE_NUM
 						" . ($connection instanceof \Bitrix\Main\DB\MysqlCommonConnection
                         ? ",MAX(case when LOCATE('.', F.VALUE_NUM) > 0 then LENGTH(SUBSTRING_INDEX(F.VALUE_NUM, '.', -1)) else 0 end)"
-                        : ",MAX(" . $sqlHelper->getLengthFunction("ABS(F.VALUE_NUM) - FLOOR(ABS(F.VALUE_NUM))") . "+1-" . $sqlHelper->getLengthFunction("0.1") . ")"
+                        : ",MAX(" . $sqlHelper->getLengthFunction(
+                            "ABS(F.VALUE_NUM) - FLOOR(ABS(F.VALUE_NUM))"
+                        ) . "+1-" . $sqlHelper->getLengthFunction("0.1") . ")"
                     ) . " VALUE_FRAC_LEN
 						,COUNT(DISTINCT F.ELEMENT_ID) ELEMENT_COUNT
 					FROM
@@ -229,25 +231,29 @@ class Facet
                 $fcJoin = "INNER JOIN " . $this->storage->getTableName() . " FC on FC.ELEMENT_ID = BE.ID";
                 foreach ($where as $facetWhere) {
                     $sqlWhere = $this->whereToSql($facetWhere, "FC");
-                    if ($sqlWhere)
+                    if ($sqlWhere) {
                         $sqlSearch[] = $sqlWhere;
+                    }
                 }
             } elseif (count($where) <= 5) {
                 $subJoin = "";
                 $subWhere = "";
                 $i = 0;
                 foreach ($where as $facetWhere) {
-                    if ($i == 0)
+                    if ($i == 0) {
                         $subJoin .= "FROM " . $this->storage->getTableName() . " FC$i\n";
-                    else
-                        $subJoin .= "INNER JOIN " . $this->storage->getTableName() . " FC$i ON FC$i.ELEMENT_ID = FC0.ELEMENT_ID\n";
+                    } else {
+                        $subJoin .= "INNER JOIN " . $this->storage->getTableName(
+                            ) . " FC$i ON FC$i.ELEMENT_ID = FC0.ELEMENT_ID\n";
+                    }
 
                     $sqlWhere = $this->whereToSql($facetWhere, "FC$i");
                     if ($sqlWhere) {
-                        if ($subWhere)
+                        if ($subWhere) {
                             $subWhere .= "\nAND " . $sqlWhere;
-                        else
+                        } else {
                             $subWhere .= $sqlWhere;
+                        }
                     }
 
                     $i++;
@@ -264,8 +270,9 @@ class Facet
                 $condition = array();
                 foreach ($where as $facetWhere) {
                     $sqlWhere = $this->whereToSql($facetWhere, "FC0");
-                    if ($sqlWhere)
+                    if ($sqlWhere) {
                         $condition[] = $sqlWhere;
+                    }
                 }
                 $fcJoin = "
 						INNER JOIN (
@@ -289,7 +296,9 @@ class Facet
 					,MAX(F.VALUE_NUM) MAX_VALUE_NUM
 					" . ($connection instanceof \Bitrix\Main\DB\MysqlCommonConnection
                     ? ",MAX(case when LOCATE('.', F.VALUE_NUM) > 0 then LENGTH(SUBSTRING_INDEX(F.VALUE_NUM, '.', -1)) else 0 end)"
-                    : ",MAX(" . $sqlHelper->getLengthFunction("ABS(F.VALUE_NUM) - FLOOR(ABS(F.VALUE_NUM))") . "+1-" . $sqlHelper->getLengthFunction("0.1") . ")"
+                    : ",MAX(" . $sqlHelper->getLengthFunction(
+                        "ABS(F.VALUE_NUM) - FLOOR(ABS(F.VALUE_NUM))"
+                    ) . "+1-" . $sqlHelper->getLengthFunction("0.1") . ")"
                 ) . " VALUE_FRAC_LEN
 					,COUNT(DISTINCT F.ELEMENT_ID) ELEMENT_COUNT
 				FROM
@@ -352,8 +361,9 @@ class Facet
     {
         $where = array();
         foreach ($this->where as $facetWhere) {
-            if ($facetWhere["FACET_ID"] != $facetToExclude)
+            if ($facetWhere["FACET_ID"] != $facetToExclude) {
                 $where[] = $facetWhere;
+            }
         }
         return $where;
     }
@@ -417,7 +427,11 @@ class Facet
                     if ($this->toCurrencyId && $this->convertCurrencyId) {
                         $sqlOr = array();
                         foreach ($this->convertCurrencyId as $currency => $currencyDictionaryId) {
-                            $convertedPrice = \CCurrencyRates::convertCurrency($where["VALUES"][0], $this->toCurrencyId, $currency);
+                            $convertedPrice = \CCurrencyRates::convertCurrency(
+                                $where["VALUES"][0],
+                                $this->toCurrencyId,
+                                $currency
+                            );
                             $sqlOr[] = "($tableAlias.VALUE = $currencyDictionaryId AND $tableAlias.VALUE_NUM " . $where["OP"] . " $convertedPrice)";
                         }
                         $sqlWhere .= " AND (" . implode(" OR ", $sqlOr) . ")";
@@ -430,8 +444,16 @@ class Facet
                     if ($this->toCurrencyId && $this->convertCurrencyId) {
                         $sqlOr = array();
                         foreach ($this->convertCurrencyId as $currency => $currencyDictionaryId) {
-                            $convertedPrice1 = \CCurrencyRates::convertCurrency($where["VALUES"][0], $this->toCurrencyId, $currency);
-                            $convertedPrice2 = \CCurrencyRates::convertCurrency($where["VALUES"][1], $this->toCurrencyId, $currency);
+                            $convertedPrice1 = \CCurrencyRates::convertCurrency(
+                                $where["VALUES"][0],
+                                $this->toCurrencyId,
+                                $currency
+                            );
+                            $convertedPrice2 = \CCurrencyRates::convertCurrency(
+                                $where["VALUES"][1],
+                                $this->toCurrencyId,
+                                $currency
+                            );
                             $sqlOr[] = "($tableAlias.VALUE = $currencyDictionaryId AND $tableAlias.VALUE_NUM BETWEEN $convertedPrice1 AND $convertedPrice2)";
                         }
                         $sqlWhere .= " AND (" . implode(" OR ", $sqlOr) . ")";
@@ -466,27 +488,29 @@ class Facet
             $properties = array();
             foreach (\CIBlockSectionPropertyLink::getArray($this->iblockId, $sectionId) as $PID => $link) {
                 if ($link["SMART_FILTER"] === "Y") {
-                    if ($link["PROPERTY_TYPE"] === "N")
+                    if ($link["PROPERTY_TYPE"] === "N") {
                         $properties[$link["PROPERTY_ID"]] = Storage::NUMERIC;
-                    elseif ($link["USER_TYPE"] === "DateTime")
+                    } elseif ($link["USER_TYPE"] === "DateTime") {
                         $properties[$link["PROPERTY_ID"]] = Storage::DATETIME;
-                    elseif ($link["PROPERTY_TYPE"] === "S")
+                    } elseif ($link["PROPERTY_TYPE"] === "S") {
                         $properties[$link["PROPERTY_ID"]] = Storage::STRING;
-                    else
+                    } else {
                         $properties[$link["PROPERTY_ID"]] = Storage::DICTIONARY;
+                    }
                 }
             }
             if ($this->skuIblockId) {
                 foreach (\CIBlockSectionPropertyLink::getArray($this->skuIblockId, $sectionId) as $PID => $link) {
                     if ($link["SMART_FILTER"] === "Y") {
-                        if ($link["PROPERTY_TYPE"] === "N")
+                        if ($link["PROPERTY_TYPE"] === "N") {
                             $properties[$link["PROPERTY_ID"]] = Storage::NUMERIC;
-                        elseif ($link["USER_TYPE"] === "DateTime")
+                        } elseif ($link["USER_TYPE"] === "DateTime") {
                             $properties[$link["PROPERTY_ID"]] = Storage::DATETIME;
-                        elseif ($link["PROPERTY_TYPE"] === "S")
+                        } elseif ($link["PROPERTY_TYPE"] === "S") {
                             $properties[$link["PROPERTY_ID"]] = Storage::STRING;
-                        else
+                        } else {
                             $properties[$link["PROPERTY_ID"]] = Storage::DICTIONARY;
+                        }
                     }
                 }
             }
@@ -538,10 +562,12 @@ class Facet
         if (!isset($this->priceFilter)) {
             $this->priceFilter = array();
             if (self::$catalog) {
-                $priceList = Catalog\GroupTable::getList(array(
-                    'select' => array('ID'),
-                    'order' => array('ID' => 'ASC')
-                ));
+                $priceList = Catalog\GroupTable::getList(
+                    array(
+                        'select' => array('ID'),
+                        'order' => array('ID' => 'ASC')
+                    )
+                );
                 while ($price = $priceList->fetch()) {
                     $this->priceFilter[] = (int)$price['ID'];
                 }
@@ -719,8 +745,9 @@ class Facet
             $this->convertCurrencyId = array();
             foreach ($convertCurrencyId as $currency) {
                 $currencyDictionaryId = $this->dictionary->getStringId($currency, false);
-                if ($currency)
+                if ($currency) {
                     $this->convertCurrencyId[$currency] = $currencyDictionaryId;
+                }
             }
         }
     }

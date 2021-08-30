@@ -41,7 +41,6 @@ class Tax
      */
     protected function __construct()
     {
-
     }
 
     /**
@@ -69,10 +68,12 @@ class Tax
             $this->list = $this->loadList();
         }
 
-        $event = new Main\Event('sale', EventActions::EVENT_ON_TAX_GET_LIST, array(
+        $event = new Main\Event(
+            'sale', EventActions::EVENT_ON_TAX_GET_LIST, array(
             'ENTITY' => $this,
             'VALUES' => $this->list,
-        ));
+        )
+        );
         $event->send();
 
         if ($event->getResults()) {
@@ -154,19 +155,21 @@ class Tax
         /** @var Basket $basket */
         $basket = $order->getBasket();
 
-        if (empty($basket))
+        if (empty($basket)) {
             return $result;
+        }
 
         /** @var BasketItem $basketItem */
         foreach ($basket as $basketItem) {
-            if ($basketItem->getQuantity() == 0)
+            if ($basketItem->getQuantity() == 0) {
                 continue;
+            }
             $fields['BASKET_ITEMS'][] = $basketItem->getFieldValues();
         }
 
         /** @var \CSaleTax $className */
         $className = static::getTaxClassName();
-        $className::calculateTax($fields, array(), $errors = array());
+        $className::calculateTax($fields, array());
 
         if (!$order->isUsedVat() && is_array($fields['TAX_LIST'])) {
             $taxResult['TAX_LIST'] = $fields['TAX_LIST'];
@@ -253,12 +256,14 @@ class Tax
 
         /** @var Shipment $shipment */
         foreach ($shipmentCollection as $shipment) {
-            if ($shipment->isSystem())
+            if ($shipment->isSystem()) {
                 continue;
+            }
 
             $service = $shipment->getDelivery();
-            if ($service === null)
+            if ($service === null) {
                 continue;
+            }
 
             $additionalFields = array(
                 "DELIVERY_PRICE" => $shipment->getPrice()
@@ -274,7 +279,7 @@ class Tax
 
             /** @var \CSaleTax $className */
             $className = static::getTaxClassName();
-            $className::calculateDeliveryTax($fields, $options, $errors = array());
+            $className::calculateDeliveryTax($fields, $options);
         }
 
 
@@ -293,7 +298,9 @@ class Tax
         }
 
 
-        if ($isDeliveryCalculate && array_key_exists('TAX_LIST', $fields) && !empty($fields['TAX_LIST']) && is_array($fields['TAX_LIST'])) {
+        if ($isDeliveryCalculate && array_key_exists('TAX_LIST', $fields) && !empty($fields['TAX_LIST']) && is_array(
+                $fields['TAX_LIST']
+            )) {
             $newTaxList = $this->checkModifyTaxList($fields['TAX_LIST']);
             $this->list = $newTaxList;
         }
@@ -397,7 +404,6 @@ class Tax
      */
     public function save()
     {
-
         $result = new Result();
         /** @var Order $order */
         if (!$order = $this->getOrder()) {
@@ -408,7 +414,7 @@ class Tax
 
         /** @var \CSaleTax $className */
         $className = static::getTaxClassName();
-        $className::DoSaveOrderTax($order->getId(), $this->getTaxList(), $errors = array());
+        $className::DoSaveOrderTax($order->getId(), $this->getTaxList(), $errors);
 
         if (!empty($errors) && is_array($errors)) {
             foreach ($errors as $error) {
@@ -475,8 +481,9 @@ class Tax
         $resultList = array();
         $order = $this->getOrder();
 
-        if ($order->getId() <= 0)
+        if ($order->getId() <= 0) {
             return null;
+        }
 
         /** @var \CSaleOrderTax $className */
         $className = static::getOrderTaxClassName();
@@ -566,8 +573,9 @@ class Tax
             $className = static::getTaxClassName();
             $dbTaxExemptList = $className::GetExemptList(array("GROUP_ID" => $userGroups));
             while ($taxExemptList = $dbTaxExemptList->Fetch()) {
-                if (!in_array(intval($taxExemptList["TAX_ID"]), $exemptList))
+                if (!in_array(intval($taxExemptList["TAX_ID"]), $exemptList)) {
                     $exemptList[] = intval($taxExemptList["TAX_ID"]);
+                }
             }
 
             $proxyTaxExemptList[$proxyTaxExemptKey] = $exemptList;
@@ -587,7 +595,6 @@ class Tax
         }
 
         return $this->availableList;
-
     }
 
     /**
@@ -597,8 +604,9 @@ class Tax
     {
         $order = $this->getOrder();
         $basket = $order->getBasket();
-        if (!$basket)
+        if (!$basket) {
             return null;
+        }
 
         $availableList = array();
 
@@ -617,7 +625,13 @@ class Tax
             while ($taxRate = $taxRateRes->GetNext()) {
                 if (!in_array(intval($taxRate["TAX_ID"]), $taxExemptList)) {
                     if ($taxRate["IS_PERCENT"] != "Y") {
-                        $taxRate["VALUE"] = PriceMaths::roundPrecision(\CCurrencyRates::convertCurrency($taxRate["VALUE"], $taxRate["CURRENCY"], $order->getCurrency()));
+                        $taxRate["VALUE"] = PriceMaths::roundPrecision(
+                            \CCurrencyRates::convertCurrency(
+                                $taxRate["VALUE"],
+                                $taxRate["CURRENCY"],
+                                $order->getCurrency()
+                            )
+                        );
                         $taxRate["CURRENCY"] = $order->getCurrency();
                     }
                     $availableList[] = $taxRate;

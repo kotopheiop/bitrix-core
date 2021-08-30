@@ -30,20 +30,23 @@ class ByPrice extends Base
 
     public static function check($price, array $restrictionParams, $deliveryId = 0)
     {
-        if (empty($restrictionParams))
+        if (empty($restrictionParams)) {
             return true;
+        }
 
-        if ($price < 0)
+        if ($price < 0) {
             return true;
+        }
 
         $price = floatval($price);
 
-        if (floatval($restrictionParams["MIN_PRICE"]) > 0 && $price < floatval($restrictionParams["MIN_PRICE"]))
+        if (floatval($restrictionParams["MIN_PRICE"]) > 0 && $price < floatval($restrictionParams["MIN_PRICE"])) {
             $result = false;
-        elseif (floatval($restrictionParams["MAX_PRICE"]) > 0 && $price > floatval($restrictionParams["MAX_PRICE"]))
+        } elseif (floatval($restrictionParams["MAX_PRICE"]) > 0 && $price > floatval($restrictionParams["MAX_PRICE"])) {
             $result = false;
-        else
+        } else {
             $result = true;
+        }
 
         return $result;
     }
@@ -53,13 +56,16 @@ class ByPrice extends Base
     {
         $severity = self::getSeverity($mode);
 
-        if ($severity == RestrictionManager::SEVERITY_NONE)
+        if ($severity == RestrictionManager::SEVERITY_NONE) {
             return RestrictionManager::SEVERITY_NONE;
+        }
 
         $price = self::extractParams($shipment);
         $sCurrency = $shipment->getCurrency();
 
-        if (!empty($sCurrency) && !empty($restrictionParams["CURRENCY"]) && \Bitrix\Main\Loader::includeModule('currency')) {
+        if (!empty($sCurrency) && !empty($restrictionParams["CURRENCY"]) && \Bitrix\Main\Loader::includeModule(
+                'currency'
+            )) {
             $price = \CCurrencyRates::convertCurrency(
                 $price,
                 $sCurrency,
@@ -74,8 +80,9 @@ class ByPrice extends Base
     protected static function extractParams(Entity $entity)
     {
         if ($entity instanceof Shipment) {
-            if (!$itemCollection = $entity->getShipmentItemCollection())
+            if (!$itemCollection = $entity->getShipmentItemCollection()) {
                 return -1;
+            }
         } else {
             return -1;
         }

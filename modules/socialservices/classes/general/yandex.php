@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 class CSocServYandexAuth extends CSocServAuth
@@ -53,10 +54,28 @@ class CSocServYandexAuth extends CSocServAuth
         if (IsModuleInstalled('bitrix24') && defined('BX24_HOST_NAME')) {
             $redirect_uri = static::CONTROLLER_URL . "/redirect.php";
             $state = CYandexOAuthInterface::GetRedirectURI() . "?check_key=" . $_SESSION["UNIQUE_KEY"] . "&state=";
-            $backurl = $APPLICATION->GetCurPageParam('', array("logout", "auth_service_error", "auth_service_id", "backurl"));
-            $state .= urlencode("state=" . urlencode("backurl=" . urlencode($backurl) . '&mode=' . $location . (isset($arParams['BACKURL']) ? '&redirect_url=' . urlencode($arParams['BACKURL']) : '')));
+            $backurl = $APPLICATION->GetCurPageParam(
+                '',
+                array("logout", "auth_service_error", "auth_service_id", "backurl")
+            );
+            $state .= urlencode(
+                "state=" . urlencode(
+                    "backurl=" . urlencode(
+                        $backurl
+                    ) . '&mode=' . $location . (isset($arParams['BACKURL']) ? '&redirect_url=' . urlencode(
+                            $arParams['BACKURL']
+                        ) : '')
+                )
+            );
         } else {
-            $state = 'site_id=' . SITE_ID . '&backurl=' . urlencode($APPLICATION->GetCurPageParam('check_key=' . $_SESSION["UNIQUE_KEY"], array("logout", "auth_service_error", "auth_service_id", "backurl"))) . '&mode=' . $location . (isset($arParams['BACKURL']) ? '&redirect_url=' . urlencode($arParams['BACKURL']) : '');
+            $state = 'site_id=' . SITE_ID . '&backurl=' . urlencode(
+                    $APPLICATION->GetCurPageParam(
+                        'check_key=' . $_SESSION["UNIQUE_KEY"],
+                        array("logout", "auth_service_error", "auth_service_id", "backurl")
+                    )
+                ) . '&mode=' . $location . (isset($arParams['BACKURL']) ? '&redirect_url=' . urlencode(
+                        $arParams['BACKURL']
+                    ) : '');
             $redirect_uri = CYandexOAuthInterface::GetRedirectURI();
         }
 
@@ -67,12 +86,20 @@ class CSocServYandexAuth extends CSocServAuth
     {
         $url = static::getUrl('opener', null, $arParams);
 
-        $phrase = ($arParams["FOR_INTRANET"]) ? GetMessage("socserv_yandex_form_note_intranet") : GetMessage("socserv_yandex_form_note");
+        $phrase = ($arParams["FOR_INTRANET"]) ? GetMessage("socserv_yandex_form_note_intranet") : GetMessage(
+            "socserv_yandex_form_note"
+        );
 
         if ($arParams["FOR_INTRANET"]) {
-            return array("ON_CLICK" => 'onclick="BX.util.popup(\'' . htmlspecialcharsbx(CUtil::JSEscape($url)) . '\', 680, 600)"');
+            return array(
+                "ON_CLICK" => 'onclick="BX.util.popup(\'' . htmlspecialcharsbx(
+                        CUtil::JSEscape($url)
+                    ) . '\', 680, 600)"'
+            );
         } else {
-            return '<a href="javascript:void(0)" onclick="BX.util.popup(\'' . htmlspecialcharsbx(CUtil::JSEscape($url)) . '\', 680, 600)" class="bx-ss-button yandex-button"></a><span class="bx-spacer"></span><span>' . $phrase . '</span>';
+            return '<a href="javascript:void(0)" onclick="BX.util.popup(\'' . htmlspecialcharsbx(
+                    CUtil::JSEscape($url)
+                ) . '\', 680, 600)" class="bx-ss-button yandex-button"></a><span class="bx-spacer"></span><span>' . $phrase . '</span>';
         }
     }
 
@@ -87,10 +114,12 @@ class CSocServYandexAuth extends CSocServAuth
         $accessToken = null;
         $userId = intval($this->userId);
         if ($userId > 0) {
-            $dbSocservUser = \Bitrix\Socialservices\UserTable::getList([
-                'filter' => ['=USER_ID' => $userId, "=EXTERNAL_AUTH_ID" => static::ID],
-                'select' => ["OATOKEN", "REFRESH_TOKEN", "OATOKEN_EXPIRES"]
-            ]);
+            $dbSocservUser = \Bitrix\Socialservices\UserTable::getList(
+                [
+                    'filter' => ['=USER_ID' => $userId, "=EXTERNAL_AUTH_ID" => static::ID],
+                    'select' => ["OATOKEN", "REFRESH_TOKEN", "OATOKEN_EXPIRES"]
+                ]
+            );
             if ($arOauth = $dbSocservUser->fetch()) {
                 $accessToken = $arOauth["OATOKEN"];
             }
@@ -113,7 +142,7 @@ class CSocServYandexAuth extends CSocServAuth
             'OATOKEN_EXPIRES' => $this->entityOAuth->getAccessTokenExpires(),
         );
 
-        if (strlen($userFields["NAME"]) <= 0) {
+        if ($userFields["NAME"] == '') {
             $userFields["NAME"] = $yandexUser["login"];
         }
 
@@ -126,9 +155,11 @@ class CSocServYandexAuth extends CSocServAuth
 
             $temp_path = CFile::GetTempName('', 'picture.jpg');
 
-            $ob = new \Bitrix\Main\Web\HttpClient(array(
-                "redirect" => true
-            ));
+            $ob = new \Bitrix\Main\Web\HttpClient(
+                array(
+                    "redirect" => true
+                )
+            );
             $ob->download($picture_url, $temp_path);
 
             $arPic = CFile::MakeFileArray($temp_path);
@@ -137,7 +168,7 @@ class CSocServYandexAuth extends CSocServAuth
             }
         }
 
-        if (strlen(SITE_ID) > 0) {
+        if (SITE_ID <> '') {
             $userFields["SITE_ID"] = SITE_ID;
         }
 
@@ -177,7 +208,17 @@ class CSocServYandexAuth extends CSocServAuth
         }
 
         $url = ($APPLICATION->GetCurDir() == "/login/") ? "" : $APPLICATION->GetCurDir();
-        $aRemove = array("logout", "auth_service_error", "auth_service_id", "code", "error_reason", "error", "error_description", "check_key", "current_fieldset");
+        $aRemove = array(
+            "logout",
+            "auth_service_error",
+            "auth_service_id",
+            "code",
+            "error_reason",
+            "error",
+            "error_description",
+            "check_key",
+            "current_fieldset"
+        );
 
         if (!$bProcessState) {
             unset($_REQUEST["state"]);
@@ -191,7 +232,7 @@ class CSocServYandexAuth extends CSocServAuth
 
             if (isset($arState['backurl']) || isset($arState['redirect_url'])) {
                 $url = !empty($arState['redirect_url']) ? $arState['redirect_url'] : $arState['backurl'];
-                if (substr($url, 0, 1) !== "#") {
+                if (mb_substr($url, 0, 1) !== "#") {
                     $parseUrl = parse_url($url);
 
                     $urlPath = $parseUrl["path"];
@@ -199,7 +240,7 @@ class CSocServYandexAuth extends CSocServAuth
 
                     foreach ($arUrlQuery as $key => $value) {
                         foreach ($aRemove as $param) {
-                            if (strpos($value, $param . "=") === 0) {
+                            if (mb_strpos($value, $param . "=") === 0) {
                                 unset($arUrlQuery[$key]);
                                 break;
                             }
@@ -221,10 +262,13 @@ class CSocServYandexAuth extends CSocServAuth
             $url = (preg_match("/\?/", $url)) ? $url . '&' : $url . '?';
             $url .= 'auth_service_id=' . static::ID . '&auth_service_error=' . SOCSERV_REGISTRATION_DENY;
         } elseif ($bSuccess !== true) {
-            $url = (isset($urlPath)) ? $urlPath . '?auth_service_id=' . static::ID . '&auth_service_error=' . $authError : $APPLICATION->GetCurPageParam(('auth_service_id=' . static::ID . '&auth_service_error=' . $authError), $aRemove);
+            $url = (isset($urlPath)) ? $urlPath . '?auth_service_id=' . static::ID . '&auth_service_error=' . $authError : $APPLICATION->GetCurPageParam(
+                ('auth_service_id=' . static::ID . '&auth_service_error=' . $authError),
+                $aRemove
+            );
         }
 
-        if ($addParams && CModule::IncludeModule("socialnetwork") && strpos($url, "current_fieldset=") === false) {
+        if ($addParams && CModule::IncludeModule("socialnetwork") && mb_strpos($url, "current_fieldset=") === false) {
             $url = (preg_match("/\?/", $url)) ? $url . "&current_fieldset=SOCSERV" : $url . "?current_fieldset=SOCSERV";
         }
 
@@ -275,7 +319,7 @@ class CYandexOAuthInterface extends CSocServOAuthTransport
         parent::__construct($appID, $appSecret, $code);
     }
 
-    public function GetRedirectURI()
+    public static function GetRedirectURI()
     {
         return \CHTTP::URN2URI("/bitrix/tools/oauth/yandex.php");
     }
@@ -320,7 +364,7 @@ class CYandexOAuthInterface extends CSocServOAuthTransport
         if (!empty($state) && isset($_SESSION[$state])) {
             list(, $deviceId) = $_SESSION[$state];
             if ($deviceId) {
-                $deviceId = substr($deviceId, 0, self::MAX_DEVICE_ID_LENGTH);
+                $deviceId = mb_substr($deviceId, 0, self::MAX_DEVICE_ID_LENGTH);
             }
         }
 
@@ -348,11 +392,14 @@ class CYandexOAuthInterface extends CSocServOAuthTransport
         $h = new \Bitrix\Main\Web\HttpClient(array("socketTimeout" => $this->httpTimeout));
         $h->setAuthorization($this->appID, $this->appSecret);
 
-        $result = $h->post(self::TOKEN_URL, array(
-            "grant_type" => "authorization_code",
-            "code" => $this->code,
-            "client_id" => $this->appID,
-        ));
+        $result = $h->post(
+            self::TOKEN_URL,
+            array(
+                "grant_type" => "authorization_code",
+                "code" => $this->code,
+                "client_id" => $this->appID,
+            )
+        );
 
         $this->arResult = \Bitrix\Main\Web\Json::decode($result);
 
@@ -375,8 +422,9 @@ class CYandexOAuthInterface extends CSocServOAuthTransport
 
     public function GetCurrentUser()
     {
-        if ($this->access_token === false)
+        if ($this->access_token === false) {
             return false;
+        }
 
         $h = new \Bitrix\Main\Web\HttpClient();
         $result = $h->get(self::USERINFO_URL . '?format=json&oauth_token=' . urlencode($this->access_token));
@@ -397,8 +445,9 @@ class CYandexOAuthInterface extends CSocServOAuthTransport
 
     public function GetAppInfo()
     {
-        if ($this->access_token === false)
+        if ($this->access_token === false) {
             return false;
+        }
 
         $h = new \Bitrix\Main\Web\HttpClient();
         $h->setTimeout($this->httpTimeout);

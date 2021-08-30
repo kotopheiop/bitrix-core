@@ -22,26 +22,30 @@ class ExceptionHandlerFormatter
     {
         $result = '[' . get_class($exception) . '] ';
 
-        if ($exception instanceof \ErrorException)
+        if ($exception instanceof \ErrorException) {
             $result .= static::severityToString($exception->getSeverity());
+        }
 
         $result .= "\n" . static::getMessage($exception) . "\n";
 
-        if ($exception instanceof Main\DB\SqlQueryException)
+        if ($exception instanceof Main\DB\SqlQueryException) {
             $result .= $exception->getQuery() . "\n";
+        }
 
         $fileLink = static::getFileLink($exception->getFile(), $exception->getLine());
         $result .= $fileLink . (empty($fileLink) ? "" : "\n");
 
-        if ($htmlMode)
+        if ($htmlMode) {
             $result = Main\Text\HtmlFilter::encode($result);
+        }
 
         $prevArg = null;
         $trace = static::getTrace($exception);
         foreach ($trace as $traceNum => $traceInfo) {
             $traceLine = '#' . $traceNum . ': ';
-            if (array_key_exists('class', $traceInfo))
+            if (array_key_exists('class', $traceInfo)) {
                 $traceLine .= $traceInfo['class'] . $traceInfo['type'];
+            }
 
             if (array_key_exists('function', $traceInfo)) {
                 $traceLine .= $traceInfo['function'];
@@ -50,21 +54,24 @@ class ExceptionHandlerFormatter
                 }
             }
 
-            if ($htmlMode)
+            if ($htmlMode) {
                 $traceLine = Main\Text\HtmlFilter::encode($traceLine);
+            }
 
-            if (array_key_exists('file', $traceInfo))
+            if (array_key_exists('file', $traceInfo)) {
                 $traceLine .= "\n\t" . static::getFileLink($traceInfo['file'], $traceInfo['line']);
-            else
+            } else {
                 $traceLine .= "\n\t" . static::getFileLink(null, null);
+            }
 
             $result .= $traceLine . "\n";
         }
 
-        if ($htmlMode)
+        if ($htmlMode) {
             $result = '<pre>' . $result . '</pre>';
-        else
+        } else {
             $result .= static::DELIMITER;
+        }
 
         return $result;
     }
@@ -81,8 +88,9 @@ class ExceptionHandlerFormatter
 
         $result = array();
         foreach ($backtrace as $item) {
-            if (array_key_exists('class', $item) && ($item['class'] == $exceptionHandlerClass))
+            if (array_key_exists('class', $item) && ($item['class'] == $exceptionHandlerClass)) {
                 continue;
+            }
 
             $result[] = $item;
         }
@@ -160,8 +168,9 @@ class ExceptionHandlerFormatter
     {
         if (!is_null($args)) {
             $argsTmp = array();
-            foreach ($args as $arg)
+            foreach ($args as $arg) {
                 $argsTmp[] = static::convertArgumentToString($arg, $level);
+            }
 
             return '(' . implode(', ', $argsTmp) . ')';
         }
@@ -195,17 +204,22 @@ class ExceptionHandlerFormatter
                 } elseif (interface_exists($arg, false)) {
                     $result = 'i:' . $arg;
                 } else {
-                    if (strlen($arg) > static::MAX_CHARS)
-                        $result = '"' . substr($arg, 0, static::MAX_CHARS / 2) . '...' . substr($arg, -static::MAX_CHARS / 2) . '" (' . strlen($arg) . ')';
-                    else
+                    if (mb_strlen($arg) > static::MAX_CHARS) {
+                        $result = '"' . mb_substr($arg, 0, static::MAX_CHARS / 2) . '...' . mb_substr(
+                                $arg,
+                                -static::MAX_CHARS / 2
+                            ) . '" (' . mb_strlen($arg) . ')';
+                    } else {
                         $result = '"' . $arg . '"';
+                    }
                 }
                 break;
             case 'array':
-                if (is_callable($arg, false, $callableName))
+                if (is_callable($arg, false, $callableName)) {
                     $result = 'fa:' . $callableName;
-                else
+                } else {
                     $result = 'array(' . count($arg) . ')';
+                }
                 break;
             case 'object':
                 $result = '[' . get_class($arg) . ']';
@@ -223,8 +237,9 @@ class ExceptionHandlerFormatter
 
     protected static function getFileLink($file, $line)
     {
-        if (!is_null($file) && !empty($file))
+        if (!is_null($file) && !empty($file)) {
             return $file . ':' . $line;
+        }
 
         return "";
     }

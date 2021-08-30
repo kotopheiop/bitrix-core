@@ -101,10 +101,11 @@ class ShipmentTable extends Entity\DataManager
     {
         $res = self::getList(array('filter' => array('=SHIPMENT_ID' => $fields['SHIPMENT_ID'])));
 
-        if ($row = $res->fetch())
+        if ($row = $res->fetch()) {
             $result = self::update($row['ID'], $fields);
-        else
+        } else {
             $result = self::add($fields);
+        }
 
         return $result;
     }

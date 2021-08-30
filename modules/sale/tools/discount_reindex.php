@@ -1,4 +1,5 @@
 <?
+
 /** @global CMain $APPLICATION */
 define('STOP_STATISTICS', true);
 define('NO_AGENT_CHECK', true);
@@ -76,8 +77,9 @@ if (
         );
         $notify = $iterator->Fetch();
         unset($iterator);
-        if (!empty($notify))
+        if (!empty($notify)) {
             \CAdminNotify::Delete($notify['ID']);
+        }
         unset($notify);
     }
 
@@ -93,7 +95,12 @@ if (
     require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php');
 
     $tabList = array(
-        array('DIV' => 'discountReindexTab01', 'TAB' => Loc::getMessage('SALE_DISCOUNT_REINDEX_TAB'), 'ICON' => 'sale', 'TITLE' => Loc::getMessage('SALE_DISCOUNT_REINDEX_TAB_TITLE'))
+        array(
+            'DIV' => 'discountReindexTab01',
+            'TAB' => Loc::getMessage('SALE_DISCOUNT_REINDEX_TAB'),
+            'ICON' => 'sale',
+            'TITLE' => Loc::getMessage('SALE_DISCOUNT_REINDEX_TAB_TITLE')
+        )
     );
     $tabControl = new CAdminTabControl('saleDiscountReindex', $tabList, true, true);
     Main\Page\Asset::getInstance()->addJs('/bitrix/js/catalog/step_operations.js');
@@ -103,7 +110,9 @@ if (
     <div id="discount_reindex_error_div" style="margin:0; display: none;">
         <div class="adm-info-message-wrap adm-info-message-red">
             <div class="adm-info-message">
-                <div class="adm-info-message-title"><? echo Loc::getMessage('SALE_DISCOUNT_REINDEX_ERRORS_TITLE'); ?></div>
+                <div class="adm-info-message-title"><? echo Loc::getMessage(
+                        'SALE_DISCOUNT_REINDEX_ERRORS_TITLE'
+                    ); ?></div>
                 <div id="discount_reindex_error_cont"></div>
                 <div class="adm-info-message-icon"></div>
             </div>
@@ -120,8 +129,9 @@ if (
         </tr><?
         $tabControl->Buttons();
         ?>
-        <input type="button" id="start_button"
-               value="<? echo Loc::getMessage('SALE_DISCOUNT_REINDEX_UPDATE_BTN') ?>"<? echo($discountCounter > 0 ? '' : ' disabled'); ?>>
+        <input type="button" id="start_button" value="<? echo Loc::getMessage(
+            'SALE_DISCOUNT_REINDEX_UPDATE_BTN'
+        ) ?>"<? echo($discountCounter > 0 ? '' : ' disabled'); ?>>
         <input type="button" id="stop_button" value="<? echo Loc::getMessage('SALE_DISCOUNT_REINDEX_STOP_BTN') ?>"
                disabled>
         <?

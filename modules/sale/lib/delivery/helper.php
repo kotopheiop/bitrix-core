@@ -2,6 +2,8 @@
 
 namespace Bitrix\Sale\Delivery;
 
+use Bitrix\Main\Loader;
+use Bitrix\Main\ModuleManager;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Currency;
@@ -28,8 +30,9 @@ class Helper
         if ($currencies === null) {
             $currencies = array();
 
-            if (!\Bitrix\Main\Loader::includeModule('currency'))
+            if (!\Bitrix\Main\Loader::includeModule('currency')) {
                 throw new SystemException("Can't include module \"Currency\"!");
+            }
 
             $currencies = Currency\CurrencyManager::getCurrencyList();
         }
@@ -74,32 +77,45 @@ class Helper
     {
         $groups = array();
 
-        $dbRes = \Bitrix\Sale\Delivery\Services\Table::getList(array(
-            "filter" => array(
-                "=CLASS_NAME" => '\Bitrix\Sale\Delivery\Services\Group'
-            ),
-            "select" => array(
-                "ID", "NAME", "PARENT_ID"
-            ),
-            "order" => array(
-                "PARENT_ID" => "ASC",
-                "NAME" => "ASC"
+        $dbRes = \Bitrix\Sale\Delivery\Services\Table::getList(
+            array(
+                "filter" => array(
+                    "=CLASS_NAME" => '\Bitrix\Sale\Delivery\Services\Group'
+                ),
+                "select" => array(
+                    "ID",
+                    "NAME",
+                    "PARENT_ID"
+                ),
+                "order" => array(
+                    "PARENT_ID" => "ASC",
+                    "NAME" => "ASC"
+                )
             )
-        ));
+        );
 
-        while ($group = $dbRes->fetch())
+        while ($group = $dbRes->fetch()) {
             $groups[$group["ID"]] = $group;
+        }
 
         //$groups = self::createTreeFromGroups($groups);
         $result = '<select name=' . $name . ' id="sale_delivery_group_choose"' . $addParams . '>';
 
-        if ($anyGroup)
-            $result .= '<option value="-1"' . ($selectedGroupId == "-1" ? ' selected' : '') . '>' . Loc::getMessage('SALE_DELIVERY_HELPER_ANY_LEVEL') . '</option>';
+        if ($anyGroup) {
+            $result .= '<option value="-1"' . ($selectedGroupId == "-1" ? ' selected' : '') . '>' . Loc::getMessage(
+                    'SALE_DELIVERY_HELPER_ANY_LEVEL'
+                ) . '</option>';
+        }
 
-        $result .= '<option value="0"' . ($selectedGroupId == 0 ? ' selected' : '') . '>' . Loc::getMessage('SALE_DELIVERY_HELPER_UPPER_LEVELL') . '</option>';
+        $result .= '<option value="0"' . ($selectedGroupId == 0 ? ' selected' : '') . '>' . Loc::getMessage(
+                'SALE_DELIVERY_HELPER_UPPER_LEVELL'
+            ) . '</option>';
 
-        foreach ($groups as $groupId => $group)
-            $result .= '<option value="' . $groupId . '"' . ($selectedGroupId == $groupId ? ' selected' : '') . '>' . htmlspecialcharsbx($group["NAME"]) . '</option>';
+        foreach ($groups as $groupId => $group) {
+            $result .= '<option value="' . $groupId . '"' . ($selectedGroupId == $groupId ? ' selected' : '') . '>' . htmlspecialcharsbx(
+                    $group["NAME"]
+                ) . '</option>';
+        }
 
         $result .= '</select>';
 
@@ -117,13 +133,16 @@ class Helper
         static $result = null;
 
         if ($result === null) {
-            $res = \Bitrix\Main\SiteTable::getList(array(
-                'filter' => array('DEF' => 'Y'),
-                'select' => array('LID')
-            ));
+            $res = \Bitrix\Main\SiteTable::getList(
+                array(
+                    'filter' => array('DEF' => 'Y'),
+                    'select' => array('LID')
+                )
+            );
 
-            if ($item = $res->fetch())
+            if ($item = $res->fetch()) {
                 $result = $item['LID'];
+            }
         }
 
         return $result;
@@ -136,5 +155,32 @@ class Helper
     {
         require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/handlers/delivery/additional/cache.php");
         \Sale\Handlers\Delivery\Additional\CacheManager::cleanAll();
+    }
+
+    /**
+     * Returns portal zone
+     *
+     * @return string
+     * @throws \Bitrix\Main\LoaderException
+     */
+    public static function getPortalZone(): string
+    {
+        static $result = null;
+
+        if ($result === null) {
+            $result = '';
+
+            if (ModuleManager::isModuleInstalled('bitrix24')
+                && Loader::includeModule('bitrix24')
+            ) {
+                $result = \CBitrix24::getLicensePrefix();
+            } elseif (ModuleManager::isModuleInstalled('intranet')
+                && Loader::includeModule('intranet')
+            ) {
+                $result = \CIntranetUtils::getPortalZone();
+            }
+        }
+
+        return (string)$result;
     }
 }

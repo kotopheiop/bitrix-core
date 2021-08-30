@@ -34,12 +34,12 @@ class UrlPreviewUserType
     public static function getDBColumnType($userField)
     {
         global $DB;
-        switch (strtolower($DB->type)) {
-            case "mysql":
+        switch ($DB->type) {
+            case "MYSQL":
                 return "int(11)";
-            case "oracle":
+            case "ORACLE":
                 return "number(18)";
-            case "mssql":
+            case "MSSQL":
                 return "int";
         }
     }
@@ -146,8 +146,9 @@ class UrlPreviewUserType
 
         $value = (int)$value;
 
-        if ($value === 0)
+        if ($value === 0) {
             return $result;
+        }
 
         $metadata = UrlMetadataTable::getById($value)->fetch();
         if (!is_array($metadata)) {
@@ -155,14 +156,17 @@ class UrlPreviewUserType
                 "id" => $userField["FIELD_NAME"],
                 "text" => GetMessage("MAIN_URL_PREVIEW_VALUE_NOT_FOUND")
             );
-        } else if ($metadata['TYPE'] === UrlMetadataTable::TYPE_DYNAMIC
-            && !UrlPreview::checkDynamicPreviewAccess($metadata['URL'])) {
-            $result[] = array(
-                "id" => $userField["FIELD_NAME"],
-                "text" => GetMessage("MAIN_URL_PREVIEW_VALUE_NO_ACCESS",
-                    array('#URL#' => $metadata['URL'])
-                )
-            );
+        } else {
+            if ($metadata['TYPE'] === UrlMetadataTable::TYPE_DYNAMIC
+                && !UrlPreview::checkDynamicPreviewAccess($metadata['URL'])) {
+                $result[] = array(
+                    "id" => $userField["FIELD_NAME"],
+                    "text" => GetMessage(
+                        "MAIN_URL_PREVIEW_VALUE_NO_ACCESS",
+                        array('#URL#' => $metadata['URL'])
+                    )
+                );
+            }
         }
 
         return $result;
@@ -179,7 +183,7 @@ class UrlPreviewUserType
     public static function onBeforeSave($userField, $value)
     {
         $imageUrl = null;
-        if (strpos($value, ';') !== false) {
+        if (mb_strpos($value, ';') !== false) {
             list($value, $imageUrl) = explode(';', $value);
         }
 
@@ -190,17 +194,23 @@ class UrlPreviewUserType
             return null;
         }
         $metadata = UrlMetadataTable::getById($value)->fetch();
-        if (!is_array($metadata))
+        if (!is_array($metadata)) {
             return null;
+        }
 
         if ($metadata['TYPE'] === UrlMetadataTable::TYPE_STATIC) {
-            if ($imageUrl && is_array($metadata['EXTRA']['IMAGES']) && in_array($imageUrl, $metadata['EXTRA']['IMAGES'])) {
+            if ($imageUrl && is_array($metadata['EXTRA']['IMAGES']) && in_array(
+                    $imageUrl,
+                    $metadata['EXTRA']['IMAGES']
+                )) {
                 UrlPreview::setMetadataImage((int)$value, $imageUrl);
             }
             return $value;
-        } else if ($metadata['TYPE'] === UrlMetadataTable::TYPE_DYNAMIC
-            && UrlPreview::checkDynamicPreviewAccess($metadata['URL'])) {
-            return $value;
+        } else {
+            if ($metadata['TYPE'] === UrlMetadataTable::TYPE_DYNAMIC
+                && UrlPreview::checkDynamicPreviewAccess($metadata['URL'])) {
+                return $value;
+            }
         }
 
         return null;

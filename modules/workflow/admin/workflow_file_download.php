@@ -11,7 +11,9 @@
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/workflow/prolog.php");
 $WORKFLOW_RIGHT = $APPLICATION->GetGroupRight("workflow");
-if ($WORKFLOW_RIGHT == "D") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($WORKFLOW_RIGHT == "D") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/workflow/include.php");
 
 IncludeModuleLangFile(__FILE__);
@@ -28,10 +30,11 @@ if ($USER->IsAdmin() || !in_array(GetFileExtension($fname), GetScriptFileExt()))
             $filename = $io->RandomizeInvalidFilename(basename($zr["FILENAME"]));
         }
     }
-} else
+} else {
     $strError = GetMessage("FLOW_ACCESS_DENIED_PHP_DOWNLOAD");
+}
 
-if (strlen($strError) <= 0) {
+if ($strError == '') {
     $fsize = filesize($path);
     header("Content-Type: application/force-download; name=\"" . $filename . "\"");
     header("Content-Transfer-Encoding: binary");

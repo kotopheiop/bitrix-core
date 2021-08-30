@@ -70,10 +70,20 @@ class Apply
      */
     public function __construct($name, Main\Engine\Controller $controller, $config = array())
     {
-        $this->keepField([
-            'languageId', 'convertEncoding', 'encoding', 'encodingIn', 'encodingOut',
-            'tmpFolderPath', 'totalFileCount', 'sourceFolderPath', 'targetFolderPath', 'seekPath'
-        ]);
+        $this->keepField(
+            [
+                'languageId',
+                'convertEncoding',
+                'encoding',
+                'encodingIn',
+                'encodingOut',
+                'tmpFolderPath',
+                'totalFileCount',
+                'sourceFolderPath',
+                'targetFolderPath',
+                'seekPath'
+            ]
+        );
 
         parent::__construct($name, $controller, $config);
 
@@ -142,7 +152,7 @@ class Apply
                         $encodingOut = Main\Localization\Translation::getCurrentEncoding();
                     }
                 }
-                $this->convertEncoding = (strtolower($encodingIn) !== strtolower($encodingOut));
+                $this->convertEncoding = (mb_strtolower($encodingIn) !== mb_strtolower($encodingOut));
                 $this->encodingIn = $encodingIn;
                 $this->encodingOut = $encodingOut;
             }
@@ -152,7 +162,9 @@ class Apply
             $sourceDirectory = new Translate\IO\Directory($this->sourceFolderPath);
             if (!$sourceDirectory->isExists()) {
                 $this->addError(
-                    new Error(Loc::getMessage('TR_ERROR_CREATE_TARGET_FOLDER', array('#PATH#' => $this->sourceFolderPath)))
+                    new Error(
+                        Loc::getMessage('TR_ERROR_CREATE_TARGET_FOLDER', array('#PATH#' => $this->sourceFolderPath))
+                    )
                 );
             }
 
@@ -160,7 +172,9 @@ class Apply
                 self::$useTranslationRepository &&
                 Main\Localization\Translation::isDefaultTranslationLang($this->languageId) !== true
             ) {
-                $this->targetFolderPath = Translate\IO\Path::tidy(self::$translationRepositoryRoot . '/' . $this->languageId . '/');
+                $this->targetFolderPath = Translate\IO\Path::tidy(
+                    self::$translationRepositoryRoot . '/' . $this->languageId . '/'
+                );
                 $targetFolder = new Translate\IO\Directory($this->targetFolderPath);
                 if (!$targetFolder->isExists()) {
                     $targetFolder->create();
@@ -226,15 +240,14 @@ class Apply
                         $content = $source->getContents();
                         $content = str_replace(array("\r\n", "\r"), array("\n", "\n"), $content);
 
-                        $errorMessage = '';
-                        $content = Main\Text\Encoding::convertEncoding($content, $this->encodingIn, $this->encodingOut, $errorMessage);
-                        if (!$content && !empty($errorMessage)) {
-                            $this->addError(new Main\Error($errorMessage));
-                        }
+                        $content = Main\Text\Encoding::convertEncoding($content, $this->encodingIn, $this->encodingOut);
                         $target->putContents($content);
                     } else {
-                        if (!@copy($source->getPhysicalPath(), $target->getPhysicalPath())) {
-                            $error = error_get_last();
+                        if (function_exists('error_clear_last')) {
+                            \error_clear_last();
+                        }
+                        if (\copy($source->getPhysicalPath(), $target->getPhysicalPath()) !== true) {
+                            $error = \error_get_last();
                             $this->addError(new Main\Error($error['message'], $error['type']));
                             continue;
                         }
@@ -314,7 +327,7 @@ class Apply
                     continue;
                 }
 
-                if ((substr($name, -4) === '.php') && is_file($fullPath)) {
+                if ((mb_substr($name, -4) === '.php') && is_file($fullPath)) {
                     $files[$langFolderRelPath . '/' . $name] = $fullPath;
                 }
             }

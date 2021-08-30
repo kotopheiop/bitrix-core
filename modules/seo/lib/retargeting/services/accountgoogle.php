@@ -12,20 +12,24 @@ class AccountGoogle extends Account
 
     public function getList()
     {
-        $response = $this->request->send(array(
-            'methodName' => 'account.list',
-            'parameters' => array()
-        ));
+        $response = $this->request->send(
+            array(
+                'methodName' => 'account.list',
+                'parameters' => array()
+            )
+        );
 
         return $response;
     }
 
     public function getProfile()
     {
-        $response = $this->request->send(array(
-            'methodName' => 'retargeting.profile',
-            'parameters' => array()
-        ));
+        $response = $this->request->send(
+            array(
+                'methodName' => 'retargeting.profile',
+                'parameters' => array()
+            )
+        );
 
         if ($response->isSuccess()) {
             $data = $response->fetch();

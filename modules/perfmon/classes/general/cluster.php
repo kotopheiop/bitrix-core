@@ -1,4 +1,5 @@
 <?php
+
 IncludeModuleLangFile(__FILE__);
 
 class CPerfCluster
@@ -28,9 +29,10 @@ class CPerfCluster
     {
         global $DB;
 
-        if (!is_array($arSelect))
+        if (!is_array($arSelect)) {
             $arSelect = array();
-        if (count($arSelect) < 1)
+        }
+        if (count($arSelect) < 1) {
             $arSelect = array(
                 "ID",
                 "TIMESTAMP_X",
@@ -41,14 +43,16 @@ class CPerfCluster
                 "PAGE_EXEC_TIME",
                 "PAGE_RESP_TIME",
             );
+        }
 
-        if (!is_array($arOrder))
+        if (!is_array($arOrder)) {
             $arOrder = array();
+        }
 
         $arQueryOrder = array();
         foreach ($arOrder as $strColumn => $strDirection) {
-            $strColumn = strtoupper($strColumn);
-            $strDirection = strtoupper($strDirection) == "ASC" ? "ASC" : "DESC";
+            $strColumn = mb_strtoupper($strColumn);
+            $strDirection = mb_strtoupper($strDirection) == "ASC" ? "ASC" : "DESC";
             switch ($strColumn) {
                 case "ID":
                     $arSelect[] = $strColumn;
@@ -59,7 +63,7 @@ class CPerfCluster
 
         $arQuerySelect = array();
         foreach ($arSelect as $strColumn) {
-            $strColumn = strtoupper($strColumn);
+            $strColumn = mb_strtoupper($strColumn);
             switch ($strColumn) {
                 case "ID":
                 case "TIMESTAMP_X":
@@ -73,8 +77,9 @@ class CPerfCluster
                     break;
             }
         }
-        if (count($arQuerySelect) < 1)
+        if (count($arQuerySelect) < 1) {
             $arQuerySelect = array("ID" => "p.ID");
+        }
 
         $obQueryWhere = new CSQLWhere;
         $arFields = array(
@@ -87,8 +92,9 @@ class CPerfCluster
         );
         $obQueryWhere->SetFields($arFields);
 
-        if (!is_array($arFilter))
+        if (!is_array($arFilter)) {
             $arFilter = array();
+        }
         $strQueryWhere = $obQueryWhere->GetQuery($arFilter);
 
         $bDistinct = $obQueryWhere->bDistinctReqired;
@@ -127,21 +133,25 @@ class CPerfCluster
         $strRequest .= "Accept-Language: en\r\n";
 
         $socket_timeout = intval($arOptions["socket_timeout"]);
-        if ($socket_timeout <= 0)
+        if ($socket_timeout <= 0) {
             $socket_timeout = 20;
+        }
 
         $rw_timeout = intval($arOptions["rw_timeout"]);
-        if ($rw_timeout <= 0)
+        if ($rw_timeout <= 0) {
             $rw_timeout = 20;
+        }
 
         $iteration_timeout = intval($arOptions["iteration_timeout"]);
-        if ($iteration_timeout <= 0)
+        if ($iteration_timeout <= 0) {
             $iteration_timeout = 30;
+        }
 
-        if ($port == 443)
+        if ($port == 443) {
             $proto = "ssl://";
-        else
+        } else {
             $proto = "";
+        }
 
         $start = getmicrotime();
         $end = $start + $iterations;
@@ -164,8 +174,9 @@ class CPerfCluster
                         $socket = fsockopen($proto . $host, $port, $errno, $errstr, $socket_timeout);
                         if ($socket) {
                             $request = str_replace("#thread#", $j, $strRequest);
-                            if (isset($arCookie[$j]))
-                                $request .= "Cookie: " . implode(';', $arCookie[$j]) . "\n";
+                            if (isset($arCookie[$j])) {
+                                $request .= "Cookie: " . implode(';', $arCookie[$j]) . "\r\n";
+                            }
                             $request .= "\r\n";
 
                             stream_set_blocking($socket, true);
@@ -195,14 +206,20 @@ class CPerfCluster
                         if ($line !== false) {
                             if (preg_match("/^Set-Cookie: (.*?)=(.*?);/", $line, $match)) {
                                 $arCookie[$j][$match[1]] = $match[1] . '=' . $match[2];
-                            } elseif (preg_match("/<span id=\"bx_main_exec_time\">(\\d+\\.\\d+)<\\/span>/", $line, $match)) {
+                            } elseif (preg_match(
+                                "/<span id=\"bx_main_exec_time\">(\\d+\\.\\d+)<\\/span>/",
+                                $line,
+                                $match
+                            )) {
                                 $arPageExecTime[] = $match[1];
                             } elseif (preg_match("/^HTTP\\/\\d+\\.\\d+\\s+(\\d+)\\s/", $line, $match)) {
-                                if ($match[1] !== '200')
+                                if ($match[1] !== '200') {
                                     $errors++;
+                                }
                             } elseif (preg_match("/^Status:\\s+(\\d+)\\s/", $line, $match)) {
-                                if ($match[1] !== '200')
+                                if ($match[1] !== '200') {
                                     $errors++;
+                                }
                             }
                         }
                     }
@@ -225,31 +242,37 @@ class CPerfCluster
                             if (preg_match("/<span id=\"bx_main_exec_time\">(\\d+\\.\\d+)<\\/span>/", $line, $match)) {
                                 $arPageExecTime[] = $match[1];
                             } elseif (preg_match("/^HTTP\\/\\d+\\.\\d+\\s+(\\d+)\\s/", $line, $match)) {
-                                if ($match[1] !== '200')
+                                if ($match[1] !== '200') {
                                     $errors++;
+                                }
                             } elseif (preg_match("/^Status:\\s+(\\d+)\\s/", $line, $match)) {
-                                if ($match[1] !== '200')
+                                if ($match[1] !== '200') {
                                     $errors++;
+                                }
                             }
                         }
                     }
                 } else {
                     unset($arConnections[$j]);
                 }
-                if (getmicrotime() > $end_after_end)
+                if (getmicrotime() > $end_after_end) {
                     break;
+                }
             }
-            if (getmicrotime() > $end_after_end)
+            if (getmicrotime() > $end_after_end) {
                 break;
+            }
         }
 
-        $this->Add(array(
-            "THREADS" => $threads,
-            "HITS" => $Pages,
-            "ERRORS" => $errors,
-            "PAGES_PER_SECOND" => $Pages / $iterations,
-            "PAGE_EXEC_TIME" => count($arPageExecTime) ? array_sum($arPageExecTime) / count($arPageExecTime) : 0,
-            "PAGE_RESP_TIME" => count($arResponseTime) ? array_sum($arResponseTime) / count($arResponseTime) : 0,
-        ));
+        $this->Add(
+            array(
+                "THREADS" => $threads,
+                "HITS" => $Pages,
+                "ERRORS" => $errors,
+                "PAGES_PER_SECOND" => $Pages / $iterations,
+                "PAGE_EXEC_TIME" => count($arPageExecTime) ? array_sum($arPageExecTime) / count($arPageExecTime) : 0,
+                "PAGE_RESP_TIME" => count($arResponseTime) ? array_sum($arResponseTime) / count($arResponseTime) : 0,
+            )
+        );
     }
 }

@@ -24,19 +24,23 @@ class Helper
      */
     public static function getShipmentEditLink($shipmentId, $text = '', $orderId = 0, $languageId = LANGUAGE_ID)
     {
-        if (strlen($text) <= 0)
+        if ($text == '') {
             $text = strval($shipmentId);
+        }
 
         if (intval($orderId) <= 0) {
-            $res = Internals\ShipmentTable::getList(array(
-                'filter' => array(
-                    '=ID' => $shipmentId
-                ),
-                'select' => array('ID', 'ORDER_ID')
-            ));
+            $res = Internals\ShipmentTable::getList(
+                array(
+                    'filter' => array(
+                        '=ID' => $shipmentId
+                    ),
+                    'select' => array('ID', 'ORDER_ID')
+                )
+            );
 
-            if ($row = $res->fetch())
+            if ($row = $res->fetch()) {
                 $orderId = $row['ORDER_ID'];
+            }
         }
 
         return '<a href="/bitrix/admin/sale_order_shipment_edit.php' .
@@ -56,9 +60,11 @@ class Helper
      */
     public static function getDeliveryEditLink($deliveryId, $deliveryName = '', $languageId = LANGUAGE_ID)
     {
-        if (strlen($deliveryName) <= 0) {
+        if ($deliveryName == '') {
             $delivery = Services\Manager::getObjectById($deliveryId);
-            $deliveryName = !!$delivery ? $delivery->getNameWithParent() . ' [' . intval($deliveryId) . ']' : intval($deliveryId);
+            $deliveryName = !!$delivery ? $delivery->getNameWithParent() . ' [' . intval($deliveryId) . ']' : intval(
+                $deliveryId
+            );
         }
 
         return '<a href="/bitrix/admin/sale_delivery_service_edit.php' .
@@ -77,8 +83,9 @@ class Helper
      */
     public static function getRequestViewLink($requestId, $text = '', $languageId = LANGUAGE_ID)
     {
-        if (strlen($text) <= 0)
+        if ($text == '') {
             $text = strval($requestId);
+        }
 
         return '<a href="/bitrix/admin/sale_delivery_request_view.php' .
             '?ID=' . intval($requestId) .
@@ -96,8 +103,9 @@ class Helper
      */
     public static function getShipmentsByIds(array $shipmentIds)
     {
-        if (empty($shipmentIds))
+        if (empty($shipmentIds)) {
             return array();
+        }
 
         $registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
         /** @var Sale\Order $orderClass */
@@ -105,22 +113,26 @@ class Helper
 
         $result = array();
 
-        $res = Internals\ShipmentTable::getList(array(
-            'filter' => array(
-                '=ID' => $shipmentIds
-            ),
-            'select' => array('ID', 'ORDER_ID')
-        ));
+        $res = Internals\ShipmentTable::getList(
+            array(
+                'filter' => array(
+                    '=ID' => $shipmentIds
+                ),
+                'select' => array('ID', 'ORDER_ID')
+            )
+        );
 
         while ($shp = $res->fetch()) {
             $order = $orderClass::load($shp['ORDER_ID']);
 
             foreach ($order->getShipmentCollection() as $shipment) {
-                if ($shp['ID'] != $shipment->getId())
+                if ($shp['ID'] != $shipment->getId()) {
                     continue;
+                }
 
-                if (!in_array($shp['ID'], $shipmentIds))
+                if (!in_array($shp['ID'], $shipmentIds)) {
                     continue;
+                }
 
                 $result[$shp['ID']] = $shipment;
                 break;

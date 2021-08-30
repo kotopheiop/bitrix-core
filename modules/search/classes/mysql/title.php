@@ -1,4 +1,5 @@
 <?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/search/classes/general/title.php");
 
 class CSearchTitle extends CAllSearchTitle
@@ -15,16 +16,18 @@ class CSearchTitle extends CAllSearchTitle
             foreach (array_reverse($this->_arPhrase, true) as $word => $pos) {
                 if ($last && !preg_match("/[\\n\\r \\t]$/", $phrase)) {
                     $last = false;
-                    if (strlen($word) >= $this->minLength)
+                    if (mb_strlen($word) >= $this->minLength) {
                         $s = $sqlWords[] = "ct.WORD like '" . $DB->ForSQL($word) . "%'";
-                    else
+                    } else {
                         $s = "";
+                    }
                 } else {
                     $s = $sqlWords[] = "ct.WORD = '" . $DB->ForSQL($word) . "'";
                 }
 
-                if ($s)
+                if ($s) {
                     $sqlHaving[] = "(sum(" . $s . ") > 0)";
+                }
             }
         }
 
@@ -32,10 +35,11 @@ class CSearchTitle extends CAllSearchTitle
             $bIncSites = false;
             $strSqlWhere = CSearch::__PrepareFilter($arParams, $bIncSites);
             if ($bNotFilter) {
-                if (!empty($strSqlWhere))
+                if (!empty($strSqlWhere)) {
                     $strSqlWhere = "NOT (" . $strSqlWhere . ")";
-                else
+                } else {
                     $strSqlWhere = "1=0";
+                }
             }
 
             $strSql = "
@@ -74,7 +78,7 @@ class CSearchTitle extends CAllSearchTitle
 			";
 
             $r = $DB->Query($strSql);
-            parent::CDBResult($r);
+            parent::__construct($r);
             return true;
         } else {
             return false;
@@ -89,9 +93,10 @@ class CSearchTitle extends CAllSearchTitle
 
     function getSqlOrder($bOrderByRank)
     {
-        if ($bOrderByRank)
+        if ($bOrderByRank) {
             return "RANK1 DESC, TITLE";
-        else
+        } else {
             return "DATE_CHANGE DESC, RANK1 DESC, TITLE";
+        }
     }
 }

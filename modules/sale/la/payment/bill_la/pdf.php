@@ -1,14 +1,19 @@
-<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die(); ?><?
-$arPaySysAction["ENCODING"] = "";
-$ORDER_ID = IntVal($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["ID"]);
-if (!is_array($arOrder))
-    $arOrder = CSaleOrder::GetByID($ORDER_ID);
-
-if (!CSalePdf::isPdfAvailable())
+<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
     die();
+} ?><?
+$arPaySysAction["ENCODING"] = "";
+$ORDER_ID = intval($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["ID"]);
+if (!is_array($arOrder)) {
+    $arOrder = CSaleOrder::GetByID($ORDER_ID);
+}
 
-if ($_REQUEST['BLANK'] == 'Y')
+if (!CSalePdf::isPdfAvailable()) {
+    die();
+}
+
+if ($_REQUEST['BLANK'] == 'Y') {
     $blank = true;
+}
 
 $pdf = new CSalePdf('P', 'pt', 'A4');
 
@@ -57,7 +62,13 @@ if (CSalePaySystemAction::GetParamValue('PATH_TO_LOGO', false)) {
     $logoHeight = $imageHeight * $imgZoom + 5;
     $logoWidth = $imageWidth * $imgZoom + 5;
 
-    $pdf->Image(CSalePaySystemAction::GetParamValue('PATH_TO_LOGO', false), $pdf->GetX(), $pdf->GetY(), -$imgDpi, -$imgDpi);
+    $pdf->Image(
+        CSalePaySystemAction::GetParamValue('PATH_TO_LOGO', false),
+        $pdf->GetX(),
+        $pdf->GetY(),
+        -$imgDpi,
+        -$imgDpi
+    );
 }
 
 $pdf->SetFont($fontFamily, 'B', $fontSize);
@@ -68,12 +79,21 @@ $pdf->Ln();
 
 if (CSalePaySystemAction::GetParamValue("SELLER_ADDRESS", false)) {
     $pdf->SetX($pdf->GetX() + $logoWidth);
-    $pdf->MultiCell(0, 15, CSalePdf::prepareToPdf(CSalePaySystemAction::GetParamValue("SELLER_ADDRESS", false)), 0, 'L');
+    $pdf->MultiCell(
+        0,
+        15,
+        CSalePdf::prepareToPdf(CSalePaySystemAction::GetParamValue("SELLER_ADDRESS", false)),
+        0,
+        'L'
+    );
 }
 
 if (CSalePaySystemAction::GetParamValue("SELLER_PHONE", false)) {
     $pdf->SetX($pdf->GetX() + $logoWidth);
-    $pdf->Write(15, CSalePdf::prepareToPdf(sprintf("Tel.: %s", CSalePaySystemAction::GetParamValue("SELLER_PHONE", false))));
+    $pdf->Write(
+        15,
+        CSalePdf::prepareToPdf(sprintf("Tel.: %s", CSalePaySystemAction::GetParamValue("SELLER_PHONE", false)))
+    );
     $pdf->Ln();
 }
 
@@ -167,13 +187,14 @@ $pdf->SetFont($fontFamily, '', $fontSize);
 $dbBasket = CSaleBasket::GetList(
     array("DATE_INSERT" => "ASC", "NAME" => "ASC"),
     array("ORDER_ID" => $ORDER_ID),
-    false, false,
+    false,
+    false,
     array("ID", "PRICE", "CURRENCY", "QUANTITY", "NAME", "VAT_RATE", "MEASURE_NAME")
 );
 if ($arBasket = $dbBasket->Fetch()) {
     $arColsCaption = array(
         1 => CSalePdf::prepareToPdf('#'),
-        CSalePdf::prepareToPdf('Art�culo / Descripci�n'),
+        CSalePdf::prepareToPdf('Art?culo / Descripci?n'),
         CSalePdf::prepareToPdf('Cant'),
         CSalePdf::prepareToPdf('Unidades'),
         CSalePdf::prepareToPdf('Precio unitario'),
@@ -184,8 +205,9 @@ if ($arBasket = $dbBasket->Fetch()) {
     $arProps = array();
     $arRowsWidth = array(1 => 0, 0, 0, 0, 0, 0, 0);
 
-    for ($i = 1; $i <= 7; $i++)
+    for ($i = 1; $i <= 7; $i++) {
         $arRowsWidth[$i] = max($arRowsWidth[$i], $pdf->GetStringWidth($arColsCaption[$i]));
+    }
 
     $n = 0;
     $sum = 0.00;
@@ -205,22 +227,30 @@ if ($arBasket = $dbBasket->Fetch()) {
             array("ID", "BASKET_ID", "NAME", "VALUE", "CODE", "SORT")
         );
         while ($arBasketProps = $dbBasketProps->GetNext()) {
-            if (!empty($arBasketProps) && $arBasketProps["VALUE"] != "")
+            if (!empty($arBasketProps) && $arBasketProps["VALUE"] != "") {
                 $arProdProps[] = $arBasketProps;
+            }
         }
         $arBasket["PROPS"] = $arProdProps;
 
         // @TODO: replace with real vatless price
-        if (isset($arBasket['VAT_INCLUDED']) && $arBasket['VAT_INCLUDED'] === 'Y')
-            $arBasket["VATLESS_PRICE"] = roundEx($arBasket["PRICE"] / (1 + $arBasket["VAT_RATE"]), SALE_VALUE_PRECISION);
-        else
+        if (isset($arBasket['VAT_INCLUDED']) && $arBasket['VAT_INCLUDED'] === 'Y') {
+            $arBasket["VATLESS_PRICE"] = roundEx(
+                $arBasket["PRICE"] / (1 + $arBasket["VAT_RATE"]),
+                SALE_VALUE_PRECISION
+            );
+        } else {
             $arBasket["VATLESS_PRICE"] = $arBasket["PRICE"];
+        }
 
         $productName = $arBasket["NAME"];
-        if ($productName == "OrderDelivery")
-            $productName = "Env�o";
-        else if ($productName == "OrderDiscount")
-            $productName = "Descuento";
+        if ($productName == "OrderDelivery") {
+            $productName = "Env?o";
+        } else {
+            if ($productName == "OrderDiscount") {
+                $productName = "Descuento";
+            }
+        }
 
         $arCells[++$n] = array(
             1 => CSalePdf::prepareToPdf($n),
@@ -229,25 +259,30 @@ if ($arBasket = $dbBasket->Fetch()) {
             CSalePdf::prepareToPdf($arBasket["MEASURE_NAME"] ? $arBasket["MEASURE_NAME"] : 'pza'),
             CSalePdf::prepareToPdf(SaleFormatCurrency($arBasket["VATLESS_PRICE"], $arBasket["CURRENCY"], false)),
             CSalePdf::prepareToPdf(roundEx($arBasket["VAT_RATE"] * 100, SALE_VALUE_PRECISION) . "%"),
-            CSalePdf::prepareToPdf(SaleFormatCurrency(
-                $arBasket["VATLESS_PRICE"] * $arBasket["QUANTITY"],
-                $arBasket["CURRENCY"],
-                false
-            ))
+            CSalePdf::prepareToPdf(
+                SaleFormatCurrency(
+                    $arBasket["VATLESS_PRICE"] * $arBasket["QUANTITY"],
+                    $arBasket["CURRENCY"],
+                    false
+                )
+            )
         );
 
         $arProps[$n] = array();
-        foreach ($arBasket["PROPS"] as $vv)
+        foreach ($arBasket["PROPS"] as $vv) {
             $arProps[$n][] = CSalePdf::prepareToPdf(sprintf("%s: %s", $vv["NAME"], $vv["VALUE"]));
+        }
 
-        for ($i = 1; $i <= 7; $i++)
+        for ($i = 1; $i <= 7; $i++) {
             $arRowsWidth[$i] = max($arRowsWidth[$i], $pdf->GetStringWidth($arCells[$n][$i]));
+        }
 
         $sum += doubleval($arBasket["VATLESS_PRICE"] * $arBasket["QUANTITY"]);
         $vat = max($vat, $arBasket["VAT_RATE"]);
         if ($arBasket["VAT_RATE"] > 0) {
-            if (!isset($vats[$arBasket["VAT_RATE"]]))
+            if (!isset($vats[$arBasket["VAT_RATE"]])) {
                 $vats[$arBasket["VAT_RATE"]] = 0;
+            }
             $vats[$arBasket["VAT_RATE"]] += ($arBasket["PRICE"] - $arBasket["VATLESS_PRICE"]) * $arBasket["QUANTITY"];
         }
     } while ($arBasket = $dbBasket->Fetch());
@@ -255,40 +290,47 @@ if ($arBasket = $dbBasket->Fetch()) {
     if (DoubleVal($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["PRICE_DELIVERY"]) > 0) {
         $arDelivery_tmp = CSaleDelivery::GetByID($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["DELIVERY_ID"]);
 
-        $sDeliveryItem = "Env�o";
-        if (strlen($arDelivery_tmp["NAME"]) > 0)
+        $sDeliveryItem = "Env?o";
+        if ($arDelivery_tmp["NAME"] <> '') {
             $sDeliveryItem .= sprintf(" (%s)", $arDelivery_tmp["NAME"]);
+        }
         $arCells[++$n] = array(
             1 => CSalePdf::prepareToPdf($n),
             CSalePdf::prepareToPdf($sDeliveryItem),
             CSalePdf::prepareToPdf(1),
             CSalePdf::prepareToPdf(''),
-            CSalePdf::prepareToPdf(SaleFormatCurrency(
-                $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["PRICE_DELIVERY"] / (1 + $vat),
-                $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"],
-                false
-            )),
+            CSalePdf::prepareToPdf(
+                SaleFormatCurrency(
+                    $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["PRICE_DELIVERY"] / (1 + $vat),
+                    $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"],
+                    false
+                )
+            ),
             CSalePdf::prepareToPdf(roundEx($vat * 100, SALE_VALUE_PRECISION) . "%"),
-            CSalePdf::prepareToPdf(SaleFormatCurrency(
-                $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["PRICE_DELIVERY"] / (1 + $vat),
-                $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"],
-                false
-            ))
+            CSalePdf::prepareToPdf(
+                SaleFormatCurrency(
+                    $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["PRICE_DELIVERY"] / (1 + $vat),
+                    $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"],
+                    false
+                )
+            )
         );
 
-        for ($i = 1; $i <= 7; $i++)
+        for ($i = 1; $i <= 7; $i++) {
             $arRowsWidth[$i] = max($arRowsWidth[$i], $pdf->GetStringWidth($arCells[$n][$i]));
+        }
 
         $sum += roundEx(
             doubleval($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["PRICE_DELIVERY"] / (1 + $vat)),
             SALE_VALUE_PRECISION
         );
 
-        if ($vat > 0)
+        if ($vat > 0) {
             $vats[$vat] += roundEx(
                 $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["PRICE_DELIVERY"] * $vat / (1 + $vat),
                 SALE_VALUE_PRECISION
             );
+        }
     }
 
     $items = $n;
@@ -310,10 +352,12 @@ if ($arBasket = $dbBasket->Fetch()) {
 
     if (!empty($vats)) {
         // @TODO: remove on real vatless price implemented
-        $delta = intval(roundEx(
+        $delta = intval(
+            roundEx(
                 $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["PRICE"] - $sum - array_sum($vats),
                 SALE_VALUE_PRECISION
-            ) * pow(10, SALE_VALUE_PRECISION));
+            ) * pow(10, SALE_VALUE_PRECISION)
+        );
         if ($delta) {
             $vatRates = array_keys($vats);
             rsort($vatRates);
@@ -323,8 +367,9 @@ if ($arBasket = $dbBasket->Fetch()) {
                     $vats[$vatRate] += abs($delta) / $delta / pow(10, SALE_VALUE_PRECISION);
                     $delta -= abs($delta) / $delta;
 
-                    if ($delta == 0)
+                    if ($delta == 0) {
                         break 2;
+                    }
                 }
             }
         }
@@ -336,15 +381,19 @@ if ($arBasket = $dbBasket->Fetch()) {
                 null,
                 null,
                 null,
-                CSalePdf::prepareToPdf(sprintf(
-                    "Impuesto (%s%%):",
-                    roundEx($vatRate * 100, SALE_VALUE_PRECISION)
-                )),
-                CSalePdf::prepareToPdf(SaleFormatCurrency(
-                    $vatSum,
-                    $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"],
-                    false
-                ))
+                CSalePdf::prepareToPdf(
+                    sprintf(
+                        "Impuesto (%s%%):",
+                        roundEx($vatRate * 100, SALE_VALUE_PRECISION)
+                    )
+                ),
+                CSalePdf::prepareToPdf(
+                    SaleFormatCurrency(
+                        $vatSum,
+                        $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"],
+                        false
+                    )
+                )
             );
 
             $arRowsWidth[7] = max($arRowsWidth[7], $pdf->GetStringWidth($arCells[$n][7]));
@@ -362,17 +411,21 @@ if ($arBasket = $dbBasket->Fetch()) {
                 null,
                 null,
                 null,
-                CSalePdf::prepareToPdf(sprintf(
-                    "%s%s%s:",
-                    ($arTaxList["IS_IN_PRICE"] == "Y") ? "Incluido " : "",
-                    $arTaxList["TAX_NAME"],
-                    sprintf(' (%s%%)', roundEx($arTaxList["VALUE"], SALE_VALUE_PRECISION))
-                )),
-                CSalePdf::prepareToPdf(SaleFormatCurrency(
-                    $arTaxList["VALUE_MONEY"],
-                    $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"],
-                    false
-                ))
+                CSalePdf::prepareToPdf(
+                    sprintf(
+                        "%s%s%s:",
+                        ($arTaxList["IS_IN_PRICE"] == "Y") ? "Incluido " : "",
+                        $arTaxList["TAX_NAME"],
+                        sprintf(' (%s%%)', roundEx($arTaxList["VALUE"], SALE_VALUE_PRECISION))
+                    )
+                ),
+                CSalePdf::prepareToPdf(
+                    SaleFormatCurrency(
+                        $arTaxList["VALUE_MONEY"],
+                        $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"],
+                        false
+                    )
+                )
             );
 
             $arRowsWidth[7] = max($arRowsWidth[7], $pdf->GetStringWidth($arCells[$n][7]));
@@ -387,11 +440,13 @@ if ($arBasket = $dbBasket->Fetch()) {
             null,
             null,
             CSalePdf::prepareToPdf("Pago hecho:"),
-            CSalePdf::prepareToPdf(SaleFormatCurrency(
-                $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["SUM_PAID"],
-                $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"],
-                false
-            ))
+            CSalePdf::prepareToPdf(
+                SaleFormatCurrency(
+                    $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["SUM_PAID"],
+                    $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"],
+                    false
+                )
+            )
         );
 
         $arRowsWidth[7] = max($arRowsWidth[7], $pdf->GetStringWidth($arCells[$n][7]));
@@ -405,11 +460,13 @@ if ($arBasket = $dbBasket->Fetch()) {
             null,
             null,
             CSalePdf::prepareToPdf("Descuento:"),
-            CSalePdf::prepareToPdf(SaleFormatCurrency(
-                $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["DISCOUNT_VALUE"],
-                $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"],
-                false
-            ))
+            CSalePdf::prepareToPdf(
+                SaleFormatCurrency(
+                    $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["DISCOUNT_VALUE"],
+                    $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"],
+                    false
+                )
+            )
         );
 
         $arRowsWidth[7] = max($arRowsWidth[7], $pdf->GetStringWidth($arCells[$n][7]));
@@ -422,19 +479,23 @@ if ($arBasket = $dbBasket->Fetch()) {
         null,
         null,
         CSalePdf::prepareToPdf("Total:"),
-        CSalePdf::prepareToPdf(SaleFormatCurrency(
-            $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["SHOULD_PAY"],
-            $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"],
-            false
-        ))
+        CSalePdf::prepareToPdf(
+            SaleFormatCurrency(
+                $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["SHOULD_PAY"],
+                $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"],
+                false
+            )
+        )
     );
 
     $arRowsWidth[7] = max($arRowsWidth[7], $pdf->GetStringWidth($arCells[$n][7]));
 
-    for ($i = 1; $i <= 7; $i++)
+    for ($i = 1; $i <= 7; $i++) {
         $arRowsWidth[$i] += 10;
-    if ($vat <= 0)
+    }
+    if ($vat <= 0) {
         $arRowsWidth[6] = 0;
+    }
     $arRowsWidth[2] = $width - (array_sum($arRowsWidth) - $arRowsWidth[2]);
 }
 $pdf->Ln();
@@ -443,8 +504,9 @@ $x0 = $pdf->GetX();
 $y0 = $pdf->GetY();
 
 for ($i = 1; $i <= 7; $i++) {
-    if ($vat > 0 || $i != 6)
+    if ($vat > 0 || $i != 6) {
         $pdf->Cell($arRowsWidth[$i], 20, $arColsCaption[$i], 0, 0, 'C');
+    }
     ${"x$i"} = $pdf->GetX();
 }
 
@@ -454,8 +516,9 @@ $y5 = $pdf->GetY();
 
 $pdf->Line($x0, $y0, $x7, $y0);
 for ($i = 0; $i <= 7; $i++) {
-    if ($vat > 0 || $i != 6)
+    if ($vat > 0 || $i != 6) {
         $pdf->Line(${"x$i"}, $y0, ${"x$i"}, $y5);
+    }
 }
 $pdf->Line($x0, $y5, $x7, $y5);
 
@@ -489,44 +552,60 @@ for ($n = 1; $n <= $rowsCnt; $n++) {
     for ($l = 0; $pdf->GetStringWidth($text) > 0; $l++) {
         list($string, $text) = $pdf->splitString($text, $cellWidth - 5);
 
-        if (!is_null($arCells[$n][1]))
+        if (!is_null($arCells[$n][1])) {
             $pdf->Cell($arRowsWidth_tmp[1], 15, ($l == 0) ? $arCells[$n][1] : '', 0, 0, 'C');
-        if ($l == 0)
+        }
+        if ($l == 0) {
             $x1 = $pdf->GetX();
+        }
 
-        if (!is_null($arCells[$n][2]))
+        if (!is_null($arCells[$n][2])) {
             $pdf->Cell($arRowsWidth_tmp[2], 15, $string);
-        if ($l == 0)
+        }
+        if ($l == 0) {
             $x2 = $pdf->GetX();
+        }
 
-        if (!is_null($arCells[$n][3]))
+        if (!is_null($arCells[$n][3])) {
             $pdf->Cell($arRowsWidth_tmp[3], 15, ($l == 0) ? $arCells[$n][3] : '', 0, 0, 'R');
-        if ($l == 0)
+        }
+        if ($l == 0) {
             $x3 = $pdf->GetX();
+        }
 
-        if (!is_null($arCells[$n][4]))
+        if (!is_null($arCells[$n][4])) {
             $pdf->Cell($arRowsWidth_tmp[4], 15, ($l == 0) ? $arCells[$n][4] : '', 0, 0, 'R');
-        if ($l == 0)
+        }
+        if ($l == 0) {
             $x4 = $pdf->GetX();
+        }
 
-        if (!is_null($arCells[$n][5]))
+        if (!is_null($arCells[$n][5])) {
             $pdf->Cell($arRowsWidth_tmp[5], 15, ($l == 0) ? $arCells[$n][5] : '', 0, 0, 'R');
-        if ($l == 0)
+        }
+        if ($l == 0) {
             $x5 = $pdf->GetX();
+        }
 
         if (!is_null($arCells[$n][6])) {
-            if (is_null($arCells[$n][2]))
+            if (is_null($arCells[$n][2])) {
                 $pdf->Cell($arRowsWidth_tmp[6], 15, $string, 0, 0, 'R');
-            else if ($vat > 0)
-                $pdf->Cell($arRowsWidth_tmp[6], 15, ($l == 0) ? $arCells[$n][6] : '', 0, 0, 'R');
+            } else {
+                if ($vat > 0) {
+                    $pdf->Cell($arRowsWidth_tmp[6], 15, ($l == 0) ? $arCells[$n][6] : '', 0, 0, 'R');
+                }
+            }
         }
-        if ($l == 0)
+        if ($l == 0) {
             $x6 = $pdf->GetX();
+        }
 
-        if (!is_null($arCells[$n][7]))
+        if (!is_null($arCells[$n][7])) {
             $pdf->Cell($arRowsWidth_tmp[7], 15, ($l == 0) ? $arCells[$n][7] : '', 0, 0, 'R');
-        if ($l == 0)
+        }
+        if ($l == 0) {
             $x7 = $pdf->GetX();
+        }
 
         $pdf->Ln();
     }
@@ -539,19 +618,22 @@ for ($n = 1; $n <= $rowsCnt; $n++) {
             $pdf->Cell($arRowsWidth_tmp[3], 12, '');
             $pdf->Cell($arRowsWidth_tmp[4], 12, '');
             $pdf->Cell($arRowsWidth_tmp[5], 12, '');
-            if ($vat > 0)
+            if ($vat > 0) {
                 $pdf->Cell($arRowsWidth_tmp[6], 12, '');
+            }
             $pdf->Cell($arRowsWidth_tmp[7], 12, '', 0, 1);
         }
     }
 
     $y5 = $pdf->GetY();
 
-    if ($y0 > $y5)
+    if ($y0 > $y5) {
         $y0 = $margin['top'];
+    }
     for ($i = (is_null($arCells[$n][1])) ? 6 : 0; $i <= 7; $i++) {
-        if ($vat > 0 || $i != 5)
+        if ($vat > 0 || $i != 5) {
             $pdf->Line(${"x$i"}, $y0, ${"x$i"}, $y5);
+        }
     }
 
     $pdf->Line((!is_null($arCells[$n][1])) ? $x0 : $x6, $y5, $x7, $y5);
@@ -565,25 +647,43 @@ $pdf->Ln();
 $pdf->SetFont($fontFamily, 'B', $fontSize);
 
 if (CSalePaySystemAction::GetParamValue("COMMENT1", false) || CSalePaySystemAction::GetParamValue("COMMENT2", false)) {
-    $pdf->Write(15, CSalePdf::prepareToPdf('T�rminos y Condiciones'));
+    $pdf->Write(15, CSalePdf::prepareToPdf('T?rminos y Condiciones'));
     $pdf->Ln();
 
     $pdf->SetFont($fontFamily, '', $fontSize);
 
     if (CSalePaySystemAction::GetParamValue("COMMENT1", false)) {
-        $pdf->Write(15, HTMLToTxt(preg_replace(
-            array('#</div>\s*<div[^>]*>#i', '#</?div>#i'), array('<br>', '<br>'),
-            CSalePdf::prepareToPdf(CSalePaySystemAction::GetParamValue("COMMENT1", false))
-        ), '', array(), 0));
+        $pdf->Write(
+            15,
+            HTMLToTxt(
+                preg_replace(
+                    array('#</div>\s*<div[^>]*>#i', '#</?div>#i'),
+                    array('<br>', '<br>'),
+                    CSalePdf::prepareToPdf(CSalePaySystemAction::GetParamValue("COMMENT1", false))
+                ),
+                '',
+                array(),
+                0
+            )
+        );
         $pdf->Ln();
         $pdf->Ln();
     }
 
     if (CSalePaySystemAction::GetParamValue("COMMENT2", false)) {
-        $pdf->Write(15, HTMLToTxt(preg_replace(
-            array('#</div>\s*<div[^>]*>#i', '#</?div>#i'), array('<br>', '<br>'),
-            CSalePdf::prepareToPdf(CSalePaySystemAction::GetParamValue("COMMENT2", false))
-        ), '', array(), 0));
+        $pdf->Write(
+            15,
+            HTMLToTxt(
+                preg_replace(
+                    array('#</div>\s*<div[^>]*>#i', '#</?div>#i'),
+                    array('<br>', '<br>'),
+                    CSalePdf::prepareToPdf(CSalePaySystemAction::GetParamValue("COMMENT2", false))
+                ),
+                '',
+                array(),
+                0
+            )
+        );
         $pdf->Ln();
         $pdf->Ln();
     }
@@ -605,8 +705,10 @@ if (!$blank && CSalePaySystemAction::GetParamValue('PATH_TO_STAMP', false)) {
 
         $pdf->Image(
             CSalePaySystemAction::GetParamValue('PATH_TO_STAMP', false),
-            $margin['left'] + $width / 2 + 45, $pdf->GetY(),
-            $stampWidth, $stampHeight
+            $margin['left'] + $width / 2 + 45,
+            $pdf->GetY(),
+            $stampWidth,
+            $stampHeight
         );
     }
 }
@@ -629,10 +731,12 @@ if ($bankAccNo && $bankRouteNo && $bankSwift) {
     $bankDetails = '';
 
     if (CSalePaySystemAction::GetParamValue("SELLER_NAME", false)) {
-        $bankDetails .= CSalePdf::prepareToPdf(sprintf(
-            "Nombre de la cuenta: %s\n",
-            CSalePaySystemAction::GetParamValue("SELLER_NAME", false)
-        ));
+        $bankDetails .= CSalePdf::prepareToPdf(
+            sprintf(
+                "Nombre de la cuenta: %s\n",
+                CSalePaySystemAction::GetParamValue("SELLER_NAME", false)
+            )
+        );
     }
 
     $bankDetails .= CSalePdf::prepareToPdf(sprintf("# de la Cuenta: %s\n", $bankAccNo));
@@ -642,20 +746,22 @@ if ($bankAccNo && $bankRouteNo && $bankSwift) {
     $bankPhone = CSalePaySystemAction::GetParamValue("SELLER_BANK_PHONE", false);
 
     if ($bank || $bankAddr || $bankPhone) {
-        $bankDetails .= CSalePdf::prepareToPdf("Nombre y direcci�n del banco: ");
-        if ($bank)
+        $bankDetails .= CSalePdf::prepareToPdf("Nombre y direcci?n del banco: ");
+        if ($bank) {
             $bankDetails .= CSalePdf::prepareToPdf($bank);
+        }
         $bankDetails .= CSalePdf::prepareToPdf("\n");
 
-        if ($bankAddr)
+        if ($bankAddr) {
             $bankDetails .= CSalePdf::prepareToPdf(sprintf("%s\n", $bankAddr));
+        }
 
         if ($bankPhone) {
             $bankDetails .= CSalePdf::prepareToPdf(sprintf("%s\n", $bankPhone));
         }
     }
 
-    $bankDetails .= CSalePdf::prepareToPdf(sprintf("N�mero de enrutamiento del banco: %s\n", $bankRouteNo));
+    $bankDetails .= CSalePdf::prepareToPdf(sprintf("N?mero de enrutamiento del banco: %s\n", $bankRouteNo));
     $bankDetails .= CSalePdf::prepareToPdf(sprintf("SWIFT del banco: %s\n", $bankSwift));
 
     $pdf->MultiCell($width / 2, 15, $bankDetails, 0, 'L');
@@ -663,10 +769,15 @@ if ($bankAccNo && $bankRouteNo && $bankSwift) {
 
 $pdf->SetY($y0 + 15);
 if (CSalePaySystemAction::GetParamValue("SELLER_DIR_POS", false)) {
-    if (CSalePaySystemAction::GetParamValue("SELLER_DIR", false) || CSalePaySystemAction::GetParamValue("SELLER_DIR_SIGN", false)) {
+    if (CSalePaySystemAction::GetParamValue("SELLER_DIR", false) || CSalePaySystemAction::GetParamValue(
+            "SELLER_DIR_SIGN",
+            false
+        )) {
         $isDirSign = false;
         if (!$blank && CSalePaySystemAction::GetParamValue('SELLER_DIR_SIGN', false)) {
-            list($signHeight, $signWidth) = $pdf->GetImageSize(CSalePaySystemAction::GetParamValue('SELLER_DIR_SIGN', false));
+            list($signHeight, $signWidth) = $pdf->GetImageSize(
+                CSalePaySystemAction::GetParamValue('SELLER_DIR_SIGN', false)
+            );
 
             if ($signHeight && $signWidth) {
                 $ratio = min(37.5 / $signHeight, 150 / $signWidth);
@@ -692,8 +803,10 @@ if (CSalePaySystemAction::GetParamValue("SELLER_DIR_POS", false)) {
         if ($isDirSign) {
             $pdf->Image(
                 CSalePaySystemAction::GetParamValue('SELLER_DIR_SIGN', false),
-                $pdf->GetX() - 150, $pdf->GetY() - $signHeight + 15,
-                $signWidth, $signHeight
+                $pdf->GetX() - 150,
+                $pdf->GetY() - $signHeight + 15,
+                $signWidth,
+                $signHeight
             );
         }
 
@@ -703,10 +816,15 @@ if (CSalePaySystemAction::GetParamValue("SELLER_DIR_POS", false)) {
 }
 
 if (CSalePaySystemAction::GetParamValue("SELLER_ACC_POS", false)) {
-    if (CSalePaySystemAction::GetParamValue("SELLER_ACC", false) || CSalePaySystemAction::GetParamValue("SELLER_ACC_SIGN", false)) {
+    if (CSalePaySystemAction::GetParamValue("SELLER_ACC", false) || CSalePaySystemAction::GetParamValue(
+            "SELLER_ACC_SIGN",
+            false
+        )) {
         $isAccSign = false;
         if (!$blank && CSalePaySystemAction::GetParamValue('SELLER_ACC_SIGN', false)) {
-            list($signHeight, $signWidth) = $pdf->GetImageSize(CSalePaySystemAction::GetParamValue('SELLER_ACC_SIGN', false));
+            list($signHeight, $signWidth) = $pdf->GetImageSize(
+                CSalePaySystemAction::GetParamValue('SELLER_ACC_SIGN', false)
+            );
 
             if ($signHeight && $signWidth) {
                 $ratio = min(37.5 / $signHeight, 150 / $signWidth);
@@ -732,8 +850,10 @@ if (CSalePaySystemAction::GetParamValue("SELLER_ACC_POS", false)) {
         if ($isAccSign) {
             $pdf->Image(
                 CSalePaySystemAction::GetParamValue('SELLER_ACC_SIGN', false),
-                $pdf->GetX() - 150, $pdf->GetY() - $signHeight + 15,
-                $signWidth, $signHeight
+                $pdf->GetX() - 150,
+                $pdf->GetY() - $signHeight + 15,
+                $signWidth,
+                $signHeight
             );
         }
 
@@ -743,16 +863,20 @@ if (CSalePaySystemAction::GetParamValue("SELLER_ACC_POS", false)) {
 
 
 $dest = 'I';
-if ($_REQUEST['GET_CONTENT'] == 'Y')
+if ($_REQUEST['GET_CONTENT'] == 'Y') {
     $dest = 'S';
-else if ($_REQUEST['DOWNLOAD'] == 'Y')
-    $dest = 'D';
+} else {
+    if ($_REQUEST['DOWNLOAD'] == 'Y') {
+        $dest = 'D';
+    }
+}
 
 return $pdf->Output(
     sprintf(
         'Invoice # %s (Issue Date %s).pdf',
         $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["ACCOUNT_NUMBER"],
         ConvertDateTime($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["DATE_INSERT"], 'YYYY-MM-DD')
-    ), $dest
+    ),
+    $dest
 );
 ?>

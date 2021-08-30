@@ -78,7 +78,11 @@ class Dispatcher
             return false;
         }
 
-        if (!SignatureHelperCreate::validateSignature($this->getSignatureManager(), $fieldInfo, $fieldInfo['SIGNATURE'])) {
+        if (!SignatureHelperCreate::validateSignature(
+            $this->getSignatureManager(),
+            $fieldInfo,
+            $fieldInfo['SIGNATURE']
+        )) {
             $this->addError(Loc::getMessage('MAIN_UF_DISPATCHER_ERROR_SIGNATURE'), $fieldInfo['FIELD']);
 
             return false;
@@ -148,7 +152,6 @@ class Dispatcher
         }
 
         return true;
-
     }
 
     public function deleteField($fieldInfo)
@@ -227,23 +230,25 @@ class Dispatcher
     protected function createNewField(array $fieldInfo)
     {
         $userTypeEntity = new \CUserTypeEntity();
-        $fieldId = $userTypeEntity->add(array(
-            'ENTITY_ID' => $fieldInfo['ENTITY_ID'],
-            'FIELD_NAME' => $fieldInfo['FIELD'],
-            'USER_TYPE_ID' => $fieldInfo['USER_TYPE_ID'],
-            'MULTIPLE' => $fieldInfo['MULTIPLE'],
-            'MANDATORY' => $fieldInfo['MANDATORY'],
-            'SHOW_FILTER' => $fieldInfo['SHOW_FILTER'],
-            'SHOW_IN_LIST' => $fieldInfo['SHOW_IN_LIST'],
-            'EDIT_IN_LIST' => $fieldInfo['EDIT_IN_LIST'],
-            'IS_SEARCHABLE' => $fieldInfo['IS_SEARCHABLE'],
-            'SETTINGS' => $fieldInfo['SETTINGS'],
-            'EDIT_FORM_LABEL' => $this->checkLabel($fieldInfo['EDIT_FORM_LABEL']),
-            'LIST_COLUMN_LABEL' => $this->checkLabel($fieldInfo['LIST_COLUMN_LABEL']),
-            'LIST_FILTER_LABEL' => $this->checkLabel($fieldInfo['LIST_FILTER_LABEL']),
-            'ERROR_MESSAGE' => $this->checkLabel($fieldInfo['ERROR_MESSAGE']),
-            'HELP_MESSAGE' => $this->checkLabel($fieldInfo['HELP_MESSAGE']),
-        ));
+        $fieldId = $userTypeEntity->add(
+            array(
+                'ENTITY_ID' => $fieldInfo['ENTITY_ID'],
+                'FIELD_NAME' => $fieldInfo['FIELD'],
+                'USER_TYPE_ID' => $fieldInfo['USER_TYPE_ID'],
+                'MULTIPLE' => $fieldInfo['MULTIPLE'],
+                'MANDATORY' => $fieldInfo['MANDATORY'],
+                'SHOW_FILTER' => $fieldInfo['SHOW_FILTER'],
+                'SHOW_IN_LIST' => $fieldInfo['SHOW_IN_LIST'],
+                'EDIT_IN_LIST' => $fieldInfo['EDIT_IN_LIST'],
+                'IS_SEARCHABLE' => $fieldInfo['IS_SEARCHABLE'],
+                'SETTINGS' => $fieldInfo['SETTINGS'],
+                'EDIT_FORM_LABEL' => $this->checkLabel($fieldInfo['EDIT_FORM_LABEL']),
+                'LIST_COLUMN_LABEL' => $this->checkLabel($fieldInfo['LIST_COLUMN_LABEL']),
+                'LIST_FILTER_LABEL' => $this->checkLabel($fieldInfo['LIST_FILTER_LABEL']),
+                'ERROR_MESSAGE' => $this->checkLabel($fieldInfo['ERROR_MESSAGE']),
+                'HELP_MESSAGE' => $this->checkLabel($fieldInfo['HELP_MESSAGE']),
+            )
+        );
 
         if (!$fieldId) {
             $this->getErrorFromApplicationException($fieldInfo);
@@ -378,7 +383,7 @@ class Dispatcher
                         'SORT' => $enumItem['SORT'],
                     );
 
-                    if (strlen($enumItem['XML_ID']) > 0) {
+                    if ($enumItem['XML_ID'] <> '') {
                         $itemDescription['XML_ID'] = $enumItem['XML_ID'];
                     }
 
@@ -713,7 +718,10 @@ class Dispatcher
             $this->userFieldList[$entityId][$field]['ENUM'] = array();
 
             $enumValuesManager = new \CUserFieldEnum();
-            $dbRes = $enumValuesManager->GetList(array(), array('USER_FIELD_ID' => $this->userFieldList[$entityId][$field]['ID']));
+            $dbRes = $enumValuesManager->GetList(
+                array(),
+                array('USER_FIELD_ID' => $this->userFieldList[$entityId][$field]['ID'])
+            );
 
             while ($enumValue = $dbRes->fetch()) {
                 $this->userFieldList[$entityId][$field]['ENUM'][] = array(
@@ -749,6 +757,7 @@ class Dispatcher
     protected function getResultFieldInfo(array $userField)
     {
         $fieldInfo = array(
+            'ID' => $userField['ID'],
             'USER_TYPE_ID' => $userField['USER_TYPE_ID'],
             'ENTITY_ID' => $userField['ENTITY_ID'],
             'ENTITY_VALUE_ID' => $userField['ENTITY_VALUE_ID'],

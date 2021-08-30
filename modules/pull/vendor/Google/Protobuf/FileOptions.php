@@ -682,24 +682,27 @@ class FileOptions extends \Protobuf\AbstractMessage
     public static function fromArray(array $values)
     {
         $message = new self();
-        $values = array_merge([
-            'java_package' => null,
-            'java_outer_classname' => null,
-            'java_multiple_files' => false,
-            'java_generate_equals_and_hash' => false,
-            'java_string_check_utf8' => false,
-            'optimize_for' => \google\protobuf\FileOptions\OptimizeMode::SPEED(),
-            'go_package' => null,
-            'cc_generic_services' => false,
-            'java_generic_services' => false,
-            'py_generic_services' => false,
-            'deprecated' => false,
-            'cc_enable_arenas' => false,
-            'objc_class_prefix' => null,
-            'csharp_namespace' => null,
-            'javanano_use_deprecated_package' => null,
-            'uninterpreted_option' => []
-        ], $values);
+        $values = array_merge(
+            [
+                'java_package' => null,
+                'java_outer_classname' => null,
+                'java_multiple_files' => false,
+                'java_generate_equals_and_hash' => false,
+                'java_string_check_utf8' => false,
+                'optimize_for' => \google\protobuf\FileOptions\OptimizeMode::SPEED(),
+                'go_package' => null,
+                'cc_generic_services' => false,
+                'java_generic_services' => false,
+                'py_generic_services' => false,
+                'deprecated' => false,
+                'cc_enable_arenas' => false,
+                'objc_class_prefix' => null,
+                'csharp_namespace' => null,
+                'javanano_use_deprecated_package' => null,
+                'uninterpreted_option' => []
+            ],
+            $values
+        );
 
         $message->setJavaPackage($values['java_package']);
         $message->setJavaOuterClassname($values['java_outer_classname']);
@@ -729,118 +732,152 @@ class FileOptions extends \Protobuf\AbstractMessage
      */
     public static function descriptor()
     {
-        return \google\protobuf\DescriptorProto::fromArray([
-            'name' => 'FileOptions',
-            'field' => [
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 1,
-                    'name' => 'java_package',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_STRING(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 8,
-                    'name' => 'java_outer_classname',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_STRING(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 10,
-                    'name' => 'java_multiple_files',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_BOOL(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
-                    'default_value' => false
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 20,
-                    'name' => 'java_generate_equals_and_hash',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_BOOL(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
-                    'default_value' => false
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 27,
-                    'name' => 'java_string_check_utf8',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_BOOL(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
-                    'default_value' => false
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 9,
-                    'name' => 'optimize_for',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_ENUM(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
-                    'type_name' => '.google.protobuf.FileOptions.OptimizeMode',
-                    'default_value' => \google\protobuf\FileOptions\OptimizeMode::SPEED()
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 11,
-                    'name' => 'go_package',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_STRING(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 16,
-                    'name' => 'cc_generic_services',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_BOOL(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
-                    'default_value' => false
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 17,
-                    'name' => 'java_generic_services',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_BOOL(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
-                    'default_value' => false
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 18,
-                    'name' => 'py_generic_services',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_BOOL(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
-                    'default_value' => false
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 23,
-                    'name' => 'deprecated',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_BOOL(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
-                    'default_value' => false
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 31,
-                    'name' => 'cc_enable_arenas',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_BOOL(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
-                    'default_value' => false
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 36,
-                    'name' => 'objc_class_prefix',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_STRING(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 37,
-                    'name' => 'csharp_namespace',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_STRING(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 38,
-                    'name' => 'javanano_use_deprecated_package',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_BOOL(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
-                ]),
-                \google\protobuf\FieldDescriptorProto::fromArray([
-                    'number' => 999,
-                    'name' => 'uninterpreted_option',
-                    'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_MESSAGE(),
-                    'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_REPEATED(),
-                    'type_name' => '.google.protobuf.UninterpretedOption'
-                ]),
-            ],
-        ]);
+        return \google\protobuf\DescriptorProto::fromArray(
+            [
+                'name' => 'FileOptions',
+                'field' => [
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 1,
+                            'name' => 'java_package',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_STRING(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 8,
+                            'name' => 'java_outer_classname',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_STRING(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 10,
+                            'name' => 'java_multiple_files',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_BOOL(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
+                            'default_value' => false
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 20,
+                            'name' => 'java_generate_equals_and_hash',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_BOOL(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
+                            'default_value' => false
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 27,
+                            'name' => 'java_string_check_utf8',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_BOOL(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
+                            'default_value' => false
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 9,
+                            'name' => 'optimize_for',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_ENUM(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
+                            'type_name' => '.google.protobuf.FileOptions.OptimizeMode',
+                            'default_value' => \google\protobuf\FileOptions\OptimizeMode::SPEED()
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 11,
+                            'name' => 'go_package',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_STRING(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 16,
+                            'name' => 'cc_generic_services',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_BOOL(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
+                            'default_value' => false
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 17,
+                            'name' => 'java_generic_services',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_BOOL(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
+                            'default_value' => false
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 18,
+                            'name' => 'py_generic_services',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_BOOL(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
+                            'default_value' => false
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 23,
+                            'name' => 'deprecated',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_BOOL(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
+                            'default_value' => false
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 31,
+                            'name' => 'cc_enable_arenas',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_BOOL(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL(),
+                            'default_value' => false
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 36,
+                            'name' => 'objc_class_prefix',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_STRING(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 37,
+                            'name' => 'csharp_namespace',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_STRING(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 38,
+                            'name' => 'javanano_use_deprecated_package',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_BOOL(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_OPTIONAL()
+                        ]
+                    ),
+                    \google\protobuf\FieldDescriptorProto::fromArray(
+                        [
+                            'number' => 999,
+                            'name' => 'uninterpreted_option',
+                            'type' => \google\protobuf\FieldDescriptorProto\Type::TYPE_MESSAGE(),
+                            'label' => \google\protobuf\FieldDescriptorProto\Label::LABEL_REPEATED(),
+                            'type_name' => '.google.protobuf.UninterpretedOption'
+                        ]
+                    ),
+                ],
+            ]
+        );
     }
 
     /**
@@ -971,7 +1008,6 @@ class FileOptions extends \Protobuf\AbstractMessage
             : null;
 
         while ($limit === null || $stream->tell() < $limit) {
-
             if ($stream->eof()) {
                 break;
             }
@@ -1140,7 +1176,6 @@ class FileOptions extends \Protobuf\AbstractMessage
             $unknown = new \Protobuf\Unknown($tag, $wire, $data);
 
             $this->unknownFieldSet->add($unknown);
-
         }
     }
 
@@ -1273,7 +1308,9 @@ class FileOptions extends \Protobuf\AbstractMessage
     public function merge(\Protobuf\Message $message)
     {
         if (!$message instanceof \google\protobuf\FileOptions) {
-            throw new \InvalidArgumentException(sprintf('Argument 1 passed to %s must be a %s, %s given', __METHOD__, __CLASS__, get_class($message)));
+            throw new \InvalidArgumentException(
+                sprintf('Argument 1 passed to %s must be a %s, %s given', __METHOD__, __CLASS__, get_class($message))
+            );
         }
 
         $this->java_package = ($message->java_package !== null) ? $message->java_package : $this->java_package;

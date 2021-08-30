@@ -121,12 +121,15 @@ class EventMessageTable extends Entity\DataManager
     {
         preg_match_all("/#([0-9a-zA-Z_.]+?)#/", $str, $matchesFindPlaceHolders);
         $matchesFindPlaceHoldersCount = count($matchesFindPlaceHolders[1]);
-        for ($i = 0; $i < $matchesFindPlaceHoldersCount; $i++)
-            if (strlen($matchesFindPlaceHolders[1][$i]) > 200)
+        for ($i = 0; $i < $matchesFindPlaceHoldersCount; $i++) {
+            if (mb_strlen($matchesFindPlaceHolders[1][$i]) > 200) {
                 unset($matchesFindPlaceHolders[1][$i]);
+            }
+        }
 
-        if (empty($matchesFindPlaceHolders[1]))
+        if (empty($matchesFindPlaceHolders[1])) {
             return $str;
+        }
         $ar = $matchesFindPlaceHolders[1];
 
         $strResult = $str;
@@ -146,7 +149,9 @@ class EventMessageTable extends Entity\DataManager
             }
         } else {
             $replaceTemplateString = '';
-            foreach ($ar as $k) $replaceTemplateString .= '|#' . $k . '#';
+            foreach ($ar as $k) {
+                $replaceTemplateString .= '|#' . $k . '#';
+            }
 
             $arReplaceTags = array();
             $bOpenPhpTag = false;
@@ -154,24 +159,27 @@ class EventMessageTable extends Entity\DataManager
             foreach ($matchesTag[0] as $tag) {
                 $placeHolder = $tag[0];
                 $placeHolderPosition = $tag[1];
-                $ch1 = substr($placeHolder, 0, 1);
-                $ch2 = substr($placeHolder, 0, 2);
+                $ch1 = mb_substr($placeHolder, 0, 1);
+                $ch2 = mb_substr($placeHolder, 0, 2);
 
-                if ($ch2 == "<?")
+                if ($ch2 == "<?") {
                     $bOpenPhpTag = true;
-                elseif ($ch2 == "?>")
+                } elseif ($ch2 == "?>") {
                     $bOpenPhpTag = false;
-                elseif ($ch1 == "#") {
-                    $placeHolderClear = substr($placeHolder, 1, strlen($placeHolder) - 2);
+                } elseif ($ch1 == "#") {
+                    $placeHolderClear = mb_substr($placeHolder, 1, mb_strlen($placeHolder) - 2);
 
-                    $bOpenQuote = (substr($str, $placeHolderPosition - 2, 2) == '"{');
-                    $bCloseQuote = (substr($str, $placeHolderPosition + strlen($placeHolder), 2) == '}"');
-                    if ($bOpenPhpTag && $bOpenQuote && $bCloseQuote)
+                    $bOpenQuote = (mb_substr($str, $placeHolderPosition - 2, 2) == '"{');
+                    $bCloseQuote = (mb_substr($str, $placeHolderPosition + mb_strlen($placeHolder), 2) == '}"');
+                    if ($bOpenPhpTag && $bOpenQuote && $bCloseQuote) {
                         $replaceTo = '$arParams[\'' . $placeHolderClear . '\']';
-                    else
+                    } else {
                         $replaceTo = '$arParams["' . $placeHolderClear . '"]';
+                    }
 
-                    if (!$bOpenPhpTag) $replaceTo = '<?=' . $replaceTo . ';?>';
+                    if (!$bOpenPhpTag) {
+                        $replaceTo = '<?=' . $replaceTo . ';?>';
+                    }
                     $arReplaceTags[$tag[0]][] = $replaceTo;
                 }
             }
@@ -180,8 +188,9 @@ class EventMessageTable extends Entity\DataManager
                 if (count($v) > 1) {
                     foreach ($v as $replaceTo) {
                         $resultReplace = preg_replace('/' . $k . '/', $replaceTo, $strResult, 1);
-                        if ($resultReplace !== null)
+                        if ($resultReplace !== null) {
                             $strResult = $resultReplace;
+                        }
                     }
                 } else {
                     $arReplaceTagsOne[$k] = $v[0];
@@ -189,8 +198,9 @@ class EventMessageTable extends Entity\DataManager
             }
         }
 
-        if (count($arReplaceTagsOne) > 0)
+        if (count($arReplaceTagsOne) > 0) {
             $strResult = str_replace(array_keys($arReplaceTagsOne), array_values($arReplaceTagsOne), $strResult);
+        }
 
         // php parser delete newline folowing the closing tag in string passed to eval
         $strResult = str_replace(array("?>\n", "?>\r\n"), array("?>\n\n", "?>\r\n\r\n"), $strResult);

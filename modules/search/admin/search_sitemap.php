@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/search/prolog.php");
 IncludeModuleLangFile(__FILE__);
@@ -8,8 +9,9 @@ global $APPLICATION;
 $searchDB = CDatabase::GetModuleConnection('search');
 
 $POST_RIGHT = $APPLICATION->GetGroupRight("search");
-if ($POST_RIGHT == "D")
+if ($POST_RIGHT == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $arSiteMap = false;
 if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Generate"] == "Y") {
@@ -22,17 +24,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Generate"] == "Y") {
             $NS = array();
 
             $sm_max_execution_time = intval($_REQUEST["sm_max_execution_time"]);
-            if ($sm_max_execution_time < 1)
+            if ($sm_max_execution_time < 1) {
                 $sm_max_execution_time = 30;
+            }
             COption::SetOptionString("search", "sm_max_execution_time", $sm_max_execution_time);
 
             $sm_record_limit = intval($_REQUEST["sm_record_limit"]);
-            if ($sm_record_limit < 1)
+            if ($sm_record_limit < 1) {
                 $sm_record_limit = 5000;
+            }
             COption::SetOptionString("search", "sm_record_limit", $sm_record_limit);
 
-            COption::SetOptionString("search", "sm_forum_topics_only", ($_REQUEST["sm_forum_topics_only"] == "Y" ? "Y" : "N"));
-            COption::SetOptionString("search", "sm_blog_no_comments", ($_REQUEST["sm_blog_no_comments"] == "Y" ? "Y" : "N"));
+            COption::SetOptionString(
+                "search",
+                "sm_forum_topics_only",
+                ($_REQUEST["sm_forum_topics_only"] == "Y" ? "Y" : "N")
+            );
+            COption::SetOptionString(
+                "search",
+                "sm_blog_no_comments",
+                ($_REQUEST["sm_blog_no_comments"] == "Y" ? "Y" : "N")
+            );
             COption::SetOptionString("search", "sm_use_https", ($_REQUEST["sm_use_https"] == "Y" ? "Y" : "N"));
         }
 
@@ -49,12 +61,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Generate"] == "Y") {
 
         $arSiteMap = $cSiteMap->Create($SM_SITE_ID, array($sm_max_execution_time, $sm_record_limit), $NS, $arOptions);
         if (is_array($arSiteMap)):
-            CAdminMessage::ShowMessage(array(
-                "TYPE" => "PROGRESS",
-                "HTML" => true,
-                "DETAILS" => GetMessage("SEARCH_SITEMAP_DOC_COUNT") . ": <b>" . intval($arSiteMap["CNT"]) . "</b>.<br>"
-                    . GetMessage("SEARCH_SITEMAP_ERR_COUNT") . ": <b>" . intval($arSiteMap["ERROR_CNT"]) . "</b>.<br>",
-            ));
+            CAdminMessage::ShowMessage(
+                array(
+                    "TYPE" => "PROGRESS",
+                    "HTML" => true,
+                    "DETAILS" => GetMessage("SEARCH_SITEMAP_DOC_COUNT") . ": <b>" . intval(
+                            $arSiteMap["CNT"]
+                        ) . "</b>.<br>"
+                        . GetMessage("SEARCH_SITEMAP_ERR_COUNT") . ": <b>" . intval(
+                            $arSiteMap["ERROR_CNT"]
+                        ) . "</b>.<br>",
+                )
+            );
             ?>
             <script>
                 CloseWaitWindow();
@@ -70,11 +88,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Generate"] == "Y") {
                     <? echo GetMessage("SEARCH_SITEMAP_INSTR2") ?> <a
                             href="https://www.google.com/webmasters/tools/home">Google Sitemaps</a>
                     <? echo GetMessage("SEARCH_SITEMAP_INSTR3") ?> <a
-                            href="https://www.google.com/accounts/ManageAccount"><? echo GetMessage("SEARCH_SITEMAP_INSTR7") ?></a>
+                            href="https://www.google.com/accounts/ManageAccount"><? echo GetMessage(
+                            "SEARCH_SITEMAP_INSTR7"
+                        ) ?></a>
                 </li>
                 <li>
-                    <? echo GetMessage("SEARCH_SITEMAP_INSTR4") ?>
-                    <strong>"<? echo GetMessage("SEARCH_SITEMAP_INSTR8") ?>"</strong>.
+                    <? echo GetMessage("SEARCH_SITEMAP_INSTR4") ?> <strong>"<? echo GetMessage(
+                            "SEARCH_SITEMAP_INSTR8"
+                        ) ?>"</strong>.
                 </li>
                 <li>
                     <? echo GetMessage("SEARCH_SITEMAP_INSTR5") ?>.
@@ -83,8 +104,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Generate"] == "Y") {
             <p><? echo GetMessage("SEARCH_SITEMAP_INSTR6") ?></p>
             <? if ($cSiteMap->m_errors_count > 0):?>
                 <p>
-                    <? echo GetMessage("SEARCH_SITEMAP_WARN") ?> <a
-                            href="<?= htmlspecialcharsbx($cSiteMap->m_errors_href) ?>"><?= $cSiteMap->m_errors_href ?></a>.
+                    <? echo GetMessage("SEARCH_SITEMAP_WARN") ?> <a href="<?= htmlspecialcharsbx(
+                        $cSiteMap->m_errors_href
+                    ) ?>"><?= $cSiteMap->m_errors_href ?></a>.
                     <br><? echo GetMessage("SEARCH_SITEMAP_WARN1") ?>.
                 </p>
             <?endif; ?>
@@ -94,12 +116,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Generate"] == "Y") {
                 EndReindex();
             </script>
         <? elseif ($arSiteMap === false):?>
-            <? CAdminMessage::ShowMessage(array(
-                "MESSAGE" => GetMessage("SEARCH_SITEMAP_ERR"),
-                "DETAILS" => $cSiteMap->m_error,
-                "TYPE" => "ERROR",
-                "HTML" => "Y",
-            )); ?>
+            <? CAdminMessage::ShowMessage(
+                array(
+                    "MESSAGE" => GetMessage("SEARCH_SITEMAP_ERR"),
+                    "DETAILS" => $cSiteMap->m_error,
+                    "TYPE" => "ERROR",
+                    "HTML" => "Y",
+                )
+            ); ?>
             <script>
                 CloseWaitWindow();
                 EndReindex();
@@ -119,14 +143,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Generate"] == "Y") {
     $APPLICATION->SetTitle(GetMessage("SEARCH_SITEMAP_TITLE"));
 
     $aTabs = array(
-        array("DIV" => "edit1", "TAB" => "Google Sitemap", "ICON" => "main_user_edit", "TITLE" => GetMessage("SEARCH_SITEMAP_TAB_TITLE")),
+        array(
+            "DIV" => "edit1",
+            "TAB" => "Google Sitemap",
+            "ICON" => "main_user_edit",
+            "TITLE" => GetMessage("SEARCH_SITEMAP_TAB_TITLE")
+        ),
     );
     $tabControl = new CAdminTabControl("tabControl", $aTabs, true, true);
 
     require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
-    if (is_object($message))
+    if (is_object($message)) {
         echo $message->Show();
+    }
     ?>
     <script language="JavaScript">
         var savedNS;
@@ -212,12 +242,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["Generate"] == "Y") {
         <?
 
         $sm_max_execution_time = intval(COption::GetOptionInt("search", "sm_max_execution_time"));
-        if ($sm_max_execution_time < 1)
+        if ($sm_max_execution_time < 1) {
             $sm_max_execution_time = 30;
+        }
 
         $sm_record_limit = intval(COption::GetOptionInt("search", "sm_record_limit"));
-        if ($sm_record_limit < 1)
+        if ($sm_record_limit < 1) {
             $sm_record_limit = 5000;
+        }
 
         $tabControl->Begin();
         $tabControl->BeginNextTab();

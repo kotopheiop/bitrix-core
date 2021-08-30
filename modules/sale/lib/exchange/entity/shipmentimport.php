@@ -43,8 +43,9 @@ class ShipmentImport extends EntityImport
      */
     public function setEntity(Internals\Entity $entity)
     {
-        if (!($entity instanceof Shipment))
+        if (!($entity instanceof Shipment)) {
             throw new Main\ArgumentException("Entity must be instanceof Shipment");
+        }
 
         $this->entity = $entity;
     }
@@ -85,7 +86,12 @@ class ShipmentImport extends EntityImport
         $result = new Sale\Result();
 
         if (!$this->isLoadedParentEntity()) {
-            $result->addError(new Error(GetMessage('SALE_EXCHANGE_ENTITY_SHIPMENT_ORDER_IS_NOT_LOADED_ERROR'), 'ENTITY_SHIPMENT_ORDER_IS_NOT_LOADED_ERROR'));
+            $result->addError(
+                new Error(
+                    GetMessage('SALE_EXCHANGE_ENTITY_SHIPMENT_ORDER_IS_NOT_LOADED_ERROR'),
+                    'ENTITY_SHIPMENT_ORDER_IS_NOT_LOADED_ERROR'
+                )
+            );
             return $result;
         }
 
@@ -93,7 +99,12 @@ class ShipmentImport extends EntityImport
         $parentEntity = $this->getParentEntity();
 
         if (($shipmentService = Manager::getObjectById($fields['DELIVERY_ID'])) == null) {
-            $result->addError(new Error(GetMessage('SALE_EXCHANGE_ENTITY_SHIPMENT_DELIVERY_SERVICE_IS_NOT_AVAILABLE_ERROR'), 'DELIVERY_SERVICE_IS_NOT_AVAILABLE_ERROR'));
+            $result->addError(
+                new Error(
+                    GetMessage('SALE_EXCHANGE_ENTITY_SHIPMENT_DELIVERY_SERVICE_IS_NOT_AVAILABLE_ERROR'),
+                    'DELIVERY_SERVICE_IS_NOT_AVAILABLE_ERROR'
+                )
+            );
         } else {
             $shipmentCollection = $parentEntity->getShipmentCollection();
             $shipment = $shipmentCollection->createItem($shipmentService);
@@ -125,7 +136,12 @@ class ShipmentImport extends EntityImport
         $result = new Sale\Result();
 
         if (!$this->isLoadedParentEntity()) {
-            $result->addError(new Error(GetMessage('SALE_EXCHANGE_ENTITY_SHIPMENT_ORDER_IS_NOT_LOADED_ERROR'), 'ORDER_IS_NOT_LOADED_ERROR'));
+            $result->addError(
+                new Error(
+                    GetMessage('SALE_EXCHANGE_ENTITY_SHIPMENT_ORDER_IS_NOT_LOADED_ERROR'),
+                    'ORDER_IS_NOT_LOADED_ERROR'
+                )
+            );
             return $result;
         }
 
@@ -163,7 +179,11 @@ class ShipmentImport extends EntityImport
         if ($result->isSuccess()) {
             //$this->setCollisions(EntityCollisionType::OrderShipmentDeleted, $this->getParentEntity());
         } else {
-            $this->setCollisions(EntityCollisionType::OrderShipmentDeletedError, $this->getParentEntity(), implode(',', $result->getErrorMessages()));
+            $this->setCollisions(
+                EntityCollisionType::OrderShipmentDeletedError,
+                $this->getParentEntity(),
+                implode(',', $result->getErrorMessages())
+            );
         }
 
         return $result;
@@ -224,8 +244,9 @@ class ShipmentImport extends EntityImport
         $allQuantity = 0;
         /** @var Shipment $shipment */
         foreach ($order->getShipmentCollection() as $shipment) {
-            if ($shipment->isShipped())
+            if ($shipment->isShipped()) {
                 continue;
+            }
 
             $allQuantity += $shipment->getBasketItemQuantity($basketItem);
         }
@@ -262,8 +283,9 @@ class ShipmentImport extends EntityImport
         if (is_array($fieldsBasketItems)) {
             foreach ($fieldsBasketItems as $items) {
                 foreach ($items as $productXML_ID => $item) {
-                    if ($productXML_ID == Exchange\ImportOneCBase::DELIVERY_SERVICE_XMLID)
+                    if ($productXML_ID == Exchange\ImportOneCBase::DELIVERY_SERVICE_XMLID) {
                         continue;
+                    }
 
                     if ($item['TYPE'] == Exchange\ImportBase::ITEM_ITEM) {
                         if ($basketItem = $this->getBasketItemByItem($basket, $item)) {
@@ -274,27 +296,46 @@ class ShipmentImport extends EntityImport
                             $deltaQuantity = $item['QUANTITY'] - $shipmentItem->getQuantity();
 
                             if ($deltaQuantity < 0) {
-                                $this->fillShipmentItem($shipmentItem, 0, abs($deltaQuantity));
+                                $result = $this->fillShipmentItem($shipmentItem, 0, abs($deltaQuantity));
                             } elseif ($deltaQuantity > 0) {
                                 if ($basketItemQuantity >= $item['QUANTITY']) {
                                     $systemShipment = $order->getShipmentCollection()->getSystemShipment();
                                     $systemBasketQuantity = $systemShipment->getBasketItemQuantity($basketItem);
 
                                     if ($systemBasketQuantity >= $deltaQuantity) {
-                                        $this->fillShipmentItem($shipmentItem, $item['QUANTITY'], $shipmentItem->getQuantity());
+                                        $this->fillShipmentItem(
+                                            $shipmentItem,
+                                            $item['QUANTITY'],
+                                            $shipmentItem->getQuantity()
+                                        );
                                     } else {
                                         $needQuantity = $deltaQuantity - $systemBasketQuantity;
 
                                         $r = $this->synchronizeQuantityShipmentItems($basketItem, $needQuantity);
                                         if ($r->isSuccess()) {
-                                            $this->fillShipmentItem($shipmentItem, $item['QUANTITY'], $shipmentItem->getQuantity());
+                                            $this->fillShipmentItem(
+                                                $shipmentItem,
+                                                $item['QUANTITY'],
+                                                $shipmentItem->getQuantity()
+                                            );
                                         } else {
-                                            $this->setCollisions(EntityCollisionType::ShipmentBasketItemsModifyError, $shipment);
+                                            $this->setCollisions(
+                                                EntityCollisionType::ShipmentBasketItemsModifyError,
+                                                $shipment
+                                            );
                                         }
                                     }
                                 } else {
-                                    $this->setCollisions(EntityCollisionType::ShipmentBasketItemQuantityError, $shipment, $item['NAME']);
+                                    $this->setCollisions(
+                                        EntityCollisionType::ShipmentBasketItemQuantityError,
+                                        $shipment,
+                                        $item['NAME']
+                                    );
                                 }
+                            }
+
+                            if (count($item['MARKINGS']) > 0) {
+                                $result = $this->fillMarkingsShipmentItem($shipmentItem, $item['MARKINGS']);
                             }
                         } else {
                             $this->setCollisions(EntityCollisionType::ShipmentBasketItemNotFound, $shipment);
@@ -328,6 +369,75 @@ class ShipmentImport extends EntityImport
         return $shipmentItem;
     }
 
+    protected function fillMarkingsShipmentItem(Sale\ShipmentItem $item, $markings)
+    {
+        $result = new Sale\Result();
+
+        $this->resetMarkingsShipmentItem($item);
+        $itemStoreCollection = $item->getShipmentItemStoreCollection();
+
+        $delta = min(count($markings), $item->getQuantity());
+
+        if ($itemStoreCollection->count() < $delta) {
+            for ($i = (count($markings) - $itemStoreCollection->count()); $i > 0; $i--) {
+                $itemStore = $itemStoreCollection->createItem($itemStoreCollection->getShipmentItem()->getBasketItem());
+                $r = $itemStore->setFields(
+                    [
+                        'QUANTITY' => 1
+                    ]
+                );
+
+                if ($r->isSuccess() === false) {
+                    $result->addErrors($r->getErrors());
+                    break 1;
+                }
+            }
+        }
+
+        if ($result->isSuccess()) {
+            $k = 0;
+            /** @var  Sale\ShipmentItemStore $storeItem */
+            foreach ($itemStoreCollection as $storeItem) {
+                $r = $storeItem->setField('MARKING_CODE', $markings[$k++]);
+                if ($r->isSuccess() === false) {
+                    $result->addErrors($r->getErrors());
+                    break 1;
+                }
+            }
+        }
+        return $result;
+    }
+
+    protected function resetMarkingsShipmentItem(Sale\ShipmentItem $item)
+    {
+        $itemStoreCollection = $item->getShipmentItemStoreCollection();
+
+        /** @var \Bitrix\Sale\ShipmentItemStore $barcode */
+        foreach ($itemStoreCollection as $barcode) {
+            $barcode->setField('MARKING_CODE', null);
+        }
+    }
+
+    private function syncRelationBarcodeMarkingsCode(Sale\ShipmentItem $shipmentItem, $value)
+    {
+        if ($shipmentItem->getBasketItem()->isSupportedMarkingCode()) {
+            $after = $shipmentItem->getQuantity() + $value;
+            if ($after < $shipmentItem->getQuantity()) // minus
+            {
+                $deltaQuantity = $shipmentItem->getQuantity() - $after;
+
+                $storeCollection = $shipmentItem->getShipmentItemStoreCollection();
+                /** @var Sale\ShipmentItemStore $store */
+                foreach ($storeCollection as $store) {
+                    if ($deltaQuantity > 0) {
+                        $store->delete();
+                        $deltaQuantity--;
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * @param Sale\ShipmentItem $shipmentItem
      * @param $value
@@ -343,6 +453,8 @@ class ShipmentImport extends EntityImport
         if ($shipmentItem->getQuantity() + $deltaQuantity == 0) {
             $r = $shipmentItem->delete();
         } else {
+            $this->syncRelationBarcodeMarkingsCode($shipmentItem, $deltaQuantity);
+
             $r = $shipmentItem->setField(
                 "QUANTITY",
                 $shipmentItem->getQuantity() + $deltaQuantity
@@ -353,12 +465,16 @@ class ShipmentImport extends EntityImport
         $shipmentItemCollection = $shipmentItem->getCollection();
 
         /** @var Shipment $shipment */
-        if (!$shipment = $shipmentItemCollection->getShipment()) {
+        if ($shipment = $shipmentItemCollection->getShipment()) {
             if (!$r->isSuccess()) {
                 $result->addErrors($r->getErrors());
-                $this->setCollisions(EntityCollisionType::OrderShipmentItemsModifyError, $shipment, implode(',', $r->getErrorMessages()));
+                $this->setCollisions(
+                    EntityCollisionType::OrderShipmentItemsModifyError,
+                    $shipment,
+                    implode(',', $r->getErrorMessages())
+                );
             } else {
-                $this->setCollisions(EntityCollisionType::OrderShipmentItemsModify, $shipment);
+                //$this->setCollisions(EntityCollisionType::OrderShipmentItemsModify, $shipment);
             }
         }
 
@@ -396,15 +512,18 @@ class ShipmentImport extends EntityImport
         /** @var Sale\Shipment $entity */
         foreach ($shipmentCollection as $shipment) {
             /** @var Sale\Shipment $shipment */
-            if (!empty($entity) && $entity->getId() == $shipment->getId())
+            if (!empty($entity) && $entity->getId() == $shipment->getId()) {
                 continue;
+            }
 
-            if ($shipment->isShipped() || $shipment->isSystem())
+            if ($shipment->isShipped() || $shipment->isSystem()) {
                 continue;
+            }
 
             $basketQuantity = $shipment->getBasketItemQuantity($basketItem);
-            if (empty($basketQuantity))
+            if (empty($basketQuantity)) {
                 continue;
+            }
 
             $shipmentItem = static::getShipmentItem($shipment, $basketItem);
 
@@ -418,12 +537,19 @@ class ShipmentImport extends EntityImport
 
             $this->setCollisions(EntityCollisionType::ShipmentBasketItemsModify, $shipment);
 
-            if ($needQuantity == 0)
+            if ($needQuantity == 0) {
                 break;
+            }
         }
 
-        if ($needQuantity != 0)
-            $result->addError(new Error(GetMessage('SALE_EXCHANGE_ENTITY_SHIPMENT_SYNCHRONIZE_QUANTITY_ERROR'), 'SYNCHRONIZE_QUANTITY_ERROR'));
+        if ($needQuantity != 0) {
+            $result->addError(
+                new Error(
+                    GetMessage('SALE_EXCHANGE_ENTITY_SHIPMENT_SYNCHRONIZE_QUANTITY_ERROR'),
+                    'SYNCHRONIZE_QUANTITY_ERROR'
+                )
+            );
+        }
 
         return $result;
     }
@@ -474,8 +600,9 @@ class ShipmentImport extends EntityImport
         /** @var Sale\Shipment $entity */
         $entity = $this->getEntity();
         if (!empty($entity) && $entity->isShipped()) {
-            if ($fields['DEDUCTED'] == 'N')
+            if ($fields['DEDUCTED'] == 'N') {
                 $entity->setField('DEDUCTED', 'N');
+            }
         }
     }
 
@@ -486,8 +613,9 @@ class ShipmentImport extends EntityImport
      */
     public static function resolveEntityTypeId(Internals\Entity $shipment)
     {
-        if (!($shipment instanceof Shipment))
+        if (!($shipment instanceof Shipment)) {
             throw new Main\ArgumentException("Entity must be instanceof Shipment");
+        }
 
         return Exchange\EntityType::SHIPMENT;
     }
@@ -533,8 +661,9 @@ class ShipmentImport extends EntityImport
 
                     $attributes = array();
                     $attributeFields = $this->getAttributesItem($basket);
-                    if (count($attributeFields) > 0)
+                    if (count($attributeFields) > 0) {
                         $attributes['ATTRIBUTES'] = $attributeFields;
+                    }
 
                     $result[] = array_merge($itemFields, $attributes);
                 }
@@ -575,8 +704,9 @@ class ShipmentImport extends EntityImport
      */
     static protected function getBusinessValueOrderProvider(\Bitrix\Sale\IBusinessValueProvider $entity)
     {
-        if (!($entity instanceof Shipment))
+        if (!($entity instanceof Shipment)) {
             throw new Main\ArgumentException("entity must be instanceof Shipment");
+        }
 
         /** @var Sale\ShipmentCollection $collection */
         $collection = $entity->getCollection();

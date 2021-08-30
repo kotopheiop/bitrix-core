@@ -1,4 +1,5 @@
 <?
+
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 IncludeModuleLangFile(__FILE__);
 
@@ -13,27 +14,39 @@ if (check_bitrix_sessid()) {
 
         if (intval($arGroup["OWNER_ID"]) != $USER_ID) {
             if ($arGroup) {
-                $CurrentUserPerms = CSocNetUserToGroup::InitUserPerms($GLOBALS["USER"]->GetID(), $arGroup, CSocNetUser::IsCurrentUserModuleAdmin($arGroup["SITE_ID"]));
+                $CurrentUserPerms = CSocNetUserToGroup::InitUserPerms(
+                    $GLOBALS["USER"]->GetID(),
+                    $arGroup,
+                    CSocNetUser::IsCurrentUserModuleAdmin(
+                        $arGroup["SITE_ID"]
+                    )
+                );
 
                 if ($CurrentUserPerms["UserCanModifyGroup"]) {
                     $res = CSocNetUserToGroup::SetOwner($USER_ID, $GROUP_ID, $arGroup);
-                    if (!$res && $e = $GLOBALS["APPLICATION"]->GetException())
+                    if (!$res && $e = $GLOBALS["APPLICATION"]->GetException()) {
                         $errorMessage = $e->GetString();
+                    }
 
-                    if (strlen($errorMessage) <= 0)
+                    if ($errorMessage == '') {
                         echo '<script>window.location.reload();</script>';
-                    else
+                    } else {
                         echo '<script>alert(\'' . CUtil::JSEscape($errorMessage) . '\');</script>';
-                } else
+                    }
+                } else {
                     echo '<script>alert(\'Access denied!\');</script>';
-            } else
+                }
+            } else {
                 echo '<script>alert(\'Group error!\');</script>';
+            }
         } else {
             // new owner is equal to old one
             echo '<script>window.location.reload();</script>';
         }
-    } else
+    } else {
         echo '<script>alert(\'Params error!\');</script>';
-} else
+    }
+} else {
     echo '<script>alert(\'Session expired!\');</script>';
+}
 ?>

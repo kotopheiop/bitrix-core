@@ -1,6 +1,8 @@
 <?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
     die();
+}
 
 ?>
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
@@ -31,8 +33,9 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 <?
 
-if ($_REQUEST['BLANK'] == 'Y')
+if ($_REQUEST['BLANK'] == 'Y') {
     $blank = true;
+}
 
 $pageWidth = 595.28;
 $pageHeight = 841.89;
@@ -41,13 +44,15 @@ $background = '#ffffff';
 if ($params['BILLDE_BACKGROUND']) {
     $path = $params['BILLDE_BACKGROUND'];
     if (intval($path) > 0) {
-        if ($arFile = CFile::GetFileArray($path))
+        if ($arFile = CFile::GetFileArray($path)) {
             $path = $arFile['SRC'];
+        }
     }
 
     $backgroundStyle = $params['BILLDE_BACKGROUND_STYLE'];
-    if (!in_array($backgroundStyle, array('none', 'tile', 'stretch')))
+    if (!in_array($backgroundStyle, array('none', 'tile', 'stretch'))) {
         $backgroundStyle = 'none';
+    }
 
     if ($path) {
         switch ($backgroundStyle) {
@@ -60,7 +65,9 @@ if ($params['BILLDE_BACKGROUND']) {
             case 'stretch':
                 $background = sprintf(
                     "url('%s') 0 0 repeat-y; background-size: %.02fpt %.02fpt",
-                    $path, $pageWidth, $pageHeight
+                    $path,
+                    $pageWidth,
+                    $pageHeight
                 );
                 break;
         }
@@ -80,7 +87,10 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
 
 <body style="margin: 0pt; padding: 0pt;"<? if ($_REQUEST['PRINT'] == 'Y') { ?> onload="setTimeout(window.print, 0);"<? } ?>>
 
-<div style="margin: 0pt; padding: <?= join('pt ', $margin); ?>pt; width: <?= $width; ?>pt; background: <?= $background; ?>">
+<div style="margin: 0pt; padding: <?= join(
+    'pt ',
+    $margin
+); ?>pt; width: <?= $width; ?>pt; background: <?= $background; ?>">
 
     <table class="header">
         <tr>
@@ -89,8 +99,9 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
                     <? $imgParams = CFile::_GetImgParams($params['BILLDE_PATH_TO_LOGO']);
                     $dpi = intval($params['BILLDE_LOGO_DPI']) ?: 96;
                     $imgWidth = $imgParams['WIDTH'] * 96 / $dpi;
-                    if ($imgWidth > $pageWidth)
+                    if ($imgWidth > $pageWidth) {
                         $imgWidth = $pageWidth * 0.6;
+                    }
                     ?>
                     <img src="<?= $imgParams['SRC']; ?>" width="<?= $imgWidth; ?>"/>
                 </td>
@@ -107,10 +118,11 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
 		<b><?= htmlspecialcharsbx($params["SELLER_COMPANY_NAME"]); ?><?
             if ($params["SELLER_COMPANY_ADDRESS"]) {
                 $sellerAddr = $params["SELLER_COMPANY_ADDRESS"];
-                if (is_array($sellerAddr))
+                if (is_array($sellerAddr)) {
                     $sellerAddr = implode(', ', $sellerAddr);
-                else
+                } else {
                     $sellerAddr = str_replace(array("\r\n", "\n", "\r"), ', ', strval($sellerAddr));
+                }
                 ?> - <?= htmlspecialcharsbx($sellerAddr); ?><?
             }
             ?></b></small></span>
@@ -199,7 +211,7 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
     foreach ($columnList as $column) {
         if ($params['BILLDE_COLUMN_' . $column . '_SHOW'] == 'Y') {
             $arCols[$column] = array(
-                'NAME' => $params['BILLDE_COLUMN_' . $column . '_TITLE'],
+                'NAME' => htmlspecialcharsbx($params['BILLDE_COLUMN_' . $column . '_TITLE']),
                 'SORT' => $params['BILLDE_COLUMN_' . $column . '_SORT']
             );
         }
@@ -208,15 +220,18 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
         $columnList = array_merge($columnList, array_keys($params['USER_COLUMNS']));
         foreach ($params['USER_COLUMNS'] as $id => $val) {
             $arCols[$id] = array(
-                'NAME' => $val['NAME'],
+                'NAME' => htmlspecialcharsbx($val['NAME']),
                 'SORT' => $val['SORT']
             );
         }
     }
 
-    uasort($arCols, function ($a, $b) {
-        return ($a['SORT'] < $b['SORT']) ? -1 : 1;
-    });
+    uasort(
+        $arCols,
+        function ($a, $b) {
+            return ($a['SORT'] < $b['SORT']) ? -1 : 1;
+        }
+    );
 
     $arColumnKeys = array_keys($arCols);
     $columnCount = count($arColumnKeys);
@@ -234,16 +249,20 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
 
         foreach ($params['BASKET_ITEMS'] as $basketItem) {
             // @TODO: replace with real vatless price
-            if ($basketItem['IS_VAT_IN_PRICE'])
+            if ($basketItem['IS_VAT_IN_PRICE']) {
                 $vatLessPrice = roundEx($basketItem['PRICE'] / (1 + $basketItem['VAT_RATE']), SALE_VALUE_PRECISION);
-            else
+            } else {
                 $vatLessPrice = $basketItem['PRICE'];
+            }
 
             $productName = $basketItem['NAME'];
-            if ($productName == "OrderDelivery")
+            if ($productName == "OrderDelivery") {
                 $productName = "Schifffahrt";
-            else if ($productName == "OrderDiscount")
-                $productName = "Rabatt";
+            } else {
+                if ($productName == "OrderDiscount") {
+                    $productName = "Rabatt";
+                }
+            }
 
             $arCells[++$n] = array();
             foreach ($arCols as $columnId => $col) {
@@ -269,22 +288,30 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
                         $data = roundEx($basketItem['VAT_RATE'] * 100, SALE_VALUE_PRECISION) . "%";
                         break;
                     case 'SUM':
-                        $data = SaleFormatCurrency($vatLessPrice * $basketItem['QUANTITY'], $basketItem['CURRENCY'], false);
+                        $data = SaleFormatCurrency(
+                            $vatLessPrice * $basketItem['QUANTITY'],
+                            $basketItem['CURRENCY'],
+                            false
+                        );
                         break;
                     default :
                         $data = ($basketItem[$columnId]) ?: '';
                 }
-                if ($data !== null)
+                if ($data !== null) {
                     $arCells[$n][$columnId] = $data;
+                }
             }
 
             if ($basketItem['PROPS']) {
                 $arProps[$n] = array();
 
                 foreach ($basketItem['PROPS'] as $basketPropertyItem) {
-                    if ($basketPropertyItem['CODE'] == 'CATALOG.XML_ID' || $basketPropertyItem['CODE'] == 'PRODUCT.XML_ID')
+                    if ($basketPropertyItem['CODE'] == 'CATALOG.XML_ID' || $basketPropertyItem['CODE'] == 'PRODUCT.XML_ID') {
                         continue;
-                    $arProps[$n][] = htmlspecialcharsbx(sprintf("%s: %s", $basketPropertyItem["NAME"], $basketPropertyItem["VALUE"]));
+                    }
+                    $arProps[$n][] = htmlspecialcharsbx(
+                        sprintf("%s: %s", $basketPropertyItem["NAME"], $basketPropertyItem["VALUE"])
+                    );
                 }
             }
 
@@ -292,20 +319,23 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
             $vat = max($vat, $basketItem['VAT_RATE']);
             if ($basketItem['VAT_RATE'] > 0) {
                 $vatRate = (string)$basketItem['VAT_RATE'];
-                if (!isset($vats[$vatRate]))
+                if (!isset($vats[$vatRate])) {
                     $vats[$vatRate] = 0;
+                }
 
-                if ($basketItem['IS_VAT_IN_PRICE'])
+                if ($basketItem['IS_VAT_IN_PRICE']) {
                     $vats[$vatRate] += ($basketItem['PRICE'] - $vatLessPrice) * $basketItem['QUANTITY'];
-                else
+                } else {
                     $vats[$vatRate] += ($basketItem['PRICE'] * (1 + $basketItem['VAT_RATE']) - $vatLessPrice) * $basketItem['QUANTITY'];
+                }
             }
         }
 
         if ($params['DELIVERY_PRICE'] > 0) {
             $sDeliveryItem = "Schifffahrt";
-            if (strlen($params['DELIVERY_NAME']) > 0)
+            if ($params['DELIVERY_NAME'] <> '') {
                 $sDeliveryItem .= sprintf(" (%s)", $params['DELIVERY_NAME']);
+            }
 
 
             $arCells[++$n] = array();
@@ -337,22 +367,25 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
                     default :
                         $data = '';
                 }
-                if ($data !== null)
+                if ($data !== null) {
                     $arCells[$n][$columnId] = $data;
+                }
             }
 
             $sum += roundEx($params['DELIVERY_PRICE'] / (1 + $vat), SALE_VALUE_PRECISION);
 
-            if ($vat > 0)
+            if ($vat > 0) {
                 $vats[(string)$vat] += roundEx($params['DELIVERY_PRICE'] * $vat / (1 + $vat), SALE_VALUE_PRECISION);
+            }
         }
 
         if ($vat <= 0) {
             unset($arCols['VAT_RATE']);
             $columnCount = count($arCols);
             $arColumnKeys = array_keys($arCols);
-            foreach ($arCells as $i => $cell)
+            foreach ($arCells as $i => $cell) {
                 unset($arCells[$i]['VAT_RATE']);
+            }
         }
 
         $items = $n;
@@ -360,8 +393,9 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
             $eps = 0.0001;
             if ($params['SUM'] - $sum > $eps) {
                 $arCells[++$n] = array();
-                for ($i = 0; $i < $columnCount; $i++)
+                for ($i = 0; $i < $columnCount; $i++) {
                     $arCells[$n][$arColumnKeys[$i]] = null;
+                }
 
                 $arCells[$n][$arColumnKeys[$columnCount - 2]] = "Nettobetrag:";
                 $arCells[$n][$arColumnKeys[$columnCount - 1]] = SaleFormatCurrency($sum, $params['CURRENCY'], false);
@@ -369,10 +403,12 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
 
             if (!empty($vats)) {
                 // @TODO: remove on real vatless price implemented
-                $delta = intval(roundEx(
+                $delta = intval(
+                    roundEx(
                         $params['SUM'] - $sum - array_sum($vats),
                         SALE_VALUE_PRECISION
-                    ) * pow(10, SALE_VALUE_PRECISION));
+                    ) * pow(10, SALE_VALUE_PRECISION)
+                );
 
                 if ($delta) {
                     $vatRates = array_keys($vats);
@@ -384,61 +420,95 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
                     foreach ($vatRates as $vatRate) {
                         $vats[$vatRate] += ($ful + $ost) / pow(10, SALE_VALUE_PRECISION);
 
-                        if ($ost > 0)
+                        if ($ost > 0) {
                             $ost--;
+                        }
                     }
                 }
 
                 foreach ($vats as $vatRate => $vatSum) {
                     $arCells[++$n] = array();
-                    for ($i = 0; $i < $columnCount; $i++)
+                    for ($i = 0; $i < $columnCount; $i++) {
                         $arCells[$n][$i] = null;
+                    }
 
-                    $arCells[$n][$arColumnKeys[$columnCount - 2]] = sprintf("zzgl. %s%% MwSt:", roundEx($vatRate * 100, SALE_VALUE_PRECISION));
-                    $arCells[$n][$arColumnKeys[$columnCount - 1]] = SaleFormatCurrency($vatSum, $params['CURRENCY'], false);
+                    $arCells[$n][$arColumnKeys[$columnCount - 2]] = sprintf(
+                        "zzgl. %s%% MwSt:",
+                        roundEx(
+                            $vatRate * 100,
+                            SALE_VALUE_PRECISION
+                        )
+                    );
+                    $arCells[$n][$arColumnKeys[$columnCount - 1]] = SaleFormatCurrency(
+                        $vatSum,
+                        $params['CURRENCY'],
+                        false
+                    );
                 }
             } else {
                 if ($params['TAXES']) {
                     foreach ($params['TAXES'] as $tax) {
                         $arCells[++$n] = array();
-                        for ($i = 0; $i < $columnCount; $i++)
+                        for ($i = 0; $i < $columnCount; $i++) {
                             $arCells[$n][$arColumnKeys[$i]] = null;
+                        }
 
-                        $arCells[$n][$arColumnKeys[$columnCount - 2]] = htmlspecialcharsbx(sprintf(
-                            "%s%s%s:",
-                            ($tax["IS_IN_PRICE"] == "Y") ? "inkl." : "zzgl.",
-                            sprintf(' %s%% ', roundEx($tax["VALUE"], SALE_VALUE_PRECISION)),
-                            $tax["TAX_NAME"]
-                        ));
-                        $arCells[$n][$arColumnKeys[$columnCount - 1]] = SaleFormatCurrency($tax["VALUE_MONEY"], $params['CURRENCY'], false);
+                        $arCells[$n][$arColumnKeys[$columnCount - 2]] = htmlspecialcharsbx(
+                            sprintf(
+                                "%s%s%s:",
+                                ($tax["IS_IN_PRICE"] == "Y") ? "inkl." : "zzgl.",
+                                sprintf(' %s%% ', roundEx($tax["VALUE"], SALE_VALUE_PRECISION)),
+                                $tax["TAX_NAME"]
+                            )
+                        );
+                        $arCells[$n][$arColumnKeys[$columnCount - 1]] = SaleFormatCurrency(
+                            $tax["VALUE_MONEY"],
+                            $params['CURRENCY'],
+                            false
+                        );
                     }
                 }
             }
 
             if ($params['SUM_PAID'] > 0) {
                 $arCells[++$n] = array();
-                for ($i = 0; $i < $columnCount; $i++)
+                for ($i = 0; $i < $columnCount; $i++) {
                     $arCells[$n][$arColumnKeys[$i]] = null;
+                }
 
                 $arCells[$n][$arColumnKeys[$columnCount - 2]] = "Payment made:";
-                $arCells[$n][$arColumnKeys[$columnCount - 1]] = SaleFormatCurrency($params['SUM_PAID'], $params['CURRENCY'], false);
+                $arCells[$n][$arColumnKeys[$columnCount - 1]] = SaleFormatCurrency(
+                    $params['SUM_PAID'],
+                    $params['CURRENCY'],
+                    false
+                );
             }
 
             if ($params['DISCOUNT_PRICE']) {
                 $arCells[++$n] = array();
-                for ($i = 0; $i < $columnCount; $i++)
+                for ($i = 0; $i < $columnCount; $i++) {
                     $arCells[$n][$arColumnKeys[$i]] = null;
+                }
 
                 $arCells[$n][$arColumnKeys[$columnCount - 2]] = "Rabatt:";
-                $arCells[$n][$arColumnKeys[$columnCount - 1]] = SaleFormatCurrency($params['DISCOUNT_PRICE'], $params['CURRENCY'], false);
+                $arCells[$n][$arColumnKeys[$columnCount - 1]] = SaleFormatCurrency(
+                    $params['DISCOUNT_PRICE'],
+                    $params['CURRENCY'],
+                    false
+                );
             }
 
             $arCells[++$n] = array();
-            for ($i = 0; $i < $columnCount; $i++)
+            for ($i = 0; $i < $columnCount; $i++) {
                 $arCells[$n][$arColumnKeys[$i]] = null;
+            }
 
             $arCells[$n][$arColumnKeys[$columnCount - 2]] = "Gesamtbetrag:";
-            $arCells[$n][$arColumnKeys[$columnCount - 1]] = SaleFormatCurrency($params['SUM'], $params['CURRENCY'], false);
+            $arCells[$n][$arColumnKeys[$columnCount - 1]] = SaleFormatCurrency(
+                $params['SUM'],
+                $params['CURRENCY'],
+                false
+            );
         }
     }
 
@@ -483,7 +553,9 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
                     <?
                     } else {
                         if (!is_null($arCells[$n][$columnId])) {
-                            if ($columnId != 'VAT_RATE' || $vat > 0 || is_null($arCells[$n][$columnId]) || $n > $items) { ?>
+                            if ($columnId != 'VAT_RATE' || $vat > 0 || is_null(
+                                    $arCells[$n][$columnId]
+                                ) || $n > $items) { ?>
                                 <td align="right"
                                     <? if ($accumulated) { ?>
                                         style="border-width: 0pt 1pt 0pt 0pt"
@@ -508,7 +580,6 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
             <?endforeach; ?>
         </tr>
         <?
-
         }
 
         ?>
@@ -519,18 +590,34 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
 
     <? if ($params["BILLDE_COMMENT1"] || $params["BILLDE_COMMENT2"]) { ?>
         <? if ($params["BILLDE_COMMENT1"]) { ?>
-            <?= nl2br(HTMLToTxt(preg_replace(
-                array('#</div>\s*<div[^>]*>#i', '#</?div>#i'), array('<br>', '<br>'),
-                htmlspecialcharsback($params["BILLDE_COMMENT1"])
-            ), '', array(), 0)); ?>
+            <?= nl2br(
+                HTMLToTxt(
+                    preg_replace(
+                        array('#</div>\s*<div[^>]*>#i', '#</?div>#i'),
+                        array('<br>', '<br>'),
+                        htmlspecialcharsback($params["BILLDE_COMMENT1"])
+                    ),
+                    '',
+                    array(),
+                    0
+                )
+            ); ?>
             <br>
             <br>
         <? } ?>
         <? if ($params["BILLDE_COMMENT2"]) { ?>
-            <?= nl2br(HTMLToTxt(preg_replace(
-                array('#</div>\s*<div[^>]*>#i', '#</?div>#i'), array('<br>', '<br>'),
-                htmlspecialcharsback($params["BILLDE_COMMENT2"])
-            ), '', array(), 0)); ?>
+            <?= nl2br(
+                HTMLToTxt(
+                    preg_replace(
+                        array('#</div>\s*<div[^>]*>#i', '#</?div>#i'),
+                        array('<br>', '<br>'),
+                        htmlspecialcharsback($params["BILLDE_COMMENT2"])
+                    ),
+                    '',
+                    array(),
+                    0
+                )
+            ); ?>
             <br>
             <br>
         <? } ?>
@@ -541,7 +628,8 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
     <? if (!$blank) { ?>
         <div style="position: relative; "><?= CFile::ShowImage(
                 $params["BILLDE_PATH_TO_STAMP"],
-                160, 160,
+                160,
+                160,
                 'style="position: absolute; left: 40pt; "'
             ); ?></div>
     <? } ?>
@@ -550,7 +638,9 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
         <table class="sign">
             <? if ($params["SELLER_COMPANY_DIRECTOR_POSITION"]) { ?>
                 <tr>
-                    <td style="width: 150pt; "><?= htmlspecialcharsbx($params["SELLER_COMPANY_DIRECTOR_POSITION"]); ?></td>
+                    <td style="width: 150pt; "><?= htmlspecialcharsbx(
+                            $params["SELLER_COMPANY_DIRECTOR_POSITION"]
+                        ); ?></td>
                     <td style="width: 160pt; border: 1pt solid #000000; border-width: 0pt 0pt 1pt 0pt; text-align: center; ">
                         <? if (!$blank) { ?>
                             <?= CFile::ShowImage($params["SELLER_COMPANY_DIR_SIGN"], 200, 50); ?>
@@ -568,7 +658,9 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
             <? } ?>
             <? if ($params["SELLER_COMPANY_ACCOUNTANT_POSITION"]) { ?>
                 <tr>
-                    <td style="width: 150pt; "><?= htmlspecialcharsbx($params["SELLER_COMPANY_ACCOUNTANT_POSITION"]); ?></td>
+                    <td style="width: 150pt; "><?= htmlspecialcharsbx(
+                            $params["SELLER_COMPANY_ACCOUNTANT_POSITION"]
+                        ); ?></td>
                     <td style="width: 160pt; border: 1pt solid #000000; border-width: 0pt 0pt 1pt 0pt; text-align: center; ">
                         <? if (!$blank) { ?>
                             <?= CFile::ShowImage($params["SELLER_COMPANY_ACC_SIGN"], 200, 50); ?>
@@ -595,17 +687,20 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
 
         $sellerName = $params["SELLER_COMPANY_NAME"];
         $sellerAddr = $params["SELLER_COMPANY_ADDRESS"];
-        if (is_array($sellerAddr))
+        if (is_array($sellerAddr)) {
             $sellerAddr = implode(', ', $sellerAddr);
-        else
+        } else {
             $sellerAddr = str_replace(array("\r\n", "\n", "\r"), ', ', strval($sellerAddr));
+        }
 
         $sellerData = array();
 
-        if ($sellerName)
+        if ($sellerName) {
             $sellerData[] = $sellerName;
-        if ($sellerAddr)
+        }
+        if ($sellerAddr) {
             $sellerData[] = $sellerAddr;
+        }
 
         if (!empty($sellerData)) {
             foreach ($sellerData as $i => $data) {
@@ -621,10 +716,12 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
 
         $sellerData = array();
 
-        if ($sellerPhone)
+        if ($sellerPhone) {
             $sellerData[] = sprintf('Telefon: %s', htmlspecialcharsbx($sellerPhone));
-        if ($sellerEmail)
+        }
+        if ($sellerEmail) {
             $sellerData[] = sprintf('Mail: %s', htmlspecialcharsbx($sellerEmail));
+        }
 
         if (!empty($sellerData)) {
             ?><small><?= join(' - ', $sellerData); ?></small>
@@ -640,16 +737,21 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
 
         $bankData = array();
 
-        if ($bankAccNo)
+        if ($bankAccNo) {
             $bankData[] = sprintf('Konto Nr.: %s', htmlspecialcharsbx($bankAccNo));
-        if ($bankBlz)
+        }
+        if ($bankBlz) {
             $bankData[] = sprintf('BLZ: %s', htmlspecialcharsbx($bankBlz));
-        if ($bankIban)
+        }
+        if ($bankIban) {
             $bankData[] = sprintf('IBAN: %s', htmlspecialcharsbx($bankIban));
-        if ($bankSwift)
+        }
+        if ($bankSwift) {
             $bankData[] = sprintf('BIC/SWIFT: %s', htmlspecialcharsbx($bankSwift));
-        if ($bank)
+        }
+        if ($bank) {
             $bankData[] = htmlspecialcharsbx($bank);
+        }
 
         if (!empty($bankData)) {
             ?><small><?= join(' - ', $bankData); ?></small>
@@ -664,14 +766,18 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
 
         $sellerData = array();
 
-        if ($sellerEuInn)
+        if ($sellerEuInn) {
             $sellerData[] = sprintf('USt-IdNr.: %s', htmlspecialcharsbx($sellerEuInn));
-        if ($sellerInn)
+        }
+        if ($sellerInn) {
             $sellerData[] = sprintf('Steuernummer: %s', htmlspecialcharsbx($sellerInn));
-        if ($sellerReg)
+        }
+        if ($sellerReg) {
             $sellerData[] = htmlspecialcharsbx($sellerReg);
-        if ($sellerDir)
+        }
+        if ($sellerDir) {
             $sellerData[] = htmlspecialcharsbx($sellerDir);
+        }
 
         if (!empty($sellerData)) {
             ?><small><?= join(' - ', $sellerData); ?></small>

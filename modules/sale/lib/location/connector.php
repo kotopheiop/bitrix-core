@@ -42,13 +42,13 @@ abstract class Connector extends Entity\DataManager
      *
      * @return string field name
      */
-    abstract public function getLinkField();
+    abstract public static function getLinkField();
 
     /** Method should return a name of the "target" entity plus namespace but without trailing 'Table'. For example, for delivery this should be 'Bitrix\Sale\Delivery\Delivery'
      *
      * @return string table name
      */
-    abstract public function getTargetEntityName();
+    abstract public static function getTargetEntityName();
 
     /**
      * Returns a name of type filed. By default 'LOCATION_TYPE' is used for the most of. Does not make any sense if getUseGroups() returns false
@@ -112,8 +112,9 @@ abstract class Connector extends Entity\DataManager
         $map = static::getMap();
         $locLinkFld = static::getLocationLinkField();
 
-        if (isset($map[$locLinkFld]))
+        if (isset($map[$locLinkFld])) {
             return $map[$locLinkFld]['data_type'] == 'integer' ? self::LINK_ID : self::LINK_CODE;
+        }
 
         Assert::announceNotImplemented(Loc::getMessage('SALE_LOCATION_CONNECTOR_ENTITY_LINK_FLD_NOT_FOUND_EXCEPTION'));
     }
@@ -142,8 +143,9 @@ abstract class Connector extends Entity\DataManager
     public static function add(array $data)
     {
         $res = parent::add($data);
-        if ($res->isSuccess())
+        if ($res->isSuccess()) {
             static::setLinkUsage($data[static::getLinkField()], $data[static::getTypeField()], true);
+        }
 
         $GLOBALS['CACHE_MANAGER']->ClearByTag('sale-location-data');
         static::onAfterModifiy();
@@ -164,13 +166,20 @@ abstract class Connector extends Entity\DataManager
         $linkFld = static::getLinkField();
 
         if ($primary && isset($data[$linkFld])) // it will break below, at parent::delete()
+        {
             $link = static::getByPrimary($primary)->fetch();
+        }
 
         $res = parent::update($primary, $data);
-        if ($res->isSuccess() && isset($data[$linkFld]) && $data[$linkFld] != $link[$linkFld]) // if switched from one entity to another
+        if ($res->isSuccess(
+            ) && isset($data[$linkFld]) && $data[$linkFld] != $link[$linkFld]) // if switched from one entity to another
         {
             static::resetLinkUsage($link[static::getLinkField()]); // for donor entity we need to recalc link existence
-            static::setLinkUsage($data[$linkFld], $data[static::getTypeField()], true); // we know there ARE links for retsepient entity
+            static::setLinkUsage(
+                $data[$linkFld],
+                $data[static::getTypeField()],
+                true
+            ); // we know there ARE links for retsepient entity
         }
 
         $GLOBALS['CACHE_MANAGER']->ClearByTag('sale-location-data');
@@ -189,11 +198,14 @@ abstract class Connector extends Entity\DataManager
     public static function delete($primary)
     {
         if ($primary) // it will break below, at parent::delete()
+        {
             $link = static::getByPrimary($primary)->fetch();
+        }
 
         $res = parent::delete($primary);
-        if ($res->isSuccess())
+        if ($res->isSuccess()) {
             static::resetLinkUsage($link[static::getLinkField()]);
+        }
 
         $GLOBALS['CACHE_MANAGER']->ClearByTag('sale-location-data');
         static::onAfterModifiy();
@@ -221,8 +233,11 @@ abstract class Connector extends Entity\DataManager
      * @throws Bitrix\Main\ArgumentNullException
      *
      */
-    public static function updateMultipleForOwner($entityPrimary, $links = array(), $behaviour = array('REMOVE_ABSENT' => true))
-    {
+    public static function updateMultipleForOwner(
+        $entityPrimary,
+        $links = array(),
+        $behaviour = array('REMOVE_ABSENT' => true)
+    ) {
         $entityPrimary = Assert::expectStringNotNull($entityPrimary, '$entityPrimary');
         $links = static::checkUpdateLinks($links);
 
@@ -232,11 +247,25 @@ abstract class Connector extends Entity\DataManager
         // get existed relations
         $existed = static::getLinkedLocations($entityPrimary);
 
-        if ($updateLocations)
-            static::updateMultipleLinkType($entityPrimary, $links[static::DB_LOCATION_FLAG], $existed[static::DB_LOCATION_FLAG], static::DB_LOCATION_FLAG, $behaviour['REMOVE_ABSENT']);
+        if ($updateLocations) {
+            static::updateMultipleLinkType(
+                $entityPrimary,
+                $links[static::DB_LOCATION_FLAG],
+                $existed[static::DB_LOCATION_FLAG],
+                static::DB_LOCATION_FLAG,
+                $behaviour['REMOVE_ABSENT']
+            );
+        }
 
-        if ($updateGroups)
-            static::updateMultipleLinkType($entityPrimary, $links[static::DB_GROUP_FLAG], $existed[static::DB_GROUP_FLAG], static::DB_GROUP_FLAG, $behaviour['REMOVE_ABSENT']);
+        if ($updateGroups) {
+            static::updateMultipleLinkType(
+                $entityPrimary,
+                $links[static::DB_GROUP_FLAG],
+                $existed[static::DB_GROUP_FLAG],
+                static::DB_GROUP_FLAG,
+                $behaviour['REMOVE_ABSENT']
+            );
+        }
 
         static::resetLinkUsage($entityPrimary);
 
@@ -261,9 +290,11 @@ abstract class Connector extends Entity\DataManager
 					from 
 						' . static::getTableName() . ' 
 					where 
-						' . static::getLinkField() . ' = \'' . $dbConnection->getSqlHelper()->forSql($entityPrimary) . '\'';
+						' . static::getLinkField() . ' = \'' . $dbConnection->getSqlHelper()->forSql(
+                    $entityPrimary
+                ) . '\'';
 
-            if (strlen($typeField) > 0) {
+            if ($typeField <> '') {
                 $sql .= '	AND (
 					' . $typeField . ' = \'' . static::DB_LOCATION_FLAG . '\' 
 					OR ' . $typeField . ' = \'' . static::DB_GROUP_FLAG . '\'
@@ -275,10 +306,23 @@ abstract class Connector extends Entity\DataManager
             // get existed relations
             $existed = static::getLinkedLocations($entityPrimary);
 
-            static::updateMultipleLinkType($entityPrimary, array(), $existed[static::DB_LOCATION_FLAG], static::DB_LOCATION_FLAG, true);
+            static::updateMultipleLinkType(
+                $entityPrimary,
+                array(),
+                $existed[static::DB_LOCATION_FLAG],
+                static::DB_LOCATION_FLAG,
+                true
+            );
 
-            if (static::getUseGroups())
-                static::updateMultipleLinkType($entityPrimary, array(), $existed[static::DB_GROUP_FLAG], static::DB_GROUP_FLAG, true);
+            if (static::getUseGroups()) {
+                static::updateMultipleLinkType(
+                    $entityPrimary,
+                    array(),
+                    $existed[static::DB_GROUP_FLAG],
+                    static::DB_GROUP_FLAG,
+                    true
+                );
+            }
         }
 
         static::setLinkUsage($entityPrimary, static::DB_LOCATION_FLAG, false);
@@ -319,13 +363,16 @@ abstract class Connector extends Entity\DataManager
             $linkFld => $map[$linkFld], // DELIVERY_ID, SITE_ID, smth else
             $locationLinkFld => $map[$locationLinkFld] // LOCATION_ID or LOCATION_CODE or smth else
         );
-        if ($useGroups = static::getUseGroups())
-            $fields[$typeFld] = $map[$typeFld]; // LOCATION_TYPE: L or G
+        if ($useGroups = static::getUseGroups()) {
+            $fields[$typeFld] = $map[$typeFld];
+        } // LOCATION_TYPE: L or G
 
-        $inserter = new BlockInserter(array(
-            'tableName' => static::getTableName(),
-            'exactFields' => $fields
-        ));
+        $inserter = new BlockInserter(
+            array(
+                'tableName' => static::getTableName(),
+                'exactFields' => $fields
+            )
+        );
 
         $smthAdded = false;
         if (is_array($links[static::DB_LOCATION_FLAG])) {
@@ -334,8 +381,9 @@ abstract class Connector extends Entity\DataManager
                     $linkFld => $entityPrimary,
                     $locationLinkFld => $id,
                 );
-                if ($useGroups)
+                if ($useGroups) {
                     $data[$typeFld] = static::DB_LOCATION_FLAG;
+                }
 
                 $inserter->insert($data);
                 $smthAdded = true;
@@ -350,8 +398,9 @@ abstract class Connector extends Entity\DataManager
                     $linkFld => $entityPrimary,
                     $locationLinkFld => $id,
                 );
-                if ($useGroups)
+                if ($useGroups) {
                     $data[$typeFld] = static::DB_GROUP_FLAG;
+                }
 
                 $inserter->insert($data);
                 $smthAdded = true;
@@ -364,8 +413,13 @@ abstract class Connector extends Entity\DataManager
         $GLOBALS['CACHE_MANAGER']->ClearByTag('sale-location-data');
     }
 
-    private static function updateMultipleLinkType($entityPrimary, $links, $existed, $linkType = self::DB_LOCATION_FLAG, $doRemove = true)
-    {
+    private static function updateMultipleLinkType(
+        $entityPrimary,
+        $links,
+        $existed,
+        $linkType = self::DB_LOCATION_FLAG,
+        $doRemove = true
+    ) {
         $useGroups = static::getUseGroups();
 
         $smthAdded = false;
@@ -375,16 +429,21 @@ abstract class Connector extends Entity\DataManager
                     static::getLinkField() => $entityPrimary,
                     static::getLocationLinkField() => $loc
                 );
-                if ($useGroups)
+                if ($useGroups) {
                     $data[static::getTypeField()] = $linkType;
+                }
 
                 $res = static::add($data);
-                if (!$res->isSuccess())
-                    throw new Main\SystemException(Loc::getMessage('SALE_LOCATION_CONNECTOR_ENTITY_CANNOT_ADD_EXCEPTION'));
+                if (!$res->isSuccess()) {
+                    throw new Main\SystemException(
+                        Loc::getMessage('SALE_LOCATION_CONNECTOR_ENTITY_CANNOT_ADD_EXCEPTION')
+                    );
+                }
 
                 $smthAdded = true;
-            } else
+            } else {
                 unset($existed[$loc]);
+            }
         }
 
         if ($doRemove && !empty($existed)) {
@@ -393,12 +452,16 @@ abstract class Connector extends Entity\DataManager
                     static::getLinkField() => $entityPrimary,
                     static::getLocationLinkField() => $loc
                 );
-                if ($useGroups)
+                if ($useGroups) {
                     $data[static::getTypeField()] = $linkType;
+                }
 
                 $res = static::delete($data);
-                if (!$res->isSuccess())
-                    throw new Main\SystemException(Loc::getMessage('SALE_LOCATION_CONNECTOR_ENTITY_CANNOT_DELETE_EXCEPTION'));
+                if (!$res->isSuccess()) {
+                    throw new Main\SystemException(
+                        Loc::getMessage('SALE_LOCATION_CONNECTOR_ENTITY_CANNOT_DELETE_EXCEPTION')
+                    );
+                }
             }
         }
     }
@@ -422,34 +485,42 @@ abstract class Connector extends Entity\DataManager
      *
      * @throws ArgumentNullException
      */
-    public static function getConnectedLocationsQuery($entityPrimary, $parameters = array(), $behaviour = array('GET_LINKED_THROUGH_GROUPS' => false))
-    {
+    public static function getConnectedLocationsQuery(
+        $entityPrimary,
+        $parameters = array(),
+        $behaviour = array('GET_LINKED_THROUGH_GROUPS' => false)
+    ) {
         $entityPrimary = Assert::expectStringNotNull($entityPrimary, '$entityPrimary');
 
-        if (!is_array($parameters))
+        if (!is_array($parameters)) {
             $parameters = array();
-        if (!is_array($behaviour))
+        }
+        if (!is_array($behaviour)) {
             $behaviour = array();
-        if (!isset($behaviour['GET_LINKED_THROUGH_GROUPS']))
+        }
+        if (!isset($behaviour['GET_LINKED_THROUGH_GROUPS'])) {
             $behaviour['GET_LINKED_THROUGH_GROUPS'] = false;
+        }
 
-        $useGroups = GroupTable::checkGroupUsage() && static::getUseGroups(); // check if we have groups in project and entity uses groups
+        $useGroups = GroupTable::checkGroupUsage() && static::getUseGroups(
+            ); // check if we have groups in project and entity uses groups
         $getLinkedThroughGroups = $behaviour['GET_LINKED_THROUGH_GROUPS'];
-        if (!$useGroups)
+        if (!$useGroups) {
             $getLinkedThroughGroups = false;
+        }
 
         $connType = static::getConnectType();
 
         // proxy select
         $select = array();
-        if (!is_array($parameters['select']))
+        if (!is_array($parameters['select'])) {
             $select = array('' => 'LOCATION');
-        else {
+        } else {
             foreach ($parameters['select'] as $k => $v) {
-                if ($v == '*')
+                if ($v == '*') {
                     $select[''] = 'LOCATION';
-                else {
-                    if (is_numeric($k) && strpos((string)$v, '.') === false) // is NOT a reference
+                } else {
+                    if (is_numeric($k) && mb_strpos((string)$v, '.') === false) // is NOT a reference
                     {
                         $k = $v;
                     }
@@ -473,22 +544,28 @@ abstract class Connector extends Entity\DataManager
             //if($getLinkedThroughGroups)
             Assert::announceNotImplemented('Sorry, order-over-union clause is not implemented currently.');
 
-            foreach ($parameters['order'] as $k => $v)
+            foreach ($parameters['order'] as $k => $v) {
                 $order['LOCATION.' . $k] = $v;
+            }
         }
 
-        if (is_array($parameters['runtime']))
+        if (is_array($parameters['runtime'])) {
             Assert::announceNotImplemented('Sorry, runtime clause is not implemented currently.');
+        }
 
         $sqls = array();
 
         if (static::checkLinkUsage($entityPrimary, static::DB_LOCATION_FLAG)) {
-            $strictFilter = array_merge($filter, array(
-                '=' . static::getLinkField() => $entityPrimary
-            ));
+            $strictFilter = array_merge(
+                $filter,
+                array(
+                    '=' . static::getLinkField() => $entityPrimary
+                )
+            );
 
-            if ($useGroups)
+            if ($useGroups) {
                 $strictFilter['=' . static::getTypeField()] = static::DB_LOCATION_FLAG;
+            }
 
             $query = new Entity\Query(self::getEntity());
             $query
@@ -537,11 +614,15 @@ abstract class Connector extends Entity\DataManager
                         )
                     )
                     ->setSelect($select)
-                    ->setFilter(array_merge($filter, array(
-                        '=' . static::getLinkField() => $entityPrimary
-                    )))
+                    ->setFilter(
+                        array_merge(
+                            $filter,
+                            array(
+                                '=' . static::getLinkField() => $entityPrimary
+                            )
+                        )
+                    )
                     ->setOrder($order);
-
                 /*
                 select LOCATION.*
                     from b_sale_delivery2location DL
@@ -559,7 +640,8 @@ abstract class Connector extends Entity\DataManager
                         array(
                             'data_type' => '\Bitrix\Sale\Location\GroupLocation',
                             'reference' => array(
-                                '=this.' . static::getLocationLinkField() => 'ref.' . GroupLocationTable::getLinkField(),
+                                '=this.' . static::getLocationLinkField() => 'ref.' . GroupLocationTable::getLinkField(
+                                    ),
                                 '=this.' . static::getTypeField() => array('?', static::DB_GROUP_FLAG)
                             ),
                             'join_type' => 'inner'
@@ -576,11 +658,15 @@ abstract class Connector extends Entity\DataManager
                         )
                     )
                     ->setSelect($select)
-                    ->setFilter(array_merge($filter, array(
-                        '=' . static::getLinkField() => $entityPrimary
-                    )))
+                    ->setFilter(
+                        array_merge(
+                            $filter,
+                            array(
+                                '=' . static::getLinkField() => $entityPrimary
+                            )
+                        )
+                    )
                     ->setOrder($order);
-
                 /*
                 select LOCATION.*
                     from b_sale_delivery2location DL
@@ -595,7 +681,9 @@ abstract class Connector extends Entity\DataManager
         }
 
         if (empty($sqls)) // entity is not connected, so it means "all connected"
+        {
             return false;
+        }
 
         return static::unionize($sqls);
     }
@@ -603,22 +691,30 @@ abstract class Connector extends Entity\DataManager
     /**
      * More preferable alias for getConnectedLocationsQuery()
      */
-    public static function getConnectedLocationsSql($entityPrimary, $parameters = array(), $behaviour = array('GET_LINKED_THROUGH_GROUPS' => false))
-    {
+    public static function getConnectedLocationsSql(
+        $entityPrimary,
+        $parameters = array(),
+        $behaviour = array('GET_LINKED_THROUGH_GROUPS' => false)
+    ) {
         return static::getConnectedLocationsQuery($entityPrimary, $parameters, $behaviour);
     }
 
-    public static function getConnectedLocations($entityPrimary, $parameters = array(), $behaviour = array('GET_LINKED_THROUGH_GROUPS' => false))
-    {
+    public static function getConnectedLocations(
+        $entityPrimary,
+        $parameters = array(),
+        $behaviour = array('GET_LINKED_THROUGH_GROUPS' => false)
+    ) {
         $query = static::getConnectedLocationsQuery($entityPrimary, $parameters, $behaviour);
 
-        if (!$query)
+        if (!$query) {
             return new DB\ArrayResult(array());
+        }
 
         return static::queryPage(
             $query,
             $parameters['limit'],
-            $parameters['offset']);
+            $parameters['offset']
+        );
     }
 
     /**
@@ -636,11 +732,13 @@ abstract class Connector extends Entity\DataManager
     {
         $entityPrimary = Assert::expectStringNotNull($entityPrimary, '$entityPrimary');
 
-        if (!static::getUseGroups())
+        if (!static::getUseGroups()) {
             Assert::announceNotSupported(Loc::getMessage('SALE_LOCATION_CONNECTOR_ENTITY_DOESNT_SUPPORT_GROUPS'));
+        }
 
-        if (!is_array($parameters))
+        if (!is_array($parameters)) {
             $parameters = array();
+        }
 
         $parameters['runtime']['C'] = array(
             'data_type' => static::getEntity()->getFullName(),
@@ -651,7 +749,8 @@ abstract class Connector extends Entity\DataManager
             'join_type' => 'inner'
         );
 
-        $parameters['runtime']['C']['reference']['=ref.' . static::getLocationLinkField()] = (static::getConnectType() == self::LINK_CODE ? 'this.CODE' : 'this.ID');
+        $parameters['runtime']['C']['reference']['=ref.' . static::getLocationLinkField()] = (static::getConnectType(
+        ) == self::LINK_CODE ? 'this.CODE' : 'this.ID');
 
         return GroupTable::getList($parameters);
     }
@@ -663,20 +762,29 @@ abstract class Connector extends Entity\DataManager
     }
 
     // returns list of connected entities for location with CODE == $locationPrimary, with an optional filter applied
-    public static function getConnectedEntitesByCode($locationPrimary, $parameters = array()) // getConnectedEntitiesByLocationCode
+    public static function getConnectedEntitesByCode(
+        $locationPrimary,
+        $parameters = array()
+    ) // getConnectedEntitiesByLocationCode
     {
         return static::getConnectedEntitiesByCondition($locationPrimary, 'code', $parameters);
     }
 
     // returns sql-select query that can be embeded to another sql query in 'ID in (select * from ...)' manner
-    public static function getConnectedEntitiesQuery($locationPrimary, $linkType = 'id', $parameters = array()) // // getConnectedEntitiesSql
+    public static function getConnectedEntitiesQuery(
+        $locationPrimary,
+        $linkType = 'id',
+        $parameters = array()
+    ) // // getConnectedEntitiesSql
     {
-        if ($linkType == 'id')
+        if ($linkType == 'id') {
             $locationPrimary = Assert::expectIntegerPositive($locationPrimary, '$locationPrimary');
-        else
+        } else {
             $locationPrimary = Assert::expectStringNotNull($locationPrimary, '$locationPrimary');
+        }
 
-        $useGroups = GroupTable::checkGroupUsage() && static::getUseGroups(); // check if we have groups in project and entity uses groups
+        $useGroups = GroupTable::checkGroupUsage() && static::getUseGroups(
+            ); // check if we have groups in project and entity uses groups
         $useCodes = static::getUseCodes(); // this entity uses codes
         $groupUseCodes = GroupLocationTable::getUseCodes(); // group entity uses codes
 
@@ -691,23 +799,28 @@ abstract class Connector extends Entity\DataManager
 
         $dbConnection = Main\HttpApplication::getConnection();
 
-        if (!is_array($parameters))
+        if (!is_array($parameters)) {
             $parameters = array();
+        }
 
-        if (is_array($parameters['runtime']))
+        if (is_array($parameters['runtime'])) {
             Assert::announceNotImplemented('Sorry, runtime clause is not implemented currently.');
+        }
 
         $order = array();
-        if (is_array($parameters['order']))
+        if (is_array($parameters['order'])) {
             Assert::announceNotImplemented('Sorry, order-over-union clause is not implemented currently.');
+        }
 
         $filter = array();
-        if (is_array($parameters['filter']) && !empty($parameters['filter']))
+        if (is_array($parameters['filter']) && !empty($parameters['filter'])) {
             $filter = $parameters['filter'];
+        }
 
         $select = array('*');
-        if (is_array($parameters['select']) && !empty($parameters['select']))
+        if (is_array($parameters['select']) && !empty($parameters['select'])) {
             $select = $parameters['select'];
+        }
 
         /*
         query example when working with delivery:
@@ -723,8 +836,9 @@ abstract class Connector extends Entity\DataManager
         $DLCondition = array(
             '=this.' . $targetPrimaryFld/*ID*/ => 'ref.' . $linkFld/*DELIVERY_ID*/
         );
-        if ($useGroups)
+        if ($useGroups) {
             $DLCondition['=ref.' . $typeFld/*LOCATION_TYPE*/] = array('?', static::DB_LOCATION_FLAG);
+        }
 
         $query
             ->registerRuntimeField(
@@ -750,9 +864,12 @@ abstract class Connector extends Entity\DataManager
                 array(
                     'data_type' => '\Bitrix\Sale\Location\Location',
                     'reference' => array(
-                        '=ref.' . ($seachById ? 'ID' : 'CODE') => array('?', $locationPrimary), // among parents we have element with ID or CODE is equal to $locationPrimary
-                        '>=ref.LEFT_MARGIN' => 'this.L1.LEFT_MARGIN', // and its left_margin
-                        '<=ref.RIGHT_MARGIN' => 'this.L1.RIGHT_MARGIN' // and right_margin fit our restrictions
+                        '=ref.' . ($seachById ? 'ID' : 'CODE') => array('?', $locationPrimary),
+                        // among parents we have element with ID or CODE is equal to $locationPrimary
+                        '>=ref.LEFT_MARGIN' => 'this.L1.LEFT_MARGIN',
+                        // and its left_margin
+                        '<=ref.RIGHT_MARGIN' => 'this.L1.RIGHT_MARGIN'
+                        // and right_margin fit our restrictions
                     ),
                     'join_type' => 'inner'
                 )
@@ -802,7 +919,8 @@ abstract class Connector extends Entity\DataManager
                         array(
                             'data_type' => '\Bitrix\Sale\Location\Group',
                             'reference' => array(
-                                '=this.DL.' . $locationLinkFld/*LOCATION_ID*/ => 'ref.CODE', //$useCodes == true here, so always CODE
+                                '=this.DL.' . $locationLinkFld/*LOCATION_ID*/ => 'ref.CODE',
+                                //$useCodes == true here, so always CODE
                             ),
                             'join_type' => 'inner'
                         )
@@ -815,7 +933,8 @@ abstract class Connector extends Entity\DataManager
                     array(
                         'data_type' => '\Bitrix\Sale\Location\GroupLocation',
                         'reference' => array(
-                            ($useCodes ? '=this.G.ID' : '=this.DL.' . $locationLinkFld/*LOCATION_ID*/) => 'ref.' . $groupLinkFld/*LOCATION_GROUP_ID*/
+                            ($useCodes ? '=this.G.ID' : '=this.DL.' . $locationLinkFld/*LOCATION_ID*/) => 'ref.' . $groupLinkFld
+                            /*LOCATION_GROUP_ID*/
                         ),
                         'join_type' => 'inner'
                     )
@@ -854,7 +973,8 @@ abstract class Connector extends Entity\DataManager
 
     protected static function getConnectedEntitiesByCondition($locationPrimary, $linkType = 'id', $parameters = array())
     {
-        $useGroups = GroupTable::checkGroupUsage() && static::getUseGroups(); // check if we have groups in project and entity uses groups
+        $useGroups = GroupTable::checkGroupUsage() && static::getUseGroups(
+            ); // check if we have groups in project and entity uses groups
 
         $sql = static::getConnectedEntitiesQuery($locationPrimary, $linkType, $parameters);
         $res = static::queryPage($sql, $parameters['limit'], $parameters['offset']);
@@ -871,8 +991,13 @@ abstract class Connector extends Entity\DataManager
         $typeFld = static::getTypeField();
         $res = static::getList(array('filter' => array(static::getLinkField() => $entityPrimary)));
         while ($item = $res->fetch()) {
-            if (!in_array($item[static::getTypeField()], array(static::DB_GROUP_FLAG, static::DB_LOCATION_FLAG))) // strange record found. skip it
+            if (!in_array(
+                $item[static::getTypeField()],
+                array(static::DB_GROUP_FLAG, static::DB_LOCATION_FLAG)
+            )) // strange record found. skip it
+            {
                 continue;
+            }
 
             $existed[$item[static::getTypeField()]][$item[$linkFld]] = true;
         }
@@ -885,7 +1010,11 @@ abstract class Connector extends Entity\DataManager
      *
      *
      */
-    public static function getLinkStatusForMultipleNodes($nodeInfo = array(), $entityPrimary, $connectors = false) // rename to: getConnectionStatusForMultipleNodes
+    public static function getLinkStatusForMultipleNodes(
+        $nodeInfo = array(),
+        $entityPrimary,
+        $connectors = false
+    ) // rename to: getConnectionStatusForMultipleNodes
     {
         $nodeInfo = Assert::expectArray($nodeInfo, '$nodeInfo');
         $entityPrimary = Assert::expectStringNotNull($entityPrimary, '$entityPrimary');
@@ -901,8 +1030,9 @@ abstract class Connector extends Entity\DataManager
             return $result;
         }
 
-        if (!is_array($connectors))
+        if (!is_array($connectors)) {
             $connectors = static::getConnectedLocationsInfo($entityPrimary);
+        }
 
         foreach ($nodeInfo as $node) {
             $node = Assert::expectNotEmptyArray($node, '$nodeInfo[]');
@@ -924,8 +1054,9 @@ abstract class Connector extends Entity\DataManager
                 }
             }
 
-            if (!$result[$node['ID']])
+            if (!$result[$node['ID']]) {
                 $result[$node['ID']] = self::LSTAT_IN_NOT_CONNECTED_BRANCH;
+            }
         }
 
         return $result;
@@ -943,15 +1074,22 @@ abstract class Connector extends Entity\DataManager
      *
      * @return boolean
      */
-    public static function checkConnectionExists($entityPrimary, $locationPrimary, array $behaviour = array('LOCATION_LINK_TYPE' => 'ID'))
-    {
+    public static function checkConnectionExists(
+        $entityPrimary,
+        $locationPrimary,
+        array $behaviour = array('LOCATION_LINK_TYPE' => 'ID')
+    ) {
         $entityPrimary = Assert::expectStringNotNull($entityPrimary, '$entityPrimary');
         $locationPrimary = Assert::expectStringNotNull($locationPrimary, '$locationPrimary');
 
         if (!isset($behaviour['LOCATION_LINK_TYPE'])) {
             $behaviour['LOCATION_LINK_TYPE'] = 'ID';
         } else {
-            $behaviour['LOCATION_LINK_TYPE'] = Assert::expectEnumerationMember($behaviour['LOCATION_LINK_TYPE'], array('AUTO', 'ID', 'CODE'), '$behaviour[LOCATION_LINK_TYPE]');
+            $behaviour['LOCATION_LINK_TYPE'] = Assert::expectEnumerationMember(
+                $behaviour['LOCATION_LINK_TYPE'],
+                array('AUTO', 'ID', 'CODE'),
+                '$behaviour[LOCATION_LINK_TYPE]'
+            );
         }
 
         if (!static::checkLinkUsageAny($entityPrimary)) // if there are no links at all, connection virtually exists
@@ -974,7 +1112,10 @@ abstract class Connector extends Entity\DataManager
         )->fetch();
 
         if (!intval($node['ID'])) {
-            throw new \Bitrix\Sale\Location\Tree\NodeNotFoundException(false, array('INFO' => array($field => $locationPrimary)));
+            throw new \Bitrix\Sale\Location\Tree\NodeNotFoundException(
+                false,
+                array('INFO' => array($field => $locationPrimary))
+            );
         }
 
         $result = static::getLinkStatusForMultipleNodes(array($node), $entityPrimary);
@@ -987,17 +1128,23 @@ abstract class Connector extends Entity\DataManager
     {
         $result = array();
 
-        $res = static::getConnectedLocations($entityPrimary, array('select' => array(
-            'ID' => 'ID',
-            'LEFT_MARGIN' => 'LEFT_MARGIN',
-            'RIGHT_MARGIN' => 'RIGHT_MARGIN',
-            'LNAME' => 'NAME.NAME',
-        ),
-            'filter' => array('NAME.LANGUAGE_ID' => LANGUAGE_ID)
-        ), array('GET_LINKED_THROUGH_GROUPS' => true));
+        $res = static::getConnectedLocations(
+            $entityPrimary,
+            array(
+                'select' => array(
+                    'ID' => 'ID',
+                    'LEFT_MARGIN' => 'LEFT_MARGIN',
+                    'RIGHT_MARGIN' => 'RIGHT_MARGIN',
+                    'LNAME' => 'NAME.NAME',
+                ),
+                'filter' => array('NAME.LANGUAGE_ID' => LANGUAGE_ID)
+            ),
+            array('GET_LINKED_THROUGH_GROUPS' => true)
+        );
 
-        while ($item = $res->fetch())
+        while ($item = $res->fetch()) {
             $result[] = $item;
+        }
 
         return $result;
     }
@@ -1010,7 +1157,10 @@ abstract class Connector extends Entity\DataManager
     {
         $entityPrimary = Assert::expectStringNotNull($entityPrimary, '$entityPrimary');
 
-        return static::checkLinkUsage($entityPrimary, static::DB_LOCATION_FLAG) || static::checkLinkUsage($entityPrimary, static::DB_GROUP_FLAG);
+        return static::checkLinkUsage($entityPrimary, static::DB_LOCATION_FLAG) || static::checkLinkUsage(
+                $entityPrimary,
+                static::DB_GROUP_FLAG
+            );
     }
 
     /**
@@ -1032,38 +1182,46 @@ abstract class Connector extends Entity\DataManager
             '$linkType'
         );
 
-        if (!static::getUseLinkTracking())
-            return true; // force to true if link tracking is off
+        if (!static::getUseLinkTracking()) {
+            return true;
+        } // force to true if link tracking is off
 
         $useGroups = static::getUseGroups();
 
-        if (!$useGroups && $linkType == static::DB_GROUP_FLAG)
-            return false; // we know we dont use groups
+        if (!$useGroups && $linkType == static::DB_GROUP_FLAG) {
+            return false;
+        } // we know we dont use groups
 
         $usageFlags = static::getLinkUsageOptionValue();
 
-        if (isset($usageFlags[$entityPrimary][$linkType]))
+        if (isset($usageFlags[$entityPrimary][$linkType])) {
             return $usageFlags[$entityPrimary][$linkType];
+        }
 
         $strictFilter = array(
             static::getLinkField() => $entityPrimary
         );
-        if ($useGroups)
+        if ($useGroups) {
             $strictFilter['LOCATION_TYPE'] = static::DB_LOCATION_FLAG;
+        }
 
-        $usageFlags[$entityPrimary][static::DB_LOCATION_FLAG] = !!static::getList(array(
-            'limit' => 1,
-            'filter' => $strictFilter
-        ))->fetch();
+        $usageFlags[$entityPrimary][static::DB_LOCATION_FLAG] = !!static::getList(
+            array(
+                'limit' => 1,
+                'filter' => $strictFilter
+            )
+        )->fetch();
 
         if ($useGroups) {
-            $usageFlags[$entityPrimary][static::DB_GROUP_FLAG] = !!static::getList(array(
-                'limit' => 1,
-                'filter' => array(
-                    static::getLinkField() => $entityPrimary,
-                    'LOCATION_TYPE' => static::DB_GROUP_FLAG
+            $usageFlags[$entityPrimary][static::DB_GROUP_FLAG] = !!static::getList(
+                array(
+                    'limit' => 1,
+                    'filter' => array(
+                        static::getLinkField() => $entityPrimary,
+                        'LOCATION_TYPE' => static::DB_GROUP_FLAG
+                    )
                 )
-            ))->fetch();
+            )->fetch();
         }
 
         static::setLinkUsageOptionValue($usageFlags);
@@ -1077,11 +1235,13 @@ abstract class Connector extends Entity\DataManager
      */
     private static function setLinkUsage($entityPrimary, $linkType = self::DB_LOCATION_FLAG, $way = true)
     {
-        if (!static::getUseLinkTracking())
+        if (!static::getUseLinkTracking()) {
             return;
+        }
 
-        if (!in_array($linkType, array(static::DB_LOCATION_FLAG, static::DB_GROUP_FLAG)))
+        if (!in_array($linkType, array(static::DB_LOCATION_FLAG, static::DB_GROUP_FLAG))) {
             $linkType = static::DB_LOCATION_FLAG;
+        }
 
         $usageFlags = static::getLinkUsageOptionValue();
         $usageFlags[$entityPrimary][$linkType] = $way;
@@ -1095,29 +1255,34 @@ abstract class Connector extends Entity\DataManager
      */
     private static function resetLinkUsage($entityPrimary)
     {
-        if (!static::getUseLinkTracking())
+        if (!static::getUseLinkTracking()) {
             return;
+        }
 
         $useGroups = static::getUseGroups();
         $typeFld = static::getTypeField();
         $groupBy = array();
-        if ($useGroups)
+        if ($useGroups) {
             $groupBy[] = $typeFld;
+        }
 
-        $res = static::getList(array(
-            'filter' => array(
-                static::getLinkField() => $entityPrimary
-            ),
-            'group' => $groupBy
-        ));
+        $res = static::getList(
+            array(
+                'filter' => array(
+                    static::getLinkField() => $entityPrimary
+                ),
+                'group' => $groupBy
+            )
+        );
 
         $hasLocationLink = false;
         $hasGroupLink = false;
         while ($item = $res->fetch()) {
-            if (isset($item[$typeFld]) && $item[$typeFld] == static::DB_GROUP_FLAG)
+            if (isset($item[$typeFld]) && $item[$typeFld] == static::DB_GROUP_FLAG) {
                 $hasGroupLink = true;
-            else
+            } else {
                 $hasLocationLink = true;
+            }
         }
 
         static::setLinkUsage($entityPrimary, static::DB_LOCATION_FLAG, $hasLocationLink);
@@ -1131,8 +1296,11 @@ abstract class Connector extends Entity\DataManager
     private static function getLinkUsageOptionValue()
     {
         $usageFlagsOpt = Config\Option::get("sale", static::getLinkOptionName());
-        if (!strlen($usageFlagsOpt) || !is_array($usageFlags = unserialize($usageFlagsOpt)))
+        if (!mb_strlen($usageFlagsOpt) || !is_array(
+                $usageFlags = unserialize($usageFlagsOpt, ['allowed_classes' => false])
+            )) {
             $usageFlags = array();
+        }
 
         return $usageFlags;
     }
@@ -1169,20 +1337,35 @@ abstract class Connector extends Entity\DataManager
         $groupArgName = '$links[' . static::DB_GROUP_FLAG . ']';
 
         if (is_array($links[static::DB_LOCATION_FLAG])) {
-            if ($useCodes)
-                $links[static::DB_LOCATION_FLAG] = Assert::expectArrayOfUniqueStringNotNull($links[static::DB_LOCATION_FLAG], $locationArgName);
-            else
-                $links[static::DB_LOCATION_FLAG] = Assert::expectArrayOfUniqueIntegerNotNull($links[static::DB_LOCATION_FLAG], $locationArgName);
+            if ($useCodes) {
+                $links[static::DB_LOCATION_FLAG] = Assert::expectArrayOfUniqueStringNotNull(
+                    $links[static::DB_LOCATION_FLAG],
+                    $locationArgName
+                );
+            } else {
+                $links[static::DB_LOCATION_FLAG] = Assert::expectArrayOfUniqueIntegerNotNull(
+                    $links[static::DB_LOCATION_FLAG],
+                    $locationArgName
+                );
+            }
         }
 
         if (is_array($links[static::DB_GROUP_FLAG])) {
-            if (!$useGroups)
+            if (!$useGroups) {
                 Assert::announceNotSupported(Loc::getMessage('SALE_LOCATION_CONNECTOR_ENTITY_DOESNT_SUPPORT_GROUPS'));
+            }
 
-            if ($useCodes)
-                $links[static::DB_GROUP_FLAG] = Assert::expectArrayOfUniqueStringNotNull($links[static::DB_GROUP_FLAG], $groupArgName);
-            else
-                $links[static::DB_GROUP_FLAG] = Assert::expectArrayOfUniqueIntegerNotNull($links[static::DB_GROUP_FLAG], $groupArgName);
+            if ($useCodes) {
+                $links[static::DB_GROUP_FLAG] = Assert::expectArrayOfUniqueStringNotNull(
+                    $links[static::DB_GROUP_FLAG],
+                    $groupArgName
+                );
+            } else {
+                $links[static::DB_GROUP_FLAG] = Assert::expectArrayOfUniqueIntegerNotNull(
+                    $links[static::DB_GROUP_FLAG],
+                    $groupArgName
+                );
+            }
         }
 
         return $links;
@@ -1224,18 +1407,21 @@ abstract class Connector extends Entity\DataManager
             while ($item = $res->fetch()) {
                 $i++;
 
-                if ($i < $offset)
+                if ($i < $offset) {
                     continue;
+                }
 
-                if ($i >= $offset + $limit)
+                if ($i >= $offset + $limit) {
                     break;
+                }
 
                 $result[] = $item;
             }
 
             return new DB\ArrayResult($result);
-        } else
+        } else {
             return $res;
+        }
     }
 
     /**
@@ -1247,11 +1433,13 @@ abstract class Connector extends Entity\DataManager
      */
     public static function unionize($sqls)
     {
-        if (!is_array($sqls))
+        if (!is_array($sqls)) {
             return $sqls;
+        }
 
-        if (count($sqls) == 1)
+        if (count($sqls) == 1) {
             return array_shift($sqls);
+        }
 
         //foreach($sqls as &$sql)
         //	$sql = '('.$sql.')';
@@ -1264,8 +1452,9 @@ abstract class Connector extends Entity\DataManager
     // function accepts denormalized list of location IDs on input, then makes it normal and returns list of IDs or CODEs, depending on current entity settings
     public static function normalizeLocationList($denormalizedList = array())
     {
-        if (empty($denormalizedList))
+        if (empty($denormalizedList)) {
             return array();
+        }
 
         $useCodes = static::getUseCodes();
 
@@ -1273,12 +1462,14 @@ abstract class Connector extends Entity\DataManager
 
         $query = new Entity\Query('Bitrix\Sale\Location\Location');
 
-        $query->setSelect(array(
-            'PARENT_ID',
-            'ID',
-            'CODE',
-            'LNAME' => 'NAME.NAME' // tmp
-        ));
+        $query->setSelect(
+            array(
+                'PARENT_ID',
+                'ID',
+                'CODE',
+                'LNAME' => 'NAME.NAME' // tmp
+            )
+        );
 
         $query->setFilter(array('NAME.LANGUAGE_ID' => LANGUAGE_ID)); // tmp
         $query->setOrder(array('LEFT_MARGIN' => 'desc')); // important
@@ -1291,20 +1482,26 @@ abstract class Connector extends Entity\DataManager
         $selected = array();
         while ($item = $res->fetch()) {
             if (!isset($relations[$item['ID']]['name'])) // tmp
+            {
                 $relations[$item['ID']]['name'] = $item['LNAME'];
+            }
 
-            if (!isset($relations[$item['ID']]['total']))
+            if (!isset($relations[$item['ID']]['total'])) {
                 $relations[$item['ID']]['total'] = 0;
+            }
 
-            if (!isset($relations[$item['ID']]['selected']))
+            if (!isset($relations[$item['ID']]['selected'])) {
                 $relations[$item['ID']]['selected'] = 0;
+            }
 
             ///
             if ($item['PARENT_ID'] != 0) {
-                if (!isset($relations[$item['PARENT_ID']]['total']))
+                if (!isset($relations[$item['PARENT_ID']]['total'])) {
                     $relations[$item['PARENT_ID']]['total'] = 0;
-                if (!isset($relations[$item['PARENT_ID']]['selected']))
+                }
+                if (!isset($relations[$item['PARENT_ID']]['selected'])) {
                     $relations[$item['PARENT_ID']]['selected'] = 0;
+                }
             }
 
             $relations[$item['PARENT_ID']]['total'] += (1 + $relations[$item['ID']]['total']);
@@ -1324,16 +1521,21 @@ abstract class Connector extends Entity\DataManager
                 if ($rel['total'] == $rel['selected']) // selected N of N of all children, remove all those children
                 {
                     if (isset($selected[$id])) // item should be selected itself to remove its children
+                    {
                         $removeChildrenOf[$id] = true;
+                    }
                 } elseif ($rel['selected'] > 0) // selected M of N of children, where M > 0, so remove item itself
+                {
                     $removeItems[$id] = true;
+                }
             }
         }
 
         $normalized = array();
         foreach ($selected as $id => $item) {
-            if (!($item['PARENT_ID'] && $removeChildrenOf[$item['PARENT_ID']]) && !$removeItems[$item['ID']])
+            if (!($item['PARENT_ID'] && $removeChildrenOf[$item['PARENT_ID']]) && !$removeItems[$item['ID']]) {
                 $normalized[] = $item[$useCodes ? 'CODE' : 'ID'];
+            }
         }
 
         return $normalized;

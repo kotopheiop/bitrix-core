@@ -26,39 +26,55 @@ class UrlRewriteTable extends Entity\DataManager
     public static function getMap()
     {
         return array(
-            'ID' => new Entity\IntegerField('ID', array(
+            'ID' => new Entity\IntegerField(
+                'ID', array(
                 'primary' => true,
                 'autocomplete' => true,
                 'title' => 'ID'
-            )),
-            'SITE_ID' => new Entity\IntegerField('SITE_ID', array(
+            )
+            ),
+            'SITE_ID' => new Entity\IntegerField(
+                'SITE_ID', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_SITE_ID'),
                 'required' => true
-            )),
-            'RULE' => new Entity\StringField('RULE', array(
+            )
+            ),
+            'RULE' => new Entity\StringField(
+                'RULE', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_RULE'),
                 'required' => true
-            )),
-            'LANDING_ID' => new Entity\IntegerField('LANDING_ID', array(
+            )
+            ),
+            'LANDING_ID' => new Entity\IntegerField(
+                'LANDING_ID', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_LANDING_ID'),
                 'required' => true
-            )),
-            'CREATED_BY_ID' => new Entity\IntegerField('CREATED_BY_ID', array(
+            )
+            ),
+            'CREATED_BY_ID' => new Entity\IntegerField(
+                'CREATED_BY_ID', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_CREATED_BY_ID'),
                 'required' => true
-            )),
-            'MODIFIED_BY_ID' => new Entity\IntegerField('MODIFIED_BY_ID', array(
+            )
+            ),
+            'MODIFIED_BY_ID' => new Entity\IntegerField(
+                'MODIFIED_BY_ID', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_MODIFIED_BY_ID'),
                 'required' => true
-            )),
-            'DATE_CREATE' => new Entity\DatetimeField('DATE_CREATE', array(
+            )
+            ),
+            'DATE_CREATE' => new Entity\DatetimeField(
+                'DATE_CREATE', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_DATE_CREATE'),
                 'required' => true
-            )),
-            'DATE_MODIFY' => new Entity\DatetimeField('DATE_MODIFY', array(
+            )
+            ),
+            'DATE_MODIFY' => new Entity\DatetimeField(
+                'DATE_MODIFY', array(
                 'title' => Loc::getMessage('LANDING_TABLE_FIELD_DATE_MODIFY'),
                 'required' => true
-            ))
+            )
+            )
         );
     }
 

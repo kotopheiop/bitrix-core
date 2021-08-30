@@ -1,4 +1,5 @@
 <?
+
 /*
 ##############################################
 # Bitrix: SiteManager                        #
@@ -11,18 +12,19 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/fileman/prolog.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/fileman/classes/general/sticker.php");
 
-if (!$USER->CanDoOperation('fileman_view_file_structure') || !$USER->CanDoOperation('fileman_edit_existent_files') || !CSticker::CanDoOperation('sticker_view'))
+if (!$USER->CanDoOperation('fileman_view_file_structure') || !$USER->CanDoOperation(
+        'fileman_edit_existent_files'
+    ) || !CSticker::CanDoOperation('sticker_view')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/fileman/include.php");
 
-if (CModule::IncludeModule("compression"))
-    CCompress::Disable2048Spaces();
-
 $action = isset($_REQUEST['sticker_action']) ? $_REQUEST['sticker_action'] : false;
 
-if (!check_bitrix_sessid())
+if (!check_bitrix_sessid()) {
     die('<!--BX_STICKER_DUBLICATE_ACTION_REQUEST' . bitrix_sessid() . '-->');
+}
 
 CUtil::JSPostUnEscape();
 
@@ -30,15 +32,17 @@ if ($action == 'show_stickers' || $action == 'hide_stickers') {
     // Save user choise
     CSticker::SetBShowStickers($action == 'show_stickers');
     if ($_REQUEST['b_inited'] == "N") {
-        $Stickers = CSticker::GetList(array(
-            'arFilter' => array(
-                'USER_ID' => $USER->GetId(),
-                'PAGE_URL' => $_POST['pageUrl'],
-                'CLOSED' => 'N',
-                'DELETED' => 'N',
-                'SITE_ID' => $_REQUEST['site_id']
+        $Stickers = CSticker::GetList(
+            array(
+                'arFilter' => array(
+                    'USER_ID' => $USER->GetId(),
+                    'PAGE_URL' => $_POST['pageUrl'],
+                    'CLOSED' => 'N',
+                    'DELETED' => 'N',
+                    'SITE_ID' => $_REQUEST['site_id']
+                )
             )
-        ));
+        );
     }
     ?>
     <script>
@@ -51,26 +55,32 @@ if ($action == 'show_stickers' || $action == 'hide_stickers') {
 } elseif ($action == 'load_lhe') // Load light editor
 {
     $LHE = new CLightHTMLEditor;
-    $LHE->Show(array(
-        'id' => 'LHEBxStickers',
-        'width' => '230',
-        'height' => '100',
-        'inputId' => 'stickers_ed',
-        'content' => 'Text',
-        'bUseFileDialogs' => false,
-        'bUseMedialib' => false,
-        'toolbarConfig' => array(
-            'Bold', 'Italic', 'Underline', 'Strike', 'RemoveFormat',
-            'ForeColor',
-            'InsertOrderedList', 'InsertUnorderedList',
-            'CreateLink'
-            //,'Source'
-        ),
-        'jsObjName' => 'oLHESticker',
-        'bInitByJS' => true,
-        'BBCode' => true,
-        'bSaveOnBlur' => false,
-        'documentCSS' => "
+    $LHE->Show(
+        array(
+            'id' => 'LHEBxStickers',
+            'width' => '230',
+            'height' => '100',
+            'inputId' => 'stickers_ed',
+            'content' => 'Text',
+            'bUseFileDialogs' => false,
+            'bUseMedialib' => false,
+            'toolbarConfig' => array(
+                'Bold',
+                'Italic',
+                'Underline',
+                'Strike',
+                'RemoveFormat',
+                'ForeColor',
+                'InsertOrderedList',
+                'InsertUnorderedList',
+                'CreateLink'
+                //,'Source'
+            ),
+            'jsObjName' => 'oLHESticker',
+            'bInitByJS' => true,
+            'BBCode' => true,
+            'bSaveOnBlur' => false,
+            'documentCSS' => "
 body{padding:0 5px 0 20px !important; font-family:Verdana !important; font-size:12px !important;}
 .bxst-title{font-family:Verdana!important; font-size:11px !important; margin:0 0 0 -7px !important;line-height:18px!important; color: #727272!important;}
 body.bxst-yellow{background: #FFFCB3!important;}
@@ -85,69 +95,74 @@ body.bxst-blue .bxst-title{color: #6E737B!important;}
 body.bxst-red .bxst-title{color: #7E6F6F!important;}
 body.bxst-purple .bxst-title{color: #7B6D7C!important;}
 body.bxst-gray .bxst-title{color: #7A7A7A!important;}"
-    ));
+        )
+    );
 } elseif ($action == 'get_cur_date') {
     echo FormatDate("j F G:i", time() + CTimeZone::GetOffset());
 } elseif ($action == 'save_sticker') {
-    if (isset($_POST['marker']['adjust']))
+    if (isset($_POST['marker']['adjust'])) {
         $markerAdjust = serialize($_POST['marker']['adjust']);
-    else
+    } else {
         $markerAdjust = "";
+    }
 
-    $ID = CSticker::Edit(array(
-        'arFields' => array(
-            'ID' => intVal($_POST['id']),
-            'PAGE_URL' => $_POST['page_url'],
-            'PAGE_TITLE' => $_POST['page_title'],
-            'SITE_ID' => $_REQUEST['site_id'],
+    $ID = CSticker::Edit(
+        array(
+            'arFields' => array(
+                'ID' => intval($_POST['id']),
+                'PAGE_URL' => $_POST['page_url'],
+                'PAGE_TITLE' => $_POST['page_title'],
+                'SITE_ID' => $_REQUEST['site_id'],
 
-            'PERSONAL' => $_POST['personal'] == 'Y' ? 'Y' : 'N',
-            'CONTENT' => $_POST['content'],
-            'POS_TOP' => intVal($_POST['top']),
-            'POS_LEFT' => intVal($_POST['left']),
-            'WIDTH' => intVal($_POST['width']),
-            'HEIGHT' => intVal($_POST['height']),
+                'PERSONAL' => $_POST['personal'] == 'Y' ? 'Y' : 'N',
+                'CONTENT' => $_POST['content'],
+                'POS_TOP' => intval($_POST['top']),
+                'POS_LEFT' => intval($_POST['left']),
+                'WIDTH' => intval($_POST['width']),
+                'HEIGHT' => intval($_POST['height']),
 
-            'COLOR' => intVal($_POST['color']),
-            'COLLAPSED' => $_POST['collapsed'] == 'Y' ? 'Y' : 'N',
-            'COMPLETED' => $_POST['completed'] == 'Y' ? 'Y' : 'N',
-            'CLOSED' => $_POST['closed'] == 'Y' ? 'Y' : 'N',
-            'DELETED' => $_POST['deleted'] == 'Y' ? 'Y' : 'N',
+                'COLOR' => intval($_POST['color']),
+                'COLLAPSED' => $_POST['collapsed'] == 'Y' ? 'Y' : 'N',
+                'COMPLETED' => $_POST['completed'] == 'Y' ? 'Y' : 'N',
+                'CLOSED' => $_POST['closed'] == 'Y' ? 'Y' : 'N',
+                'DELETED' => $_POST['deleted'] == 'Y' ? 'Y' : 'N',
 
-            'MARKER_TOP' => isset($_POST['marker']['top']) ? intVal($_POST['marker']['top']) : 0,
-            'MARKER_LEFT' => isset($_POST['marker']['left']) ? intVal($_POST['marker']['left']) : 0,
-            'MARKER_WIDTH' => isset($_POST['marker']['width']) ? intVal($_POST['marker']['width']) : 0,
-            'MARKER_HEIGHT' => isset($_POST['marker']['height']) ? intVal($_POST['marker']['height']) : 0,
+                'MARKER_TOP' => isset($_POST['marker']['top']) ? intval($_POST['marker']['top']) : 0,
+                'MARKER_LEFT' => isset($_POST['marker']['left']) ? intval($_POST['marker']['left']) : 0,
+                'MARKER_WIDTH' => isset($_POST['marker']['width']) ? intval($_POST['marker']['width']) : 0,
+                'MARKER_HEIGHT' => isset($_POST['marker']['height']) ? intval($_POST['marker']['height']) : 0,
 
-            'MARKER_ADJUST' => $markerAdjust
+                'MARKER_ADJUST' => $markerAdjust
+            )
         )
-    ));
+    );
 
-    CUserOptions::SetOption('fileman', "stickers_last_color", intVal($_POST['color']));
+    CUserOptions::SetOption('fileman', "stickers_last_color", intval($_POST['color']));
 
     if ($ID > 0) {
         ?>
         <script>
-            window.__bxst_result['<?= intVal($_POST['reqid'])?>'] = <?= CUtil::PhpToJSObject(CSticker::GetById($ID))?>;
+            window.__bxst_result['<?= intval($_POST['reqid'])?>'] = <?= CUtil::PhpToJSObject(CSticker::GetById($ID))?>;
         </script>
         <?
     } else {
-
     }
 } elseif ($action == 'show_list') {
     if (isset($_REQUEST['list_action']) && in_array($_REQUEST['list_action'], array('del', 'restore', 'hide'))) {
         $arIds = array();
         for ($i = 0; $i < count($_REQUEST['list_ids']); $i++) {
-            if (intVal($_REQUEST['list_ids'][$i]) > 0)
-                $arIds[] = intVal($_REQUEST['list_ids'][$i]);
+            if (intval($_REQUEST['list_ids'][$i]) > 0) {
+                $arIds[] = intval($_REQUEST['list_ids'][$i]);
+            }
         }
 
-        if ($_REQUEST['list_action'] == 'del')
+        if ($_REQUEST['list_action'] == 'del') {
             $res = CSticker::Delete($arIds);
-        elseif ($_REQUEST['list_action'] == 'restore')
+        } elseif ($_REQUEST['list_action'] == 'restore') {
             $res = CSticker::SetHiden($arIds, false);
-        elseif ($_REQUEST['list_action'] == 'hide')
+        } elseif ($_REQUEST['list_action'] == 'hide') {
             $res = CSticker::SetHiden($arIds, true);
+        }
 
         if ($res !== true) {
             ?>
@@ -172,12 +187,15 @@ body.bxst-gray .bxst-title{color: #7A7A7A!important;}"
         if ($_REQUEST['type'] == 'current') {
             //$arFilter['CLOSED'] = $arFilterParams['status'] == 'closed' ? 'Y' : 'N';
             $arFilter['PAGE_URL'] = $curPage;
-        } else if ($_REQUEST['type'] == 'all') {
-            $arFilter['CLOSED'] = 'N';
+        } else {
+            if ($_REQUEST['type'] == 'all') {
+                $arFilter['CLOSED'] = 'N';
+            }
         }
 
-        if ($arFilterParams['colors'] != 'all')
+        if ($arFilterParams['colors'] != 'all') {
             $arFilter['COLORS'] = $arFilterParams['colors'];
+        }
     } else // We get filter params from request
     {
         $arFilterParams = array();
@@ -220,16 +238,19 @@ body.bxst-gray .bxst-title{color: #7A7A7A!important;}"
                 'CLOSED' => 'ASC',
                 'DATE_UPDATE' => 'DESC'
             )
-        ));
+        )
+    );
 
-    $naviSize = intVal($_REQUEST['navi_size']);
+    $naviSize = intval($_REQUEST['navi_size']);
     if (!$naviSize) {
         $naviSize = CUserOptions::GetOption('fileman', "stickers_navi_size", 5);
     } else {
-        if ($naviSize < 5)
+        if ($naviSize < 5) {
             $naviSize = 5;
-        if ($naviSize > 30)
+        }
+        if ($naviSize > 30) {
             $naviSize = 30;
+        }
         CUserOptions::SetOption('fileman', "stickers_navi_size", $naviSize);
     }
 
@@ -237,7 +258,7 @@ body.bxst-gray .bxst-title{color: #7A7A7A!important;}"
     $dbStickers->NavStart($naviSize);
 
     $curPageIds = array();
-    $count = intVal($dbStickers->SelectedRowsCount());
+    $count = intval($dbStickers->SelectedRowsCount());
 
     $arPages = CSticker::GetPagesList($_REQUEST['site_id']);
 
@@ -314,8 +335,9 @@ body.bxst-gray .bxst-title{color: #7A7A7A!important;}"
                                     <td>
                                         <div id="bxstl_fil_all_p_but" class="bxstl-but">
                                             <div class="bxstl-but-l"></div>
-                                            <div class="bxstl-but-c">
-                                                <span><?= GetMessage('FMST_LIST_ALL_PAGES') ?></span></div>
+                                            <div class="bxstl-but-c"><span><?= GetMessage(
+                                                        'FMST_LIST_ALL_PAGES'
+                                                    ) ?></span></div>
                                             <div class="bxstl-but-r"></div>
                                         </div>
                                     </td>
@@ -326,14 +348,29 @@ body.bxst-gray .bxst-title{color: #7A7A7A!important;}"
                     <td>
                         <div class="bxstl-fil-cont">
                             <select id="bxstl_fil_page_sel" style="width: 200px;">
-                                <option value="<?= htmlspecialcharsbx($curPage) ?>"> <?= GetMessage('FMST_LIST_CURRENT') ?> </option>
+                                <option value="<?= htmlspecialcharsbx($curPage) ?>"> <?= GetMessage(
+                                        'FMST_LIST_CURRENT'
+                                    ) ?> </option>
                                 <option value="all"> <?= GetMessage('FMST_LIST_ALL_PAGES') ?> </option>
                                 <? for ($i = 0, $l = count($arPages); $i < $l; $i++):
-                                    if ($arPages[$i]['PAGE_URL'] == $curPage)
+                                    if ($arPages[$i]['PAGE_URL'] == $curPage) {
                                         continue;
+                                    }
                                     ?>
                                     <option value="<?= str_replace('%20', ' ', $arPages[$i]['PAGE_URL']) ?>"
-                                            title="<?= htmlspecialcharsex($arPages[$i]['PAGE_TITLE'] . " - " . str_replace('%20', ' ', $arPages[$i]['PAGE_URL'])) ?>"><?= htmlspecialcharsex($arPages[$i]['PAGE_TITLE'] . " - " . str_replace('%20', ' ', $arPages[$i]['PAGE_URL'])) ?></option>
+                                            title="<?= htmlspecialcharsex(
+                                                $arPages[$i]['PAGE_TITLE'] . " - " . str_replace(
+                                                    '%20',
+                                                    ' ',
+                                                    $arPages[$i]['PAGE_URL']
+                                                )
+                                            ) ?>"><?= htmlspecialcharsex(
+                                            $arPages[$i]['PAGE_TITLE'] . " - " . str_replace(
+                                                '%20',
+                                                ' ',
+                                                $arPages[$i]['PAGE_URL']
+                                            )
+                                        ) ?></option>
                                 <? endfor; ?>
                             </select>
                         </div>
@@ -386,15 +423,16 @@ body.bxst-gray .bxst-title{color: #7A7A7A!important;}"
                         $html = strip_tags($arRes['CONTENT']);
                         $colorClass = isset($colorSchemes[$arRes['COLOR']]) ? $colorSchemes[$arRes['COLOR']] : $colorSchemes[0];
                         $date = CSticker::GetUsableDate($arRes['DATE_UPDATE2']);
-                        $url = $arRes['PAGE_URL'] . "?show_sticker=" . intVal($arRes['ID']);
+                        $url = $arRes['PAGE_URL'] . "?show_sticker=" . intval($arRes['ID']);
                         $bCompleted = $arRes['COMPLETED'] == 'Y';
-                        if ($arRes['PAGE_URL'] == $curPage)
+                        if ($arRes['PAGE_URL'] == $curPage) {
                             $curPageIds[] = $arRes['ID'];
+                        }
                         ?>
                         <tr class="bxst-list-item<? if ($arRes['CLOSED'] == "Y") {
                             echo " bxst-list-item-closed";
                         } ?>">
-                            <td class="bxst-id-cell"><a href="<?= $url ?>"><?= intVal($arRes['ID']) ?></a></td>
+                            <td class="bxst-id-cell"><a href="<?= $url ?>"><?= intval($arRes['ID']) ?></a></td>
                             <td><?= $html ?></td>
                             <td><?= htmlspecialcharsex($date) ?></td>
                             <td>
@@ -403,12 +441,16 @@ body.bxst-gray .bxst-title{color: #7A7A7A!important;}"
                             <td class="bxst-list-it-link<? if ($bCompleted) {
                                 echo ' bxstl-completed';
                             } ?>">
-                                <? if (strlen($arRes['PAGE_TITLE']) > 0): ?>
+                                <? if ($arRes['PAGE_TITLE'] <> ''): ?>
                                     <a href="<?= $url ?>"
-                                       title="<?= htmlspecialcharsex($arRes['PAGE_TITLE']) ?>"><?= htmlspecialcharsex($arRes['PAGE_TITLE']) ?></a>
+                                       title="<?= htmlspecialcharsex($arRes['PAGE_TITLE']) ?>"><?= htmlspecialcharsex(
+                                            $arRes['PAGE_TITLE']
+                                        ) ?></a>
                                 <? endif; ?>
                                 <a href="<?= $url ?>" class="bxst-list-it-path"
-                                   title="<?= htmlspecialcharsex($arRes['PAGE_URL']) ?>"><?= htmlspecialcharsex($arRes['PAGE_URL']) ?></a>
+                                   title="<?= htmlspecialcharsex($arRes['PAGE_URL']) ?>"><?= htmlspecialcharsex(
+                                        $arRes['PAGE_URL']
+                                    ) ?></a>
                                 <div class="bxst-sprite bxstl-compl-icon"
                                      title="<?= GetMessage('FMST_COMPLETE_LABEL') ?>"></div>
                             </td>
@@ -416,7 +458,7 @@ body.bxst-gray .bxst-title{color: #7A7A7A!important;}"
                                 <div class="bxstl-color-ind <?= $colorClass ?>"/>
                             </td>
                             <? if (!$bReadonly): ?>
-                                <td><input type="checkbox" name="bxstl_item" value="<?= intVal($arRes['ID']) ?>"
+                                <td><input type="checkbox" name="bxstl_item" value="<?= intval($arRes['ID']) ?>"
                                            onclick="window.oBXSticker.List.EnableActionBut(this.checked ? true : 'check');"/>
                                 </td>
                             <? endif; ?>

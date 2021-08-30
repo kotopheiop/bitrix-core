@@ -17,11 +17,13 @@ if ($psConverted == '') {
     CSaleExport::migrateToBusinessValues();
 }
 
-CAdminMessage::ShowMessage(array(
-    "DETAILS" => Loc::getMessage('SALE_CONVERTER_PS_DETAILS'),
-    "HTML" => true,
-    "TYPE" => 'OK',
-));
+CAdminMessage::ShowMessage(
+    array(
+        "DETAILS" => Loc::getMessage('SALE_CONVERTER_PS_DETAILS'),
+        "HTML" => true,
+        "TYPE" => 'OK',
+    )
+);
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_admin.php");
 ?>

@@ -36,7 +36,7 @@ final class LivefeedIndexCalendar extends Stepper
 
         $params = Option::get("calendar", "livefeedindexcalendar", "");
 
-        $params = ($params !== "" ? @unserialize($params) : array());
+        $params = ($params !== "" ? @unserialize($params, ['allowed_classes' => false]) : array());
         $params = (is_array($params) ? $params : array());
         if (empty($params)) {
             $params = array(
@@ -74,7 +74,7 @@ final class LivefeedIndexCalendar extends Stepper
         if ($params["count"] > 0) {
             $tmpUser = false;
             if (!isset($GLOBALS["USER"]) || !is_object($GLOBALS["USER"])) {
-                $tmpUser = True;
+                $tmpUser = true;
                 $GLOBALS["USER"] = new \CUser;
             }
 
@@ -91,7 +91,7 @@ final class LivefeedIndexCalendar extends Stepper
     public static function run()
     {
         $params = Option::get("calendar", "livefeedindexcalendar", false);
-        $params = ($params !== "" ? @unserialize($params) : array());
+        $params = ($params !== "" ? @unserialize($params, ['allowed_classes' => false]) : array());
 
         $found = false;
 
@@ -99,24 +99,28 @@ final class LivefeedIndexCalendar extends Stepper
             is_array($params)
             && intval($params["lastId"]) >= 0
         ) {
-            $res = LogTable::getList(array(
-                'order' => array('ID' => 'ASC'),
-                'filter' => array(
-                    '>ID' => $params["lastId"],
-                    '@EVENT_ID' => Integration\Socialnetwork\Log::getEventIdList(),
-                    '!SOURCE_ID' => false
-                ),
-                'select' => array('ID', 'EVENT_ID', 'SOURCE_ID'),
-                'offset' => 0,
-                'limit' => 100
-            ));
+            $res = LogTable::getList(
+                array(
+                    'order' => array('ID' => 'ASC'),
+                    'filter' => array(
+                        '>ID' => $params["lastId"],
+                        '@EVENT_ID' => Integration\Socialnetwork\Log::getEventIdList(),
+                        '!SOURCE_ID' => false
+                    ),
+                    'select' => array('ID', 'EVENT_ID', 'SOURCE_ID'),
+                    'offset' => 0,
+                    'limit' => 100
+                )
+            );
 
             while ($record = $res->fetch()) {
-                LogIndex::setIndex(array(
-                    'itemType' => LogIndexTable::ITEM_TYPE_LOG,
-                    'itemId' => $record['ID'],
-                    'fields' => $record
-                ));
+                LogIndex::setIndex(
+                    array(
+                        'itemType' => LogIndexTable::ITEM_TYPE_LOG,
+                        'itemId' => $record['ID'],
+                        'fields' => $record
+                    )
+                );
 
                 $params["lastId"] = $record['ID'];
                 $params["number"]++;

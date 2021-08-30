@@ -1,4 +1,5 @@
 <?
+
 /*
 ##############################################
 # Bitrix: SiteManager                        #
@@ -14,7 +15,9 @@ $bDemo = (CTicket::IsDemo()) ? "Y" : "N";
 $bAdmin = (CTicket::IsAdmin()) ? "Y" : "N";
 $bSupportTeam = (CTicket::IsSupportTeam()) ? "Y" : "N";
 
-if ($bAdmin != "Y" && $bSupportTeam != "Y" && $bDemo != "Y") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($bAdmin != "Y" && $bSupportTeam != "Y" && $bDemo != "Y") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 include($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/support/colors.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/img.php");
@@ -37,7 +40,10 @@ $arFilter = Array(
     "SOURCE" => $find_source_id,
 );
 $CHECK_RIGHTS = ($bDemo == "Y") ? "N" : "Y";
-$rsTickets = CTicket::GetList($by, $order, $arFilter, $is_filtered, $CHECK_RIGHTS, "N", "N");
+
+global $by, $order;
+
+$rsTickets = CTicket::GetList($by, $order, $arFilter, null, $CHECK_RIGHTS, "N", "N");
 $arrMess = array();
 $arrMess["2_m"] = 0;
 $arrMess["3_m"] = 0;
@@ -49,15 +55,19 @@ $arrMess["8_m"] = 0;
 $arrMess["9_m"] = 0;
 $arrMess["10_m"] = 0;
 while ($arTicket = $rsTickets->Fetch()) {
-    if (strlen($arTicket["DATE_CLOSE"]) > 0) {
+    if ($arTicket["DATE_CLOSE"] <> '') {
         $MC = $arTicket["MESSAGES"];
-        if ($MC <= 2) $arrMess["2_m"] += 1;
-        elseif ($MC >= 10) $arrMess["10_m"] += 1;
-        else $arrMess[$MC . "_m"] += 1;
+        if ($MC <= 2) {
+            $arrMess["2_m"] += 1;
+        } elseif ($MC >= 10) {
+            $arrMess["10_m"] += 1;
+        } else {
+            $arrMess[$MC . "_m"] += 1;
+        }
     }
 }
 $arr = array();
-while (list($key, $value) = each($arrMess)) {
+foreach ($arrMess as $key => $value) {
     $arr[] = array("COLOR" => $arrColor[$key], "COUNTER" => $arrMess[$key]);
 }
 // ������� �����������

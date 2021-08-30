@@ -21,7 +21,12 @@ final class ImportOneCSubordinateSale extends ImportOneCPackage
 {
     public static function configuration()
     {
-        ManagerImport::registerInstance(static::getShipmentEntityTypeId(), OneC\ImportSettings::getCurrent(), new OneC\CollisionShipment(), new CriterionShipment());
+        ManagerImport::registerInstance(
+            static::getShipmentEntityTypeId(),
+            OneC\ImportSettings::getCurrent(),
+            new OneC\CollisionShipment(),
+            new CriterionShipment()
+        );
 
         parent::configuration();
     }
@@ -112,7 +117,9 @@ final class ImportOneCSubordinateSale extends ImportOneCPackage
                                 if (count($shipmentList) > 0) {
                                     //��������� � �������� ��������
                                     $externalId = current($shipmentList)['ID_1C'];
-                                    $shipmentFields['ID_1C'] = strlen($externalId) <= 0 ? $documentOrder->getField('ID_1C') : $externalId;
+                                    $shipmentFields['ID_1C'] = $externalId == '' ? $documentOrder->getField(
+                                        'ID_1C'
+                                    ) : $externalId;
                                     $shipmentFields['ID'] = current($shipmentList)['ID'];
                                 } else {
                                     //������ ��������� ��������
@@ -183,14 +190,15 @@ final class ImportOneCSubordinateSale extends ImportOneCPackage
                                 //-������� ������ ������ �������� ���������� ���������� �� ���������� �����
 
                                 $documentPayment = new PaymentCardDocument();
-                                $documentPayment->setFields([
-                                    'ID_1C' => $documentOrder->getField('ID_1C'),
-                                    'AMOUNT' => abs($order->getPrice() - $paymentDocumentsPaidSum)
+                                $documentPayment->setFields(
+                                    [
+                                        'ID_1C' => $documentOrder->getField('ID_1C'),
+                                        'AMOUNT' => abs($order->getPrice() - $paymentDocumentsPaidSum)
 
-                                ]);
+                                    ]
+                                );
                                 $documents[] = $documentPayment;
                             }
-
                             //endregion
                         }
                     } else {
@@ -265,7 +273,9 @@ final class ImportOneCSubordinateSale extends ImportOneCPackage
                 foreach ($this->getPaymentDocuments($documents) as $document) {
                     if (
                         $payment->getSum() == (float)$document->getField('AMOUNT') &&
-                        $this->resolveEntityTypeId($payment) == DocumentType::resolveID($document->getField('OPERATION'))
+                        $this->resolveEntityTypeId($payment) == DocumentType::resolveID(
+                            $document->getField('OPERATION')
+                        )
                     ) {
                         $document->setField('ID', $payment->getId());
                         $paymentIsReplace = true;
@@ -325,8 +335,9 @@ final class ImportOneCSubordinateSale extends ImportOneCPackage
             }
         }
 
-        if ($result->isSuccess() && $paymentIsReplace)
+        if ($result->isSuccess() && $paymentIsReplace) {
             $result->setData(['IS_REPLACE' => true]);
+        }
 
         return $result;
     }
@@ -381,8 +392,9 @@ final class ImportOneCSubordinateSale extends ImportOneCPackage
         if (count($paymentCollection) > 0) {
             /** @var Payment $payment */
             foreach ($paymentCollection as $payment) {
-                if ($payment->isPaid())
+                if ($payment->isPaid()) {
                     return true;
+                }
             }
         }
         return false;

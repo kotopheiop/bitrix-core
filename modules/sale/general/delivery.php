@@ -1,8 +1,7 @@
-<?
+<?php
+
 IncludeModuleLangFile(__FILE__);
 
-use Bitrix\Main\DB;
-use Bitrix\Sale\Location;
 use Bitrix\Sale\Shipment;
 use Bitrix\Sale\Internals\DeliveryPaySystemTable;
 use Bitrix\Sale\Location\Admin\LocationHelper as Helper;
@@ -31,7 +30,11 @@ class CAllSaleDelivery
     {
         try {
             $class = self::CONN_ENTITY_NAME . 'Table';
-            return $field . " in (" . $class::getConnectedEntitiesQuery(IntVal($val), 'id', array('select' => array('ID'))) . ")";
+            return $field . " in (" . $class::getConnectedEntitiesQuery(
+                    intval($val),
+                    'id',
+                    array('select' => array('ID'))
+                ) . ")";
         } catch (Exception $e) {
             return false;
         }
@@ -47,10 +50,11 @@ class CAllSaleDelivery
      * @internal
      * @deprecated
      */
-    static function DoProcessOrder(&$arOrder, $deliveryCode, &$arErrors)
+    public static function DoProcessOrder(&$arOrder, $deliveryCode, &$arErrors)
     {
-        if (strlen($deliveryCode) <= 0 || $deliveryCode == '0')
+        if ($deliveryCode == '' || $deliveryCode == '0') {
             return false;
+        }
 
         if (CSaleDeliveryHandler::isSidNew($deliveryCode)) {
             $service = \Bitrix\Sale\Delivery\Services\Manager::getObjectById(
@@ -83,15 +87,20 @@ class CAllSaleDelivery
             $arOrder["DELIVERY_ID"] = $deliveryCode;
             $shipment = self::convertOrderOldToNew($arOrderTmpDel);
 
-            if (isset($arOrder["DELIVERY_EXTRA_SERVICES"]))
+            if (isset($arOrder["DELIVERY_EXTRA_SERVICES"])) {
                 $shipment->setExtraServices($arOrder["DELIVERY_EXTRA_SERVICES"]);
+            }
 
             $calculationResult = $service->calculate($shipment);
 
-            if (!$calculationResult->isSuccess())
-                $arErrors[] = array("CODE" => "CALCULATE", "TEXT" => implode("<br>\n", $calculationResult->getErrorMessages()));
-            else
+            if (!$calculationResult->isSuccess()) {
+                $arErrors[] = array(
+                    "CODE" => "CALCULATE",
+                    "TEXT" => implode("<br>\n", $calculationResult->getErrorMessages())
+                );
+            } else {
                 $arOrder["DELIVERY_PRICE"] = roundEx($calculationResult->getPrice(), SALE_VALUE_PRECISION);
+            }
         } else {
             $arErrors[] = array("CODE" => "CALCULATE", "TEXT" => GetMessage('SKGD_DELIVERY_NOT_FOUND'));
         }
@@ -100,25 +109,35 @@ class CAllSaleDelivery
     /**
      * @deprecated Use \Bitrix\Sale\Delivery\Services\Manager
      */
-    public static function DoLoadDelivery($location, $locationZip, $weight, $price, $currency, $siteId = null, $arShoppingCart = array())
-    {
+    public static function DoLoadDelivery(
+        $location,
+        $locationZip,
+        $weight,
+        $price,
+        $currency,
+        $siteId = null,
+        $arShoppingCart = array()
+    ) {
         $location = intval($location);
-        if ($location <= 0)
+        if ($location <= 0) {
             return null;
+        }
 
-        if ($siteId == null)
+        if ($siteId == null) {
             $siteId = SITE_ID;
+        }
 
         $arResult = array();
         $arMaxDimensions = array();
 
         foreach ($arShoppingCart as $arBasketItem) {
             if (!is_array($arBasketItem["DIMENSIONS"])) {
-                $arDim = unserialize($arBasketItem["~DIMENSIONS"]);
+                $arDim = unserialize($arBasketItem["~DIMENSIONS"], ['allowed_classes' => false]);
                 $arBasketItem["DIMENSIONS"] = $arDim;
                 unset($arBasketItem["~DIMENSIONS"]);
-            } else
+            } else {
                 $arDim = $arBasketItem["DIMENSIONS"];
+            }
 
             if (is_array($arDim)) {
                 $arMaxDimensions = CSaleDeliveryHelper::getMaxDimensions(
@@ -143,12 +162,14 @@ class CAllSaleDelivery
         $dbDeliveryServices = CSaleDeliveryHandler::GetList(array("SORT" => "ASC"), $arFilter);
 
         while ($arDeliveryService = $dbDeliveryServices->GetNext()) {
-            if (!is_array($arDeliveryService) || !is_array($arDeliveryService["PROFILES"]))
+            if (!is_array($arDeliveryService) || !is_array($arDeliveryService["PROFILES"])) {
                 continue;
+            }
 
             foreach ($arDeliveryService["PROFILES"] as $profileId => $arDeliveryProfile) {
-                if ($arDeliveryProfile["ACTIVE"] != "Y")
+                if ($arDeliveryProfile["ACTIVE"] != "Y") {
                     continue;
+                }
 
                 if (!array_key_exists($arDeliveryService["SID"], $arResult)) {
                     $arResult[$arDeliveryService["SID"]] = array(
@@ -182,7 +203,10 @@ class CAllSaleDelivery
                 );
 
                 if ($arDeliveryPriceTmp["RESULT"] != "ERROR") {
-                    $arResult[$arDeliveryService["SID"]]["PROFILES"][$profileId]["DELIVERY_PRICE"] = roundEx($arDeliveryPriceTmp["VALUE"], SALE_VALUE_PRECISION);
+                    $arResult[$arDeliveryService["SID"]]["PROFILES"][$profileId]["DELIVERY_PRICE"] = roundEx(
+                        $arDeliveryPriceTmp["VALUE"],
+                        SALE_VALUE_PRECISION
+                    );
                     $arResult[$arDeliveryService["SID"]]["PROFILES"][$profileId]["CURRENCY"] = $currency;
                 }
             }
@@ -207,16 +231,21 @@ class CAllSaleDelivery
             $arDelivery["FIELD_NAME"] = "DELIVERY_ID";
             if (intval($arDelivery["PERIOD_FROM"]) > 0 || intval($arDelivery["PERIOD_TO"]) > 0) {
                 $arDelivery["PERIOD_TEXT"] = GetMessage("SALE_DELIV_PERIOD");
-                if (intval($arDelivery["PERIOD_FROM"]) > 0)
-                    $arDelivery["PERIOD_TEXT"] .= " " . GetMessage("SOA_FROM") . " " . intval($arDelivery["PERIOD_FROM"]);
-                if (intval($arDelivery["PERIOD_TO"]) > 0)
+                if (intval($arDelivery["PERIOD_FROM"]) > 0) {
+                    $arDelivery["PERIOD_TEXT"] .= " " . GetMessage("SOA_FROM") . " " . intval(
+                            $arDelivery["PERIOD_FROM"]
+                        );
+                }
+                if (intval($arDelivery["PERIOD_TO"]) > 0) {
                     $arDelivery["PERIOD_TEXT"] .= " " . GetMessage("SOA_TO") . " " . intval($arDelivery["PERIOD_TO"]);
-                if ($arDelivery["PERIOD_TYPE"] == "H")
+                }
+                if ($arDelivery["PERIOD_TYPE"] == "H") {
                     $arDelivery["PERIOD_TEXT"] .= " " . GetMessage("SOA_HOUR") . " ";
-                elseif ($arDelivery["PERIOD_TYPE"] == "M")
+                } elseif ($arDelivery["PERIOD_TYPE"] == "M") {
                     $arDelivery["PERIOD_TEXT"] .= " " . GetMessage("SOA_MONTH") . " ";
-                else
+                } else {
                     $arDelivery["PERIOD_TEXT"] .= " " . GetMessage("SOA_DAY") . " ";
+                }
             }
             $arResult[] = $arDelivery;
         }
@@ -233,16 +262,16 @@ class CAllSaleDelivery
         return $res->Fetch();
     }
 
-
     /**
      * @param array $arFilter
      * @return bool|CDBResult
      * @deprecated
      */
-    function GetLocationList($arFilter = Array())
+    public static function GetLocationList($arFilter = Array())
     {
-        if (!empty($arFilter['DELIVERY_ID']))
+        if (!empty($arFilter['DELIVERY_ID'])) {
             $arFilter['DELIVERY_ID'] = self::getIdByCode($arFilter['DELIVERY_ID']);
+        }
 
         try {
             $locations = array();
@@ -251,8 +280,9 @@ class CAllSaleDelivery
             while ($loc = $res->Fetch()) {
                 $oldDeliveryId = self::getCodeById($loc['DELIVERY_ID']);
 
-                if (strlen($oldDeliveryId) <= 0)
+                if ($oldDeliveryId == '') {
                     continue;
+                }
 
                 $loc['DELIVERY_ID'] = $oldDeliveryId;
                 $locations[] = $loc;
@@ -274,29 +304,32 @@ class CAllSaleDelivery
     {
         global $DB;
 
-        if ((is_set($arFields, "NAME") || $ACTION == "ADD") && strlen($arFields["NAME"]) <= 0) {
+        if ((is_set($arFields, "NAME") || $ACTION == "ADD") && $arFields["NAME"] == '') {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SKGD_EMPTY_DELIVERY"), "ERROR_NO_NAME");
             return false;
         }
 
-        if ((is_set($arFields, "LID") || $ACTION == "ADD") && strlen($arFields["LID"]) <= 0) {
+        if ((is_set($arFields, "LID") || $ACTION == "ADD") && $arFields["LID"] == '') {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SKGD_EMPTY_SITE"), "ERROR_NO_SITE");
             return false;
         }
 
-        if (is_set($arFields, "ACTIVE") && $arFields["ACTIVE"] != "Y")
+        if (is_set($arFields, "ACTIVE") && $arFields["ACTIVE"] != "Y") {
             $arFields["ACTIVE"] = "N";
-        if ((is_set($arFields, "SORT") || $ACTION == "ADD") && IntVal($arFields["SORT"]) <= 0)
+        }
+        if ((is_set($arFields, "SORT") || $ACTION == "ADD") && intval($arFields["SORT"]) <= 0) {
             $arFields["SORT"] = 100;
+        }
 
         if (is_set($arFields, "PRICE")) {
             $arFields["PRICE"] = str_replace(",", ".", $arFields["PRICE"]);
             $arFields["PRICE"] = DoubleVal($arFields["PRICE"]);
         }
-        if ((is_set($arFields, "PRICE") || $ACTION == "ADD") && DoubleVal($arFields["PRICE"]) < 0)
+        if ((is_set($arFields, "PRICE") || $ACTION == "ADD") && DoubleVal($arFields["PRICE"]) < 0) {
             return false;
+        }
 
-        if ((is_set($arFields, "CURRENCY") || $ACTION == "ADD") && strlen($arFields["CURRENCY"]) <= 0) {
+        if ((is_set($arFields, "CURRENCY") || $ACTION == "ADD") && $arFields["CURRENCY"] == '') {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SKGD_EMPTY_CURRENCY"), "ERROR_NO_CURRENCY");
             return false;
         }
@@ -311,7 +344,9 @@ class CAllSaleDelivery
             $arFields["ORDER_PRICE_TO"] = DoubleVal($arFields["ORDER_PRICE_TO"]);
         }
 
-        if ((is_set($arFields, "LOCATIONS") || $ACTION == "ADD") && (!is_array($arFields["LOCATIONS"]) || count($arFields["LOCATIONS"]) <= 0)) {
+        if ((is_set($arFields, "LOCATIONS") || $ACTION == "ADD") && (!is_array($arFields["LOCATIONS"]) || count(
+                    $arFields["LOCATIONS"]
+                ) <= 0)) {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SKGD_EMPTY_LOCATION"), "ERROR_NO_LOCATIONS");
             return false;
         }
@@ -319,14 +354,20 @@ class CAllSaleDelivery
         if (is_set($arFields, "LID")) {
             $dbSite = CSite::GetByID($arFields["LID"]);
             if (!$dbSite->Fetch()) {
-                $GLOBALS["APPLICATION"]->ThrowException(str_replace("#ID#", $arFields["LID"], GetMessage("SKGD_NO_SITE")), "ERROR_NO_SITE");
+                $GLOBALS["APPLICATION"]->ThrowException(
+                    str_replace("#ID#", $arFields["LID"], GetMessage("SKGD_NO_SITE")),
+                    "ERROR_NO_SITE"
+                );
                 return false;
             }
         }
 
         if (is_set($arFields, "CURRENCY")) {
             if (!($arCurrency = CCurrency::GetByID($arFields["CURRENCY"]))) {
-                $GLOBALS["APPLICATION"]->ThrowException(str_replace("#ID#", $arFields["CURRENCY"], GetMessage("SKGD_NO_CURRENCY")), "ERROR_NO_CURRENCY");
+                $GLOBALS["APPLICATION"]->ThrowException(
+                    str_replace("#ID#", $arFields["CURRENCY"], GetMessage("SKGD_NO_CURRENCY")),
+                    "ERROR_NO_CURRENCY"
+                );
                 return false;
             }
         }
@@ -334,12 +375,13 @@ class CAllSaleDelivery
         if (is_set($arFields, "LOCATIONS")) {
             $countField = count($arFields["LOCATIONS"]);
             for ($i = 0; $i < $countField; $i++) {
-                if ($arFields["LOCATIONS"][$i]["LOCATION_TYPE"] != "G")
+                if ($arFields["LOCATIONS"][$i]["LOCATION_TYPE"] != "G") {
                     $arFields["LOCATIONS"][$i]["LOCATION_TYPE"] = "L";
+                }
             }
         }
 
-        return True;
+        return true;
     }
 
     /**
@@ -361,20 +403,24 @@ class CAllSaleDelivery
      */
     public static function Update($oldId, $arFields, $arOptions = array())
     {
-        if (strlen($oldId) <= 0)
+        if ($oldId == '') {
             return false;
+        }
 
-        $dbRes = Bitrix\Sale\Delivery\Services\Table::getList(array(
-            'filter' => array(
-                "CODE" => $oldId,
-                "=CLASS_NAME" => '\Bitrix\Sale\Delivery\Services\Configurable'
+        $dbRes = Bitrix\Sale\Delivery\Services\Table::getList(
+            array(
+                'filter' => array(
+                    "CODE" => $oldId,
+                    "=CLASS_NAME" => '\Bitrix\Sale\Delivery\Services\Configurable'
+                )
             )
-        ));
+        );
 
         $oldData = $dbRes->fetch();
 
-        if (!$oldData)
+        if (!$oldData) {
             return false;
+        }
 
         $newId = $oldData["ID"];
 
@@ -399,15 +445,23 @@ class CAllSaleDelivery
 
             $res = \Bitrix\Sale\Delivery\Services\Manager::update($newId, $fields);
 
-            if (!$res->isSuccess())
+            if (!$res->isSuccess()) {
                 return false;
+            }
         }
 
-        if (is_set($arFields, "LOCATIONS"))
-            Helper::resetLocationsForEntity($newId, $arFields['LOCATIONS'], self::CONN_ENTITY_NAME, !!$arOptions['EXPECT_LOCATION_CODES']);
+        if (is_set($arFields, "LOCATIONS")) {
+            Helper::resetLocationsForEntity(
+                $newId,
+                $arFields['LOCATIONS'],
+                self::CONN_ENTITY_NAME,
+                !!$arOptions['EXPECT_LOCATION_CODES']
+            );
+        }
 
-        if (is_set($arFields, "PAY_SYSTEM"))
+        if (is_set($arFields, "PAY_SYSTEM")) {
             CSaleDelivery::UpdateDeliveryPay($newId, $arFields["PAY_SYSTEM"]);
+        }
 
         if (isset($arFields["LID"])) {
             $rfields = array(
@@ -419,21 +473,24 @@ class CAllSaleDelivery
                 )
             );
 
-            $rstrRes = \Bitrix\Sale\Internals\ServiceRestrictionTable::getList(array(
-                'filter' => array(
-                    "=SERVICE_ID" => $newId,
-                    "=SERVICE_TYPE" => \Bitrix\Sale\Services\Base\RestrictionManager::SERVICE_TYPE_SHIPMENT,
-                    "=CLASS_NAME" => '\Bitrix\Sale\Delivery\Restrictions\BySite'
+            $rstrRes = \Bitrix\Sale\Internals\ServiceRestrictionTable::getList(
+                array(
+                    'filter' => array(
+                        "=SERVICE_ID" => $newId,
+                        "=SERVICE_TYPE" => \Bitrix\Sale\Services\Base\RestrictionManager::SERVICE_TYPE_SHIPMENT,
+                        "=CLASS_NAME" => '\Bitrix\Sale\Delivery\Restrictions\BySite'
+                    )
                 )
-            ));
+            );
 
-            if ($restrict = $rstrRes->fetch())
+            if ($restrict = $rstrRes->fetch()) {
                 $rres = \Bitrix\Sale\Internals\ServiceRestrictionTable::update($restrict["ID"], $rfields);
-            else
+            } else {
                 $rres = \Bitrix\Sale\Internals\ServiceRestrictionTable::add($rfields);
+            }
         }
 
-        if (isset($arFields["LID"]) && strlen($arFields["LID"]) > 0) {
+        if (isset($arFields["LID"]) && $arFields["LID"] <> '') {
             $rfields = array(
                 "SERVICE_ID" => $newId,
                 "SERVICE_TYPE" => \Bitrix\Sale\Services\Base\RestrictionManager::SERVICE_TYPE_SHIPMENT,
@@ -444,18 +501,21 @@ class CAllSaleDelivery
                 )
             );
 
-            $rstrRes = \Bitrix\Sale\Internals\ServiceRestrictionTable::getList(array(
-                'filter' => array(
-                    "=SERVICE_ID" => $newId,
-                    "=SERVICE_TYPE" => \Bitrix\Sale\Services\Base\RestrictionManager::SERVICE_TYPE_SHIPMENT,
-                    "=CLASS_NAME" => '\Bitrix\Sale\Delivery\Restrictions\BySite'
+            $rstrRes = \Bitrix\Sale\Internals\ServiceRestrictionTable::getList(
+                array(
+                    'filter' => array(
+                        "=SERVICE_ID" => $newId,
+                        "=SERVICE_TYPE" => \Bitrix\Sale\Services\Base\RestrictionManager::SERVICE_TYPE_SHIPMENT,
+                        "=CLASS_NAME" => '\Bitrix\Sale\Delivery\Restrictions\BySite'
+                    )
                 )
-            ));
+            );
 
-            if ($restrict = $rstrRes->fetch())
+            if ($restrict = $rstrRes->fetch()) {
                 $rres = \Bitrix\Sale\Internals\ServiceRestrictionTable::update($restrict["ID"], $rfields);
-            else
+            } else {
                 $rres = \Bitrix\Sale\Internals\ServiceRestrictionTable::add($rfields);
+            }
         }
 
         if (isset($arFields["WEIGHT_FROM"]) || isset($arFields["WEIGHT_TO"])) {
@@ -469,30 +529,33 @@ class CAllSaleDelivery
                 )
             );
 
-            $rstrRes = \Bitrix\Sale\Internals\ServiceRestrictionTable::getList(array(
-                'filter' => array(
-                    "=SERVICE_ID" => $newId,
-                    "=SERVICE_TYPE" => \Bitrix\Sale\Services\Base\RestrictionManager::SERVICE_TYPE_SHIPMENT,
-                    "=CLASS_NAME" => '\Bitrix\Sale\Delivery\Restrictions\ByWeight'
+            $rstrRes = \Bitrix\Sale\Internals\ServiceRestrictionTable::getList(
+                array(
+                    'filter' => array(
+                        "=SERVICE_ID" => $newId,
+                        "=SERVICE_TYPE" => \Bitrix\Sale\Services\Base\RestrictionManager::SERVICE_TYPE_SHIPMENT,
+                        "=CLASS_NAME" => '\Bitrix\Sale\Delivery\Restrictions\ByWeight'
+                    )
                 )
-            ));
+            );
 
             if ($restrict = $rstrRes->fetch()) {
                 if (floatval($arFields["WEIGHT_FROM"]) <= 0 && floatval($arFields["WEIGHT_TO"]) <= 0) {
                     $rres = \Bitrix\Sale\Internals\ServiceRestrictionTable::delete($restrict["ID"]);
                 } else {
-                    if (!isset($arFields["WEIGHT_FROM"]))
+                    if (!isset($arFields["WEIGHT_FROM"])) {
                         $rfields["PARAMS"]["MIN_WEIGHT"] = $restrict["PARAMS"]["MIN_WEIGHT"];
+                    }
 
-                    if (!isset($arFields["WEIGHT_TO"]))
+                    if (!isset($arFields["WEIGHT_TO"])) {
                         $rfields["PARAMS"]["MAX_WEIGHT"] = $restrict["PARAMS"]["MAX_WEIGHT"];
+                    }
 
                     $rres = \Bitrix\Sale\Internals\ServiceRestrictionTable::update($restrict["ID"], $rfields);
                 }
             } else {
                 $rres = \Bitrix\Sale\Internals\ServiceRestrictionTable::add($rfields);
             }
-
         }
 
         if (isset($arFields["ORDER_PRICE_FROM"]) || isset($arFields["ORDER_PRICE_TO"]) || isset($arFields["ORDER_CURRENCY"])) {
@@ -507,26 +570,33 @@ class CAllSaleDelivery
                 )
             );
 
-            $rstrRes = \Bitrix\Sale\Internals\ServiceRestrictionTable::getList(array(
-                'filter' => array(
-                    "=SERVICE_ID" => $newId,
-                    "=SERVICE_TYPE" => \Bitrix\Sale\Services\Base\RestrictionManager::SERVICE_TYPE_SHIPMENT,
-                    "=CLASS_NAME" => '\Bitrix\Sale\Delivery\Restrictions\ByPrice'
+            $rstrRes = \Bitrix\Sale\Internals\ServiceRestrictionTable::getList(
+                array(
+                    'filter' => array(
+                        "=SERVICE_ID" => $newId,
+                        "=SERVICE_TYPE" => \Bitrix\Sale\Services\Base\RestrictionManager::SERVICE_TYPE_SHIPMENT,
+                        "=CLASS_NAME" => '\Bitrix\Sale\Delivery\Restrictions\ByPrice'
+                    )
                 )
-            ));
+            );
 
             if ($restrict = $rstrRes->fetch()) {
-                if (floatval($arFields["ORDER_PRICE_FROM"]) <= 0 && floatval($arFields["ORDER_PRICE_TO"]) <= 0 && strlen($arFields["ORDER_CURRENCY"]) <= 0) {
+                if (floatval($arFields["ORDER_PRICE_FROM"]) <= 0 && floatval(
+                        $arFields["ORDER_PRICE_TO"]
+                    ) <= 0 && $arFields["ORDER_CURRENCY"] == '') {
                     $rres = \Bitrix\Sale\Internals\ServiceRestrictionTable::delete($restrict["ID"]);
                 } else {
-                    if (!isset($arFields["ORDER_PRICE_FROM"]))
+                    if (!isset($arFields["ORDER_PRICE_FROM"])) {
                         $rfields["PARAMS"]["MIN_PRICE"] = $restrict["PARAMS"]["MIN_PRICE"];
+                    }
 
-                    if (!isset($arFields["ORDER_PRICE_TO"]))
+                    if (!isset($arFields["ORDER_PRICE_TO"])) {
                         $rfields["PARAMS"]["MAX_PRICE"] = $restrict["PARAMS"]["MAX_PRICE"];
+                    }
 
-                    if (!isset($arFields["ORDER_CURRENCY"]))
+                    if (!isset($arFields["ORDER_CURRENCY"])) {
                         $rfields["PARAMS"]["CURRENCY"] = $restrict["PARAMS"]["CURRENCY"];
+                    }
 
                     $rres = \Bitrix\Sale\Internals\ServiceRestrictionTable::update($restrict["ID"], $rfields);
                 }
@@ -536,10 +606,11 @@ class CAllSaleDelivery
         }
 
         if (isset($arFields["STORE"])) {
-            $stores = unserialize($arFields["STORE"]);
+            $stores = unserialize($arFields["STORE"], ['allowed_classes' => false]);
 
-            if ($stores)
+            if ($stores) {
                 \Bitrix\Sale\Delivery\ExtraServices\Manager::saveStores($newId, $stores);
+            }
         }
 
 
@@ -563,7 +634,6 @@ class CAllSaleDelivery
         return new CDBResult($res);
     }
 
-
     /**
      * The function select delivery and paysystem
      *
@@ -573,8 +643,9 @@ class CAllSaleDelivery
      */
     public static function GetDelivery2PaySystem($arFilter = array())
     {
-        if (isset($arFilter["DELIVERY_ID"]))
+        if (isset($arFilter["DELIVERY_ID"])) {
             $arFilter["DELIVERY_ID"] = self::getIdByCode($arFilter["DELIVERY_ID"]);
+        }
 
         return CSaleDelivery2PaySystem::GetList(
             $arFilter,
@@ -591,15 +662,17 @@ class CAllSaleDelivery
      * @return int $ID - code delivery
      * @deprecated
      */
-    static function UpdateDeliveryPay($ID, $arFields)
+    public static function UpdateDeliveryPay($ID, $arFields)
     {
         $ID = trim($ID);
 
-        if (strlen($ID) <= 0 || !is_array($arFields) || empty($arFields))
+        if ($ID == '' || !is_array($arFields) || empty($arFields)) {
             return false;
+        }
 
-        if ($arFields[0] == "")
+        if ($arFields[0] == "") {
             unset($arFields[0]);
+        }
 
         return CSaleDelivery2PaySystem::UpdateDelivery($ID, array("PAYSYSTEM_ID" => $arFields));
     }
@@ -613,9 +686,11 @@ class CAllSaleDelivery
     {
         $result = false;
 
-        foreach ($filter as $fName => $fValue)
-            if (preg_replace('/[^A-Z_]/', '', $fName) == $fieldName)
+        foreach ($filter as $fName => $fValue) {
+            if (preg_replace('/[^A-Z_]/', '', $fName) == $fieldName) {
                 return $fValue;
+            }
+        }
 
         return $result;
     }
@@ -640,9 +715,11 @@ class CAllSaleDelivery
     {
         $result = false;
 
-        foreach ($filter as $key => $value)
-            if (preg_replace('/[^A-Z_]/', '', $key) == $fieldName)
+        foreach ($filter as $key => $value) {
+            if (preg_replace('/[^A-Z_]/', '', $key) == $fieldName) {
                 return true;
+            }
+        }
 
         return $result;
     }
@@ -663,8 +740,9 @@ class CAllSaleDelivery
      */
     protected static function convertFilterOldToNew(array $filter = array())
     {
-        if (empty($filter))
+        if (empty($filter)) {
             return array();
+        }
 
         $result = array();
 
@@ -673,9 +751,11 @@ class CAllSaleDelivery
             unset($filter["ID"]);
         }
 
-        foreach ($filter as $fieldName => $fieldValue)
-            if (self::hasNewServiceField($fieldName))
+        foreach ($filter as $fieldName => $fieldValue) {
+            if (self::hasNewServiceField($fieldName)) {
                 $result[$fieldName] = $fieldValue;
+            }
+        }
 
         return $result;
     }
@@ -686,15 +766,18 @@ class CAllSaleDelivery
      */
     protected static function convertGroupOldToNew($groupBy)
     {
-        if (!is_array($groupBy) || empty($groupBy))
+        if (!is_array($groupBy) || empty($groupBy)) {
             return array();
+        }
 
         $result = array();
         $serviceFields = Bitrix\Sale\Delivery\Services\Table::getMap();
 
-        foreach ($groupBy as $group)
-            if (array_key_exists($group, $serviceFields))
+        foreach ($groupBy as $group) {
+            if (array_key_exists($group, $serviceFields)) {
                 $result[] = $group;
+            }
+        }
 
         return $result;
     }
@@ -705,21 +788,26 @@ class CAllSaleDelivery
      */
     protected static function convertSelectOldToNew(array $selectFields = array())
     {
-        if (empty($selectFields))
+        if (empty($selectFields)) {
             return array();
+        }
 
-        if (in_array('*', $selectFields))
+        if (in_array('*', $selectFields)) {
             return array('*');
+        }
 
         $result = array();
         $serviceFields = Bitrix\Sale\Delivery\Services\Table::getMap();
 
-        foreach ($selectFields as $select)
-            if (array_key_exists($select, $serviceFields))
+        foreach ($selectFields as $select) {
+            if (array_key_exists($select, $serviceFields)) {
                 $result[] = $select;
+            }
+        }
 
-        if (in_array('ID', $selectFields))
+        if (in_array('ID', $selectFields)) {
             $result[] = "CODE";
+        }
 
         return $result;
     }
@@ -751,19 +839,25 @@ class CAllSaleDelivery
                 $fieldInFilter = self::isFieldInFilter2("LID", $filter);
                 $value = self::getFilterValue("LID", $filter);
 
-                if (!$fieldInFilter)
+                if (!$fieldInFilter) {
                     break;
+                }
 
-                if (is_array($restriction["PARAMS"]["SITE_ID"]))
+                if (is_array($restriction["PARAMS"]["SITE_ID"])) {
                     $result = in_array($value, $restriction["PARAMS"]["SITE_ID"]);
-                else
+                } else {
                     $result = ($value == $restriction["PARAMS"]["SITE_ID"]);
+                }
 
                 break;
 
             case '\Bitrix\Sale\Delivery\Restrictions\ByWeight':
-                $result = !(self::isFieldInFilter2("WEIGHT_FROM", $filter) && floatval(self::getFilterValue("WEIGHT_FROM", $filter)) < floatval($restriction["PARAMS"]["MIN_WEIGHT"]));
-                $result = $result && !(self::isFieldInFilter2("WEIGHT_TO", $filter) && floatval(self::getFilterValue("WEIGHT_TO", $filter)) > floatval($restriction["PARAMS"]["MAX_WEIGHT"]));
+                $result = !(self::isFieldInFilter2("WEIGHT_FROM", $filter) && floatval(
+                        self::getFilterValue("WEIGHT_FROM", $filter)
+                    ) < floatval($restriction["PARAMS"]["MIN_WEIGHT"]));
+                $result = $result && !(self::isFieldInFilter2("WEIGHT_TO", $filter) && floatval(
+                            self::getFilterValue("WEIGHT_TO", $filter)
+                        ) > floatval($restriction["PARAMS"]["MAX_WEIGHT"]));
                 break;
 
             case '\Bitrix\Sale\Delivery\Restrictions\ByPrice':
@@ -775,8 +869,9 @@ class CAllSaleDelivery
                 if ($fieldInFilter && $value > 0 && floatval($restriction["PARAMS"]["MIN_PRICE"]) > 0) {
                     $result = floatval($value) > floatval($restriction["PARAMS"]["MIN_PRICE"]);
 
-                    if (!$result)
+                    if (!$result) {
                         break;
+                    }
                 }
 
                 $fieldInFilter = self::isFieldInFilter2("ORDER_PRICE_TO", $filter);
@@ -786,18 +881,20 @@ class CAllSaleDelivery
                 if ($fieldInFilter && $value > 0 && floatval($restriction["PARAMS"]["MAX_PRICE"]) > 0) {
                     $result = floatval($value) < floatval($restriction["PARAMS"]["MAX_PRICE"]);
 
-                    if (!$result)
+                    if (!$result) {
                         break;
+                    }
                 }
 
                 $fieldInFilter = self::isFieldInFilter2("ORDER_CURRENCY", $filter);
                 $value = self::getFilterValue("ORDER_CURRENCY", $filter);
 
-                if ($fieldInFilter && strlen($value) > 0 && strlen($restriction["PARAMS"]["CURRENCY"]) > 0) {
+                if ($fieldInFilter && $value <> '' && $restriction["PARAMS"]["CURRENCY"] <> '') {
                     $result = ($value == $restriction["PARAMS"]["CURRENCY"]);
 
-                    if (!$result)
+                    if (!$result) {
                         break;
+                    }
                 }
 
                 break;
@@ -806,7 +903,7 @@ class CAllSaleDelivery
                 $fieldInFilter = self::isFieldInFilter2("LOCATION", $filter);
                 $value = self::getFilterValue("LOCATION", $filter);
 
-                if ($fieldInFilter && strlen($value) > 0 && $restriction['SERVICE_ID'] > 0) {
+                if ($fieldInFilter && $value <> '' && $restriction['SERVICE_ID'] > 0) {
                     try {
                         $result = \Bitrix\Sale\Delivery\DeliveryLocationTable::checkConnectionExists(
                             intval($restriction['SERVICE_ID']),
@@ -819,8 +916,9 @@ class CAllSaleDelivery
                         $result = false;
                     }
 
-                    if ($result)
+                    if ($result) {
                         return true;
+                    }
 
                     try {
                         return \Bitrix\Sale\Delivery\DeliveryLocationTable::checkConnectionExists(
@@ -872,24 +970,29 @@ class CAllSaleDelivery
 
             case '\Bitrix\Sale\Delivery\Restrictions\ByWeight':
 
-                if (self::isFieldSelected("WEIGHT_FROM", $selectedFields))
+                if (self::isFieldSelected("WEIGHT_FROM", $selectedFields)) {
                     $fields["WEIGHT_FROM"] = $restriction["PARAMS"]["MIN_WEIGHT"];
+                }
 
-                if (self::isFieldSelected("WEIGHT_TO", $selectedFields))
+                if (self::isFieldSelected("WEIGHT_TO", $selectedFields)) {
                     $fields["WEIGHT_TO"] = $restriction["PARAMS"]["MAX_WEIGHT"];
+                }
 
                 break;
 
             case '\Bitrix\Sale\Delivery\Restrictions\ByPrice':
 
-                if (self::isFieldSelected("ORDER_PRICE_FROM", $selectedFields))
+                if (self::isFieldSelected("ORDER_PRICE_FROM", $selectedFields)) {
                     $fields["ORDER_PRICE_FROM"] = $restriction["PARAMS"]["MIN_PRICE"];
+                }
 
-                if (self::isFieldSelected("ORDER_PRICE_TO", $selectedFields))
+                if (self::isFieldSelected("ORDER_PRICE_TO", $selectedFields)) {
                     $fields["ORDER_PRICE_TO"] = $restriction["PARAMS"]["MAX_PRICE"];
+                }
 
-                if (self::isFieldSelected("ORDER_CURRENCY", $selectedFields))
+                if (self::isFieldSelected("ORDER_CURRENCY", $selectedFields)) {
                     $fields["ORDER_CURRENCY"] = $restriction["PARAMS"]["CURRENCY"];
+                }
 
                 break;
 
@@ -897,8 +1000,9 @@ class CAllSaleDelivery
                 break;
         }
 
-        if (!empty($fields))
+        if (!empty($fields)) {
             $service = array_merge($service, $fields);
+        }
 
         return $service;
     }
@@ -913,10 +1017,16 @@ class CAllSaleDelivery
      * @throws \Bitrix\Main\ArgumentException
      * @deprecated
      */
-    public static function GetList($arOrder = array("SORT" => "ASC", "NAME" => "ASC"), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array('*'))
-    {
-        if (empty($arSelectFields))
+    public static function GetList(
+        $arOrder = array("SORT" => "ASC", "NAME" => "ASC"),
+        $arFilter = array(),
+        $arGroupBy = false,
+        $arNavStartParams = false,
+        $arSelectFields = array('*')
+    ) {
+        if (empty($arSelectFields)) {
             $arSelectFields = array('*');
+        }
 
         $params = array(
             'order' => self::convertFilterOldToNew($arOrder),
@@ -930,49 +1040,74 @@ class CAllSaleDelivery
         $dbRes = \Bitrix\Sale\Delivery\Services\Table::getList($params);
 
         if (isset($arFilter["WEIGHT"]) && DoubleVal($arFilter["WEIGHT"]) > 0) {
-            if (!isset($arFilter["WEIGHT_FROM"]) || floatval($arFilter["WEIGHT"]) > floatval($arFilter["WEIGHT_FROM"]))
+            if (!isset($arFilter["WEIGHT_FROM"]) || floatval($arFilter["WEIGHT"]) > floatval(
+                    $arFilter["WEIGHT_FROM"]
+                )) {
                 $arFilter["+<=WEIGHT_FROM"] = $arFilter["WEIGHT"];
-            if (!isset($arFilter["WEIGHT_TO"]) || floatval($arFilter["WEIGHT"]) < floatval($arFilter["WEIGHT_TO"]))
+            }
+            if (!isset($arFilter["WEIGHT_TO"]) || floatval($arFilter["WEIGHT"]) < floatval($arFilter["WEIGHT_TO"])) {
                 $arFilter["+>=WEIGHT_TO"] = $arFilter["WEIGHT"];
+            }
         }
 
-        if (isset($arFilter["ORDER_PRICE"]) && IntVal($arFilter["ORDER_PRICE"]) > 0) {
-            if (!isset($arFilter["ORDER_PRICE_FROM"]) || floatval($arFilter["ORDER_PRICE"]) > floatval($arFilter["ORDER_PRICE_FROM"]))
+        if (isset($arFilter["ORDER_PRICE"]) && intval($arFilter["ORDER_PRICE"]) > 0) {
+            if (!isset($arFilter["ORDER_PRICE_FROM"]) || floatval($arFilter["ORDER_PRICE"]) > floatval(
+                    $arFilter["ORDER_PRICE_FROM"]
+                )) {
                 $arFilter["+<=ORDER_PRICE_FROM"] = $arFilter["ORDER_PRICE"];
-            if (!isset($arFilter["ORDER_PRICE_TO"]) || floatval($arFilter["ORDER_PRICE"]) < floatval($arFilter["ORDER_PRICE_TO"]))
+            }
+            if (!isset($arFilter["ORDER_PRICE_TO"]) || floatval($arFilter["ORDER_PRICE"]) < floatval(
+                    $arFilter["ORDER_PRICE_TO"]
+                )) {
                 $arFilter["+>=ORDER_PRICE_TO"] = $arFilter["ORDER_PRICE"];
+            }
         }
 
         while ($service = $dbRes->fetch()) {
-            $dbRstrRes = \Bitrix\Sale\Internals\ServiceRestrictionTable::getList(array(
-                'filter' => array(
-                    "=SERVICE_ID" => $service["ID"],
-                    "=SERVICE_TYPE" => \Bitrix\Sale\Services\Base\RestrictionManager::SERVICE_TYPE_SHIPMENT
+            $dbRstrRes = \Bitrix\Sale\Internals\ServiceRestrictionTable::getList(
+                array(
+                    'filter' => array(
+                        "=SERVICE_ID" => $service["ID"],
+                        "=SERVICE_TYPE" => \Bitrix\Sale\Services\Base\RestrictionManager::SERVICE_TYPE_SHIPMENT
+                    )
                 )
-            ));
+            );
 
             while ($restr = $dbRstrRes->fetch()) {
-                if (!self::checkRestrictionFilter($restr, $arFilter))
+                if (!self::checkRestrictionFilter($restr, $arFilter)) {
                     continue(2);
+                }
 
                 $service = self::getSelectedRestrictionField($service, $restr, $arSelectFields);
             }
 
             $selectAsterisk = in_array('*', $arSelectFields);
-            $mofifiedFields = array("LID", "WEIGHT_FROM", "WEIGHT_TO", "ORDER_PRICE_FROM", "ORDER_PRICE_TO", "ORDER_CURRENCY");
+            $mofifiedFields = array(
+                "LID",
+                "WEIGHT_FROM",
+                "WEIGHT_TO",
+                "ORDER_PRICE_FROM",
+                "ORDER_PRICE_TO",
+                "ORDER_CURRENCY"
+            );
 
-            foreach ($mofifiedFields as $field)
-                if (($selectAsterisk || in_array($field, $arSelectFields)) && !array_key_exists($field, $service))
+            foreach ($mofifiedFields as $field) {
+                if (($selectAsterisk || in_array($field, $arSelectFields)) && !array_key_exists($field, $service)) {
                     $service[$field] = "";
+                }
+            }
 
-            if ($selectAsterisk || in_array("PERIOD_FROM", $arSelectFields))
+            if ($selectAsterisk || in_array("PERIOD_FROM", $arSelectFields)) {
                 $service["PERIOD_FROM"] = $service["CONFIG"]["MAIN"]["PERIOD"]["FROM"];
+            }
 
-            if ($selectAsterisk || in_array("PERIOD_TO", $arSelectFields))
+            if ($selectAsterisk || in_array("PERIOD_TO", $arSelectFields)) {
                 $service["PERIOD_TO"] = $service["CONFIG"]["MAIN"]["PERIOD"]["TO"];
+            }
 
-            if ($selectAsterisk || in_array("PERIOD_TYPE", $arSelectFields))
+            if ($selectAsterisk || in_array("PERIOD_TYPE", $arSelectFields)) {
                 $service["PERIOD_TYPE"] = $service["CONFIG"]["MAIN"]["PERIOD"]["TYPE"];
+            }
 
             if ($selectAsterisk || in_array("PRICE", $arSelectFields)) {
                 $service["CLASS_NAME"] = '\Bitrix\Sale\Delivery\Services\Configurable';
@@ -991,8 +1126,9 @@ class CAllSaleDelivery
                 $service["STORE"] = count($stores) > 0 ? serialize($stores) : "";
             }
 
-            if (intval($service["CODE"]) > 0)
+            if (intval($service["CODE"]) > 0) {
                 $service["ID"] = $service["CODE"];
+            }
 
             unset($service["CODE"], $service["CLASS_NAME"], $service["CONFIG"], $service["PARENT_ID"]);
             $services[] = $service;
@@ -1000,10 +1136,11 @@ class CAllSaleDelivery
 
         if (!empty($arOrder)) {
             foreach ($arOrder as $k => $v) {
-                if ($v == 'ASC')
+                if ($v == 'ASC') {
                     $arOrder[$k] = SORT_ASC;
-                elseif ($v == 'DESC')
+                } elseif ($v == 'DESC') {
                     $arOrder[$k] = SORT_DESC;
+                }
             }
 
             sortByColumn($services, $arOrder);
@@ -1022,7 +1159,7 @@ class CAllSaleDelivery
      * @throws Exception
      * @deprecated
      */
-    static function Add($arFields, $arOptions = array())
+    public static function Add($arFields, $arOptions = array())
     {
         $fields = array_intersect_key($arFields, Bitrix\Sale\Delivery\Services\Table::getMap());
 
@@ -1047,8 +1184,9 @@ class CAllSaleDelivery
 
         $res = \Bitrix\Sale\Delivery\Services\Manager::add($fields);
 
-        if (!$res->isSuccess())
+        if (!$res->isSuccess()) {
             return false;
+        }
 
         $newId = $res->getId();
 
@@ -1056,59 +1194,74 @@ class CAllSaleDelivery
             \Bitrix\Sale\Delivery\Services\Manager::update($newId, array('CODE' => $newId));
         }
 
-        $res = \Bitrix\Sale\Internals\ServiceRestrictionTable::add(array(
-            "SERVICE_ID" => $newId,
-            "SERVICE_TYPE" => \Bitrix\Sale\Services\Base\RestrictionManager::SERVICE_TYPE_SHIPMENT,
-            "CLASS_NAME" => '\Bitrix\Sale\Delivery\Restrictions\BySite',
-            "PARAMS" => array(
-                "SITE_ID" => array($arFields["LID"]),
-            )
-        ));
-
-        if (intval($arFields["WEIGHT_FROM"]) > 0 || intval($arFields["WEIGHT_TO"]) > 0) {
-            $res = \Bitrix\Sale\Internals\ServiceRestrictionTable::add(array(
+        $res = \Bitrix\Sale\Internals\ServiceRestrictionTable::add(
+            array(
                 "SERVICE_ID" => $newId,
                 "SERVICE_TYPE" => \Bitrix\Sale\Services\Base\RestrictionManager::SERVICE_TYPE_SHIPMENT,
-                "CLASS_NAME" => '\Bitrix\Sale\Delivery\Restrictions\ByWeight',
+                "CLASS_NAME" => '\Bitrix\Sale\Delivery\Restrictions\BySite',
                 "PARAMS" => array(
-                    "MIN_WEIGHT" => $arFields["WEIGHT_FROM"],
-                    "MAX_WEIGHT" => $arFields["WEIGHT_TO"]
+                    "SITE_ID" => array($arFields["LID"]),
                 )
-            ));
+            )
+        );
+
+        if (intval($arFields["WEIGHT_FROM"]) > 0 || intval($arFields["WEIGHT_TO"]) > 0) {
+            $res = \Bitrix\Sale\Internals\ServiceRestrictionTable::add(
+                array(
+                    "SERVICE_ID" => $newId,
+                    "SERVICE_TYPE" => \Bitrix\Sale\Services\Base\RestrictionManager::SERVICE_TYPE_SHIPMENT,
+                    "CLASS_NAME" => '\Bitrix\Sale\Delivery\Restrictions\ByWeight',
+                    "PARAMS" => array(
+                        "MIN_WEIGHT" => $arFields["WEIGHT_FROM"],
+                        "MAX_WEIGHT" => $arFields["WEIGHT_TO"]
+                    )
+                )
+            );
         }
 
         if (intval($arFields["ORDER_PRICE_FROM"]) > 0 || intval($arFields["ORDER_PRICE_TO"]) > 0) {
-            $res = \Bitrix\Sale\Internals\ServiceRestrictionTable::add(array(
-                "SERVICE_ID" => $newId,
-                "SERVICE_TYPE" => \Bitrix\Sale\Services\Base\RestrictionManager::SERVICE_TYPE_SHIPMENT,
-                "CLASS_NAME" => '\Bitrix\Sale\Delivery\Restrictions\ByPrice',
-                "PARAMS" => array(
-                    "MIN_PRICE" => $arFields["ORDER_PRICE_FROM"],
-                    "MAX_PRICE" => $arFields["ORDER_PRICE_TO"],
-                    "CURRENCY" => $arFields["ORDER_CURRENCY"]
+            $res = \Bitrix\Sale\Internals\ServiceRestrictionTable::add(
+                array(
+                    "SERVICE_ID" => $newId,
+                    "SERVICE_TYPE" => \Bitrix\Sale\Services\Base\RestrictionManager::SERVICE_TYPE_SHIPMENT,
+                    "CLASS_NAME" => '\Bitrix\Sale\Delivery\Restrictions\ByPrice',
+                    "PARAMS" => array(
+                        "MIN_PRICE" => $arFields["ORDER_PRICE_FROM"],
+                        "MAX_PRICE" => $arFields["ORDER_PRICE_TO"],
+                        "CURRENCY" => $arFields["ORDER_CURRENCY"]
+                    )
                 )
-            ));
+            );
         }
 
         if (isset($arFields["LOCATIONS"]) && is_array($arFields["LOCATIONS"])) {
-            Helper::resetLocationsForEntity($newId, $arFields['LOCATIONS'], self::CONN_ENTITY_NAME, !!$arOptions['EXPECT_LOCATION_CODES']);
+            Helper::resetLocationsForEntity(
+                $newId,
+                $arFields['LOCATIONS'],
+                self::CONN_ENTITY_NAME,
+                !!$arOptions['EXPECT_LOCATION_CODES']
+            );
 
-            \Bitrix\Sale\Internals\ServiceRestrictionTable::add(array(
-                "SERVICE_ID" => $newId,
-                "SERVICE_TYPE" => \Bitrix\Sale\Services\Base\RestrictionManager::SERVICE_TYPE_SHIPMENT,
-                "CLASS_NAME" => '\Bitrix\Sale\Delivery\Restrictions\ByLocation',
-                "SORT" => 100
-            ));
+            \Bitrix\Sale\Internals\ServiceRestrictionTable::add(
+                array(
+                    "SERVICE_ID" => $newId,
+                    "SERVICE_TYPE" => \Bitrix\Sale\Services\Base\RestrictionManager::SERVICE_TYPE_SHIPMENT,
+                    "CLASS_NAME" => '\Bitrix\Sale\Delivery\Restrictions\ByLocation',
+                    "SORT" => 100
+                )
+            );
         }
 
-        if (isset($arFields["PAY_SYSTEM"]))
+        if (isset($arFields["PAY_SYSTEM"])) {
             CSaleDelivery::UpdateDeliveryPay($newId, $arFields["PAY_SYSTEM"]);
+        }
 
         if (isset($arFields["STORE"])) {
-            $stores = unserialize($arFields["STORE"]);
+            $stores = unserialize($arFields["STORE"], ['allowed_classes' => false]);
 
-            if ($stores)
+            if ($stores) {
                 \Bitrix\Sale\Delivery\ExtraServices\Manager::saveStores($newId, $stores);
+            }
         }
 
         return $newId;
@@ -1149,7 +1302,8 @@ class CAllSaleDelivery
 						LOCATION_CODE varchar(100) not null,
 						LOCATION_TYPE char(1) not null default 'L',
 						primary key (DELIVERY_ID, LOCATION_CODE, LOCATION_TYPE)
-					)");
+					)"
+                );
 
                 break;
 
@@ -1161,13 +1315,15 @@ class CAllSaleDelivery
 						LOCATION_CODE VARCHAR2(100 CHAR) NOT NULL,
 						LOCATION_TYPE CHAR(1 CHAR) DEFAULT 'L' NOT NULL,
 						PRIMARY KEY (DELIVERY_ID, LOCATION_CODE, LOCATION_TYPE)
-					)");
+					)"
+                );
 
                 break;
         }
 
-        foreach ($query as $q)
+        foreach ($query as $q) {
             $con->queryExecute($q);
+        }
 
         return $result;
     }
@@ -1184,8 +1340,9 @@ class CAllSaleDelivery
         $result = new \Bitrix\Sale\Result();
         $con = \Bitrix\Main\Application::getConnection();
 
-        if (!$con->isTableExists("b_sale_delivery"))
+        if (!$con->isTableExists("b_sale_delivery")) {
             return $result;
+        }
 
         if (!$con->isTableExists("b_sale_delivery2location_tmp")) {
             $res = self::createD2LTable();
@@ -1195,12 +1352,14 @@ class CAllSaleDelivery
                 return $result;
             }
 
-            $con->queryExecute('
+            $con->queryExecute(
+                '
 				INSERT INTO
 					b_sale_delivery2location_tmp(DELIVERY_ID, LOCATION_CODE, LOCATION_TYPE)
 				SELECT
 					DELIVERY_ID, LOCATION_CODE, LOCATION_TYPE FROM b_sale_delivery2location
-			');
+			'
+            );
 
             $con->queryExecute('DELETE FROM b_sale_delivery2location');
         }
@@ -1215,55 +1374,84 @@ class CAllSaleDelivery
             $newId = \CSaleDelivery::Add($delivery);
 
             if (intval($newId) <= 0) {
-                $result->addError(new \Bitrix\Main\Entity\EntityError("Can't convert old delivery id: " . $delivery["CODE"]));
+                $result->addError(
+                    new \Bitrix\Main\Entity\EntityError("Can't convert old delivery id: " . $delivery["CODE"])
+                );
                 continue;
             }
 
-            if (!$res->isSuccess())
+            if (!$res->isSuccess()) {
                 $result->addErrors($res->getErrors());
+            }
 
-            $con->queryExecute('UPDATE b_sale_delivery SET CONVERTED=\'Y\' WHERE ID=' . $sqlHelper->forSql($delivery["CODE"]));
-            $con->queryExecute("UPDATE b_sale_order SET DELIVERY_ID='" . $sqlHelper->forSql($newId) . "' WHERE DELIVERY_ID = '" . $sqlHelper->forSql($delivery["CODE"]) . "'");
-            $con->queryExecute("UPDATE b_sale_order_history SET DELIVERY_ID='" . $sqlHelper->forSql($newId) . "' WHERE DELIVERY_ID = '" . $sqlHelper->forSql($delivery["CODE"]) . "'");
-            $con->queryExecute("UPDATE b_sale_delivery2paysystem SET DELIVERY_ID='" . $sqlHelper->forSql($newId) . "', DELIVERY_PROFILE_ID='##CONVERTED##' WHERE DELIVERY_ID = '" . $sqlHelper->forSql($delivery["CODE"]) . "'");
+            $con->queryExecute(
+                'UPDATE b_sale_delivery SET CONVERTED=\'Y\' WHERE ID=' . $sqlHelper->forSql($delivery["CODE"])
+            );
+            $con->queryExecute(
+                "UPDATE b_sale_order SET DELIVERY_ID='" . $sqlHelper->forSql(
+                    $newId
+                ) . "' WHERE DELIVERY_ID = '" . $sqlHelper->forSql($delivery["CODE"]) . "'"
+            );
+            $con->queryExecute(
+                "UPDATE b_sale_order_history SET DELIVERY_ID='" . $sqlHelper->forSql(
+                    $newId
+                ) . "' WHERE DELIVERY_ID = '" . $sqlHelper->forSql($delivery["CODE"]) . "'"
+            );
+            $con->queryExecute(
+                "UPDATE b_sale_delivery2paysystem SET DELIVERY_ID='" . $sqlHelper->forSql(
+                    $newId
+                ) . "', DELIVERY_PROFILE_ID='##CONVERTED##' WHERE DELIVERY_ID = '" . $sqlHelper->forSql(
+                    $delivery["CODE"]
+                ) . "'"
+            );
 
-            $con->queryExecute('
+            $con->queryExecute(
+                '
 				INSERT INTO
 					b_sale_delivery2location(DELIVERY_ID, LOCATION_CODE, LOCATION_TYPE)
 				SELECT
 					' . $sqlHelper->forSql($newId) . ', LOCATION_CODE, LOCATION_TYPE FROM b_sale_delivery2location_tmp
 				WHERE
 					DELIVERY_ID = ' . $sqlHelper->forSql($delivery["CODE"]) . '
-			');
+			'
+            );
 
-            $con->queryExecute('DELETE FROM b_sale_delivery2location_tmp WHERE DELIVERY_ID = ' . $sqlHelper->forSql($delivery["CODE"]));
+            $con->queryExecute(
+                'DELETE FROM b_sale_delivery2location_tmp WHERE DELIVERY_ID = ' . $sqlHelper->forSql($delivery["CODE"])
+            );
 
-            $d2pRes = \Bitrix\Sale\Internals\DeliveryPaySystemTable::getList(array(
-                'filter' => array(
-                    'DELIVERY_ID' => $newId
-                ),
-                'select' => array("DELIVERY_ID"),
-                'group' => array("DELIVERY_ID")
-            ));
+            $d2pRes = \Bitrix\Sale\Internals\DeliveryPaySystemTable::getList(
+                array(
+                    'filter' => array(
+                        'DELIVERY_ID' => $newId
+                    ),
+                    'select' => array("DELIVERY_ID"),
+                    'group' => array("DELIVERY_ID")
+                )
+            );
 
             if ($d2p = $d2pRes->fetch()) {
-                $res = \Bitrix\Sale\Internals\ServiceRestrictionTable::add(array(
-                    "SERVICE_ID" => $d2p["DELIVERY_ID"],
-                    "SERVICE_TYPE" => \Bitrix\Sale\Services\Base\RestrictionManager::SERVICE_TYPE_SHIPMENT,
-                    "CLASS_NAME" => '\Bitrix\Sale\Delivery\Restrictions\ByPaySystem',
-                    "SORT" => 100
-                ));
+                $res = \Bitrix\Sale\Internals\ServiceRestrictionTable::add(
+                    array(
+                        "SERVICE_ID" => $d2p["DELIVERY_ID"],
+                        "SERVICE_TYPE" => \Bitrix\Sale\Services\Base\RestrictionManager::SERVICE_TYPE_SHIPMENT,
+                        "CLASS_NAME" => '\Bitrix\Sale\Delivery\Restrictions\ByPaySystem',
+                        "SORT" => 100
+                    )
+                );
 
-                if (!$res->isSuccess())
+                if (!$res->isSuccess()) {
                     $result->addErrors($res->getErrors());
+                }
             }
         }
 
         if ($result->isSuccess()) {
             $con->dropTable('b_sale_delivery2location_tmp');
 
-            if ($renameTable)
+            if ($renameTable) {
                 $con->renameTable("b_sale_delivery", "b_sale_delivery_old");
+            }
         }
 
         return $result;
@@ -1301,19 +1489,23 @@ class CAllSaleDelivery
         $result = new \Bitrix\Sale\Result();
         $con = \Bitrix\Main\Application::getConnection();
 
-        if (!$con->isTableExists("b_sale_delivery2paysystem"))
+        if (!$con->isTableExists("b_sale_delivery2paysystem")) {
             return $result;
+        }
 
         $query = new \Bitrix\Main\Entity\Query(DeliveryPaySystemTable::getEntity());
         $query->setSelect(array('DELIVERY_ID'));
-        $query->addFilter('LINK_DIRECTION', NULL);
+        $query->addFilter('LINK_DIRECTION', null);
         $query->setLimit(1);
         $res = $query->exec();
 
-        if (!$res->fetch())
+        if (!$res->fetch()) {
             return $result;
+        }
 
-        $con->queryExecute('UPDATE b_sale_delivery2paysystem SET LINK_DIRECTION=\'' . DeliveryPaySystemTable::LINK_DIRECTION_DELIVERY_PAYSYSTEM . '\'');
+        $con->queryExecute(
+            'UPDATE b_sale_delivery2paysystem SET LINK_DIRECTION=\'' . DeliveryPaySystemTable::LINK_DIRECTION_DELIVERY_PAYSYSTEM . '\''
+        );
         $res = DeliveryPaySystemTable::getList(array());
 
         while ($rec = $res->fetch()) {
@@ -1339,18 +1531,21 @@ class CAllSaleDelivery
         $props = $newOrder->getPropertyCollection();
         $oldOrder = array();
 
-        if (intval($newOrder->getId()) > 0)
+        if (intval($newOrder->getId()) > 0) {
             $oldOrder["ID"] = $newOrder->getId();
+        }
 
         /** @var \Bitrix\Sale\Basket $basket */
-        if ($collection = $shipment->getShipmentItemCollection())
+        if ($collection = $shipment->getShipmentItemCollection()) {
             $oldOrder["PRICE"] = $collection->getPrice();
+        }
 
         $oldOrder["LOCATION_FROM"] = \Bitrix\Main\Config\Option::get(
             'sale',
             'location',
             "",
-            $newOrder->getSiteId());
+            $newOrder->getSiteId()
+        );
         $oldOrder["SITE_ID"] = $newOrder->getSiteId();
         $oldOrder["PERSON_TYPE_ID"] = $newOrder->getPersonTypeId();
         $oldOrder["CURRENCY"] = $newOrder->getCurrency();
@@ -1367,17 +1562,23 @@ class CAllSaleDelivery
         foreach ($shipment->getShipmentItemCollection() as $shipmentItem) {
             $basketItem = $shipmentItem->getBasketItem();
 
-            if (!$basketItem)
+            if (!$basketItem) {
                 continue;
+            }
 
-            if ($basketItem->isBundleChild())
+            if ($basketItem->isBundleChild()) {
                 continue;
+            }
 
             $itemFieldValues = $basketItem->getFieldValues();
             $itemFieldValues["QUANTITY"] = $shipmentItem->getField("QUANTITY");
 
-            if (!empty($itemFieldValues["DIMENSIONS"]) && is_string($itemFieldValues["DIMENSIONS"]))
-                $itemFieldValues["DIMENSIONS"] = unserialize($itemFieldValues["DIMENSIONS"]);
+            if (!empty($itemFieldValues["DIMENSIONS"]) && is_string($itemFieldValues["DIMENSIONS"])) {
+                $itemFieldValues["DIMENSIONS"] = unserialize(
+                    $itemFieldValues["DIMENSIONS"],
+                    ['allowed_classes' => false]
+                );
+            }
 
             unset($itemFieldValues['DATE_INSERT'], $itemFieldValues['DATE_UPDATE']);
             $oldOrder["ITEMS"][] = $itemFieldValues;
@@ -1407,12 +1608,16 @@ class CAllSaleDelivery
         if (!empty($oldOrder["PERSON_TYPE_ID"]) && intval($oldOrder["PERSON_TYPE_ID"]) > 0) {
             $personTypeId = $oldOrder["PERSON_TYPE_ID"];
         } else {
-            $dbPersonType = \CSalePersonType::GetList(array("SORT" => "ASC", "NAME" => "ASC"), array("ACTIVE" => "Y", "LID" => $siteId));
+            $dbPersonType = \CSalePersonType::GetList(
+                array("SORT" => "ASC", "NAME" => "ASC"),
+                array("ACTIVE" => "Y", "LID" => $siteId)
+            );
 
-            if ($arPersonType = $dbPersonType->GetNext())
+            if ($arPersonType = $dbPersonType->GetNext()) {
                 $personTypeId = $arPersonType["ID"];
-            else
+            } else {
                 $personTypeId = 1;
+            }
         }
 
         $newOrder->setPersonTypeId($personTypeId);
@@ -1427,19 +1632,26 @@ class CAllSaleDelivery
         if (!empty($oldOrder["ITEMS"]) && is_array($oldOrder["ITEMS"])) {
             foreach ($oldOrder["ITEMS"] as $oldBasketItem) {
                 $basketId = null;
-                if (!empty($oldBasketItem['ID']) && intval($oldBasketItem['ID']) > 0)
+                if (!empty($oldBasketItem['ID']) && intval($oldBasketItem['ID']) > 0) {
                     $basketId = $oldBasketItem['ID'];
+                }
 
-                $newBasketItem = \Bitrix\Sale\BasketItem::create($basket, $oldBasketItem['MODULE'], $oldBasketItem['PRODUCT_ID']);
+                $newBasketItem = \Bitrix\Sale\BasketItem::create(
+                    $basket,
+                    $oldBasketItem['MODULE'],
+                    $oldBasketItem['PRODUCT_ID']
+                );
                 $oldBasketItem = array_intersect_key($oldBasketItem, $settableFields);
 
                 $newBasketItem->setFieldsNoDemand($oldBasketItem);
 
-                if ($basketId > 0)
+                if ($basketId > 0) {
                     $newBasketItem->setFieldNoDemand('ID', $basketId);
+                }
 
-                if ($newBasketItem->isBundleChild())
+                if ($newBasketItem->isBundleChild()) {
                     continue;
+                }
                 $basket->addItem($newBasketItem);
             }
         }
@@ -1453,11 +1665,13 @@ class CAllSaleDelivery
         $newOrder->setBasket($basket);
 
 
-        if ($loc = $props->getDeliveryLocation())
+        if ($loc = $props->getDeliveryLocation()) {
             $loc->setValue($oldOrder["LOCATION_TO"]);
+        }
 
-        if ($loc = $props->getDeliveryLocationZip())
+        if ($loc = $props->getDeliveryLocationZip()) {
             $loc->setValue($oldOrder["LOCATION_ZIP"]);
+        }
 
         /** @var \Bitrix\Sale\ShipmentCollection $shipmentCollection */
         $shipmentCollection = $newOrder->getShipmentCollection();
@@ -1469,13 +1683,17 @@ class CAllSaleDelivery
             $shipmentItem = $shipmentItemCollection->createItem($item);
             $shipmentItem->setQuantity($item->getQuantity());
 
-            if (strlen($shipmentItem->getField("DIMENSIONS"))) {
-                $shipmentItem->setField("DIMENSIONS", unserialize($shipmentItem->getField("DIMENSIONS")));
+            if ($shipmentItem->getField("DIMENSIONS") <> '') {
+                $shipmentItem->setField(
+                    "DIMENSIONS",
+                    unserialize($shipmentItem->getField("DIMENSIONS"), ['allowed_classes' => false])
+                );
             }
         }
 
-        if (isset($arOrder["DELIVERY_EXTRA_SERVICES"]))
+        if (isset($arOrder["DELIVERY_EXTRA_SERVICES"])) {
             $shipment->setExtraServices($arOrder["DELIVERY_EXTRA_SERVICES"]);
+        }
 
         return $shipment;
     }
@@ -1490,7 +1708,10 @@ class CAllSaleDelivery
         $id = \Bitrix\Sale\Delivery\Services\EmptyDeliveryService::getEmptyDeliveryServiceId();
 
         if ($id <= 0) {
-            Bitrix\Main\Localization\Loc::loadLanguageFile($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/sale/lib/delivery/helper.php', 'ru');
+            Bitrix\Main\Localization\Loc::loadLanguageFile(
+                $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/sale/lib/delivery/helper.php',
+                'ru'
+            );
 
             $fields = array();
             $fields["NAME"] = \Bitrix\Main\Localization\Loc::getMessage('SALE_DELIVERY_HELPER_NO_DELIVERY_SERVICE');
@@ -1531,10 +1752,11 @@ class CAllSaleDelivery
      */
     public static function getIdByCode($code)
     {
-        if (CSaleDeliveryHandler::isSidNew($code))
+        if (CSaleDeliveryHandler::isSidNew($code)) {
             $id = CSaleDeliveryHandler::getIdFromNewSid($code);
-        else
+        } else {
             $id = \Bitrix\Sale\Delivery\Services\Manager::getIdByCode($code);
+        }
 
         return (int)$id;
     }
@@ -1545,16 +1767,16 @@ class CAllSaleDelivery
      */
     public static function getCodeById($id)
     {
-        if (intval($id) <= 0)
+        if (intval($id) <= 0) {
             return "";
+        }
 
         $code = \Bitrix\Sale\Delivery\Services\Manager::getCodeById($id);
 
-        if (strlen($code) <= 0)
+        if ($code == '') {
             $code = 'new' . strval($id) . ':profile';
+        }
 
         return $code;
     }
 }
-
-?>

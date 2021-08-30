@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 $Dict = array("W" => array(), "T" => array());
 function __forum_chapter_menu_gen()
@@ -13,16 +14,23 @@ function __forum_chapter_menu_gen()
                 "more_url" => array(
                     "/bitrix/admin/forum_" . ($res["TYPE"] == "T" ? "letter" : "words") . ".php?DICTIONARY_ID=" . $res["ID"] . "&lang=" . LANG,
                     "/bitrix/admin/forum_dictionary_edit.php?DICTIONARY_ID=" . $res["ID"] . "&lang=" . LANG,
-                    "/bitrix/admin/forum_" . ($res["TYPE"] == "T" ? "letter" : "words") . "_edit.php?DICTIONARY_ID=" . $res["ID"] . "&lang=" . LANG),
-                "title" => htmlspecialcharsbx($res["TITLE"]));
+                    "/bitrix/admin/forum_" . ($res["TYPE"] == "T" ? "letter" : "words") . "_edit.php?DICTIONARY_ID=" . $res["ID"] . "&lang=" . LANG
+                ),
+                "title" => htmlspecialcharsbx($res["TITLE"])
+            );
         }
     }
     return $Dict;
 }
 
 if ($APPLICATION->GetGroupRight("forum") != "D") {
-    if ((method_exists($this, "IsSectionActive") && ($this->IsSectionActive("menu_forum_filter_DW") ||
-                $this->IsSectionActive("menu_forum_filter_DT"))) || ($_REQUEST["TYPE"] == "W" || $_REQUEST["TYPE"] == "T" || intVal($_REQUEST["DICTIONARY_ID"]) > 0)) {
+    if ((
+            method_exists($this, "IsSectionActive") &&
+            ($this->IsSectionActive("menu_forum_filter_DW") || $this->IsSectionActive("menu_forum_filter_DT"))
+        ) ||
+        array_key_exists("TYPE", $_REQUEST) && ($_REQUEST["TYPE"] === "W" || $_REQUEST["TYPE"] === "T") ||
+        array_key_exists("DICTIONARY_ID", $_REQUEST) && intval($_REQUEST["DICTIONARY_ID"]) > 0
+    ) {
         $Dict = __forum_chapter_menu_gen();
     }
 
@@ -31,7 +39,7 @@ if ($APPLICATION->GetGroupRight("forum") != "D") {
         "section" => "forum",
         "sort" => 550,
         "text" => GetMessage("FORUM_CONTROL"),
-        //"url" => "/bitrix/admin/forum_index.php?lang=".LANG,
+        "url" => "/bitrix/admin/forum_index.php?lang=" . LANG,
         "more_url" => [
             "/bitrix/admin/forum_index.php?lang=" . LANG,
             "/bitrix/admin/forum_index.php"
@@ -76,7 +84,8 @@ if ($APPLICATION->GetGroupRight("forum") != "D") {
                 "url" => "/bitrix/admin/forum_subscribe.php?lang=" . LANG,
                 "more_url" => array(
                     "/bitrix/admin/forum_subscribe.php",
-                    "/bitrix/admin/forum_subscribe_edit.php"),
+                    "/bitrix/admin/forum_subscribe_edit.php"
+                ),
                 "title" => GetMessage("FORUM_MENU_SUBSCRIBE_ALT")
             ),
             array(
@@ -84,7 +93,8 @@ if ($APPLICATION->GetGroupRight("forum") != "D") {
                 "items_id" => "menu_forum_filter",
                 "url" => "/bitrix/admin/forum_dictionary.php?TYPE=W&amp;lang=" . LANG,
                 "more_url" => Array(
-                    "/bitrix/admin/forum_dictionary.php"),
+                    "/bitrix/admin/forum_dictionary.php"
+                ),
                 "title" => GetMessage("FORUM_MENU_FILTER_ALT"),
                 "items" => array(
                     array(
@@ -95,7 +105,8 @@ if ($APPLICATION->GetGroupRight("forum") != "D") {
                         "more_url" => array(
                             "/bitrix/admin/forum_dictionary.php?TYPE=W&lang=" . LANG,
                             "/bitrix/admin/forum_dictionary_edit.php?TYPE=W&lang=" . LANG,
-                            "/bitrix/admin/forum_words.php"),
+                            "/bitrix/admin/forum_words.php"
+                        ),
                         "module_id" => "forum",
                         "dynamic" => true,
                         "items" => $Dict["W"]
@@ -108,10 +119,12 @@ if ($APPLICATION->GetGroupRight("forum") != "D") {
                         "more_url" => array(
                             "/bitrix/admin/forum_dictionary.php?TYPE=T&lang=" . LANG,
                             "/bitrix/admin/forum_dictionary_edit.php?TYPE=T&lang=" . LANG,
-                            "/bitrix/admin/forum_letter.php"),
+                            "/bitrix/admin/forum_letter.php"
+                        ),
                         "module_id" => "forum",
                         "dynamic" => true,
-                        "items" => $Dict["T"])
+                        "items" => $Dict["T"]
+                    )
                 )
             )
         )

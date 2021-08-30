@@ -27,9 +27,11 @@ class Converter
     {
         self::$hasCoreExtension = $builder->hasCoreExtension();
         if (self::$hasCoreExtension) {
-            $content = Json::encode([
-                'address' => Builder::getDefaultSiteUri()
-            ]);
+            $content = Json::encode(
+                [
+                    'address' => Builder::getDefaultSiteUri()
+                ]
+            );
             $content = "var webPacker = $content;" . self::getEol();
         } else {
             $content = '';
@@ -56,7 +58,6 @@ class Converter
 $content
 })();
 EOD;
-
     }
 
     /**
@@ -117,7 +118,9 @@ EOD;
                 case Resource\Asset::CSS:
                 case Resource\Asset::LAYOUT:
                     if (!self::$hasCoreExtension) {
-                        throw new InvalidOperationException("Resource of type `$type` not allowed without core extension.");
+                        throw new InvalidOperationException(
+                            "Resource of type `$type` not allowed without core extension."
+                        );
                     }
 
                     $resources = $list = Json::encode($package->toArray($type));
@@ -132,7 +135,9 @@ EOD;
 
                 case Resource\Asset::LANG:
                     if (!self::$hasCoreExtension) {
-                        throw new InvalidOperationException("Resource of type `$type` not allowed without core extension.");
+                        throw new InvalidOperationException(
+                            "Resource of type `$type` not allowed without core extension."
+                        );
                     }
 
                     $messages = [];
@@ -166,10 +171,12 @@ EOD;
                             }
                         }
 
-                        $languages = array_unique(array_merge(
-                            $languages,
-                            array_keys($messages)
-                        ));
+                        $languages = array_unique(
+                            array_merge(
+                                $languages,
+                                array_keys($messages)
+                            )
+                        );
                     }
 
                     if (count($messages) === 1) {

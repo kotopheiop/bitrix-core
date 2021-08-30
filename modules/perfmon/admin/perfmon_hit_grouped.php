@@ -1,18 +1,22 @@
 <?
+
+use Bitrix\Main\Loader;
+
 define("ADMIN_MODULE_NAME", "perfmon");
 define("PERFMON_STOP", true);
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 /** @global CMain $APPLICATION */
 /** @global CDatabase $DB */
 /** @global CUser $USER */
-require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/perfmon/include.php");
+Loader::includeModule('perfmon');
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/perfmon/prolog.php");
 
 IncludeModuleLangFile(__FILE__);
 
 $RIGHT = $APPLICATION->GetGroupRight("perfmon");
-if ($RIGHT == "D")
+if ($RIGHT == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $sTableID = "tbl_perfmon_hit_grouped";
 $oSort = new CAdminSorting($sTableID, "SUM_PAGE_TIME", "desc");
@@ -21,7 +25,8 @@ $lAdmin = new CAdminList($sTableID, $oSort);
 $FilterArr = array(
     "find_script_name",
     "find_is_admin",
-    "find_count_from", "find_count_to",
+    "find_count_from",
+    "find_count_to",
 );
 
 $lAdmin->InitFilter($FilterArr);
@@ -32,9 +37,11 @@ $arFilter = array(
     ">=COUNT" => $find_count_from,
     "<=COUNT" => $find_count_to,
 );
-foreach ($arFilter as $key => $value)
-    if (!$value)
+foreach ($arFilter as $key => $value) {
+    if (!$value) {
         unset($arFilter[$key]);
+    }
+}
 
 $arHeaders = array(
     array(
@@ -121,7 +128,7 @@ foreach ($arGrpCols as $col => $prec) {
 $lAdmin->AddHeaders($arHeaders);
 
 $arSelectedFields = $lAdmin->GetVisibleHeaderColumns();
-if (!is_array($arSelectedFields) || (count($arSelectedFields) < 1))
+if (!is_array($arSelectedFields) || (count($arSelectedFields) < 1)) {
     $arSelectedFields = array(
         "SCRIPT_NAME",
         "COUNT",
@@ -129,6 +136,7 @@ if (!is_array($arSelectedFields) || (count($arSelectedFields) < 1))
         "MAX_MEMORY_PEAK_USAGE",
         "AVG_QUERIES",
     );
+}
 
 
 $cData = new CPerfomanceHit;
@@ -152,19 +160,23 @@ $max_display_url = COption::GetOptionInt("perfmon", "max_display_url");
 while ($arRes = $rsData->NavNext(true, "f_")) {
     $row =& $lAdmin->AddRow($f_NAME, $arRes);
 
-    $row->AddViewField("SCRIPT_NAME", '<a href="perfmon_hit_list.php?lang=' . LANGUAGE_ID . '&amp;set_filter=Y&amp;find_script_name=' . $f_SCRIPT_NAME . '">' . $f_SCRIPT_NAME . '</a>');
+    $row->AddViewField(
+        "SCRIPT_NAME",
+        '<a href="perfmon_hit_list.php?lang=' . LANGUAGE_ID . '&amp;set_filter=Y&amp;find_script_name=' . $f_SCRIPT_NAME . '">' . $f_SCRIPT_NAME . '</a>'
+    );
 
     $page_time = doubleval($arTotal["SUM_PAGE_TIME"]);
-    if ($page_time > 0)
+    if ($page_time > 0) {
         $row->AddViewField("PERCENT", perfmon_NumberFormat(($arRes["SUM_PAGE_TIME"] / $page_time) * 100, 2) . "%");
-    else
+    } else {
         $row->AddViewField("PERCENT", "&nbsp;");
+    }
 
     $row->AddViewField("COUNT", perfmon_NumberFormat($f_COUNT, 0));
 
     foreach ($arGrpFuncs as $func) {
         foreach ($arGrpCols as $col => $prec) {
-            if (strlen($arRes[$func . "_" . $col])) {
+            if ($arRes[$func . "_" . $col] <> '') {
                 $row->AddViewField($func . "_" . $col, perfmon_NumberFormat($arRes[$func . "_" . $col], $prec));
             }
         }
@@ -226,11 +238,13 @@ $oFilter = new CAdminFilter(
         </td>
     </tr>
     <?
-    $oFilter->Buttons(array(
-        "table_id" => $sTableID,
-        "url" => $APPLICATION->GetCurPage(),
-        "form" => "find_form",
-    ));
+    $oFilter->Buttons(
+        array(
+            "table_id" => $sTableID,
+            "url" => $APPLICATION->GetCurPage(),
+            "form" => "find_form",
+        )
+    );
     $oFilter->End();
     ?>
 </form>

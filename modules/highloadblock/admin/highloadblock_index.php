@@ -44,10 +44,12 @@ if ($_REQUEST["mode"] !== "list") {
 use Bitrix\Highloadblock as HL;
 
 // select data
-$rsData = HL\HighloadBlockTable::getList(array(
-    "select" => $lAdmin->GetVisibleHeaderColumns(),
-    "order" => array($by => strtoupper($order))
-));
+$rsData = HL\HighloadBlockTable::getList(
+    array(
+        "select" => $lAdmin->GetVisibleHeaderColumns(),
+        "order" => array($by => mb_strtoupper($order))
+    )
+);
 
 $rsData = new CAdminResult($rsData, $sTableID);
 $rsData->NavStart();
@@ -72,7 +74,9 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
         "ICON" => "list",
         "TEXT" => GetMessage('HLBLOCK_ADMIN_FIELDS_LIST'),
         "ACTION" => $lAdmin->ActionRedirect(
-            "userfield_admin.php?lang=" . LANGUAGE_ID . "&set_filter=Y&find=HLBLOCK_" . intval($f_ID) . "&find_type=ENTITY_ID&back_url=" . urlencode($APPLICATION->GetCurPageParam())
+            "userfield_admin.php?lang=" . LANGUAGE_ID . "&set_filter=Y&find=HLBLOCK_" . intval(
+                $f_ID
+            ) . "&find_type=ENTITY_ID&back_url=" . urlencode($APPLICATION->GetCurPageParam())
         )
     );
 
@@ -86,7 +90,9 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
         "ICON" => "delete",
         "TEXT" => GetMessage("MAIN_ADMIN_MENU_DELETE"),
         "ACTION" => "if(confirm('" . GetMessageJS('HLBLOCK_ADMIN_DELETE_ENTITY_CONFIRM') . "')) " .
-            $lAdmin->ActionRedirect("highloadblock_entity_edit.php?action=delete&ID=" . $f_ID . '&' . bitrix_sessid_get())
+            $lAdmin->ActionRedirect(
+                "highloadblock_entity_edit.php?action=delete&ID=" . $f_ID . '&' . bitrix_sessid_get()
+            )
     );
 
     $row->AddActions($arActions);
@@ -108,8 +114,9 @@ $lAdmin->CheckListMode();
 $lAdmin->DisplayList();
 
 
-if ($_REQUEST["mode"] == "list")
+if ($_REQUEST["mode"] == "list") {
     require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_admin_js.php");
-else
+} else {
     require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_admin.php");
+}
 

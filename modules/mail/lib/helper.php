@@ -2,7 +2,6 @@
 
 namespace Bitrix\Mail;
 
-use Bitrix\Mail\Helper\MessageFolder;
 use Bitrix\Main;
 
 class Helper
@@ -53,11 +52,16 @@ class Helper
         $mailboxHelper->setCheckpoint();
 
         $stage1 = $mailboxHelper->dismissOldMessages();
-        $stage2 = $mailboxHelper->cleanup();
+        $stage2 = $mailboxHelper->dismissDeletedUidMessages();
+        $stage3 = $mailboxHelper->cleanup();
 
         global $pPERIOD;
 
-        $pPERIOD = min($pPERIOD, max($stage1 && $stage2 ? $pPERIOD : 600, 60));
+        $pPERIOD = min($pPERIOD, max($stage1 && $stage2 && $stage3 ? $pPERIOD : 600, 60));
+
+        if ($pPERIOD === null) {
+            $pPERIOD = 60;
+        }
 
         return sprintf('Bitrix\Mail\Helper::cleanupMailboxAgent(%u);', $id);
     }
@@ -81,12 +85,14 @@ class Helper
 
     public static function resyncDomainUsersAgent()
     {
-        $res = MailServicesTable::getList(array(
-            'filter' => array(
-                '=ACTIVE' => 'Y',
-                '@SERVICE_TYPE' => array('domain', 'crdomain'),
+        $res = MailServicesTable::getList(
+            array(
+                'filter' => array(
+                    '=ACTIVE' => 'Y',
+                    '@SERVICE_TYPE' => array('domain', 'crdomain'),
+                )
             )
-        ));
+        );
         while ($item = $res->fetch()) {
             if ($item['SERVICE_TYPE'] == 'domain') {
                 $lockName = sprintf('domain_users_sync_lock_%u', $item['ID']);
@@ -97,8 +103,13 @@ class Helper
                     \CMailDomain2::getDomainUsers($item['TOKEN'], $item['SERVER'], $error, true);
                     \Bitrix\Main\Config\Option::set('mail', $lockName, 0);
                 }
-            } else if ($item['SERVICE_TYPE'] == 'crdomain') {
-                \CControllerClient::executeEvent('OnMailControllerResyncMemberUsers', array('DOMAIN' => $item['SERVER']));
+            } else {
+                if ($item['SERVICE_TYPE'] == 'crdomain') {
+                    \CControllerClient::executeEvent(
+                        'OnMailControllerResyncMemberUsers',
+                        array('DOMAIN' => $item['SERVER'])
+                    );
+                }
             }
         }
 
@@ -122,8 +133,9 @@ class Helper
         $list = $client->listMailboxes('*', $error, true);
         $errors = $client->getErrors();
 
-        if ($list === false)
+        if ($list === false) {
             return false;
+        }
 
         $k = count($list);
         for ($i = 0; $i < $k; $i++) {
@@ -134,7 +146,7 @@ class Helper
                 'name' => $item['title'],
                 'level' => $item['level'],
                 'disabled' => (bool)preg_grep('/^ \x5c Noselect $/ix', $item['flags']),
-                'income' => strtolower($item['name']) == 'inbox',
+                'income' => mb_strtolower($item['name']) == 'inbox',
                 'outcome' => (bool)preg_grep('/^ \x5c Sent $/ix', $item['flags']),
             );
         }
@@ -142,14 +154,14 @@ class Helper
         return $list;
     }
 
-    public static function getImapUnseen($mailbox, $dir = 'inbox', &$error, &$errors = null)
+    public static function getImapUnseen($mailbox, $dirPath = 'inbox', &$error, &$errors = null)
     {
         $error = null;
         $errors = null;
 
         $client = static::createClient($mailbox);
 
-        $result = $client->getUnseen($dir, $error);
+        $result = $client->getUnseen($dirPath, $error);
         $errors = $client->getErrors();
 
         return $result;
@@ -161,16 +173,20 @@ class Helper
 
         $id = (int)(is_array($id) ? $id['ID'] : $id);
 
-        $mailbox = MailboxTable::getList(array(
-            'filter' => array('ID' => $id, 'ACTIVE' => 'Y'),
-            'select' => array('*', 'LANG_CHARSET' => 'SITE.CULTURE.CHARSET')
-        ))->fetch();
+        $mailbox = MailboxTable::getList(
+            array(
+                'filter' => array('ID' => $id, 'ACTIVE' => 'Y'),
+                'select' => array('*', 'LANG_CHARSET' => 'SITE.CULTURE.CHARSET')
+            )
+        )->fetch();
 
-        if (empty($mailbox))
+        if (empty($mailbox)) {
             return;
+        }
 
-        if (!in_array($mailbox['SERVER_TYPE'], array('imap', 'controller', 'domain', 'crdomain')))
+        if (!in_array($mailbox['SERVER_TYPE'], array('imap', 'controller', 'domain', 'crdomain'))) {
             return;
+        }
 
         if (in_array($mailbox['SERVER_TYPE'], array('controller', 'crdomain'))) {
             // @TODO: request controller
@@ -189,27 +205,31 @@ class Helper
 
         $client = static::createClient($mailbox, $mailbox['LANG_CHARSET'] ?: $mailbox['CHARSET']);
 
-        $imapOptions = $mailbox['OPTIONS']['imap'];
-        if (empty($imapOptions['outcome']) || !is_array($imapOptions['outcome']))
-            return;
+        $dir = MailboxDirectory::fetchOneOutcome($mailbox['ID']);
+        $path = $dir ? $dir->getPath() : 'INBOX';
 
-        return $client->addMessage(reset($imapOptions['outcome']), $data, $error);
+        return $client->addMessage($path, $data, $error);
     }
 
     public static function updateImapMessage($userId, $hash, $data, &$error)
     {
         $error = null;
 
-        $res = MailMessageUidTable::getList(array(
-            'select' => array(
-                'ID', 'MAILBOX_ID', 'IS_SEEN',
-                'MAILBOX_USER_ID' => 'MAILBOX.USER_ID',
-                'MAILBOX_OPTIONS' => 'MAILBOX.OPTIONS',
-            ),
-            'filter' => array(
-                '=HEADER_MD5' => $hash,
-            ),
-        ));
+        $res = MailMessageUidTable::getList(
+            array(
+                'select' => array(
+                    'ID',
+                    'MAILBOX_ID',
+                    'IS_SEEN',
+                    'MAILBOX_USER_ID' => 'MAILBOX.USER_ID',
+                    'MAILBOX_OPTIONS' => 'MAILBOX.OPTIONS',
+                ),
+                'filter' => array(
+                    '=HEADER_MD5' => $hash,
+                    '=DELETE_TIME' => 'IS NULL',
+                ),
+            )
+        );
 
         while ($item = $res->fetch()) {
             $isOwner = $item['MAILBOX_USER_ID'] == $userId;
@@ -267,6 +287,16 @@ class DummyMail extends Main\Mail\Mail
     public function __toString()
     {
         return sprintf("%s\r\n\r\n%s", $this->getHeaders(), $this->getBody());
+    }
+
+    /**
+     * @deprecated
+     */
+    public static function overwriteMessageHeaders(Main\Mail\Mail $message, array $headers)
+    {
+        foreach ($headers as $name => $value) {
+            $message->headers[$name] = $value;
+        }
     }
 
 }

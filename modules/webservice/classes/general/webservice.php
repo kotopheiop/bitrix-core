@@ -51,7 +51,7 @@ class CWebServiceDesc
 class IWebService
 {
     // May be called by Event to collect CWebServiceDesc on configuring WS.Server
-    function GetWebServiceDesc()
+    public static function GetWebServiceDesc()
     {
     }
 
@@ -68,34 +68,39 @@ class IWebService
 
 class CWebService
 {
-    function SetComponentContext($arParams)
+    public static function SetComponentContext($arParams)
     {
-        if (is_array($arParams))
+        if (is_array($arParams)) {
             $GLOBALS["componentContext"] = $arParams;
+        }
     }
 
-    function GetComponentContext($arParams)
+    public static function GetComponentContext($arParams)
     {
-        if (is_array($GLOBALS["componentContext"]))
+        if (is_array($GLOBALS["componentContext"])) {
             return $GLOBALS["componentContext"];
+        }
 
         return false;
     }
 
-    function SOAPServerProcessRequest($wsname)
+    public static function SOAPServerProcessRequest($wsname)
     {
         if (!isset($GLOBALS["wsdescs"][$wsname]) or
             !$GLOBALS["wsdescs"][$wsname] or
-            !$GLOBALS["wsdescs"][$wsname]->_soapsi)
+            !$GLOBALS["wsdescs"][$wsname]->_soapsi) {
             return false;
+        }
 
         return $GLOBALS["wsdescs"][$wsname]->_soapsi->ProcessRequest();
     }
 
-    function RegisterWebService($className /*IWebService implementor*/)
+    public static function RegisterWebService($className /*IWebService implementor*/)
     {
         $ifce =& CWebService::GetInterface($className);
-        if (!is_object($ifce)) return false;
+        if (!is_object($ifce)) {
+            return false;
+        }
 
         $wsHandler = $ifce->GetWebServiceDesc();
         if (!$wsHandler or
@@ -106,24 +111,31 @@ class CWebService
             or !$wsHandler->wsendpoint
             or !is_array($wsHandler->classes)
             or !is_array($wsHandler->structTypes)
-            or !is_array($wsHandler->classTypes))
+            or !is_array($wsHandler->classTypes)) {
             return false;
+        }
 
-        if (isset($GLOBALS["wsdescs"][$wsHandler->wsname]))
+        if (isset($GLOBALS["wsdescs"][$wsHandler->wsname])) {
             return false;
+        }
 
         $wsHandler->_wsdlci = new CWSDLCreator(
             $wsHandler->wsname,
             $wsHandler->wsendpoint,
-            $wsHandler->wstargetns);
+            $wsHandler->wstargetns
+        );
 
         $wsHandler->_wsdlci->setClasses($wsHandler->classes);
-        if (count($wsHandler->structTypes))
-            foreach ($wsHandler->structTypes as $pname => $vars)
+        if (count($wsHandler->structTypes)) {
+            foreach ($wsHandler->structTypes as $pname => $vars) {
                 $wsHandler->_wsdlci->AddComplexDataType($pname, $vars);
-        if (count($wsHandler->classTypes))
-            foreach ($wsHandler->classTypes as $pname => $vars)
+            }
+        }
+        if (count($wsHandler->classTypes)) {
+            foreach ($wsHandler->classTypes as $pname => $vars) {
                 $wsHandler->_wsdlci->AddComplexDataType($pname, $vars);
+            }
+        }
         $wsHandler->_wsdlci->createWSDL();
 
         $wsHandler->_soapsi = new CSOAPServer();
@@ -146,19 +158,23 @@ class CWebService
             );
         }
 
-        foreach ($wsHandler->classes as $classws => $methods)
+        foreach ($wsHandler->classes as $classws => $methods) {
             foreach ($methods as $method => $param) {
-                if (isset($param["httpauth"]))
+                if (isset($param["httpauth"])) {
                     $httprequired = $param["httpauth"];
-                if ($httprequired != "Y")
+                }
+                if ($httprequired != "Y") {
                     $httprequired = "N";
+                }
 
                 $input = array();
-                if (is_array($param["input"]))
+                if (is_array($param["input"])) {
                     $input = $param["input"];
+                }
                 $output = array();
-                if (is_array($param["output"]))
+                if (is_array($param["output"])) {
                     $output = $param["output"];
+                }
 
                 $soapr->RegisterFunction(
                     $method,
@@ -171,9 +187,8 @@ class CWebService
                         "httpauth" => $httprequired
                     )
                 );
-
-
             }
+        }
 
         $wsHandler->_soapsi->AddServerResponser($soapr);
 
@@ -183,7 +198,7 @@ class CWebService
         return true;
     }
 
-    function GetSOAPServerRequest($wsname)
+    public static function GetSOAPServerRequest($wsname)
     {
         if (isset($GLOBALS["wsdescs"][$wsname]) and
             $GLOBALS["wsdescs"][$wsname]->_soapsi) {
@@ -192,7 +207,7 @@ class CWebService
         return false;
     }
 
-    function GetSOAPServerResponse($wsname)
+    public static function GetSOAPServerResponse($wsname)
     {
         if (isset($GLOBALS["wsdescs"][$wsname])) {
             return $GLOBALS["wsdescs"][$wsname]->_soapsi->GetResponseData();
@@ -200,7 +215,7 @@ class CWebService
         return false;
     }
 
-    function MethodRequireHTTPAuth($class, $method)
+    public static function MethodRequireHTTPAuth($class, $method)
     {
         global $USER;
 
@@ -212,58 +227,68 @@ class CWebService
         return true;
     }
 
-    function TestComponent($wsname)
+    public static function TestComponent($wsname)
     {
         if (isset($GLOBALS["wsdescs"][$wsname])) {
             $ifce =& CWebService::GetInterface($GLOBALS["wsdescs"][$wsname]->wsclassname);
-            if (!is_object($ifce)) return false;
+            if (!is_object($ifce)) {
+                return false;
+            }
             $ifce->TestComponent();
         }
         return false;
     }
 
-    function GetWSDL($wsname)
+    public static function GetWSDL($wsname)
     {
         if (!isset($GLOBALS["wsdescs"][$wsname]) or
             !$GLOBALS["wsdescs"][$wsname] or
-            !$GLOBALS["wsdescs"][$wsname]->_wsdlci)
+            !$GLOBALS["wsdescs"][$wsname]->_wsdlci) {
             return false;
+        }
         return $GLOBALS["wsdescs"][$wsname]->_wsdlci->getWSDL();
     }
 
-    function GetDefaultEndpoint()
+    public static function GetDefaultEndpoint()
     {
         global $APPLICATION;
         return ($APPLICATION->IsHTTPS() ? "https" : "http") . "://" . $_SERVER["HTTP_HOST"] .
             $APPLICATION->GetCurPage();
     }
 
-    function GetDefaultTargetNS()
+    public static function GetDefaultTargetNS()
     {
         global $APPLICATION;
 
         return ($APPLICATION->IsHTTPS() ? "https" : "http") . "://" . $_SERVER["HTTP_HOST"] . "/";
     }
 
-    function &GetWebServiceDeclaration($className)
+    public static function &GetWebServiceDeclaration($className)
     {
-        if (isset($GLOBALS["wsdescs"][$className])) return $GLOBALS["wsdescs"][$className];
+        if (isset($GLOBALS["wsdescs"][$className])) {
+            return $GLOBALS["wsdescs"][$className];
+        }
         $ifce =& CWebService::GetInterface($className);
-        if (!is_object($ifce)) return false;
+        if (!is_object($ifce)) {
+            return false;
+        }
         return $ifce->GetWebServiceDesc();
     }
 
-    function &GetInterface($className)
+    public static function &GetInterface($className)
     {
-        if (isset($GLOBALS["wswraps"][$className])) return $GLOBALS["wswraps"][$className];
+        if (isset($GLOBALS["wswraps"][$className])) {
+            return $GLOBALS["wswraps"][$className];
+        }
 
-        if (!class_exists($className)) return 0;
+        if (!class_exists($className)) {
+            return 0;
+        }
         //AddMessage2Log(mydump(class_exists($className, true)));
         $ifce = new $className;
-        if (!is_subclass_of($ifce, "IWebService")) return 0;
+        if (!is_subclass_of($ifce, "IWebService")) {
+            return 0;
+        }
         return $ifce;
     }
-
 }
-
-?>

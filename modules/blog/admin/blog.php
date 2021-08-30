@@ -1,10 +1,12 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/blog/include.php");
 
 $blogModulePermissions = $APPLICATION->GetGroupRight("blog");
-if ($blogModulePermissions < "R")
+if ($blogModulePermissions < "R") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/blog/prolog.php");
@@ -28,20 +30,26 @@ $USER_FIELD_MANAGER->AdminListAddFilterFields("BLOG_BLOG", $arFilterFields);
 $lAdmin->InitFilter($arFilterFields);
 
 $arFilter = array();
-if (strlen($filter_name) > 0)
+if ($filter_name <> '') {
     $arFilter["~NAME"] = "%" . $filter_name . "%";
-if (strlen($filter_active) > 0)
+}
+if ($filter_active <> '') {
     $arFilter["ACTIVE"] = $filter_active;
-if (strlen($filter_url) > 0)
+}
+if ($filter_url <> '') {
     $arFilter["URL"] = $filter_url;
-if (is_array($filter_group_id))
+}
+if (is_array($filter_group_id)) {
     $arFilter["GROUP_ID"] = $filter_group_id;
-else
+} else {
     $filter_group_id = array();
-if (strlen($filter_owner) > 0)
+}
+if ($filter_owner <> '') {
     $arFilter["%OWNER"] = $filter_owner;
-if (strlen($filter_id) > 0)
+}
+if ($filter_id <> '') {
     $arFilter["ID"] = $filter_id;
+}
 
 $USER_FIELD_MANAGER->AdminListAddFilter("BLOG_BLOG", $arFilter);
 
@@ -55,13 +63,15 @@ if (($arID = $lAdmin->GroupAction()) && $blogModulePermissions >= "W") {
             false,
             array("ID")
         );
-        while ($arResult = $dbResultList->Fetch())
+        while ($arResult = $dbResultList->Fetch()) {
             $arID[] = $arResult['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
 
         switch ($_REQUEST['action']) {
             case "delete":
@@ -80,21 +90,22 @@ if (($arID = $lAdmin->GroupAction()) && $blogModulePermissions >= "W") {
                 if (!CBlog::Delete($ID)) {
                     $DB->Rollback();
 
-                    if ($ex = $APPLICATION->GetException())
+                    if ($ex = $APPLICATION->GetException()) {
                         $lAdmin->AddGroupError($ex->GetString(), $ID);
-                    else
+                    } else {
                         $lAdmin->AddGroupError(GetMessage("BLB_DELETE_ERROR"), $ID);
+                    }
                 }
 
                 $DB->Commit();
 
                 if (!empty($arBlogOld)) {
-                    BXClearCache(True, "/" . $arBlogOld["GROUP_SITE_ID"] . "/blog/");
-                    BXClearCache(True, "/" . SITE_ID . "/blog/last_messages/");
-                    BXClearCache(True, "/" . SITE_ID . "/blog/commented_posts/");
-                    BXClearCache(True, "/" . SITE_ID . "/blog/popular_posts/");
-                    BXClearCache(True, "/" . SITE_ID . "/blog/last_comments/");
-                    BXClearCache(True, "/" . SITE_ID . "/blog/popular_blogs/");
+                    BXClearCache(true, "/" . $arBlogOld["GROUP_SITE_ID"] . "/blog/");
+                    BXClearCache(true, "/" . SITE_ID . "/blog/last_messages/");
+                    BXClearCache(true, "/" . SITE_ID . "/blog/commented_posts/");
+                    BXClearCache(true, "/" . SITE_ID . "/blog/popular_posts/");
+                    BXClearCache(true, "/" . SITE_ID . "/blog/last_comments/");
+                    BXClearCache(true, "/" . SITE_ID . "/blog/popular_blogs/");
                 }
 
                 break;
@@ -105,8 +116,18 @@ if (($arID = $lAdmin->GroupAction()) && $blogModulePermissions >= "W") {
 $arHeaders = array(
     array("id" => "ID", "content" => "ID", "sort" => "ID", "default" => true),
     array("id" => "NAME", "content" => GetMessage("BLB_NAME"), "sort" => "NAME", "default" => true),
-    array("id" => "DATE_CREATE", "content" => GetMessage('BLB_DATE_CREATE'), "sort" => "DATE_CREATE", "default" => true),
-    array("id" => "DATE_UPDATE", "content" => GetMessage('BLB_DATE_UPDATE'), "sort" => "DATE_UPDATE", "default" => true),
+    array(
+        "id" => "DATE_CREATE",
+        "content" => GetMessage('BLB_DATE_CREATE'),
+        "sort" => "DATE_CREATE",
+        "default" => true
+    ),
+    array(
+        "id" => "DATE_UPDATE",
+        "content" => GetMessage('BLB_DATE_UPDATE'),
+        "sort" => "DATE_UPDATE",
+        "default" => true
+    ),
     array("id" => "ACTIVE", "content" => GetMessage('BLB_ACTIVE'), "sort" => "ACTIVE", "default" => true),
     array("id" => "OWNER_INFO", "content" => GetMessage('BLB_OWNER_ID'), "sort" => "", "default" => true),
     array("id" => "URL", "content" => GetMessage('BLB_URL'), "sort" => "URL", "default" => true),
@@ -118,11 +139,30 @@ $lAdmin->AddHeaders($arHeaders);
 
 $arVisibleColumns = $lAdmin->GetVisibleHeaderColumns();
 
-$arSelectedFields = array("ID", "NAME", "DATE_CREATE", "DATE_UPDATE", "ACTIVE", "OWNER_ID", "URL", "REAL_URL", "GROUP_ID", "OWNER_LOGIN", "OWNER_NAME", "OWNER_LAST_NAME", "OWNER_EMAIL", "GROUP_NAME", "GROUP_SITE_ID", "USE_SOCNET");
+$arSelectedFields = array(
+    "ID",
+    "NAME",
+    "DATE_CREATE",
+    "DATE_UPDATE",
+    "ACTIVE",
+    "OWNER_ID",
+    "URL",
+    "REAL_URL",
+    "GROUP_ID",
+    "OWNER_LOGIN",
+    "OWNER_NAME",
+    "OWNER_LAST_NAME",
+    "OWNER_EMAIL",
+    "GROUP_NAME",
+    "GROUP_SITE_ID",
+    "USE_SOCNET"
+);
 
-foreach ($arVisibleColumns as $val)
-    if (!in_array($val, $arSelectedFields))
+foreach ($arVisibleColumns as $val) {
+    if (!in_array($val, $arSelectedFields)) {
         $arSelectedFields[] = $val;
+    }
+}
 
 $dbResultList = CBlog::GetList(
     array($by => $order),
@@ -138,16 +178,39 @@ $dbResultList->NavStart();
 $lAdmin->NavText($dbResultList->GetNavPrint(GetMessage("BLB_GROUP_NAV")));
 
 while ($arBlog = $dbResultList->NavNext(true, "f_")) {
-    $row =& $lAdmin->AddRow($f_ID, $arBlog, "/bitrix/admin/blog_blog_edit.php?ID=" . $f_ID . "&lang=" . LANGUAGE_ID, GetMessage("BLB_UPDATE_ALT"));
+    $row =& $lAdmin->AddRow(
+        $f_ID,
+        $arBlog,
+        "/bitrix/admin/blog_blog_edit.php?ID=" . $f_ID . "&lang=" . LANGUAGE_ID,
+        GetMessage("BLB_UPDATE_ALT")
+    );
 
-    $row->AddField("ID", '<a href="/bitrix/admin/blog_blog_edit.php?ID=' . $f_ID . '&lang=' . LANGUAGE_ID . '" title="' . GetMessage("BLB_UPDATE_ALT") . '">' . $f_ID . '</a>');
-    $row->AddField("NAME", "<a href=\"" . CBlog::PreparePath($f_URL, $f_GROUP_SITE_ID, false, $f_OWNER_ID, $f_SOCNET_GROUP_ID) . "\">" . $f_NAME . "</a>");
+    $row->AddField(
+        "ID",
+        '<a href="/bitrix/admin/blog_blog_edit.php?ID=' . $f_ID . '&lang=' . LANGUAGE_ID . '" title="' . GetMessage(
+            "BLB_UPDATE_ALT"
+        ) . '">' . $f_ID . '</a>'
+    );
+    $row->AddField(
+        "NAME",
+        "<a href=\"" . CBlog::PreparePath(
+            $f_URL,
+            $f_GROUP_SITE_ID,
+            false,
+            $f_OWNER_ID,
+            $f_SOCNET_GROUP_ID
+        ) . "\">" . $f_NAME . "</a>"
+    );
     $row->AddField("DATE_CREATE", $f_DATE_CREATE);
     $row->AddField("DATE_UPDATE", $f_DATE_UPDATE);
     $row->AddField("ACTIVE", (($f_ACTIVE == "Y") ? GetMessage("BLB_YES") : GetMessage("BLB_NO")));
-    if (IntVal($f_OWNER_ID) > 0)
-        $row->AddField("OWNER_INFO", "<a href=\"/bitrix/admin/user_edit.php?ID=" . $f_OWNER_ID . "&lang=" . LANG . "\">[" . $f_OWNER_ID . "] " . $f_OWNER_NAME . " " . $f_OWNER_LAST_NAME . " (" . $f_OWNER_LOGIN . ")</a>");
-    if (IntVal($f_SOCNET_GROUP_ID) > 0) {
+    if (intval($f_OWNER_ID) > 0) {
+        $row->AddField(
+            "OWNER_INFO",
+            "<a href=\"/bitrix/admin/user_edit.php?ID=" . $f_OWNER_ID . "&lang=" . LANG . "\">[" . $f_OWNER_ID . "] " . $f_OWNER_NAME . " " . $f_OWNER_LAST_NAME . " (" . $f_OWNER_LOGIN . ")</a>"
+        );
+    }
+    if (intval($f_SOCNET_GROUP_ID) > 0) {
         $row->AddField("SOCNET_GROUP_ID", $f_SOCNET_GROUP_ID);
         if (CModule::IncludeModule("socialnetwork")) {
             $arGroupSo = CSocNetGroup::GetByID($f_SOCNET_GROUP_ID);
@@ -155,19 +218,35 @@ while ($arBlog = $dbResultList->NavNext(true, "f_")) {
                 $row->AddField("SOCNET_GROUP_ID", "[" . $f_SOCNET_GROUP_ID . "] " . $arGroupSo["NAME"]);
             }
         }
-
     }
     $row->AddField("URL", $f_URL);
-    $row->AddField("GROUP_ID", "<a href=\"/bitrix/admin/blog_group_edit.php?ID=" . $f_GROUP_ID . "&lang=" . LANG . "\">[" . $f_GROUP_SITE_ID . "] " . $f_GROUP_NAME . "</a>");
+    $row->AddField(
+        "GROUP_ID",
+        "<a href=\"/bitrix/admin/blog_group_edit.php?ID=" . $f_GROUP_ID . "&lang=" . LANG . "\">[" . $f_GROUP_SITE_ID . "] " . $f_GROUP_NAME . "</a>"
+    );
     $row->AddField("USE_SOCNET", (($f_USE_SOCNET == "Y") ? GetMessage("BLB_YES") : GetMessage("BLB_NO")));
 
     $USER_FIELD_MANAGER->AddUserFields("BLOG_BLOG", $arBlog, $row);
 
     $arActions = Array();
-    $arActions[] = array("ICON" => "edit", "TEXT" => GetMessage("BLB_UPDATE_ALT"), "ACTION" => $lAdmin->ActionRedirect("blog_blog_edit.php?ID=" . $f_ID . "&lang=" . LANG . "&" . GetFilterParams("filter_") . ""), "DEFAULT" => true);
+    $arActions[] = array(
+        "ICON" => "edit",
+        "TEXT" => GetMessage("BLB_UPDATE_ALT"),
+        "ACTION" => $lAdmin->ActionRedirect(
+            "blog_blog_edit.php?ID=" . $f_ID . "&lang=" . LANG . "&" . GetFilterParams("filter_") . ""
+        ),
+        "DEFAULT" => true
+    );
     if ($blogModulePermissions >= "U") {
         $arActions[] = array("SEPARATOR" => true);
-        $arActions[] = array("ICON" => "delete", "TEXT" => GetMessage("BLB_DELETE_ALT"), "ACTION" => "if(confirm('" . GetMessage('BLB_DELETE_CONF') . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete"));
+        $arActions[] = array(
+            "ICON" => "delete",
+            "TEXT" => GetMessage("BLB_DELETE_ALT"),
+            "ACTION" => "if(confirm('" . GetMessage('BLB_DELETE_CONF') . "')) " . $lAdmin->ActionDoGroup(
+                    $f_ID,
+                    "delete"
+                )
+        );
     }
 
     $row->AddActions($arActions);
@@ -239,8 +318,12 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
             <td>
                 <select name="filter_active">
                     <option value=""><? echo GetMessage("BLB_F_ALL") ?></option>
-                    <option value="Y"<? if ($filter_active == "Y") echo " selected" ?>><? echo GetMessage("BLB_YES") ?></option>
-                    <option value="N"<? if ($filter_active == "N") echo " selected" ?>><? echo GetMessage("BLB_NO") ?></option>
+                    <option value="Y"<? if ($filter_active == "Y") echo " selected" ?>><? echo GetMessage(
+                            "BLB_YES"
+                        ) ?></option>
+                    <option value="N"<? if ($filter_active == "N") echo " selected" ?>><? echo GetMessage(
+                            "BLB_NO"
+                        ) ?></option>
                 </select>
             </td>
         </tr>
@@ -257,8 +340,11 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
                     $dbGroup = CBlogGroup::GetList(array("NAME" => "ASC"), array());
                     while ($arGroup = $dbGroup->GetNext()) {
                         ?>
-                        <option value="<?= $arGroup["ID"] ?>"<? if (in_array($arGroup["ID"], $filter_group_id)) echo " selected" ?>>
-                        [<?= $arGroup["ID"] ?>] <?= $arGroup["NAME"] ?> (<?= $arGroup["SITE_ID"] ?>)</option><?
+                        <option value="<?= $arGroup["ID"] ?>"<? if (in_array(
+                            $arGroup["ID"],
+                            $filter_group_id
+                        )) echo " selected" ?>>[<?= $arGroup["ID"] ?>] <?= $arGroup["NAME"] ?>
+                        (<?= $arGroup["SITE_ID"] ?>)</option><?
                     }
                     ?>
                 </select>

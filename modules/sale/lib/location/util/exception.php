@@ -10,7 +10,10 @@ class SaleTreeNodeNotFoundException extends Main\SystemException
 
     public function __construct($message = "", $code = 0)
     {
-        parent::_construct(strlen($message) ? $message : Loc::getMessage('SALE_TREE_ENTITY_NODE_NOT_FOUND_EXCEPTION'), $code);
+        parent::_construct(
+            strlen($message) ? $message : Loc::getMessage('SALE_TREE_ENTITY_NODE_NOT_FOUND_EXCEPTION'),
+            $code
+        );
     }
 
 }

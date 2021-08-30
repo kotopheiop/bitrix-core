@@ -92,7 +92,8 @@ class LogTable extends Main\Entity\DataManager
                 "data_type" => "text",
                 "expression" => array(
                     "case when %s = '" . Logger::TYPE_CACHE_REWRITING . "' then NULL else %s end",
-                    "TYPE", "MESSAGE"
+                    "TYPE",
+                    "MESSAGE"
                 ),
                 "title" => Loc::getMessage("LOG_ENTITY_MESSAGE_FIELD"),
             ),

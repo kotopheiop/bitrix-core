@@ -133,25 +133,32 @@ class AudienceYandex extends Audience
         $payload = $this->prepareContacts($contacts, $hashed, $options['type']);
 
         if ($createNewAudience) {
-            $name = $options['audienceName'] ?: Loc::getMessage('SEO_RETARGETING_SERVICE_AUDIENCE_NAME_TEMPLATE', ['#DATE#' => FormatDate('j F')]);
-            $response = $this->getRequest()->send(array(
-                'methodName' => 'retargeting.audience.add',
-                'parameters' => array(
-                    'name' => $name,
-                    'hashed' => $hashed ? 1 : 0,
-                    'contacts' => $payload
-                ),
-                'timeout' => static::UPDATE_AUDIENCE_TIMEOUT
-            ));
+            $name = $options['audienceName'] ?: Loc::getMessage(
+                'SEO_RETARGETING_SERVICE_AUDIENCE_NAME_TEMPLATE',
+                ['#DATE#' => FormatDate('j F')]
+            );
+            $response = $this->getRequest()->send(
+                array(
+                    'methodName' => 'retargeting.audience.add',
+                    'parameters' => array(
+                        'name' => $name,
+                        'hashed' => $hashed ? 1 : 0,
+                        'contacts' => $payload
+                    ),
+                    'timeout' => static::UPDATE_AUDIENCE_TIMEOUT
+                )
+            );
         } else {
-            $response = $this->getRequest()->send(array(
-                'methodName' => 'retargeting.audience.contacts.rewrite',
-                'parameters' => array(
-                    'audienceId' => $audienceId,
-                    'contacts' => $payload
-                ),
-                'timeout' => static::UPDATE_AUDIENCE_TIMEOUT
-            ));
+            $response = $this->getRequest()->send(
+                array(
+                    'methodName' => 'retargeting.audience.contacts.rewrite',
+                    'parameters' => array(
+                        'audienceId' => $audienceId,
+                        'contacts' => $payload
+                    ),
+                    'timeout' => static::UPDATE_AUDIENCE_TIMEOUT
+                )
+            );
         }
 
         return $response;
@@ -178,19 +185,26 @@ class AudienceYandex extends Audience
      */
     public function getList()
     {
-        $response = $this->getRequest()->send(array(
-            'methodName' => 'retargeting.audience.list',
-            'parameters' => array()
-        ));
+        $response = $this->getRequest()->send(
+            array(
+                'methodName' => 'retargeting.audience.list',
+                'parameters' => array()
+            )
+        );
         $data = $response->getData();
         if (is_array($data['segments'])) {
-            $data = array_values(array_filter($data['segments'], function ($item) {
-                return (
-                    $item['type'] == 'uploading' && // based on uploaded data
-                    $item['content_type'] == 'crm' && // Data from crm
-                    $item['status'] != 'is_processed' // Can't use segments which are processed right now
-                );
-            }));
+            $data = array_values(
+                array_filter(
+                    $data['segments'],
+                    function ($item) {
+                        return (
+                            $item['type'] == 'uploading' && // based on uploaded data
+                            $item['content_type'] == 'crm' && // Data from crm
+                            $item['status'] != 'is_processed' // Can't use segments which are processed right now
+                        );
+                    }
+                )
+            );
         } else {
             $data = [];
         }
@@ -207,14 +221,17 @@ class AudienceYandex extends Audience
      */
     protected function addNewAudienceValue($data)
     {
-        array_unshift($data, [
-            'name' => Loc::getMessage("SEO_RETARGETING_SERVICE_AUDIENCE_YANDEX_ADD"),
-            'id' => static::NEW_AUDIENCE_FAKE_ID,
-            'valid_unique_quantity' => '',
-            'matched_quantity' => '',
-            'status' => '',
-            'hashed' => false,
-        ]);
+        array_unshift(
+            $data,
+            [
+                'name' => Loc::getMessage("SEO_RETARGETING_SERVICE_AUDIENCE_YANDEX_ADD"),
+                'id' => static::NEW_AUDIENCE_FAKE_ID,
+                'valid_unique_quantity' => '',
+                'matched_quantity' => '',
+                'status' => '',
+                'hashed' => false,
+            ]
+        );
         return $data;
     }
 }

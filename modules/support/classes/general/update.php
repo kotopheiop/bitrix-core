@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 class CAllSupportUpdate
@@ -30,14 +31,17 @@ class CAllSupportUpdate
     function Update()
     {
         if (CSupportUpdate::CurrentVersionLowerThanUpdateVersion()) {
-
             $dbType = CSupportUpdate::GetBD();
 
             $res = self::AlterTables($dbType);
-            if (!$res) return false;
+            if (!$res) {
+                return false;
+            }
 
             $res = self::SeparateSLAandTimeTable($dbType);
-            if (!$res) return false;
+            if (!$res) {
+                return false;
+            }
 
             CSupportTimetableCache::toCache();
 
@@ -48,13 +52,11 @@ class CAllSupportUpdate
             CSupportUpdate::ChangeCurrentVersion();
 
             self::SetHotKeys();
-
         }
     }
 
     function AlterTables($dbType)
     {
-
         global $DB;
         $err_mess = (CAllSupportUpdate::err_mess()) . "<br>Function: AlterTables<br>Line: ";
 
@@ -265,22 +267,57 @@ GO
         //add fields
         $addFields = array(
             "b_ticket" => array(
-                array("FIELD" => "SUPPORT_DEADLINE", "MySQL" => "datetime null", "MSSQL" => "datetime NULL", "Oracle" => "DATE NULL",),
-                array("FIELD" => "SUPPORT_DEADLINE_NOTIFY", "MySQL" => "datetime null", "MSSQL" => "datetime NULL", "Oracle" => "DATE NULL",),
-                array("FIELD" => "D_1_USER_M_AFTER_SUP_M", "MySQL" => "datetime null", "MSSQL" => "datetime NULL", "Oracle" => "DATE NULL",),
-                array("FIELD" => "ID_1_USER_M_AFTER_SUP_M", "MySQL" => "int(18) null", "MSSQL" => "int NULL", "Oracle" => "NUMBER(18) NULL",),
+                array(
+                    "FIELD" => "SUPPORT_DEADLINE",
+                    "MySQL" => "datetime null",
+                    "MSSQL" => "datetime NULL",
+                    "Oracle" => "DATE NULL",
+                ),
+                array(
+                    "FIELD" => "SUPPORT_DEADLINE_NOTIFY",
+                    "MySQL" => "datetime null",
+                    "MSSQL" => "datetime NULL",
+                    "Oracle" => "DATE NULL",
+                ),
+                array(
+                    "FIELD" => "D_1_USER_M_AFTER_SUP_M",
+                    "MySQL" => "datetime null",
+                    "MSSQL" => "datetime NULL",
+                    "Oracle" => "DATE NULL",
+                ),
+                array(
+                    "FIELD" => "ID_1_USER_M_AFTER_SUP_M",
+                    "MySQL" => "int(18) null",
+                    "MSSQL" => "int NULL",
+                    "Oracle" => "NUMBER(18) NULL",
+                ),
             ),
 
             "b_ticket_sla" => array(
-                array("FIELD" => "TIMETABLE_ID", "MySQL" => "int(18) null", "MSSQL" => "int NULL", "Oracle" => "NUMBER(18) NULL",),
+                array(
+                    "FIELD" => "TIMETABLE_ID",
+                    "MySQL" => "int(18) null",
+                    "MSSQL" => "int NULL",
+                    "Oracle" => "NUMBER(18) NULL",
+                ),
             ),
 
             "b_ticket_sla_shedule" => array(
-                array("FIELD" => "TIMETABLE_ID", "MySQL" => "int(18) null", "MSSQL" => "int NULL", "Oracle" => "NUMBER(18) NULL",),
+                array(
+                    "FIELD" => "TIMETABLE_ID",
+                    "MySQL" => "int(18) null",
+                    "MSSQL" => "int NULL",
+                    "Oracle" => "NUMBER(18) NULL",
+                ),
             ),
 
             "b_ticket_user_ugroup" => array(
-                array("FIELD" => "CAN_MAIL_UPDATE_GROUP_MESSAGES", "MySQL" => "char(1) NOT NULL default 'N'", "MSSQL" => "char(1) NOT NULL DEFAULT 'N'", "Oracle" => "CHAR(1 CHAR) DEFAULT 'N' NOT NULL",),
+                array(
+                    "FIELD" => "CAN_MAIL_UPDATE_GROUP_MESSAGES",
+                    "MySQL" => "char(1) NOT NULL default 'N'",
+                    "MSSQL" => "char(1) NOT NULL DEFAULT 'N'",
+                    "Oracle" => "CHAR(1 CHAR) DEFAULT 'N' NOT NULL",
+                ),
             ),
         );
 
@@ -290,7 +327,9 @@ GO
                     $arQuery = $DB->ParseSQLBatch(str_replace("\r", "", $arr[$dbType]));
                     foreach ($arQuery as $i => $sql) {
                         $res = $DB->Query($sql, true);
-                        if (!$res) return false;
+                        if (!$res) {
+                            return false;
+                        }
                     }
                 }
             }
@@ -301,7 +340,9 @@ GO
                 foreach ($arr as $n => $FN) {
                     if ($DB->Query("select $FN from $table WHERE 1=0", true)) {
                         $res = $DB->Query("ALTER TABLE $table DROP $FN", true);
-                        if (!$res) return false;
+                        if (!$res) {
+                            return false;
+                        }
                     }
                 }
             }
@@ -314,7 +355,9 @@ GO
                     $FT = $arrF[$dbType];
                     if (!$DB->Query("select $FN from $table WHERE 1=0", true)) {
                         $res = $DB->Query("ALTER TABLE $table ADD $FN $FT", true);
-                        if (!$res) return false;
+                        if (!$res) {
+                            return false;
+                        }
                     }
                 }
             }
@@ -515,9 +558,10 @@ GO
                     $arQuery = $DB->ParseSQLBatch(str_replace("\r", "", $arQ[$dbType]));
                     foreach ($arQuery as $i => $sql) {
                         $res = $DB->Query($sql, true);
-                        if (!$res) return false;
+                        if (!$res) {
+                            return false;
+                        }
                     }
-
                 }
             }
         }

@@ -13,9 +13,10 @@ class CRsaOpensslProvider extends CRsaProvider
 
     public function LoadKeys()
     {
-        $arKeys = unserialize(COption::GetOptionString("main", "~rsa_keys_openssl", ""));
-        if (!is_array($arKeys))
+        $arKeys = unserialize(COption::GetOptionString("main", "~rsa_keys_openssl", ""), ['allowed_classes' => false]);
+        if (!is_array($arKeys)) {
             return false;
+        }
         $arKeys["PRIV"] = COption::GetOptionString("main", "~rsa_key_pem", "");
         return $arKeys;
     }
@@ -47,10 +48,11 @@ class CRsaOpensslProvider extends CRsaProvider
 
     public function Keygen($keylen = false)
     {
-        if ($keylen === false)
+        if ($keylen === false) {
             $keylen = 1024;
-        else
+        } else {
             $keylen = intval($keylen);
+        }
 
         $fname = $_SERVER["DOCUMENT_ROOT"] . "/bitrix/tmp/openssl.cnf";
         if (!file_exists($fname)) {
@@ -58,11 +60,13 @@ class CRsaOpensslProvider extends CRsaProvider
             file_put_contents($fname, '');
         }
 
-        $keys = openssl_pkey_new(array(
-            "private_key_type" => OPENSSL_KEYTYPE_RSA,
-            "private_key_bits" => $keylen,
-            "config" => $fname,
-        ));
+        $keys = openssl_pkey_new(
+            array(
+                "private_key_type" => OPENSSL_KEYTYPE_RSA,
+                "private_key_bits" => $keylen,
+                "config" => $fname,
+            )
+        );
 
         if ($keys) {
             openssl_pkey_export($keys, $privkey, null, array("config" => $fname));

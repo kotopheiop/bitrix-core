@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 $selfFolderUrl = $adminPage->getSelfFolderUrl();
@@ -6,8 +7,9 @@ $listUrl = $selfFolderUrl . "sale_person_type.php?lang=" . LANGUAGE_ID;
 $listUrl = $adminSidePanelHelper->editUrlToPublicPage($listUrl);
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions < "W")
+if ($saleModulePermissions < "W") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 \Bitrix\Main\Loader::includeModule('sale');
 
@@ -18,9 +20,9 @@ ClearVars();
 $errorMessage = "";
 $bVarsFromForm = false;
 
-$ID = IntVal($ID);
+$ID = intval($ID);
 
-if ($REQUEST_METHOD == "POST" && strlen($Update) > 0 && $saleModulePermissions >= "W" && check_bitrix_sessid()) {
+if ($REQUEST_METHOD == "POST" && $Update <> '' && $saleModulePermissions >= "W" && check_bitrix_sessid()) {
     $adminSidePanelHelper->decodeUriComponent();
 
     if ($ACTIVE != "Y") {
@@ -47,50 +49,59 @@ if ($REQUEST_METHOD == "POST" && strlen($Update) > 0 && $saleModulePermissions >
 
         if ($ID > 0) {
             if (!CSalePersonType::Update($ID, $arFields)) {
-                if ($ex = $APPLICATION->GetException())
+                if ($ex = $APPLICATION->GetException()) {
                     $errorMessage .= $ex->GetString() . "<br>";
-                else
+                } else {
                     $errorMessage .= GetMessage("SPTEN_ERROR_SAVING_PERSON_TYPE") . "<br>";
+                }
             }
         } else {
             $ID = CSalePersonType::Add($arFields);
-            $ID = IntVal($ID);
+            $ID = intval($ID);
             if ($ID > 0) {
-                $propsGroupId = CSaleOrderPropsGroup::Add([
-                    'PERSON_TYPE_ID' => $ID,
-                    'NAME' => GetMessage('PROPS_GROUP_DEFAULT_NAME'),
-                    'SORT' => 0,
-                ]);
+                $propsGroupId = CSaleOrderPropsGroup::Add(
+                    [
+                        'PERSON_TYPE_ID' => $ID,
+                        'NAME' => GetMessage('PROPS_GROUP_DEFAULT_NAME'),
+                        'SORT' => 0,
+                    ]
+                );
 
                 if ((int)$propsGroupId <= 0) {
-                    if ($ex = $APPLICATION->GetException())
+                    if ($ex = $APPLICATION->GetException()) {
                         $errorMessage .= $ex->GetString() . ". ";
-                    else
+                    } else {
                         $errorMessage .= GetMessage("SOPGEN_ERROR_SAVING_PROPS_GRP") . ". ";
+                    }
                 }
             } else {
-                if ($ex = $APPLICATION->GetException())
+                if ($ex = $APPLICATION->GetException()) {
                     $errorMessage .= $ex->GetString() . "<br>";
-                else
+                } else {
                     $errorMessage .= GetMessage("SPTEN_ERROR_SAVING_PERSON_TYPE") . "<br>";
+                }
             }
         }
 
-        \Bitrix\Sale\Internals\BusinessValuePersonDomainTable::delete(array(
-            'PERSON_TYPE_ID' => $ID
-        ));
+        \Bitrix\Sale\Internals\BusinessValuePersonDomainTable::delete(
+            array(
+                'PERSON_TYPE_ID' => $ID
+            )
+        );
 
         if ($BUSVAL_DOMAIN !== '') {
-            \Bitrix\Sale\Internals\BusinessValuePersonDomainTable::add(array(
-                'PERSON_TYPE_ID' => $ID,
-                'DOMAIN' => $BUSVAL_DOMAIN,
-            ));
+            \Bitrix\Sale\Internals\BusinessValuePersonDomainTable::add(
+                array(
+                    'PERSON_TYPE_ID' => $ID,
+                    'DOMAIN' => $BUSVAL_DOMAIN,
+                )
+            );
         }
     }
 
-    if (strlen($errorMessage) <= 0) {
+    if ($errorMessage == '') {
         $adminSidePanelHelper->sendSuccessResponse("base", array("ID" => $ID));
-        if (strlen($apply) <= 0) {
+        if ($apply == '') {
             $adminSidePanelHelper->localRedirect($listUrl);
             LocalRedirect($listUrl);
         } else {
@@ -106,24 +117,28 @@ if ($REQUEST_METHOD == "POST" && strlen($Update) > 0 && $saleModulePermissions >
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/prolog.php");
 
-if ($ID > 0)
+if ($ID > 0) {
     $APPLICATION->SetTitle(GetMessage("SPTEN_UPDATING"));
-else
+} else {
     $APPLICATION->SetTitle(GetMessage("SPTEN_ADDING"));
+}
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
-if ($saleModulePermissions < "W")
+if ($saleModulePermissions < "W") {
     $errorMessage .= GetMessage("SPTEN_NO_PERMS2ADD") . ".<br>";
+}
 
-if (IntVal($ID) > 0) {
+if (intval($ID) > 0) {
     $personType = \Bitrix\Sale\Internals\PersonTypeTable::getRowById($ID);
 
-    $dbRes = \Bitrix\Sale\Internals\PersonTypeSiteTable::getList([
-        'filter' => [
-            '=PERSON_TYPE_ID' => $personType['ID']
+    $dbRes = \Bitrix\Sale\Internals\PersonTypeSiteTable::getList(
+        [
+            'filter' => [
+                '=PERSON_TYPE_ID' => $personType['ID']
+            ]
         ]
-    ]);
+    );
     while ($data = $dbRes->fetch()) {
         $personType['LIDS'][] = $data['SITE_ID'];
     }
@@ -153,7 +168,8 @@ if ($ID > 0 && $saleModulePermissions >= "W") {
     );
 
     if ($personType['CODE'] !== 'CRM_COMPANY' && $personType['CODE'] !== 'CRM_CONTACT') {
-        $deleteUrl = $selfFolderUrl . "sale_person_type.php?ID=" . $ID . "&action=delete&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get() . "#tb";
+        $deleteUrl = $selfFolderUrl . "sale_person_type.php?ID=" . $ID . "&action=delete&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get(
+            ) . "#tb";
         $buttonAction = "LINK";
         if ($adminSidePanelHelper->isPublicFrame()) {
             $deleteUrl = $adminSidePanelHelper->editUrlToPublicPage($deleteUrl);
@@ -161,7 +177,9 @@ if ($ID > 0 && $saleModulePermissions >= "W") {
         }
         $aMenu[] = array(
             "TEXT" => GetMessage("SPTEN_DELETE_PERSON_TYPE"),
-            $buttonAction => "javascript:if(confirm('" . GetMessage("SPTEN_DELETE_PERSON_TYPE_CONFIRM") . "')) top.window.location.href='" . $deleteUrl . "';",
+            $buttonAction => "javascript:if(confirm('" . GetMessage(
+                    "SPTEN_DELETE_PERSON_TYPE_CONFIRM"
+                ) . "')) top.window.location.href='" . $deleteUrl . "';",
             "WARNING" => "Y",
             "ICON" => "btn_delete"
         );
@@ -171,8 +189,11 @@ $context = new CAdminContextMenu($aMenu);
 $context->Show();
 ?>
 
-<? if (strlen($errorMessage) > 0)
-    echo CAdminMessage::ShowMessage(Array("DETAILS" => $errorMessage, "TYPE" => "ERROR", "MESSAGE" => GetMessage("SPTEN_ERROR"), "HTML" => true)); ?>
+<? if ($errorMessage <> '') {
+    echo CAdminMessage::ShowMessage(
+        Array("DETAILS" => $errorMessage, "TYPE" => "ERROR", "MESSAGE" => GetMessage("SPTEN_ERROR"), "HTML" => true)
+    );
+} ?>
 <?
 $actionUrl = $APPLICATION->GetCurPage();
 $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
@@ -185,7 +206,14 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
         <?= bitrix_sessid_post() ?>
 
         <?
-        $aTabs = array(array("DIV" => "edit1", "TAB" => GetMessage("SPTEN_TAB_PERSON_TYPE"), "ICON" => "sale", "TITLE" => GetMessage("SPTEN_TAB_PERSON_TYPE_DESCR")));
+        $aTabs = array(
+            array(
+                "DIV" => "edit1",
+                "TAB" => GetMessage("SPTEN_TAB_PERSON_TYPE"),
+                "ICON" => "sale",
+                "TITLE" => GetMessage("SPTEN_TAB_PERSON_TYPE_DESCR")
+            )
+        );
 
         $tabControl = new CAdminTabControl("tabControl", $aTabs);
         $tabControl->Begin();
@@ -236,20 +264,23 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
         <tr>
             <td><? echo GetMessage("SPTEN_SORT") ?>:</td>
             <td>
-                <input type="text" name="SORT" value="<?= IntVal($personType['SORT']) ?>">
+                <input type="text" name="SORT" value="<?= intval($personType['SORT']) ?>">
             </td>
         </tr>
         <tr>
             <td width="40%"><? echo GetMessage("SPTEN_XML_ID") ?>:</td>
             <td width="60%">
-                <input type="text" name="XML_ID" size="30"
-                       value="<?= $personType['XML_ID'] ? htmlspecialcharsbx($personType['XML_ID']) : \Bitrix\Sale\PersonType::generateXmlId() ?>">
+                <input type="text" name="XML_ID" size="30" value="<?= $personType['XML_ID'] ? htmlspecialcharsbx(
+                    $personType['XML_ID']
+                ) : \Bitrix\Sale\PersonType::generateXmlId() ?>">
             </td>
         </tr>
         <?
-        $dbRes = \Bitrix\Sale\Internals\BusinessValuePersonDomainTable::getList([
-            'filter' => ['=PERSON_TYPE_ID' => $ID]
-        ]);
+        $dbRes = \Bitrix\Sale\Internals\BusinessValuePersonDomainTable::getList(
+            [
+                'filter' => ['=PERSON_TYPE_ID' => $ID]
+            ]
+        );
 
         $domain = '';
         $data = $dbRes->fetch();
@@ -262,8 +293,12 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
             <td>
                 <select name="BUSVAL_DOMAIN">
                     <option value=""><? echo GetMessage("SPTEN_DOMAIN_P_TYPE_NONE") ?></option>
-                    <option value="I" <?= ($domain === 'I' ? 'selected' : ''); ?>><? echo GetMessage("SPTEN_DOMAIN_P_TYPE_I") ?></option>
-                    <option value="E" <?= ($domain === 'E' ? 'selected' : ''); ?>><? echo GetMessage("SPTEN_DOMAIN_P_TYPE_E") ?></option>
+                    <option value="I" <?= ($domain === 'I' ? 'selected' : ''); ?>><? echo GetMessage(
+                            "SPTEN_DOMAIN_P_TYPE_I"
+                        ) ?></option>
+                    <option value="E" <?= ($domain === 'E' ? 'selected' : ''); ?>><? echo GetMessage(
+                            "SPTEN_DOMAIN_P_TYPE_E"
+                        ) ?></option>
                 </select>
             </td>
         </tr>

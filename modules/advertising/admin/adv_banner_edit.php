@@ -13,11 +13,12 @@
  * @global CDatabase $DB
  */
 
+use Bitrix\Main;
+use Bitrix\Main\Loader;
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/advertising/prolog.php");
-require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/advertising/include.php");
-
-use \Bitrix\Main;
+Loader::includeModule('advertising');
 
 ClearVars();
 
@@ -26,24 +27,45 @@ $isManager = CAdvContract::IsManager();
 $isAdvertiser = CAdvContract::IsAdvertiser();
 $isAdmin = CAdvContract::IsAdmin();
 
-if (!$isAdmin && !$isDemo && !$isManager && !$isAdvertiser)
+if (!$isAdmin && !$isDemo && !$isManager && !$isAdvertiser) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 $err_mess = "FILE: " . __FILE__ . "<br>LINE: ";
 
 CModule::IncludeModule('fileman');
 CJSCore::Init('file_input');
-if (class_exists('\Bitrix\Main\UI\FileInput', true))
+if (class_exists('\Bitrix\Main\UI\FileInput', true)) {
     CJSCore::Init('fileinput');
+}
 
 $aTabs = array(
-    array("DIV" => "edit1", "TAB" => GetMessage("AD_TAB_BANNER"), "ICON" => "ad_banner_edit", "TITLE" => GetMessage("AD_TAB_TITLE_BANNER")),
-    array("DIV" => "edit2", "TAB" => GetMessage("AD_TAB_LIMIT"), "ICON" => "ad_banner_edit", "TITLE" => GetMessage("AD_WHEN")),
-    array("DIV" => "edit3", "TAB" => GetMessage("AD_TAB_TARGET"), "ICON" => "ad_banner_edit", "TITLE" => GetMessage("AD_WHERE")));
-if ($isAdmin || ($isDemo && !$isOwner))
-    $aTabs[] = array("DIV" => "edit4", "TAB" => GetMessage("AD_TAB_STAT"), "ICON" => "ad_banner_edit", "TITLE" => GetMessage("AD_STAT"));
-$aTabs[] = array("DIV" => "edit5", "TAB" => GetMessage("AD_TAB_COMMENT"), "ICON" => "ad_banner_edit", "TITLE" => GetMessage("AD_COMMENTS"));
+    array(
+        "DIV" => "edit1",
+        "TAB" => GetMessage("AD_TAB_BANNER"),
+        "ICON" => "ad_banner_edit",
+        "TITLE" => GetMessage("AD_TAB_TITLE_BANNER")
+    ),
+    array(
+        "DIV" => "edit2",
+        "TAB" => GetMessage("AD_TAB_LIMIT"),
+        "ICON" => "ad_banner_edit",
+        "TITLE" => GetMessage("AD_WHEN")
+    ),
+    array(
+        "DIV" => "edit3",
+        "TAB" => GetMessage("AD_TAB_TARGET"),
+        "ICON" => "ad_banner_edit",
+        "TITLE" => GetMessage("AD_WHERE")
+    ),
+    array(
+        "DIV" => "edit5",
+        "TAB" => GetMessage("AD_TAB_COMMENT"),
+        "ICON" => "ad_banner_edit",
+        "TITLE" => GetMessage("AD_COMMENTS")
+    ),
+);
 
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
@@ -56,11 +78,13 @@ $isEditMode = true;
 $arPropsTemplate = array();
 if ($ID > 0 && $CONTRACT_ID <= 0) {
     $rsBanner = CAdvBanner::GetByID($ID);
-    if ($arBanner = $rsBanner->Fetch())
+    if ($arBanner = $rsBanner->Fetch()) {
         $CONTRACT_ID = $arBanner["CONTRACT_ID"];
+    }
 }
-if ($CONTRACT_ID <= 0)
+if ($CONTRACT_ID <= 0) {
     $CONTRACT_ID = 1;
+}
 
 $rsContract = CAdvContract::GetByID($CONTRACT_ID, "N");
 if (!$rsContract || !$arContract = $rsContract->Fetch()) {
@@ -72,13 +96,16 @@ if (!$rsContract || !$arContract = $rsContract->Fetch()) {
     $arrPERM = CAdvContract::GetUserPermissions($CONTRACT_ID);
     $arrPERM = is_array($arrPERM[$CONTRACT_ID]) ? $arrPERM[$CONTRACT_ID] : array();
     if (!$isDemo) {
-        if (count($arrPERM) <= 0)
+        if (count($arrPERM) <= 0) {
             $APPLICATION->AuthForm(GetMessage("AD_ERROR_NOT_ENOUGH_PERMISSIONS_CONTRACT"));
-        if (!in_array("ADD", $arrPERM))
+        }
+        if (!in_array("ADD", $arrPERM)) {
             $isEditMode = false;
+        }
     }
-    if ($action == "view")
+    if ($action == "view") {
         $isEditMode = false;
+    }
 
     $arrCONTRACT_TYPE = CAdvContract::GetTypeArray($CONTRACT_ID);
     $isOwner = CAdvContract::IsOwner($CONTRACT_ID);
@@ -86,12 +113,13 @@ if (!$rsContract || !$arContract = $rsContract->Fetch()) {
 
 function pr_comp($a, $b)
 {
-    if ($a["SORT"] < $b["SORT"])
+    if ($a["SORT"] < $b["SORT"]) {
         return -1;
-    elseif ($a["SORT"] > $b["SORT"])
+    } elseif ($a["SORT"] > $b["SORT"]) {
         return 1;
-    else
+    } else {
         return 0;
+    }
 }
 
 if (
@@ -101,7 +129,7 @@ if (
     && isset($_POST["name"])
 ) {
     $GLOBALS['APPLICATION']->RestartBuffer();
-    if (strlen($_POST["name"]) > 0) {
+    if ($_POST["name"] <> '') {
         $properties = is_array($_POST['properties']) ? $_POST['properties'] : array();
         $arCurVal = is_array($_POST['curValues'])
             ? $_POST['curValues']
@@ -112,25 +140,48 @@ if (
         if (!empty($properties['parameters']['PROPS']) && is_array($properties['parameters']['PROPS'])) {
             foreach ($properties['parameters']['PROPS'] as $id => $prop) {
                 $arCurVal[$id]['EXTENDED_MODE'] = $properties['parameters']['MODE'];
-                $arPropsTemplate[$id] = CComponentUtil::GetTemplateProps('bitrix:advertising.banner.view', $_POST["name"], '', $arCurVal[$id]);
+                $arPropsTemplate[$id] = CComponentUtil::GetTemplateProps(
+                    'bitrix:advertising.banner.view',
+                    $_POST["name"],
+                    '',
+                    $arCurVal[$id]
+                );
                 uasort($arPropsTemplate[$id]["PARAMETERS"], 'pr_comp');
             }
-        } else if ($_POST["action"] == 'refreshAll') {
-            if (empty($arCurVal)) {
-                $arCurVal = array('EXTENDED_MODE' => $_POST["mode"]);
-                $arPropsTemplate[0] = CComponentUtil::GetTemplateProps('bitrix:advertising.banner.view', $_POST["name"], '', $arCurVal);
-                uasort($arPropsTemplate[0]["PARAMETERS"], 'pr_comp');
-            } else {
-                foreach ($arCurVal as $id => $curVal) {
-                    $arPropsTemplate[$id] = CComponentUtil::GetTemplateProps('bitrix:advertising.banner.view', $_POST["name"], '', $curVal);
-                    uasort($arPropsTemplate[$id]["PARAMETERS"], 'pr_comp');
-                }
-            }
         } else {
-            if (empty($arCurVal))
-                $arCurVal = array('EXTENDED_MODE' => $_POST["mode"]);
-            $arPropsTemplate[0] = CComponentUtil::GetTemplateProps('bitrix:advertising.banner.view', $_POST["name"], '', $arCurVal);
-            uasort($arPropsTemplate[0]["PARAMETERS"], 'pr_comp');
+            if ($_POST["action"] == 'refreshAll') {
+                if (empty($arCurVal)) {
+                    $arCurVal = array('EXTENDED_MODE' => $_POST["mode"]);
+                    $arPropsTemplate[0] = CComponentUtil::GetTemplateProps(
+                        'bitrix:advertising.banner.view',
+                        $_POST["name"],
+                        '',
+                        $arCurVal
+                    );
+                    uasort($arPropsTemplate[0]["PARAMETERS"], 'pr_comp');
+                } else {
+                    foreach ($arCurVal as $id => $curVal) {
+                        $arPropsTemplate[$id] = CComponentUtil::GetTemplateProps(
+                            'bitrix:advertising.banner.view',
+                            $_POST["name"],
+                            '',
+                            $curVal
+                        );
+                        uasort($arPropsTemplate[$id]["PARAMETERS"], 'pr_comp');
+                    }
+                }
+            } else {
+                if (empty($arCurVal)) {
+                    $arCurVal = array('EXTENDED_MODE' => $_POST["mode"]);
+                }
+                $arPropsTemplate[0] = CComponentUtil::GetTemplateProps(
+                    'bitrix:advertising.banner.view',
+                    $_POST["name"],
+                    '',
+                    $arCurVal
+                );
+                uasort($arPropsTemplate[0]["PARAMETERS"], 'pr_comp');
+            }
         }
 
         $defaultProps = array();
@@ -140,25 +191,33 @@ if (
                 $html = '';
                 $defaultProps[$name] = $prop['DEFAULT'];
                 if ($prop['TYPE'] == 'IMAGE') {
-                    $file_ID = (is_array($properties) && isset($properties['files'][$ind][$name]) && $properties['files'][$ind][$name] !== 'null') ? intVal($properties['files'][$ind][$name]) : 0;
+                    $file_ID = (is_array(
+                            $properties
+                        ) && isset($properties['files'][$ind][$name]) && $properties['files'][$ind][$name] !== 'null') ? intval(
+                        $properties['files'][$ind][$name]
+                    ) : 0;
                     if ($bCopy) {
                         $html .= '<input type=\'hidden\' name=\'TEMPLATE_FILES_copy[' . $ind . '_' . $name . ']\' value=\'' . $file_ID . '\'>';
                     }
                     ob_start();
                     if (class_exists('\Bitrix\Main\UI\FileInput', true)) {
-                        echo \Bitrix\Main\UI\FileInput::createInstance(array(
-                            "name" => "TEMPLATE_FILES[" . $ind . '_' . $name . "]",
-                            "description" => true,
-                            "upload" => true,
-                            "allowUpload" => "I",
-                            "medialib" => true,
-                            "fileDialog" => true,
-                            "cloud" => true,
-                            "delete" => true,
-                            "maxCount" => 1
-                        ))->show($file_ID);
+                        echo \Bitrix\Main\UI\FileInput::createInstance(
+                            array(
+                                "name" => "TEMPLATE_FILES[" . $ind . '_' . $name . "]",
+                                "description" => true,
+                                "upload" => true,
+                                "allowUpload" => "I",
+                                "medialib" => true,
+                                "fileDialog" => true,
+                                "cloud" => true,
+                                "delete" => true,
+                                "maxCount" => 1
+                            )
+                        )->show($file_ID);
                     } else {
-                        echo CFileInput::Show("TEMPLATE_FILES[" . $ind . '_' . $name . "]", $file_ID,
+                        echo CFileInput::Show(
+                            "TEMPLATE_FILES[" . $ind . '_' . $name . "]",
+                            $file_ID,
                             array(
                                 "IMAGE" => "Y",
                                 "PATH" => "Y",
@@ -169,7 +228,8 @@ if (
                                     "W" => 200,
                                     "H" => 200,
                                 ),
-                            ), array(
+                            ),
+                            array(
                                 'upload' => true,
                                 'medialib' => true,
                                 'file_dialog' => true,
@@ -186,17 +246,57 @@ if (
                     $strVal = isset($properties['parameters']['PROPS'][$i][$name]['CODE']) ? $properties['parameters']['PROPS'][$i][$name]['CODE'] : $defaultProps[$name];
                     $codeType = isset($properties['parameters']['PROPS'][$i][$name]['TYPE']) ? $properties['parameters']['PROPS'][$i][$name]['TYPE'] : 'html';
                     ob_start();
-                    if (COption::GetOptionString("advertising", "USE_HTML_EDIT", "Y") == "Y" && CModule::IncludeModule("fileman")):
-                        if (defined('BX_PUBLIC_MODE') && BX_PUBLIC_MODE == 1)
-                            CFileMan::AddHTMLEditorFrame("TEMPLATE_EDITOR_" . $ind . '_' . $name, $strVal, "TEMPLATE_EDITOR[" . $ind . '_' . $name . "_CODE_TYPE]", $codeType, array('height' => 200, 'width' => '100%'), "N", 0, "", "", false, true, false, array('setFocusAfterShow' => false, 'minHeight' => 200));
-                        else
-                            CFileMan::AddHTMLEditorFrame("TEMPLATE_EDITOR_" . $ind . '_' . $name, $strVal, "TEMPLATE_EDITOR[" . $ind . '_' . $name . "_CODE_TYPE]", $codeType, array('height' => 200, 'width' => '100%'), "N", 0, "", "", false, true, false, array('setFocusAfterShow' => false, 'minHeight' => 200));
+                    if (COption::GetOptionString("advertising", "USE_HTML_EDIT", "Y") == "Y" && CModule::IncludeModule(
+                            "fileman"
+                        )):
+                        if (defined('BX_PUBLIC_MODE') && BX_PUBLIC_MODE == 1) {
+                            CFileMan::AddHTMLEditorFrame(
+                                "TEMPLATE_EDITOR_" . $ind . '_' . $name,
+                                $strVal,
+                                "TEMPLATE_EDITOR[" . $ind . '_' . $name . "_CODE_TYPE]",
+                                $codeType,
+                                array('height' => 200, 'width' => '100%'),
+                                "N",
+                                0,
+                                "",
+                                "",
+                                false,
+                                true,
+                                false,
+                                array('setFocusAfterShow' => false, 'minHeight' => 200)
+                            );
+                        } else {
+                            CFileMan::AddHTMLEditorFrame(
+                                "TEMPLATE_EDITOR_" . $ind . '_' . $name,
+                                $strVal,
+                                "TEMPLATE_EDITOR[" . $ind . '_' . $name . "_CODE_TYPE]",
+                                $codeType,
+                                array('height' => 200, 'width' => '100%'),
+                                "N",
+                                0,
+                                "",
+                                "",
+                                false,
+                                true,
+                                false,
+                                array('setFocusAfterShow' => false, 'minHeight' => 200)
+                            );
+                        }
                     else: ?>
                         <div align="center" style="vertical-align:top;">
-                            <?= InputType("radio", "TEMPLATE_EDITOR[" . $ind . '_' . $name . "_CODE_TYPE]", "text", $codeType, false) ?>
-                            &nbsp;<?= GetMessage("AD_TEXT") ?>
-                            &nbsp;<?= InputType("radio", "TEMPLATE_EDITOR[" . $ind . '_' . $name . "_CODE_TYPE]", "html", $codeType, false) ?>
-                            &nbsp;HTML
+                            <?= InputType(
+                                "radio",
+                                "TEMPLATE_EDITOR[" . $ind . '_' . $name . "_CODE_TYPE]",
+                                "text",
+                                $codeType,
+                                false
+                            ) ?>&nbsp;<?= GetMessage("AD_TEXT") ?>&nbsp;<?= InputType(
+                                "radio",
+                                "TEMPLATE_EDITOR[" . $ind . '_' . $name . "_CODE_TYPE]",
+                                "html",
+                                $codeType,
+                                false
+                            ) ?>&nbsp;HTML
                             <textarea style="width:100%" rows="30"
                                       name="<?= 'TEMPLATE_EDITOR_' . $ind . '_' . $name ?>"><?= $strVal ?></textarea>
                         </div>
@@ -205,12 +305,18 @@ if (
                     ob_end_clean();
                 }
                 if ($prop['TYPE'] == 'FILE') {
-                    $file_ID = (is_array($properties) && isset($properties['files'][$ind][$name]) && $properties['files'][$ind][$name] !== 'null') ? intVal($properties['files'][$ind][$name]) : 0;
+                    $file_ID = (is_array(
+                            $properties
+                        ) && isset($properties['files'][$ind][$name]) && $properties['files'][$ind][$name] !== 'null') ? intval(
+                        $properties['files'][$ind][$name]
+                    ) : 0;
                     if ($bCopy) {
                         $html .= '<input type=\'hidden\' name=\'TEMPLATE_FILES_copy[' . $ind . '_' . $name . ']\' value=\'' . $file_ID . '\'>';
                     }
                     ob_start();
-                    echo CFileInput::Show("TEMPLATE_FILES[" . $ind . '_' . $name . "]", $file_ID,
+                    echo CFileInput::Show(
+                        "TEMPLATE_FILES[" . $ind . '_' . $name . "]",
+                        $file_ID,
                         array(
                             "IMAGE" => "Y",
                             "PATH" => "Y",
@@ -221,7 +327,8 @@ if (
                                 "W" => 200,
                                 "H" => 200,
                             ),
-                        ), array(
+                        ),
+                        array(
                             'upload' => true,
                             'medialib' => true,
                             'file_dialog' => true,
@@ -242,11 +349,17 @@ if (
     die();
 }
 
-if ($_SERVER["REQUEST_METHOD"] == "POST" && $_POST["action"] == 'getCleanTemplate' && isset($_POST["name"]) && check_bitrix_sessid()) {
+if ($_SERVER["REQUEST_METHOD"] == "POST" && $_POST["action"] == 'getCleanTemplate' && isset($_POST["name"]) && check_bitrix_sessid(
+    )) {
     $GLOBALS['APPLICATION']->RestartBuffer();
-    if (strlen($_POST["name"]) > 0) {
+    if ($_POST["name"] <> '') {
         $i = intval($_POST["index"]);
-        $arPropsTemplate = CComponentUtil::GetTemplateProps('bitrix:advertising.banner.view', $_POST["name"], '', array('EXTENDED_MODE' => $_POST["mode"]));
+        $arPropsTemplate = CComponentUtil::GetTemplateProps(
+            'bitrix:advertising.banner.view',
+            $_POST["name"],
+            '',
+            array('EXTENDED_MODE' => $_POST["mode"])
+        );
         uasort($arPropsTemplate["PARAMETERS"], 'pr_comp');
 
         $defaultProps = array();
@@ -256,19 +369,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_POST["action"] == 'getCleanTemplat
             if ($prop['TYPE'] == 'IMAGE') {
                 ob_start();
                 if (class_exists('\Bitrix\Main\UI\FileInput', true)) {
-                    echo \Bitrix\Main\UI\FileInput::createInstance(array(
-                        "name" => "TEMPLATE_FILES[" . $i . '_' . $name . "]",
-                        "description" => true,
-                        "upload" => true,
-                        "allowUpload" => "I",
-                        "medialib" => true,
-                        "fileDialog" => true,
-                        "cloud" => true,
-                        "delete" => true,
-                        "maxCount" => 1
-                    ))->show(0);
+                    echo \Bitrix\Main\UI\FileInput::createInstance(
+                        array(
+                            "name" => "TEMPLATE_FILES[" . $i . '_' . $name . "]",
+                            "description" => true,
+                            "upload" => true,
+                            "allowUpload" => "I",
+                            "medialib" => true,
+                            "fileDialog" => true,
+                            "cloud" => true,
+                            "delete" => true,
+                            "maxCount" => 1
+                        )
+                    )->show(0);
                 } else {
-                    echo CFileInput::Show("TEMPLATE_FILES[" . $i . '_' . $name . "]", 0,
+                    echo CFileInput::Show(
+                        "TEMPLATE_FILES[" . $i . '_' . $name . "]",
+                        0,
                         array(
                             "IMAGE" => "Y",
                             "PATH" => "Y",
@@ -279,7 +396,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_POST["action"] == 'getCleanTemplat
                                 "W" => 200,
                                 "H" => 200,
                             ),
-                        ), array(
+                        ),
+                        array(
                             'upload' => true,
                             'medialib' => true,
                             'file_dialog' => true,
@@ -296,17 +414,57 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_POST["action"] == 'getCleanTemplat
                 $strVal = $defaultProps[$name];
                 $codeType = 'html';
                 ob_start();
-                if (COption::GetOptionString("advertising", "USE_HTML_EDIT", "Y") == "Y" && CModule::IncludeModule("fileman")):
-                    if (defined('BX_PUBLIC_MODE') && BX_PUBLIC_MODE == 1)
-                        CFileMan::AddHTMLEditorFrame("TEMPLATE_EDITOR_" . $i . '_' . $name, $strVal, "TEMPLATE_EDITOR[" . $i . '_' . $name . "_CODE_TYPE]", $codeType, array('height' => 200, 'width' => '100%'), "N", 0, "", "", false, true, false, array('setFocusAfterShow' => false, 'minHeight' => 200));
-                    else
-                        CFileMan::AddHTMLEditorFrame("TEMPLATE_EDITOR_" . $i . '_' . $name, $strVal, "TEMPLATE_EDITOR[" . $i . '_' . $name . "_CODE_TYPE]", $codeType, array('height' => 200, 'width' => '100%'), "N", 0, "", "", false, true, false, array('setFocusAfterShow' => false, 'minHeight' => 200));
+                if (COption::GetOptionString("advertising", "USE_HTML_EDIT", "Y") == "Y" && CModule::IncludeModule(
+                        "fileman"
+                    )):
+                    if (defined('BX_PUBLIC_MODE') && BX_PUBLIC_MODE == 1) {
+                        CFileMan::AddHTMLEditorFrame(
+                            "TEMPLATE_EDITOR_" . $i . '_' . $name,
+                            $strVal,
+                            "TEMPLATE_EDITOR[" . $i . '_' . $name . "_CODE_TYPE]",
+                            $codeType,
+                            array('height' => 200, 'width' => '100%'),
+                            "N",
+                            0,
+                            "",
+                            "",
+                            false,
+                            true,
+                            false,
+                            array('setFocusAfterShow' => false, 'minHeight' => 200)
+                        );
+                    } else {
+                        CFileMan::AddHTMLEditorFrame(
+                            "TEMPLATE_EDITOR_" . $i . '_' . $name,
+                            $strVal,
+                            "TEMPLATE_EDITOR[" . $i . '_' . $name . "_CODE_TYPE]",
+                            $codeType,
+                            array('height' => 200, 'width' => '100%'),
+                            "N",
+                            0,
+                            "",
+                            "",
+                            false,
+                            true,
+                            false,
+                            array('setFocusAfterShow' => false, 'minHeight' => 200)
+                        );
+                    }
                 else: ?>
                     <div align="center" style="vertical-align:top;">
-                        <?= InputType("radio", "TEMPLATE_EDITOR[" . $i . '_' . $name . "_CODE_TYPE]", "text", $codeType, false) ?>
-                        &nbsp;<?= GetMessage("AD_TEXT") ?>
-                        &nbsp;<?= InputType("radio", "TEMPLATE_EDITOR[" . $i . '_' . $name . "_CODE_TYPE]", "html", $codeType, false) ?>
-                        &nbsp;HTML
+                        <?= InputType(
+                            "radio",
+                            "TEMPLATE_EDITOR[" . $i . '_' . $name . "_CODE_TYPE]",
+                            "text",
+                            $codeType,
+                            false
+                        ) ?>&nbsp;<?= GetMessage("AD_TEXT") ?>&nbsp;<?= InputType(
+                            "radio",
+                            "TEMPLATE_EDITOR[" . $i . '_' . $name . "_CODE_TYPE]",
+                            "html",
+                            $codeType,
+                            false
+                        ) ?>&nbsp;HTML
                         <textarea style="width:100%" rows="30"
                                   name="<?= 'TEMPLATE_EDITOR_' . $i . '_' . $name ?>"><?= $strVal ?></textarea>
                     </div>
@@ -316,7 +474,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_POST["action"] == 'getCleanTemplat
             }
             if ($prop['TYPE'] == 'FILE') {
                 ob_start();
-                echo CFileInput::Show("TEMPLATE_FILES[" . $i . '_' . $name . "]", 0,
+                echo CFileInput::Show(
+                    "TEMPLATE_FILES[" . $i . '_' . $name . "]",
+                    0,
                     array(
                         "IMAGE" => "Y",
                         "PATH" => "Y",
@@ -327,7 +487,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_POST["action"] == 'getCleanTemplat
                             "W" => 200,
                             "H" => 200,
                         ),
-                    ), array(
+                    ),
+                    array(
                         'upload' => true,
                         'medialib' => true,
                         'file_dialog' => true,
@@ -354,23 +515,28 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($_POST["save"] <> '' || $_POST["app
         $arrIMAGE_ID = CAdvBanner_all::makeFileArray($img_id, $_REQUEST["IMAGE_ID_del"] === "Y", '');
         $arrFlashIMAGE_ID = CAdvBanner_all::makeFileArray($flash_image_id, $_REQUEST["FLASH_IMAGE_del"] === "Y", '');
     } else {
-        if (strlen($_REQUEST["IMAGE_ID"]) > 0)
+        if ($_REQUEST["IMAGE_ID"] <> '') {
             $arrIMAGE_ID = CAdvBanner_all::makeFileArray($_REQUEST["IMAGE_ID"]);
-        else
+        } else {
             $arrIMAGE_ID = $_FILES["IMAGE_ID"];
+        }
 
-        if (strlen($_REQUEST["FLASH_IMAGE"]) > 0)
+        if ($_REQUEST["FLASH_IMAGE"] <> '') {
             $arrFlashIMAGE_ID = CAdvBanner_all::makeFileArray($_REQUEST["FLASH_IMAGE"]);
-        else
+        } else {
             $arrFlashIMAGE_ID = $_FILES["FLASH_IMAGE"];
+        }
 
-        if ($_REQUEST["IMAGE_ID_del"] === "Y")
+        if ($_REQUEST["IMAGE_ID_del"] === "Y") {
             $arrIMAGE_ID['del'] = 'Y';
-        if ($_REQUEST["FLASH_IMAGE_del"] === "Y")
+        }
+        if ($_REQUEST["FLASH_IMAGE_del"] === "Y") {
             $arrFlashIMAGE_ID['del'] = 'Y';
+        }
     }
-    if (!is_array($TEMPLATE_FILES_del))
+    if (!is_array($TEMPLATE_FILES_del)) {
         $TEMPLATE_FILES_del = array();
+    }
     if (!is_array($TEMPLATE_FILES)) {
         if (!empty($request)) {
             $TEMPLATE_FILES = $request->getFile('TEMPLATE_FILES');
@@ -383,20 +549,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($_POST["save"] <> '' || $_POST["app
     $templateFilesErr = array();
     if (is_array($TEMPLATE_FILES)) {
         foreach ($TEMPLATE_FILES as $tfk => $tfv) {
-            $before_ = substr($tfk, 0, strpos($tfk, '_'));
-            $after_ = substr($tfk, strpos($tfk, '_') + 1);
-            if (is_array($tfv))
+            $before_ = mb_substr($tfk, 0, mb_strpos($tfk, '_'));
+            $after_ = mb_substr($tfk, mb_strpos($tfk, '_') + 1);
+            if (is_array($tfv)) {
                 $tfv = '';
+            }
             $templateFilesErr[$before_][$after_] = $tfv;
         }
     }
 
     if (!is_array($TEMPLATE_FILES['name'])) {
         foreach ($TEMPLATE_FILES_del as $k2 => &$v2) {
-            if (isset($TEMPLATE_FILES[$k2]))
+            if (isset($TEMPLATE_FILES[$k2])) {
                 $v2 = '';
-            else
+            } else {
                 $TEMPLATE_FILES[$k2]['del'] = 'Y';
+            }
         }
         if (is_array($TEMPLATE_FILES)) {
             foreach ($TEMPLATE_FILES as $k => $v) {
@@ -412,16 +580,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($_POST["save"] <> '' || $_POST["app
         $arrTEMPLATE_FILES = array();
         if (is_array($TEMPLATE_FILES['name'])) {
             foreach ($TEMPLATE_FILES['name'] as $k => $v) {
-                foreach ($TEMPLATE_FILES as $key => $value)
+                foreach ($TEMPLATE_FILES as $key => $value) {
                     $arrTEMPLATE_FILES[$k][$key] = $TEMPLATE_FILES[$key][$k];
+                }
             }
         }
         $TEMPLATE_FILES = $arrTEMPLATE_FILES;
         foreach ($TEMPLATE_FILES_del as $k2 => &$v2) {
-            if (isset($_REQUEST["TEMPLATE_FILES"][$k2]))
+            if (isset($_REQUEST["TEMPLATE_FILES"][$k2])) {
                 $v2 = '';
-            else
+            } else {
                 $TEMPLATE_FILES[$k2]['del'] = 'Y';
+            }
         }
         if (is_array($_REQUEST["TEMPLATE_FILES"])) {
             foreach ($_REQUEST["TEMPLATE_FILES"] as $k1 => $v1) {
@@ -434,8 +604,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($_POST["save"] <> '' || $_POST["app
         }
         if (is_array($_REQUEST["TEMPLATE_FILES_copy"])) {
             foreach ($_REQUEST["TEMPLATE_FILES_copy"] as $k1 => $v1) {
-                if (isset($_REQUEST["TEMPLATE_FILES"][$k1]) && strlen($_REQUEST["TEMPLATE_FILES"][$k1]['tmp_name']) > 0)
+                if (isset($_REQUEST["TEMPLATE_FILES"][$k1]) && $_REQUEST["TEMPLATE_FILES"][$k1]['tmp_name'] <> '') {
                     continue;
+                }
                 $TEMPLATE_FILES[$k1] = CAdvBanner_all::makeFileArray(
                     $v1,
                     $TEMPLATE_FILES_del[$k1] === "Y",
@@ -464,16 +635,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($_POST["save"] <> '' || $_POST["app
         );
     } else {
         $ACTIVE = $ACTIVE == "Y" ? "Y" : "N";
-        $FIX_CLICK = $FIX_CLICK == "Y" ? "Y" : "N";
         $FIX_SHOW = $FIX_SHOW == "Y" ? "Y" : "N";
-        if (!is_array($TEMPLATE_PROP))
+        if (!is_array($TEMPLATE_PROP)) {
             $TEMPLATE_PROP = array();
-        if (!is_array($TEMPLATE_EDITOR))
+        }
+        if (!is_array($TEMPLATE_EDITOR)) {
             $TEMPLATE_EDITOR = array();
+        }
         foreach ($TEMPLATE_EDITOR as $name => $value) {
-            $start = strpos($name, '_') + 1;
-            $num = substr($name, 0, $start - 1);
-            $name = substr($name, $start, strpos($name, '_CODE_TYPE') - $start);
+            $start = mb_strpos($name, '_') + 1;
+            $num = mb_substr($name, 0, $start - 1);
+            $name = mb_substr($name, $start, mb_strpos($name, '_CODE_TYPE') - $start);
             $TEMPLATE_PROP[$num][$name]['CODE'] = ${"TEMPLATE_EDITOR_" . $num . "_" . $name};
             $TEMPLATE_PROP[$num][$name]['TYPE'] = $value;
         }
@@ -481,8 +653,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($_POST["save"] <> '' || $_POST["app
         $arrTemplateFiles = array();
         if (is_array($TEMPLATE_FILES)) {
             foreach ($TEMPLATE_FILES as $tfk => $tfv) {
-                $before_ = substr($tfk, 0, strpos($tfk, '_'));
-                $after_ = substr($tfk, strpos($tfk, '_') + 1);
+                $before_ = mb_substr($tfk, 0, mb_strpos($tfk, '_'));
+                $after_ = mb_substr($tfk, mb_strpos($tfk, '_') + 1);
                 $arrTemplateFiles[$before_][$after_] = $tfv;
                 $arrTemplateFiles[$before_][$after_]['lastKey'] = $before_;
             }
@@ -496,9 +668,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($_POST["save"] <> '' || $_POST["app
                 $arTemplateProperties[] = $tpv;
                 $TEMPLATE_FILES[] = $arrTemplateFiles[$tpk];
             }
-            $arTemplateProperties = serialize(array('NAME' => $TEMPLATE_NAME, 'MODE' => $EXTENDED_MODE, 'PROPS' => $arTemplateProperties));
-        } else
+            $arTemplateProperties = serialize(
+                array('NAME' => $TEMPLATE_NAME, 'MODE' => $EXTENDED_MODE, 'PROPS' => $arTemplateProperties)
+            );
+        } else {
             $arTemplateProperties = '';
+        }
 
         $arFields = array(
             "CONTRACT_ID" => $CONTRACT_ID,
@@ -514,7 +689,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($_POST["save"] <> '' || $_POST["app
             "SHOWS_FOR_VISITOR" => $SHOWS_FOR_VISITOR,
             "MAX_SHOW_COUNT" => $MAX_SHOW_COUNT,
             "RESET_SHOW_COUNT" => $RESET_SHOW_COUNT,
-            "FIX_CLICK" => $FIX_CLICK,
             "FIX_SHOW" => $FIX_SHOW,
             "FLYUNIFORM" => ($FLYUNIFORM == "Y" ? "Y" : "N"),
             "MAX_CLICK_COUNT" => $MAX_CLICK_COUNT,
@@ -528,9 +702,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($_POST["save"] <> '' || $_POST["app
             "NO_URL_IN_FLASH" => ($NO_URL_IN_FLASH == "Y" ? "Y" : "N"),
             "CODE" => $CODE,
             "CODE_TYPE" => $CODE_TYPE,
-            "STAT_EVENT_1" => $STAT_EVENT_1,
-            "STAT_EVENT_2" => $STAT_EVENT_2,
-            "STAT_EVENT_3" => $STAT_EVENT_3,
             "FOR_NEW_GUEST" => $FOR_NEW_GUEST,
             "COMMENTS" => $COMMENTS,
             "SHOW_USER_GROUP" => $SHOW_USER_GROUP,
@@ -556,16 +727,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($_POST["save"] <> '' || $_POST["app
             $arFields["STAT_TYPE"] = "CITY";
             $arrCITY = explode(",", $_POST["ALL_STAT_TYPE_VALUES"]);
             $arFilter = array();
-            foreach ($arrCITY as $CITY_ID)
+            foreach ($arrCITY as $CITY_ID) {
                 $arFilter[] = intval($CITY_ID);
+            }
             if (count($arFilter) > 0) {
                 $rs = CCity::GetList("CITY", array("=CITY_ID" => $arFilter));
-                while ($ar = $rs->GetNext())
+                while ($ar = $rs->GetNext()) {
                     $arFields["arrCOUNTRY"][] = array(
                         "COUNTRY_ID" => $ar["COUNTRY_ID"],
                         "REGION" => $ar["REGION_NAME"],
                         "CITY_ID" => $ar["CITY_ID"],
                     );
+                }
             }
         } elseif ($_POST["STAT_TYPE"] === "REGION") {
             $arFields["STAT_TYPE"] = "REGION";
@@ -597,11 +770,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($_POST["save"] <> '' || $_POST["app
 
     if ($ID = CAdvBanner::Set($arFields, $ID)) {
         // test if Set finished secsesfully.
-        if (strlen($strError) <= 0) {
-            if ($_POST["save"] <> '')
+        if ($strError == '') {
+            if ($_POST["save"] <> '') {
                 LocalRedirect("/bitrix/admin/adv_banner_list.php?lang=" . LANGUAGE_ID);
-            else
-                LocalRedirect("/bitrix/admin/adv_banner_edit.php?ID=" . $ID . "&CONTRACT_ID=" . $CONTRACT_ID . "&lang=" . LANGUAGE_ID . "&action=" . $action . "&" . $tabControl->ActiveTabParam());
+            } else {
+                LocalRedirect(
+                    "/bitrix/admin/adv_banner_edit.php?ID=" . $ID . "&CONTRACT_ID=" . $CONTRACT_ID . "&lang=" . LANGUAGE_ID . "&action=" . $action . "&" . $tabControl->ActiveTabParam(
+                    )
+                );
+            }
         }
     }
     $TEMPLATE_FILES = serialize($templateFilesErr);
@@ -609,9 +786,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && ($_POST["save"] <> '' || $_POST["app
 }
 
 $arrSites = array();
-$rs = CSite::GetList($by = "sort", $order = "asc");
-while ($ar = $rs->Fetch())
+$rs = CSite::GetList();
+while ($ar = $rs->Fetch()) {
     $arrSites[$ar["ID"]] = $ar;
+}
 
 $rsBanner = CAdvBanner::GetByID($ID);
 
@@ -627,26 +805,22 @@ if (!$rsBanner || !$banner = $rsBanner->ExtractFields()) {
     $str_AD_TYPE = 'image';
     $str_WEIGHT = 100;
     $str_ACTIVE = "Y";
-    $str_FIX_CLICK = "Y";
     $str_FIX_SHOW = "N";
     $str_FLYUNIFORM = "N";
     $str_DATE_SHOW_FROM = $arContract["DATE_SHOW_FROM"];
     $str_DATE_SHOW_TO = $arContract["DATE_SHOW_TO"];
     $str_CODE_TYPE = "html";
     //if ($isAdmin || $isManager) $str_STATUS_SID = "PUBLISHED";
-    $str_STAT_EVENT_1 = "banner";
-    $str_STAT_EVENT_2 = "click";
-    $str_STAT_EVENT_3 = "#CONTRACT_ID# / [#BANNER_ID#] [#TYPE_SID#] #BANNER_NAME#";
     $str_MAX_SHOW_COUNT = $arContract["MAX_SHOW_COUNT"];
     $str_MAX_CLICK_COUNT = $arContract["MAX_CLICK_COUNT"];
     $arrSITE = array_keys($arrSites);
     $str_CONTRACT_ID = $CONTRACT_ID;
     $str_STAT_TYPE = "COUNTRY";
 
-    $str_TYPE_SID = isset($TYPE_SID) && strlen($TYPE_SID) > 0 ? $TYPE_SID : "";
+    $str_TYPE_SID = isset($TYPE_SID) && $TYPE_SID <> '' ? $TYPE_SID : "";
 } else {
-    if (strlen($strError) <= 0) {
-        if (strlen($str_KEYWORDS) > 0) {
+    if ($strError == '') {
+        if ($str_KEYWORDS <> '') {
             $arrKEYWORDS = preg_split('/[\n\r]+/', $str_KEYWORDS);
             TrimArr($arrKEYWORDS);
         }
@@ -655,33 +829,40 @@ if (!$rsBanner || !$banner = $rsBanner->ExtractFields()) {
         $str_SHOW_PAGE = implode("\n", $arrSHOW_PAGE);
         $arrNOT_SHOW_PAGE = CAdvBanner::GetPageArray($ID, "NOT_SHOW");
         $str_NOT_SHOW_PAGE = implode("\n", $arrNOT_SHOW_PAGE);
-        if ($str_STAT_TYPE !== "CITY" && $str_STAT_TYPE != "REGION")
+        if ($str_STAT_TYPE !== "CITY" && $str_STAT_TYPE != "REGION") {
             $str_STAT_TYPE = "COUNTRY";
+        }
         $arrSTAT_TYPE_VALUES = CAdvBanner::GetCountryArray($ID, $str_STAT_TYPE);
         $arrWEEKDAY = CAdvBanner::GetWeekdayArray($ID);
-        while (list($key, $value) = each($arrWEEKDAY)) ${"arr" . $key} = $value;
+        foreach ($arrWEEKDAY as $key => $value) {
+            ${"arr" . $key} = $value;
+        }
         $arrSTAT_ADV = CAdvBanner::GetStatAdvArray($ID);
         $arrUSERGROUP = CAdvBanner::GetGroupArray($ID);
     }
 }
-if (strlen($strError) > 0) {
+if ($strError <> '') {
     $DB->InitTableVarsForEdit("b_adv_banner", "", "str_");
     $str_SHOW_PAGE = htmlspecialcharsbx($SHOW_PAGE);
     $str_NOT_SHOW_PAGE = htmlspecialcharsbx($NOT_SHOW_PAGE);
     $str_IMAGE_ID = 0;
     $str_FLASH_IMAGE = 0;
 }
-if (strlen($SEND_EMAIL) <= 0) $SEND_EMAIL = "Y";
+if ($SEND_EMAIL == '') {
+    $SEND_EMAIL = "Y";
+}
 
-if ($str_TEMPLATE && CheckSerializedData($str_TEMPLATE))
-    $str_TEMPLATE = unserialize(htmlspecialchars_decode($str_TEMPLATE));
-else
+if ($str_TEMPLATE && CheckSerializedData($str_TEMPLATE)) {
+    $str_TEMPLATE = unserialize(htmlspecialchars_decode($str_TEMPLATE), ['allowed_classes' => false]);
+} else {
     $str_TEMPLATE = array();
+}
 
-if ($str_TEMPLATE_FILES && CheckSerializedData($str_TEMPLATE_FILES))
-    $str_TEMPLATE_FILES = unserialize(htmlspecialchars_decode($str_TEMPLATE_FILES));
-else
+if ($str_TEMPLATE_FILES && CheckSerializedData($str_TEMPLATE_FILES)) {
+    $str_TEMPLATE_FILES = unserialize(htmlspecialchars_decode($str_TEMPLATE_FILES), ['allowed_classes' => false]);
+} else {
     $str_TEMPLATE_FILES = array();
+}
 
 if ($str_AD_TYPE == 'template') {
     $arCurVal = isset($str_TEMPLATE['PROPS']) ? $str_TEMPLATE['PROPS'] : $_POST['TEMPLATE_PROP'];
@@ -690,14 +871,25 @@ if ($str_AD_TYPE == 'template') {
     if (is_array($arCurVal) && !empty($arCurVal)) {
         foreach ($arCurVal as $id => $prop) {
             $arCurVal[$id]['EXTENDED_MODE'] = $templateMode;
-            $arPropsTemplate[$id] = CComponentUtil::GetTemplateProps('bitrix:advertising.banner.view', $templateName, '', $arCurVal[$id]);
+            $arPropsTemplate[$id] = CComponentUtil::GetTemplateProps(
+                'bitrix:advertising.banner.view',
+                $templateName,
+                '',
+                $arCurVal[$id]
+            );
             uasort($arPropsTemplate[$id]["PARAMETERS"], 'pr_comp');
         }
     } else {
         $arCurVal = array('EXTENDED_MODE' => $templateMode);
-        $arPropsTemplate[0] = CComponentUtil::GetTemplateProps('bitrix:advertising.banner.view', $templateName, '', $arCurVal);
-        if (is_array($arPropsTemplate[0]["PARAMETERS"]) && !empty($arPropsTemplate[0]["PARAMETERS"]))
+        $arPropsTemplate[0] = CComponentUtil::GetTemplateProps(
+            'bitrix:advertising.banner.view',
+            $templateName,
+            '',
+            $arCurVal
+        );
+        if (is_array($arPropsTemplate[0]["PARAMETERS"]) && !empty($arPropsTemplate[0]["PARAMETERS"])) {
             uasort($arPropsTemplate[0]["PARAMETERS"], 'pr_comp');
+        }
     }
 
     $defaultProps = array();
@@ -707,13 +899,18 @@ if ($str_AD_TYPE == 'template') {
                 $html = '';
                 $defaultProps[$name] = $prop['DEFAULT'];
                 if ($prop['TYPE'] == 'IMAGE') {
-                    $file_ID = (is_array($str_TEMPLATE_FILES) && isset($str_TEMPLATE_FILES[$i][$name]) && $str_TEMPLATE_FILES[$i][$name] !== 'null') ? intVal($str_TEMPLATE_FILES[$i][$name]) : 0;
+                    $file_ID = (is_array(
+                            $str_TEMPLATE_FILES
+                        ) && isset($str_TEMPLATE_FILES[$i][$name]) && $str_TEMPLATE_FILES[$i][$name] !== 'null') ? intval(
+                        $str_TEMPLATE_FILES[$i][$name]
+                    ) : 0;
                     if ($bCopy) {
                         $html .= '<input type=\'hidden\' name=\'TEMPLATE_FILES_copy[' . $i . '_' . $name . ']\' value=\'' . $file_ID . '\'>';
                     }
                     ob_start();
                     if (class_exists('\Bitrix\Main\UI\FileInput', true)) {
-                        echo \Bitrix\Main\UI\FileInput::createInstance(array(
+                        echo \Bitrix\Main\UI\FileInput::createInstance(
+                            array(
                                 "name" => "TEMPLATE_FILES[" . $i . '_' . $name . "]",
                                 "description" => true,
                                 "allowUpload" => "I",
@@ -727,9 +924,12 @@ if ($str_AD_TYPE == 'template') {
                                 "delete" => false,
                                 "edit" => false
                             )
-                            ))->show($file_ID);
+                            )
+                        )->show($file_ID);
                     } else {
-                        echo CFileInput::Show("TEMPLATE_FILES[" . $i . '_' . $name . "]", $file_ID,
+                        echo CFileInput::Show(
+                            "TEMPLATE_FILES[" . $i . '_' . $name . "]",
+                            $file_ID,
                             array(
                                 "IMAGE" => "Y",
                                 "PATH" => "Y",
@@ -740,7 +940,8 @@ if ($str_AD_TYPE == 'template') {
                                     "W" => 200,
                                     "H" => 200,
                                 )
-                            ), array(
+                            ),
+                            array(
                                 'upload' => $isEditMode,
                                 'medialib' => $isEditMode,
                                 'file_dialog' => $isEditMode,
@@ -758,33 +959,82 @@ if ($str_AD_TYPE == 'template') {
                     if ($isEditMode) {
                         $codeType = isset($str_TEMPLATE['PROPS'][$i][$name]['TYPE']) ? $str_TEMPLATE['PROPS'][$i][$name]['TYPE'] : 'html';
                         ob_start();
-                        if (COption::GetOptionString("advertising", "USE_HTML_EDIT", "Y") == "Y" && CModule::IncludeModule("fileman")):
-                            if (defined('BX_PUBLIC_MODE') && BX_PUBLIC_MODE == 1)
-                                CFileMan::AddHTMLEditorFrame("TEMPLATE_EDITOR_" . $i . '_' . $name, $strVal, "TEMPLATE_EDITOR[" . $i . '_' . $name . "_CODE_TYPE]", $codeType, array('height' => 200, 'width' => '100%'), "N", 0, "", "", false, true, false, array('setFocusAfterShow' => false, 'minHeight' => 200));
-                            else
-                                CFileMan::AddHTMLEditorFrame("TEMPLATE_EDITOR_" . $i . '_' . $name, $strVal, "TEMPLATE_EDITOR[" . $i . '_' . $name . "_CODE_TYPE]", $codeType, array('height' => 200, 'width' => '100%'), "N", 0, "", "", false, true, false, array('setFocusAfterShow' => false, 'minHeight' => 200));
+                        if (COption::GetOptionString(
+                                "advertising",
+                                "USE_HTML_EDIT",
+                                "Y"
+                            ) == "Y" && CModule::IncludeModule("fileman")):
+                            if (defined('BX_PUBLIC_MODE') && BX_PUBLIC_MODE == 1) {
+                                CFileMan::AddHTMLEditorFrame(
+                                    "TEMPLATE_EDITOR_" . $i . '_' . $name,
+                                    $strVal,
+                                    "TEMPLATE_EDITOR[" . $i . '_' . $name . "_CODE_TYPE]",
+                                    $codeType,
+                                    array('height' => 200, 'width' => '100%'),
+                                    "N",
+                                    0,
+                                    "",
+                                    "",
+                                    false,
+                                    true,
+                                    false,
+                                    array('setFocusAfterShow' => false, 'minHeight' => 200)
+                                );
+                            } else {
+                                CFileMan::AddHTMLEditorFrame(
+                                    "TEMPLATE_EDITOR_" . $i . '_' . $name,
+                                    $strVal,
+                                    "TEMPLATE_EDITOR[" . $i . '_' . $name . "_CODE_TYPE]",
+                                    $codeType,
+                                    array('height' => 200, 'width' => '100%'),
+                                    "N",
+                                    0,
+                                    "",
+                                    "",
+                                    false,
+                                    true,
+                                    false,
+                                    array('setFocusAfterShow' => false, 'minHeight' => 200)
+                                );
+                            }
                         else: ?>
                             <div align="center" style="vertical-align:top;">
-                                <?= InputType("radio", "TEMPLATE_EDITOR[" . $i . '_' . $name . "_CODE_TYPE]", "text", $codeType, false) ?>
-                                &nbsp;<?= GetMessage("AD_TEXT") ?>
-                                &nbsp;<?= InputType("radio", "TEMPLATE_EDITOR[" . $i . '_' . $name . "_CODE_TYPE]", "html", $codeType, false) ?>
-                                &nbsp;HTML
+                                <?= InputType(
+                                    "radio",
+                                    "TEMPLATE_EDITOR[" . $i . '_' . $name . "_CODE_TYPE]",
+                                    "text",
+                                    $codeType,
+                                    false
+                                ) ?>&nbsp;<?= GetMessage("AD_TEXT") ?>&nbsp;<?= InputType(
+                                    "radio",
+                                    "TEMPLATE_EDITOR[" . $i . '_' . $name . "_CODE_TYPE]",
+                                    "html",
+                                    $codeType,
+                                    false
+                                ) ?>&nbsp;HTML
                                 <textarea style="width:100%" rows="30"
                                           name="<?= 'TEMPLATE_EDITOR_' . $i . '_' . $name ?>"><?= $strVal ?></textarea>
                             </div>
                         <? endif;
                         $html = ob_get_contents();
                         ob_end_clean();
-                    } else
+                    } else {
                         $html = $strVal;
+                    }
                 }
                 if ($prop['TYPE'] == 'FILE') {
-                    $file_ID = (is_array($str_TEMPLATE_FILES) && isset($str_TEMPLATE_FILES[$i][$name]) && $str_TEMPLATE_FILES[$i][$name] !== 'null') ? intVal($str_TEMPLATE_FILES[$i][$name]) : 0;
+                    $file_ID = (is_array(
+                            $str_TEMPLATE_FILES
+                        ) && isset($str_TEMPLATE_FILES[$i][$name]) && $str_TEMPLATE_FILES[$i][$name] !== 'null') ? intval(
+                        $str_TEMPLATE_FILES[$i][$name]
+                    ) : 0;
                     if ($bCopy) {
                         $html .= '<input type=\'hidden\' name=\'TEMPLATE_FILES_copy[' . $i . '_' . $name . ']\' value=\'' . $file_ID . '\'>';
                     }
                     ob_start();
-                    echo CFileInput::Show("TEMPLATE_FILES[" . $i . '_' . $name . "]", $file_ID,
+                    echo CFileInput::Show(
+                        "TEMPLATE_FILES[" . $i . '_' . $name . "]",
+                        $file_ID,
                         array(
                             "IMAGE" => "Y",
                             "PATH" => "Y",
@@ -795,7 +1045,8 @@ if ($str_AD_TYPE == 'template') {
                                 "W" => 200,
                                 "H" => 200,
                             )
-                        ), array(
+                        ),
+                        array(
                             'upload' => $isEditMode,
                             'medialib' => $isEditMode,
                             'file_dialog' => $isEditMode,
@@ -872,7 +1123,10 @@ if (intval($ID) > 0 && !$bCopy) {
         $arMenuActions[] = array(
             "TEXT" => GetMessage("AD_DELETE_BANNER"),
             "TITLE" => GetMessage("AD_DELETE_BANNER_TITLE"),
-            "LINK" => "javascript:if (confirm('" . GetMessage("AD_DELETE_BANNER_CONFIRM") . "'))window.location='adv_banner_list.php?ID=" . $ID . "&lang=" . LANGUAGE_ID . "&sessid=" . bitrix_sessid() . "&action=delete';",
+            "LINK" => "javascript:if (confirm('" . GetMessage(
+                    "AD_DELETE_BANNER_CONFIRM"
+                ) . "'))window.location='adv_banner_list.php?ID=" . $ID . "&lang=" . LANGUAGE_ID . "&sessid=" . bitrix_sessid(
+                ) . "&action=delete';",
             "ICON" => "btn_delete"
         );
     }
@@ -889,8 +1143,9 @@ if (count($arMenuActions) > 0) {
 $context = new CAdminContextMenu($aMenu);
 $context->Show();
 ?>
-<? if (strlen($strError) > 0)
-    CAdminMessage::ShowMessage(Array("MESSAGE" => $strError, "HTML" => true, "TYPE" => "ERROR")); ?>
+<? if ($strError <> '') {
+    CAdminMessage::ShowMessage(Array("MESSAGE" => $strError, "HTML" => true, "TYPE" => "ERROR"));
+} ?>
     <style>
         #bx-admin-prefix .list-table td, #bx-admin-prefix .internal td {
             background: #fafcfc;
@@ -931,8 +1186,12 @@ $context->Show();
 
         <?
         if ($ID > 0) :
-            if ($str_LAMP == 'green') $lamp_alt = GetMessage("AD_GREEN_ALT");
-            if ($str_LAMP == 'red') $lamp_alt = GetMessage("AD_RED_ALT");
+            if ($str_LAMP == 'green') {
+                $lamp_alt = GetMessage("AD_GREEN_ALT");
+            }
+            if ($str_LAMP == 'red') {
+                $lamp_alt = GetMessage("AD_RED_ALT");
+            }
             $lamp = '<div class="lamp-' . $str_LAMP . '" title="' . $lamp_alt . '" style="float:left;"></div>';
             ?>
             <tr valign="top">
@@ -942,26 +1201,38 @@ $context->Show();
         <? endif ?>
 
         <? if ($ID > 0): ?>
-            <? if (strlen($str_DATE_CREATE) > 0): ?>
+            <? if ($str_DATE_CREATE <> ''): ?>
                 <tr valign="top">
                     <td width="40%"><?= GetMessage("AD_CREATED") ?></td>
                     <td width="60%"><?= $str_DATE_CREATE ?><?
                         if (intval($str_CREATED_BY) > 0) :
                             $rsUser = CUser::GetByID($str_CREATED_BY);
                             $arUser = $rsUser->Fetch();
-                            echo "&nbsp;&nbsp;[<a href='/bitrix/admin/user_edit.php?ID=" . $str_CREATED_BY . "&lang=" . LANGUAGE_ID . "' title='" . GetMessage("AD_USER_ALT") . "'>" . $str_CREATED_BY . "</a>]&nbsp;(" . htmlspecialcharsbx($arUser["LOGIN"]) . ") " . htmlspecialcharsbx($arUser["NAME"]) . " " . htmlspecialcharsbx($arUser["LAST_NAME"]);
+                            echo "&nbsp;&nbsp;[<a href='/bitrix/admin/user_edit.php?ID=" . $str_CREATED_BY . "&lang=" . LANGUAGE_ID . "' title='" . GetMessage(
+                                    "AD_USER_ALT"
+                                ) . "'>" . $str_CREATED_BY . "</a>]&nbsp;(" . htmlspecialcharsbx(
+                                    $arUser["LOGIN"]
+                                ) . ") " . htmlspecialcharsbx($arUser["NAME"]) . " " . htmlspecialcharsbx(
+                                    $arUser["LAST_NAME"]
+                                );
                         endif;
                         ?></td>
                 </tr>
             <? endif ?>
-            <? if (strlen($str_DATE_MODIFY) > 0): ?>
+            <? if ($str_DATE_MODIFY <> ''): ?>
                 <tr valign="top">
                     <td><?= GetMessage("AD_MODIFIED") ?></td>
                     <td><?= $str_DATE_MODIFY ?><?
                         if (intval($str_MODIFIED_BY) > 0) :
                             $rsUser = CUser::GetByID($str_MODIFIED_BY);
                             $arUser = $rsUser->Fetch();
-                            echo "&nbsp;&nbsp;[<a href='/bitrix/admin/user_edit.php?ID=" . $str_MODIFIED_BY . "&lang=" . LANGUAGE_ID . "' title='" . GetMessage("AD_USER_ALT") . "'>" . $str_MODIFIED_BY . "</a>]&nbsp;(" . htmlspecialcharsbx($arUser["LOGIN"]) . ") " . htmlspecialcharsbx($arUser["NAME"]) . " " . htmlspecialcharsbx($arUser["LAST_NAME"]);
+                            echo "&nbsp;&nbsp;[<a href='/bitrix/admin/user_edit.php?ID=" . $str_MODIFIED_BY . "&lang=" . LANGUAGE_ID . "' title='" . GetMessage(
+                                    "AD_USER_ALT"
+                                ) . "'>" . $str_MODIFIED_BY . "</a>]&nbsp;(" . htmlspecialcharsbx(
+                                    $arUser["LOGIN"]
+                                ) . ") " . htmlspecialcharsbx($arUser["NAME"]) . " " . htmlspecialcharsbx(
+                                    $arUser["LAST_NAME"]
+                                );
                         endif;
                         ?></td>
                 </tr>
@@ -971,8 +1242,9 @@ $context->Show();
         <tr valign="top">
             <td width="40%"><?= GetMessage("AD_CONTRACT") ?></td>
             <td width="60%">[<a title="<?= GetMessage("AD_CONTRACT_SETTINGS") ?>"
-                                href="adv_contract_edit.php?ID=<?= $arContract["ID"] ?>&action=view&lang=<?= LANGUAGE_ID ?>"><?= $arContract["ID"] ?></a>] <?= htmlspecialcharsbx($arContract["NAME"]) ?>
-            </td>
+                                href="adv_contract_edit.php?ID=<?= $arContract["ID"] ?>&action=view&lang=<?= LANGUAGE_ID ?>"><?= $arContract["ID"] ?></a>] <?= htmlspecialcharsbx(
+                    $arContract["NAME"]
+                ) ?></td>
         </tr>
 
         <tr>
@@ -989,16 +1261,27 @@ $context->Show();
             <td><?= GetMessage("AD_SHOW_INTERVAL") . ":" ?></td>
             <td><?
                 if ($isEditMode) :
-                    echo CalendarPeriod("DATE_SHOW_FROM", $str_DATE_SHOW_FROM, "DATE_SHOW_TO", $str_DATE_SHOW_TO, "bx_adv_edit_form", "N", "", "", 20);
+                    echo CalendarPeriod(
+                        "DATE_SHOW_FROM",
+                        $str_DATE_SHOW_FROM,
+                        "DATE_SHOW_TO",
+                        $str_DATE_SHOW_TO,
+                        "bx_adv_edit_form",
+                        "N",
+                        "",
+                        "",
+                        20
+                    );
                 else:
-                    if (strlen($str_DATE_SHOW_FROM) > 0) :
+                    if ($str_DATE_SHOW_FROM <> '') :
                         echo GetMessage("AD_FROM") ?>&nbsp;<b><?= $str_DATE_SHOW_FROM ?></b>&nbsp;<?
                     endif;
-                    if (strlen($str_DATE_SHOW_TO) > 0) :
+                    if ($str_DATE_SHOW_TO <> '') :
                         echo GetMessage("AD_TILL") ?>&nbsp;<b><?= $str_DATE_SHOW_TO ?></b><?
                     endif;
-                    if (strlen($str_DATE_SHOW_TO) <= 0 && strlen($str_DATE_SHOW_FROM) <= 0)
+                    if ($str_DATE_SHOW_TO == '' && $str_DATE_SHOW_FROM == '') {
                         echo GetMessage("ADV_NOT_SET");
+                    }
                 endif;
                 ?></td>
         </tr>
@@ -1020,9 +1303,9 @@ $context->Show();
 
                     $ref = array();
                     $ref_id = array();
-                    $rsBann = CAdvBanner::GetList($v1 = "s_group_sid", $v2 = "asc", array(), $v3);
+                    $rsBann = CAdvBanner::GetList("s_group_sid", "asc");
                     while ($arBann = $rsBann->Fetch()) {
-                        if (!in_array($arBann["GROUP_SID"], $ref_id) && strlen($arBann["GROUP_SID"]) > 0) {
+                        if (!in_array($arBann["GROUP_SID"], $ref_id) && $arBann["GROUP_SID"] <> '') {
                             $ref[] = $arBann["GROUP_SID"];
                             $ref_id[] = $arBann["GROUP_SID"];
                         }
@@ -1042,14 +1325,21 @@ $context->Show();
                         //-->
                     </script>
                     <?
-                    echo SelectBoxFromArray("SELECT_GROUP", array("reference" => $ref, "reference_id" => $ref_id), "", " ", " OnChange = SelectGroup()");
+                    echo SelectBoxFromArray(
+                        "SELECT_GROUP",
+                        array("reference" => $ref, "reference_id" => $ref_id),
+                        "",
+                        " ",
+                        " OnChange = SelectGroup()"
+                    );
                 endif;
 
                 else:
-                    if (strlen($str_GROUP_SID) > 0)
+                    if ($str_GROUP_SID <> '') {
                         echo $str_GROUP_SID;
-                    else
+                    } else {
                         echo GetMessage("ADV_NOT_SET");
+                    }
                 endif;
                 ?></td>
         </tr>
@@ -1070,16 +1360,25 @@ $context->Show();
                             "SID_EXACT_MATCH" => "Y"
                         );
                     }
-                    $rsTypies = CAdvType::GetList($v1, $v2, $arFilter, $v3);
+                    $rsTypies = CAdvType::GetList('', '', $arFilter);
                     while ($arType = $rsTypies->Fetch()) {
                         $ref[] = "[" . $arType["SID"] . "] " . htmlspecialcharsbx($arType["NAME"]);
                         $ref_id[] = $arType["SID"];
                     }
 
-                    echo SelectBoxFromArray("TYPE_SID", array("reference" => $ref, "reference_id" => $ref_id), $str_TYPE_SID, "");
+                    echo SelectBoxFromArray(
+                        "TYPE_SID",
+                        array("reference" => $ref, "reference_id" => $ref_id),
+                        $str_TYPE_SID,
+                        ""
+                    );
 
                 else:
-                    echo "[<a href='adv_type_edit.php?SID=" . urlencode($str_TYPE_SID) . "&lang=" . LANGUAGE_ID . "&action=view' title='" . GetMessage("ADV_TYPE_VIEW") . "'>" . htmlspecialcharsbx($str_TYPE_SID) . "</a>] " . $str_TYPE_NAME;
+                    echo "[<a href='adv_type_edit.php?SID=" . urlencode(
+                            $str_TYPE_SID
+                        ) . "&lang=" . LANGUAGE_ID . "&action=view' title='" . GetMessage(
+                            "ADV_TYPE_VIEW"
+                        ) . "'>" . htmlspecialcharsbx($str_TYPE_SID) . "</a>] " . $str_TYPE_NAME;
                 endif;
                 ?></td>
         </tr>
@@ -1099,18 +1398,26 @@ $context->Show();
             <td colspan="2"><b><?= GetMessage("AD_WHAT") ?></b></td>
         </tr>
 
-        <tr<? if (!$isEditMode) echo ' style="display: none;"'; ?> id='banner_type' valign="top">
+        <tr<? if (!$isEditMode) {
+            echo ' style="display: none;"';
+        } ?> id='banner_type' valign="top">
             <td>
                 <?= GetMessage("AD_TYPE_TEMPLATE") ?><span class="required"><sup>3</sup></span>
             </td>
             <td align="left">
                 <select onchange='setType(this);' name="AD_TYPE">
                     <option id="AD_TYPE_IMAGE"
-                            value="image"<? if (((($ID && $str_AD_TYPE == 'image') || !$ID) && !isset($AD_TYPE)) || (isset($AD_TYPE) && ($AD_TYPE == 'image'))): ?> selected<? endif; ?>><?= GetMessage("ADV_BANNER_IMAGE") ?></option>
+                            value="image"<? if (((($ID && $str_AD_TYPE == 'image') || !$ID) && !isset($AD_TYPE)) || (isset($AD_TYPE) && ($AD_TYPE == 'image'))): ?> selected<? endif; ?>><?= GetMessage(
+                            "ADV_BANNER_IMAGE"
+                        ) ?></option>
                     <option id="AD_TYPE_FLASH"
-                            value="flash"<? if (($ID && $str_AD_TYPE == 'flash') || (isset($AD_TYPE) && ($AD_TYPE == 'flash'))): ?> selected<? endif; ?>><?= GetMessage("ADV_BANNER_FLASH") ?></option>
+                            value="flash"<? if (($ID && $str_AD_TYPE == 'flash') || (isset($AD_TYPE) && ($AD_TYPE == 'flash'))): ?> selected<? endif; ?>><?= GetMessage(
+                            "ADV_BANNER_FLASH"
+                        ) ?></option>
                     <option id="AD_TYPE_HTML"
-                            value="html"<? if (($ID && $str_AD_TYPE == 'html') || (isset($AD_TYPE) && ($AD_TYPE == 'html'))): ?> selected<? endif; ?>><?= GetMessage("ADV_BANNER_HTML") ?></option>
+                            value="html"<? if (($ID && $str_AD_TYPE == 'html') || (isset($AD_TYPE) && ($AD_TYPE == 'html'))): ?> selected<? endif; ?>><?= GetMessage(
+                            "ADV_BANNER_HTML"
+                        ) ?></option>
                     <? $arTemplates = CComponentUtil::GetTemplatesList('bitrix:advertising.banner.view'); ?>
                     <? foreach ($arTemplates as $k => $template): ?>
                         <option id="AD_TYPE_TEMPLATE[<?= $k ?>]" value="template"
@@ -1187,7 +1494,9 @@ $context->Show();
                             SwitchRows(['eFile', 'eUrl', 'eImageAlt', 'eUrlTarget', 'eCodeHeader'], true);
                             changeTemplateNodes('fade');
                         } else if (type == 'flash') {
-                            SwitchRows(['eCodeHeader', 'eFile', <? if ($str_AD_TYPE == 'flash') echo "'eFileLoaded',";?>'eFlashUrl', 'eFlashJs', 'eFlashTrans', 'eUrl', 'eUrlTarget', 'eImageAlt'], true);
+                            SwitchRows(['eCodeHeader', 'eFile', <? if ($str_AD_TYPE == 'flash') {
+                                echo "'eFileLoaded',";
+                            }?>'eFlashUrl', 'eFlashJs', 'eFlashTrans', 'eUrl', 'eUrlTarget', 'eImageAlt'], true);
                             SwitchRows(['eAltImage', 'eFlashVer'], document.getElementById('FLASH_JS').checked);
                             SwitchRows(['eTemplatePropsHead', 'eTemplateComponent', 'eTemplateComponentHead', 'eAddTemplateBanner', 'eTemplateProperties', 'eExtMode'], false);
                             changeTemplateNodes('fade');
@@ -1295,7 +1604,15 @@ $context->Show();
             <td><label for="EXTENDED_MODE"><?= GetMessage("AD_EXTENDED_MODE") ?></label></td>
             <td>
                 <input type="hidden" name="EXTENDED_MODE" value="N"/>
-                <?= InputType("checkbox", "EXTENDED_MODE", "Y", '', false, "", 'id="EXTENDED_MODE" onclick="window.oBXBannerTemplate.refreshAll()"'); ?>
+                <?= InputType(
+                    "checkbox",
+                    "EXTENDED_MODE",
+                    "Y",
+                    '',
+                    false,
+                    "",
+                    'id="EXTENDED_MODE" onclick="window.oBXBannerTemplate.refreshAll()"'
+                ); ?>
             </td>
         </tr>
 
@@ -1307,25 +1624,30 @@ $context->Show();
                             <input type="hidden" name="IMAGE_ID_copy" value="<?= $str_IMAGE_ID ?>">
                         <? endif ?>
                         <? if (class_exists('\Bitrix\Main\UI\FileInput', true)) {
-                            echo \Bitrix\Main\UI\FileInput::createInstance(array(
-                                "name" => "IMAGE_ID",
-                                "description" => false,
-                                "upload" => true,
-                                "medialib" => true,
-                                "fileDialog" => true,
-                                "cloud" => true,
-                                "delete" => true,
-                                "maxCount" => 1
-                            ))->show($str_IMAGE_ID);
+                            echo \Bitrix\Main\UI\FileInput::createInstance(
+                                array(
+                                    "name" => "IMAGE_ID",
+                                    "description" => false,
+                                    "upload" => true,
+                                    "medialib" => true,
+                                    "fileDialog" => true,
+                                    "cloud" => true,
+                                    "delete" => true,
+                                    "maxCount" => 1
+                                )
+                            )->show($str_IMAGE_ID);
                         } else {
-                            echo CFileInput::Show("IMAGE_ID", $str_IMAGE_ID,
+                            echo CFileInput::Show(
+                                "IMAGE_ID",
+                                $str_IMAGE_ID,
                                 array(
                                     "IMAGE" => $str_AD_TYPE == 'image' ? "Y" : "N",
                                     "PATH" => "Y",
                                     "FILE_SIZE" => "Y",
                                     "DIMENSIONS" => "Y",
                                     "IMAGE_POPUP" => "Y"
-                                ), array(
+                                ),
+                                array(
                                     'upload' => true,
                                     'medialib' => true,
                                     'file_dialog' => true,
@@ -1344,13 +1666,15 @@ $context->Show();
                 ?>
                 <tr valign="top" id="eFileLoaded" style="display: none;">
                     <td align="center" colspan="2"><?
-                        echo CAdvBanner_all::GetHTML(array(
-                            "IMAGE_ID" => $str_IMAGE_ID,
-                            "FLASH_JS" => $str_FLASH_JS,
-                            "FLASH_IMAGE" => $str_FLASH_IMAGE,
-                            "FLASH_TRANSPARENT" => $str_FLASH_TRANSPARENT,
-                            "FLASH_VER" => $str_FLASH_VER,
-                        )); ?></td>
+                        echo CAdvBanner_all::GetHTML(
+                            array(
+                                "IMAGE_ID" => $str_IMAGE_ID,
+                                "FLASH_JS" => $str_FLASH_JS,
+                                "FLASH_IMAGE" => $str_FLASH_IMAGE,
+                                "FLASH_TRANSPARENT" => $str_FLASH_TRANSPARENT,
+                                "FLASH_VER" => $str_FLASH_VER,
+                            )
+                        ); ?></td>
                 </tr>
             <? endif ?>
 
@@ -1374,7 +1698,9 @@ $context->Show();
                 <td><?= GetMessage('AD_FLASH_JS') ?> <?= GetMessage('AD_FLASH_JS_DESCRIPTION') ?></td>
                 <td>
                     <input type="checkbox" id="FLASH_JS" onclick="SwitchRows(['eAltImage', 'eFlashVer'], this.checked);"
-                           name="FLASH_JS" value="Y"<? if ($str_FLASH_JS == 'Y') echo ' checked="checked"'; ?> />
+                           name="FLASH_JS" value="Y"<? if ($str_FLASH_JS == 'Y') {
+                        echo ' checked="checked"';
+                    } ?> />
                 </td>
             </tr>
 
@@ -1391,26 +1717,31 @@ $context->Show();
                         <input type="hidden" name="FLASH_IMAGE" value="<?= $str_FLASH_IMAGE ?>">
                     <? endif ?>
                     <? if (class_exists('\Bitrix\Main\UI\FileInput', true)) {
-                        echo \Bitrix\Main\UI\FileInput::createInstance(array(
-                            "name" => "FLASH_IMAGE",
-                            "description" => false,
-                            "allowUpload" => "I",
-                            "upload" => true,
-                            "medialib" => true,
-                            "fileDialog" => true,
-                            "cloud" => true,
-                            "delete" => true,
-                            "maxCount" => 1
-                        ))->show($str_FLASH_IMAGE);
+                        echo \Bitrix\Main\UI\FileInput::createInstance(
+                            array(
+                                "name" => "FLASH_IMAGE",
+                                "description" => false,
+                                "allowUpload" => "I",
+                                "upload" => true,
+                                "medialib" => true,
+                                "fileDialog" => true,
+                                "cloud" => true,
+                                "delete" => true,
+                                "maxCount" => 1
+                            )
+                        )->show($str_FLASH_IMAGE);
                     } else {
-                        echo CFileInput::Show("FLASH_IMAGE", $str_FLASH_IMAGE,
+                        echo CFileInput::Show(
+                            "FLASH_IMAGE",
+                            $str_FLASH_IMAGE,
                             array(
                                 "IMAGE" => "Y",
                                 "PATH" => "Y",
                                 "FILE_SIZE" => "Y",
                                 "DIMENSIONS" => "Y",
                                 "IMAGE_POPUP" => "Y"
-                            ), array(
+                            ),
+                            array(
                                 'upload' => true,
                                 'medialib' => true,
                                 'file_dialog' => true,
@@ -1427,8 +1758,11 @@ $context->Show();
                 <td><?= GetMessage("ADV_BANNER_NO_LINK") ?>:<? if ($isEditMode): ?><span
                             class="required"><sup>1</sup></span><? endif ?></td>
                 <td><input type="checkbox" id="NO_URL_IN_FLASH" name="NO_URL_IN_FLASH"
-                           value="Y"<? if ($str_NO_URL_IN_FLASH == "Y") echo " checked"; ?><? if (!$isEditMode) echo ' disabled="true"'; ?>
-                           id="NO_URL_IN_FLASH"></td>
+                           value="Y"<? if ($str_NO_URL_IN_FLASH == "Y") {
+                        echo " checked";
+                    } ?><? if (!$isEditMode) {
+                        echo ' disabled="true"';
+                    } ?> id="NO_URL_IN_FLASH"></td>
             </tr>
             <tr id="eUrl" style="display: none;">
                 <td valign="top"><?= GetMessage("AD_URL"); ?><? if ($isEditMode): ?><span class="required"><sup>1</sup></span><? endif ?>
@@ -1437,10 +1771,11 @@ $context->Show();
                     if ($isEditMode) :
                         ?><input id="iUrl" type="text" size="50" name="URL" value="<?= $str_URL ?>"><?
                     else:
-                        if (strlen($str_URL) > 0)
+                        if ($str_URL <> '') {
                             echo $str_URL;
-                        else
+                        } else {
                             echo GetMessage("ADV_NOT_SET");
+                        }
                     endif;
 
                     if ($isEditMode): ?>
@@ -1449,7 +1784,13 @@ $context->Show();
                                 document.bx_adv_edit_form.URL.value += str;
                             }
                         </script>
-                        <br/><?= str_replace("#EVENT_GID#", "<a href=\"javascript:PutEventGID('#EVENT_GID#')\"  title='" . GetMessage("AD_INS_TEMPL") . "'>#EVENT_GID#</a>", GetMessage("AD_CAN_USE_EVENT_GID")) ?>
+                        <br/><?= str_replace(
+                        "#EVENT_GID#",
+                        "<a href=\"javascript:PutEventGID('#EVENT_GID#')\"  title='" . GetMessage(
+                            "AD_INS_TEMPL"
+                        ) . "'>#EVENT_GID#</a>",
+                        GetMessage("AD_CAN_USE_EVENT_GID")
+                    ) ?>
                     <?
                     endif;
                     ?></td>
@@ -1485,10 +1826,20 @@ $context->Show();
                         </script>
                         <input type="text" id="iURL_TARGET" maxlength="255" name="URL_TARGET" size="30"
                                value="<?= $str_URL_TARGET ?>"> <?
-                        echo SelectBoxFromArray("SELECT_URL_TARGET", array("reference" => $ref, "reference_id" => $ref_id), "", " ", " OnChange = SelectUrlTarget()");
+                        echo SelectBoxFromArray(
+                            "SELECT_URL_TARGET",
+                            array("reference" => $ref, "reference_id" => $ref_id),
+                            "",
+                            " ",
+                            " OnChange = SelectUrlTarget()"
+                        );
                     else:
                         $key = array_search($str_URL_TARGET, $ref_id);
-                        if (strlen($ref[$key]) > 0) echo $ref[$key]; else echo $str_URL_TARGET;
+                        if ($ref[$key] <> '') {
+                            echo $ref[$key];
+                        } else {
+                            echo $str_URL_TARGET;
+                        }
                     endif;
                     ?></td>
             </tr>
@@ -1499,18 +1850,20 @@ $context->Show();
                     if ($isEditMode) :
                         ?><input type="text" name="IMAGE_ALT" maxlength="255" size="50" value="<?= $str_IMAGE_ALT ?>"><?
                     else:
-                        if (strlen($str_IMAGE_ALT) > 0)
+                        if ($str_IMAGE_ALT <> '') {
                             echo $str_IMAGE_ALT;
-                        else
+                        } else {
                             echo GetMessage("ADV_NOT_SET");
+                        }
                     endif;
                     ?></td>
             </tr>
             <? if ($isEditMode): ?>
                 <tr valign="top" style="display: none;" id="eCodeHeader">
                     <td colspan="2" align="center"><a href="javascript:void(0)"
-                                                      onclick="SwitchRows(['eCode'], document.getElementById('eCode').style.display == 'none')"><b><?= GetMessage("AD_OR"); ?></b></a>
-                    </td>
+                                                      onclick="SwitchRows(['eCode'], document.getElementById('eCode').style.display == 'none')"><b><?= GetMessage(
+                                    "AD_OR"
+                                ); ?></b></a></td>
                 </tr>
             <? endif; ?>
         <? endif ?>
@@ -1526,21 +1879,55 @@ $context->Show();
             <td align="center" colspan="2">
                 <table width="95%" cellspacing="0" border="0" cellpadding="0">
                     <? if ($isEditMode):
-                        if (COption::GetOptionString("advertising", "USE_HTML_EDIT", "Y") == "Y" && CModule::IncludeModule("fileman")): ?>
+                        if (COption::GetOptionString(
+                                "advertising",
+                                "USE_HTML_EDIT",
+                                "Y"
+                            ) == "Y" && CModule::IncludeModule("fileman")): ?>
                             <tr valign="top">
                                 <td align="center" colspan="2"><?
-                                    if (defined('BX_PUBLIC_MODE') && BX_PUBLIC_MODE == 1)
-                                        CFileMan::AddHTMLEditorFrame("CODE", $str_CODE, "CODE_TYPE", $str_CODE_TYPE, array('height' => 450, 'width' => '100%'), "N", 0, "", "onfocus=\"t=this\"");
-                                    else
-                                        CFileMan::AddHTMLEditorFrame("CODE", $str_CODE, "CODE_TYPE", $str_CODE_TYPE, 300, "N", 0, "", "onfocus=\"t=this\"");
+                                    if (defined('BX_PUBLIC_MODE') && BX_PUBLIC_MODE == 1) {
+                                        CFileMan::AddHTMLEditorFrame(
+                                            "CODE",
+                                            $str_CODE,
+                                            "CODE_TYPE",
+                                            $str_CODE_TYPE,
+                                            array('height' => 450, 'width' => '100%'),
+                                            "N",
+                                            0,
+                                            "",
+                                            "onfocus=\"t=this\""
+                                        );
+                                    } else {
+                                        CFileMan::AddHTMLEditorFrame(
+                                            "CODE",
+                                            $str_CODE,
+                                            "CODE_TYPE",
+                                            $str_CODE_TYPE,
+                                            300,
+                                            "N",
+                                            0,
+                                            "",
+                                            "onfocus=\"t=this\""
+                                        );
+                                    }
                                     ?></td>
                             </tr>
                         <? else: ?>
                             <tr valign="top">
-                                <td align="center"
-                                    colspan="2"><? echo InputType("radio", "CODE_TYPE", "text", $str_CODE_TYPE, false) ?><?= GetMessage("AD_TEXT") ?>
-                                    /&nbsp;<? echo InputType("radio", "CODE_TYPE", "html", $str_CODE_TYPE, false) ?>
-                                    &nbsp;HTML&nbsp;
+                                <td align="center" colspan="2"><? echo InputType(
+                                        "radio",
+                                        "CODE_TYPE",
+                                        "text",
+                                        $str_CODE_TYPE,
+                                        false
+                                    ) ?><?= GetMessage("AD_TEXT") ?>/&nbsp;<? echo InputType(
+                                        "radio",
+                                        "CODE_TYPE",
+                                        "html",
+                                        $str_CODE_TYPE,
+                                        false
+                                    ) ?>&nbsp;HTML&nbsp;
                                 </td>
                             </tr>
                             <tr>
@@ -1549,16 +1936,31 @@ $context->Show();
                             </tr>
                         <? endif;
                     else: ?>
-                        <? if (strlen($str_CODE) > 0): ?>
+                        <? if ($str_CODE <> ''): ?>
                             <tr valign="top">
-                                <td align="center"
-                                    colspan="2"><? echo InputType("radio", "CODE_TYPE", "text", $str_CODE_TYPE, false, "", " disabled") ?><?= GetMessage("AD_TEXT") ?>
-                                    /&nbsp;<? echo InputType("radio", "CODE_TYPE", "html", $str_CODE_TYPE, false, "", " disabled") ?>
-                                    &nbsp;HTML&nbsp;
+                                <td align="center" colspan="2"><? echo InputType(
+                                        "radio",
+                                        "CODE_TYPE",
+                                        "text",
+                                        $str_CODE_TYPE,
+                                        false,
+                                        "",
+                                        " disabled"
+                                    ) ?><?= GetMessage("AD_TEXT") ?>/&nbsp;<? echo InputType(
+                                        "radio",
+                                        "CODE_TYPE",
+                                        "html",
+                                        $str_CODE_TYPE,
+                                        false,
+                                        "",
+                                        " disabled"
+                                    ) ?>&nbsp;HTML&nbsp;
                                 </td>
                             </tr>
                             <tr>
-                                <td align="center"><?= ($str_CODE_TYPE == "text") ? $str_CODE : htmlspecialcharsback($str_CODE) ?></td>
+                                <td align="center"><?= ($str_CODE_TYPE == "text") ? $str_CODE : htmlspecialcharsback(
+                                        $str_CODE
+                                    ) ?></td>
                             </tr>
                         <? endif ?>
                     <? endif ?>
@@ -1577,7 +1979,13 @@ $context->Show();
             </td>
         </tr>
         <?
-        $APPLICATION->IncludeComponent('bitrix:main.colorpicker', '', array('SHOW_BUTTON' => 'N'), false, array('HIDE_ICONS' => 'Y'));
+        $APPLICATION->IncludeComponent(
+            'bitrix:main.colorpicker',
+            '',
+            array('SHOW_BUTTON' => 'N'),
+            false,
+            array('HIDE_ICONS' => 'Y')
+        );
 
         CJSCore::RegisterExt('adv_dragdrop', array('js' => '/bitrix/js/main/core/core_dragdrop.js'));
         \CJSCore::Init(array("adv_templates", "adv_dragdrop"));
@@ -1603,16 +2011,24 @@ $context->Show();
             });
         </script>
         <tr id="eTemplateComponentHead" class="heading" style="display:none;">
-            <? if ((!defined('BX_PUBLIC_MODE') || BX_PUBLIC_MODE != 1) && COption::GetOptionString('advertising', 'SHOW_COMPONENT_PREVIEW') == "Y"): ?>
+            <? if ((!defined('BX_PUBLIC_MODE') || BX_PUBLIC_MODE != 1) && COption::GetOptionString(
+                    'advertising',
+                    'SHOW_COMPONENT_PREVIEW'
+                ) == "Y"): ?>
                 <td colspan="2"><b><?= GetMessage("AD_PREVIEW") ?></b></td>
             <? endif ?>
         </tr>
         <tr id="eTemplateComponent" valign="top" style="display: none;">
-            <? if ((!defined('BX_PUBLIC_MODE') || BX_PUBLIC_MODE != 1) && COption::GetOptionString('advertising', 'SHOW_COMPONENT_PREVIEW') == "Y"): ?>
+            <? if ((!defined('BX_PUBLIC_MODE') || BX_PUBLIC_MODE != 1) && COption::GetOptionString(
+                    'advertising',
+                    'SHOW_COMPONENT_PREVIEW'
+                ) == "Y"): ?>
                 <td align="center" colspan="2">
                     <script>window.cWidth = BX('eCode').parentNode.clientWidth;</script>
-                    <iframe src="adv_banner_preview.php?id=<?= intval($_GET['ID']) ?>&name=<?= $str_TEMPLATE["NAME"] ?>&bitrix_include_areas=N"
-                            id="componentIframe" style="width:100%;display:none;" scrolling="no" frameBorder="0"
+                    <iframe src="adv_banner_preview.php?id=<?= intval(
+                        $_GET['ID']
+                    ) ?>&name=<?= $str_TEMPLATE["NAME"] ?>&bitrix_include_areas=N" id="componentIframe"
+                            style="width:100%;display:none;" scrolling="no" frameBorder="0"
                             onLoad="iFrameAutoResize('componentIframe');"></iframe>
                 </td>
             <? endif ?>
@@ -1627,8 +2043,9 @@ $context->Show();
                 <td colspan="2" align="center"><a href="#"
                                                   onclick='window.oBXBannerTemplate.addNewTBanner();return false;'
                                                   class="adm-btn adm-btn-add adm-btn-save"
-                                                  title="<?= GetMessage("AD_ADD_SLIDE") ?>"><?= GetMessage("AD_ADD_SLIDE") ?></a>
-                </td>
+                                                  title="<?= GetMessage("AD_ADD_SLIDE") ?>"><?= GetMessage(
+                            "AD_ADD_SLIDE"
+                        ) ?></a></td>
             <? else: ?>
                 <td colspan="2" style="text-align: center;"><input type="button"
                                                                    onclick='window.oBXBannerTemplate.addNewTBanner();return false;'
@@ -1650,7 +2067,6 @@ $context->Show();
                         if ($defStatus = $arrDefStatus->Fetch()) {
                             $str_STATUS_SID = $defStatus['DEFAULT_STATUS_SID'];
                         }
-
                     }
                     echo SelectBoxFromArray("STATUS_SID", $arrStatus, $str_STATUS_SID, " ");
                     ?></td>
@@ -1661,7 +2077,9 @@ $context->Show();
                 <td><?
                     $arrStatus = CAdvBanner::GetStatusList();
                     $key = array_search($str_STATUS_SID, $arrStatus["reference_id"]);
-                    if ($key !== false) echo $arrStatus["reference"][$key];
+                    if ($key !== false) {
+                        echo $arrStatus["reference"][$key];
+                    }
                     ?></td>
             </tr>
         <? endif ?>
@@ -1672,7 +2090,7 @@ $context->Show();
                 <td><textarea cols="35" name="STATUS_COMMENTS" rows="3"
                               wrap="VIRTUAL"><?= $str_STATUS_COMMENTS ?></textarea></td>
             </tr>
-        <? elseif (strlen($str_STATUS_COMMENTS) > 0): ?>
+        <? elseif ($str_STATUS_COMMENTS <> ''): ?>
             <tr valign="top">
                 <td><?= GetMessage("AD_STATUS_COMMENTS") ?></td>
                 <td><?= TxtToHtml($str_STATUS_COMMENTS) ?></td>
@@ -1709,7 +2127,15 @@ $context->Show();
                 <td width="40%"><label for="FIX_SHOW"><?= GetMessage("AD_FIX_SHOW") ?></label></td>
                 <td width="60%"><?
                     if ($isEditMode):
-                        echo InputType("checkbox", "FIX_SHOW", "Y", $str_FIX_SHOW, false, "", 'id="FIX_SHOW" OnClick="DisableFixShow(this.checked);"');
+                        echo InputType(
+                            "checkbox",
+                            "FIX_SHOW",
+                            "Y",
+                            $str_FIX_SHOW,
+                            false,
+                            "",
+                            'id="FIX_SHOW" OnClick="DisableFixShow(this.checked);"'
+                        );
                     else:
                         ?><?= ($str_FIX_SHOW == "Y" ? GetMessage("AD_YES") : GetMessage("AD_NO")) ?><?
                     endif;
@@ -1763,10 +2189,11 @@ $context->Show();
                     ?><input type="text" name="SHOWS_FOR_VISITOR" id="SHOWS_FOR_VISITOR"
                              value="<?= $str_SHOWS_FOR_VISITOR ?>" size="10"<?= $disableFixShow ?>><?
                 else:
-                    if (IntVal($str_SHOWS_FOR_VISITOR) > 0)
+                    if (intval($str_SHOWS_FOR_VISITOR) > 0) {
                         echo $str_SHOWS_FOR_VISITOR;
-                    else
+                    } else {
                         echo GetMessage("ADV_NO_LIMITS");
+                    }
                 endif;
                 ?></td>
         </tr>
@@ -1793,41 +2220,6 @@ $context->Show();
             </tr>
         <? endif ?>
 
-        <? if ($isAdmin || ($isDemo && !$isOwner) || $isManager): ?>
-            <script>
-                function ObjDisableR(objName, v) {
-                    ObjT = document.getElementById(objName);
-                    if (ObjT != null)
-                        ObjT.disabled = v;
-                }
-
-                function DisableFixClick() {
-                    if (!document.getElementById("FIX_CLICK").checked) {
-                        ObjDisableR("MAX_CLICK_COUNT", true);
-                        ObjDisableR("RESET_CLICK_COUNT", true);
-                    } else {
-                        ObjDisableR("MAX_CLICK_COUNT", false);
-                        ObjDisableR("RESET_CLICK_COUNT", false);
-                    }
-                }
-            </script>
-        <?
-        $disableFixClick = "";
-        if ($str_FIX_CLICK != "Y")
-            $disableFixClick = " disabled";
-        ?>
-            <tr valign="top">
-                <td width="40%"><label for="FIX_CLICK"><?= GetMessage("AD_FIX_CLICK") ?></label></td>
-                <td width="60%"><?
-                    if ($isEditMode):
-                        echo InputType("checkbox", "FIX_CLICK", "Y", $str_FIX_CLICK, false, "", 'id="FIX_CLICK" OnClick="DisableFixClick();"');
-                    else:
-                        ?><?= ($str_FIX_CLICK == "Y" ? GetMessage("AD_YES") : GetMessage("AD_NO")) ?><?
-                    endif;
-                    ?></td>
-            </tr>
-        <? endif ?>
-
         <? if (!$isEditMode): ?>
             <tr valign="top">
                 <td><?= GetMessage("AD_CLICK_COUNT_2") ?></td>
@@ -1837,13 +2229,12 @@ $context->Show();
             <tr>
                 <td><?= GetMessage("AD_CLICK_COUNT") ?></td>
                 <td><input type="text" name="MAX_CLICK_COUNT" id="MAX_CLICK_COUNT" size="10"
-                           value="<?= $str_MAX_CLICK_COUNT ?>"<?= $disableFixClick ?>><?
+                           value="<?= $str_MAX_CLICK_COUNT ?>"><?
                     if ($ID > 0) :
                         ?>&nbsp;<?= GetMessage("AD_CLICKED") ?>&nbsp;<b><?= $str_CLICK_COUNT ?></b>&nbsp;&nbsp;&nbsp;<?
                         if ($isAdmin || ($isDemo && !$isOwner) || $isManager) {
                             echo '<label for="RESET_CLICK_COUNT">' . GetMessage("AD_RESET_COUNTER") . '</label>';
-                            ?>&nbsp;<input type="checkbox" name="RESET_CLICK_COUNT" value="Y"
-                                           id="RESET_CLICK_COUNT"<?= $disableFixClick ?>><?
+                            ?>&nbsp;<input type="checkbox" name="RESET_CLICK_COUNT" value="Y" id="RESET_CLICK_COUNT"><?
                         }
                     endif;
                     ?></td>
@@ -1872,8 +2263,8 @@ $context->Show();
 
                     if ($isEditMode) : ?>
                         <div class="adm-list">
-                            <? reset($arrSites);
-                            while (list($sid, $arrS) = each($arrSites)):
+                            <?
+                            foreach ($arrSites as $sid => $arrS):
                                 if (in_array($sid, $arrContractSite)) :
                                     $checked = (in_array($sid, $arrSITE)) ? "checked" : "";
                                     /*<?=$disabled?>*/
@@ -1882,13 +2273,22 @@ $context->Show();
                                         <div class="adm-list-control"><input type="checkbox" name="arrSITE[]"
                                                                              value="<?= htmlspecialcharsbx($sid) ?>"
                                                                              style="vertical-align:baseline; border-spacing: 0px; margin: 0px; padding: 0px;"
-                                                                             id="site_<?= htmlspecialcharsbx($sid) ?>" <?= $checked ?>>
-                                        </div>
-                                        <div class="adm-list-label"><?= '[<a href="/bitrix/admin/site_edit.php?LID=' . urlencode($sid) . '&lang=' . LANGUAGE_ID . '" title="' . GetMessage("AD_SITE_ALT") . '">' . htmlspecialcharsex($sid) . '</a>]&nbsp;<label for="site_' . htmlspecialcharsbx($sid) . '">' . htmlspecialcharsex($arrS["NAME"]) ?></label></div>
+                                                                             id="site_<?= htmlspecialcharsbx(
+                                                                                 $sid
+                                                                             ) ?>" <?= $checked ?>></div>
+                                        <div class="adm-list-label"><?= '[<a href="/bitrix/admin/site_edit.php?LID=' . urlencode(
+                                                $sid
+                                            ) . '&lang=' . LANGUAGE_ID . '" title="' . GetMessage(
+                                                "AD_SITE_ALT"
+                                            ) . '">' . htmlspecialcharsex(
+                                                $sid
+                                            ) . '</a>]&nbsp;<label for="site_' . htmlspecialcharsbx(
+                                                $sid
+                                            ) . '">' . htmlspecialcharsex($arrS["NAME"]) ?></label></div>
                                     </div>
                                 <?
                                 endif;
-                            endwhile; ?>
+                            endforeach; ?>
                         </div>
                     <? else:
 
@@ -1897,7 +2297,13 @@ $context->Show();
                             foreach ($arrSITE as $sid):
                                 if (in_array($sid, $arrContractSite)) :
                                     $arS = $arrSites[$sid];
-                                    echo '[<a href="/bitrix/admin/site_edit.php?LID=' . urlencode($arS["ID"]) . '&lang=' . LANGUAGE_ID . '" title="' . GetMessage("AD_SITE_ALT") . '">' . htmlspecialcharsex($arS["ID"]) . '</a>] ' . htmlspecialcharsex($arS["NAME"]) . '<br>';
+                                    echo '[<a href="/bitrix/admin/site_edit.php?LID=' . urlencode(
+                                            $arS["ID"]
+                                        ) . '&lang=' . LANGUAGE_ID . '" title="' . GetMessage(
+                                            "AD_SITE_ALT"
+                                        ) . '">' . htmlspecialcharsex($arS["ID"]) . '</a>] ' . htmlspecialcharsex(
+                                            $arS["NAME"]
+                                        ) . '<br>';
                                 endif;
                             endforeach;
                         endif;
@@ -1913,16 +2319,18 @@ $context->Show();
             <td><?
                 if ($isEditMode) :
                     ?>
-                    <textarea name="SHOW_PAGE" cols="45" rows="6"
-                              wrap="OFF"><?= Main\Text\HtmlFilter::encode($str_SHOW_PAGE) ?></textarea>
+                    <textarea name="SHOW_PAGE" cols="45" rows="6" wrap="OFF"><?= Main\Text\HtmlFilter::encode(
+                            $str_SHOW_PAGE
+                        ) ?></textarea>
                     <br>
                     <?= GetMessage("AD_PAGES_ALT1") ?>
                 <?
                 else:
                     $arr = $arrSHOW_PAGE;
                     if (is_array($arr) && count($arr) > 0) {
-                        foreach ($arr as $page)
+                        foreach ($arr as $page) {
                             echo htmlspecialcharsbx($page) . '<br>';
+                        }
                     } else {
                         echo GetMessage("ADV_NO_LIMITS");
                     }
@@ -1934,16 +2342,18 @@ $context->Show();
             <td><?
                 if ($isEditMode) :
                     ?>
-                    <textarea name="NOT_SHOW_PAGE" cols="45" rows="6"
-                              wrap="OFF"><?= Main\Text\HtmlFilter::encode($str_NOT_SHOW_PAGE) ?></textarea>
+                    <textarea name="NOT_SHOW_PAGE" cols="45" rows="6" wrap="OFF"><?= Main\Text\HtmlFilter::encode(
+                            $str_NOT_SHOW_PAGE
+                        ) ?></textarea>
                     <br>
                     <?= GetMessage("AD_PAGES_ALT1") ?>
                 <?
                 else:
                     $arr = $arrNOT_SHOW_PAGE;
                     if (is_array($arr) && count($arr) > 0) {
-                        foreach ($arr as $page)
+                        foreach ($arr as $page) {
                             echo htmlspecialcharsbx($page) . '<br>';
+                        }
                     } else {
                         echo GetMessage("ADV_NO_LIMITS");
                     }
@@ -1952,7 +2362,7 @@ $context->Show();
         </tr>
 
         <? if ($isEditMode):
-            $rUserGroups = CGroup::GetList($by = "name", $order = "asc", array("ANONYMOUS" => "N"));
+            $rUserGroups = CGroup::GetList("name", "asc", array("ANONYMOUS" => "N"));
             while ($arUserGroups = $rUserGroups->Fetch()) {
                 $ug_id[] = $arUserGroups["ID"];
                 $ug[] = $arUserGroups["NAME"] . " [" . $arUserGroups["ID"] . "]";
@@ -1960,28 +2370,42 @@ $context->Show();
             ?>
             <tr valign="top">
                 <td><?= GetMessage("AD_USER_GROUPS"); ?><br><img src="/bitrix/images/advertising/mouse.gif" width="44"
-                                                                 height="21" border=0
-                                                                 alt=""><br><?= GetMessage("AD_SELECT_WHAT_YOU_NEED") ?>
-                </td>
+                                                                 height="21" border=0 alt=""><br><?= GetMessage(
+                        "AD_SELECT_WHAT_YOU_NEED"
+                    ) ?></td>
                 <td>
                     <input type="radio" id="SHOW_USER_LABEL_Y" name="SHOW_USER_GROUP"
-                           value="Y" <? if ($str_SHOW_USER_GROUP == "Y") echo "checked"; ?>><label
-                            for="SHOW_USER_LABEL_Y"><?= GetMessage("AD_USER_GROUP_Y"); ?></label> <br>
+                           value="Y" <? if ($str_SHOW_USER_GROUP == "Y") {
+                        echo "checked";
+                    } ?>><label for="SHOW_USER_LABEL_Y"><?= GetMessage("AD_USER_GROUP_Y"); ?></label> <br>
                     <input type="radio" id="SHOW_USER_LABEL_N" name="SHOW_USER_GROUP"
-                           value="N" <? if ($str_SHOW_USER_GROUP != "Y") echo "checked"; ?>><label
-                            for="SHOW_USER_LABEL_N"><?= GetMessage("AD_USER_GROUP_N"); ?></label><br>
-                    <?= SelectBoxMFromArray("arrUSERGROUP[]", array("REFERENCE" => $ug, "REFERENCE_ID" => $ug_id), $arrUSERGROUP, "", false, 10); ?>
-                </td>
+                           value="N" <? if ($str_SHOW_USER_GROUP != "Y") {
+                        echo "checked";
+                    } ?>><label for="SHOW_USER_LABEL_N"><?= GetMessage("AD_USER_GROUP_N"); ?></label><br>
+                    <?= SelectBoxMFromArray(
+                        "arrUSERGROUP[]",
+                        array("REFERENCE" => $ug, "REFERENCE_ID" => $ug_id),
+                        $arrUSERGROUP,
+                        "",
+                        false,
+                        10
+                    ); ?></td>
             </tr>
         <? else:
             $ug = '';
-            $rUserGroups = CGroup::GetList($by = "name", $order = "asc", Array("ID" => implode(" | ", $arrUSERGROUP), "ANONYMOUS" => "N"));
+            $rUserGroups = CGroup::GetList(
+                "name",
+                "asc",
+                Array("ID" => implode(" | ", $arrUSERGROUP), "ANONYMOUS" => "N")
+            );
             while ($arUserGroups = $rUserGroups->Fetch()) {
-                $ug .= $arUserGroups["NAME"] . ' [<a href="group_edit.php?ID=' . $arUserGroups["ID"] . '&lang=' . LANGUAGE_ID . '" title="' . GetMessage("ADV_VIEW_UGROUP") . '">' . $arUserGroups["ID"] . '</a>]<br>';
+                $ug .= $arUserGroups["NAME"] . ' [<a href="group_edit.php?ID=' . $arUserGroups["ID"] . '&lang=' . LANGUAGE_ID . '" title="' . GetMessage(
+                        "ADV_VIEW_UGROUP"
+                    ) . '">' . $arUserGroups["ID"] . '</a>]<br>';
             }
             ?>
             <tr valign="top">
-                <? if (strlen($ug) > 0 && !empty($arrUSERGROUP)): ?>
+                <? if ($ug <> '' && !empty($arrUSERGROUP)): ?>
                     <td><?= GetMessage("AD_USER_GROUP_" . $str_SHOW_USER_GROUP); ?>:</td>
                     <td><?= $ug ?></td>
                 <? else: ?>
@@ -2000,10 +2424,11 @@ $context->Show();
                         ?><textarea name="KEYWORDS" cols="45" rows="6" wrap="OFF"><?= $str_KEYWORDS ?></textarea>
                         <br><?= GetMessage("AD_KEYWORDS_ALT") ?><?
                     else:
-                        if (!empty($arrKEYWORDS))
+                        if (!empty($arrKEYWORDS)) {
                             echo implode("<br>", $arrKEYWORDS);
-                        else
+                        } else {
                             echo GetMessage("ADV_NOT_SET");
+                        }
                     endif;
                     ?></td>
             </tr>
@@ -2015,25 +2440,29 @@ $context->Show();
             if ($str_STAT_TYPE === "CITY") {
                 if (is_array($arrSTAT_TYPE_VALUES) && (count($arrSTAT_TYPE_VALUES) > 0)) {
                     $arFilter = array();
-                    foreach ($arrSTAT_TYPE_VALUES as $ar)
+                    foreach ($arrSTAT_TYPE_VALUES as $ar) {
                         $arFilter[] = $ar["CITY_ID"];
+                    }
                     $rs = CCity::GetList("CITY", array("=CITY_ID" => $arFilter));
-                    while ($ar = $rs->GetNext())
+                    while ($ar = $rs->GetNext()) {
                         $arDisplay[$ar["CITY_ID"]] = "[" . $ar["COUNTRY_ID"] . "] [" . $ar["REGION_NAME"] . "] " . $ar["CITY_NAME"];
+                    }
                 }
             } elseif ($str_STAT_TYPE === "REGION") {
                 if (is_array($arrSTAT_TYPE_VALUES)) {
-                    foreach ($arrSTAT_TYPE_VALUES as $ar)
+                    foreach ($arrSTAT_TYPE_VALUES as $ar) {
                         $arDisplay[$ar["COUNTRY_ID"] . "|" . $ar["REGION"]] = "[" . $ar["COUNTRY_ID"] . "] " . $ar["REGION"];
+                    }
                 }
             } else {
                 if (is_array($arrSTAT_TYPE_VALUES) && (count($arrSTAT_TYPE_VALUES) > 0)) {
                     $arr = array_flip($arrSTAT_TYPE_VALUES);
-                    $v1 = "s_id";
-                    $rs = CStatCountry::GetList($v1, $v2, array(), $v3);
-                    while ($ar = $rs->GetNext())
-                        if (array_key_exists($ar["REFERENCE_ID"], $arr))
+                    $rs = CStatCountry::GetList("s_id");
+                    while ($ar = $rs->GetNext()) {
+                        if (array_key_exists($ar["REFERENCE_ID"], $arr)) {
                             $arDisplay[$ar["REFERENCE_ID"]] = $ar["REFERENCE"];
+                        }
+                    }
                 }
             }
             ?>
@@ -2041,14 +2470,17 @@ $context->Show();
                 <td><?= GetMessage("ADV_STAT_WHAT_QUESTION") ?>:</td>
                 <td>
                     <label><input type="radio" name="STAT_TYPE" value="COUNTRY"
-                                  OnClick="stat_type_changed(this);" <?= $str_STAT_TYPE !== "CITY" && $str_STAT_TYPE !== "REGION" ? "checked" : "" ?><? if (!$isEditMode) echo ' disabled' ?>><?= GetMessage("ADV_STAT_WHAT_COUNTRY") ?>
-                    </label><br>
+                                  OnClick="stat_type_changed(this);" <?= $str_STAT_TYPE !== "CITY" && $str_STAT_TYPE !== "REGION" ? "checked" : "" ?><? if (!$isEditMode) echo ' disabled' ?>><?= GetMessage(
+                            "ADV_STAT_WHAT_COUNTRY"
+                        ) ?></label><br>
                     <label><input type="radio" name="STAT_TYPE" value="REGION"
-                                  OnClick="stat_type_changed(this);" <?= $str_STAT_TYPE === "REGION" ? "checked" : "" ?><? if (!$isEditMode) echo ' disabled' ?>><?= GetMessage("ADV_STAT_WHAT_REGION") ?>
-                    </label><br>
+                                  OnClick="stat_type_changed(this);" <?= $str_STAT_TYPE === "REGION" ? "checked" : "" ?><? if (!$isEditMode) echo ' disabled' ?>><?= GetMessage(
+                            "ADV_STAT_WHAT_REGION"
+                        ) ?></label><br>
                     <label><input type="radio" name="STAT_TYPE" value="CITY"
-                                  OnClick="stat_type_changed(this);" <?= $str_STAT_TYPE === "CITY" ? "checked" : "" ?><? if (!$isEditMode) echo ' disabled' ?>><?= GetMessage("ADV_STAT_WHAT_CITY") ?>
-                    </label><br>
+                                  OnClick="stat_type_changed(this);" <?= $str_STAT_TYPE === "CITY" ? "checked" : "" ?><? if (!$isEditMode) echo ' disabled' ?>><?= GetMessage(
+                            "ADV_STAT_WHAT_CITY"
+                        ) ?></label><br>
                     <select style="width:100%" size="10" id="STAT_TYPE_VALUES[]" name="STAT_TYPE_VALUES[]" multiple
                             OnChange="stat_type_values_change()"<? if (!$isEditMode) echo ' disabled' ?>>
                         <? foreach ($arDisplay as $key => $value): ?>
@@ -2058,11 +2490,13 @@ $context->Show();
                     <? if ($isEditMode): ?>
                         <script>
                             var V_STAT_TYPE = <?=CUtil::PHPToJsObject($str_STAT_TYPE);?>;
-                            var V_STAT_TYPE_VALUES = <?=CUtil::PHPToJsObject(array(
-                                "COUNTRY" => array(),
-                                "REGION" => array(),
-                                "CITY" => array()
-                            ))?>;
+                            var V_STAT_TYPE_VALUES = <?=CUtil::PHPToJsObject(
+                                array(
+                                    "COUNTRY" => array(),
+                                    "REGION" => array(),
+                                    "CITY" => array()
+                                )
+                            )?>;
 
                             function stat_type_values_change() {
                                 var oSelect = document.getElementById('STAT_TYPE_VALUES[]');
@@ -2113,8 +2547,9 @@ $context->Show();
                         <input type="hidden" id="ALL_STAT_TYPE_VALUES" name="ALL_STAT_TYPE_VALUES"
                                value="<?= implode(",", array_keys($arDisplay)) ?>">
                         <input type="button" value="<?= GetMessage("ADV_STAT_WHAT_ADD") ?>"
-                               OnClick="stat_type_popup();">&nbsp;&nbsp;<input type="button"
-                                                                               value="<?= GetMessage("ADV_STAT_WHAT_DELETE") ?>"
+                               OnClick="stat_type_popup();">&nbsp;&nbsp;<input type="button" value="<?= GetMessage(
+                            "ADV_STAT_WHAT_DELETE"
+                        ) ?>"
                                                                                OnClick="jsSelectUtils.deleteSelectedOptions('STAT_TYPE_VALUES[]');stat_type_values_change();">
                     <? endif ?>
                 </td>
@@ -2133,9 +2568,17 @@ $context->Show();
                     <tr valign="top">
                         <td><?= GetMessage("AD_STAT_ADV") ?><br><img src="/bitrix/images/advertising/mouse.gif"
                                                                      width="44" height="21" border=0
-                                                                     alt=""><br><?= GetMessage("AD_SELECT_WHAT_YOU_NEED") ?>
-                        </td>
-                        <td><?= SelectBoxMFromArray("arrSTAT_ADV[]", array("REFERENCE" => $ref, "REFERENCE_ID" => $ref_id), $arrSTAT_ADV, "", true, 10); ?></td>
+                                                                     alt=""><br><?= GetMessage(
+                                "AD_SELECT_WHAT_YOU_NEED"
+                            ) ?></td>
+                        <td><?= SelectBoxMFromArray(
+                                "arrSTAT_ADV[]",
+                                array("REFERENCE" => $ref, "REFERENCE_ID" => $ref_id),
+                                $arrSTAT_ADV,
+                                "",
+                                true,
+                                10
+                            ); ?></td>
                     </tr>
                 <? else: ?>
                     <tr valign="top">
@@ -2146,8 +2589,9 @@ $context->Show();
                                     $key = array_search($aid, $ref_id);
                                     echo htmlspecialcharsbx($ref[$key]) . "<br>";
                                 }
-                            } else
+                            } else {
                                 echo GetMessage("ADV_NOT_SET");
+                            }
                             ?></td>
                     </tr>
                 <? endif ?>
@@ -2164,16 +2608,23 @@ $context->Show();
                             ),
                             "reference_id" => array(
                                 "Y",
-                                "N")
+                                "N"
+                            )
                         );
-                        echo SelectBoxFromArray("FOR_NEW_GUEST", $arr, $str_FOR_NEW_GUEST, GetMessage("AD_ALL_VISITORS"));
+                        echo SelectBoxFromArray(
+                            "FOR_NEW_GUEST",
+                            $arr,
+                            $str_FOR_NEW_GUEST,
+                            GetMessage("AD_ALL_VISITORS")
+                        );
                     else:
-                        if ($str_FOR_NEW_GUEST == "Y")
+                        if ($str_FOR_NEW_GUEST == "Y") {
                             echo GetMessage("AD_NEW_VISITORS_ONLY");
-                        elseif ($str_FOR_NEW_GUEST == "Y")
+                        } elseif ($str_FOR_NEW_GUEST == "Y") {
                             echo GetMessage("AD_RETURNED_VISITORS_ONLY");
-                        else
+                        } else {
                             echo GetMessage("AD_ALL_VISITORS");
+                        }
                     endif;
                     ?></td>
             </tr>
@@ -2221,14 +2672,14 @@ $context->Show();
                             "SATURDAY" => GetMessage("AD_SATURDAY"),
                             "SUNDAY" => GetMessage("AD_SUNDAY")
                         );
-                        while (list($key, $value) = each($arrWDAY)) :
+                        foreach ($arrWDAY as $key => $value) :
                             ?>
                             <td><label for="<?= $key ?>"><?= $value ?></label><br><input <?= $disabled ?>type="checkbox"
                                                                                                          onclick="OnSelectAll(this.checked, '<?= $key ?>', true)"
                                                                                                          id="<?= $key ?>">
                             </td>
                         <?
-                        endwhile;
+                        endforeach;
                         ?>
                         <td>&nbsp;</td>
                     </tr>
@@ -2239,19 +2690,28 @@ $context->Show();
                         <tr>
                             <td><label for="<?= $i ?>"><?= $i . "&nbsp;-&nbsp;" . ($i + 1) ?></label></td>
                             <?
-                            reset($arrWDAY);
-                            while (list($key, $value) = each($arrWDAY)) :
+                            foreach ($arrWDAY as $key => $value):
                                 $checked = "";
                                 $disabled = "";
-                                $disabled = (!is_array($arrCONTRACT_WEEKDAY[$key]) || !in_array($i, $arrCONTRACT_WEEKDAY[$key]) || !$isEditMode) ? "disabled" : "";
+                                $disabled = (!is_array($arrCONTRACT_WEEKDAY[$key]) || !in_array(
+                                        $i,
+                                        $arrCONTRACT_WEEKDAY[$key]
+                                    ) || !$isEditMode) ? "disabled" : "";
 
-                                if ($ID <= 0 && $disabled != "disabled" && strlen($strError) <= 0) $checked = "checked";
-                                if (is_array(${"arr" . $key}) && in_array($i, ${"arr" . $key}) && $disable != "disabled") $checked = "checked";
+                                if ($ID <= 0 && $disabled != "disabled" && $strError == '') {
+                                    $checked = "checked";
+                                }
+                                if (is_array(${"arr" . $key}) && in_array(
+                                        $i,
+                                        ${"arr" . $key}
+                                    ) && $disable != "disabled") {
+                                    $checked = "checked";
+                                }
                                 ?>
                                 <td><input <?= $disabled ?> id="arr<?= $key ?>_<?= $i ?>[]" name="arr<?= $key ?>[]"
                                                             type="checkbox" value="<?= $i ?>" <?= $checked ?>></td>
                             <?
-                            endwhile;
+                            endforeach;
                             $disabled = (!$isEditMode) ? "disabled" : "";
                             ?>
                             <td><input <?= $disabled ?> type="checkbox"
@@ -2299,137 +2759,13 @@ $context->Show();
         </tr>
 
         <?
-        if ($isAdmin || ($isDemo && !$isOwner)) :
-
-            $tabControl->BeginNextTab();
-            ?>
-
-            <? if ($isEditMode): ?>
-            <script>
-                <!--
-                function PutEvent(str) {
-                    if (!t) return;
-                    if (t.name == "STAT_EVENT_1" || t.name == "STAT_EVENT_2" || t.name == "STAT_EVENT_3" || t.name == "CODE") {
-                        t.value += str;
-                        BX.fireEvent(t, 'change');
-                    }
-                }
-
-                //-->
-
-                function DisableClick() {
-                    if (!document.getElementById("FIX_STAT").checked) {
-                        document.getElementById("STAT_EVENT_1").disabled = true;
-                        document.getElementById("STAT_EVENT_2").disabled = true;
-                        document.getElementById("STAT_EVENT_3").disabled = true;
-                    } else {
-                        document.getElementById("STAT_EVENT_1").disabled = false;
-                        document.getElementById("STAT_EVENT_2").disabled = false;
-                        document.getElementById("STAT_EVENT_3").disabled = false;
-                    }
-                }
-            </script>
-        <? endif ?>
-        <?
-        if (strlen($str_STAT_EVENT_1) > 0 || strlen($str_STAT_EVENT_2) > 0 || strlen($str_STAT_EVENT_3) > 0)
-            $FIX_STAT = "Y";
-        else
-            $FIX_STAT = "N";
-        ?>
-            <tr>
-                <td width="40%"><label for="FIX_STAT"><?= GetMessage("AD_FIX_STAT") ?></label></td>
-                <td width="60%">
-                    <? if ($isEditMode): ?>
-                        <input type="checkbox" name="FIX_STAT" id="FIX_STAT" value="Y"
-                               OnClick="DisableClick()" <? if ($FIX_STAT == "Y") echo "checked"; ?>>
-                    <? else: ?>
-                        <?= GetMessage("ADV_" . $FIX_STAT) ?>
-                    <? endif ?>
-                </td>
-            </tr>
-        <?
-        if ($isEditMode):
-        ?>
-        <tr>
-            <td>event1:</td>
-            <td><input type="text" name="STAT_EVENT_1" id="STAT_EVENT_1" maxlength="255" size="30"
-                       value="<?= $str_STAT_EVENT_1 ?>" onfocus="t=this" <? if ($FIX_STAT != "Y") echo "disabled"; ?>>
-            </td>
-        </tr><?
-        else:
-        if (strlen($str_STAT_EVENT_1) > 0):
-            ?>
-            <tr valign="top">
-                <td>event1:</td>
-                <td><?= $str_STAT_EVENT_1; ?></td>
-            </tr>
-        <? endif;
-        endif;
-        ?>
-        <?
-        if ($isEditMode): ?>
-            <tr>
-                <td>event2:</td>
-                <td><input type="text" name="STAT_EVENT_2" id="STAT_EVENT_2" maxlength="255" size="30"
-                           value="<?= $str_STAT_EVENT_2 ?>"
-                           onfocus="t=this" <? if ($FIX_STAT != "Y") echo "disabled"; ?>>
-                </td>
-            </tr>
-            <tr>
-                <td>&nbsp;</td>
-                <td><?= GetMessage("AD_EVENT12") ?></td>
-            </tr>
-        <?
-        else:
-        if (strlen($str_STAT_EVENT_2) > 0):
-            ?>
-            <tr valign="top">
-                <td>event2:</td>
-                <td><?= $str_STAT_EVENT_2; ?></td>
-            </tr>
-        <? endif;
-        endif;
-        if ($isEditMode):
-        ?>
-            <tr>
-                <td>event3:</td>
-                <td><input type="text" name="STAT_EVENT_3" id="STAT_EVENT_3" maxlength="255"
-                           value="<?= $str_STAT_EVENT_3 ?>" onfocus="t=this"
-                           style="width:80%;" <? if ($FIX_STAT != "Y") echo "disabled"; ?>></td>
-            </tr>
-        <tr>
-            <td>&nbsp;</td>
-            <td><?= GetMessage("AD_EVENT3") ?>
-                <a href="javascript:PutEvent('#BANNER_NAME#')"
-                   title="<?= GetMessage("AD_INS_TEMPL") ?>">#BANNER_NAME#</a> - <?= GetMessage("AD_BANNER_NAME") ?>,
-                <a href="javascript:PutEvent('#BANNER_ID#')" title="<?= GetMessage("AD_INS_TEMPL") ?>">#BANNER_ID#</a>
-                - <?= GetMessage("AD_BANNER_ID") ?>,
-                <a href="javascript:PutEvent('#CONTRACT_ID#')"
-                   title="<?= GetMessage("AD_INS_TEMPL") ?>">#CONTRACT_ID#</a> - <?= GetMessage("AD_CONTRACT_ID") ?>,
-                <a href="javascript:PutEvent('#TYPE_SID#')" title="<?= GetMessage("AD_INS_TEMPL") ?>">#TYPE_SID#</a>
-                - <?= GetMessage("AD_TYPE_SID") ?></td>
-        </tr><?
-        else:
-        if (strlen($str_STAT_EVENT_3) > 0):
-            ?>
-            <tr valign="top">
-                <td>event3:</td>
-                <td><?= $str_STAT_EVENT_3; ?></td>
-            </tr>
-        <? endif;
-        endif;
-        endif; ?>
-
-        <?
         $tabControl->BeginNextTab();
         ?>
         <tr>
             <td colspan="2" <? if ($isEditMode): ?>align="center"<? endif ?>><?
                 if ($isEditMode):
                     ?>
-                    <textarea style="width:85%" name="COMMENTS" rows="7" wrap="VIRTUAL">
-						<?= $str_COMMENTS ?>
-					</textarea>
+                    <textarea style="width:85%" name="COMMENTS" rows="7" wrap="VIRTUAL"><?= $str_COMMENTS ?></textarea>
                 <?
                 else:
                     echo TxtToHtml($str_COMMENTS);
@@ -2438,15 +2774,18 @@ $context->Show();
         </tr>
         <?
         $disable = true;
-        if ($isManager || $isAdmin || ($isDemo && !$isOwner) || $isEditMode)
+        if ($isManager || $isAdmin || ($isDemo && !$isOwner) || $isEditMode) {
             $disable = false;
+        }
 
-        $tabControl->Buttons(array("disabled" => $disable, "back_url" => "/bitrix/admin/adv_banner_list.php?lang=" . LANGUAGE_ID));
+        $tabControl->Buttons(
+            array("disabled" => $disable, "back_url" => "/bitrix/admin/adv_banner_list.php?lang=" . LANGUAGE_ID)
+        );
         $tabControl->End();
         ?>
     </form>
     <script>
-        <? if (strlen($str_COMMENTS) <= 0 && !$isEditMode): ?>
+        <? if ($str_COMMENTS == '' && !$isEditMode): ?>
         tabControl.DisableTab("edit5");
         <? endif; ?>
         changeType('<?=$str_AD_TYPE?>', {

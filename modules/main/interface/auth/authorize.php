@@ -1,5 +1,8 @@
 <?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+}
 
 $store_password = COption::GetOptionString("main", "store_password", "Y");
 $bNeedCaptcha = $APPLICATION->NeedCAPTHAForLogin($last_login);
@@ -74,8 +77,9 @@ if (
                        tabindex="3" onfocus="BX.addClass(this.nextSibling, 'login-popup-checkbox-label-active')"
                        onblur="BX.removeClass(this.nextSibling, 'login-popup-checkbox-label-active')"><label
                         for="USER_REMEMBER" class="adm-designed-checkbox-label"></label>
-                <label for="USER_REMEMBER"
-                       class="login-popup-checkbox-label"><?= GetMessage("AUTH_REMEMBER_ME") ?></label>
+                <label for="USER_REMEMBER" class="login-popup-checkbox-label"><?= GetMessage(
+                        "AUTH_REMEMBER_ME"
+                    ) ?></label>
             </div>
         <?
         endif;
@@ -109,5 +113,9 @@ if (
     </div>
 </div>
 <script type="text/javascript">
-    BX.adminLogin.registerForm(new BX.authFormAuthorize('authorize', {url: '<?echo CUtil::JSEscape($authUrl . "?login=yes" . (($s = DeleteParam(array("logout", "login"))) == "" ? "" : "&" . $s));?>'}));
+    BX.adminLogin.registerForm(new BX.authFormAuthorize('authorize', {
+        url: '<?echo CUtil::JSEscape(
+            $authUrl . "?login=yes" . (($s = DeleteParam(array("logout", "login"))) == "" ? "" : "&" . $s)
+        );?>'
+    }));
 </script>

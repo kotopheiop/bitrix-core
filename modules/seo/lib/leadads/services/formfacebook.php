@@ -46,7 +46,7 @@ class FormFacebook extends LeadAds\Form
             case 'tr':
             case 'de':
             case 'es':
-                $locale = strtolower($languageId) . '_' . strtoupper($languageId);
+                $locale = mb_strtolower($languageId) . '_' . mb_strtoupper($languageId);
                 break;
 
             case 'la':
@@ -161,7 +161,7 @@ class FormFacebook extends LeadAds\Form
                 ),
                 'privacy_policy' => Json::encode($privacyPolicy),
                 'follow_up_action_url' => $data['SUCCESS_URL'],
-                'locale' => strtoupper($locale),
+                'locale' => mb_strtoupper($locale),
                 'context_card' => Json::encode($contextCard),
                 'questions' => Json::encode($questions)
             )
@@ -199,14 +199,16 @@ class FormFacebook extends LeadAds\Form
 
     protected function subscribeAppToPageEvents($pageAccessToken)
     {
-        $response = $this->getRequest()->send(array(
-            'method' => 'POST',
-            'endpoint' => $this->accountId . '/subscribed_apps',
-            'fields' => array(
-                'subscribed_fields' => 'leadgen',
-                'access_token' => $pageAccessToken
+        $response = $this->getRequest()->send(
+            array(
+                'method' => 'POST',
+                'endpoint' => $this->accountId . '/subscribed_apps',
+                'fields' => array(
+                    'subscribed_fields' => 'leadgen',
+                    'access_token' => $pageAccessToken
+                )
             )
-        ));
+        );
         return $response->isSuccess();
     }
 
@@ -214,12 +216,14 @@ class FormFacebook extends LeadAds\Form
     {
         // https://developers.facebook.com/docs/marketing-api/guides/lead-ads/create/v2.9#readingforms
 
-        $response = $this->getRequest()->send(array(
-            'method' => 'GET',
-            'endpoint' => $this->accountId . '/leadgen_forms',
-            'fields' => array(//'fields' => 'id,name,approximate_count'
+        $response = $this->getRequest()->send(
+            array(
+                'method' => 'GET',
+                'endpoint' => $this->accountId . '/leadgen_forms',
+                'fields' => array(//'fields' => 'id,name,approximate_count'
+                )
             )
-        ));
+        );
 
         return $response;
     }
@@ -236,11 +240,13 @@ class FormFacebook extends LeadAds\Form
         $result = new LeadAds\Result();
 
         // https://developers.facebook.com/docs/marketing-api/guides/lead-ads/create/v2.9#readingforms
-        $response = $this->getRequest()->send(array(
-            'method' => 'GET',
-            'endpoint' => $id,
-            'fields' => array()
-        ));
+        $response = $this->getRequest()->send(
+            array(
+                'method' => 'GET',
+                'endpoint' => $id,
+                'fields' => array()
+            )
+        );
         if (!$response->isSuccess()) {
             foreach ($response->getErrors() as $error) {
                 $result->addError(new Error('Can not retrieve result. ' . $error->getMessage()));
@@ -259,7 +265,9 @@ class FormFacebook extends LeadAds\Form
             $result->addError(new Error('Can not retrieve result. Empty `id`.'));
             return $result;
         }
-        if (!isset($responseData['field_data']) || !is_array($responseData['field_data']) || !$responseData['field_data']) {
+        if (!isset($responseData['field_data']) || !is_array(
+                $responseData['field_data']
+            ) || !$responseData['field_data']) {
             $result->addError(new Error('Can not retrieve result. Empty `field_data`.'));
             return $result;
         }

@@ -141,8 +141,9 @@ class ExportOneCPackageSale extends ExportOneCPackage
         $result = new Result();
         $containers = array();
         $r = parent::outputXmlDocuments($documents, 1);
-        if ($r->isSuccess())
+        if ($r->isSuccess()) {
             $containers[] = $this->outputXmlContainer(implode('', $r->getData()));
+        }
 
         $result->setData($containers);
 

@@ -1,4 +1,5 @@
 <?
+
 $module_id = "sale";
 /** @global CMain $APPLICATION */
 /** @global string $RestoreDefaults */
@@ -32,10 +33,12 @@ if ($SALE_RIGHT >= "R") :
     $lMigrated = CSaleLocation::isLocationProMigrated();
 
     $siteList = array();
-    $siteIterator = SiteTable::getList(array(
-        'select' => array('LID', 'NAME'),
-        'order' => array('SORT' => 'ASC')
-    ));
+    $siteIterator = SiteTable::getList(
+        array(
+            'select' => array('LID', 'NAME'),
+            'order' => array('SORT' => 'ASC')
+        )
+    );
     while ($oneSite = $siteIterator->fetch()) {
         $siteList[] = array('ID' => $oneSite['LID'], 'NAME' => $oneSite['NAME']);
     }
@@ -44,13 +47,14 @@ if ($SALE_RIGHT >= "R") :
 
     $bWasUpdated = false;
 
-    if ($_SERVER['REQUEST_METHOD'] == "GET" && strlen($RestoreDefaults) > 0 && $SALE_RIGHT == "W" && check_bitrix_sessid()) {
+    if ($_SERVER['REQUEST_METHOD'] == "GET" && $RestoreDefaults <> '' && $SALE_RIGHT == "W" && check_bitrix_sessid()) {
         $bWasUpdated = true;
 
         COption::RemoveOption("sale");
-        $z = CGroup::GetList($v1 = "id", $v2 = "asc", array("ACTIVE" => "Y", "ADMIN" => "N"));
-        while ($zr = $z->Fetch())
+        $z = CGroup::GetList("id", "asc", array("ACTIVE" => "Y", "ADMIN" => "N"));
+        while ($zr = $z->Fetch()) {
             $APPLICATION->DelGroupRight($module_id, array($zr["ID"]));
+        }
     }
 
     $arAllOptions =
@@ -62,22 +66,52 @@ if ($SALE_RIGHT >= "R") :
             Array("MAX_LOCK_TIME", GetMessage("SALE_MAX_LOCK_TIME"), 30, Array("text", 10)),
             Array("GRAPH_WEIGHT", GetMessage("SALE_GRAPH_WEIGHT"), 800, Array("text", 10)),
             Array("GRAPH_HEIGHT", GetMessage("SALE_GRAPH_HEIGHT"), 600, Array("text", 10)),
-            Array("path2user_ps_files", GetMessage("SALE_PATH2UPSF"), BX_PERSONAL_ROOT . "/php_interface/include/sale_payment/", Array("text", 40)),
+            Array(
+                "path2user_ps_files",
+                GetMessage("SALE_PATH2UPSF"),
+                BX_PERSONAL_ROOT . "/php_interface/include/sale_payment/",
+                Array("text", 40)
+            ),
             //Array("path2custom_view_order", GetMessage("SMO_SALE_PATH2ORDER"), "", Array("text", 40)),
             Array("lock_catalog", GetMessage("SMO_LOCK_CATALOG"), "Y", Array("checkbox", 40)),
-            (CBXFeatures::IsFeatureEnabled('SaleAffiliate')) ? Array("affiliate_param_name", GetMessage("SMOS_AFFILIATE_PARAM"), "partner", Array("text", 40)) : array(),
-            (CBXFeatures::IsFeatureEnabled('SaleAffiliate')) ? Array("affiliate_life_time", GetMessage("SMO_AFFILIATE_LIFE_TIME"), "30", Array("text", 10)) : array(),
+            (CBXFeatures::IsFeatureEnabled('SaleAffiliate')) ? Array(
+                "affiliate_param_name",
+                GetMessage("SMOS_AFFILIATE_PARAM"),
+                "partner",
+                Array("text", 40)
+            ) : array(),
+            (CBXFeatures::IsFeatureEnabled('SaleAffiliate')) ? Array(
+                "affiliate_life_time",
+                GetMessage("SMO_AFFILIATE_LIFE_TIME"),
+                "30",
+                Array("text", 10)
+            ) : array(),
             Array("show_order_sum", GetMessage("SMO_SHOW_ORDER_SUM"), "N", Array("checkbox", 40)),
             Array("show_order_product_xml_id", GetMessage("SMO_SHOW_ORDER_PRODUCT_XML_ID"), "N", Array("checkbox", 40)),
             Array("show_paysystem_action_id", GetMessage("SMO_SHOW_PAYSYSTEM_ACTION_ID"), "N", Array("checkbox", 40)),
-            Array("measurement_path", GetMessage("SMO_MEASUREMENT_PATH"), "/bitrix/modules/sale/measurements.php", Array("text", 40)),
+            Array(
+                "measurement_path",
+                GetMessage("SMO_MEASUREMENT_PATH"),
+                "/bitrix/modules/sale/measurements.php",
+                Array("text", 40)
+            ),
             //Array("use_delivery_handlers", GetMessage("SMO_USE_DELIVERY_HANDLERS"), "N", Array("checkbox", 40)),
-            Array("delivery_handles_custom_path", GetMessage("SMO_DELIVERY_HANDLERS_CUSTOM_PATH"), BX_PERSONAL_ROOT . "/php_interface/include/sale_delivery/", Array("text", 40)),
+            Array(
+                "delivery_handles_custom_path",
+                GetMessage("SMO_DELIVERY_HANDLERS_CUSTOM_PATH"),
+                BX_PERSONAL_ROOT . "/php_interface/include/sale_delivery/",
+                Array("text", 40)
+            ),
             Array("use_secure_cookies", GetMessage("SMO_USE_SECURE_COOKIES"), "N", Array("checkbox", 40)),
             Array("encode_fuser_id", GetMessage("SMO_ENCODE_FUSER_ID"), "N", Array("checkbox", 40)),
             //Array("recalc_product_list", GetMessage("SALE_RECALC_PRODUCT_LIST"), "N", Array("checkbox", 40)),
             //Array("recalc_product_list_period", GetMessage("SALE_RECALC_PRODUCT_LIST_PERIOD"), 7, Array("text", 10)),
-            Array("COUNT_DISCOUNT_4_ALL_QUANTITY", GetMessage("SALE_OPT_COUNT_DISCOUNT_4_ALL_QUANTITY"), "N", Array("checkbox", 40)),
+            Array(
+                "COUNT_DISCOUNT_4_ALL_QUANTITY",
+                GetMessage("SALE_OPT_COUNT_DISCOUNT_4_ALL_QUANTITY"),
+                "N",
+                Array("checkbox", 40)
+            ),
             Array("COUNT_DELIVERY_TAX", GetMessage("SALE_OPT_COUNT_DELIVERY_TAX"), "N", Array("checkbox", 40)),
             Array("QUANTITY_FACTORIAL", GetMessage("SALE_OPT_QUANTITY_FACTORIAL"), "N", Array("checkbox", 40)),
             Array("product_viewed_save", GetMessage("SALE_PRODUCT_VIEWED_SAVE"), "Y", Array("checkbox", 40)),
@@ -86,29 +120,84 @@ if ($SALE_RIGHT >= "R") :
             Array("viewed_count", GetMessage("SALE_VIEWED_COUNT"), 100, Array("text", 10)),
             Array("SALE_ADMIN_NEW_PRODUCT", GetMessage("SALE_ADMIN_NEW_PRODUCT"), "N", Array("checkbox", 40)),
             Array("use_ccards", GetMessage("SALE_ADMIN_USE_CARDS"), "N", Array("checkbox", 40)),
-            Array("show_basket_props_in_order_list", GetMessage("SALE_SHOW_BASKET_PROPS_IN_ORDER_LIST"), "Y", Array("checkbox", 40)),
+            Array(
+                "show_basket_props_in_order_list",
+                GetMessage("SALE_SHOW_BASKET_PROPS_IN_ORDER_LIST"),
+                "Y",
+                Array("checkbox", 40)
+            ),
         );
 
-    $arOrderFlags = array("P" => GetMessage("SMO_PAYMENT_FLAG"), "C" => GetMessage("SMO_CANCEL_FLAG"), "D" => GetMessage("SMO_DELIVERY_FLAG"));
+    $arOrderFlags = array(
+        "P" => GetMessage("SMO_PAYMENT_FLAG"),
+        "C" => GetMessage("SMO_CANCEL_FLAG"),
+        "D" => GetMessage("SMO_DELIVERY_FLAG")
+    );
     $numeratorForOrdersId = '';
     $numeratorsOrderType = Main\Numerator\Numerator::getOneByType(Registry::REGISTRY_TYPE_ORDER);
     if ($numeratorsOrderType) {
         $numeratorForOrdersId = $numeratorsOrderType['id'];
     }
     $aTabs = array(
-        array("DIV" => "edit1", "TAB" => GetMessage("MAIN_TAB_SET"), "ICON" => "sale_settings", "TITLE" => GetMessage("MAIN_TAB_TITLE_SET")),
-        array("DIV" => "edit7", "TAB" => GetMessage("SALE_TAB_WEIGHT"), "ICON" => "sale_settings", "TITLE" => GetMessage("SALE_TAB_WEIGHT_TITLE")),
-        array("DIV" => "edit5", "TAB" => GetMessage("SALE_TAB_ADDRESS"), "ICON" => "sale_settings", "TITLE" => GetMessage("SALE_TAB_ADDRESS_TITLE"))
+        array(
+            "DIV" => "edit1",
+            "TAB" => GetMessage("MAIN_TAB_SET"),
+            "ICON" => "sale_settings",
+            "TITLE" => GetMessage("MAIN_TAB_TITLE_SET")
+        ),
+        array(
+            "DIV" => "edit7",
+            "TAB" => GetMessage("SALE_TAB_WEIGHT"),
+            "ICON" => "sale_settings",
+            "TITLE" => GetMessage("SALE_TAB_WEIGHT_TITLE")
+        ),
+        array(
+            "DIV" => "edit5",
+            "TAB" => GetMessage("SALE_TAB_ADDRESS"),
+            "ICON" => "sale_settings",
+            "TITLE" => GetMessage("SALE_TAB_ADDRESS_TITLE")
+        )
     );
 
-    if (CBXFeatures::IsFeatureEnabled('SaleCCards') && COption::GetOptionString($module_id, "use_ccards", "N") == "Y")
-        $aTabs[] = array("DIV" => "edit2", "TAB" => GetMessage("SALE_TAB_2"), "ICON" => "sale_settings", "TITLE" => GetMessage("SMO_CRYPT_TITLE"));
+    if (CBXFeatures::IsFeatureEnabled('SaleCCards') && COption::GetOptionString($module_id, "use_ccards", "N") == "Y") {
+        $aTabs[] = array(
+            "DIV" => "edit2",
+            "TAB" => GetMessage("SALE_TAB_2"),
+            "ICON" => "sale_settings",
+            "TITLE" => GetMessage("SMO_CRYPT_TITLE")
+        );
+    }
 
-    $aTabs[] = array("DIV" => "edit3", "TAB" => GetMessage("SALE_TAB_3"), "ICON" => "sale_settings", "TITLE" => GetMessage("SALE_TAB_3_TITLE"));
-    $aTabs[] = array("DIV" => "edit4", "TAB" => GetMessage("MAIN_TAB_RIGHTS"), "ICON" => "sale_settings", "TITLE" => GetMessage("MAIN_TAB_TITLE_RIGHTS"));
-    $aTabs[] = array("DIV" => "edit8", "TAB" => GetMessage("SALE_TAB_AUTO"), "ICON" => "sale_settings", "TITLE" => GetMessage("SALE_TAB_AUTO_TITLE"));
-    $aTabs[] = array("DIV" => "edit9", "TAB" => GetMessage("SALE_TAB_ARCHIVE"), "ICON" => "sale_settings", "TITLE" => GetMessage("SALE_TAB_ARCHIVE_TITLE"));
-    $aTabs[] = array("DIV" => "edit10", "TAB" => GetMessage("SALE_TAB_ORDER_NUMERATOR_TEMPLATE"), "ICON" => "sale_settings", "TITLE" => GetMessage("SALE_TAB_ORDER_NUMERATOR_TEMPLATE_TITLE"));
+    $aTabs[] = array(
+        "DIV" => "edit3",
+        "TAB" => GetMessage("SALE_TAB_3"),
+        "ICON" => "sale_settings",
+        "TITLE" => GetMessage("SALE_TAB_3_TITLE")
+    );
+    $aTabs[] = array(
+        "DIV" => "edit4",
+        "TAB" => GetMessage("MAIN_TAB_RIGHTS"),
+        "ICON" => "sale_settings",
+        "TITLE" => GetMessage("MAIN_TAB_TITLE_RIGHTS")
+    );
+    $aTabs[] = array(
+        "DIV" => "edit8",
+        "TAB" => GetMessage("SALE_TAB_AUTO"),
+        "ICON" => "sale_settings",
+        "TITLE" => GetMessage("SALE_TAB_AUTO_TITLE")
+    );
+    $aTabs[] = array(
+        "DIV" => "edit9",
+        "TAB" => GetMessage("SALE_TAB_ARCHIVE"),
+        "ICON" => "sale_settings",
+        "TITLE" => GetMessage("SALE_TAB_ARCHIVE_TITLE")
+    );
+    $aTabs[] = array(
+        "DIV" => "edit10",
+        "TAB" => GetMessage("SALE_TAB_ORDER_NUMERATOR_TEMPLATE"),
+        "ICON" => "sale_settings",
+        "TITLE" => GetMessage("SALE_TAB_ORDER_NUMERATOR_TEMPLATE_TITLE")
+    );
     $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
     $strWarning = "";
@@ -121,7 +210,7 @@ if ($SALE_RIGHT >= "R") :
         return $numeratorWarningsString;
     }
 
-    if ($_SERVER['REQUEST_METHOD'] == "POST" && strlen($Update) > 0 && $SALE_RIGHT == "W" && check_bitrix_sessid()) {
+    if ($_SERVER['REQUEST_METHOD'] == "POST" && $Update <> '' && $SALE_RIGHT == "W" && check_bitrix_sessid()) {
         if (isset($_POST['hideNumeratorSettings']) && $_POST['hideNumeratorSettings'] != "Y") {
             $numerator = Main\Numerator\Numerator::create();
             $validationResult = $numerator->setConfig($_POST);
@@ -136,8 +225,20 @@ if ($SALE_RIGHT >= "R") :
 
             if (!empty($_REQUEST["WEIGHT_dif_settings"])) {
                 for ($i = 0; $i < $siteCount; $i++) {
-                    COption::SetOptionString($module_id, "weight_unit", trim($_REQUEST["weight_unit"][$siteList[$i]["ID"]]), false, $siteList[$i]["ID"]);
-                    COption::SetOptionString($module_id, "weight_koef", floatval($_REQUEST["weight_koef"][$siteList[$i]["ID"]]), false, $siteList[$i]["ID"]);
+                    COption::SetOptionString(
+                        $module_id,
+                        "weight_unit",
+                        trim($_REQUEST["weight_unit"][$siteList[$i]["ID"]]),
+                        false,
+                        $siteList[$i]["ID"]
+                    );
+                    COption::SetOptionString(
+                        $module_id,
+                        "weight_koef",
+                        floatval($_REQUEST["weight_koef"][$siteList[$i]["ID"]]),
+                        false,
+                        $siteList[$i]["ID"]
+                    );
                 }
                 COption::SetOptionString($module_id, "WEIGHT_different_set", "Y");
             } else {
@@ -152,8 +253,20 @@ if ($SALE_RIGHT >= "R") :
 
             if (!empty($_REQUEST["ADDRESS_dif_settings"])) {
                 for ($i = 0; $i < $siteCount; $i++) {
-                    COption::SetOptionString($module_id, "location_zip", $_REQUEST["location_zip"][$siteList[$i]["ID"]], false, $siteList[$i]["ID"]);
-                    COption::SetOptionString($module_id, "location", $_REQUEST["location"][$siteList[$i]["ID"]], false, $siteList[$i]["ID"]);
+                    COption::SetOptionString(
+                        $module_id,
+                        "location_zip",
+                        $_REQUEST["location_zip"][$siteList[$i]["ID"]],
+                        false,
+                        $siteList[$i]["ID"]
+                    );
+                    COption::SetOptionString(
+                        $module_id,
+                        "location",
+                        $_REQUEST["location"][$siteList[$i]["ID"]],
+                        false,
+                        $siteList[$i]["ID"]
+                    );
                 }
                 COption::SetOptionString($module_id, "ADDRESS_different_set", "Y");
             } else {
@@ -174,17 +287,41 @@ if ($SALE_RIGHT >= "R") :
                     for ($i = 0; $i < $siteCount; $i++) {
                         if ($lMigrated) {
                             try {
-                                \Bitrix\Sale\SalesZone::saveSelectedTypes(array(
-                                    'COUNTRY' => $_REQUEST["sales_zone_countries"][$siteList[$i]["ID"]],
-                                    'REGION' => $_REQUEST["sales_zone_regions"][$siteList[$i]["ID"]],
-                                    'CITY' => $_REQUEST["sales_zone_cities"][$siteList[$i]["ID"]]
-                                ), $siteList[$i]["ID"]);
+                                \Bitrix\Sale\SalesZone::saveSelectedTypes(
+                                    array(
+                                        'COUNTRY' => $_REQUEST["sales_zone_countries"][$siteList[$i]["ID"]],
+                                        'REGION' => $_REQUEST["sales_zone_regions"][$siteList[$i]["ID"]],
+                                        'CITY' => $_REQUEST["sales_zone_cities"][$siteList[$i]["ID"]]
+                                    ),
+                                    $siteList[$i]["ID"]
+                                );
                             } catch (Exception $e) {
                             }
                         } else {
-                            COption::SetOptionString($module_id, "sales_zone_countries", implode(":", $_REQUEST["sales_zone_countries"][$siteList[$i]["ID"]]), false, $siteList[$i]["ID"]);
-                            COption::SetOptionString($module_id, "sales_zone_regions", implode(":", $_REQUEST["sales_zone_regions"][$siteList[$i]["ID"]]), false, $siteList[$i]["ID"]);
-                            COption::SetOptionString($module_id, "sales_zone_cities", implode(":", $_REQUEST["sales_zone_cities"][$siteList[$i]["ID"]]), false, $siteList[$i]["ID"]);
+                            COption::SetOptionString(
+                                $module_id,
+                                "sales_zone_countries",
+                                implode(
+                                    ":",
+                                    $_REQUEST["sales_zone_countries"][$siteList[$i]["ID"]]
+                                ),
+                                false,
+                                $siteList[$i]["ID"]
+                            );
+                            COption::SetOptionString(
+                                $module_id,
+                                "sales_zone_regions",
+                                implode(":", $_REQUEST["sales_zone_regions"][$siteList[$i]["ID"]]),
+                                false,
+                                $siteList[$i]["ID"]
+                            );
+                            COption::SetOptionString(
+                                $module_id,
+                                "sales_zone_cities",
+                                implode(":", $_REQUEST["sales_zone_cities"][$siteList[$i]["ID"]]),
+                                false,
+                                $siteList[$i]["ID"]
+                            );
                         }
                     }
                 } else {
@@ -192,17 +329,32 @@ if ($SALE_RIGHT >= "R") :
 
                     if ($lMigrated) {
                         try {
-                            \Bitrix\Sale\SalesZone::saveSelectedTypes(array(
-                                'COUNTRY' => $_REQUEST["sales_zone_countries"][$site_id],
-                                'REGION' => $_REQUEST["sales_zone_regions"][$site_id],
-                                'CITY' => $_REQUEST["sales_zone_cities"][$site_id]
-                            ), $site_id);
+                            \Bitrix\Sale\SalesZone::saveSelectedTypes(
+                                array(
+                                    'COUNTRY' => $_REQUEST["sales_zone_countries"][$site_id],
+                                    'REGION' => $_REQUEST["sales_zone_regions"][$site_id],
+                                    'CITY' => $_REQUEST["sales_zone_cities"][$site_id]
+                                ),
+                                $site_id
+                            );
                         } catch (Exception $e) {
                         }
                     } else {
-                        COption::SetOptionString($module_id, "sales_zone_countries", implode(":", $_REQUEST["sales_zone_countries"][$site_id]));
-                        COption::SetOptionString($module_id, "sales_zone_regions", implode(":", $_REQUEST["sales_zone_regions"][$site_id]));
-                        COption::SetOptionString($module_id, "sales_zone_cities", implode(":", $_REQUEST["sales_zone_cities"][$site_id]));
+                        COption::SetOptionString(
+                            $module_id,
+                            "sales_zone_countries",
+                            implode(":", $_REQUEST["sales_zone_countries"][$site_id])
+                        );
+                        COption::SetOptionString(
+                            $module_id,
+                            "sales_zone_regions",
+                            implode(":", $_REQUEST["sales_zone_regions"][$site_id])
+                        );
+                        COption::SetOptionString(
+                            $module_id,
+                            "sales_zone_cities",
+                            implode(":", $_REQUEST["sales_zone_cities"][$site_id])
+                        );
                     }
                 }
             }
@@ -211,28 +363,40 @@ if ($SALE_RIGHT >= "R") :
                 if (!empty($arAllOptions[$i])) {
                     $name = $arAllOptions[$i][0];
                     $val = ${$name};
-                    if ($arAllOptions[$i][3][0] == "checkbox" && $val != "Y")
+                    if ($arAllOptions[$i][3][0] == "checkbox" && $val != "Y") {
                         $val = "N";
+                    }
 
-                    if ($name == "path2user_ps_files" && substr($val, strlen($val) - 1, 1) != "/") {
+                    if ($name == "path2user_ps_files" && mb_substr($val, mb_strlen($val) - 1, 1) != "/") {
                         $val .= "/";
                     }
                     COption::SetOptionString("sale", $name, $val, $arAllOptions[$i][1]);
                 }
             }
 
-            $rsAgents = CAgent::GetList(array("ID" => "DESC"), array(
-                "MODULE_ID" => "sale",
-                "NAME" => "\\Bitrix\\Sale\\Basket::deleteOldAgent(%",
-            ));
+            $rsAgents = CAgent::GetList(
+                array("ID" => "DESC"),
+                array(
+                    "MODULE_ID" => "sale",
+                    "NAME" => "\\Bitrix\\Sale\\Basket::deleteOldAgent(%",
+                )
+            );
 
             while ($arAgent = $rsAgents->Fetch()) {
                 CAgent::Delete($arAgent["ID"]);
             }
 
             $delete_after = (int)COption::GetOptionInt("sale", "delete_after");
-            if ($delete_after > 0)
-                CAgent::AddAgent("\\Bitrix\\Sale\\Basket::deleteOldAgent(" . $delete_after . ");", "sale", "N", 8 * 60 * 60, "", "Y");
+            if ($delete_after > 0) {
+                CAgent::AddAgent(
+                    "\\Bitrix\\Sale\\Basket::deleteOldAgent(" . $delete_after . ");",
+                    "sale",
+                    "N",
+                    8 * 60 * 60,
+                    "",
+                    "Y"
+                );
+            }
 
             /*$recalc_product_list_period = intval(COption::GetOptionInt("sale", "recalc_product_list_period", 7));
 		CAgent::RemoveAgent("CSaleProduct::RefreshProductList();", "sale");
@@ -249,11 +413,13 @@ if ($SALE_RIGHT >= "R") :
             }
             $arAmountSer = Array();
             foreach ($amount_val as $key => $val) {
-                if ((float)$val > 0)
+                if ((float)$val > 0) {
                     $arAmountSer[$key] = array("AMOUNT" => (float)$val, "CURRENCY" => $amount_currency[$key]);
+                }
             }
-            if (!empty($arAmountSer))
+            if (!empty($arAmountSer)) {
                 COption::SetOptionString("sale", "pay_amount", serialize($arAmountSer));
+            }
 
             CAgent::RemoveAgent("CSaleOrder::RemindPayment();", "sale");
             COption::RemoveOption("sale", "pay_reminder");
@@ -270,18 +436,27 @@ if ($SALE_RIGHT >= "R") :
                     "NAME" => "CSaleBasket::ClearProductSubscribe(%",
                 )
             );
-            while ($arAgent = $rsAgents->Fetch())
+            while ($arAgent = $rsAgents->Fetch()) {
                 CAgent::Delete($arAgent["ID"]);
+            }
             if (!empty($subscribProd)) {
                 foreach ($siteList as $vv) {
                     $lid = $vv["ID"];
                     $val = $subscribProd[$lid];
 
                     if ($val["use"] == "Y") {
-                        if (intval($val["del_after"]) <= 0)
+                        if (intval($val["del_after"]) <= 0) {
                             $subscribProd[$lid]["del_after"] = 30;
+                        }
 
-                        CAgent::AddAgent("CSaleBasket::ClearProductSubscribe('" . EscapePHPString($lid) . "');", "sale", "N", intval($subscribProd[$lid]["del_after"]) * 24 * 60 * 60, "", "Y");
+                        CAgent::AddAgent(
+                            "CSaleBasket::ClearProductSubscribe('" . EscapePHPString($lid) . "');",
+                            "sale",
+                            "N",
+                            intval($subscribProd[$lid]["del_after"]) * 24 * 60 * 60,
+                            "",
+                            "Y"
+                        );
                     }
                 }
                 COption::SetOptionString("sale", "subscribe_prod", serialize($subscribProd));
@@ -290,10 +465,12 @@ if ($SALE_RIGHT >= "R") :
             //viewed product
             if (!empty($viewed)) {
                 foreach ($viewed as $lid => $val) {
-                    if (intval($val["time"]) <= 0)
+                    if (intval($val["time"]) <= 0) {
                         $viewed[$lid]["time"] = 90;
-                    if (intval($val["count"]) <= 0)
+                    }
+                    if (intval($val["count"]) <= 0) {
                         $viewed[$lid]["count"] = 1000;
+                    }
                 }
                 COption::SetOptionString("sale", "viewed_product", serialize($viewed));
             }
@@ -304,10 +481,13 @@ if ($SALE_RIGHT >= "R") :
                 COption::SetOptionString("sale", "viewed_capability", "N");
             }
 
-            $rsAgents = CAgent::GetList(array("ID" => "DESC"), array(
-                "MODULE_ID" => "sale",
-                "NAME" => "CSaleViewedProduct::ClearViewed();",
-            ));
+            $rsAgents = CAgent::GetList(
+                array("ID" => "DESC"),
+                array(
+                    "MODULE_ID" => "sale",
+                    "NAME" => "CSaleViewedProduct::ClearViewed();",
+                )
+            );
             if (!$arAgent = $rsAgents->Fetch()) {
                 CAgent::AddAgent("CSaleViewedProduct::ClearViewed();", "sale", "N", 86400, "", "Y");
             }
@@ -317,16 +497,19 @@ if ($SALE_RIGHT >= "R") :
             COption::SetOptionString("sale", "sale_data_file", $sale_data_file);
             COption::SetOptionString("sale", "sale_data_file", $sale_data_file);
 
-            if ($sale_ps_success_path == "")
+            if ($sale_ps_success_path == "") {
                 $sale_ps_success_path = "/";
+            }
             COption::SetOptionString("sale", "sale_ps_success_path", $sale_ps_success_path);
 
-            if ($sale_ps_fail_path == "")
+            if ($sale_ps_fail_path == "") {
                 $sale_ps_fail_path = "/";
+            }
             COption::SetOptionString("sale", "sale_ps_fail_path", $sale_ps_fail_path);
 
-            if ($sale_location_selector_appearance == "")
+            if ($sale_location_selector_appearance == "") {
                 $sale_location_selector_appearance = "steps";
+            }
             COption::SetOptionString("sale", "sale_location_selector_appearance", $sale_location_selector_appearance);
 
             COption::SetOptionString("sale", "status_on_paid", $PAID_STATUS);
@@ -337,17 +520,33 @@ if ($SALE_RIGHT >= "R") :
             COption::SetOptionString("sale", "status_on_shipped_shipment", $SHIPMENT_SHIPPED_STATUS);
             COption::SetOptionString("sale", "status_on_shipped_shipment_one_of", $SHIPMENT_SHIPPED_ONE_OF_STATUS);
 
-            COption::SetOptionString("sale", "shipment_status_on_allow_delivery", $SHIPMENT_ALLOW_DELIVERY_TO_SHIPMENT_STATUS);
+            COption::SetOptionString(
+                "sale",
+                "shipment_status_on_allow_delivery",
+                $SHIPMENT_ALLOW_DELIVERY_TO_SHIPMENT_STATUS
+            );
             COption::SetOptionString("sale", "shipment_status_on_shipped", $SHIPMENT_SHIPPED_TO_SHIPMENT_STATUS);
 
             COption::SetOptionString("sale", "status_on_payed_2_allow_delivery", $PAYED_2_ALLOW_DELIVERY);
 
-            COption::SetOptionString("sale", "status_on_change_allow_delivery_after_paid", $CHANGE_ALLOW_DELIVERY_AFTER_PAID);
+            COption::SetOptionString(
+                "sale",
+                "status_on_change_allow_delivery_after_paid",
+                $CHANGE_ALLOW_DELIVERY_AFTER_PAID
+            );
             COption::SetOptionString("sale", "allow_deduction_on_delivery", $ALLOW_DEDUCTION_ON_DELIVERY);
 
-            COption::SetOptionString("sale", "format_quantity", ($FORMAT_QUANTITY == 'AUTO' ? $FORMAT_QUANTITY : intval($FORMAT_QUANTITY)));
+            COption::SetOptionString(
+                "sale",
+                "format_quantity",
+                ($FORMAT_QUANTITY == 'AUTO' ? $FORMAT_QUANTITY : intval($FORMAT_QUANTITY))
+            );
 
-            COption::SetOptionString("sale", "value_precision", (intval($VALUE_PRECISION) < 0 ? 2 : intval($VALUE_PRECISION)));
+            COption::SetOptionString(
+                "sale",
+                "value_precision",
+                (intval($VALUE_PRECISION) < 0 ? 2 : intval($VALUE_PRECISION))
+            );
 
             $oldExpirationProcessingEvents = Option::get('sale', 'expiration_processing_events');
 
@@ -359,25 +558,109 @@ if ($SALE_RIGHT >= "R") :
                 if ($EXPIRATION_PROCESSING_EVENTS == "Y") {
                     Sale\Compatible\EventCompatibility::registerEvents();
 
-                    $eventManager->registerEventHandlerCompatible('sale', 'OnBeforeBasketAdd', 'sale', '\Bitrix\Sale\Internals\ConversionHandlers', 'onBeforeBasketAdd');
-                    $eventManager->registerEventHandlerCompatible('sale', 'OnBasketAdd', 'sale', '\Bitrix\Sale\Internals\ConversionHandlers', 'onBasketAdd');
-                    $eventManager->registerEventHandlerCompatible('sale', 'OnOrderAdd', 'sale', '\Bitrix\Sale\Internals\ConversionHandlers', 'onOrderAdd');
-                    $eventManager->registerEventHandlerCompatible('sale', 'OnSalePayOrder', 'sale', '\Bitrix\Sale\Internals\ConversionHandlers', 'onSalePayOrder');
+                    $eventManager->registerEventHandlerCompatible(
+                        'sale',
+                        'OnBeforeBasketAdd',
+                        'sale',
+                        '\Bitrix\Sale\Internals\ConversionHandlers',
+                        'onBeforeBasketAdd'
+                    );
+                    $eventManager->registerEventHandlerCompatible(
+                        'sale',
+                        'OnBasketAdd',
+                        'sale',
+                        '\Bitrix\Sale\Internals\ConversionHandlers',
+                        'onBasketAdd'
+                    );
+                    $eventManager->registerEventHandlerCompatible(
+                        'sale',
+                        'OnOrderAdd',
+                        'sale',
+                        '\Bitrix\Sale\Internals\ConversionHandlers',
+                        'onOrderAdd'
+                    );
+                    $eventManager->registerEventHandlerCompatible(
+                        'sale',
+                        'OnSalePayOrder',
+                        'sale',
+                        '\Bitrix\Sale\Internals\ConversionHandlers',
+                        'onSalePayOrder'
+                    );
 
-                    $eventManager->unRegisterEventHandler('sale', 'OnSaleBasketItemSaved', 'sale', '\Bitrix\Sale\Internals\ConversionHandlers', 'onSaleBasketItemSaved');
-                    $eventManager->unRegisterEventHandler('sale', 'OnSaleOrderSaved', 'sale', '\Bitrix\Sale\Internals\ConversionHandlers', 'onSaleOrderSaved');
-                    $eventManager->unRegisterEventHandler('sale', 'OnSaleOrderPaid', 'sale', '\Bitrix\Sale\Internals\ConversionHandlers', 'onSaleOrderPaid');
+                    $eventManager->unRegisterEventHandler(
+                        'sale',
+                        'OnSaleBasketItemSaved',
+                        'sale',
+                        '\Bitrix\Sale\Internals\ConversionHandlers',
+                        'onSaleBasketItemSaved'
+                    );
+                    $eventManager->unRegisterEventHandler(
+                        'sale',
+                        'OnSaleOrderSaved',
+                        'sale',
+                        '\Bitrix\Sale\Internals\ConversionHandlers',
+                        'onSaleOrderSaved'
+                    );
+                    $eventManager->unRegisterEventHandler(
+                        'sale',
+                        'OnSaleOrderPaid',
+                        'sale',
+                        '\Bitrix\Sale\Internals\ConversionHandlers',
+                        'onSaleOrderPaid'
+                    );
                 } else {
                     Sale\Compatible\EventCompatibility::unRegisterEvents();
 
-                    $eventManager->unRegisterEventHandler('sale', 'OnBeforeBasketAdd', 'sale', '\Bitrix\Sale\Internals\ConversionHandlers', 'onBeforeBasketAdd');
-                    $eventManager->unRegisterEventHandler('sale', 'OnBasketAdd', 'sale', '\Bitrix\Sale\Internals\ConversionHandlers', 'onBasketAdd');
-                    $eventManager->unRegisterEventHandler('sale', 'OnOrderAdd', 'sale', '\Bitrix\Sale\Internals\ConversionHandlers', 'onOrderAdd');
-                    $eventManager->unRegisterEventHandler('sale', 'OnSalePayOrder', 'sale', '\Bitrix\Sale\Internals\ConversionHandlers', 'onSalePayOrder');
+                    $eventManager->unRegisterEventHandler(
+                        'sale',
+                        'OnBeforeBasketAdd',
+                        'sale',
+                        '\Bitrix\Sale\Internals\ConversionHandlers',
+                        'onBeforeBasketAdd'
+                    );
+                    $eventManager->unRegisterEventHandler(
+                        'sale',
+                        'OnBasketAdd',
+                        'sale',
+                        '\Bitrix\Sale\Internals\ConversionHandlers',
+                        'onBasketAdd'
+                    );
+                    $eventManager->unRegisterEventHandler(
+                        'sale',
+                        'OnOrderAdd',
+                        'sale',
+                        '\Bitrix\Sale\Internals\ConversionHandlers',
+                        'onOrderAdd'
+                    );
+                    $eventManager->unRegisterEventHandler(
+                        'sale',
+                        'OnSalePayOrder',
+                        'sale',
+                        '\Bitrix\Sale\Internals\ConversionHandlers',
+                        'onSalePayOrder'
+                    );
 
-                    $eventManager->registerEventHandler('sale', 'OnSaleBasketItemSaved', 'sale', '\Bitrix\Sale\Internals\ConversionHandlers', 'onSaleBasketItemSaved');
-                    $eventManager->registerEventHandler('sale', 'OnSaleOrderSaved', 'sale', '\Bitrix\Sale\Internals\ConversionHandlers', 'onSaleOrderSaved');
-                    $eventManager->registerEventHandler('sale', 'OnSaleOrderPaid', 'sale', '\Bitrix\Sale\Internals\ConversionHandlers', 'onSaleOrderPaid');
+                    $eventManager->registerEventHandler(
+                        'sale',
+                        'OnSaleBasketItemSaved',
+                        'sale',
+                        '\Bitrix\Sale\Internals\ConversionHandlers',
+                        'onSaleBasketItemSaved'
+                    );
+                    $eventManager->registerEventHandler(
+                        'sale',
+                        'OnSaleOrderSaved',
+                        'sale',
+                        '\Bitrix\Sale\Internals\ConversionHandlers',
+                        'onSaleOrderSaved'
+                    );
+                    $eventManager->registerEventHandler(
+                        'sale',
+                        'OnSaleOrderPaid',
+                        'sale',
+                        '\Bitrix\Sale\Internals\ConversionHandlers',
+                        'onSaleOrderPaid'
+                    );
                 }
             }
 
@@ -390,8 +673,9 @@ if ($SALE_RIGHT >= "R") :
 
             if (!empty($SELECTED_FIELDS) && is_array($SELECTED_FIELDS)) {
                 for ($i = 0, $intCount = count($SELECTED_FIELDS); $i < $intCount; $i++) {
-                    if (strlen($saveValue) > 0)
+                    if ($saveValue <> '') {
                         $saveValue .= ",";
+                    }
 
                     $saveValue .= $SELECTED_FIELDS[$i];
                 }
@@ -430,8 +714,9 @@ if ($SALE_RIGHT >= "R") :
                 COption::RemoveOption("sale", "deduct_store_id");
 
                 foreach ($defaultDeductStore as $lid => $val) {
-                    if (isset($val["save"]) && $val["save"] == "Y")
+                    if (isset($val["save"]) && $val["save"] == "Y") {
                         COption::SetOptionString("sale", "deduct_store_id", intval($val["id"]), "", $lid);
+                    }
                 }
             }
 
@@ -448,17 +733,27 @@ if ($SALE_RIGHT >= "R") :
 
             $p2p_del_exp_old = COption::GetOptionString("sale", "p2p_del_exp", 10);
 
-            $agentData = CAgent::GetList(array("ID" => "DESC"), array(
-                "MODULE_ID" => "sale",
-                "NAME" => "\\Bitrix\\Sale\\Product2ProductTable::addProductsByAgent(%",
-            ));
+            $agentData = CAgent::GetList(
+                array("ID" => "DESC"),
+                array(
+                    "MODULE_ID" => "sale",
+                    "NAME" => "\\Bitrix\\Sale\\Product2ProductTable::addProductsByAgent(%",
+                )
+            );
 
             $agent = $agentData->Fetch();
 
             if ($SALE_P2P_ALLOW_COLLECT_DATA == "Y") {
                 if (!$agent) {
                     $limit = (int)Option::get("sale", "p2p_limit_collecting_per_hit", 100);
-                    CAgent::AddAgent("Bitrix\\Sale\\Product2ProductTable::addProductsByAgent($limit);", "sale", "N", 60, "", "Y");
+                    CAgent::AddAgent(
+                        "Bitrix\\Sale\\Product2ProductTable::addProductsByAgent($limit);",
+                        "sale",
+                        "N",
+                        60,
+                        "",
+                        "Y"
+                    );
                 }
             } else {
                 $SALE_P2P_ALLOW_COLLECT_DATA = "N";
@@ -469,26 +764,40 @@ if ($SALE_RIGHT >= "R") :
 
             COption::SetOptionString("sale", "p2p_allow_collect_data", $SALE_P2P_ALLOW_COLLECT_DATA);
             COption::SetOptionString("sale", "p2p_status_list", serialize($SALE_P2P_STATUS_LIST));
-            if (intval($p2p_del_period) <= 0)
+            if (intval($p2p_del_period) <= 0) {
                 $p2p_del_period = 10;
+            }
             COption::SetOptionString("sale", "p2p_del_period", $p2p_del_period);
-            if (intval($p2p_del_exp) <= 0)
+            if (intval($p2p_del_exp) <= 0) {
                 $p2p_del_exp = 10;
+            }
             COption::SetOptionString("sale", "p2p_del_exp", $p2p_del_exp);
 
-            $rsAgents = CAgent::GetList(array("ID" => "DESC"), array(
-                "MODULE_ID" => "sale",
-                "NAME" => "\\Bitrix\\Sale\\Product2ProductTable::deleteOldProducts(%",
-            ));
+            $rsAgents = CAgent::GetList(
+                array("ID" => "DESC"),
+                array(
+                    "MODULE_ID" => "sale",
+                    "NAME" => "\\Bitrix\\Sale\\Product2ProductTable::deleteOldProducts(%",
+                )
+            );
             while ($arAgent = $rsAgents->Fetch()) {
                 CAgent::Delete($arAgent["ID"]);
             }
 
-            CAgent::AddAgent("Bitrix\\Sale\\Product2ProductTable::deleteOldProducts(" . $p2p_del_exp . ");", "sale", "N", 24 * 3600 * $p2p_del_period, "", "Y");
+            CAgent::AddAgent(
+                "Bitrix\\Sale\\Product2ProductTable::deleteOldProducts(" . $p2p_del_exp . ");",
+                "sale",
+                "N",
+                24 * 3600 * $p2p_del_period,
+                "",
+                "Y"
+            );
 
             foreach ($siteList as &$oneSite) {
                 $valCurrency = trim(${"CURRENCY_" . $oneSite['ID']});
-                if ($valCurrency == '') $valCurrency = false;
+                if ($valCurrency == '') {
+                    $valCurrency = false;
+                }
                 $arFields = array(
                     'LID' => $oneSite['ID'],
                     'CURRENCY' => $valCurrency
@@ -525,29 +834,33 @@ if ($SALE_RIGHT >= "R") :
 
             if (isset($_POST['product_reserve_condition'])) {
                 $productReserveCondition = (string)$_POST['product_reserve_condition'];
-                if (in_array($productReserveCondition, Sale\Configuration::getReservationConditionList(false)))
+                if (in_array($productReserveCondition, Sale\Configuration::getReservationConditionList(false))) {
                     Option::set('sale', 'product_reserve_condition', $productReserveCondition, '');
+                }
                 unset($productReserveCondition);
             }
 
             if (isset($_POST['product_reserve_clear_period'])) {
                 $clearPeriod = (int)$_POST['product_reserve_clear_period'];
-                if ($clearPeriod >= 0)
+                if ($clearPeriod >= 0) {
                     Option::set('sale', 'product_reserve_clear_period', $clearPeriod, '');
+                }
                 unset($clearPeriod);
             }
 
             if (isset($_POST['use_sale_discount_only'])) {
                 $useSaleDiscountOnly = (string)$_POST['use_sale_discount_only'];
-                if ($useSaleDiscountOnly == 'Y' || $useSaleDiscountOnly == 'N')
+                if ($useSaleDiscountOnly == 'Y' || $useSaleDiscountOnly == 'N') {
                     Option::set('sale', 'use_sale_discount_only', $useSaleDiscountOnly, '');
+                }
                 unset($useSaleDiscountOnly);
             }
 
             if (isset($_POST['get_discount_percent_from_base_price'])) {
                 $discountPercent = (string)$_REQUEST['get_discount_percent_from_base_price'];
-                if ($discountPercent == 'Y' || $discountPercent == 'N')
+                if ($discountPercent == 'Y' || $discountPercent == 'N') {
                     Option::set('sale', 'get_discount_percent_from_base_price', $discountPercent, '');
+                }
                 unset($discountPercent);
             }
 
@@ -556,8 +869,9 @@ if ($SALE_RIGHT >= "R") :
                 if (isset($_POST['discount_apply_mode'])) {
                     $discountModeApply = (int)$_POST['discount_apply_mode'];
                     $modeList = Sale\Discount::getApplyModeList(false);
-                    if (in_array($discountModeApply, $modeList))
+                    if (in_array($discountModeApply, $modeList)) {
                         Option::set('sale', 'discount_apply_mode', $discountModeApply, '');
+                    }
                     unset($modeList, $discountModeApply);
                 }
             }
@@ -565,58 +879,76 @@ if ($SALE_RIGHT >= "R") :
 
             Option::set("sale", "regular_archive_active", $_POST['archive_regular_accept']);
             Option::set("sale", "archive_blocked_order", $_POST['archive_blocked_order_accept']);
-            if ((int)($_POST['archive_period']))
+            if ((int)($_POST['archive_period'])) {
                 $filter['PERIOD'] = (int)($_POST['archive_period']);
-            else
+            } else {
                 $filter['PERIOD'] = 365;
+            }
 
             if ($_POST['archive_blocked_order_accept'] !== 'Y') {
                 $filterValues['LOCKED_BY'] = null;
                 $filterValues['DATE_LOCK'] = null;
             }
 
-            if (isset($_POST['archive_status_id']))
+            if (isset($_POST['archive_status_id'])) {
                 $filter["STATUS_ID"] = $_POST['archive_status_id'];
+            }
 
-            if (isset($_POST['archive_site']))
+            if (isset($_POST['archive_site'])) {
                 $filter["LID"] = $_POST['archive_site'];
+            }
 
-            if (strlen($_POST['archive_payed']))
+            if ($_POST['archive_payed'] <> '') {
                 $filter["=PAYED"] = $_POST['archive_payed'];
+            }
 
-            if (strlen($_POST['archive_canceled']))
+            if ($_POST['archive_canceled'] <> '') {
                 $filter["=CANCELED"] = $_POST['archive_canceled'];
+            }
 
-            if (strlen($_POST['archive_deducted']))
+            if ($_POST['archive_deducted'] <> '') {
                 $filter["=DEDUCTED"] = $_POST['archive_deducted'];
+            }
 
-            if ((int)($_POST['archive_limit']))
+            if ((int)($_POST['archive_limit'])) {
                 $archiveLimit = (int)$_POST['archive_limit'];
-            else
+            } else {
                 $archiveLimit = 10;
+            }
 
             Option::set('sale', 'archive_limit', $archiveLimit, '');
 
-            if ((int)($_POST['archive_time_limit']))
+            if ((int)($_POST['archive_time_limit'])) {
                 $archiveTimeLimit = (int)$_POST['archive_time_limit'];
-            else
+            } else {
                 $archiveTimeLimit = 5;
+            }
 
             Option::set('sale', 'archive_time_limit', $archiveTimeLimit, '');
 
             $filter = serialize($filter);
             Option::set("sale", "archive_params", $filter);
 
-            $agentsList = CAgent::GetList(array("ID" => "DESC"), array(
-                "MODULE_ID" => "sale",
-                "NAME" => "\\Bitrix\\Sale\\Archive\\Manager::archiveOnAgent(%",
-            ));
+            $agentsList = CAgent::GetList(
+                array("ID" => "DESC"),
+                array(
+                    "MODULE_ID" => "sale",
+                    "NAME" => "\\Bitrix\\Sale\\Archive\\Manager::archiveOnAgent(%",
+                )
+            );
             while ($agent = $agentsList->Fetch()) {
                 CAgent::Delete($agent["ID"]);
             }
 
             if (isset($_POST['archive_regular_accept'])) {
-                CAgent::AddAgent("\\Bitrix\\Sale\\Archive\\Manager::archiveOnAgent(" . $archiveLimit . "," . $archiveTimeLimit . ");", "sale", "N", 24 * 60 * 60, "", "Y");
+                CAgent::AddAgent(
+                    "\\Bitrix\\Sale\\Archive\\Manager::archiveOnAgent(" . $archiveLimit . "," . $archiveTimeLimit . ");",
+                    "sale",
+                    "N",
+                    24 * 60 * 60,
+                    "",
+                    "Y"
+                );
             }
 
             Option::set("sale", "order_changes_cleaner_active", $_POST['order_changes_cleaner_active']);
@@ -624,16 +956,26 @@ if ($SALE_RIGHT >= "R") :
             Option::set("sale", "order_changes_cleaner_days", $orderChangesCleanerDays);
             $orderChangesCleanerLimit = (int)$_POST['order_changes_cleaner_limit'];
             Option::set("sale", "order_changes_cleaner_limit", $orderChangesCleanerLimit);
-            $agentsList = CAgent::GetList(array("ID" => "DESC"), array(
-                "MODULE_ID" => "sale",
-                "NAME" => "\\Bitrix\\Sale\\OrderHistory::deleteOldAgent(%",
-            ));
+            $agentsList = CAgent::GetList(
+                array("ID" => "DESC"),
+                array(
+                    "MODULE_ID" => "sale",
+                    "NAME" => "\\Bitrix\\Sale\\OrderHistory::deleteOldAgent(%",
+                )
+            );
             while ($agent = $agentsList->Fetch()) {
                 CAgent::Delete($agent["ID"]);
             }
 
             if (isset($_POST['order_changes_cleaner_active'])) {
-                CAgent::AddAgent("\\Bitrix\\Sale\\OrderHistory::deleteOldAgent(\"$orderChangesCleanerDays\",\"$orderChangesCleanerLimit\");", "sale", "N", 60, "", "Y");
+                CAgent::AddAgent(
+                    "\\Bitrix\\Sale\\OrderHistory::deleteOldAgent(\"$orderChangesCleanerDays\",\"$orderChangesCleanerLimit\");",
+                    "sale",
+                    "N",
+                    60,
+                    "",
+                    "Y"
+                );
             }
 
             ob_start();
@@ -643,9 +985,11 @@ if ($SALE_RIGHT >= "R") :
             if (isset($_POST['tracking_map_statuses'])) {
                 $mapStatuses = $_POST['tracking_map_statuses'];
 
-                foreach ($mapStatuses as $tStatusId => $sStatusId)
-                    if (strlen($sStatusId) <= 0)
+                foreach ($mapStatuses as $tStatusId => $sStatusId) {
+                    if ($sStatusId == '') {
                         unset($mapStatuses[$tStatusId]);
+                    }
+                }
 
                 Option::set('sale', 'tracking_map_statuses', serialize($mapStatuses));
                 unset($mapStatuses);
@@ -653,15 +997,17 @@ if ($SALE_RIGHT >= "R") :
 
             $tSwitch = 'N';
 
-            if (isset($_POST['tracking_check_switch']) && $_POST['tracking_check_switch'] == 'Y')
+            if (isset($_POST['tracking_check_switch']) && $_POST['tracking_check_switch'] == 'Y') {
                 $tSwitch = 'Y';
+            }
 
             Option::set('sale', 'tracking_check_switch', $tSwitch);
 
             $tPeriod = 0;
 
-            if (isset($_POST['tracking_check_period']) && intval($_POST['tracking_check_period']) > 0)
+            if (isset($_POST['tracking_check_period']) && intval($_POST['tracking_check_period']) > 0) {
                 $tPeriod = intval($_POST['tracking_check_period']);
+            }
 
             Option::set('sale', 'tracking_check_period', $tPeriod);
 
@@ -693,16 +1039,30 @@ if ($SALE_RIGHT >= "R") :
             COption::SetOptionInt("sale", "basket_refresh_gap", $BASKET_REFRESH_GAP);
             COption::SetOptionString("sale", "allow_pay_status", $ALLOW_PAY_STATUS);
             COption::SetOptionString("sale", "allow_guest_order_view", $ALLOW_GUEST_ORDER_VIEW);
-            $ALLOW_GUEST_ORDER_VIEW_PATH = is_array($ALLOW_GUEST_ORDER_VIEW_PATH) ? $ALLOW_GUEST_ORDER_VIEW_PATH : array();
+            $ALLOW_GUEST_ORDER_VIEW_PATH = is_array(
+                $ALLOW_GUEST_ORDER_VIEW_PATH
+            ) ? $ALLOW_GUEST_ORDER_VIEW_PATH : array();
             COption::SetOptionString("sale", "allow_guest_order_view_paths", serialize($ALLOW_GUEST_ORDER_VIEW_PATH));
-            $ALLOW_GUEST_ORDER_VIEW_STATUS = is_array($ALLOW_GUEST_ORDER_VIEW_STATUS) ? $ALLOW_GUEST_ORDER_VIEW_STATUS : array();
-            COption::SetOptionString("sale", "allow_guest_order_view_status", serialize($ALLOW_GUEST_ORDER_VIEW_STATUS));
+            $ALLOW_GUEST_ORDER_VIEW_STATUS = is_array(
+                $ALLOW_GUEST_ORDER_VIEW_STATUS
+            ) ? $ALLOW_GUEST_ORDER_VIEW_STATUS : array();
+            COption::SetOptionString(
+                "sale",
+                "allow_guest_order_view_status",
+                serialize($ALLOW_GUEST_ORDER_VIEW_STATUS)
+            );
         }
     }
 
     $statusesWithoutNoChange = array();
     $arStatuses = array("" => GetMessage("SMO_STATUS"));
-    $dbStatus = CSaleStatus::GetList(Array("SORT" => "ASC"), Array("LID" => LANGUAGE_ID), false, false, Array("ID", "NAME", "SORT"));
+    $dbStatus = CSaleStatus::GetList(
+        Array("SORT" => "ASC"),
+        Array("LID" => LANGUAGE_ID),
+        false,
+        false,
+        Array("ID", "NAME", "SORT")
+    );
     while ($arStatus = $dbStatus->GetNext()) {
         $arStatuses[$arStatus["ID"]] = "[" . $arStatus["ID"] . "] " . $arStatus["NAME"];
         $statusesWithoutNoChange[$arStatus["ID"]] = "[" . $arStatus["ID"] . "] " . $arStatus["NAME"];
@@ -717,22 +1077,34 @@ if ($SALE_RIGHT >= "R") :
     }
 
 
-    if ($strWarning != '')
+    if ($strWarning != '') {
         CAdminMessage::ShowMessage($strWarning);
-    elseif ($bWasUpdated) {
-        if (strlen($Update) > 0 && strlen($_REQUEST["back_url_settings"]) > 0)
+    } elseif ($bWasUpdated) {
+        if ($Update <> '' && $_REQUEST["back_url_settings"] <> '') {
             LocalRedirect($_REQUEST["back_url_settings"]);
-        else
-            LocalRedirect($APPLICATION->GetCurPage() . "?mid=" . $module_id . "&lang=" . LANGUAGE_ID . "&back_url_settings=" . urlencode($_REQUEST["back_url_settings"]) . "&" . $tabControl->ActiveTabParam());
+        } else {
+            LocalRedirect(
+                $APPLICATION->GetCurPage(
+                ) . "?mid=" . $module_id . "&lang=" . LANGUAGE_ID . "&back_url_settings=" . urlencode(
+                    $_REQUEST["back_url_settings"]
+                ) . "&" . $tabControl->ActiveTabParam()
+            );
+        }
     }
 
     $currentSettings = array();
     $currentSettings['use_sale_discount_only'] = Option::get('sale', 'use_sale_discount_only');
-    $currentSettings['get_discount_percent_from_base_price'] = Option::get('sale', 'get_discount_percent_from_base_price');
+    $currentSettings['get_discount_percent_from_base_price'] = Option::get(
+        'sale',
+        'get_discount_percent_from_base_price'
+    );
     $currentSettings['discount_apply_mode'] = (int)Option::get('sale', 'discount_apply_mode');
     $currentSettings['product_reserve_condition'] = (string)Option::get('sale', 'product_reserve_condition');
     $currentSettings['product_reserve_clear_period'] = (int)Option::get('sale', 'product_reserve_clear_period');
-    $currentSettings['tracking_map_statuses'] = unserialize(Option::get('sale', 'tracking_map_statuses', ''));
+    $currentSettings['tracking_map_statuses'] = unserialize(
+        Option::get('sale', 'tracking_map_statuses', ''),
+        ['allowed_classes' => false]
+    );
     $currentSettings['tracking_check_switch'] = Option::get('sale', 'tracking_check_switch', 'N');
     $currentSettings['tracking_check_period'] = (int)Option::get('sale', 'tracking_check_period', '24');
 
@@ -748,8 +1120,9 @@ if ($SALE_RIGHT >= "R") :
         </tr>
         <?
         for ($i = 0, $intCount = count($arAllOptions); $i < $intCount; $i++):
-            if (empty($arAllOptions[$i]))
+            if (empty($arAllOptions[$i])) {
                 continue;
+            }
             $Option = $arAllOptions[$i];
             $val = COption::GetOptionString("sale", $Option[0], $Option[2]);
 
@@ -761,26 +1134,32 @@ if ($SALE_RIGHT >= "R") :
             $type = $Option[3];
 
             if ($Option[0] == "assist_LOGIN" || $Option[0] == "assist_PASSWORD") {
-                if ($SALE_RIGHT != "W") $val = "........";
+                if ($SALE_RIGHT != "W") {
+                    $val = "........";
+                }
             }
             ?>
             <tr>
-                <td width="40%"><? if ($type[0] == "checkbox")
+                <td width="40%"><? if ($type[0] == "checkbox") {
                         echo "<label for=\"" . htmlspecialcharsbx($Option[0]) . "\">" . $Option[1] . "</label>";
-                    else
-                        echo $Option[1]; ?></td>
+                    } else {
+                        echo $Option[1];
+                    } ?></td>
                 <td width="60%">
 
                     <? if ($type[0] == "checkbox"):?>
                         <input type="checkbox" name="<? echo htmlspecialcharsbx($Option[0]) ?>"
-                               id="<? echo htmlspecialcharsbx($Option[0]) ?>"
-                               value="Y"<? if ($val == "Y") echo " checked"; ?>>
+                               id="<? echo htmlspecialcharsbx($Option[0]) ?>" value="Y"<? if ($val == "Y") {
+                            echo " checked";
+                        } ?>>
                     <? elseif ($type[0] == "text"):?>
                         <input type="text" size="<? echo $type[1] ?>" value="<? echo htmlspecialcharsbx($val) ?>"
                                name="<? echo htmlspecialcharsbx($Option[0]) ?>">
                     <? elseif ($type[0] == "textarea"):?>
                         <textarea rows="<? echo $type[1] ?>" cols="<? echo $type[2] ?>"
-                                  name="<? echo htmlspecialcharsbx($Option[0]) ?>"><? echo htmlspecialcharsbx($val) ?></textarea>
+                                  name="<? echo htmlspecialcharsbx($Option[0]) ?>"><? echo htmlspecialcharsbx(
+                                $val
+                            ) ?></textarea>
                     <? endif ?>
 
                 </td>
@@ -795,10 +1174,18 @@ if ($SALE_RIGHT >= "R") :
                 $val = Main\Config\Option::get("sale", "format_quantity", "AUTO");
                 ?>
                 <select name="FORMAT_QUANTITY">
-                    <option value="AUTO"<? if ($val == "AUTO") echo " selected"; ?>><?= GetMessage("SMO_FORMAT_QUANTITY_AUTO") ?></option>
-                    <option value="2"<? if ($val == "2") echo " selected"; ?>><?= GetMessage("SMO_FORMAT_QUANTITY_2") ?></option>
-                    <option value="3"<? if ($val == "3") echo " selected"; ?>><?= GetMessage("SMO_FORMAT_QUANTITY_3") ?></option>
-                    <option value="4"<? if ($val == "4") echo " selected"; ?>><?= GetMessage("SMO_FORMAT_QUANTITY_4") ?></option>
+                    <option value="AUTO"<? if ($val == "AUTO") {
+                        echo " selected";
+                    } ?>><?= GetMessage("SMO_FORMAT_QUANTITY_AUTO") ?></option>
+                    <option value="2"<? if ($val == "2") {
+                        echo " selected";
+                    } ?>><?= GetMessage("SMO_FORMAT_QUANTITY_2") ?></option>
+                    <option value="3"<? if ($val == "3") {
+                        echo " selected";
+                    } ?>><?= GetMessage("SMO_FORMAT_QUANTITY_3") ?></option>
+                    <option value="4"<? if ($val == "4") {
+                        echo " selected";
+                    } ?>><?= GetMessage("SMO_FORMAT_QUANTITY_4") ?></option>
                 </select>
             </td>
         </tr>
@@ -811,11 +1198,21 @@ if ($SALE_RIGHT >= "R") :
                 $val = Main\Config\Option::get("sale", "value_precision", 2);
                 ?>
                 <select name="VALUE_PRECISION">
-                    <option value="0"<? if ($val == "0") echo " selected"; ?>><?= GetMessage("SMO_VALUE_PRECISION_0") ?></option>
-                    <option value="1"<? if ($val == "1") echo " selected"; ?>><?= GetMessage("SMO_VALUE_PRECISION_1") ?></option>
-                    <option value="2"<? if ($val == "2") echo " selected"; ?>><?= GetMessage("SMO_VALUE_PRECISION_2") ?></option>
-                    <option value="3"<? if ($val == "3") echo " selected"; ?>><?= GetMessage("SMO_VALUE_PRECISION_3") ?></option>
-                    <option value="4"<? if ($val == "4") echo " selected"; ?>><?= GetMessage("SMO_VALUE_PRECISION_4") ?></option>
+                    <option value="0"<? if ($val == "0") {
+                        echo " selected";
+                    } ?>><?= GetMessage("SMO_VALUE_PRECISION_0") ?></option>
+                    <option value="1"<? if ($val == "1") {
+                        echo " selected";
+                    } ?>><?= GetMessage("SMO_VALUE_PRECISION_1") ?></option>
+                    <option value="2"<? if ($val == "2") {
+                        echo " selected";
+                    } ?>><?= GetMessage("SMO_VALUE_PRECISION_2") ?></option>
+                    <option value="3"<? if ($val == "3") {
+                        echo " selected";
+                    } ?>><?= GetMessage("SMO_VALUE_PRECISION_3") ?></option>
+                    <option value="4"<? if ($val == "4") {
+                        echo " selected";
+                    } ?>><?= GetMessage("SMO_VALUE_PRECISION_4") ?></option>
                 </select>
             </td>
         </tr>
@@ -843,8 +1240,12 @@ if ($SALE_RIGHT >= "R") :
                     $val = COption::GetOptionString("sale", "affiliate_plan_type", "N");
                     ?>
                     <select name="affiliate_plan_type">
-                        <option value="N"<? if ($val == "N") echo " selected"; ?>><?= GetMessage("SMO_AFFILIATE_PLAN_TYPE_N") ?></option>
-                        <option value="S"<? if ($val == "S") echo " selected"; ?>><?= GetMessage("SMO_AFFILIATE_PLAN_TYPE_S") ?></option>
+                        <option value="N"<? if ($val == "N") {
+                            echo " selected";
+                        } ?>><?= GetMessage("SMO_AFFILIATE_PLAN_TYPE_N") ?></option>
+                        <option value="S"<? if ($val == "S") {
+                            echo " selected";
+                        } ?>><?= GetMessage("SMO_AFFILIATE_PLAN_TYPE_S") ?></option>
                     </select>
                 </td>
             </tr>
@@ -854,14 +1255,18 @@ if ($SALE_RIGHT >= "R") :
 
         <tr>
             <td>
-                <label for="EXPIRATION_PROCESSING_EVENTS"><? echo GetMessage("SALE_EXPIRATION_PROCESSING_EVENTS") ?></label>
+                <label for="EXPIRATION_PROCESSING_EVENTS"><? echo GetMessage(
+                        "SALE_EXPIRATION_PROCESSING_EVENTS"
+                    ) ?></label>
             </td>
             <td>
                 <?
                 $valExpirationProcessingEvents = COption::GetOptionString("sale", "expiration_processing_events", "");
                 ?>
                 <input type="checkbox" name="EXPIRATION_PROCESSING_EVENTS" id="EXPIRATION_PROCESSING_EVENTS"
-                       value="Y"<? if ($valExpirationProcessingEvents == "Y") echo " checked"; ?>>
+                       value="Y"<? if ($valExpirationProcessingEvents == "Y") {
+                    echo " checked";
+                } ?>>
             </td>
         </tr>
 
@@ -874,19 +1279,25 @@ if ($SALE_RIGHT >= "R") :
                 $valOrderHistoryLogLevel = COption::GetOptionString("sale", "order_history_log_level", "");
                 ?>
                 <input type="checkbox" name="ORDER_HISTORY_LOG_LEVEL" id="ORDER_HISTORY_LOG_LEVEL"
-                       value="1"<? if ($valOrderHistoryLogLevel == "1") echo " checked"; ?>>
+                       value="1"<? if ($valOrderHistoryLogLevel == "1") {
+                    echo " checked";
+                } ?>>
             </td>
         </tr>
         <tr>
             <td>
-                <label for="ORDER_HISTORY_ACTION_LOG_LEVEL"><? echo GetMessage("SALE_ORDER_HISTORY_ACTION_LOG_LEVEL") ?></label>
+                <label for="ORDER_HISTORY_ACTION_LOG_LEVEL"><? echo GetMessage(
+                        "SALE_ORDER_HISTORY_ACTION_LOG_LEVEL"
+                    ) ?></label>
             </td>
             <td>
                 <?
                 $valOrderHistoryActionLogLevel = COption::GetOptionString("sale", "order_history_action_log_level", "");
                 ?>
                 <input type="checkbox" name="ORDER_HISTORY_ACTION_LOG_LEVEL" id="ORDER_HISTORY_ACTION_LOG_LEVEL"
-                       value="1"<? if ($valOrderHistoryActionLogLevel == "1") echo " checked"; ?>>
+                       value="1"<? if ($valOrderHistoryActionLogLevel == "1") {
+                    echo " checked";
+                } ?>>
             </td>
         </tr>
 
@@ -900,8 +1311,11 @@ if ($SALE_RIGHT >= "R") :
                     foreach ($siteList as $key => $val) {
                         $site = COption::GetOptionString("sale", "SHOP_SITE_" . $val["ID"], "");
                         ?>
-                        <option
-                        value="<?= $val["ID"] ?>" <? if ($site == $val["ID"]) echo "selected"; ?>    ><? echo htmlspecialcharsEx($val["NAME"]) . " (" . htmlspecialcharsEx($val["ID"]) . ")"; ?></option><?
+                        <option value="<?= $val["ID"] ?>" <? if ($site == $val["ID"]) {
+                            echo "selected";
+                        } ?>    ><? echo htmlspecialcharsEx($val["NAME"]) . " (" . htmlspecialcharsEx(
+                                $val["ID"]
+                            ) . ")"; ?></option><?
                     }
                     ?>
                 </select>
@@ -935,13 +1349,19 @@ if ($SALE_RIGHT >= "R") :
             </td>
             <td>
                 <?
-                $val = \Bitrix\Main\Config\Option::get("sale", "allow_pay_status", Sale\OrderStatus::getInitialStatus());
+                $val = \Bitrix\Main\Config\Option::get(
+                    "sale",
+                    "allow_pay_status",
+                    Sale\OrderStatus::getInitialStatus()
+                );
                 ?>
                 <select name="ALLOW_PAY_STATUS">
                     <?
                     foreach ($statusesWithoutNoChange as $statusID => $statusName) {
                         ?>
-                        <option value="<?= $statusID ?>"<? if ($val == $statusID) echo " selected"; ?>><?= htmlspecialcharsbx($statusName) ?></option><?
+                        <option value="<?= $statusID ?>"<? if ($val == $statusID) {
+                            echo " selected";
+                        } ?>><?= htmlspecialcharsbx($statusName) ?></option><?
                     }
                     ?>
                 </select>
@@ -959,9 +1379,15 @@ if ($SALE_RIGHT >= "R") :
                     $val = Main\Config\Option::get("sale", "check_type_on_pay", "sell");
                     ?>
                     <select name="CHECK_TYPE_ON_PAY">
-                        <option value="sell" <?= ($val === 'sell') ? 'selected' : ''; ?>><?= Loc::getMessage('SALE_CHECK_TYPE_ON_PAY_SELL') ?></option>
-                        <option value="prepayment" <?= ($val === 'prepayment') ? 'selected' : ''; ?>><?= Loc::getMessage('SALE_CHECK_TYPE_ON_PAY_PREPAYMENT') ?></option>
-                        <option value="advance" <?= ($val === 'advance') ? 'selected' : ''; ?>><?= Loc::getMessage('SALE_CHECK_TYPE_ON_PAY_ADVANCE') ?></option>
+                        <option value="sell" <?= ($val === 'sell') ? 'selected' : ''; ?>><?= Loc::getMessage(
+                                'SALE_CHECK_TYPE_ON_PAY_SELL'
+                            ) ?></option>
+                        <option value="prepayment" <?= ($val === 'prepayment') ? 'selected' : ''; ?>><?= Loc::getMessage(
+                                'SALE_CHECK_TYPE_ON_PAY_PREPAYMENT'
+                            ) ?></option>
+                        <option value="advance" <?= ($val === 'advance') ? 'selected' : ''; ?>><?= Loc::getMessage(
+                                'SALE_CHECK_TYPE_ON_PAY_ADVANCE'
+                            ) ?></option>
                     </select>
                 </td>
             </tr>
@@ -1003,8 +1429,9 @@ if ($SALE_RIGHT >= "R") :
         <? endif; ?>
         <!-- start of order guest view -->
         <tr class="heading" id="guest_order_view_block">
-            <td colspan="2"><a
-                        name="section_guest_order_view"></a><?= GetMessage('SALE_ALLOW_GUEST_ORDER_VIEW_TITLE') ?></td>
+            <td colspan="2"><a name="section_guest_order_view"></a><?= GetMessage(
+                    'SALE_ALLOW_GUEST_ORDER_VIEW_TITLE'
+                ) ?></td>
         </tr>
         <tr>
             <td>
@@ -1026,7 +1453,10 @@ if ($SALE_RIGHT >= "R") :
             <td>
                 <?
                 $guestStatuses = \Bitrix\Main\Config\Option::get("sale", "allow_guest_order_view_status", "");
-                $guestStatuses = (strlen($guestStatuses) > 0) ? unserialize($guestStatuses) : array();
+                $guestStatuses = ($guestStatuses <> '') ? unserialize(
+                    $guestStatuses,
+                    ['allowed_classes' => false]
+                ) : array();
                 $statusList = (array_slice($arStatuses, 1));
                 ?>
 
@@ -1040,13 +1470,18 @@ if ($SALE_RIGHT >= "R") :
             </td>
         </tr>
         <?
-        $paths = unserialize(\Bitrix\Main\Config\Option::get("sale", "allow_guest_order_view_paths"));
+        $paths = unserialize(
+            \Bitrix\Main\Config\Option::get("sale", "allow_guest_order_view_paths"),
+            ['allowed_classes' => false]
+        );
         foreach ($siteList as $site) {
             ?>
             <tr class="sale_allow_guest_order_view" <?= ($val === "Y") ? "" : "style=\"display:none\"" ?>>
                 <td>
-                    <?= Main\Localization\Loc::getMessage("SALE_ALLOW_GUEST_ORDER_VIEW_PATH", array("#SITE_ID#" => $site["ID"])) ?>
-                    :
+                    <?= Main\Localization\Loc::getMessage(
+                        "SALE_ALLOW_GUEST_ORDER_VIEW_PATH",
+                        array("#SITE_ID#" => $site["ID"])
+                    ) ?>:
                 </td>
                 <td>
                     <input type="text" size="40" value="<?= htmlspecialcharsbx($paths[$site["ID"]]) ?>"
@@ -1101,10 +1536,12 @@ if ($SALE_RIGHT >= "R") :
             <td>
                 <? $isSearch = Bitrix\Sale\Location\Admin\Helper::getWidgetAppearance() == 'search'; ?>
                 <select name="sale_location_selector_appearance">
-                    <option <? if (!$isSearch): ?>selected<? endif ?>
-                            value="steps"><?= GetMessage('SALE_LOCATION_SELECTOR_APPEARANCE_STEPS') ?></option>
-                    <option <? if ($isSearch): ?>selected<? endif ?>
-                            value="search"><?= GetMessage('SALE_LOCATION_SELECTOR_APPEARANCE_SEARCH') ?></option>
+                    <option <? if (!$isSearch): ?>selected<? endif ?> value="steps"><?= GetMessage(
+                            'SALE_LOCATION_SELECTOR_APPEARANCE_STEPS'
+                        ) ?></option>
+                    <option <? if ($isSearch): ?>selected<? endif ?> value="search"><?= GetMessage(
+                            'SALE_LOCATION_SELECTOR_APPEARANCE_SEARCH'
+                        ) ?></option>
                 </select>
             </td>
         </tr>
@@ -1158,7 +1595,9 @@ if ($SALE_RIGHT >= "R") :
                     $modeList = Sale\Discount::getApplyModeList(true);
                     foreach ($modeList as $modeId => $modeTitle) {
                         ?>
-                        <option value="<?= $modeId; ?>"<?= ($modeId == $currentSettings['discount_apply_mode'] ? ' selected' : ''); ?>><?= htmlspecialcharsbx($modeTitle); ?></option><?
+                        <option value="<?= $modeId; ?>"<?= ($modeId == $currentSettings['discount_apply_mode'] ? ' selected' : ''); ?>><?= htmlspecialcharsbx(
+                            $modeTitle
+                        ); ?></option><?
                     }
                     unset($modeTitle, $modeId, $modeList);
                     ?>
@@ -1176,7 +1615,11 @@ if ($SALE_RIGHT >= "R") :
             </td>
             <td width="60%">
                 <input type="checkbox" name="SALE_P2P_ALLOW_COLLECT_DATA" value="Y"
-                       id="p2p_allow_collect_data"<? echo(Option::get("sale", "p2p_allow_collect_data", "N") == 'Y' ? ' checked' : ''); ?>>
+                       id="p2p_allow_collect_data"<? echo(Option::get(
+                    "sale",
+                    "p2p_allow_collect_data",
+                    "N"
+                ) == 'Y' ? ' checked' : ''); ?>>
             </td>
         </tr>
         <tr>
@@ -1186,21 +1629,26 @@ if ($SALE_RIGHT >= "R") :
             <td>
                 <?
                 $recStatuses = COption::GetOptionString("sale", "p2p_status_list", "");
-                if (strlen($recStatuses) > 0)
-                    $recStatuses = unserialize($recStatuses);
-                else
+                if ($recStatuses <> '') {
+                    $recStatuses = unserialize($recStatuses, ['allowed_classes' => false]);
+                } else {
                     $recStatuses = array();
+                }
 
-                if (!$recStatuses)
+                if (!$recStatuses) {
                     $recStatuses = array();
+                }
 
                 $p2pStatusesList = array_slice($arStatuses, 1);
-                $p2pStatusesList = array_merge($p2pStatusesList, array(
-                    "F_CANCELED" => GetMessage("F_CANCELED"),
-                    "F_DELIVERY" => GetMessage("F_DELIVERY"),
-                    "F_PAY" => GetMessage("F_PAY"),
-                    "F_OUT" => GetMessage("F_OUT"),
-                ));
+                $p2pStatusesList = array_merge(
+                    $p2pStatusesList,
+                    array(
+                        "F_CANCELED" => GetMessage("F_CANCELED"),
+                        "F_DELIVERY" => GetMessage("F_DELIVERY"),
+                        "F_PAY" => GetMessage("F_PAY"),
+                        "F_OUT" => GetMessage("F_OUT"),
+                    )
+                );
                 ?>
 
                 <select name="SALE_P2P_STATUS_LIST[]" multiple size="5">
@@ -1241,11 +1689,17 @@ if ($SALE_RIGHT >= "R") :
         </tr>
         <tr>
             <td align="right" width="40%">
-                <label for="order_changes_cleaner_active"><?= GetMessage("SALE_ORDER_HISTORY_CLEANER_SWITCHER") ?></label>
+                <label for="order_changes_cleaner_active"><?= GetMessage(
+                        "SALE_ORDER_HISTORY_CLEANER_SWITCHER"
+                    ) ?></label>
             </td>
             <td width="60%">
                 <input type="checkbox" name="order_changes_cleaner_active" value="Y"
-                       id="order_changes_cleaner_active"<? echo(Option::get("sale", "order_changes_cleaner_active", "N") == 'Y' ? ' checked' : ''); ?>>
+                       id="order_changes_cleaner_active"<? echo(Option::get(
+                    "sale",
+                    "order_changes_cleaner_active",
+                    "N"
+                ) == 'Y' ? ' checked' : ''); ?>>
             </td>
         </tr>
 
@@ -1289,34 +1743,63 @@ if ($SALE_RIGHT >= "R") :
                             </td>
                         </tr>
                         <?
-                        $val = COption::GetOptionString("sale", "pay_amount", 'a:4:{i:1;a:2:{s:6:"AMOUNT";s:2:"10";s:8:"CURRENCY";s:3:"EUR";}i:2;a:2:{s:6:"AMOUNT";s:2:"20";s:8:"CURRENCY";s:3:"EUR";}i:3;a:2:{s:6:"AMOUNT";s:2:"30";s:8:"CURRENCY";s:3:"EUR";}i:4;a:2:{s:6:"AMOUNT";s:2:"40";s:8:"CURRENCY";s:3:"EUR";}}');
+                        $val = COption::GetOptionString(
+                            "sale",
+                            "pay_amount",
+                            'a:4:{i:1;a:2:{s:6:"AMOUNT";s:2:"10";s:8:"CURRENCY";s:3:"EUR";}i:2;a:2:{s:6:"AMOUNT";s:2:"20";s:8:"CURRENCY";s:3:"EUR";}i:3;a:2:{s:6:"AMOUNT";s:2:"30";s:8:"CURRENCY";s:3:"EUR";}i:4;a:2:{s:6:"AMOUNT";s:2:"40";s:8:"CURRENCY";s:3:"EUR";}}'
+                        );
                         $key = 0;
-                        if (strlen($val) > 0) {
-                            $arAmount = unserialize($val);
+                        if ($val <> '') {
+                            $arAmount = unserialize($val, ['allowed_classes' => false]);
                             foreach ($arAmount as $key => $val) {
                                 ?>
                                 <tr>
                                     <td><input type="text" name="amount_val[<?= $key ?>]" value="<?= $val["AMOUNT"] ?>">
                                     </td>
-                                    <td><?= CCurrency::SelectBox("amount_currency[" . $key . "]", $val["CURRENCY"], "", True, "") ?></td>
+                                    <td><?= CCurrency::SelectBox(
+                                            "amount_currency[" . $key . "]",
+                                            $val["CURRENCY"],
+                                            "",
+                                            true,
+                                            ""
+                                        ) ?></td>
                                 </tr>
                                 <?
                             }
                         }
-                        if ((int)$key <= 0)
+                        if ((int)$key <= 0) {
                             $key = 0;
+                        }
                         ?>
                         <tr>
                             <td><input type="text" name="amount_val[<?= ++$key ?>]" value=""></td>
-                            <td><?= CCurrency::SelectBox("amount_currency[" . $key . "]", $val["CURRENCY"], "", true, "") ?></td>
+                            <td><?= CCurrency::SelectBox(
+                                    "amount_currency[" . $key . "]",
+                                    $val["CURRENCY"],
+                                    "",
+                                    true,
+                                    ""
+                                ) ?></td>
                         </tr>
                         <tr>
                             <td><input type="text" name="amount_val[<?= ++$key ?>]" value=""></td>
-                            <td><?= CCurrency::SelectBox("amount_currency[" . $key . "]", $val["CURRENCY"], "", true, "") ?></td>
+                            <td><?= CCurrency::SelectBox(
+                                    "amount_currency[" . $key . "]",
+                                    $val["CURRENCY"],
+                                    "",
+                                    true,
+                                    ""
+                                ) ?></td>
                         </tr>
                         <tr>
                             <td><input type="text" name="amount_val[<?= ++$key ?>]" value=""></td>
-                            <td><?= CCurrency::SelectBox("amount_currency[" . $key . "]", $val["CURRENCY"], "", true, "") ?></td>
+                            <td><?= CCurrency::SelectBox(
+                                    "amount_currency[" . $key . "]",
+                                    $val["CURRENCY"],
+                                    "",
+                                    true,
+                                    ""
+                                ) ?></td>
                         </tr>
 
                     </table>
@@ -1329,25 +1812,38 @@ if ($SALE_RIGHT >= "R") :
             <td colspan="2">
                 <?
                 $reminder = COption::GetOptionString("sale", "pay_reminder", "");
-                $arReminder = unserialize($reminder);
+                $arReminder = unserialize($reminder, ['allowed_classes' => false]);
 
                 $arSubscribeProd = array();
                 $subscribeProd = COption::GetOptionString("sale", "subscribe_prod", "");
-                if (strlen($subscribeProd) > 0)
-                    $arSubscribeProd = unserialize($subscribeProd);
+                if ($subscribeProd <> '') {
+                    $arSubscribeProd = unserialize($subscribeProd, ['allowed_classes' => false]);
+                }
 
                 $aTabs2 = Array();
                 foreach ($siteList as $val) {
-                    $aTabs2[] = Array("DIV" => "reminder" . $val["ID"], "TAB" => "[" . $val["ID"] . "] " . htmlspecialcharsbx($val["NAME"]), "TITLE" => "[" . htmlspecialcharsbx($val["ID"]) . "] " . htmlspecialcharsbx($val["NAME"]));
+                    $aTabs2[] = Array(
+                        "DIV" => "reminder" . $val["ID"],
+                        "TAB" => "[" . $val["ID"] . "] " . htmlspecialcharsbx($val["NAME"]),
+                        "TITLE" => "[" . htmlspecialcharsbx($val["ID"]) . "] " . htmlspecialcharsbx($val["NAME"])
+                    );
                 }
                 $tabControl2 = new CAdminViewTabControl("tabControl2", $aTabs2);
                 $tabControl2->Begin();
                 foreach ($siteList as $val) {
                     $arStores = array();
                     if (CModule::IncludeModule("catalog")) {
-                        $dbStore = CCatalogStore::GetList(array("SORT" => "DESC", "ID" => "ASC"), array("ACTIVE" => "Y", "SHIPPING_CENTER" => "Y", "+SITE_ID" => $val["ID"]));
-                        while ($arStore = $dbStore->GetNext())
+                        $dbStore = CCatalogStore::GetList(
+                            array("SORT" => "DESC", "ID" => "ASC"),
+                            array(
+                                "ACTIVE" => "Y",
+                                "SHIPPING_CENTER" => "Y",
+                                "+SITE_ID" => $val["ID"]
+                            )
+                        );
+                        while ($arStore = $dbStore->GetNext()) {
                             $arStores[] = $arStore;
+                        }
                     }
 
                     $tabControl2->BeginNextTab();
@@ -1369,14 +1865,19 @@ if ($SALE_RIGHT >= "R") :
                                     <?
                                     foreach ($arStores as $storeId => $arStore):
                                         ?>
-                                        <option value="<?= $arStore["ID"] ?>" <? if ($deductStore == $arStore["ID"]) echo "selected"; ?>><?= $arStore["TITLE"] . " [" . htmlspecialcharsEx($arStore["ID"]) . "]"; ?></option>
+                                        <option value="<?= $arStore["ID"] ?>" <? if ($deductStore == $arStore["ID"]) {
+                                            echo "selected";
+                                        } ?>><?= $arStore["TITLE"] . " [" . htmlspecialcharsEx(
+                                                $arStore["ID"]
+                                            ) . "]"; ?></option>
                                     <?
                                     endforeach;
                                     ?>
                                 </select>
                                 <input type="hidden" id="default_store_select_save_<?= $val["ID"] ?>"
-                                       name="defaultDeductStore[<?= $val["ID"] ?>][save]"
-                                       value="<?= (count($arStores) > 1 && $valDeductOnDelivery == "Y") ? "Y" : "N" ?>"/>
+                                       name="defaultDeductStore[<?= $val["ID"] ?>][save]" value="<?= (count(
+                                        $arStores
+                                    ) > 1 && $valDeductOnDelivery == "Y") ? "Y" : "N" ?>"/>
                             </td>
                         </tr>
                         <!-- end of default store -->
@@ -1385,12 +1886,13 @@ if ($SALE_RIGHT >= "R") :
                             <td colspan="2"><?= GetMessage("SMO_PRODUCT_SUBSCRIBE") ?></td>
                         </tr>
                         <tr>
-                            <td align="right" width="40%"><label
-                                        for="notify-<?= $val["ID"] ?>"><?= GetMessage("SALE_NOTIFY_PRODUCT_USE") ?></label>
-                            </td>
+                            <td align="right" width="40%"><label for="notify-<?= $val["ID"] ?>"><?= GetMessage(
+                                        "SALE_NOTIFY_PRODUCT_USE"
+                                    ) ?></label></td>
                             <td width="60%"><input type="checkbox" name="subscribProd[<?= $val["ID"] ?>][use]" value="Y"
-                                                   id="notify-<?= $val["ID"] ?>"<? if ($arSubscribeProd[$val["ID"]]["use"] == "Y") echo " checked"; ?>>
-                            </td>
+                                                   id="notify-<?= $val["ID"] ?>"<? if ($arSubscribeProd[$val["ID"]]["use"] == "Y") {
+                                    echo " checked";
+                                } ?>></td>
                         </tr>
                         <tr>
                             <td align="right"><?= GetMessage("SALE_NOTIFY_PRODUCT") ?></td>
@@ -1402,33 +1904,34 @@ if ($SALE_RIGHT >= "R") :
                             <td colspan="2"><?= GetMessage("SMO_ORDER_PAY_REMINDER") ?></td>
                         </tr>
                         <tr>
-                            <td align="right" width="40%"><label
-                                        for="use-<?= $val["ID"] ?>"><?= GetMessage("SMO_ORDER_PAY_REMINDER_USE") ?>
-                                    :</label></td>
+                            <td align="right" width="40%"><label for="use-<?= $val["ID"] ?>"><?= GetMessage(
+                                        "SMO_ORDER_PAY_REMINDER_USE"
+                                    ) ?>:</label></td>
                             <td width="60%"><input type="checkbox" name="reminder[<?= $val["ID"] ?>][use]" value="Y"
-                                                   id="use-<?= $val["ID"] ?>"<? if ($arReminder[$val["ID"]]["use"] == "Y") echo " checked"; ?>>
-                            </td>
+                                                   id="use-<?= $val["ID"] ?>"<? if ($arReminder[$val["ID"]]["use"] == "Y") {
+                                    echo " checked";
+                                } ?>></td>
                         </tr>
                         <tr>
-                            <td align="right"><label
-                                        for="after-<?= $val["ID"] ?>"><?= GetMessage("SMO_ORDER_PAY_REMINDER_AFTER") ?>
-                                    :</label></td>
+                            <td align="right"><label for="after-<?= $val["ID"] ?>"><?= GetMessage(
+                                        "SMO_ORDER_PAY_REMINDER_AFTER"
+                                    ) ?>:</label></td>
                             <td><input type="text" name="reminder[<?= $val["ID"] ?>][after]"
                                        value="<?= intval($arReminder[$val["ID"]]["after"]) ?>" size="5"
                                        id="after-<?= $val["ID"] ?>"></td>
                         </tr>
                         <tr>
-                            <td align="right"><label
-                                        for="frequency-<?= $val["ID"] ?>"><?= GetMessage("SMO_ORDER_PAY_REMINDER_FREQUENCY") ?>
-                                    :</label></td>
+                            <td align="right"><label for="frequency-<?= $val["ID"] ?>"><?= GetMessage(
+                                        "SMO_ORDER_PAY_REMINDER_FREQUENCY"
+                                    ) ?>:</label></td>
                             <td><input type="text" name="reminder[<?= $val["ID"] ?>][frequency]"
                                        value="<?= intval($arReminder[$val["ID"]]["frequency"]) ?>" size="5"
                                        id="frequency-<?= $val["ID"] ?>"></td>
                         </tr>
                         <tr>
-                            <td align="right"><label
-                                        for="period-<?= $val["ID"] ?>"><?= GetMessage("SMO_ORDER_PAY_REMINDER_PERIOD") ?>
-                                    :</label></td>
+                            <td align="right"><label for="period-<?= $val["ID"] ?>"><?= GetMessage(
+                                        "SMO_ORDER_PAY_REMINDER_PERIOD"
+                                    ) ?>:</label></td>
                             <td><input type="text" name="reminder[<?= $val["ID"] ?>][period]"
                                        value="<?= intval($arReminder[$val["ID"]]["period"]) ?>" size="5"
                                        id="period-<?= $val["ID"] ?>"></td>
@@ -1513,17 +2016,29 @@ if ($SALE_RIGHT >= "R") :
         <tr>
             <td valign="top" width="40%"><?= GetMessage("SMO_PAR_DIF_SETTINGS") ?></td>
             <td valign="top" width="60%"><input type="checkbox" name="WEIGHT_dif_settings"
-                                                id="dif_settings" <? if (COption::GetOptionString($module_id, "WEIGHT_different_set", "N") == "Y") echo " checked=\"checked\""; ?>
-                                                OnClick="changeSiteList(!this.checked, 'WEIGHT')"/></td>
+                                                id="dif_settings" <? if (COption::GetOptionString(
+                        $module_id,
+                        "WEIGHT_different_set",
+                        "N"
+                    ) == "Y") {
+                    echo " checked=\"checked\"";
+                } ?> OnClick="changeSiteList(!this.checked, 'WEIGHT')"/></td>
         </tr>
         <tr>
             <td><?= GetMessage("SMO_PAR_SITE_LIST") ?></td>
-            <td><select name="site"
-                        id="WEIGHT_site_id"<? if (COption::GetOptionString($module_id, "WEIGHT_different_set", "N") != "Y") echo " disabled=\"disabled\""; ?>
-                        OnChange="selectSite(this.value, 'WEIGHT')">
+            <td><select name="site" id="WEIGHT_site_id"<? if (COption::GetOptionString(
+                        $module_id,
+                        "WEIGHT_different_set",
+                        "N"
+                    ) != "Y") {
+                    echo " disabled=\"disabled\"";
+                } ?> OnChange="selectSite(this.value, 'WEIGHT')">
                     <?
-                    for ($i = 0; $i < $siteCount; $i++)
-                        echo "<option value=\"" . htmlspecialcharsbx($siteList[$i]["ID"]) . "\">" . htmlspecialcharsbx($siteList[$i]["NAME"]) . "</option>";
+                    for ($i = 0; $i < $siteCount; $i++) {
+                        echo "<option value=\"" . htmlspecialcharsbx($siteList[$i]["ID"]) . "\">" . htmlspecialcharsbx(
+                                $siteList[$i]["NAME"]
+                            ) . "</option>";
+                    }
                     ?></select><input type="hidden" name="WEIGHT_current_site" id="WEIGHT_current_site"
                                       value="<?= htmlspecialcharsbx($siteList[0]["ID"]); ?>"/></td>
         </tr>
@@ -1537,17 +2052,29 @@ if ($SALE_RIGHT >= "R") :
                                 <td align="center" colspan="2"><? echo GetMessage("SMO_PAR_SITE_PARAMETERS") ?></td>
                             </tr>
                             <tr>
-                                <td width="40%"
-                                    class="adm-detail-content-cell-l"><? echo GetMessage("SMO_PAR_SITE_WEIGHT_UNIT_SALE") ?></td>
+                                <td width="40%" class="adm-detail-content-cell-l"><? echo GetMessage(
+                                        "SMO_PAR_SITE_WEIGHT_UNIT_SALE"
+                                    ) ?></td>
                                 <td width="60%" class="adm-detail-content-cell-r"><select
                                             name="weight_unit_tmp[<?= htmlspecialcharsbx($siteList[$i]["ID"]) ?>]"
                                             OnChange="setWeightValue(this)">
                                         <?
                                         $arUnitList = CSaleMeasure::GetList("W");
                                         foreach ($arUnitList as $key => $arM) {
-                                            $selectedWeightUnit = COption::GetOptionString($module_id, "weight_unit", GetMessage('SMO_PAR_WEIGHT_UNIT_GRAMM'), trim($siteList[$i]["ID"]));
+                                            $selectedWeightUnit = COption::GetOptionString(
+                                                $module_id,
+                                                "weight_unit",
+                                                GetMessage(
+                                                    'SMO_PAR_WEIGHT_UNIT_GRAMM'
+                                                ),
+                                                trim($siteList[$i]["ID"])
+                                            );
                                             ?>
-                                            <option value="<?= floatval($arM["KOEF"]) ?>" <?= ($selectedWeightUnit == $arM["NAME"] ? "selected" : "") ?>><?= htmlspecialcharsbx($arM["NAME"]) ?></option>
+                                            <option value="<?= floatval(
+                                                $arM["KOEF"]
+                                            ) ?>" <?= ($selectedWeightUnit == $arM["NAME"] ? "selected" : "") ?>><?= htmlspecialcharsbx(
+                                                    $arM["NAME"]
+                                                ) ?></option>
                                             <?
                                         }
 
@@ -1556,18 +2083,34 @@ if ($SALE_RIGHT >= "R") :
                             <tr>
                                 <td class="adm-detail-content-cell-l"><?= GetMessage('SMO_PAR_WEIGHT_UNIT') ?></td>
                                 <td class="adm-detail-content-cell-r"><input type="text"
-                                                                             name="weight_unit[<?= htmlspecialcharsbx($siteList[$i]["ID"]) ?>]"
-                                                                             size="5"
-                                                                             value="<?= htmlspecialcharsbx(COption::GetOptionString($module_id, "weight_unit", GetMessage('SMO_PAR_WEIGHT_UNIT_GRAMM'), $siteList[$i]["ID"])) ?>"/>
-                                </td>
+                                                                             name="weight_unit[<?= htmlspecialcharsbx(
+                                                                                 $siteList[$i]["ID"]
+                                                                             ) ?>]" size="5"
+                                                                             value="<?= htmlspecialcharsbx(
+                                                                                 COption::GetOptionString(
+                                                                                     $module_id,
+                                                                                     "weight_unit",
+                                                                                     GetMessage(
+                                                                                         'SMO_PAR_WEIGHT_UNIT_GRAMM'
+                                                                                     ),
+                                                                                     $siteList[$i]["ID"]
+                                                                                 )
+                                                                             ) ?>"/></td>
                             </tr>
                             <tr>
                                 <td class="adm-detail-content-cell-l"><?= GetMessage('SMO_PAR_WEIGHT_KOEF') ?></td>
                                 <td class="adm-detail-content-cell-r"><input type="text"
-                                                                             name="weight_koef[<?= htmlspecialcharsbx($siteList[$i]["ID"]) ?>]"
-                                                                             size="5"
-                                                                             value="<?= htmlspecialcharsbx(COption::GetOptionString($module_id, "weight_koef", "1", $siteList[$i]["ID"])) ?>"/>
-                                </td>
+                                                                             name="weight_koef[<?= htmlspecialcharsbx(
+                                                                                 $siteList[$i]["ID"]
+                                                                             ) ?>]" size="5"
+                                                                             value="<?= htmlspecialcharsbx(
+                                                                                 COption::GetOptionString(
+                                                                                     $module_id,
+                                                                                     "weight_koef",
+                                                                                     "1",
+                                                                                     $siteList[$i]["ID"]
+                                                                                 )
+                                                                             ) ?>"/></td>
                             </tr>
                         </table>
                     </div>
@@ -1579,17 +2122,29 @@ if ($SALE_RIGHT >= "R") :
         <tr>
             <td width="40%"><?= GetMessage("SMO_DIF_SETTINGS") ?></td>
             <td width="60%"><input type="checkbox" name="ADDRESS_dif_settings"
-                                   id="ADDRESS_dif_settings"<? if (COption::GetOptionString($module_id, "ADDRESS_different_set", "N") != "N") echo " checked=\"checked\""; ?>
-                                   OnClick="changeSiteList(!this.checked, 'ADDRESS')"/></td>
+                                   id="ADDRESS_dif_settings"<? if (COption::GetOptionString(
+                        $module_id,
+                        "ADDRESS_different_set",
+                        "N"
+                    ) != "N") {
+                    echo " checked=\"checked\"";
+                } ?> OnClick="changeSiteList(!this.checked, 'ADDRESS')"/></td>
         </tr>
         <tr>
             <td><?= GetMessage("SMO_SITE_LIST") ?></td>
-            <td><select name="site"
-                        id="ADDRESS_site_id"<? if (COption::GetOptionString($module_id, "ADDRESS_different_set", "N") != "Y") echo " disabled=\"disabled\""; ?>
-                        onChange="selectSite(this.value, 'ADDRESS')">
+            <td><select name="site" id="ADDRESS_site_id"<? if (COption::GetOptionString(
+                        $module_id,
+                        "ADDRESS_different_set",
+                        "N"
+                    ) != "Y") {
+                    echo " disabled=\"disabled\"";
+                } ?> onChange="selectSite(this.value, 'ADDRESS')">
                     <?
-                    for ($i = 0; $i < $siteCount; $i++)
-                        echo "<option value=\"" . htmlspecialcharsbx($siteList[$i]["ID"]) . "\">" . htmlspecialcharsbx($siteList[$i]["NAME"]) . "</option>";
+                    for ($i = 0; $i < $siteCount; $i++) {
+                        echo "<option value=\"" . htmlspecialcharsbx($siteList[$i]["ID"]) . "\">" . htmlspecialcharsbx(
+                                $siteList[$i]["NAME"]
+                            ) . "</option>";
+                    }
                     ?></select><input type="hidden" name="ADDRESS_current_site" id="ADDRESS_current_site"
                                       value="<?= htmlspecialcharsbx($siteList[0]["ID"]); ?>"/></td>
         </tr>
@@ -1606,7 +2161,9 @@ if ($SALE_RIGHT >= "R") :
                         $sales_zone_cities = SalesZone::getCitiesIds($siteList[$i]["ID"]);
                     }
 
-                    if ($location_zip == 0) $location_zip = '';
+                    if ($location_zip == 0) {
+                        $location_zip = '';
+                    }
                     ?>
                     <div id="par_ADDRESS_<?= htmlspecialcharsbx($siteList[$i]["ID"]) ?>"
                          style="display: <?= ($i == 0 ? "inline" : "none"); ?>">
@@ -1615,30 +2172,40 @@ if ($SALE_RIGHT >= "R") :
                                 <td align="center" colspan="2"><? echo GetMessage("SMO_PAR_SITE_ADRES") ?></td>
                             </tr>
                             <tr>
-                                <td width="40%"
-                                    class="adm-detail-content-cell-l"><? echo GetMessage("SMO_LOCATION_ZIP"); ?></td>
+                                <td width="40%" class="adm-detail-content-cell-l"><? echo GetMessage(
+                                        "SMO_LOCATION_ZIP"
+                                    ); ?></td>
                                 <td width="60%" class="adm-detail-content-cell-r"><input type="text"
-                                                                                         name="location_zip[<?= htmlspecialcharsbx($siteList[$i]["ID"]) ?>]"
-                                                                                         value="<?= htmlspecialcharsbx($location_zip) ?>"
-                                                                                         size="5"/></td>
+                                                                                         name="location_zip[<?= htmlspecialcharsbx(
+                                                                                             $siteList[$i]["ID"]
+                                                                                         ) ?>]"
+                                                                                         value="<?= htmlspecialcharsbx(
+                                                                                             $location_zip
+                                                                                         ) ?>" size="5"/></td>
                             </tr>
                             <tr>
-                                <td class="adm-detail-content-cell-l"><?= GetMessage("SMO_LOCATION_SHOP_CITY") . ":"; ?></td>
+                                <td class="adm-detail-content-cell-l"><?= GetMessage(
+                                        "SMO_LOCATION_SHOP_CITY"
+                                    ) . ":"; ?></td>
                                 <td class="adm-detail-content-cell-r">
 
                                     <? if ($lpEnabled):?>
 
-                                        <? $APPLICATION->IncludeComponent("bitrix:sale.location.selector." . \Bitrix\Sale\Location\Admin\Helper::getWidgetAppearance(), "", array(
-                                            "ID" => "",
-                                            "CODE" => $location,
-                                            "INPUT_NAME" => "location[" . $siteList[$i]["ID"] . "]",
-                                            "PROVIDE_LINK_BY" => "code",
-                                            "SHOW_ADMIN_CONTROLS" => 'N',
-                                            "SELECT_WHEN_SINGLE" => 'N',
-                                            "FILTER_BY_SITE" => 'N',
-                                            "SHOW_DEFAULT_LOCATIONS" => 'N',
-                                            "SEARCH_BY_PRIMARY" => 'Y'
-                                        ),
+                                        <? $APPLICATION->IncludeComponent(
+                                            "bitrix:sale.location.selector." . \Bitrix\Sale\Location\Admin\Helper::getWidgetAppearance(
+                                            ),
+                                            "",
+                                            array(
+                                                "ID" => "",
+                                                "CODE" => $location,
+                                                "INPUT_NAME" => "location[" . $siteList[$i]["ID"] . "]",
+                                                "PROVIDE_LINK_BY" => "code",
+                                                "SHOW_ADMIN_CONTROLS" => 'N',
+                                                "SELECT_WHEN_SINGLE" => 'N',
+                                                "FILTER_BY_SITE" => 'N',
+                                                "SHOW_DEFAULT_LOCATIONS" => 'N',
+                                                "SEARCH_BY_PRIMARY" => 'Y'
+                                            ),
                                             false
                                         ); ?>
 
@@ -1653,23 +2220,28 @@ if ($SALE_RIGHT >= "R") :
                                                     "CITY_NAME_LANG" => "ASC"
                                                 ),
                                                 array(),
-                                                LANGUAGE_ID);
+                                                LANGUAGE_ID
+                                            );
                                             ?>
                                             <? while ($arLocation = $dbLocationList->GetNext()):
                                                 $locationName = $arLocation["COUNTRY_NAME"];
 
-                                                if (strlen($arLocation["REGION_NAME"]) > 0) {
-                                                    if (strlen($locationName) > 0)
+                                                if ($arLocation["REGION_NAME"] <> '') {
+                                                    if ($locationName <> '') {
                                                         $locationName .= " - ";
+                                                    }
                                                     $locationName .= $arLocation["REGION_NAME"];
                                                 }
-                                                if (strlen($arLocation["CITY_NAME"]) > 0) {
-                                                    if (strlen($locationName) > 0)
+                                                if ($arLocation["CITY_NAME"] <> '') {
+                                                    if ($locationName <> '') {
                                                         $locationName .= " - ";
+                                                    }
                                                     $locationName .= $arLocation["CITY_NAME"];
                                                 }
                                                 ?>
-                                                <option value="<?= $arLocation["ID"] ?>"<?= ($location == $arLocation["ID"] ? " selected=\"selected\"" : "") ?>> <? echo htmlspecialcharsbx($locationName) ?> </option>
+                                                <option value="<?= $arLocation["ID"] ?>"<?= ($location == $arLocation["ID"] ? " selected=\"selected\"" : "") ?>> <? echo htmlspecialcharsbx(
+                                                        $locationName
+                                                    ) ?> </option>
                                             <?endwhile; ?>
                                         </select>
 
@@ -1684,8 +2256,12 @@ if ($SALE_RIGHT >= "R") :
                                         <?= GetMessage("SMO_LOCATION_SALES_ZONE") . ":"; ?>
                                         <script type="text/javascript">
                                             BX.ready(function () {
-                                                BX.bind(BX("sales_zone_countries_<?=htmlspecialcharsbx($siteList[$i]["ID"])?>"), 'change', BX.Sale.Options.onCountrySelect);
-                                                BX.bind(BX("sales_zone_regions_<?=htmlspecialcharsbx($siteList[$i]["ID"])?>"), 'change', BX.Sale.Options.onRegionSelect);
+                                                BX.bind(BX("sales_zone_countries_<?=htmlspecialcharsbx(
+                                                    $siteList[$i]["ID"]
+                                                )?>"), 'change', BX.Sale.Options.onCountrySelect);
+                                                BX.bind(BX("sales_zone_regions_<?=htmlspecialcharsbx(
+                                                    $siteList[$i]["ID"]
+                                                )?>"), 'change', BX.Sale.Options.onRegionSelect);
                                             });
                                         </script>
                                     </td>
@@ -1699,9 +2275,15 @@ if ($SALE_RIGHT >= "R") :
                                         <? else:?>
 
                                             <?
-                                            $sales_zone_countries = \Bitrix\Sale\SalesZone::getCountriesIds($siteList[$i]["ID"]);
-                                            $sales_zone_regions = \Bitrix\Sale\SalesZone::getRegionsIds($siteList[$i]["ID"]);
-                                            $sales_zone_cities = \Bitrix\Sale\SalesZone::getCitiesIds($siteList[$i]["ID"]);
+                                            $sales_zone_countries = \Bitrix\Sale\SalesZone::getCountriesIds(
+                                                $siteList[$i]["ID"]
+                                            );
+                                            $sales_zone_regions = \Bitrix\Sale\SalesZone::getRegionsIds(
+                                                $siteList[$i]["ID"]
+                                            );
+                                            $sales_zone_cities = \Bitrix\Sale\SalesZone::getCitiesIds(
+                                                $siteList[$i]["ID"]
+                                            );
                                             ?>
 
                                             <table>
@@ -1712,59 +2294,134 @@ if ($SALE_RIGHT >= "R") :
                                                 </tr>
                                                 <tr>
                                                     <td>
-                                                        <select id="sales_zone_countries_<?= htmlspecialcharsbx($siteList[$i]["ID"]) ?>"
-                                                                name="sales_zone_countries[<?= htmlspecialcharsbx($siteList[$i]["ID"]) ?>][]"
-                                                                multiple size="10"
+                                                        <select id="sales_zone_countries_<?= htmlspecialcharsbx(
+                                                            $siteList[$i]["ID"]
+                                                        ) ?>" name="sales_zone_countries[<?= htmlspecialcharsbx(
+                                                            $siteList[$i]["ID"]
+                                                        ) ?>][]" multiple size="10"
                                                                 class="sale-options-location-mselect">
-                                                            <option value=''<?= in_array("", $sales_zone_countries) ? " selected" : "" ?>><?= GetMessage("SMO_LOCATION_ALL") ?></option>
-                                                            <option value='NULL'<?= in_array("NULL", $sales_zone_countries) ? " selected" : "" ?>><?= GetMessage("SMO_LOCATION_NO_COUNTRY") ?></option>
-                                                            <? $dbCountryList = CSaleLocation::GetCountryList(array("NAME_LANG" => "ASC")) ?>
+                                                            <option value=''<?= in_array(
+                                                                "",
+                                                                $sales_zone_countries
+                                                            ) ? " selected" : "" ?>><?= GetMessage(
+                                                                    "SMO_LOCATION_ALL"
+                                                                ) ?></option>
+                                                            <option value='NULL'<?= in_array(
+                                                                "NULL",
+                                                                $sales_zone_countries
+                                                            ) ? " selected" : "" ?>><?= GetMessage(
+                                                                    "SMO_LOCATION_NO_COUNTRY"
+                                                                ) ?></option>
+                                                            <? $dbCountryList = CSaleLocation::GetCountryList(
+                                                                array("NAME_LANG" => "ASC")
+                                                            ) ?>
                                                             <? while ($arCountry = $dbCountryList->fetch()): ?>
-                                                                <option value="<?= $arCountry["ID"] ?>"<?= in_array($arCountry["ID"], $sales_zone_countries) ? " selected" : "" ?>><?= htmlspecialcharsbx($arCountry["NAME_LANG"]) ?></option>
+                                                                <option value="<?= $arCountry["ID"] ?>"<?= in_array(
+                                                                    $arCountry["ID"],
+                                                                    $sales_zone_countries
+                                                                ) ? " selected" : "" ?>><?= htmlspecialcharsbx(
+                                                                        $arCountry["NAME_LANG"]
+                                                                    ) ?></option>
                                                             <? endwhile; ?>
                                                         </select>
                                                     </td>
                                                     <td>
-                                                        <select id="sales_zone_regions_<?= htmlspecialcharsbx($siteList[$i]["ID"]) ?>"
-                                                                name="sales_zone_regions[<?= htmlspecialcharsbx($siteList[$i]["ID"]) ?>][]"
-                                                                multiple size="10"
+                                                        <select id="sales_zone_regions_<?= htmlspecialcharsbx(
+                                                            $siteList[$i]["ID"]
+                                                        ) ?>" name="sales_zone_regions[<?= htmlspecialcharsbx(
+                                                            $siteList[$i]["ID"]
+                                                        ) ?>][]" multiple size="10"
                                                                 class="sale-options-location-mselect">
-                                                            <option value=''<?= in_array("", $sales_zone_regions) ? " selected" : "" ?>><?= GetMessage("SMO_LOCATION_ALL") ?></option>
-                                                            <option value='NULL'<?= in_array("NULL", $sales_zone_regions) ? " selected" : "" ?>><?= GetMessage("SMO_LOCATION_NO_REGION") ?></option>
+                                                            <option value=''<?= in_array(
+                                                                "",
+                                                                $sales_zone_regions
+                                                            ) ? " selected" : "" ?>><?= GetMessage(
+                                                                    "SMO_LOCATION_ALL"
+                                                                ) ?></option>
+                                                            <option value='NULL'<?= in_array(
+                                                                "NULL",
+                                                                $sales_zone_regions
+                                                            ) ? " selected" : "" ?>><?= GetMessage(
+                                                                    "SMO_LOCATION_NO_REGION"
+                                                                ) ?></option>
                                                             <? if (!in_array("", $sales_zone_countries)):?>
-                                                                <? $arRegions = \Bitrix\Sale\SalesZone::getRegions($sales_zone_countries, LANGUAGE_ID); ?>
+                                                                <? $arRegions = \Bitrix\Sale\SalesZone::getRegions(
+                                                                    $sales_zone_countries,
+                                                                    LANGUAGE_ID
+                                                                ); ?>
                                                                 <? foreach ($arRegions as $regionId => $arRegionName):?>
-                                                                    <option value="<?= $regionId ?>"<?= in_array($regionId, $sales_zone_regions) ? " selected" : "" ?>><?= htmlspecialcharsbx($arRegionName) ?></option>
+                                                                    <option value="<?= $regionId ?>"<?= in_array(
+                                                                        $regionId,
+                                                                        $sales_zone_regions
+                                                                    ) ? " selected" : "" ?>><?= htmlspecialcharsbx(
+                                                                            $arRegionName
+                                                                        ) ?></option>
                                                                 <?endforeach; ?>
                                                             <?endif; ?>
                                                         </select>
                                                     </td>
                                                     <td>
 
-                                                        <select id="sales_zone_regions_<?= htmlspecialcharsbx($siteList[$i]["ID"]) ?>"
-                                                                name="sales_zone_regions[<?= htmlspecialcharsbx($siteList[$i]["ID"]) ?>][]"
-                                                                multiple size="10"
+                                                        <select id="sales_zone_regions_<?= htmlspecialcharsbx(
+                                                            $siteList[$i]["ID"]
+                                                        ) ?>" name="sales_zone_regions[<?= htmlspecialcharsbx(
+                                                            $siteList[$i]["ID"]
+                                                        ) ?>][]" multiple size="10"
                                                                 class="sale-options-location-mselect">
-                                                            <option value=''<?= in_array("", $sales_zone_regions) ? " selected" : "" ?>><?= GetMessage("SMO_LOCATION_ALL") ?></option>
-                                                            <option value='NULL'<?= in_array("NULL", $sales_zone_regions) ? " selected" : "" ?>><?= GetMessage("SMO_LOCATION_NO_REGION") ?></option>
+                                                            <option value=''<?= in_array(
+                                                                "",
+                                                                $sales_zone_regions
+                                                            ) ? " selected" : "" ?>><?= GetMessage(
+                                                                    "SMO_LOCATION_ALL"
+                                                                ) ?></option>
+                                                            <option value='NULL'<?= in_array(
+                                                                "NULL",
+                                                                $sales_zone_regions
+                                                            ) ? " selected" : "" ?>><?= GetMessage(
+                                                                    "SMO_LOCATION_NO_REGION"
+                                                                ) ?></option>
                                                             <? if (!in_array("", $sales_zone_countries)):?>
-                                                                <? $arRegions = SalesZone::getRegions($sales_zone_countries, LANGUAGE_ID); ?>
+                                                                <? $arRegions = SalesZone::getRegions(
+                                                                    $sales_zone_countries,
+                                                                    LANGUAGE_ID
+                                                                ); ?>
                                                                 <? foreach ($arRegions as $regionId => $arRegionName):?>
-                                                                    <option value="<?= $regionId ?>"<?= in_array($regionId, $sales_zone_regions) ? " selected" : "" ?>><?= htmlspecialcharsbx($arRegionName) ?></option>
+                                                                    <option value="<?= $regionId ?>"<?= in_array(
+                                                                        $regionId,
+                                                                        $sales_zone_regions
+                                                                    ) ? " selected" : "" ?>><?= htmlspecialcharsbx(
+                                                                            $arRegionName
+                                                                        ) ?></option>
                                                                 <?endforeach; ?>
                                                             <?endif; ?>
                                                         </select>
                                                     </td>
                                                     <td>
-                                                        <select id="sales_zone_cities_<?= htmlspecialcharsbx($siteList[$i]["ID"]) ?>"
-                                                                name="sales_zone_cities[<?= htmlspecialcharsbx($siteList[$i]["ID"]) ?>][]"
-                                                                multiple size="10"
+                                                        <select id="sales_zone_cities_<?= htmlspecialcharsbx(
+                                                            $siteList[$i]["ID"]
+                                                        ) ?>" name="sales_zone_cities[<?= htmlspecialcharsbx(
+                                                            $siteList[$i]["ID"]
+                                                        ) ?>][]" multiple size="10"
                                                                 class="sale-options-location-mselect">
-                                                            <option value=''<?= in_array("", $sales_zone_cities) ? " selected" : "" ?>><?= GetMessage("SMO_LOCATION_ALL") ?></option>
+                                                            <option value=''<?= in_array(
+                                                                "",
+                                                                $sales_zone_cities
+                                                            ) ? " selected" : "" ?>><?= GetMessage(
+                                                                    "SMO_LOCATION_ALL"
+                                                                ) ?></option>
                                                             <? if (!in_array("", $sales_zone_regions)):?>
-                                                                <? $arCities = SalesZone::getCities($sales_zone_countries, $sales_zone_regions, LANGUAGE_ID); ?>
+                                                                <? $arCities = SalesZone::getCities(
+                                                                    $sales_zone_countries,
+                                                                    $sales_zone_regions,
+                                                                    LANGUAGE_ID
+                                                                ); ?>
                                                                 <? foreach ($arCities as $cityId => $cityName):?>
-                                                                    <option value="<?= $cityId ?>"<?= in_array($cityId, $sales_zone_cities) ? " selected" : "" ?>><?= htmlspecialcharsbx($cityName) ?></option>
+                                                                    <option value="<?= $cityId ?>"<?= in_array(
+                                                                        $cityId,
+                                                                        $sales_zone_cities
+                                                                    ) ? " selected" : "" ?>><?= htmlspecialcharsbx(
+                                                                            $cityName
+                                                                        ) ?></option>
                                                                 <?endforeach; ?>
                                                             <?endif; ?>
                                                         </select>
@@ -1788,7 +2445,11 @@ if ($SALE_RIGHT >= "R") :
 
             </td>
         </tr>
-        <? if (CBXFeatures::IsFeatureEnabled('SaleCCards') && COption::GetOptionString($module_id, "use_ccards", "N") == "Y") {
+        <? if (CBXFeatures::IsFeatureEnabled('SaleCCards') && COption::GetOptionString(
+                $module_id,
+                "use_ccards",
+                "N"
+            ) == "Y") {
             ?>
             <? $tabControl->BeginNextTab(); ?>
 
@@ -1796,7 +2457,9 @@ if ($SALE_RIGHT >= "R") :
             if (!CSaleUserCards::CheckPassword()) {
                 ?>
                 <tr>
-                <td colspan="2"><? CAdminMessage::ShowMessage(str_replace("#ROOT#", $_SERVER["DOCUMENT_ROOT"], GetMessage("SMO_NO_VALID_PASSWORD"))) ?></td>
+                <td colspan="2"><? CAdminMessage::ShowMessage(
+                        str_replace("#ROOT#", $_SERVER["DOCUMENT_ROOT"], GetMessage("SMO_NO_VALID_PASSWORD"))
+                    ) ?></td>
                 </tr><?
             }
             ?>
@@ -1826,11 +2489,16 @@ if ($SALE_RIGHT >= "R") :
                     $val = COption::GetOptionString("sale", "crypt_algorithm", "RC4");
                     ?>
                     <select name="crypt_algorithm">
-                        <option value="RC4"<? if ($val == "RC4") echo " selected"; ?>>RC4</option>
-                        <option value="AES"<? if ($val == "AES") echo " selected"; ?>>AES (Rijndael)
-                            - <?= GetMessage("SMO_NEED_MCRYPT") ?></option>
-                        <option value="3DES"<? if ($val == "3DES") echo " selected"; ?>>3DES (Triple-DES)
-                            - <?= GetMessage("SMO_NEED_MCRYPT") ?></option>
+                        <option value="RC4"<? if ($val == "RC4") {
+                            echo " selected";
+                        } ?>>RC4
+                        </option>
+                        <option value="AES"<? if ($val == "AES") {
+                            echo " selected";
+                        } ?>>AES (Rijndael) - <?= GetMessage("SMO_NEED_MCRYPT") ?></option>
+                        <option value="3DES"<? if ($val == "3DES") {
+                            echo " selected";
+                        } ?>>3DES (Triple-DES) - <?= GetMessage("SMO_NEED_MCRYPT") ?></option>
                     </select>
 
                 </td>
@@ -1861,14 +2529,24 @@ if ($SALE_RIGHT >= "R") :
                         ?>
                         <tr>
                             <td valign="top">
-                                [<a href="site_edit.php?LID=<?= htmlspecialcharsbx($val["ID"]) ?>&lang=<?= LANGUAGE_ID ?>"
-                                    title="<?= GetMessage("SALE_SITE_ALT") ?>"><? echo htmlspecialcharsbx($val["ID"]) ?></a>] <? echo htmlspecialcharsbx($val["NAME"]) ?>
+                                [<a href="site_edit.php?LID=<?= htmlspecialcharsbx(
+                                    $val["ID"]
+                                ) ?>&lang=<?= LANGUAGE_ID ?>"
+                                    title="<?= GetMessage("SALE_SITE_ALT") ?>"><? echo htmlspecialcharsbx(
+                                        $val["ID"]
+                                    ) ?></a>] <? echo htmlspecialcharsbx($val["NAME"]) ?>
                             </td>
                             <td valign="top">
 
                                 <?
                                 $arCurr = CSaleLang::GetByID($val["ID"]);
-                                echo CCurrency::SelectBox("CURRENCY_" . $val["ID"], $arCurr["CURRENCY"], GetMessage("SALE_NOT_SET"), True, "");
+                                echo CCurrency::SelectBox(
+                                    "CURRENCY_" . $val["ID"],
+                                    $arCurr["CURRENCY"],
+                                    GetMessage("SALE_NOT_SET"),
+                                    true,
+                                    ""
+                                );
                                 ?>
 
                             </td>
@@ -1884,15 +2562,14 @@ if ($SALE_RIGHT >= "R") :
                                     $arCurrentGroups[] = (int)$arSiteGroup["GROUP_ID"];
                                 }
 
-                                $b = "c_sort";
-                                $o = "asc";
                                 $userGroupList = array();
-                                $dbGroups = CGroup::GetList($b, $o, array("ANONYMOUS" => "N"));
+                                $dbGroups = CGroup::GetList("c_sort", "asc", array("ANONYMOUS" => "N"));
                                 while ($arGroup = $dbGroups->Fetch()) {
                                     $arGroup["ID"] = (int)$arGroup["ID"];
 
-                                    if ($arGroup["ID"] == 1 || $arGroup["ID"] == 2)
+                                    if ($arGroup["ID"] == 1 || $arGroup["ID"] == 2) {
                                         continue;
+                                    }
 
                                     $userGroupList[] = $arGroup;
                                 }
@@ -1902,7 +2579,12 @@ if ($SALE_RIGHT >= "R") :
                                     <?
                                     for ($i = 0, $intCount = count($userGroupList); $i < $intCount; $i++) {
                                         ?>
-                                        <option value="<?= $userGroupList[$i]["ID"] ?>"<? if (in_array($userGroupList[$i]["ID"], $arCurrentGroups)) echo " selected"; ?>><?= htmlspecialcharsEx($userGroupList[$i]["NAME"]) ?></option><?
+                                        <option value="<?= $userGroupList[$i]["ID"] ?>"<? if (in_array(
+                                            $userGroupList[$i]["ID"],
+                                            $arCurrentGroups
+                                        )) {
+                                            echo " selected";
+                                        } ?>><?= htmlspecialcharsEx($userGroupList[$i]["NAME"]) ?></option><?
                                     }
                                     ?>
                                 </select>
@@ -1935,7 +2617,9 @@ if ($SALE_RIGHT >= "R") :
                     <?
                     foreach ($arStatuses as $statusID => $statusName) {
                         ?>
-                        <option value="<?= $statusID ?>"<? if ($val == $statusID) echo " selected"; ?>><?= htmlspecialcharsbx($statusName) ?></option><?
+                        <option value="<?= $statusID ?>"<? if ($val == $statusID) {
+                            echo " selected";
+                        } ?>><?= htmlspecialcharsbx($statusName) ?></option><?
                     }
                     ?>
                 </select>
@@ -1953,7 +2637,9 @@ if ($SALE_RIGHT >= "R") :
                     <?
                     foreach ($arStatuses as $statusID => $statusName) {
                         ?>
-                        <option value="<?= $statusID ?>"<? if ($val == $statusID) echo " selected"; ?>><?= htmlspecialcharsbx($statusName) ?></option><?
+                        <option value="<?= $statusID ?>"<? if ($val == $statusID) {
+                            echo " selected";
+                        } ?>><?= htmlspecialcharsbx($statusName) ?></option><?
                     }
                     ?>
                 </select>
@@ -1973,11 +2659,19 @@ if ($SALE_RIGHT >= "R") :
                 }
                 ?>
                 <select name="CHANGE_ALLOW_DELIVERY_AFTER_PAID">
-                    <option value="N" <? if ($val == "N") echo " selected"; ?>><?= Main\Localization\Loc::getMessage("SALE_DENY_STATUS") ?></option>
+                    <option value="N" <? if ($val == "N") {
+                        echo " selected";
+                    } ?>><?= Main\Localization\Loc::getMessage("SALE_DENY_STATUS") ?></option>
                     <?
-                    foreach (Sale\Configuration::getAllowDeliveryAfterPaidConditionList(true) as $payTypeId => $payTitle) {
+                    foreach (
+                        Sale\Configuration::getAllowDeliveryAfterPaidConditionList(
+                            true
+                        ) as $payTypeId => $payTitle
+                    ) {
                         ?>
-                        <option value="<? echo $payTypeId; ?>"<?= ($payTypeId == $val ? ' selected' : '') ?>><?= htmlspecialcharsEx($payTitle); ?></option><?
+                        <option value="<? echo $payTypeId; ?>"<?= ($payTypeId == $val ? ' selected' : '') ?>><?= htmlspecialcharsEx(
+                            $payTitle
+                        ); ?></option><?
                     }
                     ?>
                 </select>
@@ -2000,7 +2694,9 @@ if ($SALE_RIGHT >= "R") :
                     <?
                     foreach ($arStatuses as $statusID => $statusName) {
                         ?>
-                        <option value="<?= $statusID ?>"<? if ($val == $statusID) echo " selected"; ?>><?= htmlspecialcharsbx($statusName) ?></option><?
+                        <option value="<?= $statusID ?>"<? if ($val == $statusID) {
+                            echo " selected";
+                        } ?>><?= htmlspecialcharsbx($statusName) ?></option><?
                     }
                     ?>
                 </select>
@@ -2018,7 +2714,9 @@ if ($SALE_RIGHT >= "R") :
                     <?
                     foreach ($arStatuses as $statusID => $statusName) {
                         ?>
-                        <option value="<?= $statusID ?>"<? if ($val == $statusID) echo " selected"; ?>><?= htmlspecialcharsbx($statusName) ?></option><?
+                        <option value="<?= $statusID ?>"<? if ($val == $statusID) {
+                            echo " selected";
+                        } ?>><?= htmlspecialcharsbx($statusName) ?></option><?
                     }
                     ?>
                 </select>
@@ -2036,7 +2734,9 @@ if ($SALE_RIGHT >= "R") :
                     <?
                     foreach ($arStatuses as $statusID => $statusName) {
                         ?>
-                        <option value="<?= $statusID ?>"<? if ($val == $statusID) echo " selected"; ?>><?= htmlspecialcharsbx($statusName) ?></option><?
+                        <option value="<?= $statusID ?>"<? if ($val == $statusID) {
+                            echo " selected";
+                        } ?>><?= htmlspecialcharsbx($statusName) ?></option><?
                     }
                     ?>
                 </select>
@@ -2054,7 +2754,9 @@ if ($SALE_RIGHT >= "R") :
                     <?
                     foreach ($arStatuses as $statusID => $statusName) {
                         ?>
-                        <option value="<?= $statusID ?>"<? if ($val == $statusID) echo " selected"; ?>><?= htmlspecialcharsbx($statusName) ?></option><?
+                        <option value="<?= $statusID ?>"<? if ($val == $statusID) {
+                            echo " selected";
+                        } ?>><?= htmlspecialcharsbx($statusName) ?></option><?
                     }
                     ?>
                 </select>
@@ -2077,7 +2779,9 @@ if ($SALE_RIGHT >= "R") :
                     <?
                     foreach ($delieryStatuses as $statusId => $statusName) {
                         ?>
-                        <option value="<?= $statusId ?>"<? if ($val == $statusId) echo " selected"; ?>><?= htmlspecialcharsEx($statusName) ?></option><?
+                        <option value="<?= $statusId ?>"<? if ($val == $statusId) {
+                            echo " selected";
+                        } ?>><?= htmlspecialcharsEx($statusName) ?></option><?
                     }
                     ?>
                 </select>
@@ -2095,7 +2799,9 @@ if ($SALE_RIGHT >= "R") :
                     <?
                     foreach ($delieryStatuses as $statusId => $statusName) {
                         ?>
-                        <option value="<?= $statusId ?>"<? if ($val == $statusId) echo " selected"; ?>><?= htmlspecialcharsEx($statusName) ?></option><?
+                        <option value="<?= $statusId ?>"<? if ($val == $statusId) {
+                            echo " selected";
+                        } ?>><?= htmlspecialcharsEx($statusName) ?></option><?
                     }
                     ?>
                 </select>
@@ -2103,15 +2809,18 @@ if ($SALE_RIGHT >= "R") :
         </tr>
         <tr>
             <td>
-                <label for="ALLOW_DEDUCTION_ON_DELIVERY"><? echo GetMessage("SALE_ALLOW_DEDUCTION_ON_DELIVERY") ?></label>
+                <label for="ALLOW_DEDUCTION_ON_DELIVERY"><? echo GetMessage(
+                        "SALE_ALLOW_DEDUCTION_ON_DELIVERY"
+                    ) ?></label>
             </td>
             <td>
                 <?
                 $valDeductOnDelivery = COption::GetOptionString("sale", "allow_deduction_on_delivery", "");
                 ?>
                 <input type="checkbox" name="ALLOW_DEDUCTION_ON_DELIVERY" id="ALLOW_DEDUCTION_ON_DELIVERY"
-                       value="Y"<? if ($valDeductOnDelivery == "Y") echo " checked"; ?>
-                       onclick="javascript:toggleDefaultStores(this);">
+                       value="Y"<? if ($valDeductOnDelivery == "Y") {
+                    echo " checked";
+                } ?> onclick="javascript:toggleDefaultStores(this);">
                 <script type="text/javascript">
                     function toggleDefaultStores(el) {
                         var elements = document.getElementsByClassName('default_deduct_store_control');
@@ -2142,8 +2851,9 @@ if ($SALE_RIGHT >= "R") :
         <tr class="sale-option-tracking-auto">
             <td><?= GetMessage("SALE_TRACKING_CHECK_PERIOD") ?>:</td>
             <td><input type="text" name="tracking_check_period"
-                       value="<?= !empty($currentSettings["tracking_check_period"]) && intval($currentSettings["tracking_check_period"]) > 0 ? intval($currentSettings["tracking_check_period"]) : '0' ?>">
-            </td>
+                       value="<?= !empty($currentSettings["tracking_check_period"]) && intval(
+                           $currentSettings["tracking_check_period"]
+                       ) > 0 ? intval($currentSettings["tracking_check_period"]) : '0' ?>"></td>
         </tr>
 
         <tr class="heading sale-option-tracking-auto">
@@ -2154,17 +2864,20 @@ if ($SALE_RIGHT >= "R") :
         $shipmentStatuses = array();
         $context = Main\Application::getInstance()->getContext();
 
-        $dbRes = Sale\Internals\StatusTable::getList(array(
-            'select' => array('ID', 'Bitrix\Sale\Internals\StatusLangTable:STATUS.NAME'),
-            'filter' => array(
-                '=Bitrix\Sale\Internals\StatusLangTable:STATUS.LID' => $context->getLanguage(),
-                '=TYPE' => 'D'
-            ),
-            'order' => array('SORT' => 'ASC')
-        ));
+        $dbRes = Sale\Internals\StatusTable::getList(
+            array(
+                'select' => array('ID', 'Bitrix\Sale\Internals\StatusLangTable:STATUS.NAME'),
+                'filter' => array(
+                    '=Bitrix\Sale\Internals\StatusLangTable:STATUS.LID' => $context->getLanguage(),
+                    '=TYPE' => 'D'
+                ),
+                'order' => array('SORT' => 'ASC')
+            )
+        );
 
-        while ($shipmentStatus = $dbRes->fetch())
+        while ($shipmentStatus = $dbRes->fetch()) {
             $shipmentStatuses[$shipmentStatus["ID"]] = $shipmentStatus["SALE_INTERNALS_STATUS_SALE_INTERNALS_STATUS_LANG_STATUS_NAME"] . " [" . $shipmentStatus["ID"] . "]";
+        }
 
         $trackingStatuses = \Bitrix\Sale\Delivery\Tracking\Manager::getStatusesList();
         ?>
@@ -2179,7 +2892,9 @@ if ($SALE_RIGHT >= "R") :
                     <select name="tracking_map_statuses[<?= $trackingStatusId ?>]">
                         <option value=""><?= GetMessage("SALE_TRACKING_NOT_USE") ?></option>
                         <? foreach ($shipmentStatuses as $shipmentStatusId => $shipmentStatusName):?>
-                            <option value="<?= $shipmentStatusId ?>"<?= !empty($currentSettings["tracking_map_statuses"][$trackingStatusId]) && $currentSettings["tracking_map_statuses"][$trackingStatusId] == $shipmentStatusId ? " selected" : "" ?>><?= htmlspecialcharsEx($shipmentStatusName) ?></option>
+                            <option value="<?= $shipmentStatusId ?>"<?= !empty($currentSettings["tracking_map_statuses"][$trackingStatusId]) && $currentSettings["tracking_map_statuses"][$trackingStatusId] == $shipmentStatusId ? " selected" : "" ?>><?= htmlspecialcharsEx(
+                                    $shipmentStatusName
+                                ) ?></option>
                         <? endforeach; ?>
                     </select>
                 </td>
@@ -2188,7 +2903,7 @@ if ($SALE_RIGHT >= "R") :
         <? $tabControl->BeginNextTab(); ?>
         <?
         $filterValues = Option::get('sale', 'archive_params');
-        $filterValues = unserialize($filterValues);
+        $filterValues = unserialize($filterValues, ['allowed_classes' => false]);
         ?>
         <tr>
             <td>
@@ -2196,7 +2911,9 @@ if ($SALE_RIGHT >= "R") :
             </td>
             <td>
                 <input type="checkbox" name="archive_regular_accept" id="ORDER_ARCHIVE_REGULAR_ACCEPT"
-                       value="Y" <? if (Option::get('sale', 'regular_archive_active')) echo " checked"; ?>>
+                       value="Y" <? if (Option::get('sale', 'regular_archive_active')) {
+                    echo " checked";
+                } ?>>
             </td>
         </tr>
         <tr>
@@ -2205,8 +2922,10 @@ if ($SALE_RIGHT >= "R") :
             </td>
             <td>
                 <input type="text" name="archive_limit"
-                       value="<?= (int)(Option::get('sale', 'archive_limit')) ? (int)(Option::get('sale', 'archive_limit')) : 10 ?>"
-                       size="5" id="archive_limit">
+                       value="<?= (int)(Option::get('sale', 'archive_limit')) ? (int)(Option::get(
+                           'sale',
+                           'archive_limit'
+                       )) : 10 ?>" size="5" id="archive_limit">
             </td>
         </tr>
         <tr>
@@ -2215,7 +2934,10 @@ if ($SALE_RIGHT >= "R") :
             <td>
                 <input type="text"
                        name="archive_time_limit"
-                       value="<?= (int)(Option::get('sale', 'archive_time_limit')) ? (int)(Option::get('sale', 'archive_time_limit')) : 5 ?>"
+                       value="<?= (int)(Option::get('sale', 'archive_time_limit')) ? (int)(Option::get(
+                           'sale',
+                           'archive_time_limit'
+                       )) : 5 ?>"
                        size="5"
                        id="archive_time_limit">
                 <? echo Loc::getMessage("SALE_ORDER_ARCHIVE_SEC") ?>
@@ -2245,9 +2967,9 @@ if ($SALE_RIGHT >= "R") :
                        id="archive_period"></td>
         </tr>
         <tr>
-            <td valign="top"><label
-                        for="archive_blocked_order_accept"><? echo Loc::getMessage("ARCHIVE_BLOCKED_ORDER_ACCEPT") ?>
-                    :</label></td>
+            <td valign="top"><label for="archive_blocked_order_accept"><? echo Loc::getMessage(
+                        "ARCHIVE_BLOCKED_ORDER_ACCEPT"
+                    ) ?>:</label></td>
             <td>
                 <input type="checkbox" name="archive_blocked_order_accept" id="archive_blocked_order_accept"
                        value="Y" <? if (Option::get("sale", "archive_blocked_order") === "Y") echo "checked" ?>>
@@ -2298,14 +3020,18 @@ if ($SALE_RIGHT >= "R") :
                     $allStatusNames = \Bitrix\Sale\OrderStatus::getAllStatusesNames();
 
                     foreach ($statusesList as $statusCode) {
-                        if (!$statusName = $allStatusNames[$statusCode])
+                        if (!$statusName = $allStatusNames[$statusCode]) {
                             continue;
+                        }
                         ?>
                         <option
                                 value="<?= htmlspecialcharsbx($statusCode) ?>"
                             <?
                             if (
-                                (is_array($filterValues['STATUS_ID']) && in_array($statusCode, $filterValues['STATUS_ID']))
+                                (is_array($filterValues['STATUS_ID']) && in_array(
+                                        $statusCode,
+                                        $filterValues['STATUS_ID']
+                                    ))
                                 || empty($filterValues['STATUS_ID'])
                             )
                                 echo " selected"
@@ -2326,8 +3052,12 @@ if ($SALE_RIGHT >= "R") :
             <td>
                 <select name="archive_payed" id="ORDER_ARCHIVE_PAYED">
                     <option value="" selected><? echo Loc::getMessage("SALE_ORDER_ARCHIVE_ALL") ?></option>
-                    <option value="Y"<? if ($filterValues['=PAYED'] == "Y") echo " selected" ?>><? echo Loc::getMessage("SALE_ORDER_ARCHIVE_YES") ?></option>
-                    <option value="N"<? if ($filterValues['=PAYED'] == 'N') echo " selected" ?>><? echo Loc::getMessage("SALE_ORDER_ARCHIVE_NO") ?></option>
+                    <option value="Y"<? if ($filterValues['=PAYED'] == "Y") echo " selected" ?>><? echo Loc::getMessage(
+                            "SALE_ORDER_ARCHIVE_YES"
+                        ) ?></option>
+                    <option value="N"<? if ($filterValues['=PAYED'] == 'N') echo " selected" ?>><? echo Loc::getMessage(
+                            "SALE_ORDER_ARCHIVE_NO"
+                        ) ?></option>
                 </select>
             </td>
         </tr>
@@ -2338,8 +3068,12 @@ if ($SALE_RIGHT >= "R") :
             <td>
                 <select name="archive_canceled" id="ORDER_ARCHIVE_CANCELED">
                     <option value="" selected><? echo Loc::getMessage("SALE_ORDER_ARCHIVE_ALL") ?></option>
-                    <option value="Y"<? if ($filterValues['=CANCELED'] == "Y") echo " selected" ?>><? echo Loc::getMessage("SALE_ORDER_ARCHIVE_YES") ?></option>
-                    <option value="N"<? if ($filterValues['=CANCELED'] == 'N') echo " selected" ?>><? echo Loc::getMessage("SALE_ORDER_ARCHIVE_NO") ?></option>
+                    <option value="Y"<? if ($filterValues['=CANCELED'] == "Y") echo " selected" ?>><? echo Loc::getMessage(
+                            "SALE_ORDER_ARCHIVE_YES"
+                        ) ?></option>
+                    <option value="N"<? if ($filterValues['=CANCELED'] == 'N') echo " selected" ?>><? echo Loc::getMessage(
+                            "SALE_ORDER_ARCHIVE_NO"
+                        ) ?></option>
                 </select>
             </td>
         </tr>
@@ -2350,14 +3084,20 @@ if ($SALE_RIGHT >= "R") :
             <td>
                 <select name="archive_deducted" id="ORDER_ARCHIVE_DEDUCTED">
                     <option value="" selected><? echo Loc::getMessage("SALE_ORDER_ARCHIVE_ALL") ?></option>
-                    <option value="Y"<? if ($filterValues['=DEDUCTED'] == "Y") echo " selected" ?>><? echo Loc::getMessage("SALE_ORDER_ARCHIVE_YES") ?></option>
-                    <option value="N"<? if ($filterValues['=DEDUCTED'] == 'N') echo " selected" ?>><? echo Loc::getMessage("SALE_ORDER_ARCHIVE_NO") ?></option>
+                    <option value="Y"<? if ($filterValues['=DEDUCTED'] == "Y") echo " selected" ?>><? echo Loc::getMessage(
+                            "SALE_ORDER_ARCHIVE_YES"
+                        ) ?></option>
+                    <option value="N"<? if ($filterValues['=DEDUCTED'] == 'N') echo " selected" ?>><? echo Loc::getMessage(
+                            "SALE_ORDER_ARCHIVE_NO"
+                        ) ?></option>
                 </select>
             </td>
         </tr>
         <? $tabControl->BeginNextTab(); ?>
         <div class="adm-numerator-use-template-checkbox-outer">
-            <span class="adm-numerator-use-template-checkbox-title"><?= Loc::getMessage('NUMERATOR_NOT_USE_CHECKBOX_TITLE'); ?></span>
+            <span class="adm-numerator-use-template-checkbox-title"><?= Loc::getMessage(
+                    'NUMERATOR_NOT_USE_CHECKBOX_TITLE'
+                ); ?></span>
             <div class="adm-numerator-use-template-checkbox-inner">
                 <input type="checkbox" class="adm-designed-checkbox" name="hideNumeratorSettings"
                        id="hideNumeratorSettings"
@@ -2385,16 +3125,19 @@ if ($SALE_RIGHT >= "R") :
         <script type="text/javascript">
             function RestoreDefaults() {
                 if (confirm('<?echo addslashes(GetMessage("MAIN_HINT_RESTORE_DEFAULTS_WARNING"))?>'))
-                    window.location = "<?echo $APPLICATION->GetCurPage()?>?RestoreDefaults=Y&lang=<?echo LANGUAGE_ID?>&mid=<?echo $module_id?>";
+                    window.location = "<?echo $APPLICATION->GetCurPage(
+                    )?>?RestoreDefaults=Y&lang=<?echo LANGUAGE_ID?>&mid=<?echo $module_id?>";
             }
         </script>
 
         <input type="submit" <? if ($SALE_RIGHT < "W") echo "disabled" ?> name="Update"
                value="<? echo GetMessage("MAIN_SAVE") ?>" class="adm-btn-save">
         <input type="hidden" name="Update" value="Y">
-        <? if (strlen($_REQUEST["back_url_settings"]) > 0):?>
+        <? if ($_REQUEST["back_url_settings"] <> ''):?>
             <input type="button" name="Cancel" value="<?= GetMessage("MAIN_OPT_CANCEL") ?>"
-                   onclick="window.location='<? echo htmlspecialcharsbx(CUtil::addslashes($_REQUEST["back_url_settings"])) ?>'">
+                   onclick="window.location='<? echo htmlspecialcharsbx(
+                       CUtil::addslashes($_REQUEST["back_url_settings"])
+                   ) ?>'">
             <input type="hidden" name="back_url_settings"
                    value="<?= htmlspecialcharsbx($_REQUEST["back_url_settings"]) ?>">
         <? endif; ?>
@@ -2405,22 +3148,43 @@ if ($SALE_RIGHT >= "R") :
     </form>
     <h2><?= GetMessage("SALE_SYSTEM_PROCEDURES") ?></h2>
     <?
-    $showbasketDiscountConvert = (string)Main\Config\Option::get('sale', 'basket_discount_converted') != 'Y' && Main\ModuleManager::isModuleInstalled('catalog');
+    $showbasketDiscountConvert = (string)Main\Config\Option::get(
+            'sale',
+            'basket_discount_converted'
+        ) != 'Y' && Main\ModuleManager::isModuleInstalled('catalog');
     if ($showbasketDiscountConvert) {
         if (CSaleBasketDiscountConvert::getAllCounter() == 0) {
-            $adminNotifyIterator = CAdminNotify::GetList(array(), array('MODULE_ID' => 'sale', 'TAG' => 'BASKET_DISCOUNT_CONVERTED'));
+            $adminNotifyIterator = CAdminNotify::GetList(
+                array(),
+                array(
+                    'MODULE_ID' => 'sale',
+                    'TAG' => 'BASKET_DISCOUNT_CONVERTED'
+                )
+            );
             if ($adminNotifyIterator) {
-                if ($adminNotify = $adminNotifyIterator->Fetch())
+                if ($adminNotify = $adminNotifyIterator->Fetch()) {
                     CAdminNotify::Delete($adminNotify['ID']);
+                }
                 unset($adminNotify);
             }
             unset($adminNotifyIterator);
             $showbasketDiscountConvert = false;
         }
     }
-    $systemTabs[] = array('DIV' => 'saleSysTabReindex', 'TAB' => GetMessage('SALE_SYSTEM_TAB_REINDEX'), 'ICON' => 'sale_settings', 'TITLE' => GetMessage('SALE_SYSTEM_TAB_REINDEX_TITLE'));
-    if ($showbasketDiscountConvert)
-        $systemTabs[] = array('DIV' => 'saleSysTabConvert', 'TAB' => GetMessage('SALE_SYSTEM_TAB_CONVERT'), 'ICON' => 'sale_settings', 'TITLE' => GetMessage('SALE_SYSTEM_TAB_CONVERT_TITLE'));
+    $systemTabs[] = array(
+        'DIV' => 'saleSysTabReindex',
+        'TAB' => GetMessage('SALE_SYSTEM_TAB_REINDEX'),
+        'ICON' => 'sale_settings',
+        'TITLE' => GetMessage('SALE_SYSTEM_TAB_REINDEX_TITLE')
+    );
+    if ($showbasketDiscountConvert) {
+        $systemTabs[] = array(
+            'DIV' => 'saleSysTabConvert',
+            'TAB' => GetMessage('SALE_SYSTEM_TAB_CONVERT'),
+            'ICON' => 'sale_settings',
+            'TITLE' => GetMessage('SALE_SYSTEM_TAB_CONVERT_TITLE')
+        );
+    }
 
     $systemTabControl = new CAdminTabControl('saleSysTabControl', $systemTabs, true, true);
 

@@ -20,9 +20,11 @@ class Purge extends Translate\Controller\Action
     final public function run($path = '')
     {
         if (!empty($path)) {
-            $filter = new Translate\Filter([
-                'path' => $path
-            ]);
+            $filter = new Translate\Filter(
+                [
+                    'path' => $path
+                ]
+            );
             (new Translate\Index\PathLangCollection())->purge($filter);
             (new Translate\Index\PathIndexCollection())->purge($filter);
         } else {

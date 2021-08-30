@@ -94,6 +94,5 @@ class BoardButton
 
         echo implode('', $this->getStringList());
         echo $this->getHtml();
-
     }
 }

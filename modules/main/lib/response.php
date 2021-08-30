@@ -31,17 +31,43 @@ abstract class Response
      */
     public function setContent($content)
     {
-        if (
-            $content !== null &&
-            !is_string($content) &&
-            !is_numeric($content) &&
-            !is_callable(array($content, '__toString'))) {
+        if (!$this->checkContent($content)) {
             throw new ArgumentTypeException('content', 'string');
         }
 
         $this->content = (string)$content;
 
         return $this;
+    }
+
+    /**
+     * Appends content.
+     * Valid types are strings, numbers, null, and objects that implement a __toString() method.
+     *
+     * @param mixed $content Content that can be cast to string.
+     *
+     * @return $this
+     * @throws ArgumentTypeException
+     */
+    public function appendContent($content)
+    {
+        if (!$this->checkContent($content)) {
+            throw new ArgumentTypeException('content', 'string');
+        }
+
+        $this->content .= (string)$content;
+
+        return $this;
+    }
+
+    protected function checkContent($content)
+    {
+        return (
+            $content === null ||
+            is_string($content) ||
+            is_numeric($content) ||
+            is_callable(array($content, '__toString'))
+        );
     }
 
     /**

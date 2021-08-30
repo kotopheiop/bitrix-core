@@ -65,11 +65,13 @@ final class CompatibleFormat
         }
         if (!empty($oldOrder['BASKET_ITEMS']) && !empty($currentOrder['BASKET_ITEMS'])) {
             foreach ($oldOrder['BASKET_ITEMS'] as $basketCode => $item) {
-                if (!isset($currentOrder['BASKET_ITEMS'][$basketCode]))
+                if (!isset($currentOrder['BASKET_ITEMS'][$basketCode])) {
                     continue;
+                }
                 if ($item['PRICE'] != $currentOrder['BASKET_ITEMS'][$basketCode]['PRICE']) {
-                    if (!isset($result['BASKET']))
+                    if (!isset($result['BASKET'])) {
                         $result['BASKET'] = array();
+                    }
                     $descr = self::createResultDescription(
                         $currentOrder['BASKET_ITEMS'][$basketCode]['PRICE'],
                         $item['PRICE'],

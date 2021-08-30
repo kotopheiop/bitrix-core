@@ -16,10 +16,11 @@ class Error
             $this->method = $method;
             $this->code = $code;
 
-            if (is_array($msg))
+            if (is_array($msg)) {
                 $this->msg = implode("; ", $msg);
-            else
+            } else {
                 $this->msg = $msg;
+            }
 
             $this->params = $params;
 

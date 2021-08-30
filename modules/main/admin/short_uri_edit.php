@@ -1,15 +1,22 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
-if (!$USER->CanDoOperation('manage_short_uri') && !$USER->CanDoOperation('view_other_settings'))
+if (!$USER->CanDoOperation('manage_short_uri') && !$USER->CanDoOperation('view_other_settings')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $isAdmin = $USER->CanDoOperation('manage_short_uri');
 
 IncludeModuleLangFile(__FILE__);
 
 $aTabs = array(
-    array("DIV" => "edit1", "TAB" => GetMessage("SU_EF_tab_1"), "ICON" => "main_user_edit", "TITLE" => GetMessage("SU_EF_tab_1_title")),
+    array(
+        "DIV" => "edit1",
+        "TAB" => GetMessage("SU_EF_tab_1"),
+        "ICON" => "main_user_edit",
+        "TITLE" => GetMessage("SU_EF_tab_1_title")
+    ),
 );
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
@@ -31,14 +38,19 @@ if ($REQUEST_METHOD == "POST" && ($save != "" || $apply != "") && $isAdmin && ch
     }
 
     if ($res) {
-        if ($apply != "")
-            LocalRedirect("/bitrix/admin/short_uri_edit.php?ID=" . $ID . "&mess=ok&lang=" . LANG . "&" . $tabControl->ActiveTabParam());
-        else
+        if ($apply != "") {
+            LocalRedirect(
+                "/bitrix/admin/short_uri_edit.php?ID=" . $ID . "&mess=ok&lang=" . LANG . "&" . $tabControl->ActiveTabParam(
+                )
+            );
+        } else {
             LocalRedirect("/bitrix/admin/short_uri_admin.php?lang=" . LANG);
+        }
     } else {
         $message = implode("\n", CBXShortUri::GetErrors());
-        if (strlen($message) <= 0)
+        if ($message == '') {
             $message = GetMessage("SU_EF_save_error");
+        }
         $message = new CAdminMessage($message);
         $bVarsFromForm = true;
     }
@@ -51,19 +63,22 @@ $str_SHORT_URI = CBXShortUri::GenerateShortUri();
 if (isset($_REQUEST["public"])) {
     $str_URI = $_REQUEST["str_URI"];
     $suri = CBXShortUri::GetList(array(), array("URI_EXACT" => $str_URI));
-    if ($a = $suri->Fetch())
+    if ($a = $suri->Fetch()) {
         $ID = $a["ID"];
+    }
     $str_URI = htmlspecialcharsbx($str_URI);
 }
 
 if ($ID > 0) {
     $suri = CBXShortUri::GetList(array(), array("ID" => $ID));
-    if (!$suri->ExtractFields("str_"))
+    if (!$suri->ExtractFields("str_")) {
         $ID = 0;
+    }
 }
 
-if ($bVarsFromForm)
+if ($bVarsFromForm) {
     $DB->InitTableVarsForEdit("b_short_uri", "", "str_");
+}
 
 $APPLICATION->SetTitle(($ID > 0 ? GetMessage("SU_EF_title_edit") . $ID : GetMessage("SU_EF_title_add")));
 
@@ -88,7 +103,10 @@ if ($ID > 0) {
     $aMenu[] = array(
         "TEXT" => GetMessage("SU_EF_del_text"),
         "TITLE" => GetMessage("SU_EF_mnu_del"),
-        "LINK" => "javascript:if(confirm('" . GetMessage("SU_EF_mnu_del_conf") . "'))window.location='short_uri_admin.php?ID=" . $ID . "&action=delete&lang=" . LANG . "&" . bitrix_sessid_get() . "';",
+        "LINK" => "javascript:if(confirm('" . GetMessage(
+                "SU_EF_mnu_del_conf"
+            ) . "'))window.location='short_uri_admin.php?ID=" . $ID . "&action=delete&lang=" . LANG . "&" . bitrix_sessid_get(
+            ) . "';",
         "ICON" => "btn_delete",
     );
 }
@@ -97,10 +115,12 @@ $context->Show();
 ?>
 
 <?
-if ($_REQUEST["mess"] == "ok" && $ID > 0)
+if ($_REQUEST["mess"] == "ok" && $ID > 0) {
     CAdminMessage::ShowMessage(array("MESSAGE" => GetMessage("SU_EF_saved"), "TYPE" => "OK"));
-if ($message)
+}
+if ($message) {
     echo $message->Show();
+}
 ?>
 
     <form method="POST" action="<? echo $APPLICATION->GetCurPage() ?>" enctype="multipart/form-data"
@@ -139,11 +159,17 @@ if ($message)
                     function ShortUriChangeHandler(val) {
                         var d = document.getElementById("id_short_uri_span");
                         if (d) {
-                            d.innerHTML = '<a href="<?= ($request->isHttps() ? "https://" : "http://") . $request->getHttpHost()?>/' + BX.util.htmlspecialchars(encodeURI(val)) + '"><?= ($request->isHttps() ? "https://" : "http://") . $request->getHttpHost()?>/' + BX.util.htmlspecialchars(val) + '</a>';
+                            d.innerHTML = '<a href="<?= ($request->isHttps(
+                            ) ? "https://" : "http://") . $request->getHttpHost(
+                            )?>/' + BX.util.htmlspecialchars(encodeURI(val)) + '"><?= ($request->isHttps(
+                            ) ? "https://" : "http://") . $request->getHttpHost(
+                            )?>/' + BX.util.htmlspecialchars(val) + '</a>';
                         }
                     }
 
-                    setTimeout("ShortUriChangeHandler('<?=CUtil::JSEscape(htmlspecialcharsback($str_SHORT_URI))?>')", 2);
+                    setTimeout("ShortUriChangeHandler('<?=CUtil::JSEscape(
+                        htmlspecialcharsback($str_SHORT_URI)
+                    )?>')", 2);
                 </script>
             </td>
         </tr>

@@ -60,10 +60,10 @@ class CRestServer
     protected $tokenCheck = false;
     protected $authType = null;
 
-    public function __construct($params)
+    public function __construct($params, $toLowerMethod = true)
     {
         $this->class = $params['CLASS'];
-        $this->method = ToLower($params['METHOD']);
+        $this->method = $toLowerMethod ? ToLower($params['METHOD']) : $params['METHOD'];
         $this->query = $params['QUERY'];
 
         $this->transport = $params['TRANSPORT'];
@@ -126,7 +126,11 @@ class CRestServer
                         throw new AccessException();
                     }
                 } else {
-                    throw new RestException('Method not found!', RestException::ERROR_METHOD_NOT_FOUND, self::STATUS_NOT_FOUND);
+                    throw new RestException(
+                        'Method not found!',
+                        RestException::ERROR_METHOD_NOT_FOUND,
+                        self::STATUS_NOT_FOUND
+                    );
                 }
             }
         } catch (Exception $e) {
@@ -156,10 +160,13 @@ class CRestServer
             throw new RestException('Method not found!', RestException::ERROR_METHOD_NOT_FOUND, self::STATUS_NOT_FOUND);
         }
 
-        return in_array($this->method, array(
-                \CRestUtil::METHOD_DOWNLOAD,
-                \CRestUtil::METHOD_UPLOAD,
-            )) || isset($this->query['token']);
+        return in_array(
+                $this->method,
+                array(
+                    \CRestUtil::METHOD_DOWNLOAD,
+                    \CRestUtil::METHOD_UPLOAD,
+                )
+            ) || isset($this->query['token']);
     }
 
     protected function processTokenCheckCall()
@@ -181,7 +188,11 @@ class CRestServer
             $callback = $this->getMethodCallback();
 
             if (!$callback) {
-                throw new RestException('Method not found!', RestException::ERROR_METHOD_NOT_FOUND, self::STATUS_NOT_FOUND);
+                throw new RestException(
+                    'Method not found!',
+                    RestException::ERROR_METHOD_NOT_FOUND,
+                    self::STATUS_NOT_FOUND
+                );
             }
 
             $result = call_user_func_array($callback, array($query, $this->scope, $this));
@@ -358,7 +369,7 @@ class CRestServer
         $signature = '';
 
         $arRes = \Bitrix\Rest\AppTable::getByClientId($this->clientId);
-        if (is_array($arRes) && strlen($arRes['SHARED_KEY']) > 0) {
+        if (is_array($arRes) && $arRes['SHARED_KEY'] <> '') {
             $methodState = is_array($this->securityMethodState)
                 ? $this->securityMethodState
                 : array('data' => $this->securityMethodState);
@@ -374,7 +385,7 @@ class CRestServer
 
     public function requestConfirmation($userList, $message)
     {
-        if (strlen($message) <= 0) {
+        if ($message == '') {
             throw new ArgumentNullException('message');
         }
 
@@ -417,11 +428,23 @@ class CRestServer
     private function init()
     {
         if (!in_array($this->transport, array('json', 'xml'))) {
-            throw new RestException('Wrong transport!', RestException::ERROR_INTERNAL_WRONG_TRANSPORT, self::STATUS_INTERNAL);
+            throw new RestException(
+                'Wrong transport!',
+                RestException::ERROR_INTERNAL_WRONG_TRANSPORT,
+                self::STATUS_INTERNAL
+            );
         } elseif (!$this->checkSite()) {
-            throw new RestException('Portal was deleted', RestException::ERROR_INTERNAL_PORTAL_DELETED, self::STATUS_FORBIDDEN);
+            throw new RestException(
+                'Portal was deleted',
+                RestException::ERROR_INTERNAL_PORTAL_DELETED,
+                self::STATUS_FORBIDDEN
+            );
         } elseif (!class_exists($this->class) || !method_exists($this->class, 'getDescription')) {
-            throw new RestException('Wrong handler class!', RestException::ERROR_INTERNAL_WRONG_HANDLER_CLASS, self::STATUS_INTERNAL);
+            throw new RestException(
+                'Wrong handler class!',
+                RestException::ERROR_INTERNAL_WRONG_HANDLER_CLASS,
+                self::STATUS_INTERNAL
+            );
         } else {
             if (array_key_exists("state", $this->query)) {
                 $this->securityClientState = $this->query["state"];
@@ -493,7 +516,7 @@ class CRestServer
     private function checkScope()
     {
         if ($this->tokenCheck) {
-            if (isset($this->query["token"]) && strlen($this->query["token"]) > 0) {
+            if (isset($this->query["token"]) && $this->query["token"] <> '') {
                 list($scope) = explode(\CRestUtil::TOKEN_DELIMITER, $this->query["token"], 2);
                 $this->scope = $scope == "" ? \CRestUtil::GLOBAL_SCOPE : $scope;
             }
@@ -577,10 +600,13 @@ class CRestServer
 
     private function outputError()
     {
-        $res = array_merge(array(
-            'error' => $this->error->getErrorCode(),
-            'error_description' => $this->error->getMessage(),
-        ), $this->error->getAdditional());
+        $res = array_merge(
+            array(
+                'error' => $this->error->getErrorCode(),
+                'error_description' => $this->error->getMessage(),
+            ),
+            $this->error->getAdditional()
+        );
 
         return $res;
     }
@@ -602,18 +628,39 @@ class CRestServer
                 break;
         }
 
+        $this->sendHeadersAdditional();
+    }
+
+    public function sendHeadersAdditional()
+    {
         if (\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24')) {
             if ($this->clientId) {
                 Header('X-Bitrix-Rest-Application: ' . $this->clientId);
             }
 
-            Header('X-Bitrix-Rest-Time: ' . number_format($this->timeProcessFinish - $this->timeProcessStart, 10, '.', ''));
+            Header(
+                'X-Bitrix-Rest-Time: ' . number_format($this->timeProcessFinish - $this->timeProcessStart, 10, '.', '')
+            );
 
             if (function_exists('getrusage')) {
                 $usage = getrusage();
 
-                Header('X-Bitrix-Rest-User-Time: ' . number_format($usage['ru_utime.tv_sec'] - $this->usage['ru_utime.tv_sec'] + ($usage['ru_utime.tv_usec'] - $this->usage['ru_utime.tv_usec']) / 1000000, 10, '.', ''));
-                Header('X-Bitrix-Rest-System-Time: ' . number_format($usage['ru_stime.tv_sec'] - $this->usage['ru_stime.tv_sec'] + ($usage['ru_stime.tv_usec'] - $this->usage['ru_stime.tv_usec']) / 1000000, 10, '.', ''));
+                Header(
+                    'X-Bitrix-Rest-User-Time: ' . number_format(
+                        $usage['ru_utime.tv_sec'] - $this->usage['ru_utime.tv_sec'] + ($usage['ru_utime.tv_usec'] - $this->usage['ru_utime.tv_usec']) / 1000000,
+                        10,
+                        '.',
+                        ''
+                    )
+                );
+                Header(
+                    'X-Bitrix-Rest-System-Time: ' . number_format(
+                        $usage['ru_stime.tv_sec'] - $this->usage['ru_stime.tv_sec'] + ($usage['ru_stime.tv_usec'] - $this->usage['ru_stime.tv_usec']) / 1000000,
+                        10,
+                        '.',
+                        ''
+                    )
+                );
             }
         }
     }
@@ -622,6 +669,10 @@ class CRestServer
     {
         \Bitrix\Rest\LogTable::log($this, $data);
         \Bitrix\Rest\UsageStatTable::finalize();
+
+        if (is_object($data['result']) && $data['result'] instanceof \Bitrix\Main\Engine\Response\BFile) {
+            return $data['result'];
+        }
 
         switch ($this->transport) {
             case 'json':
@@ -666,15 +717,17 @@ class CRestServer
     {
         $res = "";
         foreach ($data as $key => $value) {
-            if ($key === intval($key))
+            if ($key === intval($key)) {
                 $key = 'item';
+            }
 
             $res .= '<' . $key . '>';
 
-            if (is_array($value))
+            if (is_array($value)) {
                 $res .= $this->outputXml($value);
-            else
+            } else {
                 $res .= \CDataXML::xmlspecialchars($value);
+            }
 
             $res .= '</' . $key . '>';
         }
@@ -717,6 +770,7 @@ class CRestServerBatchItem extends \CRestServer
 
         if ($this->scope !== \CRestUtil::GLOBAL_SCOPE) {
             $allowedScope = explode(',', $this->authData['scope']);
+            $allowedScope = \Bitrix\Rest\Engine\RestManager::fillAlternativeScope($this->scope, $allowedScope);
             if (!in_array($this->scope, $allowedScope)) {
                 throw new \Bitrix\Rest\OAuthException(array('error' => 'insufficient_scope'));
             }
@@ -787,8 +841,12 @@ class IRestService
         return $arResult;
     }
 
-    protected static function sanitizeFilter($filter, array $availableFields = null, $valueCallback = null, array $availableOperations = null)
-    {
+    protected static function sanitizeFilter(
+        $filter,
+        array $availableFields = null,
+        $valueCallback = null,
+        array $availableOperations = null
+    ) {
         static $defaultOperations = array('', '=', '>', '<', '>=', '<=', '@', '%');
 
         if ($availableOperations === null) {
@@ -796,7 +854,11 @@ class IRestService
         }
 
         if (!is_array($filter)) {
-            throw new RestException('The filter is not an array.', RestException::ERROR_ARGUMENT, \CRestServer::STATUS_WRONG_REQUEST);
+            throw new RestException(
+                'The filter is not an array.',
+                RestException::ERROR_ARGUMENT,
+                \CRestServer::STATUS_WRONG_REQUEST
+            );
         }
 
         $filter = array_change_key_case($filter, CASE_UPPER);
@@ -808,11 +870,19 @@ class IRestService
                 $field = $matches[2];
 
                 if (!in_array($operation, $availableOperations)) {
-                    throw new RestException('Filter operation not allowed: ' . $operation, RestException::ERROR_ARGUMENT, \CRestServer::STATUS_WRONG_REQUEST);
+                    throw new RestException(
+                        'Filter operation not allowed: ' . $operation,
+                        RestException::ERROR_ARGUMENT,
+                        \CRestServer::STATUS_WRONG_REQUEST
+                    );
                 }
 
                 if ($availableFields !== null && !in_array($field, $availableFields)) {
-                    throw new RestException('Filter field not allowed: ' . $field, RestException::ERROR_ARGUMENT, \CRestServer::STATUS_WRONG_REQUEST);
+                    throw new RestException(
+                        'Filter field not allowed: ' . $field,
+                        RestException::ERROR_ARGUMENT,
+                        \CRestServer::STATUS_WRONG_REQUEST
+                    );
                 }
 
                 if (is_callable($valueCallback)) {
@@ -829,7 +899,11 @@ class IRestService
     protected static function sanitizeOrder($order, array $availableFields = null)
     {
         if (!is_array($order)) {
-            throw new RestException('The order is not an array.', RestException::ERROR_ARGUMENT, \CRestServer::STATUS_WRONG_REQUEST);
+            throw new RestException(
+                'The order is not an array.',
+                RestException::ERROR_ARGUMENT,
+                \CRestServer::STATUS_WRONG_REQUEST
+            );
         }
 
         $order = array_change_key_case($order, CASE_UPPER);
@@ -837,14 +911,26 @@ class IRestService
         foreach ($order as $key => $value) {
             if (!is_numeric($key)) {
                 if ($availableFields !== null && !in_array($key, $availableFields)) {
-                    throw new RestException('Order field not allowed: ' . $key, RestException::ERROR_ARGUMENT, \CRestServer::STATUS_WRONG_REQUEST);
+                    throw new RestException(
+                        'Order field not allowed: ' . $key,
+                        RestException::ERROR_ARGUMENT,
+                        \CRestServer::STATUS_WRONG_REQUEST
+                    );
                 }
 
                 if (!in_array(ToUpper($value), array('ASC', 'DESC'))) {
-                    throw new RestException('Order direction should be one of {ASC|DESC}', RestException::ERROR_ARGUMENT, \CRestServer::STATUS_WRONG_REQUEST);
+                    throw new RestException(
+                        'Order direction should be one of {ASC|DESC}',
+                        RestException::ERROR_ARGUMENT,
+                        \CRestServer::STATUS_WRONG_REQUEST
+                    );
                 }
             } elseif ($availableFields !== null && !in_array($value, $availableFields)) {
-                throw new RestException('Order field not allowed: ' . $value, RestException::ERROR_ARGUMENT, \CRestServer::STATUS_WRONG_REQUEST);
+                throw new RestException(
+                    'Order field not allowed: ' . $value,
+                    RestException::ERROR_ARGUMENT,
+                    \CRestServer::STATUS_WRONG_REQUEST
+                );
             }
         }
 

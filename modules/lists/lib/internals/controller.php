@@ -122,26 +122,32 @@ abstract class Controller implements IErrorable
             );
         }
         unset($error);
-        $this->sendJsonResponse(array(
-            'status' => self::STATUS_ERROR,
-            'errors' => $errors,
-        ));
+        $this->sendJsonResponse(
+            array(
+                'status' => self::STATUS_ERROR,
+                'errors' => $errors,
+            )
+        );
     }
 
     protected function sendJsonAccessDeniedResponse($message = '')
     {
-        $this->sendJsonResponse(array(
-            'status' => self::STATUS_DENIED,
-            'message' => $message,
-        ));
+        $this->sendJsonResponse(
+            array(
+                'status' => self::STATUS_DENIED,
+                'message' => $message,
+            )
+        );
     }
 
     protected function sendJsonInvalidSignResponse($message = '')
     {
-        $this->sendJsonResponse(array(
-            'status' => self::STATUS_INVALID_SIGN,
-            'message' => $message,
-        ));
+        $this->sendJsonResponse(
+            array(
+                'status' => self::STATUS_INVALID_SIGN,
+                'message' => $message,
+            )
+        );
     }
 
     protected function sendJsonSuccessResponse(array $response = array())
@@ -199,10 +205,17 @@ abstract class Controller implements IErrorable
     protected function resolveAction()
     {
         $listOfActions = $this->normalizeListOfAction($this->listOfActions());
-        $action = strtolower($this->action);
+        $action = mb_strtolower($this->action);
 
         if (!isset($listOfActions[$action])) {
-            $this->errorCollection->add(array(new Error(Loc::getMessage('LISTS_CONTROLLER_ERROR_UNKNOWN_ACTION', array('#ACTION#' => $action)), self::ERROR_UNKNOWN_ACTION)));
+            $this->errorCollection->add(
+                array(
+                    new Error(
+                        Loc::getMessage('LISTS_CONTROLLER_ERROR_UNKNOWN_ACTION', array('#ACTION#' => $action)),
+                        self::ERROR_UNKNOWN_ACTION
+                    )
+                )
+            );
             return $this;
         }
 
@@ -263,14 +276,19 @@ abstract class Controller implements IErrorable
 
         if (!$this->getUser() || !$this->getUser()->getId()) {
             if ($description['redirect_on_auth']) {
-                LocalRedirect(SITE_DIR . 'auth/?backurl=' . urlencode(Application::getInstance()->getContext()->getRequest()->getRequestUri()));
+                LocalRedirect(
+                    SITE_DIR . 'auth/?backurl=' . urlencode(
+                        Application::getInstance()->getContext()->getRequest()->getRequestUri()
+                    )
+                );
             } else {
                 $this->runProcessingIfUserNotAuthorized();
             }
         }
 
         //if does not exist check_csrf_token we have to check csrf for only POST method.
-        if ($description['check_csrf_token'] === true || ($this->request->isPost() && !isset($description['check_csrf_token']))) {
+        if ($description['check_csrf_token'] === true || ($this->request->isPost(
+                ) && !isset($description['check_csrf_token']))) {
             //in BDisk we have token_sid
             if (!check_bitrix_sessid() && !check_bitrix_sessid('token_sid')) {
                 $this->runProcessingIfInvalidCsrfToken();
@@ -391,8 +409,17 @@ abstract class Controller implements IErrorable
     protected function checkRequiredInputParams(array $inputParams, array $required)
     {
         foreach ($required as $item) {
-            if (!isset($inputParams[$item]) || (!$inputParams[$item] && !(is_string($inputParams[$item]) && strlen($inputParams[$item])))) {
-                $this->errorCollection->add(array(new Error(Loc::getMessage('LISTS_CONTROLLER_ERROR_REQUIRED_PARAMETER', array('#PARAM#' => $item)), self::ERROR_REQUIRED_PARAMETER)));
+            if (!isset($inputParams[$item]) || (!$inputParams[$item] && !(is_string($inputParams[$item]) && mb_strlen(
+                            $inputParams[$item]
+                        )))) {
+                $this->errorCollection->add(
+                    array(
+                        new Error(
+                            Loc::getMessage('LISTS_CONTROLLER_ERROR_REQUIRED_PARAMETER', array('#PARAM#' => $item)),
+                            self::ERROR_REQUIRED_PARAMETER
+                        )
+                    )
+                );
                 return false;
             }
         }

@@ -37,13 +37,15 @@ final class ForumTopic extends Provider
             $topicId > 0
             && Loader::includeModule('forum')
         ) {
-            $res = MessageTable::getList(array(
-                'order' => array('ID' => 'ASC'),
-                'filter' => array(
-                    'TOPIC_ID' => $topicId,
-                ),
-                'select' => array('ID')
-            ));
+            $res = MessageTable::getList(
+                array(
+                    'order' => array('ID' => 'ASC'),
+                    'filter' => array(
+                        'TOPIC_ID' => $topicId,
+                    ),
+                    'select' => array('ID')
+                )
+            );
             if ($message = $res->fetch()) {
                 $messageId = $message['ID'];
             }
@@ -66,22 +68,26 @@ final class ForumTopic extends Provider
             $messageId > 0
             && Loader::includeModule('forum')
         ) {
-            $res = MessageTable::getList(array(
-                'filter' => array(
-                    '=ID' => $messageId
-                ),
-                'select' => array('ID', 'TOPIC_ID', 'POST_MESSAGE')
-            ));
+            $res = MessageTable::getList(
+                array(
+                    'filter' => array(
+                        '=ID' => $messageId
+                    ),
+                    'select' => array('ID', 'TOPIC_ID', 'POST_MESSAGE')
+                )
+            );
             if ($message = $res->fetch()) {
                 $logId = false;
 
-                $res = LogTable::getList(array(
-                    'filter' => array(
-                        'SOURCE_ID' => $messageId,
-                        '@EVENT_ID' => $this->getEventId(),
-                    ),
-                    'select' => array('ID')
-                ));
+                $res = LogTable::getList(
+                    array(
+                        'filter' => array(
+                            'SOURCE_ID' => $messageId,
+                            '@EVENT_ID' => $this->getEventId(),
+                        ),
+                        'select' => array('ID')
+                    )
+                );
                 if ($logEntryFields = $res->fetch()) {
                     $logId = intval($logEntryFields['ID']);
                 }
@@ -103,30 +109,37 @@ final class ForumTopic extends Provider
                     );
                     if ($logFields = $res->fetch()) {
                         $this->setLogId($logFields['ID']);
-                        $this->setSourceFields(array_merge($message, array(
-                            'LOG_EVENT_ID' => $logFields['EVENT_ID'],
-                            'URL' => $logFields['URL']
-                        )));
+                        $this->setSourceFields(
+                            array_merge(
+                                $message,
+                                array(
+                                    'LOG_EVENT_ID' => $logFields['EVENT_ID'],
+                                    'URL' => $logFields['URL']
+                                )
+                            )
+                        );
                         $this->setSourceDescription($message['POST_MESSAGE']);
 
                         $title = '';
-                        $res = TopicTable::getList(array(
-                            'filter' => array(
-                                '=ID' => $message['TOPIC_ID']
-                            ),
-                            'select' => array('TITLE')
-                        ));
+                        $res = TopicTable::getList(
+                            array(
+                                'filter' => array(
+                                    '=ID' => $message['TOPIC_ID']
+                                ),
+                                'select' => array('TITLE')
+                            )
+                        );
                         if ($topic = $res->fetch()) {
                             $title = htmlspecialcharsback($topic['TITLE']);
-                            $title = preg_replace(
-                                "/\[USER\s*=\s*([^\]]*)\](.+?)\[\/USER\]/is" . BX_UTF_PCRE_MODIFIER,
-                                "\\2",
-                                $title
-                            );
+                            $title = \Bitrix\Socialnetwork\Helper\Mention::clear($title);
+
                             $CBXSanitizer = new \CBXSanitizer;
                             $CBXSanitizer->delAllTags();
-                            $title = preg_replace(array("/\n+/is" . BX_UTF_PCRE_MODIFIER, "/\s+/is" . BX_UTF_PCRE_MODIFIER), " ", $CBXSanitizer->sanitizeHtml($title));
-
+                            $title = preg_replace(
+                                array("/\n+/is" . BX_UTF_PCRE_MODIFIER, "/\s+/is" . BX_UTF_PCRE_MODIFIER),
+                                " ",
+                                $CBXSanitizer->sanitizeHtml($title)
+                            );
                         }
                         $this->setSourceTitle(truncateText($title, 100));
                         $this->setSourceAttachedDiskObjects($this->getAttachedDiskObjects($messageId));
@@ -209,12 +222,14 @@ final class ForumTopic extends Provider
             return $result;
         }
 
-        $res = MessageTable::getList(array(
-            'filter' => array(
-                '@ID' => $params['id']
-            ),
-            'select' => array('ID', 'USE_SMILES')
-        ));
+        $res = MessageTable::getList(
+            array(
+                'filter' => array(
+                    '@ID' => $params['id']
+                ),
+                'select' => array('ID', 'USE_SMILES')
+            )
+        );
 
         while ($message = $res->fetch()) {
             $data = $message;

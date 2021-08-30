@@ -28,7 +28,8 @@ class CIBlockPropertyDateTime
             "GetAdminFilterHTML" => array(__CLASS__, "GetAdminFilterHTML"),
             "GetPublicFilterHTML" => array(__CLASS__, "GetPublicFilterHTML"),
             "AddFilterFields" => array(__CLASS__, "AddFilterFields"),
-            "GetUIFilterProperty" => array(__CLASS__, "GetUIFilterProperty")
+            "GetUIFilterProperty" => array(__CLASS__, "GetUIFilterProperty"),
+            'GetUIEntityEditorProperty' => array(__CLASS__, 'GetUIEntityEditorProperty'),
         );
     }
 
@@ -69,7 +70,9 @@ class CIBlockPropertyDateTime
             if ($to) {
                 $dateFormat = Date::convertFormatToPhp(CSite::getDateFormat());
                 $dateParse = date_parse_from_format($dateFormat, $to);
-                if (!strlen($dateParse["hour"]) && !strlen($dateParse["minute"]) && !strlen($dateParse["second"])) {
+                if (!mb_strlen($dateParse["hour"]) && !mb_strlen($dateParse["minute"]) && !mb_strlen(
+                        $dateParse["second"]
+                    )) {
                     $timeFormat = Date::convertFormatToPhp(CSite::getTimeFormat());
                     $to .= " " . date($timeFormat, mktime(23, 59, 59, 0, 0, 0));
                 }
@@ -99,10 +102,12 @@ class CIBlockPropertyDateTime
         $to_name = $strHTMLControlName["VALUE"] . '_to';
 
         $lAdmin = new CAdminList($strHTMLControlName["TABLE_ID"]);
-        $lAdmin->InitFilter(array(
-            $from_name,
-            $to_name,
-        ));
+        $lAdmin->InitFilter(
+            array(
+                $from_name,
+                $to_name,
+            )
+        );
 
         $from = isset($GLOBALS[$from_name]) ? $GLOBALS[$from_name] : "";
         $to = isset($GLOBALS[$to_name]) ? $GLOBALS[$to_name] : "";
@@ -118,25 +123,27 @@ class CIBlockPropertyDateTime
         $from_name = $strHTMLControlName["VALUE"] . '_from';
         $to_name = $strHTMLControlName["VALUE"] . '_to';
 
-        if (isset($_REQUEST[$from_name]))
+        if (isset($_REQUEST[$from_name])) {
             $from = $_REQUEST[$from_name];
-        elseif (
+        } elseif (
             isset($strHTMLControlName["GRID_ID"])
             && isset($_SESSION["main.interface.grid"][$strHTMLControlName["GRID_ID"]]["filter"][$from_name])
-        )
+        ) {
             $from = $_SESSION["main.interface.grid"][$strHTMLControlName["GRID_ID"]]["filter"][$from_name];
-        else
+        } else {
             $from = "";
+        }
 
-        if (isset($_REQUEST[$to_name]))
+        if (isset($_REQUEST[$to_name])) {
             $to = $_REQUEST[$to_name];
-        elseif (
+        } elseif (
             isset($strHTMLControlName["GRID_ID"])
             && isset($_SESSION["main.interface.grid"][$strHTMLControlName["GRID_ID"]]["filter"][$to_name])
-        )
+        ) {
             $to = $_SESSION["main.interface.grid"][$strHTMLControlName["GRID_ID"]]["filter"][$to_name];
-        else
+        } else {
             $to = "";
+        }
 
         ob_start();
 
@@ -163,17 +170,19 @@ class CIBlockPropertyDateTime
 
     public static function GetPublicViewHTML($arProperty, $value, $strHTMLControlName)
     {
-        if (strlen($value["VALUE"]) > 0) {
-            if (!CheckDateTime($value["VALUE"]))
+        if ($value["VALUE"] <> '') {
+            if (!CheckDateTime($value["VALUE"])) {
                 $value = static::ConvertFromDB($arProperty, $value, $strHTMLControlName["DATETIME_FORMAT"]);
+            }
 
             if (isset($strHTMLControlName["MODE"])) {
-                if ($strHTMLControlName["MODE"] == "CSV_EXPORT")
+                if ($strHTMLControlName["MODE"] == "CSV_EXPORT") {
                     return $value["VALUE"];
-                elseif ($strHTMLControlName["MODE"] == "SIMPLE_TEXT")
+                } elseif ($strHTMLControlName["MODE"] == "SIMPLE_TEXT") {
                     return $value["VALUE"];
-                elseif ($strHTMLControlName["MODE"] == "ELEMENT_TEMPLATE")
+                } elseif ($strHTMLControlName["MODE"] == "ELEMENT_TEMPLATE") {
                     return $value["VALUE"];
+                }
             }
             return str_replace(" ", "&nbsp;", htmlspecialcharsEx($value["VALUE"]));
         }
@@ -186,7 +195,9 @@ class CIBlockPropertyDateTime
         /** @var CMain */
         global $APPLICATION;
 
-        $s = '<input type="text" name="' . htmlspecialcharsbx($strHTMLControlName["VALUE"]) . '" size="25" value="' . htmlspecialcharsbx($value["VALUE"]) . '" />';
+        $s = '<input type="text" name="' . htmlspecialcharsbx(
+                $strHTMLControlName["VALUE"]
+            ) . '" size="25" value="' . htmlspecialcharsbx($value["VALUE"]) . '" />';
         ob_start();
         $APPLICATION->IncludeComponent(
             'bitrix:main.calendar',
@@ -207,12 +218,14 @@ class CIBlockPropertyDateTime
 
     public static function GetAdminListViewHTML($arProperty, $value, $strHTMLControlName)
     {
-        if (strlen($value["VALUE"]) > 0) {
-            if (!CheckDateTime($value["VALUE"]))
+        if ($value["VALUE"] <> '') {
+            if (!CheckDateTime($value["VALUE"])) {
                 $value = static::ConvertFromDB($arProperty, $value);
+            }
             return str_replace(" ", "&nbsp;", htmlspecialcharsex($value["VALUE"]));
-        } else
+        } else {
             return '&nbsp;';
+        }
     }
 
     //PARAMETERS:
@@ -225,7 +238,9 @@ class CIBlockPropertyDateTime
     {
         return CAdminCalendar::CalendarDate($strHTMLControlName["VALUE"], $value["VALUE"], 20, true) .
             ($arProperty["WITH_DESCRIPTION"] == "Y" && '' != trim($strHTMLControlName["DESCRIPTION"]) ?
-                '&nbsp;<input type="text" size="20" name="' . $strHTMLControlName["DESCRIPTION"] . '" value="' . htmlspecialcharsbx($value["DESCRIPTION"]) . '">'
+                '&nbsp;<input type="text" size="20" name="' . $strHTMLControlName["DESCRIPTION"] . '" value="' . htmlspecialcharsbx(
+                    $value["DESCRIPTION"]
+                ) . '">'
                 : ''
             );
     }
@@ -238,8 +253,12 @@ class CIBlockPropertyDateTime
     public static function CheckFields($arProperty, $value)
     {
         $arResult = array();
-        if (strlen($value["VALUE"]) > 0 && !CheckDateTime($value["VALUE"]))
-            $arResult[] = Loc::getMessage("IBLOCK_PROP_DATETIME_ERROR_NEW", array("#FIELD_NAME#" => $arProperty["NAME"]));
+        if ($value["VALUE"] <> '' && !CheckDateTime($value["VALUE"])) {
+            $arResult[] = Loc::getMessage(
+                "IBLOCK_PROP_DATETIME_ERROR_NEW",
+                array("#FIELD_NAME#" => $arProperty["NAME"])
+            );
+        }
         return $arResult;
     }
 
@@ -250,7 +269,7 @@ class CIBlockPropertyDateTime
     //DB form of the value
     public static function ConvertToDB($arProperty, $value)
     {
-        if (strlen($value["VALUE"]) > 0) {
+        if ($value["VALUE"] <> '') {
             try {
                 $time = Bitrix\Main\Type\DateTime::createFromUserTime($value['VALUE']);
 
@@ -264,19 +283,20 @@ class CIBlockPropertyDateTime
 
     public static function ConvertFromDB($arProperty, $value, $format = '')
     {
-        if (strlen($value["VALUE"]) > 0) {
+        if ($value["VALUE"] <> '') {
             try {
                 $time = new Bitrix\Main\Type\DateTime($value['VALUE'], "Y-m-d H:i:s");
                 $time->toUserTime();
 
-                if ($format === 'SHORT')
+                if ($format === 'SHORT') {
                     $phpFormat = $time->convertFormatToPhp(FORMAT_DATE);
-                elseif ($format === 'FULL')
+                } elseif ($format === 'FULL') {
                     $phpFormat = $time->convertFormatToPhp(FORMAT_DATETIME);
-                elseif ($format)
+                } elseif ($format) {
                     $phpFormat = $time->convertFormatToPhp($format);
-                else
+                } else {
                     $phpFormat = $time->getFormat();
+                }
 
                 $value["VALUE"] = $time->format($phpFormat);
                 $value["VALUE"] = str_replace(" 00:00:00", "", $value["VALUE"]);
@@ -314,5 +334,17 @@ class CIBlockPropertyDateTime
             "more" => ">",
             "less" => "<"
         );
+    }
+
+    public static function GetUIEntityEditorProperty($settings, $value)
+    {
+        return [
+            'type' => ($settings['MULTIPLE'] === 'Y') ? 'multidatetime' : 'datetime',
+            'data' => [
+                'enableTime' => true,
+                'dateViewFormat' => \Bitrix\Main\Context::getCurrent()->getCulture()->getLongDateFormat(
+                    ) . ' ' . \Bitrix\Main\Context::getCurrent()->getCulture()->getShortTimeFormat(),
+            ]
+        ];
     }
 }

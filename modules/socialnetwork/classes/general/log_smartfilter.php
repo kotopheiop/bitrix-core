@@ -1,13 +1,19 @@
-<?
+<?php
 
 class CAllSocNetLogSmartFilter
 {
-    public static function GetList($arOrder = array(), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
-    {
+    public static function GetList(
+        $arOrder = array(),
+        $arFilter = array(),
+        $arGroupBy = false,
+        $arNavStartParams = false,
+        $arSelectFields = array()
+    ) {
         global $DB;
 
-        if (count($arSelectFields) <= 0)
+        if (count($arSelectFields) <= 0) {
             $arSelectFields = array("USER_ID", "TYPE");
+        }
 
         // FIELDS -->
         $arFields = array(
@@ -24,43 +30,49 @@ class CAllSocNetLogSmartFilter
             "SELECT " . $arSqls["SELECT"] . " " .
             "FROM b_sonet_log_smartfilter SLSF " .
             "	" . $arSqls["FROM"] . " ";
-        if (strlen($arSqls["WHERE"]) > 0)
+        if ($arSqls["WHERE"] <> '') {
             $strSql .= "WHERE " . $arSqls["WHERE"] . " ";
-        if (strlen($arSqls["ORDERBY"]) > 0)
+        }
+        if ($arSqls["ORDERBY"] <> '') {
             $strSql .= "ORDER BY " . $arSqls["ORDERBY"] . " ";
+        }
 
         $dbRes = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 
         return $dbRes;
     }
 
-    function DeleteEx($user_id)
+    public static function DeleteEx($user_id)
     {
         global $DB;
 
         $user_id = intval($user_id);
 
-        if ($user_id <= 0)
+        if ($user_id <= 0) {
             return false;
+        }
 
         $strWhere = " USER_ID = " . $user_id;
 
         $strSQL = "DELETE FROM b_sonet_log_smartfilter WHERE " . $strWhere;
-        if ($DB->Query($strSQL, false, "FILE: " . __FILE__ . "<br> LINE: " . __LINE__))
+        if ($DB->Query($strSQL, false, "FILE: " . __FILE__ . "<br> LINE: " . __LINE__)) {
             return true;
-        else
+        } else {
             return false;
+        }
     }
 
     public static function GetDefaultValue($user_id)
     {
-        if (intval($user_id) <= 0)
+        if (intval($user_id) <= 0) {
             return false;
+        }
 
-        if (defined("BX_COMP_MANAGED_CACHE"))
+        if (defined("BX_COMP_MANAGED_CACHE")) {
             $ttl = 2592000;
-        else
+        } else {
             $ttl = 600;
+        }
 
         $cache_id = 'sonet_smartfilter_default_' . $user_id;
         $obCache = new CPHPCache;
@@ -73,8 +85,9 @@ class CAllSocNetLogSmartFilter
         } else {
             $default_value = false;
 
-            if (is_object($obCache))
+            if (is_object($obCache)) {
                 $obCache->StartDataCache($ttl, $cache_id, $cache_dir);
+            }
 
             $rsSmartFilter = CSocNetLogSmartFilter::GetList(
                 array(),
@@ -83,8 +96,9 @@ class CAllSocNetLogSmartFilter
                 ),
                 array("TYPE")
             );
-            if ($arSmartFilter = $rsSmartFilter->Fetch())
+            if ($arSmartFilter = $rsSmartFilter->Fetch()) {
                 $default_value = $arSmartFilter["TYPE"];
+            }
 
             if (is_object($obCache)) {
                 $arCacheData = Array(
@@ -95,11 +109,10 @@ class CAllSocNetLogSmartFilter
         }
         unset($obCache);
 
-        if (!$default_value)
+        if (!$default_value) {
             $default_value = COption::GetOptionString("socialnetwork", "sonet_log_smart_filter", "N", "");
+        }
 
         return $default_value;
     }
 }
-
-?>

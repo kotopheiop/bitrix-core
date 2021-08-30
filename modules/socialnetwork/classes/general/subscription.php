@@ -1,17 +1,17 @@
-<?
+<?php
 
 use Bitrix\Socialnetwork\Integration;
 use Bitrix\Main\Localization\Loc;
 
 class CAllSocNetSubscription
 {
-    function CheckFields($ACTION, &$arFields, $ID = 0)
+    public static function CheckFields($ACTION, &$arFields, $ID = 0)
     {
         global $APPLICATION;
 
         if (
             $ACTION != "ADD"
-            && IntVal($ID) <= 0
+            && intval($ID) <= 0
         ) {
             $APPLICATION->ThrowException("System error 870164", "ERROR");
             return false;
@@ -19,7 +19,7 @@ class CAllSocNetSubscription
 
         if (
             (is_set($arFields, "USER_ID") || $ACTION == "ADD")
-            && IntVal($arFields["USER_ID"]) <= 0
+            && intval($arFields["USER_ID"]) <= 0
         ) {
             $APPLICATION->ThrowException(Loc::getMessage("SONET_SS_EMPTY_USER_ID"), "EMPTY_USER_ID");
             return false;
@@ -33,23 +33,24 @@ class CAllSocNetSubscription
 
         if (
             (is_set($arFields, "CODE") || $ACTION == "ADD")
-            && strlen(trim($arFields["CODE"])) <= 0
+            && trim($arFields["CODE"]) == ''
         ) {
             $APPLICATION->ThrowException(Loc::getMessage("SONET_SS_EMPTY_CODE"), "EMPTY_CODE");
             return false;
         }
 
-        return True;
+        return true;
     }
 
-    function Delete($ID)
+    public static function Delete($ID)
     {
         global $DB;
 
-        if (!CSocNetGroup::__ValidateID($ID))
+        if (!CSocNetGroup::__ValidateID($ID)) {
             return false;
+        }
 
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
         $bSuccess = $DB->Query("DELETE FROM b_sonet_subscription WHERE ID = " . $ID . "", true);
 
@@ -60,19 +61,23 @@ class CAllSocNetSubscription
     {
         global $DB, $CACHE_MANAGER;
 
-        $userID = IntVal($userID);
+        $userID = intval($userID);
         $code = trim($code);
 
         if (
             $userID <= 0
-            && strlen($code) <= 0
-        )
+            && $code == ''
+        ) {
             return false;
+        }
 
-        $DB->Query("DELETE FROM b_sonet_subscription WHERE 1=1 " .
+        $DB->Query(
+            "DELETE FROM b_sonet_subscription WHERE 1=1 " .
             (intval($userID) > 0 ? "AND USER_ID = " . $userID . " " : "") .
-            (strlen($code) > 0 ? "AND CODE = '" . $code . "' " : "")
-            , true);
+            ($code <> '' ? "AND CODE = '" . $code . "' " : "")
+            ,
+            true
+        );
 
         if (defined("BX_COMP_MANAGED_CACHE")) {
             $CACHE_MANAGER->ClearByTag("sonet_subscription" . ($code ? '_' . $code : ''));
@@ -89,12 +94,12 @@ class CAllSocNetSubscription
             return false;
         }
 
-        $userID = IntVal($userID);
+        $userID = intval($userID);
         $code = trim($code);
 
         if (
             $userID <= 0
-            || strlen($code) <= 0
+            || $code == ''
         ) {
             return false;
         }
@@ -117,10 +122,12 @@ class CAllSocNetSubscription
             }
         } else {
             if ($value == "Y") {
-                $result = CSocNetSubscription::add(array(
-                    "USER_ID" => $userID,
-                    "CODE" => $code
-                ));
+                $result = CSocNetSubscription::add(
+                    array(
+                        "USER_ID" => $userID,
+                        "CODE" => $code
+                    )
+                );
             }
         }
 
@@ -130,9 +137,11 @@ class CAllSocNetSubscription
         ) {
             $chatId = false;
             $groupId = $matches[1];
-            $chatData = \Bitrix\Socialnetwork\Integration\Im\Chat\Workgroup::getChatData(Array(
-                'group_id' => $groupId
-            ));
+            $chatData = \Bitrix\Socialnetwork\Integration\Im\Chat\Workgroup::getChatData(
+                Array(
+                    'group_id' => $groupId
+                )
+            );
             if (!empty($chatData[$groupId]) && intval($chatData[$groupId]) > 0) {
                 $chatId = $chatData[$groupId];
             }
@@ -193,21 +202,26 @@ class CAllSocNetSubscription
             && !empty($arFields['PERMISSION']['FEATURE'])
             && !empty($arFields['PERMISSION']['OPERATION'])
         ) {
-            $roleList = \CSocNetFeaturesPerms::getOperationPerm(SONET_ENTITY_GROUP, $arFields["GROUP_ID"], $arFields['PERMISSION']['FEATURE'], $arFields['PERMISSION']['OPERATION']);
+            $roleList = \CSocNetFeaturesPerms::getOperationPerm(
+                SONET_ENTITY_GROUP,
+                $arFields["GROUP_ID"],
+                $arFields['PERMISSION']['FEATURE'],
+                $arFields['PERMISSION']['OPERATION']
+            );
         }
 
         $chatData = $chatIdList = array();
         if (!empty($arFields["MESSAGE_CHAT"])) {
-            $chatData = Integration\Im\Chat\Workgroup::getChatData(array(
-                'group_id' => $arFields["GROUP_ID"]
-            ));
+            $chatData = Integration\Im\Chat\Workgroup::getChatData(
+                array(
+                    'group_id' => $arFields["GROUP_ID"]
+                )
+            );
         }
 
         if (!empty($chatData)) {
             $arFields["GROUP_ID"] = array_diff($arFields["GROUP_ID"], array_unique(array_keys($chatData)));
-        }
 
-        if (!empty($chatData)) {
             $tmp = \CSocNetLogTools::processPath(
                 array(
                     "URL" => $arFields["URL"],
@@ -238,11 +252,14 @@ class CAllSocNetSubscription
                     continue;
                 }
 
-                \CIMChat::addMessage(array_merge(
-                    $chatMessageFields, array(
-                        "TO_CHAT_ID" => $chatId
+                \CIMChat::addMessage(
+                    array_merge(
+                        $chatMessageFields,
+                        array(
+                            "TO_CHAT_ID" => $chatId
+                        )
                     )
-                ));
+                );
             }
         }
 
@@ -323,8 +340,17 @@ class CAllSocNetSubscription
         }
 
         $workgroupsPage = COption::GetOptionString("socialnetwork", "workgroups_page", "/workgroups/", SITE_ID);
-        $groupUrlTemplate = COption::GetOptionString("socialnetwork", "group_path_template", "/workgroups/group/#group_id#/", SITE_ID);
-        $groupUrlTemplate = "#GROUPS_PATH#" . substr($groupUrlTemplate, strlen($workgroupsPage), strlen($groupUrlTemplate) - strlen($workgroupsPage));
+        $groupUrlTemplate = COption::GetOptionString(
+            "socialnetwork",
+            "group_path_template",
+            "/workgroups/group/#group_id#/",
+            SITE_ID
+        );
+        $groupUrlTemplate = "#GROUPS_PATH#" . mb_substr(
+                $groupUrlTemplate,
+                mb_strlen($workgroupsPage),
+                mb_strlen($groupUrlTemplate) - mb_strlen($workgroupsPage)
+            );
 
         $canViewUserIdList = array();
 
@@ -334,13 +360,15 @@ class CAllSocNetSubscription
             if (isset($roleList[$groupId])) {
                 if (!isset($canViewUserIdList[$groupId])) {
                     $canViewUserIdList[$groupId] = array();
-                    $res = \Bitrix\Socialnetwork\UserToGroupTable::getList(array(
-                        'filter' => array(
-                            '=GROUP_ID' => $groupId,
-                            '<=ROLE' => $roleList[$groupId]
-                        ),
-                        'select' => array('USER_ID')
-                    ));
+                    $res = \Bitrix\Socialnetwork\UserToGroupTable::getList(
+                        array(
+                            'filter' => array(
+                                '=GROUP_ID' => $groupId,
+                                '<=ROLE' => $roleList[$groupId]
+                            ),
+                            'select' => array('USER_ID')
+                        )
+                    );
                     while ($relation = $res->fetch()) {
                         $canViewUserIdList[$groupId][] = $relation['USER_ID'];
                     }
@@ -353,13 +381,19 @@ class CAllSocNetSubscription
 
             $arMessageFields["TO_USER_ID"] = $arUser["USER_ID"];
             if (intval($arFields["LOG_ID"]) > 0) {
-                $arMessageFields["NOTIFY_SUB_TAG"] = "SONET|EVENT|" . intval($arFields["LOG_ID"]) . "|" . intval($arUser["USER_ID"]);
+                $arMessageFields["NOTIFY_SUB_TAG"] = "SONET|EVENT|" . intval($arFields["LOG_ID"]) . "|" . intval(
+                        $arUser["USER_ID"]
+                    );
             }
 
             $arTmp = CSocNetLogTools::ProcessPath(
                 array(
                     "URL" => $arFields["URL"],
-                    "GROUP_URL" => str_replace(array("#group_id#", "#GROUP_ID#"), $arUser["GROUP_ID"], $groupUrlTemplate)
+                    "GROUP_URL" => str_replace(
+                        array("#group_id#", "#GROUP_ID#"),
+                        $arUser["GROUP_ID"],
+                        $groupUrlTemplate
+                    )
                 ),
                 $arUser["USER_ID"],
                 SITE_ID
@@ -367,18 +401,27 @@ class CAllSocNetSubscription
             $url = $arTmp["URLS"]["URL"];
 
             $serverName = (
-            strpos($url, "http://") === 0
-            || strpos($url, "https://") === 0
+            mb_strpos($url, "http://") === 0
+            || mb_strpos($url, "https://") === 0
                 ? ""
                 : $arTmp["SERVER_NAME"]
             );
 
             $groupUrl = $serverName . $arTmp["URLS"]["GROUP_URL"];
 
-            $group_name = (array_key_exists($arUser["GROUP_ID"], $arGroups) ? $arGroups[$arUser["GROUP_ID"]]["NAME"] : "");
+            $group_name = (array_key_exists(
+                $arUser["GROUP_ID"],
+                $arGroups
+            ) ? $arGroups[$arUser["GROUP_ID"]]["NAME"] : "");
             $arMessageFields["NOTIFY_MESSAGE"] = str_replace(
                 array("#URL#", "#url#", "#group_name#", "#GROUP_ID#", "#group_id#"),
-                array($url, $url, "<a href=\"" . $groupUrl . "\" class=\"bx-notifier-item-action\">" . $group_name . "</a>", $arUser["GROUP_ID"], $arUser["GROUP_ID"]),
+                array(
+                    $url,
+                    $url,
+                    "<a href=\"" . $groupUrl . "\" class=\"bx-notifier-item-action\">" . $group_name . "</a>",
+                    $arUser["GROUP_ID"],
+                    $arUser["GROUP_ID"]
+                ),
                 $arFields["MESSAGE"]
             );
             $arMessageFields["NOTIFY_MESSAGE_OUT"] = str_replace(
@@ -458,7 +501,7 @@ class CAllSocNetSubscription
         }
 
         $code = trim($code);
-        if (strlen($code) <= 0) {
+        if ($code == '') {
             return false;
         }
 
@@ -479,8 +522,9 @@ class CAllSocNetSubscription
                 array("CODE" => $code)
             );
 
-            while ($arSubscription = $rsSubscription->Fetch())
+            while ($arSubscription = $rsSubscription->Fetch()) {
                 $arSubscriberID[] = $arSubscription["USER_ID"];
+            }
 
             if (defined("BX_COMP_MANAGED_CACHE")) {
                 $CACHE_MANAGER->StartTagCache($cache_path);
@@ -523,5 +567,3 @@ class CAllSocNetSubscription
         return self::set($userId, "SG" . $groupId, ($fields['MUTE'] != "Y" ? "Y" : "N"));
     }
 }
-
-?>

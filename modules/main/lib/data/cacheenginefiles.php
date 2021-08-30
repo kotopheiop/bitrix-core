@@ -82,7 +82,7 @@ class CacheEngineFiles
      */
     private static function unlink($fileName)
     {
-        if (self::$lockHandles[$fileName]) {
+        if (isset(self::$lockHandles[$fileName]) && self::$lockHandles[$fileName]) {
             fclose(self::$lockHandles[$fileName]);
             unset(self::$lockHandles[$fileName]);
         }
@@ -90,13 +90,15 @@ class CacheEngineFiles
         //This checks for Zend Server CE in order to suppress warnings
         if (function_exists('accelerator_reset')) {
             @chmod($fileName, BX_FILE_PERMISSIONS);
-            if (@unlink($fileName))
+            if (@unlink($fileName)) {
                 return true;
+            }
         } else {
             if (file_exists($fileName)) {
                 @chmod($fileName, BX_FILE_PERMISSIONS);
-                if (unlink($fileName))
+                if (unlink($fileName)) {
                     return true;
+                }
             }
         }
         return false;
@@ -114,7 +116,10 @@ class CacheEngineFiles
         static $agentAdded = false;
         if (!$agentAdded) {
             $agentAdded = true;
-            $agents = \CAgent::GetList(array("ID" => "DESC"), array("NAME" => "\\Bitrix\\Main\\Data\\CacheEngineFiles::delayedDelete(%"));
+            $agents = \CAgent::GetList(
+                array("ID" => "DESC"),
+                array("NAME" => "\\Bitrix\\Main\\Data\\CacheEngineFiles::delayedDelete(%")
+            );
             if (!$agents->Fetch()) {
                 $res = \CAgent::AddAgent(
                     "\\Bitrix\\Main\\Data\\CacheEngineFiles::delayedDelete();",
@@ -123,8 +128,9 @@ class CacheEngineFiles
                     1 //interval
                 );
 
-                if (!$res)
+                if (!$res) {
                     $APPLICATION->ResetException();
+                }
             }
         }
     }
@@ -142,8 +148,9 @@ class CacheEngineFiles
         $documentRoot = Main\Loader::getDocumentRoot();
         for ($i = 0; $i < 99; $i++) {
             $suffix = rand(0, 999999);
-            if (!file_exists($documentRoot . $fileName . $suffix))
+            if (!file_exists($documentRoot . $fileName . $suffix)) {
                 return $fileName . $suffix;
+            }
         }
         return "";
     }
@@ -173,13 +180,15 @@ class CacheEngineFiles
                     $dh = opendir($sourceDir);
                     if (is_resource($dh)) {
                         while ($entry = readdir($dh)) {
-                            if (preg_match("/^(\\.|\\.\\.|.*\\.~\\d+)\$/", $entry))
+                            if (preg_match("/^(\\.|\\.\\.|.*\\.~\\d+)\$/", $entry)) {
                                 continue;
+                            }
 
-                            if (is_dir($sourceDir . "/" . $entry))
+                            if (is_dir($sourceDir . "/" . $entry)) {
                                 static::clean($baseDir, $entry);
-                            elseif (is_file($sourceDir . "/" . $entry))
+                            } elseif (is_file($sourceDir . "/" . $entry)) {
                                 static::unlink($sourceDir . "/" . $entry);
+                            }
                         }
                     }
                 }
@@ -195,7 +204,10 @@ class CacheEngineFiles
                         $target = static::randomizeFile($source . ".~");
                         if ($target != '') {
                             $con = Main\Application::getConnection();
-                            $con->queryExecute("INSERT INTO b_cache_tag (SITE_ID, CACHE_SALT, RELATIVE_PATH, TAG) VALUES ('*', '*', '" . $con->getSqlHelper()->forSql($target) . "', '*')");
+                            $con->queryExecute(
+                                "INSERT INTO b_cache_tag (SITE_ID, CACHE_SALT, RELATIVE_PATH, TAG) VALUES ('*', '*', '" . $con->getSqlHelper(
+                                )->forSql($target) . "', '*')"
+                            );
                             if (@rename($documentRoot . $source, $documentRoot . $target)) {
                                 $delayedDelete = true;
                             }
@@ -203,10 +215,11 @@ class CacheEngineFiles
                     }
                 }
 
-                if ($delayedDelete)
+                if ($delayedDelete) {
                     static::addAgent();
-                else
+                } else {
                     DeleteDirFilesEx($baseDir . $initDir);
+                }
 
                 Main\Application::resetAccelerator();
             }
@@ -223,7 +236,6 @@ class CacheEngineFiles
      */
     protected function lock($fileName)
     {
-
         $wouldBlock = 0;
         self::$lockHandles[$fileName] = @fopen($fileName, "r+");
         if (self::$lockHandles[$fileName]) {
@@ -264,8 +276,9 @@ class CacheEngineFiles
         $documentRoot = Main\Loader::getDocumentRoot();
         $fn = $documentRoot . "/" . ltrim($baseDir . $initDir, "/") . $filename;
 
-        if (!file_exists($fn))
+        if (!file_exists($fn)) {
             return false;
+        }
 
         $ser_content = "";
         $dateexpire = 0;
@@ -276,12 +289,14 @@ class CacheEngineFiles
         if (is_array($allVars)) {
             $INCLUDE_FROM_CACHE = 'Y';
 
-            if (!@include($fn))
+            if (!@include($fn)) {
                 return false;
+            }
         } else {
             $handle = fopen($fn, "rb");
-            if (!$handle)
+            if (!$handle) {
                 return false;
+            }
 
             $datecreate = fread($handle, 2);
             if ($datecreate == "BX") {
@@ -342,8 +357,9 @@ class CacheEngineFiles
         $fn = $folder . $filename;
         $fnTmp = $folder . md5(mt_rand()) . ".tmp";
 
-        if (!CheckDirPath($fn))
+        if (!CheckDirPath($fn)) {
             return;
+        }
 
         if ($handle = fopen($fnTmp, "wb+")) {
             if (is_array($allVars)) {
@@ -355,20 +371,26 @@ class CacheEngineFiles
                 $contents .= "\nreturn true;";
                 $contents .= "\n?>";
             } else {
-                $contents = "BX" . str_pad(time(), 12, "0", STR_PAD_LEFT) . str_pad(time() + intval($this->TTL), 12, "0", STR_PAD_LEFT);
+                $contents = "BX" . str_pad(time(), 12, "0", STR_PAD_LEFT) . str_pad(
+                        time() + intval($this->TTL),
+                        12,
+                        "0",
+                        STR_PAD_LEFT
+                    );
                 $contents .= $allVars;
             }
 
             $this->written = fwrite($handle, $contents);
             $this->path = $fn;
-            $len = Main\Text\BinaryString::getLength($contents);
+            $len = strlen($contents);
 
             fclose($handle);
 
             static::unlink($fn);
 
-            if ($this->written === $len)
+            if ($this->written === $len) {
                 rename($fnTmp, $fn);
+            }
 
             static::unlink($fnTmp);
 
@@ -404,8 +426,9 @@ class CacheEngineFiles
             || preg_match("/^BX\\d{12}(\\d{12})/", $header, $match)
             || preg_match("/^(\\d{12})/", $header, $match)
         ) {
-            if (strlen($match[1]) <= 0 || doubleval($match[1]) < time())
+            if ($match[1] == '' || doubleval($match[1]) < time()) {
                 return true;
+            }
         }
 
         return false;
@@ -435,8 +458,9 @@ class CacheEngineFiles
                         if ($file != "." && $file != "..") {
                             DeleteDirFilesEx($ar["RELATIVE_PATH"] . "/" . $file);
                             $counter++;
-                            if (time() > $etime)
+                            if (time() > $etime) {
                                 break;
+                            }
                         }
                     }
                     closedir($dh);
@@ -453,12 +477,7 @@ class CacheEngineFiles
 
         if ($deleteFromQueue) {
             $con = Main\Application::getConnection();
-            $con->queryExecute("
-				DELETE FROM b_cache_tag
-				WHERE SITE_ID = '" . $con->getSqlHelper()->forSql($ar["SITE_ID"]) . "'
-				AND CACHE_SALT = '" . $con->getSqlHelper()->forSql($ar["CACHE_SALT"]) . "'
-				AND RELATIVE_PATH = '" . $con->getSqlHelper()->forSql($ar["RELATIVE_PATH"]) . "'
-			");
+            $con->queryExecute("DELETE FROM b_cache_tag WHERE ID = " . intval($ar["ID"]));
         }
     }
 
@@ -475,11 +494,12 @@ class CacheEngineFiles
 
         $etime = time() + 2;
         if ($count > 0) {
-            $rs = $con->query("SELECT SITE_ID, CACHE_SALT, RELATIVE_PATH, TAG from b_cache_tag WHERE TAG='*'", 0, $count);
+            $rs = $con->query("SELECT * from b_cache_tag WHERE TAG='*'", 0, $count);
             while ($ar = $rs->fetch()) {
                 static::deleteOneDir($etime, $ar);
-                if (time() > $etime)
+                if (time() > $etime) {
                     break;
+                }
             }
         }
 
@@ -488,10 +508,11 @@ class CacheEngineFiles
         if ($ar = $rs->fetch()) {
             $statRecFound = true;
             $lastCount = intval($ar["RELATIVE_PATH"]);
-            if (preg_match("/:(\\d+)$/", $ar["RELATIVE_PATH"], $m))
+            if (preg_match("/:(\\d+)$/", $ar["RELATIVE_PATH"], $m)) {
                 $lastTime = intval($m[1]);
-            else
+            } else {
                 $lastTime = 0;
+            }
         } else {
             $statRecFound = false;
             $lastCount = 0;
@@ -503,23 +524,30 @@ class CacheEngineFiles
         $delta = $toDeleteCount - $lastCount;
         if ($delta > 0) {
             $timeStep = ($lastTime > 0 ? time() - $lastTime : 0);
-            if ($timeStep <= 0)
+            if ($timeStep <= 0) {
                 $timeStep = 1;
+            }
             $count = intval($toDeleteCount * $timeStep / 3600) + 1; //Rest of the queue in an hour
         } elseif ($count < 1) {
             $count = 1;
         }
 
         if ($statRecFound) {
-            if ($lastCount != $toDeleteCount)
-                $con->queryExecute("UPDATE b_cache_tag SET RELATIVE_PATH='" . $toDeleteCount . ":" . time() . "' WHERE TAG='**'");
+            if ($lastCount != $toDeleteCount) {
+                $con->queryExecute(
+                    "UPDATE b_cache_tag SET RELATIVE_PATH='" . $toDeleteCount . ":" . time() . "' WHERE TAG='**'"
+                );
+            }
         } else {
-            $con->queryExecute("INSERT INTO b_cache_tag (TAG, RELATIVE_PATH) VALUES ('**', '" . $toDeleteCount . ":" . time() . "')");
+            $con->queryExecute(
+                "INSERT INTO b_cache_tag (TAG, RELATIVE_PATH) VALUES ('**', '" . $toDeleteCount . ":" . time() . "')"
+            );
         }
 
-        if ($toDeleteCount > 0)
+        if ($toDeleteCount > 0) {
             return "\\Bitrix\\Main\\Data\\CacheEngineFiles::delayedDelete(" . $count . ");";
-        else
+        } else {
             return "";
+        }
     }
 }

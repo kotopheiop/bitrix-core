@@ -33,14 +33,16 @@ class AccountFacebook extends Account
 
     public function getList()
     {
-        $result = $this->getRequest()->send(array(
-            'method' => 'GET',
-            'endpoint' => 'me/accounts',
-            'fields' => array(
-                'fields' => 'id,name,category,access_token,tasks'
-            ),
-            'has_pagination' => true
-        ));
+        $result = $this->getRequest()->send(
+            array(
+                'method' => 'GET',
+                'endpoint' => 'me/accounts',
+                'fields' => array(
+                    'fields' => 'id,name,category,access_token,tasks'
+                ),
+                'has_pagination' => true
+            )
+        );
 
         if (!$result->isSuccess()) {
             return $result;
@@ -62,13 +64,15 @@ class AccountFacebook extends Account
 
     public function getProfile()
     {
-        $response = $this->getRequest()->send(array(
-            'method' => 'GET',
-            'endpoint' => 'me/',
-            'fields' => array(
-                'fields' => 'id,name,picture,link'
+        $response = $this->getRequest()->send(
+            array(
+                'method' => 'GET',
+                'endpoint' => 'me/',
+                'fields' => array(
+                    'fields' => 'id,name,picture,link'
+                )
             )
-        ));
+        );
 
 
         if ($response->isSuccess()) {

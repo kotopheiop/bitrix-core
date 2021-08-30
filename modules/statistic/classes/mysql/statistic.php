@@ -1,4 +1,5 @@
 <?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/classes/general/statistic.php");
 
 class CStatistics extends CAllStatistics
@@ -7,7 +8,7 @@ class CStatistics extends CAllStatistics
     {
         $err_mess = "File: " . __FILE__ . "<br>Line: ";
         $DB = CDatabase::GetModuleConnection('statistic');
-        if (strlen($cleanup_date) > 0) {
+        if ($cleanup_date <> '') {
             $stmp = MkDateTime(ConvertDateTime($cleanup_date, "D.M.Y"), "d.m.Y");
             if ($stmp) {
                 $strSql = "DELETE FROM $table_name WHERE $date_name<FROM_UNIXTIME('$stmp')";
@@ -284,7 +285,9 @@ class CStatistics extends CAllStatistics
             $strSql = "SELECT ID FROM b_stat_referer ORDER BY SESSIONS desc LIMIT " . intval($TOP);
             $z = $DB->Query($strSql, false, $err_mess . __LINE__);
             $str = "0";
-            while ($zr = $z->Fetch()) $str .= "," . $zr["ID"];
+            while ($zr = $z->Fetch()) {
+                $str .= "," . $zr["ID"];
+            }
             $strSql = "
 				DELETE FROM b_stat_referer
 				WHERE
@@ -530,8 +533,11 @@ class CStatistics extends CAllStatistics
                 $SITE_ID = SITE_ID;
             }
         }
-        if (strlen($SITE_ID) > 0) {
-            $strSql = "SELECT D.ID FROM b_stat_day_site D WHERE D.DATE_STAT=CURDATE() AND SITE_ID = '" . $DB->ForSql($SITE_ID, 2) . "'";
+        if ($SITE_ID <> '') {
+            $strSql = "SELECT D.ID FROM b_stat_day_site D WHERE D.DATE_STAT=CURDATE() AND SITE_ID = '" . $DB->ForSql(
+                    $SITE_ID,
+                    2
+                ) . "'";
             $rs = $DB->Query($strSql, false, $err_mess . __LINE__);
             if (!$rs->Fetch()) {
                 $arFields = Array(
@@ -553,13 +559,22 @@ class CStatistics extends CAllStatistics
             $rs = $DB->Query($strSql, false, $err_mess . __LINE__);
             if ($ar = $rs->Fetch()) {
                 $arF = CSession::GetAttentiveness($ar["DATE_STAT"], $SITE_ID);
-                if (is_array($arF)) $DB->Update("b_stat_day_site", $arF, "WHERE ID='" . $ar["ID"] . "'", $err_mess . __LINE__);
+                if (is_array($arF)) {
+                    $DB->Update("b_stat_day_site", $arF, "WHERE ID='" . $ar["ID"] . "'", $err_mess . __LINE__);
+                }
             }
         }
     }
 
-    public static function SetNewDay($HOSTS = 0, $TOTAL_HOSTS = 0, $SESSIONS = 0, $HITS = 0, $NEW_GUESTS = 0, $GUESTS = 0, $FAVORITES = 0)
-    {
+    public static function SetNewDay(
+        $HOSTS = 0,
+        $TOTAL_HOSTS = 0,
+        $SESSIONS = 0,
+        $HITS = 0,
+        $NEW_GUESTS = 0,
+        $GUESTS = 0,
+        $FAVORITES = 0
+    ) {
         __SetNoKeepStatistics();
         if ($_SESSION["SESS_NO_AGENT_STATISTIC"] != "Y" && !defined("NO_AGENT_STATISTIC")) {
             $err_mess = "File: " . __FILE__ . "<br>Line: ";
@@ -588,7 +603,9 @@ class CStatistics extends CAllStatistics
             $rs = $DB->Query($strSql, false, $err_mess . __LINE__);
             if ($ar = $rs->Fetch()) {
                 $arF = CSession::GetAttentiveness($ar["DATE_STAT"]);
-                if (is_array($arF)) $DB->Update("b_stat_day", $arF, "WHERE ID='" . $ar["ID"] . "'", $err_mess . __LINE__);
+                if (is_array($arF)) {
+                    $DB->Update("b_stat_day", $arF, "WHERE ID='" . $ar["ID"] . "'", $err_mess . __LINE__);
+                }
             }
         }
         return "CStatistics::SetNewDay();";
@@ -601,14 +618,16 @@ class CStatistics extends CAllStatistics
 
     public static function DBTopSql($strSql, $nTopCount = false)
     {
-        if ($nTopCount === false)
+        if ($nTopCount === false) {
             $nTopCount = intval(COption::GetOptionString('statistic', 'RECORDS_LIMIT'));
-        else
+        } else {
             $nTopCount = intval($nTopCount);
-        if ($nTopCount > 0)
+        }
+        if ($nTopCount > 0) {
             return str_replace("/*TOP*/", "", $strSql) . "\nLIMIT " . $nTopCount;
-        else
+        } else {
             return str_replace("/*TOP*/", "", $strSql);
+        }
     }
 
     public static function DBFirstDate($strSql)

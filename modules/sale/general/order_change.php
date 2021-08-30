@@ -1,21 +1,22 @@
-<?
+<?php
+
 IncludeModuleLangFile(__FILE__);
 
 class CAllSaleOrderChange
 {
-    function CheckFields($ACTION, &$arFields, $ID = 0)
+    public static function CheckFields($ACTION, &$arFields, $ID = 0)
     {
-        if ((is_set($arFields, "ORDER_ID") || $ACTION == "ADD") && strlen($arFields["ORDER_ID"]) <= 0) {
+        if ((is_set($arFields, "ORDER_ID") || $ACTION == "ADD") && (int)$arFields["ORDER_ID"] === 0) {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SOC_EMPTY_ORDER_ID"), "SOC_ADD_EMPTY_ORDER_ID");
             return false;
         }
 
-        if ((is_set($arFields, "USER_ID") || $ACTION == "ADD") && strlen($arFields["USER_ID"]) < 0) {
+        if ((is_set($arFields, "USER_ID") || $ACTION == "ADD") && (int)$arFields["USER_ID"] === 0) {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SOC_EMPTY_USER_ID"), "SOC_ADD_EMPTY_USER_ID");
             return false;
         }
 
-        if ((is_set($arFields, "TYPE") || $ACTION == "ADD") && strlen($arFields["TYPE"]) <= 0) {
+        if ((is_set($arFields, "TYPE") || $ACTION == "ADD") && (string)$arFields["TYPE"] === '') {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SOC_EMPTY_TYPE"), "SOC_ADD_EMPTY_TYPE");
             return false;
         }
@@ -23,11 +24,11 @@ class CAllSaleOrderChange
         return true;
     }
 
-    public function GetByID($ID)
+    public static function GetByID($ID)
     {
         global $DB;
 
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
         $strSql =
             "SELECT O.*, " .
@@ -40,16 +41,17 @@ class CAllSaleOrderChange
             return $res;
         }
 
-        return False;
+        return false;
     }
 
-    public function Delete($ID)
+    public static function Delete($ID)
     {
         global $DB;
 
-        $ID = IntVal($ID);
-        if ($ID <= 0)
-            return False;
+        $ID = intval($ID);
+        if ($ID <= 0) {
+            return false;
+        }
 
         return $DB->Query("DELETE FROM b_sale_order_change WHERE ID = " . $ID . " ", true);
     }
@@ -60,14 +62,15 @@ class CAllSaleOrderChange
      *
      * @return bool|CDBResult
      */
-    public function deleteByOrderId($id)
+    public static function deleteByOrderId($id)
     {
         global $DB;
 
         $id = intval($id);
 
-        if ($id <= 0)
+        if ($id <= 0) {
             return false;
+        }
 
         return $DB->Query("DELETE FROM b_sale_order_change WHERE ORDER_ID = " . $id . " ", true);
     }
@@ -84,8 +87,9 @@ class CAllSaleOrderChange
     {
         $days = (int)($days);
 
-        if ($days <= 0)
+        if ($days <= 0) {
             return false;
+        }
 
         $expired = new \Bitrix\Main\Type\DateTime();
         $expired->add('-' . $days . ' days');
@@ -99,8 +103,9 @@ class CAllSaleOrderChange
 
         if ($connection instanceof \Bitrix\Main\DB\MysqlCommonConnection) {
             $query = "DELETE FROM b_sale_order_change WHERE DATE_CREATE < $sqlExpiredDate";
-            if ((int)$limit > 0)
+            if ((int)$limit > 0) {
                 $query .= " LIMIT " . (int)$limit;
+            }
             $connection->queryExecute($query);
         }
 
@@ -121,10 +126,11 @@ class CAllSaleOrderChange
     {
         global $USER;
 
-        if (is_object($USER))
+        if (is_object($USER)) {
             $userId = intval($USER->GetID());
-        else
+        } else {
             $userId = 0;
+        }
 
         $arParams = array(
             "ORDER_ID" => intval($orderId),
@@ -152,22 +158,36 @@ class CAllSaleOrderChange
      * @param $entity - entity
      * @return bool
      */
-    public static function AddRecordsByFields($orderId, array $arOldFields, array $arNewFields, $arDeleteFields = array(), $entityName = "", $entityId = null, $entity = null, array $data = array())
-    {
-        if ($orderId <= 0)
+    public static function AddRecordsByFields(
+        $orderId,
+        array $arOldFields,
+        array $arNewFields,
+        $arDeleteFields = array(),
+        $entityName = "",
+        $entityId = null,
+        $entity = null,
+        array $data = array()
+    ) {
+        if ($orderId <= 0) {
             return false;
+        }
 
         if ($entityName == "") // for order
         {
-            if (isset($arNewFields["ID"]))
+            if (isset($arNewFields["ID"])) {
                 unset($arNewFields["ID"]);
+            }
         }
 
         foreach ($arNewFields as $key => $val) {
-            if (is_array($val))
+            if (is_array($val)) {
                 continue;
+            }
 
-            if (!array_key_exists($key, $arOldFields) || (array_key_exists($key, $arOldFields) && strlen($val) > 0 && $val != $arOldFields[$key]) && !in_array($key, $arDeleteFields)) {
+            if (!array_key_exists($key, $arOldFields) || (array_key_exists(
+                        $key,
+                        $arOldFields
+                    ) && $val <> '' && $val != $arOldFields[$key]) && !in_array($key, $arDeleteFields)) {
                 $arRecord = CSaleOrderChange::MakeRecordFromField($key, $arNewFields, $entityName, $entity);
                 if ($arRecord) {
                     $result = $arRecord["DATA"];
@@ -197,8 +217,9 @@ class CAllSaleOrderChange
     public static function MakeRecordFromField($field, $arFields, $entityName = "", $entity = null)
     {
         foreach (CSaleOrderChangeFormat::$operationTypes as $code => $arInfo) {
-            if ($entityName != "" && (!isset($arInfo["ENTITY"]) || (isset($arInfo["ENTITY"]) && $arInfo["ENTITY"] != $entityName)))
+            if ($entityName != "" && (!isset($arInfo["ENTITY"]) || (isset($arInfo["ENTITY"]) && $arInfo["ENTITY"] != $entityName))) {
                 continue;
+            }
 
             if (in_array($field, $arInfo["TRIGGER_FIELDS"])) {
                 $originalValues = array();
@@ -240,8 +261,9 @@ class CAllSaleOrderChange
                         } elseif ($entity !== null) {
                             $value = $entity->getField($fieldName);
 
-                            if ($value === null)
+                            if ($value === null) {
                                 continue;
+                            }
                         }
                     }
 
@@ -268,14 +290,23 @@ class CAllSaleOrderChange
      * @param string $data - serialized data saved in the database for the record of this type
      * @return array with keys: NAME - record name, INFO - full description (string)
      */
-    public function GetRecordDescription($type, $data)
+    public static function GetRecordDescription($type, $data)
     {
         foreach (CSaleOrderChangeFormat::$operationTypes as $typeCode => $arInfo) {
             if ($type == $typeCode) {
                 if (isset($arInfo["FUNCTION"]) && is_callable(array("CSaleOrderChangeFormat", $arInfo["FUNCTION"]))) {
-                    $dataFields = $data;
+                    $dataFields = unserialize(
+                        $data,
+                        [
+                            'allowed_classes' => [
+                                DateTime::class,
+                                \Bitrix\Main\Type\DateTime::class,
+                                \Bitrix\Main\Type\Date::class
+                            ]
+                        ]
+                    );
 
-                    if (!(CheckSerializedData($data) && ($dataFields = unserialize($data)) !== false)) {
+                    if ($dataFields === false) {
                         $dataFields = $data;
                     }
 
@@ -447,7 +478,10 @@ class CSaleOrderChangeFormat
             "DATA_FIELDS" => array("RESPONSIBLE_ID", "RESPONSIBLE_NAME", "OLD_RESPONSIBLE_ID", "OLD_RESPONSIBLE_NAME"),
             "DATA_METHOD" => array(
                 "RESPONSIBLE_NAME" => array('CSaleOrderChangeFormat::getOrderResponsibleName', array("RESPONSIBLE_ID")),
-                "OLD_RESPONSIBLE_NAME" => array('CSaleOrderChangeFormat::getOrderResponsibleName', array("OLD_RESPONSIBLE_ID"))
+                "OLD_RESPONSIBLE_NAME" => array(
+                    'CSaleOrderChangeFormat::getOrderResponsibleName',
+                    array("OLD_RESPONSIBLE_ID")
+                )
             ),
             "ENTITY" => 'ORDER',
         ),
@@ -652,7 +686,10 @@ class CSaleOrderChangeFormat
             "DATA_FIELDS" => array("RESPONSIBLE_ID", "RESPONSIBLE_NAME", "OLD_RESPONSIBLE_ID", "OLD_RESPONSIBLE_NAME"),
             "DATA_METHOD" => array(
                 "RESPONSIBLE_NAME" => array('CSaleOrderChangeFormat::getOrderResponsibleName', array("RESPONSIBLE_ID")),
-                "OLD_RESPONSIBLE_NAME" => array('CSaleOrderChangeFormat::getOrderResponsibleName', array("OLD_RESPONSIBLE_ID"))
+                "OLD_RESPONSIBLE_NAME" => array(
+                    'CSaleOrderChangeFormat::getOrderResponsibleName',
+                    array("OLD_RESPONSIBLE_ID")
+                )
             ),
             "ENTITY" => 'SHIPMENT',
         ),
@@ -1026,12 +1063,13 @@ class CSaleOrderChangeFormat
 
     public static function FormatOrderMarked($data)
     {
-        if (is_array($data) && isset($data["REASON_MARKED"]) && strlen($data["REASON_MARKED"]) > 0) {
+        if (is_array($data) && isset($data["REASON_MARKED"]) && $data["REASON_MARKED"] <> '') {
             $info = GetMessage("SOC_ORDER_MARKED_INFO");
 
             $info = static::doProcessLogMessage($info, $data);
-        } else
+        } else {
             $info = GetMessage("SOC_ORDER_NOT_MARKED");
+        }
 
         return array(
             "NAME" => GetMessage("SOC_ORDER_MARKED"),
@@ -1043,7 +1081,9 @@ class CSaleOrderChangeFormat
     {
         return array(
             "NAME" => GetMessage("SOC_ORDER_RESERVED"),
-            "INFO" => (is_array($data) && $data["RESERVED"] == "Y") ? GetMessage("SOC_ORDER_RESERVED_Y") : GetMessage("SOC_ORDER_RESERVED_N")
+            "INFO" => (is_array($data) && $data["RESERVED"] == "Y") ? GetMessage("SOC_ORDER_RESERVED_Y") : GetMessage(
+                "SOC_ORDER_RESERVED_N"
+            )
         );
     }
 
@@ -1116,7 +1156,9 @@ class CSaleOrderChangeFormat
     {
         return array(
             "NAME" => GetMessage("SOC_ORDER_DELIVERY_ALLOWED"),
-            "INFO" => (is_array($data) && $data["ALLOW_DELIVERY"] == "Y") ? GetMessage("SOC_ORDER_DELIVERY_ALLOWED_Y") : GetMessage("SOC_ORDER_DELIVERY_ALLOWED_N")
+            "INFO" => (is_array($data) && $data["ALLOW_DELIVERY"] == "Y") ? GetMessage(
+                "SOC_ORDER_DELIVERY_ALLOWED_Y"
+            ) : GetMessage("SOC_ORDER_DELIVERY_ALLOWED_N")
         );
     }
 
@@ -1162,7 +1204,7 @@ class CSaleOrderChangeFormat
             foreach ($data as $param => $value) {
                 if ($param == "DELIVERY_ID") {
                     if (!array_key_exists('DELIVERY_NAME', $data) && strval($data['DELIVERY_NAME']) != '') {
-                        if (strpos($value, ":") !== false) {
+                        if (mb_strpos($value, ":") !== false) {
                             $arId = explode(":", $value);
                             $dbDelivery = CSaleDeliveryHandler::GetBySID($arId[0]);
                             $arDelivery = $dbDelivery->Fetch();
@@ -1235,7 +1277,9 @@ class CSaleOrderChangeFormat
     {
         return array(
             "NAME" => GetMessage("SOC_ORDER_PAYED"),
-            "INFO" => (is_array($data) && $data["PAYED"] == "Y") ? GetMessage("SOC_ORDER_PAYED_Y") : GetMessage("SOC_ORDER_PAYED_N")
+            "INFO" => (is_array($data) && $data["PAYED"] == "Y") ? GetMessage("SOC_ORDER_PAYED_Y") : GetMessage(
+                "SOC_ORDER_PAYED_N"
+            )
         );
     }
 
@@ -1264,7 +1308,16 @@ class CSaleOrderChangeFormat
     public static function FormatOrderPriceDeliveryChanged($data)
     {
         if (is_array($data)) {
-            $info = GetMessage("SOC_ORDER_PRICE_DELIVERY_CHANGED_INFO", array("#AMOUNT#" => CCurrencyLang::CurrencyFormat($data["PRICE_DELIVERY"], $data["CURRENCY"], true)));
+            $info = GetMessage(
+                "SOC_ORDER_PRICE_DELIVERY_CHANGED_INFO",
+                array(
+                    "#AMOUNT#" => CCurrencyLang::CurrencyFormat(
+                        $data["PRICE_DELIVERY"],
+                        $data["CURRENCY"],
+                        true
+                    )
+                )
+            );
         } else {
             $info = GetMessage("SOC_ORDER_PRICE_DELIVERY_CHANGED_INFO");
         }
@@ -1279,11 +1332,13 @@ class CSaleOrderChangeFormat
     public static function FormatOrderPriceChanged($data)
     {
         if (is_array($data)) {
-            $info = GetMessage("SOC_ORDER_PRICE_CHANGED_INFO",
+            $info = GetMessage(
+                "SOC_ORDER_PRICE_CHANGED_INFO",
                 array(
                     "#AMOUNT#" => CCurrencyLang::CurrencyFormat($data["PRICE"], $data["CURRENCY"], true),
                     "#OLD_AMOUNT#" => CCurrencyLang::CurrencyFormat($data["OLD_PRICE"], $data["CURRENCY"], true),
-                ));
+                )
+            );
         } else {
             $info = GetMessage("SOC_ORDER_PRICE_CHANGED_INFO");
         }
@@ -1335,7 +1390,11 @@ class CSaleOrderChangeFormat
         $info = static::doProcessLogMessage($info, $data);
 
         if (is_array($data)) {
-            $info = str_replace("#AMOUNT#", CCurrencyLang::CurrencyFormat($data["PRICE"], $data["CURRENCY"], true), $info);
+            $info = str_replace(
+                "#AMOUNT#",
+                CCurrencyLang::CurrencyFormat($data["PRICE"], $data["CURRENCY"], true),
+                $info
+            );
         }
 
         return array(
@@ -1352,13 +1411,16 @@ class CSaleOrderChangeFormat
             $reqDescription = GetMessage("SOC_ORDER_DELIVERY_REQUEST_SENT_ERROR");
 
             if (is_array($data)) {
-                if (isset($data["TEXT"]))
+                if (isset($data["TEXT"])) {
                     $reqDescription .= ": " . $data["TEXT"] . ".";
+                }
 
-                if (isset($data["DATA"]))
-                    $reqDescription .= GetMessage("SOC_ORDER_DELIVERY_REQUEST_SENT_ADD_INFO") . ": " . serialize($data["DATA"]);
+                if (isset($data["DATA"])) {
+                    $reqDescription .= GetMessage("SOC_ORDER_DELIVERY_REQUEST_SENT_ADD_INFO") . ": " . serialize(
+                            $data["DATA"]
+                        );
+                }
             }
-
         }
 
         return array(
@@ -1367,10 +1429,11 @@ class CSaleOrderChangeFormat
         );
     }
 
-
     public static function FormatPaymentPaid($data)
     {
-        $info = (is_array($data) && $data["PAID"] == "Y") ? GetMessage("SOC_PAYMENT_PAID_Y") : GetMessage("SOC_PAYMENT_PAID_N");
+        $info = (is_array($data) && $data["PAID"] == "Y") ? GetMessage("SOC_PAYMENT_PAID_Y") : GetMessage(
+            "SOC_PAYMENT_PAID_N"
+        );
         $info = static::doProcessLogMessage($info, $data);
 
         return array(
@@ -1383,7 +1446,9 @@ class CSaleOrderChangeFormat
     {
         return array(
             "NAME" => GetMessage("SOC_SHIPMENT_ALLOWED"),
-            "INFO" => (is_array($data) && $data["ALLOW_DELIVERY"] == "Y") ? GetMessage("SOC_SHIPMENT_ALLOWED_Y") : GetMessage("SOC_SHIPMENT_ALLOWED_N")
+            "INFO" => (is_array($data) && $data["ALLOW_DELIVERY"] == "Y") ? GetMessage(
+                "SOC_SHIPMENT_ALLOWED_Y"
+            ) : GetMessage("SOC_SHIPMENT_ALLOWED_N")
         );
     }
 
@@ -1401,7 +1466,7 @@ class CSaleOrderChangeFormat
     public static function FormatShipmentMarked($data)
     {
         $info = "";
-        if (is_array($data) && isset($data["REASON_MARKED"]) && strlen($data["REASON_MARKED"]) > 0) {
+        if (is_array($data) && isset($data["REASON_MARKED"]) && $data["REASON_MARKED"] <> '') {
             $info = GetMessage("SOC_SHIPMENT_MARKED_INFO");
             $info = static::doProcessLogMessage($info, $data);
         }
@@ -1411,7 +1476,6 @@ class CSaleOrderChangeFormat
             "INFO" => $info
         );
     }
-
 
     public static function FormatShipmentItemBasketAdded($data)
     {
@@ -1445,7 +1509,6 @@ class CSaleOrderChangeFormat
             "INFO" => $info,
         );
     }
-
 
     public static function FormatShipmentCanceled($data)
     {
@@ -1490,7 +1553,9 @@ class CSaleOrderChangeFormat
     {
         return array(
             "NAME" => GetMessage("SOC_SHIPMENT_DEDUCTED"),
-            "INFO" => ($data["DEDUCTED"] == "Y") ? GetMessage("SOC_SHIPMENT_DEDUCTED_Y") : GetMessage("SOC_SHIPMENT_DEDUCTED_N")
+            "INFO" => ($data["DEDUCTED"] == "Y") ? GetMessage("SOC_SHIPMENT_DEDUCTED_Y") : GetMessage(
+                "SOC_SHIPMENT_DEDUCTED_N"
+            )
         );
     }
 
@@ -1498,7 +1563,9 @@ class CSaleOrderChangeFormat
     {
         return array(
             "NAME" => GetMessage("SOC_SHIPMENT_RESERVED"),
-            "INFO" => ($data["RESERVED"] == "Y") ? GetMessage("SOC_SHIPMENT_RESERVED_Y") : GetMessage("SOC_SHIPMENT_RESERVED_N")
+            "INFO" => ($data["RESERVED"] == "Y") ? GetMessage("SOC_SHIPMENT_RESERVED_Y") : GetMessage(
+                "SOC_SHIPMENT_RESERVED_N"
+            )
         );
     }
 
@@ -1558,7 +1625,9 @@ class CSaleOrderChangeFormat
         $info = GetMessage("SOC_SHIPMENT_STATUS_CHANGE_INFO");
 
         foreach ($arData as $param => $value) {
-            $status = \Bitrix\Sale\Helpers\Admin\Blocks\OrderShipmentStatus::getShipmentStatusList($arData['STATUS_ID']);
+            $status = \Bitrix\Sale\Helpers\Admin\Blocks\OrderShipmentStatus::getShipmentStatusList(
+                $arData['STATUS_ID']
+            );
             $info = str_replace("#" . $param . "#", $status[$value], $info);
         }
 
@@ -1604,8 +1673,9 @@ class CSaleOrderChangeFormat
                     }
                 } else {
                     foreach ($data as $param => $value) {
-                        if (strpos($param, "OLD_") === 0)
+                        if (mb_strpos($param, "OLD_") === 0) {
                             continue;
+                        }
 
                         $info .= (strval($info) != "" ? "; " : "") . $param . ": " . $value;
 
@@ -1621,8 +1691,9 @@ class CSaleOrderChangeFormat
 
         $title = GetMessage("SOC_" . ToUpper($type) . "_TITLE");
 
-        if (strval($title) == "")
+        if (strval($title) == "") {
             $title = GetMessage("SOC_" . ToUpper($entity) . "_TITLE");
+        }
 
         return array(
             "NAME" => $title,
@@ -1656,8 +1727,9 @@ class CSaleOrderChangeFormat
                     }
                 } else {
                     foreach ($data as $param => $value) {
-                        if (strpos($param, "OLD_") === 0)
+                        if (mb_strpos($param, "OLD_") === 0) {
                             continue;
+                        }
 
                         $info .= (strval($info) != "" ? "; " : "") . $param . ": " . $value;
 
@@ -1673,8 +1745,9 @@ class CSaleOrderChangeFormat
 
         $title = GetMessage("SOC_" . ToUpper($type) . "_TITLE");
 
-        if (strval($title) == "")
+        if (strval($title) == "") {
             $title = GetMessage("SOC_" . ToUpper($entity) . "_TITLE");
+        }
 
         return array(
             "NAME" => $title,
@@ -1696,7 +1769,6 @@ class CSaleOrderChangeFormat
             $info = GetMessage("SOC_" . ToUpper($type) . "_INFO");
 
             if (is_array($data)) {
-
                 foreach ($data as $param => $value) {
                     if (is_array($value) && !empty($value)) {
                         $errorList = $value;
@@ -1715,8 +1787,9 @@ class CSaleOrderChangeFormat
 
         $title = GetMessage("SOC_" . ToUpper($type) . "_TITLE");
 
-        if (strval($title) == "")
+        if (strval($title) == "") {
             $title = GetMessage("SOC_" . ToUpper($entity) . "_TITLE");
+        }
 
         return array(
             "NAME" => $title,
@@ -1733,18 +1806,21 @@ class CSaleOrderChangeFormat
      */
     public static function getOrderResponsibleName($id = null)
     {
-        if (intval($id) < 0)
+        if (intval($id) < 0) {
             return false;
+        }
 
         static $orderResponsibleList = array();
 
         if (isset($orderResponsibleList[$id])) {
             return $orderResponsibleList[$id];
         }
-        $userIterator = \Bitrix\Main\UserTable::getList(array(
-            'select' => array('ID', 'LOGIN', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'EMAIL'),
-            'filter' => array('=ID' => intval($id))
-        ));
+        $userIterator = \Bitrix\Main\UserTable::getList(
+            array(
+                'select' => array('ID', 'LOGIN', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'EMAIL'),
+                'filter' => array('=ID' => intval($id))
+            )
+        );
 
         $userName = false;
         if ($userData = $userIterator->fetch()) {
@@ -1772,14 +1848,15 @@ class CSaleOrderChangeFormat
         return $text;
     }
 
-
     public static function FormatMarkerSuccess($data)
     {
         $info = GetMessage("SOC_MARKER_SUCCESS_INFO");
 
 
         if (!empty($data['ENTITY_TYPE'])) {
-            $data['ENTITY_NAME'] = \Bitrix\Main\Localization\Loc::getMessage('SOC_MARKER_' . $data['ENTITY_TYPE'] . '_INFO');
+            $data['ENTITY_NAME'] = \Bitrix\Main\Localization\Loc::getMessage(
+                'SOC_MARKER_' . $data['ENTITY_TYPE'] . '_INFO'
+            );
         }
 
         $info = static::doProcessLogMessage($info, $data);

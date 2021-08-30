@@ -29,11 +29,11 @@ class Geo extends \Bitrix\Main\UserField\TypeBase
         );
     }
 
-    function getDBColumnType($arUserField)
+    public static function getDBColumnType($arUserField)
     {
         global $DB;
-        switch (strtolower($DB->type)) {
-            case "mysql":
+        switch ($DB->type) {
+            case "MYSQL":
                 return "varchar(100)";
         }
     }
@@ -53,7 +53,7 @@ class Geo extends \Bitrix\Main\UserField\TypeBase
 
     function onBeforeSave($userField, $value)
     {
-        if (strlen($value) > 0) {
+        if ($value <> '') {
             $encodedValue = GeoHash::encode(explode(';', $value));
             $value = $encodedValue;
         }
@@ -63,7 +63,7 @@ class Geo extends \Bitrix\Main\UserField\TypeBase
 
     public function onAfterFetch($userfield, $fetched)
     {
-        if (strlen($fetched['VALUE']) > 0) {
+        if ($fetched['VALUE'] <> '') {
             $decodedValue = implode(';', GeoHash::decode($fetched['VALUE']));
             $fetched['VALUE'] = $decodedValue;
         }
@@ -98,12 +98,16 @@ class Geo extends \Bitrix\Main\UserField\TypeBase
 
         ob_start();
 
-        $APPLICATION->IncludeComponent('bitrix:map.google.system', '', array(
-            'MAP_ID' => $mapId,
-            'INIT_MAP_SCALE' => $scale,
-            'INIT_MAP_LAT' => $lat,
-            'INIT_MAP_LON' => $lon,
-        ));
+        $APPLICATION->IncludeComponent(
+            'bitrix:map.google.system',
+            '',
+            array(
+                'MAP_ID' => $mapId,
+                'INIT_MAP_SCALE' => $scale,
+                'INIT_MAP_LAT' => $lat,
+                'INIT_MAP_LON' => $lon,
+            )
+        );
         ?>
         <script>
             var mapId = '<?=$mapId?>';
@@ -186,21 +190,27 @@ class Geo extends \Bitrix\Main\UserField\TypeBase
 
         $pointList = array();
         foreach ($value as $point) {
-            if (strlen($point) > 0) {
+            if ($point <> '') {
                 $pointList[] = explode(';', $point);
             }
         }
 
         $center = static::getCenter($arUserField, $pointList);
 
-        $APPLICATION->IncludeComponent('bitrix:map.google.edit', '', array(
-            'MAP_ID' => $arUserField['FIELD_NAME'],
-            'MULTIPLE' => $multiple ? 'Y' : 'N',
-            'POINTS' => $pointList,
-            'INIT_MAP_SCALE' => $arUserField['SETTINGS']['INIT_MAP_SCALE'],
-            'INIT_MAP_LAT' => $center[0],
-            'INIT_MAP_LON' => $center[1],
-        ), null, array('HIDE_ICONS' => 'Y'));
+        $APPLICATION->IncludeComponent(
+            'bitrix:map.google.edit',
+            '',
+            array(
+                'MAP_ID' => $arUserField['FIELD_NAME'],
+                'MULTIPLE' => $multiple ? 'Y' : 'N',
+                'POINTS' => $pointList,
+                'INIT_MAP_SCALE' => $arUserField['SETTINGS']['INIT_MAP_SCALE'],
+                'INIT_MAP_LAT' => $center[0],
+                'INIT_MAP_LON' => $center[1],
+            ),
+            null,
+            array('HIDE_ICONS' => 'Y')
+        );
 
         if (!is_array($arHtmlControl['VALUE'])) {
             $arHtmlControl['VALUE'] = array($arHtmlControl['VALUE']);
@@ -216,7 +226,9 @@ foreach ($arHtmlControl['VALUE'] as $value) {
 ?>
 		</span>
         <script>
-            BX.Fileman.Map.instance('<?=\CUtil::JSEscape($arUserField['FIELD_NAME'])?>').addListener(function (map, points) {
+            BX.Fileman.Map.instance('<?=\CUtil::JSEscape(
+                $arUserField['FIELD_NAME']
+            )?>').addListener(function (map, points) {
                 var str = '';
 
                 for (var i = 0; i < points.length; i++) {
@@ -244,7 +256,7 @@ foreach ($arHtmlControl['VALUE'] as $value) {
         $pointList = array();
 
         foreach ($value as $point) {
-            if (strlen($point) > 0) {
+            if ($point <> '') {
                 $pointList[] = explode(';', $point);
             }
         }
@@ -254,22 +266,28 @@ foreach ($arHtmlControl['VALUE'] as $value) {
         $center = static::getCenter($arUserField, $pointList);
 
         ob_start();
-        $APPLICATION->IncludeComponent('bitrix:map.google.edit', '', array(
-            'MAP_ID' => $mapId,
-            'MAP_WIDTH' => '100%',
-            'MULTIPLE' => $arUserField['MULTIPLE'] == 'Y' ? 'Y' : 'N',
-            'POINTS' => $pointList,
-            'INIT_MAP_SCALE' => $arUserField['SETTINGS']['INIT_MAP_SCALE'],
-            'INIT_MAP_LAT' => $center[0],
-            'INIT_MAP_LON' => $center[1],
-        ), null, array('HIDE_ICONS' => 'Y'));
+        $APPLICATION->IncludeComponent(
+            'bitrix:map.google.edit',
+            '',
+            array(
+                'MAP_ID' => $mapId,
+                'MAP_WIDTH' => '100%',
+                'MULTIPLE' => $arUserField['MULTIPLE'] == 'Y' ? 'Y' : 'N',
+                'POINTS' => $pointList,
+                'INIT_MAP_SCALE' => $arUserField['SETTINGS']['INIT_MAP_SCALE'],
+                'INIT_MAP_LAT' => $center[0],
+                'INIT_MAP_LON' => $center[1],
+            ),
+            null,
+            array('HIDE_ICONS' => 'Y')
+        );
 
         ?>
         <span style="display: none;" id="<?= $arUserField['FIELD_NAME'] ?>_valuewrap">
 	<input type="hidden" name="<?= HtmlFilter::encode($fieldName) ?>" value=""/>
 <?
 foreach ($value as $point) {
-    if (strlen($point) > 0) {
+    if ($point <> '') {
         ?>
         <input type="hidden" name="<?= HtmlFilter::encode($fieldName) ?>" value="<?= $point ?>"/>
         <?
@@ -279,14 +297,20 @@ foreach ($value as $point) {
 </span>
         <script>
             BX.Fileman.Map.instance('<?=\CUtil::JSEscape($mapId)?>').addListener(function (map, points) {
-                var str = '<input type="hidden" name="<?=\CUtil::JSEscape(HtmlFilter::encode($fieldName))?>" value=""/>';
+                var str = '<input type="hidden" name="<?=\CUtil::JSEscape(
+                    HtmlFilter::encode($fieldName)
+                )?>" value=""/>';
 
                 for (var i = 0; i < points.length; i++) {
-                    str += '<input type="hidden" name="<?=\CUtil::JSEscape(HtmlFilter::encode($fieldName))?>" value="' + points[i].getPosition().join(';') + '" />';
+                    str += '<input type="hidden" name="<?=\CUtil::JSEscape(
+                        HtmlFilter::encode($fieldName)
+                    )?>" value="' + points[i].getPosition().join(';') + '" />';
                 }
 
                 BX('<?=HtmlFilter::encode($arUserField['FIELD_NAME'])?>_valuewrap').innerHTML = str;
-                var inputList = BX.Main.UF.Factory.get(BX.Main.UF.TypeGeo.USER_TYPE_ID).findInput(BX('<?=\CUtil::JSEscape($arUserField['FIELD_NAME'])?>_valuewrap'), '<?=\CUtil::JSEscape($fieldName)?>');
+                var inputList = BX.Main.UF.Factory.get(BX.Main.UF.TypeGeo.USER_TYPE_ID).findInput(BX('<?=\CUtil::JSEscape(
+                    $arUserField['FIELD_NAME']
+                )?>_valuewrap'), '<?=\CUtil::JSEscape($fieldName)?>');
 
                 if (inputList.length > 0) {
                     BX.fireEvent(inputList[0], 'change');
@@ -312,7 +336,7 @@ foreach ($value as $point) {
 
         if (count($value) > 0) {
             foreach ($value as $point) {
-                if (strlen($point) > 0) {
+                if ($point <> '') {
                     $c = explode(';', $point);
                     $placemarkList[] = array(
                         'TEXT' => '',
@@ -328,21 +352,29 @@ foreach ($value as $point) {
         $center = static::getCenter($arUserField, $pointList);
         ob_start();
 
-        $APPLICATION->IncludeComponent('bitrix:map.google.view', '', array(
-            'MAP_ID' => $mapId,
-            'MAP_WIDTH' => '100%',
-            'MAP_DATA' => serialize(array(
-                'google_scale' => $arUserField['SETTINGS']['INIT_MAP_SCALE'],
-                'google_lat' => $center[0],
-                'google_lon' => $center[1],
-                'PLACEMARKS' => $placemarkList
-            )),
-        ), null, array('HIDE_ICONS' => 'Y'));
+        $APPLICATION->IncludeComponent(
+            'bitrix:map.google.view',
+            '',
+            array(
+                'MAP_ID' => $mapId,
+                'MAP_WIDTH' => '100%',
+                'MAP_DATA' => serialize(
+                    array(
+                        'google_scale' => $arUserField['SETTINGS']['INIT_MAP_SCALE'],
+                        'google_lat' => $center[0],
+                        'google_lon' => $center[1],
+                        'PLACEMARKS' => $placemarkList
+                    )
+                ),
+            ),
+            null,
+            array('HIDE_ICONS' => 'Y')
+        );
 
         return ob_get_clean();
     }
 
-    protected function getCenter($arUserField, $pointList)
+    protected static function getCenter($arUserField, $pointList)
     {
         $center = array(0, 0);
         $pointCount = 0;

@@ -1,8 +1,13 @@
 <?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+}
 
 $STAT_RIGHT = $APPLICATION->GetGroupRight("statistic");
-if ($STAT_RIGHT == "D") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($STAT_RIGHT == "D") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 /***************************************************************************
  * Convertation of the standard ShareIt CSV file to the
@@ -29,14 +34,25 @@ function PrepareQuotes(&$item)
 }
 
 if ($fp_in = fopen($INPUT_CSV_FILE, "rb")) {
-    $upload_dir = rtrim($_SERVER["DOCUMENT_ROOT"], "/") . "/" . COption::GetOptionString("main", "upload_dir", "/upload/") . "/statistic";
-    if (substr($OUTPUT_CSV_FILE, 0, strlen($upload_dir)) == $upload_dir && $fp_out = fopen($OUTPUT_CSV_FILE, "wb")) {
+    $upload_dir = rtrim($_SERVER["DOCUMENT_ROOT"], "/") . "/" . COption::GetOptionString(
+            "main",
+            "upload_dir",
+            "/upload/"
+        ) . "/statistic";
+    if (mb_substr($OUTPUT_CSV_FILE, 0, mb_strlen($upload_dir)) == $upload_dir && $fp_out = fopen(
+            $OUTPUT_CSV_FILE,
+            "wb"
+        )) {
         $i = 0; // counter of the read valuable lines
         $j = 0; // counter of the written to the resulting  file lines
         $lang_date_format = FORMAT_DATETIME; // date format for the current language
         $event1 = "shareit";
         $event2 = "buy";
-        $EVENT_ID = CStatEventType::ConditionSet($event1, $event2, $arEventType) . " (" . $event1 . " / " . $event2 . ")";
+        $EVENT_ID = CStatEventType::ConditionSet(
+                $event1,
+                $event2,
+                $arEventType
+            ) . " (" . $event1 . " / " . $event2 . ")";
         $SITE_ID = GetEventSiteID(); // short site identifier (ID)
         while (!feof($fp_in)) {
             $arrCSV = fgetcsv($fp_in, 4096, $SEPARATOR);
@@ -48,7 +64,9 @@ if ($fp_in = fopen($INPUT_CSV_FILE, "rb")) {
                 if ($arrCSV[0] == "PADATE") {
                     // get an array with the field numbers
                     $arrS = array_flip($arrCSV);
-                } elseif ($arrCSV[0] != "PADATE" && is_array($arrS) && count($arrS) > 0) // else form the CSV line in module format and write it to the resulting file
+                } elseif ($arrCSV[0] != "PADATE" && is_array($arrS) && count(
+                        $arrS
+                    ) > 0) // else form the CSV line in module format and write it to the resulting file
                 {
                     $arrRes = array();
 
@@ -59,7 +77,11 @@ if ($fp_in = fopen($INPUT_CSV_FILE, "rb")) {
                     $arrRes[] = $arrCSV[$arrS["PURCHASEID"]] . " / " . $arrCSV[$arrS["PRODUCTID"]];
 
                     // date
-                    $arrRes[] = $DB->FormatDate(trim($arrCSV[$arrS["TDATE"]]), "MM/DD/YYYY HH:MI:SS", $lang_date_format);
+                    $arrRes[] = $DB->FormatDate(
+                        trim($arrCSV[$arrS["TDATE"]]),
+                        "MM/DD/YYYY HH:MI:SS",
+                        $lang_date_format
+                    );
 
                     // additional parameter
                     $ADDITIONAL_PARAMETER = $arrCSV[$arrS["ADDITIONAL1"]];
@@ -73,12 +95,14 @@ if ($fp_in = fopen($INPUT_CSV_FILE, "rb")) {
                     $arrRes[] = $CURRENCY;
 
                     // if short site identifier exists in Additional parameter then
-                    if (strpos($ADDITIONAL_PARAMETER, $SITE_ID) !== false) {
+                    if (mb_strpos($ADDITIONAL_PARAMETER, $SITE_ID) !== false) {
                         // write the line to the resulting CSV file
                         $j++;
                         array_walk($arrRes, "PrepareQuotes");
                         $str = implode(",", $arrRes);
-                        if ($j > 1) $str = "\n" . $str;
+                        if ($j > 1) {
+                            $str = "\n" . $str;
+                        }
                         fputs($fp_out, $str);
                     }
                 }

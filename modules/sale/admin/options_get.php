@@ -1,8 +1,9 @@
 <? require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_before.php");
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions < "W")
+if ($saleModulePermissions < "W") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 ?>
     <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
     <html>
@@ -12,7 +13,7 @@ if ($saleModulePermissions < "W")
 <?
 IncludeModuleLangFile(__FILE__);
 
-$divInd = IntVal($divInd);
+$divInd = intval($divInd);
 $arAgent = Array(
     "FIZ" => Array(
         "SURNAME" => GetMessage("SOG_SURNAME"),
@@ -74,11 +75,13 @@ $arAgentInfo = Array(
     "FULL_NAME" => GetMessage("SOG_FULL_NAME"),
 );
 
-if (strlen($type) <= 0)
+if ($type == '') {
     $type = "FIZ";
+}
 
-foreach ($arAgent[$type] as $k => $v)
+foreach ($arAgent[$type] as $k => $v) {
     $arAgentInfo[$k] = $v;
+}
 
 $arAgentInfo["PHONE"] = GetMessage("SOG_PHONE");
 $arAgentInfo["EMAIL"] = GetMessage("SOG_EMAIL");
@@ -106,8 +109,9 @@ if (is_array($arAgentInfo) && count($arAgentInfo) > 0) {
     $res .= '</tr>';
 
     foreach ($arAgentInfo as $key => $value) {
-        if (strlen($fields) > 0)
+        if ($fields <> '') {
             $fields .= ",";
+        }
         $fields .= $key;
 
         $res .= '<tr><td>';

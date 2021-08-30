@@ -45,11 +45,13 @@ class ByLocation extends Base
      */
     public static function check($locationCode, array $restrictionParams, $deliveryId = 0)
     {
-        if (intval($deliveryId) <= 0)
+        if (intval($deliveryId) <= 0) {
             return true;
+        }
 
-        if (strlen($locationCode) <= 0)
+        if ($locationCode == '') {
             return false;
+        }
 
         try {
             $class = static::getD2LClass();
@@ -75,18 +77,22 @@ class ByLocation extends Base
             $order = $entity;
         }
 
-        if (!$order)
+        if (!$order) {
             return '';
+        }
 
 
-        if (!$props = $order->getPropertyCollection())
+        if (!$props = $order->getPropertyCollection()) {
             return '';
+        }
 
-        if (!$locationProp = $props->getDeliveryLocation())
+        if (!$locationProp = $props->getDeliveryLocation()) {
             return '';
+        }
 
-        if (!$locationCode = $locationProp->getValue())
+        if (!$locationCode = $locationProp->getValue()) {
             return '';
+        }
 
         return $locationCode;
     }
@@ -98,30 +104,35 @@ class ByLocation extends Base
             $arLocation = array();
 
             if (!!\CSaleLocation::isLocationProEnabled()) {
-                if (strlen($params["LOCATION"][$class::DB_LOCATION_FLAG]))
+                if ($params["LOCATION"][$class::DB_LOCATION_FLAG] <> '') {
                     $LOCATION1 = explode(':', $params["LOCATION"][$class::DB_LOCATION_FLAG]);
+                }
 
-                if (strlen($params["LOCATION"][$class::DB_GROUP_FLAG]))
+                if ($params["LOCATION"][$class::DB_GROUP_FLAG] <> '') {
                     $LOCATION2 = explode(':', $params["LOCATION"][$class::DB_GROUP_FLAG]);
+                }
             }
 
             if (isset($LOCATION1) && is_array($LOCATION1) && count($LOCATION1) > 0) {
                 $arLocation[$class::DB_LOCATION_FLAG] = array();
                 $locationCount = count($LOCATION1);
 
-                for ($i = 0; $i < $locationCount; $i++)
-                    if (strlen($LOCATION1[$i]))
+                for ($i = 0; $i < $locationCount; $i++) {
+                    if ($LOCATION1[$i] <> '') {
                         $arLocation[$class::DB_LOCATION_FLAG][] = $LOCATION1[$i];
+                    }
+                }
             }
 
             if (isset($LOCATION2) && is_array($LOCATION2) && count($LOCATION2) > 0) {
                 $arLocation[$class::DB_GROUP_FLAG] = array();
                 $locationCount = count($LOCATION2);
 
-                for ($i = 0; $i < $locationCount; $i++)
-                    if (strlen($LOCATION2[$i]))
+                for ($i = 0; $i < $locationCount; $i++) {
+                    if ($LOCATION2[$i] <> '') {
                         $arLocation[$class::DB_GROUP_FLAG][] = $LOCATION2[$i];
-
+                    }
+                }
             }
 
             $class::resetMultipleForOwner($deliveryId, $arLocation);
@@ -132,7 +143,6 @@ class ByLocation extends Base
 
     public static function getParamsStructure($deliveryId = 0)
     {
-
         $result = array(
             "LOCATION" => array(
                 "TYPE" => "LOCATION_MULTI"
@@ -140,8 +150,9 @@ class ByLocation extends Base
             )
         );
 
-        if ($deliveryId > 0)
+        if ($deliveryId > 0) {
             $result["LOCATION"]["DELIVERY_ID"] = $deliveryId;
+        }
 
         return $result;
     }
@@ -166,31 +177,43 @@ class ByLocation extends Base
      */
     public static function filterServicesArray(Shipment $shipment, array $restrictionFields)
     {
-        if (empty($restrictionFields))
+        if (empty($restrictionFields)) {
             return array();
+        }
 
         $shpLocCode = self::extractParams($shipment);
 
         //if location not defined in shipment
-        if (strlen($shpLocCode) < 0)
+        if ($shpLocCode === '') {
             return array_keys($restrictionFields);
+        }
 
-        $res = LocationTable::getList(array(
-            'filter' => array('=CODE' => $shpLocCode),
-            'select' => array('CODE', 'LEFT_MARGIN', 'RIGHT_MARGIN')
-        ));
+        $res = LocationTable::getList(
+            array(
+                'filter' => array('=CODE' => $shpLocCode),
+                'select' => array('CODE', 'LEFT_MARGIN', 'RIGHT_MARGIN')
+            )
+        );
 
         //if location doesn't exists
-        if (!$shpLocParams = $res->fetch())
+        if (!$shpLocParams = $res->fetch()) {
             return array_keys($restrictionFields);
+        }
 
         $result = array();
-        $srvLocCodesCompat = static::getLocationsCompat($restrictionFields, $shpLocParams['LEFT_MARGIN'], $shpLocParams['RIGHT_MARGIN']);
+        $srvLocCodesCompat = static::getLocationsCompat(
+            $restrictionFields,
+            $shpLocParams['LEFT_MARGIN'],
+            $shpLocParams['RIGHT_MARGIN']
+        );
 
-        foreach ($srvLocCodesCompat as $locCode => $deliveries)
-            foreach ($deliveries as $deliveryId)
-                if (!in_array($deliveryId, $result))
+        foreach ($srvLocCodesCompat as $locCode => $deliveries) {
+            foreach ($deliveries as $deliveryId) {
+                if (!in_array($deliveryId, $result)) {
                     $result[] = $deliveryId;
+                }
+            }
+        }
 
         return $result;
     }
@@ -207,63 +230,75 @@ class ByLocation extends Base
         $groups = array();
         $class = static::getD2LClass();
 
-        $res = $class::getList(array(
-            'filter' => array(
-                '=DELIVERY_ID' => array_keys($restrictionFields),
-                array(
-                    'LOGIC' => 'OR',
+        $res = $class::getList(
+            array(
+                'filter' => array(
+                    '=DELIVERY_ID' => array_keys($restrictionFields),
                     array(
-                        'LOGIC' => 'AND',
-                        '=LOCATION_TYPE' => $class::DB_LOCATION_FLAG,
-                        '<=LOCATION.LEFT_MARGIN' => $leftMargin,
-                        '>=LOCATION.RIGHT_MARGIN' => $rightMargin
-                    ),
-                    array(
-                        'LOGIC' => 'AND',
-                        '=LOCATION_TYPE' => $class::DB_GROUP_FLAG
+                        'LOGIC' => 'OR',
+                        array(
+                            'LOGIC' => 'AND',
+                            '=LOCATION_TYPE' => $class::DB_LOCATION_FLAG,
+                            '<=LOCATION.LEFT_MARGIN' => $leftMargin,
+                            '>=LOCATION.RIGHT_MARGIN' => $rightMargin
+                        ),
+                        array(
+                            'LOGIC' => 'AND',
+                            '=LOCATION_TYPE' => $class::DB_GROUP_FLAG
+                        )
                     )
                 )
             )
-        ));
+        );
 
         while ($d2l = $res->fetch()) {
             if ($d2l['LOCATION_TYPE'] == $class::DB_LOCATION_FLAG) {
-                if (!is_array($result[$d2l['LOCATION_CODE']]))
+                if (!is_array($result[$d2l['LOCATION_CODE']])) {
                     $result[$d2l['LOCATION_CODE']] = array();
+                }
 
-                if (!in_array($d2l['DELIVERY_ID'], $result[$d2l['LOCATION_CODE']]))
+                if (!in_array($d2l['DELIVERY_ID'], $result[$d2l['LOCATION_CODE']])) {
                     $result[$d2l['LOCATION_CODE']][] = $d2l['DELIVERY_ID'];
+                }
             } elseif ($d2l['LOCATION_TYPE'] == $class::DB_GROUP_FLAG) {
-                if (!is_array($groups[$d2l['LOCATION_CODE']]))
+                if (!is_array($groups[$d2l['LOCATION_CODE']])) {
                     $groups[$d2l['LOCATION_CODE']] = array();
+                }
 
-                if (!in_array($d2l['DELIVERY_ID'], $groups[$d2l['LOCATION_CODE']]))
+                if (!in_array($d2l['DELIVERY_ID'], $groups[$d2l['LOCATION_CODE']])) {
                     $groups[$d2l['LOCATION_CODE']][] = $d2l['DELIVERY_ID'];
+                }
             }
         }
 
         //groups
         if (!empty($groups)) {
-            $res = GroupLocationTable::getList(array(
-                'filter' => array(
-                    '=GROUP.CODE' => array_keys($groups),
-                    '<=LOCATION.LEFT_MARGIN' => $leftMargin,
-                    '>=LOCATION.RIGHT_MARGIN' => $rightMargin
-                ),
-                'select' => array(
-                    'LOCATION_ID', 'LOCATION_GROUP_ID',
-                    'LOCATION_CODE' => 'LOCATION.CODE',
-                    'GROUP_CODE' => 'GROUP.CODE'
+            $res = GroupLocationTable::getList(
+                array(
+                    'filter' => array(
+                        '=GROUP.CODE' => array_keys($groups),
+                        '<=LOCATION.LEFT_MARGIN' => $leftMargin,
+                        '>=LOCATION.RIGHT_MARGIN' => $rightMargin
+                    ),
+                    'select' => array(
+                        'LOCATION_ID',
+                        'LOCATION_GROUP_ID',
+                        'LOCATION_CODE' => 'LOCATION.CODE',
+                        'GROUP_CODE' => 'GROUP.CODE'
+                    )
                 )
-            ));
+            );
 
             while ($loc = $res->fetch()) {
-                if (!is_array($result[$loc['LOCATION_CODE']]))
+                if (!is_array($result[$loc['LOCATION_CODE']])) {
                     $result[$loc['LOCATION_CODE']] = array();
+                }
 
-                foreach ($groups[$loc['GROUP_CODE']] as $srvId)
-                    if (!in_array($srvId, $result[$loc['LOCATION_CODE']]))
+                foreach ($groups[$loc['GROUP_CODE']] as $srvId) {
+                    if (!in_array($srvId, $result[$loc['LOCATION_CODE']])) {
                         $result[$loc['LOCATION_CODE']][] = $srvId;
+                    }
+                }
             }
         }
 

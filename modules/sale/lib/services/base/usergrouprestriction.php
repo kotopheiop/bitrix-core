@@ -44,11 +44,13 @@ class UserGroupRestriction extends Restriction
      */
     public static function check($groups, array $restrictionParams, $entityId = 0)
     {
-        if (intval($entityId) <= 0)
+        if (intval($entityId) <= 0) {
             return true;
+        }
 
-        if (empty($groups) <= 0)
+        if (empty($groups) <= 0) {
             return false;
+        }
 
         $commonGroups = array_intersect($groups, $restrictionParams['GROUP_IDS']);
         return !empty($commonGroups);
@@ -99,11 +101,13 @@ class UserGroupRestriction extends Restriction
 
         if (is_array($params['GROUP_IDS']) && !empty($params['GROUP_IDS'])) {
             foreach ($params['GROUP_IDS'] as $groupId) {
-                UserGroupRestrictionTable::add([
-                    'ENTITY_TYPE_ID' => $entityTypeId,
-                    'ENTITY_ID' => $entityId,
-                    'GROUP_ID' => (int)$groupId
-                ]);
+                UserGroupRestrictionTable::add(
+                    [
+                        'ENTITY_TYPE_ID' => $entityTypeId,
+                        'ENTITY_ID' => $entityId,
+                        'GROUP_ID' => (int)$groupId
+                    ]
+                );
             }
         }
 
@@ -113,10 +117,12 @@ class UserGroupRestriction extends Restriction
     protected static function getUserGroups()
     {
         $result = [];
-        $res = GroupTable::getList([
-            'filter' => ['ACTIVE' => 'Y'],
-            'order' => ['NAME' => 'ASC']
-        ]);
+        $res = GroupTable::getList(
+            [
+                'filter' => ['ACTIVE' => 'Y'],
+                'order' => ['NAME' => 'ASC']
+            ]
+        );
 
         while ($group = $res->fetch()) {
             $result[$group['ID']] = $group['NAME'];
@@ -141,10 +147,14 @@ class UserGroupRestriction extends Restriction
     {
         $result = [];
 
-        $res = UserGroupRestrictionTable::getList(['filter' => [
-            '=ENTITY_TYPE_ID' => static::getEntityTypeId(),
-            '=ENTITY_ID' => $entityId
-        ]]);
+        $res = UserGroupRestrictionTable::getList(
+            [
+                'filter' => [
+                    '=ENTITY_TYPE_ID' => static::getEntityTypeId(),
+                    '=ENTITY_ID' => $entityId
+                ]
+            ]
+        );
 
         while ($row = $res->fetch()) {
             $result[] = $row['GROUP_ID'];
@@ -172,8 +182,9 @@ class UserGroupRestriction extends Restriction
      */
     public static function filterServicesArray(Entity $entity, array $restrictionFields)
     {
-        if (empty($restrictionFields))
+        if (empty($restrictionFields)) {
             return [];
+        }
 
         $groups = static::extractParams($entity);
 
@@ -183,13 +194,15 @@ class UserGroupRestriction extends Restriction
 
         $entityIds = array_keys($restrictionFields);
 
-        $res = UserGroupRestrictionTable::getList(array(
-            'filter' => array(
-                '=ENTITY_TYPE_ID' => static::getEntityTypeId(),
-                '=ENTITY_ID' => $entityIds,
-                '=GROUP_ID' => $groups
+        $res = UserGroupRestrictionTable::getList(
+            array(
+                'filter' => array(
+                    '=ENTITY_TYPE_ID' => static::getEntityTypeId(),
+                    '=ENTITY_ID' => $entityIds,
+                    '=GROUP_ID' => $groups
+                )
             )
-        ));
+        );
 
         $result = [];
 

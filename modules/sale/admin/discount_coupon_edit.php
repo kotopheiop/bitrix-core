@@ -18,14 +18,16 @@ $prefix = ($subWindow ? 'COUPON_' : '');
 
 $saleModulePermissions = $APPLICATION->GetGroupRight('sale');
 $readOnly = ($saleModulePermissions < 'W');
-if ($saleModulePermissions < 'R')
+if ($saleModulePermissions < 'R') {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 Loader::includeModule('sale');
 Loc::loadMessages(__FILE__);
 
-if ($subWindow)
+if ($subWindow) {
     require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/iblock/classes/general/subelement.php');
+}
 
 if (!$subWindow && $ex = $APPLICATION->GetException()) {
     require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php');
@@ -43,10 +45,12 @@ $discountID = 0;
 if ($subWindow) {
     $multiCoupons = (string)$request->get('MULTI') == 'Y';
     $discountID = (int)$request->get('DISCOUNT_ID');
-    $discount = Internals\DiscountTable::getList(array(
-        'select' => array('ID'),
-        'filter' => array('=ID' => $discountID)
-    ))->fetch();
+    $discount = Internals\DiscountTable::getList(
+        array(
+            'select' => array('ID'),
+            'filter' => array('=ID' => $discountID)
+        )
+    )->fetch();
     if (!$discount) {
         require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php');
         ShowError(Loc::getMessage('BX_SALE_DISCOUNT_COUPON_ERR_DISCOUNT_ID_ABSENT'));
@@ -60,8 +64,9 @@ if (!$subWindow) {
     $rawReturnUrl = (string)$request->get('return_url');
     if ($rawReturnUrl != '') {
         $currentUrl = $APPLICATION->GetCurPage();
-        if (strtolower(substr($rawReturnUrl, strlen($currentUrl))) != strtolower($currentUrl))
+        if (mb_strtolower(mb_substr($rawReturnUrl, mb_strlen($currentUrl))) != mb_strtolower($currentUrl)) {
             $returnUrl = $rawReturnUrl;
+        }
     }
     unset($rawReturnUrl);
 }
@@ -103,11 +108,13 @@ $errors = array();
 $fields = array();
 $copy = false;
 $couponID = (int)$request->get('ID');
-if ($couponID < 0)
+if ($couponID < 0) {
     $couponID = 0;
+}
 
-if ($couponID > 0)
+if ($couponID > 0) {
     $copy = ($request->get('action') == 'copy');
+}
 
 if (
     check_bitrix_sessid()
@@ -124,21 +131,29 @@ if (
             'MAX_USE' => 0
         );
 
-        if (!empty($rawData[$prefix . 'ACTIVE_FROM']))
-            $fields['COUPON']['ACTIVE_FROM'] = Main\Type\DateTime::createFromUserTime($rawData[$prefix . 'ACTIVE_FROM']);
-        if (!empty($rawData[$prefix . 'ACTIVE_TO']))
-            $fields['COUPON']['ACTIVE_TO'] = Main\Type\DateTime::createFromUserTime($rawData[$prefix . 'ACTIVE_TO']);
-        if (isset($rawData[$prefix . 'TYPE']))
-            $fields['COUPON']['TYPE'] = $rawData[$prefix . 'TYPE'];
-        if (isset($fields['COUPON']['TYPE']) && $fields['COUPON']['TYPE'] == Internals\DiscountCouponTable::TYPE_MULTI_ORDER) {
-            if (isset($rawData[$prefix . 'MAX_USE']))
-                $fields['COUPON']['MAX_USE'] = $rawData[$prefix . 'MAX_USE'];
+        if (!empty($rawData[$prefix . 'ACTIVE_FROM'])) {
+            $fields['COUPON']['ACTIVE_FROM'] = Main\Type\DateTime::createFromUserTime(
+                $rawData[$prefix . 'ACTIVE_FROM']
+            );
         }
-        if (isset($rawData[$prefix . 'COUNT']))
+        if (!empty($rawData[$prefix . 'ACTIVE_TO'])) {
+            $fields['COUPON']['ACTIVE_TO'] = Main\Type\DateTime::createFromUserTime($rawData[$prefix . 'ACTIVE_TO']);
+        }
+        if (isset($rawData[$prefix . 'TYPE'])) {
+            $fields['COUPON']['TYPE'] = $rawData[$prefix . 'TYPE'];
+        }
+        if (isset($fields['COUPON']['TYPE']) && $fields['COUPON']['TYPE'] == Internals\DiscountCouponTable::TYPE_MULTI_ORDER) {
+            if (isset($rawData[$prefix . 'MAX_USE'])) {
+                $fields['COUPON']['MAX_USE'] = $rawData[$prefix . 'MAX_USE'];
+            }
+        }
+        if (isset($rawData[$prefix . 'COUNT'])) {
             $fields['COUNT'] = (int)$rawData[$prefix . 'COUNT'];
+        }
 
-        if ($fields['COUNT'] <= 0)
+        if ($fields['COUNT'] <= 0) {
             $errors[] = Loc::getMessage('BX_SALE_DISCOUNT_COUPON_ERR_COUPON_COUNT');
+        }
 
         $checkResult = Internals\DiscountCouponTable::checkPacket($fields['COUPON'], false);
         if (!$checkResult->isSuccess(true)) {
@@ -148,43 +163,57 @@ if (
                 $fields['COUPON'],
                 $fields['COUNT']
             );
-            if (!$couponsResult->isSuccess())
+            if (!$couponsResult->isSuccess()) {
                 $errors = $couponsResult->getErrorMessages();
+            }
             unset($couponsResult);
         }
         unset($checkResult);
     } else {
-        if ($subWindow)
+        if ($subWindow) {
             $fields['DISCOUNT_ID'] = $discountID;
-        elseif (!empty($rawData['DISCOUNT_ID']))
+        } elseif (!empty($rawData['DISCOUNT_ID'])) {
             $fields['DISCOUNT_ID'] = $rawData['DISCOUNT_ID'];
-
-        if (isset($rawData['COUPON']))
-            $fields['COUPON'] = $rawData['COUPON'];
-        if (!empty($rawData[$prefix . 'ACTIVE']))
-            $fields['ACTIVE'] = $rawData[$prefix . 'ACTIVE'];
-        $fields['ACTIVE_FROM'] = (!empty($rawData[$prefix . 'ACTIVE_FROM']) ? Main\Type\DateTime::createFromUserTime($rawData[$prefix . 'ACTIVE_FROM']) : null);
-        $fields['ACTIVE_TO'] = (!empty($rawData[$prefix . 'ACTIVE_TO']) ? Main\Type\DateTime::createFromUserTime($rawData[$prefix . 'ACTIVE_TO']) : null);
-        if (isset($rawData[$prefix . 'TYPE']))
-            $fields['TYPE'] = $rawData[$prefix . 'TYPE'];
-        if (isset($fields['TYPE']) && $fields['TYPE'] == Internals\DiscountCouponTable::TYPE_MULTI_ORDER) {
-            if (isset($rawData[$prefix . 'MAX_USE']))
-                $fields['MAX_USE'] = $rawData[$prefix . 'MAX_USE'];
         }
-        if (isset($rawData[$prefix . 'USER_ID']))
-            $fields['USER_ID'] = $rawData[$prefix . 'USER_ID'];
-        if (isset($rawData[$prefix . 'DESCRIPTION']))
-            $fields['DESCRIPTION'] = $rawData[$prefix . 'DESCRIPTION'];
 
-        if ($couponID == 0 || $copy)
+        if (isset($rawData['COUPON'])) {
+            $fields['COUPON'] = $rawData['COUPON'];
+        }
+        if (!empty($rawData[$prefix . 'ACTIVE'])) {
+            $fields['ACTIVE'] = $rawData[$prefix . 'ACTIVE'];
+        }
+        $fields['ACTIVE_FROM'] = (!empty($rawData[$prefix . 'ACTIVE_FROM']) ? Main\Type\DateTime::createFromUserTime(
+            $rawData[$prefix . 'ACTIVE_FROM']
+        ) : null);
+        $fields['ACTIVE_TO'] = (!empty($rawData[$prefix . 'ACTIVE_TO']) ? Main\Type\DateTime::createFromUserTime(
+            $rawData[$prefix . 'ACTIVE_TO']
+        ) : null);
+        if (isset($rawData[$prefix . 'TYPE'])) {
+            $fields['TYPE'] = $rawData[$prefix . 'TYPE'];
+        }
+        if (isset($fields['TYPE']) && $fields['TYPE'] == Internals\DiscountCouponTable::TYPE_MULTI_ORDER) {
+            if (isset($rawData[$prefix . 'MAX_USE'])) {
+                $fields['MAX_USE'] = $rawData[$prefix . 'MAX_USE'];
+            }
+        }
+        if (isset($rawData[$prefix . 'USER_ID'])) {
+            $fields['USER_ID'] = $rawData[$prefix . 'USER_ID'];
+        }
+        if (isset($rawData[$prefix . 'DESCRIPTION'])) {
+            $fields['DESCRIPTION'] = $rawData[$prefix . 'DESCRIPTION'];
+        }
+
+        if ($couponID == 0 || $copy) {
             $result = Internals\DiscountCouponTable::add($fields);
-        else
+        } else {
             $result = Internals\DiscountCouponTable::update($couponID, $fields);
+        }
         if (!$result->isSuccess()) {
             $errors = $result->getErrorMessages();
         } else {
-            if ($couponID == 0 || $copy)
+            if ($couponID == 0 || $copy) {
                 $couponID = $result->getId();
+            }
         }
         unset($result);
     }
@@ -195,7 +224,7 @@ if (
             ?>
             <script type="text/javascript">
                 var currentWindow = top.window;
-                if (top.BX.SidePanel.Instance && top.BX.SidePanel.Instance.getTopSlider()) {
+                if (top.BX.SidePanel && top.BX.SidePanel.Instance && top.BX.SidePanel.Instance.getTopSlider()) {
                     currentWindow = top.BX.SidePanel.Instance.getTopSlider().getWindow();
                 }
                 currentWindow.BX.closeWait();
@@ -210,7 +239,8 @@ if (
                 $adminSidePanelHelper->sendSuccessResponse("base", array("ID" => $couponID));
             }
             if ((string)$request->getPost('apply') != '') {
-                $applyUrl = $selfFolderUrl . 'sale_discount_coupon_edit.php?lang=' . LANGUAGE_ID . '&ID=' . $couponID . '&' . $control->ActiveTabParam();
+                $applyUrl = $selfFolderUrl . 'sale_discount_coupon_edit.php?lang=' . LANGUAGE_ID . '&ID=' . $couponID . '&' . $control->ActiveTabParam(
+                    );
                 $applyUrl = $adminSidePanelHelper->setDefaultQueryParams($applyUrl);
                 LocalRedirect($applyUrl);
             } else {
@@ -266,8 +296,9 @@ if (!$subWindow && !$readOnly && $couponID > 0) {
     if (!$copy) {
         $addUrl = $selfFolderUrl . "sale_discount_coupon_edit.php?lang=" . LANGUAGE_ID;
         $addUrl = $adminSidePanelHelper->editUrlToPublicPage($addUrl);
-        if (!$adminSidePanelHelper->isPublicFrame())
+        if (!$adminSidePanelHelper->isPublicFrame()) {
             $addUrl = $adminSidePanelHelper->setDefaultQueryParams($addUrl);
+        }
         $contextMenuItems[] = array(
             'ICON' => 'btn_new',
             'TEXT' => Loc::getMessage('BX_SALE_DISCOUNT_COUPONT_CONTEXT_NEW'),
@@ -275,14 +306,16 @@ if (!$subWindow && !$readOnly && $couponID > 0) {
         );
         $copyUrl = $selfFolderUrl . "sale_discount_coupon_edit.php?lang=" . LANGUAGE_ID . "&ID=" . $discountID . "&action=copy";
         $copyUrl = $adminSidePanelHelper->editUrlToPublicPage($copyUrl);
-        if (!$adminSidePanelHelper->isPublicFrame())
+        if (!$adminSidePanelHelper->isPublicFrame()) {
             $copyUrl = $adminSidePanelHelper->setDefaultQueryParams($copyUrl);
+        }
         $contextMenuItems[] = array(
             'ICON' => 'btn_copy',
             'TEXT' => Loc::getMessage('BX_SALE_DISCOUNT_COUPONT_CONTEXT_COPY'),
             'LINK' => $copyUrl
         );
-        $deleteUrl = $selfFolderUrl . "sale_discount_coupons.php?lang=" . LANGUAGE_ID . "&ID=" . $couponID . "&action=delete&" . bitrix_sessid_get();
+        $deleteUrl = $selfFolderUrl . "sale_discount_coupons.php?lang=" . LANGUAGE_ID . "&ID=" . $couponID . "&action=delete&" . bitrix_sessid_get(
+            );
         $buttonAction = "LINK";
         if ($adminSidePanelHelper->isPublicFrame()) {
             $deleteUrl = $adminSidePanelHelper->editUrlToPublicPage($deleteUrl);
@@ -291,7 +324,9 @@ if (!$subWindow && !$readOnly && $couponID > 0) {
         $contextMenuItems[] = array(
             'ICON' => 'btn_delete',
             'TEXT' => Loc::getMessage('BX_SALE_DISCOUNT_COUPON_CONTEXT_DELETE'),
-            $buttonAction => "javascript:if(confirm('" . CUtil::JSEscape(Loc::getMessage('BX_SALE_DISCOUNT_COUPON_CONTEXT_DELETE_CONFIRM')) . "')) top.window.location.href='" . $deleteUrl . "';",
+            $buttonAction => "javascript:if(confirm('" . CUtil::JSEscape(
+                    Loc::getMessage('BX_SALE_DISCOUNT_COUPON_CONTEXT_DELETE_CONFIRM')
+                ) . "')) top.window.location.href='" . $deleteUrl . "';",
             'WARNING' => 'Y',
         );
     }
@@ -346,15 +381,19 @@ if (!$multiCoupons) {
 
 $coupon = array();
 if (!$multiCoupons && $couponID > 0) {
-    $coupon = Internals\DiscountCouponTable::getList(array(
-        'select' => $selectFields,
-        'filter' => array('=ID' => $couponID)
-    ))->fetch();
-    if (!$coupon)
+    $coupon = Internals\DiscountCouponTable::getList(
+        array(
+            'select' => $selectFields,
+            'filter' => array('=ID' => $couponID)
+        )
+    )->fetch();
+    if (!$coupon) {
         $couponID = 0;
+    }
 }
-if ($couponID == 0)
+if ($couponID == 0) {
     $coupon = $defaultValues;
+}
 
 if (!$multiCoupons) {
     $coupon['DISCOUNT_NAME'] = (string)$coupon['DISCOUNT_NAME'];
@@ -371,8 +410,9 @@ if (!$multiCoupons) {
     $coupon['COUPON']['MAX_USE'] = (int)$coupon['COUPON']['MAX_USE'];
 }
 
-if (!empty($errors))
+if (!empty($errors)) {
     $coupon = array_merge($coupon, $fields);
+}
 
 $control->BeginPrologContent();
 CJSCore::Init(array('date'));
@@ -400,7 +440,13 @@ $formActionUrl = $adminSidePanelHelper->setDefaultQueryParams($formActionUrl);
 $control->Begin(array('FORM_ACTION' => $formActionUrl));
 $control->BeginNextFormTab();
 if ($multiCoupons) {
-    $control->AddEditField($prefix . 'COUNT', Loc::getMessage('BX_SALE_DISCOUNT_COUPON_COUNT'), true, array(), ($coupon['COUNT'] > 0 ? $coupon['COUNT'] : ''));
+    $control->AddEditField(
+        $prefix . 'COUNT',
+        Loc::getMessage('BX_SALE_DISCOUNT_COUPON_COUNT'),
+        true,
+        array(),
+        ($coupon['COUNT'] > 0 ? $coupon['COUNT'] : '')
+    );
     $control->BeginCustomField($prefix . 'PERIOD', Loc::getMessage('BX_SALE_DISCOUNT_COUPON_FIELD_PERIOD'), false);
     ?>
     <tr id="tr_COUPON_PERIOD">
@@ -408,17 +454,24 @@ if ($multiCoupons) {
         <td width="60%"><?
             $periodValue = '';
             CTimeZone::Disable();
-            $activeFrom = ($coupon['COUPON']['ACTIVE_FROM'] instanceof Main\Type\DateTime ? $coupon['COUPON']['ACTIVE_FROM']->toString() : '');
-            $activeTo = ($coupon['COUPON']['ACTIVE_TO'] instanceof Main\Type\DateTime ? $coupon['COUPON']['ACTIVE_TO']->toString() : '');
+            $activeFrom = ($coupon['COUPON']['ACTIVE_FROM'] instanceof Main\Type\DateTime ? $coupon['COUPON']['ACTIVE_FROM']->toString(
+            ) : '');
+            $activeTo = ($coupon['COUPON']['ACTIVE_TO'] instanceof Main\Type\DateTime ? $coupon['COUPON']['ACTIVE_TO']->toString(
+            ) : '');
             CTimeZone::Enable();
-            if ($activeFrom != '' || $activeTo != '')
+            if ($activeFrom != '' || $activeTo != '') {
                 $periodValue = CAdminCalendar::PERIOD_INTERVAL;
+            }
 
             $calendar = new CAdminCalendar;
             echo $calendar->CalendarPeriodCustom(
-                $prefix . 'ACTIVE_FROM', $prefix . 'ACTIVE_TO',
-                $activeFrom, $activeTo,
-                true, 19, true,
+                $prefix . 'ACTIVE_FROM',
+                $prefix . 'ACTIVE_TO',
+                $activeFrom,
+                $activeTo,
+                true,
+                19,
+                true,
                 array(
                     CAdminCalendar::PERIOD_EMPTY => Loc::getMessage('BX_SALE_DISCOUNT_COUPON_PERIOD_EMPTY'),
                     CAdminCalendar::PERIOD_INTERVAL => Loc::getMessage('BX_SALE_DISCOUNT_COUPON_PERIOD_INTERVAL')
@@ -481,24 +534,39 @@ if ($multiCoupons) {
     </script>
     <?
 } else {
-    if ($couponID > 0 && !$copy)
+    if ($couponID > 0 && !$copy) {
         $control->AddViewField($prefix . 'ID', Loc::getMessage('BX_SALE_DISCOUNT_COUPON_FIELD_ID'), $couponID, false);
-    $control->AddCheckBoxField($prefix . 'ACTIVE', Loc::getMessage('BX_SALE_DISCOUNT_COUPON_FIELD_ACTIVE'), true, array('Y', 'N'), $coupon['ACTIVE'] == 'Y');
+    }
+    $control->AddCheckBoxField(
+        $prefix . 'ACTIVE',
+        Loc::getMessage('BX_SALE_DISCOUNT_COUPON_FIELD_ACTIVE'),
+        true,
+        array('Y', 'N'),
+        $coupon['ACTIVE'] == 'Y'
+    );
     if ($couponID > 0) {
         $discountEditUrl = $selfFolderUrl . "sale_discount_edit.php?lang=" . LANGUAGE_ID . "&ID=" . $coupon['DISCOUNT_ID'];
         $discountEditUrl = $adminSidePanelHelper->editUrlToPublicPage($discountEditUrl);
         $discountName = '<a href="' . $discountEditUrl . '">[' . $coupon['DISCOUNT_ID'] . ']</a>';
-        if ($coupon['DISCOUNT_NAME'] !== '')
+        if ($coupon['DISCOUNT_NAME'] !== '') {
             $discountName .= ' ' . htmlspecialcharsbx($coupon['DISCOUNT_NAME']);
+        }
         $discountName .= '<input type="hidden" name="DISCOUNT_ID" value="' . $coupon['DISCOUNT_ID'] . '">';
-        $control->AddViewField('DISCOUNT_ID', Loc::getMessage('BX_SALE_DISCOUNT_COUPON_FIELD_DISCOUNT'), $discountName, true);
+        $control->AddViewField(
+            'DISCOUNT_ID',
+            Loc::getMessage('BX_SALE_DISCOUNT_COUPON_FIELD_DISCOUNT'),
+            $discountName,
+            true
+        );
     } elseif (!$subWindow) {
         $discountList = array();
-        $discountIterator = Internals\DiscountTable::getList(array(
-            'select' => array('ID', 'NAME'),
-            'filter' => array('=ACTIVE' => 'Y'),
-            'order' => array('SORT' => 'ASC', 'NAME' => 'ASC')
-        ));
+        $discountIterator = Internals\DiscountTable::getList(
+            array(
+                'select' => array('ID', 'NAME'),
+                'filter' => array('=ACTIVE' => 'Y'),
+                'order' => array('SORT' => 'ASC', 'NAME' => 'ASC')
+            )
+        );
         while ($discount = $discountIterator->fetch()) {
             $discount['ID'] = (int)$discount['ID'];
             $discount['NAME'] = (string)$discount['NAME'];
@@ -515,7 +583,9 @@ if ($multiCoupons) {
             );
         } else {
             $control->BeginCustomField('DISCOUNT_ID', Loc::getMessage('BX_SALE_DISCOUNT_COUPON_FIELD_DISCOUNT'), true);
-            $discountEditPath = $selfFolderUrl . 'sale_discount_edit.php?lang=' . LANGUAGE_ID . '&return_url=' . urlencode($APPLICATION->GetCurPageParam());
+            $discountEditPath = $selfFolderUrl . 'sale_discount_edit.php?lang=' . LANGUAGE_ID . '&return_url=' . urlencode(
+                    $APPLICATION->GetCurPageParam()
+                );
             $discountEditPath = $adminSidePanelHelper->editUrlToPublicPage($discountEditPath);
             ?>
             <tr id="tr_DISCOUNT_ID">
@@ -541,7 +611,8 @@ if ($multiCoupons) {
                    id="COUPON_GENERATE">
         </td>
     </tr><?
-    $control->EndCustomField('COUPON',
+    $control->EndCustomField(
+        'COUPON',
         '<input type="hidden" name="COUPON" value="' . htmlspecialcharsbx($coupon['COUPON']) . '">'
     );
     $showTypeSelect = (
@@ -562,7 +633,9 @@ if ($multiCoupons) {
         $control->AddViewField(
             $prefix . 'TYPE',
             Loc::getMessage('BX_SALE_DISCOUNT_COUPON_FIELD_TYPE'),
-            $couponTypes[$coupon['TYPE']] . '<input type="hidden" name="' . htmlspecialcharsbx($prefix . 'TYPE') . '" value="' . htmlspecialcharsbx($coupon['TYPE']) . '">',
+            $couponTypes[$coupon['TYPE']] . '<input type="hidden" name="' . htmlspecialcharsbx(
+                $prefix . 'TYPE'
+            ) . '" value="' . htmlspecialcharsbx($coupon['TYPE']) . '">',
             true
         );
     }
@@ -573,17 +646,23 @@ if ($multiCoupons) {
         <td width="60%"><?
             $periodValue = '';
             CTimeZone::Disable();
-            $activeFrom = ($coupon['ACTIVE_FROM'] instanceof Main\Type\DateTime ? $coupon['ACTIVE_FROM']->toString() : '');
+            $activeFrom = ($coupon['ACTIVE_FROM'] instanceof Main\Type\DateTime ? $coupon['ACTIVE_FROM']->toString(
+            ) : '');
             $activeTo = ($coupon['ACTIVE_TO'] instanceof Main\Type\DateTime ? $coupon['ACTIVE_TO']->toString() : '');
             CTimeZone::Enable();
-            if ($activeFrom != '' || $activeTo != '')
+            if ($activeFrom != '' || $activeTo != '') {
                 $periodValue = CAdminCalendar::PERIOD_INTERVAL;
+            }
 
             $calendar = new CAdminCalendar;
             echo $calendar->CalendarPeriodCustom(
-                $prefix . 'ACTIVE_FROM', $prefix . 'ACTIVE_TO',
-                $activeFrom, $activeTo,
-                true, 19, true,
+                $prefix . 'ACTIVE_FROM',
+                $prefix . 'ACTIVE_TO',
+                $activeFrom,
+                $activeTo,
+                true,
+                19,
+                true,
                 array(
                     CAdminCalendar::PERIOD_EMPTY => Loc::getMessage('BX_SALE_DISCOUNT_COUPON_PERIOD_EMPTY'),
                     CAdminCalendar::PERIOD_INTERVAL => Loc::getMessage('BX_SALE_DISCOUNT_COUPON_PERIOD_INTERVAL')
@@ -608,7 +687,7 @@ if ($multiCoupons) {
             ?></td>
     </tr><?
     $control->EndCustomField($prefix . 'USER_ID');
-    if ($showTypeSelect || ($couponID > 0 && $coupon['TYPE'] == Internals\DiscountCouponTable::TYPE_MULTI_ORDER))
+    if ($showTypeSelect || ($couponID > 0 && $coupon['TYPE'] == Internals\DiscountCouponTable::TYPE_MULTI_ORDER)) {
         $control->AddEditField(
             $prefix . 'MAX_USE',
             Loc::getMessage('BX_SALE_DISCOUNT_COUPON_FIELD_MAX_USE'),
@@ -616,13 +695,15 @@ if ($multiCoupons) {
             array('id' => $prefix . 'MAX_USE'),
             ($coupon['MAX_USE'] > 0 ? $coupon['MAX_USE'] : '')
         );
-    if ($couponID > 0 && $coupon['TYPE'] == Internals\DiscountCouponTable::TYPE_MULTI_ORDER && $coupon['USE_COUNT'] > 0)
+    }
+    if ($couponID > 0 && $coupon['TYPE'] == Internals\DiscountCouponTable::TYPE_MULTI_ORDER && $coupon['USE_COUNT'] > 0) {
         $control->AddViewField(
             $prefix . 'USE_COUNT',
             Loc::getMessage('BX_SALE_DISCOUNT_COUPON_FIELD_USE_COUNT'),
             $coupon['USE_COUNT'],
             false
         );
+    }
     $control->AddTextField(
         $prefix . 'DESCRIPTION',
         Loc::getMessage('BX_SALE_DISCOUNT_COUPON_FIELD_DESCRIPTION'),

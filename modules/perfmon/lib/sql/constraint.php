@@ -30,10 +30,12 @@ class Constraint extends BaseObject
         $level = $token->level;
         $constraintDefinition = '';
         do {
-            if ($token->level == $level && $token->text == ',')
+            if ($token->level == $level && $token->text == ',') {
                 break;
-            if ($token->level < $level && $token->text == ')')
+            }
+            if ($token->level < $level && $token->text == ')') {
                 break;
+            }
 
             $constraintDefinition .= $token->text;
 

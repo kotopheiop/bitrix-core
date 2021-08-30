@@ -1,4 +1,5 @@
 <?
+
 /*
 ##############################################
 # Bitrix: SiteManager                        #
@@ -11,7 +12,9 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
 require_once($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/mail/prolog.php");
 
 $MOD_RIGHT = $APPLICATION->GetGroupRight("mail");
-if ($MOD_RIGHT < "R") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($MOD_RIGHT < "R") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 IncludeModuleLangFile(__FILE__);
 Bitrix\Main\Loader::includeModule('mail');
 
@@ -56,30 +59,62 @@ $arFilter = Array(
 
 $nav = new Bitrix\Main\UI\AdminPageNavigation('nav-mail-log');
 
-$log = Bitrix\Mail\MailLogTable::getList(array(
-    'select' => array(
-        '*', 'MAILBOX_NAME' => 'MAILBOX.NAME', 'FILTER_NAME' => 'FILTER.NAME', 'MESSAGE_SUBJECT' => 'MAIL_MESSAGE.SUBJECT'
-    ),
-    'filter' => array_filter($arFilter),
-    'order' => array(strtoupper($by) => $order, 'ID' => $order),
-    'offset' => $nav->getOffset(),
-    'limit' => $nav->getLimit(),
-    'count_total' => true,
-));
+$log = Bitrix\Mail\MailLogTable::getList(
+    array(
+        'select' => array(
+            '*',
+            'MAILBOX_NAME' => 'MAILBOX.NAME',
+            'FILTER_NAME' => 'FILTER.NAME',
+            'MESSAGE_SUBJECT' => 'MAIL_MESSAGE.SUBJECT'
+        ),
+        'filter' => array_filter($arFilter),
+        'order' => array(mb_strtoupper($by) => $order, 'ID' => $order),
+        'offset' => $nav->getOffset(),
+        'limit' => $nav->getLimit(),
+        'count_total' => true,
+    )
+);
 
 $nav->setRecordCount($log->getCount());
 
 $lAdmin->setNavigation($nav, Bitrix\Main\Localization\Loc::getMessage("MAIL_LOG_NAVIGATION"));
 
 $arHeaders = Array();
-$arHeaders[] = Array("id" => "DATE_INSERT", "content" => GetMessage("MAIL_LOG_TIME"), "default" => true, "sort" => "date_insert");
-$arHeaders[] = Array("id" => "MESSAGE", "content" => GetMessage("MAIL_LOG_TEXT"), "default" => true, "sort" => "message");
-$arHeaders[] = Array("id" => "MAILBOX_NAME", "content" => GetMessage("MAIL_LOG_MBOX"), "default" => true, "sort" => "mailbox_name");
-if ($find_show_filt == "Y")
-    $arHeaders[] = Array("id" => "FILTER_NAME", "content" => GetMessage("MAIL_LOG_RULE"), "default" => true, "sort" => "filter_name");
+$arHeaders[] = Array(
+    "id" => "DATE_INSERT",
+    "content" => GetMessage("MAIL_LOG_TIME"),
+    "default" => true,
+    "sort" => "date_insert"
+);
+$arHeaders[] = Array(
+    "id" => "MESSAGE",
+    "content" => GetMessage("MAIL_LOG_TEXT"),
+    "default" => true,
+    "sort" => "message"
+);
+$arHeaders[] = Array(
+    "id" => "MAILBOX_NAME",
+    "content" => GetMessage("MAIL_LOG_MBOX"),
+    "default" => true,
+    "sort" => "mailbox_name"
+);
+if ($find_show_filt == "Y") {
+    $arHeaders[] = Array(
+        "id" => "FILTER_NAME",
+        "content" => GetMessage("MAIL_LOG_RULE"),
+        "default" => true,
+        "sort" => "filter_name"
+    );
+}
 
-if ($find_show_mess == "Y")
-    $arHeaders[] = Array("id" => "MESSAGE_SUBJECT", "content" => GetMessage("MAIL_LOG_MSG"), "default" => true, "sort" => "message_subject");
+if ($find_show_mess == "Y") {
+    $arHeaders[] = Array(
+        "id" => "MESSAGE_SUBJECT",
+        "content" => GetMessage("MAIL_LOG_MSG"),
+        "default" => true,
+        "sort" => "message_subject"
+    );
+}
 
 $lAdmin->AddHeaders($arHeaders);
 
@@ -91,23 +126,26 @@ while ($arRes = $log->fetch()) {
     $arRes['MESSAGE_TEXT'] = htmlspecialcharsbx($arRes['MESSAGE_TEXT']);
 
     if ($arRes["STATUS_GOOD"] == "Y"):
-        if (strpos($arRes["MESSAGE_TEXT"], "&gt;") === 0)
+        if (mb_strpos($arRes["MESSAGE_TEXT"], "&gt;") === 0) {
             $str = '<span style="color:green">' . $arRes["MESSAGE_TEXT"] . '</span>';
-        elseif (strpos($arRes["MESSAGE_TEXT"], "&lt;") === 0)
+        } elseif (mb_strpos($arRes["MESSAGE_TEXT"], "&lt;") === 0) {
             $str = '<span style="color:blue">' . $arRes["MESSAGE_TEXT"] . '</span>';
-        else
+        } else {
             $str = $arRes["MESSAGE_TEXT"];
+        }
     else:
         $str = '<span style="color:red">' . $arRes["MESSAGE_TEXT"] . '</span>';
     endif;
 
     $row->AddViewField("MESSAGE", $str);
 
-    if ($find_show_filt == "Y")
+    if ($find_show_filt == "Y") {
         $row->AddViewField("FILTER_NAME", $arRes["FILTER_NAME"]);
+    }
 
-    if ($find_show_mess == "Y")
+    if ($find_show_mess == "Y") {
         $row->AddViewField("MESSAGE_SUBJECT", $arRes["MESSAGE_SUBJECT"]);
+    }
 }
 
 $lAdmin->AddAdminContextMenu();
@@ -126,8 +164,9 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
                               size="47"><?= ShowFilterLogicHelp() ?><br><input type="hidden" name="find_show_mess"
                                                                                value="N">
                 <input type="checkbox" name="find_show_mess" value="Y"<? if ($find_show_mess == "Y") echo " checked" ?>
-                       id="find_show_mess"> <label
-                        for="find_show_mess"><? echo GetMessage("MAIL_LOG_FILT_SHOW_COLUMN") ?></label>
+                       id="find_show_mess"> <label for="find_show_mess"><? echo GetMessage(
+                        "MAIL_LOG_FILT_SHOW_COLUMN"
+                    ) ?></label>
 
             </td>
         </tr>
@@ -140,7 +179,10 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
                     <option value=""><? echo GetMessage("MAIL_LOG_FILT_ANY") ?></option>
                     <?
                     ClearVars("mb_");
-                    $l = CMailbox::GetList(array('NAME' => 'ASC', 'ID' => 'ASC'), array('VISIBLE' => 'Y', 'USER_ID' => 0));
+                    $l = CMailbox::GetList(
+                        array('NAME' => 'ASC', 'ID' => 'ASC'),
+                        array('VISIBLE' => 'Y', 'USER_ID' => 0)
+                    );
                     while ($l->ExtractFields("mb_")):
                         ?>
                         <option value="<? echo $mb_ID ?>"<? if ($find_mailbox_id == $mb_ID) echo " selected" ?>><? echo $mb_NAME ?></option><?
@@ -157,7 +199,9 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
                     <?
                     ClearVars("mf_");
                     $arF = Array();
-                    if ($find_mailbox_id > 0) $arF["MAILBOX_ID"] = $find_mailbox_id;
+                    if ($find_mailbox_id > 0) {
+                        $arF["MAILBOX_ID"] = $find_mailbox_id;
+                    }
                     $l = CMailFilter::GetList(Array("NAME" => "ASC", "ID" => "ASC"), $arF);
                     while ($l->ExtractFields("mf_")):
                         ?>

@@ -1,4 +1,5 @@
 <?
+
 if ($USER->IsAdmin() && CModule::IncludeModule('iblock') && CModule::IncludeModule('lists')):
 
     IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/options.php");
@@ -43,8 +44,8 @@ if ($USER->IsAdmin() && CModule::IncludeModule('iblock') && CModule::IncludeModu
 
     $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
-    if ($REQUEST_METHOD == "POST" && strlen($Update . $Apply . $RestoreDefaults) > 0 && check_bitrix_sessid()) {
-        if (strlen($RestoreDefaults) > 0) {
+    if ($REQUEST_METHOD == "POST" && $Update . $Apply . $RestoreDefaults <> '' && check_bitrix_sessid()) {
+        if ($RestoreDefaults <> '') {
             COption::RemoveOption("lists");
         } else {
             $arRights = array();
@@ -63,8 +64,9 @@ if ($USER->IsAdmin() && CModule::IncludeModule('iblock') && CModule::IncludeModu
                 }
             }
 
-            foreach ($arRights as $type_id => $groups)
+            foreach ($arRights as $type_id => $groups) {
                 CLists::SetPermission($type_id, $groups);
+            }
 
             if (IsModuleInstalled('socialnetwork')) {
                 COption::SetOptionString("lists", "socnet_iblock_type_id", $_POST["socnet_iblock_type_id"]);
@@ -77,10 +79,17 @@ if ($USER->IsAdmin() && CModule::IncludeModule('iblock') && CModule::IncludeModu
             }
         }
 
-        if (strlen($Update) > 0 && strlen($_REQUEST["back_url_settings"]) > 0)
+        if ($Update <> '' && $_REQUEST["back_url_settings"] <> '') {
             LocalRedirect($_REQUEST["back_url_settings"]);
-        else
-            LocalRedirect($APPLICATION->GetCurPage() . "?mid=" . urlencode($mid) . "&lang=" . urlencode(LANGUAGE_ID) . "&back_url_settings=" . urlencode($_REQUEST["back_url_settings"]) . "&" . $tabControl->ActiveTabParam());
+        } else {
+            LocalRedirect(
+                $APPLICATION->GetCurPage() . "?mid=" . urlencode($mid) . "&lang=" . urlencode(
+                    LANGUAGE_ID
+                ) . "&back_url_settings=" . urlencode(
+                    $_REQUEST["back_url_settings"]
+                ) . "&" . $tabControl->ActiveTabParam()
+            );
+        }
     }
 
     $tabControl->Begin();
@@ -121,8 +130,18 @@ if ($USER->IsAdmin() && CModule::IncludeModule('iblock') && CModule::IncludeModu
                         if (in_array($type_id, $arIBTypes["REFERENCE_ID"])):
                             foreach ($groups as $group):?>
                                 <tr>
-                                    <td><? echo SelectBoxFromArray("group_right[n" . $i . "]", $arGroups, $group, GetMessage("LISTS_OPTIONS_CHOOSE_GROUP")) ?></td>
-                                    <td><? echo SelectBoxFromArray("type_right[n" . $i . "]", $arIBTypes, $type_id, GetMessage("LISTS_OPTIONS_CHOOSE_TYPE")) ?></td>
+                                    <td><? echo SelectBoxFromArray(
+                                            "group_right[n" . $i . "]",
+                                            $arGroups,
+                                            $group,
+                                            GetMessage("LISTS_OPTIONS_CHOOSE_GROUP")
+                                        ) ?></td>
+                                    <td><? echo SelectBoxFromArray(
+                                            "type_right[n" . $i . "]",
+                                            $arIBTypes,
+                                            $type_id,
+                                            GetMessage("LISTS_OPTIONS_CHOOSE_TYPE")
+                                        ) ?></td>
                                 </tr>
                                 <? $i++; endforeach;
                         endif;
@@ -130,8 +149,18 @@ if ($USER->IsAdmin() && CModule::IncludeModule('iblock') && CModule::IncludeModu
                     if ($i == 0) {
                         ?>
                         <tr>
-                            <td><? echo SelectBoxFromArray("group_right[n" . $i . "]", $arGroups, $group, GetMessage("LISTS_OPTIONS_CHOOSE_GROUP")) ?></td>
-                            <td><? echo SelectBoxFromArray("type_right[n" . $i . "]", $arIBTypes, $type_id, GetMessage("LISTS_OPTIONS_CHOOSE_TYPE")) ?></td>
+                            <td><? echo SelectBoxFromArray(
+                                    "group_right[n" . $i . "]",
+                                    $arGroups,
+                                    $group,
+                                    GetMessage("LISTS_OPTIONS_CHOOSE_GROUP")
+                                ) ?></td>
+                            <td><? echo SelectBoxFromArray(
+                                    "type_right[n" . $i . "]",
+                                    $arIBTypes,
+                                    $type_id,
+                                    GetMessage("LISTS_OPTIONS_CHOOSE_TYPE")
+                                ) ?></td>
                         </tr>
                         <?
                     }
@@ -158,7 +187,12 @@ if ($USER->IsAdmin() && CModule::IncludeModule('iblock') && CModule::IncludeModu
             </tr>
             <tr>
                 <td width="30%"><? echo GetMessage("LISTS_OPTIONS_SOCNET_IBLOCK_TYPE") ?>:</td>
-                <td width="70%"><? echo SelectBoxFromArray("socnet_iblock_type_id", $arIBTypes, $socnet_iblock_type_id, GetMessage("MAIN_NO")) ?></td>
+                <td width="70%"><? echo SelectBoxFromArray(
+                        "socnet_iblock_type_id",
+                        $arIBTypes,
+                        $socnet_iblock_type_id,
+                        GetMessage("MAIN_NO")
+                    ) ?></td>
             </tr>
             <?
         }
@@ -169,7 +203,12 @@ if ($USER->IsAdmin() && CModule::IncludeModule('iblock') && CModule::IncludeModu
         ?>
         <tr>
             <td width="30%"><? echo GetMessage("LISTS_OPTIONS_LIVE_FEED_IBLOCK_TYPE") ?>:</td>
-            <td width="70%"><? echo SelectBoxFromArray("livefeed_iblock_type_id", $arIBTypes, $livefeed_iblock_type_id, GetMessage("MAIN_NO")) ?></td>
+            <td width="70%"><? echo SelectBoxFromArray(
+                    "livefeed_iblock_type_id",
+                    $arIBTypes,
+                    $livefeed_iblock_type_id,
+                    GetMessage("MAIN_NO")
+                ) ?></td>
         </tr>
         <tr>
             <td width="30%"><? echo GetMessage("LISTS_OPTIONS_LIVE_FEED_SEF_FOLDER") ?>:</td>
@@ -185,10 +224,12 @@ if ($USER->IsAdmin() && CModule::IncludeModule('iblock') && CModule::IncludeModu
                title="<?= GetMessage("MAIN_OPT_SAVE_TITLE") ?>" class="adm-btn-save">
         <input type="submit" name="Apply" value="<?= GetMessage("MAIN_OPT_APPLY") ?>"
                title="<?= GetMessage("MAIN_OPT_APPLY_TITLE") ?>">
-        <? if (strlen($_REQUEST["back_url_settings"]) > 0):?>
+        <? if ($_REQUEST["back_url_settings"] <> ''):?>
             <input type="button" name="Cancel" value="<?= GetMessage("MAIN_OPT_CANCEL") ?>"
                    title="<?= GetMessage("MAIN_OPT_CANCEL_TITLE") ?>"
-                   onclick="window.location='<? echo htmlspecialcharsbx(CUtil::addslashes($_REQUEST["back_url_settings"])) ?>'">
+                   onclick="window.location='<? echo htmlspecialcharsbx(
+                       CUtil::addslashes($_REQUEST["back_url_settings"])
+                   ) ?>'">
             <input type="hidden" name="back_url_settings"
                    value="<?= htmlspecialcharsbx($_REQUEST["back_url_settings"]) ?>">
         <? endif ?>

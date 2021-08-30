@@ -68,7 +68,13 @@ class Sender
     public static function bind($moduleId, $eventName)
     {
         $eventManager = EventManager::getInstance();
-        $eventManager->registerEventHandler($moduleId, $eventName, "rest", "\\Bitrix\\Rest\\Event\\Callback", static::getHandlerName($moduleId, $eventName));
+        $eventManager->registerEventHandler(
+            $moduleId,
+            $eventName,
+            "rest",
+            "\\Bitrix\\Rest\\Event\\Callback",
+            static::getHandlerName($moduleId, $eventName)
+        );
     }
 
     /**
@@ -80,10 +86,22 @@ class Sender
     public static function unbind($moduleId, $eventName)
     {
         $eventManager = EventManager::getInstance();
-        $eventManager->unRegisterEventHandler($moduleId, $eventName, "rest", "\\Bitrix\\Rest\\Event\\Callback", static::getHandlerName($moduleId, $eventName));
+        $eventManager->unRegisterEventHandler(
+            $moduleId,
+            $eventName,
+            "rest",
+            "\\Bitrix\\Rest\\Event\\Callback",
+            static::getHandlerName($moduleId, $eventName)
+        );
 
         /* compatibility */
-        $eventManager->unRegisterEventHandler($moduleId, $eventName, "rest", "CRestEventCallback", static::getHandlerName($moduleId, $eventName));
+        $eventManager->unRegisterEventHandler(
+            $moduleId,
+            $eventName,
+            "rest",
+            "CRestEventCallback",
+            static::getHandlerName($moduleId, $eventName)
+        );
     }
 
     /**
@@ -114,7 +132,12 @@ class Sender
         if ($application) {
             if ($userId > 0 && $additional["sendAuth"]) {
                 if (OAuthService::getEngine()->isRegistered()) {
-                    $auth = Application::getAuthProvider()->get($application['CLIENT_ID'], $application['SCOPE'], $additionalData, $userId);
+                    $auth = Application::getAuthProvider()->get(
+                        $application['CLIENT_ID'],
+                        $application['SCOPE'],
+                        $additionalData,
+                        $userId
+                    );
 
                     if (is_array($auth) && !$additional["sendRefreshToken"]) {
                         unset($auth['refresh_token']);
@@ -190,7 +213,7 @@ class Sender
                     );
                 }
 
-                if (strlen($handler['EVENT_HANDLER']) > 0) {
+                if ($handler['EVENT_HANDLER'] <> '') {
                     UsageStatTable::logEvent($application['CLIENT_ID'], $handler['EVENT_NAME']);
                 }
             } else {
@@ -204,7 +227,7 @@ class Sender
             }
 
             if ($authData) {
-                if (strlen($handler['EVENT_HANDLER']) > 0) {
+                if ($handler['EVENT_HANDLER'] <> '') {
                     self::$queryData[] = Sqs::queryItem(
                         $application['CLIENT_ID'],
                         $handler['EVENT_HANDLER'],
@@ -232,11 +255,8 @@ class Sender
         }
 
         if (count(static::$queryData) > 0 && !static::$forkSet) {
-            if (\CMain::forkActions(array(__CLASS__, "send"), array())) {
-                static::$forkSet = true;
-            } else {
-                static::send();
-            }
+            \Bitrix\Main\Application::getInstance()->addBackgroundJob(array(__CLASS__, "send"));
+            static::$forkSet = true;
         }
     }
 
@@ -319,7 +339,7 @@ class Sender
     protected static function getHandlerName($moduleId, $eventName)
     {
         // \Bitrix\Rest\EventTable::on
-        if (strpos($eventName, '::') >= 0) {
+        if (mb_strpos($eventName, '::') >= 0) {
             $handlerName = $moduleId . '__' . ToUpper(str_replace(array("\\", '::'), array('_0_', '_1_'), $eventName));
         } else {
             $handlerName = $moduleId . '__' . ToUpper($eventName);

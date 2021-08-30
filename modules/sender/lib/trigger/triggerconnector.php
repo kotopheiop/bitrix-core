@@ -31,8 +31,9 @@ abstract class TriggerConnector extends Base
             $this->connector->setFieldValues($this->getFields());
 
             return $this->connector->getForm();
-        } else
+        } else {
             return '';
+        }
     }
 
     /** @return bool */
@@ -80,10 +81,11 @@ abstract class TriggerConnector extends Base
     public function getForm()
     {
         $connectorForm = $this->getConnectorForm();
-        if ($connectorForm)
+        if ($connectorForm) {
             return $connectorForm;
-        else
+        } else {
             return '';
+        }
     }
 
     /** @return bool */
@@ -118,7 +120,7 @@ abstract class TriggerConnector extends Base
         $personalizeList = array();
         $connectorPersonalizeList = $this->connector->getPersonalizeList();
         foreach ($connectorPersonalizeList as $tag) {
-            if (strlen($tag['CODE']) > 0) {
+            if ($tag['CODE'] <> '') {
                 $personalizeList[] = $tag['CODE'];
             }
         }

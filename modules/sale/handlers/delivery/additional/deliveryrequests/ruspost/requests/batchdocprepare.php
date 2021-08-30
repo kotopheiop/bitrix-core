@@ -29,11 +29,15 @@ class BatchDocPrepare extends Base
     {
         $result = new Requests\Result();
 
-        if (!empty($rawData['error-code']))
-            $result->addError(new Main\Error(Reference::getErrorDescription($rawData['error-code'], '/1.0/batch/{name}/checkin')));
+        if (!empty($rawData['error-code'])) {
+            $result->addError(
+                new Main\Error(Reference::getErrorDescription($rawData['error-code'], '/1.0/batch/{name}/checkin'))
+            );
+        }
 
-        if (isset($rawData['f103-sent']) && $rawData['f103-sent'] == true)
+        if (isset($rawData['f103-sent']) && $rawData['f103-sent'] == true) {
             $result->addMessage(new Requests\Message(Loc::getMessage('SALE_DLVRS_ADD_DREQ_RBATCDP_01')));
+        }
 
         return $result;
     }
@@ -60,15 +64,17 @@ class BatchDocPrepare extends Base
             return $result;
         }
 
-        $res = Requests\RequestTable::getList(array(
-            'filter' => array(
-                '=ID' => $requestId
+        $res = Requests\RequestTable::getList(
+            array(
+                'filter' => array(
+                    '=ID' => $requestId
+                )
             )
-        ));
+        );
 
         $row = $res->fetch();
 
-        if (!$row || strlen($row['EXTERNAL_ID']) <= 0) {
+        if (!$row || $row['EXTERNAL_ID'] == '') {
             $result->addError(new Main\Error(Loc::getMessage('SALE_DLVRS_ADD_DREQ_RBATCDP_04')));
             return $result;
         }

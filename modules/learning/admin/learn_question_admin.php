@@ -1,13 +1,15 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 if (!CModule::IncludeModule('learning')) {
     require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php'); // second system's prolog
 
-    if (IsModuleInstalled('learning') && defined('LEARNING_FAILED_TO_LOAD_REASON'))
+    if (IsModuleInstalled('learning') && defined('LEARNING_FAILED_TO_LOAD_REASON')) {
         echo LEARNING_FAILED_TO_LOAD_REASON;
-    else
+    } else {
         CAdminMessage::ShowMessage(GetMessage('LEARNING_MODULE_NOT_FOUND'));
+    }
 
     require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin.php');    // system's epilog
     exit();
@@ -20,10 +22,11 @@ ClearVars();
 
 $lessonPath = '';
 
-if (isset($_POST['LESSON_PATH']))
+if (isset($_POST['LESSON_PATH'])) {
     $lessonPath = $_POST['LESSON_PATH'];
-elseif (isset($_GET['LESSON_PATH']))
+} elseif (isset($_GET['LESSON_PATH'])) {
     $lessonPath = $_GET['LESSON_PATH'];
+}
 
 $oPath = new CLearnPath();
 $oPath->ImportUrlencoded($lessonPath);
@@ -36,10 +39,11 @@ if ($LESSON_ID === false) {
 $uriLessonPath = $oPath->ExportUrlencoded();
 unset ($lessonPath);
 
-if (isset($from) && strlen($from) > 0)
+if (isset($from) && $from <> '') {
     $str_from = "&from=" . htmlspecialcharsbx($from);
-else
+} else {
     $str_from = "";
+}
 
 $oAccess = CLearnAccess::GetInstance($USER->GetID());
 $bAccessLessonModify = $oAccess->IsLessonAccessible($LESSON_ID, CLearnAccess::OP_LESSON_WRITE);
@@ -51,8 +55,9 @@ $oTree = CLearnLesson::GetTree($LESSON_ID, array('EDGE_SORT' => 'asc'), array(),
 
 $arSubLessons = $oTree->GetTreeAsList();
 $arSubLessonsIDs = array();
-foreach ($arSubLessons as $arSubLesson)
+foreach ($arSubLessons as $arSubLesson) {
     $arSubLessonsIDs[] = (int)$arSubLesson['LESSON_ID'];
+}
 
 $arSubLessonsIDs[] = (int)$LESSON_ID;
 
@@ -106,12 +111,14 @@ if ($lAdmin->EditAction()) // save from the list
     foreach ($FIELDS as $ID => $arFields) {
         $ID = intval($ID);
 
-        if (!$lAdmin->IsUpdated($ID))
+        if (!$lAdmin->IsUpdated($ID)) {
             continue;
+        }
 
         // http://jabber.bx/view.php?id=39495
-        if (isset($arFields['FILE_ID']))
+        if (isset($arFields['FILE_ID'])) {
             unset($arFields['FILE_ID']);
+        }
 
         $DB->StartTransaction();
         $ob = new CLQuestion;
@@ -130,13 +137,15 @@ if ($lAdmin->EditAction()) // save from the list
 if ($arID = $lAdmin->GroupAction()) {
     if ($_REQUEST['action_target'] == 'selected') {
         $rsData = CLQuestion::GetList(Array($by => $order), $arFilter);
-        while ($arRes = $rsData->Fetch())
+        while ($arRes = $rsData->Fetch()) {
             $arID[] = $arRes['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
         $ID = intval($ID);
 
         switch ($_REQUEST['action']) {
@@ -159,11 +168,14 @@ if ($arID = $lAdmin->GroupAction()) {
                     if ($arQuestionData['QUESTION_TYPE'] !== 'T') {
                         $cl = new CLQuestion;
                         $arFields = Array("SELF" => ($_REQUEST['action'] == "self" ? "Y" : "N"));
-                        if (!$cl->Update($ID, $arFields))
-                            if ($e = $APPLICATION->GetException())
+                        if (!$cl->Update($ID, $arFields)) {
+                            if ($e = $APPLICATION->GetException()) {
                                 $lAdmin->AddGroupError(GetMessage("SAVE_ERROR") . $ID . ": " . $e->GetString(), $ID);
-                    } else
+                            }
+                        }
+                    } else {
                         $lAdmin->AddGroupError(GetMessage('LEARNING_QUESTION_OF_TEXT_TYPE_IGNORED'), $ID);
+                    }
                 }
                 break;
 
@@ -171,28 +183,33 @@ if ($arID = $lAdmin->GroupAction()) {
             case "deactivate":
                 $cl = new CLQuestion;
                 $arFields = Array("ACTIVE" => ($_REQUEST['action'] == "activate" ? "Y" : "N"));
-                if (!$cl->Update($ID, $arFields))
-                    if ($e = $APPLICATION->GetException())
+                if (!$cl->Update($ID, $arFields)) {
+                    if ($e = $APPLICATION->GetException()) {
                         $lAdmin->AddGroupError(GetMessage("SAVE_ERROR") . $ID . ": " . $e->GetString(), $ID);
+                    }
+                }
                 break;
 
             case "required":
             case "derequired":
                 $cl = new CLQuestion;
                 $arFields = Array("CORRECT_REQUIRED" => ($_REQUEST['action'] == "required" ? "Y" : "N"));
-                if (!$cl->Update($ID, $arFields))
-                    if ($e = $APPLICATION->GetException())
+                if (!$cl->Update($ID, $arFields)) {
+                    if ($e = $APPLICATION->GetException()) {
                         $lAdmin->AddGroupError(GetMessage("SAVE_ERROR") . $ID . ": " . $e->GetString(), $ID);
+                    }
+                }
                 break;
         }
     }
 }
 
 // fetch data
-if (isset($_REQUEST["mode"]) && $_REQUEST["mode"] == "excel")
+if (isset($_REQUEST["mode"]) && $_REQUEST["mode"] == "excel") {
     $arNavParams = array();
-else
+} else {
     $arNavParams = array('nPageSize' => CAdminResult::GetNavSize($sTableID));
+}
 
 $rsData = CLQuestion::GetList(array($by => $order), $arFilter, true, $arNavParams);
 $rsData = new CAdminResult($rsData, $sTableID);
@@ -201,18 +218,50 @@ $rsData = new CAdminResult($rsData, $sTableID);
 $lAdmin->NavText($rsData->GetNavPrint(GetMessage("LEARNING_QUESTION")));
 
 // list header
-$lAdmin->AddHeaders(array(
-    array("id" => "ID", "content" => "ID", "sort" => "id", "default" => true),
-    array("id" => "ACTIVE", "content" => GetMessage('LEARNING_COURSE_ADM_ACT'), "sort" => "active", "default" => true),
-    array("id" => "TIMESTAMP_X", "content" => GetMessage('LEARNING_COURSE_ADM_DATECH'), "sort" => "timestamp_x", "default" => true),
-    array("id" => "NAME", "content" => GetMessage('LEARNING_NAME'), "sort" => "name", "default" => true),
-    array("id" => "SORT", "content" => GetMessage('LEARNING_COURSE_ADM_SORT'), "sort" => "sort", "default" => true),
-    array("id" => "SELF", "content" => GetMessage('LEARNING_QUESTION_ADM_SELF'), "sort" => "self", "default" => true),
-    array("id" => "CORRECT_REQUIRED", "content" => GetMessage('LEARNING_QUESTION_ADM_REQUIRED'), "sort" => "correct_required", "default" => true),
-    array("id" => "QUESTION_TYPE", "content" => GetMessage('LEARNING_QUESTION_ADM_TYPE'), "sort" => "type", "default" => true),
-    array("id" => "POINT", "content" => GetMessage('LEARNING_QUESTION_ADM_POINT'), "sort" => "point", "default" => true),
-    array("id" => "ANSWERS_STATS", "content" => GetMessage('LEARNING_QUESTION_ADM_STATS'), "default" => true),
-));
+$lAdmin->AddHeaders(
+    array(
+        array("id" => "ID", "content" => "ID", "sort" => "id", "default" => true),
+        array(
+            "id" => "ACTIVE",
+            "content" => GetMessage('LEARNING_COURSE_ADM_ACT'),
+            "sort" => "active",
+            "default" => true
+        ),
+        array(
+            "id" => "TIMESTAMP_X",
+            "content" => GetMessage('LEARNING_COURSE_ADM_DATECH'),
+            "sort" => "timestamp_x",
+            "default" => true
+        ),
+        array("id" => "NAME", "content" => GetMessage('LEARNING_NAME'), "sort" => "name", "default" => true),
+        array("id" => "SORT", "content" => GetMessage('LEARNING_COURSE_ADM_SORT'), "sort" => "sort", "default" => true),
+        array(
+            "id" => "SELF",
+            "content" => GetMessage('LEARNING_QUESTION_ADM_SELF'),
+            "sort" => "self",
+            "default" => true
+        ),
+        array(
+            "id" => "CORRECT_REQUIRED",
+            "content" => GetMessage('LEARNING_QUESTION_ADM_REQUIRED'),
+            "sort" => "correct_required",
+            "default" => true
+        ),
+        array(
+            "id" => "QUESTION_TYPE",
+            "content" => GetMessage('LEARNING_QUESTION_ADM_TYPE'),
+            "sort" => "type",
+            "default" => true
+        ),
+        array(
+            "id" => "POINT",
+            "content" => GetMessage('LEARNING_QUESTION_ADM_POINT'),
+            "sort" => "point",
+            "default" => true
+        ),
+        array("id" => "ANSWERS_STATS", "content" => GetMessage('LEARNING_QUESTION_ADM_STATS'), "default" => true),
+    )
+);
 
 $arQuestions = array();
 $arQuestionsIds = array();
@@ -237,9 +286,11 @@ foreach ($arQuestions as $arRes) {
     $row->AddInputField("SORT", Array("size" => "3"));
     $row->AddInputField("POINT", Array("size" => "3"));
 
-    $row->AddViewField("QUESTION_TYPE",
+    $row->AddViewField(
+        "QUESTION_TYPE",
         '<div title="' . GetMessage("LEARNING_QUESTION_TYPE_" . $f_QUESTION_TYPE)
-        . '" class="learning-question-' . strtolower($f_QUESTION_TYPE) . '"></div>');
+        . '" class="learning-question-' . mb_strtolower($f_QUESTION_TYPE) . '"></div>'
+    );
 
     $index = '-';
 
@@ -249,19 +300,24 @@ foreach ($arQuestions as $arRes) {
         $index = sprintf("%03.1f", $index) . '%';
     }
 
-    $row->AddViewField("ANSWERS_STATS",
+    $row->AddViewField(
+        "ANSWERS_STATS",
         $index
         . ' (<a href="learn_test_result_admin.php?lang=' . LANG
         . '&set_filter=Y&filter_correct=Y&filter_answered=Y">' . $arStat["CORRECT_CNT"]
         . '</a> / <a href="learn_test_result_admin.php?lang=' . LANG . '">'
-        . $arStat["ALL_CNT"] . '</a>)');
+        . $arStat["ALL_CNT"] . '</a>)'
+    );
 
     $arActions = Array();
 
     $editUrl = "learn_question_edit.php?lang=" . LANG . '&LESSON_PATH=' . $uriLessonPath
         . "&ID=" . $f_ID . GetFilterParams("filter_", false) . $str_from;
 
-    $row->AddViewField("NAME", '<a href="' . htmlspecialcharsbx($editUrl) . '">' . htmlspecialcharsbx($f_NAME) . '</a>');
+    $row->AddViewField(
+        "NAME",
+        '<a href="' . htmlspecialcharsbx($editUrl) . '">' . htmlspecialcharsbx($f_NAME) . '</a>'
+    );
 
     $arActions[] = array(
         "ICON" => "edit",
@@ -283,7 +339,8 @@ foreach ($arQuestions as $arRes) {
         "ICON" => "delete",
         "TEXT" => GetMessage("MAIN_ADMIN_MENU_DELETE"),
         "ACTION" => "if(confirm('" . GetMessageJS('LEARNING_CONFIRM_DEL_MESSAGE') . "')) "
-            . $lAdmin->ActionDoGroup($f_ID, "delete", 'LESSON_PATH=' . $uriLessonPath));
+            . $lAdmin->ActionDoGroup($f_ID, "delete", 'LESSON_PATH=' . $uriLessonPath)
+    );
 
     $row->AddActions($arActions);
 }
@@ -297,7 +354,8 @@ $lAdmin->AddFooter(
 );
 
 // group actions buttons
-$lAdmin->AddGroupActionTable(Array(
+$lAdmin->AddGroupActionTable(
+    Array(
         "self" => GetMessage("LEARNING_ACTION_SELF"),
         "deself" => GetMessage("LEARNING_ACTION_DESELF"),
         "activate" => GetMessage("MAIN_ADMIN_LIST_ACTIVATE"),
@@ -408,8 +466,12 @@ $filter = new CAdminFilter(
         <td>
             <select name="filter_self">
                 <option value=""><?= htmlspecialcharsex(GetMessage('LEARNING_ALL2')) ?></option>
-                <option value="Y"<? if ($filter_self == "Y") echo " selected" ?>><?= htmlspecialcharsex(GetMessage("LEARNING_YES")) ?></option>
-                <option value="N"<? if ($filter_self == "N") echo " selected" ?>><?= htmlspecialcharsex(GetMessage("LEARNING_NO")) ?></option>
+                <option value="Y"<? if ($filter_self == "Y") echo " selected" ?>><?= htmlspecialcharsex(
+                        GetMessage("LEARNING_YES")
+                    ) ?></option>
+                <option value="N"<? if ($filter_self == "N") echo " selected" ?>><?= htmlspecialcharsex(
+                        GetMessage("LEARNING_NO")
+                    ) ?></option>
             </select>
         </td>
     </tr>
@@ -419,8 +481,12 @@ $filter = new CAdminFilter(
         <td>
             <select name="filter_active">
                 <option value=""><?= htmlspecialcharsex(GetMessage('LEARNING_ALL')) ?></option>
-                <option value="Y"<? if ($filter_active == "Y") echo " selected" ?>><?= htmlspecialcharsex(GetMessage("LEARNING_YES")) ?></option>
-                <option value="N"<? if ($filter_active == "N") echo " selected" ?>><?= htmlspecialcharsex(GetMessage("LEARNING_NO")) ?></option>
+                <option value="Y"<? if ($filter_active == "Y") echo " selected" ?>><?= htmlspecialcharsex(
+                        GetMessage("LEARNING_YES")
+                    ) ?></option>
+                <option value="N"<? if ($filter_active == "N") echo " selected" ?>><?= htmlspecialcharsex(
+                        GetMessage("LEARNING_NO")
+                    ) ?></option>
             </select>
         </td>
     </tr>
@@ -430,17 +496,24 @@ $filter = new CAdminFilter(
         <td>
             <select name="filter_required">
                 <option value=""><?= htmlspecialcharsex(GetMessage('LEARNING_ALL')) ?></option>
-                <option value="Y"<? if ($filter_required == "Y") echo " selected" ?>><?= htmlspecialcharsex(GetMessage("LEARNING_YES")) ?></option>
-                <option value="N"<? if ($filter_required == "N") echo " selected" ?>><?= htmlspecialcharsex(GetMessage("LEARNING_NO")) ?></option>
+                <option value="Y"<? if ($filter_required == "Y") echo " selected" ?>><?= htmlspecialcharsex(
+                        GetMessage("LEARNING_YES")
+                    ) ?></option>
+                <option value="N"<? if ($filter_required == "N") echo " selected" ?>><?= htmlspecialcharsex(
+                        GetMessage("LEARNING_NO")
+                    ) ?></option>
             </select>
         </td>
     </tr>
 
     <?
-    $filter->Buttons(array(
-        "table_id" => $sTableID,
-        "url" => "learn_question_admin.php?lang=" . LANG . "&LESSON_PATH=" . $uriLessonPath,
-        "form" => "find_form"));
+    $filter->Buttons(
+        array(
+            "table_id" => $sTableID,
+            "url" => "learn_question_admin.php?lang=" . LANG . "&LESSON_PATH=" . $uriLessonPath,
+            "form" => "find_form"
+        )
+    );
     $filter->End();
     ?>
 </form>

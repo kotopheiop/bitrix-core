@@ -1,4 +1,5 @@
 <?
+
 //<title>Froogle</title>
 IncludeModuleLangFile($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/catalog/export_setup_templ.php');
 
@@ -9,26 +10,32 @@ $strCatalogDefaultFolder = COption::GetOptionString("catalog", "export_default_p
 $arSetupErrors = array();
 
 if (($ACTION == 'EXPORT_EDIT' || $ACTION == 'EXPORT_COPY') && $STEP == 1) {
-    if (array_key_exists('IBLOCK_ID', $arOldSetupVars))
+    if (array_key_exists('IBLOCK_ID', $arOldSetupVars)) {
         $IBLOCK_ID = $arOldSetupVars['IBLOCK_ID'];
-    if (array_key_exists('SETUP_FILE_NAME', $arOldSetupVars))
+    }
+    if (array_key_exists('SETUP_FILE_NAME', $arOldSetupVars)) {
         $SETUP_FILE_NAME = str_replace($strCatalogDefaultFolder, '', $arOldSetupVars['SETUP_FILE_NAME']);
-    if (array_key_exists('SETUP_PROFILE_NAME', $arOldSetupVars))
+    }
+    if (array_key_exists('SETUP_PROFILE_NAME', $arOldSetupVars)) {
         $SETUP_PROFILE_NAME = $arOldSetupVars['SETUP_PROFILE_NAME'];
-    if (array_key_exists('V', $arOldSetupVars))
+    }
+    if (array_key_exists('V', $arOldSetupVars)) {
         $V = $arOldSetupVars['V'];
+    }
 }
 
 if ($STEP > 1) {
     $IBLOCK_ID = intval($IBLOCK_ID);
     $rsIBlocks = CIBlock::GetByID($IBLOCK_ID);
     if ($IBLOCK_ID <= 0 || !($arIBlock = $rsIBlocks->Fetch())) {
-        $arSetupErrors[] = GetMessage("CET_ERROR_NO_IBLOCK1") . " #" . $IBLOCK_ID . " " . GetMessage("CET_ERROR_NO_IBLOCK2");
+        $arSetupErrors[] = GetMessage("CET_ERROR_NO_IBLOCK1") . " #" . $IBLOCK_ID . " " . GetMessage(
+                "CET_ERROR_NO_IBLOCK2"
+            );
     } elseif (!CIBlockRights::UserHasRightTo($IBLOCK_ID, $IBLOCK_ID, 'iblock_admin_display')) {
         $arSetupErrors[] = str_replace('#IBLOCK_ID#', $IBLOCK_ID, GetMessage('CET_ERROR_IBLOCK_PERM'));
     }
 
-    if (strlen($SETUP_FILE_NAME) <= 0) {
+    if ($SETUP_FILE_NAME == '') {
         $arSetupErrors[] = GetMessage("CET_ERROR_NO_FILENAME");
     }
     if (empty($arSetupErrors)) {
@@ -36,17 +43,21 @@ if ($STEP > 1) {
         if (preg_match(BX_CATALOG_FILENAME_REG, $SETUP_FILE_NAME)) {
             $arSetupErrors[] = GetMessage("CES_ERROR_BAD_EXPORT_FILENAME");
         } elseif ($APPLICATION->GetFileAccessPermission($SETUP_FILE_NAME) < "W") {
-            $arSetupErrors[] = str_replace("#FILE#", $SETUP_FILE_NAME, "You do not have access rights to add or modify #FILE#");
+            $arSetupErrors[] = str_replace(
+                "#FILE#",
+                $SETUP_FILE_NAME,
+                "You do not have access rights to add or modify #FILE#"
+            );
         }
     }
 
     if (empty($arSetupErrors)) {
-        $bAllSections = False;
+        $bAllSections = false;
         $arSections = array();
         if (is_array($V)) {
             foreach ($V as $key => $value) {
                 if (trim($value) == "0") {
-                    $bAllSections = True;
+                    $bAllSections = true;
                     break;
                 }
                 if (intval($value) > 0) {
@@ -55,12 +66,14 @@ if ($STEP > 1) {
             }
         }
 
-        if (!$bAllSections && count($arSections) <= 0)
+        if (!$bAllSections && count($arSections) <= 0) {
             $arSetupErrors[] = GetMessage("CET_ERROR_NO_GROUPS");
+        }
     }
 
-    if (($ACTION == "EXPORT_SETUP" || $ACTION == 'EXPORT_EDIT' || $ACTION == 'EXPORT_COPY') && strlen($SETUP_PROFILE_NAME) <= 0)
+    if (($ACTION == "EXPORT_SETUP" || $ACTION == 'EXPORT_EDIT' || $ACTION == 'EXPORT_COPY') && $SETUP_PROFILE_NAME == '') {
         $arSetupErrors[] = GetMessage("CET_ERROR_NO_PROFILE_NAME");
+    }
 
     if (!empty($arSetupErrors)) {
         $STEP = 1;
@@ -80,8 +93,9 @@ $context = new CAdminContextMenu($aMenu);
 
 $context->Show();
 
-if (!empty($arSetupErrors))
+if (!empty($arSetupErrors)) {
     ShowError(implode('<br />', $arSetupErrors));
+}
 
 $actionParams = "";
 if ($adminSidePanelHelper->isSidePanel()) {
@@ -93,8 +107,18 @@ if ($adminSidePanelHelper->isSidePanel()) {
     <?
 
     $aTabs = array(
-        array("DIV" => "edit1", "TAB" => GetMessage("CAT_ADM_MISC_EXP_TAB1"), "ICON" => "store", "TITLE" => GetMessage("CAT_ADM_MISC_EXP_TAB1_TITLE")),
-        array("DIV" => "edit2", "TAB" => GetMessage("CAT_ADM_MISC_EXP_TAB2"), "ICON" => "store", "TITLE" => GetMessage("CAT_ADM_MISC_EXP_TAB2_TITLE")),
+        array(
+            "DIV" => "edit1",
+            "TAB" => GetMessage("CAT_ADM_MISC_EXP_TAB1"),
+            "ICON" => "store",
+            "TITLE" => GetMessage("CAT_ADM_MISC_EXP_TAB1_TITLE")
+        ),
+        array(
+            "DIV" => "edit2",
+            "TAB" => GetMessage("CAT_ADM_MISC_EXP_TAB2"),
+            "ICON" => "store",
+            "TITLE" => GetMessage("CAT_ADM_MISC_EXP_TAB2_TITLE")
+        ),
     );
 
     $tabControl = new CAdminTabControl("tabControl", $aTabs, false, true);
@@ -118,16 +142,23 @@ if ($adminSidePanelHelper->isSidePanel()) {
             while ($arCatalog = $rsCatalogs->Fetch()) {
                 $arIBlockIDs[] = $arCatalog['IBLOCK_ID'];
             }
-            if (empty($arIBlockIDs))
+            if (empty($arIBlockIDs)) {
                 $arIBlockIDs[] = -1;
+            }
             echo GetIBlockDropDownListEx(
-                $IBLOCK_ID, 'IBLOCK_TYPE_ID', 'IBLOCK_ID',
+                $IBLOCK_ID,
+                'IBLOCK_TYPE_ID',
+                'IBLOCK_ID',
                 array(
-                    'ID' => $arIBlockIDs, 'ACTIVE' => 'Y',
-                    'CHECK_PERMISSIONS' => 'Y', 'MIN_PERMISSION' => 'W'
+                    'ID' => $arIBlockIDs,
+                    'ACTIVE' => 'Y',
+                    'CHECK_PERMISSIONS' => 'Y',
+                    'MIN_PERMISSION' => 'W'
                 ),
-                "ClearSelected(); BX('ifr').src='/bitrix/tools/catalog_export/froogle_util.php?IBLOCK_ID=0&'+'" . bitrix_sessid_get() . "';",
-                "ClearSelected(); BX('ifr').src='/bitrix/tools/catalog_export/froogle_util.php?IBLOCK_ID='+this[this.selectedIndex].value+'&'+'" . bitrix_sessid_get() . "';",
+                "ClearSelected(); BX('ifr').src='/bitrix/tools/catalog_export/froogle_util.php?IBLOCK_ID=0&'+'" . bitrix_sessid_get(
+                ) . "';",
+                "ClearSelected(); BX('ifr').src='/bitrix/tools/catalog_export/froogle_util.php?IBLOCK_ID='+this[this.selectedIndex].value+'&'+'" . bitrix_sessid_get(
+                ) . "';",
                 'class="adm-detail-iblock-types"',
                 'class="adm-detail-iblock-list"'
             );
@@ -175,7 +206,9 @@ if ($adminSidePanelHelper->isSidePanel()) {
 
                         buffer = '<table border="0" cellspacing="0" cellpadding="0">';
                         buffer += '<tr>';
-                        buffer += '<td colspan="2" valign="top" align="left"><input type="checkbox" name="V[]" value="0" id="v0"' + (BX.util.in_array(0, TreeSelected) ? ' checked' : '') + '><label for="v0"><font class="text"><b><?echo CUtil::JSEscape(GetMessage("CET_ALL_GROUPS"));?></b></font></label></td>';
+                        buffer += '<td colspan="2" valign="top" align="left"><input type="checkbox" name="V[]" value="0" id="v0"' + (BX.util.in_array(0, TreeSelected) ? ' checked' : '') + '><label for="v0"><font class="text"><b><?echo CUtil::JSEscape(
+                            GetMessage("CET_ALL_GROUPS")
+                        );?></b></font></label></td>';
                         buffer += '</tr>';
 
                         for (i in Tree[0]) {
@@ -234,16 +267,21 @@ if ($adminSidePanelHelper->isSidePanel()) {
                         BX.adminPanel.modifyFormElements('froogle_setup_form');
                     }
                 </script>
-                <iframe src="/bitrix/tools/catalog_export/froogle_util.php?IBLOCK_ID=<?= intval($IBLOCK_ID) ?>&<? echo bitrix_sessid_get(); ?>"
-                        id="ifr" name="ifr" style="display:none"></iframe>
+                <iframe src="/bitrix/tools/catalog_export/froogle_util.php?IBLOCK_ID=<?= intval(
+                    $IBLOCK_ID
+                ) ?>&<? echo bitrix_sessid_get(); ?>" id="ifr" name="ifr" style="display:none"></iframe>
             </td>
         </tr>
         <tr>
             <td width="40%"><? echo GetMessage("CET_SAVE_FILENAME"); ?></td>
             <td width="60%"><b><? echo htmlspecialcharsex($strCatalogDefaultFolder); ?></b>
-                <input type="text" name="SETUP_FILE_NAME"
-                       value="<? echo htmlspecialcharsbx(strlen($SETUP_FILE_NAME) > 0 ? str_replace($strCatalogDefaultFolder, '', $SETUP_FILE_NAME) : "froogle_" . mt_rand(0, 999999) . ".txt"); ?>"
-                       size="50">
+                <input type="text" name="SETUP_FILE_NAME" value="<? echo htmlspecialcharsbx(
+                    $SETUP_FILE_NAME <> '' ? str_replace(
+                        $strCatalogDefaultFolder,
+                        '',
+                        $SETUP_FILE_NAME
+                    ) : "froogle_" . mt_rand(0, 999999) . ".txt"
+                ); ?>" size="50">
             </td>
         </tr>
         <?
@@ -253,7 +291,7 @@ if ($adminSidePanelHelper->isSidePanel()) {
             <td width="40%"><? echo GetMessage("CET_PROFILE_NAME"); ?></td>
             <td width="60%">
                 <input type="text" name="SETUP_PROFILE_NAME"
-                       value="<? echo(strlen($SETUP_PROFILE_NAME) > 0 ? htmlspecialcharsbx($SETUP_PROFILE_NAME) : ''); ?>"
+                       value="<? echo($SETUP_PROFILE_NAME <> '' ? htmlspecialcharsbx($SETUP_PROFILE_NAME) : ''); ?>"
                        size="30">
             </td>
             </tr><?

@@ -6,10 +6,11 @@ class CSession
     {
         $err_mess = "File: " . __FILE__ . "<br>Line: ";
         $DB = CDatabase::GetModuleConnection('statistic');
-        if ($SITE_ID !== false)
+        if ($SITE_ID !== false) {
             $str = " and S.FIRST_SITE_ID = '" . $DB->ForSql($SITE_ID, 2) . "' ";
-        else
+        } else {
             $str = "";
+        }
 
         $strSql = "
 			SELECT
@@ -65,7 +66,7 @@ class CSession
         return $ar;
     }
 
-    public static function GetList(&$by, &$order, $arFilter = Array(), &$is_filtered)
+    public static function GetList($by = 's_id', $order = 'desc', $arFilter = [])
     {
         $err_mess = "File: " . __FILE__ . "<br>Line: ";
         $DB = CDatabase::GetModuleConnection('statistic');
@@ -76,11 +77,13 @@ class CSession
         if (is_array($arFilter)) {
             foreach ($arFilter as $key => $val) {
                 if (is_array($val)) {
-                    if (count($val) <= 0)
+                    if (count($val) <= 0) {
                         continue;
+                    }
                 } else {
-                    if ((strlen($val) <= 0) || ($val === "NOT_REF"))
+                    if (((string)$val == '') || ($val === "NOT_REF")) {
                         continue;
+                    }
                 }
                 $match_value_set = array_key_exists($key . "_EXACT_MATCH", $arFilter);
                 $key = strtoupper($key);
@@ -102,20 +105,30 @@ class CSession
                         $arSqlSearch[] = GetFilterQuery("S.CITY_ID", $val, $match);
                         break;
                     case "DATE_START_1":
-                        if (CheckDateTime($val))
+                        if (CheckDateTime($val)) {
                             $arSqlSearch[] = "S.DATE_FIRST>=" . $DB->CharToDateFunction($val, "SHORT");
+                        }
                         break;
                     case "DATE_START_2":
-                        if (CheckDateTime($val))
-                            $arSqlSearch[] = "S.DATE_FIRST<" . $DB->CharToDateFunction($val, "SHORT") . " + INTERVAL 1 DAY";
+                        if (CheckDateTime($val)) {
+                            $arSqlSearch[] = "S.DATE_FIRST<" . $DB->CharToDateFunction(
+                                    $val,
+                                    "SHORT"
+                                ) . " + INTERVAL 1 DAY";
+                        }
                         break;
                     case "DATE_END_1":
-                        if (CheckDateTime($val))
+                        if (CheckDateTime($val)) {
                             $arSqlSearch[] = "S.DATE_LAST>=" . $DB->CharToDateFunction($val, "SHORT");
+                        }
                         break;
                     case "DATE_END_2":
-                        if (CheckDateTime($val))
-                            $arSqlSearch[] = "S.DATE_LAST<" . $DB->CharToDateFunction($val, "SHORT") . " + INTERVAL 1 DAY";
+                        if (CheckDateTime($val)) {
+                            $arSqlSearch[] = "S.DATE_LAST<" . $DB->CharToDateFunction(
+                                    $val,
+                                    "SHORT"
+                                ) . " + INTERVAL 1 DAY";
+                        }
                         break;
                     case "IP":
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "Y" && $match_value_set) ? "N" : "Y";
@@ -137,10 +150,11 @@ class CSession
                         $arSqlSearch[] = "S.HITS<='" . intval($val) . "'";
                         break;
                     case "ADV":
-                        if ($val == "Y")
+                        if ($val == "Y") {
                             $arSqlSearch[] = "(S.ADV_ID>0 and S.ADV_ID is not null)";
-                        elseif ($val == "N")
+                        } elseif ($val == "N") {
                             $arSqlSearch[] = "(S.ADV_ID<=0 or S.ADV_ID is null)";
+                        }
                         break;
                     case "REFERER1":
                     case "REFERER2":
@@ -172,7 +186,12 @@ class CSession
                     case "URL_TO":
                     case "URL_LAST":
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "Y" && $match_value_set) ? "N" : "Y";
-                        $arSqlSearch[] = GetFilterQuery("S." . $key, $val, $match, array("/", "\\", ".", "?", "#", ":"));
+                        $arSqlSearch[] = GetFilterQuery(
+                            "S." . $key,
+                            $val,
+                            $match,
+                            array("/", "\\", ".", "?", "#", ":")
+                        );
                         break;
                     case "ADV_BACK":
                     case "NEW_GUEST":
@@ -191,7 +210,9 @@ class CSession
                         break;
                     case "LAST_SITE_ID":
                     case "FIRST_SITE_ID":
-                        if (is_array($val)) $val = implode(" | ", $val);
+                        if (is_array($val)) {
+                            $val = implode(" | ", $val);
+                        }
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "N" && $match_value_set) ? "Y" : "N";
                         $arSqlSearch[] = GetFilterQuery("S." . $key, $val, $match);
                         break;
@@ -199,29 +220,44 @@ class CSession
             }
         }
 
-        if ($by == "s_id") $strSqlOrder = "ORDER BY S.ID";
-        elseif ($by == "s_last_site_id") $strSqlOrder = "ORDER BY S.LAST_SITE_ID";
-        elseif ($by == "s_first_site_id") $strSqlOrder = "ORDER BY S.FIRST_SITE_ID";
-        elseif ($by == "s_date_first") $strSqlOrder = "ORDER BY S.DATE_FIRST";
-        elseif ($by == "s_date_last") $strSqlOrder = "ORDER BY S.DATE_LAST";
-        elseif ($by == "s_user_id") $strSqlOrder = "ORDER BY S.USER_ID";
-        elseif ($by == "s_guest_id") $strSqlOrder = "ORDER BY S.GUEST_ID";
-        elseif ($by == "s_ip") $strSqlOrder = "ORDER BY S.IP_LAST";
-        elseif ($by == "s_hits") $strSqlOrder = "ORDER BY S.HITS ";
-        elseif ($by == "s_events") $strSqlOrder = "ORDER BY S.C_EVENTS ";
-        elseif ($by == "s_adv_id") $strSqlOrder = "ORDER BY S.ADV_ID ";
-        elseif ($by == "s_country_id") $strSqlOrder = "ORDER BY S.COUNTRY_ID ";
-        elseif ($by == "s_region_name") $strSqlOrder = "ORDER BY CITY.REGION ";
-        elseif ($by == "s_city_id") $strSqlOrder = "ORDER BY S.CITY_ID ";
-        elseif ($by == "s_url_last") $strSqlOrder = "ORDER BY S.URL_LAST ";
-        elseif ($by == "s_url_to") $strSqlOrder = "ORDER BY S.URL_TO ";
-        else {
-            $by = "s_id";
+        if ($by == "s_id") {
+            $strSqlOrder = "ORDER BY S.ID";
+        } elseif ($by == "s_last_site_id") {
+            $strSqlOrder = "ORDER BY S.LAST_SITE_ID";
+        } elseif ($by == "s_first_site_id") {
+            $strSqlOrder = "ORDER BY S.FIRST_SITE_ID";
+        } elseif ($by == "s_date_first") {
+            $strSqlOrder = "ORDER BY S.DATE_FIRST";
+        } elseif ($by == "s_date_last") {
+            $strSqlOrder = "ORDER BY S.DATE_LAST";
+        } elseif ($by == "s_user_id") {
+            $strSqlOrder = "ORDER BY S.USER_ID";
+        } elseif ($by == "s_guest_id") {
+            $strSqlOrder = "ORDER BY S.GUEST_ID";
+        } elseif ($by == "s_ip") {
+            $strSqlOrder = "ORDER BY S.IP_LAST";
+        } elseif ($by == "s_hits") {
+            $strSqlOrder = "ORDER BY S.HITS ";
+        } elseif ($by == "s_events") {
+            $strSqlOrder = "ORDER BY S.C_EVENTS ";
+        } elseif ($by == "s_adv_id") {
+            $strSqlOrder = "ORDER BY S.ADV_ID ";
+        } elseif ($by == "s_country_id") {
+            $strSqlOrder = "ORDER BY S.COUNTRY_ID ";
+        } elseif ($by == "s_region_name") {
+            $strSqlOrder = "ORDER BY CITY.REGION ";
+        } elseif ($by == "s_city_id") {
+            $strSqlOrder = "ORDER BY S.CITY_ID ";
+        } elseif ($by == "s_url_last") {
+            $strSqlOrder = "ORDER BY S.URL_LAST ";
+        } elseif ($by == "s_url_to") {
+            $strSqlOrder = "ORDER BY S.URL_TO ";
+        } else {
             $strSqlOrder = "ORDER BY S.ID";
         }
+
         if ($order != "asc") {
             $strSqlOrder .= " desc ";
-            $order = "desc";
         }
 
         $strSqlSearch = GetFilterSqlSearch($arSqlSearch);
@@ -274,7 +310,7 @@ class CSession
 			";
 
         $res = $DB->Query($strSql, false, $err_mess . __LINE__);
-        $is_filtered = (IsFiltered($strSqlSearch));
+
         return $res;
     }
 
@@ -283,7 +319,8 @@ class CSession
         $statDB = CDatabase::GetModuleConnection('statistic');
         $ID = intval($ID);
 
-        $res = $statDB->Query("
+        $res = $statDB->Query(
+            "
 			SELECT
 				S.*,
 				UNIX_TIMESTAMP(S.DATE_LAST) - UNIX_TIMESTAMP(S.DATE_FIRST) SESSION_TIME,
@@ -298,7 +335,8 @@ class CSession
 				LEFT JOIN b_stat_city CITY ON (CITY.ID = S.CITY_ID)
 			WHERE
 				S.ID = " . $ID . "
-		");
+		"
+        );
 
         $res = new CStatResult($res);
         return $res;

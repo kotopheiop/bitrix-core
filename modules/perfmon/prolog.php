@@ -1,6 +1,8 @@
 <?
-if (file_exists($_SERVER["DOCUMENT_ROOT"] . BX_PERSONAL_ROOT . "/php_interface/geshi/geshi.php"))
+
+if (file_exists($_SERVER["DOCUMENT_ROOT"] . BX_PERSONAL_ROOT . "/php_interface/geshi/geshi.php")) {
     require_once($_SERVER["DOCUMENT_ROOT"] . BX_PERSONAL_ROOT . "/php_interface/geshi/geshi.php");
+}
 
 IncludeModuleLangFile(__FILE__);
 /**
@@ -24,10 +26,11 @@ function perfmon_NumberFormat($num, $dec = 2, $mode = 0)
             $str = '<span class="perfmon_number">' . $str . '</span>';
             break;
         default:
-            if ($_REQUEST["mode"] == "excel")
+            if ($_REQUEST["mode"] == "excel") {
                 $str = perfmon_NumberFormat($num, $dec, 1);
-            else
+            } else {
                 $str = perfmon_NumberFormat($num, $dec, 2);
+            }
             break;
     }
     return $str;
@@ -56,7 +59,9 @@ class CAdminListColumn
 
     function getFilterInput()
     {
-        return '<input type="text" name="' . $this->info["filter"] . '" size="47" value="' . htmlspecialcharsbx($GLOBALS[$this->info["filter"]]) . '">';
+        return '<input type="text" name="' . $this->info["filter"] . '" size="47" value="' . htmlspecialcharsbx(
+                $GLOBALS[$this->info["filter"]]
+            ) . '">';
     }
 }
 
@@ -91,7 +96,12 @@ class CAdminListColumnList extends CAdminListColumn
             $arr["reference"][] = $value;
             $arr["reference_id"][] = $key;
         }
-        return SelectBoxFromArray($this->info["filter"], $arr, htmlspecialcharsbx($GLOBALS[$this->info["filter"]]), GetMessage("MAIN_ALL"));
+        return SelectBoxFromArray(
+            $this->info["filter"],
+            $arr,
+            htmlspecialcharsbx($GLOBALS[$this->info["filter"]]),
+            GetMessage("MAIN_ALL")
+        );
     }
 }
 
@@ -108,10 +118,11 @@ class CAdminListColumnNumber extends CAdminListColumn
 
     function getRowView($arRes)
     {
-        if ($_REQUEST["mode"] == "excel")
+        if ($_REQUEST["mode"] == "excel") {
             return number_format($arRes[$this->id], $this->precision, ".", "");
-        else
+        } else {
             return str_replace(" ", "&nbsp;", number_format($arRes[$this->id], $this->precision, ".", " "));
+        }
     }
 }
 
@@ -136,10 +147,11 @@ class CAdminListPage
         $this->pageTitle = $pageTitle;
         $this->sTableID = $sTableID;
         $this->navLabel = $navLabel;
-        if (is_array($arSort))
+        if (is_array($arSort)) {
             $this->sort = new CAdminSorting($this->sTableID, key($arSort), current($arSort));
-        else
+        } else {
             $this->sort = false;
+        }
         $this->list = new CAdminList($this->sTableID, $this->sort);
     }
 
@@ -155,8 +167,9 @@ class CAdminListPage
             "find_type",
         );
         foreach ($this->columns as $column) {
-            if (isset($column->info["filter"]))
+            if (isset($column->info["filter"])) {
                 $FilterArr[] = $column->info["filter"];
+            }
         }
         $this->list->InitFilter($FilterArr);
     }
@@ -176,7 +189,6 @@ class CAdminListPage
                     && $find != ""
                     && $find_type == $column->info["find_type"]
                 ) {
-
                     $arFilter[$column->info["filter_key"]] = $find;
                 } elseif (
                 isset($GLOBALS[$column->info["filter"]])
@@ -187,8 +199,9 @@ class CAdminListPage
         }
 
         foreach ($arFilter as $key => $value) {
-            if ($value == "")
+            if ($value == "") {
                 unset($arFilter[$key]);
+            }
         }
 
         return $arFilter;
@@ -215,8 +228,9 @@ class CAdminListPage
         if (!is_array($arSelectedFields) || empty($arSelectedFields)) {
             $arSelectedFields = array();
             foreach ($this->columns as $column) {
-                if ($column->info["default"])
+                if ($column->info["default"]) {
                     $arSelectedFields[] = $column->id;
+                }
             }
         }
         return $arSelectedFields;
@@ -275,7 +289,13 @@ class CAdminListPage
                         <td><b><?= GetMessage("PERFMON_HIT_FIND") ?>:</b></td>
                         <td><input
                                     type="text" size="25" name="find"
-                                    value="<? echo htmlspecialcharsbx($find) ?>"><? echo SelectBoxFromArray("find_type", $findFilter, $find_type, "", ""); ?>
+                                    value="<? echo htmlspecialcharsbx($find) ?>"><? echo SelectBoxFromArray(
+                                "find_type",
+                                $findFilter,
+                                $find_type,
+                                "",
+                                ""
+                            ); ?>
                         </td>
                     </tr>
                 <? endif; ?>
@@ -289,11 +309,13 @@ class CAdminListPage
                         </tr><?
                     }
                 }
-                $this->filter->Buttons(array(
-                    "table_id" => $this->sTableID,
-                    "url" => $APPLICATION->GetCurPage(),
-                    "form" => "find_form",
-                ));
+                $this->filter->Buttons(
+                    array(
+                        "table_id" => $this->sTableID,
+                        "url" => $APPLICATION->GetCurPage(),
+                        "form" => "find_form",
+                    )
+                );
                 $this->filter->End();
                 ?>
             </form>
@@ -321,11 +343,13 @@ class CAdminListPage
                 $column = $this->columns[$fieldId];
                 if ($column) {
                     $view = $column->getRowView($arRes);
-                    if ($view !== false)
+                    if ($view !== false) {
                         $row->AddViewField($column->id, $view);
+                    }
                     $edit = $column->getRowEdit($arRes);
-                    if ($edit !== false)
+                    if ($edit !== false) {
                         $row->AddEdirField($column->id, $edit);
+                    }
                 }
             }
         }

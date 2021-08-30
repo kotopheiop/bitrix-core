@@ -36,13 +36,15 @@ class Handler extends Requests\HandlerBase
     protected function getHttpClient()
     {
         if ($this->httpClient === null) {
-            $this->httpClient = new HttpClient(array(
-                "version" => "1.1",
-                "socketTimeout" => 30,
-                "streamTimeout" => 30,
-                "redirect" => true,
-                "redirectMax" => 5,
-            ));
+            $this->httpClient = new HttpClient(
+                array(
+                    "version" => "1.1",
+                    "socketTimeout" => 30,
+                    "streamTimeout" => 30,
+                    "redirect" => true,
+                    "redirectMax" => 5,
+                )
+            );
         }
 
         return $this->httpClient;
@@ -64,23 +66,43 @@ class Handler extends Requests\HandlerBase
     {
         static $registered = false;
 
-        if ($registered)
+        if ($registered) {
             return;
+        }
 
         $path = 'handlers/delivery/additional/deliveryrequests/ruspost/requests/';
         $namespace = __NAMESPACE__ . '\Requests\\';
         $requestClasses = array(
-            'Base', 'BaseFile', 'OrderCreate', 'OrderDelete', 'CleanAddress', 'NormalizeFio', 'BatchCreate',
-            'OrderDocF7P', 'OrderDocForms', 'BatchOrderAdd', 'BatchesList', 'BatchOrders', 'BatchDocF103',
-            'BatchDocPrepare', 'BatchDateUpdate', 'BatchDocAll', 'Batch', 'BatchOrder', 'OPS', 'OrderDocF112EK',
-            'UserSettings', 'UnreliableRecipient'
+            'Base',
+            'BaseFile',
+            'OrderCreate',
+            'OrderDelete',
+            'CleanAddress',
+            'NormalizeFio',
+            'BatchCreate',
+            'OrderDocF7P',
+            'OrderDocForms',
+            'BatchOrderAdd',
+            'BatchesList',
+            'BatchOrders',
+            'BatchDocF103',
+            'BatchDocPrepare',
+            'BatchDateUpdate',
+            'BatchDocAll',
+            'Batch',
+            'BatchOrder',
+            'OPS',
+            'OrderDocF112EK',
+            'UserSettings',
+            'UnreliableRecipient'
         );
         $classes = array(
             __NAMESPACE__ . '\Reference' => 'handlers/delivery/additional/deliveryrequests/ruspost/reference.php'
         );
 
-        foreach ($requestClasses as $className)
-            $classes[$namespace . $className] = $path . strtolower($className) . '.php';
+        foreach ($requestClasses as $className) {
+            $classes[$namespace . $className] = $path . mb_strtolower($className) . '.php';
+        }
 
         Loader::registerAutoLoadClasses('sale', $classes);
         $registered = true;
@@ -127,8 +149,9 @@ class Handler extends Requests\HandlerBase
             $deliveryConfig = $delivery->getConfigValues();
 
             //cache on delivery
-            if ($deliveryConfig['MAIN']['CATEGORY'] == 4)
+            if ($deliveryConfig['MAIN']['CATEGORY'] == 4) {
                 $result['ORDER_DOC_F112EK'] = Loc::getMessage('SALE_DLVRS_ADD_DREQ_ORDER_DOC_F112EK');
+            }
         } else {
             $result = array();
         }
@@ -163,7 +186,8 @@ class Handler extends Requests\HandlerBase
                 new Error(
                     Loc::getMessage('SALE_DLVRS_ADD_DREQ_UNKNOWN_TYPE'),
                     array('#REQUEST_TYPE#' => $requestType)
-                ));
+                )
+            );
             return $result;
         }
 
@@ -197,7 +221,8 @@ class Handler extends Requests\HandlerBase
                 new Error(
                     Loc::getMessage('SALE_DLVRS_ADD_DREQ_UNKNOWN_TYPE'),
                     array('#REQUEST_ID#' => $requestId)
-                ));
+                )
+            );
 
             return $result;
         }
@@ -207,7 +232,8 @@ class Handler extends Requests\HandlerBase
             array(
                 'BATCH_NAME' => $requestFields['EXTERNAL_ID'],
                 'REQUEST_ID' => $requestFields['ID']
-            ));
+            )
+        );
 
 
         return $result;
@@ -254,9 +280,11 @@ class Handler extends Requests\HandlerBase
                 $opsRes = $this->getRequestObject('OPS')->send();
 
                 if ($opsRes->isSuccess()) {
-                    foreach ($opsRes->getData() as $ops)
-                        if ($ops['enabled'] == true)
+                    foreach ($opsRes->getData() as $ops) {
+                        if ($ops['enabled'] == true) {
                             $opsList[$ops['operator-postcode']] = '(' . $ops['operator-postcode'] . ') ' . $ops['ops-address'];
+                        }
+                    }
                 }
             }
 
@@ -363,18 +391,19 @@ class Handler extends Requests\HandlerBase
     {
         $result = $value;
 
-        if ($field == 'batch-status')
+        if ($field == 'batch-status') {
             $result = Reference::getBatchStatus($value);
-        elseif ($field == 'delivery-notice-payment-method')
+        } elseif ($field == 'delivery-notice-payment-method') {
             $result = Reference::getPaymentMethod($value);
-        elseif ($field == 'payment-method')
+        } elseif ($field == 'payment-method') {
             $result = Reference::getPaymentMethod($value);
-        elseif ($field == 'shipping-notice-type')
+        } elseif ($field == 'shipping-notice-type') {
             $result = Reference::getShipmentNoticeType($value);
-        elseif ($field == 'transport-type')
+        } elseif ($field == 'transport-type') {
             $result = Reference::getTransportType($value);
-        elseif ($field == 'postmarks') {
-            $result = implode(', ',
+        } elseif ($field == 'postmarks') {
+            $result = implode(
+                ', ',
                 array_map(
                     array('\Sale\Handlers\Delivery\Additional\DeliveryRequests\RusPost\Reference', 'getPostmarkType'),
                     $value
@@ -382,8 +411,9 @@ class Handler extends Requests\HandlerBase
             );
         }
 
-        if (is_array($result))
+        if (is_array($result)) {
             $result = implode(', ', $result);
+        }
 
         return $result;
     }
@@ -421,21 +451,27 @@ class Handler extends Requests\HandlerBase
         $ids = array();
         $filter = array('=REQUEST_ID' => $requestId);
 
-        if (!empty($shipmentIds))
+        if (!empty($shipmentIds)) {
             $filter['=SHIPMENT_ID'] = $shipmentIds;
+        }
 
-        $res = Requests\ShipmentTable::getList(array(
-            'filter' => $filter
-        ));
+        $res = Requests\ShipmentTable::getList(
+            array(
+                'filter' => $filter
+            )
+        );
 
-        while ($row = $res->fetch())
-            if (intval($row['SHIPMENT_ID']) > 0)
+        while ($row = $res->fetch()) {
+            if (intval($row['SHIPMENT_ID']) > 0) {
                 $ids[] = $row['SHIPMENT_ID'];
+            }
+        }
 
-        if (!empty($ids))
+        if (!empty($ids)) {
             $result = $this->getRequestObject('ORDER_DELETE')->process($ids);
-        else
+        } else {
             $result = new Requests\Result();
+        }
 
         return $result;
     }
@@ -450,8 +486,9 @@ class Handler extends Requests\HandlerBase
     {
         $result = $this->addShipments($requestId, $shipmentIds);
 
-        if (!$result->isSuccess())
+        if (!$result->isSuccess()) {
             return $result;
+        }
 
         $idsToDel = array();
         $queries = array();
@@ -467,7 +504,9 @@ class Handler extends Requests\HandlerBase
                         $shpInternalId = intval($shpRes->getInternalId());
                         $idsToDel[] = $shpInternalId;
                         $externalId = $sqlHelper->forSql($shpRes->getExternalId());
-                        $queries[$shpInternalId] = "UPDATE b_sale_delivery_req_shp SET EXTERNAL_ID='" . $externalId . "' WHERE REQUEST_ID=" . intval($requestId) . " AND SHIPMENT_ID=" . $shpInternalId;
+                        $queries[$shpInternalId] = "UPDATE b_sale_delivery_req_shp SET EXTERNAL_ID='" . $externalId . "' WHERE REQUEST_ID=" . intval(
+                                $requestId
+                            ) . " AND SHIPMENT_ID=" . $shpInternalId;
                     }
                 }
             }
@@ -483,9 +522,11 @@ class Handler extends Requests\HandlerBase
                 return $result;
             }
 
-            foreach ($res->getShipmentResults() as $shpRes)
-                if (!$shpRes->isSuccess())
+            foreach ($res->getShipmentResults() as $shpRes) {
+                if (!$shpRes->isSuccess()) {
                     $failedShipments[$shpRes->getInternalId()] = $shpRes;
+                }
+            }
         }
 
         if (!empty($failedShipments)) {
@@ -495,9 +536,11 @@ class Handler extends Requests\HandlerBase
                 if ($reqRes->isSuccess()) {
                     $shpResults = $reqRes->getShipmentResults();
                     /** @var Requests\ShipmentResult $shpRes */
-                    foreach ($shpResults as $resShpId => $shpRes)
-                        if (isset($failedShipments[$resShpId]))
+                    foreach ($shpResults as $resShpId => $shpRes) {
+                        if (isset($failedShipments[$resShpId])) {
                             $shpResults[$resShpId]->addErrors($failedShipments[$resShpId]->getErrors());
+                        }
+                    }
 
                     $results[$resId]->setResults($shpResults);
                 }
@@ -506,10 +549,13 @@ class Handler extends Requests\HandlerBase
             $result->setResults($results);
         }
 
-        if (!empty($queries))
-            foreach ($queries as $shpId => $query)
-                if (!isset($failedShipments[$shpId]))
+        if (!empty($queries)) {
+            foreach ($queries as $shpId => $query) {
+                if (!isset($failedShipments[$shpId])) {
                     $con->queryExecute($query);
+                }
+            }
+        }
 
         return $result;
     }
@@ -602,34 +648,35 @@ class Handler extends Requests\HandlerBase
     {
         $result = $value;
 
-        if ($field == 'address-type-to')
+        if ($field == 'address-type-to') {
             $result = Reference::getAddressType($value);
-        elseif ($field == 'batch-category')
+        } elseif ($field == 'batch-category') {
             $result = Reference::getRpoCategory($value);
-        elseif ($field == 'batch-status')
+        } elseif ($field == 'batch-status') {
             $result = Reference::getBatchStatus($value);
-        elseif ($field == 'delivery-time')
+        } elseif ($field == 'delivery-time') {
             $result = $value['max-days'] . ' - ' . $value['min-days'];
-        elseif ($field == 'dimension')
+        } elseif ($field == 'dimension') {
             $result = $value['length'] . ' X ' . $value['width'] . ' X ' . $value['height'];
-        elseif ($field == 'envelope-type')
+        } elseif ($field == 'envelope-type') {
             $result = Reference::getEnvelopeType($value);
-        elseif ($field == 'last-oper-attr')
+        } elseif ($field == 'last-oper-attr') {
             $result = Reference::getTrackingAttr($value);
-        elseif ($field == 'last-oper-type')
+        } elseif ($field == 'last-oper-type') {
             $result = Reference::getTrackingAttr($value);
-        elseif ($field == 'mail-category')
+        } elseif ($field == 'mail-category') {
             $result = Reference::getRpoCategory($value);
-        elseif ($field == 'mail-rank')
+        } elseif ($field == 'mail-rank') {
             $result = Reference::getMailRank($value);
-        elseif ($field == 'mail-type')
+        } elseif ($field == 'mail-type') {
             $result = Reference::getRpoKind($value);
-        elseif ($field == 'payment-method')
+        } elseif ($field == 'payment-method') {
             $result = Reference::getPaymentMethod($value);
-        elseif ($field == 'transport-type')
+        } elseif ($field == 'transport-type') {
             $result = Reference::getTransportType($value);
-        elseif ($field == 'postmarks') {
-            $result = implode(', ',
+        } elseif ($field == 'postmarks') {
+            $result = implode(
+                ', ',
                 array_map(
                     array(__NAMESPACE__ . '\\Reference', 'getPostmarkType'),
                     $value
@@ -637,8 +684,9 @@ class Handler extends Requests\HandlerBase
             );
         }
 
-        if (is_array($result))
+        if (is_array($result)) {
             $result = implode(', ', $result);
+        }
 
         return $result;
     }
@@ -658,21 +706,25 @@ class Handler extends Requests\HandlerBase
             return $result;
         }
 
-        $res = Requests\ShipmentTable::getList(array(
-            'filter' => array(
-                '=SHIPMENT_ID' => $shipmentId
-            ),
-        ));
+        $res = Requests\ShipmentTable::getList(
+            array(
+                'filter' => array(
+                    '=SHIPMENT_ID' => $shipmentId
+                ),
+            )
+        );
 
         $row = $res->fetch();
 
-        if (!$row || strlen($row['EXTERNAL_ID']) < 0) {
+        if (!$row || (string)$row['EXTERNAL_ID'] === '') {
             $result->addError(
                 new Error(
                     Loc::getMessage(
                         'SALE_DLVRS_ADD_DREQ_ERR_SHIPMENT_NOT_INCLUDED',
                         array('#SHIPMENT_ID#' => $shipmentId)
-                    )));
+                    )
+                )
+            );
 
             return $result;
         }
@@ -692,8 +744,9 @@ class Handler extends Requests\HandlerBase
                     );
                 }
 
-                if (!empty($fields))
+                if (!empty($fields)) {
                     $result->setData($fields);
+                }
             }
         } else {
             $result->addErrors($res->getErrors());

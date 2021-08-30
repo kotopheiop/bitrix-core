@@ -22,13 +22,15 @@ class DBResult extends \CDBResult
         if ($res = parent::fetch()) {
             $prefix = null;
             foreach ($res as $k => $v) {
-                if (strpos($k, "LAMP") !== false) {
-                    $prefix = substr($k, 0, strpos($k, "LAMP"));
+                if (mb_strpos($k, "LAMP") !== false) {
+                    $prefix = mb_substr($k, 0, mb_strpos($k, "LAMP"));
                     break;
                 }
             }
             if ($prefix !== null && $res[$prefix . "LAMP"] == "yellow" && !empty($res[$prefix . "CHANNEL_ID"])) {
-                $res[$prefix . "LAMP"] = ($res[$prefix . "ID"] == \CVote::getActiveVoteId($res[$prefix . "CHANNEL_ID"]) ? "green" : "red");
+                $res[$prefix . "LAMP"] = ($res[$prefix . "ID"] == \CVote::getActiveVoteId(
+                    $res[$prefix . "CHANNEL_ID"]
+                ) ? "green" : "red");
             }
         }
         return $res;

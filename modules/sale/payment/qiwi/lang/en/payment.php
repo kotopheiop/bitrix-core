@@ -1,4 +1,5 @@
 <?
+
 $MESS["SALE_QH_COMMENT"] = "Payment for ##ID#";
 $MESS["SALE_QH_INPUT_PHONE"] = "Enter phone number in international format";
 $MESS["SALE_QH_INCORRECT_PHONE_NUMBER"] = "Incorrect phone number";

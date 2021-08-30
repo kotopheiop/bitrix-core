@@ -87,10 +87,16 @@ class TemplateBase
             $filter['ID'] = $templateId;
         }
 
-        $templateDb = \CSiteTemplate::GetList(array($by => $order), $filter, array("ID", "NAME", "CONTENT", "SCREENSHOT"));
+        $templateDb = \CSiteTemplate::GetList(
+            array($by => $order),
+            $filter,
+            array("ID", "NAME", "CONTENT", "SCREENSHOT")
+        );
         Loader::includeModule('fileman');
         $replaceAttr = BlockEditor::BLOCK_PLACE_ATTR . '="' . BlockEditor::BLOCK_PLACE_ATTR_DEF_VALUE . '"';
-        $replaceText = '<div style="padding: 20px; border: 2px dashed #868686;"><span style="color: #868686; font-size: 20px;">' . Loc::getMessage('PRESET_TEMPLATE_LIST_SITE_DEF_TEXT') . '</span></div>';
+        $replaceText = '<div style="padding: 20px; border: 2px dashed #868686;"><span style="color: #868686; font-size: 20px;">' . Loc::getMessage(
+                'PRESET_TEMPLATE_LIST_SITE_DEF_TEXT'
+            ) . '</span></div>';
         while ($template = $templateDb->Fetch()) {
             if ($template['ID'] == 'mail_user') {
                 continue;
@@ -100,7 +106,7 @@ class TemplateBase
             $html = $template['CONTENT'];
 
             $html = preg_replace('/<\?[\w\w].*?B_PROLOG_INCLUDED[^>].*?\?>/is', '', $html);
-            if (stripos($html, $replaceAttr) === false) {
+            if (mb_stripos($html, $replaceAttr) === false) {
                 $replaceTo = '<div id="bxStylistBody" ' . $replaceAttr . '>' . $replaceText . '</div>';
             }
 
@@ -212,28 +218,50 @@ class TemplateBase
         $themeContent = File::getFileContents(Loader::getLocal(static::LOCAL_DIR_TMPL . 'theme.php'));
         return str_replace(
             array(
-                '%TEMPLATE_CONTENT%', '%LOGO_PATH_HEADER%', '%LOGO_PATH_FOOTER%', '%PHONE%',
-                '%UNSUB_LINK%', '%MENU_CONTACTS%',
-                '%MENU_HOWTO%', '%MENU_DELIVERY%',
-                '%MENU_ABOUT%', '%MENU_GUARANTEE%',
-                '%SCHEDULE_NAME%', '%SCHEDULE_DETAIL%',
+                '%TEMPLATE_CONTENT%',
+                '%LOGO_PATH_HEADER%',
+                '%LOGO_PATH_FOOTER%',
+                '%PHONE%',
+                '%UNSUB_LINK%',
+                '%MENU_CONTACTS%',
+                '%MENU_HOWTO%',
+                '%MENU_DELIVERY%',
+                '%MENU_ABOUT%',
+                '%MENU_GUARANTEE%',
+                '%SCHEDULE_NAME%',
+                '%SCHEDULE_DETAIL%',
 
-                '%BUTTON%', '%HEADER%',
-                '%TEXT1%', '%TEXT2%',
-                '%TEXT3%', '%TEXT4%',
-                '%TEXT5%', '%TEXT6%',
+                '%BUTTON%',
+                '%HEADER%',
+                '%TEXT1%',
+                '%TEXT2%',
+                '%TEXT3%',
+                '%TEXT4%',
+                '%TEXT5%',
+                '%TEXT6%',
             ),
             array(
-                $template, $logoHeader, $logoFooter, $phone,
-                Loc::getMessage('PRESET_TEMPLATE_LIST_BLANK_UNSUB_LINK'), Loc::getMessage('PRESET_TEMPLATE_LIST_BLANK_MENU_CONTACTS'),
-                Loc::getMessage('PRESET_TEMPLATE_LIST_BLANK_MENU_HOWTO'), Loc::getMessage('PRESET_TEMPLATE_LIST_BLANK_MENU_DELIVERY'),
-                Loc::getMessage('PRESET_TEMPLATE_LIST_BLANK_MENU_ABOUT'), Loc::getMessage('PRESET_TEMPLATE_LIST_BLANK_MENU_GUARANTEE'),
-                Loc::getMessage('PRESET_TEMPLATE_LIST_BLANK_SCHEDULE_NAME'), Loc::getMessage('PRESET_TEMPLATE_LIST_BLANK_SCHEDULE_DETAIL'),
+                $template,
+                $logoHeader,
+                $logoFooter,
+                $phone,
+                Loc::getMessage('PRESET_TEMPLATE_LIST_BLANK_UNSUB_LINK'),
+                Loc::getMessage('PRESET_TEMPLATE_LIST_BLANK_MENU_CONTACTS'),
+                Loc::getMessage('PRESET_TEMPLATE_LIST_BLANK_MENU_HOWTO'),
+                Loc::getMessage('PRESET_TEMPLATE_LIST_BLANK_MENU_DELIVERY'),
+                Loc::getMessage('PRESET_TEMPLATE_LIST_BLANK_MENU_ABOUT'),
+                Loc::getMessage('PRESET_TEMPLATE_LIST_BLANK_MENU_GUARANTEE'),
+                Loc::getMessage('PRESET_TEMPLATE_LIST_BLANK_SCHEDULE_NAME'),
+                Loc::getMessage('PRESET_TEMPLATE_LIST_BLANK_SCHEDULE_DETAIL'),
 
-                Loc::getMessage('PRESET_TEMPLATE_LIST_BLANK_BUTTON'), Loc::getMessage('PRESET_TEMPLATE_LIST_BLANK_HEADER'),
-                Loc::getMessage('PRESET_TEMPLATE_LIST_BLANK_TEXT1'), Loc::getMessage('PRESET_TEMPLATE_LIST_BLANK_TEXT2'),
-                Loc::getMessage('PRESET_TEMPLATE_LIST_BLANK_TEXT3'), Loc::getMessage('PRESET_TEMPLATE_LIST_BLANK_TEXT4'),
-                Loc::getMessage('PRESET_TEMPLATE_LIST_BLANK_TEXT5'), Loc::getMessage('PRESET_TEMPLATE_LIST_BLANK_TEXT6'),
+                Loc::getMessage('PRESET_TEMPLATE_LIST_BLANK_BUTTON'),
+                Loc::getMessage('PRESET_TEMPLATE_LIST_BLANK_HEADER'),
+                Loc::getMessage('PRESET_TEMPLATE_LIST_BLANK_TEXT1'),
+                Loc::getMessage('PRESET_TEMPLATE_LIST_BLANK_TEXT2'),
+                Loc::getMessage('PRESET_TEMPLATE_LIST_BLANK_TEXT3'),
+                Loc::getMessage('PRESET_TEMPLATE_LIST_BLANK_TEXT4'),
+                Loc::getMessage('PRESET_TEMPLATE_LIST_BLANK_TEXT5'),
+                Loc::getMessage('PRESET_TEMPLATE_LIST_BLANK_TEXT6'),
             ),
             $themeContent
         );
@@ -248,8 +276,9 @@ class TemplateBase
     {
         $result = false;
         $fullPathOfFile = Loader::getLocal(static::LOCAL_DIR_TMPL . bx_basename($templateName) . '.php');
-        if ($fullPathOfFile)
+        if ($fullPathOfFile) {
             $result = File::putFileContents($fullPathOfFile, $html);
+        }
 
         return $result;
     }

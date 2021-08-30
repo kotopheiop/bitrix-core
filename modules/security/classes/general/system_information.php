@@ -41,8 +41,9 @@ class CSecuritySystemInformation
     public static function getCurrentHost()
     {
         $host = COption::GetOptionString("main", "server_name", $_SERVER["HTTP_HOST"]);
-        if (!$host)
+        if (!$host) {
             $host = $_SERVER["HTTP_HOST"];
+        }
         return trim(CBXPunycode::ToASCII($host, $arErrors));
     }
 
@@ -63,7 +64,7 @@ class CSecuritySystemInformation
      */
     public static function isRunOnWin()
     {
-        return (strtoupper(substr(PHP_OS, 0, 3)) === "WIN");
+        return (mb_strtoupper(mb_substr(PHP_OS, 0, 3)) === "WIN");
     }
 
     /**
@@ -87,42 +88,51 @@ class CSecuritySystemInformation
     public static function isIpValid($ip, $allowPrivate = false, $allowRes = false)
     {
         // ToDo: what about PHP filters?
-        if (ip2long($ip) === false)
+        if (ip2long($ip) === false) {
             return false;
+        }
 
         $ipOctets = explode('.', $ip);
         if (!$allowPrivate) {
             // php/ext/filter/logical_filters.c, FILTER_FLAG_NO_PRIV_RANGE
-            if ($ipOctets[0] == 10)
+            if ($ipOctets[0] == 10) {
                 return false;
+            }
 
-            if ($ipOctets[0] == 172 && $ipOctets[1] >= 16 && $ipOctets[1] <= 31)
+            if ($ipOctets[0] == 172 && $ipOctets[1] >= 16 && $ipOctets[1] <= 31) {
                 return false;
+            }
 
-            if ($ipOctets[0] == 192 && $ipOctets[1] == 168)
+            if ($ipOctets[0] == 192 && $ipOctets[1] == 168) {
                 return false;
-
+            }
         }
 
         if (!$allowRes) {
             // php/ext/filter/logical_filters.c, FILTER_FLAG_NO_RES_RANGE
-            if ($ipOctets[0] == 0)
+            if ($ipOctets[0] == 0) {
                 return false;
+            }
 
-            if ($ipOctets[0] == 100 && $ipOctets[1] >= 64 && $ipOctets[1] <= 127)
+            if ($ipOctets[0] == 100 && $ipOctets[1] >= 64 && $ipOctets[1] <= 127) {
                 return false;
+            }
 
-            if ($ipOctets[0] == 169 && $ipOctets[1] == 254)
+            if ($ipOctets[0] == 169 && $ipOctets[1] == 254) {
                 return false;
+            }
 
-            if ($ipOctets[0] == 192 && $ipOctets[1] == 0 && $ipOctets[2] == 2)
+            if ($ipOctets[0] == 192 && $ipOctets[1] == 0 && $ipOctets[2] == 2) {
                 return false;
+            }
 
-            if ($ipOctets[0] == 127 && $ipOctets[1] == 0 && $ipOctets[2] == 0)
+            if ($ipOctets[0] == 127 && $ipOctets[1] == 0 && $ipOctets[2] == 0) {
                 return false;
+            }
 
-            if ($ipOctets[0] >= 224 && $ipOctets[0] <= 255)
+            if ($ipOctets[0] >= 224 && $ipOctets[0] <= 255) {
                 return false;
+            }
         }
 
         return true;
@@ -138,7 +148,7 @@ class CSecuritySystemInformation
     {
         $converter = CBXPunycode::GetConverter();
         $result = array();
-        $dbSites = CSite::GetList($b = 'sort', $o = 'asc', array('ACTIVE' => 'Y'));
+        $dbSites = CSite::GetList('sort', 'asc', array('ACTIVE' => 'Y'));
         while ($arSite = $dbSites->Fetch()) {
             $result[] = array(
                 'ID' => $arSite['ID'],
@@ -150,8 +160,9 @@ class CSecuritySystemInformation
                 $domainName = trim($domainName, "\r\t ");
                 if ($domainName != "") {
                     $punyName = $converter->Encode($domainName);
-                    if ($punyName !== false)
+                    if ($punyName !== false) {
                         $result[count($result) - 1]['DOMAINS'][] = $punyName;
+                    }
                 }
             }
         }
@@ -206,8 +217,9 @@ class CSecuritySystemInformation
     protected static function getBitrixVMVersion()
     {
         $result = getenv('BITRIX_VA_VER');
-        if (!$result)
+        if (!$result) {
             $result = "";
+        }
         return $result;
     }
 
@@ -250,10 +262,12 @@ class CSecuritySystemInformation
     protected static function getMemcacheSID()
     {
         $result = "";
-        if (defined("BX_MEMCACHE_CLUSTER"))
+        if (defined("BX_MEMCACHE_CLUSTER")) {
             $result .= BX_MEMCACHE_CLUSTER;
-        if (defined("BX_CACHE_SID"))
+        }
+        if (defined("BX_CACHE_SID")) {
             $result .= BX_CACHE_SID;
+        }
 
         return $result;
     }
@@ -288,11 +302,13 @@ class CSecuritySystemInformation
     protected static function getMemCacheInfoFromConstants()
     {
         $result = array();
-        if (defined('BX_MEMCACHE_HOST'))
+        if (defined('BX_MEMCACHE_HOST')) {
             $result["host"] = BX_MEMCACHE_HOST;
+        }
 
-        if (defined('BX_MEMCACHE_PORT'))
+        if (defined('BX_MEMCACHE_PORT')) {
             $result["port"] = BX_MEMCACHE_PORT;
+        }
 
         if (!empty($result)) {
             return array($result);
@@ -362,10 +378,12 @@ class CSecuritySystemInformation
                 array(//Order
                     "ID" => "ASC",
                 )
-                , array(//Filter
+                ,
+                array(//Filter
                     "=ROLE_ID" => array("SLAVE", "MASTER")
                 )
-                , array(//Select
+                ,
+                array(//Select
                     "DB_HOST"
                 )
             );

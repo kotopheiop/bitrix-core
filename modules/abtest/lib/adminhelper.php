@@ -29,12 +29,14 @@ class AdminHelper
         $uri = new Web\Uri($url);
 
         $path = \CHTTP::urnDecode($uri->getPath());
-        if (substr($path, -1, 1) == '/')
+        if (mb_substr($path, -1, 1) == '/') {
             $path .= 'index.php';
+        }
 
         $file = new IO\File($docRoot . $path);
-        if ($file->isExists())
-            return substr($file->getPath(), strlen($docRoot));
+        if ($file->isExists()) {
+            return mb_substr($file->getPath(), mb_strlen($docRoot));
+        }
 
         if ($rewriteRules = AdminHelper::getRewriteRules($site)) {
             $pathQuery = \CHTTP::urnDecode($uri->getPathQuery());
@@ -52,16 +54,18 @@ class AdminHelper
 
                     $file = new IO\File($docRoot . $path);
                     if ($file->isExists()) {
-                        $pathTmp = str_replace('.', '', strtolower(ltrim($path, '/\\')));
-                        $pathTmp7 = substr($pathTmp, 0, 7);
+                        $pathTmp = str_replace('.', '', mb_strtolower(ltrim($path, '/\\')));
+                        $pathTmp7 = mb_substr($pathTmp, 0, 7);
 
-                        if ($pathTmp7 == 'upload/' || $pathTmp7 == 'bitrix/')
+                        if ($pathTmp7 == 'upload/' || $pathTmp7 == 'bitrix/') {
                             continue;
+                        }
 
-                        if ($file->getExtension() != 'php')
+                        if ($file->getExtension() != 'php') {
                             continue;
+                        }
 
-                        return substr($file->getPath(), strlen($docRoot));
+                        return mb_substr($file->getPath(), mb_strlen($docRoot));
                     }
                 }
             }
@@ -84,8 +88,9 @@ class AdminHelper
         $arUrlRewrite =& $rewriteRules;
 
         $rewriteFile = new IO\File($docRoot . '/urlrewrite.php');
-        if ($rewriteFile->isExists())
+        if ($rewriteFile->isExists()) {
             include $rewriteFile->getPath();
+        }
 
         return $rewriteRules;
     }
@@ -102,55 +107,62 @@ class AdminHelper
 
         if ($cache->initCache(time() - strtotime('today'), 'abtest_site_capacity', '/abtest')) {
             $capacity = $cache->getVars();
-        } else if (Loader::includeModule('conversion')) {
-            if ($conversionRates = Conversion\RateManager::getTypes(array('ACTIVE' => true))) {
-                $baseRate = array_slice($conversionRates, 0, 1, true);
+        } else {
+            if (Loader::includeModule('conversion')) {
+                if ($conversionRates = Conversion\RateManager::getTypes(array('ACTIVE' => true))) {
+                    $baseRate = array_slice($conversionRates, 0, 1, true);
 
-                $reportContext = new Conversion\ReportContext;
+                    $reportContext = new Conversion\ReportContext;
 
-                $from = new \DateTime('first day of last month');
-                $to = new \DateTime('today');
+                    $from = new \DateTime('first day of last month');
+                    $to = new \DateTime('today');
 
-                $capacity = array();
+                    $capacity = array();
 
-                $res = \Bitrix\Main\SiteTable::getList();
-                while ($site = $res->fetch()) {
-                    $lid = $site['LID'];
+                    $res = \Bitrix\Main\SiteTable::getList();
+                    while ($site = $res->fetch()) {
+                        $lid = $site['LID'];
 
-                    $reportContext->setAttribute('conversion_site', $lid);
+                        $reportContext->setAttribute('conversion_site', $lid);
 
-                    $rateData = reset($reportContext->getRatesDeprecated(
-                        $baseRate, array(
-                        '>=DAY' => Type\Date::createFromPhp($from),
-                        '<=DAY' => Type\Date::createFromPhp($to)
-                    ), null
-                    ));
+                        $rateData = reset(
+                            $reportContext->getRatesDeprecated(
+                                $baseRate,
+                                array(
+                                    '>=DAY' => Type\Date::createFromPhp($from),
+                                    '<=DAY' => Type\Date::createFromPhp($to)
+                                ),
+                                null
+                            )
+                        );
 
-                    $reportContext->unsetAttribute('conversion_site', $lid);
+                        $reportContext->unsetAttribute('conversion_site', $lid);
 
-                    $rate = $rateData['RATE'];
-                    $hits = $rateData['DENOMINATOR'];
+                        $rate = $rateData['RATE'];
+                        $hits = $rateData['DENOMINATOR'];
 
-                    $daily = floor($hits / (date_diff($from, $to)->format('%a') + 1));
+                        $daily = floor($hits / (date_diff($from, $to)->format('%a') + 1));
 
-                    $min = $rate > 0 && $rate < 1 ? ceil(16 * (1 / $rate - 1) / pow(MIN_EFFECT, 2)) : 0;
-                    $est = $daily ? $min / ($daily / 2) : 0;
+                        $min = $rate > 0 && $rate < 1 ? ceil(16 * (1 / $rate - 1) / pow(MIN_EFFECT, 2)) : 0;
+                        $est = $daily ? $min / ($daily / 2) : 0;
 
-                    $capacity[$lid] = array(
-                        'daily' => $daily,
-                        'min' => $min,
-                        'est' => $est
-                    );
+                        $capacity[$lid] = array(
+                            'daily' => $daily,
+                            'min' => $min,
+                            'est' => $est
+                        );
+                    }
+
+                    $cache->startDataCache(strtotime('tomorrow') - time());
+                    $cache->endDataCache($capacity);
                 }
-
-                $cache->startDataCache(strtotime('tomorrow') - time());
-                $cache->endDataCache($capacity);
             }
         }
 
         $result = array();
-        foreach ((array)$id as $lid)
+        foreach ((array)$id as $lid) {
             $result[$lid] = isset($capacity[$lid]) ? $capacity[$lid] : array('min' => 0, 'est' => 0);
+        }
 
         return is_array($id) ? $result : reset($result);
     }
@@ -167,32 +179,34 @@ class AdminHelper
 
         if ($cache->initCache(time() - strtotime('today'), 'abtest_capacity_' . intval($id), '/abtest')) {
             $capacity = $cache->getVars();
-        } else if (Loader::includeModule('conversion')) {
-            if ($conversionRates = Conversion\RateManager::getTypes(array('ACTIVE' => true))) {
-                if ($abtest = ABTestTable::getById($id)->fetch()) {
-                    $lid = $abtest['SITE_ID'];
+        } else {
+            if (Loader::includeModule('conversion')) {
+                if ($conversionRates = Conversion\RateManager::getTypes(array('ACTIVE' => true))) {
+                    if ($abtest = ABTestTable::getById($id)->fetch()) {
+                        $lid = $abtest['SITE_ID'];
 
-                    $baseRate = array_slice($conversionRates, 0, 1, true);
+                        $baseRate = array_slice($conversionRates, 0, 1, true);
 
-                    $reportContext = new Conversion\ReportContext;
+                        $reportContext = new Conversion\ReportContext;
 
-                    $reportContext->setAttribute('conversion_site', $lid);
-                    $reportContext->setAttribute('abtest', $id);
+                        $reportContext->setAttribute('conversion_site', $lid);
+                        $reportContext->setAttribute('abtest', $id);
 
-                    $reportContext->setAttribute('abtest_section', 'A');
-                    $groupAData = reset($reportContext->getRatesDeprecated($baseRate, array(), null));
+                        $reportContext->setAttribute('abtest_section', 'A');
+                        $groupAData = reset($reportContext->getRatesDeprecated($baseRate, array(), null));
 
-                    $reportContext->unsetAttribute('abtest_section', 'A');
-                    $reportContext->setAttribute('abtest_section', 'B');
-                    $groupBData = reset($reportContext->getRatesDeprecated($baseRate, array(), null));
+                        $reportContext->unsetAttribute('abtest_section', 'A');
+                        $reportContext->setAttribute('abtest_section', 'B');
+                        $groupBData = reset($reportContext->getRatesDeprecated($baseRate, array(), null));
 
-                    $capacity = array(
-                        'A' => $groupAData['DENOMINATOR'],
-                        'B' => $groupBData['DENOMINATOR']
-                    );
+                        $capacity = array(
+                            'A' => $groupAData['DENOMINATOR'],
+                            'B' => $groupBData['DENOMINATOR']
+                        );
 
-                    $cache->startDataCache(strtotime('tomorrow') - time());
-                    $cache->endDataCache($capacity);
+                        $cache->startDataCache(strtotime('tomorrow') - time());
+                        $cache->endDataCache($capacity);
+                    }
                 }
             }
         }

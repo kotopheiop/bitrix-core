@@ -1,15 +1,23 @@
 <?php
-if (!CModule::IncludeModule('learning'))
-    return (false);
 
-if (!($USER->GetID() > 0))
+if (!CModule::IncludeModule('learning')) {
     return (false);
+}
+
+if (!($USER->GetID() > 0)) {
+    return (false);
+}
 
 IncludeModuleLangFile(__FILE__);
 $arSubMenu = $arSubCourse = Array();
 
-function __learning_admin_get_menu($THIS, $arPath = array(), $deep = 0, &$immediateChildsIds, $loadOnlySpecialEntities = false)
-{
+function __learning_admin_get_menu(
+    $THIS,
+    $arPath = array(),
+    $deep = 0,
+    &$immediateChildsIds,
+    $loadOnlySpecialEntities = false
+) {
     $immediateChildsIds = array();    // puts here ids of all immediate childs
     $deep = (int)$deep;
 
@@ -20,16 +28,18 @@ function __learning_admin_get_menu($THIS, $arPath = array(), $deep = 0, &$immedi
     //$urlPath = $oPath->ExportUrlencoded();
 
     // current lesson id (not exists only for top root)
-    if (isset($arPath[$deep]))
+    if (isset($arPath[$deep])) {
         $currentLessonIdInPath = (int)$arPath[$deep];
-    else
+    } else {
         $currentLessonIdInPath = false;
+    }
 
     // Path to current element
     $arCurrentDeepPath = array();
     foreach ($arPath as $key => $value) {
-        if ($key === $deep)
+        if ($key === $deep) {
             break;
+        }
 
         $arCurrentDeepPath[] = $value;
     }
@@ -39,8 +49,9 @@ function __learning_admin_get_menu($THIS, $arPath = array(), $deep = 0, &$immedi
         $CDBResult = CCourse::GetList(array('COURSE_SORT' => 'ASC'));
     } else {
         // If not parent with such indexInPath => we are deep too much.
-        if (!isset($arPath[$indexInPath]))
-            return ($arMenu);    // no items
+        if (!isset($arPath[$indexInPath])) {
+            return ($arMenu);
+        }    // no items
 
         $parentLessonId = $arPath[$indexInPath];
 
@@ -118,8 +129,9 @@ function __learning_admin_get_menu($THIS, $arPath = array(), $deep = 0, &$immedi
         }
     }
 
-    if ($loadOnlySpecialEntities)
+    if ($loadOnlySpecialEntities) {
         return ($arMenu);
+    }
 
     // When listing courses, limit it's count
     if ($deep === 0) {
@@ -208,23 +220,26 @@ function __learning_admin_get_menu($THIS, $arPath = array(), $deep = 0, &$immedi
             $loadOnlySpecialEntities = false;
 
             // Load child items only for lesson in current path
-            if ($arData['LESSON_ID'] == $currentLessonIdInPath)
+            if ($arData['LESSON_ID'] == $currentLessonIdInPath) {
                 $arItem['items'] = __learning_admin_get_menu($THIS, $arPath, $deep + 1, $arSubImmediateChildsIds);
+            }
         } else {
             $loadOnlySpecialEntities = false;
             $childsCnt = CLearnLesson::CountImmediateChilds($arData['LESSON_ID']);
             $questionsCnt = CLQuestion::GetCount(array('LESSON_ID' => (int)$arData['LESSON_ID']));
 
-            if ($childsCnt > 0)
+            if ($childsCnt > 0) {
                 $arItem['page_icon'] = $arItem['icon'] = 'learning_icon_chapters';
-            else
+            } else {
                 $arItem['page_icon'] = $arItem['icon'] = 'learning_icon_lessons';
+            }
 
             $arItem['dynamic'] = true;
 
             // Load child items only for lesson in current path
-            if ($arData['LESSON_ID'] == $currentLessonIdInPath)
+            if ($arData['LESSON_ID'] == $currentLessonIdInPath) {
                 $arItem['items'] = __learning_admin_get_menu($THIS, $arPath, $deep + 1, $arSubImmediateChildsIds);
+            }
         }
 
         // now, adds items into more_url (it needs when edit form for childs opened)
@@ -261,17 +276,18 @@ $module_id = "learning";
 if (\CLearnAccessMacroses::CanViewAdminMenu()) {
     // Try to determine current path
     $oPath = new CLearnPath();
-    if (isset($_GET['LESSON_PATH']))
+    if (isset($_GET['LESSON_PATH'])) {
         $oPath->ImportUrlencoded($_GET['LESSON_PATH']);
-    elseif (isset($_GET['admin_mnu_module_id'])
+    } elseif (isset($_GET['admin_mnu_module_id'])
         && isset($_GET['admin_mnu_menu_id'])
         && ($_GET['admin_mnu_module_id'] === 'learning')
     ) {
-        $strLessonIds = substr($_GET['admin_mnu_menu_id'], strlen('menu_learning_courses_new_'));
-        if (strlen($strLessonIds) > 0) {
+        $strLessonIds = mb_substr($_GET['admin_mnu_menu_id'], mb_strlen('menu_learning_courses_new_'));
+        if ($strLessonIds <> '') {
             $arLessonIds = explode('_', $strLessonIds);
-            if (is_array($arLessonIds) && (count($arLessonIds) > 0))
+            if (is_array($arLessonIds) && (count($arLessonIds) > 0)) {
                 $oPath->SetPathFromArray($arLessonIds);
+            }
         }
     }
 
@@ -296,7 +312,8 @@ if (\CLearnAccessMacroses::CanViewAdminMenu()) {
                 array(
                     "text" => GetMessage("LEARNING_MENU_COURSES"),
                     "url" => "learn_unilesson_admin.php?lang=" . LANG
-                        . '&PARENT_LESSON_ID=-1',    // '-1' means "List courses"
+                        . '&PARENT_LESSON_ID=-1',
+                    // '-1' means "List courses"
                     "title" => GetMessage("LEARNING_MENU_COURSES_ALT"),
                     "items_id" => "menu_learning_courses_new",
                     "icon" => "learning_icon_courses",
@@ -307,7 +324,8 @@ if (\CLearnAccessMacroses::CanViewAdminMenu()) {
                         Array(
                             "learn_course_edit.php",
                         ),
-                    "items" => __learning_admin_get_menu($this, $arPath, $deep = 0, $arSubImmediateChildsIds)    // Build menu from the top
+                    "items" => __learning_admin_get_menu($this, $arPath, $deep = 0, $arSubImmediateChildsIds)
+                    // Build menu from the top
                 ),
 
                 // List any lessons
@@ -409,7 +427,9 @@ if (\CLearnAccessMacroses::CanViewAdminMenu()) {
         ||
         (
             $oAccess->IsBaseAccess(CLearnAccess::OP_LESSON_CREATE)
-            && $oAccess->IsBaseAccessForCR(CLearnAccess::OP_LESSON_LINK_TO_PARENTS | CLearnAccess::OP_LESSON_LINK_DESCENDANTS)
+            && $oAccess->IsBaseAccessForCR(
+                CLearnAccess::OP_LESSON_LINK_TO_PARENTS | CLearnAccess::OP_LESSON_LINK_DESCENDANTS
+            )
         )
     ) {
         $aMenu["items"][] = Array(

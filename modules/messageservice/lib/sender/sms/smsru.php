@@ -78,27 +78,6 @@ class SmsRu extends Sender\BaseConfigurable
         return is_array($from) ? $from : array();
     }
 
-    public function getDefaultFrom()
-    {
-        $fromList = $this->getFromList();
-        $from = isset($fromList[0]) ? $fromList[0]['id'] : null;
-        //Try to find alphanumeric from
-        foreach ($fromList as $item) {
-            if (!preg_match('#^[0-9]+$#', $item['id'])) {
-                $from = $item['id'];
-                break;
-            }
-        }
-        return $from;
-    }
-
-    public function setDefaultFrom($from)
-    {
-        //$from = (string)$from;
-        //$this->setOption('default_from', $from);
-        return $this;
-    }
-
     public function isConfirmed()
     {
         return ($this->getOption('is_confirmed') === true);
@@ -178,10 +157,13 @@ class SmsRu extends Sender\BaseConfigurable
 
         if ($result->isSuccess()) {
             $this->setOption('is_confirmed', true);
-            $callBackResult = $this->callExternalMethod('callback/add', array(
-                'embed_id' => $embedId,
-                'url' => $this->getCallbackUrl()
-            ));
+            $callBackResult = $this->callExternalMethod(
+                'callback/add',
+                array(
+                    'embed_id' => $embedId,
+                    'url' => $this->getCallbackUrl()
+                )
+            );
             if ($callBackResult->isSuccess()) {
                 $this->setOption('callback_set', true);
             }
@@ -194,12 +176,14 @@ class SmsRu extends Sender\BaseConfigurable
     {
         if ($this->isRegistered()) {
             $ownerInfo = $this->getOwnerInfo();
-            $result = $this->register(array(
-                'user_phone' => $ownerInfo['phone'],
-                'user_firstname' => $ownerInfo['firstName'],
-                'user_lastname' => $ownerInfo['lastName'],
-                'user_email' => $ownerInfo['email'],
-            ));
+            $result = $this->register(
+                array(
+                    'user_phone' => $ownerInfo['phone'],
+                    'user_firstname' => $ownerInfo['firstName'],
+                    'user_lastname' => $ownerInfo['lastName'],
+                    'user_email' => $ownerInfo['email'],
+                )
+            );
         } else {
             $result = new Result();
             $result->addError(new Error('Provider is not registered.'));
@@ -347,11 +331,13 @@ class SmsRu extends Sender\BaseConfigurable
     {
         $url = 'https://sms.ru/' . $method;
 
-        $httpClient = new HttpClient(array(
-            "socketTimeout" => 10,
-            "streamTimeout" => 30,
-            "waitResponse" => true,
-        ));
+        $httpClient = new HttpClient(
+            array(
+                "socketTimeout" => 10,
+                "streamTimeout" => 30,
+                "waitResponse" => true,
+            )
+        );
         $httpClient->setHeader('User-Agent', 'Bitrix24');
         $httpClient->setCharset('UTF-8');
 

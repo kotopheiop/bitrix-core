@@ -25,6 +25,9 @@ class CIBlockPropertySectionAutoComplete extends CIBlockPropertyElementAutoCompl
             "PrepareSettings" => array(__CLASS__, 'PrepareSettings'),
             "AddFilterFields" => array(__CLASS__, 'AddFilterFields'),
             "GetPublicFilterHTML" => array(__CLASS__, 'GetPublicFilterHTML'),
+            'GetUIEntityEditorProperty' => array(__CLASS__, 'GetUIEntityEditorProperty'),
+            'GetUIEntityEditorPropertyEditHtml' => array(__CLASS__, 'GetUIEntityEditorPropertyEditHtml'),
+            'GetUIEntityEditorPropertyViewHtml' => array(__CLASS__, 'GetUIEntityEditorPropertyViewHtml'),
         );
     }
 
@@ -33,7 +36,9 @@ class CIBlockPropertySectionAutoComplete extends CIBlockPropertyElementAutoCompl
         $strResult = '';
         $mxResult = static::GetPropertyValue($arProperty, $arValue);
         if (is_array($mxResult)) {
-            $strResult = htmlspecialcharsbx(str_replace($arBanSym, $arRepSym, $mxResult['~NAME'])) . ' [' . $mxResult['ID'] . ']';
+            $strResult = htmlspecialcharsbx(
+                    str_replace($arBanSym, $arRepSym, $mxResult['~NAME'])
+                ) . ' [' . $mxResult['ID'] . ']';
         }
         return $strResult;
     }
@@ -52,7 +57,9 @@ class CIBlockPropertySectionAutoComplete extends CIBlockPropertyElementAutoCompl
                 }
                 $mxResult = static::GetPropertyValue($arProperty, $arOneValue);
                 if (is_array($mxResult)) {
-                    $arResult[$intPropertyValueID] = htmlspecialcharsbx(str_replace($arBanSym, $arRepSym, $mxResult['~NAME'])) . ' [' . $mxResult['ID'] . ']';
+                    $arResult[$intPropertyValueID] = htmlspecialcharsbx(
+                            str_replace($arBanSym, $arRepSym, $mxResult['~NAME'])
+                        ) . ' [' . $mxResult['ID'] . ']';
                 }
             }
         }
@@ -84,7 +91,9 @@ class CIBlockPropertySectionAutoComplete extends CIBlockPropertyElementAutoCompl
                 '&amp;tableId=' . $windowTableId;
             $mxElement = static::GetPropertyValue($arProperty, $arValue);
             if (!is_array($mxElement)) {
-                $strResult = '<input type="text" name="' . htmlspecialcharsbx($strHTMLControlName["VALUE"]) . '" id="' . $strHTMLControlName["VALUE"] . '" value="" size="5">' .
+                $strResult = '<input type="text" name="' . htmlspecialcharsbx(
+                        $strHTMLControlName["VALUE"]
+                    ) . '" id="' . $strHTMLControlName["VALUE"] . '" value="" size="5">' .
                     '<input type="button" value="..." onClick="jsUtils.OpenWindow(\'' . $searchUrl . '\', 900, 700);">' .
                     '&nbsp;<span id="sp_' . $strHTMLControlName["VALUE"] . '" ></span>';
             } else {
@@ -107,12 +116,14 @@ class CIBlockPropertySectionAutoComplete extends CIBlockPropertyElementAutoCompl
                     ),
                     "INPUT_NAME" => $strHTMLControlName["VALUE"],
                     "INPUT_NAME_STRING" => "inp_" . $strHTMLControlName["VALUE"],
-                    "INPUT_VALUE_STRING" => htmlspecialcharsback(static::GetValueForAutoComplete(
-                        $arProperty,
-                        $arValue,
-                        $arSymbols['BAN_SYM'],
-                        $arSymbols['REP_SYM']
-                    )),
+                    "INPUT_VALUE_STRING" => htmlspecialcharsback(
+                        static::GetValueForAutoComplete(
+                            $arProperty,
+                            $arValue,
+                            $arSymbols['BAN_SYM'],
+                            $arSymbols['REP_SYM']
+                        )
+                    ),
                     "START_TEXT" => Loc::getMessage('BT_UT_SAUTOCOMPLETE_MESS_INVITE'),
                     "MULTIPLE" => $arProperty["MULTIPLE"],
                     "MAX_WIDTH" => $arSettings['MAX_WIDTH'],
@@ -122,7 +133,9 @@ class CIBlockPropertySectionAutoComplete extends CIBlockPropertyElementAutoCompl
                     'REP_SYM' => $arSymbols['REP_SYM_STRING'],
                     'FILTER' => 'Y',
                     'TYPE' => 'SECTION'
-                ), null, array("HIDE_ICONS" => "Y")
+                ),
+                null,
+                array("HIDE_ICONS" => "Y")
             );
             ?><?
             if ($arSettings['VIEW'] == 'E') {
@@ -146,8 +159,9 @@ class CIBlockPropertySectionAutoComplete extends CIBlockPropertyElementAutoCompl
                     $strButtonCaption = $arLangMess['SECTION_ADD'];
                     unset($arLangMess);
                 }
-                if ($strButtonCaption == '')
+                if ($strButtonCaption == '') {
                     $strButtonCaption = Loc::getMessage('BT_UT_SAUTOCOMPLETE_MESS_NEW_ELEMENT');
+                }
                 ?><input
                 type="button"
                 style="margin-top: 5px;"
@@ -219,7 +233,12 @@ class CIBlockPropertySectionAutoComplete extends CIBlockPropertyElementAutoCompl
 
             $strResult = implode('<br />', $arResult);
         } else {
-            $mxResultValue = static::GetValueForAutoCompleteMulti($arProperty, $arValues, $arSymbols['BAN_SYM'], $arSymbols['REP_SYM']);
+            $mxResultValue = static::GetValueForAutoCompleteMulti(
+                $arProperty,
+                $arValues,
+                $arSymbols['BAN_SYM'],
+                $arSymbols['REP_SYM']
+            );
             $strResultValue = (is_array($mxResultValue) ? htmlspecialcharsback(implode("\n", $mxResultValue)) : '');
 
             ob_start();
@@ -247,7 +266,9 @@ class CIBlockPropertySectionAutoComplete extends CIBlockPropertyElementAutoCompl
                     'REP_SYM' => $arSymbols['REP_SYM_STRING'],
                     'FILTER' => 'Y',
                     'TYPE' => 'SECTION'
-                ), null, array("HIDE_ICONS" => "Y")
+                ),
+                null,
+                array("HIDE_ICONS" => "Y")
             );
             ?><?
             if ($arSettings['VIEW'] == 'E') {
@@ -271,8 +292,9 @@ class CIBlockPropertySectionAutoComplete extends CIBlockPropertyElementAutoCompl
                     $strButtonCaption = $arLangMess['SECTION_ADD'];
                     unset($arLangMess);
                 }
-                if ($strButtonCaption == '')
+                if ($strButtonCaption == '') {
                     $strButtonCaption = Loc::getMessage('BT_UT_SAUTOCOMPLETE_MESS_NEW_ELEMENT');
+                }
                 ?><input
                 type="button"
                 style="margin-top: 5px;"
@@ -311,7 +333,9 @@ class CIBlockPropertySectionAutoComplete extends CIBlockPropertyElementAutoCompl
                     array(
                         'WF' => 'Y'
                     )
-                ) . '" title="' . Loc::getMessage("BT_UT_SAUTOCOMPLETE_MESS_ELEMENT_EDIT") . '">' . $mxResult['ID'] . '</a>]';
+                ) . '" title="' . Loc::getMessage(
+                    "BT_UT_SAUTOCOMPLETE_MESS_ELEMENT_EDIT"
+                ) . '">' . $mxResult['ID'] . '</a>]';
         }
         return $strResult;
     }
@@ -326,7 +350,9 @@ class CIBlockPropertySectionAutoComplete extends CIBlockPropertyElementAutoCompl
             if (!isset($cache[$arValue['VALUE']])) {
                 $arFilter = array();
                 $intIBlockID = intval($arProperty['LINK_IBLOCK_ID']);
-                if (0 < $intIBlockID) $arFilter['IBLOCK_ID'] = $intIBlockID;
+                if (0 < $intIBlockID) {
+                    $arFilter['IBLOCK_ID'] = $intIBlockID;
+                }
                 $arFilter['ID'] = $arValue['VALUE'];
                 $arFilter["ACTIVE"] = "Y";
                 $arFilter["CHECK_PERMISSIONS"] = "Y";
@@ -375,12 +401,14 @@ class CIBlockPropertySectionAutoComplete extends CIBlockPropertyElementAutoCompl
             );
             $resultValue = (is_array($resultValue) ? htmlspecialcharsback(implode("\n", $resultValue)) : '');
         } else {
-            $resultValue = htmlspecialcharsback(static::GetValueForAutoComplete(
-                $property,
-                $value,
-                $symbols['BAN_SYM'],
-                $symbols['REP_SYM']
-            ));
+            $resultValue = htmlspecialcharsback(
+                static::GetValueForAutoComplete(
+                    $property,
+                    $value,
+                    $symbols['BAN_SYM'],
+                    $symbols['REP_SYM']
+                )
+            );
         }
 
         $APPLICATION->IncludeComponent(
@@ -431,35 +459,60 @@ class CIBlockPropertySectionAutoComplete extends CIBlockPropertyElementAutoCompl
          * IBLOCK_MESS		- get lang mess from linked iblock
          */
         $arViewsList = static::GetPropertyViewsList(false);
-        $strView = (isset($arFields['USER_TYPE_SETTINGS']['VIEW']) && in_array($arFields['USER_TYPE_SETTINGS']['VIEW'], $arViewsList) ? $arFields['USER_TYPE_SETTINGS']['VIEW'] : current($arViewsList));
+        $strView = (isset($arFields['USER_TYPE_SETTINGS']['VIEW']) && in_array(
+            $arFields['USER_TYPE_SETTINGS']['VIEW'],
+            $arViewsList
+        ) ? $arFields['USER_TYPE_SETTINGS']['VIEW'] : current($arViewsList));
 
         $strShowAdd = (isset($arFields['USER_TYPE_SETTINGS']['SHOW_ADD']) ? $arFields['USER_TYPE_SETTINGS']['SHOW_ADD'] : '');
         $strShowAdd = ('Y' == $strShowAdd ? 'Y' : 'N');
-        if ((int)$arFields['LINK_IBLOCK_ID'] <= 0)
+        if ((int)$arFields['LINK_IBLOCK_ID'] <= 0) {
             $strShowAdd = 'N';
+        }
 
-        $intMaxWidth = intval(isset($arFields['USER_TYPE_SETTINGS']['MAX_WIDTH']) ? $arFields['USER_TYPE_SETTINGS']['MAX_WIDTH'] : 0);
-        if (0 >= $intMaxWidth) $intMaxWidth = 0;
+        $intMaxWidth = intval(
+            isset($arFields['USER_TYPE_SETTINGS']['MAX_WIDTH']) ? $arFields['USER_TYPE_SETTINGS']['MAX_WIDTH'] : 0
+        );
+        if (0 >= $intMaxWidth) {
+            $intMaxWidth = 0;
+        }
 
-        $intMinHeight = intval(isset($arFields['USER_TYPE_SETTINGS']['MIN_HEIGHT']) ? $arFields['USER_TYPE_SETTINGS']['MIN_HEIGHT'] : 0);
-        if (0 >= $intMinHeight) $intMinHeight = 24;
+        $intMinHeight = intval(
+            isset($arFields['USER_TYPE_SETTINGS']['MIN_HEIGHT']) ? $arFields['USER_TYPE_SETTINGS']['MIN_HEIGHT'] : 0
+        );
+        if (0 >= $intMinHeight) {
+            $intMinHeight = 24;
+        }
 
-        $intMaxHeight = intval(isset($arFields['USER_TYPE_SETTINGS']['MAX_HEIGHT']) ? $arFields['USER_TYPE_SETTINGS']['MAX_HEIGHT'] : 0);
-        if (0 >= $intMaxHeight) $intMaxHeight = 1000;
+        $intMaxHeight = intval(
+            isset($arFields['USER_TYPE_SETTINGS']['MAX_HEIGHT']) ? $arFields['USER_TYPE_SETTINGS']['MAX_HEIGHT'] : 0
+        );
+        if (0 >= $intMaxHeight) {
+            $intMaxHeight = 1000;
+        }
 
-        $strBannedSymbols = trim(isset($arFields['USER_TYPE_SETTINGS']['BAN_SYM']) ? $arFields['USER_TYPE_SETTINGS']['BAN_SYM'] : ',;');
+        $strBannedSymbols = trim(
+            isset($arFields['USER_TYPE_SETTINGS']['BAN_SYM']) ? $arFields['USER_TYPE_SETTINGS']['BAN_SYM'] : ',;'
+        );
         $strBannedSymbols = str_replace(' ', '', $strBannedSymbols);
-        if (false === strpos($strBannedSymbols, ','))
+        if (false === mb_strpos($strBannedSymbols, ',')) {
             $strBannedSymbols .= ',';
-        if (false === strpos($strBannedSymbols, ';'))
+        }
+        if (false === mb_strpos($strBannedSymbols, ';')) {
             $strBannedSymbols .= ';';
+        }
 
         $strOtherReplaceSymbol = '';
         $strReplaceSymbol = (isset($arFields['USER_TYPE_SETTINGS']['REP_SYM']) ? $arFields['USER_TYPE_SETTINGS']['REP_SYM'] : ' ');
         if (BT_UT_AUTOCOMPLETE_REP_SYM_OTHER == $strReplaceSymbol) {
-            $strOtherReplaceSymbol = (isset($arFields['USER_TYPE_SETTINGS']['OTHER_REP_SYM']) ? substr($arFields['USER_TYPE_SETTINGS']['OTHER_REP_SYM'], 0, 1) : '');
-            if ((',' == $strOtherReplaceSymbol) || (';' == $strOtherReplaceSymbol))
+            $strOtherReplaceSymbol = (isset($arFields['USER_TYPE_SETTINGS']['OTHER_REP_SYM']) ? mb_substr(
+                $arFields['USER_TYPE_SETTINGS']['OTHER_REP_SYM'],
+                0,
+                1
+            ) : '');
+            if ((',' == $strOtherReplaceSymbol) || (';' == $strOtherReplaceSymbol)) {
                 $strOtherReplaceSymbol = '';
+            }
             if (('' == $strOtherReplaceSymbol) || in_array($strOtherReplaceSymbol, static::GetReplaceSymList())) {
                 $strReplaceSymbol = $strOtherReplaceSymbol;
                 $strOtherReplaceSymbol = '';
@@ -471,7 +524,9 @@ class CIBlockPropertySectionAutoComplete extends CIBlockPropertyElementAutoCompl
         }
 
         $strIBlockMess = (isset($arFields['USER_TYPE_SETTINGS']['IBLOCK_MESS']) ? $arFields['USER_TYPE_SETTINGS']['IBLOCK_MESS'] : '');
-        if ('Y' != $strIBlockMess) $strIBlockMess = 'N';
+        if ('Y' != $strIBlockMess) {
+            $strIBlockMess = 'N';
+        }
 
         return array(
             'VIEW' => $strView,
@@ -497,35 +552,63 @@ class CIBlockPropertySectionAutoComplete extends CIBlockPropertyElementAutoCompl
 
         return '<tr>
 		<td>' . Loc::getMessage('BT_UT_SAUTOCOMPLETE_SETTING_VIEW') . '</td>
-		<td>' . SelectBoxFromArray($strHTMLControlName["NAME"] . '[VIEW]', static::GetPropertyViewsList(true), htmlspecialcharsbx($arSettings['VIEW'])) . '</td>
+		<td>' . SelectBoxFromArray(
+                $strHTMLControlName["NAME"] . '[VIEW]',
+                static::GetPropertyViewsList(true),
+                htmlspecialcharsbx($arSettings['VIEW'])
+            ) . '</td>
 		</tr>
 		<tr>
 		<td>' . Loc::getMessage('BT_UT_SAUTOCOMPLETE_SETTING_SHOW_ADD') . '</td>
-		<td>' . InputType('checkbox', $strHTMLControlName["NAME"] . '[SHOW_ADD]', 'Y', htmlspecialcharsbx($arSettings["SHOW_ADD"])) . '</td>
+		<td>' . InputType(
+                'checkbox',
+                $strHTMLControlName["NAME"] . '[SHOW_ADD]',
+                'Y',
+                htmlspecialcharsbx($arSettings["SHOW_ADD"])
+            ) . '</td>
 		</tr>
 		<tr>
 		<td>' . Loc::getMessage('BT_UT_SAUTOCOMPLETE_SETTING_IBLOCK_MESS') . '</td>
-		<td>' . InputType('checkbox', $strHTMLControlName["NAME"] . '[IBLOCK_MESS]', 'Y', htmlspecialcharsbx($arSettings["IBLOCK_MESS"])) . '</td>
+		<td>' . InputType(
+                'checkbox',
+                $strHTMLControlName["NAME"] . '[IBLOCK_MESS]',
+                'Y',
+                htmlspecialcharsbx($arSettings["IBLOCK_MESS"])
+            ) . '</td>
 		</tr>
 		<tr>
 		<td>' . Loc::getMessage('BT_UT_SAUTOCOMPLETE_SETTING_MAX_WIDTH') . '</td>
-		<td><input type="text" name="' . $strHTMLControlName["NAME"] . '[MAX_WIDTH]" value="' . intval($arSettings['MAX_WIDTH']) . '">&nbsp;' . Loc::getMessage('BT_UT_SAUTOCOMPLETE_SETTING_COMMENT_MAX_WIDTH') . '</td>
+		<td><input type="text" name="' . $strHTMLControlName["NAME"] . '[MAX_WIDTH]" value="' . intval(
+                $arSettings['MAX_WIDTH']
+            ) . '">&nbsp;' . Loc::getMessage('BT_UT_SAUTOCOMPLETE_SETTING_COMMENT_MAX_WIDTH') . '</td>
 		</tr>
 		<tr>
 		<td>' . Loc::getMessage('BT_UT_SAUTOCOMPLETE_SETTING_MIN_HEIGHT') . '</td>
-		<td><input type="text" name="' . $strHTMLControlName["NAME"] . '[MIN_HEIGHT]" value="' . intval($arSettings['MIN_HEIGHT']) . '">&nbsp;' . Loc::getMessage('BT_UT_SAUTOCOMPLETE_SETTING_COMMENT_MIN_HEIGHT') . '</td>
+		<td><input type="text" name="' . $strHTMLControlName["NAME"] . '[MIN_HEIGHT]" value="' . intval(
+                $arSettings['MIN_HEIGHT']
+            ) . '">&nbsp;' . Loc::getMessage('BT_UT_SAUTOCOMPLETE_SETTING_COMMENT_MIN_HEIGHT') . '</td>
 		</tr>
 		<tr>
 		<td>' . Loc::getMessage('BT_UT_SAUTOCOMPLETE_SETTING_MAX_HEIGHT') . '</td>
-		<td><input type="text" name="' . $strHTMLControlName["NAME"] . '[MAX_HEIGHT]" value="' . intval($arSettings['MAX_HEIGHT']) . '">&nbsp;' . Loc::getMessage('BT_UT_SAUTOCOMPLETE_SETTING_COMMENT_MAX_HEIGHT') . '</td>
+		<td><input type="text" name="' . $strHTMLControlName["NAME"] . '[MAX_HEIGHT]" value="' . intval(
+                $arSettings['MAX_HEIGHT']
+            ) . '">&nbsp;' . Loc::getMessage('BT_UT_SAUTOCOMPLETE_SETTING_COMMENT_MAX_HEIGHT') . '</td>
 		</tr>
 		<tr>
 		<td>' . Loc::getMessage('BT_UT_SAUTOCOMPLETE_SETTING_BAN_SYMBOLS') . '</td>
-		<td><input type="text" name="' . $strHTMLControlName["NAME"] . '[BAN_SYM]" value="' . htmlspecialcharsbx($arSettings['BAN_SYM']) . '"></td>
+		<td><input type="text" name="' . $strHTMLControlName["NAME"] . '[BAN_SYM]" value="' . htmlspecialcharsbx(
+                $arSettings['BAN_SYM']
+            ) . '"></td>
 		</tr>
 		<tr>
 		<td>' . Loc::getMessage('BT_UT_SAUTOCOMPLETE_SETTING_REP_SYMBOL') . '</td>
-		<td>' . SelectBoxFromArray($strHTMLControlName["NAME"] . '[REP_SYM]', static::GetReplaceSymList(true), htmlspecialcharsbx($arSettings['REP_SYM'])) . '&nbsp;<input type="text" name="' . $strHTMLControlName["NAME"] . '[OTHER_REP_SYM]" size="1" maxlength="1" value="' . htmlspecialcharsbx($arSettings['OTHER_REP_SYM']) . '"></td>
+		<td>' . SelectBoxFromArray(
+                $strHTMLControlName["NAME"] . '[REP_SYM]',
+                static::GetReplaceSymList(true),
+                htmlspecialcharsbx($arSettings['REP_SYM'])
+            ) . '&nbsp;<input type="text" name="' . $strHTMLControlName["NAME"] . '[OTHER_REP_SYM]" size="1" maxlength="1" value="' . htmlspecialcharsbx(
+                $arSettings['OTHER_REP_SYM']
+            ) . '"></td>
 		</tr>
 		';
     }
@@ -547,13 +630,31 @@ class CIBlockPropertySectionAutoComplete extends CIBlockPropertyElementAutoCompl
 
         $strValue = '';
 
-        if (isset($_REQUEST[$strHTMLControlName["VALUE"]]) && (is_array($_REQUEST[$strHTMLControlName["VALUE"]]) || (0 < intval($_REQUEST[$strHTMLControlName["VALUE"]])))) {
-            $arFilterValues = (is_array($_REQUEST[$strHTMLControlName["VALUE"]]) ? $_REQUEST[$strHTMLControlName["VALUE"]] : array($_REQUEST[$strHTMLControlName["VALUE"]]));
-            $mxResultValue = static::GetValueForAutoCompleteMulti($arProperty, $arFilterValues, $arSymbols['BAN_SYM'], $arSymbols['REP_SYM']);
+        if (isset($_REQUEST[$strHTMLControlName["VALUE"]]) && (is_array(
+                    $_REQUEST[$strHTMLControlName["VALUE"]]
+                ) || (0 < intval($_REQUEST[$strHTMLControlName["VALUE"]])))) {
+            $arFilterValues = (is_array(
+                $_REQUEST[$strHTMLControlName["VALUE"]]
+            ) ? $_REQUEST[$strHTMLControlName["VALUE"]] : array($_REQUEST[$strHTMLControlName["VALUE"]]));
+            $mxResultValue = static::GetValueForAutoCompleteMulti(
+                $arProperty,
+                $arFilterValues,
+                $arSymbols['BAN_SYM'],
+                $arSymbols['REP_SYM']
+            );
             $strValue = (is_array($mxResultValue) ? htmlspecialcharsback(implode("\n", $mxResultValue)) : '');
-        } elseif (isset($GLOBALS[$strHTMLControlName["VALUE"]]) && (is_array($GLOBALS[$strHTMLControlName["VALUE"]]) || (0 < intval($GLOBALS[$strHTMLControlName["VALUE"]])))) {
-            $arFilterValues = (is_array($GLOBALS[$strHTMLControlName["VALUE"]]) ? $GLOBALS[$strHTMLControlName["VALUE"]] : array($GLOBALS[$strHTMLControlName["VALUE"]]));
-            $mxResultValue = static::GetValueForAutoCompleteMulti($arProperty, $arFilterValues, $arSymbols['BAN_SYM'], $arSymbols['REP_SYM']);
+        } elseif (isset($GLOBALS[$strHTMLControlName["VALUE"]]) && (is_array(
+                    $GLOBALS[$strHTMLControlName["VALUE"]]
+                ) || (0 < intval($GLOBALS[$strHTMLControlName["VALUE"]])))) {
+            $arFilterValues = (is_array(
+                $GLOBALS[$strHTMLControlName["VALUE"]]
+            ) ? $GLOBALS[$strHTMLControlName["VALUE"]] : array($GLOBALS[$strHTMLControlName["VALUE"]]));
+            $mxResultValue = static::GetValueForAutoCompleteMulti(
+                $arProperty,
+                $arFilterValues,
+                $arSymbols['BAN_SYM'],
+                $arSymbols['REP_SYM']
+            );
             $strValue = (is_array($mxResultValue) ? htmlspecialcharsback(implode("\n", $mxResultValue)) : '');
         }
         ob_start();
@@ -576,7 +677,9 @@ class CIBlockPropertySectionAutoComplete extends CIBlockPropertyElementAutoCompl
                 'FILTER' => 'Y',
                 'MAIN_UI_FILTER' => ($isMainUiFilter ? 'Y' : 'N'),
                 'TYPE' => 'SECTION',
-            ), null, array("HIDE_ICONS" => "Y")
+            ),
+            null,
+            array("HIDE_ICONS" => "Y")
         );
         $inputStyle = 'float: left; margin-right: 10px;';
         if ($isMainUiFilter) {
@@ -618,7 +721,9 @@ class CIBlockPropertySectionAutoComplete extends CIBlockPropertyElementAutoCompl
                     (0 < intval($_REQUEST[$strHTMLControlName["VALUE"]])))) {
                 $arFilterValues = (is_array($_REQUEST[$strHTMLControlName["VALUE"]]) ?
                     $_REQUEST[$strHTMLControlName["VALUE"]] : array($_REQUEST[$strHTMLControlName["VALUE"]]));
-            } elseif (isset($GLOBALS[$strHTMLControlName["VALUE"]]) && (is_array($GLOBALS[$strHTMLControlName["VALUE"]]) ||
+            } elseif (isset($GLOBALS[$strHTMLControlName["VALUE"]]) && (is_array(
+                        $GLOBALS[$strHTMLControlName["VALUE"]]
+                    ) ||
                     (0 < intval($GLOBALS[$strHTMLControlName["VALUE"]])))) {
                 $arFilterValues = (is_array($GLOBALS[$strHTMLControlName["VALUE"]]) ?
                     $GLOBALS[$strHTMLControlName["VALUE"]] : array($GLOBALS[$strHTMLControlName["VALUE"]]));
@@ -626,8 +731,9 @@ class CIBlockPropertySectionAutoComplete extends CIBlockPropertyElementAutoCompl
         }
 
         foreach ($arFilterValues as $key => $value) {
-            if (0 >= intval($value))
+            if (0 >= intval($value)) {
                 unset($arFilterValues[$key]);
+            }
         }
 
         if (!empty($arFilterValues)) {
@@ -641,15 +747,18 @@ class CIBlockPropertySectionAutoComplete extends CIBlockPropertyElementAutoCompl
         static $cache = array();
 
         $iblockID = intval($iblockID);
-        if (0 >= $iblockID)
+        if (0 >= $iblockID) {
             $iblockID = 0;
+        }
         $sectionID = intval($sectionID);
-        if (0 >= $sectionID)
+        if (0 >= $sectionID) {
             return false;
+        }
         if (!isset($cache[$sectionID])) {
             $arFilter = array();
-            if (0 < $iblockID)
+            if (0 < $iblockID) {
                 $arFilter['IBLOCK_ID'] = $iblockID;
+            }
             $arFilter['ID'] = $sectionID;
             $sectionRes = CIBlockSection::GetList(array(), $arFilter, false, array('IBLOCK_ID', 'ID', 'NAME'));
             if ($section = $sectionRes->GetNext(true, true)) {
@@ -695,7 +804,8 @@ class CIBlockPropertySectionAutoComplete extends CIBlockPropertyElementAutoCompl
                     Loc::getMessage('BT_UT_SAUTOCOMPLETE_VIEW_ELEMENT'),
                 ),
                 'REFERENCE_ID' => array(
-                    'A', 'E'
+                    'A',
+                    'E'
                 ),
             );
         }

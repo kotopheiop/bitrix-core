@@ -45,12 +45,15 @@ class Router
     {
         static::init();
 
-        if (!is_string($route) || strlen($route) == 0)
+        if (!is_string($route) || $route == '') {
             throw new ArgumentException('Route could not be empty', '$route');
-        if (!is_string($handlerModule) || strlen($handlerModule) == 0)
+        }
+        if (!is_string($handlerModule) || $handlerModule == '') {
             throw new ArgumentException('Handler module could not be empty', '$handler');
-        if (!is_string($handlerClass) || strlen($handlerClass) == 0)
+        }
+        if (!is_string($handlerClass) || $handlerClass == '') {
             throw new ArgumentException('Handler class could not be empty', '$handler');
+        }
 
         $newRoute = true;
         if (isset(static::$routeTable[$route])) {
@@ -89,18 +92,49 @@ class Router
                 $result = $routeRecord;
                 //replace parameters variables with values
                 foreach ($result['PARAMETERS'] as $parameterName => &$parameterValue) {
-                    if (strpos($parameterValue, '$') === 0) {
-                        $variableName = substr($parameterValue, 1);
+                    if (mb_strpos($parameterValue, '$') === 0) {
+                        $variableName = mb_substr($parameterValue, 1);
                         if (isset($matches[$variableName])) {
                             $parameterValue = $matches[$variableName];
                         }
                     }
                 }
+                unset($parameterValue);
+
+                $uriQuery = $uri->getQuery();
+                if (mb_strlen($uriQuery) > 0) {
+                    $uriQueryParams = static::parseQueryParams($uriQuery);
+                    foreach ($result['PARAMETERS'] as $parameterName => &$parameterValue) {
+                        if (mb_strpos($parameterValue, '$') === 0) {
+                            $variableName = mb_substr($parameterValue, 1);
+                            if (isset($uriQueryParams[$variableName])) {
+                                $parameterValue = $uriQueryParams[$variableName];
+                            }
+                        }
+                    }
+                    unset($parameterValue);
+                }
+
                 return $result;
             }
         }
 
         return false;
+    }
+
+    protected static function parseQueryParams($uriQuery): array
+    {
+        $data = preg_replace_callback(
+            '/(?:^|(?<=&))[^=[]+/',
+            function ($match) {
+                return bin2hex(urldecode($match[0]));
+            },
+            $uriQuery
+        );
+
+        parse_str($data, $values);
+
+        return array_combine(array_map('hex2bin', array_keys($values)), $values);
     }
 
     /**
@@ -109,33 +143,42 @@ class Router
      */
     protected static function init()
     {
-        if (static::$initialized)
+        if (static::$initialized) {
             return;
+        }
 
         static::$managedCache = Application::getInstance()->getManagedCache();
 
         if (static::$managedCache->read(static::CACHE_TTL, static::CACHE_ID)) {
             static::$routeTable = (array)static::$managedCache->get(static::CACHE_ID);
         } else {
-            $queryResult = RouteTable::getList(array(
-                'select' => array('*')
-            ));
+            $queryResult = RouteTable::getList(
+                array(
+                    'select' => array('*')
+                )
+            );
 
             while ($routeRecord = $queryResult->fetch()) {
                 $routeRecord['REGEXP'] = static::convertRouteToRegexp($routeRecord['ROUTE']);
                 static::$routeTable[$routeRecord['ROUTE']] = $routeRecord;
             }
 
-            uksort(static::$routeTable, function ($a, $b) {
-                $lengthOfA = strlen($a);
-                $lengthOfB = strlen($b);
-                if ($lengthOfA > $lengthOfB)
-                    return -1;
-                else if ($lengthOfA == $lengthOfB)
-                    return 0;
-                else
-                    return 1;
-            });
+            uksort(
+                static::$routeTable,
+                function ($a, $b) {
+                    $lengthOfA = mb_strlen($a);
+                    $lengthOfB = mb_strlen($b);
+                    if ($lengthOfA > $lengthOfB) {
+                        return -1;
+                    } else {
+                        if ($lengthOfA == $lengthOfB) {
+                            return 0;
+                        } else {
+                            return 1;
+                        }
+                    }
+                }
+            );
 
             static::$managedCache->set(static::CACHE_ID, static::$routeTable);
         }

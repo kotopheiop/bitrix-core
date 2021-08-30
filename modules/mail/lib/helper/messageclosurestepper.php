@@ -16,11 +16,13 @@ class MessageClosureStepper extends Main\Update\Stepper
         $pPERIOD = 10;
 
         $option['count'] = Mail\MailMessageTable::getCount();
-        $option['steps'] = Mail\Internals\MessageClosureTable::getList(array(
-            'select' => array(
-                new Main\Entity\ExpressionField('CNT', 'COUNT(DISTINCT %s)', 'MESSAGE_ID')
-            ),
-        ))->fetch()['CNT'];
+        $option['steps'] = Mail\Internals\MessageClosureTable::getList(
+            array(
+                'select' => array(
+                    new Main\Entity\ExpressionField('CNT', 'COUNT(DISTINCT %s)', 'MESSAGE_ID')
+                ),
+            )
+        )->fetch()['CNT'];
 
         if ($option['steps'] < $option['count']) {
             if (!($option['mailboxId'] > 0) || $option['stage'] < 1) {
@@ -39,8 +41,9 @@ class MessageClosureStepper extends Main\Update\Stepper
         }
 
         if ($option['mailboxId'] > 0 && 1 == $option['stage']) {
-            $res = $DB->query(sprintf(
-                'INSERT IGNORE INTO b_mail_message_closure (MESSAGE_ID, PARENT_ID)
+            $res = $DB->query(
+                sprintf(
+                    'INSERT IGNORE INTO b_mail_message_closure (MESSAGE_ID, PARENT_ID)
 				(
 					SELECT M.ID, M.ID FROM b_mail_message M
 					WHERE M.MAILBOX_ID = %u AND (
@@ -50,8 +53,9 @@ class MessageClosureStepper extends Main\Update\Stepper
 					) AND NOT EXISTS (SELECT 1 FROM b_mail_message_closure WHERE MESSAGE_ID = M.ID)
 					LIMIT 40000
 				)',
-                $option['mailboxId']
-            ))->affectedRowsCount();
+                    $option['mailboxId']
+                )
+            )->affectedRowsCount();
 
             $option['stage'] = $res < 40000 ? 2 : 1;
             $option['steps'] += $res;
@@ -60,8 +64,9 @@ class MessageClosureStepper extends Main\Update\Stepper
         }
 
         if ($option['mailboxId'] > 0 && 2 == $option['stage']) {
-            $res = $DB->query(sprintf(
-                'INSERT IGNORE INTO b_mail_message_closure (MESSAGE_ID, PARENT_ID)
+            $res = $DB->query(
+                sprintf(
+                    'INSERT IGNORE INTO b_mail_message_closure (MESSAGE_ID, PARENT_ID)
 				(
 					SELECT DISTINCT M.ID, C.PARENT_ID
 					FROM b_mail_message M
@@ -71,8 +76,9 @@ class MessageClosureStepper extends Main\Update\Stepper
 						AND EXISTS (SELECT 1 FROM b_mail_message_closure WHERE MESSAGE_ID = R.ID)
 						AND NOT EXISTS (SELECT 1 FROM b_mail_message_closure WHERE MESSAGE_ID = M.ID)
 				)',
-                $option['mailboxId']
-            ))->affectedRowsCount();
+                    $option['mailboxId']
+                )
+            )->affectedRowsCount();
 
             $option['stage'] = $res > 0 ? 3 : 4;
 
@@ -93,16 +99,18 @@ class MessageClosureStepper extends Main\Update\Stepper
         }
 
         if (4 == $option['stage']) {
-            $res = $DB->query(sprintf(
-                'INSERT IGNORE INTO b_mail_message_closure (MESSAGE_ID, PARENT_ID)
+            $res = $DB->query(
+                sprintf(
+                    'INSERT IGNORE INTO b_mail_message_closure (MESSAGE_ID, PARENT_ID)
 				(
 					SELECT M.ID, M.ID FROM b_mail_message M
 					WHERE M.MAILBOX_ID = %u
 						AND NOT EXISTS (SELECT 1 FROM b_mail_message_closure WHERE MESSAGE_ID = M.ID)
 					ORDER BY FIELD_DATE ASC LIMIT 1
 				)',
-                $option['mailboxId']
-            ))->affectedRowsCount();
+                    $option['mailboxId']
+                )
+            )->affectedRowsCount();
 
             $option['stage'] = $res > 0 ? 2 : 0;
         }

@@ -21,8 +21,13 @@ if (Loader::requireModule("bizproc")) {
          * @param int $renderMode Control render mode.
          * @return string
          */
-        public static function renderControlSingle(FieldType $fieldType, array $field, $value, $allowSelection, $renderMode)
-        {
+        public static function renderControlSingle(
+            FieldType $fieldType,
+            array $field,
+            $value,
+            $allowSelection,
+            $renderMode
+        ) {
             return self::renderControl($fieldType, $field, $value, $allowSelection, $renderMode);
         }
 
@@ -34,8 +39,13 @@ if (Loader::requireModule("bizproc")) {
          * @param int $renderMode Control render mode.
          * @return string
          */
-        public static function renderControlMultiple(FieldType $fieldType, array $field, $value, $allowSelection, $renderMode)
-        {
+        public static function renderControlMultiple(
+            FieldType $fieldType,
+            array $field,
+            $value,
+            $allowSelection,
+            $renderMode
+        ) {
             $typeValue = [];
             if (!is_array($value) || is_array($value) && \CBPHelper::isAssociativeArray($value)) {
                 $value = [$value];
@@ -66,8 +76,13 @@ if (Loader::requireModule("bizproc")) {
          * @param int $renderMode
          * @return string - HTML rendering
          */
-        protected static function renderControl(FieldType $fieldType, array $field, $value, $allowSelection, $renderMode)
-        {
+        protected static function renderControl(
+            FieldType $fieldType,
+            array $field,
+            $value,
+            $allowSelection,
+            $renderMode
+        ) {
             $name = static::generateControlName($field);
             $controlId = static::generateControlId($field);
             $className = static::generateControlClassName($fieldType, $field);
@@ -76,7 +91,7 @@ if (Loader::requireModule("bizproc")) {
 
             $iblockId = self::getIblockId($fieldType);
             $propertyId = 0;
-            $queryObject = \CIBlockProperty::getByID(substr($field["Field"], strlen("PROPERTY_")), $iblockId);
+            $queryObject = \CIBlockProperty::getByID(mb_substr($field["Field"], mb_strlen("PROPERTY_")), $iblockId);
             if ($property = $queryObject->fetch()) {
                 $propertyId = $property["ID"];
             }

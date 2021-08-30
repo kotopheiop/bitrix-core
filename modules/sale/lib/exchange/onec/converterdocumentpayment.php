@@ -31,8 +31,9 @@ class ConverterDocumentPayment extends Converter
      */
     public function resolveParams($documentImport)
     {
-        if (!($documentImport instanceof DocumentBase))
+        if (!($documentImport instanceof DocumentBase)) {
             throw new ArgumentException("Document must be instanceof DocumentBase");
+        }
 
         $result = array();
 
@@ -47,49 +48,59 @@ class ConverterDocumentPayment extends Converter
             switch ($k) {
                 case 'ID_1C':
                 case 'VERSION_1C':
-                    if (isset($params[$k]))
+                    if (isset($params[$k])) {
                         $fields[$k] = $params[$k];
+                    }
                     break;
                 case 'SUM':
-                    if (isset($params['AMOUNT']))
+                    if (isset($params['AMOUNT'])) {
                         $fields[$k] = $params['AMOUNT'];
+                    }
                     break;
                 case 'COMMENTS':
-                    if (isset($params['COMMENT']))
+                    if (isset($params['COMMENT'])) {
                         $fields[$k] = $params['COMMENT'];
+                    }
                     break;
                 case 'PAY_VOUCHER_DATE':
-                    if (isset($params['REK_VALUES']['1C_PAYED_DATE']))
+                    if (isset($params['REK_VALUES']['1C_PAYED_DATE'])) {
                         $fields[$k] = $params['REK_VALUES']['1C_PAYED_DATE'];
+                    }
                     break;
                 case 'PAY_VOUCHER_NUM':
-                    if (isset($params['REK_VALUES']['1C_PAYED_NUM']))
+                    if (isset($params['REK_VALUES']['1C_PAYED_NUM'])) {
                         $fields[$k] = $params['REK_VALUES']['1C_PAYED_NUM'];
+                    }
                     break;
                 case 'PAID':
                     $payed = '';
                     $cancel = '';
 
-                    if (isset($params['REK_VALUES']['1C_PAYED']))
+                    if (isset($params['REK_VALUES']['1C_PAYED'])) {
                         $payed = $params['REK_VALUES']['1C_PAYED'];
-                    if (isset($params['REK_VALUES']['CANCEL']))
+                    }
+                    if (isset($params['REK_VALUES']['CANCEL'])) {
                         $cancel = $params['REK_VALUES']['CANCEL'];
+                    }
 
-                    if ($payed == 'Y')
+                    if ($payed == 'Y') {
                         $fields[$k] = 'Y';
-                    elseif ($cancel == 'Y')
+                    } elseif ($cancel == 'Y') {
                         $fields[$k] = 'N';
+                    }
                     break;
                 case 'IS_RETURN':
                     if (isset($params['REK_VALUES']['1C_RETURN'])) {
                         $value = $params['REK_VALUES']['1C_RETURN'];
-                        if ($value == 'Y')
+                        if ($value == 'Y') {
                             $fields[$k] = 'Y';
+                        }
                     }
                     break;
                 case 'PAY_RETURN_COMMENT':
-                    if (isset($params['REK_VALUES']['1C_RETURN_REASON']))
+                    if (isset($params['REK_VALUES']['1C_RETURN_REASON'])) {
                         $fields[$k] = $params['REK_VALUES']['1C_RETURN_REASON'];
+                    }
                     break;
                 case 'PAY_SYSTEM_ID':
                     $fields[$k] = $this->getPaySystemId($params['REK_VALUES']);
@@ -158,8 +169,9 @@ class ConverterDocumentPayment extends Converter
      */
     static public function sanitizeFields($payment = null, array &$fields, ISettings $settings)
     {
-        if (!empty($payment) && !($payment instanceof Payment))
+        if (!empty($payment) && !($payment instanceof Payment)) {
             throw new ArgumentException("Entity must be instanceof Payment");
+        }
 
         foreach ($fields as $k => $v) {
             switch ($k) {
@@ -216,7 +228,7 @@ class ConverterDocumentPayment extends Converter
                     break;
                 case 'CURRENCY':
                     $replaceCurrency = $settings->getReplaceCurrency();
-                    $value = substr($replaceCurrency <> '' ? $replaceCurrency : $traits[$k], 0, 3);
+                    $value = mb_substr($replaceCurrency <> '' ? $replaceCurrency : $traits[$k], 0, 3);
                     break;
                 case 'CURRENCY_RATE':
                     $value = self::CURRENCY_RATE_DEFAULT;

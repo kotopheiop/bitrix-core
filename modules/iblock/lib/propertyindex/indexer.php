@@ -96,10 +96,12 @@ class Indexer
      */
     public function startIndex()
     {
-        if ($this->storage->isExists())
+        if ($this->storage->isExists()) {
             $this->storage->drop();
-        if ($this->dictionary->isExists())
+        }
+        if ($this->dictionary->isExists()) {
             $this->dictionary->drop();
+        }
 
         $this->dictionary->create();
         $this->storage->create();
@@ -114,15 +116,21 @@ class Indexer
      */
     public function endIndex()
     {
-        \Bitrix\Iblock\IblockTable::update($this->iblockId, array(
-            "PROPERTY_INDEX" => "Y",
-        ));
+        \Bitrix\Iblock\IblockTable::update(
+            $this->iblockId,
+            array(
+                "PROPERTY_INDEX" => "Y",
+            )
+        );
         //TODO: replace \CIBlock::CleanCache to d7 method
         \CIBlock::CleanCache($this->iblockId);
         if ($this->skuIblockId) {
-            \Bitrix\Iblock\IblockTable::update($this->skuIblockId, array(
-                "PROPERTY_INDEX" => "Y",
-            ));
+            \Bitrix\Iblock\IblockTable::update(
+                $this->skuIblockId,
+                array(
+                    "PROPERTY_INDEX" => "Y",
+                )
+            );
             //TODO: replace \CIBlock::CleanCache to d7 method
             \CIBlock::CleanCache($this->skuIblockId);
         }
@@ -138,25 +146,28 @@ class Indexer
      */
     public function continueIndex($interval = 0)
     {
-        if ($interval > 0)
+        if ($interval > 0) {
             $endTime = microtime(true) + $interval;
-        else
+        } else {
             $endTime = 0;
+        }
 
         $indexedCount = 0;
 
-        if ($this->lastElementId === null)
+        if ($this->lastElementId === null) {
             $lastElementId = $this->storage->getLastStoredElementId();
-        else
+        } else {
             $lastElementId = $this->lastElementId;
+        }
 
         $elementList = $this->getElementsCursor($lastElementId);
         while ($element = $elementList->fetch()) {
             $this->indexElement($element["ID"]);
             $indexedCount++;
             $this->lastElementId = $element["ID"];
-            if ($endTime > 0 && $endTime < microtime(true))
+            if ($endTime > 0 && $endTime < microtime(true)) {
                 break;
+            }
         }
         return $indexedCount;
     }
@@ -195,7 +206,7 @@ class Indexer
         foreach ($element->getParentSections() as $sectionId) {
             foreach ($elementIndexValues as $facetId => $values) {
                 foreach ($values as $value) {
-                    $this->storage->addIndexEntry(
+                    $this->storage->queueIndexEntry(
                         $sectionId,
                         $elementId,
                         $facetId,
@@ -209,7 +220,7 @@ class Indexer
 
         foreach ($elementIndexValues as $facetId => $values) {
             foreach ($values as $value) {
-                $this->storage->addIndexEntry(
+                $this->storage->queueIndexEntry(
                     0,
                     $elementId,
                     $facetId,
@@ -219,6 +230,8 @@ class Indexer
                 );
             }
         }
+
+        $this->storage->flushIndexEntries();
     }
 
     /**
@@ -366,18 +379,22 @@ class Indexer
                 Storage::NUMERIC => array(),
                 Storage::DATETIME => array(),
             );
-            $propertyList = \Bitrix\Iblock\SectionPropertyTable::getList(array(
-                "select" => array("PROPERTY_ID", "PROPERTY.PROPERTY_TYPE", "PROPERTY.USER_TYPE"),
-                "filter" => array(
-                    "=IBLOCK_ID" => array($this->iblockId, $this->skuIblockId),
-                    "=SMART_FILTER" => "Y",
-                ),
-            ));
+            $propertyList = \Bitrix\Iblock\SectionPropertyTable::getList(
+                array(
+                    "select" => array("PROPERTY_ID", "PROPERTY.PROPERTY_TYPE", "PROPERTY.USER_TYPE"),
+                    "filter" => array(
+                        "=IBLOCK_ID" => array($this->iblockId, $this->skuIblockId),
+                        "=SMART_FILTER" => "Y",
+                    ),
+                )
+            );
             while ($link = $propertyList->fetch()) {
-                $storageType = $this->getPropertyStorageType(array(
-                    "PROPERTY_TYPE" => $link["IBLOCK_SECTION_PROPERTY_PROPERTY_PROPERTY_TYPE"],
-                    "USER_TYPE" => $link["IBLOCK_SECTION_PROPERTY_PROPERTY_USER_TYPE"],
-                ));
+                $storageType = $this->getPropertyStorageType(
+                    array(
+                        "PROPERTY_TYPE" => $link["IBLOCK_SECTION_PROPERTY_PROPERTY_PROPERTY_TYPE"],
+                        "USER_TYPE" => $link["IBLOCK_SECTION_PROPERTY_PROPERTY_USER_TYPE"],
+                    )
+                );
                 $this->propertyFilter[$storageType][] = $link["PROPERTY_ID"];
             }
         }
@@ -396,8 +413,9 @@ class Indexer
             if (self::$catalog) {
                 //TODO: replace \CCatalogGroup::GetListArray after create cached d7 method
                 $priceList = \CCatalogGroup::GetListArray();
-                if (!empty($priceList))
+                if (!empty($priceList)) {
                     $this->priceFilter = array_keys($priceList);
+                }
                 unset($priceList);
             }
         }
@@ -416,13 +434,14 @@ class Indexer
      */
     public static function getPropertyStorageType($property)
     {
-        if ($property["PROPERTY_TYPE"] === "N")
+        if ($property["PROPERTY_TYPE"] === "N") {
             return Storage::NUMERIC;
-        elseif ($property["USER_TYPE"] === "DateTime")
+        } elseif ($property["USER_TYPE"] === "DateTime") {
             return Storage::DATETIME;
-        elseif ($property["PROPERTY_TYPE"] === "S")
+        } elseif ($property["PROPERTY_TYPE"] === "S") {
             return Storage::STRING;
-        else
+        } else {
             return Storage::DICTIONARY;
+        }
     }
 }

@@ -4,11 +4,13 @@ use Bitrix\Main\ModuleManager,
     Bitrix\Main\Loader,
     Bitrix\Catalog;
 
-if (ModuleManager::isModuleInstalled('sale'))
+if (ModuleManager::isModuleInstalled('sale')) {
     return false;
+}
 
-if (!Loader::includeModule('catalog'))
+if (!Loader::includeModule('catalog')) {
     return false;
+}
 
 IncludeModuleLangFile(__FILE__);
 
@@ -34,11 +36,13 @@ if (!function_exists("__get_export_profiles")) {
 
         global $adminMenu;
 
-        if (!isset($USER) || !(($USER instanceof CUser) && ('CUser' == get_class($USER))))
+        if (!isset($USER) || !(($USER instanceof CUser) && ('CUser' == get_class($USER)))) {
             return array();
+        }
 
-        if (empty($strItemID))
+        if (empty($strItemID)) {
             return array();
+        }
 
         $boolRead = $USER->CanDoOperation('catalog_read');
         $boolExportEdit = $USER->CanDoOperation('catalog_export_edit');
@@ -50,19 +54,25 @@ if (!function_exists("__get_export_profiles")) {
             if ($adminMenu->IsSectionActive($strItemID)) {
                 $rsProfiles = CCatalogExport::GetList(array("NAME" => "ASC", "ID" => "ASC"), array("IN_MENU" => "Y"));
                 while ($arProfile = $rsProfiles->Fetch()) {
-                    $strName = (strlen($arProfile["NAME"]) > 0 ? $arProfile["NAME"] : $arProfile["FILE_NAME"]);
+                    $strName = ($arProfile["NAME"] <> '' ? $arProfile["NAME"] : $arProfile["FILE_NAME"]);
                     if ('Y' == $arProfile['DEFAULT_PROFILE']) {
                         $arProfileList[] = array(
                             "text" => htmlspecialcharsbx($strName),
-                            "url" => "cat_exec_exp.php?lang=" . LANGUAGE_ID . "&ACT_FILE=" . $arProfile["FILE_NAME"] . "&ACTION=EXPORT&PROFILE_ID=" . $arProfile["ID"] . "&" . bitrix_sessid_get(),
-                            "title" => GetMessage("CAM_EXPORT_DESCR_EXPORT") . " &quot;" . htmlspecialcharsbx($strName) . "&quot;",
+                            "url" => "cat_exec_exp.php?lang=" . LANGUAGE_ID . "&ACT_FILE=" . $arProfile["FILE_NAME"] . "&ACTION=EXPORT&PROFILE_ID=" . $arProfile["ID"] . "&" . bitrix_sessid_get(
+                                ),
+                            "title" => GetMessage("CAM_EXPORT_DESCR_EXPORT") . " &quot;" . htmlspecialcharsbx(
+                                    $strName
+                                ) . "&quot;",
                             "readonly" => !$boolExportExec,
                         );
                     } else {
                         $arProfileList[] = array(
                             "text" => htmlspecialcharsbx($strName),
-                            "url" => "cat_export_setup.php?lang=" . LANGUAGE_ID . "&ACT_FILE=" . $arProfile["FILE_NAME"] . "&ACTION=EXPORT_EDIT&PROFILE_ID=" . $arProfile["ID"] . "&" . bitrix_sessid_get(),
-                            "title" => GetMessage("CAM_EXPORT_DESCR_EDIT") . " &quot;" . htmlspecialcharsbx($strName) . "&quot;",
+                            "url" => "cat_export_setup.php?lang=" . LANGUAGE_ID . "&ACT_FILE=" . $arProfile["FILE_NAME"] . "&ACTION=EXPORT_EDIT&PROFILE_ID=" . $arProfile["ID"] . "&" . bitrix_sessid_get(
+                                ),
+                            "title" => GetMessage("CAM_EXPORT_DESCR_EDIT") . " &quot;" . htmlspecialcharsbx(
+                                    $strName
+                                ) . "&quot;",
                             "readonly" => !$boolExportEdit,
                         );
                     }
@@ -80,11 +90,13 @@ if (!function_exists("__get_import_profiles")) {
 
         global $adminMenu;
 
-        if (!isset($USER) || !(($USER instanceof CUser) && ('CUser' == get_class($USER))))
+        if (!isset($USER) || !(($USER instanceof CUser) && ('CUser' == get_class($USER)))) {
             return array();
+        }
 
-        if (empty($strItemID))
+        if (empty($strItemID)) {
             return array();
+        }
 
         $boolRead = $USER->CanDoOperation('catalog_read');
         $boolImportEdit = $USER->CanDoOperation('catalog_import_edit');
@@ -96,19 +108,25 @@ if (!function_exists("__get_import_profiles")) {
             if ($adminMenu->IsSectionActive($strItemID)) {
                 $rsProfiles = CCatalogImport::GetList(array("NAME" => "ASC", "ID" => "ASC"), array("IN_MENU" => "Y"));
                 while ($arProfile = $rsProfiles->Fetch()) {
-                    $strName = (strlen($arProfile["NAME"]) > 0 ? $arProfile["NAME"] : $arProfile["FILE_NAME"]);
+                    $strName = ($arProfile["NAME"] <> '' ? $arProfile["NAME"] : $arProfile["FILE_NAME"]);
                     if ('Y' == $arProfile['DEFAULT_PROFILE']) {
                         $arProfileList[] = array(
                             "text" => htmlspecialcharsbx($strName),
-                            "url" => "cat_exec_imp.php?lang=" . LANGUAGE_ID . "&ACT_FILE=" . $arProfile["FILE_NAME"] . "&ACTION=IMPORT&PROFILE_ID=" . $arProfile["ID"] . "&" . bitrix_sessid_get(),
-                            "title" => GetMessage("CAM_IMPORT_DESCR_IMPORT") . " &quot;" . htmlspecialcharsbx($strName) . "&quot;",
+                            "url" => "cat_exec_imp.php?lang=" . LANGUAGE_ID . "&ACT_FILE=" . $arProfile["FILE_NAME"] . "&ACTION=IMPORT&PROFILE_ID=" . $arProfile["ID"] . "&" . bitrix_sessid_get(
+                                ),
+                            "title" => GetMessage("CAM_IMPORT_DESCR_IMPORT") . " &quot;" . htmlspecialcharsbx(
+                                    $strName
+                                ) . "&quot;",
                             "readonly" => !$boolImportExec,
                         );
                     } else {
                         $arProfileList[] = array(
                             "text" => htmlspecialcharsbx($strName),
-                            "url" => "cat_import_setup.php?lang=" . LANGUAGE_ID . "&ACT_FILE=" . $arProfile["FILE_NAME"] . "&ACTION=IMPORT_EDIT&PROFILE_ID=" . $arProfile["ID"] . "&" . bitrix_sessid_get(),
-                            "title" => GetMessage("CAM_IMPORT_DESCR_EDIT") . " &quot;" . htmlspecialcharsbx($strName) . "&quot;",
+                            "url" => "cat_import_setup.php?lang=" . LANGUAGE_ID . "&ACT_FILE=" . $arProfile["FILE_NAME"] . "&ACTION=IMPORT_EDIT&PROFILE_ID=" . $arProfile["ID"] . "&" . bitrix_sessid_get(
+                                ),
+                            "title" => GetMessage("CAM_IMPORT_DESCR_EDIT") . " &quot;" . htmlspecialcharsbx(
+                                    $strName
+                                ) . "&quot;",
                             "readonly" => !$boolImportEdit,
                         );
                     }
@@ -164,7 +182,7 @@ if ($boolRead || $boolDiscount) {
 }
 
 if ($boolRead || $boolStore) {
-    if (Catalog\Config\State::isUsedInventoryManagement()) {
+    if ($boolStore && Catalog\Config\State::isUsedInventoryManagement()) {
         $arSubItems[] = array(
             "text" => GetMessage("CM_STORE_DOCS"),
             "url" => "cat_store_document_list.php?lang=" . LANGUAGE_ID,
@@ -296,10 +314,11 @@ if ($boolRead) {
     );
 }
 
-if (empty($arSubItems))
+if (empty($arSubItems)) {
     return false;
+}
 
-$aMenu = array(
+return array(
     "parent_menu" => "global_menu_store",
     "section" => "catalog",
     "sort" => 200,
@@ -310,4 +329,3 @@ $aMenu = array(
     "items_id" => "mnu_catalog",
     "items" => $arSubItems,
 );
-return $aMenu;

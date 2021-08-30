@@ -19,20 +19,30 @@ abstract class TypeManager
             foreach (EventManager::getInstance()->findEventHandlers('conversion', $event) as $handler) {
                 $result = ExecuteModuleEventEx($handler);
 
-                if (!is_array($result))
+                if (!is_array($result)) {
                     throw new SystemException('Not array returned from: ' . print_r($handler, true));
+                }
 
                 foreach ($result as $name => $type) {
-                    if (!is_array($type))
-                        throw new SystemException('Not array in: ' . $event . '()[' . $name . '] => ' . print_r($handler, true));
-
-                    if ($checkModule) {
-                        if (!$type['MODULE'])
-                            throw new SystemException('No [MODULE] in: ' . $event . '()[' . $name . '] => ' . print_r($handler, true));
+                    if (!is_array($type)) {
+                        throw new SystemException(
+                            'Not array in: ' . $event . '()[' . $name . '] => ' . print_r($handler, true)
+                        );
                     }
 
-                    if ($types[$name])
-                        throw new SystemException('Duplicate in: ' . $event . '()[' . $name . '] => ' . print_r($handler, true));
+                    if ($checkModule) {
+                        if (!$type['MODULE']) {
+                            throw new SystemException(
+                                'No [MODULE] in: ' . $event . '()[' . $name . '] => ' . print_r($handler, true)
+                            );
+                        }
+                    }
+
+                    if ($types[$name]) {
+                        throw new SystemException(
+                            'Duplicate in: ' . $event . '()[' . $name . '] => ' . print_r($handler, true)
+                        );
+                    }
 
                     $types[$name] = $type;
                 }
@@ -51,12 +61,15 @@ abstract class TypeManager
         if (!static::$ready) {
             static::$ready = true;
 
-            uasort($types, function ($a, $b) {
-                $a = $a['SORT'];
-                $b = $b['SORT'];
+            uasort(
+                $types,
+                function ($a, $b) {
+                    $a = $a['SORT'];
+                    $b = $b['SORT'];
 
-                return $a < $b ? -1 : ($a > $b ? 1 : 0);
-            });
+                    return $a < $b ? -1 : ($a > $b ? 1 : 0);
+                }
+            );
 
             if (static::$checkModule) {
                 $modules = Config::getModules();
@@ -71,9 +84,12 @@ abstract class TypeManager
         if ($filter) {
             $count = count($filter);
 
-            return array_filter($types, function (array $type) use ($count, $filter) {
-                return $count == count(array_intersect_assoc($filter, $type));
-            });
+            return array_filter(
+                $types,
+                function (array $type) use ($count, $filter) {
+                    return $count == count(array_intersect_assoc($filter, $type));
+                }
+            );
         } else {
             return $types;
         }

@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 /** @global CMain $APPLICATION */
@@ -12,8 +13,9 @@ use Bitrix\Socialnetwork\Item\UserToGroup;
 Loader::includeModule('socialnetwork');
 
 $socialnetworkModulePermissions = $APPLICATION->GetGroupRight("socialnetwork");
-if ($socialnetworkModulePermissions < "R")
+if ($socialnetworkModulePermissions < "R") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/socialnetwork/prolog.php");
@@ -22,7 +24,12 @@ $sTableID = "tbl_socnet_group";
 $arHeaders = array(
     array("id" => "ID", "content" => "ID", "sort" => "ID", "default" => true),
     array("id" => "NAME", "content" => GetMessage("SONET_GROUP_NAME"), "sort" => "NAME", "default" => true),
-    array("id" => "SUBJECT_ID", "content" => GetMessage('SONET_GROUP_SUBJECT_ID'), "sort" => "SUBJECT_ID", "default" => true),
+    array(
+        "id" => "SUBJECT_ID",
+        "content" => GetMessage('SONET_GROUP_SUBJECT_ID'),
+        "sort" => "SUBJECT_ID",
+        "default" => true
+    ),
     array("id" => "OWNER_ID", "content" => GetMessage('SONET_GROUP_OWNER_ID'), "sort" => "OWNER_ID", "default" => true),
 );
 
@@ -40,16 +47,21 @@ $arFilterFields = array(
 $lAdmin->InitFilter($arFilterFields);
 
 $arFilter = array();
-if (strlen($filter_site_id) > 0 && $filter_site_id != "NOT_REF")
+if ($filter_site_id <> '' && $filter_site_id != "NOT_REF") {
     $arFilter["SITE_ID"] = $filter_site_id;
-if (strlen($filter_subject_id) > 0 && $filter_subject_id != "NOT_REF")
+}
+if ($filter_subject_id <> '' && $filter_subject_id != "NOT_REF") {
     $arFilter["SUBJECT_ID"] = $filter_subject_id;
-if (strlen($filter_name) > 0)
+}
+if ($filter_name <> '') {
     $arFilter["%NAME"] = $filter_name;
-if (intval($filter_owner_id) > 0)
+}
+if (intval($filter_owner_id) > 0) {
     $arFilter["OWNER_ID"] = $filter_owner_id;
-if (strlen($filter_owner_user) > 0)
+}
+if ($filter_owner_user <> '') {
     $arFilter["?OWNER_USER"] = $filter_owner_user;
+}
 
 if ($lAdmin->EditAction() && $socialnetworkModulePermissions >= "W") {
     $arOwnerOld = array();
@@ -78,27 +90,31 @@ if ($lAdmin->EditAction() && $socialnetworkModulePermissions >= "W") {
 
     foreach ($FIELDS as $ID => $arFields) {
         $DB->StartTransaction();
-        $ID = IntVal($ID);
+        $ID = intval($ID);
         $bError = false;
 
-        if (!$lAdmin->IsUpdated($ID))
+        if (!$lAdmin->IsUpdated($ID)) {
             continue;
+        }
 
         foreach ($arFields as $key => $value) {
             $bAllowed = false;
             foreach ($arHeaders as $header) {
-                if ($header["id"] === $key)
+                if ($header["id"] === $key) {
                     $bAllowed = true;
+                }
             }
-            if (!$bAllowed)
+            if (!$bAllowed) {
                 unset($arFields[$key]);
+            }
         }
 
         if (!CSocNetGroup::Update($ID, $arFields, false)) {
-            if ($ex = $APPLICATION->GetException())
+            if ($ex = $APPLICATION->GetException()) {
                 $lAdmin->AddUpdateError($ex->GetString(), $ID);
-            else
+            } else {
                 $lAdmin->AddUpdateError(GetMessage("SONET_ERROR_UPDATE"), $ID);
+            }
 
             $DB->Rollback();
         } elseif (
@@ -122,7 +138,16 @@ if ($lAdmin->EditAction() && $socialnetworkModulePermissions >= "W") {
             }
 
             if (!$bError) {
-                $dbRelation = CSocNetUserToGroup::GetList(array(), array("USER_ID" => intval($arFields["OWNER_ID"]), "GROUP_ID" => $ID), false, false, array("ID"));
+                $dbRelation = CSocNetUserToGroup::GetList(
+                    array(),
+                    array(
+                        "USER_ID" => intval($arFields["OWNER_ID"]),
+                        "GROUP_ID" => $ID
+                    ),
+                    false,
+                    false,
+                    array("ID")
+                );
                 if ($arRelation = $dbRelation->Fetch()) {
                     $arUpdateFields = array(
                         "ROLE" => SONET_ROLES_OWNER,
@@ -159,11 +184,14 @@ if ($lAdmin->EditAction() && $socialnetworkModulePermissions >= "W") {
                             $lAdmin->AddUpdateError(GetMessage("SONET_ERROR_UPDATE"), $ID);
                         }
                     } else {
-                        UserToGroup::addInfoToChat(array(
-                            'group_id' => $ID,
-                            'user_id' => $arFields["OWNER_ID"],
-                            'action' => UserToGroup::CHAT_ACTION_IN
-                        ));
+                        UserToGroup::addInfoToChat(
+                            array(
+                                'group_id' => $ID,
+                                'user_id' => $arFields["OWNER_ID"],
+                                'action' => UserToGroup::CHAT_ACTION_IN,
+                                'role' => \Bitrix\Socialnetwork\UserToGroupTable::ROLE_OWNER
+                            )
+                        );
                     }
                 }
             }
@@ -187,13 +215,15 @@ if (($arID = $lAdmin->GroupAction()) && $socialnetworkModulePermissions >= "W") 
             false,
             array("ID")
         );
-        while ($arResult = $dbResultList->Fetch())
+        while ($arResult = $dbResultList->Fetch()) {
             $arID[] = $arResult['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
 
         switch ($_REQUEST['action']) {
             case "delete":
@@ -204,10 +234,11 @@ if (($arID = $lAdmin->GroupAction()) && $socialnetworkModulePermissions >= "W") 
                 if (!CSocNetGroup::Delete($ID)) {
                     $DB->Rollback();
 
-                    if ($ex = $APPLICATION->GetException())
+                    if ($ex = $APPLICATION->GetException()) {
                         $lAdmin->AddGroupError($ex->GetString(), $ID);
-                    else
+                    } else {
                         $lAdmin->AddGroupError(GetMessage("SONET_DELETE_ERROR"), $ID);
+                    }
                 }
 
                 $DB->Commit();
@@ -237,7 +268,7 @@ $arVisibleColumns = $lAdmin->GetVisibleHeaderColumns();
 $arSubjects = array();
 $arSubjectsBySite = array();
 
-$dbSitesList = CSite::GetList(($b = "sort"), ($o = "asc"));
+$dbSitesList = CSite::GetList();
 while ($arSite = $dbSitesList->Fetch()) {
     $dbSubjectsList = CSocNetGroupSubject::GetList(
         Array("SORT" => "ASC", "ID" => "DESC"),
@@ -274,7 +305,12 @@ while ($arGroup = $dbResultList->NavNext(true, "f_")) {
             "LAST_NAME" => $arRequests["USER_LAST_NAME"],
             "LOGIN" => $arRequests["USER_LOGIN"]
         );
-        $arMembers[$arRequests["USER_ID"]] = CUser::FormatName(GetMessage("USER_NAME_TEMPLATE"), $arTmpUser, true, false);
+        $arMembers[$arRequests["USER_ID"]] = CUser::FormatName(
+            GetMessage("USER_NAME_TEMPLATE"),
+            $arTmpUser,
+            true,
+            false
+        );
     }
 
     $row =& $lAdmin->AddRow($f_ID, $arGroup);
@@ -294,7 +330,14 @@ while ($arGroup = $dbResultList->NavNext(true, "f_")) {
 
     $arActions = Array();
     if ($socialnetworkModulePermissions >= "U") {
-        $arActions[] = array("ICON" => "delete", "TEXT" => GetMessage("SONET_DELETE_ALT"), "ACTION" => "if(confirm('" . GetMessage('SONET_DELETE_CONF') . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete"));
+        $arActions[] = array(
+            "ICON" => "delete",
+            "TEXT" => GetMessage("SONET_DELETE_ALT"),
+            "ACTION" => "if(confirm('" . GetMessage('SONET_DELETE_CONF') . "')) " . $lAdmin->ActionDoGroup(
+                    $f_ID,
+                    "delete"
+                )
+        );
     }
 
     $row->AddActions($arActions);
@@ -356,7 +399,9 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
                     foreach ($arSubjectsBySite as $subj_site_id => $arSiteSubjects) {
                         foreach ($arSiteSubjects as $subject_id => $sSubjectName) {
                             ?>
-                            <option value="<?= $subject_id ?>"<? if ($filter_subject_id == $subject_id) echo " selected" ?>><?= htmlspecialcharsex($sSubjectName) ?></option><?
+                            <option value="<?= $subject_id ?>"<? if ($filter_subject_id == $subject_id) echo " selected" ?>><?= htmlspecialcharsex(
+                            $sSubjectName
+                        ) ?></option><?
                         }
                     }
                     ?>

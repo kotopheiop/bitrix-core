@@ -102,7 +102,6 @@ class Container extends Base
         } else {
             $this->elements[] = $element;
         }
-
     }
 
     /**

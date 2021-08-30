@@ -1,21 +1,26 @@
 <?php
+
 define("STOP_STATISTICS", true);
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 /** @var CMain $APPLICATION */
 $STAT_RIGHT = $APPLICATION->GetGroupRight("statistic");
-if ($STAT_RIGHT == "D") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($STAT_RIGHT == "D") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 include($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/colors.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/img.php");
 
 $width = intval($_GET["width"]);
 $max_width = COption::GetOptionInt("statistic", "GRAPH_WEIGHT");
-if ($width <= 0 || $width > $max_width)
+if ($width <= 0 || $width > $max_width) {
     $width = $max_width;
+}
 
 $height = intval($_GET["height"]);
 $max_height = COption::GetOptionInt("statistic", "GRAPH_HEIGHT");
-if ($height <= 0 || $height > $max_height)
+if ($height <= 0 || $height > $max_height) {
     $height = $max_height;
+}
 
 // Image init
 $ImageHandle = CreateImageHandle($width, $height);
@@ -45,8 +50,9 @@ $arrParams = array(
     "EVENT_BACK" => true,
 );
 
-if (!array_key_exists($find_data_type, $arrParams))
+if (!array_key_exists($find_data_type, $arrParams)) {
     $find_data_type = "SESSION_SUMMA";
+}
 
 /******************************************************
  * Get graph data
@@ -72,8 +78,7 @@ $arFilter = Array(
 );
 $arrDays = CAdv::GetAnalysisGraphArray($arFilter, $is_filtered, $find_data_type, $arrLegend, $total, $max);
 
-reset($arrDays);
-while (list($keyD, $arD) = each($arrDays)) {
+foreach ($arrDays as $keyD => $arD) {
     $date = mktime(0, 0, 0, $arD["M"], $arD["D"], $arD["Y"]);
     $date_tmp = 0;
     // check if date is missing (or misordered) then
@@ -83,8 +88,7 @@ while (list($keyD, $arD) = each($arrDays)) {
         $date_tmp = $next_date;
         while ($date_tmp < $date) {
             $arrX[] = $date_tmp;
-            reset($arrLegend);
-            while (list($adv_id, $arrS) = each($arrLegend)) {
+            foreach ($arrLegend as $adv_id => $arrS) {
                 $arrY_adv[$adv_id][] = 0;
                 $arrY[] = 0;
             }
@@ -92,8 +96,7 @@ while (list($keyD, $arD) = each($arrDays)) {
         }
     }
     $arrX[] = $date;
-    reset($arrLegend);
-    while (list($adv_id, $arrS) = each($arrLegend)) {
+    foreach ($arrLegend as $adv_id => $arrS) {
         $arrY_adv[$adv_id][] = $arD[$adv_id];
         $arrY[] = $arD[$adv_id];
     }
@@ -121,8 +124,7 @@ DrawCoordinatGrid($arrayX, $arrayY, $width, $height, $ImageHandle);
  * plot graph
  *******************************************************/
 
-reset($arrLegend);
-while (list($adv_id, $arrS) = each($arrLegend)) {
+foreach ($arrLegend as $adv_id => $arrS) {
     Graf($arrX, $arrY_adv[$adv_id], $ImageHandle, $MinX, $MaxX, $MinY, $MaxY, $arrS["CLR"]);
 }
 

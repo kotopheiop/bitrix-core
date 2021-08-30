@@ -17,21 +17,28 @@ class Product extends DataConverter
 
     public function __construct($params)
     {
-        if (!isset($params["SITE_ID"]) || strlen($params["SITE_ID"]) <= 0)
+        if (!isset($params["SITE_ID"]) || $params["SITE_ID"] == '') {
             throw new ArgumentNullException("SITE_ID");
+        }
 
         $this->siteId = $params["SITE_ID"];
 
-        if (!\Bitrix\Main\Loader::includeModule('iblock'))
+        if (!\Bitrix\Main\Loader::includeModule('iblock')) {
             throw new SystemException("Can't include module \"iblock\"!");
+        }
     }
 
     public function convert($data)
     {
         $this->ebayCategories = $this->bitrixToEbayCategories($data["IBLOCK_ID"], $data["CATEGORIES"]);
 
-        if (empty($this->ebayCategories))
-            throw new SystemException('Can\'t recieve categories for ebay. Product id: ' . $data["ID"] . ', product categories ids: ' . implode(', ' . $data["CATEGORIES"]));
+        if (empty($this->ebayCategories)) {
+            throw new SystemException(
+                'Can\'t recieve categories for ebay. Product id: ' . $data["ID"] . ', product categories ids: ' . implode(
+                    ', ' . $data["CATEGORIES"]
+                )
+            );
+        }
 
         $this->attributesList = $this->getAttributesList($data["IBLOCK_ID"], $this->ebayCategories);
         $this->attributesItem = $this->getAttributesItem($this->attributesList, $data);
@@ -40,8 +47,9 @@ class Product extends DataConverter
         if (isset($data["OFFERS"]) && is_array($data["OFFERS"]) && !empty($data["OFFERS"])) {
             $result = $this->getItemDataOffers($data);
 
-            foreach ($data["OFFERS"] as $offer)
+            foreach ($data["OFFERS"] as $offer) {
                 $result .= $this->getItemDataOffersOffer($offer, $data["IBLOCK_ID"] . "_" . $data["ID"]);
+            }
         } else {
             $result = $this->getItemData($data);
         }
@@ -61,15 +69,18 @@ class Product extends DataConverter
         if (!empty($attributies)) {
             $result .= "\t\t\t<Attributes>\n";
 
-            foreach ($attributies as $attrName => $attrValue)
-                $result .= "\t\t\t\t<Attribute Name=\"" . \CDataXML::xmlspecialchars($attrName) . "\">" . \CDataXML::xmlspecialchars($attrValue) . "</Attribute>\n";
+            foreach ($attributies as $attrName => $attrValue) {
+                $result .= "\t\t\t\t<Attribute Name=\"" . \CDataXML::xmlspecialchars(
+                        $attrName
+                    ) . "\">" . \CDataXML::xmlspecialchars($attrValue) . "</Attribute>\n";
+            }
 
             $result .= "\t\t\t</Attributes>\n";
         }
 
-        if (strlen($data["DETAIL_PICTURE_URL"]) > 0 || strlen($data["PREVIEW_PICTURE_URL"]) > 0) {
+        if ($data["DETAIL_PICTURE_URL"] <> '' || $data["PREVIEW_PICTURE_URL"] <> '') {
             $result .= "\t\t\t<PictureUrls>\n";
-            $result .= "\t\t\t\t<PictureUrl>" . (strlen($data["DETAIL_PICTURE_URL"]) > 0 ? $data["DETAIL_PICTURE_URL"] : $data["PREVIEW_PICTURE_URL"]) . "</PictureUrl>\n";
+            $result .= "\t\t\t\t<PictureUrl>" . ($data["DETAIL_PICTURE_URL"] <> '' ? $data["DETAIL_PICTURE_URL"] : $data["PREVIEW_PICTURE_URL"]) . "</PictureUrl>\n";
             $result .= "\t\t\t</PictureUrls>\n";
         }
 
@@ -91,16 +102,18 @@ class Product extends DataConverter
         if (is_array($this->variationsVector) && !empty($this->variationsVector)) {
             $result .= "\t\t\t<VariationVector>\n";
 
-            foreach ($this->variationsVector as $ebayAttributeName => $bitrixPropId)
+            foreach ($this->variationsVector as $ebayAttributeName => $bitrixPropId) {
                 $result .= "\t\t\t\t<Name>" . \CDataXML::xmlspecialchars($ebayAttributeName) . "</Name>\n";
+            }
 
             $result .= "\t\t\t</VariationVector>\n";
         }
 
         $result .= "\t\t\t<Categories>\n";
 
-        foreach ($this->ebayCategories as $category)
+        foreach ($this->ebayCategories as $category) {
             $result .= "\t\t\t\t<Category Type=\"eBayLeafCategory\">" . $category . "</Category>\n";
+        }
 
         $result .= "\t\t\t</Categories>\n";
         $result .= "\t\t\t<SharedProductInformation>\n";
@@ -108,7 +121,7 @@ class Product extends DataConverter
         $result .= "\t\t\t<Description>\n";
         $result .= "\t\t\t\t<ProductDescription>\n";
         $result .= "<![CDATA[\n";
-        $result .= strlen($data["~PREVIEW_TEXT"]) > 0 ? $data["~PREVIEW_TEXT"] : $data["~DETAIL_TEXT"] . "\n";
+        $result .= $data["~PREVIEW_TEXT"] <> '' ? $data["~PREVIEW_TEXT"] : $data["~DETAIL_TEXT"] . "\n";
         $result .= "]]>\n";
         $result .= "</ProductDescription>\n";
         $result .= "\t\t\t</Description>\n";
@@ -121,14 +134,16 @@ class Product extends DataConverter
                     $attrValue = current($attrValue);
                 }
 
-                $result .= "\t\t\t\t<Attribute Name=\"" . \CDataXML::xmlspecialchars($attrName) . "\">" . \CDataXML::xmlspecialchars($attrValue) . "</Attribute>\n";
+                $result .= "\t\t\t\t<Attribute Name=\"" . \CDataXML::xmlspecialchars(
+                        $attrName
+                    ) . "\">" . \CDataXML::xmlspecialchars($attrValue) . "</Attribute>\n";
             }
 
             $result .= "\t\t\t</Attributes>\n";
         }
 
         $result .= "\t\t\t<PictureUrls>\n";
-        $result .= "\t\t\t\t<PictureUrl>" . (strlen($data["DETAIL_PICTURE_URL"]) > 0 ? $data["DETAIL_PICTURE_URL"] : $data["PREVIEW_PICTURE_URL"]) . "</PictureUrl>\n";
+        $result .= "\t\t\t\t<PictureUrl>" . ($data["DETAIL_PICTURE_URL"] <> '' ? $data["DETAIL_PICTURE_URL"] : $data["PREVIEW_PICTURE_URL"]) . "</PictureUrl>\n";
         $result .= "\t\t\t</PictureUrls>\n";
         $result .= "<ConditionInfo>
 						<Condition>NEW</Condition>
@@ -145,18 +160,20 @@ class Product extends DataConverter
     {
         $res = CategoryVariationTable::getById($ebeyAttributeId);
 
-        if ($category = $res->fetch())
+        if ($category = $res->fetch()) {
             $result = $category["NAME"];
-        else
+        } else {
             $result = "";
+        }
 
         return $result;
     }
 
     protected function getAttributesItem($attributesList, $data)
     {
-        if (!is_array($data["PROPERTIES"]))
+        if (!is_array($data["PROPERTIES"])) {
             return array();
+        }
 
         $result = array();
 
@@ -164,8 +181,9 @@ class Product extends DataConverter
             $value = $this->getBitrixItemPropValue($bitrixAttr, $data["PROPERTIES"]);
             $name = $this->getEbayCategoryAttrName($ebayCategoryAttrId);
 
-            if ($value !== false)
+            if ($value !== false) {
                 $result[$name] = $value;
+            }
         }
 
         return $result;
@@ -182,7 +200,7 @@ class Product extends DataConverter
         $result .= "\t\t\t\t<Description>\n";
         $result .= "\t\t\t\t\t<ProductDescription>\n";
         $result .= "<![CDATA[\n";
-        $result .= strlen($data["~PREVIEW_TEXT"]) > 0 ? $data["~PREVIEW_TEXT"] : $data["~DETAIL_TEXT"] . "\n";
+        $result .= $data["~PREVIEW_TEXT"] <> '' ? $data["~PREVIEW_TEXT"] : $data["~DETAIL_TEXT"] . "\n";
         $result .= "]]>\n";
         $result .= "</ProductDescription>\n";
         $result .= "\t\t\t\t</Description>\n";
@@ -198,19 +216,22 @@ class Product extends DataConverter
                     $attrValue = current($attrValue);
                 }
 
-                $result .= "\t\t\t\t\t<Attribute Name=\"" . \CDataXML::xmlspecialchars($attrName) . "\">" . \CDataXML::xmlspecialchars($attrValue) . "</Attribute>\n";
+                $result .= "\t\t\t\t\t<Attribute Name=\"" . \CDataXML::xmlspecialchars(
+                        $attrName
+                    ) . "\">" . \CDataXML::xmlspecialchars($attrValue) . "</Attribute>\n";
             }
 
             $result .= "\t\t\t\t</Attributes>\n";
         }
 
         $result .= "\t\t\t\t<PictureUrls>\n";
-        $result .= "\t\t\t\t\t<PictureUrl>" . (strlen($data["DETAIL_PICTURE_URL"]) > 0 ? $data["DETAIL_PICTURE_URL"] : $data["PREVIEW_PICTURE_URL"]) . "</PictureUrl>\n";
+        $result .= "\t\t\t\t\t<PictureUrl>" . ($data["DETAIL_PICTURE_URL"] <> '' ? $data["DETAIL_PICTURE_URL"] : $data["PREVIEW_PICTURE_URL"]) . "</PictureUrl>\n";
         $result .= "\t\t\t\t</PictureUrls>\n";
         $result .= "\t\t\t\t<Categories>\n";
 
-        foreach ($this->ebayCategories as $category)
+        foreach ($this->ebayCategories as $category) {
             $result .= "\t\t\t\t\t<Category Type=\"eBayLeafCategory\">" . $category . "</Category>\n";
+        }
 
         $result .= "\t\t\t\t</Categories>\n";
         $result .= "\t\t\t</ProductInformation>\n";
@@ -226,14 +247,19 @@ class Product extends DataConverter
         $policy = $this->getPolicyForCategory($iBlockId, $ebayCategory);
         $result = "\t\t<ListingDetails>\n";
 
-        if (!empty($policy["RETURN"]))
+        if (!empty($policy["RETURN"])) {
             $result .= "\t\t\t<ReturnPolicy>" . \CDataXML::xmlspecialchars($policy["RETURN"]) . "</ReturnPolicy>\n";
+        }
 
-        if (!empty($policy["SHIPPING"]))
-            $result .= "\t\t\t<ShippingPolicy>" . \CDataXML::xmlspecialchars($policy["SHIPPING"]) . "</ShippingPolicy>\n";
+        if (!empty($policy["SHIPPING"])) {
+            $result .= "\t\t\t<ShippingPolicy>" . \CDataXML::xmlspecialchars(
+                    $policy["SHIPPING"]
+                ) . "</ShippingPolicy>\n";
+        }
 
-        if (!empty($policy["PAYMENT"]))
+        if (!empty($policy["PAYMENT"])) {
             $result .= "\t\t\t<PaymentPolicy>" . \CDataXML::xmlspecialchars($policy["PAYMENT"]) . "</PaymentPolicy>\n";
+        }
 
         $result .= "\t\t</ListingDetails>\n";
         return $result;
@@ -258,16 +284,22 @@ class Product extends DataConverter
         $result = array();
 
         foreach ($ebayCategories as $category) {
-            $mapEntityId = \Bitrix\Sale\TradingPlatform\Ebay\MapHelper::getCategoryVariationEntityId($iblockId, $category);
+            $mapEntityId = \Bitrix\Sale\TradingPlatform\Ebay\MapHelper::getCategoryVariationEntityId(
+                $iblockId,
+                $category
+            );
 
-            $catMapVarRes = \Bitrix\Sale\TradingPlatform\MapTable::getList(array(
-                "filter" => array(
-                    "ENTITY_ID" => $mapEntityId
+            $catMapVarRes = \Bitrix\Sale\TradingPlatform\MapTable::getList(
+                array(
+                    "filter" => array(
+                        "ENTITY_ID" => $mapEntityId
+                    )
                 )
-            ));
+            );
 
-            while ($arMapRes = $catMapVarRes->fetch())
+            while ($arMapRes = $catMapVarRes->fetch()) {
                 $result[$arMapRes["VALUE_EXTERNAL"]] = $arMapRes["VALUE_INTERNAL"];
+            }
         }
 
         return $result;
@@ -279,8 +311,9 @@ class Product extends DataConverter
         $categories = $this->getEbayCategoriesParams($iblockId, $bitrixCategories);
         $result = array();
 
-        foreach ($categories as $category)
+        foreach ($categories as $category) {
             $result[] = $category["VALUE_EXTERNAL"];
+        }
 
         return $result;
     }
@@ -292,8 +325,9 @@ class Product extends DataConverter
         if (empty($entitiesIds[$iblockId])) {
             $res = \Bitrix\Sale\TradingPlatform\Ebay\MapHelper::getCategoryEntityId($iblockId);
 
-            if (!$res)
+            if (!$res) {
                 return array();
+            }
 
             $entitiesIds[$iblockId] = $res;
         }
@@ -303,16 +337,19 @@ class Product extends DataConverter
         if (!isset($params[$iblockId])) {
             $params[$iblockId] = array();
 
-            $catRes = \Bitrix\Sale\TradingPlatform\MapTable::getList(array(
-                'filter' => array(
-                    '=ENTITY_ID' => $entitiesIds[$iblockId],
-                ),
-            ));
+            $catRes = \Bitrix\Sale\TradingPlatform\MapTable::getList(
+                array(
+                    'filter' => array(
+                        '=ENTITY_ID' => $entitiesIds[$iblockId],
+                    ),
+                )
+            );
 
-            while ($category = $catRes->fetch())
-                if (intval($category["VALUE_INTERNAL"]) > 0)
+            while ($category = $catRes->fetch()) {
+                if (intval($category["VALUE_INTERNAL"]) > 0) {
                     $params[$iblockId][$category["VALUE_INTERNAL"]] = $category;
-
+                }
+            }
         }
 
         $result = array();
@@ -325,9 +362,9 @@ class Product extends DataConverter
                     $res = \CIBlockSection::GetNavChain($iblockId, $catId);
 
                     while ($row = $res->fetch()) {
-
-                        if (isset($params[$iblockId][$row['ID']]) && is_array($params[$iblockId][$row['ID']]))
+                        if (isset($params[$iblockId][$row['ID']]) && is_array($params[$iblockId][$row['ID']])) {
                             $result[] = $params[$iblockId][$row['ID']];
+                        }
                     }
                 }
             }
@@ -352,37 +389,47 @@ class Product extends DataConverter
             $result[$ebayCategory] = array();
 
             foreach ($this->getEbayCategoriesParams($iblockId) as $categoryParams) {
-                if ($categoryParams["VALUE_EXTERNAL"] != $ebayCategory)
+                if ($categoryParams["VALUE_EXTERNAL"] != $ebayCategory) {
                     continue;
-
-                if (!empty($categoryParams["PARAMS"]["POLICY"])) {
-                    if (!empty($categoryParams["PARAMS"]["POLICY"]["RETURN"]))
-                        $policyReturnId = $categoryParams["PARAMS"]["POLICY"]["RETURN"];
-
-                    if (!empty($categoryParams["PARAMS"]["POLICY"]["SHIPPING"]))
-                        $policyShippingId = $categoryParams["PARAMS"]["POLICY"]["SHIPPING"];
-
-                    if (!empty($categoryParams["PARAMS"]["POLICY"]["PAYMENT"]))
-                        $policyPaymentId = $categoryParams["PARAMS"]["POLICY"]["PAYMENT"];
                 }
 
-                if (strlen($policyReturnId) <= 0 && !empty($siteSettings["POLICY"]["RETURN"]["DEFAULT"]))
+                if (!empty($categoryParams["PARAMS"]["POLICY"])) {
+                    if (!empty($categoryParams["PARAMS"]["POLICY"]["RETURN"])) {
+                        $policyReturnId = $categoryParams["PARAMS"]["POLICY"]["RETURN"];
+                    }
+
+                    if (!empty($categoryParams["PARAMS"]["POLICY"]["SHIPPING"])) {
+                        $policyShippingId = $categoryParams["PARAMS"]["POLICY"]["SHIPPING"];
+                    }
+
+                    if (!empty($categoryParams["PARAMS"]["POLICY"]["PAYMENT"])) {
+                        $policyPaymentId = $categoryParams["PARAMS"]["POLICY"]["PAYMENT"];
+                    }
+                }
+
+                if ($policyReturnId == '' && !empty($siteSettings["POLICY"]["RETURN"]["DEFAULT"])) {
                     $policyReturnId = $siteSettings["POLICY"]["RETURN"]["DEFAULT"];
+                }
 
-                if (strlen($policyShippingId) <= 0 && !empty($siteSettings["POLICY"]["SHIPPING"]["DEFAULT"]))
+                if ($policyShippingId == '' && !empty($siteSettings["POLICY"]["SHIPPING"]["DEFAULT"])) {
                     $policyShippingId = $siteSettings["POLICY"]["SHIPPING"]["DEFAULT"];
+                }
 
-                if (strlen($policyPaymentId) <= 0 && !empty($siteSettings["POLICY"]["PAYMENT"]["DEFAULT"]))
+                if ($policyPaymentId == '' && !empty($siteSettings["POLICY"]["PAYMENT"]["DEFAULT"])) {
                     $policyPaymentId = $siteSettings["POLICY"]["PAYMENT"]["DEFAULT"];
+                }
 
-                if ($policyReturnId != "" && !empty($siteSettings["POLICY"]["RETURN"]["LIST"][$policyReturnId]))
+                if ($policyReturnId != "" && !empty($siteSettings["POLICY"]["RETURN"]["LIST"][$policyReturnId])) {
                     $result[$ebayCategory]["RETURN"] = $siteSettings["POLICY"]["RETURN"]["LIST"][$policyReturnId];
+                }
 
-                if ($policyShippingId != "" && !empty($siteSettings["POLICY"]["SHIPPING"]["LIST"][$policyShippingId]))
+                if ($policyShippingId != "" && !empty($siteSettings["POLICY"]["SHIPPING"]["LIST"][$policyShippingId])) {
                     $result[$ebayCategory]["SHIPPING"] = $siteSettings["POLICY"]["SHIPPING"]["LIST"][$policyShippingId];
+                }
 
-                if ($policyPaymentId != "" && !empty($siteSettings["POLICY"]["PAYMENT"]["LIST"][$policyPaymentId]))
+                if ($policyPaymentId != "" && !empty($siteSettings["POLICY"]["PAYMENT"]["LIST"][$policyPaymentId])) {
                     $result[$ebayCategory]["PAYMENT"] = $siteSettings["POLICY"]["PAYMENT"]["LIST"][$policyPaymentId];
+                }
 
                 break;
             }

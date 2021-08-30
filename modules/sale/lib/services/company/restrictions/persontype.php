@@ -18,8 +18,9 @@ class PersonType extends Restrictions\PersonType
     {
         $result = Base\RestrictionManager::SEVERITY_STRICT;
 
-        if ($mode == Base\RestrictionManager::MODE_MANAGER)
+        if ($mode == Base\RestrictionManager::MODE_MANAGER) {
             return Base\RestrictionManager::SEVERITY_SOFT;
+        }
 
         return $result;
     }

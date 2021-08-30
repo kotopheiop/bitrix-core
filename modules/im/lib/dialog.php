@@ -24,7 +24,7 @@ class Dialog
     public static function getChatId($dialogId, $userId = null)
     {
         if (\Bitrix\Im\Common::isChatId($dialogId)) {
-            $chatId = substr($dialogId, 4);
+            $chatId = (int)mb_substr($dialogId, 4);
         } else {
             $dialogId = intval($dialogId);
             if (!$dialogId) {
@@ -53,7 +53,7 @@ class Dialog
         }
 
         if (\Bitrix\Im\Common::isChatId($dialogId)) {
-            $chatId = intval(substr($dialogId, 4));
+            $chatId = intval(mb_substr($dialogId, 4));
 
             $sql =
                 'SELECT C.ID CHAT_ID, R.ID RID,
@@ -69,77 +69,92 @@ class Dialog
 
             if ($chatData['RID'] > 0) {
                 return true;
-            } else if (
-                $chatData['CHAT_TYPE'] == Chat::TYPE_SYSTEM
-                || $chatData['CHAT_TYPE'] == Chat::TYPE_PRIVATE
-            ) {
-                return false;
-            } else if ($chatData['CHAT_TYPE'] == Chat::TYPE_OPEN) {
-                if (\Bitrix\Im\User::getInstance($userId)->isExtranet()) {
+            } else {
+                if (
+                    $chatData['CHAT_TYPE'] == Chat::TYPE_SYSTEM
+                    || $chatData['CHAT_TYPE'] == Chat::TYPE_PRIVATE
+                ) {
                     return false;
                 } else {
-                    return true;
-                }
-            } else if (
-                $chatData['CHAT_TYPE'] == Chat::TYPE_OPEN_LINE
-                || $chatData['CHAT_TYPE'] == Chat::TYPE_GROUP && $chatData['CHAT_ENTITY_TYPE'] == 'LINES'
-            ) {
-                if (\Bitrix\Main\Loader::includeModule('imopenlines')) {
-                    $crmEntityType = null;
-                    $crmEntityId = null;
+                    if ($chatData['CHAT_TYPE'] == Chat::TYPE_OPEN) {
+                        if (\Bitrix\Im\User::getInstance($userId)->isExtranet()) {
+                            return false;
+                        } else {
+                            return true;
+                        }
+                    } else {
+                        if (
+                            $chatData['CHAT_TYPE'] == Chat::TYPE_OPEN_LINE
+                            || $chatData['CHAT_TYPE'] == Chat::TYPE_GROUP && $chatData['CHAT_ENTITY_TYPE'] == 'LINES'
+                        ) {
+                            if (\Bitrix\Main\Loader::includeModule('imopenlines')) {
+                                $crmEntityType = null;
+                                $crmEntityId = null;
 
-                    if (strlen($chatData['CHAT_ENTITY_TYPE']) > 0) {
-                        $fieldData = explode("|", $chatData['CHAT_ENTITY_TYPE']);
-                        if ($fieldData[0] == 'Y') {
-                            $crmEntityType = $fieldData[1];
-                            $crmEntityId = $fieldData[2];
+                                if ($chatData['CHAT_ENTITY_DATA_1'] <> '') {
+                                    $fieldData = explode("|", $chatData['CHAT_ENTITY_DATA_1']);
+                                    if ($fieldData[0] == 'Y') {
+                                        $crmEntityType = $fieldData[1];
+                                        $crmEntityId = $fieldData[2];
+                                    }
+                                }
+
+                                return \Bitrix\ImOpenLines\Config::canJoin($chatId, $crmEntityType, $crmEntityId);
+                            } else {
+                                return false;
+                            }
+                        } else {
+                            return false;
                         }
                     }
-
-                    return \Bitrix\ImOpenLines\Config::canJoin($chatId, $crmEntityType, $crmEntityId);
-                } else {
-                    return false;
                 }
-            } else {
-                return false;
             }
         } else {
-            if (\Bitrix\Main\ModuleManager::isModuleInstalled('intranet')) {
-                if (
-                    \Bitrix\Im\User::getInstance($userId)->isExtranet()
-                    || \Bitrix\Im\User::getInstance($dialogId)->isExtranet()
-                ) {
+            if ($dialogId == $userId) {
+                return true;
+            } else {
+                if (\Bitrix\Main\ModuleManager::isModuleInstalled('intranet')) {
                     if (
-                        !\Bitrix\Im\User::getInstance($userId)->isExtranet()
-                        && \Bitrix\Im\User::getInstance($dialogId)->isNetwork()
+                        \Bitrix\Im\User::getInstance($userId)->isExtranet()
+                        || \Bitrix\Im\User::getInstance($dialogId)->isExtranet()
                     ) {
+                        if (
+                            !\Bitrix\Im\User::getInstance($userId)->isExtranet()
+                            && \Bitrix\Im\User::getInstance($dialogId)->isNetwork()
+                        ) {
+                            return true;
+                        }
+
+                        return \Bitrix\Im\Integration\Socialnetwork\Extranet::isUserInGroup($dialogId, $userId);
+                    } else {
                         return true;
                     }
-
-                    return \Bitrix\Im\Integration\Socialnetwork\Extranet::isUserInGroup($dialogId, $userId);
                 } else {
-                    return true;
-                }
-            } else {
-                if (
-                    \CIMSettings::GetPrivacy(\CIMSettings::PRIVACY_MESSAGE) == \CIMSettings::PRIVACY_RESULT_CONTACT
-                    && \CModule::IncludeModule('socialnetwork')
-                    && \CSocNetUser::IsFriendsAllowed()
-                    && !\CSocNetUserRelations::IsFriends($dialogId, $userId)) {
-                    return false;
-                } else if
-                (
-                    \CIMSettings::GetPrivacy(\CIMSettings::PRIVACY_MESSAGE, $dialogId) == \CIMSettings::PRIVACY_RESULT_CONTACT
-                    && \CModule::IncludeModule('socialnetwork')
-                    && \CSocNetUser::IsFriendsAllowed()
-                    && !\CSocNetUserRelations::IsFriends($dialogId, $userId)
-                ) {
-                    return false;
+                    if (
+                        \CIMSettings::GetPrivacy(\CIMSettings::PRIVACY_MESSAGE) == \CIMSettings::PRIVACY_RESULT_CONTACT
+                        && \CModule::IncludeModule('socialnetwork')
+                        && \CSocNetUser::IsFriendsAllowed()
+                        && !\CSocNetUserRelations::IsFriends($dialogId, $userId)) {
+                        return false;
+                    } else {
+                        if
+                        (
+                            \CIMSettings::GetPrivacy(
+                                \CIMSettings::PRIVACY_MESSAGE,
+                                $dialogId
+                            ) == \CIMSettings::PRIVACY_RESULT_CONTACT
+                            && \CModule::IncludeModule('socialnetwork')
+                            && \CSocNetUser::IsFriendsAllowed()
+                            && !\CSocNetUserRelations::IsFriends($dialogId, $userId)
+                        ) {
+                            return false;
+                        } else {
+                            return true;
+                        }
+                    }
                 }
             }
         }
-
-        return false;
     }
 
     public static function read($dialogId, $messageId = null, $userId = null)
@@ -155,11 +170,61 @@ class Dialog
             $chat = new \CIMChat($userId);
             $result = $chat->SetReadMessage($chatId, $messageId);
         } else {
-            $CIMMessage = new \CIMMessage($userId);
-            $result = $CIMMessage->SetReadMessage($dialogId, $messageId);
+            if ($dialogId === 'notify') {
+                $notify = new \CIMNotify();
+                $notify->MarkNotifyRead(0, true);
+
+                return true;
+            } else {
+                $CIMMessage = new \CIMMessage($userId);
+                $result = $CIMMessage->SetReadMessage($dialogId, $messageId);
+            }
         }
 
         return $result;
+    }
+
+    public static function readAll($userId = null)
+    {
+        $userId = \Bitrix\Im\Common::getUserId($userId);
+        if (!$userId) {
+            return false;
+        }
+
+        \Bitrix\Main\Application::getConnection()->query(
+            "UPDATE b_im_relation R
+				INNER JOIN b_im_chat C on C.ID = R.CHAT_ID
+				SET R.LAST_ID = C.LAST_MESSAGE_ID,
+				R.UNREAD_ID = 0,
+				R.LAST_READ = NOW(),
+				R.STATUS = " . IM_STATUS_READ . ",
+				R.COUNTER = 0
+				WHERE R.MESSAGE_TYPE <> '" . IM_MESSAGE_OPEN_LINE . "'
+				AND R.COUNTER > 0
+				AND R.USER_ID = " . $userId
+        );
+
+        \Bitrix\Main\Application::getConnection()->query(
+            "UPDATE b_im_recent R
+			SET R.UNREAD = 'N'
+			WHERE R.UNREAD = 'Y'"
+        );
+
+        $notify = new \CIMNotify();
+        $notify->MarkNotifyRead(0, true);
+
+        if (\CModule::IncludeModule("pull")) {
+            \Bitrix\Pull\Event::add(
+                $userId,
+                [
+                    'module_id' => 'im',
+                    'command' => 'readAllChats',
+                    'extra' => \Bitrix\Im\Common::getPullExtra()
+                ]
+            );
+        }
+
+        return true;
     }
 
     public static function unread($dialogId, $messageId = null, $userId = null)

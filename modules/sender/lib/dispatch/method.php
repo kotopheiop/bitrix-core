@@ -47,7 +47,6 @@ class Method implements iMethod
         } else {
             $this->defer();
         }
-
     }
 
     /**

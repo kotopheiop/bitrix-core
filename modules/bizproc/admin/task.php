@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 \Bitrix\Main\Loader::includeModule('bizproc');
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/bizproc/prolog.php");
@@ -11,8 +12,9 @@ $allowAdminAccess = $USER->IsAdmin();
 
 $taskId = intval($_REQUEST["id"]);
 $userId = intval($_REQUEST["uid"]);
-if (!$allowAdminAccess || $userId <= 0)
+if (!$allowAdminAccess || $userId <= 0) {
     $userId = $USER->GetID();
+}
 
 $arTask = false;
 if ($taskId > 0) {
@@ -21,7 +23,20 @@ if ($taskId > 0) {
         array("ID" => $taskId, "USER_ID" => $userId),
         false,
         false,
-        array("ID", "WORKFLOW_ID", "ACTIVITY", "ACTIVITY_NAME", "MODIFIED", "OVERDUE_DATE", "NAME", "DESCRIPTION", "PARAMETERS", "USER_ID", 'STATUS', 'USER_STATUS',)
+        array(
+            "ID",
+            "WORKFLOW_ID",
+            "ACTIVITY",
+            "ACTIVITY_NAME",
+            "MODIFIED",
+            "OVERDUE_DATE",
+            "NAME",
+            "DESCRIPTION",
+            "PARAMETERS",
+            "USER_ID",
+            'STATUS',
+            'USER_STATUS',
+        )
     );
     $arTask = $dbTask->GetNext();
 }
@@ -29,13 +44,26 @@ if ($taskId > 0) {
 if (!$arTask) {
     $workflowId = trim($_REQUEST["workflow_id"]);
 
-    if (strlen($workflowId) > 0) {
+    if ($workflowId <> '') {
         $dbTask = CBPTaskService::GetList(
             array(),
             array("WORKFLOW_ID" => $workflowId, "USER_ID" => $userId),
             false,
             false,
-            array("ID", "WORKFLOW_ID", "ACTIVITY", "ACTIVITY_NAME", "MODIFIED", "OVERDUE_DATE", "NAME", "DESCRIPTION", "PARAMETERS", "USER_ID", 'STATUS', 'USER_STATUS',)
+            array(
+                "ID",
+                "WORKFLOW_ID",
+                "ACTIVITY",
+                "ACTIVITY_NAME",
+                "MODIFIED",
+                "OVERDUE_DATE",
+                "NAME",
+                "DESCRIPTION",
+                "PARAMETERS",
+                "USER_ID",
+                'STATUS',
+                'USER_STATUS',
+            )
         );
         $arTask = $dbTask->GetNext();
     }
@@ -49,10 +77,12 @@ if (!$arTask) {
 } else {
     $arTask["PARAMETERS"]["DOCUMENT_ID"] = CBPStateService::GetStateDocumentId($arTask['WORKFLOW_ID']);
     $backUrl = !empty($_REQUEST["back_url"]) ? "/" . ltrim(trim($_REQUEST["back_url"]), "\\/") : '';
-    if (strlen($backUrl) <= 0)
+    if ($backUrl == '') {
         $backUrl = "/bitrix/admin/bizproc_task_list.php?lang=" . LANGUAGE_ID;
-    if (strlen($backUrl) <= 0 && !empty($arTask["PARAMETERS"]["DOCUMENT_ID"]))
+    }
+    if ($backUrl == '' && !empty($arTask["PARAMETERS"]["DOCUMENT_ID"])) {
         $backUrl = CBPDocument::GetDocumentAdminPage($arTask["PARAMETERS"]["DOCUMENT_ID"]);
+    }
 
     $backUrl = CHTTP::urlDeleteParams($backUrl, array('mode'));
 
@@ -65,15 +95,22 @@ if (!$arTask) {
     if ($_SERVER["REQUEST_METHOD"] == "POST" && check_bitrix_sessid()) {
         if ($_POST["action"] == "doTask") {
             $arErrorsTmp = array();
-            if (CBPDocument::PostTaskForm($arTask, $userId, $_REQUEST + $_FILES, $arErrorsTmp, $USER->GetFormattedName(false))) {
+            if (CBPDocument::PostTaskForm(
+                $arTask,
+                $userId,
+                $_REQUEST + $_FILES,
+                $arErrorsTmp,
+                $USER->GetFormattedName(false)
+            )) {
                 $showType = "Success";
-                if (strlen($backUrl) > 0) {
+                if ($backUrl <> '') {
                     LocalRedirect($backUrl);
                     die();
                 }
             } else {
-                foreach ($arErrorsTmp as $e)
+                foreach ($arErrorsTmp as $e) {
                     $errorMessage .= $e["message"] . ".<br />";
+                }
             }
         } elseif (
             $_POST["action"] == "delegate"
@@ -84,10 +121,11 @@ if (!$arTask) {
         ) {
             $errors = array();
             CBPDocument::delegateTasks($arTask["USER_ID"], $_POST['delegate_to'], $arTask['ID'], $errors);
-            if ($errors)
+            if ($errors) {
                 $errorMessage .= $errors[0] . '.';
-            else
+            } else {
                 LocalRedirect($backUrl);
+            }
         }
     }
 
@@ -113,8 +151,9 @@ if (!$arTask) {
 
     $APPLICATION->SetTitle(str_replace("#ID#", $taskId, GetMessage("BPAT_TITLE")));
 
-    if (strlen($errorMessage) > 0)
+    if ($errorMessage <> '') {
         CAdminMessage::ShowMessage($errorMessage);
+    }
 
     $runtime = CBPRuntime::GetRuntime();
     $runtime->StartRuntime();
@@ -126,7 +165,10 @@ if (!$arTask) {
     } else {
         try {
             $documentType = $documentService->GetDocumentType($arTask["PARAMETERS"]["DOCUMENT_ID"]);
-            if (!array_key_exists("BP_AddShowParameterInit_" . $documentType[0] . "_" . $documentType[1] . "_" . $documentType[2], $GLOBALS)) {
+            if (!array_key_exists(
+                "BP_AddShowParameterInit_" . $documentType[0] . "_" . $documentType[1] . "_" . $documentType[2],
+                $GLOBALS
+            )) {
                 $GLOBALS["BP_AddShowParameterInit_" . $documentType[0] . "_" . $documentType[1] . "_" . $documentType[2]] = 1;
                 CBPDocument::AddShowParameterInit($documentType[0], "only_users", $documentType[2], $documentType[1]);
             }
@@ -137,8 +179,14 @@ if (!$arTask) {
     }
 
     list($taskForm, $taskFormButtons) = array("", "");
-    if ($showType != "Success")
-        list($taskForm, $taskFormButtons) = CBPDocument::ShowTaskForm($arTask, $userId, "", ($_SERVER["REQUEST_METHOD"] == "POST" && $_POST["action"] == "doTask") ? $_REQUEST : null);
+    if ($showType != "Success") {
+        list($taskForm, $taskFormButtons) = CBPDocument::ShowTaskForm(
+            $arTask,
+            $userId,
+            "",
+            ($_SERVER["REQUEST_METHOD"] == "POST" && $_POST["action"] == "doTask") ? $_REQUEST : null
+        );
+    }
 
     ?>
     <form method="post" name="task_delegate" action="<?= GetPagePath(false, true) ?>">
@@ -148,8 +196,9 @@ if (!$arTask) {
         <input type="hidden" name="back_url" value="<?= htmlspecialcharsbx($backUrl) ?>">
         <?= bitrix_sessid_post() ?>
         <?
-        if ($allowAdminAccess)
+        if ($allowAdminAccess) {
             echo '<input type="hidden" name="uid" value="' . intval($arTask["USER_ID"]) . '">';
+        }
         ?>
         <input type="hidden" name="delegate_to" onchange="submit()">
     </form>
@@ -170,11 +219,17 @@ if (!$arTask) {
         <input type="hidden" name="back_url" value="<?= htmlspecialcharsbx($backUrl) ?>">
         <?= bitrix_sessid_post() ?>
         <?
-        if ($allowAdminAccess)
+        if ($allowAdminAccess) {
             echo '<input type="hidden" name="uid" value="' . intval($arTask["USER_ID"]) . '">';
+        }
 
         $aTabs = array(
-            array("DIV" => "edit1", "TAB" => GetMessage("BPAT_TAB"), "ICON" => "bizproc", "TITLE" => GetMessage("BPAT_TAB_TITLE"))
+            array(
+                "DIV" => "edit1",
+                "TAB" => GetMessage("BPAT_TAB"),
+                "ICON" => "bizproc",
+                "TITLE" => GetMessage("BPAT_TAB_TITLE")
+            )
         );
 
         $tabControl = new CAdminTabControl("tabControl", $aTabs);
@@ -189,7 +244,11 @@ if (!$arTask) {
                     <?
                     $dbUserTmp = CUser::GetByID($arTask["USER_ID"]);
                     $arUserTmp = $dbUserTmp->GetNext();
-                    $str = $arUserTmp ? CUser::FormatName(COption::GetOptionString("bizproc", "name_template", CSite::GetNameFormat(false), SITE_ID), $arUserTmp, true) : GetMessage('BPAT_USER_NOT_FOUND');
+                    $str = $arUserTmp ? CUser::FormatName(
+                        COption::GetOptionString("bizproc", "name_template", CSite::GetNameFormat(false), SITE_ID),
+                        $arUserTmp,
+                        true
+                    ) : GetMessage('BPAT_USER_NOT_FOUND');
                     $str .= " [" . $arTask["USER_ID"] . "]";
                     echo $str;
                     ?>
@@ -204,7 +263,7 @@ if (!$arTask) {
             <td align="right" valign="top" width="40%"><?= GetMessage("BPAT_DESCR") ?>:</td>
             <td width="60%" valign="top"><?= nl2br($arTask["DESCRIPTION"]) ?></td>
         </tr>
-        <? if (strlen($arTask["PARAMETERS"]["DOCUMENT_URL"]) > 0):?>
+        <? if ($arTask["PARAMETERS"]["DOCUMENT_URL"] <> ''):?>
             <tr>
                 <td align="right" valign="top" width="40%">&nbsp;</td>
                 <td width="60%" valign="top"><a href="<?= $arTask["PARAMETERS"]["DOCUMENT_URL"] ?>"

@@ -62,24 +62,28 @@ class Element
     public function loadFromDatabase()
     {
         $this->elementPropertyValues = array();
-        $this->loadElementProperties($this->iblockId, array(
-            "IBLOCK_ID" => $this->iblockId,
-            "=ID" => $this->elementId,
-        ));
-        if ($this->skuIblockId > 0 && $this->skuPropertyId > 0) {
-            $this->loadElementProperties($this->skuIblockId, array(
+        $this->loadElementProperties(
+            $this->iblockId,
+            array(
                 "IBLOCK_ID" => $this->iblockId,
-                "ACTIVE" => "Y",
-                "=PROPERTY_" . $this->skuPropertyId => $this->elementId,
-            ));
+                "=ID" => $this->elementId,
+            )
+        );
+        if ($this->skuIblockId > 0 && $this->skuPropertyId > 0) {
+            $this->loadElementProperties(
+                $this->skuIblockId,
+                array(
+                    "IBLOCK_ID" => $this->iblockId,
+                    "ACTIVE" => "Y",
+                    "=PROPERTY_" . $this->skuPropertyId => $this->elementId,
+                )
+            );
         }
 
         $this->elementPrices = array();
         if (self::$catalog) {
-            $elements = $this->elementPropertyValues["IBLOCK_ELEMENT_ID"];
-            if ($elements) {
-                $this->loadElementPrices($elements);
-            }
+            $elements = $this->elementPropertyValues["IBLOCK_ELEMENT_ID"] ?? [$this->elementId];
+            $this->loadElementPrices($elements);
         }
 
         $this->elementSections = array();
@@ -89,22 +93,24 @@ class Element
     /**
      * Fills member elementPropertyValues member with property values.
      *
-     * @param integer $iblockId Information block identifier.
+     * @param int $iblockId Information block identifier.
      * @param array[string]string $elementFilter Element property values criteria.
      *
      * @return void
      */
-    protected function loadElementProperties($iblockId, array $elementFilter)
+    protected function loadElementProperties(int $iblockId, array $elementFilter)
     {
         if (!isset(self::$filterPropertyID[$iblockId])) {
             self::$filterPropertyID[$iblockId] = [];
-            $properties = \Bitrix\Iblock\SectionPropertyTable::getList(array(
-                "select" => array("PROPERTY_ID"),
-                "filter" => array(
-                    "=IBLOCK_ID" => array($this->iblockId, $this->skuIblockId),
-                    "=SMART_FILTER" => "Y",
-                ),
-            ));
+            $properties = \Bitrix\Iblock\SectionPropertyTable::getList(
+                array(
+                    "select" => array("PROPERTY_ID"),
+                    "filter" => array(
+                        "=IBLOCK_ID" => array($this->iblockId, $this->skuIblockId),
+                        "=SMART_FILTER" => "Y",
+                    ),
+                )
+            );
             while ($property = $properties->fetch()) {
                 self::$filterPropertyID[$iblockId][] = $property['PROPERTY_ID'];
             }
@@ -122,13 +128,18 @@ class Element
         while ($element = $elementList->fetch()) {
             foreach ($element as $propertyId => $value) {
                 if ($value !== false) {
-                    if (!isset($this->elementPropertyValues[$propertyId]))
+                    if (!isset($this->elementPropertyValues[$propertyId])) {
                         $this->elementPropertyValues[$propertyId] = array();
+                    }
 
-                    if (is_array($value))
-                        $this->elementPropertyValues[$propertyId] = array_merge($this->elementPropertyValues[$propertyId], $value);
-                    else
+                    if (is_array($value)) {
+                        $this->elementPropertyValues[$propertyId] = array_merge(
+                            $this->elementPropertyValues[$propertyId],
+                            $value
+                        );
+                    } else {
                         $this->elementPropertyValues[$propertyId][] = $value;
+                    }
                 }
             }
         }
@@ -143,13 +154,24 @@ class Element
      */
     protected function loadElementPrices(array $productList)
     {
-        $priceList = \Bitrix\Catalog\PriceTable::getList(array(
-            'select' => array('ID', 'PRODUCT_ID', 'CATALOG_GROUP_ID', 'PRICE', 'CURRENCY', 'QUANTITY_FROM', 'QUANTITY_TO'),
-            'filter' => array('@PRODUCT_ID' => $productList)
-        ));
+        $priceList = \Bitrix\Catalog\PriceTable::getList(
+            array(
+                'select' => array(
+                    'ID',
+                    'PRODUCT_ID',
+                    'CATALOG_GROUP_ID',
+                    'PRICE',
+                    'CURRENCY',
+                    'QUANTITY_FROM',
+                    'QUANTITY_TO'
+                ),
+                'filter' => array('@PRODUCT_ID' => $productList)
+            )
+        );
         while ($price = $priceList->fetch()) {
-            if (!isset($this->elementPrices[$price["CATALOG_GROUP_ID"]][$price["CURRENCY"]]))
+            if (!isset($this->elementPrices[$price["CATALOG_GROUP_ID"]][$price["CURRENCY"]])) {
                 $this->elementPrices[$price["CATALOG_GROUP_ID"]][$price["CURRENCY"]] = array();
+            }
             $priceValue = (float)$price["PRICE"];
             $this->elementPrices[$price["CATALOG_GROUP_ID"]][$price["CURRENCY"]][(string)$priceValue] = $priceValue;
         }
@@ -194,10 +216,11 @@ class Element
      */
     public function getPropertyValues($propertyId)
     {
-        if (!$this->elementPropertyValues[$propertyId])
+        if (!$this->elementPropertyValues[$propertyId]) {
             return array();
-        else
+        } else {
             return $this->elementPropertyValues[$propertyId];
+        }
     }
 
     /**

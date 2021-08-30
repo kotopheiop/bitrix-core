@@ -38,16 +38,19 @@ class PaySystem extends Base\Restriction
      */
     public static function check($params, array $restrictionParams, $serviceId = 0)
     {
-        if ((int)$serviceId <= 0)
+        if ((int)$serviceId <= 0) {
             return true;
+        }
 
-        if (!$params)
+        if (!$params) {
             return true;
+        }
 
         $paySystemIds = self::getPaySystemsByCompanyId($serviceId);
 
-        if (empty($paySystemIds))
+        if (empty($paySystemIds)) {
             return true;
+        }
 
         $diff = array_diff($params, $paySystemIds);
 
@@ -74,8 +77,9 @@ class PaySystem extends Base\Restriction
             if ($shipmentCollection) {
                 /** @var \Bitrix\Sale\Order $order */
                 $order = $shipmentCollection->getOrder();
-                if ($order)
+                if ($order) {
                     $paymentCollection = $order->getPaymentCollection();
+                }
             }
         } elseif ($entity instanceOf Sale\Order) {
             $paymentCollection = $entity->getPaymentCollection();
@@ -85,8 +89,9 @@ class PaySystem extends Base\Restriction
             /** @var \Bitrix\Sale\Payment $payment */
             foreach ($paymentCollection as $payment) {
                 $paySystemId = $payment->getPaymentSystemId();
-                if ($paySystemId)
+                if ($paySystemId) {
                     $result[] = $paySystemId;
+                }
             }
         }
 
@@ -101,8 +106,9 @@ class PaySystem extends Base\Restriction
         $result = array();
 
         $dbRes = Sale\PaySystem\Manager::getList(array('select' => array('ID', 'NAME')));
-        while ($paySystem = $dbRes->fetch())
+        while ($paySystem = $dbRes->fetch()) {
             $result[$paySystem['ID']] = $paySystem['NAME'] . ' [' . $paySystem['ID'] . ']';
+        }
 
         return $result;
     }
@@ -133,20 +139,23 @@ class PaySystem extends Base\Restriction
     protected static function getPaySystemsByCompanyId($companyId = 0)
     {
         $result = array();
-        if ($companyId == 0)
+        if ($companyId == 0) {
             return $result;
+        }
 
         $dbRes = CompanyServiceTable::getList(
             array(
                 'select' => array('SERVICE_ID'),
                 'filter' => array(
                     'COMPANY_ID' => $companyId,
-                    'SERVICE_TYPE' => Sale\Services\Company\Restrictions\Manager::SERVICE_TYPE_PAYMENT)
+                    'SERVICE_TYPE' => Sale\Services\Company\Restrictions\Manager::SERVICE_TYPE_PAYMENT
+                )
             )
         );
 
-        while ($data = $dbRes->fetch())
+        while ($data = $dbRes->fetch()) {
             $result[] = $data['SERVICE_ID'];
+        }
 
         return $result;
     }
@@ -175,7 +184,13 @@ class PaySystem extends Base\Restriction
             while ($data = $dbRes->fetch()) {
                 $key = array_search($data['SERVICE_ID'], $serviceIds['PAYSYSTEM']);
                 if (!$key) {
-                    CompanyServiceTable::delete(array('COMPANY_ID' => $fields['SERVICE_ID'], 'SERVICE_ID' => $data['SERVICE_ID'], 'SERVICE_TYPE' => Sale\Services\Company\Restrictions\Manager::SERVICE_TYPE_PAYMENT));
+                    CompanyServiceTable::delete(
+                        array(
+                            'COMPANY_ID' => $fields['SERVICE_ID'],
+                            'SERVICE_ID' => $data['SERVICE_ID'],
+                            'SERVICE_TYPE' => Sale\Services\Company\Restrictions\Manager::SERVICE_TYPE_PAYMENT
+                        )
+                    );
                 } else {
                     unset($serviceIds['PAYSYSTEM'][$key]);
                 }
@@ -184,7 +199,10 @@ class PaySystem extends Base\Restriction
 
         $result = parent::save($fields, $restrictionId);
 
-        $addFields = array('COMPANY_ID' => $fields['SERVICE_ID'], 'SERVICE_TYPE' => Sale\Services\Company\Restrictions\Manager::SERVICE_TYPE_PAYMENT);
+        $addFields = array(
+            'COMPANY_ID' => $fields['SERVICE_ID'],
+            'SERVICE_TYPE' => Sale\Services\Company\Restrictions\Manager::SERVICE_TYPE_PAYMENT
+        );
         foreach ($serviceIds['PAYSYSTEM'] as $id) {
             $addFields['SERVICE_ID'] = $id;
             CompanyServiceTable::add($addFields);
@@ -222,7 +240,13 @@ class PaySystem extends Base\Restriction
         );
 
         while ($data = $dbRes->fetch()) {
-            CompanyServiceTable::delete(array('COMPANY_ID' => $entityId, 'SERVICE_ID' => $data['SERVICE_ID'], 'SERVICE_TYPE' => Sale\Services\Company\Restrictions\Manager::SERVICE_TYPE_PAYMENT));
+            CompanyServiceTable::delete(
+                array(
+                    'COMPANY_ID' => $entityId,
+                    'SERVICE_ID' => $data['SERVICE_ID'],
+                    'SERVICE_TYPE' => Sale\Services\Company\Restrictions\Manager::SERVICE_TYPE_PAYMENT
+                )
+            );
         }
 
         return parent::delete($restrictionId);

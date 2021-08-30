@@ -4,6 +4,7 @@ namespace Bitrix\Photogallery\Copy\Stepper;
 
 use Bitrix\Iblock\Copy\Implement\Element as ElementImplementer;
 use Bitrix\Main\Application;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Copy\Container;
 use Bitrix\Main\Copy\ContainerCollection;
 use Bitrix\Main\Copy\EntityCopier;
@@ -45,23 +46,31 @@ class Section extends Stepper
 
             $sectionId = ($queueOption["sectionId"] ?: 0);
             $copiedSectionId = ($queueOption["copiedSectionId"] ?: 0);
+            $errorOffset = ($queueOption["errorOffset"] ?: 0);
 
             $limit = 5;
-            $offset = $this->getOffset($copiedSectionId);
+            $offset = $this->getOffset($copiedSectionId) + $errorOffset;
 
             $enumRatio = ($queueOption["enumRatio"] ?: []);
             $sectionsRatio = ($queueOption["sectionsRatio"] ?: []);
+            $mapIdsCopiedElements = ($queueOption["mapIdsCopiedElements"] ?: []);
 
             if ($sectionId) {
                 list($elementIds, $selectedRowsCount) = $this->getElementIds($sectionId, $limit, $offset);
 
                 $elementCopier = $this->getElementCopier();
                 $containerCollection = $this->getContainerCollection($elementIds, $sectionsRatio, $enumRatio);
-                $elementCopier->copy($containerCollection);
+                $result = $elementCopier->copy($containerCollection);
+                if (!$result->isSuccess()) {
+                    $queueOption["errorOffset"] += $this->getErrorOffset($elementCopier);
+                }
+
+                $mapIdsCopiedElements = $elementCopier->getMapIdsCopiedEntity() + $mapIdsCopiedElements;
+                $queueOption["mapIdsCopiedElements"] = $mapIdsCopiedElements;
+                $this->saveQueueOption($queueOption);
 
                 if ($selectedRowsCount < $limit) {
-                    $this->afterQueueCopy($queueOption);
-                    $this->deleteCurrentQueue($queue);
+                    $this->onAfterQueueCopy($queueOption);
                     $this->deleteQueueOption();
                     return !$this->isQueueEmpty();
                 } else {
@@ -69,8 +78,7 @@ class Section extends Stepper
                     return true;
                 }
             } else {
-                $this->afterQueueCopy($queueOption);
-                $this->deleteCurrentQueue($queue);
+                $this->onAfterQueueCopy($queueOption);
                 $this->deleteQueueOption();
                 return !$this->isQueueEmpty();
             }
@@ -88,8 +96,10 @@ class Section extends Stepper
         $connection = Application::getInstance()->getConnection();
         $sqlHelper = $connection->getSqlHelper();
 
-        $queryObject = $connection->query("SELECT ID FROM `b_iblock_element` WHERE `IBLOCK_SECTION_ID` = '" .
-            $sqlHelper->forSql($sectionId) . "' ORDER BY ID ASC LIMIT " . $limit . " OFFSET " . $offset);
+        $queryObject = $connection->query(
+            "SELECT ID FROM `b_iblock_element` WHERE `IBLOCK_SECTION_ID` = '" .
+            $sqlHelper->forSql($sectionId) . "' ORDER BY ID ASC LIMIT " . $limit . " OFFSET " . $offset
+        );
         $selectedRowsCount = $queryObject->getSelectedRowsCount();
         while ($element = $queryObject->fetch()) {
             $elementIds[] = $element["ID"];
@@ -105,8 +115,10 @@ class Section extends Stepper
         $connection = Application::getInstance()->getConnection();
         $sqlHelper = $connection->getSqlHelper();
 
-        $queryObject = $connection->query("SELECT ID FROM `b_iblock_element` WHERE `IBLOCK_SECTION_ID` = '" .
-            $sqlHelper->forSql($copiedSectionId) . "' ORDER BY ID");
+        $queryObject = $connection->query(
+            "SELECT ID FROM `b_iblock_element` WHERE `IBLOCK_SECTION_ID` = '" .
+            $sqlHelper->forSql($copiedSectionId) . "' ORDER BY ID"
+        );
         while ($element = $queryObject->fetch()) {
             $elementIds[] = $element["ID"];
         }
@@ -114,7 +126,14 @@ class Section extends Stepper
         return count($elementIds);
     }
 
-    protected function getContainerCollection($elementIds, array $sectionsRatio, array $enumRatio, $targetIblockId = 0)
+    private function getErrorOffset(EntityCopier $elementCopier): int
+    {
+        $numberIds = count($elementCopier->getMapIdsCopiedEntity());
+        $numberSuccessIds = count(array_filter($elementCopier->getMapIdsCopiedEntity()));
+        return $numberIds - $numberSuccessIds;
+    }
+
+    private function getContainerCollection($elementIds, array $sectionsRatio, array $enumRatio, $targetIblockId = 0)
     {
         $containerCollection = new ContainerCollection();
 
@@ -135,21 +154,28 @@ class Section extends Stepper
         return $containerCollection;
     }
 
-    protected function getElementCopier()
+    private function getElementCopier()
     {
         $elementImplementer = new ElementImplementer();
         return new EntityCopier($elementImplementer);
     }
 
-    protected function afterQueueCopy(array $queueOption): void
+    private function onAfterQueueCopy(array $queueOption): void
     {
         $copiedSectionId = ($queueOption["copiedSectionId"] ?: 0);
         if (!$copiedSectionId) {
             return;
         }
 
-        $queryObject = \CIBlockSection::getList([], [
-            "ID" => $copiedSectionId, "CHECK_PERMISSIONS" => "N"], false, ["IBLOCK_ID"]);
+        $queryObject = \CIBlockSection::getList(
+            [],
+            [
+                "ID" => $copiedSectionId,
+                "CHECK_PERMISSIONS" => "N"
+            ],
+            false,
+            ["IBLOCK_ID"]
+        );
         if ($fields = $queryObject->fetch()) {
             $iblockId = $fields["IBLOCK_ID"];
             if (!$iblockId) {
@@ -164,5 +190,68 @@ class Section extends Stepper
 
             PClearComponentCacheEx($iblockId, $sectionIds);
         }
+    }
+
+    protected function getQueue(): array
+    {
+        return $this->getOptionData($this->queueName);
+    }
+
+    protected function setQueue(array $queue): void
+    {
+        $queueId = (string)current($queue);
+        $this->checkerName = (mb_strpos($this->checkerName, $queueId) === false ?
+            $this->checkerName . $queueId : $this->checkerName);
+        $this->baseName = (mb_strpos($this->baseName, $queueId) === false ?
+            $this->baseName . $queueId : $this->baseName);
+        $this->errorName = (mb_strpos($this->errorName, $queueId) === false ?
+            $this->errorName . $queueId : $this->errorName);
+    }
+
+    protected function getQueueOption()
+    {
+        return $this->getOptionData($this->baseName);
+    }
+
+    protected function saveQueueOption(array $data)
+    {
+        Option::set(static::$moduleId, $this->baseName, serialize($data));
+    }
+
+    protected function deleteQueueOption()
+    {
+        $queue = $this->getQueue();
+        $this->setQueue($queue);
+        $this->deleteCurrentQueue($queue);
+        Option::delete(static::$moduleId, ["name" => $this->checkerName]);
+        Option::delete(static::$moduleId, ["name" => $this->baseName]);
+    }
+
+    protected function deleteCurrentQueue(array $queue): void
+    {
+        $queueId = current($queue);
+        $currentPos = array_search($queueId, $queue);
+        if ($currentPos !== false) {
+            unset($queue[$currentPos]);
+            Option::set(static::$moduleId, $this->queueName, serialize($queue));
+        }
+    }
+
+    protected function isQueueEmpty()
+    {
+        $queue = $this->getOptionData($this->queueName);
+        return empty($queue);
+    }
+
+    protected function getOptionData($optionName)
+    {
+        $option = Option::get(static::$moduleId, $optionName);
+        $option = ($option !== "" ? unserialize($option, ['allowed_classes' => false]) : []);
+        return (is_array($option) ? $option : []);
+    }
+
+    protected function deleteOption($optionName)
+    {
+        Option::delete(static::$moduleId, ["name" => $optionName]);
     }
 }

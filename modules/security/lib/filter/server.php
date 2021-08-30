@@ -38,20 +38,20 @@ class Server
 
         foreach ($values as $key => &$val) {
             if (
-                substr($key, 0, 5) === 'HTTP_'
+                mb_substr($key, 0, 5) === 'HTTP_'
                 || in_array($key, $this->interestingKeys, true)
             ) {
                 $val = $this->filterVar('server', $val, '$_SERVER["' . $key . '"]');
             }
-
         }
         unset($val);
 
         $this->onFilterFinished();
 
-        if (!$isReturnChangedOnly || isset($this->changedContext['server']))
+        if (!$isReturnChangedOnly || isset($this->changedContext['server'])) {
             return $values;
-        else
+        } else {
             return null;
+        }
     }
 }

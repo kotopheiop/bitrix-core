@@ -14,6 +14,7 @@ use Bitrix\Main\Error;
 use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\ORM;
+use Bitrix\Main\Web\Uri;
 
 Loc::loadLanguageFile(__FILE__);
 
@@ -49,6 +50,8 @@ class Agreement
     /** @var DataProvider|null $dataProvider Data provider. */
     protected $dataProvider;
 
+    private $isAgreementTextHtml;
+
     /**
      * Get active agreement list.
      *
@@ -57,11 +60,13 @@ class Agreement
     public static function getActiveList()
     {
         $result = array();
-        $list = Internals\AgreementTable::getList(array(
-            'select' => array('ID', 'NAME'),
-            'filter' => array('=ACTIVE' => 'Y'),
-            'order' => array('ID' => 'DESC')
-        ));
+        $list = Internals\AgreementTable::getList(
+            array(
+                'select' => array('ID', 'NAME'),
+                'filter' => array('=ACTIVE' => 'Y'),
+                'order' => array('ID' => 'DESC')
+            )
+        );
         foreach ($list as $item) {
             $result[$item['ID']] = $item['NAME'];
         }
@@ -94,6 +99,8 @@ class Agreement
         $this->intl = new Intl();
         $this->load($id);
         $this->setReplace($replace);
+
+        $this->isAgreementTextHtml = ($this->data['IS_AGREEMENT_TEXT_HTML'] == 'Y');
     }
 
     /**
@@ -185,6 +192,8 @@ class Agreement
     {
         unset($data['ID']);
         $this->data = $data;
+
+        $this->isAgreementTextHtml = ($this->data['IS_AGREEMENT_TEXT_HTML'] == 'Y');
     }
 
     /**
@@ -213,6 +222,10 @@ class Agreement
 
         if (!$this->check()) {
             return;
+        }
+
+        if ($this->isAgreementTextHtml) {
+            (new \CBXSanitizer)->sanitizeHtml($data['AGREEMENT_TEXT']);
         }
 
         if ($this->id) {
@@ -272,6 +285,11 @@ class Agreement
         return ($this->data['ACTIVE'] == self::ACTIVE);
     }
 
+    public function isAgreementTextHtml(): bool
+    {
+        return $this->isAgreementTextHtml;
+    }
+
     /**
      * Return true if is custom type.
      *
@@ -297,13 +315,13 @@ class Agreement
         $text = trim($text);
         $maxLength = 50;
         $pos = min(
-            strpos($text, "\n") ?: 50,
-            strpos($text, "<br>") ?: 50,
-            strpos($text, ".") ?: 50,
+            mb_strpos($text, "\n") ?: 50,
+            mb_strpos($text, "<br>") ?: 50,
+            mb_strpos($text, ".") ?: 50,
             $maxLength
         );
 
-        return substr($text, 0, $pos);
+        return mb_substr($text, 0, $pos);
     }
 
     /**
@@ -313,6 +331,40 @@ class Agreement
      * @return string
      */
     public function getText($cutTitle = false)
+    {
+        $text = $this->getContent($cutTitle);
+
+        return ($this->isAgreementTextHtml ? strip_tags($text) : $text);
+    }
+
+    /**
+     * Get html.
+     * @return string
+     */
+    public function getHtml()
+    {
+        $text = $this->getContent();
+
+        $text = ($this->isAgreementTextHtml ? $text : nl2br($text));
+        $sanitizer = new \CBXSanitizer;
+        $sanitizer->setLevel(\CBXSanitizer::SECURE_LEVEL_MIDDLE);
+        $sanitizer->allowAttributes(
+            [
+                'target' => [
+                    'tag' => function ($tag) {
+                        return $tag === 'a';
+                    },
+                    'content' => function ($tag) {
+                        return true;
+                    },
+                ]
+            ]
+        );
+
+        return $sanitizer->sanitizeHtml($text);
+    }
+
+    private function getContent($cutTitle = false)
     {
         if ($this->isCustomType()) {
             return $this->data['AGREEMENT_TEXT'];
@@ -329,8 +381,8 @@ class Agreement
         $text = trim($text);
         if ($cutTitle) {
             $title = self::getTitleFromText($text);
-            if (strlen($title) !== 50 && $title === substr($text, 0, strlen($title))) {
-                $text = trim(substr($text, strlen($title)));
+            if (mb_strlen($title) !== 50 && $title === mb_substr($text, 0, mb_strlen($title))) {
+                $text = trim(mb_substr($text, mb_strlen($title)));
             }
         }
 
@@ -344,12 +396,62 @@ class Agreement
      */
     public function getLabelText()
     {
-        if ($this->isCustomType()) {
-            return $this->data['LABEL_TEXT'];
+        return str_replace('%', '', $this->getLabel());
+    }
+
+    /**
+     * Get url.
+     *
+     * @return string
+     */
+    public function getUrl()
+    {
+        return ($this->data['USE_URL'] === 'Y' && $this->data['URL'])
+            ? (new Uri($this->data['URL']))->getLocator()
+            : null;
+    }
+
+    /**
+     * Get label with synbols '%' for link in label text.
+     *
+     * @return string
+     */
+    public function getLabel()
+    {
+        $text = $this->isCustomType() ? $this->data['LABEL_TEXT'] : $this->intl->getLabelText();
+        $text = Text::replace($text, $this->replace);
+
+        if ($this->data['USE_URL'] !== 'Y') {
+            return str_replace('%', '', $text);
         }
 
-        $label = $this->intl->getLabelText();
-        return Text::replace($label, $this->replace);
+        $text = trim(trim($text), "%");
+        $text = explode('%', $text);
+        $text = array_filter($text);
+
+        /** @var array $text */
+        switch (count($text)) {
+            case 0:
+            case 1:
+                $text = array_merge([''], $text, ['']);
+                break;
+
+            case 2:
+                $text[] = '';
+                break;
+
+            case 3:
+                break;
+
+            default:
+                $text = array_merge(
+                    array_slice($text, 0, 2),
+                    [implode('', array_slice($text, 2))]
+                );
+                break;
+        }
+
+        return implode('%', $text);
     }
 
     /**

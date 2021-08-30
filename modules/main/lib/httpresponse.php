@@ -3,14 +3,15 @@
 namespace Bitrix\Main;
 
 use Bitrix\Main\Config;
+use Bitrix\Main\Engine;
 use Bitrix\Main\Web;
 
 class HttpResponse extends Response
 {
-    const STORE_COOKIE_NAME = "STORE_COOKIES";
+    public const STORE_COOKIE_NAME = "STORE_COOKIES";
 
     /** @var \Bitrix\Main\Web\Cookie[] */
-    protected $cookies = array();
+    protected $cookies = [];
 
     /** @var Web\HttpHeaders */
     protected $headers;
@@ -18,32 +19,45 @@ class HttpResponse extends Response
     /** @var \Bitrix\Main\Type\DateTime */
     protected $lastModified;
 
-    protected $backgroundJobs = [];
-
     public function __construct()
     {
         parent::__construct();
 
-        $this->initializeHeaders();
+        $this->setHeaders(new Web\HttpHeaders());
     }
 
-    protected function initializeHeaders()
-    {
-        if ($this->headers === null) {
-            $this->setHeaders(new Web\HttpHeaders());
-        }
-
-        return $this;
-    }
-
+    /**
+     * Flushes the content to the output buffer. All following output will be ignored.
+     * @param string $text
+     */
     public function flush($text = '')
     {
-        if (empty($this->backgroundJobs)) {
+        //clear all buffers - the response is responsible alone for its content
+        while (@ob_end_clean()) {
+            ;
+        }
+
+        if (function_exists("fastcgi_finish_request")) {
+            //php-fpm
             $this->writeHeaders();
             $this->writeBody($text);
+
+            fastcgi_finish_request();
         } else {
-            $this->closeConnection($text);
-            $this->runBackgroundJobs();
+            //apache handler
+            ob_start();
+
+            $this->writeBody($text);
+
+            $size = ob_get_length();
+
+            $this->addHeader('Content-Length', $size);
+
+            $this->writeHeaders();
+
+            ob_end_flush();
+            @ob_flush();
+            flush();
         }
     }
 
@@ -57,8 +71,9 @@ class HttpResponse extends Response
      */
     public function addHeader($name, $value = '')
     {
-        if (empty($name))
+        if (empty($name)) {
             throw new ArgumentNullException("name");
+        }
 
         $this->getHeaders()->add($name, $value);
 
@@ -138,8 +153,6 @@ class HttpResponse extends Response
      */
     public function getHeaders()
     {
-        $this->initializeHeaders();
-
         return $this->headers;
     }
 
@@ -149,7 +162,9 @@ class HttpResponse extends Response
     public function writeHeaders()
     {
         if ($this->lastModified !== null) {
-            $this->flushHeader(array("Last-Modified", gmdate("D, d M Y H:i:s", $this->lastModified->getTimestamp()) . " GMT"));
+            $this->flushHeader(
+                array("Last-Modified", gmdate("D, d M Y H:i:s", $this->lastModified->getTimestamp()) . " GMT")
+            );
         }
 
         foreach ($this->getHeaders() as $name => $values) {
@@ -164,17 +179,25 @@ class HttpResponse extends Response
             }
         }
 
+        $cookiesCrypter = new Web\CookiesCrypter();
         foreach ($this->cookies as $cookie) {
-            $this->setCookie($cookie);
+            if (!$cookiesCrypter->shouldEncrypt($cookie)) {
+                $this->setCookie($cookie);
+            } else {
+                foreach ($cookiesCrypter->encrypt($cookie) as $cryptoCookie) {
+                    $this->setCookie($cryptoCookie);
+                }
+            }
         }
     }
 
     protected function flushHeader($header)
     {
-        if (is_array($header))
+        if (is_array($header)) {
             header(sprintf("%s: %s", $header[0], $header[1]));
-        else
+        } else {
             header($header);
+        }
 
         return $this;
     }
@@ -201,22 +224,21 @@ class HttpResponse extends Response
      *
      * @param string $status
      * @return $this
-     * @throws ArgumentNullException
-     * @throws ArgumentOutOfRangeException
      */
     public function setStatus($status)
     {
         $httpStatus = Config\Configuration::getValue("http_status");
 
         $cgiMode = (stristr(php_sapi_name(), "cgi") !== false);
-        if ($cgiMode && (($httpStatus == null) || ($httpStatus == false))) {
+        if ($cgiMode && ($httpStatus == null || $httpStatus == false)) {
             $this->addHeader("Status", $status);
         } else {
             $httpHeaders = $this->getHeaders();
             $httpHeaders->delete($this->getStatus());
 
-            $server = Context::getCurrent()->getServer();
-            $this->addHeader($server->get("SERVER_PROTOCOL") . " " . $status);
+            $proto = $this->getServerProtocol();
+
+            $this->addHeader("{$proto} {$status}");
         }
 
         return $this;
@@ -233,7 +255,7 @@ class HttpResponse extends Response
             return $cgiStatus;
         }
 
-        $prefixStatus = strtolower(Context::getCurrent()->getServer()->get("SERVER_PROTOCOL") . ' ');
+        $prefixStatus = strtolower($this->getServerProtocol() . ' ');
         $prefixStatusLength = strlen($prefixStatus);
         foreach ($this->getHeaders() as $name => $value) {
             if (substr(strtolower($name), 0, $prefixStatusLength) === $prefixStatus) {
@@ -242,6 +264,18 @@ class HttpResponse extends Response
         }
 
         return null;
+    }
+
+    protected function getServerProtocol()
+    {
+        $context = Context::getCurrent();
+        if ($context !== null) {
+            $server = $context->getServer();
+            if ($server !== null) {
+                return $server->get("SERVER_PROTOCOL");
+            }
+        }
+        return "HTTP/1.0";
     }
 
     /**
@@ -259,53 +293,56 @@ class HttpResponse extends Response
         return $this;
     }
 
-    public function addBackgroundJob(callable $job, array $args = [])
+    /**
+     * @param $url
+     * @return Engine\Response\Redirect
+     */
+    final public function redirectTo($url): HttpResponse
     {
-        $this->backgroundJobs[] = [$job, $args];
+        $redirectResponse = new Engine\Response\Redirect($url);
 
-        return $this;
+        return $this->copyHeadersTo($redirectResponse);
     }
 
-    protected function runBackgroundJobs()
+    public function copyHeadersTo(HttpResponse $response): HttpResponse
     {
-        $lastException = null;
+        $httpHeaders = $response->getHeaders();
 
-        foreach ($this->backgroundJobs as $job) {
-            try {
-                call_user_func_array($job[0], $job[1]);
-            } catch (\Exception $exception) {
-                $lastException = $exception;
+        $status = $response->getStatus();
+        $previousStatus = $this->getStatus();
+        foreach ($this->getHeaders() as $headerName => $values) {
+            if ($this->shouldIgnoreHeaderToClone($headerName)) {
+                continue;
             }
+
+            if ($status && $headerName === $previousStatus) {
+                continue;
+            }
+
+            if ($httpHeaders->get($headerName)) {
+                continue;
+            }
+
+            $httpHeaders->add($headerName, $values);
         }
 
-        if ($lastException !== null) {
-            throw $lastException;
+        foreach ($this->getCookies() as $cookie) {
+            $response->addCookie($cookie, false);
         }
+
+        return $response;
     }
 
-    private function closeConnection($content = "")
+    private function shouldIgnoreHeaderToClone($headerName)
     {
-        while (@ob_end_clean()) ;
-
-        ob_start();
-
-        echo $content;
-
-        $size = ob_get_length();
-
-        $this
-            ->addHeader('Connection', 'close')
-            ->addHeader('Content-Encoding', 'none')
-            ->addHeader('Content-Length', $size);
-
-        $this->writeHeaders();
-
-        ob_end_flush();
-        @ob_flush();
-        flush();
-
-        if (function_exists("fastcgi_finish_request")) {
-            fastcgi_finish_request();
-        }
+        return in_array(
+            strtolower($headerName),
+            [
+                'content-encoding',
+                'content-length',
+                'content-type',
+            ],
+            true
+        );
     }
 }

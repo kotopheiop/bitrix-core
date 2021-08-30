@@ -11,8 +11,9 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
 
-if ($saleModulePermissions < "W")
+if ($saleModulePermissions < "W") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 global $USER_FIELD_MANAGER, $USER;
 IncludeModuleLangFile(__FILE__);
@@ -31,8 +32,9 @@ if ($request->isPost() && $request->getPost("update") && check_bitrix_sessid() &
     $name = $request->getPost('NAME');
     $locationId = $request->getPost('LOCATION_ID');
 
-    if (empty($name))
+    if (empty($name)) {
         $errorMessage .= GetMessage('ERROR_NO_NAME') . "\n";
+    }
 
     if (empty($errorMessage)) {
         $uFields = array();
@@ -46,8 +48,9 @@ if ($request->isPost() && $request->getPost("update") && check_bitrix_sessid() &
             'ACTIVE' => ($request->getPost('ACTIVE') !== null) ? 'Y' : 'N'
         );
 
-        if ($request->getPost('SORT') > 0)
+        if ($request->getPost('SORT') > 0) {
             $fields['SORT'] = $request->getPost('SORT');
+        }
 
         $fields = array_merge($fields, $uFields);
 
@@ -74,30 +77,36 @@ if ($request->isPost() && $request->getPost("update") && check_bitrix_sessid() &
 
             if ($groups = $request->getPost('GROUPS')) {
                 foreach ($groups as $groupId) {
-                    $r = \Bitrix\Sale\Internals\CompanyGroupTable::add(array(
-                        'COMPANY_ID' => $id,
-                        'GROUP_ID' => $groupId,
-                    ));
-
+                    $r = \Bitrix\Sale\Internals\CompanyGroupTable::add(
+                        array(
+                            'COMPANY_ID' => $id,
+                            'GROUP_ID' => $groupId,
+                        )
+                    );
                 }
-
             }
 
             if ($responsibleGroups = $request->getPost('RESPONSIBLE_GROUPS')) {
                 foreach ($responsibleGroups as $groupId) {
-                    $r = \Bitrix\Sale\Internals\CompanyResponsibleGroupTable::add(array(
-                        'COMPANY_ID' => $id,
-                        'GROUP_ID' => $groupId,
-                    ));
-
+                    $r = \Bitrix\Sale\Internals\CompanyResponsibleGroupTable::add(
+                        array(
+                            'COMPANY_ID' => $id,
+                            'GROUP_ID' => $groupId,
+                        )
+                    );
                 }
-
             }
 
-            if (strlen($request->getPost("apply")) == 0)
+            if ($request->getPost("apply") == '') {
                 LocalRedirect("/bitrix/admin/sale_company.php?lang=" . $lang . "&" . GetFilterParams("filter_", false));
-            else
-                LocalRedirect("/bitrix/admin/sale_company_edit.php?lang=" . $lang . "&ID=" . $id . "&" . GetFilterParams("filter_", false));
+            } else {
+                LocalRedirect(
+                    "/bitrix/admin/sale_company_edit.php?lang=" . $lang . "&ID=" . $id . "&" . GetFilterParams(
+                        "filter_",
+                        false
+                    )
+                );
+            }
         } else {
             $errorMessage .= join("\n", $result->getErrorMessages());
         }
@@ -108,13 +117,15 @@ require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_a
 
 Main\Page\Asset::getInstance()->addJs("/bitrix/js/sale/company.js");
 
-if ($errorMessage !== '')
+if ($errorMessage !== '') {
     CAdminMessage::ShowMessage($errorMessage);
+}
 if ($id > 0) {
     $select = array('*', 'CREATED', 'MODIFIED');
     $fields = $USER_FIELD_MANAGER->GetUserFields(CompanyTable::getUfId());
-    foreach ($fields as $field)
+    foreach ($fields as $field) {
         $select[] = $field['FIELD_NAME'];
+    }
 
     $params = array(
         'select' => $select,
@@ -130,8 +141,16 @@ if ($id > 0) {
 
 $aTabs = array(
     array("DIV" => "edit1", "TAB" => GetMessage("COMPANY_TAB"), "TITLE" => GetMessage("COMPANY_TAB_DESCR")),
-    array("DIV" => "edit2", "TAB" => GetMessage("COMPANY_USER_FIELD_TAB"), "TITLE" => GetMessage("COMPANY_USER_FIELD_TAB_DESCR")),
-    array("DIV" => "edit3", "TAB" => GetMessage("COMPANY_RULES_USE_TAB"), "TITLE" => GetMessage("COMPANY_RULES_USE_TAB_DESCR")),
+    array(
+        "DIV" => "edit2",
+        "TAB" => GetMessage("COMPANY_USER_FIELD_TAB"),
+        "TITLE" => GetMessage("COMPANY_USER_FIELD_TAB_DESCR")
+    ),
+    array(
+        "DIV" => "edit3",
+        "TAB" => GetMessage("COMPANY_RULES_USE_TAB"),
+        "TITLE" => GetMessage("COMPANY_RULES_USE_TAB_DESCR")
+    ),
 );
 $tabControl = new CAdminForm("company_edit", $aTabs);
 $tabControl->BeginPrologContent();
@@ -154,34 +173,48 @@ $fields = ($request->isPost()) ? $_POST : $company;
 
 $tabControl->AddViewField("ID", "ID:", $company['ID']);
 if ($id > 0) {
-    $createdBy = htmlspecialcharsbx($company['SALE_INTERNALS_COMPANY_CREATED_LAST_NAME']) . ' ' . htmlspecialcharsbx($company['SALE_INTERNALS_COMPANY_CREATED_NAME']);
-    $modifiedBy = htmlspecialcharsbx($company['SALE_INTERNALS_COMPANY_CREATED_LAST_NAME']) . ' ' . htmlspecialcharsbx($company['SALE_INTERNALS_COMPANY_CREATED_NAME']);
+    $createdBy = htmlspecialcharsbx($company['SALE_INTERNALS_COMPANY_CREATED_LAST_NAME']) . ' ' . htmlspecialcharsbx(
+            $company['SALE_INTERNALS_COMPANY_CREATED_NAME']
+        );
+    $modifiedBy = htmlspecialcharsbx($company['SALE_INTERNALS_COMPANY_CREATED_LAST_NAME']) . ' ' . htmlspecialcharsbx(
+            $company['SALE_INTERNALS_COMPANY_CREATED_NAME']
+        );
     $tabControl->AddViewField('DATE_CREATE', GetMessage("COMPANY_DATE_CREATE"), $company['DATE_CREATE']);
     $tabControl->AddViewField('DATE_MODIFY', GetMessage("COMPANY_DATE_MODIFY"), $company['DATE_MODIFY']);
     $tabControl->AddViewField('CREATED_BY', GetMessage("COMPANY_CREATED_BY"), $createdBy);
-    if ($modifiedBy)
+    if ($modifiedBy) {
         $tabControl->AddViewField('MODIFIED_BY', GetMessage("COMPANY_MODIFIED_BY"), $modifiedBy);
+    }
 }
 $tabControl->AddCheckBoxField("ACTIVE", GetMessage("COMPANY_ACTIVE"), false, 'Y', $fields['ACTIVE'] != 'N');
-$tabControl->AddEditField("NAME", GetMessage("COMPANY_NAME"), true, array('size' => 120), htmlspecialcharsbx($fields['NAME']));
+$tabControl->AddEditField(
+    "NAME",
+    GetMessage("COMPANY_NAME"),
+    true,
+    array('size' => 120),
+    htmlspecialcharsbx($fields['NAME'])
+);
 
 $tabControl->BeginCustomField('LOCATIONS', GetMessage("COMPANY_LOCATION_ID"));
 if ($saleModulePermissions >= 'W'):?>
     <tr>
         <td style="vertical-align: top"><?= GetMessage("COMPANY_LOCATION_ID"); ?></td>
         <td>
-            <? $APPLICATION->IncludeComponent("bitrix:sale.location.selector." . \Bitrix\Sale\Location\Admin\LocationHelper::getWidgetAppearance(), "", array(
-                "ID" => "",
-                "CODE" => $fields['LOCATION_ID'],
-                "INPUT_NAME" => "LOCATION_ID",
-                "PROVIDE_LINK_BY" => "code",
-                "SHOW_ADMIN_CONTROLS" => 'Y',
-                "SELECT_WHEN_SINGLE" => 'N',
-                "FILTER_BY_SITE" => 'Y',
-                "FILTER_SITE_ID" => Application::getInstance()->getContext()->getSite(),
-                "SHOW_DEFAULT_LOCATIONS" => 'N',
-                "SEARCH_BY_PRIMARY" => 'Y'
-            ),
+            <? $APPLICATION->IncludeComponent(
+                "bitrix:sale.location.selector." . \Bitrix\Sale\Location\Admin\LocationHelper::getWidgetAppearance(),
+                "",
+                array(
+                    "ID" => "",
+                    "CODE" => $fields['LOCATION_ID'],
+                    "INPUT_NAME" => "LOCATION_ID",
+                    "PROVIDE_LINK_BY" => "code",
+                    "SHOW_ADMIN_CONTROLS" => 'Y',
+                    "SELECT_WHEN_SINGLE" => 'N',
+                    "FILTER_BY_SITE" => 'Y',
+                    "FILTER_SITE_ID" => Application::getInstance()->getContext()->getSite(),
+                    "SHOW_DEFAULT_LOCATIONS" => 'N',
+                    "SEARCH_BY_PRIMARY" => 'Y'
+                ),
                 false
             ); ?>
         </td>
@@ -198,8 +231,9 @@ else:
         );
 
         $chain = array();
-        while ($item = $res->fetch())
+        while ($item = $res->fetch()) {
             $chain[] = $item['CHAIN'];
+        }
 
         $path = implode(', ', array_reverse($chain));
     } catch (Main\SystemException $e) {
@@ -214,24 +248,29 @@ else:
 endif;
 $tabControl->EndCustomField('LOCATIONS', '');
 
-$tabControl->AddTextField("ADDRESS", GetMessage("COMPANY_LOCATION"), htmlspecialcharsbx($fields['ADDRESS']), array('cols' => 60, 'rows' => 5));
+$tabControl->AddTextField(
+    "ADDRESS",
+    GetMessage("COMPANY_LOCATION"),
+    htmlspecialcharsbx($fields['ADDRESS']),
+    array('cols' => 60, 'rows' => 5)
+);
 
 $tabControl->BeginCustomField('USER_GROUPS', GetMessage("COMPANY_GROUPS"));
 $currentGroups = array();
 if ($id > 0) {
-    $resCompayGroup = \Bitrix\Sale\Internals\CompanyGroupTable::getList(array(
-        'filter' => array('=COMPANY_ID' => $id),
-        'select' => array('GROUP_ID')
-    ));
+    $resCompayGroup = \Bitrix\Sale\Internals\CompanyGroupTable::getList(
+        array(
+            'filter' => array('=COMPANY_ID' => $id),
+            'select' => array('GROUP_ID')
+        )
+    );
     while ($companyGroup = $resCompayGroup->fetch()) {
         $currentGroups[] = $companyGroup['GROUP_ID'];
     }
 }
 
-$b = "c_sort";
-$o = "asc";
 $userGroupList = array();
-$resGroups = CGroup::GetList($b, $o, array("ANONYMOUS" => "N"));
+$resGroups = CGroup::GetList("c_sort", "asc", array("ANONYMOUS" => "N"));
 while ($groupData = $resGroups->Fetch()) {
     $groupData["ID"] = (int)$groupData["ID"];
     $userGroupList[] = $groupData;
@@ -245,7 +284,9 @@ while ($groupData = $resGroups->Fetch()) {
             <?
             foreach ($userGroupList as $userGroupData) {
                 ?>
-                <option value="<?= $userGroupData["ID"] ?>"<? if (in_array($userGroupData["ID"], $currentGroups)) echo " selected"; ?>><?= htmlspecialcharsEx($userGroupData["NAME"]) ?></option><?
+                <option value="<?= $userGroupData["ID"] ?>"<? if (in_array($userGroupData["ID"], $currentGroups)) {
+                    echo " selected";
+                } ?>><?= htmlspecialcharsEx($userGroupData["NAME"]) ?></option><?
             }
             ?>
         </select>
@@ -257,19 +298,19 @@ $tabControl->EndCustomField('USER_GROUPS', '');
 $tabControl->BeginCustomField('RESPONSIBLE_USER_GROUPS', GetMessage("COMPANY_RESPONSIBLE_GROUPS"));
 $currentResponsibleGroups = array();
 if ($id > 0) {
-    $resCompayGroup = \Bitrix\Sale\Internals\CompanyResponsibleGroupTable::getList(array(
-        'filter' => array('=COMPANY_ID' => $id),
-        'select' => array('GROUP_ID')
-    ));
+    $resCompayGroup = \Bitrix\Sale\Internals\CompanyResponsibleGroupTable::getList(
+        array(
+            'filter' => array('=COMPANY_ID' => $id),
+            'select' => array('GROUP_ID')
+        )
+    );
     while ($companyGroup = $resCompayGroup->fetch()) {
         $currentResponsibleGroups[] = $companyGroup['GROUP_ID'];
     }
 }
 
-$b = "c_sort";
-$o = "asc";
 $userGroupList = array();
-$resGroups = CGroup::GetList($b, $o, array("ANONYMOUS" => "N"));
+$resGroups = CGroup::GetList("c_sort", "asc", array("ANONYMOUS" => "N"));
 while ($groupData = $resGroups->Fetch()) {
     $groupData["ID"] = (int)$groupData["ID"];
     $userGroupList[] = $groupData;
@@ -283,7 +324,12 @@ while ($groupData = $resGroups->Fetch()) {
             <?
             foreach ($userGroupList as $userGroupData) {
                 ?>
-                <option value="<?= $userGroupData["ID"] ?>"<? if (in_array($userGroupData["ID"], $currentResponsibleGroups)) echo " selected"; ?>><?= htmlspecialcharsEx($userGroupData["NAME"]) ?></option><?
+                <option value="<?= $userGroupData["ID"] ?>"<? if (in_array(
+                    $userGroupData["ID"],
+                    $currentResponsibleGroups
+                )) {
+                    echo " selected";
+                } ?>><?= htmlspecialcharsEx($userGroupData["NAME"]) ?></option><?
             }
             ?>
         </select>
@@ -292,7 +338,13 @@ while ($groupData = $resGroups->Fetch()) {
 <?
 $tabControl->EndCustomField('RESPONSIBLE_USER_GROUPS', '');
 $tabControl->AddEditField("SORT", GetMessage("COMPANY_SORT"), false, array('size' => 30), $fields['SORT']);
-$tabControl->AddEditField("CODE", GetMessage("COMPANY_CODE"), false, array('size' => 30), htmlspecialcharsbx($fields['CODE']));
+$tabControl->AddEditField(
+    "CODE",
+    GetMessage("COMPANY_CODE"),
+    false,
+    array('size' => 30),
+    htmlspecialcharsbx($fields['CODE'])
+);
 
 $tabControl->BeginNextFormTab();
 $tabControl->ShowUserFieldsWithReadyData(CompanyTable::getUfId(), $fields, false, 'ID');
@@ -313,10 +365,12 @@ if ($id > 0):
     $tabControl->EndCustomField('COMPANY_RULES');
 endif;
 
-$tabControl->Buttons(array(
-    "disabled" => ($saleModulePermissions < 'W'),
-    "back_url" => "sale_company.php?lang=" . $lang
-));
+$tabControl->Buttons(
+    array(
+        "disabled" => ($saleModulePermissions < 'W'),
+        "back_url" => "sale_company.php?lang=" . $lang
+    )
+);
 
 $tabControl->Show();
 ?>

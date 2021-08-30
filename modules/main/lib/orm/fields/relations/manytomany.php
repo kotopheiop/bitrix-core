@@ -205,10 +205,14 @@ class ManyToMany extends Relation
                 // there is no described mediator entity
                 // check table_name first, entity can not exist without it
                 if (empty($this->mediatorTableName)) {
-                    throw new ArgumentException(sprintf(
-                        'Table Name for mediator entity of relation `%s` between %s and %s was not found',
-                        $this->name, $this->getEntity()->getObjectClass(), $this->getRefEntity()->getObjectClass()
-                    ));
+                    throw new ArgumentException(
+                        sprintf(
+                            'Table Name for mediator entity of relation `%s` between %s and %s was not found',
+                            $this->name,
+                            $this->getEntity()->getObjectClass(),
+                            $this->getRefEntity()->getObjectClass()
+                        )
+                    );
                 }
 
                 // generate mediator entity runtime
@@ -247,7 +251,11 @@ class ManyToMany extends Relation
                 }
 
                 // local reference
-                $localReference = (new Reference($this->getLocalReferenceName(), $this->getEntity(), $localReferenceConditions))
+                $localReference = (new Reference(
+                    $this->getLocalReferenceName(),
+                    $this->getEntity(),
+                    $localReferenceConditions
+                ))
                     ->configureJoinType($this->joinType);
                 $fields[] = $localReference;
 
@@ -274,7 +282,11 @@ class ManyToMany extends Relation
                 }
 
                 // remote reference
-                $remoteReference = (new Reference($this->getRemoteReferenceName(), $this->getRefEntity(), $remoteReferenceConditions))
+                $remoteReference = (new Reference(
+                    $this->getRemoteReferenceName(),
+                    $this->getRefEntity(),
+                    $remoteReferenceConditions
+                ))
                     ->configureJoinType($this->joinType);
                 $fields[] = $remoteReference;
 

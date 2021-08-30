@@ -80,11 +80,14 @@ class GoogleApiSection
     private function saveSection($responseFields, $section)
     {
         $sectionId = \CCalendarSect::Edit(
-            ['arFields' => [
-                'ID' => $section['ID'],
-                'GAPI_CALENDAR_ID' => $responseFields['GAPI_CALENDAR_ID'],
-                'CAL_DAV_CON' => $this->connection,
-            ]]);
+            [
+                'arFields' => [
+                    'ID' => $section['ID'],
+                    'GAPI_CALENDAR_ID' => $responseFields['GAPI_CALENDAR_ID'],
+                    'CAL_DAV_CON' => $this->connection,
+                ]
+            ]
+        );
 
         return $sectionId ?: false;
     }

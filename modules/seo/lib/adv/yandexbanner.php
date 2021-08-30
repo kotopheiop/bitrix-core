@@ -168,11 +168,13 @@ class YandexBannerTable extends AdvEntity
                 $bannerSettings = $engine->getBanners(array($data['XML_ID']));
                 $data['SETTINGS'] = $bannerSettings[0];
             } catch (Engine\YandexDirectException $e) {
-                $result->addError(new Entity\FieldError(
-                    static::getEntity()->getField('ENGINE_ID'),
-                    $e->getMessage(),
-                    $e->getCode()
-                ));
+                $result->addError(
+                    new Entity\FieldError(
+                        static::getEntity()->getField('ENGINE_ID'),
+                        $e->getMessage(),
+                        $e->getCode()
+                    )
+                );
             }
         }
 
@@ -211,19 +213,23 @@ class YandexBannerTable extends AdvEntity
             $engine = self::getEngine();
 
             if ($currentData['ENGINE_ID'] != $engine->getId()) {
-                $result->addError(new Entity\FieldError(
-                    static::getEntity()->getField('ENGINE_ID'),
-                    Loc::getMessage("SEO_CAMPAIGN_ERROR_WRONG_ENGINE")
-                ));
+                $result->addError(
+                    new Entity\FieldError(
+                        static::getEntity()->getField('ENGINE_ID'),
+                        Loc::getMessage("SEO_CAMPAIGN_ERROR_WRONG_ENGINE")
+                    )
+                );
             }
 
             $ownerInfo = $engine->getCurrentUser();
 
             if ($currentData['OWNER_ID'] != $ownerInfo['id']) {
-                $result->addError(new Entity\FieldError(
-                    static::getEntity()->getField('OWNER_ID'),
-                    Loc::getMessage("SEO_CAMPAIGN_ERROR_WRONG_OWNER")
-                ));
+                $result->addError(
+                    new Entity\FieldError(
+                        static::getEntity()->getField('OWNER_ID'),
+                        Loc::getMessage("SEO_CAMPAIGN_ERROR_WRONG_OWNER")
+                    )
+                );
             }
 
             $data['OWNER_NAME'] = $ownerInfo['login'];
@@ -293,15 +299,18 @@ class YandexBannerTable extends AdvEntity
 
             $engine = self::getEngine();
 
-            $dbRes = static::getList(array(
-                'filter' => array(
-                    '=ID' => $primary,
-                    '=ENGINE_ID' => $engine->getId(),
-                ),
-                'select' => array(
-                    'XML_ID', 'CAMPAIGN_XML_ID' => 'CAMPAIGN.XML_ID',
+            $dbRes = static::getList(
+                array(
+                    'filter' => array(
+                        '=ID' => $primary,
+                        '=ENGINE_ID' => $engine->getId(),
+                    ),
+                    'select' => array(
+                        'XML_ID',
+                        'CAMPAIGN_XML_ID' => 'CAMPAIGN.XML_ID',
+                    )
                 )
-            ));
+            );
             $banner = $dbRes->fetch();
 
             if ($banner) {
@@ -355,10 +364,12 @@ class YandexBannerTable extends AdvEntity
             if ($campaign) {
                 $data['SETTINGS']['CampaignID'] = $campaign['XML_ID'];
             } else {
-                $result->addError(new Entity\FieldError(
-                    static::getEntity()->getField('CAMPAIGN_ID'),
-                    Loc::getMessage('SEO_BANNER_ERROR_CAMPAIGN_NOT_FOUND')
-                ));
+                $result->addError(
+                    new Entity\FieldError(
+                        static::getEntity()->getField('CAMPAIGN_ID'),
+                        Loc::getMessage('SEO_BANNER_ERROR_CAMPAIGN_NOT_FOUND')
+                    )
+                );
             }
         }
 
@@ -369,45 +380,61 @@ class YandexBannerTable extends AdvEntity
         if ($newBanner || isset($data['SETTINGS']["Title"])) {
             $bannerParam["Title"] = trim($data['SETTINGS']["Title"]);
 
-            if (strlen($bannerParam["Title"]) <= 0) {
-                $result->addError(new Entity\FieldError(
-                    static::getEntity()->getField('NAME'),
-                    Loc::getMessage('SEO_BANNER_ERROR_NO_NAME')
-                ));
-            } elseif (strlen($bannerParam["Title"]) > static::MAX_TITLE_LENGTH) {
-                $result->addError(new Entity\FieldError(
-                    static::getEntity()->getField('NAME'),
-                    Loc::getMessage('SEO_BANNER_ERROR_LONG_NAME', array(
-                        "#MAX#" => static::MAX_TITLE_LENGTH,
-                    ))
-                ));
+            if ($bannerParam["Title"] == '') {
+                $result->addError(
+                    new Entity\FieldError(
+                        static::getEntity()->getField('NAME'),
+                        Loc::getMessage('SEO_BANNER_ERROR_NO_NAME')
+                    )
+                );
+            } elseif (mb_strlen($bannerParam["Title"]) > static::MAX_TITLE_LENGTH) {
+                $result->addError(
+                    new Entity\FieldError(
+                        static::getEntity()->getField('NAME'),
+                        Loc::getMessage(
+                            'SEO_BANNER_ERROR_LONG_NAME',
+                            array(
+                                "#MAX#" => static::MAX_TITLE_LENGTH,
+                            )
+                        )
+                    )
+                );
             }
         }
 
         if ($newBanner || isset($data['SETTINGS']["Text"])) {
             $bannerParam["Text"] = trim($data['SETTINGS']["Text"]);
-            if (strlen($bannerParam["Text"]) <= 0) {
-                $result->addError(new Entity\FieldError(
-                    static::getEntity()->getField('SETTINGS'),
-                    Loc::getMessage('SEO_BANNER_ERROR_NO_TEXT')
-                ));
-            } elseif (strlen($bannerParam["Text"]) > static::MAX_TEXT_LENGTH) {
-                $result->addError(new Entity\FieldError(
-                    static::getEntity()->getField('SETTINGS'),
-                    Loc::getMessage('SEO_BANNER_ERROR_LONG_TEXT', array(
-                        "#MAX#" => static::MAX_TEXT_LENGTH,
-                    ))
-                ));
+            if ($bannerParam["Text"] == '') {
+                $result->addError(
+                    new Entity\FieldError(
+                        static::getEntity()->getField('SETTINGS'),
+                        Loc::getMessage('SEO_BANNER_ERROR_NO_TEXT')
+                    )
+                );
+            } elseif (mb_strlen($bannerParam["Text"]) > static::MAX_TEXT_LENGTH) {
+                $result->addError(
+                    new Entity\FieldError(
+                        static::getEntity()->getField('SETTINGS'),
+                        Loc::getMessage(
+                            'SEO_BANNER_ERROR_LONG_TEXT',
+                            array(
+                                "#MAX#" => static::MAX_TEXT_LENGTH,
+                            )
+                        )
+                    )
+                );
             }
         }
 
         if ($newBanner || isset($data['SETTINGS']["Href"])) {
             $bannerParam["Href"] = trim($data['SETTINGS']["Href"]);
-            if (strlen($bannerParam["Href"]) <= 0) {
-                $result->addError(new Entity\FieldError(
-                    static::getEntity()->getField('SETTINGS'),
-                    Loc::getMessage('SEO_BANNER_ERROR_NO_HREF')
-                ));
+            if ($bannerParam["Href"] == '') {
+                $result->addError(
+                    new Entity\FieldError(
+                        static::getEntity()->getField('SETTINGS'),
+                        Loc::getMessage('SEO_BANNER_ERROR_NO_HREF')
+                    )
+                );
             }
         }
 
@@ -421,22 +448,29 @@ class YandexBannerTable extends AdvEntity
         }
 
         if ($newBanner || isset($data["SETTINGS"]["Phrases"])) {
-            if (strlen($data["SETTINGS"]["Geo"]) <= 0) {
-                $result->addError(new Entity\FieldError(
-                    static::getEntity()->getField('SETTINGS'),
-                    Loc::getMessage('SEO_BANNER_ERROR_NO_GEO')
-                ));
+            if ($data["SETTINGS"]["Geo"] == '') {
+                $result->addError(
+                    new Entity\FieldError(
+                        static::getEntity()->getField('SETTINGS'),
+                        Loc::getMessage('SEO_BANNER_ERROR_NO_GEO')
+                    )
+                );
             } elseif (!is_array($data["SETTINGS"]["Phrases"]) || count($data["SETTINGS"]["Phrases"]) <= 0) {
-                $result->addError(new Entity\FieldError(
-                    static::getEntity()->getField('SETTINGS'),
-                    Loc::getMessage('SEO_BANNER_ERROR_NO_PHRASES')
-                ));
+                $result->addError(
+                    new Entity\FieldError(
+                        static::getEntity()->getField('SETTINGS'),
+                        Loc::getMessage('SEO_BANNER_ERROR_NO_PHRASES')
+                    )
+                );
             } else {
                 $bannerParam["Phrases"] = $data["SETTINGS"]["Phrases"];
 
                 foreach ($bannerParam["Phrases"] as $key => $phraseInfo) {
-                    if (is_numeric($phraseInfo['AutoBudgetPriority']))
-                        $phraseInfo['AutoBudgetPriority'] = static::$priorityList[intval($phraseInfo['AutoBudgetPriority'])];
+                    if (is_numeric($phraseInfo['AutoBudgetPriority'])) {
+                        $phraseInfo['AutoBudgetPriority'] = static::$priorityList[intval(
+                            $phraseInfo['AutoBudgetPriority']
+                        )];
+                    }
 
                     $bannerParam["Phrases"][$key] = $phraseInfo;
                 }
@@ -445,7 +479,7 @@ class YandexBannerTable extends AdvEntity
 
         if ($newBanner || isset($data["SETTINGS"]["MinusKeywords"])) {
             if (!is_array($data["SETTINGS"]["MinusKeywords"])) {
-                if (strlen($data["SETTINGS"]["MinusKeywords"]) > 0) {
+                if ($data["SETTINGS"]["MinusKeywords"] <> '') {
                     $data["SETTINGS"]["MinusKeywords"] = array();
                 } else {
                     $data["SETTINGS"]["MinusKeywords"] = array($data["SETTINGS"]["MinusKeywords"]);
@@ -460,13 +494,15 @@ class YandexBannerTable extends AdvEntity
                 $yandexBannerParam = $engine->getBanners(array($data["XML_ID"]));
 
                 if (!is_array($yandexBannerParam) || count($yandexBannerParam) <= 0) {
-                    $result->addError(new Entity\FieldError(
-                        static::getEntity()->getField('XML_ID'),
-                        Loc::getMessage(
-                            'SEO_CAMPAIGN_ERROR_BANNER_NOT_FOUND',
-                            array('#ID#' => $data["XML_ID"])
+                    $result->addError(
+                        new Entity\FieldError(
+                            static::getEntity()->getField('XML_ID'),
+                            Loc::getMessage(
+                                'SEO_CAMPAIGN_ERROR_BANNER_NOT_FOUND',
+                                array('#ID#' => $data["XML_ID"])
+                            )
                         )
-                    ));
+                    );
                 } else {
                     $bannerParam = array_replace_recursive($yandexBannerParam[0], $bannerParam);
                 }
@@ -492,12 +528,18 @@ class YandexBannerTable extends AdvEntity
 
             $idList = array_map("intval", $idList);
 
-            $update = $sqlHelper->prepareUpdate(static::getTableName(), array(
-                "AUTO_QUANTITY_OFF" => static::MARKED,
-            ));
+            $update = $sqlHelper->prepareUpdate(
+                static::getTableName(),
+                array(
+                    "AUTO_QUANTITY_OFF" => static::MARKED,
+                )
+            );
 
             $connection->queryExecute(
-                "UPDATE " . static::getTableName() . " SET " . $update[0] . " WHERE ID IN (" . implode(",", $idList) . ")"
+                "UPDATE " . static::getTableName() . " SET " . $update[0] . " WHERE ID IN (" . implode(
+                    ",",
+                    $idList
+                ) . ")"
             );
         }
     }
@@ -510,12 +552,18 @@ class YandexBannerTable extends AdvEntity
 
             $idList = array_map("intval", $idList);
 
-            $update = $sqlHelper->prepareUpdate(static::getTableName(), array(
-                "AUTO_QUANTITY_ON" => static::MARKED,
-            ));
+            $update = $sqlHelper->prepareUpdate(
+                static::getTableName(),
+                array(
+                    "AUTO_QUANTITY_ON" => static::MARKED,
+                )
+            );
 
             $connection->queryExecute(
-                "UPDATE " . static::getTableName() . " SET " . $update[0] . " WHERE ID IN (" . implode(",", $idList) . ")"
+                "UPDATE " . static::getTableName() . " SET " . $update[0] . " WHERE ID IN (" . implode(
+                    ",",
+                    $idList
+                ) . ")"
             );
         }
     }
@@ -528,12 +576,18 @@ class YandexBannerTable extends AdvEntity
 
             $idList = array_map("intval", $idList);
 
-            $update = $sqlHelper->prepareUpdate(static::getTableName(), array(
-                "AUTO_QUANTITY_OFF" => static::ACTIVE,
-            ));
+            $update = $sqlHelper->prepareUpdate(
+                static::getTableName(),
+                array(
+                    "AUTO_QUANTITY_OFF" => static::ACTIVE,
+                )
+            );
 
             $connection->queryExecute(
-                "UPDATE " . static::getTableName() . " SET " . $update[0] . " WHERE ID IN (" . implode(",", $idList) . ")"
+                "UPDATE " . static::getTableName() . " SET " . $update[0] . " WHERE ID IN (" . implode(
+                    ",",
+                    $idList
+                ) . ")"
             );
         }
     }
@@ -546,12 +600,18 @@ class YandexBannerTable extends AdvEntity
 
             $idList = array_map("intval", $idList);
 
-            $update = $sqlHelper->prepareUpdate(static::getTableName(), array(
-                "AUTO_QUANTITY_ON" => static::ACTIVE,
-            ));
+            $update = $sqlHelper->prepareUpdate(
+                static::getTableName(),
+                array(
+                    "AUTO_QUANTITY_ON" => static::ACTIVE,
+                )
+            );
 
             $connection->queryExecute(
-                "UPDATE " . static::getTableName() . " SET " . $update[0] . " WHERE ID IN (" . implode(",", $idList) . ")"
+                "UPDATE " . static::getTableName() . " SET " . $update[0] . " WHERE ID IN (" . implode(
+                    ",",
+                    $idList
+                ) . ")"
             );
         }
     }

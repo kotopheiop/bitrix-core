@@ -26,12 +26,14 @@ class LogSubscribe
             $logId <= 0
             && $commentId > 0
         ) {
-            $res = LogCommentTable::getList(array(
-                'filter' => array(
-                    '=ID' => $commentId
-                ),
-                'select' => array('LOG_ID')
-            ));
+            $res = LogCommentTable::getList(
+                array(
+                    'filter' => array(
+                        '=ID' => $commentId
+                    ),
+                    'select' => array('LOG_ID')
+                )
+            );
             if ($logCommentFields = $res->fetch()) {
                 $logId = $logCommentFields['LOG_ID'];
             }
@@ -41,13 +43,15 @@ class LogSubscribe
             return false;
         }
 
-        $res = LogSubscribeTable::getList(array(
-            'filter' => array(
-                '=LOG_ID' => $logId,
-                '=TYPE' => LogSubscribeTable::TYPE_COUNTER_COMMENT_PUSH
-            ),
-            'select' => array('USER_ID')
-        ));
+        $res = LogSubscribeTable::getList(
+            array(
+                'filter' => array(
+                    '=LOG_ID' => $logId,
+                    '=TYPE' => LogSubscribeTable::TYPE_COUNTER_COMMENT_PUSH
+                ),
+                'select' => array('USER_ID')
+            )
+        );
         while ($subscribeFields = $res->fetch()) {
             \Bitrix\Pull\MobileCounter::send($subscribeFields['USER_ID']);
         }

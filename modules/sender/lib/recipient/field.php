@@ -28,7 +28,11 @@ class Field
     {
         static $name;
         if (!$name) {
-            $name = Option::get('sender', 'default_recipient_name', Loc::getMessage('SENDER_RECIPIENT_FIELD_DEFAULT_NAME'));
+            $name = Option::get(
+                'sender',
+                'default_recipient_name',
+                Loc::getMessage('SENDER_RECIPIENT_FIELD_DEFAULT_NAME')
+            );
         }
         return $name;
     }

@@ -71,14 +71,15 @@ class Table extends BaseObject
      *
      * @param Tokenizer $tokenizer Tokens collection.
      * @param boolean $unique Uniqueness flag.
+     * @param boolean $fulltext Fulltext flag.
      * @param string $indexName Optional name of the index.
      *
      * @return Table
      * @see Index::create
      */
-    public function createIndex(Tokenizer $tokenizer, $unique = false, $indexName = '')
+    public function createIndex(Tokenizer $tokenizer, $unique = false, $fulltext = false, $indexName = '')
     {
-        $index = Index::create($tokenizer, $unique, $indexName);
+        $index = Index::create($tokenizer, $unique, $fulltext, $indexName);
         $index->setParent($this);
         $this->indexes->add($index);
         return $this;
@@ -119,11 +120,13 @@ class Table extends BaseObject
         if ($tokenizer->testUpperText('IF')) {
             $tokenizer->skipWhiteSpace();
 
-            if ($tokenizer->testUpperText('NOT'))
+            if ($tokenizer->testUpperText('NOT')) {
                 $tokenizer->skipWhiteSpace();
+            }
 
-            if ($tokenizer->testUpperText('EXISTS'))
+            if ($tokenizer->testUpperText('EXISTS')) {
                 $tokenizer->skipWhiteSpace();
+            }
         }
 
         $table = new Table($tokenizer->getCurrentToken()->text);
@@ -145,15 +148,25 @@ class Table extends BaseObject
                     $table->createIndex($tokenizer, false);
                 } elseif ($tokenizer->testUpperText('UNIQUE')) {
                     $tokenizer->skipWhiteSpace();
-                    if ($tokenizer->testUpperText('KEY'))
+                    if ($tokenizer->testUpperText('KEY')) {
                         $tokenizer->skipWhiteSpace();
-                    elseif ($tokenizer->testUpperText('INDEX'))
+                    } elseif ($tokenizer->testUpperText('INDEX')) {
                         $tokenizer->skipWhiteSpace();
+                    }
                     $table->createIndex($tokenizer, true);
+                } elseif ($tokenizer->testUpperText('FULLTEXT')) {
+                    $tokenizer->skipWhiteSpace();
+                    if ($tokenizer->testUpperText('KEY')) {
+                        $tokenizer->skipWhiteSpace();
+                    } elseif ($tokenizer->testUpperText('INDEX')) {
+                        $tokenizer->skipWhiteSpace();
+                    }
+                    $table->createIndex($tokenizer, false, true);
                 } elseif ($tokenizer->testUpperText('PRIMARY')) {
                     $tokenizer->skipWhiteSpace();
-                    if (!$tokenizer->testUpperText('KEY'))
+                    if (!$tokenizer->testUpperText('KEY')) {
                         throw new NotSupportedException("'KEY' expected. line:" . $tokenizer->getCurrentToken()->line);
+                    }
 
                     $tokenizer->putBack(); //KEY
                     $tokenizer->putBack(); //WS
@@ -173,7 +186,9 @@ class Table extends BaseObject
                         $tokenizer->putBack();
                         $table->createConstraint($tokenizer, $constraintName);
                     } else {
-                        throw new NotSupportedException("'PRIMARY KEY' expected. line:" . $tokenizer->getCurrentToken()->line);
+                        throw new NotSupportedException(
+                            "'PRIMARY KEY' expected. line:" . $tokenizer->getCurrentToken()->line
+                        );
                     }
                 } elseif ($tokenizer->testUpperText(')')) {
                     break;
@@ -191,7 +206,9 @@ class Table extends BaseObject
                     $tokenizer->nextToken();
                     break;
                 } else {
-                    throw new NotSupportedException("',' or ')' expected. line:" . $token->line);
+                    throw new NotSupportedException(
+                        "',' or ')' expected got (" . $token->text . "). line:" . $token->line
+                    );
                 }
 
                 $tokenizer->skipWhiteSpace();
@@ -202,8 +219,9 @@ class Table extends BaseObject
                 $suffix .= $tokenizer->getCurrentToken()->text;
                 $tokenizer->nextToken();
             }
-            if ($suffix)
+            if ($suffix) {
                 $table->setBody($suffix);
+            }
         } else {
             throw new NotSupportedException("'(' expected. line:" . $tokenizer->getCurrentToken()->line);
         }
@@ -230,10 +248,11 @@ class Table extends BaseObject
         if ($dbType !== 'MSSQL') {
             /** @var Constraint $constraint */
             foreach ($this->constraints->getList() as $constraint) {
-                if ($constraint->name === '')
+                if ($constraint->name === '') {
                     $items[] = $constraint->body;
-                else
+                } else {
                     $items[] = "CONSTRAINT " . $constraint->name . " " . $constraint->body;
+                }
             }
         }
         $result[] = "CREATE TABLE " . $this->name . "(\n\t" . implode(",\n\t", $items) . "\n)" . $this->body;

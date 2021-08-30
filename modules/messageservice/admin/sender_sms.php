@@ -1,4 +1,5 @@
 <?
+
 define("ADMIN_MODULE_NAME", "messageservice");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin.php");
 
@@ -25,9 +26,13 @@ if ($isSlider) {
     <div style="background: white">
         <?
         /** @var \CAllMain $APPLICATION */
-        $APPLICATION->IncludeComponent("bitrix:messageservice.config.sender.sms", "", [
-            'SENDER_ID' => isset($_REQUEST['sender_id']) ? $_REQUEST['sender_id'] : null
-        ]);
+        $APPLICATION->IncludeComponent(
+            "bitrix:messageservice.config.sender.sms",
+            "",
+            [
+                'SENDER_ID' => isset($_REQUEST['sender_id']) ? $_REQUEST['sender_id'] : null
+            ]
+        );
         ?>
     </div>
 <?

@@ -13,14 +13,13 @@ use Bitrix\Main\Config\Option;
 use Bitrix\Main\IO\File;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
-
 use Bitrix\Main\SiteTable;
-use Bitrix\Sender\Internals\Model;
 use Bitrix\Sender\Dispatch\Semantics;
-use Bitrix\Sender\Message\Tracker;
 use Bitrix\Sender\Entity;
-use Bitrix\Sender\Message;
 use Bitrix\Sender\Integration\Seo;
+use Bitrix\Sender\Internals\Model;
+use Bitrix\Sender\Message;
+use Bitrix\Sender\Message\Tracker;
 
 /**
  * Class Service
@@ -96,6 +95,25 @@ class Service
     }
 
     /**
+     * Return true if region of cloud portal is Russian.
+     *
+     * @return bool
+     */
+    public static function isCloudRegionMayTrackMails()
+    {
+        return self::isCloud() && in_array(
+                \CBitrix24::getPortalZone(),
+                [
+                    'de',
+                    'eu',
+                    'it',
+                    'pl',
+                    'fr',
+                ]
+            );
+    }
+
+    /**
      * Return true if Ad provider is available in region.
      *
      * @param string $code Service message code.
@@ -103,10 +121,34 @@ class Service
      */
     public static function isAdVisibleInRegion($code)
     {
-        if (!in_array($code, array(Seo\Ads\MessageBase::CODE_ADS_VK, Seo\Ads\MessageBase::CODE_ADS_YA, Seo\Ads\MessageBase::CODE_ADS_LOOKALIKE_VK))) {
+        if (!in_array(
+            $code,
+            array(
+                Seo\Ads\MessageBase::CODE_ADS_VK,
+                Seo\Ads\MessageBase::CODE_ADS_YA,
+                Seo\Ads\MessageBase::CODE_ADS_LOOKALIKE_VK
+            )
+        )) {
             return true;
         }
 
+        if (self::isCloud()) {
+            return self::isCloudRegionRussian();
+        } elseif (Loader::includeModule('intranet')) {
+            return in_array(\CIntranetUtils::getPortalZone(), ['ru', 'kz', 'by']);
+        }
+
+        return true;
+    }
+
+    /**
+     * Return true if toloka is available.
+     *
+     * @param string $code Service message code.
+     * @return bool
+     */
+    public static function isTolokaVisibleInRegion()
+    {
         if (self::isCloud()) {
             return self::isCloudRegionRussian();
         } elseif (Loader::includeModule('intranet')) {
@@ -143,8 +185,12 @@ class Service
                 empty($dateCreate)
                 ||
                 $dateCreate <= mktime(
-                    0, 0, 0,
-                    1, 9, 2019
+                    0,
+                    0,
+                    0,
+                    1,
+                    9,
+                    2019
                 )
             );
     }
@@ -209,7 +255,10 @@ class Service
             }
         }
 
-        if (self::isCloud() && !in_array(substr(BX24_HOST_NAME, -7), ['.com.br', '.com.de'])) // exclude com.br & com.de domains
+        if (self::isCloud() && !in_array(
+                mb_substr(BX24_HOST_NAME, -7),
+                ['.com.br', '.com.de']
+            )) // exclude com.br & com.de domains
         {
             Loader::includeModule('bitrix24');
             $domain = BX24_HOST_NAME;
@@ -265,13 +314,15 @@ class Service
             return;
         }
 
-        $letters = Model\LetterTable::getList(array(
-            'select' => array('ID'),
-            'filter' => array(
-                '=STATUS' => Semantics::getWorkStates(),
-                '!MESSAGE_CODE' => Message\iBase::CODE_MAIL
+        $letters = Model\LetterTable::getList(
+            array(
+                'select' => array('ID'),
+                'filter' => array(
+                    '=STATUS' => Semantics::getWorkStates(),
+                    '!MESSAGE_CODE' => Message\iBase::CODE_MAIL
+                )
             )
-        ));
+        );
 
         $letter = new Entity\Letter();
         foreach ($letters as $letterData) {
@@ -283,8 +334,10 @@ class Service
             $state = $letter->getState();
             if ($state->canReady()) {
                 $state->ready();
-            } else if ($state->canStop()) {
-                $state->stop();
+            } else {
+                if ($state->canStop()) {
+                    $state->stop();
+                }
             }
         }
     }

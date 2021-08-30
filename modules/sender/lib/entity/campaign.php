@@ -43,7 +43,11 @@ class Campaign extends Base
         }
         $parameters['filter']['=IS_TRIGGER'] = 'N';
         if (in_array('SUBSCRIBER_COUNT', $parameters['select'])) {
-            $parameters['runtime'][] = new ExpressionField('SUBSCRIBER_COUNT', 'COUNT(DISTINCT %s)', 'SUBSCRIBER.CONTACT_ID');
+            $parameters['runtime'][] = new ExpressionField(
+                'SUBSCRIBER_COUNT',
+                'COUNT(DISTINCT %s)',
+                'SUBSCRIBER.CONTACT_ID'
+            );
         }
 
         return MailingTable::getList($parameters);
@@ -61,10 +65,12 @@ class Campaign extends Base
     public static function getDefaultId($siteId = null)
     {
         if ($siteId !== null) {
-            if (!SiteTable::getList([
-                'filter' => ['ACTIVE' => 'Y', 'LID' => $siteId],
-                'cache' => 3600
-            ])->fetch()) {
+            if (!SiteTable::getList(
+                [
+                    'filter' => ['ACTIVE' => 'Y', 'LID' => $siteId],
+                    'cache' => 3600
+                ]
+            )->fetch()) {
                 $siteId = null;
             }
         }
@@ -80,21 +86,25 @@ class Campaign extends Base
             return self::$defaultId[$siteId];
         }
 
-        $row = MailingTable::getRow(array(
-            'select' => array('ID'),
-            'filter' => array('=ACTIVE' => 'Y', '=IS_TRIGGER' => 'N', 'SITE_ID' => $siteId),
-            'limit' => 1,
-            'order' => array('ID' => 'DESC')
-        ));
+        $row = MailingTable::getRow(
+            array(
+                'select' => array('ID'),
+                'filter' => array('=ACTIVE' => 'Y', '=IS_TRIGGER' => 'N', 'SITE_ID' => $siteId),
+                'limit' => 1,
+                'order' => array('ID' => 'DESC')
+            )
+        );
         if ($row) {
             self::$defaultId[$siteId] = $row['ID'];
             return self::$defaultId[$siteId];
         }
 
-        $result = MailingTable::add(array(
-            'NAME' => Loc::getMessage('SENDER_ENTITY_CAMPAIGN_NAME_DEFAULT'),
-            'SITE_ID' => $siteId
-        ));
+        $result = MailingTable::add(
+            array(
+                'NAME' => Loc::getMessage('SENDER_ENTITY_CAMPAIGN_NAME_DEFAULT'),
+                'SITE_ID' => $siteId
+            )
+        );
         if ($result->isSuccess()) {
             self::$defaultId[$siteId] = $result->getId();
         }

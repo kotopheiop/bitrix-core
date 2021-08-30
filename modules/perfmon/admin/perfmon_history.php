@@ -1,18 +1,22 @@
 <?
+
+use Bitrix\Main\Loader;
+
 define("ADMIN_MODULE_NAME", "perfmon");
 define("PERFMON_STOP", true);
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 /** @global CMain $APPLICATION */
 /** @global CDatabase $DB */
 /** @global CUser $USER */
-require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/perfmon/include.php");
+Loader::includeModule('perfmon');
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/perfmon/prolog.php");
 
 IncludeModuleLangFile(__FILE__);
 
 $RIGHT = $APPLICATION->GetGroupRight("perfmon");
-if ($RIGHT == "D")
+if ($RIGHT == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $sTableID = "tbl_perfmon_history";
 $lAdmin = new CAdminList($sTableID);
@@ -21,13 +25,15 @@ if (($arID = $lAdmin->GroupAction()) && $RIGHT >= "W") {
     if ($_REQUEST['action_target'] == 'selected') {
         $cData = new CPerfomanceHistory;
         $rsData = $cData->GetList(array("ID" => "ASC"));
-        while ($arRes = $rsData->Fetch())
+        while ($arRes = $rsData->Fetch()) {
             $arID[] = $arRes['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
         $ID = intval($ID);
         switch ($_REQUEST['action']) {
             case "delete":
@@ -37,32 +43,34 @@ if (($arID = $lAdmin->GroupAction()) && $RIGHT >= "W") {
     }
 }
 
-$lAdmin->AddHeaders(array(
+$lAdmin->AddHeaders(
     array(
-        "id" => "ID",
-        "content" => GetMessage("PERFMON_HIST_ID"),
-        "align" => "right",
-        "default" => true,
-    ),
-    array(
-        "id" => "TIMESTAMP_X",
-        "content" => GetMessage("PERFMON_HIST_TIMESTAMP_X"),
-        "align" => "right",
-        "default" => true,
-    ),
-    array(
-        "id" => "TOTAL_MARK",
-        "content" => GetMessage("PERFMON_HIST_TOTAL_MARK"),
-        "align" => "right",
-        "default" => true,
-    ),
-    array(
-        "id" => "ACCELERATOR_ENABLED",
-        "content" => GetMessage("PERFMON_HIST_ACCELERATOR_ENABLED"),
-        "align" => "right",
-        "default" => true,
-    ),
-));
+        array(
+            "id" => "ID",
+            "content" => GetMessage("PERFMON_HIST_ID"),
+            "align" => "right",
+            "default" => true,
+        ),
+        array(
+            "id" => "TIMESTAMP_X",
+            "content" => GetMessage("PERFMON_HIST_TIMESTAMP_X"),
+            "align" => "right",
+            "default" => true,
+        ),
+        array(
+            "id" => "TOTAL_MARK",
+            "content" => GetMessage("PERFMON_HIST_TOTAL_MARK"),
+            "align" => "right",
+            "default" => true,
+        ),
+        array(
+            "id" => "ACCELERATOR_ENABLED",
+            "content" => GetMessage("PERFMON_HIST_ACCELERATOR_ENABLED"),
+            "align" => "right",
+            "default" => true,
+        ),
+    )
+);
 
 $cData = new CPerfomanceHistory;
 $rsData = $cData->GetList(array("ID" => "DESC"));
@@ -83,12 +91,16 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
             "ICON" => "delete",
             "DEFAULT" => "Y",
             "TEXT" => GetMessage("PERFMON_HIST_DELETE"),
-            "ACTION" => "if(confirm('" . GetMessageJS('PERFMON_HIST_DELETE_CONFIRM') . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete"),
+            "ACTION" => "if(confirm('" . GetMessageJS('PERFMON_HIST_DELETE_CONFIRM') . "')) " . $lAdmin->ActionDoGroup(
+                    $f_ID,
+                    "delete"
+                ),
         );
     }
 
-    if (!empty($arActions))
+    if (!empty($arActions)) {
         $row->AddActions($arActions);
+    }
 }
 
 $lAdmin->AddFooter(

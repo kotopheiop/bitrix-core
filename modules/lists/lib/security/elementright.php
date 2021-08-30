@@ -54,13 +54,19 @@ class ElementRight implements RightEntity, Errorable
                 $this->rightParam->getEntityId() &&
                 $this->listsPermission < \CListPermissions::CAN_READ &&
                 !\CIBlockElementRights::userHasRightTo(
-                    $this->rightParam->getIblockId(), $this->rightParam->getEntityId(), "element_read")
+                    $this->rightParam->getIblockId(),
+                    $this->rightParam->getEntityId(),
+                    "element_read"
+                )
             ) ||
             (
                 !$this->rightParam->getEntityId() &&
                 $this->listsPermission < \CListPermissions::CAN_READ &&
                 !\CIBlockSectionRights::userHasRightTo(
-                    $this->rightParam->getIblockId(), $this->rightParam->getEntityId(), "element_read")
+                    $this->rightParam->getIblockId(),
+                    $this->rightParam->getEntityId(),
+                    "element_read"
+                )
             )
         ) {
             $this->errorCollection->setError(new Error("Access denied", self::ACCESS_DENIED));
@@ -82,7 +88,10 @@ class ElementRight implements RightEntity, Errorable
                     (
                         $this->listsPermission >= \CListPermissions::CAN_WRITE ||
                         \CIBlockElementRights::UserHasRightTo(
-                            $this->rightParam->getIblockId(), $this->rightParam->getEntityId(), "element_edit")
+                            $this->rightParam->getIblockId(),
+                            $this->rightParam->getEntityId(),
+                            "element_edit"
+                        )
                     )
                 )
                 || (
@@ -90,7 +99,10 @@ class ElementRight implements RightEntity, Errorable
                     && (
                         $this->listsPermission >= \CListPermissions::CAN_WRITE ||
                         \CIBlockSectionRights::UserHasRightTo(
-                            $this->rightParam->getIblockId(), $this->rightParam->getEntityId(), "section_element_bind")
+                            $this->rightParam->getIblockId(),
+                            $this->rightParam->getEntityId(),
+                            "section_element_bind"
+                        )
                     )
                 ))
         );
@@ -115,7 +127,10 @@ class ElementRight implements RightEntity, Errorable
             (
                 $this->listsPermission > \CListPermissions::CAN_READ ||
                 \CIBlockSectionRights::UserHasRightTo(
-                    $this->rightParam->getIblockId(), $this->rightParam->getEntityId(), "section_element_bind")
+                    $this->rightParam->getIblockId(),
+                    $this->rightParam->getEntityId(),
+                    "section_element_bind"
+                )
             )
         );
 
@@ -140,7 +155,10 @@ class ElementRight implements RightEntity, Errorable
             (
                 $this->listsPermission >= \CListPermissions::CAN_WRITE ||
                 \CIBlockElementRights::UserHasRightTo(
-                    $this->rightParam->getIblockId(), $this->rightParam->getEntityId(), "element_delete")
+                    $this->rightParam->getIblockId(),
+                    $this->rightParam->getEntityId(),
+                    "element_delete"
+                )
             )
         );
 
@@ -164,7 +182,10 @@ class ElementRight implements RightEntity, Errorable
             (
                 $this->listsPermission >= \CListPermissions::IS_ADMIN ||
                 \CIBlockRights::UserHasRightTo(
-                    $this->rightParam->getIblockId(), $this->rightParam->getIblockId(), "iblock_edit")
+                    $this->rightParam->getIblockId(),
+                    $this->rightParam->getIblockId(),
+                    "iblock_edit"
+                )
             )
         );
 

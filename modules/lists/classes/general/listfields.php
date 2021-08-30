@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 class CListFieldList
@@ -21,7 +22,12 @@ class CListFieldList
         }
 
         if (!count($this->fields) || !isset($this->fields["NAME"])) {
-            $this->fields["NAME"] = new CListElementField($this->iblock_id, "NAME", GetMessage("LISTS_LIST_NAME_FIELD_DEFAULT_LABEL"), (count($this->fields) + 1) * 10);
+            $this->fields["NAME"] = new CListElementField(
+                $this->iblock_id,
+                "NAME",
+                GetMessage("LISTS_LIST_NAME_FIELD_DEFAULT_LABEL"),
+                (count($this->fields) + 1) * 10
+            );
         }
     }
 
@@ -31,10 +37,11 @@ class CListFieldList
      */
     public function GetByID($field_id)
     {
-        if (isset($this->fields[$field_id]))
+        if (isset($this->fields[$field_id])) {
             return $this->fields[$field_id];
-        else
+        } else {
             return null;
+        }
     }
 
     public function GetFields()
@@ -84,8 +91,9 @@ class CListFieldList
         }
 
         if (is_object($newField)) {
-            if (isset($arFields["SETTINGS"]))
+            if (isset($arFields["SETTINGS"])) {
                 $newField->SetSettings($arFields["SETTINGS"]);
+            }
 
             $new_field_id = $newField->GetID();
             $this->fields[$new_field_id] = $newField;
@@ -128,8 +136,9 @@ class CListFieldList
         }
 
         if (is_object($newField)) {
-            if (isset($arFields["SETTINGS"]))
+            if (isset($arFields["SETTINGS"])) {
                 $newField->SetSettings($arFields["SETTINGS"]);
+            }
 
             unset($this->fields[$field_id]);
             $new_field_id = $newField->GetID();
@@ -164,28 +173,35 @@ class CListFieldList
             $tab2 = implode("--,--", $arFormLayout);
 
             global $USER;
-            if (is_object($USER) && ((get_class($USER) === 'CUser') || ($USER instanceof CUser)))
-                CUserOptions::DeleteOption("form", $form_id); //This clears custom user settings
+            if (is_object($USER) && ((get_class($USER) === 'CUser') || ($USER instanceof CUser))) {
+                CUserOptions::DeleteOption("form", $form_id);
+            } //This clears custom user settings
             CUserOptions::SetOption("form", $form_id, array("tabs" => $tab1 . "--;--" . $tab2 . "--;--"), true);
         }
     }
 
     protected function _read_form_settings($form_id)
     {
-        if (!$form_id)
+        if (!$form_id) {
             return null;
+        }
 
         global $DB;
 
         //read list meta from module table
-        $rsFields = $DB->Query("
+        $rsFields = $DB->Query(
+            "
 			SELECT * FROM b_lists_field
 			WHERE IBLOCK_ID = " . $this->iblock_id . "
 			ORDER BY SORT ASC
-		", false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+		",
+            false,
+            "File: " . __FILE__ . "<br>Line: " . __LINE__
+        );
         $dbFields = array();
-        while ($arField = $rsFields->Fetch())
+        while ($arField = $rsFields->Fetch()) {
             $dbFields[$arField["FIELD_ID"]] = $arField;
+        }
 
         $fields = array();
         $customTabs = CUserOptions::GetOption("form", $form_id);
@@ -203,10 +219,21 @@ class CListFieldList
                         if ($FIELD_ID != "SECTIONS") {
                             $customName = ltrim($customName, "* -\xa0");
 
-                            if (CListFieldTypeList::IsField($FIELD_ID))
-                                $obField = $fields[$FIELD_ID] = new CListElementField($this->iblock_id, $FIELD_ID, $customName, $sort);
-                            else
-                                $obField = $fields[$FIELD_ID] = new CListPropertyField($this->iblock_id, $FIELD_ID, $customName, $sort);
+                            if (CListFieldTypeList::IsField($FIELD_ID)) {
+                                $obField = $fields[$FIELD_ID] = new CListElementField(
+                                    $this->iblock_id,
+                                    $FIELD_ID,
+                                    $customName,
+                                    $sort
+                                );
+                            } else {
+                                $obField = $fields[$FIELD_ID] = new CListPropertyField(
+                                    $this->iblock_id,
+                                    $FIELD_ID,
+                                    $customName,
+                                    $sort
+                                );
+                            }
 
                             //check if property was deleted from admin interface
                             if (!is_array($obField->GetArray())) {
@@ -221,27 +248,46 @@ class CListFieldList
             }
             //There were some fields "deleted" from interface
             foreach ($dbFields as $FIELD_ID => $arField) {
-                $DB->Query("
+                $DB->Query(
+                    "
 					DELETE FROM b_lists_field
 					WHERE IBLOCK_ID = " . $this->iblock_id . "
 					AND FIELD_ID = '" . $DB->ForSQL($FIELD_ID) . "'
-				", false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+				",
+                    false,
+                    "File: " . __FILE__ . "<br>Line: " . __LINE__
+                );
             }
         } else//or from module metadata
         {
             foreach ($dbFields as $FIELD_ID => $arField) {
-                if (CListFieldTypeList::IsField($FIELD_ID))
-                    $obField = $fields[$FIELD_ID] = new CListElementField($this->iblock_id, $FIELD_ID, $arField["NAME"], $arField["SORT"]);
-                else
-                    $obField = $fields[$FIELD_ID] = new CListPropertyField($this->iblock_id, $FIELD_ID, $arField["NAME"], $arField["SORT"]);
+                if (CListFieldTypeList::IsField($FIELD_ID)) {
+                    $obField = $fields[$FIELD_ID] = new CListElementField(
+                        $this->iblock_id,
+                        $FIELD_ID,
+                        $arField["NAME"],
+                        $arField["SORT"]
+                    );
+                } else {
+                    $obField = $fields[$FIELD_ID] = new CListPropertyField(
+                        $this->iblock_id,
+                        $FIELD_ID,
+                        $arField["NAME"],
+                        $arField["SORT"]
+                    );
+                }
                 //check if property was deleted from admin interface
                 if (!is_array($obField->GetArray())) {
                     unset($fields[$FIELD_ID]);
-                    $DB->Query("
+                    $DB->Query(
+                        "
 						DELETE FROM b_lists_field
 						WHERE IBLOCK_ID = " . $this->iblock_id . "
 						AND FIELD_ID = '" . $DB->ForSQL($FIELD_ID) . "'
-					", false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+					",
+                        false,
+                        "File: " . __FILE__ . "<br>Line: " . __LINE__
+                    );
                 }
             }
         }
@@ -259,20 +305,21 @@ class CListFieldList
         $a_sort = $a->GetSort();
         $b_sort = $b->GetSort();
 
-        if ($a_sort < $b_sort)
+        if ($a_sort < $b_sort) {
             return -1;
-        elseif ($a_sort > $b_sort)
+        } elseif ($a_sort > $b_sort) {
             return 1;
-        else {
+        } else {
             $a_name = $a->GetLabel();
             $b_name = $b->GetLabel();
 
-            if ($a_name < $b_name)
+            if ($a_name < $b_name) {
                 return -1;
-            elseif ($a_name > $b_name)
+            } elseif ($a_name > $b_name) {
                 return 1;
-            else
+            } else {
                 return 0;
+            }
         }
     }
 
@@ -291,15 +338,22 @@ class CListFieldList
     {
         global $DB;
         $iblock_id = intval($iblock_id);
-        $DB->Query("
+        $DB->Query(
+            "
 			DELETE FROM b_lists_field
 			WHERE IBLOCK_ID = " . $iblock_id . "
-		", false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+		",
+            false,
+            "File: " . __FILE__ . "<br>Line: " . __LINE__
+        );
 
-        $rsOptions = CUserOptions::GetList(array("ID" => "ASC"), array(
-            "CATEGORY" => "form",
-            "NAME" => "form_element_" . $iblock_id,
-        ));
+        $rsOptions = CUserOptions::GetList(
+            array("ID" => "ASC"),
+            array(
+                "CATEGORY" => "form",
+                "NAME" => "form_element_" . $iblock_id,
+            )
+        );
         while ($arOption = $rsOptions->Fetch()) {
             CUserOptions::DeleteOption(
                 $arOption["CATEGORY"],

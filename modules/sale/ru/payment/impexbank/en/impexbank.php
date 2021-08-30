@@ -1,4 +1,5 @@
 <?
+
 global $MESS;
 
 $MESS["SIBP_DTITLE"] = "ImpexBank (Russian payment system)";

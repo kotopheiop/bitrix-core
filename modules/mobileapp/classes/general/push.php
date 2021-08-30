@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 class CAdminMobilePush
@@ -9,10 +10,11 @@ class CAdminMobilePush
     {
         $result = true;
 
-        if (strlen($branchName) > 0)
+        if ($branchName <> '') {
             self::$arData[$branchName] = $arData;
-        else
+        } else {
             $result = false;
+        }
 
         return $result;
     }
@@ -31,27 +33,32 @@ class CAdminMobilePush
 
         if (is_array($arPath)) {
             foreach ($arPath as $idx) {
-                if (isset($arResult["SECTIONS"][$idx]))
+                if (isset($arResult["SECTIONS"][$idx])) {
                     $arResult = $arResult["SECTIONS"][$idx];
-                else
+                } else {
                     break;
+                }
             }
         }
 
         return $arResult;
     }
 
-    public function getOptions($path = "")
+    public static function getOptions($path = "")
     {
         global $USER;
         $arOptions = array();
 
-        foreach (GetModuleEvents("mobileapp", "OnBeforeAdminMobilePushOptsLoad", true) as $arHandler)
-            ExecuteModuleEventEx($arHandler, array(
-                $USER->GetID(),
-                $path,
-                &$arOptions
-            ));
+        foreach (GetModuleEvents("mobileapp", "OnBeforeAdminMobilePushOptsLoad", true) as $arHandler) {
+            ExecuteModuleEventEx(
+                $arHandler,
+                array(
+                    $USER->GetID(),
+                    $path,
+                    &$arOptions
+                )
+            );
+        }
 
         if (empty($arOptions)) {
             $arResult = CUserOptions::GetOption('mobileapp', 'push_options', array());
@@ -59,10 +66,11 @@ class CAdminMobilePush
 
             if (is_array($arPath)) {
                 foreach ($arPath as $idx) {
-                    if (isset($arResult[$idx]))
+                    if (isset($arResult[$idx])) {
                         $arResult = $arResult[$idx];
-                    else
+                    } else {
                         break;
+                    }
                 }
             }
         } else {
@@ -72,7 +80,7 @@ class CAdminMobilePush
         return $arResult;
     }
 
-    public function saveOptions($path = "", $arOpts)
+    public static function saveOptions($path = "", $arOpts)
     {
         $result = true;
         $opts = self::getOptions();
@@ -81,8 +89,9 @@ class CAdminMobilePush
 
         if (is_array($arPath)) {
             foreach ($arPath as $pathItem) {
-                if (!isset($arTmp[$pathItem]) || !is_array($arTmp[$pathItem]))
+                if (!isset($arTmp[$pathItem]) || !is_array($arTmp[$pathItem])) {
                     $arTmp[$pathItem] = array();
+                }
 
                 $arTmp = &$arTmp[$pathItem];
             }
@@ -93,10 +102,11 @@ class CAdminMobilePush
         return CUserOptions::SetOption('mobileapp', 'push_options', $opts);
     }
 
-    public function OnAdminMobileGetPushSettings()
+    public static function OnAdminMobileGetPushSettings()
     {
-        foreach (GetModuleEvents("mobileapp", "OnAdminMobileGetPushSettings", true) as $arHandler)
+        foreach (GetModuleEvents("mobileapp", "OnAdminMobileGetPushSettings", true) as $arHandler) {
             ExecuteModuleEventEx($arHandler);
+        }
 
         if (!empty(self::$arData)) {
             $arItems = array();

@@ -128,7 +128,9 @@ final class Manager
 
         $collections = array();
         foreach ($potentialGiftData as $giftData) {
-            $giftData['GiftValue'] = is_array($giftData['GiftValue']) ? $giftData['GiftValue'] : array($giftData['GiftValue']);
+            $giftData['GiftValue'] = is_array(
+                $giftData['GiftValue']
+            ) ? $giftData['GiftValue'] : array($giftData['GiftValue']);
 
             $giftCollection = new Collection(array(), $giftData['Type']);
             foreach ($giftData['GiftValue'] as $value) {
@@ -267,7 +269,7 @@ final class Manager
         $pseudoBasket = $this->getBasketCopy($basket);
         $checkProductInBasket = $this->checkProductInBasket($product, $pseudoBasket);
         if ($checkProductInBasket) {
-            $this->deleteProductFromBasket($pseudoBasket, $product);
+            $this->deleteProductFromBasket($pseudoBasket, $product, false);
         } else {
             $this->addProductToBasket($pseudoBasket, $product);
         }
@@ -337,8 +339,11 @@ final class Manager
      * @param array $calcResults
      * @return array
      */
-    private function getAffectedReformattedBasketItemsInDiscount(Basket $basket, array $discountData, array $calcResults)
-    {
+    private function getAffectedReformattedBasketItemsInDiscount(
+        Basket $basket,
+        array $discountData,
+        array $calcResults
+    ) {
         $items = array();
         foreach ($calcResults['PRICES']['BASKET'] as $basketCode => $priceData) {
             if (empty($priceData['DISCOUNT'])) {
@@ -393,7 +398,10 @@ final class Manager
         if (!$order->setBasket($basket)->isSuccess()) {
             return null;
         }
-        $calcResults = $order->getDiscount()->getApplyResult(true);
+        $discount = $order->getDiscount();
+        $discount->calculate();
+        $calcResults = $discount->getApplyResult(true);
+        unset($discount);
 
         $appliedDiscounts = array();
         foreach ($calcResults['DISCOUNT_LIST'] as $discountData) {
@@ -454,10 +462,10 @@ final class Manager
         }
     }
 
-    private function deleteProductFromBasket(Basket $basket, array $product)
+    private function deleteProductFromBasket(Basket $basket, array $product, bool $checkQuantity = true)
     {
         $item = $this->getItemFromBasket($product, $basket);
-        if ($item && $item->getQuantity() == $product['QUANTITY']) {
+        if ($item && (!$checkQuantity || $item->getQuantity() == $product['QUANTITY'])) {
             $item->delete();
         }
     }

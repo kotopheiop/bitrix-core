@@ -1,21 +1,21 @@
-<?
-
-/***************************************
- * ������ ���������� ���-�����
- ***************************************/
+<?php
 
 class CAllFormStatus
 {
-    function err_mess()
+    public static function err_mess()
     {
         $module_id = "form";
         @include($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/" . $module_id . "/install/version.php");
         return "<br>Module: " . $module_id . " (" . $arModuleVersion["VERSION"] . ")<br>Class: CAllFormStatus<br>File: " . __FILE__;
     }
 
-    // ����� �� ������ �� �������
-    function GetPermissionList($STATUS_ID, &$arPERMISSION_VIEW, &$arPERMISSION_MOVE, &$arPERMISSION_EDIT, &$arPERMISSION_DELETE)
-    {
+    public static function GetPermissionList(
+        $STATUS_ID,
+        &$arPERMISSION_VIEW,
+        &$arPERMISSION_MOVE,
+        &$arPERMISSION_EDIT,
+        &$arPERMISSION_DELETE
+    ) {
         $err_mess = (CAllFormStatus::err_mess()) . "<br>Function: GetPermissionList<br>Line: ";
         global $DB, $strError;
         $STATUS_ID = intval($STATUS_ID);
@@ -31,22 +31,27 @@ class CAllFormStatus
 			";
         $z = $DB->Query($strSql, false, $err_mess . __LINE__);
         while ($zr = $z->Fetch()) {
-            if ($zr["PERMISSION"] == "VIEW") $arPERMISSION_VIEW[] = $zr["GROUP_ID"];
-            if ($zr["PERMISSION"] == "MOVE") $arPERMISSION_MOVE[] = $zr["GROUP_ID"];
-            if ($zr["PERMISSION"] == "EDIT") $arPERMISSION_EDIT[] = $zr["GROUP_ID"];
-            if ($zr["PERMISSION"] == "DELETE") $arPERMISSION_DELETE[] = $zr["GROUP_ID"];
+            if ($zr["PERMISSION"] == "VIEW") {
+                $arPERMISSION_VIEW[] = $zr["GROUP_ID"];
+            }
+            if ($zr["PERMISSION"] == "MOVE") {
+                $arPERMISSION_MOVE[] = $zr["GROUP_ID"];
+            }
+            if ($zr["PERMISSION"] == "EDIT") {
+                $arPERMISSION_EDIT[] = $zr["GROUP_ID"];
+            }
+            if ($zr["PERMISSION"] == "DELETE") {
+                $arPERMISSION_DELETE[] = $zr["GROUP_ID"];
+            }
         }
-
     }
 
-    // ���������� ������ ������������ ���� �� ���������
-    function GetMaxPermissions()
+    public static function GetMaxPermissions()
     {
         return array("VIEW", "MOVE", "EDIT", "DELETE");
     }
 
-    // ����� �� ������
-    function GetPermissions($STATUS_ID)
+    public static function GetPermissions($STATUS_ID)
     {
         $err_mess = (CAllFormStatus::err_mess()) . "<br>Function: GetPermissions<br>Line: ";
 
@@ -57,8 +62,9 @@ class CAllFormStatus
         $arReturn = array();
         $arGroups = $USER->GetUserGroupArray();
 
-        if (!is_array($arGroups) || count($arGroups) <= 0)
+        if (!is_array($arGroups) || count($arGroups) <= 0) {
             $arGroups = array(2);
+        }
 
         if (CForm::IsAdmin()) {
             $arReturn = CFormStatus::GetMaxPermissions();
@@ -76,14 +82,15 @@ class CAllFormStatus
 					G.GROUP_ID IN (0," . $groups . ")";
 
             $z = $DB->Query($strSql, false, $err_mess . __LINE__);
-            while ($zr = $z->Fetch())
+            while ($zr = $z->Fetch()) {
                 $arReturn[] = $zr["PERMISSION"];
+            }
         }
 
         return $arReturn;
     }
 
-    function GetNextSort($WEB_FORM_ID)
+    public static function GetNextSort($WEB_FORM_ID)
     {
         $err_mess = (CAllFormStatus::err_mess()) . "<br>Function: GetNextSort<br>Line: ";
         global $DB, $strError;
@@ -94,7 +101,7 @@ class CAllFormStatus
         return intval($zr["MAX_SORT"]) + 100;
     }
 
-    function GetDefault($WEB_FORM_ID)
+    public static function GetDefault($WEB_FORM_ID)
     {
         $err_mess = (CAllFormStatus::err_mess()) . "<br>Function: GetDefault<br>Line: ";
         global $DB, $USER, $strError;
@@ -105,35 +112,45 @@ class CAllFormStatus
         return intval($zr["ID"]);
     }
 
-    // �������� �������
-    function CheckFields($arFields, $STATUS_ID, $CHECK_RIGHTS = "Y")
+    public static function CheckFields($arFields, $STATUS_ID, $CHECK_RIGHTS = "Y")
     {
         $err_mess = (CAllFormStatus::err_mess()) . "<br>Function: CheckFields<br>Line: ";
         global $DB, $strError, $APPLICATION, $USER;
         $str = "";
         $STATUS_ID = intval($STATUS_ID);
         $FORM_ID = intval($arFields["FORM_ID"]);
-        if ($FORM_ID <= 0) $str .= GetMessage("FORM_ERROR_FORM_ID_NOT_DEFINED") . "<br>";
-        else {
+        if ($FORM_ID <= 0) {
+            $str .= GetMessage("FORM_ERROR_FORM_ID_NOT_DEFINED") . "<br>";
+        } else {
             $RIGHT_OK = "N";
-            if ($CHECK_RIGHTS != "Y" || CForm::IsAdmin()) $RIGHT_OK = "Y";
-            else {
+            if ($CHECK_RIGHTS != "Y" || CForm::IsAdmin()) {
+                $RIGHT_OK = "Y";
+            } else {
                 $FORM_RIGHT = $APPLICATION->GetGroupRight("form");
                 $F_RIGHT = CForm::GetPermission($FORM_ID);
-                if ($FORM_RIGHT > "D" && $F_RIGHT >= 30) $RIGHT_OK = "Y";
+                if ($FORM_RIGHT > "D" && $F_RIGHT >= 30) {
+                    $RIGHT_OK = "Y";
+                }
             }
             if ($RIGHT_OK == "Y") {
                 if ($STATUS_ID <= 0 || ($STATUS_ID > 0 && is_set($arFields, "TITLE"))) {
-                    if (strlen(trim($arFields["TITLE"])) <= 0) $str .= GetMessage("FORM_ERROR_FORGOT_TITLE") . "<br>";
+                    if (trim($arFields["TITLE"]) == '') {
+                        $str .= GetMessage("FORM_ERROR_FORGOT_TITLE") . "<br>";
+                    }
                 }
-            } else $str .= GetMessage("FORM_ERROR_ACCESS_DENIED");
+            } else {
+                $str .= GetMessage("FORM_ERROR_ACCESS_DENIED");
+            }
         }
         $strError .= $str;
-        if (strlen($str) > 0) return false; else return true;
+        if ($str <> '') {
+            return false;
+        } else {
+            return true;
+        }
     }
 
-    // ����������/���������� �������
-    function Set($arFields, $STATUS_ID = false, $CHECK_RIGHTS = "Y")
+    public static function Set($arFields, $STATUS_ID = false, $CHECK_RIGHTS = "Y")
     {
         $err_mess = (CAllFormStatus::err_mess()) . "<br>Function: Set<br>Line: ";
         global $DB, $USER, $strError, $APPLICATION;
@@ -143,38 +160,44 @@ class CAllFormStatus
 
             $arFields_i["TIMESTAMP_X"] = $DB->GetNowFunction();
 
-            if (is_set($arFields, "C_SORT"))
+            if (is_set($arFields, "C_SORT")) {
                 $arFields_i["C_SORT"] = "'" . intval($arFields["C_SORT"]) . "'";
+            }
 
-            if (is_set($arFields, "ACTIVE"))
+            if (is_set($arFields, "ACTIVE")) {
                 $arFields_i["ACTIVE"] = ($arFields["ACTIVE"] == "Y") ? "'Y'" : "'N'";
+            }
 
-            if (is_set($arFields, "TITLE"))
+            if (is_set($arFields, "TITLE")) {
                 $arFields_i["TITLE"] = "'" . $DB->ForSql($arFields["TITLE"], 255) . "'";
+            }
 
-            if (is_set($arFields, "DESCRIPTION"))
+            if (is_set($arFields, "DESCRIPTION")) {
                 $arFields_i["DESCRIPTION"] = "'" . $DB->ForSql($arFields["DESCRIPTION"], 2000) . "'";
+            }
 
-            if (is_set($arFields, "CSS"))
+            if (is_set($arFields, "CSS")) {
                 $arFields_i["CSS"] = "'" . $DB->ForSql($arFields["CSS"], 255) . "'";
+            }
 
-            if (is_set($arFields, "HANDLER_OUT"))
+            if (is_set($arFields, "HANDLER_OUT")) {
                 $arFields_i["HANDLER_OUT"] = "'" . $DB->ForSql($arFields["HANDLER_OUT"], 255) . "'";
+            }
 
-            if (is_set($arFields, "HANDLER_IN"))
+            if (is_set($arFields, "HANDLER_IN")) {
                 $arFields_i["HANDLER_IN"] = "'" . $DB->ForSql($arFields["HANDLER_IN"], 255) . "'";
+            }
 
-            if (is_set($arFields, "MAIL_EVENT_TYPE"))
+            if (is_set($arFields, "MAIL_EVENT_TYPE")) {
                 $arFields_i["MAIL_EVENT_TYPE"] = "'" . $DB->ForSql($arFields["MAIL_EVENT_TYPE"], 255) . "'";
+            }
 
             $DEFAULT_STATUS_ID = intval(CFormStatus::GetDefault($arFields["FORM_ID"]));
             if ($DEFAULT_STATUS_ID <= 0 || $DEFAULT_STATUS_ID == $STATUS_ID) {
-                if (is_set($arFields, "DEFAULT_VALUE"))
+                if (is_set($arFields, "DEFAULT_VALUE")) {
                     $arFields_i["DEFAULT_VALUE"] = ($arFields["DEFAULT_VALUE"] == "Y") ? "'Y'" : "'N'";
+                }
             }
-
-            //echo '<pre>'; print_r($arFields); echo '</pre>';
-            //die();
 
             if ($STATUS_ID > 0) {
                 $DB->Update("b_form_status", $arFields_i, "WHERE ID='" . $STATUS_ID . "'", $err_mess . __LINE__);
@@ -186,9 +209,12 @@ class CAllFormStatus
             $STATUS_ID = intval($STATUS_ID);
 
             if ($STATUS_ID > 0) {
-                // ����� �� ��������
                 if (is_set($arFields, "arPERMISSION_VIEW")) {
-                    $DB->Query("DELETE FROM b_form_status_2_group WHERE STATUS_ID='" . $STATUS_ID . "' and PERMISSION='VIEW'", false, $err_mess . __LINE__);
+                    $DB->Query(
+                        "DELETE FROM b_form_status_2_group WHERE STATUS_ID='" . $STATUS_ID . "' and PERMISSION='VIEW'",
+                        false,
+                        $err_mess . __LINE__
+                    );
                     if (is_array($arFields["arPERMISSION_VIEW"])) {
                         reset($arFields["arPERMISSION_VIEW"]);
                         foreach ($arFields["arPERMISSION_VIEW"] as $gid) {
@@ -202,9 +228,12 @@ class CAllFormStatus
                     }
                 }
 
-                // ����� �� �������
                 if (is_set($arFields, "arPERMISSION_MOVE")) {
-                    $DB->Query("DELETE FROM b_form_status_2_group WHERE STATUS_ID='" . $STATUS_ID . "' and PERMISSION='MOVE'", false, $err_mess . __LINE__);
+                    $DB->Query(
+                        "DELETE FROM b_form_status_2_group WHERE STATUS_ID='" . $STATUS_ID . "' and PERMISSION='MOVE'",
+                        false,
+                        $err_mess . __LINE__
+                    );
                     if (is_array($arFields["arPERMISSION_MOVE"])) {
                         reset($arFields["arPERMISSION_MOVE"]);
                         foreach ($arFields["arPERMISSION_MOVE"] as $gid) {
@@ -218,9 +247,12 @@ class CAllFormStatus
                     }
                 }
 
-                // ����� �� ��������������
                 if (is_set($arFields, "arPERMISSION_EDIT")) {
-                    $DB->Query("DELETE FROM b_form_status_2_group WHERE STATUS_ID='" . $STATUS_ID . "' and PERMISSION='EDIT'", false, $err_mess . __LINE__);
+                    $DB->Query(
+                        "DELETE FROM b_form_status_2_group WHERE STATUS_ID='" . $STATUS_ID . "' and PERMISSION='EDIT'",
+                        false,
+                        $err_mess . __LINE__
+                    );
                     if (is_array($arFields["arPERMISSION_EDIT"])) {
                         reset($arFields["arPERMISSION_EDIT"]);
                         foreach ($arFields["arPERMISSION_EDIT"] as $gid) {
@@ -234,9 +266,12 @@ class CAllFormStatus
                     }
                 }
 
-                // ����� �� ��������
                 if (is_set($arFields, "arPERMISSION_DELETE")) {
-                    $DB->Query("DELETE FROM b_form_status_2_group WHERE STATUS_ID='" . $STATUS_ID . "' and PERMISSION='DELETE'", false, $err_mess . __LINE__);
+                    $DB->Query(
+                        "DELETE FROM b_form_status_2_group WHERE STATUS_ID='" . $STATUS_ID . "' and PERMISSION='DELETE'",
+                        false,
+                        $err_mess . __LINE__
+                    );
                     if (is_array($arFields["arPERMISSION_DELETE"])) {
                         reset($arFields["arPERMISSION_DELETE"]);
                         foreach ($arFields["arPERMISSION_DELETE"] as $gid) {
@@ -251,7 +286,11 @@ class CAllFormStatus
                 }
 
                 if (is_set($arFields, "arMAIL_TEMPLATE")) {
-                    $DB->Query("DELETE FROM b_form_status_2_mail_template WHERE STATUS_ID='" . $STATUS_ID . "'", false, $err_mess . __LINE__);
+                    $DB->Query(
+                        "DELETE FROM b_form_status_2_mail_template WHERE STATUS_ID='" . $STATUS_ID . "'",
+                        false,
+                        $err_mess . __LINE__
+                    );
                     if (is_array($arFields["arMAIL_TEMPLATE"])) {
                         reset($arFields["arMAIL_TEMPLATE"]);
                         foreach ($arFields["arMAIL_TEMPLATE"] as $mid) {
@@ -271,38 +310,45 @@ class CAllFormStatus
         return false;
     }
 
-    // ������� ������
-    function Delete($ID, $CHECK_RIGHTS = "Y")
+    public static function Delete($ID, $CHECK_RIGHTS = "Y")
     {
         global $DB, $APPLICATION, $strError;
         $ID = intval($ID);
         $rsStatus = CFormStatus::GetByID($ID);
         if ($arStatus = $rsStatus->Fetch()) {
             $RIGHT_OK = "N";
-            if ($CHECK_RIGHTS != "Y" || CForm::IsAdmin())
+            if ($CHECK_RIGHTS != "Y" || CForm::IsAdmin()) {
                 $RIGHT_OK = "Y";
-            else {
+            } else {
                 $F_RIGHT = CForm::GetPermission($arStatus["FORM_ID"]);
-                if ($F_RIGHT >= 30) $RIGHT_OK = "Y";
+                if ($F_RIGHT >= 30) {
+                    $RIGHT_OK = "Y";
+                }
             }
             if ($RIGHT_OK == "Y") {
                 $strSql = "SELECT 'x' FROM b_form_result WHERE STATUS_ID='$ID'";
                 $z = $DB->Query($strSql, false, $err_mess . __LINE__);
                 if (!$zr = $z->Fetch()) {
                     if ($DB->Query("DELETE FROM b_form_status WHERE ID='$ID'", false, $err_mess . __LINE__)) {
-                        if ($DB->Query("DELETE FROM b_form_status_2_group WHERE STATUS_ID='$ID'", false, $err_mess . __LINE__))
+                        if ($DB->Query(
+                            "DELETE FROM b_form_status_2_group WHERE STATUS_ID='$ID'",
+                            false,
+                            $err_mess . __LINE__
+                        )) {
                             return true;
+                        }
                     }
-                } else
+                } else {
                     $strError .= GetMessage("FORM_ERROR_CANNOT_DELETE_STATUS") . "<br>";
+                }
             }
-        } else
+        } else {
             $strError .= GetMessage("FORM_ERROR_STATUS_NOT_FOUND") . "<br>";
+        }
         return false;
     }
 
-    // �������� ������
-    function Copy($ID, $CHECK_RIGHTS = "Y", $NEW_FORM_ID = false)
+    public static function Copy($ID, $CHECK_RIGHTS = "Y", $NEW_FORM_ID = false)
     {
         global $DB, $APPLICATION, $strError;
         $err_mess = (CAllFormStatus::err_mess()) . "<br>Function: Copy<br>Line: ";
@@ -311,27 +357,30 @@ class CAllFormStatus
         $rsStatus = CFormStatus::GetByID($ID);
         if ($arStatus = $rsStatus->Fetch()) {
             $RIGHT_OK = "N";
-            if ($CHECK_RIGHTS != "Y" || CForm::IsAdmin()) $RIGHT_OK = "Y";
-            else {
+            if ($CHECK_RIGHTS != "Y" || CForm::IsAdmin()) {
+                $RIGHT_OK = "Y";
+            } else {
                 $F_RIGHT = CForm::GetPermission($arStatus["FORM_ID"]);
-                // ���� ����� ����� �� �������� ���������� �����
                 if ($F_RIGHT >= 25) {
-                    // ���� ������ ����� �����
                     if ($NEW_FORM_ID > 0) {
                         $NEW_F_RIGHT = CForm::GetPermission($NEW_FORM_ID);
-                        // ���� ����� ������ ������ �� ����� �����
-                        if ($NEW_F_RIGHT >= 30) $RIGHT_OK = "Y";
-                    } elseif ($F_RIGHT >= 30) // ���� ����� ������ ������ �� �������� �����
-                    {
+                        if ($NEW_F_RIGHT >= 30) {
+                            $RIGHT_OK = "Y";
+                        }
+                    } elseif ($F_RIGHT >= 30) {
                         $RIGHT_OK = "Y";
                     }
                 }
             }
 
-            // ���� ����� ��������� ��
             if ($RIGHT_OK == "Y") {
-                CFormStatus::GetPermissionList($ID, $arPERMISSION_VIEW, $arPERMISSION_MOVE, $arPERMISSION_EDIT, $arPERMISSION_DELETE);
-                // ��������
+                CFormStatus::GetPermissionList(
+                    $ID,
+                    $arPERMISSION_VIEW,
+                    $arPERMISSION_MOVE,
+                    $arPERMISSION_EDIT,
+                    $arPERMISSION_DELETE
+                );
                 $arFields = array(
                     "FORM_ID" => ($NEW_FORM_ID > 0) ? $NEW_FORM_ID : $arStatus["FORM_ID"],
                     "C_SORT" => $arStatus["C_SORT"],
@@ -349,13 +398,22 @@ class CAllFormStatus
                 );
                 $NEW_ID = CFormStatus::Set($arFields);
                 return $NEW_ID;
-            } else $strError .= GetMessage("FORM_ERROR_ACCESS_DENIED") . "<br>";
-        } else $strError .= GetMessage("FORM_ERROR_STATUS_NOT_FOUND") . "<br>";
+            } else {
+                $strError .= GetMessage("FORM_ERROR_ACCESS_DENIED") . "<br>";
+            }
+        } else {
+            $strError .= GetMessage("FORM_ERROR_STATUS_NOT_FOUND") . "<br>";
+        }
         return false;
     }
 
-    function SetMailTemplate($WEB_FORM_ID, $STATUS_ID, $ADD_NEW_TEMPLATE = "Y", $old_SID = "", $bReturnFullInfo = false)
-    {
+    public static function SetMailTemplate(
+        $WEB_FORM_ID,
+        $STATUS_ID,
+        $ADD_NEW_TEMPLATE = "Y",
+        $old_SID = "",
+        $bReturnFullInfo = false
+    ) {
         global $DB, $MESS, $strError;
         $err_mess = (CAllForm::err_mess()) . "<br>Function: SetMailTemplate<br>Line: ";
         $arrReturn = array();
@@ -365,20 +423,25 @@ class CAllFormStatus
             $dbRes = CFormStatus::GetByID($STATUS_ID);
             if ($arrStatus = $dbRes->Fetch()) {
                 $MAIL_EVENT_TYPE = "FORM_STATUS_CHANGE_" . $arrForm["SID"] . "_" . $arrStatus['ID'];
-                if (strlen($old_SID) > 0)
+                if ($old_SID <> '') {
                     $old_MAIL_EVENT_TYPE = "FORM_STATUS_CHANGE_" . $old_SID . "_" . $arrStatus['ID'];
+                }
 
                 $et = new CEventType;
                 $em = new CEventMessage;
 
-                if (strlen($MAIL_EVENT_TYPE) > 0)
+                if ($MAIL_EVENT_TYPE <> '') {
                     $et->Delete($MAIL_EVENT_TYPE);
+                }
 
-                $z = CLanguage::GetList($v1, $v2);
+                $z = CLanguage::GetList();
                 $OLD_MESS = $MESS;
                 $MESS = array();
                 while ($arLang = $z->Fetch()) {
-                    IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/form/admin/form_status_mail.php", $arLang["LID"]);
+                    IncludeModuleLangFile(
+                        $_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/form/admin/form_status_mail.php",
+                        $arLang["LID"]
+                    );
 
                     $str = "";
                     $str .= "#EMAIL_TO# - " . GetMessage("FORM_L_EMAIL_TO") . "\n";
@@ -397,34 +460,43 @@ class CAllFormStatus
                         Array(
                             "LID" => $arLang["LID"],
                             "EVENT_NAME" => $MAIL_EVENT_TYPE,
-                            "NAME" => str_replace(array('#FORM_SID#', '#STATUS_NAME#'), array($arrForm['SID'], $arrStatus['TITLE']), GetMessage("FORM_CHANGE_STATUS")),
+                            "NAME" => str_replace(
+                                array('#FORM_SID#', '#STATUS_NAME#'),
+                                array($arrForm['SID'], $arrStatus['TITLE']),
+                                GetMessage("FORM_CHANGE_STATUS")
+                            ),
                             "DESCRIPTION" => $str
                         )
                     );
                 }
                 // create new event type for old templates
-                if (strlen($old_MAIL_EVENT_TYPE) > 0 && $old_MAIL_EVENT_TYPE != $MAIL_EVENT_TYPE) {
-                    $e = $em->GetList($by = "id", $order = "desc", array("EVENT_NAME" => $old_MAIL_EVENT_TYPE));
+                if ($old_MAIL_EVENT_TYPE <> '' && $old_MAIL_EVENT_TYPE != $MAIL_EVENT_TYPE) {
+                    $e = $em->GetList("id", "desc", array("EVENT_NAME" => $old_MAIL_EVENT_TYPE));
                     while ($er = $e->Fetch()) {
                         $em->Update($er["ID"], array("EVENT_NAME" => $MAIL_EVENT_TYPE));
                     }
-                    if (strlen($old_MAIL_EVENT_TYPE) > 0)
+                    if ($old_MAIL_EVENT_TYPE <> '') {
                         $et->Delete($old_MAIL_EVENT_TYPE);
+                    }
                 }
 
                 if ($ADD_NEW_TEMPLATE == "Y") {
-                    $z = CSite::GetList($v1, $v2);
-                    while ($arSite = $z->Fetch()) $arrSiteLang[$arSite["ID"]] = $arSite["LANGUAGE_ID"];
+                    $z = CSite::GetList();
+                    while ($arSite = $z->Fetch()) {
+                        $arrSiteLang[$arSite["ID"]] = $arSite["LANGUAGE_ID"];
+                    }
 
                     $arrFormSite = CForm::GetSiteArray($WEB_FORM_ID);
                     if (is_array($arrFormSite) && count($arrFormSite) > 0) {
                         foreach ($arrFormSite as $sid) {
-                            IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/form/admin/form_status_mail.php", $arrSiteLang[$sid]);
+                            IncludeModuleLangFile(
+                                $_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/form/admin/form_status_mail.php",
+                                $arrSiteLang[$sid]
+                            );
 
                             $SUBJECT = GetMessage("FORM_CHANGE_STATUS_S");
                             $MESSAGE = GetMessage("FORM_CHANGE_STATUS_B");
 
-                            // ��������� ����� ������
                             $arFields = Array(
                                 "ACTIVE" => "Y",
                                 "EVENT_NAME" => $MAIL_EVENT_TYPE,
@@ -435,21 +507,24 @@ class CAllFormStatus
                                 "MESSAGE" => $MESSAGE,
                                 "BODY_TYPE" => "text"
                             );
-                            //echo '<pre>'; print_r($arFields); echo '</pre>';
                             $TEMPLATE_ID = $em->Add($arFields);
-                            if ($bReturnFullInfo)
+                            if ($bReturnFullInfo) {
                                 $arrReturn[] = array(
                                     'ID' => $TEMPLATE_ID,
                                     'FIELDS' => $arFields,
                                 );
-                            else
+                            } else {
                                 $arrReturn[] = $TEMPLATE_ID;
-
+                            }
                         }
                     }
                 }
 
-                CFormStatus::Set(array('FORM_ID' => $WEB_FORM_ID, 'MAIL_EVENT_TYPE' => $MAIL_EVENT_TYPE), $STATUS_ID, 'N');
+                CFormStatus::Set(
+                    array('FORM_ID' => $WEB_FORM_ID, 'MAIL_EVENT_TYPE' => $MAIL_EVENT_TYPE),
+                    $STATUS_ID,
+                    'N'
+                );
 
                 $MESS = $OLD_MESS;
             }
@@ -457,14 +532,16 @@ class CAllFormStatus
         return $arrReturn;
     }
 
-    function GetMailTemplateArray($STATUS_ID)
+    public static function GetMailTemplateArray($STATUS_ID)
     {
         $err_mess = (CAllFormStatus::err_mess()) . "<br>Function: GetMailTemplateArray<br>Line: ";
 
         global $DB, $USER, $strError;
 
         $STATUS_ID = intval($STATUS_ID);
-        if ($STATUS_ID <= 0) return false;
+        if ($STATUS_ID <= 0) {
+            return false;
+        }
 
         $arrRes = array();
         $strSql = "
@@ -475,15 +552,15 @@ FROM
 WHERE
 	FM.STATUS_ID='" . $STATUS_ID . "'
 ";
-        //echo "<pre>".$strSql."</pre>";
         $rs = $DB->Query($strSql, false, $err_mess . __LINE__);
-        while ($ar = $rs->Fetch()) $arrRes[] = $ar["MAIL_TEMPLATE_ID"];
-        //echo "<pre>".print_r($arrRes, true)."</pre>";
+        while ($ar = $rs->Fetch()) {
+            $arrRes[] = $ar["MAIL_TEMPLATE_ID"];
+        }
 
         return $arrRes;
     }
 
-    function GetTemplateList($STATUS_ID)
+    public static function GetTemplateList($STATUS_ID)
     {
         $err_mess = (CAllForm::err_mess()) . "<br>Function: GetTemplateList<br>Line: ";
         global $DB, $strError;
@@ -501,15 +578,15 @@ WHERE
 	F.ID='" . $STATUS_ID . "'
 ";
 
-            //echo '<pre>',$strSql,'</pre>';
             $z = $DB->Query($strSql, false, $err_mess . __LINE__);
             while ($zr = $z->Fetch()) {
                 $MAIL_EVENT_TYPE = $zr["MAIL_EVENT_TYPE"];
                 $arrSITE[] = $zr["SITE_ID"];
             }
 
-            if (strlen($MAIL_EVENT_TYPE) <= 0)
+            if ($MAIL_EVENT_TYPE == '') {
                 return false;
+            }
 
             $arReferenceId = array();
             $arReference = array();
@@ -518,7 +595,7 @@ WHERE
                 "SITE_ID" => $arrSITE,
                 "EVENT_NAME" => $MAIL_EVENT_TYPE
             );
-            $e = CEventMessage::GetList($by = "id", $order = "asc", $arFilter);
+            $e = CEventMessage::GetList("id", "asc", $arFilter);
             while ($er = $e->Fetch()) {
                 if (!in_array($er["ID"], $arReferenceId)) {
                     $arReferenceId[] = $er["ID"];
@@ -532,5 +609,3 @@ WHERE
         return false;
     }
 }
-
-?>

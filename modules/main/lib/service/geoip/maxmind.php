@@ -51,21 +51,24 @@ final class MaxMind extends Base
         if (!$httpRes && !empty($errors)) {
             $strError = "";
 
-            foreach ($errors as $errorCode => $errMes)
+            foreach ($errors as $errorCode => $errMes) {
                 $strError .= $errorCode . ": " . $errMes;
+            }
 
             $result->addError(new Error($strError));
         } else {
             $status = $httpClient->getStatus();
 
-            if ($status != 200)
+            if ($status != 200) {
                 $result->addError(new Error('Http status: ' . $status));
+            }
 
             $arRes = json_decode($httpRes, true);
 
             if (is_array($arRes)) {
-                if (strtolower(SITE_CHARSET) != 'utf-8')
+                if (mb_strtolower(SITE_CHARSET) != 'utf-8') {
                     $arRes = Encoding::convertEncoding($arRes, 'UTF-8', SITE_CHARSET);
+                }
 
                 if ($status == 200) {
                     $result->setData($arRes);
@@ -85,13 +88,15 @@ final class MaxMind extends Base
      */
     protected static function getHttpClient()
     {
-        return new HttpClient(array(
-            "version" => "1.1",
-            "socketTimeout" => 5,
-            "streamTimeout" => 5,
-            "redirect" => true,
-            "redirectMax" => 5,
-        ));
+        return new HttpClient(
+            array(
+                "version" => "1.1",
+                "socketTimeout" => 5,
+                "streamTimeout" => 5,
+                "redirect" => true,
+                "redirectMax" => 5,
+            )
+        );
     }
 
     /**
@@ -114,9 +119,9 @@ final class MaxMind extends Base
         $geoData = new Data();
 
         $geoData->ip = $ipAddress;
-        $geoData->lang = $lang = strlen($lang) > 0 ? $lang : 'en';
+        $geoData->lang = $lang = $lang <> '' ? $lang : 'en';
 
-        if (strlen($this->config['USER_ID']) <= 0 || strlen($this->config['LICENSE_KEY']) <= 0) {
+        if ($this->config['USER_ID'] == '' || $this->config['LICENSE_KEY'] == '') {
             $dataResult->addError(new Error(Loc::getMessage('MAIN_SRV_GEOIP_MM_SETT_EMPTY')));
             return $dataResult;
         }
@@ -126,38 +131,49 @@ final class MaxMind extends Base
         if ($res->isSuccess()) {
             $data = $res->getData();
 
-            if (!empty($data['country']['names'][$lang]))
+            if (!empty($data['country']['names'][$lang])) {
                 $geoData->countryName = $data['country']['names'][$lang];
+            }
 
-            if (!empty($data['country']['iso_code']))
+            if (!empty($data['country']['iso_code'])) {
                 $geoData->countryCode = $data['country']['iso_code'];
+            }
 
-            if (!empty($data['subdivisions'][0]['names'][$lang]))
+            if (!empty($data['subdivisions'][0]['names'][$lang])) {
                 $geoData->regionName = $data['subdivisions'][0]['names'][$lang];
+            }
 
-            if (!empty($data['subdivisions'][0]['iso_code']))
+            if (!empty($data['subdivisions'][0]['iso_code'])) {
                 $geoData->regionCode = $data['subdivisions'][0]['iso_code'];
+            }
 
-            if (!empty($data['city']['names'][$lang]))
+            if (!empty($data['city']['names'][$lang])) {
                 $geoData->cityName = $data['city']['names'][$lang];
+            }
 
-            if (!empty($data['location']['latitude']))
+            if (!empty($data['location']['latitude'])) {
                 $geoData->latitude = $data['location']['latitude'];
+            }
 
-            if (!empty($data['location']['longitude']))
+            if (!empty($data['location']['longitude'])) {
                 $geoData->longitude = $data['location']['longitude'];
+            }
 
-            if (!empty($data['location']['time_zone']))
+            if (!empty($data['location']['time_zone'])) {
                 $geoData->timezone = $data['location']['time_zone'];
+            }
 
-            if (!empty($data['postal']['code']))
+            if (!empty($data['postal']['code'])) {
                 $geoData->zipCode = $data['postal']['code'];
+            }
 
-            if (!empty($data['traits']['isp']))
+            if (!empty($data['traits']['isp'])) {
                 $geoData->ispName = $data['traits']['isp'];
+            }
 
-            if (!empty($data['traits']['organization']))
+            if (!empty($data['traits']['organization'])) {
                 $geoData->organizationName = $data['traits']['organization'];
+            }
         } else {
             $dataResult->addErrors($res->getErrors());
         }
@@ -205,7 +221,8 @@ final class MaxMind extends Base
                 'TITLE' => Loc::getMessage('MAIN_SRV_GEOIP_MM_F_LICENSE_KEY'),
                 'TYPE' => 'TEXT',
                 'VALUE' => htmlspecialcharsbx($this->config['LICENSE_KEY']),
-                'REQUIRED' => true)
+                'REQUIRED' => true
+            )
         );
     }
 

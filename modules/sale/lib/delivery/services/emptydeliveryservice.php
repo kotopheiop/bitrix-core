@@ -43,8 +43,9 @@ class EmptyDeliveryService extends Configurable
         $id = 0;
         $cacheManager = Application::getInstance()->getManagedCache();
 
-        if ($cacheManager->read(self::TTL, self::CACHE_ID))
+        if ($cacheManager->read(self::TTL, self::CACHE_ID)) {
             $id = $cacheManager->get(self::CACHE_ID);
+        }
 
         if ($id <= 0) {
             $data = Table::getRow(
@@ -53,16 +54,18 @@ class EmptyDeliveryService extends Configurable
                     'filter' => array('=CLASS_NAME' => '\Bitrix\Sale\Delivery\Services\EmptyDeliveryService')
                 )
             );
-            if ($data !== null)
+            if ($data !== null) {
                 $id = $data['ID'];
-            else
+            } else {
                 $id = self::create();
+            }
 
-            if ($id > 0)
+            if ($id > 0) {
                 $cacheManager->set(self::CACHE_ID, $id);
+            }
         }
 
-        return $id;
+        return (int)$id;
     }
 
     /**
@@ -75,15 +78,30 @@ class EmptyDeliveryService extends Configurable
         $fields["PARENT_ID"] = 0;
         $fields["CURRENCY"] = Currency\CurrencyManager::getBaseCurrency();
         $fields["ACTIVE"] = "Y";
-        $fields["CONFIG"] = array('MAIN' => array('CURRENCY' => Currency\CurrencyManager::getBaseCurrency(), 'PRICE' => 0, 'PERIOD' => array('FROM' => 0, 'TO' => 0, 'TYPE' => 'D')));
+        $fields["CONFIG"] = array(
+            'MAIN' => array(
+                'CURRENCY' => Currency\CurrencyManager::getBaseCurrency(),
+                'PRICE' => 0,
+                'PERIOD' => array('FROM' => 0, 'TO' => 0, 'TYPE' => 'D')
+            )
+        );
         $fields["SORT"] = 100;
 
         $res = Table::add($fields);
 
-        if (!$res->isSuccess())
+        if (!$res->isSuccess()) {
             return 0;
+        }
 
-        ServiceRestrictionTable::add(array('SORT' => 100, 'SERVICE_ID' => $res->getId(), 'PARAMS' => array('PUBLIC_SHOW' => 'N'), 'SERVICE_TYPE' => '0', 'CLASS_NAME' => '\Bitrix\Sale\Delivery\Restrictions\ByPublicMode'));
+        ServiceRestrictionTable::add(
+            array(
+                'SORT' => 100,
+                'SERVICE_ID' => $res->getId(),
+                'PARAMS' => array('PUBLIC_SHOW' => 'N'),
+                'SERVICE_TYPE' => '0',
+                'CLASS_NAME' => '\Bitrix\Sale\Delivery\Restrictions\ByPublicMode'
+            )
+        );
 
         return $res->getId();
     }

@@ -1,4 +1,5 @@
 <?
+
 $MESS["DEMO_MENU_LOCAL_NOTIF"] = "Local notifications";
 $MESS["DEMO_MENU_LISTS"] = "Lists";
 $MESS["DEMO_MENU_TEXT_PANEL"] = "Text bar";

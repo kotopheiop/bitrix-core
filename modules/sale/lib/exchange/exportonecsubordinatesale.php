@@ -40,7 +40,6 @@ final class ExportOneCSubordinateSale extends ExportOneCPackage
         $fieldsOrder = $documentOrder->getFieldValues();
         foreach ($documents as $document) {
             if ($document instanceof PaymentDocument || $document instanceof ShipmentDocument) {
-
                 $fieldsOrder['SUBORDINATES'][] = $document->getFieldValues();
             }
         }

@@ -77,8 +77,9 @@ class Event
     {
         $this->loadParameters();
 
-        if (isset($this->parameters[$key]))
+        if (isset($this->parameters[$key])) {
             return $this->parameters[$key];
+        }
 
         return null;
     }
@@ -98,10 +99,11 @@ class Event
     public function setFilter($filter)
     {
         if (!is_array($filter)) {
-            if (empty($filter))
+            if (empty($filter)) {
                 $filter = null;
-            else
+            } else {
                 $filter = array($filter);
+            }
         }
 
         $this->filter = $filter;
@@ -158,8 +160,9 @@ class Event
 
     public function addDebugInfo($ar)
     {
-        if (!$this->debugMode)
+        if (!$this->debugMode) {
             return;
+        }
 
         $this->debugInfo[] = $ar;
     }

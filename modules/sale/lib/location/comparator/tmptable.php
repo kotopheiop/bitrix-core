@@ -24,11 +24,13 @@ final class TmpTable
      */
     public function __construct($serviceId, $tableName = "")
     {
-        if (intval($serviceId) <= 0)
+        if (intval($serviceId) <= 0) {
             throw new ArgumentNullException('serviceId');
+        }
 
-        if (strlen($tableName) > 0)
+        if ($tableName <> '') {
             $this->name = $tableName;
+        }
 
         $this->serviceId = intval($serviceId);
         $this->connection = \Bitrix\Main\Application::getConnection();
@@ -49,8 +51,9 @@ final class TmpTable
 				TMP.LOCATION_ID IS NULL				
 		";
 
-        if (intval($startId) > 0)
+        if (intval($startId) > 0) {
             $query .= " AND TMP.ID > " . intval($startId);
+        }
 
         $query .= " ORDER BY ID ASC";
         return $this->connection->query($query);
@@ -63,15 +66,18 @@ final class TmpTable
      */
     public function markMapped($locationId, $xmlId)
     {
-        if (intval($locationId) <= 0)
+        if (intval($locationId) <= 0) {
             throw new ArgumentNullException('locationId');
+        }
 
-        if (strlen($xmlId) <= 0)
+        if ($xmlId == '') {
             throw new ArgumentNullException('xmlId');
+        }
 
         $sqlHelper = $this->connection->getSqlHelper();
 
-        $this->connection->queryExecute("
+        $this->connection->queryExecute(
+            "
 			UPDATE
 				" . $this->name . " 
 			SET 
@@ -88,14 +94,16 @@ final class TmpTable
     {
         set_time_limit(0);
 
-        $this->connection->queryExecute("
+        $this->connection->queryExecute(
+            "
 			UPDATE
 				" . $this->name . " AS TMP
 			INNER JOIN
 				b_sale_loc_ext AS E ON TMP.XML_ID = E.XML_ID AND E.SERVICE_ID = " . $this->serviceId . "
 			SET
 				TMP.LOCATION_ID = E.LOCATION_ID
-		");
+		"
+        );
     }
 
     /**
@@ -106,19 +114,23 @@ final class TmpTable
      */
     public function create(array $data)
     {
-        if (empty($data))
+        if (empty($data)) {
             throw new ArgumentNullException('data');
+        }
 
-        if (!is_array(current($data)))
+        if (!is_array(current($data))) {
             throw new ArgumentTypeException('current(data)', 'array');
+        }
 
         $sqlHelper = $this->connection->getSqlHelper();
         $cols = '';
 
-        foreach (current($data) as $key => $val)
+        foreach (current($data) as $key => $val) {
             $cols .= $sqlHelper->forSql($key) . " VARCHAR(255) NULL,\n";
+        }
 
-        return $this->connection->queryExecute('
+        return $this->connection->queryExecute(
+            '
 			CREATE TABLE ' . $this->name . ' (
 				ID INT NOT NULL AUTO_INCREMENT,
 				XML_ID VARCHAR (100) NOT NULL,				
@@ -153,8 +165,9 @@ final class TmpTable
      */
     public function saveData(array $data)
     {
-        if (empty($data))
+        if (empty($data)) {
             return 0;
+        }
 
         set_time_limit(0);
 
@@ -162,8 +175,9 @@ final class TmpTable
         $queryBegin = '';
 
         foreach (current($data) as $key => $val) {
-            if (strlen($queryBegin) > 0)
+            if ($queryBegin <> '') {
                 $queryBegin .= ', ';
+            }
 
             $queryBegin .= $sqlHelper->forSql($key);
         }
@@ -176,14 +190,16 @@ final class TmpTable
         $INSERT_BLOCK_SIZE = 100;
 
         foreach ($data as $xmlId => $row) {
-            if (strlen($values) > 0)
+            if ($values <> '') {
                 $values .= ', ';
+            }
 
             $rowValues = '';
 
             foreach ($row as $col) {
-                if (strlen($rowValues) > 0)
+                if ($rowValues <> '') {
                     $rowValues .= ', ';
+                }
 
                 $rowValues .= "'" . $sqlHelper->forSql($col) . "'";
             }
@@ -200,8 +216,9 @@ final class TmpTable
             $imported++;
         }
 
-        if (strlen($values) > 0)
+        if ($values <> '') {
             $this->connection->queryExecute($queryBegin . $values);
+        }
 
         $this->connection->queryExecute("CREATE INDEX IX_BSDTMP_XML_ID ON " . $this->name . " (XML_ID)");
         return $imported;
@@ -215,8 +232,9 @@ final class TmpTable
         $result = 0;
         $res = $this->connection->query("SELECT MAX(ID) AS MAX FROM " . $this->name . " WHERE LOCATION_ID IS NULL");
 
-        if ($loc = $res->fetch())
+        if ($loc = $res->fetch()) {
             $result = $loc['MAX'];
+        }
 
         return $result;
     }

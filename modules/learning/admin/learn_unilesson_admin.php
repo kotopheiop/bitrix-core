@@ -1,14 +1,16 @@
 <?php
+
 require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_before.php');    // first system's prolog
 require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/learning/prolog.php');    // init module
 
 if (!CModule::IncludeModule('learning')) {
     require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php'); // second system's prolog
 
-    if (IsModuleInstalled('learning') && defined('LEARNING_FAILED_TO_LOAD_REASON'))
+    if (IsModuleInstalled('learning') && defined('LEARNING_FAILED_TO_LOAD_REASON')) {
         echo LEARNING_FAILED_TO_LOAD_REASON;
-    else
+    } else {
         CAdminMessage::ShowMessage(GetMessage('LEARNING_MODULE_NOT_FOUND'));
+    }
 
     require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin.php');    // system's epilog
     exit();
@@ -62,7 +64,7 @@ class CLearnRenderAdminUnilessonList
 
         $oPath = false;
         if (isset ($_GET['LESSON_PATH'])
-            && (strlen($_GET['LESSON_PATH']) > 0)
+            && ($_GET['LESSON_PATH'] <> '')
         ) {
             $oPath = new CLearnPath();
             $oPath->ImportUrlencoded($_GET['LESSON_PATH']);
@@ -71,8 +73,9 @@ class CLearnRenderAdminUnilessonList
             $rootAncestorLessonId = $oPath->GetTop();
             if ($rootAncestorLessonId !== false) {
                 $rc = CLearnLesson::GetLinkedCourse($rootAncestorLessonId);
-                if ($rc !== false)
-                    $this->contextCourseLessonId = (int)$rootAncestorLessonId;        // lesson id of course
+                if ($rc !== false) {
+                    $this->contextCourseLessonId = (int)$rootAncestorLessonId;
+                }        // lesson id of course
             }
         }
 
@@ -82,36 +85,42 @@ class CLearnRenderAdminUnilessonList
             $parentLessonId = intval($_GET['PARENT_LESSON_ID']);
         } elseif ($oPath !== false) {
             $parentLessonId = $oPath->GetBottom();
-            if ($parentLessonId === false)
-                $parentLessonId = -2;        // by default, magic number '-2' is means 'List lessons, without relation to parent'
+            if ($parentLessonId === false) {
+                $parentLessonId = -2;
+            }        // by default, magic number '-2' is means 'List lessons, without relation to parent'
         }
 
         $this->requestedParentLessonId = $parentLessonId;
 
         // Determine current list mode
-        if ($parentLessonId >= 1)
+        if ($parentLessonId >= 1) {
             $this->listMode = self::ListChildLessonsMode;
-        elseif ($parentLessonId == -1)    // magic number '-1' is means 'List courses'
+        } elseif ($parentLessonId == -1)    // magic number '-1' is means 'List courses'
+        {
             $this->listMode = self::ListAnyCoursesMode;
-        else
-            $this->listMode = self::ListAnyLessonsMode;        // by default
+        } else {
+            $this->listMode = self::ListAnyLessonsMode;
+        }        // by default
 
         $orderBy = false;
         $order = 'asc';
 
-        if (isset($_POST['by']))
+        if (isset($_POST['by'])) {
             $orderBy = $_POST['by'];
-        elseif (isset($_GET['by']))
+        } elseif (isset($_GET['by'])) {
             $orderBy = $_GET['by'];
+        }
 
-        if (isset($_POST['order']))
+        if (isset($_POST['order'])) {
             $order = $_POST['order'];
-        elseif (isset($_GET['order']))
+        } elseif (isset($_GET['order'])) {
             $order = $_GET['order'];
+        }
 
-        $order = strtolower($order);
-        if (($orderBy !== false) && (($order === 'asc') || ($order === 'desc')))
+        $order = mb_strtolower($order);
+        if (($orderBy !== false) && (($order === 'asc') || ($order === 'desc'))) {
             $this->arSortOrder = array($orderBy => $order);
+        }
 
         $this->search_mode = false;
         $this->search_mode_type = 'childs_candidates';    // by default;
@@ -121,10 +130,11 @@ class CLearnRenderAdminUnilessonList
             $this->hrefSearchRetPoint = '&search_retpoint=' . htmlspecialcharsbx($this->search_retpoint);
 
             if (isset($_GET['search_mode_type'])) {
-                if ($_GET['search_mode_type'] === 'parents_candidates')
+                if ($_GET['search_mode_type'] === 'parents_candidates') {
                     $this->search_mode_type = 'parents_candidates';
-                elseif ($_GET['search_mode_type'] === 'attach_question_to_lesson')
+                } elseif ($_GET['search_mode_type'] === 'attach_question_to_lesson') {
                     $this->search_mode_type = 'attach_question_to_lesson';
+                }
             }
         }
     }
@@ -145,9 +155,11 @@ class CLearnRenderAdminUnilessonList
     {
         // Check access rights
         if (defined('LEARNING_ADMIN_ACCESS_DENIED')) {
-            throw new CLearnRenderAdminUnilessonListException ('',
+            throw new CLearnRenderAdminUnilessonListException (
+                '',
                 CLearnRenderAdminUnilessonListException::C_ACCESS_DENIED
-                | CLearnRenderAdminUnilessonListException::C_NEED_SHOW_AUTH_FORM);
+                | CLearnRenderAdminUnilessonListException::C_NEED_SHOW_AUTH_FORM
+            );
         }
 
         return ($this);
@@ -157,8 +169,10 @@ class CLearnRenderAdminUnilessonList
     protected function EnsureLessonUpdateAccess($lessonID)
     {
         if ($this->IsLessonUpdateAccess($lessonID) !== true) {
-            throw new CLearnRenderAdminUnilessonListException ('',
-                CLearnRenderAdminUnilessonListException::C_ACCESS_DENIED);
+            throw new CLearnRenderAdminUnilessonListException (
+                '',
+                CLearnRenderAdminUnilessonListException::C_ACCESS_DENIED
+            );
         }
 
         return ($this);
@@ -167,10 +181,11 @@ class CLearnRenderAdminUnilessonList
 
     protected function IsLessonUpdateAccess($lessonID)
     {
-        if ($this->oAccess->IsLessonAccessible($lessonID, CLearnAccess::OP_LESSON_WRITE, true))
+        if ($this->oAccess->IsLessonAccessible($lessonID, CLearnAccess::OP_LESSON_WRITE, true)) {
             return (true);
-        else
+        } else {
             return (false);
+        }
 
         return ($this);
     }
@@ -179,8 +194,10 @@ class CLearnRenderAdminUnilessonList
     protected function EnsureLessonUnlinkAccess($parentLessonId, $childLessonId)
     {
         if ($this->LEARNING_RIGHT < 'W') {
-            throw new CLearnRenderAdminUnilessonListException ('',
-                CLearnRenderAdminUnilessonListException::C_ACCESS_DENIED);
+            throw new CLearnRenderAdminUnilessonListException (
+                '',
+                CLearnRenderAdminUnilessonListException::C_ACCESS_DENIED
+            );
         }
 
         // TODO: check access in new data model
@@ -190,16 +207,20 @@ class CLearnRenderAdminUnilessonList
 
     public function Init()
     {
-        $oSort = new CAdminSorting($this->tableID, 'LESSON_ID', 'asc', 'learning_sort_by', 'learning_sort_order');    // sort initialization
+        $oSort = new CAdminSorting(
+            $this->tableID, 'LESSON_ID', 'asc', 'learning_sort_by', 'learning_sort_order'
+        );    // sort initialization
         $this->oList = new CAdminList($this->tableID, $oSort);        // list initialization
 
-        $GLOBALS['learning_sort_by'] = strtoupper($GLOBALS['learning_sort_by']);
-        $GLOBALS['learning_sort_order'] = strtoupper($GLOBALS['learning_sort_order']);
-        if (!in_array($GLOBALS['learning_sort_order'], array('ASC', 'DESC'), true))
+        $GLOBALS['learning_sort_by'] = mb_strtoupper($GLOBALS['learning_sort_by']);
+        $GLOBALS['learning_sort_order'] = mb_strtoupper($GLOBALS['learning_sort_order']);
+        if (!in_array($GLOBALS['learning_sort_order'], array('ASC', 'DESC'), true)) {
             $GLOBALS['learning_sort_order'] = 'ASC';
+        }
 
-        if (strlen($GLOBALS['learning_sort_by']) > 0)
+        if ($GLOBALS['learning_sort_by'] <> '') {
             $this->arSortOrder = array($GLOBALS['learning_sort_by'] => $GLOBALS['learning_sort_order']);
+        }
 
         $arFilterFields = array(
             'filter_name',
@@ -221,30 +242,40 @@ class CLearnRenderAdminUnilessonList
         );    // names of filter fields for humans
 
         $arHeaders = array(
-            array('id' => 'NAME',
+            array(
+                'id' => 'NAME',
                 'content' => GetMessage('LEARNING_NAME'),
                 'sort' => 'name',
-                'default' => true),
+                'default' => true
+            ),
 
-            array('id' => 'LESSON_ID',
+            array(
+                'id' => 'LESSON_ID',
                 'content' => 'ID',
                 'sort' => 'lesson_id',
-                'default' => true),
+                'default' => true
+            ),
 
-            array('id' => 'TIMESTAMP_X',
+            array(
+                'id' => 'TIMESTAMP_X',
                 'content' => GetMessage('LEARNING_COURSE_ADM_DATECH'),
                 'sort' => 'timestamp_x',
-                'default' => true),
+                'default' => true
+            ),
 
-            array('id' => 'ACTIVE',
+            array(
+                'id' => 'ACTIVE',
                 'content' => GetMessage('LEARNING_COURSE_ADM_ACT'),
                 'sort' => 'active',
-                'default' => true),
+                'default' => true
+            ),
 
-            array('id' => 'SITE_ID',
+            array(
+                'id' => 'SITE_ID',
                 'content' => GetMessage('LEARNING_SITE_ID'),
                 'sort' => 'site_id',
-                'default' => true)
+                'default' => true
+            )
         );
 
         if ($this->requestedParentLessonId != -2)        // magic number '-2' is means 'List lessons, without relation to parent'
@@ -264,55 +295,65 @@ class CLearnRenderAdminUnilessonList
             $arHeaders[] = array(
                 'id' => 'PUBLISH_PROHIBITED',
                 'content' => GetMessage('LEARNING_COURSE_ADM_PUBLISH_PROHIBITED'),
-                'default' => true);
+                'default' => true
+            );
         }
 
         $arHeaders[] = array(
             'id' => 'CARDINALITY_DEPTH',
             'content' => GetMessage('LEARNING_COURSE_ADM_CARDINALITY_DEPTH'),
-            'default' => true);
+            'default' => true
+        );
 
         $arHeaders[] = array(
             'id' => 'CARDINALITY_CHAPTERS',
             'content' => GetMessage('LEARNING_COURSE_ADM_CARDINALITY_CHAPTERS'),
-            'default' => true);
+            'default' => true
+        );
 
         $arHeaders[] = array(
             'id' => 'CARDINALITY_LESSONS',
             'content' => GetMessage('LEARNING_COURSE_ADM_CARDINALITY_LESSONS'),
-            'default' => true);
+            'default' => true
+        );
 
         $arHeaders[] = array(
             'id' => 'CARDINALITY_QUESTIONS',
             'content' => GetMessage('LEARNING_COURSE_ADM_CARDINALITY_QUESTIONS'),
-            'default' => true);
+            'default' => true
+        );
 
         $arHeaders[] = array(
             'id' => 'CARDINALITY_TESTS',
             'content' => GetMessage('LEARNING_COURSE_ADM_CARDINALITY_TESTS'),
-            'default' => true);
+            'default' => true
+        );
 
         $arHeaders[] = array(
             'id' => 'PARENTS',
             'content' => GetMessage('LEARNING_INCLUDED_IN'),
-            'default' => true);
+            'default' => true
+        );
 
         $arHeaders[] = array(
             'id' => 'CHILDS',
             'content' => GetMessage('LEARNING_CONSIST_FROM'),
-            'default' => false);
+            'default' => false
+        );
 
         $arHeaders[] = array(
             'id' => 'CODE',
             'content' => GetMessage('LEARNING_CODE'),
             'sort' => 'code',
-            'default' => false);
+            'default' => false
+        );
 
         $arHeaders[] = array(
             'id' => 'CREATED_USER_NAME',
             'content' => GetMessage('LEARNING_AUTHOR'),
             'sort' => 'code',
-            'default' => false);
+            'default' => false
+        );
 
         // list's header
         $this->oList->AddHeaders($arHeaders);
@@ -328,29 +369,35 @@ class CLearnRenderAdminUnilessonList
 
         global $filter_name, $filter_uid, $filter_active, $filter_creator_id, $filter_keywords, $filter_lesson_type;
 
-        if ($filter_name !== null)
+        if ($filter_name !== null) {
             $this->arFilter['?NAME'] = $filter_name;
+        }
 
-        if ($filter_uid !== null)
+        if ($filter_uid !== null) {
             $this->arFilter['LESSON_ID'] = $filter_uid;
+        }
 
-        if ($filter_creator_id !== null)
+        if ($filter_creator_id !== null) {
             $this->arFilter['CREATED_USER_NAME'] = '%' . $filter_creator_id . '%';
+        }
 
-        if ($filter_active !== null)
+        if ($filter_active !== null) {
             $this->arFilter['ACTIVE'] = $filter_active;
+        }
 
-        if ($filter_keywords !== null)
+        if ($filter_keywords !== null) {
             $this->arFilter['KEYWORDS'] = '%' . $filter_keywords . '%';
+        }
 
         if ($filter_lesson_type !== null) {
-            if ($filter_lesson_type === 'COURSE')
+            if ($filter_lesson_type === 'COURSE') {
                 $this->arFilter['>LINKED_LESSON_ID'] = 0;
-            elseif ($filter_lesson_type === 'LESSON_WITH_CHILDS') {
+            } elseif ($filter_lesson_type === 'LESSON_WITH_CHILDS') {
                 $this->arFilter['>CHILDS_CNT'] = 0;
                 $this->arFilter['LINKED_LESSON_ID'] = '';
-            } elseif ($filter_lesson_type === 'LESSON_WO_CHILDS')
+            } elseif ($filter_lesson_type === 'LESSON_WO_CHILDS') {
                 $this->arFilter['CHILDS_CNT'] = 0;
+            }
         }
 
         /*
@@ -366,45 +413,52 @@ class CLearnRenderAdminUnilessonList
 
     public function IsNeedProcessActionsOnList()
     {
-        if ($this->oList->GroupAction() === false)
+        if ($this->oList->GroupAction() === false) {
             return (false);
-        else
+        } else {
             return (true);
+        }
     }
 
     public function ProcessActionsOnList()
     {
-        if (isset($_POST['action']) && (strlen($_POST['action']) !== 0))
+        if (isset($_POST['action']) && ($_POST['action'] <> '')) {
             $action = $_POST['action'];
-        elseif (isset($_GET['action']) && (strlen($_GET['action']) !== 0))
+        } elseif (isset($_GET['action']) && ($_GET['action'] <> '')) {
             $action = $_GET['action'];
-        elseif (isset($_POST['action_button']) && (strlen($_POST['action_button']) !== 0))
+        } elseif (isset($_POST['action_button']) && ($_POST['action_button'] <> '')) {
             $action = $_POST['action_button'];
-        elseif (isset($_GET['action_button']) && (strlen($_GET['action_button']) !== 0))
+        } elseif (isset($_GET['action_button']) && ($_GET['action_button'] <> '')) {
             $action = $_GET['action_button'];
-        else
-            return ($this);        // nothing to do
+        } else {
+            return ($this);
+        }        // nothing to do
 
         $arID = $this->oList->GroupAction();
-        if ($arID === false)
-            return ($this);        // no items selected
+        if ($arID === false) {
+            return ($this);
+        }        // no items selected
 
         if (check_bitrix_sessid() !== true) {
-            throw new CLearnRenderAdminUnilessonListException ('',
-                CLearnRenderAdminUnilessonListException::C_ACCESS_DENIED);
+            throw new CLearnRenderAdminUnilessonListException (
+                '',
+                CLearnRenderAdminUnilessonListException::C_ACCESS_DENIED
+            );
         }
 
         if ($_POST['action_target'] === 'selected') {
             $arID = array();
             $rsData = $this->fetchDataFromDb();
-            while ($arRes = $rsData->Fetch())
+            while ($arRes = $rsData->Fetch()) {
                 $arID[] = $arRes['LESSON_ID'];
+            }
         }
 
         foreach ($arID as $lessonId) {
             // If not int or string can't be strictly casted to int
-            if (!(is_numeric($lessonId) && is_int($lessonId + 0)))
+            if (!(is_numeric($lessonId) && is_int($lessonId + 0))) {
                 continue;
+            }
 
             $lessonId += 0;
 
@@ -418,16 +472,20 @@ class CLearnRenderAdminUnilessonList
                         $oPath->ImportUrlencoded($lessonId);
                         $arPath = $oPath->GetPathAsArray();
                         if (count($arPath) < 2) {
-                            throw new CLearnRenderAdminUnilessonListException ('',
-                                CLearnRenderAdminUnilessonListException::C_LOGIC);
+                            throw new CLearnRenderAdminUnilessonListException (
+                                '',
+                                CLearnRenderAdminUnilessonListException::C_LOGIC
+                            );
                         }
 
                         $childLessonId = $oPath->GetBottom();
                         $parentLessonId = $oPath->GetBottom();
                         if (($parentLessonId === false) || ($childLessonId === false)) {
                             // something goes wrong
-                            throw new CLearnRenderAdminUnilessonListException ('',
-                                CLearnRenderAdminUnilessonListException::C_LOGIC);
+                            throw new CLearnRenderAdminUnilessonListException (
+                                '',
+                                CLearnRenderAdminUnilessonListException::C_LOGIC
+                            );
                         }
 
                         $this->EnsureLessonUnlinkAccess($parentLessonId, $childLessonId);
@@ -440,8 +498,9 @@ class CLearnRenderAdminUnilessonList
                         @set_time_limit(0);
 
                         $courseId = CLearnLesson::GetLinkedCourse($lessonId);
-                        if (($courseId !== false) && CCourse::IsCertificatesExists($courseId))
+                        if (($courseId !== false) && CCourse::IsCertificatesExists($courseId)) {
                             throw new Exception (GetMessage("LEARNING_COURSE_UNREMOVABLE_CAUSE_OF_CERTIFICATES"));
+                        }
 
                         $this->EnsureLessonDisbandAccess($lessonId);
                         CLearnLesson::Delete($lessonId);
@@ -453,8 +512,9 @@ class CLearnRenderAdminUnilessonList
                         @set_time_limit(0);
 
                         $courseId = CLearnLesson::GetLinkedCourse($lessonId);
-                        if (($courseId !== false) && CCourse::IsCertificatesExists($courseId))
+                        if (($courseId !== false) && CCourse::IsCertificatesExists($courseId)) {
                             throw new Exception (GetMessage("LEARNING_COURSE_UNREMOVABLE_CAUSE_OF_CERTIFICATES"));
+                        }
 
                         try {
                             // firstly, simulate to check permissions
@@ -469,8 +529,10 @@ class CLearnRenderAdminUnilessonList
                             CLearnLesson::DeleteRecursiveLikeHardlinks($lessonId);
                         } catch (LearnException $e) {
                             if ($e->GetCode() === LearnException::EXC_ERR_ALL_ACCESS_DENIED) {
-                                throw new CLearnRenderAdminUnilessonListException ('',
-                                    CLearnRenderAdminUnilessonListException::C_ACCESS_DENIED);
+                                throw new CLearnRenderAdminUnilessonListException (
+                                    '',
+                                    CLearnRenderAdminUnilessonListException::C_ACCESS_DENIED
+                                );
                             } else {
                                 // bubble exception
                                 throw new LearnException ($e->GetMessage(), $e->GetCode());
@@ -480,15 +542,17 @@ class CLearnRenderAdminUnilessonList
 
                     case 'activate':
                     case 'deactivate':
-                        if (strtolower($action) === 'deactivate') {
+                        if (mb_strtolower($action) === 'deactivate') {
                             $this->EnsureLessonDeactivateAccess($lessonId);
                             $arFields = Array('ACTIVE' => 'N');
-                        } elseif (strtolower($action) === 'activate') {
+                        } elseif (mb_strtolower($action) === 'activate') {
                             $this->EnsureLessonActivateAccess($lessonId);
                             $arFields = Array('ACTIVE' => 'Y');
                         } else {
-                            throw new CLearnRenderAdminUnilessonListException ('WTFAYD,#Pro#?!',
-                                CLearnRenderAdminUnilessonListException::C_ACCESS_DENIED);
+                            throw new CLearnRenderAdminUnilessonListException (
+                                'WTFAYD,#Pro#?!',
+                                CLearnRenderAdminUnilessonListException::C_ACCESS_DENIED
+                            );
                         }
 
                         // Is item course or not?
@@ -501,8 +565,9 @@ class CLearnRenderAdminUnilessonList
                             $rc = $oCourse->Update($courseId, $arFields);
                             unset ($oCourse);
 
-                            if ($rc === false)
+                            if ($rc === false) {
                                 throw new Exception();
+                            }
                         }
                         break;
 
@@ -526,20 +591,23 @@ class CLearnRenderAdminUnilessonList
                     $errmsg = GetMessage('LEARNING_SAVE_ERROR') . '#' . $lessonId . ': '
                         . GetMessage('LEARNING_ACCESS_D');
 
-                    if (strlen($errorText) > 0)
+                    if ($errorText <> '') {
                         $errmsg .= (': ' . $errorText);
+                    }
                 } else {
                     // Some error occured during update operation
                     $errmsg = GetMessage('LEARNING_SAVE_ERROR') . $lessonId;
 
-                    if (strlen($errorText) > 0)
+                    if ($errorText <> '') {
                         $errmsg .= (' (' . $errorText . ')');
+                    }
                 }
 
-                if ($preventSelectionOnError)
+                if ($preventSelectionOnError) {
                     $this->oList->AddUpdateError($errmsg);
-                else
+                } else {
                     $this->oList->AddUpdateError($errmsg, $lessonId);
+                }
             }
         }
 
@@ -555,10 +623,13 @@ class CLearnRenderAdminUnilessonList
         if (!$this->oAccess->IsLessonAccessible(
             $lessonID,
             CLearnAccess::OP_LESSON_REMOVE,
-            true)
+            true
+        )
         ) {
-            throw new CLearnRenderAdminUnilessonListException ('',
-                CLearnRenderAdminUnilessonListException::C_ACCESS_DENIED);
+            throw new CLearnRenderAdminUnilessonListException (
+                '',
+                CLearnRenderAdminUnilessonListException::C_ACCESS_DENIED
+            );
         }
 
         // ensure, that all childs can be unlinked from lesson
@@ -567,20 +638,26 @@ class CLearnRenderAdminUnilessonList
             if (!$this->oAccess->IsLessonAccessible(
                 $lessonID,
                 CLearnAccess::OP_LESSON_UNLINK_DESCENDANTS,
-                true)
+                true
+            )
             ) {
-                throw new CLearnRenderAdminUnilessonListException ('',
-                    CLearnRenderAdminUnilessonListException::C_ACCESS_DENIED);
+                throw new CLearnRenderAdminUnilessonListException (
+                    '',
+                    CLearnRenderAdminUnilessonListException::C_ACCESS_DENIED
+                );
             }
 
             foreach ($arChildEdges as $arChildEdge) {
                 if (!$this->oAccess->IsLessonAccessible(
                     $arChildEdge['CHILD_LESSON'],
                     CLearnAccess::OP_LESSON_UNLINK_FROM_PARENTS,
-                    true)
+                    true
+                )
                 ) {
-                    throw new CLearnRenderAdminUnilessonListException ('',
-                        CLearnRenderAdminUnilessonListException::C_ACCESS_DENIED);
+                    throw new CLearnRenderAdminUnilessonListException (
+                        '',
+                        CLearnRenderAdminUnilessonListException::C_ACCESS_DENIED
+                    );
                 }
             }
         }
@@ -591,20 +668,26 @@ class CLearnRenderAdminUnilessonList
             if (!$this->oAccess->IsLessonAccessible(
                 $lessonID,
                 CLearnAccess::OP_LESSON_UNLINK_FROM_PARENTS,
-                true)
+                true
+            )
             ) {
-                throw new CLearnRenderAdminUnilessonListException ('',
-                    CLearnRenderAdminUnilessonListException::C_ACCESS_DENIED);
+                throw new CLearnRenderAdminUnilessonListException (
+                    '',
+                    CLearnRenderAdminUnilessonListException::C_ACCESS_DENIED
+                );
             }
 
             foreach ($arParentEdges as $arParentEdge) {
                 if (!$this->oAccess->IsLessonAccessible(
                     $arParentEdge['PARENT_LESSON'],
                     CLearnAccess::OP_LESSON_UNLINK_DESCENDANTS,
-                    true)
+                    true
+                )
                 ) {
-                    throw new CLearnRenderAdminUnilessonListException ('',
-                        CLearnRenderAdminUnilessonListException::C_ACCESS_DENIED);
+                    throw new CLearnRenderAdminUnilessonListException (
+                        '',
+                        CLearnRenderAdminUnilessonListException::C_ACCESS_DENIED
+                    );
                 }
             }
         }
@@ -616,13 +699,16 @@ class CLearnRenderAdminUnilessonList
     protected function EnsureLessonActivateAccess($lessonID)
     {
         global $USER;
-        if ($USER->IsAdmin())
+        if ($USER->IsAdmin()) {
             return ($this);
+        }
 
         $oAccess = CLearnAccess::GetInstance($USER->GetID());
         if (!$oAccess->IsLessonAccessible($lessonID, CLearnAccess::OP_LESSON_WRITE)) {
-            throw new CLearnRenderAdminUnilessonListException ('',
-                CLearnRenderAdminUnilessonListException::C_ACCESS_DENIED);
+            throw new CLearnRenderAdminUnilessonListException (
+                '',
+                CLearnRenderAdminUnilessonListException::C_ACCESS_DENIED
+            );
         }
 
         return ($this);
@@ -632,13 +718,16 @@ class CLearnRenderAdminUnilessonList
     protected function EnsureLessonDeactivateAccess($lessonID)
     {
         global $USER;
-        if ($USER->IsAdmin())
+        if ($USER->IsAdmin()) {
             return ($this);
+        }
 
         $oAccess = CLearnAccess::GetInstance($USER->GetID());
         if (!$oAccess->IsLessonAccessible($lessonID, CLearnAccess::OP_LESSON_WRITE)) {
-            throw new CLearnRenderAdminUnilessonListException ('',
-                CLearnRenderAdminUnilessonListException::C_ACCESS_DENIED);
+            throw new CLearnRenderAdminUnilessonListException (
+                '',
+                CLearnRenderAdminUnilessonListException::C_ACCESS_DENIED
+            );
         }
 
         return ($this);
@@ -661,10 +750,11 @@ class CLearnRenderAdminUnilessonList
 
     protected function IsListMode($mode)
     {
-        if ($this->listMode === $mode)
+        if ($this->listMode === $mode) {
             return (true);
-        else
+        } else {
             return (false);
+        }
     }
 
     private function fetchDataFromDb()
@@ -678,12 +768,14 @@ class CLearnRenderAdminUnilessonList
             } elseif ($searchMode === 'childs_candidates') {
                 //exit('2');
                 $accessOperations = CLearnAccess::OP_LESSON_READ | CLearnAccess::OP_LESSON_LINK_TO_PARENTS;
-            } elseif ($searchMode === 'attach_question_to_lesson')
+            } elseif ($searchMode === 'attach_question_to_lesson') {
                 $accessOperations = CLearnAccess::OP_LESSON_WRITE;
-            else
+            } else {
                 $accessOperations = CLearnAccess::OP_LESSON_READ;
-        } else
+            }
+        } else {
             $accessOperations = CLearnAccess::OP_LESSON_READ;
+        }
 
         $this->arFilter['ACCESS_OPERATIONS'] = $accessOperations;
 
@@ -695,10 +787,11 @@ class CLearnRenderAdminUnilessonList
                 $this->arSortOrder,
                 $this->arFilter
             );
-        } elseif ($this->IsListAnyLessonsMode())
+        } elseif ($this->IsListAnyLessonsMode()) {
             $CDBResult = CLearnLesson::GetList($this->arSortOrder, $this->arFilter);
-        elseif ($this->IsListAnyCoursesMode())
+        } elseif ($this->IsListAnyCoursesMode()) {
             $CDBResult = CCourse::GetList($this->arSortOrder, $this->arFilter);
+        }
 
         return ($CDBResult);
     }
@@ -725,16 +818,22 @@ class CLearnRenderAdminUnilessonList
         // list's footer
         $this->oList->AddFooter(
             array(
-                array('title' => GetMessage('MAIN_ADMIN_LIST_SELECTED'),
-                    'value' => $this->rsData->SelectedRowsCount()),
-                array('counter' => true,
-                    'title' => GetMessage('MAIN_ADMIN_LIST_CHECKED'), 'value' => '0')
+                array(
+                    'title' => GetMessage('MAIN_ADMIN_LIST_SELECTED'),
+                    'value' => $this->rsData->SelectedRowsCount()
+                ),
+                array(
+                    'counter' => true,
+                    'title' => GetMessage('MAIN_ADMIN_LIST_CHECKED'),
+                    'value' => '0'
+                )
             )
         );
 
         $oParentPath = new CLearnPath();
-        if (isset($_GET['LESSON_PATH']))
+        if (isset($_GET['LESSON_PATH'])) {
             $oParentPath->ImportUrlencoded($_GET['LESSON_PATH']);
+        }
 
         $arParentPath = $oParentPath->GetPathAsArray();
 
@@ -750,8 +849,9 @@ class CLearnRenderAdminUnilessonList
             // PUBLISH_PROHIBITED available in context of most parent course only
             if ($this->contextCourseLessonId !== false) {
                 $arRes['PUBLISH_PROHIBITED'] = 'N';
-                if (CLearnLesson::IsPublishProhibited($arRes['LESSON_ID'], $this->contextCourseLessonId))
+                if (CLearnLesson::IsPublishProhibited($arRes['LESSON_ID'], $this->contextCourseLessonId)) {
                     $arRes['PUBLISH_PROHIBITED'] = 'Y';
+                }
             }
 
             $arRes['SITE_ID'] = '';
@@ -762,14 +862,17 @@ class CLearnRenderAdminUnilessonList
 
                 $resCourseSites = CCourse::GetSite($courseId);
                 while ($arCourseSites = $resCourseSites->Fetch()) {
-                    if ($arRes['SITE_ID'] != '')
+                    if ($arRes['SITE_ID'] != '') {
                         $arRes['SITE_ID'] .= ' / ';
+                    }
 
                     $arRes['SITE_ID'] .= htmlspecialcharsbx($arCourseSites['LID']);
                 }
             } else {
                 $hrefPrefix = 'learn_unilesson_edit.php?lang=' . LANG . '&LESSON_ID=' . $arRes['LESSON_ID']
-                    . '&LESSON_PATH=' . ($this->requestedParentLessonId > 0 ? urlencode($urlCurPath) : $this->requestedParentLessonId);
+                    . '&LESSON_PATH=' . ($this->requestedParentLessonId > 0 ? urlencode(
+                        $urlCurPath
+                    ) : $this->requestedParentLessonId);
             }
 
             $actionEditLesson = $hrefPrefix . $filterParams;
@@ -806,44 +909,53 @@ class CLearnRenderAdminUnilessonList
                 array(),                                // $arOrder
                 array('CHECK_PERMISSIONS' => 'N')        // $arFilter
             );
-            while ($arParent = $rsParents->Fetch())
+            while ($arParent = $rsParents->Fetch()) {
                 $arParents[] = $arParent['NAME'];
+            }
 
             $arParents = array_map('htmlspecialcharsbx', $arParents);
-            if (count($arParents) > 0)
+            if (count($arParents) > 0) {
                 $htmlParents = implode('<hr width="100%" size="1">', $arParents);
-            else
+            } else {
                 $htmlParents = '&nbsp;';
+            }
 
             $rsChilds = CLearnLesson::GetListOfImmediateChilds(
                 $arRes['LESSON_ID'],
                 array(),                                // $arOrder
                 array('CHECK_PERMISSIONS' => 'N')        // $arFilter
             );
-            while ($arChild = $rsChilds->Fetch())
+            while ($arChild = $rsChilds->Fetch()) {
                 $arChilds[] = $arChild['NAME'];
+            }
 
             $arChilds = array_map('htmlspecialcharsbx', $arChilds);
-            if (count($arChilds) > 0)
+            if (count($arChilds) > 0) {
                 $htmlChilds = implode('<hr width="100%" size="1">', $arChilds);
-            else
+            } else {
                 $htmlChilds = '&nbsp;';
+            }
 
-            if (isset($arRes['LINKED_LESSON_ID']) && ($arRes['LINKED_LESSON_ID'] > 0))
+            if (isset($arRes['LINKED_LESSON_ID']) && ($arRes['LINKED_LESSON_ID'] > 0)) {
                 $icon = 'learning_icon_courses';
-            elseif (count($arChilds) > 0)
+            } elseif (count($arChilds) > 0) {
                 $icon = 'learning_icon_chapters';
-            else
+            } else {
                 $icon = 'learning_icon_lessons';
+            }
 
             if (!$this->IsSearchMode()) {
-                $row->AddViewField('NAME',
+                $row->AddViewField(
+                    'NAME',
                     '<span class="adm-list-table-icon-link"><span class="adm-submenu-item-link-icon adm-list-table-icon ' . $icon . '"></span>'
                     . ($rowAction === false
                         ? '<span class="adm-list-table-link">' . htmlspecialcharsbx($arRes['NAME']) . '</span>'
-                        : '<a href="' . $rowAction . '" class="adm-list-table-link">' . htmlspecialcharsbx($arRes['NAME']) . '</a>'
+                        : '<a href="' . $rowAction . '" class="adm-list-table-link">' . htmlspecialcharsbx(
+                            $arRes['NAME']
+                        ) . '</a>'
                     ) .
-                    '</span>');
+                    '</span>'
+                );
             } else {
                 $actionUseLesson = "(function()
 					{
@@ -851,17 +963,25 @@ class CLearnRenderAdminUnilessonList
                     . str_replace(
                         array("'", ';', ',', "\n", "\r"),
                         '',
-                        htmlspecialcharsbx($this->search_retpoint))
+                        htmlspecialcharsbx($this->search_retpoint)
+                    )
                     . "';
 						if ( ! (window.opener && window.opener[fnName]) )
 							return;
 
-						window.opener[fnName]('" . (int)$arRes['LESSON_ID'] . "', '" . CUtil::JSEscape(htmlspecialcharsbx($arRes['NAME'])) . "');
+						window.opener[fnName]('" . (int)$arRes['LESSON_ID'] . "', '" . CUtil::JSEscape(
+                        htmlspecialcharsbx($arRes['NAME'])
+                    ) . "');
 						window.close();
 					})();
 					";
 
-                $row->AddViewField('NAME', '<a href="javascript:void(0);" class="adm-list-table-icon-link" onclick="' . $actionUseLesson . '"><span class="adm-submenu-item-link-icon adm-list-table-icon ' . $icon . '"></span><span class="adm-list-table-link">' . htmlspecialcharsbx($arRes['NAME']) . '</span></a>');
+                $row->AddViewField(
+                    'NAME',
+                    '<a href="javascript:void(0);" class="adm-list-table-icon-link" onclick="' . $actionUseLesson . '"><span class="adm-submenu-item-link-icon adm-list-table-icon ' . $icon . '"></span><span class="adm-list-table-link">' . htmlspecialcharsbx(
+                        $arRes['NAME']
+                    ) . '</span></a>'
+                );
             }
 
             $row->AddViewField('PARENTS', $htmlParents);
@@ -877,21 +997,27 @@ class CLearnRenderAdminUnilessonList
             $lessonsCount = 0;
 
             if (!isset($questionsCountCache[$arRes['LESSON_ID']])) {
-                $questionsCountCache[$arRes['LESSON_ID']] = CLQuestion::GetCount(array('LESSON_ID' => (int)$arRes['LESSON_ID']));
+                $questionsCountCache[$arRes['LESSON_ID']] = CLQuestion::GetCount(
+                    array('LESSON_ID' => (int)$arRes['LESSON_ID'])
+                );
             }
             $questionsCount = $questionsCountCache[$arRes['LESSON_ID']];
 
             foreach ($arTree as $arLessonData) {
-                if ($arLessonData['IS_CHILDS'])
+                if ($arLessonData['IS_CHILDS']) {
                     ++$chapterCount;
-                else
+                } else {
                     ++$lessonsCount;
+                }
 
-                if ((int)$arLessonData['#DEPTH_IN_TREE'] > $depth)
+                if ((int)$arLessonData['#DEPTH_IN_TREE'] > $depth) {
                     $depth = (int)$arLessonData['#DEPTH_IN_TREE'];
+                }
 
                 if (!isset($questionsCountCache[$arLessonData['LESSON_ID']])) {
-                    $questionsCountCache[$arLessonData['LESSON_ID']] = CLQuestion::GetCount(array('LESSON_ID' => (int)$arLessonData['LESSON_ID']));
+                    $questionsCountCache[$arLessonData['LESSON_ID']] = CLQuestion::GetCount(
+                        array('LESSON_ID' => (int)$arLessonData['LESSON_ID'])
+                    );
                 }
                 $questionsCount += $questionsCountCache[$arLessonData['LESSON_ID']];
             }
@@ -966,8 +1092,9 @@ class CLearnRenderAdminUnilessonList
                 $row->AddInputField('NAME', array('size' => '35'));
 
                 // SORT field editing possibly only for courses and for lessons in relation to parent lesson
-                if ($this->IsListChildLessonsMode() || $this->IsListAnyCoursesMode())
+                if ($this->IsListChildLessonsMode() || $this->IsListAnyCoursesMode()) {
                     $row->AddInputField('SORT', array('size' => '3'));
+                }
 
                 $row->AddCheckField('ACTIVE');
                 $row->AddInputField('CODE');
@@ -980,10 +1107,11 @@ class CLearnRenderAdminUnilessonList
             $arActions = Array();
 
             if (!$this->IsSearchMode()) {
-                if ($this->IsLessonUpdateAccess($arRes['LESSON_ID']) === true)
+                if ($this->IsLessonUpdateAccess($arRes['LESSON_ID']) === true) {
                     $editTxt = GetMessage('MAIN_ADMIN_MENU_EDIT');
-                else
+                } else {
                     $editTxt = GetMessage('MAIN_ADMIN_MENU_OPEN');
+                }
 
                 // Actions
                 $arActions[] = array(
@@ -1022,8 +1150,9 @@ class CLearnRenderAdminUnilessonList
                 if ($arRes['CHILDS_CNT'] > 0) {
                     $deleteMSG = GetMessage('LEARNING_ADMIN_MENU_DELETE_RECURSIVE')
                         . ' (' . (string)((int)$arRes['CHILDS_CNT']) . ')';
-                } else
+                } else {
                     $deleteMSG = GetMessage("MAIN_ADMIN_MENU_DELETE");
+                }
 
                 $disbandMSG = GetMessage('LEARNING_ADMIN_MENU_DISBAND');
 
@@ -1032,8 +1161,9 @@ class CLearnRenderAdminUnilessonList
                     $this->EnsureLessonDisbandAccess($arRes['LESSON_ID']);
                     $isEnoughRightsForDisbandLesson = true;
                 } catch (CLearnRenderAdminUnilessonListException $e) {
-                    if ($e->GetCode() & CLearnRenderAdminUnilessonListException::C_ACCESS_DENIED)
-                        ; // access denied, nothing to do
+                    if ($e->GetCode() & CLearnRenderAdminUnilessonListException::C_ACCESS_DENIED) {
+                        ;
+                    } // access denied, nothing to do
                     else {
                         // bubble exception
                         throw new CLearnRenderAdminUnilessonListException ($e->GetMessage(), $e->GetCode());
@@ -1142,10 +1272,12 @@ class CLearnRenderAdminUnilessonList
     public function BuildListGroupActionsButton()
     {
         // no group actions in search mode
-        if ($this->IsSearchMode())
+        if ($this->IsSearchMode()) {
             return ($this);
+        }
 
-        $this->oList->AddGroupActionTable(Array(
+        $this->oList->AddGroupActionTable(
+            Array(
                 'activate' => GetMessage('MAIN_ADMIN_LIST_ACTIVATE'),
                 'deactivate' => GetMessage('MAIN_ADMIN_LIST_DEACTIVATE'),
                 'delete' => GetMessage('MAIN_ADMIN_LIST_DELETE'),
@@ -1162,7 +1294,7 @@ class CLearnRenderAdminUnilessonList
         $parentLessonId = false;
 
         // Button "level up" available only if LESSON_PATH available and parent exists in it
-        if (isset($_GET['LESSON_PATH']) && strlen($_GET['LESSON_PATH']) > 0) {
+        if (isset($_GET['LESSON_PATH']) && $_GET['LESSON_PATH'] <> '') {
             $PROPOSE_RETURN_LESSON_PATH = '&PROPOSE_RETURN_LESSON_PATH=' . urlencode($_GET['LESSON_PATH']);
             $oPath = new CLearnPath();
             $oPath->ImportUrlencoded($_GET['LESSON_PATH']);
@@ -1172,8 +1304,9 @@ class CLearnRenderAdminUnilessonList
 
             $count_arUpPath = count($arUpPath);
 
-            if (isset($arUpPath[$count_arUpPath - 1]))
+            if (isset($arUpPath[$count_arUpPath - 1])) {
                 $parentLessonId = $arUpPath[$count_arUpPath - 1];
+            }
 
             // Is parent node exists
             if ($count_arUpPath >= 2) {
@@ -1207,8 +1340,9 @@ class CLearnRenderAdminUnilessonList
             }
 
             unset ($arPath, $oPath, $arUpPath, $oUpPath);
-        } else
+        } else {
             $PROPOSE_RETURN_LESSON_PATH = '';
+        }
 
         if (!$this->IsSearchMode()) {
             /**
@@ -1225,9 +1359,14 @@ class CLearnRenderAdminUnilessonList
                     if ($parentLessonId === false) {
                         $isAccessCreate = true;
                     } elseif (
-                        $this->oAccess->IsBaseAccess(CLearnAccess::OP_LESSON_LINK_DESCENDANTS | CLearnAccess::OP_LESSON_LINK_TO_PARENTS)
+                        $this->oAccess->IsBaseAccess(
+                            CLearnAccess::OP_LESSON_LINK_DESCENDANTS | CLearnAccess::OP_LESSON_LINK_TO_PARENTS
+                        )
                         || (
-                            $this->oAccess->IsLessonAccessible($parentLessonId, CLearnAccess::OP_LESSON_LINK_DESCENDANTS)
+                            $this->oAccess->IsLessonAccessible(
+                                $parentLessonId,
+                                CLearnAccess::OP_LESSON_LINK_DESCENDANTS
+                            )
                             && $this->oAccess->IsBaseAccessForCR(CLearnAccess::OP_LESSON_LINK_TO_PARENTS)
                         )
                     ) {
@@ -1297,12 +1436,15 @@ class CLearnRenderAdminUnilessonList
 
     public function SaveInlineEditedItems()
     {
-        if (!$this->IsNeedSaveInlineEditedItems())
+        if (!$this->IsNeedSaveInlineEditedItems()) {
             return ($this);
+        }
 
         if (check_bitrix_sessid() !== true) {
-            throw new CLearnRenderAdminUnilessonListException ('',
-                CLearnRenderAdminUnilessonListException::C_ACCESS_DENIED);
+            throw new CLearnRenderAdminUnilessonListException (
+                '',
+                CLearnRenderAdminUnilessonListException::C_ACCESS_DENIED
+            );
         }
 
         foreach ($_POST['FIELDS'] as $lessonId => $arFields) {
@@ -1311,8 +1453,9 @@ class CLearnRenderAdminUnilessonList
             $wasError = false;
             try {
                 // skip not changed items
-                if (!$this->oList->IsUpdated($lessonId))
+                if (!$this->oList->IsUpdated($lessonId)) {
                     continue;
+                }
 
                 // throws exception if access denied
                 $this->EnsureLessonUpdateAccess($lessonId);
@@ -1329,9 +1472,11 @@ class CLearnRenderAdminUnilessonList
                     } elseif ($this->IsListChildLessonsMode()) {
                         $arFields['EDGE_SORT'] = $arFields['SORT'];
                     } else {
-                        throw new CLearnRenderAdminUnilessonListException ('',
+                        throw new CLearnRenderAdminUnilessonListException (
+                            '',
                             CLearnRenderAdminUnilessonListException::C_LOGIC
-                            | CLearnRenderAdminUnilessonListException::C_ACTION_UPDATE_FAIL);
+                            | CLearnRenderAdminUnilessonListException::C_ACTION_UPDATE_FAIL
+                        );
                     }
 
                     unset ($arFields['SORT']);
@@ -1352,8 +1497,9 @@ class CLearnRenderAdminUnilessonList
                         && in_array($arFields['PUBLISH_PROHIBITED'], array('N', 'Y'), true)
                     ) {
                         $isProhibited = true;
-                        if ($arFields['PUBLISH_PROHIBITED'] === 'N')
+                        if ($arFields['PUBLISH_PROHIBITED'] === 'N') {
                             $isProhibited = false;
+                        }
 
                         CLearnLesson::PublishProhibitionSetTo($lessonId, $this->contextCourseLessonId, $isProhibited);
                     }
@@ -1368,7 +1514,8 @@ class CLearnRenderAdminUnilessonList
                     $ob = new CCourse;
                     if (!$ob->Update($courseId, $arFields)) {
                         throw new CLearnRenderAdminUnilessonListException (
-                            '', CLearnRenderAdminUnilessonListException::C_ACTION_UPDATE_FAIL);
+                            '', CLearnRenderAdminUnilessonListException::C_ACTION_UPDATE_FAIL
+                        );
                     }
                     unset ($ob);
                 }
@@ -1392,14 +1539,16 @@ class CLearnRenderAdminUnilessonList
                     $errmsg = GetMessage('LEARNING_SAVE_ERROR') . ': '
                         . GetMessage('LEARNING_ACCESS_D');
 
-                    if (strlen($errorText) > 0)
+                    if ($errorText <> '') {
                         $errmsg .= (': ' . $errorText);
+                    }
                 } else {
                     // Some error occured during update operation
                     $errmsg = GetMessage('LEARNING_SAVE_ERROR') . $lessonId;
 
-                    if (strlen($errorText) > 0)
+                    if ($errorText <> '') {
                         $errmsg .= (' (' . $errorText . ')');
+                    }
                 }
 
                 $this->oList->AddUpdateError($errmsg, $lessonId);
@@ -1445,7 +1594,12 @@ class CLearnRenderAdminUnilessonList
                         'reference' => array(GetMessage('LEARNING_YES'), GetMessage('LEARNING_NO')),
                         'reference_id' => array('Y', 'N')
                     );
-                    echo SelectBoxFromArray('filter_active', $arr, htmlspecialcharsEx($filter_active), GetMessage('LEARNING_ALL'));
+                    echo SelectBoxFromArray(
+                        'filter_active',
+                        $arr,
+                        htmlspecialcharsEx($filter_active),
+                        GetMessage('LEARNING_ALL')
+                    );
                     ?>
                 </td>
             </tr>
@@ -1464,13 +1618,20 @@ class CLearnRenderAdminUnilessonList
                         'reference' => array(
                             GetMessage('LEARNING_FILTER_TYPE_COURSE'),
                             GetMessage('LEARNING_FILTER_TYPE_LESSON_WITH_CHILDS'),
-                            GetMessage('LEARNING_FILTER_TYPE_LESSON_WO_CHILDS')),
+                            GetMessage('LEARNING_FILTER_TYPE_LESSON_WO_CHILDS')
+                        ),
                         'reference_id' => array(
                             'COURSE',
                             'LESSON_WITH_CHILDS',
-                            'LESSON_WO_CHILDS')
+                            'LESSON_WO_CHILDS'
+                        )
                     );
-                    echo SelectBoxFromArray('filter_lesson_type', $arr, htmlspecialcharsEx($filter_lesson_type), GetMessage('LEARNING_ALL'));
+                    echo SelectBoxFromArray(
+                        'filter_lesson_type',
+                        $arr,
+                        htmlspecialcharsEx($filter_lesson_type),
+                        GetMessage('LEARNING_ALL')
+                    );
                     ?>
                 </td>
             </tr>
@@ -1489,8 +1650,9 @@ class CLearnRenderAdminUnilessonList
             */
 
             $strTmpLessonPath = '';
-            if (isset($_GET['LESSON_PATH']))
+            if (isset($_GET['LESSON_PATH'])) {
                 $strTmpLessonPath = $_GET['LESSON_PATH'];
+            }
 
             $this->oFilter->Buttons(
                 array(
@@ -1530,15 +1692,18 @@ try {
     ->Init();                // init filter, list
 
     // save inline edited items
-    if ($oRE->IsNeedSaveInlineEditedItems())
+    if ($oRE->IsNeedSaveInlineEditedItems()) {
         $oRE->SaveInlineEditedItems();
+    }
 
     // process group or single actions on list's item(s)
-    if ($oRE->IsNeedProcessActionsOnList())
+    if ($oRE->IsNeedProcessActionsOnList()) {
         $oRE->ProcessActionsOnList();
+    }
 
-    if (isset($_REQUEST['return_url']) && (strlen($_REQUEST['return_url']) > 0) && check_bitrix_sessid())
+    if (isset($_REQUEST['return_url']) && ($_REQUEST['return_url'] <> '') && check_bitrix_sessid()) {
         LocalRedirect($_REQUEST['return_url']);
+    }
 
 
     $oRE->FetchData()                    // get data for list
@@ -1551,31 +1716,36 @@ try {
 
     $errCode = $e->getCode();
 
-    if ($errCode & CLearnRenderAdminUnilessonListException::C_COURSE_UNAVAILABLE)
+    if ($errCode & CLearnRenderAdminUnilessonListException::C_COURSE_UNAVAILABLE) {
         $strCAdminMessage = GetMessage('LEARNING_BAD_COURSE');
-    elseif ($errCode & CLearnRenderAdminUnilessonListException::C_ACCESS_DENIED) {
-        if ($errCode & CLearnRenderAdminUnilessonListException::C_NEED_SHOW_AUTH_FORM)
+    } elseif ($errCode & CLearnRenderAdminUnilessonListException::C_ACCESS_DENIED) {
+        if ($errCode & CLearnRenderAdminUnilessonListException::C_NEED_SHOW_AUTH_FORM) {
             $needShowAuthForm = true;
-        else
+        } else {
             $strCAdminMessage = GetMessage('ACCESS_DENIED');
-    } else
+        }
+    } else {
         $strCAdminMessage = GetMessage('LEARNING_ERROR') . ' (' . $e->GetMessage() . ')';
+    }
 } catch (Exception $e) {
     $wasError = true;
 
     $strCAdminMessage = GetMessage('LEARNING_ERROR');
 
     $errmsg = $e->GetMessage();
-    if (strlen($errmsg) > 0)
+    if ($errmsg <> '') {
         $strCAdminMessage .= ' (' . $e->GetMessage() . ')';
+    }
 }
 
 $APPLICATION->SetTitle($title);
 
-if (!$oRE->IsSearchMode())
-    require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php'); // second system's prolog
-else
+if (!$oRE->IsSearchMode()) {
+    require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php');
+} // second system's prolog
+else {
     require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_popup_admin.php");
+}
 
 if ($wasError) {
     $title = GetMessage('LEARNING_LESSONS');
@@ -1583,8 +1753,9 @@ if ($wasError) {
     if ($needShowAuthForm) {
         $APPLICATION->AuthForm(GetMessage('ACCESS_DENIED'), false);
     } else {
-        if ($strCAdminMessage !== false)
+        if ($strCAdminMessage !== false) {
             CAdminMessage::ShowMessage($strCAdminMessage);
+        }
 
         $aContext = array(
             array(
@@ -1597,10 +1768,13 @@ if ($wasError) {
         $context = new CAdminContextMenu($aContext);
         $context->Show();
     }
-} else
-    echo $html;        // output
+} else {
+    echo $html;
+}        // output
 
-if (!$oRE->IsSearchMode())
-    require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin.php');    // system's epilog
-else
+if (!$oRE->IsSearchMode()) {
+    require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin.php');
+}    // system's epilog
+else {
     require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_popup_admin.php');
+}

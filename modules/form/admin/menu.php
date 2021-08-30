@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 if ($APPLICATION->GetGroupRight("form") > "D") {
@@ -16,12 +17,14 @@ if ($APPLICATION->GetGroupRight("form") > "D") {
     );
 
     $arFormsList = array();
-    if (method_exists($this, "IsSectionActive") && $this->IsSectionActive("menu_webforms_list") || defined('BX_ADMIN_FORM_MENU_OPEN') && BX_ADMIN_FORM_MENU_OPEN == 1) {
+    if (method_exists($this, "IsSectionActive") && $this->IsSectionActive("menu_webforms_list") || defined(
+            'BX_ADMIN_FORM_MENU_OPEN'
+        ) && BX_ADMIN_FORM_MENU_OPEN == 1) {
         CModule::IncludeModule('form');
 
         $z = CForm::GetMenuList(array("LID" => LANGUAGE_ID));
         while ($zr = $z->GetNext()) {
-            if (strlen($zr["MENU"]) > 0) {
+            if ($zr["MENU"] <> '') {
                 $alt = str_replace("#NAME#", $zr["NAME"], htmlspecialcharsbx(GetMessage("FORM_RESULTS_ALT")));
                 $arFormsList[] = array(
                     "text" => $zr["MENU"],

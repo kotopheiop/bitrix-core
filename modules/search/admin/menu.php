@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 /** @global CMain $APPLICATION */
 global $APPLICATION;

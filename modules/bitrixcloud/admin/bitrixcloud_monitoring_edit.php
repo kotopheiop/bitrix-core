@@ -1,11 +1,13 @@
 <?
+
 define("ADMIN_MODULE_NAME", "bitrixcloud");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 IncludeModuleLangFile(__FILE__);
 /* @global CMain $APPLICATION */
 /* @global CUser $USER */
-if (!$USER->CanDoOperation("bitrixcloud_monitoring") || !CModule::IncludeModule("bitrixcloud"))
+if (!$USER->CanDoOperation("bitrixcloud_monitoring") || !CModule::IncludeModule("bitrixcloud")) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $strError = "";
 $bVarsFromForm = false;
@@ -40,10 +42,15 @@ try {
             throw new CBitrixCloudException($result);
         }
 
-        if ($apply != "")
-            LocalRedirect("/bitrix/admin/bitrixcloud_monitoring_edit.php?lang=" . LANGUAGE_ID . "&domain=" . urlencode($_REQUEST["domain"]));
-        else
+        if ($apply != "") {
+            LocalRedirect(
+                "/bitrix/admin/bitrixcloud_monitoring_edit.php?lang=" . LANGUAGE_ID . "&domain=" . urlencode(
+                    $_REQUEST["domain"]
+                )
+            );
+        } else {
             LocalRedirect("/bitrix/admin/bitrixcloud_monitoring_admin.php?lang=" . LANGUAGE_ID);
+        }
     }
 
     $arResult = $monitoring->getList();
@@ -58,8 +65,9 @@ try {
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
-if ($strError)
+if ($strError) {
     CAdminMessage::ShowMessage($strError);
+}
 
 if ($bVarsFromForm) {
     $aDomain = array(
@@ -107,40 +115,52 @@ if ($bVarsFromForm) {
             <td><label for="TEST_HTTP_RESPONSE_TIME"><? echo GetMessage("BCL_MONITORING_TEST_HTTP_RESPONSE_TIME") ?>
                     :</label></td>
             <td><input type="checkbox" id="TEST_HTTP_RESPONSE_TIME" name="TESTS[]"
-                       value="test_http_response_time" <? if (in_array("test_http_response_time", $aDomain["TESTS"])) echo 'checked="checked"'; ?>>
-            </td>
+                       value="test_http_response_time" <? if (in_array("test_http_response_time", $aDomain["TESTS"])) {
+                    echo 'checked="checked"';
+                } ?>></td>
         </tr>
         <tr>
             <td><label for="TEST_DOMAIN_REGISTRATION"><? echo GetMessage("BCL_MONITORING_TEST_DOMAIN_REGISTRATION") ?>
                     :</label></td>
             <td><input type="checkbox" id="TEST_DOMAIN_REGISTRATION" name="TESTS[]"
-                       value="test_domain_registration" <? if (in_array("test_domain_registration", $aDomain["TESTS"])) echo 'checked="checked"'; ?>>
-            </td>
+                       value="test_domain_registration" <? if (in_array(
+                    "test_domain_registration",
+                    $aDomain["TESTS"]
+                )) {
+                    echo 'checked="checked"';
+                } ?>></td>
         </tr>
         <tr>
             <td><label for="TEST_LICENSE"><? echo GetMessage("BCL_MONITORING_TEST_LICENSE") ?>:</label></td>
-            <td><input type="checkbox" id="TEST_LICENSE" name="TESTS[]"
-                       value="test_lic" <? if (in_array("test_lic", $aDomain["TESTS"])) echo 'checked="checked"'; ?>>
-            </td>
+            <td><input type="checkbox" id="TEST_LICENSE" name="TESTS[]" value="test_lic" <? if (in_array(
+                    "test_lic",
+                    $aDomain["TESTS"]
+                )) {
+                    echo 'checked="checked"';
+                } ?>></td>
         </tr>
         <tr>
             <td><label for="IS_HTTPS"><? echo GetMessage("BCL_MONITORING_IS_HTTPS") ?>:</label></td>
             <td>
                 <input type="checkbox" id="IS_HTTPS" name="IS_HTTPS" value="Y"
                     <?
-                    if ($aDomain["IS_HTTPS"] === "Y")
+                    if ($aDomain["IS_HTTPS"] === "Y") {
                         echo 'checked="checked"';
+                    }
                     ?>
                        onclick="ssl_changed(this)"
                 />
             </td>
         </tr>
-        <tr id="ssl" <? if ($aDomain["IS_HTTPS"] !== "Y") echo 'style="display:none"'; ?>>
+        <tr id="ssl" <? if ($aDomain["IS_HTTPS"] !== "Y") {
+            echo 'style="display:none"';
+        } ?>>
             <td><label for="TEST_SSL_CERT_VALIDITY"><? echo GetMessage("BCL_MONITORING_TEST_SSL_CERT_VALIDITY") ?>
                     :</label></td>
             <td><input type="checkbox" id="TEST_SSL_CERT_VALIDITY" name="TESTS[]"
-                       value="test_ssl_cert_validity" <? if (in_array("test_ssl_cert_validity", $aDomain["TESTS"])) echo 'checked="checked"'; ?>>
-            </td>
+                       value="test_ssl_cert_validity" <? if (in_array("test_ssl_cert_validity", $aDomain["TESTS"])) {
+                    echo 'checked="checked"';
+                } ?>></td>
         </tr>
         <!--<tr>
 		<td width="40%"><? echo GetMessage("BCL_MONITORING_LANGUAGE") ?>:</td>
@@ -161,10 +181,12 @@ if ($bVarsFromForm) {
                 <input type="button" value="<? echo GetMessage("BCL_MONITORING_ADD_BTN") ?>" onclick="add_email()">
             </td>
         </tr>
-        <? $tabControl->Buttons(array(
-            "disabled" => false,
-            "back_url" => "bitrixcloud_monitoring_admin.php?lang=" . LANGUAGE_ID,
-        )); ?>
+        <? $tabControl->Buttons(
+            array(
+                "disabled" => false,
+                "back_url" => "bitrixcloud_monitoring_admin.php?lang=" . LANGUAGE_ID,
+            )
+        ); ?>
         <? echo bitrix_sessid_post(); ?>
         <input type="hidden" name="lang" value="<? echo LANGUAGE_ID ?>">
         <?

@@ -12,7 +12,11 @@ class Users extends \Bitrix\Main\UI\Selector\EntityBase
     public static function getNameTemplate($requestNameTemplate = '')
     {
         if (!empty($requestNameTemplate)) {
-            preg_match_all("/(#NAME#)|(#LAST_NAME#)|(#SECOND_NAME#)|(#NAME_SHORT#)|(#SECOND_NAME_SHORT#)|\\s|\\,/", urldecode($requestNameTemplate), $matches);
+            preg_match_all(
+                "/(#NAME#)|(#LAST_NAME#)|(#SECOND_NAME#)|(#NAME_SHORT#)|(#SECOND_NAME_SHORT#)|\\s|\\,/",
+                urldecode($requestNameTemplate),
+                $matches
+            );
             $result = implode("", $matches[0]);
         } else {
             $result = \CSite::getNameFormat(false);
@@ -32,7 +36,11 @@ class Users extends \Bitrix\Main\UI\Selector\EntityBase
                 'GROUPS_LIST' => array(
                     'users' => array(
                         'TITLE' => Loc::getMessage('MAIN_UI_SELECTOR_TITLE_USERS'),
-                        'TYPE_LIST' => array(Handler::ENTITY_TYPE_USERS, Handler::ENTITY_TYPE_EMAILUSERS, Handler::ENTITY_TYPE_GROUPS),
+                        'TYPE_LIST' => array(
+                            Handler::ENTITY_TYPE_USERS,
+                            Handler::ENTITY_TYPE_EMAILUSERS,
+                            Handler::ENTITY_TYPE_GROUPS
+                        ),
                         'DESC_LESS_MODE' => 'Y',
                         'SORT' => 10
                     )
@@ -60,11 +68,14 @@ class Users extends \Bitrix\Main\UI\Selector\EntityBase
 
         $selected = array();
         if (!empty($selectedUserList)) {
-            $selected = \CSocNetLogDestination::getUsers(array(
-                'id' => $selectedUserList,
-                'CRM_ENTITY' => ModuleManager::isModuleInstalled('crm'),
-                'IGNORE_ACTIVITY' => 'Y'
-            ));
+            $selected = \CSocNetLogDestination::getUsers(
+                [
+                    'id' => $selectedUserList,
+                    'CRM_ENTITY' => ModuleManager::isModuleInstalled('crm'),
+                    'IGNORE_ACTIVITY' => 'Y',
+                    'ALLOW_BOTS' => (isset($options['allowBots']) && $options['allowBots'] === 'Y')
+                ]
+            );
         }
 
         if (Handler::isExtranetUser()) {
@@ -85,7 +96,7 @@ class Users extends \Bitrix\Main\UI\Selector\EntityBase
             }
             $result["ITEMS_LAST"] = array_values(array_intersect($result["ITEMS_LAST"], array_keys($result['ITEMS'])));
         } else {
-            $lastUserList = array();
+            $lastUserList = [];
             if (!empty($lastItems[$entityType])) {
                 $lastUserList = array_map(
                     function ($code) {
@@ -99,28 +110,34 @@ class Users extends \Bitrix\Main\UI\Selector\EntityBase
 
             $items[$entityType] = [];
             if (!empty($lastUserList)) {
-                $items[$entityType] = \CSocNetLogDestination::getUsers(array(
-                    'id' => $lastUserList,
-                    'CRM_ENTITY' => ModuleManager::isModuleInstalled('crm'),
-                    'ONLY_WITH_EMAIL' => (isset($options['onlyWithEmail']) && $options['onlyWithEmail'] == 'Y' ? 'Y' : '')
-                ));
+                $items[$entityType] = \CSocNetLogDestination::getUsers(
+                    array(
+                        'id' => $lastUserList,
+                        'CRM_ENTITY' => ModuleManager::isModuleInstalled('crm'),
+                        'ONLY_WITH_EMAIL' => (isset($options['onlyWithEmail']) && $options['onlyWithEmail'] === 'Y' ? 'Y' : ''),
+                        'ALLOW_BOTS' => (isset($options['allowBots']) && $options['allowBots'] === 'Y')
+                    )
+                );
             }
 
             $items[$entityType] = array_merge($items[$entityType], $selected);
 
             if (
                 isset($options['extranetContext'])
-                && in_array($options['extranetContext'], array(Entities::EXTRANET_CONTEXT_INTERNAL, Entities::EXTRANET_CONTEXT_EXTERNAL))
+                && in_array(
+                    $options['extranetContext'],
+                    array(Entities::EXTRANET_CONTEXT_INTERNAL, Entities::EXTRANET_CONTEXT_EXTERNAL)
+                )
             ) {
                 foreach ($items[$entityType] as $key => $value) {
                     if (isset($value["isExtranet"])) {
                         if (
                             (
-                                $value["isExtranet"] == 'Y'
+                                $value["isExtranet"] === 'Y'
                                 && $options['extranetContext'] == Entities::EXTRANET_CONTEXT_INTERNAL
                             )
                             || (
-                                $value["isExtranet"] == 'N'
+                                $value["isExtranet"] === 'N'
                                 && $options['extranetContext'] == Entities::EXTRANET_CONTEXT_EXTERNAL
                             )
                         ) {
@@ -142,7 +159,7 @@ class Users extends \Bitrix\Main\UI\Selector\EntityBase
             foreach ($items[$entityType] as $key => $value) {
                 if (
                     !empty($value['isEmail'])
-                    && $value['isEmail'] == 'Y'
+                    && $value['isEmail'] === 'Y'
                 ) {
                     unset($items[$entityType][$key]);
                     unset($lastItems[$entityType][$key]);
@@ -155,15 +172,15 @@ class Users extends \Bitrix\Main\UI\Selector\EntityBase
             if (
                 (
                     isset($options["allowAddUser"])
-                    && $options["allowAddUser"] == 'Y'
+                    && $options["allowAddUser"] === 'Y'
                 )
                 || (
                     isset($options["allowSearchEmailUsers"])
-                    && $options["allowSearchEmailUsers"] == 'Y'
+                    && $options["allowSearchEmailUsers"] === 'Y'
                 )
                 || (
                     isset($options["allowEmailInvitation"])
-                    && $options["allowEmailInvitation"] == 'Y'
+                    && $options["allowEmailInvitation"] === 'Y'
                 )
             ) {
                 $items['LAST'] = $result["ITEMS_LAST"];
@@ -188,25 +205,34 @@ class Users extends \Bitrix\Main\UI\Selector\EntityBase
             ) {
                 $lastUserList = array();
 
-                $res = UserTable::getList(array(
-                    'order' => array(
-                        'LAST_ACTIVITY_DATE' => 'DESC'
-                    ),
-                    'filter' => array(
-                        '!=UF_DEPARTMENT' => false,
-                        '=ACTIVE' => 'Y',
-                        'CONFIRM_CODE' => false
-                    ),
-                    'select' => array('ID'),
-                    'limit' => 10
-                ));
+                $res = UserTable::getList(
+                    array(
+                        'order' => array(
+                            'LAST_ACTIVITY_DATE' => 'DESC'
+                        ),
+                        'filter' => array(
+                            '!=UF_DEPARTMENT' => false,
+                            '=ACTIVE' => 'Y',
+                            'CONFIRM_CODE' => false
+                        ),
+                        'select' => array('ID'),
+                        'limit' => 10
+                    )
+                );
                 while ($userFields = $res->fetch()) {
                     $lastUserList[] = $userFields['ID'];
                 }
 
-                $items[$entityType] = array_merge((is_array($items[$entityType]) ? $items[$entityType] : array()), \CSocNetLogDestination::getUsers(array(
-                    'id' => $lastUserList
-                )));
+                $items[$entityType] = array_merge(
+                    (is_array($items[$entityType]) ? $items[$entityType] : array()),
+                    \CSocNetLogDestination::getUsers(
+                        array(
+                            'id' => $lastUserList,
+                            'ONLY_WITH_EMAIL' => (isset($options['onlyWithEmail']) && $options['onlyWithEmail'] === 'Y' ? 'Y' : ''),
+                            'ALLOW_BOTS' => (isset($options['allowBots']) && $options['allowBots'] === 'Y')
+                        )
+                    )
+                );
                 foreach ($items[$entityType] as $item) {
                     $result["ITEMS_LAST"][] = 'U' . $item['entityId'];
                 }
@@ -215,9 +241,10 @@ class Users extends \Bitrix\Main\UI\Selector\EntityBase
 
         if (
             isset($options["showVacations"])
-            && $options["showVacations"] == 'Y'
+            && $options["showVacations"] === 'Y'
         ) {
-            $result['ADDITIONAL_INFO']['USERS_VACATION'] = \Bitrix\Socialnetwork\Integration\Intranet\Absence\User::getDayVacationList();
+            $result['ADDITIONAL_INFO']['USERS_VACATION'] = \Bitrix\Socialnetwork\Integration\Intranet\Absence\User::getDayVacationList(
+            );
         }
 
         $result['ITEMS'] = $items[$entityType];
@@ -233,87 +260,77 @@ class Users extends \Bitrix\Main\UI\Selector\EntityBase
         );
 
         $entityOptions = (!empty($params['options']) ? $params['options'] : array());
-        $requestFields = (!empty($params['requestFields']) ? $params['requestFields'] : array());
-        $commonOptions = (!empty($requestFields['options']) ? $requestFields['options'] : array());
+
+        if (
+            !empty($entityOptions['allowSearch'])
+            && $entityOptions['allowSearch'] === 'N'
+        ) {
+            return $result;
+        }
+
+        $requestFields = (!empty($params['requestFields']) ? $params['requestFields'] : []);
+        $commonOptions = (!empty($requestFields['options']) ? $requestFields['options'] : []);
 
         $search = $requestFields['searchString'];
         $searchConverted = (!empty($requestFields['searchStringConverted']) ? $requestFields['searchStringConverted'] : false);
         $nameTemplate = self::getNameTemplate($commonOptions['userNameTemplate']);
 
-        if (
-            !empty($searchOptions['additional'])
-            && $searchOptions['additional'] == 'Y'
-        ) {
-            $result["ITEMS"] = array();
-            if (
-                !empty($entityOptions['allowSearchNetwork'])
-                && $entityOptions['allowSearchNetwork'] == 'Y'
-                && Loader::includeModule('socialservices')
-            ) {
-                $result["ITEMS"] = \Bitrix\Socialnetwork\Integration\Main\UISelector\Search::searchNetworkUsers(array(
-                    'search' => $search,
-                    'nameTemplate' => $nameTemplate
-                ));
-            }
+        $searchModified = false;
+        $result["ITEMS"] = \CSocNetLogDestination::searchUsers(
+            array(
+                "SEARCH" => $search,
+                "NAME_TEMPLATE" => $nameTemplate,
+                "SELF" => (!empty($entityOptions['allowSearchSelf']) && $entityOptions['allowSearchSelf'] === 'Y'),
+                "EMPLOYEES_ONLY" => (!empty($entityOptions['scope']) && $entityOptions['scope'] === "I"),
+                "EXTRANET_ONLY" => (!empty($entityOptions['scope']) && $entityOptions['scope'] === "E"),
+                "DEPARTAMENT_ID" => (
+                !empty($commonOptions['siteDepartmentId'])
+                && (int)$commonOptions['siteDepartmentId'] > 0
+                    ? (int)$commonOptions['siteDepartmentId']
+                    : false
+                ),
+                "EMAIL_USERS" => (!empty($entityOptions['allowSearchByEmail']) && $entityOptions['allowSearchByEmail'] === 'Y'),
+                "CRMEMAIL_USERS" => (!empty($entityOptions['allowSearchCrmEmailUsers']) && $entityOptions['allowSearchCrmEmailUsers'] === 'Y'),
+                "NETWORK_SEARCH" => false,
+                "ONLY_WITH_EMAIL" => (isset($entityOptions['onlyWithEmail']) && $entityOptions['onlyWithEmail'] === 'Y' ? 'Y' : ''),
+                'ALLOW_BOTS' => (isset($entityOptions['allowBots']) && $entityOptions['allowBots'] === 'Y'),
+                'SHOW_ALL_EXTRANET_CONTACTS' => (isset($entityOptions['showAllExtranetContacts']) && $entityOptions['showAllExtranetContacts'] === 'Y')
+            ),
+            $searchModified
+        );
 
-            return $result;
+        if (!empty($searchModified)) {
+            $result['SEARCH'] = $searchModified;
         }
 
         if (
-            empty($entityOptions['allowSearch'])
-            || $entityOptions['allowSearch'] != 'N'
+            empty($result["ITEMS"])
+            && $searchConverted
+            && $search !== $searchConverted
         ) {
-            $searchModified = false;
             $result["ITEMS"] = \CSocNetLogDestination::searchUsers(
                 array(
-                    "SEARCH" => $search,
+                    "SEARCH" => $searchConverted,
                     "NAME_TEMPLATE" => $nameTemplate,
-                    "SELF" => (!empty($entityOptions['allowSearchSelf']) && $entityOptions['allowSearchSelf'] == 'Y'),
-                    "EMPLOYEES_ONLY" => (!empty($entityOptions['scope']) && $entityOptions['scope'] == "I"),
-                    "EXTRANET_ONLY" => (!empty($entityOptions['scope']) && $entityOptions['scope'] == "E"),
+                    "SELF" => (!empty($entityOptions['allowSearchSelf']) && $entityOptions['allowSearchSelf'] === 'Y'),
+                    "EMPLOYEES_ONLY" => (!empty($entityOptions['scope']) && $entityOptions['scope'] === "I"),
+                    "EXTRANET_ONLY" => (!empty($entityOptions['scope']) && $entityOptions['scope'] === "E"),
                     "DEPARTAMENT_ID" => (
-                    !empty($commonOptions['siteDepartmentId']) && intval($commonOptions['siteDepartmentId']) > 0
-                        ? intval($commonOptions['siteDepartmentId'])
+                    !empty($commonOptions['siteDepartmentId'])
+                    && (int)$commonOptions['siteDepartmentId'] > 0
+                        ? (int)$commonOptions['siteDepartmentId']
                         : false
                     ),
-                    "EMAIL_USERS" => (!empty($entityOptions['allowSearchByEmail']) && $entityOptions['allowSearchByEmail'] == 'Y'),
-                    "CRMEMAIL_USERS" => (!empty($entityOptions['allowSearchCrmEmailUsers']) && $entityOptions['allowSearchCrmEmailUsers'] == 'Y'),
+                    "EMAIL_USERS" => (!empty($entityOptions['allowSearchByEmail']) && $entityOptions['allowSearchByEmail'] === 'Y'),
+                    "CRMEMAIL_USERS" => (!empty($entityOptions['allowSearchCrmEmailUsers']) && $entityOptions['allowSearchCrmEmailUsers'] === 'Y'),
                     "NETWORK_SEARCH" => false,
-                    "ONLY_WITH_EMAIL" => (isset($entityOptions['onlyWithEmail']) && $entityOptions['onlyWithEmail'] == 'Y' ? 'Y' : '')
+                    'ALLOW_BOTS' => (isset($entityOptions['allowBots']) && $entityOptions['allowBots'] === 'Y'),
+                    'SHOW_ALL_EXTRANET_CONTACTS' => (isset($entityOptions['showAllExtranetContacts']) && $entityOptions['showAllExtranetContacts'] === 'Y')
                 ),
                 $searchModified
             );
 
-            if (!empty($searchModified)) {
-                $result['SEARCH'] = $searchModified;
-            }
-
-            if (
-                empty($result["ITEMS"])
-                && $searchConverted
-                && $search != $searchConverted
-            ) {
-                $result["ITEMS"] = \CSocNetLogDestination::searchUsers(
-                    array(
-                        "SEARCH" => $searchConverted,
-                        "NAME_TEMPLATE" => $nameTemplate,
-                        "SELF" => (!empty($entityOptions['allowSearchSelf']) && $entityOptions['allowSearchSelf'] == 'Y'),
-                        "EMPLOYEES_ONLY" => (!empty($entityOptions['scope']) && $entityOptions['scope'] == "I"),
-                        "EXTRANET_ONLY" => (!empty($entityOptions['scope']) && $entityOptions['scope'] == "E"),
-                        "DEPARTAMENT_ID" => (
-                        !empty($commonOptions['siteDepartmentId']) && intval($commonOptions['siteDepartmentId']) > 0
-                            ? intval($commonOptions['siteDepartmentId'])
-                            : false
-                        ),
-                        "EMAIL_USERS" => (!empty($entityOptions['allowSearchByEmail']) && $entityOptions['allowSearchByEmail'] == 'Y'),
-                        "CRMEMAIL_USERS" => (!empty($entityOptions['allowSearchCrmEmailUsers']) && $entityOptions['allowSearchCrmEmailUsers'] == 'Y'),
-                        "NETWORK_SEARCH" => false,
-                    ),
-                    $searchModified
-                );
-
-                $result['SEARCH'] = $searchConverted;
-            }
+            $result['SEARCH'] = $searchConverted;
         }
 
         return $result;
@@ -321,9 +338,11 @@ class Users extends \Bitrix\Main\UI\Selector\EntityBase
 
     public function loadAll()
     {
-        return \CSocNetLogDestination::getUsers(array(
-            'all' => 'Y'
-        ));
+        return \CSocNetLogDestination::getUsers(
+            array(
+                'all' => 'Y'
+            )
+        );
     }
 
     public function getItemName($itemCode = '')
@@ -348,12 +367,14 @@ class Users extends \Bitrix\Main\UI\Selector\EntityBase
             $entityId > 0
             && \CSocNetUser::canProfileView($USER->getId(), $entityId)
         ) {
-            $res = UserTable::getList(array(
-                'filter' => array(
-                    '=ID' => $entityId
-                ),
-                'select' => array('NAME', 'SECOND_NAME', 'LAST_NAME', 'LOGIN')
-            ));
+            $res = UserTable::getList(
+                array(
+                    'filter' => array(
+                        '=ID' => $entityId
+                    ),
+                    'select' => array('NAME', 'SECOND_NAME', 'LAST_NAME', 'LOGIN')
+                )
+            );
 
             if ($userFields = $res->fetch()) {
                 $result = \CUser::formatName(self::getNameTemplate(), $userFields, false);

@@ -41,26 +41,30 @@ final class IndexCalendar extends Stepper
 
         // 1. Update sections
         if (!$status['sectionFinished']) {
-            $sections = \CCalendarSect::GetList(array(
-                'arFilter' => array(
-                    '>ID' => $status['sectionLastId']
-                ),
-                'arOrder' => array('ID' => 'asc'),
-                'checkPermissions' => false,
-                'getPermissions' => false,
-                'limit' => self::PORTION
-            ));
+            $sections = \CCalendarSect::GetList(
+                array(
+                    'arFilter' => array(
+                        '>ID' => $status['sectionLastId']
+                    ),
+                    'arOrder' => array('ID' => 'asc'),
+                    'checkPermissions' => false,
+                    'getPermissions' => false,
+                    'limit' => self::PORTION
+                )
+            );
 
             foreach ($sections as $section) {
                 // 1. Replace colors
                 $color = self::getNewColor($section['COLOR']);
-                if (strtolower($color) != strtolower($section['COLOR'])) {
-                    \CCalendarSect::Edit(array(
-                        'arFields' => array(
-                            'ID' => $section['ID'],
-                            'COLOR' => $color
+                if (mb_strtolower($color) != mb_strtolower($section['COLOR'])) {
+                    \CCalendarSect::Edit(
+                        array(
+                            'arFields' => array(
+                                'ID' => $section['ID'],
+                                'COLOR' => $color
+                            )
                         )
-                    ));
+                    );
                 }
                 $newStatus['sectionLastId'] = $section['ID'];
                 $newStatus['steps']++;
@@ -83,7 +87,8 @@ final class IndexCalendar extends Stepper
         }
 
         // 2. Update events
-        $events = \CCalendarEvent::GetList(array(
+        $events = \CCalendarEvent::GetList(
+            array(
                 'arFilter' => array(
                     '>ID' => $status['eventLastId'],
                     'DELETED' => false
@@ -101,14 +106,17 @@ final class IndexCalendar extends Stepper
         foreach ($events as $event) {
             // 1. Replace colors
             $color = self::getNewColor($event['COLOR']);
-            if (strtolower($color) != strtolower($event['COLOR'])) {
+            if (mb_strtolower($color) != mb_strtolower($event['COLOR'])) {
                 \CCalendarEvent::updateColor($event['ID'], $color);
             }
 
             // 2. Fill searchable content
-            \CCalendarEvent::updateSearchIndex($event['ID'], array(
-                'events' => array($event)
-            ));
+            \CCalendarEvent::updateSearchIndex(
+                $event['ID'],
+                array(
+                    'events' => array($event)
+                )
+            );
 
             $newStatus['eventLastId'] = $event['ID'];
             $newStatus['steps']++;
@@ -133,7 +141,7 @@ final class IndexCalendar extends Stepper
     private function loadCurrentStatus()
     {
         $status = Option::get('calendar', 'eventindex', 'default');
-        $status = ($status !== 'default' ? @unserialize($status) : array());
+        $status = ($status !== 'default' ? @unserialize($status, ['allowed_classes' => false]) : array());
         $status = (is_array($status) ? $status : array());
 
         if (empty($status)) {
@@ -160,7 +168,7 @@ final class IndexCalendar extends Stepper
 
     public function getNewColor($color)
     {
-        $color = strtolower($color);
+        $color = mb_strtolower($color);
         $colorTable = array(
             // Biege
             '#daa187' => '#af7e00',
@@ -193,8 +201,9 @@ final class IndexCalendar extends Stepper
             '#29ad49' => '#9dcf00',
             '#cee669' => '#9dcf00'
         );
-        if ($color && isset($colorTable[$color]))
+        if ($color && isset($colorTable[$color])) {
             return $colorTable[$color];
+        }
         return $color;
     }
 }

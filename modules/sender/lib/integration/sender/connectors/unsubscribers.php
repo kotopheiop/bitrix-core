@@ -46,14 +46,16 @@ class UnSubscribers extends ConnectorBase
         if ($mailingId) {
             $filter['=MAILING_ID'] = $mailingId;
         }
-        $mailingDb = MailingSubscriptionTable::getUnSubscriptionList(array(
-            'select' => array(
-                'SENDER_CONTACT_ID' => 'CONTACT.ID',
-                'EMAIL' => 'CONTACT.CODE'
-            ),
-            'filter' => $filter,
-            'group' => array('CONTACT.CODE'),
-        ));
+        $mailingDb = MailingSubscriptionTable::getUnSubscriptionList(
+            array(
+                'select' => array(
+                    'SENDER_CONTACT_ID' => 'CONTACT.ID',
+                    'EMAIL' => 'CONTACT.CODE'
+                ),
+                'filter' => $filter,
+                'group' => array('CONTACT.CODE'),
+            )
+        );
 
         return $mailingDb;
     }
@@ -64,10 +66,12 @@ class UnSubscribers extends ConnectorBase
      */
     public function getForm()
     {
-        $mailingDb = MailingTable::getList(array(
-            'select' => array('ID', 'NAME',),
-            'order' => array('NAME' => 'ASC', 'ID' => 'DESC')
-        ));
+        $mailingDb = MailingTable::getList(
+            array(
+                'select' => array('ID', 'NAME',),
+                'order' => array('NAME' => 'ASC', 'ID' => 'DESC')
+            )
+        );
         $mailingList = $mailingDb->fetchAll();
         $mailingList = array_merge(
             array(

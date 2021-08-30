@@ -41,8 +41,14 @@ class_alias('Bitrix\Main\ORM\Query\Chain', 'Bitrix\Main\Entity\QueryChain');
 class_alias('Bitrix\Main\ORM\Query\ChainElement', 'Bitrix\Main\Entity\QueryChainElement');
 
 class_alias('Bitrix\Main\ORM\Query\Filter\Expressions\Expression', 'Bitrix\Main\Entity\Query\Filter\Expression\Base');
-class_alias('Bitrix\Main\ORM\Query\Filter\Expressions\ColumnExpression', 'Bitrix\Main\Entity\Query\Filter\Expression\Column');
-class_alias('Bitrix\Main\ORM\Query\Filter\Expressions\NullExpression', 'Bitrix\Main\Entity\Query\Filter\Expression\NullEx');
+class_alias(
+    'Bitrix\Main\ORM\Query\Filter\Expressions\ColumnExpression',
+    'Bitrix\Main\Entity\Query\Filter\Expression\Column'
+);
+class_alias(
+    'Bitrix\Main\ORM\Query\Filter\Expressions\NullExpression',
+    'Bitrix\Main\Entity\Query\Filter\Expression\NullEx'
+);
 
 class_alias('Bitrix\Main\ORM\Data\DataManager', 'Bitrix\Main\Entity\DataManager');
 class_alias('Bitrix\Main\ORM\Data\Result', 'Bitrix\Main\Entity\Result');
@@ -66,7 +72,9 @@ class_alias('Bitrix\Main\ORM\Event', 'Bitrix\Main\Entity\Event');
 class_alias('Bitrix\Main\ORM\EventResult', 'Bitrix\Main\Entity\EventResult');
 
 \Bitrix\Main\Loader::registerAutoLoadClasses(
-    "main", ["Bitrix\\Main\\Entity\\UField" => "include/deprecated/ufield.php"]
+    "main",
+    ["Bitrix\\Main\\Entity\\UField" => "include/deprecated/ufield.php"]
 );
 
 class_alias('Bitrix\Main\Entity\UField', 'Bitrix\Main\ORM\UField');
+#class_alias('Bitrix\Main\UserField\Types\BaseType', 'Bitrix\Main\UserField\TypeBase');

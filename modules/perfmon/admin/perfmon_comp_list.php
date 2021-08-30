@@ -1,18 +1,22 @@
 <?
+
+use Bitrix\Main\Loader;
+
 define("ADMIN_MODULE_NAME", "perfmon");
 define("PERFMON_STOP", true);
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 /** @global CMain $APPLICATION */
 /** @global CDatabase $DB */
 /** @global CUser $USER */
-require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/perfmon/include.php");
+Loader::includeModule('perfmon');
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/perfmon/prolog.php");
 
 IncludeModuleLangFile(__FILE__);
 
 $RIGHT = $APPLICATION->GetGroupRight("perfmon");
-if ($RIGHT == "D")
+if ($RIGHT == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $sTableID = "tbl_perfmon_comp_list";
 $oSort = new CAdminSorting($sTableID, "NN", "asc");
@@ -36,8 +40,9 @@ $arFilter = array(
     "HIT_SCRIPT_NAME" => $find_hit_script_name,
 );
 foreach ($arFilter as $key => $value) {
-    if (!$value)
+    if (!$value) {
         unset($arFilter[$key]);
+    }
 }
 
 $arHeaders = array();
@@ -183,8 +188,9 @@ $arNumCols = array(
     "CACHE_COUNT_C" => 0,
 );
 
-if (isset($arFilter["CACHE_TYPE"]) && $arFilter["CACHE_TYPE"] == "N")
+if (isset($arFilter["CACHE_TYPE"]) && $arFilter["CACHE_TYPE"] == "N") {
     $arFilter["CACHE_TYPE"] = array(false, "N");
+}
 
 $cData = new CPerfomanceComponent;
 $rsData = $cData->GetList(
@@ -205,25 +211,53 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
     foreach ($arNumCols as $column_name => $precision) {
         $row->AddViewField($column_name, perfmon_NumberFormat($arRes[$column_name], $precision));
     }
-    if ($group === "Y" && $f_COMPONENT_NAME)
-        $row->AddViewField("COMPONENT_NAME", '<a href="perfmon_comp_list.php?lang=' . LANGUAGE_ID . '&amp;set_filter=Y&amp;find_component_name=' . $f_COMPONENT_NAME . '">' . $f_COMPONENT_NAME . '</a>');
-    if ($f_QUERIES > 0)
-        $row->AddViewField("QUERIES", '<a href="perfmon_sql_list.php?lang=' . LANGUAGE_ID . '&amp;set_filter=Y&amp;find_component_id=' . $f_ID . '">' . $f_QUERIES . '</a>');
-    $row->AddViewField("HIT_ID", '<a href="perfmon_hit_list.php?lang=' . LANGUAGE_ID . '&amp;set_filter=Y&amp;find_id=' . $f_HIT_ID . '">' . $f_HIT_ID . '</a>');
-    if ($f_CACHE_TYPE == "A")
+    if ($group === "Y" && $f_COMPONENT_NAME) {
+        $row->AddViewField(
+            "COMPONENT_NAME",
+            '<a href="perfmon_comp_list.php?lang=' . LANGUAGE_ID . '&amp;set_filter=Y&amp;find_component_name=' . $f_COMPONENT_NAME . '">' . $f_COMPONENT_NAME . '</a>'
+        );
+    }
+    if ($f_QUERIES > 0) {
+        $row->AddViewField(
+            "QUERIES",
+            '<a href="perfmon_sql_list.php?lang=' . LANGUAGE_ID . '&amp;set_filter=Y&amp;find_component_id=' . $f_ID . '">' . $f_QUERIES . '</a>'
+        );
+    }
+    $row->AddViewField(
+        "HIT_ID",
+        '<a href="perfmon_hit_list.php?lang=' . LANGUAGE_ID . '&amp;set_filter=Y&amp;find_id=' . $f_HIT_ID . '">' . $f_HIT_ID . '</a>'
+    );
+    if ($f_CACHE_TYPE == "A") {
         $row->AddViewField("CACHE_TYPE", GetMessage("PERFMON_COMP_CACHE_TYPE_AUTO"));
-    elseif ($f_CACHE_TYPE == "Y")
+    } elseif ($f_CACHE_TYPE == "Y") {
         $row->AddViewField("CACHE_TYPE", GetMessage("PERFMON_COMP_CACHE_TYPE_YES"));
-    else
+    } else {
         $row->AddViewField("CACHE_TYPE", GetMessage("PERFMON_COMP_CACHE_TYPE_NO"));
-    if ($f_CACHE_COUNT > 0)
-        $row->AddViewField("CACHE_COUNT", '<a href="perfmon_cache_list.php?lang=' . LANGUAGE_ID . '&amp;set_filter=Y&amp;find_component_id=' . $f_ID . '">' . $f_CACHE_COUNT . '</a>');
-    if ($f_CACHE_COUNT_R > 0)
-        $row->AddViewField("CACHE_COUNT_R", '<a href="perfmon_cache_list.php?lang=' . LANGUAGE_ID . '&amp;set_filter=Y&amp;find_component_id=' . $f_ID . '&amp;find_op_mode=R">' . $f_CACHE_COUNT_R . '</a>');
-    if ($f_CACHE_COUNT_W > 0)
-        $row->AddViewField("CACHE_COUNT_W", '<a href="perfmon_cache_list.php?lang=' . LANGUAGE_ID . '&amp;set_filter=Y&amp;find_component_id=' . $f_ID . '&amp;find_op_mode=W">' . $f_CACHE_COUNT_W . '</a>');
-    if ($f_CACHE_COUNT_C > 0)
-        $row->AddViewField("CACHE_COUNT_C", '<a href="perfmon_cache_list.php?lang=' . LANGUAGE_ID . '&amp;set_filter=Y&amp;find_component_id=' . $f_ID . '&amp;find_op_mode=C">' . $f_CACHE_COUNT_C . '</a>');
+    }
+    if ($f_CACHE_COUNT > 0) {
+        $row->AddViewField(
+            "CACHE_COUNT",
+            '<a href="perfmon_cache_list.php?lang=' . LANGUAGE_ID . '&amp;set_filter=Y&amp;find_component_id=' . $f_ID . '">' . $f_CACHE_COUNT . '</a>'
+        );
+    }
+    if ($f_CACHE_COUNT_R > 0) {
+        $row->AddViewField(
+            "CACHE_COUNT_R",
+            '<a href="perfmon_cache_list.php?lang=' . LANGUAGE_ID . '&amp;set_filter=Y&amp;find_component_id=' . $f_ID . '&amp;find_op_mode=R">' . $f_CACHE_COUNT_R . '</a>'
+        );
+    }
+    if ($f_CACHE_COUNT_W > 0) {
+        $row->AddViewField(
+            "CACHE_COUNT_W",
+            '<a href="perfmon_cache_list.php?lang=' . LANGUAGE_ID . '&amp;set_filter=Y&amp;find_component_id=' . $f_ID . '&amp;find_op_mode=W">' . $f_CACHE_COUNT_W . '</a>'
+        );
+    }
+    if ($f_CACHE_COUNT_C > 0) {
+        $row->AddViewField(
+            "CACHE_COUNT_C",
+            '<a href="perfmon_cache_list.php?lang=' . LANGUAGE_ID . '&amp;set_filter=Y&amp;find_component_id=' . $f_ID . '&amp;find_op_mode=C">' . $f_CACHE_COUNT_C . '</a>'
+        );
+    }
 }
 
 $lAdmin->AddFooter(
@@ -329,15 +363,22 @@ $oFilter = new CAdminFilter(
                     "A",
                 ),
             );
-            echo SelectBoxFromArray("find_cache_type", $arr, htmlspecialcharsbx($find_cache_type), GetMessage("MAIN_ALL"));
+            echo SelectBoxFromArray(
+                "find_cache_type",
+                $arr,
+                htmlspecialcharsbx($find_cache_type),
+                GetMessage("MAIN_ALL")
+            );
             ?></td>
     </tr>
     <?
-    $oFilter->Buttons(array(
-        "table_id" => $sTableID,
-        "url" => $APPLICATION->GetCurPage(),
-        "form" => "find_form",
-    ));
+    $oFilter->Buttons(
+        array(
+            "table_id" => $sTableID,
+            "url" => $APPLICATION->GetCurPage(),
+            "form" => "find_form",
+        )
+    );
     $oFilter->End();
     ?>
 </form>

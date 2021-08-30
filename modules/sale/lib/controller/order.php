@@ -32,7 +32,7 @@ class Order extends Controller
 
                 /** @var \Bitrix\Sale\Order $className */
                 $order = $orderClass::load($id);
-                if ($order) {
+                if ($order && $order instanceof Sale\OrderBase) {
                     return $order;
                 } else {
                     $this->addError(new Error('order is not exists', 200540400001));
@@ -46,9 +46,11 @@ class Order extends Controller
     public function getFieldsAction()
     {
         $entity = new \Bitrix\Sale\Rest\Entity\Order();
-        return ['ORDER' => $entity->prepareFieldInfos(
-            $entity->getFields()
-        )];
+        return [
+            'ORDER' => $entity->prepareFieldInfos(
+                $entity->getFields()
+            )
+        ];
     }
 
     public function getAction(\Bitrix\Sale\Order $order)
@@ -242,7 +244,8 @@ class Order extends Controller
             ]
         )->fetchAll();
 
-        return new Page('ORDERS', $orders, function () use ($select, $filter, $runtime) {
+        return new Page(
+            'ORDERS', $orders, function () use ($select, $filter, $runtime) {
             $registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
 
             /** @var Sale\Order $orderClass */
@@ -251,14 +254,16 @@ class Order extends Controller
             return count(
                 $orderClass::getList(['select' => $select, 'filter' => $filter, 'runtime' => $runtime])->fetchAll()
             );
-        });
+        }
+        );
     }
 
     public function deleteAction(\Bitrix\Sale\Order $order)
     {
         $r = $order->delete($order->getId());
-        if ($r->isSuccess())
+        if ($r->isSuccess()) {
             $r = $order->save();
+        }
 
         if (!$r->isSuccess()) {
             $this->addErrors($r->getErrors());
@@ -446,10 +451,11 @@ class Order extends Controller
             $errorsContainer = $builder->getErrorsContainer();
         }
 
-        if ($errorsContainer->getErrorCollection()->count() > 0)
+        if ($errorsContainer->getErrorCollection()->count() > 0) {
             $r->addErrors($errorsContainer->getErrors());
-        else
+        } else {
             $r->setData(['ORDER' => $builder->getOrder()]);
+        }
 
         return $r;
     }
@@ -460,16 +466,18 @@ class Order extends Controller
 
         $fields = ['ORDER' => $fields];
 
-        if ($fields['ORDER']['ID'])
+        if ($fields['ORDER']['ID']) {
             unset($fields['ORDER']['ID']);
+        }
 
         $orderBuilder = $this->getBuilder();
         $order = $orderBuilder->buildEntityOrder($fields);
 
-        if ($orderBuilder->getErrorsContainer()->getErrorCollection()->count() > 0)
+        if ($orderBuilder->getErrorsContainer()->getErrorCollection()->count() > 0) {
             $r->addErrors($orderBuilder->getErrorsContainer()->getErrors());
-        else
+        } else {
             $r->setData(['ORDER' => $order]);
+        }
 
         return $r;
     }
@@ -485,10 +493,11 @@ class Order extends Controller
         $orderBuilder = $this->getBuilder();
         $order = $orderBuilder->buildEntityOrder($data);
 
-        if ($orderBuilder->getErrorsContainer()->getErrorCollection()->count() > 0)
+        if ($orderBuilder->getErrorsContainer()->getErrorCollection()->count() > 0) {
             $r->addErrors($orderBuilder->getErrorsContainer()->getErrors());
-        else
+        } else {
             $r->setData(['ORDER' => $order]);
+        }
 
         return $r;
     }
@@ -502,20 +511,27 @@ class Order extends Controller
     {
         $fields = isset($fields['ORDER']) ? $fields['ORDER'] : [];
 
-        if (isset($fields['BASKET_ITEMS']))
+        if (isset($fields['BASKET_ITEMS'])) {
             unset($fields['BASKET_ITEMS']);
-        if (isset($fields['PROPERTY_VALUES']))
+        }
+        if (isset($fields['PROPERTY_VALUES'])) {
             unset($fields['PROPERTY_VALUES']);
-        if (isset($fields['PAYMENTS']))
+        }
+        if (isset($fields['PAYMENTS'])) {
             unset($fields['PAYMENTS']);
-        if (isset($fields['SHIPMENTS']))
+        }
+        if (isset($fields['SHIPMENTS'])) {
             unset($fields['SHIPMENTS']);
-        if (isset($fields['TRADE_BINDINGS']))
+        }
+        if (isset($fields['TRADE_BINDINGS'])) {
             unset($fields['TRADE_BINDINGS']);
-        if (isset($fields['CLIENTS']))
+        }
+        if (isset($fields['CLIENTS'])) {
             unset($fields['CLIENTS']);
-        if (isset($fields['REQUISITE_LINKS']))
+        }
+        if (isset($fields['REQUISITE_LINKS'])) {
             unset($fields['REQUISITE_LINKS']);
+        }
 
         return $fields;
     }
@@ -558,14 +574,16 @@ class Order extends Controller
         }
 
         $internalOrderStatusId = $this->getInternalId($fields['ORDER']['STATUS_XML_ID'], Registry::ENTITY_ORDER_STATUS);
-        $fields['ORDER']['STATUS_ID'] = $internalOrderStatusId <> '' ? $internalOrderStatusId : $instance->getDefaultOrderStatusId();
+        $fields['ORDER']['STATUS_ID'] = $internalOrderStatusId <> '' ? $internalOrderStatusId : $instance->getDefaultOrderStatusId(
+        );
 
         // �������� ����������� ������ ��� ������ ������.
         // � ������� �� ����� �������� � ������ ����� ������� ��������� �������� ����� ������ - �����, ���� ����������� ��� ������������ �� ������������
         if (intval($internalId) <= 0) {
             //TODO: ������������� ����� � ������� ��������
             $internalPersonTypeId = $this->getInternalId($fields['ORDER']['PERSON_TYPE_XML_ID'], 'PERSON_TYPE_TYPE');
-            $fields['ORDER']['PERSON_TYPE_ID'] = $internalPersonTypeId > 0 ? $internalPersonTypeId : $instance->getDefaultPersonTypeId();
+            $fields['ORDER']['PERSON_TYPE_ID'] = $internalPersonTypeId > 0 ? $internalPersonTypeId : $instance->getDefaultPersonTypeId(
+            );
             $fields['ORDER']['USER_ID'] = \CSaleUser::GetAnonymousUserID();
             $fields['ORDER']['SITE_ID'] = $instance->getDefaultSiteId();
         } else {
@@ -609,16 +627,26 @@ class Order extends Controller
                 $internalIdExternalSystem = $item['ID'];
                 $externalId = $item['XML_ID'];
 
-                $internalId = $this->getInternalId($externalId, Registry::ENTITY_BASKET, ['ORDER_ID' => $internalOrderId]);
+                $internalId = $this->getInternalId(
+                    $externalId,
+                    Registry::ENTITY_BASKET,
+                    ['ORDER_ID' => $internalOrderId]
+                );
                 $internalBasketItemId = (intval($internalId) > 0) ? $internalId : -1;
-                $ixInternal['BASKET_ITEMS'][$k]['MAP'][$externalId] = (intval($internalId) > 0) ? $internalId : 'n' . $n++;
+                $ixInternal['BASKET_ITEMS'][$k]['MAP'][$externalId] = (intval(
+                        $internalId
+                    ) > 0) ? $internalId : 'n' . $n++;
                 $ixExternal['BASKET_ITEMS'][$k]['MAP'][$externalId] = $internalIdExternalSystem;
 
                 $properties = $item['PROPERTIES'];
                 if (count($properties) > 0) {
                     foreach ($properties as $kp => &$property) {
                         $property['BASKET_ID'] = $ixInternal['BASKET_ITEMS'][$k]['MAP'][$externalId];
-                        $internalIdBasketProps = $this->getInternalId($property['XML_ID'], Registry::ENTITY_BASKET_PROPERTIES_COLLECTION, ['BASKET_ID' => $internalBasketItemId]);
+                        $internalIdBasketProps = $this->getInternalId(
+                            $property['XML_ID'],
+                            Registry::ENTITY_BASKET_PROPERTIES_COLLECTION,
+                            ['BASKET_ID' => $internalBasketItemId]
+                        );
                         if (intval($internalIdBasketProps) > 0) {
                             $ixInternal['BASKET_ITEMS'][$k]['PROPERTIES'][$kp][$property['XML_ID']] = $internalIdBasketProps;
                             $property['ID'] = $internalIdBasketProps;
@@ -643,7 +671,11 @@ class Order extends Controller
                 $ixExternal['PAYMENTS'][$k]['MAP'][$externalId] = $item['ID'];
 
                 unset($item['ID']);
-                $internalId = $this->getInternalId($externalId, Registry::ENTITY_PAYMENT_COLLECTION, ['ORDER_ID' => $internalOrderId]);
+                $internalId = $this->getInternalId(
+                    $externalId,
+                    Registry::ENTITY_PAYMENT_COLLECTION,
+                    ['ORDER_ID' => $internalOrderId]
+                );
                 if (intval($internalId) > 0) {
                     $item['ID'] = $internalId;
                     $ixInternal['PAYMENTS'][$k]['MAP'][$externalId] = $internalId;
@@ -654,7 +686,8 @@ class Order extends Controller
 
                 unset($item['PAY_SYSTEM_XML_ID']);
                 $internalPaySystemId = $this->getInternalId($externalPaySystemId, 'PAY_SYSTEM_TYPE');
-                $item['PAY_SYSTEM_ID'] = $internalPaySystemId > 0 ? $internalPaySystemId : $instance->getDefaultPaySystemId();
+                $item['PAY_SYSTEM_ID'] = $internalPaySystemId > 0 ? $internalPaySystemId : $instance->getDefaultPaySystemId(
+                );
                 $ixInternal['PAYMENTS'][$k]['PAY_SYSTEM']['MAP'][$externalPaySystemId] = $item['PAY_SYSTEM_ID'];
             }
         }
@@ -665,7 +698,11 @@ class Order extends Controller
                 $ixExternal['SHIPMENTS'][$k]['MAP'][$externalId] = $item['ID'];
 
                 unset($item['ID']);
-                $internalId = $this->getInternalId($item['XML_ID'], Registry::ENTITY_SHIPMENT_COLLECTION, ['ORDER_ID' => $internalOrderId]);
+                $internalId = $this->getInternalId(
+                    $item['XML_ID'],
+                    Registry::ENTITY_SHIPMENT_COLLECTION,
+                    ['ORDER_ID' => $internalOrderId]
+                );
                 $internalShipmentId = (intval($internalId) > 0) ? $internalId : -1;
                 if (intval($internalId) > 0) {
                     $item['ID'] = $internalId;
@@ -677,26 +714,36 @@ class Order extends Controller
 
                 unset($item['DELIVERY_XML_ID']);
                 $internalDeliveryId = $this->getInternalId($externalDeliveryId, 'DELIVERY_SYSTEM_TYPE');
-                $item['DELIVERY_ID'] = $internalDeliveryId > 0 ? $internalDeliveryId : $instance->getDefaultDeliverySystemId();
+                $item['DELIVERY_ID'] = $internalDeliveryId > 0 ? $internalDeliveryId : $instance->getDefaultDeliverySystemId(
+                );
                 $ixInternal['SHIPMENTS'][$k]['DELIVERY_SYSTEM']['MAP'][$externalDeliveryId] = $item['DELIVERY_ID'];
 
                 $externalDeliveryStatusId = $item['STATUS_XML_ID'];
                 $ixExternal['SHIPMENTS'][$k]['DELIVERY_STATUS']['MAP'][$externalDeliveryStatusId] = $item['STATUS_ID'];
 
                 unset($item['STATUS_XML_ID']);
-                $internalDeliveryStatusId = $this->getInternalId($externalDeliveryStatusId, Registry::ENTITY_DELIVERY_STATUS);
-                $item['STATUS_ID'] = $internalDeliveryStatusId <> '' ? $internalDeliveryStatusId : $instance->getDefaultDeliveryStatusId();
+                $internalDeliveryStatusId = $this->getInternalId(
+                    $externalDeliveryStatusId,
+                    Registry::ENTITY_DELIVERY_STATUS
+                );
+                $item['STATUS_ID'] = $internalDeliveryStatusId <> '' ? $internalDeliveryStatusId : $instance->getDefaultDeliveryStatusId(
+                );
                 $ixInternal['SHIPMENTS'][$k]['DELIVERY_STATUS']['MAP'][$externalDeliveryStatusId] = $item['STATUS_ID'];
 
                 foreach ($item['SHIPMENT_ITEMS'] as $kb => &$shipmentItem) {
                     unset($shipmentItem['ID']);
                     unset($shipmentItem['ORDER_DELIVERY_ID']);
-                    $internalIdShipmentItem = $this->getInternalId($shipmentItem['XML_ID'], Registry::ENTITY_SHIPMENT_ITEM_COLLECTION, ['ORDER_DELIVERY_ID' => $internalShipmentId]);
+                    $internalIdShipmentItem = $this->getInternalId(
+                        $shipmentItem['XML_ID'],
+                        Registry::ENTITY_SHIPMENT_ITEM_COLLECTION,
+                        ['ORDER_DELIVERY_ID' => $internalShipmentId]
+                    );
 
                     if (intval($internalIdShipmentItem) > 0) {
                         $shipmentItem['ID'] = $internalIdShipmentItem;
-                        if (intval($internalId) > 0)
+                        if (intval($internalId) > 0) {
                             $shipmentItem['ORDER_DELIVERY_ID'] = $internalId;
+                        }
 
                         $ixInternal['SHIPMENTS'][$k]['SHIPMENT_ITEMS'][$kb]['MAP'][$externalId] = $internalIdShipmentItem;
                     }
@@ -712,8 +759,11 @@ class Order extends Controller
                         }
                     }
 
-                    if ($external == '')
-                        $result->addError(new Error('Modify fields error. ShipmentItem xmlId is invalid', 200550000002));
+                    if ($external == '') {
+                        $result->addError(
+                            new Error('Modify fields error. ShipmentItem xmlId is invalid', 200550000002)
+                        );
+                    }
 
                     if ($external <> '') {
                         // ������� �������� id ������� �� ����������� ����������� xmlId => id.��������� ��������
@@ -730,7 +780,7 @@ class Order extends Controller
             }
         }
 
-        if ($this->isB24()) {
+        if ($this->isCrmModuleInstalled()) {
             if (is_array($fields['ORDER']['TRADE_BINDINGS'])) {
                 foreach ($fields['ORDER']['TRADE_BINDINGS'] as $k => &$item) {
                     $externalId = $item['XML_ID'];
@@ -739,7 +789,11 @@ class Order extends Controller
                     unset($item['ID']);
                     if ($externalId <> '') // ������� ��� ���. xmlId �� ��� �� ����������
                     {
-                        $internalId = $this->getInternalId($externalId, Registry::ENTITY_TRADE_BINDING_COLLECTION, ['ORDER_ID' => $internalOrderId]);
+                        $internalId = $this->getInternalId(
+                            $externalId,
+                            Registry::ENTITY_TRADE_BINDING_COLLECTION,
+                            ['ORDER_ID' => $internalOrderId]
+                        );
                         if (intval($internalId) > 0) {
                             $item['ID'] = $internalId;
                             $ixInternal['TRADE_BINDINGS'][$k]['MAP'][$externalId] = $internalId;
@@ -800,8 +854,9 @@ class Order extends Controller
 
         $code = $loader->getCodeAfterDelimiter($fields['PRODUCT_XML_ID']);
         $product = $code <> '' ? $loader->getFieldsByExternalId($code) : array();
-        if (empty($product))
+        if (empty($product)) {
             $product = $loader->getFieldsByExternalId($fields['PRODUCT_XML_ID']);
+        }
 
         if (!empty($product)) {
             $result = array(
@@ -862,7 +917,10 @@ class Order extends Controller
 
         $fields = $this->prepareFieldsImport($fields);
 
-        LoggerDiag::addMessage('ORDER_IMPORT_ACTION_WITH_RESOLVE_EXTERNAL_ID_TO_INTERNAL_ID', var_export($fields, true));
+        LoggerDiag::addMessage(
+            'ORDER_IMPORT_ACTION_WITH_RESOLVE_EXTERNAL_ID_TO_INTERNAL_ID',
+            var_export($fields, true)
+        );
 
         $r = $this->resolveExternalIdToInternalId($fields);
 
@@ -873,7 +931,10 @@ class Order extends Controller
         }
 
         if (count($this->getErrors()) > 0) {
-            LoggerDiag::addMessage('ORDER_IMPORT_ACTION_WITH_RESOLVE_EXTERNAL_ID_TO_INTERNAL_ID_ERROR', var_export($this->getErrors(), true));
+            LoggerDiag::addMessage(
+                'ORDER_IMPORT_ACTION_WITH_RESOLVE_EXTERNAL_ID_TO_INTERNAL_ID_ERROR',
+                var_export($this->getErrors(), true)
+            );
             return null;
         } else {
             LoggerDiag::addMessage('ORDER_IMPORT_ACTION_WITH_RESOLVE_EXTERNAL_ID_TO_INTERNAL_ID_SUCCESS');
@@ -969,8 +1030,12 @@ class Order extends Controller
         $result['ORDER'] = array_intersect_key($fields['ORDER'], array_flip($orderFields));
 
         if (isset($fields['ORDER']['PROPERTY_VALUES'])) {
-            foreach ($fields['ORDER']['PROPERTY_VALUES'] as $k => $v)
-                $result['ORDER']['PROPERTY_VALUES'][$k] = array_intersect_key($v, array_flip($orderPropertyValuesFields));
+            foreach ($fields['ORDER']['PROPERTY_VALUES'] as $k => $v) {
+                $result['ORDER']['PROPERTY_VALUES'][$k] = array_intersect_key(
+                    $v,
+                    array_flip($orderPropertyValuesFields)
+                );
+            }
         }
 
         if (isset($fields['ORDER']['BASKET_ITEMS'])) {
@@ -979,7 +1044,12 @@ class Order extends Controller
 
                 if (isset($item['PROPERTIES'])) {
                     foreach ($item['PROPERTIES'] as $kProps => $pros) {
-                        $result['ORDER']['BASKET_ITEMS'][$k]['PROPERTIES'][$kProps] = array_intersect_key($pros, array_flip($basketItemPropertiesFields));
+                        $result['ORDER']['BASKET_ITEMS'][$k]['PROPERTIES'][$kProps] = array_intersect_key(
+                            $pros,
+                            array_flip(
+                                $basketItemPropertiesFields
+                            )
+                        );
                     }
                 }
             }
@@ -997,7 +1067,10 @@ class Order extends Controller
 
                 if (isset($shipment['SHIPMENT_ITEMS'])) {
                     foreach ($shipment['SHIPMENT_ITEMS'] as $kShipmentItem => $shipmentItem) {
-                        $result['ORDER']['SHIPMENTS'][$k]['SHIPMENT_ITEMS'][$kShipmentItem] = array_intersect_key($shipmentItem, array_flip($shipmentItemsFields));
+                        $result['ORDER']['SHIPMENTS'][$k]['SHIPMENT_ITEMS'][$kShipmentItem] = array_intersect_key(
+                            $shipmentItem,
+                            array_flip($shipmentItemsFields)
+                        );
                     }
                 }
             }

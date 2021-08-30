@@ -1,9 +1,11 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions < "W")
+if ($saleModulePermissions < "W") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 
@@ -11,14 +13,14 @@ IncludeModuleLangFile(__FILE__);
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/prolog.php");
 
-$ID = IntVal($ID);
+$ID = intval($ID);
 
 ClearVars();
 
 $langCount = 0;
 $arSysLangs = Array();
 $arSysLangNames = Array();
-$db_lang = CLangAdmin::GetList(($b = "sort"), ($o = "asc"), array("ACTIVE" => "Y"));
+$db_lang = CLangAdmin::GetList("sort", "asc", array("ACTIVE" => "Y"));
 while ($arLang = $db_lang->Fetch()) {
     $arSysLangs[$langCount] = $arLang["LID"];
     $arSysLangNames[$langCount] = htmlspecialcharsbx($arLang["NAME"]);
@@ -27,22 +29,27 @@ while ($arLang = $db_lang->Fetch()) {
 
 $strError = "";
 $bInitVars = false;
-if ((strlen($save) > 0 || strlen($apply) > 0) && $REQUEST_METHOD == "POST" && $saleModulePermissions == "W" && check_bitrix_sessid()) {
+if (($save <> '' || $apply <> '') && $REQUEST_METHOD == "POST" && $saleModulePermissions == "W" && check_bitrix_sessid(
+    )) {
     $adminSidePanelHelper->decodeUriComponent();
-    $SORT = IntVal($SORT);
-    if ($SORT <= 0) $SORT = 100;
+    $SORT = intval($SORT);
+    if ($SORT <= 0) {
+        $SORT = 100;
+    }
 
-    if (!is_array($LOCATION_ID) || count($LOCATION_ID) <= 0)
+    if (!is_array($LOCATION_ID) || count($LOCATION_ID) <= 0) {
         $strError .= GetMessage("ERROR_EMPTY_LOCATION") . "<br>";
+    }
 
     $langCnt = count($arSysLangs);
     for ($i = 0; $i < $langCnt; $i++) {
         ${"NAME_" . $arSysLangs[$i]} = Trim(${"NAME_" . $arSysLangs[$i]});
-        if (strlen(${"NAME_" . $arSysLangs[$i]}) <= 0)
+        if (${"NAME_" . $arSysLangs[$i]} == '') {
             $strError .= GetMessage("ERROR_EMPTY_NAME") . " [" . $arSysLangs[$i] . "] " . $arSysLangNames[$i] . ".<br>";
+        }
     }
 
-    if (strlen($strError) <= 0) {
+    if ($strError == '') {
         $arFields = array(
             "SORT" => $SORT,
             "LOCATION_ID" => $LOCATION_ID
@@ -57,24 +64,27 @@ if ((strlen($save) > 0 || strlen($apply) > 0) && $REQUEST_METHOD == "POST" && $s
         }
 
         if ($ID > 0) {
-            if (!CSaleLocationGroup::Update($ID, $arFields))
+            if (!CSaleLocationGroup::Update($ID, $arFields)) {
                 $strError .= GetMessage("ERROR_EDIT_GROUP") . "<br>";
+            }
         } else {
             $ID = CSaleLocationGroup::Add($arFields);
-            if (IntVal($ID) <= 0)
+            if (intval($ID) <= 0) {
                 $strError .= GetMessage("ERROR_ADD_GROUP") . "<br>";
+            }
         }
     }
 
-    if (strlen($strError) > 0) {
+    if ($strError <> '') {
         $adminSidePanelHelper->sendJsonErrorResponse($strError);
         $bInitVars = true;
     }
 
     $adminSidePanelHelper->sendSuccessResponse("base");
 
-    if (strlen($save) > 0 && strlen($strError) <= 0)
+    if ($save <> '' && $strError == '') {
         LocalRedirect("sale_location_group_admin.php?lang=" . LANG . GetFilterParams("filter_", false));
+    }
 }
 
 if ($ID > 0) {
@@ -119,7 +129,10 @@ if ($ID > 0 && $saleModulePermissions >= "W") {
     $aMenu[] = array(
         "TEXT" => GetMessage("SLGEN_DELETE_LGROUP"),
         "ICON" => "btn_delete",
-        "LINK" => "javascript:if(confirm('" . GetMessage("SLGEN_DELETE_LGROUP_CONFIRM") . "')) window.location='/bitrix/admin/sale_location_group_admin.php?action=delete&ID[]=" . $ID . "&lang=" . LANG . "&" . bitrix_sessid_get() . "#tb';",
+        "LINK" => "javascript:if(confirm('" . GetMessage(
+                "SLGEN_DELETE_LGROUP_CONFIRM"
+            ) . "')) window.location='/bitrix/admin/sale_location_group_admin.php?action=delete&ID[]=" . $ID . "&lang=" . LANG . "&" . bitrix_sessid_get(
+            ) . "#tb';",
     );
 }
 $context = new CAdminContextMenu($aMenu);
@@ -137,7 +150,12 @@ $context->Show();
 
         <?
         $aTabs = array(
-            array("DIV" => "edit1", "TAB" => GetMessage("SLGEN_TAB_LGROUP"), "ICON" => "sale", "TITLE" => GetMessage("SLGEN_TAB_LGROUP_DESCR"))
+            array(
+                "DIV" => "edit1",
+                "TAB" => GetMessage("SLGEN_TAB_LGROUP"),
+                "ICON" => "sale",
+                "TITLE" => GetMessage("SLGEN_TAB_LGROUP_DESCR")
+            )
         );
 
         $tabControl = new CAdminTabControl("tabControl", $aTabs);
@@ -175,31 +193,43 @@ $context->Show();
 
                 <?
                 $db_locs = CSaleLocationGroup::GetLocationList(Array("LOCATION_GROUP_ID" => $ID));
-                $db_vars = CSaleLocation::GetList(Array("COUNTRY_NAME_LANG" => "ASC", "REGION_NAME_LANG" => "ASC", "CITY_NAME_LANG" => "ASC"), array(), LANG);
+                $db_vars = CSaleLocation::GetList(
+                    Array("COUNTRY_NAME_LANG" => "ASC", "REGION_NAME_LANG" => "ASC", "CITY_NAME_LANG" => "ASC"),
+                    array(),
+                    LANG
+                );
                 ?>
 
                 <select name="LOCATION_ID[]" size="10" multiple>
                     <?
                     $arCurLocs = array();
-                    while ($arLocs = $db_locs->Fetch())
-                        $arCurLocs[] = IntVal($arLocs["LOCATION_ID"]);
-                    if ($bInitVars && is_array($LOCATION_ID)) $arCurLocs = $LOCATION_ID;
+                    while ($arLocs = $db_locs->Fetch()) {
+                        $arCurLocs[] = intval($arLocs["LOCATION_ID"]);
+                    }
+                    if ($bInitVars && is_array($LOCATION_ID)) {
+                        $arCurLocs = $LOCATION_ID;
+                    }
                     ?>
                     <? while ($vars = $db_vars->Fetch()):
                         $locationName = $vars["COUNTRY_NAME"];
 
-                        if (strlen($vars["REGION_NAME"]) > 0) {
-                            if (strlen($locationName) > 0)
+                        if ($vars["REGION_NAME"] <> '') {
+                            if ($locationName <> '') {
                                 $locationName .= " - ";
+                            }
                             $locationName .= $vars["REGION_NAME"];
                         }
-                        if (strlen($vars["CITY_NAME"]) > 0) {
-                            if (strlen($locationName) > 0)
+                        if ($vars["CITY_NAME"] <> '') {
+                            if ($locationName <> '') {
                                 $locationName .= " - ";
+                            }
                             $locationName .= $vars["CITY_NAME"];
                         }
                         ?>
-                        <option value="<? echo $vars["ID"] ?>"<? if (in_array(IntVal($vars["ID"]), $arCurLocs)) echo " selected" ?>><? echo htmlspecialcharsbx($locationName) ?></option>
+                        <option value="<? echo $vars["ID"] ?>"<? if (in_array(
+                            intval($vars["ID"]),
+                            $arCurLocs
+                        )) echo " selected" ?>><? echo htmlspecialcharsbx($locationName) ?></option>
                     <? endwhile; ?>
                 </select>
             </td>

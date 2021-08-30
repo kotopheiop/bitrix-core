@@ -1,4 +1,5 @@
 <?
+
 $search_default_option = array(
     "include_mask" => "*.php;*.html;*.htm",
     "exclude_mask" => "/bitrix/*;/404.php;/upload/*;*/.hg/*;*/.svn/*;*/.git/*;*/cgi-bin/*;/bitrix_personal/*;/local/*",

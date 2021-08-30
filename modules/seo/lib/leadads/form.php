@@ -86,12 +86,14 @@ abstract class Form extends BaseApiObject implements IRequestDirectly
      */
     public function getRegisteredGroups()
     {
-        $rows = Internals\CallbackSubscriptionTable::getList([
-            'select' => ['GROUP_ID'],
-            'filter' => [
-                '=TYPE' => static::TYPE_CODE,
+        $rows = Internals\CallbackSubscriptionTable::getList(
+            [
+                'select' => ['GROUP_ID'],
+                'filter' => [
+                    '=TYPE' => static::TYPE_CODE,
+                ]
             ]
-        ])->fetchAll();
+        )->fetchAll();
 
         return array_column($rows, 'GROUP_ID');
     }
@@ -104,12 +106,14 @@ abstract class Form extends BaseApiObject implements IRequestDirectly
      */
     public function unRegisterGroup($groupId)
     {
-        $row = Internals\CallbackSubscriptionTable::getRow([
-            'filter' => [
-                '=TYPE' => static::TYPE_CODE,
-                '=GROUP_ID' => $groupId
+        $row = Internals\CallbackSubscriptionTable::getRow(
+            [
+                'filter' => [
+                    '=TYPE' => static::TYPE_CODE,
+                    '=GROUP_ID' => $groupId
+                ]
             ]
-        ]);
+        );
         if (!$row) {
             return true;
         }
@@ -126,11 +130,13 @@ abstract class Form extends BaseApiObject implements IRequestDirectly
     public function registerGroup($groupId)
     {
         $hasGroup = false;
-        $list = Internals\CallbackSubscriptionTable::getList([
-            'filter' => [
-                '=TYPE' => static::TYPE_CODE
+        $list = Internals\CallbackSubscriptionTable::getList(
+            [
+                'filter' => [
+                    '=TYPE' => static::TYPE_CODE
+                ]
             ]
-        ]);
+        );
         foreach ($list as $row) {
             if ($row['GROUP_ID'] == $groupId) {
                 $hasGroup = true;
@@ -143,10 +149,12 @@ abstract class Form extends BaseApiObject implements IRequestDirectly
             return true;
         }
 
-        return Internals\CallbackSubscriptionTable::add([
-            'TYPE' => static::TYPE_CODE,
-            'GROUP_ID' => $groupId
-        ])->isSuccess();
+        return Internals\CallbackSubscriptionTable::add(
+            [
+                'TYPE' => static::TYPE_CODE,
+                'GROUP_ID' => $groupId
+            ]
+        )->isSuccess();
     }
 
     /**
@@ -269,11 +277,13 @@ abstract class Form extends BaseApiObject implements IRequestDirectly
             ->setParameters($this->getAuthParameters());
 
 
-        $row = Internals\CallbackSubscriptionTable::getRow([
-            'filter' => [
-                '=TYPE' => $type,
+        $row = Internals\CallbackSubscriptionTable::getRow(
+            [
+                'filter' => [
+                    '=TYPE' => $type,
+                ]
             ]
-        ]);
+        );
         if ($row && $row['HAS_AUTH'] !== 'Y' && $adapter->hasAuth()) {
             Internals\CallbackSubscriptionTable::update($row['ID'], ['HAS_AUTH' => 'Y']);
         }

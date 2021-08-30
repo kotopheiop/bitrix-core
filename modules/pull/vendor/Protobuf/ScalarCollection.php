@@ -28,11 +28,13 @@ class ScalarCollection extends ArrayObject implements Collection
     public function add($value)
     {
         if (!is_scalar($value)) {
-            throw new InvalidArgumentException(sprintf(
-                'Argument 1 passed to %s must be a scalar value, %s given',
-                __METHOD__,
-                is_object($value) ? get_class($value) : gettype($value)
-            ));
+            throw new InvalidArgumentException(
+                sprintf(
+                    'Argument 1 passed to %s must be a scalar value, %s given',
+                    __METHOD__,
+                    is_object($value) ? get_class($value) : gettype($value)
+                )
+            );
         }
 
         parent::offsetSet(null, $value);
@@ -44,11 +46,13 @@ class ScalarCollection extends ArrayObject implements Collection
     public function offsetSet($offset, $value)
     {
         if (!is_scalar($value)) {
-            throw new InvalidArgumentException(sprintf(
-                'Argument 2 passed to %s must be a scalar value, %s given',
-                __METHOD__,
-                is_object($value) ? get_class($value) : gettype($value)
-            ));
+            throw new InvalidArgumentException(
+                sprintf(
+                    'Argument 2 passed to %s must be a scalar value, %s given',
+                    __METHOD__,
+                    is_object($value) ? get_class($value) : gettype($value)
+                )
+            );
         }
 
         parent::offsetSet($offset, $value);

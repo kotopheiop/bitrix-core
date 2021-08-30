@@ -1,7 +1,10 @@
 <?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
-$login = (strlen($USER_LOGIN) > 0) ? $USER_LOGIN : $last_login;
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+}
+
+$login = ($USER_LOGIN <> '') ? $USER_LOGIN : $last_login;
 $bNeedCaptcha = (COption::GetOptionString("main", "captcha_restoring_password", "N") == "Y");
 ?>
 
@@ -30,9 +33,11 @@ $bNeedCaptcha = (COption::GetOptionString("main", "captcha_restoring_password", 
                 </div>
             </div>
             <div class="login-popup-field login-replace-field">
-                <div class="login-popup-field-title"><span
-                            class="login-replace-title"><?= GetMessage("AUTH_NEW_PASSWORD") ?></span><span
-                            class="login-replace-title"><?= GetMessage("AUTH_NEW_PASSWORD_CONFIRM") ?></span></div>
+                <div class="login-popup-field-title"><span class="login-replace-title"><?= GetMessage(
+                            "AUTH_NEW_PASSWORD"
+                        ) ?></span><span class="login-replace-title"><?= GetMessage(
+                            "AUTH_NEW_PASSWORD_CONFIRM"
+                        ) ?></span></div>
                 <div class="login-input-wrap">
                     <input type="password" onfocus="BX.addClass(this.parentNode, 'login-input-active')"
                            onblur="BX.removeClass(this.parentNode, 'login-input-active')" class="login-input"
@@ -58,12 +63,15 @@ $bNeedCaptcha = (COption::GetOptionString("main", "captcha_restoring_password", 
             </div>
         </div>
         <a href="javascript:void(0)" onclick="toggleAuthForm('forgot_password')" style="display: none;"
-           id="change_password_forgot_link"
-           class="login-popup-forget-pas"><? echo GetMessage("AUTH_GOTO_FORGOT_FORM") ?></a>
+           id="change_password_forgot_link" class="login-popup-forget-pas"><? echo GetMessage(
+                "AUTH_GOTO_FORGOT_FORM"
+            ) ?></a>
         <div class="login-btn-wrap" id="change_password_button"><a class="login-popup-link login-popup-return-auth"
                                                                    href="javascript:void(0)"
-                                                                   onclick="BX.adminLogin.toggleAuthForm('authorize')"><?= GetMessage('AUTH_GOTO_AUTH_FORM_1') ?></a><input
-                    type="submit" name="change_pwd" value="<?= GetMessage("AUTH_CHANGE") ?>" class="login-btn"></div>
+                                                                   onclick="BX.adminLogin.toggleAuthForm('authorize')"><?= GetMessage(
+                    'AUTH_GOTO_AUTH_FORM_1'
+                ) ?></a><input type="submit" name="change_pwd" value="<?= GetMessage("AUTH_CHANGE") ?>"
+                               class="login-btn"></div>
     </div>
 </div>
 
@@ -74,7 +82,9 @@ $bNeedCaptcha = (COption::GetOptionString("main", "captcha_restoring_password", 
 
     var obChangeMsg = new BX.authFormChangePasswordMessage('change_password_message', {url: ''}),
         obChange = new BX.authFormChangePassword('change_password', {
-            url: '<?echo CUtil::JSEscape($authUrl . "?change_password=yes" . (($s = DeleteParam(array("change_password"))) == "" ? "" : "&" . $s))?>',
+            url: '<?echo CUtil::JSEscape(
+                $authUrl . "?change_password=yes" . (($s = DeleteParam(array("change_password"))) == "" ? "" : "&" . $s)
+            )?>',
             needCaptcha: <?=$bNeedCaptcha ? 'true' : 'false'?>,
             message: obChangeMsg
         });

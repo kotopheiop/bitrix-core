@@ -59,7 +59,7 @@ abstract class Base implements IErrorable
     public function addFilter($key, $value)
     {
         if ($this->isAvailableFilter($key)) {
-            $this->filters[$key] = $this->normaliseFilterValue($value);
+            $this->filters[$key][] = $this->normaliseFilterValue($value);
             return true;
         } else {
             $this->errors[] = new Error('Filter with key:' . $key . ' not available for this provider');
@@ -104,12 +104,7 @@ abstract class Base implements IErrorable
         $result = array();
         $filters = $this->getFilters();
         if (!empty($filters)) {
-            foreach ($entities as $key => $entity) {
-                if (in_array($key, $filteredEntityIds)) {
-                    $this->processAvailableRelations($entity);
-                    $result[] = $entity;
-                }
-            }
+            $result = $this->applyFilters($entities, $filteredEntityIds);
         } else {
             foreach ($entities as $key => $entity) {
                 $this->processAvailableRelations($entity);
@@ -120,6 +115,26 @@ abstract class Base implements IErrorable
         $this->setResults($result);
 
         return $this;
+    }
+
+    /**
+     * @param array $entities
+     * @param array $filteredEntityIds
+     *
+     * @return array
+     */
+    protected function applyFilters($entities, $filteredEntityIds)
+    {
+        $result = [];
+
+        foreach ($entities as $key => $entity) {
+            if (in_array($key, $filteredEntityIds)) {
+                $this->processAvailableRelations($entity);
+                $result[] = $entity;
+            }
+        }
+
+        return $result;
     }
 
     protected function sortResults(&$result)
@@ -137,9 +152,11 @@ abstract class Base implements IErrorable
         foreach ($this->getFilters() as $filterType => $filterValues) {
             if ($filterType !== 'primary') {
                 $newFilterEntityIds = array();
-                foreach ($filterValues as $filterValue) {
-                    if (isset($indices[$filterType][$filterValue])) {
-                        $newFilterEntityIds = array_merge($newFilterEntityIds, $indices[$filterType][$filterValue]);
+                foreach ($filterValues as $filterKey) {
+                    foreach ($filterKey as $filterValue) {
+                        if (isset($indices[$filterType][$filterValue])) {
+                            $newFilterEntityIds = array_merge($newFilterEntityIds, $indices[$filterType][$filterValue]);
+                        }
                     }
                 }
                 if (!empty($filteredEntityIds)) {
@@ -149,15 +166,14 @@ abstract class Base implements IErrorable
                 }
             } else {
                 if (!empty($filteredEntityIds)) {
-                    $filteredEntityIds = array_intersect($filteredEntityIds, $filterValues);
+                    $filteredEntityIds = array_intersect($filteredEntityIds, $filterValues[0]);
                 } else {
-                    $filteredEntityIds = $filterValues;
+                    $filteredEntityIds = $filterValues[0];
                 }
             }
         }
         return array_unique($filteredEntityIds);
     }
-
 
     /**
      * @return array

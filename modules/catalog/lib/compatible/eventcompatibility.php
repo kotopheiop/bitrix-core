@@ -31,52 +31,14 @@ final class EventCompatibility
 
     private static $allowEvents = 0;
 
-    private static $handlerList = array();
+    private static $handlerList = [];
 
-    private static $whiteList = array(
-        self::ENTITY_PRODUCT => array(
-            'ID' => true,
-            'QUANTITY' => true,
-            'QUANTITY_TRACE' => true,
-            'WEIGHT' => true,
-            'PRICE_TYPE' => true,
-            'RECUR_SCHEME_LENGTH' => true,
-            'RECUR_SCHEME_TYPE' => true,
-            'TRIAL_PRICE_ID' => true,
-            'WITHOUT_ORDER' => true,
-            'SELECT_BEST_PRICE' => true,
-            'VAT_ID' => true,
-            'VAT_INCLUDED' => true,
-            'CAN_BUY_ZERO' => true,
-            'NEGATIVE_AMOUNT_TRACE' => true,
-            'TMP_ID' => true,
-            'PURCHASING_PRICE' => true,
-            'PURCHASING_CURRENCY' => true,
-            'BARCODE_MULTI' => true,
-            'QUANTITY_RESERVED' => true,
-            'SUBSCRIBE' => true,
-            'WIDTH' => true,
-            'LENGTH' => true,
-            'HEIGHT' => true,
-            'MEASURE' => true,
-            'TYPE' => true,
-            'AVAILABLE' => true,
-            'BUNDLE' => true,
-            'PRICE_MODE' => true
-        ),
-        self::ENTITY_PRICE => array(
-            'PRODUCT_ID' => true,
-            'CATALOG_GROUP_ID' => true,
-            'PRICE' => true,
-            'CURRENCY' => true,
-            'QUANTITY_FROM' => true,
-            'QUANTITY_TO' => true,
-            'PRICE_SCALE' => true,
-            'EXTRA_ID' => true,
-            'TMP_ID' => true,
-            'MEASURE_RATIO_ID' => true
-        )
-    );
+    private static $whiteList = [];
+
+    private static $entityClass = [
+        self::ENTITY_PRODUCT => '\Bitrix\Catalog\Model\Product',
+        self::ENTITY_PRICE => '\Bitrix\Catalog\Model\Price'
+    ];
 
     public static function execAgent()
     {
@@ -89,48 +51,78 @@ final class EventCompatibility
         $eventManager = Main\EventManager::getInstance();
 
         $eventManager->registerEventHandler(
-            'catalog', 'Bitrix\Catalog\Model\Product::' . Main\Entity\DataManager::EVENT_ON_BEFORE_ADD,
-            'catalog', __CLASS__, 'handlerProductOnBeforeAdd'
+            'catalog',
+            'Bitrix\Catalog\Model\Product::' . Main\Entity\DataManager::EVENT_ON_BEFORE_ADD,
+            'catalog',
+            __CLASS__,
+            'handlerProductOnBeforeAdd'
         );
         $eventManager->registerEventHandler(
-            'catalog', 'Bitrix\Catalog\Model\Product::' . Main\Entity\DataManager::EVENT_ON_AFTER_ADD,
-            'catalog', __CLASS__, 'handlerProductOnAfterAdd'
-        );
-
-        $eventManager->registerEventHandler(
-            'catalog', 'Bitrix\Catalog\Model\Product::' . Main\Entity\DataManager::EVENT_ON_BEFORE_UPDATE,
-            'catalog', __CLASS__, 'handlerProductOnBeforeUpdate'
-        );
-        $eventManager->registerEventHandler(
-            'catalog', 'Bitrix\Catalog\Model\Product::' . Main\Entity\DataManager::EVENT_ON_AFTER_UPDATE,
-            'catalog', __CLASS__, 'handlerProductOnAfterUpdate'
+            'catalog',
+            'Bitrix\Catalog\Model\Product::' . Main\Entity\DataManager::EVENT_ON_AFTER_ADD,
+            'catalog',
+            __CLASS__,
+            'handlerProductOnAfterAdd'
         );
 
         $eventManager->registerEventHandler(
-            'catalog', 'Bitrix\Catalog\Model\Price::' . Main\Entity\DataManager::EVENT_ON_BEFORE_ADD,
-            'catalog', __CLASS__, 'handlerPriceOnBeforeAdd'
+            'catalog',
+            'Bitrix\Catalog\Model\Product::' . Main\Entity\DataManager::EVENT_ON_BEFORE_UPDATE,
+            'catalog',
+            __CLASS__,
+            'handlerProductOnBeforeUpdate'
         );
         $eventManager->registerEventHandler(
-            'catalog', 'Bitrix\Catalog\Model\Price::' . Main\Entity\DataManager::EVENT_ON_AFTER_ADD,
-            'catalog', __CLASS__, 'handlerPriceOnAfterAdd'
-        );
-
-        $eventManager->registerEventHandler(
-            'catalog', 'Bitrix\Catalog\Model\Price::' . Main\Entity\DataManager::EVENT_ON_BEFORE_UPDATE,
-            'catalog', __CLASS__, 'handlerPriceOnBeforeUpdate'
-        );
-        $eventManager->registerEventHandler(
-            'catalog', 'Bitrix\Catalog\Model\Price::' . Main\Entity\DataManager::EVENT_ON_AFTER_UPDATE,
-            'catalog', __CLASS__, 'handlerPriceOnAfterUpdate'
+            'catalog',
+            'Bitrix\Catalog\Model\Product::' . Main\Entity\DataManager::EVENT_ON_AFTER_UPDATE,
+            'catalog',
+            __CLASS__,
+            'handlerProductOnAfterUpdate'
         );
 
         $eventManager->registerEventHandler(
-            'catalog', 'Bitrix\Catalog\Model\Price::' . Main\Entity\DataManager::EVENT_ON_BEFORE_DELETE,
-            'catalog', __CLASS__, 'handlerPriceOnBeforeDelete'
+            'catalog',
+            'Bitrix\Catalog\Model\Price::' . Main\Entity\DataManager::EVENT_ON_BEFORE_ADD,
+            'catalog',
+            __CLASS__,
+            'handlerPriceOnBeforeAdd'
         );
         $eventManager->registerEventHandler(
-            'catalog', 'Bitrix\Catalog\Model\Price::' . Main\Entity\DataManager::EVENT_ON_AFTER_DELETE,
-            'catalog', __CLASS__, 'handlerPriceOnAfterDelete'
+            'catalog',
+            'Bitrix\Catalog\Model\Price::' . Main\Entity\DataManager::EVENT_ON_AFTER_ADD,
+            'catalog',
+            __CLASS__,
+            'handlerPriceOnAfterAdd'
+        );
+
+        $eventManager->registerEventHandler(
+            'catalog',
+            'Bitrix\Catalog\Model\Price::' . Main\Entity\DataManager::EVENT_ON_BEFORE_UPDATE,
+            'catalog',
+            __CLASS__,
+            'handlerPriceOnBeforeUpdate'
+        );
+        $eventManager->registerEventHandler(
+            'catalog',
+            'Bitrix\Catalog\Model\Price::' . Main\Entity\DataManager::EVENT_ON_AFTER_UPDATE,
+            'catalog',
+            __CLASS__,
+            'handlerPriceOnAfterUpdate'
+        );
+
+        $eventManager->registerEventHandler(
+            'catalog',
+            'Bitrix\Catalog\Model\Price::' . Main\Entity\DataManager::EVENT_ON_BEFORE_DELETE,
+            'catalog',
+            __CLASS__,
+            'handlerPriceOnBeforeDelete'
+        );
+        $eventManager->registerEventHandler(
+            'catalog',
+            'Bitrix\Catalog\Model\Price::' . Main\Entity\DataManager::EVENT_ON_AFTER_DELETE,
+            'catalog',
+            __CLASS__,
+            'handlerPriceOnAfterDelete'
         );
 
         unset($eventManager);
@@ -141,48 +133,78 @@ final class EventCompatibility
         $eventManager = Main\EventManager::getInstance();
 
         $eventManager->unRegisterEventHandler(
-            'catalog', 'Bitrix\Catalog\Model\Product::' . Main\Entity\DataManager::EVENT_ON_BEFORE_ADD,
-            'catalog', __CLASS__, 'handlerProductOnBeforeAdd'
+            'catalog',
+            'Bitrix\Catalog\Model\Product::' . Main\Entity\DataManager::EVENT_ON_BEFORE_ADD,
+            'catalog',
+            __CLASS__,
+            'handlerProductOnBeforeAdd'
         );
         $eventManager->unRegisterEventHandler(
-            'catalog', 'Bitrix\Catalog\Model\Product::' . Main\Entity\DataManager::EVENT_ON_AFTER_ADD,
-            'catalog', __CLASS__, 'handlerProductOnAfterAdd'
-        );
-
-        $eventManager->unRegisterEventHandler(
-            'catalog', 'Bitrix\Catalog\Model\Product::' . Main\Entity\DataManager::EVENT_ON_BEFORE_UPDATE,
-            'catalog', __CLASS__, 'handlerProductOnBeforeUpdate'
-        );
-        $eventManager->unRegisterEventHandler(
-            'catalog', 'Bitrix\Catalog\Model\Product::' . Main\Entity\DataManager::EVENT_ON_AFTER_UPDATE,
-            'catalog', __CLASS__, 'handlerProductOnAfterUpdate'
+            'catalog',
+            'Bitrix\Catalog\Model\Product::' . Main\Entity\DataManager::EVENT_ON_AFTER_ADD,
+            'catalog',
+            __CLASS__,
+            'handlerProductOnAfterAdd'
         );
 
         $eventManager->unRegisterEventHandler(
-            'catalog', 'Bitrix\Catalog\Model\Price::' . Main\Entity\DataManager::EVENT_ON_BEFORE_ADD,
-            'catalog', __CLASS__, 'handlerPriceOnBeforeAdd'
+            'catalog',
+            'Bitrix\Catalog\Model\Product::' . Main\Entity\DataManager::EVENT_ON_BEFORE_UPDATE,
+            'catalog',
+            __CLASS__,
+            'handlerProductOnBeforeUpdate'
         );
         $eventManager->unRegisterEventHandler(
-            'catalog', 'Bitrix\Catalog\Model\Price::' . Main\Entity\DataManager::EVENT_ON_AFTER_ADD,
-            'catalog', __CLASS__, 'handlerPriceOnAfterAdd'
-        );
-
-        $eventManager->unRegisterEventHandler(
-            'catalog', 'Bitrix\Catalog\Model\Price::' . Main\Entity\DataManager::EVENT_ON_BEFORE_UPDATE,
-            'catalog', __CLASS__, 'handlerPriceOnBeforeUpdate'
-        );
-        $eventManager->unRegisterEventHandler(
-            'catalog', 'Bitrix\Catalog\Model\Price::' . Main\Entity\DataManager::EVENT_ON_AFTER_UPDATE,
-            'catalog', __CLASS__, 'handlerPriceOnAfterUpdate'
+            'catalog',
+            'Bitrix\Catalog\Model\Product::' . Main\Entity\DataManager::EVENT_ON_AFTER_UPDATE,
+            'catalog',
+            __CLASS__,
+            'handlerProductOnAfterUpdate'
         );
 
         $eventManager->unRegisterEventHandler(
-            'catalog', 'Bitrix\Catalog\Model\Price::' . Main\Entity\DataManager::EVENT_ON_BEFORE_DELETE,
-            'catalog', __CLASS__, 'handlerPriceOnBeforeDelete'
+            'catalog',
+            'Bitrix\Catalog\Model\Price::' . Main\Entity\DataManager::EVENT_ON_BEFORE_ADD,
+            'catalog',
+            __CLASS__,
+            'handlerPriceOnBeforeAdd'
         );
         $eventManager->unRegisterEventHandler(
-            'catalog', 'Bitrix\Catalog\Model\Price::' . Main\Entity\DataManager::EVENT_ON_AFTER_DELETE,
-            'catalog', __CLASS__, 'handlerPriceOnAfterDelete'
+            'catalog',
+            'Bitrix\Catalog\Model\Price::' . Main\Entity\DataManager::EVENT_ON_AFTER_ADD,
+            'catalog',
+            __CLASS__,
+            'handlerPriceOnAfterAdd'
+        );
+
+        $eventManager->unRegisterEventHandler(
+            'catalog',
+            'Bitrix\Catalog\Model\Price::' . Main\Entity\DataManager::EVENT_ON_BEFORE_UPDATE,
+            'catalog',
+            __CLASS__,
+            'handlerPriceOnBeforeUpdate'
+        );
+        $eventManager->unRegisterEventHandler(
+            'catalog',
+            'Bitrix\Catalog\Model\Price::' . Main\Entity\DataManager::EVENT_ON_AFTER_UPDATE,
+            'catalog',
+            __CLASS__,
+            'handlerPriceOnAfterUpdate'
+        );
+
+        $eventManager->unRegisterEventHandler(
+            'catalog',
+            'Bitrix\Catalog\Model\Price::' . Main\Entity\DataManager::EVENT_ON_BEFORE_DELETE,
+            'catalog',
+            __CLASS__,
+            'handlerPriceOnBeforeDelete'
+        );
+        $eventManager->unRegisterEventHandler(
+            'catalog',
+            'Bitrix\Catalog\Model\Price::' . Main\Entity\DataManager::EVENT_ON_AFTER_DELETE,
+            'catalog',
+            __CLASS__,
+            'handlerPriceOnAfterDelete'
         );
 
         unset($eventManager);
@@ -196,12 +218,14 @@ final class EventCompatibility
     public static function handlerProductOnAfterAdd(Catalog\Model\Event $event)
     {
         $result = new Catalog\Model\EventResult();
-        if (!self::allowedEvents())
+        if (!self::allowedEvents()) {
             return $result;
+        }
 
         $success = $event->getParameter('success');
-        if (!$success)
+        if (!$success) {
             return $result;
+        }
 
         self::disableEvents();
 
@@ -210,10 +234,10 @@ final class EventCompatibility
             self::getHandlerList('sale', self::EVENT_ON_PRODUCT_ADD)       // compatibility with old strange code
         );
         if (!empty($handlerList)) {
-            $data = array(
+            $data = [
                 $event->getParameter('id'),
                 $event->getParameter('fields') + $event->getParameter('external_fields')
-            );
+            ];
 
             foreach ($handlerList as $handler) {
                 ExecuteModuleEventEx($handler, $data);
@@ -240,8 +264,9 @@ final class EventCompatibility
     public static function handlerPriceOnBeforeAdd(Catalog\Model\Event $event)
     {
         $result = new Catalog\Model\EventResult();
-        if (!self::allowedEvents())
+        if (!self::allowedEvents()) {
             return $result;
+        }
 
         self::disableEvents();
 
@@ -257,7 +282,7 @@ final class EventCompatibility
             $fields['RECALL'] = (isset($actions['OLD_RECOUNT']) && $actions['OLD_RECOUNT'] === true);
 
             foreach ($handlerList as $handler) {
-                if (ExecuteModuleEventEx($handler, array(&$fields)) === false) {
+                if (ExecuteModuleEventEx($handler, [&$fields]) === false) {
                     $error = true;
                     break;
                 }
@@ -265,18 +290,20 @@ final class EventCompatibility
             unset($handler);
 
             if (isset($fields['RECALL'])) {
-                $result->modifyActions(array('OLD_RECOUNT' => $fields['RECALL']));
+                $result->modifyActions(['OLD_RECOUNT' => $fields['RECALL']]);
                 unset($fields['RECALL']);
             } else {
-                if (isset($actions['OLD_RECOUNT']))
-                    $result->unsetActions(array('OLD_RECOUNT'));
+                if (isset($actions['OLD_RECOUNT'])) {
+                    $result->unsetActions(['OLD_RECOUNT']);
+                }
             }
 
             self::fillResultData($result, self::ENTITY_PRICE, $oldFields, $oldExternalFields, $fields);
             unset($actions, $oldExternalFields, $oldFields, $externalFields, $fields);
 
-            if ($error)
+            if ($error) {
                 self::setHandlerError($result, self::EVENT_ON_BEFORE_PRICE_ADD);
+            }
             unset($error);
         }
 
@@ -288,12 +315,14 @@ final class EventCompatibility
     public static function handlerPriceOnAfterAdd(Catalog\Model\Event $event)
     {
         $result = new Catalog\Model\EventResult();
-        if (!self::allowedEvents())
+        if (!self::allowedEvents()) {
             return $result;
+        }
 
         $success = $event->getParameter('success');
-        if (!$success)
+        if (!$success) {
             return $result;
+        }
 
         self::disableEvents();
 
@@ -305,10 +334,10 @@ final class EventCompatibility
             $fields = $event->getParameter('fields');
             $actions = $event->getParameter('actions');
             $fields['RECALL'] = (isset($actions['OLD_RECOUNT']) && $actions['OLD_RECOUNT'] === true);
-            $data = array(
+            $data = [
                 $event->getParameter('id'),
                 $fields + $event->getParameter('external_fields')
-            );
+            ];
             unset($actions, $fields);
 
             foreach ($handlerList as $handler) {
@@ -326,8 +355,9 @@ final class EventCompatibility
     public static function handlerPriceOnBeforeUpdate(Catalog\Model\Event $event)
     {
         $result = new Catalog\Model\EventResult();
-        if (!self::allowedEvents())
+        if (!self::allowedEvents()) {
             return $result;
+        }
 
         self::disableEvents();
 
@@ -343,7 +373,7 @@ final class EventCompatibility
             $fields['RECALL'] = (isset($actions['OLD_RECOUNT']) && $actions['OLD_RECOUNT'] === true);
 
             foreach ($handlerList as $handler) {
-                if (ExecuteModuleEventEx($handler, array($id, &$fields)) === false) {
+                if (ExecuteModuleEventEx($handler, [$id, &$fields]) === false) {
                     $error = true;
                     break;
                 }
@@ -351,18 +381,20 @@ final class EventCompatibility
             unset($handler);
 
             if (isset($fields['RECALL'])) {
-                $result->modifyActions(array('OLD_RECOUNT' => $fields['RECALL']));
+                $result->modifyActions(['OLD_RECOUNT' => $fields['RECALL']]);
                 unset($fields['RECALL']);
             } else {
-                if (isset($actions['OLD_RECOUNT']))
-                    $result->unsetActions(array('OLD_RECOUNT'));
+                if (isset($actions['OLD_RECOUNT'])) {
+                    $result->unsetActions(['OLD_RECOUNT']);
+                }
             }
 
             self::fillResultData($result, self::ENTITY_PRICE, $oldFields, $oldExternalFields, $fields);
             unset($actions, $oldExternalFields, $oldFields, $externalFields, $fields);
 
-            if ($error)
+            if ($error) {
                 self::setHandlerError($result, self::EVENT_ON_BEFORE_PRICE_UPDATE);
+            }
             unset($error);
         }
         unset($handlerList);
@@ -421,7 +453,7 @@ final class EventCompatibility
     {
         $eventIndex = $module . ':' . $event;
         if (!isset(self::$handlerList[$eventIndex])) {
-            self::$handlerList[$eventIndex] = array();
+            self::$handlerList[$eventIndex] = [];
             $eventManager = Main\EventManager::getInstance();
             $result = $eventManager->findEventHandlers($module, $event);
             if (!empty($result)) {
@@ -440,8 +472,9 @@ final class EventCompatibility
     private static function handlerOnBeforeAdd(Catalog\Model\Event $event, $entity, $eventName)
     {
         $result = new Catalog\Model\EventResult();
-        if (!self::allowedEvents())
+        if (!self::allowedEvents()) {
             return $result;
+        }
 
         self::disableEvents();
 
@@ -452,11 +485,12 @@ final class EventCompatibility
             $externalFields = $event->getParameter('external_fields');
             $oldFields = $fields;
             $oldExternalFields = $externalFields;
-            if (!empty($externalFields))
+            if (!empty($externalFields)) {
                 $fields = $fields + $externalFields;
+            }
 
             foreach ($handlerList as $handler) {
-                if (ExecuteModuleEventEx($handler, array(&$fields)) === false) {
+                if (ExecuteModuleEventEx($handler, [&$fields]) === false) {
                     $error = true;
                     break;
                 }
@@ -466,8 +500,9 @@ final class EventCompatibility
             self::fillResultData($result, $entity, $oldFields, $oldExternalFields, $fields);
             unset($oldExternalFields, $oldFields, $externalFields, $fields);
 
-            if ($error)
+            if ($error) {
                 self::setHandlerError($result, $eventName);
+            }
             unset($error);
         }
 
@@ -479,21 +514,23 @@ final class EventCompatibility
     private static function handlerOnAfterModify(Catalog\Model\Event $event, $eventName)
     {
         $result = new Catalog\Model\EventResult();
-        if (!self::allowedEvents())
+        if (!self::allowedEvents()) {
             return $result;
+        }
 
         $success = $event->getParameter('success');
-        if (!$success)
+        if (!$success) {
             return $result;
+        }
 
         self::disableEvents();
 
         $handlerList = self::getHandlerList('catalog', $eventName);
         if (!empty($handlerList)) {
-            $data = array(
+            $data = [
                 $event->getParameter('id'),
                 $event->getParameter('fields') + $event->getParameter('external_fields')
-            );
+            ];
 
             foreach ($handlerList as $handler) {
                 ExecuteModuleEventEx($handler, $data);
@@ -510,8 +547,9 @@ final class EventCompatibility
     private static function handlerOnBeforeUpdate(Catalog\Model\Event $event, $entity, $eventName)
     {
         $result = new Catalog\Model\EventResult();
-        if (!self::allowedEvents())
+        if (!self::allowedEvents()) {
             return $result;
+        }
 
         self::disableEvents();
 
@@ -523,11 +561,12 @@ final class EventCompatibility
             $externalFields = $event->getParameter('external_fields');
             $oldFields = $fields;
             $oldExternalFields = $externalFields;
-            if (!empty($externalFields))
+            if (!empty($externalFields)) {
                 $fields = $fields + $externalFields;
+            }
 
             foreach ($handlerList as $handler) {
-                if (ExecuteModuleEventEx($handler, array($id, &$fields)) === false) {
+                if (ExecuteModuleEventEx($handler, [$id, &$fields]) === false) {
                     $error = true;
                     break;
                 }
@@ -537,8 +576,9 @@ final class EventCompatibility
             self::fillResultData($result, $entity, $oldFields, $oldExternalFields, $fields);
             unset($oldExternalFields, $oldFields, $externalFields, $fields);
 
-            if ($error)
+            if ($error) {
                 self::setHandlerError($result, $eventName);
+            }
             unset($error);
         }
         unset($handlerList);
@@ -551,8 +591,9 @@ final class EventCompatibility
     private static function handlerOnBeforeDelete(Catalog\Model\Event $event, $eventName)
     {
         $result = new Catalog\Model\EventResult();
-        if (!self::allowedEvents())
+        if (!self::allowedEvents()) {
             return $result;
+        }
 
         self::disableEvents();
 
@@ -562,15 +603,16 @@ final class EventCompatibility
             $id = $event->getParameter('id');
 
             foreach ($handlerList as $handler) {
-                if (ExecuteModuleEventEx($handler, array($id)) === false) {
+                if (ExecuteModuleEventEx($handler, [$id]) === false) {
                     $error = true;
                     break;
                 }
             }
             unset($handler);
 
-            if ($error)
+            if ($error) {
                 self::setHandlerError($result, $eventName);
+            }
             unset($id, $error);
         }
 
@@ -582,20 +624,22 @@ final class EventCompatibility
     private static function handlerOnAfterDelete(Catalog\Model\Event $event, $eventName)
     {
         $result = new Catalog\Model\EventResult();
-        if (!self::allowedEvents())
+        if (!self::allowedEvents()) {
             return $result;
+        }
 
         $success = $event->getParameter('success');
-        if (!$success)
+        if (!$success) {
             return $result;
+        }
 
         self::disableEvents();
 
         $handlerList = self::getHandlerList('catalog', $eventName);
         if (!empty($handlerList)) {
-            $data = array(
+            $data = [
                 $event->getParameter('id')
-            );
+            ];
 
             foreach ($handlerList as $handler) {
                 ExecuteModuleEventEx($handler, $data);
@@ -612,12 +656,14 @@ final class EventCompatibility
     private static function handlerPriceOnAfterModify(Catalog\Model\Event $event, $eventName)
     {
         $result = new Catalog\Model\EventResult();
-        if (!self::allowedEvents())
+        if (!self::allowedEvents()) {
             return $result;
+        }
 
         $success = $event->getParameter('success');
-        if (!$success)
+        if (!$success) {
             return $result;
+        }
 
         self::disableEvents();
 
@@ -626,10 +672,10 @@ final class EventCompatibility
             $fields = $event->getParameter('fields');
             $actions = $event->getParameter('actions');
             $fields['RECALL'] = (isset($actions['OLD_RECOUNT']) && $actions['OLD_RECOUNT'] === true);
-            $data = array(
+            $data = [
                 $event->getParameter('id'),
                 $fields + $event->getParameter('external_fields')
-            );
+            ];
             unset($actions, $fields);
 
             foreach ($handlerList as $handler) {
@@ -650,16 +696,20 @@ final class EventCompatibility
 
         $oldException = $APPLICATION->GetException();
         if (is_object($oldException)) {
-            $result->addError(new Main\Entity\EntityError(
-                $oldException->GetString()
-            ));
-        } else {
-            $result->addError(new Main\Entity\EntityError(
-                Loc::getMessage(
-                    'BX_CATALOG_EVENT_COMPATIBILITY_ERR_UNKNOWN',
-                    array('#EVENT#' => $eventName)
+            $result->addError(
+                new Main\Entity\EntityError(
+                    $oldException->GetString()
                 )
-            ));
+            );
+        } else {
+            $result->addError(
+                new Main\Entity\EntityError(
+                    Loc::getMessage(
+                        'BX_CATALOG_EVENT_COMPATIBILITY_ERR_UNKNOWN',
+                        ['#EVENT#' => $eventName]
+                    )
+                )
+            );
         }
         unset($oldException);
     }
@@ -670,30 +720,48 @@ final class EventCompatibility
         array $fields,
         array $externalFields,
         array $handlerFields
-    )
-    {
-        $unsetFields = array();
-        $modifyFields = array();
-        $unsetExternalFields = array();
-        $modifyExternalFields = array();
+    ) {
+        $unsetFields = [];
+        $modifyFields = [];
+        $unsetExternalFields = [];
+        $modifyExternalFields = [];
+
+        if (!isset(self::$entityClass[$entity])) {
+            return;
+        }
+        if (!isset(self::$whiteList[$entity])) {
+            /** @var Catalog\Model\Entity $className */
+            $className = self::$entityClass[$entity];
+            $list = $className::getTabletFieldNames(Catalog\Model\Entity::FIELDS_ALL);
+            self::$whiteList[$entity] = (!empty($list)
+                ? array_fill_keys($list, true)
+                : []
+            );
+        }
+        if (empty(self::$whiteList[$entity])) {
+            return;
+        }
 
         $handlerExternalFields = array_diff_key($handlerFields, self::$whiteList[$entity]);
-        if (!empty($handlerExternalFields))
+        if (!empty($handlerExternalFields)) {
             $handlerFields = array_intersect_key($handlerFields, self::$whiteList[$entity]);
+        }
 
         foreach ($fields as $key => $value) {
             if (!array_key_exists($key, $handlerFields)) {
                 $unsetFields[] = $key;
             } else {
                 if (!is_array($value)) {
-                    if ($value !== $handlerFields[$key])
+                    if ($value !== $handlerFields[$key]) {
                         $modifyFields[$key] = $handlerFields[$key];
+                    }
                 }
                 unset($handlerFields[$key]);
             }
         }
-        if (!empty($handlerFields))
+        if (!empty($handlerFields)) {
             $modifyFields = $modifyFields + $handlerFields;
+        }
 
         foreach ($externalFields as $key => $value) {
             if (!array_key_exists($key, $handlerExternalFields)) {
@@ -701,23 +769,29 @@ final class EventCompatibility
             } else {
                 //TODO: add array check
                 if (!is_array($value)) {
-                    if ($value !== $handlerExternalFields[$key])
+                    if ($value !== $handlerExternalFields[$key]) {
                         $modifyExternalFields[$key] = $handlerExternalFields[$key];
+                    }
                 }
                 unset($handlerExternalFields[$key]);
             }
         }
-        if (!empty($handlerExternalFields))
+        if (!empty($handlerExternalFields)) {
             $modifyExternalFields = $modifyExternalFields + $handlerExternalFields;
+        }
 
-        if (!empty($unsetFields))
+        if (!empty($unsetFields)) {
             $result->unsetFields($unsetFields);
-        if (!empty($modifyFields))
+        }
+        if (!empty($modifyFields)) {
             $result->modifyFields($modifyFields);
-        if (!empty($unsetExternalFields))
+        }
+        if (!empty($unsetExternalFields)) {
             $result->unsetExternalFields($unsetExternalFields);
-        if (!empty($modifyExternalFields))
+        }
+        if (!empty($modifyExternalFields)) {
             $result->modifyExternalFields($modifyExternalFields);
+        }
         unset($modifyFields, $unsetFields);
     }
 }

@@ -57,15 +57,17 @@ class CVoteCacheManager
     public static function SetTag($path, $tag, $ID = 0)
     {
         global $CACHE_MANAGER;
-        if (!defined("BX_COMP_MANAGED_CACHE"))
+        if (!defined("BX_COMP_MANAGED_CACHE")) {
             return false;
+        }
         $CACHE_MANAGER->StartTagCache($path);
         $tags = is_array($tag) ? $tag : array($tag => $ID);
         foreach ($tags as $tag => $ID) {
             if (array_key_exists($tag, self::$types)) {
                 $ID = is_array($ID) ? $ID : array($ID);
-                foreach ($ID as $i)
+                foreach ($ID as $i) {
                     $CACHE_MANAGER->RegisterTag(self::$types[$tag] . $i);
+                }
             } else {
                 $CACHE_MANAGER->RegisterTag($tag);
             }
@@ -76,13 +78,15 @@ class CVoteCacheManager
 
     public static function ClearTag($type, $ID = 0)
     {
-        if (!defined("BX_COMP_MANAGED_CACHE"))
+        if (!defined("BX_COMP_MANAGED_CACHE")) {
             return false;
+        }
         global $CACHE_MANAGER;
-        if (array_key_exists($type, self::$types))
+        if (array_key_exists($type, self::$types)) {
             $CACHE_MANAGER->ClearByTag(self::$types[$type] . $ID);
-        else
+        } else {
             $CACHE_MANAGER->ClearByTag($type);
+        }
         return true;
     }
 
@@ -93,10 +97,12 @@ class CVoteCacheManager
         if (VOTE_CACHE_TIME !== false):
             global $CACHE_MANAGER;
             $CACHE_MANAGER->CleanDir("b_vote_channel");
-            if (empty($arFields) || array_key_exists("GROUP_ID", $arFields))
+            if (empty($arFields) || array_key_exists("GROUP_ID", $arFields)) {
                 $CACHE_MANAGER->CleanDir("b_vote_perm");
-            if (empty($arFields) || !empty($arFields["SITE"]))
+            }
+            if (empty($arFields) || !empty($arFields["SITE"])) {
                 $CACHE_MANAGER->CleanDir("b_vote_channel_2_site");
+            }
             $CACHE_MANAGER->CleanDir("b_vote");
         endif;
     }
@@ -126,8 +132,9 @@ class CVoteCacheManager
     {
         if (array_key_exists("VOTE_ID", $arFields)) {
             $db_res = CVoteQuestion::GetByID($ID);
-            if ($db_res && ($res = $db_res->Fetch()))
+            if ($db_res && ($res = $db_res->Fetch())) {
                 self::ClearTag("V", $res["VOTE_ID"]);
+            }
         }
     }
 
@@ -137,8 +144,9 @@ class CVoteCacheManager
             self::ClearTag("V", $arFields["VOTE_ID"]);
         } else {
             $db_res = CVoteQuestion::GetByID($ID);
-            if ($db_res && ($res = $db_res->Fetch()))
+            if ($db_res && ($res = $db_res->Fetch())) {
                 self::ClearTag("V", $res["VOTE_ID"]);
+            }
         }
         self::ClearTag("Q", $ID);
     }
@@ -157,9 +165,14 @@ class CVoteCacheManager
     {
         if (array_key_exists("QUESTION_ID", $arFields)) {
             global $DB;
-            $res = $DB->Query("SELECT QUESTION_ID FROM b_vote_answer WHERE ID=" . $ID, false, "File:" . __FILE__ . " Line: " . __LINE__);
-            if ($row = $res->Fetch())
+            $res = $DB->Query(
+                "SELECT QUESTION_ID FROM b_vote_answer WHERE ID=" . $ID,
+                false,
+                "File:" . __FILE__ . " Line: " . __LINE__
+            );
+            if ($row = $res->Fetch()) {
                 self::ClearTag("Q", $row["QUESTION_ID"]);
+            }
         }
     }
 
@@ -169,18 +182,25 @@ class CVoteCacheManager
             self::ClearTag("Q", $arFields["QUESTION_ID"]);
         } else {
             global $DB;
-            $db_res = $DB->Query("SELECT QUESTION_ID FROM b_vote_answer WHERE ID=" . $ID, false, "File:" . __FILE__ . " Line: " . __LINE__);
-            if ($res = $db_res->Fetch())
+            $db_res = $DB->Query(
+                "SELECT QUESTION_ID FROM b_vote_answer WHERE ID=" . $ID,
+                false,
+                "File:" . __FILE__ . " Line: " . __LINE__
+            );
+            if ($res = $db_res->Fetch()) {
                 self::ClearTag("Q", $res["QUESTION_ID"]);
+            }
         }
     }
 
     function OnAfterVoteAnswerDelete($ID, $QUESTION_ID, $VOTE_ID)
     {
-        if ($QUESTION_ID != false)
+        if ($QUESTION_ID != false) {
             self::ClearTag("Q", $QUESTION_ID);
-        if ($VOTE_ID != false)
+        }
+        if ($VOTE_ID != false) {
             self::ClearTag("V", $VOTE_ID);
+        }
     }
 
     function onAfterVoting($VOTE_ID, $EVENT_ID)

@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 class CSocServOdnoklassniki extends CSocServAuth
@@ -14,7 +15,12 @@ class CSocServOdnoklassniki extends CSocServAuth
             array("odnoklassniki_appid", GetMessage("socserv_odnoklassniki_client_id"), "", Array("text", 40)),
             array("odnoklassniki_appkey", GetMessage("socserv_odnoklassniki_client_key"), "", Array("text", 40)),
             array("odnoklassniki_appsecret", GetMessage("socserv_odnoklassniki_client_secret"), "", Array("text", 40)),
-            array("note" => GetMessage("socserv_odnoklassniki_form_note", array('#URL#' => \CHTTP::URN2URI("/bitrix/tools/oauth/odnoklassniki.php")))),
+            array(
+                "note" => GetMessage(
+                    "socserv_odnoklassniki_form_note",
+                    array('#URL#' => \CHTTP::URN2URI("/bitrix/tools/oauth/odnoklassniki.php"))
+                )
+            ),
         );
     }
 
@@ -26,11 +32,20 @@ class CSocServOdnoklassniki extends CSocServAuth
     public function GetFormHtml($arParams)
     {
         $url = $this->getUrl('opener', null, $arParams);
-        $phrase = ($arParams["FOR_INTRANET"]) ? GetMessage("MAIN_OPTION_COMMENT1_INTRANET") : GetMessage("MAIN_OPTION_COMMENT1");
+        $phrase = ($arParams["FOR_INTRANET"]) ? GetMessage("MAIN_OPTION_COMMENT1_INTRANET") : GetMessage(
+            "MAIN_OPTION_COMMENT1"
+        );
 
-        if ($arParams["FOR_INTRANET"])
-            return array("ON_CLICK" => 'onclick="BX.util.popup(\'' . htmlspecialcharsbx(CUtil::JSEscape($url)) . '\', 580, 400)"');
-        return '<a href="javascript:void(0)" onclick="BX.util.popup(\'' . htmlspecialcharsbx(CUtil::JSEscape($url)) . '\', 580, 400)" class="bx-ss-button odnoklassniki-button"></a><span class="bx-spacer"></span><span>' . $phrase . '</span>';
+        if ($arParams["FOR_INTRANET"]) {
+            return array(
+                "ON_CLICK" => 'onclick="BX.util.popup(\'' . htmlspecialcharsbx(
+                        CUtil::JSEscape($url)
+                    ) . '\', 580, 400)"'
+            );
+        }
+        return '<a href="javascript:void(0)" onclick="BX.util.popup(\'' . htmlspecialcharsbx(
+                CUtil::JSEscape($url)
+            ) . '\', 580, 400)" class="bx-ss-button odnoklassniki-button"></a><span class="bx-spacer"></span><span>' . $phrase . '</span>';
     }
 
     public function GetOnClickJs($arParams)
@@ -49,7 +64,12 @@ class CSocServOdnoklassniki extends CSocServAuth
         if (IsModuleInstalled('bitrix24') && defined('BX24_HOST_NAME')) {
             $redirect_uri = self::CONTROLLER_URL . "/redirect.php";
             $state = \CHTTP::URN2URI("/bitrix/tools/oauth/odnoklassniki.php") . "?state=";
-            $backurl = urlencode($GLOBALS["APPLICATION"]->GetCurPageParam('check_key=' . $_SESSION["UNIQUE_KEY"], array("logout", "auth_service_error", "auth_service_id", "backurl"))) . '&mode=' . $location;
+            $backurl = urlencode(
+                    $GLOBALS["APPLICATION"]->GetCurPageParam(
+                        'check_key=' . $_SESSION["UNIQUE_KEY"],
+                        array("logout", "auth_service_error", "auth_service_id", "backurl")
+                    )
+                ) . '&mode=' . $location;
             $state .= urlencode(urlencode("backurl=" . $backurl));
         } else {
             $backurl = $APPLICATION->GetCurPageParam(
@@ -57,7 +77,11 @@ class CSocServOdnoklassniki extends CSocServAuth
                 array("logout", "auth_service_error", "auth_service_id", "backurl")
             );
             $redirect_uri = \CHTTP::URN2URI("/bitrix/tools/oauth/odnoklassniki.php");
-            $state = 'site_id=' . SITE_ID . '&backurl=' . urlencode($backurl) . (isset($arParams['BACKURL']) ? '&redirect_url=' . urlencode($arParams['BACKURL']) : '') . '&mode=' . $location;
+            $state = 'site_id=' . SITE_ID . '&backurl=' . urlencode(
+                    $backurl
+                ) . (isset($arParams['BACKURL']) ? '&redirect_url=' . urlencode(
+                        $arParams['BACKURL']
+                    ) : '') . '&mode=' . $location;
         }
 
         return $this->entityOAuth->GetAuthUrl($redirect_uri, $state);
@@ -74,10 +98,11 @@ class CSocServOdnoklassniki extends CSocServAuth
         if ((isset($_REQUEST["code"]) && $_REQUEST["code"] <> '') && CSocServAuthManager::CheckUniqueKey()) {
             $bProcessState = true;
 
-            if (IsModuleInstalled('bitrix24') && defined('BX24_HOST_NAME'))
+            if (IsModuleInstalled('bitrix24') && defined('BX24_HOST_NAME')) {
                 $redirect_uri = self::CONTROLLER_URL . "/redirect.php";
-            else
+            } else {
                 $redirect_uri = \CHTTP::URN2URI("/bitrix/tools/oauth/odnoklassniki.php");
+            }
 
             $appID = trim(self::GetOption("odnoklassniki_appid"));
             $appSecret = trim(self::GetOption("odnoklassniki_appsecret"));
@@ -91,15 +116,18 @@ class CSocServOdnoklassniki extends CSocServAuth
                 if (is_array($arOdnoklUser) && ($arOdnoklUser['uid'] <> '')) {
                     $uid = $arOdnoklUser['uid'];
                     $first_name = $last_name = $gender = "";
-                    if ($arOdnoklUser['first_name'] <> '')
+                    if ($arOdnoklUser['first_name'] <> '') {
                         $first_name = $arOdnoklUser['first_name'];
-                    if ($arOdnoklUser['last_name'] <> '')
+                    }
+                    if ($arOdnoklUser['last_name'] <> '') {
                         $last_name = $arOdnoklUser['last_name'];
+                    }
                     if (isset($arOdnoklUser['gender']) && $arOdnoklUser['gender'] != '') {
-                        if ($arOdnoklUser['gender'] == 'male')
+                        if ($arOdnoklUser['gender'] == 'male') {
                             $gender = 'M';
-                        elseif ($arOdnoklUser['gender'] == 'female')
+                        } elseif ($arOdnoklUser['gender'] == 'female') {
                             $gender = 'F';
+                        }
                     }
 
                     $arFields = array(
@@ -110,9 +138,11 @@ class CSocServOdnoklassniki extends CSocServAuth
                         'LAST_NAME' => $last_name,
                         'PERSONAL_GENDER' => $gender,
                     );
-                    if (isset($arOdnoklUser['birthday']))
-                        if ($date = MakeTimeStamp($arOdnoklUser['birthday'], "YYYY-MM-DD"))
+                    if (isset($arOdnoklUser['birthday'])) {
+                        if ($date = MakeTimeStamp($arOdnoklUser['birthday'], "YYYY-MM-DD")) {
                             $arFields["PERSONAL_BIRTHDAY"] = ConvertTimeStamp($date);
+                        }
+                    }
                     if (isset($arOdnoklUser['pic_2']) && self::CheckPhotoURI($arOdnoklUser['pic_2'])) {
                         if ($arPic = CFile::MakeFileArray($arOdnoklUser['pic_2'])) {
                             $arPic['name'] = md5($arOdnoklUser['pic_2']) . '.jpg';
@@ -120,8 +150,9 @@ class CSocServOdnoklassniki extends CSocServAuth
                         }
                     }
                     $arFields["PERSONAL_WWW"] = "http://odnoklassniki.ru/profile/" . $uid;
-                    if (strlen(SITE_ID) > 0)
+                    if (SITE_ID <> '') {
                         $arFields["SITE_ID"] = SITE_ID;
+                    }
 
                     $bSuccess = $this->AuthorizeUser($arFields);
                 }
@@ -133,20 +164,32 @@ class CSocServOdnoklassniki extends CSocServAuth
         }
 
         $url = ($APPLICATION->GetCurDir() == "/login/") ? "" : $APPLICATION->GetCurDir();
-        $aRemove = array("logout", "auth_service_error", "auth_service_id", "code", "error_reason", "error", "error_description", "check_key", "current_fieldset");
+        $aRemove = array(
+            "logout",
+            "auth_service_error",
+            "auth_service_id",
+            "code",
+            "error_reason",
+            "error",
+            "error_description",
+            "check_key",
+            "current_fieldset"
+        );
 
         $mode = 'opener';
         if (isset($_REQUEST["state"])) {
             $arState = array();
             parse_str($_REQUEST["state"], $arState);
             if (isset($arState['backurl']) || isset($arState['redirect_url'])) {
-                $parseUrl = parse_url(!empty($arState['redirect_url']) ? $arState['redirect_url'] : $arState['backurl']);
+                $parseUrl = parse_url(
+                    !empty($arState['redirect_url']) ? $arState['redirect_url'] : $arState['backurl']
+                );
                 $urlPath = $parseUrl["path"];
                 $arUrlQuery = explode('&', $parseUrl["query"]);
 
                 foreach ($arUrlQuery as $key => $value) {
                     foreach ($aRemove as $param) {
-                        if (strpos($value, $param . "=") === 0) {
+                        if (mb_strpos($value, $param . "=") === 0) {
                             unset($arUrlQuery[$key]);
                             break;
                         }
@@ -167,11 +210,15 @@ class CSocServOdnoklassniki extends CSocServAuth
         } elseif ($bSuccess !== true) {
             $url = (isset($parseUrl))
                 ? $urlPath . '?auth_service_id=' . self::ID . '&auth_service_error=' . $bSuccess
-                : $APPLICATION->GetCurPageParam(('auth_service_id=' . self::ID . '&auth_service_error=' . $bSuccess), $aRemove);
+                : $APPLICATION->GetCurPageParam(
+                    ('auth_service_id=' . self::ID . '&auth_service_error=' . $bSuccess),
+                    $aRemove
+                );
         }
 
-        if (CModule::IncludeModule("socialnetwork") && strpos($url, "current_fieldset=") === false)
+        if (CModule::IncludeModule("socialnetwork") && mb_strpos($url, "current_fieldset=") === false) {
             $url = (preg_match("/\?/", $url)) ? $url . "&current_fieldset=SOCSERV" : $url . "?current_fieldset=SOCSERV";
+        }
 
         $url = CUtil::JSEscape($url);
         $location = ($mode == "opener") ? 'if(window.opener) window.opener.location = \'' . $url . '\'; window.close();' : ' window.location = \'' . $url . '\';';
@@ -246,16 +293,22 @@ class COdnoklassnikiInterface
 
     public function GetAccessToken($redirect_uri)
     {
-        if ($this->code === false)
+        if ($this->code === false) {
             return false;
+        }
 
-        $result = CHTTP::sPostHeader(self::TOKEN_URL, array(
-            "code" => $this->code,
-            "client_id" => $this->appID,
-            "client_secret" => $this->appSecret,
-            "redirect_uri" => $redirect_uri,
-            "grant_type" => "authorization_code",
-        ), array(), $this->httpTimeout);
+        $result = CHTTP::sPostHeader(
+            self::TOKEN_URL,
+            array(
+                "code" => $this->code,
+                "client_id" => $this->appID,
+                "client_secret" => $this->appSecret,
+                "redirect_uri" => $redirect_uri,
+                "grant_type" => "authorization_code",
+            ),
+            array(),
+            $this->httpTimeout
+        );
 
         $arResult = CUtil::JsObjectToPhp($result);
 
@@ -271,7 +324,13 @@ class COdnoklassnikiInterface
             $arguments["application_key"] = $this->appKey;
             $arguments['method'] = 'users.getCurrentUser';
             ksort($arguments);
-            $this->sign = strtolower(md5('application_key=' . $arguments["application_key"] . 'method=' . $arguments['method'] . md5($this->access_token . $this->appSecret)));
+            $this->sign = mb_strtolower(
+                md5(
+                    'application_key=' . $arguments["application_key"] . 'method=' . $arguments['method'] . md5(
+                        $this->access_token . $this->appSecret
+                    )
+                )
+            );
             return true;
         }
         return false;
@@ -279,44 +338,68 @@ class COdnoklassnikiInterface
 
     public function GetCurrentUser()
     {
-        if ($this->access_token === false)
+        if ($this->access_token === false) {
             return false;
+        }
 
-        $result = CHTTP::sGetHeader(self::CONTACTS_URL . "?method=users.getCurrentUser&application_key=" . $this->appKey . "&access_token=" . $this->access_token . "&sig=" . $this->sign, array(), $this->httpTimeout);
-        if (!defined("BX_UTF"))
+        $result = CHTTP::sGetHeader(
+            self::CONTACTS_URL . "?method=users.getCurrentUser&application_key=" . $this->appKey . "&access_token=" . $this->access_token . "&sig=" . $this->sign,
+            array(),
+            $this->httpTimeout
+        );
+        if (!defined("BX_UTF")) {
             $result = CharsetConverter::ConvertCharset($result, "utf-8", LANG_CHARSET);
+        }
 
         return CUtil::JsObjectToPhp($result);
     }
 
     public function SendFeed($socServUserId, $message, $getNewToken = true)
     {
-        if (!$this->access_token || intval($this->userId) < 1)
+        if (!$this->access_token || intval($this->userId) < 1) {
             self::SetOauthKeys($socServUserId);
-        if (!defined("BX_UTF"))
+        }
+        if (!defined("BX_UTF")) {
             $message = CharsetConverter::ConvertCharset($message, LANG_CHARSET, "utf-8");
-        $this->sign = strtolower(md5('application_key=' . $this->appKey . 'method=users.setStatusstatus=' . $message . md5($this->access_token . $this->appSecret)));
-        $result = CHTTP::sGetHeader(self::CONTACTS_URL . "?method=users.setStatus&application_key=" . $this->appKey . "&access_token=" . $this->access_token . "&sig=" . $this->sign . "&status=" . urlencode($message), array(), $this->httpTimeout);
+        }
+        $this->sign = mb_strtolower(
+            md5(
+                'application_key=' . $this->appKey . 'method=users.setStatusstatus=' . $message . md5(
+                    $this->access_token . $this->appSecret
+                )
+            )
+        );
+        $result = CHTTP::sGetHeader(
+            self::CONTACTS_URL . "?method=users.setStatus&application_key=" . $this->appKey . "&access_token=" . $this->access_token . "&sig=" . $this->sign . "&status=" . urlencode(
+                $message
+            ),
+            array(),
+            $this->httpTimeout
+        );
 
-        if (!defined("BX_UTF"))
+        if (!defined("BX_UTF")) {
             $result = CharsetConverter::ConvertCharset($result, "utf-8", LANG_CHARSET);
+        }
         $arResult = CUtil::JsObjectToPhp($result);
         if ($getNewToken === true && isset($arResult["error_code"]) && $arResult["error_code"] == "102") {
             $newToken = self::RefreshToken($socServUserId);
-            if ($newToken === true)
+            if ($newToken === true) {
                 self::SendFeed($socServUserId, $message, false);
-            else
+            } else {
                 return false;
+            }
         }
         return $arResult;
     }
 
     private function SetOauthKeys($socServUserId)
     {
-        $dbSocservUser = \Bitrix\Socialservices\UserTable::getList([
-            'filter' => ['=ID' => $socServUserId],
-            'select' => ["OATOKEN", "XML_ID", "REFRESH_TOKEN"]
-        ]);
+        $dbSocservUser = \Bitrix\Socialservices\UserTable::getList(
+            [
+                'filter' => ['=ID' => $socServUserId],
+                'select' => ["OATOKEN", "XML_ID", "REFRESH_TOKEN"]
+            ]
+        );
         while ($arOauth = $dbSocservUser->fetch()) {
             $this->access_token = $arOauth["OATOKEN"];
             $this->userId = preg_replace("|\D|", '', $arOauth["XML_ID"]);
@@ -326,12 +409,17 @@ class COdnoklassnikiInterface
 
     private function RefreshToken($socServUserId)
     {
-        $result = CHTTP::sPostHeader(self::TOKEN_URL, array(
-            "refresh_token" => $this->refresh_token,
-            "client_id" => $this->appID,
-            "client_secret" => $this->appSecret,
-            "grant_type" => "refresh_token",
-        ), array(), $this->httpTimeout);
+        $result = CHTTP::sPostHeader(
+            self::TOKEN_URL,
+            array(
+                "refresh_token" => $this->refresh_token,
+                "client_id" => $this->appID,
+                "client_secret" => $this->appSecret,
+                "grant_type" => "refresh_token",
+            ),
+            array(),
+            $this->httpTimeout
+        );
         $arResult = CUtil::JsObjectToPhp($result);
 
         if (isset($arResult["access_token"]) && $arResult["access_token"] <> '') {

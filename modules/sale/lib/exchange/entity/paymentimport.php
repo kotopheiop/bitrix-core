@@ -24,8 +24,9 @@ class PaymentImport extends EntityImport
      */
     public function setEntity(Internals\Entity $entity)
     {
-        if (!($entity instanceof Payment))
+        if (!($entity instanceof Payment)) {
             throw new Main\ArgumentException("Entity must be instanceof Payment");
+        }
 
         $this->entity = $entity;
     }
@@ -64,14 +65,24 @@ class PaymentImport extends EntityImport
         $result = new Sale\Result();
 
         if (!$this->isLoadedParentEntity()) {
-            $result->addError(new Error(GetMessage('SALE_EXCHANGE_ENTITY_PAYMENT_ORDER_IS_NOT_LOADED_ERROR'), 'ENTITY_PAYMENT_ORDER_IS_NOT_LOADED_ERROR'));
+            $result->addError(
+                new Error(
+                    GetMessage('SALE_EXCHANGE_ENTITY_PAYMENT_ORDER_IS_NOT_LOADED_ERROR'),
+                    'ENTITY_PAYMENT_ORDER_IS_NOT_LOADED_ERROR'
+                )
+            );
             return $result;
         }
 
         $fields = $params['TRAITS'];
 
         if (($paySystem = Sale\PaySystem\Manager::getObjectById($fields['PAY_SYSTEM_ID'])) == null) {
-            $result->addError(new Error(GetMessage('SALE_EXCHANGE_ENTITY_PAYMENT_PAYMENT_SYSTEM_IS_NOT_AVAILABLE_ERROR'), 'PAYMENT_SYSTEM_IS_NOT_AVAILABLE_ERROR'));
+            $result->addError(
+                new Error(
+                    GetMessage('SALE_EXCHANGE_ENTITY_PAYMENT_PAYMENT_SYSTEM_IS_NOT_AVAILABLE_ERROR'),
+                    'PAYMENT_SYSTEM_IS_NOT_AVAILABLE_ERROR'
+                )
+            );
         } else {
             $parentEntity = $this->getParentEntity();
             $paymentCollection = $parentEntity->getPaymentCollection();
@@ -123,7 +134,11 @@ class PaymentImport extends EntityImport
         if ($result->isSuccess()) {
             //$this->setCollisions(Exchange\EntityCollisionType::OrderPaymentDeleted, $this->getParentEntity());
         } else {
-            $this->setCollisions(Exchange\EntityCollisionType::OrderPaymentDeletedError, $this->getParentEntity(), implode(',', $result->getErrorMessages()));
+            $this->setCollisions(
+                Exchange\EntityCollisionType::OrderPaymentDeletedError,
+                $this->getParentEntity(),
+                implode(',', $result->getErrorMessages())
+            );
         }
 
         return $result;
@@ -181,8 +196,9 @@ class PaymentImport extends EntityImport
         /** @var Sale\Payment $entity */
         $entity = $this->getEntity();
         if (!empty($entity) && $entity->isPaid()) {
-            if ($fields['PAID'] == 'N')
+            if ($fields['PAID'] == 'N') {
                 $entity->setField('PAID', 'N');
+            }
         }
     }
 
@@ -193,8 +209,9 @@ class PaymentImport extends EntityImport
      */
     static public function resolveEntityTypeId(Internals\Entity $payment)
     {
-        if (!($payment instanceof Payment))
+        if (!($payment instanceof Payment)) {
             throw new Main\ArgumentException("Entity must be instanceof Payment");
+        }
 
         $paySystem = $payment->getPaySystem();
         $type = $paySystem->getField('IS_CASH');
@@ -239,8 +256,9 @@ class PaymentImport extends EntityImport
      */
     static protected function getBusinessValueOrderProvider(\Bitrix\Sale\IBusinessValueProvider $entity)
     {
-        if (!($entity instanceof Payment))
+        if (!($entity instanceof Payment)) {
             throw new Main\ArgumentException("entity must be instanceof Payment");
+        }
 
         /** @var Sale\PaymentCollection $collection */
         $collection = $entity->getCollection();

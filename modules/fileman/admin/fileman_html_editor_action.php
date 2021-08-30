@@ -1,4 +1,5 @@
 <?
+
 define("NO_KEEP_STATISTIC", "Y");
 define("NO_AGENT_STATISTIC", "Y");
 define("NO_AGENT_CHECK", true);
@@ -9,7 +10,9 @@ CModule::IncludeModule("fileman");
 
 $action = isset($_REQUEST['action']) ? $_REQUEST['action'] : false;
 
-if (check_bitrix_sessid()) {
+if ($GLOBALS['USER'] instanceof \CAllUser
+    && $GLOBALS['USER']->getId()
+    && check_bitrix_sessid()) {
     CHTMLEditor::RequestAction($action);
 }
 

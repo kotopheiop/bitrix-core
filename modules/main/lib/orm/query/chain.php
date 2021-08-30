@@ -149,7 +149,8 @@ class Chain
     public function getDefinition($elementsSlice = 0)
     {
         if (!isset($this->definition[$elementsSlice])) {
-            $this->definition[$elementsSlice] = join('.',
+            $this->definition[$elementsSlice] = join(
+                '.',
                 $elementsSlice == 0
                     ? $this->getDefinitionParts()
                     : array_slice($this->getDefinitionParts(), 0, $elementsSlice)
@@ -234,10 +235,13 @@ class Chain
                 } elseif ($field instanceof ManyToMany) {
                     $prev_entity = $field->getRefEntity();
                 } elseif (!$is_last_elem) {
-                    throw new SystemException(sprintf(
-                        'Normal fields can be only the last in chain, `%s` %s is not the last.',
-                        $field->getName(), get_class($field)
-                    ));
+                    throw new SystemException(
+                        sprintf(
+                            'Normal fields can be only the last in chain, `%s` %s is not the last.',
+                            $field->getName(),
+                            get_class($field)
+                        )
+                    );
                 }
 
                 if ($is_last_elem && $field instanceof ExpressionField) {
@@ -256,9 +260,11 @@ class Chain
 
                 $prev_entity = $ref_entity;
 
-                $chain->addElement(new ChainElement(
-                    array($ref_entity, $field)
-                ));
+                $chain->addElement(
+                    new ChainElement(
+                        array($ref_entity, $field)
+                    )
+                );
             } elseif (($pos_wh = strpos($def_element, ':')) > 0) {
                 $ref_entity_name = substr($def_element, 0, $pos_wh);
 
@@ -269,7 +275,9 @@ class Chain
 
                 if (
                     Entity::isExists($ref_entity_name)
-                    && Entity::getInstance($ref_entity_name)->hasField($ref_field_name = substr($def_element, $pos_wh + 1))
+                    && Entity::getInstance($ref_entity_name)->hasField(
+                        $ref_field_name = substr($def_element, $pos_wh + 1)
+                    )
                     && Entity::getInstance($ref_entity_name)->getField($ref_field_name) instanceof Reference
                 ) {
                     /** @var Reference $reference */
@@ -285,10 +293,14 @@ class Chain
                         // chain element is another entity with >1 references to current entity
                         // def like NewsArticle:AUTHOR, NewsArticle:LAST_COMMENTER
                         // NewsArticle - entity, AUTHOR and LAST_COMMENTER - Reference fields
-                        $chain->addElement(new ChainElement(array(
-                            Entity::getInstance($ref_entity_name),
-                            Entity::getInstance($ref_entity_name)->getField($ref_field_name)
-                        )));
+                        $chain->addElement(
+                            new ChainElement(
+                                array(
+                                    Entity::getInstance($ref_entity_name),
+                                    Entity::getInstance($ref_entity_name)->getField($ref_field_name)
+                                )
+                            )
+                        );
 
                         $prev_entity = Entity::getInstance($ref_entity_name);
                     } else {
@@ -297,7 +309,6 @@ class Chain
                 } else {
                     $not_found = true;
                 }
-
             } elseif ($def_element == '*' && $is_last_elem) {
                 continue;
             } else {
@@ -306,10 +317,14 @@ class Chain
             }
 
             if ($not_found) {
-                throw new SystemException(sprintf(
-                    'Unknown field definition `%s` (%s) for %s Entity.',
-                    $def_element, $definition, $prev_entity->getFullName()
-                ), 100);
+                throw new SystemException(
+                    sprintf(
+                        'Unknown field definition `%s` (%s) for %s Entity.',
+                        $def_element,
+                        $definition,
+                        $prev_entity->getFullName()
+                    ), 100
+                );
             }
         }
 
@@ -342,6 +357,15 @@ class Chain
         return $def;
     }
 
+    public static function appendDefinition($currentDefinition, $newDefinitionPart)
+    {
+        if ($currentDefinition !== '') {
+            $currentDefinition .= '.';
+        }
+
+        return $currentDefinition . $newDefinitionPart;
+    }
+
     public static function getAliasByChain(Chain $chain)
     {
         $alias = array();
@@ -360,7 +384,7 @@ class Chain
         foreach ($elements as $element) {
             $fragment = $element->getAliasFragment();
 
-            if (strlen($fragment)) {
+            if ($fragment <> '') {
                 $alias[] = $fragment;
             }
         }

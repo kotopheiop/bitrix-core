@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 class CPGalleryInterface
@@ -13,7 +14,7 @@ class CPGalleryInterface
         $userAliasesCache = array(),
         $arPassFormShowed = array();
 
-    function CPGalleryInterface($main_params = array(), $additional_params = array())
+    public function __construct($main_params = array(), $additional_params = array())
     {
         // check id iblock
         if (intval($main_params["IBlockID"]) <= 0) {
@@ -21,10 +22,11 @@ class CPGalleryInterface
             return false;
         }
 
-        if (isset($additional_params["cache_path"]) && !empty($additional_params["cache_path"]))
+        if (isset($additional_params["cache_path"]) && !empty($additional_params["cache_path"])) {
             $cache_path = rtrim(trim($additional_params["cache_path"]), '/');
-        else
-            $cache_path = "/photogallery"; // default cache path
+        } else {
+            $cache_path = "/photogallery";
+        } // default cache path
         //$cache_path = "/".SITE_ID."/photogallery/".$main_params["IBlockID"]; // default cache path
 
         // All caches:
@@ -44,19 +46,23 @@ class CPGalleryInterface
 
         if (!empty($main_params["GalleryID"])) {
             $this->Gallery = $this->GetGallery($main_params["GalleryID"]);
-            if (!$this->Gallery)
+            if (!$this->Gallery) {
                 return false;
+            }
         }
-        $this->User["Permission"] = (!empty($main_params["Permission"]) ? $main_params["Permission"] : $this->GetPermission());
-        if (!$this->CheckPermission("R"))
+        $this->User["Permission"] = (!empty($main_params["Permission"]) ? $main_params["Permission"] : $this->GetPermission(
+        ));
+        if (!$this->CheckPermission("R")) {
             return false;
+        }
     }
 
     function GetGallery($gallery_id)
     {
         static $arResult = array();
         $arCache = array(
-            "id" => serialize(array(
+            "id" => serialize(
+                array(
                     "iblock_id" => $this->IBlockID,
                     "user_alias" => $gallery_id,
                     "site" => SITE_ID,
@@ -67,8 +73,9 @@ class CPGalleryInterface
             "time" => $this->arCache["time"]
         );
 
-        if (($tzOffset = CTimeZone::GetOffset()) <> 0)
+        if (($tzOffset = CTimeZone::GetOffset()) <> 0) {
             $arCache["id"] .= "_" . $tzOffset;
+        }
 
         if (empty($arResult[$arCache["id"]])) {
             $cache = new CPHPCache;
@@ -99,16 +106,18 @@ class CPGalleryInterface
             }
         }
         if (empty($arResult[$arCache["id"]])) {
-            if ($this->arError["show_error"] == "Y")
+            if ($this->arError["show_error"] == "Y") {
                 ShowError(GetMessage("P_GALLERY_NOT_FOUND"));
+            }
             if ($this->arError["set_404"] == "Y") {
                 @define("ERROR_404", "Y");
                 CHTTP::SetStatus("404 Not Found");
             }
             return false;
         } elseif ($arResult[$arCache["id"]]["ACTIVE"] != "Y") {
-            if ($this->arError["show_error"] == "Y")
+            if ($this->arError["show_error"] == "Y") {
                 ShowError(GetMessage("P_GALLERY_IS_BLOCKED"));
+            }
             return false;
         }
 
@@ -120,11 +129,13 @@ class CPGalleryInterface
         static $arResult = array();
         $params = (is_array($params) ? $params : array($params));
         $id = intval($id);
-        if ($id <= 0)
+        if ($id <= 0) {
             return 200;
+        }
 
         $arCache = array(
-            "id" => serialize(array(
+            "id" => serialize(
+                array(
                     "iblock_id" => $this->IBlockID,
                     "section_id" => $id,
                     "gallery_id" => $this->Gallery && $this->Gallery['ID'] ? $this->Gallery['ID'] : "0",
@@ -135,8 +146,9 @@ class CPGalleryInterface
             "time" => $this->arCache["time"]
         );
 
-        if (($tzOffset = CTimeZone::GetOffset()) <> 0)
+        if (($tzOffset = CTimeZone::GetOffset()) <> 0) {
             $arCache["id"] .= "_" . $tzOffset;
+        }
 
         if (empty($arResult[$arCache["id"]])) {
             $cache = new CPHPCache;
@@ -157,16 +169,18 @@ class CPGalleryInterface
                 );
 
                 if (!($db_res && $arSection = $db_res->GetNext())) {
-                    if ($this->arError["show_error"] == "Y")
+                    if ($this->arError["show_error"] == "Y") {
                         ShowError(GetMessage("P_SECTION_NOT_FOUND"));
+                    }
                     if ($this->arError["set_404"] == "Y") {
                         @define("ERROR_404", "Y");
                         CHTTP::SetStatus("404 Not Found");
                     }
                     return 404;
                 } elseif ($arSection["ACTIVE"] != "Y" && $this->User["Permission"] < "U") {
-                    if ($this->arError["show_error"] == "Y")
+                    if ($this->arError["show_error"] == "Y") {
                         ShowError(GetMessage("P_ALBUM_IS_BLOCKED"));
+                    }
                     return 405;
                 } elseif ($this->Gallery && ($arSection["LEFT_MARGIN"] < $this->Gallery["LEFT_MARGIN"] ||
                         $this->Gallery["RIGHT_MARGIN"] < $arSection["RIGHT_MARGIN"])) {
@@ -175,64 +189,89 @@ class CPGalleryInterface
                     $arSection["DESCRIPTION"] = htmlspecialcharsbx($arSection["~DESCRIPTION"]);
 
                     $arSection["SECTIONS_CNT"] = 0;
-                    if (($arSection["RIGHT_MARGIN"] - $arSection["LEFT_MARGIN"]) > 1)
-                        $arSection["SECTIONS_CNT"] = intVal(CIBlockSection::GetCount(array("SECTION_ID" => $arSection["ID"])));
+                    if (($arSection["RIGHT_MARGIN"] - $arSection["LEFT_MARGIN"]) > 1) {
+                        $arSection["SECTIONS_CNT"] = intval(
+                            CIBlockSection::GetCount(array("SECTION_ID" => $arSection["ID"]))
+                        );
+                    }
 
                     $arSection["SECTION_ELEMENTS_CNT"] = $arSection["SECTION_ELEMENTS_CNT_ALL"] = $arSection["ELEMENTS_CNT"] = 0;
-                    $arSection["ELEMENTS_CNT_ALL"] = intVal(CIBlockSection::GetSectionElementsCount(
-                        $arSection["ID"], array("CNT_ALL" => "Y")));
+                    $arSection["ELEMENTS_CNT_ALL"] = intval(
+                        CIBlockSection::GetSectionElementsCount(
+                            $arSection["ID"],
+                            array("CNT_ALL" => "Y")
+                        )
+                    );
 
                     // if section not empty
                     if ($arSection["ELEMENTS_CNT_ALL"] > 0) {
                         if ($arSection["SECTIONS_CNT"] > 0) {
-                            $arSection["SECTION_ELEMENTS_CNT_ALL"] = intval(CIBlockElement::GetList(
-                                array(),
-                                array("SECTION_ID" => $arSection["ID"]),
-                                array(),
-                                false,
-                                array("ID")));
+                            $arSection["SECTION_ELEMENTS_CNT_ALL"] = intval(
+                                CIBlockElement::GetList(
+                                    array(),
+                                    array("SECTION_ID" => $arSection["ID"]),
+                                    array(),
+                                    false,
+                                    array("ID")
+                                )
+                            );
                         } else {
                             $arSection["SECTION_ELEMENTS_CNT_ALL"] = $arSection["ELEMENTS_CNT_ALL"];
                         }
                         if ($this->User["Permission"] < "U") {
-                            $arSection["ELEMENTS_CNT"] = intVal(CIBlockSection::GetSectionElementsCount($arSection["ID"], array("CNT_ACTIVE" => "Y")));
+                            $arSection["ELEMENTS_CNT"] = intval(
+                                CIBlockSection::GetSectionElementsCount($arSection["ID"], array("CNT_ACTIVE" => "Y"))
+                            );
                         } else {
                             $arSection["ELEMENTS_CNT"] = $arSection["ELEMENTS_CNT_ALL"];
                         }
                         // if not exists active elements
-                        if ($arSection["ELEMENTS_CNT"] <= 0)
+                        if ($arSection["ELEMENTS_CNT"] <= 0) {
                             $arSection["SECTION_ELEMENTS_CNT"] = 0;
-                        // if not exists unactive elements
-                        elseif ($arSection["ELEMENTS_CNT_ALL"] == $arSection["ELEMENTS_CNT"])
+                        } // if not exists unactive elements
+                        elseif ($arSection["ELEMENTS_CNT_ALL"] == $arSection["ELEMENTS_CNT"]) {
                             $arSection["SECTION_ELEMENTS_CNT"] = $arSection["SECTION_ELEMENTS_CNT_ALL"];
-                        elseif ($arSection["SECTIONS_CNT"] <= 0)
+                        } elseif ($arSection["SECTIONS_CNT"] <= 0) {
                             $arSection["SECTION_ELEMENTS_CNT"] = $arSection["ELEMENTS_CNT"];
-                        else {
-                            $arSection["SECTION_ELEMENTS_CNT"] = intval(CIBlockElement::GetList(
-                                array(),
-                                array("SECTION_ID" => $arSection["ID"], "ACTIVE" => "Y"),
-                                array(),
-                                false,
-                                array("ID")));
+                        } else {
+                            $arSection["SECTION_ELEMENTS_CNT"] = intval(
+                                CIBlockElement::GetList(
+                                    array(),
+                                    array("SECTION_ID" => $arSection["ID"], "ACTIVE" => "Y"),
+                                    array(),
+                                    false,
+                                    array("ID")
+                                )
+                            );
                         }
                     }
 
-                    $arUserFields = $GLOBALS["USER_FIELD_MANAGER"]->GetUserFields("IBLOCK_" . $this->IBlockID . "_SECTION", $arSection["ID"], LANGUAGE_ID);
+                    $arUserFields = $GLOBALS["USER_FIELD_MANAGER"]->GetUserFields(
+                        "IBLOCK_" . $this->IBlockID . "_SECTION",
+                        $arSection["ID"],
+                        LANGUAGE_ID
+                    );
                     $arSection["USER_FIELDS"] = $arUserFields;
                     $arSection["DATE"] = $arSection["~DATE"] = $arUserFields["UF_DATE"];
                     $arSection["~PASSWORD"] = $arUserFields["UF_PASSWORD"];
-                    if (is_array($arSection["~PASSWORD"]))
+                    if (is_array($arSection["~PASSWORD"])) {
                         $arSection["PASSWORD"] = $arSection["~PASSWORD"]["VALUE"];
+                    }
 
                     $arSection["PICTURE"] = CFile::GetFileArray($arSection["PICTURE"]);
                     $arSection["DETAIL_PICTURE"] = CFile::GetFileArray($arSection["DETAIL_PICTURE"]);
                     $arSection["PATH"] = array();
                     $db_res = GetIBlockSectionPath($this->IBlockID, $arSection["ID"]);
                     while ($res = $db_res->GetNext()) {
-                        $arUserFields = $GLOBALS["USER_FIELD_MANAGER"]->GetUserFields("IBLOCK_" . $this->IBlockID . "_SECTION", $res["ID"], LANGUAGE_ID);
+                        $arUserFields = $GLOBALS["USER_FIELD_MANAGER"]->GetUserFields(
+                            "IBLOCK_" . $this->IBlockID . "_SECTION",
+                            $res["ID"],
+                            LANGUAGE_ID
+                        );
                         $res["~PASSWORD"] = $arUserFields["UF_PASSWORD"];
-                        if (is_array($res["~PASSWORD"]))
+                        if (is_array($res["~PASSWORD"])) {
                             $res["PASSWORD"] = $res["~PASSWORD"]["VALUE"];
+                        }
                         $arSection["PATH"][$res["ID"]] = $res;
                     }
 
@@ -258,13 +297,15 @@ class CPGalleryInterface
                 "SECTION_ID" => 0,
                 "!LEFT_MARGIN" => $arSection["LEFT_MARGIN"],
                 "!RIGHT_MARGIN" => $arSection["RIGHT_MARGIN"],
-                "!ID" => $arSection["ID"]),
+                "!ID" => $arSection["ID"]
+            ),
             false
         );
 
         if (!($db_res && $arGallery = $db_res->GetNext())) {
-            if ($this->arError["show_error"] == "Y")
+            if ($this->arError["show_error"] == "Y") {
                 ShowError(GetMessage("P_GALLERY_NOT_FOUND"));
+            }
             if ($this->arError["set_404"] == "Y") {
                 @define("ERROR_404", "Y");
                 CHTTP::SetStatus("404 Not Found");
@@ -278,18 +319,21 @@ class CPGalleryInterface
     function GetPermission()
     {
         static $arResult = array();
-        $user_id = intVal($GLOBALS["USER"]->GetID());
+        $user_id = intval($GLOBALS["USER"]->GetID());
         $user_groups = $GLOBALS["USER"]->GetGroups();
 
-        if (!$this->IBlockID)
+        if (!$this->IBlockID) {
             return false;
+        }
 
         $arCache = array(
-            "id" => serialize(array(
-                "iblock_id" => $this->IBlockID,
-                "permission" => $user_groups,
-                "site" => SITE_ID
-            )),
+            "id" => serialize(
+                array(
+                    "iblock_id" => $this->IBlockID,
+                    "permission" => $user_groups,
+                    "site" => SITE_ID
+                )
+            ),
             "path" => $this->arCache["path"],
             "time" => $this->arCache["time"]
         );
@@ -324,22 +368,29 @@ class CPGalleryInterface
             ShowError(GetMessage("P_DENIED_ACCESS"));
             return false;
         } elseif ($permission < "U" && !empty($arSection) && $arSection["ELEMENTS_CNT"] <= 0) {
-            ShowNote($arSection["ELEMENTS_CNT_ALL"] > 0 ? GetMessage("P_SECTION_IS_NOT_APPROVED") : GetMessage("P_SECTION_IS_EMPTY"));
+            ShowNote(
+                $arSection["ELEMENTS_CNT_ALL"] > 0 ? GetMessage("P_SECTION_IS_NOT_APPROVED") : GetMessage(
+                    "P_SECTION_IS_EMPTY"
+                )
+            );
             return false;
         } elseif ($permission < "U" && !empty($arSection["PATH"])) {
             $password_checked = true;
 
             foreach ($arSection["PATH"] as $key => $res) {
-                if (empty($res["PASSWORD"]))
+                if (empty($res["PASSWORD"])) {
                     continue;
+                }
 
-                if (check_bitrix_sessid() && $arSection["PASSWORD"] == md5($_REQUEST["password_" . $arSection["ID"]]))
+                if (check_bitrix_sessid() && $arSection["PASSWORD"] == md5($_REQUEST["password_" . $arSection["ID"]])) {
                     $_SESSION['PHOTOGALLERY']['SECTION'][$arSection["ID"]] = $arSection["PASSWORD"];
+                }
             }
 
             foreach ($arSection["PATH"] as $key => $res) {
-                if (empty($res["PASSWORD"]))
+                if (empty($res["PASSWORD"])) {
                     continue;
+                }
 
                 if ($res["PASSWORD"] != $_SESSION['PHOTOGALLERY']['SECTION'][$res["ID"]]) {
                     $password_checked = false;
@@ -386,27 +437,32 @@ class CPGalleryInterface
 
     public static function GetUserAlias($userId = false, $iblockId = 0)
     {
-        if ($userId && $iblockId && isset(self::$userAliasesCache[$iblockId][$userId]))
+        if ($userId && $iblockId && isset(self::$userAliasesCache[$iblockId][$userId])) {
             return self::$userAliasesCache[$iblockId][$userId];
+        }
         return false;
     }
 
     public static function GetPathWithUserAlias($path, $userId = false, $iblockId = 0)
     {
         $url = '';
-        if ($alias = self::GetUserAlias($userId, $iblockId))
+        if ($alias = self::GetUserAlias($userId, $iblockId)) {
             $url = preg_replace("/#user_alias#/i" . BX_UTF_PCRE_MODIFIER, $alias, $path);
+        }
         return $url;
     }
 
     public static function HandleUserAliases($arUserIds = array(), $iblockId = 0)
     {
-        if (!$iblockId || count($arUserIds) == 0)
+        if (!$iblockId || count($arUserIds) == 0) {
             return;
+        }
 
-        foreach ($arUserIds as $k => $id)
-            if (isset(self::$userAliasesCache[$iblockId][$id]))
+        foreach ($arUserIds as $k => $id) {
+            if (isset(self::$userAliasesCache[$iblockId][$id])) {
                 unset($arUserIds[$k]);
+            }
+        }
 
         if (count($arUserIds) > 0) {
             CModule::IncludeModule("iblock");
@@ -424,8 +480,9 @@ class CPGalleryInterface
             );
 
             while ($res = $db_res->GetNext()) {
-                if (isset(self::$userAliasesCache[$iblockId][$res['CREATED_BY']]))
+                if (isset(self::$userAliasesCache[$iblockId][$res['CREATED_BY']])) {
                     continue;
+                }
                 self::$userAliasesCache[$iblockId][$res['CREATED_BY']] = $res['CODE'];
             }
         }
@@ -434,7 +491,7 @@ class CPGalleryInterface
     private static function GetUniqAjaxId()
     {
         $uniq = COption::GetOptionString("photogallery", "~uniq_ajax_id", "");
-        if (strlen($uniq) <= 0) {
+        if ($uniq == '') {
             $uniq = md5(uniqid(rand(), true));
             COption::SetOptionString("photogallery", "~uniq_ajax_id", $uniq);
         }
@@ -455,11 +512,13 @@ class CPGalleryInterface
     {
         if ($GLOBALS["USER"]->CanDoOperation('edit_php')) {
             if ($type != "form") {
-                CAdminNotify::Add(Array(
-                    "MESSAGE" => GetMessage("P_UPLOADER_TYPE_NOTIFY"),
-                    "TAG" => "PHOTOGALLERY_UPLOADER",
-                    "MODULE_ID" => "PHOTOGALLERY"
-                ));
+                CAdminNotify::Add(
+                    Array(
+                        "MESSAGE" => GetMessage("P_UPLOADER_TYPE_NOTIFY"),
+                        "TAG" => "PHOTOGALLERY_UPLOADER",
+                        "MODULE_ID" => "PHOTOGALLERY"
+                    )
+                );
             } else {
                 CAdminNotify::DeleteByTag("PHOTOGALLERY_UPLOADER");
             }

@@ -60,7 +60,7 @@ class ElementSkuProperty extends Base
                         } elseif ($property["PROPERTY_TYPE"] === "G") {
                             $value = new ElementPropertySection($property["VALUE"]);
                         } else {
-                            if (strlen($property["USER_TYPE"])) {
+                            if ($property["USER_TYPE"] <> '') {
                                 $value = new ElementPropertyUserField($property["VALUE"], $property);
                             } else {
                                 $value = $property["VALUE"];
@@ -69,8 +69,9 @@ class ElementSkuProperty extends Base
 
                         $this->fields[$property["ID"]][] = $value;
                         $this->fieldMap[$property["ID"]] = $property["ID"];
-                        if ($property["CODE"] != "")
-                            $this->fieldMap[strtolower($property["CODE"])] = $property["ID"];
+                        if ($property["CODE"] != "") {
+                            $this->fieldMap[mb_strtolower($property["CODE"])] = $property["ID"];
+                        }
                     }
                 }
             }

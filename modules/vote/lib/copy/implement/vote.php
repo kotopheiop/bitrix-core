@@ -161,13 +161,16 @@ class Vote extends CopyImplementer
 
         $resultData = $result->getData();
         foreach ($resultData as $data) {
-            array_walk($data, function ($item, $key) use (&$copiedIdsRelation) {
-                if (is_array($item)) {
-                    $copiedIdsRelation["answer"] = $item;
-                } else {
-                    $copiedIdsRelation[$key] = $item;
+            array_walk(
+                $data,
+                function ($item, $key) use (&$copiedIdsRelation) {
+                    if (is_array($item)) {
+                        $copiedIdsRelation["answer"] = $item;
+                    } else {
+                        $copiedIdsRelation[$key] = $item;
+                    }
                 }
-            });
+            );
         }
 
         return $copiedIdsRelation;

@@ -1,4 +1,5 @@
 <?
+
 define("NO_KEEP_STATISTIC", true);
 define("BX_STATISTIC_BUFFER_USED", false);
 define("NO_LANG_FILES", true);
@@ -7,7 +8,7 @@ define("PUBLIC_AJAX_MODE", true);
 define('BX_SECURITY_SESSION_READONLY', true);
 
 $site_id = (isset($_REQUEST["site"]) && is_string($_REQUEST["site"])) ? trim($_REQUEST["site"]) : "";
-$site_id = substr(preg_replace("/[^a-z0-9_]/i", "", $site_id), 0, 2);
+$site_id = mb_substr(preg_replace("/[^a-z0-9_]/i", "", $site_id), 0, 2);
 
 define("SITE_ID", $site_id);
 
@@ -27,15 +28,13 @@ $action = preg_replace("/[^a-z0-9_]/i", "", $action);
 $contentId = (isset($_REQUEST["contentId"]) && is_string($_REQUEST["contentId"])) ? trim($_REQUEST["contentId"]) : "";
 $page = (isset($_REQUEST["page"]) && intval($_REQUEST["page"]) > 0) ? intval($_REQUEST["page"]) : 1;
 
-$pathToUserProfile = (isset($_REQUEST["pathToUserProfile"]) && is_string($_REQUEST["pathToUserProfile"])) ? trim($_REQUEST["pathToUserProfile"]) : "";
+$pathToUserProfile = (isset($_REQUEST["pathToUserProfile"]) && is_string($_REQUEST["pathToUserProfile"])) ? trim(
+    $_REQUEST["pathToUserProfile"]
+) : "";
 
 
 use Bitrix\Socialnetwork\Livefeed;
 use Bitrix\Main\Loader;
-
-if (Loader::includeModule("compression")) {
-    CCompress::Disable2048Spaces();
-}
 
 $result = array();
 if (
@@ -59,14 +58,18 @@ if (
                 !empty($entityType)
                 && $entityId > 0
             ) {
-                $provider = Livefeed\Provider::init(array(
-                    'ENTITY_TYPE' => $entityType,
-                    'ENTITY_ID' => $entityId,
-                ));
+                $provider = Livefeed\Provider::init(
+                    array(
+                        'ENTITY_TYPE' => $entityType,
+                        'ENTITY_ID' => $entityId,
+                    )
+                );
                 if ($provider) {
-                    $provider->setContentView(array(
-                        'save' => $save
-                    ));
+                    $provider->setContentView(
+                        array(
+                            'save' => $save
+                        )
+                    );
                 }
             }
         }
@@ -74,11 +77,13 @@ if (
         $action == 'get_view_list'
         && !empty($contentId)
     ) {
-        $userList = \Bitrix\Socialnetwork\Item\UserContentView::getUserList(array(
-            'contentId' => $contentId,
-            'page' => $page,
-            'pathToUserProfile' => $pathToUserProfile
-        ));
+        $userList = \Bitrix\Socialnetwork\Item\UserContentView::getUserList(
+            array(
+                'contentId' => $contentId,
+                'page' => $page,
+                'pathToUserProfile' => $pathToUserProfile
+            )
+        );
 
         $result['items'] = $userList['items'];
         $result['itemsCount'] = count($result['items']);

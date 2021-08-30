@@ -49,7 +49,16 @@ class Group
             );
 
             foreach (getModuleEvents("photogallery", "OnBeforeSectionDrop", true) as $event) {
-                executeModuleEventEx($event, array($section['ID'], $pseudoComponentParams, $pseudoComponentResult, &$treeSectionIdList, &$treeElementIdList));
+                executeModuleEventEx(
+                    $event,
+                    array(
+                        $section['ID'],
+                        $pseudoComponentParams,
+                        $pseudoComponentResult,
+                        &$treeSectionIdList,
+                        &$treeElementIdList
+                    )
+                );
             }
 
             if (\CIBlockSection::delete($section['ID'], false)) {
@@ -59,7 +68,15 @@ class Group
                     "ELEMENTS_IN_TREE" => $treeElementIdList
                 );
                 foreach (getModuleEvents("photogallery", "OnAfterSectionDrop", true) as $event) {
-                    executeModuleEventEx($event, array($section['ID'], $eventFields, $pseudoComponentParams, $pseudoComponentResult));
+                    executeModuleEventEx(
+                        $event,
+                        array(
+                            $section['ID'],
+                            $eventFields,
+                            $pseudoComponentParams,
+                            $pseudoComponentResult
+                        )
+                    );
                 }
             }
         }

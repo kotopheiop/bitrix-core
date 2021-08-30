@@ -9,6 +9,8 @@ use Bitrix\Main\Type\Date;
 use Bitrix\Sale\Cashbox\Internals\CashboxTable;
 use Bitrix\Sale\Cashbox;
 use Bitrix\Sale\Delivery\CalculationResult;
+use Bitrix\Sale\Exchange\Integration\Admin\Link;
+use Bitrix\Sale\Exchange\Integration\Admin\Registry;
 use Bitrix\Sale\Helpers\Admin\OrderEdit;
 use Bitrix\Sale\Delivery\Services;
 use Bitrix\Sale\Delivery\Restrictions;
@@ -44,27 +46,31 @@ class OrderShipment
         $index++;
 
         static $items = null;
-        if (is_null($items))
+        if (is_null($items)) {
             $items = self::getDeliveryServiceList();
+        }
 
         if (!isset($items[$data['DELIVERY_ID']])) {
             $delivery = self::getDeliveryServiceInfoById($data['DELIVERY_ID']);
-            if ($delivery)
+            if ($delivery) {
                 $items[$delivery['ID']] = $delivery;
+            }
         }
 
         static $deliveries = null;
-        if (is_null($deliveries))
+        if (is_null($deliveries)) {
             $deliveries = self::makeDeliveryServiceTree($items);
+        }
 
         $deliveryId = 0;
         $profileId = 0;
 
         if (isset($post['DELIVERY_ID'])) {
-            if (isset($post['PROFILE']))
+            if (isset($post['PROFILE'])) {
                 $data['DELIVERY_ID'] = $post['PROFILE'];
-            else
+            } else {
                 $data['DELIVERY_ID'] = $post['DELIVERY_ID'];
+            }
         }
 
         $profiles = array();
@@ -76,15 +82,19 @@ class OrderShipment
                 $deliveryId = $service->getParentService()->getId();
 
                 $profiles = self::getDeliveryServiceProfiles($deliveryId);
-                if (!$profiles)
+                if (!$profiles) {
                     unset($deliveries[$deliveryId]);
-            } else if ($service && $service->canHasProfiles()) {
-                unset($deliveries[$deliveryId]);
+                }
+            } else {
+                if ($service && $service->canHasProfiles()) {
+                    unset($deliveries[$deliveryId]);
+                }
             }
         }
 
-        if (isset($post['ALLOW_DELIVERY']))
+        if (isset($post['ALLOW_DELIVERY'])) {
             $data['ALLOW_DELIVERY'] = $post['ALLOW_DELIVERY'];
+        }
 
         $allowedStatusesDelivery = DeliveryStatus::getStatusesUserCanDoOperations($USER->GetID(), array('delivery'));
         $isAllowDelivery = in_array($data["STATUS_ID"], $allowedStatusesDelivery);
@@ -94,43 +104,56 @@ class OrderShipment
         $status = ($data['ALLOW_DELIVERY'] == 'Y') ? 'YES' : 'NO';
         $triangle = ($class === '') ? '<span class="triangle"> &#9662;</span>' : '';
 
-        $allowDelivery = '<span><span id="BUTTON_ALLOW_DELIVERY_' . $index . '" class="' . $class . '">' . Loc::getMessage('SALE_ORDER_SHIPMENT_ALLOW_DELIVERY_' . $status) . '</span>' . $triangle . '</span>';
+        $allowDelivery = '<span><span id="BUTTON_ALLOW_DELIVERY_' . $index . '" class="' . $class . '">' . Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_ALLOW_DELIVERY_' . $status
+            ) . '</span>' . $triangle . '</span>';
 
         $allowedStatusesDeduction = DeliveryStatus::getStatusesUserCanDoOperations($USER->GetID(), array('deduction'));
         $isAllowDeduction = in_array($data["STATUS_ID"], $allowedStatusesDeduction);
 
-        if (isset($post['DEDUCTED']) && $isAllowDeduction)
+        if (isset($post['DEDUCTED']) && $isAllowDeduction) {
             $data['DEDUCTED'] = $post['DEDUCTED'];
+        }
 
         $class = ($data['DEDUCTED'] == 'Y') ? '' : 'notdeducted';
         $class .= ($isAllowDeduction) ? '' : ' not_active';
         $status = ($data['DEDUCTED'] == 'Y') ? 'YES' : 'NO';
         $triangle = ($class === '') ? '<span class="triangle"> &#9662;</span>' : '';
 
-        $deducted = '<span><span id="BUTTON_DEDUCTED_' . $index . '" class="' . $class . '">' . Loc::getMessage('SALE_ORDER_SHIPMENT_DEDUCTED_' . $status) . '</span>' . $triangle . '</span>';
+        $deducted = '<span><span id="BUTTON_DEDUCTED_' . $index . '" class="' . $class . '">' . Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_DEDUCTED_' . $status
+            ) . '</span>' . $triangle . '</span>';
 
         $lang = Main\Application::getInstance()->getContext()->getLanguage();
         $map = '';
         $extraServiceHTML = '';
         $extraServiceManager = new \Bitrix\Sale\Delivery\ExtraServices\Manager($data['DELIVERY_ID']);
         $extraServiceManager->setOperationCurrency($data['CURRENCY']);
-        if (isset($post['EXTRA_SERVICES']))
+        if (isset($post['EXTRA_SERVICES'])) {
             $data['EXTRA_SERVICES'] = $post['EXTRA_SERVICES'];
-        if (isset($post['EXTRA_SERVICES']))
+        }
+        if (isset($post['EXTRA_SERVICES'])) {
             $data['DELIVERY_STORE_ID'] = $post['DELIVERY_STORE_ID'];
+        }
 
-        if ($data['EXTRA_SERVICES'])
+        if ($data['EXTRA_SERVICES']) {
             $extraServiceManager->setValues($data['EXTRA_SERVICES']);
+        }
         $extraService = $extraServiceManager->getItems();
-        if ($extraService)
+        if ($extraService) {
             $extraServiceHTML = self::getExtraServiceEditControl($extraService, $index, false, self::$shipment);
+        }
 
-        if ($data['DELIVERY_ID'] > 0)
+        if ($data['DELIVERY_ID'] > 0) {
             $map = self::getMap($data['DELIVERY_ID'], $index, $data['DELIVERY_STORE_ID']);
+        }
 
         if ($data['ID'] > 0) {
             $dateInsert = new Date($data['DATE_INSERT']);
-            $title = Loc::getMessage('SALE_ORDER_SHIPMENT_BLOCK_EDIT_SHIPMENT_TITLE', array("#ID#" => $data['ID'], '#DATE_INSERT#' => $dateInsert));
+            $title = Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_BLOCK_EDIT_SHIPMENT_TITLE',
+                array("#ID#" => $data['ID'], '#DATE_INSERT#' => $dateInsert)
+            );
         } else {
             $title = Loc::getMessage('SALE_ORDER_SHIPMENT_BLOCK_NEW_SHIPMENT_TITLE');
         }
@@ -138,10 +161,17 @@ class OrderShipment
         $curFormat = \CCurrencyLang::GetFormatDescription($data['CURRENCY']);
         $currencyLang = preg_replace("/(^|[^&])#/", '$1', $curFormat["FORMAT_STRING"]);
 
-        $customPriceDelivery = isset($post['CUSTOM_PRICE_DELIVERY']) ? htmlspecialcharsbx($post['CUSTOM_PRICE_DELIVERY']) : $data['CUSTOM_PRICE_DELIVERY'];
-        $customWeightDelivery = isset($post['CUSTOM_WEIGHT_DELIVERY']) ? htmlspecialcharsbx($post['CUSTOM_WEIGHT_DELIVERY']) : $data['CUSTOM_WEIGHT_DELIVERY'];
+        $customPriceDelivery = isset($post['CUSTOM_PRICE_DELIVERY']) ? htmlspecialcharsbx(
+            $post['CUSTOM_PRICE_DELIVERY']
+        ) : $data['CUSTOM_PRICE_DELIVERY'];
+        $customWeightDelivery = isset($post['CUSTOM_WEIGHT_DELIVERY']) ? htmlspecialcharsbx(
+            $post['CUSTOM_WEIGHT_DELIVERY']
+        ) : $data['CUSTOM_WEIGHT_DELIVERY'];
 
-        $basePriceDelivery = round((isset($post['BASE_PRICE_DELIVERY']) ? $post['BASE_PRICE_DELIVERY'] : $data['BASE_PRICE_DELIVERY']), 2);
+        $basePriceDelivery = round(
+            (isset($post['BASE_PRICE_DELIVERY']) ? $post['BASE_PRICE_DELIVERY'] : $data['BASE_PRICE_DELIVERY']),
+            2
+        );
         $priceDelivery = round((isset($post['PRICE_DELIVERY']) ? $post['PRICE_DELIVERY'] : $data['PRICE_DELIVERY']), 2);
 
         $weight = isset($post['WEIGHT']) ? $post['WEIGHT'] : $data['WEIGHT'];
@@ -161,7 +191,9 @@ class OrderShipment
             $profilesTemplate = self::getProfileEditControl($profiles, $index, $profileId);
             $blockProfiles = '
 				<tr id="BLOCK_PROFILES_' . $index . '">
-					<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage('SALE_ORDER_SHIPMENT_DELIVERY_SERVICE_PROFILE') . ':</td>
+					<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage(
+                    'SALE_ORDER_SHIPMENT_DELIVERY_SERVICE_PROFILE'
+                ) . ':</td>
 					<td class="adm-detail-content-cell-r" id="PROFILE_SELECT_' . $index . '">' . $profilesTemplate . '</td>
 				</tr>';
         }
@@ -217,7 +249,11 @@ class OrderShipment
             }
         } else {
             if ($saleModulePermissions >= "W") {
-                $companies = str_replace("#URL#", "/bitrix/admin/sale_company_edit.php?lang=" . $lang, Loc::getMessage('SALE_ORDER_SHIPMENT_ADD_COMPANY'));
+                $companies = str_replace(
+                    "#URL#",
+                    "/bitrix/admin/sale_company_edit.php?lang=" . $lang,
+                    Loc::getMessage('SALE_ORDER_SHIPMENT_ADD_COMPANY')
+                );
             }
         }
 
@@ -228,17 +264,22 @@ class OrderShipment
                 $checkLink .= OrderShipment::buildCheckHtml($data['CHECK']);
             }
             $checkLink .= '</td></tr>';
-            if ($data['HAS_ENABLED_CASHBOX'] === 'Y') {
-                $checkLink .= '<tr><td class="adm-detail-content-cell-r tac"><a href="javascript:void(0);" onclick="BX.Sale.Admin.OrderShipment.prototype.showCreateCheckWindow(' . $data['ID'] . ');">' . Loc::getMessage('SALE_ORDER_SHIPMENT_CHECK_ADD') . '</a></td></tr>';
+            if ($data['HAS_ENABLED_CASHBOX'] === 'Y' && $data['CAN_PRINT_CHECK'] === 'Y') {
+                $checkLink .= '<tr><td class="adm-detail-content-cell-r tac"><a href="javascript:void(0);" onclick="BX.Sale.Admin.OrderShipment.prototype.showCreateCheckWindow(' . $data['ID'] . ');">' . Loc::getMessage(
+                        'SALE_ORDER_SHIPMENT_CHECK_ADD'
+                    ) . '</a></td></tr>';
             }
         }
 
-        if (isset($items[$data['DELIVERY_ID']]['LOGOTIP']['MAIN']))
+        if (isset($items[$data['DELIVERY_ID']]['LOGOTIP']['MAIN'])) {
             $logo = $items[$data['DELIVERY_ID']]['LOGOTIP']['MAIN'];
-        else
+        } else {
             $logo = '/bitrix/images/sale/logo-default-d.gif';
+        }
 
-        $trackingNumber = htmlspecialcharsbx(isset($post['TRACKING_NUMBER']) ? $post['TRACKING_NUMBER'] : $data['TRACKING_NUMBER']);
+        $trackingNumber = htmlspecialcharsbx(
+            isset($post['TRACKING_NUMBER']) ? $post['TRACKING_NUMBER'] : $data['TRACKING_NUMBER']
+        );
 
         $result = '
 		<div class="adm-bus-pay" id="shipment_container_' . $index . '">
@@ -246,10 +287,16 @@ class OrderShipment
 			<input type="hidden" name="SHIPMENT[' . $index . '][CUSTOM_PRICE_DELIVERY]" id="CUSTOM_PRICE_DELIVERY_' . $index . '" value="' . $customPriceDelivery . '">
 			<input type="hidden" name="SHIPMENT[' . $index . '][CUSTOM_WEIGHT_DELIVERY]" id="CUSTOM_WEIGHT_DELIVERY_' . $index . '" value="' . $customWeightDelivery . '">
 			<input type="hidden" name="SHIPMENT[' . $index . '][BASE_PRICE_DELIVERY]" id="BASE_PRICE_DELIVERY_' . $index . '" value="' . $data['BASE_PRICE_DELIVERY'] . '">
-			<input type="hidden" name="SHIPMENT[' . $index . '][CALCULATED_PRICE]" id="CALCULATED_PRICE_' . $index . '" value="' . (isset($post['CALCULATED_PRICE']) ? htmlspecialcharsbx($post['CALCULATED_PRICE']) : $data['CALCULATED_PRICE']) . '">
-			<input type="hidden" name="SHIPMENT[' . $index . '][CALCULATED_WEIGHT]" id="CALCULATED_WEIGHT_' . $index . '" value="' . (isset($post['CALCULATED_WEIGHT']) ? htmlspecialcharsbx($post['CALCULATED_WEIGHT']) : $data['CALCULATED_WEIGHT']) . '">
+			<input type="hidden" name="SHIPMENT[' . $index . '][CALCULATED_PRICE]" id="CALCULATED_PRICE_' . $index . '" value="' . (isset($post['CALCULATED_PRICE']) ? htmlspecialcharsbx(
+                $post['CALCULATED_PRICE']
+            ) : $data['CALCULATED_PRICE']) . '">
+			<input type="hidden" name="SHIPMENT[' . $index . '][CALCULATED_WEIGHT]" id="CALCULATED_WEIGHT_' . $index . '" value="' . (isset($post['CALCULATED_WEIGHT']) ? htmlspecialcharsbx(
+                $post['CALCULATED_WEIGHT']
+            ) : $data['CALCULATED_WEIGHT']) . '">
 			<input type="hidden" name="SHIPMENT[' . $index . '][DEDUCTED]" id="STATUS_DEDUCTED_' . $index . '" value="' . ($data['DEDUCTED'] == "" ? "N" : $data['DEDUCTED']) . '">
-			<input type="hidden" name="SHIPMENT[' . $index . '][ALLOW_DELIVERY]" id="STATUS_ALLOW_DELIVERY_' . $index . '" value="' . ($data['ALLOW_DELIVERY'] == "" ? "N" : htmlspecialcharsbx($data['ALLOW_DELIVERY'])) . '">
+			<input type="hidden" name="SHIPMENT[' . $index . '][ALLOW_DELIVERY]" id="STATUS_ALLOW_DELIVERY_' . $index . '" value="' . ($data['ALLOW_DELIVERY'] == "" ? "N" : htmlspecialcharsbx(
+                $data['ALLOW_DELIVERY']
+            )) . '">
 			<div class="adm-bus-component-content-container">
 				<div class="adm-bus-pay-section">
 					<div class="adm-bus-pay-section-title-container">
@@ -262,11 +309,15 @@ class OrderShipment
 						</div>
 						<div class="adm-bus-pay-section-right">
 							<div class="adm-bus-table-container caption border">
-								<div class="adm-bus-table-caption-title" style="background: #eef5f5;">' . Loc::getMessage('SALE_ORDER_SHIPMENT_BLOCK_SERVICE') . '</div>
+								<div class="adm-bus-table-caption-title" style="background: #eef5f5;">' . Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_BLOCK_SERVICE'
+            ) . '</div>
 								<table border="0" cellspacing="0" cellpadding="0" width="100%" class="adm-detail-content-table edit-table ">
 									<tbody>
 										<tr id="BLOCK_DELIVERY_SERVICE_' . $index . '">
-											<td class="adm-detail-content-cell-l fwb" width="40%">' . Loc::getMessage('SALE_ORDER_SHIPMENT_DELIVERY_SERVICE') . ':</td>
+											<td class="adm-detail-content-cell-l fwb" width="40%">' . Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_DELIVERY_SERVICE'
+            ) . ':</td>
 											<td class="adm-detail-content-cell-r">
 												' . self::getDeliverySelectHtml($deliveries, $deliveryId, $index) . '
 											</td>
@@ -276,30 +327,46 @@ class OrderShipment
 								</table>
 							</div>
 							<div class="adm-bus-table-container caption border">
-								<div class="adm-bus-table-caption-title" style="background: #eef5f5;">' . Loc::getMessage('SALE_ORDER_SHIPMENT_DELIVERY_BLOCK_PRICE') . '</div>
+								<div class="adm-bus-table-caption-title" style="background: #eef5f5;">' . Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_DELIVERY_BLOCK_PRICE'
+            ) . '</div>
 								<table border="0" cellspacing="0" cellpadding="0" width="100%" class="adm-detail-content-table edit-table ">
 									<tbody>
 										<tr style="display: none;">
-											<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage('SALE_ORDER_SHIPMENT_DELIVERY_SUM_PRICE') . ':</td>
-											<td class="adm-detail-content-cell-r tal"><span id="BASE_PRICE_DELIVERY_T_' . $index . '">' . $basePriceDelivery . '</span> ' . htmlspecialcharsbx($currencyLang) . '<br></td>
+											<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_DELIVERY_SUM_PRICE'
+            ) . ':</td>
+											<td class="adm-detail-content-cell-r tal"><span id="BASE_PRICE_DELIVERY_T_' . $index . '">' . $basePriceDelivery . '</span> ' . htmlspecialcharsbx(
+                $currencyLang
+            ) . '<br></td>
 										</tr>
 										<tr id="sale-order-shipment-discounts-row-' . $index . '" style="display: none;">
-											<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage('SALE_ORDER_SHIPMENT_DISCOUNT') . ':</td>
+											<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_DISCOUNT'
+            ) . ':</td>
 											<td class="adm-detail-content-cell-r tal" id="sale-order-shipment-discounts-container-' . $index . '"></td>
 										</tr>
 										<tr>
-											<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage('SALE_ORDER_SHIPMENT_DELIVERY_SUM_DISCOUNT_PRICE') . ':</td>
-											<td class="adm-detail-content-cell-r tal"><input type="text" class="adm-bus-input-price" name="SHIPMENT[' . $index . '][PRICE_DELIVERY]" id="PRICE_DELIVERY_' . $index . '" value="' . $priceDelivery . '"> ' . htmlspecialcharsbx($currencyLang) . '</td>
+											<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_DELIVERY_SUM_DISCOUNT_PRICE'
+            ) . ':</td>
+											<td class="adm-detail-content-cell-r tal"><input type="text" class="adm-bus-input-price" name="SHIPMENT[' . $index . '][PRICE_DELIVERY]" id="PRICE_DELIVERY_' . $index . '" value="' . $priceDelivery . '"> ' . htmlspecialcharsbx(
+                $currencyLang
+            ) . '</td>
 										</tr>
 									</tbody>
 								</table>
 							</div>
 							<div class="adm-bus-table-container caption border">
-								<div class="adm-bus-table-caption-title" style="background: #eef5f5;">' . Loc::getMessage('SALE_ORDER_SHIPMENT_DELIVERY_BLOCK_WEIGHT') . '</div>
+								<div class="adm-bus-table-caption-title" style="background: #eef5f5;">' . Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_DELIVERY_BLOCK_WEIGHT'
+            ) . '</div>
 								<table border="0" cellspacing="0" cellpadding="0" width="100%" class="adm-detail-content-table edit-table ">
 									<tbody>
 										<tr>
-											<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage('SALE_ORDER_SHIPMENT_DELIVERY_WEIGHT') . ':</td>
+											<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_DELIVERY_WEIGHT'
+            ) . ':</td>
 											<td class="adm-detail-content-cell-r tal"><input type="text" class="adm-bus-input-price" name="SHIPMENT[' . $index . '][WEIGHT]" id="WEIGHT_DELIVERY_' . $index . '" value="' . $weight . '"> ' . $weightMeasureUnits . '</td>
 										</tr>
 									</tbody>
@@ -309,11 +376,15 @@ class OrderShipment
 
         if ($companies) {
             $result .= '<div class="adm-bus-table-container caption border">
-			<div class="adm-bus-table-caption-title" style="background: #eef5f5;">' . Loc::getMessage('SALE_ORDER_SHIPMENT_BLOCK_SHIPMENT') . '</div>
+			<div class="adm-bus-table-caption-title" style="background: #eef5f5;">' . Loc::getMessage(
+                    'SALE_ORDER_SHIPMENT_BLOCK_SHIPMENT'
+                ) . '</div>
 			<table border="0" cellspacing="0" cellpadding="0" width="100%" class="adm-detail-content-table edit-table ">
 				<tbody>
 					<tr>
-						<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage('SALE_ORDER_SHIPMENT_OFFICE') . ':</td>
+						<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage(
+                    'SALE_ORDER_SHIPMENT_OFFICE'
+                ) . ':</td>
 						<td class="adm-detail-content-cell-r">' . $companies . '</td>
 					</tr>
 				</tbody>
@@ -322,7 +393,9 @@ class OrderShipment
         }
         if ($data['FFD_105_ENABLED'] === 'Y' && $data['ID'] > 0) {
             $result .= '<div class="adm-bus-table-container caption border" style="padding-top:10px;">
-					<div class="adm-bus-table-caption-title" style="background: #eef5f5;">' . Loc::getMessage('SALE_ORDER_SHIPMENT_CHECK_LINK_TITLE') . '</div>
+					<div class="adm-bus-table-caption-title" style="background: #eef5f5;">' . Loc::getMessage(
+                    'SALE_ORDER_SHIPMENT_CHECK_LINK_TITLE'
+                ) . '</div>
 					<table border="0" cellspacing="0" cellpadding="0" width="100%" class="adm-detail-content-table edit-table">
 						<tbody>
 						' . $checkLink . '
@@ -333,30 +406,48 @@ class OrderShipment
 
         $result .= '<div class="adm-bus-table-container caption border">
 		<div class="adm-bus-moreInfo_part1">
-			<div class="adm-bus-table-caption-title" style="background: #eef5f5;">' . Loc::getMessage('SALE_ORDER_SHIPMENT_BLOCK_STATUS') . '</div>
+			<div class="adm-bus-table-caption-title" style="background: #eef5f5;">' . Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_BLOCK_STATUS'
+            ) . '</div>
 			<table class="adm-detail-content-table edit-table" border="0" width="100%" cellpadding="0" cellspacing="0">
 				<tbody>
 					<tr>
-						<td class="adm-detail-content-cell-l vat" width="40%">' . Loc::getMessage('SALE_ORDER_SHIPMENT_ALLOW_DELIVERY') . ':</td>
+						<td class="adm-detail-content-cell-l vat" width="40%">' . Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_ALLOW_DELIVERY'
+            ) . ':</td>
 						<td class="adm-detail-content-cell-r delivery-status">' . $allowDelivery . '</td>
 					</tr>
 					' . ((!empty($data['EMP_ALLOW_DELIVERY_ID'])) ? '
 					<tr>
 						<td class="adm-detail-content-cell-l vat" width="40%"></td>
 						<td class="adm-detail-content-cell-r">
-							<div>' . Loc::getMessage('SALE_ORDER_SHIPMENT_MODIFY_BY') . ': <span style="color: #66878F" id="order_additional_info_date_responsible">' . htmlspecialcharsbx($data['DATE_ALLOW_DELIVERY']) . '</span>  <a href="/bitrix/admin/user_edit.php?lang=' . $lang . '&ID=' . $data['EMP_ALLOW_DELIVERY_ID'] . '" id="order_additional_info_emp_responsible">' . htmlspecialcharsbx($data['EMP_ALLOW_DELIVERY_ID_LAST_NAME']) . ' ' . htmlspecialcharsbx($data['EMP_ALLOW_DELIVERY_ID_NAME']) . '</a></div>
+							<div>' . Loc::getMessage(
+                    'SALE_ORDER_SHIPMENT_MODIFY_BY'
+                ) . ': <span style="color: #66878F" id="order_additional_info_date_responsible">' . htmlspecialcharsbx(
+                    $data['DATE_ALLOW_DELIVERY']
+                ) . '</span>  <a href="/bitrix/admin/user_edit.php?lang=' . $lang . '&ID=' . $data['EMP_ALLOW_DELIVERY_ID'] . '" id="order_additional_info_emp_responsible">' . htmlspecialcharsbx(
+                    $data['EMP_ALLOW_DELIVERY_ID_LAST_NAME']
+                ) . ' ' . htmlspecialcharsbx($data['EMP_ALLOW_DELIVERY_ID_NAME']) . '</a></div>
 						</td>
 					</tr>
 					' : '') . '
 					<tr>
-						<td class="adm-detail-content-cell-l vat" width="40%">' . Loc::getMessage('SALE_ORDER_SHIPMENT_DEDUCTED') . ':</td>
+						<td class="adm-detail-content-cell-l vat" width="40%">' . Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_DEDUCTED'
+            ) . ':</td>
 						<td class="adm-detail-content-cell-r deducted-status">' . $deducted . '</td>
 					</tr>
 					' . ((!empty($data['EMP_DEDUCTED_ID'])) ? '
 					<tr>
 						<td class="adm-detail-content-cell-l fwb vat" width="40%"></td>
 						<td class="adm-detail-content-cell-r">
-							<div>' . Loc::getMessage('SALE_ORDER_SHIPMENT_MODIFY_BY') . ': <span style="color: #66878F" id="order_additional_info_date_responsible">' . htmlspecialcharsbx($data['DATE_DEDUCTED']) . '</span>  <a href="/bitrix/admin/user_edit.php?lang=' . $lang . '&ID=' . $data['EMP_DEDUCTED_ID'] . '" id="order_additional_info_emp_responsible">' . htmlspecialcharsbx($data['EMP_DEDUCTED_ID_LAST_NAME']) . ' ' . htmlspecialcharsbx($data['EMP_DEDUCTED_ID_NAME']) . '</a></div>
+							<div>' . Loc::getMessage(
+                    'SALE_ORDER_SHIPMENT_MODIFY_BY'
+                ) . ': <span style="color: #66878F" id="order_additional_info_date_responsible">' . htmlspecialcharsbx(
+                    $data['DATE_DEDUCTED']
+                ) . '</span>  <a href="/bitrix/admin/user_edit.php?lang=' . $lang . '&ID=' . $data['EMP_DEDUCTED_ID'] . '" id="order_additional_info_emp_responsible">' . htmlspecialcharsbx(
+                    $data['EMP_DEDUCTED_ID_LAST_NAME']
+                ) . ' ' . htmlspecialcharsbx($data['EMP_DEDUCTED_ID_NAME']) . '</a></div>
 						</td>
 					</tr>
 					' : '') . '
@@ -365,45 +456,73 @@ class OrderShipment
 		</div>
 	</div>
 	<div class="adm-bus-table-container caption border">
-		<div class="adm-bus-table-caption-title" style="background: #eef5f5;">' . Loc::getMessage('SALE_ORDER_SHIPMENT_BLOCK_DELIVERY_INFO') . '</div>
+		<div class="adm-bus-table-caption-title" style="background: #eef5f5;">' . Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_BLOCK_DELIVERY_INFO'
+            ) . '</div>
 		<table border="0" cellspacing="0" cellpadding="0" width="100%" class="adm-detail-content-table edit-table ">
 			<tbody>
 				<tr>
-					<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage('SALE_ORDER_SHIPMENT_TRACKING_NUMBER') . ':</td>
+					<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_TRACKING_NUMBER'
+            ) . ':</td>
 					<td class="adm-detail-content-cell-r tal"><input type="text" class="adm-bus-input" name="SHIPMENT[' . $index . '][TRACKING_NUMBER]" value="' . $trackingNumber . '"><br></td>
 				</tr>' . (
-            $data['HAS_TRACKING'] && strlen($trackingNumber) > 0 && intval($data['ID'] > 0)
+            $data['HAS_TRACKING'] && $trackingNumber <> '' && intval($data['ID'] > 0)
                 ?
                 '<tr>
-					<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage('SALE_ORDER_SHIPMENT_TRACKING_STATUS') . ':</td>
+					<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage(
+                    'SALE_ORDER_SHIPMENT_TRACKING_STATUS'
+                ) . ':</td>
 					<td class="adm-detail-content-cell-r tal">' .
-                '<span id="sale-order-shipment-tracking-status-' . $index . '">' . (intval($data['TRACKING_STATUS']) >= 0 ? \Bitrix\Sale\Delivery\Tracking\Manager::getStatusName($data['TRACKING_STATUS']) : '-') . '</span>' .
-                '&nbsp;&nbsp;&nbsp;[<span onclick="BX.Sale.Admin.GeneralShipment.refreshTrackingStatus(\'' . $index . '\', \'' . $data['ID'] . '\', true);" style="border-bottom: 1px dashed #2675d7; cursor: pointer; color: #2675d7;">' . Loc::getMessage('SALE_ORDER_SHIPMENT_TRACKING_STATUS_REFRESH') . '</span>]<br></td>
+                '<span id="sale-order-shipment-tracking-status-' . $index . '">' . (intval(
+                    $data['TRACKING_STATUS']
+                ) >= 0 ? \Bitrix\Sale\Delivery\Tracking\Manager::getStatusName(
+                    $data['TRACKING_STATUS']
+                ) : '-') . '</span>' .
+                '&nbsp;&nbsp;&nbsp;[<span onclick="BX.Sale.Admin.GeneralShipment.refreshTrackingStatus(\'' . $index . '\', \'' . $data['ID'] . '\', true);" style="border-bottom: 1px dashed #2675d7; cursor: pointer; color: #2675d7;">' . Loc::getMessage(
+                    'SALE_ORDER_SHIPMENT_TRACKING_STATUS_REFRESH'
+                ) . '</span>]<br></td>
 				</tr>
 				<tr>
-					<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage('SALE_ORDER_SHIPMENT_TRACKING_DESCRIPTION') . ':</td>
-					<td class="adm-detail-content-cell-r tal" id="sale-order-shipment-tracking-description-' . $index . '">' . (strlen($data['TRACKING_DESCRIPTION']) > 0 ? $data['TRACKING_DESCRIPTION'] : '-') . '<br></td>
+					<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage(
+                    'SALE_ORDER_SHIPMENT_TRACKING_DESCRIPTION'
+                ) . ':</td>
+					<td class="adm-detail-content-cell-r tal" id="sale-order-shipment-tracking-description-' . $index . '">' . ($data['TRACKING_DESCRIPTION'] <> '' ? $data['TRACKING_DESCRIPTION'] : '-') . '<br></td>
 				</tr>
 				<tr>
-					<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage('SALE_ORDER_SHIPMENT_TRACKING_LAST_CHANGE') . ':</td>
-					<td class="adm-detail-content-cell-r tal" id="sale-order-shipment-tracking-last-change-' . $index . '">' . (strlen($data['TRACKING_LAST_CHANGE']) > 0 ? $data['TRACKING_LAST_CHANGE'] : '-') . '<br></td>
+					<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage(
+                    'SALE_ORDER_SHIPMENT_TRACKING_LAST_CHANGE'
+                ) . ':</td>
+					<td class="adm-detail-content-cell-r tal" id="sale-order-shipment-tracking-last-change-' . $index . '">' . ($data['TRACKING_LAST_CHANGE'] <> '' ? $data['TRACKING_LAST_CHANGE'] : '-') . '<br></td>
 				</tr>' . (!empty($data['TRACKING_URL']) ?
                     '<tr>
-							<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage('SALE_ORDER_SHIPMENT_TRACKING_URL') . ':</td>
+							<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage(
+                        'SALE_ORDER_SHIPMENT_TRACKING_URL'
+                    ) . ':</td>
 							<td class="adm-detail-content-cell-r tal" id="sale-order-shipment-tracking-url-' . $index . '"><a href="' . $data['TRACKING_URL'] . '">' . $data['TRACKING_URL'] . '</a><br></td>
 						<tr>' : '')
                 :
                 ''
             ) . '<tr>
-					<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage('SALE_ORDER_SHIPMENT_DELIVERY_DOC_NUM') . ':</td>
-					<td class="adm-detail-content-cell-r tal"><input type="text" class="adm-bus-input" name="SHIPMENT[' . $index . '][DELIVERY_DOC_NUM]" value="' . htmlspecialcharsbx(isset($post['DELIVERY_DOC_NUM']) ? $post['DELIVERY_DOC_NUM'] : $data['DELIVERY_DOC_NUM']) . '"><br></td>
+					<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_DELIVERY_DOC_NUM'
+            ) . ':</td>
+					<td class="adm-detail-content-cell-r tal"><input type="text" class="adm-bus-input" name="SHIPMENT[' . $index . '][DELIVERY_DOC_NUM]" value="' . htmlspecialcharsbx(
+                isset($post['DELIVERY_DOC_NUM']) ? $post['DELIVERY_DOC_NUM'] : $data['DELIVERY_DOC_NUM']
+            ) . '"><br></td>
 				</tr>
 				<tr>
-					<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage('SALE_ORDER_SHIPMENT_DELIVERY_DOC_DATE') . ':</td>
+					<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_DELIVERY_DOC_DATE'
+            ) . ':</td>
 					<td class="adm-detail-content-cell-r tal">
 						<div class="adm-input-wrap adm-calendar-second" style="display: inline-block;">
-							<input type="text" class="adm-input adm-calendar-to" id="DELIVERY_DOC_DATE" name="SHIPMENT[' . $index . '][DELIVERY_DOC_DATE]" size="15" value="' . htmlspecialcharsbx(isset($post['DELIVERY_DOC_DATE']) ? $post['DELIVERY_DOC_DATE'] : $data['DELIVERY_DOC_DATE']) . '">
-							<span class="adm-calendar-icon" title="' . Loc::getMessage('SALE_ORDER_SHIPMENT_DELIVERY_CHOOSE_DATE') . '" onclick="BX.calendar({node:this, field:\'DELIVERY_DOC_DATE\', form: \'\', bTime: false, bHideTime: false});"></span>
+							<input type="text" class="adm-input adm-calendar-to" id="DELIVERY_DOC_DATE" name="SHIPMENT[' . $index . '][DELIVERY_DOC_DATE]" size="15" value="' . htmlspecialcharsbx(
+                isset($post['DELIVERY_DOC_DATE']) ? $post['DELIVERY_DOC_DATE'] : $data['DELIVERY_DOC_DATE']
+            ) . '">
+							<span class="adm-calendar-icon" title="' . Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_DELIVERY_CHOOSE_DATE'
+            ) . '" onclick="BX.calendar({node:this, field:\'DELIVERY_DOC_DATE\', form: \'\', bTime: false, bHideTime: false});"></span>
 						</div>
 					</td>
 				</tr>
@@ -415,20 +534,26 @@ class OrderShipment
 
         if (!empty($data['DELIVERY_REQUEST_NAME']) || !empty($data['DELIVERY_REQUEST_ERROR_DESCRIPTION'])) {
             $result .= '<div class="adm-bus-table-container caption border">
-				<div class="adm-bus-table-caption-title" style="background: #eef5f5;">' . Loc::getMessage('SALE_ORDER_SHIPMENT_DEL_REQ_INFO') . '</div>
+				<div class="adm-bus-table-caption-title" style="background: #eef5f5;">' . Loc::getMessage(
+                    'SALE_ORDER_SHIPMENT_DEL_REQ_INFO'
+                ) . '</div>
 				<table border="0" cellspacing="0" cellpadding="0" width="100%" class="adm-detail-content-table edit-table ">
 					<tbody>';
 
             if (!empty($data['DELIVERY_REQUEST_NAME'])) {
                 $result .= '<tr>
-						<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage('SALE_ORDER_SHIPMENT_DEL_REQ') . ':</td>
+						<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage(
+                        'SALE_ORDER_SHIPMENT_DEL_REQ'
+                    ) . ':</td>
 						<td class="adm-detail-content-cell-r"><a href="' . $data['DELIVERY_REQUEST_LINK'] . '"">' . $data['DELIVERY_REQUEST_NAME'] . '</a></td>
 					</tr>';
             }
 
             if (!empty($data['DELIVERY_REQUEST_ERROR_DESCRIPTION'])) {
                 $result .= '<tr>
-						<td valign="top" class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage('SALE_ORDER_SHIPMENT_DEL_REQ_ERROR') . ':</td>
+						<td valign="top" class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage(
+                        'SALE_ORDER_SHIPMENT_DEL_REQ_ERROR'
+                    ) . ':</td>
 						<td class="adm-detail-content-cell-r">' . $data['DELIVERY_REQUEST_ERROR_DESCRIPTION'] . '</td>
 					</tr>';
             }
@@ -441,7 +566,9 @@ class OrderShipment
 
         if (is_array($data['DELIVERY_ADDITIONAL_INFO_EDIT']) && !empty($data['DELIVERY_ADDITIONAL_INFO_EDIT'])) {
             $result .= '<div class="adm-bus-table-container caption border">
-							<div class="adm-bus-table-caption-title" style="background: #eef5f5;">' . Loc::getMessage('SALE_ORDER_SHIPMENT_BLOCK_DELIVERY_ADDITIONAL') . '</div>
+							<div class="adm-bus-table-caption-title" style="background: #eef5f5;">' . Loc::getMessage(
+                    'SALE_ORDER_SHIPMENT_BLOCK_DELIVERY_ADDITIONAL'
+                ) . '</div>
 							<table border="0" cellspacing="0" cellpadding="0" width="100%" class="adm-detail-content-table edit-table ">
 								<tbody><tr>';
 
@@ -449,7 +576,10 @@ class OrderShipment
                 $result .= '
 					<td class="adm-detail-content-cell-l" width="40%">' . $params['LABEL'] . ':</td>
 					<td class="adm-detail-content-cell-r" width="60%">
-						' . \Bitrix\Sale\Internals\Input\Manager::getEditHtml('SHIPMENT[' . $index . '][ADDITIONAL][' . $name . ']', $params) . '
+						' . \Bitrix\Sale\Internals\Input\Manager::getEditHtml(
+                        'SHIPMENT[' . $index . '][ADDITIONAL][' . $name . ']',
+                        $params
+                    ) . '
 					</td>';
             }
 
@@ -483,11 +613,13 @@ class OrderShipment
             'weightUnit' => self::getWeightUnit($data['SITE_ID'])
         );
 
-        if ($customPriceDelivery == 'Y')
+        if ($customPriceDelivery == 'Y') {
             $params['calculated_price'] = $data['CALCULATED_PRICE'];
+        }
 
-        if ($customWeightDelivery == 'Y')
+        if ($customWeightDelivery == 'Y') {
             $params['calculated_weight'] = $data['CALCULATED_WEIGHT'];
+        }
 
         $result .= self::initJsShipment($params);
         return $result;
@@ -509,11 +641,12 @@ class OrderShipment
         return $weightKoef;
     }
 
-    public function getImgDeliveryServiceList($items)
+    public static function getImgDeliveryServiceList($items)
     {
         $srcList = array();
-        foreach ($items as $item)
+        foreach ($items as $item) {
             $srcList[$item['ID']] = $item['LOGOTIP'];
+        }
         return $srcList;
     }
 
@@ -528,7 +661,9 @@ class OrderShipment
 
         return "<script>
 					BX.ready(function() {
-						var " . self::$shipmentObjJs . " = new BX.Sale.Admin.OrderShipment(" . \CUtil::PhpToJSObject($params) . ");
+						var " . self::$shipmentObjJs . " = new BX.Sale.Admin.OrderShipment(" . \CUtil::PhpToJSObject(
+                $params
+            ) . ");
 						if (BX.Sale.Admin.ShipmentBasketObj)
 							BX.Sale.Admin.ShipmentBasketObj.shipment = " . self::$shipmentObjJs . ";
 					});
@@ -540,11 +675,13 @@ class OrderShipment
         $service = null;
 
         if ($id > 0) {
-            $resService = \Bitrix\Sale\Delivery\Services\Table::getList(array(
-                'filter' => array('ID' => $id),
-                'order' => array('SORT' => 'ASC', 'NAME' => 'ASC'),
-                'select' => array("ID", "NAME", "DESCRIPTION", "LOGOTIP", "CLASS_NAME", "PARENT_ID", "CONFIG")
-            ));
+            $resService = \Bitrix\Sale\Delivery\Services\Table::getList(
+                array(
+                    'filter' => array('ID' => $id),
+                    'order' => array('SORT' => 'ASC', 'NAME' => 'ASC'),
+                    'select' => array("ID", "NAME", "DESCRIPTION", "LOGOTIP", "CLASS_NAME", "PARENT_ID", "CONFIG")
+                )
+            );
             $service = $resService->fetch();
         }
 
@@ -557,8 +694,9 @@ class OrderShipment
         $logoPath = '/bitrix/images/sale/logo-default-d.gif';
 
         if ($result === null) {
-            if ($shipment != null)
+            if ($shipment != null) {
                 self::$shipment = $shipment;
+            }
 
             $result = array(
                 array(
@@ -584,16 +722,19 @@ class OrderShipment
             foreach ($deliveryList as $delivery) {
                 $service = Services\Manager::getObjectById($delivery['ID']);
 
-                if (!$service)
+                if (!$service) {
                     continue;
+                }
 
-                if ($shipment && !$service->isCompatible($shipment))
+                if ($shipment && !$service->isCompatible($shipment)) {
                     continue;
+                }
 
                 if ($service->canHasProfiles()) {
                     $profiles = $service->getProfilesList();
-                    if (empty($profiles))
+                    if (empty($profiles)) {
                         continue;
+                    }
                 }
 
                 $logo = $service->getLogotip();
@@ -645,23 +786,28 @@ class OrderShipment
          * @var \Bitrix\Sale\Delivery\ExtraServices\Base $item
          */
         foreach ($extraService as $itemId => $item) {
-            if (!$item->canManagerEditValue())
+            if (!$item->canManagerEditValue()) {
                 continue;
+            }
 
-            echo '<tr><td class="adm-detail-content-cell-l" width="40%">' . htmlspecialcharsbx($item->getName()) . ':</td>';
+            echo '<tr><td class="adm-detail-content-cell-l" width="40%">' . htmlspecialcharsbx(
+                    $item->getName()
+                ) . ':</td>';
             echo '<td class="adm-detail-content-cell-r tal">';
 
-            if ($view)
+            if ($view) {
                 echo $item->getViewControl();
-            else
+            } else {
                 echo $item->getEditControl('SHIPMENT[' . $index . '][EXTRA_SERVICES][' . $itemId . ']');
+            }
 
             $order = self::$shipment->getCollection()->getOrder();
             $currency = $order->getCurrency();
             $price = $item->getPriceShipment($shipment);
 
-            if ($price)
+            if ($price) {
                 echo ' (' . SaleFormatCurrency(floatval($price), $currency) . ')';
+            }
 
             echo '</td></tr>';
         }
@@ -686,7 +832,10 @@ class OrderShipment
 
         self::$shipment = $shipment;
         $data = self::prepareData(!empty($dataForRecovery));
-        $data['COMPANIES'] = Company\Manager::getListWithRestrictions($shipment, \Bitrix\Sale\Services\Company\Restrictions\Manager::MODE_MANAGER);
+        $data['COMPANIES'] = Company\Manager::getListWithRestrictions(
+            $shipment,
+            \Bitrix\Sale\Services\Company\Restrictions\Manager::MODE_MANAGER
+        );
 
         $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
 
@@ -732,8 +881,9 @@ class OrderShipment
     {
         $result = array();
 
-        if (!\Bitrix\Main\Loader::includeModule('catalog'))
+        if (!\Bitrix\Main\Loader::includeModule('catalog')) {
             return $result;
+        }
 
         $storesIds = \Bitrix\Sale\Delivery\ExtraServices\Manager::getStoresList($deliveryId);
 
@@ -743,12 +893,26 @@ class OrderShipment
                 array("ISSUING_CENTER" => "Y", "ID" => $storesIds),
                 false,
                 false,
-                array("ID", "ACTIVE", "SITE_ID", "TITLE", "ADDRESS", "DESCRIPTION", "IMAGE_ID", "PHONE", "SCHEDULE", "LOCATION_ID", "GPS_N", "GPS_S")
+                array(
+                    "ID",
+                    "ACTIVE",
+                    "SITE_ID",
+                    "TITLE",
+                    "ADDRESS",
+                    "DESCRIPTION",
+                    "IMAGE_ID",
+                    "PHONE",
+                    "SCHEDULE",
+                    "LOCATION_ID",
+                    "GPS_N",
+                    "GPS_S"
+                )
             );
 
             while ($store = $dbList->Fetch()) {
-                if ($store['ACTIVE'] === 'N' && (int)$store["ID"] !== (int)$storeId)
+                if ($store['ACTIVE'] === 'N' && (int)$store["ID"] !== (int)$storeId) {
                     continue;
+                }
                 $result[$store["ID"]] = $store;
             }
         }
@@ -761,8 +925,9 @@ class OrderShipment
         global $APPLICATION;
         $map = '';
 
-        if ($deliveryId <= 0)
+        if ($deliveryId <= 0) {
             return $map;
+        }
 
         $stores = self::getStoresList($deliveryId, $storeId);
         if ($stores) {
@@ -784,8 +949,9 @@ class OrderShipment
                 $params['FORM'] = 'view';
             }
 
-            if (intval($storeId) > 0)
+            if (intval($storeId) > 0) {
                 $params["SELECTED_STORE"] = $storeId;
+            }
 
             ob_start();
             $APPLICATION->IncludeComponent(
@@ -824,13 +990,21 @@ class OrderShipment
             'SALE_ORDER_SHIPMENT_NEW_PRICE_DELIVERY' => Loc::getMessage('SALE_ORDER_SHIPMENT_NEW_PRICE_DELIVERY'),
             'SALE_ORDER_SHIPMENT_APPLY' => Loc::getMessage('SALE_ORDER_SHIPMENT_APPLY'),
             'SALE_ORDER_SHIPMENT_CONFIRM_SET_NEW_PRICE' => Loc::getMessage('SALE_ORDER_SHIPMENT_CONFIRM_SET_NEW_PRICE'),
-            'SALE_ORDER_SHIPMENT_BLOCK_SHIPMENT_TOGGLE_UP' => Loc::getMessage('SALE_ORDER_SHIPMENT_BLOCK_SHIPMENT_TOGGLE_UP'),
+            'SALE_ORDER_SHIPMENT_BLOCK_SHIPMENT_TOGGLE_UP' => Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_BLOCK_SHIPMENT_TOGGLE_UP'
+            ),
             'SALE_ORDER_SHIPMENT_BLOCK_SHIPMENT_TOGGLE' => Loc::getMessage('SALE_ORDER_SHIPMENT_BLOCK_SHIPMENT_TOGGLE'),
-            'SALE_ORDER_SHIPMENT_CONFIRM_DELETE_SHIPMENT' => Loc::getMessage('SALE_ORDER_SHIPMENT_CONFIRM_DELETE_SHIPMENT'),
+            'SALE_ORDER_SHIPMENT_CONFIRM_DELETE_SHIPMENT' => Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_CONFIRM_DELETE_SHIPMENT'
+            ),
             'SALE_ORDER_SHIPMENT_PROFILE' => Loc::getMessage('SALE_ORDER_SHIPMENT_PROFILE'),
             'SALE_ORDER_SHIPMENT_TRACKING_S_EMPTY' => Loc::getMessage('SALE_ORDER_SHIPMENT_TRACKING_S_EMPTY'),
-            'SALE_ORDER_SHIPMENT_CASHBOX_CHECK_ADD_WINDOW_TITLE' => Loc::getMessage('SALE_ORDER_SHIPMENT_CHECK_ADD_WINDOW_TITLE'),
-            'SALE_ORDER_SHIPMENT_CONFIRM_SET_NEW_WEIGHT' => Loc::getMessage('SALE_ORDER_SHIPMENT_CONFIRM_SET_NEW_WEIGHT'),
+            'SALE_ORDER_SHIPMENT_CASHBOX_CHECK_ADD_WINDOW_TITLE' => Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_CHECK_ADD_WINDOW_TITLE'
+            ),
+            'SALE_ORDER_SHIPMENT_CONFIRM_SET_NEW_WEIGHT' => Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_CONFIRM_SET_NEW_WEIGHT'
+            ),
             'SALE_ORDER_SHIPMENT_NEW_WEIGHT_DELIVERY' => Loc::getMessage('SALE_ORDER_SHIPMENT_NEW_WEIGHT_DELIVERY'),
         );
 
@@ -846,7 +1020,6 @@ class OrderShipment
 				BX.Sale.Admin.OrderEditPage.registerFieldsUpdaters( BX.Sale.Admin.GeneralShipment.getFieldsUpdaters() );
 			});
 		</script>";
-
     }
 
     /**
@@ -857,7 +1030,11 @@ class OrderShipment
     public static function checkProfilesRestriction($profiles, $shipment)
     {
         foreach ($profiles as $key => $profile) {
-            $profiles[$key]['RESTRICTED'] = Restrictions\Manager::checkService($profile['ID'], $shipment, Restrictions\Manager::MODE_MANAGER);
+            $profiles[$key]['RESTRICTED'] = Restrictions\Manager::checkService(
+                $profile['ID'],
+                $shipment,
+                Restrictions\Manager::MODE_MANAGER
+            );
             if ($profiles[$key]['RESTRICTED'] === Base\RestrictionManager::SEVERITY_NONE) {
                 $service = Services\Manager::getObjectById($profile['ID']);
                 if ($service && !$service->isCompatible($shipment)) {
@@ -877,21 +1054,26 @@ class OrderShipment
      */
     public static function getProfileEditControl($profiles, $index = 1, $selectedProfileId = 0)
     {
-
         $result = '<select class="adm-bus-select" name="SHIPMENT[' . $index . '][PROFILE]" id="PROFILE_' . $index . '">';
         $availableProfile = '';
         $unAvailableProfile = '';
 
         foreach ($profiles as $profile) {
-            if ($profile['ACTIVE'] == 'N')
+            if ($profile['ACTIVE'] == 'N') {
                 continue;
+            }
 
             $selected = ($profile['ID'] == $selectedProfileId ? 'selected' : '');
 
-            if ($profile['RESTRICTED'] == Restrictions\Manager::SEVERITY_SOFT)
-                $unAvailableProfile .= '<option value="' . $profile['ID'] . '" ' . $selected . ' class="bx-admin-service-restricted">' . htmlspecialcharsbx($profile['NAME']) . '</option>';
-            else
-                $availableProfile .= '<option value="' . $profile['ID'] . '" ' . $selected . '>' . htmlspecialcharsbx($profile['NAME']) . '</option>';
+            if ($profile['RESTRICTED'] == Restrictions\Manager::SEVERITY_SOFT) {
+                $unAvailableProfile .= '<option value="' . $profile['ID'] . '" ' . $selected . ' class="bx-admin-service-restricted">' . htmlspecialcharsbx(
+                        $profile['NAME']
+                    ) . '</option>';
+            } else {
+                $availableProfile .= '<option value="' . $profile['ID'] . '" ' . $selected . '>' . htmlspecialcharsbx(
+                        $profile['NAME']
+                    ) . '</option>';
+            }
         }
 
         $result .= $availableProfile . $unAvailableProfile . '</select>';
@@ -907,22 +1089,30 @@ class OrderShipment
         $deliveries = array();
         $rootId = array();
 
-        foreach ($items as $item)
+        foreach ($items as $item) {
             $deliveries[$item['ID']] = $item;
+        }
 
         foreach ($deliveries as $id => $delivery) {
-            if (is_callable($deliveries[$delivery['PARENT_ID']]['CLASS_NAME'] . '::canHasProfiles') && $deliveries[$delivery['PARENT_ID']]['CLASS_NAME']::canHasProfiles())
+            if (is_callable(
+                    $deliveries[$delivery['PARENT_ID']]['CLASS_NAME'] . '::canHasProfiles'
+                ) && $deliveries[$delivery['PARENT_ID']]['CLASS_NAME']::canHasProfiles()) {
                 continue;
-            if ($delivery['PARENT_ID'])
+            }
+            if ($delivery['PARENT_ID']) {
                 $deliveries[$delivery['PARENT_ID']]['SUBMENU'][$id] = &$deliveries[$id];
-            else
+            } else {
                 $rootId[] = $id;
+            }
         }
 
         $result = array();
         foreach ($rootId as $id) {
-            if (is_callable($deliveries[$id]['CLASS_NAME'] . '::canHasChildren') && $deliveries[$id]['CLASS_NAME']::canHasChildren() && !isset($deliveries[$id]['SUBMENU']))
+            if (is_callable(
+                    $deliveries[$id]['CLASS_NAME'] . '::canHasChildren'
+                ) && $deliveries[$id]['CLASS_NAME']::canHasChildren() && !isset($deliveries[$id]['SUBMENU'])) {
                 continue;
+            }
 
             $result[$id] = $deliveries[$id];
         }
@@ -941,44 +1131,67 @@ class OrderShipment
         $restricted = '';
         foreach ($deliveries as $service) {
             $serviceCode = '';
-            if ($service['ID'] > 0)
+            if ($service['ID'] > 0) {
                 $serviceCode = '[' . $service['ID'] . '] ';
+            }
 
             if (isset($service['SUBMENU']) && count($service['SUBMENU']) > 0) {
-                $result .= '<optgroup label="' . htmlspecialcharsbx($service['NAME']) . '" id="parent_' . $service['ID'] . '">';
+                $result .= '<optgroup label="' . htmlspecialcharsbx(
+                        $service['NAME']
+                    ) . '" id="parent_' . $service['ID'] . '">';
                 $subRestricted = '';
                 foreach ($service['SUBMENU'] as $subService) {
                     $subServiceCode = '';
-                    if ($subService['ID'] > 0)
+                    if ($subService['ID'] > 0) {
                         $subServiceCode = '[' . $subService['ID'] . '] ';
+                    }
 
                     if (isset($subService['RESTRICTED']) && $subService['RESTRICTED']) {
-                        if ($subService['ID'] == $selected)
-                            $subRestricted .= '<option value="' . $subService['ID'] . '" class="bx-admin-service-restricted" data-parent-id="' . $subService['PARENT_ID'] . '" selected>' . $subServiceCode . htmlspecialcharsbx(TruncateText($subService['NAME'], 40)) . '</option>';
-                        else
-                            $subRestricted .= '<option value="' . $subService['ID'] . '" class="bx-admin-service-restricted" data-parent-id="' . $subService['PARENT_ID'] . '">' . $subServiceCode . htmlspecialcharsbx(TruncateText($subService['NAME'], 40)) . '</option>';
+                        if ($subService['ID'] == $selected) {
+                            $subRestricted .= '<option value="' . $subService['ID'] . '" class="bx-admin-service-restricted" data-parent-id="' . $subService['PARENT_ID'] . '" selected>' . $subServiceCode . htmlspecialcharsbx(
+                                    TruncateText($subService['NAME'], 40)
+                                ) . '</option>';
+                        } else {
+                            $subRestricted .= '<option value="' . $subService['ID'] . '" class="bx-admin-service-restricted" data-parent-id="' . $subService['PARENT_ID'] . '">' . $subServiceCode . htmlspecialcharsbx(
+                                    TruncateText($subService['NAME'], 40)
+                                ) . '</option>';
+                        }
                     } else {
-                        if ($subService['ID'] == $selected)
-                            $result .= '<option value="' . $subService['ID'] . '" data-parent-id="' . $subService['PARENT_ID'] . '" selected>' . $subServiceCode . htmlspecialcharsbx(TruncateText($subService['NAME'], 40)) . '</option>';
-                        else
-                            $result .= '<option value="' . $subService['ID'] . '" data-parent-id="' . $subService['PARENT_ID'] . '">' . $subServiceCode . htmlspecialcharsbx(TruncateText($subService['NAME'], 40)) . '</option>';
+                        if ($subService['ID'] == $selected) {
+                            $result .= '<option value="' . $subService['ID'] . '" data-parent-id="' . $subService['PARENT_ID'] . '" selected>' . $subServiceCode . htmlspecialcharsbx(
+                                    TruncateText($subService['NAME'], 40)
+                                ) . '</option>';
+                        } else {
+                            $result .= '<option value="' . $subService['ID'] . '" data-parent-id="' . $subService['PARENT_ID'] . '">' . $subServiceCode . htmlspecialcharsbx(
+                                    TruncateText($subService['NAME'], 40)
+                                ) . '</option>';
+                        }
                     }
                 }
                 $result .= $subRestricted . '</optgroup>';
             } else {
                 if (isset($service['RESTRICTED']) && $service['RESTRICTED']) {
-                    if ($service['ID'] == $selected)
-                        $restricted .= '<option value="' . $service['ID'] . '" class="bx-admin-service-restricted" selected>' . $serviceCode . htmlspecialcharsbx(TruncateText($service['NAME'], 40)) . '</option>';
-                    else
-                        $restricted .= '<option value="' . $service['ID'] . '" class="bx-admin-service-restricted">' . $serviceCode . htmlspecialcharsbx(TruncateText($service['NAME'], 40)) . '</option>';
+                    if ($service['ID'] == $selected) {
+                        $restricted .= '<option value="' . $service['ID'] . '" class="bx-admin-service-restricted" selected>' . $serviceCode . htmlspecialcharsbx(
+                                TruncateText($service['NAME'], 40)
+                            ) . '</option>';
+                    } else {
+                        $restricted .= '<option value="' . $service['ID'] . '" class="bx-admin-service-restricted">' . $serviceCode . htmlspecialcharsbx(
+                                TruncateText($service['NAME'], 40)
+                            ) . '</option>';
+                    }
                 } else {
-                    if ($service['ID'] == $selected)
-                        $result .= '<option value="' . $service['ID'] . '" selected>' . $serviceCode . htmlspecialcharsbx(TruncateText($service['NAME'], 40)) . '</option>';
-                    else
-                        $result .= '<option value="' . $service['ID'] . '">' . $serviceCode . htmlspecialcharsbx(TruncateText($service['NAME'], 40)) . '</option>';
+                    if ($service['ID'] == $selected) {
+                        $result .= '<option value="' . $service['ID'] . '" selected>' . $serviceCode . htmlspecialcharsbx(
+                                TruncateText($service['NAME'], 40)
+                            ) . '</option>';
+                    } else {
+                        $result .= '<option value="' . $service['ID'] . '">' . $serviceCode . htmlspecialcharsbx(
+                                TruncateText($service['NAME'], 40)
+                            ) . '</option>';
+                    }
                 }
             }
-
         }
 
         return $result . $restricted;
@@ -1024,40 +1237,58 @@ class OrderShipment
             $isAllowCompany = $data['IS_ALLOW_COMPANY'];
         }
 
-        if (self::$backUrl !== '')
+        if (self::$backUrl !== '') {
             $backUrl = self::$backUrl;
-        else
+        } else {
             $backUrl = $_SERVER['REQUEST_URI'];
+        }
 
         $allowDeliveryString = ($data['ALLOW_DELIVERY'] == 'Y') ? 'YES' : 'NO';
         $deductedString = ($data['DEDUCTED'] == 'Y') ? 'YES' : 'NO';
 
         $allowedStatusesDelivery = DeliveryStatus::getStatusesUserCanDoOperations($USER->GetID(), array('delivery'));
-        $isAllowDelivery = in_array($data["STATUS_ID"], $allowedStatusesDelivery) && $formType != 'archive' && $formType != 'edit';
+        $isAllowDelivery = in_array(
+                $data["STATUS_ID"],
+                $allowedStatusesDelivery
+            ) && $formType != 'archive' && $formType != 'edit';
 
         $isActive = ($formType != 'edit' && $formType != 'archive') && !$data['ORDER_LOCKED'];
 
         $triangle = ($isActive && $isAllowDelivery) ? '<span class="triangle"> &#9662;</span>' : '';
 
-        if ($data['ALLOW_DELIVERY'] == 'Y')
+        if ($data['ALLOW_DELIVERY'] == 'Y') {
             $class = ($isActive && $isAllowDelivery) ? '' : 'class="not_active"';
-        else
+        } else {
             $class = ($isActive && $isAllowDelivery) ? 'class="notdelivery"' : 'class="notdelivery not_active"';
+        }
 
-        $allowDelivery = '<span><span id="BUTTON_ALLOW_DELIVERY_' . $index . '" ' . $class . '>' . Loc::getMessage('SALE_ORDER_SHIPMENT_ALLOW_DELIVERY_' . $allowDeliveryString) . '</span>' . $triangle . '</span>';
+        $allowDelivery = '<span><span id="BUTTON_ALLOW_DELIVERY_' . $index . '" ' . $class . '>' . Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_ALLOW_DELIVERY_' . $allowDeliveryString
+            ) . '</span>' . $triangle . '</span>';
 
         $allowedStatusesDeduction = DeliveryStatus::getStatusesUserCanDoOperations($USER->GetID(), array('deduction'));
-        $isAllowDeduction = in_array($data["STATUS_ID"], $allowedStatusesDeduction) && $formType != 'archive' && $formType != 'edit';
+        $isAllowDeduction = in_array(
+                $data["STATUS_ID"],
+                $allowedStatusesDeduction
+            ) && $formType != 'archive' && $formType != 'edit';
 
         $triangle = ($isActive && $isAllowDeduction) ? '<span class="triangle"> &#9662;</span>' : '';
 
-        if ($data['DEDUCTED'] == 'Y')
+        if ($data['DEDUCTED'] == 'Y') {
             $class = ($isActive && $isAllowDeduction) ? '' : 'class="not_active"';
-        else
+        } else {
             $class = ($isActive && $isAllowDeduction) ? 'class="notdeducted"' : 'class="notdeducted not_active"';
-        $deducted = '<span><span id="BUTTON_DEDUCTED_' . $index . '" ' . $class . '>' . Loc::getMessage('SALE_ORDER_SHIPMENT_DEDUCTED_' . $deductedString) . '</span>' . $triangle . '</span>';
+        }
+        $deducted = '<span><span id="BUTTON_DEDUCTED_' . $index . '" ' . $class . '>' . Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_DEDUCTED_' . $deductedString
+            ) . '</span>' . $triangle . '</span>';
 
-        $map = ($data['DELIVERY_ID'] > 0) ? self::getMap($data['DELIVERY_ID'], $index, $data['DELIVERY_STORE_ID'], 'view') : '';
+        $map = ($data['DELIVERY_ID'] > 0) ? self::getMap(
+            $data['DELIVERY_ID'],
+            $index,
+            $data['DELIVERY_STORE_ID'],
+            'view'
+        ) : '';
 
         $lang = Main\Application::getInstance()->getContext()->getLanguage();
         $service = null;
@@ -1069,8 +1300,9 @@ class OrderShipment
             $service = Services\Manager::getObjectById($data['DELIVERY_ID']);
             $extraServiceManager = new \Bitrix\Sale\Delivery\ExtraServices\Manager($data['DELIVERY_ID']);
             $extraServiceManager->setOperationCurrency($data['CURRENCY']);
-            if ($data['EXTRA_SERVICES'])
+            if ($data['EXTRA_SERVICES']) {
                 $extraServiceManager->setValues($data['EXTRA_SERVICES']);
+            }
 
             if ($service && $service->getLogotip() > 0) {
                 $mainLogo = self::getMainImgPath($service->getLogotip());
@@ -1080,8 +1312,9 @@ class OrderShipment
             }
 
             $extraService = $extraServiceManager->getItems();
-            if ($extraService)
+            if ($extraService) {
                 $extraServiceHTML = self::getExtraServiceEditControl($extraService, $index, true, self::$shipment);
+            }
         }
 
         $companyList = OrderEdit::getCompanyList();
@@ -1095,42 +1328,68 @@ class OrderShipment
         }
 
         $allowedStatusesFrom = DeliveryStatus::getStatusesUserCanDoOperations($USER->GetID(), array('from'));
-        $canChangeStatus = in_array($data["STATUS_ID"], $allowedStatusesFrom) && $formType != 'archive' && $formType != 'edit';
+        $canChangeStatus = in_array(
+                $data["STATUS_ID"],
+                $allowedStatusesFrom
+            ) && $formType != 'archive' && $formType != 'edit';
         $triangle = ($isActive && $canChangeStatus) ? '<span class="triangle"> &#9662;</span>' : '';
 
         $class = ($isActive && $canChangeStatus) ? '' : 'class="not_active"';
-        $shipmentStatus = '<span><span id="BUTTON_SHIPMENT_' . $index . '" ' . $class . '>' . htmlspecialcharsbx($shipmentStatusList[$data['STATUS_ID']]) . '</span>' . $triangle . '</span>';
+        $shipmentStatus = '<span><span id="BUTTON_SHIPMENT_' . $index . '" ' . $class . '>' . htmlspecialcharsbx(
+                $shipmentStatusList[$data['STATUS_ID']]
+            ) . '</span>' . $triangle . '</span>';
 
         $shippingBlockId = '';
-        if (($isAllowCompany !== false || $isUserResponsible !== false) && ($isActive || strlen($data['TRACKING_NUMBER']) > 0)) {
+        if (($isAllowCompany !== false || $isUserResponsible !== false) && ($isActive || $data['TRACKING_NUMBER'] <> '')) {
             $shippingBlockId = '<tr>
-									<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage('SALE_ORDER_SHIPMENT_TRACKING_NUMBER') . ':</td>
+									<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage(
+                    'SALE_ORDER_SHIPMENT_TRACKING_NUMBER'
+                ) . ':</td>
 									<td class="adm-detail-content-cell-r tal">
-										<input type="text" id="TRACKING_NUMBER_' . $index . '_EDIT" name="SHIPMENT[' . $index . '][TRACKING_NUMBER]" style="display: none;" value="' . htmlspecialcharsbx($data['TRACKING_NUMBER']) . '">
-										<span id="TRACKING_NUMBER_' . $index . '_VIEW">' . htmlspecialcharsbx($data['TRACKING_NUMBER']) . '</span>';
-            if ($isActive)
+										<input type="text" id="TRACKING_NUMBER_' . $index . '_EDIT" name="SHIPMENT[' . $index . '][TRACKING_NUMBER]" style="display: none;" value="' . htmlspecialcharsbx(
+                    $data['TRACKING_NUMBER']
+                ) . '">
+										<span id="TRACKING_NUMBER_' . $index . '_VIEW">' . htmlspecialcharsbx(
+                    $data['TRACKING_NUMBER']
+                ) . '</span>';
+            if ($isActive) {
                 $shippingBlockId .= '<div class="bx-adm-edit-pencil" id="TRACKING_NUMBER_PENCIL_' . $index . '"></div>';
+            }
 
-            if ($data['HAS_TRACKING'] && strlen($data['TRACKING_NUMBER']) > 0) {
+            if ($data['HAS_TRACKING'] && $data['TRACKING_NUMBER'] <> '') {
                 $shippingBlockId .= '</td></tr>
 				<tr>
-												<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage('SALE_ORDER_SHIPMENT_TRACKING_STATUS') . ':</td>
+												<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage(
+                        'SALE_ORDER_SHIPMENT_TRACKING_STATUS'
+                    ) . ':</td>
 												<td class="adm-detail-content-cell-r tal">' .
-                    '<span id="sale-order-shipment-tracking-status-' . $index . '">' . (intval($data['TRACKING_STATUS']) >= 0 ? \Bitrix\Sale\Delivery\Tracking\Manager::getStatusName($data['TRACKING_STATUS']) : '-') . '</span>' .
-                    '&nbsp;&nbsp;&nbsp;[<span onclick="BX.Sale.Admin.GeneralShipment.refreshTrackingStatus(\'' . $index . '\', \'' . $data['ID'] . '\');" style="border-bottom: 1px dashed #2675d7; cursor: pointer; color: #2675d7;">' . Loc::getMessage('SALE_ORDER_SHIPMENT_TRACKING_STATUS_REFRESH') . '</span>]<br></td>
+                    '<span id="sale-order-shipment-tracking-status-' . $index . '">' . (intval(
+                        $data['TRACKING_STATUS']
+                    ) >= 0 ? \Bitrix\Sale\Delivery\Tracking\Manager::getStatusName(
+                        $data['TRACKING_STATUS']
+                    ) : '-') . '</span>' .
+                    '&nbsp;&nbsp;&nbsp;[<span onclick="BX.Sale.Admin.GeneralShipment.refreshTrackingStatus(\'' . $index . '\', \'' . $data['ID'] . '\');" style="border-bottom: 1px dashed #2675d7; cursor: pointer; color: #2675d7;">' . Loc::getMessage(
+                        'SALE_ORDER_SHIPMENT_TRACKING_STATUS_REFRESH'
+                    ) . '</span>]<br></td>
 											</tr>
 											<tr>
-												<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage('SALE_ORDER_SHIPMENT_TRACKING_DESCRIPTION') . ':</td>
-												<td class="adm-detail-content-cell-r tal" id="sale-order-shipment-tracking-description-' . $index . '">' . (strlen($data['TRACKING_DESCRIPTION']) > 0 ? $data['TRACKING_DESCRIPTION'] : '-') . '<br></td>
+												<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage(
+                        'SALE_ORDER_SHIPMENT_TRACKING_DESCRIPTION'
+                    ) . ':</td>
+												<td class="adm-detail-content-cell-r tal" id="sale-order-shipment-tracking-description-' . $index . '">' . ($data['TRACKING_DESCRIPTION'] <> '' ? $data['TRACKING_DESCRIPTION'] : '-') . '<br></td>
 											<tr>
 											<tr>
-												<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage('SALE_ORDER_SHIPMENT_TRACKING_LAST_CHANGE') . ':</td>
-												<td class="adm-detail-content-cell-r tal" id="sale-order-shipment-tracking-last-change-' . $index . '">' . (strlen($data['TRACKING_LAST_CHANGE']) > 0 ? $data['TRACKING_LAST_CHANGE'] : '-') . '<br></td>
+												<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage(
+                        'SALE_ORDER_SHIPMENT_TRACKING_LAST_CHANGE'
+                    ) . ':</td>
+												<td class="adm-detail-content-cell-r tal" id="sale-order-shipment-tracking-last-change-' . $index . '">' . ($data['TRACKING_LAST_CHANGE'] <> '' ? $data['TRACKING_LAST_CHANGE'] : '-') . '<br></td>
 											<tr>';
 
                 if (!empty($data['TRACKING_URL'])) {
                     $shippingBlockId .= '<tr>
-						<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage('SALE_ORDER_SHIPMENT_TRACKING_URL') . ':</td>
+						<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage(
+                            'SALE_ORDER_SHIPMENT_TRACKING_URL'
+                        ) . ':</td>
 						<td class="adm-detail-content-cell-r tal" id="sale-order-shipment-tracking-url-' . $index . '"><a href="' . $data['TRACKING_URL'] . '">' . $data['TRACKING_URL'] . '</a><br></td>
 					<tr>';
                 }
@@ -1138,9 +1397,11 @@ class OrderShipment
         }
 
         $shippingBlockDocNum = '';
-        if (($isAllowCompany !== false || $isUserResponsible !== false) && strlen($data['DELIVERY_DOC_NUM']) > 0) {
+        if (($isAllowCompany !== false || $isUserResponsible !== false) && $data['DELIVERY_DOC_NUM'] <> '') {
             $shippingBlockDocNum = '<tr>
-								<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage('SALE_ORDER_SHIPMENT_DELIVERY_DOC_NUM') . ':</td>
+								<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage(
+                    'SALE_ORDER_SHIPMENT_DELIVERY_DOC_NUM'
+                ) . ':</td>
 								<td class="adm-detail-content-cell-r tal">
 									' . htmlspecialcharsbx($data['DELIVERY_DOC_NUM']) . '
 								</td>
@@ -1148,9 +1409,11 @@ class OrderShipment
         }
 
         $shippingBlockDocDate = '';
-        if (($isAllowCompany !== false || $isUserResponsible !== false) && strlen($data['DELIVERY_DOC_DATE']) > 0) {
+        if (($isAllowCompany !== false || $isUserResponsible !== false) && $data['DELIVERY_DOC_DATE'] <> '') {
             $shippingBlockDocDate = '<tr>
-								<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage('SALE_ORDER_SHIPMENT_DELIVERY_DOC_DATE') . ':</td>
+								<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage(
+                    'SALE_ORDER_SHIPMENT_DELIVERY_DOC_DATE'
+                ) . ':</td>
 								<td class="adm-detail-content-cell-r tal">
 									' . htmlspecialcharsbx($data['DELIVERY_DOC_DATE']) . '
 								</td>
@@ -1166,20 +1429,37 @@ class OrderShipment
                 $checkLink .= OrderShipment::buildCheckHtml($data['CHECK']);
             }
             $checkLink .= "</td></tr>";
-            if ($formType != 'archive' && $data['HAS_ENABLED_CASHBOX'] === 'Y') {
-                $checkLink .= '<tr><td class="adm-detail-content-cell-r tac"><a href="javascript:void(0);" onclick="BX.Sale.Admin.OrderShipment.prototype.showCreateCheckWindow(' . $data['ID'] . ');">' . Loc::getMessage('SALE_ORDER_SHIPMENT_CHECK_ADD') . '</a></td></tr>';
+            if ($formType != 'archive' && $data['HAS_ENABLED_CASHBOX'] === 'Y' && $data['CAN_PRINT_CHECK'] === 'Y') {
+                $checkLink .= '<tr><td class="adm-detail-content-cell-r tac"><a href="javascript:void(0);" onclick="BX.Sale.Admin.OrderShipment.prototype.showCreateCheckWindow(' . $data['ID'] . ');">' . Loc::getMessage(
+                        'SALE_ORDER_SHIPMENT_CHECK_ADD'
+                    ) . '</a></td></tr>';
             }
         }
 
         $sectionDelete = '';
-        $allowedDeliveryStatusesDelete = DeliveryStatus::getStatusesUserCanDoOperations($USER->GetID(), array('delete'));
-        if (in_array($data["STATUS_ID"], $allowedDeliveryStatusesDelete) && !$data['ORDER_LOCKED'] && $formType != 'archive')
-            $sectionDelete = '<div class="adm-bus-pay-section-action" id="SHIPMENT_SECTION_' . $index . '_DELETE">' . Loc::getMessage('SALE_ORDER_SHIPMENT_BLOCK_SHIPMENT_DELETE') . '</div>';
+        $allowedDeliveryStatusesDelete = DeliveryStatus::getStatusesUserCanDoOperations(
+            $USER->GetID(),
+            array('delete')
+        );
+        if (in_array(
+                $data["STATUS_ID"],
+                $allowedDeliveryStatusesDelete
+            ) && !$data['ORDER_LOCKED'] && $formType != 'archive') {
+            $sectionDelete = '<div class="adm-bus-pay-section-action" id="SHIPMENT_SECTION_' . $index . '_DELETE">' . Loc::getMessage(
+                    'SALE_ORDER_SHIPMENT_BLOCK_SHIPMENT_DELETE'
+                ) . '</div>';
+        }
 
         $sectionEdit = '';
         $allowedOrderStatusesUpdate = DeliveryStatus::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
-        if (in_array($data["STATUS_ID"], $allowedOrderStatusesUpdate) && !$data['ORDER_LOCKED'] && $formType != 'archive')
-            $sectionEdit = '<div class="adm-bus-pay-section-action" id="SHIPMENT_SECTION_' . $index . '_EDIT"><a href="/bitrix/admin/sale_order_shipment_edit.php?order_id=' . $data['ORDER_ID'] . '&shipment_id=' . $data['ID'] . '&backurl=' . urlencode($backUrl) . '&lang=' . $lang . '">' . Loc::getMessage('SALE_ORDER_SHIPMENT_BLOCK_SHIPMENT_EDIT') . '</a></div>';
+        if (in_array(
+                $data["STATUS_ID"],
+                $allowedOrderStatusesUpdate
+            ) && !$data['ORDER_LOCKED'] && $formType != 'archive') {
+            $sectionEdit = '<div class="adm-bus-pay-section-action" id="SHIPMENT_SECTION_' . $index . '_EDIT">' .
+                static::renderShipmentEditLink($data + ['backurl' => $backUrl]) .
+                Loc::getMessage('SALE_ORDER_SHIPMENT_BLOCK_SHIPMENT_EDIT') . '</a></div>';
+        }
 
         $weightView = roundEx(
                 floatval(
@@ -1197,9 +1477,14 @@ class OrderShipment
 			<div class="adm-bus-component-content-container">
 				<div class="adm-bus-pay-section">
 					<div class="adm-bus-pay-section-title-container">
-						<div class="adm-bus-pay-section-title" id="shipment_' . $data['ID'] . '">' . Loc::getMessage('SALE_ORDER_SHIPMENT_BLOCK_EDIT_SHIPMENT_TITLE', array("#ID#" => $data['ID'], '#DATE_INSERT#' => $dateInsert)) . '</div>
+						<div class="adm-bus-pay-section-title" id="shipment_' . $data['ID'] . '">' . Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_BLOCK_EDIT_SHIPMENT_TITLE',
+                array("#ID#" => $data['ID'], '#DATE_INSERT#' => $dateInsert)
+            ) . '</div>
 						<div class="adm-bus-pay-section-action-block">' . $sectionDelete . $sectionEdit . '						
-							<div class="adm-bus-pay-section-action" id="SHIPMENT_SECTION_' . $index . '_TOGGLE">' . Loc::getMessage('SALE_ORDER_SHIPMENT_BLOCK_SHIPMENT_TOGGLE_UP') . '</div>
+							<div class="adm-bus-pay-section-action" id="SHIPMENT_SECTION_' . $index . '_TOGGLE">' . Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_BLOCK_SHIPMENT_TOGGLE_UP'
+            ) . '</div>
 						</div>
 					</div>
 					<div class="adm-bus-pay-section-content" id="SHIPMENT_SECTION_' . $index . '" style="display:none;">
@@ -1209,58 +1494,90 @@ class OrderShipment
 						</div>
 						<div class="adm-bus-pay-section-right">
 							<div class="adm-bus-table-container caption border">
-								<div class="adm-bus-table-caption-title" style="background: #eef5f5;">' . Loc::getMessage('SALE_ORDER_SHIPMENT_BLOCK_SERVICE') . '</div>
+								<div class="adm-bus-table-caption-title" style="background: #eef5f5;">' . Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_BLOCK_SERVICE'
+            ) . '</div>
 								<table border="0" cellspacing="0" cellpadding="0" width="100%" class="adm-detail-content-table edit-table ">
 									<tbody>
 										<tr>
-											<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage('SALE_ORDER_SHIPMENT_DELIVERY_SERVICE') . ':</td>
+											<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_DELIVERY_SERVICE'
+            ) . ':</td>
 											<td class="adm-detail-content-cell-r">
-												' . (($isAllowCompany === false && $isUserResponsible === false) ? Loc::getMessage('SALE_ORDER_SHIPMENT_HIDDEN') : htmlspecialcharsbx($data['DELIVERY_NAME']) . ' [' . $data['DELIVERY_ID'] . ']') . ' 
+												' . (($isAllowCompany === false && $isUserResponsible === false) ? Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_HIDDEN'
+            ) : htmlspecialcharsbx($data['DELIVERY_NAME']) . ' [' . $data['DELIVERY_ID'] . ']') . ' 
 											</td>
 										</tr>
 									</tbody>
 								</table>
 							</div>
 							<div class="adm-bus-table-container caption border">
-								<div class="adm-bus-table-caption-title" style="background: #eef5f5;">' . Loc::getMessage('SALE_ORDER_SHIPMENT_DELIVERY_BLOCK_PRICE') . '</div>
+								<div class="adm-bus-table-caption-title" style="background: #eef5f5;">' . Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_DELIVERY_BLOCK_PRICE'
+            ) . '</div>
 								<table border="0" cellspacing="0" cellpadding="0" width="100%" class="adm-detail-content-table edit-table">
 									<tbody>
 										<tr style="display: none;">
-											<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage('SALE_ORDER_SHIPMENT_DELIVERY_SUM_PRICE') . ':</td>
+											<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_DELIVERY_SUM_PRICE'
+            ) . ':</td>
 											<td class="adm-detail-content-cell-r tal">
-												' . SaleFormatCurrency(floatval($data['BASE_PRICE_DELIVERY']), $data['CURRENCY']) . '
+												' . SaleFormatCurrency(
+                floatval($data['BASE_PRICE_DELIVERY']),
+                $data['CURRENCY']
+            ) . '
 											</td>
 										</tr>
 										<tr id="sale-order-shipment-discounts-row-' . $index . '" style="display: none;">
-											<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage('SALE_ORDER_SHIPMENT_DISCOUNT') . ':</td>
+											<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_DISCOUNT'
+            ) . ':</td>
 											<td class="adm-detail-content-cell-r tal" id="sale-order-shipment-discounts-container-' . $index . '"></td>
 										</tr>
 										<tr>
-											<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage('SALE_ORDER_SHIPMENT_DELIVERY_SUM_DISCOUNT_PRICE') . ':</td>
-											<td class="adm-detail-content-cell-r tal" id="PRICE_DELIVERY_' . $index . '">' . SaleFormatCurrency(floatval($data['PRICE_DELIVERY']), $data['CURRENCY']) . '<br></td>
+											<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_DELIVERY_SUM_DISCOUNT_PRICE'
+            ) . ':</td>
+											<td class="adm-detail-content-cell-r tal" id="PRICE_DELIVERY_' . $index . '">' . SaleFormatCurrency(
+                floatval($data['PRICE_DELIVERY']),
+                $data['CURRENCY']
+            ) . '<br></td>
 										</tr>
 									</tbody>
 								</table>
 							</div>
 							<div class="adm-bus-table-container caption border">
-								<div class="adm-bus-table-caption-title" style="background: #eef5f5;">' . Loc::getMessage('SALE_ORDER_SHIPMENT_DELIVERY_BLOCK_WEIGHT') . '</div>
+								<div class="adm-bus-table-caption-title" style="background: #eef5f5;">' . Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_DELIVERY_BLOCK_WEIGHT'
+            ) . '</div>
 								<table border="0" cellspacing="0" cellpadding="0" width="100%" class="adm-detail-content-table edit-table">
 									<tbody>
 										<tr>
-											<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage('SALE_ORDER_SHIPMENT_DELIVERY_WEIGHT') . ':</td>
+											<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_DELIVERY_WEIGHT'
+            ) . ':</td>
 											<td class="adm-detail-content-cell-r tal" id="WEIGHT_DELIVERY_' . $index . '">' . $weightView . '<br></td>
 										</tr>
 									</tbody>
 								</table>
 							</div>
 							<div class="adm-bus-table-container caption border">
-								<div class="adm-bus-table-caption-title" style="background: #eef5f5;">' . Loc::getMessage('SALE_ORDER_SHIPMENT_BLOCK_SHIPMENT') . '</div>
+								<div class="adm-bus-table-caption-title" style="background: #eef5f5;">' . Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_BLOCK_SHIPMENT'
+            ) . '</div>
 								<table border="0" cellspacing="0" cellpadding="0" width="100%" class="adm-detail-content-table edit-table ">
 									<tbody>
 										<tr>
-											<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage('SALE_ORDER_SHIPMENT_OFFICE') . ':</td>
+											<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_OFFICE'
+            ) . ':</td>
 											<td class="adm-detail-content-cell-r">
-												' . (($isAllowCompany === false && $isUserResponsible === false) ? Loc::getMessage('SALE_ORDER_SHIPMENT_HIDDEN') : (isset($companyList[$data['COMPANY_ID']]) ? htmlspecialcharsbx($companyList[$data['COMPANY_ID']]) : Loc::getMessage('SALE_ORDER_SHIPMENT_NO_COMPANY'))) . '
+												' . (($isAllowCompany === false && $isUserResponsible === false) ? Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_HIDDEN'
+            ) : (isset($companyList[$data['COMPANY_ID']]) ? htmlspecialcharsbx(
+                $companyList[$data['COMPANY_ID']]
+            ) : Loc::getMessage('SALE_ORDER_SHIPMENT_NO_COMPANY'))) . '
 											</td>
 										</tr>
 									</tbody>
@@ -1268,7 +1585,9 @@ class OrderShipment
 							</div>';
         if ($checkLink) {
             $result .= '<div class="adm-bus-table-container caption border" style="padding-top:10px;">
-						<div class="adm-bus-table-caption-title" style="background: #eef5f5;">' . Loc::getMessage('SALE_ORDER_SHIPMENT_CHECK_LINK_TITLE') . '</div>
+						<div class="adm-bus-table-caption-title" style="background: #eef5f5;">' . Loc::getMessage(
+                    'SALE_ORDER_SHIPMENT_CHECK_LINK_TITLE'
+                ) . '</div>
 						<table border="0" cellspacing="0" cellpadding="0" width="100%" class="adm-detail-content-table edit-table">
 							<tbody>
 							' . $checkLink . '
@@ -1278,35 +1597,55 @@ class OrderShipment
         }
         $result .= '<div class="adm-bus-table-container caption border">
 								<div class="adm-bus-moreInfo_part1">
-									<div class="adm-bus-table-caption-title" style="background: #eef5f5;">' . Loc::getMessage('SALE_ORDER_SHIPMENT_BLOCK_STATUS') . '</div>
+									<div class="adm-bus-table-caption-title" style="background: #eef5f5;">' . Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_BLOCK_STATUS'
+            ) . '</div>
 									<table class="adm-detail-content-table edit-table" border="0" width="100%" cellpadding="0" cellspacing="0">
 										<tbody>
 											<tr>
-												<td class="adm-detail-content-cell-l vat" width="40%">' . Loc::getMessage('SALE_ORDER_SHIPMENT_ALLOW_DELIVERY') . ':</td>
+												<td class="adm-detail-content-cell-l vat" width="40%">' . Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_ALLOW_DELIVERY'
+            ) . ':</td>
 												<td class="adm-detail-content-cell-r delivery-status">' . $allowDelivery . '</td>
 											</tr>
 											' . ((!empty($data['EMP_ALLOW_DELIVERY_ID'])) ? '
 											<tr>
 												<td class="adm-detail-content-cell-l vat" width="40%"></td>
 												<td class="adm-detail-content-cell-r">
-													<div>' . Loc::getMessage('SALE_ORDER_SHIPMENT_MODIFY_BY') . ': <span style="color: #66878F" id="order_additional_info_date_responsible">' . htmlspecialcharsbx($data['DATE_ALLOW_DELIVERY']) . '</span>  <a href="/bitrix/admin/user_edit.php?lang=' . $lang . '&ID=' . $data['EMP_ALLOW_DELIVERY_ID'] . '" id="order_additional_info_emp_responsible">' . htmlspecialcharsbx($data['EMP_ALLOW_DELIVERY_ID_LAST_NAME']) . ' ' . htmlspecialcharsbx($data['EMP_ALLOW_DELIVERY_ID_NAME']) . '</a></div>
+													<div>' . Loc::getMessage(
+                    'SALE_ORDER_SHIPMENT_MODIFY_BY'
+                ) . ': <span style="color: #66878F" id="order_additional_info_date_responsible">' . htmlspecialcharsbx(
+                    $data['DATE_ALLOW_DELIVERY']
+                ) . '</span>  <a href="/bitrix/admin/user_edit.php?lang=' . $lang . '&ID=' . $data['EMP_ALLOW_DELIVERY_ID'] . '" id="order_additional_info_emp_responsible">' . htmlspecialcharsbx(
+                    $data['EMP_ALLOW_DELIVERY_ID_LAST_NAME']
+                ) . ' ' . htmlspecialcharsbx($data['EMP_ALLOW_DELIVERY_ID_NAME']) . '</a></div>
 												</td>
 											</tr>
 											' : '') . '
 											<tr>
-												<td class="adm-detail-content-cell-l vat" width="40%">' . Loc::getMessage('SALE_ORDER_SHIPMENT_DEDUCTED') . ':</td>
+												<td class="adm-detail-content-cell-l vat" width="40%">' . Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_DEDUCTED'
+            ) . ':</td>
 												<td class="adm-detail-content-cell-r"><div class="delivery-status">' . $deducted . '</div></td>
 											</tr>
 											' . ((!empty($data['EMP_DEDUCTED_ID'])) ? '
 											<tr>
 												<td class="adm-detail-content-cell-l vat" width="40%"></td>
 												<td class="adm-detail-content-cell-r">
-													<div>' . Loc::getMessage('SALE_ORDER_SHIPMENT_MODIFY_BY') . ': <span style="color: #66878F" id="order_additional_info_date_responsible">' . htmlspecialcharsbx($data['DATE_DEDUCTED']) . '</span>  <a href="/bitrix/admin/user_edit.php?lang=' . $lang . '&ID=' . $data['EMP_DEDUCTED_ID'] . '" id="order_additional_info_emp_responsible">' . htmlspecialcharsbx($data['EMP_DEDUCTED_ID_LAST_NAME']) . ' ' . htmlspecialcharsbx($data['EMP_DEDUCTED_ID_NAME']) . '</a></div>
+													<div>' . Loc::getMessage(
+                    'SALE_ORDER_SHIPMENT_MODIFY_BY'
+                ) . ': <span style="color: #66878F" id="order_additional_info_date_responsible">' . htmlspecialcharsbx(
+                    $data['DATE_DEDUCTED']
+                ) . '</span>  <a href="/bitrix/admin/user_edit.php?lang=' . $lang . '&ID=' . $data['EMP_DEDUCTED_ID'] . '" id="order_additional_info_emp_responsible">' . htmlspecialcharsbx(
+                    $data['EMP_DEDUCTED_ID_LAST_NAME']
+                ) . ' ' . htmlspecialcharsbx($data['EMP_DEDUCTED_ID_NAME']) . '</a></div>
 												</td>
 											</tr>
 											' : '') . '
 											<tr>
-												<td class="adm-detail-content-cell-l vat" width="40%">' . Loc::getMessage('SALE_ORDER_SHIPMENT_DELIVERY_DOC_STATUS') . ':</td>
+												<td class="adm-detail-content-cell-l vat" width="40%">' . Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_DELIVERY_DOC_STATUS'
+            ) . ':</td>
 												<td class="adm-detail-content-cell-r">
 													<div class="shipment-status">
 														' . $shipmentStatus . '
@@ -1320,7 +1659,9 @@ class OrderShipment
 
         if (!empty($shippingBlockId) || !empty($shippingBlockDocNum) || !empty($shippingBlockDocDate) || !empty($extraServiceHTML)) {
             $result .= '<div class="adm-bus-table-container caption border">
-				<div class="adm-bus-table-caption-title" style="background: #eef5f5;">' . Loc::getMessage('SALE_ORDER_SHIPMENT_BLOCK_DELIVERY_INFO') . '</div>
+				<div class="adm-bus-table-caption-title" style="background: #eef5f5;">' . Loc::getMessage(
+                    'SALE_ORDER_SHIPMENT_BLOCK_DELIVERY_INFO'
+                ) . '</div>
 				<table border="0" cellspacing="0" cellpadding="0" width="100%" class="adm-detail-content-table edit-table ">
 					<tbody>
 						' . $shippingBlockId . $shippingBlockDocNum . $shippingBlockDocDate . '
@@ -1334,20 +1675,26 @@ class OrderShipment
 
         if (!empty($data['DELIVERY_REQUEST_NAME']) || !empty($data['DELIVERY_REQUEST_ERROR_DESCRIPTION'])) {
             $result .= '<div class="adm-bus-table-container caption border">
-				<div class="adm-bus-table-caption-title" style="background: #eef5f5;">' . Loc::getMessage('SALE_ORDER_SHIPMENT_DEL_REQ_INFO') . '</div>
+				<div class="adm-bus-table-caption-title" style="background: #eef5f5;">' . Loc::getMessage(
+                    'SALE_ORDER_SHIPMENT_DEL_REQ_INFO'
+                ) . '</div>
 				<table border="0" cellspacing="0" cellpadding="0" width="100%" class="adm-detail-content-table edit-table ">
 					<tbody>';
 
             if (!empty($data['DELIVERY_REQUEST_NAME'])) {
                 $result .= '<tr>
-						<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage('SALE_ORDER_SHIPMENT_DEL_REQ') . ':</td>
+						<td class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage(
+                        'SALE_ORDER_SHIPMENT_DEL_REQ'
+                    ) . ':</td>
 						<td class="adm-detail-content-cell-r"><a href="' . $data['DELIVERY_REQUEST_LINK'] . '"">' . $data['DELIVERY_REQUEST_NAME'] . '</a></td>
 					</tr>';
             }
 
             if (!empty($data['DELIVERY_REQUEST_ERROR_DESCRIPTION'])) {
                 $result .= '<tr>
-						<td valign="top" class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage('SALE_ORDER_SHIPMENT_DEL_REQ_ERROR') . ':</td>
+						<td valign="top" class="adm-detail-content-cell-l" width="40%">' . Loc::getMessage(
+                        'SALE_ORDER_SHIPMENT_DEL_REQ_ERROR'
+                    ) . ':</td>
 						<td class="adm-detail-content-cell-r">' . $data['DELIVERY_REQUEST_ERROR_DESCRIPTION'] . '</td>
 					</tr>';
             }
@@ -1360,7 +1707,9 @@ class OrderShipment
 
         if (is_array($data['DELIVERY_ADDITIONAL_INFO_VIEW']) && !empty($data['DELIVERY_ADDITIONAL_INFO_VIEW'])) {
             $result .= '<div class="adm-bus-table-container caption border">
-							<div class="adm-bus-table-caption-title" style="background: #eef5f5;">' . Loc::getMessage('SALE_ORDER_SHIPMENT_BLOCK_DELIVERY_ADDITIONAL') . '</div>
+							<div class="adm-bus-table-caption-title" style="background: #eef5f5;">' . Loc::getMessage(
+                    'SALE_ORDER_SHIPMENT_BLOCK_DELIVERY_ADDITIONAL'
+                ) . '</div>
 							<table border="0" cellspacing="0" cellpadding="0" width="100%" class="adm-detail-content-table edit-table ">
 								<tbody><tr>';
 
@@ -1381,7 +1730,11 @@ class OrderShipment
 		<div class="clb"></div>
 		<div class="adm-s-order-shipment-basket-structure">' . Loc::getMessage('SALE_ORDER_SHIPMENT_BASKET') . '</div>';
 
-        $shipmentBasket = new OrderBasketShipment(self::$shipment, "BX.Sale.Admin.ShipmentBasketObj_" . $index, "shipment_basket_" . $index);
+        $shipmentBasket = new OrderBasketShipment(
+            self::$shipment,
+            "BX.Sale.Admin.ShipmentBasketObj_" . $index,
+            "shipment_basket_" . $index
+        );
         $result .= $shipmentBasket->getView($index);
 
         $result .= '</div>';
@@ -1413,6 +1766,22 @@ class OrderShipment
         return $result;
     }
 
+    protected static function renderShipmentEditLink($data)
+    {
+        $backUrl = $data['backurl'];
+        $href = Link::getInstance()
+            ->create()
+            ->setPageByType(Registry::SALE_ORDER_SHIPMENT_EDIT)
+            ->setFilterParams(false)
+            ->fill()
+            ->setField('order_id', $data['ORDER_ID'])
+            ->setField('shipment_id', $data['ID'])
+            ->setField('backurl', $backUrl)
+            ->build();
+
+        return '<a href="' . $href . '">';
+    }
+
     private static function getShortViewTemplate($data, $index, $logo, $formType)
     {
         global $USER;
@@ -1432,53 +1801,74 @@ class OrderShipment
         $deductedString = ($data['DEDUCTED'] == 'Y') ? 'YES' : 'NO';
 
         $allowedStatusesDelivery = DeliveryStatus::getStatusesUserCanDoOperations($USER->GetID(), array('delivery'));
-        $isAllowDelivery = in_array($data["STATUS_ID"], $allowedStatusesDelivery) && $formType != 'archive' && $formType != 'edit';
+        $isAllowDelivery = in_array(
+                $data["STATUS_ID"],
+                $allowedStatusesDelivery
+            ) && $formType != 'archive' && $formType != 'edit';
 
         $isActive = ($formType != 'edit' && $formType != 'archive') && !$data['ORDER_LOCKED'];
         $triangle = ($isActive && $isAllowDelivery) ? '<span class="triangle"> &#9662;</span>' : '';
 
-        if ($data['ALLOW_DELIVERY'] == 'Y')
+        if ($data['ALLOW_DELIVERY'] == 'Y') {
             $class = ($isActive && $isAllowDelivery) ? '' : 'class="not_active"';
-        else
+        } else {
             $class = ($isActive && $isAllowDelivery) ? 'class="notdelivery"' : 'class="notdelivery not_active"';
+        }
 
-        $allowDelivery = '<span><span id="BUTTON_ALLOW_DELIVERY_SHORT_' . $index . '" ' . $class . '>' . Loc::getMessage('SALE_ORDER_SHIPMENT_ALLOW_DELIVERY_' . $allowDeliveryString) . '</span>' . $triangle . '</span>';
+        $allowDelivery = '<span><span id="BUTTON_ALLOW_DELIVERY_SHORT_' . $index . '" ' . $class . '>' . Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_ALLOW_DELIVERY_' . $allowDeliveryString
+            ) . '</span>' . $triangle . '</span>';
 
         $allowedStatusesDeduction = DeliveryStatus::getStatusesUserCanDoOperations($USER->GetID(), array('deduction'));
-        $isAllowDeduction = in_array($data["STATUS_ID"], $allowedStatusesDeduction) && $formType != 'archive' && $formType != 'edit';
+        $isAllowDeduction = in_array(
+                $data["STATUS_ID"],
+                $allowedStatusesDeduction
+            ) && $formType != 'archive' && $formType != 'edit';
 
         $triangle = ($isActive && $isAllowDeduction) ? '<span class="triangle"> &#9662;</span>' : '';
 
-        if ($data['DEDUCTED'] == 'Y')
+        if ($data['DEDUCTED'] == 'Y') {
             $class = ($isActive && $isAllowDeduction) ? '' : 'class="not_active"';
-        else
+        } else {
             $class = ($isActive && $isAllowDeduction) ? 'class="notdeducted"' : 'class="notdeducted not_active"';
-        $deducted = '<span><span id="BUTTON_DEDUCTED_SHORT_' . $index . '" ' . $class . '>' . Loc::getMessage('SALE_ORDER_SHIPMENT_DEDUCTED_' . $deductedString) . '</span>' . $triangle . '</span>';
+        }
+        $deducted = '<span><span id="BUTTON_DEDUCTED_SHORT_' . $index . '" ' . $class . '>' . Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_DEDUCTED_' . $deductedString
+            ) . '</span>' . $triangle . '</span>';
 
         $shipmentStatusList = OrderShipmentStatus::getShipmentStatusList($data['STATUS_ID']);
 
         $allowedStatusesFrom = DeliveryStatus::getStatusesUserCanDoOperations($USER->GetID(), array('from'));
-        $canChangeStatus = in_array($data["STATUS_ID"], $allowedStatusesFrom) && $formType != 'archive' && $formType != 'edit';
+        $canChangeStatus = in_array(
+                $data["STATUS_ID"],
+                $allowedStatusesFrom
+            ) && $formType != 'archive' && $formType != 'edit';
         $triangle = ($isActive && $canChangeStatus) ? '<span class="triangle"> &#9662;</span>' : '';
 
         $class = ($isActive && $canChangeStatus) ? '' : 'class="not_active"';
-        $shipmentStatus = '<span><span id="BUTTON_SHIPMENT_SHORT_' . $index . '" ' . $class . '>' . htmlspecialcharsbx($shipmentStatusList[$data['STATUS_ID']]) . '</span>' . $triangle . '</span>';
+        $shipmentStatus = '<span><span id="BUTTON_SHIPMENT_SHORT_' . $index . '" ' . $class . '>' . htmlspecialcharsbx(
+                $shipmentStatusList[$data['STATUS_ID']]
+            ) . '</span>' . $triangle . '</span>';
 
         $checkLink = '';
         if ($data['FFD_105_ENABLED'] === 'Y' &&
             (
-                ($formType != 'archive' && $data['HAS_ENABLED_CASHBOX'] === 'Y') ||
+                ($formType != 'archive' && $data['HAS_ENABLED_CASHBOX'] === 'Y' && $data['CAN_PRINT_CHECK'] === 'Y') ||
                 !empty($data['CHECK'])
             )
         ) {
-            $checkLink = '<td class="adm-detail-content-cell-l vat">' . Loc::getMessage('SALE_ORDER_SHIPMENT_CHECK_LINK_TITLE') . ':</td><td class="adm-detail-content-cell-l vat">';
+            $checkLink = '<td class="adm-detail-content-cell-l vat">' . Loc::getMessage(
+                    'SALE_ORDER_SHIPMENT_CHECK_LINK_TITLE'
+                ) . ':</td><td class="adm-detail-content-cell-l vat">';
             $checkLink .= '<div id="SHIPMENT_CHECK_LIST_ID_SHORT_VIEW' . $data['ID'] . '">';
             if (!empty($data['CHECK'])) {
                 $checkLink .= OrderShipment::buildCheckHtml($data['CHECK']);
             }
             $checkLink .= "</div>";
-            if ($formType != 'archive' && $data['HAS_ENABLED_CASHBOX'] === 'Y') {
-                $checkLink .= '<div><a href="javascript:void(0);" onclick="BX.Sale.Admin.OrderShipment.prototype.showCreateCheckWindow(' . $data['ID'] . ');">' . Loc::getMessage('SALE_ORDER_SHIPMENT_CHECK_ADD') . '</a></div>';
+            if ($formType != 'archive' && $data['HAS_ENABLED_CASHBOX'] === 'Y' && $data['CAN_PRINT_CHECK'] === 'Y') {
+                $checkLink .= '<div><a href="javascript:void(0);" onclick="BX.Sale.Admin.OrderShipment.prototype.showCreateCheckWindow(' . $data['ID'] . ');">' . Loc::getMessage(
+                        'SALE_ORDER_SHIPMENT_CHECK_ADD'
+                    ) . '</a></div>';
             }
             $checkLink .= '</td>';
         }
@@ -1490,10 +1880,20 @@ class OrderShipment
 									<td class="adm-detail-content-cell-l vat">
 										<div style="background: url(\'' . $logo . '\')" id="delivery_service_short_logo_' . $index . '" class="adm-shipment-block-short-logo"></div>
 									</td>
-									<td class="adm-detail-content-cell-l vat">' . Loc::getMessage('SALE_ORDER_SHIPMENT_DELIVERY_SERVICE') . ': <span>' . (($isAllowCompany === false && $isUserResponsible === false) ? Loc::getMessage('SALE_ORDER_SHIPMENT_HIDDEN') : htmlspecialcharsbx($data['DELIVERY_NAME'])) . '</span></td>
-									<td class="adm-detail-content-cell-l vat"><div class="delivery-status">' . Loc::getMessage('SALE_ORDER_SHIPMENT_ALLOW_DELIVERY') . ': ' . $allowDelivery . '</div></td>
-									<td class="adm-detail-content-cell-l vat"><div class="deducted-status">' . Loc::getMessage('SALE_ORDER_SHIPMENT_DEDUCTED') . ': ' . $deducted . '</div></td>
-									<td class="adm-detail-content-cell-l vat"><div class="shipment-status">' . Loc::getMessage('SALE_ORDER_SHIPMENT_DELIVERY_STATUS') . ': ' . $shipmentStatus . '</div></td>
+									<td class="adm-detail-content-cell-l vat">' . Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_DELIVERY_SERVICE'
+            ) . ': <span>' . (($isAllowCompany === false && $isUserResponsible === false) ? Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_HIDDEN'
+            ) : htmlspecialcharsbx($data['DELIVERY_NAME'])) . '</span></td>
+									<td class="adm-detail-content-cell-l vat"><div class="delivery-status">' . Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_ALLOW_DELIVERY'
+            ) . ': ' . $allowDelivery . '</div></td>
+									<td class="adm-detail-content-cell-l vat"><div class="deducted-status">' . Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_DEDUCTED'
+            ) . ': ' . $deducted . '</div></td>
+									<td class="adm-detail-content-cell-l vat"><div class="shipment-status">' . Loc::getMessage(
+                'SALE_ORDER_SHIPMENT_DELIVERY_STATUS'
+            ) . ': ' . $shipmentStatus . '</div></td>
 									' . $checkLink . '
 								</tr>
 							</tbody>
@@ -1505,9 +1905,11 @@ class OrderShipment
         return $result;
     }
 
-    public static function createNewShipmentButton()
+    public static function createNewShipmentButton($params = [])
     {
-        return '<input type="button" class="adm-order-block-add-button" onclick="BX.Sale.Admin.GeneralShipment.createNewShipment()" value = "' . Loc::getMessage('SALE_ORDER_SHIPMENT_ADD_SHIPMENT') . '">';
+        return '<input type="button" class="adm-order-block-add-button" onclick="BX.Sale.Admin.GeneralShipment.createNewShipment(this,' . \CUtil::PhpToJSObject(
+                $params
+            ) . ')" value = "' . Loc::getMessage('SALE_ORDER_SHIPMENT_ADD_SHIPMENT') . '">';
     }
 
     /**
@@ -1547,7 +1949,10 @@ class OrderShipment
                 $isUserResponsible = true;
             }
 
-            $isAllowCompany = in_array(self::$shipment->getField('COMPANY_ID'), $userCompanyList) || in_array($order->getField('COMPANY_ID'), $userCompanyList);
+            $isAllowCompany = in_array(self::$shipment->getField('COMPANY_ID'), $userCompanyList) || in_array(
+                    $order->getField('COMPANY_ID'),
+                    $userCompanyList
+                );
 
             $fields['IS_USER_RESPONSIBLE'] = $isUserResponsible;
             $fields['IS_ALLOW_COMPANY'] = $isAllowCompany;
@@ -1568,32 +1973,36 @@ class OrderShipment
 
         $empDeductedId = $fields['EMP_DEDUCTED_ID'];
         if ($empDeductedId > 0) {
-            if (!array_key_exists($empDeductedId, $users))
+            if (!array_key_exists($empDeductedId, $users)) {
                 $users[$empDeductedId] = $USER->GetByID($empDeductedId)->Fetch();
+            }
             $fields['EMP_DEDUCTED_ID_NAME'] = $users[$empDeductedId]['NAME'];
             $fields['EMP_DEDUCTED_ID_LAST_NAME'] = $users[$empDeductedId]['LAST_NAME'];
         }
 
         $empAllowDeliveryId = $fields['EMP_ALLOW_DELIVERY_ID'];
         if ($empAllowDeliveryId > 0) {
-            if (!array_key_exists($empAllowDeliveryId, $users))
+            if (!array_key_exists($empAllowDeliveryId, $users)) {
                 $users[$empAllowDeliveryId] = $USER->GetByID($empAllowDeliveryId)->Fetch();
+            }
             $fields['EMP_ALLOW_DELIVERY_ID_NAME'] = $users[$empAllowDeliveryId]['NAME'];
             $fields['EMP_ALLOW_DELIVERY_ID_LAST_NAME'] = $users[$empAllowDeliveryId]['LAST_NAME'];
         }
 
         $empCanceledId = $fields['EMP_CANCELED_ID'];
         if ($empCanceledId > 0) {
-            if (!array_key_exists($empCanceledId, $users))
+            if (!array_key_exists($empCanceledId, $users)) {
                 $users[$empCanceledId] = $USER->GetByID($empCanceledId)->Fetch();
+            }
             $fields['EMP_CANCELLED_ID_NAME'] = $users[$empCanceledId]['NAME'];
             $fields['EMP_CANCELLED_ID_LAST_NAME'] = $users[$empCanceledId]['LAST_NAME'];
         }
 
         $empMarkedId = $fields['EMP_MARKED_ID'];
         if ($empMarkedId > 0) {
-            if (!array_key_exists($empMarkedId, $users))
+            if (!array_key_exists($empMarkedId, $users)) {
                 $users[$empMarkedId] = $USER->GetByID($empMarkedId)->Fetch();
+            }
             $fields['EMP_MARKED_ID_NAME'] = $users[$empMarkedId]['NAME'];
             $fields['EMP_MARKED_ID_LAST_NAME'] = $users[$empMarkedId]['LAST_NAME'];
         }
@@ -1601,14 +2010,18 @@ class OrderShipment
 
         if ($needRecalculate) {
             $calcResult = self::calculateDeliveryPrice(self::$shipment);
-            if ($calcResult->isSuccess())
+            if ($calcResult->isSuccess()) {
                 $fields['CALCULATED_PRICE'] = $calcResult->getPrice();
+            }
         }
 
-        $fields['CALCULATED_WEIGHT'] = self::$shipment->getShipmentItemCollection()->getWeight() / self::getWeightKoef($order->getSiteId());
+        $fields['CALCULATED_WEIGHT'] = self::$shipment->getShipmentItemCollection()->getWeight() / self::getWeightKoef(
+                $order->getSiteId()
+            );
 
-        if ($fields['CUSTOM_PRICE_DELIVERY'] == 'Y' && $fields['ID'] <= 0)
+        if ($fields['CUSTOM_PRICE_DELIVERY'] == 'Y' && $fields['ID'] <= 0) {
             $fields['BASE_PRICE_DELIVERY'] = self::$shipment->getField('BASE_PRICE_DELIVERY');
+        }
 
         $discounts = OrderEdit::getDiscountsApplyResult($order, $needRecalculate);
 
@@ -1619,32 +2032,38 @@ class OrderShipment
         }
 
         foreach ($shipmentIds as $shipmentId) {
-            if ($shipmentId == self::$shipment->getId())
+            if ($shipmentId == self::$shipment->getId()) {
                 $fields['DISCOUNTS'] = $discounts;
+            }
         }
 
         /** @var \Bitrix\Sale\Delivery\Services\Base $delivery */
         $delivery = self::$shipment->getDelivery();
 
         if (!is_null($delivery)) {
-            $fields['HAS_TRACKING'] = strlen($delivery->getTrackingClass()) > 0 ? true : false;
+            $fields['HAS_TRACKING'] = $delivery->getTrackingClass() <> '' ? true : false;
 
             if ($fields['HAS_TRACKING'] && intval($fields['DELIVERY_ID']) > 0) {
                 $trackingManager = \Bitrix\Sale\Delivery\Tracking\Manager::getInstance();
-                $fields['TRACKING_URL'] = $trackingManager->getTrackingUrl($fields['DELIVERY_ID'], $fields['TRACKING_NUMBER']);
+                $fields['TRACKING_URL'] = $trackingManager->getTrackingUrl(
+                    $fields['DELIVERY_ID'],
+                    $fields['TRACKING_NUMBER']
+                );
             }
 
             $fields['DELIVERY_ADDITIONAL_INFO_EDIT'] = $delivery->getAdditionalInfoShipmentEdit(self::$shipment);
             $fields['DELIVERY_ADDITIONAL_INFO_VIEW'] = $delivery->getAdditionalInfoShipmentView(self::$shipment);
         }
 
-        $res = Requests\ShipmentTable::getList(array(
-            'filter' => array('=SHIPMENT_ID' => self::$shipment->getId()),
-            'select' => array(
-                '*',
-                'REQUEST_DATE' => 'REQUEST.DATE'
+        $res = Requests\ShipmentTable::getList(
+            array(
+                'filter' => array('=SHIPMENT_ID' => self::$shipment->getId()),
+                'select' => array(
+                    '*',
+                    'REQUEST_DATE' => 'REQUEST.DATE'
+                )
             )
-        ));
+        );
 
         if ($request = $res->fetch()) {
             if (intval($request['REQUEST_ID']) > 0) {
@@ -1653,15 +2072,19 @@ class OrderShipment
                     array(
                         '#REQUEST_ID#' => $request['REQUEST_ID'],
                         '#REQUEST_DATE#' => $request['REQUEST_DATE']->format(\Bitrix\Main\Type\Date::getFormat())
-                    ));
-                $fields['DELIVERY_REQUEST_LINK'] = '/bitrix/admin/sale_delivery_request_view.php?lang=' . LANGUAGE_ID . '&ID=' . intval($request['REQUEST_ID']);
+                    )
+                );
+                $fields['DELIVERY_REQUEST_LINK'] = '/bitrix/admin/sale_delivery_request_view.php?lang=' . LANGUAGE_ID . '&ID=' . intval(
+                        $request['REQUEST_ID']
+                    );
             }
 
             $sanitizer = new \CBXSanitizer;
             $sanitizer->SetLevel(\CBXSanitizer::SECURE_LEVEL_MIDDLE);
 
-            if (strlen($request['ERROR_DESCRIPTION']) > 0)
+            if ($request['ERROR_DESCRIPTION'] <> '') {
                 $fields['DELIVERY_REQUEST_ERROR_DESCRIPTION'] = $sanitizer->SanitizeHtml($request['ERROR_DESCRIPTION']);
+            }
         }
 
         $fields['FFD_105_ENABLED'] = Cashbox\Manager::isSupportedFFD105() ? 'Y' : 'N';
@@ -1672,6 +2095,10 @@ class OrderShipment
         $dbRes = CashboxTable::getList(array('filter' => array('=ACTIVE' => 'Y', '=ENABLED' => 'Y')));
         $fields['HAS_ENABLED_CASHBOX'] = ($dbRes->fetch()) ? 'Y' : 'N';
 
+        $fields['CAN_PRINT_CHECK'] = 'Y';
+        if (Sale\Cashbox\Manager::isEnabledPaySystemPrint()) {
+            $fields['CAN_PRINT_CHECK'] = 'N';
+        }
 
         $registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
         /** @var Sale\Order $orderClass */
@@ -1683,7 +2110,6 @@ class OrderShipment
 
         return $fields;
     }
-
 
     private static function getDisallowFields()
     {
@@ -1768,9 +2194,13 @@ class OrderShipment
                 if ($basket) {
                     $basketItems = $basket->getBasketItems();
                     foreach ($basketItems as $product) {
-                        $systemShipmentItem = $systemShipmentItemCollection->getItemByBasketCode($product->getBasketCode());
-                        if ($product->isBundleChild() || !$systemShipmentItem || $systemShipmentItem->getQuantity() <= 0)
+                        $systemShipmentItem = $systemShipmentItemCollection->getItemByBasketCode(
+                            $product->getBasketCode()
+                        );
+                        if ($product->isBundleChild() || !$systemShipmentItem || $systemShipmentItem->getQuantity(
+                            ) <= 0) {
                             continue;
+                        }
 
                         $products[] = array(
                             'AMOUNT' => $product->getQuantity(),
@@ -1784,14 +2214,17 @@ class OrderShipment
 
             if ($item['DEDUCTED'] == 'Y') {
                 $basketResult = OrderBasketShipment::updateData($order, self::$shipment, $products);
-                if (!$basketResult->isSuccess())
+                if (!$basketResult->isSuccess()) {
                     $result->addErrors($basketResult->getErrors());
+                }
             }
 
             $extraServices = ($item['EXTRA_SERVICES']) ? $item['EXTRA_SERVICES'] : array();
 
             $shipmentFields = array(
-                'COMPANY_ID' => (isset($item['COMPANY_ID']) && intval($item['COMPANY_ID']) > 0) ? intval($item['COMPANY_ID']) : 0,
+                'COMPANY_ID' => (isset($item['COMPANY_ID']) && intval($item['COMPANY_ID']) > 0) ? intval(
+                    $item['COMPANY_ID']
+                ) : 0,
                 'DEDUCTED' => $item['DEDUCTED'],
                 'DELIVERY_DOC_NUM' => $item['DELIVERY_DOC_NUM'],
                 'TRACKING_NUMBER' => $item['TRACKING_NUMBER'],
@@ -1839,10 +2272,11 @@ class OrderShipment
 
             try {
                 if ($deliveryService = Services\Manager::getObjectById($shipmentFields['DELIVERY_ID'])) {
-                    if ($deliveryService->isProfile())
+                    if ($deliveryService->isProfile()) {
                         $shipmentFields['DELIVERY_NAME'] = $deliveryService->getNameWithParent();
-                    else
+                    } else {
                         $shipmentFields['DELIVERY_NAME'] = $deliveryService->getName();
+                    }
                 }
             } catch (Main\ArgumentNullException $e) {
                 $result->addError(
@@ -1854,10 +2288,11 @@ class OrderShipment
 
             $responsibleId = self::$shipment->getField('RESPONSIBLE_ID');
             if ($item['RESPONSIBLE_ID'] != $responsibleId || empty($responsibleId)) {
-                if (isset($item['RESPONSIBLE_ID']))
+                if (isset($item['RESPONSIBLE_ID'])) {
                     $shipmentFields['RESPONSIBLE_ID'] = $item['RESPONSIBLE_ID'];
-                else
+                } else {
                     $shipmentFields['RESPONSIBLE_ID'] = $order->getField('RESPONSIBLE_ID');
+                }
 
                 if (!empty($shipmentFields['RESPONSIBLE_ID'])) {
                     $shipmentFields['EMP_RESPONSIBLE_ID'] = $USER->getID();
@@ -1865,17 +2300,20 @@ class OrderShipment
                 }
             }
 
-            if ($extraServices)
+            if ($extraServices) {
                 self::$shipment->setExtraServices($extraServices);
+            }
             $setFieldsResult = self::$shipment->setFields($shipmentFields);
-            if (!$setFieldsResult->isSuccess())
+            if (!$setFieldsResult->isSuccess()) {
                 $result->addErrors($setFieldsResult->getErrors());
+            }
             self::$shipment->setStoreId($item['DELIVERY_STORE_ID']);
 
             if ($item['DEDUCTED'] == 'N') {
                 $basketResult = OrderBasketShipment::updateData($order, self::$shipment, $products);
-                if (!$basketResult->isSuccess())
+                if (!$basketResult->isSuccess()) {
                     $result->addErrors($basketResult->getErrors());
+                }
             }
 
             $fields = array(
@@ -1885,10 +2323,11 @@ class OrderShipment
 
             $deliveryPrice = (float)str_replace(',', '.', $item['PRICE_DELIVERY']);
 
-            if ($item['CUSTOM_PRICE_DELIVERY'] == 'Y')
+            if ($item['CUSTOM_PRICE_DELIVERY'] == 'Y') {
                 $fields['BASE_PRICE_DELIVERY'] = $deliveryPrice;
-            else
+            } else {
                 $fields['BASE_PRICE_DELIVERY'] = (float)str_replace(',', '.', $item['BASE_PRICE_DELIVERY']);
+            }
 
             $fields['PRICE_DELIVERY'] = $deliveryPrice;
 
@@ -1900,10 +2339,14 @@ class OrderShipment
             }
 
             if ($deliveryService && !empty($item['ADDITIONAL'])) {
-                $modifiedShipment = $deliveryService->processAdditionalInfoShipmentEdit(self::$shipment, $item['ADDITIONAL']);
+                $modifiedShipment = $deliveryService->processAdditionalInfoShipmentEdit(
+                    self::$shipment,
+                    $item['ADDITIONAL']
+                );
 
-                if ($modifiedShipment && get_class($modifiedShipment) == 'Bitrix\Sale\Shipment')
+                if ($modifiedShipment && get_class($modifiedShipment) == 'Bitrix\Sale\Shipment') {
                     self::$shipment = $modifiedShipment;
+                }
             }
 
             $data['SHIPMENT'][] = self::$shipment;
@@ -1963,8 +2406,9 @@ class OrderShipment
 
         /** @var \Bitrix\Sale\ShipmentItem $systemShipmentItem */
         foreach ($systemShipmentItemCollection as $systemShipmentItem) {
-            if ($systemShipmentItem->getQuantity() <= 0)
+            if ($systemShipmentItem->getQuantity() <= 0) {
                 continue;
+            }
 
             $basketItem = $systemShipmentItem->getBasketItem();
             $shipmentItem = $shipmentItemCollection->createItem($basketItem);
@@ -1980,8 +2424,9 @@ class OrderShipment
 
         $price = 0;
         $calcResult = self::calculateDeliveryPrice($shipment);
-        if ($calcResult->isSuccess())
+        if ($calcResult->isSuccess()) {
             $price = $calcResult->getPrice();
+        }
         $shipment->setField('BASE_PRICE_DELIVERY', $price);
     }
 
@@ -2001,12 +2446,20 @@ class OrderShipment
         foreach ($checkList as $check) {
             $result .= '<div>';
 
-            if (strlen($check['LINK']) > 0) {
-                $result .= '<a href="' . $check['LINK'] . '" target="_blank">' . Loc::getMessage('SALE_ORDER_SHIPMENT_CHECK_LINK', array('#CHECK_ID#' => $check['ID'])) . '</a>';
+            if ($check['LINK'] <> '') {
+                $result .= '<a href="' . $check['LINK'] . '" target="_blank">' . Loc::getMessage(
+                        'SALE_ORDER_SHIPMENT_CHECK_LINK',
+                        array('#CHECK_ID#' => $check['ID'])
+                    ) . '</a>';
             } else {
-                $result .= '<tspan>' . Loc::getMessage('SALE_ORDER_SHIPMENT_CHECK_LINK', array('#CHECK_ID#' => $check['ID']));
+                $result .= '<tspan>' . Loc::getMessage(
+                        'SALE_ORDER_SHIPMENT_CHECK_LINK',
+                        array('#CHECK_ID#' => $check['ID'])
+                    );
                 if ($check['STATUS'] === 'P') {
-                    $result .= ' (<a href="javascript:void(0);" onclick="BX.Sale.Admin.OrderShipment.prototype.sendQueryCheckStatus(' . $check['ID'] . ');">' . Loc::getMessage('SALE_ORDER_SHIPMENT_CHECK_CHECK_STATUS') . '</a>)';
+                    $result .= ' (<a href="javascript:void(0);" onclick="BX.Sale.Admin.OrderShipment.prototype.sendQueryCheckStatus(' . $check['ID'] . ');">' . Loc::getMessage(
+                            'SALE_ORDER_SHIPMENT_CHECK_CHECK_STATUS'
+                        ) . '</a>)';
                 }
                 $result .= '</tspan>';
             }

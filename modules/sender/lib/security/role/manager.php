@@ -7,6 +7,7 @@ use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\AddResult;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Sender\Access\Role\RoleTable;
 use Bitrix\Sender\Internals\Model;
 
 use Bitrix\Bitrix24\Feature;
@@ -65,7 +66,7 @@ class Manager
      */
     public static function getRoleList(array $parameters = [])
     {
-        return Model\Role\RoleTable::getList($parameters);
+        return RoleTable::getList($parameters);
     }
 
     /**
@@ -90,10 +91,12 @@ class Manager
         self::clearMenuCache();
         Model\Role\AccessTable::truncate();
         foreach ($list as $item) {
-            $result = Model\Role\AccessTable::add(array(
-                'ROLE_ID' => $item['ROLE_ID'],
-                'ACCESS_CODE' => $item['ACCESS_CODE']
-            ));
+            $result = Model\Role\AccessTable::add(
+                array(
+                    'ROLE_ID' => $item['ROLE_ID'],
+                    'ACCESS_CODE' => $item['ACCESS_CODE']
+                )
+            );
             if (!$result->isSuccess()) {
                 return $result;
             }
@@ -112,20 +115,24 @@ class Manager
      */
     public static function getRolesByUserId($userId)
     {
-        if (isset(self::$userRoles[$userId]))
+        if (isset(self::$userRoles[$userId])) {
             return self::$userRoles[$userId];
+        }
 
         $result = [];
         $userAccessCodes = \CAccess::getUserCodesArray($userId);
 
-        if (!is_array($userAccessCodes) || count($userAccessCodes) === 0)
+        if (!is_array($userAccessCodes) || count($userAccessCodes) === 0) {
             return [];
+        }
 
-        $cursor = Model\Role\AccessTable::getList([
-            'filter' => [
-                '=ACCESS_CODE' => $userAccessCodes
+        $cursor = Model\Role\AccessTable::getList(
+            [
+                'filter' => [
+                    '=ACCESS_CODE' => $userAccessCodes
+                ]
             ]
-        ]);
+        );
 
         while ($row = $cursor->fetch()) {
             $result[] = $row['ROLE_ID'];
@@ -168,15 +175,15 @@ class Manager
             throw new ArgumentException('Role id should be greater than zero', 'roleId');
         }
 
-        if (Model\Role\RoleTable::getRowById($roleId)) {
+        if (RoleTable::getRowById($roleId)) {
             if (!empty($roleFields)) {
-                $result = Model\Role\RoleTable::update($roleId, $roleFields);
+                $result = RoleTable::update($roleId, $roleFields);
                 if (!$result->isSuccess()) {
                     return $result;
                 }
             }
         } else {
-            $result = Model\Role\RoleTable::add($roleFields);
+            $result = RoleTable::add($roleFields);
             if (!$result->isSuccess()) {
                 return $result;
             }
@@ -188,12 +195,14 @@ class Manager
         Model\Role\PermissionTable::deleteByRoleId($roleId);
         foreach ($normalizedPermissions as $entity => $actions) {
             foreach ($actions as $action => $permission) {
-                $result = Model\Role\PermissionTable::add(array(
-                    'ROLE_ID' => $roleId,
-                    'ENTITY' => $entity,
-                    'ACTION' => $action,
-                    'PERMISSION' => $permission
-                ));
+                $result = Model\Role\PermissionTable::add(
+                    array(
+                        'ROLE_ID' => $roleId,
+                        'ENTITY' => $entity,
+                        'ACTION' => $action,
+                        'PERMISSION' => $permission
+                    )
+                );
                 if (!$result->isSuccess()) {
                     return $result;
                 }
@@ -216,7 +225,7 @@ class Manager
     {
         Model\Role\PermissionTable::deleteByRoleId($roleId);
         Model\Role\AccessTable::deleteByRoleId($roleId);
-        Model\Role\RoleTable::delete($roleId);
+        RoleTable::delete($roleId);
         self::clearMenuCache();
     }
 
@@ -238,7 +247,7 @@ class Manager
      */
     public static function installRoles()
     {
-        $roleRow = Model\Role\RoleTable::getRow([]);
+        $roleRow = RoleTable::getRow([]);
         if ($roleRow) {
             return;
         }
@@ -305,10 +314,12 @@ class Manager
 
         $roleIds = array();
         foreach ($defaultRoles as $roleCode => $role) {
-            $addResult = Model\Role\RoleTable::add(array(
-                'NAME' => $role['NAME'],
-                'XML_ID' => $roleCode,
-            ));
+            $addResult = RoleTable::add(
+                array(
+                    'NAME' => $role['NAME'],
+                    'XML_ID' => $roleCode,
+                )
+            );
 
             $roleId = $addResult->getId();
             if ($roleId) {
@@ -318,20 +329,24 @@ class Manager
         }
 
         if (isset($roleIds['ADMIN'])) {
-            Model\Role\AccessTable::add(array(
-                'ROLE_ID' => $roleIds['ADMIN'],
-                'ACCESS_CODE' => 'G1'
-            ));
+            Model\Role\AccessTable::add(
+                array(
+                    'ROLE_ID' => $roleIds['ADMIN'],
+                    'ACCESS_CODE' => 'G1'
+                )
+            );
         }
         if (isset($roleIds['MANAGER']) && Loader::includeModule('intranet')) {
             $departmentTree = \CIntranetUtils::getDeparmentsTree();
             $rootDepartment = (int)$departmentTree[0][0];
 
             if ($rootDepartment > 0) {
-                Model\Role\AccessTable::add(array(
-                    'ROLE_ID' => $roleIds['MANAGER'],
-                    'ACCESS_CODE' => 'DR' . $rootDepartment
-                ));
+                Model\Role\AccessTable::add(
+                    array(
+                        'ROLE_ID' => $roleIds['MANAGER'],
+                        'ACCESS_CODE' => 'DR' . $rootDepartment
+                    )
+                );
             }
         }
     }

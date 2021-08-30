@@ -1,4 +1,5 @@
 <?
+
 /** @global CMain $APPLICATION */
 define('STOP_STATISTICS', true);
 define('NO_AGENT_CHECK', true);
@@ -82,10 +83,14 @@ if (
     }
 
     if ($request['clearTags'] == 'Y') {
-        $adminNotifyIterator = CAdminNotify::GetList(array(), array('MODULE_ID' => 'sale', 'TAG' => 'BASKET_DISCOUNT_CONVERTED'));
+        $adminNotifyIterator = CAdminNotify::GetList(
+            array(),
+            array('MODULE_ID' => 'sale', 'TAG' => 'BASKET_DISCOUNT_CONVERTED')
+        );
         if ($adminNotifyIterator) {
-            if ($adminNotify = $adminNotifyIterator->Fetch())
+            if ($adminNotify = $adminNotifyIterator->Fetch()) {
                 CAdminNotify::Delete($adminNotify['ID']);
+            }
             unset($adminNotify);
         }
         unset($adminNotifyIterator);
@@ -100,10 +105,14 @@ if (
     $oneStepTime = CSaleBasketDiscountConvert::getDefaultExecutionTime();
 
     if ($ordersCounter == 0) {
-        $adminNotifyIterator = CAdminNotify::GetList(array(), array('MODULE_ID' => 'sale', 'TAG' => 'BASKET_DISCOUNT_CONVERTED'));
+        $adminNotifyIterator = CAdminNotify::GetList(
+            array(),
+            array('MODULE_ID' => 'sale', 'TAG' => 'BASKET_DISCOUNT_CONVERTED')
+        );
         if ($adminNotifyIterator) {
-            if ($adminNotify = $adminNotifyIterator->Fetch())
+            if ($adminNotify = $adminNotifyIterator->Fetch()) {
                 CAdminNotify::Delete($adminNotify['ID']);
+            }
             unset($adminNotify);
         }
         unset($adminNotifyIterator);
@@ -112,7 +121,12 @@ if (
     require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php');
 
     $tabList = array(
-        array('DIV' => 'basketDiscountTab01', 'TAB' => Loc::getMessage('SALE_BASKET_DISCOUNT_TAB'), 'ICON' => 'sale', 'TITLE' => Loc::getMessage('SALE_BASKET_DISCOUNT_TAB_TITLE'))
+        array(
+            'DIV' => 'basketDiscountTab01',
+            'TAB' => Loc::getMessage('SALE_BASKET_DISCOUNT_TAB'),
+            'ICON' => 'sale',
+            'TITLE' => Loc::getMessage('SALE_BASKET_DISCOUNT_TAB_TITLE')
+        )
     );
     $tabControl = new CAdminTabControl('basketDiscountConvert', $tabList, true, true);
     CJSCore::Init(array('date'));
@@ -131,7 +145,9 @@ if (
     <div id="basket_discount_error_div" style="margin:0; display: none;">
         <div class="adm-info-message-wrap adm-info-message-red">
             <div class="adm-info-message">
-                <div class="adm-info-message-title"><? echo Loc::getMessage('SALE_BASKET_DISCOUNT_ERRORS_TITLE'); ?></div>
+                <div class="adm-info-message-title"><? echo Loc::getMessage(
+                        'SALE_BASKET_DISCOUNT_ERRORS_TITLE'
+                    ); ?></div>
                 <div id="basket_discount_error_cont"></div>
                 <div class="adm-info-message-icon"></div>
             </div>
@@ -153,11 +169,13 @@ if (
             <td width="40%"><? echo Loc::getMessage('SALE_BASKET_DISCOUNT_FILTER_TYPE') ?></td>
             <td>
                 <select name="filter_type" id="filter_type">
-                    <option value="all"
-                            selected><? echo Loc::getMessage('SALE_BASKET_DISCOUNT_FILTER_TYPE_ALL'); ?></option>
+                    <option value="all" selected><? echo Loc::getMessage(
+                            'SALE_BASKET_DISCOUNT_FILTER_TYPE_ALL'
+                        ); ?></option>
                     <option value="id"><? echo Loc::getMessage('SALE_BASKET_DISCOUNT_FILTER_TYPE_ID'); ?></option>
-                    <option value="date"
-                            selected><? echo Loc::getMessage('SALE_BASKET_DISCOUNT_FILTER_TYPE_DATE'); ?></option>
+                    <option value="date" selected><? echo Loc::getMessage(
+                            'SALE_BASKET_DISCOUNT_FILTER_TYPE_DATE'
+                        ); ?></option>
                 </select>
             </td>
         </tr>
@@ -175,9 +193,13 @@ if (
             <td><?
                 $calendar = new CAdminCalendar;
                 echo $calendar->CalendarPeriodCustom(
-                    'order_date_from', 'order_date_to',
-                    $startDate->toString(), '',
-                    false, 19, true
+                    'order_date_from',
+                    'order_date_to',
+                    $startDate->toString(),
+                    '',
+                    false,
+                    19,
+                    true
                 );
                 ?></td>
         </tr>
@@ -221,7 +243,11 @@ if (
     );
     ?>
     <script type="text/javascript">
-        var jsBasketDiscountConverter = new BX.Sale.Admin.StepOperations.StepOperationsFilter(<? echo CUtil::PhpToJSObject($jsParams, false, true); ?>);
+        var jsBasketDiscountConverter = new BX.Sale.Admin.StepOperations.StepOperationsFilter(<? echo CUtil::PhpToJSObject(
+            $jsParams,
+            false,
+            true
+        ); ?>);
         BX.ready(function () {
             var filterType = BX('filter_type'),
                 filterId = BX('tr_filter_id'),

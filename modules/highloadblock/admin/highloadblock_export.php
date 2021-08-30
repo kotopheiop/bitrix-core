@@ -1,4 +1,5 @@
 <?php
+
 define('ADMIN_MODULE_NAME', 'highloadblock');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_before.php');
 
@@ -19,14 +20,18 @@ if (!CModule::IncludeModule(ADMIN_MODULE_NAME)) {
 // init data
 $hls = array();
 $hlsVisual = array();
-$res = HL\HighloadBlockTable::getList(array(
-    'select' => array(
-        '*', 'NAME_LANG' => 'LANG.NAME'
-    ),
-    'order' => array(
-        'NAME_LANG' => 'ASC', 'NAME' => 'ASC'
+$res = HL\HighloadBlockTable::getList(
+    array(
+        'select' => array(
+            '*',
+            'NAME_LANG' => 'LANG.NAME'
+        ),
+        'order' => array(
+            'NAME_LANG' => 'ASC',
+            'NAME' => 'ASC'
+        )
     )
-));
+);
 while ($row = $res->fetch()) {
     $row['NAME_LANG'] = $row['NAME_LANG'] != '' ? $row['NAME_LANG'] : $row['NAME'];
     $hlsVisual[$row['ID']] = $row;
@@ -105,7 +110,7 @@ if (
     );
 
     // check filename
-    if (substr($NS['url_data_file'], -4) != '.xml') {
+    if (mb_substr($NS['url_data_file'], -4) != '.xml') {
         $error = Loc::getMessage('XML_FILENAME_IS_NOT_XML');
     }
     if (!preg_match('/^[a-zA-Z0-9_\/.]+$/', $NS['url_data_file'], $n)) {
@@ -114,25 +119,29 @@ if (
 
     // first level errors
     if ($error != '') {
-        \CAdminMessage::ShowMessage(array(
-            'MESSAGE' => Loc::getMessage('ADMIN_TOOLS_ERROR_EXPORT'),
-            'DETAILS' => $error,
-            'HTML' => true,
-            'TYPE' => 'ERROR',
-        ));
+        \CAdminMessage::ShowMessage(
+            array(
+                'MESSAGE' => Loc::getMessage('ADMIN_TOOLS_ERROR_EXPORT'),
+                'DETAILS' => $error,
+                'HTML' => true,
+                'TYPE' => 'ERROR',
+            )
+        );
         echo '<script>CloseWaitWindow();</script>';
         echo '<script>EndExport();</script>';
         require($_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/main/include/epilog_admin_js.php');
     }
 
     // create / open file
-    $export = new \Bitrix\Main\XmlWriter(array(
-        'file' => $NS['url_data_file'],
-        'create_file' => $NS['step'] == 0,
-        'charset' => SITE_CHARSET,
-        'lowercase' => true,
-        'tab' => $NS['step'] == 0 ? 0 : 2
-    ));
+    $export = new \Bitrix\Main\XmlWriter(
+        array(
+            'file' => $NS['url_data_file'],
+            'create_file' => $NS['step'] == 0,
+            'charset' => SITE_CHARSET,
+            'lowercase' => true,
+            'tab' => $NS['step'] == 0 ? 0 : 2
+        )
+    );
     $export->openFile();
 
     if (!$export->getErrors()) {
@@ -141,20 +150,26 @@ if (
             $export->writeBeginTag('hiblock');
             // write hlblock
             if ($NS['export_hl'] && $NS['object']) {
-                $export->writeItem(array(
-                    'hiblock' => $hls[$NS['object']]
-                ));
+                $export->writeItem(
+                    array(
+                        'hiblock' => $hls[$NS['object']]
+                    )
+                );
                 // write langs
                 $export->writeBeginTag('langs');
-                $res = HL\HighloadBlockLangTable::getList(array(
-                    'filter' => array(
-                        'ID' => $NS['object']
+                $res = HL\HighloadBlockLangTable::getList(
+                    array(
+                        'filter' => array(
+                            'ID' => $NS['object']
+                        )
                     )
-                ));
+                );
                 while ($row = $res->fetch()) {
-                    $export->writeItem(array(
-                        'lang' => $row
-                    ));
+                    $export->writeItem(
+                        array(
+                            'lang' => $row
+                        )
+                    );
                 }
                 $export->writeEndTag('langs');
             }
@@ -198,13 +213,17 @@ if (
                             $hid = $row['SETTINGS']['HLBLOCK_ID'];
                             $row['SETTINGS']['HLBLOCK_TABLE'] = $hls[$hid]['TABLE_NAME'];
                         }
-                        if (isset($row['SETTINGS']['EXTENSIONS']) && is_array($row['SETTINGS']['EXTENSIONS']) && $row['USER_TYPE_ID'] == 'file') {
+                        if (isset($row['SETTINGS']['EXTENSIONS']) && is_array(
+                                $row['SETTINGS']['EXTENSIONS']
+                            ) && $row['USER_TYPE_ID'] == 'file') {
                             $row['SETTINGS']['EXTENSIONS'] = implode(', ', array_keys($row['SETTINGS']['EXTENSIONS']));
                         }
                     }
-                    $export->writeItem(array(
-                        'field' => $row
-                    ));
+                    $export->writeItem(
+                        array(
+                            'field' => $row
+                        )
+                    );
                     $row['enum_values'] = $enumValues;
                     $userFelds[$row['FIELD_NAME']] = $row;
                 }
@@ -241,16 +260,18 @@ if (
             $dataExist = false;
             if ($hlblock = HL\HighloadBlockTable::getById($NS['object'])->fetch()) {
                 $startTime = time();
-                $filesPath = $server->getDocumentRoot() . substr($NS['url_data_file'], 0, -4) . '_files';
+                $filesPath = $server->getDocumentRoot() . mb_substr($NS['url_data_file'], 0, -4) . '_files';
                 $entity = HL\HighloadBlockTable::compileEntity($hlblock)->getDataClass();
-                $res = $entity::getList(array(
-                    'filter' => array(
-                        '>ID' => $NS['last_id']
-                    ),
-                    'order' => array(
-                        'ID' => 'ASC'
+                $res = $entity::getList(
+                    array(
+                        'filter' => array(
+                            '>ID' => $NS['last_id']
+                        ),
+                        'order' => array(
+                            'ID' => 'ASC'
+                        )
                     )
-                ));
+                );
                 while ($row = $res->fetch()) {
                     foreach ($row as $k => $v) {
                         if ($userFelds[$k]['BASE_TYPE'] == 'file') {
@@ -268,9 +289,11 @@ if (
                         }
                         $row[$k] = $v;
                     }
-                    $export->writeItem(array(
-                        'item' => $row
-                    ));
+                    $export->writeItem(
+                        array(
+                            'item' => $row
+                        )
+                    );
                     $dataExist = true;
                     $NS['count']++;
                     $NS['last_id'] = $row['ID'];
@@ -284,11 +307,13 @@ if (
                 }
 
                 // calculate margins
-                $res = $entity::getList(array(
-                    'select' => array(
-                        new \Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(*)'),
+                $res = $entity::getList(
+                    array(
+                        'select' => array(
+                            new \Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(*)'),
+                        )
                     )
-                ));
+                );
                 if ($row = $res->fetch()) {
                     $NS['all'] = $row['CNT'];
                     $NS['right_margin'] = $row['CNT'] - $NS['count'];
@@ -314,48 +339,70 @@ if (
         foreach ($export->getErrors() as $error) {
             $errors[] = Loc::getMessage($error->getCode());
         }
-        \CAdminMessage::ShowMessage(array(
-            'MESSAGE' => Loc::getMessage('ADMIN_TOOLS_ERROR_EXPORT'),
-            'DETAILS' => implode('<br/>', $errors),
-            'HTML' => true,
-            'TYPE' => 'ERROR',
-        ));
+        \CAdminMessage::ShowMessage(
+            array(
+                'MESSAGE' => Loc::getMessage('ADMIN_TOOLS_ERROR_EXPORT'),
+                'DETAILS' => implode('<br/>', $errors),
+                'HTML' => true,
+                'TYPE' => 'ERROR',
+            )
+        );
     } else {
-        $details = Loc::getMessage('ADMIN_TOOLS_PROCESS_PERCENT',
+        $details = Loc::getMessage(
+            'ADMIN_TOOLS_PROCESS_PERCENT',
             array(
                 '#percent#' => $NS['percent'],
                 '#count#' => $NS['count'],
                 '#all#' => $NS['all'],
-            ));
+            )
+        );
         if ($NS['finish']) {
             $pathInfo = pathinfo($NS['url_data_file']);
             $pathInfo['files_dir'] = $pathInfo['filename'] . '_files';
-            $details .= '<br/>' . Loc::getMessage('ADMIN_TOOLS_PROCESS_FINAL', array(
-                    '#xml_link#' => '<a href="/bitrix/admin/fileman_admin.php?lang=' . LANG . '&amp;path=' . htmlspecialcharsbx(urlencode($pathInfo['dirname'])) . '&amp;set_filter=Y&amp;find_name=' . htmlspecialcharsbx(urlencode($pathInfo['basename'])) . '" target="_blank">' .
-                        htmlspecialcharsbx($pathInfo['basename']) .
-                        '</a>'
-                ));
-            if ($NS['has_files']) {
-                $details .= '<br/>' . Loc::getMessage('ADMIN_TOOLS_PROCESS_FILES_FINAL', array(
-                        '#files_link#' => '<a href="/bitrix/admin/fileman_admin.php?lang=' . LANG . '&amp;path=' . htmlspecialcharsbx(urlencode($pathInfo['dirname'])) . '&amp;set_filter=Y&amp;find_name=' . htmlspecialcharsbx(urlencode($pathInfo['files_dir'])) . '" target="_blank">' .
-                            htmlspecialcharsbx($pathInfo['files_dir']) .
+            $details .= '<br/>' . Loc::getMessage(
+                    'ADMIN_TOOLS_PROCESS_FINAL',
+                    array(
+                        '#xml_link#' => '<a href="/bitrix/admin/fileman_admin.php?lang=' . LANG . '&amp;path=' . htmlspecialcharsbx(
+                                urlencode($pathInfo['dirname'])
+                            ) . '&amp;set_filter=Y&amp;find_name=' . htmlspecialcharsbx(
+                                urlencode($pathInfo['basename'])
+                            ) . '" target="_blank">' .
+                            htmlspecialcharsbx($pathInfo['basename']) .
                             '</a>'
-                    ));
+                    )
+                );
+            if ($NS['has_files']) {
+                $details .= '<br/>' . Loc::getMessage(
+                        'ADMIN_TOOLS_PROCESS_FILES_FINAL',
+                        array(
+                            '#files_link#' => '<a href="/bitrix/admin/fileman_admin.php?lang=' . LANG . '&amp;path=' . htmlspecialcharsbx(
+                                    urlencode($pathInfo['dirname'])
+                                ) . '&amp;set_filter=Y&amp;find_name=' . htmlspecialcharsbx(
+                                    urlencode($pathInfo['files_dir'])
+                                ) . '" target="_blank">' .
+                                htmlspecialcharsbx($pathInfo['files_dir']) .
+                                '</a>'
+                        )
+                    );
             }
         }
-        \CAdminMessage::ShowMessage(array(
-            'MESSAGE' => Loc::getMessage('ADMIN_TOOLS_PROCESS_EXPORT'),
-            'DETAILS' => $details,
-            'HTML' => true,
-            'TYPE' => 'PROGRESS',
-        ));
-        if ($NS['finish']) {
-            \CAdminMessage::ShowMessage(array(
-                'MESSAGE' => Loc::getMessage('ADMIN_TOOLS_PROCESS_FINISH_DELETE'),
-                'DETAILS' => '',
+        \CAdminMessage::ShowMessage(
+            array(
+                'MESSAGE' => Loc::getMessage('ADMIN_TOOLS_PROCESS_EXPORT'),
+                'DETAILS' => $details,
                 'HTML' => true,
-                'TYPE' => 'ERROR',
-            ));
+                'TYPE' => 'PROGRESS',
+            )
+        );
+        if ($NS['finish']) {
+            \CAdminMessage::ShowMessage(
+                array(
+                    'MESSAGE' => Loc::getMessage('ADMIN_TOOLS_PROCESS_FINISH_DELETE'),
+                    'DETAILS' => '',
+                    'HTML' => true,
+                    'TYPE' => 'ERROR',
+                )
+            );
         }
     }
     echo '<script>CloseWaitWindow();</script>';

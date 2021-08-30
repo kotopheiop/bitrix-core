@@ -47,7 +47,11 @@ class CodeTree
             } else {
                 $stmt = trim($stmt, "\n\t");
                 $stmt = preg_replace("/\\n[\\t]+/", "\n", $stmt);
-                $code .= str_repeat("\t", $level) . str_replace("\n\$", "\n" . str_repeat("\t", $level) . "\$", $stmt) . "\n";
+                $code .= str_repeat("\t", $level) . str_replace(
+                        "\n\$",
+                        "\n" . str_repeat("\t", $level) . "\$",
+                        $stmt
+                    ) . "\n";
             }
         }
         return $code;
@@ -103,11 +107,14 @@ class CodeTree
             }
 
             if ($byPredicates) {
-                sortByColumn($byPredicates, array(
-                    "dep" => SORT_ASC,
-                    "count" => SORT_DESC,
-                    "sort" => SORT_ASC,
-                ));
+                sortByColumn(
+                    $byPredicates,
+                    array(
+                        "dep" => SORT_ASC,
+                        "count" => SORT_DESC,
+                        "sort" => SORT_ASC,
+                    )
+                );
                 $mostPopular = key($byPredicates);
                 $subSteps = array();
                 $ifStatement = array(
@@ -130,7 +137,7 @@ class CodeTree
                     && is_array($ifStatement["body"][0])
                     && isset($ifStatement["body"][0]["if"])
                     && isset($ifStatement["body"][0]["body"])
-                    && strlen(implode(' && ', array_merge($ifStatement["if"], $ifStatement["body"][0]["if"]))) < 100
+                    && mb_strlen(implode(' && ', array_merge($ifStatement["if"], $ifStatement["body"][0]["if"]))) < 100
                 ) {
                     $ifStatement["if"] = array_merge($ifStatement["if"], $ifStatement["body"][0]["if"]);
                     $ifStatement["body"] = $ifStatement["body"][0]["body"];
@@ -147,13 +154,14 @@ class CodeTree
      */
     protected function getPredicateSort($predicate)
     {
-        if (strpos($predicate, "CanUpdateDatabase"))
+        if (mb_strpos($predicate, "CanUpdateDatabase")) {
             return 10;
-        elseif (strpos($predicate, "->type"))
+        } elseif (mb_strpos($predicate, "->type")) {
             return 20;
-        elseif (strpos($predicate, "TableExists"))
+        } elseif (mb_strpos($predicate, "TableExists")) {
             return 30;
-        else
+        } else {
             return 50;
+        }
     }
 }

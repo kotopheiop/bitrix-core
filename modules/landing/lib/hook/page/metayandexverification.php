@@ -18,10 +18,13 @@ class MetaYandexVerification extends \Bitrix\Landing\Hook\Page
     {
         $helpUrl = \Bitrix\Landing\Help::getHelpUrl('META_YANDEX_VERIFICATION');
         return array(
-            'USE' => new Field\Checkbox('USE', array(
+            'USE' => new Field\Checkbox(
+                'USE', array(
                 'title' => Loc::getMessage('LANDING_HOOK_YANDEX_VERIF_TITLE')
-            )),
-            'META' => new Field\Text('META', array(
+            )
+            ),
+            'META' => new Field\Text(
+                'META', array(
                 'title' => Loc::getMessage('LANDING_HOOK_YANDEX_VERIF_TITLE'),
                 'placeholder' => '<meta name="yandex-verification" content="9fe8a037d323d50a5faed82923c1438f" />',
                 'help' => $helpUrl
@@ -29,7 +32,8 @@ class MetaYandexVerification extends \Bitrix\Landing\Hook\Page
                     Loc::getMessage('LANDING_HOOK_DETAIL_HELP') .
                     '</a>'
                     : ''
-            ))
+            )
+            )
         );
     }
 

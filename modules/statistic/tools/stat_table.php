@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 class CCityLookup_stat_table extends CCityLookup
@@ -33,8 +34,9 @@ class CCityLookup_stat_table extends CCityLookup
                 $city_recs = COption::GetOptionString("statistic", "CITY_INDEX_LOADED", "N");
                 if ($city_recs !== "Y") {
                     $rs = $DB->Query(CStatistics::DBTopSql("SELECT /*TOP*/ * FROM b_stat_city_ip", 1));
-                    if ($rs->Fetch())
+                    if ($rs->Fetch()) {
                         COption::SetOptionString("statistic", "CITY_INDEX_LOADED", "Y");
+                    }
                 }
                 $this->city_avail = COption::GetOptionString("statistic", "CITY_INDEX_LOADED", "N") === "Y";
             }
@@ -48,7 +50,8 @@ class CCityLookup_stat_table extends CCityLookup
         if (!$this->country_full_name && !$this->region_name && !$this->city_name) {
             if ($this->city_id > 0) {
                 $DB = CDatabase::GetModuleConnection('statistic');
-                $rs = $DB->Query("
+                $rs = $DB->Query(
+                    "
 					SELECT
 						C.NAME COUNTRY_NAME,
 						CITY.REGION REGION_NAME,
@@ -57,7 +60,8 @@ class CCityLookup_stat_table extends CCityLookup
 						b_stat_city CITY
 						INNER JOIN b_stat_country C on C.ID = CITY.COUNTRY_ID
 					WHERE
-						CITY.ID = " . intval($this->city_id));
+						CITY.ID = " . intval($this->city_id)
+                );
                 $ar = $rs->Fetch();
                 if ($ar) {
                     $this->country_full_name = $ar["COUNTRY_NAME"];
@@ -73,7 +77,13 @@ class CCityLookup_stat_table extends CCityLookup
     {
         return array(
             "CLASS" => "CCityLookup_stat_table",
-            "DESCRIPTION" => GetMessage("STAT_CITY_TABLE_DESCR", array("#WIZARD_HREF#" => "javascript:WizardWindow.Open('bitrix:statistic.locations','" . bitrix_sessid() . "')")),
+            "DESCRIPTION" => GetMessage(
+                "STAT_CITY_TABLE_DESCR",
+                array(
+                    "#WIZARD_HREF#" => "javascript:WizardWindow.Open('bitrix:statistic.locations','" . bitrix_sessid(
+                        ) . "')"
+                )
+            ),
             "IS_INSTALLED" => true,
             "CAN_LOOKUP_COUNTRY" => $this->country_avail,
             "CAN_LOOKUP_CITY" => $this->city_avail,
@@ -90,7 +100,8 @@ class CCityLookup_stat_table extends CCityLookup
         $DB = CDatabase::GetModuleConnection('statistic');
 
         if ($this->city_avail && $this->ip_number) {
-            $rs = $DB->Query("
+            $rs = $DB->Query(
+                "
 				SELECT *
 				FROM b_stat_city_ip
 				WHERE START_IP = (
@@ -99,7 +110,9 @@ class CCityLookup_stat_table extends CCityLookup
 					WHERE START_IP <= " . $this->ip_number . "
 				)
 				AND END_IP >= " . $this->ip_number . "
-			", true);
+			",
+                true
+            );
 
             if ($rs) {
                 $ar = $rs->Fetch();
@@ -110,21 +123,25 @@ class CCityLookup_stat_table extends CCityLookup
             } else {
                 //Here is mysql 4.0 version which does not supports subqueries
                 //and not smart to optimeze query
-                $rs = $DB->Query("
+                $rs = $DB->Query(
+                    "
 					SELECT START_IP
 					FROM b_stat_city_ip
 					WHERE START_IP <= " . $this->ip_number . "
 					ORDER BY START_IP DESC
 					LIMIT 1
-				");
+				"
+                );
                 $ar = $rs->Fetch();
-                if ($ar && strlen($ar["START_IP"]) > 0) {
-                    $rs = $DB->Query("
+                if ($ar && $ar["START_IP"] <> '') {
+                    $rs = $DB->Query(
+                        "
 						SELECT *
 						FROM b_stat_city_ip
 						WHERE START_IP = " . $ar["START_IP"] . "
 						AND END_IP >= " . $this->ip_number . "
-					");
+					"
+                    );
                     $ar = $rs->Fetch();
                     if ($ar) {
                         $this->country_code = $ar["COUNTRY_ID"];

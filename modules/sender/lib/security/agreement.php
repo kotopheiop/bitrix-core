@@ -21,12 +21,14 @@ class Agreement
      */
     public static function isAcceptedByUser($userId)
     {
-        $agreement = AgreementTable::getRow(array(
-            'select' => array('ID'),
-            'filter' => array('=USER_ID' => $userId),
-            'limit' => 1,
-            'cache' => array('ttl' => 3600)
-        ));
+        $agreement = AgreementTable::getRow(
+            array(
+                'select' => array('ID'),
+                'filter' => array('=USER_ID' => $userId),
+                'limit' => 1,
+                'cache' => array('ttl' => 3600)
+            )
+        );
 
         return !empty($agreement);
     }
@@ -56,12 +58,14 @@ class Agreement
             return true;
         }
 
-        $result = AgreementTable::add(array(
-            'USER_ID' => User::current()->getId(),
-            'NAME' => User::current()->getObject()->GetFullName(),
-            'EMAIL' => User::current()->getObject()->GetEmail(),
-            'IP_ADDRESS' => Context::getCurrent()->getRequest()->getRemoteAddress(),
-        ));
+        $result = AgreementTable::add(
+            array(
+                'USER_ID' => User::current()->getId(),
+                'NAME' => User::current()->getObject()->GetFullName(),
+                'EMAIL' => User::current()->getObject()->GetEmail(),
+                'IP_ADDRESS' => Context::getCurrent()->getRequest()->getRemoteAddress(),
+            )
+        );
 
         return $result->isSuccess();
     }

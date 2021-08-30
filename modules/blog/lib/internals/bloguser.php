@@ -19,45 +19,63 @@ class BlogUserTable extends Entity\DataManager
     public static function getMap()
     {
         return array(
-            new Entity\IntegerField('ID', array(
+            new Entity\IntegerField(
+                'ID', array(
                 'primary' => true,
                 'autocomplete' => true,
-            )),
+            )
+            ),
 
-            new Entity\IntegerField('USER_ID', array(
+            new Entity\IntegerField(
+                'USER_ID', array(
                 'required' => true,
-            )),
+            )
+            ),
 
-            new Entity\StringField('ALIAS', array(
+            new Entity\StringField(
+                'ALIAS', array(
                 'required' => false,
                 'validation' => array(__CLASS__, 'validateAlias'),
-            )),
+            )
+            ),
 
-            new Entity\TextField('DESCRIPTION', array(
+            new Entity\TextField(
+                'DESCRIPTION', array(
                 'required' => false,
-            )),
+            )
+            ),
 
-            new Entity\IntegerField('AVATAR', array(
+            new Entity\IntegerField(
+                'AVATAR', array(
                 'required' => false,
-            )),
+            )
+            ),
 
-            new Entity\StringField('INTERESTS', array(
+            new Entity\StringField(
+                'INTERESTS', array(
                 'required' => false,
                 'validation' => array(__CLASS__, 'validateInterests'),
-            )),
+            )
+            ),
 
-            new Entity\DatetimeField('LAST_VISIT', array(
+            new Entity\DatetimeField(
+                'LAST_VISIT', array(
                 'required' => false,
-            )),
+            )
+            ),
 
-            new Entity\DatetimeField('DATE_REG', array(
+            new Entity\DatetimeField(
+                'DATE_REG', array(
                 'required' => true,
-            )),
+            )
+            ),
 
-            new Entity\BooleanField('ALLOW_POST', array(
+            new Entity\BooleanField(
+                'ALLOW_POST', array(
                 'required' => true,
                 'values' => array('N', 'Y'),
-            )),
+            )
+            ),
 
             new Entity\ReferenceField(
                 'USER',
@@ -75,7 +93,7 @@ class BlogUserTable extends Entity\DataManager
     public static function validateAlias()
     {
         return array(
-            new Entity\Validator\Length(NULL, 255),
+            new Entity\Validator\Length(null, 255),
         );
     }
 
@@ -87,7 +105,7 @@ class BlogUserTable extends Entity\DataManager
     public static function validateInterests()
     {
         return array(
-            new Entity\Validator\Length(NULL, 255),
+            new Entity\Validator\Length(null, 255),
         );
     }
 

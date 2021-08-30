@@ -27,7 +27,7 @@ final class OrderBuilderNew implements IOrderBuilderDelegate
             $siteId = $data['LID'];
         }
 
-        if (strlen($siteId) <= 0) {
+        if ($siteId == '') {
             $this->builder->getErrorsContainer()->addError(new Error(Loc::getMessage("SALE_HLP_OBN_SITEID_ABSENT")));
             throw new BuildingException();
         }
@@ -54,7 +54,9 @@ final class OrderBuilderNew implements IOrderBuilderDelegate
         $order = $orderClassName::create($siteId, $currentUserId, $currency);
 
         if (!$order) {
-            $this->builder->getErrorsContainer()->addError(new Error(Loc::getMessage("SALE_HLP_OBE_ORDER_NOT_CREATED")));
+            $this->builder->getErrorsContainer()->addError(
+                new Error(Loc::getMessage("SALE_HLP_OBE_ORDER_NOT_CREATED"))
+            );
             throw new BuildingException();
         }
 
@@ -92,16 +94,20 @@ final class OrderBuilderNew implements IOrderBuilderDelegate
             'USER_ID',
             $this->builder->getUserId()
         );
-        $personTypeId = (int)$this->builder->getOrder()->getPersonTypeId();
-        $currentUserId = $this->builder->getOrder()->getUserId();
+
+        $currentUserId = (int)$this->builder->getOrder()->getUserId();
         $oldFormDataUserId = (int)$this->builder->getFormData('OLD_USER_ID');
-        $reloadProfile = ((int)$currentUserId !== $oldFormDataUserId);
-        if (!$reloadProfile && (int)$this->builder->getFormData('OLD_PERSON_TYPE_ID') !== $personTypeId) {
+
+        $currentPersonTypeId = (int)$this->builder->getOrder()->getPersonTypeId();
+        $oldPersonTypeId = (int)$this->builder->getFormData('OLD_PERSON_TYPE_ID');
+
+        $reloadProfile = $oldFormDataUserId > 0 && $currentUserId !== $oldFormDataUserId;
+        if (!$reloadProfile && $oldPersonTypeId > 0 && $oldPersonTypeId !== $currentPersonTypeId) {
             $reloadProfile = true;
         }
 
         if ($reloadProfile) {
-            $resultLoading = \Bitrix\Sale\OrderUserProperties::loadProfiles($currentUserId, $personTypeId);
+            $resultLoading = \Bitrix\Sale\OrderUserProperties::loadProfiles($currentUserId, $currentPersonTypeId);
             if (!$resultLoading->isSuccess()) {
                 return;
             }
@@ -109,34 +115,25 @@ final class OrderBuilderNew implements IOrderBuilderDelegate
             if (empty($profiles) || !is_array($profiles)) {
                 return;
             }
-            $currentProfile = current($profiles[$personTypeId]);
+            $currentProfile = current($profiles[$currentPersonTypeId]);
             if (empty($currentProfile)) {
                 return;
             }
             $values = $currentProfile['VALUES'];
             $propertyCollection = $this->builder->getOrder()->getPropertyCollection();
             $propertyCollection->setValuesFromPost(
-                ['PROPERTIES' => $values], []
+                ['PROPERTIES' => $values],
+                []
             );
         }
     }
 
     public function setShipmentPriceFields(Shipment $shipment, array $fields)
     {
-        if ($fields['CUSTOM_PRICE_DELIVERY'] == 'Y') {
-            $priceDelivery = $fields['PRICE_DELIVERY'];
-        } else {
-            $calcPrice = $shipment->calculateDelivery();
-
-            if (!$calcPrice->isSuccess()) {
-                $this->builder->getErrorsContainer()->addErrors($calcPrice->getErrors());
-            }
-
-            $priceDelivery = $calcPrice->getPrice();
+        if ($fields['CUSTOM_PRICE_DELIVERY'] !== 'Y') {
+            $fields['PRICE_DELIVERY'] = $shipment->calculateDelivery()->getPrice();
+            $fields['BASE_PRICE_DELIVERY'] = $fields['PRICE_DELIVERY'];
         }
-
-        $fields['BASE_PRICE_DELIVERY'] = $priceDelivery;
-        $fields['PRICE_DELIVERY'] = $priceDelivery;
 
         $res = $shipment->setFields($fields);
 

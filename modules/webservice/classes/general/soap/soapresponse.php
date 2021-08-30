@@ -23,13 +23,13 @@ class CSOAPResponse extends CSOAPEnvelope
     /// Contains the DOM document for the current SOAP response
     var $DOMDocument = false;
 
-    function CSOAPResponse($name = "", $namespace = "")
+    public function __construct($name = "", $namespace = "")
     {
         $this->Name = $name;
         $this->Namespace = $namespace;
 
         // call the parents constructor
-        $this->CSOAPEnvelope();
+        parent::__construct();
     }
 
     //	Decodes the SOAP response stream
@@ -39,8 +39,10 @@ class CSOAPResponse extends CSOAPEnvelope
 
         $stream_cutted = $this->stripHTTPHeader($stream);
         if (!$stream_cutted or !class_exists("CDataXML")) {
-            $APPLICATION->ThrowException("Error: BitrixXMLParser. "
-                . "Downloaded page: <br>" . htmlspecialcharsEx($stream));
+            $APPLICATION->ThrowException(
+                "Error: BitrixXMLParser. "
+                . "Downloaded page: <br>" . htmlspecialcharsEx($stream)
+            );
             return;
         }
 
@@ -120,13 +122,14 @@ class CSOAPResponse extends CSOAPEnvelope
         $returnValue = false;
 
         $attr = $node->getAttribute("type");
-        if ($attr and strlen($attr)) {
+        if ($attr and mb_strlen($attr)) {
             return new CSOAPFault("Server Error", "Server supports only document/literal binding.");
         }
 
         $rootDataName = $this->Name;
-        if (strlen(trim($complexDataTypeName)))
+        if (trim($complexDataTypeName) <> '') {
             $rootDataName = trim($complexDataTypeName);
+        }
 
         if (!$rootDataName or !isset($this->typensVars[$rootDataName])) {
             return new CSOAPFault("Server Error", "decodeDataTypes() can't find function type declaration.");
@@ -144,26 +147,34 @@ class CSOAPResponse extends CSOAPEnvelope
          * 	3) Output decl
          */
 
-        if (isset($this->typensVars[$name]))
+        if (isset($this->typensVars[$name])) {
             $typeDeclaration = $this->typensVars[$name];
-        if (isset($this->typensVars[$rootDataName][$name]))
+        }
+        if (isset($this->typensVars[$rootDataName][$name])) {
             $typeDeclaration = $this->typensVars[$rootDataName][$name];
-        else if (isset($this->typensVars[$rootDataName]["input"][$name]))
-            $typeDeclaration = $this->typensVars[$rootDataName]["input"][$name];
-        else if (isset($this->typensVars[$rootDataName]["output"][$name]))
-            $typeDeclaration = $this->typensVars[$rootDataName]["output"][$name];
+        } else {
+            if (isset($this->typensVars[$rootDataName]["input"][$name])) {
+                $typeDeclaration = $this->typensVars[$rootDataName]["input"][$name];
+            } else {
+                if (isset($this->typensVars[$rootDataName]["output"][$name])) {
+                    $typeDeclaration = $this->typensVars[$rootDataName]["output"][$name];
+                }
+            }
+        }
 
         if (!count($typeDeclaration)) {
             return new CSOAPFault("Server Error", "decodeDataTypes() can't find type declaration for {$name} param.");
         } else {
-            if (isset($typeDeclaration["varType"]))
+            if (isset($typeDeclaration["varType"])) {
                 $dataType = $typeDeclaration["varType"];
-            else
-                $dataType = $name; // case 1 of typens choose.
+            } else {
+                $dataType = $name;
+            } // case 1 of typens choose.
         }
 
-        if (isset($xsd_simple_type[$dataType]))
+        if (isset($xsd_simple_type[$dataType])) {
             $dataType = $xsd_simple_type[$dataType];
+        }
 
         switch ($dataType) {
             case "string" :
@@ -181,10 +192,11 @@ class CSOAPResponse extends CSOAPEnvelope
 
             case "boolean" :
                 {
-                    if ($node->textContent() == "true")
+                    if ($node->textContent() == "true") {
                         $returnValue = true;
-                    else
+                    } else {
                         $returnValue = false;
+                    }
                 }
                 break;
 
@@ -207,8 +219,9 @@ class CSOAPResponse extends CSOAPEnvelope
                         $returnValue = array();
 
                         $arrayType = $typeDeclaration["arrType"];
-                        if (isset($typeDeclaration["maxOccursA"]))
+                        if (isset($typeDeclaration["maxOccursA"])) {
                             $maxOccurs = $typeDeclaration["maxOccursA"];
+                        }
 
                         if (isset($xsd_simple_type[$arrayType])) {
                             $i = 0;
@@ -216,8 +229,9 @@ class CSOAPResponse extends CSOAPEnvelope
                             foreach ($childs as $child) {
                                 $i++;
                                 $returnValue[] = $child->textContent();
-                                if (intval($maxOccurs) and $i > intval($maxOccurs))
+                                if (intval($maxOccurs) and $i > intval($maxOccurs)) {
                                     break;
+                                }
                             }
                         } else {
                             foreach ($node->children() as $child) {
@@ -226,11 +240,14 @@ class CSOAPResponse extends CSOAPEnvelope
                                  * ArrayOf{STRUCT|CLASS}El. So decoder must have
                                  * a chance to find true data type = arrayType;
                                  */
-                                if (!isset($this->typensVars[$child->name]))
+                                if (!isset($this->typensVars[$child->name])) {
                                     $child->name = $arrayType;
+                                }
                                 // Decode complex data type for an array
                                 $decoded = $this->decodeDataTypes($child, $arrayType);
-                                if (is_object($decoded) and (get_class($decoded) == "CSOAPFault" or get_class($decoded) == "csoapfault")) {
+                                if (is_object($decoded) and (get_class($decoded) == "CSOAPFault" or get_class(
+                                            $decoded
+                                        ) == "csoapfault")) {
                                     CSOAPServer::ShowSOAPFault($decoded);
                                     return;
                                 }
@@ -246,7 +263,9 @@ class CSOAPResponse extends CSOAPEnvelope
                         $returnValue = array();
                         $params = array();
 
-                        if (!isset($this->typensVars[$dataType])) break;
+                        if (!isset($this->typensVars[$dataType])) {
+                            break;
+                        }
                         $objectDecl = $this->typensVars[$dataType];
 
                         // Type of serialization: class/assoc array
@@ -259,7 +278,9 @@ class CSOAPResponse extends CSOAPEnvelope
 
                         $requestParams = array(); // reorganize params
                         foreach ($node->children() as $parameterNode) {
-                            if (!$parameterNode->name()) continue;
+                            if (!$parameterNode->name()) {
+                                continue;
+                            }
                             $requestParams[$parameterNode->name()] =
                                 $parameterNode;
                         }
@@ -267,15 +288,21 @@ class CSOAPResponse extends CSOAPEnvelope
                         foreach ($objectDecl as $pname => $param) {
                             $decoded = null;
 
-                            if (isset($requestParams[$pname]))
+                            if (isset($requestParams[$pname])) {
                                 $decoded = $this->decodeDataTypes($requestParams[$pname], $dataType);
-                            if (is_object($decoded) and (get_class($decoded) == "CSOAPFault" or get_class($decoded) == "csoapfault")) {
+                            }
+                            if (is_object($decoded) and (get_class($decoded) == "CSOAPFault" or get_class(
+                                        $decoded
+                                    ) == "csoapfault")) {
                                 CSOAPServer::ShowSOAPFault($decoded);
                                 return;
                             }
                             if (!$decoded and (!isset($param["strict"]) or
                                     (isset($param["strict"]) and $param["strict"] == "strict"))) {
-                                return new CSOAPFault("Server Error", "Request has not enough params of strict type to be decoded. ");
+                                return new CSOAPFault(
+                                    "Server Error",
+                                    "Request has not enough params of strict type to be decoded. "
+                                );
                             }
 
                             $params[$pname] = $decoded;
@@ -291,8 +318,9 @@ class CSOAPResponse extends CSOAPEnvelope
                                 if ($objectClass) {
                                     $existedVars = get_object_vars($objectClass);
                                     foreach ($classRequest as $pname => $value) {
-                                        if (!is_set($existedVars, $pname))
+                                        if (!is_set($existedVars, $pname)) {
                                             $stillValid = false;
+                                        }
                                         $objectClass->$pname = $value;
                                     }
                                 } else {
@@ -300,13 +328,13 @@ class CSOAPResponse extends CSOAPEnvelope
                                 }
                             }
 
-                            if ($stillValid) $params = $objectClass;
+                            if ($stillValid) {
+                                $params = $objectClass;
+                            }
                         }
 
                         $returnValue = $params;
                     }
-
-
                 }
                 break;
         }
@@ -337,8 +365,9 @@ class CSOAPResponse extends CSOAPEnvelope
 
             $fault->addChild($faultStringNode);
 
-            if ($this->Value->detail)
+            if ($this->Value->detail) {
                 $fault->addChild($this->Value->detail());
+            }
 
             $body->addChild($fault);
         } else {
@@ -348,7 +377,10 @@ class CSOAPResponse extends CSOAPEnvelope
             $response->setAttribute("xmlns", $this->Namespace);
             if (!isset($this->typensVars[$this->Name]["output"]) or !count($this->typensVars[$this->Name]["output"])) {
                 if (count($this->typensVars)) {
-                    $GLOBALS['APPLICATION']->ThrowException("payload() can't find output type declaration.", "SoapRespnose::payload()");
+                    $GLOBALS['APPLICATION']->ThrowException(
+                        "payload() can't find output type declaration.",
+                        "SoapRespnose::payload()"
+                    );
                     return;
                 } else {
                     //print_r($this->Value);
@@ -365,17 +397,22 @@ class CSOAPResponse extends CSOAPEnvelope
 
                 foreach ($this->typensVars[$this->Name]["output"] as $returnType => $returnParam) {
                     if (!$returnType) {
-                        $GLOBALS['APPLICATION']->ThrowException("payload() can't find output type declaration for {$this->Name}.", "SoapRespnose::payload()");
+                        $GLOBALS['APPLICATION']->ThrowException(
+                            "payload() can't find output type declaration for {$this->Name}.",
+                            "SoapRespnose::payload()"
+                        );
                         return;
                     }
 
                     $valueEncoder->setOutputVars($this->Name);
 
-                    $value = $valueEncoder->encodeValue($returnType, isset($this->Value[$returnType]) ? $this->Value[$returnType] : $this->Value);
+                    $value = $valueEncoder->encodeValue(
+                        $returnType,
+                        isset($this->Value[$returnType]) ? $this->Value[$returnType] : $this->Value
+                    );
 
                     $response->addChild($value);
                 }
-
                 //AddM
             }
 
@@ -394,9 +431,11 @@ class CSOAPResponse extends CSOAPEnvelope
     {
         $missingxml = false;
         //$start = strpos( $data, "<"."?xml" );
-        $start = strpos($data, "\r\n\r\n");
-        if ($start === false) return null;
-        $data = substr($data, $start, strlen($data) - $start);
+        $start = mb_strpos($data, "\r\n\r\n");
+        if ($start === false) {
+            return null;
+        }
+        $data = mb_substr($data, $start, mb_strlen($data) - $start);
         return $data;
     }
 

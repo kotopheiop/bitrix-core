@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 use Bitrix\Main\Localization\Loc;
@@ -17,7 +18,6 @@ if (defined('LANG') && LANG != 'ru') {
     echo '<img src="/bitrix/images/sale/vk/vk_only_russian.png" alt="">';
     echo EndNote();
 } else {
-
 //prepare TABS
     $arrTabs = array(
         array(
@@ -62,13 +62,18 @@ if (defined('LANG') && LANG != 'ru') {
             <div style="max-width: 950px;">
                 <h3><?= Loc::getMessage("SALE_VK_MANUAL__CONNECTION_TITLE_1") ?></h3>
                 <p><?= Loc::getMessage("SALE_VK_MANUAL__CONNECTION_1") ?></p>
-                <p><?= Loc::getMessage("SALE_VK_MANUAL__CONNECTION_2") ?> <?= Loc::getMessage("SALE_VK_MANUAL__CONNECTION_3") ?></p>
+                <p><?= Loc::getMessage("SALE_VK_MANUAL__CONNECTION_2") ?> <?= Loc::getMessage(
+                        "SALE_VK_MANUAL__CONNECTION_3"
+                    ) ?></p>
                 <p><?= Loc::getMessage("SALE_VK_MANUAL__CONNECTION_3a") ?></p>
                 <h3><?= Loc::getMessage("SALE_VK_MANUAL__CONNECTION_TITLE_3") ?></h3>
-                <p><?= Loc::getMessage("SALE_VK_MANUAL__CONNECTION_4", array(
-                        '#A1' => '<a href="https://vk.com/apps?act=manage">',
-                        '#A2' => '</a>',
-                    )); ?></p>
+                <p><?= Loc::getMessage(
+                        "SALE_VK_MANUAL__CONNECTION_4",
+                        array(
+                            '#A1' => '<a href="https://vk.com/apps?act=manage">',
+                            '#A2' => '</a>',
+                        )
+                    ); ?></p>
                 <p><?= Loc::getMessage("SALE_VK_MANUAL__CONNECTION_5") ?></p>
                 <p><?= Loc::getMessage("SALE_VK_MANUAL__CONNECTION_6") ?></p>
                 <img src="/bitrix/images/sale/vk/vk_man_1.png" alt="">

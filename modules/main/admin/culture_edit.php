@@ -12,14 +12,19 @@ require_once(dirname(__FILE__) . "/../include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/prolog.php");
 define("HELP_FILE", "settings/culture_edit.php");
 
-if (!$USER->CanDoOperation('edit_other_settings') && !$USER->CanDoOperation('view_other_settings'))
+if (!$USER->CanDoOperation('edit_other_settings') && !$USER->CanDoOperation('view_other_settings')) {
     $APPLICATION->AuthForm(Loc::getMessage("ACCESS_DENIED"));
+}
 
 $isAdmin = $USER->CanDoOperation('edit_other_settings');
 
 $aTabs = array(
     array("DIV" => "edit1", "TAB" => Loc::getMessage("MAIN_PARAM"), "TITLE" => Loc::getMessage("MAIN_PARAM_TITLE")),
-    array("DIV" => "edit2", "TAB" => Loc::getMessage("main_culture_edit_tab"), "TITLE" => Loc::getMessage("main_culture_edit_tab_title")),
+    array(
+        "DIV" => "edit2",
+        "TAB" => Loc::getMessage("main_culture_edit_tab"),
+        "TITLE" => Loc::getMessage("main_culture_edit_tab_title")
+    ),
 );
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
@@ -50,6 +55,10 @@ if ($request->isPost() && ($request["save"] <> '' || $request["apply"] <> '') &&
         "DAY_MONTH_FORMAT" => $request['DAY_MONTH_FORMAT'],
         "SHORT_TIME_FORMAT" => $request['SHORT_TIME_FORMAT'],
         "LONG_TIME_FORMAT" => $request['LONG_TIME_FORMAT'],
+        "DAY_SHORT_MONTH_FORMAT" => $request['DAY_SHORT_MONTH_FORMAT'],
+        "DAY_OF_WEEK_MONTH_FORMAT" => $request['DAY_OF_WEEK_MONTH_FORMAT'],
+        "SHORT_DAY_OF_WEEK_MONTH_FORMAT" => $request['SHORT_DAY_OF_WEEK_MONTH_FORMAT'],
+        "SHORT_DAY_OF_WEEK_SHORT_MONTH_FORMAT" => $request['SHORT_DAY_OF_WEEK_SHORT_MONTH_FORMAT'],
         "AM_VALUE" => $request['AM_VALUE'],
         "PM_VALUE" => $request['PM_VALUE'],
         "NUMBER_THOUSANDS_SEPARATOR" => $request['NUMBER_THOUSANDS_SEPARATOR'],
@@ -65,14 +74,17 @@ if ($request->isPost() && ($request["save"] <> '' || $request["apply"] <> '') &&
     }
 
     if ($result->isSuccess()) {
-        if ($request["save"] <> '')
+        if ($request["save"] <> '') {
             LocalRedirect(BX_ROOT . "/admin/culture_admin.php?lang=" . LANGUAGE_ID);
-        else
-            LocalRedirect(BX_ROOT . "/admin/culture_edit.php?lang=" . LANGUAGE_ID . "&ID=" . $ID . "&" . $tabControl->ActiveTabParam());
+        } else {
+            LocalRedirect(
+                BX_ROOT . "/admin/culture_edit.php?lang=" . LANGUAGE_ID . "&ID=" . $ID . "&" . $tabControl->ActiveTabParam(
+                )
+            );
+        }
     } else {
         $errors = $result->getErrorMessages();
     }
-
 }
 
 if (empty($errors)) {
@@ -86,8 +98,9 @@ if (empty($errors)) {
         $culture = CultureTable::createObject()->collectValues();
 
         $weekStart = Loc::getMessage('LANG_EDIT_WEEK_START_DEFAULT');
-        if ($weekStart == '')
+        if ($weekStart == '') {
             $weekStart = 1;
+        }
         $culture["WEEK_START"] = $weekStart;
     }
 } else {
@@ -124,7 +137,10 @@ if ($ID > 0 && $isAdmin) {
     );
     $aMenu[] = array(
         "TEXT" => Loc::getMessage("MAIN_DELETE_RECORD"),
-        "LINK" => "javascript:if(confirm('" . CUtil::JSEscape(Loc::getMessage("MAIN_DELETE_RECORD_CONF")) . "')) window.location='/bitrix/admin/culture_admin.php?ID=" . $ID . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get() . "&action_button=delete';",
+        "LINK" => "javascript:if(confirm('" . CUtil::JSEscape(
+                Loc::getMessage("MAIN_DELETE_RECORD_CONF")
+            ) . "')) window.location='/bitrix/admin/culture_admin.php?ID=" . $ID . "&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get(
+            ) . "&action_button=delete';",
         "TITLE" => Loc::getMessage("MAIN_DELETE_RECORD_TITLE"),
         "ICON" => "btn_delete"
     );
@@ -177,7 +193,9 @@ foreach ($culture as $key => $val) {
             <td><select name="WEEK_START">
                     <?
                     for ($i = 0; $i < 7; $i++) {
-                        echo '<option value="' . $i . '"' . ($i == $culture["WEEK_START"] ? ' selected="selected"' : '') . '>' . Loc::getMessage('DAY_OF_WEEK_' . $i) . '</option>';
+                        echo '<option value="' . $i . '"' . ($i == $culture["WEEK_START"] ? ' selected="selected"' : '') . '>' . Loc::getMessage(
+                                'DAY_OF_WEEK_' . $i
+                            ) . '</option>';
                     }
                     ?>
                 </select></td>
@@ -189,7 +207,9 @@ foreach ($culture as $key => $val) {
                     <option value=""><? echo Loc::getMessage("culture_edit_other") ?></option>
                     <?
                     foreach (CSite::GetNameTemplates() as $template => $value) {
-                        echo '<option value="' . $template . '"' . ($template == $culture["FORMAT_NAME"] ? ' selected' : '') . '>' . htmlspecialcharsex($value) . '</option>' . "\n";
+                        echo '<option value="' . $template . '"' . ($template == $culture["FORMAT_NAME"] ? ' selected' : '') . '>' . htmlspecialcharsex(
+                                $value
+                            ) . '</option>' . "\n";
                     }
                     ?>
                 </select>
@@ -211,7 +231,9 @@ foreach ($culture as $key => $val) {
             <td><? echo Loc::getMessage('DIRECTION') ?></td>
             <td><select name="DIRECTION">
                     <option value="Y"><?= Loc::getMessage('DIRECTION_LTR') ?></option>
-                    <option value="N"<? if ($culture["DIRECTION"] == "N") echo " selected" ?>><?= Loc::getMessage('DIRECTION_RTL') ?></option>
+                    <option value="N"<? if ($culture["DIRECTION"] == "N") echo " selected" ?>><?= Loc::getMessage(
+                            'DIRECTION_RTL'
+                        ) ?></option>
                 </select>
             </td>
         </tr>
@@ -226,56 +248,95 @@ foreach ($culture as $key => $val) {
             <td colspan="2"><? echo Loc::getMessage("main_culture_edit_date_formats") ?></td>
         <tr>
         <tr>
-            <td><? echo Loc::getMessage("main_culture_edit_short_date") ?></td>
+            <td><? echo Loc::getMessage("main_culture_edit_short_date1") ?></td>
             <td><input type="text" name="SHORT_DATE_FORMAT" size="20" maxlength="255"
                        value="<?= $cultureField["SHORT_DATE_FORMAT"] ?>">
-                <? if ($cultureField["SHORT_DATE_FORMAT"] <> '') echo htmlspecialcharsbx(FormatDate($cultureField["SHORT_DATE_FORMAT"])) ?>
-            </td>
+                <? if ($cultureField["SHORT_DATE_FORMAT"] <> '') echo htmlspecialcharsbx(
+                    FormatDate($cultureField["SHORT_DATE_FORMAT"])
+                ) ?></td>
         </tr>
         <tr>
-            <td><? echo Loc::getMessage("main_culture_edit_medium_date") ?></td>
+            <td><? echo Loc::getMessage("main_culture_edit_medium_date1") ?></td>
             <td><input type="text" name="MEDIUM_DATE_FORMAT" size="20" maxlength="255"
                        value="<?= $cultureField["MEDIUM_DATE_FORMAT"] ?>">
-                <? if ($cultureField["MEDIUM_DATE_FORMAT"] <> '') echo htmlspecialcharsbx(FormatDate($cultureField["MEDIUM_DATE_FORMAT"])) ?>
-            </td>
+                <? if ($cultureField["MEDIUM_DATE_FORMAT"] <> '') echo htmlspecialcharsbx(
+                    FormatDate($cultureField["MEDIUM_DATE_FORMAT"])
+                ) ?></td>
         </tr>
         <tr>
-            <td><? echo Loc::getMessage("main_culture_edit_long_date") ?></td>
+            <td><? echo Loc::getMessage("main_culture_edit_long_date1") ?></td>
             <td><input type="text" name="LONG_DATE_FORMAT" size="20" maxlength="255"
                        value="<?= $cultureField["LONG_DATE_FORMAT"] ?>">
-                <? if ($cultureField["LONG_DATE_FORMAT"] <> '') echo htmlspecialcharsbx(FormatDate($cultureField["LONG_DATE_FORMAT"])) ?>
-            </td>
+                <? if ($cultureField["LONG_DATE_FORMAT"] <> '') echo htmlspecialcharsbx(
+                    FormatDate($cultureField["LONG_DATE_FORMAT"])
+                ) ?></td>
         </tr>
         <tr>
-            <td><? echo Loc::getMessage("main_culture_edit_full_date") ?></td>
-            <td><input type="text" name="FULL_DATE_FORMAT" size="20" maxlength="255"
-                       value="<?= $cultureField["FULL_DATE_FORMAT"] ?>">
-                <? if ($cultureField["FULL_DATE_FORMAT"] <> '') echo htmlspecialcharsbx(FormatDate($cultureField["FULL_DATE_FORMAT"])) ?>
-            </td>
-        </tr>
-        <tr>
-            <td><? echo Loc::getMessage("main_culture_edit_day_month") ?></td>
+            <td><? echo Loc::getMessage("main_culture_edit_day_month1") ?></td>
             <td><input type="text" name="DAY_MONTH_FORMAT" size="20" maxlength="255"
                        value="<?= $cultureField["DAY_MONTH_FORMAT"] ?>">
-                <? if ($cultureField["DAY_MONTH_FORMAT"] <> '') echo htmlspecialcharsbx(FormatDate($cultureField["DAY_MONTH_FORMAT"])) ?>
-            </td>
+                <? if ($cultureField["DAY_MONTH_FORMAT"] <> '') echo htmlspecialcharsbx(
+                    FormatDate($cultureField["DAY_MONTH_FORMAT"])
+                ) ?></td>
+        </tr>
+        <tr>
+            <td><? echo Loc::getMessage("main_culture_edit_day_short_month") ?></td>
+            <td><input type="text" name="DAY_SHORT_MONTH_FORMAT" size="20" maxlength="255"
+                       value="<?= $cultureField["DAY_SHORT_MONTH_FORMAT"] ?>">
+                <? if ($cultureField["DAY_SHORT_MONTH_FORMAT"] <> '') echo htmlspecialcharsbx(
+                    FormatDate($cultureField["DAY_SHORT_MONTH_FORMAT"])
+                ) ?></td>
+        </tr>
+        <tr>
+            <td><? echo Loc::getMessage("main_culture_edit_short_day_of_week_month") ?></td>
+            <td><input type="text" name="SHORT_DAY_OF_WEEK_MONTH_FORMAT" size="20" maxlength="255"
+                       value="<?= $cultureField["SHORT_DAY_OF_WEEK_MONTH_FORMAT"] ?>">
+                <? if ($cultureField["SHORT_DAY_OF_WEEK_MONTH_FORMAT"] <> '') echo htmlspecialcharsbx(
+                    FormatDate($cultureField["SHORT_DAY_OF_WEEK_MONTH_FORMAT"])
+                ) ?></td>
+        </tr>
+        <tr>
+            <td><? echo Loc::getMessage("main_culture_edit_short_day_of_week_short_month") ?></td>
+            <td><input type="text" name="SHORT_DAY_OF_WEEK_SHORT_MONTH_FORMAT" size="20" maxlength="255"
+                       value="<?= $cultureField["SHORT_DAY_OF_WEEK_SHORT_MONTH_FORMAT"] ?>">
+                <? if ($cultureField["SHORT_DAY_OF_WEEK_SHORT_MONTH_FORMAT"] <> '') echo htmlspecialcharsbx(
+                    FormatDate($cultureField["SHORT_DAY_OF_WEEK_SHORT_MONTH_FORMAT"])
+                ) ?></td>
+        </tr>
+        <tr>
+            <td><? echo Loc::getMessage("main_culture_edit_day_of_week_month") ?></td>
+            <td><input type="text" name="DAY_OF_WEEK_MONTH_FORMAT" size="20" maxlength="255"
+                       value="<?= $cultureField["DAY_OF_WEEK_MONTH_FORMAT"] ?>">
+                <? if ($cultureField["DAY_OF_WEEK_MONTH_FORMAT"] <> '') echo htmlspecialcharsbx(
+                    FormatDate($cultureField["DAY_OF_WEEK_MONTH_FORMAT"])
+                ) ?></td>
+        </tr>
+        <tr>
+            <td><? echo Loc::getMessage("main_culture_edit_full_date1") ?></td>
+            <td><input type="text" name="FULL_DATE_FORMAT" size="20" maxlength="255"
+                       value="<?= $cultureField["FULL_DATE_FORMAT"] ?>">
+                <? if ($cultureField["FULL_DATE_FORMAT"] <> '') echo htmlspecialcharsbx(
+                    FormatDate($cultureField["FULL_DATE_FORMAT"])
+                ) ?></td>
         </tr>
         <tr class="heading">
             <td colspan="2"><? echo Loc::getMessage("main_culture_edit_time_formats") ?></td>
         <tr>
         <tr>
-            <td><? echo Loc::getMessage("main_culture_edit_short_time") ?></td>
+            <td><? echo Loc::getMessage("main_culture_edit_short_time1") ?></td>
             <td><input type="text" name="SHORT_TIME_FORMAT" size="20" maxlength="255"
                        value="<?= $cultureField["SHORT_TIME_FORMAT"] ?>">
-                <? if ($cultureField["SHORT_TIME_FORMAT"] <> '') echo htmlspecialcharsbx(FormatDate($cultureField["SHORT_TIME_FORMAT"])) ?>
-            </td>
+                <? if ($cultureField["SHORT_TIME_FORMAT"] <> '') echo htmlspecialcharsbx(
+                    FormatDate($cultureField["SHORT_TIME_FORMAT"])
+                ) ?></td>
         </tr>
         <tr>
-            <td><? echo Loc::getMessage("main_culture_edit_long_time") ?></td>
+            <td><? echo Loc::getMessage("main_culture_edit_long_time1") ?></td>
             <td><input type="text" name="LONG_TIME_FORMAT" size="20" maxlength="255"
                        value="<?= $cultureField["LONG_TIME_FORMAT"] ?>">
-                <? if ($cultureField["LONG_TIME_FORMAT"] <> '') echo htmlspecialcharsbx(FormatDate($cultureField["LONG_TIME_FORMAT"])) ?>
-            </td>
+                <? if ($cultureField["LONG_TIME_FORMAT"] <> '') echo htmlspecialcharsbx(
+                    FormatDate($cultureField["LONG_TIME_FORMAT"])
+                ) ?></td>
         </tr>
         <tr>
             <td><? echo Loc::getMessage("main_culture_edit_am") ?></td>
@@ -288,8 +349,9 @@ foreach ($culture as $key => $val) {
             </td>
         </tr>
         <tr>
-            <td colspan="2"
-                align="center"><?= BeginNote() ?><?= Loc::getMessage("main_culture_edit_note") ?><?= EndNote() ?></td>
+            <td colspan="2" align="center"><?= BeginNote() ?><?= Loc::getMessage(
+                    "main_culture_edit_note"
+                ) ?><?= EndNote() ?></td>
         <tr>
         <tr class="heading">
             <td colspan="2"><? echo Loc::getMessage("main_culture_numbers_format") ?></td>
@@ -311,12 +373,21 @@ foreach ($culture as $key => $val) {
         </tr>
         <tr>
             <td><? echo Loc::getMessage("main_culture_numbers_example") ?></td>
-            <td><?= htmlspecialcharsbx(number_format(2345678.123456789, $cultureField["NUMBER_DECIMALS"], $cultureField["NUMBER_DECIMAL_SEPARATOR"], $cultureField["NUMBER_THOUSANDS_SEPARATOR"])) ?></td>
+            <td><?= htmlspecialcharsbx(
+                    number_format(
+                        2345678.123456789,
+                        $cultureField["NUMBER_DECIMALS"],
+                        $cultureField["NUMBER_DECIMAL_SEPARATOR"],
+                        $cultureField["NUMBER_THOUSANDS_SEPARATOR"]
+                    )
+                ) ?></td>
         </tr>
         <? if (IsModuleInstalled("currency")): ?>
         <tr>
-            <td colspan="2"
-                align="center"><?= BeginNote() ?><?= Loc::getMessage("main_culture_edit_note_currencies", ["#LANG#" => LANGUAGE_ID]); ?><?= EndNote() ?></td>
+            <td colspan="2" align="center"><?= BeginNote() ?><?= Loc::getMessage(
+                    "main_culture_edit_note_currencies",
+                    ["#LANG#" => LANGUAGE_ID]
+                ); ?><?= EndNote() ?></td>
         <tr>
             <?endif ?>
             <?

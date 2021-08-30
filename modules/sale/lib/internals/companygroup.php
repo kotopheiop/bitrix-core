@@ -32,8 +32,9 @@ class CompanyGroupTable extends Main\Entity\DataManager
     public static function deleteByCompanyId($id)
     {
         $id = intval($id);
-        if ($id <= 0)
+        if ($id <= 0) {
             throw new Main\ArgumentNullException("id");
+        }
 
         $itemsList = static::getList(
             array(
@@ -41,7 +42,8 @@ class CompanyGroupTable extends Main\Entity\DataManager
                 "select" => array("ID")
             )
         );
-        while ($item = $itemsList->fetch())
+        while ($item = $itemsList->fetch()) {
             static::delete($item["ID"]);
+        }
     }
 }

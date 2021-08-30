@@ -7,7 +7,9 @@ use Bitrix\Main,
     Bitrix\Main\Loader,
     Bitrix\Main\Localization\Loc;
 
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+}
 
 $module_id = "catalog";
 
@@ -29,22 +31,24 @@ if ($USER->CanDoOperation('catalog_read')) :
         );
         $rsIBlockType = CIBlockType::GetList(array("sort" => "asc"), array("ACTIVE" => "Y"));
         while ($arr = $rsIBlockType->Fetch()) {
-            if ($ar = CIBlockType::GetByIDLang($arr["ID"], LANGUAGE_ID))
+            if ($ar = CIBlockType::GetByIDLang($arr["ID"], LANGUAGE_ID)) {
                 $arIBlockType[$arr["ID"]] = "[" . $arr["ID"] . "] " . $ar["NAME"];
+            }
             unset($ar);
         }
         unset($arr, $rsIBlockType);
 
-        $rsSite = CSite::GetList($by = "sort", $order = "asc", $arFilter = array("ACTIVE" => "Y"));
+        $rsSite = CSite::GetList("sort", "asc", $arFilter = array("ACTIVE" => "Y"));
         $arSites = array(
             "-" => Loc::getMessage("CAT_1C_CURRENT"),
         );
-        while ($arSite = $rsSite->GetNext())
+        while ($arSite = $rsSite->GetNext()) {
             $arSites[$arSite["LID"]] = $arSite["NAME"];
+        }
         unset($arSite, $rsSite);
 
         $arUGroupsEx = Array();
-        $dbUGroups = CGroup::GetList($by = "c_sort", $order = "asc");
+        $dbUGroups = CGroup::GetList();
         while ($arUGroups = $dbUGroups->Fetch()) {
             $arUGroupsEx[$arUGroups["ID"]] = $arUGroups["NAME"];
         }
@@ -58,7 +62,12 @@ if ($USER->CanDoOperation('catalog_read')) :
         $arBaseOptions = array(
             array("1C_IBLOCK_TYPE", Loc::getMessage("CAT_1C_IBLOCK_TYPE"), "-", array("list", $arIBlockType)),
             array("1C_SITE_LIST", Loc::getMessage("CAT_1C_SITE_LIST"), "-", array("list", $arSites)),
-            array("1C_GROUP_PERMISSIONS", Loc::getMessage("CAT_1C_GROUP_PERMISSIONS"), "1", array("mlist", 5, $arUGroupsEx)),
+            array(
+                "1C_GROUP_PERMISSIONS",
+                Loc::getMessage("CAT_1C_GROUP_PERMISSIONS"),
+                "1",
+                array("mlist", 5, $arUGroupsEx)
+            ),
             array("1C_USE_OFFERS", Loc::getMessage("CAT_1C_USE_OFFERS_2"), "N", array("checkbox")),
             array("1C_TRANSLIT_ON_ADD", Loc::getMessage("CAT_1C_TRANSLIT_ON_ADD_2"), "Y", array("checkbox")),
             array("1C_TRANSLIT_ON_UPDATE", Loc::getMessage("CAT_1C_TRANSLIT_ON_UPDATE_2"), "Y", array("checkbox")),
@@ -75,14 +84,24 @@ if ($USER->CanDoOperation('catalog_read')) :
             array("1C_FORCE_OFFERS", Loc::getMessage("CAT_1C_FORCE_OFFERS_2"), "N", array("checkbox")),
             array("1C_USE_IBLOCK_TYPE_ID", Loc::getMessage("CAT_1C_USE_IBLOCK_TYPE_ID"), "N", array("checkbox")),
             array("1C_SKIP_ROOT_SECTION", Loc::getMessage("CAT_1C_SKIP_ROOT_SECTION_2"), "N", array("checkbox")),
-            array("1C_DISABLE_CHANGE_PRICE_NAME", Loc::getMessage("CAT_1C_DISABLE_CHANGE_PRICE_NAME"), "N", array("checkbox")),
+            array(
+                "1C_DISABLE_CHANGE_PRICE_NAME",
+                Loc::getMessage("CAT_1C_DISABLE_CHANGE_PRICE_NAME"),
+                "N",
+                array("checkbox")
+            ),
             array(
                 "1C_IBLOCK_CACHE_MODE",
                 Loc::getMessage("CAT_1C_IBLOCK_CACHE_MODE"),
                 "-",
                 array("list", CIBlockCMLImport::getIblockCacheModeList(true))
             ),
-            array("1C_USE_IBLOCK_PICTURE_SETTINGS", Loc::getMessage("CAT_1C_USE_IBLOCK_PICTURE_SETTINGS"), "N", array("checkbox")),
+            array(
+                "1C_USE_IBLOCK_PICTURE_SETTINGS",
+                Loc::getMessage("CAT_1C_USE_IBLOCK_PICTURE_SETTINGS"),
+                "N",
+                array("checkbox")
+            ),
             array("1C_GENERATE_PREVIEW", Loc::getMessage("CAT_1C_GENERATE_PREVIEW"), "Y", array("checkbox")),
             array("1C_PREVIEW_WIDTH", Loc::getMessage("CAT_1C_PREVIEW_WIDTH"), 100, array("text", 20)),
             array("1C_PREVIEW_HEIGHT", Loc::getMessage("CAT_1C_PREVIEW_HEIGHT"), 100, array("text", 20)),
@@ -102,7 +121,9 @@ if ($USER->CanDoOperation('catalog_read')) :
             ),
         );
 
-        if ($_SERVER['REQUEST_METHOD'] == "POST" && strlen($Update) > 0 && $USER->CanDoOperation('edit_php') && check_bitrix_sessid()) {
+        if ($_SERVER['REQUEST_METHOD'] == "POST" && $Update <> '' && $USER->CanDoOperation(
+                'edit_php'
+            ) && check_bitrix_sessid()) {
             $arDisableOptions = array();
             foreach ($arOptionsDeps as $option => $subOptions) {
                 if (isset($_REQUEST[$option]) && (string)$_REQUEST[$option] == 'Y') {
@@ -119,10 +140,12 @@ if ($USER->CanDoOperation('catalog_read')) :
                 $reqName = 'catalog_' . $name;
                 if (isset($_REQUEST[$reqName]) && !isset($arDisableOptions[$reqName])) {
                     $val = $_REQUEST[$reqName];
-                    if ($Option[3][0] == "checkbox" && $val != "Y")
+                    if ($Option[3][0] == "checkbox" && $val != "Y") {
                         $val = "N";
-                    if ($Option[3][0] == "mlist" && is_array($val))
+                    }
+                    if ($Option[3][0] == "mlist" && is_array($val)) {
                         $val = implode(",", $val);
+                    }
                     Main\Config\Option::set('catalog', $name, $val, '');
                 }
             }
@@ -132,10 +155,12 @@ if ($USER->CanDoOperation('catalog_read')) :
                 $reqName = 'catalog_' . $name;
                 if (isset($_REQUEST[$reqName]) && !isset($arDisableOptions[$reqName])) {
                     $val = $_REQUEST[$reqName];
-                    if ($Option[3][0] == "checkbox" && $val != "Y")
+                    if ($Option[3][0] == "checkbox" && $val != "Y") {
                         $val = "N";
-                    if ($Option[3][0] == "mlist")
+                    }
+                    if ($Option[3][0] == "mlist") {
                         $val = implode(",", $val);
+                    }
                     Main\Config\Option::set('catalog', $name, $val, '');
                 }
             }
@@ -146,8 +171,9 @@ if ($USER->CanDoOperation('catalog_read')) :
         $showExtOptions = false;
         foreach ($arExtOptions as $Option) {
             $val = (string)Main\Config\Option::get('catalog', $Option[0], $Option[2]);
-            if ($val != $Option[2])
+            if ($val != $Option[2]) {
                 $showExtOptions = true;
+            }
         }
 
         foreach ($arBaseOptions as $Option) {
@@ -157,17 +183,20 @@ if ($USER->CanDoOperation('catalog_read')) :
             ?>
             <tr>
                 <td <? echo('textarea' == $type[0] || 'mlist' == $type[0] ? 'valign="top"' : ''); ?>
-                        width="40%"><? if ($type[0] == "checkbox")
+                        width="40%"><? if ($type[0] == "checkbox") {
                         echo '<label for="' . $strOptionName . '">' . $Option[1] . '</label>';
-                    else
-                        echo $Option[1]; ?>:
+                    } else {
+                        echo $Option[1];
+                    } ?>:
                 </td>
                 <td width="60%">
                     <? if ($type[0] == "checkbox"):?>
                         <input type="hidden" name="<? echo $strOptionName; ?>" id="<? echo $strOptionName; ?>_N"
                                value="N">
                         <input type="checkbox" name="<? echo $strOptionName; ?>" id="<? echo $strOptionName; ?>"
-                               value="Y"<? if ($val == "Y") echo " checked"; ?> onclick="Check(this.id);">
+                               value="Y"<? if ($val == "Y") {
+                            echo " checked";
+                        } ?> onclick="Check(this.id);">
                     <? elseif ($type[0] == "text"):?>
                         <input type="text" size="<? echo $type[1] ?>" maxlength="255"
                                value="<? echo htmlspecialcharsbx($val) ?>" name="<? echo $strOptionName; ?>"
@@ -179,7 +208,11 @@ if ($USER->CanDoOperation('catalog_read')) :
                     <? elseif ($type[0] == "list"):?>
                         <select name="<? echo $strOptionName; ?>" id="<? echo $strOptionName; ?>">
                             <? foreach ($type[1] as $key => $value):?>
-                                <option value="<? echo htmlspecialcharsbx($key) ?>" <? if ($val == $key) echo "selected" ?>><? echo htmlspecialcharsbx($value) ?></option>
+                                <option value="<? echo htmlspecialcharsbx(
+                                    $key
+                                ) ?>" <? if ($val == $key) echo "selected" ?>><? echo htmlspecialcharsbx(
+                                        $value
+                                    ) ?></option>
                             <?endforeach ?>
                         </select>
                     <?
@@ -188,7 +221,10 @@ if ($USER->CanDoOperation('catalog_read')) :
                         <select multiple name="<? echo $strOptionName; ?>[]" size="<? echo $type[1] ?>"
                                 id="<? echo $strOptionName; ?>">
                             <? foreach ($type[2] as $key => $value):?>
-                                <option value="<? echo htmlspecialcharsbx($key) ?>" <? if (in_array($key, $val)) echo "selected" ?>><? echo htmlspecialcharsbx($value) ?></option>
+                                <option value="<? echo htmlspecialcharsbx($key) ?>" <? if (in_array(
+                                    $key,
+                                    $val
+                                )) echo "selected" ?>><? echo htmlspecialcharsbx($value) ?></option>
                             <?endforeach ?>
                         </select>
                     <?endif ?>
@@ -202,8 +238,9 @@ if ($USER->CanDoOperation('catalog_read')) :
                 <? if ($showExtOptions):?>
                     <? echo Loc::getMessage("CAT_1C_EXTENDED_SETTINGS") ?>
                 <? else:?>
-                    <a class="bx-action-href"
-                       href="javascript:showExtOptions()"><? echo Loc::getMessage("CAT_1C_EXTENDED_SETTINGS") ?></a>
+                    <a class="bx-action-href" href="javascript:showExtOptions()"><? echo Loc::getMessage(
+                            "CAT_1C_EXTENDED_SETTINGS"
+                        ) ?></a>
                 <?endif; ?>
             </td>
         </tr>
@@ -213,19 +250,24 @@ if ($USER->CanDoOperation('catalog_read')) :
             $type = $Option[3];
             $strOptionName = htmlspecialcharsbx("catalog_" . $Option[0]);
             ?>
-            <tr id="tr_<? echo htmlspecialcharsbx($Option[0]) ?>" <? if (!$showExtOptions) echo 'style="display:none"' ?>>
+            <tr id="tr_<? echo htmlspecialcharsbx(
+                $Option[0]
+            ) ?>" <? if (!$showExtOptions) echo 'style="display:none"' ?>>
                 <td <? echo('textarea' == $type[0] || 'mlist' == $type[0] ? 'valign="top"' : ''); ?>
-                        width="40%"><? if ($type[0] == "checkbox")
+                        width="40%"><? if ($type[0] == "checkbox") {
                         echo '<label for="' . $strOptionName . '">' . $Option[1] . '</label>';
-                    else
-                        echo $Option[1]; ?>:
+                    } else {
+                        echo $Option[1];
+                    } ?>:
                 </td>
                 <td width="60%">
                     <? if ($type[0] == "checkbox"):?>
                         <input type="hidden" name="<? echo $strOptionName; ?>" id="<? echo $strOptionName; ?>_N"
                                value="N">
                         <input type="checkbox" name="<? echo $strOptionName; ?>" id="<? echo $strOptionName; ?>"
-                               value="Y"<? if ($val == "Y") echo " checked"; ?> onclick="Check(this.id);">
+                               value="Y"<? if ($val == "Y") {
+                            echo " checked";
+                        } ?> onclick="Check(this.id);">
                     <? elseif ($type[0] == "text"):?>
                         <input type="text" size="<? echo $type[1] ?>" maxlength="255"
                                value="<? echo htmlspecialcharsbx($val) ?>" name="<? echo $strOptionName; ?>"
@@ -237,7 +279,11 @@ if ($USER->CanDoOperation('catalog_read')) :
                     <? elseif ($type[0] == "list"):?>
                         <select name="<? echo $strOptionName; ?>" id="<? echo $strOptionName; ?>">
                             <? foreach ($type[1] as $key => $value):?>
-                                <option value="<? echo htmlspecialcharsbx($key) ?>" <? if ($val == $key) echo "selected" ?>><? echo htmlspecialcharsbx($value) ?></option>
+                                <option value="<? echo htmlspecialcharsbx(
+                                    $key
+                                ) ?>" <? if ($val == $key) echo "selected" ?>><? echo htmlspecialcharsbx(
+                                        $value
+                                    ) ?></option>
                             <?endforeach ?>
                         </select>
                     <?
@@ -246,7 +292,10 @@ if ($USER->CanDoOperation('catalog_read')) :
                         <select multiple name="<? echo $strOptionName; ?>[]" size="<? echo $type[1] ?>"
                                 id="<? echo $strOptionName; ?>">
                             <? foreach ($type[2] as $key => $value):?>
-                                <option value="<? echo htmlspecialcharsbx($key) ?>" <? if (in_array($key, $val)) echo "selected" ?>><? echo htmlspecialcharsbx($value) ?></option>
+                                <option value="<? echo htmlspecialcharsbx($key) ?>" <? if (in_array(
+                                    $key,
+                                    $val
+                                )) echo "selected" ?>><? echo htmlspecialcharsbx($value) ?></option>
                             <?endforeach ?>
                         </select>
                     <?endif ?>

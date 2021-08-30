@@ -45,23 +45,28 @@ class ExternalLocationMap
      */
     public static function getInternalId($externalCode)
     {
-        if (strlen($externalCode) <= 0)
+        if ($externalCode == '') {
             return 0;
+        }
 
         $srvId = static::getExternalServiceId();
 
-        if ($srvId <= 0)
+        if ($srvId <= 0) {
             return 0;
+        }
 
-        $res = ExternalTable::getList(array(
-            'filter' => array(
-                '=XML_ID' => $externalCode,
-                '=SERVICE_ID' => $srvId
+        $res = ExternalTable::getList(
+            array(
+                'filter' => array(
+                    '=XML_ID' => $externalCode,
+                    '=SERVICE_ID' => $srvId
+                )
             )
-        ));
+        );
 
-        if ($loc = $res->fetch())
+        if ($loc = $res->fetch()) {
             return $loc['ID'];
+        }
 
         return 0;
     }
@@ -73,36 +78,43 @@ class ExternalLocationMap
      */
     public static function getExternalId($locationId)
     {
-        if (strlen($locationId) <= 0)
+        if ($locationId == '') {
             return '';
+        }
 
         $srvId = static::getExternalServiceId();
 
-        if ($srvId <= 0)
+        if ($srvId <= 0) {
             return 0;
+        }
 
-        $res = LocationTable::getList(array(
-            'filter' => array(
-                array(
-                    'LOGIC' => 'OR',
-                    '=CODE' => $locationId,
-                    '=ID' => $locationId
+        $res = LocationTable::getList(
+            array(
+                'filter' => array(
+                    array(
+                        'LOGIC' => 'OR',
+                        '=CODE' => $locationId,
+                        '=ID' => $locationId
+                    ),
+                    '=EXTERNAL.SERVICE_ID' => $srvId
                 ),
-                '=EXTERNAL.SERVICE_ID' => $srvId
-            ),
-            'select' => array(
-                'ID', 'CODE',
-                'XML_ID' => 'EXTERNAL.XML_ID'
+                'select' => array(
+                    'ID',
+                    'CODE',
+                    'XML_ID' => 'EXTERNAL.XML_ID'
+                )
             )
-        ));
+        );
 
         $result = '';
 
-        if ($loc = $res->fetch())
+        if ($loc = $res->fetch()) {
             $result = $loc['XML_ID'];
+        }
 
-        if (strlen($result) <= 0)
+        if ($result == '') {
             $result = self::getUpperCityExternalId($locationId, $srvId);
+        }
 
         return $result;
     }
@@ -111,41 +123,54 @@ class ExternalLocationMap
     {
         $result = '';
 
-        $res = LocationTable::getList(array(
-            'filter' => array(
-                array(
-                    'LOGIC' => 'OR',
-                    '=CODE' => $locationId,
-                    '=ID' => $locationId
+        $res = LocationTable::getList(
+            array(
+                'filter' => array(
+                    array(
+                        'LOGIC' => 'OR',
+                        '=CODE' => $locationId,
+                        '=ID' => $locationId
+                    ),
                 ),
-            ),
-            'select' => array(
-                'ID', 'CODE', 'LEFT_MARGIN', 'RIGHT_MARGIN',
-                'TYPE_CODE' => 'TYPE.CODE'
+                'select' => array(
+                    'ID',
+                    'CODE',
+                    'LEFT_MARGIN',
+                    'RIGHT_MARGIN',
+                    'TYPE_CODE' => 'TYPE.CODE'
+                )
             )
-        ));
+        );
 
-        if (!$loc = $res->fetch())
+        if (!$loc = $res->fetch()) {
             return '';
+        }
 
-        if ($loc['TYPE_CODE'] == 'CITY')
+        if ($loc['TYPE_CODE'] == 'CITY') {
             return '';
+        }
 
-        $res = LocationTable::getList(array(
-            'filter' => array(
-                '<LEFT_MARGIN' => $loc['LEFT_MARGIN'],
-                '>RIGHT_MARGIN' => $loc['RIGHT_MARGIN'],
-                'TYPE.CODE' => 'CITY',
-                '=EXTERNAL.SERVICE_ID' => $srvId
-            ),
-            'select' => array(
-                'ID', 'CODE', 'LEFT_MARGIN', 'RIGHT_MARGIN',
-                'XML_ID' => 'EXTERNAL.XML_ID'
+        $res = LocationTable::getList(
+            array(
+                'filter' => array(
+                    '<LEFT_MARGIN' => $loc['LEFT_MARGIN'],
+                    '>RIGHT_MARGIN' => $loc['RIGHT_MARGIN'],
+                    'TYPE.CODE' => 'CITY',
+                    '=EXTERNAL.SERVICE_ID' => $srvId
+                ),
+                'select' => array(
+                    'ID',
+                    'CODE',
+                    'LEFT_MARGIN',
+                    'RIGHT_MARGIN',
+                    'XML_ID' => 'EXTERNAL.XML_ID'
+                )
             )
-        ));
+        );
 
-        if ($locParent = $res->fetch())
+        if ($locParent = $res->fetch()) {
             return $locParent['XML_ID'];
+        }
 
         return $result;
     }
@@ -157,27 +182,31 @@ class ExternalLocationMap
      */
     public static function getCityId($locationId)
     {
-        if (strlen($locationId) <= 0)
+        if ($locationId == '') {
             return 0;
+        }
 
-        $res = LocationTable::getList(array(
-            'filter' => array(
-                array(
-                    'LOGIC' => 'OR',
-                    '=CODE' => $locationId,
-                    '=ID' => $locationId,
+        $res = LocationTable::getList(
+            array(
+                'filter' => array(
+                    array(
+                        'LOGIC' => 'OR',
+                        '=CODE' => $locationId,
+                        '=ID' => $locationId,
+                    ),
+                    array(
+                        '=TYPE.CODE' => 'CITY',
+                        '=PARENTS.TYPE.CODE' => 'CITY'
+                    ),
                 ),
-                array(
-                    '=TYPE.CODE' => 'CITY',
-                    '=PARENTS.TYPE.CODE' => 'CITY'
-                ),
-            ),
-            'select' => array(
-                'ID', 'CODE',
-                'TYPE_CODE' => 'TYPE.CODE',
-                'PID' => 'PARENTS.ID',
+                'select' => array(
+                    'ID',
+                    'CODE',
+                    'TYPE_CODE' => 'TYPE.CODE',
+                    'PID' => 'PARENTS.ID',
+                )
             )
-        ));
+        );
 
         if ($loc = $res->fetch()) {
             return $loc['PID'];
@@ -195,13 +224,15 @@ class ExternalLocationMap
     {
         $result = new Result();
 
-        if (static::isInstalled())
+        if (static::isInstalled()) {
             return $result;
+        }
 
         $imported = static::importFromCsv($_SERVER['DOCUMENT_ROOT'] . static::CSV_FILE_PATH);
 
-        if (intval($imported) <= 0)
+        if (intval($imported) <= 0) {
             $result = static::refresh();
+        }
 
         return $result;
     }
@@ -215,8 +246,9 @@ class ExternalLocationMap
     {
         $result = new Result();
 
-        if (!static::isInstalled())
+        if (!static::isInstalled()) {
             return $result;
+        }
 
         $con = \Bitrix\Main\Application::getConnection();
         $sqlHelper = $con->getSqlHelper();
@@ -236,15 +268,18 @@ class ExternalLocationMap
 
         if ($result === null) {
             $result = false;
-            $res = ExternalServiceTable::getList(array(
-                'filter' => array(
-                    '=CODE' => static::EXTERNAL_SERVICE_CODE,
-                    '!=EXTERNAL.ID' => false
+            $res = ExternalServiceTable::getList(
+                array(
+                    'filter' => array(
+                        '=CODE' => static::EXTERNAL_SERVICE_CODE,
+                        '!=EXTERNAL.ID' => false
+                    )
                 )
-            ));
+            );
 
-            if ($res->fetch())
+            if ($res->fetch()) {
                 $result = true;
+            }
         }
 
         return $result;
@@ -267,8 +302,9 @@ class ExternalLocationMap
             if (is_array($locations) && !empty($locations)) {
                 $res = static::setMap($locations);
 
-                if (!$res->isSuccess())
+                if (!$res->isSuccess()) {
                     $result->addErrors($res->getErrors());
+                }
             }
         } else {
             $result->addErrors($res->getErrors());
@@ -288,45 +324,55 @@ class ExternalLocationMap
     {
         set_time_limit(0);
 
-        if (strlen($path) <= 0)
+        if ($path == '') {
             return 0;
+        }
 
-        if (!\Bitrix\Main\IO\File::isFileExists($path))
+        if (!\Bitrix\Main\IO\File::isFileExists($path)) {
             return 0;
+        }
 
         $content = \Bitrix\Main\IO\File::getFileContents($path);
 
-        if ($content === false)
+        if ($content === false) {
             return 0;
+        }
 
         $srvId = self::getExternalServiceId();
 
-        if (intval($srvId) < 0)
+        if (intval($srvId) < 0) {
             return 0;
+        }
 
         $lines = explode("\n", $content);
 
-        if (!is_array($lines))
+        if (!is_array($lines)) {
             return array();
+        }
 
         $result = 0;
 
         foreach ($lines as $line) {
             $columns = explode(';', $line);
 
-            if (!is_array($columns) || count($columns) != 2)
+            if (!is_array($columns) || count($columns) != 2) {
                 continue;
+            }
 
-            $res = LocationTable::getList(array(
-                'filter' => array(
-                    '=CODE' => $columns[0],
-                ),
-                'select' => array('ID')
-            ));
+            $res = LocationTable::getList(
+                array(
+                    'filter' => array(
+                        '=CODE' => $columns[0],
+                    ),
+                    'select' => array('ID')
+                )
+            );
 
-            if ($loc = $res->fetch())
-                if (self::setExternalLocation($srvId, $loc['ID'], $columns[1]))
+            if ($loc = $res->fetch()) {
+                if (self::setExternalLocation($srvId, $loc['ID'], $columns[1])) {
                     $result++;
+                }
+            }
         }
 
         return $result;
@@ -342,24 +388,29 @@ class ExternalLocationMap
         set_time_limit(0);
         $srvId = static::getExternalServiceId();
 
-        if ($srvId <= 0)
+        if ($srvId <= 0) {
             return false;
+        }
 
-        $res = LocationTable::getList(array(
-            'filter' => array(
-                '=EXTERNAL.SERVICE_ID' => $srvId
-            ),
-            'select' => array(
-                'CODE',
-                'XML_ID' => 'EXTERNAL.XML_ID'
+        $res = LocationTable::getList(
+            array(
+                'filter' => array(
+                    '=EXTERNAL.SERVICE_ID' => $srvId
+                ),
+                'select' => array(
+                    'CODE',
+                    'XML_ID' => 'EXTERNAL.XML_ID'
+                )
             )
-        ));
+        );
 
         $content = '';
 
-        while ($row = $res->fetch())
-            if (strlen($row['CODE']) > 0)
+        while ($row = $res->fetch()) {
+            if ($row['CODE'] <> '') {
                 $content .= $row['CODE'] . ";" . $row['XML_ID'] . "\n";
+            }
+        }
 
         return \Bitrix\Main\IO\File::putFileContents($path, $content);
     }
@@ -371,17 +422,21 @@ class ExternalLocationMap
      */
     public static function getExternalServiceId()
     {
-        if (strlen(static::EXTERNAL_SERVICE_CODE) <= 0)
+        if (static::EXTERNAL_SERVICE_CODE == '') {
             throw new SystemException('EXTERNAL_SERVICE_CODE must be defined!');
+        }
 
         static $result = null;
 
-        if ($result !== null)
+        if ($result !== null) {
             return $result;
+        }
 
-        $res = ExternalServiceTable::getList(array(
-            'filter' => array('=CODE' => static::EXTERNAL_SERVICE_CODE)
-        ));
+        $res = ExternalServiceTable::getList(
+            array(
+                'filter' => array('=CODE' => static::EXTERNAL_SERVICE_CODE)
+            )
+        );
 
         if ($srv = $res->fetch()) {
             $result = $srv['ID'];
@@ -406,8 +461,9 @@ class ExternalLocationMap
      */
     protected static function utfDecode($str)
     {
-        if (strtolower(SITE_CHARSET) != 'utf-8')
+        if (mb_strtolower(SITE_CHARSET) != 'utf-8') {
             $str = Encoding::convertEncoding($str, 'UTF-8', SITE_CHARSET);
+        }
 
         return $str;
     }
@@ -424,43 +480,50 @@ class ExternalLocationMap
     {
         $result = new Result();
 
-        if (empty($cities))
+        if (empty($cities)) {
             throw new ArgumentNullException('cities');
+        }
 
         $xmlIdExist = array();
         $locationIdExist = array();
         $xmlIds = array_keys($cities);
         $srvId = static::getExternalServiceId();
 
-        $res = ExternalTable::getList(array(
-            'filter' => array(
-                '=SERVICE_ID' => $srvId
+        $res = ExternalTable::getList(
+            array(
+                'filter' => array(
+                    '=SERVICE_ID' => $srvId
+                )
             )
-        ));
+        );
 
         while ($map = $res->fetch()) {
             $xmlIdExist[] = $map['XML_ID'];
             $locationIdExist[] = $map['LOCATION_ID'];
 
             //we already have this location
-            if (in_array($map['XML_ID'], $xmlIds))
+            if (in_array($map['XML_ID'], $xmlIds)) {
                 unset($cities[$map['XML_ID']]);
+            }
         }
 
         //nothing to import
-        if (empty($cities))
+        if (empty($cities)) {
             return $result;
+        }
 
         foreach ($cities as $city) {
             $xmlId = $city[self::CITY_XML_ID_IDX];
             $locId = static::getLocationIdByNames($city[static::CITY_NAME_IDX], '', '', $city[static::REGION_NAME_IDX]);
 
             if (intval($locId) > 0 && !in_array($xmlId, $xmlIdExist) && !in_array($locId, $locationIdExist)) {
-                ExternalTable::add(array(
-                    'SERVICE_ID' => $srvId,
-                    'LOCATION_ID' => $locId,
-                    'XML_ID' => $xmlId
-                ));
+                ExternalTable::add(
+                    array(
+                        'SERVICE_ID' => $srvId,
+                        'LOCATION_ID' => $locId,
+                        'XML_ID' => $xmlId
+                    )
+                );
 
                 $xmlIdExist[] = $xmlId;
                 $locationIdExist[] = $locId;
@@ -484,29 +547,35 @@ class ExternalLocationMap
      */
     public static function setExternalLocation2($srvId, $locationId, $xmlId, $updateExist = false)
     {
-        if (strlen($xmlId) <= 0)
+        if ($xmlId == '') {
             throw new ArgumentNullException('code');
+        }
 
-        if (strlen($srvId) <= 0)
+        if ($srvId == '') {
             throw new ArgumentNullException('srvId');
+        }
 
-        if (intval($locationId) <= 0)
+        if (intval($locationId) <= 0) {
             throw new ArgumentNullException('locationId');
+        }
 
         static $locCache = array();
 
         if (!isset($locCache[$srvId])) {
             $locCache[$srvId] = array();
 
-            $eRes = ExternalTable::getList(array(
-                'filter' => array(
-                    '=SERVICE_ID' => $srvId,
-                ),
-                'select' => array('ID', 'SERVICE_ID', 'LOCATION_ID', 'XML_ID')
-            ));
+            $eRes = ExternalTable::getList(
+                array(
+                    'filter' => array(
+                        '=SERVICE_ID' => $srvId,
+                    ),
+                    'select' => array('ID', 'SERVICE_ID', 'LOCATION_ID', 'XML_ID')
+                )
+            );
 
-            while ($loc = $eRes->fetch())
+            while ($loc = $eRes->fetch()) {
                 $locCache[$srvId][$loc['LOCATION_ID'] . '##' . $loc['XML_ID']] = $loc['ID'];
+            }
         }
 
         if (!empty($locCache[$srvId][$locationId . '##' . $xmlId])) {
@@ -517,7 +586,8 @@ class ExternalLocationMap
                         'SERVICE_ID' => $srvId,
                         'XML_ID' => $xmlId,
                         'LOCATION_ID' => $locationId
-                    ));
+                    )
+                );
 
                 return $res;
             } else {
@@ -526,11 +596,13 @@ class ExternalLocationMap
                 return $result;
             }
         } else {
-            $res = ExternalTable::add(array(
-                'SERVICE_ID' => $srvId,
-                'XML_ID' => $xmlId,
-                'LOCATION_ID' => $locationId
-            ));
+            $res = ExternalTable::add(
+                array(
+                    'SERVICE_ID' => $srvId,
+                    'XML_ID' => $xmlId,
+                    'LOCATION_ID' => $locationId
+                )
+            );
 
             $locCache[$srvId][$locationId . '##' . $xmlId] = $res->getId();
             return $res;
@@ -559,8 +631,9 @@ class ExternalLocationMap
         $con = \Bitrix\Main\Application::getConnection();
         $res = $con->query("SELECT COUNT(1) AS COUNT FROM b_sale_hdaln");
 
-        if ($row = $res->fetch())
+        if ($row = $res->fetch()) {
             $count = intval($row['COUNT']);
+        }
 
         return $count > 0;
     }
@@ -580,8 +653,9 @@ class ExternalLocationMap
         $con = \Bitrix\Main\Application::getConnection();
         $sqlHelper = $con->getSqlHelper();
 
-        if (intval($startId) <= 0)
+        if (intval($startId) <= 0) {
             $con->queryExecute("DELETE FROM b_sale_hdaln");
+        }
 
         $query = "SELECT
 			  L.ID,
@@ -596,14 +670,16 @@ class ExternalLocationMap
 			  N.LANGUAGE_ID = 'ru'
 			  AND (T.CODE = 'VILLAGE' OR T.CODE = 'CITY')";
 
-        if ($startId !== false)
+        if ($startId !== false) {
             $query .= " AND L.ID > " . strval(intval($startId));
+        }
 
         $query .= " ORDER BY ID ASC";
         $res = $con->query($query);
 
         while ($loc = $res->fetch()) {
-            $con->queryExecute("
+            $con->queryExecute(
+                "
 				INSERT INTO
 					  b_sale_hdaln (LOCATION_ID, LEFT_MARGIN, RIGHT_MARGIN, NAME)
 				VALUES(
@@ -614,15 +690,18 @@ class ExternalLocationMap
                     preg_replace(
                         '/\s*(\(.*\))/i' . BX_UTF_PCRE_MODIFIER,
                         '',
-                        \Bitrix\Sale\Location\Comparator::flatten($loc['NAME_UPPER']))
+                        \Bitrix\Sale\Location\Comparator::flatten($loc['NAME_UPPER'])
+                    )
                 ) . "'
 				)
-			");
+			"
+            );
 
             $lastProcessedId = $loc['ID'];
 
-            if ($timeout > 0 && (mktime(true) - $startTime) >= $timeout)
+            if ($timeout > 0 && (mktime(true) - $startTime) >= $timeout) {
                 break;
+            }
         }
 
         return $lastProcessedId;
@@ -647,21 +726,33 @@ class ExternalLocationMap
         $cityNorm = null;
         $searchNames = array($name);
 
-        if (!$exactOnly)
-            $searchNames = array_merge($searchNames, \Bitrix\Sale\Location\Comparator::getLocalityNamesArray($nameNorm['NAME'], $nameNorm['TYPE']));
+        if (!$exactOnly) {
+            $searchNames = array_merge(
+                $searchNames,
+                \Bitrix\Sale\Location\Comparator::getLocalityNamesArray(
+                    $nameNorm['NAME'],
+                    $nameNorm['TYPE']
+                )
+            );
+        }
 
         $searchNames = array_map(array('\Bitrix\Sale\Location\Comparator', 'flatten'), $searchNames);
-        $searchNames = array_map(function ($name) {
-            return "'" . $name . "'";
-        }, $searchNames);
+        $searchNames = array_map(
+            function ($name) {
+                return "'" . $name . "'";
+            },
+            $searchNames
+        );
 
-        if (empty($searchNames))
+        if (empty($searchNames)) {
             return 0;
+        }
 
         $con = \Bitrix\Main\Application::getConnection();
         $sqlHelper = $con->getSqlHelper();
         $margins = array();
-        $res = $con->query("
+        $res = $con->query(
+            "
 			SELECT
 				N.LOCATION_ID AS LOCATION_ID,
 				N.LEFT_MARGIN AS LEFT_MARGIN,
@@ -670,10 +761,13 @@ class ExternalLocationMap
 			FROM
 				b_sale_hdaln AS N
 				  LEFT JOIN b_sale_loc_ext AS E
-					ON N.LOCATION_ID = E.LOCATION_ID AND E.SERVICE_ID = " . $sqlHelper->forSql(self::getExternalServiceId()) . "
+					ON N.LOCATION_ID = E.LOCATION_ID AND E.SERVICE_ID = " . $sqlHelper->forSql(
+                self::getExternalServiceId()
+            ) . "
 			WHERE
 				E.LOCATION_ID IS NULL
-				AND NAME IN (" . implode(', ', $searchNames) . ")");
+				AND NAME IN (" . implode(', ', $searchNames) . ")"
+        );
 
         $results = array();
         $exact = array();
@@ -683,55 +777,65 @@ class ExternalLocationMap
                 $margins[] = array($loc['LOCATION_ID'], $loc['LEFT_MARGIN'], $loc['RIGHT_MARGIN'], $loc['NAME']);
                 $results[$loc['LOCATION_ID']] = array('NAME' => true);
 
-                if ($loc['NAME'] == $nameNorm["NAME"])
+                if ($loc['NAME'] == $nameNorm["NAME"]) {
                     $exact[] = $loc['LOCATION_ID'];
+                }
             }
         }
 
-        if (empty($margins))
+        if (empty($margins)) {
             return 0;
+        }
 
         $marginFilter = array('LOGIC' => 'OR');
 
-        foreach ($margins as $v)
+        foreach ($margins as $v) {
             $marginFilter[] = array('<LEFT_MARGIN' => $v[1], '>RIGHT_MARGIN' => $v[2]);
+        }
 
-        $res = LocationTable::getList(array(
-            'filter' => array(
-                '=NAME.LANGUAGE_ID' => LANGUAGE_ID,
-                '=TYPE.CODE' => array('SUBREGION', 'REGION', 'CITY'),
-                $marginFilter
-            ),
-            'select' => array(
-                'ID',
-                'PARENTS_NAME_UPPER' => 'NAME.NAME_UPPER',
-                'PARENTS_TYPE_CODE' => 'TYPE.CODE',
-                'LEFT_MARGIN', 'RIGHT_MARGIN'
+        $res = LocationTable::getList(
+            array(
+                'filter' => array(
+                    '=NAME.LANGUAGE_ID' => LANGUAGE_ID,
+                    '=TYPE.CODE' => array('SUBREGION', 'REGION', 'CITY'),
+                    $marginFilter
+                ),
+                'select' => array(
+                    'ID',
+                    'PARENTS_NAME_UPPER' => 'NAME.NAME_UPPER',
+                    'PARENTS_TYPE_CODE' => 'TYPE.CODE',
+                    'LEFT_MARGIN',
+                    'RIGHT_MARGIN'
+                )
             )
-        ));
+        );
 
         while ($loc = $res->fetch()) {
             $ids = self::getIdByMargin($loc['LEFT_MARGIN'], $loc['RIGHT_MARGIN'], $margins);
 
             foreach ($ids as $id) {
-                if (in_array(false, $results[$id], true))
+                if (in_array(false, $results[$id], true)) {
                     continue;
+                }
 
                 $found = null;
 
-                if ($loc['PARENTS_TYPE_CODE'] == 'REGION' && strlen($region) > 0) {
-                    if (!is_array($regionNorm))
+                if ($loc['PARENTS_TYPE_CODE'] == 'REGION' && $region <> '') {
+                    if (!is_array($regionNorm)) {
                         $regionNorm = Comparator::normalizeEntity($region, 'REGION');
+                    }
 
                     $found = Comparator::isEntityEqual($loc['PARENTS_NAME_UPPER'], $regionNorm, 'REGION');
-                } elseif (strlen($subregion) > 0 && $loc['PARENTS_TYPE_CODE'] == 'SUBREGION') {
-                    if (!is_array($subregionNorm))
+                } elseif ($subregion <> '' && $loc['PARENTS_TYPE_CODE'] == 'SUBREGION') {
+                    if (!is_array($subregionNorm)) {
                         $subregionNorm = Comparator::normalizeEntity($subregion, 'SUBREGION');
+                    }
 
                     $found = Comparator::isEntityEqual($loc['PARENTS_NAME_UPPER'], $subregionNorm, 'SUBREGION');
-                } elseif (strlen($city) > 0 && $loc['PARENTS_TYPE_CODE'] == 'CITY') {
-                    if (!is_array($cityNorm))
+                } elseif ($city <> '' && $loc['PARENTS_TYPE_CODE'] == 'CITY') {
+                    if (!is_array($cityNorm)) {
                         $subregionNorm = Comparator::normalizeEntity($city, 'LOCALITY');
+                    }
 
                     $found = Comparator::isEntityEqual($loc['PARENTS_NAME_UPPER'], $cityNorm, 'LOCALITY');
                 }
@@ -740,23 +844,28 @@ class ExternalLocationMap
                     $isInExact = in_array($id, $exact);
                     $results[$id][$loc['PARENTS_TYPE_CODE']] = $found;
 
-                    if ($results[$id]['REGION'] === true && $results[$id]['SUBREGION'] === true && $isInExact)
+                    if ($results[$id]['REGION'] === true && $results[$id]['SUBREGION'] === true && $isInExact) {
                         return $id;
+                    }
 
                     if ($found === false && $isInExact) {
                         $key = array_search($id, $exact);
 
-                        if ($key !== false)
+                        if ($key !== false) {
                             unset($exact[$key]);
+                        }
                     }
                 }
             }
         }
 
-        if (!empty($exact))
-            foreach ($exact as $e)
-                if (!in_array(false, $results[$e], true))
+        if (!empty($exact)) {
+            foreach ($exact as $e) {
+                if (!in_array(false, $results[$e], true)) {
                     return $e;
+                }
+            }
+        }
 
         $resCandidates = array();
 
@@ -766,8 +875,9 @@ class ExternalLocationMap
             }
         }
 
-        if (empty($resCandidates))
+        if (empty($resCandidates)) {
             return 0;
+        }
 
         if (count($resCandidates) > 1) {
             arsort($resCandidates);
@@ -782,8 +892,9 @@ class ExternalLocationMap
         $result = array();
 
         foreach ($lMargins as $m) {
-            if ($m[1] > $parentLeft && $m[2] < $parentRight)
+            if ($m[1] > $parentLeft && $m[2] < $parentRight) {
                 $result[] = $m[0];
+            }
         }
 
         return $result;
@@ -792,8 +903,9 @@ class ExternalLocationMap
     protected static function getNameByMargin($parentLeft, $parentRight, $lMargins)
     {
         foreach ($lMargins as $m) {
-            if ($m[1] > $parentLeft && $m[2] < $parentRight)
+            if ($m[1] > $parentLeft && $m[2] < $parentRight) {
                 return $m[3];
+            }
         }
 
         return 0;

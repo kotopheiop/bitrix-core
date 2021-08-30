@@ -1,7 +1,10 @@
-<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die(); ?><?
-$ORDER_ID = IntVal($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["ID"]);
-if (!is_array($arOrder))
+<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+} ?><?
+$ORDER_ID = intval($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["ID"]);
+if (!is_array($arOrder)) {
     $arOrder = CSaleOrder::GetByID($ORDER_ID);
+}
 ?>
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
 <html>
@@ -32,8 +35,9 @@ if (!is_array($arOrder))
 
 <?
 
-if ($_REQUEST['BLANK'] == 'Y')
+if ($_REQUEST['BLANK'] == 'Y') {
     $blank = true;
+}
 
 $pageWidth = 595.28;
 $pageHeight = 841.89;
@@ -42,13 +46,15 @@ $background = '#ffffff';
 if (CSalePaySystemAction::GetParamValue('BACKGROUND', false)) {
     $path = CSalePaySystemAction::GetParamValue('BACKGROUND', false);
     if (intval($path) > 0) {
-        if ($arFile = CFile::GetFileArray($path))
+        if ($arFile = CFile::GetFileArray($path)) {
             $path = $arFile['SRC'];
+        }
     }
 
     $backgroundStyle = CSalePaySystemAction::GetParamValue('BACKGROUND_STYLE', false);
-    if (!in_array($backgroundStyle, array('none', 'tile', 'stretch')))
+    if (!in_array($backgroundStyle, array('none', 'tile', 'stretch'))) {
         $backgroundStyle = 'none';
+    }
 
     if ($path) {
         switch ($backgroundStyle) {
@@ -61,7 +67,9 @@ if (CSalePaySystemAction::GetParamValue('BACKGROUND', false)) {
             case 'stretch':
                 $background = sprintf(
                     "url('%s') 0 0 repeat-y; background-size: %.02fpt %.02fpt",
-                    $path, $pageWidth, $pageHeight
+                    $path,
+                    $pageWidth,
+                    $pageHeight
                 );
                 break;
         }
@@ -81,7 +89,10 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
 
 <body style="margin: 0pt; padding: 0pt;"<? if ($_REQUEST['PRINT'] == 'Y') { ?> onload="setTimeout(window.print, 0);"<? } ?>>
 
-<div style="margin: 0pt; padding: <?= join('pt ', $margin); ?>pt; width: <?= $width; ?>pt; background: <?= $background; ?>">
+<div style="margin: 0pt; padding: <?= join(
+    'pt ',
+    $margin
+); ?>pt; width: <?= $width; ?>pt; background: <?= $background; ?>">
 
     <b><?= sprintf(
             "������� �� ������ �%s �� %s",
@@ -153,7 +164,8 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
     $dbBasket = CSaleBasket::GetList(
         array("DATE_INSERT" => "ASC", "NAME" => "ASC"),
         array("ORDER_ID" => $ORDER_ID),
-        false, false,
+        false,
+        false,
         array("ID", "PRICE", "CURRENCY", "QUANTITY", "NAME", "VAT_RATE", "MEASURE_NAME")
     );
     if ($arBasket = $dbBasket->Fetch()) {
@@ -177,16 +189,20 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
                 array("ID", "BASKET_ID", "NAME", "VALUE", "CODE", "SORT")
             );
             while ($arBasketProps = $dbBasketProps->GetNext()) {
-                if (!empty($arBasketProps) && $arBasketProps["VALUE"] != "")
+                if (!empty($arBasketProps) && $arBasketProps["VALUE"] != "") {
                     $arProdProps[] = $arBasketProps;
+                }
             }
             $arBasket["PROPS"] = $arProdProps;
 
             $productName = $arBasket["NAME"];
-            if ($productName == "OrderDelivery")
+            if ($productName == "OrderDelivery") {
                 $productName = "��������";
-            else if ($productName == "OrderDiscount")
-                $productName = "������";
+            } else {
+                if ($productName == "OrderDiscount") {
+                    $productName = "������";
+                }
+            }
 
             $arCells[++$n] = array(
                 1 => $n,
@@ -203,8 +219,9 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
             );
 
             $arProps[$n] = array();
-            foreach ($arBasket["PROPS"] as $vv)
+            foreach ($arBasket["PROPS"] as $vv) {
                 $arProps[$n][] = htmlspecialcharsbx(sprintf("%s: %s", $vv["NAME"], $vv["VALUE"]));
+            }
 
             $sum += doubleval($arBasket["PRICE"] * $arBasket["QUANTITY"]);
             $vat = max($vat, $arBasket["VAT_RATE"]);
@@ -214,8 +231,9 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
             $arDelivery_tmp = CSaleDelivery::GetByID($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["DELIVERY_ID"]);
 
             $sDeliveryItem = "��������";
-            if (strlen($arDelivery_tmp["NAME"]) > 0)
+            if ($arDelivery_tmp["NAME"] <> '') {
                 $sDeliveryItem .= sprintf(" (%s)", $arDelivery_tmp["NAME"]);
+            }
             $arCells[++$n] = array(
                 1 => $n,
                 htmlspecialcharsbx($sDeliveryItem),
@@ -265,14 +283,16 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
                 null,
                 null,
                 null,
-                htmlspecialcharsbx(sprintf(
-                    "%s%s%s:",
-                    ($arTaxList["IS_IN_PRICE"] == "Y") ? "� ���� ���� " : "",
-                    ($vat <= 0) ? $arTaxList["TAX_NAME"] : "���",
-                    ($vat <= 0 && $arTaxList["IS_PERCENT"] == "Y")
-                        ? sprintf(' (%s%%)', roundEx($arTaxList["VALUE"], SALE_VALUE_PRECISION))
-                        : ""
-                )),
+                htmlspecialcharsbx(
+                    sprintf(
+                        "%s%s%s:",
+                        ($arTaxList["IS_IN_PRICE"] == "Y") ? "� ���� ���� " : "",
+                        ($vat <= 0) ? $arTaxList["TAX_NAME"] : "���",
+                        ($vat <= 0 && $arTaxList["IS_PERCENT"] == "Y")
+                            ? sprintf(' (%s%%)', roundEx($arTaxList["VALUE"], SALE_VALUE_PRECISION))
+                            : ""
+                    )
+                ),
                 SaleFormatCurrency(
                     $arTaxList["VALUE_MONEY"],
                     $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"],
@@ -408,7 +428,6 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
                 } ?>
             </tr>
             <?
-
         }
 
         ?>
@@ -445,22 +464,41 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
     <br>
     <br>
 
-    <? if (CSalePaySystemAction::GetParamValue("COMMENT1", false) || CSalePaySystemAction::GetParamValue("COMMENT2", false)) { ?>
+    <? if (CSalePaySystemAction::GetParamValue("COMMENT1", false) || CSalePaySystemAction::GetParamValue(
+            "COMMENT2",
+            false
+        )) { ?>
         <b>����� �� ��������</b>
         <br>
         <? if (CSalePaySystemAction::GetParamValue("COMMENT1", false)) { ?>
-            <?= nl2br(HTMLToTxt(preg_replace(
-                array('#</div>\s*<div[^>]*>#i', '#</?div>#i'), array('<br>', '<br>'),
-                htmlspecialcharsback(CSalePaySystemAction::GetParamValue("COMMENT1", false))
-            ), '', array(), 0)); ?>
+            <?= nl2br(
+                HTMLToTxt(
+                    preg_replace(
+                        array('#</div>\s*<div[^>]*>#i', '#</?div>#i'),
+                        array('<br>', '<br>'),
+                        htmlspecialcharsback(CSalePaySystemAction::GetParamValue("COMMENT1", false))
+                    ),
+                    '',
+                    array(),
+                    0
+                )
+            ); ?>
             <br>
             <br>
         <? } ?>
         <? if (CSalePaySystemAction::GetParamValue("COMMENT2", false)) { ?>
-            <?= nl2br(HTMLToTxt(preg_replace(
-                array('#</div>\s*<div[^>]*>#i', '#</?div>#i'), array('<br>', '<br>'),
-                htmlspecialcharsback(CSalePaySystemAction::GetParamValue("COMMENT2", false))
-            ), '', array(), 0)); ?>
+            <?= nl2br(
+                HTMLToTxt(
+                    preg_replace(
+                        array('#</div>\s*<div[^>]*>#i', '#</?div>#i'),
+                        array('<br>', '<br>'),
+                        htmlspecialcharsback(CSalePaySystemAction::GetParamValue("COMMENT2", false))
+                    ),
+                    '',
+                    array(),
+                    0
+                )
+            ); ?>
             <br>
             <br>
         <? } ?>
@@ -471,7 +509,8 @@ $width = $pageWidth - $margin['left'] - $margin['right'];
     <? if (!$blank) { ?>
         <div style="position: relative; "><?= CFile::ShowImage(
                 CSalePaySystemAction::GetParamValue("PATH_TO_STAMP", false),
-                160, 160,
+                160,
+                160,
                 'style="position: absolute; left: 40pt; "'
             ); ?></div>
     <? } ?>

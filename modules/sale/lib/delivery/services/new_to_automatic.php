@@ -63,8 +63,9 @@ class NewToAutomatic
         $result = array();
         $shipment = \CSaleDelivery::convertOrderOldToNew($arOrder);
 
-        if ($this->service->isCompatible($shipment))
+        if ($this->service->isCompatible($shipment)) {
             $result = array('profile');
+        }
 
         return $result;
     }
@@ -98,8 +99,9 @@ class NewToAutomatic
      */
     public static function convertNewServiceToOld($service)
     {
-        if (intval($service["ID"]) <= 0)
+        if (intval($service["ID"]) <= 0) {
             return array();
+        }
 
         $service["SID"] = 'new' . $service["ID"];
         $service["TAX_RATE"] = 0;
@@ -108,8 +110,9 @@ class NewToAutomatic
         $service["SETTINGS"] = array();
         $service["HANDLER"] = self::HANDLER;
 
-        if (intval($service["LOGOTIP"]) > 0)
+        if (intval($service["LOGOTIP"]) > 0) {
             $service["LOGOTIP"] = \CFile::getFileArray($service["LOGOTIP"]);
+        }
 
         $service["CONFIG"] = array(
             "CONFIG_GROUPS" => array(),
@@ -130,11 +133,17 @@ class NewToAutomatic
         foreach ($restrictions as $restriction) {
             switch ($restriction["CLASS_NAME"]) {
                 case '\Bitrix\Sale\Delivery\Restrictions\ByWeight':
-                    $profileParams["RESTRICTIONS_WEIGHT"] = array($restriction["PARAMS"]["MIN_WEIGHT"], $restriction["PARAMS"]["MAX_WEIGHT"]);
+                    $profileParams["RESTRICTIONS_WEIGHT"] = array(
+                        $restriction["PARAMS"]["MIN_WEIGHT"],
+                        $restriction["PARAMS"]["MAX_WEIGHT"]
+                    );
                     break;
 
                 case '\Bitrix\Sale\Delivery\Restrictions\ByPrice':
-                    $profileParams["RESTRICTIONS_SUM"] = array($restriction["PARAMS"]["MIN_PRICE"], $restriction["PARAMS"]["MAX_PRICE"]);
+                    $profileParams["RESTRICTIONS_SUM"] = array(
+                        $restriction["PARAMS"]["MIN_PRICE"],
+                        $restriction["PARAMS"]["MAX_PRICE"]
+                    );
                     break;
 
                 case '\Bitrix\Sale\Delivery\Restrictions\ByDimensions':

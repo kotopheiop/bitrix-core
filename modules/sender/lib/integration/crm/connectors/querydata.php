@@ -8,10 +8,9 @@
 
 namespace Bitrix\Sender\Integration\Crm\Connectors;
 
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Entity;
 use Bitrix\Main\DB\Result;
-
+use Bitrix\Main\Entity;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Sender\Recipient;
 use Bitrix\Sender\UI\PageNavigation;
 
@@ -74,6 +73,7 @@ class QueryData
                 $alias = '';
             }
 
+            $query->addGroup('ID');
             $query->addSelect($field, $alias);
         }
 
@@ -90,8 +90,10 @@ class QueryData
                         $data['EMAIL'] = $data['EMAIL_MAILING'];
                     } elseif (isset($data['EMAIL_HOME']) && $data['EMAIL_HOME']) {
                         $data['EMAIL'] = $data['EMAIL_HOME'];
-                    } else if (isset($data['EMAIL_WORK']) && $data['EMAIL_WORK']) {
-                        $data['EMAIL'] = $data['EMAIL_WORK'];
+                    } else {
+                        if (isset($data['EMAIL_WORK']) && $data['EMAIL_WORK']) {
+                            $data['EMAIL'] = $data['EMAIL_WORK'];
+                        }
                     }
                 }
 
@@ -100,8 +102,10 @@ class QueryData
                         $data['PHONE'] = $data['PHONE_MAILING'];
                     } elseif (isset($data['PHONE_MOBILE']) && $data['PHONE_MOBILE']) {
                         $data['PHONE'] = $data['PHONE_MOBILE'];
-                    } else if (isset($data['PHONE_WORK']) && $data['PHONE_WORK']) {
-                        $data['PHONE'] = $data['PHONE_WORK'];
+                    } else {
+                        if (isset($data['PHONE_WORK']) && $data['PHONE_WORK']) {
+                            $data['PHONE'] = $data['PHONE_WORK'];
+                        }
                     }
                 }
 

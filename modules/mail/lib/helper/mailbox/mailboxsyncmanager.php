@@ -49,7 +49,9 @@ class MailboxSyncManager
         $mailboxesSyncData = $this->getSuccessSyncedMailboxes();
         $mailboxesToSync = [];
         foreach ($mailboxesSyncData as $mailboxId => $lastMailCheckData) {
-            if ($lastMailCheckData['timeStarted'] >= 0 && (time() - intval($lastMailCheckData['timeStarted']) >= $this->mailCheckInterval)) {
+            if ($lastMailCheckData['timeStarted'] >= 0 && (time() - intval(
+                        $lastMailCheckData['timeStarted']
+                    ) >= $this->mailCheckInterval)) {
                 $mailboxesToSync[$mailboxId] = $lastMailCheckData;
             }
         }
@@ -85,20 +87,32 @@ class MailboxSyncManager
     public function setSyncStartedData($mailboxId, $time = null)
     {
         $mailboxesOptions = $this->getMailboxesSyncInfo();
-        $mailboxesOptions[$mailboxId] = ['isSuccess' => true, 'timeStarted' => $time !== null && (int)$time >= 0 ? (int)$time : time()];
+        $mailboxesOptions[$mailboxId] = [
+            'isSuccess' => true,
+            'timeStarted' => $time !== null && (int)$time >= 0 ? (int)$time : time()
+        ];
         $this->setOption($mailboxesOptions);
     }
 
     public function setSyncStatus($mailboxId, $isSuccess, $time = null)
     {
         $mailboxesOptions = $this->getMailboxesSyncInfo();
-        $mailboxesOptions[$mailboxId] = ['isSuccess' => $isSuccess, 'timeStarted' => $time !== null && (int)$time >= 0 ? (int)$time : time()];
+        $mailboxesOptions[$mailboxId] = [
+            'isSuccess' => $isSuccess,
+            'timeStarted' => $time !== null && (int)$time >= 0 ? (int)$time : time()
+        ];
         $this->setOption($mailboxesOptions);
     }
 
     private function setOption($mailboxesSyncInfo)
     {
-        CUserOptions::setOption($this->syncOptionCategory, $this->syncOptionName, $mailboxesSyncInfo, false, $this->userId);
+        CUserOptions::setOption(
+            $this->syncOptionCategory,
+            $this->syncOptionName,
+            $mailboxesSyncInfo,
+            false,
+            $this->userId
+        );
     }
 
     /**

@@ -2,15 +2,16 @@
 
 IncludeModuleLangFile(__FILE__);
 
-if (!$USER->CanDoOperation('edit_other_settings'))
+if (!$USER->CanDoOperation('edit_other_settings')) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
-$ID = intVal($ID);
+$ID = intval($ID);
 $arError = $arSmileSet = $arFields = $arLang = array();
 
 /* LANGS */
 $arLangTitle = array("reference_id" => array(), "reference" => array());
-$db_res = CLanguage::GetList(($b = "sort"), ($o = "asc"));
+$db_res = CLanguage::GetList();
 while ($res = $db_res->GetNext(true, false)) {
     $arLang[$res["LID"]] = $res;
     $arLangTitle["reference_id"][] = $res["LID"];
@@ -21,14 +22,16 @@ $bInitVars = false;
 $APPLICATION->SetTitle($ID > 0 ? GetMessage("SMILE_EDIT_RECORD") : GetMessage("SMILE_NEW_RECORD"));
 
 $fileName = '';
-if ($REQUEST_METHOD == "POST" && (strlen($save) > 0 || strlen($apply) > 0)) {
-    if (isset($_FILES["IMAGE"]["name"]))
+if ($REQUEST_METHOD == "POST" && ($save <> '' || $apply <> '')) {
+    if (isset($_FILES["IMAGE"]["name"])) {
         $fileName = RemoveScriptExtension($_FILES["IMAGE"]["name"]);
+    }
 
     if (!check_bitrix_sessid()) {
         $arError[] = array(
             "id" => "bad_sessid",
-            "text" => GetMessage("ERROR_BAD_SESSID"));
+            "text" => GetMessage("ERROR_BAD_SESSID")
+        );
     }
 
     if (empty($arError)) {
@@ -45,8 +48,9 @@ if ($REQUEST_METHOD == "POST" && (strlen($save) > 0 || strlen($apply) > 0)) {
             unset($arFields['STRING_ID']);
         }
 
-        foreach ($arLang as $key => $val)
+        foreach ($arLang as $key => $val) {
             $arFields["LANG"][$key] = $_REQUEST["NAME"][$key];
+        }
 
         if ($ID > 0) {
             CSmileGallery::update($ID, $arFields);
@@ -61,9 +65,10 @@ if ($REQUEST_METHOD == "POST" && (strlen($save) > 0 || strlen($apply) > 0)) {
             );
         } else {
             LocalRedirect(
-                (strlen($save) > 0 ?
+                ($save <> '' ?
                     "smile_gallery.php?lang=" . LANG . "&" . GetFilterParams("filter_", false) :
-                    "smile_gallery_edit.php?lang=" . LANG . "&ID=" . $ID . "&" . GetFilterParams("filter_", false)));
+                    "smile_gallery_edit.php?lang=" . LANG . "&ID=" . $ID . "&" . GetFilterParams("filter_", false))
+            );
         }
     }
     $e = new CAdminException($arError);
@@ -72,9 +77,11 @@ if ($REQUEST_METHOD == "POST" && (strlen($save) > 0 || strlen($apply) > 0)) {
 }
 
 if ($bInitVars && !empty($arFields)) {
-    if (isset($arFields['NAME']))
-        foreach ($arFields['NAME'] as $key => $value)
+    if (isset($arFields['NAME'])) {
+        foreach ($arFields['NAME'] as $key => $value) {
             $arFields['NAME'][htmlspecialcharsbx($key)] = htmlspecialcharsbx($value);
+        }
+    }
 
     $arSmileSet = array(
         "SORT" => isset($arFields['SORT']) ? intval($arFields['SORT']) : 300,
@@ -84,9 +91,11 @@ if ($bInitVars && !empty($arFields)) {
 } elseif ($ID > 0) {
     $arSmileSet = CSmileGallery::getById($ID, CSmileSet::GET_ALL_LANGUAGE);
 } else {
-    if (isset($_REQUEST['NAME']))
-        foreach ($_REQUEST['NAME'] as $key => $value)
+    if (isset($_REQUEST['NAME'])) {
+        foreach ($_REQUEST['NAME'] as $key => $value) {
             $_REQUEST['NAME'][htmlspecialcharsbx($key)] = htmlspecialcharsbx($value);
+        }
+    }
 
     $arSmileSet = array(
         "SORT" => isset($_REQUEST['SORT']) ? intval($_REQUEST['SORT']) : 300,
@@ -115,7 +124,10 @@ if ($ID > 0) {
     if ($arSmileSet["STRING_ID"] != 'bitrix') {
         $aMenu[] = array(
             "TEXT" => GetMessage("SMILE_BTN_DELETE"),
-            "LINK" => "javascript:if(confirm('" . GetMessage("SMILE_BTN_DELETE_CONFIRM") . "')) window.location='/bitrix/admin/smile_gallery.php?action=delete&ID[]=" . $ID . "&lang=" . LANG . "&" . bitrix_sessid_get() . "#tb';",
+            "LINK" => "javascript:if(confirm('" . GetMessage(
+                    "SMILE_BTN_DELETE_CONFIRM"
+                ) . "')) window.location='/bitrix/admin/smile_gallery.php?action=delete&ID[]=" . $ID . "&lang=" . LANG . "&" . bitrix_sessid_get(
+                ) . "#tb';",
             "ICON" => "btn_delete",
         );
     }
@@ -123,8 +135,9 @@ if ($ID > 0) {
 
 $context = new CAdminContextMenu($aMenu);
 $context->Show();
-if (isset($message) && $message)
+if (isset($message) && $message) {
     echo $message->Show();
+}
 
 ?>
 <form method="POST" action="<?= $APPLICATION->GetCurPageParam() ?>" name="smile_gallery_edit"
@@ -135,7 +148,12 @@ if (isset($message) && $message)
     <?= bitrix_sessid_post() ?>
     <?
     $aTabs = array(
-        array("DIV" => "edit1", "TAB" => GetMessage("SMILE_TAB_SMILE"), "ICON" => "smile", "TITLE" => GetMessage("SMILE_TAB_SMILE_DESCR"))
+        array(
+            "DIV" => "edit1",
+            "TAB" => GetMessage("SMILE_TAB_SMILE"),
+            "ICON" => "smile",
+            "TITLE" => GetMessage("SMILE_TAB_SMILE_DESCR")
+        )
     );
     $tabControl = new CAdminTabControl("tabControl", $aTabs);
     $tabControl->Begin();
@@ -147,8 +165,8 @@ if (isset($message) && $message)
     </tr>
     <? foreach ($arLang as $key => $val): ?>
         <tr>
-            <td><? $word = GetMessage('SMILE_IMAGE_NAME_' . strtoupper($key));
-                if (strlen($word) > 0) {
+            <td><? $word = GetMessage('SMILE_IMAGE_NAME_' . mb_strtoupper($key));
+                if ($word <> '') {
                     echo $word;
                 } else {
                     echo $val["NAME"];
@@ -176,12 +194,14 @@ if (isset($message) && $message)
     <?
     endif;
     if ($ID > 0) {
-        $arSmiles = CSmile::getList(Array(
-            'SELECT' => Array('SET_ID', 'NAME', 'TYPE', 'IMAGE', 'IMAGE_WIDTH', 'IMAGE_HEIGHT'),
-            'FILTER' => Array('PARENT_ID' => $ID),
-            'ORDER' => array($by => $order),
-            'NAV_PARAMS' => array("nTopCount" => 12),
-        ));
+        $arSmiles = CSmile::getList(
+            Array(
+                'SELECT' => Array('SET_ID', 'NAME', 'TYPE', 'IMAGE', 'IMAGE_WIDTH', 'IMAGE_HEIGHT'),
+                'FILTER' => Array('PARENT_ID' => $ID),
+                'ORDER' => array($by => $order),
+                'NAV_PARAMS' => array("nTopCount" => 12),
+            )
+        );
     } else {
         $arSmiles = Array();
     }
@@ -200,8 +220,11 @@ if (isset($message) && $message)
     <?
     $tabControl->EndTab();
 
-    $tabControl->Buttons(array(
-        "back_url" => "/bitrix/admin/smile_gallery.php?lang=" . LANG . "&" . GetFilterParams("filter_", false)));
+    $tabControl->Buttons(
+        array(
+            "back_url" => "/bitrix/admin/smile_gallery.php?lang=" . LANG . "&" . GetFilterParams("filter_", false)
+        )
+    );
     ?>
 </form>
 <?

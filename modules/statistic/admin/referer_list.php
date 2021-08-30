@@ -1,9 +1,12 @@
 <?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/prolog.php");
 /** @var CMain $APPLICATION */
 $STAT_RIGHT = $APPLICATION->GetGroupRight("statistic");
-if ($STAT_RIGHT == "D") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($STAT_RIGHT == "D") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 
@@ -11,10 +14,12 @@ IncludeModuleLangFile(__FILE__);
 $sTableID = "tbl_referer_list";
 
 if (isset($group_by)) {
-    if ($group_by != "S" && $group_by != "U")
+    if ($group_by != "S" && $group_by != "U") {
         $group_by = "none";
-} else
-    $group_by = false;//no setting (will be read later from session)
+    }
+} else {
+    $group_by = false;
+}//no setting (will be read later from session)
 
 // Sort init
 if ($group_by == "S" || $group_by == "U") {
@@ -30,11 +35,13 @@ $lAdmin = new CAdminList($sTableID, $oSort);
 
 $arSites = array();
 $ref = $ref_id = array();
-$rs = CSite::GetList(($v1 = "sort"), ($v2 = "asc"));
+$rs = CSite::GetList();
 while ($ar = $rs->Fetch()) {
     $ref[] = $ar["ID"];
     $ref_id[] = $ar["ID"];
-    $arSites[$ar["ID"]] = "[<a title=\"" . GetMessage("STAT_EDIT_SITE") . "\" href=\"/bitrix/admin/site_edit.php?LID=" . $ar["ID"] . "&lang=" . LANGUAGE_ID . "\">" . $ar["ID"] . "</a>]&nbsp;";
+    $arSites[$ar["ID"]] = "[<a title=\"" . GetMessage(
+            "STAT_EDIT_SITE"
+        ) . "\" href=\"/bitrix/admin/site_edit.php?LID=" . $ar["ID"] . "&lang=" . LANGUAGE_ID . "\">" . $ar["ID"] . "</a>]&nbsp;";
 }
 $arSiteDropdown = array("reference" => $ref, "reference_id" => $ref_id);
 
@@ -65,16 +72,20 @@ $FilterArr = Array(
     "find_site_id",
     "find_to",
     "find_to_404",
-    "find_group");
+    "find_group"
+);
 $arFilterFields = array_merge($FilterArr, array_values($arrExactMatch));
 
 //Restore & Save settings (windows registry like)
 $arSettings = array("saved_group_by");
 InitFilterEx($arSettings, $sTableID . "_settings", "get");
 if ($group_by === false)//Restore saved setting
+{
     $group_by = $saved_group_by;
-elseif ($saved_group_by != $group_by)//Set if changed
+} elseif ($saved_group_by != $group_by)//Set if changed
+{
     $saved_group_by = $group_by;
+}
 InitFilterEx($arSettings, $sTableID . "_settings", "set");
 
 $lAdmin->InitFilter($arFilterFields);
@@ -103,7 +114,9 @@ $arFilter = array_merge($arFilter, array_convert_name_2_value($arrExactMatch));
 //////////////////////////////////////////////////////////////////////
 // Quering data
 
-$rsData = CReferer::GetList($by, $order, $arFilter, $is_filtered, $total, $grby, $max);
+global $by, $order;
+
+$rsData = CReferer::GetList($by, $order, $arFilter, null, $total, $grby, $max);
 $rsData = new CAdminResult($rsData, $sTableID);
 $rsData->NavStart();
 
@@ -137,20 +150,68 @@ $lAdmin->NavText($rsData->GetNavPrint(GetMessage("STAT_REF_PAGES")));
 
 if ($grby == "S") {
     $headers = array(
-        array("id" => "FAKE_NUM", "content" => GetMessage("STAT_NUM"), "default" => true, "options" => array("width" => "0"), "align" => "right"),
+        array(
+            "id" => "FAKE_NUM",
+            "content" => GetMessage("STAT_NUM"),
+            "default" => true,
+            "options" => array("width" => "0"),
+            "align" => "right"
+        ),
         array("id" => "URL_FROM", "content" => GetMessage("STAT_URL_FROM"), "sort" => "s_url_from", "default" => true),
-        array("id" => "QUANTITY", "content" => GetMessage("STAT_QUANTITY"), "sort" => "s_quantity", "default" => true, "align" => "right"),
-        array("id" => "PERCENT", "content" => GetMessage("STAT_PERCENT"), "sort" => "s_quantity", "default" => true, "align" => "right"),
-        array("id" => "AVERAGE_HITS", "content" => GetMessage("STAT_AVERAGE_HITS"), "sort" => "s_average_hits", "default" => true, "align" => "right"),
+        array(
+            "id" => "QUANTITY",
+            "content" => GetMessage("STAT_QUANTITY"),
+            "sort" => "s_quantity",
+            "default" => true,
+            "align" => "right"
+        ),
+        array(
+            "id" => "PERCENT",
+            "content" => GetMessage("STAT_PERCENT"),
+            "sort" => "s_quantity",
+            "default" => true,
+            "align" => "right"
+        ),
+        array(
+            "id" => "AVERAGE_HITS",
+            "content" => GetMessage("STAT_AVERAGE_HITS"),
+            "sort" => "s_average_hits",
+            "default" => true,
+            "align" => "right"
+        ),
         array("id" => "FAKE_GRAPH", "content" => GetMessage("STAT_GRAPH"), "default" => true),
     );
 } elseif ($grby == "U") {
     $headers = array(
-        array("id" => "FAKE_NUM", "content" => GetMessage("STAT_NUM"), "default" => true, "options" => array("width" => "0"), "align" => "right"),
+        array(
+            "id" => "FAKE_NUM",
+            "content" => GetMessage("STAT_NUM"),
+            "default" => true,
+            "options" => array("width" => "0"),
+            "align" => "right"
+        ),
         array("id" => "URL_FROM", "content" => GetMessage("STAT_URL_FROM"), "sort" => "s_url_from", "default" => true),
-        array("id" => "QUANTITY", "content" => GetMessage("STAT_QUANTITY"), "sort" => "s_quantity", "default" => true, "align" => "right"),
-        array("id" => "PERCENT", "content" => GetMessage("STAT_PERCENT"), "sort" => "s_quantity", "default" => true, "align" => "right"),
-        array("id" => "AVERAGE_HITS", "content" => GetMessage("STAT_AVERAGE_HITS"), "sort" => "s_average_hits", "default" => true, "align" => "right"),
+        array(
+            "id" => "QUANTITY",
+            "content" => GetMessage("STAT_QUANTITY"),
+            "sort" => "s_quantity",
+            "default" => true,
+            "align" => "right"
+        ),
+        array(
+            "id" => "PERCENT",
+            "content" => GetMessage("STAT_PERCENT"),
+            "sort" => "s_quantity",
+            "default" => true,
+            "align" => "right"
+        ),
+        array(
+            "id" => "AVERAGE_HITS",
+            "content" => GetMessage("STAT_AVERAGE_HITS"),
+            "sort" => "s_average_hits",
+            "default" => true,
+            "align" => "right"
+        ),
         array("id" => "FAKE_GRAPH", "content" => GetMessage("STAT_GRAPH"), "default" => true),
     );
 } else {
@@ -159,7 +220,13 @@ if ($grby == "S") {
         array("id" => "URL_FROM", "content" => GetMessage("STAT_URL_FROM"), "sort" => "s_url_from", "default" => true),
         array("id" => "URL_TO", "content" => GetMessage("STAT_PAGE_TO"), "sort" => "s_url_to", "default" => true),
         array("id" => "DATE_HIT", "content" => GetMessage("STAT_DATE_HIT"), "sort" => "s_date_hit", "default" => true),
-        array("id" => "SESSION_ID", "content" => GetMessage("STAT_SESSION"), "sort" => "s_session_id", "default" => true, "align" => "right"),
+        array(
+            "id" => "SESSION_ID",
+            "content" => GetMessage("STAT_SESSION"),
+            "sort" => "s_session_id",
+            "default" => true,
+            "align" => "right"
+        ),
     );
 }
 
@@ -171,46 +238,90 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
 
     $row->AddViewField("FAKE_NUM", ($rsData->NavPageNomer - 1) * $rsData->NavPageSize + (++$i));
 
-    if (strlen($f_URL_FROM) >= 55) {
+    if (mb_strlen($f_URL_FROM) >= 55) {
         $uri_type = "";
         $stripped = $f_URL_FROM;
 
-        if (preg_match("#^(http|ftp|https|news)://(\S+)$#i", $f_URL_FROM, $match)) ;
+        if (preg_match("#^(http|ftp|https|news)://(\S+)$#i", $f_URL_FROM, $match)) {
+            ;
+        }
         {
             $uri_type = $match[1];
             $stripped = $match[2];
         }
 
-        $txt = '<span class="' . ($f_URL_404 == "Y" ? "stat_attention" : "") . '">' . $uri_type . '://' . substr($stripped, 0, 30) . '...' . substr($stripped, -10) . '</span>';
-    } else
+        $txt = '<span class="' . ($f_URL_404 == "Y" ? "stat_attention" : "") . '">' . $uri_type . '://' . mb_substr(
+                $stripped,
+                0,
+                30
+            ) . '...' . mb_substr($stripped, -10) . '</span>';
+    } else {
         $txt = '<span class="' . ($f_URL_404 == "Y" ? "stat_attention" : "") . '">' . $f_URL_FROM . '</span>';
+    }
 
-    if ($grby == "S")
-        $row->AddViewField("URL_FROM", '<a title="' . GetMessage("STAT_GO_LINK") . '" href="http://' . $f_URL_FROM . '">&raquo;</a>&nbsp;<a href="' . htmlspecialcharsbx('referer_list.php?find_from_domain=' . urlencode(htmlspecialcharsback($f_URL_FROM)) . '&group_by=U&set_filter=Y') . '">' . $txt . '</a>');
-    elseif ($grby == "U")
-        $row->AddViewField("URL_FROM", '<a title="' . GetMessage("STAT_GO_LINK") . '" href="' . $f_URL_FROM . '">&raquo;</a>&nbsp;<a href="' . htmlspecialcharsbx('referer_list.php?find_from=' . urlencode(htmlspecialcharsback($f_URL_FROM)) . '&group_by=none&set_filter=Y') . '">' . $txt . '</a>');
-    else
-        $row->AddViewField("URL_FROM", "<a title=\"" . GetMessage("STAT_GO_LINK") . "\" href=\"" . $f_URL_FROM . "\">$txt</a>");
+    if ($grby == "S") {
+        $row->AddViewField(
+            "URL_FROM",
+            '<a title="' . GetMessage(
+                "STAT_GO_LINK"
+            ) . '" href="http://' . $f_URL_FROM . '">&raquo;</a>&nbsp;<a href="' . htmlspecialcharsbx(
+                'referer_list.php?find_from_domain=' . urlencode(
+                    htmlspecialcharsback($f_URL_FROM)
+                ) . '&group_by=U&set_filter=Y'
+            ) . '">' . $txt . '</a>'
+        );
+    } elseif ($grby == "U") {
+        $row->AddViewField(
+            "URL_FROM",
+            '<a title="' . GetMessage(
+                "STAT_GO_LINK"
+            ) . '" href="' . $f_URL_FROM . '">&raquo;</a>&nbsp;<a href="' . htmlspecialcharsbx(
+                'referer_list.php?find_from=' . urlencode(
+                    htmlspecialcharsback($f_URL_FROM)
+                ) . '&group_by=none&set_filter=Y'
+            ) . '">' . $txt . '</a>'
+        );
+    } else {
+        $row->AddViewField(
+            "URL_FROM",
+            "<a title=\"" . GetMessage("STAT_GO_LINK") . "\" href=\"" . $f_URL_FROM . "\">$txt</a>"
+        );
+    }
 
-    $row->AddViewField("URL_TO", $arSites[$f_SITE_ID] . ' ' . StatAdminListFormatURL($arRes["URL_TO"], array(
-            "title" => GetMessage("STAT_GO_LINK"),
-            "new_window" => true,
-            "chars_per_line" => 100,
-            "kill_sessid" => $STAT_RIGHT < "W",
-        )));
-    $row->AddViewField("SESSION_ID", "<a title=\"" . GetMessage("STAT_SESS_OPEN") . "\" href=\"session_list.php?lang=" . LANGUAGE_ID . "&find_id=$f_SESSION_ID&find_id_exact_match=Y&set_filter=Y\">$f_SESSION_ID</a></td>");
+    $row->AddViewField(
+        "URL_TO",
+        $arSites[$f_SITE_ID] . ' ' . StatAdminListFormatURL(
+            $arRes["URL_TO"],
+            array(
+                "title" => GetMessage("STAT_GO_LINK"),
+                "new_window" => true,
+                "chars_per_line" => 100,
+                "kill_sessid" => $STAT_RIGHT < "W",
+            )
+        )
+    );
+    $row->AddViewField(
+        "SESSION_ID",
+        "<a title=\"" . GetMessage(
+            "STAT_SESS_OPEN"
+        ) . "\" href=\"session_list.php?lang=" . LANGUAGE_ID . "&find_id=$f_SESSION_ID&find_id_exact_match=Y&set_filter=Y\">$f_SESSION_ID</a></td>"
+    );
 
     $row->AddViewField("QUANTITY", "$f_QUANTITY");
     $row->AddViewField("PERCENT", "$f_C_PERCENT");
 
     if ($max > 0) {
         $w = round(100 * $f_QUANTITY / $max);
-        $row->AddViewField("FAKE_GRAPH", "<img src=\"/bitrix/images/statistic/votebar.gif\" style=width:" . (($w == 0) ? "0" : $w . "%") . " height=10 border=0 alt=\"\">");
+        $row->AddViewField(
+            "FAKE_GRAPH",
+            "<img src=\"/bitrix/images/statistic/votebar.gif\" style=width:" . (($w == 0) ? "0" : $w . "%") . " height=10 border=0 alt=\"\">"
+        );
     }
 }
 
 // list footer
-$lAdmin->AddFooter(array(
+$lAdmin->AddFooter(
+    array(
         array("title" => GetMessage("MAIN_ADMIN_LIST_SELECTED"), "value" => $rsData->SelectedRowsCount()),
     )
 );
@@ -252,8 +363,9 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
         <tr>
             <td><? echo GetMessage("STAT_F_SESSION") ?></td>
             <td><input type="text" name="find_session_id" size="47"
-                       value="<? echo htmlspecialcharsbx($find_session_id) ?>"><?= ShowExactMatchCheckbox("find_session_id") ?>
-                &nbsp;<?= ShowFilterLogicHelp() ?></td>
+                       value="<? echo htmlspecialcharsbx($find_session_id) ?>"><?= ShowExactMatchCheckbox(
+                    "find_session_id"
+                ) ?>&nbsp;<?= ShowFilterLogicHelp() ?></td>
         </tr>
         <tr>
             <td><? echo GetMessage("STAT_F_FROM") ?>:</td>
@@ -274,23 +386,38 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
         <tr>
             <td><?= GetMessage("STAT_F_PAGE") ?>:</td>
             <td><input type="text" name="find_from_url" size="47"
-                       value="<? echo htmlspecialcharsbx($find_from_url) ?>"><?= ShowExactMatchCheckbox("find_from_detail") ?>
-                &nbsp;<?= ShowFilterLogicHelp() ?></td>
+                       value="<? echo htmlspecialcharsbx($find_from_url) ?>"><?= ShowExactMatchCheckbox(
+                    "find_from_detail"
+                ) ?>&nbsp;<?= ShowFilterLogicHelp() ?></td>
         </tr>
         <tr>
             <td nowrap><? echo GetMessage("STAT_F_TO") ?></td>
             <td><?
                 echo SelectBoxFromArray("find_site_id", $arSiteDropdown, $find_site_id, GetMessage("STAT_D_SITE"));
                 ?>&nbsp;<?
-                echo SelectBoxFromArray("find_to_404", array("reference" => array(GetMessage("STAT_YES"), GetMessage("STAT_NO")), "reference_id" => array("Y", "N")), htmlspecialcharsbx($find_to_404), GetMessage("STAT_404"));
+                echo SelectBoxFromArray(
+                    "find_to_404",
+                    array(
+                        "reference" => array(GetMessage("STAT_YES"), GetMessage("STAT_NO")),
+                        "reference_id" => array("Y", "N")
+                    ),
+                    htmlspecialcharsbx($find_to_404),
+                    GetMessage("STAT_404")
+                );
                 ?>&nbsp;<input type="text" name="find_to" size="34"
                                value="<? echo htmlspecialcharsbx($find_to) ?>"><?= ShowExactMatchCheckbox("find_to") ?>
                 &nbsp;<?= ShowFilterLogicHelp() ?></td>
         </tr>
         <tr>
             <td width="0%" nowrap><? echo GetMessage("STAT_F_PERIOD") . ":" ?></td>
-            <td width="0%"
-                nowrap><? echo CalendarPeriod("find_date1", $find_date1, "find_date2", $find_date2, "form1", "Y") ?></td>
+            <td width="0%" nowrap><? echo CalendarPeriod(
+                    "find_date1",
+                    $find_date1,
+                    "find_date2",
+                    $find_date2,
+                    "form1",
+                    "Y"
+                ) ?></td>
         </tr>
         <?= ShowLogicRadioBtn();
 
@@ -300,8 +427,9 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
     </form>
 
 <?
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 $lAdmin->DisplayList();
 ?>
 

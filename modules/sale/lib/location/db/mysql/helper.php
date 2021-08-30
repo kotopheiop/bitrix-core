@@ -30,22 +30,31 @@ final class Helper extends CommonHelper
         $toTable = $dbHelper->forSql(trim($toTable));
         $fromTable = $dbHelper->forSql(trim($fromTable));
 
-        if (!strlen($toTable) || !strlen($toTable) || !is_array($fldMap) || empty($fldMap) || empty($fldCondition))
+        if (!mb_strlen($toTable) || !mb_strlen($toTable) || !is_array(
+                $fldMap
+            ) || empty($fldMap) || empty($fldCondition)) {
             return false;
+        }
 
         // update tab1, tab2 set tab1.aa = tab2.bb, tab1.cc = tab2.dd where tab1.ee = tab2.ff
 
         $sql = 'update ' . $toTable . ', ' . $fromTable . ' set ';
 
         $fields = array();
-        foreach ($fldMap as $toFld => $fromFld)
-            $fields[] = $toTable . '.' . $dbHelper->forSql(trim($toFld)) . ' = ' . $fromTable . '.' . $dbHelper->forSql(trim($fromFld));
+        foreach ($fldMap as $toFld => $fromFld) {
+            $fields[] = $toTable . '.' . $dbHelper->forSql(trim($toFld)) . ' = ' . $fromTable . '.' . $dbHelper->forSql(
+                    trim($fromFld)
+                );
+        }
 
         $sql .= implode(', ', $fields);
 
         $where = array();
-        foreach ($fldCondition as $left => $right)
-            $where[] = $toTable . '.' . $dbHelper->forSql(trim($left)) . ' = ' . $fromTable . '.' . $dbHelper->forSql(trim($right));
+        foreach ($fldCondition as $left => $right) {
+            $where[] = $toTable . '.' . $dbHelper->forSql(trim($left)) . ' = ' . $fromTable . '.' . $dbHelper->forSql(
+                    trim($right)
+                );
+        }
 
         $sql .= ' where ' . implode(' and ', $where);
 
@@ -62,14 +71,16 @@ final class Helper extends CommonHelper
         $indexName = trim($indexName);
         $tableName = $dbHelper->forSql(trim($tableName));
 
-        if (!strlen($indexName) || !strlen($tableName))
+        if (!mb_strlen($indexName) || !mb_strlen($tableName)) {
             return false;
+        }
 
         $res = $dbConnection->query("show index from " . $tableName);
 
         while ($item = $res->fetch()) {
-            if ($item['Key_name'] == $indexName || $item['KEY_NAME'] == $indexName)
+            if ($item['Key_name'] == $indexName || $item['KEY_NAME'] == $indexName) {
                 return true;
+            }
         }
 
         return false;
@@ -83,11 +94,13 @@ final class Helper extends CommonHelper
         $indexName = $dbHelper->forSql(trim($indexName));
         $tableName = $dbHelper->forSql(trim($tableName));
 
-        if (!strlen($indexName) || !strlen($tableName))
+        if (!mb_strlen($indexName) || !mb_strlen($tableName)) {
             return false;
+        }
 
-        if (!static::checkIndexNameExists($indexName, $tableName))
+        if (!static::checkIndexNameExists($indexName, $tableName)) {
             return false;
+        }
 
         $dbConnection->query("alter table {$tableName} drop index {$indexName}");
 
@@ -99,8 +112,9 @@ final class Helper extends CommonHelper
         $dbConnection = Main\HttpApplication::getConnection();
 
         $res = $dbConnection->query("SHOW VARIABLES LIKE 'max_allowed_packet'")->fetch();
-        if (!($res['Variable_name'] == 'max_allowed_packet' && $mtu = intval($res['Value'])))
+        if (!($res['Variable_name'] == 'max_allowed_packet' && $mtu = intval($res['Value']))) {
             return 0;
+        }
 
         return $mtu;
     }
@@ -109,8 +123,9 @@ final class Helper extends CommonHelper
     public static function resetAutoIncrement($tableName, $startIndex = 1)
     {
         $startIndex = intval($startIndex);
-        if ($startIndex <= 0 || !strlen($tableName))
+        if ($startIndex <= 0 || !mb_strlen($tableName)) {
             return false;
+        }
 
         $dbConnection = Main\HttpApplication::getConnection();
         $dbHelper = $dbConnection->getSqlHelper();

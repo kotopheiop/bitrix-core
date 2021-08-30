@@ -6,31 +6,36 @@ IncludeModuleLangFile(__FILE__);
 Bitrix\Main\Loader::includeModule('abtest');
 
 $MOD_RIGHT = $APPLICATION->getGroupRight('abtest');
-if ($MOD_RIGHT < 'W')
+if ($MOD_RIGHT < 'W') {
     $APPLICATION->authForm(getMessage('ACCESS_DENIED'));
+}
 
 $ID = intval($ID);
 
 $abtest = Bitrix\ABTest\ABTestTable::getById($ID)->fetch();
-if (empty($abtest))
+if (empty($abtest)) {
     $ID = 0;
+}
 
 $arSites = array();
 $dbSites = Bitrix\Main\SiteTable::getList(array('order' => array('DEF' => 'DESC', 'SORT' => 'ASC')));
-while ($arSite = $dbSites->fetch())
+while ($arSite = $dbSites->fetch()) {
     $arSites[$arSite['LID']] = $arSite;
+}
 
 $arTemplates = array();
 $dbTemplates = CSiteTemplate::getList(array('ID' => 'ASC'), array('TYPE' => ''), array('ID', 'NAME'));
-while ($arTemplate = $dbTemplates->fetch())
+while ($arTemplate = $dbTemplates->fetch()) {
     $arTemplates[$arTemplate['ID']] = $arTemplate;
+}
 
 $arEstDays = array();
-foreach (Bitrix\ABTest\AdminHelper::getSiteCapacity(array_keys($arSites)) as $lid => $value)
+foreach (Bitrix\ABTest\AdminHelper::getSiteCapacity(array_keys($arSites)) as $lid => $value) {
     $arEstDays[$lid] = $value['est'];
+}
 
 
-if ($REQUEST_METHOD == "POST" && (strlen($save) > 0 || strlen($apply) > 0) && check_bitrix_sessid()) {
+if ($REQUEST_METHOD == "POST" && ($save <> '' || $apply <> '') && check_bitrix_sessid()) {
     $arFields = array(
         'SITE_ID' => $SITE,
         'NAME' => $NAME,
@@ -44,26 +49,49 @@ if ($REQUEST_METHOD == "POST" && (strlen($save) > 0 || strlen($apply) > 0) && ch
         $arFields['TEST_DATA']['list'] = array();
     }
 
-    if (empty($arFields['SITE_ID']))
+    if (empty($arFields['SITE_ID'])) {
         $message = new CAdminMessage(array('MESSAGE' => getMessage('ABTEST_EMPTY_SITE')));
-    else if (!is_set($arSites, $arFields['SITE_ID']))
-        $message = new CAdminMessage(array('MESSAGE' => str_replace('#VALUE#', htmlspecialcharsbx($arFields['SITE_ID']), getMessage('ABTEST_UNKNOWN_SITE'))));
+    } else {
+        if (!is_set($arSites, $arFields['SITE_ID'])) {
+            $message = new CAdminMessage(
+                array(
+                    'MESSAGE' => str_replace(
+                        '#VALUE#',
+                        htmlspecialcharsbx($arFields['SITE_ID']),
+                        getMessage('ABTEST_UNKNOWN_SITE')
+                    )
+                )
+            );
+        }
+    }
 
-    if ($arFields['PORTION'] < 1 || $arFields['PORTION'] > 100)
-        $message = new CAdminMessage(array('MESSAGE' => getMessage('ABTEST_PORTION_ERROR'), 'DETAILS' => getMessage('ABTEST_PORTION_HINT')));
+    if ($arFields['PORTION'] < 1 || $arFields['PORTION'] > 100) {
+        $message = new CAdminMessage(
+            array('MESSAGE' => getMessage('ABTEST_PORTION_ERROR'), 'DETAILS' => getMessage('ABTEST_PORTION_HINT'))
+        );
+    }
 
     $errors = array();
 
     if (!empty($TEST_DATA['type']) && is_array($TEST_DATA['type'])) {
         foreach ($TEST_DATA['type'] as $k => $type) {
-            if (!in_array($type, array('template', 'page')))
-                $errors[] = str_replace(array('#ID#', '#VALUE#'), array(intval($k) + 1, htmlspecialcharsbx($type)), getMessage('ABTEST_UNKNOWN_TEST_TYPE'));
+            if (!in_array($type, array('template', 'page'))) {
+                $errors[] = str_replace(
+                    array('#ID#', '#VALUE#'),
+                    array(intval($k) + 1, htmlspecialcharsbx($type)),
+                    getMessage('ABTEST_UNKNOWN_TEST_TYPE')
+                );
+            }
 
             if (empty($TEST_DATA['old_value'][$k]) || empty($TEST_DATA['new_value'][$k])) {
-                $errors[] = str_replace('#ID#', intval($k) + 1, getMessage(
-                    empty($TEST_DATA['old_value'][$k]) && empty($TEST_DATA['new_value'][$k])
-                        ? 'ABTEST_EMPTY_TEST_VALUES' : 'ABTEST_EMPTY_TEST_VALUE'
-                ));
+                $errors[] = str_replace(
+                    '#ID#',
+                    intval($k) + 1,
+                    getMessage(
+                        empty($TEST_DATA['old_value'][$k]) && empty($TEST_DATA['new_value'][$k])
+                            ? 'ABTEST_EMPTY_TEST_VALUES' : 'ABTEST_EMPTY_TEST_VALUE'
+                    )
+                );
             }
 
             if (!empty($TEST_DATA['old_value'][$k]) || !empty($TEST_DATA['new_value'][$k])) {
@@ -73,13 +101,15 @@ if ($REQUEST_METHOD == "POST" && (strlen($save) > 0 || strlen($apply) > 0) && ch
                     case 'template':
                         if (!empty($TEST_DATA['old_value'][$k]) && !is_set($arTemplates, $TEST_DATA['old_value'][$k])) {
                             $errors[] = str_replace(
-                                array('#ID#', '#VALUE#'), array(intval($k) + 1, htmlspecialcharsbx($TEST_DATA['old_value'][$k])),
+                                array('#ID#', '#VALUE#'),
+                                array(intval($k) + 1, htmlspecialcharsbx($TEST_DATA['old_value'][$k])),
                                 getMessage('ABTEST_UNKNOWN_TEST_TEMPLATE')
                             );
                         }
                         if (!empty($TEST_DATA['new_value'][$k]) && !is_set($arTemplates, $TEST_DATA['new_value'][$k])) {
                             $errors[] = str_replace(
-                                array('#ID#', '#VALUE#'), array(intval($k) + 1, htmlspecialcharsbx($TEST_DATA['new_value'][$k])),
+                                array('#ID#', '#VALUE#'),
+                                array(intval($k) + 1, htmlspecialcharsbx($TEST_DATA['new_value'][$k])),
                                 getMessage('ABTEST_UNKNOWN_TEST_TEMPLATE')
                             );
                         }
@@ -89,7 +119,8 @@ if ($REQUEST_METHOD == "POST" && (strlen($save) > 0 || strlen($apply) > 0) && ch
                             $file = new Bitrix\Main\IO\File($docRoot . $TEST_DATA['old_value'][$k]);
                             if (!$file->isExists()) {
                                 $errors[] = str_replace(
-                                    array('#ID#', '#VALUE#'), array(intval($k) + 1, htmlspecialcharsbx($TEST_DATA['old_value'][$k])),
+                                    array('#ID#', '#VALUE#'),
+                                    array(intval($k) + 1, htmlspecialcharsbx($TEST_DATA['old_value'][$k])),
                                     getMessage('ABTEST_UNKNOWN_TEST_PAGE')
                                 );
                             }
@@ -98,7 +129,8 @@ if ($REQUEST_METHOD == "POST" && (strlen($save) > 0 || strlen($apply) > 0) && ch
                             $file = new Bitrix\Main\IO\File($docRoot . $TEST_DATA['new_value'][$k]);
                             if (!$file->isExists()) {
                                 $errors[] = str_replace(
-                                    array('#ID#', '#VALUE#'), array(intval($k) + 1, htmlspecialcharsbx($TEST_DATA['new_value'][$k])),
+                                    array('#ID#', '#VALUE#'),
+                                    array(intval($k) + 1, htmlspecialcharsbx($TEST_DATA['new_value'][$k])),
                                     getMessage('ABTEST_UNKNOWN_TEST_PAGE')
                                 );
                             }
@@ -117,8 +149,11 @@ if ($REQUEST_METHOD == "POST" && (strlen($save) > 0 || strlen($apply) > 0) && ch
         $errors[] = getMessage('ABTEST_EMPTY_TEST_DATA');
     }
 
-    if (!empty($errors))
-        $message = new CAdminMessage(array('MESSAGE' => getMessage('ABTEST_TEST_DATA_ERROR'), 'DETAILS' => join('<br>', $errors)));
+    if (!empty($errors)) {
+        $message = new CAdminMessage(
+            array('MESSAGE' => getMessage('ABTEST_TEST_DATA_ERROR'), 'DETAILS' => join('<br>', $errors))
+        );
+    }
 
     if (empty($message)) {
         $arFields['ENABLED'] = 'Y';
@@ -126,8 +161,9 @@ if ($REQUEST_METHOD == "POST" && (strlen($save) > 0 || strlen($apply) > 0) && ch
         if ($ID > 0) {
             $result = Bitrix\ABTest\ABTestTable::update($ID, $arFields);
 
-            if ($result->isSuccess() && $abtest['ACTIVE'] == 'Y')
+            if ($result->isSuccess() && $abtest['ACTIVE'] == 'Y') {
                 Bitrix\ABTest\Helper::clearCache($arFields['SITE_ID']);
+            }
         } else {
             $arFields['ACTIVE'] = 'N';
 
@@ -138,29 +174,34 @@ if ($REQUEST_METHOD == "POST" && (strlen($save) > 0 || strlen($apply) > 0) && ch
         if (!$result->isSuccess()) {
             unset($arFields['ENABLED']);
 
-            $message = new CAdminMessage(array(
-                'MESSAGE' => getMessage('ABTEST_SAVE_ERROR'),
-                'DETAILS' => join('<br>', $result->getErrorMessages())
-            ));
+            $message = new CAdminMessage(
+                array(
+                    'MESSAGE' => getMessage('ABTEST_SAVE_ERROR'),
+                    'DETAILS' => join('<br>', $result->getErrorMessages())
+                )
+            );
         } else {
-            if (strlen($save) > 0)
+            if ($save <> '') {
                 LocalRedirect('abtest_admin.php?lang=' . LANG);
-            else
+            } else {
                 LocalRedirect($APPLICATION->getCurPage() . '?lang=' . LANG . '&ID=' . $ID);
+            }
         }
     }
 
-    if ($ID > 0)
+    if ($ID > 0) {
         $abtest = array_merge($abtest, $arFields);
-    else
+    } else {
         $abtest = $arFields;
+    }
 }
 
 
 if ($ID > 0) {
-    $APPLICATION->SetTitle(empty($abtest['NAME'])
-        ? str_replace('#ID#', $ID, getMessage('ABTEST_EDIT_TITLE1'))
-        : str_replace('#NAME#', $abtest['NAME'], getMessage('ABTEST_EDIT_TITLE2'))
+    $APPLICATION->SetTitle(
+        empty($abtest['NAME'])
+            ? str_replace('#ID#', $ID, getMessage('ABTEST_EDIT_TITLE1'))
+            : str_replace('#NAME#', $abtest['NAME'], getMessage('ABTEST_EDIT_TITLE2'))
     );
 } else {
     $APPLICATION->SetTitle(getMessage('ABTEST_ADD_TITLE'));
@@ -189,7 +230,10 @@ if ($ID > 0) {
         $aMenu[] = array(
             "ICON" => "btn_delete",
             "TEXT" => getMessage('ABTEST_DELETE'),
-            "LINK" => "javascript:if(confirm('" . CUtil::JSEscape(getMessage('ABTEST_DELETE_CONFIRM')) . "')) window.location='abtest_admin.php?action=delete&ID=" . $ID . "&lang=" . LANG . "&" . bitrix_sessid_get() . "';",
+            "LINK" => "javascript:if(confirm('" . CUtil::JSEscape(
+                    getMessage('ABTEST_DELETE_CONFIRM')
+                ) . "')) window.location='abtest_admin.php?action=delete&ID=" . $ID . "&lang=" . LANG . "&" . bitrix_sessid_get(
+                ) . "';",
         );
     }
 }
@@ -204,7 +248,9 @@ $aTabs = array(
 $tabControl = new CAdminTabControl("tabControl", $aTabs, false);
 
 
-if ($message) echo $message->Show();
+if ($message) {
+    echo $message->Show();
+}
 
 ?>
 
@@ -238,7 +284,11 @@ if ($message) echo $message->Show();
                     <? endif; ?>
                     <? $siteDefined = false; ?>
                     <? foreach ($arSites as $value => $site) : ?>
-                        <option value="<?= htmlspecialcharsbx($value); ?>"<? if ($lid == $value && ($siteDefined = true)) echo ' selected'; ?>>
+                        <option value="<?= htmlspecialcharsbx(
+                            $value
+                        ); ?>"<? if ($lid == $value && ($siteDefined = true)) {
+                            echo ' selected';
+                        } ?>>
                             <?= htmlspecialcharsbx($site['NAME']); ?> (<?= htmlspecialcharsbx($value); ?>)
                         </option>
                     <? endforeach; ?>
@@ -252,14 +302,16 @@ if ($message) echo $message->Show();
 
         <tr>
             <td><?= getMessage('ABTEST_NAME_FIELD'); ?>:</td>
-            <td><input type="text" name="NAME" style="width: 340px; " maxlength="255"
-                       value="<? if (!empty($abtest)) echo htmlspecialcharsbx($abtest['NAME']); ?>"></td>
+            <td><input type="text" name="NAME" style="width: 340px; " maxlength="255" value="<? if (!empty($abtest)) {
+                    echo htmlspecialcharsbx($abtest['NAME']);
+                } ?>"></td>
         </tr>
 
         <tr>
             <td class="adm-detail-valign-top"><?= getMessage('ABTEST_DESCR_FIELD'); ?>:</td>
-            <td><textarea name="DESCR" cols="80"
-                          rows="4"><? if (!empty($abtest)) echo htmlspecialcharsbx($abtest['DESCR']); ?></textarea></td>
+            <td><textarea name="DESCR" cols="80" rows="4"><? if (!empty($abtest)) {
+                        echo htmlspecialcharsbx($abtest['DESCR']);
+                    } ?></textarea></td>
         </tr>
 
         <?
@@ -283,18 +335,26 @@ if ($message) echo $message->Show();
             <td>
                 <select name="DURATION" style="width: 200px; ">
                     <? $durationDefined = false; ?>
-                    <option id="duration_auto"
-                            value="-1"<? if ($duration == -1 && ($durationDefined = true)) echo ' selected'; ?>>
+                    <option id="duration_auto" value="-1"<? if ($duration == -1 && ($durationDefined = true)) {
+                        echo ' selected';
+                    } ?>>
                         <? $value = (empty($arEstDays[$lid]) || $portion < 1 || $portion > 100)
                             ? getMessage('ABTEST_DURATION_OPTION_NA') : ceil(100 * $arEstDays[$lid] / $portion); ?>
                         <?= str_replace('#NUM#', $value, getMessage('ABTEST_DURATION_OPTION_A')); ?>
                     </option>
                     <? foreach ($durations as $value => $title) : ?>
-                        <option value="<?= intval($value); ?>"<? if ($duration == $value && ($durationDefined = true)) echo ' selected'; ?>><?= htmlspecialcharsbx($title); ?></option>
+                        <option value="<?= intval($value); ?>"<? if ($duration == $value && ($durationDefined = true)) {
+                            echo ' selected';
+                        } ?>><?= htmlspecialcharsbx($title); ?></option>
                     <? endforeach; ?>
                     <? if (!empty($abtest) && !$durationDefined) : ?>
-                        <option value="<?= intval($duration); ?>" selected>
-                            * <?= str_replace('#NUM#', intval($duration), getMessage('ABTEST_DURATION_OPTION_C')); ?></option>
+                        <option value="<?= intval($duration); ?>" selected>* <?= str_replace(
+                                '#NUM#',
+                                intval($duration),
+                                getMessage(
+                                    'ABTEST_DURATION_OPTION_C'
+                                )
+                            ); ?></option>
                     <? endif; ?>
                 </select>
             </td>
@@ -307,8 +367,9 @@ if ($message) echo $message->Show();
                         style="width: 200px; ">
                     <? $portionDefined = false; ?>
                     <? foreach (array(10, 20, 30, 50, 100) as $value) : ?>
-                        <option value="<?= $value; ?>"<? if ($portion == $value && ($portionDefined = true)) echo ' selected'; ?>><?= $value; ?>
-                            %
+                        <option value="<?= $value; ?>"<? if ($portion == $value && ($portionDefined = true)) {
+                            echo ' selected';
+                        } ?>><?= $value; ?>%
                         </option>
                     <? endforeach; ?>
                     <? if (!empty($abtest) && !$portionDefined) : ?>
@@ -345,8 +406,9 @@ if ($message) echo $message->Show();
                     <? if (!empty($abtest['TEST_DATA']['list']) && is_array($abtest['TEST_DATA']['list'])) : ?>
                         <? if ($ID > 0 && empty($message)) :
                             $check_url = '';
-                            if (!empty($arSites[$abtest['SITE_ID']]['SERVER_NAME']))
+                            if (!empty($arSites[$abtest['SITE_ID']]['SERVER_NAME'])) {
                                 $check_url = 'http://' . $arSites[$abtest['SITE_ID']]['SERVER_NAME'];
+                            }
                         endif; ?>
                         <? foreach ($abtest['TEST_DATA']['list'] as $k => $item) : ?>
 
@@ -368,7 +430,11 @@ if ($message) echo $message->Show();
                                              onclick="BX.remove(BX.findParent(this, {'tag': 'table', 'class': 'test-item'}));">
                                             x
                                         </div>
-                                        <?= str_replace('#TYPE#', $test_form_msg[$item['type']]['title'], getMessage('ABTEST_TEST_TITLE')); ?>
+                                        <?= str_replace(
+                                            '#TYPE#',
+                                            $test_form_msg[$item['type']]['title'],
+                                            getMessage('ABTEST_TEST_TITLE')
+                                        ); ?>
                                     </td>
                                 </tr>
                                 <tr>
@@ -390,19 +456,26 @@ if ($message) echo $message->Show();
                                                             <select class="value-input old-value-input"
                                                                     name="TEST_DATA[old_value][]"
                                                                     onchange="ABTestList.Item.handle(this); "
-                                                                    data-value="<?= htmlspecialcharsbx($item['old_value']); ?>"
-                                                                    style="width: 320px; ">
+                                                                    data-value="<?= htmlspecialcharsbx(
+                                                                        $item['old_value']
+                                                                    ); ?>" style="width: 320px; ">
                                                                 <option></option>
                                                                 <? $oldvalueDefined = false; ?>
                                                                 <? foreach ($arTemplates as $tmpl_id => $tmpl) : ?>
-                                                                    <option value="<?= htmlspecialcharsbx($tmpl_id); ?>"<? if ($item['old_value'] == $tmpl_id && ($oldvalueDefined = true)) echo ' selected'; ?>><?= htmlspecialcharsbx($tmpl['NAME']); ?>
+                                                                    <option value="<?= htmlspecialcharsbx(
+                                                                        $tmpl_id
+                                                                    ); ?>"<? if ($item['old_value'] == $tmpl_id && ($oldvalueDefined = true)) {
+                                                                        echo ' selected';
+                                                                    } ?>><?= htmlspecialcharsbx($tmpl['NAME']); ?>
                                                                         (<?= htmlspecialcharsbx($tmpl_id); ?>)
                                                                     </option>
                                                                 <? endforeach; ?>
                                                                 <? if ($item['old_value'] && !$oldvalueDefined) : ?>
-                                                                    <option value="<?= htmlspecialcharsbx($item['old_value']); ?>"
-                                                                            selected>
-                                                                        * <?= htmlspecialcharsbx($item['old_value']); ?></option>
+                                                                    <option value="<?= htmlspecialcharsbx(
+                                                                        $item['old_value']
+                                                                    ); ?>" selected>* <?= htmlspecialcharsbx(
+                                                                            $item['old_value']
+                                                                        ); ?></option>
                                                                 <? endif; ?>
                                                             </select>
                                                             <? break;
@@ -411,21 +484,31 @@ if ($message) echo $message->Show();
                                                                    onchange="ABTestList.Item.handle(this); "
                                                                    oninput="ABTestList.Item.handle(this); "
                                                                    name="TEST_DATA[old_value][]"
-                                                                   data-value="<?= htmlspecialcharsbx($item['old_value']); ?>"
-                                                                   value="<?= htmlspecialcharsbx($item['old_value']); ?>"
-                                                                   style="width: 230px; ">
+                                                                   data-value="<?= htmlspecialcharsbx(
+                                                                       $item['old_value']
+                                                                   ); ?>" value="<?= htmlspecialcharsbx(
+                                                                $item['old_value']
+                                                            ); ?>" style="width: 230px; ">
                                                             <input type="button" value="..."
                                                                    onclick="ABTestList.Item.select(this); "
-                                                                   title="<?= getMessage('ABTEST_TEST_SELECT_PAGE'); ?>">
+                                                                   title="<?= getMessage(
+                                                                       'ABTEST_TEST_SELECT_PAGE'
+                                                                   ); ?>">
                                                             <input class="copy-value-btn" type="button"
                                                                    onclick="ABTestList.Item.copy(this); " value="&gt;"
-                                                                   title="<?= getMessage('ABTEST_TEST_COPY_PAGE'); ?>"<? if (empty($item['old_value'])) echo ' disabled'; ?>>
+                                                                   title="<?= getMessage(
+                                                                       'ABTEST_TEST_COPY_PAGE'
+                                                                   ); ?>"<? if (empty($item['old_value'])) {
+                                                                echo ' disabled';
+                                                            } ?>>
                                                             <? break;
                                                     endswitch; ?>
                                                     <? if ($ID > 0 && $abtest['ENABLED'] == 'Y' && empty($message)) : ?>
                                                         <br><br><input class="preview-btn" type="button"
                                                                        value="<?= getMessage('ABTEST_TEST_CHECK'); ?>"
-                                                                       data-href="<?= htmlspecialcharsbx($check_uri); ?>|A"
+                                                                       data-href="<?= htmlspecialcharsbx(
+                                                                           $check_uri
+                                                                       ); ?>|A"
                                                                        onclick="window.open(this.getAttribute('data-href')); ">
                                                     <? endif; ?>
                                                 </td>
@@ -448,19 +531,26 @@ if ($message) echo $message->Show();
                                                             <select class="value-input new-value-input"
                                                                     name="TEST_DATA[new_value][]"
                                                                     onchange="ABTestList.Item.handle(this); "
-                                                                    data-value="<?= htmlspecialcharsbx($item['new_value']); ?>"
-                                                                    style="width: 320px; ">
+                                                                    data-value="<?= htmlspecialcharsbx(
+                                                                        $item['new_value']
+                                                                    ); ?>" style="width: 320px; ">
                                                                 <? $newvalueDefined = false; ?>
                                                                 <option></option>
                                                                 <? foreach ($arTemplates as $tmpl_id => $tmpl) : ?>
-                                                                    <option value="<?= htmlspecialcharsbx($tmpl_id); ?>"<? if ($item['new_value'] == $tmpl_id && ($newvalueDefined = true)) echo ' selected'; ?>><?= htmlspecialcharsbx($tmpl['NAME']); ?>
+                                                                    <option value="<?= htmlspecialcharsbx(
+                                                                        $tmpl_id
+                                                                    ); ?>"<? if ($item['new_value'] == $tmpl_id && ($newvalueDefined = true)) {
+                                                                        echo ' selected';
+                                                                    } ?>><?= htmlspecialcharsbx($tmpl['NAME']); ?>
                                                                         (<?= htmlspecialcharsbx($tmpl_id); ?>)
                                                                     </option>
                                                                 <? endforeach; ?>
                                                                 <? if ($item['new_value'] && !$newvalueDefined) : ?>
-                                                                    <option value="<?= htmlspecialcharsbx($item['new_value']); ?>"
-                                                                            selected>
-                                                                        * <?= htmlspecialcharsbx($item['new_value']); ?></option>
+                                                                    <option value="<?= htmlspecialcharsbx(
+                                                                        $item['new_value']
+                                                                    ); ?>" selected>* <?= htmlspecialcharsbx(
+                                                                            $item['new_value']
+                                                                        ); ?></option>
                                                                 <? endif; ?>
                                                             </select>
                                                             <? break;
@@ -469,21 +559,28 @@ if ($message) echo $message->Show();
                                                                    onchange="ABTestList.Item.handle(this); "
                                                                    oninput="ABTestList.Item.handle(this); "
                                                                    name="TEST_DATA[new_value][]"
-                                                                   data-value="<?= htmlspecialcharsbx($item['new_value']); ?>"
-                                                                   value="<?= htmlspecialcharsbx($item['new_value']); ?>"
-                                                                   style="width: 230px; ">
+                                                                   data-value="<?= htmlspecialcharsbx(
+                                                                       $item['new_value']
+                                                                   ); ?>" value="<?= htmlspecialcharsbx(
+                                                                $item['new_value']
+                                                            ); ?>" style="width: 230px; ">
                                                             <input type="button"
                                                                    onclick="ABTestList.Item.select(this); " value="..."
-                                                                   title="<?= getMessage('ABTEST_TEST_SELECT_PAGE'); ?>">
-                                                            <span class="edit-value-btn adm-btn<? if (empty($item['new_value'])) echo ' adm-btn-disabled'; ?>"
-                                                                  onclick="ABTestList.Item.edit(this); "
+                                                                   title="<?= getMessage(
+                                                                       'ABTEST_TEST_SELECT_PAGE'
+                                                                   ); ?>">
+                                                            <span class="edit-value-btn adm-btn<? if (empty($item['new_value'])) {
+                                                                echo ' adm-btn-disabled';
+                                                            } ?>" onclick="ABTestList.Item.edit(this); "
                                                                   title="<?= getMessage('ABTEST_TEST_EDIT_PAGE'); ?>">&nbsp;</span>
                                                             <? break;
                                                     endswitch; ?>
                                                     <? if ($ID > 0 && $abtest['ENABLED'] == 'Y' && empty($message)) : ?>
                                                         <br><br><input class="preview-btn" type="button"
                                                                        value="<?= getMessage('ABTEST_TEST_CHECK'); ?>"
-                                                                       data-href="<?= htmlspecialcharsbx($check_uri); ?>|B"
+                                                                       data-href="<?= htmlspecialcharsbx(
+                                                                           $check_uri
+                                                                       ); ?>|B"
                                                                        onclick="window.open(this.getAttribute('data-href')); ">
                                                     <? endif; ?>
                                                 </td>
@@ -510,9 +607,16 @@ if ($message) echo $message->Show();
         <? endif; ?>
 
         <? $tabControl->EndTab(); ?>
-        <? $tabControl->Buttons(array('disabled' => $ID > 0 && !in_array($abtest['ENABLED'], array('T', 'Y')), 'back_url' => 'abtest_admin.php?lang=' . LANG)); ?>
+        <? $tabControl->Buttons(
+            array(
+                'disabled' => $ID > 0 && !in_array($abtest['ENABLED'], array('T', 'Y')),
+                'back_url' => 'abtest_admin.php?lang=' . LANG
+            )
+        ); ?>
         <? if ($ID > 0 && $abtest['ACTIVE'] == 'Y') : ?>
-            <span style="margin-left: 25px; color: #e70000; text-decoration: underline; "><?= getMessage('ABTEST_TEST_EDIT_WARNING'); ?></span>
+            <span style="margin-left: 25px; color: #e70000; text-decoration: underline; "><?= getMessage(
+                    'ABTEST_TEST_EDIT_WARNING'
+                ); ?></span>
         <? endif; ?>
         <? $tabControl->End(); ?>
 
@@ -543,8 +647,9 @@ if ($message) echo $message->Show();
                             <select name="TEST_DATA[old_value][]" style="width: 320px; ">
                                 <option></option>
                                 <? foreach ($arTemplates as $tmpl_id => $tmpl) : ?>
-                                    <option value="<?= htmlspecialcharsbx($tmpl_id); ?>"><?= htmlspecialcharsbx($tmpl['NAME']); ?>
-                                        (<?= htmlspecialcharsbx($tmpl_id); ?>)
+                                    <option value="<?= htmlspecialcharsbx($tmpl_id); ?>"><?= htmlspecialcharsbx(
+                                            $tmpl['NAME']
+                                        ); ?> (<?= htmlspecialcharsbx($tmpl_id); ?>)
                                     </option>
                                 <? endforeach; ?>
                             </select>
@@ -565,8 +670,9 @@ if ($message) echo $message->Show();
                             <select name="TEST_DATA[new_value][]" style="width: 320px; ">
                                 <option></option>
                                 <? foreach ($arTemplates as $tmpl_id => $tmpl) : ?>
-                                    <option value="<?= htmlspecialcharsbx($tmpl_id); ?>"><?= htmlspecialcharsbx($tmpl['NAME']); ?>
-                                        (<?= htmlspecialcharsbx($tmpl_id); ?>)
+                                    <option value="<?= htmlspecialcharsbx($tmpl_id); ?>"><?= htmlspecialcharsbx(
+                                            $tmpl['NAME']
+                                        ); ?> (<?= htmlspecialcharsbx($tmpl_id); ?>)
                                     </option>
                                 <? endforeach; ?>
                             </select>
@@ -640,23 +746,30 @@ if ($message) echo $message->Show();
         </div>
     </div>
 
-<? CAdminFileDialog::ShowScript(array(
-    'event' => 'openFileDialog',
-    'arResultDest' => array('FUNCTION_NAME' => 'fileDialogCallback'),
-    'arPath' => array('SITE' => $siteDefined ? $abtest['SITE_ID'] : '', 'PATH' => '/'),
-    'select' => 'F',
-    'operation' => 'O',
-    'fileFilter' => 'php',
-    'allowAllFiles' => true,
-    'saveConfig' => true
-)); ?>
+<? CAdminFileDialog::ShowScript(
+    array(
+        'event' => 'openFileDialog',
+        'arResultDest' => array('FUNCTION_NAME' => 'fileDialogCallback'),
+        'arPath' => array('SITE' => $siteDefined ? $abtest['SITE_ID'] : '', 'PATH' => '/'),
+        'select' => 'F',
+        'operation' => 'O',
+        'fileFilter' => 'php',
+        'allowAllFiles' => true,
+        'saveConfig' => true
+    )
+); ?>
 
     <script type="text/javascript">
 
         var initialSite = '<?=CUtil::jsEscape($abtest['SITE_ID']); ?>';
-        var siteDirs = <?=CUtil::phpToJSObject(array_map(function ($site) {
-            return $site['DIR'];
-        }, $arSites)); ?>;
+        var siteDirs = <?=CUtil::phpToJSObject(
+            array_map(
+                function ($site) {
+                    return $site['DIR'];
+                },
+                $arSites
+            )
+        ); ?>;
 
         var estDays = <?=CUtil::phpToJSObject($arEstDays); ?>;
 
@@ -832,7 +945,8 @@ if ($message) echo $message->Show();
                     BX.ajax({
                         method: 'POST',
                         url: '/bitrix/admin/abtest_ajax.php?action=copy&type=page',
-                        data: '<?=bitrix_sessid_get(); ?>&site=' + encodeURIComponent(BX('site_id').value) + '&source=' + encodeURIComponent(old_value.value),
+                        data: '<?=bitrix_sessid_get(
+                        ); ?>&site=' + encodeURIComponent(BX('site_id').value) + '&source=' + encodeURIComponent(old_value.value),
                         dataType: 'json',
                         onsuccess: function (json) {
                             if (json.result != 'error') {

@@ -7,8 +7,9 @@ if (!defined("UPD_INTERNAL_CALL") || UPD_INTERNAL_CALL != "Y") {
     require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
     require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/classes/general/update_client_partner.php");
 
-    if (!$USER->CanDoOperation('install_updates') || !check_bitrix_sessid())
+    if (!$USER->CanDoOperation('install_updates') || !check_bitrix_sessid()) {
         $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+    }
 }
 
 @set_time_limit(0);
@@ -22,8 +23,9 @@ $errorMessage = "";
 $stableVersionsOnly = COption::GetOptionString("main", "stable_versions_only", "Y");
 
 $queryType = $_REQUEST["query_type"];
-if (!in_array($queryType, array("search", "register", "coupon")))
+if (!in_array($queryType, array("search", "register", "coupon"))) {
     $queryType = "search";
+}
 
 /************************************/
 if ($queryType == "search") {
@@ -54,15 +56,17 @@ if ($queryType == "search") {
     }
 } elseif ($queryType == "coupon") {
     $coupon = $APPLICATION->UnJSEscape($_REQUEST["COUPON"]);
-    if (StrLen($coupon) <= 0)
+    if ($coupon == '') {
         $errorMessage .= GetMessage("SUPA_ACE_CPN") . ". ";
-
-    if (StrLen($errorMessage) <= 0) {
-        if (!CUpdateClientPartner::ActivateCoupon($coupon, $errorMessage, LANG, $stableVersionsOnly))
-            $errorMessage .= GetMessage("SUPA_ACE_ACT") . ". ";
     }
 
-    if (StrLen($errorMessage) <= 0) {
+    if ($errorMessage == '') {
+        if (!CUpdateClientPartner::ActivateCoupon($coupon, $errorMessage, LANG, $stableVersionsOnly)) {
+            $errorMessage .= GetMessage("SUPA_ACE_ACT") . ". ";
+        }
+    }
+
+    if ($errorMessage == '') {
         CUpdateClientPartner::AddMessage2Log("Coupon activated", "UPD_SUCCESS");
         echo "Y";
     } else {

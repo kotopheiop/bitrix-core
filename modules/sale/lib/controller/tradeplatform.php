@@ -13,9 +13,11 @@ class TradePlatform extends Controller
     public function getFieldsAction()
     {
         $entity = new \Bitrix\Sale\Rest\Entity\TradePlatform();
-        return ['TRADE_PLATFORM' => $entity->prepareFieldInfos(
-            $entity->getFields()
-        )];
+        return [
+            'TRADE_PLATFORM' => $entity->prepareFieldInfos(
+                $entity->getFields()
+            )
+        ];
     }
 
     public function listAction($select = [], $filter = [], $order = [], PageNavigation $pageNavigation)
@@ -33,8 +35,10 @@ class TradePlatform extends Controller
             ]
         )->fetchAll();
 
-        return new Page('TRADE_PLATFORMS', $tradingPlatforms, function () use ($filter) {
+        return new Page(
+            'TRADE_PLATFORMS', $tradingPlatforms, function () use ($filter) {
             return TradingPlatformTable::getCount($filter);
-        });
+        }
+        );
     }
 }

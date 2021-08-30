@@ -53,16 +53,89 @@ abstract class DataManager
     /** @var array Restricted words for object class name */
     protected static $reservedWords = [
         // keywords
-        'abstract', 'and', 'array', 'as', 'break', 'callable', 'case', 'catch', 'class', 'clone', 'const', 'continue',
-        'declare', 'default', 'die', 'do', 'echo', 'else', 'elseif', 'empty', 'enddeclare', 'endfor', 'endforeach',
-        'endif', 'endswitch', 'endwhile', 'eval', 'exit', 'extends', 'final', 'finally', 'for', 'foreach', 'function',
-        'global', 'goto', 'if', 'implements', 'include', 'include_once', 'instanceof', 'insteadof', 'interface', 'isset',
-        'list', 'namespace', 'new', 'or', 'print', 'private', 'protected', 'public', 'require', 'require_once', 'return',
-        'static', 'switch', 'throw', 'trait', 'try', 'unset', 'use', 'var', 'while', 'xor', 'yield',
+        'abstract',
+        'and',
+        'array',
+        'as',
+        'break',
+        'callable',
+        'case',
+        'catch',
+        'class',
+        'clone',
+        'const',
+        'continue',
+        'declare',
+        'default',
+        'die',
+        'do',
+        'echo',
+        'else',
+        'elseif',
+        'empty',
+        'enddeclare',
+        'endfor',
+        'endforeach',
+        'endif',
+        'endswitch',
+        'endwhile',
+        'eval',
+        'exit',
+        'extends',
+        'final',
+        'finally',
+        'for',
+        'foreach',
+        'function',
+        'global',
+        'goto',
+        'if',
+        'implements',
+        'include',
+        'include_once',
+        'instanceof',
+        'insteadof',
+        'interface',
+        'isset',
+        'list',
+        'namespace',
+        'new',
+        'or',
+        'print',
+        'private',
+        'protected',
+        'public',
+        'require',
+        'require_once',
+        'return',
+        'static',
+        'switch',
+        'throw',
+        'trait',
+        'try',
+        'unset',
+        'use',
+        'var',
+        'while',
+        'xor',
+        'yield',
         // classes
-        'self', 'parent',
+        'self',
+        'parent',
         // others
-        'int', 'float', 'bool', 'string', 'true', 'false', 'null', 'void', 'iterable', 'object', 'resource', 'mixed', 'numeric',
+        'int',
+        'float',
+        'bool',
+        'string',
+        'true',
+        'false',
+        'null',
+        'void',
+        'iterable',
+        'object',
+        'resource',
+        'mixed',
+        'numeric',
     ];
 
     /**
@@ -470,6 +543,13 @@ abstract class DataManager
                         $query->disableDataDoubling();
                     }
                     break;
+                case 'private_fields':
+                    if ($value) {
+                        $query->enablePrivateFields();
+                    } else {
+                        $query->disablePrivateFields();
+                    }
+                    break;
                 case 'cache':
                     $query->setCacheTtl($value["ttl"]);
                     if (isset($value["cache_joins"])) {
@@ -513,7 +593,7 @@ abstract class DataManager
 
         $result = $query->exec()->fetch();
 
-        return $result['CNT'];
+        return (int)$result['CNT'];
     }
 
     /**
@@ -538,18 +618,14 @@ abstract class DataManager
      */
     protected static function replaceFieldName($data = array())
     {
+        $newData = [];
         $entity = static::getEntity();
+
         foreach ($data as $fieldName => $value) {
-            /** @var ScalarField $field */
-            $field = $entity->getField($fieldName);
-            $columnName = $field->getColumnName();
-            if ($columnName != $fieldName) {
-                $data[$columnName] = $data[$fieldName];
-                unset($data[$fieldName]);
-            }
+            $newData[$entity->getField($fieldName)->getColumnName()] = $value;
         }
 
-        return $data;
+        return $newData;
     }
 
     /**
@@ -576,19 +652,27 @@ abstract class DataManager
                 }
 
                 if (!isset($data[$key])) {
-                    throw new Main\ArgumentException(sprintf(
-                        'Primary `%s` was not found when trying to query %s row.', $key, $entity->getName()
-                    ));
+                    throw new Main\ArgumentException(
+                        sprintf(
+                            'Primary `%s` was not found when trying to query %s row.',
+                            $key,
+                            $entity->getName()
+                        )
+                    );
                 }
 
                 $primary[$key] = $data[$key];
             }
         } elseif (is_scalar($primary)) {
             if (count($entity_primary) > 1) {
-                throw new Main\ArgumentException(sprintf(
-                    'Require multi primary {`%s`}, but one scalar value "%s" found when trying to query %s row.',
-                    join('`, `', $entity_primary), $primary, $entity->getName()
-                ));
+                throw new Main\ArgumentException(
+                    sprintf(
+                        'Require multi primary {`%s`}, but one scalar value "%s" found when trying to query %s row.',
+                        join('`, `', $entity_primary),
+                        $primary,
+                        $entity->getName()
+                    )
+                );
             }
 
             $primary = array($entity_primary[0] => $primary);
@@ -606,34 +690,48 @@ abstract class DataManager
         $entity = static::getEntity();
         if (is_array($primary)) {
             if (empty($primary)) {
-                throw new Main\ArgumentException(sprintf(
-                    'Empty primary found when trying to query %s row.', $entity->getName()
-                ));
+                throw new Main\ArgumentException(
+                    sprintf(
+                        'Empty primary found when trying to query %s row.',
+                        $entity->getName()
+                    )
+                );
             }
 
             $entity_primary = $entity->getPrimaryArray();
 
             foreach (array_keys($primary) as $key) {
                 if (!in_array($key, $entity_primary, true)) {
-                    throw new Main\ArgumentException(sprintf(
-                        'Unknown primary `%s` found when trying to query %s row.',
-                        $key, $entity->getName()
-                    ));
+                    throw new Main\ArgumentException(
+                        sprintf(
+                            'Unknown primary `%s` found when trying to query %s row.',
+                            $key,
+                            $entity->getName()
+                        )
+                    );
                 }
             }
         } else {
-            throw new Main\ArgumentException(sprintf(
-                'Unknown type of primary "%s" found when trying to query %s row.', gettype($primary), $entity->getName()
-            ));
+            throw new Main\ArgumentException(
+                sprintf(
+                    'Unknown type of primary "%s" found when trying to query %s row.',
+                    gettype($primary),
+                    $entity->getName()
+                )
+            );
         }
 
         // primary values validation
         foreach ($primary as $key => $value) {
             if (!is_scalar($value) && !($value instanceof Main\Type\Date)) {
-                throw new Main\ArgumentException(sprintf(
-                    'Unknown value type "%s" for primary "%s" found when trying to query %s row.',
-                    gettype($value), $key, $entity->getName()
-                ));
+                throw new Main\ArgumentException(
+                    sprintf(
+                        'Unknown value type "%s" for primary "%s" found when trying to query %s row.',
+                        gettype($value),
+                        $key,
+                        $entity->getName()
+                    )
+                );
             }
         }
     }
@@ -659,11 +757,13 @@ abstract class DataManager
                     (empty($primary) && (!isset($data[$fieldName]) || $field->isValueEmpty($data[$fieldName])))
                     || (!empty($primary) && isset($data[$fieldName]) && $field->isValueEmpty($data[$fieldName]))
                 ) {
-                    $result->addError(new FieldError(
-                        $field,
-                        Loc::getMessage("MAIN_ENTITY_FIELD_REQUIRED", array("#FIELD#" => $field->getTitle())),
-                        FieldError::EMPTY_REQUIRED
-                    ));
+                    $result->addError(
+                        new FieldError(
+                            $field,
+                            Loc::getMessage("MAIN_ENTITY_FIELD_REQUIRED", array("#FIELD#" => $field->getTitle())),
+                            FieldError::EMPTY_REQUIRED
+                        )
+                    );
                 }
             }
         }
@@ -672,12 +772,14 @@ abstract class DataManager
         foreach ($data as $k => $v) {
             if ($entity->hasField($k)) {
                 $field = $entity->getField($k);
-
             } else {
-                throw new Main\ArgumentException(sprintf(
-                    'Field `%s` not found in entity when trying to query %s row.',
-                    $k, $entity->getName()
-                ));
+                throw new Main\ArgumentException(
+                    sprintf(
+                        'Field `%s` not found in entity when trying to query %s row.',
+                        $k,
+                        $entity->getName()
+                    )
+                );
             }
 
             $field->validateValue($v, $primary, $data, $result);
@@ -726,7 +828,9 @@ abstract class DataManager
                 foreach ($fields as $fieldName => $value) {
                     // sometimes data array can be used for storing non-entity data
                     if ($entity->hasField($fieldName)) {
-                        if ($entity->getField($fieldName) instanceof ScalarField && $entity->getField($fieldName)->isPrimary()) {
+                        if ($entity->getField($fieldName) instanceof ScalarField && $entity->getField(
+                                $fieldName
+                            )->isPrimary()) {
                             // ignore old primary
                             if (array_key_exists($fieldName, $primary) && $primary[$fieldName] == $value) {
                                 unset($fields[$fieldName]);
@@ -734,10 +838,14 @@ abstract class DataManager
                             }
 
                             // but prevent primary changing
-                            trigger_error(sprintf(
-                                'Primary of %s %s can not be changed. You can delete this row and add a new one',
-                                static::getObjectClass(), Main\Web\Json::encode($object->primary)
-                            ), E_USER_WARNING);
+                            trigger_error(
+                                sprintf(
+                                    'Primary of %s %s can not be changed. You can delete this row and add a new one',
+                                    static::getObjectClass(),
+                                    Main\Web\Json::encode($object->primary)
+                                ),
+                                E_USER_WARNING
+                            );
 
                             continue;
                         }
@@ -863,14 +971,16 @@ abstract class DataManager
 
             // build standard primary
             $primary = null;
+            $isGuessedPrimary = false;
 
             if (!empty($id)) {
-                if (strlen($entity->getAutoIncrement())) {
+                if ($entity->getAutoIncrement() <> '') {
                     $primary = array($entity->getAutoIncrement() => $id);
                     static::normalizePrimary($primary);
                 } else {
                     // for those who did not set 'autocomplete' flag but wants to get id from result
                     $primary = array('ID' => $id);
+                    $isGuessedPrimary = true;
                 }
             } else {
                 static::normalizePrimary($primary, $fields);
@@ -878,11 +988,13 @@ abstract class DataManager
 
             // fill result
             $result->setPrimary($primary);
-            $result->setData($fields);
+            $result->setData($fields + $ufdata);
             $result->setObject($object);
 
-            foreach ($primary as $primaryName => $primaryValue) {
-                $object->sysSetActual($primaryName, $primaryValue);
+            if (!$isGuessedPrimary) {
+                foreach ($primary as $primaryName => $primaryValue) {
+                    $object->sysSetActual($primaryName, $primaryValue);
+                }
             }
 
             // save uf data
@@ -892,7 +1004,7 @@ abstract class DataManager
 
             $entity->cleanCache();
 
-            static::callOnAfterAddEvent($object, $fields, $id);
+            static::callOnAfterAddEvent($object, $fields + $ufdata, $id);
         } catch (\Exception $e) {
             // check result to avoid warning
             $result->isSuccess();
@@ -1038,7 +1150,7 @@ abstract class DataManager
                 $primary = null;
 
                 if (!empty($id)) {
-                    if (strlen($entity->getAutoIncrement())) {
+                    if ($entity->getAutoIncrement() <> '') {
                         $primary = array($entity->getAutoIncrement() => $id);
                         static::normalizePrimary($primary);
                     } else {
@@ -1067,7 +1179,7 @@ abstract class DataManager
             // after event
             if (!$ignoreEvents) {
                 foreach ($objects as $k => $object) {
-                    $fields = $allFields[$k];
+                    $fields = $allFields[$k] + $allUfData[$k];
                     $id = $forceSeparateQueries ? $ids[$k] : null;
 
                     static::callOnAfterAddEvent($object, $fields, $id);
@@ -1107,7 +1219,8 @@ abstract class DataManager
 
         // check primary
         static::normalizePrimary(
-            $primary, isset($fields["fields"]) && is_array($data["fields"]) ? $data["fields"] : $data
+            $primary,
+            isset($data["fields"]) && is_array($data["fields"]) ? $data["fields"] : $data
         );
         static::validatePrimary($primary);
 
@@ -1180,7 +1293,7 @@ abstract class DataManager
                 $result->setAffectedRowsCount($connection);
             }
 
-            $result->setData($fields);
+            $result->setData($fields + $ufdata);
             $result->setPrimary($primary);
             $result->setObject($object);
 
@@ -1192,7 +1305,7 @@ abstract class DataManager
             $entity->cleanCache();
 
             // event after update
-            static::callOnAfterUpdateEvent($object, $fields);
+            static::callOnAfterUpdateEvent($object, $fields + $ufdata);
         } catch (\Exception $e) {
             // check result to avoid warning
             $result->isSuccess();
@@ -1313,75 +1426,77 @@ abstract class DataManager
             $dataSample = $allSqlData[0];
             asort($dataSample);
 
-            foreach ($allSqlData as $data) {
-                asort($data);
+            if (!empty($allSqlData[0])) {
+                foreach ($allSqlData as $data) {
+                    asort($data);
 
-                if ($data !== $dataSample) {
-                    $areEqual = false;
-                    break;
+                    if ($data !== $dataSample) {
+                        $areEqual = false;
+                        break;
+                    }
                 }
-            }
 
-            // save data
-            $connection = $entity->getConnection();
-            $helper = $connection->getSqlHelper();
-            $tableName = $entity->getDBTableName();
+                // save data
+                $connection = $entity->getConnection();
+                $helper = $connection->getSqlHelper();
+                $tableName = $entity->getDBTableName();
 
-            // save data
-            if ($areEqual) {
-                // one query
-                $update = $helper->prepareUpdate($tableName, $dataSample);
-                $where = [];
-                $isSinglePrimary = (count($entity->getPrimaryArray()) == 1);
+                // save data
+                if ($areEqual) {
+                    // one query
+                    $update = $helper->prepareUpdate($tableName, $dataSample);
+                    $where = [];
+                    $isSinglePrimary = (count($entity->getPrimaryArray()) == 1);
 
-                foreach ($allSqlData as $k => $data) {
-                    $replacedPrimary = static::replaceFieldName($objects[$k]->primary);
+                    foreach ($allSqlData as $k => $data) {
+                        $replacedPrimary = static::replaceFieldName($objects[$k]->primary);
+
+                        if ($isSinglePrimary) {
+                            // for single primary IN is better
+                            $primaryName = key($replacedPrimary);
+                            $primaryValue = current($replacedPrimary);
+                            $tableField = $entity->getConnection()->getTableField($tableName, $primaryName);
+
+                            $where[] = $helper->convertToDb($primaryValue, $tableField);
+                        } else {
+                            $id = [];
+
+                            foreach ($replacedPrimary as $primaryName => $primaryValue) {
+                                $id[] = $helper->prepareAssignment($tableName, $primaryName, $primaryValue);
+                            }
+                            $where[] = implode(' AND ', $id);
+                        }
+                    }
 
                     if ($isSinglePrimary) {
-                        // for single primary IN is better
-                        $primaryName = key($replacedPrimary);
-                        $primaryValue = current($replacedPrimary);
-                        $tableField = $entity->getConnection()->getTableField($tableName, $primaryName);
-
-                        $where[] = $helper->convertToDb($primaryValue, $tableField);
+                        $where = $helper->quote($entity->getPrimary()) . ' IN (' . join(', ', $where) . ')';
                     } else {
-                        $id = [];
-
-                        foreach ($replacedPrimary as $primaryName => $primaryValue) {
-                            $id[] = $helper->prepareAssignment($tableName, $primaryName, $primaryValue);
-                        }
-                        $where[] = implode(' AND ', $id);
+                        $where = '(' . join(') OR (', $where) . ')';
                     }
-                }
-
-                if ($isSinglePrimary) {
-                    $where = $helper->quote($entity->getPrimary()) . ' IN (' . join(', ', $where) . ')';
-                } else {
-                    $where = '(' . join(') OR (', $where) . ')';
-                }
-
-                $sql = "UPDATE " . $helper->quote($tableName) . " SET " . $update[0] . " WHERE " . $where;
-                $connection->queryExecute($sql, $update[1]);
-
-                $result->setAffectedRowsCount($connection);
-            } else {
-                // query for each row
-                foreach ($allSqlData as $k => $dataReplacedColumn) {
-                    $update = $helper->prepareUpdate($tableName, $dataReplacedColumn);
-
-                    $replacedPrimary = static::replaceFieldName($objects[$k]->primary);
-
-                    $id = [];
-
-                    foreach ($replacedPrimary as $primaryName => $primaryValue) {
-                        $id[] = $helper->prepareAssignment($tableName, $primaryName, $primaryValue);
-                    }
-                    $where = implode(' AND ', $id);
 
                     $sql = "UPDATE " . $helper->quote($tableName) . " SET " . $update[0] . " WHERE " . $where;
                     $connection->queryExecute($sql, $update[1]);
 
                     $result->setAffectedRowsCount($connection);
+                } else {
+                    // query for each row
+                    foreach ($allSqlData as $k => $dataReplacedColumn) {
+                        $update = $helper->prepareUpdate($tableName, $dataReplacedColumn);
+
+                        $replacedPrimary = static::replaceFieldName($objects[$k]->primary);
+
+                        $id = [];
+
+                        foreach ($replacedPrimary as $primaryName => $primaryValue) {
+                            $id[] = $helper->prepareAssignment($tableName, $primaryName, $primaryValue);
+                        }
+                        $where = implode(' AND ', $id);
+
+                        $sql = "UPDATE " . $helper->quote($tableName) . " SET " . $update[0] . " WHERE " . $where;
+                        $connection->queryExecute($sql, $update[1]);
+
+                        $result->setAffectedRowsCount($connection);
+                    }
                 }
             }
 
@@ -1406,7 +1521,7 @@ abstract class DataManager
             // event after update
             if (!$ignoreEvents) {
                 foreach ($objects as $k => $object) {
-                    $fields = $allFields[$k];
+                    $fields = $allFields[$k] + $allUfData[$k];
 
                     static::callOnAfterUpdateEvent($object, $fields);
                 }
@@ -1496,20 +1611,24 @@ abstract class DataManager
     protected static function callOnBeforeAddEvent($object, $fields, $result)
     {
         //event before adding
-        $event = new Event($object->entity, self::EVENT_ON_BEFORE_ADD, [
+        $event = new Event(
+            $object->entity, self::EVENT_ON_BEFORE_ADD, [
             'fields' => $fields,
             'object' => $object
-        ]);
+        ]
+        );
 
         $event->send();
         $event->getErrors($result);
         $event->mergeObjectFields($object);
 
         //event before adding (modern with namespace)
-        $event = new Event($object->entity, self::EVENT_ON_BEFORE_ADD, [
+        $event = new Event(
+            $object->entity, self::EVENT_ON_BEFORE_ADD, [
             'fields' => $fields,
             'object' => $object
-        ], true);
+        ], true
+        );
 
         $event->send();
         $event->getErrors($result);
@@ -1523,17 +1642,21 @@ abstract class DataManager
      */
     protected static function callOnAddEvent($object, $fields, $ufdata)
     {
-        $event = new Event($object->entity, self::EVENT_ON_ADD, [
+        $event = new Event(
+            $object->entity, self::EVENT_ON_ADD, [
             'fields' => $fields + $ufdata,
             'object' => clone $object
-        ]);
+        ]
+        );
         $event->send();
 
         //event on adding (modern with namespace)
-        $event = new Event($object->entity, self::EVENT_ON_ADD, [
+        $event = new Event(
+            $object->entity, self::EVENT_ON_ADD, [
             'fields' => $fields + $ufdata,
             'object' => clone $object
-        ], true);
+        ], true
+        );
         $event->send();
     }
 
@@ -1545,20 +1668,24 @@ abstract class DataManager
     protected static function callOnAfterAddEvent($object, $fields, $id)
     {
         //event after adding
-        $event = new Event($object->entity, self::EVENT_ON_AFTER_ADD, [
+        $event = new Event(
+            $object->entity, self::EVENT_ON_AFTER_ADD, [
             'id' => $id,
             'fields' => $fields,
             'object' => clone $object
-        ]);
+        ]
+        );
         $event->send();
 
         //event after adding (modern with namespace)
-        $event = new Event($object->entity, self::EVENT_ON_AFTER_ADD, [
+        $event = new Event(
+            $object->entity, self::EVENT_ON_AFTER_ADD, [
             'id' => $id,
             'primary' => $object->primary,
             'fields' => $fields,
             'object' => clone $object
-        ], true);
+        ], true
+        );
         $event->send();
     }
 
@@ -1569,23 +1696,27 @@ abstract class DataManager
      */
     protected static function callOnBeforeUpdateEvent($object, $fields, $result)
     {
-        $event = new Event($object->entity, self::EVENT_ON_BEFORE_UPDATE, [
+        $event = new Event(
+            $object->entity, self::EVENT_ON_BEFORE_UPDATE, [
             'id' => $object->primary,
             'fields' => $fields,
             'object' => $object
-        ]);
+        ]
+        );
 
         $event->send();
         $event->getErrors($result);
         $event->mergeObjectFields($object);
 
         //event before update (modern with namespace)
-        $event = new Event($object->entity, self::EVENT_ON_BEFORE_UPDATE, [
+        $event = new Event(
+            $object->entity, self::EVENT_ON_BEFORE_UPDATE, [
             'id' => $object->primary,
             'primary' => $object->primary,
             'fields' => $fields,
             'object' => $object
-        ], true);
+        ], true
+        );
 
         $event->send();
         $event->getErrors($result);
@@ -1599,20 +1730,24 @@ abstract class DataManager
      */
     protected static function callOnUpdateEvent($object, $fields, $ufdata)
     {
-        $event = new Event($object->entity, self::EVENT_ON_UPDATE, [
+        $event = new Event(
+            $object->entity, self::EVENT_ON_UPDATE, [
             'id' => $object->primary,
             'fields' => $fields + $ufdata,
             'object' => clone $object
-        ]);
+        ]
+        );
         $event->send();
 
         //event on update (modern with namespace)
-        $event = new Event($object->entity, self::EVENT_ON_UPDATE, [
+        $event = new Event(
+            $object->entity, self::EVENT_ON_UPDATE, [
             'id' => $object->primary,
             'primary' => $object->primary,
             'fields' => $fields + $ufdata,
             'object' => clone $object
-        ], true);
+        ], true
+        );
         $event->send();
     }
 
@@ -1622,20 +1757,24 @@ abstract class DataManager
      */
     protected static function callOnAfterUpdateEvent($object, $fields)
     {
-        $event = new Event($object->entity, self::EVENT_ON_AFTER_UPDATE, [
+        $event = new Event(
+            $object->entity, self::EVENT_ON_AFTER_UPDATE, [
             'id' => $object->primary,
             'fields' => $fields,
             'object' => clone $object
-        ]);
+        ]
+        );
         $event->send();
 
         //event after update (modern with namespace)
-        $event = new Event($object->entity, self::EVENT_ON_AFTER_UPDATE, [
+        $event = new Event(
+            $object->entity, self::EVENT_ON_AFTER_UPDATE, [
             'id' => $object->primary,
             'primary' => $object->primary,
             'fields' => $fields,
             'object' => clone $object
-        ], true);
+        ], true
+        );
         $event->send();
     }
 
@@ -1702,7 +1841,7 @@ abstract class DataManager
         $options = array();
         $optionString = Main\Config\Option::get("main", "~crypto_" . $table);
         if ($optionString <> '') {
-            $options = unserialize($optionString);
+            $options = unserialize($optionString, ['allowed_classes' => false]);
         }
         $options[strtoupper($field)] = $mode;
         Main\Config\Option::set("main", "~crypto_" . $table, serialize($options));
@@ -1726,7 +1865,7 @@ abstract class DataManager
         $optionString = Main\Config\Option::get("main", "~crypto_" . $table);
         if ($optionString <> '') {
             $field = strtoupper($field);
-            $options = unserialize($optionString);
+            $options = unserialize($optionString, ['allowed_classes' => false]);
             if (isset($options[$field]) && $options[$field] === true) {
                 return true;
             }

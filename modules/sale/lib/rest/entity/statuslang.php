@@ -40,8 +40,9 @@ class StatusLang extends Base
         if ($name == 'deletebyfilter') {
             if (isset($arguments['fields'])) {
                 $fields = $arguments['fields'];
-                if (!empty($fields))
+                if (!empty($fields)) {
                     $arguments['fields'] = $this->convertKeysToSnakeCaseFields($fields);
+                }
             }
         } else {
             $arguments = parent::convertKeysToSnakeCaseArguments($name, $arguments);
@@ -66,8 +67,9 @@ class StatusLang extends Base
         if ($name == 'getlistlangs') {
         } elseif ($name == 'deletebyfilter') {
             $fields = $arguments['fields'];
-            if (!empty($fields))
+            if (!empty($fields)) {
                 $arguments['fields'] = $this->internalizeFieldsAdd($fields);
+            }
         } else {
             parent::internalizeArguments($name, $arguments);
         }

@@ -24,17 +24,20 @@ abstract class ServiceHandler extends BaseServiceHandler
     {
         $fields = static::getIndicativeFields();
 
-        if (!is_array($fields) || empty($fields))
+        if (!is_array($fields) || empty($fields)) {
             return false;
+        }
 
         $isAssociate = \CSaleHelper::IsAssociativeArray($fields);
 
         foreach ($fields as $key => $value) {
-            if (!$isAssociate && !isset($request[$value]))
+            if (!$isAssociate && !isset($request[$value])) {
                 return false;
+            }
 
-            if ($isAssociate && (!isset($request[$key]) || is_null($value) || ($value != $request[$key])))
+            if ($isAssociate && (!isset($request[$key]) || is_null($value) || ($value != $request[$key]))) {
                 return false;
+            }
         }
 
         return static::isMyResponseExtended($request, $paySystemId);

@@ -48,10 +48,11 @@ class Base
      */
     public function resolve($entity)
     {
-        if ($entity === "this")
+        if ($entity === "this") {
             return $this;
-        else
+        } else {
             return new Base(0);
+        }
     }
 
     /**
@@ -75,25 +76,28 @@ class Base
      */
     public function getField($fieldName)
     {
-        if (!$this->loadFromDatabase())
+        if (!$this->loadFromDatabase()) {
             return "";
+        }
 
-        if (!isset($this->fieldMap[$fieldName]))
+        if (!isset($this->fieldMap[$fieldName])) {
             return "";
+        }
 
         $fieldName = $this->fieldMap[$fieldName];
-        if (!isset($this->fields[$fieldName]))
+        if (!isset($this->fields[$fieldName])) {
             return "";
+        }
 
         $fieldValue = $this->fields[$fieldName];
         if (is_array($fieldValue)) {
             $result = array();
             foreach ($fieldValue as $key => $value) {
-                if ($value instanceof LazyValueLoader)
+                if ($value instanceof LazyValueLoader) {
                     $result[$key] = $value->getValue();
-                else
+                } else {
                     $result[$key] = $value;
-
+                }
             }
             return $result;
         } else {
@@ -130,9 +134,10 @@ class Base
      */
     protected function addField($fieldName, $internalName, $value)
     {
-        if (!isset($this->fields[$internalName]))
+        if (!isset($this->fields[$internalName])) {
             $this->fields[$internalName] = $value;
-        $this->fieldMap[strtolower($fieldName)] = $internalName;
+        }
+        $this->fieldMap[mb_strtolower($fieldName)] = $internalName;
     }
 }
 
@@ -162,8 +167,9 @@ class LazyValueLoader
      */
     public function __toString()
     {
-        if (!isset($this->value))
+        if (!isset($this->value)) {
             $this->value = $this->load();
+        }
         return $this->value;
     }
 
@@ -174,8 +180,9 @@ class LazyValueLoader
      */
     public function getValue()
     {
-        if (!isset($this->value))
+        if (!isset($this->value)) {
             $this->value = $this->load();
+        }
         return $this->value;
     }
 

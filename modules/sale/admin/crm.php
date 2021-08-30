@@ -9,8 +9,9 @@ use Bitrix\Main,
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions < "W")
+if ($saleModulePermissions < "W") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 Loader::includeModule('sale');
 IncludeModuleLangFile(__FILE__);
@@ -19,67 +20,80 @@ IncludeModuleLangFile(__FILE__);
 ClearVars();
 
 $crmIntegrationData = COption::GetOptionString("sale", "~crm_integration", "");
-$arCrmIntegration = unserialize($crmIntegrationData);
-if (!is_array($arCrmIntegration))
+$arCrmIntegration = unserialize($crmIntegrationData, ['allowed_classes' => false]);
+if (!is_array($arCrmIntegration)) {
     $arCrmIntegration = array();
+}
 
 //$arCrmIntegration = array();
 
-if ($_SERVER["REQUEST_METHOD"] != "POST" || $do_create_link != "Y")
+if ($_SERVER["REQUEST_METHOD"] != "POST" || $do_create_link != "Y") {
     $_REQUEST["CRM_BUS_USER_SET_C"] = "Y";
+}
 
 $errorMessage = "";
 $successMessage = "";
-if ($_SERVER["REQUEST_METHOD"] == "POST" && $do_create_link == "Y" && $saleModulePermissions >= "W" && check_bitrix_sessid()) {
+if ($_SERVER["REQUEST_METHOD"] == "POST" && $do_create_link == "Y" && $saleModulePermissions >= "W" && check_bitrix_sessid(
+    )) {
     if (!isset($_POST["CRM_URL_SERVER"]) || empty($_POST["CRM_URL_SERVER"])) {
         $errorMessage .= GetMessage("SPTEN_SCRM_NO_SITE") . "<br />";
     } else {
         $arCrmUrl = parse_url($_POST["CRM_URL_SERVER"]);
         $crmUrlHost = $arCrmUrl["host"] ? $arCrmUrl["host"] : $arCrmUrl["path"];
-        $crmUrlScheme = $arCrmUrl["scheme"] ? strtolower($arCrmUrl["scheme"]) : strtolower($_POST["CRM_URL_SCHEME"]);
+        $crmUrlScheme = $arCrmUrl["scheme"] ? mb_strtolower($arCrmUrl["scheme"]) : mb_strtolower(
+            $_POST["CRM_URL_SCHEME"]
+        );
         $crmUrlPort = $arCrmUrl["port"] ? intval($arCrmUrl["port"]) : intval($_POST["CRM_URL_PORT"]);
         switch ($crmUrlScheme) {
             case 'https':
-                if (!function_exists("openssl_verify"))
+                if (!function_exists("openssl_verify")) {
                     $errorMessage .= "OpenSSL PHP extention required" . "<br />";
+                }
 
                 $crmUrlScheme = 'ssl://';
-                if ($crmUrlPort <= 0)
+                if ($crmUrlPort <= 0) {
                     $crmUrlPort = 443;
+                }
                 break;
 
             default:
                 $crmUrlScheme = '';
-                if ($crmUrlPort <= 0)
+                if ($crmUrlPort <= 0) {
                     $crmUrlPort = 80;
+                }
                 break;
         }
 
-        if (empty($crmUrlHost))
+        if (empty($crmUrlHost)) {
             $errorMessage .= GetMessage("SPTEN_SCRM_WRONG_SITE") . "<br />";
+        }
     }
 
     $crmLogin = $_POST["CRM_LOGIN"];
     $crmPassword = $_POST["CRM_PASSWORD"];
 
-    if (strlen($crmLogin) <= 0)
+    if ($crmLogin == '') {
         $errorMessage .= GetMessage("SPTEN_SCRM_NO_LOGIN") . "<br />";
-    if (strlen($crmPassword) <= 0)
+    }
+    if ($crmPassword == '') {
         $errorMessage .= GetMessage("SPTEN_SCRM_NO_PWD") . "<br />";
+    }
 
     $createNewSaleUser = ($_POST["CRM_BUS_USER_SET_C"] == "Y");
     if (!$createNewSaleUser) {
         $saleLogin = $_POST["CRM_BUS_USER_LOGIN"];
         $salePassword = $_POST["CRM_BUS_USER_PASSWORD"];
-        if (strlen($saleLogin) <= 0) {
+        if ($saleLogin == '') {
             $errorMessage .= GetMessage("SPTEN_SCRM_NO_SALE_LOGIN") . "<br />";
         } else {
             $dbSaleLoginUser = CUser::GetByLogin($saleLogin);
-            if (!$arSaleLoginUser = $dbSaleLoginUser->Fetch())
+            if (!$arSaleLoginUser = $dbSaleLoginUser->Fetch()) {
                 $errorMessage .= GetMessage("SPTEN_SCRM_WRONG_SALE_LOGIN") . "<br />";
+            }
         }
-        if (strlen($salePassword) <= 0)
+        if ($salePassword == '') {
             $errorMessage .= GetMessage("SPTEN_SCRM_NO_SALE_PWD") . "<br />";
+        }
     }
 
     if ($createNewSaleUser) {
@@ -108,27 +122,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $do_create_link == "Y" && $saleModul
             $defaultGroup = COption::GetOptionString("main", "new_user_registration_def_group", "");
             if ($defaultGroup != "") {
                 $arDefaultGroup = explode(",", $defaultGroup);
-                $arPolicy = CUser::GetGroupPolicy($arDefaultGroup);
             } else {
-                $arPolicy = CUser::GetGroupPolicy(array());
+                $arDefaultGroup = [];
             }
 
-            $passwordMinLength = intval($arPolicy["PASSWORD_LENGTH"]);
-            if ($passwordMinLength <= 10)
-                $passwordMinLength = 10;
-            $passwordChars = array(
-                "abcdefghijklnmopqrstuvwxyz",
-                "ABCDEFGHIJKLNMOPQRSTUVWXYZ",
-                "0123456789",
-            );
-            if ($arPolicy["PASSWORD_PUNCTUATION"] === "Y")
-                $passwordChars[] = ",.<>/?;:'\"[]{}\|`~!@#\$%^&*()-_+=";
-
-            $salePassword = randString($passwordMinLength + 2, $passwordChars);
+            $salePassword = \CUser::GeneratePasswordByPolicy($arDefaultGroup);
 
             $saleEMail = $saleLogin . '@' . $_SERVER["SERVER_NAME"];
-            if (!check_email($saleEMail))
+            if (!check_email($saleEMail)) {
                 $saleEMail = $saleLogin . '@temporary.temp';
+            }
 
             $arUserFields = array(
                 "LOGIN" => $saleLogin,
@@ -144,8 +147,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $do_create_link == "Y" && $saleModul
             $user = new CUser;
             $userId = $user->Add($arUserFields);
             $userId = intval($userId);
-            if ($userId <= 0)
-                $errorMessage .= GetMessage("SPTEN_SCRM_ERR_REG") . ((strlen($user->LAST_ERROR) > 0) ? ": " . $user->LAST_ERROR : "");
+            if ($userId <= 0) {
+                $errorMessage .= GetMessage(
+                        "SPTEN_SCRM_ERR_REG"
+                    ) . (($user->LAST_ERROR <> '') ? ": " . $user->LAST_ERROR : "");
+            }
         }
 
         if (empty($errorMessage)) {
@@ -165,16 +171,33 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $do_create_link == "Y" && $saleModul
 
             $groupId = $group->Add($arGroupFields);
             $groupId = intval($groupId);
-            if ($groupId <= 0)
-                $errorMessage .= GetMessage("SPTEN_SCRM_ERR_GRP") . ((strlen($group->LAST_ERROR) > 0) ? ": " . $group->LAST_ERROR : "");
+            if ($groupId <= 0) {
+                $errorMessage .= GetMessage(
+                        "SPTEN_SCRM_ERR_GRP"
+                    ) . (($group->LAST_ERROR <> '') ? ": " . $group->LAST_ERROR : "");
+            }
         }
     }
 
-    function __CrmSaleQuery($crmUrlScheme, $crmUrlHost, $crmUrlPort, $crmLogin, $crmPassword, $head, $body, &$errorMessage)
-    {
+    function __CrmSaleQuery(
+        $crmUrlScheme,
+        $crmUrlHost,
+        $crmUrlPort,
+        $crmLogin,
+        $crmPassword,
+        $head,
+        $body,
+        &$errorMessage
+    ) {
+        // remove last slash from $crmUrlHost, eg. site.ru/
+        if (mb_strpos($crmUrlHost, '/') === (mb_strlen($crmUrlHost) - 1)) {
+            $crmUrlHost = mb_substr($crmUrlHost, 0, -1);
+        }
+
         $hServer = @fsockopen($crmUrlScheme . $crmUrlHost, $crmUrlPort, $errno, $errstr, 20);
-        if (!$hServer)
+        if (!$hServer) {
             $errorMessage .= sprintf("[%s] %s", $errno, $errstr) . "<br />";
+        }
 
         $arResponseHeaders = array();
         $responseBody = "";
@@ -184,7 +207,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $do_create_link == "Y" && $saleModul
             $buffer .= sprintf("Host: %s:%s\r\n", $crmUrlHost, $crmUrlPort);
             $buffer .= "Content-type: application/x-www-form-urlencoded; charset=UTF-8\r\n";
             $buffer .= sprintf("Authorization: Basic %s\r\n", base64_encode($crmLogin . ":" . $crmPassword));
-            $buffer .= sprintf("Content-length: %s\r\n", ((function_exists('mb_strlen') ? mb_strlen($body, 'latin1') : strlen($body))));
+            $buffer .= sprintf(
+                "Content-length: %s\r\n",
+                ((function_exists('mb_strlen') ? mb_strlen($body, 'latin1') : mb_strlen($body)))
+            );
             $buffer .= $head;
             $buffer .= "\r\n";
             $buffer .= $body;
@@ -192,14 +218,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $do_create_link == "Y" && $saleModul
             fputs($hServer, $buffer);
 
             while ($line = fgets($hServer, 4096)) {
-                if ($line == "\r\n")
+                if ($line == "\r\n") {
                     break;
+                }
 
                 $arResponseHeaders[] = trim($line);
             }
 
-            if (count($arResponseHeaders) <= 0)
+            if (count($arResponseHeaders) <= 0) {
                 $errorMessage .= GetMessage("SPTEN_SCRM_ERR_CONNECT") . "<br />";
+            }
         }
 
         if (empty($errorMessage)) {
@@ -220,15 +248,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $do_create_link == "Y" && $saleModul
                 $lb = $contentLength;
                 while ($lb > 0) {
                     $responseBody .= fread($hServer, $lb);
-                    $lb = $contentLength - ((function_exists('mb_strlen') ? mb_strlen($responseBody, 'latin1') : strlen($responseBody)));
+                    $lb = $contentLength - ((function_exists('mb_strlen') ? mb_strlen(
+                            $responseBody,
+                            'latin1'
+                        ) : mb_strlen($responseBody)));
                 }
             } else {
                 stream_set_timeout($hServer, 0);
 
                 while (!feof($hServer)) {
                     $responseBody .= fread($hServer, 4096);
-                    if (substr($responseBody, -9) == "\r\n\r\n0\r\n\r\n") {
-                        $responseBody = substr($responseBody, 0, -9);
+                    if (mb_substr($responseBody, -9) == "\r\n\r\n0\r\n\r\n") {
+                        $responseBody = mb_substr($responseBody, 0, -9);
                         break;
                     }
                 }
@@ -250,12 +281,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $do_create_link == "Y" && $saleModul
             "SITE_NAME" => COption::GetOptionString("main", "site_name", ""),
         );
         $body1 = http_build_query($body);
-        if (!defined("BX_UTF"))
+        if (!defined("BX_UTF")) {
             $body1 = CharsetConverter::ConvertCharset($body1, SITE_CHARSET, "UTF-8");
+        }
 
-        list($arResponseHeaders, $responseBody) = __CrmSaleQuery($crmUrlScheme, $crmUrlHost, $crmUrlPort, $crmLogin, $crmPassword, "", $body1, $errorMessageTmp);
-        if (!empty($errorMessageTmp))
+        list($arResponseHeaders, $responseBody) = __CrmSaleQuery(
+            $crmUrlScheme,
+            $crmUrlHost,
+            $crmUrlPort,
+            $crmLogin,
+            $crmPassword,
+            "",
+            $body1,
+            $errorMessageTmp
+        );
+        if (!empty($errorMessageTmp)) {
             $errorMessage .= $errorMessageTmp;
+        }
     }
 
     if (empty($errorMessage)) {
@@ -264,28 +306,43 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $do_create_link == "Y" && $saleModul
             $responseBody = CharsetConverter::ConvertCharset($responseBody, SITE_CHARSET, "CP1251");
         }
 
-        if (strpos($responseBody, "bsid=") !== false) {
-            $p1 = strpos($responseBody, "bsid=");
-            $p2 = strpos($responseBody, ";", $p1);
+        if (mb_strpos($responseBody, "bsid=") !== false) {
+            $p1 = mb_strpos($responseBody, "bsid=");
+            $p2 = mb_strpos($responseBody, ";", $p1);
 
-            $body["sessid"] = substr($responseBody, $p1 + 5, $p2 - $p1 - 5);
+            $body["sessid"] = mb_substr($responseBody, $p1 + 5, $p2 - $p1 - 5);
             $body1 = http_build_query($body);
-            if (!defined("BX_UTF"))
+            if (!defined("BX_UTF")) {
                 $body1 = CharsetConverter::ConvertCharset($body1, SITE_CHARSET, "UTF-8");
+            }
 
             $head1 = "";
             foreach ($arResponseHeaders as $h) {
-                $p1 = strpos($h, "PHPSESSID=");
+                $p1 = mb_strpos($h, "PHPSESSID=");
                 if ($p1 !== false) {
-                    $p2 = strpos($h, ";", $p1);
-                    $head1 .= "Cookie: PHPSESSID=" . (($p2 !== false) ? substr($h, $p1 + 10, $p2 - $p1 - 10) : substr($h, $p1 + 10)) . "\r\n";
+                    $p2 = mb_strpos($h, ";", $p1);
+                    $head1 .= "Cookie: PHPSESSID=" . (($p2 !== false) ? mb_substr(
+                            $h,
+                            $p1 + 10,
+                            $p2 - $p1 - 10
+                        ) : mb_substr($h, $p1 + 10)) . "\r\n";
                     break;
                 }
             }
 
-            list($arResponseHeaders, $responseBody) = __CrmSaleQuery($crmUrlScheme, $crmUrlHost, $crmUrlPort, $crmLogin, $crmPassword, $head1, $body1, $errorMessageTmp);
-            if (!empty($errorMessageTmp))
+            list($arResponseHeaders, $responseBody) = __CrmSaleQuery(
+                $crmUrlScheme,
+                $crmUrlHost,
+                $crmUrlPort,
+                $crmLogin,
+                $crmPassword,
+                $head1,
+                $body1,
+                $errorMessageTmp
+            );
+            if (!empty($errorMessageTmp)) {
                 $errorMessage .= $errorMessageTmp;
+            }
         }
     }
 
@@ -293,19 +350,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $do_create_link == "Y" && $saleModul
         list($httpVersion, $statusCode, $reasonPhrase) = explode(' ', $arResponseHeaders[0], 3);
         $responseBody = ltrim($responseBody);
 
-        if (!defined("BX_UTF"))
+        if (!defined("BX_UTF")) {
             $responseBody = $APPLICATION->ConvertCharset($responseBody, "UTF-8", LANG_CHARSET);
+        }
 
-        if (($statusCode == 401) || (strpos($responseBody, "form_auth") !== false) || (strpos($responseBody, "Permission denied") !== false)) {
+        if (($statusCode == 401) || (mb_strpos($responseBody, "form_auth") !== false) || (mb_strpos(
+                    $responseBody,
+                    "Permission denied"
+                ) !== false)) {
             $errorMessage .= GetMessage("SPTEN_SCRM_ERR_AUTH") . "<br />";
         } else {
-            $rcode = ToUpper(substr($responseBody, 0, 2));
-            if ($rcode == "ER")
-                $errorMessage .= substr($responseBody, 2) . "<br />";
-            elseif ($rcode != "OK")
+            $rcode = ToUpper(mb_substr($responseBody, 0, 2));
+            if ($rcode == "ER") {
+                $errorMessage .= mb_substr($responseBody, 2) . "<br />";
+            } elseif ($rcode != "OK") {
                 $errorMessage .= GetMessage("SPTEN_SCRM_ERR_ANSWER") . "<br />";
-            else
-                $crmUrl4Import = trim(substr($responseBody, 2));
+            } else {
+                $crmUrl4Import = trim(mb_substr($responseBody, 2));
+            }
         }
     }
 
@@ -317,15 +379,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $do_create_link == "Y" && $saleModul
 
             if (Loader::includeModule('iblock') && Loader::includeModule('catalog')) {
                 $catalogs = array();
-                $iterator = Catalog\CatalogIblockTable::getList(array(
-                    'select' => array('IBLOCK_ID', 'PRODUCT_IBLOCK_ID')
-                ));
+                $iterator = Catalog\CatalogIblockTable::getList(
+                    array(
+                        'select' => array('IBLOCK_ID', 'PRODUCT_IBLOCK_ID')
+                    )
+                );
                 while ($row = $iterator->fetch()) {
                     $row['IBLOCK_ID'] = (int)$row['IBLOCK_ID'];
                     $catalogs[$row['IBLOCK_ID']] = $row['IBLOCK_ID'];
                     $row['PRODUCT_IBLOCK_ID'] = (int)$row['PRODUCT_IBLOCK_ID'];
-                    if ($row['PRODUCT_IBLOCK_ID'] > 0)
+                    if ($row['PRODUCT_IBLOCK_ID'] > 0) {
                         $catalogs[$row['PRODUCT_IBLOCK_ID']] = $row['PRODUCT_IBLOCK_ID'];
+                    }
                 }
                 unset($row, $iterator);
 
@@ -333,12 +398,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $do_create_link == "Y" && $saleModul
                     $iblockObject = new \CIBlock();
 
                     $rightsId = null;
-                    $row = Main\TaskTable::getList(array(
-                        'select' => array('ID'),
-                        'filter' => array('=LETTER' => 'S', '=MODULE_ID' => 'iblock', '=SYS' => 'Y')
-                    ))->fetch();
-                    if (!empty($row))
+                    $row = Main\TaskTable::getList(
+                        array(
+                            'select' => array('ID'),
+                            'filter' => array('=LETTER' => 'S', '=MODULE_ID' => 'iblock', '=SYS' => 'Y')
+                        )
+                    )->fetch();
+                    if (!empty($row)) {
                         $rightsId = $row['ID'];
+                    }
                     unset($row);
                     $groupCode = 'G' . $groupId;
 
@@ -387,7 +455,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $do_create_link == "Y" && $saleModul
             $APPLICATION->SetFileAccessPermission(array(SITE_ID, "/bitrix/admin"), $arFPerms);
         }
 
-        LocalRedirect($APPLICATION->GetCurPage() . "?lang=" . LANGUAGE_ID . "&success=Y&crm_imp_url=" . urlencode(($crmUrlScheme == 'ssl://' ? "https" : "http") . "://" . $crmUrlHost . ":" . $crmUrlPort . $crmUrl4Import) . "&crm_url=" . urlencode(($crmUrlScheme == 'ssl://' ? "https" : "http") . "://" . $crmUrlHost . ":" . $crmUrlPort));
+        LocalRedirect(
+            $APPLICATION->GetCurPage() . "?lang=" . LANGUAGE_ID . "&success=Y&crm_imp_url=" . urlencode(
+                ($crmUrlScheme == 'ssl://' ? "https" : "http") . "://" . $crmUrlHost . ":" . $crmUrlPort . $crmUrl4Import
+            ) . "&crm_url=" . urlencode(
+                ($crmUrlScheme == 'ssl://' ? "https" : "http") . "://" . $crmUrlHost . ":" . $crmUrlPort
+            )
+        );
     } else {
         if ($createNewSaleUser) {
             if ($groupId > 0) {
@@ -401,14 +475,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $do_create_link == "Y" && $saleModul
         }
     }
 }
-if ($_SERVER["REQUEST_METHOD"] == "GET" && $_REQUEST["clear_crm_stat"] == "Y" && $saleModulePermissions >= "W" && check_bitrix_sessid()) {
+if ($_SERVER["REQUEST_METHOD"] == "GET" && $_REQUEST["clear_crm_stat"] == "Y" && $saleModulePermissions >= "W" && check_bitrix_sessid(
+    )) {
     if (!isset($_REQUEST["clear_crm_stat_url"])) {
         COption::SetOptionString("sale", "~crm_integration", "");
     } else {
         $ar = array();
         foreach ($arCrmIntegration as $k => $v) {
-            if ($k != $_REQUEST["clear_crm_stat_url"])
+            if ($k != $_REQUEST["clear_crm_stat_url"]) {
                 $ar[$k] = $v;
+            }
         }
         COption::SetOptionString("sale", "~crm_integration", serialize($ar));
     }
@@ -426,11 +502,13 @@ if ($_REQUEST["success"] == "Y") {
     $crmIntegrationImpUrl = htmlspecialcharsbx($_REQUEST["crm_imp_url"]);
 
     $find = "/^(http:\/\/|https:\/\/|ssl:\/\/)/i";
-    if (!preg_match($find, $crmIntegrationUrl, $res) && !empty($_REQUEST["crm_url"]))
+    if (!preg_match($find, $crmIntegrationUrl, $res) && !empty($_REQUEST["crm_url"])) {
         $crmIntegrationUrl = "http://" . $crmIntegrationUrl;
+    }
 
-    if (!preg_match($find, $crmIntegrationImpUrl, $res) && !empty($_REQUEST["crm_imp_url"]))
+    if (!preg_match($find, $crmIntegrationImpUrl, $res) && !empty($_REQUEST["crm_imp_url"])) {
         $crmIntegrationImpUrl = "http://" . $crmIntegrationImpUrl;
+    }
 
     $successMessage = GetMessage(
         "SPTEN_SCRM_SUCCESS_MESS",
@@ -443,7 +521,9 @@ if ($_REQUEST["success"] == "Y") {
 
     $successMessage .= '<br /><br /><div class="crm-admin-buttons" id="id_new_crm_btns">
 		<span class="crm-admin-button-wrap">
-			<a target="_blank" href="' . (!empty($crmIntegrationImpUrl) ? $crmIntegrationImpUrl : $crmIntegrationUrl . "/crm/configs/external_sale/") . '" class="adm-btn adm-btn-green">' . GetMessage("SPTEN_SCRM_CRM_BTN") . '</a>
+			<a target="_blank" href="' . (!empty($crmIntegrationImpUrl) ? $crmIntegrationImpUrl : $crmIntegrationUrl . "/crm/configs/external_sale/") . '" class="adm-btn adm-btn-green">' . GetMessage(
+            "SPTEN_SCRM_CRM_BTN"
+        ) . '</a>
 		</span>
 	</div>';
     CAdminMessage::ShowMessage(array("MESSAGE" => $successMessage, "TYPE" => "OK", "HTML" => true));
@@ -464,7 +544,10 @@ if (count($arCrmIntegration) <= 0)
     <p class="crm-admin-paragraph">
         <?= GetMessage("SPTEN_SCRM_TEXT3") ?>
     </p>
-    <div class="crm-admin-banner crm-admin-banner-<?= in_array(LANGUAGE_ID, array("ru", "en", "de")) ? LANGUAGE_ID : "en" ?>"></div>
+    <div class="crm-admin-banner crm-admin-banner-<?= in_array(
+        LANGUAGE_ID,
+        array("ru", "en", "de")
+    ) ? LANGUAGE_ID : "en" ?>"></div>
     <p class="crm-admin-paragraph"><?= GetMessage("SPTEN_SCRM_TEXT4") ?></p>
     <?
 }
@@ -483,12 +566,21 @@ foreach ($arCrmIntegration as $crmUrl => $arCrm) {
             <a target="_blank" class="crm-admin-title-link"
                href="<?= htmlspecialcharsbx($crmUrl) ?>"><?= htmlspecialcharsbx($crmUrl) ?></a>
             <a class="crm-admin-reset"
-               href="/bitrix/admin/sale_crm.php?clear_crm_stat=Y&clear_crm_stat_url=<?= urlencode($crmUrl) ?>&<?= bitrix_sessid_get() ?>"><?= GetMessage("SPTEN_SCRM_CLEAR_STAT") ?></a>
+               href="/bitrix/admin/sale_crm.php?clear_crm_stat=Y&clear_crm_stat_url=<?= urlencode(
+                   $crmUrl
+               ) ?>&<?= bitrix_sessid_get() ?>"><?= GetMessage("SPTEN_SCRM_CLEAR_STAT") ?></a>
         </div>
         <table class="crm-admin-stat-content" cellspacing="0">
             <tr>
                 <td class="crm-admin-stat-cont-left"><?= GetMessage("SPTEN_SCRM_SHOW_TOTSTAT") ?>:</td>
-                <td><?= GetMessage("SPTEN_SCRM_SHOW_TEXT", array("#ORDERS#" => intval($arCrm["TOTAL_ORDERS"]), "#CONTACTS#" => intval($arCrm["TOTAL_CONTACTS"]), "#COMPANIES#" => intval($arCrm["TOTAL_COMPANIES"]))) ?></td>
+                <td><?= GetMessage(
+                        "SPTEN_SCRM_SHOW_TEXT",
+                        array(
+                            "#ORDERS#" => intval($arCrm["TOTAL_ORDERS"]),
+                            "#CONTACTS#" => intval($arCrm["TOTAL_CONTACTS"]),
+                            "#COMPANIES#" => intval($arCrm["TOTAL_COMPANIES"])
+                        )
+                    ) ?></td>
             </tr>
             <tr>
                 <td class="crm-admin-stat-cont-left">
@@ -498,11 +590,20 @@ foreach ($arCrmIntegration as $crmUrl => $arCrm) {
             </tr>
             <tr>
                 <td class="crm-admin-stat-cont-left"><?= GetMessage("SPTEN_SCRM_SHOW_LASTSTAT") ?>:</td>
-                <td><?= GetMessage("SPTEN_SCRM_SHOW_TEXT", array("#ORDERS#" => intval($arCrm["NUM_ORDERS"]), "#CONTACTS#" => intval($arCrm["NUM_CONTACTS"]), "#COMPANIES#" => intval($arCrm["NUM_COMPANIES"]))) ?></td>
+                <td><?= GetMessage(
+                        "SPTEN_SCRM_SHOW_TEXT",
+                        array(
+                            "#ORDERS#" => intval($arCrm["NUM_ORDERS"]),
+                            "#CONTACTS#" => intval($arCrm["NUM_CONTACTS"]),
+                            "#COMPANIES#" => intval($arCrm["NUM_COMPANIES"])
+                        )
+                    ) ?></td>
             </tr>
         </table>
         <a class="crm-admin-stat-link" target="_blank"
-           href="<?= htmlspecialcharsbx($crmUrl) ?>/crm/configs/external_sale/"><?= GetMessage("SPTEN_SCRM_SHOW_SETUP") ?></a>
+           href="<?= htmlspecialcharsbx($crmUrl) ?>/crm/configs/external_sale/"><?= GetMessage(
+                "SPTEN_SCRM_SHOW_SETUP"
+            ) ?></a>
     </div>
     <?
 }
@@ -515,15 +616,20 @@ foreach ($arCrmIntegration as $crmUrl => $arCrm) {
 ?>
     <div class="crm-admin-buttons" id="id_new_crm_btns">
 		<span class="crm-admin-button-wrap">
-			<a href="javascript:SaleCrmAdminShowRegForm(true)"
-               class="adm-btn adm-btn-green"><?= GetMessage("SPTEN_SCRM_REG_BTN_SETUP") ?></a>
+			<a href="javascript:SaleCrmAdminShowRegForm(true)" class="adm-btn adm-btn-green"><?= GetMessage(
+                    "SPTEN_SCRM_REG_BTN_SETUP"
+                ) ?></a>
 			<div class="crm-admin-button-text"><?= GetMessage("SPTEN_SCRM_REG_BTN_SETUP_HINT") ?></div>
 		</span>
         <span class="crm-admin-button-or">&nbsp;&nbsp;<?= GetMessage("SPTEN_SCRM_REG_BTN_OR") ?></span>
         <span class="crm-admin-button-wrap">
-			<a target="_blank"
-               href="https://www.bitrix24.<? if (LANGUAGE_ID == "ru") echo "ru"; elseif (LANGUAGE_ID == "de") echo "de"; else echo "com"; ?>/"
-               class="adm-btn adm-btn-green"><?= GetMessage("SPTEN_SCRM_REG_BTN_24") ?></a>
+			<a target="_blank" href="https://www.bitrix24.<? if (LANGUAGE_ID == "ru") {
+                echo "ru";
+            } elseif (LANGUAGE_ID == "de") {
+                echo "de";
+            } else {
+                echo "com";
+            } ?>/" class="adm-btn adm-btn-green"><?= GetMessage("SPTEN_SCRM_REG_BTN_24") ?></a>
 			<div class="crm-admin-button-text"><?= GetMessage("SPTEN_SCRM_REG_BTN_24_HINT") ?></div>
 		</span>
     </div>
@@ -538,8 +644,9 @@ foreach ($arCrmIntegration as $crmUrl => $arCrm) {
             <div class="crm-admin-set-title"><?= GetMessage("SPTEN_SCRM_REG_TITLE") ?></div>
             <table class="crm-admin-set-content-table" cellspacing="0">
                 <tr>
-                    <td class="crm-admin-set-left"><span
-                                class="required">*</span><?= GetMessage("SPTEN_SCRM_REG_URL") ?>:
+                    <td class="crm-admin-set-left"><span class="required">*</span><?= GetMessage(
+                            "SPTEN_SCRM_REG_URL"
+                        ) ?>:
                     </td>
                     <td class="crm-admin-set-right">
                         <select class="crm-admin-set-select" name="CRM_URL_SCHEME">
@@ -552,7 +659,9 @@ foreach ($arCrmIntegration as $crmUrl => $arCrm) {
                         </select><span class="crm-admin-set-text">&nbsp;://&nbsp;</span><input type="text"
                                                                                                class="crm-admin-set-input"
                                                                                                name="CRM_URL_SERVER"
-                                                                                               value="<?= htmlspecialcharsbx($_REQUEST["CRM_URL_SERVER"]) ?>"/>
+                                                                                               value="<?= htmlspecialcharsbx(
+                                                                                                   $_REQUEST["CRM_URL_SERVER"]
+                                                                                               ) ?>"/>
                     </td>
                 </tr>
                 <tr>
@@ -580,8 +689,9 @@ foreach ($arCrmIntegration as $crmUrl => $arCrm) {
                                name="CRM_BUS_USER_SET_C"
                                value="Y"<?= ($_REQUEST["CRM_BUS_USER_SET_C"] == "Y") ? " checked" : "" ?>
                                onclick="SaleCrmAdminShowRegFormUser(this.checked)"/><label
-                                for="id_CRM_BUS_USER_SET_C"><span
-                                    class="crm-admin-set-checkbox-label"><?= GetMessage("SPTEN_SCRM_CRM_BUS_USER_SET") ?></span></label>
+                                for="id_CRM_BUS_USER_SET_C"><span class="crm-admin-set-checkbox-label"><?= GetMessage(
+                                    "SPTEN_SCRM_CRM_BUS_USER_SET"
+                                ) ?></span></label>
                         <script type="text/javascript">
                             function SaleCrmAdminShowRegFormUser(v) {
                                 document.getElementById("id_CRM_BUS_USER_SET_C_login").style.display = v ? "none" : "";
@@ -591,17 +701,19 @@ foreach ($arCrmIntegration as $crmUrl => $arCrm) {
                     </td>
                 </tr>
                 <tr id="id_CRM_BUS_USER_SET_C_login" style="display: none;">
-                    <td class="crm-admin-set-left"><span
-                                class="required">*</span><?= GetMessage("SPTEN_SCRM_REG_USER_SET_LOGIN") ?>:
+                    <td class="crm-admin-set-left"><span class="required">*</span><?= GetMessage(
+                            "SPTEN_SCRM_REG_USER_SET_LOGIN"
+                        ) ?>:
                     </td>
                     <td class="crm-admin-set-right"><input class="crm-admin-set-input" type="text"
-                                                           name="CRM_BUS_USER_LOGIN"
-                                                           value="<?= htmlspecialcharsbx($_REQUEST["CRM_BUS_USER_LOGIN"]) ?>"/>
-                    </td>
+                                                           name="CRM_BUS_USER_LOGIN" value="<?= htmlspecialcharsbx(
+                            $_REQUEST["CRM_BUS_USER_LOGIN"]
+                        ) ?>"/></td>
                 </tr>
                 <tr id="id_CRM_BUS_USER_SET_C_pwd" style="display: none;">
-                    <td class="crm-admin-set-left"><span
-                                class="required">*</span><?= GetMessage("SPTEN_SCRM_REG_USER_SET_PWD") ?>:
+                    <td class="crm-admin-set-left"><span class="required">*</span><?= GetMessage(
+                            "SPTEN_SCRM_REG_USER_SET_PWD"
+                        ) ?>:
                     </td>
                     <td class="crm-admin-set-right"><input class="crm-admin-set-input" type="password"
                                                            name="CRM_BUS_USER_PASSWORD" value=""/></td>
@@ -609,9 +721,12 @@ foreach ($arCrmIntegration as $crmUrl => $arCrm) {
             </table>
             <div class="crm-admin-set-button">
                 <a class="adm-btn adm-btn-green"
-                   href='javascript:document.forms["form1_do_create_link"].submit();'><?= GetMessage("SPTEN_SCRM_REG_SAVE") ?></a>&nbsp;&nbsp;
-                <a class="adm-btn"
-                   href="javascript:SaleCrmAdminShowRegForm(false)"><?= GetMessage("SPTEN_SCRM_REG_CANCEL") ?></a>
+                   href='javascript:document.forms["form1_do_create_link"].submit();'><?= GetMessage(
+                        "SPTEN_SCRM_REG_SAVE"
+                    ) ?></a>&nbsp;&nbsp;
+                <a class="adm-btn" href="javascript:SaleCrmAdminShowRegForm(false)"><?= GetMessage(
+                        "SPTEN_SCRM_REG_CANCEL"
+                    ) ?></a>
             </div>
             <?= bitrix_sessid_post(); ?>
             <input type="hidden" name="lang" value="<?= LANGUAGE_ID ?>">

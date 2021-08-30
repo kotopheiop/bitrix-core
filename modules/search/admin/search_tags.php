@@ -1,4 +1,5 @@
 <?
+
 define("STOP_STATISTICS", true);
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 header('Content-Type: application/x-javascript; charset=' . LANG_CHARSET);
@@ -10,18 +11,21 @@ if (CModule::IncludeModule("search")) {
         $order = CUserOptions::GetOption("search_tags", "order", "CNT");
         if ($_REQUEST["order_by"] == "NAME") {
             $arOrder = array("NAME" => "ASC");
-            if ($order != "NAME")
+            if ($order != "NAME") {
                 CUserOptions::SetOption("search_tags", "order", "NAME");
+            }
         } else {
             $arOrder = array("CNT" => "DESC", "NAME" => "ASC");
-            if ($order != "CNT")
+            if ($order != "CNT") {
                 CUserOptions::SetOption("search_tags", "order", "CNT");
+            }
         }
         $db_res = CSearchTags::GetList(
             array("NAME", "CNT"),
             array("TAG" => $_REQUEST["search"], "SITE_ID" => $_REQUEST["site_id"]),
             $arOrder,
-            10);
+            10
+        );
         if ($db_res) {
             while ($res = $db_res->Fetch()) {
                 $arResult[] = array(

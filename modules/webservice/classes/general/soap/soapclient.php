@@ -18,19 +18,20 @@ class CSOAPClient
     var $SOAPRawRequest;
     var $SOAPRawResponse;
 
-    function CSOAPClient($server, $path = '/', $port = 80)
+    public function __construct($server, $path = '/', $port = 80)
     {
         $this->Login = "";
         $this->Password = "";
         $this->Server = $server;
         $this->Path = $path;
         $this->Port = $port;
-        if (is_numeric($port))
+        if (is_numeric($port)) {
             $this->Port = $port;
-        elseif (strtolower($port) == 'ssl')
+        } elseif (mb_strtolower($port) == 'ssl') {
             $this->Port = 443;
-        else
+        } else {
             $this->Port = 80;
+        }
     }
 
     /*!
@@ -51,16 +52,20 @@ class CSOAPClient
         }
 
         if ($this->Timeout != 0) {
-            $fp = fsockopen($this->Server,
+            $fp = fsockopen(
+                $this->Server,
                 $this->Port,
                 $this->errorNumber,
                 $this->errorString,
-                $this->Timeout);
+                $this->Timeout
+            );
         } else {
-            $fp = fsockopen($this->Server,
+            $fp = fsockopen(
+                $this->Server,
                 $this->Port,
                 $this->errorNumber,
-                $this->errorString);
+                $this->errorString
+            );
         }
 
         if ($fp == 0) {
@@ -72,13 +77,16 @@ class CSOAPClient
 
         $authentification = "";
         if (($this->login() != "")) {
-            $authentification = "Authorization: Basic " . base64_encode($this->login() . ":" . $this->password()) . "\r\n";
+            $authentification = "Authorization: Basic " . base64_encode(
+                    $this->login() . ":" . $this->password()
+                ) . "\r\n";
         }
 
         $name = $request->name();
         $namespace = $request->get_namespace();
-        if ($namespace[strlen($namespace) - 1] != "/")
+        if ($namespace[mb_strlen($namespace) - 1] != "/") {
             $namespace .= "/";
+        }
 
         $HTTPRequest = "POST " . $this->Path . " HTTP/1.0\r\n" .
             "User-Agent: BITRIX SOAP Client\r\n" .
@@ -86,7 +94,10 @@ class CSOAPClient
             $authentification .
             "Content-Type: text/xml; charset=utf-8\r\n" .
             "SOAPAction: \"" . $namespace . $request->name() . "\"\r\n" .
-            "Content-Length: " . (defined('BX_UTF') && BX_UTF == 1 && function_exists('mb_strlen') ? mb_strlen($payload, 'latin1') : strlen($payload)) . "\r\n\r\n" .
+            "Content-Length: " . (defined('BX_UTF') && BX_UTF == 1 && function_exists('mb_strlen') ? mb_strlen(
+                $payload,
+                'latin1'
+            ) : mb_strlen($payload)) . "\r\n\r\n" .
             $payload;
 
         $this->SOAPRawRequest = $HTTPRequest;

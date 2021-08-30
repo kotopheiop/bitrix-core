@@ -70,7 +70,7 @@ abstract class Asset
      */
     public static function detectType($path)
     {
-        $type = strtolower(substr(strrchr($path, '.'), 1));
+        $type = mb_strtolower(mb_substr(strrchr($path, '.'), 1));
         switch ($type) {
             case 'js':
                 return self::JS;
@@ -212,20 +212,20 @@ abstract class Asset
 
         $mapPath = null;
         $useMinimized = false;
-        $minPathPos = strrpos($path, '.');
+        $minPathPos = mb_strrpos($path, '.');
         if ($minPathPos !== false) {
-            $minPath = substr($path, 0, $minPathPos)
+            $minPath = mb_substr($path, 0, $minPathPos)
                 . '.min'
-                . substr($path, $minPathPos);
+                . mb_substr($path, $minPathPos);
 
             if (IO\File::isFileExists($minPath)) {
                 $path = $minPath;
                 $useMinimized = true;
 
-                $minPathPos = strrpos($this->path, '.');
-                $mapPath = substr($this->path, 0, $minPathPos)
+                $minPathPos = mb_strrpos($this->path, '.');
+                $mapPath = mb_substr($this->path, 0, $minPathPos)
                     . '.map'
-                    . substr($this->path, $minPathPos);
+                    . mb_substr($this->path, $minPathPos);
             }
         }
 
@@ -236,7 +236,7 @@ abstract class Asset
 
         $parts = explode("\n", $content);
         $mapUri = '//# sourceMappingURL=';
-        if (strpos(array_pop($parts), $mapUri) !== 0) {
+        if (mb_strpos(array_pop($parts), $mapUri) !== 0) {
             return $content;
         }
 
@@ -244,7 +244,6 @@ abstract class Asset
         array_push($parts, $mapUri);
 
         return implode("\n", $parts);
-
     }
 
     /**

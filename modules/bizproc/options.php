@@ -1,4 +1,5 @@
 <?
+
 $module_id = "bizproc";
 $bizprocPerms = $APPLICATION->GetGroupRight($module_id);
 if ($bizprocPerms >= "R") :
@@ -8,7 +9,7 @@ if ($bizprocPerms >= "R") :
     IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/options.php");
     IncludeModuleLangFile(__FILE__);
 
-    $dbSites = CSite::GetList(($b = ""), ($o = ""), Array("ACTIVE" => "Y"));
+    $dbSites = CSite::GetList("", "", Array("ACTIVE" => "Y"));
     $arSites = array();
     $aSubTabs = array();
     while ($site = $dbSites->Fetch()) {
@@ -16,35 +17,52 @@ if ($bizprocPerms >= "R") :
         $site["NAME"] = htmlspecialcharsbx($site["NAME"]);
         $arSites[] = $site;
 
-        $aSubTabs[] = array("DIV" => "opt_site_" . $site["ID"], "TAB" => "(" . $site["ID"] . ") " . $site["NAME"], 'TITLE' => '');
+        $aSubTabs[] = array(
+            "DIV" => "opt_site_" . $site["ID"],
+            "TAB" => "(" . $site["ID"] . ") " . $site["NAME"],
+            'TITLE' => ''
+        );
     }
     $subTabControl = new CAdminViewTabControl("subTabControl", $aSubTabs);
 
-    if ($REQUEST_METHOD == "GET" && strlen($RestoreDefaults) > 0 && $bizprocPerms == "W" && check_bitrix_sessid()) {
+    if ($REQUEST_METHOD == "GET" && $RestoreDefaults <> '' && $bizprocPerms == "W" && check_bitrix_sessid()) {
         COption::RemoveOption("bizproc");
     }
 
     $arAllOptions = array(
         array("log_cleanup_days", GetMessage("BIZPROC_LOG_CLEANUP_DAYS"), "90", Array("text", 3)),
-        array("log_skip_types", GetMessage("BIZPROC_LOG_SKIP_TYPES"), "1,2", Array("checkboxlist", array(
-            1 => GetMessage("BIZPROC_LOG_SKIP_TYPES_1"),
-            2 => GetMessage("BIZPROC_LOG_SKIP_TYPES_2"),
-        ))),
+        array(
+            "log_skip_types",
+            GetMessage("BIZPROC_LOG_SKIP_TYPES"),
+            "1,2",
+            Array(
+                "checkboxlist",
+                array(
+                    1 => GetMessage("BIZPROC_LOG_SKIP_TYPES_1"),
+                    2 => GetMessage("BIZPROC_LOG_SKIP_TYPES_2"),
+                )
+            )
+        ),
         array("limit_simultaneous_processes", GetMessage("BIZPROC_LIMIT_SIMULTANEOUS_PROCESSES"), "", Array("text", 3)),
         array("employee_compatible_mode", GetMessage("BIZPROC_EMPLOYEE_COMPATIBLE_MODE"), "N", Array("checkbox")),
 //	array("name_template", GetMessage("BIZPROC_NAME_TEMPLATE"), "", Array("select", 35))
     );
 
     $strWarning = "";
-    if ($REQUEST_METHOD == "POST" && strlen($Update) > 0 && $bizprocPerms == "W" && check_bitrix_sessid()) {
+    if ($REQUEST_METHOD == "POST" && $Update <> '' && $bizprocPerms == "W" && check_bitrix_sessid()) {
         COption::SetOptionString("bizproc", "log_cleanup_days", $log_cleanup_days);
-        if ($log_cleanup_days > 0)
+        if ($log_cleanup_days > 0) {
             CAgent::AddAgent("CBPTrackingService::ClearOldAgent();", "bizproc", "N", 86400);
-        else
+        } else {
             CAgent::RemoveAgent("CBPTrackingService::ClearOldAgent();", "bizproc");
+        }
 
         COption::SetOptionString("bizproc", "employee_compatible_mode", $employee_compatible_mode == "Y" ? "Y" : "N");
-        COption::SetOptionString("bizproc", "limit_simultaneous_processes", $limit_simultaneous_processes ? $limit_simultaneous_processes : 0);
+        COption::SetOptionString(
+            "bizproc",
+            "limit_simultaneous_processes",
+            $limit_simultaneous_processes ? $limit_simultaneous_processes : 0
+        );
         COption::SetOptionString("bizproc", "log_skip_types", $log_skip_types ? implode(',', $log_skip_types) : "");
 
         \Bitrix\Main\Config\Option::set("bizproc", "use_gzip_compression", $_REQUEST["use_gzip_compression"]);
@@ -54,19 +72,32 @@ if ($bizprocPerms >= "R") :
 
         foreach ($arSites as $site) {
             if (isset($_POST["name_template_" . $site["LID"]])) {
-                if (empty($_POST["name_template_" . $site["LID"]]))
+                if (empty($_POST["name_template_" . $site["LID"]])) {
                     COption::RemoveOption("bizproc", "name_template", $site["LID"]);
-                else
-                    COption::SetOptionString("bizproc", "name_template", $_POST["name_template_" . $site["LID"]], false, $site["LID"]);
+                } else {
+                    COption::SetOptionString(
+                        "bizproc",
+                        "name_template",
+                        $_POST["name_template_" . $site["LID"]],
+                        false,
+                        $site["LID"]
+                    );
+                }
             }
         }
     }
 
-    if (strlen($strWarning) > 0)
+    if ($strWarning <> '') {
         CAdminMessage::ShowMessage($strWarning);
+    }
 
     $aTabs = array(
-        array("DIV" => "edit1", "TAB" => GetMessage("BIZPROC_TAB_SET"), "ICON" => "", "TITLE" => GetMessage("BIZPROC_TAB_SET_ALT")),
+        array(
+            "DIV" => "edit1",
+            "TAB" => GetMessage("BIZPROC_TAB_SET"),
+            "ICON" => "",
+            "TITLE" => GetMessage("BIZPROC_TAB_SET_ALT")
+        ),
     );
     $tabControl = new CAdminTabControl("tabControl", $aTabs);
     $tabControl->Begin();
@@ -84,23 +115,27 @@ if ($bizprocPerms >= "R") :
             ?>
             <tr>
                 <td width="50%" valign="top"><?
-                    if ($type[0] == "checkbox")
+                    if ($type[0] == "checkbox") {
                         echo "<label for=\"" . htmlspecialcharsbx($Option[0]) . "\">" . $Option[1] . "</label>";
-                    else
+                    } else {
                         echo $Option[1];
+                    }
                     ?>:
                 </td>
                 <td width="50%" valign="top">
                     <? if ($type[0] == "checkbox"):?>
                         <input type="checkbox" name="<? echo htmlspecialcharsbx($Option[0]) ?>"
-                               id="<? echo htmlspecialcharsbx($Option[0]) ?>"
-                               value="Y"<? if ($val == "Y") echo " checked"; ?>>
+                               id="<? echo htmlspecialcharsbx($Option[0]) ?>" value="Y"<? if ($val == "Y") {
+                            echo " checked";
+                        } ?>>
                     <? elseif ($type[0] == "text"):?>
                         <input type="text" size="<? echo $type[1] ?>" value="<? echo htmlspecialcharsbx($val) ?>"
                                name="<? echo htmlspecialcharsbx($Option[0]) ?>">
                     <? elseif ($type[0] == "textarea"):?>
                         <textarea rows="<? echo $type[1] ?>" cols="<? echo $type[2] ?>"
-                                  name="<? echo htmlspecialcharsbx($Option[0]) ?>"><? echo htmlspecialcharsbx($val) ?></textarea>
+                                  name="<? echo htmlspecialcharsbx($Option[0]) ?>"><? echo htmlspecialcharsbx(
+                                $val
+                            ) ?></textarea>
                     <? elseif ($type[0] == "checkboxlist"):?>
                         <?
                         $arVal = explode(',', $val);
@@ -108,9 +143,12 @@ if ($bizprocPerms >= "R") :
                         <? foreach ($type[1] as $k => $v):?>
                             <input type="checkbox" name="<? echo htmlspecialcharsbx($Option[0]) ?>[]"
                                    id="<? echo htmlspecialcharsbx($Option[0] . '_' . $k) ?>"
-                                   value="<?= $k ?>"<? if (in_array($k, $arVal)) echo " checked"; ?>>
-                            <label for="<?= htmlspecialcharsbx($Option[0] . '_' . $k) ?>"><? echo htmlspecialcharsbx($v) ?></label>
-                            <br>
+                                   value="<?= $k ?>"<? if (in_array($k, $arVal)) {
+                                echo " checked";
+                            } ?>>
+                            <label for="<?= htmlspecialcharsbx($Option[0] . '_' . $k) ?>"><? echo htmlspecialcharsbx(
+                                    $v
+                                ) ?></label><br>
                         <? endforeach; ?>
                     <? endif ?>
                 </td>
@@ -121,16 +159,26 @@ if ($bizprocPerms >= "R") :
             <td width="50%" valign="top">
                 <select name="use_gzip_compression">
                     <? $useGZipCompression = \Bitrix\Main\Config\Option::get("bizproc", "use_gzip_compression", ""); ?>
-                    <option value="" <? if (empty($useGZipCompression)) echo "selected"; ?>><?= GetMessage("BIZPROC_OPT_USE_GZIP_COMPRESSION_EMPTY") ?></option>
-                    <option value="Y" <? if ($useGZipCompression == "Y") echo "selected"; ?>><?= GetMessage("BIZPROC_OPT_USE_GZIP_COMPRESSION_Y") ?></option>
-                    <option value="N" <? if ($useGZipCompression == "N") echo "selected"; ?>><?= GetMessage("BIZPROC_OPT_USE_GZIP_COMPRESSION_N") ?></option>
+                    <option value="" <? if (empty($useGZipCompression)) {
+                        echo "selected";
+                    } ?>><?= GetMessage("BIZPROC_OPT_USE_GZIP_COMPRESSION_EMPTY") ?></option>
+                    <option value="Y" <? if ($useGZipCompression == "Y") {
+                        echo "selected";
+                    } ?>><?= GetMessage("BIZPROC_OPT_USE_GZIP_COMPRESSION_Y") ?></option>
+                    <option value="N" <? if ($useGZipCompression == "N") {
+                        echo "selected";
+                    } ?>><?= GetMessage("BIZPROC_OPT_USE_GZIP_COMPRESSION_N") ?></option>
                 </select>
             </td>
         </tr>
         <tr>
             <td width="50%" valign="top"><?= GetMessage("BIZPROC_OPT_LOCKED_WI_PATH") ?>:</td>
             <td width="50%" valign="top">
-                <? $path = \Bitrix\Main\Config\Option::get("bizproc", "locked_wi_path", "/bizproc/bizproc/?type=is_locked"); ?>
+                <? $path = \Bitrix\Main\Config\Option::get(
+                    "bizproc",
+                    "locked_wi_path",
+                    "/bizproc/bizproc/?type=is_locked"
+                ); ?>
                 <input type="text" size="40" name="locked_wi_path" value="<?= htmlspecialcharsbx($path) ?>">
             </td>
         </tr>
@@ -142,10 +190,18 @@ if ($bizprocPerms >= "R") :
                 ?>
                 <input type="text" name="delay_min_limit" value="<?= $delayTime ?>" size="5"/>
                 <select name="delay_min_limit_type">
-                    <option value="s"<?= ($delayType == "s") ? " selected" : "" ?>><?= GetMessage("BIZPROC_OPT_TIME_LIMIT_S") ?></option>
-                    <option value="m"<?= ($delayType == "m") ? " selected" : "" ?>><?= GetMessage("BIZPROC_OPT_TIME_LIMIT_M") ?></option>
-                    <option value="h"<?= ($delayType == "h") ? " selected" : "" ?>><?= GetMessage("BIZPROC_OPT_TIME_LIMIT_H") ?></option>
-                    <option value="d"<?= ($delayType == "d") ? " selected" : "" ?>><?= GetMessage("BIZPROC_OPT_TIME_LIMIT_D") ?></option>
+                    <option value="s"<?= ($delayType == "s") ? " selected" : "" ?>><?= GetMessage(
+                            "BIZPROC_OPT_TIME_LIMIT_S"
+                        ) ?></option>
+                    <option value="m"<?= ($delayType == "m") ? " selected" : "" ?>><?= GetMessage(
+                            "BIZPROC_OPT_TIME_LIMIT_M"
+                        ) ?></option>
+                    <option value="h"<?= ($delayType == "h") ? " selected" : "" ?>><?= GetMessage(
+                            "BIZPROC_OPT_TIME_LIMIT_H"
+                        ) ?></option>
+                    <option value="d"<?= ($delayType == "d") ? " selected" : "" ?>><?= GetMessage(
+                            "BIZPROC_OPT_TIME_LIMIT_D"
+                        ) ?></option>
                 </select>
             </td>
         </tr>
@@ -161,7 +217,10 @@ if ($bizprocPerms >= "R") :
                     <select name="name_template_<?php echo $site["LID"] ?>">
                         <?
                         $arNameTemplates = CSite::GetNameTemplates();
-                        $arNameTemplates = array_reverse($arNameTemplates, true); //prepend array with default '' => Site Format value
+                        $arNameTemplates = array_reverse(
+                            $arNameTemplates,
+                            true
+                        ); //prepend array with default '' => Site Format value
                         $arNameTemplates[""] = GetMessage("BIZPROC_OPTIONS_NAME_IN_SITE_FORMAT");
                         $arNameTemplates = array_reverse($arNameTemplates, true);
                         foreach ($arNameTemplates as $template => $phrase) {
@@ -182,7 +241,8 @@ if ($bizprocPerms >= "R") :
         <script language="JavaScript">
             function RestoreDefaults() {
                 if (confirm('<?echo AddSlashes(GetMessage("MAIN_HINT_RESTORE_DEFAULTS_WARNING"))?>'))
-                    window.location = "<?= $APPLICATION->GetCurPage() ?>?RestoreDefaults=Y&lang=<?= LANG ?>&mid=<?= urlencode($mid) ?>&<?= bitrix_sessid_get() ?>";
+                    window.location = "<?= $APPLICATION->GetCurPage(
+                    ) ?>?RestoreDefaults=Y&lang=<?= LANG ?>&mid=<?= urlencode($mid) ?>&<?= bitrix_sessid_get() ?>";
             }
         </script>
 

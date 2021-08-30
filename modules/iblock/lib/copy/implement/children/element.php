@@ -77,10 +77,13 @@ class Element implements Child
         ];
         Option::set($this->moduleId, "SectionGroupStepper_" . $copiedSectionId, serialize($queueOption));
 
-        $agent = \CAgent::getList([], [
-            "MODULE_ID" => $this->moduleId,
-            "NAME" => SectionStepper::class . "::execAgent();"
-        ])->fetch();
+        $agent = \CAgent::getList(
+            [],
+            [
+                "MODULE_ID" => $this->moduleId,
+                "NAME" => SectionStepper::class . "::execAgent();"
+            ]
+        )->fetch();
         if (!$agent) {
             SectionStepper::bind(1);
         }
@@ -111,10 +114,13 @@ class Element implements Child
         ];
         Option::set($moduleId, "IblockGroupStepper_" . $copiedIblockId, serialize($queueOption));
 
-        $agent = \CAgent::getList([], [
-            "MODULE_ID" => $moduleId,
-            "NAME" => IblockStepper::class . "::execAgent();"
-        ])->fetch();
+        $agent = \CAgent::getList(
+            [],
+            [
+                "MODULE_ID" => $moduleId,
+                "NAME" => IblockStepper::class . "::execAgent();"
+            ]
+        )->fetch();
         if (!$agent) {
             IblockStepper::bind(1);
         }
@@ -125,7 +131,7 @@ class Element implements Child
     protected function addToQueue(int $copiedSectionId, $queueName)
     {
         $option = Option::get($this->moduleId, $queueName, "");
-        $option = ($option !== "" ? unserialize($option) : []);
+        $option = ($option !== "" ? unserialize($option, ['allowed_classes' => false]) : []);
         $option = (is_array($option) ? $option : []);
 
         $option[] = $copiedSectionId;

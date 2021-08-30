@@ -20,15 +20,18 @@ if (!CModule::IncludeModule(ADMIN_MODULE_NAME)) {
 $hblockName = '';
 $hlblock = null;
 $ENTITY_ID = 0;
-if (isset($_REQUEST['ENTITY_ID']))
+if (isset($_REQUEST['ENTITY_ID'])) {
     $ENTITY_ID = (int)$_REQUEST['ENTITY_ID'];
+}
 if ($ENTITY_ID > 0) {
     $hlblock = HL\HighloadBlockTable::getById($ENTITY_ID)->fetch();
 
     if (!empty($hlblock)) {
         //localization
-        $lng = HL\HighloadBlockLangTable::getList(array(
-                'filter' => array('ID' => $hlblock['ID'], '=LID' => LANG))
+        $lng = HL\HighloadBlockLangTable::getList(
+            array(
+                'filter' => array('ID' => $hlblock['ID'], '=LID' => LANG)
+            )
         )->fetch();
         if ($lng) {
             $hblockName = $lng['NAME'];
@@ -72,12 +75,14 @@ $sTableID = 'tbl_' . $entity_table_name;
 $oSort = new CAdminSorting($sTableID, "ID", "asc");
 $lAdmin = new CAdminList($sTableID, $oSort);
 
-$arHeaders = array(array(
-    'id' => 'ID',
-    'content' => 'ID',
-    'sort' => 'ID',
-    'default' => true
-));
+$arHeaders = array(
+    array(
+        'id' => 'ID',
+        'content' => 'ID',
+        'sort' => 'ID',
+        'default' => true
+    )
+);
 
 $ufEntityId = 'HLBLOCK_' . $hlblock['ID'];
 $USER_FIELD_MANAGER->AdminListAddHeaders($ufEntityId, $arHeaders);
@@ -122,11 +127,13 @@ $filter = new CAdminFilter(
 if ($lAdmin->EditAction() && $canEdit) {
     foreach ($FIELDS as $ID => $arFields) {
         $ID = (int)$ID;
-        if ($ID <= 0)
+        if ($ID <= 0) {
             continue;
+        }
 
-        if (!$lAdmin->IsUpdated($ID))
+        if (!$lAdmin->IsUpdated($ID)) {
             continue;
+        }
 
         $entity_data_class::update($ID, $arFields);
     }
@@ -136,13 +143,16 @@ if ($arID = $lAdmin->GroupAction()) {
     if ($_REQUEST['action_target'] == 'selected') {
         $arID = array();
 
-        $rsData = $entity_data_class::getList(array(
-            "select" => array('ID'),
-            "filter" => $filterValues
-        ));
+        $rsData = $entity_data_class::getList(
+            array(
+                "select" => array('ID'),
+                "filter" => $filterValues
+            )
+        );
 
-        while ($arRes = $rsData->Fetch())
+        while ($arRes = $rsData->Fetch()) {
             $arID[] = $arRes['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
@@ -167,16 +177,18 @@ $lAdmin->AddGroupActionTable($arr);
 
 // select data
 /** @var string $order */
-$order = strtoupper($order);
+$order = mb_strtoupper($order);
 
 $usePageNavigation = true;
 if (isset($_REQUEST['mode']) && $_REQUEST['mode'] == 'excel') {
     $usePageNavigation = false;
 } else {
-    $navyParams = CDBResult::GetNavParams(CAdminResult::GetNavSize(
-        $sTableID,
-        array('nPageSize' => 20, 'sNavID' => $APPLICATION->GetCurPage() . '?ENTITY_ID=' . $ENTITY_ID)
-    ));
+    $navyParams = CDBResult::GetNavParams(
+        CAdminResult::GetNavSize(
+            $sTableID,
+            array('nPageSize' => 20, 'sNavID' => $APPLICATION->GetCurPage() . '?ENTITY_ID=' . $ENTITY_ID)
+        )
+    );
     if ($navyParams['SHOW_ALL']) {
         $usePageNavigation = false;
     } else {
@@ -185,8 +197,9 @@ if (isset($_REQUEST['mode']) && $_REQUEST['mode'] == 'excel') {
     }
 }
 $selectFields = $lAdmin->GetVisibleHeaderColumns();
-if (!in_array('ID', $selectFields))
+if (!in_array('ID', $selectFields)) {
     $selectFields[] = 'ID';
+}
 $getListParams = array(
     'select' => $selectFields,
     'filter' => $filterValues,
@@ -207,8 +220,9 @@ if ($usePageNavigation) {
     $totalCount = (int)$totalCount['CNT'];
     if ($totalCount > 0) {
         $totalPages = ceil($totalCount / $navyParams['SIZEN']);
-        if ($navyParams['PAGEN'] > $totalPages)
+        if ($navyParams['PAGEN'] > $totalPages) {
             $navyParams['PAGEN'] = $totalPages;
+        }
         $getListParams['limit'] = $navyParams['SIZEN'];
         $getListParams['offset'] = $navyParams['SIZEN'] * ($navyParams['PAGEN'] - 1);
     } else {
@@ -231,7 +245,10 @@ if ($usePageNavigation) {
 $lAdmin->NavText($rsData->GetNavPrint(GetMessage("PAGES")));
 while ($arRes = $rsData->NavNext(true, "f_")) {
     $row = $lAdmin->AddRow($f_ID, $arRes);
-    $row->AddViewField('ID', '<a href="' . 'highloadblock_row_edit.php?ENTITY_ID=' . $hlblock['ID'] . '&ID=' . $f_ID . '&lang=' . LANGUAGE_ID . '">' . $f_ID . '</a>');
+    $row->AddViewField(
+        'ID',
+        '<a href="' . 'highloadblock_row_edit.php?ENTITY_ID=' . $hlblock['ID'] . '&ID=' . $f_ID . '&lang=' . LANGUAGE_ID . '">' . $f_ID . '</a>'
+    );
 
     $USER_FIELD_MANAGER->AddUserFields('HLBLOCK_' . $hlblock['ID'], $arRes, $row);
 
@@ -240,14 +257,18 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
     $arActions[] = array(
         'ICON' => 'edit',
         'TEXT' => GetMessage($canEdit ? 'MAIN_ADMIN_MENU_EDIT' : 'MAIN_ADMIN_MENU_VIEW'),
-        'ACTION' => $lAdmin->ActionRedirect('highloadblock_row_edit.php?ENTITY_ID=' . $hlblock['ID'] . '&ID=' . $f_ID . '&lang=' . LANGUAGE_ID),
+        'ACTION' => $lAdmin->ActionRedirect(
+            'highloadblock_row_edit.php?ENTITY_ID=' . $hlblock['ID'] . '&ID=' . $f_ID . '&lang=' . LANGUAGE_ID
+        ),
         'DEFAULT' => true
     );
     if ($canEdit) {
         $arActions[] = array(
             'ICON' => 'copy',
             'TEXT' => GetMessage('MAIN_ADMIN_MENU_COPY'),
-            'ACTION' => $lAdmin->ActionRedirect('highloadblock_row_edit.php?ENTITY_ID=' . $hlblock['ID'] . '&ID=' . $f_ID . '&lang=' . LANGUAGE_ID . '&action=copy')
+            'ACTION' => $lAdmin->ActionRedirect(
+                'highloadblock_row_edit.php?ENTITY_ID=' . $hlblock['ID'] . '&ID=' . $f_ID . '&lang=' . LANGUAGE_ID . '&action=copy'
+            )
         );
     }
     if ($canDelete) {
@@ -255,7 +276,10 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
             'ICON' => 'delete',
             'TEXT' => GetMessage('MAIN_ADMIN_MENU_DELETE'),
             'ACTION' => 'if(confirm(\'' . GetMessageJS('HLBLOCK_ADMIN_DELETE_ROW_CONFIRM') . '\')) ' .
-                $lAdmin->ActionRedirect('highloadblock_row_edit.php?action=delete&ENTITY_ID=' . $hlblock['ID'] . '&ID=' . $f_ID . '&lang=' . LANGUAGE_ID . '&' . bitrix_sessid_get())
+                $lAdmin->ActionRedirect(
+                    'highloadblock_row_edit.php?action=delete&ENTITY_ID=' . $hlblock['ID'] . '&ID=' . $f_ID . '&lang=' . LANGUAGE_ID . '&' . bitrix_sessid_get(
+                    )
+                )
         );
     }
 
@@ -265,7 +289,9 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
 // force disable edit
 if (!$canEdit) {
     $eventManager = \Bitrix\Main\EventManager::getInstance();
-    $eventManager->addEventHandler('main', 'OnAdminListDisplay',
+    $eventManager->addEventHandler(
+        'main',
+        'OnAdminListDisplay',
         function (&$list) {
             $list->bCanBeEdited = false;
         }
@@ -299,7 +325,13 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
         </tr>
         <?
         $USER_FIELD_MANAGER->AdminListShowFilter($ufEntityId);
-        $filter->Buttons(array("table_id" => $sTableID, "url" => $APPLICATION->GetCurPage() . '?ENTITY_ID=' . $hlblock['ID'], "form" => "find_form"));
+        $filter->Buttons(
+            array(
+                "table_id" => $sTableID,
+                "url" => $APPLICATION->GetCurPage() . '?ENTITY_ID=' . $hlblock['ID'],
+                "form" => "find_form"
+            )
+        );
         $filter->End();
         ?>
     </form>

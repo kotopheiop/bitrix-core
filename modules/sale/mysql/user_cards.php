@@ -1,15 +1,17 @@
-<?
+<?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/general/user_cards.php");
 
 class CSaleUserCards extends CAllSaleUserCards
 {
-    function GetByID($ID)
+    public static function GetByID($ID)
     {
         global $DB;
 
-        $ID = IntVal($ID);
-        if ($ID <= 0)
+        $ID = intval($ID);
+        if ($ID <= 0) {
             return false;
+        }
 
         $strSql =
             "SELECT UC.ID, UC.USER_ID, UC.SORT, UC.PAY_SYSTEM_ACTION_ID, UC.CURRENCY, UC.CARD_CODE, " .
@@ -23,18 +25,49 @@ class CSaleUserCards extends CAllSaleUserCards
             "WHERE UC.ID = " . $ID . " ";
 
         $db_res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-        if ($res = $db_res->Fetch())
+        if ($res = $db_res->Fetch()) {
             return $res;
+        }
 
         return false;
     }
 
-    function GetList($arOrder = array(), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
-    {
+    public static function GetList(
+        $arOrder = array(),
+        $arFilter = array(),
+        $arGroupBy = false,
+        $arNavStartParams = false,
+        $arSelectFields = array()
+    ) {
         global $DB;
 
-        if (count($arSelectFields) <= 0)
-            $arSelectFields = array("ID", "USER_ID", "ACTIVE", "SORT", "PAY_SYSTEM_ACTION_ID", "CURRENCY", "CARD_TYPE", "CARD_NUM", "CARD_CODE", "CARD_EXP_MONTH", "CARD_EXP_YEAR", "DESCRIPTION", "SUM_MIN", "SUM_MAX", "SUM_CURRENCY", "TIMESTAMP_X", "LAST_STATUS", "LAST_STATUS_CODE", "LAST_STATUS_DESCRIPTION", "LAST_STATUS_MESSAGE", "LAST_SUM", "LAST_CURRENCY", "LAST_DATE");
+        if (count($arSelectFields) <= 0) {
+            $arSelectFields = array(
+                "ID",
+                "USER_ID",
+                "ACTIVE",
+                "SORT",
+                "PAY_SYSTEM_ACTION_ID",
+                "CURRENCY",
+                "CARD_TYPE",
+                "CARD_NUM",
+                "CARD_CODE",
+                "CARD_EXP_MONTH",
+                "CARD_EXP_YEAR",
+                "DESCRIPTION",
+                "SUM_MIN",
+                "SUM_MAX",
+                "SUM_CURRENCY",
+                "TIMESTAMP_X",
+                "LAST_STATUS",
+                "LAST_STATUS_CODE",
+                "LAST_STATUS_DESCRIPTION",
+                "LAST_STATUS_MESSAGE",
+                "LAST_SUM",
+                "LAST_CURRENCY",
+                "LAST_DATE"
+            );
+        }
 
         // FIELDS -->
         $arFields = array(
@@ -61,12 +94,37 @@ class CSaleUserCards extends CAllSaleUserCards
             "LAST_SUM" => array("FIELD" => "UC.LAST_SUM", "TYPE" => "double"),
             "LAST_CURRENCY" => array("FIELD" => "UC.LAST_CURRENCY", "TYPE" => "string"),
             "LAST_DATE" => array("FIELD" => "UC.LAST_DATE", "TYPE" => "datetime"),
-            "USER_LOGIN" => array("FIELD" => "U.LOGIN", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (UC.USER_ID = U.ID)"),
-            "USER_ACTIVE" => array("FIELD" => "U.ACTIVE", "TYPE" => "char", "FROM" => "INNER JOIN b_user U ON (UC.USER_ID = U.ID)"),
-            "USER_NAME" => array("FIELD" => "U.NAME", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (UC.USER_ID = U.ID)"),
-            "USER_LAST_NAME" => array("FIELD" => "U.LAST_NAME", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (UC.USER_ID = U.ID)"),
-            "USER_EMAIL" => array("FIELD" => "U.EMAIL", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (UC.USER_ID = U.ID)"),
-            "USER_USER" => array("FIELD" => "U.LOGIN,U.NAME,U.LAST_NAME,U.EMAIL,U.ID", "WHERE_ONLY" => "Y", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (UC.USER_ID = U.ID)")
+            "USER_LOGIN" => array(
+                "FIELD" => "U.LOGIN",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_user U ON (UC.USER_ID = U.ID)"
+            ),
+            "USER_ACTIVE" => array(
+                "FIELD" => "U.ACTIVE",
+                "TYPE" => "char",
+                "FROM" => "INNER JOIN b_user U ON (UC.USER_ID = U.ID)"
+            ),
+            "USER_NAME" => array(
+                "FIELD" => "U.NAME",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_user U ON (UC.USER_ID = U.ID)"
+            ),
+            "USER_LAST_NAME" => array(
+                "FIELD" => "U.LAST_NAME",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_user U ON (UC.USER_ID = U.ID)"
+            ),
+            "USER_EMAIL" => array(
+                "FIELD" => "U.EMAIL",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_user U ON (UC.USER_ID = U.ID)"
+            ),
+            "USER_USER" => array(
+                "FIELD" => "U.LOGIN,U.NAME,U.LAST_NAME,U.EMAIL,U.ID",
+                "WHERE_ONLY" => "Y",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_user U ON (UC.USER_ID = U.ID)"
+            )
         );
         // <-- FIELDS
 
@@ -79,48 +137,57 @@ class CSaleUserCards extends CAllSaleUserCards
                 "SELECT " . $arSqls["SELECT"] . " " .
                 "FROM b_sale_user_cards UC " .
                 "	" . $arSqls["FROM"] . " ";
-            if (strlen($arSqls["WHERE"]) > 0)
+            if ($arSqls["WHERE"] <> '') {
                 $strSql .= "WHERE " . $arSqls["WHERE"] . " ";
-            if (strlen($arSqls["GROUPBY"]) > 0)
+            }
+            if ($arSqls["GROUPBY"] <> '') {
                 $strSql .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
+            }
 
             //echo "!1!=".htmlspecialcharsbx($strSql)."<br>";
 
             $dbRes = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-            if ($arRes = $dbRes->Fetch())
+            if ($arRes = $dbRes->Fetch()) {
                 return $arRes["CNT"];
-            else
-                return False;
+            } else {
+                return false;
+            }
         }
 
         $strSql =
             "SELECT " . $arSqls["SELECT"] . " " .
             "FROM b_sale_user_cards UC " .
             "	" . $arSqls["FROM"] . " ";
-        if (strlen($arSqls["WHERE"]) > 0)
+        if ($arSqls["WHERE"] <> '') {
             $strSql .= "WHERE " . $arSqls["WHERE"] . " ";
-        if (strlen($arSqls["GROUPBY"]) > 0)
+        }
+        if ($arSqls["GROUPBY"] <> '') {
             $strSql .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
-        if (strlen($arSqls["ORDERBY"]) > 0)
+        }
+        if ($arSqls["ORDERBY"] <> '') {
             $strSql .= "ORDER BY " . $arSqls["ORDERBY"] . " ";
+        }
 
-        if (is_array($arNavStartParams) && IntVal($arNavStartParams["nTopCount"]) <= 0) {
+        if (is_array($arNavStartParams) && intval($arNavStartParams["nTopCount"]) <= 0) {
             $strSql_tmp =
                 "SELECT COUNT('x') as CNT " .
                 "FROM b_sale_user_cards UC " .
                 "	" . $arSqls["FROM"] . " ";
-            if (strlen($arSqls["WHERE"]) > 0)
+            if ($arSqls["WHERE"] <> '') {
                 $strSql_tmp .= "WHERE " . $arSqls["WHERE"] . " ";
-            if (strlen($arSqls["GROUPBY"]) > 0)
+            }
+            if ($arSqls["GROUPBY"] <> '') {
                 $strSql_tmp .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
+            }
 
             //echo "!2.1!=".htmlspecialcharsbx($strSql_tmp)."<br>";
 
             $dbRes = $DB->Query($strSql_tmp, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             $cnt = 0;
-            if (strlen($arSqls["GROUPBY"]) <= 0) {
-                if ($arRes = $dbRes->Fetch())
+            if ($arSqls["GROUPBY"] == '') {
+                if ($arRes = $dbRes->Fetch()) {
                     $cnt = $arRes["CNT"];
+                }
             } else {
                 // FOR MYSQL!!! ANOTHER CODE FOR ORACLE
                 $cnt = $dbRes->SelectedRowsCount();
@@ -132,8 +199,9 @@ class CSaleUserCards extends CAllSaleUserCards
 
             $dbRes->NavQuery($strSql, $cnt, $arNavStartParams);
         } else {
-            if (is_array($arNavStartParams) && IntVal($arNavStartParams["nTopCount"]) > 0)
-                $strSql .= "LIMIT " . IntVal($arNavStartParams["nTopCount"]);
+            if (is_array($arNavStartParams) && intval($arNavStartParams["nTopCount"]) > 0) {
+                $strSql .= "LIMIT " . intval($arNavStartParams["nTopCount"]);
+            }
 
             //echo "!3!=".htmlspecialcharsbx($strSql)."<br>";
 
@@ -143,12 +211,13 @@ class CSaleUserCards extends CAllSaleUserCards
         return $dbRes;
     }
 
-    function Add($arFields)
+    public static function Add($arFields)
     {
         global $DB;
 
-        if (!CSaleUserCards::CheckFields("ADD", $arFields, 0))
+        if (!CSaleUserCards::CheckFields("ADD", $arFields, 0)) {
             return false;
+        }
 
         $arInsert = $DB->PrepareInsert("b_sale_user_cards", $arFields);
 
@@ -157,21 +226,23 @@ class CSaleUserCards extends CAllSaleUserCards
             "VALUES(" . $arInsert[1] . ")";
         $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 
-        $ID = IntVal($DB->LastID());
+        $ID = intval($DB->LastID());
 
         return $ID;
     }
 
-    function Update($ID, $arFields)
+    public static function Update($ID, $arFields)
     {
         global $DB;
 
-        $ID = IntVal($ID);
-        if ($ID <= 0)
-            return False;
-
-        if (!CSaleUserCards::CheckFields("UPDATE", $arFields, $ID))
+        $ID = intval($ID);
+        if ($ID <= 0) {
             return false;
+        }
+
+        if (!CSaleUserCards::CheckFields("UPDATE", $arFields, $ID)) {
+            return false;
+        }
 
         $strUpdate = $DB->PrepareUpdate("b_sale_user_cards", $arFields);
         $strSql = "UPDATE b_sale_user_cards SET " . $strUpdate . " WHERE ID = " . $ID . " ";
@@ -180,5 +251,3 @@ class CSaleUserCards extends CAllSaleUserCards
         return $ID;
     }
 }
-
-?>

@@ -23,10 +23,11 @@ class CSecurityUserTest
     {
         IncludeModuleLangFile(__FILE__);
         $this->savedMaxExecutionTime = ini_get("max_execution_time");
-        if ($this->savedMaxExecutionTime <= 0)
+        if ($this->savedMaxExecutionTime <= 0) {
             $phpMaxExecutionTime = 30;
-        else
+        } else {
             $phpMaxExecutionTime = $this->savedMaxExecutionTime - 2;
+        }
         $this->maximumExecutionTime = time() + $phpMaxExecutionTime;
         set_time_limit(0);
     }
@@ -70,10 +71,11 @@ class CSecurityUserTest
                 }
             }
 
-            if ($userChecked)
+            if ($userChecked) {
                 $sessionData->setData('current_user', static::getNextUserId($userId));
-            else
+            } else {
                 $sessionData->setData('current_user', $userId);
+            }
 
             $result = array(
                 'name' => $this->getName(),
@@ -91,7 +93,9 @@ class CSecurityUserTest
                         'title' => GetMessage('SECURITY_SITE_CHECKER_ADMIN_WEAK_PASSWORD'),
                         'critical' => CSecurityCriticalLevel::HIGHT,
                         'detail' => GetMessage('SECURITY_SITE_CHECKER_ADMIN_WEAK_PASSWORD_DETAIL'),
-                        'recommendation' => $result = GetMessage('SECURITY_SITE_CHECKER_ADMIN_WEAK_PASSWORD_RECOMMENDATIONS'),
+                        'recommendation' => $result = GetMessage(
+                            'SECURITY_SITE_CHECKER_ADMIN_WEAK_PASSWORD_RECOMMENDATIONS'
+                        ),
                         'additional_info' => !empty($weakUsers) ? static::formatRecommendation($weakUsers) : ''
                     )
                 ),
@@ -105,14 +109,19 @@ class CSecurityUserTest
     protected function checkOtp()
     {
         if (IsModuleInstalled('intranet')) //OTP not used in Bitrix Intranet Portal
+        {
             return;
+        }
 
         if (CSecurityUser::isActive()) {
             $dbUser = $this->getAdminUserList();
             while ($user = $dbUser->fetch()) {
                 $userInfo = CSecurityUser::getSecurityUserInfo($user['ID']);
                 if (!$userInfo) {
-                    $this->addUnformattedDetailError('SECURITY_SITE_CHECKER_ADMIN_OTP_NOT_USED', CSecurityCriticalLevel::MIDDLE);
+                    $this->addUnformattedDetailError(
+                        'SECURITY_SITE_CHECKER_ADMIN_OTP_NOT_USED',
+                        CSecurityCriticalLevel::MIDDLE
+                    );
                 }
             }
         } else {
@@ -130,7 +139,8 @@ class CSecurityUserTest
         foreach (static::getUsersLogins($weakUsers) as $id => $login) {
             $result .= sprintf(
                 '<br><a href="/bitrix/admin/user_edit.php?ID=%d" target="_blank">%s<a/>',
-                $id, $login
+                $id,
+                $login
             );
         }
 
@@ -144,8 +154,8 @@ class CSecurityUserTest
     protected static function getUserPassword($id)
     {
         $dbUser = CUser::GetList(
-            $by = 'ID',
-            $order = 'ASC',
+            'ID',
+            'ASC',
             array(
                 'ID' => $id,
                 'ACTIVE' => 'Y'
@@ -161,9 +171,9 @@ class CSecurityUserTest
             $user = $dbUser->fetch();
             $password = $user['PASSWORD'];
             $salt = '';
-            if (strlen($password) > 32) {
-                $salt = substr($password, 0, strlen($password) - 32);
-                $password = substr($password, -32);
+            if (mb_strlen($password) > 32) {
+                $salt = mb_substr($password, 0, mb_strlen($password) - 32);
+                $password = mb_substr($password, -32);
             }
         }
 
@@ -178,8 +188,9 @@ class CSecurityUserTest
     {
         $result = 0;
         $users = static::getAdminUserList(1, $id);
-        if ($user = $users->fetch())
+        if ($user = $users->fetch()) {
             $result = $user['ID'];
+        }
 
         return $result;
     }
@@ -190,12 +201,13 @@ class CSecurityUserTest
      */
     protected static function getUsersLogins(array $ids)
     {
-        if (empty($ids))
+        if (empty($ids)) {
             return array();
+        }
 
         $dbUser = CUser::GetList(
-            $by = 'ID',
-            $order = 'ASC',
+            'ID',
+            'ASC',
             array(
                 'ID' => implode('|', $ids),
                 'ACTIVE' => 'Y'
@@ -230,8 +242,12 @@ class CSecurityUserTest
     {
         static $passwords = null;
 
-        if (is_null($passwords))
-            $passwords = file($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/security/data/passwordlist.txt', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        if (is_null($passwords)) {
+            $passwords = file(
+                $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/security/data/passwordlist.txt',
+                FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES
+            );
+        }
 
         return $passwords;
     }
@@ -244,8 +260,8 @@ class CSecurityUserTest
     protected static function getAdminUserList($limit = 0, $minId = 0)
     {
         $dbUser = CUser::GetList(
-            $by = 'ID',
-            $order = 'ASC',
+            'ID',
+            'ASC',
             array(
                 'GROUPS_ID' => 1,
                 '>ID' => $minId,
@@ -259,10 +275,11 @@ class CSecurityUserTest
             )
         );
 
-        if ($dbUser)
+        if ($dbUser) {
             return $dbUser;
-        else
+        } else {
             return new CDBResult(array());
+        }
     }
 
     /**

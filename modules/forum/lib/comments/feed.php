@@ -97,15 +97,18 @@ class Feed extends BaseObject
      */
     public function add(array $params)
     {
-        if (!$this->canAdd())
+        if (!$this->canAdd()) {
             $this->errorCollection->addOne(new Error(Loc::getMessage("FORUM_CM_RIGHTS1"), self::ERROR_PERMISSION));
-        else if ($this->checkTopic()) {
-            $comment = Comment::create($this);
-            $comment->add($params);
-            if ($comment->hasErrors())
-                $this->errorCollection->add($comment->getErrors());
-            else
-                return $comment->getComment();
+        } else {
+            if ($this->checkTopic()) {
+                $comment = Comment::create($this);
+                $comment->add($params);
+                if ($comment->hasErrors()) {
+                    $this->errorCollection->add($comment->getErrors());
+                } else {
+                    return $comment->getComment();
+                }
+            }
         }
         return false;
     }
@@ -119,14 +122,15 @@ class Feed extends BaseObject
     public function edit($id, array $params)
     {
         $comment = Comment::createFromId($this, $id);
-        if (!$this->canEdit() && !$comment->canEdit())
+        if (!$this->canEdit() && !$comment->canEdit()) {
             $this->errorCollection->addOne(new Error(Loc::getMessage("FORUM_CM_RIGHTS2"), self::ERROR_PERMISSION));
-        else {
+        } else {
             $comment->edit($params);
-            if ($comment->hasErrors())
+            if ($comment->hasErrors()) {
                 $this->errorCollection->add($comment->getErrors());
-            else
+            } else {
                 return $comment->getComment();
+            }
         }
         return false;
     }
@@ -139,14 +143,15 @@ class Feed extends BaseObject
     public function delete($id)
     {
         $comment = Comment::createFromId($this, $id);
-        if (!$this->canDelete() && !$comment->canDelete())
+        if (!$this->canDelete() && !$comment->canDelete()) {
             $this->errorCollection->addOne(new Error(Loc::getMessage("FORUM_CM_RIGHTS3"), self::ERROR_PERMISSION));
-        else {
+        } else {
             $comment->delete();
-            if ($comment->hasErrors())
+            if ($comment->hasErrors()) {
                 $this->errorCollection->add($comment->getErrors());
-            else
+            } else {
                 return $comment->getComment();
+            }
         }
         return false;
     }
@@ -160,16 +165,56 @@ class Feed extends BaseObject
     public function moderate($id, $show)
     {
         $comment = Comment::createFromId($this, $id);
-        if (!$this->canModerate())
+        if (!$this->canModerate()) {
             $this->errorCollection->addOne(new Error(Loc::getMessage("FORUM_CM_RIGHTS4"), self::ERROR_PERMISSION));
-        else {
+        } else {
             $comment->moderate($show);
-            if ($comment->hasErrors())
+            if ($comment->hasErrors()) {
                 $this->errorCollection->add($comment->getErrors());
-            else
+            } else {
                 return $comment->getComment();
+            }
         }
         return false;
+    }
+
+    /**
+     * Render comment through the component and send into pull
+     * @param integer $id Message id.
+     * @param array $params Params for component including.
+     * @return bool
+     */
+    public function send($id, array $params)
+    {
+        ob_start();
+        try {
+            global $APPLICATION;
+            $APPLICATION->IncludeComponent(
+                "bitrix:forum.comments",
+                "bitrix24",
+                [
+                    "FORUM_ID" => $this->getForum()["ID"],
+                    "ENTITY_TYPE" => $this->getEntity()->getType(),
+                    "ENTITY_ID" => $this->getEntity()->getId(),
+                    "ENTITY_XML_ID" => $this->getEntity()->getXmlId(),
+                    "MID" => $id,
+                    "ACTION" => "SEND",
+                    "SHOW_POST_FORM" => "N"
+                ] + $params + [
+                    "SHOW_RATING" => "Y",
+                    "URL_TEMPLATES_PROFILE_VIEW" => "",
+                    "CHECK_ACTIONS" => "N",
+                    "RECIPIENT_ID" => $this->getUser()->getId()
+                ],
+                null,
+                array("HIDE_ICONS" => "Y")
+            );
+            $result = true;
+        } catch (\Throwable $e) {
+            $result = false;
+        }
+        ob_get_clean();
+        return $result;
     }
 
     /**

@@ -61,12 +61,18 @@ class OrderDiscountManager extends OrderDiscount
      *
      * @deprecated
      */
-    public static function loadResultFromDatabase($order, $extendedMode = false, $basketList = false, $basketData = array())
-    {
-        if (!is_array($basketList))
+    public static function loadResultFromDatabase(
+        $order,
+        $extendedMode = false,
+        $basketList = false,
+        $basketData = array()
+    ) {
+        if (!is_array($basketList)) {
             $basketList = [];
-        if (!is_array($basketData))
+        }
+        if (!is_array($basketData)) {
             $basketData = [];
+        }
         $result = parent::loadResultFromDb($order, $basketList, $basketData);
 
         /* for compatibility only */
@@ -82,8 +88,9 @@ class OrderDiscountManager extends OrderDiscount
         }
         if (!empty($data['DISCOUNT_LIST'])) {
             foreach (array_keys($data['DISCOUNT_LIST']) as $index) {
-                if (empty($data['DISCOUNT_LIST'][$index]['MODULES']))
+                if (empty($data['DISCOUNT_LIST'][$index]['MODULES'])) {
                     continue;
+                }
                 $data['DISCOUNT_MODULES'][$index] = $data['DISCOUNT_LIST'][$index]['MODULES'];
             }
             unset($index);
@@ -115,20 +122,25 @@ class OrderDiscountManager extends OrderDiscount
         $type = (int)$type;
         switch ($type) {
             case Discount\Formatter::TYPE_LIMIT_VALUE:
-                if (!is_array($data))
+                if (!is_array($data)) {
                     $data = array();
-                if (!isset($data['LIMIT_UNIT']) && isset($config['CURRENCY']))
+                }
+                if (!isset($data['LIMIT_UNIT']) && isset($config['CURRENCY'])) {
                     $data['LIMIT_UNIT'] = $config['CURRENCY'];
-                if (!isset($data['VALUE_UNIT']) && isset($config['CURRENCY']))
+                }
+                if (!isset($data['VALUE_UNIT']) && isset($config['CURRENCY'])) {
                     $data['VALUE_UNIT'] = $config['CURRENCY'];
+                }
                 break;
             case Discount\Formatter::TYPE_VALUE:
             case Discount\Formatter::TYPE_FIXED:
             case Discount\Formatter::TYPE_MAX_BOUND:
-                if (!is_array($data))
+                if (!is_array($data)) {
                     $data = array();
-                if (!isset($data['VALUE_UNIT']) && isset($config['CURRENCY']))
+                }
+                if (!isset($data['VALUE_UNIT']) && isset($config['CURRENCY'])) {
                     $data['VALUE_UNIT'] = $config['CURRENCY'];
+                }
                 break;
         }
 
@@ -155,8 +167,9 @@ class OrderDiscountManager extends OrderDiscount
     {
         $result = new Result();
 
-        if (!is_array($data))
+        if (!is_array($data)) {
             $data = array();
+        }
 
         $description = Discount\Formatter::formatRow($data);
         if ($description !== null) {
@@ -180,11 +193,13 @@ class OrderDiscountManager extends OrderDiscount
     public static function formatDescription($data)
     {
         $result = false;
-        if (!is_array($data))
+        if (!is_array($data)) {
             $data = array();
+        }
         $description = Discount\Formatter::formatRow($data);
-        if ($description !== null)
+        if ($description !== null) {
             $result = $description;
+        }
 
         return $result;
     }
@@ -203,8 +218,9 @@ class OrderDiscountManager extends OrderDiscount
         $result = array();
         if (!empty($data) && is_array($data)) {
             $description = Discount\Formatter::formatList($data);
-            if ($description !== null)
+            if ($description !== null) {
                 $result = $description;
+            }
         }
 
         return (empty($result) ? false : $result);
@@ -240,8 +256,9 @@ class OrderDiscountManager extends OrderDiscount
         $translate = ($translate === true);
         $index = '';
         if ($translate) {
-            if (is_array($basketList) && isset($basketList[$rule['ENTITY_ID']]))
+            if (is_array($basketList) && isset($basketList[$rule['ENTITY_ID']])) {
                 $index = $basketList[$rule['ENTITY_ID']];
+            }
         } else {
             $index = $rule['ENTITY_ID'];
         }
@@ -258,9 +275,11 @@ class OrderDiscountManager extends OrderDiscount
     {
         $errors = Discount\Formatter::getErrors();
         Discount\Formatter::clearErrors();
-        $result->addWarning(new Main\Error(
-            implode('. ', $errors),
-            self::ERROR_ID
-        ));
+        $result->addWarning(
+            new Main\Error(
+                implode('. ', $errors),
+                self::ERROR_ID
+            )
+        );
     }
 }

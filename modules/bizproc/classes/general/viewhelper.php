@@ -8,8 +8,15 @@ class CBPViewHelper
 {
     private static $cachedTasks = array();
 
-    public static function RenderUserSearch($ID, $searchInputID, $dataInputID, $componentName, $siteID = '', $nameFormat = '', $delay = 0)
-    {
+    public static function RenderUserSearch(
+        $ID,
+        $searchInputID,
+        $dataInputID,
+        $componentName,
+        $siteID = '',
+        $nameFormat = '',
+        $delay = 0
+    ) {
         $ID = strval($ID);
         $searchInputID = strval($searchInputID);
         $dataInputID = strval($dataInputID);
@@ -31,12 +38,18 @@ class CBPViewHelper
         }
 
         echo '<input type="text" id="', htmlspecialcharsbx($searchInputID), '" style="width:200px;"   >',
-        '<input type="hidden" id="', htmlspecialcharsbx($dataInputID), '" name="', htmlspecialcharsbx($dataInputID), '" value="">';
+        '<input type="hidden" id="', htmlspecialcharsbx($dataInputID), '" name="', htmlspecialcharsbx(
+            $dataInputID
+        ), '" value="">';
 
         echo '<script type="text/javascript">',
         'BX.ready(function(){',
         'BX.CrmUserSearchPopup.deletePopup("', $ID, '");',
-        'BX.CrmUserSearchPopup.create("', $ID, '", { searchInput: BX("', CUtil::JSEscape($searchInputID), '"), dataInput: BX("', CUtil::JSEscape($dataInputID), '"), componentName: "', CUtil::JSEscape($componentName), '", user: {} }, ', $delay, ');',
+        'BX.CrmUserSearchPopup.create("', $ID, '", { searchInput: BX("', CUtil::JSEscape(
+            $searchInputID
+        ), '"), dataInput: BX("', CUtil::JSEscape($dataInputID), '"), componentName: "', CUtil::JSEscape(
+            $componentName
+        ), '", user: {} }, ', $delay, ');',
         '});</script>';
 
         $GLOBALS['APPLICATION']->IncludeComponent(
@@ -60,6 +73,10 @@ class CBPViewHelper
     {
         $withUsers = $withUsers ? 1 : 0;
         $extendUserInfo = $extendUserInfo ? 1 : 0;
+
+        if (!$workflowId) {
+            return ['COMPLETED' => [], 'RUNNING' => []];
+        }
 
         if (!isset(self::$cachedTasks[$workflowId][$withUsers][$extendUserInfo])) {
             $tasks = array('COMPLETED' => array(), 'RUNNING' => array());
@@ -99,10 +116,12 @@ class CBPViewHelper
             if (isset($taskUsers[$t['ID']])) {
                 foreach ($taskUsers[$t['ID']] as $u) {
                     if ($extendUserInfo) {
-                        if (empty($u['FULL_NAME']))
+                        if (empty($u['FULL_NAME'])) {
                             $u['FULL_NAME'] = self::getUserFullName($u);
-                        if (empty($u['PHOTO_SRC']))
+                        }
+                        if (empty($u['PHOTO_SRC'])) {
                             $u['PHOTO_SRC'] = self::getUserPhotoSrc($u);
+                        }
                     }
                     $t['USERS'][] = $u;
                     $t['USERS_CNT'] = sizeof($t['USERS']);
@@ -115,8 +134,9 @@ class CBPViewHelper
 
     public static function getUserPhotoSrc(array $user)
     {
-        if (empty($user['PERSONAL_PHOTO']))
+        if (empty($user['PERSONAL_PHOTO'])) {
             return '';
+        }
         $arFileTmp = \CFile::ResizeImageGet(
             $user["PERSONAL_PHOTO"],
             array('width' => 58, 'height' => 58),
@@ -136,10 +156,13 @@ class CBPViewHelper
         $id = htmlspecialcharsbx($id);
         $fieldName = htmlspecialcharsbx($fieldName);
 
-        if (is_array($content) && isset($content['TEXT']))
+        if (is_array($content) && isset($content['TEXT'])) {
             $content = $content['TEXT'];
+        }
 
-        $result = '<textarea rows="5" cols="40" id="' . $id . '" name="' . $fieldName . '">' . htmlspecialcharsbx((string)$content) . '</textarea>';
+        $result = '<textarea rows="5" cols="40" id="' . $id . '" name="' . $fieldName . '">' . htmlspecialcharsbx(
+                (string)$content
+            ) . '</textarea>';
 
         if (CModule::includeModule("fileman")) {
             $editor = new \CHTMLEditor;
@@ -204,7 +227,18 @@ class CBPViewHelper
 
     public static function prepareTaskDescription($description)
     {
-        return nl2br(preg_replace_callback(
+        $description = self::replaceFileLinks($description);
+
+        if (\Bitrix\Main\Loader::includeModule('disk')) {
+            $description = self::replaceDiskLinks($description);
+        }
+
+        return nl2br($description);
+    }
+
+    private static function replaceFileLinks(string $description)
+    {
+        return preg_replace_callback(
             '|<a href="(/bitrix/tools/bizproc_show_file.php\?)([^"]+)"\starget=\'_blank\'>|',
             function ($matches) {
                 parse_str($matches[2], $query);
@@ -222,6 +256,32 @@ class CBPViewHelper
                 return $matches[0];
             },
             $description
-        ));
+        );
+    }
+
+    private static function replaceDiskLinks(string $description)
+    {
+        return preg_replace_callback(
+            '|<a href="(/bitrix/tools/disk/uf.php\?)([^"]+)"\starget=\'_blank\'>|',
+            function ($matches) {
+                parse_str($matches[2], $query);
+                if (isset($query['attachedId'])) {
+                    $attach = \Bitrix\Disk\AttachedObject::loadById($query['attachedId']);
+                    if ($attach) {
+                        try {
+                            $attributes = \Bitrix\Main\UI\Viewer\ItemAttributes::tryBuildByFileId(
+                                $attach->getFileId(),
+                                $matches[1] . $matches[2]
+                            );
+                            return "<a href=\"" . $matches[1] . $matches[2] . "\" " . $attributes . ">";
+                        } catch (ArgumentException $e) {
+                        }
+                    }
+                }
+
+                return $matches[0];
+            },
+            $description
+        );
     }
 }

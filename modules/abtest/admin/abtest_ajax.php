@@ -12,8 +12,9 @@ if ($APPLICATION->getGroupRight('abtest') >= 'W') {
 
     $arSites = array();
     $dbSites = Bitrix\Main\SiteTable::getList(array('select' => array('LID')));
-    while ($arSite = $dbSites->fetch())
+    while ($arSite = $dbSites->fetch()) {
         $arSites[] = $arSite['LID'];
+    }
 
     switch ($_REQUEST['action']) {
         case 'copy':
@@ -22,24 +23,29 @@ if ($APPLICATION->getGroupRight('abtest') >= 'W') {
             $type = isset($_REQUEST['type']) ? $_REQUEST['type'] : null;
             $source = isset($_REQUEST['source']) ? $_REQUEST['source'] : null;
 
-            if (!check_bitrix_sessid())
+            if (!check_bitrix_sessid()) {
                 $error = getMessage('ABTEST_CSRF_ERROR');
+            }
 
-            if (empty($site) || empty($type) || empty($source))
+            if (empty($site) || empty($type) || empty($source)) {
                 $error = getMessage('ABTEST_AJAX_ERROR');
+            }
 
-            if (!in_array($type, array('page')))
+            if (!in_array($type, array('page'))) {
                 $error = getMessage('ABTEST_AJAX_ERROR');
+            }
 
-            if (!in_array($site, $arSites))
+            if (!in_array($site, $arSites)) {
                 $error = getMessage('ABTEST_AJAX_ERROR');
+            }
 
             if ($error === false) {
                 $source = Bitrix\Main\Text\Encoding::convertEncodingToCurrent($source);
                 $source = Bitrix\ABTest\AdminHelper::getRealPath($site, $source);
 
-                if (empty($source))
+                if (empty($source)) {
                     $error = getMessage('ABTEST_UNKNOWN_PAGE');
+                }
 
                 if ($error === false) {
                     $docRoot = rtrim(\Bitrix\Main\SiteTable::getDocumentRoot($site), '/');
@@ -48,7 +54,10 @@ if ($APPLICATION->getGroupRight('abtest') >= 'W') {
 
                     $k = 0;
                     do {
-                        $targetPath = BX_ROOT . '/abtest/' . date('Ymd') . '/' . sprintf('%u', crc32(rand() . time())) . $source->getName();
+                        $targetPath = BX_ROOT . '/abtest/' . date('Ymd') . '/' . sprintf(
+                                '%u',
+                                crc32(rand() . time())
+                            ) . $source->getName();
                         $target = new Bitrix\Main\IO\File($docRoot . $targetPath);
                     } while ($target->isExists() && $k++ < 10);
 
@@ -56,14 +65,18 @@ if ($APPLICATION->getGroupRight('abtest') >= 'W') {
                         $error = getMessage('ABTEST_AJAX_ERROR');
                     } else {
                         $success = copyDirFiles(
-                            $source->getPath(), $target->getPath(),
-                            false, false, false
+                            $source->getPath(),
+                            $target->getPath(),
+                            false,
+                            false,
+                            false
                         );
 
-                        if ($success)
+                        if ($success) {
                             $result = $targetPath;
-                        else
+                        } else {
                             $error = getMessage('ABTEST_AJAX_ERROR');
+                        }
                     }
                 }
             }
@@ -76,24 +89,29 @@ if ($APPLICATION->getGroupRight('abtest') >= 'W') {
             $type = isset($_REQUEST['type']) ? $_REQUEST['type'] : null;
             $value = isset($_REQUEST['value']) ? $_REQUEST['value'] : null;
 
-            if (empty($site) || empty($type) || empty($value))
+            if (empty($site) || empty($type) || empty($value)) {
                 $error = getMessage('ABTEST_AJAX_ERROR');
+            }
 
-            if (!in_array($type, array('page')))
+            if (!in_array($type, array('page'))) {
                 $error = getMessage('ABTEST_AJAX_ERROR');
+            }
 
-            if (!in_array($site, $arSites))
+            if (!in_array($site, $arSites)) {
                 $error = getMessage('ABTEST_AJAX_ERROR');
+            }
 
             if ($error === false) {
                 $value = Bitrix\Main\Text\Encoding::convertEncodingToCurrent($value);
                 $value = Bitrix\ABTest\AdminHelper::getRealPath($site, $value);
 
-                if (empty($value))
+                if (empty($value)) {
                     $error = getMessage('ABTEST_UNKNOWN_PAGE');
+                }
 
-                if ($error === false)
+                if ($error === false) {
                     $result = $value;
+                }
             }
 
             break;

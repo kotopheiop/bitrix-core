@@ -119,6 +119,17 @@ class Robot
         return $this->setProperties($properties);
     }
 
+    public function getReturnProperties(): array
+    {
+        return \CBPRuntime::GetRuntime(true)->getActivityReturnProperties($this->getType());
+    }
+
+    public function getReturnProperty(string $name): ?array
+    {
+        $props = $this->getReturnProperties();
+        return ($props && isset($props[$name])) ? $props[$name] : null;
+    }
+
     public function getTitle()
     {
         return $this->getProperty('Title');
@@ -134,6 +145,11 @@ class Robot
         return $this->bizprocActivity['Type'];
     }
 
+    public function getDescription(): ?array
+    {
+        return \CBPRuntime::GetRuntime(true)->GetActivityDescription($this->getType());
+    }
+
     public function toArray()
     {
         $activity = $this->bizprocActivity;
@@ -143,8 +159,9 @@ class Robot
             $activity['Delay'] = $delayInterval->toArray();
             $activity['DelayName'] = $this->getDelayName();
         }
-        if ($this->isExecuteAfterPrevious())
+        if ($this->isExecuteAfterPrevious()) {
             $activity['ExecuteAfterPrevious'] = 1;
+        }
 
         $condition = $this->getCondition();
         if ($condition) {

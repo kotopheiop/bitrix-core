@@ -18,18 +18,22 @@ class AccountFacebook extends Account
 
     public function getList()
     {
-        return $this->getRequest()->send(array(
-            'methodName' => 'retargeting.account.list',
-            'parameters' => array()
-        ));
+        return $this->getRequest()->send(
+            array(
+                'methodName' => 'retargeting.account.list',
+                'parameters' => array()
+            )
+        );
     }
 
     public function getProfile()
     {
-        $response = $this->getRequest()->send(array(
-            'methodName' => 'retargeting.profile',
-            'parameters' => array()
-        ));
+        $response = $this->getRequest()->send(
+            array(
+                'methodName' => 'retargeting.profile',
+                'parameters' => array()
+            )
+        );
 
         if ($response->isSuccess()) {
             $data = $response->fetch();
@@ -53,10 +57,12 @@ class AccountFacebook extends Account
         if ($cache->read(static::REGIONS_LIST_CACHE_TTL, $cacheId)) {
             $data = $cache->get($cacheId);
         } else {
-            $result = $this->getRequest()->send(array(
-                'methodName' => 'retargeting.audience.regions',
-                'parameters' => array()
-            ));
+            $result = $this->getRequest()->send(
+                array(
+                    'methodName' => 'retargeting.audience.regions',
+                    'parameters' => array()
+                )
+            );
 
             if ($result->isSuccess()) {
                 foreach ($result->getData() as $region) {
@@ -65,9 +71,12 @@ class AccountFacebook extends Account
                         'name' => $region['name']
                     ];
                 }
-                usort($data, function ($a, $b) {
-                    return strcmp($a['name'], $b['name']);
-                });
+                usort(
+                    $data,
+                    function ($a, $b) {
+                        return strcmp($a['name'], $b['name']);
+                    }
+                );
                 $cache->set($cacheId, $data);
             }
         }

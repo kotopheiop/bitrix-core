@@ -78,12 +78,17 @@ abstract class BaseServiceHandler
                 $content = require($templatePath);
 
                 $buffer = ob_get_contents();
-                if (strlen($buffer) > 0)
+                if ($buffer <> '') {
                     $content = $buffer;
+                }
 
                 if ($this->service->getField('ENCODING') != '') {
                     $encoding = Context::getCurrent()->getCulture()->getCharset();
-                    $content = Text\Encoding::convertEncoding($content, $encoding, $this->service->getField('ENCODING'));
+                    $content = Text\Encoding::convertEncoding(
+                        $content,
+                        $encoding,
+                        $this->service->getField('ENCODING')
+                    );
                 }
 
                 $result->setTemplate($content);
@@ -110,12 +115,14 @@ abstract class BaseServiceHandler
         $folders = array();
 
         $folders[] = '/local/templates/' . $siteTemplate . '/payment/' . $handlerName . '/template';
-        if ($siteTemplate !== '.default')
+        if ($siteTemplate !== '.default') {
             $folders[] = '/local/templates/.default/payment/' . $handlerName . '/template';
+        }
 
         $folders[] = '/bitrix/templates/' . $siteTemplate . '/payment/' . $handlerName . '/template';
-        if ($siteTemplate !== '.default')
+        if ($siteTemplate !== '.default') {
             $folders[] = '/bitrix/templates/.default/payment/' . $handlerName . '/template';
+        }
 
         $baseFolders = Manager::getHandlerDirectories();
         $folders[] = $baseFolders[$this->handlerType] . $handlerName . '/template';
@@ -123,8 +130,9 @@ abstract class BaseServiceHandler
         foreach ($folders as $folder) {
             $templatePath = $documentRoot . $folder . '/' . $template . '.php';
 
-            if (IO\File::isFileExists($templatePath))
+            if (IO\File::isFileExists($templatePath)) {
                 return $templatePath;
+            }
         }
 
         return '';
@@ -141,8 +149,9 @@ abstract class BaseServiceHandler
         $codes = $this->getBusinessCodes();
 
         if ($codes) {
-            foreach ($codes as $code)
+            foreach ($codes as $code) {
                 $params[$code] = $this->getBusinessValue($payment, $code);
+            }
         }
 
         return $params;
@@ -163,7 +172,12 @@ abstract class BaseServiceHandler
      */
     protected function getBusinessValue(Payment $payment = null, $code)
     {
-        return BusinessValue::getValueFromProvider($payment, $code, $this->service->getConsumerName());
+        $value = BusinessValue::getValueFromProvider($payment, $code, $this->service->getConsumerName());
+        if (is_string($value)) {
+            $value = trim($value);
+        }
+
+        return $value;
     }
 
     /**
@@ -175,12 +189,41 @@ abstract class BaseServiceHandler
         $documentRoot = Application::getDocumentRoot();
         $dirs = Manager::getHandlerDirectories();
         $handlerDir = $dirs[$this->handlerType];
-        $file = $documentRoot . $handlerDir . $this->getName() . '/.description.php';
+        $file = $documentRoot . $handlerDir . static::getName() . '/.description.php';
 
-        if (IO\File::isFileExists($file))
+        if (IO\File::isFileExists($file)) {
             require $file;
+        }
+
+        if (isset($data["CODES"]) && is_array($data["CODES"])) {
+            $data["CODES"] = $this->filterDescriptionCodes($data["CODES"]);
+        }
 
         return $data;
+    }
+
+    /**
+     * @param $codes
+     * @return array
+     */
+    protected function filterDescriptionCodes($codes)
+    {
+        $psMode = $this->service->getField("PS_MODE");
+        return array_filter(
+            $codes,
+            static function ($code) use ($psMode) {
+                if (!isset($code["HANDLER_MODE"])) {
+                    return true;
+                }
+
+                if (isset($code["HANDLER_MODE"]) && !is_array($code["HANDLER_MODE"])) {
+                    trigger_error("HANDLER_MODE must be an array", E_USER_WARNING);
+                    return false;
+                }
+
+                return in_array($psMode, $code["HANDLER_MODE"], true);
+            }
+        );
     }
 
     /**
@@ -192,8 +235,9 @@ abstract class BaseServiceHandler
 
         if (!$data) {
             $result = $this->getDescription();
-            if ($result['CODES'])
+            if ($result['CODES']) {
                 $data = array_keys($result['CODES']);
+            }
         }
 
         return $data;
@@ -266,10 +310,11 @@ abstract class BaseServiceHandler
             $url = $urlList[$action];
 
             if (is_array($url)) {
-                if ($this->isTestMode($payment) && isset($url[self::TEST_URL]))
+                if ($this->isTestMode($payment) && isset($url[self::TEST_URL])) {
                     return $url[self::TEST_URL];
-                else
+                } else {
                     return $url[self::ACTIVE_URL];
+                }
             } else {
                 return $url;
             }

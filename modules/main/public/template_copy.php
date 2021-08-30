@@ -19,14 +19,16 @@ $src_path = $io->CombinePath("/", $_GET["src_path"]);
 $src_line = intval($_GET["src_line"]);
 $template_site_template = $_GET["template_site_template"];
 
-if (!$USER->CanDoOperation('edit_php') && !$USER->CanDoFileOperation('fm_lpa', array($_GET["src_site"], $src_path)))
+if (!$USER->CanDoOperation('edit_php') && !$USER->CanDoFileOperation('fm_lpa', array($_GET["src_site"], $src_path))) {
     die(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 
 CUtil::JSPostUnescape();
 
-$obJSPopup = new CJSPopup('',
+$obJSPopup = new CJSPopup(
+    '',
     array(
         'TITLE' => GetMessage("template_copy_title"),
         'ARGS' => 'component_name=' . urlencode($_GET["component_name"]) .
@@ -59,8 +61,9 @@ if (!$src_path || $src_line <= 0) {
     $f = $io->GetFile($abs_path);
     $filesrc = $f->GetContents();
 
-    if (!$filesrc || $filesrc == "")
+    if (!$filesrc || $filesrc == "") {
         $strWarning .= GetMessage("comp_prop_err_open") . "<br>";
+    }
 }
 
 $arComponent = false;
@@ -70,8 +73,8 @@ if ($strWarning == "") {
 
     /* identify the component by line number */
     for ($i = 0, $cnt = count($arComponents); $i < $cnt; $i++) {
-        $nLineFrom = substr_count(substr($filesrc, 0, $arComponents[$i]["START"]), "\n") + 1;
-        $nLineTo = substr_count(substr($filesrc, 0, $arComponents[$i]["END"]), "\n") + 1;
+        $nLineFrom = substr_count(mb_substr($filesrc, 0, $arComponents[$i]["START"]), "\n") + 1;
+        $nLineTo = substr_count(mb_substr($filesrc, 0, $arComponents[$i]["END"]), "\n") + 1;
 
         if ($nLineFrom <= $src_line && $nLineTo >= $src_line) {
             if ($arComponents[$i]["DATA"]["COMPONENT_NAME"] == $_GET["component_name"]) {
@@ -79,13 +82,15 @@ if ($strWarning == "") {
                 break;
             }
         }
-        if ($nLineTo > $src_line)
+        if ($nLineTo > $src_line) {
             break;
+        }
     }
 }
 
-if ($arComponent === false)
+if ($arComponent === false) {
     $strWarning .= GetMessage("comp_prop_err_comp") . "<br>";
+}
 
 $arComponentDescription = array();
 $arTemplatesList = array();
@@ -95,19 +100,34 @@ if ($strWarning == "") {
     $arComponentDescription = CComponentUtil::GetComponentDescr($_GET["component_name"]);
 
     $arComponentParameters = CComponentUtil::GetComponentProps($_GET["component_name"], $arComponent["DATA"]["PARAMS"]);
-    $arTemplateParameters = CComponentUtil::GetTemplateProps($_GET["component_name"], $_GET["component_template"], $_GET["template_id"], $arComponent["DATA"]["PARAMS"]);
+    $arTemplateParameters = CComponentUtil::GetTemplateProps(
+        $_GET["component_name"],
+        $_GET["component_template"],
+        $_GET["template_id"],
+        $arComponent["DATA"]["PARAMS"]
+    );
 
     $arParameterGroups = array();
-    if (isset($arComponentParameters["GROUPS"]) && is_array($arComponentParameters["GROUPS"]))
+    if (isset($arComponentParameters["GROUPS"]) && is_array($arComponentParameters["GROUPS"])) {
         $arParameterGroups = $arParameterGroups + $arComponentParameters["GROUPS"];
-    if (isset($arTemplateParameters) && is_array($arTemplateParameters))
-        $arParameterGroups = $arParameterGroups + array("TEMPLATE" => array("NAME" => GetMessage("comp_templ_template")));
+    }
+    if (isset($arTemplateParameters) && is_array($arTemplateParameters)) {
+        $arParameterGroups = $arParameterGroups + array(
+                "TEMPLATE" => array(
+                    "NAME" => GetMessage(
+                        "comp_templ_template"
+                    )
+                )
+            );
+    }
 
     $arParameters = array();
-    if (isset($arComponentParameters["PARAMETERS"]) && is_array($arComponentParameters["PARAMETERS"]))
+    if (isset($arComponentParameters["PARAMETERS"]) && is_array($arComponentParameters["PARAMETERS"])) {
         $arParameters = $arParameters + $arComponentParameters["PARAMETERS"];
-    if (isset($arTemplateParameters) && is_array($arTemplateParameters))
+    }
+    if (isset($arTemplateParameters) && is_array($arTemplateParameters)) {
         $arParameters = $arParameters + $arTemplateParameters;
+    }
 
     $arTemplatesList = CComponentUtil::GetTemplatesList($_GET["component_name"], $_GET["template_id"]);
     for ($i = 0, $cnt = count($arTemplatesList); $i < $cnt; $i++) {
@@ -119,29 +139,45 @@ if ($strWarning == "") {
     }
 
     /* save parameters to file */
-    if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["action"] == "save" && $arComponent !== false && $arComponentDescription !== false && check_bitrix_sessid()) {
+    if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["action"] == "save" && $arComponent !== false && $arComponentDescription !== false && check_bitrix_sessid(
+        )) {
         //check template name
         $sTemplateName = trim($_POST["TEMPLATE_NAME"]);
-        if ($sTemplateName == '' || !CBitrixComponentTemplate::CheckName($sTemplateName))
+        if ($sTemplateName == '' || !CBitrixComponentTemplate::CheckName($sTemplateName)) {
             $sTemplateName = '.default';
+        }
 
-        if ($_POST["SITE_TEMPLATE"] != $_GET["template_id"] && $_POST["SITE_TEMPLATE"] != ".default")
+        if ($_POST["SITE_TEMPLATE"] != $_GET["template_id"] && $_POST["SITE_TEMPLATE"] != ".default") {
             $_POST["USE_TEMPLATE"] = "N";
+        }
 
-        if (CComponentUtil::CopyTemplate($arComponent["DATA"]["COMPONENT_NAME"], $arComponent["DATA"]["TEMPLATE_NAME"], ((strlen($templateSiteTemplate) > 0) ? $templateSiteTemplate : false), $_POST["SITE_TEMPLATE"], $sTemplateName, false)) {
+        if (CComponentUtil::CopyTemplate(
+            $arComponent["DATA"]["COMPONENT_NAME"],
+            $arComponent["DATA"]["TEMPLATE_NAME"],
+            (($templateSiteTemplate <> '') ? $templateSiteTemplate : false),
+            $_POST["SITE_TEMPLATE"],
+            $sTemplateName,
+            false
+        )) {
             if ($_POST["USE_TEMPLATE"] == "Y") {
                 $code = ($arComponent["DATA"]["VARIABLE"] ? $arComponent["DATA"]["VARIABLE"] . "=" : "") .
                     "\$APPLICATION->IncludeComponent(\"" . $arComponent["DATA"]["COMPONENT_NAME"] . "\", " .
                     "\"" . $sTemplateName . "\", " .
                     "Array(\n\t" . PHPParser::ReturnPHPStr2($arComponent["DATA"]["PARAMS"], $arParameters) . "\n\t)" .
-                    ",\n\t" . (strlen($arComponent["DATA"]["PARENT_COMP"]) > 0 ? $arComponent["DATA"]["PARENT_COMP"] : "false") .
-                    (!empty($arComponent["DATA"]["FUNCTION_PARAMS"]) ? ",\n\t" . "array(\n\t" . PHPParser::ReturnPHPStr2($arComponent["DATA"]["FUNCTION_PARAMS"]) . "\n\t)" : "") .
+                    ",\n\t" . ($arComponent["DATA"]["PARENT_COMP"] <> '' ? $arComponent["DATA"]["PARENT_COMP"] : "false") .
+                    (!empty($arComponent["DATA"]["FUNCTION_PARAMS"]) ? ",\n\t" . "array(\n\t" . PHPParser::ReturnPHPStr2(
+                            $arComponent["DATA"]["FUNCTION_PARAMS"]
+                        ) . "\n\t)" : "") .
                     "\n);";
 
-                $filesrc_for_save = substr($filesrc, 0, $arComponent["START"]) . $code . substr($filesrc, $arComponent["END"]);
+                $filesrc_for_save = mb_substr($filesrc, 0, $arComponent["START"]) . $code . mb_substr(
+                        $filesrc,
+                        $arComponent["END"]
+                    );
 
-                if (!$APPLICATION->SaveFileContent($abs_path, $filesrc_for_save))
+                if (!$APPLICATION->SaveFileContent($abs_path, $filesrc_for_save)) {
                     $strWarning .= GetMessage("comp_prop_err_save") . "<br>";
+                }
             }
 
             if ($strWarning == "") {
@@ -155,8 +191,17 @@ if ($strWarning == "") {
                             if (!is_null($template)) {
                                 $strJSText = $APPLICATION->GetPopupLink(
                                     array(
-                                        'URL' => '/bitrix/admin/public_file_edit_src.php?lang=' . LANGUAGE_ID . '&site=' . SITE_ID . '&back_url=' . urlencode($_REQUEST["back_path"]) . '&path=' . urlencode($template->GetFile()),
-                                        "PARAMS" => Array("width" => 770, "height" => 570, "resize" => true, "dialog_type" => 'EDITOR', "min_width" => 700, "min_height" => 400),
+                                        'URL' => '/bitrix/admin/public_file_edit_src.php?lang=' . LANGUAGE_ID . '&site=' . SITE_ID . '&back_url=' . urlencode(
+                                                $_REQUEST["back_path"]
+                                            ) . '&path=' . urlencode($template->GetFile()),
+                                        "PARAMS" => Array(
+                                            "width" => 770,
+                                            "height" => 570,
+                                            "resize" => true,
+                                            "dialog_type" => 'EDITOR',
+                                            "min_width" => 700,
+                                            "min_height" => 400
+                                        ),
                                     )
                                 );
                             }
@@ -174,10 +219,11 @@ if ($strWarning == "") {
                 die();
             }
         } else {
-            if ($ex = $APPLICATION->GetException())
+            if ($ex = $APPLICATION->GetException()) {
                 $strWarning .= $ex->GetString() . "<br>";
-            else
+            } else {
                 $strWarning .= GetMessage("comp_templ_error_copy") . "<br>";
+            }
         }
     }
 }
@@ -185,29 +231,39 @@ if ($strWarning == "") {
 $componentPath = CComponentEngine::MakeComponentPath($_GET["component_name"]);
 $arComponentDescription["ICON"] = ltrim($arComponentDescription["ICON"], "/");
 $localPath = getLocalPath("components" . $componentPath);
-if ($localPath !== false && $arComponentDescription["ICON"] <> "" && $io->FileExists($io->RelativeToAbsolutePath($localPath . "/" . $arComponentDescription["ICON"])))
+if ($localPath !== false && $arComponentDescription["ICON"] <> "" && $io->FileExists(
+        $io->RelativeToAbsolutePath($localPath . "/" . $arComponentDescription["ICON"])
+    )) {
     $sIcon = $localPath . "/" . $arComponentDescription["ICON"];
-else
+} else {
     $sIcon = "/bitrix/images/fileman/htmledit2/component.gif";
+}
 
-$sCurrentTemplateName = ($arComponent["DATA"]["TEMPLATE_NAME"] <> "" ? htmlspecialcharsbx($arComponent["DATA"]["TEMPLATE_NAME"]) : ".default");
+$sCurrentTemplateName = ($arComponent["DATA"]["TEMPLATE_NAME"] <> "" ? htmlspecialcharsbx(
+    $arComponent["DATA"]["TEMPLATE_NAME"]
+) : ".default");
 
 $obJSPopup->ShowTitlebar();
 $obJSPopup->StartDescription($sIcon);
 ?>
 <? if ($arComponentDescription["NAME"] <> ""): ?>
-    <p title="<? echo GetMessage("comp_prop_name") ?>">
-        <b><? echo htmlspecialcharsbx($arComponentDescription["NAME"]) ?></b></p>
+    <p title="<? echo GetMessage("comp_prop_name") ?>"><b><? echo htmlspecialcharsbx(
+                $arComponentDescription["NAME"]
+            ) ?></b></p>
 <? endif; ?>
 <? if ($arComponentDescription["DESCRIPTION"] <> ""): ?>
-    <p title="<? echo GetMessage("comp_prop_desc") ?>"><? echo htmlspecialcharsbx($arComponentDescription["DESCRIPTION"]) ?></p>
+    <p title="<? echo GetMessage("comp_prop_desc") ?>"><? echo htmlspecialcharsbx(
+            $arComponentDescription["DESCRIPTION"]
+        ) ?></p>
 <? endif; ?>
     <p class="note" title="<? echo GetMessage("comp_prop_path") ?>"><a
-                href="/bitrix/admin/fileman_admin.php?lang=<? echo LANGUAGE_ID ?>&amp;path=<? echo urlencode($localPath) ?>"><? echo htmlspecialcharsbx($_GET["component_name"]) ?></a>
-    </p>
+                href="/bitrix/admin/fileman_admin.php?lang=<? echo LANGUAGE_ID ?>&amp;path=<? echo urlencode(
+                    $localPath
+                ) ?>"><? echo htmlspecialcharsbx($_GET["component_name"]) ?></a></p>
 <?
-if ($_GET['system_template'] == 'Y')
+if ($_GET['system_template'] == 'Y') {
     ShowNote(GetMessage("copy_comp_sys_templ"));
+}
 
 if ($strWarning <> "") {
     //ShowError($strWarning);
@@ -233,23 +289,25 @@ $obJSPopup->StartContent();
     <table cellspacing="0" class="bx-width100">
         <tr>
             <td class="bx-popup-label bx-width50"><?= GetMessage("comp_templ_cur_template") ?>:</td>
-            <td>
-                <b><?= $sCurrentTemplateName ?></b><? if ($templateSiteTemplate == ""): ?> (<? echo GetMessage("comp_templ_system") ?>)<? endif ?>
-            </td>
+            <td><b><?= $sCurrentTemplateName ?></b><? if ($templateSiteTemplate == ""): ?> (<? echo GetMessage(
+                    "comp_templ_system"
+                ) ?>)<? endif ?></td>
         </tr>
         <?
         $arSiteTemplates = array(".default" => GetMessage("comp_templ_def_templ"));
         $db_site_templates = CSiteTemplate::GetList(array("sort" => "asc", "name" => "asc"), array(), array());
-        while ($ar_site_templates = $db_site_templates->Fetch())
+        while ($ar_site_templates = $db_site_templates->Fetch()) {
             $arSiteTemplates[$ar_site_templates['ID']] = $ar_site_templates['NAME'];
+        }
 
         if ($templateSiteTemplate <> ""):
             $sSiteTemplate = $arSiteTemplates[$templateSiteTemplate];
             ?>
             <tr>
                 <td class="bx-popup-label bx-width50"><?= GetMessage("comp_templ_cur_site_template") ?>:</td>
-                <td>
-                    <b><?= htmlspecialcharsbx($templateSiteTemplate) ?></b><? if ($sSiteTemplate <> "") echo " (" . htmlspecialcharsbx($sSiteTemplate) . ")" ?>
+                <td><b><?= htmlspecialcharsbx(
+                            $templateSiteTemplate
+                        ) ?></b><? if ($sSiteTemplate <> "") echo " (" . htmlspecialcharsbx($sSiteTemplate) . ")" ?>
                 </td>
             </tr>
         <?
@@ -259,20 +317,30 @@ $obJSPopup->StartContent();
             <td class="bx-popup-label bx-width50"><?= GetMessage("comp_templ_new_tpl") ?>:</td>
             <td>
                 <?
-                $sParentComp = strtolower($arComponent["DATA"]["PARENT_COMP"]);
+                $sParentComp = mb_strtolower($arComponent["DATA"]["PARENT_COMP"]);
                 $bParentComp = ($sParentComp <> "" && $sParentComp !== "false" && $sParentComp !== "null");
                 if (!$bParentComp):
                     //find next template name
-                    $def = (strlen($arComponent["DATA"]["TEMPLATE_NAME"]) > 0 && $arComponent["DATA"]["TEMPLATE_NAME"] <> ".default" ? rtrim($arComponent["DATA"]["TEMPLATE_NAME"], "0..9") : "template");
-                    if ($def == '')
+                    $def = ($arComponent["DATA"]["TEMPLATE_NAME"] <> '' && $arComponent["DATA"]["TEMPLATE_NAME"] <> ".default" ? rtrim(
+                        $arComponent["DATA"]["TEMPLATE_NAME"],
+                        "0..9"
+                    ) : "template");
+                    if ($def == '') {
                         $def = "template";
+                    }
                     $max = 0;
-                    foreach ($arTemplatesList as $templ)
-                        if (strpos($templ["NAME"], $def) === 0 && ($v = intval(substr($templ["NAME"], strlen($def)))) > $max)
+                    foreach ($arTemplatesList as $templ) {
+                        if (mb_strpos($templ["NAME"], $def) === 0 && ($v = intval(
+                                mb_substr($templ["NAME"], mb_strlen($def))
+                            )) > $max) {
                             $max = $v;
+                        }
+                    }
                     ?>
                     <input type="text" name="TEMPLATE_NAME"
-                           value="<? echo(strlen($_REQUEST["TEMPLATE_NAME"]) > 0 ? htmlspecialcharsbx($_REQUEST["TEMPLATE_NAME"]) : htmlspecialcharsbx($def) . ($max + 1)); ?>">
+                           value="<? echo($_REQUEST["TEMPLATE_NAME"] <> '' ? htmlspecialcharsbx(
+                               $_REQUEST["TEMPLATE_NAME"]
+                           ) : htmlspecialcharsbx($def) . ($max + 1)); ?>">
                 <? else:?>
                     <? echo $sCurrentTemplateName ?>
                     <input type="hidden" name="TEMPLATE_NAME" value="<? echo $sCurrentTemplateName ?>">
@@ -284,15 +352,17 @@ $obJSPopup->StartContent();
             <td>
                 <input type="radio" name="SITE_TEMPLATE" value=".default"
                        id="SITE_TEMPLATE_def"<? if ($_REQUEST["SITE_TEMPLATE"] == "" || $_REQUEST["SITE_TEMPLATE"] == ".default") echo " checked" ?>
-                       onclick="CheckSiteTemplate(this)"><label
-                        for="SITE_TEMPLATE_def"><? echo GetMessage("template_copy_def") ?> / .default
-                    (<? echo GetMessage("comp_templ_def_templ") ?>)</label><br>
+                       onclick="CheckSiteTemplate(this)"><label for="SITE_TEMPLATE_def"><? echo GetMessage(
+                        "template_copy_def"
+                    ) ?> / .default (<? echo GetMessage("comp_templ_def_templ") ?>)</label><br>
                 <? if ($_GET["template_id"] <> "" && $_GET["template_id"] <> ".default"): ?>
                     <input type="radio" name="SITE_TEMPLATE" value="<? echo htmlspecialcharsbx($_GET["template_id"]) ?>"
                            id="SITE_TEMPLATE_cur"<? if ($_REQUEST["SITE_TEMPLATE"] == $_GET["template_id"]) echo " checked" ?>
-                           onclick="CheckSiteTemplate(this)"><label
-                            for="SITE_TEMPLATE_cur"><? echo GetMessage("template_copy_cur") ?>
-                        / <? echo htmlspecialcharsbx($_GET["template_id"]) ?><? if ($arSiteTemplates[$_GET["template_id"]] <> '') echo " (" . $arSiteTemplates[$_GET["template_id"]] . ")" ?></label>
+                           onclick="CheckSiteTemplate(this)"><label for="SITE_TEMPLATE_cur"><? echo GetMessage(
+                            "template_copy_cur"
+                        ) ?> / <? echo htmlspecialcharsbx(
+                            $_GET["template_id"]
+                        ) ?><? if ($arSiteTemplates[$_GET["template_id"]] <> '') echo " (" . $arSiteTemplates[$_GET["template_id"]] . ")" ?></label>
                     <br>
                 <? endif ?>
                 <?
@@ -304,10 +374,15 @@ $obJSPopup->StartContent();
                 <select name="SITE_TEMPLATE"<? if (!$bList) echo " disabled" ?>>
                     <?
                     foreach ($arSiteTemplates as $templ_id => $templ_name):
-                        if ($templ_id == ".default" || $templ_id == $_GET["template_id"])
+                        if ($templ_id == ".default" || $templ_id == $_GET["template_id"]) {
                             continue;
+                        }
                         ?>
-                        <option value="<?= htmlspecialcharsbx($templ_id) ?>"<? if ((strlen($_REQUEST["SITE_TEMPLATE"]) > 0 && $_REQUEST["SITE_TEMPLATE"] == $templ_id) || (strlen($_REQUEST["SITE_TEMPLATE"]) <= 0 && $templ_id == $template_site_template)) echo " selected"; ?>><?= htmlspecialcharsbx($templ_id . " (" . $templ_name . ")") ?></option>
+                        <option value="<?= htmlspecialcharsbx(
+                            $templ_id
+                        ) ?>"<? if (($_REQUEST["SITE_TEMPLATE"] <> '' && $_REQUEST["SITE_TEMPLATE"] == $templ_id) || ($_REQUEST["SITE_TEMPLATE"] == '' && $templ_id == $template_site_template)) {
+                            echo " selected";
+                        } ?>><?= htmlspecialcharsbx($templ_id . " (" . $templ_name . ")") ?></option>
                     <? endforeach; ?>
                 </select>
             </td>
@@ -317,7 +392,9 @@ $obJSPopup->StartContent();
                 <td class="bx-popup-label bx-width50"><?= GetMessage("comp_templ_use") ?>:</td>
                 <td>
                     <input type="checkbox" name="USE_TEMPLATE"
-                           value="Y"<? if (!($_REQUEST["action"] == "save" && $_REQUEST["USE_TEMPLATE"] <> "Y")) echo " checked"; ?><? if ($bList) echo " disabled" ?>>
+                           value="Y"<? if (!($_REQUEST["action"] == "save" && $_REQUEST["USE_TEMPLATE"] <> "Y")) {
+                        echo " checked";
+                    } ?><? if ($bList) echo " disabled" ?>>
                 </td>
             </tr>
         <? endif ?>
@@ -326,7 +403,9 @@ $obJSPopup->StartContent();
                 <td class="bx-popup-label bx-width50"><?= GetMessage("comp_templ_edit") ?>:</td>
                 <td>
                     <input type="checkbox" name="EDIT_TEMPLATE"
-                           value="Y"<? if (!($_REQUEST["action"] == "save" && $_REQUEST["EDIT_TEMPLATE"] <> "Y")) echo " checked"; ?>>
+                           value="Y"<? if (!($_REQUEST["action"] == "save" && $_REQUEST["EDIT_TEMPLATE"] <> "Y")) {
+                        echo " checked";
+                    } ?>>
                 </td>
             </tr>
         <? endif ?>

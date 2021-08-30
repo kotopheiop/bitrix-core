@@ -1,4 +1,5 @@
 <?
+
 define("ADMIN_MODULE_NAME", "security");
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
@@ -13,8 +14,9 @@ IncludeModuleLangFile(__FILE__);
 
 $canRead = $USER->CanDoOperation('security_iprule_admin_settings_read');
 $canWrite = $USER->CanDoOperation('security_iprule_admin_settings_write');
-if (!$canRead && !$canWrite)
+if (!$canRead && !$canWrite) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $aTabs = array(
     array(
@@ -26,14 +28,18 @@ $aTabs = array(
 );
 $tabControl = new CAdminTabControl("tabControl", $aTabs, false, true);
 
-$rsIPRule = CSecurityIPRule::GetList(array(), array(
-    "=RULE_TYPE" => "A",
-    "=ADMIN_SECTION" => "Y",
-    "=SITE_ID" => false,
-    "=SORT" => 10,
-    "=ACTIVE_FROM" => false,
-    "=ACTIVE_TO" => false,
-), array("ID" => "ASC"));
+$rsIPRule = CSecurityIPRule::GetList(
+    array(),
+    array(
+        "=RULE_TYPE" => "A",
+        "=ADMIN_SECTION" => "Y",
+        "=SITE_ID" => false,
+        "=SORT" => 10,
+        "=ACTIVE_FROM" => false,
+        "=ACTIVE_TO" => false,
+    ),
+    array("ID" => "ASC")
+);
 
 $arIPRule = $rsIPRule->Fetch();
 if ($arIPRule) {
@@ -44,7 +50,9 @@ if ($arIPRule) {
     $ACTIVE = "N";
 }
 
-$exclMasks = array();
+$exclMasks = array(
+    '/bitrix/admin/user_options.php',
+);
 
 foreach (GetModuleEvents("security", "OnIPRuleAdmin", true) as $event) {
     $exclMasks = array_merge($exclMasks, ExecuteModuleEventEx($event));
@@ -55,7 +63,8 @@ $bVarsFromForm = false;
 $bShowForce = false;
 $message = CSecurityIPRule::CheckAntiFile(true);
 
-if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["save"] . $_REQUEST["apply"] . $_REQUEST["activate_iprule"] . $_REQUEST["deactivate_iprule"] != "" && $canWrite && check_bitrix_sessid()) {
+if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["save"] . $_REQUEST["apply"] . $_REQUEST["activate_iprule"] . $_REQUEST["deactivate_iprule"] != "" && $canWrite && check_bitrix_sessid(
+    )) {
     $ob = new CSecurityIPRule;
 
     if (!$_REQUEST["activate_iprule"] && $_REQUEST["deactivate_iprule"]) {
@@ -66,7 +75,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["save"] . $_REQUEST["apply
         //Otherwise check if ANY input supplied
         $noExclIPS = true;
         foreach ($_POST["EXCL_IPS"] as $ip) {
-            if (strlen(trim($ip)) > 0) {
+            if (trim($ip) <> '') {
                 $noExclIPS = false;
                 break;
             }
@@ -80,12 +89,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["save"] . $_REQUEST["apply
         $message = new CAdminMessage(GetMessage("SEC_IPRULE_ADMIN_NO_IP"));
         $bVarsFromForm = true;
     } elseif ($selfBlock && (COption::GetOptionString("security", "ipcheck_allow_self_block") !== "Y")) {
-        if ($e = $APPLICATION->GetException())
+        if ($e = $APPLICATION->GetException()) {
             $message = new CAdminMessage(GetMessage("SEC_IPRULE_ADMIN_SAVE_ERROR"), $e);
+        }
         $bVarsFromForm = true;
     } elseif ($selfBlock && $_POST["USE_THE_FORCE_LUK"] !== "Y") {
-        if ($e = $APPLICATION->GetException())
+        if ($e = $APPLICATION->GetException()) {
             $message = new CAdminMessage(GetMessage("SEC_IPRULE_ADMIN_SAVE_ERROR"), $e);
+        }
         $bVarsFromForm = true;
         $bShowForce = true;
     } else {
@@ -111,14 +122,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $_REQUEST["save"] . $_REQUEST["apply
         }
 
         if ($res) {
-            if ($_REQUEST["save"] != "" && $_GET["return_url"] != "")
+            if ($_REQUEST["save"] != "" && $_GET["return_url"] != "") {
                 LocalRedirect($_GET["return_url"]);
+            }
 
             $returnUrl = $_GET["return_url"] ? "&return_url=" . urlencode($_GET["return_url"]) : "";
-            LocalRedirect("/bitrix/admin/security_iprule_admin.php?lang=" . LANGUAGE_ID . $returnUrl . "&" . $tabControl->ActiveTabParam());
+            LocalRedirect(
+                "/bitrix/admin/security_iprule_admin.php?lang=" . LANGUAGE_ID . $returnUrl . "&" . $tabControl->ActiveTabParam(
+                )
+            );
         } else {
-            if ($e = $APPLICATION->GetException())
+            if ($e = $APPLICATION->GetException()) {
                 $message = new CAdminMessage(GetMessage("SEC_IPRULE_ADMIN_SAVE_ERROR"), $e);
+            }
             $bVarsFromForm = true;
         }
     }
@@ -140,20 +156,24 @@ $APPLICATION->AddHeadScript('/bitrix/js/security/admin/interface.js');
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 
-CAdminMessage::ShowMessage(array(
-    "MESSAGE" => $messageText,
-    "TYPE" => $messageType,
-    "DETAILS" => $messageDetails,
-    "HTML" => true
-));
+CAdminMessage::ShowMessage(
+    array(
+        "MESSAGE" => $messageText,
+        "TYPE" => $messageType,
+        "DETAILS" => $messageDetails,
+        "HTML" => true
+    )
+);
 ?>
 
     <form method="POST"
-          action="security_iprule_admin.php?lang=<? echo LANGUAGE_ID ?><? echo $_GET["return_url"] ? "&amp;return_url=" . urlencode($_GET["return_url"]) : "" ?>"
-          enctype="multipart/form-data" name="editform">
+          action="security_iprule_admin.php?lang=<? echo LANGUAGE_ID ?><? echo $_GET["return_url"] ? "&amp;return_url=" . urlencode(
+                  $_GET["return_url"]
+              ) : "" ?>" enctype="multipart/form-data" name="editform">
         <?
         $tabControl->Begin();
         ?>
@@ -163,31 +183,38 @@ CAdminMessage::ShowMessage(array(
         <tr>
             <td colspan="2" align="left">
                 <? if ($ID > 0 && $ACTIVE == "Y"): ?>
-                    <input type="submit" name="deactivate_iprule"
-                           value="<? echo GetMessage("SEC_IPRULE_ADMIN_BUTTON_OFF") ?>"<? if (!$canWrite) echo " disabled" ?>>
+                    <input type="submit" name="deactivate_iprule" value="<? echo GetMessage(
+                        "SEC_IPRULE_ADMIN_BUTTON_OFF"
+                    ) ?>"<? if (!$canWrite) echo " disabled" ?>>
                 <? else: ?>
-                    <input type="submit" name="activate_iprule"
-                           value="<? echo GetMessage("SEC_IPRULE_ADMIN_BUTTON_ON") ?>"<? if (!$canWrite) echo " disabled" ?>
-                           class="adm-btn-save">
+                    <input type="submit" name="activate_iprule" value="<? echo GetMessage(
+                        "SEC_IPRULE_ADMIN_BUTTON_ON"
+                    ) ?>"<? if (!$canWrite) echo " disabled" ?> class="adm-btn-save">
                 <? endif ?>
             </td>
         </tr>
         <tr>
             <td colspan="2">
-                <? echo BeginNote(); ?><? echo GetMessage("SEC_IPRULE_ADMIN_NOTE", array("#IP#" => $_SERVER["REMOTE_ADDR"])) ?>
+                <? echo BeginNote(); ?><? echo GetMessage(
+                    "SEC_IPRULE_ADMIN_NOTE",
+                    array("#IP#" => $_SERVER["REMOTE_ADDR"])
+                ) ?>
                 <? echo EndNote(); ?>
             </td>
         </tr>
         <?
         $arExclIPs = array();
         if ($bVarsFromForm) {
-            if (is_array($_POST["EXCL_IPS"]))
-                foreach ($_POST["EXCL_IPS"] as $i => $ip)
+            if (is_array($_POST["EXCL_IPS"])) {
+                foreach ($_POST["EXCL_IPS"] as $i => $ip) {
                     $arExclIPs[] = htmlspecialcharsbx($ip);
+                }
+            }
         } elseif ($ID > 0) {
             $ar = CSecurityIPRule::GetRuleExclIPs($ID);
-            foreach ($ar as $i => $ip)
+            foreach ($ar as $i => $ip) {
                 $arExclIPs[] = htmlspecialcharsbx($ip);
+            }
         }
         ?>
         <tr>
@@ -222,8 +249,9 @@ CAdminMessage::ShowMessage(array(
         if (count($exclMasks) > 0) {
             ?>
             <tr>
-                <td class="adm-detail-valign-top"
-                    width="40%"><? echo GetMessage("SEC_IPRULE_ADMIN_EXCL_FILES_" . (($ACTIVE == 'Y') ? 'ACTIVE' : 'INACTIVE')) ?></td>
+                <td class="adm-detail-valign-top" width="40%"><? echo GetMessage(
+                        "SEC_IPRULE_ADMIN_EXCL_FILES_" . (($ACTIVE == 'Y') ? 'ACTIVE' : 'INACTIVE')
+                    ) ?></td>
                 <td width="60%">
                     <table cellpadding="0" cellspacing="0" border="0" class="nopadding" width="100%" id="tbEXCL_FILES">
                         <? foreach ($exclMasks as $mask):?>

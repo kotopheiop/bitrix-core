@@ -39,13 +39,18 @@ class LoggerDiag extends \Bitrix\Sale\Exchange\Internals\LoggerDiagBase
         $mess = static::getMessage();
 
         $logger = new static();
-        $logger->setField('MESSAGE_ID', isset($mess['LOGGER_' . $messageId]) ? $mess['LOGGER_' . $messageId] : $messageId);
+        $logger->setField(
+            'MESSAGE_ID',
+            isset($mess['LOGGER_' . $messageId]) ? $mess['LOGGER_' . $messageId] : $messageId
+        );
         $logger->setField('MESSAGE', $message);
         $logger->save();
     }
 
     protected static function getMessage()
     {
-        return Loc::loadLanguageFile($_SERVER["DOCUMENT_ROOT"] . '/bitrix/modules/sale/lib/rest/synchronization/loggerdiag.php');
+        return Loc::loadLanguageFile(
+            $_SERVER["DOCUMENT_ROOT"] . '/bitrix/modules/sale/lib/rest/synchronization/loggerdiag.php'
+        );
     }
 }

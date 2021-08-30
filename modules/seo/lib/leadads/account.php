@@ -76,11 +76,13 @@ abstract class Account extends Retargeting\Account implements IRequestDirectly
     {
         $adapter = Retargeting\AuthAdapter::create($type . '.groups');
 
-        $row = Internals\CallbackSubscriptionTable::getRow([
-            'filter' => [
-                '=TYPE' => $type,
+        $row = Internals\CallbackSubscriptionTable::getRow(
+            [
+                'filter' => [
+                    '=TYPE' => $type,
+                ]
             ]
-        ]);
+        );
         if ($row && $row['HAS_AUTH'] !== 'Y' && $adapter->hasAuth()) {
             Internals\CallbackSubscriptionTable::update($row['ID'], ['HAS_AUTH' => 'Y']);
         }

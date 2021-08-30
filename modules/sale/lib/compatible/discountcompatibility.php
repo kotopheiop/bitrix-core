@@ -88,33 +88,42 @@ class DiscountCompatibility
     {
         $adminSection = (defined('ADMIN_SECTION') && ADMIN_SECTION === true);
         $mode = (int)$mode;
-        if (!is_array($config))
+        if (!is_array($config)) {
             $config = array();
+        }
 
         if ($adminSection) {
             self::$useMode = self::MODE_SYSTEM;
             switch ($mode) {
                 case self::MODE_MANAGER:
-                    if (empty($config['SITE_ID']))
+                    if (empty($config['SITE_ID'])) {
                         self::$errors[] = Loc::getMessage('BX_SALE_DCL_ERR_SITE_ABSENT');
-                    elseif (empty($config['CURRENCY']))
+                    } elseif (empty($config['CURRENCY'])) {
                         $config['CURRENCY'] = Sale\Internals\SiteCurrencyTable::getCurrency($config['SITE_ID']);
-                    if (empty($config['CURRENCY']))
+                    }
+                    if (empty($config['CURRENCY'])) {
                         self::$errors[] = Loc::getMessage('BX_SALE_DCL_ERR_CURRENCY_ABSENT');
+                    }
                     if (empty(self::$errors)) {
                         self::$useMode = self::MODE_MANAGER;
-                        $config['SALE_DISCOUNT_ONLY'] = (string)Main\Config\Option::get('sale', 'use_sale_discount_only');
+                        $config['SALE_DISCOUNT_ONLY'] = (string)Main\Config\Option::get(
+                            'sale',
+                            'use_sale_discount_only'
+                        );
                         self::$config = $config;
                         self::$discountUseMode = Sale\Discount::USE_MODE_FULL;
                     }
                     break;
                 case self::MODE_ORDER:
-                    if (empty($config['ORDER_ID']))
+                    if (empty($config['ORDER_ID'])) {
                         self::$errors[] = Loc::getMessage('BX_SALE_DCL_ERR_ORDER_ID_ABSENT');
-                    if (empty($config['SITE_ID']))
+                    }
+                    if (empty($config['SITE_ID'])) {
                         self::$errors[] = Loc::getMessage('BX_SALE_DCL_ERR_SITE_ABSENT');
-                    if (empty($config['CURRENCY']))
+                    }
+                    if (empty($config['CURRENCY'])) {
                         self::$errors[] = Loc::getMessage('BX_SALE_DCL_ERR_CURRENCY_ABSENT');
+                    }
                     if (empty(self::$errors)) {
                         self::$useMode = self::MODE_ORDER;
                         self::$order = $config['ORDER_ID'];
@@ -132,20 +141,24 @@ class DiscountCompatibility
             switch ($mode) {
                 case self::MODE_CLIENT:
                     self::$useMode = self::MODE_CLIENT;
-                    if (empty($config['SITE_ID']))
+                    if (empty($config['SITE_ID'])) {
                         $config['SITE_ID'] = SITE_ID;
-                    if (empty($config['CURRENCY']))
+                    }
+                    if (empty($config['CURRENCY'])) {
                         $config['CURRENCY'] = Sale\Internals\SiteCurrencyTable::getSiteCurrency($config['SITE_ID']);
+                    }
                     $config['SALE_DISCOUNT_ONLY'] = (string)Main\Config\Option::get('sale', 'use_sale_discount_only');
                     self::$config = $config;
                     self::$discountUseMode = Sale\Discount::USE_MODE_FULL;
                     break;
                 case self::MODE_EXTERNAL:
                     self::$useMode = self::MODE_EXTERNAL;
-                    if (empty($config['SITE_ID']))
+                    if (empty($config['SITE_ID'])) {
                         $config['SITE_ID'] = SITE_ID;
-                    if (empty($config['CURRENCY']))
+                    }
+                    if (empty($config['CURRENCY'])) {
                         $config['CURRENCY'] = Sale\Internals\SiteCurrencyTable::getSiteCurrency($config['SITE_ID']);
+                    }
                     $config['SALE_DISCOUNT_ONLY'] = (string)Main\Config\Option::get('sale', 'use_sale_discount_only');
                     self::$config = $config;
                     self::$discountUseMode = Sale\Discount::USE_MODE_FULL;
@@ -212,8 +225,9 @@ class DiscountCompatibility
      */
     public static function setSaved($save)
     {
-        if ($save !== true && $save !== false)
+        if ($save !== true && $save !== false) {
             return;
+        }
         self::$saved = $save;
     }
 
@@ -237,8 +251,9 @@ class DiscountCompatibility
      */
     public static function setRepeatSave($repeat)
     {
-        if ($repeat !== true && $repeat !== false)
+        if ($repeat !== true && $repeat !== false) {
             return;
+        }
         self::$repeatSave = $repeat;
     }
 
@@ -305,12 +320,14 @@ class DiscountCompatibility
      */
     public static function init($mode = self::MODE_CLIENT, $config = array())
     {
-        if (self::$init)
+        if (self::$init) {
             return;
+        }
         self::clearErrors();
         self::initUseMode($mode, $config);
-        if (!self::isSuccess())
+        if (!self::isSuccess()) {
             return;
+        }
         self::$basketBasePrice = array();
         self::$basketDiscountList = array();
         self::$basketItemsData = array();
@@ -391,10 +408,12 @@ class DiscountCompatibility
      */
     public static function setBasketItemBasePrice($code, $price, $currency)
     {
-        if (!self::$init)
+        if (!self::$init) {
             self::init();
-        if (!self::isSuccess() || self::$useMode == self::MODE_SYSTEM || self::$useMode == self::MODE_DISABLED)
+        }
+        if (!self::isSuccess() || self::$useMode == self::MODE_SYSTEM || self::$useMode == self::MODE_DISABLED) {
             return;
+        }
         /** @noinspection PhpMethodOrClassCallIsNotCaseSensitiveInspection */
         self::$basketBasePrice[$code] = (
         $currency == self::$config['CURRENCY']
@@ -412,19 +431,26 @@ class DiscountCompatibility
      */
     public static function setBasketBasePrice($basket)
     {
-        if (!self::$init)
+        if (!self::$init) {
             self::init();
-        if (!self::isSuccess() || self::$useMode == self::MODE_SYSTEM || self::$useMode == self::MODE_DISABLED)
+        }
+        if (!self::isSuccess() || self::$useMode == self::MODE_SYSTEM || self::$useMode == self::MODE_DISABLED) {
             return;
+        }
         self::$basketBasePrice = array();
-        if (empty($basket) || !is_array($basket))
+        if (empty($basket) || !is_array($basket)) {
             return;
+        }
         foreach ($basket as $code => $basketItem) {
             /** @noinspection PhpMethodOrClassCallIsNotCaseSensitiveInspection */
             self::$basketBasePrice[$code] = (
             $basketItem['CURRENCY'] == self::$config['CURRENCY']
                 ? $basketItem['PRICE']
-                : \CCurrencyRates::convertCurrency($basketItem['PRICE'], $basketItem['CURRENCY'], self::$config['CURRENCY'])
+                : \CCurrencyRates::convertCurrency(
+                $basketItem['PRICE'],
+                $basketItem['CURRENCY'],
+                self::$config['CURRENCY']
+            )
             );
         }
         unset($code, $basketItem);
@@ -438,8 +464,9 @@ class DiscountCompatibility
      */
     public static function getBasketItemBasePrice($code)
     {
-        if (!self::$init)
+        if (!self::$init) {
             self::init();
+        }
         return (isset(self::$basketBasePrice[$code]) ? self::$basketBasePrice[$code] : null);
     }
 
@@ -452,14 +479,18 @@ class DiscountCompatibility
      */
     public static function setBasketItemDiscounts($code, $discountList)
     {
-        if (!self::$init)
+        if (!self::$init) {
             self::init();
-        if (!self::isSuccess() || self::$useMode == self::MODE_SYSTEM || self::$useMode == self::MODE_DISABLED)
+        }
+        if (!self::isSuccess() || self::$useMode == self::MODE_SYSTEM || self::$useMode == self::MODE_DISABLED) {
             return;
-        if (self::$config['SALE_DISCOUNT_ONLY'] == 'Y')
+        }
+        if (self::$config['SALE_DISCOUNT_ONLY'] == 'Y') {
             return;
-        if (!is_array($discountList))
+        }
+        if (!is_array($discountList)) {
             return;
+        }
         self::$basketDiscountList[$code] = $discountList;
     }
 
@@ -471,10 +502,12 @@ class DiscountCompatibility
      */
     public static function getBasketItemDiscounts($code)
     {
-        if (!self::$init)
+        if (!self::$init) {
             self::init();
-        if (self::$config['SALE_DISCOUNT_ONLY'] == 'Y')
+        }
+        if (self::$config['SALE_DISCOUNT_ONLY'] == 'Y') {
             return null;
+        }
         return (isset(self::$basketDiscountList[$code]) ? self::$basketDiscountList[$code] : null);
     }
 
@@ -485,30 +518,35 @@ class DiscountCompatibility
      */
     public static function setBasketItemData($code, $providerData)
     {
-        if ($code == '' || empty($providerData) || !is_array($providerData))
+        if ($code == '' || empty($providerData) || !is_array($providerData)) {
             return;
+        }
         if (isset($providerData['CUSTOM_PRICE']) && $providerData['CUSTOM_PRICE'] == 'Y') {
             static::clearBasketItemData($code);
             return;
         }
-        if (isset($providerData['BASE_PRICE']) && isset($providerData['CURRENCY']))
+        if (isset($providerData['BASE_PRICE']) && isset($providerData['CURRENCY'])) {
             static::setBasketItemBasePrice($code, $providerData['BASE_PRICE'], $providerData['CURRENCY']);
+        }
         if (isset($providerData['DISCOUNT_LIST'])) {
-            if (!empty($providerData['DISCOUNT_LIST']) || isset(self::$basketDiscountList[$code]))
+            if (!empty($providerData['DISCOUNT_LIST']) || isset(self::$basketDiscountList[$code])) {
                 static::setBasketItemDiscounts($code, $providerData['DISCOUNT_LIST']);
+            }
         }
 
         $fields['PRICE'] = static::getBasketItemBasePrice($code);
-        if (empty($fields['PRICE']))
+        if (empty($fields['PRICE'])) {
             return;
+        }
 
         self::$basketItemsData[$code] = $providerData;
 
         $fields['DISCOUNT_PRICE'] = 0;
         $fields['CURRENCY'] = self::$config['CURRENCY'];
 
-        if (self::$config['SALE_DISCOUNT_ONLY'] == 'Y')
+        if (self::$config['SALE_DISCOUNT_ONLY'] == 'Y') {
             return;
+        }
         static::calculateBasketItemDiscount($code, $fields);
     }
 
@@ -520,14 +558,18 @@ class DiscountCompatibility
      */
     public static function clearBasketItemData($code)
     {
-        if (isset(self::$basketBasePrice[$code]))
+        if (isset(self::$basketBasePrice[$code])) {
             unset(self::$basketBasePrice[$code]);
-        if (isset(self::$basketDiscountList[$code]))
+        }
+        if (isset(self::$basketDiscountList[$code])) {
             unset(self::$basketDiscountList[$code]);
-        if (isset(self::$discountResult['BASKET'][$code]))
+        }
+        if (isset(self::$discountResult['BASKET'][$code])) {
             unset(self::$discountResult['BASKET'][$code]);
-        if (isset(self::$basketItemsData[$code]))
+        }
+        if (isset(self::$basketItemsData[$code])) {
             unset(self::$basketItemsData[$code]);
+        }
     }
 
     /**
@@ -553,19 +595,23 @@ class DiscountCompatibility
      */
     public static function fillBasketData(&$basket)
     {
-        if (!self::$init)
+        if (!self::$init) {
             self::init();
-        if (!self::isSuccess() || self::$useMode == self::MODE_SYSTEM || self::$useMode == self::MODE_DISABLED)
+        }
+        if (!self::isSuccess() || self::$useMode == self::MODE_SYSTEM || self::$useMode == self::MODE_DISABLED) {
             return;
-        if (empty($basket) || !is_array($basket))
+        }
+        if (empty($basket) || !is_array($basket)) {
             return;
+        }
         $publicMode = self::usedByClient();
 
         $loadBasketProperties = array();
         foreach ($basket as $basketCode => $basketItem) {
             $code = ($publicMode ? $basketItem['ID'] : $basketCode);
-            if (!isset($basketItem['DISCOUNT_PRICE']))
+            if (!isset($basketItem['DISCOUNT_PRICE'])) {
                 $basketItem['DISCOUNT_PRICE'] = 0;
+            }
             if (!isset($basketItem['BASE_PRICE'])) {
                 $basketItem['BASE_PRICE'] = (isset(self::$basketBasePrice[$code])
                     ? self::$basketBasePrice[$code]
@@ -574,8 +620,9 @@ class DiscountCompatibility
             }
             $checkProperties = true;
             if (self::isCustomPrice($basketItem)) {
-                if (array_key_exists($code, self::$basketDiscountList))
+                if (array_key_exists($code, self::$basketDiscountList)) {
                     unset(self::$basketDiscountList[$code]);
+                }
                 $checkProperties = false;
             }
             if (\CSaleBasketHelper::isSetItem($basketItem)) {
@@ -584,15 +631,16 @@ class DiscountCompatibility
                 $checkProperties = false;
             }
             if (isset(self::$basketItemsData[$code])) {
-                if (isset(self::$basketItemsData[$code]['PRICE_TYPE_ID']))
+                if (isset(self::$basketItemsData[$code]['PRICE_TYPE_ID'])) {
                     $basketItem['PRICE_TYPE_ID'] = self::$basketItemsData[$code]['PRICE_TYPE_ID'];
+                }
             }
 
             if ($checkProperties) {
                 if (!isset($basketItem['PROPERTIES'])) {
-                    if (isset($basketItem['PROPS']))
+                    if (isset($basketItem['PROPS'])) {
                         $basketItem['PROPERTIES'] = $basketItem['PROPS'];
-                    elseif (isset($basketItem['ID'])) {
+                    } elseif (isset($basketItem['ID'])) {
                         $loadBasketProperties[$basketItem['ID']] = $basketCode;
                         $basketItem['PROPERTIES'] = array();
                     }
@@ -603,14 +651,17 @@ class DiscountCompatibility
         }
 
         if (!empty($loadBasketProperties)) {
-            $iterator = Sale\BasketPropertiesCollection::getList(array(
-                'select' => array('*'),
-                'filter' => array('BASKET_ID' => 'ASC', 'SORT' => 'ASC', 'ID' => 'ASC')
-            ));
+            $iterator = Sale\BasketPropertiesCollection::getList(
+                array(
+                    'select' => array('*'),
+                    'filter' => array('BASKET_ID' => 'ASC', 'SORT' => 'ASC', 'ID' => 'ASC')
+                )
+            );
             while ($row = $iterator->fetch()) {
                 $id = $row['ID'];
-                if (!isset($loadBasketProperties[$id]))
+                if (!isset($loadBasketProperties[$id])) {
                     continue;
+                }
                 $basketCode = $loadBasketProperties[$id];
                 $basket[$basketCode]['PROPERTIES'][] = array(
                     'CODE' => ((string)$row['CODE'] != '' ? $row['CODE'] : $row['NAME']),
@@ -635,21 +686,26 @@ class DiscountCompatibility
      */
     public static function calculateBasketDiscounts(&$basket)
     {
-        if (!self::$init)
+        if (!self::$init) {
             return false;
-        if (!self::isSuccess() || self::$useMode == self::MODE_SYSTEM || self::$useMode == self::MODE_DISABLED)
+        }
+        if (!self::isSuccess() || self::$useMode == self::MODE_SYSTEM || self::$useMode == self::MODE_DISABLED) {
             return false;
-        if (empty($basket) || !is_array($basket))
+        }
+        if (empty($basket) || !is_array($basket)) {
             return false;
+        }
         Sale\DiscountCouponsManager::clearApply();
-        if (self::$config['SALE_DISCOUNT_ONLY'] == 'Y' || empty(self::$basketDiscountList))
+        if (self::$config['SALE_DISCOUNT_ONLY'] == 'Y' || empty(self::$basketDiscountList)) {
             return true;
+        }
         $publicMode = self::usedByClient();
 
         foreach ($basket as $basketCode => $basketItem) {
             $code = ($publicMode ? $basketItem['ID'] : $basketCode);
-            if (!static::calculateBasketItemDiscount($code, $basketItem))
+            if (!static::calculateBasketItemDiscount($code, $basketItem)) {
                 return false;
+            }
             if (!empty(self::$discountResult['BASKET'][$code])) {
                 foreach (self::$discountResult['BASKET'][$code] as $row) {
                     if ($row['RESULT']['APPLY'] == 'Y') {
@@ -673,12 +729,15 @@ class DiscountCompatibility
      */
     public static function setApplyMode(&$basket)
     {
-        if (!self::$init)
+        if (!self::$init) {
             return;
-        if (!self::isSuccess() || self::$useMode == self::MODE_SYSTEM || self::$useMode == self::MODE_DISABLED)
+        }
+        if (!self::isSuccess() || self::$useMode == self::MODE_SYSTEM || self::$useMode == self::MODE_DISABLED) {
             return;
-        if (empty($basket) || !is_array($basket))
+        }
+        if (empty($basket) || !is_array($basket)) {
             return;
+        }
         $publicMode = self::usedByClient();
 
         switch (Sale\Discount::getApplyMode()) {
@@ -686,8 +745,9 @@ class DiscountCompatibility
             case Sale\Discount::APPLY_MODE_FULL_DISABLE:
                 foreach ($basket as $basketCode => $basketItem) {
                     $code = ($publicMode ? $basketItem['ID'] : $basketCode);
-                    if (isset(self::$basketDiscountList[$code]) && !empty(self::$basketDiscountList[$code]))
+                    if (isset(self::$basketDiscountList[$code]) && !empty(self::$basketDiscountList[$code])) {
                         $basket[$basketCode]['LAST_DISCOUNT'] = 'Y';
+                    }
                     unset($code);
                 }
                 unset($basketCode, $basketItem);
@@ -696,11 +756,13 @@ class DiscountCompatibility
             case Sale\Discount::APPLY_MODE_FULL_LAST:
                 foreach ($basket as $basketCode => $basketItem) {
                     $code = ($publicMode ? $basketItem['ID'] : $basketCode);
-                    if (!isset(self::$basketDiscountList[$code]) || empty(self::$basketDiscountList[$code]))
+                    if (!isset(self::$basketDiscountList[$code]) || empty(self::$basketDiscountList[$code])) {
                         continue;
+                    }
                     $lastDiscount = end(self::$basketDiscountList[$code]);
-                    if (!empty($lastDiscount['LAST_DISCOUNT']) && $lastDiscount['LAST_DISCOUNT'] == 'Y')
+                    if (!empty($lastDiscount['LAST_DISCOUNT']) && $lastDiscount['LAST_DISCOUNT'] == 'Y') {
                         $basket[$basketCode]['LAST_DISCOUNT'] = 'Y';
+                    }
                 }
                 unset($basketCode, $basketItem);
                 break;
@@ -717,10 +779,12 @@ class DiscountCompatibility
      */
     public static function setOrderData($order)
     {
-        if (array_key_exists('DISCOUNT_DESCR', $order))
+        if (array_key_exists('DISCOUNT_DESCR', $order)) {
             unset($order['DISCOUNT_DESCR']);
-        if (array_key_exists('DISCOUNT_RESULT', $order))
+        }
+        if (array_key_exists('DISCOUNT_RESULT', $order)) {
             unset($order['DISCOUNT_RESULT']);
+        }
         self::$previousOrderData = $order;
     }
 
@@ -754,10 +818,12 @@ class DiscountCompatibility
      */
     public static function calculateSaleDiscount(&$order, $discount)
     {
-        if (!self::$init)
+        if (!self::$init) {
             self::init();
-        if (!self::isSuccess())
+        }
+        if (!self::isSuccess()) {
             return false;
+        }
 
         $order['DISCOUNT_RESULT'] = Sale\Discount\Actions::getActionResult();
         $order['DISCOUNT_DESCR'] = Sale\Discount\Actions::getActionDescription();
@@ -766,8 +832,9 @@ class DiscountCompatibility
         } else {
             $stepResult = self::getStepResultOld($order);
             if (!empty($stepResult)) {
-                if (empty($order['DISCOUNT_DESCR']) || !is_array($order['DISCOUNT_DESCR']))
+                if (empty($order['DISCOUNT_DESCR']) || !is_array($order['DISCOUNT_DESCR'])) {
                     $order['DISCOUNT_DESCR'] = Discount\Result\CompatibleFormat::getDiscountDescription($stepResult);
+                }
             }
         }
         Sale\Discount\Actions::fillCompatibleFields($order);
@@ -781,20 +848,23 @@ class DiscountCompatibility
 
             $discount['ACTIONS_DESCR'] = $order['DISCOUNT_DESCR'];
             $discountResult = self::convertDiscount($discount);
-            if (!$discountResult->isSuccess())
+            if (!$discountResult->isSuccess()) {
                 return false;
+            }
 
             $orderDiscountId = $discountResult->getId();
             $discountData = $discountResult->getData();
             $discount['ORDER_DISCOUNT_ID'] = $orderDiscountId;
 
             if ($discountData['USE_COUPONS'] == 'Y') {
-                if (empty($discount['COUPON']))
+                if (empty($discount['COUPON'])) {
                     return false;
+                }
 
                 $couponResult = self::convertCoupon($discount['COUPON']['COUPON'], $orderDiscountId);
-                if (!$couponResult->isSuccess())
+                if (!$couponResult->isSuccess()) {
                     return false;
+                }
                 $orderCouponId = $couponResult->getId();
                 Sale\DiscountCouponsManager::setApply($orderCouponId, $stepResult);
                 unset($couponResult);
@@ -805,7 +875,10 @@ class DiscountCompatibility
 
         self::$currentOrderData = $order;
         if ($applied && $orderCouponId != '') {
-            $couponApply = Sale\DiscountCouponsManager::setApply(self::$couponsCache[$orderCouponId]['COUPON'], $stepResult);
+            $couponApply = Sale\DiscountCouponsManager::setApply(
+                self::$couponsCache[$orderCouponId]['COUPON'],
+                $stepResult
+            );
             unset($couponApply);
         }
 
@@ -814,10 +887,12 @@ class DiscountCompatibility
                 $publicMode = self::usedByClient();
                 foreach ($order['BASKET_ITEMS'] as $basketCode => $basketItem) {
                     $code = ($publicMode ? $basketItem['ID'] : $basketCode);
-                    if (empty($stepResult['BASKET'][$code]))
+                    if (empty($stepResult['BASKET'][$code])) {
                         continue;
-                    if ($stepResult['BASKET'][$code]['APPLY'] == 'Y')
+                    }
+                    if ($stepResult['BASKET'][$code]['APPLY'] == 'Y') {
                         $order['BASKET_ITEMS'][$basketCode]['ACTION_APPLIED'] = 'Y';
+                    }
                 }
                 unset($code, $basketCode, $basketItem);
                 unset($publicMode);
@@ -845,12 +920,14 @@ class DiscountCompatibility
         $extMode = ($extMode === true);
 
         self::getApplyDiscounts();
-        if ($extMode)
+        if ($extMode) {
             self::remakingDiscountResult();
+        }
 
         $result = self::$discountResult;
-        if ($extMode)
+        if ($extMode) {
             unset($result['BASKET'], $result['ORDER']);
+        }
         //$result['CONVERTED_ORDER'] = 'Y';
         return $result;
     }
@@ -874,12 +951,15 @@ class DiscountCompatibility
      */
     public static function getResult()
     {
-        if (!self::$init || self::$useMode == self::MODE_SYSTEM)
+        if (!self::$init || self::$useMode == self::MODE_SYSTEM) {
             return false;
-        if (self::$useMode == self::MODE_ORDER)
+        }
+        if (self::$useMode == self::MODE_ORDER) {
             return array();
-        if (self::$useMode == self::MODE_DISABLED)
+        }
+        if (self::$useMode == self::MODE_DISABLED) {
             return array();
+        }
         $result = array(
             'CALCULATE' => array(
                 'USE_MODE' => self::$discountUseMode,
@@ -895,18 +975,21 @@ class DiscountCompatibility
 
         if (!empty(self::$basketBasePrice)) {
             foreach (self::$basketBasePrice as $index => $price) {
-                if (!isset(self::$basketCodes[$index]))
+                if (!isset(self::$basketCodes[$index])) {
                     continue;
+                }
                 $result['BASE_PRICE'][self::$basketCodes[$index]] = $price;
             }
             unset($index, $price);
         }
 
-        if (!empty(self::$discountsCache))
+        if (!empty(self::$discountsCache)) {
             $result['DISCOUNT_LIST'] = self::$discountsCache;
+        }
 
-        if (!empty(self::$couponsCache))
+        if (!empty(self::$couponsCache)) {
             $result['COUPONS_LIST'] = self::$couponsCache;
+        }
 
         if (
             !empty(self::$discountResult['BASKET'])
@@ -924,8 +1007,9 @@ class DiscountCompatibility
 
         if (!empty(self::$discountResult['BASKET'])) {
             foreach (self::$discountResult['BASKET'] as $index => $discountList) {
-                if (!isset(self::$basketCodes[$index]))
+                if (!isset(self::$basketCodes[$index])) {
                     continue;
+                }
                 $result['DISCOUNT_RESULT']['APPLY_BLOCKS'][0]['BASKET'][self::$basketCodes[$index]] = $discountList;
             }
             unset($index, $discountList);
@@ -933,8 +1017,9 @@ class DiscountCompatibility
 
         if (!empty(self::$discountResult['BASKET_ROUND'])) {
             foreach (self::$discountResult['BASKET_ROUND'] as $index => $roundData) {
-                if (!isset(self::$basketCodes[$index]))
+                if (!isset(self::$basketCodes[$index])) {
                     continue;
+                }
                 $result['DISCOUNT_RESULT']['APPLY_BLOCKS'][0]['BASKET_ROUND'][self::$basketCodes[$index]] = $roundData;
             }
             unset($index, $roundData);
@@ -945,8 +1030,9 @@ class DiscountCompatibility
                 if (!empty($discount['RESULT']['BASKET'])) {
                     $newBasket = array();
                     foreach ($discount['RESULT']['BASKET'] as $index => $basketItem) {
-                        if (!isset(self::$basketCodes[$index]))
+                        if (!isset(self::$basketCodes[$index])) {
                             continue;
+                        }
                         $basketItem['BASKET_ID'] = self::$basketCodes[$index];
                         $newBasket[self::$basketCodes[$index]] = $basketItem;
                     }
@@ -978,15 +1064,17 @@ class DiscountCompatibility
      */
     public static function roundPrices(array &$basket, array $orderData = array())
     {
-        if (empty($basket))
+        if (empty($basket)) {
             return;
+        }
 
         $publicMode = self::usedByClient();
 
         $clearedBasket = array();
         foreach ($basket as $basketCode => $basketItem) {
-            if (\CSaleBasketHelper::isSetItem($basketItem))
+            if (\CSaleBasketHelper::isSetItem($basketItem)) {
                 continue;
+            }
             $clearedBasket[$basketCode] = $basketItem;
         }
         unset($basketCode, $basketItem);
@@ -998,8 +1086,9 @@ class DiscountCompatibility
                 $orderData
             );
             foreach ($result as $basketCode => $roundResult) {
-                if (empty($roundResult) || !is_array($roundResult))
+                if (empty($roundResult) || !is_array($roundResult)) {
                     continue;
+                }
 
                 $code = ($publicMode ? $basket[$basketCode]['ID'] : $basketCode);
 
@@ -1011,8 +1100,9 @@ class DiscountCompatibility
                     $basket[$basketCode]['DISCOUNT_PRICE'] = 0;
                 }
 
-                if (!isset(self::$discountResult['BASKET_ROUND']))
+                if (!isset(self::$discountResult['BASKET_ROUND'])) {
                     self::$discountResult['BASKET_ROUND'] = array();
+                }
                 self::$discountResult['BASKET_ROUND'][$code] = array(
                     'APPLY' => 'Y',
                     'ROUND_RULE' => $roundResult['ROUND_RULE']
@@ -1047,10 +1137,12 @@ class DiscountCompatibility
      */
     protected static function calculateBasketItemDiscount($code, $fields)
     {
-        if (\CSaleBasketHelper::isSetItem($fields))
+        if (\CSaleBasketHelper::isSetItem($fields)) {
             return true;
-        if (empty(self::$basketDiscountList[$code]))
+        }
+        if (empty(self::$basketDiscountList[$code])) {
             return true;
+        }
 
         $itemData = array(
             'MODULE_ID' => $fields['MODULE'],
@@ -1059,28 +1151,32 @@ class DiscountCompatibility
         );
         foreach (self::$basketDiscountList[$code] as $index => $discount) {
             $discountResult = self::convertDiscount($discount);
-            if (!$discountResult->isSuccess())
+            if (!$discountResult->isSuccess()) {
                 return false;
+            }
 
             $orderDiscountId = $discountResult->getId();
             $discountData = $discountResult->getData();
             $orderCouponId = '';
             self::$basketDiscountList[$code][$index]['ORDER_DISCOUNT_ID'] = $orderDiscountId;
             if ($discountData['USE_COUPONS'] == 'Y') {
-                if (empty($discount['COUPON']))
+                if (empty($discount['COUPON'])) {
                     return false;
+                }
 
                 $couponResult = self::convertCoupon($discount['COUPON'], $orderDiscountId);
-                if (!$couponResult->isSuccess())
+                if (!$couponResult->isSuccess()) {
                     return false;
+                }
 
                 $orderCouponId = $couponResult->getId();
                 Sale\DiscountCouponsManager::setApplyByProduct($itemData, array($orderCouponId));
                 unset($couponResult);
             }
             unset($discountData, $discountResult);
-            if (!isset(self::$discountResult['BASKET'][$code]))
+            if (!isset(self::$discountResult['BASKET'][$code])) {
                 self::$discountResult['BASKET'][$code] = array();
+            }
             self::$discountResult['BASKET'][$code][$index] = array(
                 'DISCOUNT_ID' => $orderDiscountId,
                 'COUPON_ID' => $orderCouponId,
@@ -1105,13 +1201,16 @@ class DiscountCompatibility
 
                 $applyProduct = null;
                 eval('$applyProduct=' . $orderApplication . ';');
-                if (is_callable($applyProduct))
+                if (is_callable($applyProduct)) {
                     $applyProduct($fields);
+                }
                 unset($applyProduct);
 
                 if (!empty($fields['DISCOUNT_RESULT'])) {
                     self::$discountResult['BASKET'][$code][$index]['RESULT']['DESCR_DATA'] = $fields['DISCOUNT_RESULT']['BASKET'];
-                    self::$discountResult['BASKET'][$code][$index]['RESULT']['DESCR'] = self::formatDescription($fields['DISCOUNT_RESULT']);
+                    self::$discountResult['BASKET'][$code][$index]['RESULT']['DESCR'] = self::formatDescription(
+                        $fields['DISCOUNT_RESULT']
+                    );
                 }
                 unset($fields['DISCOUNT_RESULT']);
             }
@@ -1181,10 +1280,12 @@ class DiscountCompatibility
         if (!is_array($coupon)) {
             $couponData = Sale\DiscountCouponsManager::getEnteredCoupon($coupon, true);
             if (empty($couponData)) {
-                $result->addError(new Main\Entity\EntityError(
-                    Loc::getMessage('BX_SALE_DISCOUNT_ERR_COUPON_NOT_FOUND'),
-                    self::ERROR_ID
-                ));
+                $result->addError(
+                    new Main\Entity\EntityError(
+                        Loc::getMessage('BX_SALE_DISCOUNT_ERR_COUPON_NOT_FOUND'),
+                        self::ERROR_ID
+                    )
+                );
                 return $result;
             }
             $coupon = array(
@@ -1199,8 +1300,9 @@ class DiscountCompatibility
         $coupon['ID'] = 0;
 
         $orderCouponId = $coupon['COUPON'];
-        if (!isset(self::$couponsCache[$orderCouponId]))
+        if (!isset(self::$couponsCache[$orderCouponId])) {
             self::$couponsCache[$orderCouponId] = $coupon;
+        }
         $result->setId($orderCouponId);
         $result->setData($coupon);
         unset($coupon, $orderCouponId);
@@ -1216,29 +1318,34 @@ class DiscountCompatibility
     protected static function formatDescription($descr)
     {
         $result = array();
-        if (empty($descr) || !is_array($descr))
+        if (empty($descr) || !is_array($descr)) {
             return $result;
+        }
         if (isset($descr['DELIVERY'])) {
             $result['DELIVERY'] = array();
             foreach ($descr['DELIVERY'] as $index => $value) {
                 $result['DELIVERY'][$index] = Sale\OrderDiscountManager::formatDescription($value);
-                if ($result['DELIVERY'][$index] == false)
+                if ($result['DELIVERY'][$index] == false) {
                     unset($result['DELIVERY'][$index]);
+                }
             }
             unset($value, $index);
-            if (!empty($result['DELIVERY']))
+            if (!empty($result['DELIVERY'])) {
                 $result['DELIVERY'] = implode(', ', $result['DELIVERY']);
+            }
         }
         if (isset($descr['BASKET'])) {
             $result['BASKET'] = array();
             foreach ($descr['BASKET'] as $index => $value) {
                 $result['BASKET'][$index] = Sale\OrderDiscountManager::formatDescription($value);
-                if ($result['BASKET'][$index] == false)
+                if ($result['BASKET'][$index] == false) {
                     unset($result['BASKET'][$index]);
+                }
             }
             unset($value, $index);
-            if (!empty($result['BASKET']))
+            if (!empty($result['BASKET'])) {
                 $result['BASKET'] = implode(', ', $result['BASKET']);
+            }
         }
         return $result;
     }
@@ -1263,12 +1370,14 @@ class DiscountCompatibility
                 'DESCR_DATA' => $stepResult['DELIVERY'],
                 'ACTION_BLOCK_LIST' => array_keys($stepResult['DELIVERY'])
             );
-            if (is_array($result['DELIVERY']['DESCR']))
+            if (is_array($result['DELIVERY']['DESCR'])) {
                 $result['DELIVERY']['DESCR'] = implode(', ', $result['DELIVERY']['DESCR']);
+            }
         }
         if (!empty($stepResult['BASKET']) && is_array($stepResult['BASKET'])) {
-            if (!isset($result['BASKET']))
+            if (!isset($result['BASKET'])) {
                 $result['BASKET'] = array();
+            }
             foreach ($stepResult['BASKET'] as $basketCode => $basketResult) {
                 $code = ($publicMode ? $order['BASKET_ITEMS'][$basketCode]['ID'] : $basketCode);
                 $result['BASKET'][$code] = array(
@@ -1280,8 +1389,9 @@ class DiscountCompatibility
                     'BASKET_ID' => $code,
                     'ACTION_BLOCK_LIST' => array_keys($basketResult)
                 );
-                if (is_array($result['BASKET'][$code]['DESCR']))
+                if (is_array($result['BASKET'][$code]['DESCR'])) {
                     $result['BASKET'][$code]['DESCR'] = implode(', ', $result['BASKET'][$code]['DESCR']);
+                }
             }
             unset($code, $basketCode, $basketResult);
         }
@@ -1319,12 +1429,14 @@ class DiscountCompatibility
         }
         if (!empty(self::$previousOrderData['BASKET_ITEMS']) && !empty($currentOrder['BASKET_ITEMS'])) {
             foreach (self::$previousOrderData['BASKET_ITEMS'] as $basketCode => $item) {
-                if (!isset($currentOrder['BASKET_ITEMS'][$basketCode]))
+                if (!isset($currentOrder['BASKET_ITEMS'][$basketCode])) {
                     continue;
+                }
                 $code = ($publicMode ? $currentOrder['BASKET_ITEMS'][$basketCode]['ID'] : $basketCode);
                 if ($item['PRICE'] != $currentOrder['BASKET_ITEMS'][$basketCode]['PRICE']) {
-                    if (!isset($result['BASKET']))
+                    if (!isset($result['BASKET'])) {
                         $result['BASKET'] = array();
+                    }
                     $descr = Discount\Result\CompatibleFormat::createResultDescription(
                         $currentOrder['BASKET_ITEMS'][$basketCode]['PRICE'],
                         $item['PRICE'],
@@ -1377,15 +1489,17 @@ class DiscountCompatibility
                 unset($key, $item);
                 $basketKeys = array_keys($order['BASKET_ITEMS']);
                 foreach ($basketKeys as &$key) {
-                    if ($key == $maxKey)
+                    if ($key == $maxKey) {
                         continue;
+                    }
                     $order['BASKET_ITEMS'][$key] = self::$previousOrderData['BASKET_ITEMS'][$key];
                 }
                 unset($key);
                 $basketKeys = array_keys($stepResult['BASKET']);
                 foreach ($basketKeys as &$key) {
-                    if ($key == $basketId)
+                    if ($key == $basketId) {
                         continue;
+                    }
                     unset($stepResult['BASKET'][$key]);
                 }
                 unset($key);
@@ -1438,10 +1552,12 @@ class DiscountCompatibility
             foreach (self::$discountResult['BASKET'] as $basketCode => $discountList) {
                 foreach ($discountList as $discount) {
                     if ($discount['RESULT']['APPLY'] == 'Y') {
-                        if (isset($discountApply[$discount['DISCOUNT_ID']]))
+                        if (isset($discountApply[$discount['DISCOUNT_ID']])) {
                             $discountApply[$discount['DISCOUNT_ID']]['APPLY'] = 'Y';
-                        if (isset($couponApply[$discount['COUPON_ID']]))
+                        }
+                        if (isset($couponApply[$discount['COUPON_ID']])) {
                             $couponApply[$discount['COUPON_ID']]['APPLY'] = 'Y';
+                        }
                     }
                 }
                 unset($discount);
@@ -1454,19 +1570,23 @@ class DiscountCompatibility
                 if (!empty($discount['RESULT']['BASKET'])) {
                     foreach ($discount['RESULT']['BASKET'] as $basketCode => $applyList) {
                         if ($applyList['APPLY'] == 'Y') {
-                            if (isset($discountApply[$discount['DISCOUNT_ID']]))
+                            if (isset($discountApply[$discount['DISCOUNT_ID']])) {
                                 $discountApply[$discount['DISCOUNT_ID']]['APPLY'] = 'Y';
-                            if (isset($couponApply[$discount['COUPON_ID']]))
+                            }
+                            if (isset($couponApply[$discount['COUPON_ID']])) {
                                 $couponApply[$discount['COUPON_ID']]['APPLY'] = 'Y';
+                            }
                         }
                     }
                     unset($basketCode, $applyList);
                 }
                 if (!empty($discount['RESULT']['DELIVERY']) && $discount['RESULT']['DELIVERY']['APPLY'] == 'Y') {
-                    if (isset($discountApply[$discount['DISCOUNT_ID']]))
+                    if (isset($discountApply[$discount['DISCOUNT_ID']])) {
                         $discountApply[$discount['DISCOUNT_ID']]['APPLY'] = 'Y';
-                    if (isset($couponApply[$discount['COUPON_ID']]))
+                    }
+                    if (isset($couponApply[$discount['COUPON_ID']])) {
                         $couponApply[$discount['COUPON_ID']]['APPLY'] = 'Y';
+                    }
                 }
             }
             unset($discount);
@@ -1486,8 +1606,9 @@ class DiscountCompatibility
 
         if (!empty(self::$discountResult['BASKET'])) {
             foreach (self::$discountResult['BASKET'] as $basketCode => $discountList) {
-                if (!isset($basket[$basketCode]))
+                if (!isset($basket[$basketCode])) {
                     $basket[$basketCode] = array();
+                }
                 foreach ($discountList as $discount) {
                     $basket[$basketCode][] = array(
                         'DISCOUNT_ID' => $discount['DISCOUNT_ID'],
@@ -1505,8 +1626,9 @@ class DiscountCompatibility
             foreach (self::$discountResult['ORDER'] as $discount) {
                 if (!empty($discount['RESULT']['BASKET'])) {
                     foreach ($discount['RESULT']['BASKET'] as $basketCode => $applyList) {
-                        if (!isset($basket[$basketCode]))
+                        if (!isset($basket[$basketCode])) {
                             $basket[$basketCode] = array();
+                        }
                         $basket[$basketCode][] = array(
                             'DISCOUNT_ID' => $discount['DISCOUNT_ID'],
                             'COUPON_ID' => $discount['COUPON_ID'],

@@ -7,12 +7,12 @@ use Bitrix\Main\Result;
 
 class WorkflowTemplate
 {
-    const WORKFLOW_TEMPLATE_COPY_ERROR = "WORKFLOW_TEMPLATE_COPY_ERROR";
+    const WORKFLOW_TEMPLATE_COPY_ERROR = 'WORKFLOW_TEMPLATE_COPY_ERROR';
 
-    private $targetDocumentType = [];
-    private $mapStatusIdsCopiedDocument = [];
+    protected $targetDocumentType = [];
+    protected $mapStatusIdsCopiedDocument = [];
 
-    private $result;
+    protected $result;
 
     public function __construct($targetDocumentType = [], $mapStatusIdsCopiedDocument = [])
     {
@@ -24,22 +24,22 @@ class WorkflowTemplate
 
     public function getFields($workflowTemplateId)
     {
-        $queryResult = \CBPWorkflowTemplateLoader::getList([], ["ID" => $workflowTemplateId]);
+        $queryResult = \CBPWorkflowTemplateLoader::getList([], ['ID' => $workflowTemplateId]);
         return (($fields = $queryResult->fetch()) ? $fields : []);
     }
 
     public function prepareFieldsToCopy(array $fields)
     {
-        if (isset($fields["ID"])) {
-            unset($fields["ID"]);
+        if (isset($fields['ID'])) {
+            unset($fields['ID']);
         }
 
         if ($this->targetDocumentType) {
-            $fields["DOCUMENT_TYPE"] = $this->targetDocumentType;
+            $fields['DOCUMENT_TYPE'] = $this->targetDocumentType;
         }
 
-        if (array_key_exists($fields["DOCUMENT_STATUS"], $this->mapStatusIdsCopiedDocument)) {
-            $fields["DOCUMENT_STATUS"] = $this->mapStatusIdsCopiedDocument[$fields["DOCUMENT_STATUS"]];
+        if (array_key_exists($fields['DOCUMENT_STATUS'], $this->mapStatusIdsCopiedDocument)) {
+            $fields['DOCUMENT_STATUS'] = $this->mapStatusIdsCopiedDocument[$fields['DOCUMENT_STATUS']];
         }
 
         return $fields;
@@ -54,8 +54,9 @@ class WorkflowTemplate
         }
 
         if (!$result) {
-            $this->result->addError(new Error(
-                "Failed to copy workflow template", self::WORKFLOW_TEMPLATE_COPY_ERROR));
+            $this->result->addError(
+                new Error('Failed to copy workflow template', self::WORKFLOW_TEMPLATE_COPY_ERROR)
+            );
         }
 
         return $result;

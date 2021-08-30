@@ -5,7 +5,11 @@ use Bitrix\Main\Entity;
 class CReport
 {
     protected static $totalCountableAggrFuncs = [
-        'SUM', 'COUNT_DISTINCT', 'AVG', 'MAX', 'MIN'
+        'SUM',
+        'COUNT_DISTINCT',
+        'AVG',
+        'MAX',
+        'MIN'
     ];
 
     protected static $alternateColumnPhrases = null;
@@ -103,7 +107,9 @@ class CReport
         $strSql = "UPDATE b_report SET " . $strUpdate . " WHERE ID='" . $DB->ForSQL($ID) . "'";
 
         $result = $DB->QueryBind(
-            $strSql, array('SETTINGS' => $settings, 'DESCRIPTION' => $description), false,
+            $strSql,
+            array('SETTINGS' => $settings, 'DESCRIPTION' => $description),
+            false,
             "File: " . __FILE__ . "<br>Line: " . __LINE__
         );
 
@@ -151,10 +157,12 @@ class CReport
     {
         global $USER;
 
-        return Bitrix\Report\ReportTable::getList(array(
-            'select' => array('ID', 'TITLE', 'DESCRIPTION', 'CREATED_DATE'),
-            'filter' => array('=CREATED_BY' => $USER->GetID(), '=OWNER_ID' => $owner)
-        ));
+        return Bitrix\Report\ReportTable::getList(
+            array(
+                'select' => array('ID', 'TITLE', 'DESCRIPTION', 'CREATED_DATE'),
+                'filter' => array('=CREATED_BY' => $USER->GetID(), '=OWNER_ID' => $owner)
+            )
+        );
     }
 
     public static function setViewParams($id, $templateName, $strParams)
@@ -162,7 +170,9 @@ class CReport
         global $USER;
 
         $result = false;
-        if (empty($templateName)) $templateName = '.default';
+        if (empty($templateName)) {
+            $templateName = '.default';
+        }
         if (
             get_class($USER) === 'CUser'
             && $id !== null && intval($id) >= 0
@@ -172,7 +182,11 @@ class CReport
             $user_id = $USER->GetId();
             if ($user_id != null) {
                 $result = CUserOptions::SetOption(
-                    'report', 'view_params_' . $id . '_' . $templateName, $_SERVER['QUERY_STRING'], false, $user_id
+                    'report',
+                    'view_params_' . $id . '_' . $templateName,
+                    $_SERVER['QUERY_STRING'],
+                    false,
+                    $user_id
                 );
             }
         }
@@ -185,15 +199,19 @@ class CReport
         global $USER;
 
         $result = '';
-        if (empty($templateName)) $templateName = '.default';
+        if (empty($templateName)) {
+            $templateName = '.default';
+        }
         if (get_class($USER) === 'CUser' && $id !== null && intval($id) >= 0 && !empty($templateName)) {
             $user_id = $USER->GetId();
             if ($user_id != null) {
                 $result = CUserOptions::GetOption(
-                    'report', 'view_params_' . $id . '_' . $templateName, false, $user_id
+                    'report',
+                    'view_params_' . $id . '_' . $templateName,
+                    false,
+                    $user_id
                 );
             }
-
         }
 
         return $result;
@@ -210,8 +228,9 @@ class CReport
                 while ($row = $dbRes->fetch()) {
                     $userId = (int)$row['USER_ID'];
                     if ($userId > 0) {
-                        if (strpos($row['NAME'], 'view_params_' . $id . '_') === 0)
+                        if (mb_strpos($row['NAME'], 'view_params_' . $id . '_') === 0) {
                             CUserOptions::DeleteOption('report', $row['NAME'], false, $userId);
+                        }
                     }
                 }
             }
@@ -223,7 +242,9 @@ class CReport
     {
         global $DB, $USER;
 
-        $strSql = "SELECT COUNT(ID) AS CNT FROM b_report WHERE CREATED_BY='" . $DB->ForSql($USER->GetID()) . "' AND OWNER_ID='" . $DB->ForSql($owner) . "'";
+        $strSql = "SELECT COUNT(ID) AS CNT FROM b_report WHERE CREATED_BY='" . $DB->ForSql(
+                $USER->GetID()
+            ) . "' AND OWNER_ID='" . $DB->ForSql($owner) . "'";
 
         $res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
         $row = $res->Fetch();
@@ -394,8 +415,8 @@ class CReport
                 $eElementTitle = $treeElem['field']->getLangCode();
 
                 // PRCNT hack should not be here
-                if (substr($rElementTitle, -12) === '_PRCNT_FIELD') {
-                    $messageCode = substr($rElementTitle, 0, -12) . '_FIELD';
+                if (mb_substr($rElementTitle, -12) === '_PRCNT_FIELD') {
+                    $messageCode = mb_substr($rElementTitle, 0, -12) . '_FIELD';
                 } else {
                     $messageCode = $rElementTitle;
                 }
@@ -420,8 +441,8 @@ class CReport
 
             if (!isset($treeElem['isUF']) || !$treeElem['isUF']) {
                 // PRCNT hack should not be here
-                if (substr($elementTitle, -12) === '_PRCNT_FIELD') {
-                    $messageCode = substr($elementTitle, 0, -12) . '_FIELD';
+                if (mb_substr($elementTitle, -12) === '_PRCNT_FIELD') {
+                    $messageCode = mb_substr($elementTitle, 0, -12) . '_FIELD';
                 } else {
                     $messageCode = $elementTitle;
                 }
@@ -439,7 +460,7 @@ class CReport
                 $humanTitle = $treeElem['fieldName'];
             }
 
-            if (substr($elementTitle, -12) == '_PRCNT_FIELD') {
+            if (mb_substr($elementTitle, -12) == '_PRCNT_FIELD') {
                 $humanTitle .= ' (%)';
             }
 
@@ -501,7 +522,7 @@ class CReport
             $elem = $select[$elemIndex];
             $result = false;
 
-            if (strlen($elem['prcnt']) > 0 && $elem['prcnt'] !== 'self_column') {
+            if ($elem['prcnt'] <> '' && $elem['prcnt'] !== 'self_column') {
                 $result = self::checkSelectViewElementCyclicDependency($select, $elem['prcnt']);
             }
             unset($elems[$elemIndex]);
@@ -521,14 +542,20 @@ class CReport
      *
      * @return array
      */
-    public static function prepareSelectViewElement($elem, $select, $isInitEntityAggregated, $fList, $fChainList,
-                                                    $helperClassName, Entity\Base $entity)
-    {
+    public static function prepareSelectViewElement(
+        $elem,
+        $select,
+        $isInitEntityAggregated,
+        $fList,
+        $fChainList,
+        $helperClassName,
+        Entity\Base $entity
+    ) {
         $selectElem = null;
         $totalInfo = null;
         $alias = null;
 
-        if (empty($elem['aggr']) && !strlen($elem['prcnt'])) {
+        if (empty($elem['aggr']) && !mb_strlen($elem['prcnt'])) {
             $selectElem = $elem['name'];
         } else {
             $expression = '';
@@ -570,7 +597,8 @@ class CReport
                 if ($elem['aggr'] == 'COUNT_DISTINCT') {
                     $dataType = 'integer';
                     $expression = array(
-                        'COUNT(DISTINCT ' . $localDef . ')', $elem['name']
+                        'COUNT(DISTINCT ' . $localDef . ')',
+                        $elem['name']
                     );
                 } else {
                     if ($dataType == 'boolean') {
@@ -579,7 +607,8 @@ class CReport
 
                     if ($elem['aggr'] == 'GROUP_CONCAT') {
                         $expression = array(
-                            $localDef, $elem['name']
+                            $localDef,
+                            $elem['name']
                         );
                     } else {
                         if ($elem['aggr'] === 'AVG') {
@@ -647,8 +676,10 @@ class CReport
                                 $cntQuery->setTableAliasPostfix('_cnt');
 
                                 $sumQuery = new Entity\Query($entity);
-                                $sumQuery->addSelect(new Entity\ExpressionField(
-                                        'SUM', 'SUM(' . $localDef . ')', $elem['name'])
+                                $sumQuery->addSelect(
+                                    new Entity\ExpressionField(
+                                        'SUM', 'SUM(' . $localDef . ')', $elem['name']
+                                    )
                                 );
                                 $sumQuery->setFilter($filter);
                                 $sumQuery->setTableAliasPostfix('_sum');
@@ -682,7 +713,7 @@ class CReport
                 }
             }
 
-            if (strlen($elem['prcnt'])) {
+            if ($elem['prcnt'] <> '') {
                 $alias = $alias . '_PRCNT';
                 $dataType = 'integer';
 
@@ -768,7 +799,7 @@ class CReport
             $title .= ' (' . GetMessage('REPORT_SELECT_CALC_VAR_' . $view['aggr']) . ')';
         }
 
-        if (strlen($view['prcnt'])) {
+        if ($view['prcnt'] <> '') {
             if ($view['prcnt'] == 'self_column') {
                 $title .= ' (%)';
             } else {
@@ -890,14 +921,16 @@ class CReport
                                 $runtime[$fieldAlias] = array(
                                     'data_type' => 'integer',  // until we don't have group_concat
                                     'expression' => array(
-                                        'COUNT(DISTINCT %s)', $fieldDefinition
+                                        'COUNT(DISTINCT %s)',
+                                        $fieldDefinition
                                     )
                                 );
                             } else {
                                 $runtime[$fieldAlias] = array(
                                     'data_type' => call_user_func(array($helper_class, 'getFieldDataType'), $field),
                                     'expression' => array(
-                                        $fieldAggr . '(%s)', $fieldDefinition
+                                        $fieldAggr . '(%s)',
+                                        $fieldDefinition
                                     )
                                 );
                             }
@@ -934,11 +967,14 @@ class CReport
     {
         foreach ($select as $k => $def) {
             if (
-                (is_string($def) && (substr($def, -11) == '.SHORT_NAME' || $def === 'SHORT_NAME'))
-                || (is_array($def) && count($def['expression']) === 2 && substr($def['expression'][1], -11) == '.SHORT_NAME')
+                (is_string($def) && (mb_substr($def, -11) == '.SHORT_NAME' || $def === 'SHORT_NAME'))
+                || (is_array($def) && count($def['expression']) === 2 && mb_substr(
+                        $def['expression'][1],
+                        -11
+                    ) == '.SHORT_NAME')
             ) {
                 $definition = is_string($def) ? $def : $def['expression'][1];
-                $pre = substr($definition, 0, -11);
+                $pre = mb_substr($definition, 0, -11);
                 $_alias = Entity\QueryChain::getAliasByDefinition($entity, $definition);
 
                 $expression = self::getFormattedNameExpr($format, $pre);
@@ -954,12 +990,16 @@ class CReport
                 } else {
                     $arConcatNameElements = array($DB->IsNull('%s', '\' \''));
                     $n = $nNameElements;
-                    while (--$n > 0)
+                    while (--$n > 0) {
                         $arConcatNameElements[] = $DB->IsNull('%s', '\' \'');
+                    }
                     $strConcatNameElements = call_user_func_array(array($DB, 'concat'), $arConcatNameElements);
-                    $expression[0] = 'CASE WHEN ' . $DB->Length('LTRIM(RTRIM(' . $strConcatNameElements . '))') . '>0 THEN ' . $expression[0] . ' ELSE %s END';
-                    for ($i = 1; $i <= $nNameElements; $i++)
+                    $expression[0] = 'CASE WHEN ' . $DB->Length(
+                            'LTRIM(RTRIM(' . $strConcatNameElements . '))'
+                        ) . '>0 THEN ' . $expression[0] . ' ELSE %s END';
+                    for ($i = 1; $i <= $nNameElements; $i++) {
                         $expression[] = $expression[$i];
+                    }
                     $expression[] = (empty($pre) ? '' : $pre . '.') . 'LOGIN';
                 }
 
@@ -973,7 +1013,7 @@ class CReport
                     );
                 } else {
                     // add aggr
-                    if (substr($def['expression'][0], 0, 14) == 'COUNT(DISTINCT') {
+                    if (mb_substr($def['expression'][0], 0, 14) == 'COUNT(DISTINCT') {
                         $_alias = 'COUNT_DISTINCT_' . $_alias;
                     } elseif ($grc) {
                         $_alias = 'GROUP_CONCAT_' . $_alias;
@@ -1049,7 +1089,6 @@ class CReport
                 }
 
                 if ($subFilter['type'] == 'field') {
-
                     $compare = self::$iBlockCompareVariations[$subFilter['compare']];
                     $name = $subFilter['name'];
                     $value = $subFilter['value'];
@@ -1070,9 +1109,11 @@ class CReport
                         default:
                             $iFilterItems[] = [$compare . $name => $value];
                     }
-                } else if ($subFilter['type'] == 'filter') {
-                    // hold link to another filter
-                    $iFilterItems[] = 'FILTER_' . $subFilter['name'];
+                } else {
+                    if ($subFilter['type'] == 'filter') {
+                        // hold link to another filter
+                        $iFilterItems[] = 'FILTER_' . $subFilter['name'];
+                    }
                 }
             }
 
@@ -1095,7 +1136,7 @@ class CReport
         foreach ($filter as &$filterInfo) {
             foreach ($filterInfo as $key => $subFilter) {
                 if ($key !== 'LOGIC' && is_string($subFilter)) {
-                    $sfId = substr($subFilter, 7);
+                    $sfId = mb_substr($subFilter, 7);
 
                     if (array_key_exists($sfId, $filter)) {
                         $filterInfo[$key] = &$filter[$sfId];
@@ -1114,11 +1155,11 @@ class CReport
         foreach ($tree as $treeElem) {
             //$fullHumanTitles[$treeElem['fieldName']] = $treeElem['fullHumanTitle'];
             $fullHumanTitle = $treeElem['fullHumanTitle'];
-            if (substr($treeElem['fieldName'], -11) == '.SHORT_NAME')    // hack for ticket 0037576
+            if (mb_substr($treeElem['fieldName'], -11) == '.SHORT_NAME')    // hack for ticket 0037576
             {
-                $pos = strrpos($fullHumanTitle, ':');
+                $pos = mb_strrpos($fullHumanTitle, ':');
                 if ($pos !== false) {
-                    $fullHumanTitle = substr($fullHumanTitle, 0, $pos);
+                    $fullHumanTitle = mb_substr($fullHumanTitle, 0, $pos);
                 }
             }
             $fullHumanTitles[$treeElem['fieldName']] = $fullHumanTitle;
@@ -1138,11 +1179,26 @@ class CReport
 
         $values = array(
             '#NAME#' => array($DB->IsNull('%s', '\' \''), 'NAME'),
-            '#NAME_SHORT#' => array($DB->Concat("UPPER(" . $DB->Substr($DB->IsNull('%s', '\' \''), 1, 1) . ")", "'.'"), 'NAME'),
+            '#NAME_SHORT#' => array(
+                $DB->Concat("UPPER(" . $DB->Substr($DB->IsNull('%s', '\' \''), 1, 1) . ")", "'.'"),
+                'NAME'
+            ),
             '#SECOND_NAME#' => array($DB->IsNull('%s', '\' \''), 'SECOND_NAME'),
-            '#SECOND_NAME_SHORT#' => array($DB->Concat("UPPER(" . $DB->Substr($DB->IsNull('%s', '\' \''), 1, 1) . ")", "'.'"), 'SECOND_NAME'),
+            '#SECOND_NAME_SHORT#' => array(
+                $DB->Concat(
+                    "UPPER(" . $DB->Substr($DB->IsNull('%s', '\' \''), 1, 1) . ")",
+                    "'.'"
+                ),
+                'SECOND_NAME'
+            ),
             '#LAST_NAME#' => array($DB->IsNull('%s', '\' \''), 'LAST_NAME'),
-            '#LAST_NAME_SHORT#' => array($DB->Concat("UPPER(" . $DB->Substr($DB->IsNull('%s', '\' \''), 1, 1) . ")", "'.'"), 'LAST_NAME')
+            '#LAST_NAME_SHORT#' => array(
+                $DB->Concat(
+                    "UPPER(" . $DB->Substr($DB->IsNull('%s', '\' \''), 1, 1) . ")",
+                    "'.'"
+                ),
+                'LAST_NAME'
+            )
         );
 
         if (empty($format)) {
@@ -1154,7 +1210,8 @@ class CReport
         $matches = preg_split(
             '/(' . join('|', array_keys($values)) . ')/',
             str_replace('%', '%%', $format),
-            -1, PREG_SPLIT_DELIM_CAPTURE
+            -1,
+            PREG_SPLIT_DELIM_CAPTURE
         );
 
         $expression = array();

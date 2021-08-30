@@ -20,10 +20,12 @@ if (Loader::requireModule('bizproc')) {
          */
         public static function convertTo(FieldType $fieldType, $value, $toTypeClass)
         {
-            if (is_array($value) && isset($value['VALUE']))
+            if (is_array($value) && isset($value['VALUE'])) {
                 $value = $value['VALUE'];
-            if (is_array($value) && isset($value['TEXT']))
+            }
+            if (is_array($value) && isset($value['TEXT'])) {
                 $value = $value['TEXT'];
+            }
 
             return parent::convertTo($fieldType, $value, $toTypeClass);
         }
@@ -36,8 +38,9 @@ if (Loader::requireModule('bizproc')) {
          */
         public static function convertFrom(FieldType $fieldType, $value, $fromTypeClass)
         {
-            if ($value === null)
+            if ($value === null) {
                 return null;
+            }
 
             /** @var BaseType\Base $fromTypeClass */
             $type = $fromTypeClass::getType();
@@ -92,10 +95,12 @@ if (Loader::requireModule('bizproc')) {
          */
         protected static function formatValuePrintable(FieldType $fieldType, $value)
         {
-            if (is_array($value) && isset($value['VALUE']))
+            if (is_array($value) && isset($value['VALUE'])) {
                 $value = $value['VALUE'];
-            if (is_array($value) && isset($value['TEXT']))
+            }
+            if (is_array($value) && isset($value['TEXT'])) {
                 $value = $value['TEXT'];
+            }
 
             return HTMLToTxt(htmlspecialcharsback((string)$value));
         }
@@ -109,15 +114,22 @@ if (Loader::requireModule('bizproc')) {
          * @param int $renderMode
          * @return string - HTML rendering
          */
-        protected static function renderControl(FieldType $fieldType, array $field, $value, $allowSelection, $renderMode)
-        {
+        protected static function renderControl(
+            FieldType $fieldType,
+            array $field,
+            $value,
+            $allowSelection,
+            $renderMode
+        ) {
             $name = static::generateControlName($field);
             $controlId = static::generateControlId($field);
 
-            if (is_array($value) && isset($value['VALUE']))
+            if (is_array($value) && isset($value['VALUE'])) {
                 $value = $value['VALUE'];
-            if (is_array($value) && isset($value['TEXT']))
+            }
+            if (is_array($value) && isset($value['TEXT'])) {
                 $value = $value['TEXT'];
+            }
 
             return \CBPViewHelper::getHtmlEditor($controlId, $name, $value);
         }
@@ -130,8 +142,13 @@ if (Loader::requireModule('bizproc')) {
          * @param int $renderMode Control render mode.
          * @return string
          */
-        public static function renderControlSingle(FieldType $fieldType, array $field, $value, $allowSelection, $renderMode)
-        {
+        public static function renderControlSingle(
+            FieldType $fieldType,
+            array $field,
+            $value,
+            $allowSelection,
+            $renderMode
+        ) {
             $selectorValue = null;
             if (\CBPActivity::isExpression($value)) {
                 $selectorValue = $value;
@@ -155,22 +172,30 @@ if (Loader::requireModule('bizproc')) {
          * @param int $renderMode Control render mode.
          * @return string
          */
-        public static function renderControlMultiple(FieldType $fieldType, array $field, $value, $allowSelection, $renderMode)
-        {
+        public static function renderControlMultiple(
+            FieldType $fieldType,
+            array $field,
+            $value,
+            $allowSelection,
+            $renderMode
+        ) {
             $selectorValue = null;
             $typeValue = array();
-            if (!is_array($value) || is_array($value) && \CBPHelper::isAssociativeArray($value))
+            if (!is_array($value) || is_array($value) && \CBPHelper::isAssociativeArray($value)) {
                 $value = array($value);
+            }
 
             foreach ($value as $v) {
-                if (\CBPActivity::isExpression($v))
+                if (\CBPActivity::isExpression($v)) {
                     $selectorValue = $v;
-                else
+                } else {
                     $typeValue[] = $v;
+                }
             }
             // need to show at least one control
-            if (empty($typeValue))
+            if (empty($typeValue)) {
                 $typeValue[] = null;
+            }
 
             $controls = array();
 

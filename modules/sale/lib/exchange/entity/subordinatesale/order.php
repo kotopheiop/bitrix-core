@@ -18,8 +18,9 @@ class Order extends \Bitrix\Sale\Exchange\Entity\OrderImport
             /** @var  \Bitrix\Sale\BasketItem $basketItem */
             if ($item['ID'] == $basketItem->getField('PRODUCT_XML_ID')) {
                 return $basketItem;
-            } else
+            } else {
                 continue;
+            }
         }
         return false;
     }

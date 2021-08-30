@@ -1,5 +1,10 @@
 <?
 
+/**
+ * Class CSecuritySessionMC
+ * @deprecated
+ * @see \Bitrix\Main\Session\Handlers\MemcacheSessionHandler
+ */
 class CSecuritySessionMC
 {
     /** @var Memcache $connection */
@@ -7,14 +12,16 @@ class CSecuritySessionMC
     protected static $sessionId = null;
     protected static $isReadOnly = false;
     protected static $isSessionReady = false;
+    protected static $hasFailedRead = false;
 
     /**
      * @return bool
      */
     public static function Init()
     {
-        if (self::isConnected())
+        if (self::isConnected()) {
             return true;
+        }
 
         self::$isReadOnly = defined('BX_SECURITY_SESSION_READONLY');
 
@@ -36,12 +43,14 @@ class CSecuritySessionMC
      */
     public static function close()
     {
-        if (!self::isConnected() || !self::isValidId(self::$sessionId))
+        if (!self::isConnected() || !self::isValidId(self::$sessionId)) {
             return false;
+        }
 
         if (!self::$isReadOnly && self::$isSessionReady) {
-            if (isSessionExpired())
+            if (isSessionExpired()) {
                 self::destroy(self::$sessionId);
+            }
 
             self::$connection->replace(self::getPrefix() . self::$sessionId . ".lock", 0, 0, 1);
         }
@@ -57,8 +66,9 @@ class CSecuritySessionMC
      */
     public static function read($id)
     {
-        if (!self::isConnected() || !self::isValidId($id))
+        if (!self::isConnected() || !self::isValidId($id)) {
             return "";
+        }
 
         $sid = self::getPrefix();
 
@@ -67,10 +77,11 @@ class CSecuritySessionMC
             $lockWait = 59000000;//micro seconds = 60 seconds TODO: add setting
             $waitStep = 100;
 
-            if (defined('BX_SECURITY_SESSION_MEMCACHE_EXLOCK') && BX_SECURITY_SESSION_MEMCACHE_EXLOCK)
+            if (defined('BX_SECURITY_SESSION_MEMCACHE_EXLOCK') && BX_SECURITY_SESSION_MEMCACHE_EXLOCK) {
                 $lock = Bitrix\Main\Context::getCurrent()->getRequest()->getRequestedPage();
-            else
+            } else {
                 $lock = 1;
+            }
 
             while (!self::$connection->add($sid . $id . ".lock", $lock, 0, $lockTimeout)) {
                 if (self::$connection->increment($sid . $id . ".lock", 1) === 1) {
@@ -83,23 +94,30 @@ class CSecuritySessionMC
                     $errorText = 'Unable to get session lock within 60 seconds.';
                     if ($lock !== 1) {
                         $lockedUri = self::$connection->get($sid . $id . ".lock");
-                        if ($lockedUri && $lockedUri != 1)
+                        if ($lockedUri && $lockedUri != 1) {
                             $errorText .= sprintf(' Locked by "%s".', $lockedUri);
+                        }
                     }
 
                     CSecuritySession::triggerFatalError($errorText);
                 }
 
-                if ($waitStep < 1000000)
+                if ($waitStep < 1000000) {
                     $waitStep *= 2;
+                }
             }
         }
 
         self::$sessionId = $id;
         self::$isSessionReady = true;
         $res = self::$connection->get($sid . $id);
-        if ($res === false)
+        if ($res === false) {
+            if (!self::$hasFailedRead) {
+                AddEventHandler("main", "OnPageStart", array("CSecuritySession", "UpdateSessID"));
+                self::$hasFailedRead = true;
+            }
             $res = "";
+        }
 
         return $res;
     }
@@ -111,11 +129,13 @@ class CSecuritySessionMC
      */
     public static function write($id, $sessionData)
     {
-        if (!self::isConnected() || !self::isValidId($id))
+        if (!self::isConnected() || !self::isValidId($id)) {
             return false;
+        }
 
-        if (!self::$isSessionReady)
+        if (!self::$isSessionReady) {
             return false;
+        }
 
         if (self::$isReadOnly) {
             if (!CSecuritySession::isOldSessionIdExist()) {
@@ -142,30 +162,37 @@ class CSecuritySessionMC
      */
     public static function destroy($id)
     {
-        if (!self::isValidId($id))
+        if (!self::isValidId($id)) {
             return false;
+        }
 
-        if (!self::$isSessionReady)
+        if (!self::$isSessionReady) {
             return false;
+        }
 
-        if (self::$isReadOnly)
+        if (self::$isReadOnly) {
             return false;
+        }
 
         $isConnectionRestored = false;
-        if (!self::isConnected())
+        if (!self::isConnected()) {
             $isConnectionRestored = self::newConnection();
+        }
 
-        if (!self::isConnected())
+        if (!self::isConnected()) {
             return false;
+        }
 
         $sid = self::getPrefix();
         self::$connection->replace($sid . $id, "", 0, 1);
 
-        if (CSecuritySession::isOldSessionIdExist())
+        if (CSecuritySession::isOldSessionIdExist()) {
             self::$connection->replace($sid . CSecuritySession::getOldSessionId(true), "", 0, 1);
+        }
 
-        if ($isConnectionRestored)
+        if ($isConnectionRestored) {
             self::closeConnection();
+        }
 
         return true;
     }
@@ -232,7 +259,13 @@ class CSecuritySessionMC
         if (!$exception) {
             if (!self::isStorageEnabled()) {
                 $result = false;
-                $exception = new \ErrorException("BX_SECURITY_SESSION_MEMCACHE_HOST constant is not defined.", 0, E_USER_ERROR, __FILE__, __LINE__);
+                $exception = new \ErrorException(
+                    "BX_SECURITY_SESSION_MEMCACHE_HOST constant is not defined.",
+                    0,
+                    E_USER_ERROR,
+                    __FILE__,
+                    __LINE__
+                );
             }
         }
 
@@ -243,7 +276,13 @@ class CSecuritySessionMC
             if (!$result) {
                 $error = error_get_last();
                 if ($error && $error["type"] == E_WARNING) {
-                    $exception = new \ErrorException($error['message'], 0, $error['type'], $error['file'], $error['line']);
+                    $exception = new \ErrorException(
+                        $error['message'],
+                        0,
+                        $error['type'],
+                        $error['file'],
+                        $error['line']
+                    );
                 }
             }
         }

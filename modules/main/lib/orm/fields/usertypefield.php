@@ -33,9 +33,12 @@ class UserTypeField extends ExpressionField
             {
                 //if (!\is_iterable($value)) PHP 7
                 if (!is_array($value) && !($value instanceof \Traversable)) {
-                    throw new ArgumentException(sprintf(
-                        'Expected iterable value for multiple field, but got `%s` instead', gettype($value)
-                    ));
+                    throw new ArgumentException(
+                        sprintf(
+                            'Expected iterable value for multiple field, but got `%s` instead',
+                            gettype($value)
+                        )
+                    );
                 }
 
                 // array of values
@@ -75,5 +78,16 @@ class UserTypeField extends ExpressionField
     public function isMultiple()
     {
         return $this->isMultiple;
+    }
+
+    /**
+     * @param mixed $value
+     *
+     * @return string
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function convertValueToDb($value)
+    {
+        return $this->getConnection()->getSqlHelper()->convertToDbString($value);
     }
 }

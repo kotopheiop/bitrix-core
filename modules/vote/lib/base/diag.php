@@ -91,7 +91,8 @@ final class Diag
      */
     public function collectDebugInfo($uniqueId)
     {
-        if ($this->enableLog !== true || ($this->exclusiveUserId !== null && $this->getUser()->getId() != $this->exclusiveUserId)) {
+        if ($this->enableLog !== true || ($this->exclusiveUserId !== null && $this->getUser()->getId(
+                ) != $this->exclusiveUserId)) {
             return;
         }
         Debug::startTimeLabel($uniqueId);
@@ -102,7 +103,14 @@ final class Diag
         } else {
             list($prevLabel, $prevLabelCount, $prevSqlTrackerQueries) = array_pop($this->stackSql);
             list($countQueries, $sqlTrackerQueries) = $this->getDebugInfoSql();
-            array_push($this->stackSql, array($prevLabel, $countQueries + $prevLabelCount, array_merge($prevSqlTrackerQueries, $sqlTrackerQueries)));
+            array_push(
+                $this->stackSql,
+                array(
+                    $prevLabel,
+                    $countQueries + $prevLabelCount,
+                    array_merge($prevSqlTrackerQueries, $sqlTrackerQueries)
+                )
+            );
 
             $this->connection->startTracker(true);
             array_push($this->stackSql, array($uniqueId, 0, array()));
@@ -132,7 +140,8 @@ final class Diag
             $label = $uniqueId;
         }
 
-        if ($this->enableLog !== true || ($this->exclusiveUserId !== null && $this->getUser()->getId() != $this->exclusiveUserId)) {
+        if ($this->enableLog !== true || ($this->exclusiveUserId !== null && $this->getUser()->getId(
+                ) != $this->exclusiveUserId)) {
             return;
         }
 
@@ -154,7 +163,6 @@ final class Diag
                 $sqlTrackerQueries = array_merge($prevSqlTrackerQueries, $sqlTrackerQueries);
             }
             $debugData[] = 'Count sql: ' . $countQueries;
-
         }
         /** @var SqlTrackerQuery[] $sqlTrackerQueries */
         foreach ($sqlTrackerQueries as $query) {
@@ -192,7 +200,7 @@ final class Diag
     {
         $functionStack = $filesStack = '';
         foreach ($backtrace as $b) {
-            if (strlen($functionStack) > 0) {
+            if ($functionStack <> '') {
                 $functionStack .= " < ";
             }
 

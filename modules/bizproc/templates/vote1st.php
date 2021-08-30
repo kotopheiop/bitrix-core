@@ -1,4 +1,5 @@
 <?
+
 IncludeModuleLangFile(__FILE__);
 
 $arFields = Array(
@@ -93,7 +94,8 @@ $arFields = Array(
                                         Array(
                                             'Title' => GetMessage("BP_V1ST_T3")
                                         )
-                                ))
+                                )
+                            )
                         ),
                         Array(
                             'Type' => 'SequenceActivity',
@@ -127,10 +129,14 @@ $arFields = Array(
                                             'TargetStateTitle' => GetMessage("BP_V1ST_STAT_NA"),
                                             'Title' => GetMessage("BP_V1ST_STAT_NA_T")
                                         )
-                                ))
-                        ))
-                ))
-        )),
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        )
+    ),
     'PARAMETERS' =>
         Array(
             'Voters' =>

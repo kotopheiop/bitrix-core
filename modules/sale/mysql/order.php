@@ -1,9 +1,10 @@
-<?
+<?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/general/order.php");
 
 class CSaleOrder extends CAllSaleOrder
 {
-    function Add($arFields)
+    public static function Add($arFields)
     {
         global $DB, $USER_FIELD_MANAGER, $CACHE_MANAGER, $APPLICATION;
 
@@ -12,8 +13,8 @@ class CSaleOrder extends CAllSaleOrder
 
         $arFields1 = array();
         foreach ($arFields as $key => $value) {
-            if (substr($key, 0, 1) == "=") {
-                $arFields1[substr($key, 1)] = $value;
+            if (mb_substr($key, 0, 1) == "=") {
+                $arFields1[mb_substr($key, 1)] = $value;
                 unset($arFields[$key]);
             }
         }
@@ -37,16 +38,22 @@ class CSaleOrder extends CAllSaleOrder
         unset($arFields['DELIVERY_PRICE']);
         unset($arFields['TAX_LIST']);
 
-        if (!CSaleOrder::CheckFields("ADD", $arFields))
+        if (!CSaleOrder::CheckFields("ADD", $arFields)) {
             return false;
+        }
 
-        foreach (GetModuleEvents("sale", "OnBeforeOrderAdd", true) as $arEvent)
-            if (ExecuteModuleEventEx($arEvent, Array(&$arFields)) === false)
+        foreach (GetModuleEvents("sale", "OnBeforeOrderAdd", true) as $arEvent) {
+            if (ExecuteModuleEventEx($arEvent, Array(&$arFields)) === false) {
                 return false;
+            }
+        }
 
         if ($isOrderConverted != 'N') {
             if (!empty($arFields1)) {
-                $arFields1 = \Bitrix\Sale\Compatible\OrderCompatibility::backRawField(\Bitrix\Sale\Compatible\OrderCompatibility::ENTITY_ORDER, $arFields1);
+                $arFields1 = \Bitrix\Sale\Compatible\OrderCompatibility::backRawField(
+                    \Bitrix\Sale\Compatible\OrderCompatibility::ENTITY_ORDER,
+                    $arFields1
+                );
             }
 
             $result = \Bitrix\Sale\Compatible\OrderCompatibility::add(array_merge($arFields, $arFields1));
@@ -76,7 +83,7 @@ class CSaleOrder extends CAllSaleOrder
             }
 
             foreach ($arFields1 as $key => $value) {
-                if (strlen($arInsert[0]) > 0) {
+                if ($arInsert[0] <> '') {
                     $arInsert[0] .= ", ";
                     $arInsert[1] .= ", ";
                 }
@@ -90,7 +97,7 @@ class CSaleOrder extends CAllSaleOrder
 
             $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 
-            $ID = IntVal($DB->LastID());
+            $ID = intval($DB->LastID());
             CSaleOrder::SetAccountNumber($ID);
         }
 
@@ -100,8 +107,9 @@ class CSaleOrder extends CAllSaleOrder
         $USER_FIELD_MANAGER->Update("ORDER", $ID, $arFields);
 
         if ($isOrderConverted == 'N') {
-            foreach (GetModuleEvents("sale", "OnOrderAdd", true) as $arEvent)
+            foreach (GetModuleEvents("sale", "OnOrderAdd", true) as $arEvent) {
                 ExecuteModuleEventEx($arEvent, Array($ID, $arFields));
+            }
         }
 
         if (defined("CACHED_b_sale_order")) {
@@ -112,37 +120,47 @@ class CSaleOrder extends CAllSaleOrder
         return $ID;
     }
 
-    function Update($ID, $arFields, $bDateUpdate = true)
+    public static function Update($ID, $arFields, $bDateUpdate = true)
     {
         global $DB, $USER_FIELD_MANAGER, $CACHE_MANAGER, $APPLICATION;
 
         $isOrderConverted = \Bitrix\Main\Config\Option::get("main", "~sale_converted_15", 'Y');
 
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
         $arFields1 = array();
         foreach ($arFields as $key => $value) {
-            if (substr($key, 0, 1) == "=") {
-                $arFields1[substr($key, 1)] = $value;
+            if (mb_substr($key, 0, 1) == "=") {
+                $arFields1[mb_substr($key, 1)] = $value;
                 unset($arFields[$key]);
             }
         }
 
-        if (!CSaleOrder::CheckFields("UPDATE", $arFields, $ID))
+        if (!CSaleOrder::CheckFields("UPDATE", $arFields, $ID)) {
             return false;
+        }
 
-        foreach (GetModuleEvents("sale", "OnBeforeOrderUpdate", true) as $arEvent)
-            if (ExecuteModuleEventEx($arEvent, Array($ID, &$arFields)) === false)
+        foreach (GetModuleEvents("sale", "OnBeforeOrderUpdate", true) as $arEvent) {
+            if (ExecuteModuleEventEx($arEvent, Array($ID, &$arFields)) === false) {
                 return false;
+            }
+        }
 
 
         if ($isOrderConverted != 'N') {
             if (!empty($arFields1)) {
-                $arFields1 = \Bitrix\Sale\Compatible\OrderCompatibility::backRawField(\Bitrix\Sale\Compatible\OrderCompatibility::ENTITY_ORDER, $arFields1);
+                $arFields1 = \Bitrix\Sale\Compatible\OrderCompatibility::backRawField(
+                    \Bitrix\Sale\Compatible\OrderCompatibility::ENTITY_ORDER,
+                    $arFields1
+                );
             }
 
             \Bitrix\Sale\DiscountCouponsManager::freezeCouponStorage();
-            $result = \Bitrix\Sale\Compatible\OrderCompatibility::update($ID, array_merge($arFields, $arFields1), $bDateUpdate);
+            $result = \Bitrix\Sale\Compatible\OrderCompatibility::update(
+                $ID,
+                array_merge($arFields, $arFields1),
+                $bDateUpdate
+            );
             \Bitrix\Sale\DiscountCouponsManager::unFreezeCouponStorage();
             if (!$result->isSuccess()) {
                 foreach ($result->getErrorMessages() as $error) {
@@ -161,11 +179,12 @@ class CSaleOrder extends CAllSaleOrder
                 $updated = true;
             }
         } else {
-
             $strUpdate = $DB->PrepareUpdate("b_sale_order", $arFields);
 
             foreach ($arFields1 as $key => $value) {
-                if (strlen($strUpdate) > 0) $strUpdate .= ", ";
+                if ($strUpdate <> '') {
+                    $strUpdate .= ", ";
+                }
                 $strUpdate .= $key . "=" . $value . " ";
             }
 
@@ -175,32 +194,36 @@ class CSaleOrder extends CAllSaleOrder
             $strSql =
                 "UPDATE b_sale_order SET " .
                 "	" . $strUpdate . " ";
-            if ($bDateUpdate)
+            if ($bDateUpdate) {
                 $strSql .= ",	DATE_UPDATE = " . $DB->GetNowFunction() . " ";
+            }
             $strSql .= "WHERE ID = " . $ID . " ";
 
             $updated = $DB->Query($strSql, true, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 
-            if (!$updated)
+            if (!$updated) {
                 return false;
-
+            }
         }
 
         $USER_FIELD_MANAGER->Update("ORDER", $ID, $arFields);
 
-        if ($updated)
+        if ($updated) {
             CSaleOrderChange::AddRecordsByFields($ID, $arOrderOldFields, $arFields);
+        }
 
         unset($GLOBALS["SALE_ORDER"]["SALE_ORDER_CACHE_" . $ID]);
 
-        foreach (GetModuleEvents("sale", "OnOrderUpdate", true) as $arEvent)
+        foreach (GetModuleEvents("sale", "OnOrderUpdate", true) as $arEvent) {
             ExecuteModuleEventEx($arEvent, Array($ID, $arFields));
+        }
 
         if (isset($arFields["TRACKING_NUMBER"])) {
-            foreach (GetModuleEvents("sale", "OnTrackingNumberChange", true) as $arEvent)
+            foreach (GetModuleEvents("sale", "OnTrackingNumberChange", true) as $arEvent) {
                 ExecuteModuleEventEx($arEvent, array($ID, $arFields["TRACKING_NUMBER"]));
+            }
 
-            if (strlen($arFields["TRACKING_NUMBER"]) > 0 && $arOrderOldFields["TRACKING_NUMBER"] != $arFields["TRACKING_NUMBER"]) {
+            if ($arFields["TRACKING_NUMBER"] <> '' && $arOrderOldFields["TRACKING_NUMBER"] != $arFields["TRACKING_NUMBER"]) {
                 $accountNumber = (isset($arFields["ACCOUNT_NUMBER"])) ? $arFields["ACCOUNT_NUMBER"] : $arOrderOldFields["ACCOUNT_NUMBER"];
                 $userId = (isset($arFields["USER_ID"])) ? $arFields["USER_ID"] : $arOrderOldFields["USER_ID"];
 
@@ -208,10 +231,12 @@ class CSaleOrder extends CAllSaleOrder
                 $payerEMail = '';
                 $dbUser = CUser::GetByID($userId);
                 if ($arUser = $dbUser->Fetch()) {
-                    if (strlen($payerName) <= 0)
-                        $payerName = $arUser["NAME"] . ((strlen($arUser["NAME"]) <= 0 || strlen($arUser["LAST_NAME"]) <= 0) ? "" : " ") . $arUser["LAST_NAME"];
-                    if (strlen($payerEMail) <= 0)
+                    if ($payerName == '') {
+                        $payerName = $arUser["NAME"] . (($arUser["NAME"] == '' || $arUser["LAST_NAME"] == '') ? "" : " ") . $arUser["LAST_NAME"];
+                    }
+                    if ($payerEMail == '') {
                         $payerEMail = $arUser["EMAIL"];
+                    }
                 }
 
                 $arEmailFields = Array(
@@ -237,42 +262,79 @@ class CSaleOrder extends CAllSaleOrder
         return $ID;
     }
 
-    function PrepareGetListArray($key, &$arFields, &$arPropIDsTmp)
+    public static function PrepareGetListArray($key, &$arFields, &$arPropIDsTmp)
     {
         $propIDTmp = false;
-        if (StrPos($key, "PROPERTY_ID_") === 0)
-            $propIDTmp = IntVal(substr($key, StrLen("PROPERTY_ID_")));
-        elseif (StrPos($key, "PROPERTY_NAME_") === 0)
-            $propIDTmp = IntVal(substr($key, StrLen("PROPERTY_NAME_")));
-        elseif (StrPos($key, "PROPERTY_VALUE_") === 0)
-            $propIDTmp = IntVal(substr($key, StrLen("PROPERTY_VALUE_")));
-        elseif (StrPos($key, "PROPERTY_CODE_") === 0)
-            $propIDTmp = IntVal(substr($key, StrLen("PROPERTY_CODE_")));
-        elseif (StrPos($key, "PROPERTY_VAL_BY_CODE_") === 0)
-            $propIDTmp = preg_replace("/[^a-zA-Z0-9_-]/is", "", trim(substr($key, StrLen("PROPERTY_VAL_BY_CODE_"))));
+        if (mb_strpos($key, "PROPERTY_ID_") === 0) {
+            $propIDTmp = intval(mb_substr($key, mb_strlen("PROPERTY_ID_")));
+        } elseif (mb_strpos($key, "PROPERTY_NAME_") === 0) {
+            $propIDTmp = intval(mb_substr($key, mb_strlen("PROPERTY_NAME_")));
+        } elseif (mb_strpos($key, "PROPERTY_VALUE_") === 0) {
+            $propIDTmp = intval(mb_substr($key, mb_strlen("PROPERTY_VALUE_")));
+        } elseif (mb_strpos($key, "PROPERTY_CODE_") === 0) {
+            $propIDTmp = intval(mb_substr($key, mb_strlen("PROPERTY_CODE_")));
+        } elseif (mb_strpos($key, "PROPERTY_VAL_BY_CODE_") === 0) {
+            $propIDTmp = preg_replace(
+                "/[^a-zA-Z0-9_-]/is",
+                "",
+                trim(mb_substr($key, mb_strlen("PROPERTY_VAL_BY_CODE_")))
+            );
+        }
 
         $locationPropInfo = self::getLocationPropertyInfo();
 
-        if (strlen($propIDTmp) > 0 || $propIDTmp > 0) {
+        if ($propIDTmp <> '' || $propIDTmp > 0) {
             if (!in_array($propIDTmp, $arPropIDsTmp)) {
                 $arPropIDsTmp[] = $propIDTmp;
 
-                $arFields["PROPERTY_ID_" . $propIDTmp] = array("FIELD" => "SP_" . $propIDTmp . ".ID", "TYPE" => "int", "FROM" => "INNER JOIN b_sale_order_props_value SP_" . $propIDTmp . " ON (SP_" . $propIDTmp . ".ORDER_PROPS_ID = " . $propIDTmp . " AND O.ID = SP_" . $propIDTmp . ".ORDER_ID)");
-                $arFields["PROPERTY_ORDER_PROPS_ID_" . $propIDTmp] = array("FIELD" => "SP_" . $propIDTmp . ".ORDER_PROPS_ID", "TYPE" => "int", "FROM" => "INNER JOIN b_sale_order_props_value SP_" . $propIDTmp . " ON (SP_" . $propIDTmp . ".ORDER_PROPS_ID = " . $propIDTmp . " AND O.ID = SP_" . $propIDTmp . ".ORDER_ID)");
-                $arFields["PROPERTY_NAME_" . $propIDTmp] = array("FIELD" => "SP_" . $propIDTmp . ".NAME", "TYPE" => "string", "FROM" => "INNER JOIN b_sale_order_props_value SP_" . $propIDTmp . " ON (SP_" . $propIDTmp . ".ORDER_PROPS_ID = " . $propIDTmp . " AND O.ID = SP_" . $propIDTmp . ".ORDER_ID)");
+                $arFields["PROPERTY_ID_" . $propIDTmp] = array(
+                    "FIELD" => "SP_" . $propIDTmp . ".ID",
+                    "TYPE" => "int",
+                    "FROM" => "INNER JOIN b_sale_order_props_value SP_" . $propIDTmp . " ON (SP_" . $propIDTmp . ".ORDER_PROPS_ID = " . $propIDTmp . " AND O.ID = SP_" . $propIDTmp . ".ORDER_ID)"
+                );
+                $arFields["PROPERTY_ORDER_PROPS_ID_" . $propIDTmp] = array(
+                    "FIELD" => "SP_" . $propIDTmp . ".ORDER_PROPS_ID",
+                    "TYPE" => "int",
+                    "FROM" => "INNER JOIN b_sale_order_props_value SP_" . $propIDTmp . " ON (SP_" . $propIDTmp . ".ORDER_PROPS_ID = " . $propIDTmp . " AND O.ID = SP_" . $propIDTmp . ".ORDER_ID)"
+                );
+                $arFields["PROPERTY_NAME_" . $propIDTmp] = array(
+                    "FIELD" => "SP_" . $propIDTmp . ".NAME",
+                    "TYPE" => "string",
+                    "FROM" => "INNER JOIN b_sale_order_props_value SP_" . $propIDTmp . " ON (SP_" . $propIDTmp . ".ORDER_PROPS_ID = " . $propIDTmp . " AND O.ID = SP_" . $propIDTmp . ".ORDER_ID)"
+                );
 
                 if (CSaleLocation::isLocationProMigrated() && isset($locationPropInfo['ID'][$propIDTmp])) {
-                    $arFields["PROPERTY_VALUE_" . $propIDTmp] = array("FIELD" => "L_" . $propIDTmp . ".ID", "TYPE" => "string", "FROM" => "INNER JOIN b_sale_order_props_value SP_" . $propIDTmp . " ON (SP_" . $propIDTmp . ".ORDER_PROPS_ID = " . $propIDTmp . " AND O.ID = SP_" . $propIDTmp . ".ORDER_ID) INNER JOIN b_sale_location L_" . $propIDTmp . " ON (SP_" . $propIDTmp . ".VALUE = L_" . $propIDTmp . ".CODE)");
+                    $arFields["PROPERTY_VALUE_" . $propIDTmp] = array(
+                        "FIELD" => "L_" . $propIDTmp . ".ID",
+                        "TYPE" => "string",
+                        "FROM" => "INNER JOIN b_sale_order_props_value SP_" . $propIDTmp . " ON (SP_" . $propIDTmp . ".ORDER_PROPS_ID = " . $propIDTmp . " AND O.ID = SP_" . $propIDTmp . ".ORDER_ID) INNER JOIN b_sale_location L_" . $propIDTmp . " ON (SP_" . $propIDTmp . ".VALUE = L_" . $propIDTmp . ".CODE)"
+                    );
                 } else {
-                    $arFields["PROPERTY_VALUE_" . $propIDTmp] = array("FIELD" => "SP_" . $propIDTmp . ".VALUE", "TYPE" => "string", "FROM" => "INNER JOIN b_sale_order_props_value SP_" . $propIDTmp . " ON (SP_" . $propIDTmp . ".ORDER_PROPS_ID = " . $propIDTmp . " AND O.ID = SP_" . $propIDTmp . ".ORDER_ID)");
+                    $arFields["PROPERTY_VALUE_" . $propIDTmp] = array(
+                        "FIELD" => "SP_" . $propIDTmp . ".VALUE",
+                        "TYPE" => "string",
+                        "FROM" => "INNER JOIN b_sale_order_props_value SP_" . $propIDTmp . " ON (SP_" . $propIDTmp . ".ORDER_PROPS_ID = " . $propIDTmp . " AND O.ID = SP_" . $propIDTmp . ".ORDER_ID)"
+                    );
                 }
 
-                $arFields["PROPERTY_CODE_" . $propIDTmp] = array("FIELD" => "SP_" . $propIDTmp . ".CODE", "TYPE" => "string", "FROM" => "INNER JOIN b_sale_order_props_value SP_" . $propIDTmp . " ON (SP_" . $propIDTmp . ".ORDER_PROPS_ID = " . $propIDTmp . " AND O.ID = SP_" . $propIDTmp . ".ORDER_ID)");
+                $arFields["PROPERTY_CODE_" . $propIDTmp] = array(
+                    "FIELD" => "SP_" . $propIDTmp . ".CODE",
+                    "TYPE" => "string",
+                    "FROM" => "INNER JOIN b_sale_order_props_value SP_" . $propIDTmp . " ON (SP_" . $propIDTmp . ".ORDER_PROPS_ID = " . $propIDTmp . " AND O.ID = SP_" . $propIDTmp . ".ORDER_ID)"
+                );
 
                 if (CSaleLocation::isLocationProMigrated() && isset($locationPropInfo['CODE'][$propIDTmp])) {
-                    $arFields["PROPERTY_VAL_BY_CODE_" . $propIDTmp] = array("FIELD" => "L_" . $propIDTmp . ".ID", "TYPE" => "string", "FROM" => "INNER JOIN b_sale_order_props_value SP_" . $propIDTmp . " ON (SP_" . $propIDTmp . ".CODE = '" . $propIDTmp . "' AND O.ID = SP_" . $propIDTmp . ".ORDER_ID) INNER JOIN b_sale_location L_" . $propIDTmp . " ON (SP_" . $propIDTmp . ".VALUE = L_" . $propIDTmp . ".CODE)");
+                    $arFields["PROPERTY_VAL_BY_CODE_" . $propIDTmp] = array(
+                        "FIELD" => "L_" . $propIDTmp . ".ID",
+                        "TYPE" => "string",
+                        "FROM" => "INNER JOIN b_sale_order_props_value SP_" . $propIDTmp . " ON (SP_" . $propIDTmp . ".CODE = '" . $propIDTmp . "' AND O.ID = SP_" . $propIDTmp . ".ORDER_ID) INNER JOIN b_sale_location L_" . $propIDTmp . " ON (SP_" . $propIDTmp . ".VALUE = L_" . $propIDTmp . ".CODE)"
+                    );
                 } else {
-                    $arFields["PROPERTY_VAL_BY_CODE_" . $propIDTmp] = array("FIELD" => "SP_" . $propIDTmp . ".VALUE", "TYPE" => "string", "FROM" => "INNER JOIN b_sale_order_props_value SP_" . $propIDTmp . " ON (SP_" . $propIDTmp . ".CODE = '" . $propIDTmp . "' AND O.ID = SP_" . $propIDTmp . ".ORDER_ID)");
+                    $arFields["PROPERTY_VAL_BY_CODE_" . $propIDTmp] = array(
+                        "FIELD" => "SP_" . $propIDTmp . ".VALUE",
+                        "TYPE" => "string",
+                        "FROM" => "INNER JOIN b_sale_order_props_value SP_" . $propIDTmp . " ON (SP_" . $propIDTmp . ".CODE = '" . $propIDTmp . "' AND O.ID = SP_" . $propIDTmp . ".ORDER_ID)"
+                    );
                 }
             }
         }
@@ -287,16 +349,25 @@ class CSaleOrder extends CAllSaleOrder
      * @param array $arOptions
      * @return bool|CDBResult
      */
-    public static function GetList($arOrder = array("ID" => "DESC"), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array(), $arOptions = array())
-    {
+    public static function GetList(
+        $arOrder = array("ID" => "DESC"),
+        $arFilter = array(),
+        $arGroupBy = false,
+        $arNavStartParams = false,
+        $arSelectFields = array(),
+        $arOptions = array()
+    ) {
         global $DB, $USER_FIELD_MANAGER;
 
-        if (!is_array($arOrder))
+        if (!is_array($arOrder)) {
             $arOrder = array('ID' => 'DESC');
-        if (!is_array($arFilter))
+        }
+        if (!is_array($arFilter)) {
             $arFilter = array();
-        if (!is_array($arSelectFields))
+        }
+        if (!is_array($arSelectFields)) {
             $arSelectFields = array();
+        }
 
         $isOrderConverted = \Bitrix\Main\Config\Option::get("main", "~sale_converted_15", 'Y');
 
@@ -408,10 +479,11 @@ class CSaleOrder extends CAllSaleOrder
             $arFilter["<=DATE_PAY_BEFORE"] = $val;
         }
         if (array_key_exists("DELIVERY_REQUEST_SENT", $arFilter)) {
-            if ($arFilter["DELIVERY_REQUEST_SENT"] == "Y")
+            if ($arFilter["DELIVERY_REQUEST_SENT"] == "Y") {
                 $arFilter["!DELIVERY_DATE_REQUEST"] = "";
-            else
+            } else {
                 $arFilter["+DELIVERY_DATE_REQUEST"] = "";
+            }
 
             unset($arFilter["DELIVERY_REQUEST_SENT"]);
         }
@@ -423,9 +495,17 @@ class CSaleOrder extends CAllSaleOrder
         }
 
         if ($isOrderConverted != 'N') {
-            $result = \Bitrix\Sale\Compatible\OrderCompatibility::getList($arOrder, $arFilter, $arGroupBy, $arNavStartParams, $arSelectFields, $callback);
-            if ($result instanceof \Bitrix\Sale\Compatible\CDBResult)
+            $result = \Bitrix\Sale\Compatible\OrderCompatibility::getList(
+                $arOrder,
+                $arFilter,
+                $arGroupBy,
+                $arNavStartParams,
+                $arSelectFields,
+                $callback
+            );
+            if ($result instanceof \Bitrix\Sale\Compatible\CDBResult) {
                 $result->addFetchAdapter(new \Bitrix\Sale\Compatible\OrderFetchAdapter());
+            }
             return $result;
         }
 
@@ -587,11 +667,12 @@ class CSaleOrder extends CAllSaleOrder
             );
         }
 
-        $maxLock = IntVal(COption::GetOptionString("sale", "MAX_LOCK_TIME", "60"));
-        if (is_object($GLOBALS["USER"]))
-            $userID = IntVal($GLOBALS["USER"]->GetID());
-        else
+        $maxLock = intval(COption::GetOptionString("sale", "MAX_LOCK_TIME", "60"));
+        if (is_object($GLOBALS["USER"])) {
+            $userID = intval($GLOBALS["USER"]->GetID());
+        } else {
             $userID = 0;
+        }
 
         // FIELDS -->
         $arFields = array(
@@ -650,15 +731,25 @@ class CSaleOrder extends CAllSaleOrder
             "AFFILIATE_ID" => array("FIELD" => "O.AFFILIATE_ID", "TYPE" => "int"),
             "LOCKED_BY" => array("FIELD" => "O.LOCKED_BY", "TYPE" => "int"),
 
-            "LOCK_STATUS" => array("FIELD" => "if(DATE_LOCK is null, 'green', if(DATE_ADD(DATE_LOCK, interval " . $maxLock . " MINUTE)<now(), 'green', if(LOCKED_BY=" . $userID . ", 'yellow', 'red')))", "TYPE" => "string"),
+            "LOCK_STATUS" => array(
+                "FIELD" => "if(DATE_LOCK is null, 'green', if(DATE_ADD(DATE_LOCK, interval " . $maxLock . " MINUTE)<now(), 'green', if(LOCKED_BY=" . $userID . ", 'yellow', 'red')))",
+                "TYPE" => "string"
+            ),
 
-            "LOCK_USER_NAME" => array("FIELD" => "concat('(', UL.LOGIN ,') ',UL.NAME,' ',UL.LAST_NAME)", "FROM" => "LEFT JOIN b_user UL ON (O.LOCKED_BY = UL.ID)", "TYPE" => "string"),
+            "LOCK_USER_NAME" => array(
+                "FIELD" => "concat('(', UL.LOGIN ,') ',UL.NAME,' ',UL.LAST_NAME)",
+                "FROM" => "LEFT JOIN b_user UL ON (O.LOCKED_BY = UL.ID)",
+                "TYPE" => "string"
+            ),
 
             "DELIVERY_DOC_NUM" => array("FIELD" => "O.DELIVERY_DOC_NUM", "TYPE" => "string"),
             "DELIVERY_DOC_DATE" => array("FIELD" => "O.DELIVERY_DOC_DATE", "TYPE" => "date"),
             "UPDATED_1C" => array("FIELD" => "O.UPDATED_1C", "TYPE" => "string"),
             "STORE_ID" => array("FIELD" => "O.STORE_ID", "TYPE" => "int"),
-            "BY_RECOMMENDATION" => array("FIELD" => "(SELECT (CASE WHEN MAX(BR.RECOMMENDATION) IS NULL OR MAX(BR.RECOMMENDATION) = '' THEN 'N' ELSE 'Y' END) FROM b_sale_basket BR WHERE BR.ORDER_ID=O.ID GROUP BY BR.ORDER_ID)", "TYPE" => "char"),
+            "BY_RECOMMENDATION" => array(
+                "FIELD" => "(SELECT (CASE WHEN MAX(BR.RECOMMENDATION) IS NULL OR MAX(BR.RECOMMENDATION) = '' THEN 'N' ELSE 'Y' END) FROM b_sale_basket BR WHERE BR.ORDER_ID=O.ID GROUP BY BR.ORDER_ID)",
+                "TYPE" => "char"
+            ),
 
             "ORDER_TOPIC" => array("FIELD" => "O.ORDER_TOPIC", "TYPE" => "string"),
             "RESPONSIBLE_ID" => array("FIELD" => "O.RESPONSIBLE_ID", "TYPE" => "int"),
@@ -672,54 +763,200 @@ class CSaleOrder extends CAllSaleOrder
             "VERSION" => array("FIELD" => "O.VERSION", "TYPE" => "int"),
             "EXTERNAL_ORDER" => array("FIELD" => "O.EXTERNAL_ORDER", "TYPE" => "string"),
 
-            "NAME_SEARCH" => array("FIELD" => "U.NAME, U.LAST_NAME, U.SECOND_NAME, U.EMAIL, U.LOGIN, U.ID", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (O.USER_ID = U.ID)"),
-            "USER_LOGIN" => array("FIELD" => "U.LOGIN", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (O.USER_ID = U.ID)"),
-            "USER_NAME" => array("FIELD" => "U.NAME", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (O.USER_ID = U.ID)"),
-            "USER_LAST_NAME" => array("FIELD" => "U.LAST_NAME", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (O.USER_ID = U.ID)"),
-            "USER_EMAIL" => array("FIELD" => "U.EMAIL", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (O.USER_ID = U.ID)"),
-            "USER_GROUP_ID" => array("FIELD" => "UG.GROUP_ID", "TYPE" => "int", "FROM" => "LEFT JOIN b_user_group UG ON (UG.USER_ID = O.USER_ID)"),
+            "NAME_SEARCH" => array(
+                "FIELD" => "U.NAME, U.LAST_NAME, U.SECOND_NAME, U.EMAIL, U.LOGIN, U.ID",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_user U ON (O.USER_ID = U.ID)"
+            ),
+            "USER_LOGIN" => array(
+                "FIELD" => "U.LOGIN",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_user U ON (O.USER_ID = U.ID)"
+            ),
+            "USER_NAME" => array(
+                "FIELD" => "U.NAME",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_user U ON (O.USER_ID = U.ID)"
+            ),
+            "USER_LAST_NAME" => array(
+                "FIELD" => "U.LAST_NAME",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_user U ON (O.USER_ID = U.ID)"
+            ),
+            "USER_EMAIL" => array(
+                "FIELD" => "U.EMAIL",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_user U ON (O.USER_ID = U.ID)"
+            ),
+            "USER_GROUP_ID" => array(
+                "FIELD" => "UG.GROUP_ID",
+                "TYPE" => "int",
+                "FROM" => "LEFT JOIN b_user_group UG ON (UG.USER_ID = O.USER_ID)"
+            ),
 
-            "RESPONSIBLE_LOGIN" => array("FIELD" => "UR.LOGIN", "TYPE" => "string", "FROM" => "LEFT JOIN b_user UR ON (O.RESPONSIBLE_ID = UR.ID)"),
-            "RESPONSIBLE_NAME" => array("FIELD" => "UR.NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_user UR ON (O.RESPONSIBLE_ID = UR.ID)"),
-            "RESPONSIBLE_LAST_NAME" => array("FIELD" => "UR.LAST_NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_user UR ON (O.RESPONSIBLE_ID = UR.ID)"),
-            "RESPONSIBLE_SECOND_NAME" => array("FIELD" => "UR.SECOND_NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_user UR ON (O.RESPONSIBLE_ID = UR.ID)"),
-            "RESPONSIBLE_EMAIL" => array("FIELD" => "UR.EMAIL", "TYPE" => "string", "FROM" => "LEFT JOIN b_user UR ON (O.RESPONSIBLE_ID = UR.ID)"),
-            "RESPONSIBLE_WORK_POSITION" => array("FIELD" => "UR.WORK_POSITION", "TYPE" => "string", "FROM" => "LEFT JOIN b_user UR ON (O.RESPONSIBLE_ID = UR.ID)"),
-            "RESPONSIBLE_PERSONAL_PHOTO" => array("FIELD" => "UR.PERSONAL_PHOTO", "TYPE" => "string", "FROM" => "LEFT JOIN b_user UR ON (O.RESPONSIBLE_ID = UR.ID)"),
+            "RESPONSIBLE_LOGIN" => array(
+                "FIELD" => "UR.LOGIN",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_user UR ON (O.RESPONSIBLE_ID = UR.ID)"
+            ),
+            "RESPONSIBLE_NAME" => array(
+                "FIELD" => "UR.NAME",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_user UR ON (O.RESPONSIBLE_ID = UR.ID)"
+            ),
+            "RESPONSIBLE_LAST_NAME" => array(
+                "FIELD" => "UR.LAST_NAME",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_user UR ON (O.RESPONSIBLE_ID = UR.ID)"
+            ),
+            "RESPONSIBLE_SECOND_NAME" => array(
+                "FIELD" => "UR.SECOND_NAME",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_user UR ON (O.RESPONSIBLE_ID = UR.ID)"
+            ),
+            "RESPONSIBLE_EMAIL" => array(
+                "FIELD" => "UR.EMAIL",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_user UR ON (O.RESPONSIBLE_ID = UR.ID)"
+            ),
+            "RESPONSIBLE_WORK_POSITION" => array(
+                "FIELD" => "UR.WORK_POSITION",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_user UR ON (O.RESPONSIBLE_ID = UR.ID)"
+            ),
+            "RESPONSIBLE_PERSONAL_PHOTO" => array(
+                "FIELD" => "UR.PERSONAL_PHOTO",
+                "TYPE" => "string",
+                "FROM" => "LEFT JOIN b_user UR ON (O.RESPONSIBLE_ID = UR.ID)"
+            ),
 
-            "BUYER" => array("FIELD" => "U.LOGIN,U.NAME,U.LAST_NAME,U.EMAIL,U.ID", "WHERE_ONLY" => "Y", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (O.USER_ID = U.ID)"),
-            "BASKET_ID" => array("FIELD" => "B.ID", "TYPE" => "int", "FROM" => "INNER JOIN b_sale_basket B ON (O.ID = B.ORDER_ID)"),
-            "BASKET_PRODUCT_ID" => array("FIELD" => "B.PRODUCT_ID", "TYPE" => "int", "FROM" => "INNER JOIN b_sale_basket B ON (O.ID = B.ORDER_ID)"),
-            "BASKET_PRODUCT_XML_ID" => array("FIELD" => "B.PRODUCT_XML_ID", "TYPE" => "string", "FROM" => "INNER JOIN b_sale_basket B ON (O.ID = B.ORDER_ID)"),
-            "BASKET_MODULE" => array("FIELD" => "B.MODULE", "TYPE" => "string", "FROM" => "INNER JOIN b_sale_basket B ON (O.ID = B.ORDER_ID)"),
-            "BASKET_NAME" => array("FIELD" => "B.NAME", "TYPE" => "string", "FROM" => "INNER JOIN b_sale_basket B ON (O.ID = B.ORDER_ID)"),
-            "BASKET_QUANTITY" => array("FIELD" => "B.QUANTITY", "TYPE" => "int", "FROM" => "INNER JOIN b_sale_basket B ON (O.ID = B.ORDER_ID)"),
-            "BASKET_PRICE" => array("FIELD" => "B.PRICE", "TYPE" => "double", "FROM" => "INNER JOIN b_sale_basket B ON (O.ID = B.ORDER_ID)"),
-            "BASKET_CURRENCY" => array("FIELD" => "B.CURRENCY", "TYPE" => "string", "FROM" => "INNER JOIN b_sale_basket B ON (O.ID = B.ORDER_ID)"),
-            "BASKET_DISCOUNT_PRICE" => array("FIELD" => "B.DISCOUNT_PRICE", "TYPE" => "double", "FROM" => "INNER JOIN b_sale_basket B ON (O.ID = B.ORDER_ID)"),
-            "BASKET_DISCOUNT_NAME" => array("FIELD" => "B.DISCOUNT_NAME", "TYPE" => "string", "FROM" => "INNER JOIN b_sale_basket B ON (O.ID = B.ORDER_ID)"),
-            "BASKET_DISCOUNT_VALUE" => array("FIELD" => "B.DISCOUNT_VALUE", "TYPE" => "string", "FROM" => "INNER JOIN b_sale_basket B ON (O.ID = B.ORDER_ID)"),
-            "BASKET_DISCOUNT_COUPON" => array("FIELD" => "B.DISCOUNT_COUPON", "TYPE" => "string", "FROM" => "INNER JOIN b_sale_basket B ON (O.ID = B.ORDER_ID)"),
-            "BASKET_VAT_RATE" => array("FIELD" => "B.VAT_RATE", "TYPE" => "string", "FROM" => "INNER JOIN b_sale_basket B ON (O.ID = B.ORDER_ID)"),
-            "BASKET_RECOMMENDATION" => array("FIELD" => "B.RECOMMENDATION", "TYPE" => "string", "FROM" => "INNER JOIN b_sale_basket B ON (O.ID = B.ORDER_ID)"),
-            "BASKET_PRICE_TOTAL" => array("FIELD" => "(B.PRICE * B.QUANTITY)", "TYPE" => "double", "FROM" => "INNER JOIN b_sale_basket B ON (O.ID = B.ORDER_ID)"),
+            "BUYER" => array(
+                "FIELD" => "U.LOGIN,U.NAME,U.LAST_NAME,U.EMAIL,U.ID",
+                "WHERE_ONLY" => "Y",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_user U ON (O.USER_ID = U.ID)"
+            ),
+            "BASKET_ID" => array(
+                "FIELD" => "B.ID",
+                "TYPE" => "int",
+                "FROM" => "INNER JOIN b_sale_basket B ON (O.ID = B.ORDER_ID)"
+            ),
+            "BASKET_PRODUCT_ID" => array(
+                "FIELD" => "B.PRODUCT_ID",
+                "TYPE" => "int",
+                "FROM" => "INNER JOIN b_sale_basket B ON (O.ID = B.ORDER_ID)"
+            ),
+            "BASKET_PRODUCT_XML_ID" => array(
+                "FIELD" => "B.PRODUCT_XML_ID",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_sale_basket B ON (O.ID = B.ORDER_ID)"
+            ),
+            "BASKET_MODULE" => array(
+                "FIELD" => "B.MODULE",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_sale_basket B ON (O.ID = B.ORDER_ID)"
+            ),
+            "BASKET_NAME" => array(
+                "FIELD" => "B.NAME",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_sale_basket B ON (O.ID = B.ORDER_ID)"
+            ),
+            "BASKET_QUANTITY" => array(
+                "FIELD" => "B.QUANTITY",
+                "TYPE" => "int",
+                "FROM" => "INNER JOIN b_sale_basket B ON (O.ID = B.ORDER_ID)"
+            ),
+            "BASKET_PRICE" => array(
+                "FIELD" => "B.PRICE",
+                "TYPE" => "double",
+                "FROM" => "INNER JOIN b_sale_basket B ON (O.ID = B.ORDER_ID)"
+            ),
+            "BASKET_CURRENCY" => array(
+                "FIELD" => "B.CURRENCY",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_sale_basket B ON (O.ID = B.ORDER_ID)"
+            ),
+            "BASKET_DISCOUNT_PRICE" => array(
+                "FIELD" => "B.DISCOUNT_PRICE",
+                "TYPE" => "double",
+                "FROM" => "INNER JOIN b_sale_basket B ON (O.ID = B.ORDER_ID)"
+            ),
+            "BASKET_DISCOUNT_NAME" => array(
+                "FIELD" => "B.DISCOUNT_NAME",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_sale_basket B ON (O.ID = B.ORDER_ID)"
+            ),
+            "BASKET_DISCOUNT_VALUE" => array(
+                "FIELD" => "B.DISCOUNT_VALUE",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_sale_basket B ON (O.ID = B.ORDER_ID)"
+            ),
+            "BASKET_DISCOUNT_COUPON" => array(
+                "FIELD" => "B.DISCOUNT_COUPON",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_sale_basket B ON (O.ID = B.ORDER_ID)"
+            ),
+            "BASKET_VAT_RATE" => array(
+                "FIELD" => "B.VAT_RATE",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_sale_basket B ON (O.ID = B.ORDER_ID)"
+            ),
+            "BASKET_RECOMMENDATION" => array(
+                "FIELD" => "B.RECOMMENDATION",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_sale_basket B ON (O.ID = B.ORDER_ID)"
+            ),
+            "BASKET_PRICE_TOTAL" => array(
+                "FIELD" => "(B.PRICE * B.QUANTITY)",
+                "TYPE" => "double",
+                "FROM" => "INNER JOIN b_sale_basket B ON (O.ID = B.ORDER_ID)"
+            ),
 
-            "PROPERTY_ID" => array("FIELD" => "SP.ID", "TYPE" => "int", "FROM" => "INNER JOIN b_sale_order_props_value SP ON (O.ID = SP.ORDER_ID)"),
-            "PROPERTY_ORDER_PROPS_ID" => array("FIELD" => "SP.ORDER_PROPS_ID", "TYPE" => "int", "FROM" => "INNER JOIN b_sale_order_props_value SP ON (O.ID = SP.ORDER_ID)"),
-            "PROPERTY_NAME" => array("FIELD" => "SP.NAME", "TYPE" => "string", "FROM" => "INNER JOIN b_sale_order_props_value SP ON (O.ID = SP.ORDER_ID)"),
-            "PROPERTY_VALUE" => array("FIELD" => "SP.VALUE", "TYPE" => "string", "FROM" => "INNER JOIN b_sale_order_props_value SP ON (O.ID = SP.ORDER_ID)"),
-            "PROPERTY_CODE" => array("FIELD" => "SP.CODE", "TYPE" => "string", "FROM" => "INNER JOIN b_sale_order_props_value SP ON (O.ID = SP.ORDER_ID)"),
-            "PROPERTY_VAL_BY_CODE" => array("FIELD" => "SP.VALUE", "TYPE" => "string", "FROM" => "INNER JOIN b_sale_order_props_value SP ON (O.ID = SP.ORDER_ID)"),
+            "PROPERTY_ID" => array(
+                "FIELD" => "SP.ID",
+                "TYPE" => "int",
+                "FROM" => "INNER JOIN b_sale_order_props_value SP ON (O.ID = SP.ORDER_ID)"
+            ),
+            "PROPERTY_ORDER_PROPS_ID" => array(
+                "FIELD" => "SP.ORDER_PROPS_ID",
+                "TYPE" => "int",
+                "FROM" => "INNER JOIN b_sale_order_props_value SP ON (O.ID = SP.ORDER_ID)"
+            ),
+            "PROPERTY_NAME" => array(
+                "FIELD" => "SP.NAME",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_sale_order_props_value SP ON (O.ID = SP.ORDER_ID)"
+            ),
+            "PROPERTY_VALUE" => array(
+                "FIELD" => "SP.VALUE",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_sale_order_props_value SP ON (O.ID = SP.ORDER_ID)"
+            ),
+            "PROPERTY_CODE" => array(
+                "FIELD" => "SP.CODE",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_sale_order_props_value SP ON (O.ID = SP.ORDER_ID)"
+            ),
+            "PROPERTY_VAL_BY_CODE" => array(
+                "FIELD" => "SP.VALUE",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_sale_order_props_value SP ON (O.ID = SP.ORDER_ID)"
+            ),
 
-            "DELIVERY_DATE_REQUEST" => array("FIELD" => "OD.DATE_REQUEST", "TYPE" => "datetime", "FROM" => "LEFT JOIN b_sale_order_delivery OD ON (O.ID = OD.ORDER_ID)")
+            "DELIVERY_DATE_REQUEST" => array(
+                "FIELD" => "OD.DATE_REQUEST",
+                "TYPE" => "datetime",
+                "FROM" => "LEFT JOIN b_sale_order_delivery OD ON (O.ID = OD.ORDER_ID)"
+            )
         );
         require_once $_SERVER["DOCUMENT_ROOT"] . '/bitrix/modules/sale/general/status.php';
         CSaleStatusAdapter::addFieldsTo($arFields, 'O.STATUS_ID', 'STATUS_PERMS_');
         // <-- FIELDS
 
         $arPropIDsTmp = array();
-        foreach ($arOrder as $key => $value)
+        foreach ($arOrder as $key => $value) {
             CSaleOrder::PrepareGetListArray($key, $arFields, $arPropIDsTmp);
+        }
 
         foreach ($arFilter as $key => $value) {
             $arKeyTmp = CSaleOrder::GetFilterOperation($key);
@@ -728,21 +965,34 @@ class CSaleOrder extends CAllSaleOrder
             CSaleOrder::PrepareGetListArray($key, $arFields, $arPropIDsTmp);
         }
 
-        if (is_array($arGroupBy))
-            foreach ($arGroupBy as $key => $value)
+        if (is_array($arGroupBy)) {
+            foreach ($arGroupBy as $key => $value) {
                 CSaleOrder::PrepareGetListArray($key, $arFields, $arPropIDsTmp);
+            }
+        }
 
-        foreach ($arSelectFields as $key => $value)
+        foreach ($arSelectFields as $key => $value) {
             CSaleOrder::PrepareGetListArray($key, $arFields, $arPropIDsTmp);
+        }
 
-        $arSqls = CSaleOrder::PrepareSql($arFields, $arOrder, $arFilter, $arGroupBy, $arSelectFields, $obUserFieldsSql, $callback, $arOptions);
+        $arSqls = CSaleOrder::PrepareSql(
+            $arFields,
+            $arOrder,
+            $arFilter,
+            $arGroupBy,
+            $arSelectFields,
+            $obUserFieldsSql,
+            $callback,
+            $arOptions
+        );
 
         $arSqls["SELECT"] = str_replace("%%_DISTINCT_%%", "", $arSqls["SELECT"]);
 
         $r = $obUserFieldsSql->GetFilter();
         $strSqlUFFilter = '';
-        if (strlen($r) > 0)
+        if ($r <> '') {
             $strSqlUFFilter = " (" . $r . ") ";
+        }
 
         if (is_array($arGroupBy) && count($arGroupBy) == 0) {
             $strSql =
@@ -752,25 +1002,29 @@ class CSaleOrder extends CAllSaleOrder
                 "	" . $arSqls["FROM"] . " " .
                 $obUserFieldsSql->GetJoin("O.ID") . " ";
 
-            if (strlen($arSqls["WHERE"]) > 0)
+            if ($arSqls["WHERE"] <> '') {
                 $strSql .= "WHERE " . $arSqls["WHERE"] . " ";
-            if (strlen($arSqls["WHERE"]) > 0 && strlen($strSqlUFFilter) > 0)
+            }
+            if ($arSqls["WHERE"] <> '' && $strSqlUFFilter <> '') {
                 $strSql .= " AND " . $strSqlUFFilter . " ";
-            elseif (strlen($arSqls["WHERE"]) <= 0 && strlen($strSqlUFFilter) > 0)
+            } elseif ($arSqls["WHERE"] == '' && $strSqlUFFilter <> '') {
                 $strSql .= " WHERE " . $strSqlUFFilter . " ";
+            }
 
-            if (strlen($arSqls["GROUPBY"]) > 0)
+            if ($arSqls["GROUPBY"] <> '') {
                 $strSql .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
+            }
 
             //echo "!1!=".htmlspecialcharsbx($strSql)."<br>";
 
             $dbRes = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             $dbRes->SetUserFields($USER_FIELD_MANAGER->GetUserFields("ORDER"));
 
-            if ($arRes = $dbRes->Fetch())
+            if ($arRes = $dbRes->Fetch()) {
                 return $arRes["CNT"];
-            else
-                return False;
+            } else {
+                return false;
+            }
         }
 
         $strSql =
@@ -780,43 +1034,51 @@ class CSaleOrder extends CAllSaleOrder
             "	" . $arSqls["FROM"] . " " .
             $obUserFieldsSql->GetJoin("O.ID") . " ";
 
-        if (strlen($arSqls["WHERE"]) > 0)
+        if ($arSqls["WHERE"] <> '') {
             $strSql .= "WHERE " . $arSqls["WHERE"] . " ";
-        if (strlen($arSqls["WHERE"]) > 0 && strlen($strSqlUFFilter) > 0)
+        }
+        if ($arSqls["WHERE"] <> '' && $strSqlUFFilter <> '') {
             $strSql .= " AND " . $strSqlUFFilter . " ";
-        elseif (strlen($arSqls["WHERE"]) <= 0 && strlen($strSqlUFFilter) > 0)
+        } elseif ($arSqls["WHERE"] == '' && $strSqlUFFilter <> '') {
             $strSql .= " WHERE " . $strSqlUFFilter . " ";
+        }
 
-        if (strlen($arSqls["GROUPBY"]) > 0)
+        if ($arSqls["GROUPBY"] <> '') {
             $strSql .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
+        }
 
-        if (strlen($arSqls["ORDERBY"]) > 0)
+        if ($arSqls["ORDERBY"] <> '') {
             $strSql .= "ORDER BY " . $arSqls["ORDERBY"] . " ";
+        }
 
-        if (is_array($arNavStartParams) && IntVal($arNavStartParams["nTopCount"]) <= 0) {
+        if (is_array($arNavStartParams) && intval($arNavStartParams["nTopCount"]) <= 0) {
             $strSql_tmp =
                 "SELECT COUNT('x') as CNT " .
                 "FROM b_sale_order O " .
                 "	" . $arSqls["FROM"] . " " .
                 $obUserFieldsSql->GetJoin("O.ID") . " ";
 
-            if (strlen($arSqls["WHERE"]) > 0)
+            if ($arSqls["WHERE"] <> '') {
                 $strSql_tmp .= "WHERE " . $arSqls["WHERE"] . " ";
-            if (strlen($arSqls["WHERE"]) > 0 && strlen($strSqlUFFilter) > 0)
+            }
+            if ($arSqls["WHERE"] <> '' && $strSqlUFFilter <> '') {
                 $strSql_tmp .= " AND " . $strSqlUFFilter . " ";
-            elseif (strlen($arSqls["WHERE"]) <= 0 && strlen($strSqlUFFilter) > 0)
+            } elseif ($arSqls["WHERE"] == '' && $strSqlUFFilter <> '') {
                 $strSql_tmp .= " WHERE " . $strSqlUFFilter . " ";
+            }
 
-            if (strlen($arSqls["GROUPBY"]) > 0)
+            if ($arSqls["GROUPBY"] <> '') {
                 $strSql_tmp .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
+            }
 
             //echo "!2.1!=".htmlspecialcharsbx($strSql_tmp)."<br>";
 
             $dbRes = $DB->Query($strSql_tmp, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             $cnt = 0;
-            if (strlen($arSqls["GROUPBY"]) <= 0) {
-                if ($arRes = $dbRes->Fetch())
+            if ($arSqls["GROUPBY"] == '') {
+                if ($arRes = $dbRes->Fetch()) {
                     $cnt = $arRes["CNT"];
+                }
             } else {
                 $cnt = $dbRes->SelectedRowsCount();
             }
@@ -828,8 +1090,9 @@ class CSaleOrder extends CAllSaleOrder
             $dbRes->SetUserFields($USER_FIELD_MANAGER->GetUserFields("ORDER"));
             $dbRes->NavQuery($strSql, $cnt, $arNavStartParams);
         } else {
-            if (is_array($arNavStartParams) && IntVal($arNavStartParams["nTopCount"]) > 0)
-                $strSql .= "LIMIT " . IntVal($arNavStartParams["nTopCount"]);
+            if (is_array($arNavStartParams) && intval($arNavStartParams["nTopCount"]) > 0) {
+                $strSql .= "LIMIT " . intval($arNavStartParams["nTopCount"]);
+            }
 
             //echo "!3!=".htmlspecialcharsbx($strSql)."<br>";
 
@@ -840,16 +1103,17 @@ class CSaleOrder extends CAllSaleOrder
         return $dbRes;
     }
 
-    function GetLockStatus($ID, &$lockedBY, &$dateLock)
+    public static function GetLockStatus($ID, &$lockedBY, &$dateLock)
     {
         global $DB;
 
-        $ID = IntVal($ID);
-        if ($ID <= 0)
-            return False;
+        $ID = intval($ID);
+        if ($ID <= 0) {
+            return false;
+        }
 
-        $maxLock = IntVal(COption::GetOptionString("sale", "MAX_LOCK_TIME", "60"));
-        $userID = IntVal($GLOBALS["USER"]->GetID());
+        $maxLock = intval(COption::GetOptionString("sale", "MAX_LOCK_TIME", "60"));
+        $userID = intval($GLOBALS["USER"]->GetID());
 
         $strSql =
             "SELECT LOCKED_BY, " .
@@ -874,23 +1138,31 @@ class CSaleOrder extends CAllSaleOrder
      * @param array $arOrderOld old order fields
      * @return bool true
      */
-    public function AddOrderHistory($OldFields, $NewFields)
+    public static function AddOrderHistory($OldFields, $NewFields)
     {
         global $DB, $USER;
 
-        foreach (GetModuleEvents("sale", "OnBeforeOrderAddHistory", true) as $arEvent)
-            if (ExecuteModuleEventEx($arEvent, Array(&$NewFields)) === false)
+        foreach (GetModuleEvents("sale", "OnBeforeOrderAddHistory", true) as $arEvent) {
+            if (ExecuteModuleEventEx($arEvent, Array(&$NewFields)) === false) {
                 return false;
+            }
+        }
 
-        if ($OldFields["ID"] <= 0)
+        if ($OldFields["ID"] <= 0) {
             return false;
+        }
 
-        if (isset($NewFields["ID"]))
+        if (isset($NewFields["ID"])) {
             unset($NewFields["ID"]);
+        }
 
         $bChange = false;
         $strSql = '';
-        $arInsert = array("H_USER_ID" => $USER->GetID(), "H_ORDER_ID" => $OldFields["ID"], "H_CURRENCY" => $OldFields["CURRENCY"]);
+        $arInsert = array(
+            "H_USER_ID" => $USER->GetID(),
+            "H_ORDER_ID" => $OldFields["ID"],
+            "H_CURRENCY" => $OldFields["CURRENCY"]
+        );
 
         $arDeleteFields = array(
             "ID",
@@ -917,9 +1189,13 @@ class CSaleOrder extends CAllSaleOrder
                 $val = CDatabase::FormatDate(trim($val), false, "Y-M-D");
             }
 
-            if (array_key_exists($key, $OldFields) && strlen($val) > 0 && $val != $OldFields[$key] && !in_array($key, $arDeleteFields)) {
-                if ($key == "PAY_VOUCHER_DATE" || $key == "DELIVERY_DOC_DATE")
+            if (array_key_exists($key, $OldFields) && $val <> '' && $val != $OldFields[$key] && !in_array(
+                    $key,
+                    $arDeleteFields
+                )) {
+                if ($key == "PAY_VOUCHER_DATE" || $key == "DELIVERY_DOC_DATE") {
                     $val = $valOld;
+                }
 
                 $bChange = true;
                 $arInsert[$key] = $val;
@@ -935,8 +1211,9 @@ class CSaleOrder extends CAllSaleOrder
             $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
         }
 
-        foreach (GetModuleEvents("sale", "OnAfterOrderAddHistory", true) as $arEvent)
+        foreach (GetModuleEvents("sale", "OnAfterOrderAddHistory", true) as $arEvent) {
             ExecuteModuleEventEx($arEvent, Array($NewFields));
+        }
 
         return true;
     }

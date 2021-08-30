@@ -57,6 +57,7 @@ echo "<pre>",htmlspecialcharsEx(print_r($arSkuCollection,1)),"</pre>";
 */
 
 namespace Bitrix\Iblock\Template;
+
 /**
  * Class Engine
  * Provides interface for templates processing.
@@ -96,8 +97,9 @@ class Engine
     protected static function parseTemplateTree($template, NodeRoot $parent)
     {
         list($template, $modifiers) = Helper::splitTemplate($template);
-        if ($modifiers != "")
+        if ($modifiers != "") {
             $parent->setModifiers($modifiers);
+        }
 
         $parsedTemplate = preg_split('/({=|})/', $template, -1, PREG_SPLIT_DELIM_CAPTURE);
         while (($token = array_shift($parsedTemplate)) !== null) {
@@ -109,8 +111,9 @@ class Engine
                 $node = new NodeText($token);
             }
 
-            if ($node)
+            if ($node) {
                 $parent->addChild($node);
+            }
         }
         return $parent;
     }
@@ -137,8 +140,9 @@ class Engine
         }
         //Eat up to the formula end
         while (($token = array_shift($parsedTemplate)) !== null) {
-            if ($token === "}")
+            if ($token === "}") {
                 break;
+            }
         }
         return $node;
     }
@@ -159,8 +163,9 @@ class Engine
     {
         $token = ltrim($token, " \t\n\r");
 
-        if ($token !== "")
+        if ($token !== "") {
             self::explodeFunctionArgument($token, $function);
+        }
 
         while (($token = array_shift($parsedTemplate)) !== null) {
             if ($token === "}") {
@@ -168,8 +173,9 @@ class Engine
                 break;
             } elseif ($token === "{=") {
                 $node = self::parseFormula($parsedTemplate);
-                if ($node)
+                if ($node) {
                     $function->addParameter($node);
+                }
             } elseif ($token !== "") {
                 self::explodeFunctionArgument($token, $function);
             }
@@ -187,13 +193,17 @@ class Engine
      */
     protected static function explodeFunctionArgument($token, NodeFunction $function)
     {
-        if (preg_match_all("/
+        if (preg_match_all(
+            "/
 			(
 				[a-zA-Z0-9_]+\\.[a-zA-Z0-9_.]+
 				|[0-9]+
 				|\"[^\"]*\"
 			)
-			/x", $token, $wordList)
+			/x",
+            $token,
+            $wordList
+        )
         ) {
             foreach ($wordList[0] as $word) {
                 if ($word !== "") {
@@ -262,12 +272,16 @@ class NodeRoot extends NodeBase
     {
         $this->modifiers = array();
         foreach (Helper::splitModifiers($modifiers) as $mod) {
-            if ($mod == "l")
+            if ($mod == "l") {
                 $modifierFunction = Functions\Fabric::createInstance("lower");
-            else
-                $modifierFunction = Functions\Fabric::createInstance("translit", array(
-                    "replace_space" => substr($mod, 1),
-                ));
+            } else {
+                $modifierFunction = Functions\Fabric::createInstance(
+                    "translit",
+                    array(
+                        "replace_space" => mb_substr($mod, 1),
+                    )
+                );
+            }
             $this->modifiers[] = $modifierFunction;
         }
     }
@@ -286,10 +300,11 @@ class NodeRoot extends NodeBase
         /** @var NodeBase $child */
         foreach ($this->children as $child) {
             $childContent = $child->process($entity);
-            if (is_array($childContent))
+            if (is_array($childContent)) {
                 $content .= implode(" ", $childContent);
-            else
+            } else {
                 $content .= $childContent;
+            }
         }
         /** @var Functions\FunctionBase $modifier */
         foreach ($this->modifiers as $modifier) {
@@ -353,7 +368,7 @@ class NodeEntityField extends NodeBase
      */
     function __construct($entityField = "")
     {
-        $this->entityField = strtolower($entityField);
+        $this->entityField = mb_strtolower($entityField);
     }
 
     /**
@@ -372,10 +387,11 @@ class NodeEntityField extends NodeBase
         for ($i = 0, $c = count($pathToField) - 1; $i < $c; $i++) {
             $entityObject = $entityObject->resolve($pathToField[$i]);
         }
-        if ($entityObject)
+        if ($entityObject) {
             return $entityObject->getField($pathToField[$c]);
-        else
+        } else {
             return "";
+        }
     }
 }
 
@@ -397,7 +413,7 @@ class NodeFunction extends NodeBase
      */
     public function __construct($functionName = "")
     {
-        $this->functionName = strtolower($functionName);
+        $this->functionName = mb_strtolower($functionName);
     }
 
     /**

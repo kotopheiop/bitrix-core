@@ -33,8 +33,9 @@ class Tools
 
         $coreFile = new File(Application::getDocumentRoot() . self::$jsMobileCorePath);
 
-        if ($modificationHash == $lastModificationHash && $coreFile->isExists())
+        if ($modificationHash == $lastModificationHash && $coreFile->isExists()) {
             return;
+        }
 
         CheckDirPath(Application::getDocumentRoot() . "/bitrix/cache/js/mobileapp_designer/");
 
@@ -44,7 +45,6 @@ class Tools
             if ($file->isExists()) {
                 $fileContent = $file->getContents();
                 $content .= "\n\n" . $fileContent;
-
             }
         }
 
@@ -54,7 +54,6 @@ class Tools
         $coreFile->close();
 
         Option::set("mobileapp", "mobile_core_modification", $modificationHash);
-
     }
 
     public static function getArrayFilesHash($fileList = array())

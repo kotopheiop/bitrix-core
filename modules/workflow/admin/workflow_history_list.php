@@ -1,10 +1,12 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/workflow/prolog.php");
 
 $WORKFLOW_RIGHT = $APPLICATION->GetGroupRight("workflow");
-if ($WORKFLOW_RIGHT == "D")
+if ($WORKFLOW_RIGHT == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/workflow/include.php");
 IncludeModuleLangFile(__FILE__);
@@ -68,11 +70,11 @@ $arFilter = array(
     "DOCUMENT_ID" => $find_document_id,
     "DATE_MODIFY_1" => $find_modify_1,
     "DATE_MODIFY_2" => $find_modify_2,
-    "MODIFIED_USER" => ($find_type == "modified_by" && strlen($find) > 0 ? $find : $find_modified_user),
+    "MODIFIED_USER" => ($find_type == "modified_by" && $find <> '' ? $find : $find_modified_user),
     "SITE_ID" => $find_site_id,
     "FILENAME" => $find_filename,
-    "TITLE" => ($find_type == "title" && strlen($find) > 0 ? $find : $find_title),
-    "BODY" => ($find_type == "body" && strlen($find) > 0 ? $find : $find_body),
+    "TITLE" => ($find_type == "title" && $find <> '' ? $find : $find_title),
+    "BODY" => ($find_type == "body" && $find <> '' ? $find : $find_body),
     "STATUS" => $find_status,
     "STATUS_ID" => $find_status_id,
     "ID_EXACT_MATCH" => $find_id_exact_match,
@@ -86,14 +88,16 @@ $arFilter = array(
 
 if ($arID = $lAdmin->GroupAction()) {
     if ($_REQUEST['action_target'] == 'selected') {
-        $rsData = CWorkflow::GetList($by, $order, $arFilter, $is_filtered);
-        while ($arRes = $rsData->Fetch())
+        $rsData = CWorkflow::GetList('', '', $arFilter);
+        while ($arRes = $rsData->Fetch()) {
             $arID[] = $arRes['ID'];
+        }
     }
     foreach ($arID as $ID) {
-        $ID = IntVal($ID);
-        if ($ID <= 0)
+        $ID = intval($ID);
+        if ($ID <= 0) {
             continue;
+        }
 
         switch ($_REQUEST['action']) {
             case "delete":
@@ -157,18 +161,34 @@ $arHeaders = array(
 );
 $lAdmin->AddHeaders($arHeaders);
 
-$rsData = CWorkflow::GetHistoryList($by, $order, $arFilter, $is_filtered);
+global $by, $order;
+
+$rsData = CWorkflow::GetHistoryList($by, $order, $arFilter);
 $rsData = new CAdminResult($rsData, $sTableID);
 $rsData->NavStart(50);
 $lAdmin->NavText($rsData->GetNavPrint(GetMessage("FLOW_PAGES")));
 while ($arRes = $rsData->NavNext(true, "f_")) {
     $row = &$lAdmin->AddRow($f_ID, $arRes);
-    if (CWorkflow::IsHaveEditRights($f_DOCUMENT_ID) && $f_DOCUMENT_ID > 0)
-        $row->AddViewField("DOCUMENT_ID", '<a href="workflow_edit.php?lang=' . LANG . '&ID=' . $f_DOCUMENT_ID . '">' . $f_DOCUMENT_ID . '</a>');
+    if (CWorkflow::IsHaveEditRights($f_DOCUMENT_ID) && $f_DOCUMENT_ID > 0) {
+        $row->AddViewField(
+            "DOCUMENT_ID",
+            '<a href="workflow_edit.php?lang=' . LANG . '&ID=' . $f_DOCUMENT_ID . '">' . $f_DOCUMENT_ID . '</a>'
+        );
+    }
 
-    $row->AddViewField("MODIFIED_BY", '[<a title="' . GetMessage("FLOW_USER_ALT") . '" href="user_edit.php?ID=' . $f_MODIFIED_BY . '&lang=' . LANG . '">' . $f_MODIFIED_BY . '</a>]&nbsp;' . $f_USER_NAME);
+    $row->AddViewField(
+        "MODIFIED_BY",
+        '[<a title="' . GetMessage(
+            "FLOW_USER_ALT"
+        ) . '" href="user_edit.php?ID=' . $f_MODIFIED_BY . '&lang=' . LANG . '">' . $f_MODIFIED_BY . '</a>]&nbsp;' . $f_USER_NAME
+    );
     $row->AddViewField("FILENAME", '<a href="' . $f_FILENAME . '">' . TruncateText($f_FILENAME, 45) . '</a>');
-    $row->AddViewField("STATUS_ID", '[<a title="' . GetMessage("FLOW_STATUS_ALT") . '" href="workflow_status_edit.php?ID=' . $f_STATUS_ID . '&lang=' . LANG . '">' . $f_STATUS_ID . '</a>]&nbsp;' . $f_STATUS_TITLE);
+    $row->AddViewField(
+        "STATUS_ID",
+        '[<a title="' . GetMessage(
+            "FLOW_STATUS_ALT"
+        ) . '" href="workflow_status_edit.php?ID=' . $f_STATUS_ID . '&lang=' . LANG . '">' . $f_STATUS_ID . '</a>]&nbsp;' . $f_STATUS_TITLE
+    );
     $arActions = array(
         array(
             "ICON" => "view",
@@ -184,34 +204,41 @@ while ($arRes = $rsData->NavNext(true, "f_")) {
         $arActions[] = array(
             "ICON" => "delete",
             "TEXT" => GetMessage("FLOW_DELETE"),
-            "ACTION" => "if(confirm('" . GetMessage('FLOW_DELETE_CONFIRM') . "')) " . $lAdmin->ActionDoGroup($f_ID, "delete"),
+            "ACTION" => "if(confirm('" . GetMessage('FLOW_DELETE_CONFIRM') . "')) " . $lAdmin->ActionDoGroup(
+                    $f_ID,
+                    "delete"
+                ),
         );
     }
     $row->AddActions($arActions);
 }
 
-$lAdmin->AddFooter(array(
+$lAdmin->AddFooter(
     array(
-        "title" => GetMessage("MAIN_ADMIN_LIST_SELECTED"),
-        "value" => $rsData->SelectedRowsCount(),
-    ),
-    array(
-        "counter" => true,
-        "title" => GetMessage("MAIN_ADMIN_LIST_CHECKED"),
-        "value" => "0",
-    ),
-));
+        array(
+            "title" => GetMessage("MAIN_ADMIN_LIST_SELECTED"),
+            "value" => $rsData->SelectedRowsCount(),
+        ),
+        array(
+            "counter" => true,
+            "title" => GetMessage("MAIN_ADMIN_LIST_CHECKED"),
+            "value" => "0",
+        ),
+    )
+);
 
 if ($WORKFLOW_RIGHT > "R" && CWorkflow::IsAdmin()) {
-    $lAdmin->AddGroupActionTable(array(
-        "delete" => GetMessage("MAIN_ADMIN_LIST_DELETE"),
+    $lAdmin->AddGroupActionTable(
         array(
-            "action" => "Diff()",
-            "value" => "compare",
-            "type" => "button",
-            "name" => GetMessage("FLOW_COMPARE"),
-        ),
-    ));
+            "delete" => GetMessage("MAIN_ADMIN_LIST_DELETE"),
+            array(
+                "action" => "Diff()",
+                "value" => "compare",
+                "type" => "button",
+                "name" => GetMessage("FLOW_COMPARE"),
+            ),
+        )
+    );
 }
 
 $aMenu = array(
@@ -248,7 +275,9 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
             if (j < 2 || j > 2) {
                 alert('<?echo GetMessageJS("FLOW_COMPARE_ALERT")?>');
             } else {
-                window.location = 'workflow_history_view.php?lang=<?echo urlencode(LANG)?>&ID=' + selection[0] + '&PREV_ID=' + selection[1];
+                window.location = 'workflow_history_view.php?lang=<?echo urlencode(
+                    LANG
+                )?>&ID=' + selection[0] + '&PREV_ID=' + selection[1];
             }
         }
     </script>
@@ -261,9 +290,15 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
                 <input type="text" size="25" name="find" value="<? echo htmlspecialcharsbx($find) ?>"
                        title="<?= GetMessage("MAIN_FIND_TITLE") ?>">
                 <select name="find_type">
-                    <option value="title"<? if ($find_type == "title") echo " selected" ?>><?= GetMessage('FLOW_F_TITLE') ?></option>
-                    <option value="body"<? if ($find_type == "body") echo " selected" ?>><?= GetMessage('FLOW_F_BODY') ?></option>
-                    <option value="modified_by"<? if ($find_type == "modified_by") echo " selected" ?>><?= GetMessage('FLOW_F_MODIFIED_BY') ?></option>
+                    <option value="title"<? if ($find_type == "title") echo " selected" ?>><?= GetMessage(
+                            'FLOW_F_TITLE'
+                        ) ?></option>
+                    <option value="body"<? if ($find_type == "body") echo " selected" ?>><?= GetMessage(
+                            'FLOW_F_BODY'
+                        ) ?></option>
+                    <option value="modified_by"<? if ($find_type == "modified_by") echo " selected" ?>><?= GetMessage(
+                            'FLOW_F_MODIFIED_BY'
+                        ) ?></option>
                 </select>
             </td>
         </tr>
@@ -277,12 +312,20 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
         <tr valign="center">
             <td nowrap><?= GetMessage("FLOW_F_DOCUMENT") ?>:</td>
             <td nowrap><input type="text" name="find_document_id" size="47"
-                              value="<? echo htmlspecialcharsbx($find_document_id) ?>"><?= ShowExactMatchCheckbox("find_document_id") ?>
-                &nbsp;<?= ShowFilterLogicHelp() ?></td>
+                              value="<? echo htmlspecialcharsbx($find_document_id) ?>"><?= ShowExactMatchCheckbox(
+                    "find_document_id"
+                ) ?>&nbsp;<?= ShowFilterLogicHelp() ?></td>
         </tr>
         <tr valign="center">
             <td nowrap><? echo GetMessage("FLOW_F_DATE_MODIFY") . ":" ?></td>
-            <td nowrap><? echo CalendarPeriod("find_modify_1", $find_modify_1, "find_modify_2", $find_modify_2, "form1", "Y") ?></td>
+            <td nowrap><? echo CalendarPeriod(
+                    "find_modify_1",
+                    $find_modify_1,
+                    "find_modify_2",
+                    $find_modify_2,
+                    "form1",
+                    "Y"
+                ) ?></td>
         </tr>
         <tr valign="center">
             <td nowrap valign="top"><?= GetMessage("FLOW_F_MODIFIED_BY") ?>:</td>
@@ -318,16 +361,23 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
             <td nowrap><input type="text" name="find_status" value="<? echo htmlspecialcharsbx($find_status) ?>"
                               size="47"><?= ShowExactMatchCheckbox("find_status") ?>&nbsp;<?= ShowFilterLogicHelp() ?>
                 <br><?
-                echo SelectBox("find_status_id", CWorkflowStatus::GetDropDownList("Y"), GetMessage("MAIN_ALL"), htmlspecialcharsbx($find_status_id));
+                echo SelectBox(
+                    "find_status_id",
+                    CWorkflowStatus::GetDropDownList("Y"),
+                    GetMessage("MAIN_ALL"),
+                    htmlspecialcharsbx($find_status_id)
+                );
                 ?></td>
         </tr>
         <?
         echo ShowLogicRadioBtn();
-        $filter->Buttons(array(
-            "table_id" => $sTableID,
-            "url" => $APPLICATION->GetCurPage(),
-            "form" => "form1",
-        ));
+        $filter->Buttons(
+            array(
+                "table_id" => $sTableID,
+                "url" => $APPLICATION->GetCurPage(),
+                "form" => "form1",
+            )
+        );
         $filter->End();
         ?>
     </form>

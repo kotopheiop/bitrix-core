@@ -1,4 +1,5 @@
 <?php
+
 IncludeModuleLangFile(__FILE__);
 
 class CBitrixCloudBackup
@@ -22,8 +23,9 @@ class CBitrixCloudBackup
      */
     public static function getInstance()
     {
-        if (!isset(self::$instance))
+        if (!isset(self::$instance)) {
             self::$instance = new CBitrixCloudBackup;
+        }
 
         return self::$instance;
     }
@@ -37,8 +39,9 @@ class CBitrixCloudBackup
      */
     private function _getInformation($force = false)
     {
-        if ($this->init && !$force)
+        if ($this->init && !$force) {
             return true;
+        }
         $this->init = true;
 
         try {
@@ -51,8 +54,9 @@ class CBitrixCloudBackup
         $node = /*.(CDataXMLNode).*/
             null;
         $node = $this->infoXML->SelectNodes("/control/quota/allow");
-        if (is_object($node))
+        if (is_object($node)) {
             $this->quota = CBitrixCloudCDNQuota::parseSize($node->textContent());
+        }
 
         $node = $this->infoXML->SelectNodes("/control/files");
         if (is_object($node)) {
@@ -70,9 +74,16 @@ class CBitrixCloudBackup
                     "FILE_NAME" => $name,
                     "FILE_SIZE" => (string)$size,
                 );
-                $time = strtotime(preg_replace('/^(\\d{4})(\\d\\d)(\\d\\d)_(\\d\\d)(\\d\\d)(\\d\\d)(.*)$/', '\\1-\\2-\\3 \\4:\\5:\\6', $name));
-                if ($time > $this->last_backup_time)
+                $time = strtotime(
+                    preg_replace(
+                        '/^(\\d{4})(\\d\\d)(\\d\\d)_(\\d\\d)(\\d\\d)(\\d\\d)(.*)$/',
+                        '\\1-\\2-\\3 \\4:\\5:\\6',
+                        $name
+                    )
+                );
+                if ($time > $this->last_backup_time) {
                     $this->last_backup_time = $time;
+                }
             }
         }
 
@@ -138,21 +149,29 @@ class CBitrixCloudBackup
      */
     private function _getBucket($operation, $check_word, $file_name)
     {
-        if (!CModule::IncludeModule('clouds'))
+        if (!CModule::IncludeModule('clouds')) {
             throw new CBitrixCloudException("Module clouds not installed.");
+        }
 
         $web_service = new CBitrixCloudBackupWebService();
-        if ($operation === "write")
+        if ($operation === "write") {
             $obXML = $web_service->actionWriteFile($check_word, $file_name);
-        else
+        } else {
             $obXML = $web_service->actionReadFile($check_word, $file_name);
+        }
 
-        $bucket_name = (is_object($node = $obXML->SelectNodes("/control/bucket/bucket_name"))) ? $node->textContent() : "";
-        $bucket_location = (is_object($node = $obXML->SelectNodes("/control/bucket/bucket_location"))) ? $node->textContent() : "";
+        $bucket_name = (is_object($node = $obXML->SelectNodes("/control/bucket/bucket_name"))) ? $node->textContent(
+        ) : "";
+        $bucket_location = (is_object(
+            $node = $obXML->SelectNodes("/control/bucket/bucket_location")
+        )) ? $node->textContent() : "";
         $prefix = (is_object($node = $obXML->SelectNodes("/control/bucket/prefix"))) ? $node->textContent() : "";
-        $access_key = (is_object($node = $obXML->SelectNodes("/control/bucket/access_key"))) ? $node->textContent() : "";
-        $secret_key = (is_object($node = $obXML->SelectNodes("/control/bucket/secret_key"))) ? $node->textContent() : "";
-        $session_token = (is_object($node = $obXML->SelectNodes("/control/bucket/session_token"))) ? $node->textContent() : "";
+        $access_key = (is_object($node = $obXML->SelectNodes("/control/bucket/access_key"))) ? $node->textContent(
+        ) : "";
+        $secret_key = (is_object($node = $obXML->SelectNodes("/control/bucket/secret_key"))) ? $node->textContent(
+        ) : "";
+        $session_token = (is_object($node = $obXML->SelectNodes("/control/bucket/session_token"))) ? $node->textContent(
+        ) : "";
         $file_name = (is_object($node = $obXML->SelectNodes("/control/bucket/file_name"))) ? $node->textContent() : "";
 
         return new CBitrixCloudBackupBucket(
@@ -280,8 +299,9 @@ class CBitrixCloudBackup
             return;
         }
 
-        if ($backup->getQuota() <= 0)
+        if ($backup->getQuota() <= 0) {
             return;
+        }
 
         $arFiles = $backup->listFiles();
         if (empty($arFiles)) {
@@ -291,39 +311,55 @@ class CBitrixCloudBackup
             $CDNAIParams["ALERT"] = true;
             $MESS = '<span class="adm-informer-strong-text">' . GetMessage("BCL_BACKUP_AI_NO_FILES") . '</span>';
             if ($USER->CanDoOperation("bitrixcloud_backup") && $USER->CanDoOperation('edit_php')) {
-                $CDNAIParams["FOOTER"] = '<a href="/bitrix/admin/dump.php?lang=' . LANGUAGE_ID . '">' . GetMessage("BCL_BACKUP_AI_DO_BACKUP_STRONGLY") . '</a>';
+                $CDNAIParams["FOOTER"] = '<a href="/bitrix/admin/dump.php?lang=' . LANGUAGE_ID . '">' . GetMessage(
+                        "BCL_BACKUP_AI_DO_BACKUP_STRONGLY"
+                    ) . '</a>';
             }
         } elseif ($backup->getLastTimeBackup() < (time() - 7 * 24 * 3600)) {
             $AVAIL = $backup->getQuota() - $backup->getUsage();
-            if ($AVAIL < 0.0)
+            if ($AVAIL < 0.0) {
                 $AVAIL = 0.0;
+            }
 
             $PROGRESS_FREE = round($AVAIL / $backup->getQuota() * 100);
             $ALLOWED = CFile::FormatSize($backup->getQuota(), 0);
             $CDNAIParams["ALERT"] = true;
-            $MESS = '<span class="adm-informer-strong-text">' . GetMessage("BCL_BACKUP_AI_LAST_TIME") . ': ' . FormatDate(array(
-                    "today" => "today",
-                    "yesterday" => "yesterday",
-                    "" => "dago",
-                ), $backup->getLastTimeBackup()) . '.</span>';
+            $MESS = '<span class="adm-informer-strong-text">' . GetMessage(
+                    "BCL_BACKUP_AI_LAST_TIME"
+                ) . ': ' . FormatDate(
+                    array(
+                        "today" => "today",
+                        "yesterday" => "yesterday",
+                        "" => "dago",
+                    ),
+                    $backup->getLastTimeBackup()
+                ) . '.</span>';
             if ($USER->CanDoOperation("bitrixcloud_backup") && $USER->CanDoOperation('edit_php')) {
-                $CDNAIParams["FOOTER"] = '<a href="/bitrix/admin/dump.php?lang=' . LANGUAGE_ID . '">' . GetMessage("BCL_BACKUP_AI_DO_BACKUP_STRONGLY") . '</a>';
+                $CDNAIParams["FOOTER"] = '<a href="/bitrix/admin/dump.php?lang=' . LANGUAGE_ID . '">' . GetMessage(
+                        "BCL_BACKUP_AI_DO_BACKUP_STRONGLY"
+                    ) . '</a>';
             }
         } else {
             $AVAIL = $backup->getQuota() - $backup->getUsage();
-            if ($AVAIL < 0.0)
+            if ($AVAIL < 0.0) {
                 $AVAIL = 0.0;
+            }
 
             $PROGRESS_FREE = round($AVAIL / $backup->getQuota() * 100);
             $ALLOWED = CFile::FormatSize($backup->getQuota(), 0);
             $CDNAIParams["ALERT"] = false;
-            $MESS = GetMessage("BCL_BACKUP_AI_LAST_TIME") . ': ' . FormatDate(array(
-                    "today" => "today",
-                    "yesterday" => "yesterday",
-                    "" => "dago",
-                ), $backup->getLastTimeBackup());
+            $MESS = GetMessage("BCL_BACKUP_AI_LAST_TIME") . ': ' . FormatDate(
+                    array(
+                        "today" => "today",
+                        "yesterday" => "yesterday",
+                        "" => "dago",
+                    ),
+                    $backup->getLastTimeBackup()
+                );
             if ($USER->CanDoOperation("bitrixcloud_backup") && $USER->CanDoOperation('edit_php')) {
-                $CDNAIParams["FOOTER"] = '<a href="/bitrix/admin/dump.php?lang=' . LANGUAGE_ID . '">' . GetMessage("BCL_BACKUP_AI_DO_BACKUP") . '</a>';
+                $CDNAIParams["FOOTER"] = '<a href="/bitrix/admin/dump.php?lang=' . LANGUAGE_ID . '">' . GetMessage(
+                        "BCL_BACKUP_AI_DO_BACKUP"
+                    ) . '</a>';
             }
         }
 
@@ -332,10 +368,14 @@ class CBitrixCloudBackup
             $CDNAIParams["HTML"] = '
 				<div class="adm-informer-item-section">
 					<span class="adm-informer-item-l">
-						<span class="adm-informer-strong-text">' . GetMessage("BCL_BACKUP_AI_USAGE_TOTAL") . '</span> ' . $ALLOWED . '
+						<span class="adm-informer-strong-text">' . GetMessage(
+                    "BCL_BACKUP_AI_USAGE_TOTAL"
+                ) . '</span> ' . $ALLOWED . '
 					</span>
 					<span class="adm-informer-item-r">
-							<span class="adm-informer-strong-text">' . GetMessage("BCL_BACKUP_AI_USAGE_AVAIL") . '</span> ' . CFile::FormatSize($AVAIL, 0) . '
+							<span class="adm-informer-strong-text">' . GetMessage(
+                    "BCL_BACKUP_AI_USAGE_AVAIL"
+                ) . '</span> ' . CFile::FormatSize($AVAIL, 0) . '
 					</span>
 				</div>
 				<div class="adm-informer-status-bar-block" >

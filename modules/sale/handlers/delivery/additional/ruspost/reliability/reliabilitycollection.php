@@ -25,7 +25,6 @@ class ReliabilityCollection extends EO_Reliability_Collection
 
         /** @var Reliability $reliability */
         foreach ($this as $reliability) {
-
             if (in_array($reliability->getHash(), $hashes)) {
                 $result->add($reliability);
             }

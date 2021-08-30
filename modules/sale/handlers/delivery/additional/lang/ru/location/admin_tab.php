@@ -1,5 +1,6 @@
 <?
-$MESS["SALE_DLVRS_ADDL_LOC_TAB_COUNT"] = "Местоположений в магазине";
-$MESS["SALE_DLVRS_ADDL_LOC_TAB_COUNT_H"] = "Местоположений поддерживается обработчиком";
-$MESS["SALE_DLVRS_ADDL_LOC_TAB_COUNT_COMP"] = "Сопоставлено";
-$MESS["SALE_DLVRS_ADDL_LOC_TAB_B_COMP"] = "Сопоставить";
+
+$MESS["SALE_DLVRS_ADDL_LOC_TAB_COUNT"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_DLVRS_ADDL_LOC_TAB_COUNT_H"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_DLVRS_ADDL_LOC_TAB_COUNT_COMP"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";
+$MESS["SALE_DLVRS_ADDL_LOC_TAB_B_COMP"] = "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ";

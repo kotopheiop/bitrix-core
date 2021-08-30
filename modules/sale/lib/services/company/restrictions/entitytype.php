@@ -66,14 +66,17 @@ class EntityType extends Restriction
     protected static function extractParams(Internals\Entity $entity)
     {
         /** @var PaymentCollection|ShipmentCollection $collection */
-        if ($entity instanceof Payment)
+        if ($entity instanceof Payment) {
             return self::ENTITY_PAYMENT;
+        }
 
-        if ($entity instanceof Shipment)
+        if ($entity instanceof Shipment) {
             return self::ENTITY_SHIPMENT;
+        }
 
-        if ($entity instanceof Order)
+        if ($entity instanceof Order) {
             return self::ENTITY_ORDER;
+        }
 
         return self::ENTITY_NONE;
     }

@@ -1,11 +1,14 @@
 <?php
+
 /**
  * Bitrix vars
  * @global CUser $USER
  * @global CMain $APPLICATION
  * @global array $bannerInfo
  */
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+}
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\Converter;
@@ -98,12 +101,20 @@ $host = parse_url($bannerInfo['SETTINGS']['Href'], PHP_URL_HOST);
 ?>
 <div class="yandex-adv-block">
     <h2 class="yandex-title"><a href="/" class="yandex-title-link" id="yandex_link"><b
-                    id="yandex_title_content"><?= Converter::getHtmlConverter()->encode($bannerInfo['SETTINGS']['Title']); ?></b>
-            / <font id="yandex_link_content"><?= Converter::getHtmlConverter()->encode($host) ?></font></a></h2>
+                    id="yandex_title_content"><?= Converter::getHtmlConverter()->encode(
+                    $bannerInfo['SETTINGS']['Title']
+                ); ?></b> / <font id="yandex_link_content"><?= Converter::getHtmlConverter()->encode(
+                    $host
+                ) ?></font></a></h2>
     <div class="yandex-adv">
         <div class="yandex-adv-note"><?= Loc::getMessage('SEO_BANNER_ADV_MARK') ?></div>
         <a class="yandex-adv-link" href="<?= Converter::getHtmlConverter()->encode($bannerInfo['SETTINGS']['Href']) ?>"
            id="yandex_link_content_link"><?= Converter::getHtmlConverter()->encode($host) ?></a></div>
-    <div class="yandex-text"
-         id="yandex_text_content"><?= preg_replace("/\\n+/", ' ', Converter::getHtmlConverter()->encode($bannerInfo['SETTINGS']['Text'])) ?></div>
+    <div class="yandex-text" id="yandex_text_content"><?= preg_replace(
+            "/\\n+/",
+            ' ',
+            Converter::getHtmlConverter()->encode(
+                $bannerInfo['SETTINGS']['Text']
+            )
+        ) ?></div>
 </div>

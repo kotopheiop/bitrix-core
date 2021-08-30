@@ -61,19 +61,23 @@ class Importer
     public static function export($iblockId)
     {
         $iblockId = intval($iblockId);
-        if ($iblockId <= 0)
+        if ($iblockId <= 0) {
             throw new Main\ArgumentNullException("iblockId");
+        }
 
         $db = \CIBlock::GetList(Array(), Array("ID" => $iblockId, "CHECK_PERMISSIONS" => "N"));
         $iblock = $db->Fetch();
-        if (!$iblock)
+        if (!$iblock) {
             throw new Main\ArgumentOutOfRangeException("iblockId");
+        }
 
-        if (!$iblock["CODE"])
+        if (!$iblock["CODE"]) {
             throw new Main\ArgumentException("Parameter 'CODE' is required.", "matches");
+        }
 
-        foreach (\CIBlock::getMessages($iblockId) as $messageKey => $message)
+        foreach (\CIBlock::getMessages($iblockId) as $messageKey => $message) {
             $iblock[$messageKey] = $message;
+        }
 
         $list = new \CList($iblockId);
         $fields = $list->getFields();
@@ -103,7 +107,12 @@ class Importer
 
                 $pictureTypeLength = Main\Text\BinaryString::getLength($picture["type"]);
                 $pictureLength = Main\Text\BinaryString::getLength($pictureData);
-                $datum .= "P" . str_pad($pictureTypeLength, 10, "0", STR_PAD_LEFT) . $picture["type"] . str_pad($pictureLength, 10, "0", STR_PAD_LEFT) . $pictureData;
+                $datum .= "P" . str_pad($pictureTypeLength, 10, "0", STR_PAD_LEFT) . $picture["type"] . str_pad(
+                        $pictureLength,
+                        10,
+                        "0",
+                        STR_PAD_LEFT
+                    ) . $pictureData;
             }
         }
 
@@ -127,8 +136,9 @@ class Importer
             $datum .= str_pad($bpLength, 10, "0", STR_PAD_LEFT) . $bp;
         }
 
-        if (function_exists("gzcompress"))
+        if (function_exists("gzcompress")) {
             $datum = "compressed" . gzcompress($datum, 9);
+        }
 
         return $datum;
     }
@@ -143,8 +153,9 @@ class Importer
         $datum = fread($f, filesize($filePath));
         fclose($f);
 
-        if (substr($datum, 0, 10) === "compressed")
+        if (mb_substr($datum, 0, 10) === "compressed") {
             $datum = gzuncompress(Main\Text\BinaryString::getSubstring($datum, 10));
+        }
 
         $len = intval(Main\Text\BinaryString::getSubstring($datum, 0, 10));
         $dataSerialized = Main\Text\BinaryString::getSubstring($datum, 10, $len);
@@ -163,11 +174,13 @@ class Importer
      */
     public static function import($iblockType, $datum, $siteId = null)
     {
-        if (empty($datum))
+        if (empty($datum)) {
             throw new Main\ArgumentNullException("datum");
+        }
 
-        if (substr($datum, 0, 10) === "compressed")
+        if (mb_substr($datum, 0, 10) === "compressed") {
             $datum = gzuncompress(Main\Text\BinaryString::getSubstring($datum, 10));
+        }
 
         $len = intval(Main\Text\BinaryString::getSubstring($datum, 0, 10));
         $iblockSerialized = Main\Text\BinaryString::getSubstring($datum, 10, $len);
@@ -210,11 +223,11 @@ class Importer
 
                     static::importTemplate($documentType, $bpDescr, $bp);
                 } else {
-
                 }
 
-                if (empty($datum))
+                if (empty($datum)) {
                     break;
+                }
 
                 $marker = Main\Text\BinaryString::getSubstring($datum, 0, 1);
             }
@@ -233,8 +246,9 @@ class Importer
             array("ID", "IS_MODIFIED")
         );
         if ($res = $db->Fetch()) {
-            if ($res["IS_MODIFIED"] == "Y")
+            if ($res["IS_MODIFIED"] == "Y") {
                 return;
+            }
 
             $id = $res["ID"];
         }
@@ -256,15 +270,22 @@ class Importer
 
     private static function createIBlock($iblockType, $iblock, $pictureType, $picture, $siteId = null)
     {
-        if (is_null($siteId))
+        if (is_null($siteId)) {
             $siteId = \CSite::GetDefSite();
+        }
 
         $db = \CIBlock::GetList(
             array(),
-            array("IBLOCK_TYPE_ID" => $iblockType, "CODE" => $iblock["CODE"], "CHECK_PERMISSIONS" => "N", "SITE_ID" => $siteId)
+            array(
+                "IBLOCK_TYPE_ID" => $iblockType,
+                "CODE" => $iblock["CODE"],
+                "CHECK_PERMISSIONS" => "N",
+                "SITE_ID" => $siteId
+            )
         );
-        if ($res = $db->Fetch())
+        if ($res = $db->Fetch()) {
             return $res["ID"];
+        }
 
         $fields = array(
             "NAME" => $iblock["NAME"],
@@ -288,8 +309,9 @@ class Importer
             "RIGHTS_MODE" => "E",
         );
 
-        if ($iblock["SOCNET_GROUP_ID"])
+        if ($iblock["SOCNET_GROUP_ID"]) {
             $fields["SOCNET_GROUP_ID"] = $iblock["SOCNET_GROUP_ID"];
+        }
 
         static $exts = array(
             "image/jpeg" => "jpg",
@@ -316,8 +338,9 @@ class Importer
 
             $list = new \CList($res);
 
-            if (isset($iblock["~NAME_FIELD"]))
+            if (isset($iblock["~NAME_FIELD"])) {
                 $list->UpdateField("NAME", $iblock["~NAME_FIELD"]);
+            }
 
             $list->Save();
 
@@ -332,18 +355,20 @@ class Importer
     protected static function getIBlockType()
     {
         $iblockType = Main\Config\Option::get("lists", "livefeed_iblock_type_id", "bitrix_processes");
-        if (empty($iblockType))
+        if (empty($iblockType)) {
             $iblockType = "bitrix_processes";
+        }
 
         return $iblockType;
     }
 
     protected static function getDocumentType($iblockType, $iblockId)
     {
-        if ($iblockType == static::getIBlockType())
+        if ($iblockType == static::getIBlockType()) {
             $documentType = array('lists', 'BizprocDocument', 'iblock_' . $iblockId);
-        else
+        } else {
             $documentType = array('lists', 'Bitrix\Lists\BizprocDocumentLists', 'iblock_' . $iblockId);
+        }
 
         return $documentType;
     }
@@ -378,25 +403,30 @@ class Importer
      */
     public static function installProcesses($lang, $siteId = null)
     {
-        if (empty($lang))
+        if (empty($lang)) {
             throw new Main\ArgumentNullException("lang");
+        }
 
-        if (!Main\Loader::includeModule("bizproc"))
+        if (!Main\Loader::includeModule("bizproc")) {
             return;
+        }
 
         $iblockType = static::getIBlockType();
 
         $db = \CIBlockType::GetList(array(), array("=ID" => $iblockType));
         $res = $db->Fetch();
-        if (!$res)
+        if (!$res) {
             static::createIBlockType();
+        }
 
-        if (in_array($lang, self::$listRuLanguage))
+        if (in_array($lang, self::$listRuLanguage)) {
             $lang = 'ru';
+        }
 
         $dir = new Main\IO\Directory(Main\Loader::getDocumentRoot() . static::PATH . $lang . "/");
-        if (!$dir->isExists())
+        if (!$dir->isExists()) {
             $dir = new Main\IO\Directory(Main\Loader::getDocumentRoot() . static::PATH . "en/");
+        }
 
         if ($dir->isExists()) {
             $children = $dir->getChildren();
@@ -417,19 +447,22 @@ class Importer
      */
     public static function installProcess($path, $siteId = null)
     {
-        if (empty($path))
+        if (empty($path)) {
             throw new Main\ArgumentNullException("path");
+        }
 
-        if (!Main\Loader::includeModule("bizproc"))
+        if (!Main\Loader::includeModule("bizproc")) {
             return;
+        }
 
         $path = Main\Loader::getDocumentRoot() . $path;
         $iblockType = static::getIBlockType();
 
         $db = \CIBlockType::GetList(array(), array("=ID" => $iblockType));
         $res = $db->Fetch();
-        if (!$res)
+        if (!$res) {
             static::createIBlockType();
+        }
 
         $file = new Main\IO\File($path);
         if ($file->isExists() && $file->getExtension() == "prc") {
@@ -447,11 +480,13 @@ class Importer
      */
     public static function loadDataProcesses($lang, $systemProcesses = true, &$fileData, $path = null)
     {
-        if (empty($lang))
+        if (empty($lang)) {
             throw new Main\ArgumentNullException("lang");
+        }
 
-        if (in_array($lang, self::$listRuLanguage))
+        if (in_array($lang, self::$listRuLanguage)) {
             $lang = 'ru';
+        }
 
         if (!empty($path)) {
             $path = rtrim($path, "/");
@@ -472,7 +507,11 @@ class Importer
                 if ($child->isFile() && ($child->getExtension() == "prc")) {
                     $data = self::getDataProcess($path . $child->getName());
                     $fileData[$data['CODE']]['FILE_NAME'] = $child->getName();
-                    $fileData[$data['CODE']]['FILE_PATH'] = str_replace(Main\Loader::getDocumentRoot(), '', $child->getPath());
+                    $fileData[$data['CODE']]['FILE_PATH'] = str_replace(
+                        Main\Loader::getDocumentRoot(),
+                        '',
+                        $child->getPath()
+                    );
                     $fileData[$data['CODE']]['NAME'] = $data['NAME'];
                     $fileData[$data['CODE']]['DESCRIPTION'] = $data['DESCRIPTION'];
                     $fileData[$data['CODE']]['CODE'] = $data['CODE'];
@@ -508,11 +547,10 @@ class Importer
             'LANG' => array(),
         );
 
-        $by = "lid";
-        $order = "asc";
-        $langList = \CLanguage::GetList($by, $order, array("ACTIVE" => "Y"));
-        while ($lang = $langList->Fetch())
+        $langList = \CLanguage::GetList('lid', 'asc', array("ACTIVE" => "Y"));
+        while ($lang = $langList->Fetch()) {
             $iblockType['LANG'][$lang['LID']]['NAME'] = "Processes";
+        }
 
         $iblockTypeList = \CIBlockType::GetList(array(), array('=ID' => $iblockType['ID']));
         $res = $iblockTypeList->fetch();
@@ -521,7 +559,8 @@ class Importer
             $iblockTypeObject->add($iblockType);
 
             $con = Main\Application::getConnection();
-            $con->queryExecute("
+            $con->queryExecute(
+                "
 				insert into b_lists_permission (IBLOCK_TYPE_ID, GROUP_ID)
 				select 'bitrix_processes', p.GROUP_ID
 				from
@@ -530,7 +569,8 @@ class Importer
 				where
 					p.IBLOCK_TYPE_ID = 'lists'
 					and p2.IBLOCK_TYPE_ID is null
-			");
+			"
+            );
 
             global $CACHE_MANAGER;
             $CACHE_MANAGER->Clean("b_lists_permission");
@@ -558,16 +598,18 @@ class Importer
     public static function migrateList($id)
     {
         $id = intval($id);
-        if ($id <= 0)
+        if ($id <= 0) {
             throw new Main\ArgumentNullException("id");
+        }
 
         $db = \CIBlock::GetList(
             array(),
             array("ID" => $id, "IBLOCK_TYPE_ID" => "lists", "CHECK_PERMISSIONS" => "N")
         );
         $iblock = $db->Fetch();
-        if (!$iblock)
+        if (!$iblock) {
             throw new Main\ArgumentOutOfRangeException("id");
+        }
 
         $iblockType = static::getIBlockType();
 

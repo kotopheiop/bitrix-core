@@ -1,21 +1,21 @@
-<?
+<?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/support/classes/general/dictionary.php");
 
 class CTicketDictionary extends CAllTicketDictionary
 {
-    function err_mess()
+    public static function err_mess()
     {
         $module_id = "support";
         @include($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/" . $module_id . "/install/version.php");
         return "<br>Module: " . $module_id . " <br>Class: CTicketDictionary<br>File: " . __FILE__;
     }
 
-    function GetList(&$by, &$order, $arFilter = Array(), &$isFiltered)
+    public static function GetList($by = 's_c_sort', $order = 'asc', $arFilter = [])
     {
         $err_mess = (CTicketDictionary::err_mess()) . "<br>Function: GetList<br>Line: ";
         global $DB;
         $arSqlSearch = Array();
-        $strSqlSearch = "";
         $leftJoinSite = "";
         $leftJoinUser = "";
         if (is_array($arFilter)) {
@@ -24,19 +24,26 @@ class CTicketDictionary extends CAllTicketDictionary
             for ($i = 0; $i < $filterKeysCount; $i++) {
                 $key = $filterKeys[$i];
                 $val = $arFilter[$filterKeys[$i]];
-                if ((is_array($val) && count($val) <= 0) || (!is_array($val) && (strlen($val) <= 0 || $val === 'NOT_REF')))
+                if ((is_array($val) && count($val) <= 0) || (!is_array(
+                            $val
+                        ) && ((string)$val == '' || $val === 'NOT_REF'))) {
                     continue;
+                }
                 $match_value_set = (in_array($key . "_EXACT_MATCH", $filterKeys)) ? true : false;
                 $key = strtoupper($key);
                 switch ($key) {
                     case "ID":
                     case "SID":
-                        if (is_array($val)) $val = implode(" | ", $val);
+                        if (is_array($val)) {
+                            $val = implode(" | ", $val);
+                        }
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "N" && $match_value_set) ? "Y" : "N";
                         $arSqlSearch[] = GetFilterQuery("D." . $key, $val, $match);
                         break;
                     case "SITE":
-                        if (is_array($val)) $val = implode(" | ", $val);
+                        if (is_array($val)) {
+                            $val = implode(" | ", $val);
+                        }
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "N" && $match_value_set) ? "Y" : "N";
                         $arSqlSearch[] = GetFilterQuery("DS.SITE_ID", $val, $match);
                         $leftJoinSite .= "LEFT JOIN b_ticket_dictionary_2_site DS ON (D.ID = DS.DICTIONARY_ID)";
@@ -52,12 +59,19 @@ class CTicketDictionary extends CAllTicketDictionary
                         $arSqlSearch[] = GetFilterQuery("D." . $key, $val, $match);
                         break;
                     case "RESPONSIBLE_ID":
-                        if (intval($val) > 0) $arSqlSearch[] = "D.RESPONSIBLE_USER_ID = '" . intval($val) . "'";
-                        elseif ($val == 0) $arSqlSearch[] = "(D.RESPONSIBLE_USER_ID is null or D.RESPONSIBLE_USER_ID=0)";
+                        if (intval($val) > 0) {
+                            $arSqlSearch[] = "D.RESPONSIBLE_USER_ID = '" . intval($val) . "'";
+                        } elseif ($val == 0) {
+                            $arSqlSearch[] = "(D.RESPONSIBLE_USER_ID is null or D.RESPONSIBLE_USER_ID=0)";
+                        }
                         break;
                     case "RESPONSIBLE":
                         $match = ($arFilter[$key . "_EXACT_MATCH"] == "Y" && $match_value_set) ? "N" : "Y";
-                        $arSqlSearch[] = GetFilterQuery("D.RESPONSIBLE_USER_ID, U.LOGIN, U.LAST_NAME, U.NAME", $val, $match);
+                        $arSqlSearch[] = GetFilterQuery(
+                            "D.RESPONSIBLE_USER_ID, U.LOGIN, U.LAST_NAME, U.NAME",
+                            $val,
+                            $match
+                        );
                         $select_user = ",
 							U.LOGIN														RESPONSIBLE_LOGIN,
 							concat(ifnull(U.NAME,''),' ',ifnull(U.LAST_NAME,''))		RESPONSIBLE_NAME
@@ -91,16 +105,15 @@ class CTicketDictionary extends CAllTicketDictionary
         } elseif ($by == "s_dropdown") {
             $strSqlOrder = "D.C_SORT, D.ID, D.NAME";
         } else {
-            $by = "s_c_sort";
             $strSqlOrder = "D.C_SORT";
         }
-        if ($order != "desc") {
-            $strSqlOrder .= " asc ";
-            $order = "asc";
-        } else {
+
+        if ($order == "desc") {
             $strSqlOrder .= " desc ";
-            $order = "desc";
+        } else {
+            $strSqlOrder .= " asc ";
         }
+
         $strSqlSearch = GetFilterSqlSearch($arSqlSearch);
         $strSql = "
 			SELECT
@@ -130,9 +143,7 @@ class CTicketDictionary extends CAllTicketDictionary
 			$strSqlOrder
 			";
         $res = $DB->Query($strSql, false, $err_mess . __LINE__);
-        $isFiltered = (IsFiltered($strSqlSearch));
+
         return $res;
     }
 }
-
-?>

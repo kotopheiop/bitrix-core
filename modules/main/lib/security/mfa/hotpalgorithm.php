@@ -19,27 +19,21 @@ class HotpAlgorithm extends OtpAlgorithm
     public function __construct()
     {
         $window = (int)Option::get('security', 'hotp_user_window', 10);
-        if ($window && $window > 0)
+        if ($window && $window > 0) {
             $this->window = $window;
+        }
     }
 
     /**
-     * Verify provided input
-     *
-     * @param string $input Input received from user.
-     * @param int|string $params Synchronized user params, saved for this algorithm (see getSyncParameters).
-     * @return array [
-     *  bool isSuccess (Valid input or not),
-     *  string newParams (Updated user params for this OtpAlgorithm)
-     * ]
-     * @throws ArgumentOutOfRangeException
+     * @inheritDoc
      */
-    public function verify($input, $params = 0)
+    public function verify($input, $params = null)
     {
         $input = (string)$input;
 
-        if (!preg_match('#^\d+$#D', $input))
+        if (!preg_match('#^\d+$#D', $input)) {
             throw new ArgumentOutOfRangeException('input', 'string with numbers');
+        }
 
         $counter = (int)$params;
         $result = false;
@@ -52,20 +46,15 @@ class HotpAlgorithm extends OtpAlgorithm
             $counter++;
         }
 
-        if ($result === true)
+        if ($result === true) {
             return array($result, $counter + 1);
+        }
 
         return array($result, null);
     }
 
     /**
-     * Generate provision URI according to KeyUriFormat
-     *
-     * @link https://code.google.com/p/google-authenticator/wiki/KeyUriFormat
-     * @param string $label User label.
-     * @param array $opts Additional URI parameters, e.g. ['image' => 'http://example.com/my_logo.png'] .
-     * @throws \Bitrix\Main\ArgumentTypeException
-     * @return string
+     * @inheritDoc
      */
     public function generateUri($label, array $opts = array())
     {
@@ -74,13 +63,7 @@ class HotpAlgorithm extends OtpAlgorithm
     }
 
     /**
-     * Return synchronized user params for provided inputs
-     *
-     * @param string $inputA First code.
-     * @param string $inputB Second code.
-     * @return string
-     * @throws ArgumentOutOfRangeException
-     * @throws OtpException
+     * @inheritDoc
      */
     public function getSyncParameters($inputA, $inputB)
     {
@@ -96,8 +79,9 @@ class HotpAlgorithm extends OtpAlgorithm
             $counter++;
         }
 
-        if ($i === self::SYNC_WINDOW)
+        if ($i === self::SYNC_WINDOW) {
             throw new OtpException('Cannot synchronize this secret key with the provided password values.');
+        }
 
         return $counter;
     }

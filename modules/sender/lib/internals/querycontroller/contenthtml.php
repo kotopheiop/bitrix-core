@@ -42,6 +42,5 @@ class ContentHtml extends Content
         } else {
             return implode('<br>', $this->getErrorMessages());
         }
-
     }
 }

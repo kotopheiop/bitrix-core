@@ -163,8 +163,9 @@ if (Loader::includeModule('replica')) {
                 if (preg_match("/^TASK_([0-9]+)\$/", $record["XML_ID"], $match)) {
                     $mapper = \Bitrix\Replica\Mapper::getInstance();
                     $guid = $mapper->getLogGuid("b_tasks.ID", $match[1]);
-                    if ($guid)
+                    if ($guid) {
                         $record['XML_ID'] = 'TASK_' . $guid;
+                    }
                 }
             }
         }

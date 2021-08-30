@@ -51,54 +51,76 @@ class CurrencyTable extends Main\Entity\DataManager
     public static function getMap()
     {
         return array(
-            'CURRENCY' => new Main\Entity\StringField('CURRENCY', array(
+            'CURRENCY' => new Main\Entity\StringField(
+                'CURRENCY', array(
                 'primary' => true,
                 'validation' => array(__CLASS__, 'validateCurrency'),
                 'required' => true,
                 'title' => Loc::getMessage('CURRENCY_ENTITY_CURRENCY_FIELD')
-            )),
-            'AMOUNT_CNT' => new Main\Entity\IntegerField('AMOUNT_CNT', array(
+            )
+            ),
+            'AMOUNT_CNT' => new Main\Entity\IntegerField(
+                'AMOUNT_CNT', array(
                 'required' => true,
                 'title' => Loc::getMessage('CURRENCY_ENTITY_AMOUNT_CNT_FIELD'),
-            )),
-            'AMOUNT' => new Main\Entity\FloatField('AMOUNT', array(
+            )
+            ),
+            'AMOUNT' => new Main\Entity\FloatField(
+                'AMOUNT', array(
                 'required' => true,
                 'title' => Loc::getMessage('CURRENCY_ENTITY_AMOUNT_FIELD')
-            )),
-            'SORT' => new Main\Entity\IntegerField('SORT', array(
+            )
+            ),
+            'SORT' => new Main\Entity\IntegerField(
+                'SORT', array(
                 'title' => Loc::getMessage('CURRENCY_ENTITY_SORT_FIELD')
-            )),
-            'DATE_UPDATE' => new Main\Entity\DatetimeField('DATE_UPDATE', array(
+            )
+            ),
+            'DATE_UPDATE' => new Main\Entity\DatetimeField(
+                'DATE_UPDATE', array(
                 'required' => true,
                 'default_value' => function () {
                     return new Main\Type\DateTime();
                 },
                 'title' => Loc::getMessage('CURRENCY_ENTITY_DATE_UPDATE_FIELD')
-            )),
-            'NUMCODE' => new Main\Entity\StringField('NUMCODE', array(
+            )
+            ),
+            'NUMCODE' => new Main\Entity\StringField(
+                'NUMCODE', array(
                 'validation' => array(__CLASS__, 'validateNumcode'),
                 'title' => Loc::getMessage('CURRENCY_ENTITY_NUMCODE_FIELD')
-            )),
-            'BASE' => new Main\Entity\BooleanField('BASE', array(
+            )
+            ),
+            'BASE' => new Main\Entity\BooleanField(
+                'BASE', array(
                 'values' => array('N', 'Y'),
                 'default_value' => 'N',
                 'title' => Loc::getMessage('CURRENCY_ENTITY_BASE_FIELD')
-            )),
-            'CREATED_BY' => new Main\Entity\IntegerField('CREATED_BY', array(
+            )
+            ),
+            'CREATED_BY' => new Main\Entity\IntegerField(
+                'CREATED_BY', array(
                 'title' => Loc::getMessage('CURRENCY_ENTITY_CREATED_BY_FIELD')
-            )),
-            'DATE_CREATE' => new Main\Entity\DatetimeField('DATE_CREATE', array(
+            )
+            ),
+            'DATE_CREATE' => new Main\Entity\DatetimeField(
+                'DATE_CREATE', array(
                 'default_value' => function () {
                     return new Main\Type\DateTime();
                 },
                 'title' => Loc::getMessage('CURRENCY_ENTITY_DATE_CREATE_FIELD')
-            )),
-            'MODIFIED_BY' => new Main\Entity\IntegerField('MODIFIED_BY', array(
+            )
+            ),
+            'MODIFIED_BY' => new Main\Entity\IntegerField(
+                'MODIFIED_BY', array(
                 'title' => Loc::getMessage('CURRENCY_ENTITY_MODIFIED_BY_FIELD')
-            )),
-            'CURRENT_BASE_RATE' => new Main\Entity\FloatField('CURRENT_BASE_RATE', array(
+            )
+            ),
+            'CURRENT_BASE_RATE' => new Main\Entity\FloatField(
+                'CURRENT_BASE_RATE', array(
                 'title' => Loc::getMessage('CURRENCY_ENTITY_CURRENT_BASE_RATE_FIELD')
-            )),
+            )
+            ),
             'CREATED_BY_USER' => new Main\Entity\ReferenceField(
                 'CREATED_BY_USER',
                 'Bitrix\Main\User',

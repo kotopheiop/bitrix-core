@@ -17,7 +17,9 @@ $bAdmin = (CTicket::IsAdmin()) ? "Y" : "N";
 $bSupportTeam = (CTicket::IsSupportTeam()) ? "Y" : "N";
 $message = null;
 
-if ($bAdmin != "Y" && $bSupportTeam != "Y" && $bDemo != "Y") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($bAdmin != "Y" && $bSupportTeam != "Y" && $bDemo != "Y") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/support/include.php");
 IncludeModuleLangFile(__FILE__);
@@ -31,26 +33,29 @@ function CheckFilter() // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï
 {
     global $arFilterFields;
     reset($arFilterFields);
-    foreach ($arFilterFields as $f) global $$f;
+    foreach ($arFilterFields as $f) {
+        global $$f;
+    }
     $str = "";
     $arMsg = Array();
 
-    if (strlen(trim($find_date1)) > 0 || strlen(trim($find_date2)) > 0) {
+    if (trim($find_date1) <> '' || trim($find_date2) <> '') {
         $date_1_ok = false;
         $date1_stm = MkDateTime(ConvertDateTime($find_date1, "D.M.Y"), "d.m.Y");
         $date2_stm = MkDateTime(ConvertDateTime($find_date2, "D.M.Y") . " 23:59", "d.m.Y H:i");
-        if (!$date1_stm && strlen(trim($find_date1)) > 0)
-            //$str.= GetMessage("SUP_WRONG_DATE_FROM")."<br>";
+        if (!$date1_stm && trim($find_date1) <> '') //$str.= GetMessage("SUP_WRONG_DATE_FROM")."<br>";
+        {
             $arMsg[] = array("id" => "find_date1", "text" => GetMessage("SUP_WRONG_DATE_FROM"));
-        else
+        } else {
             $date_1_ok = true;
+        }
 
-        if (!$date2_stm && strlen(trim($find_date2)) > 0)
-            //$str.= GetMessage("SUP_WRONG_DATE_TILL")."<br>";
+        if (!$date2_stm && trim($find_date2) <> '') //$str.= GetMessage("SUP_WRONG_DATE_TILL")."<br>";
+        {
             $arMsg[] = array("id" => "find_date2", "text" => GetMessage("SUP_WRONG_DATE_TILL"));
-
-        elseif ($date_1_ok && $date2_stm <= $date1_stm && strlen($date2_stm) > 0)
+        } elseif ($date_1_ok && $date2_stm <= $date1_stm && $date2_stm <> '') {
             $arMsg[] = array("id" => "find_date2", "text" => GetMessage("SUP_FROM_TILL_DATE"));
+        }
         //$str.= GetMessage("SUP_FROM_TILL_DATE")."<br>";
     }
 
@@ -126,7 +131,9 @@ $arFilterFields = array_merge($FilterArr1, $FilterArr2);
 $lAdmin->InitFilter($arFilterFields);//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
 
-if ($bAdmin != "Y" && $bDemo != "Y") $find_responsible_id = $USER->GetID();
+if ($bAdmin != "Y" && $bDemo != "Y") {
+    $find_responsible_id = $USER->GetID();
+}
 
 InitBVar($find_responsible_exact_match);
 
@@ -151,8 +158,9 @@ if (CheckFilter()) {
         //$message = new CAdminMessage(GetMessage("SUP_FILTER_ERROR"), $e);
     }
 }
+global $by, $order;
 
-$rsTickets = CTicket::GetList($by, $order, $arFilter, $is_filtered, "Y", "N", "N");
+$rsTickets = CTicket::GetList($by, $order, $arFilter, null, "Y", "N", "N");
 $OPEN_TICKETS = $CLOSE_TICKETS = 0;
 $arrTickets = array();
 $arrTime = array();
@@ -178,31 +186,51 @@ $arrMess["10_m"] = 0;
 $arUsersID = array();
 
 while ($arTicket = $rsTickets->Fetch()) {
-    if ($arTicket["DATE_CREATE_SHORT"] != $PREV_CREATE && strlen($PREV_CREATE) > 0) {
+    if ($arTicket["DATE_CREATE_SHORT"] != $PREV_CREATE && $PREV_CREATE <> '') {
         $show_graph = "Y";
     }
 
-    if (strlen($arTicket["DATE_CLOSE"]) <= 0) {
+    if ($arTicket["DATE_CLOSE"] == '') {
         $OPEN_TICKETS++;
     } else {
         $CLOSE_TICKETS++;
         $day_sec = 86400;
         $TT = $arTicket["TICKET_TIME"];
 
-        if ($TT < $day_sec) $arrTime["1"] += 1;
-        if ($TT > $day_sec && $TT <= 2 * $day_sec) $arrTime["1_2"] += 1;
-        if ($TT > 2 * $day_sec && $TT <= 3 * $day_sec) $arrTime["2_3"] += 1;
-        if ($TT > 3 * $day_sec && $TT <= 4 * $day_sec) $arrTime["3_4"] += 1;
-        if ($TT > 4 * $day_sec && $TT <= 5 * $day_sec) $arrTime["4_5"] += 1;
-        if ($TT > 5 * $day_sec && $TT <= 6 * $day_sec) $arrTime["5_6"] += 1;
-        if ($TT > 6 * $day_sec && $TT <= 7 * $day_sec) $arrTime["6_7"] += 1;
-        if ($TT > 7 * $day_sec) $arrTime["7"] += 1;
+        if ($TT < $day_sec) {
+            $arrTime["1"] += 1;
+        }
+        if ($TT > $day_sec && $TT <= 2 * $day_sec) {
+            $arrTime["1_2"] += 1;
+        }
+        if ($TT > 2 * $day_sec && $TT <= 3 * $day_sec) {
+            $arrTime["2_3"] += 1;
+        }
+        if ($TT > 3 * $day_sec && $TT <= 4 * $day_sec) {
+            $arrTime["3_4"] += 1;
+        }
+        if ($TT > 4 * $day_sec && $TT <= 5 * $day_sec) {
+            $arrTime["4_5"] += 1;
+        }
+        if ($TT > 5 * $day_sec && $TT <= 6 * $day_sec) {
+            $arrTime["5_6"] += 1;
+        }
+        if ($TT > 6 * $day_sec && $TT <= 7 * $day_sec) {
+            $arrTime["6_7"] += 1;
+        }
+        if ($TT > 7 * $day_sec) {
+            $arrTime["7"] += 1;
+        }
 
         $MC = $arTicket["MESSAGES"];
 
-        if ($MC <= 2) $arrMess["2_m"] += 1;
-        elseif ($MC >= 10) $arrMess["10_m"] += 1;
-        else $arrMess[$MC . "_m"] += 1;
+        if ($MC <= 2) {
+            $arrMess["2_m"] += 1;
+        } elseif ($MC >= 10) {
+            $arrMess["10_m"] += 1;
+        } else {
+            $arrMess[$MC . "_m"] += 1;
+        }
     }
 
     $PREV_CREATE = $arTicket["DATE_CREATE_SHORT"];
@@ -219,9 +247,12 @@ while ($arTicket = $rsTickets->Fetch()) {
 $arrSupportUser = array();
 $arUsersID = array_unique($arUsersID);
 $strUsers = implode("|", $arUsersID);
-$f = "ID";
-$o = "asc";
-$rs = CUser::GetList($f, $o, array("ID" => $strUsers), array("FIELDS" => array("NAME", "LAST_NAME", "LOGIN", "ID")));
+$rs = CUser::GetList(
+    'id',
+    'asc',
+    array("ID" => $strUsers),
+    array("FIELDS" => array("NAME", "LAST_NAME", "LOGIN", "ID"))
+);
 while ($ar = $rs->Fetch()) {
     $arrSupportUser[$ar["ID"]] = $ar;
 }
@@ -235,8 +266,9 @@ $lAdmin->BeginCustomContent();
 
 <?
 
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 
 ?>
     <p><? echo GetMessage("SUP_SERVER_TIME") . "&nbsp;" . GetTime(time(), "FULL") ?></p>
@@ -262,7 +294,9 @@ elseif ($show_graph == "Y") :
                                 <table cellpadding="1" cellspacing="0" border="0">
                                     <tr>
                                         <td valign="center" nowrap><img
-                                                    src="/bitrix/admin/ticket_graph.php?<?= GetFilterParams($arFilterFields) ?>&width=<?= $width ?>&height=<?= $height ?>&lang=<? echo LANG ?>"
+                                                    src="/bitrix/admin/ticket_graph.php?<?= GetFilterParams(
+                                                        $arFilterFields
+                                                    ) ?>&width=<?= $width ?>&height=<?= $height ?>&lang=<? echo LANG ?>"
                                                     width="<?= $width ?>" height="<?= $height ?>"></td>
                                     </tr>
                                 </table>
@@ -342,15 +376,16 @@ else :
     <div class="graph">
         <table cellspacing=0 cellpadding=10 class="graph">
             <tr>
-                <td valign="top"><img
-                            src="/bitrix/admin/ticket_diagram_time.php?<?= GetFilterParams($FilterArr1) ?>&diameter=<?= $diameter ?>&lang=<?= LANG ?>"
-                            width="<?= $diameter ?>" height="<?= $diameter ?>"></td>
+                <td valign="top"><img src="/bitrix/admin/ticket_diagram_time.php?<?= GetFilterParams(
+                        $FilterArr1
+                    ) ?>&diameter=<?= $diameter ?>&lang=<?= LANG ?>" width="<?= $diameter ?>" height="<?= $diameter ?>">
+                </td>
                 <td valign="top">
                     <table cellpadding=2 cellspacing=0 border=0 class="legend">
                         <?
                         $s = GetFilterParams($FilterArr);
                         $i = 0;
-                        while (list($key, $counter) = each($arrTime)) :
+                        foreach ($arrTime as $key => $counter):
                             $i++;
                             $procent = round(($counter * 100) / $CLOSE_TICKETS, 2);
                             $color = $arrColor[$key];
@@ -392,12 +427,13 @@ else :
                                     </table>
                                 </td>
                                 <td align="right" nowrap><? echo sprintf("%01.2f", $procent) . "%" ?></td>
-                                <td nowrap><a
-                                            href="/bitrix/admin/ticket_list.php?<?= GetFilterParams($FilterArr1) ?>&find_close=Y&lang=<?= LANG ?>&<? echo $f ?>&set_filter=Y"><?= $counter ?></a>
+                                <td nowrap><a href="/bitrix/admin/ticket_list.php?<?= GetFilterParams(
+                                        $FilterArr1
+                                    ) ?>&find_close=Y&lang=<?= LANG ?>&<? echo $f ?>&set_filter=Y"><?= $counter ?></a>
                                 </td>
                                 <td nowrap><? echo GetMessage("SUP_DIAGRAM_" . $key); ?></td>
                             </tr>
-                        <? endwhile; ?>
+                        <? endforeach; ?>
                     </table>
                 </td>
             </tr>
@@ -419,22 +455,27 @@ else :
     <div class="graph">
         <table cellspacing=0 cellpadding=10 class="graph">
             <tr>
-                <td valign="top"><img
-                            src="/bitrix/admin/ticket_diagram_mess.php?<?= GetFilterParams($FilterArr1) ?>&diameter=<?= $diameter ?>&lang=<?= LANG ?>"
-                            width="<?= $diameter ?>" height="<?= $diameter ?>"></td>
+                <td valign="top"><img src="/bitrix/admin/ticket_diagram_mess.php?<?= GetFilterParams(
+                        $FilterArr1
+                    ) ?>&diameter=<?= $diameter ?>&lang=<?= LANG ?>" width="<?= $diameter ?>" height="<?= $diameter ?>">
+                </td>
                 <td valign="top">
                     <table cellpadding=2 cellspacing=0 border=0 class="legend">
                         <?
                         $s = GetFilterParams($FilterArr);
                         $i = 0;
-                        while (list($key, $counter) = each($arrMess)) :
+                        foreach ($arrMess as $key => $counter):
                             $i++;
                             $procent = round(($counter * 100) / $CLOSE_TICKETS, 2);
                             $color = $arrColor[$key];
                             $key = intval($key);
-                            if ($key == "2") $f = "find_messages2=2";
-                            elseif ($key == "10") $f = "find_messages1=10";
-                            else $f = "find_messages1=" . $key . "&find_messages2=" . $key;
+                            if ($key == "2") {
+                                $f = "find_messages2=2";
+                            } elseif ($key == "10") {
+                                $f = "find_messages1=10";
+                            } else {
+                                $f = "find_messages1=" . $key . "&find_messages2=" . $key;
+                            }
                             ?>
                             <tr>
                                 <td align="right" nowrap><?= $i . "." ?></td>
@@ -448,11 +489,13 @@ else :
                                 </td>
                                 <td align="right" nowrap><? echo sprintf("%01.2f", $procent) . "%" ?></td>
                                 <td nowrap><img src="/bitrix/images/1.gif" width="3" height="1"><a
-                                            href="/bitrix/admin/ticket_list.php?<?= GetFilterParams($FilterArr1) ?>&find_close=Y&lang=<?= LANG ?>&<? echo $f ?>&set_filter=Y"><?= $counter ?></a>
+                                            href="/bitrix/admin/ticket_list.php?<?= GetFilterParams(
+                                                $FilterArr1
+                                            ) ?>&find_close=Y&lang=<?= LANG ?>&<? echo $f ?>&set_filter=Y"><?= $counter ?></a>
                                 </td>
                                 <td nowrap><? echo GetMessage("SUP_DIAGRAM_MESS_" . $key); ?></td>
                             </tr>
-                        <?endwhile; ?>
+                        <?endforeach; ?>
                     </table>
                 </td>
             </tr>
@@ -478,12 +521,19 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
             <td><?
                 $ref = array();
                 $ref_id = array();
-                $rs = CSite::GetList(($v1 = "sort"), ($v2 = "asc"));
+                $rs = CSite::GetList();
                 while ($ar = $rs->Fetch()) {
                     $ref[] = "[" . $ar["ID"] . "] " . $ar["NAME"];
                     $ref_id[] = $ar["ID"];
                 }
-                echo SelectBoxMFromArray("find_site[]", array("reference" => $ref, "reference_id" => $ref_id), $find_site, "", false, "3");
+                echo SelectBoxMFromArray(
+                    "find_site[]",
+                    array("reference" => $ref, "reference_id" => $ref_id),
+                    $find_site,
+                    "",
+                    false,
+                    "3"
+                );
                 ?></td>
         </tr>
         <tr>
@@ -501,7 +551,7 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
                     }
                     if (is_array($arrSupportUser) && count($arrSupportUser) > 0) {
                         ksort($arrSupportUser);
-                        while (list($key, $arUser) = each($arrSupportUser)) {
+                        foreach ($arrSupportUser as $key => $arUser) {
                             if (!in_array($key, $ref_id)) {
                                 $ref[] = $arUser["LAST_NAME"] . " " . $arUser["NAME"] . " (" . $arUser["LOGIN"] . ") " . "[" . $key . "]";
                                 $ref_id[] = $key;
@@ -509,12 +559,29 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
                         }
                     }
                     $arr = array("REFERENCE" => $ref, "REFERENCE_ID" => $ref_id);
-                    echo SelectBoxFromArray("find_responsible_id", $arr, htmlspecialcharsbx($find_responsible_id), GetMessage("SUP_ALL"));
+                    echo SelectBoxFromArray(
+                        "find_responsible_id",
+                        $arr,
+                        htmlspecialcharsbx($find_responsible_id),
+                        GetMessage("SUP_ALL")
+                    );
                     ?><br><input class="typeinput" type="text" name="find_responsible" size="47"
-                                 value="<?= htmlspecialcharsbx($find_responsible) ?>"><?= InputType("checkbox", "find_responsible_exact_match", "Y", $find_responsible_exact_match, false, "", "title='" . GetMessage("SUP_EXACT_MATCH") . "'") ?>&nbsp;<?= ShowFilterLogicHelp() ?><?
+                                 value="<?= htmlspecialcharsbx($find_responsible) ?>"><?= InputType(
+                    "checkbox",
+                    "find_responsible_exact_match",
+                    "Y",
+                    $find_responsible_exact_match,
+                    false,
+                    "",
+                    "title='" . GetMessage(
+                        "SUP_EXACT_MATCH"
+                    ) . "'"
+                ) ?>&nbsp;<?= ShowFilterLogicHelp() ?><?
                 else :
-                    ?>[<a
-                        href="/bitrix/admin/user_edit.php?ID=<?= $USER->GetID() ?>"><?= $USER->GetID() ?></a>] (<?= htmlspecialcharsEx($USER->GetLogin()) ?>) <?= htmlspecialcharsEx($USER->GetFullName()) ?><?
+                    ?>[<a href="/bitrix/admin/user_edit.php?ID=<?= $USER->GetID() ?>"><?= $USER->GetID(
+                    ) ?></a>] (<?= htmlspecialcharsEx($USER->GetLogin()) ?>) <?= htmlspecialcharsEx(
+                    $USER->GetFullName()
+                ) ?><?
                 endif;
                 ?></td>
         </tr>
@@ -640,23 +707,53 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
                                         <table cellpadding="3" cellspacing="1" border="0">
                                             <tr>
                                                 <td nowrap><?= GetMessage("SUP_OPEN_TICKET") ?></td>
-                                                <td align="center"><? echo InputType("checkbox", "find_open", "Y", $find_open, false); ?></td>
+                                                <td align="center"><? echo InputType(
+                                                        "checkbox",
+                                                        "find_open",
+                                                        "Y",
+                                                        $find_open,
+                                                        false
+                                                    ); ?></td>
                                             </tr>
                                             <tr>
                                                 <td nowrap><?= GetMessage("SUP_CLOSE_TICKET") ?></td>
-                                                <td align="center"><? echo InputType("checkbox", "find_close", "Y", $find_close, false); ?></td>
+                                                <td align="center"><? echo InputType(
+                                                        "checkbox",
+                                                        "find_close",
+                                                        "Y",
+                                                        $find_close,
+                                                        false
+                                                    ); ?></td>
                                             </tr>
                                             <tr>
                                                 <td nowrap><?= GetMessage("SUP_ALL_TICKET") ?></td>
-                                                <td align="center"><? echo InputType("checkbox", "find_all", "Y", $find_all, false); ?></td>
+                                                <td align="center"><? echo InputType(
+                                                        "checkbox",
+                                                        "find_all",
+                                                        "Y",
+                                                        $find_all,
+                                                        false
+                                                    ); ?></td>
                                             </tr>
                                             <tr>
                                                 <td nowrap><?= GetMessage("SUP_MESSAGES") ?></td>
-                                                <td align="center"><? echo InputType("checkbox", "find_mess", "Y", $find_mess, false); ?></td>
+                                                <td align="center"><? echo InputType(
+                                                        "checkbox",
+                                                        "find_mess",
+                                                        "Y",
+                                                        $find_mess,
+                                                        false
+                                                    ); ?></td>
                                             </tr>
                                             <tr>
                                                 <td nowrap><?= GetMessage("SUP_OVERDUE_MESSAGES") ?></td>
-                                                <td align="center"><? echo InputType("checkbox", "find_overdue_mess", "Y", $find_overdue_mess, false); ?></td>
+                                                <td align="center"><? echo InputType(
+                                                        "checkbox",
+                                                        "find_overdue_mess",
+                                                        "Y",
+                                                        $find_overdue_mess,
+                                                        false
+                                                    ); ?></td>
                                             </tr>
                                         </table>
                                     </td>

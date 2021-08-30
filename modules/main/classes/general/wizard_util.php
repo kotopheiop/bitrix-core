@@ -9,8 +9,9 @@ class CWizardUtil
 
     public static function MakeWizardPath($wizardName)
     {
-        if (!CWizardUtil::CheckName($wizardName))
+        if (!CWizardUtil::CheckName($wizardName)) {
             return "";
+        }
 
         return Rel2Abs("/", "/" . str_replace(":", "/", $wizardName));
     }
@@ -18,7 +19,7 @@ class CWizardUtil
     public static function CheckName($wizardName)
     {
         return (
-            strlen($wizardName) > 0
+            $wizardName <> ''
             && preg_match("#^([A-Za-z0-9_.-]+:)?([A-Za-z0-9_-]+\\.)*([A-Za-z0-9_-]+)$#i", $wizardName)
         );
     }
@@ -32,45 +33,65 @@ class CWizardUtil
 
         if ($handle = @opendir($wizardPath)) {
             while (($dirName = readdir($handle)) !== false) {
-                if ($dirName == "." || $dirName == ".." || !is_dir($wizardPath . "/" . $dirName))
+                if ($dirName == "." || $dirName == ".." || !is_dir($wizardPath . "/" . $dirName)) {
                     continue;
+                }
 
                 if (file_exists($wizardPath . "/" . $dirName . "/.description.php")) {
                     //Skip component without namespace
-                    if ($filterNamespace !== false && strlen($filterNamespace) > 0)
+                    if ($filterNamespace !== false && $filterNamespace <> '') {
                         continue;
-
-                    if (LANGUAGE_ID != "en" && LANGUAGE_ID != "ru") {
-                        if (file_exists(($fname = $wizardPath . "/" . $dirName . "/lang/" . LangSubst(LANGUAGE_ID) . "/.description.php")))
-                            __IncludeLang($fname, false, true);
                     }
 
-                    if (file_exists(($fname = $wizardPath . "/" . $dirName . "/lang/" . LANGUAGE_ID . "/.description.php")))
+                    if (LANGUAGE_ID != "en" && LANGUAGE_ID != "ru") {
+                        if (file_exists(
+                            ($fname = $wizardPath . "/" . $dirName . "/lang/" . LangSubst(
+                                    LANGUAGE_ID
+                                ) . "/.description.php")
+                        )) {
+                            __IncludeLang($fname, false, true);
+                        }
+                    }
+
+                    if (file_exists(
+                        ($fname = $wizardPath . "/" . $dirName . "/lang/" . LANGUAGE_ID . "/.description.php")
+                    )) {
                         __IncludeLang($fname, false, true);
+                    }
 
                     $arWizardDescription = array();
                     include($wizardPath . "/" . $dirName . "/.description.php");
                     $arWizards[] = array("ID" => $dirName) + $arWizardDescription;
                     $arLoadedWizards[] = $dirName;
                 } else {
-                    if ($filterNamespace !== false && (strlen($filterNamespace) <= 0 || $filterNamespace != $dirName))
+                    if ($filterNamespace !== false && ($filterNamespace == '' || $filterNamespace != $dirName)) {
                         continue;
+                    }
 
                     if ($nspaceHandle = @opendir($wizardPath . "/" . $dirName)) {
                         while (($file = readdir($nspaceHandle)) !== false) {
                             $pathToWizard = $wizardPath . "/" . $dirName . "/" . $file;
 
-                            if ($file == "." || $file == ".." || !is_dir($pathToWizard))
+                            if ($file == "." || $file == ".." || !is_dir($pathToWizard)) {
                                 continue;
+                            }
 
                             if (file_exists($pathToWizard . "/.description.php")) {
                                 if (LANGUAGE_ID != "en" && LANGUAGE_ID != "ru") {
-                                    if (file_exists(($fname = $pathToWizard . "/lang/" . LangSubst(LANGUAGE_ID) . "/.description.php")))
+                                    if (file_exists(
+                                        ($fname = $pathToWizard . "/lang/" . LangSubst(
+                                                LANGUAGE_ID
+                                            ) . "/.description.php")
+                                    )) {
                                         __IncludeLang($fname, false, true);
+                                    }
                                 }
 
-                                if (file_exists(($fname = $pathToWizard . "/lang/" . LANGUAGE_ID . "/.description.php")))
+                                if (file_exists(
+                                    ($fname = $pathToWizard . "/lang/" . LANGUAGE_ID . "/.description.php")
+                                )) {
                                     __IncludeLang($fname, false, true);
+                                }
 
                                 $arWizardDescription = array();
                                 include($pathToWizard . "/.description.php");
@@ -91,38 +112,56 @@ class CWizardUtil
 
             if ($handle = @opendir($modulesPath)) {
                 while (($moduleName = readdir($handle)) !== false) {
-                    if ($moduleName == "." || $moduleName == ".." || !is_dir($modulesPath . "/" . $moduleName))
+                    if ($moduleName == "." || $moduleName == ".." || !is_dir($modulesPath . "/" . $moduleName)) {
                         continue;
+                    }
 
-                    if (!file_exists($modulesPath . "/" . $moduleName . "/install/wizards"))
+                    if (!file_exists($modulesPath . "/" . $moduleName . "/install/wizards")) {
                         continue;
+                    }
 
                     if ($handle1 = @opendir($modulesPath . "/" . $moduleName . "/install/wizards")) {
                         while (($dirName = readdir($handle1)) !== false) {
-                            if ($dirName == "." || $dirName == ".." || !is_dir($modulesPath . "/" . $moduleName . "/install/wizards/" . $dirName))
+                            if ($dirName == "." || $dirName == ".." || !is_dir(
+                                    $modulesPath . "/" . $moduleName . "/install/wizards/" . $dirName
+                                )) {
                                 continue;
+                            }
 
-                            if ($filterNamespace !== false && (strlen($filterNamespace) <= 0 || $filterNamespace != $dirName))
+                            if ($filterNamespace !== false && ($filterNamespace == '' || $filterNamespace != $dirName)) {
                                 continue;
+                            }
 
-                            if ($handle2 = @opendir($modulesPath . "/" . $moduleName . "/install/wizards/" . $dirName)) {
+                            if ($handle2 = @opendir(
+                                $modulesPath . "/" . $moduleName . "/install/wizards/" . $dirName
+                            )) {
                                 while (($file = readdir($handle2)) !== false) {
                                     $pathToWizard = $modulesPath . "/" . $moduleName . "/install/wizards/" . $dirName . "/" . $file;
 
-                                    if ($file == "." || $file == ".." || !is_dir($pathToWizard))
+                                    if ($file == "." || $file == ".." || !is_dir($pathToWizard)) {
                                         continue;
+                                    }
 
-                                    if (in_array($dirName . ":" . $file, $arLoadedWizards))
+                                    if (in_array($dirName . ":" . $file, $arLoadedWizards)) {
                                         continue;
+                                    }
 
                                     if (file_exists($pathToWizard . "/.description.php")) {
                                         if (LANGUAGE_ID != "en" && LANGUAGE_ID != "ru") {
-                                            if (file_exists(($fname = $pathToWizard . "/lang/" . LangSubst(LANGUAGE_ID) . "/.description.php")))
+                                            if (file_exists(
+                                                ($fname = $pathToWizard . "/lang/" . LangSubst(
+                                                        LANGUAGE_ID
+                                                    ) . "/.description.php")
+                                            )) {
                                                 __IncludeLang($fname, false, true);
+                                            }
                                         }
 
-                                        if (file_exists(($fname = $pathToWizard . "/lang/" . LANGUAGE_ID . "/.description.php")))
+                                        if (file_exists(
+                                            ($fname = $pathToWizard . "/lang/" . LANGUAGE_ID . "/.description.php")
+                                        )) {
                                             __IncludeLang($fname, false, true);
+                                        }
 
                                         $arWizardDescription = array();
                                         include($pathToWizard . "/.description.php");
@@ -151,12 +190,14 @@ class CWizardUtil
 
         if ($handle = @opendir($namespacePath)) {
             while (($file = readdir($handle)) !== false) {
-                if ($file == "." || $file == "..")
+                if ($file == "." || $file == "..") {
                     continue;
+                }
 
                 if (is_dir($namespacePath . "/" . $file)) {
-                    if (!file_exists($namespacePath . "/" . $file . "/.description.php"))
+                    if (!file_exists($namespacePath . "/" . $file . "/.description.php")) {
                         $arNamespaces[] = $file;
+                    }
                 }
             }
             @closedir($handle);
@@ -167,12 +208,14 @@ class CWizardUtil
 
     public static function DeleteWizard($wizardName)
     {
-        if (!CWizardUtil::CheckName($wizardName))
+        if (!CWizardUtil::CheckName($wizardName)) {
             return false;
+        }
 
         $wizardPath = CWizardUtil::GetRepositoryPath() . CWizardUtil::MakeWizardPath($wizardName);
-        if (!file_exists($_SERVER["DOCUMENT_ROOT"] . $wizardPath))
+        if (!file_exists($_SERVER["DOCUMENT_ROOT"] . $wizardPath)) {
             return false;
+        }
 
         $success = DeleteDirFilesEx($wizardPath);
         return $success;
@@ -180,13 +223,19 @@ class CWizardUtil
 
     public static function CopyWizard($wizardName, $newName)
     {
-        if (!CWizardUtil::CheckName($wizardName) || !CWizardUtil::CheckName($newName))
+        if (!CWizardUtil::CheckName($wizardName) || !CWizardUtil::CheckName($newName)) {
             return false;
+        }
 
-        $wizardPath = $_SERVER["DOCUMENT_ROOT"] . CWizardUtil::GetRepositoryPath() . CWizardUtil::MakeWizardPath($wizardName);
-        $newNamePath = $_SERVER["DOCUMENT_ROOT"] . CWizardUtil::GetRepositoryPath() . CWizardUtil::MakeWizardPath($newName);
-        if (!file_exists($wizardPath) || file_exists($newNamePath))
+        $wizardPath = $_SERVER["DOCUMENT_ROOT"] . CWizardUtil::GetRepositoryPath() . CWizardUtil::MakeWizardPath(
+                $wizardName
+            );
+        $newNamePath = $_SERVER["DOCUMENT_ROOT"] . CWizardUtil::GetRepositoryPath() . CWizardUtil::MakeWizardPath(
+                $newName
+            );
+        if (!file_exists($wizardPath) || file_exists($newNamePath)) {
             return false;
+        }
 
         CopyDirFiles(
             $wizardPath,
@@ -202,29 +251,33 @@ class CWizardUtil
     {
         clearstatcache();
 
-        if (!is_file($filePath) || !is_writable($filePath) || !is_array($arReplace))
+        if (!is_file($filePath) || !is_writable($filePath) || !is_array($arReplace)) {
             return;
+        }
 
         @chmod($filePath, BX_FILE_PERMISSIONS);
 
-        if (!$handle = @fopen($filePath, "rb"))
+        if (!$handle = @fopen($filePath, "rb")) {
             return;
+        }
 
         $content = @fread($handle, filesize($filePath));
         @fclose($handle);
 
-        if (!($handle = @fopen($filePath, "wb")))
+        if (!($handle = @fopen($filePath, "wb"))) {
             return;
+        }
 
         if (flock($handle, LOCK_EX)) {
             $arSearch = array();
             $arValue = array();
 
             foreach ($arReplace as $search => $replace) {
-                if ($skipSharp)
+                if ($skipSharp) {
                     $arSearch[] = $search;
-                else
+                } else {
                     $arSearch[] = "#" . $search . "#";
+                }
 
                 $arValue[] = $replace;
             }
@@ -240,36 +293,51 @@ class CWizardUtil
     {
         clearstatcache();
 
-        if ((!is_dir($filePath) && !is_file($filePath)) || !is_array($arReplace))
+        if ((!is_dir($filePath) && !is_file($filePath)) || !is_array($arReplace)) {
             return;
+        }
 
         $root = (defined("WIZARD_SITE_ROOT_PATH") ? WIZARD_SITE_ROOT_PATH : $_SERVER["DOCUMENT_ROOT"]);
         $root = trim($root, "/");
 
         if ($handle = @opendir($filePath)) {
             while (($file = readdir($handle)) !== false) {
-                if ($file == "." || $file == ".." || (trim($filePath, "/") == $root && ($file == "bitrix" || $file == "upload")))
+                if ($file == "." || $file == ".." || (trim(
+                            $filePath,
+                            "/"
+                        ) == $root && ($file == "bitrix" || $file == "upload"))) {
                     continue;
+                }
 
                 if (is_dir($filePath . "/" . $file)) {
                     self::ReplaceMacrosRecursive($filePath . $file . "/", $arReplace);
                 } elseif (is_file($filePath . "/" . $file)) {
-                    if (GetFileExtension($file) <> "php")
+                    if (GetFileExtension($file) <> "php") {
                         continue;
+                    }
 
-                    if (!is_writable($filePath . "/" . $file))
+                    if (!is_writable($filePath . "/" . $file)) {
                         continue;
+                    }
+
+                    $size = filesize($filePath . "/" . $file);
+
+                    if ($size == 0) {
+                        continue;
+                    }
 
                     @chmod($filePath . "/" . $file, BX_FILE_PERMISSIONS);
 
-                    if (!$handleFile = @fopen($filePath . "/" . $file, "rb"))
+                    if (!$handleFile = @fopen($filePath . "/" . $file, "rb")) {
                         continue;
+                    }
 
-                    $content = @fread($handleFile, filesize($filePath . "/" . $file));
+                    $content = @fread($handleFile, $size);
                     @fclose($handleFile);
 
-                    if (!($handleFile = @fopen($filePath . "/" . $file, "wb")))
+                    if (!($handleFile = @fopen($filePath . "/" . $file, "wb"))) {
                         continue;
+                    }
 
                     if (flock($handleFile, LOCK_EX)) {
                         $arSearch = array();
@@ -285,7 +353,6 @@ class CWizardUtil
                         @flock($handleFile, LOCK_UN);
                     }
                     @fclose($handleFile);
-
                 }
             }
             @closedir($handle);
@@ -295,19 +362,23 @@ class CWizardUtil
     public static function CopyFile($fileID, $destPath, $deleteAfterCopy = true)
     {
         $arFile = CFile::GetFileArray($fileID);
-        if (!$arFile)
+        if (!$arFile) {
             return false;
+        }
 
         $filePath = $_SERVER["DOCUMENT_ROOT"] . $arFile["SRC"];
-        if (!is_file($filePath))
+        if (!is_file($filePath)) {
             return false;
+        }
 
         CheckDirPath($_SERVER["DOCUMENT_ROOT"] . $destPath);
-        if (!@copy($filePath, $_SERVER["DOCUMENT_ROOT"] . $destPath))
+        if (!@copy($filePath, $_SERVER["DOCUMENT_ROOT"] . $destPath)) {
             return false;
+        }
 
-        if ($deleteAfterCopy)
+        if ($deleteAfterCopy) {
             CFile::Delete($fileID);
+        }
 
         return true;
     }
@@ -348,32 +419,36 @@ class CWizardUtil
 
     public static function CreateThumbnail($sourcePath, $previewPath, $maxWidth, $maxHeight)
     {
-        if (!is_file($sourcePath))
+        if (!is_file($sourcePath)) {
             return false;
+        }
 
         $maxWidth = intval($maxWidth);
         $maxHeight = intval($maxHeight);
 
-        if ($maxWidth <= 0 || $maxHeight <= 0)
+        if ($maxWidth <= 0 || $maxHeight <= 0) {
             return false;
+        }
 
         list($sourceWidth, $sourceHeight, $type) = @getimagesize($sourcePath);
 
         //Image type
-        if ($type == 1)
+        if ($type == 1) {
             $imageType = "gif";
-        elseif ($type == 2)
+        } elseif ($type == 2) {
             $imageType = "jpeg";
-        elseif ($type == 3)
+        } elseif ($type == 3) {
             $imageType = "png";
-        else
+        } else {
             return false;
+        }
 
         $imageFunction = "imagecreatefrom" . $imageType;
         $sourceImage = @$imageFunction($sourcePath);
 
-        if (!$sourceImage)
+        if (!$sourceImage) {
             return false;
+        }
 
         $ratioWidth = $sourceWidth / $maxWidth;
         $ratioHeight = $sourceHeight / $maxHeight;
@@ -392,30 +467,52 @@ class CWizardUtil
         $bGD2 = false;
         if (function_exists("gd_info")) {
             $arGDInfo = gd_info();
-            $bGD2 = ((strpos($arGDInfo['GD Version'], "2.") !== false) ? true : false);
+            $bGD2 = ((mb_strpos($arGDInfo['GD Version'], "2.") !== false) ? true : false);
         }
 
         //Create Preview
         if ($bGD2) {
             $previewImage = imagecreatetruecolor($previewWidth, $previewHeight);
-            imagecopyresampled($previewImage, $sourceImage, 0, 0, 0, 0, $previewWidth, $previewHeight, $sourceWidth, $sourceHeight);
+            imagecopyresampled(
+                $previewImage,
+                $sourceImage,
+                0,
+                0,
+                0,
+                0,
+                $previewWidth,
+                $previewHeight,
+                $sourceWidth,
+                $sourceHeight
+            );
         } else {
             $previewImage = imagecreate($previewWidth, $previewHeight);
-            imagecopyresized($previewImage, $sourceImage, 0, 0, 0, 0, $previewWidth, $previewHeight, $sourceWidth, $sourceHeight);
+            imagecopyresized(
+                $previewImage,
+                $sourceImage,
+                0,
+                0,
+                0,
+                0,
+                $previewWidth,
+                $previewHeight,
+                $sourceWidth,
+                $sourceHeight
+            );
         }
 
         //Save preview
         $imageFunction = "image" . $imageType;
 
-        if ($imageType == "jpeg")
+        if ($imageType == "jpeg") {
             $success = @$imageFunction($previewImage, $previewPath, 95);
-        else
+        } else {
             $success = @$imageFunction($previewImage, $previewPath);
+        }
 
         @imagedestroy($previewImage);
         @imagedestroy($sourceImage);
 
         return $success;
-
     }
 }

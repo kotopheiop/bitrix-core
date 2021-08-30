@@ -2,6 +2,7 @@
 
 namespace Bitrix\Mail\Helper;
 
+use Bitrix\Mail\MailboxDirectory;
 use Bitrix\Mail\MailMessageTable;
 use Bitrix\Mail\MailMessageUidTable;
 use Bitrix\Main\Event;
@@ -52,20 +53,18 @@ class MessageEventManager
         $updatedFieldValues = empty($params['UPDATED_FIELDS_VALUES']) ? [] : $params['UPDATED_FIELDS_VALUES'];
         $fieldsData = empty($params['MAIL_FIELDS_DATA']) ? [] : $params['MAIL_FIELDS_DATA'];
         $filter = empty($params['UPDATED_BY_FILTER']) ? [] : $params['UPDATED_BY_FILTER'];
+
         if (!empty($updatedFieldValues) && isset($updatedFieldValues['IS_SEEN'])) {
             $fieldsData = $this->getMailsFieldsData($fieldsData, ['HEADER_MD5', 'MAILBOX_USER_ID', 'IS_SEEN'], $filter);
             $this->sendMessageModifiedEvent($fieldsData);
         }
-        if (!empty($updatedFieldValues) && isset($updatedFieldValues['DIR_MD5'])) {
-            $folderHash = empty($updatedFieldValues['DIR_MD5']) ? null : $updatedFieldValues['DIR_MD5'];
-            $mailboxOptions = !empty($fieldsData[0]) && !empty($fieldsData[0]['MAILBOX_OPTIONS']) ? $fieldsData[0]['MAILBOX_OPTIONS'] : [];
-            if (!empty($folderHash) && !empty($mailboxOptions)) {
-                $isTrashFolder = $folderHash === MessageFolder::getFolderHashByType(MessageFolder::TRASH, $mailboxOptions);
-                $isSpamFolder = $folderHash === MessageFolder::getFolderHashByType(MessageFolder::SPAM, $mailboxOptions);
-                $folderName = MessageFolder::getFolderNameByHash($folderHash, $mailboxOptions);
-                $isDisabledFolder = MessageFolder::isDisabledFolder($folderName, $mailboxOptions);
 
-                if ($isTrashFolder || $isSpamFolder || $isDisabledFolder) {
+        if (!empty($updatedFieldValues) && isset($updatedFieldValues['DIR_MD5']) && isset($filter['=MAILBOX_ID'])) {
+            $dirHash = empty($updatedFieldValues['DIR_MD5']) ? null : $updatedFieldValues['DIR_MD5'];
+            $dir = MailboxDirectory::fetchOneByHash($filter['=MAILBOX_ID'], $dirHash);
+
+            if (!empty($dirHash) && $dir != null) {
+                if ($dir->isTrash() || $dir->isSpam() || $dir->isDisabled()) {
                     $this->handleRemovedEvent($fieldsData, $filter);
                 }
             }
@@ -135,16 +134,21 @@ class MessageEventManager
         $dateLastMonth->add('-1 MONTH');
         foreach ($selectingFields as $index => $selectingField) {
             if (strncmp('MAILBOX_', $selectingField, 8) === 0) {
-                $selectingFields[$selectingField] = 'MAILBOX.' . substr($selectingField, 8);
+                $selectingFields[$selectingField] = 'MAILBOX.' . mb_substr($selectingField, 8);
                 unset($selectingFields[$index]);
             }
         }
 
-        return MailMessageUidTable::getList([
+        return MailMessageUidTable::getList(
+            [
                 'select' => $selectingFields,
-                'filter' => array_merge($filter, [
-                    '>=INTERNALDATE' => $dateLastMonth,
-                ]),
+                'filter' => array_merge(
+                    $filter,
+                    [
+                        '>=INTERNALDATE' => $dateLastMonth,
+                        '=DELETE_TIME' => 'IS NULL',
+                    ]
+                ),
             ]
         )->fetchAll();
     }
@@ -159,30 +163,40 @@ class MessageEventManager
     {
         $messageId = $data['msgid'];
         if ($messageId) {
-            $message = MailMessageTable::getList([
-                'select' => [
-                    'OPTIONS', 'ID', 'READ_CONFIRMED',
-                ],
-                'filter' => [
-                    '=MSG_ID' => $messageId,
-                    'READ_CONFIRMED' => null,
+            $message = MailMessageTable::getList(
+                [
+                    'select' => [
+                        'OPTIONS',
+                        'ID',
+                        'READ_CONFIRMED',
+                    ],
+                    'filter' => [
+                        '=MSG_ID' => $messageId,
+                        'READ_CONFIRMED' => null,
+                    ]
                 ]
-            ])->fetch();
+            )->fetch();
             if ($message) {
                 $readTime = new DateTime();
-                $result = MailMessageTable::update($message['ID'], [
-                    'READ_CONFIRMED' => $readTime,
-                ]);
+                $result = MailMessageTable::update(
+                    $message['ID'],
+                    [
+                        'READ_CONFIRMED' => $readTime,
+                    ]
+                );
                 if ($result->isSuccess()) {
                     if (Loader::includeModule("pull")) {
-                        \CPullWatch::addToStack(static::getPullTagName($message['ID']), [
-                            'module_id' => 'mail',
-                            'command' => 'onMessageRead',
-                            'params' => [
-                                'messageId' => $message['ID'],
-                                'readTime' => $readTime->getTimestamp(),
-                            ],
-                        ]);
+                        \CPullWatch::addToStack(
+                            static::getPullTagName($message['ID']),
+                            [
+                                'module_id' => 'mail',
+                                'command' => 'onMessageRead',
+                                'params' => [
+                                    'messageId' => $message['ID'],
+                                    'readTime' => $readTime->getTimestamp(),
+                                ],
+                            ]
+                        );
                     }
                 }
             }
@@ -201,5 +215,7 @@ class MessageEventManager
         if ($eventName === static::EVENT_DELETE_MESSAGES) {
             return array('HEADER_MD5', 'MESSAGE_ID', 'MAILBOX_USER_ID');
         }
+
+        return [];
     }
 }

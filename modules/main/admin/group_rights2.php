@@ -1,6 +1,8 @@
 <?
-if (!$USER->IsAdmin())
+
+if (!$USER->IsAdmin()) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 IncludeModuleLangFile(__FILE__);
 
@@ -8,10 +10,11 @@ $md = CModule::CreateModuleObject($module_id);
 
 $arGROUPS = array();
 $arFilter = Array("ACTIVE" => "Y");
-if ($md->SHOW_SUPER_ADMIN_GROUP_RIGHTS != "Y")
+if ($md->SHOW_SUPER_ADMIN_GROUP_RIGHTS != "Y") {
     $arFilter["ADMIN"] = "N";
+}
 
-$z = CGroup::GetList($v1 = "sort", $v2 = "asc", $arFilter);
+$z = CGroup::GetList("sort", "asc", $arFilter);
 while ($zr = $z->Fetch()) {
     $ar = array();
     $ar["ID"] = intval($zr["ID"]);
@@ -19,7 +22,7 @@ while ($zr = $z->Fetch()) {
     $arGROUPS[] = $ar;
 }
 
-if ($REQUEST_METHOD == "POST" && strlen($Update) > 0 && $USER->IsAdmin() && check_bitrix_sessid()) {
+if ($REQUEST_METHOD == "POST" && $Update <> '' && $USER->IsAdmin() && check_bitrix_sessid()) {
     // ��������� ���� �����
     COption::SetOptionString($module_id, "GROUP_DEFAULT_TASK", $GROUP_DEFAULT_TASK, "Task for groups by default");
     $letter = ($l = CTask::GetLetter($GROUP_DEFAULT_TASK)) ? $l : 'D';
@@ -28,14 +31,16 @@ if ($REQUEST_METHOD == "POST" && strlen($Update) > 0 && $USER->IsAdmin() && chec
     $arTasksInModule = Array();
     foreach ($arGROUPS as $value) {
         $tid = ${"TASKS_" . $value["ID"]};
-        if ($tid)
+        if ($tid) {
             $arTasksInModule[$value["ID"]] = Array('ID' => $tid);
+        }
 
         $rt = ($tid) ? CTask::GetLetter($tid) : '';
-        if (strlen($rt) > 0 && $rt != "NOT_REF")
+        if ($rt <> '' && $rt != "NOT_REF") {
             $APPLICATION->SetGroupRight($module_id, $value["ID"], $rt);
-        else
+        } else {
             $APPLICATION->DelGroupRight($module_id, array($value["ID"]));
+        }
     }
     CGroup::SetTasksForModule($module_id, $arTasksInModule);
 }
@@ -44,8 +49,9 @@ $GROUP_DEFAULT_TASK = COption::GetOptionString($module_id, "GROUP_DEFAULT_TASK",
 if ($GROUP_DEFAULT_TASK == '') {
     $GROUP_DEFAULT_RIGHT = COption::GetOptionString($module_id, "GROUP_DEFAULT_RIGHT", "D");
     $GROUP_DEFAULT_TASK = CTask::GetIdByLetter($GROUP_DEFAULT_RIGHT, $module_id, 'module');
-    if ($GROUP_DEFAULT_TASK)
+    if ($GROUP_DEFAULT_TASK) {
         COption::SetOptionString($module_id, "GROUP_DEFAULT_TASK", $GROUP_DEFAULT_TASK);
+    }
 }
 ?>
     <tr>
@@ -65,7 +71,9 @@ foreach ($arGROUPS as $value):
         $arUsedGroups[$value["ID"]] = true;
         ?>
         <tr>
-            <td><?= $value["NAME"] . " [<a title=\"" . GetMessage("MAIN_USER_GROUP_TITLE") . "\" href=\"/bitrix/admin/group_edit.php?ID=" . $value["ID"] . "&amp;lang=" . LANGUAGE_ID . "\">" . $value["ID"] . "</a>]:" ?><?
+            <td><?= $value["NAME"] . " [<a title=\"" . GetMessage(
+                    "MAIN_USER_GROUP_TITLE"
+                ) . "\" href=\"/bitrix/admin/group_edit.php?ID=" . $value["ID"] . "&amp;lang=" . LANGUAGE_ID . "\">" . $value["ID"] . "</a>]:" ?><?
                 if ($value["ID"] == 1 && $md->SHOW_SUPER_ADMIN_GROUP_RIGHTS == "Y"):
                     echo "<br><small>" . GetMessage("MAIN_SUPER_ADMIN_RIGHTS_COMMENT") . "</small>";
                 endif;
@@ -85,8 +93,9 @@ if (count($arGROUPS) > count($arUsedGroups)):
                 <option value=""><? echo GetMessage("group_rights_select") ?></option>
                 <?
                 foreach ($arGROUPS as $group):
-                    if ($arUsedGroups[$group["ID"]] == true)
+                    if ($arUsedGroups[$group["ID"]] == true) {
                         continue;
+                    }
                     ?>
                     <option value="<?= $group["ID"] ?>"><?= $group["NAME"] . " [" . $group["ID"] . "]" ?></option>
                 <? endforeach ?>

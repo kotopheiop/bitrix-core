@@ -70,7 +70,7 @@ class Cache
         $id = intval($id);
 
         if ($id > 0 && self::isCaching()) {
-            Manager::getCacheManager()->ClearByTag(
+            Manager::getCacheManager()->clearByTag(
                 self::TAG_PREFIX . $id
             );
         }

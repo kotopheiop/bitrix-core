@@ -37,7 +37,9 @@ class YandexBase extends BitrixEngine
     public function getInterface()
     {
         if ($this->authInterface === null) {
-            $this->authInterface = new \CYandexOAuthInterface($this->engine['CLIENT_ID'], $this->engine['CLIENT_SECRET']);
+            $this->authInterface = new \CYandexOAuthInterface(
+                $this->engine['CLIENT_ID'], $this->engine['CLIENT_SECRET']
+            );
 
             if ($this->engineSettings['AUTH']) {
                 $this->authInterface->setToken($this->engineSettings['AUTH']['access_token']);
@@ -110,7 +112,7 @@ class YandexBase extends BitrixEngine
         ) {
             $queryResult = self::query(self::QUERY_USER);
 
-            if ($queryResult->getStatus() == self::HTTP_STATUS_OK && strlen($queryResult->getResult()) > 0) {
+            if ($queryResult->getStatus() == self::HTTP_STATUS_OK && $queryResult->getResult() <> '') {
                 $res = Web\Json::decode($queryResult->getResult());
 
                 if (is_array($res)) {

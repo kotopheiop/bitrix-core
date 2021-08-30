@@ -1,7 +1,8 @@
 <?php
 
-if (!CModule::IncludeModule('rest'))
+if (!CModule::IncludeModule('rest')) {
     return;
+}
 
 class CMailRestService extends IRestService
 {
@@ -44,10 +45,12 @@ class CMailRestService extends IRestService
     {
         IncludeModuleLangFile(__FILE__);
 
-        $result = Bitrix\Mail\MailServicesTable::getList(array(
-            'filter' => array('ACTIVE' => 'Y', '=SITE_ID' => SITE_ID),
-            'order' => array('SORT' => 'ASC', 'NAME' => 'ASC')
-        ));
+        $result = Bitrix\Mail\MailServicesTable::getList(
+            array(
+                'filter' => array('ACTIVE' => 'Y', '=SITE_ID' => SITE_ID),
+                'order' => array('SORT' => 'ASC', 'NAME' => 'ASC')
+            )
+        );
 
         $data = array();
         while ($row = $result->fetch()) {
@@ -57,8 +60,9 @@ class CMailRestService extends IRestService
             $data[] = $row;
         }
 
-        if (empty($data))
+        if (empty($data)) {
             throw new Exception(GetMessage('MAIL_MAILSERVICE_LIST_EMPTY'));
+        }
 
         return $data;
     }
@@ -67,20 +71,24 @@ class CMailRestService extends IRestService
     {
         IncludeModuleLangFile(__FILE__);
 
-        if (empty($arParams['ID']))
+        if (empty($arParams['ID'])) {
             throw new Exception(GetMessage('MAIL_MAILSERVICE_EMPTY_ID'));
+        }
 
-        $result = Bitrix\Mail\MailServicesTable::getList(array(
-            'filter' => array('=ID' => $arParams['ID'], '=SITE_ID' => SITE_ID)
-        ));
+        $result = Bitrix\Mail\MailServicesTable::getList(
+            array(
+                'filter' => array('=ID' => $arParams['ID'], '=SITE_ID' => SITE_ID)
+            )
+        );
 
         if ($data = $result->fetch()) {
             unset($data['SERVICE_TYPE'], $data['TOKEN'], $data['FLAGS']);
             $data['ICON'] = Bitrix\Mail\MailServicesTable::getIconSrc($data['NAME'], $data['ICON']);
         }
 
-        if (empty($data))
+        if (empty($data)) {
             throw new Exception(GetMessage('MAIL_MAILSERVICE_EMPTY'));
+        }
 
         return $data;
     }
@@ -89,8 +97,9 @@ class CMailRestService extends IRestService
     {
         global $USER;
 
-        if (!$USER->CanDoOperation('bitrix24_config'))
+        if (!$USER->CanDoOperation('bitrix24_config')) {
             throw new Exception(GetMessage('ACCESS_DENIED'));
+        }
 
         $arFields = array(
             'SITE_ID' => SITE_ID,
@@ -108,8 +117,9 @@ class CMailRestService extends IRestService
 
         $result = Bitrix\Mail\MailServicesTable::add($arFields);
 
-        if (!$result->isSuccess())
+        if (!$result->isSuccess()) {
             throw new Exception(join('; ', $result->getErrorMessages()));
+        }
 
         return $result->getId();
     }
@@ -120,18 +130,23 @@ class CMailRestService extends IRestService
 
         IncludeModuleLangFile(__FILE__);
 
-        if (!$USER->CanDoOperation('bitrix24_config'))
+        if (!$USER->CanDoOperation('bitrix24_config')) {
             throw new Exception(GetMessage('ACCESS_DENIED'));
+        }
 
-        if (empty($arParams['ID']))
+        if (empty($arParams['ID'])) {
             throw new Exception(GetMessage('MAIL_MAILSERVICE_EMPTY_ID'));
+        }
 
-        $result = Bitrix\Mail\MailServicesTable::getList(array(
-            'filter' => array('=ID' => $arParams['ID'], '=SITE_ID' => SITE_ID)
-        ));
+        $result = Bitrix\Mail\MailServicesTable::getList(
+            array(
+                'filter' => array('=ID' => $arParams['ID'], '=SITE_ID' => SITE_ID)
+            )
+        );
 
-        if (!$result->fetch())
+        if (!$result->fetch()) {
             throw new Exception(GetMessage('MAIL_MAILSERVICE_EMPTY'));
+        }
 
         $arFields = array(
             'ACTIVE' => $arParams['ACTIVE'],
@@ -146,14 +161,16 @@ class CMailRestService extends IRestService
         );
 
         foreach ($arFields as $name => $value) {
-            if (empty($value))
+            if (empty($value)) {
                 unset($arFields[$name]);
+            }
         }
 
         $result = Bitrix\Mail\MailServicesTable::update($arParams['ID'], $arFields);
 
-        if (!$result->isSuccess())
+        if (!$result->isSuccess()) {
             throw new Exception(join('; ', $result->getErrorMessages()));
+        }
 
         return true;
     }
@@ -164,23 +181,29 @@ class CMailRestService extends IRestService
 
         IncludeModuleLangFile(__FILE__);
 
-        if (!$USER->CanDoOperation('bitrix24_config'))
+        if (!$USER->CanDoOperation('bitrix24_config')) {
             throw new Exception(GetMessage('ACCESS_DENIED'));
+        }
 
-        if (empty($arParams['ID']))
+        if (empty($arParams['ID'])) {
             throw new Exception(GetMessage('MAIL_MAILSERVICE_EMPTY_ID'));
+        }
 
-        $result = Bitrix\Mail\MailServicesTable::getList(array(
-            'filter' => array('=ID' => $arParams['ID'], '=SITE_ID' => SITE_ID)
-        ));
+        $result = Bitrix\Mail\MailServicesTable::getList(
+            array(
+                'filter' => array('=ID' => $arParams['ID'], '=SITE_ID' => SITE_ID)
+            )
+        );
 
-        if (!$result->fetch())
+        if (!$result->fetch()) {
             throw new Exception(GetMessage('MAIL_MAILSERVICE_EMPTY'));
+        }
 
         $result = Bitrix\Mail\MailServicesTable::delete($arParams['ID']);
 
-        if (!$result->isSuccess())
+        if (!$result->isSuccess()) {
             throw new Exception(join('; ', $result->getErrorMessages()));
+        }
 
         return true;
     }

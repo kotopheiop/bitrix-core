@@ -28,10 +28,12 @@ class ActionEmail extends Action
         $fields["EMAIL"] = $this->getRecipient();
         $fields["ADDITIONAL_TEXT"] = $this->getText();
 
-        \Bitrix\Main\Mail\Event::send([
-            'EVENT_NAME' => self::EVENT_TYPE,
-            'C_FIELDS' => $fields,
-            'LID' => $site,
-        ]);
+        \Bitrix\Main\Mail\Event::send(
+            [
+                'EVENT_NAME' => self::EVENT_TYPE,
+                'C_FIELDS' => $fields,
+                'LID' => $site,
+            ]
+        );
     }
 }

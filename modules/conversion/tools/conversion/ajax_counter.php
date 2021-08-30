@@ -4,7 +4,10 @@ if ($_SERVER['REQUEST_METHOD'] != 'POST') {
     die;
 }
 
-if (isset($_POST['SITE_ID']) && is_string($_POST['SITE_ID']) && preg_match('/^[A-Za-z0-9_]{2}$/', $_POST['SITE_ID']) === 1) {
+if (isset($_POST['SITE_ID']) && is_string($_POST['SITE_ID']) && preg_match(
+        '/^[A-Za-z0-9_]{2}$/',
+        $_POST['SITE_ID']
+    ) === 1) {
     define('SITE_ID', $_POST['SITE_ID']);
 }
 

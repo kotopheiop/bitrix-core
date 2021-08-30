@@ -75,61 +75,89 @@ class OrderDiscountTable extends Main\Entity\DataManager
     public static function getMap()
     {
         return array(
-            'ID' => new Main\Entity\IntegerField('ID', array(
+            'ID' => new Main\Entity\IntegerField(
+                'ID', array(
                 'primary' => true,
                 'autocomplete' => true,
                 'title' => Loc::getMessage('ORDER_DISCOUNT_ENTITY_ID_FIELD')
-            )),
-            'MODULE_ID' => new Main\Entity\StringField('MODULE_ID', array(
+            )
+            ),
+            'MODULE_ID' => new Main\Entity\StringField(
+                'MODULE_ID', array(
                 'required' => true,
                 'validation' => array(__CLASS__, 'validateModuleId'),
                 'title' => Loc::getMessage('ORDER_DISCOUNT_ENTITY_MODULE_ID_FIELD')
-            )),
-            'DISCOUNT_ID' => new Main\Entity\IntegerField('DISCOUNT_ID', array(
+            )
+            ),
+            'DISCOUNT_ID' => new Main\Entity\IntegerField(
+                'DISCOUNT_ID', array(
                 'required' => true,
                 'title' => Loc::getMessage('ORDER_DISCOUNT_ENTITY_DISCOUNT_ID_FIELD')
-            )),
-            'NAME' => new Main\Entity\StringField('NAME', array(
+            )
+            ),
+            'NAME' => new Main\Entity\StringField(
+                'NAME', array(
                 'validation' => array(__CLASS__, 'validateName'),
                 'title' => Loc::getMessage('ORDER_DISCOUNT_ENTITY_NAME_FIELD')
-            )),
-            'DISCOUNT_HASH' => new Main\Entity\StringField('DISCOUNT_HASH', array(
+            )
+            ),
+            'DISCOUNT_HASH' => new Main\Entity\StringField(
+                'DISCOUNT_HASH', array(
                 'required' => true,
                 'validation' => array(__CLASS__, 'validateDiscountHash'),
                 'title' => Loc::getMessage('ORDER_DISCOUNT_ENTITY_DISCOUNT_HASH_FIELD')
-            )),
-            'CONDITIONS' => new Main\Entity\TextField('CONDITIONS', array(
+            )
+            ),
+            'CONDITIONS' => new Main\Entity\TextField(
+                'CONDITIONS', array(
                 'serialized' => true,
                 'title' => Loc::getMessage('ORDER_DISCOUNT_ENTITY_CONDITIONS_FIELD')
-            )),
-            'UNPACK' => new Main\Entity\TextField('UNPACK', array(
+            )
+            ),
+            'UNPACK' => new Main\Entity\TextField(
+                'UNPACK', array(
                 'title' => Loc::getMessage('ORDER_DISCOUNT_ENTITY_UNPACK_FIELD')
-            )),
-            'ACTIONS' => new Main\Entity\TextField('ACTIONS', array(
+            )
+            ),
+            'ACTIONS' => new Main\Entity\TextField(
+                'ACTIONS', array(
                 'serialized' => true,
                 'title' => Loc::getMessage('ORDER_DISCOUNT_ENTITY_ACTIONS_FIELD')
-            )),
-            'APPLICATION' => new Main\Entity\TextField('APPLICATION', array(
+            )
+            ),
+            'APPLICATION' => new Main\Entity\TextField(
+                'APPLICATION', array(
                 'title' => Loc::getMessage('ORDER_DISCOUNT_ENTITY_APPLICATION_FIELD')
-            )),
-            'USE_COUPONS' => new Main\Entity\BooleanField('USE_COUPONS', array(
+            )
+            ),
+            'USE_COUPONS' => new Main\Entity\BooleanField(
+                'USE_COUPONS', array(
                 'values' => array('N', 'Y'),
                 'title' => Loc::getMessage('ORDER_DISCOUNT_ENTITY_USE_COUPONS_FIELD')
-            )),
-            'SORT' => new Main\Entity\IntegerField('SORT', array(
+            )
+            ),
+            'SORT' => new Main\Entity\IntegerField(
+                'SORT', array(
                 'title' => Loc::getMessage('ORDER_DISCOUNT_ENTITY_SORT_FIELD')
-            )),
-            'PRIORITY' => new Main\Entity\IntegerField('PRIORITY', array(
+            )
+            ),
+            'PRIORITY' => new Main\Entity\IntegerField(
+                'PRIORITY', array(
                 'title' => Loc::getMessage('ORDER_DISCOUNT_ENTITY_PRIORITY_FIELD')
-            )),
-            'LAST_DISCOUNT' => new Main\Entity\BooleanField('LAST_DISCOUNT', array(
+            )
+            ),
+            'LAST_DISCOUNT' => new Main\Entity\BooleanField(
+                'LAST_DISCOUNT', array(
                 'values' => array('N', 'Y'),
                 'title' => Loc::getMessage('ORDER_DISCOUNT_ENTITY_LAST_DISCOUNT_FIELD')
-            )),
-            'ACTIONS_DESCR' => new Main\Entity\TextField('ACTIONS_DESCR', array(
+            )
+            ),
+            'ACTIONS_DESCR' => new Main\Entity\TextField(
+                'ACTIONS_DESCR', array(
                 'serialized' => true,
                 'title' => Loc::getMessage('ORDER_DISCOUNT_ENTITY_ACTIONS_DESCR_FIELD')
-            ))
+            )
+            )
         );
     }
 
@@ -178,15 +206,19 @@ class OrderDiscountTable extends Main\Entity\DataManager
     public static function getDiscountByHash($hash)
     {
         $hash = (string)$hash;
-        if ($hash == '')
+        if ($hash == '') {
             return false;
+        }
         $result = 0;
-        $discountIterator = self::getList(array(
-            'select' => array('ID', 'DISCOUNT_HASH'),
-            'filter' => array('=DISCOUNT_HASH' => $hash)
-        ));
-        if ($discount = $discountIterator->fetch())
+        $discountIterator = self::getList(
+            array(
+                'select' => array('ID', 'DISCOUNT_HASH'),
+                'filter' => array('=DISCOUNT_HASH' => $hash)
+            )
+        );
+        if ($discount = $discountIterator->fetch()) {
             $result = (int)$discount['ID'];
+        }
         unset($discount, $discountIterator);
         return $result;
     }
@@ -203,16 +235,18 @@ class OrderDiscountTable extends Main\Entity\DataManager
         if (!empty($discount) && is_array($discount)) {
             $fields = array();
             foreach (self::$requiredFields as $fieldName) {
-                if (!isset($discount[$fieldName]))
+                if (!isset($discount[$fieldName])) {
                     return $hash;
+                }
                 $fields[$fieldName] = (
                 is_array($discount[$fieldName])
                     ? $discount[$fieldName]
                     : trim((string)$discount[$fieldName])
                 );
             }
-            if (!empty($fields))
+            if (!empty($fields)) {
                 $hash = md5(serialize($fields));
+            }
         }
         return $hash;
     }
@@ -227,12 +261,15 @@ class OrderDiscountTable extends Main\Entity\DataManager
     {
         $hash = false;
         if (!empty($discount) && is_array($discount)) {
-            if (isset($discount['CONDITIONS_LIST']))
+            if (isset($discount['CONDITIONS_LIST'])) {
                 $discount['CONDITIONS'] = $discount['CONDITIONS_LIST'];
-            if (isset($discount['ACTIONS_LIST']))
+            }
+            if (isset($discount['ACTIONS_LIST'])) {
                 $discount['ACTIONS'] = $discount['ACTIONS_LIST'];
-            if (!isset($discount['CONDITIONS']) || !isset($discount['ACTIONS']))
+            }
+            if (!isset($discount['CONDITIONS']) || !isset($discount['ACTIONS'])) {
                 return $hash;
+            }
             $fields = array(
                 'CONDITIONS' => $discount['CONDITIONS'],
                 'ACTIONS' => $discount['ACTIONS']
@@ -253,15 +290,17 @@ class OrderDiscountTable extends Main\Entity\DataManager
         $fields = false;
         if (!empty($discount) && is_array($discount)) {
             foreach (self::$replaceFields as $dest => $src) {
-                if (!isset($discount[$dest]) && isset($discount[$src]))
+                if (!isset($discount[$dest]) && isset($discount[$src])) {
                     $discount[$dest] = $discount[$src];
+                }
             }
             unset($dest, $src);
 
             $fields = array();
             foreach (self::$requiredFields as $fieldName) {
-                if (!isset($discount[$fieldName]))
+                if (!isset($discount[$fieldName])) {
                     return false;
+                }
                 $fields[$fieldName] = $discount[$fieldName];
             }
             unset($fieldName);
@@ -277,20 +316,24 @@ class OrderDiscountTable extends Main\Entity\DataManager
      */
     public static function getEmptyFields($discount)
     {
-        if (!is_array($discount))
+        if (!is_array($discount)) {
             return false;
-        if (empty($discount))
+        }
+        if (empty($discount)) {
             return self::$requiredFields;
+        }
 
         $fields = array();
         foreach (self::$replaceFields as $dest => $src) {
-            if (!isset($discount[$dest]) && isset($discount[$src]))
+            if (!isset($discount[$dest]) && isset($discount[$src])) {
                 $discount[$dest] = $discount[$src];
+            }
         }
         unset($dest, $src);
         foreach (self::$requiredFields as $fieldName) {
-            if (!isset($discount[$fieldName]))
+            if (!isset($discount[$fieldName])) {
                 $fields[] = (isset(self::$revertFields[$fieldName]) ? self::$revertFields[$fieldName] : $fieldName);
+            }
         }
         unset($fieldName);
 
@@ -326,8 +369,9 @@ class OrderDiscountTable extends Main\Entity\DataManager
         if (!empty($needDiscountModules)) {
             foreach ($needDiscountModules as &$module) {
                 $module = trim((string)$module);
-                if (!empty($module))
+                if (!empty($module)) {
                     $result[] = $module;
+                }
             }
             unset($module);
         }
@@ -342,11 +386,13 @@ class OrderDiscountTable extends Main\Entity\DataManager
      */
     public static function clearList($discount)
     {
-        if (!is_array($discount))
+        if (!is_array($discount)) {
             $discount = array($discount);
+        }
         Main\Type\Collection::normalizeArrayValuesByInt($discount, true);
-        if (empty($discount))
+        if (empty($discount)) {
             return;
+        }
         $conn = Main\Application::getConnection();
         $helper = $conn->getSqlHelper();
         $discountRows = array_chunk($discount, 500);
@@ -394,38 +440,52 @@ class OrderCouponsTable extends Main\Entity\DataManager
     public static function getMap()
     {
         return array(
-            'ID' => new Main\Entity\IntegerField('ID', array(
+            'ID' => new Main\Entity\IntegerField(
+                'ID', array(
                 'primary' => true,
                 'autocomplete' => true,
                 'title' => Loc::getMessage('ORDER_COUPONS_ENTITY_ID_FIELD')
-            )),
-            'ORDER_ID' => new Main\Entity\IntegerField('ORDER_ID', array(
+            )
+            ),
+            'ORDER_ID' => new Main\Entity\IntegerField(
+                'ORDER_ID', array(
                 'required' => true,
                 'title' => Loc::getMessage('ORDER_COUPONS_ENTITY_ORDER_ID_FIELD')
-            )),
-            'ORDER_DISCOUNT_ID' => new Main\Entity\IntegerField('ORDER_DISCOUNT_ID', array(
+            )
+            ),
+            'ORDER_DISCOUNT_ID' => new Main\Entity\IntegerField(
+                'ORDER_DISCOUNT_ID', array(
                 'required' => true,
                 'title' => Loc::getMessage('ORDER_COUPONS_ENTITY_ORDER_DISCOUNT_ID_FIELD')
-            )),
-            'COUPON' => new Main\Entity\StringField('COUPON', array(
+            )
+            ),
+            'COUPON' => new Main\Entity\StringField(
+                'COUPON', array(
                 'required' => true,
                 'validation' => array(__CLASS__, 'validateCoupon'),
                 'title' => Loc::getMessage('ORDER_COUPONS_ENTITY_COUPON_FIELD')
-            )),
-            'TYPE' => new Main\Entity\IntegerField('TYPE', array(
+            )
+            ),
+            'TYPE' => new Main\Entity\IntegerField(
+                'TYPE', array(
                 'required' => true,
                 'validation' => array(__CLASS__, 'validateType'),
                 'title' => Loc::getMessage('ORDER_COUPONS_ENTITY_TYPE_FIELD')
-            )),
-            'DATA' => new Main\Entity\TextField('DATA', array(
+            )
+            ),
+            'DATA' => new Main\Entity\TextField(
+                'DATA', array(
                 'required' => true,
                 'serialized' => true,
                 'title' => Loc::getMessage('ORDER_COUPONS_ENTITY_DATA_FIELD')
-            )),
-            'COUPON_ID' => new Main\Entity\IntegerField('COUPON_ID', array(
+            )
+            ),
+            'COUPON_ID' => new Main\Entity\IntegerField(
+                'COUPON_ID', array(
                 'required' => true,
                 'title' => Loc::getMessage('ORDER_COUPONS_ENTITY_COUPON_ID_FIELD')
-            )),
+            )
+            ),
             'ORDER_DISCOUNT' => new Main\Entity\ReferenceField(
                 'ORDER_DISCOUNT',
                 'Bitrix\Sale\Internals\OrderDiscount',
@@ -470,8 +530,11 @@ class OrderCouponsTable extends Main\Entity\DataManager
      */
     public static function checkType($value, $primary, array $row, Main\Entity\Field $field)
     {
-        if (Internals\DiscountCouponTable::isValidCouponType($value) || $value == Internals\DiscountCouponTable::TYPE_ARCHIVED)
+        if (Internals\DiscountCouponTable::isValidCouponType(
+                $value
+            ) || $value == Internals\DiscountCouponTable::TYPE_ARCHIVED) {
             return true;
+        }
 
         return Loc::getMessage('ORDER_COUPONS_VALIDATOR_TYPE');
     }
@@ -485,12 +548,17 @@ class OrderCouponsTable extends Main\Entity\DataManager
     public static function clearByOrder($order)
     {
         $order = (int)$order;
-        if ($order <= 0)
+        if ($order <= 0) {
             return;
+        }
 
         $conn = Main\Application::getConnection();
         $helper = $conn->getSqlHelper();
-        $conn->queryExecute('delete from ' . $helper->quote(self::getTableName()) . ' where ' . $helper->quote('ORDER_ID') . ' = ' . $order);
+        $conn->queryExecute(
+            'delete from ' . $helper->quote(self::getTableName()) . ' where ' . $helper->quote(
+                'ORDER_ID'
+            ) . ' = ' . $order
+        );
         unset($helper, $conn);
     }
 
@@ -502,11 +570,13 @@ class OrderCouponsTable extends Main\Entity\DataManager
      */
     public static function clearList($coupon)
     {
-        if (!is_array($coupon))
+        if (!is_array($coupon)) {
             $coupon = array($coupon);
+        }
         Main\Type\Collection::normalizeArrayValuesByInt($coupon, true);
-        if (empty($coupon))
+        if (empty($coupon)) {
             return;
+        }
         $conn = Main\Application::getConnection();
         $helper = $conn->getSqlHelper();
         $couponRows = array_chunk($coupon, 500);
@@ -527,13 +597,16 @@ class OrderCouponsTable extends Main\Entity\DataManager
     public static function applyOrder($coupons, $order)
     {
         $order = (int)$order;
-        if ($order <= 0 || empty($coupons))
+        if ($order <= 0 || empty($coupons)) {
             return;
-        if (!is_array($coupons))
+        }
+        if (!is_array($coupons)) {
             $coupons = array($coupons);
+        }
         Main\Type\Collection::normalizeArrayValuesByInt($coupons, true);
-        if (empty($coupons))
+        if (empty($coupons)) {
             return;
+        }
         $conn = Main\Application::getConnection();
         $helper = $conn->getSqlHelper();
         $conn->queryExecute(
@@ -577,20 +650,26 @@ class OrderModulesTable extends Main\Entity\DataManager
     public static function getMap()
     {
         return array(
-            'ID' => new Main\Entity\IntegerField('ID', array(
+            'ID' => new Main\Entity\IntegerField(
+                'ID', array(
                 'primary' => true,
                 'autocomplete' => true,
                 'title' => Loc::getMessage('ORDER_MODULES_ENTITY_ID_FIELD')
-            )),
-            'ORDER_DISCOUNT_ID' => new Main\Entity\IntegerField('ORDER_DISCOUNT_ID', array(
+            )
+            ),
+            'ORDER_DISCOUNT_ID' => new Main\Entity\IntegerField(
+                'ORDER_DISCOUNT_ID', array(
                 'required' => true,
                 'title' => Loc::getMessage('ORDER_MODULES_ENTITY_ORDER_DISCOUNT_ID_FIELD')
-            )),
-            'MODULE_ID' => new Main\Entity\StringField('MODULE_ID', array(
+            )
+            ),
+            'MODULE_ID' => new Main\Entity\StringField(
+                'MODULE_ID', array(
                 'required' => true,
                 'validation' => array(__CLASS__, 'validateModuleId'),
                 'title' => Loc::getMessage('ORDER_MODULES_ENTITY_MODULE_ID_FIELD')
-            ))
+            )
+            )
         );
     }
 
@@ -616,21 +695,26 @@ class OrderModulesTable extends Main\Entity\DataManager
     public static function saveOrderDiscountModules($discountId, $moduleList)
     {
         $discountId = (int)$discountId;
-        if ($discountId <= 0)
+        if ($discountId <= 0) {
             return false;
-        if (!is_array($moduleList))
+        }
+        if (!is_array($moduleList)) {
             $moduleList = array($moduleList);
+        }
 
         $error = false;
 
         $conn = Main\Application::getConnection();
         $helper = $conn->getSqlHelper();
-        $query = 'delete from ' . $helper->quote(self::getTableName()) . ' where ' . $helper->quote('ORDER_DISCOUNT_ID') . ' = ' . $discountId;
+        $query = 'delete from ' . $helper->quote(self::getTableName()) . ' where ' . $helper->quote(
+                'ORDER_DISCOUNT_ID'
+            ) . ' = ' . $discountId;
         $conn->queryExecute($query);
         foreach ($moduleList as &$module) {
             $module = (string)$module;
-            if (empty($module))
+            if (empty($module)) {
                 continue;
+            }
             $fields = array(
                 'ORDER_DISCOUNT_ID' => $discountId,
                 'MODULE_ID' => $module
@@ -642,8 +726,9 @@ class OrderModulesTable extends Main\Entity\DataManager
             }
         }
         unset($result, $module);
-        if ($error)
+        if ($error) {
             $conn->queryExecute($query);
+        }
 
         unset($query, $helper, $conn);
         return !$error;
@@ -657,15 +742,19 @@ class OrderModulesTable extends Main\Entity\DataManager
      */
     public static function clearByDiscount($discount)
     {
-        if (!is_array($discount))
+        if (!is_array($discount)) {
             $discount = array($discount);
+        }
         Main\Type\Collection::normalizeArrayValuesByInt($discount, true);
-        if (empty($discount))
+        if (empty($discount)) {
             return;
+        }
         $conn = Main\Application::getConnection();
         $helper = $conn->getSqlHelper();
         $discountRows = array_chunk($discount, 500);
-        $query = 'delete from ' . $helper->quote(self::getTableName()) . ' where ' . $helper->quote('ORDER_DISCOUNT_ID');
+        $query = 'delete from ' . $helper->quote(self::getTableName()) . ' where ' . $helper->quote(
+                'ORDER_DISCOUNT_ID'
+            );
         foreach ($discountRows as &$row) {
             $conn->queryExecute($query . ' in (' . implode(', ', $row) . ')');
         }
@@ -718,16 +807,21 @@ class OrderDiscountDataTable extends Main\Entity\DataManager
     public static function getMap()
     {
         return array(
-            'ID' => new Main\Entity\IntegerField('ID', array(
+            'ID' => new Main\Entity\IntegerField(
+                'ID', array(
                 'primary' => true,
                 'autocomplete' => true,
                 'title' => Loc::getMessage('ORDER_DISCOUNT_DATA_ENTITY_ID_FIELD')
-            )),
-            'ORDER_ID' => new Main\Entity\IntegerField('ORDER_ID', array(
+            )
+            ),
+            'ORDER_ID' => new Main\Entity\IntegerField(
+                'ORDER_ID', array(
                 'required' => true,
                 'title' => Loc::getMessage('ORDER_DISCOUNT_DATA_ENTITY_ORDER_ID_FIELD')
-            )),
-            'ENTITY_TYPE' => new Main\Entity\EnumField('ENTITY_TYPE', array(
+            )
+            ),
+            'ENTITY_TYPE' => new Main\Entity\EnumField(
+                'ENTITY_TYPE', array(
                 'required' => true,
                 'values' => array(
                     self::ENTITY_TYPE_BASKET_ITEM,
@@ -739,20 +833,27 @@ class OrderDiscountDataTable extends Main\Entity\DataManager
                     self::ENTITY_TYPE_DISCOUNT_STORED_DATA
                 ),
                 'title' => Loc::getMessage('ORDER_DISCOUNT_DATA_ENTITY_ENTITY_TYPE_FIELD')
-            )),
-            'ENTITY_ID' => new Main\Entity\IntegerField('ENTITY_ID', array(
+            )
+            ),
+            'ENTITY_ID' => new Main\Entity\IntegerField(
+                'ENTITY_ID', array(
                 'required' => true,
                 'title' => Loc::getMessage('ORDER_DISCOUNT_DATA_ENTITY_ENTITY_ID_FIELD')
-            )),
-            'ENTITY_VALUE' => new Main\Entity\StringField('ENTITY_VALUE', array(
+            )
+            ),
+            'ENTITY_VALUE' => new Main\Entity\StringField(
+                'ENTITY_VALUE', array(
                 'validation' => array(__CLASS__, 'validateEntityValue'),
                 'title' => Loc::getMessage('ORDER_DISCOUNT_DATA_ENTITY_ENTITY_VALUE_FIELD')
-            )),
-            'ENTITY_DATA' => new Main\Entity\TextField('ENTITY_DATA', array(
+            )
+            ),
+            'ENTITY_DATA' => new Main\Entity\TextField(
+                'ENTITY_DATA', array(
                 'required' => true,
                 'serialized' => true,
                 'title' => Loc::getMessage('ORDER_DISCOUNT_DATA_ENTITY_ENTITY_DATA_FIELD')
-            ))
+            )
+            )
         );
     }
 
@@ -781,20 +882,28 @@ class OrderDiscountDataTable extends Main\Entity\DataManager
     {
         $order = (int)$order;
         $basket = (int)$basket;
-        if ($order < 0 || $basket <= 0 || empty($data) || !is_array($data))
+        if ($order < 0 || $basket <= 0 || empty($data) || !is_array($data)) {
             return false;
+        }
         $clear = ($clear === true);
         $id = 0;
         $fields = array(
             'ENTITY_DATA' => $data
         );
-        $dataIterator = self::getList(array(
-            'select' => array('ID', 'ENTITY_DATA'),
-            'filter' => array('=ORDER_ID' => $order, '=ENTITY_TYPE' => self::ENTITY_TYPE_BASKET_ITEM, '=ENTITY_ID' => $basket)
-        ));
+        $dataIterator = self::getList(
+            array(
+                'select' => array('ID', 'ENTITY_DATA'),
+                'filter' => array(
+                    '=ORDER_ID' => $order,
+                    '=ENTITY_TYPE' => self::ENTITY_TYPE_BASKET_ITEM,
+                    '=ENTITY_ID' => $basket
+                )
+            )
+        );
         if ($oldData = $dataIterator->fetch()) {
-            if (!$clear && !empty($oldData['ENTITY_DATA']))
+            if (!$clear && !empty($oldData['ENTITY_DATA'])) {
                 $fields['ENTITY_DATA'] = array_merge($oldData['ENTITY_DATA'], $fields['ENTITY_DATA']);
+            }
             $id = (int)$oldData['ID'];
         }
         unset($oldData, $dataIterator);
@@ -806,8 +915,9 @@ class OrderDiscountDataTable extends Main\Entity\DataManager
             $fields['ENTITY_ID'] = $basket;
             $fields['ENTITY_VALUE'] = $basket;
             $result = self::add($fields);
-            if ($result->isSuccess())
+            if ($result->isSuccess()) {
                 $id = (int)$result->getId();
+            }
         }
         unset($fields, $id);
         return $result->isSuccess();
@@ -822,8 +932,9 @@ class OrderDiscountDataTable extends Main\Entity\DataManager
     public static function clearByBasketItem($basket)
     {
         $basket = (int)$basket;
-        if ($basket <= 0)
+        if ($basket <= 0) {
             return false;
+        }
 
         $conn = Main\Application::getConnection();
         $helper = $conn->getSqlHelper();
@@ -845,12 +956,17 @@ class OrderDiscountDataTable extends Main\Entity\DataManager
     public static function clearByOrder($order)
     {
         $order = (int)$order;
-        if ($order <= 0)
+        if ($order <= 0) {
             return false;
+        }
 
         $conn = Main\Application::getConnection();
         $helper = $conn->getSqlHelper();
-        $conn->queryExecute('delete from ' . $helper->quote(self::getTableName()) . ' where ' . $helper->quote('ORDER_ID') . ' = ' . $order);
+        $conn->queryExecute(
+            'delete from ' . $helper->quote(self::getTableName()) . ' where ' . $helper->quote(
+                'ORDER_ID'
+            ) . ' = ' . $order
+        );
         unset($helper, $conn);
 
         return true;
@@ -864,13 +980,16 @@ class OrderDiscountDataTable extends Main\Entity\DataManager
      */
     public static function clearByDiscount($discountList)
     {
-        if (!is_array($discountList))
+        if (!is_array($discountList)) {
             $discountList = array($discountList);
-        if (empty($discountList))
+        }
+        if (empty($discountList)) {
             return false;
+        }
         Main\Type\Collection::normalizeArrayValuesByInt($discountList, true);
-        if (empty($discountList))
+        if (empty($discountList)) {
             return false;
+        }
 
         $conn = Main\Application::getConnection();
         $helper = $conn->getSqlHelper();
@@ -929,51 +1048,73 @@ class OrderRulesTable extends Main\Entity\DataManager
     public static function getMap()
     {
         return array(
-            'ID' => new Main\Entity\IntegerField('ID', array(
+            'ID' => new Main\Entity\IntegerField(
+                'ID', array(
                 'primary' => true,
                 'autocomplete' => true,
                 'title' => Loc::getMessage('ORDER_RULES_ENTITY_ID_FIELD')
-            )),
-            'MODULE_ID' => new Main\Entity\StringField('MODULE_ID', array(
+            )
+            ),
+            'MODULE_ID' => new Main\Entity\StringField(
+                'MODULE_ID', array(
                 'required' => true,
                 'validation' => array(__CLASS__, 'validateModuleId'),
                 'title' => Loc::getMessage('ORDER_RULES_ENTITY_MODULE_ID_FIELD')
-            )),
-            'ORDER_DISCOUNT_ID' => new Main\Entity\IntegerField('ORDER_DISCOUNT_ID', array(
+            )
+            ),
+            'ORDER_DISCOUNT_ID' => new Main\Entity\IntegerField(
+                'ORDER_DISCOUNT_ID', array(
                 'required' => true,
                 'title' => Loc::getMessage('ORDER_RULES_ENTITY_ORDER_DISCOUNT_ID_FIELD')
-            )),
-            'ORDER_ID' => new Main\Entity\IntegerField('ORDER_ID', array(
+            )
+            ),
+            'ORDER_ID' => new Main\Entity\IntegerField(
+                'ORDER_ID', array(
                 'required' => true,
                 'title' => Loc::getMessage('ORDER_RULES_ENTITY_ORDER_ID_FIELD')
-            )),
-            'ENTITY_TYPE' => new Main\Entity\EnumField('ENTITY_TYPE', array(
+            )
+            ),
+            'ENTITY_TYPE' => new Main\Entity\EnumField(
+                'ENTITY_TYPE', array(
                 'required' => true,
                 'values' => array(self::ENTITY_TYPE_BASKET_ITEM, self::ENTITY_TYPE_DELIVERY),
                 'title' => Loc::getMessage('ORDER_RULES_ENTITY_ENTITY_TYPE_FIELD')
-            )),
-            'ENTITY_ID' => new Main\Entity\IntegerField('ENTITY_ID', array(
+            )
+            ),
+            'ENTITY_ID' => new Main\Entity\IntegerField(
+                'ENTITY_ID', array(
                 'required' => true,
                 'title' => Loc::getMessage('ORDER_RULES_ENTITY_ENTITY_ID_FIELD')
-            )),
-            'ENTITY_VALUE' => new Main\Entity\StringField('ENTITY_VALUE', array(
+            )
+            ),
+            'ENTITY_VALUE' => new Main\Entity\StringField(
+                'ENTITY_VALUE', array(
                 'validation' => array(__CLASS__, 'validateEntityValue'),
                 'title' => Loc::getMessage('ORDER_RULES_ENTITY_ENTITY_VALUE_FIELD')
-            )),
-            'COUPON_ID' => new Main\Entity\IntegerField('COUPON_ID', array(
+            )
+            ),
+            'COUPON_ID' => new Main\Entity\IntegerField(
+                'COUPON_ID', array(
                 'required' => true,
                 'title' => Loc::getMessage('ORDER_RULES_ENTITY_COUPON_ID_FIELD')
-            )),
-            'APPLY' => new Main\Entity\BooleanField('APPLY', array(
+            )
+            ),
+            'APPLY' => new Main\Entity\BooleanField(
+                'APPLY', array(
                 'values' => array('N', 'Y'),
                 'title' => Loc::getMessage('ORDER_RULES_ENTITY_APPLY_FIELD')
-            )),
-            'ACTION_BLOCK_LIST' => new Main\Entity\TextField('ACTION_BLOCK_LIST', array(
+            )
+            ),
+            'ACTION_BLOCK_LIST' => new Main\Entity\TextField(
+                'ACTION_BLOCK_LIST', array(
                 'serialized' => true,
-            )),
-            'APPLY_BLOCK_COUNTER' => new Main\Entity\IntegerField('APPLY_BLOCK_COUNTER', array(
+            )
+            ),
+            'APPLY_BLOCK_COUNTER' => new Main\Entity\IntegerField(
+                'APPLY_BLOCK_COUNTER', array(
                 'default_value' => 0
-            )),
+            )
+            ),
             'ORDER_DISCOUNT' => new Main\Entity\ReferenceField(
                 'ORDER_DISCOUNT',
                 'Bitrix\Sale\Internals\OrderDiscount',
@@ -1022,8 +1163,9 @@ class OrderRulesTable extends Main\Entity\DataManager
     public static function clearByBasketItem($basket)
     {
         $basket = (int)$basket;
-        if ($basket <= 0)
+        if ($basket <= 0) {
             return;
+        }
 
         self::clear(array('=ENTITY_TYPE' => self::ENTITY_TYPE_BASKET_ITEM, '=ENTITY_ID' => $basket, '=ORDER_ID' => 0));
     }
@@ -1036,13 +1178,22 @@ class OrderRulesTable extends Main\Entity\DataManager
      */
     public static function clearBasketSaleDiscount($basketList)
     {
-        if (empty($basketList) || !is_array($basketList))
+        if (empty($basketList) || !is_array($basketList)) {
             return;
+        }
         Main\Type\Collection::normalizeArrayValuesByInt($basketList, true);
-        if (empty($basketList))
+        if (empty($basketList)) {
             return;
+        }
 
-        self::clear(array('=MODULE_ID' => 'sale', '=ENTITY_TYPE' => self::ENTITY_TYPE_BASKET_ITEM, '@ENTITY_ID' => $basketList, '=ORDER_ID' => 0));
+        self::clear(
+            array(
+                '=MODULE_ID' => 'sale',
+                '=ENTITY_TYPE' => self::ENTITY_TYPE_BASKET_ITEM,
+                '@ENTITY_ID' => $basketList,
+                '=ORDER_ID' => 0
+            )
+        );
     }
 
     /**
@@ -1054,8 +1205,9 @@ class OrderRulesTable extends Main\Entity\DataManager
     public static function clearByOrder($order)
     {
         $order = (int)$order;
-        if ($order <= 0)
+        if ($order <= 0) {
             return;
+        }
 
         self::clear(array('=ORDER_ID' => $order));
     }
@@ -1069,14 +1221,17 @@ class OrderRulesTable extends Main\Entity\DataManager
      */
     protected static function checkUseOrderDiscounts(&$orderDiscountList, &$ruleList)
     {
-        if (empty($orderDiscountList) || empty($ruleList))
+        if (empty($orderDiscountList) || empty($ruleList)) {
             return;
+        }
 
-        $discountIterator = self::getList(array(
-            'select' => array('ORDER_DISCOUNT_ID', new Main\Entity\ExpressionField('CNT', 'COUNT(*)')),
-            'filter' => array('!@ID' => $ruleList, '@ORDER_DISCOUNT_ID' => $orderDiscountList),
-            'group' => array('DISCOUNT_ID')
-        ));
+        $discountIterator = self::getList(
+            array(
+                'select' => array('ORDER_DISCOUNT_ID', new Main\Entity\ExpressionField('CNT', 'COUNT(*)')),
+                'filter' => array('!@ID' => $ruleList, '@ORDER_DISCOUNT_ID' => $orderDiscountList),
+                'group' => array('DISCOUNT_ID')
+            )
+        );
         while ($discount = $discountIterator->fetch()) {
             $discount['CNT'] = (int)$discount['CNT'];
             if ($discount['CNT'] > 0) {
@@ -1096,14 +1251,17 @@ class OrderRulesTable extends Main\Entity\DataManager
      */
     protected static function checkUseOrderCoupons(&$orderCouponList, &$ruleList)
     {
-        if (empty($orderCouponList) || empty($ruleList))
+        if (empty($orderCouponList) || empty($ruleList)) {
             return;
+        }
 
-        $couponIterator = self::getList(array(
-            'select' => array('COUPON_ID', new Main\Entity\ExpressionField('CNT', 'COUNT(*)')),
-            'filter' => array('!@ID' => $ruleList, '@COUPON_ID' => $orderCouponList),
-            'group' => array('COUPON_ID')
-        ));
+        $couponIterator = self::getList(
+            array(
+                'select' => array('COUPON_ID', new Main\Entity\ExpressionField('CNT', 'COUNT(*)')),
+                'filter' => array('!@ID' => $ruleList, '@COUPON_ID' => $orderCouponList),
+                'group' => array('COUPON_ID')
+            )
+        );
         while ($coupon = $couponIterator->fetch()) {
             $coupon['CNT'] = (int)$coupon['CNT'];
             if ($coupon['CNT'] > 0) {
@@ -1122,16 +1280,19 @@ class OrderRulesTable extends Main\Entity\DataManager
      */
     protected static function clear($filter)
     {
-        if (empty($filter) || !is_array($filter))
+        if (empty($filter) || !is_array($filter)) {
             return;
+        }
 
         $ruleList = array();
         $orderDiscountList = array();
         $orderCouponList = array();
-        $ruleIterator = self::getList(array(
-            'select' => array('ID', 'ORDER_DISCOUNT_ID', 'COUPON_ID'),
-            'filter' => $filter
-        ));
+        $ruleIterator = self::getList(
+            array(
+                'select' => array('ID', 'ORDER_DISCOUNT_ID', 'COUPON_ID'),
+                'filter' => $filter
+            )
+        );
         while ($rule = $ruleIterator->fetch()) {
             $rule['ID'] = (int)$rule['ID'];
             $rule['ORDER_DISCOUNT_ID'] = (int)$rule['ORDER_DISCOUNT_ID'];
@@ -1139,14 +1300,17 @@ class OrderRulesTable extends Main\Entity\DataManager
             $ruleList[] = $rule['ID'];
         }
         unset($rule, $ruleIterator);
-        if (empty($ruleList))
+        if (empty($ruleList)) {
             return;
+        }
 
         $conn = Main\Application::getConnection();
         $helper = $conn->getSqlHelper();
         $ruleRows = array_chunk($ruleList, 500);
         $mainQuery = 'delete from ' . $helper->quote(self::getTableName()) . ' where ' . $helper->quote('ID');
-        $descrQuery = 'delete from ' . $helper->quote(OrderRulesDescrTable::getTableName()) . ' where ' . $helper->quote('RULE_ID');
+        $descrQuery = 'delete from ' . $helper->quote(
+                OrderRulesDescrTable::getTableName()
+            ) . ' where ' . $helper->quote('RULE_ID');
         foreach ($ruleRows as &$row) {
             $conn->queryExecute($mainQuery . ' in (' . implode(', ', $row) . ')');
             $conn->queryExecute($descrQuery . ' in (' . implode(', ', $row) . ')');
@@ -1154,11 +1318,13 @@ class OrderRulesTable extends Main\Entity\DataManager
         unset($row, $descrQuery, $mainQuery, $ruleRows, $ruleList);
         unset($helper, $conn);
 
-        if (!empty($orderDiscountList))
+        if (!empty($orderDiscountList)) {
             OrderDiscountTable::clearList($orderDiscountList);
+        }
         unset($orderDiscountList);
-        if (!empty($orderCouponList))
+        if (!empty($orderCouponList)) {
             OrderCouponsTable::clearList($orderCouponList);
+        }
         unset($orderCouponList);
     }
 }
@@ -1198,33 +1364,45 @@ class OrderRulesDescrTable extends Main\Entity\DataManager
     public static function getMap()
     {
         return array(
-            'ID' => new Main\Entity\IntegerField('ID', array(
+            'ID' => new Main\Entity\IntegerField(
+                'ID', array(
                 'primary' => true,
                 'autocomplete' => true,
                 'title' => Loc::getMessage('ORDER_RULES_DESCR_ENTITY_ID_FIELD')
-            )),
-            'MODULE_ID' => new Main\Entity\StringField('MODULE_ID', array(
+            )
+            ),
+            'MODULE_ID' => new Main\Entity\StringField(
+                'MODULE_ID', array(
                 'required' => true,
                 'validation' => array(__CLASS__, 'validateModuleId'),
                 'title' => Loc::getMessage('ORDER_RULES_DESCR_ENTITY_MODULE_ID_FIELD')
-            )),
-            'ORDER_DISCOUNT_ID' => new Main\Entity\IntegerField('ORDER_DISCOUNT_ID', array(
+            )
+            ),
+            'ORDER_DISCOUNT_ID' => new Main\Entity\IntegerField(
+                'ORDER_DISCOUNT_ID', array(
                 'required' => true,
                 'title' => Loc::getMessage('ORDER_RULES_DESCR_ENTITY_ORDER_DISCOUNT_ID_FIELD')
-            )),
-            'ORDER_ID' => new Main\Entity\IntegerField('ORDER_ID', array(
+            )
+            ),
+            'ORDER_ID' => new Main\Entity\IntegerField(
+                'ORDER_ID', array(
                 'required' => true,
                 'title' => Loc::getMessage('ORDER_RULES_DESCR_ENTITY_ORDER_ID_FIELD')
-            )),
-            'RULE_ID' => new Main\Entity\IntegerField('RULE_ID', array(
+            )
+            ),
+            'RULE_ID' => new Main\Entity\IntegerField(
+                'RULE_ID', array(
                 'required' => true,
                 'title' => Loc::getMessage('ORDER_RULES_DESCR_ENTITY_RULE_ID_FIELD')
-            )),
-            'DESCR' => new Main\Entity\TextField('DESCR', array(
+            )
+            ),
+            'DESCR' => new Main\Entity\TextField(
+                'DESCR', array(
                 'required' => true,
                 'serialized' => true,
                 'title' => Loc::getMessage('ORDER_RULES_DESCR_ENTITY_DESCR_FIELD')
-            ))
+            )
+            )
         );
     }
 

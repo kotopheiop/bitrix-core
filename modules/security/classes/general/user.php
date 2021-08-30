@@ -53,8 +53,9 @@ class CSecurityUser
         $userId = intval($arFields['USER_ID']);
         $result = null;
 
-        if (!$userId)
+        if (!$userId) {
             return true;
+        }
 
         $otp = Otp::getByUser($userId);
         $canAdminOtp =
@@ -84,7 +85,7 @@ class CSecurityUser
                 return false;
             }
 
-            $secret = substr(trim($arFields['SECRET']), 0, 64);
+            $secret = mb_substr(trim($arFields['SECRET']), 0, 64);
             if (!$secret) {
                 if ($canAdminOtp) {
                     $otp->delete();
@@ -166,27 +167,51 @@ class CSecurityUser
         $otpRecheckAgent = 'Bitrix\Security\Mfa\OtpEvents::onRecheckDeactivate();';
         if ($pActive) {
             if (!CSecurityUser::isActive()) {
-                RegisterModuleDependences("main", "OnBeforeUserLogin", "security", "CSecurityUser", "OnBeforeUserLogin", "100");
-                RegisterModuleDependences("main", "OnAfterUserLogout", "security", "CSecurityUser", "OnAfterUserLogout", "100");
+                RegisterModuleDependences(
+                    "main",
+                    "OnBeforeUserLogin",
+                    "security",
+                    "CSecurityUser",
+                    "OnBeforeUserLogin",
+                    "100"
+                );
+                RegisterModuleDependences(
+                    "main",
+                    "OnAfterUserLogout",
+                    "security",
+                    "CSecurityUser",
+                    "OnAfterUserLogout",
+                    "100"
+                );
                 CAgent::RemoveAgent($otpRecheckAgent, "security");
-                CAgent::Add(array(
-                    "NAME" => $otpRecheckAgent,
-                    "MODULE_ID" => "security",
-                    "ACTIVE" => "Y",
-                    "AGENT_INTERVAL" => 3600,
-                    "IS_PERIOD" => "N"
-                ));
-                $f = fopen($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/security/options_user_settings.php", "w");
-                fwrite($f, "<?include(\$_SERVER[\"DOCUMENT_ROOT\"].\"/bitrix/modules/security/options_user_settings_1.php\");?>");
-                fclose($f);
+                CAgent::Add(
+                    array(
+                        "NAME" => $otpRecheckAgent,
+                        "MODULE_ID" => "security",
+                        "ACTIVE" => "Y",
+                        "AGENT_INTERVAL" => 3600,
+                        "IS_PERIOD" => "N"
+                    )
+                );
                 COption::SetOptionString('security', 'otp_enabled', 'Y');
             }
         } else {
             if (CSecurityUser::isActive()) {
-                UnRegisterModuleDependences("main", "OnBeforeUserLogin", "security", "CSecurityUser", "OnBeforeUserLogin");
-                UnRegisterModuleDependences("main", "OnAfterUserLogout", "security", "CSecurityUser", "OnAfterUserLogout");
+                UnRegisterModuleDependences(
+                    "main",
+                    "OnBeforeUserLogin",
+                    "security",
+                    "CSecurityUser",
+                    "OnBeforeUserLogin"
+                );
+                UnRegisterModuleDependences(
+                    "main",
+                    "OnAfterUserLogout",
+                    "security",
+                    "CSecurityUser",
+                    "OnAfterUserLogout"
+                );
                 CAgent::RemoveAgent($otpRecheckAgent, "security");
-                unlink($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/security/options_user_settings.php");
                 COption::SetOptionString('security', 'otp_enabled', 'N');
             }
         }
@@ -211,8 +236,9 @@ class CSecurityUser
 
     public static function IsUserOtpActive($userId)
     {
-        if (!intval($userId))
+        if (!intval($userId)) {
             return false;
+        }
 
         $otp = static::getCachedOtp($userId);
         return ($otp->isActivated() ? true : false);
@@ -220,11 +246,13 @@ class CSecurityUser
 
     public static function IsUserSkipMandatoryRights($userId)
     {
-        if (!intval($userId))
+        if (!intval($userId)) {
             return false;
+        }
 
-        if (!static::IsOtpMandatory())
+        if (!static::IsOtpMandatory()) {
             return true;
+        }
 
         $otp = static::getCachedOtp($userId);
         return $otp->canSkipMandatoryByRights();
@@ -232,8 +260,9 @@ class CSecurityUser
 
     public static function IsUserOtpExist($userId)
     {
-        if (!intval($userId))
+        if (!intval($userId)) {
             return false;
+        }
 
         $otp = static::getCachedOtp($userId);
         return ($otp->isInitialized() ? true : false);
@@ -244,8 +273,9 @@ class CSecurityUser
         /** @global CUser $USER */
         global $USER;
 
-        if (!intval($userId))
+        if (!intval($userId)) {
             return false;
+        }
 
         $isOtpMandatory = self::IsOtpMandatory();
 
@@ -260,7 +290,6 @@ class CSecurityUser
             } catch (OtpException $e) {
                 return false;
             }
-
         }
 
         return false;
@@ -271,8 +300,9 @@ class CSecurityUser
         /** @global CUser $USER */
         global $USER;
 
-        if (!intval($userId))
+        if (!intval($userId)) {
             return false;
+        }
 
         $isOtpMandatory = self::IsOtpMandatory();
 
@@ -287,7 +317,6 @@ class CSecurityUser
             } catch (OtpException $e) {
                 return false;
             }
-
         }
 
         return false;
@@ -298,8 +327,9 @@ class CSecurityUser
         /** @global CUser $USER */
         global $USER;
 
-        if (!intval($userId))
+        if (!intval($userId)) {
             return false;
+        }
 
         if (
             $userId == $USER->GetID()
@@ -322,8 +352,9 @@ class CSecurityUser
         /** @global CUser $USER */
         global $USER;
 
-        if (!intval($userId))
+        if (!intval($userId)) {
             return false;
+        }
 
         if (
             $userId == $USER->GetID()
@@ -341,8 +372,9 @@ class CSecurityUser
         /** @global CUser $USER */
         global $USER;
 
-        if (!intval($userId))
+        if (!intval($userId)) {
             return false;
+        }
 
         $otp = static::getCachedOtp($userId);
         if ($otp->isActivated()) {

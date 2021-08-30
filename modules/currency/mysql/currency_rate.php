@@ -12,18 +12,23 @@ class CCurrencyRates extends CAllCurrencyRates
 
         $baseCurrency = Currency\CurrencyManager::getBaseCurrency();
 
-        $strSql = $DB->TopSql("
+        $strSql = $DB->TopSql(
+            "
 			SELECT C.AMOUNT, C.AMOUNT_CNT, CR.RATE, CR.RATE_CNT
 			FROM
 				b_catalog_currency C
 				LEFT JOIN b_catalog_currency_rate CR ON (
-					C.CURRENCY = CR.CURRENCY AND CR.DATE_RATE < '" . $DB->ForSql($valDate) . "' AND CR.BASE_CURRENCY = '" . $DB->ForSql($baseCurrency) . "'
+					C.CURRENCY = CR.CURRENCY AND CR.DATE_RATE < '" . $DB->ForSql(
+                $valDate
+            ) . "' AND CR.BASE_CURRENCY = '" . $DB->ForSql($baseCurrency) . "'
 				)
 			WHERE
 				C.CURRENCY = '" . $DB->ForSql($cur) . "'
 			ORDER BY
 				DATE_RATE DESC
-		", 1);
+		",
+            1
+        );
         $db_res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
         return $db_res->Fetch();
     }

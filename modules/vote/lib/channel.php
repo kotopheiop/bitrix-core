@@ -224,8 +224,9 @@ class Channel extends BaseObject implements \ArrayAccess
      */
     public function __construct($id)
     {
-        if (!($id > 0))
+        if (!($id > 0)) {
             throw new \Bitrix\Main\ArgumentNullException("id");
+        }
         parent::__construct($id);
     }
 
@@ -234,10 +235,13 @@ class Channel extends BaseObject implements \ArrayAccess
      */
     public function init()
     {
-        if (($data = self::getById($this->id)->fetch()) && !empty($data))
+        if (($data = self::getById($this->id)->fetch()) && !empty($data)) {
             $this->data = $data;
-        else
-            throw new \Bitrix\Main\ObjectNotFoundException(GetMessage("V_CHANNEL_IS_NOT_FOUND", "channel is not found"));
+        } else {
+            throw new \Bitrix\Main\ObjectNotFoundException(
+                GetMessage("V_CHANNEL_IS_NOT_FOUND", "channel is not found")
+            );
+        }
     }
 
     /**
@@ -251,14 +255,20 @@ class Channel extends BaseObject implements \ArrayAccess
         $md5 = md5(serialize($parameters));
         if (!array_key_exists($md5, self::$channels)) {
             $data = array();
-            if (defined("VOTE_CACHE_TIME") && $CACHE_MANAGER->read(VOTE_CACHE_TIME, "b_vote_channel_" . $md5, "b_vote_channel"))
+            if (defined("VOTE_CACHE_TIME") && $CACHE_MANAGER->read(
+                    VOTE_CACHE_TIME,
+                    "b_vote_channel_" . $md5,
+                    "b_vote_channel"
+                )) {
                 $data = $CACHE_MANAGER->get("b_vote_channel_" . $md5);
-            else {
+            } else {
                 $db = ChannelTable::getList($parameters);
-                while ($r = $db->fetch())
+                while ($r = $db->fetch()) {
                     $data[$r["ID"]] = $r;
-                if (defined("VOTE_CACHE_TIME"))
+                }
+                if (defined("VOTE_CACHE_TIME")) {
                     $CACHE_MANAGER->set("b_vote_channel_" . $md5, $data);
+                }
             }
             self::$channels[$md5] = $data;
         }
@@ -274,10 +284,12 @@ class Channel extends BaseObject implements \ArrayAccess
      */
     public static function getById($id)
     {
-        return self::getList(array(
-            'select' => array("*"),
-            'filter' => array("ID" => $id),
-        ));
+        return self::getList(
+            array(
+                'select' => array("*"),
+                'filter' => array("ID" => $id),
+            )
+        );
     }
 
     /**
@@ -288,22 +300,25 @@ class Channel extends BaseObject implements \ArrayAccess
     {
         if (!parent::canEdit($userId)) {
             $groups = parent::loadUserGroups($userId);
-            $dbRes = \Bitrix\Vote\Channel::getList(array(
-                'select' => array("*"),
-                'filter' => array(
-                    "ACTIVE" => "Y",
-                    "HIDDEN" => "N",
-                    ">=PERMISSION.PERMISSION" => 1,
-                    "PERMISSION.GROUP_ID" => $groups
-                ),
-                'order' => array(
-                    'TITLE' => 'ASC'
-                ),
-                'group' => array("ID")
-            ));
+            $dbRes = \Bitrix\Vote\Channel::getList(
+                array(
+                    'select' => array("*"),
+                    'filter' => array(
+                        "ACTIVE" => "Y",
+                        "HIDDEN" => "N",
+                        ">=PERMISSION.PERMISSION" => 1,
+                        "PERMISSION.GROUP_ID" => $groups
+                    ),
+                    'order' => array(
+                        'TITLE' => 'ASC'
+                    ),
+                    'group' => array("ID")
+                )
+            );
             while ($res = $dbRes->fetch()) {
-                if ($res["ID"] == $this->id)
+                if ($res["ID"] == $this->id) {
                     return true;
+                }
             }
             return false;
         }
@@ -327,22 +342,25 @@ class Channel extends BaseObject implements \ArrayAccess
     {
         if (!parent::canEdit($userId)) {
             $groups = parent::loadUserGroups($userId);
-            $dbRes = \Bitrix\Vote\Channel::getList(array(
-                'select' => array("*"),
-                'filter' => array(
-                    "ACTIVE" => "Y",
-                    "HIDDEN" => "N",
-                    ">=PERMISSION.PERMISSION" => 4,
-                    "PERMISSION.GROUP_ID" => $groups
-                ),
-                'order' => array(
-                    'TITLE' => 'ASC'
-                ),
-                'group' => array("ID")
-            ));
+            $dbRes = \Bitrix\Vote\Channel::getList(
+                array(
+                    'select' => array("*"),
+                    'filter' => array(
+                        "ACTIVE" => "Y",
+                        "HIDDEN" => "N",
+                        ">=PERMISSION.PERMISSION" => 4,
+                        "PERMISSION.GROUP_ID" => $groups
+                    ),
+                    'order' => array(
+                        'TITLE' => 'ASC'
+                    ),
+                    'group' => array("ID")
+                )
+            );
             while ($res = $dbRes->fetch()) {
-                if ($res["ID"] == $this->id)
+                if ($res["ID"] == $this->id) {
                     return true;
+                }
             }
             return false;
         }

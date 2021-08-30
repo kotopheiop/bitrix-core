@@ -1,4 +1,5 @@
-<?
+<?php
+
 IncludeModuleLangFile(__FILE__);
 
 class CAllSocNetUserRelations
@@ -6,50 +7,69 @@ class CAllSocNetUserRelations
     /***************************************/
     /********  DATA MODIFICATION  **********/
     /***************************************/
-    function CheckFields($ACTION, &$arFields, $ID = 0)
+    public static function CheckFields($ACTION, &$arFields, $ID = 0)
     {
         global $DB, $arSocNetAllowedRelations;
 
-        if ($ACTION != "ADD" && IntVal($ID) <= 0) {
+        if ($ACTION != "ADD" && intval($ID) <= 0) {
             $GLOBALS["APPLICATION"]->ThrowException("System error 870164", "ERROR");
             return false;
         }
 
-        if ((is_set($arFields, "FIRST_USER_ID") || $ACTION == "ADD") && IntVal($arFields["FIRST_USER_ID"]) <= 0) {
+        if ((is_set($arFields, "FIRST_USER_ID") || $ACTION == "ADD") && intval($arFields["FIRST_USER_ID"]) <= 0) {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_UR_EMPTY_FIRST_USER_ID"), "EMPTY_FIRST_USER_ID");
             return false;
         } elseif (is_set($arFields, "FIRST_USER_ID")) {
             $dbResult = CUser::GetByID($arFields["FIRST_USER_ID"]);
             if (!$dbResult->Fetch()) {
-                $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_UR_ERROR_NO_FIRST_USER_ID"), "ERROR_NO_FIRST_USER_ID");
+                $GLOBALS["APPLICATION"]->ThrowException(
+                    GetMessage("SONET_UR_ERROR_NO_FIRST_USER_ID"),
+                    "ERROR_NO_FIRST_USER_ID"
+                );
                 return false;
             }
         }
 
-        if ((is_set($arFields, "SECOND_USER_ID") || $ACTION == "ADD") && IntVal($arFields["SECOND_USER_ID"]) <= 0) {
-            $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_UR_EMPTY_SECOND_USER_ID"), "EMPTY_SECOND_USER_ID");
+        if ((is_set($arFields, "SECOND_USER_ID") || $ACTION == "ADD") && intval($arFields["SECOND_USER_ID"]) <= 0) {
+            $GLOBALS["APPLICATION"]->ThrowException(
+                GetMessage("SONET_UR_EMPTY_SECOND_USER_ID"),
+                "EMPTY_SECOND_USER_ID"
+            );
             return false;
         } elseif (is_set($arFields, "SECOND_USER_ID")) {
             $dbResult = CUser::GetByID($arFields["SECOND_USER_ID"]);
             if (!$dbResult->Fetch()) {
-                $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_UR_ERROR_NO_SECOND_USER_ID"), "ERROR_NO_SECOND_USER_ID");
+                $GLOBALS["APPLICATION"]->ThrowException(
+                    GetMessage("SONET_UR_ERROR_NO_SECOND_USER_ID"),
+                    "ERROR_NO_SECOND_USER_ID"
+                );
                 return false;
             }
         }
 
-        if ((is_set($arFields, "RELATION") || $ACTION == "ADD") && strlen($arFields["RELATION"]) <= 0) {
+        if ((is_set($arFields, "RELATION") || $ACTION == "ADD") && $arFields["RELATION"] == '') {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_UR_EMPTY_RELATION"), "EMPTY_RELATION");
             return false;
         } elseif (is_set($arFields, "RELATION") && !in_array($arFields["RELATION"], $arSocNetAllowedRelations)) {
-            $GLOBALS["APPLICATION"]->ThrowException(str_replace("#ID#", $arFields["RELATION"], GetMessage("SONET_UR_ERROR_NO_RELATION")), "ERROR_NO_RELATION");
+            $GLOBALS["APPLICATION"]->ThrowException(
+                str_replace("#ID#", $arFields["RELATION"], GetMessage("SONET_UR_ERROR_NO_RELATION")),
+                "ERROR_NO_RELATION"
+            );
             return false;
         } elseif (is_set($arFields, "RELATION") && $arFields["RELATION"] == SONET_RELATIONS_TYPE_FRIENDS2) {
-            $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_UR_ERROR_RELATION_FRIENDS2"), "ERROR_RELATION_FRIENDS2");
+            $GLOBALS["APPLICATION"]->ThrowException(
+                GetMessage("SONET_UR_ERROR_RELATION_FRIENDS2"),
+                "ERROR_RELATION_FRIENDS2"
+            );
             return false;
         }
 
-        if ((is_set($arFields, "INITIATED_BY") || $ACTION == "ADD") && !in_array($arFields["INITIATED_BY"], array("F", "S")))
+        if ((is_set($arFields, "INITIATED_BY") || $ACTION == "ADD") && !in_array(
+                $arFields["INITIATED_BY"],
+                array("F", "S")
+            )) {
             $arFields["INITIATED_BY"] = "F";
+        }
 
         if (is_set($arFields, "DATE_CREATE") && (!$DB->IsDate($arFields["DATE_CREATE"], false, LANG, "FULL"))) {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_UR_EMPTY_DATE_CREATE"), "EMPTY_DATE_CREATE");
@@ -61,18 +81,19 @@ class CAllSocNetUserRelations
             return false;
         }
 
-        return True;
+        return true;
     }
 
     public static function Delete($ID)
     {
         global $DB;
 
-        if (!CSocNetGroup::__ValidateID($ID))
+        if (!CSocNetGroup::__ValidateID($ID)) {
             return false;
+        }
 
-        $ID = IntVal($ID);
-        $bSuccess = True;
+        $ID = intval($ID);
+        $bSuccess = true;
 
         $rsUser2UserOld = $DB->Query("SELECT * FROM b_sonet_user_relations WHERE ID = " . $ID . "");
         if ($arUser2UserOld = $rsUser2UserOld->Fetch()) {
@@ -81,13 +102,16 @@ class CAllSocNetUserRelations
         }
 
         $db_events = GetModuleEvents("socialnetwork", "OnBeforeSocNetUserRelationsDelete");
-        while ($arEvent = $db_events->Fetch())
-            if (ExecuteModuleEventEx($arEvent, array($ID)) === false)
+        while ($arEvent = $db_events->Fetch()) {
+            if (ExecuteModuleEventEx($arEvent, array($ID)) === false) {
                 return false;
+            }
+        }
 
         $events = GetModuleEvents("socialnetwork", "OnSocNetUserRelationsDelete");
-        while ($arEvent = $events->Fetch())
+        while ($arEvent = $events->Fetch()) {
             ExecuteModuleEventEx($arEvent, array($ID));
+        }
 
         if ($bSuccess) {
             $arRelation = CSocNetUserRelations::GetByID($ID);
@@ -95,8 +119,9 @@ class CAllSocNetUserRelations
         }
 
         if ($bSuccess) {
-            if ($arRelation && $arRelation["RELATION"] == SONET_RELATIONS_FRIEND)
-                $GLOBALS["DB"]->Query("DELETE FROM b_sonet_event_user_view WHERE
+            if ($arRelation && $arRelation["RELATION"] == SONET_RELATIONS_FRIEND) {
+                $GLOBALS["DB"]->Query(
+                    "DELETE FROM b_sonet_event_user_view WHERE
 					ENTITY_TYPE = '" . SONET_ENTITY_USER . "'
 					AND (
 						(USER_ID = " . $arRelation["FIRST_USER_ID"] . " AND ENTITY_ID = " . $arRelation["SECOND_USER_ID"] . ")
@@ -105,7 +130,10 @@ class CAllSocNetUserRelations
 						OR (ENTITY_ID = " . $arRelation["SECOND_USER_ID"] . " AND USER_IM_ID = " . $arRelation["FIRST_USER_ID"] . ")
 						OR (USER_ID = " . $arRelation["FIRST_USER_ID"] . " AND USER_IM_ID = " . $arRelation["SECOND_USER_ID"] . ")
 						OR (USER_ID = " . $arRelation["SECOND_USER_ID"] . " AND USER_IM_ID = " . $arRelation["FIRST_USER_ID"] . ")
-						)", true);
+						)",
+                    true
+                );
+            }
         }
 
         return $bSuccess;
@@ -115,29 +143,40 @@ class CAllSocNetUserRelations
     {
         global $DB;
 
-        if (!CSocNetGroup::__ValidateID($userID))
+        if (!CSocNetGroup::__ValidateID($userID)) {
             return false;
+        }
 
-        $userID = IntVal($userID);
-        $bSuccess = True;
+        $userID = intval($userID);
+        $bSuccess = true;
 
-        $rsUser2UserOld = $DB->Query("SELECT * FROM b_sonet_user_relations WHERE FIRST_USER_ID = " . $userID . " OR SECOND_USER_ID = " . $userID . "");
+        $rsUser2UserOld = $DB->Query(
+            "SELECT * FROM b_sonet_user_relations WHERE FIRST_USER_ID = " . $userID . " OR SECOND_USER_ID = " . $userID . ""
+        );
         while ($arUser2UserOld = $rsUser2UserOld->Fetch()) {
             CSocNetSearch::OnUserRelationsChange($arUser2UserOld["FIRST_USER_ID"]);
             CSocNetSearch::OnUserRelationsChange($arUser2UserOld["SECOND_USER_ID"]);
         }
 
-        if ($bSuccess)
-            $bSuccess = $DB->Query("DELETE FROM b_sonet_user_relations WHERE FIRST_USER_ID = " . $userID . " OR SECOND_USER_ID = " . $userID . "", true);
+        if ($bSuccess) {
+            $bSuccess = $DB->Query(
+                "DELETE FROM b_sonet_user_relations WHERE FIRST_USER_ID = " . $userID . " OR SECOND_USER_ID = " . $userID . "",
+                true
+            );
+        }
 
-        if ($bSuccess)
-            $DB->Query("DELETE FROM b_sonet_event_user_view WHERE
+        if ($bSuccess) {
+            $DB->Query(
+                "DELETE FROM b_sonet_event_user_view WHERE
 				ENTITY_TYPE = '" . SONET_ENTITY_USER . "'
 				AND (
 					USER_ID = " . $userID . "
 					OR ENTITY_ID = " . $userID . "
 					OR USER_IM_ID = " . $userID . "
-				)", true);
+				)",
+                true
+            );
+        }
 
         CSocNetUserRelations::__SpeedFileDelete($userID);
 
@@ -151,29 +190,32 @@ class CAllSocNetUserRelations
     {
         global $DB;
 
-        if (!CSocNetGroup::__ValidateID($ID))
+        if (!CSocNetGroup::__ValidateID($ID)) {
             return false;
+        }
 
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
         $dbResult = CSocNetUserRelations::GetList(Array(), Array("ID" => $ID));
         if ($arResult = $dbResult->GetNext()) {
             return $arResult;
         }
 
-        return False;
+        return false;
     }
 
-    function GetByUserID($user1ID, $user2ID)
+    public static function GetByUserID($user1ID, $user2ID)
     {
         global $DB;
 
-        $user1ID = IntVal($user1ID);
-        if ($user1ID <= 0)
+        $user1ID = intval($user1ID);
+        if ($user1ID <= 0) {
             return false;
-        $user2ID = IntVal($user2ID);
-        if ($user2ID <= 0)
+        }
+        $user2ID = intval($user2ID);
+        if ($user2ID <= 0) {
             return false;
+        }
 
         $strSql =
             "SELECT ID, FIRST_USER_ID, SECOND_USER_ID, RELATION, DATE_CREATE, DATE_UPDATE, MESSAGE, INITIATED_BY " .
@@ -182,31 +224,35 @@ class CAllSocNetUserRelations
             "	OR FIRST_USER_ID = " . $user2ID . " AND SECOND_USER_ID = " . $user1ID . " ";
 
         $dbResult = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-        if ($arResult = $dbResult->Fetch())
+        if ($arResult = $dbResult->Fetch()) {
             return $arResult;
+        }
 
-        return False;
+        return false;
     }
 
     public static function GetRelatedUsers($userID, $relation, $arNavStartParams = false, $bActiveOnly = "N")
     {
         global $DB, $arSocNetAllowedRelations;
 
-        $userID = IntVal($userID);
-        if ($userID <= 0)
+        $userID = intval($userID);
+        if ($userID <= 0) {
             return false;
+        }
 
-        if (!in_array($relation, $arSocNetAllowedRelations))
+        if (!in_array($relation, $arSocNetAllowedRelations)) {
             return false;
+        }
 
-        if (is_array($arNavStartParams) && IntVal($arNavStartParams["nTopCount"]) > 0)
+        if (is_array($arNavStartParams) && intval($arNavStartParams["nTopCount"]) > 0) {
             $arOrderBy = array(
                 "RAND" => "ASC"
             );
-        else
+        } else {
             $arOrderBy = array(
                 "DATE_UPDATE" => "DESC"
             );
+        }
 
         $dbResult = CSocNetUserRelations::GetList(
             $arOrderBy,
@@ -217,9 +263,29 @@ class CAllSocNetUserRelations
             ),
             false,
             $arNavStartParams,
-            array("ID", "FIRST_USER_ID", "SECOND_USER_ID", "DATE_CREATE", "DATE_UPDATE", "INITIATED_BY",
-                "FIRST_USER_NAME", "FIRST_USER_LAST_NAME", "FIRST_USER_PERSONAL_PHOTO", "FIRST_USER_PERSONAL_GENDER", "FIRST_USER_SECOND_NAME", "FIRST_USER_LOGIN", "FIRST_USER_EMAIL", "FIRST_USER_IS_ONLINE",
-                "SECOND_USER_NAME", "SECOND_USER_LAST_NAME", "SECOND_USER_PERSONAL_PHOTO", "SECOND_USER_PERSONAL_GENDER", "SECOND_USER_SECOND_NAME", "SECOND_USER_LOGIN", "SECOND_USER_EMAIL", "SECOND_USER_IS_ONLINE"
+            array(
+                "ID",
+                "FIRST_USER_ID",
+                "SECOND_USER_ID",
+                "DATE_CREATE",
+                "DATE_UPDATE",
+                "INITIATED_BY",
+                "FIRST_USER_NAME",
+                "FIRST_USER_LAST_NAME",
+                "FIRST_USER_PERSONAL_PHOTO",
+                "FIRST_USER_PERSONAL_GENDER",
+                "FIRST_USER_SECOND_NAME",
+                "FIRST_USER_LOGIN",
+                "FIRST_USER_EMAIL",
+                "FIRST_USER_IS_ONLINE",
+                "SECOND_USER_NAME",
+                "SECOND_USER_LAST_NAME",
+                "SECOND_USER_PERSONAL_PHOTO",
+                "SECOND_USER_PERSONAL_GENDER",
+                "SECOND_USER_SECOND_NAME",
+                "SECOND_USER_LOGIN",
+                "SECOND_USER_EMAIL",
+                "SECOND_USER_IS_ONLINE"
             )
         );
 
@@ -236,12 +302,12 @@ class CAllSocNetUserRelations
         static $arSocNetURNCache = array();
         static $arSocNetUserRelationsCache1 = array();
 
-        $firstUserID = IntVal($firstUserID);
+        $firstUserID = intval($firstUserID);
         if ($firstUserID <= 0) {
             return false;
         }
 
-        $secondUserID = IntVal($secondUserID);
+        $secondUserID = intval($secondUserID);
         if ($secondUserID <= 0) {
             return false;
         }
@@ -310,12 +376,12 @@ class CAllSocNetUserRelations
         global $DB;
         static $arSocNetUserRelationsCache = array();
 
-        $firstUserID = IntVal($firstUserID);
+        $firstUserID = intval($firstUserID);
         if ($firstUserID <= 0) {
             return false;
         }
 
-        $secondUserID = IntVal($secondUserID);
+        $secondUserID = intval($secondUserID);
         if ($secondUserID <= 0) {
             return false;
         }
@@ -345,17 +411,17 @@ class CAllSocNetUserRelations
         return $arSocNetUserRelationsCache[$firstUserID . "_" . $secondUserID];
     }
 
-    function IsFriends2($firstUserID, $secondUserID)
+    public static function IsFriends2($firstUserID, $secondUserID)
     {
         global $DB;
         static $arSocNetUser2RelationsCache = array();
 
-        $firstUserID = IntVal($firstUserID);
+        $firstUserID = intval($firstUserID);
         if ($firstUserID <= 0) {
             return false;
         }
 
-        $secondUserID = IntVal($secondUserID);
+        $secondUserID = intval($secondUserID);
         if ($secondUserID <= 0) {
             return false;
         }
@@ -408,22 +474,42 @@ class CAllSocNetUserRelations
     /***************************************/
     /**********  SEND EVENTS  **************/
     /***************************************/
-    function SendEvent($relationID, $mailType = "INVITE_FRIEND")
+    public static function SendEvent($relationID, $mailType = "INVITE_FRIEND")
     {
-        $relationID = IntVal($relationID);
-        if ($relationID <= 0)
+        $relationID = intval($relationID);
+        if ($relationID <= 0) {
             return false;
+        }
 
         $dbRelation = CSocNetUserRelations::GetList(
             array(),
             array("ID" => $relationID),
             false,
             false,
-            array("ID", "FIRST_USER_ID", "SECOND_USER_ID", "RELATION", "DATE_CREATE", "MESSAGE", "INITIATED_BY", "FIRST_USER_NAME", "FIRST_USER_LAST_NAME", "FIRST_USER_LOGIN", "FIRST_USER_EMAIL", "FIRST_USER_LID", "SECOND_USER_NAME", "SECOND_USER_LAST_NAME", "SECOND_USER_LOGIN", "SECOND_USER_EMAIL", "SECOND_USER_LID")
+            array(
+                "ID",
+                "FIRST_USER_ID",
+                "SECOND_USER_ID",
+                "RELATION",
+                "DATE_CREATE",
+                "MESSAGE",
+                "INITIATED_BY",
+                "FIRST_USER_NAME",
+                "FIRST_USER_LAST_NAME",
+                "FIRST_USER_LOGIN",
+                "FIRST_USER_EMAIL",
+                "FIRST_USER_LID",
+                "SECOND_USER_NAME",
+                "SECOND_USER_LAST_NAME",
+                "SECOND_USER_LOGIN",
+                "SECOND_USER_EMAIL",
+                "SECOND_USER_LID"
+            )
         );
         $arRelation = $dbRelation->Fetch();
-        if (!$arRelation)
+        if (!$arRelation) {
             return false;
+        }
 
         $fromUserPref = "FIRST";
         $toUserPref = "SECOND";
@@ -433,21 +519,34 @@ class CAllSocNetUserRelations
         }
 
         $mailTemplate = "SONET_INVITE_FRIEND";
-        if ($mailType == "AGREE_FRIEND")
+        if ($mailType == "AGREE_FRIEND") {
             $mailTemplate = "SONET_AGREE_FRIEND";
-        elseif ($mailType == "BAN_FRIEND")
+        } elseif ($mailType == "BAN_FRIEND") {
             $mailTemplate = "SONET_BAN_FRIEND";
+        }
 
         $defSiteID = $arRelation[$toUserPref . "_USER_LID"];
         $siteID = CSocNetUserEvents::GetEventSite($arRelation[$toUserPref . "_USER_ID"], $mailTemplate, $defSiteID);
-        if ($siteID == false || StrLen($siteID) <= 0)
+        if ($siteID == false || $siteID == '') {
             return false;
+        }
 
         if (IsModuleInstalled("im")) {
-            $url = str_replace("#USER_ID#", $arRelation[$toUserPref . "_USER_ID"], COption::GetOptionString("socialnetwork", "user_request_page",
-                (IsModuleInstalled("intranet")) ? "/company/personal/user/#USER_ID#/requests/" : "/club/user/#USER_ID#/requests/", $siteID));
-        } else
+            $url = str_replace(
+                "#USER_ID#",
+                $arRelation[$toUserPref . "_USER_ID"],
+                COption::GetOptionString(
+                    "socialnetwork",
+                    "user_request_page",
+                    (IsModuleInstalled(
+                        "intranet"
+                    )) ? "/company/personal/user/#USER_ID#/requests/" : "/club/user/#USER_ID#/requests/",
+                    $siteID
+                )
+            );
+        } else {
             $url = COption::GetOptionString("socialnetwork", "messages_path", "/company/personal/messages/", $siteID);
+        }
 
         $arFields = array(
             "RELATION_ID" => $relationID,
@@ -472,19 +571,25 @@ class CAllSocNetUserRelations
     /***************************************/
     /************  ACTIONS  ****************/
     /***************************************/
-    function SendRequestToBeFriend($senderUserID, $targetUserID, $message)
+    public static function SendRequestToBeFriend($senderUserID, $targetUserID, $message)
     {
         global $APPLICATION;
 
-        $senderUserID = IntVal($senderUserID);
+        $senderUserID = intval($senderUserID);
         if ($senderUserID <= 0) {
-            $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_UR_EMPTY_SENDER_USER_ID"), "ERROR_SENDER_USER_ID");
+            $GLOBALS["APPLICATION"]->ThrowException(
+                GetMessage("SONET_UR_EMPTY_SENDER_USER_ID"),
+                "ERROR_SENDER_USER_ID"
+            );
             return false;
         }
 
-        $targetUserID = IntVal($targetUserID);
+        $targetUserID = intval($targetUserID);
         if ($targetUserID <= 0) {
-            $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_UR_EMPTY_TARGET_USER_ID"), "ERROR_TARGET_USER_ID");
+            $GLOBALS["APPLICATION"]->ThrowException(
+                GetMessage("SONET_UR_EMPTY_TARGET_USER_ID"),
+                "ERROR_TARGET_USER_ID"
+            );
             return false;
         }
 
@@ -510,17 +615,21 @@ class CAllSocNetUserRelations
 
         $ID = false;
         if ($arResult = $dbResult->GetNext()) {
-            if ($arResult["RELATION"] == SONET_RELATIONS_BAN && IsModuleInstalled("im"))
+            if ($arResult["RELATION"] == SONET_RELATIONS_BAN && IsModuleInstalled("im")) {
                 $ID = CSocNetUserRelations::Update($arResult["ID"], $arFields);
-        } else
+            }
+        } else {
             $ID = CSocNetUserRelations::Add($arFields);
+        }
 
         if (!$ID) {
             $errorMessage = "";
-            if ($e = $APPLICATION->GetException())
+            if ($e = $APPLICATION->GetException()) {
                 $errorMessage = $e->GetString();
-            if (StrLen($errorMessage) <= 0)
+            }
+            if ($errorMessage == '') {
                 $errorMessage = GetMessage("SONET_UR_ERROR_CREATE_RELATION");
+            }
 
             $GLOBALS["APPLICATION"]->ThrowException($errorMessage, "ERROR_CREATE_RELATION");
             return false;
@@ -550,24 +659,36 @@ class CAllSocNetUserRelations
             $dbSite = CSite::GetByID(SITE_ID);
             $arSite = $dbSite->Fetch();
             $serverName = htmlspecialcharsEx($arSite["SERVER_NAME"]);
-            if (strlen($serverName) <= 0) {
-                if (defined("SITE_SERVER_NAME") && strlen(SITE_SERVER_NAME) > 0)
+            if ($serverName == '') {
+                if (defined("SITE_SERVER_NAME") && SITE_SERVER_NAME <> '') {
                     $serverName = SITE_SERVER_NAME;
-                else
+                } else {
                     $serverName = COption::GetOptionString("main", "server_name", "");
-                if (strlen($serverName) <= 0)
+                }
+                if ($serverName == '') {
                     $serverName = $_SERVER["SERVER_NAME"];
+                }
             }
             $serverName = (CMain::IsHTTPS() ? "https" : "http") . "://" . $serverName;
 
-            $requestUrl = COption::GetOptionString("socialnetwork", "user_request_page",
-                (IsModuleInstalled("intranet")) ? "/company/personal/user/#USER_ID#/requests/" : "/club/user/#USER_ID#/requests/", SITE_ID);
+            $requestUrl = COption::GetOptionString(
+                "socialnetwork",
+                "user_request_page",
+                (IsModuleInstalled(
+                    "intranet"
+                )) ? "/company/personal/user/#USER_ID#/requests/" : "/club/user/#USER_ID#/requests/",
+                SITE_ID
+            );
 
             $requestUrl = $serverName . str_replace(array("#USER_ID#", "#user_id#"), $targetUserID, $requestUrl);
 
             $arMessageFields['NOTIFY_MESSAGE_OUT'] = $arMessageFields['NOTIFY_MESSAGE'];
-            $arMessageFields['NOTIFY_MESSAGE_OUT'] .= "\n\n" . GetMessage('SONET_U_INVITE_CONFIRM') . ": " . $requestUrl . '?INVITE_USER=' . $ID . '&CONFIRM=Y';
-            $arMessageFields['NOTIFY_MESSAGE_OUT'] .= "\n\n" . GetMessage('SONET_U_INVITE_REJECT') . ": " . $requestUrl . '?INVITE_USER=' . $ID . '&CONFIRM=N';
+            $arMessageFields['NOTIFY_MESSAGE_OUT'] .= "\n\n" . GetMessage(
+                    'SONET_U_INVITE_CONFIRM'
+                ) . ": " . $requestUrl . '?INVITE_USER=' . $ID . '&CONFIRM=Y';
+            $arMessageFields['NOTIFY_MESSAGE_OUT'] .= "\n\n" . GetMessage(
+                    'SONET_U_INVITE_REJECT'
+                ) . ": " . $requestUrl . '?INVITE_USER=' . $ID . '&CONFIRM=N';
 
             CIMNotify::Add($arMessageFields);
         }
@@ -581,13 +702,16 @@ class CAllSocNetUserRelations
     {
         global $APPLICATION;
 
-        $senderUserID = IntVal($senderUserID);
+        $senderUserID = intval($senderUserID);
         if ($senderUserID <= 0) {
-            $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_UR_EMPTY_SENDER_USER_ID"), "ERROR_SENDER_USER_ID");
+            $GLOBALS["APPLICATION"]->ThrowException(
+                GetMessage("SONET_UR_EMPTY_SENDER_USER_ID"),
+                "ERROR_SENDER_USER_ID"
+            );
             return false;
         }
 
-        $relationID = IntVal($relationID);
+        $relationID = intval($relationID);
         if ($relationID <= 0) {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_UR_EMPTY_TARGET_USER_ID"), "ERROR_RELATION_ID");
             return false;
@@ -609,7 +733,10 @@ class CAllSocNetUserRelations
             $rsUser = CUser::GetByID(intval($arResult["FIRST_USER_ID"]));
             $arUser = $rsUser->Fetch();
             if (!is_array($arUser) || $arUser["ACTIVE"] != "Y") {
-                $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_UR_INVALID_TARGET_USER_ID"), "ERROR_INVALID_TARGET_USER_ID");
+                $GLOBALS["APPLICATION"]->ThrowException(
+                    GetMessage("SONET_UR_INVALID_TARGET_USER_ID"),
+                    "ERROR_INVALID_TARGET_USER_ID"
+                );
                 return false;
             }
 
@@ -626,7 +753,9 @@ class CAllSocNetUserRelations
                 }
 
                 if (CModule::IncludeModule("im")) {
-                    CIMNotify::DeleteByTag("SOCNET|INVITE_USER|" . intval($senderUserID) . "|" . intval($arResult["ID"]));
+                    CIMNotify::DeleteByTag(
+                        "SOCNET|INVITE_USER|" . intval($senderUserID) . "|" . intval($arResult["ID"])
+                    );
                     $arMessageFields = array(
                         "MESSAGE_TYPE" => IM_MESSAGE_SYSTEM,
                         "TO_USER_ID" => $arResult["FIRST_USER_ID"],
@@ -641,16 +770,21 @@ class CAllSocNetUserRelations
                 }
             } else {
                 $errorMessage = "";
-                if ($e = $APPLICATION->GetException())
+                if ($e = $APPLICATION->GetException()) {
                     $errorMessage = $e->GetString();
-                if (StrLen($errorMessage) <= 0)
+                }
+                if ($errorMessage == '') {
                     $errorMessage = GetMessage("SONET_UR_ERROR_UPDATE_RELATION");
+                }
 
                 $GLOBALS["APPLICATION"]->ThrowException($errorMessage, "ERROR_CREATE_RELATION");
                 return false;
             }
         } else {
-            $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_UR_NO_FRIEND_REQUEST"), "ERROR_NO_FRIEND_REQUEST");
+            $GLOBALS["APPLICATION"]->ThrowException(
+                GetMessage("SONET_UR_NO_FRIEND_REQUEST"),
+                "ERROR_NO_FRIEND_REQUEST"
+            );
             return false;
         }
 
@@ -682,13 +816,16 @@ class CAllSocNetUserRelations
     {
         global $APPLICATION;
 
-        $senderUserID = IntVal($senderUserID);
+        $senderUserID = intval($senderUserID);
         if ($senderUserID <= 0) {
-            $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_UR_EMPTY_SENDER_USER_ID"), "ERROR_SENDER_USER_ID");
+            $GLOBALS["APPLICATION"]->ThrowException(
+                GetMessage("SONET_UR_EMPTY_SENDER_USER_ID"),
+                "ERROR_SENDER_USER_ID"
+            );
             return false;
         }
 
-        $relationID = IntVal($relationID);
+        $relationID = intval($relationID);
         if ($relationID <= 0) {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_UR_EMPTY_TARGET_USER_ID"), "ERROR_RELATION_ID");
             return false;
@@ -709,7 +846,9 @@ class CAllSocNetUserRelations
         if ($arResult = $dbResult->Fetch()) {
             if (CSocNetUserRelations::Delete($arResult["ID"])) {
                 if (CModule::IncludeModule("im")) {
-                    CIMNotify::DeleteByTag("SOCNET|INVITE_USER|" . intval($senderUserID) . "|" . intval($arResult["ID"]));
+                    CIMNotify::DeleteByTag(
+                        "SOCNET|INVITE_USER|" . intval($senderUserID) . "|" . intval($arResult["ID"])
+                    );
                     $arMessageFields = array(
                         "MESSAGE_TYPE" => IM_MESSAGE_SYSTEM,
                         "TO_USER_ID" => $arResult["FIRST_USER_ID"],
@@ -724,16 +863,21 @@ class CAllSocNetUserRelations
                 }
             } else {
                 $errorMessage = "";
-                if ($e = $APPLICATION->GetException())
+                if ($e = $APPLICATION->GetException()) {
                     $errorMessage = $e->GetString();
-                if (StrLen($errorMessage) <= 0)
+                }
+                if ($errorMessage == '') {
                     $errorMessage = GetMessage("SONET_UR_RELATION_DELETE_ERROR");
+                }
 
                 $GLOBALS["APPLICATION"]->ThrowException($errorMessage, "ERROR_DELETE_RELATION");
                 return false;
             }
         } else {
-            $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_UR_NO_FRIEND_REQUEST"), "ERROR_NO_FRIEND_REQUEST");
+            $GLOBALS["APPLICATION"]->ThrowException(
+                GetMessage("SONET_UR_NO_FRIEND_REQUEST"),
+                "ERROR_NO_FRIEND_REQUEST"
+            );
             return false;
         }
 
@@ -742,25 +886,34 @@ class CAllSocNetUserRelations
         return true;
     }
 
-    function DeleteRelation($senderUserID, $targetUserID)
+    public static function DeleteRelation($senderUserID, $targetUserID)
     {
         global $APPLICATION;
 
-        $senderUserID = IntVal($senderUserID);
+        $senderUserID = intval($senderUserID);
         if ($senderUserID <= 0) {
-            $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_UR_EMPTY_SENDER_USER_ID"), "ERROR_SENDER_USER_ID");
+            $GLOBALS["APPLICATION"]->ThrowException(
+                GetMessage("SONET_UR_EMPTY_SENDER_USER_ID"),
+                "ERROR_SENDER_USER_ID"
+            );
             return false;
         }
 
-        $targetUserID = IntVal($targetUserID);
+        $targetUserID = intval($targetUserID);
         if ($targetUserID <= 0) {
-            $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_UR_EMPTY_TARGET_USER_ID"), "ERROR_TARGET_USER_ID");
+            $GLOBALS["APPLICATION"]->ThrowException(
+                GetMessage("SONET_UR_EMPTY_TARGET_USER_ID"),
+                "ERROR_TARGET_USER_ID"
+            );
             return false;
         }
 
         $arRelation = CSocNetUserRelations::GetByUserID($senderUserID, $targetUserID);
         if (!$arRelation) {
-            $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_UR_RELATION_NOT_FOUND"), "ERROR_RELATION_NOT_FOUND");
+            $GLOBALS["APPLICATION"]->ThrowException(
+                GetMessage("SONET_UR_RELATION_NOT_FOUND"),
+                "ERROR_RELATION_NOT_FOUND"
+            );
             return false;
         }
 
@@ -793,8 +946,9 @@ class CAllSocNetUserRelations
                 CIMNotify::Add($arMessageFields);
             }
 
-            if ($arRelation["RELATION"] == SONET_RELATIONS_FRIEND)
-                $GLOBALS["DB"]->Query("DELETE FROM b_sonet_event_user_view WHERE
+            if ($arRelation["RELATION"] == SONET_RELATIONS_FRIEND) {
+                $GLOBALS["DB"]->Query(
+                    "DELETE FROM b_sonet_event_user_view WHERE
 					ENTITY_TYPE = '" . SONET_ENTITY_USER . "'
 					AND (
 						(USER_ID = " . $arRelation["FIRST_USER_ID"] . " AND ENTITY_ID = " . $arRelation["SECOND_USER_ID"] . ")
@@ -803,13 +957,18 @@ class CAllSocNetUserRelations
 						OR (ENTITY_ID = " . $arRelation["SECOND_USER_ID"] . " AND USER_IM_ID = " . $arRelation["FIRST_USER_ID"] . ")
 						OR (USER_ID = " . $arRelation["FIRST_USER_ID"] . " AND USER_IM_ID = " . $arRelation["SECOND_USER_ID"] . ")
 						OR (USER_ID = " . $arRelation["SECOND_USER_ID"] . " AND USER_IM_ID = " . $arRelation["FIRST_USER_ID"] . ")
-					)", true);
+					)",
+                    true
+                );
+            }
         } else {
             $errorMessage = "";
-            if ($e = $APPLICATION->GetException())
+            if ($e = $APPLICATION->GetException()) {
                 $errorMessage = $e->GetString();
-            if (StrLen($errorMessage) <= 0)
+            }
+            if ($errorMessage == '') {
                 $errorMessage = GetMessage("SONET_UR_RELATION_DELETE_ERROR");
+            }
 
             $GLOBALS["APPLICATION"]->ThrowException($errorMessage, "ERROR_DELETE_RELATION");
             return false;
@@ -820,22 +979,31 @@ class CAllSocNetUserRelations
         return true;
     }
 
-    function BanUser($senderUserID, $targetUserID)
+    public static function BanUser($senderUserID, $targetUserID)
     {
         global $APPLICATION, $DB;
 
-        $senderUserID = IntVal($senderUserID);
+        $senderUserID = intval($senderUserID);
         if ($senderUserID <= 0) {
-            $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_UR_EMPTY_SENDER_USER_ID"), "ERROR_SENDER_USER_ID");
+            $GLOBALS["APPLICATION"]->ThrowException(
+                GetMessage("SONET_UR_EMPTY_SENDER_USER_ID"),
+                "ERROR_SENDER_USER_ID"
+            );
             return false;
         }
 
-        $targetUserID = IntVal($targetUserID);
+        $targetUserID = intval($targetUserID);
         if ($targetUserID <= 0) {
-            $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_UR_EMPTY_TARGET_USER_ID"), "ERROR_TARGET_USER_ID");
+            $GLOBALS["APPLICATION"]->ThrowException(
+                GetMessage("SONET_UR_EMPTY_TARGET_USER_ID"),
+                "ERROR_TARGET_USER_ID"
+            );
             return false;
         } elseif (CSocNetUser::IsUserModuleAdmin($targetUserID, false)) {
-            $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_UR_ERROR_CREATE_RELATION"), "ERROR_TARGET_USER_ID");
+            $GLOBALS["APPLICATION"]->ThrowException(
+                GetMessage("SONET_UR_ERROR_CREATE_RELATION"),
+                "ERROR_TARGET_USER_ID"
+            );
             return false;
         }
 
@@ -857,10 +1025,11 @@ class CAllSocNetUserRelations
                     "RELATION" => SONET_RELATIONS_BAN,
                     "=DATE_UPDATE" => $GLOBALS["DB"]->CurrentTimeFunction(),
                 );
-                if ($arResult["FIRST_USER_ID"] == $senderUserID)
+                if ($arResult["FIRST_USER_ID"] == $senderUserID) {
                     $arFields["INITIATED_BY"] = "F";
-                else
+                } else {
                     $arFields["INITIATED_BY"] = "S";
+                }
 
                 if (CSocNetUserRelations::Update($arResult["ID"], $arFields)) {
                     $arMessageFields = array(
@@ -872,8 +1041,9 @@ class CAllSocNetUserRelations
                     );
                     CSocNetMessages::Add($arMessageFields);
 
-                    if ($arResult["RELATION"] == SONET_RELATIONS_FRIEND)
-                        $GLOBALS["DB"]->Query("DELETE FROM b_sonet_event_user_view WHERE
+                    if ($arResult["RELATION"] == SONET_RELATIONS_FRIEND) {
+                        $GLOBALS["DB"]->Query(
+                            "DELETE FROM b_sonet_event_user_view WHERE
 							ENTITY_TYPE = '" . SONET_ENTITY_USER . "'
 							AND (
 								(USER_ID = " . $arRelation["FIRST_USER_ID"] . " AND ENTITY_ID = " . $arRelation["SECOND_USER_ID"] . ")
@@ -882,13 +1052,18 @@ class CAllSocNetUserRelations
 								OR (ENTITY_ID = " . $arRelation["SECOND_USER_ID"] . " AND USER_IM_ID = " . $arRelation["FIRST_USER_ID"] . ")
 								OR (USER_ID = " . $arRelation["FIRST_USER_ID"] . " AND USER_IM_ID = " . $arRelation["SECOND_USER_ID"] . ")
 								OR (USER_ID = " . $arRelation["SECOND_USER_ID"] . " AND USER_IM_ID = " . $arRelation["FIRST_USER_ID"] . ")
-							)", true);
+							)",
+                            true
+                        );
+                    }
                 } else {
                     $errorMessage = "";
-                    if ($e = $APPLICATION->GetException())
+                    if ($e = $APPLICATION->GetException()) {
                         $errorMessage = $e->GetString();
-                    if (StrLen($errorMessage) <= 0)
+                    }
+                    if ($errorMessage == '') {
                         $errorMessage = GetMessage("SONET_UR_ERROR_UPDATE_RELATION");
+                    }
 
                     $GLOBALS["APPLICATION"]->ThrowException($errorMessage, "ERROR_UPDATE_RELATION");
                     return false;
@@ -917,10 +1092,12 @@ class CAllSocNetUserRelations
                 CSocNetMessages::Add($arMessageFields);
             } else {
                 $errorMessage = "";
-                if ($e = $APPLICATION->GetException())
+                if ($e = $APPLICATION->GetException()) {
                     $errorMessage = $e->GetString();
-                if (StrLen($errorMessage) <= 0)
+                }
+                if ($errorMessage == '') {
                     $errorMessage = GetMessage("SONET_UR_ERROR_CREATE_RELATION");
+                }
 
                 $GLOBALS["APPLICATION"]->ThrowException($errorMessage, "ERROR_CREATE_RELATION");
                 return false;
@@ -930,17 +1107,20 @@ class CAllSocNetUserRelations
         return true;
     }
 
-    function UnBanMember($senderUserID, $relationID)
+    public static function UnBanMember($senderUserID, $relationID)
     {
         global $APPLICATION, $DB;
 
-        $senderUserID = IntVal($senderUserID);
+        $senderUserID = intval($senderUserID);
         if ($senderUserID <= 0) {
-            $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_UR_EMPTY_SENDER_USER_ID"), "ERROR_SENDER_USER_ID");
+            $GLOBALS["APPLICATION"]->ThrowException(
+                GetMessage("SONET_UR_EMPTY_SENDER_USER_ID"),
+                "ERROR_SENDER_USER_ID"
+            );
             return false;
         }
 
-        $relationID = IntVal($relationID);
+        $relationID = intval($relationID);
         if ($relationID <= 0) {
             $GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_UR_EMPTY_RELATION"), "ERROR_RELATIONID");
             return false;
@@ -967,10 +1147,12 @@ class CAllSocNetUserRelations
                 CSocNetMessages::Add($arMessageFields);
             } else {
                 $errorMessage = "";
-                if ($e = $APPLICATION->GetException())
+                if ($e = $APPLICATION->GetException()) {
                     $errorMessage = $e->GetString();
-                if (StrLen($errorMessage) <= 0)
+                }
+                if ($errorMessage == '') {
                     $errorMessage = GetMessage("SONET_UR_RELATION_DELETE_ERROR");
+                }
 
                 $GLOBALS["APPLICATION"]->ThrowException($errorMessage, "ERROR_DELETE_RELATION");
                 return false;
@@ -983,11 +1165,12 @@ class CAllSocNetUserRelations
         return true;
     }
 
-    function __SpeedFileCheckMessages($userID)
+    public static function __SpeedFileCheckMessages($userID)
     {
-        $userID = IntVal($userID);
-        if ($userID <= 0)
+        $userID = intval($userID);
+        if ($userID <= 0) {
             return;
+        }
 
         $cnt = 0;
         $dbResult = $GLOBALS["DB"]->Query(
@@ -996,25 +1179,29 @@ class CAllSocNetUserRelations
             "WHERE SECOND_USER_ID = " . $userID . " " .
             "	AND RELATION = '" . $GLOBALS["DB"]->ForSql(SONET_RELATIONS_REQUEST, 1) . "' "
         );
-        if ($arResult = $dbResult->Fetch())
-            $cnt = IntVal($arResult["CNT"]);
+        if ($arResult = $dbResult->Fetch()) {
+            $cnt = intval($arResult["CNT"]);
+        }
 
-        if ($cnt > 0)
+        if ($cnt > 0) {
             CSocNetUserRelations::__SpeedFileCreate($userID);
-        else
+        } else {
             CSocNetUserRelations::__SpeedFileDelete($userID);
+        }
     }
 
-    function __SpeedFileCreate($userID)
+    public static function __SpeedFileCreate($userID)
     {
         global $CACHE_MANAGER;
 
-        $userID = IntVal($userID);
-        if ($userID <= 0)
+        $userID = intval($userID);
+        if ($userID <= 0) {
             return;
+        }
 
-        if ($CACHE_MANAGER->Read(86400 * 30, "socnet_cf_" . $userID))
+        if ($CACHE_MANAGER->Read(86400 * 30, "socnet_cf_" . $userID)) {
             $CACHE_MANAGER->Clean("socnet_cf_" . $userID);
+        }
         /*
                 $filePath = $_SERVER["DOCUMENT_ROOT"].BX_PERSONAL_ROOT."/managed_flags/socnet/c/".IntVal($userID / 1000)."/";
                 $fileName = $userID."_f";
@@ -1027,16 +1214,18 @@ class CAllSocNetUserRelations
         */
     }
 
-    function __SpeedFileDelete($userID)
+    public static function __SpeedFileDelete($userID)
     {
         global $CACHE_MANAGER;
 
-        $userID = IntVal($userID);
-        if ($userID <= 0)
+        $userID = intval($userID);
+        if ($userID <= 0) {
             return;
+        }
 
-        if (!$CACHE_MANAGER->Read(86400 * 30, "socnet_cf_" . $userID))
+        if (!$CACHE_MANAGER->Read(86400 * 30, "socnet_cf_" . $userID)) {
             $CACHE_MANAGER->Set("socnet_cf_" . $userID, true);
+        }
         /*
                 $fileName = $_SERVER["DOCUMENT_ROOT"].BX_PERSONAL_ROOT."/managed_flags/socnet/c/".IntVal($userID / 1000)."/".$userID."_f";
                 if (file_exists($fileName))
@@ -1044,13 +1233,14 @@ class CAllSocNetUserRelations
         */
     }
 
-    function SpeedFileExists($userID)
+    public static function SpeedFileExists($userID)
     {
         global $CACHE_MANAGER;
 
-        $userID = IntVal($userID);
-        if ($userID <= 0)
+        $userID = intval($userID);
+        if ($userID <= 0) {
             return;
+        }
 
         return (!$CACHE_MANAGER->Read(86400 * 30, "socnet_cf_" . $userID));
         /*
@@ -1060,7 +1250,7 @@ class CAllSocNetUserRelations
     }
 
     /* Module IM callback */
-    function OnBeforeConfirmNotify($module, $tag, $value, $arParams)
+    public static function OnBeforeConfirmNotify($module, $tag, $value, $arParams)
     {
         if ($module == "socialnetwork") {
             $arTag = explode("|", $tag);
@@ -1076,5 +1266,3 @@ class CAllSocNetUserRelations
         }
     }
 }
-
-?>

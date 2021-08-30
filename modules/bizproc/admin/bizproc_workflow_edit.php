@@ -40,13 +40,15 @@ if ($ID > 0) {
         $arWorkflowTemplate = $arTemplate["TEMPLATE"];
         $arWorkflowParameters = $arTemplate["PARAMETERS"];
         $arWorkflowVariables = $arTemplate["VARIABLES"];
-    } else
+    } else {
         $ID = 0;
+    }
 }
 
 if ($ID <= 0) {
-    if (strlen($document_type) <= 0)
+    if (strlen($document_type) <= 0) {
         $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED") . " " . GetMessage("BIZPROC_WFEDIT_ERROR_TYPE"));
+    }
 
     $canWrite = CBPDocument::CanUserOperateDocumentType(
         CBPCanUserOperateOperation::CreateWorkflow,
@@ -82,8 +84,9 @@ if ($ID <= 0) {
     $arWorkflowVariables = Array();
 }
 
-if (!$canWrite)
+if (!$canWrite) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 //print_r($arWorkflowTemplate);
 //print_r($arWorkflowParameters);
@@ -100,8 +103,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_REQUEST['saveajax'] == 'Y') {
             foreach ($_POST["arWorkflowParameters"] as $name => $param) {
                 if (is_array($_POST["arWorkflowParameters"][$name]["Options"])) {
                     $newarr = Array();
-                    foreach ($_POST["arWorkflowParameters"][$name]["Options"] as $k => $v)
+                    foreach ($_POST["arWorkflowParameters"][$name]["Options"] as $k => $v) {
                         $newarr[$GLOBALS["APPLICATION"]->ConvertCharset($k, "UTF-8", LANG_CHARSET)] = $v;
+                    }
                     $_POST["arWorkflowParameters"][$name]["Options"] = $newarr;
                 }
             }
@@ -121,11 +125,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_REQUEST['saveajax'] == 'Y') {
         "USER_ID" => intval($USER->GetID()),
     );
 
-    if (strlen($_REQUEST["back_url"]) > 0)
+    if (strlen($_REQUEST["back_url"]) > 0) {
         $back_url = "/" . ltrim($_REQUEST["back_url"], "/");
+    }
 
-    if (!is_array($arFields["VARIABLES"]))
+    if (!is_array($arFields["VARIABLES"])) {
         $arFields["VARIABLES"] = Array();
+    }
 
     function wfeexception_handler($e)
     {
@@ -141,17 +147,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_REQUEST['saveajax'] == 'Y') {
 
     set_exception_handler('wfeexception_handler');
     try {
-        if ($ID > 0)
+        if ($ID > 0) {
             CBPWorkflowTemplateLoader::Update($ID, $arFields);
-        else
+        } else {
             $ID = CBPWorkflowTemplateLoader::Add($arFields);
+        }
     } catch (Exception $e) {
         wfeexception_handler($e);
     }
     restore_exception_handler();
     ?>
     <script>
-        window.location = '<?=($_REQUEST["apply"] == "Y" ? "/bitrix/admin/" . MODULE_ID . "_bizproc_workflow_edit.php?lang=" . LANGUAGE_ID . "&ID=" . $ID . "&back_url_list=" . AddSlashes($_REQUEST["back_url_list"]) : AddSlashes($back_url))?>';
+        window.location = '<?=($_REQUEST["apply"] == "Y" ? "/bitrix/admin/" . MODULE_ID . "_bizproc_workflow_edit.php?lang=" . LANGUAGE_ID . "&ID=" . $ID . "&back_url_list=" . AddSlashes(
+                $_REQUEST["back_url_list"]
+            ) : AddSlashes($back_url))?>';
     </script>
     <?
     die();
@@ -183,7 +192,9 @@ $aMenu[] = array("SEPARATOR" => true);
 $aMenu[] = array(
     "TEXT" => GetMessage("BIZPROC_WFEDIT_MENU_LIST"),
     "TITLE" => GetMessage("BIZPROC_WFEDIT_MENU_LIST_TITLE"),
-    "LINK" => "/bitrix/admin/" . MODULE_ID . "_bizproc_workflow_admin.php?lang=" . LANGUAGE_ID . "&document_type=" . AddSlashes($document_type) . "",
+    "LINK" => "/bitrix/admin/" . MODULE_ID . "_bizproc_workflow_admin.php?lang=" . LANGUAGE_ID . "&document_type=" . AddSlashes(
+            $document_type
+        ) . "",
     "ICON" => "btn_list",
 );
 
@@ -191,12 +202,20 @@ $arSubMenu = Array();
 
 $arSubMenu[] = array(
     "TEXT" => GetMessage("BIZPROC_WFEDIT_MENU_ADD_STATE"),
-    "ACTION" => "if(confirm('" . GetMessage("BIZPROC_WFEDIT_MENU_ADD_WARN") . "'))window.location='/bitrix/admin/" . MODULE_ID . "_bizproc_workflow_edit.php?lang=" . LANGUAGE_ID . "&init=statemachine&document_type=" . AddSlashes($document_type) . "';"
+    "ACTION" => "if(confirm('" . GetMessage(
+            "BIZPROC_WFEDIT_MENU_ADD_WARN"
+        ) . "'))window.location='/bitrix/admin/" . MODULE_ID . "_bizproc_workflow_edit.php?lang=" . LANGUAGE_ID . "&init=statemachine&document_type=" . AddSlashes(
+            $document_type
+        ) . "';"
 );
 
 $arSubMenu[] = array(
     "TEXT" => GetMessage("BIZPROC_WFEDIT_MENU_ADD_SEQ"),
-    "ACTION" => "if(confirm('" . GetMessage("BIZPROC_WFEDIT_MENU_ADD_WARN") . "'))window.location='/bitrix/admin/" . MODULE_ID . "_bizproc_workflow_edit.php?lang=" . LANGUAGE_ID . "&document_type=" . AddSlashes($document_type) . "';"
+    "ACTION" => "if(confirm('" . GetMessage(
+            "BIZPROC_WFEDIT_MENU_ADD_WARN"
+        ) . "'))window.location='/bitrix/admin/" . MODULE_ID . "_bizproc_workflow_edit.php?lang=" . LANGUAGE_ID . "&document_type=" . AddSlashes(
+            $document_type
+        ) . "';"
 );
 
 $aMenu[] = array(
@@ -209,10 +228,11 @@ $aMenu[] = array(
 
 $context = new CAdminContextMenu($aMenu);
 
-if ($ID > 0)
+if ($ID > 0) {
     $APPLICATION->SetTitle(GetMessage("BIZPROC_WFEDIT_TITLE_EDIT"));
-else
+} else {
     $APPLICATION->SetTitle(GetMessage("BIZPROC_WFEDIT_TITLE_ADD"));
+}
 
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/pubstyles.css");
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/jspopup.css");
@@ -367,14 +387,17 @@ $JSMESS = Array();
 function GetJSLangMess($f, $actId)
 {
     $MESS = Array();
-    if (file_exists($f . "/lang/en/" . $actId . ".js.php"))
+    if (file_exists($f . "/lang/en/" . $actId . ".js.php")) {
         include($f . "/lang/en/" . $actId . ".js.php");
-    if (file_exists($f . "/lang/" . LANGUAGE_ID . "/" . $actId . ".js.php"))
+    }
+    if (file_exists($f . "/lang/" . LANGUAGE_ID . "/" . $actId . ".js.php")) {
         include($f . "/lang/" . LANGUAGE_ID . "/" . $actId . ".js.php");
+    }
 
     global $JSMESS;
-    foreach ($MESS as $k => $v)
+    foreach ($MESS as $k => $v) {
         $JSMESS[$k] = $v;
+    }
 }
 
 foreach ($arAllActivities as $actId => $actProps) {
@@ -384,11 +407,13 @@ foreach ($arAllActivities as $actId => $actProps) {
         GetJSLangMess($actProps["PATH_TO_ACTIVITY"], $actId);
     }
 
-    if (file_exists($actProps["PATH_TO_ACTIVITY"] . "/" . $actId . ".css"))
+    if (file_exists($actProps["PATH_TO_ACTIVITY"] . "/" . $actId . ".css")) {
         echo '<link rel="stylesheet" type="text/css" href="' . $actPath . '/' . $actId . '.css">';
+    }
 
-    if (file_exists($actProps["PATH_TO_ACTIVITY"] . "/icon.gif"))
+    if (file_exists($actProps["PATH_TO_ACTIVITY"] . "/icon.gif")) {
         $arAllActivities[$actId]['ICON'] = $actPath . '/icon.gif';
+    }
 
     unset($arAllActivities[$actId]['PATH_TO_ACTIVITY']);
 }

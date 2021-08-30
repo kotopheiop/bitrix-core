@@ -19,8 +19,9 @@ Bitrix\Main\Loader::includeModule('sale');
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
 $arUserGroups = $USER->GetUserGroupArray();
 
-if ($saleModulePermissions == "D")
+if ($saleModulePermissions == "D") {
     $APPLICATION->AuthForm(Loc::getMessage("ACCESS_DENIED"));
+}
 
 $allowedStatusesView = array();
 
@@ -43,16 +44,20 @@ if ($saleOrder) {
         }
 
         if (!$isUserResponsible && !$isAllowCompany) {
-            LocalRedirect("/bitrix/admin/sale_order_archive.php?lang=" . LANGUAGE_ID . GetFilterParams("filter_", false));
+            LocalRedirect(
+                "/bitrix/admin/sale_order_archive.php?lang=" . LANGUAGE_ID . GetFilterParams("filter_", false)
+            );
         }
     }
 }
 
-if ($saleOrder)
+if ($saleOrder) {
     $allowedStatusesView = \Bitrix\Sale\OrderStatus::getStatusesUserCanDoOperations($USER->GetID(), array('view'));
+}
 
-if (!$saleOrder || !in_array($saleOrder->getField("STATUS_ID"), $allowedStatusesView))
+if (!$saleOrder || !in_array($saleOrder->getField("STATUS_ID"), $allowedStatusesView)) {
     LocalRedirect("/bitrix/admin/sale_order_archive.php?lang=" . LANGUAGE_ID . GetFilterParams("filter_", false));
+}
 
 $id = (int)($_REQUEST["ID"]);
 
@@ -73,7 +78,9 @@ $APPLICATION->SetTitle(
         "SALE_OVIEW_TITLE",
         array(
             "#ID#" => $saleOrder->getId(),
-            "#NUM#" => strlen($saleOrder->getField('ACCOUNT_NUMBER')) > 0 ? $saleOrder->getField('ACCOUNT_NUMBER') : $saleOrder->getId(),
+            "#NUM#" => $saleOrder->getField('ACCOUNT_NUMBER') <> '' ? $saleOrder->getField(
+                'ACCOUNT_NUMBER'
+            ) : $saleOrder->getId(),
             "#DATE#" => $saleOrder->getDateInsert()->toString()
         )
     )
@@ -88,7 +95,9 @@ $aMenu[] = array(
     "ICON" => "btn_list",
     "TEXT" => Loc::getMessage("SALE_OVIEW_TO_ARCHIVE_LIST"),
     "TITLE" => Loc::getMessage("SALE_OVIEW_TO_ARCHIVE_LIST_TITLE"),
-    "LINK" => "/bitrix/admin/sale_order_archive.php?target=list&ID=" . $id . "&lang=" . LANGUAGE_ID . GetFilterParams("filter_")
+    "LINK" => "/bitrix/admin/sale_order_archive.php?target=list&ID=" . $id . "&lang=" . LANGUAGE_ID . GetFilterParams(
+            "filter_"
+        )
 );
 
 $allowedStatusesUpdate = \Bitrix\Sale\OrderStatus::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
@@ -97,18 +106,21 @@ if (!$boolLocked && in_array($saleOrder->getField("STATUS_ID"), $allowedStatuses
     $aMenu[] = array(
         "TEXT" => Loc::getMessage("SALE_OVIEW_TO_RESTORE"),
         "TITLE" => Loc::getMessage("SALE_OVIEW_TO_RESTORE_TITLE"),
-        "LINK" => "/bitrix/admin/sale_order_create.php?restoreID=" . $id . "&lang=" . LANGUAGE_ID . "&SITE_ID=" . $saleOrder->getSiteId()
+        "LINK" => "/bitrix/admin/sale_order_create.php?restoreID=" . $id . "&lang=" . LANGUAGE_ID . "&SITE_ID=" . $saleOrder->getSiteId(
+            )
     );
 }
 $context = new CAdminContextMenu($aMenu);
 $context->Show();
 
 if (!empty($errorMsgs)) {
-    $m = new CAdminMessage(array(
-        "TYPE" => "ERROR",
-        "MESSAGE" => implode("<br>\n", $errorMsgs),
-        "HTML" => true
-    ));
+    $m = new CAdminMessage(
+        array(
+            "TYPE" => "ERROR",
+            "MESSAGE" => implode("<br>\n", $errorMsgs),
+            "HTML" => true
+        )
+    );
 
     echo $m->Show();
 }
@@ -159,7 +171,13 @@ $blocks = $view->getTemplates();
 echo Admin\Blocks\OrderInfo::getView($saleOrder, $orderBasket);
 
 $aTabs = array(
-    array("DIV" => "tab_order", "TAB" => Loc::getMessage("SALE_OVIEW_TAB_ORDER"), "TITLE" => Loc::getMessage("SALE_OVIEW_TAB_ORDER"), "SHOW_WRAP" => "N", "IS_DRAGGABLE" => "Y"),
+    array(
+        "DIV" => "tab_order",
+        "TAB" => Loc::getMessage("SALE_OVIEW_TAB_ORDER"),
+        "TITLE" => Loc::getMessage("SALE_OVIEW_TAB_ORDER"),
+        "SHOW_WRAP" => "N",
+        "IS_DRAGGABLE" => "Y"
+    ),
 );
 
 $tabControl = new CAdminTabControlDrag($formId, $aTabs, $moduleId, false, true);
@@ -172,8 +190,9 @@ $blocksOrder = $tabControl->getCurrentTabBlocksOrder($defaultBlocksOrder);
 
 $fastNavItems = array();
 
-foreach ($blocksOrder as $item)
+foreach ($blocksOrder as $item) {
     $fastNavItems[$item] = Loc::getMessage("SALE_OVIEW_BLOCK_TITLE_" . ToUpper($item));
+}
 
 foreach ($customDraggableBlocks->getBlocksBrief() as $blockId => $blockParams) {
     $defaultBlocksOrder[] = $blockId;

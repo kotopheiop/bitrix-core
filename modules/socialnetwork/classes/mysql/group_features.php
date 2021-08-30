@@ -1,4 +1,5 @@
 <?
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/socialnetwork/classes/general/group_features.php");
 
 class CSocNetFeatures extends CAllSocNetFeatures
@@ -27,13 +28,13 @@ class CSocNetFeatures extends CAllSocNetFeatures
         \Bitrix\Socialnetwork\Util::processEqualityFieldsToInsert($arFields1, $arInsert);
 
         $ID = false;
-        if (strlen($arInsert[0]) > 0) {
+        if ($arInsert[0] <> '') {
             $strSql =
                 "INSERT INTO b_sonet_features(" . $arInsert[0] . ") " .
                 "VALUES(" . $arInsert[1] . ")";
-            $DB->Query($strSql, False, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+            $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 
-            $ID = IntVal($DB->LastID());
+            $ID = intval($DB->LastID());
 
             if (array_key_exists("ENTITY_TYPE", $arFields) && array_key_exists("ENTITY_ID", $arFields)) {
                 unset($SONET_FEATURES_CACHE[$arFields["ENTITY_TYPE"]][$arFields["ENTITY_ID"]]);
@@ -60,12 +61,26 @@ class CSocNetFeatures extends CAllSocNetFeatures
     /***************************************/
     /**********  DATA SELECTION  ***********/
     /***************************************/
-    public static function GetList($arOrder = Array("ID" => "DESC"), $arFilter = Array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
-    {
+    public static function GetList(
+        $arOrder = Array("ID" => "DESC"),
+        $arFilter = Array(),
+        $arGroupBy = false,
+        $arNavStartParams = false,
+        $arSelectFields = array()
+    ) {
         global $DB;
 
         if (count($arSelectFields) <= 0) {
-            $arSelectFields = array("ID", "ENTITY_TYPE", "ENTITY_ID", "FEATURE", "FEATURE_NAME", "ACTIVE", "DATE_CREATE", "DATE_UPDATE");
+            $arSelectFields = array(
+                "ID",
+                "ENTITY_TYPE",
+                "ENTITY_ID",
+                "FEATURE",
+                "FEATURE_NAME",
+                "ACTIVE",
+                "DATE_CREATE",
+                "DATE_UPDATE"
+            );
         }
 
         static $arFields = array(
@@ -77,7 +92,11 @@ class CSocNetFeatures extends CAllSocNetFeatures
             "ACTIVE" => Array("FIELD" => "GF.ACTIVE", "TYPE" => "string"),
             "DATE_CREATE" => Array("FIELD" => "GF.DATE_CREATE", "TYPE" => "datetime"),
             "DATE_UPDATE" => Array("FIELD" => "GF.DATE_UPDATE", "TYPE" => "datetime"),
-            "GROUP_NAME" => Array("FIELD" => "G.NAME", "TYPE" => "string", "FROM" => "INNER JOIN b_sonet_group G ON (GF.GROUP_ID = G.ID)"),
+            "GROUP_NAME" => Array(
+                "FIELD" => "G.NAME",
+                "TYPE" => "string",
+                "FROM" => "INNER JOIN b_sonet_group G ON (GF.GROUP_ID = G.ID)"
+            ),
         );
 
         $arSqls = CSocNetGroup::PrepareSql($arFields, $arOrder, $arFilter, $arGroupBy, $arSelectFields);
@@ -89,10 +108,12 @@ class CSocNetFeatures extends CAllSocNetFeatures
                 "SELECT " . $arSqls["SELECT"] . " " .
                 "FROM b_sonet_features GF " .
                 "	" . $arSqls["FROM"] . " ";
-            if (strlen($arSqls["WHERE"]) > 0)
+            if ($arSqls["WHERE"] <> '') {
                 $strSql .= "WHERE " . $arSqls["WHERE"] . " ";
-            if (strlen($arSqls["GROUPBY"]) > 0)
+            }
+            if ($arSqls["GROUPBY"] <> '') {
                 $strSql .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
+            }
 
             //echo "!1!=".htmlspecialcharsbx($strSql)."<br>";
 
@@ -100,7 +121,7 @@ class CSocNetFeatures extends CAllSocNetFeatures
             if ($arRes = $dbRes->Fetch()) {
                 return $arRes["CNT"];
             } else {
-                return False;
+                return false;
             }
         }
 
@@ -109,30 +130,36 @@ class CSocNetFeatures extends CAllSocNetFeatures
             "SELECT " . $arSqls["SELECT"] . " " .
             "FROM b_sonet_features GF " .
             "	" . $arSqls["FROM"] . " ";
-        if (strlen($arSqls["WHERE"]) > 0)
+        if ($arSqls["WHERE"] <> '') {
             $strSql .= "WHERE " . $arSqls["WHERE"] . " ";
-        if (strlen($arSqls["GROUPBY"]) > 0)
+        }
+        if ($arSqls["GROUPBY"] <> '') {
             $strSql .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
-        if (strlen($arSqls["ORDERBY"]) > 0)
+        }
+        if ($arSqls["ORDERBY"] <> '') {
             $strSql .= "ORDER BY " . $arSqls["ORDERBY"] . " ";
+        }
 
-        if (is_array($arNavStartParams) && IntVal($arNavStartParams["nTopCount"]) <= 0) {
+        if (is_array($arNavStartParams) && intval($arNavStartParams["nTopCount"]) <= 0) {
             $strSql_tmp =
                 "SELECT COUNT('x') as CNT " .
                 "FROM b_sonet_features GF " .
                 "	" . $arSqls["FROM"] . " ";
-            if (strlen($arSqls["WHERE"]) > 0)
+            if ($arSqls["WHERE"] <> '') {
                 $strSql_tmp .= "WHERE " . $arSqls["WHERE"] . " ";
-            if (strlen($arSqls["GROUPBY"]) > 0)
+            }
+            if ($arSqls["GROUPBY"] <> '') {
                 $strSql_tmp .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
+            }
 
             //echo "!2.1!=".htmlspecialcharsbx($strSql_tmp)."<br>";
 
             $dbRes = $DB->Query($strSql_tmp, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             $cnt = 0;
-            if (strlen($arSqls["GROUPBY"]) <= 0) {
-                if ($arRes = $dbRes->Fetch())
+            if ($arSqls["GROUPBY"] == '') {
+                if ($arRes = $dbRes->Fetch()) {
                     $cnt = $arRes["CNT"];
+                }
             } else {
                 // ������ ��� MYSQL!!! ��� ORACLE ������ ���
                 $cnt = $dbRes->SelectedRowsCount();
@@ -144,8 +171,9 @@ class CSocNetFeatures extends CAllSocNetFeatures
 
             $dbRes->NavQuery($strSql, $cnt, $arNavStartParams);
         } else {
-            if (is_array($arNavStartParams) && IntVal($arNavStartParams["nTopCount"]) > 0)
-                $strSql .= "LIMIT " . IntVal($arNavStartParams["nTopCount"]);
+            if (is_array($arNavStartParams) && intval($arNavStartParams["nTopCount"]) > 0) {
+                $strSql .= "LIMIT " . intval($arNavStartParams["nTopCount"]);
+            }
 
             //echo "!3!=".htmlspecialcharsbx($strSql)."<br>";
 

@@ -22,7 +22,7 @@ class DeliveryLocationTable extends Sale\Location\Connector
         return 'b_sale_delivery2location';
     }
 
-    public function getLinkField()
+    public static function getLinkField()
     {
         return 'DELIVERY_ID';
     }
@@ -32,7 +32,7 @@ class DeliveryLocationTable extends Sale\Location\Connector
         return 'LOCATION_CODE';
     }
 
-    public function getTargetEntityName()
+    public static function getTargetEntityName()
     {
         return 'Bitrix\Sale\Delivery\Services\Table';
     }

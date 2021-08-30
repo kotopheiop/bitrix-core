@@ -16,13 +16,15 @@ $skip_handler = false;
 function __try_run()
 {
     global $skip_handler, $oResponse;
-    if ($skip_handler)
+    if ($skip_handler) {
         return;
+    }
 
     $res = ob_get_contents();
 
-    if ($oResponse->OK())
+    if ($oResponse->OK()) {
         return;
+    }
 
     $oResponse->status = "500 Execution Error";
     $oResponse->text = $res;
@@ -40,7 +42,11 @@ if ($oRequest->operation == 'simple_register' && !$USER->IsAuthorized()) {
         COption::SetOptionString("main", "controller_member_id", $oRequest->arParameters["member_id"]);
         COption::SetOptionString("main", "controller_member_secret_id", $oRequest->arParameters["member_secret_id"]);
         COption::SetOptionString("main", "controller_url", $oRequest->arParameters["controller_url"]);
-        COption::SetOptionString("main", "~controller_disconnect_command", $oRequest->arParameters['disconnect_command']);
+        COption::SetOptionString(
+            "main",
+            "~controller_disconnect_command",
+            $oRequest->arParameters['disconnect_command']
+        );
         eval($oRequest->arParameters['join_command']);
         $oResponse->status = "200 OK";
     } else {
@@ -60,9 +66,13 @@ if ($oRequest->operation == 'simple_register' && !$USER->IsAuthorized()) {
             $ticket_id = COption::GetOptionString("main", "controller_ticket", "");
             list($ticket_created, $ticket_id, $controller_url) = explode("|", $ticket_id);
             if ($ticket_id == $oRequest->arParameters["controller_ticket_id"]) {
-                if (strlen($controller_url) > 0) {
+                if ($controller_url <> '') {
                     if ($ticket_created > 0 && $ticket_created + 10 * 60 >= time()) {
-                        COption::SetOptionString("main", "~controller_disconnect_command", $oRequest->arParameters['disconnect_command']);
+                        COption::SetOptionString(
+                            "main",
+                            "~controller_disconnect_command",
+                            $oRequest->arParameters['disconnect_command']
+                        );
                         eval($oRequest->arParameters['join_command']);
                         $oResponse->status = "200 OK";
                     } else {
@@ -97,10 +107,11 @@ if ($oRequest->operation == 'simple_register' && !$USER->IsAuthorized()) {
                 if ($oClientResponse->OK()) {
                     $command = $oClientResponse->arParameters['query'];
 
-                    if (CControllerClient::RunCommand($command, $oResponse, $oClientResponse) === false)
+                    if (CControllerClient::RunCommand($command, $oResponse, $oClientResponse) === false) {
                         $oResponse->status = "450 Execution error";
-                    else
+                    } else {
                         $oResponse->status = "200 OK";
+                    }
                 } else {
                     $oResponse->status = $oClientResponse->status;
                     $oResponse->text = $oClientResponse->text;
@@ -113,10 +124,11 @@ if ($oRequest->operation == 'simple_register' && !$USER->IsAuthorized()) {
 
         case "run_immediate":
             $command = $oRequest->arParameters["command"];
-            if (CControllerClient::RunCommand($command, $oRequest, $oResponse) === false)
+            if (CControllerClient::RunCommand($command, $oRequest, $oResponse) === false) {
                 $oResponse->status = "450 Execution error";
-            else
+            } else {
                 $oResponse->status = "200 OK";
+            }
             break;
 
         case 'sendfile':
@@ -131,19 +143,26 @@ if ($oRequest->operation == 'simple_register' && !$USER->IsAuthorized()) {
 
             if (is_object($oClientResponse) && $oClientResponse->Check()) {
                 if ($oClientResponse->OK()) {
-                    if (CControllerTools::UnpackFileArchive($oClientResponse->arParameters['file'], $oClientResponse->arParameters['path_to'])) {
+                    if (CControllerTools::UnpackFileArchive(
+                        $oClientResponse->arParameters['file'],
+                        $oClientResponse->arParameters['path_to']
+                    )) {
                         $oResponse->status = "200 OK";
                         $command = $oClientResponse->arParameters['command'];
-                        if (strlen($command) > 0 && CControllerClient::RunCommand($command, $oResponse, $oClientResponse) === false) {
+                        if ($command <> '' && CControllerClient::RunCommand(
+                                $command,
+                                $oResponse,
+                                $oClientResponse
+                            ) === false) {
                             $oResponse->status = "450 Execution error";
                         }
                     } else {
                         $oResponse->status = "451 Copy File error";
                         $e = $APPLICATION->GetException();
-                        if (is_object($e))
+                        if (is_object($e)) {
                             $oResponse->text = $e->GetString();
+                        }
                     }
-
                 } else {
                     $oResponse->status = $oClientResponse->status;
                     $oResponse->text = $oClientResponse->text;
@@ -159,13 +178,13 @@ if ($oRequest->operation == 'simple_register' && !$USER->IsAuthorized()) {
             if (!($arUser = $dbUser->Fetch())) {
                 $oResponse->status = "444 User is not found.";
                 $oResponse->text = "User is not found.";
-            } elseif (strlen($arUser["EXTERNAL_AUTH_ID"]) > 0) {
+            } elseif ($arUser["EXTERNAL_AUTH_ID"] <> '') {
                 $oResponse->status = "445 External user.";
                 $oResponse->text = "External user.";
             } else {
-                if (strlen($arUser["PASSWORD"]) > 32) {
-                    $salt = substr($arUser["PASSWORD"], 0, strlen($arUser["PASSWORD"]) - 32);
-                    $db_password = substr($arUser["PASSWORD"], -32);
+                if (mb_strlen($arUser["PASSWORD"]) > 32) {
+                    $salt = mb_substr($arUser["PASSWORD"], 0, mb_strlen($arUser["PASSWORD"]) - 32);
+                    $db_password = mb_substr($arUser["PASSWORD"], -32);
                 } else {
                     $salt = "";
                     $db_password = $arUser["PASSWORD"];
@@ -181,33 +200,38 @@ if ($oRequest->operation == 'simple_register' && !$USER->IsAuthorized()) {
                     $arUserGroups = array();
                     $dbUserGroups = CUser::GetUserGroupEx($arUser['ID']);
                     while ($arG = $dbUserGroups->Fetch()) {
-                        if (strlen($arG["STRING_ID"]) > 0)
+                        if ($arG["STRING_ID"] <> '') {
                             $arUserGroups[] = $arG["STRING_ID"];
-                        elseif ($arG["GROUP_ID"] == 1)
+                        } elseif ($arG["GROUP_ID"] == 1) {
                             $arUserGroups[] = "administrators";
-                        elseif ($arG["GROUP_ID"] == 2)
+                        } elseif ($arG["GROUP_ID"] == 2) {
                             $arUserGroups[] = "everyone";
+                        }
                     }
                     $arSaveUser["GROUP_ID"] = $arUserGroups;
 
                     if (CModule::IncludeModule("blog")) {
                         $arBlogUser = CBlogUser::GetByID($arUser['ID'], BLOG_BY_USER_ID);
-                        if (is_array($arBlogUser) && $arBlogUser["AVATAR"] > 0)
+                        if (is_array($arBlogUser) && $arBlogUser["AVATAR"] > 0) {
                             $arSaveUser["BLOG_AVATAR"] = CFile::GetPath($arBlogUser["AVATAR"]);
+                        }
                     }
 
                     if (CModule::IncludeModule("forum")) {
                         $arForumUser = CForumUser::GetByID($arUser['ID'], BLOG_BY_USER_ID);
-                        if (is_array($arForumUser) && $arForumUser["AVATAR"] > 0)
+                        if (is_array($arForumUser) && $arForumUser["AVATAR"] > 0) {
                             $arSaveUser["FORUM_AVATAR"] = CFile::GetPath($arForumUser["AVATAR"]);
+                        }
                     }
 
                     $oResponse->status = "200 OK";
                     $oResponse->arParameters['USER_INFO'] = $arSaveUser;
-                    if (defined("FORMAT_DATE"))
+                    if (defined("FORMAT_DATE")) {
                         $oResponse->arParameters['FORMAT_DATE'] = FORMAT_DATE;
-                    if (defined("FORMAT_DATETIME"))
+                    }
+                    if (defined("FORMAT_DATETIME")) {
                         $oResponse->arParameters['FORMAT_DATETIME'] = FORMAT_DATETIME;
+                    }
                 } else {
                     $oResponse->status = "443 Bad password.";
                     $oResponse->text = GetMessage("CTRLR_WS_ERR_BAD_PASSW");
@@ -233,16 +257,24 @@ if ($oRequest->Internal()) {
     //or other controller activity detected which may concern about
     //site contents
     $db_events = GetModuleEvents("main", "OnEpilog");
-    while ($arEvent = $db_events->Fetch())
+    while ($arEvent = $db_events->Fetch()) {
         ExecuteModuleEventEx($arEvent);
+    }
 } else {
     require_once(dirname(__FILE__) . "/../include/prolog_after.php");
     if ($oResponse->OK()) {
         echo $oResponse->text;
     } else {
-        ShowError(GetMessage("MAIN_ADM_CONTROLLER_ERR7") . ' ' . $oResponse->text . '. ' . GetMessage("MAIN_ADM_CONTROLLER_ERR7_AGAIN"));
-        if (strlen($_SERVER['HTTP_REFERER']) > 0)
-            echo '<br>' . '<a href="' . htmlspecialcharsbx($_SERVER['HTTP_REFERER']) . '">' . GetMessage("MAIN_ADM_CONTROLLER_BACK_URL") . '</a>';
+        ShowError(
+            GetMessage("MAIN_ADM_CONTROLLER_ERR7") . ' ' . $oResponse->text . '. ' . GetMessage(
+                "MAIN_ADM_CONTROLLER_ERR7_AGAIN"
+            )
+        );
+        if ($_SERVER['HTTP_REFERER'] <> '') {
+            echo '<br>' . '<a href="' . htmlspecialcharsbx($_SERVER['HTTP_REFERER']) . '">' . GetMessage(
+                    "MAIN_ADM_CONTROLLER_BACK_URL"
+                ) . '</a>';
+        }
     }
     require_once(dirname(__FILE__) . "/../include/epilog.php");
 }

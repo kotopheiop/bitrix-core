@@ -78,8 +78,9 @@ abstract class Tree extends Entity\DataManager
 
         $addResult = parent::add($data);
 
-        if ($addResult->isSuccess() && $needResort && $rebalance)
+        if ($addResult->isSuccess() && $needResort && $rebalance) {
             self::rebalance($node, $addResult->getId());
+        }
 
         return $addResult;
     }
@@ -95,17 +96,21 @@ abstract class Tree extends Entity\DataManager
         parent::checkFields($result, $primary, $data);
 
         if (!($result instanceof Entity\UpdateResult)) // work out only when update()
+        {
             return;
+        }
 
         foreach (static::getEntity()->getFields() as $field) {
-            if ($field->getName() == 'PARENT_ID' && strlen($data['PARENT_ID'])) {
+            if ($field->getName() == 'PARENT_ID' && mb_strlen($data['PARENT_ID'])) {
                 //it cant be parent for itself
                 if (intval($primary['ID']) == intval($data['PARENT_ID'])) {
-                    $result->addError(new Entity\FieldError(
-                        $field,
-                        Loc::getMessage('SALE_LOCATION_TREE_ENTITY_CANNOT_MOVE_STRAIGHT_TO_ITSELF_EXCEPTION'),
-                        Entity\FieldError::INVALID_VALUE
-                    ));
+                    $result->addError(
+                        new Entity\FieldError(
+                            $field,
+                            Loc::getMessage('SALE_LOCATION_TREE_ENTITY_CANNOT_MOVE_STRAIGHT_TO_ITSELF_EXCEPTION'),
+                            Entity\FieldError::INVALID_VALUE
+                        )
+                    );
                 } else {
                     try {
                         $node = self::getNodeInfo($primary['ID']);
@@ -114,14 +119,15 @@ abstract class Tree extends Entity\DataManager
                         // new parent cannot belong to node subtree
                         if ($node['PARENT_ID'] != $nodeDst['ID']) {
                             if ($nodeDst['LEFT_MARGIN'] >= $node['LEFT_MARGIN'] && $nodeDst['RIGHT_MARGIN'] <= $node['RIGHT_MARGIN']) {
-                                $result->addError(new Entity\FieldError(
-                                    $field,
-                                    Loc::getMessage('SALE_LOCATION_TREE_ENTITY_CANNOT_MOVE_TO_ITSELF_EXCEPTION'),
-                                    Entity\FieldError::INVALID_VALUE
-                                ));
+                                $result->addError(
+                                    new Entity\FieldError(
+                                        $field,
+                                        Loc::getMessage('SALE_LOCATION_TREE_ENTITY_CANNOT_MOVE_TO_ITSELF_EXCEPTION'),
+                                        Entity\FieldError::INVALID_VALUE
+                                    )
+                                );
                             }
                         }
-
                     } catch (Main\SystemException $e) {
                     }
                 }
@@ -143,14 +149,18 @@ abstract class Tree extends Entity\DataManager
         $rebalance = !isset($additional['REBALANCE']) || $additional['REBALANCE'] !== false;
         $node = self::getNodeInfo($primary);
 
-        if (isset($data['PARENT_ID']) && !strlen($data['PARENT_ID']))
+        if (isset($data['PARENT_ID']) && !mb_strlen($data['PARENT_ID'])) {
             $data['PARENT_ID'] = 0;
+        }
 
         $updResult = parent::update($primary, $data);
 
         // if we have 'PARENT_ID' key in $data, and it was changed, we should relocate subtree
-        if ($updResult->isSuccess() && isset($data['PARENT_ID']) && (intval($node['PARENT_ID']) != intval($data['PARENT_ID'])) && $rebalance)
+        if ($updResult->isSuccess() && isset($data['PARENT_ID']) && (intval($node['PARENT_ID']) != intval(
+                    $data['PARENT_ID']
+                )) && $rebalance) {
             self::moveSubtree($primary, $data['PARENT_ID']);
+        }
 
         return $updResult;
     }
@@ -172,7 +182,10 @@ abstract class Tree extends Entity\DataManager
      * @throws Tree\NodeNotFoundException
      * @throws \Exception
      */
-    public static function deleteExtended($primary, array $additional = array()) // here also could be an implementation of CHILDREN_REATTACH
+    public static function deleteExtended(
+        $primary,
+        array $additional = array()
+    ) // here also could be an implementation of CHILDREN_REATTACH
     {
         $rebalance = !isset($additional['REBALANCE']) || $additional['REBALANCE'] !== false;
         $deleteSubtree = !isset($additional['DELETE_SUBTREE']) || $additional['DELETE_SUBTREE'] !== false;
@@ -185,7 +198,10 @@ abstract class Tree extends Entity\DataManager
             if (intval($node['ID'])) {
                 static::checkNodeThrowException($node);
                 // low-level
-                Main\HttpApplication::getConnection()->query('delete from ' . static::getTableName() . ' where LEFT_MARGIN > ' . $node['LEFT_MARGIN'] . ' and RIGHT_MARGIN < ' . $node['RIGHT_MARGIN']);
+                Main\HttpApplication::getConnection()->query(
+                    'delete from ' . static::getTableName(
+                    ) . ' where LEFT_MARGIN > ' . $node['LEFT_MARGIN'] . ' and RIGHT_MARGIN < ' . $node['RIGHT_MARGIN']
+                );
 
                 // and also remove free spece, if needed
                 if ($rebalance) {
@@ -223,47 +239,64 @@ abstract class Tree extends Entity\DataManager
 
         $query = new Main\Entity\Query(static::getEntity());
         $query->setSelect(array('ID'));
-        $query->setFilter(array(
-            '>LEFT_MARGIN' => $node['LEFT_MARGIN'],
-            '<RIGHT_MARGIN' => $node['RIGHT_MARGIN']
-        ));
+        $query->setFilter(
+            array(
+                '>LEFT_MARGIN' => $node['LEFT_MARGIN'],
+                '<RIGHT_MARGIN' => $node['RIGHT_MARGIN']
+            )
+        );
 
         return $query->getQuery();
     }
 
     public static function checkIntegrity()
     {
-        return !self::getList([
-            'select' => ['ID'],
-            'filter' => [
-                'LOGIC' => 'OR',
-                ['LEFT_MARGIN' => false],
-                ['RIGHT_MARGIN' => false]
-            ],
-            'limit' => 1
-        ])->fetch();
+        return !self::getList(
+            [
+                'select' => ['ID'],
+                'filter' => [
+                    'LOGIC' => 'OR',
+                    ['LEFT_MARGIN' => false],
+                    ['RIGHT_MARGIN' => false]
+                ],
+                'limit' => 1
+            ]
+        )->fetch();
     }
 
-    public static function checkNodeIsParentOfNodeById($primary, $childPrimary, $behaviour = array('CHECK_DIRECT' => false))
-    {
+    public static function checkNodeIsParentOfNodeById(
+        $primary,
+        $childPrimary,
+        $behaviour = array('CHECK_DIRECT' => false)
+    ) {
         $primary = Assert::expectIntegerPositive($primary, '$primary');
         $childPrimary = Assert::expectIntegerPositive($childPrimary, '$childPrimary');
 
-        return static::checkNodeIsParentOfNodeByCondition(array('=ID' => $primary), array('=ID' => $childPrimary), $behaviour);
+        return static::checkNodeIsParentOfNodeByCondition(
+            array('=ID' => $primary),
+            array('=ID' => $childPrimary),
+            $behaviour
+        );
     }
 
-    protected static function checkNodeIsParentOfNodeByCondition($parentNodeFilter, $nodeFilter, $behaviour = array('CHECK_DIRECT' => false))
-    {
+    protected static function checkNodeIsParentOfNodeByCondition(
+        $parentNodeFilter,
+        $nodeFilter,
+        $behaviour = array('CHECK_DIRECT' => false)
+    ) {
         $parent = static::getList(array('filter' => $parentNodeFilter, 'limit' => 1))->fetch();
         $child = static::getList(array('filter' => $nodeFilter, 'limit' => 1))->fetch();
 
-        if (!intval($parent['ID']))
+        if (!intval($parent['ID'])) {
             throw new Main\SystemException('Node being checked not found');
-        if (!intval($child['ID']))
+        }
+        if (!intval($child['ID'])) {
             throw new Main\SystemException('Child node not found');
+        }
 
-        if ($behaviour['CHECK_DIRECT'])
+        if ($behaviour['CHECK_DIRECT']) {
             return $parent['ID'] == $child['PARENT_ID'];
+        }
 
         return $parent['LEFT_MARGIN'] < $child['LEFT_MARGIN'] && $parent['RIGHT_MARGIN'] > $child['RIGHT_MARGIN'];
     }
@@ -282,10 +315,11 @@ abstract class Tree extends Entity\DataManager
                 'RIGHT_MARGIN' => $item['RIGHT_MARGIN']
             );
 
-            if (!intval($item['PARENT_ID']))
+            if (!intval($item['PARENT_ID'])) {
                 $edges['ROOT'][] = $item['ID'];
-            else
+            } else {
                 $edges[$item['PARENT_ID']][] = $item['ID'];
+            }
         }
 
         // walk tree in-deep to obtain correct margins
@@ -297,25 +331,29 @@ abstract class Tree extends Entity\DataManager
 
         $dbConnection = Main\HttpApplication::getConnection();
 
-        $dbConnection->query("create table " . $tabName . " (
+        $dbConnection->query(
+            "create table " . $tabName . " (
 			ID " . Helper::getSqlForDataType('int') . ",
 			LEFT_MARGIN " . Helper::getSqlForDataType('int') . ",
 			RIGHT_MARGIN " . Helper::getSqlForDataType('int') . ",
 			DEPTH_LEVEL " . Helper::getSqlForDataType('int') . "
-		)");
+		)"
+        );
 
-        $handle = new BlockInserter(array(
-            'tableName' => $tabName,
-            'exactFields' => array(
-                'ID' => array('data_type' => 'integer'),
-                'LEFT_MARGIN' => array('data_type' => 'integer'),
-                'RIGHT_MARGIN' => array('data_type' => 'integer'),
-                'DEPTH_LEVEL' => array('data_type' => 'integer'),
-            ),
-            'parameters' => array(
-                'mtu' => self::BLOCK_INSERT_MTU
+        $handle = new BlockInserter(
+            array(
+                'tableName' => $tabName,
+                'exactFields' => array(
+                    'ID' => array('data_type' => 'integer'),
+                    'LEFT_MARGIN' => array('data_type' => 'integer'),
+                    'RIGHT_MARGIN' => array('data_type' => 'integer'),
+                    'DEPTH_LEVEL' => array('data_type' => 'integer'),
+                ),
+                'parameters' => array(
+                    'mtu' => self::BLOCK_INSERT_MTU
+                )
             )
-        ));
+        );
         foreach ($nodes as $id => $node) {
             $node['ID'] = $id;
             $handle->insert($node);
@@ -323,11 +361,16 @@ abstract class Tree extends Entity\DataManager
         $handle->flush();
 
         // merge temp table with location table
-        Helper::mergeTables($entityTableName, $tabName, array(
-            'LEFT_MARGIN' => 'LEFT_MARGIN',
-            'RIGHT_MARGIN' => 'RIGHT_MARGIN',
-            'DEPTH_LEVEL' => 'DEPTH_LEVEL'
-        ), array('ID' => 'ID'));
+        Helper::mergeTables(
+            $entityTableName,
+            $tabName,
+            array(
+                'LEFT_MARGIN' => 'LEFT_MARGIN',
+                'RIGHT_MARGIN' => 'RIGHT_MARGIN',
+                'DEPTH_LEVEL' => 'DEPTH_LEVEL'
+            ),
+            array('ID' => 'ID')
+        );
 
         $dbConnection->query("drop table {$tabName}");
     }
@@ -335,10 +378,12 @@ abstract class Tree extends Entity\DataManager
     public static function getPathToNode($primary, $parameters, $behaviour = array('SHOW_LEAF' => true))
     {
         $primary = Assert::expectIntegerPositive($primary, '$primary');
-        if (!is_array($behaviour))
+        if (!is_array($behaviour)) {
             $behaviour = array();
-        if (!isset($behaviour['SHOW_LEAF']))
+        }
+        if (!isset($behaviour['SHOW_LEAF'])) {
             $behaviour['SHOW_LEAF'] = true;
+        }
 
         return self::getPathToNodeByCondition(array('ID' => $primary), $parameters, $behaviour);
     }
@@ -351,29 +396,37 @@ abstract class Tree extends Entity\DataManager
      *
      * @access private
      */
-    public static function getPathToNodeByCondition($filter, $parameters = array(), $behaviour = array('SHOW_LEAF' => true))
-    {
+    public static function getPathToNodeByCondition(
+        $filter,
+        $parameters = array(),
+        $behaviour = array('SHOW_LEAF' => true)
+    ) {
         $filter = Assert::expectNotEmptyArray($filter, '$filter');
 
-        if (!is_array($behaviour))
+        if (!is_array($behaviour)) {
             $behaviour = array();
-        if (!isset($behaviour['SHOW_LEAF']))
+        }
+        if (!isset($behaviour['SHOW_LEAF'])) {
             $behaviour['SHOW_LEAF'] = true;
+        }
 
-        if (empty($parameters))
+        if (empty($parameters)) {
             $parameters = array();
+        }
 
         // todo: try to do this job in a single query with join. Speed profit?
 
         $node = self::getList(array('filter' => $filter, 'limit' => 1))->fetch();
-        if (!isset($node['ID']))
+        if (!isset($node['ID'])) {
             throw new Main\SystemException(Loc::getMessage('SALE_LOCATION_TREE_ENTITY_NODE_NOT_FOUND_EXCEPTION'));
+        }
 
         $parameters['filter']['<=LEFT_MARGIN'] = intval($node['LEFT_MARGIN']);
         $parameters['filter']['>=RIGHT_MARGIN'] = intval($node['RIGHT_MARGIN']);
 
-        if (!$behaviour['SHOW_LEAF'])
+        if (!$behaviour['SHOW_LEAF']) {
             $parameters['filter']['!=ID'] = $node['ID'];
+        }
 
         $parameters['order'] = array(
             'LEFT_MARGIN' => 'asc'
@@ -382,25 +435,33 @@ abstract class Tree extends Entity\DataManager
         return self::getList($parameters);
     }
 
-    public static function getPathToMultipleNodes($nodeInfo = array(), $parameters = array(), $behaviour = array('SHOW_LEAF' => true))
-    {
+    public static function getPathToMultipleNodes(
+        $nodeInfo = array(),
+        $parameters = array(),
+        $behaviour = array('SHOW_LEAF' => true)
+    ) {
         Assert::expectNotEmptyArray($nodeInfo, '$nodeInfo');
 
-        if (!is_array($behaviour))
+        if (!is_array($behaviour)) {
             $behaviour = array();
-        if (!isset($behaviour['SHOW_LEAF']))
+        }
+        if (!isset($behaviour['SHOW_LEAF'])) {
             $behaviour['SHOW_LEAF'] = true;
+        }
 
-        if (empty($parameters))
+        if (empty($parameters)) {
             $parameters = array();
+        }
 
-        if (is_array($parameters['select']))
+        if (is_array($parameters['select'])) {
             $originSelect = $parameters['select'];
-        else
+        } else {
             $originSelect = array();
+        }
 
-        if (is_array($parameters['order']))
+        if (is_array($parameters['order'])) {
             throw new Main\NotSupportedException('"Order" clause is not supported here');
+        }
 
         $parameters['order'] = array(
             'LEFT_MARGIN' => 'asc'
@@ -420,8 +481,9 @@ abstract class Tree extends Entity\DataManager
                 '>=RIGHT_MARGIN' => intval($node['RIGHT_MARGIN'])
             );
 
-            if (!$behaviour['SHOW_LEAF'])
+            if (!$behaviour['SHOW_LEAF']) {
                 $filter['!=ID'] = $node['ID'];
+            }
         }
         $filter['LOGIC'] = 'OR';
 
@@ -448,16 +510,22 @@ abstract class Tree extends Entity\DataManager
             $i = 0;
             while ($id) {
                 if ($i >= $depthLimit) // there is a cycle or smth like, anyway this is abnormal situation
+                {
                     break;
+                }
 
                 if (!isset($index[$id])) // non-existing element in the chain. strange, abort
+                {
                     break;
+                }
 
                 $resultNode = $index[$id]['NODE'];
-                if (!in_array('PARENT_ID', $originSelect))
+                if (!in_array('PARENT_ID', $originSelect)) {
                     unset($resultNode['PARENT_ID']);
-                if (!in_array('ID', $originSelect))
+                }
+                if (!in_array('ID', $originSelect)) {
                     unset($resultNode['ID']);
+                }
                 $path[$id] = $resultNode;
 
                 $id = intval($index[$id]['PARENT_ID']);
@@ -487,26 +555,33 @@ abstract class Tree extends Entity\DataManager
             $node['LEFT_MARGIN'] = Assert::expectIntegerNonNegative($node['LEFT_MARGIN'], '$nodeInfo[][LEFT_MARGIN]');
             $node['RIGHT_MARGIN'] = Assert::expectIntegerPositive($node['RIGHT_MARGIN'], '$nodeInfo[][RIGHT_MARGIN]');
 
-            if ($min === false || $node['LEFT_MARGIN'] < $min)
+            if ($min === false || $node['LEFT_MARGIN'] < $min) {
                 $min = $node['LEFT_MARGIN'];
+            }
 
-            if ($max === false || $node['RIGHT_MARGIN'] > $max)
+            if ($max === false || $node['RIGHT_MARGIN'] > $max) {
                 $max = $node['RIGHT_MARGIN'];
+            }
         }
 
-        if (empty($parameters))
+        if (empty($parameters)) {
             $parameters = array();
+        }
 
-        if (!is_array($parameters['order']))
+        if (!is_array($parameters['order'])) {
             $parameters['order'] = array();
+        }
 
         $parameters['filter']['<LEFT_MARGIN'] = $min;
         $parameters['filter']['>RIGHT_MARGIN'] = $max;
 
-        $parameters['order'] = array_merge(array(
-            'LEFT_MARGIN' => 'desc',
-            'RIGHT_MARGIN' => 'asc'
-        ), $parameters['order']);
+        $parameters['order'] = array_merge(
+            array(
+                'LEFT_MARGIN' => 'desc',
+                'RIGHT_MARGIN' => 'asc'
+            ),
+            $parameters['order']
+        );
 
         $parameters['limit'] = 1;
 
@@ -515,8 +590,9 @@ abstract class Tree extends Entity\DataManager
 
     public static function getChildren($primary, $parameters = array())
     {
-        if (empty($parameters))
+        if (empty($parameters)) {
             $parameters = array();
+        }
 
         if ($primary = intval($primary)) // here $primary might be unset: in this case we take the first level of a tree
         {
@@ -526,8 +602,9 @@ abstract class Tree extends Entity\DataManager
             $parameters['filter']['<=RIGHT_MARGIN'] = intval($node['RIGHT_MARGIN']);
             $parameters['filter']['!=ID'] = $primary;
             $parameters['filter']['DEPTH_LEVEL'] = intval($node['DEPTH_LEVEL']) + 1;
-        } else
+        } else {
             $parameters['filter']['DEPTH_LEVEL'] = 1;
+        }
 
         return self::getList($parameters);
     }
@@ -537,8 +614,9 @@ abstract class Tree extends Entity\DataManager
      */
     public static function getSubTree($primary, $parameters = array())
     {
-        if (empty($parameters))
+        if (empty($parameters)) {
             $parameters = array();
+        }
 
         if ($primary = intval($primary)) // here $primary might be unset: if so, get the whole tree
         {
@@ -548,8 +626,9 @@ abstract class Tree extends Entity\DataManager
             $parameters['filter']['<=RIGHT_MARGIN'] = intval($node['RIGHT_MARGIN']);
         }
 
-        if (!is_array($parameters['order']) || empty($parameters['order']))
+        if (!is_array($parameters['order']) || empty($parameters['order'])) {
             $parameters['order'] = array('LEFT_MARGIN' => 'asc');
+        }
 
         return self::getList($parameters);
     }
@@ -561,19 +640,26 @@ abstract class Tree extends Entity\DataManager
      * SHOW_CHILDREN : if set to true, do return direct ancestors of $primary in the result
      * START_FROM
      */
-    public static function getParentTree($primary, $parameters = array(), $behaviour = array('SHOW_CHILDREN' => true, 'START_FROM' => false))
-    {
+    public static function getParentTree(
+        $primary,
+        $parameters = array(),
+        $behaviour = array('SHOW_CHILDREN' => true, 'START_FROM' => false)
+    ) {
         $primary = Assert::expectIntegerPositive($primary, '$primary');
 
-        if (!is_array($behaviour))
+        if (!is_array($behaviour)) {
             $behaviour = array();
-        if (!isset($behaviour['SHOW_CHILDREN']))
+        }
+        if (!isset($behaviour['SHOW_CHILDREN'])) {
             $behaviour['SHOW_CHILDREN'] = true;
-        if (!isset($behaviour['START_FROM']))
+        }
+        if (!isset($behaviour['START_FROM'])) {
             $behaviour['START_FROM'] = false;
+        }
 
-        if (empty($parameters))
+        if (empty($parameters)) {
             $parameters = array();
+        }
 
         $startFrom = intval($behaviour['START_FROM']);
         $showChildren = $behaviour['SHOW_CHILDREN'];
@@ -587,20 +673,26 @@ abstract class Tree extends Entity\DataManager
         // todo: combine (1) and (2) in one query, check perfomance change
 
         // (1)
-        $res = self::getPathToNode($primary, array(
-            'select' => array('ID')
-        ));
+        $res = self::getPathToNode(
+            $primary,
+            array(
+                'select' => array('ID')
+            )
+        );
 
         $started = !$startFrom;
         while ($item = $res->Fetch()) {
-            if ($item['ID'] == $startFrom)
+            if ($item['ID'] == $startFrom) {
                 $started = true;
+            }
 
-            if (!$started)
+            if (!$started) {
                 continue;
+            }
 
-            if (!$showChildren && $item['ID'] == $primary)
+            if (!$showChildren && $item['ID'] == $primary) {
                 continue;
+            }
 
             $conditions[] = array(
                 'PARENT_ID' => $item['ID']
@@ -611,8 +703,9 @@ abstract class Tree extends Entity\DataManager
 
         $parameters['filter'][] = $conditions;
 
-        if (!is_array($parameters['order']) || empty($parameters['order']))
+        if (!is_array($parameters['order']) || empty($parameters['order'])) {
             $parameters['order'] = array('LEFT_MARGIN' => 'asc');
+        }
 
         // (2)
         return self::getList($parameters);
@@ -800,15 +893,17 @@ abstract class Tree extends Entity\DataManager
             unset($data['INSERT_AFTER']);
             unset($data['INSERT_BEFORE']);
 
-            if ($sort != false)
+            if ($sort != false) {
                 $data['SORT'] = $sort;
+            }
         }
     }
 
     protected final static function manageFreeSpace($right, $length = 2, $op = self::SPACE_ADD, $exceptId = false)
     {
-        if ($length <= 1 || $right <= 0)
+        if ($length <= 1 || $right <= 0) {
             return;
+        }
 
         // LEFT_MARGIN & RIGHT_MARGIN are system fields, user should not know about them ever, so no orm events needed to be fired on update of them
 
@@ -824,13 +919,18 @@ abstract class Tree extends Entity\DataManager
 
         $shifted = Main\HttpApplication::getConnection()->query($query);
 
-        if (!$shifted)
-            throw new Main\SystemException('Query failed: managing free space in a tree', 0, __FILE__, __LINE__); // SaleTreeSystemException
+        if (!$shifted) {
+            throw new Main\SystemException('Query failed: managing free space in a tree', 0, __FILE__, __LINE__);
+        } // SaleTreeSystemException
     }
 
     // act in assumption sort field is always defined for each node and also it`s value positive signed
-    protected final static function makeSortSpace($primary, $direction = self::SORT_FREE_AFTER, $primaryParent, $knownSort = false)
-    {
+    protected final static function makeSortSpace(
+        $primary,
+        $direction = self::SORT_FREE_AFTER,
+        $primaryParent,
+        $knownSort = false
+    ) {
         $primary = Assert::expectIntegerPositive($primary, '$primary');
         $primaryParent = Assert::expectIntegerPositive($primary, '$primaryParent');
 
@@ -841,10 +941,14 @@ abstract class Tree extends Entity\DataManager
         $prevNodeId = false;
 
         $prev = false;
-        $res = self::getChildren($primaryParent, array('select' => array('ID', 'SORT', 'CODE'), 'order' => array('SORT' => 'asc')));
+        $res = self::getChildren(
+            $primaryParent,
+            array('select' => array('ID', 'SORT', 'CODE'), 'order' => array('SORT' => 'asc'))
+        );
         while ($item = $res->Fetch()) {
-            if ($nodeFound && !$nextNodeId)
+            if ($nodeFound && !$nextNodeId) {
                 $nextNodeId = $item['ID'];
+            }
 
             if ($item['ID'] == $primary) {
                 $nodeFound = true;
@@ -857,8 +961,9 @@ abstract class Tree extends Entity\DataManager
         }
 
         // no node exists or they are not neighbours
-        if (!$nodeFound)
+        if (!$nodeFound) {
             return false;
+        }
 
         // add extra items
         if (!$prevNodeId) {
@@ -872,22 +977,26 @@ abstract class Tree extends Entity\DataManager
 
         // handle some obvious situations
         if ($direction == self::SORT_FREE_BEFORE) {
-            if ($knownSort && ($knownSort < $sorts[$prevNodeId]) && ($knownSort < $sorts[$primary]))
-                return $knownSort; // its okay, current sort fits
+            if ($knownSort && ($knownSort < $sorts[$prevNodeId]) && ($knownSort < $sorts[$primary])) {
+                return $knownSort;
+            } // its okay, current sort fits
 
             // inequation above is not true, but there is free space between nodes
-            if ($sorts[$primary] - $sorts[$prevNodeId] > 1)
+            if ($sorts[$primary] - $sorts[$prevNodeId] > 1) {
                 return $sorts[$prevNodeId] + 1;
+            }
 
             $startShift = $primary;
             $return = $sorts[$prevNodeId] + self::SORT_HOLE_SIZE_HALF;
         } else {
-            if ($knownSort && ($knownSort < $sorts[$primary]) && ($knownSort < $sorts[$nextNodeId]))
-                return $knownSort; // its okay, current sort fits
+            if ($knownSort && ($knownSort < $sorts[$primary]) && ($knownSort < $sorts[$nextNodeId])) {
+                return $knownSort;
+            } // its okay, current sort fits
 
             // inequation above is not true, but there is free space between nodes
-            if ($sorts[$nextNodeId] - $sorts[$primary] > 1)
+            if ($sorts[$nextNodeId] - $sorts[$primary] > 1) {
                 return $sorts[$primary] + 1;
+            }
 
             $startShift = $nextNodeId;
             $return = $sorts[$primary] + self::SORT_HOLE_SIZE_HALF;
@@ -898,8 +1007,9 @@ abstract class Tree extends Entity\DataManager
         $shift = $sorts[$startShift] + self::SORT_HOLE_SIZE;
 
         foreach ($sorts as $id => $sVal) {
-            if ($id == $startShift)
+            if ($id == $startShift) {
                 $begin = true;
+            }
 
             if ($begin && $sVal <= $shift) {
                 $shift = $sVal + self::SORT_HOLE_SIZE;
@@ -911,16 +1021,23 @@ abstract class Tree extends Entity\DataManager
     }
 
     // in-deep tree walk
-    protected final static function walkTreeInDeep($primary, $edges, &$nodes, $margin, $depth = 0, $dontCareEvents = false)
-    {
+    protected final static function walkTreeInDeep(
+        $primary,
+        $edges,
+        &$nodes,
+        $margin,
+        $depth = 0,
+        $dontCareEvents = false
+    ) {
         $lMargin = $margin;
 
-        if (empty($edges[$primary]))
+        if (empty($edges[$primary])) {
             $rMargin = $margin + 1;
-        else {
+        } else {
             $offset = $margin + 1;
-            foreach ($edges[$primary] as $sNode)
+            foreach ($edges[$primary] as $sNode) {
                 $offset = self::walkTreeInDeep($sNode, $edges, $nodes, $offset, $depth + 1, $dontCareEvents);
+            }
 
             $rMargin = $offset;
         }
@@ -959,22 +1076,32 @@ abstract class Tree extends Entity\DataManager
         $tableName = static::getTableName();
 
         // todo: write it in orm way
-        $res = Main\HttpApplication::getConnection()->query("select A.RIGHT_MARGIN from {$tableName} A order by A.RIGHT_MARGIN desc")->fetch();
+        $res = Main\HttpApplication::getConnection()->query(
+            "select A.RIGHT_MARGIN from {$tableName} A order by A.RIGHT_MARGIN desc"
+        )->fetch();
         return intval($res['RIGHT_MARGIN']);
     }
 
-    public static function mergeRelationsFromTemporalTable($temporalTabName, $additinalFlds = array(), $fldMap = array())
-    {
+    public static function mergeRelationsFromTemporalTable(
+        $temporalTabName,
+        $additinalFlds = array(),
+        $fldMap = array()
+    ) {
         $dbConnection = Main\HttpApplication::getConnection();
         $dbHelper = $dbConnection->getSqlHelper();
 
-        $temporalTabName = Assert::expectStringNotNull($temporalTabName, false, 'Name of temporal table must be a non-zero length string');
+        $temporalTabName = Assert::expectStringNotNull(
+            $temporalTabName,
+            false,
+            'Name of temporal table must be a non-zero length string'
+        );
         $temporalTabName = $dbHelper->forSql($temporalTabName);
 
         $entityTableName = static::getTableName();
 
-        if (!is_array($additinalFlds))
+        if (!is_array($additinalFlds)) {
             $additinalFlds = array();
+        }
 
         $additinalFlds = array_merge(array('LEFT_MARGIN', 'RIGHT_MARGIN', 'DEPTH_LEVEL'), $additinalFlds);
 
@@ -991,7 +1118,9 @@ abstract class Tree extends Entity\DataManager
             $additFldCnt = count($additinalFlds);
 
             for ($i = 0; $i < $additFldCnt; $i++) {
-                $sql .= $entityTableName . '.' . $additinalFlds[$i] . ' = ' . $temporalTabName . '.' . $fldReplace[$additinalFlds[$i]] . ($i == count($additinalFlds) - 1 ? '' : ', ');
+                $sql .= $entityTableName . '.' . $additinalFlds[$i] . ' = ' . $temporalTabName . '.' . $fldReplace[$additinalFlds[$i]] . ($i == count(
+                        $additinalFlds
+                    ) - 1 ? '' : ', ');
             }
 
             $sql .= ' where ' . $entityTableName . '.ID = ' . $temporalTabName . '.' . $idReplace;
@@ -1000,7 +1129,9 @@ abstract class Tree extends Entity\DataManager
             $additFldCnt = count($additinalFlds);
 
             for ($i = 0; $i < $additFldCnt; $i++) {
-                $sql .= $additinalFlds[$i] . ' = ' . $temporalTabName . '.' . $fldReplace[$additinalFlds[$i]] . ($i == count($additinalFlds) - 1 ? '' : ', ');
+                $sql .= $additinalFlds[$i] . ' = ' . $temporalTabName . '.' . $fldReplace[$additinalFlds[$i]] . ($i == count(
+                        $additinalFlds
+                    ) - 1 ? '' : ', ');
             }
 
             $sql .= ' from ' . $entityTableName . ' join ' . $temporalTabName . ' on ' . $entityTableName . '.ID = ' . $temporalTabName . '.' . $idReplace;
@@ -1029,8 +1160,9 @@ abstract class Tree extends Entity\DataManager
             'select' => array('CNT')
         );
 
-        if (is_array($filter))
+        if (is_array($filter)) {
             $params['filter'] = $filter;
+        }
 
         $res = static::getList($params)->fetch();
 
@@ -1040,7 +1172,9 @@ abstract class Tree extends Entity\DataManager
     protected static function checkNodeThrowException($node)
     {
         // left margin MAY be equal to zero, right margin MAY NOT
-        if (!is_numeric($node['LEFT_MARGIN']) || (int)$node['LEFT_MARGIN'] < 0 || !intval($node['RIGHT_MARGIN']) || !intval($node['ID'])) {
+        if (!is_numeric($node['LEFT_MARGIN']) || (int)$node['LEFT_MARGIN'] < 0 || !intval(
+                $node['RIGHT_MARGIN']
+            ) || !intval($node['ID'])) {
             throw new Tree\NodeIncorrectException(
                 false,
                 array(
@@ -1049,13 +1183,18 @@ abstract class Tree extends Entity\DataManager
                         'CODE' => $node['CODE'],
                         'LEFT_MARGIN' => $node['LEFT_MARGIN'],
                         'RIGHT_MARGIN' => $node['RIGHT_MARGIN']
-                    )));
+                    )
+                )
+            );
         }
     }
 
     // deprecated
-    protected static function checkNodeIsParentOfNodeByFilters($parentNodeFilter, $nodeFilter, $behaviour = array('CHECK_DIRECT' => false))
-    {
+    protected static function checkNodeIsParentOfNodeByFilters(
+        $parentNodeFilter,
+        $nodeFilter,
+        $behaviour = array('CHECK_DIRECT' => false)
+    ) {
         return static::checkNodeIsParentOfNodeByCondition($parentNodeFilter, $nodeFilter, $behaviour);
     }
 }

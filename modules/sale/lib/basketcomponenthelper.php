@@ -26,7 +26,9 @@ class BasketComponentHelper
         }
 
         $quantity = null;
-        if (!empty($_SESSION['SALE_USER_BASKET_QUANTITY'][$siteId]) && is_array($_SESSION['SALE_USER_BASKET_QUANTITY'][$siteId])
+        if (!empty($_SESSION['SALE_USER_BASKET_QUANTITY'][$siteId]) && is_array(
+                $_SESSION['SALE_USER_BASKET_QUANTITY'][$siteId]
+            )
             && array_key_exists($fuserId, $_SESSION['SALE_USER_BASKET_QUANTITY'][$siteId])) {
             $quantity = $_SESSION['SALE_USER_BASKET_QUANTITY'][$siteId][$fuserId];
         }
@@ -52,7 +54,9 @@ class BasketComponentHelper
         }
 
         $price = null;
-        if (!empty($_SESSION['SALE_USER_BASKET_PRICE'][$siteId]) && is_array($_SESSION['SALE_USER_BASKET_PRICE'][$siteId])
+        if (!empty($_SESSION['SALE_USER_BASKET_PRICE'][$siteId]) && is_array(
+                $_SESSION['SALE_USER_BASKET_PRICE'][$siteId]
+            )
             && array_key_exists($fuserId, $_SESSION['SALE_USER_BASKET_PRICE'][$siteId])) {
             $price = $_SESSION['SALE_USER_BASKET_PRICE'][$siteId][$fuserId];
         }
@@ -209,18 +213,21 @@ class BasketComponentHelper
         $basketClassName = $registry->getBasketClassName();
 
         $basketList = array();
-        $res = $basketClassName::getList(array(
-            'filter' => array(
-                'FUSER_ID' => $fuserId,
-                'ORDER_ID' => null,
-                'LID' => $siteId,
-                'CAN_BUY' => 'Y',
-                'DELAY' => 'N'
+        $res = $basketClassName::getList(
+            array(
+                'filter' => array(
+                    'FUSER_ID' => $fuserId,
+                    'ORDER_ID' => null,
+                    'LID' => $siteId,
+                    'CAN_BUY' => 'Y',
+                    'DELAY' => 'N'
+                )
             )
-        ));
+        );
         while ($data = $res->fetch()) {
-            if (\CSaleBasketHelper::isSetItem($data))
+            if (\CSaleBasketHelper::isSetItem($data)) {
                 continue;
+            }
 
             if (!isset($data['BASE_PRICE']) || (float)$data['BASE_PRICE'] <= 0) {
                 $data['BASE_PRICE'] = $data['PRICE'] + $data['DISCOUNT_PRICE'];
@@ -303,26 +310,40 @@ class BasketComponentHelper
                     $updateSessionData = true;
                 }
 
-                if (!$updateSessionData && (array_key_exists('PRICE', $originalValues) && PriceMaths::roundPrecision($originalValues['PRICE']) !== PriceMaths::roundPrecision($basketItem->getPrice()))) {
+                if (!$updateSessionData && (array_key_exists('PRICE', $originalValues) && PriceMaths::roundPrecision(
+                            $originalValues['PRICE']
+                        ) !== PriceMaths::roundPrecision($basketItem->getPrice()))) {
                     $updateSessionData = true;
                 }
 
-                if (!$updateSessionData && (array_key_exists('DISCOUNT_PRICE', $originalValues) && PriceMaths::roundPrecision($originalValues['DISCOUNT_PRICE']) !== PriceMaths::roundPrecision($basketItem->getDiscountPrice()))) {
+                if (!$updateSessionData && (array_key_exists(
+                            'DISCOUNT_PRICE',
+                            $originalValues
+                        ) && PriceMaths::roundPrecision(
+                            $originalValues['DISCOUNT_PRICE']
+                        ) !== PriceMaths::roundPrecision($basketItem->getDiscountPrice()))) {
                     $updateSessionData = true;
                 }
             }
 
-            if (!$updateSessionData && (array_key_exists('ORDER_ID', $originalValues) && (intval($originalValues['ORDER_ID'])) == 0 && intval($basketItem->getField('ORDER_ID') > 0))) {
+            if (!$updateSessionData && (array_key_exists('ORDER_ID', $originalValues) && (intval(
+                        $originalValues['ORDER_ID']
+                    )) == 0 && intval($basketItem->getField('ORDER_ID') > 0))) {
                 $updateSessionData = true;
             }
 
             if (!$updateSessionData
-                && (array_key_exists('CAN_BUY', $originalValues) && ($originalValues['CAN_BUY'] !== $basketItem->getField('CAN_BUY')))) {
+                && (array_key_exists(
+                        'CAN_BUY',
+                        $originalValues
+                    ) && ($originalValues['CAN_BUY'] !== $basketItem->getField('CAN_BUY')))) {
                 $updateSessionData = true;
             }
 
             if (!$updateSessionData
-                && (array_key_exists('DELAY', $originalValues) && ($originalValues['DELAY'] !== $basketItem->getField('DELAY')))) {
+                && (array_key_exists('DELAY', $originalValues) && ($originalValues['DELAY'] !== $basketItem->getField(
+                            'DELAY'
+                        )))) {
                 $updateSessionData = true;
             }
 
@@ -388,7 +409,10 @@ class BasketComponentHelper
                     $basketItemQuantity = $basketItem->getQuantity();
                     $basketItemRatio = (float)$ratioList[$basketItemCode];
 
-                    $mod = roundEx(($basketItemQuantity / $basketItemRatio - round($basketItemQuantity / $basketItemRatio)), 6);
+                    $mod = roundEx(
+                        ($basketItemQuantity / $basketItemRatio - round($basketItemQuantity / $basketItemRatio)),
+                        6
+                    );
 
                     if ($mod == 0) {
                         $basketItemRatioList[$basketItemCode] = true;
@@ -454,16 +478,26 @@ class BasketComponentHelper
                     }
 
                     if (!isset($ratioList[$basketItemCode])) {
-                        $result->addError(new ResultError(Main\Localization\Loc::getMessage('SALE_BASKET_COMPONENT_HELPER_PRODUCT_RATIO_NOT_FOUND', array(
-                            '#PRODUCT_NAME#' => $basketItem->getField('NAME')
-                        )), 'SALE_BASKET_COMPONENT_HELPER_PRODUCT_RATIO_NOT_FOUND'));
+                        $result->addError(
+                            new ResultError(
+                                Main\Localization\Loc::getMessage(
+                                    'SALE_BASKET_COMPONENT_HELPER_PRODUCT_RATIO_NOT_FOUND',
+                                    array(
+                                        '#PRODUCT_NAME#' => $basketItem->getField('NAME')
+                                    )
+                                ), 'SALE_BASKET_COMPONENT_HELPER_PRODUCT_RATIO_NOT_FOUND'
+                            )
+                        );
                         continue;
                     }
 
                     $basketItemQuantity = $basketItem->getQuantity();
                     $basketItemRatio = (float)$ratioList[$basketItemCode];
 
-                    $mod = roundEx(($basketItemQuantity / $basketItemRatio - round($basketItemQuantity / $basketItemRatio)), 6);
+                    $mod = roundEx(
+                        ($basketItemQuantity / $basketItemRatio - round($basketItemQuantity / $basketItemRatio)),
+                        6
+                    );
 
                     if ($mod != 0) {
                         $changedItems[] = $basketItemCode;
@@ -525,7 +559,13 @@ class BasketComponentHelper
                     continue;
                 }
 
-                $hash = md5((strval($basketItem->getField("PRODUCT_PROVIDER_CLASS")) != '' ? $basketItem->getField("PRODUCT_PROVIDER_CLASS") : "") . "|" . (strval($basketItem->getField("MODULE")) != '' ? $basketItem->getField("MODULE") : "") . "|" . $basketItem->getField("PRODUCT_ID"));
+                $hash = md5(
+                    (strval($basketItem->getField("PRODUCT_PROVIDER_CLASS")) != '' ? $basketItem->getField(
+                        "PRODUCT_PROVIDER_CLASS"
+                    ) : "") . "|" . (strval($basketItem->getField("MODULE")) != '' ? $basketItem->getField(
+                        "MODULE"
+                    ) : "") . "|" . $basketItem->getField("PRODUCT_ID")
+                );
 
                 if (array_key_exists($hash, static::$cacheRatio)) {
                     $ratioList[$code] = static::$cacheRatio[$hash];
@@ -541,21 +581,31 @@ class BasketComponentHelper
             }
 
             if (!empty($elementList)) {
-                $res = Catalog\MeasureRatioTable::getList(array(
-                    'select' => array('*'),
-                    'filter' => array('@PRODUCT_ID' => $elementList, '=IS_DEFAULT' => 'Y')
-                ));
+                $res = Catalog\MeasureRatioTable::getList(
+                    array(
+                        'select' => array('*'),
+                        'filter' => array('@PRODUCT_ID' => $elementList, '=IS_DEFAULT' => 'Y')
+                    )
+                );
                 while ($ratioData = $res->fetch()) {
-                    if (empty($map[$ratioData["PRODUCT_ID"]]))
+                    if (empty($map[$ratioData["PRODUCT_ID"]])) {
                         continue;
+                    }
 
                     foreach ($map[$ratioData["PRODUCT_ID"]] as $key) {
                         $ratioList[$key] = $ratioData["RATIO"];
 
-                        if (!$basketItem = $basket->getItemByBasketCode($key))
+                        if (!$basketItem = $basket->getItemByBasketCode($key)) {
                             continue;
+                        }
 
-                        $hash = md5((strval($basketItem->getField("PRODUCT_PROVIDER_CLASS")) != '' ? $basketItem->getField("PRODUCT_PROVIDER_CLASS") : "") . "|" . (strval($basketItem->getField("MODULE")) != '' ? $basketItem->getField("MODULE") : "") . "|" . $basketItem->getField("PRODUCT_ID"));
+                        $hash = md5(
+                            (strval($basketItem->getField("PRODUCT_PROVIDER_CLASS")) != '' ? $basketItem->getField(
+                                "PRODUCT_PROVIDER_CLASS"
+                            ) : "") . "|" . (strval($basketItem->getField("MODULE")) != '' ? $basketItem->getField(
+                                "MODULE"
+                            ) : "") . "|" . $basketItem->getField("PRODUCT_ID")
+                        );
 
                         static::$cacheRatio[$hash] = $ratioData["RATIO"];
                         static::$cacheRatioData[$hash] = $ratioData;
@@ -567,8 +617,9 @@ class BasketComponentHelper
             unset($elementList, $map);
         }
 
-        if (!empty($ratioList))
+        if (!empty($ratioList)) {
             $result->addData(array('RATIO_LIST' => $ratioList));
+        }
 
         return $result;
     }
@@ -580,33 +631,40 @@ class BasketComponentHelper
      */
     protected static function calculateBasketCost(Basket $basket)
     {
-        if ($basket->count() == 0)
+        if ($basket->count() == 0) {
             return 0;
+        }
 
-        $oldApiStatus = Compatible\DiscountCompatibility::isUsed(); // TODO: remove this code after refactoring DiscountCompatibility
-        if ($oldApiStatus)
+        $oldApiStatus = Compatible\DiscountCompatibility::isUsed(
+        ); // TODO: remove this code after refactoring DiscountCompatibility
+        if ($oldApiStatus) {
             Compatible\DiscountCompatibility::stopUsageCompatible();
+        }
         DiscountCouponsManager::freezeCouponStorage();
         $basket->refreshData(array('PRICE', 'COUPONS'));
         $discounts = Discount::buildFromBasket($basket, new Discount\Context\Fuser($basket->getFUserId(true)));
         $discounts->calculate();
         $discountResult = $discounts->getApplyResult();
         DiscountCouponsManager::unFreezeCouponStorage();
-        if ($oldApiStatus)
+        if ($oldApiStatus) {
             Compatible\DiscountCompatibility::revertUsageCompatible();
+        }
 
-        if (empty($discountResult['PRICES']['BASKET']))
+        if (empty($discountResult['PRICES']['BASKET'])) {
             return 0;
+        }
 
         $result = 0;
         $discountResult = $discountResult['PRICES']['BASKET'];
         /** @var BasketItem $basketItem */
         foreach ($basket as $basketItem) {
-            if (!$basketItem->canBuy())
+            if (!$basketItem->canBuy()) {
                 continue;
+            }
             $code = $basketItem->getBasketCode();
-            if (!empty($discountResult[$code]))
+            if (!empty($discountResult[$code])) {
                 $result += $discountResult[$code]['PRICE'] * $basketItem->getQuantity();
+            }
             unset($code);
         }
         unset($basketItem);

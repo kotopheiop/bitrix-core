@@ -1,5 +1,8 @@
 <?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
+    die();
+}
 
 $store_password = (COption::GetOptionString('security', 'otp_allow_remember') === 'Y');
 $bNeedCaptcha = (CModule::IncludeModule("security") && \Bitrix\Security\Mfa\Otp::isCaptchaRequired());
@@ -33,15 +36,17 @@ $bNeedCaptcha = (CModule::IncludeModule("security") && \Bitrix\Security\Mfa\Otp:
                        tabindex="3" onfocus="BX.addClass(this.nextSibling, 'login-popup-checkbox-label-active')"
                        onblur="BX.removeClass(this.nextSibling, 'login-popup-checkbox-label-active')"><label
                         for="OTP_REMEMBER" class="adm-designed-checkbox-label"></label>
-                <label for="OTP_REMEMBER"
-                       class="login-popup-checkbox-label"><?= GetMessage("AUTH_OTP_REMEMBER_ME") ?></label>
+                <label for="OTP_REMEMBER" class="login-popup-checkbox-label"><?= GetMessage(
+                        "AUTH_OTP_REMEMBER_ME"
+                    ) ?></label>
             </div>
         <?
         endif;
 
         $CAPTCHA_CODE = '';
-        if ($bNeedCaptcha)
+        if ($bNeedCaptcha) {
             $CAPTCHA_CODE = $APPLICATION->CaptchaGetCode();
+        }
 
         ?>
         <input type="hidden" name="captcha_sid" value="<?= $CAPTCHA_CODE ?>"/>
@@ -69,5 +74,9 @@ $bNeedCaptcha = (CModule::IncludeModule("security") && \Bitrix\Security\Mfa\Otp:
     </div>
 </div>
 <script type="text/javascript">
-    BX.adminLogin.registerForm(new BX.authFormOtp('otp', {url: '<?echo CUtil::JSEscape($authUrl . (($s = DeleteParam(array("logout", "login"))) == "" ? "" : "?" . $s));?>'}));
+    BX.adminLogin.registerForm(new BX.authFormOtp('otp', {
+        url: '<?echo CUtil::JSEscape(
+            $authUrl . (($s = DeleteParam(array("logout", "login"))) == "" ? "" : "?" . $s)
+        );?>'
+    }));
 </script>

@@ -1,4 +1,5 @@
 <?
+
 /*
 ##############################################
 # Bitrix: SiteManager                        #
@@ -14,7 +15,9 @@ $bDemo = (CTicket::IsDemo()) ? "Y" : "N";
 $bAdmin = (CTicket::IsAdmin()) ? "Y" : "N";
 $bSupportTeam = (CTicket::IsSupportTeam()) ? "Y" : "N";
 
-if ($bAdmin != "Y" && $bSupportTeam != "Y" && $bDemo != "Y") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if ($bAdmin != "Y" && $bSupportTeam != "Y" && $bDemo != "Y") {
+    $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 include($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/support/colors.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/img.php");
@@ -45,7 +48,7 @@ $arFilter = Array(
     "MARK" => $find_mark_id,
     "SOURCE" => $find_source_id,
 );
-$rsTickets = CTicket::GetDynamicList($by = "s_date_create", $order = "asc", $arFilter);
+$rsTickets = CTicket::GetDynamicList("s_date_create", "asc", $arFilter);
 while ($rsTickets->ExtractFields("f_", false)) {
     $date = mktime(0, 0, 0, $f_CREATE_MONTH, $f_CREATE_DAY, $f_CREATE_YEAR);
     $date_tmp = 0;
@@ -56,16 +59,28 @@ while ($rsTickets->ExtractFields("f_", false)) {
         $date_tmp = $next_date;
         while ($date_tmp < $date) {
             $arrX[] = $date_tmp;
-            if ($find_all == "Y") $arrY_all[] = 0;
-            if ($find_open == "Y") $arrY_open[] = 0;
-            if ($find_close == "Y") $arrY_close[] = 0;
+            if ($find_all == "Y") {
+                $arrY_all[] = 0;
+            }
+            if ($find_open == "Y") {
+                $arrY_open[] = 0;
+            }
+            if ($find_close == "Y") {
+                $arrY_close[] = 0;
+            }
             $date_tmp = AddTime($date_tmp, 1, "D");
         }
     }
     $arrX[] = $date;
-    if ($find_all == "Y") $arrY_all[] = intval($f_ALL_TICKETS);
-    if ($find_open == "Y") $arrY_open[] = intval($f_OPEN_TICKETS);
-    if ($find_close == "Y") $arrY_close[] = intval($f_CLOSE_TICKETS);
+    if ($find_all == "Y") {
+        $arrY_all[] = intval($f_ALL_TICKETS);
+    }
+    if ($find_open == "Y") {
+        $arrY_open[] = intval($f_OPEN_TICKETS);
+    }
+    if ($find_close == "Y") {
+        $arrY_close[] = intval($f_CLOSE_TICKETS);
+    }
     $prev_date = $date;
 }
 /******************************************************
@@ -92,7 +107,7 @@ if ($find_mess == "Y" || $find_overdue_mess == "Y") {
         "IS_LOG" => "N",
         "IS_OVERDUE" => "N"
     );
-    $rsMess = CTicket::GetMessageDynamicList($v1 = "s_date_create", $v2 = "asc", $arFilter);
+    $rsMess = CTicket::GetMessageDynamicList("s_date_create", "asc", $arFilter);
     while ($arMess = $rsMess->Fetch()) {
         $date = mktime(0, 0, 0, $arMess["CREATE_MONTH"], $arMess["CREATE_DAY"], $arMess["CREATE_YEAR"]);
         $arrMessages[$date] = $arMess["COUNTER"];
@@ -108,11 +123,21 @@ if ($find_mess == "Y" || $find_overdue_mess == "Y") {
  * ��������� ��� Y
  *******************************************************/
 $arrY = array();
-if ($find_all == "Y") $arrY = array_merge($arrY, $arrY_all);
-if ($find_open == "Y") $arrY = array_merge($arrY, $arrY_open);
-if ($find_close == "Y") $arrY = array_merge($arrY, $arrY_close);
-if ($find_mess == "Y") $arrY = array_merge($arrY, $arrY_mess);
-if ($find_overdue_mess == "Y") $arrY = array_merge($arrY, $arrY_overdue_mess);
+if ($find_all == "Y") {
+    $arrY = array_merge($arrY, $arrY_all);
+}
+if ($find_open == "Y") {
+    $arrY = array_merge($arrY, $arrY_open);
+}
+if ($find_close == "Y") {
+    $arrY = array_merge($arrY, $arrY_close);
+}
+if ($find_mess == "Y") {
+    $arrY = array_merge($arrY, $arrY_mess);
+}
+if ($find_overdue_mess == "Y") {
+    $arrY = array_merge($arrY, $arrY_overdue_mess);
+}
 $arrayY = GetArrayY($arrY, $MinY, $MaxY);
 
 //while (list($key, $value) = each($arrX)) echo date("d.m.Y",$value)." = ".$arrY_all[$key]."<br>";
@@ -128,20 +153,25 @@ DrawCoordinatGrid($arrayX, $arrayY, $width, $height, $ImageHendle);
  * ������ �������
  *******************************************************/
 
-if ($find_all == "Y")
+if ($find_all == "Y") {
     Graf($arrX, $arrY_all, $ImageHendle, $MinX, $MaxX, $MinY, $MaxY, $arrColor["ALL_TICKET"]);
+}
 
-if ($find_open == "Y")
+if ($find_open == "Y") {
     Graf($arrX, $arrY_open, $ImageHendle, $MinX, $MaxX, $MinY, $MaxY, $arrColor["OPEN_TICKET"]);
+}
 
-if ($find_close == "Y")
+if ($find_close == "Y") {
     Graf($arrX, $arrY_close, $ImageHendle, $MinX, $MaxX, $MinY, $MaxY, $arrColor["CLOSE_TICKET"]);
+}
 
-if ($find_mess == "Y")
+if ($find_mess == "Y") {
     Graf($arrX, $arrY_mess, $ImageHendle, $MinX, $MaxX, $MinY, $MaxY, $arrColor["MESSAGES"]);
+}
 
-if ($find_overdue_mess == "Y")
+if ($find_overdue_mess == "Y") {
     Graf($arrX, $arrY_overdue_mess, $ImageHendle, $MinX, $MaxX, $MinY, $MaxY, $arrColor["OVERDUE_MESSAGES"]);
+}
 
 /******************************************************
  * ���������� �����������

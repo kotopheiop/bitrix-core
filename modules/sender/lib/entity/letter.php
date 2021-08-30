@@ -8,25 +8,25 @@
 
 namespace Bitrix\Sender\Entity;
 
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\DB;
 use Bitrix\Main\Error;
 use Bitrix\Main\InvalidOperationException;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\Type\Date;
-
+use Bitrix\Main\Type\DateTime;
+use Bitrix\Sender\Dispatch;
+use Bitrix\Sender\Integration;
+use Bitrix\Sender\Internals\Model\LetterSegmentTable;
+use Bitrix\Sender\Internals\Model\LetterTable;
 use Bitrix\Sender\Internals\Model\MessageFieldTable;
 use Bitrix\Sender\Message as MainMessage;
-use Bitrix\Sender\Dispatch;
 use Bitrix\Sender\Posting;
-use Bitrix\Sender\Templates;
-use Bitrix\Sender\TemplateTable;
 use Bitrix\Sender\Recipient;
 use Bitrix\Sender\Security;
-use Bitrix\Sender\Integration;
-
-use Bitrix\Sender\Internals\Model\LetterTable;
-use Bitrix\Sender\Internals\Model\LetterSegmentTable;
+use Bitrix\Sender\Templates;
+use Bitrix\Sender\TemplateTable;
 
 Loc::loadMessages(__FILE__);
 
@@ -185,10 +185,12 @@ class Letter extends Base
     {
         $code = null;
         if ($id) {
-            $row = LetterTable::getRow([
-                'select' => ['MESSAGE_CODE'],
-                'filter' => ['=ID' => $id],
-            ]);
+            $row = LetterTable::getRow(
+                [
+                    'select' => ['MESSAGE_CODE'],
+                    'filter' => ['=ID' => $id],
+                ]
+            );
             if ($row) {
                 $code = $row['MESSAGE_CODE'];
             } else {
@@ -234,11 +236,13 @@ class Letter extends Base
      */
     public static function createInstanceByPostingId($postingId)
     {
-        $row = LetterTable::getList(array(
-            'select' => array('ID', 'IS_ADS'),
-            'filter' => array('=POSTING_ID' => $postingId),
-            'limit' => 1
-        ))->fetch();
+        $row = LetterTable::getList(
+            array(
+                'select' => array('ID', 'IS_ADS'),
+                'filter' => array('=POSTING_ID' => $postingId),
+                'limit' => 1
+            )
+        )->fetch();
         if (!$row) {
             return new static();
         }
@@ -292,13 +296,20 @@ class Letter extends Base
             return null;
         }
 
-        $message = MainMessage\Adapter::create($code);
-        if ($message->isAds()) {
+        try {
+            $message = MainMessage\Adapter::create($code);
+        } catch (ArgumentException $e) {
+            return null;
+        }
+
+        if ($message->isAds() || $message->isMarketing()) {
             $instance = new Ad();
         } elseif ($message->isReturnCustomer()) {
             $instance = new Rc();
-        } else {
+        } elseif ($message->isMailing()) {
             $instance = new Letter();
+        } else {
+            $instance = new Toloka();
         }
 
         return $instance;
@@ -358,7 +369,14 @@ class Letter extends Base
 
         // segment check
         if (!is_array($segmentsInclude) || count($segmentsInclude) == 0) {
-            if ($data['IS_TRIGGER'] <> 'Y' && $previousData['IS_TRIGGER'] <> 'Y') {
+            if (
+                (
+                    isset($data['NOT_USE_SEGMENTS'])
+                    && !$data['NOT_USE_SEGMENTS']
+                )
+                && $data['IS_TRIGGER'] <> 'Y'
+                && $previousData['IS_TRIGGER'] <> 'Y'
+            ) {
                 $this->addError(Loc::getMessage('SENDER_ENTITY_LETTER_ERROR_NO_SEGMENTS'));
                 return $id;
             }
@@ -388,16 +406,20 @@ class Letter extends Base
             $data['REITERATE'] = 'Y';
         }
 
+
         if ($this->filterDataByChanging($data, $previousData)) {
             $id = $this->saveByEntity(LetterTable::getEntity(), $id, $data);
         }
 
-        if ($this->hasErrors()) {
-            return $id;
-        }
-
         if ($this->canChangeSegments()) {
             $this->saveDataSegments($id, $segmentsInclude, $segmentsExclude);
+
+            $data['DATE_UPDATE'] = new DateTime();
+            $this->saveByEntity(LetterTable::getEntity(), $id, $data);
+        }
+
+        if ($this->hasErrors()) {
+            return $id;
         }
 
         // update template use count
@@ -464,22 +486,30 @@ class Letter extends Base
         );
 
         $oldSegments = $this->loadDataSegments($id);
+        $letter = LetterTable::getById($id)->fetch();
         LetterSegmentTable::delete(array('LETTER_ID' => $id));
 
         $isChanged = false;
+        $dataToInsert = [];
         foreach ($segmentsList as $segments) {
-            foreach ($segments['list'] as $segmentId) {
-                $result = LetterSegmentTable::add(array(
-                    'LETTER_ID' => $id,
-                    'SEGMENT_ID' => $segmentId,
-                    'INCLUDE' => $segments['include'],
-                ));
-                $result->isSuccess();
+            if (empty($segments['list'])) {
+                continue;
             }
 
             $typeCode = $segments['include'] ? 'INCLUDE' : 'EXCLUDE';
-            $newest = self::getArrayDiffNewest($segments['list'], $oldSegments[$typeCode]);
-            $removed = self::getArrayDiffRemoved($segments['list'], $oldSegments[$typeCode]);
+            $list = [];
+            foreach ($segments['list'] as $segment) {
+                $list[] = ['DATE_UPDATE' => $letter['DATE_UPDATE'], 'ID' => $segment];
+                $dataToInsert[] = array(
+                    'LETTER_ID' => $id,
+                    'SEGMENT_ID' => $segment,
+                    'INCLUDE' => $segments['include'],
+                );
+            }
+
+            $newest = self::getArrayDiffNewest($list, $oldSegments[$typeCode]);
+            $removed = self::getArrayDiffRemoved($list, $oldSegments[$typeCode]);
+
             if (count($newest) === 0 && count($removed) === 0) {
                 continue;
             }
@@ -487,22 +517,33 @@ class Letter extends Base
             if (count($newest) > 0) {
                 Segment::updateUseCounters($newest, $segments['include']);
             }
+
             $isChanged = true;
+        }
+        if (!empty($dataToInsert)) {
+            LetterSegmentTable::addMulti($dataToInsert);
         }
 
         if ($isChanged && $this->getId() && $this->get('POSTING_ID')) {
-            Posting\Builder::create()->run($this->get('POSTING_ID'), false);
+            Posting\Builder::create()
+                ->run($this->get('POSTING_ID'), false);
         }
     }
 
     private static function getArrayDiffNewest(array $current, array $old)
     {
-        return array_diff($current, $old);
+        return array_udiff(
+            $current,
+            $old,
+            function ($first, $second) {
+                return $first['DATE_UPDATE'] < $second['DATE_UPDATE'] || $first['ID'] != $second['ID'];
+            }
+        );
     }
 
     private static function getArrayDiffRemoved(array $current, array $old)
     {
-        return array_diff($old, $current);
+        return self::getArrayDiffNewest($old, $current);
     }
 
     protected function updateTemplateUseCount(array $data, array $previousData)
@@ -529,18 +570,22 @@ class Letter extends Base
      */
     public function loadData($id)
     {
-        $data = static::getList(array(
-            'filter' => array(
-                '=ID' => $id
+        $data = static::getList(
+            array(
+                'filter' => array(
+                    '=ID' => $id
+                )
             )
-        ))->fetch();
+        )->fetch();
         if (!is_array($data)) {
             return null;
         }
 
         $segments = $this->loadDataSegments($id);
         foreach ($segments as $typeCode => $list) {
-            $data["SEGMENTS_$typeCode"] = $list;
+            foreach ($list as $item) {
+                $data["SEGMENTS_$typeCode"][] = $item['ID'];
+            }
         }
 
         return $data;
@@ -581,16 +626,21 @@ class Letter extends Base
     public function loadDataSegments($id)
     {
         $data = array('INCLUDE' => array(), 'EXCLUDE' => array());
-        $segments = LetterSegmentTable::getList(array(
-            'filter' => array(
-                '=LETTER_ID' => $id
+        $segments = LetterSegmentTable::getList(
+            array(
+                'select' => ['INCLUDE', 'LETTER_ID', 'SEGMENT_ID', 'DATE_UPDATE' => 'SEGMENT.DATE_UPDATE'],
+                'filter' => array(
+                    '=LETTER_ID' => $id
+                )
             )
-        ));
+        );
         foreach ($segments as $segment) {
             if ($segment['INCLUDE']) {
-                $data['INCLUDE'][] = $segment['SEGMENT_ID'];
+                $data['INCLUDE'][] =
+                    ['ID' => $segment['SEGMENT_ID'], 'DATE_UPDATE' => $segment['DATE_UPDATE']];
             } else {
-                $data['EXCLUDE'][] = $segment['SEGMENT_ID'];
+                $data['EXCLUDE'][] =
+                    ['ID' => $segment['SEGMENT_ID'], 'DATE_UPDATE' => $segment['DATE_UPDATE']];
             }
         }
 
@@ -1028,26 +1078,28 @@ class Letter extends Base
             //'!POSTING.DATE_SENT' => null
         );
 
-        $postings = static::getList(array(
-            'select' => array(
-                'POSTING_ID',
-                'LETTER_ID' => 'ID',
-                'CAMPAIGN_ID',
-                'TITLE' => 'TITLE',
-                'MAILING_NAME' => 'CAMPAIGN.NAME',
-                'DATE_SENT' => 'POSTING.DATE_SENT',
-                'COUNT_SEND_ERROR' => 'POSTING.COUNT_SEND_ERROR',
-                'CREATED_BY' => 'CREATED_BY',
-                'CREATED_BY_NAME' => 'CREATED_BY_USER.NAME',
-                'CREATED_BY_LAST_NAME' => 'CREATED_BY_USER.LAST_NAME',
-                'CREATED_BY_SECOND_NAME' => 'CREATED_BY_USER.SECOND_NAME',
-                'CREATED_BY_LOGIN' => 'CREATED_BY_USER.LOGIN',
-                'CREATED_BY_TITLE' => 'CREATED_BY_USER.TITLE',
-            ),
-            'filter' => $postingFilter,
-            'limit' => 1,
-            'order' => array('POSTING.DATE_SENT' => 'DESC', 'POSTING.DATE_CREATE' => 'DESC'),
-        ));
+        $postings = static::getList(
+            array(
+                'select' => array(
+                    'POSTING_ID',
+                    'LETTER_ID' => 'ID',
+                    'CAMPAIGN_ID',
+                    'TITLE' => 'TITLE',
+                    'MAILING_NAME' => 'CAMPAIGN.NAME',
+                    'DATE_SENT' => 'POSTING.DATE_SENT',
+                    'COUNT_SEND_ERROR' => 'POSTING.COUNT_SEND_ERROR',
+                    'CREATED_BY' => 'CREATED_BY',
+                    'CREATED_BY_NAME' => 'CREATED_BY_USER.NAME',
+                    'CREATED_BY_LAST_NAME' => 'CREATED_BY_USER.LAST_NAME',
+                    'CREATED_BY_SECOND_NAME' => 'CREATED_BY_USER.SECOND_NAME',
+                    'CREATED_BY_LOGIN' => 'CREATED_BY_USER.LOGIN',
+                    'CREATED_BY_TITLE' => 'CREATED_BY_USER.TITLE',
+                ),
+                'filter' => $postingFilter,
+                'limit' => 1,
+                'order' => array('POSTING.DATE_SENT' => 'DESC', 'POSTING.DATE_CREATE' => 'DESC'),
+            )
+        );
         if ($postingData = $postings->fetch()) {
             $this->postingData = $postingData + $this->postingData;
         }

@@ -31,10 +31,12 @@ class PhraseIndexCollection
             $relPath = '/' . trim($filter->path, '/');
             $relPath = Translate\IO\Path::replaceLangId($relPath, '#LANG_ID#');
 
-            $topPathRes = Index\Internals\PathIndexTable::getList([
-                'select' => ['ID'],
-                'filter' => ['=PATH' => $relPath]
-            ]);
+            $topPathRes = Index\Internals\PathIndexTable::getList(
+                [
+                    'select' => ['ID'],
+                    'filter' => ['=PATH' => $relPath]
+                ]
+            );
             if (!($topPath = $topPathRes->fetch())) {
                 return 0;
             }
@@ -67,8 +69,11 @@ class PhraseIndexCollection
      *
      * @return int
      */
-    public function collect(Translate\Filter $filter = null, Translate\Controller\ITimeLimit $timer = null, Translate\Filter $seek = null)
-    {
+    public function collect(
+        Translate\Filter $filter = null,
+        Translate\Controller\ITimeLimit $timer = null,
+        Translate\Filter $seek = null
+    ) {
         if (isset($filter, $filter->path)) {
             $relPath = $filter->path;
         } else {
@@ -83,10 +88,12 @@ class PhraseIndexCollection
             $checkLanguages = array_intersect($filter->langId, $checkLanguages);
         }
 
-        $topPathRes = Index\Internals\PathIndexTable::getList([
-            'select' => ['ID'],
-            'filter' => ['=PATH' => $relPath]
-        ]);
+        $topPathRes = Index\Internals\PathIndexTable::getList(
+            [
+                'select' => ['ID'],
+                'filter' => ['=PATH' => $relPath]
+            ]
+        );
         if (!($topPath = $topPathRes->fetch())) {
             return 0;
         }
@@ -106,11 +113,29 @@ class PhraseIndexCollection
 
         $fileListQuery
             ->addSelect('PATH_ID')
-            ->registerRuntimeField(new Main\ORM\Fields\ExpressionField('FILE_IDS', "GROUP_CONCAT(%s ORDER BY (%s) SEPARATOR '\\n')", ['ID', 'ID']))
+            ->registerRuntimeField(
+                new Main\ORM\Fields\ExpressionField(
+                    'FILE_IDS',
+                    "GROUP_CONCAT(%s ORDER BY (%s) SEPARATOR '\\n')",
+                    ['ID', 'ID']
+                )
+            )
             ->addSelect('FILE_IDS')
-            ->registerRuntimeField(new Main\ORM\Fields\ExpressionField('LANG_IDS', "GROUP_CONCAT(%s ORDER BY (%s) SEPARATOR '\\n')", ['LANG_ID', 'ID']))
+            ->registerRuntimeField(
+                new Main\ORM\Fields\ExpressionField(
+                    'LANG_IDS',
+                    "GROUP_CONCAT(%s ORDER BY (%s) SEPARATOR '\\n')",
+                    ['LANG_ID', 'ID']
+                )
+            )
             ->addSelect('LANG_IDS')
-            ->registerRuntimeField(new Main\ORM\Fields\ExpressionField('FULL_PATHS', "GROUP_CONCAT(%s ORDER BY (%s) SEPARATOR '\\n')", ['FULL_PATH', 'ID']))
+            ->registerRuntimeField(
+                new Main\ORM\Fields\ExpressionField(
+                    'FULL_PATHS',
+                    "GROUP_CONCAT(%s ORDER BY (%s) SEPARATOR '\\n')",
+                    ['FULL_PATH', 'ID']
+                )
+            )
             ->addSelect('FULL_PATHS')
             ->setFilter($fileFilter)
             ->setOrder(['PATH_ID' => 'ASC'])

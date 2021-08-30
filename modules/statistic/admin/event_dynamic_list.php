@@ -1,12 +1,14 @@
 <?php
+
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/statistic/prolog.php");
 /** @var CMain $APPLICATION */
 IncludeModuleLangFile(__FILE__);
 
 $STAT_RIGHT = $APPLICATION->GetGroupRight("statistic");
-if ($STAT_RIGHT == "D")
+if ($STAT_RIGHT == "D") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 $sTableID = "tbl_event_dynamic_list";
 $oSort = new CAdminSorting($sTableID, "DATE_STAT", "desc");
@@ -31,6 +33,8 @@ $arFilter = Array(
     "DATE2" => $find_date2,
 );
 
+global $by, $order;
+
 $cData = new CStatEventType;
 $rsData = $cData->GetDynamicList($find_event_id, $by, $order, $arMaxMin, $arFilter);
 $rsData = new CAdminResult($rsData, $sTableID);
@@ -38,12 +42,14 @@ $rsData->NavStart();
 $lAdmin->NavText($rsData->GetNavPrint(GetMessage("STAT_EVENT_DYN_PAGES")));
 
 $arHeaders = array(
-    array("id" => "DATE_STAT",
+    array(
+        "id" => "DATE_STAT",
         "content" => GetMessage("STAT_DATE"),
         "sort" => "s_date",
         "default" => true,
     ),
-    array("id" => "COUNTER",
+    array(
+        "id" => "COUNTER",
         "content" => GetMessage("STAT_COUNTER") . $group_by,
         "align" => "right",
         "default" => true,
@@ -54,7 +60,13 @@ $lAdmin->AddHeaders($arHeaders);
 while ($arRes = $rsData->NavNext(true, "f_")):
     $row =& $lAdmin->AddRow($f_ID, $arRes);
     if ($f_COUNTER > 0) {
-        $href = htmlspecialcharsbx("event_list.php?lang=" . LANGUAGE_ID . "&find_event_id=" . urlencode($find_event_id) . "&find_event_id_exact_match=Y&find_date1=" . urlencode($f_DATE_STAT) . "&find_date2=" . urlencode($f_DATE_STAT) . "&set_filter=Y");
+        $href = htmlspecialcharsbx(
+            "event_list.php?lang=" . LANGUAGE_ID . "&find_event_id=" . urlencode(
+                $find_event_id
+            ) . "&find_event_id_exact_match=Y&find_date1=" . urlencode($f_DATE_STAT) . "&find_date2=" . urlencode(
+                $f_DATE_STAT
+            ) . "&set_filter=Y"
+        );
         $strHTML = "<a href=\"" . $href . "\">" . $f_COUNTER . "</a>";
     } else {
         $strHTML = "&nbsp;";
@@ -64,19 +76,22 @@ endwhile;
 
 $max_date = mktime(24, 59, 59, $arMaxMin["MAX_MONTH"], $arMaxMin["MAX_DAY"], $arMaxMin["MAX_YEAR"]);
 $min_date = mktime(0, 0, 0, $arMaxMin["MIN_MONTH"], $arMaxMin["MIN_DAY"], $arMaxMin["MIN_YEAR"]);
-if (strlen($arFilter["DATE1"]) > 0)
+if ($arFilter["DATE1"] <> '') {
     $mindate = $arFilter["DATE1"];
-else
+} else {
     $mindate = GetTime($min_date);
-if (strlen($arFilter["DATE2"]) > 0)
+}
+if ($arFilter["DATE2"] <> '') {
     $maxdate = $arFilter["DATE2"];
-else $maxdate = GetTime($max_date);
+} else {
+    $maxdate = GetTime($max_date);
+}
 $arF = Array(
     "ID" => $find_event_id,
     "DATE1_PERIOD" => $mindate,
     "DATE2_PERIOD" => $maxdate
 );
-$rsEventType = CStatEventType::GetList($by2, $order2, $arF, $is_filtered);
+$rsEventType = CStatEventType::GetList('', '', $arF);
 $arEventType = $rsEventType->Fetch();
 
 $arFooter = array();
@@ -86,7 +101,9 @@ $arFooter[] = array(
 );
 $arFooter[] = array(
     "title" => GetMessage("STAT_TOTAL"),
-    "value" => (strlen($arF["DATE1_PERIOD"]) > 0 || strlen($arF["DATE2_PERIOD"]) > 0) ? intval($arEventType["PERIOD_COUNTER"]) : intval($arEventType["TOTAL_COUNTER"]),
+    "value" => ($arF["DATE1_PERIOD"] <> '' || $arF["DATE2_PERIOD"] <> '') ? intval(
+        $arEventType["PERIOD_COUNTER"]
+    ) : intval($arEventType["TOTAL_COUNTER"]),
 );
 $arFooter[] = array(
     "title" => GetMessage("STAT_TOTAL_TIME"),
@@ -101,7 +118,9 @@ if ($dynamic_days >= 2 && function_exists("ImageCreate")):
     $aContext = array(
         array(
             "TEXT" => GetMessage("STAT_MNU_GRAPH"),
-            "LINK" => htmlspecialcharsbx("event_graph_list.php?lang=" . LANGUAGE_ID . "&find_events[]=" . $find_event_id . "&find_date1=" . $arFilter["DATE1"] . "&find_date2=" . $arFilter["DATE2"] . "&set_filter=Y"),
+            "LINK" => htmlspecialcharsbx(
+                "event_graph_list.php?lang=" . LANGUAGE_ID . "&find_events[]=" . $find_event_id . "&find_date1=" . $arFilter["DATE1"] . "&find_date2=" . $arFilter["DATE2"] . "&set_filter=Y"
+            ),
             "TITLE" => GetMessage("STAT_GRAPH"),
         ),
     );
@@ -148,8 +167,9 @@ $oFilter = new CAdminFilter($sTableID . "_filter", $arFilterDropDown);
     </form>
 
 <?
-if ($message)
+if ($message) {
     echo $message->Show();
+}
 $lAdmin->DisplayList();
 ?>
 

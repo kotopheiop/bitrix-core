@@ -1,5 +1,7 @@
-<?
+<?php
+
 IncludeModuleLangFile(__FILE__);
+
 $GLOBALS["BLOG_IMAGE"] = Array();
 
 class CAllBlogImage
@@ -7,14 +9,14 @@ class CAllBlogImage
     const NOT_ATTACHED_IMAGES_LIFETIME = 86400; //one day
 
     /*************** ADD, UPDATE, DELETE *****************/
-    function CheckFields($ACTION, &$arFields, $ID = 0)
+    public static function CheckFields($ACTION, &$arFields, $ID = 0)
     {
         global $APPLICATION;
 
         if (is_set($arFields, "FILE_ID")) {
             $arFile = null;
             if (is_array($arFields['FILE_ID'])) {
-                if (strlen($arFields["FILE_ID"]["name"]) <= 0 && strlen($arFields["FILE_ID"]["del"]) <= 0) {
+                if ($arFields["FILE_ID"]["name"] == '' && $arFields["FILE_ID"]["del"] == '') {
                     unset($arFields["FILE_ID"]);
                 }
 
@@ -28,7 +30,7 @@ class CAllBlogImage
 
             if ($arFile) {
                 $res = CFile::CheckImageFile($arFile, 0, 0, 0);
-                if (strlen($res) > 0) {
+                if ($res <> '') {
                     $APPLICATION->ThrowException($res, "ERROR_ATTACH_IMG");
                     return false;
                 }
@@ -36,20 +38,30 @@ class CAllBlogImage
 
             if (
                 $arFields["IMAGE_SIZE_CHECK"] != "N"
-                && IntVal($arFields["IMAGE_SIZE"]) > 0
-                && IntVal($arFields["IMAGE_SIZE"]) > COption::GetOptionString("blog", "image_max_size", 5000000)
+                && intval($arFields["IMAGE_SIZE"]) > 0
+                && intval($arFields["IMAGE_SIZE"]) > COption::GetOptionString("blog", "image_max_size", 5000000)
             ) {
-                $APPLICATION->ThrowException(GetMessage("ERROR_ATTACH_IMG_SIZE", Array("#SIZE#" => DoubleVal(COption::GetOptionString("blog", "image_max_size", 5000000) / 1000000))), "ERROR_ATTACH_IMG_SIZE");
+                $APPLICATION->ThrowException(
+                    GetMessage(
+                        "ERROR_ATTACH_IMG_SIZE",
+                        Array(
+                            "#SIZE#" => DoubleVal(
+                                COption::GetOptionString("blog", "image_max_size", 5000000) / 1000000
+                            )
+                        )
+                    ),
+                    "ERROR_ATTACH_IMG_SIZE"
+                );
                 return false;
             }
 
             unset($arFields["IMAGE_SIZE_CHECK"]);
         }
 
-        return True;
+        return true;
     }
 
-    function ImageFixSize($aFile)
+    public static function ImageFixSize($aFile)
     {
         $file = $aFile['tmp_name'];
         preg_match("#/([a-z]+)#is", $aFile['type'], $regs);
@@ -62,16 +74,19 @@ class CAllBlogImage
             case 'jpeg':
             case 'pjpeg':
             case 'jpg':
-                if (!function_exists("imageJPEG") || !function_exists("imagecreatefromjpeg"))
+                if (!function_exists("imageJPEG") || !function_exists("imagecreatefromjpeg")) {
                     return false;
+                }
                 break;
             case 'gif':
-                if (!function_exists("imageGIF") || !function_exists("imagecreatefromgif"))
+                if (!function_exists("imageGIF") || !function_exists("imagecreatefromgif")) {
                     return false;
+                }
                 break;
             case 'png':
-                if (!function_exists("imagePNG") || !function_exists("imagecreatefrompng"))
+                if (!function_exists("imagePNG") || !function_exists("imagecreatefrompng")) {
                     return false;
+                }
                 break;
         }
 
@@ -102,15 +117,17 @@ class CAllBlogImage
                 $newX = $imgX * ($newY / $imgY);
             }
 
-            if (function_exists("imagecreatetruecolor"))
+            if (function_exists("imagecreatetruecolor")) {
                 $imageOutput = ImageCreateTrueColor($newX, $newY);
-            else
+            } else {
                 $imageOutput = ImageCreate($newX, $newY);
+            }
 
-            if (function_exists("imagecopyresampled"))
+            if (function_exists("imagecopyresampled")) {
                 imagecopyresampled($imageOutput, $imageInput, 0, 0, 0, 0, $newX, $newY, $imgX, $imgY);
-            else
+            } else {
                 imagecopyresized($imageOutput, $imageInput, 0, 0, 0, 0, $newX, $newY, $imgX, $imgY);
+            }
 
             switch ($ext_tmp) {
                 case 'jpg':
@@ -128,7 +145,7 @@ class CAllBlogImage
     {
         global $DB;
 
-        $ID = IntVal($ID);
+        $ID = intval($ID);
         unset($GLOBALS["BLOG_IMAGE"]["BLOG_IMAGE_CACHE_" . $ID]);
         if ($res = CBlogImage::GetByID($ID)) {
             CFile::Delete($res['FILE_ID']);
@@ -142,23 +159,25 @@ class CAllBlogImage
     {
         global $DB;
 
-        $ID = IntVal($ID);
+        $ID = intval($ID);
 
-        if (isset($GLOBALS["BLOG_IMAGE"]["BLOG_IMAGE_CACHE_" . $ID]) && is_array($GLOBALS["BLOG_IMAGE"]["BLOG_IMAGE_CACHE_" . $ID]) && is_set($GLOBALS["BLOG_IMAGE"]["BLOG_IMAGE_CACHE_" . $ID], "ID")) {
+        if (isset($GLOBALS["BLOG_IMAGE"]["BLOG_IMAGE_CACHE_" . $ID]) && is_array(
+                $GLOBALS["BLOG_IMAGE"]["BLOG_IMAGE_CACHE_" . $ID]
+            ) && is_set($GLOBALS["BLOG_IMAGE"]["BLOG_IMAGE_CACHE_" . $ID], "ID")) {
             return $GLOBALS["BLOG_IMAGE"]["BLOG_IMAGE_CACHE_" . $ID];
         } else {
             $strSql =
                 "SELECT G.* " .
                 "FROM b_blog_image G " .
                 "WHERE G.ID = " . $ID . "";
-            $dbResult = $DB->Query($strSql, False, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+            $dbResult = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
             if ($arResult = $dbResult->Fetch()) {
                 $GLOBALS["BLOG_IMAGE"]["BLOG_IMAGE_CACHE_" . $ID] = $arResult;
                 return $arResult;
             }
         }
 
-        return False;
+        return false;
     }
 
     public static function AddImageResizeHandler($arParams)
@@ -175,16 +194,18 @@ class CAllBlogImage
         self::ImageCreateHandler($bNull, $arParams);
     }
 
-    static function ImageResizeHandler(&$arCustomFile, $arParams = null)
+    public static function ImageResizeHandler(&$arCustomFile, $arParams = null)
     {
 //		static for save values from arParams to next method call
         static $arResizeParams = array();
 
-        if ($arParams !== null)
+        if ($arParams !== null) {
             $arResizeParams = $arParams;
+        }
 
-        if ((!is_array($arCustomFile)) || !isset($arCustomFile['fileID']))
+        if ((!is_array($arCustomFile)) || !isset($arCustomFile['fileID'])) {
             return false;
+        }
 
         $fileID = $arCustomFile['fileID'];
         $arFile = CFile::MakeFileArray($fileID);
@@ -208,17 +229,19 @@ class CAllBlogImage
         }
     }
 
-    static function ImageCreateHandler(&$arCustomFile, $arParams = null)
+    public static function ImageCreateHandler(&$arCustomFile, $arParams = null)
     {
 //		static for save values from arParams to next method call
         static $arCreateParams = array();
         global $DB;
 
-        if ($arParams !== null)
+        if ($arParams !== null) {
             $arCreateParams = $arParams;
+        }
 
-        if ((!is_array($arCustomFile)) || !isset($arCustomFile['fileID']))
+        if ((!is_array($arCustomFile)) || !isset($arCustomFile['fileID'])) {
             return false;
+        }
 
         $fileID = $arCustomFile['fileID'];
         $arFile = CFile::MakeFileArray($fileID);
@@ -234,8 +257,9 @@ class CAllBlogImage
                 "IMAGE_SIZE" => $arFile['~filesize'],
                 "IS_COMMENT" => $arCreateParams['IS_COMMENT'],
             );
-            if ($arCreateParams['IS_COMMENT'] == 'Y')
+            if ($arCreateParams['IS_COMMENT'] == 'Y') {
                 $imageFields["COMMENT_ID"] = 0;
+            }
 
             $imageId = CBlogImage::Add($imageFields);
             if (intval($imageId) <= 0) {
@@ -244,5 +268,3 @@ class CAllBlogImage
         }
     }
 }
-
-?>

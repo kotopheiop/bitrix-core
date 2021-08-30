@@ -1,8 +1,9 @@
-<?
+<?php
 
+use Bitrix\Sale;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Application;
-use Bitrix\Sale\Internals\PaySystemActionTable;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Sale\Helpers\Admin\BusinessValueControl;
 use Bitrix\Sale\Services\PaySystem\Restrictions;
@@ -23,8 +24,9 @@ $listUrl = $selfFolderUrl . "sale_pay_system.php?lang=" . LANGUAGE_ID;
 $listUrl = $adminSidePanelHelper->editUrlToPublicPage($listUrl);
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-if ($saleModulePermissions < "W")
+if ($saleModulePermissions < "W") {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 Loc::loadMessages(__FILE__);
 
@@ -56,6 +58,8 @@ $lheStyle = '
 	}
 </style>';
 
+\CJSCore::init(['admin_sidepanel']);
+
 Asset::getInstance()->addString($lheStyle);
 Asset::getInstance()->addJs("/bitrix/js/sale/pay_system.js");
 
@@ -67,14 +71,16 @@ $request = $context->getRequest();
 $server = $context->getServer();
 $documentRoot = Application::getDocumentRoot();
 $paySystem = array();
+$isPrintCheck = false;
 
 $psDescription = '';
 $description = '';
 
 $id = (int)$request->get('ID');
 
-if (CModule::IncludeModule("fileman"))
+if (CModule::IncludeModule("fileman")) {
     $bFilemanModuleInst = true;
+}
 
 $aTabs = array(
     array(
@@ -92,6 +98,28 @@ if ($id > 0 && $request->getRequestMethod() !== 'POST') {
         "ICON" => "sale",
         "TITLE" => GetMessage("SPS_PAY_SYSTEM_RESTRICTION_DESC"),
     );
+
+    $service = PaySystem\Manager::getObjectById($id);
+    if ($service->isSupportPrintCheck()) {
+        /** @var Sale\Cashbox\CashboxPaySystem $cashboxClass */
+        $cashboxClass = $service->getCashboxClass();
+        $cashboxCode = mb_strtoupper($cashboxClass::getCode());
+        $fiscalizationTab = Loc::getMessage('SPS_FISCALIZATION_TAB_' . $cashboxCode);
+        $fiscalizationTabTitle = Loc::getMessage('SPS_FISCALIZATION_TAB_TITLE_' . $cashboxCode);
+
+        if (!$fiscalizationTab) {
+            $fiscalizationTab = Loc::getMessage('SPS_FISCALIZATION_TAB');
+            $fiscalizationTabTitle = Loc::getMessage('SPS_FISCALIZATION_TAB_TITLE');
+        }
+
+        $isPrintCheck = true;
+        $aTabs[] = array(
+            "DIV" => "cashbox_edit",
+            "TAB" => $fiscalizationTab,
+            "ICON" => "sale",
+            "TITLE" => $fiscalizationTabTitle,
+        );
+    }
 }
 
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
@@ -109,16 +137,19 @@ if ($server->getRequestMethod() == "POST"
     $isNewSystem = ($id <= 0);
 
     $name = trim($request->get('NAME'));
-    if ($name == '')
+    if ($name == '') {
         $errorMessage .= Loc::getMessage("ERROR_NO_NAME") . "<br>";
+    }
 
-    if ($request->get('ACTION_FILE') == '')
+    if ($request->get('ACTION_FILE') == '') {
         $errorMessage .= Loc::getMessage("ERROR_NO_ACTION_FILE") . "<br>";
+    }
 
     $sort = (int)$request->get('SORT');
 
-    if ($sort <= 0)
+    if ($sort <= 0) {
         $sort = 100;
+    }
 
     $actionFile = $request->get('ACTION_FILE');
     if (!$actionFile) {
@@ -126,7 +157,7 @@ if ($server->getRequestMethod() == "POST"
     }
 
     // temp crutch because of CSalePdf does not support all images
-    if (strpos($actionFile, 'bill') === 0) {
+    if (mb_strpos($actionFile, 'bill') === 0) {
         $consumer = $isNewSystem ? 'PAYSYSTEM_NEW' : 'PAYSYSTEM_' . $id;
 
         $fileNameList = [];
@@ -178,59 +209,68 @@ if ($server->getRequestMethod() == "POST"
             "CAN_PRINT_CHECK" => ($request->get('CAN_PRINT_CHECK') != 'Y') ? 'N' : $request->get('CAN_PRINT_CHECK'),
             "CODE" => $request->get('CODE'),
             "NEW_WINDOW" => ($request->get('NEW_WINDOW') != 'Y') ? 'N' : $request->get('NEW_WINDOW'),
-            "ALLOW_EDIT_PAYMENT" => ($request->get('ALLOW_EDIT_PAYMENT') != 'Y') ? 'N' : $request->get('ALLOW_EDIT_PAYMENT'),
+            "ALLOW_EDIT_PAYMENT" => ($request->get('ALLOW_EDIT_PAYMENT') != 'Y') ? 'N' : $request->get(
+                'ALLOW_EDIT_PAYMENT'
+            ),
             "IS_CASH" => (!in_array($request->get('IS_CASH'), array('Y', 'A'))) ? 'N' : $request->get('IS_CASH'),
             "ENTITY_REGISTRY_TYPE" => \Bitrix\Sale\Registry::REGISTRY_TYPE_ORDER,
             "SORT" => $sort,
             "ENCODING" => $request->get('ENCODING'),
-            "DESCRIPTION" => $request->get('DESCRIPTION'),
+            "DESCRIPTION" => htmlspecialcharsback($request->get('DESCRIPTION')),
             "ACTION_FILE" => $actionFile,
             'PS_MODE' => ($request->get('PS_MODE')) ? $request->get('PS_MODE') : '',
             'XML_ID' => ($request->get('XML_ID')) ?: PaySystem\Manager::generateXmlId()
         );
 
-        if ($request->get('AUTO_CHANGE_1C') == 'Y')
+        if ($request->get('AUTO_CHANGE_1C') == 'Y') {
             $fields['AUTO_CHANGE_1C'] = 'Y';
-        else
+        } else {
             $fields['AUTO_CHANGE_1C'] = 'N';
+        }
 
         $path = PaySystem\Manager::getPathToHandlerFolder($actionFile);
         if (\Bitrix\Main\IO\File::isFileExists($documentRoot . $path . '/handler.php')) {
-            require_once $documentRoot . $path . '/handler.php';
+            list($className) = PaySystem\Manager::includeHandler($actionFile);
 
-            $className = PaySystem\Manager::getClassNameFromPath($path);
             $fields['HAVE_PAYMENT'] = 'Y';
 
-            if (is_subclass_of($className, '\Bitrix\Sale\PaySystem\IPrePayable'))
+            if (is_subclass_of($className, '\Bitrix\Sale\PaySystem\IPrePayable')) {
                 $fields['HAVE_PREPAY'] = 'Y';
+            }
 
-            if (is_subclass_of($className, '\Bitrix\Sale\PaySystem\ServiceHandler'))
+            if (is_subclass_of($className, '\Bitrix\Sale\PaySystem\ServiceHandler')) {
                 $fields['HAVE_RESULT_RECEIVE'] = 'Y';
+            }
 
-            if (is_subclass_of($className, '\Bitrix\Sale\PaySystem\IPayable'))
+            if (is_subclass_of($className, '\Bitrix\Sale\PaySystem\IPayable')) {
                 $fields['HAVE_PRICE'] = 'Y';
+            }
 
-            if (is_subclass_of($className, '\Bitrix\Sale\PaySystem\ICheckable'))
+            if (is_subclass_of($className, '\Bitrix\Sale\PaySystem\ICheckable')) {
                 $fields['HAVE_RESULT'] = 'Y';
+            }
         } else {
-            if (\Bitrix\Main\IO\File::isFileExists($documentRoot . $actionFile . "/pre_payment.php"))
+            if (\Bitrix\Main\IO\File::isFileExists($documentRoot . $actionFile . "/pre_payment.php")) {
                 $fields["HAVE_PREPAY"] = "Y";
-            if (\Bitrix\Main\IO\File::isFileExists($documentRoot . $actionFile . "/result.php"))
+            }
+            if (\Bitrix\Main\IO\File::isFileExists($documentRoot . $actionFile . "/result.php")) {
                 $fields["HAVE_RESULT"] = "Y";
-            if (\Bitrix\Main\IO\File::isFileExists($documentRoot . $actionFile . "/action.php"))
+            }
+            if (\Bitrix\Main\IO\File::isFileExists($documentRoot . $actionFile . "/action.php")) {
                 $fields["HAVE_ACTION"] = "Y";
-            if (\Bitrix\Main\IO\File::isFileExists($documentRoot . $actionFile . "/payment.php"))
+            }
+            if (\Bitrix\Main\IO\File::isFileExists($documentRoot . $actionFile . "/payment.php")) {
                 $fields["HAVE_PAYMENT"] = "Y";
-            if (\Bitrix\Main\IO\File::isFileExists($documentRoot . $actionFile . "/result_rec.php"))
+            }
+            if (\Bitrix\Main\IO\File::isFileExists($documentRoot . $actionFile . "/result_rec.php")) {
                 $fields["HAVE_RESULT_RECEIVE"] = "Y";
+            }
         }
 
         if ($request->get('TARIF') !== null) {
             if ($path !== null) {
                 if (\Bitrix\Main\IO\File::isFileExists($documentRoot . $path . '/handler.php')) {
-                    require_once $documentRoot . $path . '/handler.php';
-
-                    $className = PaySystem\Manager::getClassNameFromPath($actionFile);
+                    list($className) = PaySystem\Manager::includeHandler($actionFile);
                     $fields["TARIF"] = $className::prepareToField($request->get('TARIF'));
                 }
             } else {
@@ -239,6 +279,10 @@ if ($server->getRequestMethod() == "POST"
         }
 
         $isConsumerChange = $request->get('ACTION_FILE') != $request->get('PRIOR_ACTION_FILE');
+        if (!$isConsumerChange) {
+            $isConsumerChange = $request->get('PS_MODE') != $request->get('PRIOR_PS_MODE');
+        }
+
         $file = $request->getFile('LOGOTIP');
 
         if ($file !== null && $file["error"] == 0) {
@@ -277,15 +321,16 @@ if ($server->getRequestMethod() == "POST"
             }
         }
 
-        $data = PaySystem\Manager::getHandlerDescription($request->get('ACTION_FILE'));
+        $data = PaySystem\Manager::getHandlerDescription($request->get('ACTION_FILE'), $request->get('PS_MODE'));
 
         if ($id > 0) {
-            $result = PaySystemActionTable::update($id, $fields);
+            $result = PaySystem\Manager::update($id, $fields);
 
-            if (!$result->isSuccess())
+            if (!$result->isSuccess()) {
                 $errorMessage .= join(',', $result->getErrorMessages()) . ".<br>";
+            }
         } else {
-            $result = PaySystemActionTable::add($fields);
+            $result = PaySystem\Manager::add($fields);
             if (!$result->isSuccess()) {
                 $errorMessage .= join(',', $result->getErrorMessages());
             } else {
@@ -296,9 +341,10 @@ if ($server->getRequestMethod() == "POST"
                         'PAY_SYSTEM_ID' => $id
                     );
 
-                    $result = PaySystemActionTable::update($id, $fields);
-                    if (!$result->isSuccess())
+                    $result = PaySystem\Manager::update($id, $fields);
+                    if (!$result->isSuccess()) {
                         $errorMessage .= join(',', $result->getErrorMessages());
+                    }
 
                     $service = PaySystem\Manager::getObjectById($id);
                     $currency = $service->getCurrency();
@@ -310,9 +356,19 @@ if ($server->getRequestMethod() == "POST"
                         );
                         Restrictions\Manager::getClassesList();
                         $saveResult = \Bitrix\Sale\Services\PaySystem\Restrictions\Currency::save($params);
-                        if (!$saveResult->isSuccess())
+                        if (!$saveResult->isSuccess()) {
                             $errorMessage .= Loc::getMessage('SALE_PSE_ERROR_RSRT_CURRENCY_SAVE');
+                        }
                     }
+                }
+            }
+        }
+
+        if ($errorMessage === '') {
+            if ($request->get('CASHBOX')) {
+                $service = PaySystem\Manager::getObjectById($id);
+                if ($service->isSupportPrintCheck()) {
+                    require_once $documentRoot . "/bitrix/modules/sale/admin/pay_system_cashbox_edit.php";
                 }
             }
         }
@@ -320,18 +376,21 @@ if ($server->getRequestMethod() == "POST"
         if ($errorMessage === '') {
             if ($isConsumerChange) {
                 $priorActionFile = $request->get('PRIOR_ACTION_FILE');
-                if ($isNewSystem)
+                if ($isNewSystem) {
                     BusinessValue::addConsumer('PAYSYSTEM_NEW', $data);
-                else
+                } else {
                     BusinessValue::changeConsumer('PAYSYSTEM_' . $id, $data);
+                }
             }
 
             if ($businessValueControl->setMapFromPost()) {
-                if ($isConsumerChange && $isNewSystem)
+                if ($isConsumerChange && $isNewSystem) {
                     $businessValueControl->changeConsumerKey('PAYSYSTEM_NEW', 'PAYSYSTEM_' . $id);
+                }
 
-                if (!$businessValueControl->saveMap())
+                if (!$businessValueControl->saveMap()) {
                     $errorMessage .= Loc::getMessage('SALE_PSE_ERROR_SET_BIZVAL_MAP');
+                }
             } else {
                 $errorMessage .= Loc::getMessage('SALE_PSE_ERROR_SET_BIZVAL_MAP');
             }
@@ -340,16 +399,23 @@ if ($server->getRequestMethod() == "POST"
 
     if ($errorMessage === '') {
         if ($adminSidePanelHelper->isAjaxRequest()) {
-            if (strlen($request->get('apply')) > 0) {
-                $adminSidePanelHelper->sendSuccessResponse("apply", array("ID" => $id, "reloadUrl" =>
-                    $selfFolderUrl . "sale_pay_system_edit.php?ID=" . $id . "&lang=" . $context->getLanguage() .
-                    "&IFRAME=Y&IFRAME_TYPE=SIDE_SLIDER&" . $tabControl->ActiveTabParam()));
+            if ($request->get('apply') <> '') {
+                $adminSidePanelHelper->sendSuccessResponse(
+                    "apply",
+                    array(
+                        "ID" => $id,
+                        "reloadUrl" =>
+                            $selfFolderUrl . "sale_pay_system_edit.php?ID=" . $id . "&lang=" . $context->getLanguage() .
+                            "&IFRAME=Y&IFRAME_TYPE=SIDE_SLIDER&" . $tabControl->ActiveTabParam()
+                    )
+                );
             } else {
                 $adminSidePanelHelper->sendSuccessResponse("base", array("ID" => $id));
             }
         } else {
-            if (strlen($request->get('apply')) > 0) {
-                $applyUrl = $selfFolderUrl . "sale_pay_system_edit.php?lang=" . $context->getLanguage() . "&ID=" . $id . "&" . $tabControl->ActiveTabParam();
+            if ($request->get('apply') <> '') {
+                $applyUrl = $selfFolderUrl . "sale_pay_system_edit.php?lang=" . $context->getLanguage(
+                    ) . "&ID=" . $id . "&" . $tabControl->ActiveTabParam();
                 $applyUrl = $adminSidePanelHelper->setDefaultQueryParams($applyUrl);
                 LocalRedirect($applyUrl);
             } else {
@@ -376,14 +442,23 @@ if ($id > 0) {
 
 require_once($documentRoot . "/bitrix/modules/sale/prolog.php");
 
-$APPLICATION->SetTitle(($id > 0) ? Loc::getMessage("SALE_EDIT_RECORD", array("#ID#" => $id)) : Loc::getMessage("SALE_NEW_RECORD"));
+$APPLICATION->SetTitle(
+    ($id > 0) ? Loc::getMessage("SALE_EDIT_RECORD", array("#ID#" => $id)) : Loc::getMessage("SALE_NEW_RECORD")
+);
 
 $restrictionsHtml = '';
-
 if ($id > 0 && $request->getRequestMethod() !== 'POST') {
     ob_start();
     require_once($documentRoot . "/bitrix/modules/sale/admin/pay_system_restrictions_list.php");
     $restrictionsHtml = ob_get_contents();
+    ob_end_clean();
+}
+
+$paySystemCashbox = '';
+if ($isPrintCheck) {
+    ob_start();
+    require_once $documentRoot . "/bitrix/modules/sale/admin/pay_system_cashbox_edit.php";
+    $paySystemCashbox = ob_get_contents();
     ob_end_clean();
 }
 
@@ -410,7 +485,8 @@ if ($id > 0 && $saleModulePermissions >= "W") {
         "LINK" => $addUrl,
         "ICON" => "btn_new"
     );
-    $deleteUrl = "" . $selfFolderUrl . "sale_pay_system.php?action=delete&ID[]=" . $id . "&lang=" . $context->getLanguage() . "&" . bitrix_sessid_get() . "#tb";
+    $deleteUrl = "" . $selfFolderUrl . "sale_pay_system.php?action=delete&ID[]=" . $id . "&lang=" . $context->getLanguage(
+        ) . "&" . bitrix_sessid_get() . "#tb";
     $buttonAction = "LINK";
     if ($adminSidePanelHelper->isPublicFrame()) {
         $deleteUrl = $adminSidePanelHelper->editUrlToPublicPage($deleteUrl);
@@ -418,7 +494,9 @@ if ($id > 0 && $saleModulePermissions >= "W") {
     }
     $aMenu[] = array(
         "TEXT" => Loc::getMessage("SPSN_DELETE_PAYSYS"),
-        $buttonAction => "javascript:if(confirm('" . Loc::getMessage("SPSN_DELETE_PAYSYS_CONFIRM") . "')) top.window.location.href='" . $deleteUrl . "';",
+        $buttonAction => "javascript:if(confirm('" . Loc::getMessage(
+                "SPSN_DELETE_PAYSYS_CONFIRM"
+            ) . "')) top.window.location.href='" . $deleteUrl . "';",
         "WARNING" => "Y",
         "ICON" => "btn_delete"
     );
@@ -427,8 +505,11 @@ $contextMenu = new CAdminContextMenu($aMenu);
 $contextMenu->Show();
 ?>
 
-<? if ($errorMessage !== '')
-    CAdminMessage::ShowMessage(array("DETAILS" => $errorMessage, "TYPE" => "ERROR", "MESSAGE" => Loc::getMessage("SPSN_ERROR"), "HTML" => true)); ?>
+<? if ($errorMessage !== '') {
+    CAdminMessage::ShowMessage(
+        array("DETAILS" => $errorMessage, "TYPE" => "ERROR", "MESSAGE" => Loc::getMessage("SPSN_ERROR"), "HTML" => true)
+    );
+} ?>
 
 <script language="JavaScript">
     function setLHEClass(lheDivId) {
@@ -482,15 +563,17 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
                 natsort($handlerList['SYSTEM']);
                 natsort($handlerList['USER']);
 
-                if ($request->get('ACTION_FILE') !== null)
+                if ($request->get('ACTION_FILE') !== null) {
                     $handlerName = $request->get('ACTION_FILE');
-                else
+                } else {
                     $handlerName = $paySystem['ACTION_FILE'];
+                }
 
                 $pathToDesc = '';
                 $pathToHandler = PaySystem\Manager::getPathToHandlerFolder($handlerName);
-                if (\Bitrix\Main\IO\File::isFileExists($documentRoot . $pathToHandler . '/.description.php'))
+                if (\Bitrix\Main\IO\File::isFileExists($documentRoot . $pathToHandler . '/.description.php')) {
                     $pathToDesc = $documentRoot . $pathToHandler . '/.description.php';
+                }
 
                 if ($pathToDesc !== '') {
                     include $pathToDesc;
@@ -502,7 +585,7 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
                 <?
                 foreach ($handlerList['USER'] as $handler => $title) {
                     // for B24
-                    if (strpos($handler, 'quote_') !== false) {
+                    if (mb_strpos($handler, 'quote_') !== false) {
                         unset($handlerList['USER'][$handler]);
                     }
                 }
@@ -511,10 +594,13 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
                     <optgroup label="<?= Loc::getMessage("SPS_ACT_USER"); ?>">
                         <? foreach ($handlerList['USER'] as $handler => $title): ?>
                             <?
-                            if (ToLower($handlerName) == ToLower($handler))
+                            if (ToLower($handlerName) == ToLower($handler)) {
                                 $selected = true;
+                            }
                             ?>
-                            <option value="<?= htmlspecialcharsbx($handler) ?>"<?= (ToLower($handlerName) == ToLower($handler)) ? " selected" : ''; ?>>
+                            <option value="<?= htmlspecialcharsbx($handler) ?>"<?= (ToLower($handlerName) == ToLower(
+                                    $handler
+                                )) ? " selected" : ''; ?>>
                                 <?= htmlspecialcharsbx($title); ?>
                             </option>
                         <? endforeach; ?>
@@ -524,7 +610,9 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
                     <?
                     foreach ($mainHandlers as $handler):?>
                         <? if (isset($handlerList['SYSTEM'][$handler])):?>
-                            <option value="<?= htmlspecialcharsbx($handler) ?>"<?= ((!$selected && ToLower($handlerName) == ToLower($handler)) ? " selected" : ''); ?>>
+                            <option value="<?= htmlspecialcharsbx($handler) ?>"<?= ((!$selected && ToLower(
+                                    $handlerName
+                                ) == ToLower($handler)) ? " selected" : ''); ?>>
                                 <?= htmlspecialcharsEx($handlerList['SYSTEM'][$handler]) ?>
                             </option>
                             <? unset($handlerList['SYSTEM'][$handler]) ?>
@@ -541,20 +629,23 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
                             )
                             || (
                                 IsModuleInstalled('documentgenerator')
-                                && strpos($handler, 'bill') === 0
+                                && mb_strpos($handler, 'bill') === 0
                                 && ToLower($handlerName) !== ToLower($handler)
                             )
                         ) {
                             continue;
                         }
                         ?>
-                        <option value="<?= htmlspecialcharsbx($handler) ?>"<?= ((!$selected && ToLower($handlerName) == ToLower($handler)) ? " selected" : ''); ?>>
+                        <option value="<?= htmlspecialcharsbx($handler) ?>"<?= ((!$selected && ToLower(
+                                $handlerName
+                            ) == ToLower($handler)) ? " selected" : ''); ?>>
                             <?= htmlspecialcharsEx($title) ?>
                         </option>
                     <? endforeach; ?>
                 </optgroup>
             </select>
             <input type="hidden" value="<?= htmlspecialcharsbx($paySystem['ACTION_FILE']) ?>" name="PRIOR_ACTION_FILE">
+            <input type="hidden" value="<?= htmlspecialcharsbx($paySystem['PS_MODE']) ?>" name="PRIOR_PS_MODE">
         </td>
     </tr>
     <tbody id="pay_system_ps_mode">
@@ -562,19 +653,14 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
     $psMode = ($request->get('PS_MODE') !== null) ? $request->get('PS_MODE') : $paySystem['PS_MODE'];
 
     /** @var PaySystem\BaseServiceHandler $className */
-    $className = PaySystem\Manager::getClassNameFromPath($handlerName);
-    if (!class_exists($className)) {
-        $path = PaySystem\Manager::getPathToHandlerFolder($handler);
-        $fullPath = $documentRoot . $path . '/handler.php';
-        if ($path && \Bitrix\Main\IO\File::isFileExists($fullPath))
-            require_once $fullPath;
-    }
+    list($className) = PaySystem\Manager::includeHandler($handlerName);
 
     $handlerModeList = array();
-    if (class_exists($className))
+    if (class_exists($className)) {
         $handlerModeList = $className::getHandlerModeList();
+    }
 
-    $isOrderDocument = strpos($handlerName, 'orderdocument') === 0;
+    $isOrderDocument = mb_strpos($handlerName, 'orderdocument') === 0;
     if ($handlerModeList || $isOrderDocument):?>
         <tr>
             <?
@@ -584,8 +670,9 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
             <td width="60%" valign="top">
                 <?
                 if ($handlerModeList) {
-                    if (!class_exists('\Bitrix\Sale\Internals\Input\Enum'))
+                    if (!class_exists('\Bitrix\Sale\Internals\Input\Enum')) {
                         require $documentRoot . '/bitrix/modules/sale/lib/internals/input.php';
+                    }
 
                     if (class_exists($className)) {
                         echo Bitrix\Sale\Internals\Input\Enum::getEditHtml(
@@ -629,8 +716,9 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
         $handlerDescription = $psDescription;
     } elseif ($description) {
         if (is_array($description)) {
-            if (array_key_exists('MAIN', $description))
+            if (array_key_exists('MAIN', $description)) {
                 $handlerDescription = $description['MAIN'];
+            }
         } else {
             $handlerDescription = $description;
         }
@@ -666,10 +754,11 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
         <td width="40%"><label for="ACTIVE"><?= Loc::getMessage("F_ACTIVE"); ?>:</label></td>
         <td width="60%">
             <?
-            if ($request->isPost())
+            if ($request->isPost()) {
                 $active = $request->get('ACTIVE') ? $request->get('ACTIVE') : '';
-            else
+            } else {
                 $active = isset($paySystem['ACTIVE']) ? $paySystem['ACTIVE'] : 'Y';
+            }
             ?>
             <input type="checkbox" name="ACTIVE" id="ACTIVE" value="Y" <?= ($active == 'Y' ? 'checked' : '') ?>>
         </td>
@@ -688,6 +777,9 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
         <td width="60%" valign="top">
             <?
             $description = $request->get('DESCRIPTION') ? $request->get('DESCRIPTION') : $paySystem['DESCRIPTION'];
+            $CBXSanitizer = new \CBXSanitizer;
+            $CBXSanitizer->SetLevel(\CBXSanitizer::SECURE_LEVEL_LOW);
+            $description = $CBXSanitizer->SanitizeHtml($description);
             ?>
             <?= wrapDescrLHE("DESCRIPTION", $description, "hndl_dscr_" . $id); ?>
             <script language="JavaScript">setLHEClass('bxlhe_frame_hndl_dscr_<?=$id;?>'); </script>
@@ -716,10 +808,11 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
         <td width="40%" align="right"><label for="NEW_WINDOW"><?= Loc::getMessage("SPS_NEW_WINDOW"); ?>:</label></td>
         <td width="60%">
             <?
-            if ($request->isPost())
+            if ($request->isPost()) {
                 $active = $request->get('NEW_WINDOW') ? $request->get('NEW_WINDOW') : '';
-            else
+            } else {
                 $active = isset($paySystem['NEW_WINDOW']) ? $paySystem['NEW_WINDOW'] : 'N';
+            }
             ?>
 
             <input type="checkbox" name="NEW_WINDOW" id="NEW_WINDOW"
@@ -733,9 +826,15 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
         ?>
         <td width="60%">
             <select name="IS_CASH">
-                <option value="N" <? if ($isCash == "N") echo "selected" ?>><?= Loc::getMessage('SPS_IS_CASH_TYPE_NO_CASH'); ?></option>
-                <option value="Y" <? if ($isCash == "Y") echo "selected" ?>><?= Loc::getMessage('SPS_IS_CASH_TYPE_CASH'); ?></option>
-                <option value="A" <? if ($isCash == "A") echo "selected" ?>><?= Loc::getMessage('SPS_IS_CASH_TYPE_ACQUIRING'); ?></option>
+                <option value="N" <? if ($isCash == "N") echo "selected" ?>><?= Loc::getMessage(
+                        'SPS_IS_CASH_TYPE_NO_CASH'
+                    ); ?></option>
+                <option value="Y" <? if ($isCash == "Y") echo "selected" ?>><?= Loc::getMessage(
+                        'SPS_IS_CASH_TYPE_CASH'
+                    ); ?></option>
+                <option value="A" <? if ($isCash == "A") echo "selected" ?>><?= Loc::getMessage(
+                        'SPS_IS_CASH_TYPE_ACQUIRING'
+                    ); ?></option>
             </select>
         </td>
     </tr>
@@ -744,10 +843,11 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
                 :</label></td>
         <td width="60%">
             <?
-            if ($request->isPost())
+            if ($request->isPost()) {
                 $allowEditPayment = $request->get('ALLOW_EDIT_PAYMENT') ? $request->get('ALLOW_EDIT_PAYMENT') : '';
-            else
+            } else {
                 $allowEditPayment = isset($paySystem['ALLOW_EDIT_PAYMENT']) ? $paySystem['ALLOW_EDIT_PAYMENT'] : 'Y';
+            }
             ?>
 
             <input type="checkbox" name="ALLOW_EDIT_PAYMENT" id="ALLOW_EDIT_PAYMENT"
@@ -755,18 +855,24 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
         </td>
     </tr>
     <?
-    $licensePrefix = CModule::IncludeModule("bitrix24") ? \CBitrix24::getLicensePrefix() : "";
-    if (!IsModuleInstalled("bitrix24") || in_array($licensePrefix, array("ru"))):
+    $licensePrefix = 'ru';
+    if (Loader::includeModule("bitrix24")) {
+        $licensePrefix = \CBitrix24::getLicensePrefix();
+    } elseif (Loader::includeModule('intranet')) {
+        $licensePrefix = \CIntranetUtils::getPortalZone();
+    }
+    if (in_array($licensePrefix, array("ru", "ua"))):
         ?>
         <tr>
             <td width="40%" align="right"><label for="CAN_PRINT_CHECK"><?= Loc::getMessage("SPS_CAN_PRINT_CHECK"); ?>
                     :</label></td>
             <td width="60%">
                 <?
-                if ($request->isPost())
+                if ($request->isPost()) {
                     $printable = $request->get('CAN_PRINT_CHECK') ? $request->get('CAN_PRINT_CHECK') : '';
-                else
+                } else {
                     $printable = isset($paySystem['CAN_PRINT_CHECK']) ? $paySystem['CAN_PRINT_CHECK'] : 'N';
+                }
                 ?>
 
                 <input type="checkbox" name="CAN_PRINT_CHECK" id="CAN_PRINT_CHECK"
@@ -810,6 +916,38 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
             <input type="text" name="XML_ID" value="<?= htmlspecialcharsbx($xmlId); ?>" size="40">
         </td>
     </tr>
+
+    <?php
+    $entityName = $handlerName;
+    if ($psMode) {
+        $entityName .= $psMode;
+    }
+    $needVerification = PaySystem\Domain\Verification\Manager::needVerification($entityName);
+    ?>
+    <tbody id="pay_system_validation_domain" <?= ($needVerification ? "" : "style='display:none;'") ?>>
+    <tr>
+        <td colspan="2" align="center" class="heading"><?= Loc::getMessage("SPS_VALIDATION_DOMAIN_HEAD") ?></td>
+    </tr>
+    <tr>
+        <?php
+        $domainVerificationFormUrl = \CComponentEngine::makeComponentPath('bitrix:sale.domain.verification.form');
+        $domainVerificationFormUrl = getLocalPath('components' . $domainVerificationFormUrl . '/slider.php');
+        $domainVerificationFormUrl = new \Bitrix\Main\Web\Uri($domainVerificationFormUrl);
+        $domainVerificationFormUrl->addParams(
+            [
+                'analyticsLabel' => 'paySystemDomainVerification',
+                'entity' => $entityName,
+                'manager' => PaySystem\Domain\Verification\Manager::class,
+            ]
+        );
+        ?>
+        <td><?= Loc::getMessage("SPS_VALIDATION_DOMAIN_VALIDATION") ?></td>
+        <td><a href="javascript:void(0);" id="domain-verification-link"
+               onclick="BX.Sale.PaySystem.openVerificationForm('<?= $domainVerificationFormUrl ?>')"><?= Loc::getMessage(
+                    "SPS_VALIDATION_DOMAIN_FORM"
+                ) ?></a></td>
+    </tr>
+    </tbody>
     <tr>
         <td colspan="2" align="center" class="heading">
             <?= Loc::getMessage('SALE_PSE_BIS_VAL_SETTINGS') ?>
@@ -830,8 +968,9 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
                     }
                 } else {
                     $consumer = 'PAYSYSTEM_NEW';
-                    if ($data)
+                    if ($data) {
                         BusinessValue::addConsumer($consumer, $data);
+                    }
                 }
 
                 $businessValueControl->renderMap(array('CONSUMER_KEY' => $consumer));
@@ -848,7 +987,9 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
 
     $tariff = PaySystem\Manager::getTariff($actionFile, $paySystem['ID']);
     if ($tariff) {
-        $tariffBlock = '<tr class="heading"><td align="center" colspan="2">' . Loc::getMessage('SALE_PS_TARIFF') . '</td></tr>';
+        $tariffBlock = '<tr class="heading"><td align="center" colspan="2">' . Loc::getMessage(
+                'SALE_PS_TARIFF'
+            ) . '</td></tr>';
 
         $arMultiControlQuery = array();
         foreach ($tariff as $fieldId => $arField) {
@@ -873,8 +1014,9 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
             $tariffBlock .= CSaleHelper::wrapAdminHtml($controlHtml, $arField);
         }
 
-        if (!empty($arMultiControlQuery))
+        if (!empty($arMultiControlQuery)) {
             $tariffBlock .= CSaleHelper::getAdminMultilineControl($arMultiControlQuery);
+        }
 
         echo $tariffBlock;
         echo "<script type=\"text/javascript\">BX.Sale.PaySystem.initTariffLoad();</script>";
@@ -898,8 +1040,9 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
                         <td colspan="2" style="padding-top: 10px" align="center">
                             <?
                             $message = Loc::getMessage('SALE_PS_RETURN_SETTINGS_YANDEX');
-                            if (strpos($message, "/bitrix/admin/"))
+                            if (mb_strpos($message, "/bitrix/admin/")) {
                                 $message = str_replace("/bitrix/admin/", $selfFolderUrl, $message);
+                            }
                             echo $message;
                             $message = $adminSidePanelHelper->editUrlToPublicPage($message);
                             ?>
@@ -926,14 +1069,16 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
                         }
                         if ($yandexInvoiceSettings && $yandexInvoiceSettings['PKEY'] && $yandexInvoiceSettings['PUB_KEY']) {
                             $message = Loc::getMessage('SALE_PSE_YANDEX_INVOICE_SETTINGS_OK', array('#ID#' => $id));
-                            if (strpos($message, "/bitrix/admin/"))
+                            if (mb_strpos($message, "/bitrix/admin/")) {
                                 $message = str_replace("/bitrix/admin/", $selfFolderUrl, $message);
+                            }
                             $message = $adminSidePanelHelper->editUrlToPublicPage($message);
                             echo $message;
                         } else {
                             $message = Loc::getMessage('SALE_PSE_YANDEX_INVOICE_SETTINGS', array('#ID#' => $id));
-                            if (strpos($message, "/bitrix/admin/"))
+                            if (mb_strpos($message, "/bitrix/admin/")) {
                                 $message = str_replace("/bitrix/admin/", $selfFolderUrl, $message);
+                            }
                             $message = $adminSidePanelHelper->editUrlToPublicPage($message);
                             echo $message;
                         }
@@ -957,6 +1102,12 @@ $actionUrl = $adminSidePanelHelper->setDefaultQueryParams($actionUrl);
         </tr>
         <? $tabControl->EndTab();
     endif;
+
+    if ($paySystemCashbox !== '') {
+        $tabControl->BeginNextTab();
+        echo $paySystemCashbox;
+        $tabControl->EndTab();
+    }
 
     $tabControl->Buttons(array("disabled" => ($saleModulePermissions < "W"), "back_url" => $listUrl));
     $tabControl->End();
@@ -990,14 +1141,22 @@ function wrapDescrLHE($inputName, $content = '', $divId = false)
         'bAutoResize' => true,
         'bSaveOnBlur' => true,
         'toolbarConfig' => array(
-            'Bold', 'Italic', 'Underline', 'Strike',
-            'CreateLink', 'DeleteLink',
-            'Source', 'BackColor', 'ForeColor', 'Image'
+            'Bold',
+            'Italic',
+            'Underline',
+            'Strike',
+            'CreateLink',
+            'DeleteLink',
+            'Source',
+            'BackColor',
+            'ForeColor',
+            'Image'
         )
     );
 
-    if ($divId)
+    if ($divId) {
         $ar['id'] = $divId;
+    }
 
     $LHE = new CLightHTMLEditor;
     $LHE->Show($ar);

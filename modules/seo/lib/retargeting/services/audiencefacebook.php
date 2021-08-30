@@ -28,14 +28,16 @@ class AudienceFacebook extends Audience
 
     public function add(array $data)
     {
-        $response = $this->getRequest()->send(array(
-            'methodName' => 'retargeting.audience.add',
-            'parameters' => array(
-                'accountId' => $this->accountId,
-                'name' => $data['NAME'],
-                'description' => $data['DESCRIPTION'],
+        $response = $this->getRequest()->send(
+            array(
+                'methodName' => 'retargeting.audience.add',
+                'parameters' => array(
+                    'accountId' => $this->accountId,
+                    'name' => $data['NAME'],
+                    'description' => $data['DESCRIPTION'],
+                )
             )
-        ));
+        );
 
         $responseData = $response->getData();
         if (isset($responseData['id'])) {
@@ -79,44 +81,55 @@ class AudienceFacebook extends Audience
 
     public function importContacts($audienceId, array $contacts = array(), array $options)
     {
-        return $this->getRequest()->send(array(
-            'methodName' => 'retargeting.audience.contacts.add',
-            'parameters' => array(
-                'accountId' => $this->accountId,
-                'audienceId' => $audienceId,
-                'contacts' => Json::encode(
-                    $this->prepareContacts($contacts)
+        return $this->getRequest()->send(
+            array(
+                'methodName' => 'retargeting.audience.contacts.add',
+                'parameters' => array(
+                    'accountId' => $this->accountId,
+                    'audienceId' => $audienceId,
+                    'contacts' => Json::encode(
+                        $this->prepareContacts($contacts)
+                    )
                 )
             )
-        ));
+        );
     }
 
     public function removeContacts($audienceId, array $contacts = array(), array $options)
     {
-        return $this->getRequest()->send(array(
-            'methodName' => 'retargeting.audience.contacts.remove',
-            'parameters' => array(
-                'accountId' => $this->accountId,
-                'audienceId' => $audienceId,
-                'contacts' => Json::encode(
-                    $this->prepareContacts($contacts)
+        return $this->getRequest()->send(
+            array(
+                'methodName' => 'retargeting.audience.contacts.remove',
+                'parameters' => array(
+                    'accountId' => $this->accountId,
+                    'audienceId' => $audienceId,
+                    'contacts' => Json::encode(
+                        $this->prepareContacts($contacts)
+                    )
                 )
             )
-        ));
+        );
     }
 
     public function getList()
     {
-        $response = $this->getRequest()->send(array(
-            'methodName' => 'retargeting.audience.list',
-            'parameters' => array(
-                'accountId' => $this->accountId
+        $response = $this->getRequest()->send(
+            array(
+                'methodName' => 'retargeting.audience.list',
+                'parameters' => array(
+                    'accountId' => $this->accountId
+                )
             )
-        ));
+        );
         $data = $response->getData();
-        $data = array_values(array_filter($data, function ($item) {
-            return ($item['subtype'] == 'CUSTOM'); // only CUSTOM type (list of clients) is supported
-        }));
+        $data = array_values(
+            array_filter(
+                $data,
+                function ($item) {
+                    return ($item['subtype'] == 'CUSTOM'); // only CUSTOM type (list of clients) is supported
+                }
+            )
+        );
         $response->setData($data);
         return $response;
     }
@@ -140,14 +153,16 @@ class AudienceFacebook extends Audience
 
     public function createLookalike($sourceAudienceId, array $options)
     {
-        $result = $this->getRequest()->send(array(
-            'methodName' => 'retargeting.audience.lookalike.add',
-            'parameters' => array(
-                'accountId' => $this->accountId,
-                'audienceId' => $sourceAudienceId,
-                'options' => $options
+        $result = $this->getRequest()->send(
+            array(
+                'methodName' => 'retargeting.audience.lookalike.add',
+                'parameters' => array(
+                    'accountId' => $this->accountId,
+                    'audienceId' => $sourceAudienceId,
+                    'options' => $options
+                )
             )
-        ));
+        );
         if ($result->isSuccess()) {
             $result->setId($result->getData()['id']);
         }

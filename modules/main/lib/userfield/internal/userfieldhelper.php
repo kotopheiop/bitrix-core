@@ -83,7 +83,7 @@ final class UserFieldHelper
     public static function OnBeforeUserTypeAdd($field)
     {
         if (static::getInstance()->parseUserFieldEntityId($field['ENTITY_ID'])) {
-            if (substr($field['FIELD_NAME'], -4) == '_REF') {
+            if (mb_substr($field['FIELD_NAME'], -4) == '_REF') {
                 /**
                  * postfix _REF reserved for references to other highloadblocks
                  * @see CUserTypeHlblock::getEntityReferences
@@ -127,9 +127,12 @@ final class UserFieldHelper
             $typeData = $dataClass::getById($typeId)->fetch();
 
             if (empty($typeData)) {
-                $application->throwException(sprintf(
-                    'Entity "%s" wasn\'t found.', $factory->getUserFieldEntityId($typeId)
-                ));
+                $application->throwException(
+                    sprintf(
+                        'Entity "%s" wasn\'t found.',
+                        $factory->getUserFieldEntityId($typeId)
+                    )
+                );
 
                 return false;
             }
@@ -141,10 +144,14 @@ final class UserFieldHelper
             $connection = Application::getConnection();
             $sqlHelper = $connection->getSqlHelper();
 
-            $connection->query(sprintf(
-                'ALTER TABLE %s ADD %s %s',
-                $sqlHelper->quote($typeData['TABLE_NAME']), $sqlHelper->quote($field['FIELD_NAME']), $sql_column_type
-            ));
+            $connection->query(
+                sprintf(
+                    'ALTER TABLE %s ADD %s %s',
+                    $sqlHelper->quote($typeData['TABLE_NAME']),
+                    $sqlHelper->quote($field['FIELD_NAME']),
+                    $sql_column_type
+                )
+            );
 
             if ($field['MULTIPLE'] == 'Y') {
                 // create table for this relation
@@ -154,19 +161,23 @@ final class UserFieldHelper
                 $utmEntity->createDbTable();
 
                 // add indexes
-                $connection->query(sprintf(
-                    'CREATE INDEX %s ON %s (%s)',
-                    $sqlHelper->quote('IX_UTM_HL' . $typeId . '_' . $field['ID'] . '_ID'),
-                    $sqlHelper->quote($utmEntity->getDBTableName()),
-                    $sqlHelper->quote('ID')
-                ));
+                $connection->query(
+                    sprintf(
+                        'CREATE INDEX %s ON %s (%s)',
+                        $sqlHelper->quote('IX_UTM_HL' . $typeId . '_' . $field['ID'] . '_ID'),
+                        $sqlHelper->quote($utmEntity->getDBTableName()),
+                        $sqlHelper->quote('ID')
+                    )
+                );
 
-                $connection->query(sprintf(
-                    'CREATE INDEX %s ON %s (%s)',
-                    $sqlHelper->quote('IX_UTM_HL' . $typeId . '_' . $field['ID'] . '_VALUE'),
-                    $sqlHelper->quote($utmEntity->getDBTableName()),
-                    $sqlHelper->quote('VALUE')
-                ));
+                $connection->query(
+                    sprintf(
+                        'CREATE INDEX %s ON %s (%s)',
+                        $sqlHelper->quote('IX_UTM_HL' . $typeId . '_' . $field['ID'] . '_VALUE'),
+                        $sqlHelper->quote($utmEntity->getDBTableName()),
+                        $sqlHelper->quote('VALUE')
+                    )
+                );
             }
 
             return [
@@ -268,9 +279,11 @@ final class UserFieldHelper
                 $values = [];
             }
 
-            $result = new EventResult(EventResult::SUCCESS, [
+            $result = new EventResult(
+                EventResult::SUCCESS, [
                 'values' => $values,
-            ]);
+            ]
+            );
         }
 
         return $result;

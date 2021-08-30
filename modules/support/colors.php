@@ -1,4 +1,5 @@
 <?
+
 $arrColor = array();
 $arrColor["ALL_TICKET"] = "8080C0";
 $arrColor["OPEN_TICKET"] = "FF0000";

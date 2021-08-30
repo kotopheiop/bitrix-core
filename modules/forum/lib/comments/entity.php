@@ -54,9 +54,10 @@ class Entity
 
     public function getXmlId()
     {
-        if (!empty($this->entity["xml_id"]))
+        if (!empty($this->entity["xml_id"])) {
             return $this->entity["xml_id"];
-        return strtoupper($this->entity["type"] . "_" . $this->entity["id"]);
+        }
+        return mb_strtoupper($this->entity["type"] . "_" . $this->entity["id"]);
     }
 
     /**
@@ -142,8 +143,9 @@ class Entity
     public function setPermission($userId, $permission)
     {
         if (is_string($permission)) {
-            if (!is_array(self::$permissions[$userId]))
+            if (!is_array(self::$permissions[$userId])) {
                 self::$permissions[$userId] = array();
+            }
             self::$permissions[$userId][$this->forum["ID"]] = $permission;
         }
         return $this;
@@ -168,29 +170,35 @@ class Entity
         if (!array_key_exists($userId, self::$permissions)) {
             self::$permissions[$userId] = array();
             if (!array_key_exists($this->forum["ID"], self::$permissions[$userId])) {
-                if (\CForumUser::IsAdmin($userId))
+                if (\CForumUser::IsAdmin($userId)) {
                     $result = "Y";
-                else if ($this->forum["ACTIVE"] != "Y")
-                    $result = "A";
-                else if (\CForumUser::IsLocked($userId))
-                    $result = \CForumNew::GetPermissionUserDefault($this->forum["ID"]);
-                else {
-                    if (in_array($this->getType(), array('PH', 'TR', 'TE', 'IBLOCK'))) {
-                        $result = 'Y';
+                } else {
+                    if ($this->forum["ACTIVE"] != "Y") {
+                        $result = "A";
                     } else {
-                        $res = ForumTable::getList(array(
-                            'filter' => array(
-                                '=ID' => $this->forum["ID"],
-                                '@XML_ID' => array(
-                                    'USERS_AND_GROUPS'
-                                )
-                            ),
-                            'select' => array('ID')
-                        ));
-                        if ($forumFields = $res->fetch()) {
-                            $result = 'Y';
+                        if (\CForumUser::IsLocked($userId)) {
+                            $result = \CForumNew::GetPermissionUserDefault($this->forum["ID"]);
                         } else {
-                            $result = \CForumNew::GetUserPermission($this->forum["ID"], $userId);
+                            if (in_array($this->getType(), array('PH', 'TR', 'TM', 'IBLOCK'))) {
+                                $result = 'Y';
+                            } else {
+                                $res = ForumTable::getList(
+                                    array(
+                                        'filter' => array(
+                                            '=ID' => $this->forum["ID"],
+                                            '@XML_ID' => array(
+                                                'USERS_AND_GROUPS'
+                                            )
+                                        ),
+                                        'select' => array('ID')
+                                    )
+                                );
+                                if ($forumFields = $res->fetch()) {
+                                    $result = 'Y';
+                                } else {
+                                    $result = \CForumNew::GetUserPermission($this->forum["ID"], $userId);
+                                }
+                            }
                         }
                     }
                 }
@@ -207,7 +215,7 @@ class Entity
      */
     public static function getEntityByType($type = "")
     {
-        $type = strtolower($type);
+        $type = mb_strtolower($type);
         $entities = self::getEntities();
         return (array_key_exists($type, $entities) ? $entities[$type] : null);
     }
@@ -218,7 +226,7 @@ class Entity
      */
     public static function getEntityByXmlId($xmlId = "")
     {
-        $xmlId = strtoupper($xmlId);
+        $xmlId = mb_strtoupper($xmlId);
         $entities = self::getEntities();
         $result = null;
         foreach ($entities as $entity) {
@@ -238,19 +246,22 @@ class Entity
                     "entityType" => "tk",
                     "className" => TaskEntity::className(),
                     "moduleId" => "tasks",
-                    "xmlIdPrefix" => TaskEntity::getXmlIdPrefix()),
+                    "xmlIdPrefix" => TaskEntity::getXmlIdPrefix()
+                ),
                 "wf" => array(
                     "entityType" => "wf",
                     "className" => WorkflowEntity::className(),
                     "moduleId" => "lists",
-                    "xmlIdPrefix" => WorkflowEntity::getXmlIdPrefix()),
+                    "xmlIdPrefix" => WorkflowEntity::getXmlIdPrefix()
+                ),
                 "ev" => array(
                     "entityType" => "ev",
                     "className" => CalendarEntity::className(),
                     "moduleId" => "calendar",
-                    "xmlIdPrefix" => CalendarEntity::getXmlIdPrefix()),
-                "te" => array(
-                    "entityType" => "te",
+                    "xmlIdPrefix" => CalendarEntity::getXmlIdPrefix()
+                ),
+                "tm" => array(
+                    "entityType" => "tm",
                     "className" => Entity::className(),
                     "moduleId" => "timeman",
                     "xmlIdPrefix" => 'TIMEMAN_ENTRY_'
@@ -292,11 +303,11 @@ class Entity
                     }
 
                     if (is_string($connector['CLASS']) && class_exists($connector['CLASS'])) {
-                        self::$entities[strtolower($connector['ENTITY_TYPE'])] = array(
-                            "id" => strtolower($connector['ENTITY_TYPE']),
+                        self::$entities[mb_strtolower($connector['ENTITY_TYPE'])] = array(
+                            "id" => mb_strtolower($connector['ENTITY_TYPE']),
                             "className" => str_replace('\\\\', '\\', $connector['CLASS']),
                             "moduleId" => $connector['MODULE_ID'],
-                            "xmlIdPrefix" => strtoupper($connector['ENTITY_TYPE']) . "_"
+                            "xmlIdPrefix" => mb_strtoupper($connector['ENTITY_TYPE']) . "_"
                         );
                     }
                 }

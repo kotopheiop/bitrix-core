@@ -44,10 +44,8 @@ if ($catalogInstalled) {
 global $adminMenu;
 
 if ($APPLICATION->GetGroupRight("sale") != "D") {
-
     /* Converter Begin */
     if (Bitrix\Main\Config\Option::get("main", "~sale_converted_15", 'Y') == 'N') {
-
         $aMenu[] = array(
             "parent_menu" => "global_menu_store",
             "sort" => 100,
@@ -170,54 +168,71 @@ if ($APPLICATION->GetGroupRight("sale") != "D") {
 
     /* CASHBOX Begin*/
     if ($APPLICATION->GetGroupRight("sale") == "W") {
-        $portalZone = Loader::includeModule('intranet') ? CIntranetUtils::getPortalZone() : "";
-        $licensePrefix = Loader::includeModule("bitrix24") ? \CBitrix24::getLicensePrefix() : "";
+        $currentZone = '';
+        if (Loader::includeModule("bitrix24")) {
+            $currentZone = \CBitrix24::getLicensePrefix();
+        } elseif (Loader::includeModule('intranet')) {
+            $currentZone = \CIntranetUtils::getPortalZone();
+        }
 
+        $isAvailable = true;
         if (
-            Loader::includeModule("bitrix24") && $licensePrefix === 'ru'
-            ||
-            Loader::includeModule('intranet') && $portalZone === 'ru'
-            ||
-            !Loader::includeModule("bitrix24") && !Loader::includeModule('intranet')
+            $currentZone !== ''
+            && !in_array($currentZone, ['ru', 'ua'])
         ) {
-            $arMenu = array(
+            $isAvailable = false;
+        }
+
+        if ($isAvailable) {
+            $arMenu = [
                 "parent_menu" => "global_menu_store",
                 "sort" => 300,
                 "text" => GetMessage("SALE_CASHBOX_TITLE"),
                 "title" => GetMessage("SALE_CASHBOX"),
                 "icon" => "crm-cashbox-icon",
-                "url" => "sale_cashbox.php?lang=" . LANGUAGE_ID,
+                "url" => $currentZone !== 'ua' ? "sale_cashbox.php?lang=" . LANGUAGE_ID : '',
                 "page_icon" => "sale_page_icon_crm",
                 "items_id" => "menu_sale_cashbox",
-                "items" => Array(),
-            );
+                "items" => [],
+            ];
 
-            $arMenu["items"][] = array(
+            $arMenu["items"][] = [
                 "text" => GetMessage("SALE_CASHBOX_LIST"),
                 "title" => GetMessage("SALE_CASHBOX_LIST"),
                 "url" => "sale_cashbox_list.php?lang=" . LANGUAGE_ID,
-                "more_url" => array("sale_cashbox_edit.php"),
+                "more_url" => ["sale_cashbox_edit.php"],
                 "items_id" => "sale_cashbox_list",
                 "sort" => 301,
-            );
+            ];
 
-            $arMenu["items"][] = array(
+            $arMenu["items"][] = [
                 "text" => GetMessage("SALE_CASHBOX_CHECK"),
                 "title" => GetMessage("SALE_CASHBOX_CHECK"),
                 "url" => "sale_cashbox_check.php?lang=" . LANGUAGE_ID,
-                "more_url" => array("sale_cashbox_check_edit.php"),
+                "more_url" => ["sale_cashbox_check_edit.php"],
                 "items_id" => "sale_cashbox_check",
                 "sort" => 302,
-            );
+            ];
 
-            $arMenu["items"][] = array(
+            if (\Bitrix\Sale\Cashbox\CheckManager::isAvailableCorrection()) {
+                $arMenu["items"][] = [
+                    "text" => GetMessage("SALE_CASHBOX_CHECK_CORRECTION"),
+                    "title" => GetMessage("SALE_CASHBOX_CHECK_CORRECTION"),
+                    "url" => "sale_cashbox_correction.php?lang=" . LANGUAGE_ID,
+                    "more_url" => [],
+                    "items_id" => "sale_cashbox_correction",
+                    "sort" => 303,
+                ];
+            }
+
+            $arMenu["items"][] = [
                 "text" => GetMessage("SALE_CASHBOX_ZREPORT"),
                 "title" => GetMessage("SALE_CASHBOX_ZREPORT"),
                 "url" => "sale_cashbox_zreport.php?lang=" . LANGUAGE_ID,
-                "more_url" => array(),
+                "more_url" => [],
                 "items_id" => "sale_cashbox_zreport",
-                "sort" => 303,
-            );
+                "sort" => 304,
+            ];
 
             $aMenu[] = $arMenu;
         }
@@ -370,6 +385,15 @@ if ($APPLICATION->GetGroupRight("sale") == "W" || $discountView || $bViewAll) {
         }
     } else {
         if ($APPLICATION->GetGroupRight('sale') > 'D') {
+            if ($APPLICATION->GetGroupRight('sale') >= 'W') {
+                $arMenu["items"][] = array(
+                    "text" => GetMessage("SALE_MENU_DISCOUNT_PRESETS_NEW"),
+                    "title" => GetMessage("SALE_MENU_DISCOUNT_PRESETS_NEW"),
+                    "url" => "sale_discount_preset_list.php?lang=" . LANGUAGE_ID,
+                    "more_url" => array("sale_discount_preset_detail.php"),
+                    "items_id" => "sale_discount_preset_list",
+                );
+            }
             $arMenu["items"][] = array(
                 "text" => GetMessage("SALE_MENU_DISCOUNT"),
                 "title" => GetMessage("SALE_MENU_DISCOUNT_TITLE"),
@@ -439,14 +463,19 @@ if ($APPLICATION->GetGroupRight("sale") != "D") {
 
         if (IsModuleInstalled('report')) {
             $arSaleReports = array();
-            if (method_exists($adminMenu, "IsSectionActive")) {
+            if ($adminMenu && method_exists($adminMenu, "IsSectionActive")) {
                 if ($adminMenu->IsSectionActive("menu_sale_report") && CModule::IncludeModule("report")) {
                     CModule::IncludeModule("sale");
                     CBaseSaleReportHelper::initOwners();
-                    $dbRepList = Bitrix\Report\ReportTable::getList(array(
-                        'select' => array('ID', 'TITLE', 'DESCRIPTION'),
-                        'filter' => array('=CREATED_BY' => $USER->GetID(), '=OWNER_ID' => CBaseSaleReportHelper::getOwners())
-                    ));
+                    $dbRepList = Bitrix\Report\ReportTable::getList(
+                        array(
+                            'select' => array('ID', 'TITLE', 'DESCRIPTION'),
+                            'filter' => array(
+                                '=CREATED_BY' => $USER->GetID(),
+                                '=OWNER_ID' => CBaseSaleReportHelper::getOwners()
+                            )
+                        )
+                    );
                     while ($arReport = $dbRepList->fetch()) {
                         $arSaleReports[] = array(
                             "text" => htmlspecialcharsbx($arReport["TITLE"]),
@@ -569,7 +598,6 @@ if ($APPLICATION->GetGroupRight("sale") == "W" ||
                 ),
                 "sort" => 701,
             );
-
         }
 
         $arMenu["items"][] = array(
@@ -591,7 +619,6 @@ if ($APPLICATION->GetGroupRight("sale") == "W" ||
             ),
             "sort" => 704,
         );
-
     }
 
     $arSubItems = array();
@@ -719,7 +746,10 @@ if ($APPLICATION->GetGroupRight("sale") == "W" ||
                     array(
                         "text" => GetMessage("sale_menu_locations"),
                         "title" => GetMessage("sale_menu_locations_title"),
-                        "url" => CHTTP::urlAddParams(Location\Admin\LocationHelper::getListUrl(0), ["apply_filter" => "y"]),
+                        "url" => CHTTP::urlAddParams(
+                            Location\Admin\LocationHelper::getListUrl(0),
+                            ["apply_filter" => "y"]
+                        ),
                         "more_url" => array(Location\Admin\LocationHelper::getEditUrl()),
                         "module_id" => "sale",
                         "items_id" => "sale_location_node_list",
@@ -856,48 +886,6 @@ if ($APPLICATION->GetGroupRight("sale") == "W" ||
                 "items_id" => "menu_sale_trading_platforms",
                 "items" => array(
                     array(
-                        "text" => "eBay",
-                        "title" => "eBay",
-                        "items_id" => "menu_sale_trading_platforms_ebay",
-                        "url" => "sale_ebay.php?lang=" . LANGUAGE_ID,
-                        "more_url" => array("sale_ebay_actions.php", "sale_ebay.php"),
-                        "items" => array(
-                            array(
-                                "text" => GetMessage("SALE_MENU_EBAY_WIZARD"),
-                                "title" => GetMessage("SALE_MENU_EBAY_EXCHANGE_DESCR"),
-                                "url" => "sale_ebay_wizard.php?lang=" . LANGUAGE_ID,
-                                "more_url" => array("sale_ebay_wizard.php"),
-                                "items_id" => "sale_ebay_wizard",
-                                "sort" => 733,
-                            ),
-                            array(
-                                "text" => GetMessage("SALE_MENU_EBAY_SETT"),
-                                "title" => GetMessage("SALE_MENU_EBAY_SETT_DESCR"),
-                                "url" => "sale_ebay_general.php?lang=" . LANGUAGE_ID,
-                                "more_url" => array("sale_ebay_general.php"),
-                                "items_id" => "sale_ebay_general",
-                                "sort" => 734,
-                            ),
-                            array(
-                                "text" => GetMessage("SALE_MENU_EBAY_POLICY"),
-                                "title" => GetMessage("SALE_MENU_EBAY_POLICY_DESCR"),
-                                "url" => "sale_ebay_policy.php?lang=" . LANGUAGE_ID,
-                                "more_url" => array("sale_ebay_policy.php"),
-                                "items_id" => "sale_ebay_policy",
-                                "sort" => 735,
-                            ),
-                            array(
-                                "text" => GetMessage("SALE_MENU_EBAY_EXCHANGE"),
-                                "title" => GetMessage("SALE_MENU_EBAY_EXCHANGE_DESCR"),
-                                "url" => "sale_ebay_exchange.php?lang=" . LANGUAGE_ID,
-                                "more_url" => array("sale_ebay_exchange.php"),
-                                "items_id" => "sale_ebay_exchange",
-                                "sort" => 736,
-                            )
-                        ),
-                        "sort" => 732,
-                    ),
-                    array(
                         "text" => GetMessage("SALE_MENU_VK"),
                         "title" => GetMessage("SALE_MENU_VK_DESC"),
                         "items_id" => "menu_sale_trading_platforms_vk",
@@ -1005,33 +993,37 @@ if ($APPLICATION->GetGroupRight("sale") != "D" && $USER->CanDoOperation('install
     );
 }
 
-EventManager::getInstance()->addEventHandler("main", "OnBuildGlobalMenu", function (&$arGlobalMenu, &$arModuleMenu) {
-    if (in_array(Application::getInstance()->getContext()->getLanguage(), ["ru", "ua"])
-        &&
-        (
-            !ModuleManager::isModuleInstalled("intranet")
-            || Option::get("sale", "~IS_CRM_SITE_MASTER_OPENED", "N") === "Y"
-        )
-    ) {
-        $arGlobalMenu["global_menu_crm_site_master"] = [
-            "menu_id" => "crm-site-master",
-            "text" => GetMessage("SALE_MENU_CRM_SITE_MASTER"),
-            "title" => GetMessage("SALE_MENU_CRM_SITE_MASTER"),
-            "sort" => 475,
-            "items_id" => "global_menu_crm_site_master",
-            "help_section" => "crm-site-master",
-            "items" => [
-                [
-                    "parent_menu" => "global_menu_crm_site_master",
-                    "text" => GetMessage("SALE_MENU_CRM_SITE_MASTER_ITEM"),
-                    "title" => GetMessage("SALE_MENU_CRM_SITE_MASTER_ITEM"),
-                    "url" => "sale_crm_site_master.php?lang=" . LANGUAGE_ID,
-                    "icon" => "sale_crm_site_master_icon",
-                    "sort" => 100,
-                ]
-            ],
-        ];
+EventManager::getInstance()->addEventHandler(
+    "main",
+    "OnBuildGlobalMenu",
+    function (&$arGlobalMenu, &$arModuleMenu) {
+        if (in_array(Application::getInstance()->getContext()->getLanguage(), ["ru", "ua"])
+            &&
+            (
+                !ModuleManager::isModuleInstalled("intranet")
+                || Option::get("sale", "~IS_CRM_SITE_MASTER_OPENED", "N") === "Y"
+            )
+        ) {
+            $arGlobalMenu["global_menu_crm_site_master"] = [
+                "menu_id" => "crm-site-master",
+                "text" => GetMessage("SALE_MENU_CRM_SITE_MASTER"),
+                "title" => GetMessage("SALE_MENU_CRM_SITE_MASTER"),
+                "sort" => 475,
+                "items_id" => "global_menu_crm_site_master",
+                "help_section" => "crm-site-master",
+                "items" => [
+                    [
+                        "parent_menu" => "global_menu_crm_site_master",
+                        "text" => GetMessage("SALE_MENU_CRM_SITE_MASTER_ITEM"),
+                        "title" => GetMessage("SALE_MENU_CRM_SITE_MASTER_ITEM"),
+                        "url" => "sale_crm_site_master.php?lang=" . LANGUAGE_ID,
+                        "icon" => "sale_crm_site_master_icon",
+                        "sort" => 100,
+                    ]
+                ],
+            ];
+        }
     }
-});
+);
 
 return (!empty($aMenu) ? $aMenu : false);

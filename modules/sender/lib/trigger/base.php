@@ -136,10 +136,11 @@ abstract class Base
      */
     public function getFields()
     {
-        if (is_array($this->fields))
+        if (is_array($this->fields)) {
             return $this->fields;
-        else
+        } else {
             return array();
+        }
     }
 
     /**
@@ -170,10 +171,11 @@ abstract class Base
      */
     public function getParams()
     {
-        if (is_array($this->params))
+        if (is_array($this->params)) {
             return $this->params;
-        else
+        } else {
             return array();
+        }
     }
 
     /**
@@ -233,8 +235,9 @@ abstract class Base
         $fieldPrefix = $this->getFieldPrefix();
         if ($fieldPrefix) {
             return $fieldPrefix . '_' . $id;
-        } else
+        } else {
             return $id;
+        }
     }
 
     /**
@@ -255,8 +258,9 @@ abstract class Base
             }
 
             return implode('', $returnName);
-        } else
+        } else {
             return $name;
+        }
     }
 
     /**
@@ -302,7 +306,7 @@ abstract class Base
         $personalizeList = array();
         $personalizeListTmp = $this->getPersonalizeList();
         foreach ($personalizeListTmp as $tag) {
-            if (strlen($tag['CODE']) > 0) {
+            if ($tag['CODE'] <> '') {
                 $personalizeList[] = $tag['CODE'];
             }
         }

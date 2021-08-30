@@ -86,18 +86,21 @@ class CStoreAssist
 
     public static function setSettingOption($pageId, $isDone)
     {
-        if (!in_array($pageId, self::$arAllPageId))
+        if (!in_array($pageId, self::$arAllPageId)) {
             return false;
+        }
 
-        if (!in_array($isDone, array("Y", "N")))
+        if (!in_array($isDone, array("Y", "N"))) {
             return false;
+        }
 
         $option = Bitrix\Main\Config\Option::get('storeassist', 'storeassist_settings', '');
 
-        if (!$option)
+        if (!$option) {
             $option = array();
-        else
+        } else {
             $option = explode(",", $option);
+        }
 
         if ($isDone == "Y" && !in_array($pageId, $option)) {
             $option[] = $pageId;
@@ -116,29 +119,33 @@ class CStoreAssist
     public static function getSettingOption()
     {
         $option = Bitrix\Main\Config\Option::get('storeassist', 'storeassist_settings', '');
-        if (!$option)
+        if (!$option) {
             $option = array();
-        else
+        } else {
             $option = explode(",", $option);
+        }
 
         return $option;
     }
 
     public static function getDocumentationLink($pageId)
     {
-        if (!$pageId)
+        if (!$pageId) {
             return false;
+        }
 
-        if (!in_array($pageId, self::$arAllPageId))
+        if (!in_array($pageId, self::$arAllPageId)) {
             return false;
+        }
 
         return Loc::getMessage("STOREAS_DOCURL_" . $pageId);
     }
 
     public static function onPrologAdminTitle($pageUrl, $pageId = "")
     {
-        if (!in_array(LANGUAGE_ID, array("ru", "ua")))
+        if (!in_array(LANGUAGE_ID, array("ru", "ua"))) {
             return;
+        }
 
         global $APPLICATION, $bxProductConfig;
 
@@ -148,19 +155,24 @@ class CStoreAssist
         }
 
         $partnerUrl = Bitrix\Main\Config\Option::get("storeassist", "partner_url", '');
-        if ($partnerUrl)
-            $bxProductConfig["admin"]["links"] = '<a href="http://www.1c-bitrix.ru/">www.1c-bitrix.ru</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="' . htmlspecialcharsbx($partnerUrl) . '" class="adm-main-support-link">' . Loc::getMessage("STOREAS_SUPPORT") . '</a>';
+        if ($partnerUrl) {
+            $bxProductConfig["admin"]["links"] = '<a href="http://www.1c-bitrix.ru/">www.1c-bitrix.ru</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="' . htmlspecialcharsbx(
+                    $partnerUrl
+                ) . '" class="adm-main-support-link">' . Loc::getMessage("STOREAS_SUPPORT") . '</a>';
+        }
 
         if (!$pageId) {
             preg_match("/([^\/]*?)\.php/i", $pageUrl, $matches);
-            if (isset($matches[1]))
+            if (isset($matches[1])) {
                 $pageId = $matches[1];
-            else
+            } else {
                 return false;
+            }
         }
 
-        if (!in_array($pageId, self::$arAllPageId))
+        if (!in_array($pageId, self::$arAllPageId)) {
             return false;
+        }
 
         $arSettingOption = self::getSettingOption();
         $isItemDone = (in_array($pageId, $arSettingOption)) ? true : false;
@@ -173,21 +185,33 @@ class CStoreAssist
         echo '<div class="adm-s-toolbar" data-role="adm-task-toolbar" onmouseout="BX.removeClass(this, \'hover\')">
 			<div class="adm-s-toolbar-shadow">
 				<div class="adm-detail-toolbar" style="margin-bottom: 0;">
-					<a href="/bitrix/admin/storeassist.php?lang=' . LANGUAGE_ID . $hash . '" class="adm-detail-toolbar-btn"><span class="adm-detail-toolbar-btn-l"></span><span class="adm-detail-toolbar-btn-text">' . Loc::getMessage("STOREAS_BACK_BUTTON") . '</span><span class="adm-detail-toolbar-btn-r"></span></a>
-					<span class="adm-s-toolbar-task ' . ($isItemDone ? 'checked' : '') . '">' . Loc::getMessage(($isItemDone ? 'STOREAS_DONE' : 'STOREAS_NOT_DONE')) . '</span>
+					<a href="/bitrix/admin/storeassist.php?lang=' . LANGUAGE_ID . $hash . '" class="adm-detail-toolbar-btn"><span class="adm-detail-toolbar-btn-l"></span><span class="adm-detail-toolbar-btn-text">' . Loc::getMessage(
+                "STOREAS_BACK_BUTTON"
+            ) . '</span><span class="adm-detail-toolbar-btn-r"></span></a>
+					<span class="adm-s-toolbar-task ' . ($isItemDone ? 'checked' : '') . '">' . Loc::getMessage(
+                ($isItemDone ? 'STOREAS_DONE' : 'STOREAS_NOT_DONE')
+            ) . '</span>
 					<div class="adm-detail-toolbar-right">
 						<span class="adm-btn-wrap adm-btn-delete">
-							<span class="adm-btn" onclick="BX.Storeassist.Admin.showDocumentation(\'' . CUtil::JSEscape(Loc::getMessage("STOREAS_DOCURL_" . $pageId)) . '\')">' . Loc::getMessage("STOREAS_DOCUMENTATION") . '</span>
+							<span class="adm-btn" onclick="BX.Storeassist.Admin.showDocumentation(\'' . CUtil::JSEscape(
+                Loc::getMessage("STOREAS_DOCURL_" . $pageId)
+            ) . '\')">' . Loc::getMessage("STOREAS_DOCUMENTATION") . '</span>
 						</span>
 					</div>
 				</div>
 				<div class="adm-s-toolbar-hidden-block">
 					<strong>' . Loc::getMessage("STOREAS_TASK") . ':</strong>
-					' . Loc::getMessage("STOREAS_TASK_" . (isset($_GET["subId"]) ? htmlspecialcharsbx($_GET["subId"]) : $pageId)) .
+					' . Loc::getMessage(
+                "STOREAS_TASK_" . (isset($_GET["subId"]) ? htmlspecialcharsbx($_GET["subId"]) : $pageId)
+            ) .
             ($ST_RIGHT >= "W" ?
                 '<div class="adm-s-toolbar-hidden-block-btn">' . ($isItemDone ?
-                    '<a href="javascript:void(0)" onclick="BX.Storeassist.Admin.setOption(\'' . $pageId . '\', \'N\')" class="adm-btn">' . Loc::getMessage("STOREAS_NOT_DONE_BUTTON") . '</a>' :
-                    '<a href="javascript:void(0)" onclick="BX.Storeassist.Admin.setOption(\'' . $pageId . '\', \'Y\')" class="adm-btn adm-btn-green">' . Loc::getMessage("STOREAS_DONE_BUTTON") . '</a>') .
+                    '<a href="javascript:void(0)" onclick="BX.Storeassist.Admin.setOption(\'' . $pageId . '\', \'N\')" class="adm-btn">' . Loc::getMessage(
+                        "STOREAS_NOT_DONE_BUTTON"
+                    ) . '</a>' :
+                    '<a href="javascript:void(0)" onclick="BX.Storeassist.Admin.setOption(\'' . $pageId . '\', \'Y\')" class="adm-btn adm-btn-green">' . Loc::getMessage(
+                        "STOREAS_DONE_BUTTON"
+                    ) . '</a>') .
                 '</div>' : '')
             . '</div>
 			</div>
@@ -224,8 +248,9 @@ class CStoreAssist
 
     public static function onBuildGlobalMenu(&$arGlobalMenu, &$arModuleMenu)
     {
-        if (!in_array(LANGUAGE_ID, array("ru", "ua")))
+        if (!in_array(LANGUAGE_ID, array("ru", "ua"))) {
             return;
+        }
 
         global $APPLICATION;
 
@@ -255,10 +280,11 @@ class CStoreAssist
     {
         $progress = Bitrix\Main\Config\Option::get("storeassist", "progress_percent", 0);
 
-        if ($progress < 0)
+        if ($progress < 0) {
             $progress = 0;
-        elseif ($progress > 10)
+        } elseif ($progress > 10) {
             $progress = 10;
+        }
 
         return $progress;
     }
@@ -274,8 +300,17 @@ class CStoreAssist
                 "PAYED" => "Y",
             );
 
-            $dateFromTs = MakeTimeStamp(date("d", time() - 3600 * 24 * 2) . "." . date("m", time() - 3600 * 24 * 2) . "." . date("Y", time() - 3600 * 24 * 2) . " 23:59:59", "DD.MM.YYYY HH:MI:SS");
-            $dateToTs = MakeTimeStamp(date("d") . "." . date("m") . "." . date("Y") . " 00:00:00", "DD.MM.YYYY HH:MI:SS");
+            $dateFromTs = MakeTimeStamp(
+                date("d", time() - 3600 * 24 * 2) . "." . date("m", time() - 3600 * 24 * 2) . "." . date(
+                    "Y",
+                    time() - 3600 * 24 * 2
+                ) . " 23:59:59",
+                "DD.MM.YYYY HH:MI:SS"
+            );
+            $dateToTs = MakeTimeStamp(
+                date("d") . "." . date("m") . "." . date("Y") . " 00:00:00",
+                "DD.MM.YYYY HH:MI:SS"
+            );
 
             $arFilter[">DATE_STATUS"] = date($DB->DateFormatToPHP(CSite::GetDateFormat("FULL", SITE_ID)), $dateFromTs);
             $arFilter["<DATE_STATUS"] = date($DB->DateFormatToPHP(CSite::GetDateFormat("FULL", SITE_ID)), $dateToTs);
@@ -289,7 +324,7 @@ class CStoreAssist
 
             $curNumOrders = Bitrix\Main\Config\Option::get("storeassist", "num_orders", "");
             if ($curNumOrders) {
-                $curNumOrders = unserialize($curNumOrders);
+                $curNumOrders = unserialize($curNumOrders, ["allowed_classes" => false]);
             }
             $newNumOrders["prevDay"] = (isset($curNumOrders["newDay"])) ? $curNumOrders["newDay"] : 0;
 

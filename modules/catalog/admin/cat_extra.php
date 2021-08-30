@@ -1,5 +1,6 @@
 <?
 /** @global CUser $USER */
+
 /** @global CMain $APPLICATION */
 
 /** @global CDatabase $DB */
@@ -17,8 +18,9 @@ global $adminSidePanelHelper;
 $publicMode = $adminPage->publicMode;
 $selfFolderUrl = $adminPage->getSelfFolderUrl();
 
-if (!($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_price')))
+if (!($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_price'))) {
     $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 Loader::includeModule('catalog');
 $bReadOnly = !$USER->CanDoOperation('catalog_extra');
 
@@ -70,15 +72,17 @@ if ($lAdmin->EditAction() && !$bReadOnly) {
     foreach ($_POST['FIELDS'] as $ID => $arFields) {
         $ID = (int)($ID);
 
-        if ($ID <= 0 || !$lAdmin->IsUpdated($ID))
+        if ($ID <= 0 || !$lAdmin->IsUpdated($ID)) {
             continue;
+        }
 
         $DB->StartTransaction();
         if (!CExtra::Update($ID, $arFields)) {
-            if ($ex = $APPLICATION->GetException())
+            if ($ex = $APPLICATION->GetException()) {
                 $lAdmin->AddUpdateError($ex->GetString(), $ID);
-            else
+            } else {
                 $lAdmin->AddUpdateError(GetMessage("CEN_ERROR_UPDATE"), $ID);
+            }
 
             $DB->Rollback();
         } else {
@@ -91,13 +95,15 @@ if (($arID = $lAdmin->GroupAction()) && !$bReadOnly) {
     if ($_REQUEST['action_target'] == 'selected') {
         $arID = array();
         $dbResultList = CExtra::GetList(array($by => $order), $arFilter, false, false, array('ID'));
-        while ($arResult = $dbResultList->Fetch())
+        while ($arResult = $dbResultList->Fetch()) {
             $arID[] = $arResult['ID'];
+        }
     }
 
     foreach ($arID as $ID) {
-        if (strlen($ID) <= 0)
+        if ($ID == '') {
             continue;
+        }
 
         switch ($_REQUEST['action']) {
             case "delete":
@@ -106,10 +112,11 @@ if (($arID = $lAdmin->GroupAction()) && !$bReadOnly) {
                 if (!CExtra::Delete($ID)) {
                     $DB->Rollback();
 
-                    if ($ex = $APPLICATION->GetException())
+                    if ($ex = $APPLICATION->GetException()) {
                         $lAdmin->AddGroupError($ex->GetString(), $ID);
-                    else
+                    } else {
                         $lAdmin->AddGroupError(GetMessage("EXTRA_DELETE_ERROR"), $ID);
+                    }
                 } else {
                     $DB->Commit();
                 }
@@ -200,7 +207,10 @@ while ($arExtra = $dbResultList->NavNext(false)) {
         $arActions[] = array(
             "ICON" => "delete",
             "TEXT" => GetMessage("CEN_DELETE_ALT"),
-            "ACTION" => "if(confirm('" . GetMessage('CEN_DELETE_CONF') . "')) " . $lAdmin->ActionDoGroup($arExtra["ID"], "delete")
+            "ACTION" => "if(confirm('" . GetMessage('CEN_DELETE_CONF') . "')) " . $lAdmin->ActionDoGroup(
+                    $arExtra["ID"],
+                    "delete"
+                )
         );
     }
 
@@ -222,10 +232,12 @@ $lAdmin->AddFooter(
 );
 
 if (!$bReadOnly) {
-    $lAdmin->AddGroupActionTable([
-        'edit' => true,
-        'delete' => true
-    ]);
+    $lAdmin->AddGroupActionTable(
+        [
+            'edit' => true,
+            'delete' => true
+        ]
+    );
 }
 
 if (!$bReadOnly) {

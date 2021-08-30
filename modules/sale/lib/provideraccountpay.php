@@ -14,8 +14,9 @@ use Bitrix\Main,
     Bitrix\Currency,
     Bitrix\Catalog;
 
-if (!Loader::includeModule('sale'))
+if (!Loader::includeModule('sale')) {
     return false;
+}
 
 /**
  * Class ProviderAccountPay
@@ -32,7 +33,6 @@ class ProviderAccountPay implements \IBXSaleProductProvider
         $fields["CAN_BUY"] = 'Y';
         $fields["AVAILABLE_QUANTITY"] = 100000000;
         return $fields;
-
     }
 
     public static function OrderProduct($fields)
@@ -97,7 +97,14 @@ class ProviderAccountPay implements \IBXSaleProductProvider
         $order = $basket->getOrder();
         $userId = $order->getUserId();
 
-        $resultUpdateUserAccount = \CSaleUserAccount::UpdateAccount($userId, ($fields["UNDO_DEDUCTION"] === 'N' ? $sum : -$sum), $currency, "MANUAL", $orderId, "Payment to user account");
+        $resultUpdateUserAccount = \CSaleUserAccount::UpdateAccount(
+            $userId,
+            ($fields["UNDO_DEDUCTION"] === 'N' ? $sum : -$sum),
+            $currency,
+            "MANUAL",
+            $orderId,
+            "Payment to user account"
+        );
 
         if ($resultUpdateUserAccount) {
             $fields['RESULT'] = true;

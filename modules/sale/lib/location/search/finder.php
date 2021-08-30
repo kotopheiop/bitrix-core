@@ -48,8 +48,10 @@ class Finder
         $types = Option::get('sale', self::SALE_LOCATION_INDEXED_TYPES_OPT, '', '');
         $typesFromDb = static::getTypesFromDb();
 
-        if (!strlen($types)) // means "all"
+        if ($types == '') // means "all"
+        {
             return array_keys($typesFromDb);
+        }
 
         $types = explode(':', $types);
         $result = array();
@@ -57,8 +59,9 @@ class Finder
         if (is_array($types)) {
             foreach ($types as $type) {
                 $type = intval($type);
-                if (isset($typesFromDb[$type]))
+                if (isset($typesFromDb[$type])) {
                     $result[] = $type;
+                }
             }
         }
 
@@ -73,8 +76,9 @@ class Finder
 
             foreach ($types as $type) {
                 $type = intval($type);
-                if (isset($typesFromDb[$type]))
+                if (isset($typesFromDb[$type])) {
                     $result[] = $type;
+                }
             }
 
             $result = array_unique($result);
@@ -88,16 +92,18 @@ class Finder
         $langs = Option::get('sale', self::SALE_LOCATION_INDEXED_LANGUAGES_OPT, '', '');
         $langsFromDb = static::getLangsFromDb();
 
-        if (!strlen($langs))
+        if ($langs == '') {
             return array_keys($langsFromDb);
+        }
 
         $result = array();
         $langs = explode(':', $langs);
 
         if (is_array($langs)) {
             foreach ($langs as $lang) {
-                if (isset($langsFromDb[$lang]))
+                if (isset($langsFromDb[$lang])) {
                     $result[] = $lang;
+                }
             }
         }
 
@@ -106,18 +112,20 @@ class Finder
 
     public static function setIndexedLanguages($langs = array())
     {
-        if (is_array($langs) && !empty($langs))
+        if (is_array($langs) && !empty($langs)) {
             $langs = array_unique($langs);
-        else
+        } else {
             $langs = array();
+        }
 
         $result = array();
         if (is_array($langs) && !empty($langs)) {
             $langsFromDb = static::getLangsFromDb();
 
             foreach ($langs as $lang) {
-                if (isset($langsFromDb[$lang]))
+                if (isset($langsFromDb[$lang])) {
                     $result[] = $lang;
+                }
             }
 
             $result = array_unique($result);
@@ -130,8 +138,9 @@ class Finder
     {
         $langsFromDb = array();
         $res = \Bitrix\Main\Localization\LanguageTable::getList(array('select' => array('ID')));
-        while ($item = $res->fetch())
+        while ($item = $res->fetch()) {
             $langsFromDb[$item['ID']] = true;
+        }
 
         return $langsFromDb;
     }
@@ -140,8 +149,9 @@ class Finder
     {
         $typesFromDb = array();
         $res = Location\TypeTable::getList(array('select' => array('ID')));
-        while ($item = $res->fetch())
+        while ($item = $res->fetch()) {
             $typesFromDb[intval($item['ID'])] = true;
+        }
 
         return $typesFromDb;
     }
@@ -152,24 +162,31 @@ class Finder
      *
      *
      */
-    public static function find($parameters, $behaviour = array('FALLBACK_TO_NOINDEX_ON_NOTFOUND' => true, 'USE_INDEX' => true, 'USE_ORM' => true))
-    {
+    public static function find(
+        $parameters,
+        $behaviour = array('FALLBACK_TO_NOINDEX_ON_NOTFOUND' => true, 'USE_INDEX' => true, 'USE_ORM' => true)
+    ) {
         /////////////////////////////////
         // parameter check and process
 
         Assert::expectArray($parameters, '$parameters');
 
-        if (!is_array($behaviour))
+        if (!is_array($behaviour)) {
             $behaviour = array();
-        if (!isset($behaviour['FALLBACK_TO_NOINDEX_ON_NOTFOUND']))
+        }
+        if (!isset($behaviour['FALLBACK_TO_NOINDEX_ON_NOTFOUND'])) {
             $behaviour['FALLBACK_TO_NOINDEX_ON_NOTFOUND'] = true;
-        if (!isset($behaviour['USE_INDEX']))
+        }
+        if (!isset($behaviour['USE_INDEX'])) {
             $behaviour['USE_INDEX'] = true;
-        if (!isset($behaviour['USE_ORM']))
+        }
+        if (!isset($behaviour['USE_ORM'])) {
             $behaviour['USE_ORM'] = true;
+        }
 
-        if (!isset($parameters['select']))
+        if (!isset($parameters['select'])) {
             $parameters['select'] = array('ID');
+        }
 
         Assert::expectArray($parameters['select'], '$parameters[select]');
 
@@ -181,23 +198,36 @@ class Finder
             if (isset($parameters['filter']['PHRASE']) || isset($parameters['filter']['=PHRASE'])) {
                 $key = isset($parameters['filter']['PHRASE']) ? 'PHRASE' : '=PHRASE';
 
-                $parameters['filter'][$key] = Assert::expectStringNotNull($parameters['filter'][$key], '$parameters[filter][' . $key . ']');
-                $parameters['filter'][$key] = str_replace('%', '', $parameters['filter'][$key]); // cannot pass '%' to like
+                $parameters['filter'][$key] = Assert::expectStringNotNull(
+                    $parameters['filter'][$key],
+                    '$parameters[filter][' . $key . ']'
+                );
+                $parameters['filter'][$key] = str_replace(
+                    '%',
+                    '',
+                    $parameters['filter'][$key]
+                ); // cannot pass '%' to like
             }
 
             if (isset($parameters['filter']['SITE_ID']) || isset($parameters['filter']['=SITE_ID'])) {
                 $key = isset($parameters['filter']['SITE_ID']) ? 'SITE_ID' : '=SITE_ID';
-                $parameters['filter'][$key] = Assert::expectStringNotNull($parameters['filter'][$key], '$parameters[filter][' . $key . ']'); // stronger here
+                $parameters['filter'][$key] = Assert::expectStringNotNull(
+                    $parameters['filter'][$key],
+                    '$parameters[filter][' . $key . ']'
+                ); // stronger here
 
-                if (!Location\SiteLocationTable::checkLinkUsageAny($parameters['filter'][$key]))
+                if (!Location\SiteLocationTable::checkLinkUsageAny($parameters['filter'][$key])) {
                     unset($parameters['filter'][$key]);
+                }
             }
         }
 
-        if (isset($parameters['limit']))
+        if (isset($parameters['limit'])) {
             $parameters['limit'] = Assert::expectIntegerNonNegative($parameters['limit'], '$parameters[limit]');
-        if (isset($parameters['offset']))
+        }
+        if (isset($parameters['offset'])) {
             $parameters['offset'] = Assert::expectIntegerNonNegative($parameters['offset'], '$parameters[offset]');
+        }
 
         /////////////////////////////////
 
@@ -239,18 +269,20 @@ class Finder
                 $found = array();
                 preg_match("#^(=?)(.+)#", $field, $found);
 
-                if (strlen($found[1]))
+                if ($found[1] <> '') {
                     $op = $found[1];
-                else
+                } else {
                     $op = '=';
+                }
 
-                if (!isset(static::$allowedOperations[$op]))
+                if (!isset(static::$allowedOperations[$op])) {
                     throw new Main\ArgumentException('Unknown modifier in the filter');
+                }
 
                 $fieldParsed = $found[2];
 
                 $parsed[$fieldParsed] = array(
-                    'OP' => strlen($op) ? $op : '=',
+                    'OP' => $op <> '' ? $op : '=',
                     'VALUE' => $value
                 );
             }
@@ -268,7 +300,7 @@ class Finder
 
         $filter = static::parseFilter($parameters['filter']);
 
-        $filterByPhrase = isset($filter['PHRASE']) && strlen($filter['PHRASE']['VALUE']);
+        $filterByPhrase = isset($filter['PHRASE']) && mb_strlen($filter['PHRASE']['VALUE']);
 
         if ($filterByPhrase) // filter by phrase
         {
@@ -277,7 +309,8 @@ class Finder
             $firstBound = array_shift($bounds);
             $k = 0;
             foreach ($bounds as $bound) {
-                $query['JOIN'][] = " inner join " . ChainTable::getTableName() . " A" . $k . " on A.LOCATION_ID = A" . $k . ".LOCATION_ID and (
+                $query['JOIN'][] = " inner join " . ChainTable::getTableName(
+                    ) . " A" . $k . " on A.LOCATION_ID = A" . $k . ".LOCATION_ID and (
 
 					" . ($bound['INF'] == $bound['SUP']
                         ? " A" . $k . ".POSITION = '" . $bound['INF'] . "'"
@@ -299,8 +332,11 @@ class Finder
         }
 
         // site link search
-        if (strlen($filter['SITE_ID']['VALUE']) && SiteLinkTable::checkTableExists()) {
-            $query['JOIN'][] = "inner join " . SiteLinkTable::getTableName() . " SL on SL.LOCATION_ID = " . $mainTableJoinCondition . " and SL.SITE_ID = '" . $dbHelper->forSql($filter['SITE_ID']['VALUE']) . "'";
+        if (mb_strlen($filter['SITE_ID']['VALUE']) && SiteLinkTable::checkTableExists()) {
+            $query['JOIN'][] = "inner join " . SiteLinkTable::getTableName(
+                ) . " SL on SL.LOCATION_ID = " . $mainTableJoinCondition . " and SL.SITE_ID = '" . $dbHelper->forSql(
+                    $filter['SITE_ID']['VALUE']
+                ) . "'";
         }
 
         // process filter and select statements
@@ -348,47 +384,58 @@ class Finder
 
         // data join, only if extended select specified
 
-        if ($locationRequired && $filterByPhrase)
+        if ($locationRequired && $filterByPhrase) {
             $query['JOIN'][] = "inner join " . Location\LocationTable::getTableName() . " L on A.LOCATION_ID = L.ID";
+        }
 
-        if ($nameRequired)
-            $query['JOIN'][] = "inner join " . Location\Name\LocationTable::getTableName() . " NAME on NAME.LOCATION_ID = " . $mainTableJoinCondition; //  and N.LANGUAGE_ID = 'ru'
+        if ($nameRequired) {
+            $query['JOIN'][] = "inner join " . Location\Name\LocationTable::getTableName(
+                ) . " NAME on NAME.LOCATION_ID = " . $mainTableJoinCondition;
+        } //  and N.LANGUAGE_ID = 'ru'
 
         // making select
         if (is_array($parameters['select'])) {
             $select = array();
             foreach ($parameters['select'] as $alias => $field) {
-                if ($field != 'NAME.NAME' && $field != 'NAME.LANGUAGE_ID')
+                if ($field != 'NAME.NAME' && $field != 'NAME.LANGUAGE_ID') {
                     $field = 'L.' . $dbHelper->forSql($field);
+                }
 
-                if ((string)$alias === (string)intval($alias))
+                if ((string)$alias === (string)intval($alias)) {
                     $select[] = $field;
-                else
+                } else {
                     $select[] = $field . ' as ' . $dbHelper->forSql($alias);
+                }
             }
 
             $sqlSelect = implode(', ', $select);
-        } else
+        } else {
             $sqlSelect = $mainTableJoinCondition . ' as ID';
+        }
 
         // making filter
         foreach ($filter as $field => $params) {
-            if ($field != 'NAME.NAME' && $field != 'NAME.LANGUAGE_ID')
+            if ($field != 'NAME.NAME' && $field != 'NAME.LANGUAGE_ID') {
                 $field = 'L.' . $dbHelper->forSql($field);
+            }
 
             $values = $params['VALUE'];
 
-            if (!is_array($values))
+            if (!is_array($values)) {
                 $values = array($values);
+            }
 
-            foreach ($values as $value)
+            foreach ($values as $value) {
                 $query['WHERE'][] = $field . ' ' . $params['OP'] . " '" . $dbHelper->forSql($value) . "'";
+            }
         }
 
         if ($filterByPhrase) {
             $sql = "
-				select " . ($dbConnection->getType() != 'mysql' ? '' : 'distinct')/*fix this in more clever way later*/ . " 
-					" . $sqlSelect . (\Bitrix\Sale\Location\DB\Helper::needSelectFieldsInOrderByWhenDistinct() ? ', A.RELEVANCY' : '') . "
+				select " . ($dbConnection->getType(
+                ) != 'mysql' ? '' : 'distinct')/*fix this in more clever way later*/ . " 
+					" . $sqlSelect . (\Bitrix\Sale\Location\DB\Helper::needSelectFieldsInOrderByWhenDistinct(
+                ) ? ', A.RELEVANCY' : '') . "
 
 				from " . ChainTable::getTableName() . " A
 
@@ -415,8 +462,9 @@ class Finder
         $offset = intval($parameters['offset']);
         $limit = intval($parameters['limit']);
 
-        if ($limit)
+        if ($limit) {
             $sql = $dbHelper->getTopSql($sql, $limit, $offset);
+        }
 
         $res = $dbConnection->query($sql);
 
@@ -448,14 +496,20 @@ class Finder
 
         $filter = static::parseFilter($parameters['filter']);
 
-        if (strlen($filter['SITE_ID']['VALUE'])) {
-            $filterSite = $dbHelper->forSql(substr($filter['SITE_ID']['VALUE'], 0, 2));
+        if ($filter['SITE_ID']['VALUE'] <> '') {
+            $filterSite = $dbHelper->forSql(mb_substr($filter['SITE_ID']['VALUE'], 0, 2));
 
-            $hasLocLinks = Location\SiteLocationTable::checkLinkUsage($filterSite, Location\SiteLocationTable::DB_LOCATION_FLAG);
-            $hasGrpLinks = Location\SiteLocationTable::checkLinkUsage($filterSite, Location\SiteLocationTable::DB_GROUP_FLAG);
+            $hasLocLinks = Location\SiteLocationTable::checkLinkUsage(
+                $filterSite,
+                Location\SiteLocationTable::DB_LOCATION_FLAG
+            );
+            $hasGrpLinks = Location\SiteLocationTable::checkLinkUsage(
+                $filterSite,
+                Location\SiteLocationTable::DB_GROUP_FLAG
+            );
             $doFilterBySite = true;
         }
-        if (strlen($filter['PHRASE']['VALUE'])) {
+        if ($filter['PHRASE']['VALUE'] <> '') {
             $doFilterByName = true;
 
             $filterName = ToUpper($dbHelper->forSql($filter['PHRASE']['VALUE']));
@@ -481,10 +535,11 @@ class Finder
         }
 
         $doFilterByLang = true;
-        if (strlen($filter['NAME.LANGUAGE_ID']['VALUE'])) {
-            $filterLang = $dbHelper->forSql(substr($filter['NAME.LANGUAGE_ID']['VALUE'], 0, 2));
-        } else
+        if ($filter['NAME.LANGUAGE_ID']['VALUE'] <> '') {
+            $filterLang = $dbHelper->forSql(mb_substr($filter['NAME.LANGUAGE_ID']['VALUE'], 0, 2));
+        } else {
             $filterLang = LANGUAGE_ID;
+        }
 
         if (isset($filter['PARENT_ID']) && intval($filter['PARENT_ID']['VALUE']) >= 0) {
             $doFilterByParent = true;
@@ -496,17 +551,20 @@ class Finder
         }
 
         // filter select fields
-        if (!is_array($parameters['select']))
+        if (!is_array($parameters['select'])) {
             $parameters['select'] = array();
+        }
 
         $map = Location\LocationTable::getMap();
         $nameAlias = false;
         foreach ($parameters['select'] as $alias => $field) {
-            if ($field == 'CHILD_CNT')
+            if ($field == 'CHILD_CNT') {
                 $doCountChildren = true;
+            }
 
-            if ($field == 'NAME.NAME')
+            if ($field == 'NAME.NAME') {
                 $nameAlias = $alias;
+            }
 
             if (/*in_array($field, array('ID', 'CODE', 'SORT', 'LEFT_MARGIN', 'RIGHT_MARGIN')) || */
                 !isset($map[$field]) ||
@@ -536,10 +594,13 @@ class Finder
             $fields[$nameAlias] = 'LN.NAME';
         }
 
-        $fields = array_merge($fields, array(
-            'L.LEFT_MARGIN' => 'L.LEFT_MARGIN',
-            'L.RIGHT_MARGIN' => 'L.RIGHT_MARGIN'
-        ));
+        $fields = array_merge(
+            $fields,
+            array(
+                'L.LEFT_MARGIN' => 'L.LEFT_MARGIN',
+                'L.RIGHT_MARGIN' => 'L.RIGHT_MARGIN'
+            )
+        );
 
         $groupFields = $fields;
 
@@ -549,15 +610,17 @@ class Finder
             // check if field is already selected
             if ((string)$alias === (string)intval($alias)) {
                 // already selected
-                if (in_array($lFld, $fields))
+                if (in_array($lFld, $fields)) {
                     continue;
+                }
 
                 $fields[$lFld] = $lFld;
                 //$groupFields[$lFld] = $lFld;
             } else // alias is not a number
             {
-                if (isset($fields[$alias]))
+                if (isset($fields[$alias])) {
                     continue;
+                }
 
                 $fields[$alias] = $lFld;
                 //$groupFields[$alias] = $lFld;
@@ -566,16 +629,18 @@ class Finder
             $groupFields[$lFld] = $lFld;
         }
 
-        if ($doCountChildren)
+        if ($doCountChildren) {
             $fields['CHILD_CNT'] = 'COUNT(LC.ID)';
+        }
 
         // make select sql
         $selectSql = array();
         foreach ($fields as $alias => $fld) {
-            if ($fld == $alias)
+            if ($fld == $alias) {
                 $selectSql[] = $fld;
-            else
+            } else {
                 $selectSql[] = $fld . ' as ' . $alias;
+            }
         }
 
         $selectSql = implode(', ', $selectSql);
@@ -602,11 +667,13 @@ class Finder
 
         $where = array();
 
-        if ($doFilterByLang)
+        if ($doFilterByLang) {
             $where[] = "LN.LANGUAGE_ID = '" . $filterLang . "'";
+        }
 
-        if ($doFilterByParent)
+        if ($doFilterByParent) {
             $where[] = "L.PARENT_ID = '" . $filterParentId . "'";
+        }
 
         if ($doFilterById) {
             if (is_array($filterId)) {
@@ -620,14 +687,17 @@ class Finder
             }
         }
 
-        if ($doFilterByCode)
+        if ($doFilterByCode) {
             $where[] = "L.CODE = '" . $filterCode . "'";
+        }
 
-        if ($doFilterByType)
+        if ($doFilterByType) {
             $where[] = "L.TYPE_ID = '" . $filterTypeId . "'";
+        }
 
-        if ($doFilterByName)
+        if ($doFilterByName) {
             $where[] = "LN.NAME_UPPER like '" . $filterName . "%'";
+        }
 
         $mainSql = str_replace('%MAIN_FILTER_CONDITION%', implode(' and ', $where), $mainSql);
         $needDistinct = false;
@@ -639,21 +709,29 @@ class Finder
         } else {
             $sql = array();
             if ($hasLocLinks) {
-                $sql[] = str_replace('%SITE_FILTER_CONDITION%', "
+                $sql[] = str_replace(
+                    '%SITE_FILTER_CONDITION%',
+                    "
 
 					inner join {$locationTable} L2 on L2.LEFT_MARGIN <= L.LEFT_MARGIN and L2.RIGHT_MARGIN >= L.RIGHT_MARGIN
 					inner join {$locationSiteTable} LS2 on L2.ID = LS2.LOCATION_ID and LS2.LOCATION_TYPE = 'L' and LS2.SITE_ID = '{$filterSite}'
 
-				", $mainSql);
+				",
+                    $mainSql
+                );
             }
             if ($hasGrpLinks) {
-                $sql[] = str_replace('%SITE_FILTER_CONDITION%', "
+                $sql[] = str_replace(
+                    '%SITE_FILTER_CONDITION%',
+                    "
 
 					inner join {$locationTable} L2 on L2.LEFT_MARGIN <= L.LEFT_MARGIN and L2.RIGHT_MARGIN >= L.RIGHT_MARGIN
 					inner join {$locationGroupTable} LG on LG.LOCATION_ID = L2.ID
 					inner join {$locationSiteTable} LS2 on LG.LOCATION_GROUP_ID = LS2.LOCATION_ID and LS2.LOCATION_TYPE = 'G' and LS2.SITE_ID = '{$filterSite}'
 
-				", $mainSql);
+				",
+                    $mainSql
+                );
 
                 $useDistinct = true;
             }
@@ -677,8 +755,9 @@ class Finder
             $sql .= " order by 3, 4 asc, 5";
         } else {
             // currenly spike
-            if (isset($parameters['order']['NAME.NAME']))
+            if (isset($parameters['order']['NAME.NAME'])) {
                 $sql .= " order by 5 " . ($parameters['order']['NAME.NAME'] == 'asc' ? 'asc' : 'desc');
+            }
         }
 
         $offset = intval($parameters['offset']);
@@ -702,11 +781,13 @@ class Finder
             while ($item = $res->fetch()) {
                 $i++;
 
-                if ($i < $offset)
+                if ($i < $offset) {
                     continue;
+                }
 
-                if ($i >= $offset + $limit)
+                if ($i >= $offset + $limit) {
                     break;
+                }
 
                 $result[] = $item;
             }

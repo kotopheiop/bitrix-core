@@ -43,15 +43,19 @@ class Logger
         $result = array();
 
         $filter = array('=EXPORT_ID' => $this->exportId,);
-        if ($errCode)
+        if ($errCode) {
             $filter['=ERROR_CODE'] = $errCode;
-        if ($itemId)
+        }
+        if ($itemId) {
             $filter['=ITEM_ID'] = $itemId;
+        }
 
-        $resExistErrors = LogTable::getList(array(
-            'filter' => $filter,
-            'order' => array('ERROR_CODE' => 'ASC'),
-        ));
+        $resExistErrors = LogTable::getList(
+            array(
+                'filter' => $filter,
+                'order' => array('ERROR_CODE' => 'ASC'),
+            )
+        );
 
         while ($err = $resExistErrors->fetch()) {
             $result[$err['ID']] = $err;
@@ -90,8 +94,9 @@ class Logger
         $errorDescription = $this->getErrorsDescriptions($errCode);
         $errCode = $errorDescription['CODE'] ? $errorDescription['CODE'] : $errCode;
 //		add new error
-        if (!$this->addErrorToTable($errCode, $itemId, $errParams))
+        if (!$this->addErrorToTable($errCode, $itemId, $errParams)) {
             return false;
+        }
 
 //		show notify only for critical errors, other message - show only on page
         if ($errorDescription['CRITICAL']) {
@@ -118,22 +123,24 @@ class Logger
             "ERROR_CODE" => $errCode,
         );
 //		add item if not null
-        if ($itemId)
+        if ($itemId) {
             $fields["ITEM_ID"] = $itemId;
+        }
 
 //		add params for rich log
-        if ($errParams)
+        if ($errParams) {
             $fields["ERROR_PARAMS"] = $errParams;
+        }
 
         $resExistError = LogTable::getList(array("filter" => $fields));
 
-        if ($existError = $resExistError->fetch())
-//			UPDATE
+        if ($existError = $resExistError->fetch()) //			UPDATE
+        {
             $resDb = LogTable::update($existError["ID"], $fields);
-
-        else
-//			ADD
+        } else //			ADD
+        {
             $resDb = LogTable::add($fields);
+        }
 
         return $resDb->isSuccess();
     }
@@ -155,7 +162,9 @@ class Logger
         $errCodes[$errCode] = $errCode;
 
 //		remove error from log table
-        $resErrId = LogTable::getList(array('filter' => array("EXPORT_ID" => $this->exportId, "ERROR_CODE" => $errCodes)));
+        $resErrId = LogTable::getList(
+            array('filter' => array("EXPORT_ID" => $this->exportId, "ERROR_CODE" => $errCodes))
+        );
         while ($err = $resErrId->fetch()) {
             $errId = $err["ID"];
             LogTable::delete($errId);
@@ -203,14 +212,18 @@ class Logger
                 ) {
 //					if first error with this code - create new item
                     $errorsConverted[$err['ERROR_CODE']]['MESSAGE'] = $errorsDescriptions[$err['ERROR_CODE']]['MESSAGE'];
-                    if ($err['ITEM_ID'])
+                    if ($err['ITEM_ID']) {
                         $errorsConverted[$err['ERROR_CODE']]['ITEMS'][$err['ITEM_ID']] = $err['ITEM_ID'];
+                    }
                 } //				unknown errors (if not ignored)
                 elseif (!$errorsDescriptions[$err['ERROR_CODE']]['IGNORE']) {
-                    $errorsConverted['UNKNOWN']['MESSAGE'] = Loc::getMessage("SALE_VK_ERRORS__UNKNOWN") . '. ' . Loc::getMessage("SALE_VK_ERRORS__ERRORS_CODES");
+                    $errorsConverted['UNKNOWN']['MESSAGE'] = Loc::getMessage(
+                            "SALE_VK_ERRORS__UNKNOWN"
+                        ) . '. ' . Loc::getMessage("SALE_VK_ERRORS__ERRORS_CODES");
 //					add codes as items to show in future
-                    if ($err['ERROR_CODE'])
+                    if ($err['ERROR_CODE']) {
                         $errorsConverted['UNKNOWN']['ITEMS'][$err['ERROR_CODE']] = $err['ERROR_CODE'];
+                    }
                 }
             }
 
@@ -233,14 +246,17 @@ class Logger
                             );
                             $itemsCount++;
 
-                            if (strlen($itemConverted) > 0)
-                                if ($itemsCount <= self::MAX_SHOWING_ERRORS_ITEMS)
+                            if ($itemConverted <> '') {
+                                if ($itemsCount <= self::MAX_SHOWING_ERRORS_ITEMS) {
                                     $itemsConverted[] = $itemConverted;
-                                else
+                                } else {
                                     $itemsConvertedHide[] = $itemConverted;
+                                }
+                            }
                         }
-                        if (!empty($itemsConverted))
+                        if (!empty($itemsConverted)) {
                             $itemsConvertedString = ': ' . implode(', ', $itemsConverted);
+                        }
                         if (!empty($itemsConvertedHide)) {
                             $itemsConvertedString .= ', 
 							<span class="vk_export_notify__error_normal__hide_elements" style="display:none"
@@ -252,8 +268,10 @@ class Logger
 								<span style="cursor:pointer; border: 1px dashed; border-width: 0 0 1px 0" 
 									onclick = "expandElements(\'' . $errCode . '\');"
 									class="vk_export_notify__error_normal__more_elements" id="vk_export_notify__error_normal__more_elements--' . $errCode . '">' .
-                                Loc::getMessage('SALE_VK_ERRORS__MORE_ELEMENTS',
-                                    array('#C1' => $itemsCount - self::MAX_SHOWING_ERRORS_ITEMS)) .
+                                Loc::getMessage(
+                                    'SALE_VK_ERRORS__MORE_ELEMENTS',
+                                    array('#C1' => $itemsCount - self::MAX_SHOWING_ERRORS_ITEMS)
+                                ) .
                                 '</span>
 								
 								<span style="cursor:pointer; border: 1px dashed; border-width: 0 0 1px 0; display:none;" 
@@ -277,25 +295,32 @@ class Logger
 //				for critical errors show message just once - clean after get message
                 if ($errCritical && $flagCritical) {
                     $criticalErrors = $this->getExistingErrors($errCode);
-                    foreach ($criticalErrors as $error)
+                    foreach ($criticalErrors as $error) {
                         $resDelete = LogTable::delete($error['ID']);
+                    }
                 }
             }
 
             $errorsConvertedString = implode('', $errorsConvertedStrings);
 
 //			add intro before errors
-            if (strlen($errorsConvertedString) > 0) {
-                $result = $flagCritical ? Loc::getMessage("SALE_VK_ERRORS__INTRO_CRITICAL") : Loc::getMessage("SALE_VK_ERRORS__INTRO_NORMAL");
+            if ($errorsConvertedString <> '') {
+                $result = $flagCritical ? Loc::getMessage("SALE_VK_ERRORS__INTRO_CRITICAL") : Loc::getMessage(
+                    "SALE_VK_ERRORS__INTRO_NORMAL"
+                );
                 $result .= ':<br>' . $errorsConvertedString;
             }
 
 //			check if need download log file
-            if (strlen($result) > 0) {
+            if ($result <> '') {
                 $vk = Vk::getInstance();
                 if ($richLog = $vk->getRichLog($this->exportId)) {
                     $href = '/bitrix/admin/sale_vk_export_edit.php' . '?ID=' . $this->exportId . '&lang=' . LANG . '&download_log=Y';
-                    $result .= '<br><p>' . Loc::getMessage("SALE_VK_ERRORS__LOG_TITLE") . ': <a href="' . $href . '">' . Loc::getMessage("SALE_VK_ERRORS__LOG_DOWNLOAD") . '</a>.</p>';
+                    $result .= '<br><p>' . Loc::getMessage(
+                            "SALE_VK_ERRORS__LOG_TITLE"
+                        ) . ': <a href="' . $href . '">' . Loc::getMessage(
+                            "SALE_VK_ERRORS__LOG_DOWNLOAD"
+                        ) . '</a>.</p>';
                 }
             }
 
@@ -332,20 +357,23 @@ class Logger
 
     public static function createLogFileContent($exportId)
     {
-        $resExistLogs = LogTable::getList(array(
-            'select' => array("ITEM_ID", "ERROR_PARAMS", "TIME"),
-            'filter' => array(
-                '=EXPORT_ID' => $exportId,
-                '=ERROR_CODE' => "LOG",
-            ),
-            'order' => array('TIME' => 'ASC', 'ID' => 'ASC'),
-        ));
+        $resExistLogs = LogTable::getList(
+            array(
+                'select' => array("ITEM_ID", "ERROR_PARAMS", "TIME"),
+                'filter' => array(
+                    '=EXPORT_ID' => $exportId,
+                    '=ERROR_CODE' => "LOG",
+                ),
+                'order' => array('TIME' => 'ASC', 'ID' => 'ASC'),
+            )
+        );
 
         $log = "";
         while ($record = $resExistLogs->fetch()) {
             $log .= $record["TIME"] . ' - ' . $record["ITEM_ID"] . ".";
-            if (!empty($record["ERROR_PARAMS"]))
+            if (!empty($record["ERROR_PARAMS"])) {
                 $log .= " Params: " . print_r($record["ERROR_PARAMS"], true);
+            }
             $log .= "\r\n";
         }
 
@@ -364,7 +392,10 @@ class Logger
     {
         $errorsDescriptions = $this->getErrorsDescriptions();
 
-        if (array_key_exists($errCode, $errorsDescriptions) && array_key_exists('ITEMS_TYPE', $errorsDescriptions[$errCode])) {
+        if (array_key_exists($errCode, $errorsDescriptions) && array_key_exists(
+                'ITEMS_TYPE',
+                $errorsDescriptions[$errCode]
+            )) {
             return self::createItemErrorStringByType($item, $errorsDescriptions[$errCode]['ITEMS_TYPE']);
         } //		if error have format without items - just item ID - for unknown errors
         else {
@@ -388,7 +419,13 @@ class Logger
             case 'PRODUCT':
 
 //				get iblock id fore create link to edit
-                $resProduct = \CIBlockElement::GetList(array(), array("ID" => $item), false, false, array('IBLOCK_ID', 'NAME'));
+                $resProduct = \CIBlockElement::GetList(
+                    array(),
+                    array("ID" => $item),
+                    false,
+                    false,
+                    array('IBLOCK_ID', 'NAME')
+                );
                 $resProduct = $resProduct->Fetch();
                 $query = array(
                     "IBLOCK_ID" => $resProduct["IBLOCK_ID"],
@@ -403,7 +440,12 @@ class Logger
             case 'ALBUM':
 //				todo: use link create method from ZZ
 //				get iblock id fore create link to edit
-                $resSection = \CIBlockSection::GetList(array(), array("ID" => $item), false, array('IBLOCK_ID', 'NAME'));
+                $resSection = \CIBlockSection::GetList(
+                    array(),
+                    array("ID" => $item),
+                    false,
+                    array('IBLOCK_ID', 'NAME')
+                );
                 $resSection = $resSection->Fetch();
                 $query = array(
                     "IBLOCK_ID" => $resSection["IBLOCK_ID"],
@@ -435,7 +477,6 @@ class Logger
         }
 
         return $result;
-
     }
 
 
@@ -465,7 +506,9 @@ class Logger
                 "CRITICAL" => true,
             ),
             "1" => array(
-                "MESSAGE" => Loc::getMessage("SALE_VK_ERROR__UNKNOWN_VK_ERROR") . ' ' . Loc::getMessage('SALE_VK_ERROR__CODE_1'),
+                "MESSAGE" => Loc::getMessage("SALE_VK_ERROR__UNKNOWN_VK_ERROR") . ' ' . Loc::getMessage(
+                        'SALE_VK_ERROR__CODE_1'
+                    ),
                 "CODE" => "1",
                 "CRITICAL" => true,
                 "ITEMS_TYPE" => 'NONE',
@@ -477,7 +520,9 @@ class Logger
                 "ITEMS_TYPE" => 'NONE',
             ),
             "10" => array(
-                "MESSAGE" => Loc::getMessage("SALE_VK_ERROR__UNKNOWN_VK_ERROR") . ' ' . Loc::getMessage('SALE_VK_ERROR__CODE_10'),
+                "MESSAGE" => Loc::getMessage("SALE_VK_ERROR__UNKNOWN_VK_ERROR") . ' ' . Loc::getMessage(
+                        'SALE_VK_ERROR__CODE_10'
+                    ),
                 "CODE" => "10",
                 "CRITICAL" => true,
                 "ITEMS_TYPE" => 'NONE',
@@ -495,9 +540,12 @@ class Logger
                 "ITEMS_TYPE" => 'NONE',
             ),
             "VK_NOT_AVAILABLE" => array(
-                "MESSAGE" => Loc::getMessage("SALE_VK_ERROR__VK_NOT_AVAILABLE", array(
-                    '#A1' => '<a href="http://vk.com">http://vk.com</a>',
-                )),
+                "MESSAGE" => Loc::getMessage(
+                    "SALE_VK_ERROR__VK_NOT_AVAILABLE",
+                    array(
+                        '#A1' => '<a href="http://vk.com">http://vk.com</a>',
+                    )
+                ),
                 "CRITICAL" => true,
                 "CODE" => "VK_NOT_AVAILABLE",
                 "ITEMS_TYPE" => 'NONE',
@@ -539,10 +587,13 @@ class Logger
                 "ITEMS_TYPE" => 'PRODUCT',
             ),
             "5" => array(
-                "MESSAGE" => Loc::getMessage("SALE_VK_ERROR__WRONG_ACCESS_TOKEN", array(
-                    '#A1' => '<a href="/bitrix/admin/sale_vk_export_edit.php?ID=' . $this->exportId . '&lang=' . LANG . '&tabControl_active_tab=vk_settings">',
-                    '#A2' => '</a>',
-                )),
+                "MESSAGE" => Loc::getMessage(
+                    "SALE_VK_ERROR__WRONG_ACCESS_TOKEN",
+                    array(
+                        '#A1' => '<a href="/bitrix/admin/sale_vk_export_edit.php?ID=' . $this->exportId . '&lang=' . LANG . '&tabControl_active_tab=vk_settings">',
+                        '#A2' => '</a>',
+                    )
+                ),
                 "CRITICAL" => true,
                 "CODE" => "5",
                 "ITEMS_TYPE" => 'NONE',
@@ -666,13 +717,17 @@ class Logger
                 "ITEMS_TYPE" => 'NONE',
             ),
             "TOO_MANY_SECTIONS_TO_EXPORT" => array(
-                "MESSAGE" => Loc::getMessage("SALE_VK_ERRORS__TOO_MANY_SECTIONS_TO_EXPORT") . ' ' . Vk::MAX_EXECUTION_ITEMS,
+                "MESSAGE" => Loc::getMessage(
+                        "SALE_VK_ERRORS__TOO_MANY_SECTIONS_TO_EXPORT"
+                    ) . ' ' . Vk::MAX_EXECUTION_ITEMS,
                 "CRITICAL" => false,
                 "CODE" => "TOO_MANY_SECTIONS_TO_EXPORT",
                 "ITEMS_TYPE" => 'NONE',
             ),
             "TOO_MANY_PRODUCTS_TO_EXPORT" => array(
-                "MESSAGE" => Loc::getMessage("SALE_VK_ERRORS__TOO_MANY_PRODUCTS_TO_EXPORT") . ' ' . Vk::MAX_EXECUTION_ITEMS,
+                "MESSAGE" => Loc::getMessage(
+                        "SALE_VK_ERRORS__TOO_MANY_PRODUCTS_TO_EXPORT"
+                    ) . ' ' . Vk::MAX_EXECUTION_ITEMS,
                 "CRITICAL" => false,
                 "CODE" => "TOO_MANY_PRODUCTS_TO_EXPORT",
                 "ITEMS_TYPE" => 'NONE',

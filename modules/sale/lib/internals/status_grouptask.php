@@ -26,32 +26,41 @@ class StatusGroupTaskTable extends Main\Entity\DataManager
     {
         return array(
 
-            new Main\Entity\StringField('STATUS_ID', array(
+            new Main\Entity\StringField(
+                'STATUS_ID', array(
                 'primary' => true,
                 'format' => '/^[A-Za-z?0-9]{1,2}$/',
-            )),
+            )
+            ),
 
-            new Main\Entity\IntegerField('GROUP_ID', array(
+            new Main\Entity\IntegerField(
+                'GROUP_ID', array(
                 'primary' => true,
                 'format' => '/^[0-9]{1,18}$/',
-            )),
+            )
+            ),
 
-            new Main\Entity\IntegerField('TASK_ID', array(
+            new Main\Entity\IntegerField(
+                'TASK_ID', array(
                 'primary' => true,
                 'format' => '/^[0-9]{1,18}$/',
-            )),
+            )
+            ),
 
-            new Main\Entity\ReferenceField('STATUS', 'Bitrix\Sale\Internals\StatusTable',
+            new Main\Entity\ReferenceField(
+                'STATUS', 'Bitrix\Sale\Internals\StatusTable',
                 array('=this.STATUS_ID' => 'ref.ID'),
                 array('join_type' => 'LEFT')
             ),
 
-            new Main\Entity\ReferenceField('GROUP', 'Bitrix\Main\GroupTable',
+            new Main\Entity\ReferenceField(
+                'GROUP', 'Bitrix\Main\GroupTable',
                 array('=this.GROUP_ID' => 'ref.ID'),
                 array('join_type' => 'INNER')
             ),
 
-            new Main\Entity\ReferenceField('TASK', 'Bitrix\Main\TaskTable',
+            new Main\Entity\ReferenceField(
+                'TASK', 'Bitrix\Main\TaskTable',
                 array('=this.TASK_ID' => 'ref.ID'),
                 array('join_type' => 'INNER')
             ),
@@ -61,11 +70,14 @@ class StatusGroupTaskTable extends Main\Entity\DataManager
 
     public static function deleteByStatus($statusId)
     {
-        $result = self::getList(array(
-            'select' => array('STATUS_ID', 'GROUP_ID', 'TASK_ID'),
-            'filter' => array('=STATUS_ID' => $statusId)
-        ));
-        while ($primary = $result->fetch())
+        $result = self::getList(
+            array(
+                'select' => array('STATUS_ID', 'GROUP_ID', 'TASK_ID'),
+                'filter' => array('=STATUS_ID' => $statusId)
+            )
+        );
+        while ($primary = $result->fetch()) {
             self::delete($primary);
+        }
     }
 }

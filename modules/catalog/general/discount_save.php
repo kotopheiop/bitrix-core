@@ -50,8 +50,9 @@ class CAllCatalogDiscountSave
     public static function SetDiscountUserID($intUserID)
     {
         $intUserID = (int)$intUserID;
-        if ($intUserID > 0)
+        if ($intUserID > 0) {
             self::$intDiscountUserID = $intUserID;
+        }
     }
 
     public static function ClearDiscountUserID()
@@ -102,9 +103,10 @@ class CAllCatalogDiscountSave
         global $DB;
         global $USER;
 
-        $strAction = strtoupper($strAction);
-        if ('UPDATE' != $strAction && 'ADD' != $strAction)
+        $strAction = mb_strtoupper($strAction);
+        if ('UPDATE' != $strAction && 'ADD' != $strAction) {
             return false;
+        }
         $intID = (int)$intID;
 
         $arCurrencyList = Currency\CurrencyManager::getCurrencyList();
@@ -134,12 +136,14 @@ class CAllCatalogDiscountSave
             '~MODIFIED_BY',
             '~CREATED_BY'
         );
-        if ($strAction == 'UPDATE')
+        if ($strAction == 'UPDATE') {
             $clearFields[] = 'CREATED_BY';
+        }
         $arFields = array_filter($arFields, 'CCatalogDiscountSave::clearFields');
         foreach ($clearFields as &$fieldName) {
-            if (isset($arFields[$fieldName]))
+            if (isset($arFields[$fieldName])) {
                 unset($arFields[$fieldName]);
+            }
         }
         unset($fieldName, $clearFields);
 
@@ -161,61 +165,103 @@ class CAllCatalogDiscountSave
             }
         }
 
-        if ((is_set($arFields, "NAME") || $strAction == "ADD") && (strlen(trim($arFields["NAME"])) <= 0)) {
+        if ((is_set($arFields, "NAME") || $strAction == "ADD") && (trim($arFields["NAME"]) == '')) {
             $arMsg[] = array('id' => 'NAME', 'text' => Loc::getMessage('BT_MOD_CAT_DSC_SV_ERR_EMPTY_NAME'));
             $boolResult = false;
         }
-        if ((is_set($arFields, "ACTIVE") || $strAction == "ADD") && $arFields["ACTIVE"] != "N")
+        if ((is_set($arFields, "ACTIVE") || $strAction == "ADD") && $arFields["ACTIVE"] != "N") {
             $arFields["ACTIVE"] = "Y";
-        if ((is_set($arFields, 'SORT') || $strAction == 'ADD') && intval($arFields['SORT']) <= 0)
+        }
+        if ((is_set($arFields, 'SORT') || $strAction == 'ADD') && intval($arFields['SORT']) <= 0) {
             $arFields['SORT'] = 500;
+        }
         if ((is_set($arFields, "CURRENCY") || $strAction == "ADD") && empty($arFields["CURRENCY"])) {
             $arMsg[] = array('id' => 'CURRENCY', 'text' => Loc::getMessage('BT_MOD_CAT_DSC_SV_ERR_EMPTY_CURRENCY'));
             $boolResult = false;
         }
-        if ((is_set($arFields, "ACTIVE_FROM") || $strAction == "ADD") && (!$DB->IsDate($arFields["ACTIVE_FROM"], false, LANGUAGE_ID, "FULL")))
+        if ((is_set($arFields, "ACTIVE_FROM") || $strAction == "ADD") && (!$DB->IsDate(
+                $arFields["ACTIVE_FROM"],
+                false,
+                LANGUAGE_ID,
+                "FULL"
+            ))) {
             $arFields["ACTIVE_FROM"] = false;
-        if ((is_set($arFields, "ACTIVE_TO") || $strAction == "ADD") && (!$DB->IsDate($arFields["ACTIVE_TO"], false, LANGUAGE_ID, "FULL")))
+        }
+        if ((is_set($arFields, "ACTIVE_TO") || $strAction == "ADD") && (!$DB->IsDate(
+                $arFields["ACTIVE_TO"],
+                false,
+                LANGUAGE_ID,
+                "FULL"
+            ))) {
             $arFields["ACTIVE_TO"] = false;
+        }
 
-        if ((is_set($arFields, 'COUNT_SIZE') || $strAction == 'ADD') && intval($arFields['COUNT_SIZE']) < 0)
+        if ((is_set($arFields, 'COUNT_SIZE') || $strAction == 'ADD') && intval($arFields['COUNT_SIZE']) < 0) {
             $arFields['COUNT_SIZE'] = 0;
-        if ((is_set($arFields, 'COUNT_TYPE') || $strAction == 'ADD') && !in_array($arFields['COUNT_TYPE'], array('D', 'M', 'Y')))
+        }
+        if ((is_set($arFields, 'COUNT_TYPE') || $strAction == 'ADD') && !in_array(
+                $arFields['COUNT_TYPE'],
+                array('D', 'M', 'Y')
+            )) {
             $arFields['COUNT_TYPE'] = 'Y';
-        if ((is_set($arFields, "COUNT_FROM") || $strAction == "ADD") && (!$DB->IsDate($arFields["COUNT_FROM"], false, LANGUAGE_ID, "FULL")))
+        }
+        if ((is_set($arFields, "COUNT_FROM") || $strAction == "ADD") && (!$DB->IsDate(
+                $arFields["COUNT_FROM"],
+                false,
+                LANGUAGE_ID,
+                "FULL"
+            ))) {
             $arFields["COUNT_FROM"] = false;
-        if ((is_set($arFields, "COUNT_TO") || $strAction == "ADD") && (!$DB->IsDate($arFields["COUNT_TO"], false, LANGUAGE_ID, "FULL")))
+        }
+        if ((is_set($arFields, "COUNT_TO") || $strAction == "ADD") && (!$DB->IsDate(
+                $arFields["COUNT_TO"],
+                false,
+                LANGUAGE_ID,
+                "FULL"
+            ))) {
             $arFields["COUNT_TO"] = false;
+        }
 
-        if (is_set($arFields, 'COUNT_PERIOD'))
+        if (is_set($arFields, 'COUNT_PERIOD')) {
             unset($arFields['COUNT_PERIOD']);
+        }
         $strCountPeriod = self::COUNT_TIME_ALL;
-        if (is_set($arFields, 'COUNT_SIZE') && intval($arFields['COUNT_SIZE']) > 0)
+        if (is_set($arFields, 'COUNT_SIZE') && intval($arFields['COUNT_SIZE']) > 0) {
             $strCountPeriod = self::COUNT_TIME_PERIOD;
-        if (!empty($arFields["COUNT_FROM"]) || !empty($arFields["COUNT_TO"]))
+        }
+        if (!empty($arFields["COUNT_FROM"]) || !empty($arFields["COUNT_TO"])) {
             $strCountPeriod = self::COUNT_TIME_INTERVAL;
+        }
         $arFields['COUNT_PERIOD'] = $strCountPeriod;
 
-        if ((is_set($arFields, 'ACTION_SIZE') || $strAction == 'ADD') && intval($arFields['ACTION_SIZE']) < 0)
+        if ((is_set($arFields, 'ACTION_SIZE') || $strAction == 'ADD') && intval($arFields['ACTION_SIZE']) < 0) {
             $arFields['ACTION_SIZE'] = 0;
-        if ((is_set($arFields, 'ACTION_TYPE') || $strAction == 'ADD') && !in_array($arFields['ACTION_TYPE'], array('D', 'M', 'Y')))
+        }
+        if ((is_set($arFields, 'ACTION_TYPE') || $strAction == 'ADD') && !in_array(
+                $arFields['ACTION_TYPE'],
+                array('D', 'M', 'Y')
+            )) {
             $arFields['ACTION_TYPE'] = 'Y';
+        }
 
         $intUserID = 0;
         $boolUserExist = CCatalog::IsUserExists();
-        if ($boolUserExist)
+        if ($boolUserExist) {
             $intUserID = (int)$USER->GetID();
+        }
         $strDateFunction = $DB->GetNowFunction();
         $arFields['~TIMESTAMP_X'] = $strDateFunction;
         if ($boolUserExist) {
-            if (!array_key_exists('MODIFIED_BY', $arFields) || (int)$arFields["MODIFIED_BY"] <= 0)
+            if (!array_key_exists('MODIFIED_BY', $arFields) || (int)$arFields["MODIFIED_BY"] <= 0) {
                 $arFields["MODIFIED_BY"] = $intUserID;
+            }
         }
         if ('ADD' == $strAction) {
             $arFields['~DATE_CREATE'] = $strDateFunction;
             if ($boolUserExist) {
-                if (!array_key_exists('CREATED_BY', $arFields) || (int)$arFields["CREATED_BY"] <= 0)
+                if (!array_key_exists('CREATED_BY', $arFields) || (int)$arFields["CREATED_BY"] <= 0) {
                     $arFields["CREATED_BY"] = $intUserID;
+                }
             }
         }
 
@@ -228,23 +274,36 @@ class CAllCatalogDiscountSave
                 $arRangeList = array();
                 foreach ($arFields['RANGES'] as &$arRange) {
                     if (!is_array($arRange) || empty($arRange)) {
-                        $arMsg[] = array('id' => 'RANGES', 'text' => Loc::getMessage('BT_MOD_CAT_DSC_SV_ERR_BAD_RANGE'));
+                        $arMsg[] = array(
+                            'id' => 'RANGES',
+                            'text' => Loc::getMessage('BT_MOD_CAT_DSC_SV_ERR_BAD_RANGE')
+                        );
                         $boolResult = false;
                     } else {
-                        if (empty($arRange['TYPE']) || $arRange['TYPE'] != self::TYPE_FIX)
+                        if (empty($arRange['TYPE']) || $arRange['TYPE'] != self::TYPE_FIX) {
                             $arRange['TYPE'] = self::TYPE_PERCENT;
+                        }
                         if (isset($arRange['VALUE'])) {
                             $arRange["VALUE"] = str_replace(",", ".", $arRange["VALUE"]);
                             $arRange["VALUE"] = doubleval($arRange["VALUE"]);
                             if (!(0 < $arRange["VALUE"])) {
-                                $arMsg[] = array('id' => 'RANGES', 'text' => Loc::getMessage('BT_MOD_CAT_DSC_SV_ERR_BAD_RANGE_VALUE'));
+                                $arMsg[] = array(
+                                    'id' => 'RANGES',
+                                    'text' => Loc::getMessage('BT_MOD_CAT_DSC_SV_ERR_BAD_RANGE_VALUE')
+                                );
                                 $boolResult = false;
                             } elseif (self::TYPE_PERCENT == $arRange['TYPE'] && 100 < $arRange["VALUE"]) {
-                                $arMsg[] = array('id' => 'RANGES', 'text' => Loc::getMessage('BT_MOD_CAT_DSC_SV_ERR_BAD_RANGE_VALUE'));
+                                $arMsg[] = array(
+                                    'id' => 'RANGES',
+                                    'text' => Loc::getMessage('BT_MOD_CAT_DSC_SV_ERR_BAD_RANGE_VALUE')
+                                );
                                 $boolResult = false;
                             }
                         } else {
-                            $arMsg[] = array('id' => 'RANGES', 'text' => Loc::getMessage('BT_MOD_CAT_DSC_SV_ERR_BAD_RANGE_VALUE'));
+                            $arMsg[] = array(
+                                'id' => 'RANGES',
+                                'text' => Loc::getMessage('BT_MOD_CAT_DSC_SV_ERR_BAD_RANGE_VALUE')
+                            );
                             $boolResult = false;
                         }
 
@@ -252,7 +311,10 @@ class CAllCatalogDiscountSave
                             $arRange["RANGE_FROM"] = str_replace(",", ".", $arRange["RANGE_FROM"]);
                             $arRange["RANGE_FROM"] = doubleval($arRange["RANGE_FROM"]);
                             if (0 > $arRange["RANGE_FROM"]) {
-                                $arMsg[] = array('id' => 'RANGES', 'text' => Loc::getMessage('BT_MOD_CAT_DSC_SV_ERR_BAD_RANGE_FROM'));
+                                $arMsg[] = array(
+                                    'id' => 'RANGES',
+                                    'text' => Loc::getMessage('BT_MOD_CAT_DSC_SV_ERR_BAD_RANGE_FROM')
+                                );
                                 $boolResult = false;
                             } else {
                                 if (in_array($arRange["RANGE_FROM"], $arRangeList)) {
@@ -262,35 +324,48 @@ class CAllCatalogDiscountSave
                                 }
                             }
                         } else {
-                            $arMsg[] = array('id' => 'RANGES', 'text' => Loc::getMessage('BT_MOD_CAT_DSC_SV_ERR_BAD_RANGE_FROM'));
+                            $arMsg[] = array(
+                                'id' => 'RANGES',
+                                'text' => Loc::getMessage('BT_MOD_CAT_DSC_SV_ERR_BAD_RANGE_FROM')
+                            );
                             $boolResult = false;
                         }
                     }
                 }
-                if (isset($arRange))
+                if (isset($arRange)) {
                     unset($arRange);
+                }
                 if ($boolRepeat) {
-                    $arMsg[] = array('id' => 'RANGES', 'text' => Loc::getMessage('BT_MOD_CAT_DSC_SV_ERR_DUP_RANGE_FROM'));
+                    $arMsg[] = array(
+                        'id' => 'RANGES',
+                        'text' => Loc::getMessage('BT_MOD_CAT_DSC_SV_ERR_DUP_RANGE_FROM')
+                    );
                     $boolResult = false;
                 }
             }
         }
         if (isset($arFields['GROUP_IDS']) || $strAction == 'ADD') {
             if (!empty($arFields['GROUP_IDS'])) {
-                if (!is_array($arFields['GROUP_IDS']))
+                if (!is_array($arFields['GROUP_IDS'])) {
                     $arFields['GROUP_IDS'] = array($arFields['GROUP_IDS']);
+                }
                 $arValid = array();
                 foreach ($arFields['GROUP_IDS'] as &$intGroupID) {
                     $intGroupID = (int)$intGroupID;
-                    if (0 < $intGroupID && 2 != $intGroupID)
+                    if (0 < $intGroupID && 2 != $intGroupID) {
                         $arValid[] = $intGroupID;
+                    }
                 }
-                if (isset($intGroupID))
+                if (isset($intGroupID)) {
                     unset($intGroupID);
+                }
                 $arFields['GROUP_IDS'] = array_unique($arValid);
             }
             if (empty($arFields['GROUP_IDS'])) {
-                $arMsg[] = array('id' => 'GROUP_IDS', 'text' => Loc::getMessage('BT_MOD_CAT_DSC_SV_ERR_EMPTY_GROUP_IDS'));
+                $arMsg[] = array(
+                    'id' => 'GROUP_IDS',
+                    'text' => Loc::getMessage('BT_MOD_CAT_DSC_SV_ERR_EMPTY_GROUP_IDS')
+                );
                 $boolResult = false;
             }
         }
@@ -317,8 +392,9 @@ class CAllCatalogDiscountSave
     public static function GetByID($intID)
     {
         $intID = (int)$intID;
-        if ($intID <= 0)
+        if ($intID <= 0) {
             return false;
+        }
 
         return CCatalogDiscountSave::GetList(array(), array('ID' => $intID), false, false, array());
     }
@@ -326,12 +402,14 @@ class CAllCatalogDiscountSave
     public static function GetArrayByID($intID)
     {
         $intID = (int)$intID;
-        if ($intID <= 0)
+        if ($intID <= 0) {
             return false;
+        }
 
         $rsDiscounts = CCatalogDiscountSave::GetList(array(), array('ID' => $intID), false, false, array());
-        if ($arDiscount = $rsDiscounts->Fetch())
+        if ($arDiscount = $rsDiscounts->Fetch()) {
             return $arDiscount;
+        }
 
         return false;
     }
@@ -341,14 +419,30 @@ class CAllCatalogDiscountSave
         global $DB;
 
         $intID = (int)$intID;
-        if ($intID <= 0)
+        if ($intID <= 0) {
             return false;
+        }
 
-        $DB->Query("delete from b_catalog_disc_save_range where DISCOUNT_ID = " . $intID, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-        $DB->Query("delete from b_catalog_disc_save_group where DISCOUNT_ID = " . $intID, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
-        $DB->Query("delete from b_catalog_disc_save_user where DISCOUNT_ID = " . $intID, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+        $DB->Query(
+            "delete from b_catalog_disc_save_range where DISCOUNT_ID = " . $intID,
+            false,
+            "File: " . __FILE__ . "<br>Line: " . __LINE__
+        );
+        $DB->Query(
+            "delete from b_catalog_disc_save_group where DISCOUNT_ID = " . $intID,
+            false,
+            "File: " . __FILE__ . "<br>Line: " . __LINE__
+        );
+        $DB->Query(
+            "delete from b_catalog_disc_save_user where DISCOUNT_ID = " . $intID,
+            false,
+            "File: " . __FILE__ . "<br>Line: " . __LINE__
+        );
 
-        return $DB->Query("delete from b_catalog_discount where ID = " . $intID . " and TYPE = " . self::ENTITY_ID, true);
+        return $DB->Query(
+            "delete from b_catalog_discount where ID = " . $intID . " and TYPE = " . self::ENTITY_ID,
+            true
+        );
     }
 
     /*
@@ -378,15 +472,15 @@ class CAllCatalogDiscountSave
     public static function ChangeActive($intID, $boolActive = true)
     {
         $intID = (int)$intID;
-        if ($intID <= 0)
+        if ($intID <= 0) {
             return false;
+        }
 
         return CCatalogDiscountSave::Update($intID, array('ACTIVE' => ($boolActive === true ? 'Y' : 'N')), false);
     }
 
     public static function UserDiscountCalc($intID, $arFields = array(), $boolNew = false)
     {
-
     }
 
     /*
@@ -405,27 +499,33 @@ class CAllCatalogDiscountSave
 
         $arResult = array();
 
-        if (!CCatalog::IsUserExists() || !$USER->IsAuthorized() || !self::IsEnabled())
+        if (!CCatalog::IsUserExists() || !$USER->IsAuthorized() || !self::IsEnabled()) {
             return $arResult;
+        }
 
         foreach (GetModuleEvents("catalog", "OnGetDiscountSave", true) as $arEvent) {
             $mxResult = ExecuteModuleEventEx($arEvent, $arParams);
-            if ($mxResult !== true)
+            if ($mxResult !== true) {
                 return $mxResult;
+            }
         }
 
-        if (empty($arParams) || !is_array($arParams))
+        if (empty($arParams) || !is_array($arParams)) {
             return $arResult;
+        }
 
         $intUserID = 0;
         $arUserGroups = array();
         $strSiteID = false;
-        if (isset($arParams['USER_ID']))
+        if (isset($arParams['USER_ID'])) {
             $intUserID = (int)$arParams['USER_ID'];
-        if (isset($arParams['USER_GROUPS']))
+        }
+        if (isset($arParams['USER_GROUPS'])) {
             $arUserGroups = $arParams['USER_GROUPS'];
-        if (isset($arParams['SITE_ID']))
+        }
+        if (isset($arParams['SITE_ID'])) {
             $strSiteID = $arParams['SITE_ID'];
+        }
 
         if (self::GetDiscountUserID() > 0) {
             $intUserID = (int)self::GetDiscountUserID();
@@ -436,34 +536,43 @@ class CAllCatalogDiscountSave
             $arUserGroups = array();
         }
         if (empty($arUserGroups)) {
-            if (!isset(self::$userGroups[$intUserID]))
+            if (!isset(self::$userGroups[$intUserID])) {
                 self::$userGroups[$intUserID] = $USER->GetUserGroup($intUserID);
+            }
             $arUserGroups = self::$userGroups[$intUserID];
         }
-        if (empty($arUserGroups) || !is_array($arUserGroups) || $intUserID <= 0)
+        if (empty($arUserGroups) || !is_array($arUserGroups) || $intUserID <= 0) {
             return $arResult;
+        }
         $key = array_search(2, $arUserGroups);
-        if ($key !== false)
+        if ($key !== false) {
             unset($arUserGroups[$key]);
-        if (empty($arUserGroups))
+        }
+        if (empty($arUserGroups)) {
             return $arResult;
+        }
         Main\Type\Collection::normalizeArrayValuesByInt($arUserGroups, true);
-        if (empty($arUserGroups))
+        if (empty($arUserGroups)) {
             return $arResult;
-        if ($strSiteID === false)
+        }
+        if ($strSiteID === false) {
             $strSiteID = SITE_ID;
+        }
         $cacheKey = md5('U' . implode('_', $arUserGroups));
-        if (!isset(self::$discountFilterCache[$cacheKey]))
+        if (!isset(self::$discountFilterCache[$cacheKey])) {
             self::$discountFilterCache[$cacheKey] = CCatalogDiscountSave::__GetDiscountIDByGroup($arUserGroups);
-        if (empty(self::$discountFilterCache[$cacheKey]))
+        }
+        if (empty(self::$discountFilterCache[$cacheKey])) {
             return $arResult;
+        }
 
         $arCurrentDiscountID = self::$discountFilterCache[$cacheKey];
         unset($cacheKey);
         if (isset($arParams['ID'])) {
             Main\Type\Collection::normalizeArrayValuesByInt($arUserGroups, true);
-            if (!empty($arParams['ID']))
+            if (!empty($arParams['ID'])) {
                 $arCurrentDiscountID = array_intersect($arCurrentDiscountID, $arParams['ID']);
+            }
         }
 
         if (!empty($arCurrentDiscountID)) {
@@ -528,19 +637,32 @@ class CAllCatalogDiscountSave
 
                 if (!empty($arDiscSave['ACTIVE_FROM']) || !empty($arDiscSave['ACTIVE_TO'])) {
                     $strActionPeriod = self::ACTION_TIME_INTERVAL;
-                    if (!empty($arDiscSave['ACTIVE_FROM']))
+                    if (!empty($arDiscSave['ACTIVE_FROM'])) {
                         $arDiscSave['ACTIVE_FROM_UT'] = MakeTimeStamp($arDiscSave['ACTIVE_FROM']);
-                    if (!empty($arDiscSave['ACTIVE_TO']))
+                    }
+                    if (!empty($arDiscSave['ACTIVE_TO'])) {
                         $arDiscSave['ACTIVE_TO_UT'] = MakeTimeStamp($arDiscSave['ACTIVE_TO']);
-                } elseif ($arDiscSave['ACTION_SIZE'] > 0 && in_array($arDiscSave['ACTION_TYPE'], array('D', 'M', 'Y'))) {
+                    }
+                } elseif ($arDiscSave['ACTION_SIZE'] > 0 && in_array(
+                        $arDiscSave['ACTION_TYPE'],
+                        array('D', 'M', 'Y')
+                    )) {
                     $strActionPeriod = self::ACTION_TIME_PERIOD;
-                    $arActionPeriodBack = CCatalogDiscountSave::__GetTimeStampArray($arDiscSave['ACTION_SIZE'], $arDiscSave['ACTION_TYPE']);
-                    $arActionPeriod = CCatalogDiscountSave::__GetTimeStampArray($arDiscSave['ACTION_SIZE'], $arDiscSave['ACTION_TYPE'], true);
+                    $arActionPeriodBack = CCatalogDiscountSave::__GetTimeStampArray(
+                        $arDiscSave['ACTION_SIZE'],
+                        $arDiscSave['ACTION_TYPE']
+                    );
+                    $arActionPeriod = CCatalogDiscountSave::__GetTimeStampArray(
+                        $arDiscSave['ACTION_SIZE'],
+                        $arDiscSave['ACTION_TYPE'],
+                        true
+                    );
                 }
                 if (!empty($arDiscSave['COUNT_FROM']) || !empty($arDiscSave['COUNT_TO'])) {
                     $strCountPeriod = self::COUNT_TIME_INTERVAL;
-                    if (!empty($arDiscSave['COUNT_FROM']))
+                    if (!empty($arDiscSave['COUNT_FROM'])) {
                         $arDiscSave['COUNT_FROM_UT'] = MakeTimeStamp($arDiscSave['COUNT_FROM']);
+                    }
                     if (!empty($arDiscSave['COUNT_TO'])) {
                         $arDiscSave['COUNT_TO_UT'] = MakeTimeStamp($arDiscSave['COUNT_TO']);
                         if ($arDiscSave['COUNT_TO_UT'] > $intCountTime) {
@@ -550,36 +672,57 @@ class CAllCatalogDiscountSave
                     }
                 } elseif ($arDiscSave['COUNT_SIZE'] > 0 && in_array($arDiscSave['COUNT_TYPE'], array('D', 'M', 'Y'))) {
                     $strCountPeriod = self::COUNT_TIME_PERIOD;
-                    $arCountPeriodBack = CCatalogDiscountSave::__GetTimeStampArray($arDiscSave['COUNT_SIZE'], $arDiscSave['COUNT_TYPE']);
+                    $arCountPeriodBack = CCatalogDiscountSave::__GetTimeStampArray(
+                        $arDiscSave['COUNT_SIZE'],
+                        $arDiscSave['COUNT_TYPE']
+                    );
                 }
 
                 if ($strCountPeriod == self::COUNT_TIME_INTERVAL) {
                     if (false !== $arDiscSave['COUNT_FROM_UT']) {
-                        if ($arDiscSave['COUNT_FROM_UT'] > $intCountTime)
+                        if ($arDiscSave['COUNT_FROM_UT'] > $intCountTime) {
                             continue;
-                        if (false !== $arDiscSave['COUNT_TO_UT'] && $arDiscSave['COUNT_TO_UT'] <= $arDiscSave['COUNT_FROM_UT'])
+                        }
+                        if (false !== $arDiscSave['COUNT_TO_UT'] && $arDiscSave['COUNT_TO_UT'] <= $arDiscSave['COUNT_FROM_UT']) {
                             continue;
-                        if (false !== $arDiscSave['ACTIVE_TO_UT'] && $arDiscSave['COUNT_FROM_UT'] >= $arDiscSave['ACTIVE_TO_UT'])
+                        }
+                        if (false !== $arDiscSave['ACTIVE_TO_UT'] && $arDiscSave['COUNT_FROM_UT'] >= $arDiscSave['ACTIVE_TO_UT']) {
                             continue;
+                        }
                     }
                     if (false !== $arDiscSave['COUNT_TO_UT']) {
-                        if ($strActionPeriod == self::ACTION_TIME_PERIOD && ($arDiscSave['COUNT_TO_UT'] < AddToTimeStamp($arActionPeriodBack, $intCountTime)))
+                        if ($strActionPeriod == self::ACTION_TIME_PERIOD && ($arDiscSave['COUNT_TO_UT'] < AddToTimeStamp(
+                                    $arActionPeriodBack,
+                                    $intCountTime
+                                ))) {
                             continue;
+                        }
                     }
                 }
 
                 if ($strActionPeriod == self::ACTION_TIME_PERIOD) {
                     if ($strCountPeriod == self::COUNT_TIME_PERIOD) {
-                        $arStartDate = CCatalogDiscountSave::__GetUserInfoByDiscount(array(
-                            'DISCOUNT_ID' => $arDiscSave['ID'],
-                            'USER_ID' => $intUserID,
-                            'ACTIVE_FROM' => date($DB->DateFormatToPHP(CSite::GetDateFormat("FULL")), AddToTimeStamp($arActionPeriodBack, $intCountTime)),
-                        ));
+                        $arStartDate = CCatalogDiscountSave::__GetUserInfoByDiscount(
+                            array(
+                                'DISCOUNT_ID' => $arDiscSave['ID'],
+                                'USER_ID' => $intUserID,
+                                'ACTIVE_FROM' => date(
+                                    $DB->DateFormatToPHP(CSite::GetDateFormat("FULL")),
+                                    AddToTimeStamp($arActionPeriodBack, $intCountTime)
+                                ),
+                            )
+                        );
                         if (is_array($arStartDate) && !empty($arStartDate)) {
                             $arOldOrderFilter['<DATE_INSERT'] = $arStartDate['ACTIVE_FROM_FORMAT'];
-                            $arOldOrderFilter['>=DATE_INSERT'] = date($DB->DateFormatToPHP(CSite::GetDateFormat("FULL")), AddToTimeStamp($arCountPeriodBack, MakeTimeStamp($arStartDate['ACTIVE_FROM_FORMAT'])));
+                            $arOldOrderFilter['>=DATE_INSERT'] = date(
+                                $DB->DateFormatToPHP(CSite::GetDateFormat("FULL")),
+                                AddToTimeStamp($arCountPeriodBack, MakeTimeStamp($arStartDate['ACTIVE_FROM_FORMAT']))
+                            );
 
-                            $arOldOrderSumm = CCatalogDiscountSave::__SaleOrderSumm($arOldOrderFilter, $arDiscSave['CURRENCY']);
+                            $arOldOrderSumm = CCatalogDiscountSave::__SaleOrderSumm(
+                                $arOldOrderFilter,
+                                $arDiscSave['CURRENCY']
+                            );
                         }
                     } else {
                         $arStartDate = CCatalogDiscountSave::__GetUserInfoByDiscount(
@@ -611,12 +754,17 @@ class CAllCatalogDiscountSave
                     $intTimeStart = (!empty($arDiscSave['COUNT_FROM']) ? $arDiscSave['COUNT_FROM'] : false);
                     $intTimeFinish = (!empty($arDiscSave['COUNT_TO']) ? $arDiscSave['COUNT_TO'] : false);
                 } elseif ($strCountPeriod == self::COUNT_TIME_PERIOD) {
-                    $intTimeStart = date($DB->DateFormatToPHP(CSite::GetDateFormat("FULL")), AddToTimeStamp($arCountPeriodBack, $intCountTime));
+                    $intTimeStart = date(
+                        $DB->DateFormatToPHP(CSite::GetDateFormat("FULL")),
+                        AddToTimeStamp($arCountPeriodBack, $intCountTime)
+                    );
                 }
-                if ($intTimeStart)
+                if ($intTimeStart) {
                     $arOrderFilter['>=DATE_INSERT'] = $intTimeStart;
-                if ($intTimeFinish)
+                }
+                if ($intTimeFinish) {
                     $arOrderFilter['<DATE_INSERT'] = $intTimeFinish;
+                }
 
                 $arOrderSumm = CCatalogDiscountSave::__SaleOrderSumm($arOrderFilter, $arDiscSave['CURRENCY']);
 
@@ -640,13 +788,21 @@ class CAllCatalogDiscountSave
                         if ($strActionPeriod == self::ACTION_TIME_PERIOD) {
                             if ($strCountPeriod == self::COUNT_TIME_PERIOD) {
                                 if (!is_array($arOldOrderSumm)) {
-                                    CCatalogDiscountSave::__UpdateUserInfoByDiscount(array(
-                                        'DISCOUNT_ID' => $arDiscSave['ID'],
-                                        'USER_ID' => $intUserID,
-                                        'ACTIVE_FROM' => date($DB->DateFormatToPHP(CSite::GetDateFormat("FULL")), $intCountTime),
-                                        'ACTIVE_TO' => date($DB->DateFormatToPHP(CSite::GetDateFormat("FULL")), AddToTimeStamp($arActionPeriod, $intCountTime)),
-                                        'RANGE_FROM' => -1,
-                                    ));
+                                    CCatalogDiscountSave::__UpdateUserInfoByDiscount(
+                                        array(
+                                            'DISCOUNT_ID' => $arDiscSave['ID'],
+                                            'USER_ID' => $intUserID,
+                                            'ACTIVE_FROM' => date(
+                                                $DB->DateFormatToPHP(CSite::GetDateFormat("FULL")),
+                                                $intCountTime
+                                            ),
+                                            'ACTIVE_TO' => date(
+                                                $DB->DateFormatToPHP(CSite::GetDateFormat("FULL")),
+                                                AddToTimeStamp($arActionPeriod, $intCountTime)
+                                            ),
+                                            'RANGE_FROM' => -1,
+                                        )
+                                    );
                                 }
                             } else {
                                 if ($boolPeriodInsert) {
@@ -654,8 +810,14 @@ class CAllCatalogDiscountSave
                                         array(
                                             'DISCOUNT_ID' => $arDiscSave['ID'],
                                             'USER_ID' => $intUserID,
-                                            'ACTIVE_FROM' => date($DB->DateFormatToPHP(CSite::GetDateFormat("FULL")), $intCountTime),
-                                            'ACTIVE_TO' => date($DB->DateFormatToPHP(CSite::GetDateFormat("FULL")), AddToTimeStamp($arActionPeriod, $intCountTime)),
+                                            'ACTIVE_FROM' => date(
+                                                $DB->DateFormatToPHP(CSite::GetDateFormat("FULL")),
+                                                $intCountTime
+                                            ),
+                                            'ACTIVE_TO' => date(
+                                                $DB->DateFormatToPHP(CSite::GetDateFormat("FULL")),
+                                                AddToTimeStamp($arActionPeriod, $intCountTime)
+                                            ),
                                             'RANGE_FROM' => -1,
                                         ),
                                         array(
@@ -754,14 +916,15 @@ class CAllCatalogDiscountSave
 
     protected static function __GetTimeStampArray($intSize, $strType, $boolDir = false)
     {
-        if ('D' == $strType)
+        if ('D' == $strType) {
             $arTimeStamp = array('DD' => ($boolDir ? $intSize : -$intSize));
-        elseif ('M' == $strType)
+        } elseif ('M' == $strType) {
             $arTimeStamp = array('MM' => ($boolDir ? $intSize : -$intSize));
-        elseif ('Y' == $strType)
+        } elseif ('Y' == $strType) {
             $arTimeStamp = array('YYYY' => ($boolDir ? $intSize : -$intSize));
-        else
+        } else {
             $arTimeStamp = array();
+        }
         return $arTimeStamp;
     }
 

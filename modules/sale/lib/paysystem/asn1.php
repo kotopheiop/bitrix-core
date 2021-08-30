@@ -67,19 +67,25 @@ class ASN1
      * bit string manually
      * @return int the number of bytes read, or 0 if there is an error
      */
-    static function readDER($der, $offset, &$data, $ignore_bit_strings = FALSE)
+    static function readDER($der, $offset, &$data, $ignore_bit_strings = false)
     {
         $pos = $offset;
 
-        $size = strlen($der);
+        $size = mb_strlen($der);
 
-        if ($size < 2) return 0;
+        if ($size < 2) {
+            return 0;
+        }
 
         // Tag/Type
         $constructed = (ord($der[$pos]) >> 5) & 0x01;
         $type = ord($der[$pos++]) & 0x1f;
-        if ($type == 0x1f) return 0; // Long-form type: not supported
-        if ($pos >= $size) return 0;
+        if ($type == 0x1f) {
+            return 0;
+        } // Long-form type: not supported
+        if ($pos >= $size) {
+            return 0;
+        }
 
         // Length
         $len = ord($der[$pos++]);
@@ -90,15 +96,19 @@ class ASN1
                 $len = ($len << 8) | ord($der[$pos++]);
             }
         }
-        if ($pos >= $size || $len > $size - $pos) return 0;
+        if ($pos >= $size || $len > $size - $pos) {
+            return 0;
+        }
 
         // Value
         if ($type == self::BIT_STRING) { // BIT STRING
             $pos++; // Skip the first contents octet (padding indicator)
-            $data = substr($der, $pos, $len - 1);
-            if (!$ignore_bit_strings) $pos += $len - 1;
+            $data = mb_substr($der, $pos, $len - 1);
+            if (!$ignore_bit_strings) {
+                $pos += $len - 1;
+            }
         } elseif (!$constructed /*&& ($type != 0x04)*/) {
-            $data = substr($der, $pos, $len);
+            $data = mb_substr($der, $pos, $len);
             $pos += $len;
         }
 
@@ -117,17 +127,19 @@ class ASN1
     static function encodeDER($type, $value = '', $primitive = true, $class = 0)
     {
         $tag_header = $class;
-        if (!$primitive) $tag_header |= 0x20;
+        if (!$primitive) {
+            $tag_header |= 0x20;
+        }
 
         // Type
         if ($type < 0x1f) {
             $der = chr($tag_header | $type);
         } else {
-            return NULL; // Long form required. not supported.
+            return null; // Long form required. not supported.
         }
 
         // Length
-        $len = strlen($value);
+        $len = mb_strlen($value);
         if ($len <= 0x7f) {
             $der .= chr($len);
         } else {
@@ -161,7 +173,7 @@ class ASN1
     static function decodeOID($oid)
     {
         $pos = 0;
-        $size = strlen($oid);
+        $size = mb_strlen($oid);
 
         // First octet
         $oct = ord($oid[$pos++]);

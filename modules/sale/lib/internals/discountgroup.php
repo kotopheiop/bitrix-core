@@ -42,24 +42,32 @@ class DiscountGroupTable extends Main\Entity\DataManager
     public static function getMap()
     {
         return array(
-            'ID' => new Main\Entity\IntegerField('ID', array(
+            'ID' => new Main\Entity\IntegerField(
+                'ID', array(
                 'primary' => true,
                 'autocomplete' => true,
                 'title' => Loc::getMessage('DISCOUNT_GROUP_ENTITY_ID_FIELD')
-            )),
-            'DISCOUNT_ID' => new Main\Entity\IntegerField('DISCOUNT_ID', array(
+            )
+            ),
+            'DISCOUNT_ID' => new Main\Entity\IntegerField(
+                'DISCOUNT_ID', array(
                 'required' => true,
                 'title' => Loc::getMessage('DISCOUNT_GROUP_ENTITY_DISCOUNT_ID_FIELD')
-            )),
-            'ACTIVE' => new Main\Entity\BooleanField('ACTIVE', array(
+            )
+            ),
+            'ACTIVE' => new Main\Entity\BooleanField(
+                'ACTIVE', array(
                 'values' => array('N', 'Y'),
                 'default_value' => 'Y',
                 'title' => Loc::getMessage('DISCOUNT_GROUP_ENTITY_ACTIVE_FIELD')
-            )),
-            'GROUP_ID' => new Main\Entity\IntegerField('GROUP_ID', array(
+            )
+            ),
+            'GROUP_ID' => new Main\Entity\IntegerField(
+                'GROUP_ID', array(
                 'required' => true,
                 'title' => Loc::getMessage('DISCOUNT_GROUP_ENTITY_GROUP_ID_FIELD')
-            )),
+            )
+            ),
             'DISCOUNT' => new Main\Entity\ReferenceField(
                 'DISCOUNT',
                 'Bitrix\Sale\Internals\Discount',
@@ -78,12 +86,15 @@ class DiscountGroupTable extends Main\Entity\DataManager
     public static function deleteByDiscount($discount)
     {
         $discount = (int)$discount;
-        if ($discount <= 0)
+        if ($discount <= 0) {
             return;
+        }
         $conn = Application::getConnection();
         $helper = $conn->getSqlHelper();
         $conn->queryExecute(
-            'delete from ' . $helper->quote(self::getTableName()) . ' where ' . $helper->quote('DISCOUNT_ID') . ' = ' . $discount
+            'delete from ' . $helper->quote(self::getTableName()) . ' where ' . $helper->quote(
+                'DISCOUNT_ID'
+            ) . ' = ' . $discount
         );
     }
 
@@ -99,8 +110,9 @@ class DiscountGroupTable extends Main\Entity\DataManager
     public static function updateByDiscount($discount, $groupList, $active, $clear)
     {
         $discount = (int)$discount;
-        if ($discount <= 0)
+        if ($discount <= 0) {
             return false;
+        }
         $clear = ($clear === true);
         if ($clear) {
             self::deleteByDiscount($discount);
@@ -108,18 +120,21 @@ class DiscountGroupTable extends Main\Entity\DataManager
         if (is_array($groupList)) {
             $active = (string)$active;
             if ($active != 'Y' && $active != 'N') {
-                $discountIterator = self::getList(array(
-                    'select' => array('ACTIVE'),
-                    'filter' => array('=ID' => $discount)
-                ));
+                $discountIterator = self::getList(
+                    array(
+                        'select' => array('ACTIVE'),
+                        'filter' => array('=ID' => $discount)
+                    )
+                );
                 if ($discountActive = $discountIterator->fetch()) {
                     $active = $discountActive['ACTIVE'];
                 }
                 unset($discountActive, $discountIterator);
             }
             if ($active == 'Y' || $active == 'N') {
-                if (empty($groupList))
+                if (empty($groupList)) {
                     $groupList[] = -1;
+                }
 
                 foreach ($groupList as &$group) {
                     $fields = array(
@@ -146,8 +161,9 @@ class DiscountGroupTable extends Main\Entity\DataManager
     {
         $discount = (int)$discount;
         $active = (string)$active;
-        if ($discount <= 0 || ($active != 'Y' && $active != 'N'))
+        if ($discount <= 0 || ($active != 'Y' && $active != 'N')) {
             return;
+        }
         $conn = Application::getConnection();
         $helper = $conn->getSqlHelper();
         $conn->queryExecute(
@@ -170,17 +186,20 @@ class DiscountGroupTable extends Main\Entity\DataManager
         if (!empty($groupList) && is_array($groupList)) {
             Main\Type\Collection::normalizeArrayValuesByInt($groupList);
             if (!empty($groupList)) {
-                if (!is_array($filter))
+                if (!is_array($filter)) {
                     $filter = array();
+                }
 
                 $groupRows = array_chunk($groupList, 500);
                 foreach ($groupRows as &$row) {
                     $filter['@GROUP_ID'] = $row;
 
-                    $groupIterator = self::getList(array(
-                        'select' => array('DISCOUNT_ID'),
-                        'filter' => $filter
-                    ));
+                    $groupIterator = self::getList(
+                        array(
+                            'select' => array('DISCOUNT_ID'),
+                            'filter' => $filter
+                        )
+                    );
                     while ($group = $groupIterator->fetch()) {
                         $group['DISCOUNT_ID'] = (int)$group['DISCOUNT_ID'];
                         $result[$group['DISCOUNT_ID']] = true;
@@ -188,8 +207,9 @@ class DiscountGroupTable extends Main\Entity\DataManager
                     unset($group, $groupIterator);
                 }
                 unset($row, $groupRows);
-                if (!empty($result))
+                if (!empty($result)) {
                     $result = array_keys($result);
+                }
             }
         }
         return $result;

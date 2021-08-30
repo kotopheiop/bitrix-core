@@ -1,14 +1,20 @@
 <?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
     die();
+}
 
 use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
-$paymentDesc = Loc::getMessage('SALE_HPS_WEBMONEY_PAYMENT_DESC', array('#ID#' => $params["PAYMENT_ID"], '#DATE_INSERT#' => $params["PAYMENT_DATE_INSERT"]));
-if ($params['ENCODING'])
+$paymentDesc = Loc::getMessage(
+    'SALE_HPS_WEBMONEY_PAYMENT_DESC',
+    array('#ID#' => $params["PAYMENT_ID"], '#DATE_INSERT#' => $params["PAYMENT_DATE_INSERT"])
+);
+if ($params['ENCODING']) {
     $paymentDesc = $APPLICATION->ConvertCharset($paymentDesc, SITE_CHARSET, $params['ENCODING']);
+}
 ?>
 <div class="mb-4">
     <form id="pay" name="pay" method="POST" action="<?= $params['URL'] ?>">
@@ -32,6 +38,6 @@ if ($params['ENCODING'])
         <input type="hidden" name="BX_HANDLER" value="WEBMONEY">
         <input type="hidden" name="BX_PAYSYSTEM_CODE" value="<?= $params['BX_PAYSYSTEM_CODE'] ?>">
         <input type="submit" value="<?= Loc::getMessage('SALE_HPS_WEBMONEY_BUTTON') ?>"
-               class="btn btn-primary pl-4 pr-4">
+               class="btn btn-lg btn-success pl-4 pr-4" style="border-radius: 32px;">
     </form>
 </div>

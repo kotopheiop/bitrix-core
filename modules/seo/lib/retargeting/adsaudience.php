@@ -297,6 +297,7 @@ class AdsAudience
                 'HAS_AUTH' => $authAdapter->hasAuth(),
                 'AUTH_URL' => $authAdapter->getAuthUrl(),
                 'PROFILE' => $authAdapter->getToken() ? $account->getProfileCached() : false,
+                'ENGINE_CODE' => $service::getEngineCode($type)
             );
             if ($canUserMultiClients) {
                 $providers[$type]['CLIENTS'] = static::getClientsProfiles($authAdapter);
@@ -325,25 +326,32 @@ class AdsAudience
     protected static function getClientsProfiles(AuthAdapter $authAdapter)
     {
         $type = $authAdapter->getType();
-        return array_values(array_filter(array_map(function ($item) use ($type) {
-            $service = new Service();
-            $service->setClientId($item['proxy_client_id']);
+        return array_values(
+            array_filter(
+                array_map(
+                    function ($item) use ($type) {
+                        $service = new Service();
+                        $service->setClientId($item['proxy_client_id']);
 
-            $authAdapter = Service::getAuthAdapter($type);
-            $authAdapter->setService($service);
+                        $authAdapter = Service::getAuthAdapter($type);
+                        $authAdapter->setService($service);
 
-            $account = Service::getAccount($type);
-            $account->setService($service);
-            $account->getRequest()->setAuthAdapter($authAdapter);
+                        $account = Service::getAccount($type);
+                        $account->setService($service);
+                        $account->getRequest()->setAuthAdapter($authAdapter);
 
-            $profile = $account->getProfileCached();
-            if ($profile) {
-                return $profile;
-            } else {
-                // if no profile, then may be auth was removed in service
-                $authAdapter->removeAuth();
-            }
-        }, $authAdapter->getAuthorizedClientsList())));
+                        $profile = $account->getProfileCached();
+                        if ($profile) {
+                            return $profile;
+                        } else {
+                            // if no profile, then may be auth was removed in service
+                            $authAdapter->removeAuth();
+                        }
+                    },
+                    $authAdapter->getAuthorizedClientsList()
+                )
+            )
+        );
     }
 
     /**

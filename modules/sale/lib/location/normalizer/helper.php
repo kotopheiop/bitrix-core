@@ -41,7 +41,9 @@ final class Helper
 
         while ($row = $res->fetch()) {
             if (!isset($normalizers[$row['LANGUAGE_ID']])) {
-                $normalizers[$row['LANGUAGE_ID']] = \Bitrix\Sale\Location\Normalizer\Builder::build($row['LANGUAGE_ID']);
+                $normalizers[$row['LANGUAGE_ID']] = \Bitrix\Sale\Location\Normalizer\Builder::build(
+                    $row['LANGUAGE_ID']
+                );
             }
 
             Name\LocationTable::update(

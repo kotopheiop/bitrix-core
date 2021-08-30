@@ -51,7 +51,6 @@ class DefaultBoardManager extends Base
             foreach ($boards as $board) {
                 self::$defaultBoardsList[$board->getBoardKey()] = $board;
                 self::$indices['boardKey'][$board->getBoardKey()][] = $board->getBoardKey();
-
             }
         }
         return self::$defaultBoardsList;

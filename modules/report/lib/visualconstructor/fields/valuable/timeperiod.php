@@ -170,7 +170,6 @@ class TimePeriod extends BaseValuable
             case self::LAST_7_DAYS_PERIOD_TIME:
                 $result = $this->prepareTimePeriodForLastDays(7);
                 break;
-
         }
         $result['type'] = $value['type'];
         return $result;
@@ -202,9 +201,9 @@ class TimePeriod extends BaseValuable
      */
     private function prepareTimePeriodForQuarter($value)
     {
-        $year = $value['year'];
+        $year = (int)$value['year'];
         $startYear = $endYear = $year;
-        $quarter = $value['quarter'];
+        $quarter = (int)$value['quarter'];
         $quarterStartMonth = 1 + ($quarter - 1) * 3;
         if ($quarterStartMonth < 10) {
             $quarterStartMonth = '0' . $quarterStartMonth;
@@ -317,7 +316,7 @@ class TimePeriod extends BaseValuable
         $thisYear = (int)$year->format('Y');
         $thisMonth = (int)$year->format('m');
         $value['year'] = $thisYear;
-        $value['quarter'] = $thisMonth / 3;
+        $value['quarter'] = ceil($thisMonth / 3);
         return $this->prepareTimePeriodForQuarter($value);
     }
 
